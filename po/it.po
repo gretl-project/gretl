@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.2.6\n"
 "POT-Creation-Date: 2004-05-22 13:29-0400\n"
-"PO-Revision-Date: 2004-05-26 00:25+0200\n"
+"PO-Revision-Date: 2004-05-28 14:33+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -9567,19 +9567,19 @@ msgstr "La stringa da sostituire non è stata trovata"
 
 #: gui2/model_table.c:57
 msgid "Model table is full"
-msgstr "La tabella del modello è piena"
+msgstr "La tabella modelli è piena"
 
 #: gui2/model_table.c:108
 msgid "Sorry, NLS models can't be put in the model table"
-msgstr "I modelli NLS non possono essere aggiunti alla tabella dei modelli"
+msgstr "I modelli NLS non possono essere aggiunti alla tabella modelli"
 
 #: gui2/model_table.c:115
 msgid "Sorry, ARMA models can't be put in the model table"
-msgstr "I modelli ARMA non possono essere aggiunti alla tabella dei modelli"
+msgstr "I modelli ARMA non possono essere aggiunti alla tabella modelli"
 
 #: gui2/model_table.c:122
 msgid "Sorry, TSLS models can't be put in the model table"
-msgstr "I modelli TSLS non possono essere aggiunti alla tabella dei modelli"
+msgstr "I modelli TSLS non possono essere aggiunti alla tabella modelli"
 
 #: gui2/model_table.c:138
 msgid ""
@@ -9598,7 +9598,7 @@ msgstr "Modello aggiunto alla tabella"
 
 #: gui2/model_table.c:198
 msgid "Model table cleared"
-msgstr "Tabella dei modelli cancellata"
+msgstr "Tabella modelli cancellata"
 
 #: gui2/model_table.c:350
 msgid "HSK"
@@ -9631,7 +9631,7 @@ msgstr "R**2 Corr."
 #: gui2/model_table.c:642 gui2/model_table.c:720 gui2/model_table.c:840
 #: gui2/model_table.c:942
 msgid "The model table is empty"
-msgstr "La tabella dei modelli è vuota"
+msgstr "La tabella modelli è vuota"
 
 #: gui2/model_table.c:657 gui2/model_table.c:747 gui2/model_table.c:857
 #, c-format
@@ -9666,7 +9666,7 @@ msgstr "Per logit e probit, R-quadro è lo pseudo-R-quadro di McFadden"
 
 #: gui2/model_table.c:706
 msgid "gretl: model table"
-msgstr "gretl: tabella dei modelli"
+msgstr "gretl: tabella modelli"
 
 #: gui2/model_table.c:801
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
@@ -9905,7 +9905,7 @@ msgstr "Correlazioni"
 
 #: gui2/session.c:2326
 msgid "Model table"
-msgstr "Modelli"
+msgstr "Tabella modelli"
 
 #: gui2/session.c:2329
 msgid "Graph page"
