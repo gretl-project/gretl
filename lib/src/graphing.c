@@ -1305,6 +1305,9 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     if (spec->code == PLOT_FORECAST) {
 	fputs("# forecasts with 95 pc conf. interval\n", fp);
     }
+    else if (spec->code == PLOT_CORRELOGRAM) {
+	fputs("# correlogram\n", fp); 
+    }
     else if (spec->code == PLOT_FREQ_SIMPLE) {
 	fputs("# frequency plot (simple)\n", fp); 
     }
