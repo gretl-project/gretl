@@ -3899,7 +3899,7 @@ static int *str_to_list (const char *liststr)
     const char *s = liststr;
     char numstr[8];
     int *list;
-    int li, n = 0;
+    int n = 0;
 
     while (*s) {
 	while (*s == ' ') s++;
