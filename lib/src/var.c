@@ -1789,7 +1789,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     int orig_t1 = pdinfo->t1;
     int orig_v = pdinfo->v;
     int *varlist;
-    int verbose = (opt & OPT_V);
+    int verbose = (opt & OPT_O);
     int hasconst = 0;
     int trends = 0;
 

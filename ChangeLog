@@ -12,6 +12,7 @@ version 1.2.4
   were appearing both as saved models and as saved text
 - Fix bug: autocorrelation test from model window Tests menu
   was broken by new options mechanism
+- Fix bug: "--verbose" option for Johansen test was broken
 - Fix curious Windows bug: line-endings in scripts were not
   recognized in some cases
 - Improve path-searching for data files

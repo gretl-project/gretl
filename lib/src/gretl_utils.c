@@ -981,7 +981,6 @@ const char **get_opts_for_command (int ci)
     return ret;
 }
 
-
 struct flag_match flag_matches[] = {
     { OPT_A, 'a' },
     { OPT_B, 'b' },
@@ -1079,7 +1078,7 @@ static unsigned long get_short_opts (char *line, int ci, int *err)
 static unsigned long get_long_opts (char *line, int ci, int *err)
 {
     char *p = strstr(line, "--");
-    unsigned long opt, ret = 0L;
+    unsigned long ret = 0L;
 
     while (p != NULL) {
 	char longopt[32];
@@ -1087,19 +1086,26 @@ static unsigned long get_long_opts (char *line, int ci, int *err)
 
 	sscanf(p + 2, "%31s", longopt);
 	for (i=0; gretl_opts[i].o != 0; i++) {
-	    if (!strcmp(longopt, gretl_opts[i].longopt)) {
-		opt = gretl_opts[i].o;
-		if (!opt_is_valid(opt, ci, 0, longopt)) {
-		    *err = 1;
-		    return 0L;
-		}
+	    if (ci == gretl_opts[i].ci && 
+		!strcmp(longopt, gretl_opts[i].longopt)) {
 		ret |= gretl_opts[i].o;
 		_delete(p, 0, 2 + strlen(longopt));
 		match = 1;
 		break;
 	    }
 	}
-	if (!match) p += 2;
+	if (!match) {
+	    /* is this a recognized gretl option, but not valid for the 
+	       particular command? */
+	    for (i=0; gretl_opts[i].ci > 0; i++) {
+		if (!strcmp(longopt, gretl_opts[i].longopt)) {
+		    sprintf(gretl_errmsg, "Invalid option '--%s'", longopt);
+		    *err = 1;
+		    return 0L;
+		}
+	    }
+	    p += 2;
+	}
 	p = strstr(p, "--");
     }
 
@@ -1154,13 +1160,17 @@ int catchflags (char *line, unsigned long *oflags)
 
     /* try for short-form options (e.g. "-o") */
     opt = get_short_opts(line, ci, &err);
-    if (err) return 1;
-    if (opt) *oflags |= opt;
+    if (!err && opt) {
+	*oflags |= opt;
+    }
 
     /* try for long-form options (e.g. "--vcv") */
-    opt = get_long_opts(line, ci, &err);
-    if (err) return 1;
-    if (opt) *oflags |= opt;
+    if (!err) {
+	opt = get_long_opts(line, ci, &err);
+	if (!err && opt) {
+	    *oflags |= opt;
+	}
+    }
 
     return err;
 }
