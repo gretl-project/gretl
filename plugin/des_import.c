@@ -129,7 +129,7 @@ static void get_jwfile (const char *fname, char *jwfile)
     strcpy(jwfile, fname);
     p = strrchr(jwfile, '/');
     if (p == NULL) p = strrchr(jwfile, '\\');
-    if (p != NULL) strcpy(p + 1, "jw_structure");
+    if (p != NULL) strcpy(p + 1, "jw.hints");
 }
 
 static void get_dname (const char *fname, char *dname)
