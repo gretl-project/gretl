@@ -2247,7 +2247,9 @@ void do_model (GtkWidget *widget, gpointer p)
 	}
 	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_NONE, rho);
 	err = model_output(pmod, prn);
-	if (action == HILU) register_graph();
+	if (action == HILU) {
+	    register_graph();
+	}
 	break;
 
     case OLS:

@@ -48,14 +48,13 @@ int model_info_get_n (const model_info *model);
 
 int model_info_get_iters (const model_info *model);
 
-void model_info_get_pqr (const model_info *model, 
-			 int *p, int *q, int *r);
+void *model_info_get_extra_info (model_info *model);
 
 double model_info_get_ll (const model_info *model);
 
 double **model_info_get_series (const model_info *model);
 
-void model_info_set_pqr (model_info *model, int p, int q, int r);
+void model_info_set_extra_info (model_info *model, void *extra);
 
 void model_info_set_n_series (model_info *model, int n);
 

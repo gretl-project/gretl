@@ -1166,7 +1166,9 @@ static int insert_ghost_zero (char *start, char *p, int *np)
     }
 
     /* do we have space to make the insertion? */
-    if (n + (2 * (*np)) >= MAXLEN) return 1;
+    if (n + (2 * (*np)) >= MAXLEN) {
+	return 1;
+    }
 
     /* move material right */
     memmove(p + 1 + *np, p, pn + 1);
@@ -1184,29 +1186,55 @@ static int insert_ghost_zero (char *start, char *p, int *np)
     return err;
 }
 
+static int function_word_to_left (const char *s, int n)
+{
+    int i, ret = 0;
+
+    for (i=1; i<n; i++) {
+	const char *p = s + n - i;
+
+	if (!isalpha(*p)) {
+	    break;
+	} else if (get_genr_function(p)) {
+	    ret = 1;
+	    break;
+	} 
+    }
+
+    return ret;
+}
+
+/* Given: there is a '-' or '+' at *p.  N.B. This needs care, because
+   plus/minus may be part of a lag variable specification.
+*/
+
 static int unary_op_context (char *start, char *p)
 {
     int pos = p - start;
+    int ret = 0;
 
-    /* given: there is a '-' or '+' at *p */
-
-    /* plus/minus at start of formula, or directly preceded
+    /* plus/minus at very start of formula, or directly preceded
        by another operator: must be plain unary */
-    if (pos == 0 || op_level(*(p-1))) 
-	return 1;
+    if (pos == 0 || op_level(*(p-1))) {
+	ret = 1;
+    }
 
     /* plus/minus preceded _only_ by left paren: unary */
-    if (pos == 1 && *start == '(') 
-	return 1;
+    else if (pos == 1 && *start == '(') {
+	ret = 1;
+    }
 
-    /* plus/minus preceded by left paren, preceded by operator,
-       again unary */
-    if (pos >= 2 && *(p-1) == '(' && op_level(*(p-2)))
-	return 1;
+    /* plus/minus preceded by left paren, preceded by operator
+       or function: again unary */
+    else if (pos >= 2 && *(p-1) == '(') {
+	if (op_level(*(p-2))) {
+	    ret = 1;
+	} else if (function_word_to_left(start, pos - 1)) {
+	    ret = 1;
+	}
+    }
 
-    /* N.B. plus/minus may be part of a lead/lag specification */
-
-    return 0;
+    return ret;
 }
 
 static int catch_special_operators (char *s)
@@ -1231,7 +1259,7 @@ static int catch_special_operators (char *s)
 	    *s = '^';
 	    lshift = 1;
 	} else if ((*s == '-' || *s == '+') && unary_op_context(p, s)) {
-	    int np; /* "need (to insert) parentheses" ? */
+	    int np; /* need to insert parentheses? */
 
 	    err = insert_ghost_zero(p, s, &np);
 	    s += 1 + np;
@@ -1300,16 +1328,24 @@ static int token_is_atomic (const char *s, GENERATE *genr)
     DPRINTF(("token_is_atomic: looking at '%s'\n", s));
 
     /* number in scientific notation */
-    if (numeric_string(s)) return 1;
+    if (numeric_string(s)) {
+	return 1;
+    }
 
     /* treat lag variable as atom */
-    if (get_lagvar(s, NULL, genr)) return 1;
+    if (get_lagvar(s, NULL, genr)) {
+	return 1;
+    }
 
     while (*s) {
 	/* token is non-atomic if it contains an operator,
 	   or parentheses */
-	if (op_level(*s) || *s == '(') count++;
-	if (count > 0) break;
+	if (op_level(*s) || *s == '(') {
+	    count++;
+	}
+	if (count > 0) {
+	    break;
+	}
 	s++;
     }
 
@@ -1323,8 +1359,11 @@ static int token_is_function (char *s, GENERATE *genr, int level)
     const char *p = s;
 
     while (*p) {
-	if (!op_level(*p) && *p != '(') wlen++; /* might be a problem */
-	else break;
+	if (!op_level(*p) && *p != '(') {
+	    wlen++; /* might be a problem */
+	} else {
+	    break;
+	}
 	p++;
     }
 
@@ -1338,10 +1377,13 @@ static int token_is_function (char *s, GENERATE *genr, int level)
 	    char subtok[TOKLEN];
 
 	    strcpy(subtok, strchr(s, '(') + 1);
-	    subtok[strlen(subtok)-1] = '\0';
+	    subtok[strlen(subtok) - 1] = '\0';
 
-	    if (wlen == 0) strcpy(s, "ident(#)");
-	    else strcpy(strchr(s, '(') + 1, "#)");
+	    if (wlen == 0) {
+		strcpy(s, "ident(#)");
+	    } else {
+		strcpy(strchr(s, '(') + 1, "#)");
+	    }
 
 	    if (*subtok) {
 		math_tokenize(subtok, genr, ++level);
@@ -1355,8 +1397,11 @@ static int token_is_function (char *s, GENERATE *genr, int level)
 static int contains_no_operator (const char *s)
 {
     while (*s++) {
-	if (op_level(*s)) return 0;
+	if (op_level(*s)) {
+	    return 0;
+	}
     }
+
     return 1;
 }
 
@@ -1547,15 +1592,17 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 
 static int count_ops (char *s, int *opcount)
 {
-    int level, maxlevel = 0;
+    int level, maxlev = 0;
 
     while (*s++) {
 	level = op_level(*s);
 	opcount[level] += 1;
-	if (level > maxlevel) maxlevel = level;
+	if (level > maxlev) {
+	    maxlev = level;
+	}
     }
 
-    return maxlevel;
+    return maxlev;
 }
 
 /* ...................................................... */
@@ -1565,9 +1612,14 @@ int insert_paren (char *s, int pos, char lr)
     static int lpos;
     int i, rpos, n = strlen(s);
 
-    if (n + 1 >= MAXLEN) return 1;
+    if (n + 1 >= MAXLEN) {
+	return 1;
+    }
+
     /* move material right */
-    for (i=n+1; i>=pos+1; i--) s[i] = s[i - 1];
+    for (i=n+1; i>=pos+1; i--) {
+	s[i] = s[i - 1];
+    }
 
     if (lr == 'L') {
 	lpos = pos + 1;
@@ -1588,16 +1640,24 @@ static int paren_state (char c, int *state, char lr)
 
     if (c == '(') {
 	if (lr == 'L') {
-	    if (s > 0) s--;
-	} else s++;
-    }
-    else if (c == ')') {
+	    if (s > 0) {
+		s--;
+	    }
+	} else {
+	    s++;
+	}
+    } else if (c == ')') {
 	if (lr == 'R') {
-	    if (s > 0) s--;
-	} else s++;
+	    if (s > 0) {
+		s--;
+	    }
+	} else {
+	    s++;
+	}
     }
 
     *state = s;
+
     return s;
 }
 

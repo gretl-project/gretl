@@ -30,13 +30,14 @@ struct _model_info {
        functions: */
 
     int k;              /* number of parameters */
-    int p, q, r;        /* for use with ARMA: AR, MA orders and number of
-                           other regressors.  Otherwise unused. */
     int t1, t2;         /* starting and ending point of sample */
     int n_series;       /* number of additional series needed in the
                            likelihood and/or score calculations */
     double tol;         /* tolerance for convergence */
     unsigned char opts; /* options from among bhhh_opts */
+
+    void *extra_info;   /* pointer to additional info which may be
+			   used in likelihood callback */
 
     /* members set within bhhh_max: */
 
@@ -193,24 +194,6 @@ int model_info_get_iters (const model_info *model)
 }
 
 /**
- * model_info_get_pqr:
- * @model: model info pointer.
- * @p: pointer to receive the AR order of @model.
- * @q: pointer to receive the MA order of @model.
- * @r: pointer to receive the number of regular regressors in 
- * ARMA(X) @model.
- *
- */  
- 
-void model_info_get_pqr (const model_info *model, 
-			 int *p, int *q, int *r)
-{
-    *p = model->p;
-    *q = model->q;
-    *r = model->r;
-}
-
-/**
  * model_info_get_series:
  * @model: model info pointer.
  *
@@ -283,24 +266,6 @@ void model_info_set_tol (model_info *model, double tol)
 }
 
 /**
- * model_info_set_pqr:
- * @model: model info pointer.
- * @p: AR order for @model.
- * @q: MA order for @model.
- * @r: Number of regular regressors in ARMA(X) @model.
- *
- * Sets the specified parameters for @model.
- */ 
-
-void model_info_set_pqr (model_info *model, int p, int q, int r)
-{
-    model->p = p;
-    model->q = q;
-    model->r = r;
-    model->k = p + q + r + 1;
-}
-
-/**
  * model_info_set_k:
  * @model: model info pointer.
  * @k: number of regressors in (non-ARMA) model.
@@ -311,7 +276,6 @@ void model_info_set_pqr (model_info *model, int p, int q, int r)
 void model_info_set_k (model_info *model, int k)
 {
     model->k = k;
-    model->p = model->q = model->r = 0;
 }
 
 /**
@@ -355,6 +319,20 @@ void model_info_set_t1_t2 (model_info *model, int t1, int t2)
     model->n = t2 + 1;
 }
 
+/* set extra information pointer on basic model_info */
+
+void model_info_set_extra_info (model_info *model, void *extra)
+{
+    model->extra_info = extra;
+}
+
+/* retrieve extra information pointer from model_info */
+
+void *model_info_get_extra_info (model_info *model)
+{
+    return model->extra_info;
+}
+
 /* Below: construct the regression list for the OPG regression, with
    the appropriate indices into the temporary artificial dataset.
 */
@@ -382,12 +360,10 @@ static int *make_opg_list (int k)
 
 static int model_info_init (model_info *model, const double *init_coeff)
 {
-    int i, t, k, err = 0;
+    int i, t, err = 0;
     int n_series = model->n_series;
 
-    k = model->k;  
-
-    model->theta = malloc(k * sizeof *model->theta);
+    model->theta = malloc(model->k * sizeof *model->theta);
 
     if (model->theta == NULL) {
 	model_info_free(model);
@@ -416,7 +392,7 @@ static int model_info_init (model_info *model, const double *init_coeff)
     }
 
     /* initialize parameters */
-    for (i=0; i<k; i++) {
+    for (i=0; i<model->k; i++) {
 	model->theta[i] = init_coeff[i];
     }
 
@@ -452,6 +428,7 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
     int i;
 
     pprintf(prn, "\n*** %s %d: theta, ll ***\n", _("iteration"), iter);
+
     for (i=0; i<m; i++) {
 	if (i && i % 5 == 0) pputc(prn, '\n');
 	if (na(theta[i]) || isnan(theta[i])) {
@@ -460,6 +437,7 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
 	}
 	pprintf(prn, "%#12.5g ", theta[i]);
     }
+
     pprintf(prn, "\n    %s = %g, ll = %g\n", _("step length"),
 	    steplength, ll);
 
@@ -560,6 +538,10 @@ int bhhh_max (LL_FUNC loglik,
 	    break;
 	}
 
+#ifdef BHHH_DEBUG
+	pprintf(prn, "Top of loop: ll = %g\n", model->ll);
+#endif
+
 	/* BHHH via OPG regression */
 	*bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
 	if (bmod->errcode) {
@@ -584,6 +566,10 @@ int bhhh_max (LL_FUNC loglik,
 	/* see if we've gone up... (0 = "don't compute score") */
 	err = loglik(ctemp, X, tZ, model, 0); 
 
+#ifdef BHHH_DEBUG
+	pprintf(prn, "bhhh loop: initial ll2 = %g\n", model->ll2);
+#endif
+
 	while (model->ll2 < model->ll || err) { 
 	    /* ... if not, halve the steplength */
 	    stepsize *= 0.5;
@@ -596,6 +582,9 @@ int bhhh_max (LL_FUNC loglik,
 		ctemp[i] = model->theta[i] + delta[i];
 	    }
 	    err = loglik(ctemp, X, tZ, model, 0);
+#ifdef BHHH_DEBUG
+	    pprintf(prn, "bhhh loop: modified ll2 = %g\n", model->ll2);
+#endif
 	}
 
 	if (err) break;
