@@ -27,11 +27,11 @@
 
 #include "libgretl.h"
 #include "var.h"
+#include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
 #include "modelspec.h"
 #include "libset.h"
-#include "system.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -992,8 +992,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
 	    if (err) errmsg(err, prn);
 	    sys = NULL;
-	} 
-	else if (!strcmp(cmd.param, "nls")) {
+	} else if (!strcmp(cmd.param, "nls")) {
 	    clear_model(models[0]);
 	    *models[0] = nls(&Z, datainfo, prn);
 	    if ((err = (models[0])->errcode)) {
@@ -1002,13 +1001,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    }
 	    do_nls = 1;
 	    printmodel(models[0], datainfo, cmd.opt, prn);
-	}
-	else if (!strcmp(cmd.param, "restrict")) {
+	} else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, prn);
 	    if (err) errmsg(err, prn);
 	    rset = NULL;
-	}  
-	else {
+	} else {
 	    err = 1;
 	}
 	break;
@@ -1524,9 +1521,12 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case RESTRICT:
-	/* joint hypothesis test on model */
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	/* joint hypothesis test on model or system */
 	if (rset == NULL) {
+	    if (*cmd.param == '\0') {
+		/* if param is non-blank, we're restricting a named system */
+		if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	    }
 	    rset = restriction_set_start(line, models[0], datainfo);
 	    if (rset == NULL) {
 		err = 1;

@@ -143,11 +143,14 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 
 static int restrict_bnum (const char *s)
 {
-    if (*s == 'b' && isdigit((unsigned char) *(s+1))) {
-	return 1;
-    } else {
-	return 0;
-    }
+    if (*s == 'b') {
+	s++;
+	if (isdigit((unsigned char) *s) || *s == '[') {
+	    return 1;
+	}
+    } 
+
+    return 0;
 }
 
 static int subsetted_command (const char *cmd)
@@ -237,7 +240,6 @@ static int aliased (char *cmd)
                        c == RENAME || \
 	               c == TESTUHAT || \
                        c == RESET || \
-                       c == RESTRICT || \
                        c == SYSTEM || \
                        c == LEVERAGE || \
                        c == VIF || \
@@ -789,6 +791,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == LOOP ||
 	command->ci == END ||
 	command->ci == LMTEST ||
+	command->ci == RESTRICT ||
 	command->ci == NULLDATA ||
 	(command->ci == PRINT && strstr(line, "\""))) {
 	command->nolist = 1;

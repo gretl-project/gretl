@@ -96,7 +96,7 @@ static int make_sys_X_block (gretl_matrix *X,
     X->cols = pmod->ncoeff;
 
     for (i=0; i<X->cols; i++) {
-	if (systype == THREESLS || systype == FIML) {
+	if (systype == THREESLS || systype == FIML || systype == SYS_TSLS) {
 	    Xi = tsls_get_Xi(pmod, Z, i);
 	} else {
 	    Xi = Z[pmod->list[i+2]];
@@ -274,11 +274,12 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
 
     *freeit = 0;
 
-    if (systype == SUR || systype == THREESLS) {
+    if (systype == SUR || systype == THREESLS ||
+	systype == SYS_OLS || systype == SYS_TSLS) {
 	list = system_get_list(sys, i);
     }
 
-    if (systype == THREESLS) {
+    if (systype == THREESLS || systype == SYS_TSLS) {
 	/* is list already in tsls form? */
 	if (list != NULL && !in_list(list, LISTSEP)) {
 	    list = NULL;
@@ -286,7 +287,8 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
     }
 
     if (systype == FIML || systype == LIML ||
-	(systype == THREESLS && list == NULL)) {
+	((systype == THREESLS || systype == SYS_TSLS) 
+	 && list == NULL)) {
 	list = compose_tsls_list(sys, i);
 	*freeit = 1;
     }
@@ -581,14 +583,18 @@ static int basic_system_allocate (int systype,
     *sigma = gretl_matrix_alloc(m, m);
     if (*sigma == NULL) {
 	return E_ALLOC;
-    }    
+    }  
+
+    if (nr == 0 && (systype == SYS_OLS || systype == SYS_TSLS)) {
+	return 0;
+    }
 
     if (systype != LIML) {
 	*X = gretl_matrix_alloc(ldx, ldx);
 	if (*X == NULL) {
 	    return E_ALLOC;
 	}
-	*y = gretl_vector_alloc(ldx);
+	*y = gretl_column_vector_alloc(ldx);
 	if (*y == NULL) {
 	    return E_ALLOC;
 	}
@@ -679,18 +685,26 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
 			     gretl_equation_system *sys)
 {
     const gretl_matrix *R;
-    gretl_matrix *Rt;
+    double rij;
+    int Rrows, Rcols;
+    int i, j;
 
     R = system_get_R_matrix(sys);
     if (R == NULL) return 1;
 
-    Rt = gretl_matrix_copy_transpose(R);
-    if (Rt == NULL) return 1;
-
     kronecker_place(X, R, mk, 0, 1.0);
-    kronecker_place(X, Rt, 0, mk, 1.0);
 
-    gretl_matrix_free(Rt);
+    /* place R-transpose */
+
+    Rrows = gretl_matrix_rows(R);
+    Rcols = gretl_matrix_cols(R);
+
+    for (i=0; i<Rrows; i++) {
+	for (j=0; j<Rcols; j++) {
+	    rij = gretl_matrix_get(R, i, j);
+	    gretl_matrix_set(X, j, i + mk, rij);
+	}
+    }
 
     return 0;
 }
@@ -726,14 +740,17 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     int v, l, mk, krow, nr;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int orig_t1 = t1, orig_t2 = t2;
+
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *uhat = NULL;
     gretl_matrix *sigma = NULL;
     gretl_matrix *Xi = NULL, *Xj = NULL, *M = NULL;
     MODEL **models = NULL;
+
     int systype = system_get_type(sys);
     double llbak = -1.0e9;
+    int single_equation = 0;
     int do_iteration = 0;
     int iters = 0;
     int err = 0;
@@ -743,6 +760,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
     
     nr = system_n_restrictions(sys);
+
+    if (systype == SYS_OLS || systype == SYS_TSLS) {
+	single_equation = 1;
+    }
 
     /* get uniform sample starting and ending points */
     if (system_adjust_t1t2(sys, &t1, &t2, (const double **) *pZ)) {
@@ -788,9 +809,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    break;
 	}
 
-	if (systype == SUR) {
+	if (systype == SUR || systype == SYS_OLS) {
 	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
-	} else if (systype == THREESLS || systype == FIML) {
+	} else if (systype == THREESLS || systype == FIML || 
+		   systype == SYS_TSLS) {
 	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_S);
 	} else if (systype == LIML) {
 	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_N);
@@ -831,9 +853,18 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
  iteration_start:
 
     gls_sigma_from_uhat(sigma, uhat, m, T);
-    err = gretl_invert_symmetric_matrix(sigma);    
-    if (err) {
-	goto cleanup;
+
+    if (nr == 0 && single_equation) {
+	goto print_save;
+    }
+
+    if (single_equation) {
+	gretl_matrix_zero(X);
+    } else {
+	err = gretl_invert_symmetric_matrix(sigma);    
+	if (err) {
+	    goto cleanup;
+	}
     }
 
     if (Xi == NULL) {
@@ -863,6 +894,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    double sij;
 
 	    if (i != j) {
+		if (single_equation) {
+		    kcol += models[j]->ncoeff;
+		    continue;
+		}
 		err = make_sys_X_block(Xj, models[j], (const double **) *pZ, 
 				       pdinfo->t1, systype);
 		Xk = Xj;
@@ -874,7 +909,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    err = gretl_matrix_multiply_mod (Xi, GRETL_MOD_TRANSPOSE,
 					     Xk, GRETL_MOD_NONE, 
 					     M);
-	    sij = gretl_matrix_get(sigma, i, j);
+	    if (single_equation) {
+		sij = 1.0;
+	    } else {
+		sij = gretl_matrix_get(sigma, i, j);
+	    }
 	    kronecker_place (X, M, krow, kcol, sij);
 	    kcol += models[j]->ncoeff;
 	}
@@ -898,7 +937,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     /* form Y column vector (m x k) */
     v = 0;
-    for (i=0; i<m; i++) { /* loop over the m vertically arranged
+    for (i=0; i<m; i++) { /* loop over the m vertically-arranged
 			     blocks in the final column vector */
 
 	make_sys_X_block(Xi, models[i], (const double **) *pZ, 
@@ -907,17 +946,28 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	for (j=0; j<models[i]->ncoeff; j++) { /* loop over the rows within each of 
 						 the m blocks */
 	    double yv = 0.0;
+	    int lmin = 0, lmax = m;
 
-	    for (l=0; l<m; l++) { /* loop over the m components that
-				     must be added to form each element */
+	    if (single_equation) {
+		lmin = i;
+		lmax = i + 1;
+	    }
+
+	    for (l=lmin; l<lmax; l++) { /* loop over the components that
+					  must be added to form each element */
 		const double *yl = (*pZ)[system_get_depvar(sys, l)];
-		double xx = 0.0;
+		double sil, xx = 0.0;
 
 		/* multiply X'[l] into y */
 		for (t=0; t<T; t++) {
 		    xx += gretl_matrix_get(Xi, t, j) * yl[t + pdinfo->t1];
 		}
-		yv += xx * gretl_matrix_get(sigma, i, l);
+		if (single_equation) {
+		    sil = 1.0;
+		} else {
+		    sil = gretl_matrix_get(sigma, i, l);
+		}
+		yv += xx * sil;
 	    }
 	    gretl_vector_set(y, v++, yv);
 	}
@@ -928,8 +978,14 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	augment_y_with_restrictions(y, mk, nr, sys);
     }
 
+#if SDEBUG
+    gretl_matrix_print(X, "sys X", NULL);
+    gretl_matrix_print(y, "sys y", NULL);
+#endif    
+
     /* depending on whether we used OLS or TSLS at the first stage above,
-       these estimates will be either SUR or 3SLS
+       these estimates will be either SUR or 3SLS -- unless we're just
+       doing restricted single-equation estimates
     */
     calculate_sys_coefficients(models, (const double **) *pZ, X, uhat, 
 			       y, m, mk);
@@ -975,7 +1031,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	/* discard convenience pointers */
 	system_unattach_uhat(sys);
 	system_unattach_models(sys);
-    } 
+    }
+
+ print_save: 
 
     if (!err) {
 	err = save_and_print_results(sys, sigma, models, iters,

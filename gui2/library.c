@@ -23,11 +23,11 @@
 #include "var.h"
 #include "textbuf.h"
 #include "gpt_control.h"
+#include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
 #include "modelspec.h"
 #include "menustate.h"
-#include "system.h"
 #include "dlgutils.h"
 
 #ifdef G_OS_WIN32 
@@ -5980,9 +5980,12 @@ int gui_exec_line (char *line,
 	break;
 
     case RESTRICT:
-	/* joint hypothesis test on model */
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	/* joint hypothesis test on model or system */
 	if (rset == NULL) {
+	    if (*cmd.param == '\0') {
+		/* if param is non-blank, we're restricting a named system */
+		if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	    }	
 	    rset = restriction_set_start(line, models[0], datainfo);
 	    if (rset == NULL) {
 		err = 1;

@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef GRETL_RESTRICT_H
+#define GRETL_RESTRICT_H
+
 typedef struct restriction_set_ gretl_restriction_set;
 
 gretl_restriction_set *
@@ -30,5 +33,7 @@ restriction_set_parse_line (gretl_restriction_set *rset, const char *line);
 
 int
 gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn);
+
+#endif
 
 

@@ -77,6 +77,8 @@ const char *gretl_system_type_strings[] = {
     "3sls",
     "fiml",
     "liml",
+    "ols",
+    "tsls",
     NULL
 };
 
@@ -85,6 +87,8 @@ const char *gretl_system_short_strings[] = {
     N_("3SLS"),
     N_("FIML"),
     N_("LIML"),
+    N_("OLS"),
+    N_("TSLS"),
     NULL
 };
 
@@ -93,6 +97,8 @@ const char *gretl_system_long_strings[] = {
     N_("Three-Stage Least Squares"),
     N_("Full Information Maximum Likelihood"),
     N_("Limited Information Maximum Likelihood"),
+    N_("Ordinary Least Squares"),
+    N_("Two-Stage Least Squares"),
     NULL
 };
 
@@ -109,7 +115,7 @@ static int make_instrument_list (gretl_equation_system *sys);
 static gretl_equation_system **system_stack;
 static int n_systems;
 
-static gretl_equation_system *
+gretl_equation_system *
 get_equation_system_by_name (const char *sysname, int *snum)
 {
     int i;
@@ -370,7 +376,7 @@ int gretl_equation_system_append (gretl_equation_system *sys,
 /* retrieve the name -- possible quoted with embedded spaces -- for
    an equation system */
 
-static char *get_maybe_quoted_name (const char *s)
+char *get_system_name_from_line (const char *s)
 {
     char *name = NULL;
     const char *p;
@@ -427,7 +433,7 @@ static char *system_start_get_name (const char *s)
     const char *p = strstr(s, "system name=");
 
     if (p != NULL) {
-	sysname = get_maybe_quoted_name(p + 12);
+	sysname = get_system_name_from_line(p + 12);
     }
 
     return sysname;
@@ -615,7 +621,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    sysname = get_maybe_quoted_name(line + 9);
+    sysname = get_system_name_from_line(line + 9);
     if (sysname == NULL) {
 	strcpy(gretl_errmsg, "estimate: no system name was provided");
 	return 1;
@@ -1262,3 +1268,14 @@ static int make_instrument_list (gretl_equation_system *sys)
 
     return 0;
 }
+
+void 
+system_set_restriction_matrices (gretl_equation_system *sys,
+				 gretl_matrix *R, gretl_matrix *q)
+{
+    sys->R = R;
+    sys->q = q;
+    
+    sys->n_restrictions = gretl_matrix_rows(R);
+}
+

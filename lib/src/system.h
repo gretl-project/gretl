@@ -27,6 +27,8 @@ enum gretl_system_types {
     THREESLS,
     FIML,
     LIML,
+    SYS_OLS,
+    SYS_TSLS,
     SYSMAX
 };
 
@@ -38,6 +40,11 @@ enum equation_system_flags {
 };
 
 gretl_equation_system *system_start (const char *line);
+
+gretl_equation_system *
+get_equation_system_by_name (const char *sysname, int *snum);
+
+char *get_system_name_from_line (const char *s);
 
 void gretl_equation_systems_cleanup (void);
 
@@ -117,5 +124,9 @@ int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 void 
 print_equation_system_info (const gretl_equation_system *sys, 
 			    const DATAINFO *pdinfo, PRN *prn);
+
+void 
+system_set_restriction_matrices (gretl_equation_system *sys,
+				 gretl_matrix *R, gretl_matrix *q);
 
 #endif /* GRETL_EQUATION_SYSTEM_H */
