@@ -29,6 +29,7 @@ static int *xlist;
 static int *instlist;
 static GtkWidget *scatters_label;
 static GtkWidget *scatters_menu;
+static GtkWidget *x_axis_item;
 
 void clear_selector (void)
 {
@@ -410,9 +411,12 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     if (sr->code == GR_XY || sr->code == GR_IMP)
 	strcat(sr->cmdlist, grvar);
 
-    if (sr->code == SCATTERS && 
-	gtk_option_menu_get_history(GTK_OPTION_MENU(scatters_menu))) {
-	reverse_list(sr->cmdlist);
+    if (sr->code == SCATTERS) {
+	GtkWidget *active_item = GTK_OPTION_MENU(scatters_menu)->menu_item;
+
+	if (active_item == x_axis_item) {
+	    reverse_list(sr->cmdlist);
+	}
     }
 
     if (err) 
@@ -526,12 +530,12 @@ dialog_right_click (GtkWidget *widget, GdkEventButton *event,
 
 static gint flip_scatters_axis (GtkMenuItem *m, GtkOptionMenu *popdown)
 {
-    gint state = gtk_option_menu_get_history(popdown);
+    GtkWidget *active_item = popdown->menu_item;
 
-    if (state == 0) {
-	gtk_label_set_text(GTK_LABEL(scatters_label), _("X-axis variables"));
-    } else {
+    if (active_item == x_axis_item) {
 	gtk_label_set_text(GTK_LABEL(scatters_label), _("Y-axis variables"));
+    } else {
+	gtk_label_set_text(GTK_LABEL(scatters_label), _("X-axis variables"));
     }
 
     return FALSE;
@@ -542,7 +546,7 @@ scatters_popdown (void)
 {
     GtkWidget *popdown;
     GtkWidget *menu;
-    GtkWidget *child;
+    GtkWidget *tmp;
     const char *popstrings[] = {
         N_("Y-axis variable"),
         N_("X-axis variable")
@@ -553,10 +557,11 @@ scatters_popdown (void)
     menu = gtk_menu_new();
 
     for (i=0; i<2; i++) {
-        child = gtk_menu_item_new_with_label(_(popstrings[i]));
-	gtk_signal_connect(GTK_OBJECT(child), "activate",
-			   G_SIGNAL_FUNC(flip_scatters_axis), popdown);
-        gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
+        tmp = gtk_menu_item_new_with_label(_(popstrings[i]));
+	gtk_signal_connect(GTK_OBJECT(tmp), "activate",
+			   GTK_SIGNAL_FUNC(flip_scatters_axis), popdown);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	if (i == 1) x_axis_item = tmp;
     }
 
     gtk_option_menu_set_menu(GTK_OPTION_MENU(popdown), menu);
@@ -572,12 +577,13 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 
     if (sr->code == SCATTERS) {
 	tmp = scatters_popdown();
+	gtk_widget_show_all(tmp);
     } else {
 	tmp = gtk_label_new(_("X-axis variable"));
+	gtk_widget_show(tmp);
     }
 
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
-    gtk_widget_show(tmp);
 
     x_hbox = gtk_hbox_new(FALSE, 5); 
 
