@@ -1278,12 +1278,13 @@ void first_time_set_user_dir (void)
 	    return;
 	}
     }
-	
+
     /* user dir is not specified, or doesn't exist */
     edit_dialog (_("gretl: working directory"), 
                  _("You seem to be using gretl for the first time.\n"
 		   "Please enter a directory for gretl user files."),
                  paths.userdir, 
-                 real_set_userdir, NULL, 
+                 _("OK"), real_set_userdir, NULL,
+		 _("  Cancel  "), NULL, NULL,
                  CREATE_USERDIR, 0);
 }
