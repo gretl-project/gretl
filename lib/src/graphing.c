@@ -453,7 +453,16 @@ static int factorized_vars (double ***pZ,
     return 0;
 }
 
-#ifndef OS_WIN32
+#ifdef OS_WIN32
+
+int gnuplot_has_ttf (void)
+{
+    /* we know the gnuplot supplied with gretl for win32
+       does TrueType fonts */
+    return 1;
+}
+
+#else
 
 static int old_gnuplot_png (void)
 {
@@ -484,13 +493,6 @@ int gnuplot_has_ttf (void)
     return !t;
 }
 
-#else
-
-int gnuplot_has_ttf (void)
-{
-    return 1;
-}
-
 #endif /* OS_WIN32 */
 
 /**
@@ -509,23 +511,26 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
     static char png_term_line[256];
     char font_string[128];
     char color_string[64];
-    int oldgp = 0;
+    int oldgp = 0, gpttf = 1;
     const char *grfont = NULL;
 
     *font_string = 0;
     *color_string = 0;
 #ifndef OS_WIN32
     oldgp = old_gnuplot_png();
+    gpttf = gnuplot_has_ttf();
 #endif
 
     /* plot font setup */
-    if (*ppaths->pngfont != 0) {
-	grfont = ppaths->pngfont;
-    } else {
-	grfont = getenv("GRETL_PNG_GRAPH_FONT");
-    }
-    if (grfont != NULL && *grfont != 0) {
-	sprintf(font_string, " font %s", grfont);
+    if (gpttf) {
+	if (*ppaths->pngfont != 0) {
+	    grfont = ppaths->pngfont;
+	} else {
+	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
+	}
+	if (grfont != NULL && *grfont != 0) {
+	    sprintf(font_string, " font %s", grfont);
+	}
     }
 
     /* plot color setup */
