@@ -1434,6 +1434,33 @@ void open_remote_clist (GtkWidget *w, gpointer data)
 #define BUFSIZE 8192
 #define INFOLEN 100
 
+static int parse_db_header (const char *buf, size_t *idxlen, 
+			    size_t *datalen, size_t *cblen)
+{
+    char *p;
+
+    *cblen = 0;
+
+    /* length of index file (required) */
+    if (sscanf(buf, "%u", idxlen) != 1) return 1;
+
+    /* length of data (required under "new" system) */
+    p = strchr(buf, '\n');
+    if (p == NULL) return 1;
+    p++; 
+    if (sscanf(p, "%u", datalen) != 1) return 1;
+
+    /* length of codebook (optional) */
+    p = strchr(p, '\n');
+    if (p == NULL) return 0;
+    p++;
+    if (sscanf(p, "%u", cblen) != 1) {
+	*cblen = 0;
+    }
+
+    return 0;
+}
+
 static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 {
     FILE *fidx, *fbin, *fcb;
