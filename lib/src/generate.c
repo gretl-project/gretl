@@ -4381,6 +4381,12 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 		    (*pZ)[vi][t] = get_dec_date(datestr);
 		}
 	    } 
+	} else if (dataset_is_decennial(pdinfo)) {
+	    strcpy(pdinfo->varname[vi], "time");
+	    strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));
+	    for (t=0; t<n; t++) {
+		(*pZ)[vi][t] = pdinfo->sd0 + 10 * t;
+	    }	    
 	} else {
 	    strcpy(pdinfo->varname[vi], "time");
 	    strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));

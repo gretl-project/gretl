@@ -203,7 +203,8 @@ const char *get_timevar_name (DATAINFO *pdinfo)
 	return "months";
     } else if (pdinfo->pd == 24) {
 	return "hrs";
-    } else if (calendar_data(pdinfo)) {
+    } else if (calendar_data(pdinfo) || 
+	       dataset_is_decennial(pdinfo)) {
 	return "decdate";
     } else {
 	return "time";

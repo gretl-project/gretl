@@ -160,7 +160,7 @@ double date (int nt, int pd, const double sd0)
 
     if (pd == 1) {
 	return (double) (ysd + nt);  
-    }
+    } 
 
     pp = pd;
     while ((pp = pp / 10)) {
@@ -712,7 +712,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	return 1;
     }
 
-    /* truncate stobs if not a date */
+    /* truncate stobs if not a calendar date */
     if (strchr(stobs, '/') != NULL) {
 	dated = 1;
     } else {
@@ -763,6 +763,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
+    } else if (structure == TIME_SERIES && pd == 10) {
+	/* decennial data */
+	pdinfo->sd0 = (double) atoi(stobs);
     } else {
 	int maj = 0, min = 0;
 
@@ -1182,22 +1185,30 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int varnum_from_string (const char *str, DATAINFO *pdinfo)
+int positive_int_from_string (const char *s)
 {
-    int varno;
+    int ret;
     char *test;
 
     errno = 0;
 
-    strtol(str, &test, 10);
-    if (*test != '\0' || !strcmp(str, test) || errno == ERANGE) {
-        return -1;
-    }
+    ret = strtol(s, &test, 10);
 
-    varno = atoi(str);
+    if (*test != '\0' || !strcmp(s, test) || errno == ERANGE) {
+        ret = -1;
+    } 
+
+    return ret;
+}
+
+/* ......................................................  */
+
+int varnum_from_string (const char *str, DATAINFO *pdinfo)
+{
+    int varno = positive_int_from_string(str);
 
     if (varno <= 0 || varno >= pdinfo->v) {
-	return -1;
+	varno = -1;
     } 
     
     return varno;

@@ -78,6 +78,16 @@ enum model_selection_criteria {
                               && p->pd == 24)
 
 /**
+ * dataset_is_decennial:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains decennial time series
+ * data (1) or not (0).
+ */
+#define dataset_is_decennial(p) (p->structure == TIME_SERIES \
+                                 && p->pd == 10)
+
+/**
  * dated_daily_data:
  * @p: pointer to data information struct.
  *
@@ -167,6 +177,8 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo);
 int dataset_add_allocated_var (double *x, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
+
+int positive_int_from_string (const char *s);
 
 int varnum_from_string (const char *str, DATAINFO *pdinfo);
 

@@ -2522,8 +2522,14 @@ enum {
 
 static void dwinfo_init (DATAINFO *dwinfo)
 {
-    dwinfo->pd = datainfo->pd;
-    dwinfo->structure = datainfo->structure;
+    if (datainfo->structure == SPECIAL_TIME_SERIES) {
+	dwinfo->pd = PD_SPECIAL;
+	dwinfo->structure = TIME_SERIES;
+    } else {
+	dwinfo->pd = datainfo->pd;
+	dwinfo->structure = datainfo->structure;
+    }
+
     dwinfo->sd0 = datainfo->sd0;
 
     strcpy(dwinfo->stobs, datainfo->stobs);
@@ -2670,6 +2676,9 @@ datawiz_make_changes (DATAINFO *dwinfo)
     return err;
 }
 
+#define TS_INFO_MAX 8
+#define PANEL_INFO_MAX 2
+
 struct freq_info {
     int pd;
     const char *label;
@@ -2682,6 +2691,7 @@ struct freq_info ts_info[] = {
     { 52, N_("Weekly") },
     {  5, N_("Daily") },
     { 24, N_("Hourly") },
+    { 10, N_("Decennial") },
     { PD_SPECIAL, N_("Other") },
 };
 
@@ -2697,26 +2707,32 @@ struct panel_info pan_info[] = {
 
 static int radio_default (DATAINFO *dwinfo, int code)
 {
+    int deflt = 1;
+
+#if DWDEBUG
+    fprintf(stderr, "radio_default: code = %d, dwinfo->pd = %d, dwinfo->structure = %d\n", 
+	    code, dwinfo->pd, dwinfo->structure);
+#endif
+
     if (code == DW_SET_TYPE) {
-	return dwinfo->structure;
+	deflt = dwinfo->structure;
     } else if (code == DW_TS_FREQUENCY) {
 	if (dwinfo->pd == 6 || dwinfo->pd == 7) {
-	    return 5;
-	} else if (dwinfo->pd == 5 || dwinfo->pd == 4 ||
-		   dwinfo->pd == 12 || dwinfo->pd == 52) {
-	    return dwinfo->pd;
-	} else {
-	    return 1;
-	}
+	    deflt = 5;
+	} else if (dwinfo->pd == 5 || dwinfo->pd == 4 || dwinfo->pd == 10 ||
+		   dwinfo->pd == 12 || dwinfo->pd == 52 || 
+		   dwinfo->pd == PD_SPECIAL) {
+	    deflt = dwinfo->pd;
+	} 
     } else if (code == DW_WEEK_DAYS) {
-	return dwinfo->pd; 
+	deflt = dwinfo->pd; 
     } else if (code == DW_WEEKLY_SELECT) {
-	return dwinfo->v;
+	deflt = dwinfo->v;
     } else if (code == DW_PANEL_MODE) { 
-	return dwinfo->structure;
+	deflt = dwinfo->structure;
     }
 
-    return 0;
+    return deflt;
 }
 
 static int datawiz_i_to_setval (int step, int i)
@@ -2724,11 +2740,11 @@ static int datawiz_i_to_setval (int step, int i)
     int setval;
 
     if (step == DW_TS_FREQUENCY) {
-	setval = (i < 7)? ts_info[i].pd : 0;
+	setval = (i < TS_INFO_MAX)? ts_info[i].pd : 0;
     } else if (step == DW_WEEK_DAYS) {
 	setval = i + 5;
     } else if (step == DW_PANEL_MODE) {
-	setval = (i < 2)? pan_info[i].code : 0;
+	setval = (i < PANEL_INFO_MAX)? pan_info[i].code : 0;
     } else {
 	setval = i;
     }
@@ -2758,7 +2774,7 @@ static const char *datawiz_radio_strings (int wizcode, int idx)
     } else if (wizcode == DW_TS_FREQUENCY) {
 	int j;
 
-	for (j=0; j<7; j++) {
+	for (j=0; j<TS_INFO_MAX; j++) {
 	    if (idx == ts_info[j].pd) {
 		return ts_info[j].label;
 	    }
@@ -2766,7 +2782,7 @@ static const char *datawiz_radio_strings (int wizcode, int idx)
     } else if (wizcode == DW_PANEL_MODE) {  
 	int j;
 
-	for (j=0; j<2; j++) {
+	for (j=0; j<PANEL_INFO_MAX; j++) {
 	    if (idx == pan_info[j].code) {
 		return pan_info[j].label;
 	    }
@@ -2808,6 +2824,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	{  6, N_("daily data") },
 	{  7, N_("daily data") },
 	{ 24, N_("hourly data") },
+	{ 10, N_("decennial data") },
 	{  PD_SPECIAL, N_("time-series data") }
     };
 
@@ -2864,6 +2881,21 @@ static void make_weekly_stobs (DATAINFO *dwinfo)
     sprintf(dwinfo->stobs, "1800/01/0%d", start_days[dwinfo->v]);    
 }
 
+static int default_start_decade (void)
+{
+    int d = 1700;
+
+    if (datainfo->S != NULL) {
+	d = positive_int_from_string(datainfo->S[0]);
+    }
+    
+    if (d < 0) {
+	d = 1700;
+    }
+
+    return d;
+}
+
 void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 {
 #if DWDEBUG
@@ -2880,6 +2912,17 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 	strcpy(dwinfo->stobs, "1700");
 	dwinfo->n = 400;
 	dwinfo->t1 = 250;
+    } else if (dwinfo->pd == 10) {
+	int dd = default_start_decade();
+
+	sprintf(dwinfo->stobs, "%d", dd);
+	if (dd > 1700) {
+	    dwinfo->n = 30;
+	    dwinfo->t1 = 0;
+	} else {
+	    dwinfo->n = 40;
+	    dwinfo->t1 = 25;
+	}
     } else if (dwinfo->pd == 4) {
 	strcpy(dwinfo->stobs, "1700:1");
 	dwinfo->n = 1300;
@@ -3028,7 +3071,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	nopts = 3;
 	setint = &dwinfo->structure;
     } else if (step == DW_TS_FREQUENCY) {
-	nopts = 7;
+	nopts = TS_INFO_MAX;
 	setint = &dwinfo->pd;
     } else if (step == DW_WEEK_DAYS) {
 	nopts = 3;
@@ -3037,7 +3080,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	nopts = 8;
 	setint = &dwinfo->v;
     } else if (step == DW_PANEL_MODE) {
-	nopts = 2;
+	nopts = PANEL_INFO_MAX;
 	setint = &dwinfo->structure;
     } else if (step == DW_PANEL_SIZE) {
 	setint = &dwinfo->pd;
@@ -3131,9 +3174,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     gtk_widget_show(dialog);
-
     gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
-
     gtk_main();
 
     return ret;

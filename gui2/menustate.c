@@ -388,6 +388,8 @@ void set_sample_label (DATAINFO *pdinfo)
 	case 6:
 	case 7:
 	    strcpy(pdstr, _("Daily")); break;
+	case 10:
+	    strcpy(pdstr, _("Decennial")); break;
 	default:
 	    strcpy(pdstr, _("Unknown")); break;
 	}

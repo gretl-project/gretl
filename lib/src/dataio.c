@@ -1090,6 +1090,14 @@ real_dateton (const char *date, const DATAINFO *pdinfo,
 	}
     }
 
+    /* decennial data? */
+
+    else if (dataset_is_decennial(pdinfo)) {
+	if (sscanf(date, "%d", &t) && t > 0) {
+	    n = (t - pdinfo->sd0) / 10;
+	}	
+    }
+
     /* treat as "regular" numeric obs number or date */
 
     else {
@@ -1194,7 +1202,11 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	x = date(t, 1, pdinfo->sd0);
 	sprintf(datestr, "%d", (int) x);
 	return datestr;
-    } 
+    } else if (dataset_is_decennial(pdinfo)) {
+	x = pdinfo->sd0 + 10 * t;
+	sprintf(datestr, "%d", (int) x);
+	return datestr;
+    }	
 
     x = date(t, pdinfo->pd, pdinfo->sd0);
 
