@@ -46,10 +46,10 @@ cli/complete.c
 cli/gretlcli.c
 gui/gretl.c
 gui/guiprint.c
-gui/obsbutton.c
 gui/plotps.c
 gui/selector.c
 gui/ssheet.c
+gui/obsbutton.c
 gui/textbuf.c
 gui2/about.c
 gui2/boxplots.c

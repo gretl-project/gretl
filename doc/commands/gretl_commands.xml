@@ -1178,6 +1178,14 @@
 	  <flag>--iterate</flag>
 	  <effect>iterate to convergence</effect>
 	</option>
+	<option>
+	  <flag>--no-df-corr</flag>
+	  <effect>no degrees of freedom correction</effect>
+	</option>
+	<option>
+	  <flag>--geomean</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
       <examples>
         <example>estimate "Klein Model 1" method=fiml</example>
@@ -1192,9 +1200,14 @@
 	been previously defined using the <cmdref targ="system"/>
 	command.  The name of the system should be given first,
 	surrounded by double quotes if the name contains spaces.  The
-	estimator, which must be one of <cmd>sur</cmd>,
-	<cmd>3sls</cmd>, <cmd>fiml</cmd> or <cmd>liml</cmd>, is
-	preceded by the string <lit>method=</lit>.
+	estimator, which must be one of <cmd>ols</cmd>,
+	<cmd>tsls</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
+	<cmd>fiml</cmd> or <cmd>liml</cmd>, is preceded by the string
+	<lit>method=</lit>.
+      </para>
+      <para>If the system in question has had a set of restrictions
+	applied (see the <cmdref targ="restrict"/> command),
+	estimation will be subject to the specified restrictions.
       </para>
       <para>
 	If the estimation method is <cmd>sur</cmd> or <cmd>3sls</cmd>
@@ -1203,6 +1216,31 @@
 	the results are maximum likelihood estimates.  Iteration of
 	three-stage least squares, however, does not in general
 	converge on the full-information maximum likelihood results.
+	The <lit>--iterate</lit> flag is ignored for other methods of
+	estimation.  
+      </para>
+      <para>If the equation-by-equation estimators <cmd>ols</cmd> or
+	<cmd>tsls</cmd> are chosen, the default is to apply a degrees
+	of freedom correction when calculating standard errors. This
+	can be suppressed using the <lit>--no-df-corr</lit> flag. This
+	flag has no effect with the other estimators; no degrees of
+	freedom correction is applied in any case.
+      </para>
+      <para>By default, the formula used in calculating the
+	elements of the cross-equation covariance matrix is
+	<equation status="display"
+	tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]"
+	ascii="sigma(i,j) = u(i)' * u(j) / T"
+	graphic="syssigma1"/>
+	If the <lit>--geomean</lit> flag is
+	given, a degrees of freedom correction is applied: the
+	formula is
+	<equation status="display"
+	tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]"
+	ascii="sigma(i,j) = u(i)' * u(j) / sqrt((T - ki) * (T - kj))"
+	graphic="syssigma2"/>
+	where the <mathvar>k</mathvar>s denote the number of
+	independent parameters in each equation.
       </para>
     </description>
 
@@ -4176,28 +4214,50 @@
 
     <description>
       <para>
-	Evaluates a set of linear restrictions on the parameters of
-	the model last estimated.  In script mode, the set of
-	restrictions must be enclosed by <quote>restrict</quote> and
-	<quote>end restrict</quote>, but in the restrictions dialog
-	box these lines may be omitted.</para>
+	Imposes a set of linear restrictions on either (a) the model
+	last estimated or (b) a system of equations previously defined
+	and named.  The syntax and effects of the command differ
+	slightly in the two cases.
+      </para>
+
+      <para>
+	In both cases the set of restrictions should be started with
+	the keyword <quote>restrict</quote> and terminated with
+	<quote>end restrict</quote>.  In the single equation case the
+	restrictions are implicitly to be applied to the last model,
+	and they are evaluated as soon as the <lit>restrict</lit>
+	command is terminated.  In the system case the initial
+	<quote>restrict</quote> must be followed by the name of a
+	previously defined system of equations (see <cmdref
+	  targ="system"/>).  The restrictions are evaluated when
+	the system is next estimated, using the <cmdref
+	targ="estimate"/> command.
+      </para>
 
       <para>Each restriction in the set should be expressed as an
 	equation, with a linear combination of parameters on the left
-	and a numeric value to the right of the equals sign.
-	Parameters are referenced in the form b<repl>N</repl>, where
-	<repl>N</repl> represents the position in the list of
-	regressors, starting at zero.  For example, <lit>b1</lit>
-	denotes the second regression parameter.
+	and a numeric value to the right of the equals sign. In the
+	single-equation case, parameters are referenced in the form
+	b<repl>N</repl>, where <repl>N</repl> represents the position
+	in the list of regressors, starting at zero.  For example,
+	<lit>b1</lit> denotes the second regression parameter.  In the
+	system case, parameters are referenced using <lit>b</lit> plus
+	two numbers in square brackets.  The leading number represents
+	the position of the equation within the system, starting from
+	1, and the second number indicates position in the list of
+	regressors, starting at zero.  For example <lit>b[2,0]</lit>
+	denotes the first parameter in the second equation, and
+	<lit>b[3,1]</lit> the second parameter in the third equation.
       </para>
 
-      <para>The second and subsequent <lit>bN</lit> terms in an
-	equation may be prefixed with a numeric multiplier, using
-	<lit>*</lit> to represent multiplication, for example
-	<lit>3.5*b4</lit>.
+      <para>The <lit>b</lit> terms in the equation representing a
+	restriction equation may be prefixed with a numeric
+	multiplier, using <lit>*</lit> to represent multiplication,
+	for example <lit>3.5*b4</lit>.
       </para>
 
-      <para>Here is an example of a set of restrictions:</para>
+      <para>Here is an example of a set of restrictions for a
+	previously estimated model:</para>
 
       <code>
 	restrict
@@ -4206,9 +4266,25 @@
 	 b4 + 2*b5 = 1
 	end restrict</code>
 
-      <para>The restrictions are evaluated via a Wald F-test,
-	using the coefficient covariance matrix of the model in
-	question.
+      <para>And here is an example of a set of restrictions to be
+	applied to a named system.  (If the name of the system does
+	not contain spaces, the surrounding quotes are not required.)
+      </para>
+
+      <code>
+	restrict "System 1"
+	 b[1,1] = 0
+	 b[1,2] - b[2,2] = 0
+	 b[3,4] + 2*b[3,5] = 1
+	end restrict</code>
+
+      <para>In the single-equation case the restrictions are evaluated
+	via a Wald F-test, using the coefficient covariance matrix of
+	the model in question.  In the system case, the full results
+	of estimating the system subject to the restrictions are
+	shown; the test statistic depends on the estimator chosen (a
+	Likelihood Ratio test if the system is estimated using a
+	Maximum Likelihood method, or an asymptotic F-test otherwise.)
       </para>
 
     </description>
@@ -5034,7 +5110,7 @@
 
     <usage>
       <altforms>
-	<altform><lit>system type=</lit><repl>estimator</repl></altform>
+	<altform><lit>system method=</lit><repl>estimator</repl></altform>
 	<altform><lit>system name=</lit><repl>sysname</repl></altform>
       </altforms>
       <arguments>
@@ -5042,9 +5118,9 @@
       </arguments>
       <examples>
 	<example>system name="Klein Model 1"</example>
-        <example>system type=sur</example>
-	<example>system type=sur save=resids</example>
-	<example>system type=3sls save=resids,fitted</example>
+        <example>system method=sur</example>
+	<example>system method=sur save=resids</example>
+	<example>system method=3sls save=resids,fitted</example>
       </examples>
     </usage>
 
@@ -5066,17 +5142,22 @@
 	To save the system you should give it a name, as in the first
 	example (if the name contains spaces it must be surrounded by
 	double quotes).  In this case you estimate the system using
-	the <cmdref targ="estimate"/> command.</para>
+	the <cmdref targ="estimate"/> command.  With a saved system of
+	equations, you are able to impose restrictions (including
+	cross-equation restrictions) using the <cmdref
+	targ="restrict"/> command.
+      </para>
 
       <para context="cli">
 	Alternatively you can specify an estimator for the system
-	using <lit>type=</lit> followed by a string identifying one of
-	the four supported estimators: <cmd>sur</cmd> (Seemingly
-	Unrelated Regressions), <cmd>3sls</cmd> (Three-Stage Least
-	Squares), <cmd>fiml</cmd> (Full Information Maximum
-	Likelihood) or <cmd>liml</cmd> (Limited Information Maximum
-	Likelihood).  In this case the system is estimated once its
-	definition is complete.  
+	using <lit>method=</lit> followed by a string identifying one
+	of the supported estimators: <cmd>ols</cmd> (Ordinary Least
+	Squares), <cmd>tsls</cmd> (Two-Stage Least Squares)
+	<cmd>sur</cmd> (Seemingly Unrelated Regressions),
+	<cmd>3sls</cmd> (Three-Stage Least Squares), <cmd>fiml</cmd>
+	(Full Information Maximum Likelihood) or <cmd>liml</cmd>
+	(Limited Information Maximum Likelihood).  In this case the
+	system is estimated once its definition is complete.  
       </para>
 
       <para context="cli">An equation system is terminated by the line

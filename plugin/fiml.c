@@ -344,7 +344,6 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     }
 
     /* not using df correction for pmod->sigma or sigma matrix */
-    
     gretl_matrix_copy_values(sigma, fsys->sigma);
 
     /* record restricted and unrestricted log-likelihood */
@@ -655,8 +654,6 @@ static void fiml_B_update (fiml_system *fsys)
 }
 
 /* calculate log-likelihood for FIML system */
-
-/* FIXME: case where restrictions are imposed? */
 
 static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 {
