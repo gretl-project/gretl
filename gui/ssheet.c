@@ -279,7 +279,7 @@ static GtkWidget *build_menu (GtkWidget *sheet)
         item = gtk_menu_item_new_with_label(_(items[i]));
         gtk_signal_connect(GTK_OBJECT(item), "activate",
                            (GtkSignalFunc) popup_activated,
-                           items[i]);
+                           _(items[i]));
         GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
         gtk_widget_show(item);
         gtk_menu_append(GTK_MENU(menu), item);

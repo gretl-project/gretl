@@ -495,8 +495,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     case MEANTEST:
     case MEANTEST2:
 	strcpy(title, _("gretl: means test"));
-	if (action == MEANTEST2) 
-	    strcat(title, _(" (unequal var)"));
 	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
 	varclick = 1;
@@ -529,12 +527,12 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	okfunc = do_edit_label;
 	break;
     case VSETMISS:
-	strcpy(title, _("gretl: missing code for variable"));
+	strcpy(title, _("gretl: missing code"));
 	strcpy(query, _("Enter value to be read as \"missing\":"));
 	okfunc = do_variable_setmiss;
 	break;
     case GSETMISS:
-	strcpy(title, _("gretl: missing code for dataset"));
+	strcpy(title, _("gretl: missing code"));
 	strcpy(query, _("Enter value to be read as \"missing\":"));
 	okfunc = do_global_setmiss;
 	break;
