@@ -45,8 +45,10 @@ extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
 
 #ifdef TRAMO_X12
+# ifndef G_OS_WIN32
 extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
+# endif
 extern char x12a[MAXSTR];
 extern char x12adir[MAXSTR];
 #endif
@@ -137,10 +139,12 @@ RCVARS rc_vars[] = {
      'R', MAXSTR, 3, NULL},
     {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
      'R', MAXSTR, 3, NULL},
+# ifndef G_OS_WIN32
     {"tramo", N_("path to tramo"), NULL, tramo, 
      'R', MAXSTR, 3, NULL},
     {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
      'R', MAXSTR, 3, NULL},
+# endif
 #endif
     {"binbase", N_("gretl database directory"), NULL, paths.binbase, 
      'U', MAXLEN, 2, NULL},
@@ -236,11 +240,13 @@ void get_default_dir (char *s)
 #ifdef TRAMO_X12
 static void set_tramo_x12a_dirs (void)
 {
+#ifndef G_OS_WIN32   
     char cmd[MAXLEN];
-    
+
     if (*tramodir == 0) {
 	build_path(paths.userdir, "tramo", tramodir, NULL);
     }
+#endif
     if (*x12adir == 0) {
 	build_path(paths.userdir, "x12a", x12adir, NULL);
     }
@@ -248,6 +254,7 @@ static void set_tramo_x12a_dirs (void)
     /* make directory structure */
 #ifdef G_OS_WIN32
     CreateDirectory(x12adir, NULL);
+# if 0
     CreateDirectory(tramodir, NULL);
     sprintf(cmd, "%s\\output", tramodir);
     CreateDirectory(cmd, NULL);
@@ -263,6 +270,7 @@ static void set_tramo_x12a_dirs (void)
     CreateDirectory(cmd, NULL);
     sprintf(cmd, "%s\\graph\\spectra", tramodir);
     CreateDirectory(cmd, NULL);
+# endif
 #else
     sprintf(cmd, "mkdir -p %s", x12adir);
     system(cmd);

@@ -970,6 +970,7 @@ static char *print_option (int opt)
     case GRAB_FILE:
 	return "GRAB_FILE";
     default:
+	return NULL;
     }
     return NULL;
 } 

@@ -2248,8 +2248,10 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 #ifdef TRAMO_X12
 
+# ifndef G_OS_WIN32
 extern char tramo[];
 extern char tramodir[];
+# endif
 extern char x12a[];
 extern char x12adir[];
 
@@ -2292,6 +2294,10 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     *fname = 0;
+#ifdef G_OS_WIN32
+    err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
+			 &paths, &graph, x12a, x12adir, errtext);
+#else
     if (opt == TRAMO) {
 	err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
 			     &paths, &graph, tramo, tramodir, errtext);
@@ -2299,6 +2305,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
 			     &paths, &graph, x12a, x12adir, errtext);
     }
+#endif
 
     close_plugin(handle);
 

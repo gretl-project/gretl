@@ -715,7 +715,7 @@ int write_tx_data (char *fname, int varnum,
 	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", workdir, prog, varname);
 	err = system(cmd);
 #endif
-    } else { /* TRAMO */
+    } else { /* TRAMO -- currently does not work under Windows */
 	char seats[MAXLEN];
 
 #ifdef OS_WIN32 
