@@ -1444,6 +1444,11 @@ gint populate_dbfilelist (windata_t *ddata)
 	strcpy(dbdir, paths.binbase);
     }
 
+#ifdef G_OS_WIN32 /* opendir doesn't work on e.g. c:\foo\ */
+    if (dbdir[strlen(dbdir) - 1] == '\\') 
+	dbdir[strlen(dbdir) - 1] = '\0';
+#endif
+
     if ((dir = opendir(dbdir)) == NULL) {
 	sprintf(errtext, "Can't open folder %s", dbdir);
 	errbox(errtext);
