@@ -170,6 +170,7 @@ int new_style_gui_help (FILE *fp)
 	if (*s == '@') {
 	    if (!strncmp(s, "@new-style", 10)) {
 		newhelp = 1;
+		fgets(s, sizeof s, fp); /* eat blank line */
 	    }
 	    break;
 	}
@@ -220,8 +221,8 @@ static void set_english_help_file (int script)
 	    }
 
 	    while (fgets(test, sizeof test, fp)) {
-		if (*test == '@') {
-		    if (newhelp) len -= 2;
+		if (*test == '#') {
+		    if (newhelp) len += 2;
 		} else {
 		    len++;
 		}
@@ -391,8 +392,8 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
     } else {
 	(heads[m])->topicnames[nt] = g_strdup(word);
     }
-    (heads[m])->pos[nt] = pos - 1;
 
+    (heads[m])->pos[nt] = pos;
     (heads[m])->ntopics += 1;
 
     return 0;
@@ -407,10 +408,11 @@ static int assemble_topic_list (struct help_head_t **heads, int nh,
     int match, topic = 0;
 
     if (newhelp) {
+	pos = -2;
 	while (fgets(test, sizeof test, fp)) {
 	    if (*test == '#') {
-		pos += 2;
 		new_add_topic_to_heading(heads, nh, test, pos);
+		pos += 2;
 	    } else {
 		pos++;
 	    }
@@ -511,7 +513,6 @@ static int real_helpfile_init (int cli)
 
     if (!cli) {
 	newhelp = new_style_gui_help(fp);
-	fprintf(stderr, "helpfile '%s', new = %d\n", helpfile, newhelp);
     }
 
     /* first pass: find length and number of topics */

@@ -3756,6 +3756,58 @@
 
   </command>
 
+  <command name="sampling" section="Dataset" context="gui"
+    label="Setting the sample">
+
+    <description>
+      <para>The Sample menu offers several ways of selecting a
+      sub-sample from the current dataset.</para>
+
+      <para>
+	If you choose <quote>Sample/Define based on dummy...</quote>
+	you are prompted to select a dummy (indicator) variable, which
+	must have the values 0 or 1 at each observation.  The sample
+	will be restricted to observations for which the dummy's value
+	is 1.</para>
+
+      <para>If you choose <quote>Sample/Restrict based on
+	  criterion...</quote> you need to supply a Boolean (logical)
+	expression, of the same sort that you would use to define a
+	dummy variable.  For example the expression <quote>sqft >
+	  1400</quote> will select only cases for which the variable
+	sqft has a value greater than 1400. Conditions may be
+	concatenated using the logical operators <quote>&amp;</quote>
+	(AND) and <quote>|</quote> (OR), and may be negated using
+	<quote>!</quote> (NOT).</para>
+
+      <para>The menu item <quote>Sample/Drop all obs with missing
+	  values</quote> redefines the sample to exclude all
+	observations for which values of one or more variables are
+	missing (leaving only complete cases).</para>  
+
+      <para>To select observations for which a particular variable has
+	no missing values, use <quote>Sample/Restrict based on
+	  criterion...</quote> and supply the Boolean condition
+	<quote>!missing(varname)</quote> (replace
+	<quote>varname</quote> with the name of the variable you want
+	to use).</para>  
+
+      <para>If the observations are named, you can re-sample to
+	exclude a particular observation using, say, obs!="France" as
+	the Boolean criterion.  The observation name must be enclosed
+	in double quotes.</para>
+
+      <para>One point should be noted about defining a sample based on
+	a dummy variable, a Boolean expression, or on the missing
+	values criterion: Any <quote>structural</quote> information in
+	the data header file (regarding the time series or panel
+	nature of the data) is lost.  You may reimpose structure with
+	<quote>Sample/Set frequency, startobs...</quote>.</para>
+
+    </description>
+  </command>
+
+
   <command name="scatters" section="Graphs"
     label="Multiple scatterplots">
 

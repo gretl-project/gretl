@@ -2150,7 +2150,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     }
     else if (strcmp(item, _("Help")) == 0) {
 	if (obj->sort == 't') {
-	    context_help(NULL, GINT_TO_POINTER(MODELTABLE));
+	    context_help(NULL, GINT_TO_POINTER(MODELTAB));
 	}
 	else if (obj->sort == 'q') {
 	    context_help(NULL, GINT_TO_POINTER(GRAPHPAGE));
