@@ -75,14 +75,17 @@ int win_copy_rtf (PRN *prn)
 
 /* also Windows only: print using Windows spooler */
 
-void winprint(char *p, size_t len)
+void winprint(char *buf)
 {
     HDC dc;
     PRINTDLG pdlg;
-    int printok;
+    int printok, lines;
     LOGFONT LogFont;
     HFONT aFont, *oldFont;
     DOCINFO di;
+    int x, y, page_lines = 70;
+    char *p, line[100];
+    size_t len;
 
     memset(&pdlg, 0, sizeof(pdlg));
     pdlg.lStructSize = sizeof(pdlg);
@@ -106,28 +109,38 @@ void winprint(char *p, size_t len)
     LogFont.lfOutPrecision = OUT_TT_PRECIS;
     LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
     LogFont.lfQuality = DEFAULT_QUALITY;
-    LogFont.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
-    lstrcpy (LogFont.lfFaceName, "MS Sans Serif");
+    LogFont.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS; /* FIXME */
+    lstrcpy (LogFont.lfFaceName, "Courier");
     aFont = CreateFontIndirect(&LogFont);
     /* ok, we've build the font, now use it */
     oldFont = SelectObject(dc, &aFont);        
         
-    /* Initialise print document details */
+    /* Initialize print document details */
     memset(&di, 0, sizeof(DOCINFO));
     di.cbSize = sizeof(DOCINFO);
-    /* application title appears in the spooler view */
     di.lpszDocName = "gretl";
     
     printok = StartDoc(dc, &di);
-        
-    /* begin new page */
-    StartPage(dc);
-       
-    /* print text */
-    TextOut(dc, 0, 0, p, len);
-        
-    /* end page */
-    printok = (EndPage(dc) > 0);
+
+    p = buf;
+    x = 72;
+    while (*p && printok) { /* pages loop */
+	StartPage(dc);
+	lines = 0;
+	y = 72;
+	while (lines < page_lines) { /* lines loop */
+	    len = strcspn(p, "\n");
+	    if (!len) break; /* FIXME */
+	    memcpy(line, p, len);
+	    line[len] = '\0';
+	    strcat(line, "\r\n");
+	    TextOut(dc, x, y, line, len + 2);
+	    p += len + 1;
+	    y += 12; /* line spacing? */
+	    lines++;
+	}
+	printok = (EndPage(dc) > 0);
+    }
     
     /* end print job */
     if (printok)
@@ -137,9 +150,8 @@ void winprint(char *p, size_t len)
     
     /* restore font */
     SelectObject(dc, oldFont);
-    /* free font memory */
+
     DeleteObject(aFont);
-    /* detach the printer DC */
     DeleteDC(dc);
 }
 
