@@ -1614,33 +1614,6 @@ int gnuplot_3d (LIST list, const char *literal,
     return 0;
 }
 
-static int gamma_visible (FREQDIST *freq, double alpha, double beta,
-			  double lambda)
-{
-    double fmax = 0.0, gmax = 0.0;
-    int i;
-
-    for (i=0; i<freq->numbins; i++) { 
-	double x = freq->midpt[i];
-	double f = lambda * freq->f[i];
-	double g = pow(x, alpha - 1.0) * exp(-x/beta) /
-	    (gamma(alpha) * pow(beta, alpha));
-
-#if 0
-	fprintf(stderr, "x = %g, f = %g, g = %g\n", x, f, g);
-#endif
-
-	if (f > fmax) {
-	    fmax = f;
-	}
-	if (g > gmax) {
-	    gmax = g;
-	}
-    }
-
-    return (gmax > .02 * fmax);
-}
-
 /**
  * plot_freq:
  * @freq: frequency distribution struct.
@@ -1798,10 +1771,6 @@ int plot_freq (FREQDIST *freq, int dist)
 	strcat(withstring, "w impulses");
     }
 
-    if (dist == GAMMA && !gamma_visible(freq, alpha, beta, lambda)) {
-	dist = 0;
-    }
-
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:($2) %s\n", withstring);
     } else if (dist == NORMAL) {
@@ -1813,7 +1782,7 @@ int plot_freq (FREQDIST *freq, int dist)
     } else if (dist == GAMMA) {
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"
-		"x**(alpha-1.0)*exp(-x/beta)/(gamma(alpha)*(beta**alpha)) "
+		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
 		"title 'gamma(%.4f,%.4f)' w lines\n",
 		freq->varname, withstring, alpha, beta); 
     }
