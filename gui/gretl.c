@@ -1001,7 +1001,9 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
     int listbox_id_width = 30;
     int listbox_varname_width = 90;
 
-    if (strcmp(titles[1], "Variable name")) listbox_varname_width = 110;
+    if (strcmp(titles[1], "Variable name")) {
+	listbox_varname_width = 110;
+    }
 
     view = gtk_clist_new_with_titles (3, titles);
     gtk_clist_column_titles_passive(GTK_CLIST(view));
@@ -1017,6 +1019,8 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
 
     gtk_signal_connect_after(GTK_OBJECT(view), "select_row",
 			     GTK_SIGNAL_FUNC(selectrow), (gpointer) mdata);
+    gtk_signal_connect_after(GTK_OBJECT(view), "unselect_row",
+			     GTK_SIGNAL_FUNC(unselectrow), (gpointer) mdata);
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
