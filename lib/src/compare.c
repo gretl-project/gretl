@@ -422,7 +422,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     /* ADD: run an augmented regression, matching the original
        estimation method */
     if (!err && aux_code == AUX_ADD) {
-	if (orig->ci == CORC || orig->ci == HILU) {
+	if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
 	    err = hilu_corc(&rho, newlist, pZ, pdinfo, 
 			    NULL, 1, orig->ci, prn);
 	}
@@ -682,7 +682,11 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     } else if (orig->ci == ARCH) {
 	maxlag = orig->order;
     }
-    pdinfo->t1 = orig->t1 - maxlag;
+    pdinfo->t1 = orig->t1 - maxlag; /* FIXME: problem */
+
+    if (orig->ci == CORC || orig->ci == HILU) {
+	pdinfo->t1 -= 1;
+    }
 
     tmplist = malloc((orig->ncoeff + 2) * sizeof *tmplist);
     if (tmplist == NULL) { 
@@ -696,7 +700,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	if (orig->ci == CORC || orig->ci == HILU) {
+	if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
 	    err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
 			    NULL, 1, orig->ci, prn);
 	    if (err) {
@@ -1891,7 +1895,7 @@ int sum_test (LIST sumvars, MODEL *pmod,
 
     gretl_model_init(&summod, pdinfo);
 
-    if (pmod->ci == CORC || pmod->ci == HILU) {
+    if (pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) {
 	err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
 			NULL, 1, pmod->ci, prn);
     } else if (pmod->ci == WLS || pmod->ci == AR) {

@@ -982,7 +982,8 @@ static int token_is_function (char *s, GENERATE *genr, int level)
     const char *p = s;
 
     while (*p) {
-	if (isalpha(*p)) wlen++;
+	/* if (isalpha(*p) || *p == '_') wlen++; */
+	if (!op_level(*p) && *p != '(') wlen++; /* might be a problem */
 	else break;
 	p++;
     }

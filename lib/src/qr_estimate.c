@@ -50,12 +50,6 @@ static double get_tss (const double *y, int n, int ifc)
 
 static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 {
-    int t1 = pmod->t1;
-    int qdiff = (pmod->rho != 0.0);
-    int pwe = gretl_model_get_int(pmod, "pwe");
-
-    if (qdiff && !pwe) t1++;
-
     if (pmod->dfd > 0) {
 	if (pmod->ifc) {
 	    double den = pmod->tss * pmod->dfd;
@@ -63,7 +57,7 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 	    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
 	    pmod->adjrsq = 1.0 - (pmod->ess * (n - 1) / den);
 	} else {
-	    double alt = corrrsq(n, y + t1, pmod->yhat + t1);
+	    double alt = corrrsq(n, y + pmod->t1, pmod->yhat + pmod->t1);
 
 	    if (na(alt)) {
 		pmod->rsq = pmod->adjrsq = NADBL;
@@ -130,21 +124,19 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     int qdiff = (pmod->rho != 0.0);
     int pwe = gretl_model_get_int(pmod, "pwe");
     int yvar = pmod->list[1];
-    int t1 = pmod->t1;
 
     if (dwt) dwt = pmod->nwt;
-    if (qdiff && !pwe) t1++;
 
     pmod->ess = 0.0;
 
     if (qdiff) {
 	for (t=0; t<fulln; t++) {
-	    if (t < t1 || t > pmod->t2) {
+	    if (t < pmod->t1 || t > pmod->t2) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
 		double x = Z[yvar][t];
 
-		if (t == t1 && pwe) {
+		if (t == pmod->t1 && pwe) {
 		    x *= sqrt(1.0 - pmod->rho * pmod->rho);
 		} else {
 		    x -= pmod->rho * Z[yvar][t-1];
@@ -435,7 +427,6 @@ static double get_model_data (MODEL *pmod, const double **Z,
 {
     int i, j, t, start;
     double x, ypy = 0.0;
-    int t1 = pmod->t1;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
     int qdiff = (pmod->rho != 0.0);
     int pwe = gretl_model_get_int(pmod, "pwe");
@@ -443,9 +434,7 @@ static double get_model_data (MODEL *pmod, const double **Z,
 
     if (pwe) {
 	pw1 = sqrt(1.0 - pmod->rho * pmod->rho);
-    } else if (qdiff) {
-	t1++;
-    }
+    } 
 
     start = (pmod->ifc)? 3 : 2;
 
@@ -454,14 +443,14 @@ static double get_model_data (MODEL *pmod, const double **Z,
     /* copy independent vars into matrix Q */
     j = 0;
     for (i=start; i<=pmod->list[0]; i++) {
-	for (t=t1; t<=pmod->t2; t++) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    x = Z[pmod->list[i]][t];
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
 		x *= Z[pmod->nwt][t];
-	    } else if (qdiff && pmod->list[i] != 0) {
-		if (pwe && t == t1) {
+	    } else if (qdiff) {
+		if (pwe && t == pmod->t1) {
 		    x *= pw1;
 		} else {
 		    x -= pmod->rho * Z[pmod->list[i]][t-1];
@@ -473,27 +462,33 @@ static double get_model_data (MODEL *pmod, const double **Z,
 
     /* insert constant last (numerical issues) */
     if (pmod->ifc) {
-	for (t=t1; t<=pmod->t2; t++) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    x = 1.0;
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
-	    } if (pmod->nwt) {
-		Q->val[j++] = Z[pmod->nwt][t];
-	    } else {
-		Q->val[j++] = 1.0;
-	    }
+	    } else if (pmod->nwt) {
+		x = Z[pmod->nwt][t];
+	    } else if (qdiff) {
+		if (pwe && t == pmod->t1) {
+		    x = pw1;
+		} else {
+		    x = 1.0 - pmod->rho;
+		}
+	    } 
+	    Q->val[j++] = x;
 	}
     }
 
     /* copy dependent variable into y vector */
     j = 0;
-    for (t=t1; t<=pmod->t2; t++) {
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = Z[pmod->list[1]][t];
 	if (dwt) {
 	    if (Z[dwt][t] == 0.0) continue;
 	} else if (pmod->nwt) {
 	    x *= Z[pmod->nwt][t];
 	} else if (qdiff) {
-	    if (pwe && t == t1) {
+	    if (pwe && t == pmod->t1) {
 		x *= pw1;
 	    } else {
 		x -= pmod->rho * Z[pmod->list[1]][t-1];

@@ -35,9 +35,9 @@
    not getting any garbage results.
 */
 
-#define TINY 4.75e-9 
-#define SMALL 1.0e-8 /* threshold for printing a warning for collinearity */
-#define STATZERO 0.5e-14
+#define TINY     4.75e-09 
+#define SMALL     1.0e-08 /* threshold for printing a warning for collinearity */
+#define STATZERO  0.5e-14
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			int c, PRN *prn);
@@ -164,13 +164,8 @@ static int ar_info_init (MODEL *pmod, int nterms)
     return 0;
 }
 
-static int get_model_df (MODEL *pmod, double rho, int pwe)
+static int get_model_df (MODEL *pmod)
 {
-    if (rho != 0.0 && !pwe) {
-	/* corc and hilu */
-	pmod->nobs -= 1;
-    }
-
     pmod->ncoeff = pmod->list[0] - 1;
 
     pmod->dfd = pmod->nobs - pmod->ncoeff;
@@ -204,11 +199,6 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     pmod->arinfo->rho[1] = rho;
     gretl_model_set_double(pmod, "rho_in", rho);
 
-    if (pmod->ifc) {
-	pmod->coeff[0] /= (1.0 - rho);
-	pmod->sderr[0] /= (1.0 - rho);
-    }
-
     t = pmod->t1;
     if (pmod->ci == PWE) {
 	x = pw1 * Z[yno][t];
@@ -225,35 +215,23 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 	pmod->yhat[t] = NADBL;
     }
 
-    for (t=pmod->t1+1; t<=pmod->t2; t++) {
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = Z[yno][t] - rho * Z[yno][t-1];
-	for (i=pmod->ifc; i<pmod->ncoeff; i++) {
+	for (i=0; i<pmod->ncoeff; i++) {
 	    x -= pmod->coeff[i] * 
 		(Z[pmod->list[i+2]][t] - 
 		 rho * Z[pmod->list[i+2]][t-1]);
-	}
-	if (pmod->ifc) {
-	    x -= (1 - rho) * pmod->coeff[0];
 	}
 	pmod->uhat[t] = x;
 	pmod->yhat[t] = Z[yno][t] - x;
     }
 
-    if (pmod->ci == PWE) {
-	pmod->rsq = 
-	    corrrsq(pmod->t2 - pmod->t1 + 1, &Z[yno][pmod->t1], 
-		    pmod->yhat + pmod->t1);
-	pmod->adjrsq = 
-	    1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) / 
-		   (double) pmod->dfd);
-    } else {	
-	pmod->rsq = 
-	    corrrsq(pmod->t2 - pmod->t1, &Z[yno][pmod->t1+1], 
-		    pmod->yhat + pmod->t1 + 1);
-	pmod->adjrsq = 
-	    1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1 - 1) / 
-		   (double) pmod->dfd);
-    }
+    pmod->rsq = 
+	corrrsq(pmod->t2 - pmod->t1 + 1, &Z[yno][pmod->t1], 
+		pmod->yhat + pmod->t1);
+    pmod->adjrsq = 
+	1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) / 
+	       (double) pmod->dfd);
 
     return 0;
 }
@@ -466,13 +444,18 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
+    /* AR1: advance the starting observation by one? */
+    if (rho != 0.0 && !pwe) {
+	mdl.t1 += 1;
+    }
+
     l0 = mdl.list[0];  /* holds 1 + number of coeffs */
     mdl.ncoeff = l0 - 1; 
     if (effobs) mdl.nobs = effobs;
     else mdl.nobs = mdl.t2 - mdl.t1 + 1;
 
     /* check degrees of freedom */
-    if (get_model_df(&mdl, rho, pwe)) {
+    if (get_model_df(&mdl)) {
         goto lsq_abort; 
     }
 
@@ -533,10 +516,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (opts & OPT_D) {
-	int order = (ci == CORC || ci == HILU)? 1 : 0;
-
-	mdl.rho = rhohat(order, mdl.t1, mdl.t2, mdl.uhat);
-	mdl.dw = dwstat(order, &mdl, *pZ);
+	mdl.rho = rhohat(0, mdl.t1, mdl.t2, mdl.uhat);
+	mdl.dw = dwstat(0, &mdl, *pZ);
     } else {
 	mdl.rho = mdl.dw = NADBL;
     }
@@ -594,7 +575,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     int i, j, t;
     int li, lj, m;
     int l0 = list[0], yno = list[1];
-    double x, z1, z2, pw1, m1, m2;
+    double x, z1, pw1;
     int qdiff = (rho != 0.0);
 
     /* Prais-Winsten term */
@@ -607,23 +588,20 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 
     xpy[0] = xpy[l0] = 0.0;
 
-    if (pwe) {
-	x = pw1 * Z[yno][t1];
-        xpy[0] += x;
-        xpy[l0] += x * x;
-    }	
-
     for (t=t1; t<=t2; t++) {
-	if (t == t1 && qdiff) continue;
 	x = Z[yno][t]; 
 	if (qdiff) {
-	    x -= rho * Z[yno][t-1];
+	    if (pwe && t == t1) {
+		x = pw1 * Z[yno][t];
+	    } else {
+		x -= rho * Z[yno][t-1];
+	    }
 	} else if (nwt) {
 	    x *= Z[nwt][t];
 	}
         xpy[0] += x;
         xpy[l0] += x * x;
-    }	
+    }
 
     if (xpy[l0] <= 0.0) {
          return yno; 
@@ -635,19 +613,16 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	/* quasi-difference the data */
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
-	    z1 = (li == 0)? 0.0 : rho;
-	    m1 = (li == 0)? 1.0 : pw1;
 	    for (j=i; j<=l0; j++) {
 		lj = list[j];
-		z2 = (lj == 0)? 0.0 : rho;
-		m2 = (lj == 0)? 1.0 : pw1;
 		x = 0.0;
-		if (pwe) {
-		    x += m1 * Z[li][t1] * m2 * Z[lj][t1];
-		}
-		for (t=t1+1; t<=t2; t++) {
-		    x += (Z[li][t] - z1 * Z[li][t-1]) * 
-			(Z[lj][t] - z2 * Z[lj][t-1]);
+		for (t=t1; t<=t2; t++) {
+		    if (pwe && t == t1) {
+			x += pw1 * Z[li][t1] * pw1 * Z[lj][t];
+		    } else {
+			x += (Z[li][t] - rho * Z[li][t-1]) * 
+			    (Z[lj][t] - rho * Z[lj][t-1]);
+		    }
 		}
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
@@ -655,12 +630,13 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		xpx[m++] = x;
 	    }
 	    x = 0.0;
-	    if (pwe) {
-		x += pw1 * Z[yno][t1] * m1 * Z[li][t1];
-	    }
-	    for (t=t1+1; t<=t2; t++) {
-		x += (Z[yno][t] - rho * Z[yno][t-1]) *
-		    (Z[li][t] - z1 * Z[li][t-1]);
+	    for (t=t1; t<=t2; t++) {
+		if (pwe && t == t1) {
+		    x += pw1 * Z[yno][t] * pw1 * Z[li][t];
+		} else {
+		    x += (Z[yno][t] - rho * Z[yno][t-1]) *
+			(Z[li][t] - rho * Z[li][t-1]);
+		}
 	    }
 	    xpy[i-1] = x;
 	}
@@ -702,10 +678,6 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}
-#if 0
-		fprintf(stderr, "xpx[%d] is sum(Z[%d]*Z[%d])\n", 
-			m, li, lj);
-#endif
 		xpx[m++] = x;
 	    }
 	    x = 0.0;
@@ -715,15 +687,6 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    xpy[i-1] = x;
 	}
     }
-
-#if 0
-    for (i=0; i<=m; i++) {
-	fprintf(stderr, "xpx[%d] = %g\n", i, xpx[i]);
-    }
-    for (i=0; i<=l0; i++) {
-	fprintf(stderr, "xpy[%d] = %g\n", i, xpy[i]);
-    }
-#endif
 
     return 0; 
 }
@@ -861,7 +824,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     hatvar(pmod, Z); 
     if (pmod->errcode) return;
 
-    if (pmod->tss > 0) {
+    if (pmod->tss > 0.0) {
 	compute_r_squared(pmod, &Z[yno][pmod->t1]);
     }
 
@@ -876,6 +839,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	pmod->fstt = NADBL;
     } else {
 	pmod->fstt = (rss - zz * pmod->ifc) / (sgmasq * pmod->dfn);
+	if (pmod->fstt < 0.0) pmod->fstt = 0.0;
     }
 
     diag = malloc(pmod->ncoeff * sizeof *diag); 
@@ -1110,23 +1074,6 @@ int makevcv (MODEL *pmod)
 	} 
 	for (k=0; k<nxpx; k++) {
 	    pmod->vcv[k] *= sigma * sigma;
-	}
-    }
-
-    if ((pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) && pmod->ifc) {
-	double r = gretl_model_get_double(pmod, "rho_in");
-
-	d = 1.0 / (1.0 - r);
-	kk = -1;
-	for (i=0; i<nv; i++) {
-	    for (j=0; j<nv; j++) {
-		if (j < i) continue;
-		kk++;
-		if (i == 0) { 
-		    pmod->vcv[kk] *= d;
-		    if (j == i) pmod->vcv[kk] *= d;
-		}
-	    }
 	}
     }
 
@@ -1390,21 +1337,21 @@ static int hilu_plot (double *ssr, double *rho, int n,
     return 0;
 }
 
-static double autores (MODEL *pmod, double rho, const double **Z)
+static double autores (MODEL *pmod, double rho, const double **Z,
+		       int opt)
 {
-    int t, v;
+    int t, v, t1 = pmod->t1;
     double x, num = 0.0, den = 0.0;
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
+    if (opt == CORC || opt == HILU) t1--;
+
+    for (t=t1; t<=pmod->t2; t++) {
 	x = Z[pmod->list[1]][t];
-	if (pmod->ifc) {
-	    x -= pmod->coeff[0] / (1.0 - rho);
-	}
-	for (v=pmod->ifc; v<pmod->ncoeff; v++) {
+	for (v=0; v<pmod->ncoeff; v++) {
 	    x -= pmod->coeff[v] * Z[pmod->list[v+2]][t];
 	}
 	pmod->uhat[t] = x;
-	if (t > pmod->t1) {
+	if (t > t1) {
 	    num += pmod->uhat[t] * pmod->uhat[t-1];
 	    den += pmod->uhat[t-1] * pmod->uhat[t-1];
 	}
@@ -1531,7 +1478,8 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    return err;
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
-	rho = autores(&corc_model, rho, (const double **) *pZ);
+	/* printmodel(&corc_model, pdinfo, prn); */
+	rho = autores(&corc_model, rho, (const double **) *pZ, opt);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
 	if (iter == 20) break;
