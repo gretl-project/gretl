@@ -1,21 +1,37 @@
-# Greene Table 10.3
- 4.5     480.0  2208.3
- 4.19    524.3  2271.4
- 5.16    566.3  2365.6
- 5.87    589.5  2423.3
- 5.95    628.2  2416.2
- 4.88    712.8  2484.8
- 4.50    805.2  2608.5
- 6.44    861.0  2744.1
- 7.83    908.4  2729.3
- 6.25   1023.1  2695.0
- 5.50   1163.6  2826.7
- 5.46   1286.6  2958.6
- 7.46   1388.9  3115.2
-10.28   1497.9  3192.4
-11.77   1631.4  3187.1
-13.42   1794.4  3248.8
-11.02   1954.9  3166.0
- 8.50   2188.8  3277.7
- 8.80   2371.7  3492.0
- 7.69   2563.6  3573.5
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="greene10_3" frequency="1" startobs="1966" endobs="1985" type="time-series">
+<description>
+  William Greene, Econometric Analysis, 3rd ed.
+  Table 10.3
+  US macro data
+</description>
+<variables count="3">
+<variable name="r"/>
+<variable name="M"/>
+<variable name="Y"/>
+</variables>
+<observations count="20" labels="false">
+<obs>4.50 480.0 2208.3 </obs>
+<obs>4.19 524.3 2271.4 </obs>
+<obs>5.16 566.3 2365.6 </obs>
+<obs>5.87 589.5 2423.3 </obs>
+<obs>5.95 628.2 2416.2 </obs>
+<obs>4.88 712.8 2484.8 </obs>
+<obs>4.50 805.2 2608.5 </obs>
+<obs>6.44 861.0 2744.1 </obs>
+<obs>7.83 908.4 2729.3 </obs>
+<obs>6.25 1023.1 2695.0 </obs>
+<obs>5.50 1163.6 2826.7 </obs>
+<obs>5.46 1286.6 2958.6 </obs>
+<obs>7.46 1388.9 3115.2 </obs>
+<obs>10.28 1497.9 3192.4 </obs>
+<obs>11.77 1631.4 3187.1 </obs>
+<obs>13.42 1794.4 3248.8 </obs>
+<obs>11.02 1954.9 3166.0 </obs>
+<obs>8.50 2188.8 3277.7 </obs>
+<obs>8.80 2371.7 3492.0 </obs>
+<obs>7.69 2563.6 3573.5 </obs>
+</observations>
+</gretldata>

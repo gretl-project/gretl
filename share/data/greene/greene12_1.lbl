@@ -1,7 +1,0 @@
-derog     number of derogatory reports
-accept    credit card application accepted (yes = 1)
-age       age in years + 12ths of a year
-income    income/10000
-expend    average monthly credit card expenditure
-ownrent   own-rent: individual owns (1) or rents (0) home
-selfemp   self-employed (yes = 1)

@@ -1,37 +1,60 @@
-#        Y       C
- 791.8   733.2
- 819.0   748.7
- 844.3   771.4
- 880.0   802.5
- 894.0   822.7
- 944.5   873.8
- 989.4   899.8
-1012.1   919.7
-1028.8   932.9
-1067.2   979.4
-1091.1  1005.1
-1123.2  1025.2
-1170.2  1069.0
-1207.3  1108.4
-1291.0  1170.6
-1365.7  1236.4
-1431.3  1298.9
-1493.2  1337.7
-1551.3  1405.9
-1599.8  1456.7
-1688.1  1492.0
-1728.4  1538.8
-1797.4  1621.9
-1916.3  1689.6
-1896.6  1674.0
-1931.7  1711.9
-2001.0  1803.9
-2066.6  1883.8
-2167.4  1961.0
-2216.2  2004.4
-2214.3  2000.4
-2248.6  2024.2
-2261.5  2050.7
-2334.6  2145.9
-2468.4  2239.9
-2509.0  2312.6
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="greene11_3" frequency="1" startobs="1950" endobs="1985" type="time-series">
+<description>
+Annual data on U.S. aggregate income and consumption, 1950-1985.
+From the Economic Report of the President, 1986.
+Reprinted from William Greene, Econometric Analysis (4 ed.),
+Table A10.3.  See Example 11.3 in that book.
+
+Y = income
+C = consumption
+
+This file included with gretl by kind permission of William Greene.
+</description>
+<variables count="2">
+<variable name="Y"
+ label="aggregate income"/>
+<variable name="C"
+ label="aggregate consumption"/>
+</variables>
+<observations count="36" labels="false">
+<obs>791.8 733.2 </obs>
+<obs>819.0 748.7 </obs>
+<obs>844.3 771.4 </obs>
+<obs>880.0 802.5 </obs>
+<obs>894.0 822.7 </obs>
+<obs>944.5 873.8 </obs>
+<obs>989.4 899.8 </obs>
+<obs>1012.1 919.7 </obs>
+<obs>1028.8 932.9 </obs>
+<obs>1067.2 979.4 </obs>
+<obs>1091.1 1005.1 </obs>
+<obs>1123.2 1025.2 </obs>
+<obs>1170.2 1069.0 </obs>
+<obs>1207.3 1108.4 </obs>
+<obs>1291.0 1170.6 </obs>
+<obs>1365.7 1236.4 </obs>
+<obs>1431.3 1298.9 </obs>
+<obs>1493.2 1337.7 </obs>
+<obs>1551.3 1405.9 </obs>
+<obs>1599.8 1456.7 </obs>
+<obs>1688.1 1492.0 </obs>
+<obs>1728.4 1538.8 </obs>
+<obs>1797.4 1621.9 </obs>
+<obs>1916.3 1689.6 </obs>
+<obs>1896.6 1674.0 </obs>
+<obs>1931.7 1711.9 </obs>
+<obs>2001.0 1803.9 </obs>
+<obs>2066.6 1883.8 </obs>
+<obs>2167.4 1961.0 </obs>
+<obs>2216.2 2004.4 </obs>
+<obs>2214.3 2000.4 </obs>
+<obs>2248.6 2024.2 </obs>
+<obs>2261.5 2050.7 </obs>
+<obs>2334.6 2145.9 </obs>
+<obs>2468.4 2239.9 </obs>
+<obs>2509.0 2312.6 </obs>
+</observations>
+</gretldata>

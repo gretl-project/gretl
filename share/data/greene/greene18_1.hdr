@@ -1,7 +1,0 @@
-(*
-Table 18.1 from Greene, Econometric Analysis, 4ed.
-Monthly yields on a Moody's Aaa-rated corporate bond.
-*)
-YIELD ;
-12 1990.01 1994.12
-BYOBS

@@ -1,63 +1,75 @@
-# Greene Table 18.1
- 8.99
- 9.72
- 9.37
- 9.46
- 9.47
- 9.26
- 9.24
- 9.41
- 9.56
- 9.53
- 9.30
- 9.05
- 9.04
- 8.83
- 8.93
- 8.86
- 8.86
- 9.01
- 9.00
- 8.75
- 8.61
- 8.55
- 8.48
- 8.31
- 8.20
- 8.29
- 8.35
- 8.33
- 8.28
- 8.22
- 8.07
- 7.95
- 7.92
- 7.99
- 8.10
- 7.98
- 7.91
- 7.71
- 7.58
- 7.46
- 7.43
- 7.33
- 7.17
- 6.85
- 6.66
- 6.67
- 6.93
- 6.93
- 6.92
- 7.08
- 7.48
- 7.88
- 7.99
- 7.97
- 8.11
- 8.07
- 8.34
- 8.57
- 8.68
- 8.46
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-
+<gretldata name="greene18_1" frequency="12" startobs="1990.01" endobs="1994.12" type="time-series">
+<description>
+Table 18.1 from Greene, Econometric Analysis, 4ed.
+Monthly yields on a Moody's Aaa-rated corporate bond.
+</description>
+<variables count="1">
+<variable name="YIELD"
+ label="yield on Moody's Aaa rated corporate bond"/>
+</variables>
+<observations count="60" labels="false">
+<obs>8.99 </obs>
+<obs>9.72 </obs>
+<obs>9.37 </obs>
+<obs>9.46 </obs>
+<obs>9.47 </obs>
+<obs>9.26 </obs>
+<obs>9.24 </obs>
+<obs>9.41 </obs>
+<obs>9.56 </obs>
+<obs>9.53 </obs>
+<obs>9.30 </obs>
+<obs>9.05 </obs>
+<obs>9.04 </obs>
+<obs>8.83 </obs>
+<obs>8.93 </obs>
+<obs>8.86 </obs>
+<obs>8.86 </obs>
+<obs>9.01 </obs>
+<obs>9.00 </obs>
+<obs>8.75 </obs>
+<obs>8.61 </obs>
+<obs>8.55 </obs>
+<obs>8.48 </obs>
+<obs>8.31 </obs>
+<obs>8.20 </obs>
+<obs>8.29 </obs>
+<obs>8.35 </obs>
+<obs>8.33 </obs>
+<obs>8.28 </obs>
+<obs>8.22 </obs>
+<obs>8.07 </obs>
+<obs>7.95 </obs>
+<obs>7.92 </obs>
+<obs>7.99 </obs>
+<obs>8.10 </obs>
+<obs>7.98 </obs>
+<obs>7.91 </obs>
+<obs>7.71 </obs>
+<obs>7.58 </obs>
+<obs>7.46 </obs>
+<obs>7.43 </obs>
+<obs>7.33 </obs>
+<obs>7.17 </obs>
+<obs>6.85 </obs>
+<obs>6.66 </obs>
+<obs>6.67 </obs>
+<obs>6.93 </obs>
+<obs>6.93 </obs>
+<obs>6.92 </obs>
+<obs>7.08 </obs>
+<obs>7.48 </obs>
+<obs>7.88 </obs>
+<obs>7.99 </obs>
+<obs>7.97 </obs>
+<obs>8.11 </obs>
+<obs>8.07 </obs>
+<obs>8.34 </obs>
+<obs>8.57 </obs>
+<obs>8.68 </obs>
+<obs>8.46 </obs>
+</observations>
+</gretldata>
