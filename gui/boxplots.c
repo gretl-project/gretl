@@ -574,8 +574,10 @@ destroy_boxplots (GtkWidget *w, gpointer data)
     PLOTGROUP *grp = (PLOTGROUP *) data;
     int i;
 
-    for (i=0; i<grp->nplots; i++)  
+    for (i=0; i<grp->nplots; i++) {
 	free(grp->plots[i].outliers);
+	free(grp->plots[i].bool);
+    }
     free(grp->plots);
     free(grp->numbers);
     gdk_pixmap_unref(grp->pixmap);
@@ -837,8 +839,6 @@ five_numbers (gpointer data)
 
 	for (i=0; i<grp->nplots; i++) {
 	    if (grp->plots[i].bool != NULL) {
-		fprintf(stderr, "plots[%d].bool = '%s'\n", i, 
-			grp->plots[i].bool);
 		pprintf(prn, "%s\n%10s%10g%10g%10g%10g%10g\n",
 			grp->plots[i].varname, grp->plots[i].bool,
 			grp->plots[i].min, 
