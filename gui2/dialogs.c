@@ -2915,10 +2915,12 @@ static void msgbox (const char *msg, int err)
 	}
     } 
 
-    MessageBox(NULL, trmsg, "gretl", 
+    MessageBox(NULL, (trmsg != NULL)? trmsg : msg, "gretl", 
 	       MB_OK | ((err)? MB_ICONERROR : MB_ICONINFORMATION));
 
-    g_free(trmsg);
+    if (trmsg != NULL) {
+	g_free(trmsg);
+    }
 }
 
 #else /* gtk 2 native */
