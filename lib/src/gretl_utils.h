@@ -104,7 +104,7 @@ enum flagvals {
  
 double date (int nt, int pd, const double sd0);
 
-int isdummy (int varnum, int t1, int t2, double **Z);
+int isdummy (double *x, int t1, int t2);
 
 void printlist (const int *list, const char *msg);
 
@@ -157,9 +157,15 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 
 int swap_models (MODEL **targ, MODEL **src);
 
+FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
+			 DATAINFO *pdinfo);
+
+FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
+			       double ***pZ, DATAINFO *pdinfo, PRN *prn);
+
 int fcast_with_errs (const char *str, const MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     const PATHS *ppaths, int plot);
+		     PATHS *ppaths, int plot);
 
 int is_model_cmd (const char *line);
 
@@ -191,5 +197,8 @@ mp_results *gretl_mp_results_new (int totvar);
 
 int allocate_mp_varnames (mp_results *mpvals);
 
+FITRESID *fit_resid_new (int n, int errs);
+
+void free_fit_resid (FITRESID *fr);
 
 #endif /* UTILS_H */

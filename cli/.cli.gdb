@@ -1,2 +1,2 @@
-set args -b ps13-1.inp
+set args data4-1 
 run

@@ -295,6 +295,18 @@ typedef struct {
     double fstt;
 } mp_results;
 
+typedef struct {
+    double *actual;
+    double *fitted;
+    double *sderr;
+    double sigma;
+    double tval;
+    int pmax;
+    int t1, t2;
+    int nobs;
+    char depvar[9];
+} FITRESID;
+
 
 #include "commands.h"
 #include "errors.h"

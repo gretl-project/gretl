@@ -814,28 +814,25 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 
 /* ........................................................... */
 
-static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo, 
+static void fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
 			    PRN *prn)
 {
-    int i, t2 = pmod->t2;
+    int i;
     char label[16], date1[9], date2[9]; 
 
-    if (pmod->data != NULL) 
-        t2 += get_misscount(pmod);
-
-    ntodate(date1, pmod->t1, pdinfo);
-    ntodate(date2, t2, pdinfo);
+    ntodate(date1, fr->t1, pdinfo);
+    ntodate(date2, fr->t2, pdinfo);
     pprintf(prn, _("\nFull data range: %s - %s (n = %d)\n"),
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pprintf(prn, _("Model estimation range: %s - %s"), date1, date2);
-    if (pmod->nobs == pdinfo->n) pprintf(prn, "\n");
-    else pprintf(prn, " (n = %d)\n", pmod->nobs); 
+    if (fr->nobs == pdinfo->n) pprintf(prn, "\n");
+    else pprintf(prn, " (n = %d)\n", fr->nobs); 
 
-    pprintf(prn, _("Standard error of residuals = %f\n"), pmod->sigma);
+    pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
     
     pprintf(prn, "\n     %s ", _("Obs"));
     for (i=1; i<4; i++) {
-	if (i == 1) strcpy(label, pdinfo->varname[pmod->list[1]]);
+	if (i == 1) strcpy(label, fr->depvar);
 	if (i == 2) strcpy(label, _("fitted"));
 	if (i == 3) strcpy(label, _("residuals"));
 	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
@@ -1242,6 +1239,109 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     return 0;
 }
 
+/* ........................................................... */
+
+int
+text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
+{
+    int t, anyast = 0;
+    int n = pdinfo->n;
+    double xx;
+
+    fit_resid_head(fr, pdinfo, prn); 
+
+    for (t=0; t<n; t++) {
+	if (t == fr->t1 && t) pprintf(prn, "\n");
+	if (t == fr->t2 + 1) pprintf(prn, "\n");
+
+	print_obs_marker(t, pdinfo, prn);
+
+	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
+	    pprintf(prn, "\n");
+	} else {
+	    int ast;
+
+	    xx = fr->actual[t] - fr->fitted[t];
+	    ast = (fabs(xx) > 2.5 * fr->sigma);
+	    if (ast) anyast = 1;
+	    pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
+		    fr->pmax, fr->actual[t],
+		    fr->pmax, fr->fitted[t], fr->pmax, xx,
+		    (ast)? " *" : "");
+	}
+    }
+    pprintf(prn, "\n");
+    if (anyast) pprintf(prn, _("Note: * denotes a residual in excess of "
+			       "2.5 standard errors\n"));
+    return 0;
+}
+
+/* ........................................................... */
+
+int text_print_fcast_with_errs (const FITRESID *fr, 
+				double ***pZ, DATAINFO *pdinfo, PRN *prn,
+				PATHS *ppaths, int plot)
+{
+    int err = 0;
+    int t;
+    double *maxerr;
+
+    maxerr = malloc(fr->nobs * sizeof *maxerr);
+    if (maxerr == NULL) return E_ALLOC;
+
+    pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
+	    fr->pmax, fr->tval);
+    pprintf(prn, "\n     Obs ");
+    pprintf(prn, "%12s", fr->depvar);
+    pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
+    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+    pprintf(prn, _("   95%% confidence interval\n"));
+    pprintf(prn, "\n");
+
+    for (t=0; t<fr->nobs; t++) {
+	print_obs_marker(t + fr->t1, pdinfo, prn);
+	_printxs(fr->actual[t], 15, PRINT, prn);
+	_printxs(fr->fitted[t], 15, PRINT, prn);
+	_printxs(fr->sderr[t], 15, PRINT, prn);
+	maxerr[t] = fr->tval * fr->sderr[t];
+	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
+	pprintf(prn, " -");
+	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
+	pprintf(prn, "\n");
+    }
+
+    if (plot) {
+	if (pdinfo->time_series == TIME_SERIES) {
+	    switch (pdinfo->pd) {
+	    case 1:
+		plotvar(pZ, pdinfo, "annual");
+		break;
+	    case 4:
+		plotvar(pZ, pdinfo, "qtrs");
+		break;
+	    case 12:
+		plotvar(pZ, pdinfo, "months");
+		break;
+	    case 24:
+		plotvar(pZ, pdinfo, "hours");
+		break;
+	    default:
+		plotvar(pZ, pdinfo, "time");
+	    }
+	} else {
+	    plotvar(pZ, pdinfo, "index");
+	}
+	err = plot_fcast_errs(fr->nobs, &(*pZ)[pdinfo->v - 1][fr->t1], 
+			      fr->actual, fr->fitted, maxerr, 
+			      fr->depvar, 
+			      ppaths);
+    }
+
+    free(maxerr);
+
+    return err;
+}
+
 /**
  * print_fit_resid:
  * @pmod: pointer to gretl model.
@@ -1257,51 +1357,13 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 int print_fit_resid (const MODEL *pmod, double ***pZ, 
 		     DATAINFO *pdinfo, PRN *prn)
 {
-    int pmax, depvar, t, nfit, anyast = 0;
-    int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
-    double xx;
-    char fcastline[32];
+    FITRESID *fr;
 
-    depvar = pmod->list[1];
+    fr = get_fit_resid (pmod, pZ, pdinfo);
+    if (fr == NULL) return 1;
 
-    if (pmod->data != NULL) 
-	t2 += get_misscount(pmod);
-
-    sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
-	    pdinfo->endobs);
-    nfit = fcast(fcastline, pmod, pdinfo, pZ); 
-    if (nfit < 0) return 1; 
-
-    if (isdummy(depvar, t1, t2, *pZ) > 0)
-	pmax = get_precision((*pZ)[nfit], n);
-    else
-	pmax = get_precision((*pZ)[depvar], n);
-
-    fit_resid_head(pmod, pdinfo, prn);
-
-    for (t=0; t<n; t++) {
-	if (t == t1 && t) pprintf(prn, "\n");
-	if (t == t2 + 1) pprintf(prn, "\n");
-
-	print_obs_marker(t, pdinfo, prn);
-
-	if (na((*pZ)[depvar][t]) || na((*pZ)[nfit][t])) { 
-	    pprintf(prn, "\n");
-	} else {
-	    int ast;
-
-	    xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
-	    ast = (fabs(xx) > 2.5 * pmod->sigma);
-	    if (ast) anyast = 1;
-	    pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
-		    pmax, (*pZ)[depvar][t],
-		    pmax, (*pZ)[nfit][t], pmax, xx,
-		    (ast)? " *" : "");
-	}
-    }
-    pprintf(prn, "\n");
-    if (anyast) pprintf(prn, _("Note: * denotes a residual in excess of "
-			       "2.5 standard errors\n"));
+    text_print_fit_resid (fr, pdinfo, prn);
+    free_fit_resid(fr);
     return 0;
 }
 

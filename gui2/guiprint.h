@@ -46,6 +46,10 @@ void rtfprint_corrmat (CORRMAT *corr,
 		       const DATAINFO *pdinfo, 
 		       PRN *prn);
 
+void texprint_fit_resid (const FITRESID *fr, 
+			 const DATAINFO *pdinfo, 
+			 PRN *prn);
+
 void augment_copy_menu (windata_t *vwin);
 
 #endif /* GUIPRINT_H */

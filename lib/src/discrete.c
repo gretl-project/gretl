@@ -127,7 +127,7 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     } 
 
     /* check that depvar really is binary */
-    if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ) == 0) {
+    if (isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2) == 0) {
 	dmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
 		"variable.\n"), pdinfo->varname[depvar]);

@@ -58,9 +58,17 @@ int printdata (LIST list,
 	       double ***pZ, const DATAINFO *pdinfo, 
 	       int pause, int option, PRN *prn);
 
+int text_print_fit_resid (const FITRESID *fr, 
+			  const DATAINFO *pdinfo, 
+			  PRN *prn);
+
 int print_fit_resid (const MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn);
+
+int text_print_fcast_with_errs (const FITRESID *fr, 
+				double ***pZ, DATAINFO *pdinfo, PRN *prn,
+				PATHS *ppaths, int plot);
 
 void printxx (double xx, char *str, int ci);
 

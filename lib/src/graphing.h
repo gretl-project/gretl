@@ -95,6 +95,11 @@ int termtype_to_termstr (char *termtype, char *termstr);
 int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
 	    PATHS *ppaths);
 
+int plot_fcast_errs (int n, const double *obs, 
+		     const double *depvar, const double *yhat, 
+		     const double *maxerr, const char *varname, 
+		     PATHS *ppaths);
+
 
 
 

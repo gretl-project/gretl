@@ -2847,19 +2847,23 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 {
     PRN *prn;
-    int err;
     windata_t *mydata = (windata_t *) data;
+    windata_t *vwin;
     MODEL *pmod = (MODEL *) mydata->data;
+    FITRESID *fr;
 
     if (bufopen(&prn)) return;
-    err = print_fit_resid(pmod, &Z, datainfo, prn);
 
-    if (err) {
+    fr = get_fit_resid(pmod, &Z, datainfo);
+    if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);
-    } else 
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, 
-		    view_items);    
+    } else {
+	text_print_fit_resid(fr, datainfo, prn);
+	vwin = view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
+			   view_items);  
+	vwin->data = fr;
+    }  
 }
 
 /* ........................................................... */
@@ -2956,7 +2960,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     if (check_cmd(line) || cmd_init(line)) return;
 
     if (command.list[0] != 3 || 
-	!isdummy(command.list[3], datainfo->t1, datainfo->t2, Z)) {
+	!isdummy(Z[command.list[3]], datainfo->t1, datainfo->t2)) {
 	errbox(_("You must supply three variables, the last\nof which "
 	       "is a dummy variable (values 1 or 0)"));
 	return;
@@ -3071,7 +3075,7 @@ void display_var (void)
 
     vwin = view_buffer(prn, 28, height, 
 		       datainfo->varname[list[1]], VIEW_SERIES, 
-		       (vec)? view_items : NULL); 
+		       (vec)? series_view_items : scalar_view_items); 
 
     series_view_connect(vwin, list[1]);
 }

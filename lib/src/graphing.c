@@ -721,7 +721,7 @@ int gnuplot (LIST list, const int *lines,
 
     xvar = (opt == OPT_Z || opt == OPT_RESIDZ)? list[lo - 1] : list[lo];
 
-    if (isdummy(xvar, t1, t2, *pZ)) {
+    if (isdummy((*pZ)[xvar], t1, t2)) {
 	fputs("set xrange[-1:2]\n", fq);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fq);
 	xrange = 3;

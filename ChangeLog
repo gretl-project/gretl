@@ -4,9 +4,9 @@ version 1.0.3
   spaces in its name on win32
 - Reorganize management of win32 registry entries
 - Add tramo/seats for win32 version
-- In window displaying a single data, add popup options to show 
-  the series sorted, and to format the data values to a specified 
-  number of significant digits or decimal places
+- In window displaying a single data, add menu options to show 
+  the series sorted, to graph the variable, and to format the data 
+  values to a specified number of significant digits or decimal places
 - Fix bug in command echo for "store" and a few others
 - Add selector for variables to be saved when doing "Save as"
   or "Export" (gtk 2.0 version only)

@@ -210,7 +210,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	    model.errcode = E_WTZERO;
 	    return model;
 	}
-	effobs = isdummy(nwt, model.t1, model.t2, *pZ);
+	effobs = isdummy((*pZ)[nwt], model.t1, model.t2);
 	if (effobs) model.wt_dummy = 1;
     }
 

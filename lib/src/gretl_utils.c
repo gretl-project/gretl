@@ -29,11 +29,6 @@ static DIR *dir;
 
 static int _pdton (int pd);
 
-extern int plot_fcast_errs (int n, const double *obs, 
-			    const double *depvar, const double *yhat, 
-			    const double *maxerr, const char *varname, 
-			    const PATHS *ppaths);
-
 /* .......................................................... */
 
 static int path_append (char *file, const char *path)
@@ -243,25 +238,24 @@ int ztox (int i, double *px, double **Z, const DATAINFO *pdinfo)
 
 /**
  * isdummy:
- * @varnum: index number of variable to examine.
+ * @x: data series to examine.
  * @t1: starting observation.
  * @t2: ending observation. 
- * @Z: data matrix.
  * 
- * Check whether variable @varnum has only 0 or 1 values over the
+ * Check whether variable @x has only 0 or 1 values over the
  * given sample range. 
  *
  * Returns: 0 if the variable is not a 0/1 dummy, otherwise the
  * number of 1s in the series.
  */
 
-int isdummy (int varnum, int t1, int t2, double **Z)
+int isdummy (double *x, int t1, int t2)
 {
     int t, m = 0;
     double xx;
 
     for (t=t1; t<=t2; t++) {
-	xx = Z[varnum][t];
+	xx = x[t];
 	if (floatneq(xx, 0.0) && floatneq(xx, 1.0)) 
 	    return 0;
 	if (floateq(xx, 1.0)) m++;
@@ -1857,31 +1851,77 @@ int _full_model_list (MODEL *pmod, int **plist)
 
 /* ........................................................... */
 
-int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
-		     const PATHS *ppaths, int plot)
+FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
+			 DATAINFO *pdinfo)
+{
+    int depvar, t, nfit;
+    int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
+    char fcastline[32];
+    FITRESID *fr;
+
+    depvar = pmod->list[1];
+
+    if (pmod->data != NULL) {
+	t2 += get_misscount(pmod);
+    }
+
+    sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
+	    pdinfo->endobs);
+    nfit = fcast(fcastline, pmod, pdinfo, pZ); 
+    if (nfit < 0) return NULL; 
+
+    fr = fit_resid_new(n, 0);
+    if (fr == NULL) return NULL;
+
+    fr->sigma = pmod->sigma;
+    for (t=0; t<n; t++) {
+	fr->actual[t] = (*pZ)[depvar][t];
+	fr->fitted[t] = (*pZ)[nfit][t];
+    }
+
+    if (isdummy(fr->actual, 0, n) > 0) {
+	fr->pmax = get_precision(fr->fitted, n);
+    } else {
+	fr->pmax = get_precision(fr->actual, n);
+    }
+
+    strcpy(fr->depvar, pdinfo->varname[depvar]);
+    
+    fr->t1 = t1;
+    fr->t2 = t2;
+    fr->nobs = pmod->nobs;
+
+    /* should delete the fitted value from *pZ? */
+
+    return fr;
+}
+
+/* ........................................................... */
+
+FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
+			       double ***pZ, DATAINFO *pdinfo, PRN *prn)
      /* use Salkever's method to generate forecasts plus forecast
 	variances -- FIXME ifc = 0, and methods other than OLS */
 {
     double **fZ;
     DATAINFO fdatainfo;
     MODEL fmod; 
+    FITRESID *fr;
     int *list, orig_v, ft1, ft2, v1, err = 0;
     int i, j, k, t, nfcast, fn, fv;
-    double tval, maxerr, *yhat, *sderr, *depvar;
     char t1str[9], t2str[9];
 
-    if (pmod->ci != OLS || !pmod->ifc) return E_OLSONLY;
+    if (pmod->ci != OLS || !pmod->ifc) return NULL; /* E_OLSONLY */
 
     /* temporary bodge */
-    if (pmod->data != NULL) return E_DATA;
+    if (pmod->data != NULL) return NULL; /* E_DATA */
 
     /* parse dates */
     if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) 
-	return E_OBS; 
+	return NULL; /* E_OBS */ 
     ft1 = dateton(t1str, pdinfo);
     ft2 = dateton(t2str, pdinfo);
-    if (ft1 < 0 || ft2 < 0 || ft2 < ft1) return E_OBS;
+    if (ft1 < 0 || ft2 < 0 || ft2 < ft1) return NULL; /* E_OBS */
 
     orig_v = pmod->list[0];
     v1 = pmod->list[1];
@@ -1892,27 +1932,24 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     nfcast = ft2 - ft1 + 1;
 
     /* sanity check */
-    if (nfcast > 1024) return E_ALLOC; /* requires > 16MB RAM for fZ */
+    if (nfcast > 1024) return NULL; /* requires > 16MB RAM for fZ */
 
     fn = fdatainfo.n = nfcast + pdinfo->t2 + 1;
     fv = fdatainfo.v = nfcast + orig_v;
 
     fZ = malloc(fv * sizeof *fZ);
-    if (fZ == NULL) return E_ALLOC;
+    if (fZ == NULL) return NULL;
 
     for (i=0; i<fv; i++) {
 	fZ[i] = malloc(fn * sizeof **fZ);
-	if (fZ[i] == NULL) return E_ALLOC;
+	if (fZ[i] == NULL) return NULL;
     }
 
     list = malloc((fv + 1) * sizeof *list);
-    if (list == NULL) return E_ALLOC;
-    yhat = malloc(nfcast * sizeof *yhat);
-    if (yhat == NULL) return E_ALLOC;
-    sderr = malloc(nfcast * sizeof *sderr);
-    if (sderr == NULL) return E_ALLOC;
-    depvar = malloc(nfcast * sizeof *depvar);
-    if (depvar == NULL) return E_ALLOC;
+    if (list == NULL) return NULL;
+
+    fr = fit_resid_new(nfcast, 1);
+    if (fr == NULL) return NULL;
 
     strcpy(fdatainfo.stobs, pdinfo->stobs);
     fdatainfo.t1 = pdinfo->t1;
@@ -1932,19 +1969,29 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     if (pmod->ifc) list[list[0]] = 0;
 
     /* set new data matrix to zero */
-    for (i=1; i<fv; i++)
-	for (t=0; t<fn; t++) fZ[i][t] = 0.0;
+    for (i=1; i<fv; i++) {
+	for (t=0; t<fn; t++) {
+	    fZ[i][t] = 0.0;
+	}
+    }
+
     /* insert const at pos. 0 */
-    for (t=0; t<fn; t++) fZ[0][t] = 1.0;
+    for (t=0; t<fn; t++) {
+	fZ[0][t] = 1.0;
+    }
+
     /* insert orig model vars into fZ */
     k = pmod->ifc? orig_v-1: orig_v;
     for (i=1; i<=k; i++) {
-	for (t=0; t<=pdinfo->t2; t++) 
+	for (t=0; t<=pdinfo->t2; t++) {
 	    fZ[i][t] = (*pZ)[pmod->list[i]][t];
+	}
 	if (i == 1) continue;
-	for (t=pdinfo->t2+1; t<fn; t++)
+	for (t=pdinfo->t2+1; t<fn; t++) {
 	    fZ[i][t] = (*pZ)[pmod->list[i]][t - (pdinfo->t2+1) + ft1];
+	}
     }
+
     /* insert -I section */
     for (i=orig_v; i<fv; i++) {
 	k = orig_v - i;
@@ -1954,15 +2001,6 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	}
     }
 
-#ifdef FCAST_DEBUG
-    /* check: print matrix */
-    for (t=0; t<fn; t++) {
- 	for (i=0; i<fv; i++)
- 	    fprintf(stderr, "%.2f ", fZ[i][t]);
- 	putc('\n', stderr);
-    }
-#endif
-    
     _init_model(&fmod, &fdatainfo);
     fdatainfo.extra = 1;
     fmod = lsq(list, &fZ, &fdatainfo, OLS, 1, 0.0);
@@ -1971,29 +2009,20 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	clear_model(&fmod, &fdatainfo);
 	free_Z(fZ, &fdatainfo);
 	free(list);
-	free(yhat);
-	free(sderr);
-	free(depvar);
+	free_fit_resid(fr);
 	fprintf(stderr, _("forecasting model failed in fcast_with_errs()\n"));
-	return err;
+	return NULL;
     }
 
     /* find the fitted values */
     t = 0;
     for (i=orig_v-1; i<fv-1; i++) {
-	yhat[t] = fmod.coeff[i];
+	fr->fitted[t] = fmod.coeff[i];
 	t++;
     }    
 
     /* and the variances */
-    if (makevcv(&fmod)) return E_ALLOC;
-
-#ifdef notdef
-    nv = fv - 1;
-    k = (nv * nv + nv)/2;
-    for (i=0; i<k; i++)
- 	printf("vcv[%d] = %f\n", i, fmod.vcv[i]);
-#endif
+    if (makevcv(&fmod)) return NULL; /* E_ALLOC */
 
     k = -1;
     t = 0;
@@ -2002,72 +2031,49 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	    if (j < i) continue;
 	    k++;
 	    if (j == i && i < fv - 1 && i > orig_v - 2) {
-		sderr[t] = sqrt(fmod.vcv[k]);
+		fr->sderr[t] = sqrt(fmod.vcv[k]);
 		t++;
 	    }
 	}
     } 
 
-    /* print results */
     for (t=0; t<nfcast; t++) {
-	depvar[t] = (*pZ)[v1][ft1 + t];
+	fr->actual[t] = (*pZ)[v1][ft1 + t];
     }
 
-    tval = _tcrit95(pmod->dfd);
-    pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
-	    pmod->dfd, tval);
-    pprintf(prn, "\n     Obs ");
-    pprintf(prn, "%12s", pdinfo->varname[v1]);
-    pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
-    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
-    pprintf(prn, _("   95%% confidence interval\n"));
-    pprintf(prn, "\n");
+    fr->tval = _tcrit95(pmod->dfd);
+    strcpy(fr->depvar, pdinfo->varname[v1]);
 
-    for (t=0; t<nfcast; t++) {
-	print_obs_marker(t + ft1, pdinfo, prn);
-	_printxs(depvar[t], 15, PRINT, prn);
-	_printxs(yhat[t], 15, PRINT, prn);
-	_printxs(sderr[t], 15, PRINT, prn);
-	maxerr = tval * sderr[t];
-	_printxs(yhat[t] - maxerr, 15, PRINT, prn);
-	pprintf(prn, " -");
-	_printxs(yhat[t] + maxerr, 10, PRINT, prn);
-	pprintf(prn, "\n");
-	sderr[t] = maxerr;
-    }
-
-    if (plot) {
-	if (pdinfo->time_series == TIME_SERIES) {
-	    switch (pdinfo->pd) {
-	    case 1:
-		plotvar(pZ, pdinfo, "annual");
-		break;
-	    case 4:
-		plotvar(pZ, pdinfo, "qtrs");
-		break;
-	    case 12:
-		plotvar(pZ, pdinfo, "months");
-		break;
-	    case 24:
-		plotvar(pZ, pdinfo, "hours");
-		break;
-	    default:
-		plotvar(pZ, pdinfo, "time");
-	    }
-	} else plotvar(pZ, pdinfo, "index");
-	err = plot_fcast_errs(nfcast, &(*pZ)[pdinfo->v - 1][ft1], 
-			      depvar, yhat, sderr, pdinfo->varname[v1], 
-			      ppaths);
-    }
+    fr->t1 = ft1;
+    fr->t2 = ft2;
+    fr->nobs = ft2 - ft1 + 1;
+    fr->pmax = pmod->dfd;
 
     clear_model(&fmod, &fdatainfo);
     free_Z(fZ, &fdatainfo);
     free(list);
-    free(yhat);
-    free(sderr);
-    free(depvar);
     clear_datainfo(&fdatainfo, CLEAR_FULL);
 
+    return fr;
+}
+
+/* ........................................................... */
+
+int fcast_with_errs (const char *str, const MODEL *pmod, 
+		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
+		     PATHS *ppaths, int plot)
+{
+    FITRESID *fr;
+    int err;
+
+    fr = get_fcast_with_errs (str, pmod, pZ, pdinfo, prn);
+    if (fr == NULL) return 1;
+
+    err = text_print_fcast_with_errs (fr, pZ, pdinfo, prn,
+				      ppaths, plot);
+
+    free_fit_resid(fr);
+    
     return err;
 }
 
@@ -2406,6 +2412,53 @@ mp_results *gretl_mp_results_new (int totvar)
     mpvals->dfn = mpvals->dfd = 0;
 
     return mpvals;
+}
+
+/* ........................................................... */
+
+FITRESID *fit_resid_new (int n, int errs)
+{
+    FITRESID *fr;
+
+    fr = malloc(sizeof *fr);
+    if (fr == NULL) return NULL;
+
+    fr->actual = malloc(n * sizeof *fr->actual);
+    if (fr->actual == NULL) {
+	free(fr);
+	return NULL;
+    }
+
+    fr->fitted = malloc(n * sizeof *fr->fitted);
+    if (fr->fitted == NULL) {
+	free(fr->actual);
+	free(fr);
+	return NULL;
+    }
+
+    if (errs) {
+	fr->sderr = malloc(n * sizeof *fr->sderr);
+	if (fr->sderr == NULL) {
+	    free(fr->actual);
+	    free(fr->fitted);
+	    free(fr);
+	    return NULL;
+	}
+    } else {
+	fr->sderr = NULL;
+    }
+    
+    return fr;
+}
+
+/* ........................................................... */
+
+void free_fit_resid (FITRESID *fr)
+{
+    free(fr->actual);
+    free(fr->fitted);
+    free(fr->sderr);
+    free(fr);
 }
 
 

@@ -2251,7 +2251,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	v = list[i];
 	if (v == 0) continue; /* dont try to take log of constant */
 	/* and don't try to take the log of a dummy variable */
-	if (isdummy(v, pdinfo->t1, pdinfo->t2, *pZ))
+	if (isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2))
 	    continue;
 	if (v < nvar)  { 
 	    le_zero = 0;
@@ -2406,7 +2406,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
     terms = 0;
     for (i=1; i<=l0; i++) {
 	li = list[i];
-	if (!isdummy(li, 0, n-1, *pZ)) {
+	if (!isdummy((*pZ)[li], 0, n-1)) {
 	    for (t=0; t<n; t++) (*pZ)[v+terms][t] = NADBL;
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		zi = (*pZ)[li][t];

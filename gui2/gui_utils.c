@@ -901,6 +901,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_summary(vwin->data); 
 	else if (vwin->role == CORR)
 	    free_corrmat(vwin->data);
+	else if (vwin->role == FCASTERR || vwin->role == FCAST)
+	    free_fit_resid(vwin->data);
 	else if (vwin->role == MPOLS)
 	    free_gretl_mp_results(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
@@ -1323,16 +1325,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_view_key), vwin->dialog);
 
-    /* make popup? */
-    if (role == VIEW_SERIES) {
-	series_view_build_popup(vwin);
-	g_signal_connect (G_OBJECT(vwin->w), "button_press_event",
-			  G_CALLBACK(popup_menu_handler), 
-			  (gpointer) vwin->popup);
-    } else {
-	g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
-			  G_CALLBACK(catch_button), vwin->w);
-    }
+    g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
+		      G_CALLBACK(catch_button), vwin->w);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
@@ -1746,7 +1740,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
     /* reinstate role == MPOLS below when ready */
     if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR) {
+	|| vwin->role == CORR || vwin->role == FCASTERR ||
+	vwin->role == FCAST) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -1855,7 +1850,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
 	if (pmod->list[i] == 0) continue;
 
-	if (!isdummy(pmod->list[i], datainfo->t1, datainfo->t2, Z)) {
+	if (!isdummy(Z[pmod->list[i]], datainfo->t1, datainfo->t2)) {
 	    continue;
 	}
 
@@ -2155,6 +2150,25 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	gretl_print_destroy(prn);
 	return;
     }
+
+    /* display for fitted, actual, resid */
+    if (vwin->role == FCAST && SPECIAL_COPY(how)) {
+	FITRESID *fr = (FITRESID *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    texprint_fit_resid(fr, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    /* rtfprint_fit_resid(fr, datainfo, prn); */
+	    ;
+	}
+
+	prn_to_clipboard(prn, how);
+	gretl_print_destroy(prn);
+	return;
+    }    
 
     /* multiple-precision OLS */
     if (vwin->role == MPOLS && SPECIAL_COPY(how)) {

@@ -222,7 +222,7 @@ static int get_listlen (const int *varlist, int order, double **Z,
     for (i=1; i<=varlist[0]; i++) {
 	if (strcmp(pdinfo->varname[varlist[i]], "time") == 0 ||
 	    strcmp(pdinfo->varname[varlist[i]], "const") == 0 ||
-	    isdummy(varlist[i], pdinfo->t1, pdinfo->t2, Z)) v++;
+	    isdummy(Z[varlist[i]], pdinfo->t1, pdinfo->t2)) v++;
 	else v += order;
     }
     return v;
@@ -295,7 +295,7 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	   it unmodified -- at the end of the list */
 	if (strcmp(pdinfo->varname[list[i]], "time") == 0 || 
 	    strcmp(pdinfo->varname[list[i]], "const") == 0 || 
-	    isdummy(list[i], pdinfo->t1, pdinfo->t2, *pZ)) { 
+	    isdummy((*pZ)[list[i]], pdinfo->t1, pdinfo->t2)) { 
 	    varlist[end] = list[i];
 	    end--;
 	    continue;	    
