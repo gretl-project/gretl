@@ -27,7 +27,7 @@ includedir = $(prefix)/include/gretl
 
 # General compile options and libs:
 LIBGRETL = libgretl.la
-LIBS = -lm -L/usr/local/lib -lz $(XML_LIBS)
+LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS)
 
 #### End of system configuration section. ####
 
