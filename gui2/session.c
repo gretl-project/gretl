@@ -1838,3 +1838,4 @@ static void session_add_icon (gpointer data, int sort, int mode)
 
 
 
+

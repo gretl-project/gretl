@@ -677,6 +677,10 @@ static void gnuplot_dialog (GPT_SPEC *plot)
 
 #ifdef GNUPLOT_PNG
 
+#ifdef G_OS_WIN32
+static void gnuplot_graph_to_clipboard (GPT_SPEC *plot);
+#endif
+
 void save_this_graph (GPT_SPEC *plot, const char *fname)
 {
     FILE *fq;
@@ -1417,6 +1421,11 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	strcpy(plot->spec->termtype, "png");
         file_selector("Save graph as PNG", SAVE_THIS_GRAPH, plot->spec);
     }
+#ifdef G_OS_WIN32
+    else if (!strcmp(item, _("Copy to clipboard"))) {
+	gnuplot_graph_to_clipboard(plot->spec);
+    }
+#endif
     else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_last_graph(plot->spec, 0, NULL);
     }
@@ -1458,6 +1467,9 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
     const char *regular_items[] = {
         N_("Save as postscript (EPS)..."),
 	N_("Save as PNG..."),
+#ifdef G_OS_WIN32
+	N_("Copy to clipboard"),
+#endif
 	N_("Save to session as icon"),
 	N_("Zoom..."), 
 #ifdef USE_GNOME
@@ -1971,6 +1983,15 @@ int gnuplot_show_png (const char *plotfile)
 
     return 0;
 }
+
+#ifdef G_OS_WIN32
+
+static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
+{
+    dummy_call();
+}
+
+#endif
 
 #endif /* GNUPLOT_PNG */
 
