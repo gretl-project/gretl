@@ -916,7 +916,7 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 
 static void make_viewbar (windata_t *vwin)
 {
-    GtkWidget *iconw, *button, *viewbar;
+    GtkWidget *iconw, *button, *viewbar, *hbox;
     GdkPixmap *icon;
     GdkBitmap *mask;
     GdkColormap *cmap;
@@ -957,10 +957,13 @@ static void make_viewbar (windata_t *vwin)
     int print_ok = 0;
 #endif
 
-    cmap = gdk_colormap_get_system();
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
+
     viewbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
-    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(vwin->dialog)->action_area), 
-		      viewbar);
+    gtk_box_pack_start(GTK_BOX(hbox), viewbar, FALSE, FALSE, 0);
+
+    cmap = gdk_colormap_get_system();
 
     colorize_tooltips(GTK_TOOLBAR(viewbar)->tooltips);
 
@@ -1054,6 +1057,7 @@ static void make_viewbar (windata_t *vwin)
 					 iconw, toolfunc, vwin);
     }
     gtk_widget_show(viewbar);
+    gtk_widget_show(hbox);
 }
 
 /* ........................................................... */
