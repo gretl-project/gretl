@@ -83,6 +83,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have dirent.h */
 #undef HAVE_DIRENT_H
 
+/* Do we have sys/wait.h */
+#undef HAVE_SYS_WAIT_H
+
 /* Define if the `long double' type works.  */
 #undef HAVE_LONG_DOUBLE
 

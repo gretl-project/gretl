@@ -33,7 +33,15 @@
 # if GLIB_CHECK_VERSION(2,0,0)
 #  define GLIB2
 #  include <signal.h>
-#  include <wait.h>
+#  if HAVE_SYS_WAIT_H
+#   include <sys/wait.h>
+#  endif
+#  ifndef WEXITSTATUS
+#   define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
+#  endif
+#  ifndef WIFEXITED
+#   define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
+#  endif
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! _WIN32 */
 
