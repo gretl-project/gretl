@@ -441,7 +441,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     if (!gotdata) {
 	if (filter_comments(line, ignore)) {
 	    command->nolist = 1;
-	    command->ci = -2;
+	    command->ci = CMD_COMMENT;
 	    return;
 	}
     }
@@ -449,7 +449,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* also new-style comments */
     if (*line == '#') {
 	command->nolist = 1;
-	command->ci = -1;
+	command->ci = CMD_COMMENT;
 	return;
     }    
 
@@ -459,7 +459,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* no command here? */
     if (sscanf(line, "%s", command->cmd) != 1) {
 	command->nolist = 1;
-	command->ci = -1;
+	command->ci = CMD_NULL;
 	return;
     }
 
@@ -503,7 +503,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* if, else, endif controls */
     if (flow_control(line, pZ, pdinfo, command)) {
 	command->nolist = 1;
-	command->ci = -1;
+	command->ci = CMD_NULL;
 	return;
     }
 

@@ -5097,7 +5097,7 @@ int gui_exec_line (char *line,
 	}
     }
 
-    if (cmd.ci < 0) return 0; /* nothing there, or comment */
+    if (cmd.ci < 0) return 0; /* nothing there, or a comment */
 
     if (cmd.errcode) {
         errmsg(cmd.errcode, prn);

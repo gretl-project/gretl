@@ -24,6 +24,8 @@
 
 #define MAXSAVENAME 32
 #define VARDUP     999
+#define CMD_NULL    -1
+#define CMD_COMMENT -2
 
 typedef struct _CMD CMD;
 

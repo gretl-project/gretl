@@ -651,9 +651,10 @@ void exec_line (char *line, PRN *prn)
     }
 
     /* if in batch mode, echo comments in input */
-    if (batch && cmd.ci == -2 && !echo_off) {
+    if (batch && cmd.ci == CMD_COMMENT && !echo_off) {
 	printf("%s", linebak);
     }
+
     if ((err = cmd.errcode)) {
 	errmsg(err, prn);
 	return;
