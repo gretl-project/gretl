@@ -1689,7 +1689,10 @@ static void gretl_website (void)
 
 static void gretl_pdf (void)
 {
-    netscape_open("http://gretl.sourceforge.net/manual.pdf");
+    char manurl[64];
+
+    sprintf(manurl, "http://gretl.sourceforge.net/%s", _("manual.pdf"));    
+    netscape_open(manurl);
 }
 
 static void xy_graph (void)

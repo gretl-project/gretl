@@ -13,7 +13,7 @@ THISDIR=`pwd`
 
 # add gnuplot distribution
 function process_gnuplot {
-    unzip -X $GNUPLOT_ZIPFILE | grep gnuplot | grep -v /$ \
+    unzip -X $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
 	| awk '{ print $NF }' >> MANIFEST
 }
 

@@ -151,7 +151,7 @@ int plot_fcast_errs (int n, const double *obs,
 
 int is_auto_ols_string (const char *s);
 
-
+int gnuplot_has_ttf (void);
 
 
 

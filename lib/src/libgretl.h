@@ -186,7 +186,6 @@ struct _PATHS {
     char gnuplot[MAXLEN];
     char dbhost_ip[16];
     char pngfont[16];
-    int ttfsize;
 };
 
 struct _GRETLTEST {

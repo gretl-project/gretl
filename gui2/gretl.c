@@ -211,12 +211,22 @@ static void gnome_help (void)
 #elif defined(G_OS_WIN32)
 static void win_help (void)
 {
-    char hlpfile[MAXLEN];
+    char hlpshow[MAXLEN];
+    int found = 0;
 
-    sprintf(hlpfile, "hh.exe \"%s\\%s\"", paths.gretldir, _("gretl.chm"));
-    if (WinExec(hlpfile, SW_SHOWNORMAL) < 32) {
-        errbox(_("Couldn't access help file"));
+    sprintf(hlpshow, "hh.exe \"%s\\%s\"", paths.gretldir, _("gretl.chm"));
+    
+    if (WinExec(hlpshow, SW_SHOWNORMAL) < 32) {
+	if (strcmp("gretl.chm", _("gretl.chm"))) {
+	    /* try falling back on untranslated helpfile */
+	    sprintf(hlpshow, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
+	    if (WinExec(hlpshow, SW_SHOWNORMAL) >= 32) found = 1;
+	}
+    } else {
+	found = 1;
     }
+
+    if (!found) errbox(_("Couldn't access help file"));
 }
 
 static int unmangle (const char *dosname, char *longname);
@@ -2023,11 +2033,15 @@ static void gretl_website (void)
 
 static void gretl_pdf (void)
 {
+    char manurl[64];
+
+    sprintf(manurl, "http://gretl.sourceforge.net/%s", _("manual.pdf"));
+
 #ifdef G_OS_WIN32
-    if (goto_url("http://gretl.sourceforge.net/manual.pdf"))
+    if (goto_url(manurl))
 	errbox(_("Failed to open URL"));
 #else
-    netscape_open("http://gretl.sourceforge.net/manual.pdf");
+    netscape_open(manurl);
 #endif
 }
 

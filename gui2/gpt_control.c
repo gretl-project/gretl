@@ -65,11 +65,7 @@ static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *termcombo;
 static GtkWidget *no_ols_check;
-
-#define TTF_SELECT
-#ifdef TTF_SELECT
 static GtkWidget *ttfentry;
-#endif
 
 GtkWidget *filesavebutton;
 
@@ -485,25 +481,14 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-#ifdef TTF_SELECT
-    if (1) {
+    if (ttfentry != NULL) {
 	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(ttfentry));
 
 	if (tmp != NULL) {
-	    char ttf[18] = "";
-	    int size = 0;
-
-	    sscanf(tmp, "%31s %d", ttf, &size);
-	    if (*ttf != 0) {
-		*paths.pngfont = 0;
-		strncat(paths.pngfont, ttf, sizeof(paths.pngfont) - 1);
-		if (size > 0) {
-		    paths.ttfsize = size;
-		}
-	    }
+	    *paths.pngfont = 0;
+	    strncat(paths.pngfont, tmp, sizeof(paths.pngfont) - 1);
 	}
     }
-#endif
 
 #ifdef GNUPLOT_PIPE
     if (spec->edit == 2 || spec->edit == 3) {  /* silent update */
@@ -641,17 +626,9 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	no_ols_check = NULL;
     }
 
-#ifdef TTF_SELECT
-    /* allow for setting TT font (if gnuplot uses libgd and freetype */
-    if (1) {
-	gchar *fontstr = NULL;
-
-	if (*paths.pngfont && paths.ttfsize) {
-	    fontstr = g_strdup_printf("%s %d", paths.pngfont, 
-				      paths.ttfsize);
-	} else if (*paths.pngfont) {
-	    fontstr = g_strdup(paths.pngfont);
-	} 
+    /* set TT font (if gnuplot uses libgd and freetype) */
+    if (gnuplot_has_ttf()) {
+	GtkWidget *ebox;
 
 	/* first a separator */
 	tbl_len++;
@@ -661,26 +638,31 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show (tempwid);
 
 	tbl_len++;
+	ebox = gtk_event_box_new();
+	gretl_tooltips_add(ebox, _("This box may contain the name of a "
+				   "TrueType font, such as arial or verdana, "
+				   "and a size in points.  Leave blank to "
+				   "use the default graph font."));
 	tempwid = gtk_label_new (_("TrueType font"));
+	gtk_container_add(GTK_CONTAINER(ebox), tempwid);
 	gtk_table_attach_defaults(GTK_TABLE (tbl), 
-				  tempwid, 0, 1, tbl_len-1, tbl_len);
+				  ebox, 0, 1, tbl_len-1, tbl_len);
 	gtk_widget_show(tempwid);
+	gtk_widget_show(ebox);
 
 	ttfentry = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(ttfentry), 15);
+	gtk_entry_set_width_chars(GTK_ENTRY(ttfentry), 15);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  ttfentry, 1, 2, tbl_len-1, tbl_len);
-	if (fontstr != NULL) {
-	    gtk_entry_set_text(GTK_ENTRY(ttfentry), fontstr);
-	    g_free(fontstr);
-	} else {
-	    gtk_entry_set_text(GTK_ENTRY(ttfentry), "");
-	}
+	gtk_entry_set_text(GTK_ENTRY(ttfentry), paths.pngfont);
 	g_signal_connect(G_OBJECT(ttfentry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
 	gtk_widget_show (ttfentry);
+    } else {
+	ttfentry = NULL;
     }
-#endif
 }
 
 /* ........................................................... */

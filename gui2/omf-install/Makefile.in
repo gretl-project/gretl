@@ -1,4 +1,4 @@
-topsrc = $top_srcdir@
+topsrc = @top_srcdir@
 tooldir = $(topsrc)/tools
 
 INSTALL = @INSTALL@

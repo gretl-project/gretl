@@ -523,7 +523,7 @@ void edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	return;
     } else {
 	gchar *text;
-	guint pt = GTK_EDITABLE(vwin->w)->current_pos;
+	int pt = GTK_EDITABLE(vwin->w)->current_pos;
 	int len = gtk_text_get_length(GTK_TEXT(vwin->w));
 	int pos = 0;
 
@@ -537,7 +537,7 @@ void edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	    p = q = text + pt;
 	    if (pt > 0)
 		while (p - text && !isspace(*(p-1))) p--;
-	    if (pt < strlen(text))
+	    if (pt < (int) strlen(text))
 		while (*q && !isspace(*q)) q++;
 	    *word = '\0';
 	    strncat(word, p, (q - p > 8)? 8 : q - p);
@@ -882,7 +882,7 @@ void gretl_tooltips_init (void)
 {
     gretl_tips = gtk_tooltips_new();
     gtk_tooltips_enable(gretl_tips); /* redundant? */
-    /* colorize_tooltips(gretl_tips); */
+    colorize_tooltips(gretl_tips); 
 }
 
 void gretl_tooltips_add (GtkWidget *w, const gchar *str)

@@ -449,7 +449,8 @@ static int factorized_vars (double ***pZ,
 }
 
 #ifndef OS_WIN32
-static int old_gnuplot (void)
+
+static int old_gnuplot_png (void)
 {
     /* "color" is wanted for gnuplot 3.7, but not 3.8 */
     static int c = -1; 
@@ -463,17 +464,37 @@ static int old_gnuplot (void)
     }
     return !c;
 }
-#endif
+
+int gnuplot_has_ttf (void)
+{
+    static int t = -1; 
+
+    if (t == -1) {
+	char cmd[512];
+
+	sprintf(cmd, "echo \"set term png font arial\" | %s 2>/dev/null",
+		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
+	t = system(cmd);
+    }
+    return !t;
+}
+
+#else
+
+int gnuplot_has_ttf (void)
+{
+    return 1;
+}
+
+#endif /* OS_WIN32 */
 
 /**
  * get_gretl_png_term_line:
  *
  * Constructs a suitable line for sending to gnuplot to invoke
- * the PNG "terminal".  Checks the environment for settings of 
- * GRETL_PNG_GRAPH_FONT and GRETL_PNG_GRAPH_FONT_SIZE.  If both are 
- * non-NULL, appends a string such as " font 'verdana' 8".  Also
- * appends a color-specification string if the gnuplot PNG driver
- * supports this.
+ * the PNG "terminal".  Checks the environment for setting of 
+ * GRETL_PNG_GRAPH_FONT. Also appends a color-specification string 
+ * if the gnuplot PNG driver supports this.
  *
  * Returns: the term string, "set term png ..."
  */
@@ -481,60 +502,31 @@ static int old_gnuplot (void)
 const char *get_gretl_png_term_line (const PATHS *ppaths)
 {
     static char png_term_line[128];
-    static int done = 0;
+    const char *grfont = NULL;
 
-    if (1 || !done) {
-	const char *grfont = NULL;
-	char *p;
-	int grfsize = 0;
-#ifdef OS_WIN32
-	char pngfont[MAXLEN];
-	char pngfontsize[MAXLEN];
-#endif
+    strcpy(png_term_line, "set term png");
 
-	strcpy(png_term_line, "set term png");
-
-#if defined(OS_WIN32)
-	*pngfont = 0;
-	*pngfontsize = 0;
-	read_reg_val(HKEY_CURRENT_USER, "gretl", "png-font", pngfont);
-	if (*pngfont) grfont = pngfont;
-	read_reg_val(HKEY_CURRENT_USER, "gretl", "png-font-size", pngfontsize);
-	if (*pngfontsize) grfsize = atoi(pngfontsize);
-#elif defined(USE_ENV)
+    if (*ppaths->pngfont != 0) 
+	grfont = ppaths->pngfont;
+    else 
 	grfont = getenv("GRETL_PNG_GRAPH_FONT");
-	p = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
-	if (p != NULL) grfsize = atoi(p);
-#else
-	if (*ppaths->pngfont != 0) grfont = ppaths->pngfont;
-	if (ppaths->ttfsize > 0) grfsize = ppaths->ttfsize;
-#endif
 
-	if (grfont != NULL) {
-	    strcat(png_term_line, " font ");
-	    strcat(png_term_line, grfont);
-	}
-	if (grfsize > 0 && grfsize < 50) {
-	    char tmp[4];
-
-	    sprintf(tmp, " %d", grfsize);
-	    strcat(png_term_line, tmp);
-	}
+    if (grfont != NULL && *grfont != 0) {
+	strcat(png_term_line, " font ");
+	strcat(png_term_line, grfont);
+    }
 
 #ifdef OS_WIN32
-	strcat(png_term_line, 
-	       " xffffff x000000 x202020 xff0000 x0000ff x00ff00");
+    strcat(png_term_line, 
+	   " xffffff x000000 x202020 xff0000 x0000ff x00ff00");
 #else
-	if (old_gnuplot()) {
-	    strcat(png_term_line, " color"); 
-	} else {
-	    strcat(png_term_line, 
-		   " xffffff x000000 x202020 xff0000 x0000ff x00ff00"); 
-	}
-#endif 
-	
-	done = 1;
+    if (old_gnuplot_png()) {
+	strcat(png_term_line, " color"); 
+    } else {
+	strcat(png_term_line, 
+	       " xffffff x000000 x202020 xff0000 x0000ff x00ff00"); 
     }
+#endif 
 
     return png_term_line;
 }

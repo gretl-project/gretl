@@ -246,6 +246,18 @@
       </locale>
     </schema>
 
+    <schema>
+      <key>/schemas/apps/gretl/useqr</key>
+      <applyto>/apps/gretl/useqr</applyto>
+      <owner>gretl</owner>
+      <type>bool</type>
+      <default>FALSE</default>
+      <locale name="C">
+        <short>Use QR decomposition</short>
+        <long>Use QR decomposition (rather than Cholesky) for regression</long>
+      </locale>
+    </schema>
+
 
     <!-- Section: internet -->
 
@@ -321,6 +333,18 @@
       <locale name="C">
         <short>Fixed font</short>
         <long>Monospaced font for use in gretl output</long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/apps/gretl/Png_font</key>
+      <applyto>/apps/gretl/Png_font</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <default>Vera 8</default>
+      <locale name="C">
+        <short>graph font</short>
+        <long>Font for use in gretl screen graphs</long>
       </locale>
     </schema>
 

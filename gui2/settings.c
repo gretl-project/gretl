@@ -98,7 +98,11 @@ typedef struct {
     char *description; /* How the field will show up in the options dialog */
     char *link;        /* in case of radio button pair, alternate string */
     void *var;         /* pointer to variable */
-    char type;         /* 'U' (user) or 'R' (root) for string, 'B' for boolean */
+    char type;         /* 'U' user string
+			  'R' root string
+			  'B' boolean (user) 
+			  'I' "invisible" (user) string 
+		       */
     int len;           /* storage size for string variable (also see Note) */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
@@ -173,6 +177,7 @@ RCVARS rc_vars[] = {
 #ifndef USE_GNOME
     {"App_font", N_("Menu font"), NULL, appfontname, 'U', MAXLEN, 0, NULL},
 #endif
+    {"Png_font", N_("PNG graph font"), NULL, paths.pngfont, 'I', 16, 0, NULL},
     {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
 
@@ -606,7 +611,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		}
 		rc->widget = tempwid;
 		gtk_widget_show (tempwid);
-	    } else { /* string variable */
+	    } else if (rc->type != 'I') { /* string variable */
 		s_count++;
 		s_len++;
 		gtk_table_resize (GTK_TABLE (s_table), s_len, 

@@ -50,8 +50,8 @@ print "Name: \"{app}\\nist\"\n";
 print "Name: \"{app}\\locale\"\n";
 print "Name: \"{app}\\locale\\es\"\n";
 print "Name: \"{app}\\locale\\es\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\..\\gnuplot\"\n";
-print "Name: \"{app}\\..\\gnuplot\\demo\"\n";
+print "Name: \"{app}\\gnuplot\"\n";
+print "Name: \"{app}\\demo\"\n";
 
 # extra GTK module dirs for gtk-2.0
 print "Name: \"{app}\\lib\"\n";
@@ -84,11 +84,6 @@ while ($line = <STDIN>) {
     print "Source: \"$line\"; "; 
     if ($line =~ /\.ini$/) {
 	print "Destdir: \"{win}";
-    } elsif ($line =~ /gnuplot/) {
-	print "Destdir: \"{app}\\..";
-	for ($i = 0; $i < @pathbits - 1; $i++) {
-	    print "\\$pathbits[$i]";
-	}
     } else {
 	print "Destdir: \"{app}";
 	for ($i = 1; $i < @pathbits - 1; $i++) {
@@ -110,7 +105,7 @@ print "Root: HKCU; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
 print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n"; 
 print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"gnuplot\"; ValueData: \"{app}\\..\\gnuplot\\wgnuplot.exe\"\n"; 
+print "\"gnuplot\"; ValueData: \"{app}\\wgnuplot.exe\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"userdir\"; ValueData: \"{app}\\user\\\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
@@ -134,9 +129,7 @@ print "\"editor\"; ValueData: \"c:\\Program Files\\Microsoft Office\\Office\\win
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"toolbar\"; ValueData: \"true\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"png-font\"; ValueData: \"verdana\"\n";   
-print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"png-font-size\"; ValueData: \"8\"\n";   
+print "\"Png_font\"; ValueData: \"verdana 8\"\n";   
 
 # Establish file associations
 

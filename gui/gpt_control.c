@@ -58,6 +58,7 @@ static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *termcombo;
 static GtkWidget *no_ols_check;
+static GtkWidget *ttfentry;
 
 GtkWidget *filesavebutton;
 
@@ -293,7 +294,7 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     }
 
     if (add) {
-	fprintf(ftmp, "%s\n", get_gretl_png_term_line());
+	fprintf(ftmp, "%s\n", get_gretl_png_term_line(&paths));
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
     }
@@ -343,7 +344,7 @@ static int gnuplot_png_init (const char *fname, FILE **fpp)
 	errbox(errtext);
 	return 1;
     }
-    fprintf(*fpp, "%s\n", get_gretl_png_term_line());
+    fprintf(*fpp, "%s\n", get_gretl_png_term_line(&paths));
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
     return 0;
 }
@@ -460,7 +461,16 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	} else {
 	    spec->flags &= ~GPTSPEC_OLS_HIDDEN;
 	}
-    }   
+    }  
+
+    if (ttfentry != NULL) {
+	gchar *tmp = gtk_entry_get_text(GTK_ENTRY(ttfentry));
+
+	if (tmp != NULL) {
+	    *paths.pngfont = 0;
+	    strncat(paths.pngfont, tmp, sizeof(paths.pngfont) - 1);
+	}
+    } 
 
 #ifndef GNUPLOT_PNG
     if (spec->edit == 2 || spec->edit == 3) {  /* silent update */
@@ -592,6 +602,43 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     } else {
 	no_ols_check = NULL;
     }
+
+    /* set TT font (if gnuplot uses libgd and freetype) */
+    if (gnuplot_has_ttf()) {
+	GtkWidget *ebox;
+	
+	/* first a separator */
+	tbl_len++;
+	tempwid = gtk_hseparator_new ();
+	gtk_table_attach_defaults 
+	    (GTK_TABLE (tbl), tempwid, 0, 2, tbl_len-1, tbl_len);  
+	gtk_widget_show (tempwid);
+
+	tbl_len++;
+	ebox = gtk_event_box_new();
+	gretl_tooltips_add(ebox, _("This box may contain the name of a "
+				   "TrueType font, such as arial or verdana, "
+				   "and a size in points.  Leave blank to "
+				   "use the default graph font."));
+	tempwid = gtk_label_new (_("TrueType font"));
+	gtk_container_add(GTK_CONTAINER(ebox), tempwid);
+	gtk_table_attach_defaults(GTK_TABLE (tbl), 
+				  ebox, 0, 1, tbl_len-1, tbl_len);
+	gtk_widget_show(tempwid);
+	gtk_widget_show(ebox);
+
+	ttfentry = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(ttfentry), 15);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  ttfentry, 1, 2, tbl_len-1, tbl_len);
+	gtk_entry_set_text(GTK_ENTRY(ttfentry), paths.pngfont);
+	gtk_signal_connect(GTK_OBJECT(ttfentry), "activate", 
+			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
+			   spec);
+	gtk_widget_show (ttfentry);
+    } else {
+	ttfentry = NULL;
+    }    
 }
 
 /* ........................................................... */
@@ -1159,7 +1206,7 @@ void save_this_graph (GPT_SPEC *spec, const char *fname)
 	return;
     }
  
-    cmds = termtype_to_termstr(spec->termtype, termstr);
+    cmds = termtype_to_termstr(spec->termtype, termstr, &paths);
   
     if (cmds) {
 	if (copyfile(spec->fname, fname)) 
@@ -1215,7 +1262,7 @@ void do_save_graph (const char *fname, char *savestr)
 	return;
     } 
 
-    cmds = termtype_to_termstr(savestr, termstr);  
+    cmds = termtype_to_termstr(savestr, termstr, &paths);  
 
     if (cmds) {
 	if (copyfile(paths.plotfile, fname)) 
