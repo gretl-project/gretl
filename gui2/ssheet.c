@@ -86,6 +86,30 @@ static void set_locator_label (spreadsheet *sheet, GtkTreePath *path,
 
 /* .................................................................. */
 
+static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
+			       GtkTreeViewColumn *column)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    gint nextrow;
+
+    nextrow = gtk_tree_path_get_indices(path)[0] + 1;
+
+    if (nextrow < sheet->datarows) {
+	GtkTreePath *newpath;
+	gchar pstr[8];
+
+	sprintf(pstr, "%d", nextrow);
+	newpath = gtk_tree_path_new_from_string(pstr);
+	if (newpath != NULL) {
+	    gtk_tree_view_set_cursor(view, newpath, column, FALSE);
+	    set_locator_label(sheet, newpath, column);
+	    gtk_tree_path_free(newpath);
+	}
+    }
+}
+
+/* .................................................................. */
+
 static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
 			       const gchar *new_text,
@@ -113,6 +137,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       colnum, new_text, -1);
 	    sheet_modified = 1;
 	}
+	move_to_next_cell(sheet, path, column);
 	gtk_tree_path_free(path);
 	g_free(old_text);
     }
@@ -365,10 +390,6 @@ static void add_data_column (spreadsheet *sheet)
 	/* column 0: markers */
 	gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, 0, &str, -1);
 	gtk_list_store_set(new_store, &new_iter, 0, str, -1);
-#if 0
-	column = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view), 0);
-	gtk_tree_view_column_set_attributes();
-#endif
 	g_free(str);
 
 	/* original data values */
@@ -458,6 +479,39 @@ static void build_sheet_popup (GtkWidget **popup, spreadsheet *sheet)
 		   sheet);
 }
 
+#if 0
+static void render_active_cell (spreadsheet *sheet,
+				GtkTreePath *path,
+				GtkTreeViewColumn *column)
+{
+    GdkRectangle bg, cell;
+
+    fprintf(stderr, "render_active_cell\n");
+    
+    gtk_tree_view_get_background_area(GTK_TREE_VIEW(sheet->view), 
+				      path, column, &bg);
+
+    gtk_cell_renderer_get_size (sheet->currcell,
+				sheet->view,
+				&cell,
+				NULL,
+				NULL,
+				NULL,
+				NULL);
+
+    g_object_set(G_OBJECT(sheet->currcell), "cell-background", "green", NULL);
+
+    gtk_cell_renderer_render (sheet->currcell,
+			      gtk_tree_view_get_bin_window(GTK_TREE_VIEW(sheet->view)),
+			      sheet->view,
+			      &bg,
+			      &cell,
+			      &cell,
+			      0);
+
+}
+#endif
+
 /* ......................................................... */
 
 static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
@@ -465,6 +519,8 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
     GtkTreePath *path;
     GtkTreeViewColumn *column;
     static gint oldrow, oldcol;
+
+    fprintf(stderr, "update_cell_position:\n");
 
     gtk_tree_view_get_cursor(view, &path, &column);
 
@@ -474,17 +530,24 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
 
 	if (newrow != oldrow || newcol != oldcol) {
+	    fprintf(stderr, " activating cell(%d, %d)\n", newrow, newcol);
 	    set_locator_label(sheet, path, column);
 	    oldrow = newrow;
 	    oldcol = newcol;
 	    gtk_tree_view_set_cursor(view, path, column, 
-				     FALSE); /* start editing */
+				     FALSE); /* start editing? */
+#if 0
+	    render_active_cell(sheet, path, column);
+	    /* doesn't work */
+#endif
+	} else {
+	   fprintf(stderr, " still in cell(%d, %d)\n", oldrow, oldcol); 
 	}
 
 	gtk_tree_path_free(path);
     }
 
-    return FALSE;
+    return TRUE;
 }
 
 /* ........................................................... */
@@ -560,7 +623,7 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 	}
     }
 
-    data_status |= (GUI_DATA|MODIFIED_DATA);
+    data_status |= (GUI_DATA | MODIFIED_DATA);
     register_data(NULL, NULL, 0);
 
     if (missobs) {
@@ -577,17 +640,13 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 static void select_first_editable_cell (spreadsheet *sheet)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
-    GtkTreeViewColumn *column;
     GtkTreePath *path;
-    GtkTreeIter iter;
+    GtkTreeViewColumn *column;
 
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    path = gtk_tree_model_get_path(GTK_TREE_MODEL(store), &iter);
+    path = gtk_tree_path_new_from_string("0");
     column = gtk_tree_view_get_column(view, 1);
     gtk_tree_view_set_cursor(view, path, column, FALSE);
     set_locator_label(sheet, path, column);
-    gtk_widget_grab_focus(sheet->view);
 
     gtk_tree_path_free(path);
 }
@@ -783,12 +842,30 @@ static void create_sheet_cell_renderers (spreadsheet *sheet)
     sheet->datacell = r;
 }
 
-static void argfoo (spreadsheet *sheet, GtkTreePath *path,
-		    GtkTreeViewColumn *column)
+static int get_number_from_key (unsigned k)
+{
+    if (k >= GDK_0 && k <= GDK_9) {
+	return k - GDK_0;
+    }
+    
+    if (k >= GDK_KP_0 && k <= GDK_KP_9) {
+	return k - GDK_KP_0;
+    }
+
+    if (k == GDK_minus || k == GDK_KP_Subtract) {
+	return -1;
+    }
+
+    return -999;
+}
+
+static void insert_in_cell (spreadsheet *sheet, GtkTreePath *path,
+			     GtkTreeViewColumn *column, unsigned k)
 {
     GtkCellEditable *editable;
     GdkRectangle bg, cell;
     gchar *pstr;
+    int n;
     
     pstr = gtk_tree_path_to_string(path);
     gtk_tree_view_get_background_area(GTK_TREE_VIEW(sheet->view), 
@@ -796,37 +873,38 @@ static void argfoo (spreadsheet *sheet, GtkTreePath *path,
     gtk_tree_view_get_cell_area(GTK_TREE_VIEW(sheet->view), 
 				path, column, &cell);
 
-    fprintf(stderr, "path='%s', cell x = %d, cell y = %d\n", pstr,
-	    cell.x, cell.y);
-
     editable = gtk_cell_renderer_start_editing (sheet->datacell,
 						NULL,
 						sheet->view,
 						pstr,
 						&bg,
 						&cell,
-						GTK_CELL_RENDERER_FOCUSED);
+						GTK_CELL_RENDERER_FOCUSED |
+						GTK_CELL_RENDERER_SELECTED);
+    g_free(pstr);
 
     g_return_if_fail(GTK_IS_ENTRY(editable));
-    fprintf(stderr, "text: '%s'\n", gtk_entry_get_text(GTK_ENTRY(editable)));
-    gtk_entry_set_text(GTK_ENTRY(editable), "egg");
 
-    gtk_cell_renderer_render (sheet->datacell,
-			      gtk_tree_view_get_bin_window(GTK_TREE_VIEW(sheet->view)),
-			      sheet->view,
-			      &bg,
-			      &cell,
-			      &bg,
-			      GTK_CELL_RENDERER_FOCUSED);
-    g_free(pstr);
+    n = get_number_from_key(k);
+    if (n == -1) {
+	gtk_entry_set_text(GTK_ENTRY(editable), "-");
+    } else {
+	char numstr[2];
+
+	sprintf(numstr, "%d", n);
+	gtk_entry_set_text(GTK_ENTRY(editable), numstr);
+    }
+    /* get the cell updated */
+    g_signal_emit_by_name(editable, "editing_done");
 }
-
 
 /* Below: prevent cursor movement outside of the data area;
    also, start editing if a numeric key is pressed in a cell
 */
 
-#define NUMERIC_KEY(k) (k >= GDK_0 && k <= GDK_9)
+#define NUMERIC_KEY(k) ((k >= GDK_0 && k <= GDK_9) || \
+                        (k >= GDK_KP_0 && k <= GDK_KP_9) || \
+			k == GDK_minus || k == GDK_KP_Subtract)
 
 static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key, 
 				   spreadsheet *sheet)
@@ -854,11 +932,15 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	GtkTreeViewColumn *column;
 
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
-	argfoo(sheet, path, column);
-#if 0
+	insert_in_cell(sheet, path, column, key->keyval);
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, column, TRUE);
-#endif
+	/* problem: the next keystroke overwrites the inserted number,
+	   because when you go into editing mode the existing text is
+	   selected -- that's set in gtkcellrendertext.c.
+	*/
+	
 	gtk_tree_path_free(path);
+	return TRUE;
     } 
 
     return FALSE;
