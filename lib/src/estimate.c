@@ -250,7 +250,10 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
     double x, dy, w2, wmean = 0.0, wsum = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) { 
-	if (Z[pmod->nwt][t] == 0) {
+	if (model_missing(pmod, t)) {
+	    continue;
+	}
+	if (Z[pmod->nwt][t] == 0.0) {
 	    wobs--;
 	    pmod->dfd -= 1;
 	} else {
@@ -264,9 +267,9 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
     x = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (Z[pmod->nwt][t] == 0.0) {
+	if (model_missing(pmod, t) || Z[pmod->nwt][t] == 0.0) {
 	    continue;
-	}
+	}	
 	w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
 	dy = Z[yno][t] - wmean;
 	x += w2 * dy * dy;
@@ -294,6 +297,9 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 	pmod->sigma_wt = pmod->sigma;
 	pmod->ess = 0.0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (model_missing(pmod, t)) {
+		continue;
+	    }
 	    if (Z[pmod->nwt][t] == 0.0) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 		pmod->nobs -= 1;
@@ -2005,23 +2011,30 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	for the series using an aux. regression with squares, and
 	adds that series to the data set */
 {
-    int *tmplist, *list, t, v = pdinfo->v;
-    int i, j, l0 = pmod->list[0], check, shrink;
+    int i, j, t, nxpx;
+    int oldv = pdinfo->v, l0 = pmod->list[0];
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int *list = NULL, *tmplist = NULL;
+    int err = 0, shrink = 0;
     MODEL aux;
 
     gretl_model_init(&aux);
 
-    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
 
     /* add uhat1 to data set temporarily */
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	(*pZ)[v][t] = uhat1[t];
+	(*pZ)[pdinfo->v - 1][t] = uhat1[t];
     }
 
     /* tmplist is first used to construct a list of
        vars to be squared */
     tmplist = gretl_list_new((pmod->ifc)? l0 - 2 : l0 - 1);
-    if (tmplist == NULL) return E_ALLOC;
+    if (tmplist == NULL) {
+	return E_ALLOC;
+    }
 
     j = 1;
     for (i=2; i<=pmod->list[0]; i++) {
@@ -2031,46 +2044,58 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     }
 
     /* now generate the required squares */
-    check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
-    if (check < 1) {
+    nxpx = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
+    if (nxpx < 1) {
 	printf(_("generation of squares failed\n"));
 	free(tmplist);
 	return E_SQUARES;
+    } 
+
+    tmplist = realloc(tmplist, (nxpx + 2) * sizeof *tmplist);
+    if (tmplist == NULL) {
+	return E_ALLOC;
     }
 
-    tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
-    if (tmplist == NULL) return E_ALLOC;
-
-    tmplist[0] = pdinfo->v - v - 1;
+    tmplist[0] = pdinfo->v - oldv - 1;
     for (i=1; i<=tmplist[0]; i++) {
-	tmplist[i] = i + v;
+	tmplist[i] = i + oldv;
     }
 
-    list = gretl_list_add(pmod->list, tmplist, &check);
-    if (check) {
+    list = gretl_list_add(pmod->list, tmplist, &err);
+    if (err) {
 	free(tmplist);
-	return check;
+	return err;
     }
 
-    list[1] = v;
+    list[1] = oldv;
+
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t2;
 
     aux = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.);
-    check = aux.errcode;
-    if (check) shrink = pdinfo->v - v;
-    else {
-	for (t=aux.t1; t<=aux.t2; t++)
-	    (*pZ)[v][t] = aux.yhat[t]; 
-	shrink = pdinfo->v - v - 1;
+    err = aux.errcode;
+    if (err) {
+	shrink = pdinfo->v - oldv;
+    } else {
+	for (t=aux.t1; t<=aux.t2; t++) {
+	    (*pZ)[oldv][t] = aux.yhat[t]; 
+	}
+	shrink = pdinfo->v - oldv - 1;
     }
 
-    if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
+    pdinfo->t1 = t1;
+    pdinfo->t2 = t2;
 
     clear_model(&aux);
+
+    if (shrink > 0) {
+	dataset_drop_vars(shrink, pZ, pdinfo);
+    }
 
     free(tmplist);
     free(list);
 
-    return check;
+    return err;
 }
 
 /**
@@ -2087,7 +2112,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 
 MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    int err, lo, ncoeff, yno, t, nwt, v, n = pdinfo->n;
+    int err, lo, ncoeff, yno, t, nwt, v;
     int shrink, orig_nvar = pdinfo->v;
     double *uhat1, zz;
     int *hsklist;
@@ -2097,13 +2122,16 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     lo = list[0];         /* number of vars in original list */
     yno = list[1];        /* ID number of original dependent variable */
-    ncoeff = list[0] - 1;
+    ncoeff = lo - 1;
     rearrange_list(list);
 
+    /* run initial OLS */
     hsk = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (hsk.errcode) return hsk;
+    if (hsk.errcode) {
+	return hsk;
+    }
 
-    uhat1 = malloc(n * sizeof *uhat1);
+    uhat1 = malloc(pdinfo->n * sizeof *uhat1);
     if (uhat1 == NULL) {
 	hsk.errcode = E_ALLOC;
 	return hsk;
@@ -2111,8 +2139,12 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     /* get residuals, square and log */
     for (t=hsk.t1; t<=hsk.t2; t++) {
-	zz = hsk.uhat[t];
-	uhat1[t] = log(zz * zz);
+	if (na(hsk.uhat[t])) {
+	    uhat1[t] = NADBL;
+	} else {
+	    zz = hsk.uhat[t];
+	    uhat1[t] = log(zz * zz);
+	}
     }
 
     /* run auxiliary regression */
@@ -2157,7 +2189,9 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     hsk.ci = HSK;
 
     shrink = pdinfo->v - orig_nvar;
-    if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
+    if (shrink > 0) {
+	dataset_drop_vars(shrink, pZ, pdinfo);
+    }
 
     free(hsklist);
     free(uhat1);
@@ -2177,13 +2211,27 @@ static double **allocate_hccm_p (int lo, int n)
 	if (p[i] == NULL) {
 	    int j;
 
-	    for (j=0; j<i; j++) free(p[j]);
+	    for (j=0; j<i; j++) {
+		free(p[j]);
+	    }
 	    free(p);
 	    p = NULL;
 	}
     }
 
     return p;
+}
+
+static void free_hccm_p (double **p, int m)
+{
+    if (p != NULL) {
+	int i;
+
+	for (i=0; i<m; i++) {
+	    free(p[i]);
+	}
+	free(p);
+    }
 }
 
 /**
@@ -2201,30 +2249,17 @@ static double **allocate_hccm_p (int lo, int n)
 
 MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    int nobs, m3, lo, index, ncoeff, i, j, n, t, t1, t2;
-    double xx, *st = NULL, *uhat1 = NULL, **p = NULL;
+    int nobs, lo, index, ncoeff, i, j, t, t1, t2, tp;
+    double *st = NULL, *uhat1 = NULL, **p = NULL;
+    double xx;
     MODEL hccm;
 
     *gretl_errmsg = '\0';
 
     gretl_model_init(&hccm);
 
-    n = pdinfo->n;
-    t1 = pdinfo->t1; t2 = pdinfo->t2;
     lo = list[0];
-    m3 = 1 + (lo - 1) * (lo - 1);
-
-    /* first try allocating memory */
-    st = malloc(lo * sizeof *st);
-    uhat1 = malloc(pdinfo->n * sizeof *uhat1);
-    p = allocate_hccm_p(lo, t2 - t1 + 1);
-
-    if (st == NULL || p == NULL || uhat1 == NULL) {
-	hccm.errcode = E_ALLOC;
-	goto bailout;
-    }
-
-    ncoeff = list[0] - 1;
+    ncoeff = lo - 1;
     rearrange_list(list);
 
     /* run a regular OLS */
@@ -2233,8 +2268,21 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	goto bailout;
     }
 
-    hccm.ci = HCCM;
+    t1 = hccm.t1;
+    t2 = hccm.t2;
     nobs = hccm.nobs;
+
+    hccm.ci = HCCM;
+
+    /* now try allocating memory */
+    st = malloc(lo * sizeof *st);
+    uhat1 = malloc(nobs * sizeof *uhat1);
+    p = allocate_hccm_p(lo, nobs);
+
+    if (st == NULL || p == NULL || uhat1 == NULL) {
+	hccm.errcode = E_ALLOC;
+	goto bailout;
+    }    
 
     if (get_use_qr()) {
 	/* vcv is already computed */
@@ -2250,7 +2298,11 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     } 
 
     for (i=1; i<=ncoeff; i++) {
+	tp = 0;
 	for (t=t1; t<=t2; t++) {
+	    if (model_missing(&hccm, t)) {
+		continue;
+	    }
 	    xx = 0.0;
 	    for (j=1; j<=ncoeff; j++) {
 		if (i <= j) {
@@ -2260,28 +2312,34 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 		}
 		xx += hccm.vcv[index] * (*pZ)[list[j+1]][t];
 	    }
-	    p[i][t] = xx;
+	    p[i][tp++] = xx;
 	}
     }
 
+    tp = 0;
     for (t=t1; t<=t2; t++) {
+	if (model_missing(&hccm, t)) {
+	    continue;
+	}	
 	xx = 0.0;
 	for (i=1; i<=ncoeff; i++) {
-	    xx += (*pZ)[list[i+1]][t] * p[i][t];
+	    xx += (*pZ)[list[i+1]][t] * p[i][tp];
 	}
-	if (floateq(xx, 1.0)) xx = 0.0;
-	uhat1[t] = hccm.uhat[t] / (1 - xx);
+	if (floateq(xx, 1.0)) {
+	    xx = 0.0;
+	}
+	uhat1[tp++] = hccm.uhat[t] / (1 - xx);
     }
 
     for (i=1; i<=ncoeff; i++) {
 	xx = 0.0;
-	for (t=t1; t<=t2; t++) {
+	for (t=0; t<nobs; t++) {
 	    xx += p[i][t] * uhat1[t];
 	}
 	st[i] = xx;
     }
 
-    for (t=t1; t<=t2; t++) {
+    for (t=0; t<nobs; t++) {
 	for (i=1; i<=ncoeff; i++) {
 	    p[i][t] *= uhat1[t];
 	}
@@ -2291,7 +2349,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     for (i=1; i<=ncoeff; i++) {
 	for (j=i; j<=ncoeff; j++) {
 	    xx = 0.0;
-	    for (t=t1; t<=t2; t++) {
+	    for (t=0; t<nobs; t++) {
 		xx += p[i][t] * p[j][t];
 	    }
 	    xx = xx * (nobs - 1) / nobs -
@@ -2312,13 +2370,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     free(st);
     free(uhat1);
-
-    if (p != NULL) {
-	for (i=0; i<lo; i++) {
-	    free(p[i]);
-	}
-	free(p);
-    }
+    free_hccm_p(p, lo);
 
     set_model_id(&hccm);
 
