@@ -62,6 +62,7 @@ int ok_in_loop (int ci)
 	ci == SMPL ||
 	ci == SUMMARY ||
 	ci == IF ||
+	ci == ELSE ||
 	ci == ENDIF ||
 	ci == ENDLOOP) 
 	return 1;
@@ -774,101 +775,59 @@ void get_cmd_ci (const char *line, CMD *command)
 
 /* ifthen stuff - conditional execution */
 
-enum {
-    IFGT,
-    IFLT,
-    IFEQ
-} if_condition;
-
-typedef struct {
-    int condition;
-    int lvar, rvar;
-    double lval, rval;
-} if_block;
-
-static void if_block_init (if_block *block)
+int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 {
-    block->lvar = 0;
-    block->rvar = 0;
-    block->lval = 0.0;
-    block->rval = 0.0;
-}
+    GENERATE genr;
+    char formula[MAXLEN];
+    int ret = -1;
 
-static int 
-if_block_set_condition (if_block *block, const char *line, DATAINFO *pdinfo)
-{
-    char op[6], lvar[9], rvar[9];
-    int err = 0, v;
-
-    if (sscanf(line, "if %[^ <=>]%[ <=>] %s", lvar, op, rvar) == 3) {
-	if (strstr(op, ">")) block->condition = IFGT;
-	else if (strstr(op, "<")) block->condition = IFLT;
-	else if (strstr(op, "=")) block->condition = IFEQ;
-	else err = 1;
-	if (!err && (isdigit((unsigned char) lvar[0]) 
-		     || rvar[0] == '.')) { /* numeric lvalue? */
-	    block->lval = atof(lvar);
-	} else if (!err) { /* otherwise try a varname */
-	    v = varindex(pdinfo, lvar);
-	    if (v > 0 && v < pdinfo->v) block->lvar = v;
-	    else {
-		sprintf(gretl_errmsg, 
-			_("Undefined variable '%s' in conditional"), lvar);
-		err = 1;
-	    }
-	}
-	if (!err && (isdigit((unsigned char) rvar[0]) 
-		     || rvar[0] == '.')) { /* numeric rvalue? */
-	    block->rval = atof(rvar);
-	} else if (!err) { /* otherwise try a varname */
-	    v = varindex(pdinfo, rvar);
-	    if (v > 0 && v < pdinfo->v) block->rvar = v;
-	    else {
-		sprintf(gretl_errmsg, 
-			_("Undefined variable '%s' in condition"), rvar);
-		err = 1;
-	    }
-	}
-    } else
-	err = 1;
-
-    return err;
-}
-
-static int 
-if_block_eval_condition (if_block *block, double **Z, DATAINFO *pdinfo)
-{
-    double test;
-
-    if (!block->lvar && !block->rvar) 
-	test = block->lval - block->rval;
-    else if (block->lvar && !block->rvar)
-	test = Z[block->lvar][0] - block->rval;
-    else if (!block->lvar && block->rvar) 
-	test = block->lval - Z[block->rvar][0];
-    else
-	test = Z[block->lvar][0] - Z[block->rvar][0];
-
-    switch (block->condition) {
-    case IFGT:
-	return (test > 0.0);
-    case IFLT:
-	return (test < 0.0);
-    case IFEQ:
-	return floateq(test, 0.0);
-    default:
-	return 0;
+    /* + 2 below to omit "if" */
+    sprintf(formula, "iftest=%s", line + 2);
+    genr = generate(pZ, pdinfo, formula, 0, NULL, 1);
+    if (!genr.errcode && genr.xvec != NULL) {
+	ret = (genr.xvec[0] > 0);
+        free(genr.xvec);
     }
+    return ret;
 }
 
-int if_eval (const char *line, double **Z, DATAINFO *pdinfo)
+int ifstate (int code)
 {
-    if_block block;
+    static int iflevel;
+    static int iffalse;
 
-    if_block_init(&block);
+    switch (code) {
+    case RELAX:
+	iflevel = iffalse = 0;
+	break;
+    case SET_FALSE:
+	iflevel = iffalse = 1;
+	break;
+    case SET_TRUE:
+	iflevel = 1;
+	iffalse = 0;
+	break;
+    case SET_ELSE:
+	if (!iflevel) {
+	    sprintf(gretl_errmsg, "Unmatched \"else\"");
+	    return 1; 
+	}
+	iffalse = !iffalse;
+	break;
+    case SET_ENDIF:
+	if (!iflevel) {
+	    sprintf(gretl_errmsg, "Unmatched \"endif\"");
+	    return 1; 
+	}
+	iflevel = iffalse = 0;
+	break;
+    case IS_FALSE:
+	return iffalse;
+    case CHECK_NEST:
+	return iflevel;
+    }
 
-    if (if_block_set_condition(&block, line, pdinfo))
-	return -1;
-
-    return if_block_eval_condition(&block, Z, pdinfo);
+    return 0;
 }
+
+

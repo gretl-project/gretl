@@ -170,6 +170,74 @@ static int aliased (char *cmd)
     return 0;
 }
 
+#define NO_VARLIST(c) (c == VARLIST || \
+	               c == NOECHO || \
+	               c == QUIT || \
+	               c == SMPL || \
+	               c == EQNPRINT || \
+	               c == TABPRINT || \
+	               c == FCAST || \
+	               c == FCASTERR || \
+	               c == FIT || \
+ 	               c == LABELS || \
+    	               c == INFO || \
+	               c == CRITERIA || \
+	               c == PVALUE || \
+	               c == RUN || \
+	               c == SHELL || \
+	               c == SETOBS || \
+	               c == CHOW || \
+	               c == CUSUM || \
+	               c == CRITICAL || \
+	               c == HAUSMAN || \
+	               c == PANEL || \
+	               c == OPEN || \
+	               c == IMPORT || \
+	               c == ENDLOOP || \
+	               c == SIM || \
+	               c == DELEET || \
+	               c == TESTUHAT || \
+	               c == GENR)
+
+/* ........................................................... */
+
+static int flow_control (const char *line, double ***pZ, 
+			 DATAINFO *pdinfo, CMD *cmd)
+{
+    int stop = ifstate(IS_FALSE);
+
+    /* clear to proceed */
+    if (!stop && cmd->ci != IF && cmd->ci != ELSE && cmd->ci != ENDIF)
+	return 0;
+
+    /* nested if */
+    if (ifstate(CHECK_NEST) && cmd->ci == IF) {
+	sprintf(gretl_errmsg, "Sorry, \"if\"s can't be nested (yet)");
+	cmd->errcode = E_SYNTAX;
+	return 1;
+    }	
+
+    /* impeded by current FALSE condition, can't be changed */
+    if (stop && cmd->ci != ELSE && cmd->ci != ENDIF) 
+	return 1;
+
+    if (cmd->ci == IF) {
+	int ret = if_eval(line, pZ, pdinfo);
+
+	if (ret == -1) 
+	    cmd->errcode = E_SYNTAX;
+	else 
+	    ifstate((ret)? SET_TRUE : SET_FALSE);
+    }
+    else if (cmd->ci == ELSE && ifstate(SET_ELSE)) 
+	cmd->errcode = E_SYNTAX;
+
+    else if (cmd->ci == ENDIF && ifstate(SET_ENDIF)) 
+	cmd->errcode = E_SYNTAX;
+
+    return 1;
+}
+
 /* ........................................................... */
 
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
@@ -221,37 +289,15 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	return;
     }
 
+    /* if, else, endif controls */
+    if (flow_control(line, pZ, pdinfo, command)) {
+	command->nolist = 1;
+	command->ci = -1;
+	return;
+    }
+
     /* commands that never take a list of variables */
-    if (command->ci == VARLIST ||
-	command->ci == IF ||
-	command->ci == ENDIF ||
-	command->ci == NOECHO ||
-	command->ci == QUIT || 
-	command->ci == SMPL ||
-	command->ci == EQNPRINT ||
-	command->ci == TABPRINT ||
-	command->ci == FCAST ||
-	command->ci == FCASTERR ||
-	command->ci == FIT ||
-	command->ci == LABELS ||
-	command->ci == INFO ||
-	command->ci == CRITERIA ||
-	command->ci == PVALUE ||
-	command->ci == RUN ||
-	command->ci == SHELL ||
-	command->ci == SETOBS ||
-	command->ci == CHOW ||
-	command->ci == CUSUM ||
-	command->ci == CRITICAL ||
-	command->ci == HAUSMAN ||
-	command->ci == PANEL ||
-	command->ci == OPEN ||
-	command->ci == IMPORT ||
-	command->ci == ENDLOOP ||
-	command->ci == SIM ||
-	command->ci == DELEET ||
-	command->ci == TESTUHAT ||
-	command->ci == GENR) {
+    if (NO_VARLIST(command->ci)) {
 	command->nolist = 1;
 	return;
     }

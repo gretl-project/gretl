@@ -40,6 +40,7 @@ char *commands[] = {
     "cusum",
     "delete",
     "diff",
+    "else",
     "endif",
     "endloop",
     "eqnprint", 

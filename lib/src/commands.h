@@ -38,6 +38,7 @@ typedef enum {
     CUSUM,
     DELEET,
     DIFF,
+    ELSE,
     ENDIF,
     ENDLOOP,
     EQNPRINT, 

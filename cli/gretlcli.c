@@ -382,7 +382,7 @@ int main (int argc, char *argv[])
 	    }
 	    i = 0;
 	    while (j != 1000 && loop_condition(i, &loop, Z, datainfo)) {
-		if (loop.type == FOR_LOOP)
+		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(&prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, &prn)) {
@@ -484,7 +484,6 @@ void exec_line (char *line, PRN *prn)
     int check, nulldata_n;
     char s1[12], s2[12];
     double rho;
-    static int if_skip;
 
     /* are we ready for this? */
     if (!data_status && !ignore && !ready_for_command(line)) {
@@ -503,11 +502,11 @@ void exec_line (char *line, PRN *prn)
     if (batch && command.ci == -2 && !echo_off) {
 	printf("%s", linebak);
     }
-    if (command.ci < 0) return; /* there's nothing there */
     if ((err = command.errcode)) {
 	errmsg(err, prn);
 	return;
     }
+    if (command.ci < 0) return; /* there's nothing there */    
     if (loopstack) {  /* accumulating loop commands */
 	if (!ok_in_loop(command.ci)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
@@ -523,11 +522,10 @@ void exec_line (char *line, PRN *prn)
 	    }
 	}
     }
+
     if (!echo_off && command.ci != ENDLOOP) 
 	echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 0, 
 		 oflag, cmds);
-
-    if (if_skip && command.ci != ENDIF) return;
 
     /* FIXME ?? */
 /*      if (is_model_ref_cmd(command.ci) &&  */
@@ -834,15 +832,6 @@ void exec_line (char *line, PRN *prn)
 	if (strlen(command.param)) 
 	    help(command.param, paths.helpfile, prn);
 	else help(NULL, paths.helpfile, prn);
-	break;
-
-    case IF:
-	if_skip = !(if_eval(line, Z, datainfo));
-	if (if_skip < 0) err = 1;
-	break;
-
-    case ENDIF:
-	if_skip = 0;
 	break;
 
     case IMPORT:

@@ -3325,7 +3325,6 @@ static int gui_exec_line (char *line,
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
     void *ptr;
-    static int if_skip;
 
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));
@@ -3385,8 +3384,6 @@ static int gui_exec_line (char *line,
 
     /* if rebuilding a session, put the commands onto the stack */
     if (rebuild) cmd_init(line);
-
-    if (if_skip && command.ci != ENDIF) return 0;
 
 #ifdef notdef /* ??? */
      if (is_model_ref_cmd(command.ci)) {
@@ -3719,15 +3716,6 @@ static int gui_exec_line (char *line,
 	else help(NULL, paths.cmd_helpfile, prn);
 	break;
 
-    case IF:
-        if_skip = !(if_eval(line, Z, datainfo));
-        if (if_skip < 0) err = 1;
-        break;
-
-    case ENDIF:
-        if_skip = 0;
-        break;	
-		
     case IMPORT:
 	if (exec_code == SAVE_SESSION_EXEC) break;
         err = getopenfile(line, datfile, &paths, 0, 0);

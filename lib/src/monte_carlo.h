@@ -25,6 +25,16 @@ typedef enum {
     FOR_LOOP
 } loop_types;
 
+typedef enum {
+    SET_FALSE,
+    SET_TRUE,
+    SET_ELSE,
+    SET_ENDIF,
+    IS_FALSE,
+    CHECK_NEST,
+    RELAX
+} ifcodes;
+
 typedef struct {
     int ID;
     int *list;
@@ -107,4 +117,6 @@ void get_cmd_ci (const char *line, CMD *command);
 
 int get_modnum_by_cmdnum (LOOPSET *ploop, const int cmdnum);
 
-int if_eval (const char *line, double **Z, DATAINFO *pdinfo);
+int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
+
+int ifstate (int code);
