@@ -84,7 +84,7 @@ lad.so: lad.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 tramo-x12a.so: tramo-x12a.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB)
 
 progress_bar.so: progress_bar.lo
 	$(LINK) -o $@ $< $(GTK_LIBS)
@@ -120,7 +120,7 @@ lad.lo: lad.c
 	$(COMPILE) $(GRETLINC) $< 
 
 tramo-x12a.lo: tramo-x12a.c
-	$(COMPILE) $(GRETLINC) $< 
+	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
 
 progress_bar.lo: progress_bar.c
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 

@@ -6,6 +6,8 @@ version 1.0.1
 - fix bug in saving gnuplot commands to file
 - updates to updater function in gui program (both gui and gui2)
 - add rudimentary plugin support for TRAMO and X-12-ARIMA
+- fix font encoding for postscript graphs in gtk-1.2 version of
+  gretl_x11 (also make postscript graphs in color by default)
 
 11/15/02 version 1.0
 - change *nix library name to libgretl-1.0

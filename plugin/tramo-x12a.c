@@ -10,7 +10,7 @@
 typedef enum {
     D11,     /* seasonally adjusted series */
     D12,     /* trend/cycle */
-    D13      /* irregular component */
+    D13,     /* irregular component */
     TRIGRAPH /* graph showing all of the above */
 } x12a_objects;
 
@@ -98,10 +98,7 @@ static int x12a_dialog (x12a_request *request)
 
     ret = gtk_dialog_run (GTK_DIALOG(request->dialog));
 
-    switch (ret) {
-    case GTK_RESPONSE_ACCEPT: return 1;
-    case GTK_RESPONSE_REJECT: return 0;	
-    }  
+    if (ret == GTK_RESPONSE_ACCEPT) return 1;
 
     return 0;
 }
@@ -202,7 +199,7 @@ static void truncate (char *str, int n)
 }
 
 static int graph_x12a_series (double **Z, DATAINFO *pdinfo, 
-			      PATHS *paths, int varno)
+			      PATHS *paths)
 {
     FILE *fp = NULL;
     int t;
@@ -224,7 +221,7 @@ static int graph_x12a_series (double **Z, DATAINFO *pdinfo,
 	    "plot '-' using :(1.0):($1-1.0) w yerrorbars title '%s', \\\n"
 	    "1.0 notitle\n", I_("irregular"));
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g\n", Z[pdinfo->v - 1][t]);
+	fprintf(fp, "%g\n", Z[D13 + 1][t]);
     }
     fprintf(fp, "e\n");
 
@@ -232,24 +229,24 @@ static int graph_x12a_series (double **Z, DATAINFO *pdinfo,
     fprintf(fp, "set origin 0.0,0.33\n"
 	    "plot '-' using 1 w l title '%s', \\\n"
 	    " '-' using 1 w l title '%s'\n",
-	    pdinfo->varname[varno], I_("trend/cycle"));
+	    pdinfo->varname[0], I_("trend/cycle"));
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[varno][t]);
+	fprintf(fp, "%g\n", Z[0][t]);
     fprintf(fp, "e , \\\n");
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[pdinfo->v - 2][t]);
+	fprintf(fp, "%g\n", Z[D12 + 1][t]);
     fprintf(fp, "e\n");
 
     /* actual vs seasonally adjusted */
     fprintf(fp, "set origin 0.0,0.66\n"
 	    "plot '-' using 1 w l title '%s', \\\n"
 	    " '-' using 1 w l title '%s'\n",
-	    pdinfo->varname[varno], I_("adjusted"));
+	    pdinfo->varname[0], I_("adjusted"));
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[varno][t]);
+	fprintf(fp, "%g\n", Z[0][t]);
     fprintf(fp, "e\n");
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[pdinfo->v - 3][t]);
+	fprintf(fp, "%g\n", Z[D11 + 1][t]);
 
     fprintf(fp, "unset multiplot\n");
 
@@ -266,15 +263,28 @@ static int graph_x12a_series (double **Z, DATAINFO *pdinfo,
     return 0;
 }
 
+static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
+			   double **srcZ, DATAINFO *srcinfo, int srcv)
+{
+    int t;
+
+    for (t=0; t<targinfo->n; t++) {
+	targZ[targv][t] = srcZ[srcv][t];
+    }
+
+    strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
+    strcpy(targinfo->label[targv], srcinfo->label[srcv]);
+}
+
 static int add_x12a_series (const char *fname, int code,
-			    double ***pZ, DATAINFO *pdinfo,
-			    int varno)
+			    double **Z, DATAINFO *pdinfo,
+			    int v)
 {
     FILE *fp;
     char *p, line[128], varname[16], sfname[MAXLEN], date[8];
     double x;
     int d, yr, per, err = 0;
-    int t, v = pdinfo->v;
+    int t;
 
     strcpy(sfname, fname);
     p = strrchr(sfname, '.');
@@ -287,23 +297,16 @@ static int add_x12a_series (const char *fname, int code,
     }
 
     /* formulate name of new variable to add */
-    strcpy(varname, pdinfo->varname[varno]);
+    strcpy(varname, pdinfo->varname[0]);
     truncate(varname, 4);
     strcat(varname, "_");
     strcat(varname, x12a_series_strings[code]);
 
-    /* expand the dataset */
-    if (dataset_add_vars(1, pZ, pdinfo)) {
-	sprintf(gretl_errmsg, _("Out of memory adding data"));
-	fclose(fp);
-	return 1;
-    }
-
     /* copy varname and label into place */
     strcpy(pdinfo->varname[v], varname);
-    sprintf(pdinfo->label[v], _(x12a_descrip_formats[code]), pdinfo->varname[varno]);
+    sprintf(pdinfo->label[v], _(x12a_descrip_formats[code]), pdinfo->varname[0]);
 
-    for (t=0; t<pdinfo->n; t++) (*pZ)[v][t] = NADBL;
+    for (t=0; t<pdinfo->n; t++) Z[v][t] = NADBL;
 
     /* grab the data from the x12arima file */
     while (fgets(line, 127, fp)) {
@@ -316,11 +319,12 @@ static int add_x12a_series (const char *fname, int code,
 	per = d % 100;
 	sprintf(date, "%d.%d", yr, per);
 	t = dateton(date, pdinfo);
+	/* fprintf(stderr, "date='%s', t=%d\n", date, t); */
 	if (t < 0 || t >= pdinfo->n) {
 	    err = 1;
 	    break;
 	}
-	(*pZ)[v][t] = x;
+	Z[v][t] = x;
     }
 
     fclose(fp);
@@ -328,21 +332,7 @@ static int add_x12a_series (const char *fname, int code,
     return err;
 }
 
-int *make_savelist (void)
-{
-    int *list = malloc(4 * sizeof *list);
-
-    if (list == NULL) return NULL;
-    
-    list[0] = 3;
-    list[1] = D11;
-    list[2] = D12;
-    list[3] = D13;
-
-    return list;
-}
-
-static int set_opts (x12a_request *request)
+static void set_opts (x12a_request *request)
 {
     int i;
 
@@ -358,38 +348,160 @@ static int set_opts (x12a_request *request)
     }
 }
 
+static int write_spc_file (const char *fname, 
+			   double **Z, DATAINFO *pdinfo, 
+			   int varnum, int *varlist, 
+			   x12a_request *request)
+{
+    double x;
+    FILE *fp;
+    int i, j, t;
+    int startyr, startper;
+    char tmp[8];
+
+    fp = fopen(fname, "w");
+    if (fp == NULL) return 1;    
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif 
+
+    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
+    startyr = (int) x;
+    sprintf(tmp, "%g", x);
+    startper = atoi(strchr(tmp, '.') + 1);
+
+    fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, 
+	    pdinfo->varname[varnum]);
+    fprintf(fp, " start=%d.%d\n", startyr, startper);
+    fprintf(fp, " data=(\n");
+
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(Z[varnum][t])) {
+	    fprintf(fp, "-99999 "); /* FIXME? */
+	} else {
+	    fprintf(fp, "%g ", Z[varnum][t]);
+	}
+	if ((i + 1) % 7 == 0) fputs("\n", fp);
+	i++;
+    }
+    fputs(" )\n}\n", fp);
+
+    /* FIXME: make these values configurable */
+    fputs("automdl{}\nx11{", fp);
+
+    /* construct list of vars to be grabbed */
+    varlist[0] = 0;
+    j = 1;
+    for (i=0; i<TRIGRAPH; i++) {
+	if (request->opt[TRIGRAPH].save || request->opt[i].save) {
+	    varlist[0] += 1;
+	    varlist[j++] = i;
+	}
+    }
+    
+    if (varlist[0] > 0) {
+	if (varlist[0] == 1) {
+	    fprintf(fp, " save=%s ", x12a_series_strings[varlist[1]]); 
+	} else {
+	    fputs(" save=( ", fp);
+	    for (i=1; i<=varlist[0]; i++) {
+		fprintf(fp, "%s ", x12a_series_strings[varlist[i]]);
+	    }
+	    fputs(") ", fp);
+	}
+    }
+
+    fputs("}\n", fp);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fp);
+
+    return 0;
+}
+
+static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
+{
+    targ->sd0 = src->sd0;
+    strcpy(targ->stobs, src->stobs); 
+    targ->t1 = src->t1;
+    targ->t2 = src->t2;
+    targ->pd = src->pd;
+    targ->time_series = src->time_series;
+}
+
+static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
+				 double **x12Z, DATAINFO *x12info,
+				 int *varlist, x12a_request *request)
+{
+    int i, v, j, addvars = 0;
+
+    /* how many vars are wanted, and new? */
+    for (i=1; i<=varlist[0]; i++) {
+	if (request->opt[varlist[i]].save && 
+	    varindex(pdinfo, x12info->varname[i]) == pdinfo->v) {
+	    addvars++;
+	}
+    }
+
+    if (addvars > 0 && dataset_add_vars(addvars, pZ, pdinfo)) {
+	strcpy(gretl_errmsg, _("Failed to allocate memory for new data"));
+	return 1;
+    }
+
+    j = pdinfo->v - addvars;
+    for (i=1; i<=varlist[0]; i++) {
+	if (request->opt[varlist[i]].save) {
+	    v = varindex(pdinfo, x12info->varname[i]);
+	    if (v < pdinfo->v) {
+		copy_variable(*pZ, pdinfo, v, x12Z, x12info, i);
+	    } else {
+		copy_variable(*pZ, pdinfo, j++, x12Z, x12info, i);
+	    }
+	}
+    }
+
+    return 0;
+}
+
 int write_x12a_data (char *fname, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     PATHS *paths, int *graph,
 		     const char *x12a, const char *x12adir)
 {
-    int i, t, err = 0;
-    char tmp[8], varname[9], cmd[MAXLEN];
-    int startyr, startper;
-    int *savelist = NULL;
-    double x;
+    int i, doit, err = 0;
+    char varname[9], cmd[MAXLEN];
+    int varlist[4];
     FILE *fp = NULL;
     x12a_request request;
-    int doit;
+    double **x12Z;
+    DATAINFO *x12info;
 
-    doit = x12a_dialog(&request); 
-
-    if (!doit) {
-	gtk_widget_destroy(request.dialog);
-	return 0;
-    }
-
-    set_opts(&request);
-
-    gtk_widget_destroy(request.dialog);
-
+    /* sanity check */
     *gretl_errmsg = 0;
-
     if (!pdinfo->vector[varnum]) {
 	sprintf(gretl_errmsg, "%s %s", pdinfo->varname[varnum], 
 		_("is a scalar"));
 	return 1;
     }
+
+    /* show dialog and get option settings */
+    doit = x12a_dialog(&request); 
+    if (!doit) {
+	gtk_widget_destroy(request.dialog);
+	return 0;
+    }
+    set_opts(&request);
+    gtk_widget_destroy(request.dialog);
+
+    /* create little temporary dataset */
+    x12info = create_new_dataset(&x12Z, 4, pdinfo->n, 0);
+    if (x12info == NULL) return E_ALLOC;
+    copy_basic_data_info(x12info, pdinfo);
 
     /* make a default x12a.mdl file if it doesn't already exist */
     sprintf(fname, "%s%cx12a.mdl", x12adir, SLASH);
@@ -404,77 +516,39 @@ int write_x12a_data (char *fname, int varnum,
     }
 
     sprintf(varname, pdinfo->varname[varnum]);
+
+    /* write out the .spc file for x12a */
     sprintf(fname, "%s%c%s.spc", x12adir, SLASH, varname);
+    write_spc_file(fname, *pZ, pdinfo, varnum, varlist, &request);
 
-    fp = fopen(fname, "w");
-    if (fp == NULL) return 1;
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif 
-
-    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
-    startyr = (int) x;
-    sprintf(tmp, "%g", x);
-    startper = atoi(strchr(tmp, '.') + 1);
-
-    fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, varname);
-    fprintf(fp, " start=%d.%d\n", startyr, startper);
-    fprintf(fp, " data=(\n");
-
-    i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (na((*pZ)[varnum][t])) {
-	    fprintf(fp, "-99999 "); /* FIXME? */
-	} else {
-	    fprintf(fp, "%g ", (*pZ)[varnum][t]);
-	}
-	if ((i + 1) % 7 == 0) fputs("\n", fp);
-	i++;
-    }
-    fputs(" )\n}\n", fp);
-
-    savelist = make_savelist();
-
-    /* FIXME: make these values configurable */
-    fputs("automdl{}\nx11{", fp);
-    
-    if (savelist != NULL) {
-	if (savelist[0] == 1) {
-	    fprintf(fp, " save=%s ", x12a_series_strings[savelist[1]]); 
-	} else {
-	    fputs(" save=( ", fp);
-	    for (i=1; i<=savelist[0]; i++) {
-		fprintf(fp, "%s ", x12a_series_strings[savelist[i]]);
-	    }
-	    fputs(") ", fp);
-	}
-    }
-
-    fputs("}\n", fp);
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
-
-    if (fp != NULL) {
-	fclose(fp);
-    }
-
-    /* FIXME win32 */
+    /* run the x12a program -- FIXME win32 */
     sprintf(cmd, "cd %s && %s %s -r -p -q >/dev/null", x12adir, x12a, varname);
-    system(cmd);
+    err = system(cmd);
+    
+    if (!err) {
+	sprintf(fname, "%s%c%s.out", x12adir, SLASH, varname); 
 
-    sprintf(fname, "%s%c%s.out", x12adir, SLASH, varname); 
-
-    if (savelist != NULL) {
-	for (i=1; i<=savelist[0]; i++) {
-	    err = add_x12a_series (fname, savelist[i], pZ, pdinfo, varnum);
+	/* save vars locally if needed; graph if wanted */
+	if (varlist[0] > 0) {
+	    copy_variable(x12Z, x12info, 0, *pZ, pdinfo, varnum);
+	    for (i=1; i<=varlist[0]; i++) {
+		err = add_x12a_series(fname, varlist[i], x12Z, x12info, i);
+	    }
+	    if (request.opt[TRIGRAPH].save) {
+		err = graph_x12a_series(x12Z, x12info, paths);
+		if (!err) *graph = 1;
+	    }
 	}
-	/* testing */
-	err = graph_x12a_series(*pZ, pdinfo, paths, varnum);
-	if (!err) *graph = 1;
+
+	/* now save the local vars to main dataset, if wanted */
+	if (request.savevars > 0) {
+	    err = save_vars_to_dataset(pZ, pdinfo, x12Z, x12info, varlist, &request);
+	}
     }
+
+    free_Z(x12Z, x12info);
+    clear_datainfo(x12info, CLEAR_FULL);
+    free(x12info);
 
     return err;
 }

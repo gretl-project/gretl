@@ -1183,7 +1183,7 @@ int termtype_to_termstr (char *termtype, char *termstr)
     int cmds = 0;
 
     if (!strcmp(termtype, "postscript")) 
-	strcpy(termstr, "postscript eps");
+	strcpy(termstr, "postscript eps color"); /* color? */
     else if (!strcmp(termtype, "fig")) 
 	strcpy(termstr, "fig");
     else if (!strcmp(termtype, "latex")) 
