@@ -1540,7 +1540,7 @@ void gretl_fork (const char *prog, const char *arg)
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
-    const char *suppress = "--no-init-file";
+    const char *suppress = "--no-restore";
     FILE *fp;
     int i;
     char *s0, *s1, *s2;
@@ -1574,10 +1574,18 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     }
 
     if (dataset_is_time_series(datainfo)) {
-	fprintf(fp, "source(\"%s\")\n", Rdata);
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rdata);
     } else {
-	fprintf(fp, "gretldata <- read.table(\"%s\")\n", Rdata);
-	fprintf(fp, "attach(gretldata)\n");
+	char Rtmp[MAXLEN];
+	FILE *fq;
+
+	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
+	fq = fopen(Rtmp, "w");
+	fprintf(fq, "gretldata <- read.table(\"%s\")\n", Rdata);
+	fprintf(fq, "attach(gretldata)\n");
+	fclose(fq);
+
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
     }
 
     fclose(fp);
@@ -1603,12 +1611,21 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	perror("fork");
 	return;
     } else if (pid == 0) {  
+#if 1
 	if (i == 1)
 	    execlp(s0, s0, suppress, NULL);
 	else if (i == 2)
 	    execlp(s0, s0, s1, suppress, NULL);
 	else if (i == 3)
 	    execlp(s0, s0, s1, s2, suppress, NULL);
+#else
+	if (i == 1)
+	    execlp(s0, s0, NULL);
+	else if (i == 2)
+	    execlp(s0, s0, s1, NULL);
+	else if (i == 3)
+	    execlp(s0, s0, s1, s2, NULL);
+#endif
 	perror("execlp");
 	_exit(EXIT_FAILURE);
     }

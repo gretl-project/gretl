@@ -1110,14 +1110,13 @@ void populate_varlist (void)
     gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
     gtk_tree_selection_select_iter(select, &iter);
+
     if (!check_connected) {
 	g_signal_connect (G_OBJECT(select), "changed",
 			  G_CALLBACK(check_varmenu_state),
 			  mdata);
 	check_connected = 1;
     }
-
-    fprintf(stderr, "populate_varlist(), mdata->popup = %p\n", (void *) mdata->popup);
 
     if (!click_connected) {
 	g_signal_connect (G_OBJECT(mdata->listbox), "button_press_event",
@@ -1820,7 +1819,7 @@ static char *slash_convert (char *str, int which)
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
-    const char *suppress = "--no-init-file";
+    const char *suppress = "--no-restore";
     FILE *fp;
 #ifdef G_OS_WIN32
     char renv[MAXLEN];
@@ -1864,18 +1863,32 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 
     if (dataset_is_time_series(datainfo)) {
 #ifdef G_OS_WIN32
-	fprintf(fp, "source(\"%s\")\n", slash_convert(Rdata, FROM_BACKSLASH));
-#else
-	fprintf(fp, "source(\"%s\")\n", Rdata);
-#endif
-    } else {
-#ifdef G_OS_WIN32
-	fprintf(fp, "gretldata <- read.table(\"%s\")\n", 
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
 		slash_convert(Rdata, FROM_BACKSLASH));
 #else
-	fprintf(fp, "gretldata <- read.table(\"%s\")\n", Rdata);
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rdata);
 #endif
-	fprintf(fp, "attach(gretldata)\n");
+    } else {
+	char Rtmp[MAXLEN];
+	FILE *fq;
+
+	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
+	fq = fopen(Rtmp, "w");
+#ifdef G_OS_WIN32
+	fprintf(fq, "gretldata <- read.table(\"%s\")\n", 
+		slash_convert(Rdata, FROM_BACKSLASH));
+#else
+	fprintf(fq, "gretldata <- read.table(\"%s\")\n", Rdata);
+#endif
+	fprintf(fq, "attach(gretldata)\n");
+	fclose(fq);
+
+#ifdef G_OS_WIN32
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
+		slash_convert(Rtmp, FROM_BACKSLASH));
+#else
+	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
+#endif	
     }
 
     fclose(fp);
