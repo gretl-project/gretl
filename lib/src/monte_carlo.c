@@ -1961,6 +1961,7 @@ int loop_exec (LOOPSET *loop, char *line,
 {
     CMD cmd;
     MODEL *lastmod = models[0];
+    char linecpy[MAXLINE];
     int m = 0, lround = 0, ignore = 0;
     int err = 0;
 
@@ -2002,8 +2003,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	}
 
 	for (j=0; !err && j<loop->ncmds; j++) {
-	    char linecpy[MAXLINE];
-
 #ifdef LOOP_DEBUG
 	    fprintf(stderr, "loop->lines[%d] = '%s'\n", j, loop->lines[j]);
 #endif
@@ -2207,10 +2206,6 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    } /* end switch on specific command number */
 
-	    if (err) {
-		fprintf(stderr, "error in '%s'\n", linecpy);
-	    }
-
 	} /* end execution of commands within loop */
 
 	lround++;
@@ -2218,9 +2213,10 @@ int loop_exec (LOOPSET *loop, char *line,
     } /* end iterations of loop */
 
     if (err) {
-	print_gretl_errmsg(prn);
+	errmsg(err, prn);
+	pprintf(prn, ">> %s\n", linecpy);
     } else if (loop->err) {
-	print_gretl_errmsg(prn);
+	errmsg(loop->err, prn);
 	err = loop->err;
     }
 
