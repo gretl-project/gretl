@@ -1239,8 +1239,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 				double ***pZ, DATAINFO *pdinfo, PRN *prn,
 				int plot)
 {
-    int pv, err = 0;
-    int t;
+    int t, pv, err = 0;
     double *maxerr;
     int time_series = (pdinfo->time_series == TIME_SERIES);
 
@@ -1260,11 +1259,15 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	if (na(fr->actual[t]) || na(fr->fitted[t])) {
+	if (na(fr->actual[t])) {
+	    bufspace(15, prn);
+	} else {
+	    gretl_printxs(fr->actual[t], 15, PRINT, prn);
+	}
+	if (na(fr->fitted[t])) {
 	    pputc(prn, '\n');
 	    continue;
 	}
-	gretl_printxs(fr->actual[t], 15, PRINT, prn);
 	gretl_printxs(fr->fitted[t], 15, PRINT, prn);
 	gretl_printxs(fr->sderr[t], 15, PRINT, prn);
 	maxerr[t] = fr->tval * fr->sderr[t];

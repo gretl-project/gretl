@@ -1776,6 +1776,18 @@ static void fcast_adjust_t1_t2 (const MODEL *pmod,
     *t2 = my_t2;
 }
 
+static int 
+fcast_x_missing (const int *list, const double **Z, int t)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+	if (na(Z[list[i]][t])) return 1;
+    }
+
+    return 0;
+}
+
 /* 
    Below: the method for generating forecasts and prediction errors
    that is presented in Wooldridge's Introductory Econometrics,
@@ -1790,9 +1802,8 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     DATAINFO *finfo = NULL;
     MODEL fmod; 
     FITRESID *fr;
-    int *list = NULL;
-    int ft1, ft2;
-    int i, j, k, t, nfcast, n_est, nv;
+    int *flist = NULL;
+    int i, k, t, n_est, nv;
     int yno = pmod->list[1];
     char t1str[OBSLEN], t2str[OBSLEN];
 
@@ -1818,27 +1829,29 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	return fr;
     }
 
-    ft1 = dateton(t1str, pdinfo);
-    ft2 = dateton(t2str, pdinfo);
-    if (ft1 < 0 || ft2 < 0 || ft2 <= ft1) {
+    fr->t1 = dateton(t1str, pdinfo);
+    fr->t2 = dateton(t2str, pdinfo);
+
+    if (fr->t1 < 0 || fr->t2 < 0 || fr->t2 <= fr->t1) {
 	fr->err = E_OBS;
 	return fr;
     }
 
     /* move endpoints if there are missing vals for the
        independent variables */
-    fcast_adjust_t1_t2(pmod, (const double **) *pZ, &ft1, &ft2);
+    fcast_adjust_t1_t2(pmod, (const double **) *pZ, &fr->t1, &fr->t2);
 
     /* number of obs for which forecasts will be generated */
-    nfcast = ft2 - ft1 + 1;
+    fr->nobs = fr->t2 - fr->t1 + 1;
 
-    if (allocate_fit_resid_arrays(fr, nfcast, 1)) {
+    if (allocate_fit_resid_arrays(fr, fr->nobs, 1)) {
 	fr->err = E_ALLOC;
 	return fr;
     }
 
     nv = pmod->list[0];
     if (!pmod->ifc) nv++;
+
     n_est = pmod->t2 - pmod->t1 + 1;
 
     finfo = create_new_dataset(&fZ, nv, n_est, 0);
@@ -1853,16 +1866,17 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     }
 
     /* create new list */
-    list = malloc((finfo->v + 1) * sizeof *list);
-    if (list == NULL) {
+    flist = malloc((finfo->v + 1) * sizeof *flist);
+    if (flist == NULL) {
 	fr->err = E_ALLOC;
 	goto fcast_bailout;
     }
-    list[0] = finfo->v;
-    list[1] = 1;
-    list[2] = 0;
-    for (i=3; i<=list[0]; i++) {
-	list[i] = i - 1;
+
+    flist[0] = finfo->v;
+    flist[1] = 1;
+    flist[2] = 0;
+    for (i=3; i<=flist[0]; i++) {
+	flist[i] = i - 1;
     }
 
     gretl_model_init(&fmod);
@@ -1872,36 +1886,47 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 
 #ifdef FCAST_DEBUG
     printf("get_fcast_with_errs: ft1=%d, ft2=%d, pmod->t1=%d, pmod->t2=%d\n",
-	   ft1, ft2, pmod->t1, pmod->t2);
+	   fr->t1, fr->t2, pmod->t1, pmod->t2);
 #endif
 
-    /* FIXME: case of missing obs within model range */
+    for (k=0; k<fr->nobs; k++) {
+	int tk = k + fr->t1;
 
-    for (k=0; k<nfcast; k++) {
+	fr->actual[k] = (*pZ)[yno][tk];
 
-	if (model_missing(pmod, k + ft1)) {
+	if (fcast_x_missing(pmod->list, (const double **) *pZ, tk)) {
 	    fr->sderr[k] = fr->fitted[k] = NADBL;
-	    fr->actual[k] = (*pZ)[pmod->list[1]][k + ft1];
 	    continue;
 	}
 
 	/* form modified indep vars: original data minus the values
-	   to be used for the forecast */
-	for (i=3; i<=list[0]; i++) {
-	    j = (pmod->ifc)? pmod->list[i] : pmod->list[i-1];
+	   to be used for the forecast 
+	*/
+	for (i=3; i<=flist[0]; i++) {
+	    int v = (pmod->ifc)? pmod->list[i] : pmod->list[i-1];
+	    const double *xv = (*pZ)[v];
+
 	    for (t=0; t<finfo->n; t++) {
-		fZ[i-1][t] = (*pZ)[j][t + pmod->t1] 
-		    - (*pZ)[j][k + ft1];
+		int tp = t + pmod->t1;
+
+		if (na(xv[tp])) {
+		    fZ[i-1][t] = NADBL;
+		} else {
+		    fZ[i-1][t] = xv[tp] - xv[tk];
+		}
 	    }
 	}
-	clear_model(&fmod);
-	fmod = lsq(list, &fZ, finfo, OLS, OPT_A, 0.0);
+
+	fmod = lsq(flist, &fZ, finfo, OLS, OPT_A, 0.0);
+
 	if (fmod.errcode) {
 	    fr->err = fmod.errcode;
 	    clear_model(&fmod);
 	    goto fcast_bailout;
 	}
+
 	fr->fitted[k] = fmod.coeff[0];
+
 	/* what exactly do we want here? */
 #ifdef GIVE_SDERR_OF_EXPECTED_Y
 	fr->sderr[k] = fmod.sderr[0];
@@ -1909,22 +1934,17 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	fr->sderr[k] = sqrt(fmod.sderr[0] * fmod.sderr[0] + 
 			    fmod.sigma * fmod.sigma);
 #endif
-	fr->actual[k] = (*pZ)[pmod->list[1]][k + ft1];
+	clear_model(&fmod);
     }
-
-    clear_model(&fmod);
 
     fr->tval = tcrit95(pmod->dfd);
     strcpy(fr->depvar, pdinfo->varname[yno]);
-
-    fr->t1 = ft1;
-    fr->t2 = ft2;
-    fr->nobs = ft2 - ft1 + 1;
     fr->df = pmod->dfd;
 
  fcast_bailout:
+
     free_Z(fZ, finfo);
-    free(list);
+    free(flist);
     clear_datainfo(finfo, CLEAR_FULL);
     free(finfo);
 

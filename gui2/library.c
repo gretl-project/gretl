@@ -1126,9 +1126,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 	gui_errmsg(fr->err);
 	free_fit_resid(fr);
     } else {
-	err = text_print_fcast_with_errs (fr, 
-					  &Z, datainfo, prn,
-					  1);
+	err = text_print_fcast_with_errs(fr, &Z, datainfo, prn, 1);
 	if (!err) {
 	    register_graph();
 	}
