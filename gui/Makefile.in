@@ -1,4 +1,4 @@
-topsrc = ..
+topsrc = @topsrc@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -77,7 +77,7 @@ docdir = $(topsrc)/doc
 #### End of system configuration section. ####
 
 SHELL = /bin/sh
-LIBTOOL = $(topsrc)/libtool
+LIBTOOL = ../libtool
 PROG  = gretl_x11
 
 vpath %.c $(topsrc)/cli
@@ -103,8 +103,8 @@ install-strip: $(PROG) install-data $(query_install_gnome)
 	$(LIBTOOL) $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
 
 install-data: installdirs
-	$(INSTALL_PROGRAM) $(topsrc)/gretl_sh $(bindir)/gretl
-	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gretldir)
+	$(INSTALL_PROGRAM) ../gretl_sh $(bindir)/gretl
+	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(gretldir)
 	$(INSTALL_DATA) $(topsrc)/COPYING $(gretldir)
 
 install-exec: $(PROG) installdirs 

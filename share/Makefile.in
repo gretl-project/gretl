@@ -1,4 +1,4 @@
-topsrc = ..
+topsrc = @topsrc@
 
 prefix = @prefix@
 have_gtk = @have_gtk@

@@ -1,4 +1,7 @@
-tooldir = ../tools
+topsrc = @topsrc@
+
+tooldir = $(topsrc)/tools
+libsrc = $(topsrc)/lib/src
 
 CC = @CC@
 CFLAGS = @CFLAGS@
@@ -23,7 +26,7 @@ ifeq ($(havegtk),2.0)
   RAND_LIBS += $(GLIB_LIBS)
 endif
 
-override CFLAGS += -I../lib/src $(DEFINES)
+override CFLAGS += -I$(libsrc) $(DEFINES)
 
 all: nistcheck
 
