@@ -215,7 +215,7 @@ static void try_to_get_windows_font (void)
     h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);
     if (h_dc == NULL) return;
 
-    h_font = GetStockObject(DEFAULT_GUI_FONT); 
+    h_font = GetStockObject(SYSTEM_FONT); /* was DEFAULT_GUI_FONT */
     if (h_font == NULL || !SelectObject(h_dc, h_font)) {
 	DeleteDC(h_dc);
 	return;
