@@ -1596,7 +1596,7 @@ static void print_aicetc_value (double x, PRN *prn)
 
     if ((p = strstr(dstr, "+00")) ||
 	(p = strstr(dstr, "-00"))) {
-	memmove(p+1, p+2, strlen(p+2));
+	memmove(p+1, p+2, strlen(p+1));
     }    
 
     len = strlen(dstr) - 1;
@@ -1613,7 +1613,9 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
 {
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
-	pmod->aux == AUX_AR) return;
+	pmod->aux == AUX_AR) {
+	return;
+    }
 
     if (pmod->dfd == 0) {
 	pputs(prn, "\n");

@@ -368,7 +368,7 @@ char *gretl_fix_exponent (char *s)
     char *p;
 
     if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
-	memmove(p+2, p+3, strlen(p+2));
+	memmove(p+1, p+2, strlen(p+1));
     }
 
     return s;
@@ -785,24 +785,30 @@ static void printstr (PRN *prn, double xx, int *ls)
     *ls += lwrd;
 }
 
-/* ........................................................... */
+/* prints series z from current sample t1 to t2 */
 
 static void printz (const double *z, const DATAINFO *pdinfo, 
 		    PRN *prn, gretlopt opt)
-/* prints series z from current sample t1 to t2 */
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
     double xx;
 
     if (gretl_isconst(t1, t2, z)) {
-	if (opt & OPT_T) printstr_ten(prn, z[t1], &ls);
-	else printstr(prn, z[t1], &ls);
+	if (opt & OPT_T) {
+	    printstr_ten(prn, z[t1], &ls);
+	} else {
+	    printstr(prn, z[t1], &ls);
+	}
     }
     else for (t=t1; t<=t2; t++) {
 	xx = z[t];
-	if (opt & OPT_T) printstr_ten(prn, xx, &ls);
-	else printstr(prn, xx, &ls);
+	if (opt & OPT_T) {
+	    printstr_ten(prn, xx, &ls);
+	} else {
+	    printstr(prn, xx, &ls);
+	}
     }
+
     pputc(prn, '\n');
 }
 
@@ -842,20 +848,25 @@ static int get_signif (const double *x, int n)
 	    if (numstr[j] == '0') {
 		s--;
 		if (!gotdec) trail--;
-	    }
-	    else if (numstr[j] == decpoint) {
+	    } else if (numstr[j] == decpoint) {
 		gotdec = 1;
 		if (xx < 10000) break;
 		else continue;
+	    } else {
+		break;
 	    }
-	    else break;
 	}
 
-	if (trail > trailmax) trailmax = trail;
+	if (trail > trailmax) {
+	    trailmax = trail;
+	}
 
 	if (xx < 1.0) s--; /* don't count leading zero */
 
-	if (s > smax) smax = s;
+	if (s > smax) {
+	    smax = s;
+	}
+
 #ifdef PRN_DEBUG
 	fprintf(stderr, "get_signif: set smax = %d\n", smax);
 #endif
