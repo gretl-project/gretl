@@ -16,6 +16,10 @@ GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
 
+CURRENT=@LIBGRETL_CURRENT@
+REVISION=@LIBGRETL_REVISION@
+AGE=@LIBGRETL_AGE@
+
 have_gtk = @have_gtk@
 
 ifeq ($(INSTALL_PROGRAM),)
@@ -125,7 +129,8 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 0:24:0
+	-rpath $(prefix)/lib $(LIBS) \
+	-version-info $(CURRENT):$(REVISION):$(AGE)
 
 .deps:
 	mkdir $@

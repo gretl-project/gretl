@@ -19,10 +19,6 @@
 
 /* Trivial sample client program for libgretl */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-
 #include <gretl/libgretl.h>   
 
 void noalloc(void)
@@ -91,7 +87,7 @@ int main (void)
        number of the first independent variable.
     */
 
-    list = gretl_list_new(3); /* number of tems will be 3 */
+    list = gretl_list_new(3); /* number of terms will be 3 */
     list[1] = 1;   /* the dependent variable is the one with ID# 1 */
     list[2] = 0;   /* we include a constant (ID# 0) */
     list[3] = 2;   /* the independent variable has ID# 2 */
