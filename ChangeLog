@@ -1,6 +1,12 @@
 version 0.97
 - add various formats to copy of models to clipboard (HTML,
   RTF, LaTeX)
+- enable LaTeX and RTF copying for correlation matrix and
+  summary statistics windows
+- Add the LMF statistic (Kiviet, 1986) for the autocorrelation
+  LM test
+- Add prompt to save data on exit, if the data set has been
+  changed or newly constructed
 - Fixes to BOX1 datafile reading function
 - small fixes to display of databases
 - revert behavior in case of taking logs of series with non-
@@ -9,7 +15,8 @@ version 0.97
 - convert manual to SGML (DocBook) and update
 - support directory names with spaces (yuck) under win32 
 - under win32, use registry instead of system-wide config file
-  libgretl.cfg and per-user gretl.rc
+  libgretl.cfg and per-user gretl.rc; also use native win32
+  dialog boxes for more functions
 - add check for GRETL_HOME environment variable
 - make gnuplot command configurable under Preferences (meant
   for win32)

@@ -36,9 +36,9 @@ typedef struct {
 
 void free_freq (FREQDIST *freq);
 
-FREQDIST freq_func (double **pZ, const DATAINFO *pdinfo, 
-		    double *zz, const int nzz, 
-		    const char *varname, const int params);
+FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, 
+		     double *zz, const int nzz, 
+		     const char *varname, const int params);
 
 int corrgram (const int *list, const int order, 
 	      double **pZ, DATAINFO *pdinfo, 
@@ -59,6 +59,11 @@ void print_summary (GRETLSUMMARY *summ,
 		    print_t *prn, int batch); 
 
 void free_summary (GRETLSUMMARY *summ);
+
+CORRMAT *corrlist (int *list, 
+		   double **pZ, const DATAINFO *pdinfo);
+
+void free_corrmat (CORRMAT *corrmat);
 
 int esl_corrmx (int *list, 
 		double **pZ, const DATAINFO *pdinfo, 

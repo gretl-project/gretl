@@ -274,6 +274,28 @@ void prnclose (print_t *prn)
 
 /* ........................................................... */
 
+static int freq_error (FREQDIST *freq, print_t *prn)
+{
+    if (freq == NULL) {
+	if (prn == NULL)
+	    errbox("Out of memory in frequency distribution");
+	else
+	    pprintf(prn, "Out of memory in frequency distribution\n");
+	return 1;
+    }
+    if (freq->errcode) {
+	if (prn == NULL)
+	    gui_errmsg(freq->errcode, freq->errmsg);
+	else
+	    errmsg(freq->errcode, freq->errmsg, prn);
+	free_freq(freq);
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
 gint check_cmd (char *line)
 {
     strcpy(command.param, "");
@@ -579,17 +601,16 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	break;
     case FREQ:
 	if (1) {
-	    FREQDIST freq;
+	    FREQDIST *freq;
 
 	    freq = freq_func(&Z, datainfo, NULL, 0,
 			     datainfo->varname[mdata->active_var], 1);
-	    if (freq.errcode) {
-		gui_errmsg(freq.errcode, freq.errmsg);
+	    if (freq_error(freq, NULL)) {
 		prnclose(&prn);
 		return;
 	    } 
-	    printfreq(&freq, &prn);
-	    free_freq(&freq);
+	    printfreq(freq, &prn);
+	    free_freq(freq);
 	}
 	break;
     case RUNS:
@@ -1870,7 +1891,7 @@ static void normal_test (GRETLTEST *test, FREQDIST *freq)
 
 void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 {
-    FREQDIST freq;
+    FREQDIST *freq;
     print_t prn;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
@@ -1880,13 +1901,12 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 
     freq = freq_func(NULL, NULL, pmod->uhat, pmod->t2 - pmod->t1 + 1, 
 		     "uhat", pmod->ncoeff);
-    if (freq.errcode) {
-	gui_errmsg(freq.errcode, freq.errmsg);
+    if (freq_error(freq, NULL)) {
 	prnclose(&prn);
 	return;
     }
     
-    normal_test(&test, &freq);
+    normal_test(&test, freq);
 
     if (add_test_to_model(&test, pmod) == 0)
 	print_test_to_window(&test, mydata->w);
@@ -1895,8 +1915,8 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     strcpy(line, "testuhat");
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
  
-    printfreq(&freq, &prn);
-    free_freq(&freq);
+    printfreq(freq, &prn);
+    free_freq(freq);
 
     view_buffer(&prn, 77, 300, "gretl: residual dist.", TESTUHAT,
 		NULL, 0);
@@ -1906,7 +1926,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 
 void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
-    FREQDIST freq;
+    FREQDIST *freq;
 
     if (mdata->active_var < 0) return;
     if (mdata->active_var == 0) {
@@ -1920,19 +1940,18 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
     freq = freq_func(&Z, datainfo, NULL, 0,
 		     datainfo->varname[mdata->active_var], 1);
-    if (freq.errcode) 
-	gui_errmsg(freq.errcode, freq.errmsg);
-    else {
-	if (dist == GAMMA && freq.midpt[0] < 0.0 && freq.f[0] > 0) {
+
+    if (!freq_error(freq, NULL)) { 
+	if (dist == GAMMA && freq->midpt[0] < 0.0 && freq->f[0] > 0) {
 	    errbox("Data contain negative values: gamma distribution not "
 		   "appropriate");
 	} else {
-	    if (plot_freq(&freq, &paths, dist))
+	    if (plot_freq(freq, &paths, dist))
 		errbox("gnuplot command failed");
 	    else
 		graphmenu_state(TRUE);
 	}
-	free_freq(&freq);
+	free_freq(freq);
     }
 }
 
@@ -2916,7 +2935,7 @@ static int gui_exec_line (char *line,
     char linecopy[MAXLEN];
     char texfile[MAXLEN];
     MODEL tmpmod;
-    FREQDIST freq;              /* struct for freq distributions */
+    FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
     void *ptr;
@@ -3205,16 +3224,15 @@ static int gui_exec_line (char *line,
     case FREQ:
 	freq = freq_func(&Z, datainfo, NULL, 0,
 			 datainfo->varname[command.list[1]], 1);
-	if ((err = freq.errcode)) {
-	    errmsg(freq.errcode, freq.errmsg, prn);
+	if ((err = freq_error(freq, prn))) {
 	    break;
 	}
-	printfreq(&freq, prn);
+	printfreq(freq, prn);
 	if (exec_code == CONSOLE_EXEC) {
-	    if (plot_freq(&freq, &paths, NORMAL))
+	    if (plot_freq(freq, &paths, NORMAL))
 		pprintf(prn, "gnuplot command failed.\n");
 	}
-	free_freq(&freq);
+	free_freq(freq);
 	break;
 
     case GENR:
@@ -3583,15 +3601,14 @@ static int gui_exec_line (char *line,
 	freq = freq_func(NULL, NULL, (models[0])->uhat, 
 			 (models[0])->t2 - (models[0])->t1 + 1, 
 			 "uhat", (models[0])->ncoeff);
-	if ((err = freq.errcode)) 
-	    errmsg(err, freq.errmsg, prn);
-	else {
+
+	if (!(err = freq_error(freq, prn))) {
 	    if (rebuild) {
-		normal_test(ptest, &freq);
+		normal_test(ptest, freq);
 		add_test_to_model(ptest, models[0]);
 	    }
-	    printfreq(&freq, prn); 
-	    free_freq(&freq);
+	    printfreq(freq, prn); 
+	    free_freq(freq);
 	}
 	break;
 

@@ -57,7 +57,7 @@ MODEL **models;               /* holds ptrs to model structs */
 DATAINFO *datainfo;           /* info on data set */
 DATAINFO *subinfo;            /* info on sub-sampled data set */
 DATAINFO *fullinfo;           /* convenience pointer */
-FREQDIST freq;                /* struct for freq distributions */
+FREQDIST *freq;               /* struct for freq distributions */
 CMD command;                  /* struct for command characteristics */
 GENERATE genr;                /* genr_func return struct */
 PATHS paths;                  /* useful paths */
@@ -739,15 +739,19 @@ void exec_line (char *line, print_t *prn)
     case FREQ:
 	freq = freq_func(&Z, datainfo, NULL, 0,
 			 datainfo->varname[command.list[1]], 1);
-	if ((err = freq.errcode)) 
-	    errmsg(err, freq.errmsg, prn);
+	if (freq == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+	if ((err = freq->errcode)) 
+	    errmsg(err, freq->errmsg, prn);
 	else {
-	    printfreq(&freq, prn); 
+	    printfreq(freq, prn); 
 	    if (!batch) {
-		if (plot_freq(&freq, &paths, NORMAL))
+		if (plot_freq(freq, &paths, NORMAL))
 		    pprintf(prn, "gnuplot command failed.\n");
 	    }
-	    free_freq(&freq);
+	    free_freq(freq);
 	}
 	break;
 
@@ -1142,11 +1146,15 @@ void exec_line (char *line, print_t *prn)
 	freq = freq_func(NULL, NULL, (models[0])->uhat, 
 			 (models[0])->t2 - (models[0])->t1 + 1, 
 			 "uhat", (models[0])->ncoeff);
-	if ((err = freq.errcode)) 
-	    errmsg(err, freq.errmsg, prn);
+	if (freq == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+	if ((err = freq->errcode)) 
+	    errmsg(err, freq->errmsg, prn);
 	else {
-	    printfreq(&freq, prn); 
-	    free_freq(&freq);
+	    printfreq(freq, prn); 
+	    free_freq(freq);
 	}
 	break;
 

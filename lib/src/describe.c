@@ -96,12 +96,13 @@ void free_freq (FREQDIST *freq)
     free(freq->midpt);
     free(freq->endpt);
     free(freq->f);
+    free(freq);
 }
 
 /* ........................................................ */
 
-FREQDIST freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
-		    const int nzz, const char *varname, const int params)
+FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
+		     const int nzz, const char *varname, const int params)
      /* generates frequency distribution:
 	params is the "degrees of freedom loss", which will
 	genrally be 1 unless dealing with a regression residual. 
@@ -109,18 +110,21 @@ FREQDIST freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
         up the variable by name and find its values in pZ.
      */
 {
-    FREQDIST freq;
+    FREQDIST *freq;
     double *x;
     double xx, xmin, xmax, xbar, sdx;
     double skew, kurt;
     int i, k, n, t, t1, t2;
     int maxend = 16;
 
-    freq.errcode = 0;
-    freq.errmsg[0] = '\0';
-    freq.midpt = NULL;
-    freq.endpt = NULL;
-    freq.f = NULL;
+    freq = malloc(sizeof *freq);
+    if (freq == NULL) return NULL;
+
+    freq->errcode = 0;
+    freq->errmsg[0] = '\0';
+    freq->midpt = NULL;
+    freq->endpt = NULL;
+    freq->f = NULL;
 
     if (pZ != NULL) {
 	int list[2]; 
@@ -128,8 +132,8 @@ FREQDIST freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 	list[0] = 1;
 	list[1] = i = varindex(pdinfo, varname);
 	if (i > pdinfo->v - 1) {
-	    freq.errcode = E_DATA;
-	    sprintf(freq.errmsg, "'%s' is not in the data set", varname);
+	    freq->errcode = E_DATA;
+	    sprintf(freq->errmsg, "'%s' is not in the data set", varname);
 	    return freq;
 	}
 	n = pdinfo->n;
@@ -144,68 +148,68 @@ FREQDIST freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 	t1 = 0;
 	t2 = n - 1;
     }
-    strcpy(freq.varname, varname);
-    freq.t1 = t1; freq.t2 = t2;
+    strcpy(freq->varname, varname);
+    freq->t1 = t1; freq->t2 = t2;
 
     if (isconst(t1, t2, x)) {
-	freq.errcode = 1;
-	sprintf(freq.errmsg, "'%s' is a constant", freq.varname);
+	freq->errcode = 1;
+	sprintf(freq->errmsg, "'%s' is a constant", freq->varname);
 	return freq;
     }    
     
-    moments(t1, t2, x, &freq.xbar, &freq.sdx, &skew, &kurt, params);
-    xbar = freq.xbar;
-    sdx = freq.sdx;
+    moments(t1, t2, x, &(freq->xbar), &(freq->sdx), &skew, &kurt, params);
+    xbar = freq->xbar;
+    sdx = freq->sdx;
 
-    freq.endpt = malloc((maxend + 1) * sizeof(double));
-    freq.midpt = malloc(maxend * sizeof(double));
-    freq.f = malloc(maxend * sizeof(int));
-    if (freq.endpt == NULL || freq.midpt == NULL ||
-	freq.f == NULL) {
-	freq.errcode = E_ALLOC;
-	strcpy(freq.errmsg, "Out of memory for frequency distribution");
+    freq->endpt = malloc((maxend + 1) * sizeof(double));
+    freq->midpt = malloc(maxend * sizeof(double));
+    freq->f = malloc(maxend * sizeof(int));
+    if (freq->endpt == NULL || freq->midpt == NULL ||
+	freq->f == NULL) {
+	freq->errcode = E_ALLOC;
+	strcpy(freq->errmsg, "Out of memory for frequency distribution");
 	return freq;
     }
     
     minmax(t1, t2, x, &xmin, &xmax);
-    freq.n = t2 - t1 + 1;
-    freq.endpt[0] = xmin;
+    freq->n = t2 - t1 + 1;
+    freq->endpt[0] = xmin;
 
     xx = xbar - 3.75 * sdx;
     sdx /= 2.0; 
     while (xx < xmin) xx += sdx;
-    freq.endpt[1] = xx;
-    freq.endpt[maxend] = xmax;
+    freq->endpt[1] = xx;
+    freq->endpt[maxend] = xmax;
     for (t=2; t<maxend; t++) {
 	xx += sdx;
 	if (xx > xmax) {
-	    freq.endpt[t] = xmax;
+	    freq->endpt[t] = xmax;
 	    break;
 	}
-	freq.endpt[t] = xx;
+	freq->endpt[t] = xx;
     }
-    freq.numbins = t;
+    freq->numbins = t;
 
-    for (k=0; k<freq.numbins; k++) {
-	freq.f[k] = 0;
-	freq.midpt[k] = (freq.endpt[k] + freq.endpt[k+1])/2;
+    for (k=0; k<freq->numbins; k++) {
+	freq->f[k] = 0;
+	freq->midpt[k] = (freq->endpt[k] + freq->endpt[k+1])/2;
     }
     for (i=t1; i<=t2; i++) {
 	xx = x[i];
-	if (xx < freq.endpt[1]) {
-	    freq.f[0] += 1;
+	if (xx < freq->endpt[1]) {
+	    freq->f[0] += 1;
 	    continue;
 	}
-	if (xx >= freq.endpt[freq.numbins]) {
-	    freq.f[freq.numbins-1] += 1;
+	if (xx >= freq->endpt[freq->numbins]) {
+	    freq->f[freq->numbins-1] += 1;
 	    continue;
 	}
-	for (k=1; k<freq.numbins; k++) 
-	    if (freq.endpt[k] <= xx && xx <freq.endpt[k+1])
-		freq.f[k] += 1;
+	for (k=1; k<freq->numbins; k++) 
+	    if (freq->endpt[k] <= xx && xx <freq->endpt[k+1])
+		freq->f[k] += 1;
     }
 
-    freq.chisqu = freq.n * (skew * skew/6.0 + kurt * kurt/24.0);    
+    freq->chisqu = freq->n * (skew * skew/6.0 + kurt * kurt/24.0);    
 
     return freq;
 }
@@ -768,6 +772,73 @@ GRETLSUMMARY *summary (const int *list,
     return summ;
 }
 
+/* ....................................................... */
+
+void free_corrmat (CORRMAT *corrmat)
+{
+    free(corrmat->list);
+    free(corrmat->xpx);
+    free(corrmat);
+}
+
+/* ....................................................... */
+
+CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
+/* computes pairwise correlation coefficients for 
+   variables in list, skipping any constants, from
+   observation pdinfo->t1 to pdinfo->t2.  
+*/
+{
+    CORRMAT *corrmat;
+    int *p = NULL;
+    int i, j, lo, nij, mm;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n; 
+
+    corrmat = malloc(sizeof *corrmat);
+    if (corrmat == NULL) return NULL;
+
+    copylist(&p, list);
+    if (p == NULL) {
+	free(corrmat);
+	return NULL;
+    }	
+
+    /* drop any constants from list */
+    for (i=1; i<=p[0]; i++) {
+	if (isconst(t1, t2, &(*pZ)[n * p[i]])) {
+	    list_exclude(i, p);
+	    i--;
+	}
+    }
+    corrmat->list = p;
+
+    lo = corrmat->list[0];  
+    corrmat->n = t2 - t1 + 1;
+    mm = (lo * (lo + 1))/2;
+    corrmat->xpx = malloc(mm * sizeof(double));
+    if (corrmat->xpx == NULL) {
+	free_corrmat(corrmat);
+	return NULL;
+    }
+    for (i=1; i<=lo; i++) {   
+	for (j=i; j<=lo; j++)  {
+	    nij = ijton(i, j, lo);
+	    if (i == j) {
+		corrmat->xpx[nij] = 1.0;
+		continue;
+	    }
+	    corrmat->xpx[nij] = corr(corrmat->n, 
+				     &(*pZ)[n * corrmat->list[i] + t1],
+				     &(*pZ)[n * corrmat->list[j] + t1]);
+	}
+    }
+
+    corrmat->t1 = t1;
+    corrmat->t2 = t2;
+
+    return corrmat;
+}
+
 /* ............................................................ */
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
@@ -785,52 +856,12 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo, 
 		const int batch, print_t *prn)
 {
-    int lo, n, i, j, ni, nj, nij;
-    int mm, len = pdinfo->t2 - pdinfo->t1 + 1;
-    double *x, *y, *xpx;
+    CORRMAT *corr;
 
-    lo = list[0];
-    /* drop constants from list */
-    for (i=1; i<=lo; i++) {
-	if (isconst(pdinfo->t1, pdinfo->t2, &(*pZ)[pdinfo->n * list[i]])) {
-	    pprintf(prn, "Excluding '%s', which is constant\n",
-		    pdinfo->varname[list[i]]);
-	    list_exclude(i, list);
-	    lo = list[0];
-	    i--;
-	}
-    }
-
-    mm = (lo * (lo + 1))/2;
-
-    if ((x = calloc(len, sizeof *x)) == NULL) return E_ALLOC;
-    if ((y = calloc(len, sizeof *y)) == NULL) return E_ALLOC;
-    if ((xpx = calloc(mm, sizeof *xpx)) == NULL) return E_ALLOC; 
-
-    lo = list[0];
-    prhdr("Correlation Coefficients", pdinfo, CORR, prn);
-    pprintf(prn, "              5%% critical value (two-tailed) = "
-	    "%.3f for n = %d\n\n", rhocrit95(len), len);
-
-    for (i=1; i<=lo; i++) {   
-	for (j=i;j<=lo; j++)  {
-	    nij = ijton(i, j, lo);
-	    if (i == j) {
-		xpx[nij] = 1.0;
-		continue;
-	    }
-	    ni = list[i];
-	    nj = list[j];
-	    n = _ztoxy(ni, nj, x, y, pdinfo, *pZ);
-	    xpx[nij] = corr(n, x, y);
-	}
-    }
-    _mxout(xpx, list, CORR, pdinfo, batch, prn);
-
-    free(x);
-    free(y);
-    free(xpx);
-
+    corr = corrlist(list, pZ, pdinfo);
+    if (corr == NULL) return 1;
+    matrix_print_corr(corr, pdinfo, batch, prn);
+    free_corrmat(corr);
     return 0;
 }
 
