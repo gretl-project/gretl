@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "pvalues.h"
 #include "gretl_matrix.h"
+#include "gretl_matrix_private.h"
 
 /* 
    Critical values for Johansen's likelihood ratio tests
@@ -168,6 +169,25 @@ static int inverse_compare_doubles (const void *a, const void *b)
     return (*da < *db) - (*da > *db);
 }
 
+static gretl_matrix *j_matrix_from_array (const double **X, 
+					  int rows, int cols)
+{
+    int i, j, p;
+    gretl_matrix *m;
+
+    m = gretl_matrix_alloc(rows, cols);
+    if (m == NULL) return m;
+
+    p = 0;
+    for (j=0; j<rows; j++) {
+	for (i=0; i<cols; i++) {
+	    m->val[p++] = X[i][j];
+	}
+    } 
+
+    return m;
+}
+
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
 			int k, int T, int trends, PRN *prn)
 {
@@ -176,9 +196,9 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
     double *eigvals = NULL;
     int err = 0;
 
-    Suu = gretl_matrix_from_2d_array(X, k, k);
-    Svv = gretl_matrix_from_2d_array(Y, k, k);
-    Suv = gretl_matrix_from_2d_array(Z, k, k);
+    Suu = j_matrix_from_array(X, k, k);
+    Svv = j_matrix_from_array(Y, k, k);
+    Suv = j_matrix_from_array(Z, k, k);
 
     Inv = gretl_matrix_alloc(k, k);
     TmpL = gretl_matrix_alloc(k, k);

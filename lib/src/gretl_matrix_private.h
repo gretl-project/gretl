@@ -28,4 +28,7 @@ struct _gretl_matrix {
     double *val;
 };
 
+#define mdx(a,i,j)   ((j)*(a)->rows+(i))
+#define mdxtr(a,i,j) ((i)*(a)->rows+(j))
+
 #endif /* GRETL_MATRIX_PRIVATE_H */

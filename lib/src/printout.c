@@ -104,6 +104,17 @@ void gui_logo (FILE *fp)
 }
 
 /**
+ * lib_logo:
+ *
+ * Print gretl library version information to stdout.
+ */
+
+void lib_logo (void)
+{
+    printf("\nLibgretl-1.0, revision %d\n", LIBGRETL_REVISION);
+}
+
+/**
  * text_print_model_confints:
  * @cf: pointer to confidence intervals.
  * @pdinfo: data information struct.

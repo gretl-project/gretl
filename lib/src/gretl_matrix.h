@@ -61,11 +61,9 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
 
 void gretl_matrix_zero (gretl_matrix *m);
 
-void 
-gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x);
+void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x);
 
-void 
-gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);
+void gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);
 
 void gretl_matrix_free (gretl_matrix *m);
 
@@ -94,6 +92,8 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
 int gretl_invert_general_matrix (gretl_matrix *m);
+
+int gretl_invert_symmetric_matrix (gretl_matrix *m);
 
 double *gretl_general_matrix_eigenvals (gretl_matrix *m);
 

@@ -21,7 +21,8 @@ version 1.2.3
   console (new command "modeltab")
 - Add an OLS option, "-r" or "--robust", which calls for
   the use of White's robust standard errors (HC0) in the
-  case of cross-sectional data
+  case of cross-sectional data, or HAC in the case of time
+  series data
 - Fix bug: latent problems when adding an observation to
   the working dataset
 

@@ -23,9 +23,6 @@
 
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
-#define mdx(a,i,j)   ((j)*(a)->rows+(i))
-#define mdxtr(a,i,j) ((i)*(a)->rows+(j))
-
 static int packed_idx (int nrows, int i, int j);
 
 /* ....................................................... */
@@ -368,6 +365,14 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
 void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
 {
     int i, j;
+    PRN myprn;
+
+    if (prn == NULL) {
+	myprn.fp = stdout;
+	myprn.fpaux = NULL;
+	myprn.buf = NULL;
+	prn = &myprn;
+    }
 
     if (msg != NULL && *msg != '\0') {
 	pprintf(prn, "%s\n\n", msg);
@@ -377,9 +382,10 @@ void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
 	for (j=0; j<m->cols; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(m, i, j));
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
-    pputs(prn, "\n");
+
+    pputc(prn, '\n');
 }
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
@@ -534,15 +540,16 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
 	}
     }
 
+    /* v = m'm */
     err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
 				    m, GRETL_MOD_NONE,
 				    v);
 
-    gretl_matrix_divide_by_scalar(v, (double) m->rows);
-
     if (err) {
 	gretl_matrix_free(v);
 	return NULL;
+    } else {
+	gretl_matrix_divide_by_scalar(v, (double) m->rows);
     }
 
     return v;
@@ -633,6 +640,76 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 
     free(work);
     free(ipiv);
+
+    return info;
+}
+
+/* In the case of symmetric matrices, the lapack functions tend
+   to process only either the upper or lower triangle.  This
+   function "expands" the solution, reconstituting the matrix
+   as symmetric. 
+*/
+
+static int 
+gretl_symmetric_matrix_expand (gretl_matrix *m, char uplo)
+{
+    int i, j, n;
+    double x;
+
+    if (m->cols != m->rows) {
+	fputs("gretl_symmetric_matrix_expand: input is not square\n",
+	      stderr);
+	return 1;
+    }
+
+    n = m->rows;
+
+    for (i=0; i<n; i++) {
+	for (j=i+1; j<n; j++) {
+	    if (uplo == 'U') {
+		x = m->val[mdx(m, i, j)];
+		m->val[mdx(m, j, i)] = x;
+	    } else {
+		x = m->val[mdx(m, j, i)];
+		m->val[mdx(m, i, j)] = x;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+int gretl_invert_symmetric_matrix (gretl_matrix *a)
+{
+    integer n, info;
+    char uplo = 'U';
+
+    if (a->cols != a->rows) {
+	fputs("gretl_invert_symmetric_matrix: input is not square\n",
+	      stderr);
+	return 1;
+    }
+
+    n = a->cols;
+
+    dpotrf_(&uplo, &n, a->val, &n, &info);   
+
+    if (info != 0) {
+	fputs("gretl_invert_symmetric_matrix: dpotrf failed\n", stderr);
+	return info;
+    }
+
+    dpotri_(&uplo, &n, a->val, &n, &info);
+
+#ifdef LAPACK_DEBUG
+    printf("dpotri: info = %d\n", (int) info);
+#endif
+    
+    if (info != 0) {
+	fputs("gretl_invert_symmetric_matrix: dpotrf failed\n", stderr);
+    } else {
+	gretl_symmetric_matrix_expand(a, uplo);
+    }
 
     return info;
 }

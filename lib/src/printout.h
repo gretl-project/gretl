@@ -28,6 +28,8 @@ void session_time (FILE *fp);
 
 void logo (void);
 
+void lib_logo (void);
+
 void gui_logo (FILE *fp);
 
 void text_print_model_confints (const CONFINT *cf,
