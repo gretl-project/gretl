@@ -408,6 +408,14 @@ static MODEL GNR (double *fvec, double *fjac)
     nlspec.t1 = 0;
     nlspec.t2 = pdinfo->n - 1;
 
+    if (gretl_iszero(0, T-1, fvec)) {
+	pputs(prn, _("Perfect fit achieved\n"));
+	for (t=0; t<T; t++) {
+	    fvec[t] = 1.0;
+	}
+	nlspec.ess = 0.0;
+    }
+
     ninfo = create_new_dataset(&nZ, nlspec.nparam + 1, pdinfo->n, 0);
     if (ninfo == NULL) {
 	gretl_model_init(&gnr, NULL);
@@ -743,10 +751,10 @@ static int lm_calculate (double *fvec, double *fjac)
     case 1:
     case 2:
     case 3:
+    case 4: /* is this right? */
 	pprintf(prn, _("Convergence achieved after %d iterations\n"),
 		nlspec.iters);
 	break;
-    case 4:
     case 5:
     case 6:
     case 7:

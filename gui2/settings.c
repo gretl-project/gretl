@@ -2554,15 +2554,25 @@ void first_time_set_user_dir (void)
 void dump_rc (void) 
 {
     FILE *fp;
-    char dumper[MAXLEN], val[6];
-    char *tmp;
+    char *tmp, *dumper = NULL;
+    char val[6];
     int i;
 
-    sprintf(dumper, "%sconfig-dump.txt", paths.userdir);
+    if (dir_exists(paths.userdir, NULL)) {
+	dumper = g_strdup_printf("%sconfig-dump.txt", paths.userdir);
+    } else {
+	dumper = tempnam(NULL, "gretl");
+    }
+
+    if (dumper == NULL) {
+	errbox(_("Couldn't open config file for writing"));
+	return;
+    }
 
     fp = fopen(dumper, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't open config file for writing"));
+	free(dumper);
 	return;
     }
 
@@ -2593,4 +2603,5 @@ void dump_rc (void)
     fprintf(stderr, "Config info written to %s\n", dumper);
 
     fclose(fp);
+    free(dumper);
 }

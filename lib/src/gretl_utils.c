@@ -284,7 +284,7 @@ int gretl_iszero (int t1, int t2, const double *x)
 
     for (t=t1; t<=t2; t++) {
         xx = x[t];
-        sum = sum + xx*xx;
+        sum = sum + xx * xx;
     }
 
     return floateq(sum, 0.0);

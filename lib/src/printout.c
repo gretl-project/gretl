@@ -1536,15 +1536,16 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 
 void gretl_print_destroy (PRN *prn)
 {
+    int fpdup = (prn->fp == prn->fpaux);
+
     if (prn == NULL) return;
 
     if (prn->fp != NULL &&
 	prn->fp != stdout && prn->fp != stderr)
 	fclose(prn->fp);
 
-    if (prn->fpaux != NULL && 
-	prn->fpaux != stdout && prn->fpaux != stderr && 
-	prn->fpaux != prn->fp)
+    if (!fpdup && prn->fpaux != NULL && 
+	prn->fpaux != stdout && prn->fpaux != stderr)
 	fclose(prn->fpaux);
 
     if (prn->buf != NULL) {
@@ -2099,7 +2100,7 @@ char *bufgets (char *s, size_t size, const char *buf)
     *s = 0;
     /* advance to line-end, end of buffer, or maximum size,
        whichever comes first */
-    for (i=0; i<size; i++) {
+    for (i=0; ; i++) {
 	s[i] = p[i];
 	if (p[i] == 0) {
 	    break;
@@ -2116,6 +2117,12 @@ char *bufgets (char *s, size_t size, const char *buf)
 	if (p[i] == '\n') {
 	    s[i] = 0;
 	    status = GOT_LF;
+	    break;
+	}
+	if (i == size - 1) {
+	    fprintf(stderr, "bufgets: line too long: max %d characters\n", 
+		    (int) size);
+	    s[i] = '\0';
 	    break;
 	}
     }
