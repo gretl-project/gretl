@@ -240,4 +240,7 @@ Other access: <xsl:apply-templates/>
 <xsl:template match="footnote">
 </xsl:template>
 
+<xsl:template match="blurb">
+</xsl:template>
+
 </xsl:stylesheet>

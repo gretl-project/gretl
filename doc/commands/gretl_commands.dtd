@@ -20,8 +20,7 @@
 <!-- The description is the only element that is absolutely
      required of a command -->
 
-<!ELEMENT command (usage?, description, option-notes?, addendum?, 
-                   gui-access?)>
+<!ELEMENT command (usage?, description, gui-access?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
@@ -30,15 +29,14 @@
                  Transformations | Utilities | Unknown) "Unknown"
 >
 
-<!ELEMENT usage (arguments?, altforms?, options?, examples?)>
+<!ELEMENT usage (blurb?, arguments?, altforms?, options?, examples?)>
 
+<!ELEMENT blurb        (#PCDATA)>
 <!ELEMENT arguments    (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
 <!ELEMENT altforms     (altform)+>
 <!ELEMENT description  (para | code | ilist | table)*>
-<!ELEMENT option-notes (para)+>
-<!ELEMENT addendum     (para)+>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
 <!ELEMENT argument (#PCDATA)>

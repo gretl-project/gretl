@@ -282,4 +282,7 @@
   <entry><xsl:apply-templates/></entry>
 </xsl:template>
 
+<xsl:template match="blurb">
+</xsl:template>
+
 </xsl:stylesheet>

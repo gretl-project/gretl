@@ -2,11 +2,12 @@
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
 <commandlist language="english">
 
-<?PSGML NOFILL code altforms altform menu-path other-access?>
+<?PSGML NOFILL blurb code altforms altform menu-path other-access?>
 
   <command name="add" section="Tests">
 
     <usage>
+      <blurb>Add variables to a model and test for their significance</blurb>
       <arguments>
         <argument>varlist</argument>
       </arguments>
@@ -71,6 +72,7 @@
   <command name="adf" section="Tests">
 
     <usage>
+      <blurb>Augmented Dickey-Fuller test</blurb>
       <arguments>
         <argument>order</argument>
         <argument>varname</argument>
@@ -118,6 +120,7 @@
   <command name="ar" section="Estimation">
 
     <usage>
+      <blurb>Generalized Cochrane-Orcutt (autoregressive) estimation</blurb>
       <arguments>
         <argument>lags</argument>
         <argument separated="true">indepvars</argument>
@@ -161,6 +164,7 @@
   <command name="arch" section="Tests">
 
     <usage>
+      <blurb>Test for ARCH (Autoregressive Conditional Heteroskedasticity)</blurb>
       <arguments>
         <argument>order</argument>
         <argument>depvar</argument>
@@ -193,6 +197,7 @@
   <command name="arma" section="Estimation">
 
     <usage>
+      <blurb>Univariate ARMA model</blurb>
       <arguments>
         <argument>p</argument>
 	<argument>q</argument>
@@ -278,6 +283,7 @@
   <command name="boxplot" section="Graphs">
 
     <usage>
+      <blurb>Exploratory data analysis</blurb>
       <arguments>
         <argument>varname</argument>
       </arguments>
@@ -306,6 +312,7 @@
   <command name="chow" section="Tests">
 
     <usage>
+      <blurb>Chow test for structural homogeneity</blurb>
       <arguments>
         <argument>obs</argument>
       </arguments>
@@ -339,6 +346,7 @@
   <command name="coeffsum" section="Tests">
 
     <usage>
+      <blurb>Test for the sum of specified coefficients</blurb>
       <arguments>
         <argument>indepvars</argument>
       </arguments>
@@ -368,6 +376,7 @@
   <command name="coint" section="Tests">
 
     <usage>
+      <blurb>Engle-Granger cointegration test</blurb>
       <arguments>
         <argument>order</argument>
         <argument>depvar</argument>
@@ -401,6 +410,7 @@
   <command name="coint2" section="Tests">
 
     <usage>
+      <blurb>Johansen cointegration test</blurb>
       <arguments>
         <argument>order</argument>
         <argument>depvar</argument>
@@ -438,6 +448,7 @@
 
     <usage>
       <arguments>
+	<blurb>Cochrane-Orcutt estimation</blurb>
         <argument>depvar</argument>
         <argument>indepvars</argument>
       </arguments>
@@ -724,6 +735,7 @@
   <command name="diff" section="Transformations">
 
     <usage>
+      <blurb>First differences</blurb>
       <arguments>
         <argument>varlist</argument>
       </arguments>
@@ -878,6 +890,7 @@
   <command name="fcasterr" section="Prediction">
 
     <usage>
+      <blurb>Forecasts with confidence intervals</blurb>
       <arguments>
         <argument>startobs</argument>
         <argument>endobs</argument>
@@ -950,6 +963,7 @@
   <command name="genr" section="Dataset">
 
     <usage>
+      <blurb>Generate a new variable</blurb>
       <arguments>
         <argument>newvar</argument>
         <argument>= formula</argument>
@@ -1477,6 +1491,7 @@
   <command name="hccm" section="Estimation">
 
     <usage>
+      <blurb>Heteroskedasticity Consistent Covariance Matrix</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -1525,6 +1540,7 @@
   <command name="hilu" section="Estimation">
 
     <usage>
+      <blurb>Hildreth-Lu estimation</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -1559,6 +1575,7 @@
 
     <usage>
       <arguments>
+	<blurb>Heteroskedasticity-corrected estimates</blurb>
         <argument>depvar</argument>
         <argument>indepvars</argument>
       </arguments>
@@ -1907,6 +1924,7 @@
   <command name="logistic" section="Estimation">
 
     <usage>
+      <blurb>Logistic regression</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -1970,6 +1988,7 @@
   <command name="logit" section="Estimation">
 
     <usage>
+      <blurb>Logit regression</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -2343,6 +2362,7 @@
   <command name="ols" section="Estimation">
 
     <usage>
+      <blurb>Ordinary Least Squares estimation</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -2404,6 +2424,7 @@
   <command name="omit" section="Tests">
 
     <usage>
+      <blurb>Omit variables from a model and test for joint significance</blurb>
       <arguments>
         <argument>varlist</argument>
       </arguments>
@@ -2547,6 +2568,7 @@
   <command name="panel" section="Dataset">
 
     <usage>
+      <blurb>Register panel data structure</blurb>
       <options>
         <option>
 	  <flag>--cross-section</flag>
