@@ -2609,10 +2609,7 @@ static void add_x12_output_menu_item (windata_t *vwin)
 {
     GtkItemFactoryEntry x12item;
     MODEL *pmod = vwin->data;
-    const char *mpath[] = {
-	N_("/Model data/x12sep"),
-	N_("/Model data/view X-12-ARIMA output")
-    };
+    const gchar *mpath = "/Model data";
 
     if (pmod->params == NULL || pmod->params[0] == NULL)
 	return;
@@ -2623,14 +2620,14 @@ static void add_x12_output_menu_item (windata_t *vwin)
     /* separator */
     x12item.callback = NULL;
     x12item.item_type = "<Separator>";
-    x12item.path = g_strdup(_(mpath[0]));
+    x12item.path = g_strdup_printf("%s/%s", mpath, _("x12sep"));
     gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
     g_free(x12item.path);
 
     /* actual item */
     x12item.callback = x12_output_callback;
     x12item.item_type = NULL;
-    x12item.path = g_strdup(_(mpath[1]));
+    x12item.path = g_strdup_printf("%s/%s", mpath, _("view X-12-ARIMA output"));
     gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
     g_free(x12item.path);
 }
