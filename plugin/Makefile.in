@@ -1,4 +1,4 @@
-top_builddir = ..
+topsrc = ..
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -8,70 +8,53 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
 
-ifeq ($(prefix),)
-  prefix = /opt/esl
-endif
 ifeq ($(CC),)
   CC = gcc
-endif
-ifeq ($(CFLAGS),)
-  CFLAGS = -g -O2 -Wall
-endif
-ifeq ($(MAKE),)
-  MAKE = make
-endif
-ifeq ($(INSTALL),)
-  INSTALL = /bin/install -c
 endif
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
 endif
 
-# Directories
-srcdir  = ./src
-VPATH = ./src
+# Installation directory
 share = $(prefix)/share/gretl
 
-GTK_CFLAGS = `gtk-config --cflags`
+libsrc = $(topsrc)/lib/src
 
-# General compile options and libs:
-PLUGINS  = stats_tables.so panel_data.so
+PLUGINS = stats_tables.so panel_data.so
 
-#### End of system configuration section. ####
+CFLAGS += `gtk-config --cflags` -I$(libsrc) -fPIC -DPIC
+LIBTOOL = $(topsrc)/libtool
 
-COMPILE = $(CC) -c $(CFLAGS) $(GTK_CFLAGS) -I../lib/src -fPIC -DPIC
+all: ../lib/libgretl.la $(PLUGINS)
 
-all: $(PLUGINS)
+../lib/libgretl.la:
+	$(MAKE) -C ../lib
 
-.c.o:        
-	$(COMPILE) $< 
-
-stats_tables.so: stats_tables.o
-	../libtool --mode=link $(CC) -shared -o stats_tables.so \
-	stats_tables.o ../lib/libgretl.la `gtk-config --libs`
-
-panel_data.so: panel_data.o
-	../libtool --mode=link $(CC) -shared -o panel_data.so \
-	panel_data.o ../lib/libgretl.la `gtk-config --libs`
+%.so : %.o
+	$(LIBTOOL) --mode=link $(CC) -shared -o $@ \
+	$< ../lib/libgretl.la `gtk-config --libs`
 
 .PHONY: 
 
 install: $(PLUGINS) installdirs
-	../libtool --mode=install $(INSTALL_PROGRAM) \
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(PLUGINS) $(share)/plugins
 
 install-strip: $(PLUGINS) installdirs
-	../libtool --mode=install $(INSTALL_PROGRAM) -s \
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
 	$(PLUGINS) $(share)/plugins
 
 installdirs:
-	../tools/mkinstalldirs $(share)/plugins
+	$(topsrc)/tools/mkinstalldirs $(share)/plugins
 
 clean:
 	rm -f *.o $(PLUGINS) core 
 	rm -rf .libs
 
+depend:
+	makedepend -Y$(libsrc) *.c 
 
+# DO NOT DELETE
 
 
 

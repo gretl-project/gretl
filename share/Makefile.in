@@ -1,12 +1,12 @@
+topsrc = ..
+
 prefix = @prefix@
 
-ifeq ($(prefix),)
-  prefix = /opt/esl
-endif
-
 gretldir = $(prefix)/share/gretl
-tooldir = ../tools
+tooldir = $(topsrc)/tools
 INSTALL_DATA = cp -fp
+
+.PHONY :
 
 all: install
 
@@ -23,7 +23,7 @@ install_datafiles:
 	$(INSTALL_DATA) $$f $(gretldir)/data ; done 
 	for f in data/greene/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
-	
+
 install_scripts:
 	for f in scripts/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/scripts ; done

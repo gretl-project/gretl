@@ -1,4 +1,4 @@
-top_builddir = .
+topsrc = .
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
@@ -18,118 +18,47 @@ CLI_LIBS = @CLI_LIBS@
 RL_OBJ = @RL_OBJ@
 GUI = @GUI@
 
-ifeq ($(prefix),)
-  prefix = /usr/local
-endif
-ifeq ($(libdir),)
-  libdir = $(prefix)/lib
-endif
-ifeq ($(bindir),)
-  bindir = $(prefix)/bin
-endif
 ifeq ($(CC),)
   CC = gcc
-endif
-ifeq ($(CFLAGS),)
-  CFLAGS = -g -O2 -Wall
-endif
-ifeq ($(MAKE),)
-  MAKE = make
-endif
-ifeq ($(INSTALL),)
-  INSTALL = /bin/install -c
-endif
-ifeq ($(LN),)
-  LN = ln -sf
-endif
-ifeq ($(have_readline),)
-  have_readline = yes
-  CLI_LIBS = -lreadline
-endif
-ifeq ($(have_zlib),)
-  have_zlib = yes
-endif
-ifeq ($(have_gtk),)
-  have_gtk = yes
-  GUI = gretl
-endif
-ifeq ($(have_gtkextra),)
-  have_gtkextra = yes
 endif
 
 INSTALL_PROGRAM = ${INSTALL} -m 755
 INSTALL_DATA = ${INSTALL} -m 644
 
-LIBGRETL  = libgretl.la
-CLI = gretlcli
-PLUGIN = stats_tables.so
-
 export
 
-mklibdir = ./lib
-clidir = ./cli
-tooldir = ./tools
-guidir = ./gui
-plugindir = ./plugin
-sharedir = ./share
+tooldir = $(topsrc)/tools
 
-GUI_SRC = ./gui/gretl.c ./gui/lib.c ./gui/gui_utils.c ./gui/callbacks.c \
-	./gui/dialogs.c ./gui/ssheet.c ./gui/datafiles.c ./gui/database.c \
-	./gui/fileselect.c ./gui/gpt_control.c ./gui/session.c \
-	./gui/webget.c ./gui/calculator.c ./gui/htmlprint.c ./gui/guiprint.c \
-	./gui/boxplots.c ./gui/plotps.c
+SUBDIRS = lib plugin cli gui
 
-PLUGIN_SRC = ./plugin/stats_tables.c ./plugin/panel_data.c
+.PHONY :
 
-COMMON = ./cli/common.c
-
-all: $(LIBGRETL) $(CLI) $(GUI) $(PLUGIN) Makefile
-
-lib: $(LIBGRETL)
-
-$(LIBGRETL): Makefile
-	cd $(mklibdir) && $(MAKE)
-
-cli: $(CLI)
-
-$(CLI): $(LIBGRETL) Makefile ./cli/gretlcli.c $(COMMON) ./cli/complete.c
-	cd $(clidir) && $(MAKE)
-
-$(GUI): $(LIBGRETL) $(GUI_SRC) $(COMMON) Makefile
-	cd $(guidir) && $(MAKE)
-
-$(PLUGIN): $(PLUGIN_SRC)
-	cd $(plugindir) && $(MAKE)
+all: $(SUBDIRS)
+	for d in $^ ; do $(MAKE) -C $$d ; done
 
 clean:
-	cd $(mklibdir) && $(MAKE) clean
-	cd $(clidir) && $(MAKE) clean
-	cd $(guidir) && $(MAKE) clean
-	cd $(plugindir) && $(MAKE) clean	
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d clean; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(libdir) $(includedir) $(bindir)
 
-install: $(GUI) $(CLI) installdirs
-	cd $(mklibdir) && $(MAKE) install
-	cd $(clidir) && $(MAKE) install
-	cd $(guidir) && $(MAKE) install
-	cd $(sharedir) && $(MAKE) install
-	cd $(plugindir) && $(MAKE) install
-	$(tooldir)/install_man $(tooldir) $(prefix) gretl.1 
-	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
+install: $(SUBDIRS) installdirs install-man
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install; done
+	$(MAKE) -C share install
 
-install-strip: $(GUI) $(CLI) installdirs
-	cd $(mklibdir) && $(MAKE) install-strip
-	cd $(clidir) && $(MAKE) install-strip
-	cd $(guidir) && $(MAKE) install-strip
-	cd $(sharedir) && $(MAKE) install
-	cd $(plugindir) && $(MAKE) install
+install-strip: $(SUBDIRS) installdirs install-man	
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-strip; done
+	$(MAKE) -C share install-strip
+
+install-man:
 	$(tooldir)/install_man $(tooldir) $(prefix) gretl.1 
 	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
 
 tags:
 	etags lib/src/*.c cli/*.c gui/*.c plugin/*.c
+
+depend:
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d depend; done	
 
 dist:	
 	./tools/makedist

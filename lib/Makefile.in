@@ -1,4 +1,4 @@
-top_builddir = ..
+topsrc = ..
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -11,24 +11,6 @@ LN = @LN_S@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 
-ifeq ($(prefix),)
-  prefix = /opt/esl
-endif
-ifeq ($(bindir),)
-  bindir = $(prefix)/bin
-endif
-ifeq ($(CC),)
-  CC = gcc
-endif
-ifeq ($(CFLAGS),)
-  CFLAGS = -g -O2 -Wall
-endif
-ifeq ($(MAKE),)
-  MAKE = make
-endif
-ifeq ($(INSTALL),)
-  INSTALL = /bin/install -c
-endif
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
 endif
@@ -44,13 +26,13 @@ libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 
 # General compile options and libs:
-LIBGRETL  = libgretl.la
+LIBGRETL = libgretl.la
 LIBS = -lm -L/usr/local/lib -lz $(XML_LIBS)
 
 #### End of system configuration section. ####
 
-VPATH += ./src
 srcdir  = ./src
+vpath %.c $(srcdir)
 libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 
@@ -62,49 +44,41 @@ HDRS = libgretl.h commands.h estimate.h utils.h errors.h pvalues.h \
 	compare.h dataio.h generate.h strutils.h describe.h printout.h \
 	version.h texprint.h var.h interact.h graphing.h monte_carlo.h \
 	nonparam.h discrete.h subsample.h internal.h
-OBJS = estimate.o compare.o utils.o errors.o pvalues.o dataio.o \
-	generate.o strutils.o describe.o printout.o texprint.o var.o \
-	interact.o graphing.o monte_carlo.o nonparam.o discrete.o \
-	subsample.o
-LOBJS = estimate.lo compare.lo utils.lo errors.lo pvalues.lo dataio.lo \
-	generate.lo strutils.lo describe.lo printout.lo texprint.lo var.lo \
-	interact.lo graphing.lo monte_carlo.lo nonparam.lo discrete.lo \
-	subsample.lo
+OBJS = $(SRCS:.c=.o)
+LOBJS = $(SRCS:.c=.lo)
 
-COMPILE = ../libtool --mode=compile $(CC) -c -I.. -I./src $(CFLAGS) $(XML_CFLAGS)
+LIBTOOL = $(topsrc)/libtool
+
+COMPILE = $(LIBTOOL) --mode=compile $(CC) -c -I.. -I./src $(CFLAGS) $(XML_CFLAGS)
 
 .c.o:        
 	$(COMPILE) $<
 
-$(LIBGRETL): $(OBJS) $(LOBJS) ../Makefile
-	../libtool --mode=link $(CC) -o $(LIBGRETL) $(LOBJS) \
+$(LIBGRETL): $(OBJS) $(LOBJS)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) \
 	-rpath $(prefix)/lib $(LIBS) -version-info 8:0:0
-
-$(LOBJS): Makefile
-
-$(OBJS): Makefile
 
 .PHONY: 
 
-install: $(LIBGRETL) installdirs
-	../libtool $(INSTALL_PROGRAM) $(LIBGRETL) $(libdir)/$(LIBGRETL)
-	$(INSTALL_DATA) $(srcdir)/*.h $(includedir)
-	$(INSTALL_PROGRAM) ../gretl-config $(bindir)
+install: $(LIBGRETL) install-data
+	$(LIBTOOL) $(INSTALL_PROGRAM) $< $(libdir)/$<
 
-install-strip: $(LIBGRETL) installdirs
-	../libtool $(INSTALL_PROGRAM) -s $(LIBGRETL) $(libdir)/$(LIBGRETL)
+install-strip: $(LIBGRETL) install-data
+	$(LIBTOOL) $(INSTALL_PROGRAM) -s $< $(libdir)/$<
+
+install-data: installdirs
 	$(INSTALL_DATA) $(srcdir)/*.h $(includedir)
 	$(INSTALL_PROGRAM) ../gretl-config $(bindir)
 
 installdirs:
-	../tools/mkinstalldirs $(libdir) $(includedir)
+	$(topsrc)/tools/mkinstalldirs $(libdir) $(includedir)
 
 clean:
 	rm -f *.o *.lo $(LIBGRETL) core 
 	rm -rf ./.libs
 
 tags:
-	cd $(srcdir)/../.. && etags lib/src/*.c cli/*.c gui/*.c
+	$(MAKE) -C $(topsrc) tags
 
 depend:
 	makedepend -Y src/*.c && \

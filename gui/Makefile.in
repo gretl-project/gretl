@@ -1,4 +1,4 @@
-top_builddir = ..
+topsrc = ..
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -17,20 +17,8 @@ have_gtkextra = @have_gtkextra@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
 
-ifeq ($(prefix),)
-  prefix = /opt/esl
-endif
 ifeq ($(CC),)
   CC = gcc
-endif
-ifeq ($(CFLAGS),)
-  CFLAGS = -g -O2 -Wall
-endif
-ifeq ($(MAKE),)
-  MAKE = make
-endif
-ifeq ($(INSTALL),)
-  INSTALL = /bin/install -c
 endif
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
@@ -43,9 +31,6 @@ ifeq ($(LN),)
 endif
 ifeq ($(need_libbind),yes)
   INETLIB = -lbind
-endif
-ifeq ($(have_gnome),)
-  have_gnome = yes
 endif
 ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`
@@ -64,50 +49,48 @@ else
 endif
 
 # Directories
-srcdir  = .
 bindir	= $(prefix)/bin
 gretldir = $(prefix)/share/gretl
-tooldir = ../tools
+tooldir = $(topsrc)/tools
+libsrc = $(topsrc)/lib/src
+clisrc = $(topsrc)/cli
+docdir = $(topsrc)/doc
 
 #### End of system configuration section. ####
 
 SHELL = /bin/sh
+LIBTOOL = $(topsrc)/libtool
 PROG  = gretl_x11
 
-SRCS = gretl.c lib.c gui_utils.c callbacks.c dialogs.c ssheet.c \
-	datafiles.c database.c fileselect.c gpt_control.c session.c \
-	webget.c calculator.c htmlprint.c guiprint.c boxplots.c \
-	../cli/common.c plotps.c
-HDRS = gretl.h lib.h gui_utils.h callbacks.h dialogs.h session.h \
-	gretltypes.h webget.h htmlprint.h guiprint.h
-OBJS = gui_utils.o lib.o gretl.o callbacks.o dialogs.o ssheet.o \
+vpath %.c $(topsrc)/cli
+
+OBJS = gretl.o lib.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
 	webget.o calculator.o htmlprint.o guiprint.o boxplots.o
-COMPILE = $(CC) -c -I$(srcdir) -I../lib/src $(CFLAGS) $(GUI_CFLAGS)
+
+COMPILE = $(CC) -c -I. -I$(libsrc) $(CFLAGS) $(GUI_CFLAGS)
 
 .c.o:
 	$(COMPILE) $<
 
-$(PROG): $(OBJS) ../Makefile 
-	../libtool --mode=link $(CC) -o $(PROG) $(OBJS) \
-	$(LIBS) $(INETLIB)
+$(PROG): $(OBJS)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(LIBS) $(INETLIB)
 
 .PHONY:
 
-install: $(PROG) installdirs $(query_install_gnome)
-	../libtool $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
-	$(INSTALL_PROGRAM) ../gretl_sh $(bindir)/gretl
-	$(INSTALL_DATA) gretl-logo.xpm $(gretldir)
-	$(INSTALL_DATA) ../COPYING $(gretldir)
+install: $(PROG) install-data $(query_install_gnome)
+	$(LIBTOOL) $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
 
-install-strip: $(PROG) installdirs $(query_install_gnome)
-	../libtool $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
-	$(INSTALL_PROGRAM) ../gretl_sh $(bindir)/gretl
+install-strip: $(PROG) install-data $(query_install_gnome)
+	$(LIBTOOL) $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
+
+install-data: installdirs
+	$(INSTALL_PROGRAM) $(topsrc)/gretl_sh $(bindir)/gretl
 	$(INSTALL_DATA) gretl-logo.xpm $(gretldir)
-	$(INSTALL_DATA) ../COPYING $(gretldir)
+	$(INSTALL_DATA) $(topsrc)/COPYING $(gretldir)
 
 install-exec: $(PROG) installdirs 
-	../libtool $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
+	$(LIBTOOL) $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
 
 install-gnome: $(PROG) installdirs 
 	$(tooldir)/mkinstalldirs $(gpixmaps)
@@ -123,9 +106,9 @@ install-gnome: $(PROG) installdirs
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C/figures
 	$(INSTALL_DATA) gnome/topic.dat $(ghelpdir)/C
-	$(INSTALL_DATA) ../doc/manual-html/*.html $(ghelpdir)/C
-	$(INSTALL_DATA) ../doc/manual-html/*.css $(ghelpdir)/C
-	$(INSTALL_DATA) ../doc/figures/*.png $(ghelpdir)/C/figures
+	$(INSTALL_DATA) $(docdir)/manual-html/*.html $(ghelpdir)/C
+	$(INSTALL_DATA) $(docdir)/manual-html/*.css $(ghelpdir)/C
+	$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/C/figures
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(bindir) 
@@ -136,11 +119,7 @@ clean:
 	rm -rf .libs
 
 depend:
-	makedepend -Y../lib/src *.c 
-
-topclean: 
-	rm -f *.o $(PROG) core
-	rm -rf .libs
+	makedepend -Y$(libsrc) *.c 
 
 # DO NOT DELETE
 
