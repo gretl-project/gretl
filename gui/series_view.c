@@ -279,7 +279,7 @@ set_series_float_format (GtkWidget *w, gpointer p)
     series_view_t *sview = (series_view_t *) p;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
-        i = GPOINTER_TO_INT(g_object_get_data(GTK_OBJECT(w), "action"));
+        i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
         sview->format = i;
     }
 }
@@ -297,7 +297,7 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(w), _("gretl: data format"));
-    g_signal_connect(GTK_OBJECT(w), "destroy",  
+    gtk_signal_connect(GTK_OBJECT(w), "destroy",  
 		     GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
 
     vbox = gtk_vbox_new (FALSE, 5);
@@ -313,8 +313,8 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     tmp = gtk_label_new(_("Show"));
     adj = gtk_adjustment_new(sview->digits, 1, 10, 1, 1, 1);
     sview->digit_spin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
-    g_signal_connect (adj, "value_changed",
-		      GTK_SIGNAL_FUNC (series_view_get_figures), sview);
+    gtk_signal_connect (adj, "value_changed",
+			GTK_SIGNAL_FUNC (series_view_get_figures), sview);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), sview->digit_spin, FALSE, FALSE, 5);
 
@@ -323,20 +323,20 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     if (sview->format == 'G')
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
-    g_signal_connect(GTK_OBJECT(tmp), "clicked",
-                     GTK_SIGNAL_FUNC(set_series_float_format), sview);
-    g_object_set_data(GTK_OBJECT(tmp), "action", 
-                      GINT_TO_POINTER('G'));
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_series_float_format), sview);
+    gtk_object_set_data(GTK_OBJECT(tmp), "action", 
+			GINT_TO_POINTER('G'));
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (tmp));
     tmp = gtk_radio_button_new_with_label(group, _("decimal places"));
     gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     if (sview->format == 'f')
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
-    g_signal_connect(GTK_OBJECT(tmp), "clicked",
-                     GTK_SIGNAL_FUNC(set_series_float_format), sview);
-    g_object_set_data(GTK_OBJECT(tmp), "action", 
-                      GINT_TO_POINTER('f'));    
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_series_float_format), sview);
+    gtk_object_set_data(GTK_OBJECT(tmp), "action", 
+			GINT_TO_POINTER('f'));    
 
     /* control buttons */
     hbox = gtk_hbox_new (TRUE, 5);
@@ -344,7 +344,7 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
-    g_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
+    gtk_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
 			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
 			      GTK_OBJECT (w));
 
@@ -352,9 +352,9 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
-    g_signal_connect (GTK_OBJECT (tmp), "clicked", 
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
 		      GTK_SIGNAL_FUNC (series_view_format_cancel), sview);
-    g_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
+    gtk_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
 			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
 			      GTK_OBJECT (w));
 
