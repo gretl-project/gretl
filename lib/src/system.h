@@ -116,11 +116,13 @@ MODEL *system_get_model (const gretl_equation_system *sys, int i);
 double system_get_ll (const gretl_equation_system *sys);
 double system_get_llu (const gretl_equation_system *sys);
 double system_get_X2 (const gretl_equation_system *sys);
+double system_get_BPLM (const gretl_equation_system *sys);
 
 void system_set_ll (gretl_equation_system *sys, double ll);
 void system_set_llu (gretl_equation_system *sys, double llu);
 void system_set_X2 (gretl_equation_system *sys, double X2);
 void system_set_ess (gretl_equation_system *sys, double ess);
+void system_set_BPLM (gretl_equation_system *sys, double lm);
 
 int system_get_overid_df (const gretl_equation_system *sys);
 

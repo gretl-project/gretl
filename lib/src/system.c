@@ -39,7 +39,8 @@ enum {
 enum {
     SYS_NO_TEST,
     SYS_LR_TEST,
-    SYS_F_TEST
+    SYS_F_TEST,
+    SYS_TEST_NOTIMP
 } system_test_types;
 
 enum {
@@ -74,6 +75,7 @@ struct _gretl_equation_system {
     double llu;                 /* unrestricted log-likelihood */
     double X2;                  /* chi-square test value */
     double ess;                 /* total error sum of squares */
+    double BPLM;                /* test stat for diagonal covariance matrix */
     int **lists;                /* regression lists for stochastic equations */
     int *endog_vars;            /* list of endogenous variables */
     int *instr_vars;            /* list of instruments (exogenous vars) */
@@ -298,6 +300,7 @@ gretl_equation_system_new (int method, const char *name)
     sys->ll = sys->llu = 0.0;
     sys->X2 = 0.0;
     sys->ess = 0.0;
+    sys->BPLM = 0.0;
 
     sys->b = NULL;
     sys->vcv = NULL;
@@ -335,6 +338,7 @@ static void system_clear_results (gretl_equation_system *sys)
     sys->llu = 0.0;
     sys->X2 = 0.0;
     sys->ess = 0.0;
+    sys->BPLM = 0.0;
 
     if (sys->b != NULL) {
 	gretl_matrix_free(sys->b);
@@ -722,6 +726,9 @@ static int sys_test_type (gretl_equation_system *sys, gretlopt opt)
 		   sys->method == TSLS ||
 		   sys->method == SYS_3SLS) {
 	    ret = SYS_F_TEST;
+	} else if (sys->method == SYS_LIML) {
+	    /* not implemented yet */
+	    ret = SYS_TEST_NOTIMP;
 	} else if (sys->method == SYS_FIML) {
 	    ret = SYS_LR_TEST;
 	} 
@@ -824,7 +831,11 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 
     stest = sys_test_type(sys, opt);
 
-    if (stest != SYS_NO_TEST) {
+    if (stest == SYS_TEST_NOTIMP) {
+	pprintf(prn, _("Sorry, command not available for this estimator"));
+	pputc(prn, '\n');
+	err = 1;
+    } else if (stest != SYS_NO_TEST) {
 	err = estimate_with_test(sys, pZ, pdinfo, opt, stest, 
 				 system_est, prn);
     } else {
@@ -1230,6 +1241,11 @@ double system_get_X2 (const gretl_equation_system *sys)
     return sys->X2;
 }
 
+double system_get_BPLM (const gretl_equation_system *sys)
+{
+    return sys->BPLM;
+}
+
 void system_set_ll (gretl_equation_system *sys, double ll)
 {
     sys->ll = ll;
@@ -1248,6 +1264,11 @@ void system_set_X2 (gretl_equation_system *sys, double X2)
 void system_set_ess (gretl_equation_system *sys, double ess)
 {
     sys->ess = ess;
+}
+
+void system_set_BPLM (gretl_equation_system *sys, double lm)
+{
+    sys->BPLM = lm;
 }
 
 /* for case of applying df correction to cross-equation 

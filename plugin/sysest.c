@@ -35,12 +35,13 @@ extern int liml_driver (gretl_equation_system *sys, double ***pZ,
 			PRN *prn);
 
 static void 
-print_system_vcv (const gretl_matrix *m, PRN *prn)
+print_system_vcv (const gretl_equation_system *sys, const gretl_matrix *m, 
+		  PRN *prn)
 {
     gretl_matrix *mcopy;
     int jmax = 1;
     char numstr[16];
-    double x;
+    double x, lm;
     int i, j;
 
     pprintf(prn, "%s\n(%s)\n\n",
@@ -71,6 +72,15 @@ print_system_vcv (const gretl_matrix *m, PRN *prn)
 	    pprintf(prn, "\n%s = %g\n", _("log determinant"), x);
 	}
 	gretl_matrix_free(mcopy);
+    }
+
+    lm = system_get_BPLM(sys);
+    if (lm > 0) {
+	int df = m->rows * (m->rows - 1) / 2;
+	
+	pprintf(prn, "%s:\n", _("Breusch-Pagan test for diagonal covariance matrix"));
+	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
+		df, lm, _("with p-value"), chisq(lm, df));
     }
 
     pputc(prn, '\n');
@@ -127,11 +137,12 @@ static int make_sys_X_block (gretl_matrix *X,
 */
 
 static int
-gls_sigma_from_uhat (const gretl_equation_system *sys,
+gls_sigma_from_uhat (gretl_equation_system *sys,
 		     gretl_matrix *sigma, const gretl_matrix *e, 
 		     int m, int T)
 {
     int geomean = system_vcv_geomean(sys);
+    double lm = system_get_BPLM(sys);
     int i, j, t;
     double xx;
 
@@ -151,6 +162,21 @@ gls_sigma_from_uhat (const gretl_equation_system *sys,
 		gretl_matrix_set(sigma, j, i, xx);
 	    }
 	}
+    }
+
+    if (system_get_method(sys) == SYS_OLS && lm == 0.0) {
+	double sii, sij, sjj;
+
+	for (i=1; i<m; i++) {
+	    sii = gretl_matrix_get(sigma, i, i);
+	    for (j=0; j<i; j++) {
+		sij = gretl_matrix_get(sigma, i, j);
+		sjj = gretl_matrix_get(sigma, j, j);
+		lm += (sij * sij) / (sii * sjj);
+	    }
+	}
+	lm *= T;
+	system_set_BPLM(sys, lm);
     }
 
     return 0;
@@ -651,7 +677,7 @@ save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
 	}
     }
 
-    print_system_vcv(sigma, prn);
+    print_system_vcv(sys, sigma, prn);
 
     if (nr == 0 && (method == SYS_FIML || 
 		    method == SYS_3SLS || 
