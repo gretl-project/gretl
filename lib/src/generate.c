@@ -125,6 +125,7 @@ enum retrieve {
     R_NUMERIC,
     R_MATH,
     R_VARNAME,
+    R_OBS,
     R_UNKNOWN
 };
 
@@ -1571,6 +1572,27 @@ static int check_modelstat (const MODEL *pmod, int type1)
 
 /* ...........................................................*/
 
+static double get_obs_value (const char *s, double **Z, 
+			     const DATAINFO *pdinfo)
+{
+    char vname[9], obs[9];
+
+    if (sscanf(s, "%8[^[][%8[^]]]", vname, obs) != 2) {
+	return NADBL;
+    } else {
+	int i = varindex(pdinfo, vname);
+	int t = dateton(obs, pdinfo);
+
+	if (i < pdinfo->v && pdinfo->vector[i] && 
+	    t >= 0 && t < pdinfo->n) {
+	    return Z[i][t];
+	}
+    }
+    return NADBL;
+}
+
+/* ...........................................................*/
+
 static int getxvec (char *s, double *xvec, 
 		    double **Z, const DATAINFO *pdinfo, 
 		    const MODEL *pmod, int *scalar)
@@ -1699,6 +1721,13 @@ static int getxvec (char *s, double *xvec,
 	}
 	break;
 
+    case R_OBS:
+	value = get_obs_value(s, Z, pdinfo);
+	for (t=0; t<n; t++) {
+	    xvec[t] = value;
+	}
+	break;
+
     case R_UNKNOWN:  return 1;
 
     default:
@@ -1799,6 +1828,34 @@ static int scanb (const char *ss, char *word)
 
 /* ......................................................   */
 
+static int varname_plus_obs (const char *ss, const DATAINFO *pdinfo)
+{
+    if (strchr(ss, '[') == NULL || strchr(ss, ']') == NULL) {
+	return 0;
+    } else {
+	char vname[9], obs[9];
+
+	if (sscanf(ss, "%8[^[][%8[^]]]", vname, obs) != 2) {
+	    return 0;
+	} else {
+	    int i = varindex(pdinfo, vname);
+
+	    if (i == pdinfo->v || !pdinfo->vector[i]) {
+		/* invalid varname or scalar */
+		return 0; 
+	    }
+	    if (dateton(obs, pdinfo) < 0) {
+		/* invalid observation string */
+		return 0;
+	    }
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+/* ......................................................   */
+
 static int strtype (char *ss, const DATAINFO *pdinfo)
      /*  checks whether ss is a number, variable name or transformation */
 {
@@ -1844,6 +1901,10 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
     i = varindex(pdinfo, ss);
     if (i < pdinfo->v || i == UHATNUM || i == TNUM || i == INDEXNUM) {
 	return R_VARNAME; 
+    }
+
+    if (varname_plus_obs(ss, pdinfo)) {
+	return R_OBS;
     }
 
     return 0;
