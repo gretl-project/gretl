@@ -807,10 +807,10 @@ void ntodate (char *datestr, int nt, const DATAINFO *pdinfo)
         int n = (int) xn;
 
         sprintf(datestr, "%d", n);
+    } else {
+	if (pdinfo->pd < 10) sprintf(datestr, "%.1f", xn);
+	else sprintf(datestr, "%.2f", xn);
     }
-    else if (pdinfo->pd < 10) 
-	sprintf(datestr, "%.1f", xn);
-    else sprintf(datestr, "%.2f", xn);
 }
 
 /* .......................................................... */

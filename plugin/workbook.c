@@ -1,13 +1,50 @@
-#define _(str) (str)
+/*
+ *  Copyright (c) by Allin Cottrell 2002
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
+
+/*
+  Mostly borrowed from Gnumeric's Excel importer my Michael Meeks
+*/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <glib.h>
 
-#include <wctype.h>
-#include <wchar.h>
+#ifdef G_OS_WIN32
+# include "../winconfig.h"
+#else
+# include "../config.h"
+#endif
 
 #include "biff.h"
 #include "importer.h"
+
+#ifndef __GNOME_I18N_H__
+# ifdef ENABLE_NLS
+#  include "libintl.h"
+#  define gettext_noop(String) String
+#  define _(String) gettext (String)
+#  define N_(String) gettext_noop (String)
+# else
+#  define _(String) String
+#  define N_(String) String
+# endif /* ENABLE_NLS */
+#endif /* __GNOME_I18N_H__ */
 
 typedef struct _BiffBoundsheetData
 {

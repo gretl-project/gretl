@@ -47,8 +47,9 @@ static int printvars (FILE *fp, int t, const int *list, double **Z)
 	if (na(xx)) {
 	    fprintf(fp, "? ");
 	    miss = 1;
-	} else 
+	} else {
 	    fprintf(fp, "%g ", xx);
+	}
     }
     fprintf(fp, "\n");
     return miss;
@@ -495,15 +496,7 @@ int gnuplot_display (const PATHS *ppaths)
 
 static void print_xrange (FILE *fp, double xmin, double xmax)
 {
-    char minstr[12], maxstr[12];
-    char *p;
-
-    sprintf(minstr, "%g", xmin);
-    sprintf(maxstr, "%g", xmax);
-    if ((p = strchr(minstr, ','))) *p = '.';
-    if ((p = strchr(maxstr, ','))) *p = '.';
-
-    fprintf(fp, "set xrange [%s:%s]\n", minstr, maxstr);
+    fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
 }
 
 /**
@@ -746,8 +739,7 @@ int gnuplot (LIST list, const int *lines,
 	fprintf(fq, _("%f + %f*x title 'least squares fit' w lines\n"),
 		a, b);
 
-    /* supply the data to gnuplot inline 
-       -- is something wrong here?? */
+    /* supply the data to gnuplot inline */
     if (opt == OPT_Z || opt == OPT_RESIDZ) {
 	double xx, yy;
 
@@ -871,6 +863,7 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
 		(yvar)? pdinfo->varname[yvar] :
 		pdinfo->varname[plotlist[i+1]]);
 	fprintf(fp, "plot '-' using 1:2\n");
+
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    m = (yvar)? plotlist[i+1] : xvar;
 	    xx = (*pZ)[m][t];
@@ -882,7 +875,6 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
 	    else fprintf(fp, "%f\n", xx);
 	}
 	fprintf(fp, "e\n");
-
     } 
     fprintf(fp, "set nomultiplot\n");
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
@@ -1022,6 +1014,7 @@ int plot_fcast_errs (const int n, const double *obs,
 	    "'-' using 1:2 title 'fitted' w lines , \\\n"
 	    "'-' using 1:2:3 title '95%% confidence interval' "
 	    "w errorbars\n", varname);
+
     /* send data inline */
     for (t=0; t<n; t++)
 	fprintf(fp, "%f %f\n", obs[t], depvar[t]);

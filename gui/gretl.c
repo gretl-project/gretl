@@ -586,7 +586,7 @@ void nls_init (void)
     setlocale (LC_ALL, "");
     bindtextdomain ("gretl", localedir);
     /* bind_textdomain_codeset ("gretl", "UTF-8"); */
-    textdomain ("gretl");  
+    textdomain ("gretl");
     nls_on = doing_nls();
 }
 # else
@@ -641,6 +641,10 @@ int main (int argc, char *argv[])
     set_rcfile();
     make_userdir(&paths);
 #endif/* G_OS_WIN32 */
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     if (argc > 1) {
 	int opt = parseopt(argv[1]);

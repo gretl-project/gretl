@@ -871,6 +871,7 @@ static void get_gpt_data (char *line, double *x, double *y)
 	if (sscanf(line, "%*s %lf", y) == 1) return;
 	*y = NADBL;
     }
+
     return;
 }
 
@@ -1338,19 +1339,19 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "plot");
     png_plot_t *plot = (png_plot_t *) ptr;
 
-    if (!strcmp(item, "Save as postscript (EPS)...")) {
+    if (!strcmp(item, _("Save as postscript (EPS)..."))) {
 	strcpy(plot->spec->termtype, "postscript");
 	file_selector("Save graph as postscript file", SAVE_THIS_GRAPH, 
 		      plot->spec);
     }
-    else if (!strcmp(item, "Save as PNG...")) {
+    else if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
         file_selector("Save graph as PNG", SAVE_THIS_GRAPH, plot->spec);
     }
-    else if (!strcmp(item, "Save to session as icon")) { 
+    else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_last_graph(plot->spec, 0, NULL);
     }
-    else if (!strcmp(item, "Zoom...")) { 
+    else if (!strcmp(item, _("Zoom..."))) { 
 	 GdkCursor* cursor;
 
 	 cursor = gdk_cursor_new(GDK_CROSSHAIR);
@@ -1358,19 +1359,19 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	 gdk_cursor_destroy(cursor);
 	 plot->zoom->active = 1;
 	 gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
-			    " Drag to define zoom rectangle");
+			    _(" Drag to define zoom rectangle"));
 	 create_selection_gc(plot);
     }
-    else if (!strcmp(item, "Restore full view")) { 
+    else if (!strcmp(item, _("Restore full view"))) { 
 	make_new_png(plot, PNG_UNZOOM);
 	plot->zoom->zoomed = 0;
     }
 #ifdef USE_GNOME 
-    else if (!strcmp(item, "Print...")) { 
+    else if (!strcmp(item, _("Print..."))) { 
 	gnome_print_graph(plot->spec->fname);
     }
 #endif 
-    else if (!strcmp(item, "Close")) { 
+    else if (!strcmp(item, _("Close"))) { 
         gtk_widget_destroy(plot->shell);
     } 
 
@@ -1382,23 +1383,23 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 static GtkWidget *build_plot_menu (png_plot_t *plot)
 {
     GtkWidget *menu, *item;    
-    static char *regular_items[] = {
-        "Save as postscript (EPS)...",
-	"Save as PNG...",
-	"Save to session as icon",
-	"Zoom...", 
+    const char *regular_items[] = {
+        N_("Save as postscript (EPS)..."),
+	N_("Save as PNG..."),
+	N_("Save to session as icon"),
+	N_("Zoom..."), 
 #ifdef USE_GNOME
-	"Print...",
+	N_("Print..."),
 #endif
-        "Close",
+        N_("Close"),
         NULL
     };
-    static char *zoomed_items[] = {
-	"Restore full view",
-	"Close",
+    const char *zoomed_items[] = {
+	N_("Restore full view"),
+	N_("Close"),
 	NULL
     };
-    char **plot_items;
+    const char **plot_items;
     int i = 0;
 
     menu = gtk_menu_new();
@@ -1414,10 +1415,10 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	    i++;
 	    continue;
 	}
-        item = gtk_menu_item_new_with_label(plot_items[i]);
+        item = gtk_menu_item_new_with_label(_(plot_items[i]));
         gtk_signal_connect(GTK_OBJECT(item), "activate",
                            (GtkSignalFunc) plot_popup_activated,
-                           plot_items[i]);
+                           _(plot_items[i]));
         gtk_object_set_data(GTK_OBJECT(item), "plot", plot);
         GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
         gtk_widget_show(item);
@@ -1450,6 +1451,7 @@ static int make_new_png (png_plot_t *plot, int view)
 		plot->zoom->xmax);
 	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom->ymin,
 		plot->zoom->ymax);
+
 	while (fgets(line, MAXLEN-1, fpin)) {
 	    if (strncmp(line, "set xrange", 10) &&
 		strncmp(line, "set yrange", 10))
@@ -1469,7 +1471,7 @@ static int make_new_png (png_plot_t *plot, int view)
     }
 
     if (err) {
-	errbox("Failed to generate PNG file");
+	errbox(_("Failed to generate PNG file"));
 	return 1;
     }
 
@@ -1562,7 +1564,7 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
 
     pbuf = gdk_pixbuf_new_from_file(fname);
     if (pbuf == NULL) {
-	errbox("Failed to create pixbuf from file");
+	errbox(_("Failed to create pixbuf from file"));
 	remove(fname);
 	return;
     }
@@ -1571,7 +1573,7 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
     height = gdk_pixbuf_get_height(pbuf);
 
     if (width == 0 || height == 0) {
-	errbox("Malformed PNG file for graph");
+	errbox(_("Malformed PNG file for graph"));
 	gdk_pixbuf_unref(pbuf);
 	remove(fname);
 	return;
@@ -1685,6 +1687,7 @@ static int get_plot_ranges (png_plot_t *plot)
 
     fp = fopen(plot->spec->fname, "r");
     if (fp == NULL) return 0;
+
     while (fgets(line, MAXLEN-1, fp)) {
 	if (sscanf(line, "set xrange [%lf:%lf]", 
 		   &plot->xmin, &plot->xmax) == 2) 
@@ -1695,6 +1698,7 @@ static int get_plot_ranges (png_plot_t *plot)
 	    plot->title = 1;	
 	if (!strncmp(line, "plot ", 5)) break;
     }
+
     fclose(fp);
 
     if (got_x) {
@@ -1746,7 +1750,7 @@ int gnuplot_show_png (char *plotfile)
     gtk_widget_pop_colormap();
 
     gtk_widget_ref(plot->shell);
-    gtk_window_set_title(GTK_WINDOW(plot->shell), "gretl: gnuplot graph"); 
+    gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 
 
     vbox = gtk_vbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
@@ -1813,7 +1817,7 @@ int gnuplot_show_png (char *plotfile)
 	plot->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
 					    "plot_message");
 	gtk_statusbar_push (GTK_STATUSBAR (plot->statusbar),
-			    plot->cid, " Click on graph for pop-up menu");
+			    plot->cid, _(" Click on graph for pop-up menu"));
 	gtk_signal_connect (GTK_OBJECT (plot->canvas), "motion_notify_event",
 			    (GtkSignalFunc) motion_notify_event, plot);
     }

@@ -206,10 +206,10 @@ static GtkWidget *build_menu (gpointer data)
     menu = gtk_menu_new();
 
     while (items[i]) {
-        item = gtk_menu_item_new_with_label(items[i]);
+        item = gtk_menu_item_new_with_label(_(items[i]));
         gtk_signal_connect(GTK_OBJECT(item), "activate",
                            (GtkSignalFunc) box_popup_activated,
-                           items[i]);
+                           _(items[i]));
 	gtk_object_set_data(GTK_OBJECT(item), "group", data);
         GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
         gtk_widget_show(item);

@@ -11,7 +11,6 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 have_readline = @have_readline@
 have_zlib = @have_zlib@
-need_libbind = @need_libbind@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
 
@@ -24,6 +23,7 @@ GTK_EXTRA_LIBS = @GTK_EXTRA_LIBS@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 USE_NLS = @USE_NLS@
+INETLIB = @INETLIB@
 
 ifeq ($(CC),)
   CC = gcc
@@ -36,9 +36,6 @@ ifeq ($(INSTALL_DATA),)
 endif
 ifeq ($(LN),)
   LN = ln -sf
-endif
-ifeq ($(need_libbind),yes)
-  INETLIB = -lbind
 endif
 ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`

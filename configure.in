@@ -29,15 +29,15 @@ build_gui="yes"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
-have_libxml="no"
 have_libole2="no"
 have_gtk="no"
 have_gtkextra="no"
 have_gnome="no"
 have_gmp="no"
-need_libbind="no"
+seek_inet_addr="no"
 png_graphics="yes"
 MAKE="make"
+XML_LIBS=
 
 AM_GNU_GETTEXT([external])
 
@@ -149,29 +149,21 @@ AC_CHECK_LIB(readline, rl_completion_matches,new_readline="yes" ; \
   CLI_LIBS="-lreadline -ltermcap" ; AC_DEFINE(NEW_READLINE),,-ltermcap)
 AC_SUBST(new_readline)
 
-AC_CHECK_LIB(c, inet_addr,,need_libbind="yes",)
-if test "$need_libbind" = yes; then
-  AC_CHECK_LIB(bind, inet_addr,,
-  AC_MSG_ERROR(Can't find a definition of inet_addr),)
+INETLIB=''
+AC_CHECK_LIB(c, inet_addr,,seek_inet_addr="yes",)
+if test "$seek_inet_addr" = yes; then
+  AC_CHECK_LIB(bind, inet_addr,INETLIB="-lbind",)
+  if test "$INETLIB" != "-lbind"; then
+    AC_CHECK_LIB(nsl, inet_addr, INETLIB="-lnsl",
+    AC_MSG_ERROR(Can't find a definition of inet_addr),)
+  fi
 fi
-AC_SUBST(need_libbind)
+AC_SUBST(INETLIB)
 
 AC_CHECK_LIB(z, gzopen,have_zlib="yes" ; \
   ZLIB="-lz" ; AC_DEFINE(HAVE_ZLIB),,)
 AC_SUBST(have_zlib)
 
-XMLCONF=''
-AC_DEFUN(AC_LIB_XML,
-[AC_CHECK_PROGS(XMLCONF,xml-config xml2-config,)])
-
-AC_LIB_XML
-if test x"${XMLCONF}" != x ; then
-  have_libxml=yes
-  XML_CFLAGS=`$XMLCONF --cflags`
-  XML_LIBS=`$XMLCONF --libs`
-  AC_SUBST(XML_CFLAGS)
-  AC_SUBST(XML_LIBS)
-fi
 
 if test x"${png_graphics}" = xyes
 then
@@ -247,14 +239,33 @@ if test "$trygnome" = "yes" ; then
       gnome_prefix="`gnome-config --prefix`"
       GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
       GNOME_LIBS=`gnome-config --libs gnomeui print`
+      XML_CFLAGS=`gnome-config --cflags xml`
+      XML_LIBS=`gnome-config --libs xml`
     fi
   fi
   AC_SUBST(have_gnome)
   AC_SUBST(GNOME_CFLAGS)
   AC_SUBST(GNOME_LIBS)
+  AC_SUBST(XML_CFLAGS)
+  AC_SUBST(XML_LIBS)
 fi
 
 AC_SUBST(gnome_prefix)
+
+dnl If libxml is not already provided by gnome, test for it separately
+if test x"${XML_LIBS}" = x ; then
+  XMLCONF=''
+  AC_DEFUN(AC_LIB_XML,
+  [AC_CHECK_PROGS(XMLCONF,xml-config xml2-config,)])
+
+  AC_LIB_XML
+  if test x"${XMLCONF}" != x ; then
+    XML_CFLAGS=`$XMLCONF --cflags`
+    XML_LIBS=`$XMLCONF --libs`
+    AC_SUBST(XML_CFLAGS)
+    AC_SUBST(XML_LIBS)
+  fi
+fi
 
 AM_PATH_GTK(1.2.3,have_gtk="yes",have_gtk="no")
 if test "${have_gtk}" = "no" ; then
@@ -295,7 +306,7 @@ Please install zlib (compression library) and then reconfigure gretl.
 zlib is available via http://www.info-zip.org/pub/infozip/zlib/
 "
 
-elif test "${have_libxml}" = "no" ; then
+elif test x"${XML_LIBS}" = x ; then
 echo "
 Please install libxml and then reconfigure gretl.
 libxml is available from http://xmlsoft.org/

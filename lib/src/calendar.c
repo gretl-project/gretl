@@ -131,22 +131,25 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
     else
 	dfind = t_to_epoch_day(t, (long) pdinfo->sd0);
 
-    yr = 1 + (double) dfind / 365.248;
+    yr = 1 + (double) dfind / 365.248; 
     
     yrstart = (long)(yr - 1) * 365 + leap_years_since_year_1(yr - 1);
     rem = dfind - yrstart;
-    if (rem == 0) {
-	mo = 12;
-	day = 31;
-    } else {
-	while (modays < rem) {
-	    mo++;
-	    add = days_in_month[leap_year(yr)][mo];
-	    if (modays + add < rem) modays += add;
-	    else break;
-	}
-	day = rem - modays;
+
+    if (rem <= 0) {
+	yr--;
+	yrstart = (long)(yr - 1) * 365 + leap_years_since_year_1(yr - 1);
+	rem = dfind - yrstart;
     }
+
+    while (modays < rem) {
+	mo++;
+	add = days_in_month[leap_year(yr)][mo];
+	if (modays + add < rem) modays += add;
+	else break;
+    }
+    day = rem - modays;
+
     sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day);    
 }
 

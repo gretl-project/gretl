@@ -179,4 +179,4 @@ stats_tables.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
 stats_tables.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 stats_tables.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
 stats_tables.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-workbook.lo: biff.h importer.h
+workbook.lo: ../config.h biff.h importer.h

@@ -247,6 +247,7 @@ int main (int argc, char *argv[])
 
 #ifdef ENABLE_NLS
     nls_init();
+    setlocale(LC_NUMERIC, "C");
 #endif
 
     datainfo = datainfo_new();
