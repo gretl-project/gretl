@@ -69,7 +69,7 @@
 	</para>
 
       <para>
-	<command>loop while differ > .00001</command>
+	<command>loop while differ &gt; .00001</command>
       </para>
 
       <para>L'esecuzione del ciclo di comandi continuerà fintanto che la

@@ -5,58 +5,38 @@
 
   <sect1 id="panel-structure"><title>Struttura panel</title>
 
-    <para>I dati di tipo panel (cross-section e serie storiche uniti) richiedono
-      una cura particolare: ecco alcuni riferimenti.</para>
+    <para>I dati panel possono essere visti sotto tre dimensioni, ossia
+      le variabili, le unità cross-section e i periodi temporali.
+      Per rappresentarli in un file testuale (e anche per poterli
+      manipolare), queste tre dimensioni devono in qualche modo essere
+      riportate a due. Questa procedura di <quote>appiattimento</quote>
+      richiede di prendere degli <quote>strati</quote> di dati che
+      apparterrebbero alla terza dimensione e di impilarli nella dimensione
+      verticale del file.</para>
 
-    <para>Si consideri un dataset composto da osservazioni su ognuna
-    di <emphasis>n</emphasis> unità cross-section (regioni, stati,
-    persone o altro) in ognuno di <emphasis>T</emphasis> periodi.
-    Si supponga che ogni osservazione comprenda i valori di
-    <emphasis>k</emphasis> variabili di interesse. Il dataset contiene
-    dunque <emphasis>knT</emphasis> valori.</para>
-
-    <para>I dati dovrebbero essere organizzati <quote>per osservazione</quote>:
-      ogni riga rappresenta un'osservazione, ogni colonna contiene i
-      valori di una particolare variabile. La matrice dei dati
-      contiene dunque <emphasis>nT</emphasis> righe e
-      <emphasis>k</emphasis> colonne. Ciò lascia aperta la questione
-      di come debbano essere disposte le righe; ci sono due
-      possibilità<footnote><para>Se non si intende operare distinzioni
-      concettuali o statistiche tra la variazione dei dati nella
-      dimensione temporale o longitudinale, è possibile disporre le
-      righe in modo arbitrario, ma così facendo probabilmente si
-      sprecherà informazione.</para>
-      </footnote>:</para>
+    <para><application>Gretl</application> si aspetta sempre di trovare
+      dati organizzati <quote>per osservazione</quote>, ossia in modo che
+      ogni riga rappresenti un'osservazione (e che ogni variabile occupi
+      esattamente una colonna). Alla luce di questo fatto, l'appiattimento
+      dei dati panel può essere realizzato in due modi:</para>
 
     <itemizedlist>
-      <listitem><para>Righe raggruppate per
-      <emphasis>unità</emphasis>. Si pensi alla matrice dei dati come
-      composta da <emphasis>n</emphasis> blocchi, ognuno composto da
-      <emphasis>T</emphasis> righe. Il primo blocco di
-      <emphasis>T</emphasis> righe contiene le osservazioni relative
-      all'unità cross-section numero 1 per ognuno dei periodi; il
-      blocco successivo contiene le osservazioni dell'unità numero 2 e
-      così via. In pratica, la matrice dei dati è un insieme di
-      dataset di serie storiche impilati verticalmente.</para></listitem>
-      <listitem><para>Righe raggruppate per <emphasis>periodo</emphasis>.
-      Si pensi alla matrice dei dati come composta da
-      <emphasis>T</emphasis> blocchi, ognuno composto da
-      <emphasis>n</emphasis> righe. Le prime <emphasis>n</emphasis>
-      righe contengono le osservazioni per ognuna delle unità
-      cross-section nel primo periodo; il blocco successivo contiene
-      le osservazioni per tutte le unità nel secondo periodo, e così
-      via. La matrice dei dati è un insieme di dati cross-section
-      impilati verticalmente.</para></listitem>
+       <listitem><para>
+         Pila di dati cross section: ognuno dei blocchi di dati disposti
+         verticalmente contiene i valori per tutte le unità cross-section
+         (longitudinali) in un determinato periodo.</para>
+       </listitem>
+       <listitem><para>
+         Pila di serie storiche: ognuno dei blocchi di dati disposti
+         verticalmente contiene serie storiche per una determinata
+         unità cross-section.</para>
+       </listitem>
     </itemizedlist>
 
-    <para>È possibile usare entrambi i metodi, ma forse il secondo è più
-      scomodo da gestire, visto che occorre assicurarsi che tutte le
-      unità cross-section appaiano nello stesso ordine in tutti i blocchi
-      di dati relativi ai vari periodi. Il menù
-      <guimenu>Campione</guimenu> di <application>gretl</application>
-      contiene il comando
-      <quote>Ristruttura panel</quote>, che permette di passare dalla
-      disposizione "pila di dati cross-section" a quella "pila di
+    <para>È possibile usare entrambi i metodi. Il menù
+      <guimenu>Campione</guimenu> di <application>gretl</application> contiene
+      il comando <quote>Ristruttura panel</quote>, che permette di passare
+      dalla disposizione "pila di dati cross-section" a quella "pila di
       serie storiche" e viceversa.</para>
 
     <para>Quando si importano dati panel in
@@ -73,28 +53,27 @@
     <orderedlist>
       <listitem>
 	<para>Per i dati panel, la <emphasis>periodicità</emphasis>
-	  è pari al numero di periodi temporali, nel caso delle serie
-          storiche impilate, o al numero delle unità cross-section,
-          nel caso dei dati cross-section impilati (ossia, è pari al
-          numero di righe in ognuno dei blocchi da cui è composta la
-          matrice dei dati).
+          è pari al numero di righe contenute in ogni blocco di dati:
+          se i dati sono organizzati come pila di serie storiche,
+          essa sarà pari al numero dei periodi temporali, se i dati
+          sono organizzati come pila di dati cross-section, essa sarà
+          pari al numero di unità cross-section.
 	</para> 
-	<para>L'<emphasis>osservazione iniziale</emphasis> deve essere
-          indicata nella forma <literal>1:1</literal> (se la
-          periodicità è inferiore a 10), o <literal>1:01</literal> (se
-          la periodicità è compresa tra 10 e 99; se la periodicità è
-          maggiore di 100 occorrerà aggiungere un altro zero
-          iniziale). Il primo di questa coppia di numeri separati dal
-          punto e virgola rappresenta il blocco di dati, mentre il
+        <para>Nella maggior parte dei casi, l'<emphasis>osservazione
+          iniziale</emphasis> va indicata nella forma
+          <literal>1:1</literal>.  Il primo di questa coppia di numeri separati
+          dal punto e virgola rappresenta il blocco di dati, mentre il
           secondo numero rappresenta l'osservazione all'interno di
           questo blocco (ad esempio, se il panel è organizzato come
-          pila di dati cross-section, l'etichetta
-          <literal>3:02</literal> indica l'osservazione relativa
-          alla terza unità nel secondo periodo).</para>
+          pila di dati cross-section, l'etichetta <literal>3:2</literal>
+          indica l'osservazione relativa alla terza unità nel secondo
+          periodo).
+        </para>
 	<para>La periodicità e l'osservazione iniziale possono essere
-        impostate usando il comando testuale <command>setobs</command>
-        o il comando dal menù <guimenuitem>Campione, Imposta frequenza
-        e inizio&hellip;</guimenuitem>.</para>
+         impostate usando il comando testuale <command>setobs</command>
+         o il comando dal menù <guimenuitem>Campione, Imposta frequenza
+         e inizio&hellip;</guimenuitem>.
+        </para>
       </listitem>
       <listitem>
         <para>Una volta impostate la periodicità e l'osservazione

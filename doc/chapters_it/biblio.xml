@@ -88,6 +88,14 @@
   </bibliomixed>
 
   <bibliomixed>
+    <bibliomset relation='article'>MacKinnon, J. G. (1996)
+      <title>Numerical Distribution Functions for Unit Root and
+       Cointegration Tests</title>,</bibliomset> <bibliomset
+      relation='journal'><title>Journal of Applied
+       Econometrics</title>, 11, pp. 601&ndash;618.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
     <bibliomset relation='article'>MacKinnon, J. G. and White, H.
       (1985) <title>Some Heteroskedasticity-Consistent Covariance
 	Matrix Estimators with Improved Finite Sample
