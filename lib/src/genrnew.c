@@ -494,6 +494,11 @@ static genatom *parse_token (const char *s, char op,
 	}
     }
 
+    else if (*s == '#') {
+	/* dummy token for parenthetical term */
+	strcpy(str, "#");
+    }
+
     else if (_isnumber(s)) {
 	val = dot_atof(s);
 	scalar = 1;
@@ -838,6 +843,12 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 	}
     }
 
+    /* dummy for parenthetical term */
+    else if (*atom->str == '#') {
+	/* x = calc_xy(calc_pop(), a, atom->op, t); */
+	; /* FIXME!!! */
+    }
+
     return x;
 }
 
@@ -1058,17 +1069,7 @@ static int evaluate_genr (GENERATE *genr)
 		    x = calc_pop();
 		    DPRINTF(("popped %g\n", x));
 		}
-#ifdef GENR_DEBUG
-		if (t == t1) { 
-		    fprintf(stderr, "calc_xy: in: x=%g, y=%g, ", x, y);
-		    if (isprint(atom->op)) fprintf(stderr, "op='%c'\n", atom->op);
-		    else fprintf(stderr, "op=%d\n", atom->op);
-		}
-#endif
 		x = calc_xy(x, y, atom->op, t);
-#ifdef GENR_DEBUG
-		if (t == t1) fprintf(stderr, "calc_xy: out: x=%g\n", x);
-#endif 
 	    }
 	    if (atom->level > level) {
 		calc_push(xbak);
@@ -1201,11 +1202,13 @@ static int token_is_function (char *s, GENERATE *genr, int level)
 static int stack_op_and_token (const char *s, GENERATE *genr, int level)
 {
     char tok[TOKLEN];
-    int wrapped = 0;
-    char op = 0;
-    size_t n;
+    int wrapped = 0, plevel = level;
+    char op = 0, last = 0;
+    size_t n = strlen(s);
 
     DPRINTF(("stack_op_and_token: looking at '%s'\n", s));
+
+    if (n > 0) last = s[n-1];
 
     if (op_level(*s)) {
 	/* leading character is an operator */
@@ -1229,15 +1232,20 @@ static int stack_op_and_token (const char *s, GENERATE *genr, int level)
 	}
     } else {
 	if (*s == '(') {
-	    s++;
-	    wrapped = 1;
+	    if (last == ')') {
+		s++;
+		wrapped = 1;
+		DPRINTF(("term is wrapped in parens\n"));
+	    } else {
+		genr->err = E_UNBAL;
+	    }
 	}
-	strcpy(tok, s);
+	if (!genr->err) strcpy(tok, s);
     }
 
     if (!genr->err) {
 	n = strlen(tok);
-	if (n > 0 && wrapped && tok[n-1] == ')') tok[n-1] = '\0';
+	if (n > 0 && wrapped) tok[n-1] = '\0';
 	
 	if (!token_is_atomic(tok, genr) &&
 	    !token_is_function(tok, genr, level)) {
@@ -1256,6 +1264,16 @@ static int stack_op_and_token (const char *s, GENERATE *genr, int level)
 #endif
 	    }
 	}
+    }
+
+    /* FIXME: need to do something special with wrapped terms:
+       create a dummy atom at the current level?? */
+
+    if (wrapped && op) {
+	genatom *atom;
+
+	atom = parse_token("#", op, genr, plevel);
+	if (atom != NULL) genr->err = push_atom(atom);
     }
 
     return genr->err;
@@ -1954,6 +1972,12 @@ static double calc_xy (double x, double y, char op, int t)
     long int ny;
     double xx, yy;
 
+#ifdef GENR_DEBUG
+    fprintf(stderr, "calc_xy: in: x=%g, y=%g, ", x, y);
+    if (isprint(op)) fprintf(stderr, "op='%c'\n", op);
+    else fprintf(stderr, "op=%d\n", op);
+#endif
+
     switch (op) {
     case '\0':
 	x = y;
@@ -2033,6 +2057,8 @@ static double calc_xy (double x, double y, char op, int t)
 	else x = 1.0;
 	break;
     } 
+
+    DPRINTF(("calc_xy: out: x=%g\n", x));
 
     return x;
 }
