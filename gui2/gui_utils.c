@@ -205,6 +205,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL },
+    { N_("/Tests/variance inflation factors"), NULL, do_vif, VIF, NULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
     { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
