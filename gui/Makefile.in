@@ -82,7 +82,7 @@ vpath %.c = $(topsrc)/gui
 vpath %.h = $(topsrc)/gui
 
 SRCS = boxplots.c calculator.c callbacks.c console.c database.c datafiles.c \
-	dialogs.c fileselect.c gpt_control.c gretl.c guiprint.c \
+	dialogs.c fileselect.c gpt_control.c graph_page.c gretl.c guiprint.c \
 	gui_utils.c helpfiles.c library.c model_table.c obsbutton.c \
 	objectsave.c selector.c series_view.c session.c settings.c ssheet.c \
 	textbuf.c webget.c 

@@ -1,6 +1,24 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+/*
+ *  Copyright (c) 2004 by Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
+#include "gretl.h"
+#include "graph_page.h"
 
 enum {
     PS_OUTPUT,
@@ -20,12 +38,23 @@ const char *gpage_base = "gretl_graphpage";
 const char *gpage_tex = "gretl_graphpage.tex";
 const char *gpage_plt = "gretl_graphpage.plt";
 
-static void graphpage_init (graphpage *gpage)
+static graphpage gpage;
+
+static void gpage_errmsg (char *msg, int gui)
 {
-    gpage->output = PS_OUTPUT;
-    gpage->color = 0;
-    gpage->ngraphs = 0;
-    gpage->fnames = NULL;
+    if (gui) {
+	errbox(msg);
+    } else {
+	gretl_errmsg_set(msg);
+    }
+}
+
+static void graph_page_init (void)
+{
+    gpage.output = PS_OUTPUT;
+    gpage.color = 0;
+    gpage.ngraphs = 0;
+    gpage.fnames = NULL;
 }
 
 static void doctop (int otype, FILE *fp)
@@ -128,7 +157,7 @@ static void common_end (FILE *fp)
 	  "\\end{document}\n", fp);
 }
 
-static int make_graphpage_tex (graphpage *gpage)
+static int make_graphpage_tex (void)
 {
     FILE *fp;
     int err = 0;
@@ -136,13 +165,13 @@ static int make_graphpage_tex (graphpage *gpage)
     fp = fopen(gpage_tex, "w");
     if (fp == NULL) return 1;
 
-    doctop(gpage->output, fp);
+    doctop(gpage.output, fp);
 
-    err = geomline(gpage->ngraphs, fp);
+    err = geomline(gpage.ngraphs, fp);
 
     if (!err) {
 	common_setup(fp);
-	err = tex_graph_setup(gpage->ngraphs, fp);
+	err = tex_graph_setup(gpage.ngraphs, fp);
     }
 
     if (!err) common_end(fp);
@@ -152,25 +181,17 @@ static int make_graphpage_tex (graphpage *gpage)
     return err;
 }
 
-static char *my_strdup (const char *s)
-{
-    char *ret = malloc(strlen(s) + 1);
-
-    if (ret != NULL) strcpy(ret, s);
-    return ret;
-}
-
-static int graphpage_add_file (graphpage *gpage, const char *fname)
+int graph_page_add_file (const char *fname)
 {
     char **fnames;
-    int ng = gpage->ngraphs + 1;
+    int ng = gpage.ngraphs + 1;
 
-    fnames = realloc(gpage->fnames, ng * sizeof *fnames);
+    fnames = myrealloc(gpage.fnames, ng * sizeof *fnames);
     if (fnames == NULL) return 1;
 
-    fnames[ng - 1] = my_strdup(fname);
-    gpage->fnames = fnames;
-    gpage->ngraphs = ng;
+    fnames[ng - 1] = g_strdup(fname);
+    gpage.fnames = fnames;
+    gpage.ngraphs = ng;
 
     return 0;
 }
@@ -200,7 +221,6 @@ static int gp_make_outfile (const char *fname, int i, double scale,
     }
     
     if (output == PDF_OUTPUT) {
-	fprintf(stderr, "Gnuplot: doing PNG\n");
 	fprintf(fq, "set term png%s font verdana 6 size %g,%g\n", 
 		((color)? "" : " mono"),
 		480.0 * scale, 360.0 * scale);
@@ -230,12 +250,12 @@ static int gp_make_outfile (const char *fname, int i, double scale,
     return err;
 }
 
-static int latex_compile (graphpage *gpage)
+static int latex_compile_graph_page (void)
 {
     char cmd[128];
     int err;
 
-    if (gpage->output == PDF_OUTPUT) {
+    if (gpage.output == PDF_OUTPUT) {
 	sprintf(cmd, "pdflatex %s", gpage_base);
 	err = system(cmd);
     } else {
@@ -250,21 +270,21 @@ static int latex_compile (graphpage *gpage)
     return err;
 }
 
-static int make_gp_output (graphpage *gpage)
+static int make_gp_output (void)
 {
     double scale = 1.0;
     int i;
     int err = 0;
 
-    if (gpage->ngraphs == 3) {
+    if (gpage.ngraphs == 3) {
 	scale = 0.8;
-    } else if (gpage->ngraphs > 3) {
+    } else if (gpage.ngraphs > 3) {
 	scale = 0.75;
     }
 
-    for (i=0; i<gpage->ngraphs && !err; i++) {
-	err = gp_make_outfile(gpage->fnames[i], i + 1, scale, 
-			      gpage->output, gpage->color);
+    for (i=0; i<gpage.ngraphs && !err; i++) {
+	err = gp_make_outfile(gpage.fnames[i], i + 1, scale, 
+			      gpage.output, gpage.color);
     }
 
     remove(gpage_plt); 
@@ -272,11 +292,11 @@ static int make_gp_output (graphpage *gpage)
     return err;
 }
 
-static int real_display_gpage (graphpage *gpage)
+static int real_display_gpage (void)
 {
     char cmd[128];
 
-    if (gpage->output == PDF_OUTPUT) {
+    if (gpage.output == PDF_OUTPUT) {
 	sprintf(cmd, "acroread %s.pdf", gpage_base);
     } else {
 	sprintf(cmd, "gv %s.ps", gpage_base);
@@ -285,12 +305,12 @@ static int real_display_gpage (graphpage *gpage)
     return system(cmd);
 }
 
-static void gpage_cleanup (graphpage *gpage)
+static void gpage_cleanup (void)
 {
     char fname[128];
     int i;
 
-    for (i=0; i<gpage->ngraphs; i++) {
+    for (i=0; i<gpage.ngraphs; i++) {
 	sprintf(fname, "gretl_gpage_%d.ps", i + 1);
 	remove(fname);
     }
@@ -305,63 +325,49 @@ static void gpage_cleanup (graphpage *gpage)
     remove(fname);
 }
 
-static int display_graphpage (graphpage *gpage)
+int display_graph_page (void)
 {
     int err = 0;
 
+    if (gpage.ngraphs == 0) {
+	gpage_errmsg(_("The graph page is empty"), 1);
+	return 1;
+    }
+
     /* write the LaTeX driver file */
-    err = make_graphpage_tex(gpage);
+    err = make_graphpage_tex();
 
     if (!err) {
 	/* transform individual plot files and compile 
 	   using gnuplot */
-	err = make_gp_output(gpage);
+	err = make_gp_output();
     }
 
     if (!err) {
-	err = latex_compile(gpage);
+	err = latex_compile_graph_page();
     }
 
     if (!err) {
 	/* compile LaTeX and display output */
-	real_display_gpage(gpage);
+	real_display_gpage();
     }
 
-    gpage_cleanup(gpage);
+    gpage_cleanup();
 
     return err;
 }
 
-int main (int argc, char **argv)
+void clear_graph_page (void)
 {
-    graphpage gpage;
-    const char *gnames[] = {
-	"test.gp", "test.gp", "test.gp", "test.gp",
-	"test.gp", "test.gp", NULL
-    };
-    int i, ng = 4;
+    int i;
 
-    if (argc > 1) {
-	ng = atoi(argv[1]);
-	if (ng == 0) exit(EXIT_FAILURE);
+    for (i=0; i<gpage.ngraphs; i++) {
+	free(gpage.fnames[i]);
     }
 
-    graphpage_init(&gpage);
+    free(gpage.fnames);
 
-    if (argc == 3) {
-	if (!strcmp(argv[2], "pdf")) {
-	    gpage.output = PDF_OUTPUT;
-	}
-	else if (!strcmp(argv[2], "color")) {
-	    gpage.color = 1;
-	}
-    }
-
-    for (i=0; i<ng; i++) {
-	graphpage_add_file(&gpage, gnames[i]);
-    }
-
-    display_graphpage(&gpage);
-
-    return 0;
+    graph_page_init();
 }
+
+

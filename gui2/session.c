@@ -27,6 +27,7 @@
 #include "gpt_control.h"
 #include "guiprint.h"
 #include "model_table.h"
+#include "graph_page.h"
 #include "textbuf.h"
 
 #include "var.h"
@@ -60,6 +61,7 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 #include "../pixmaps/rhohat.xpm"
 #include "../pixmaps/summary.xpm"
 #include "../pixmaps/model_table.xpm"
+#include "../pixmaps/graph_page.xpm"
 
 /* #define SESSION_DEBUG */
 
@@ -115,8 +117,9 @@ enum {
     SAVEFILE_ERROR
 };
 
-static GtkTargetEntry model_table_drag_target = {
-    "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER 
+static GtkTargetEntry session_drag_targets[] = {
+    { "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER },
+    { "text/uri-list", 0, GRETL_FILENAME }
 };
 
 static char *global_items[] = {
@@ -130,9 +133,9 @@ static char *model_items[] = {
     N_("Delete")
 };
 
-static char *model_table_items[] = {
+static char *table_items[] = {
     N_("Display"),
-    N_("Clear table"),
+    N_("Clear"),
     N_("Help")
 };
 
@@ -176,7 +179,7 @@ static GtkWidget *icon_table;
 static GtkWidget *global_popup;
 static GtkWidget *session_popup;
 static GtkWidget *model_popup;
-static GtkWidget *model_table_popup;
+static GtkWidget *table_popup;
 static GtkWidget *var_popup;
 static GtkWidget *graph_popup;
 static GtkWidget *boxplot_popup;
@@ -806,6 +809,7 @@ void close_session (void)
     clear_data(); /* in gtk1 version: clear_data(1); */
     free_session();
     free_model_table_list(NULL);
+    clear_graph_page();
 
     session_menu_state(FALSE);
     session_file_open = 0;
@@ -1841,6 +1845,7 @@ static void add_all_icons (void)
 	session_add_icon(NULL, 's', ICON_ADD_BATCH);     /* summary stats */
 	session_add_icon(NULL, 'r', ICON_ADD_BATCH);     /* correlation matrix */
 	session_add_icon(NULL, 't', ICON_ADD_BATCH);     /* model table */
+	session_add_icon(NULL, 'q', ICON_ADD_BATCH);     /* graph page */
     }
 
     session_add_icon(NULL, 'p', ICON_ADD_BATCH);         /* script file */
@@ -1923,7 +1928,8 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 	w = model_popup; 
 	break;
     case 't': 
-	w = model_table_popup; 
+    case 'q':
+	w = table_popup; 
 	break;
     case 'v': 
     case 'x':
@@ -2002,6 +2008,8 @@ static gboolean session_icon_click (GtkWidget *widget,
 	    edit_session_notes(); break;
 	case 't':
 	    display_model_table_wrapper(); break;
+	case 'q':
+	    display_graph_page(); break;
 	case 'r':
 	    do_menu_op(NULL, CORR, NULL); break;
 	case 's':
@@ -2012,7 +2020,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 
     if (mods & GDK_BUTTON3_MASK) {
 	if (gobj->sort == 'm' || gobj->sort == 'g' || gobj->sort == 'x' || 
-	    gobj->sort == 'd' || gobj->sort == 'i' ||
+	    gobj->sort == 'd' || gobj->sort == 'i' || gobj->sort == 'q' ||
 	    gobj->sort == 'p' || gobj->sort == 'b' ||
 	    gobj->sort == 't' || gobj->sort == 'v') {
 	    object_popup_show(gobj, (GdkEventButton *) event);
@@ -2096,6 +2104,9 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (obj->sort == 't') {
 	    display_model_table_wrapper();
 	}
+	if (obj->sort == 'q') {
+	    display_graph_page();
+	}
 	else if (obj->sort == 'g') {
 	    open_gui_graph(obj);
 	}
@@ -2122,14 +2133,20 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 				    NULL);
 	}
     }
-    else if (strcmp(item, _("Clear table")) == 0) {
+    else if (strcmp(item, _("Clear")) == 0) {
 	if (obj->sort == 't') {
 	    free_model_table_list(NULL);
+	}
+	else if (obj->sort == 'q') {
+	    clear_graph_page();
 	}
     }
     else if (obj->sort == 't' && strcmp(item, _("Help")) == 0) {
 	context_help(NULL, GINT_TO_POINTER(MODELTABLE));
     }
+    else if (obj->sort == 'q' && strcmp(item, _("Help")) == 0) {
+	dummy_call();
+    }    
 }
 
 /* ........................................................... */
@@ -2153,38 +2170,76 @@ static gboolean icon_left (GtkWidget *icon, GdkEventCrossing *event,
 /* ........................................................... */
 
 static void 
-model_table_data_received (GtkWidget *widget,
-			   GdkDragContext *context,
-			   gint x,
-			   gint y,
-			   GtkSelectionData *data,
-			   guint info,
-			   guint time,
-			   gpointer p)
+session_data_received (GtkWidget *widget,
+		       GdkDragContext *context,
+		       gint x,
+		       gint y,
+		       GtkSelectionData *data,
+		       guint info,
+		       guint time,
+		       gpointer p)
 {
+    gchar *fname;
+
     if (info == GRETL_MODEL_POINTER && data != NULL && 
 	data->type == GDK_SELECTION_TYPE_INTEGER) {
 	MODEL *pmod = *(MODEL **) data->data;
 
 	add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_BY_DRAG, NULL);
     }
+
+    else if (info == GRETL_FILENAME && data != NULL && 
+	     (fname = data->data) != NULL) {
+	graph_page_add_file(fname);
+    }
 }
 
-static void table_drag_setup (GtkWidget *w)
+static void session_drag_setup (gui_obj *gobj)
 {
+    GtkWidget *w = GTK_WIDGET(gobj->icon);
+    GtkTargetEntry *targ;
+    
+    if (gobj->sort == 't') {
+	targ = &session_drag_targets[0];
+    } else {
+	targ = &session_drag_targets[1];
+    }
+
     gtk_drag_dest_set (w,
                        GTK_DEST_DEFAULT_ALL,
-                       &model_table_drag_target, 1,
+                       targ, 1,
                        GDK_ACTION_COPY);
 
 #ifdef OLD_GTK
     gtk_signal_connect (GTK_OBJECT(w), "drag_data_received",
-			GTK_SIGNAL_FUNC(model_table_data_received),
+			GTK_SIGNAL_FUNC(session_data_received),
 			NULL);
 #else
     g_signal_connect (G_OBJECT(w), "drag_data_received",
-                      G_CALLBACK(model_table_data_received),
+                      G_CALLBACK(session_data_received),
                       NULL);
+#endif
+}
+
+static void drag_graph (GtkWidget *w, GdkDragContext *context,
+			GtkSelectionData *sel, guint info, guint t,
+			GRAPHT *graph)
+{
+    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_STRING, 8, 
+                           graph->fname, strlen(graph->fname));
+}
+
+static void graph_drag_connect (GtkWidget *w, GRAPHT *graph)
+{
+    gtk_drag_source_set(w, GDK_BUTTON1_MASK,
+                        &session_drag_targets[1],
+                        1, GDK_ACTION_COPY);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(w), "drag_data_get",
+		       GTK_SIGNAL_FUNC(drag_graph), graph);
+#else
+    g_signal_connect(G_OBJECT(w), "drag_data_get",
+                     G_CALLBACK(drag_graph), graph);
 #endif
 }
 
@@ -2199,7 +2254,7 @@ static void drag_model (GtkWidget *w, GdkDragContext *context,
 static void model_drag_connect (GtkWidget *w, MODEL *pmod)
 {
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
-                        &model_table_drag_target,
+                        &session_drag_targets[0],
                         1, GDK_ACTION_COPY);
 #ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(w), "drag_data_get",
@@ -2261,6 +2316,9 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     case 't':
 	name = g_strdup(_("Model table"));
 	break;
+    case 'q':
+	name = g_strdup(_("Graph page"));
+	break;
     default:
 	break;
     }
@@ -2278,6 +2336,9 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	    model_drag_connect(gobj->icon, pmod);
 	} else {
 	    gobj->data = graph;
+	    if (sort == 'g') {
+		graph_drag_connect(gobj->icon, graph);
+	    }
 	} 
 
 	if (!icon_named) {
@@ -2531,11 +2592,11 @@ static void session_build_popups (void)
 	}
     }
 
-    if (model_table_popup == NULL) {
-	model_table_popup = gtk_menu_new();
-	for (i=0; i<sizeof model_table_items / sizeof model_table_items[0]; i++) {
-		create_popup_item(model_table_popup, 
-				  _(model_table_items[i]), 
+    if (table_popup == NULL) {
+	table_popup = gtk_menu_new();
+	for (i=0; i<sizeof table_items / sizeof table_items[0]; i++) {
+		create_popup_item(table_popup, 
+				  _(table_items[i]), 
 				  object_popup_activated);
 	}
     }
@@ -2781,7 +2842,9 @@ static void create_gobj_icon (gui_obj *gobj, char **xpm)
     gtk_container_add(GTK_CONTAINER(gobj->icon), image);
     gtk_widget_show(image);
 
-    if (gobj->sort == 't') table_drag_setup(gobj->icon);
+    if (gobj->sort == 't' || gobj->sort == 'q') {
+	session_drag_setup(gobj);
+    }
 
     make_short_label_string(shortname, gobj->name);
     gobj->label = gtk_label_new(shortname);
@@ -2812,7 +2875,9 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
     gtk_container_add(GTK_CONTAINER(gobj->icon), image);
     gtk_widget_show(image);
 
-    if (gobj->sort == 't') table_drag_setup(gobj->icon);
+    if (gobj->sort == 't' || gobj->sort == 'q') {
+	session_drag_setup(gobj);
+    }
 
     if (gobj->sort == 'm' || gobj->sort == 'g' ||
 	gobj->sort == 'v' || gobj->sort == 'b') { 
@@ -2865,6 +2930,7 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     case 'r': xpm = rhohat_xpm; break;
     case 's': xpm = summary_xpm; break;
     case 't': xpm = model_table_xpm; break;
+    case 'q': xpm = graph_page_xpm; break;
     case 'x': xpm = text_xpm; break;
     default: break;
     }
