@@ -1273,6 +1273,10 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }
 
+    if (pmod->ci == LOGISTIC) {
+	original_stats_message(prn);
+    }
+
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
 	|| pmod->ci == HCCM || pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
@@ -1747,6 +1751,11 @@ static void tex_float_str (double x, char *str)
     }
 }
 
+const char *roots_hdr = N_("                        Real  Imaginary"
+			   "    Modulus  Frequency");
+const char *root_fmt = "%8s%3d%17.4f%11.4f%11.4f%11.4f\n";
+const char *roots_sep = "  -----------------------------------------"
+                        "------------------";
 static void print_ll_stats (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
@@ -1776,71 +1785,45 @@ static void print_ll_stats (const MODEL *pmod, PRN *prn)
 	if (roots != NULL) {
 	    int p = pmod->list[1];
 	    int q = pmod->list[2];
-	    int i, mod;
+	    int i;
+	    double mod, fr;
+
+	    pprintf(prn, "\n%s\n%s\n", _(roots_hdr), roots_sep);
 
 	    if (p > 0) {
-		mod = 0;
-		pprintf(prn,"\n  %s:\t", _("AR roots"));
+		pprintf(prn, "  %s\n", _("AR"));
 		for (i=0; i<p; i++) {
-		    pprintf(prn, "%7.4f", roots[i].r);
 		    if (roots[i].i != 0) {
-			pputs(prn, (roots[i].i > 0) ? "+" : "");
-			pprintf(prn, "%6.4fi", roots[i].i);
-			mod = 1;
+			mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
+			mod = sqrt(mod);
+		    } else {
+			mod = fabs(roots[i].r);
 		    }
-		    pputc(prn, '\t');
+		    fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		    pprintf(prn, root_fmt, _("Root"), i + 1, 
+			    roots[i].r, roots[i].i, mod, fr);
 		}
-		if (mod) {
-		    pputc(prn, '\n');
-		    pprintf(prn, "  %s:\t", _("Moduli"));
-		    for (i=0; i<p; i++) {
-			if (roots[i].i != 0) {
-			    double x = roots[i].r * roots[i].r +
-				roots[i].i * roots[i].i;
-			    
-			    pprintf(prn, "%7.4f", sqrt(x));
-			    _bufspace(9, prn);
-			} else {
-			    _bufspace(16, prn);
-			}
-		    }
-		}
-		pputc(prn, '\n');
-	    } else {
-		pputc(prn, '\n');
-	    }
+	    } 
 
 	    if (q > 0) {
-		mod = 0;
-		pprintf(prn,"  %s:\t", _("MA roots"));
+		pprintf(prn, "  %s\n", _("MA"));
 		for (i=p; i<p+q; i++) {
-		    pprintf(prn,"%7.4f", roots[i].r);
 		    if (roots[i].i != 0) {
-			pprintf(prn, (roots[i].i > 0) ? "+" : "");
-			pprintf(prn, "%6.4fi", roots[i].i);
-			mod = 1;
-		    } 
-		    pputc(prn, '\t');
-		}
-		if (mod) {
-		    pputc(prn, '\n');
-		    pprintf(prn, "  %s:\t", _("Moduli"));
-		    for (i=p; i<p+q; i++) {
-			if (roots[i].i != 0) {
-			    double x = roots[i].r * roots[i].r +
-				roots[i].i * roots[i].i;
-			    
-			    pprintf(prn, "%7.4f", sqrt(x));
-			    _bufspace(9, prn);
-			} else {
-			    _bufspace(16, prn);
-			}
+			mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
+			mod = sqrt(mod);
+		    } else {
+			mod = fabs(roots[i].r);
 		    }
-		}		
-		pputc(prn, '\n');	
+		    fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		    pprintf(prn, root_fmt, _("Root"), i - p + 1, 
+			    roots[i].r, roots[i].i, mod, fr);
+		}
 	    }
-	}
-    }
+
+	    pprintf(prn, "%s\n", roots_sep);
+
+	} /* roots != NULL */
+    } /* plain text && ARMA */
 }
 
 static void print_discrete_statistics (const MODEL *pmod, 

@@ -20,6 +20,8 @@
 #include "libgretl.h"
 #include "internal.h"
 
+#include "../cephes/mconf.h"
+
 #include <glib.h>
 
 #ifdef WIN32
@@ -314,6 +316,53 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
     return 0;
 }
 
+/* Parse the roots information from the X12ARIMA output file foo.rts */
+
+static int get_roots (const char *fname, MODEL *pmod, int nr)
+{
+    FILE *fp;
+    char line[132];
+    int i, err = 0;
+    cmplx *roots;
+
+    roots = malloc(nr * sizeof *roots);
+    if (roots == NULL) return E_ALLOC;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't read from '%s'\n", fname);
+	free(roots);
+	return 1;
+    }
+
+    i = 0;
+    while (fgets(line, sizeof line, fp) && i < nr) {
+	double re, im;
+
+	if (!strncmp(line, "AR", 2) || !strncmp(line, "MA", 2)) {
+	    if (sscanf(line, "%*s %*s %*s %lf %lf", &re, &im) == 2) {
+		roots[i].r = re;
+		roots[i].i = im;
+		i++;
+	    }
+	}
+    }
+
+    fclose(fp);
+
+    if (i != nr) {
+	free(roots);
+	roots = NULL;
+	err = 1;
+    }
+
+    if (roots != NULL) {
+	gretl_model_set_data(pmod, "roots", roots, nr * sizeof *roots);
+    }
+
+    return err;
+}
+
 /* The problem below is that X12ARIMA does not give the full covariance
    matrix: it gives it only for the ARMA terms, and not for the
    constant.  This creates problems for the printing of the matrix,
@@ -512,6 +561,11 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 	err = get_ll_stats(fname, pmod);
     }
 
+    if (!err) {
+	sprintf(fname, "%s.rts", path);
+	err = get_roots(fname, pmod, nc - 1);
+    }
+
 #if 0
     if (!err) {
 	sprintf(fname, "%s.acm", path);
@@ -621,7 +675,7 @@ static int write_spc_file (const char *fname,
     } else {
 	fputs("estimate {\n print = (acm lkf lks mdl est rts rcm)\n", fp);
     }
-    fputs(" save = (rsd est lks acm rcm)\n}\n", fp);
+    fputs(" save = (rsd est lks acm rts rcm)\n}\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
