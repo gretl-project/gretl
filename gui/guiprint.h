@@ -23,7 +23,7 @@
 #define GUIPRINT_H
 
 #ifdef G_OS_WIN32
-int win_copy_rtf (PRN *prn);
+int win_copy_text (PRN *prn, int format);
 #endif
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)

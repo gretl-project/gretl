@@ -19,7 +19,7 @@
 
 /* gretl.c : main for gretl */
 
-/* #define DND 1 */
+/* #define DND_DEBUG 1 */
 
 #include "gretl.h"
 #include <dirent.h>
@@ -534,7 +534,7 @@ void dummy_output_handler (const gchar *log_domain,
 }
 #endif 
 
-#ifdef DND
+#ifdef DND_DEBUG
     FILE *dp;
 #endif
 
@@ -542,7 +542,7 @@ int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
     char dbname[MAXLEN];
-#ifdef DND
+#ifdef DND_DEBUG
     int i;
 
     dp = fopen("c:\\userdata\\debug.txt", "w");
@@ -585,7 +585,7 @@ int main (int argc, char *argv[])
     make_userdir(&paths);
 #endif/* G_OS_WIN32 */
 
-#ifdef DND
+#ifdef DND_DEBUG
     fprintf(dp, "About to parse arguments if argc > 1\n");
     fflush(dp);
 #endif
@@ -627,7 +627,7 @@ int main (int argc, char *argv[])
     } else 
 	gui_get_data = 1;
 
-#ifdef DND
+#ifdef DND_DEBUG
     fprintf(dp, "Parsed args: gui_get_data = %d\n",
 	    opt, gui_get_data);
     fflush(dp);
@@ -672,7 +672,7 @@ int main (int argc, char *argv[])
 	int ftype;
 	PRN *prn; 
 
-#ifdef DND
+#ifdef DND_DEBUG
 	fprintf(dp, "About to try to get file\n");
 	fflush(dp);
 #endif
@@ -687,7 +687,7 @@ int main (int argc, char *argv[])
 	strncat(paths.datfile, argv[1], MAXLEN-1);
 #endif
 	ftype = detect_filetype(paths.datfile, &paths, prn);
-#ifdef DND
+#ifdef DND_DEBUG
 	fprintf(dp, "detect_filetype: got ftype = %d\n", ftype);
 	fflush(dp);
 #endif
@@ -720,7 +720,7 @@ int main (int argc, char *argv[])
 	}
 	gretl_print_destroy(prn);
     }
-#ifdef DND
+#ifdef DND_DEBUG
 	fprintf(dp, "About to create GUI; err = %d\n", err);
 	fflush(dp);
 #endif

@@ -44,15 +44,21 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
 #ifdef G_OS_WIN32
 
-/* win32 only: copy rtf to clipboard for pasting into Word */
-int win_copy_rtf (PRN *prn)
+/* win32 only: copy text to clipboard for pasting into Word */
+int win_copy_text (PRN *prn, int format)
 {
     HGLOBAL winclip;
     char *ptr;
-    unsigned rtf_format = RegisterClipboardFormat("Rich Text Format");
+    unsigned rtf_format;
     size_t len;
 
+    if (format == COPY_RTF) 
+	rtf_format = RegisterClipboardFormat("Rich Text Format");
+    else 
+	rtf_format = CF_TEXT;
+
     if (prn->buf == NULL) return 0;
+
     if (!OpenClipboard(NULL)) return 1;
 
     EmptyClipboard();
@@ -311,7 +317,7 @@ void model_to_rtf (MODEL *pmod)
     r_printmodel(pmod, datainfo, prn);
 
 #ifdef G_OS_WIN32
-    win_copy_rtf(prn);
+    win_copy_text(prn, COPY_RTF);
 #else
     prn_to_clipboard(prn);
 #endif
@@ -1023,13 +1029,40 @@ static void outxx (const double xx, PRN *prn)
 
 static void rtf_outxx (const double xx, PRN *prn)
 {
-    if (na(xx)) pprintf(prn, "undefined\\cell ");
-    else pprintf(prn, "%.3f\\cell ", xx);
+    if (na(xx)) pprintf(prn, "\\qc undefined\\cell ");
+    else pprintf(prn, "\\qc %.3f\\cell ", xx);
 }
 
-#define CORR_ROW "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                 "\\cellx1500\\cellx3000\\cellx4500\\cellx6000" \
-                 "\\cellx7500\\cellx8000\n"
+/* ......................................................... */ 
+
+static void rtf_corr_row (int lo, PRN *prn)
+{
+    pprintf(prn, "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262");
+
+    if (lo == 2) {
+	pprintf(prn, "\\cellx1500\\cellx3000\\cellx3500\n");
+    }
+    else if (lo == 3) {
+	pprintf(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx5000\n");
+    }
+    else if (lo == 4) {
+	pprintf(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
+		"\\cellx6500\n");
+    }
+    else {
+	pprintf(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
+		"\\cellx7500\\cellx8000\n");
+    }
+
+    pprintf(prn, "\\intbl ");
+}
+
+/* ......................................................... */ 
+
+static void rtf_table_pad (int pad, PRN *prn)
+{
+    while (pad--) pprintf(prn, "\\cell ");
+}
 
 /* ......................................................... */ 
 
@@ -1056,41 +1089,48 @@ void rtfprint_corrmat (CORRMAT *corr,
     lo = corr->list[0];
 
     for (i=0; i<=lo/FIELDS; i++) {
+	int pad;
+
 	nf = i * FIELDS;
 	li2 = lo - nf;
 	p = (li2 > FIELDS) ? FIELDS : li2;
 	if (p == 0) break;
 
-	pprintf(prn, CORR_ROW "\\intbl ");
+	pad = (lo > FIELDS)? FIELDS - p : lo - p;
+
+	rtf_corr_row(lo, prn);
+
+	if (pad) rtf_table_pad(pad, prn);
+
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
 	    ljnf = corr->list[j + nf];
 	    pprintf(prn, "%d) %s\\cell %s", ljnf, pdinfo->varname[ljnf],
-		    (j == p)? "\\intbl \\row\n" : "");
+		    (j == p)? "\\cell \\intbl \\row\n" : "");
 	}
-	
+
 	/* print rectangular part, if any, of matrix */
 	for (j=1; j<=nf; j++) {
 	    pprintf(prn, "\\intbl "); 
+	    if (pad) rtf_table_pad(pad, prn);
 	    for (k=1; k<=p; k++) {
 		index = ijton(j, nf+k, lo);
 		rtf_outxx(corr->xpx[index], prn);
 	    }
-	    pprintf(prn, "(%d \\intbl \\row\n", corr->list[j]);
+	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", corr->list[j]);
 	}
 
 	/* print upper triangular part of matrix */
 	for (j=1; j<=p; ++j) {
 	    pprintf(prn, "\\intbl "); 
+	    rtf_table_pad(pad + j - 1, prn);
 	    ij2 = nf + j;
-	    for (k=0; k<j-1; k++) pprintf(prn, "\\cell ");
 	    for (k=j; k<=p; k++) {
 		index = ijton(ij2, nf+k, lo);
 		rtf_outxx(corr->xpx[index], prn);
 	    }
-	    pprintf(prn, "(%d \\intbl \\row\n", corr->list[ij2]);
+	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", corr->list[ij2]);
 	}
-	pprintf(prn, "\\intbl \\intbl \\row\n");
     }
     pprintf(prn, "}}\n");
 }

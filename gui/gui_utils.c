@@ -1372,7 +1372,7 @@ void windata_init (windata_t *vwin)
     vwin->ifac = NULL;
     vwin->data = NULL;
     vwin->fname[0] = '\0';
-    vwin->role = -1;
+    vwin->role = 0;
     vwin->active_var = 0;
     vwin->help_active = 0;
 }
@@ -3363,7 +3363,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	} else { /* RTF */
 	    rtfprint_summary(summ, datainfo, prn);
 #ifdef G_OS_WIN32
-	    win_copy_rtf(prn);
+	    win_copy_text(prn, COPY_RTF);
 #else
 	    prn_to_clipboard(prn);
 #endif
@@ -3380,10 +3380,11 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	if (how == COPY_LATEX) { 
 	    texprint_corrmat(corr, datainfo, prn);
 	    prn_to_clipboard(prn);
-	} else { /* RTF */
+	} 
+	else { /* RTF */
 	    rtfprint_corrmat(corr, datainfo, prn);
 #ifdef G_OS_WIN32
-	    win_copy_rtf(prn);
+	    win_copy_text(prn, COPY_RTF);
 #else
 	    prn_to_clipboard(prn);
 #endif
@@ -3419,17 +3420,24 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
-
     }
 
-    /* otherwise just copying plain text from window */
-    else if (how == COPY_TEXT) {
-	gtk_editable_select_region(GTK_EDITABLE(vwin->w), 0, -1);
+    /* otherwise copying plain text from window */
+    if (how == COPY_TEXT) {
+	PRN textprn;
+
+	textprn.fp = NULL;
+	textprn.buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+#ifdef G_OS_WIN32
+	win_copy_text(&textprn, COPY_TEXT);	
+#else
+	prn_to_clipboard(&textprn);
+#endif
+	g_free(textprn.buf);
+    } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
     }
-    else if (how == COPY_SELECTION) {
-	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
-    }
+
 }
 
 /* .................................................................. */
