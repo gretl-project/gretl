@@ -16,11 +16,18 @@ cd ${topdir} && date > share/gretl.stamp
 # make the archive and remove the dist dir
 cd $parent 
 echo "making archive..."
-for f in calculator.c guiprint_common.c gpt_control.c gpt_control.h \
-  model_table.c model_table.h objectsave.c objectsave.h \
-  session.c session.h webget.c webget.h library.c library.h ; do
+for f in \
+  calculator.c guiprint_common.c \
+  callbacks.c callbacks.h \
+  database.c database.h \
+  datafiles.c datafiles.h \
+  gpt_control.c gpt_control.h \
+  model_table.c model_table.h \
+  objectsave.c objectsave.h \
+  session.c session.h \
+  webget.c webget.h \
+  library.c library.h ; do
     rm -f gretl/gui/$f
-    cp -ap gretl/gui2/$f gretl/gui/
 done
 mv gretl gretl-${version}
 rm -f $tarfile 

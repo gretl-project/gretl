@@ -26843,6 +26843,12 @@ if test "$no_create" != yes; then
 fi
 
 
+if test "${have_gtk}" = "1.2" ; then
+  echo -n "creating links for gtk-1.2 build... "
+  $srcdir/tools/mkguilinks $srcdir
+  echo "done"
+fi
+
 if test "${have_zlib}" = "no" ; then
 echo "
 Please install zlib (compression library) and then reconfigure gretl.
@@ -26873,7 +26879,7 @@ Configuration:
   Gnu Multiple Precision support:         ${have_gmp}
   LAPACK support:                         ${have_lapack}
   Build with GTK version:                 ${have_gtk}
-  Use gtksourceview for scripts:          ${have_gnu_regex}
+  Use installed gtksourceview:            ${have_gnu_regex}
   Use installed libole2:                  ${have_libole2}
   Use installed gtkextra:		  ${have_gtkextra}
   Build with gnome support:               ${have_gnome}

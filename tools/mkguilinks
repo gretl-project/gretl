@@ -1,8 +1,9 @@
-If you are building gretl from CVS source, and are linking to
-GTK 1.2 for the gretl GUI, you need to carry out this preliminary
-step first:
+#!/bin/sh
 
-#!bin/sh
+TOPSRC=$1
+BUILDDIR=`pwd`
+
+cd ${TOPSRC}/gui && \
 for f in \
   calculator.c guiprint_common.c \
   callbacks.c callbacks.h \
@@ -14,6 +15,8 @@ for f in \
   session.c session.h \
   webget.c webget.h \
   library.c library.h ; do
-    rm -f gui/$f
-    cp -ap gui2/$f gui
+    rm -f $f
+    ln -s ${TOPSRC}/gui2/$f $f
 done
+cd $BUILDDIR
+
