@@ -64,12 +64,12 @@ int auxreg (LIST addvars,
 	    MODEL *orig, MODEL *new, int *model_count, 
 	    double ***pZ, DATAINFO *pdinfo, 
 	    int aux_code, 
-	    PRN *prn, GRETLTEST *test);
+	    PRN *prn, GRETLTEST *test, unsigned long opt);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn);
+	       PRN *prn, unsigned long opt);
 
 int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn, GRETLTEST *test);

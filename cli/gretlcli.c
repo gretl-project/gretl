@@ -678,10 +678,10 @@ void exec_line (char *line, PRN *prn)
 	clear_model(models[1], NULL);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_ADD, prn, NULL);
+			 &Z, datainfo, AUX_ADD, prn, NULL, cmd.opt);
 	} else {
 	    err = omit_test(cmd.list, models[0], models[1],
-			    &model_count, &Z, datainfo, prn);
+			    &model_count, &Z, datainfo, prn, cmd.opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -709,12 +709,13 @@ void exec_line (char *line, PRN *prn)
 	} 
 	clear_model(models[1], NULL);
 	tmpmod.ID = i;
-	if (cmd.ci == ADDTO)
+	if (cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, &tmpmod, models[1], &model_count, 
-			 &Z, datainfo, AUX_ADD, prn, NULL);
-	else
+			 &Z, datainfo, AUX_ADD, prn, NULL, cmd.opt);
+	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &model_count, &Z, datainfo, prn);
+			    &model_count, &Z, datainfo, prn, cmd.opt);
+	}
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1], NULL);
@@ -1180,7 +1181,7 @@ void exec_line (char *line, PRN *prn)
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    clear_model(models[1], NULL);
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_SQ, prn, NULL);
+			 &Z, datainfo, AUX_SQ, prn, NULL, 0);
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
@@ -1190,7 +1191,7 @@ void exec_line (char *line, PRN *prn)
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_LOG, prn, NULL);
+			 &Z, datainfo, AUX_LOG, prn, NULL, 0);
 	    clear_model(models[1], NULL); 
 	    model_count--;
 	    if (err) errmsg(err, prn);

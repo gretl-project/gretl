@@ -144,14 +144,15 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 /* ........................................................... */
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
-		      const DATAINFO *pdinfo, int aux_code, PRN *prn)
+		      const DATAINFO *pdinfo, int aux_code, PRN *prn,
+		      unsigned long opt)
 {
     int i;
     char spc[3];
 
     if (add->ci == LAD) return;
 
-    if (aux_code != AUX_SQ && aux_code != AUX_LOG) {
+    if (!(opt & OPT_Q) && aux_code != AUX_SQ && aux_code != AUX_LOG) {
 	strcpy(spc, "  ");
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
 		add->m1, add->m2);
@@ -209,14 +210,19 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 /* ........................................................... */
 
 void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
-		       const DATAINFO *pdinfo, PRN *prn)
+		       const DATAINFO *pdinfo, PRN *prn,
+		       unsigned long opt)
 {
     int i;
 
     if (omit->ci == LAD) return;
 
-    pprintf(prn, _("Comparison of Model %d and Model %d:\n\n"),
-	    omit->m1, omit->m2);
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("Comparison of Model %d and Model %d:\n\n"),
+		omit->m1, omit->m2);
+    } else {
+	pputc(prn, '\n');
+    }
     if (omit->ci == OLS && omit->dfn > 0 && omitvars[0] > 1) {
 	pprintf(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));

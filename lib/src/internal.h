@@ -29,10 +29,12 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	       DATAINFO *pdinfo);
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
-		      const DATAINFO *pdinfo, int aux_code, PRN *prn);
+		      const DATAINFO *pdinfo, int aux_code, PRN *prn,
+		      unsigned long opt);
 
 void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
-		       const DATAINFO *pdinfo, PRN *prn);
+		       const DATAINFO *pdinfo, PRN *prn,
+		       unsigned long opt);
 
 void _graphyzx (const int *list, const double *zy1, const double *zy2, 
 		const double *zx, int n, const char *yname, 

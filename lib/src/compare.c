@@ -332,6 +332,7 @@ static double robust_lm_test (MODEL *unrest, MODEL *rest,
  * @aux_code: code indicating what sort of aux regression to run.
  * @prn: gretl printing struct.
  * @test: hypothesis test results struct.
+ * @opt: can contain options flags (--quiet)
  *
  * Run an auxiliary regression, in order to test a given set of added
  * variables, or to test for non-linearity (squares, logs).
@@ -341,7 +342,7 @@ static double robust_lm_test (MODEL *unrest, MODEL *rest,
 
 int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count, 
 	    double ***pZ, DATAINFO *pdinfo, int aux_code, 
-	    PRN *prn, GRETLTEST *test)
+	    PRN *prn, GRETLTEST *test, unsigned long opt)
 {
     COMPARE add;  
     MODEL aux;
@@ -536,15 +537,16 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	add = add_compare(orig, new);
 	add.trsq = trsq;
 
-	if (aux_code == AUX_ADD && new->ci != AR && new->ci != ARCH)
+	if (aux_code == AUX_ADD && !(opt & OPT_Q) && 
+	    new->ci != AR && new->ci != ARCH)
 	    printmodel(new, pdinfo, prn);
 
 	if (addvars != NULL) {
 	    _difflist(new->list, orig->list, addvars);
-	    gretl_print_add(&add, addvars, pdinfo, aux_code, prn);
+	    gretl_print_add(&add, addvars, pdinfo, aux_code, prn, opt);
 	} else {
 	    add.dfn = newlist[0] - orig->list[0];
-	    gretl_print_add(&add, tmplist, pdinfo, aux_code, prn);
+	    gretl_print_add(&add, tmplist, pdinfo, aux_code, prn, opt);
 	}
 
 	*model_count += 1;
@@ -562,6 +564,77 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     return err;
 }
 
+static int in_omit_list (int k, const int *list)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == k) return 1;
+    }
+
+    return 0;
+}
+
+static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
+{
+    int err = 0;
+    int q = list[0];
+    gretl_matrix *sigma;
+    gretl_matrix *betahat;
+    gretl_matrix *tmp;
+    double x, F;
+    int i, j, k, ii, jj, idx;
+    
+    sigma = gretl_matrix_alloc(q, q);
+    betahat = gretl_matrix_alloc(q, 1);
+    tmp = gretl_matrix_alloc(1, q);
+
+    if (sigma == NULL || betahat == NULL) {
+	gretl_matrix_free(sigma);
+	gretl_matrix_free(betahat);
+	return E_ALLOC;
+    }
+
+    ii = 0;
+    for (i=2; i<=pmod->list[0]; i++) {
+	k = pmod->list[i];
+	if (in_omit_list(k, list)) {
+	    gretl_matrix_set(betahat, ii, 0, pmod->coeff[i-2]);
+	    pprintf(prn, "set betahat[%d] = coeff[%d] = %g\n",
+		    ii, i-2, pmod->coeff[i-2]);
+	    jj = 0;
+	    for (j=i; j<=pmod->list[0]; j++) {
+		k = pmod->list[j];
+		if (in_omit_list(k, list)) {
+		    idx = ijton(i-1, j-1, pmod->ncoeff);
+		    gretl_matrix_set(sigma, ii, jj, pmod->vcv[idx]);
+		    gretl_matrix_set(sigma, jj, ii, pmod->vcv[idx]);
+		    pprintf(prn, "set sigma(%d,%d) = vcv[%d] = %g\n",
+			    ii, jj, idx, pmod->vcv[idx]);
+
+		    jj++;
+		}
+	    }
+	    ii++;
+	}
+    }
+
+#if 1	
+    err = gretl_invert_symmetric_matrix(sigma);
+    err = gretl_matrix_multiply_mod(betahat, GRETL_MOD_TRANSPOSE,
+				    sigma, GRETL_MOD_NONE,
+				    tmp);
+
+    F = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
+				 betahat, GRETL_MOD_NONE,
+				 &err);
+
+    pprintf(prn, "Robust F(%d,%d) = %g\n", q, pmod->dfd, F);
+#endif
+
+    return err;
+}
+
 /**
  * omit_test:
  * @omitvars: list of variables to omit from original model.
@@ -571,6 +644,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
+ * @opt: can contain option flags (--quiet)
  *
  * Re-estimate a given model after removing a list of 
  * specified variables.
@@ -580,7 +654,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn)
+	       PRN *prn, unsigned long opt)
 {
     COMPARE omit;             /* Comparison struct for two models */
     int *tmplist, m = *model_count, pos = 0;
@@ -611,6 +685,10 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	if (err) {
 	    free(tmplist);
 	}
+    }
+
+    if (!err && gretl_model_get_int(orig, "hc")) {
+	return robust_omit_test(omitvars, orig, prn);
     }
 
     if (!err) {
@@ -679,11 +757,11 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    gretl_model_set_double(new, "chisq", chisq);
 	}
 	omit = omit_compare(orig, new);
-	if (orig->ci != AR && orig->ci != ARCH) {
+	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, prn); 
 	}
 	_difflist(orig->list, new->list, omitvars);
-	gretl_print_omit(&omit, omitvars, pdinfo, prn);     
+	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt);     
 
 	*model_count += 1;
 	free(tmplist);

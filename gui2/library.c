@@ -1478,12 +1478,13 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (selector_code(sr) == ADD) 
+    if (selector_code(sr) == ADD) { 
         err = auxreg(cmd.list, orig, pmod, &model_count, 
-                     &Z, datainfo, AUX_ADD, prn, NULL);
-    else 
+                     &Z, datainfo, AUX_ADD, prn, NULL, 0);
+    } else {
         err = omit_test(cmd.list, orig, pmod, &model_count, 
-			&Z, datainfo, prn);
+			&Z, datainfo, prn, 0);
+    }
 
     if (err) {
         gui_errmsg(err);
@@ -1638,13 +1639,14 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	}
     } 
     else {
-	if (aux_code == AUX_SQ) 
+	if (aux_code == AUX_SQ) { 
 	    strcpy(line, "lmtest -s");
-	else
+	} else {
 	    strcpy(line, "lmtest -l");
+	}
 	clear_model(models[0], NULL);
 	err = auxreg(NULL, pmod, models[0], &model_count, 
-		     &Z, datainfo, aux_code, prn, &test);
+		     &Z, datainfo, aux_code, prn, &test, 0);
 	if (err) {
 	    gui_errmsg(err);
 	    clear_model(models[0], NULL);
@@ -5124,10 +5126,10 @@ int gui_exec_line (char *line,
 	clear_model(models[1], NULL);
 	if (cmd.ci == ADD || cmd.ci == ADDTO)
 	    err = auxreg(cmd.list, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_ADD, outprn, NULL);
+			 &Z, datainfo, AUX_ADD, outprn, NULL, cmd.opt);
 	else
 	    err = omit_test(cmd.list, models[0], models[1],
-			    &model_count, &Z, datainfo, outprn);
+			    &model_count, &Z, datainfo, outprn, cmd.opt);
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1], NULL);
@@ -5154,12 +5156,13 @@ int gui_exec_line (char *line,
 	} 
 	clear_model(models[1], NULL);
 	tmpmod.ID = i;
-	if (cmd.ci == ADDTO)
+	if (cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, &tmpmod, models[1], &model_count, 
-			 &Z, datainfo, AUX_ADD, outprn, NULL);
-	else
+			 &Z, datainfo, AUX_ADD, outprn, NULL, cmd.opt);
+	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &model_count, &Z, datainfo, outprn);
+			    &model_count, &Z, datainfo, outprn, cmd.opt);
+	}
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1], NULL);
@@ -5659,7 +5662,7 @@ int gui_exec_line (char *line,
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_SQ, outprn, ptest);
+			 &Z, datainfo, AUX_SQ, outprn, ptest, 0);
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
@@ -5667,7 +5670,7 @@ int gui_exec_line (char *line,
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_LOG, outprn, ptest);
+			 &Z, datainfo, AUX_LOG, outprn, ptest, 0);
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
