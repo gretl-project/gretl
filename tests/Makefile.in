@@ -35,6 +35,8 @@ all: nistcheck
 nistcheck: nistcheck.o
 	../libtool --mode=link $(CC) -o $@ $< $(LIBGRETL)
 
+nistcheck.o: $(LIBGRETL)
+
 randcheck: diehard mtrand
 	if [ `pwd` != "$(topsrc)/tests" ] ; then \
 	cp $(topsrc)/tests/operm5.data . ; \
