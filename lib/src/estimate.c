@@ -3071,14 +3071,16 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	arlist[2] = 0;
 
 	/* run OLS and get squared residuals */
-	archmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	archmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
 	err = archmod.errcode;
     }
 
     if (!err) {
 	nv = pdinfo->v - order - 1;
 	strcpy(pdinfo->varname[nv], "utsq");
-	for (t=0; t<n; t++) (*pZ)[nv][t] = NADBL;
+	for (t=0; t<n; t++) {
+	    (*pZ)[nv][t] = NADBL;
+	}
 	for (t=archmod.t1; t<=archmod.t2; t++) {
 	    xx = archmod.uhat[t];
 	    (*pZ)[nv][t] = xx * xx;
@@ -3088,9 +3090,12 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    nv =  pdinfo->v - order + i - 1;
 	    arlist[i+2] = nv;
 	    sprintf(pdinfo->varname[nv], "utsq_%d", i);
-	    for (t=0; t<n; t++) (*pZ)[nv][t] = NADBL;
-	    for (t=archmod.t1+i; t<=archmod.t2; t++) 
+	    for (t=0; t<n; t++) {
+		(*pZ)[nv][t] = NADBL;
+	    }
+	    for (t=archmod.t1+i; t<=archmod.t2; t++) {
 		(*pZ)[nv][t] = (*pZ)[arlist[1]][t-i];
+	    }
 	}
 
 	/* run aux. regression */

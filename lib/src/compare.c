@@ -930,6 +930,10 @@ int autocorr_test (MODEL *pmod, int order,
     if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) 
 	return E_NOTIMP;
 
+    if (pmod->missmask != NULL) {
+	return E_DATA;
+    }
+
     if (dataset_is_panel(pdinfo)) {
 	void *handle;
 	int (*panel_autocorr_test)(MODEL *, int, 

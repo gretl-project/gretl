@@ -2318,7 +2318,9 @@ static void minimal_model_check (GtkItemFactory *ifac, const MODEL *pmod)
     }
 
     if (pmod->missmask != NULL) {
+	flip(ifac, "/Tests/autocorrelation", FALSE);
 	flip(ifac, "/Tests/CUSUM test", FALSE);
+	flip(ifac, "/Tests/ARCH", FALSE);
     }
 }
 

@@ -188,8 +188,12 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     v = pdinfo->v - 1; /* the last created variable */
 
-    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
-    if (dmod.ifc == 0) dmod.errcode = E_NOCONST;
+    /* Below: might want to implement skipping of missing obs */
+
+    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0);
+    if (dmod.ifc == 0) {
+	dmod.errcode = E_NOCONST;
+    }
     if (dmod.errcode) {
 	dataset_drop_vars(1, pZ, pdinfo);
 	free(xbar);
@@ -200,8 +204,9 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     for (i=2; i<=list[0]; i++) {
 	dmodlist[i] = list[i];
 	xbar[i-2] = 0.0;
-	for (t=dmod.t1; t<=dmod.t2; t++)
+	for (t=dmod.t1; t<=dmod.t2; t++) {
 	    xbar[i-2] += (*pZ)[dmod.list[i]][t];
+	}
 	xbar[i-2] /= dmod.nobs;
     }
 
@@ -221,21 +226,24 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 		fx = _norm_pdf(xx);
 		Fx = _norm_cdf(xx);
 	    }
-	    if (floateq((*pZ)[depvar][t], 0.0)) 
+	    if (floateq((*pZ)[depvar][t], 0.0)) {
 		xx -= fx/(1.0 - Fx);
-	    else 
+	    } else {
 		xx += fx/Fx;
+	    }
 	    (*pZ)[v][t] = xx;
 	}
 	dmod.lnL = _logit_probit_llhood(&(*pZ)[v][0], &dmod, opt);
-	if (fabs(dmod.lnL - Lbak) < .000005) break; 
+	if (fabs(dmod.lnL - Lbak) < .000005) {
+	    break; 
+	}
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
 	clear_model(&dmod);
 	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
 	if (dmod.errcode) {
 	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);
-	    (void) dataset_drop_vars(1, pZ, pdinfo);
+	    dataset_drop_vars(1, pZ, pdinfo);
 	    free(xbar);
 	    free(dmodlist);
 	    return dmod;
@@ -256,7 +264,9 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     }
 
     /* form the Hessian */
-    if (dmod.xpx != NULL) free(dmod.xpx);
+    if (dmod.xpx != NULL) {
+	free(dmod.xpx);
+    }
     /* if (dmod.vcv != NULL) free(dmod.vcv); */
     dmod.xpx = hessian(&dmod, *pZ, n, opt);
     if (dmod.xpx == NULL) {
