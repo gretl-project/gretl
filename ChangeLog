@@ -9,6 +9,9 @@ version 1.0.9
 - Updates to manual
 - Spanish version: provide access to English help files as well
   as Spanish
+- Add rudimentary scripting capacity to gnuplot command (can
+  append "{ ... }" block to gretl gnuplot command, containing
+  literal gnuplot command lines, each terminated with ";")
 
 05/02/03 version 1.0.8
 - Require lapack
