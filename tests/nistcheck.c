@@ -83,19 +83,22 @@ int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	pputs(prn, "\nGetting data...\n\n");
     }
 
+    for (i=1; i<realvars; i++) {
+	if (i == 1) {
+	    strcpy(dinfo->varname[i], "y");
+	} else if (realvars > 3) {
+	    sprintf(dinfo->varname[i], "x%d", i - 1);
+	} else {
+	    strcpy(dinfo->varname[i], "x");
+	}
+	if (verbose > 1) {
+	    pprintf(prn, "reading variable %d as '%s'\n",
+		    i, dinfo->varname[i]);
+	}
+    }	
+
     for (t=0; t<dinfo->n; t++) {
 	for (i=1; i<realvars; i++) {
-	    if (t == 0) {
-		if (i == 1) {
-		    strcpy(dinfo->varname[i], "y");
-		} else {
-		    if (realvars > 3) {
-			sprintf(dinfo->varname[i], "x%d", i - 1);
-		    } else {
-			strcpy(dinfo->varname[i], "x");
-		    }
-		}
-	    }
 	    if (fscanf(fp, "%s", numstr) != 1) {
 		pputs(prn, "Data ended prematurely\n");
 		return 1;
@@ -411,10 +414,12 @@ int read_nist_file (const char *fname,
     }
 
     fclose(fp);
+
     *pZ = Z;
     *pdinfo = dinfo;
     *pcertvals = certvals;
     *polyterms = npoly;
+
     return 0;
 }
 
@@ -455,7 +460,7 @@ int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
 	sprintf(v1, "%#.*g", digits, certvals->coeff[i]);
 	sprintf(v2, "%#.*g", digits, pmod->coeff[i]);
 	if (doubles_differ(v1, v2)) {
-	    sprintf(s, "coeff for %s", dinfo->varname[i+1]);
+	    sprintf(s, "coeff[%d]", i);
 	    print_result_error(digits, v1, v2, s, prn);
 	    return 0;
 	}
@@ -468,7 +473,7 @@ int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
 	sprintf(v1, "%#.*g", digits, certvals->sderr[i]);
 	sprintf(v2, "%#.*g", digits, pmod->sderr[i]);
 	if (doubles_differ(v1, v2)) {
-	    sprintf(s, "std err for %s", dinfo->varname[i+1]);
+	    sprintf(s, "std_err[%d]", i);
 	    print_result_error(digits, v1, v2, s, prn);
 	    return 0; 
 	}

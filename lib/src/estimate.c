@@ -609,7 +609,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 
     if ((opts & OPT_R) || (use_qr && !(opts & OPT_C))) { 
 	mdl.rho = rho;
-	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n, opts);
+	gretl_lapack_regress(&mdl, (const double **) *pZ, pdinfo->n, opts);
     } else {
 	int l = l0 - 1;
 	int nxpx = l * (l + 1) / 2;

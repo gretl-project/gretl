@@ -135,8 +135,7 @@ static int qr_make_vcv (MODEL *pmod, gretl_matrix *v, int robust)
 }
 
 static void get_resids_and_SSR (MODEL *pmod, const double **Z,
-				gretl_matrix *yhat, double ypy, 
-				int fulln)
+				gretl_matrix *yhat, int fulln)
 {
     int t, i = 0;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
@@ -204,14 +203,11 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     } 
 }
 
-static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
+static void 
+get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 {
-    gretl_matrix *X;
     int i, j, t;
     int start = (pmod->ifc)? 3 : 2;
-
-    X = gretl_matrix_alloc(pmod->nobs, pmod->ncoeff);
-    if (X == NULL) return NULL;
 
     /* copy independent vars into matrix X */
     j = 0;
@@ -230,6 +226,16 @@ static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
 		X->val[j++] = 1.0;
 	    }
 	}
+    }
+}
+
+static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
+{
+    gretl_matrix *X;
+
+    X = gretl_matrix_alloc(pmod->nobs, pmod->ncoeff);
+    if (X != NULL) {
+	get_data_X(X, pmod, Z);
     }
 
     return X;
@@ -374,8 +380,8 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     gretl_matrix *X;
     gretl_matrix *diag = NULL;
     gretl_matrix *tmp1 = NULL, *tmp2 = NULL, *tmp3 = NULL;
-    int m = pmod->nobs; 
-    int n = pmod->list[0] - 1;
+    int T = pmod->nobs; 
+    int k = pmod->list[0] - 1;
     int hc_version;
     int i, j, t;
     int err = 0;
@@ -383,16 +389,16 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
 
-    diag = gretl_column_vector_from_array(pmod->uhat + pmod->t1, m,
+    diag = gretl_column_vector_from_array(pmod->uhat + pmod->t1, T,
 					  GRETL_MOD_SQUARE);
     if (diag == NULL) {
 	err = 1;
 	goto bailout;
     }  
 
-    tmp1 = gretl_matrix_alloc(n, m);
-    tmp2 = gretl_matrix_alloc(n, n);
-    tmp3 = gretl_matrix_alloc(n, n);
+    tmp1 = gretl_matrix_alloc(k, T);
+    tmp2 = gretl_matrix_alloc(k, k);
+    tmp3 = gretl_matrix_alloc(k, k);
     if (tmp1 == NULL || tmp2 == NULL || tmp3 == NULL) {
 	err = 1;
 	goto bailout;
@@ -405,15 +411,15 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     }
 
     if (hc_version == 1) {
-	for (t=0; t<m; t++) {
-	    diag->val[t] *= (double) m / (m - n);
+	for (t=0; t<T; t++) {
+	    diag->val[t] *= (double) T / (T - k);
 	}
     } else if (hc_version > 1) {
 	/* do the h_t calculations */
-	for (t=0; t<m; t++) {
+	for (t=0; t<T; t++) {
 	    double q, ht = 0.0;
 
-	    for (i=0; i<n; i++) {
+	    for (i=0; i<k; i++) {
 		q = Q->val[mdx(Q, t, i)];
 		ht += q * q;
 	    }
@@ -432,10 +438,10 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     gretl_matrix_multiply(tmp3, xpxinv, tmp2);
 
     /* tmp2 now holds HCCM */
-    for (i=0; i<n; i++) {
+    for (i=0; i<k; i++) {
 	double x = tmp2->val[mdx(tmp2, i, i)];
 
-	j = (pmod->ifc)? (i + 1) % n : i;
+	j = (pmod->ifc)? (i + 1) % k : i;
 	pmod->sderr[j] = sqrt(x);
     }
 
@@ -469,11 +475,11 @@ static int qr_make_regular_vcv (MODEL *pmod, gretl_matrix *v)
     return err;
 }
 
-static double get_model_data (MODEL *pmod, const double **Z, 
-			      gretl_matrix *Q, gretl_matrix *y)
+static void get_model_data (MODEL *pmod, const double **Z, 
+			    gretl_matrix *Q, gretl_matrix *y)
 {
     int i, j, t, start;
-    double x, ypy = 0.0;
+    double x;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
     int qdiff = (pmod->rho != 0.0);
     int pwe = gretl_model_get_int(pmod, "pwe");
@@ -551,13 +557,10 @@ static double get_model_data (MODEL *pmod, const double **Z,
 	    }
 	}
 	y->val[j++] = x;
-	ypy += x * x;
     }
 
     /* fetch tss based on the (possibly transformed) y */
     pmod->tss = get_tss(y->val, pmod->nobs, pmod->ifc);
-
-    return ypy;
 }
 
 static void save_coefficients (MODEL *pmod, gretl_matrix *b,
@@ -601,7 +604,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     gretl_matrix *xpxinv = NULL;
     doublereal *tau = NULL, *work = NULL;
     doublereal *work2;
-    doublereal rcond, ypy;
+    doublereal rcond;
     char uplo = 'U';
     char diag = 'N';
     char norm = '1';
@@ -627,7 +630,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 	goto qr_cleanup;
     }
 
-    ypy = get_model_data(pmod, Z, Q, y);
+    get_model_data(pmod, Z, Q, y);
 
     /* do a workspace size query */
     lwork = -1;
@@ -727,7 +730,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     gretl_matrix_multiply(Q, g, y);    
 
     /* get vector of residuals and SSR */
-    get_resids_and_SSR(pmod, Z, y, ypy, fulln);
+    get_resids_and_SSR(pmod, Z, y, fulln);
 
     /* standard error of regression */
     if (m - n > 0) {
@@ -787,9 +790,191 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     return err;    
 }
 
-#if 0
+#undef USE_SVD
 
-/* might be worth trying (?), but not ready yet */
+#ifdef USE_SVD
+
+static void svd_get_hvec (const gretl_matrix *X,
+			  const gretl_matrix *V,
+			  gretl_vector *h)
+{
+    double ht, htj;
+    int k = X->cols;
+    int T = X->rows;
+    int i, j, t;
+
+    for (t=0; t<T; t++) {
+	ht = 0.0;
+	for (j=0; j<k; j++) {
+	    htj = 0.0;
+	    for (i=0; i<k; i++) {
+		htj += X->val[mdx(X, T, i)] * V->val[mdx(V, i, j)];
+	    }
+	    htj *= X->val[mdx(X, T, j)];
+	    ht += htj;
+	}
+	gretl_vector_set(h, t, ht);
+    }
+}
+
+static int svd_make_hccme (MODEL *pmod, const double **Z, 
+			   gretl_matrix *X, gretl_matrix *xpxinv)
+{
+    gretl_matrix *diag = NULL;
+    gretl_matrix *h = NULL;
+    gretl_matrix *tmp1 = NULL, *tmp2 = NULL, *tmp3 = NULL;
+    int T = pmod->nobs; 
+    int k = pmod->list[0] - 1;
+    int hc_version;
+    int i, j, t;
+    int err = 0;
+
+    diag = gretl_column_vector_from_array(pmod->uhat + pmod->t1, T,
+					  GRETL_MOD_SQUARE);
+    if (diag == NULL) {
+	err = 1;
+	goto bailout;
+    }  
+
+    tmp1 = gretl_matrix_alloc(k, T);
+    tmp2 = gretl_matrix_alloc(k, k);
+    tmp3 = gretl_matrix_alloc(k, k);
+    h = gretl_column_vector_alloc(T);
+    if (tmp1 == NULL || tmp2 == NULL || tmp3 == NULL || h == NULL) {
+	err = 1;
+	goto bailout;
+    } 
+
+    get_data_X(X, pmod, Z);
+    svd_get_hvec(X, xpxinv, h);
+
+    hc_version = get_hc_version();
+    gretl_model_set_int(pmod, "hc", 1);
+    if (hc_version > 0) {
+	gretl_model_set_int(pmod, "hc_version", hc_version);
+    }
+
+    if (hc_version == 1) {
+	for (t=0; t<T; t++) {
+	    diag->val[t] *= (double) T / (T - k);
+	}
+    } else if (hc_version > 1) {
+	/* do the h_t calculations */
+	for (t=0; t<T; t++) {
+	    double ht = h->val[t];
+
+	    if (hc_version == 2) {
+		diag->val[t] /= (1.0 - ht);
+	    } else { /* HC3 */
+		diag->val[t] /= (1.0 - ht) * (1.0 - ht);
+	    }
+	}
+    }
+
+    do_X_prime_diag(X, diag, tmp1);
+
+    gretl_matrix_multiply(tmp1, X, tmp2);
+    gretl_matrix_multiply(xpxinv, tmp2, tmp3); 
+    gretl_matrix_multiply(tmp3, xpxinv, tmp2);
+
+    /* tmp2 now holds HCCM */
+    for (i=0; i<k; i++) {
+	double x = tmp2->val[mdx(tmp2, i, i)];
+
+	j = (pmod->ifc)? (i + 1) % k : i;
+	pmod->sderr[j] = sqrt(x);
+    }
+
+    err = qr_make_vcv(pmod, tmp2, 1);
+
+    bailout:
+
+    gretl_matrix_free(diag);
+    gretl_matrix_free(tmp1);
+    gretl_matrix_free(tmp2);
+    gretl_matrix_free(tmp3);
+    gretl_vector_free(h);
+
+    return err;
+}
+
+static void svd_yhat_uhat (MODEL *pmod, const double **Z, int fulln)
+{
+    int i, t;
+    int l0 = pmod->list[0];
+    int dwt = gretl_model_get_int(pmod, "wt_dummy");
+    int qdiff = (pmod->rho != 0.0);
+    int pwe = gretl_model_get_int(pmod, "pwe");
+    int yvar = pmod->list[1];
+    double u, y, yhat;
+
+    if (dwt) dwt = pmod->nwt;
+
+    pmod->ess = 0.0;
+
+    if (qdiff) {
+	for (t=0; t<fulln; t++) {
+	    if (t < pmod->t1 || t > pmod->t2) {
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	    } else {
+		y = Z[yvar][t];
+		if (t == pmod->t1 && pwe) {
+		    y *= sqrt(1.0 - pmod->rho * pmod->rho);
+		} else {
+		    y -= pmod->rho * Z[yvar][t-1];
+		}
+		yhat = 0.0;
+		for (i=2; i<=l0; i++) {
+		    yhat += pmod->coeff[i-2] * Z[pmod->list[i]][t];
+		}
+		u = y - yhat;
+		pmod->uhat[t] = u;
+		pmod->ess += u * u;
+	    }
+	}
+    } else if (pmod->nwt) {
+	for (t=0; t<fulln; t++) {
+	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	    } else {
+		y = Z[yvar][t];
+		if (dwt && Z[dwt][t] == 0.0) {
+		    pmod->yhat[t] = NADBL;
+		} else {
+		    if (!dwt) {
+			y *= Z[pmod->nwt][t];
+		    }
+		    yhat = 0.0;
+		    for (i=2; i<=l0; i++) {
+			yhat += pmod->coeff[i-2] * Z[pmod->list[i]][t];
+		    }
+		    pmod->yhat[t] = yhat;
+		    pmod->uhat[t] = y - yhat;
+		    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		}
+	    }
+	}
+    } else {
+	for (t=0; t<fulln; t++) {
+	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	    } else {
+		yhat = 0.0;
+		for (i=2; i<=l0; i++) {
+		    yhat += pmod->coeff[i-2] * Z[pmod->list[i]][t];
+		}
+		pmod->yhat[t] = yhat;
+		pmod->uhat[t] = Z[yvar][t] - yhat;
+		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+	    }
+	}
+    }
+
+    /* if SSR is small enough, treat it as zero */
+    if (pmod->ess < ESSZERO && pmod->ess > (-ESSZERO)) {
+	pmod->ess = 0.0;
+    } 
+}
 
 static void
 svd_xpxinv (const gretl_matrix *A, const gretl_matrix *B,
@@ -833,7 +1018,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
     gretl_matrix *xpxinv = NULL;
     doublereal *work = NULL, *s = NULL;
     doublereal *work2;
-    doublereal ypy, rcond = -1.0;
+    doublereal rcond = -1.0;
     int i;
     int err = 0;
 
@@ -853,7 +1038,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	goto svd_cleanup;
     }
 
-    ypy = get_model_data(pmod, Z, A, B);
+    get_model_data(pmod, Z, A, B);
 
     /* workspace query */
     lwork = -1;
@@ -884,7 +1069,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	goto svd_cleanup;
     }
 
-    /* allocate temporary auxiliary vector */
+    /* allocate temporary coeff vector */
     b = gretl_matrix_alloc(n, 1);
     if (b == NULL) {
 	err = E_ALLOC;
@@ -897,27 +1082,14 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	goto svd_cleanup;
     }
 
-    /* OLS coefficients */
+    /* copy and arrange OLS coefficients */
     for (i=0; i<n; i++) {
 	b->val[i] = B->val[i];
     }
     save_coefficients(pmod, b, n);
 
-    /* SSR or ESS */
-    pmod->ess = 0.0;
-    for (i=n; i<m; i++) {
-	pmod->ess += B->val[i] * B->val[i];
-    }
-
-    /* FIXME from this point on, for SVD */
-
-#if 0
-    /* write vector of fitted values into B */
-    gretl_matrix_multiply(Q, g, B);    
-
-    /* get vector of residuals */
-    get_resids_and_SSR(pmod, Z, B, ypy, fulln);
-#endif
+    /* calculate fitted vals and residuals */
+    svd_yhat_uhat(pmod, Z, fulln);
 
     /* standard error of regression */
     if (m - n > 0) {
@@ -944,7 +1116,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	if ((opts & OPT_T) && !get_force_hc()) {
 	    qr_make_hac(pmod, Z, xpxinv);
 	} else {
-	    qr_make_hccme(pmod, Z, A, xpxinv);
+	    svd_make_hccme(pmod, Z, A, xpxinv);
 	}
     } else {
 	qr_make_regular_vcv(pmod, xpxinv);
@@ -973,7 +1145,21 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
     return err;    
 }
 
-#endif /* SVD stuff */
+int gretl_lapack_regress (MODEL *pmod, const double **Z, int fulln,
+			  gretlopt opts)
+{
+    return gretl_svd_regress(pmod, Z, fulln, opts);
+}
+
+#else /* !USE_SVD */
+
+int gretl_lapack_regress (MODEL *pmod, const double **Z, int fulln,
+			  gretlopt opts)
+{
+    return gretl_qr_regress(pmod, Z, fulln, opts);
+}
+
+#endif
 
 int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
 {

@@ -26,6 +26,8 @@
 
 #undef TDEBUG 
 
+#define TOBIT_TOL 1.0e-10 /* was 1.0e-9: do more checking? */
+
 /* Below: we are buying ourselves a considerable simplification when it comes
    to the tobit_ll function.  That function needs access to the original y
    and X data.  But the sample used for estimation may be at an offset into
@@ -313,7 +315,7 @@ tobit_model_info_init (int nobs, int k, int n_series)
     if (tobit == NULL) return NULL;
 
     model_info_set_opts(tobit, FULL_VCV_MATRIX);
-    model_info_set_tol(tobit, 1.0e-09);
+    model_info_set_tol(tobit, TOBIT_TOL);
     model_info_set_k(tobit, k);
     model_info_set_n_series(tobit, n_series);
     model_info_set_t1_t2(tobit, 0, nobs - 1);
