@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<html>
+<head><title>gretl per Windows</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+</head>
+
+<body>
+[<a href="../gretl_italiano.html">pagina principale</a>]
+
+<center>
+<h1>Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>Versione MS Windows</h2>
+</center>
+
+<h2>Download</h2>
+
+<p>gretl è disponibile per Windows sotto forma di file eseguibile auto-installante,
+<a
+href="http://prdownloads.sourceforge.net/gretl/gretl_install.exe">gretl_install.exe</a>
+(SHORTDATE, circa 7MB). È sufficiente scaricarlo, eseguirlo e scegliere la
+posizione dove verrà installato il programma (il valore predefinito è
+<kbd>c:\userdata\gretl</kbd>).  Il programma è testato su Windows 98 e
+Windows XP; per quanto ne sappia, dovrebbe funzionare bene su tutte le
+versioni di Windows successive a Windows 95.</p>
+
+<p>Software aggiuntivo che può essere utile installare:</p>
+
+<center>
+<table cellpadding="4">
+<tr>
+<td><p>X-12-ARIMA (destagionalizzazione, modelli ARIMA)</p></td>
+<td><p><a
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a></p></td>
+</tr>
+<tr>
+<td><p>TRAMO/SEATS (destagionalizzazione, modelli ARIMA)</p></td>
+<td><p><a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a></p></td>
+</tr>
+<tr>
+<td><p>Dati di Wooldridge (dataset aggiuntivi del libro)</p></td>
+<td><p><a 
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a></p></td>
+</tr>
+<tr>
+<td><p>Dati di Gujarati (dataset aggiuntivi del libro)</p></td>
+<td><p><a 
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/gujarati_data.exe">gujarati_data.exe</a></p></td>
+</tr>
+<tr>
+<td><p>Dati da <a href="http://www.econ.queensu.ca/ETM/">Econometric Theory and 
+Methods</a> di Davidson e MacKinnon</p></td>
+<td><p><a 
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a></p></td>
+</tr>
+</table>
+</center>
+
+<p>Tutti i file precedenti sono auto-estraenti: per installarli è necessario
+prima installare gretl.</p>
+
+
+<p>Il manuale di gretl è disponibile separatamente come file PDF: <a
+href="../manual.pdf">manual.pdf</a> in formato US letter, oppure in
+formato A4: <a href="../manual-a4.pdf">manual-a4.pdf</a>. È possibile scaricare
+il software per leggere i file PDF dal <a
+href="http://www.adobe.com/products/acrobat/readstep2.html">sito
+Adobe</a>.</p>
+
+<p>Gli eseguibili sono stati cross-compilati su GNU/Linux usando <a
+href="http://www.mingw.org/">mingw32</a> e <a
+href="http://www.gimp.org/~tml/gimp/win32/downloads.html">gtk per
+win32</a> di Tor Lillqvist. Il programma di installazione è di
+<a href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+
+<h2>Aggiornare gretl</h2>
+
+<p>Prima di aggiornare gretl è consigliabile eseguire il programma
+di disinstallazione <kbd>unins000.exe</kbd>, che si trova nella cartella
+principale di gretl.  Questo evita possibili strani comportamenti dovuti
+a "vecchie" DLL o impostazioni del registro di Windows. Attenzione: 
+disinstallando il programma non verranno rimossi eventuali file creati
+nella cartella <kbd>gretl/user</kbd>, ma verranno cancellate le personalizzazioni
+fatte nel menù "Preferenze", che quindi dovranno essere reimpostate
+una volta avviata la nuova versione del programma.</p>
+
+<h2>Eseguire gretl via rete</h2>
+
+<p>Sono disponibili <a href="./gretl_network.html">istruzioni</a> 
+per configurare gretl per Windows in modo da essere eseguito via rete,
+ad esempio in un laboratorio informatico.</p>
+
+<h2>Compilare gretl per Windows</h2>
+
+<p>Per compilare gretl per Windows, basta scaricare il pacchetto dei sorgenti
+di gretl (si veda <a href="http://sourceforge.net/projects/gretl/">qui</a> per
+la versione più recente) e dare un'occhiata alla directory <kbd>win32</kbd>.
+Il Makefile per la versione Windows è in realtà scritto per cross-compilare
+gretl su Linux, ma non dovrebbe essere difficile modificarlo per compilare il
+programma direttamente su Windows, in particolare se si usa il compilatore
+mingw32.</p>
+
+<hr>
+
+<p>
+Allin Cottrell (<a href="mailto:cottrell@wfu.edu">cottrell@wfu.edu</a>)<br>
+SHORTDATE</p>
+
+</body>
+</html>
+
+
+
+

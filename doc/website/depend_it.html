@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>Dipendenze di gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="./css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="./gretl_italiano.html">pagina principale</a>]
+
+<center>
+<h1>Dipendenze di gretl</h1>
+</center>
+
+<p>Gretl dipende da varie librerie e dal programma <tt>gnuplot</tt>, 
+per alcune delle sue funzionalità.  La tabella sottostante mostra un
+riassunto di queste dipendenze.  Il link alla sinistra porta al sito
+principale per il pacchetto in questione (valido ad Aprile 2002),
+mentre il link a destra consente di cercare il pacchetto su
+<tt>rpmfind.net</tt>.</p>
+
+<table width="90%" border=0 cellspacing=4 cellpadding=4>
+<tr><th align=left bgcolor="#808080"><FONT COLOR="white">Pacchetto</font></th>
+  <th align=left bgcolor="#808080"><FONT COLOR="white">Relazione con gretl</font></th>
+  <th align=left bgcolor="#808080"><FONT COLOR="white">Funzionalità</font></th>
+  <th align=left bgcolor="#808080"><FONT COLOR="white">rpmfind</font></th>
+</tr> 
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.gtk.org/">gtk</a></td>
+  <td>Richiesto</td>
+  <td>Fornisce l'interfaccia grafica di gretl</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://gtkextra.sourceforge.net/">gtkextra</a></td>
+  <td>Opzionale</td>
+  <td>Dialoghi di selezione file, visualizzazione della sessione come icone, modifica dei dati nel foglio di calcolo</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk%2Bextra">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.xmlsoft.org/">libxml</a></td>
+  <td>Richiesto</td>
+  <td>Salva i file di dati nel formato predefinito</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libxml">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.netlib.org/lapack/">lapack</a></td>
+  <td>Richiesto</td>
+  <td>Varie funzioni di algebra lineare</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=lapack">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.gnuplot.info/">gnuplot</a></td>
+  <td>Richiesto</td>
+  <td>Genera i grafici</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gnuplot">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="ftp://ftp.gnome.org/pub/GNOME/stable/latest/sources/">gdk-pixbuf</a></td>
+  <td>Raccomandato [<a href="#note1">1</a>]</td>
+  <td>Gestisce i grafici in formato PNG; rende interattivi i grafici di gnuplot</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gdk-pixbuf">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">readline</a></td>
+  <td>Opzionale</td>
+  <td>Fornisce una comoda riga di comando modificabile in <tt>gretlcli</tt>, la versione
+      a riga di comando del programma</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=readline">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.gnome.org/">gnome</a></td>
+  <td>Opzionale</td>
+  <td>gretl è integrato nel desktop gnome (icone e associazioni dei file, sistema di aiuto
+      HTML e così via)</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gnome">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="ftp://ftp.gnome.org/pub/GNOME/sources/libole2/">libole2</a></td>
+  <td>Opzionale [<a href="#note2">2</a>]</td>
+  <td>Importa dati da MS Excel</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libole2">Cerca</a></td>
+</tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://swox.com/gmp/">GMP</a></td>
+  <td>Opzionale</td>
+  <td>Supporto per il plugin OLS a precisione multipla</td>
+  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libgmp">Cerca</a></td>
+</tr>
+</table>
+
+<h3>Note</h3>
+
+<p><a name="note1">1.</a> Se si compila gretl in proprio, è possibile rimuovere la
+dipendenza da gdk-pixbuf dando l'opzione <tt>--disable-png-comments</tt> a
+<tt>configure</tt>.  Si otterranno ancora grafici corretti, ma non interattivi.</p>
+
+
+<p><a name="note2">2.</a> Le parti rilevanti del codice di libole2 sono
+incluse nel pacchetto sorgenti di gretl e vengono compilate se libole2 
+non viene trovato sul sistema.</p>
+
+
+</body>
