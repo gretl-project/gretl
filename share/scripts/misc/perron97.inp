@@ -26,7 +26,6 @@ endloop
 # starting year for the series (the first non-missing
 # observation)
 genr startyr = min(zeromiss(yr * ok(y)))
-genr smplmin = startyr + maxlag + 1
 
 genr t_a_min = 10000
 genr Tbstar = 0
@@ -34,49 +33,35 @@ genr Tbk = 0
 
 # loop across possible breakpoints
 
-genr Tbmin = smplmin + 3;
+genr Tbmin = startyr + maxlag + 2;
 genr Tbmax = 1970 - 3;
 
 loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1)
 
   printf "\n*** Trying break in %d\n", Tb
 
-  smpl full
-
   genr DU = (yr > Tb)
   genr DT = (yr = (Tb + 1))
 
-  # The arguments to "smpl" can be variables
-  smpl smplmin ;
-
-  # Regression including all lags (using wildcard)
-  ols y 0 DU time DT y_1 dyt_* --quiet
-  genr essu = $ess
-  genr dfu = $df
-
-  genr prevsig = 0
-  genr sig = 0
   genr kstar = 0
 
   # Now try trimming the list of lags
-  loop for k=1..maxlag
-     # drop the last lag
-     omit --quiet
-     genr essr = $ess
-     genr dfr = $df
-     genr tstat = sqrt((essr - essu) / (essu / dfu))
+  loop for (k=maxlag; k>0; k-=1)
+     if k > 1
+	    ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
+	 else 
+        ols y 0 DU time DT y_1 dyt_1 --quiet
+	 endif
+     # test for significance of the last lag
+     genr tstat = coeff(dyt_$k) / stderr(dyt_$k)
      genr pval = 2 * pvalue(z, tstat)
      genr sig = pval < .10
-     genr testlag = maxlag - $k + 1
      # printf "last lag (%d): t=%g, asy. p-value = %g\n", \
-	 # testlag, tstat, pval
-     if (prevsig = 0 & sig = 1)
-        genr kstar = testlag
+	 # k, tstat, pval
+     if (sig)
+        genr kstar = k
 		break
      endif
-     genr essu = essr
-     genr dfu = dfr
-     genr prevsig = sig
    endloop
 
    printf "*** optimal k = %d ***\n", kstar
@@ -99,8 +84,6 @@ loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1)
    endif
    
 endloop
-
-smpl smplmin ;
 
 genr DU = (yr > Tbstar)
 genr DT = (yr = (Tbstar + 1))
