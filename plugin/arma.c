@@ -263,9 +263,8 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     pmod->ci = ARMA;
     pmod->ifc = 1;
 
-    pmod->nobs -= maxlag;
-    pmod->dfd -= maxlag;
     pmod->dfn = p + q;
+    pmod->dfd = pmod->nobs - pmod->dfn;
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->coeff[i] = coeff[i];
@@ -273,8 +272,8 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 
     copylist(&pmod->list, list);
 
-    pmod->ybar = _esl_mean(realt1 + maxlag, realt2, y);
-    pmod->sdy = _esl_stddev(realt1 + maxlag, realt2, y);
+    pmod->ybar = _esl_mean(realt1, realt2, y);
+    pmod->sdy = _esl_stddev(realt1, realt2, y);
 
     /* if model was estimated on a sub-sample, we need to expand the
        residual and fitted series (which are always full-length) */
@@ -286,7 +285,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 
     pmod->ess_wt = pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
-	if (t < (realt1 + maxlag) || t > realt2) {
+	if (t < realt1 || t > realt2) {
 	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
 	} else {
 	    pmod->uhat[t] = e[t - realt1];
@@ -302,8 +301,10 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
     pmod->tss = 0.0;
-    for (t=realt1 + maxlag; t<=realt2; t++) {
-	pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
+    for (t=realt1; t<=realt2; t++) {
+	if (!na(y[t])) {
+	    pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
+	}
     }
 
     pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
@@ -320,7 +321,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     }
 
     /* get the model start/end dates in sync with the main dataset */
-    pmod->t1 = realt1 + maxlag;
+    pmod->t1 = realt1;
     pmod->t2 += pdinfo->t1;
 
     gretl_aic_etc(pmod);
@@ -521,6 +522,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	update_ll_partials(e, aZ, s2, an, p, q);
 
 	/* OPG regression */
+	clear_model(&armod, NULL);
 	armod = lsq(alist, &aZ, ainfo, OLS, 1, 0.0);
 	if (armod.errcode) {
 	    goto arma_bailout;
