@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
-"POT-Creation-Date: 2003-10-23 10:43-0400\n"
-"PO-Revision-Date: 2003-10-10 15:09-0400\n"
+"POT-Creation-Date: 2003-10-23 15:28-0400\n"
+"PO-Revision-Date: 2003-10-23 15:26-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2279,9 +2279,8 @@ msgid "(%d units observed in each of %d periods)\n"
 msgstr "(%d unités observés dans chaque %d périodes)\n"
 
 #: lib/src/gretl_utils.c:2674
-#, fuzzy
 msgid "Command failed"
-msgstr "Échec de l'exécution de la commande\n"
+msgstr "Échec de l'exécution de la commande"
 
 #: lib/src/gretl_win32.c:44
 msgid "Couldn't open registry\n"
@@ -4400,9 +4399,9 @@ msgstr "Sauvegarder le fichier BoxPlot"
 msgid "Five-number summary"
 msgstr "Résumé à 5 nombres"
 
-#: gui/boxplots.c:146 gui/boxplots.c:179 gui/gpt_control.c:2467
-#: gui/gpt_control.c:2510 gui2/boxplots.c:165 gui2/boxplots.c:209
-#: gui2/gpt_control.c:2640 gui2/gpt_control.c:2689
+#: gui/boxplots.c:146 gui/boxplots.c:179 gui/gpt_control.c:2495
+#: gui/gpt_control.c:2538 gui2/boxplots.c:165 gui2/boxplots.c:209
+#: gui2/gpt_control.c:2670 gui2/gpt_control.c:2719
 msgid "Save to session as icon"
 msgstr "Sauvegarder comme une icône"
 
@@ -4423,21 +4422,21 @@ msgstr "Sauvegarder en tant que XPM..."
 
 #: gui/boxplots.c:158 gui/boxplots.c:183 gui/database.c:1656
 #: gui/datafiles.c:854 gui/dialogs.c:490 gui/dialogs.c:1291
-#: gui/gpt_control.c:1257 gui/gpt_control.c:2470 gui/gpt_control.c:2516
+#: gui/gpt_control.c:1285 gui/gpt_control.c:2498 gui/gpt_control.c:2544
 #: gui/selector.c:896 gui/session.c:123 gui/session.c:1934 gui2/boxplots.c:186
-#: gui2/boxplots.c:217 gui2/gpt_control.c:2643 gui2/gpt_control.c:2699
+#: gui2/boxplots.c:217 gui2/gpt_control.c:2673 gui2/gpt_control.c:2729
 #: gui2/session.c:123 gui2/session.c:1989
 msgid "Help"
 msgstr "Aide"
 
 #: gui/boxplots.c:160 gui/boxplots.c:184 gui/calculator.c:1068
-#: gui/database.c:596 gui/datafiles.c:594 gui/gpt_control.c:1249
-#: gui/gpt_control.c:2495 gui/gpt_control.c:2517 gui/gpt_control.c:2522
+#: gui/database.c:596 gui/datafiles.c:594 gui/gpt_control.c:1277
+#: gui/gpt_control.c:2523 gui/gpt_control.c:2545 gui/gpt_control.c:2550
 #: gui/gui_utils.c:978 gui/gui_utils.c:1259 gui/gui_utils.c:1364
 #: gui/gui_utils.c:1519 gui/gui_utils.c:2054 gui/ssheet.c:652
 #: gui2/boxplots.c:189 gui2/boxplots.c:218 gui2/database.c:612
-#: gui2/datafiles.c:611 gui2/gpt_control.c:2671 gui2/gpt_control.c:2700
-#: gui2/gpt_control.c:2705 gui2/gui_utils.c:1055 gui2/gui_utils.c:1543
+#: gui2/datafiles.c:611 gui2/gpt_control.c:2701 gui2/gpt_control.c:2730
+#: gui2/gpt_control.c:2735 gui2/gui_utils.c:1055 gui2/gui_utils.c:1543
 #: gui2/gui_utils.c:1809 gui2/gui_utils.c:1902 gui2/gui_utils.c:1944
 msgid "Close"
 msgstr "Fermer"
@@ -4602,12 +4601,12 @@ msgid "F(%d, %d) sampling distribution"
 msgstr "F(%d, %d) distribution de l'échantillon"
 
 #: gui/calculator.c:445 gui/database.c:194 gui/fileselect.c:359
-#: gui/gpt_control.c:2129 gui/library.c:2629 gui/library.c:3178
+#: gui/gpt_control.c:2157 gui/library.c:2629 gui/library.c:3178
 #: gui/library.c:3245 gui/library.c:3286 gui/library.c:3436 gui/library.c:3476
 #: gui/library.c:3557 gui/library.c:3601 gui/library.c:3696 gui/library.c:3732
 #: gui/session.c:1080 gui/session.c:1114 gui2/calculator.c:453
 #: gui2/database.c:212 gui2/fileselect.c:546 gui2/fileselect.c:670
-#: gui2/gpt_control.c:2286 gui2/library.c:124 gui2/library.c:2593
+#: gui2/gpt_control.c:2316 gui2/library.c:124 gui2/library.c:2593
 #: gui2/library.c:3118 gui2/library.c:3185 gui2/library.c:3226
 #: gui2/library.c:3417 gui2/library.c:3478 gui2/library.c:3622
 #: gui2/session.c:1150 gui2/session.c:1197
@@ -5151,7 +5150,7 @@ msgid "gretl: time-series plot"
 msgstr "gretl: traçage de série temporelle"
 
 #: gui/callbacks.c:418 gui/dialogs.c:47 gui/dialogs.c:53 gui/dialogs.c:270
-#: gui/dialogs.c:289 gui/dialogs.c:298 gui/gpt_control.c:1230
+#: gui/dialogs.c:289 gui/dialogs.c:298 gui/gpt_control.c:1258
 #: gui/selector.c:1376 gui/settings.c:349 gui/ssheet.c:117 gui/ssheet.c:129
 msgid "Apply"
 msgstr "Appliquer"
@@ -5552,9 +5551,9 @@ msgid "Use start-of-period values"
 msgstr "Utiliser les valeurs de début des périodes"
 
 #: gui/database.c:1644 gui/datafiles.c:844 gui/dialogs.c:816
-#: gui/dialogs.c:1282 gui/gpt_control.c:1465 gui/helpfiles.c:844
+#: gui/dialogs.c:1282 gui/gpt_control.c:1493 gui/helpfiles.c:844
 #: gui/library.c:5456 gui/selector.c:887 gui/series_view.c:334
-#: gui/ssheet.c:118 gui/ssheet.c:130 gui2/gpt_control.c:1612
+#: gui/ssheet.c:118 gui/ssheet.c:130 gui2/gpt_control.c:1642
 #: gui2/helpfiles.c:878 gui2/library.c:5527 plugin/progress_bar.c:118
 msgid "Cancel"
 msgstr "Annuler"
@@ -6058,56 +6057,60 @@ msgstr "Titre du traçé"
 msgid "Title for axis"
 msgstr "Titre de l'axe"
 
-#: gui/gpt_control.c:294 gui/gpt_control.c:391 gui/gui_utils.c:1568
-#: gui/library.c:4111 gui/session.c:1057 gui2/gpt_control.c:317
-#: gui2/gpt_control.c:415 gui2/gui_utils.c:197 gui2/gui_utils.c:1279
+#: gui/gpt_control.c:299 gui2/gpt_control.c:306
+msgid "Invalid label position, must be X,Y"
+msgstr ""
+
+#: gui/gpt_control.c:321 gui/gpt_control.c:418 gui/gui_utils.c:1568
+#: gui/library.c:4111 gui/session.c:1057 gui2/gpt_control.c:346
+#: gui2/gpt_control.c:444 gui2/gui_utils.c:197 gui2/gui_utils.c:1279
 #: gui2/library.c:4109 gui2/session.c:1052
 #, c-format
 msgid "Couldn't write to %s"
 msgstr "Ne peut écrire dans %s"
 
-#: gui/gpt_control.c:301 gui/library.c:3863 gui2/boxplots.c:1348
-#: gui2/gpt_control.c:324 gui2/guiprint.c:298 gui2/gui_utils.c:192
+#: gui/gpt_control.c:328 gui/library.c:3863 gui2/boxplots.c:1348
+#: gui2/gpt_control.c:353 gui2/guiprint.c:298 gui2/gui_utils.c:192
 #: gui2/library.c:3785 plugin/tramo-x12a.c:447
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Ne peut ouvrir %s"
 
-#: gui/gpt_control.c:414 gui/gpt_control.c:1321 gui/gpt_control.c:1370
-#: gui2/gpt_control.c:442 gui2/gpt_control.c:1453 gui2/gpt_control.c:1516
-#: gui2/gpt_control.c:3786
+#: gui/gpt_control.c:441 gui/gpt_control.c:1349 gui/gpt_control.c:1398
+#: gui2/gpt_control.c:471 gui2/gpt_control.c:1483 gui2/gpt_control.c:1546
+#: gui2/gpt_control.c:3834
 msgid "Gnuplot error creating graph"
 msgstr "Erreur de GnuPlot lors de la création du graphe"
 
-#: gui/gpt_control.c:529 gui/gpt_control.c:1386 gui/gpt_control.c:2441
-#: gui/gpt_control.c:2465 gui2/gpt_control.c:555 gui2/gpt_control.c:1532
-#: gui2/gpt_control.c:2606 gui2/gpt_control.c:2638
+#: gui/gpt_control.c:557 gui/gpt_control.c:1414 gui/gpt_control.c:2469
+#: gui/gpt_control.c:2493 gui2/gpt_control.c:585 gui2/gpt_control.c:1562
+#: gui2/gpt_control.c:2636 gui2/gpt_control.c:2668
 msgid "Save gnuplot graph"
 msgstr "Sauvegarder le graphe GnuPlot"
 
-#: gui/gpt_control.c:565 gui2/gpt_control.c:591
+#: gui/gpt_control.c:593 gui2/gpt_control.c:621
 msgid "Error saving graph"
 msgstr "Erreur lors de la sauvegarde du graphe"
 
-#: gui/gpt_control.c:567 gui/gpt_control.c:1323 gui/gpt_control.c:1372
-#: gui/session.c:373 gui2/gpt_control.c:593 gui2/gpt_control.c:1455
-#: gui2/gpt_control.c:1518 gui2/session.c:354
+#: gui/gpt_control.c:595 gui/gpt_control.c:1351 gui/gpt_control.c:1400
+#: gui/session.c:373 gui2/gpt_control.c:623 gui2/gpt_control.c:1485
+#: gui2/gpt_control.c:1548 gui2/session.c:354
 msgid "Graph saved"
 msgstr "Sauvegarde du graphe"
 
-#: gui/gpt_control.c:614 gui2/gpt_control.c:654
+#: gui/gpt_control.c:642 gui2/gpt_control.c:684
 msgid "Main"
 msgstr "Principal"
 
-#: gui/gpt_control.c:648 gui2/gpt_control.c:694
+#: gui/gpt_control.c:676 gui2/gpt_control.c:724
 msgid "key position"
 msgstr "position clé"
 
-#: gui/gpt_control.c:663 gui2/gpt_control.c:709
+#: gui/gpt_control.c:691 gui2/gpt_control.c:739
 msgid "Hide fitted line"
 msgstr "Cacher la ligne ajusté"
 
-#: gui/gpt_control.c:688 gui2/gpt_control.c:738
+#: gui/gpt_control.c:716 gui2/gpt_control.c:768
 msgid ""
 "This box may contain the name of a TrueType font, such as arial or verdana, "
 "and a size in points.  Leave blank to use the default graph font."
@@ -6116,101 +6119,101 @@ msgstr ""
 "et la taille en points. Laisser en blanc pour utiliser la fonte de graphe "
 "par défaut."
 
-#: gui/gpt_control.c:692 gui2/gpt_control.c:742
+#: gui/gpt_control.c:720 gui2/gpt_control.c:772
 msgid "TrueType font"
 msgstr "fonte TrueType"
 
-#: gui/gpt_control.c:737 gui2/gpt_control.c:834
+#: gui/gpt_control.c:765 gui2/gpt_control.c:864
 msgid "Output to file"
 msgstr "Sortie vers le fichier"
 
-#: gui/gpt_control.c:749 gui2/gpt_control.c:846
+#: gui/gpt_control.c:777 gui2/gpt_control.c:876
 msgid "output format"
 msgstr "format de sortie"
 
-#: gui/gpt_control.c:761 gui2/gpt_control.c:858
+#: gui/gpt_control.c:789 gui2/gpt_control.c:888
 msgid "Save to file..."
 msgstr "Sauvegarde dans le fichier..."
 
-#: gui/gpt_control.c:809 gui2/gpt_control.c:906
+#: gui/gpt_control.c:837 gui2/gpt_control.c:936
 msgid "Lines"
 msgstr "Lignes"
 
-#: gui/gpt_control.c:828 gui2/gpt_control.c:927
+#: gui/gpt_control.c:856 gui2/gpt_control.c:957
 #, c-format
 msgid "line %d: "
 msgstr "ligne %d: "
 
-#: gui/gpt_control.c:835 gui2/gpt_control.c:934
+#: gui/gpt_control.c:863 gui2/gpt_control.c:964
 msgid "legend"
 msgstr "légende"
 
-#: gui/gpt_control.c:855 gui2/gpt_control.c:958
+#: gui/gpt_control.c:883 gui2/gpt_control.c:988
 msgid "type"
 msgstr "type"
 
-#: gui/gpt_control.c:871 gui2/gpt_control.c:974
+#: gui/gpt_control.c:899 gui2/gpt_control.c:1004
 msgid "scale"
 msgstr "échelle"
 
-#: gui/gpt_control.c:888 gui2/gpt_control.c:993
+#: gui/gpt_control.c:916 gui2/gpt_control.c:1023
 msgid "y axis"
 msgstr "axe des y"
 
-#: gui/gpt_control.c:921 gui2/gpt_control.c:1026
+#: gui/gpt_control.c:949 gui2/gpt_control.c:1056
 msgid " Click to set label position"
 msgstr " CLiquer pour fixer la position de l'étiquette"
 
-#: gui/gpt_control.c:937 gui2/gpt_control.c:1042
+#: gui/gpt_control.c:965 gui2/gpt_control.c:1072
 msgid "Labels"
 msgstr "Étiquettes"
 
-#: gui/gpt_control.c:959 gui2/gpt_control.c:1065
+#: gui/gpt_control.c:987 gui2/gpt_control.c:1095
 #, c-format
 msgid "label %d: "
 msgstr "étiquette %d: "
 
-#: gui/gpt_control.c:966 gui2/gpt_control.c:1072
+#: gui/gpt_control.c:994 gui2/gpt_control.c:1102
 msgid "text"
 msgstr "texte"
 
-#: gui/gpt_control.c:986 gui2/gpt_control.c:1097
+#: gui/gpt_control.c:1014 gui2/gpt_control.c:1127
 msgid "position (X,Y)"
 msgstr "position (X,Y)"
 
-#: gui/gpt_control.c:1024 gui2/gpt_control.c:1136
+#: gui/gpt_control.c:1052 gui2/gpt_control.c:1166
 msgid "justification"
 msgstr "justification"
 
-#: gui/gpt_control.c:1059 gui2/gpt_control.c:1169
+#: gui/gpt_control.c:1087 gui2/gpt_control.c:1199
 msgid "X-axis"
 msgstr "axe des X"
 
-#: gui/gpt_control.c:1061 gui2/gpt_control.c:1171
+#: gui/gpt_control.c:1089 gui2/gpt_control.c:1201
 msgid "Y-axis"
 msgstr "axe des Y"
 
-#: gui/gpt_control.c:1063 gui2/gpt_control.c:1173
+#: gui/gpt_control.c:1091 gui2/gpt_control.c:1203
 msgid "Y2-axis"
 msgstr "axe Y2"
 
-#: gui/gpt_control.c:1109 gui2/gpt_control.c:1228
+#: gui/gpt_control.c:1137 gui2/gpt_control.c:1258
 msgid "auto axis range"
 msgstr "auto étendue des axes"
 
-#: gui/gpt_control.c:1123 gui2/gpt_control.c:1242
+#: gui/gpt_control.c:1151 gui2/gpt_control.c:1272
 msgid "manual range:"
 msgstr "étendue manuelle:"
 
-#: gui/gpt_control.c:1133 gui2/gpt_control.c:1252
+#: gui/gpt_control.c:1161 gui2/gpt_control.c:1282
 msgid "minimum"
 msgstr "minimum"
 
-#: gui/gpt_control.c:1149 gui2/gpt_control.c:1268
+#: gui/gpt_control.c:1177 gui2/gpt_control.c:1298
 msgid "maximum"
 msgstr "maximum"
 
-#: gui/gpt_control.c:1185 gui2/gpt_control.c:1304
+#: gui/gpt_control.c:1213 gui2/gpt_control.c:1334
 msgid ""
 "You can only have one plot controller open\n"
 "at any given time"
@@ -6218,110 +6221,110 @@ msgstr ""
 "Vous ne pouvez avoir qu'un seul contrôleur de traçé\n"
 "ouvert à la fois"
 
-#: gui/gpt_control.c:1199 gui2/gpt_control.c:1318
+#: gui/gpt_control.c:1227 gui2/gpt_control.c:1348
 msgid "gretl plot controls"
 msgstr "contrôles du traçé gretl"
 
-#: gui/gpt_control.c:1240 gui/gpt_control.c:1456 gui/gui_utils.c:968
-#: gui/session.c:148 gui/session.c:1837 gui2/gpt_control.c:1603
+#: gui/gpt_control.c:1268 gui/gpt_control.c:1484 gui/gui_utils.c:968
+#: gui/session.c:148 gui/session.c:1837 gui2/gpt_control.c:1633
 #: gui2/gui_utils.c:1043 gui2/session.c:148 gui2/session.c:1894
 msgid "Save"
 msgstr "Sauvegarder"
 
-#: gui/gpt_control.c:1287 gui/gpt_control.c:1343 gui2/gpt_control.c:1410
-#: gui2/gpt_control.c:1475 gui2/gpt_control.c:3755
+#: gui/gpt_control.c:1315 gui/gpt_control.c:1371 gui2/gpt_control.c:1440
+#: gui2/gpt_control.c:1505 gui2/gpt_control.c:3803
 msgid "Couldn't access graph info"
 msgstr "Ne peut accéder aux infos du graphe"
 
-#: gui/gpt_control.c:1296 gui/gpt_control.c:1352 gui/session.c:343
-#: gui2/gpt_control.c:1419 gui2/gpt_control.c:1483 gui2/session.c:324
+#: gui/gpt_control.c:1324 gui/gpt_control.c:1380 gui/session.c:343
+#: gui2/gpt_control.c:1449 gui2/gpt_control.c:1513 gui2/session.c:324
 msgid "Failed to copy graph file"
 msgstr "Échec de copie du fichier de graphe"
 
-#: gui/gpt_control.c:1425 gui2/gpt_control.c:1572
+#: gui/gpt_control.c:1453 gui2/gpt_control.c:1602
 msgid "gretl: save graph"
 msgstr "gretl: sauvegarde du graphe"
 
-#: gui/gpt_control.c:1445 gui2/gpt_control.c:1592
+#: gui/gpt_control.c:1473 gui2/gpt_control.c:1622
 msgid "output type"
 msgstr "type de sortie"
 
-#: gui/gpt_control.c:1750 gui/gpt_control.c:1974 gui2/gpt_control.c:1908
-#: gui2/gpt_control.c:2132
+#: gui/gpt_control.c:1778 gui/gpt_control.c:2002 gui2/gpt_control.c:1938
+#: gui2/gpt_control.c:2162
 msgid "Failed to parse gnuplot file"
 msgstr "Échec d'analyse du fichier GnuPlot"
 
-#: gui/gpt_control.c:1894 gui2/gpt_control.c:2052
+#: gui/gpt_control.c:1922 gui2/gpt_control.c:2082
 msgid "Couldn't open graph file"
 msgstr "Ne peut ouvrir le fichier de graphe"
 
-#: gui/gpt_control.c:1934 gui2/gpt_control.c:2092
+#: gui/gpt_control.c:1962 gui2/gpt_control.c:2122
 msgid "Plot file is corrupted"
 msgstr "Le fichier du traçé est corrompu"
 
-#: gui/gpt_control.c:2428 gui/gpt_control.c:2527 gui2/gpt_control.c:2593
-#: gui2/gpt_control.c:2710
+#: gui/gpt_control.c:2456 gui/gpt_control.c:2555 gui2/gpt_control.c:2623
+#: gui2/gpt_control.c:2740
 msgid "monochrome"
 msgstr "monochrome"
 
-#: gui/gpt_control.c:2438 gui/gpt_control.c:2509 gui2/gpt_control.c:2603
-#: gui2/gpt_control.c:2685
+#: gui/gpt_control.c:2466 gui/gpt_control.c:2537 gui2/gpt_control.c:2633
+#: gui2/gpt_control.c:2715
 msgid "Save as postscript (EPS)..."
 msgstr "Sauvegarder en tant que PostScript (EPS)..."
 
-#: gui/gpt_control.c:2463 gui/gpt_control.c:2508 gui2/gpt_control.c:2636
-#: gui2/gpt_control.c:2684
+#: gui/gpt_control.c:2491 gui/gpt_control.c:2536 gui2/gpt_control.c:2666
+#: gui2/gpt_control.c:2714
 msgid "Save as PNG..."
 msgstr "Sauvegarder en tant que PNG..."
 
-#: gui/gpt_control.c:2473 gui/gpt_control.c:2511 gui2/gpt_control.c:2649
-#: gui2/gpt_control.c:2691
+#: gui/gpt_control.c:2501 gui/gpt_control.c:2539 gui2/gpt_control.c:2679
+#: gui2/gpt_control.c:2721
 msgid "Zoom..."
 msgstr "Agrandir..."
 
-#: gui/gpt_control.c:2481 gui2/gpt_control.c:2657
+#: gui/gpt_control.c:2509 gui2/gpt_control.c:2687
 msgid " Drag to define zoom rectangle"
 msgstr " Déplacer pour définir le rectangle d'agrandissement"
 
-#: gui/gpt_control.c:2484 gui/gpt_control.c:2521 gui2/gpt_control.c:2660
-#: gui2/gpt_control.c:2704
+#: gui/gpt_control.c:2512 gui/gpt_control.c:2549 gui2/gpt_control.c:2690
+#: gui2/gpt_control.c:2734
 msgid "Restore full view"
 msgstr "Restaurer la vue complète"
 
-#: gui/gpt_control.c:2488 gui/gpt_control.c:2513 gui/gui_utils.c:970
-#: gui2/gpt_control.c:2664 gui2/gpt_control.c:2693 gui2/gui_utils.c:1046
+#: gui/gpt_control.c:2516 gui/gpt_control.c:2541 gui/gui_utils.c:970
+#: gui2/gpt_control.c:2694 gui2/gpt_control.c:2723 gui2/gui_utils.c:1046
 msgid "Print..."
 msgstr "Afficher..."
 
-#: gui/gpt_control.c:2492 gui/gpt_control.c:2515 gui/session.c:136
+#: gui/gpt_control.c:2520 gui/gpt_control.c:2543 gui/session.c:136
 #: gui/session.c:144 gui/session.c:1855 gui/session.c:1865
-#: gui2/gpt_control.c:2668 gui2/gpt_control.c:2698 gui2/session.c:136
+#: gui2/gpt_control.c:2698 gui2/gpt_control.c:2728 gui2/session.c:136
 #: gui2/session.c:144 gui2/session.c:1912 gui2/session.c:1922
 msgid "Edit"
 msgstr "Éditer"
 
-#: gui/gpt_control.c:2526 gui2/gpt_control.c:2709
+#: gui/gpt_control.c:2554 gui2/gpt_control.c:2739
 msgid "color"
 msgstr "couleur"
 
-#: gui/gpt_control.c:2616 gui/gpt_control.c:2678 gui2/gpt_control.c:2814
-#: gui2/gpt_control.c:2887
+#: gui/gpt_control.c:2644 gui/gpt_control.c:2706 gui2/gpt_control.c:2844
+#: gui2/gpt_control.c:2917
 msgid "Failed to generate PNG file"
 msgstr "Échec de génération du fichier PNG"
 
-#: gui/gpt_control.c:2807
+#: gui/gpt_control.c:2834
 msgid "Failed to create pixbuf from file"
 msgstr "Échec de création d'un pixbuf à partir du fichier"
 
-#: gui/gpt_control.c:2816 gui2/gpt_control.c:3022
+#: gui/gpt_control.c:2843 gui2/gpt_control.c:3056
 msgid "Malformed PNG file for graph"
 msgstr "Fichier PNG mal composé pour un graphe"
 
-#: gui/gpt_control.c:3227 gui2/gpt_control.c:3455
+#: gui/gpt_control.c:3254 gui2/gpt_control.c:3489
 msgid "gretl: gnuplot graph"
 msgstr "gretl: graphe GnuPlot"
 
-#: gui/gpt_control.c:3293 gui2/gpt_control.c:3520
+#: gui/gpt_control.c:3320 gui2/gpt_control.c:3554
 msgid " Click on graph for pop-up menu"
 msgstr " Cliquer sur le graphe pour le menu pop-up"
 
@@ -7329,7 +7332,7 @@ msgid "Correlation matrix"
 msgstr "Matrice de corrélation"
 
 #: gui/gretl.c:1393 gui/gretl.c:1405 gui2/boxplots.c:178 gui2/boxplots.c:213
-#: gui2/gpt_control.c:2610 gui2/gpt_control.c:2687 gui2/gretl.c:1620
+#: gui2/gpt_control.c:2640 gui2/gpt_control.c:2717 gui2/gretl.c:1620
 #: gui2/gretl.c:1632
 msgid "Copy to clipboard"
 msgstr "Copier vers le Clipboard"
@@ -8245,11 +8248,8 @@ msgid "Couldn't open command file for writing"
 msgstr "Ne peut ouvrir le fichier de commandes en écriture"
 
 #: gui/library.c:714 gui2/library.c:706
-#, fuzzy
 msgid "Please give the current dataset a name"
-msgstr ""
-"Voulez-vous enregistrer le jeu de données courant\n"
-"comme %s?"
+msgstr "SVP veuillez fournir le nom du jeu de données courant"
 
 #: gui/library.c:802 gui/library.c:808 gui2/library.c:794 gui2/library.c:800
 msgid "correlation matrix"
@@ -9765,7 +9765,7 @@ msgid "(no description)"
 msgstr "(pas de description)"
 
 #: gui/webget.c:1649 gui2/webget.c:1649
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "New files are available from the gretl web site.\n"
 "These files have a combined size of %u bytes.\n"
@@ -9774,13 +9774,11 @@ msgid ""
 "(You can run gretl_updater.exe later if you prefer.)"
 msgstr ""
 "Les nouveaux fichiers sont disponibles à partir du site web de gretl.\n"
-"Ces fichiers une taille combinée de %u octets.\n"
+"Ces fichiers ont une taille combinée de %u octets.\n"
 "\n"
-"Si vous désirez mettre à jour votre installation, svp quitter gretl\n"
-"et exécuter le programme portant le nom \"gretl updater\".\n"
-"\n"
-"Lorsque le programme de mise à jour est complété, vous devez redémarrer "
-"gretl."
+"Désirez-vous quitter gretl pour mettre à jour votre installation "
+"maintenant?\n"
+"(Vous pouvez exécuter gretl_updater.exe plus tard si vous préférez.)"
 
 #: gui/webget.c:1657 gui2/webget.c:1657
 msgid ""
@@ -9975,28 +9973,28 @@ msgstr "fichiers de données gretl (*.dat)"
 msgid "File dialog box error"
 msgstr "Erreur de la boîte de dialogue"
 
-#: gui2/gpt_control.c:790
+#: gui2/gpt_control.c:820
 #, c-format
 msgid "Color %d"
 msgstr "Couleur %d"
 
-#: gui2/gpt_control.c:798
+#: gui2/gpt_control.c:828
 msgid "Select color"
 msgstr "Sélectionner couleur"
 
-#: gui2/gpt_control.c:2613 gui2/gpt_control.c:2696
+#: gui2/gpt_control.c:2643 gui2/gpt_control.c:2726
 msgid "Print"
 msgstr "Afficher"
 
-#: gui2/gpt_control.c:2646 gui2/gpt_control.c:2690
+#: gui2/gpt_control.c:2676 gui2/gpt_control.c:2720
 msgid "Clear data labels"
 msgstr "Effacer les étiquettes de données"
 
-#: gui2/gpt_control.c:3720 gui2/guiprint.c:80 gui2/series_view.c:71
+#: gui2/gpt_control.c:3768 gui2/guiprint.c:80 gui2/series_view.c:71
 msgid "Cannot open the clipboard"
 msgstr "Ne peut ouvrir le clipboard"
 
-#: gui2/gpt_control.c:3790
+#: gui2/gpt_control.c:3838
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
 msgstr "Pour coller, utiliser Editer/_Coller spécial.../metafichier rehaussé"
 
@@ -10137,9 +10135,8 @@ msgid "Copy"
 msgstr "Copier"
 
 #: gui2/gui_utils.c:1054
-#, fuzzy
 msgid "LaTeX"
-msgstr "/_LaTeX"
+msgstr "LaTeX"
 
 #: gui2/gui_utils.c:2698
 msgid "Copied selection to clipboard"
@@ -10864,6 +10861,8 @@ msgid ""
 "TRAMO can't handle more than 600 observations.\n"
 "Please select a smaller sample."
 msgstr ""
+"TRAMO ne peut traiter plus de 600 observations.\n"
+"SVP sélectionnez un échantillon de taille plus petite."
 
 #: plugin/workbook.c:403
 msgid "No book or workbook streams found."

@@ -282,6 +282,35 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 
 /* ........................................................... */
 
+static void 
+get_label_pos_from_entry (GtkWidget *w, char *str, size_t n)
+{
+    const gchar *p;
+    double x, y;
+    int chk;
+
+    *str = 0;
+    p = gtk_entry_get_text(GTK_ENTRY(w));
+    
+    strncat(str, p, n-1);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+    chk = sscanf(str, "%lf,%lf", &x, &y);
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    if (chk != 2) {
+	errbox(_("Invalid label position, must be X,Y"));
+	gtk_editable_select_region(GTK_EDITABLE(w), 0, strlen(p));
+	strcpy(str, "0.0,0.0");
+    }
+}
+
+/* ........................................................... */
+
 static int just_string_to_int (const char *str)
 {
     if (!strcmp(str, "left")) return JUST_LEFT;
@@ -520,8 +549,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	widget_to_str(labeltext[i], 
 		      spec->text_labels[i].text, 
 		      sizeof spec->text_labels[0].text);
-	widget_to_str(labelpos[i], spec->text_labels[i].pos, 
-		      sizeof spec->text_labels[0].pos);
+	get_label_pos_from_entry(labelpos[i], 
+				 spec->text_labels[i].pos,
+				 sizeof spec->text_labels[0].pos);
 	strcpy(spec->text_labels[i].just, 
 	       just_int_to_string(gtk_option_menu_get_history
 				  (GTK_OPTION_MENU(labeljust[i]))));
@@ -2939,18 +2969,22 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     if (plot_doing_position(plot)) {
 	if (plot->labelpos_entry != NULL) {
 	    double dx, dy;
-	    gchar *posstr;
+	    char posstr[32];
 	    
 	    get_data_xy(plot, event->x, event->y, &dx, &dy);
 #ifdef ENABLE_NLS
 	    setlocale(LC_NUMERIC, "C");
 #endif
-	    posstr = g_strdup_printf("%g,%g", dx, dy);
+	    if (na(dy)) {
+		fprintf(stderr, "Couldn't get y coordinate\n");
+		sprintf(posstr, "%g,0.0", dx);
+	    } else {
+		sprintf(posstr, "%g,%g", dx, dy);
+	    }
 #ifdef ENABLE_NLS
 	    setlocale(LC_NUMERIC, "");
 #endif
 	    gtk_entry_set_text(GTK_ENTRY(plot->labelpos_entry), posstr);
-	    g_free(posstr);
 	} 
 	terminate_plot_positioning(plot);
 	return TRUE;
@@ -3590,18 +3624,32 @@ static int get_png_plot_bounds (const char *str, png_bounds_t *bounds)
     }
 }
 
-static int get_png_data_bounds (const char *str, png_bounds_t *bounds)
+static int get_png_data_bounds (char *str, png_bounds_t *bounds)
 {
+    char *p = str;
+    int ret = 0;
+
+    while (*p) {
+	if (*p == ',') *p = '.';
+	p++;
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
     if (sscanf(str, "xmin=%lf xmax=%lf ymin=%lf ymax=%lf", 
 	       &bounds->xmin, &bounds->xmax,
 	       &bounds->ymin, &bounds->ymax) != 4) {
-	return GRETL_PNG_BAD_COMMENTS;
+	ret = GRETL_PNG_BAD_COMMENTS;
     } else if (bounds->xmin == 0.0 && bounds->xmax == 0.0 &&
 	       bounds->ymin == 0.0 && bounds->ymax == 0.0) {
-	return GRETL_PNG_NO_COORDS;
-    } else {
-	return 0;
-    }
+	ret = GRETL_PNG_NO_COORDS;
+    } 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    return ret;
 }
 
 #define PNG_CHECK_BYTES 4
