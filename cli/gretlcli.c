@@ -780,7 +780,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case MULTIPLY: case SQUARE: case RHODIFF:
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
-    case PRINT: 
+    case PRINT: case MAHAL:
     case SIM: case SUMMARY: case RMPLOT: case HURST:
     case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:

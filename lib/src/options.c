@@ -89,6 +89,8 @@ struct gretl_option gretl_opts[] = {
     { LOOP,     OPT_P, "progressive" },
     { LOOP,     OPT_Q, "quiet" },
     { LOOP,     OPT_V, "verbose" },
+    { MAHAL,    OPT_S, "save" },
+    { MAHAL,    OPT_V, "verbose" },
     { MEANTEST, OPT_O, "unequal-vars" },
     { OLS,      OPT_N, "no-df-corr" },
     { OLS,      OPT_O, "vcv" }, 

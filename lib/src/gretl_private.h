@@ -51,8 +51,6 @@ int gretl_iszero (int t1, int t2, const double *x);
 
 int gretl_isconst (int t1, int t2, const double *x);
 
-double gretl_mean (int t1, int t2, const double *x);
-
 void gretl_minmax (int t1, int t2, const double *x, 
 		   double *min, double *max);
 

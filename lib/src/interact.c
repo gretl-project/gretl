@@ -2347,6 +2347,11 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	break; 
 
+    case MAHAL:
+	err = mahalanobis_distance(cmd->list, pZ, datainfo, 
+				   cmd->opt, prn);
+	break;
+
     case MEANTEST:
 	err = means_test(cmd->list, (const double **) *pZ, datainfo, 
 			 cmd->opt, prn);

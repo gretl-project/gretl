@@ -105,3 +105,8 @@ int moments (int t1, int t2, const double *zx,
 
 double doornik_chisq (double skew, double kurt, int n);
 
+int mahalanobis_distance (const int *list, double ***pZ,
+			  DATAINFO *pdinfo, gretlopt opt,
+			  PRN *prn);
+
+

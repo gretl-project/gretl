@@ -1763,3 +1763,144 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     return 0;
 }
+
+static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
+{
+    int sv = 0;
+    int err;
+
+    err = dataset_add_vars(1, pZ, pdinfo);
+
+    if (!err) {
+	int i, j, t;
+
+	sv = pdinfo->v - 1;
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[sv][t] = NADBL;
+	}
+
+	j = 0;
+	for (i=1; i<sv; i++) {
+	    if (!strncmp(pdinfo->varname[i], "mdist", 5)) {
+		j++;
+	    }
+	}
+	
+	if (j > 0) {
+	    sprintf(pdinfo->varname[sv], "mdist%d", j);
+	} else {
+	    strcpy(pdinfo->varname[sv], "mdist");
+	}
+
+	strcpy(VARLABEL(pdinfo, sv), "Mahalanobis distances");	
+    }
+		
+    return sv;
+}
+
+int mahalanobis_distance (const int *list, double ***pZ,
+			  DATAINFO *pdinfo, gretlopt opt, 
+			  PRN *prn)
+{
+    gretl_matrix *S = NULL;
+    gretl_vector *means = NULL;
+    gretl_vector *xdiff;
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
+    int n, err = 0;
+
+    adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
+		(const double **) *pZ, NULL);
+
+    n = pdinfo->t2 - pdinfo->t1 + 1;
+    if (n < 2) {
+	pdinfo->t1 = orig_t1;
+	pdinfo->t2 = orig_t2;
+	return E_DATA;
+    }
+
+    xdiff = gretl_column_vector_alloc(list[0]);
+    if (xdiff == NULL) {
+	pdinfo->t1 = orig_t1;
+	pdinfo->t2 = orig_t2;
+	return E_ALLOC;
+    }
+
+    S = gretl_covariance_matrix_from_varlist(list, 
+					     (const double **) *pZ, 
+					     pdinfo, 
+					     &means,
+					     &err);
+
+    if (!err) {
+	if (opt & OPT_V) {
+	    gretl_matrix_print(S, _("Covariance matrix"), prn);
+	}
+	err = gretl_invert_symmetric_matrix(S);
+	if (err) {
+	    fprintf(stderr, "error inverting covariance matrix\n");
+	} else if (opt & OPT_V) {
+	    gretl_matrix_print(S, _("Inverse of covariance matrix"), prn);
+	}
+    }
+
+    if (!err) {
+	int k = gretl_vector_get_length(means);
+	char obs_string[OBSLEN];
+	int savevar = 0;
+	double m;
+	int i, t;
+
+	if (opt & OPT_S) {
+	    /* save the results to a data series */
+	    savevar = mdist_saver(pZ, pdinfo);
+	}
+
+	pprintf(prn, "%s\n\n", _("Mahalanobis distances from the centroid"));
+
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+
+	    /* write vector of deviations from centroid for
+	       observation t */
+	    for (i=0; i<k; i++) {
+		int vi = list[i+1];
+		double xbar = gretl_vector_get(means, i);
+
+		gretl_vector_set(xdiff, i, (*pZ)[vi][t] - xbar);
+	    }
+
+	    m = gretl_scalar_b_prime_X_b(xdiff, S, &err);
+
+	    get_obs_string(obs_string, t, pdinfo);
+	    pprintf(prn, "%8s ", obs_string);
+
+	    if (err) {
+		pprintf(prn, "NA\n");
+	    } else {
+		m = sqrt(m);
+		pprintf(prn, "%9.6f\n", m);
+		if (savevar > 0) {
+		    (*pZ)[savevar][t] = m;
+		}
+	    }
+	}
+
+	if (savevar > 0) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Distances saved as '%s'"), 
+		    pdinfo->varname[savevar]);
+	    pputc(prn, '\n');
+	}
+
+	pputc(prn, '\n');
+    }
+
+    gretl_matrix_free(xdiff);
+    gretl_matrix_free(means);
+    gretl_matrix_free(S);
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
+
+    return err;
+}

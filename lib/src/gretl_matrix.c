@@ -2075,28 +2075,29 @@ double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 {
     gretl_matrix *tmp = NULL;
     double ret = NADBL;
-    int err = 0;
+
+    *errp = 0;
 
     if (b->rows != X->rows ||
 	X->rows != X->cols ||
 	b->cols != 1) {
-	err = GRETL_MATRIX_NON_CONFORM;
+	*errp = GRETL_MATRIX_NON_CONFORM;
     }
 
-    if (!err) {
+    if (*errp == 0) {
 	tmp = gretl_matrix_alloc(1, b->rows);
 	if (tmp == NULL) {
-	    err = GRETL_MATRIX_NOMEM;
+	    *errp = GRETL_MATRIX_NOMEM;
 	}
     }
 
-    if (!err) {
-	err = gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
-					X, GRETL_MOD_NONE,
-					tmp);
+    if (*errp == 0) {
+	*errp = gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
+					  X, GRETL_MOD_NONE,
+					  tmp);
     }
 
-    if (!err) {
+    if (*errp == 0) {
 	ret = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
 				       b, GRETL_MOD_NONE,
 				       errp);
@@ -2321,6 +2322,100 @@ int gretl_is_zero_vector (const gretl_vector *v)
 
     return 1;
 }
+
+/**
+ * gretl_covariance_matrix_from_varlist:
+ * @list: list of variables by ID number.
+ * @Z: data array.
+ * @pdinfo: pointer to data information struct.
+ * @means: pointer to pick up vector of means, or %NULL to discard.
+ * @err: pointer to pass back error code.
+ *
+ * Returns: the variance-covariance matrix of the listed variables
+ * (over the currently defined data sample), or %NULL in case of
+ * failure.
+ */
+
+gretl_matrix *
+gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 
+				      const DATAINFO *pdinfo, 
+				      gretl_matrix **means,
+				      int *err)
+{
+    gretl_matrix *vcv;
+    gretl_vector *xbar;
+
+    int k = list[0];
+    int t, i, j;
+
+    double vv, x, y;
+    double xbi, xbj;
+    int nv;
+
+    *err = 0;
+
+    vcv = gretl_matrix_alloc(k, k);
+    if (vcv == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    xbar = gretl_vector_alloc(k);
+    if (xbar == NULL) {
+	*err = E_ALLOC;
+	gretl_matrix_free(vcv);
+	return NULL;
+    }
+    
+    for (i=0; i<k && !*err; i++) {
+	xbi = gretl_mean(pdinfo->t1, pdinfo->t2, Z[list[i+1]]);
+	if (na(xbi)) {
+	    *err = E_DATA;
+	} else {
+	    gretl_vector_set(xbar, i, xbi);
+	}
+    }
+
+    for (i=0; i<k && !*err; i++) {
+	xbi = gretl_vector_get(xbar, i);
+	for (j=i; j<k; j++) {
+	    xbj = gretl_vector_get(xbar, j);
+	    vv = 0.0;
+	    nv = 0;
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		x = Z[list[i+1]][t];
+		y = Z[list[j+1]][t];
+		if (na(x) || na(y)) {
+		    continue;
+		}
+		vv += (x - xbi) * (y - xbj);
+		nv++;
+	    }
+	    if (nv < 2) {
+		*err = E_DATA;
+		vv = NADBL;
+	    } else {
+		vv /= (nv - 1); /* plain nv? */
+	    }
+	    gretl_matrix_set(vcv, i, j, vv);
+	    gretl_matrix_set(vcv, j, i, vv);
+	}
+    }
+
+    if (means != NULL && !*err) {
+	*means = xbar;
+    } else {
+	gretl_vector_free(xbar);
+    }
+
+    if (*err) {
+	gretl_matrix_free(vcv);
+	vcv = NULL;
+    }
+
+    return vcv;
+}
+
 
 #if 0
 

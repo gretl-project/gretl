@@ -81,6 +81,7 @@ enum gretl_cmd_codes {
     LOGIT,
     LOGS,
     LOOP,
+    MAHAL,
     MEANTEST,
     MODELTAB,
     MPOLS,

@@ -5304,7 +5304,7 @@ int gui_exec_line (char *line,
     case PRINT: case SIM: case SUMMARY:
     case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case PCA:
-    case OUTFILE: case RMPLOT: case HURST:
+    case OUTFILE: case RMPLOT: case HURST: case MAHAL:
 	err = simple_commands(&cmd, line, &Z, datainfo, outprn);
 	if (err) errmsg(err, prn);
 	else if (cmd.ci == DATA) {
