@@ -136,18 +136,18 @@ static int read_data_descriptions (windata_t *fdata)
 static void browse_header (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN];
-    windata_t *mydata = (windata_t *) data;
+    windata_t *win = (windata_t *) data;
     PRN *prn;
     gchar *fname;
 
-    gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
+    gtk_clist_get_text(GTK_CLIST(win->listbox), win->active_var, 
 		       0, &fname);
     
-    if (mydata->role == PWT_DATA)
+    if (win->role == PWT_DATA)
 	build_path(pwtpath, fname, hdrname, ".gdt"); 
-    else if (mydata->role == RAMU_DATA)
+    else if (win->role == RAMU_DATA)
 	build_path(paths.datadir, fname, hdrname, ".gdt");
-    else if (mydata->role == GREENE_DATA) {
+    else if (win->role == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
 	strcat(hdrname, fname);
@@ -176,17 +176,17 @@ static void browse_header (GtkWidget *w, gpointer data)
 
 void browser_open_data (GtkWidget *w, gpointer data)
 {
-    windata_t *mydata = (windata_t *) data;
+    windata_t *win = (windata_t *) data;
     gchar *datname;
 
-    gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
+    gtk_clist_get_text(GTK_CLIST(win->listbox), win->active_var, 
 		       0, &datname);
 
-    if (mydata->role == PWT_DATA)
+    if (win->role == PWT_DATA)
 	build_path(pwtpath, datname, trydatfile, ".gdt");
-    else if (mydata->role == RAMU_DATA)  
+    else if (win->role == RAMU_DATA)  
 	build_path(paths.datadir, datname, trydatfile, ".gdt");
-    else if (mydata->role == GREENE_DATA) {
+    else if (win->role == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
 	strcat(trydatfile, datname);
@@ -199,7 +199,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
         strcat(trydatfile, ".gdt");
     }
 
-    verify_open_data(mydata, OPEN_DATA);
+    verify_open_data(win, OPEN_DATA);
 } 
 
 /* ........................................................... */

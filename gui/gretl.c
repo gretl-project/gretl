@@ -999,7 +999,7 @@ static float get_gui_scale (GtkWidget *w)
 
 static GtkWidget *make_main_window (int gui_get_data) 
 {
-    GtkWidget *box, *scroller, *dframe;
+    GtkWidget *box, *scroller, *dlabel, *align;
     char *titles[3] = {
 	_("ID #"), 
 	_("Variable name"), 
@@ -1008,8 +1008,8 @@ static GtkWidget *make_main_window (int gui_get_data)
     int listbox_id_width = 30;
     int listbox_varname_width = 90;
     int listbox_label_width = 400;
-    int listbox_data_width = 500;
-    int listbox_file_height = 300;
+    int mainwin_width = 520;
+    int mainwin_height = 400;
 
     mdata->data = NULL;  
     mdata->listbox = NULL;
@@ -1030,13 +1030,19 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_signal_connect (GTK_OBJECT (mdata->w), "destroy",
 			GTK_SIGNAL_FUNC (destroy), NULL);
 
+    gui_scale = get_gui_scale(mdata->w); 
+    mainwin_width *= gui_scale;
+    mainwin_height *= gui_scale;
+    
+    gtk_window_set_default_size(GTK_WINDOW (mdata->w), 
+				mainwin_width, mainwin_height);
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_policy(GTK_WINDOW (mdata->w), TRUE, TRUE, FALSE);
     gtk_signal_connect_after(GTK_OBJECT(mdata->w), "realize", 
                              GTK_SIGNAL_FUNC(set_wm_icon), 
                              NULL);
 
-    main_vbox = gtk_vbox_new(FALSE, 5);
+    main_vbox = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER (main_vbox), 10);
 
 #ifdef USE_GNOME
@@ -1051,17 +1057,14 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     mdata->active_var = 1;
     
-    gui_scale = get_gui_scale(mdata->w); 
-    listbox_data_width *= gui_scale;
-    listbox_file_height *= gui_scale;
-     
-    dframe = gtk_frame_new(_(" No datafile loaded ")); 
-    gtk_widget_set_usize(dframe, listbox_data_width, listbox_file_height);
-    gtk_widget_show(dframe);
+    dlabel = gtk_label_new(_(" No datafile loaded ")); 
+    gtk_widget_show(dlabel);
     
     box = gtk_vbox_new (FALSE, 0);
-    gtk_container_border_width (GTK_CONTAINER (box), 5);
-    gtk_container_add (GTK_CONTAINER (dframe), box);
+    align = gtk_alignment_new(0, 0, 0, 0);
+    gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
+    gtk_widget_show(align);
+    gtk_container_add(GTK_CONTAINER(align), dlabel);
    
     scroller = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
@@ -1069,7 +1072,6 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     mdata->listbox = gtk_clist_new_with_titles (3, titles);
     gtk_clist_column_titles_passive(GTK_CLIST(mdata->listbox));
-    gtk_container_add (GTK_CONTAINER (scroller), mdata->listbox);
     gtk_clist_set_selection_mode (GTK_CLIST (mdata->listbox), 
 				  GTK_SELECTION_BROWSE);
     gtk_clist_set_column_width (GTK_CLIST (mdata->listbox), 
@@ -1078,6 +1080,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 					GTK_JUSTIFY_LEFT);
     setup_column(mdata->listbox, 1, listbox_varname_width * gui_scale);
     setup_column(mdata->listbox, 2, listbox_label_width * gui_scale);
+    gtk_container_add (GTK_CONTAINER(scroller), mdata->listbox);
 
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
@@ -1087,34 +1090,32 @@ static GtkWidget *make_main_window (int gui_get_data)
 			GTK_SIGNAL_FUNC(drag_data_received),
 			NULL);
 
-    gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
+    gtk_box_pack_start(GTK_BOX (main_vbox), box, TRUE, TRUE, 0);
+
+    gtk_box_pack_start (GTK_BOX(box), scroller, TRUE, TRUE, 0);
     gtk_signal_connect_after (GTK_OBJECT (mdata->listbox), "select_row", 
 			      GTK_SIGNAL_FUNC (selectrow), (gpointer) mdata);
+
     gtk_widget_show(mdata->listbox);
     gtk_widget_show(scroller);
-
     gtk_widget_show(box);
-
-    gtk_box_pack_start(GTK_BOX (main_vbox), dframe, TRUE, TRUE, 0);
 
     mdata->status = gtk_label_new("");
     
-    gtk_box_pack_start (GTK_BOX (main_vbox), mdata->status, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into clist, activate menus */
-    if (!gui_get_data) 
-	populate_clist(mdata->listbox, datainfo);
+    if (!gui_get_data) populate_clist(mdata->listbox, datainfo);
 
     /* create gretl toolbar */
-    if (want_toolbar)
-	make_toolbar(mdata->w, main_vbox);
+    if (want_toolbar) make_toolbar(mdata->w, main_vbox);
 
     /* get a monospaced font for various windows */
     load_fixed_font();
 
     gtk_widget_show_all(mdata->w); 
     
-    return dframe;
+    return dlabel;
 }
 
 /* ........................................................... */

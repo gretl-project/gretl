@@ -1391,7 +1391,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 {
     FILE *fidx, *fbin;
     size_t idxlen, bytesleft, bgot;
-    char idxname[MAXLEN], binname[MAXLEN], tmp[MAXLEN];
+    char idxname[MAXLEN], binname[MAXLEN];
     char gzbuf[BUFSIZE];
     gzFile fgz;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
