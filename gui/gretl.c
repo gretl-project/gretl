@@ -81,11 +81,7 @@ static int popup_connected;
 int *default_list = NULL;
 
 static GtkTargetEntry target_table[] = {
-    /* the first two types are not getting used */
-    {"application/x-gretldata", 0, 1},
-    {"application/x-gretlsession", 0, 2},
-    {"text/plain", 0, 0},
-    {"text/xml", 0, 0},
+    {"text/uri-list", 0, 1},
 };
 
 static void  
@@ -1128,7 +1124,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
-		       target_table, 4,
+		       target_table, 1,
 		       GDK_ACTION_COPY);
     gtk_signal_connect (GTK_OBJECT(mdata->listbox), "drag_data_received",
 			GTK_SIGNAL_FUNC(drag_data_received),
@@ -1698,30 +1694,42 @@ drag_data_received  (GtkWidget *widget,
 		     guint time,
 		     gpointer p)
 {
-    gchar *dfname = data->data;
-    char *suff = NULL;
-
-#ifdef DND
-    fprintf(dp, "received dragdata '%s'; info = %d\n", dfname, info);
-    fflush(dp);
-#endif
+    gchar *dfname;
+    char *suff = NULL, tmp[MAXLEN];
+    int pos, skip = 5;
 
     /* ignore the wrong sort of data */
-    if (dfname == NULL || strlen(dfname) <= 5 || 
-	strncmp(dfname, "file:", 5))
+    if (data == NULL || (dfname = data->data) == NULL || 
+	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5))
 	return;
 
-    suff = strrchr(dfname, '.');
+    if (strncmp(dfname, "file://", 7)) skip = 7;
 
-    if (suff && (!strncmp(suff, ".gretl", 6) || !strncmp(suff, ".inp", 4))) {
-	strcpy(tryscript, dfname + 5);
-	top_n_tail(tryscript);
+    /* there may be multiple files: we ignore all but the first */
+    tmp[0] ='\0';
+    if ((pos = haschar('\r', dfname)) > 0 || 
+	(pos = haschar('\n', dfname) > 0)) {
+	strncat(tmp, dfname + skip, pos - skip);
+    } else
+	strcat(tmp, dfname + skip);
+
+#ifdef G_OS_WIN32
+    if (unmangle(tmp, tryscript)) return;
+    strcpy(tmp, tryscript);
+    tryscript[0] = '\0';
+#endif
+
+    suff = strrchr(tmp, '.');
+    if (suff && (!strncmp(suff, ".gretl", 6) || 
+		 !strncmp(suff, ".inp", 4) ||
+		 !strncmp(suff, ".GRE", 4) ||
+		 !strncmp(suff, ".INP", 4))) {
+	strcpy(tryscript, tmp);
 	verify_open_session(NULL);
-    } else { 
-	strcpy(trydatfile, dfname + 5);
-	top_n_tail(trydatfile);
-	verify_open_data(NULL);	
-    }
+    } else {
+	strcpy(trydatfile, tmp);
+	verify_open_data(NULL);
+    }	
 }
 
 /* ........................................................... */
@@ -1805,21 +1813,26 @@ static void auto_store (void)
 #ifdef G_OS_WIN32
 
 static int old_windows (void) {
-    OSVERSIONINFO winver;
-    int old = 1;
+    OSVERSIONINFO *winver;
+    static int old = 1;
 
-    winver.dwOSVersionInfoSize = sizeof *winver;
-    GetVersionEx(&winver);
-    switch (winver.dwPlatformId) {
+    if (!old) return 0; /* do only one look up */
+
+    winver = mymalloc(sizeof *winver);
+    if (winver == NULL) return old;
+    winver->dwOSVersionInfoSize = sizeof *winver;
+    GetVersionEx(winver);
+    switch (winver->dwPlatformId) {
     case VER_PLATFORM_WIN32_WINDOWS:
-        if (winver.dwMinorVersion >= 10) /* win98 or higher */
+        if (winver->dwMinorVersion >= 10) /* win98 or higher */
 	    old = 0;
         break;
     case VER_PLATFORM_WIN32_NT:
-        if (winver.dwMajorVersion > 4) /* win2000 or higher */
+        if (winver->dwMajorVersion > 4) /* win2000 or higher */
 	    old = 0;
         break;
     }
+    free(winver);
     return old;
 }
 
