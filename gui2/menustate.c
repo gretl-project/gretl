@@ -98,7 +98,7 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 
 #endif
 
-#define DATASET_COMPACTABLE(d) (d->time_series == TIME_SERIES && \
+#define DATASET_COMPACTABLE(d) (d->structure == TIME_SERIES && \
                                 (d->pd == 4 || d->pd == 12 || \
                                  d->pd == 5 || d->pd == 7))
 
@@ -261,7 +261,7 @@ GtkWidget *build_var_popup (void)
 
     for (i=0; i<n_items; i++) {
 	if (i == 2 && !dataset_is_time_series(datainfo) &&
-	    datainfo->time_series != STACKED_TIME_SERIES) {
+	    datainfo->structure != STACKED_TIME_SERIES) {
 	    continue;
 	}
 	if (!dataset_is_time_series(datainfo) && i >= 6 && i <= 11) {
@@ -397,14 +397,11 @@ void set_sample_label (DATAINFO *pdinfo)
     ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
 			   dataset_is_panel(pdinfo));
 
-    flip(mdata->ifac, "/Sample/Interpret as time series...", 
-	 !(dataset_is_time_series(pdinfo)));
-
     flip(mdata->ifac, "/Sample/Interpret as panel...", 
 	 !(pdinfo->pd == 1));
 
     flip(mdata->ifac, "/Sample/Restructure panel...", 
-	 pdinfo->time_series == STACKED_CROSS_SECTION);
+	 pdinfo->structure == STACKED_CROSS_SECTION);
 
     sprintf(labeltxt, _("%s: Full range %s - %s"), 
 	    pdstr, stobs, endobs);

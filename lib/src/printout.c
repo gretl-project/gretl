@@ -1241,7 +1241,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 {
     int t, pv, err = 0;
     double *maxerr;
-    int time_series = (pdinfo->time_series == TIME_SERIES);
+    int time_series = (pdinfo->structure == TIME_SERIES);
 
     maxerr = malloc(fr->nobs * sizeof *maxerr);
     if (maxerr == NULL) {

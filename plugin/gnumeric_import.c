@@ -643,7 +643,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    sprintf(newinfo->endobs, "%d", newinfo->n);
 	    newinfo->sd0 = 1.0;
 	    newinfo->pd = 1;
-	    newinfo->time_series = 0;
+	    newinfo->structure = CROSS_SECTION;
 	} else {
 	    ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
 	    fprintf(stderr, "endobs='%s'\n", newinfo->endobs);

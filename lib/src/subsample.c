@@ -570,7 +570,7 @@ maybe_reconstitute_panel (const DATAINFO *pdinfo,
 	gretlopt opt = OPT_C;
 
 	sprintf(line, "setobs %d 1.1", pd);
-	if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	if (pdinfo->structure == STACKED_TIME_SERIES) {
 	    opt = OPT_S;
 	} 
 	set_obs(line, subinfo, opt);
@@ -1309,7 +1309,7 @@ int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 	modinfo->sd0 = fullinfo->sd0;
 	strcpy(modinfo->stobs, fullinfo->stobs);
 	strcpy(modinfo->endobs, fullinfo->endobs);
-	modinfo->time_series = fullinfo->time_series;
+	modinfo->structure = fullinfo->structure;
     }
 
     pmod->dataset->Z = modZ;

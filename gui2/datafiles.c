@@ -1315,57 +1315,6 @@ void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
     }
 }
 
-/* .................................................................. */
-
-struct ts_pd {
-    int pd;
-    const char *label;
-};
-
-void time_series_dialog (gpointer data, guint u, GtkWidget *w)
-{
-    gchar *msg = NULL;
-    const char *label = NULL;
-    int i;
-    struct ts_pd ok_pd[] = {
-	{  1, N_("annual data") },
-	{  4, N_("quarterly data") },
-	{ 12, N_("monthly data") },
-	{ 52, N_("weekly data") },
-	{  5, N_("daily data") },
-	{  7, N_("daily data") },
-	{ 24, N_("hourly data") },
-	{  0, NULL }
-    };
-	
-    for (i=0; ok_pd[i].pd != 0; i++) { 
-	if (datainfo->pd == ok_pd[i].pd) {
-	    label = ok_pd[i].label;
-	    break;
-	}
-    }
-
-    if (label != NULL) {
-	int resp;
-
-	msg = g_strdup_printf(_("Do you want to register the current data set\n"
-		"as %s?"), _(label));
-	resp = yes_no_dialog(_("gretl: time series data"), msg, 0);
-	if (resp == GRETL_YES) {
-	    if (!(datainfo->time_series == TIME_SERIES)) {
-		data_status |= MODIFIED_DATA;
-	    }
-	    datainfo->time_series = TIME_SERIES;
-	    set_sample_label(datainfo);
-	}
-    } else {
-	msg = g_strdup_printf(_("The current data frequency, %d, is not "
-				"recognized\nas a valid time-series frequency"), 
-			      datainfo->pd);
-	errbox(msg);
-    }
-}
-
 static void 
 switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 			   guint page_num, windata_t *fdata)

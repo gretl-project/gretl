@@ -166,7 +166,7 @@ static void dataset_dates_defaults (DATAINFO *pdinfo)
     sprintf(pdinfo->endobs, "%d", pdinfo->n);
     pdinfo->sd0 = 1.0;
     pdinfo->pd = 1;
-    pdinfo->time_series = 0;
+    pdinfo->structure = CROSS_SECTION;
     pdinfo->decpoint = '.';
 }
 
@@ -403,7 +403,7 @@ DATAINFO *datainfo_new (void)
     dinfo->vector = NULL;
     dinfo->subdum = NULL;
     dinfo->data = NULL;
-    dinfo->time_series = 0;
+    dinfo->structure = CROSS_SECTION;
 
     return dinfo;
 }
@@ -846,11 +846,11 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
 
     if (pdinfo->sd0 >= 2.0) {
-        pdinfo->time_series = TIME_SERIES; /* actual time series? */
+        pdinfo->structure = TIME_SERIES; /* actual time series? */
     } else if (pdinfo->sd0 > 1.0) {
-	pdinfo->time_series = STACKED_TIME_SERIES; /* panel data? */
+	pdinfo->structure = STACKED_TIME_SERIES; /* panel data? */
     } else {
-	pdinfo->time_series = 0;
+	pdinfo->structure = CROSS_SECTION;
     }
 
     pdinfo->n = -1;
@@ -872,18 +872,18 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 	    pdinfo->markers = 1;
 	} else if (strcmp(option, "PANEL2") == 0) {
 	    panel = 1;
-	    pdinfo->time_series = STACKED_TIME_SERIES;
+	    pdinfo->structure = STACKED_TIME_SERIES;
 	} else if (strcmp(option, "PANEL3") == 0) {
 	    panel = 1;
-	    pdinfo->time_series = STACKED_CROSS_SECTION;
+	    pdinfo->structure = STACKED_CROSS_SECTION;
 	}
     } 
 
     if (!panel && fscanf(fp, "%6s", option) == 1) {
 	if (strcmp(option, "PANEL2") == 0) {
-	    pdinfo->time_series = STACKED_TIME_SERIES;
+	    pdinfo->structure = STACKED_TIME_SERIES;
 	} else if (strcmp(option, "PANEL3") == 0) {
-	    pdinfo->time_series = STACKED_CROSS_SECTION;
+	    pdinfo->structure = STACKED_CROSS_SECTION;
 	}
     }
 
@@ -1247,9 +1247,9 @@ static int writehdr (const char *hdrfile, const int *list,
 	    fputs("MARKERS\n", fp);
 	}
     }
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+    if (pdinfo->structure == STACKED_TIME_SERIES) {
 	fputs("PANEL2\n", fp);
-    } else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+    } else if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	fputs("PANEL3\n", fp);
     }
     
@@ -1372,7 +1372,7 @@ int write_data (const char *fname, const int *list,
 
     strcpy(datfile, fname);
 
-    if (opt == GRETL_DATA_R && pdinfo->time_series == TIME_SERIES) {
+    if (opt == GRETL_DATA_R && pdinfo->structure == TIME_SERIES) {
 	opt = GRETL_DATA_R_ALT;
     }
 
@@ -1505,7 +1505,7 @@ int write_data (const char *fname, const int *list,
 	}
 	fputc('\n', fp);
     }
-    else if (opt == GRETL_DATA_R_ALT && pdinfo->time_series == TIME_SERIES) {
+    else if (opt == GRETL_DATA_R_ALT && pdinfo->structure == TIME_SERIES) {
 	/* new (October, 2003) attempt at improved R time-series structure */
 	char *p, datestr[OBSLEN];
 	int subper = 1;
@@ -1552,7 +1552,7 @@ int write_data (const char *fname, const int *list,
 		}
 	    }
 	    fputc(')', fp);
-	    if (pdinfo->time_series == TIME_SERIES) 
+	    if (pdinfo->structure == TIME_SERIES) 
 		fprintf(fp, ",\n.Tsp = c(%f, %f, %d), class = \"ts\"",
 			obs_float(pdinfo, 0), obs_float(pdinfo, 1), 
 			pdinfo->pd);
@@ -1581,7 +1581,7 @@ int write_data (const char *fname, const int *list,
 	/* PcGive: data file with load info */
 	for (i=1; i<=list[0]; i++) {
 	    fprintf(fp, ">%s ", pdinfo->varname[list[i]]);
-	    if (pdinfo->time_series == TIME_SERIES) {
+	    if (pdinfo->structure == TIME_SERIES) {
 		double ts = obs_float(pdinfo, 0);
 		double te = obs_float(pdinfo, 1);
 		int pd = pdinfo->pd;
@@ -1628,7 +1628,7 @@ static void dataset_type_string (char *str, const DATAINFO *pdinfo)
     } else if (dataset_is_panel(pdinfo)) {
         strcpy(str, _("panel"));
 	strcat(str, " (");
-	strcat(str, (pdinfo->time_series == STACKED_TIME_SERIES)? 
+	strcat(str, (pdinfo->structure == STACKED_TIME_SERIES)? 
 	       _("Stacked time series") : _("Stacked cross sections"));
 	strcat(str, ")");       
     } else {
@@ -2044,7 +2044,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 	   tmpdinfo->stobs, tmpdinfo->endobs);
 
     pputs(prn, I_("\nReading "));
-    pputs(prn, (tmpdinfo->time_series == TIME_SERIES) ? 
+    pputs(prn, (tmpdinfo->structure == TIME_SERIES) ? 
 	    I_("time-series") : _("cross-sectional"));
     pputs(prn, I_(" datafile"));
     if (strlen(datfile) > 40) {
@@ -2169,7 +2169,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
     }
 
     pdinfo->pd = guess_daily_pd(pdinfo);
-    pdinfo->time_series = TIME_SERIES;
+    pdinfo->structure = TIME_SERIES;
 
     if (!err) {
 	ed2 = get_epoch_day(pdinfo->S[pdinfo->n - 1]);
@@ -2223,7 +2223,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
     if (err) {
 	pdinfo->pd = oldpd;
 	pdinfo->sd0 = oldsd0;
-	pdinfo->time_series = 0;
+	pdinfo->structure = CROSS_SECTION;
     } else {
 	strcpy(pdinfo->stobs, pdinfo->S[0]);
 	strcpy(pdinfo->endobs, pdinfo->S[pdinfo->n - 1]);
@@ -2601,7 +2601,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err && addrows && !addcols) {
-	if (pdinfo->time_series && 
+	if (pdinfo->structure && 
 	    dateton(addinfo->stobs, pdinfo) != pdinfo->n) {
 	    merge_error(_("Starting point of new data does not fit\n"), prn);
 	    err = 1;
@@ -3324,7 +3324,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) { 
-        csvinfo->time_series = TIME_SERIES;
+        csvinfo->structure = TIME_SERIES;
     }
 
     /* If there were observation labels and they were not interpretable
@@ -3998,7 +3998,7 @@ static int write_xmldata (const char *fname, const int *list,
 
     free(xmlbuf);
 
-    switch (pdinfo->time_series) {
+    switch (pdinfo->structure) {
     case 0:
 	strcpy(type, "cross-section"); break;
     case TIME_SERIES:
@@ -4589,13 +4589,13 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	goto bailout;
     } else {
 	if (!strcmp(tmp, "cross-section")) 
-	    tmpdinfo->time_series = 0;
+	    tmpdinfo->structure = CROSS_SECTION;
 	else if (!strcmp(tmp, "time-series"))
-	    tmpdinfo->time_series = TIME_SERIES;
+	    tmpdinfo->structure = TIME_SERIES;
 	else if (!strcmp(tmp, "stacked-time-series"))
-	    tmpdinfo->time_series = STACKED_TIME_SERIES;
+	    tmpdinfo->structure = STACKED_TIME_SERIES;
 	else if (!strcmp(tmp, "stacked-cross-section"))
-	    tmpdinfo->time_series = STACKED_CROSS_SECTION;
+	    tmpdinfo->structure = STACKED_CROSS_SECTION;
 	else {
 	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
 	    free(tmp);

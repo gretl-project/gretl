@@ -644,7 +644,7 @@ static double get_lag_at_obs (int v, int tmp, int lag,
     }
 
     /* stacked X-section needs rather special handling */
-    if (genr->pdinfo->time_series == STACKED_CROSS_SECTION) {
+    if (genr->pdinfo->structure == STACKED_CROSS_SECTION) {
 	lt = t - lag * genr->pdinfo->pd;
 	if (lt >= 0 && lt < genr->pdinfo->n) {
 	    x = Z[v][lt];
@@ -663,7 +663,7 @@ static double get_lag_at_obs (int v, int tmp, int lag,
     }
 
     /* post-process missing panel values */
-    if (genr->pdinfo->time_series == STACKED_TIME_SERIES) {
+    if (genr->pdinfo->structure == STACKED_TIME_SERIES) {
 	char *p, obs[OBSLEN];
 	int j;
 
@@ -2933,7 +2933,7 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
     if (fn == T_DIFF || fn == T_LDIFF) {
 	for (t=t1+1; t<=t2; t++) {
 	    /* get "later" value */
-	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
+	    if (pdinfo->structure == STACKED_TIME_SERIES &&
 		panel_unit_first_obs(t, pdinfo)) {
 		x[t] = NADBL;
 		continue;
@@ -2941,7 +2941,7 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 	    xx = mvec[t];
 
 	    /* get "earlier" value */
-	    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	    if (pdinfo->structure == STACKED_CROSS_SECTION) {
 		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
 	    } else {
 		yy = mvec[t-1];
@@ -3378,7 +3378,7 @@ static double *get_model_series (const DATAINFO *pdinfo,
 
 static double get_tnum (const DATAINFO *pdinfo, int t)
 {
-    if (pdinfo->time_series && pdinfo->pd == 1) {
+    if (pdinfo->structure == TIME_SERIES && pdinfo->pd == 1) {
 	/* annual data: let 't' be the year */ 
 	return pdinfo->sd0 + t;
     } else {
@@ -3416,7 +3416,7 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 	}
     }
 
-    if (pdinfo->time_series == TIME_SERIES) {
+    if (pdinfo->structure == TIME_SERIES) {
 	t = dateton(test, pdinfo);
 	if (t >= 0) return t + 1;
     }
@@ -3588,7 +3588,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
     int newvnum, ndums, orig_v = pdinfo->v;
     double xx;
 
-    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+    if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	ndums = pdinfo->n / pdinfo->pd;
 	if (pdinfo->n % pdinfo->pd) {
 	    ndums++;
@@ -3616,11 +3616,11 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
     for (vi=1; vi<=ndums; vi++) {
 	int di = orig_v + vi - 1;
 
-	if (pdinfo->pd == 4 && pdinfo->time_series == TIME_SERIES) {
+	if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
 	    sprintf(vname, "dq%d", vi);
 	    sprintf(vlabel, 
 		    _("= 1 if quarter = %d, 0 otherwise"), vi);
-	} else if (pdinfo->pd == 12 && pdinfo->time_series == TIME_SERIES) {
+	} else if (pdinfo->pd == 12 && pdinfo->structure == TIME_SERIES) {
 	    char mname[8];
 
 	    get_month_name(mname, vi);
@@ -3646,7 +3646,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	strcpy(pdinfo->varname[di], vname);
 	strcpy(VARLABEL(pdinfo, di), vlabel);
 
-	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	    make_x_panel_dummy((*pZ)[di], pdinfo, vi);
 	} else {
 	    for (t=0; t<pdinfo->n; t++) {
@@ -3680,7 +3680,7 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
     int newvnum, offset, bad = 0;
     double xx;
 
-    xsect = (pdinfo->time_series == STACKED_CROSS_SECTION);
+    xsect = (pdinfo->structure == STACKED_CROSS_SECTION);
 
     /* in case xsect, block dummies are per time-period,
        frequency dummies are for units;
@@ -3830,7 +3830,7 @@ make_panel_time_var (double *x, const DATAINFO *pdinfo)
 {
     int t, xt = 0;
 
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+    if (pdinfo->structure == STACKED_TIME_SERIES) {
 	for (t=0; t<pdinfo->n; t++) {
 	    if (t % pdinfo->pd == 0) {
 		xt = 1;
@@ -3869,8 +3869,8 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
     }
     
     if (tm && 
-	(pdinfo->time_series == STACKED_TIME_SERIES ||
-	 pdinfo->time_series == STACKED_CROSS_SECTION)) {
+	(pdinfo->structure == STACKED_TIME_SERIES ||
+	 pdinfo->structure == STACKED_CROSS_SECTION)) {
 	make_panel_time_var((*pZ)[i], pdinfo);
     } else {
 	for (t=0; t<pdinfo->n; t++) {

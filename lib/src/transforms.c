@@ -158,7 +158,7 @@ static int get_lag (int v, int lag, double *lagvec,
 	lagvec[t] = NADBL;
     }
 
-    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+    if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	/* needs rather special handling */
 	for (t=t1; t<=pdinfo->t2; t++) { 
 	    lt = t - lag * pdinfo->pd;
@@ -187,7 +187,7 @@ static int get_lag (int v, int lag, double *lagvec,
     }
 
     /* post-process missing panel values */
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+    if (pdinfo->structure == STACKED_TIME_SERIES) {
 	char *p, obs[OBSLEN];
 	int j;
 
@@ -241,12 +241,12 @@ static int get_diff (int v, double *diffvec, int ci,
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
 
     for (t=t1; t<=pdinfo->t2; t++) {
-	if (pdinfo->time_series == STACKED_TIME_SERIES &&
+	if (pdinfo->structure == STACKED_TIME_SERIES &&
 	    panel_unit_first_obs(t, pdinfo)) {
 	    continue;
 	}
 	x0 = Z[v][t];
-	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	    x1 = (t - pdinfo->pd >= 0)? Z[v][t-pdinfo->pd] : NADBL;
 	} else {
 	    x1 = Z[v][t-1];

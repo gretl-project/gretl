@@ -1013,7 +1013,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	    fprintf(fq, "set x2label '%s'\n", I_("quarters"));
 	} else if (pdinfo->pd == 12) {
 	    fprintf(fq, "set x2label '%s'\n", I_("months"));
-	} else if (pdinfo->pd == 1 && pdinfo->time_series == TIME_SERIES) {
+	} else if (pdinfo->pd == 1 && pdinfo->structure == TIME_SERIES) {
 	    fprintf(fq, "set x2label '%s'\n", I_("years"));
 	} else {
 	    fprintf(fq, "set x2label '%s'\n", I_("periods"));

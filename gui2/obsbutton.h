@@ -83,7 +83,7 @@ struct _ObsButtonClass
 
 GType		obs_button_get_type	   (void) G_GNUC_CONST;
 
-GtkWidget*	obs_button_new		   (GtkAdjustment  *adjustment);
+GtkWidget*	obs_button_new		   (GtkAdjustment  *adjustment, const DATAINFO *pdinfo);
 
 gdouble		obs_button_get_value       (ObsButton  *obs_button);
 

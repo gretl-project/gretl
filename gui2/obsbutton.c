@@ -42,6 +42,8 @@ enum {
   PROP_VALUE
 };
 
+static const DATAINFO *obs_button_pdinfo;
+
 static void obs_button_class_init     (ObsButtonClass *klass);
 static void obs_button_editable_init  (GtkEditableClass   *iface);
 static void obs_button_init           (ObsButton      *obs_button);
@@ -410,7 +412,7 @@ obs_button_size_request (GtkWidget      *widget,
       
 	width = MIN_OBS_BUTTON_WIDTH;
 	max_string_len = OBSLEN;
-	string_len = strlen(datainfo->endobs) + 1;
+	string_len = strlen(obs_button_pdinfo->endobs) + 1;
 	w = PANGO_PIXELS (MIN (string_len, max_string_len) * digit_width);
 	width = MAX (width, w);
       
@@ -1044,7 +1046,8 @@ static gint
 obs_button_default_input (ObsButton *obs_button,
 			  gdouble       *new_val)
 {
-    *new_val = dateton(gtk_entry_get_text(GTK_ENTRY (obs_button)), datainfo);
+    *new_val = dateton(gtk_entry_get_text(GTK_ENTRY (obs_button)), 
+		       obs_button_pdinfo);
 
     if (*new_val < 0)
 	return GTK_INPUT_ERROR;
@@ -1060,7 +1063,7 @@ obs_button_default_output (ObsButton *obs_button)
     gchar buf[OBSLEN];
     gpointer data;
 
-    ntodate_full(buf, (int) obs_button->adjustment->value, datainfo);
+    ntodate_full(buf, (int) obs_button->adjustment->value, obs_button_pdinfo);
 
     if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (obs_button))))
 	gtk_entry_set_text (GTK_ENTRY (obs_button), buf);
@@ -1080,7 +1083,7 @@ obs_button_default_output (ObsButton *obs_button)
  ***********************************************************/
 
 GtkWidget *
-obs_button_new (GtkAdjustment *adjustment)
+obs_button_new (GtkAdjustment *adjustment, const DATAINFO *pdinfo)
 {
     ObsButton *spin;
 
@@ -1088,6 +1091,8 @@ obs_button_new (GtkAdjustment *adjustment)
 	g_return_val_if_fail (GTK_IS_ADJUSTMENT (adjustment), NULL);
 
     spin = g_object_new (GTK_TYPE_OBS_BUTTON, NULL);
+
+    obs_button_pdinfo = pdinfo;
 
     obs_button_set_adjustment (spin, adjustment);
     gtk_adjustment_value_changed (adjustment);

@@ -879,10 +879,10 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
     gchar *obsstr = NULL;
 
     if (pd_code == 0) {
-	datainfo->time_series = 0;
+	datainfo->structure = CROSS_SECTION;
 	datainfo->pd = 1;
     } else {
-	datainfo->time_series = TIME_SERIES;
+	datainfo->structure = TIME_SERIES;
 	datainfo->pd = pd_code;
     }
 

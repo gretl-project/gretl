@@ -690,7 +690,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	    /* undated */
 	    pdinfo->sd0 = 1.0;
 	}
-	pdinfo->time_series = TIME_SERIES;
+	pdinfo->structure = TIME_SERIES;
     } else {
 	int maj = 0, min = 0, dc = 0, pos;
 
@@ -743,20 +743,20 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     } 
 
     if (opt == OPT_S) {
-	pdinfo->time_series = STACKED_TIME_SERIES;
+	pdinfo->structure = STACKED_TIME_SERIES;
     } else if (opt == OPT_C) {
-	pdinfo->time_series = STACKED_CROSS_SECTION;
+	pdinfo->structure = STACKED_CROSS_SECTION;
     } else if (pdinfo->sd0 >= 1.0) {
-        pdinfo->time_series = TIME_SERIES; /* but might be panel? */
+        pdinfo->structure = TIME_SERIES; /* but might be panel? */
     } else {
-	pdinfo->time_series = 0;
+	pdinfo->structure = CROSS_SECTION;
     }
 
     /* try to catch panels with frequency 5, 6 or 7 */
     if ((pdinfo->pd >= 5 && pdinfo->pd <= 7) &&
 	pdinfo->sd0 > 1.0 && pdinfo->sd0 < 2.0 &&
 	opt != OPT_S && opt != OPT_C) {
-	pdinfo->time_series = 0;
+	pdinfo->structure = CROSS_SECTION;
     }
 
     ntodate_full(pdinfo->stobs, 0, pdinfo); 
@@ -2069,10 +2069,10 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 	panel = 0; /* can't guess */
     } else {
 	if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
-	    pdinfo->time_series = STACKED_CROSS_SECTION; 
+	    pdinfo->structure = STACKED_CROSS_SECTION; 
 	    panel = STACKED_CROSS_SECTION;
 	} else {
-	    pdinfo->time_series = STACKED_TIME_SERIES; 
+	    pdinfo->structure = STACKED_TIME_SERIES; 
 	    panel = STACKED_TIME_SERIES;
 	}
     }
@@ -2089,10 +2089,10 @@ int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 {
     int err = 0;
 
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+    if (pdinfo->structure == STACKED_TIME_SERIES) {
         *nunits = pdinfo->n / pdinfo->pd;
         *T = pdinfo->pd;
-    } else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+    } else if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	*nunits = pdinfo->pd;
 	*T = pdinfo->n / pdinfo->pd;
     } else {
@@ -2107,7 +2107,7 @@ int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 {
     int nunits, T;
-    int old_ts = pdinfo->time_series;
+    int old_ts = pdinfo->structure;
 
     if (pdinfo->pd == 1) {
 	pputs(prn, _("The current data frequency, 1, is not "
@@ -2117,18 +2117,18 @@ int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
     }
 
     if (opt == OPT_C) {
-	pdinfo->time_series = STACKED_CROSS_SECTION;
+	pdinfo->structure = STACKED_CROSS_SECTION;
     } else {
-	pdinfo->time_series = STACKED_TIME_SERIES;
+	pdinfo->structure = STACKED_TIME_SERIES;
     }
 
     if (get_panel_structure(pdinfo, &nunits, &T)) {
 	pputs(prn, _("Failed to set panel structure\n"));
-	pdinfo->time_series = old_ts;
+	pdinfo->structure = old_ts;
 	return 1;
     } else {
 	pprintf(prn, _("Panel structure set to %s\n"),
-		(pdinfo->time_series == STACKED_CROSS_SECTION)? 
+		(pdinfo->structure == STACKED_CROSS_SECTION)? 
 		_("stacked cross sections") : _("stacked time series"));
 	pprintf(prn, _("(%d units observed in each of %d periods)\n"),
 		nunits, T);

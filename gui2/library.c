@@ -3022,8 +3022,8 @@ void add_dummies (gpointer data, guint u, GtkWidget *widget)
     clear(line, MAXLEN);
 
     if (u > 0) {
-	if (datainfo->time_series == STACKED_TIME_SERIES ||
-	    datainfo->time_series == STACKED_CROSS_SECTION) {
+	if (datainfo->structure == STACKED_TIME_SERIES ||
+	    datainfo->structure == STACKED_CROSS_SECTION) {
 	    if (u == 1) {
 		sprintf(line, "genr unitdum");
 	    } else {

@@ -38,7 +38,7 @@ static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
 {
     if (*s == '"' || *s == '\'') s++;
     newinfo->pd = pd;
-    newinfo->time_series = TIME_SERIES;
+    newinfo->structure = TIME_SERIES;
 
     strcpy(newinfo->stobs, s);
     colonize_obs(newinfo->stobs);

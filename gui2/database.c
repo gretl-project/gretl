@@ -66,7 +66,7 @@ enum db_data_actions {
 static void set_time_series (DATAINFO *pdinfo)
 {
     if (pdinfo->pd != 1 || strcmp(pdinfo->stobs, "1")) { 
-	pdinfo->time_series = TIME_SERIES;
+	pdinfo->structure = TIME_SERIES;
     }
 }
 
@@ -188,7 +188,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     int err, lines[1], list[3];
     char pd[7];
 
-    if (dbdinfo->time_series == 0) { /* undated */
+    if (dbdinfo->structure == CROSS_SECTION) {
 	list[0] = 1; list[1] = 1;
 	err = boxplots(list, NULL, dbZ, dbdinfo, 0);
 	if (err) {

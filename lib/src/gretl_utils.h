@@ -35,7 +35,8 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains time series
  * data (1) or not (0).
  */
-#define dataset_is_time_series(p) ((p)->time_series == TIME_SERIES)
+#define dataset_is_time_series(p) ((p)->structure == TIME_SERIES || \
+                                   (p)->structure == TIME_SERIES_SPECIAL)
 
 /**
  * dataset_is_daily:
@@ -44,7 +45,7 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains daily time series
  * data (1) or not (0).
  */
-#define dataset_is_daily(p) (p->time_series == TIME_SERIES \
+#define dataset_is_daily(p) (p->structure == TIME_SERIES \
                              && (p->pd == 5 || p->pd == 6 || p->pd == 7))
 
 /**
@@ -54,7 +55,7 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains weekly time series
  * data (1) or not (0).
  */
-#define dataset_is_weekly(p) (p->time_series == TIME_SERIES \
+#define dataset_is_weekly(p) (p->structure == TIME_SERIES \
                               && p->pd == 52)
 
 /**
@@ -64,7 +65,7 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains hourly time series
  * data (1) or not (0).
  */
-#define dataset_is_hourly(p) (p->time_series == TIME_SERIES \
+#define dataset_is_hourly(p) (p->structure == TIME_SERIES \
                               && p->pd == 24)
 
 /**
@@ -74,7 +75,7 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains dated daily time series
  * data (1) or not (0).
  */
-#define dated_daily_data(p) (p->time_series == TIME_SERIES \
+#define dated_daily_data(p) (p->structure == TIME_SERIES \
                              && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
                              && p->sd0 > 10000.0)
 
@@ -85,7 +86,7 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains dated daily 
  * (seven-day) time series data (1) or not (0).
  */
-#define dated_seven_day_data(p) (p->time_series == TIME_SERIES \
+#define dated_seven_day_data(p) (p->structure == TIME_SERIES \
                                  && p->pd == 7 && \
                                  p->sd0 > 10000.0)
 
@@ -96,8 +97,8 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains panel
  * data (1) or not (0).
  */
-#define dataset_is_panel(p) ((p)->time_series == STACKED_TIME_SERIES \
-                            || (p)->time_series == STACKED_CROSS_SECTION)
+#define dataset_is_panel(p) ((p)->structure == STACKED_TIME_SERIES || \
+                             (p)->structure == STACKED_CROSS_SECTION)
 
 #include <float.h>
 

@@ -105,10 +105,11 @@ enum gretl_print_formats {
 };
 
 enum ts_codes {
-    TIME_SERIES = 1,
+    CROSS_SECTION,
+    TIME_SERIES,
     STACKED_TIME_SERIES,
     STACKED_CROSS_SECTION,
-    STRUCTURE_UNKNOWN,
+    TIME_SERIES_SPECIAL
 };
 
 enum auto_genr {
@@ -200,6 +201,7 @@ struct DATAINFO_ {
     int v;              /* number of variables */
     int n;              /* number of observations */
     int pd;             /* periodicity or frequency of data */
+    int structure;      /* time series, cross section or whatever */
     double sd0;         /* float representation of stobs */
     int t1, t2;         /* start and end of current sample */
     char stobs[OBSLEN];  /* string representation of starting obs (date) */
@@ -209,8 +211,6 @@ struct DATAINFO_ {
     char markers;       /* whether (1) or not (0) the data file has
 			   observation markers */
     char delim;         /* default delimiter for "CSV" files */
-    char time_series;   /* bit field to record time-series/panel nature
-			   of the data set */
     char decpoint;      /* character used to represent decimal point */
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */

@@ -694,7 +694,7 @@ static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
     targ->t1 = src->t1;
     targ->t2 = src->t2;
     targ->pd = src->pd;
-    targ->time_series = src->time_series;
+    targ->structure = src->structure;
 }
 
 static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,

@@ -47,7 +47,7 @@ struct {
 static void 
 panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
 {
-    panel_idx.ts = (pdinfo->time_series == STACKED_TIME_SERIES);
+    panel_idx.ts = (pdinfo->structure == STACKED_TIME_SERIES);
     panel_idx.n = nunits;
     panel_idx.T = T;
 }
@@ -515,7 +515,7 @@ static int random_effects (const MODEL *pmod,
 	    }
 	    for (t=0; t<T; t++) {
 		bigt = panel_index(i, t);
-		if (pdinfo->time_series == STACKED_TIME_SERIES) {
+		if (pdinfo->structure == STACKED_TIME_SERIES) {
 		    rt = u * T + t;
 		} else {
 		    rt = t * effn + u;
@@ -709,7 +709,7 @@ int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
 	return -1;
     }
 
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+    if (pdinfo->structure == STACKED_TIME_SERIES) {
 	nunits = nmaj;
 	T = nmin;
     } else {
@@ -1262,7 +1262,7 @@ static void make_reduced_data_info (DATAINFO *targ, DATAINFO *src, int order)
     targ->pd = src->pd - order;
     ntodate(targ->stobs, src->t1 + order, src);
     targ->sd0 = obs_str_to_double(targ->stobs); 
-    targ->time_series = src->time_series;
+    targ->structure = src->structure;
 }
 
 static void panel_lag (double **tmpZ, DATAINFO *tmpinfo, 
@@ -1306,7 +1306,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     if (order > pdinfo->pd - 1) return E_DF;
     if (pmod->ncoeff + order >= sn) return E_DF;
 
-    if (pdinfo->time_series != STACKED_TIME_SERIES ||
+    if (pdinfo->structure != STACKED_TIME_SERIES ||
 	!balanced_panel(pdinfo)) { 
         return E_DATA;
     }
@@ -1503,7 +1503,7 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
     }
 
     /* change the datainfo setup */
-    pdinfo->time_series = STACKED_TIME_SERIES;
+    pdinfo->structure = STACKED_TIME_SERIES;
     pdinfo->pd = nperiods;
 
     pdinfo->sd0 = 1.0;

@@ -299,7 +299,7 @@ static void sample_replace_buttons (GtkWidget *box, gpointer data)
     gtk_widget_show(tmp);
 }
 
-/* ........................................................... */
+/* Various buttons, usable in several sorts of dialogs */
 
 static void context_help_button (GtkWidget *box, int cmdcode)
 {
@@ -1891,7 +1891,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	adj = gtk_adjustment_new(datainfo->t1, 
 				 0, datainfo->n - 1,
 				 1, 1, 1);
-	rset->startspin = obs_button_new(GTK_ADJUSTMENT(adj));
+	rset->startspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -1902,7 +1902,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	adj = gtk_adjustment_new(datainfo->t2, 
 				 0, datainfo->n - 1, 
 				 1, 1, 1);
-	rset->endspin = obs_button_new(GTK_ADJUSTMENT(adj));
+	rset->endspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
@@ -2191,7 +2191,7 @@ static void really_set_panel_code (GtkWidget *w, dialog_t *d)
 {
     DATAINFO *pdinfo = (DATAINFO *) d->data;
 
-    pdinfo->time_series = d->code;
+    pdinfo->structure = d->code;
     set_sample_label(pdinfo);
     d->data = NULL;
 }
@@ -2222,7 +2222,7 @@ void panel_structure_dialog (DATAINFO *pdinfo)
     GSList *group;
 
     d = dialog_data_new(pdinfo, (dataset_is_panel(pdinfo))?
-			pdinfo->time_series : STACKED_TIME_SERIES,
+			pdinfo->structure : STACKED_TIME_SERIES,
 			_("gretl: panel structure"));
     if (d == NULL) {
 	return;
@@ -3107,25 +3107,46 @@ GtkWidget *standard_button (int code)
 
 #endif
 
-#undef DATAWIZ
+/* --------------  Dataset structure "wizard" ---------------- */
 
-#ifdef DATAWIZ /* not ready yet */
+#define DWDEBUG 1
 
 struct datatmp {
     int pd;
-    double sd0;
     char stobs[OBSLEN];
     char endobs[OBSLEN];
-    char markers;
-    int time_series;
+    int structure;
 } dtmp;
 
 enum {
-    DATAWIZ_SET_TYPE,
-    DATAWIZ_TIME_SERIES_INFO,
-    DATAWIZ_PANEL_INFO,
-    DATAWIZ_CONFIRM
+    DW_SET_TYPE,
+    DW_TS_FREQUENCY,
+    DW_WEEK_DAYS,
+    DW_STARTING_OBS,
+    DW_PANEL_MODE,
+    DW_PANEL_SIZE,
+    DW_CONFIRM,
+    DW_DONE
 };
+
+static const char *wizcode_string (int code)
+{
+    const char *titles[] = {
+	N_("Structure of dataset"),
+	N_("Time series frequency"),
+	N_("Days in week"),
+	N_("Starting observation"),
+	N_("Panel data organization"),
+	N_("Number of cross-sectional units"),
+	N_("Confirm dataset structure")
+    };
+
+    if (code <= DW_CONFIRM) {
+	return titles[code];
+    } else {
+	return "";
+    }
+}
 
 enum {
     DW_FORWARD = 0,
@@ -3136,41 +3157,24 @@ enum {
 static void datatmp_init (void)
 {
     dtmp.pd = datainfo->pd;
-    dtmp.sd0 = datainfo->sd0;
 
     strcpy(dtmp.stobs, datainfo->stobs);
     strcpy(dtmp.endobs, datainfo->endobs);
 
-    dtmp.markers = datainfo->markers;
-    dtmp.time_series = datainfo->time_series;
+    dtmp.structure = datainfo->structure;
 }
 
 static void 
-datatmp_transcribe (DATAINFO *pdinfo)
+datawiz_make_changes (void)
 {
-    pdinfo->pd = dtmp.pd;
-    pdinfo->sd0 = dtmp.sd0;
-
-    strcpy(pdinfo->stobs, dtmp.stobs);
-    strcpy(pdinfo->endobs, dtmp.endobs);
-
-    pdinfo->markers = dtmp.markers; /* FIXME */
-    pdinfo->time_series = dtmp.time_series;
-}
-
-static const char *title_from_wizcode (int code)
-{
-    const char *titles[] = {
-	N_("Dataset structure"),
-	N_("Time series information"),
-	N_("Panel data information"),
-	N_("Confirm changes")
-    };
-
-    if (code <= DATAWIZ_CONFIRM) {
-	return titles[code];
+    if (dtmp.structure == datainfo->structure &&
+	dtmp.pd == datainfo->pd &&
+	strcmp(dtmp.stobs, datainfo->stobs) == 0) {
+	infobox("No changes were made");
     } else {
-	return "";
+	fprintf(stderr, "New data structure: pd=%d, structure=%d,"
+		"starting obs = '%s'\n", dtmp.pd, dtmp.structure,
+		dtmp.stobs);
     }
 }
 
@@ -3185,40 +3189,40 @@ struct freq_info ts_info[] = {
     { 12, N_("Monthly") },
     { 52, N_("Weekly") },
     {  5, N_("Daily") },
-    {  6, N_("Daily") },
-    {  7, N_("Daily") },
     { 24, N_("Hourly") },
-    {  0, N_("Special") },
+    {  0, N_("Other") },
 };
 
-struct pan_info {
+struct panel_info {
     int code;
     const char *label;
-}
+};
 
-struct pan_info panel_info[] = {
+struct panel_info pan_info[] = {
     { STACKED_TIME_SERIES,   N_("Stacked time series") },
     { STACKED_CROSS_SECTION, N_("Stacked cross sections") }
 };
 
 static int radio_default (int code)
 {
-    if (code == DATAWIZ_SET_TYPE) {
-	return dtmp.time_series;
-    } else if (code == DATAWIZ_TIME_SERIES_INFO) {
-	return dtmp.pd;
-    } else if (code == DATAWIZ_PANEL_INFO) { 
-	return dtmp.time_series;
+    if (code == DW_SET_TYPE) {
+	return dtmp.structure;
+    } else if (code == DW_TS_FREQUENCY) {
+	return (dtmp.pd == 6 || dtmp.pd == 7)? 5 : dtmp.pd;
+    } else if (code == DW_WEEK_DAYS) {
+	return dtmp.pd; 
+    } else if (code == DW_PANEL_MODE) { 
+	return dtmp.structure;
     }
 
     return 0;
 }
 
-static const char *datawiz_pd_to_str (int pd)
+static const char *datawiz_pd_str (int pd)
 {
     int i;
 
-    for (i=0; i<9; i++) {
+    for (i=0; i<7; i++) {
 	if (pd == ts_info[i].pd) {
 	    return ts_info[i].label;
 	}
@@ -3226,13 +3230,13 @@ static const char *datawiz_pd_to_str (int pd)
     return "";
 }
 
-static const char *datawiz_pantype_to_str (int code)
+static const char *datawiz_pantype_str (int code)
 {
     int i;
 
     for (i=0; i<2; i++) {
-	if (code == panel_info[i].code) {
-	    return panel_info[i].label;
+	if (code == pan_info[i].code) {
+	    return pan_info[i].label;
 	}
     }
     return "";
@@ -3240,32 +3244,33 @@ static const char *datawiz_pantype_to_str (int code)
 
 static int datawiz_i_to_pd (int i)
 {
-    if (i < 9) {
-	return ts_info[i].pd;
-    } else {
-	return 0;
-    }
+    return (i < 7)? ts_info[i].pd : 0;
+}
+
+static int datawiz_i_to_daily_pd (int i)
+{
+    return i + 5;
 }
 
 static int datawiz_i_to_panel (int i)
 {
-    if (i < 2) {
-	return panel_info[i].code;
-    } else {
-	return 0;
-    }
+    return (i < 2)? pan_info[i].code : 0;
 } 
 
 static const char *datawiz_radio_strings (int wizcode, int i)
 {
-    if (wizcode == DATAWIZ_SET_TYPE) {
+    if (wizcode == DW_SET_TYPE) {
 	if (i == 0) return N_("Cross-sectional");
 	if (i == 1) return N_("Time series");
 	if (i == 2) return N_("Panel");
-    } else if (wizcode == DATAWIZ_TIME_SERIES_INFO) {
-	return datawiz_pd_to_str(i);
-    } else if (wizcode == DATAWIZ_PANEL_INFO) {  
-	return datawiz_pantype_to_str(i);
+    } else if (wizcode == DW_TS_FREQUENCY) {
+	return datawiz_pd_str(i);
+    } else if (wizcode == DW_WEEK_DAYS) {
+	if (i == 5) return N_("5 days in week");
+	if (i == 6) return N_("6 days in week");
+	if (i == 7) return N_("7 days in week");
+    } else if (wizcode == DW_PANEL_MODE) {  
+	return datawiz_pantype_str(i);
     }
 
     return "";
@@ -3274,6 +3279,12 @@ static const char *datawiz_radio_strings (int wizcode, int i)
 static void datawiz_set_radio_opt (GtkWidget *w, int *setvar)
 {
     int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+
+#if DWDEBUG
+    fprintf(stderr, "  dw_set_radio_opt: var = %s, setting val = %d\n",
+	    (setvar == &dtmp.pd)? "dtmp.pd" : "dtmp.structure",
+	    val);
+#endif
     
     *setvar = val;
 }
@@ -3283,50 +3294,160 @@ static void set_back_code (GtkWidget *w, int *ret)
     *ret = DW_BACK;
 }
 
-static int datawiz_dialog (int code)
+#if DWDEBUG
+static const char *step_string (int step)
+{
+    if (step == DW_SET_TYPE) return "DW_SET_TYPE";
+    if (step == DW_TS_FREQUENCY) return "DW_TS_FREQUENCY";
+    if (step == DW_WEEK_DAYS) return "DW_WEEK_DAYS";
+    if (step == DW_STARTING_OBS) return "DW_STARTING_OBS";
+    if (step == DW_PANEL_MODE) return "DW_PANEL_MODE";
+    if (step == DW_PANEL_SIZE) return "DW_PANEL_SIZE";
+    if (step == DW_CONFIRM) return "DW_CONFIRM";
+    if (step == DW_DONE) return "DW_DONE";    
+    return "MISSING";
+}
+#endif
+
+struct ts_pd {
+    int pd;
+    const char *label;
+};
+
+static void confirmation_text (char *ctxt)
+{
+    struct ts_pd ok_pd[] = {
+	{  1, N_("annual data") },
+	{  4, N_("quarterly data") },
+	{ 12, N_("monthly data") },
+	{ 52, N_("weekly data") },
+	{  5, N_("daily data") },
+	{  6, N_("daily data") },
+	{  7, N_("daily data") },
+	{ 24, N_("hourly data") },
+	{  0, N_("time-series data") }
+    };
+
+    if (dtmp.structure == CROSS_SECTION) {
+	sprintf(ctxt, "cross-sectional data, observations 1 to %d\n",
+		datainfo->n);
+    } else if (dtmp.structure == TIME_SERIES) {
+	const char *tslabel = NULL;
+	int i;
+
+	for (i=0; ok_pd[i].pd != 0; i++) { 
+	    if (dtmp.pd == ok_pd[i].pd) {
+		tslabel = ok_pd[i].label;
+		break;
+	    }
+	} 
+	if (tslabel == NULL) {
+	    tslabel = N_("time-series data");
+	}
+	sprintf(ctxt, "%s\nobservations 1 to %d\n", tslabel,
+		datainfo->n);
+    } else if (dtmp.structure == STACKED_TIME_SERIES) {
+	sprintf(ctxt, "panel data (stacked time series)\nobservations 1 to %d\n",
+		datainfo->n);
+    } else if (dtmp.structure == STACKED_CROSS_SECTION) {
+	sprintf(ctxt, "panel data (stacked cross sections)\nobservations 1 to %d\n",
+		datainfo->n);
+    } else if (dtmp.structure == TIME_SERIES_SPECIAL) {
+	sprintf(ctxt, "time-series data\nobservations 1 to %d\n",
+		datainfo->n);
+    }	
+}
+
+static GtkWidget *dwiz_stobs_spinner (GtkWidget *dialog)
+{
+    GtkObject *adj;
+    GtkWidget *hbox;
+    GtkWidget *label;
+    GtkWidget *startspin;
+
+    hbox = gtk_hbox_new(TRUE, 5);
+
+    label = gtk_label_new(_("Starting observation:"));
+    gtk_widget_show(label);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+
+    adj = gtk_adjustment_new(datainfo->t1, 
+			     0, datainfo->n - 1,
+			     1, 1, 1);
+    startspin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
+    gtk_box_pack_start(GTK_BOX(hbox), startspin, FALSE, FALSE, 0);
+    gtk_widget_show(startspin);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, 
+		       FALSE, FALSE, 5);
+    gtk_widget_show(hbox);
+
+    return startspin;
+}
+
+static int datawiz_dialog (int step, DATAINFO *dwinfo)
 {
     GtkWidget *dialog;
     GtkWidget *tempwid;
     GtkWidget *button = NULL;
     GSList *group = NULL;
     int nopts = 0;
-    int deflt = radio_default(code);
+    int deflt = radio_default(step);
     int setval = 0;
-    int *setvar = NULL;
+    int *setint = NULL;
     int i, ret = DW_FORWARD;
 
-    if (code == DATAWIZ_CONFIRM) {
-	return DW_CANCEL; /* fixme */
-    }
+#if DWDEBUG
+    fprintf(stderr, "\n** datawiz_dlg: step=%s, pd=%d, structure=%d, deflt=%d\n",
+	    step_string(step), dtmp.pd, dtmp.structure, deflt);
+#endif
 
-    dialog = simple_dialog_new(_(title_from_wizcode(code)));
+    dialog = simple_dialog_new(_("Data structure wizard"));
 
     no_resize(dialog);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(dialog_unblock), NULL);
 
-    if (code == DATAWIZ_SET_TYPE) {
+    if (step == DW_SET_TYPE) {
 	nopts = 3;
-	setvar = &dtmp.time_series;
-    } else if (code == DATAWIZ_TIME_SERIES_INFO) {
-	nopts = 9;
-	setvar = &dtmp.pd;
-    } else if (code == DATAWIZ_PANEL_INFO) {
+	setint = &dtmp.structure;
+    } else if (step == DW_TS_FREQUENCY) {
+	nopts = 7;
+	setint = &dtmp.pd;
+    } else if (step == DW_WEEK_DAYS) {
+	nopts = 3;
+	setint = &dtmp.pd;
+    } else if (step == DW_PANEL_MODE) {
 	nopts = 2;
-	setvar = &dtmp.time_series;
-    }
+	setint = &dtmp.structure;
+    } else if (step == DW_PANEL_SIZE) {
+	setint = &dtmp.pd;
+    } 
+
+    /* top label */
+    tempwid = gtk_label_new(_(wizcode_string(step)));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       tempwid, TRUE, TRUE, 0);
+    gtk_widget_show(tempwid);
 
     /* radio options? */
     for (i=0; i<nopts; i++) {
 
-	if (code == DATAWIZ_TIME_SERIES_INFO) {
+	if (step == DW_TS_FREQUENCY) {
 	    setval = datawiz_i_to_pd(i);
-	} else if (code == DATAWIZ_PANEL_INFO) {
+	} else if (step == DW_WEEK_DAYS) {
+	    setval = datawiz_i_to_daily_pd(i);
+	} else if (step == DW_PANEL_MODE) {
 	    setval = datawiz_i_to_panel(i);
 	} else {
 	    setval = i;
 	}
+
+#if DWDEBUG
+	fprintf(stderr, " making button: i=%d, setval=%d, deflt=%d\n",
+		i, setval, deflt);
+#endif
 
 	if (button != NULL) {
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
@@ -3335,36 +3456,60 @@ static int datawiz_dialog (int code)
 	}
 
 	button = gtk_radio_button_new_with_label(group, 
-						 _(datawiz_radio_strings(code, setval)));
-	gtk_box_pack_start(GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+						 _(datawiz_radio_strings(step, setval)));
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   button, TRUE, TRUE, 0);
+
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(datawiz_set_radio_opt), setint);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(setval));
 
 	if (deflt == setval) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	} 
 
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(datawiz_set_radio_opt), setvar);
-	g_object_set_data(G_OBJECT(button), "action", 
-			  GINT_TO_POINTER(setval));
-
 	gtk_widget_show(button);
     }
 
+    /* starting observation selection? */
+    if (step == DW_STARTING_OBS) {
+	dwiz_stobs_spinner(dialog);
+    }
+
+    /* panel size selection? */
+    if (step == DW_PANEL_SIZE) {
+	tempwid = gtk_label_new("panel size selection goes here");
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   tempwid, TRUE, TRUE, 0);
+	gtk_widget_show(tempwid);
+    }
+
+    /* confirming? */
+    if (step == DW_CONFIRM) {
+	char ctxt[256];
+
+	confirmation_text(ctxt);
+	tempwid = gtk_label_new(ctxt);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   tempwid, TRUE, TRUE, 0);
+	gtk_widget_show(tempwid);
+    }    
+
     /* Create a "Back" button? */
-    if (code > DATAWIZ_SET_TYPE) {
+    if (step > DW_SET_TYPE) {
 	tempwid = back_button(GTK_DIALOG(dialog)->action_area);
-	g_signal_connect(G_OBJECT(tempwid), "clicked", 
-			 G_CALLBACK(delete_widget), 
-			 dialog);
 	g_signal_connect(G_OBJECT(tempwid), "clicked", 
 			 G_CALLBACK(set_back_code), 
 			 &ret);
+	g_signal_connect(G_OBJECT(tempwid), "clicked", 
+			 G_CALLBACK(delete_widget), 
+			 dialog);
 	gtk_widget_show(tempwid);  
     }  
 
     /* Create the "Next" or "OK" button */
-    if (code == DATAWIZ_CONFIRM) {
+    if (step == DW_CONFIRM) {
 	tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
     } else {
 	tempwid = next_button(GTK_DIALOG(dialog)->action_area);
@@ -3380,10 +3525,21 @@ static int datawiz_dialog (int code)
 
     gtk_widget_show(dialog);
 
+    gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+
     gtk_main();
 
     return ret;
 }
+
+#if DWDEBUG
+static const char *ret_string (int ret)
+{
+    if (ret == DW_CANCEL) return "DW_CANCEL";
+    if (ret == DW_FORWARD) return "DW_FORWARD";
+    if (ret == DW_BACK) return "DW_BACK";
+}
+#endif
 
 /* take the user through a series of dialogs, to define the
    structure of the data set
@@ -3391,34 +3547,92 @@ static int datawiz_dialog (int code)
 
 void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 {
+    DATAINFO *dwinfo;
+    int step = DW_SET_TYPE;
     int ret;
+
+    dwinfo = datainfo_new();
+    if (dwinfo == NULL) {
+	/* error message needed */
+	return;
+    }
 
     /* copy current relevant info */
     datatmp_init();
 
-    /* step 1: show choice of structures */
-    ret = datawiz_dialog(DATAWIZ_SET_TYPE);
-    if (ret == DW_CANCEL) {
-	return;
+    while (step != DW_DONE) {
+
+	ret = datawiz_dialog(step, dwinfo);
+
+#if DWDEBUG
+	fprintf(stderr, "wizard: got ret = %s\n", ret_string(ret));
+#endif
+
+	switch (ret) {
+
+	case DW_CANCEL:
+	    step = DW_DONE;
+	    break;
+
+	case DW_FORWARD:
+	    if (step == DW_CONFIRM) {
+		step = DW_DONE;
+	    } else if (step == DW_SET_TYPE) {
+		if (dtmp.structure == TIME_SERIES) {
+		    step = DW_TS_FREQUENCY;
+		} else if (dtmp.structure == STACKED_TIME_SERIES ||
+			   dtmp.structure == STACKED_CROSS_SECTION) {
+		    step = DW_PANEL_MODE;
+		} else {
+		    step = DW_CONFIRM;
+		}		
+	    } else if (step == DW_TS_FREQUENCY) {
+		if (dtmp.pd == 5 || dtmp.pd == 6 || dtmp.pd == 7) {
+		    step = DW_WEEK_DAYS;
+		} else {
+		    step = DW_STARTING_OBS;
+		}
+	    } else if (step == DW_WEEK_DAYS) {
+		step = DW_STARTING_OBS;
+	    } else if (step == DW_PANEL_MODE) {
+		step = DW_PANEL_SIZE;
+	    } else if (step == DW_STARTING_OBS || step == DW_PANEL_SIZE) {
+		step = DW_CONFIRM;
+	    } 
+	    break;
+
+	case DW_BACK:
+	    if (step == DW_TS_FREQUENCY || step == DW_PANEL_MODE) {
+		step = DW_SET_TYPE;
+	    } else if (step == DW_STARTING_OBS) {
+		if (dtmp.pd == 5 || dtmp.pd == 6 || dtmp.pd == 7) {
+		    step = DW_WEEK_DAYS;
+		} else {
+		    step = DW_TS_FREQUENCY;
+		}
+	    } else if (step == DW_WEEK_DAYS) {
+		step = DW_TS_FREQUENCY;
+	    } else if (step == DW_PANEL_SIZE) {
+		step = DW_PANEL_MODE;
+	    } else if (step == DW_CONFIRM) {
+		if (dtmp.structure == TIME_SERIES) {
+		    step = DW_STARTING_OBS;
+		} else if (dtmp.structure == STACKED_TIME_SERIES ||
+			   dtmp.structure == STACKED_CROSS_SECTION) {
+		    step = DW_PANEL_SIZE;
+		} else {
+		    step = DW_SET_TYPE;
+		}
+	    }
+	    break;
+
+	}
+    }
+    
+    if (ret != DW_CANCEL) {
+	datawiz_make_changes();
     }
 
-    /* step 2: fix details (not needed for cross-section) */
-    if (dtmp.time_series == TIME_SERIES) {
-	ret = datawiz_dialog(DATAWIZ_TIME_SERIES_INFO);
-    } else if (dtmp.time_series == STRUCTURE_UNKNOWN) {
-	ret = datawiz_dialog(DATAWIZ_PANEL_INFO);
-    }
-    if (ret == DW_CANCEL) {
-	return;
-    }
-
-    /* step 3: confirm changes */
-    ret = datawiz_dialog(DATAWIZ_CONFIRM);
-    if (ret == DW_CANCEL) {
-	return;
-    }
-
-    /* FIXME: actually make the changes */
+    free(dwinfo);
 }
 
-#endif /* DATAWIZ (not ready yet) */

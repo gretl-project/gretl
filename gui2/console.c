@@ -202,14 +202,13 @@ static int console_sample (const DATAINFO *pdinfo, int code)
 	pd = pdinfo->pd;
 	t1 = pdinfo->t1;
 	t2 = pdinfo->t2;
-	ts = pdinfo->time_series;
+	ts = pdinfo->structure;
 	sd0 = pdinfo->sd0;
-    }
-    else if (code == SAMPLE_CHECK) {
+    } else if (code == SAMPLE_CHECK) {
 	if (pdinfo->pd != pd ||
 	    pdinfo->t1 != t1 ||
 	    pdinfo->t2 != t2 ||
-	    pdinfo->time_series != ts ||
+	    pdinfo->structure != ts ||
 	    pdinfo->sd0 != sd0) {
 	    ret = 1;
 	}
