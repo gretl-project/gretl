@@ -1,0 +1,6 @@
+#!/bin/sh
+
+VERSION=$(cat ../lib/src/version.h | grep version_ | \
+	awk '{ print $NF}' | sed s/[\"\;]//g)
+
+cat pottop | sed s/VERSION/$VERSION/ >gretl.pot
