@@ -21,7 +21,7 @@
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
 
-#define FDEBUG 1
+#define FDEBUG 0
 
 typedef struct fiml_system_ fiml_system;
 
@@ -222,8 +222,6 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
 	gretl_matrix_zero_lower(fsys->psi);
     }
 
-    /* I've checked, and psi * psi-transpose does equal sigma-inverse */
-
 #if FDEBUG
     gretl_matrix_print(fsys->psi, "fiml Psi-transpose", NULL);
 #endif
@@ -340,7 +338,7 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
 
 #if FDEBUG
 
-/* check: initially set residual matrix based on 3SLS */
+/* check: set initial residual matrix based on 3SLS */
 
 static void fiml_uhat_init (fiml_system *fsys)
 {
@@ -358,8 +356,9 @@ static void fiml_uhat_init (fiml_system *fsys)
     gretl_matrix_print(fsys->uhat, "uhat from 3SLS", NULL);
 }
 
-/* check: initialize coefficients from "known" MLE:
-   see http://www.stanford.edu/~clint/bench/kleinfm2.tsp
+/* test for loglikelihood and gradient calculations: initialize
+   coefficients from "known" MLE: see
+   http://www.stanford.edu/~clint/bench/kleinfm2.tsp
 */
 
 static void klein_MLE_init (fiml_system *fsys)
@@ -572,7 +571,7 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 	return 1;
     }
 
-    /* Davison and MacKinnon, ETM, equation (12.80) */
+    /* Davidson and MacKinnon, ETM, equation (12.80) */
 
     fsys->ll -= (fsys->gn / 2.0) * LN_2_PI;
     fsys->ll -= (fsys->n / 2.0) * log(detS);
@@ -606,7 +605,7 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 }
 
 /* calculate instrumented version of endogenous variables, using
-   the restricted reduced form: WB\Gamma^{-1}.  Davidson and
+   the "restricted reduced form": WB\Gamma^{-1}.  Davidson and
    MacKinnon, ETM, equation (12.70)
 */
 
@@ -650,7 +649,8 @@ static void copy_estimates_to_btmp (fiml_system *fsys)
 */
 
 static int
-fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
+fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1,
+		       double *instep)
 {
     MODEL *pmod;
     double llbak = fsys->ll;
@@ -671,10 +671,6 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
 	double bk, delta;
 	int i, j, k = 0;
 
-#if FDEBUG
-	printf(" step = %g\n", step);
-#endif
-
 	/* new coeff = old + gradient * step */
 	for (i=0; i<fsys->g; i++) {
 	    pmod = system_get_model(fsys->sys, i);
@@ -694,6 +690,7 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
 	err = fiml_ll(fsys, Z, t1);
 	if (!err) {
 	    if (fsys->ll > llbak) {
+		*instep = step;
 		improved = 1;
 	    } else {
 		step /= 2.0;
@@ -705,7 +702,7 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
 }
 
 /* get standard errors for FIML estimates from the covariance
-   matrix of the artificial regression
+   matrix of the artificial OLS regression
 */
 
 static int fiml_get_std_errs (fiml_system *fsys)
@@ -736,18 +733,17 @@ static int fiml_get_std_errs (fiml_system *fsys)
 	}
     }
 
-    /* fixme: make further use of this? */
+    /* fixme: make further use of vcv? */
     gretl_matrix_free(vcv);
 
     return err;
 }
 
 /* Beginnings of a driver function for FIML as described in Davidson
-   and MacKinnon, ETM, chap 12, sect 5.  Not ready yet.
+   and MacKinnon, ETM, chap 12, sect 5.  Near to ready now.
 */
 
 #define FIML_ITER_MAX 250
-#define KLEIN_INIT
 
 int fiml_driver (gretl_equation_system *sys, const double **Z, 
 		 const DATAINFO *pdinfo, PRN *prn)
@@ -755,7 +751,7 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
     fiml_system *fsys;
     double llbak;
     double crit = 1.0;
-    double tol = 1.0e-09;
+    double tol = 1.0e-12; /* over-ambitious? */
     int iters = 0;
     int err = 0;
 
@@ -775,14 +771,6 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 # endif
 #endif
 
-    /* AC, 29/11/04: When we try the Klein model 1 using the MLE
-       benchmark to start from, the loglikelihood calculation
-       seems to be fine, but the artificial regression is not: it's
-       producing substantial gradient estimates... need to track
-       this down.  Quite likely the Kronecker multiplication
-       with Psi is borked...
-    */
-
     /* intialize Gamma coefficient matrix */
     fiml_G_init(fsys, pdinfo);
 
@@ -800,6 +788,7 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
     }    
 
     while (crit > tol && iters < FIML_ITER_MAX) {
+	double step;
 
 	/* form LHS vector for artificial regression */
 	fiml_form_depvar(fsys);
@@ -823,12 +812,13 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 	}
 
 	/* adjust param estimates based on gradients in fsys->artb */
-	err = fiml_adjust_estimates(fsys, Z, pdinfo->t1);
+	err = fiml_adjust_estimates(fsys, Z, pdinfo->t1, &step);
 	if (err) {
 	    break;
 	}
 
-	pprintf(prn, "*** iteration %d: ll = %g ***\n", iters + 1, fsys->ll);
+	pprintf(prn, "*** iteration %3d: step = %g, ll = %g\n", iters + 1, 
+		step, fsys->ll);
 
 	crit = fsys->ll - llbak;
 	llbak = fsys->ll;
