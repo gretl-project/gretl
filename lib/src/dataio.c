@@ -22,7 +22,6 @@
 #include <zlib.h>
 #include <ctype.h>
 #include <errno.h>
-#include "../../config.h"
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>

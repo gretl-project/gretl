@@ -27,4 +27,4 @@ rm -rf gretl-$version
 
 scp gretl/doc/manual.pdf $WWW
 scp gretl/doc/manual-a4.pdf $WWW
-scp gretl/ChangeLog $WWW
+#scp gretl/ChangeLog $WWW
