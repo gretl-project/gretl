@@ -218,7 +218,6 @@ floatgt
 floatlt
 na
 NADBL
-want_vcv
 date
 isdummy
 printlist
@@ -455,6 +454,7 @@ bigval
 LOOP_PRINT
 LOOP_MODEL
 LOOPSET
+script_loop_init
 ok_in_loop
 parse_loopline
 loop_condition
@@ -486,6 +486,7 @@ PAGELINES
 session_time
 logo
 lib_logo
+gui_script_logo
 gui_logo
 text_print_model_confints
 printfreq
