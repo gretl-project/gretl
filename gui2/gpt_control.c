@@ -421,7 +421,7 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     int l2 = 0;
 #endif
 
-    sprintf(temp, "%sgpttmp.XXXXXX", gretl_user_dir());
+    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
     if (mktemp(temp) == NULL) return 1;
 
     ftmp = open_gp_file(temp, "w");
@@ -461,7 +461,7 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 		    get_gretl_png_term_line(PLOT_REGULAR));
 	}	    
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
-		gretl_user_dir());
+		paths.userdir);
     }
 
     /* now for the body of the plot file */
@@ -530,7 +530,7 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 	return 1;
     }
     fprintf(*fpp, "%s\n", get_gretl_png_term_line(spec->code));
-    fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_user_dir());
+    fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
     return 0;
 }
 
@@ -544,7 +544,7 @@ void display_session_graph_png (char *fname)
        the PNG */
     if (add_png_term_to_plotfile(myfname)) return;
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), myfname);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, myfname);
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
@@ -1699,7 +1699,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     gretl_print_destroy(prn);
     fclose(fq);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
 
 #ifdef G_OS_WIN32
@@ -2752,9 +2752,9 @@ static void audio_render_plot (png_plot_t *plot)
     }
 
 # ifdef G_OS_WIN32
-    (*midi_play_graph) (plot->spec->fname, gretl_user_dir(), NULL);
+    (*midi_play_graph) (plot->spec->fname, paths.userdir, NULL);
 # else
-    (*midi_play_graph) (plot->spec->fname, gretl_user_dir(), midiplayer);
+    (*midi_play_graph) (plot->spec->fname, paths.userdir, midiplayer);
 # endif
 
     close_plugin(handle);
@@ -2996,7 +2996,7 @@ static int redisplay_edited_png (png_plot_t *plot)
     fclose(fp);
 
     /* get gnuplot to create a new PNG graph */
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plot->spec->fname);
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
@@ -3032,7 +3032,7 @@ static int zoom_unzoom_png (png_plot_t *plot, int view)
 	fpin = fopen(plot->spec->fname, "r");
 	if (fpin == NULL) return 1;
 
-	build_path(gretl_user_dir(), "zoomplot.gp", fullname, NULL);
+	build_path(paths.userdir, "zoomplot.gp", fullname, NULL);
 	fpout = fopen(fullname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
@@ -3060,10 +3060,10 @@ static int zoom_unzoom_png (png_plot_t *plot, int view)
 	fclose(fpout);
 	fclose(fpin);
 
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  fullname);
     } else { /* PNG_UNZOOM or PNG_START */
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  plot->spec->fname);
     }
 
@@ -3229,7 +3229,7 @@ static void render_pngfile (png_plot_t *plot, int view)
     GError *error = NULL;
 #endif
 
-    build_path(gretl_user_dir(), "gretltmp.png", pngname, NULL);
+    build_path(paths.userdir, "gretltmp.png", pngname, NULL);
 
 #ifdef OLD_GTK
     pbuf = gdk_pixbuf_new_from_file(pngname);
@@ -3395,8 +3395,8 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	return 1;
     }
 
-    build_path(gretl_user_dir(), "dumbplot.gp", dumbgp, NULL);
-    build_path(gretl_user_dir(), "gptdumb.txt", dumbtxt, NULL);
+    build_path(paths.userdir, "dumbplot.gp", dumbgp, NULL);
+    build_path(paths.userdir, "gptdumb.txt", dumbtxt, NULL);
     fpout = fopen(dumbgp, "w");
     if (fpout == NULL) {
 	fclose(fpin);
@@ -3418,7 +3418,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
     fclose(fpin);
     fclose(fpout);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(),
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
 			      dumbgp);
 
 #ifdef G_OS_WIN32
@@ -3948,7 +3948,7 @@ static int get_png_bounds_info (png_bounds_t *bounds)
     int i, num_text;
     volatile int ret = GRETL_PNG_OK;
 
-    build_path(gretl_user_dir(), "gretltmp.png", pngname, NULL); 
+    build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
 
     fp = fopen(pngname, "rb");
     if (fp == NULL) {
@@ -4113,7 +4113,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 
     /* generate gnuplot source file to make emf */
     pprintf(prn, "%s\n", get_gretl_emf_term_line(spec->code, color));
-    emfname = g_strdup_printf("%sgpttmp.emf", gretl_user_dir());
+    emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
     pprintf(prn, "set output '%s'\n", emfname);
     pprintf(prn, "set size 0.8,0.8\n");
     while (fgets(plotline, MAXLEN-1, fq)) {
@@ -4126,7 +4126,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     fclose(fq);
 
     /* get gnuplot to create the emf file */
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", gretl_gnuplot_path(), 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
     g_free(plotcmd);

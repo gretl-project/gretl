@@ -202,7 +202,7 @@ static void launch_gnuplot_interactive (void)
 	       "+sb", "+ls",
 	       "-geometry", "40x4", 
 	       "-title", "gnuplot: type q to quit",
-	       "-e", gretl_gnuplot_path(), gretl_plotfile(), "-", 
+	       "-e", paths.gnuplot, gretl_plotfile(), "-", 
 	       NULL);
 	fprintf(stderr, "execlp: %s: %s\n", term, strerror(errno));
 	_exit(EXIT_FAILURE);
@@ -218,16 +218,14 @@ static void launch_gnuplot_interactive (void)
 # ifdef G_OS_WIN32
     gchar *cmdline;
 
-    cmdline = g_strdup_printf("\"%s\" \"%s\" -", gretl_gnuplot_path(),
+    cmdline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
 			      gretl_plotfile());
     create_child_process(cmdline, NULL);
     g_free(cmdline);
 # else
     char term[8];
-    char gnuplot[MAXLEN];
     char plotfile[MAXLEN];
 
-    strcpy(gnuplot, gretl_gnuplot_path());
     strcpy(plotfile, gretl_plotfile());
 
     if (get_terminal(term)) {
@@ -238,7 +236,7 @@ static void launch_gnuplot_interactive (void)
 	    term, "+sb", "+ls", 
 	    "-geometry", "40x4",
 	    "-title", "gnuplot: type q to quit",
-	    "-e", gnuplot, plotfile, "-",
+	    "-e", paths.gnuplot, plotfile, "-",
 	    NULL 
 	};
 	int ok;
@@ -331,7 +329,7 @@ void clear_data (void)
 
 char *user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
-    strcpy(fullname, gretl_user_dir());
+    strcpy(fullname, paths.userdir);
     strcat(fullname, fname);
 
     *pprn = gretl_print_new(GRETL_PRINT_FILE, fullname);
@@ -4150,7 +4148,7 @@ static void maybe_display_string_table (void)
     if (gretl_string_table_written()) {
 	char stname[MAXLEN];
 
-	build_path(gretl_user_dir(), "string_table.txt", stname, NULL);
+	build_path(paths.userdir, "string_table.txt", stname, NULL);
 	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
     }
 }
@@ -4388,9 +4386,9 @@ static int spawn_latex (char *texsrc)
     int ret = LATEX_OK;
 
     sprintf(tmp, "cd %s && latex \\\\batchmode \\\\input %s", 
-	    gretl_user_dir(), texsrc);
+	    paths.userdir, texsrc);
     system(tmp);
-    sprintf(tmp, "%s%s.dvi", gretl_user_dir(), texsrc);
+    sprintf(tmp, "%s%s.dvi", paths.userdir, texsrc);
     if (stat(tmp, &sbuf)) {
 	errbox(_("Failed to process TeX file"));
 	ret = LATEX_EXEC_FAILED;
@@ -4417,7 +4415,7 @@ static int spawn_latex (char *texsrc)
 
     signal(SIGCHLD, SIG_DFL);
 
-    ok = g_spawn_sync (gretl_user_dir(), /* working dir */
+    ok = g_spawn_sync (paths.userdir, /* working dir */
 		       argv,
 		       NULL,    /* envp */
 		       G_SPAWN_SEARCH_PATH,
@@ -4470,7 +4468,7 @@ int latex_compile (char *texshort)
     }
 
     sprintf(tmp, "\"%s\" %s", latex_path, texshort);
-    if (winfork(tmp, gretl_user_dir(), SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+    if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return LATEX_EXEC_FAILED;
     }
 #else
@@ -4512,7 +4510,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	FILE *fp;
 
 	prn = (PRN *) data;
-	sprintf(texfile, "%smodeltable.tex", gretl_user_dir());
+	sprintf(texfile, "%smodeltable.tex", paths.userdir);
 	fp = fopen(texfile, "w");
 	if (fp == NULL) {
 	    sprintf(errtext, _("Couldn't write to %s"), texfile);

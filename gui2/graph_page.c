@@ -51,7 +51,7 @@ static char *gpage_fname (const char *ext, int i)
     static char fname[MAXLEN];
     size_t n;
 
-    strcpy(fname, gretl_user_dir());
+    strcpy(fname, paths.userdir);
     n = strlen(fname);
     if (fname[n - 1] != SLASH) {
 	strcat(fname, SLASHSTR);
@@ -279,10 +279,10 @@ static int gnuplot_compile (const char *fname)
     int err = 0;
 
 # ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
+    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, fname);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 # else
-    sprintf(plotcmd, "%s \"%s\"", gretl_gnuplot_path(), fname);
+    sprintf(plotcmd, "%s \"%s\"", paths.gnuplot, fname);
     err = gretl_spawn(plotcmd);  
 # endif /* WIN32 */
 
@@ -385,7 +385,7 @@ static int spawn_dvips (char *texsrc)
 
     signal(SIGCHLD, SIG_DFL);
 
-    ok = g_spawn_sync (gretl_user_dir(), /* working dir */
+    ok = g_spawn_sync (paths.userdir, /* working dir */
 		       argv,
 		       NULL,    /* envp */
 		       G_SPAWN_SEARCH_PATH,

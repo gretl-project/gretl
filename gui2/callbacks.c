@@ -585,7 +585,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     case MARKERS:
 	strcpy(title, _("gretl: add markers"));
 	strcpy(query, _("Supply full path to file with markers:"));
-	strcpy(defstr, gretl_user_dir());
+	strcpy(defstr, paths.userdir);
 	okfunc = do_add_markers; 
 	break;
     case CORRGM:
@@ -970,7 +970,7 @@ void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 	return;
     }
 
-    fname = g_strdup_printf("%snist.out", gretl_user_dir());
+    fname = g_strdup_printf("%snist.out", paths.userdir);
 
     (*run_nist_tests)(paths.datadir, fname, (int) v);
 
