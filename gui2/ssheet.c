@@ -24,7 +24,7 @@
 #include <ctype.h>
 #include <float.h>
 
-/* #define SSDEBUG */
+#define SSDEBUG
 
 typedef struct {
     GtkWidget *view;
@@ -171,40 +171,66 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 
 static int real_add_new_var (spreadsheet *sheet, const char *varname)
 {
-    GtkTreeView *view = GTK_TREE_VIEW(sheet->view); 
-    GtkTreeModel *model;
     GtkTreeViewColumn *column;
-    GList *collist = NULL;
+    GList *collist = NULL, *clstart = NULL;
     gint i, oldcols, cols;
     char tmp[16];
 
     oldcols = sheet->totcols;
 
+#ifdef SSDEBUG
+    fprintf(stderr, "real_add_new_var: sheet->totcols=%d\n", oldcols);
+#endif
+
     if (add_data_column(sheet)) return 1;
 
+#ifdef SSDEBUG
+    fprintf(stderr, "real_add_new_var: now: sheet->totcols=%d, oldcols=%d\n", 
+	    sheet->totcols, oldcols);
+#endif
+
     if (sheet->totcols == oldcols) {
-	column = gtk_tree_view_get_column(view, sheet->datacols);
-	gtk_tree_view_remove_column(view, column);
+	/* remove a padding column from the tree view */
+	column = gtk_tree_view_get_column(GTK_TREE_VIEW(sheet->view), 
+					  sheet->datacols);
+	gtk_tree_view_remove_column(GTK_TREE_VIEW(sheet->view), column);
     }
 
     column = gtk_tree_view_column_new();
-
     double_underscores(tmp, varname);
     gtk_tree_view_column_set_title(column, tmp);
+    set_up_sheet_column(column, get_data_col_width());
 
-    cols = gtk_tree_view_insert_column(view, column, sheet->datacols);
+    cols = gtk_tree_view_insert_column(GTK_TREE_VIEW(sheet->view), 
+				       column, sheet->datacols);
+#ifdef SSDEBUG
+    fprintf(stderr, "inserted new tree view col at pos %d, cols now = %d\n", 
+	    sheet->datacols, cols);
+#endif
 	
-    set_up_sheet_column(column, get_data_col_width()); 
+    clstart = collist = gtk_tree_view_get_columns(GTK_TREE_VIEW(sheet->view));
 
-    model = gtk_tree_view_get_model(view);
-
-    collist = gtk_tree_view_get_columns(view);
-
-    for (i=0; i<sheet->totcols-2; i++) {
+    i = 0;
+    while (collist != NULL && i < sheet->totcols - 2) {
 	column = GTK_TREE_VIEW_COLUMN(collist->data);
-	gtk_tree_view_column_clear(column);
 
-	if (i > 0 && i <= sheet->datacols) {
+#ifdef SSDEBUG
+	fprintf(stderr, "setting up new tree view, column %d\n", i);
+#endif	
+
+	if (i < sheet->datacols) {
+	    gint editcol = (i > 0)? sheet->totcols - 1 : sheet->totcols - 2;
+
+	    gtk_tree_view_column_set_attributes (column, 
+						 sheet->datacell,
+						 "text", i,
+						 "editable", editcol,
+						 NULL);
+	} else {	    
+	    gtk_tree_view_column_clear(column);
+	}     
+
+	if (i == sheet->datacols) {
 	    gtk_tree_view_column_pack_start(column, sheet->datacell, TRUE);
 	    gtk_tree_view_column_set_attributes (column,
 						 sheet->datacell,
@@ -212,7 +238,8 @@ static int real_add_new_var (spreadsheet *sheet, const char *varname)
 						 "editable", sheet->totcols - 1, 
 						 NULL);
 	    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(i));
-	} else { /* non-data cells */
+	} 
+	else if (i > sheet->datacols) {
 	    gtk_tree_view_column_pack_start(column, sheet->dumbcell, TRUE);
 	    gtk_tree_view_column_set_attributes (column,
 						 sheet->dumbcell,
@@ -221,10 +248,12 @@ static int real_add_new_var (spreadsheet *sheet, const char *varname)
 						 NULL);
 	    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(0));
 	}
+
 	collist = collist->next;
+	i++;
     }
 
-    if (collist) g_list_free(collist);
+    if (clstart) g_list_free(clstart);
 
     sheet_modified = 1;
 
@@ -383,14 +412,19 @@ static int add_data_column (spreadsheet *sheet)
     GType *types;
     GtkListStore *old_store, *new_store;
     GtkTreeIter old_iter, new_iter;
-    gint i, row, newcolnum;
+    gint i, row, newcol;
     int totcols = sheet->totcols;
     int padcols = sheet->padcols;
 
     /* This is relatively complex because, so far as I can tell, you can't
        append or insert additional columns in a GtkListStore: we have to
-       create a new liststore and copy the old info across.
+       create a whole new liststore and copy the old info across.
     */
+
+#ifdef SSDEBUG
+    fprintf(stderr, "add_data_column: totcols=%d, padcols=%d\n", 
+	    totcols, padcols);
+#endif    
 
     if (padcols > 0) padcols--;
     else totcols++;
@@ -405,53 +439,52 @@ static int add_data_column (spreadsheet *sheet)
     sheet->totcols = totcols;
     sheet->padcols = padcols;
 
-    /* configure the types */
-    types[0] = G_TYPE_STRING;
-    for (i=1; i<=sheet->datacols; i++) types[i] = G_TYPE_STRING;
-    for (i=0; i<sheet->padcols; i++) types[sheet->datacols+1+i] = G_TYPE_STRING;
-    for (i=sheet->totcols-2; i<=sheet->totcols-1; i++) types[i] = G_TYPE_BOOLEAN;
+#ifdef SSDEBUG
+    fprintf(stderr, "add_data_column: now sheet->totcols=%d, sheet->padcols=%d,"
+	    " sheet->datacols=%d\n", sheet->totcols, sheet->padcols, sheet->datacols);
+#endif 
 
-    newcolnum = sheet->datacols;
+    /* configure the types */
+    for (i=0; i<sheet->totcols; i++) {
+	if (i >= sheet->totcols - 2) types[i] = G_TYPE_BOOLEAN;
+	else types[i] = G_TYPE_STRING;
+    }
+
+    newcol = sheet->datacols;
 
     old_store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sheet->view)));
-    new_store = gtk_list_store_newv (sheet->totcols, types);
+    new_store = gtk_list_store_newv(sheet->totcols, types);
     free(types);
 
     /* go to start of old and new lists */
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(old_store), &old_iter);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(new_store), &new_iter);
 
-    /* copy across the old data */
+    /* construct the new table */
     for (row=0; row<sheet->datarows; row++) {
+	int col;
 	gchar *str;
 
 	gtk_list_store_append(new_store, &new_iter);
 
-	/* column 0: markers */
-	gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, 0, &str, -1);
-	gtk_list_store_set(new_store, &new_iter, 0, str, -1);
-	g_free(str);
+	for (col=0; col<sheet->totcols; col++) {
+	    if (col < newcol) {
+		/* copy labels and original data */
+		gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, col, &str, -1);
+		gtk_list_store_set(new_store, &new_iter, col, str, -1);
+		g_free(str);
+	    }
+	    else if (col >= newcol && col <= newcol + sheet->padcols) {
+		/* new data values (and any padding) set blank */
+		gtk_list_store_set(new_store, &new_iter, col, "", -1);
+	    }
+	    else {
+		/* editable flags at end of row */
+		gboolean editable = (col == sheet->totcols - 1);
 
-	/* original data values */
-	for (i=1; i<newcolnum; i++) {
-	    gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, i, &str, -1);
-	    gtk_list_store_set(new_store, &new_iter, i, str, -1);
-	    g_free(str);
+		gtk_list_store_set(new_store, &new_iter, col, editable, -1);
+	    }
 	}
-
-	/* new data values blank */
-	gtk_list_store_set(new_store, &new_iter, newcolnum, "", -1);
-
-	/* any padding cols */
-	for (i=1; i<=sheet->padcols; i++) {
-	    gtk_list_store_set(new_store, &new_iter, newcolnum + i, "", -1);
-	}	
-
-	/* editable flags */
-	gtk_list_store_set(new_store, &new_iter, 
-			   sheet->totcols - 2, FALSE, 
-			   sheet->totcols - 1, TRUE, -1);
-
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(old_store), &old_iter);
     }    
 
@@ -908,8 +941,11 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
 	}
     }
 
-    if (sheet->datacols < 6) sheet->padcols = 6 - sheet->datacols;
-    else sheet->padcols = 0;
+    if (sheet->datacols < 6) {
+	sheet->padcols = 6 - sheet->datacols;
+    } else {
+	sheet->padcols = 0;
+    }
 
     /* obs, data, padding, boolean cols */
     sheet->totcols = 1 + sheet->datacols + sheet->padcols + 2;
@@ -917,13 +953,11 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     types = mymalloc(sheet->totcols * sizeof *types);
     if (types == NULL) return NULL;
 
-    types[0] = G_TYPE_STRING;                             /* observation marker */
-    for (i=1; i<=sheet->datacols; i++) 
-	types[i] = G_TYPE_STRING;                         /* string rep. of data values */
-    for (i=0; i<sheet->padcols; i++) 
-	types[i + sheet->datacols + 1] = G_TYPE_STRING;   /* padding columns */
-    types[sheet->totcols - 2] = G_TYPE_BOOLEAN;           /* FALSE editable flag */
-    types[sheet->totcols - 1] = G_TYPE_BOOLEAN;           /* TRUE editable flag */
+    /* configure the types */
+    for (i=0; i<sheet->totcols; i++) {
+	if (i >= sheet->totcols - 2) types[i] = G_TYPE_BOOLEAN;
+	else types[i] = G_TYPE_STRING;
+    }
 
     store = gtk_list_store_newv (sheet->totcols, types);
     free(types);

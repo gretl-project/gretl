@@ -8,6 +8,14 @@ version 1.2.2
   test; also expand the help entry for this
 - Add a little explanation of Johansen cointegration test
   results to GUI helpfile
+- Fix bug: when you go to save data imported from gnumeric,
+  the suggested file suffix should be changed to ".gdt"
+- Fix bug: when importing data from Excel with a non-zero
+  row offset, respect the offset when checking for date
+  strings
+- Fix bug: adding a variable to the built-in spreadsheet
+  (GTK 2 version) when there are already 6 variables shown
+  (this fix *in progress*!!)
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation

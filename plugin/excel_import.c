@@ -685,16 +685,16 @@ static void free_sheet (void)
 
 #define IS_STRING(v) ((v[0] == '"'))
 
-static int consistent_date_labels (void)
+static int consistent_date_labels (int row_offset)
 {
-    int t;
+    int t, tstart = 1 + row_offset;
     int pd = 0, pdbak = 0;
     double x, xbak = 0.0;
     char *test;
 
     fputs("testing for consistent date labels\n", stderr);
 
-    for (t=1; t<=lastrow; t++) {
+    for (t=tstart; t<=lastrow; t++) {
 	test = rowptr[t].cells[0];
 	if (*test == '\0') {
 	    fprintf(stderr, " no: blank cell at row %d\n", t);
@@ -708,7 +708,7 @@ static int consistent_date_labels (void)
 	    return 0;
 	}
 	x = atof(test);
-	if (t == 1) pdbak = pd;
+	if (t == tstart) pdbak = pd;
 	else { /* t > 1 */
 	    if (pd != pdbak) {
 		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
@@ -948,7 +948,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	i = book.col_offset;
 	if (obs_column(rowptr[book.row_offset].cells[i] + 1)) {
-	    int pd = consistent_date_labels();
+	    int pd = consistent_date_labels(book.row_offset);
 
 	    if (pd) {
 		char *s = rowptr[1 + book.row_offset].cells[i];

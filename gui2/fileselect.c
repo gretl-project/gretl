@@ -346,7 +346,7 @@ static char *suggested_savename (const char *fname)
     char *s = g_strdup(fname);
     char *sfx = strrchr(s, '.');
 
-    if (sfx != NULL && strlen(sfx) == 4) {
+    if (sfx != NULL && (strlen(sfx) == 4 || !strcmp(sfx, ".gnumeric"))) {
 	const char *test = (olddat)? ".dat" : ".gdt";
 
 	if (strcmp(test, sfx)) {
