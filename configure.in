@@ -267,7 +267,9 @@ if test "$try_gtk2" = "yes" ; then
     CFLAGS="$CFLAGS $GTK_CFLAGS"
     LIBS="$LIBS $GTK_LIBS"
     have_gtk="2.0"
+    gretlbin="gretl2"
     AC_DEFINE(USE_GTK2)
+    AC_SUBST(gretlbin)
 else
 dnl Or fall back on GTK 1.2
    AM_PATH_GTK(1.2.3,have_gtk="1.2",have_gtk="no")
@@ -280,7 +282,9 @@ dnl Or fall back on GTK 1.2
    if test "${have_gtkextra}" = "no" ; then
        exit
    fi
+   gretlbin="gretl"
    AC_SUBST(have_gtk)
+   AC_SUBST(gretlbin)
 fi
 
 dnl
@@ -390,8 +394,8 @@ gui/Makefile
 gui2/Makefile
 gui2/gtkextra-lite/Makefile
 gui2/omf-install/Makefile
+gnome/Makefile
 gnome/gretl.keys 
-gnome/gretl2.keys 
 cli/Makefile 
 lib/Makefile 
 cephes/Makefile

@@ -1,4 +1,3 @@
-# needs to be generalized as Makefile.in
 
 INSTALL = @INSTALL@
 gnome_prefix = @gnome_prefix@

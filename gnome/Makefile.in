@@ -7,6 +7,12 @@ ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
 endif
 
+ifeq ($(have_gnome),2.0)
+gretl_desktop = gretl2.desktop
+else
+gretl_desktop = gretl.desktop
+endif
+
 desktopdir = $(gnome_prefix)/share/applications
 mimedir = $(gnome_prefix)/share/mime-info
 gpixmaps = $(gnome_prefix)/share/pixmaps/gretl
@@ -15,13 +21,13 @@ ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
 install: 
 	$(tooldir)/mkinstalldirs $(gpixmaps)
 	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gpixmaps)
-	$(INSTALL_DATA) ../gnome/gretl.png $(gpixmaps)
-	$(INSTALL_DATA) ../gnome/gnome-*.png $(gpixmaps)
+	$(INSTALL_DATA) gretl.png $(gpixmaps)
+	$(INSTALL_DATA) gnome-*.png $(gpixmaps)
 	$(tooldir)/mkinstalldirs $(desktopdir)
-	$(INSTALL_DATA) ../gnome/gretl.desktop $(desktopdir)
+	$(INSTALL_DATA) $(gretl_desktop) $(desktopdir)/gretl.desktop
 	$(tooldir)/mkinstalldirs $(mimedir)
-	$(INSTALL_DATA) ../gnome/gretl.mime $(mimedir)
-	$(INSTALL_DATA) ../gnome/gretl.keys $(mimedir)
+	$(INSTALL_DATA) gretl.mime $(mimedir)
+	$(INSTALL_DATA) gretl.keys $(mimedir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C/figures
