@@ -516,10 +516,17 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
 
     if (GRETL_GUI(ppaths)) {
 	char *fontspec = get_gretl_png_fontspec();
+	int old_gp = gp_png_wants_color();
 
-	fprintf(*fpp, "set term png%s%s\n", 
-		(gp_png_wants_color())? " color" : "", 
+	fprintf(*fpp, "set term png%s%s", 
+		(old_gp)? " color" : "", 
 		(fontspec != NULL)? fontspec : "");
+	if (old_gp) {
+	    fputc('\n', *fpp);
+	} else {
+	    fputs(" xffffff x000000 x202020 xff0000 x0000ff x00ff00\n", 
+		  *fpp);
+	}
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
 	free(fontspec);
     }
