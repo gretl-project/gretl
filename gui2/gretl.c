@@ -448,6 +448,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>" },    
     { N_("/Sample/Set _frequency, startobs..."), NULL, gretl_callback, 
       SETOBS, NULL },
+    { N_("/Sample/Compact data..."), NULL, compact_data_set, 0, NULL },
     { N_("/Sample/sep2"), NULL, NULL, 0, "<Separator>" },   
     { N_("/Sample/_Define, based on dummy..."), NULL, gretl_callback, 
       SMPLDUM, NULL },
@@ -988,6 +989,8 @@ static void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Model/Autoregressive estimation...", s);
 	flip(mdata->ifac, "/Model/Vector Autoregression...", s);
 	flip(mdata->ifac, "/Model/Cointegration test...", s);
+	flip(mdata->ifac, "/Sample/Compact data...", 
+	     s && (datainfo->pd == 4 || datainfo->pd == 12));
     }
 }
 
@@ -1019,6 +1022,15 @@ void restore_sample_state (gboolean s)
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Sample/Restore full range", s);
 	flip(mdata->ifac, "/Variable/Delete last variable", !s);
+    }
+}
+
+/* ........................................................... */
+
+void compact_data_state (gboolean s)
+{
+    if (mdata->ifac != NULL) {
+	flip(mdata->ifac, "/Sample/Compact data...", s);
     }
 }
 
@@ -1114,10 +1126,6 @@ void clear_sample_label (void)
     gtk_label_set_text(GTK_LABEL(mdata->status), "");
     gtk_label_set_text(GTK_LABEL(datalabel), _(" No datafile loaded "));
 }
-
-/* ......................................................... */
-
-
 
 /* ......................................................... */
 

@@ -17,6 +17,8 @@ version 1.0.7
   or file manager onto the main gretl window
 - Add drag and drop of data series from a database window into
   the main gretl window (i.e. into the current data set)
+- Add general time-series data compaction function (under Sample
+  menu): needs more testing
 
 03/16/03 version 1.0.6
 - minor adjustment to model print output formatting

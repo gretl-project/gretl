@@ -268,6 +268,14 @@ enum file_lists {
     FILE_LIST_SCRIPT,
 };
 
+enum compaction_methods {
+    COMPACT_NONE,
+    COMPACT_SUM,
+    COMPACT_AVG,
+    COMPACT_SOP,
+    COMPACT_EOP
+};    
+
 /* functions follow */
 
 #ifndef G_OS_WIN32
@@ -304,6 +312,7 @@ void gui_get_series (gpointer data, guint bci_code, GtkWidget *widget);
 void import_db_series (windata_t *dbwin);
 void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
+void compact_data_set (void);
 
 /* webget.c */
 int update_query (int verbose); 
