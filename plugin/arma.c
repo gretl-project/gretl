@@ -599,7 +599,8 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     /* initialize the coefficients: AR part by OLS, MA at 0 */
     ar_init_by_ols(v, p, coeff, Z, pdinfo);
-    for (i=0; i<q; i++) coeff[i+p+1] = 0.0; 
+    for (i=0; i<q; i++) coeff[i+p+1] = 0.0;
+
 
     /* initialize forecast errors and derivatives */
     for (t=0; t<an; t++) {
