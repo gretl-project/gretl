@@ -1577,8 +1577,48 @@ static void draw_selection_rectangle (png_plot_t *plot,
 
 #define TOLDIST 0.01
 
-static int
-identify_point (png_plot_t *plot, double x, double y) 
+static void
+write_label_to_plot (png_plot_t *plot, const gchar *label,
+		     gint x, gint y)
+{
+    static GdkFont *label_font;
+
+    if (plot->invert_gc == NULL) {
+	create_selection_gc(plot);
+    }
+
+    if (label_font == NULL) {
+	label_font = gdk_font_load("fixed");
+    }
+
+    /* draw the label */
+    gdk_draw_text (plot->pixmap,
+		   label_font,
+		   plot->invert_gc,
+		   x, y,
+		   label,
+		   strlen(label));
+
+    /* show the modified pixmap */
+    gdk_window_copy_area(plot->canvas->window,
+			 plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+			 0, 0,
+			 plot->pixmap,
+			 0, 0,
+			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+
+    /* draw (invert) again to erase the text */
+    gdk_draw_text (plot->pixmap,
+		   label_font,
+		   plot->invert_gc,
+		   x, y,
+		   label,
+		   strlen(label));
+}
+
+static void
+identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
+		double x, double y) 
 {
     double xrange, yrange;
     double xdiff, ydiff;
@@ -1590,7 +1630,7 @@ identify_point (png_plot_t *plot, double x, double y)
 
     if (plot->spec == NULL || plot->spec->t1 == plot->spec->t2) {
 	/* plot has no in-memory data */
-	return -1;
+	return;
     }
 
     plot_n = plot->spec->t2 - plot->spec->t1 + 1;
@@ -1615,17 +1655,14 @@ identify_point (png_plot_t *plot, double x, double y)
 	}
     }
 
-    if (mindist > TOLDIST * diag) {
-	best_match = -1;
-    } else {
-	fprintf(stderr, "Got a match at obs %d\n", best_match);
-	if (datainfo->markers) {
-	    fprintf(stderr, "Got a match at %s\n", 
-		    datainfo->S[best_match]);
-	}
+    if (best_match >= 0 && mindist < TOLDIST * diag) {
+#if 0
+	fprintf(stderr, "%s at (%d,%d)\n", datainfo->S[best_match],
+		pixel_x, pixel_y);
+#endif
+	write_label_to_plot(plot, datainfo->S[best_match],
+			    pixel_x, pixel_y);
     }
-	
-    return best_match;
 }
 
 static gint
@@ -1657,9 +1694,10 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
 
-#ifdef notyet
-	identify_point(plot, data_x, data_y);
-#endif
+	/* FIXME: restrict to (single) scatter plots */
+	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250) {
+	    identify_point(plot, x, y, data_x, data_y);
+	}
 
 	if (plot->pd == 4 || plot->pd == 12) {
 	    x_to_date(data_x, plot->pd, label);

@@ -121,6 +121,7 @@ typedef struct png_plot_t {
 static void render_pngfile (png_plot_t *plot, int view);
 static int zoom_unzoom_png (png_plot_t *plot, int view);
 static int redisplay_edited_png (png_plot_t *plot);
+static void create_selection_gc (png_plot_t *plot);
 #endif /* GNUPLOT_PNG */
 
 #ifdef PNG_COMMENTS
@@ -1235,6 +1236,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->edit = 0;
 
     spec->termtype[0] = 0;
+    spec->t1 = spec->t2 = 0;
 
     return spec;
 }
@@ -1649,6 +1651,93 @@ static void draw_selection_rectangle (png_plot_t *plot,
 		       rx, ry, rw, rh);
 }
 
+#define TOLDIST 0.01
+
+static void
+write_label_to_plot (png_plot_t *plot, const gchar *label,
+		     gint x, gint y)
+{
+    static GdkFont *label_font;
+
+    if (label_font == NULL) {
+	label_font = gdk_font_load("fixed");
+    }
+
+    if (plot->invert_gc == NULL) {
+	create_selection_gc(plot);
+    }
+
+    /* draw the label */
+    gdk_draw_text (plot->pixmap,
+		   label_font,
+		   plot->invert_gc,
+		   x, y,
+		   label,
+		   strlen(label));
+
+    /* show the modified pixmap */
+    gdk_window_copy_area(plot->canvas->window,
+			 plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+			 0, 0,
+			 plot->pixmap,
+			 0, 0,
+			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
+
+    /* draw (invert) again to erase the label */
+    gdk_draw_text (plot->pixmap,
+		   label_font,
+		   plot->invert_gc,
+		   x, y,
+		   label,
+		   strlen(label));
+}
+
+static void
+identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
+		double x, double y) 
+{
+    double xrange, yrange;
+    double xdiff, ydiff;
+    double dist, mindist;
+    double diag;    
+    int best_match = -1;
+    int t, plot_n;
+    const double *data_x, *data_y;
+
+    if (plot->spec == NULL || plot->spec->data == NULL) {
+	/* plot has no in-memory data: FIXME, need to grab data */
+	return;
+    }
+
+    plot_n = plot->spec->t2 - plot->spec->t1 + 1;
+
+    xrange = plot->xmax - plot->xmin;
+    yrange = plot->ymax - plot->ymin;
+    diag = sqrt(xrange * xrange + yrange * yrange);
+    mindist = diag;
+    
+    data_x = &plot->spec->data[0];
+    data_y = &plot->spec->data[plot_n];
+
+    /* try to find the best-matching data point */
+    for (t=0; t<plot_n; t++) { 
+	if (na(data_x[t]) || na(data_y[t])) continue;
+	xdiff = data_x[t] - x;
+	ydiff = data_y[t] - y;
+	dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+	if (dist < mindist) {
+	    mindist = dist;
+	    best_match = t + plot->spec->t1;
+	}
+    }
+
+    /* if the match is good enough, show the label */
+    if (best_match >= 0 && mindist < TOLDIST * diag) {
+	write_label_to_plot(plot, datainfo->S[best_match],
+			    pixel_x, pixel_y);
+    }
+}
+
 static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 		     png_plot_t *plot)
@@ -1677,6 +1766,12 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
+
+	/* FIXME: restrict to (single) scatter plots */
+	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250) {
+	    identify_point(plot, x, y, data_x, data_y);
+	}
+
 	if (plot->pd == 4 || plot->pd == 12) {
 	    x_to_date(data_x, plot->pd, label);
 	} else
