@@ -2815,6 +2815,7 @@ static void start_editing_png_plot (png_plot_t *plot)
     }
 }
 
+#ifdef HAVE_AUDIO
 static void audio_render_plot (png_plot_t *plot)
 {
     void *handle;
@@ -2830,6 +2831,7 @@ static void audio_render_plot (png_plot_t *plot)
 
     close_plugin(handle);
 }
+#endif
 
 static gint color_popup_activated (GtkWidget *w, gpointer data)
 {
@@ -2916,9 +2918,11 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     else if (!strcmp(item, _("Edit"))) { 
 	start_editing_png_plot(plot);
     }
+#ifdef HAVE_AUDIO
     else if (!strcmp(item, _("Audio"))) { 
 	audio_render_plot(plot);
     }
+#endif
     else if (!strcmp(item, _("Close"))) { 
         killplot = 1;
     } 
@@ -2949,7 +2953,9 @@ static void build_plot_menu (png_plot_t *plot)
 	N_("Print"),
 #endif
 	N_("Edit"),
+#ifdef HAVE_AUDIO
 	N_("Audio"),
+#endif
 	N_("Help"),
         N_("Close"),
         NULL

@@ -43,6 +43,7 @@ png_comments="yes"
 prefer_xml1="no"
 have_tramo="yes"
 have_x12a="yes"
+have_audio="no"
 have_gnu_regex="no"
 have_libxml2="no"
 use_gtksourceview="no"
@@ -144,6 +145,7 @@ AC_ARG_WITH(libole2,
 if test "x${withval}" = "xno"
 then
   try_ole=no
+  have_libole2=no
 else
   try_ole=yes
 fi,
@@ -164,6 +166,7 @@ AC_ARG_WITH(gtkextra,
 if test "x${withval}" = "xno"
 then
   try_gtkextra=no
+  have_gtkextra=no
 else
   try_gtkextra=yes
 fi,
@@ -204,6 +207,17 @@ fi,
 AC_DEFINE(HAVE_TRAMO)
 HAVE_TRAMO=1)
 AC_SUBST(HAVE_TRAMO)
+
+AC_ARG_WITH(audio,
+[  --with-audio    include audio graph support (experimental)],
+if test "x${withval}" = "xyes"
+then
+  AC_DEFINE(HAVE_AUDIO)
+  HAVE_AUDIO=1
+  AC_SUBST(HAVE_AUDIO)
+  have_audio=yes
+fi,
+have_audio=no)
 
 AC_PROG_CC
 
@@ -413,6 +427,7 @@ AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_gtksourceview)
 AC_SUBST(have_gnu_regex)
+AC_SUBST(have_audio)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTKSOURCEVIEW_CFLAGS)
@@ -641,6 +656,7 @@ Configuration:
   Gnome installation prefix:              ${gnome_prefix}
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
+  Experimental audio support:             ${have_audio}
   
 
 Now type '$MAKE' to build gretl.
