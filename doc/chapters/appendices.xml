@@ -183,12 +183,13 @@
       description of the series (maximum 128 characters).  On the
       second line the first field is a frequency code:
       <literal>M</literal> for monthly, <literal>Q</literal> for
-      quarterly, <literal>A</literal> for annual and
-      <literal>D</literal> for daily.  No other frequencies are
-      accepted at present.  Then comes the starting date (N.B. with
-      two digits following the point for monthly data, one for
-      quarterly data, none for annual), a space, a hyphen, another
-      space, the ending date, the string <quote><literal>n =
+      quarterly, <literal>A</literal> for annual, <literal>B</literal>
+      for business-daily (daily with five days per week) and
+      <literal>D</literal> for daily (seven days per week).  No other
+      frequencies are accepted at present.  Then comes the starting
+      date (N.B. with two digits following the point for monthly data,
+      one for quarterly data, none for annual), a space, a hyphen,
+      another space, the ending date, the string <quote><literal>n =
 	</literal></quote> and the integer number of observations. In
       the case of daily data the starting and ending dates should be
       given in the form <literal>YYYY/MM/DD</literal>. This format

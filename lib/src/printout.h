@@ -56,7 +56,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
 int printdata (LIST list, 
 	       double ***pZ, const DATAINFO *pdinfo, 
-	       int pause, int byobs, PRN *prn);
+	       int pause, int option, PRN *prn);
 
 int print_fit_resid (const MODEL *pmod, 
 		     double ***pZ, DATAINFO *pdinfo, 

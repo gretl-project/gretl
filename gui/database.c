@@ -607,7 +607,7 @@ static int check_serinfo (char *str, char *sername)
 	!isdigit((unsigned char) stobs[0]) || 
 	!isdigit((unsigned char) endobs[0]) ||
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
-	 pdc != 'D')) {
+	 pdc != 'D' && pdc != 'B')) {
 	sprintf(msg, _("Database parse error at variable '%s'"), sername);
 	errbox(msg);
 	return 1;
@@ -1208,7 +1208,8 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
     sinfo->pd = 1;
     if (pdc == 'M') sinfo->pd = 12;
     else if (pdc == 'Q') sinfo->pd = 4;
-    else if (pdc == 'D') sinfo->pd = 5;
+    else if (pdc == 'B') sinfo->pd = 5;
+    else if (pdc == 'D') sinfo->pd = 7;
 
     if (strchr(stobs, '/')) { /* daily data */
 	char *q = stobs;

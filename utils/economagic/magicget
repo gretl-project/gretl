@@ -1,8 +1,5 @@
 #!/usr/bin/perl
 
-# gretl - The Gnu Regression, Econometrics and Time-series Library
-# Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
-
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License 
 # as published by the Free Software Foundation; either version 2
@@ -29,7 +26,7 @@ use Date::Calc qw(Delta_Days Day_of_Week);
 require LWP::UserAgent;
 require "getopts.pl";
 
-my(@fields, @obs, @yr, @subper, @subsubper, @sernames, @dirs, @daily);
+my(@fields, @obs, @yr, @subper, @subsubper, @sernames, @dirs, @daily, @business);
 my($s, $n, $full_n, $i, $url, $line, $pdstr, $varname, $pd, $pdcheck);
 my($remote, $port, $iaddr, $paddr, $proto, $msg, $title, $grab);
 my($ua, $request, $response);
@@ -47,6 +44,61 @@ sub series_is_daily {
     if ($_[0] =~ m+/day+) { return 1; }
     if ($_[0] =~ /^day-/) { return 1; }
     return 0;
+}
+
+sub business_days {
+    # param: daily series name
+    my $series = $_[0];
+    my $busdays = 1;
+    my $wkendcnt = 0;
+    my $dow;
+
+    if ($source eq "sp") {
+	$grab = "sp/" . "$series";
+    } else {
+	$grab = "$series";
+    }
+
+    $msg = "GET /em-cgi/data.exe/$grab \n\n";
+    if ($verbose) {
+	print STDERR "Testing frequency of $grab\n";
+    }
+    socket(SOCK, PF_INET, SOCK_STREAM, $proto) or die "Error: $!";
+    connect(SOCK, $paddr) or die "Error: $!";
+    send(SOCK, $msg, 0) or die "Cannot send query: $!";
+
+    $n = 0;
+    while (<SOCK>) {
+	if (/Server Error/) {
+	    print;
+	    die "Can't get info from server";
+	}
+	chomp;
+
+	if (/^ 19/ || /^ 20/) {
+	    s/\r//;
+	    # remove economagic obfuscation
+	    s#>[^<]*</#><#g;
+	    s#<[^>]*># #g;
+
+	    @fields = split(/ +/);
+	    $dow = Day_of_Week($fields[1], $fields[2], $fields[3]);
+	    if ($dow == 6 || $dow == 7) {
+		$wkendcnt++;
+	    }
+	    $n++;
+	}
+	if ($n > 22) { last; }
+    }
+
+    if ($wkendcnt >= 6) { 
+	$busdays = 0; 
+	if ($verbose) { print STDERR " apparently 7-day data\n"; }
+    } elsif ($verbose) {
+	print STDERR " apparently 5-day data\n"; 
+    }
+
+    return $busdays;
 }
 
 sub get_gap {
@@ -92,7 +144,7 @@ EndUsage
 
 # Start of main program
 
-# Get command-line options (b for batch, h for help);
+# Get command-line options (b for batch, h for help, etc.);
 
 if (!(&Getopts('bvh')) || $opt_h) { &usage; }
 if ($opt_b) { $interactive = 0; }
@@ -184,6 +236,14 @@ $paddr = sockaddr_in($port, $iaddr) or die "Error: $!";
 $proto = getprotobyname('tcp') or die "Error: $!";
 
 for ($s = 0; $s < $nseries; $s++) {
+    if ($daily[$s]) { 
+	push(@business, business_days($sernames[$s]));
+    } else {
+	push(@business, 0);
+    }
+}
+
+for ($s = 0; $s < $nseries; $s++) {
 
     # if ($sernames[$s] !~ /day-tcm3y/) { next; }
 
@@ -210,7 +270,8 @@ for ($s = 0; $s < $nseries; $s++) {
     $title = "";
     my $baddate;
     
-    if ($daily[$s]) { $pd = 5; }
+    if ($daily[$s]) { $pd = 7; } 
+    if ($business[$s]) { $pd = 5; }
 
     while (<SOCK>) {
 	if (/Server Error/) {
@@ -247,7 +308,7 @@ for ($s = 0; $s < $nseries; $s++) {
 		}
 	    }
 	    # check that dates make sense 
-	    if ($n > 14 && $pd != 4 && $pd != 12 && $pd != 1 && $pd != 5) { 
+	    if ($n > 14 && $pd != 4 && $pd != 12 && $pd != 1 && $pd != 5 && $pd != 7) { 
 		print STDERR "Unrecognized frequency $pd for $sernames[$s]\n"; 
 		print STDERR "Skipping this series\n";
 		$pd = -1;
@@ -298,19 +359,23 @@ for ($s = 0; $s < $nseries; $s++) {
     $full_n = $n;
     for ($i = 1; $i <= $n; $i++) {
 	$baddate = 0;
-	if ($pd == 5 && $i > 1) { # special treatment for daily data
+	if (($pd == 5 || $pd == 7 ) && $i > 1) { # special treatment for daily data
 	    my $dd = Delta_Days($yr[$i-2], $subper[$i-2], $subsubper[$i-2],
 				$yr[$i-1], $subper[$i-1], $subsubper[$i-1]);
 	    my $dow = Day_of_Week($yr[$i-1], $subper[$i-1], $subsubper[$i-1]);
-	    my $dd_exp = ($dow == 1)? 3 : 1;
+	    my $dd_exp = ($dow == 1 && $pd == 5)? 3 : 1;
 	    my $gap = 0;
 
 	    if ($dd > $dd_exp) {
-		$gap = get_gap($dd, $dd_exp,
-			       $yr[$i-2], $subper[$i-2], $subsubper[$i-2]);
+		if ($pd == 5) {
+		    $gap = get_gap($dd, $dd_exp,
+				   $yr[$i-2], $subper[$i-2], $subsubper[$i-2]);
+		} else {
+		    $gap = $dd - $dd_exp;
+		}
 	    } 
 
-	    if ($dow == 6 || $dow == 7) {
+	    if ($pd == 5 && ($dow == 6 || $dow == 7)) {
 		print STDERR "\nWarning: $varname: found data at bad date ";
 		print STDERR "$yr[$i-1]/$subper[$i-1]/$subsubper[$i-1]\n";
 		$baddate = 1;
@@ -328,15 +393,19 @@ for ($s = 0; $s < $nseries; $s++) {
 	if ($baddate) { next; }
 	chomp ($obs[$i-1]);
 	if ($verbose) { 
-	    print STDERR "$yr[$i-1]/$subper[$i-1]/$subsubper[$i-1]: $obs[$i-1]\n"; 
+	    if ($pd == 5 || $pd == 7) {
+		print STDERR "$yr[$i-1]/$subper[$i-1]/$subsubper[$i-1]: $obs[$i-1]\n";
+	    } else {
+		print STDERR "$yr[$i-1]:$subper[$i-1]  $obs[$i-1]\n";
+	    }
 	}
 	print BIN pack("f", $obs[$i-1]);
 	if ($verbose && !($i % $pd)) { print STDERR "\n"; }
     }
 
     # daily data: print dates/obs once we know how many calendar days there are
-    if ($pd == 5) {
-	print IDX "D  $yr[0]/$subper[0]/$subsubper[0] - ";
+    if ($pd == 5 || $pd == 7) {
+	printf IDX "%s  $yr[0]/$subper[0]/$subsubper[0] - ", ($pd == 5)? "D" : "B";
 	print IDX "$yr[$n-1]/$subper[$n-1]/$subsubper[$n-1]  n = $full_n\n";
     }
 
@@ -350,6 +419,7 @@ close (IDX);
 if ($tester) {
     close (TST);
 }
+
 
 
 

@@ -1146,10 +1146,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case PRINT:
-	if (strlen(cmd->param)) 
+	if (strlen(cmd->param)) {
 	    do_print_string(cmd->param, prn);
-	else 
+	} else {
 	    printdata(cmd->list, pZ, datainfo, pause, oflag, prn);
+	}
 	break;
 
     case SUMMARY:

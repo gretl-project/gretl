@@ -901,7 +901,8 @@ print 3 6          prints values of variable numbers 3 and 6
 print x y z        prints values of variables named x, y and z
 
 If the -o flag is given, the variables are printed in columns, otherwise they
-are printed in consecutive blocks.
+are printed in consecutive blocks.  If the flag "-t" is given, the data are
+printed to 10 significant figures.
 
 print "Literal string" prints the given string.  The closing quote is not
 required, but the opening quote is needed to trigger this behavior.
