@@ -51,6 +51,8 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 			double *xpx, double *xpy);
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho);
+static int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
+		     int nv);
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
 static double dwstat (int order, MODEL *pmod, double **Z);
@@ -71,7 +73,7 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z);
 static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
 
-/* use Choleski or QR for regression? */
+/* use Cholesky or QR for regression? */
 static int use_qr;
 void set_use_qr (int set)
 {
@@ -440,7 +442,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<=l0; i++) xpy[i] = 0.0;
 	for (i=0; i<nxpx; i++) mdl.xpx[i] = 0.0;
 
-	/* calculate regression results, Choleski style */
+	/* calculate regression results, Cholesky style */
 	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho,
 		    mdl.xpx, xpy);
 
@@ -743,7 +745,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     }
 #endif
 
-    /*  Choleski-decompose X'X and find the coefficients */
+    /*  Cholesky-decompose X'X and find the coefficients */
     err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, pmod->ncoeff);
     if (err) {
         pmod->errcode = err;
@@ -820,8 +822,8 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
 /* .......................................................... */
 
-int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
-	      int nv)
+static int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
+		     int nv)
 /*
 
   This function does an in-place Choleski decomposition of xpx
@@ -841,12 +843,6 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
-
-    if (coeff != NULL) {
-	for (j=0; j<nv; j++) {
-	    coeff[j] = 0.0;
-	}
-    }
 
     e = 1.0 / sqrt(xpx[0]);
     xpx[0] = e;
@@ -895,14 +891,19 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
     }
 
     kk--;
-    d = 0.0;
-    for (j=1; j<=nv; j++) {
-        d += xpy[j] * xpy[j];
+
+    /* find regression sum of squares */
+    if (rss != NULL) {
+	d = 0.0;
+	for (j=1; j<=nv; j++) {
+	    d += xpy[j] * xpy[j];
+	}
+	*rss = d;
     }
 
-    if (rss != NULL) *rss = d;
-
+    /* solve for the regression coefficients */
     if (coeff != NULL) {
+	for (j=0; j<nv-1; j++) coeff[j] = 0.0;
 	coeff[nv-1] = xpy[nv] * xpx[kk];
 	for (j=nv-1; j>=1; j--) {
 	    d = xpy[j];

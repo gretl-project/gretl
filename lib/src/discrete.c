@@ -29,7 +29,7 @@ static double *hessian (MODEL *pmod, double **Z, const int n,
 static double *hess_wts (MODEL *pmod, double **Z, const int n, 
 			 const int opt);
 static int neginv (double *xpx, double *diag, int nv);
-static int choleski (double *xpx, int nv);
+static int cholesky_decomp (double *xpx, int nv);
 
 /* .......................................................... */
 
@@ -238,7 +238,7 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     } 
 
     /* obtain negative inverse of Hessian */
-    choleski(dmod.xpx, dmod.ncoeff); 
+    cholesky_decomp(dmod.xpx, dmod.ncoeff); 
     diag = malloc(dmod.ncoeff * sizeof *diag); 
     if (diag == NULL) {
 	free(xbar);
@@ -369,7 +369,7 @@ static double *hess_wts (MODEL *pmod, double **Z, const int n,
 static int neginv (double *xpx, double *diag, int nv)
 /*
   Solves for diagonal elements of X'X inverse matrix.
-  X'X must be Choleski-decomposed already.
+  X'X must be Cholesky-decomposed already.
 */
 {
     int kk, l, m, k, i, j;
@@ -413,8 +413,8 @@ static int neginv (double *xpx, double *diag, int nv)
 
 /* .......................................................... */
 
-static int choleski (double *xpx, int nv)
-     /* Choleski decomposition of X'X */
+static int cholesky_decomp (double *xpx, int nv)
+     /* Cholesky decomposition of X'X */
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, test, xx;
@@ -426,7 +426,7 @@ static int choleski (double *xpx, int nv)
     kk = nv;
 
     for (j=2; j<=nv; j++) {
-    /* diagonal elements */
+	/* diagonal elements */
         d = d1 = 0.0;
         k = jm1 = j - 1;
         for (l=1; l<=jm1; l++) {
@@ -435,7 +435,7 @@ static int choleski (double *xpx, int nv)
             k += nv-l;
         }
         test = xpx[kk] - d;
-        if (test <= TINY) return 1;
+        if (test / xpx[kk] < TINY) return 1;
         e = 1 / sqrt(test);
         xpx[kk] = e;
         /* off-diagonal elements */

@@ -47,7 +47,8 @@ int numeric_check_model (MODEL *pmod,
 }
 #endif
 
-int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn) 
+static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn,
+			   PRN *cmdprn) 
      /* special version of command executor for loop construct */
 {
     int i, err, m, oflag = 0;
@@ -57,7 +58,7 @@ int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 
     strcpy(linecpy, plp->lines[cmdnum]);
     catchflag(linecpy, &oflag);
-    getcmd(linecpy, datainfo, &command, &ignore, &Z, cmds);
+    getcmd(linecpy, datainfo, &command, &ignore, &Z, cmdprn);
 
     if (command.ci < 0) return 0;
 

@@ -617,11 +617,14 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
     GtkTextBuffer *buf;
     GtkTextIter iter;
     gboolean found = FALSE;
+    gboolean wrapped = FALSE;
     GtkTextSearchFlags search_flags;
 
     buf = gtk_text_view_get_buffer (view);
 
     search_flags = GTK_TEXT_SEARCH_VISIBLE_ONLY | GTK_TEXT_SEARCH_TEXT_ONLY;
+
+ text_search_wrap:
 	
     if (from_cursor) {
 	GtkTextIter sel_bound;
@@ -635,8 +638,9 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
 					  gtk_text_buffer_get_mark (buf,
 								    "selection_bound"));
 	gtk_text_iter_order (&sel_bound, &iter);		
-    } else		
+    } else {		
 	gtk_text_buffer_get_iter_at_offset (buf, &iter, 0);
+    }
 
     if (*str != '\0') {
 	GtkTextIter match_start, match_end;
@@ -650,8 +654,15 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
 	    gtk_text_buffer_move_mark_by_name (buf, "selection_bound", &match_end);
 	    vis = gtk_text_buffer_create_mark (buf, "vis", &match_end, FALSE);
 	    gtk_text_view_scroll_to_mark (view, vis, 0.0, TRUE, 0.1, 0.0);
+	} else if (from_cursor && !wrapped) {
+	    /* try wrapping */
+	    from_cursor = FALSE;
+	    wrapped = TRUE;
+	    goto text_search_wrap;
 	}
     }
+
+    if (found && wrapped) infobox(_("Search wrapped"));
 
     return found;
 }
@@ -675,14 +686,18 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 
 static void find_in_listbox (GtkWidget *w, gpointer data)
 {
-    int found = 0;
+    int found = 0, wrapped = 0, minvar = 0;
     gchar *tmp, *pstr; 
     char haystack[MAXLEN];
     windata_t *win;
     GtkTreeModel *model;
-    GtkTreeIter iter, iterbak;
+    GtkTreeIter iter, iterhere;
 
     win = (windata_t *) g_object_get_data(G_OBJECT(data), "windat");
+    if (win == mdata) {
+	/* searching in the main gretl window: start on line 1, not 0 */
+	minvar = 1;
+    }
 
 #if 0
     fprintf(stderr, "find_in_listbox: win at %p, active_var = %d\n", 
@@ -694,11 +709,15 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
     lower(needle);
 
     model = gtk_tree_view_get_model (GTK_TREE_VIEW(win->listbox));
+
+    /* try searching downward from the current line plus one */
     pstr = g_strdup_printf("%d", win->active_var);
     gtk_tree_model_get_iter_from_string (model, &iter, pstr);
     g_free(pstr);
-    iterbak = iter;
-    if (!gtk_tree_model_iter_next(model, &iter)) iter = iterbak;
+    iterhere = iter;
+    if (!gtk_tree_model_iter_next(model, &iter)) iter = iterhere;
+
+ search_wrap:
 
     while (1) {
 	/* try looking in column 1 first */
@@ -717,8 +736,20 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 	if (found >= 0) break;
 	if (!gtk_tree_model_iter_next(model, &iter)) break;
     }
+
+    if (found < 0 && win->active_var > minvar && !wrapped) {
+	/* try wrapping to start */
+	gtk_tree_model_get_iter_first(model, &iter);
+	if (minvar > 0 && !gtk_tree_model_iter_next(model, &iter)) {
+	    ; /* do nothing: there's only one line in the box */
+	} else {
+	    wrapped = 1;
+	    goto search_wrap;
+	}
+    }
     
     if (found >= 0) {
+	if (wrapped) infobox(_("Search wrapped"));
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
 	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(win->listbox),

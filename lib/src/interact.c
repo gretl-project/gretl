@@ -530,7 +530,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     if (command->ci == AR) ar = 1;
 
-    command->list = realloc(command->list, (1 + nf) * sizeof(int));
+    command->list = realloc(command->list, (1 + nf) * sizeof *command->list);
     if (command->list == NULL) {
 	command->errcode = E_ALLOC;
 	strcpy (gretl_errmsg, _("Memory allocation failed for command list"));
@@ -575,7 +575,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 			return;
 		    } else { 
 			command->list[j] = pdinfo->v - 1;
-			if (cmds) {
+			if (cmds != NULL) {
 			    pprintf(cmds, "genr %s\n", 
 				    VARLABEL(pdinfo, pdinfo->v - 1));
 			}

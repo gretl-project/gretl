@@ -45,8 +45,8 @@ extern double **fullZ;
 
 /* ../cli/common.c */
 static int data_option (int flag);
-extern int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, PRN *prn);
+static int loop_exec_line (LOOPSET *plp, const int round, 
+			   const int cmdnum, PRN *prn, PRN *cmdprn);
 
 int gui_exec_line (char *line, 
 		   LOOPSET *plp, int *plstack, int *plrun, 
@@ -243,7 +243,7 @@ void clear_data (void)
     extern void clear_varlist (GtkWidget *widget);
 
     *paths.datfile = 0;
-    restore_sample(NULL, 0, NULL);
+    restore_sample();
     if (Z != NULL) free_Z(Z, datainfo); 
     clear_datainfo(datainfo, CLEAR_FULL);
     Z = NULL;
@@ -375,13 +375,13 @@ static void maybe_quote_filename (char *line, char *cmd)
 
 /* ........................................................... */
 
-gint cmd_init (char *line)
+gint cmd_init (char *cmdstr)
 {
     size_t len;
     PRN *echo;
 
 #ifdef CMD_DEBUG
-    fprintf(stderr, "cmd_init: got line: '%s'\n", line);
+    fprintf(stderr, "cmd_init: got cmdstr: '%s'\n", cmdstr);
     fprintf(stderr, "command.cmd: '%s'\n", command.cmd);
     fprintf(stderr, "command.param: '%s'\n", command.param);
 #endif
@@ -394,12 +394,12 @@ gint cmd_init (char *line)
     if (cmd_stack == NULL) return 1;
 
     if (command.ci == OPEN || command.ci == RUN) {
-	maybe_quote_filename(line, command.cmd);
+	maybe_quote_filename(cmdstr, command.cmd);
     }
 
     if (bufopen(&echo)) return 1;
 
-    echo_cmd(&command, datainfo, line, 0, 1, oflag, echo);
+    echo_cmd(&command, datainfo, cmdstr, 0, 1, oflag, echo);
 
     len = strlen(echo->buf);
     if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL)
@@ -429,9 +429,9 @@ static gint record_model_genr (char *line)
     size_t len = strlen(line);
 
     if (n_cmds == 0) 
-	cmd_stack = mymalloc(sizeof(char *));
+	cmd_stack = mymalloc(sizeof *cmd_stack);
     else 
-	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof(char *));
+	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
     if (cmd_stack == NULL) return 1;
 
     if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL)
@@ -1030,7 +1030,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 {
     int err = 0;
 
-    restore_sample(NULL, 0, NULL);
+    restore_sample();
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
 	return;
 
@@ -3374,7 +3374,9 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	/* get commands from file view buffer */
 	windata_t *mydata = (windata_t *) data;
 	gchar *buf = textview_get_text(GTK_TEXT_VIEW(mydata->w));
+#ifdef PGRAB
 	GdkCursor *plswait; 
+#endif
 
 	if (buf == NULL || !strlen(buf)) {
 	    errbox("No commands to execute");
@@ -3383,17 +3385,20 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	    return;
 	}
 
+#ifdef PGRAB
 	plswait = gdk_cursor_new(GDK_WATCH);
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK,
 			 NULL, plswait,
 			 GDK_CURRENT_TIME);
+#endif
 
 	err = execute_script(NULL, buf, prn, code);
 	g_free(buf);
-
+#ifdef PGRAB
 	gdk_cursor_destroy(plswait);
 	gdk_pointer_ungrab(GDK_CURRENT_TIME);
+#endif
     } else {
 	/* get commands from file */
 	err = execute_script(runfile, NULL, prn, code);
@@ -3525,7 +3530,8 @@ int maybe_restore_full_data (int action)
 	    }
 
 	    if (resp == GRETL_YES) {
-		restore_sample(NULL, 0, NULL);
+		restore_sample();
+		restore_sample_state(FALSE);
 	    } else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
 		return 1;
 	    }
@@ -3892,7 +3898,7 @@ int execute_script (const char *runfile, const char *buf,
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, prn)) {
+		    if (loop_exec_line(&loop, i, j, prn, NULL)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
 			j = MAXLOOP - 1;
 			i = loop.ntimes;
@@ -4059,28 +4065,18 @@ int gui_exec_line (char *line,
 
     /* parse the command line */
     *linecopy = 0;
-    strncat(linecopy, line, 1023);
+    strncat(linecopy, line, sizeof linecopy - 1);
     catchflag(line, &oflag);
 
     /* but if we're stacking commands for a loop, parse "lightly" */
     if (*plstack) { 
 	get_cmd_ci(line, &command);
     } else {
-	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
+	/* FIXME: record model-command "genr"s in case of CONSOLE_EXEC? */
+	getcmd(line, datainfo, &command, &ignore, &Z, NULL);
     }
 
-    if (command.ci == -2) { /* line was a comment, pass */
-#ifdef notdef
- 	cmds->fp = fopen(cmdfile, "a");
- 	if (cmds->fp) {
- 	    pprintf(cmds, "%s\n", linecopy);
- 	    fclose(cmds->fp);
- 	}
-#endif
-	return 0;
-    }
-
-    if (command.ci < 0) return 0; /* nothing there */
+    if (command.ci < 0) return 0; /* nothing there, or comment */
 
     if (command.errcode) {
         errmsg(command.errcode, prn);
@@ -4101,11 +4097,6 @@ int gui_exec_line (char *line,
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         } 
-	if (!echo_off) {
-	    /* FIXME? the echo here was causing horrible havoc with
-	       the store command in a loop */
-	    echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
-	}
 	if (command.ci != ENDLOOP) {
 	    if (add_to_loop(plp, line, command.ci, oflag)) {
 		pprintf(prn, _("Failed to add command to loop stack\n"));
@@ -4786,7 +4777,7 @@ int gui_exec_line (char *line,
 
     case SMPL:
 	if (oflag) {
-	    restore_sample(NULL, 0, NULL);
+	    restore_sample();
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) 
 		err = E_ALLOC;
 	    else 
@@ -4801,7 +4792,7 @@ int gui_exec_line (char *line,
 	    }
 	} 
 	else if (strcmp(line, "smpl full") == 0) {
-	    restore_sample(NULL, 0, NULL);
+	    restore_sample();
 	    restore_sample_state(FALSE);
 	    check = 1;
 	} else 
@@ -4915,8 +4906,8 @@ int gui_exec_line (char *line,
     } /* end of command switch */
 
     /* log the specific command? */
-    if (exec_code == CONSOLE_EXEC) {
-	if (!err) cmd_init(line);
+    if (exec_code == CONSOLE_EXEC && !err) {
+	cmd_init(line);
     }
 
     if ((is_model_cmd(command.cmd) || !strncmp(line, "end nls", 7))

@@ -2213,6 +2213,7 @@ int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo,
        then we stack the given model pointer and substitute a
        new blank model for the next use.
     */
+
     if (rebuilding) {
 	static int save;
 

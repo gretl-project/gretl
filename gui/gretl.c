@@ -68,6 +68,7 @@ static void set_up_main_menu (void);
 static void startR (gpointer p, guint opt, GtkWidget *w);
 static void auto_store (void);
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
+static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w);
 
 GtkWidget *toolbar_box = NULL; /* shared with settings.c */
 
@@ -126,7 +127,6 @@ double **fullZ;             /* convenience pointer */
 MODEL **models;             /* gretl models structs */
 
 int plot_count, data_status, orig_vars;
-PRN *cmds;
 gchar *clipboard_buf; /* for copying models as LaTeX */
 float gui_scale;
 
@@ -385,7 +385,7 @@ GtkItemFactoryEntry data_items[] = {
     /* Sample menu */
     { N_("/_Sample"), NULL, NULL, 0, "<Branch>" },
     { N_("/Sample/_Set range..."), NULL, gretl_callback, SMPL, NULL },
-    { N_("/Sample/_Restore full range"), NULL, restore_sample, 1, NULL },
+    { N_("/Sample/_Restore full range"), NULL, restore_sample_callback, 1, NULL },
     { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>" },    
     { N_("/Sample/Set _frequency, startobs..."), NULL, gretl_callback, 
       SETOBS, NULL },
@@ -638,12 +638,6 @@ int main (int argc, char *argv[])
 
     strcpy(cmdfile, paths.userdir);
     strcat(cmdfile, "session.inp");
-    cmds = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
-    if (cmds == NULL) {
-	fprintf(stderr, _("Can't open file to save commands\n"));
-	return EXIT_FAILURE;
-    }
-    fclose(cmds->fp);
 
     /* allocate data information struct */
     datainfo = datainfo_new();
@@ -1487,9 +1481,9 @@ static void check_for_extra_data (void)
 
 /* ........................................................... */
 
-void restore_sample (gpointer data, int verbose, GtkWidget *w)
+void restore_sample (void)
 {
-    int err = 0;
+    int err;
 
     err = restore_full_sample(&subZ, &fullZ, &Z,
 			      &subinfo, &fullinfo, &datainfo);
@@ -1497,6 +1491,12 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
 	gui_errmsg(err);
 	return;
     }
+}
+
+static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
+{
+    restore_sample();
+
     if (verbose) {
 	infobox(_("Full sample range restored"));
 	set_sample_label(datainfo);    

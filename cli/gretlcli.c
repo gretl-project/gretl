@@ -60,7 +60,7 @@ FREQDIST *freq;               /* struct for freq distributions */
 CMD command;                  /* struct for command characteristics */
 PATHS paths;                  /* useful paths */
 LOOPSET loop;                 /* struct for monte carlo loop */
-PRN *cmds;
+PRN *cmdprn;
 MODELSPEC *modelspec;
 MODEL tmpmod;
 FILE *dat, *fb;
@@ -82,8 +82,8 @@ char *line_read;
 gretl_equation_system *sys;
 
 void exec_line (char *line, PRN *prn); 
-extern int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, PRN *prn);
+static int loop_exec_line (LOOPSET *plp, const int round, 
+			   const int cmdnum, PRN *prn, PRN *cmdprn);
 
 void usage(void)
 {
@@ -299,8 +299,8 @@ int main (int argc, char *argv[])
     if (!batch) {
 	strcpy(cmdfile, paths.userdir);
 	strcat(cmdfile, "session.inp");
-	cmds = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
-	if (cmds == NULL) {
+	cmdprn = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
+	if (cmdprn == NULL) {
 	    printf(_("Can't open file to save commands\n"));
 	    return EXIT_FAILURE;
 	}
@@ -344,7 +344,7 @@ int main (int argc, char *argv[])
 	    }
 	    data_status = 1;
 	    if (!batch) 
-		pprintf(cmds, "open %s\n", paths.datfile);
+		pprintf(cmdprn, "open %s\n", paths.datfile);
 	}
     }
 
@@ -421,7 +421,7 @@ int main (int argc, char *argv[])
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, prn)) {
+		    if (loop_exec_line(&loop, i, j, prn, cmdprn)) {
 			printf(_("Error in command loop: aborting\n"));
 			j = MAXLOOP - 1;
 		    }
@@ -551,7 +551,7 @@ void exec_line (char *line, PRN *prn)
     if (loopstack) {
 	get_cmd_ci(line, &command);
     } else {
-	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
+	getcmd(line, datainfo, &command, &ignore, &Z, cmdprn);
     }
 
     /* if in batch mode, echo comments in input */
@@ -581,7 +581,7 @@ void exec_line (char *line, PRN *prn)
 	} else {
 	    if (!echo_off) 
 		echo_cmd(&command, datainfo, line, (batch || runit)? 1 : 0, 
-			 0, oflag, cmds);
+			 0, oflag, cmdprn);
 	    if (command.ci != ENDLOOP) {
 		if (add_to_loop(&loop, line, command.ci, oflag)) 
 		    printf(_("Failed to add command to loop stack\n"));
@@ -592,7 +592,7 @@ void exec_line (char *line, PRN *prn)
 
     if (!echo_off && command.ci != ENDLOOP) 
 	echo_cmd(&command, datainfo, line, (batch || runit)? 1 : 0, 0, 
-		 oflag, cmds);
+		 oflag, cmdprn);
 
 #ifdef notdef
      if (is_model_ref_cmd(command.ci) &&
@@ -1174,7 +1174,7 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	pprintf(prn, _("commands saved as %s\n"), cmdfile);
-	gretl_print_destroy(cmds);
+	gretl_print_destroy(cmdprn);
 	if (command.param[0] == 'x') break;
 	printf(_("type a filename to store output (enter to quit): "));
 	*outfile = '\0';
@@ -1379,9 +1379,11 @@ void exec_line (char *line, PRN *prn)
 	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
+#ifdef notyet
     case MVAVG:
 	err = ma_model(command.list, &Z, datainfo, prn);
 	break;
+#endif
 
     case VAR:
 	order = atoi(command.param);

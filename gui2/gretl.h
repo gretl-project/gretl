@@ -59,7 +59,6 @@ extern double **Z;
 extern DATAINFO *datainfo;
 extern PATHS paths; 
 extern CMD command;
-extern PRN *cmds;
 extern MODEL **models;
 
 /* global counters */
@@ -301,7 +300,7 @@ void set_sample_label (DATAINFO *pdinfo);
 
 void restore_sample_state (gboolean s); 
 
-void restore_sample (gpointer data, int verbose, GtkWidget *w);
+void restore_sample (void);
 
 void refresh_data (void);
 

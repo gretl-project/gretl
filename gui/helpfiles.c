@@ -655,7 +655,9 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 	gtk_editable_set_position(GTK_EDITABLE(vwin->w), found);
         gtk_editable_select_region(GTK_EDITABLE(vwin->w), 
 				   found, found + strlen(needle));
-    } else infobox(_("String was not found."));
+    } else {
+	infobox(_("String was not found."));
+    }
 
     g_free(haystack);
 }
@@ -664,42 +666,58 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 
 static void find_in_clist (GtkWidget *w, gpointer data)
 {
-    int start, found = 0, n, i;
+    int start, end, i;
+    int found = 0, wrapped = 0, minvar = 0;
     gchar *tmp; 
     char haystack[MAXLEN];
-    windata_t *dbdat;
+    windata_t *win;
 
-    dbdat = (windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
+    win = (windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
+    if (win == mdata) {
+	/* searching in the main gretl window: start on line 1, not 0 */
+	minvar = 1;
+    }
 
     if (needle) g_free(needle);
     needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
     lower(needle);
 
-    start = dbdat->active_var;
-    n = GTK_CLIST(dbdat->listbox)->rows;
+    start = win->active_var;
+    end = GTK_CLIST(win->listbox)->rows;
 
-    for (i=start; i<n; i++) {  
+ search_wrap: 
+
+    for (i=start; i<end; i++) {  
 	/* try looking in column 1 first */
-	gtk_clist_get_text(GTK_CLIST(dbdat->listbox), i, 1, &tmp);
+	gtk_clist_get_text(GTK_CLIST(win->listbox), i, 1, &tmp);
 	strcpy(haystack, tmp);
 	lower(haystack);
 	found = look_for_string(haystack, needle, 0);
 	if (found >= 0) break;
 	/* try column 0? */
-	gtk_clist_get_text(GTK_CLIST(dbdat->listbox), i, 0, &tmp);
+	gtk_clist_get_text(GTK_CLIST(win->listbox), i, 0, &tmp);
 	strcpy(haystack, tmp);
 	lower(haystack);
 	found = look_for_string(haystack, needle, 0);
 	if (found >= 0) break;
     }
 
+    if (found < 0 && win->active_var > minvar && !wrapped) {
+	/* try wrapping to start */
+	end = win->active_var;
+	start = minvar;
+	wrapped = 1;
+	goto search_wrap;
+    }    
+
     if (found >= 0) {
-	gtk_clist_moveto(GTK_CLIST(dbdat->listbox), i, 0, 0, .1);
-	gtk_clist_select_row(GTK_CLIST(dbdat->listbox), i, 0);
-	dbdat->active_var = i;
+	if (wrapped) infobox(_("Search wrapped"));
+	gtk_clist_moveto(GTK_CLIST(win->listbox), i, 0, 0, .1);
+	gtk_clist_select_row(GTK_CLIST(win->listbox), i, 0);
+	win->active_var = i;
     } else {
-	gtk_clist_select_row(GTK_CLIST(dbdat->listbox), 0, 0);
-	dbdat->active_var = 0;
+	gtk_clist_select_row(GTK_CLIST(win->listbox), 0, 0);
+	win->active_var = 0;
 	infobox(_("String was not found."));
     }
 }

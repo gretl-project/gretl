@@ -962,9 +962,11 @@ static void get_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 			 gint method)
 {
-    int t, p, pmax = 0, m0, q0, y0, skip = 0, endskip, goodobs;
+    int t, p, m0, q0, y0, skip = 0, endskip, goodobs;
     float q;
     double val = 0.;
+#ifdef LIMIT_DIGITS
+    int pmax = 0;
     char numstr[16];
 
     /* record the precision of the original data */
@@ -972,6 +974,7 @@ static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 	p = get_places(mvec[t]);
 	if (p > pmax) pmax = p;
     }
+#endif
 
     /* figure the quarterly dates */
     y0 = atoi(sinfo->stobs);
@@ -983,6 +986,7 @@ static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 	y0++;
 	q0 = 1;
     }
+
     fprintf(stderr, "startskip = %d\n", skip);
     endskip = (sinfo->nobs - skip) % 3;
     fprintf(stderr, "endskip = %d\n", endskip);
@@ -1005,10 +1009,16 @@ static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 	    val = mvec[p-1+skip];
 	else if (method == COMPACT_SOP)
 	    val = mvec[p-3+skip];
+	/* do we want to limit the precision of the compacted
+	   data to that of the original data? */
+#ifdef LIMIT_DIGITS
 	sprintf(numstr, "%.*f", pmax, val);
 	(*pq)[t] = atof(numstr);
-	/*  printf("qvec[%d] = %f\n", t, (*pq)[t]); */
+#else
+	(*pq)[t] = val;
+#endif
     }
+
     sinfo->pd = 4;
     return 0;
 }

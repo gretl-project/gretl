@@ -36,8 +36,8 @@ extern double **fullZ;
 
 /* ../cli/common.c */
 static int data_option (int flag);
-extern int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, PRN *prn);
+static int loop_exec_line (LOOPSET *plp, const int round, 
+			   const int cmdnum, PRN *prn, PRN *cmdprn);
 
 int gui_exec_line (char *line, 
 		   LOOPSET *plp, int *plstack, int *plrun, 
@@ -235,7 +235,7 @@ void clear_data (int full)
 
     if (full) 
 	clear(paths.datfile, MAXLEN);
-    restore_sample(NULL, 0, NULL);
+    restore_sample();
     if (Z != NULL) free_Z(Z, datainfo); 
     clear_datainfo(datainfo, CLEAR_FULL);
     Z = NULL;
@@ -1023,7 +1023,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 {
     int err = 0;
 
-    restore_sample(NULL, 0, NULL);
+    restore_sample();
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
 	return;
 
@@ -3591,7 +3591,8 @@ int maybe_restore_full_data (int action)
 	    }
 
 	    if (resp == GRETL_YES) {
-		restore_sample(NULL, 0, NULL);
+		restore_sample();
+		restore_sample_state(FALSE);
 	    } else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
 		return 1;
 	    }
@@ -3884,7 +3885,7 @@ int execute_script (const char *runfile, const char *buf,
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, prn)) {
+		    if (loop_exec_line(&loop, i, j, prn, NULL)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
 			j = MAXLOOP - 1;
 			i = loop.ntimes;
@@ -4049,21 +4050,10 @@ int gui_exec_line (char *line,
     if (*plstack) { 
 	get_cmd_ci(line, &command);
     } else {
-	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
+	getcmd(line, datainfo, &command, &ignore, &Z, cmdprn);
     }
 
-    if (command.ci == -2) { /* line was a comment, pass */
-#ifdef notdef
- 	cmds->fp = fopen(cmdfile, "a");
- 	if (cmds->fp) {
- 	    pprintf(cmds, "%s\n", linecopy);
- 	    fclose(cmds->fp);
- 	}
-#endif
-	return 0;
-    }
-
-    if (command.ci < 0) return 0; /* nothing there */
+    if (command.ci < 0) return 0; /* nothing there, or comment */
 
     if (command.errcode) {
         errmsg(command.errcode, prn);
@@ -4084,9 +4074,6 @@ int gui_exec_line (char *line,
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         } 
-	if (!echo_off) {
-	    echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
-	}
 	if (command.ci != ENDLOOP) {
 	    if (add_to_loop(plp, line, command.ci, oflag)) {
 		pprintf(prn, _("Failed to add command to loop stack\n"));
@@ -4762,7 +4749,7 @@ int gui_exec_line (char *line,
 
     case SMPL:
 	if (oflag) {
-	    restore_sample(NULL, 0, NULL);
+	    restore_sample();
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
 		err = E_ALLOC;
 	    }
@@ -4779,7 +4766,7 @@ int gui_exec_line (char *line,
 	    }
 	} 
 	else if (strcmp(line, "smpl full") == 0) {
-	    restore_sample(NULL, 0, NULL);
+	    restore_sample();
 	    restore_sample_state(FALSE);
 	    check = 1;
 	} else {
