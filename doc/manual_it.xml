@@ -13,6 +13,7 @@
 <!ENTITY starting SYSTEM "chapters_it/starting.xml">
 <!ENTITY modes SYSTEM "chapters_it/modes.xml">
 <!ENTITY datafiles SYSTEM "chapters_it/datafiles.xml">
+<!ENTITY genr SYSTEM "chapters_it/genr.xml">
 <!ENTITY panel SYSTEM "chapters_it/panel.xml">
 <!ENTITY sampling SYSTEM "chapters_it/sampling.xml">
 <!ENTITY graphs SYSTEM "chapters_it/graphs.xml">
@@ -57,11 +58,11 @@
     <graphic fileref="figures/gretl-logo"/>
     
     <copyright>
-      <year>2001&ndash;2004</year>
+      <year>2001&ndash;2005</year>
       <holder>Allin Cottrell</holder>
     </copyright>
 
-    <date>Ottobre 2004</date>
+    <date>Gennaio 2005</date>
 
     <legalnotice id="legalnotice">
       <para>
@@ -83,6 +84,7 @@
   &starting;
   &modes;
   &datafiles;
+  &genr;
   &sampling;
   &panel;
   &graphs;
