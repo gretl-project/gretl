@@ -363,7 +363,7 @@ if test "$have_gtk" = "2.0" ; then
 fi
 
 dnl ...and try for gtksourceview flags, unless prohibited
-if test "$have_gtk" = "2.0" && "$try_sourceview" = "yes" ; then
+if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
      PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
      have_gtksourceview="yes"
      AC_DEFINE(USE_GTKSOURCEVIEW),
