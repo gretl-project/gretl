@@ -75,3 +75,4 @@
 "ps11-3","exponential smoothing","workforce"
 "ps12-1","logit model","women in labor force"
 "ps13-1","Two-stage Least Squares","macro system"
+"pscoin","Johansen cointegration test","prices & exchange rate"
