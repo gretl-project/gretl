@@ -19,6 +19,8 @@
 
 /* generate.c for gretl */
 
+#define GENR_DEBUG
+
 #include "libgretl.h"
 #include "internal.h"
 
@@ -39,8 +41,8 @@ static int _whichtrans (const char *ss);
 static int _normal_dist (double *a, const int t1, const int t2); 
 static void _uniform (double *a, const int t1, const int t2);
 static int _createvar (double *xxvec, char *snew, char *sleft, 
-		       char *sright, int nv, int nvtmp, double ***pZ, 
-		       DATAINFO *pdinfo);
+		       char *sright, int ssnum, double ***pZ, 
+		       DATAINFO *pdinfo, int scalar);
 static void _genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *pgenr,
 		       double *mystack, double *mvec, const int nv);
 static void _lag (const char *ss, const int vi, double *xmvec, double **Z, 
@@ -589,6 +591,9 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
     }
 
     while ((ls = strlen(s)) > 0) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, "s='%s'\n", s);
+#endif
 	for (i=t1; i<=t2; i++) mvec[i] = genr.xvec[i] = 0.;
 	indx1 = strrchr(s, '('); /* point to last '('  */
 	if (indx1 == NULL) { /* no parenthesis  */
@@ -648,7 +653,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
         } else { /* indx1 != NULL */
             nright1 = strlen(indx1);    /* no. of characters to right of ( */
             nleft1 = ls - nright1;      /* no. of characters before ( */
-            strncpy (sleft, s, nleft1); /*string to left of (  */
+            strncpy(sleft, s, nleft1);  /*string to left of (  */
             strcpy(sleft + nleft1, "\0");
             /* calculate equation inside parenthesis */
             strcpy(sright, indx1);         /*string to right of ( */
@@ -686,7 +691,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		/* create new temporary variable and var string here */
                 strcpy(sright, indx2);
 		ig = _createvar(genr.xvec, snew, sleft, sright, 
-				nv, nvtmp, pZ, pdinfo);
+				nv + nvtmp, pZ, pdinfo, genr.scalar);
 		if (ig != 0) {
 		    genr.errcode = E_UNSPEC;
 		    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -754,8 +759,9 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			}
-			for (i=t1; i<=t2; i++) 
-			    genr.xvec[i] = pmod->rhot[vi]; 
+			for (i=0; i<n; i++) 
+			    genr.xvec[i] = pmod->rhot[vi];
+			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_NORMAL) {
@@ -834,17 +840,24 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			}
-			if (nt == T_COEFF && pmod->coeff != NULL) 
-			    for (i=t1; i<=t2; i++) 
+			if (nt == T_COEFF && pmod->coeff != NULL) { 
+			    for (i=0; i<n; i++) 
 				genr.xvec[i] = pmod->coeff[vi-1];
-			else if (pmod->sderr != NULL)
-			    for (i=t1; i<=t2; i++) 
+#ifdef GENR_DEBUG
+			    fprintf(stderr, "got coeff=%g\n", pmod->coeff[vi-1]);
+#endif
+			} else if (pmod->sderr != NULL) {
+			    for (i=0; i<n; i++) 
 				genr.xvec[i] = pmod->sderr[vi-1];
-			else {
+			} else {
 			    genr.errcode = E_INVARG;
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			}
+#ifdef GENR_DEBUG
+			fprintf(stderr, "setting scalar=1\n");
+#endif
+			genr.scalar = 1;
 			break;
 		    } else {
 			ig = _evalexp(sexpr, mvec, genr.xvec, 
@@ -883,7 +896,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
                 strcpy(sright, indx2);
 		/* create temp var */
 		ig = _createvar(genr.xvec, snew, sleft, sright, 
-				nv, nvtmp, pZ, pdinfo);
+				nv + nvtmp, pZ, pdinfo, genr.scalar);
                 strcpy(s, snew);
             } /* end of if (iw == 0) */
         }  /* end of if (indx1=='\0') loop */
@@ -915,7 +928,7 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 	for (i=t1; i<=t2; i++) xstack[i] = xxvec[i];
 	break;
     case '+':
-	for (i=t1; i<=t2; i++) xstack[i] = xstack[i] + xxvec[i];
+	for (i=t1; i<=t2; i++) xstack[i] += xxvec[i];
 	break;
     case '|':
 	for (i=t1; i<=t2; i++) {
@@ -924,10 +937,10 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 	}
 	break;
     case '-':
-	for (i=t1; i<=t2; i++) xstack[i] = xstack[i] - xxvec[i];
+	for (i=t1; i<=t2; i++) xstack[i] -= xxvec[i];
 	break;
     case '*':
-	for (i=t1; i<=t2; i++) xstack[i] = xstack[i] * xxvec[i];
+	for (i=t1; i<=t2; i++) xstack[i] *= xxvec[i];
 	break;
     case '&':
 	for (i=t1; i<=t2; i++) {
@@ -947,7 +960,7 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 		free(st2);
 		return 1;
 	    }
-	    xstack[i] = xstack[i]/xx;
+	    xstack[i] /= xx;
 	}
 	break;
     case '^':
@@ -1431,9 +1444,16 @@ static int _getxvec (char *ss, double *xxvec,
 		}
 	    } else
 		for (i=0; i<n; i++) xxvec[i] = (double) (i + 1);
-	} else 
+	} else {
 	    for (i=0; i<n; i++) 
-		xxvec[i] = (pdinfo->vector[v1])? Z[v1][i] : Z[v1][0] ;
+		xxvec[i] = (pdinfo->vector[v1])? Z[v1][i] : Z[v1][0];
+	    if (pdinfo->vector[v1]) {
+#ifdef GENR_DEBUG
+		fprintf(stderr, "setting scalar=0\n");
+#endif
+		*scalar = 0;
+	    }
+	}
 	break;
 
     case 'u':  return 1;
@@ -1871,20 +1891,24 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 /* ........................................................ */
 
 static int _createvar (double *xxvec, char *snew, char *sleft, 
-		       char *sright, int nv, int nvtmp, double ***pZ, 
-		       DATAINFO *pdinfo)
+		       char *sright, int ssnum, double ***pZ, 
+		       DATAINFO *pdinfo, int scalar)
 {
     static char ss[10];
     int mv, t1 = pdinfo->t1, t2 = pdinfo->t2;
     register int t;
 
-    sprintf(ss, "q#$%d", nv + nvtmp); 
+    sprintf(ss, "q#$%d", ssnum); 
     mv = varindex(pdinfo, ss);
 
     if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     strcpy(pdinfo->varname[mv], ss);
-    for (t=t1; t<=t2; t++) (*pZ)[mv][t] = xxvec[t];
+    if (scalar) {
+	pdinfo->vector[mv] = 0;
+	for (t=0; t<pdinfo->n; t++) (*pZ)[mv][t] = xxvec[t];
+    } else
+	for (t=t1; t<=t2; t++) (*pZ)[mv][t] = xxvec[t];
     /* return a new string with the temporary variable name in
        place of the calculated expression */
     strcpy(snew, sleft);
@@ -2356,9 +2380,10 @@ static double _genr_vcv (const char *str, double ***pZ,
 
 static void _genr_msg (GENERATE *pgenr, const int nv)
 {
-	sprintf(pgenr->msg, "%s var. no. %d (%s)\n", 
+	sprintf(pgenr->msg, "%s %s %s (ID %d)\n", 
 		(pgenr->varnum < nv)? "Replaced" : "Generated", 
-		 pgenr->varnum, pgenr->varname);
+		(pgenr->scalar)? "scalar" : "vector",
+		 pgenr->varname, pgenr->varnum);
 }
 
 /* ......................................................  */

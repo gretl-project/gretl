@@ -2294,57 +2294,54 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 void add_model_stat (MODEL *pmod, const int which)
 {
     char vname[9], vlabel[MAXLABEL], cmdstr[MAXLEN];
-    int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
+    int i, n;
 
-    if (dataset_add_vars(1, &Z, datainfo)) {
+    if (dataset_add_scalar(&Z, datainfo)) {
 	errbox("Out of memory attempting to add variable");
 	return;
     }
+
     i = datainfo->v - 1;
     n = datainfo->n;
-
-    for (t=0; t<t1; t++) Z[i][t] = NADBL;
-    for (t=t2+1; t<n; t++) Z[i][t] = NADBL;
 
     switch (which) {
     case ESS:
 	sprintf(vname, "ess_%d", pmod->ID);
 	sprintf(vlabel, "error sum of squares from model %d", 
 		pmod->ID);
-	for (t=t1; t<=t2; t++) Z[i][t] = pmod->ess;
+	Z[i][0] = pmod->ess;
 	sprintf(cmdstr, "genr ess_%d = $ess", pmod->ID);
 	break;
     case R2:
 	sprintf(vname, "r2_%d", pmod->ID);
 	sprintf(vlabel, "R-squared from model %d", pmod->ID);
-	for (t=t1; t<=t2; t++) Z[i][t] = pmod->rsq;
+	Z[i][0] = pmod->rsq;
 	sprintf(cmdstr, "genr r2_%d = $rsq", pmod->ID);
 	break;
     case TR2:
 	sprintf(vname, "trsq%d", pmod->ID);
 	sprintf(vlabel, "T*R-squared from model %d", pmod->ID);
-	for (t=t1; t<=t2; t++) Z[i][t] = pmod->nobs * pmod->rsq;
+	Z[i][0] = pmod->nobs * pmod->rsq;
 	sprintf(cmdstr, "genr trsq%d = $trsq", pmod->ID);
 	break;
     case DF:
 	sprintf(vname, "df_%d", pmod->ID);
 	sprintf(vlabel, "degrees of freedom from model %d", 
 		pmod->ID);
-	for (t=t1; t<=t2; t++) Z[i][t] = (double) pmod->dfd;
+	Z[i][0] = (double) pmod->dfd;
 	sprintf(cmdstr, "genr df_%d = $df", pmod->ID);
 	break;
     case SIGMA:
 	sprintf(vname, "sgma_%d", pmod->ID);
 	sprintf(vlabel, "std err of residuals from model %d", 
 		pmod->ID);
-	for (t=t1; t<=t2; t++) Z[i][t] = pmod->sigma;
+	Z[i][0] = pmod->sigma;
 	sprintf(cmdstr, "genr sgma_%d = $sigma", pmod->ID);
 	break;
     }
 
     strcpy(datainfo->varname[i], vname);
     strcpy(datainfo->label[i], vlabel);
-    datainfo->vector[i] = 0;
     populate_clist(mdata->listbox, datainfo);
     check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);

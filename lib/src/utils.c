@@ -1305,6 +1305,47 @@ int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
+int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
+{
+    double **newZ;
+    char **varname;
+    char **label;
+    char *vector;
+    int n = pdinfo->n, v = pdinfo->v;    
+
+    newZ = realloc(*pZ, (v + 1) * sizeof *newZ);  
+    if (newZ == NULL) return E_ALLOC;
+    newZ[v] = malloc(n * sizeof **newZ);
+    if (newZ[v] == NULL) return E_ALLOC;
+    *pZ = newZ;
+
+    varname = realloc(pdinfo->varname, (v + 1) * sizeof(char *));
+    if (varname == NULL) return E_ALLOC;
+    else pdinfo->varname = varname;
+    pdinfo->varname[v] = malloc(9);
+    if (pdinfo->varname[v] == NULL) return E_ALLOC;
+    pdinfo->varname[v][0] = '\0';
+
+    if (pdinfo->label != NULL) {
+	label = realloc(pdinfo->label, (v + 1) * sizeof(char *));
+	if (label == NULL) return E_ALLOC;
+	else pdinfo->label = label;
+	pdinfo->label[v] = malloc(MAXLABEL);
+	if (pdinfo->label[v] == NULL) return E_ALLOC;
+	pdinfo->label[v][0] = '\0';
+    }
+
+    vector = realloc(pdinfo->vector, (v + 1));
+    if (vector == NULL) return E_ALLOC;
+    else pdinfo->vector = vector;
+    pdinfo->vector[v] = 0;
+
+    pdinfo->v += 1;
+    return 0;
+}
+
+/* ......................................................  */
+
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;

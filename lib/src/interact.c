@@ -485,7 +485,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    return;
 	}
 
-	if (command->ci != PRINT && pdinfo->vector[command->list[j]] == 0) {
+	if (command->ci != PRINT && command->ci != STORE
+	    && pdinfo->vector[command->list[j]] == 0) {
 	    command->errcode = 1;
 	    sprintf(gretl_errmsg, 
 		    "variable %s is a scalar", field);
@@ -695,7 +696,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     
 int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 {
-    int t, isconst = 1, n = pdinfo->n, v = genr->varnum;
+    int t, n = pdinfo->n, v = genr->varnum;
     double xx;
 
     if (genr->special) return 0;
@@ -703,24 +704,17 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     if (v >= pdinfo->v) {
 	if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 	strcpy(pdinfo->varname[v], genr->varname);
-	strcpy(pdinfo->label[v], genr->label);
-    } else {
-	strcpy(pdinfo->label[v], genr->label);
-    }
+    } 
+
+    strcpy(pdinfo->label[v], genr->label);
     pdinfo->vector[v] = !genr->scalar;
     xx = genr->xvec[pdinfo->t1];
-    for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) {
-	if (xx != genr->xvec[t]) {
-	    isconst = 0;
-	    break;
-	}
-    }
 
     if (genr->scalar) {
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = genr->xvec[0];
     } else {
-	if (isconst) {
+	if (_isconst(pdinfo->t1, pdinfo->t2, genr->xvec)) {
 	    for (t=0; t<n; t++) (*pZ)[v][t] = xx;
 	} else {
 	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
