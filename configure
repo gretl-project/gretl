@@ -14841,7 +14841,7 @@ _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-                                                                                                                                                                                                                                                ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gretl.pc gui/Makefile gui/debug gui/gtkextra-lite/Makefile gui2/Makefile gui2/debug gui2/gtkextra-lite/Makefile gui2/omf-install/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile minpack/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile redhat/gretl.spec"
+                                                                                                                                                                                                                                      ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gretl.pc gui/Makefile gui/debug gui/gtkextra-lite/Makefile gui2/Makefile gui2/debug gui2/gtkextra-lite/Makefile gui2/omf-install/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile redhat/gretl.spec"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -15399,7 +15399,6 @@ do
   "cli/debug" ) CONFIG_FILES="$CONFIG_FILES cli/debug" ;;
   "lib/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
   "plugin/Makefile" ) CONFIG_FILES="$CONFIG_FILES plugin/Makefile" ;;
-  "minpack/Makefile" ) CONFIG_FILES="$CONFIG_FILES minpack/Makefile" ;;
   "po/Makefile.in" ) CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
   "share/Makefile" ) CONFIG_FILES="$CONFIG_FILES share/Makefile" ;;
   "share/bcih/Makefile" ) CONFIG_FILES="$CONFIG_FILES share/bcih/Makefile" ;;

@@ -539,7 +539,6 @@ cli/Makefile
 cli/debug
 lib/Makefile 
 plugin/Makefile
-minpack/Makefile
 po/Makefile.in 
 share/Makefile
 share/bcih/Makefile

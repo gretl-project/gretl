@@ -74,6 +74,7 @@ typedef enum {
     MPOLS,
     MULTIPLY,
     MVAVG,
+    NLS,
     NOECHO,
     NULLDATA,
     OLS,     

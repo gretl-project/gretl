@@ -242,9 +242,10 @@ typedef struct {
     double *slope;               /* for nonlinear models */
     int errcode;                 /* Error code in case of failure */
     char *name;
+    char **params;               /* for named model parameters */
     int ntests;
     GRETLTEST *tests;
-    void *data;                   /* pointer for use in re. missing data */
+    void *data;                  /* pointer for use in re. missing data */
 } MODEL;
 
 typedef struct {
@@ -345,6 +346,7 @@ typedef struct {
 #include "subsample.h"
 #include "calendar.h"
 #include "system.h"
+#include "nls.h"
 #ifdef OS_WIN32
 # include "gretl_win32.h"
 #endif

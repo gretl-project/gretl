@@ -50,29 +50,32 @@ LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
 
 libsrc  = $(topsrc)/lib/src
 cephessrc = $(topsrc)/cephes
-VPATH = $(libsrc):$(cephessrc)
+minpacksrc = $(topsrc)/minpack
+VPATH = $(libsrc):$(cephessrc):$(minpacksrc)
 
 SRCS = calendar.c compare.c dataio.c describe.c discrete.c \
 	estimate.c generate.c graphing.c gretl_errors.c \
-	gretl_utils.c interact.c modelprint.c monte_carlo.c nonparam.c \
+	gretl_utils.c interact.c modelprint.c monte_carlo.c nls.c nonparam.c \
 	printout.c pvalues.c random.c strutils.c subsample.c system.c \
 	texprint.c var.c 
 
 HDRS = libgretl.h gretl_commands.h estimate.h gretl_utils.h gretl_errors.h pvalues.h \
 	random.h compare.h dataio.h generate.h strutils.h describe.h \
 	printout.h modelprint.h version.h texprint.h var.h interact.h graphing.h \
-	monte_carlo.h nonparam.h discrete.h subsample.h system.h calendar.h \
-	internal.h ../cephes/libprob.h
+	monte_carlo.h nonparam.h discrete.h subsample.h system.h nls.h calendar.h \
+	internal.h ../cephes/libprob.h ../minpack/minpack.h
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c drand.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
 	   mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c polevl.c \
 	   stdtr.c unity.c 
 
+MINPACK_SRC = dpmpar.c enorm.c lmder.c lmder1.c lmpar.c qrfac.c qrsolv.c
+
 OBJS = $(SRCS:.c=.o)
 LOBJS = $(SRCS:.c=.lo)
-CEPHES_OBJ = $(CEPHES_SRC:.c=.o)
-CEPHES_LOBJ = $(CEPHES_SRC:.c=.lo)
+AUX_OBJ = $(CEPHES_SRC:.c=.o) $(MINPACK_SRC:.c=.o)
+AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 
 LIBTOOL = ../libtool
 
@@ -84,8 +87,8 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 	$(COMPILE) $<
 	$(CC) -MM -MG -I$(libsrc) $< > $*.d 2>/dev/null
 
-$(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ) $(CEPHES_LOBJ)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_LOBJ) \
+$(LIBGRETL): $(OBJS) $(LOBJS) $(AUX_OBJ) $(AUX_LOBJ)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
 	-rpath $(prefix)/lib $(LIBS) -version-info 0:7:0
 
 -include $(OBJS:.o=.d)

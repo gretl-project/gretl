@@ -771,7 +771,19 @@ void exec_line (char *line, PRN *prn)
 	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
 	    if (err) errmsg(err, prn);
 	    sys = NULL;
-	} else {
+	} 
+	else if (!strcmp(command.param, "nls")) {
+	    clear_model(models[0], NULL);
+	    *models[0] = nls(&Z, datainfo, prn);
+	    if ((err = (models[0])->errcode)) {
+		errmsg(err, prn);
+		break;
+	    }
+	    ++model_count;
+	    (models[0])->ID = model_count;
+	    printmodel(models[0], datainfo, prn);
+	} 
+	else {
 	    err = 1;
 	}
 	break;
@@ -1065,6 +1077,10 @@ void exec_line (char *line, PRN *prn)
 	    pputs(prn, _("Enter commands for loop.  "
 		   "Type 'endloop' to get out\n"));
 	loopstack = 1; 
+	break;
+
+    case NLS:
+	err = nls_parse_line(line, (const double **) Z, datainfo);
 	break;
 
     case NOECHO:

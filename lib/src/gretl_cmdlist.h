@@ -76,6 +76,7 @@ char *gretl_commands[] = {
     "mpols",
     "multiply",
     "mvavg",
+    "nls",
     "noecho",
     "nulldata",
     "ols",     

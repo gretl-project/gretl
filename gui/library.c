@@ -4338,7 +4338,19 @@ static int gui_exec_line (char *line,
 	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
 	    if (err) errmsg(err, prn);
 	    sys = NULL;
-	} else {
+	} 
+	else if (!strcmp(command.param, "nls")) {
+	    clear_model(models[0], NULL);
+	    *models[0] = nls(&Z, datainfo, prn);
+	    if ((err = (models[0])->errcode)) {
+		errmsg(err, prn);
+		break;
+	    }
+	    ++model_count;
+	    (models[0])->ID = model_count;
+	    /* printmodel(models[0], datainfo, prn); */
+	} 
+	else {
 	    err = 1;
 	}
 	break;
@@ -4639,6 +4651,10 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	*plstack = 1; 
+	break;
+
+    case NLS:
+	err = nls_parse_line(line, (const double **) Z, datainfo);
 	break;
 
     case NOECHO:

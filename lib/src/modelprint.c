@@ -461,6 +461,7 @@ const char *estimator_string (int ci, int format)
     else if (ci == PROBIT) return N_("Probit");
     else if (ci == LOGIT) return N_("Logit");
     else if (ci == POOLED) return N_("Pooled OLS");
+    else if (ci == NLS) return N_("NLS");
     else if (ci == CORC) {
 	if (TEX_FORMAT(format)) return N_("Cochrane--Orcutt");
 	else return N_("Cochrane-Orcutt");
@@ -763,6 +764,12 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "%s: %s\n", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
+    }
+    else if (pmod->ci == NLS) {
+	if (tex) tex_escape(vname, pmod->params[0]);
+	pprintf(prn, "%s: %s\n", 
+		(utf)? _("Dependent variable") : I_("Dependent variable"),
+		(tex)? vname : pmod->params[0]);
     }
     else { 
 	/* ordinary dependent variable */
@@ -1150,7 +1157,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }
 
-    if (!pmod->ifc && PLAIN_FORMAT(prn->format)) noconst(prn);
+    if (!pmod->ifc && pmod->ci != NLS && PLAIN_FORMAT(prn->format)) 
+	noconst(prn);
     
     if (pmod->aux == AUX_WHITE) { 
 	rsqline(pmod, prn);
@@ -1159,7 +1167,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
-	|| pmod->ci == HCCM || pmod->ci == POOLED 
+	|| pmod->ci == HCCM || pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| (pmod->ci == WLS && pmod->wt_dummy)) {
 	print_middle_table_start(prn);
@@ -1170,7 +1178,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	}
 
 	rsqline(pmod, prn);
-	Fline(pmod, prn);
+	if (pmod->ci != NLS) Fline(pmod, prn);
 
 	if (dataset_is_time_series(pdinfo)) {
 	    if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
@@ -1357,6 +1365,8 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* special treatment for ARCH model coefficients */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
+    } else if (pmod->ci == NLS) {
+	strcpy(varname, pmod->params[c-1]);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }

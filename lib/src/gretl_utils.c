@@ -1124,6 +1124,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->arinfo = NULL;
     pmod->slope = NULL;
     pmod->name = NULL;
+    pmod->params = NULL;
     pmod->ntests = 0;
     pmod->tests = NULL;
     pmod->data = NULL;
@@ -1239,14 +1240,15 @@ void debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->xpx = %p\n"
 	    " pmod->vcv = %p\n"
 	    " pmod->name = %p\n"
+	    " pmod->params = %p\n"
 	    " pmod->arinfo = %p\n"
 	    " pmod->slope = %p\n"
 	    " pmod->tests = %p\n"
 	    " pmod->data = %p\n", msg,
 	    pmod, pmod->list, pmod->subdum, pmod->coeff,
 	    pmod->sderr, pmod->yhat, pmod->uhat, pmod->xpx,
-	    pmod->vcv, pmod->name, pmod->arinfo, pmod->slope,
-	    pmod->tests, pmod->data);
+	    pmod->vcv, pmod->name, pmod->params, pmod->arinfo, 
+	    pmod->slope, pmod->tests, pmod->data);
 }
 
 /* .......................................................... */
@@ -1273,6 +1275,14 @@ void clear_model (MODEL *pmod, DATAINFO *pdinfo)
 	    if (pmod->slope) free(pmod->slope);
 	}
 	if (pmod->ntests) free(pmod->tests);
+	if (pmod->params) {
+	    int i;
+
+	    for (i=0; i<=pmod->ncoeff; i++) {
+		free(pmod->params[i]);
+	    }
+	    free(pmod->params);
+	}
 	if (pmod->data) {
 	    MISSOBS *mobs = (MISSOBS *) pmod->data;
 	    free(mobs->missvec);

@@ -28,8 +28,8 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli $(GUIDIR) plugin minpack po
-ALLSUBDIRS = lib cli gui gui2 plugin minpack po share tests
+SUBDIRS = lib cli $(GUIDIR) plugin po
+ALLSUBDIRS = lib cli gui gui2 plugin po share tests
 
 .PHONY :
 

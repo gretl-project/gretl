@@ -218,3 +218,6 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     return err;
 }
 
+
+
+

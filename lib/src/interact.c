@@ -117,6 +117,14 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 
 /* ........................................................... */
 
+int subsetted_command (const char *cmd)
+{    
+    if (strcmp(cmd, "deriv") == 0) return NLS;
+    return 0;
+}
+
+/* ........................................................... */
+
 int command_number (const char *cmd)
 {    
     int i;
@@ -200,6 +208,7 @@ static int aliased (char *cmd)
                        c == RESET || \
                        c == SYSTEM || \
                        c == LEVERAGE || \
+                       c == NLS || \
 	               c == GENR)
 
 /* ........................................................... */
@@ -250,6 +259,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     char field[10], *remainder;
     LAGVAR lagvar;
 
+    command->ci = 0;
     command->errcode = 0;
     gretl_errmsg[0] = '\0';
     command->nolist = 0;
@@ -283,12 +293,18 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	strcpy(command->param, "x");
     }
 
-    /* trap bogus commands */    
-    if ((command->ci = command_number(command->cmd)) == 0) {
-	command->errcode = 1;
-	sprintf(gretl_errmsg, _("command '%s' not recognized"), 
-		command->cmd);
-	return;
+    /* subsetted commands (e.g. "deriv" in relation to "nls") */
+    command->ci = subsetted_command(command->cmd);
+
+    /* trap bogus commands */ 
+    if (command->ci == 0) {
+	command->ci = command_number(command->cmd);
+	if (command->ci == 0) {
+	    command->errcode = 1;
+	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
+		    command->cmd);
+	    return;
+	}
     }
 
     /* if, else, endif controls */
