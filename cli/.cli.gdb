@@ -1,2 +1,2 @@
-set args -b /home/allin/foo.inp
+set args -b greene14_2.inp
 run

@@ -922,14 +922,6 @@ grab_eigenvals (const double **X, const double **Y, const double **Z,
     return err;
 }
 
-static int inverse_compare_doubles (const void *a, const void *b)
-{
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
-
-    return (*da < *db) - (*da > *db);
-}
-
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn)
 {
@@ -1045,14 +1037,13 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 #endif
 
-	/* now get LAPACK to find the eigenvalues (put into v) */
+	/* now get LAPACK to find the sorted eigenvalues */
 	evals = malloc(k * sizeof *evals);
 	err = grab_eigenvals((const double **) Suu, 
 			     (const double **) Svv, 
 			     (const double **) Suv, k, evals);
 
 	if (!err) {
-	    qsort(evals, k, sizeof *evals, inverse_compare_doubles);
 	    pprintf(prn, "%s\n\n", _("Johansen eigenvalues"));
 	    for (i=0; i<k; i++) {
 		pprintf(prn, "lambda %d = ", i + 1);
