@@ -172,6 +172,7 @@ double date (int nt, int pd, const double sd0)
 
     if (pd == 1) 
 	return ((double) (ysd + nt));  
+
     pp = (nt) % pd + _pdton(pd) * (sd0 - ysd) + .5;
     if (pp != pd)  {
         yy = ysd + (nt)/pd  + (pp/pd) + .5;
@@ -180,7 +181,9 @@ double date (int nt, int pd, const double sd0)
         yy = ysd + (nt)/pd + .5;
         yp = pp;
     }
+
     dd = (pd < 10)? 0.1: 0.01;
+
     return (yy + yp * dd);
 }
 
@@ -301,8 +304,8 @@ int _iszero (int t1, int t2, const double *x)
         xx = x[t];
         sum = sum + xx*xx;
     }
-    if (floateq(sum, 0.0)) return 1;
-    else return 0;
+
+    return floateq(sum, 0.0);
 }
 
 /**
@@ -328,7 +331,9 @@ int _isconst (int t1, int t2, const double *x)
     int t;
     double xx = x[t1];
 
-    for (t=t1+1; t<=t2; t++) if (floatneq(x[t], xx)) return 0;
+    for (t=t1+1; t<=t2; t++) {
+	if (floatneq(x[t], xx)) return 0;
+    }
     return 1;
 }
 
@@ -430,8 +435,8 @@ double _esl_stddev (int t1, int t2, const double *x)
     double xx;
 
     xx = _esl_variance(t1, t2, x);
-    if (na(xx)) return xx;
-    return sqrt(xx);
+
+    return (na(xx))? xx : sqrt(xx);
 }
 
 /* .............................................................  */
@@ -444,8 +449,10 @@ double _esl_variance (int t1, int t2, const double *x)
 
     n = t2 - t1 + 1;
     if (n == 0) return NADBL;
+
     xbar = _esl_mean(t1, t2, x);
     if (na(xbar)) return NADBL;
+
     sumsq = 0.0;
     for (i=t1; i<=t2; i++) {
 	if (!na(x[i])) {
@@ -453,9 +460,10 @@ double _esl_variance (int t1, int t2, const double *x)
 	    sumsq += xx*xx;
 	} else n--;
     }
+
     sumsq = (n > 1)? sumsq/(n - 1) : 0.0;
-    if (sumsq >= 0) return sumsq;
-    else return NADBL;
+
+    return (sumsq >= 0)? sumsq : NADBL;
 }
 
 /* .............................................................  */
@@ -466,15 +474,18 @@ double _esl_sst (int t1, int t2, const double *x)
     double sumsq, xx, xbar;
 
     if (t2 - t1 + 1 == 0) return NADBL;
+
     xbar = _esl_mean(t1, t2, x);
     if (na(xbar)) return NADBL;
+
     sumsq = 0.0;
     for (i=t1; i<=t2; i++) {
 	if (!na(x[i])) {
 	    xx = x[i] - xbar;
-	    sumsq += xx*xx;
+	    sumsq += xx * xx;
 	} 
     }
+
     return sumsq;
 }
 
@@ -596,7 +607,7 @@ void _criteria (const double ess, int nobs, int ncoeff,
     if (criterion[7] > 0.0) pprintf(prn, "     RICE      %13g\n", 
 					  criterion[7]);
     else pputs(prn, "     RICE          undefined\n");
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 /* ....................................................... */
@@ -667,6 +678,7 @@ static int real_setmiss (double missval, int varno,
 	    }
 	}	
     }
+
     return count;
 }
 
@@ -823,14 +835,6 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
     else if (pdinfo->sd0 >= 1.0) 
         pdinfo->time_series = TIME_SERIES; /* but might be panel? */
     else pdinfo->time_series = 0;
-
-    /* and report? */
-#if 0
-    fprintf(stderr, I_("setting data frequency = %d\n"), pd);
-    if (pdinfo->n > 0) {
-	fprintf(stderr, I_("data range: %s - %s\n"), pdinfo->stobs, pdinfo->endobs);
-    }
-#endif
 
     return 0;
 }
@@ -1036,6 +1040,7 @@ static int get_quoted_filename (const char *line, char *fname)
 		return 0;
 	}
     }
+
     return 1;
 }
 
@@ -1066,6 +1071,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
     /* try a basic path search on this filename */
     addpath(fname, ppaths, script);
+
     if (addpath != NULL && setpath) {
 	ppaths->currdir[0] = '.';
 	ppaths->currdir[1] = SLASH;
@@ -1078,10 +1084,12 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 	    ppaths->currdir[n+1] = '\0';
 	}
     }
+
     if (dir != NULL) {  /* dir is static, declared outside of funcs */
 	closedir(dir);     
 	dir = NULL;
     }
+
     return 0;
 }
 
@@ -1165,6 +1173,7 @@ int _list_dups (const int *list, int ci)
 	    if (i != j && list[i] == list[j]) return list[i];
 	}
     }
+
     return 0;
 }
 
@@ -1817,6 +1826,7 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     pdinfo->vector[v] = 0;
 
     pdinfo->v += 1;
+
     return 0;
 }
 
@@ -1998,7 +2008,9 @@ double *copyvec (const double *src, int n)
 
     xx = malloc(n * sizeof *xx);
     if (xx == NULL) return NULL;
+
     for (i=0; i<n; i++) xx[i] = src[i];
+
     return xx;
 }
 
