@@ -1493,6 +1493,7 @@ int simple_commands (CMD *cmd, const char *line,
 	    pputs(prn, _("adf: lag order must be given first\n"));
 	    break;
 	}
+	/* flag an error if cmd->list[0] > 1? */
 	order = atoi(cmd->param);
 	err = adf_test(order, cmd->list[1], pZ, datainfo, prn);
 	break;
