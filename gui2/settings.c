@@ -264,18 +264,16 @@ void set_x12a_ok (int set)
 }
 #endif
 
-static int check_for_prog (const char *prog)
+#ifdef G_OS_WIN32
+static int win32_check_for_prog (const char *prog)
 {
     int ret = 1;
     char tmp[MAXLEN];
-#ifdef G_OS_WIN32
     WIN32_FIND_DATA find_data;
     HANDLE hfind;
-#endif
 
     if (prog == NULL || *prog == 0) return 0;
 
-#ifdef G_OS_WIN32
     hfind = FindFirstFile(prog, &find_data);
     if (hfind == INVALID_HANDLE_VALUE) ret = 0;
     FindClose(hfind);
@@ -285,12 +283,28 @@ static int check_for_prog (const char *prog)
 
 	ret = SearchPath(NULL, prog, NULL, MAXLEN, tmp, &p);
     }
-#else
-    sprintf(tmp, "%s > /dev/null 2>&1", prog);
-    ret = (system(tmp) == 0);
-#endif
 
     return ret;
+}
+#else
+static int unix_check_for_prog (const char *prog)
+{
+    char tmp[MAXLEN];
+
+    if (prog == NULL || *prog == 0) return 0;
+
+    sprintf(tmp, "%s > /dev/null 2>&1", prog);
+    return (system(tmp) == 0);
+}
+#endif
+
+static int check_for_prog (const char *prog)
+{
+#ifdef G_OS_WIN32
+    return win32_check_for_prog(prog);
+#else
+    return unix_check_for_prog(prog);
+#endif
 }
 
 static void set_tramo_x12a_dirs (void)
