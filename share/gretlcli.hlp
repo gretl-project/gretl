@@ -314,17 +314,21 @@ equal), >= (greater than or equal) and <= (less than or equal).  The Boolean
 operators can be used in constructing dummy variables: for instance (x > 10)
 returns 1 if x(t) > 10, 0 otherwise.
 
-Supported functions fall into these groups: Standard math functions: abs, cos,
-exp, int (integer part), ln (natural log: log is a synonym), sin, sqrt.
+Supported functions fall into these groups: 
+
+Standard math functions: abs, cos, exp, int (integer part), ln (natural log:
+log is a synonym), sin, sqrt.
+
 Statistical functions: mean (arithmetic mean), median, var (variance), sd
-(standard deviation), sum, cov (covariance), corr (correlation coefficient).
+(standard deviation), sum, cov (covariance), corr (correlation coefficient),
+min (minimum) and max (maximum).
+
 Time-series functions: lag, lead, diff (first difference), ldiff
 (log-difference, or first difference of natural logs).  Miscellaneous: cum
-(cumulate), sort, uniform, normal, misszero (replace the missing
-observation code with zero), zeromiss (inverse operation of misszero), 
-pvalue (probability value for a given statistic against a specified
-distribution) and mpow (raise a series to an integer power using multiple
-precision arithmetic).    
+(cumulate), sort, uniform, normal, misszero (replace the missing observation
+code with zero), zeromiss (inverse operation of misszero), pvalue (probability
+value for a given statistic against a specified distribution) and mpow (raise
+a series to an integer power using multiple precision arithmetic).
 
 All of the above functions with the exception of cov, corr, uniform, normal
 pvalue and mpow take as their single argument either the name of a variable
@@ -368,6 +372,9 @@ uses of genr:
 
 The internal variable $nobs holds the number of observations in the current
 sample range, which may or may not equal the value of $T for the last model.
+
+The internal variable $pd holds the periodicity or frequency of the data
+(e.g. 4 for quarterly data, 12 for monthly).
 
 The internal variable t references the observations, starting at 1.  Thus one
 can do "genr dum15 = (t=15)" to generate a dummy variable with value 1 for
