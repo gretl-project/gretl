@@ -320,25 +320,27 @@ void file_selector (char *msg, int action, gpointer data)
     else if (action == OPEN_SCRIPT) {
 	int spos;
 
-	strcpy(scriptfile, fname);
-	spos = slashpos(scriptfile);
-	if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
-	mkfilelist(3, scriptfile);
+	strcpy(tryscript, fname);
 
-	view_file(scriptfile, 1, 0, 78, 370, title, script_items);
+	if (view_file(tryscript, 1, 0, 78, 370, title, script_items) != NULL) {
+	    strcpy(scriptfile, tryscript);
+	    mkfilelist(3, scriptfile);
+	    spos = slashpos(scriptfile);
+	    if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
+	}
     }
     else if (action == OPEN_SESSION) {
-	int n = strlen(paths.scriptdir);
+	int pub = !strncmp(tryscript, paths.scriptdir, strlen(paths.scriptdir));
 
-	strcpy(scriptfile, fname);
-	if (saved_objects(scriptfile)) {
+	strcpy(tryscript, fname);
+
+	if (saved_objects(tryscript)) {
 	    verify_open_session(NULL);
 	    return;
-	}
-	if (strncmp(scriptfile, paths.scriptdir, n)) 
-	    view_file(scriptfile, 1, 0, 78, 370, title, script_items);
-	else 
-	    view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
+	} 
+	if (view_file(tryscript, 1, 0, 78, 370, title, pub ? 
+		      sample_script_items : script_items))
+		strcpy(scriptfile, tryscript);
     }
 
     if (action < END_OPEN) return;
@@ -435,26 +437,29 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     else if (action == OPEN_SCRIPT) {
 	int spos;
 
-	strcpy(scriptfile, fname);
-	spos = slashpos(scriptfile);
-	if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
-	mkfilelist(3, scriptfile);
+	strcpy(tryscript, fname);
 
-	view_file(scriptfile, 1, 0, 78, 370, title, script_items);
+	if (view_file(tryscript, 1, 0, 78, 370, title, script_items) != NULL) {
+	    strcpy(scriptfile, tryscript);
+	    mkfilelist(3, scriptfile);
+	    spos = slashpos(scriptfile);
+	    if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
+	}
+
     }
     else if (action == OPEN_SESSION) {
-	int n = strlen(paths.scriptdir);
+	int pub = !strncmp(tryscript, paths.scriptdir, strlen(paths.scriptdir));
 
-	strcpy(scriptfile, fname);
-	if (saved_objects(scriptfile)) {
+	strcpy(tryscript, fname);
+
+	if (saved_objects(tryscript)) {
 	    verify_open_session(NULL);
 	    gtk_widget_destroy(GTK_WIDGET(fs));    
 	    return;
-	}
-	if (strncmp(scriptfile, paths.scriptdir, n)) 
-	    view_file(scriptfile, 1, 0, 78, 370, title, script_items);
-	else 
-	    view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
+	} 
+	if (view_file(tryscript, 1, 0, 78, 370, title, pub ? 
+		      sample_script_items : script_items))
+		strcpy(scriptfile, tryscript);
     }
 
     if (action < END_OPEN) {

@@ -3389,6 +3389,7 @@ static int gui_exec_line (char *line,
             pprintf(prn, "import command is malformed.\n");
             break;
         }
+	close_session();
         if (oflag)
             err = import_box(&Z, datainfo, datfile, prn);
         else
@@ -3411,6 +3412,7 @@ static int gui_exec_line (char *line,
 	    errbox("'open' command is malformed");
 	    break;
 	}
+	close_session();
 	check = detect_filetype(datfile, &paths, prn);
 	if (check == GRETL_CSV_DATA)
 	    err = import_csv(&Z, datainfo, datfile, prn);

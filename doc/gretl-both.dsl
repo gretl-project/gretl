@@ -22,6 +22,8 @@
 
 ;; customize the print stylesheet
 
+;; (define %paper-type% "A4")
+
 (define %generate-article-toc% 
   ;; Should a Table of Contents be produced for Articles?
   #t)

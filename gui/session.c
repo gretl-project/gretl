@@ -301,7 +301,10 @@ void do_open_session (GtkWidget *w, gpointer data)
 	fclose(fp);
 	strcpy(scriptfile, tryscript);
     } else {
-	errbox("Couldn't open session file");
+	char errbuf[MAXLEN];
+
+	sprintf(errbuf, "Couldn't open %s\n", tryscript);
+	errbox(errbuf);
 	return;
     }
 

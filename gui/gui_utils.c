@@ -1837,7 +1837,7 @@ static void boolvar_to_str (void *b, char *s)
 
 /* .................................................................. */
 
-#ifdef USE_GNOME
+#if defined(USE_GNOME)
 
 void write_rc (void) 
 {
@@ -1915,8 +1915,8 @@ static void read_rc (void)
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
 }
 
-#else /* end of gnome versions */
-#ifdef G_OS_WIN32
+/* end of gnome versions, now win32 */
+#elif defined(G_OS_WIN32)
 
 void write_rc (void) 
 {
@@ -1984,7 +1984,7 @@ void read_rc (void)
     set_paths(&paths, 0, 1);
 }
 
-#else /* end of win32 versions */
+#else /* end of win32 versions, now plain GTK */
 
 void write_rc (void) 
 {
@@ -2089,7 +2089,6 @@ static void read_rc (void)
 }
 
 #endif /* end of "plain gtk" versions of read_rc, write_rc */
-#endif /* end of 3-way fork */
 
 /* .................................................................. */
 
@@ -2557,7 +2556,7 @@ char *endbit (char *dest, char *src, int addscore)
 
 /* .................................................................. */
 
-#ifdef USE_GNOME
+#if defined(USE_GNOME)
 
 static void gnome_printfilelist (int filetype)
 {
@@ -2583,8 +2582,7 @@ static void gnome_printfilelist (int filetype)
     }
 }
 
-#else
-#ifdef G_OS_WIN32
+#elif defined(G_OS_WIN32)
 
 static void win_printfilelist (int filetype)
 {
@@ -2610,7 +2608,7 @@ static void win_printfilelist (int filetype)
     }
 }
 
-#endif /* "plain" version follows */
+#else /* "plain" version follows */
 
 static void printfilelist (int filetype, FILE *fp)
 {

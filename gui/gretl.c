@@ -88,7 +88,9 @@ target_drag_data_received  (GtkWidget          *widget,
                             GtkSelectionData   *data,
                             guint               info,
                             guint               time);
+#endif
 
+#ifdef USE_GNOME
 char *optrun = NULL, *optdb = NULL;
 
 static const struct poptOption options[] = {
