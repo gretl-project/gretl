@@ -1435,7 +1435,8 @@ int gretl_matrix_rows (const gretl_matrix *m)
 
 static int
 get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
-	     const gretl_vector *b, gretl_matrix *vcv)
+	     const gretl_vector *b, gretl_matrix *vcv,
+	     double *s2)
 {
     double u, sigma2 = 0.0;
     int k = X->cols;
@@ -1455,6 +1456,10 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
     sigma2 /= (n - k);
 
     gretl_matrix_multiply_by_scalar(vcv, sigma2);  
+
+    if (s2 != NULL) {
+	*s2 = sigma2;
+    }
 
     return 0;
 }
@@ -1486,6 +1491,7 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
  * or %NULL if this is not needed.
  * @uhat: vector to hold the regression residuals, or %NULL if 
  * these are not needed.
+ * @s2: pointer to receive residual variance, or %NULL.
  *
  * Computes OLS estimates using LU factorization, and puts the
  * coefficient estimates in @b.  Optionally, calculates the
@@ -1497,7 +1503,7 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,
-		      gretl_vector *uhat)
+		      gretl_vector *uhat, double *s2)
 {
     gretl_vector *XTy = NULL;
     gretl_matrix *XTX = NULL;
@@ -1545,7 +1551,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	    b->val[i] = XTy->val[i];
 	}
 	if (vcv != NULL) {
-	    err = get_ols_vcv(y, X, b, vcv);
+	    err = get_ols_vcv(y, X, b, vcv, s2);
 	}
 	if (uhat != NULL) {
 	    get_ols_uhat(y, X, b, uhat);

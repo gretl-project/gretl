@@ -357,7 +357,6 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     /* just testing for now */
     if (systype == FIML) {
 	print_fiml_sys_info(sys, pdinfo, prn);
-	pprintf(prn, "Sorry, FIML is not really implemented yet.\n");
     }
 
     /* first grab the single-equation residuals */
@@ -485,16 +484,16 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     gls_sigma_from_uhat(sigma, uhat, m, T);
 
-    /* FIXME: implement FIML here, after getting 3SLS starting values */
     if (systype == FIML) {
 #ifdef TRY_FIML
+	pputs(prn, "\n*** FIML: experimental, work in progress! ***\n\n");
 	system_attach_uhat(sys, uhat);
 	system_attach_models(sys, models);
 	uhat = NULL;
-	fiml_driver(sys, (const double **) *pZ, pdinfo);
+	fiml_driver(sys, (const double **) *pZ, pdinfo, prn);
 #else
-	pprintf(prn, "Sorry, FIML is not implmented yet.\n"
-		"The following are just 3SLS estimates.\n");
+	pputs(prn, "Sorry, FIML is not implemented yet.\n"
+	      "The following are just 3SLS estimates.\n");
 #endif
     }
 
