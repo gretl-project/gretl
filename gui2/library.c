@@ -42,8 +42,6 @@ extern DATAINFO *fullinfo;
 extern double **subZ;
 extern double **fullZ;
 
-extern void set_errline (int err, const char *line); /* console.c */
-
 /* ../cli/common.c */
 static int data_option (int flag);
 extern int loop_exec_line (LOOPSET *plp, const int round, 
@@ -373,17 +371,6 @@ static void maybe_quote_filename (char *line, char *cmd)
 	    strcpy(tmp, p);
 	    sprintf(line, "%s \"%s\"", cmd, tmp);
 	}
-    }
-}
-
-/* ........................................................... */
-
-const char *grab_last_cmd (void) /* for use by the console */
-{
-    if (n_cmds > 0 && strncmp(cmd_stack[n_cmds-1], "open", 4)) {
-	return cmd_stack[n_cmds-1];
-    } else {
-	return NULL;
     }
 }
 
@@ -2128,13 +2115,9 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    err = plotvar(&Z, datainfo, "index");
-    if (err) 
-	errbox(_("Error generating index variable"));
-
     infobox(prn->buf);
     gretl_print_destroy(prn);
-    paths.datfile[0] = '\0';
+    *paths.datfile = '\0';
     populate_varlist();
     data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
     set_sample_label(datainfo);
@@ -4054,9 +4037,6 @@ int gui_exec_line (char *line,
 
     if (command.errcode) {
         errmsg(command.errcode, prn);
-	if (exec_code == CONSOLE_EXEC) {
-	    set_errline(command.errcode, linecopy);
-	}
         return 1;
     }
 
@@ -4446,10 +4426,6 @@ int gui_exec_line (char *line,
     case GNUPLOT:
 	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
 	    break;
-	if (plp != NULL) {
-	    pprintf(prn, _("script mode: gnuplot command ignored\n"));
-	    break;
-	}
 	if (oflag == OPT_M) { /* plot with impulses */
 	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
 			  &paths, &plot_count, 0, 0, OPT_M);
@@ -4459,8 +4435,14 @@ int gui_exec_line (char *line,
 			  &Z, datainfo, &paths, &plot_count, 
 			  0, 0, 0);
 	}
-	if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
-	else register_graph();
+	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
+	else {
+	    if (plp == NULL) register_graph();
+	    else {
+		pprintf(prn, _("Graph written to %s\n"), paths.plotfile);
+		/* maybe_save_graph */
+	    }
+	}
 	break;
 
     case HAUSMAN:
@@ -4659,7 +4641,7 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Failed to create empty data set\n"));
 	    break;
 	}
-	paths.datfile[0] = '\0';
+	*paths.datfile = '\0';
 	populate_varlist();
 	data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
 	set_sample_label(datainfo);
@@ -4736,8 +4718,8 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    return 1;
 	}
-	execute_script(runfile, NULL, NULL, NULL, prn, SESSION_EXEC);
-	/* pprintf(prn, "run command not available in script mode\n"); */
+	/* was SESSION_EXEC below */
+	err = execute_script(runfile, NULL, NULL, NULL, prn, exec_code);
 	break;
 
     case SCATTERS:
@@ -4913,7 +4895,6 @@ int gui_exec_line (char *line,
 
     /* log the specific command? */
     if (exec_code == CONSOLE_EXEC) {
-	set_errline(err, line);
 	if (!err) cmd_init(line);
     }
 

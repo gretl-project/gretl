@@ -675,7 +675,7 @@ static void find_in_clist (GtkWidget *w, gpointer data)
     needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
     lower(needle);
 
-    start = dbdat->active_var + 1;
+    start = dbdat->active_var;
     n = GTK_CLIST(dbdat->listbox)->rows;
 
     for (i=start; i<n; i++) {  
@@ -685,13 +685,12 @@ static void find_in_clist (GtkWidget *w, gpointer data)
 	lower(haystack);
 	found = look_for_string(haystack, needle, 0);
 	if (found >= 0) break;
-	else { /* try column 0? */
-	    gtk_clist_get_text(GTK_CLIST(dbdat->listbox), i, 0, &tmp);
-	    strcpy(haystack, tmp);
-	    lower(haystack);
-	    found = look_for_string(haystack, needle, 0);
-	    if (found >= 0) break;
-	}
+	/* try column 0? */
+	gtk_clist_get_text(GTK_CLIST(dbdat->listbox), i, 0, &tmp);
+	strcpy(haystack, tmp);
+	lower(haystack);
+	found = look_for_string(haystack, needle, 0);
+	if (found >= 0) break;
     }
 
     if (found >= 0) {

@@ -721,9 +721,11 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     }
 
     if (batch) {  
-	*plot_count += 1; 
-	sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
-		*plot_count);
+	if (*ppaths->plotfile == 0) {
+	    *plot_count += 1; 
+	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
+		    *plot_count);
+	}
 	fq = fopen(ppaths->plotfile, "w");
 	if (fq == NULL) return E_FOPEN;
     } else {

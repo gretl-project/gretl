@@ -25,13 +25,13 @@ enum {
     MODEL_ADD_BY_DRAG
 } model_add_modes;
 
-int start_model_list (const MODEL *pmod, int add_mode);
+int start_model_table_list (const MODEL *pmod, int add_mode);
 
-int add_to_model_list (const MODEL *pmod, int add_mode);
+int add_to_model_table_list (const MODEL *pmod, int add_mode);
 
-void remove_from_model_list (const MODEL *pmod);
+void remove_from_model_table_list (const MODEL *pmod);
 
-void free_model_list (void);
+void free_model_table_list (void);
 
 int display_model_table (void);
 

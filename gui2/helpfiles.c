@@ -680,9 +680,14 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
     char haystack[MAXLEN];
     windata_t *win;
     GtkTreeModel *model;
-    GtkTreeIter iter;
+    GtkTreeIter iter, iterbak;
 
     win = (windata_t *) g_object_get_data(G_OBJECT(data), "windat");
+
+#if 0
+    fprintf(stderr, "find_in_listbox: win at %p, active_var = %d\n", 
+	    (void *) win, win->active_var);
+#endif
 
     if (needle) g_free(needle);
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
@@ -691,12 +696,13 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
     model = gtk_tree_view_get_model (GTK_TREE_VIEW(win->listbox));
     pstr = g_strdup_printf("%d", win->active_var);
     gtk_tree_model_get_iter_from_string (model, &iter, pstr);
-    gtk_tree_model_iter_next(model, &iter);
     g_free(pstr);
+    iterbak = iter;
+    if (!gtk_tree_model_iter_next(model, &iter)) iter = iterbak;
 
     while (1) {
 	/* try looking in column 1 first */
-	gtk_tree_model_get (model, &iter, 1, &tmp, -1);
+	gtk_tree_model_get(model, &iter, 1, &tmp, -1);
 	strcpy(haystack, tmp);
 	g_free(tmp);
 	lower(haystack);
@@ -780,7 +786,7 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     GtkWidget *hbox;
     windata_t *mydat = (windata_t *) data;
 
-    if (find_window) {
+    if (find_window != NULL) {
 	g_object_set_data(G_OBJECT(find_window), "windat", mydat);
 	parent_find(find_window, mydat);
 	return;

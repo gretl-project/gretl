@@ -22,15 +22,6 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-typedef struct {
-    gchar *name;
-    gint sort;
-    gpointer data;
-    GtkWidget *icon;
-    GtkWidget *label;
-    gint row, col;
-} gui_obj;
-
 enum {
     SCHEDULE_FOR_DELETION,
     REALLY_DELETE_ALL,
@@ -47,6 +38,12 @@ void session_menu_state (gboolean s);
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
 void remember_model (gpointer data, guint close, GtkWidget *widget);
+
+int try_add_model_to_session (MODEL *pmod);
+
+MODEL *get_session_model_by_name (const char *modname);
+
+void delete_model_from_session (MODEL *pmod);
 
 int session_changed (int set);
 

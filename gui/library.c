@@ -2289,10 +2289,6 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    err = plotvar(&Z, datainfo, "index");
-    if (err) 
-	errbox(_("Error generating index variable"));
-
     infobox(prn->buf);
     gretl_print_destroy(prn);
     paths.datfile[0] = '\0';
@@ -4897,8 +4893,8 @@ static int gui_exec_line (char *line,
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    return 1;
 	}
-	execute_script(runfile, NULL, NULL, NULL, prn, SESSION_EXEC);
-	/* pprintf(prn, "run command not available in script mode\n"); */
+	/* was SESSION_EXEC below */
+	err = execute_script(runfile, NULL, NULL, NULL, prn, exec_code);
 	break;
 
     case SCATTERS:

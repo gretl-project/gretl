@@ -1323,6 +1323,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->data = NULL;  
     mdata->listbox = NULL;
     mdata->popup = NULL;
+    mdata->dialog = NULL;
     mdata->role = MAINWIN;
 
 #ifdef USE_GNOME

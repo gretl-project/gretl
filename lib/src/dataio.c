@@ -1697,12 +1697,14 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 		   int data_status, int length,
 		   PRN *prn) 
 {
+    int t;
+
     /* clear any existing data info */
     if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
 
     /* dummy up the data info */
     pdinfo->n = length;
-    pdinfo->v = 1;
+    pdinfo->v = 2;
     dataset_dates_defaults(pdinfo);
 
     if (dataset_allocate_varnames(pdinfo)) return E_ALLOC;
@@ -1716,6 +1718,11 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 
     /* allocate dataset */
     if (prepZ(pZ, pdinfo)) return E_ALLOC;
+
+    /* add an index var */
+    strcpy(pdinfo->varname[1], "index");
+    strcpy(VARLABEL(pdinfo, 1), _("index variable"));
+    for (t=0; t<pdinfo->n; t++) (*pZ)[1][t] = (double) (t + 1);
 
     /* print out basic info */
     pprintf(prn, I_("periodicity: %d, maxobs: %d, "

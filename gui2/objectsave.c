@@ -22,30 +22,11 @@
 #include "gretl.h"
 #include "objectsave.h"
 
-typedef struct _model_stack_entry model_stack_entry;
-
-struct _model_stack_entry {
-    char *name;
-    MODEL *pmod;
-};
-    
-static model_stack_entry **model_stack;  
-static int n_stacked_models;
-static int freeindex;  
-
 enum {
     OBJ_CMD_NONE,
     OBJ_CMD_SHOW,
     OBJ_CMD_FREE
 };
-
-static void free_model_stack_entry (int i)
-{
-    free((model_stack[i])->name);
-    free_model((model_stack[i])->pmod);
-    free(model_stack[i]);
-    model_stack[i] = NULL;
-}
 
 static int match_object_command (const char *s)
 {
@@ -53,41 +34,6 @@ static int match_object_command (const char *s)
     if (strcmp(s, "free") == 0) return OBJ_CMD_FREE;    
 
     return OBJ_CMD_NONE;
-}
-
-static int add_model_to_stack (MODEL *pmod, const char *s)
-{
-    int nm = n_stacked_models;
-    char *mname = NULL;
-    model_stack_entry **tmpstack = NULL;
-    model_stack_entry *entry = NULL;
-
-    entry = malloc(sizeof *entry);
-    if (entry == NULL) goto stack_abort;
-
-    mname = malloc(strlen(s) + 1);
-    if (mname == NULL) goto stack_abort;
-
-    tmpstack = realloc(model_stack, (nm + 1) * sizeof *tmpstack);
-    if (tmpstack == NULL) goto stack_abort;
-
-    pmod->name = g_strdup_printf("%s %d", _("Model"), pmod->ID);
-
-    strcpy(mname, s);
-
-    entry->name = mname;
-    entry->pmod = pmod;
-
-    tmpstack[nm] = entry;
-    model_stack = tmpstack;
-    n_stacked_models++;
-    
-    return 0;
-
- stack_abort:
-    free(entry);
-    free(mname);
-    return E_ALLOC;
 }
 
 static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
@@ -104,26 +50,11 @@ static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
     view_model(prn, pmod, 78, 400, title); 
 }
 
-static MODEL *get_model_from_stack (const char *mname)
-{
-    int i;
-
-    freeindex = -1;
-
-    for (i=0; i<n_stacked_models; i++) {
-	if (model_stack[i] == NULL) continue;
-	if (strcmp(mname, (model_stack[i])->name) == 0) {
-	    freeindex = i;
-	    return (model_stack[i])->pmod;
-	}
-    }
-    return NULL;
-}
-
 static void get_word_and_command (const char *s, char *word, 
 				  char *cmd)
 {
     int start = 0, len, d;
+    int quoted = 0;
     const char *p;
 
     *word = 0;
@@ -133,12 +64,20 @@ static void get_word_and_command (const char *s, char *word,
     while (*s && isspace(*s)) {
 	s++; start++;
     }
+
+    /* skip an opening quote */
+    if (*s == '"') {
+	s++;
+	quoted = 1;
+    }
+
     p = s;
 
-    /* crawl to end of "word" */
+    /* crawl to end of (possibly quoted) "word" */
     len = 0;
     while (*s) {
-	if (isspace(*s)) break;
+	if (*s == '"') quoted = 0;
+	if (!quoted && isspace(*s)) break;
 	s++; len++;
     }
 
@@ -152,13 +91,16 @@ static void get_word_and_command (const char *s, char *word,
     if (len > MAXSAVENAME - 1) len = MAXSAVENAME - 1;
     strncat(word, p, len);
 
+    if (word[strlen(word) - 1] == '"') 
+	word[strlen(word) - 1] = 0;
+
 #if 0
     fprintf(stderr, "word='%s', cmd='%s'\n", word, cmd);
 #endif
 }
 
 static int parse_object_request (const char *line, 
-				 char *objname, 
+				 char *objname, MODEL **ppmod,
 				 PRN *prn)
 {
     char word[MAXSAVENAME];
@@ -175,13 +117,11 @@ static int parse_object_request (const char *line,
 	return action;
     }
 
-    if (get_model_from_stack(word)) {
+    *ppmod = get_session_model_by_name(word);
+
+    if (*ppmod) {
 	strcpy(objname, word);
-	if (action == OBJ_CMD_SHOW) {
-	    return action;
-	}
-	if (action == OBJ_CMD_FREE) {
-	    free_model_stack_entry(freeindex);
+	if (action == OBJ_CMD_SHOW || OBJ_CMD_FREE) {
 	    return action;
 	}
     } else {
@@ -204,12 +144,8 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     if ((*ppmod)->errcode) return 1;
     if (*cmd->savename == 0) return 0;
 
-#if 0
-    err = add_model_to_stack(*ppmod, cmd->savename);
-#else
     (*ppmod)->name = g_strdup(cmd->savename);
     err = try_add_model_to_session(*ppmod);
-#endif
 
     if (!err) {
 	MODEL *mnew = gretl_model_new(pdinfo);
@@ -227,17 +163,17 @@ int saved_object_action (const char *line,
 {
     int action;
     char savename[MAXSAVENAME];
+    MODEL *pmod;
 
-    action = parse_object_request(line, savename, prn);
+    action = parse_object_request(line, savename, &pmod, prn);
 
-    if (action == OBJ_CMD_SHOW) {
-	MODEL *pmod = get_model_from_stack(savename);
-
+    if (action == OBJ_CMD_SHOW && pmod != NULL) {
 	show_saved_model(pmod, pdinfo);
 	return 1;
     } 
 
-    if (action == OBJ_CMD_FREE) {
+    if (action == OBJ_CMD_FREE && pmod != NULL) {
+	delete_model_from_session(pmod);
 	pprintf(prn, _("Freed %s\n"), savename);
 	return 1;
     }

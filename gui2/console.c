@@ -27,7 +27,6 @@ extern int gui_exec_line (char *line,
 			  SESSION *psession, SESSIONBUILD *rebuild,
 			  PRN *prn, int exec_code, 
 			  const char *myname);
-extern const char *grab_last_cmd (void);
 
 GtkItemFactoryEntry console_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
@@ -39,8 +38,57 @@ GtkItemFactoryEntry console_items[] = {
 };
 
 static GtkWidget *console_view;
-static char errline[MAXLEN] = ""; /* for use with the console */
 
+#define HLINES 16
+
+static char *cmd_history[HLINES];
+static int hl, hlmax;
+
+static int push_history_line (const char *line)
+{
+    int i;
+
+    /* drop last entry */
+    free(cmd_history[HLINES-1]);
+
+    /* push the other lines down one place */
+    for (i=HLINES-1; i>0; i--) {
+	cmd_history[i] = cmd_history[i-1];
+    }
+
+    /* add the new line */
+    cmd_history[0] = g_strdup(line);
+    
+    if (hlmax < HLINES) hlmax++;
+
+    hl = 0;
+
+    return 0;
+}
+
+static char *pop_history_line (int keyval)
+{
+    static int blank;
+
+    if (keyval == GDK_Up) {
+	if (hl < 0) hl = (hlmax > 1 && !blank)? 1 : 0;
+	if (hl == hlmax) return NULL;
+	blank = 0;
+	return cmd_history[hl++];
+    }
+
+    if (keyval == GDK_Down) {
+	if (hl == hlmax) hl = hlmax - 2;
+	if (hl < 0) {
+	    blank = 1;
+	    return NULL;
+	}
+	blank = 0;
+	return cmd_history[hl--];
+    }
+
+    return NULL;
+}
 
 static void console_exec (void)
 {
@@ -74,6 +122,7 @@ static void console_exec (void)
     g_free(c_line);
     gui_exec_line(execline, NULL, &loopstack, &looprun, NULL, NULL, 
 		  prn, CONSOLE_EXEC, NULL);
+    push_history_line(execline);
 
     /* put results into console window */
     gtk_text_buffer_get_end_iter(buf, &start);
@@ -131,8 +180,6 @@ void console (void)
 
 gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 {
-    static int lastkey;
-    int savekey = key->keyval;
     gint last_line, curr_line, line_pos;
     GdkModifierType mods;
     GtkTextBuffer *buf;
@@ -154,43 +201,29 @@ gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
     if (key->keyval == GDK_Return) {
 	console_exec();
 	key->keyval = GDK_End;
-	lastkey = savekey;
 	return FALSE;
     }
 
-    /* make up-arrow recall last command entered */
-    if (key->keyval == GDK_Up) {
-#ifdef CMD_DEBUG
-	fprintf(stderr, "errline: '%s'\n", errline);
-#endif
-	key->keyval = GDK_VoidSymbol;
-	if (lastkey != GDK_Up) {
-	    if (*errline != 0) {
-		gtk_text_buffer_insert(buf, &iter, errline, strlen(errline));
-	    } else {
-		const char *lastcmd = grab_last_cmd();
+    /* up and down arrows: command history */
+    if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
+	char *histline;
 
-		if (lastcmd != NULL) {
-		    gtk_text_buffer_insert(buf, &iter, lastcmd, 
-					   strlen(lastcmd) - 1);
-		}
+	histline = pop_history_line(key->keyval);
+
+	if (histline != NULL || key->keyval == GDK_Down) {
+	    GtkTextIter start, end;
+
+	    start = end = iter;
+	    gtk_text_iter_set_line_index(&start, 2);
+	    gtk_text_iter_forward_to_line_end(&end);
+	    gtk_text_buffer_delete(buf, &start, &end);
+	    if (histline != NULL) {
+		gtk_text_buffer_insert(buf, &start, histline, strlen(histline));
 	    }
 	}
-	lastkey = savekey;
+	
 	return TRUE;
     }
-
-    /* down-arrow clears line */
-    if (lastkey == GDK_Up && key->keyval == GDK_Down) {
-	GtkTextIter start, end;
-
-	start = end = iter;
-	gtk_text_iter_set_line_index(&start, 2);
-	gtk_text_iter_forward_to_line_end(&end);
-	gtk_text_buffer_delete(buf, &start, &end);
-	lastkey = savekey;
-	return TRUE;
-    } 
 
     /* Ctrl-A: go to start of typing area */
     gdk_window_get_pointer(console_view->window, NULL, NULL, &mods);
@@ -200,16 +233,39 @@ gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 
 	gtk_text_iter_set_line_index(&where, 2);	
 	gtk_text_buffer_place_cursor(buf, &where);
-	lastkey = savekey;
 	return TRUE;
     }
 
-    lastkey = savekey;
+    /* tab completion for gretl commands */
+    if (key->keyval == GDK_Tab) {
+	GtkTextIter start, end;	
+	gchar *bit;
+
+	start = end = iter;
+	gtk_text_iter_set_line_index(&start, 2);
+	gtk_text_iter_forward_to_line_end(&end);
+	bit = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+
+	if (bit != NULL && *bit != 0) {
+	    const char *complete = NULL;
+	    int i, len = strlen(bit);
+
+	    for (i=0; i<NC; i++) {
+		if (strncmp(bit, gretl_commands[i], len) == 0)
+		    complete = gretl_commands[i];
+	    }
+
+	    g_free(bit);
+
+	    if (complete != NULL) {
+		gtk_text_buffer_delete(buf, &start, &end);
+		gtk_text_buffer_insert(buf, &start, complete, strlen(complete));
+	    }
+	}
+	return TRUE;
+    }
+
     return FALSE;
 }
 
-void set_errline (int err, const char *line)
-{
-    if (err) strcpy(errline, line);
-    else *errline = 0;
-}
+

@@ -45,6 +45,17 @@
 
 /* #define SESSION_DEBUG */
 
+typedef struct _gui_obj gui_obj;
+
+struct _gui_obj {
+    gchar *name;
+    gint sort;
+    gpointer data;
+    GtkWidget *icon;
+    GtkWidget *label;
+    gint row, col;
+};
+
 enum {
     ICON_ADD_BATCH,
     ICON_ADD_SINGLE
@@ -63,6 +74,7 @@ static GtkTargetEntry model_table_drag_target = {
 /* from gui_utils.c */
 extern void winstack_init (void);
 extern void winstack_destroy (void);
+extern int winstack_match_data (gpointer p);
 extern GtkTooltips *gretl_tips;
 
 extern int replay; /* lib.c */
@@ -171,7 +183,7 @@ static gint object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
 static void info_popup_activated (GtkWidget *widget, gpointer data);
 static gui_obj *gui_object_new (gchar *name, int sort);
-static void session_add_icon (gpointer data, int sort, int mode);
+static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_delete_icon (gui_obj *gobj);
 static void open_gui_model (gui_obj *gobj);
 static void open_gui_graph (gui_obj *gobj);
@@ -185,10 +197,13 @@ static gboolean session_icon_click (GtkWidget *widget,
 static int rebuild_init (SESSIONBUILD *rebuild)
 {
     rebuild->nmodels = 0;
+
     rebuild->model_ID = malloc(sizeof *rebuild->model_ID);
     if (rebuild->model_ID == NULL) return 1;
+
     rebuild->model_name = malloc(sizeof *rebuild->model_name);
     if (rebuild->model_name == NULL) return 1;
+
     rebuild->model_name[0] = malloc(64);
     if (rebuild->model_name[0] == NULL) return 1;
 
@@ -202,6 +217,7 @@ static void free_rebuild (SESSIONBUILD *rebuild)
     int i;
 
     if (rebuild->model_ID) free(rebuild->model_ID);
+
     if (rebuild->model_name) {
 	for (i=0; i<rebuild->nmodels; i++) {
 	    if (rebuild->model_name[i])
@@ -213,13 +229,16 @@ static void free_rebuild (SESSIONBUILD *rebuild)
 
 /* .................................................................. */
 
-char *space_to_score (char *str)
+char *space_to_score (char *s)
 {
-    int i, n = strlen(str);
+    char *p = s;
 
-    for (i=0; i<n; i++)
-	if (str[i] == ' ') str[i] = '_';
-    return str;
+    while (*p) {
+	if (*p == ' ') *p = '_';
+	p++;
+    }
+
+    return s;
 }
 
 /* .................................................................. */
@@ -318,39 +337,83 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 
 /* ........................................................... */
 
+static int model_already_saved (MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<session.nmodels; i++) {
+	if (session.models[i] == pmod) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+static int real_add_model_to_session (MODEL *pmod)
+{
+    int n = session.nmodels; 
+
+    if (session.nmodels) {
+	session.models = myrealloc(session.models, 
+				   (n + 1) * sizeof *session.models);
+    } else {
+	session.models = mymalloc(sizeof *session.models);
+    }
+
+    if (session.models == NULL) return 1;
+
+    session.models[n] = pmod;
+    session.nmodels += 1;
+
+    /* add model icon to session display */
+    if (icon_list != NULL) {
+	session_add_icon(session.models[n], 'm', ICON_ADD_SINGLE);
+    }    
+
+    return 0;
+}
+
+/* ........................................................... */
+
+MODEL *get_session_model_by_name (const char *modname)
+{
+    int i;
+
+    for (i=0; i<session.nmodels; i++) {
+	if (strcmp(modname, (session.models[i])->name) == 0) 
+	    return session.models[i];
+    }
+    return NULL;
+}
+
+/* ........................................................... */
+
+int try_add_model_to_session (MODEL *pmod)
+{
+    if (model_already_saved(pmod)) return 1;
+    if (real_add_model_to_session(pmod)) return 1;
+    return 0;
+}
+
+/* ........................................................... */
+
 void remember_model (gpointer data, guint close, GtkWidget *widget)
      /* called directly from model window */
 {
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
-    int i = session.nmodels;
     gchar *buf;
 
-    for (i=0; i<session.nmodels; i++) {
-	if (session.models[i] == pmod) {
-	    infobox(_("Model is already saved"));
-	    return;
-	}
+    if (model_already_saved(pmod)) {
+	infobox(_("Model is already saved"));
+	return;
     }
 
     pmod->name = g_strdup_printf("%s %d", _("Model"), pmod->ID);
 
-    if (session.nmodels) {
-	session.models = myrealloc(session.models, 
-				   (i + 1) * sizeof(MODEL *));
-    } else {
-	session.models = mymalloc(sizeof(MODEL *));
-    }
-
-    if (session.models == NULL) return;
-
-    session.nmodels += 1;
-    session.models[i] = pmod;
-
-    /* add model icon to session display */
-    if (icon_list != NULL) {
-	session_add_icon(session.models[i], 'm', ICON_ADD_SINGLE);
-    }
+    if (real_add_model_to_session(pmod)) return;
 
     buf = g_strdup_printf(_("%s saved"), pmod->name);
     infobox(buf);
@@ -361,7 +424,7 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     /* close model window */
     if (close) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
-    }
+    } 
 }
 
 /* ........................................................... */
@@ -385,7 +448,8 @@ void session_init (void)
     session.notes = NULL;
     session.nmodels = 0;
     session.ngraphs = 0;
-    session.name[0] = '\0';
+    *session.name = '\0';
+
     session_changed(0);
     winstack_init();
     session_file_manager(CLEAR_DELFILES, NULL);
@@ -489,7 +553,8 @@ void close_session (void)
 {
     clear_data(1); /* this was (0): why?? */
     free_session();
-    free_model_list();
+    free_model_table_list();
+
     session_menu_state(FALSE);
     session_file_open = 0;
     if (iconview != NULL) 
@@ -524,22 +589,26 @@ void free_session (void)
     int i;
 
     if (session.models) {
-	for (i=0; i<session.nmodels; i++) 
+	for (i=0; i<session.nmodels; i++) {
 	    free_model(session.models[i]);
+	}
 	free(session.models);
 	session.models = NULL;
     }
+
     if (session.graphs) {
 	free(session.graphs);
 	session.graphs = NULL;
     }
+
     if (session.notes) {
 	free(session.notes);
 	session.notes = NULL;
     }
+
     session.nmodels = 0;
     session.ngraphs = 0;
-    session.name[0] = '\0';
+    *session.name = '\0';
 }
 
 /* ........................................................... */
@@ -976,7 +1045,7 @@ static void open_gui_model (gui_obj *gobj)
     if (bufopen(&prn)) return;
     if (printmodel(pmod, datainfo, prn))
 	pmod->errcode = E_NAN;
-    view_model((void *) prn, pmod, 78, 400, gobj->name);
+    view_model(prn, pmod, 78, 400, gobj->name);
 }
 
 /* ........................................................... */
@@ -1044,73 +1113,142 @@ void session_file_manager (int action, const char *fname)
 
 /* ........................................................... */
 
-static int delete_session_object (gui_obj *obj)
+static int real_delete_model_from_session (MODEL *junk)
+{
+    remove_from_model_table_list(junk);
+
+    if (session.nmodels == 1) {
+	free_model(session.models[0]);
+    } else {
+	MODEL **ppmod;
+	int i, j;
+
+	ppmod = mymalloc((session.nmodels - 1) * sizeof *ppmod);
+	if (session.nmodels > 1 && ppmod == NULL) {
+	    return 1;
+	}
+	j = 0;
+	for (i=0; i<session.nmodels; i++) {
+	    if ((session.models[i])->ID != junk->ID) {
+		ppmod[j++] = session.models[i];
+	    } else {
+		free_model(session.models[i]);
+	    }
+	}
+	free(session.models);
+	session.models = ppmod;
+    }
+
+    session.nmodels -= 1;
+    session_changed(1);
+
+    return 0;
+}
+
+static int real_delete_graph_from_session (GRAPHT *junk)
 {
     int i, j;
 
-    if (obj == NULL) return 0; 
+    if (session.ngraphs == 1) {
+	session_file_manager(SCHEDULE_FOR_DELETION,
+			     (session.graphs[0])->fname);
+	free(session.graphs[0]);
+    } else {
+	GRAPHT **ppgr;
 
-    if (obj->sort == 'm') { /* it's a model */
-	MODEL **ppmod, *junk = (MODEL *) obj->data;
-
-	remove_from_model_list(junk);
-
-	/* special case: only one model currently */
-	if (session.nmodels == 1) {
-	    free_model(session.models[0]);
-	} else {
-	    ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
-	    if (session.nmodels > 1 && ppmod == NULL) {
-		return 1;
-	    }
-	    j = 0;
-	    for (i=0; i<session.nmodels; i++) {
-		if ((session.models[i])->ID != junk->ID) {
-		    ppmod[j++] = session.models[i];
-		} else {
-		    free_model(session.models[i]);
-		}
-	    }
-	    free(session.models);
-	    session.models = ppmod;
+	ppgr = mymalloc((session.ngraphs - 1) * sizeof *ppgr);
+	if (session.ngraphs > 1 && ppgr == NULL) {
+	    return 1;
 	}
-	session.nmodels -= 1;
+	j = 0;
+	for (i=0; i<session.ngraphs; i++) {
+	    if ((session.graphs[i])->ID != junk->ID) { 
+		ppgr[j++] = session.graphs[i];
+	    } else {
+		session_file_manager(SCHEDULE_FOR_DELETION,
+				     (session.graphs[i])->fname);
+		free(session.graphs[i]);
+	    }
+	}
+	free(session.graphs);
+	session.graphs = ppgr;
+    }
+
+    session.ngraphs -= 1;
+    session_changed(1);
+
+    return 0;
+}
+
+static int delete_session_object (gui_obj *obj)
+{
+    if (obj->sort == 'm') { /* it's a model */
+	MODEL *junk = (MODEL *) obj->data;
+
+	real_delete_model_from_session(junk);
     }
     else if (obj->sort == 'g' || obj->sort == 'b') { /* it's a graph */    
-	GRAPHT **ppgr, *junk = (GRAPHT *) obj->data;
+	GRAPHT *junk = (GRAPHT *) obj->data;
 
-	/* special case: only one graph currently */
-	if (session.ngraphs == 1) {
-	    session_file_manager(SCHEDULE_FOR_DELETION,
-				 (session.graphs[0])->fname);
-	    free(session.graphs[0]);
-	} else {
-	    ppgr = mymalloc((session.ngraphs - 1) * sizeof(GRAPHT *));
-	    if (session.ngraphs > 1 && ppgr == NULL) {
-		return 1;
-	    }
-	    j = 0;
-	    for (i=0; i<session.ngraphs; i++) {
-		if ((session.graphs[i])->ID != junk->ID) { 
-		    ppgr[j++] = session.graphs[i];
-		} else {
-		    session_file_manager(SCHEDULE_FOR_DELETION,
-					 (session.graphs[i])->fname);
-		    free(session.graphs[i]);
-		}
-	    }
-	    free(session.graphs);
-	    session.graphs = ppgr;
-	}
-	session.ngraphs -= 1;
+	real_delete_graph_from_session(junk);
     }
 
-    session_changed(1);
     replay = 0;
 
     session_delete_icon(obj);
 
     return 0;
+}
+
+static void maybe_delete_session_object (gui_obj *obj)
+{
+    gchar *msg;
+
+    if (winstack_match_data(obj->data)) {
+	errbox(_("Please close this object's window first"));
+	return;
+    }    
+
+    msg = g_strdup_printf(_("Really delete %s?"), obj->name);
+    if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
+	delete_session_object(obj);
+    }
+    g_free(msg);
+}
+
+static gui_obj *get_gui_obj_from_data (void *finddata)
+{
+    gui_obj *gobj;
+    int found = 0;
+
+    icon_list = g_list_first(icon_list);
+
+    while (icon_list != NULL) {
+	gobj = (gui_obj *) icon_list->data;
+
+	if (gobj->data == finddata) break;
+	if (icon_list->next == NULL) break;
+	icon_list = icon_list->next;
+    }
+
+    return (found)? gobj : NULL;
+}
+
+void delete_model_from_session (MODEL *pmod)
+{
+    gui_obj *obj;
+
+    obj = get_gui_obj_from_data((void *) pmod);
+
+    if (winstack_match_data(pmod)) {
+	errbox(_("Please close this object's window first"));
+	return;
+    }
+
+    real_delete_model_from_session(pmod);
+    if (obj != NULL) {
+	session_delete_icon(obj);
+    }
 }
 
 /* ........................................................... */
@@ -1730,24 +1868,18 @@ static gint object_popup_activated (GtkWidget *widget, gpointer data)
 	}
     }   
     else if (strcmp(item, _("Delete")) == 0) {
-	gchar *msg;
-
-	msg = g_strdup_printf(_("Really delete %s?"), obj->name);
-	if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
-	    delete_session_object(obj);
-	}
-	g_free(msg);
+	maybe_delete_session_object(obj);
     }
     else if (strcmp(item, _("Add to model table")) == 0) {
 	if (obj->sort == 'm') {
 	    MODEL *pmod = (MODEL *) obj->data;
-	    add_to_model_list((const MODEL *) pmod,
-			      MODEL_ADD_FROM_MENU);
+	    add_to_model_table_list((const MODEL *) pmod,
+				    MODEL_ADD_FROM_MENU);
 	}
     }
     else if (strcmp(item, _("Clear table")) == 0) {
 	if (obj->sort == 't') {
-	    free_model_list();
+	    free_model_table_list();
 	}
     }
     else if (obj->sort == 't' && strcmp(item, _("Help")) == 0) {
@@ -1808,7 +1940,7 @@ model_table_data_received (GtkWidget *widget,
 	data->type == GDK_SELECTION_TYPE_INTEGER) {
 	MODEL *pmod = *(MODEL **) data->data;
 
-	add_to_model_list((const MODEL *) pmod, MODEL_ADD_BY_DRAG);
+	add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_BY_DRAG);
     }
 }
 
@@ -1884,7 +2016,7 @@ static gui_obj *gui_object_new (gchar *name, int sort)
 
 /* ........................................................... */
 
-static void session_add_icon (gpointer data, int sort, int mode)
+static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 {
     gui_obj *gobj;
     gchar *name = NULL;
@@ -1964,6 +2096,8 @@ static void session_add_icon (gpointer data, int sort, int mode)
 	pack_single_icon(gobj);
     else if (mode == ICON_ADD_BATCH)
 	icon_list = g_list_append(icon_list, gobj);
+
+    return gobj;
 }
 
 

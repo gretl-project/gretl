@@ -250,13 +250,15 @@ enum winstack_codes {
     STACK_INIT,
     STACK_ADD,
     STACK_REMOVE,
-    STACK_DESTROY
+    STACK_DESTROY,
+    STACK_QUERY
 };
 
-static void winstack (int code, GtkWidget *w)
+static void winstack (int code, GtkWidget *w, gpointer ptest)
 {
     static int n_windows;
     static GtkWidget **wstack;
+    int found = 0;
     int i;
 
     switch (code) {
@@ -291,29 +293,49 @@ static void winstack (int code, GtkWidget *w)
 	    }
 	}
 	break;
+    case STACK_QUERY:
+	for (i=0; i<n_windows; i++) {
+	    if (wstack[i] != NULL) {
+		gpointer p = gtk_object_get_data(GTK_OBJECT(wstack[i]), 
+						 "object");
+
+		if (p == ptest) {
+		    found = 1;
+		    break;
+		}
+	    }
+	}
+	break;
     default:
 	break;
     }
+
+    return found;
 }
 
 void winstack_init (void)
 {
-    winstack(STACK_INIT, NULL);
+    winstack(STACK_INIT, NULL, NULL);
 }
     
 void winstack_destroy (void)
 {
-    winstack(STACK_DESTROY, NULL);
+    winstack(STACK_DESTROY, NULL, NULL);
+}
+
+void winstack_match_data (gpointer p)
+{
+    winstack(STACK_QUERY, NULL, p);
 }
 
 static void winstack_add (GtkWidget *w)
 {
-    winstack(STACK_ADD, w);
+    winstack(STACK_ADD, w, NULL);
 }
 
 static void winstack_remove (GtkWidget *w)
 {
-    winstack(STACK_REMOVE, w);
+    winstack(STACK_REMOVE, w, NULL);
 }
 
 /* ........................................................... */
@@ -1144,7 +1166,10 @@ static windata_t *common_viewer_new (int role, const char *title,
     gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
     gtk_window_set_policy(GTK_WINDOW(vwin->dialog), TRUE, TRUE, TRUE);
 
-    if (record) winstack_add(vwin->dialog);
+    if (record) {
+	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "object", data);
+	winstack_add(vwin->dialog);
+    }
 
     return vwin;
 }

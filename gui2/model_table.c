@@ -46,7 +46,7 @@ GtkItemFactoryEntry model_table_items[] = {
     { NULL, NULL, NULL, 0, NULL }
 };
 
-static int real_model_list_length (void)
+static int real_model_table_list_length (void)
 {
     int i, len = 0;
 
@@ -57,16 +57,16 @@ static int real_model_list_length (void)
     return len;    
 }
 
-static int model_too_many (void)
+static int model_table_too_many (void)
 {
-    if (real_model_list_length() == MAX_TABLE_MODELS) {
+    if (real_model_table_list_length() == MAX_TABLE_MODELS) {
 	errbox(_("Model table is full"));
 	return 1;
     }
     return 0;
 }
 
-static int model_already_listed (const MODEL *pmod)
+static int model_already_in_table (const MODEL *pmod)
 {
     int i;
 
@@ -78,7 +78,7 @@ static int model_already_listed (const MODEL *pmod)
     return 0;
 }
 
-int start_model_list (const MODEL *pmod, int add_mode)
+int start_model_table_list (const MODEL *pmod, int add_mode)
 {
     model_list = mymalloc(sizeof *model_list);
     if (model_list == NULL) return 1;
@@ -93,7 +93,7 @@ int start_model_list (const MODEL *pmod, int add_mode)
     return 0;
 }
 
-void remove_from_model_list (const MODEL *pmod)
+void remove_from_model_table_list (const MODEL *pmod)
 {
     int i;
 
@@ -107,7 +107,7 @@ void remove_from_model_list (const MODEL *pmod)
     }
 }
 
-int add_to_model_list (const MODEL *pmod, int add_mode)
+int add_to_model_table_list (const MODEL *pmod, int add_mode)
 {
     const MODEL **tmp;
 
@@ -119,7 +119,7 @@ int add_to_model_list (const MODEL *pmod, int add_mode)
 
     /* check that list is really started */
     if (model_list_len == 0) {
-	return start_model_list(pmod, add_mode);
+	return start_model_table_list(pmod, add_mode);
     }
 
     /* check that the dependent variable is in common */
@@ -130,13 +130,13 @@ int add_to_model_list (const MODEL *pmod, int add_mode)
     }
 
     /* check that model is not already on the list */
-    if (model_already_listed(pmod)) {
+    if (model_already_in_table(pmod)) {
 	errbox(_("Model is already included in the table"));
 	return 0;
     }
 
     /* check that the model table is not already full */
-    if (model_too_many()) return 1;
+    if (model_table_too_many()) return 1;
 
     model_list_len++;
     tmp = myrealloc(model_list, model_list_len * sizeof *model_list);
@@ -155,7 +155,7 @@ int add_to_model_list (const MODEL *pmod, int add_mode)
     return 0;
 }
 
-void free_model_list (void)
+void free_model_table_list (void)
 {
     free(model_list);
     model_list = NULL;
@@ -505,7 +505,7 @@ int display_model_table (void)
     if (make_grand_varlist()) return 1;
 
     if (bufopen(&prn)) {
-	free_model_list();
+	free_model_table_list();
 	return 1;
     }
 
@@ -559,7 +559,7 @@ int display_model_table (void)
 				 "McFadden's pseudo-R-squared"));
     }
 
-    if (real_model_list_length() > 5) winwidth = 90;
+    if (real_model_table_list_length() > 5) winwidth = 90;
 
     view_buffer(prn, winwidth, 450, _("gretl: model table"), PRINT, 
 		model_table_items);
@@ -655,7 +655,7 @@ static void tex_print_model_table (void)
 
 static void print_rtf_row_spec (PRN *prn, int tall)
 {
-    int i, cols = 1 + real_model_list_length();
+    int i, cols = 1 + real_model_table_list_length();
     int col1 = 1000;
     int ht = (tall)? 362 : 262;
 

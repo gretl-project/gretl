@@ -519,7 +519,7 @@ int main (int argc, char *argv[])
 	free(modelspec);
     }
 
-    remove(paths.plotfile);
+    if (!batch) remove(paths.plotfile);
     gretl_print_destroy(prn);
     gretl_rand_free();
 
@@ -919,7 +919,6 @@ void exec_line (char *line, PRN *prn)
 	    err = gnuplot(command.list, lines, command.param, 
 			  &Z, datainfo, &paths, &plot_count, 
 			  batch, 0, 0);
-	    
 	}
 	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	break;
