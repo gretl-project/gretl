@@ -194,7 +194,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Autoregressive estimation</menu-path>
+      <menu-path>/Model/Time series/Autoregressive estimation</menu-path>
     </gui-access>
 
   </command>
@@ -327,7 +327,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/ARMA model</menu-path>
+      <menu-path>/Variable/ARMA model, /Model/Time series/ARMAX</menu-path>
       <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
@@ -499,7 +499,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Cointegration test/Engle-Granger</menu-path>
+      <menu-path>/Model/Time series/Cointegration test/Engle-Granger</menu-path>
     </gui-access>
 
   </command>
@@ -553,7 +553,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Cointegration test/Johansen</menu-path>
+      <menu-path>/Model/Time series/Cointegration test/Johansen</menu-path>
     </gui-access>
 
   </command>
@@ -639,7 +639,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Cochrane-Orcutt</menu-path>
+      <menu-path>/Model/Time series/Cochrane-Orcutt</menu-path>
     </gui-access>
 
   </command>
@@ -1273,7 +1273,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/GARCH model</menu-path>
+      <menu-path>/Model/Time series/GARCH model</menu-path>
     </gui-access>
 
   </command>
@@ -2015,7 +2015,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Hildreth-Lu</menu-path>
+      <menu-path>/Model/Time Series/Hildreth-Lu</menu-path>
     </gui-access>
 
   </command>
@@ -3709,6 +3709,43 @@
 
   </command>
 
+  <command name="pwe" section="Estimation" label="Prais-Winsten estimator">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
+      <examples>
+        <example>pwe 1 0 2 4 6 7</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Computes parameter estimates using the Prais&ndash;Winsten
+	procedure, an implementation of feasible GLS which is designed
+	to handle first-order autocorrelation of the error term.  The
+	procedure is iterated, as with <cmdref targ="corc"/>; the
+	difference is that while Cochrane&ndash;Orcutt discards the
+	first observation, Prais&ndash;Winsten makes use of it. See,
+	for example, Chapter 13 of Greene's <book>Econometric
+	  Analysis</book> (2000) for details.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Time series/Prais-Winsten</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="quit" section="Utilities" context="cli">
 
     <description>
@@ -4796,7 +4833,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Vector autoregression</menu-path>
+      <menu-path>/Model/Time series/Vector autoregression</menu-path>
     </gui-access>
 
   </command>

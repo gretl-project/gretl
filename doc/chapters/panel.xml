@@ -11,13 +11,13 @@
       <emphasis>n</emphasis> cross-sectional units (countries, states,
       persons or whatever) in each of <emphasis>T</emphasis> periods.
       Let each observation comprise the values of
-      <emphasis>m</emphasis> variables of interest.  The data set then
-      contains <emphasis>mnT</emphasis> values.</para>
+      <emphasis>k</emphasis> variables of interest.  The data set then
+      contains <emphasis>knT</emphasis> values.</para>
 
     <para>The data should be arranged <quote>by observation</quote>:
       each row represents an observation; each column contains the
       values of a particular variable. The data matrix then has
-      <emphasis>nT</emphasis> rows and <emphasis>m</emphasis> columns.
+      <emphasis>nT</emphasis> rows and <emphasis>k</emphasis> columns.
       That leaves open the matter of how the rows should be arranged.
       There are two possibilities.<footnote><para>If you don't intend
 	  to make any conceptual or statistical distinction between
@@ -56,39 +56,52 @@
       <quote>Restructure panel</quote> which allows you to convert
       from stacked cross-section form to stacked time series.</para>
 
-    <para>In either case you can use the frequency field in the
-      <emphasis>observations</emphasis> line of the data header file
-      (see <xref linkend="datafiles"/>) to make life a little
-      easier.</para>
+    <para>When you import panel data into
+    <application>gretl</application> from a spreadsheet or comma
+    separated format, the panel nature of the data will not be
+    recognized automatically (most likely the data will be treated as
+    <quote>undated</quote>).  Getting the data recognized correctly is
+    a two-step process: first, establish the periodicity of the data
+    and the starting observation; second, establish the structure of
+    the data (stacked time series or stacked cross-sections).</para>
 
-    <itemizedlist>
-      <listitem><para><emphasis>Grouped by unit</emphasis>: Set the
-	  frequency equal to <emphasis>T</emphasis>. Suppose you have
-	  observations on 20 units in each of 5 time periods. Then
-	  this observations line is appropriate: <literal>5 1.1
-	    20.5</literal> (read: frequency 5, starting with the
-	  observation for unit 1, period 1, and ending with the
-	  observation for unit 20, period 5). Then, for instance, you
-	  can refer to the observation for unit 2 in period 5 as
-	  <literal>2.5</literal>, and that for unit 13 in period 1 as
-	  <literal>13.1</literal>.</para></listitem>
-      <listitem><para><emphasis>Grouped by period</emphasis>: Set the
-	  frequency equal to <emphasis>n</emphasis>.  In this case if
-	  you have observations on 20 units in each of 5 periods, the
-	  observations line should be: <literal>20 1.01 5.20</literal>
-	  (read: frequency 20, starting with the observation for
-	  period 1, unit 01, and ending with the observation for
-	  period 5, unit 20).  One refers to the observation for unit
-	  2, period 5 as <literal>5.02</literal>.</para></listitem>
-    </itemizedlist>
-
-    <para>If you decide to construct a panel data set using a
-      spreadsheet program then import the data into
-      <application>gretl</application>, the program may not at first
-      recognize the special nature of the data.  You can fix this by
-      using the command <command>setobs</command> (see
-      <xref linkend="cmdref"/>) or the GUI menu item <quote>Sample,
-	Set frequency, startobs&hellip;</quote>.</para>
+    <orderedlist>
+      <listitem>
+	<para>For panel data the <emphasis>periodicity</emphasis>
+	  equals the number of time periods, in the case of stacked
+	  time series, or the number of cross-sectional unit, in the
+	  case of stacked cross-sections.  (In either case it is the
+	  number of rows in each block of the data matrix.)</para> 
+	<para>The <emphasis>starting observation</emphasis> should be
+	  set in the form <literal>1:1</literal> (for periodicity less
+	  than 10) or <literal>1:01</literal> (for periodicity between
+	  10 and 99; add another leading zero if the periodicity is
+	  100 or greater).  In this colon-separated pair of numbers,
+	  the leading number represents the data-block and the
+	  trailing number represents the entry within that block.
+	  (Thus for example, with stacked time series the observation
+	  label <literal>3:02</literal> denotes the observation for
+	  unit 3, period 2.)</para>
+	<para>The periodicity and starting observation can be set
+	  using the script command <command>setobs</command> or the
+	  GUI menu item <quote>Sample, Set frequency,
+	    startobs&hellip;</quote>.</para>
+      </listitem>
+      <listitem>
+	<para>Once the periodicity and starting observation are set
+	  appropriately, you can impose the correct interpretation of
+	  the data structure using the script command
+	  <command>panel</command> or the GUI menu item <quote>Sample,
+	    interpret as panel</quote>.  The <command>panel</command>
+	  takes an option, either <literal>--time-series</literal>
+	  (for stacked time series) or
+	  <literal>--cross-section</literal> (for stacked
+	  cross-sections).  If no option is given, stacked time series
+	  is assumed.  The <quote>interpret an panel</quote> menu item
+	  brings up a dialog box where you select stacked time series
+	  or stacked cross-sections.</para>
+	</listitem>
+    </orderedlist>
 
   </sect1>
 
@@ -160,23 +173,21 @@
 
   </sect1>
 
-  <sect1 id="panel-lagged"><title>Using lagged values with panel
+  <sect1 id="panel-lagged"><title>Lags and differences with panel
       data</title>
 
     <para>If the time periods are evenly spaced you may want to use
-      lagged values of variables in a panel regression.  In this case
-      arranging the data rows by <emphasis>unit</emphasis> (stacked
-      time-series) is definitely preferable.</para>
+      lagged values of variables in a panel regression; you may also
+      with to construct first differences of variables of
+      interest.</para>
 
-    <para>Suppose you create a lag of variable<varname>x1</varname>,
-      using <command>genr x1_1 = x1(-1)</command>.  The values of this
-      variable will be mostly correct, but at the boundaries of the
-      unit data blocks they are not unusable: the
-      <quote>previous</quote> value is not actually the first lag of
-      <varname>x1_1</varname> but rather the last observation of
-      <varname>x1</varname> for the previous cross-sectional
-      unit.  Such values are marked as missing by
-      <application>gretl</application>.
+    <para>Once a dataset is properly identified as a panel (as
+      described in the previous section),
+      <application>gretl</application> will handle the generation of
+      such variables correctly.  For example the command <command>genr
+	x1_1 = x1(-1)</command> will create a variable that contains
+      the first lag of <literal>x1</literal> where available, and the
+      missing value code where the lag is not available.
     </para>
 
     <para>If a lag of this sort is to be included in a regression you
@@ -202,7 +213,8 @@
       1.</para>
 
     <para>Another option is to use the <command>smpl</command> with
-      the <command>-o</command> flag and a suitable dummy variable.
+      the <command>--restrict</command> or <command>--dummy</command>
+      option.
       <xref linkend="examp-pwt"/> shows illustrative commands,
       assuming the unit data blocks each contain 30 observations and
       we want to drop the first row of each.  You can then run
@@ -216,14 +228,14 @@
     <example id="examp-panel-lags">
       <title>Lags with panel data</title>
     <programlisting>
-      (* create index variable *) 
+      # create index variable 
       genr index 
-      (* create dum = 0 for every 30th obs *) 
+      # create dum = 0 for every 30th obs 
       genr dum = ((index-1)%30) > 0 
-      (* sample based on this dummy *) 
-      smpl -o dum 
-      (* recreate the obs. structure, for 56 units *) 
-      setobs 29 1.01 56.29
+      # sample based on this dummy
+      smpl --dummy dum 
+      # recreate the obs. structure, for 29 periods
+      setobs 29 1.01 
     </programlisting>
     </example>
 
@@ -231,9 +243,8 @@
 
   <sect1 id="pooled-est"><title>Pooled estimation</title>
 
-    <para>Having come this far, we can reveal that there is a special
-      purpose estimation command for use with panel data, the
-      <quote>Pooled OLS</quote> option under the
+    <para>There is a special purpose estimation command for use with
+      panel data, the <quote>Pooled OLS</quote> option under the
       <guimenu>Model</guimenu> menu. This command is available only if
       the data set is recognized as a panel.  To take advantage of it,
       you should specify a model without any dummy variables
@@ -315,18 +326,18 @@
       <title>Use of the Penn World Table</title>
       <programlisting>
 	  open pwt56_60_89.gdt 
-	  (* for 1989 (last obs), lag 29 gives 1960, the first obs *) 
+	  # for 1989 (the last obs), lag 29 gives 1960, the first obs 
 	  genr gdp60 = RGDPL(-29) 
-	  (* find total growth of real GDP over 30 years *) 
+	  # find total growth of real GDP over 30 years
 	  genr gdpgro = (RGDPL - gdp60)/gdp60
-	  (* restrict the sample to a 1989 cross-section *) 
-	  smpl -r YEAR=1989 
-	  (* Convergence?  Did countries with a lower base grow faster? *) 
+	  # restrict the sample to a 1989 cross-section 
+	  smpl --restrict YEAR=1989 
+	  # convergence: did countries with a lower base grow faster?  
 	  ols gdpgro const gdp60 
-	  (* result: No! Try inverse relationship *) 
+	  # result: No! Try an inverse relationship?
 	  genr gdp60inv = 1/gdp60 
 	  ols gdpgro const gdp60inv 
-	  (* No again.  Try dropping Africa? *) 
+	  # no again.  Try treating Africa as special? 
 	  genr afdum = (CCODE = 1)
 	  genr afslope = afdum * gdp60 
 	  ols gdpgro const afdum gdp60 afslope 
