@@ -101,6 +101,7 @@ extern int updater;
 extern int wimp;
 #endif
 extern char viewdvi[MAXSTR];
+extern char viewps[MAXSTR];
 
 /* global GUI equipment */
 extern windata_t *mdata;

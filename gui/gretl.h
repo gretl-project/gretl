@@ -86,6 +86,7 @@ extern char *errtext;
 extern int expert;
 extern int updater;
 extern char viewdvi[MAXSTR];
+extern char viewps[MAXSTR];
 
 /* global GUI equipment */
 extern windata_t *mdata;

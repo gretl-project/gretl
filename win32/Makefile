@@ -103,11 +103,34 @@ LIBOBJ = $(LIBSRC:.c=.o)
 CLISRC = gretlcli.c complete.c 
 CLIOBJ = $(CLISRC:.c=.o)
 
-GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
-	datafiles.c database.c gpt_control.c session.c webget.c \
-	calculator.c fileselect.c guiprint.c boxplots.c series_view.c \
-	selector.c settings.c helpfiles.c treeutils.c console.c model_table.c \
-	objectsave.c obsbutton.c textbuf.c gretlwin32.c
+GUISRC = boxplots.c \
+	calculator.c \
+	callbacks.c \
+	console.c \
+	database.c \
+	datafiles.c \
+	dialogs.c \
+	fileselect.c \
+	gpt_control.c \
+	graph_page.c \
+	gretl.c \
+	gretlwin32.c \
+	guiprint.c \
+	gui_utils.c \
+	helpfiles.c \
+	library.c \
+	model_table.c \
+	objectsave.c \
+	obsbutton.c \
+	selector.c \
+	series_view.c \
+	session.c \
+	settings.c \
+	ssheet.c \
+	textbuf.c \
+	treeutils.c \
+	webget.c
+
 GUIOBJ = $(GUISRC:.c=.o)
 
 EXTRASRC = gtkpsfont.c gtkplotpc.c gtkplotps.c

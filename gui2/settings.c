@@ -172,6 +172,8 @@ RCVARS rc_vars[] = {
      ROOTSET, MAXSTR, 3, NULL},
     {"viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
      ROOTSET, MAXSTR, 3, NULL},
+    {"viewps", N_("Command to view postscript files"), NULL, viewps, 
+     ROOTSET, MAXSTR, 3, NULL},
     {"calculator", N_("Calculator"), NULL, calculator, USERSET, MAXSTR, 3, NULL},
 #ifdef SELECT_EDITOR
     {"editor", N_("Editor"), NULL, editor, USERSET, MAXSTR, 3, NULL},

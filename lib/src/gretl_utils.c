@@ -1103,6 +1103,13 @@ static unsigned long get_long_opts (char *line, int ci, int *err)
     return ret;
 }
 
+static void get_cmdword (const char *line, char *word)
+{
+    if (!sscanf(line, "%*s <- %8s", word)) {
+	sscanf(line, "%8s", word);
+    }
+}
+
 int catchflags (char *line, unsigned long *oflags)
      /* check for option flags in line: if found, chop them out 
 	and set oflags value accordingly.  
@@ -1129,7 +1136,7 @@ int catchflags (char *line, unsigned long *oflags)
 
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
-    sscanf(line, "%8s", cmdword);
+    get_cmdword(line, cmdword);
     if (!strcmp(cmdword, "genr") || !strcmp(cmdword, "sim") ||
 	!strcmp(cmdword, "label")) return 0;
 

@@ -155,10 +155,12 @@ char Rcommand[MAXSTR] = "RGui.exe";
 char editor[MAXSTR] = "c:\\Program Files\\Microsoft Office\\Office\\winword.exe";
 char calculator[MAXSTR] = "calc.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
+char viewps[MAXSTR] = "gsview.exe";
 #else
 char editor[MAXSTR] = "emacs";
 char calculator[MAXSTR] = "xcalc";
 char viewdvi[MAXSTR] = "xdvi";
+char viewps[MAXSTR] = "gv";
 # ifdef USE_GNOME
 char Rcommand[MAXSTR] = "R --gui=gnome";
 extern const char *version_string;

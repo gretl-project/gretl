@@ -27,6 +27,8 @@
 # include <sys/stat.h>
 #endif
 
+#define GRAPHS_MAX 6
+
 enum {
     PS_OUTPUT,
     PDF_OUTPUT
@@ -97,19 +99,8 @@ static void doctop (int otype, FILE *fp)
 
 static int geomline (int ng, FILE *fp)
 {
-    double width = 6.5, height = 9.0;
-    double tmarg = 1.0, lmarg = 1.0;
-
-    if (ng == 3) {
-	height = 9.5;
-	tmarg = 0.8;
-    } else if (ng < 7) {
-	width = 7.0;
-	lmarg = 0.75;
-    } else {
-	fprintf(stderr, "ng (%d) out of range\n", ng);
-	return 1;
-    }
+    double width = 7.0, height = 10.0;
+    double tmarg = 0.5, lmarg = 0.75;
 
     fprintf(fp, "\\usepackage[body={%gin,%gin},"
 	    "top=%gin,left=%gin,nohead]{geometry}\n\n",
@@ -122,6 +113,7 @@ static void common_setup (FILE *fp)
 {
     fputs("\\begin{document}\n\n"
 	  "\\thispagestyle{empty}\n\n"
+	  "\\vspace*{\\stretch{1}}\n\n"
 	  "\\begin{center}\n", fp);
 }
 
@@ -132,15 +124,14 @@ static int tex_graph_setup (int ng, FILE *fp)
     double vspace = 1.0;
     int i;
 
-    if (ng > 6) {
+    if (ng > GRAPHS_MAX) {
 	fprintf(stderr, "ng (%d) out of range\n", ng);
 	return 1;
     }
 
     if (ng == 1) {
-	fputs("\n\\vspace{2in}\n\n", fp);
 	strcpy(fname, "gretl_graphpage_1");
-	fprintf(fp, "\\includegraphics{%s}\n", fname);
+	fprintf(fp, "\\includegraphics[scale=1.2]{%s}\n", fname);
     }
 
     else if (ng == 2) {
@@ -185,6 +176,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 static void common_end (FILE *fp)
 {
     fputs("\\end{center}\n\n"
+	  "\\vspace*{\\stretch{2}}\n\n"
 	  "\\end{document}\n", fp);
 }
 
@@ -219,6 +211,11 @@ int graph_page_add_file (const char *fname)
 {
     char **fnames;
     int ng = gpage.ngraphs + 1;
+
+    if (ng > GRAPHS_MAX) {
+	gpage_errmsg(_("The graph page is full"), 1);
+	return 1;
+    }
 
     fnames = myrealloc(gpage.fnames, ng * sizeof *fnames);
     if (fnames == NULL) return 1;
@@ -308,86 +305,20 @@ static int get_dvips_path (char *path)
     return (ret == 0);
 }
 
-#elif defined (OLD_GTK)
-
-static int spawn_dvips (char *texsrc)
-{
-    char tmp[MAXLEN];
-    struct stat sbuf;
-    int ret = 0;
-
-    sprintf(tmp, "cd %s && dvips %s", paths.userdir, texsrc);
-    system(tmp);
-    sprintf(tmp, "%s%s.ps", paths.userdir, texsrc);
-    if (stat(tmp, &sbuf)) {
-	errbox(_("Failed to process TeX file"));
-	ret = 1;
-    } 
-
-    return ret;
-}
-
-#else
-
-#include <signal.h>
-
-static int spawn_dvips (char *texsrc)
-{
-    GError *error = NULL;
-    gchar *errout = NULL, *sout = NULL;
-    gchar *argv[] = {
-	"dvips",
-	texsrc,
-	NULL
-    };
-    int ok, status;
-    int ret = LATEX_OK;
-
-    signal(SIGCHLD, SIG_DFL);
-
-    ok = g_spawn_sync (paths.userdir, /* working dir */
-		       argv,
-		       NULL,    /* envp */
-		       G_SPAWN_SEARCH_PATH,
-		       NULL,    /* child_setup */
-		       NULL,    /* user_data */
-		       &sout,   /* standard output */
-		       &errout, /* standard error */
-		       &status, /* exit status */
-		       &error);
-
-    if (!ok) {
-	errbox(error->message);
-	g_error_free(error);
-	ret = LATEX_EXEC_FAILED;
-    } else if (errout && *errout) {
-	errbox(errout);
-	ret = LATEX_ERROR;
-    } else if (status != 0) {
-	gchar *errmsg;
-
-	errmsg = g_strdup_printf("%s\n%s", 
-				 _("Failed to process TeX file"),
-				 sout);
-	errbox(errmsg);
-	g_free(errmsg);
-	ret = LATEX_ERROR;
-    }
-
-    if (errout != NULL) g_free(errout);
-    if (sout != NULL) g_free(sout);
-
-    return ret;
-}
-
-#endif /* !G_OS_WIN32 */
+#endif
 
 int dvips_compile (char *texshort)
 {
+    char *fname, tmp[MAXLEN];
 #ifdef G_OS_WIN32
     static char dvips_path[MAXLEN];
 #endif
     int err = 0;
+
+    /* ensure we don't get stale output */
+    fname = gpage_fname(".ps", 0);
+    remove(fname);
+	
 
 #ifdef G_OS_WIN32
     if (*dvips_path == 0 && get_dvips_path(dvips_path)) {
@@ -401,7 +332,8 @@ int dvips_compile (char *texshort)
 	return 1;
     }
 #else
-    err = spawn_dvips(texshort);
+    sprintf(tmp, "dvips %s", texshort);
+    err = gretl_spawn(tmp);
 #endif /* G_OS_WIN32 */
 
     return err;
@@ -415,7 +347,7 @@ static int latex_compile_graph_page (void)
 
     err = latex_compile(gpage_base);
 
-    if (err = LATEX_ERROR) {
+    if (err == LATEX_ERROR) {
 	char *fname = gpage_fname(".log", 0);
 
 	view_file(fname, 0, 1, 78, 350, VIEW_FILE);
@@ -454,17 +386,32 @@ static int make_gp_output (void)
 
 static int real_display_gpage (void)
 {
-    char *fname, cmd[MAXLEN];
+    char *fname, *viewer;
+#ifdef G_OS_WIN32
+    char tmp[MAXLEN];
+#endif
+    int err = 0;
 
     if (gpage.output == PDF_OUTPUT) {
 	fname = gpage_fname(".pdf", 0);
-	sprintf(cmd, "acroread \"%s\"", fname);
+	viewer = "acroread";
     } else {
 	fname = gpage_fname(".ps", 0);
-	sprintf(cmd, "gv \"%s\"", fname);
+	viewer = viewps;
     }
 
-    return system(cmd);
+#ifdef G_OS_WIN32
+    sprintf(tmp, "\"%s\" \"%s\"", viewer, fname);
+    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
+	err = 1;
+    }
+#else
+    gretl_fork(viewer, fname);
+#endif
+
+    return err;
 }
 
 static void gpage_cleanup (void)
@@ -518,7 +465,7 @@ int display_graph_page (void)
 	real_display_gpage();
     }
 
-    /* gpage_cleanup(); */
+    gpage_cleanup();
 
     return err;
 }
