@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <zlib.h>
 #include <dirent.h>
+#include <errno.h>
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 #include <netinet/in.h>
@@ -1274,19 +1275,23 @@ void open_named_db_clist (char *dbname)
 
 void open_db_clist (GtkWidget *w, gpointer data)
 {
-    gchar *fname;
+    gchar *fname, *dbdir;
     char dbfile[MAXLEN];
     int n, action = NATIVE_SERIES;
     windata_t *mydata = (windata_t *) data;
 
+    dbdir = gtk_clist_get_row_data(GTK_CLIST(mydata->listbox),
+				   mydata->active_var);
+
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), 
 		       mydata->active_var, 0, &fname);
     n = strlen(fname);
+
     if (strcmp(fname + n - 4, ".rat") == 0) {
 	action = RATS_SERIES;
-	build_path(paths.ratsbase, fname, dbfile, NULL);
-    } else 
-	build_path(paths.binbase, fname, dbfile, NULL);
+    }
+
+    build_path(dbdir, fname, dbfile, NULL);
 
     display_db_series_list(action, dbfile, NULL); 
     /* gtk_widget_destroy(GTK_WIDGET(mydata->w)); */
@@ -1326,8 +1331,9 @@ void open_named_remote_clist (char *dbname)
     } 
     else if (strncmp(getbuf, "Couldn't open", 13) == 0) {
 	errbox(getbuf);
-    } else 
+    } else {
 	display_db_series_list(REMOTE_SERIES, dbname, getbuf);
+    }
 
     free(getbuf);
 }
@@ -1464,16 +1470,21 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 	return;
     }
 
-    build_path(paths.binbase, dbname, ggzname, ".ggz");
+    errno = 0;
     fp = fopen(ggzname, "w");
     if (fp == NULL) {
-	gchar *errstr;
+	if (errno == EACCES) { /* write to user dir instead */
+	    build_path(paths.userdir, dbname, ggzname, ".ggz");
+	} else {
+	    gchar *errstr;
 
-	errstr = g_strdup_printf(_("Couldn't open %s for writing"), ggzname);
-	errbox(errstr);
-	g_free(errstr);
-	free(ggzname);
-	return;
+	    errstr = g_strdup_printf(_("Couldn't open %s for writing"), 
+				     ggzname);
+	    errbox(errstr);
+	    g_free(errstr);
+	    free(ggzname);
+	    return;
+	}
     } else {
 	fclose(fp);
     }
@@ -1508,7 +1519,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static gchar *get_descrip (char *fname, const PATHS *ppaths)
+static gchar *get_descrip (char *fname, const char *dbdir)
 {
     FILE *fp;
     gchar *line, *p;
@@ -1516,7 +1527,7 @@ static gchar *get_descrip (char *fname, const PATHS *ppaths)
 
     if ((line = mymalloc(MAXLEN)) == NULL) return NULL;
 
-    build_path(ppaths->binbase, fname, tmp, NULL);
+    build_path(dbdir, fname, tmp, NULL);
     if ((p = strrchr(tmp, '.'))) strcpy(p, ".idx");
 
     if ((fp = fopen(tmp, "r")) == NULL) {
@@ -1552,11 +1563,6 @@ gint populate_dbfilelist (windata_t *ddata)
 	dbdir = paths.binbase;
     }
 
-#ifdef G_OS_WIN32 /* opendir doesn't work on e.g. c:\foo\ */
-    if (dbdir[strlen(dbdir) - 1] == '\\') 
-        dbdir[strlen(dbdir) - 1] = '\0';
-#endif
-
     if ((dir = opendir(dbdir)) == NULL) {
 	sprintf(errtext, _("Can't open folder %s"), dbdir);
 	errbox(errtext);
@@ -1572,19 +1578,43 @@ gint populate_dbfilelist (windata_t *ddata)
 	if (strcmp(fname + n - 4, filter) == 0) {
 	    row[0] = fname;
 	    row[1] = NULL;
-	    if (ddata->role == NATIVE_DB) 
-		row[1] = get_descrip(fname, &paths);
+	    if (ddata->role == NATIVE_DB) { 
+		row[1] = get_descrip(fname, dbdir);
+	    }
 	    gtk_clist_append(GTK_CLIST (ddata->listbox), row);
+	    gtk_clist_set_row_data(GTK_CLIST (ddata->listbox), i, dbdir);
 	    if (row[1]) g_free(row[1]);
 	    i++;
 	}
     }
     closedir(dir);
 
+    /* pick up any databases in the user's personal dir */
+    dbdir = paths.userdir;
+    if ((dir = opendir(dbdir)) != NULL) {
+	while ((dirent = readdir(dir)) != NULL) {
+	    fname = dirent->d_name;
+	    n = strlen(fname);
+	    if (strcmp(fname + n - 4, filter) == 0) {
+		row[0] = fname;
+		row[1] = NULL;
+		if (win->role == NATIVE_DB) {
+		    row[1] = get_descrip(fname, dbdir);
+		}
+		gtk_clist_append(GTK_CLIST (ddata->listbox), row);
+		gtk_clist_set_row_data(GTK_CLIST (ddata->listbox), i, dbdir);
+		if (row[1]) g_free(row[1]);
+		i++;
+	    }
+	}
+	closedir(dir);
+    }
+
     if (i == 0) {
 	errbox(_("No database files found"));
 	return 1;
     }
+
     gtk_clist_select_row(GTK_CLIST (ddata->listbox), 0, 0);
     return 0;
 }

@@ -171,7 +171,8 @@ static void cell_edited (GtkCellRendererText *cell,
 /* .................................................................. */
 
 GtkWidget *list_box_create (windata_t *win, GtkBox *box, 
-			    gint ncols, const char *titles[]) 
+			    gint ncols, int hidden_col, 
+			    const char *titles[]) 
 {
     GtkListStore *store; 
     GtkWidget *view, *scroller;
@@ -181,13 +182,17 @@ GtkWidget *list_box_create (windata_t *win, GtkBox *box,
     GType *types;
     gint i, totcols = ncols;
 
-    if (win == mdata) totcols++;
+    if (win == mdata || hidden_col) totcols++;
 
     types = mymalloc(totcols * sizeof *types);
     if (types == NULL) return NULL;
 
     for (i=0; i<ncols; i++) types[i] = G_TYPE_STRING;
-    if (win == mdata) types[ncols] = G_TYPE_BOOLEAN;
+    if (win == mdata) {
+	types[ncols] = G_TYPE_BOOLEAN;
+    } else if (hidden_col) {
+	types[ncols] = G_TYPE_STRING;
+    }
 
     store = gtk_list_store_newv (totcols, types);
     free(types);
@@ -220,6 +225,14 @@ GtkWidget *list_box_create (windata_t *win, GtkBox *box,
 							       "text", i, 
 							       NULL);
 	    gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
+	}
+	if (hidden_col) {
+	    column = gtk_tree_view_column_new_with_attributes (NULL,
+							       renderer,
+							       "text", i, 
+							       NULL);
+	    gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
+	    gtk_tree_view_column_set_visible(column, FALSE);
 	}
     }
 

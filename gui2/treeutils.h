@@ -2,7 +2,8 @@
 #define TREEUTILS_H
 
 GtkWidget *list_box_create (windata_t *win, GtkBox *box, 
-			    gint ncols, const char *titles[]);
+			    gint ncols, int hidden_col,
+			    const char *titles[]);
 
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val);
 

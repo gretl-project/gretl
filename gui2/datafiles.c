@@ -549,6 +549,7 @@ static GtkWidget *files_window (windata_t *fdata)
     int remote_col_width[] = {80, 256, 180};
     int *col_width = data_col_width;
     int full_width = 500, file_height = 260;
+    int hidden_col = 0;
 
     GtkWidget *box;
     int cols = 2;
@@ -557,6 +558,7 @@ static GtkWidget *files_window (windata_t *fdata)
     case NATIVE_DB:
 	titles = db_titles;
 	col_width = db_col_width;
+	hidden_col = 1;
 	break;
     case REMOTE_DB:
 	titles = remote_titles;
@@ -570,6 +572,7 @@ static GtkWidget *files_window (windata_t *fdata)
 	col_width = db_col_width;
 	col_width[0] = 200;
 	full_width = 240;
+	hidden_col = 1;
 	break;
     case RAMU_PS:
     case GREENE_PS:
@@ -591,7 +594,8 @@ static GtkWidget *files_window (windata_t *fdata)
     box = gtk_vbox_new (FALSE, 0);
     gtk_widget_set_size_request (box, full_width, file_height);
 
-    fdata->listbox = list_box_create (fdata, GTK_BOX(box), cols, titles);
+    fdata->listbox = list_box_create (fdata, GTK_BOX(box), cols, 
+				      hidden_col, titles);
 
     gtk_widget_show (box);
 

@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <zlib.h>
 #include <dirent.h>
+#include <errno.h>
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 #include <netinet/in.h>
@@ -537,6 +538,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     GtkWidget *main_vbox;
     char *titlestr;
     windata_t *dbwin;
+    int err = 0;
 
     dbwin = mymalloc(sizeof *dbwin);
     if (dbwin == NULL) return;
@@ -590,19 +592,18 @@ void display_db_series_list (int action, char *fname, char *buf)
 		      G_CALLBACK(delete_widget), dbwin->w);
 
     if (action == NATIVE_SERIES) { 
-	if (populate_series_list(dbwin, &paths)) 
-	    return;
+	err = populate_series_list(dbwin, &paths);
     } 
     else if (action == REMOTE_SERIES) { 
-	if (populate_remote_series_list(dbwin, buf)) 
-	    return;
+	err = populate_remote_series_list(dbwin, buf);
     }
     else {
-	if (rats_populate_series_list(dbwin)) 
-	    return;
-    }
+	err = rats_populate_series_list(dbwin);
+    } 
 
-    gtk_widget_show_all(dbwin->w); 
+    if (!err) {
+	gtk_widget_show_all(dbwin->w); 
+    }
 }
 
 /* ........................................................... */
@@ -805,7 +806,7 @@ static GtkWidget *database_window (windata_t *ddata)
 
     box = gtk_vbox_new (FALSE, 0);
 
-    ddata->listbox = list_box_create (ddata, GTK_BOX(box), cols, titles);
+    ddata->listbox = list_box_create (ddata, GTK_BOX(box), cols, 0, titles);
 
     g_signal_connect (G_OBJECT(ddata->listbox), "button_press_event",
 		      G_CALLBACK(popup_menu_handler), 
@@ -1308,7 +1309,7 @@ void open_named_db_list (char *dbname)
 
 void open_db_list (GtkWidget *w, gpointer data)
 {
-    gchar *fname;
+    gchar *fname = NULL, *dbdir = NULL;
     char dbfile[MAXLEN];
     int n, action = NATIVE_SERIES;
     windata_t *win = (windata_t *) data;
@@ -1319,12 +1320,17 @@ void open_db_list (GtkWidget *w, gpointer data)
     n = strlen(fname);
     if (strcmp(fname + n - 4, ".rat") == 0) {
 	action = RATS_SERIES;
-	build_path(paths.ratsbase, fname, dbfile, NULL);
-    } else {
-	build_path(paths.binbase, fname, dbfile, NULL);
+	tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
+			     win->active_var, 1, &dbdir);
+	build_path(dbdir, fname, dbfile, NULL);
+    } else { /* native DB */
+	tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
+			     win->active_var, 2, &dbdir);
+	build_path(dbdir, fname, dbfile, NULL);
     }
 
     g_free(fname);
+    g_free(dbdir);
     display_db_series_list(action, dbfile, NULL); 
     /* gtk_widget_destroy(GTK_WIDGET(win->w)); */
 }
@@ -1365,8 +1371,9 @@ void open_named_remote_db_list (char *dbname)
     } 
     else if (strncmp(getbuf, "Couldn't open", 13) == 0) {
 	errbox(getbuf);
-    } else 
+    } else {
 	display_db_series_list(REMOTE_SERIES, dbname, getbuf);
+    }
 
     free(getbuf);
 }
@@ -1507,15 +1514,22 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     if (ggzname == NULL) return;
 
     build_path(paths.binbase, dbname, ggzname, ".ggz");
+
+    errno = 0;
     fp = fopen(ggzname, "w");
     if (fp == NULL) {
-	gchar *errstr;
+	if (errno == EACCES) { /* write to user dir instead */
+	    build_path(paths.userdir, dbname, ggzname, ".ggz");
+	} else {
+	    gchar *errstr;
 
-	errstr = g_strdup_printf(_("Couldn't open %s for writing"), ggzname);
-	errbox(errstr);
-	g_free(errstr);
-	free(ggzname);
-	return;
+	    errstr = g_strdup_printf(_("Couldn't open %s for writing"), 
+				     ggzname);
+	    errbox(errstr);
+	    g_free(errstr);
+	    free(ggzname);
+	    return;
+	}
     } else {
 	fclose(fp);
     }
@@ -1552,7 +1566,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static gchar *get_descrip (char *fname, const PATHS *ppaths)
+static gchar *get_descrip (char *fname, const char *dbdir)
 {
     FILE *fp;
     gchar *line, *p;
@@ -1560,7 +1574,7 @@ static gchar *get_descrip (char *fname, const PATHS *ppaths)
 
     if ((line = mymalloc(MAXLEN)) == NULL) return NULL;
 
-    build_path(ppaths->binbase, fname, tmp, NULL);
+    build_path(dbdir, fname, tmp, NULL);
     if ((p = strrchr(tmp, '.'))) strcpy(p, ".idx");
     
     if ((fp = fopen(tmp, "r")) == NULL) {
@@ -1631,16 +1645,43 @@ gint populate_dbfilelist (windata_t *win)
 	    row[0] = fname;
 	    gtk_list_store_append(store, &iter);
 	    if (win->role == NATIVE_DB) {
-		row[1] = get_descrip(fname, &paths);
-		gtk_list_store_set (store, &iter, 0, row[0], 1, row[1], -1);
+		row[1] = get_descrip(fname, dbdir);
+		gtk_list_store_set (store, &iter, 0, row[0], 1, row[1], 
+				    2, dbdir, -1);
 		g_free(row[1]);
 	    } else { /* RATS */
-		gtk_list_store_set (store, &iter, 0, row[0], -1);
-	    }	
+		gtk_list_store_set (store, &iter, 0, row[0], 1, dbdir, -1);
+	    }
+	    
 	    i++;
 	}
     }
     closedir(dir);
+
+#ifndef G_OS_WIN32
+    /* pick up any databases in the user's personal dir */
+    dbdir = paths.userdir;
+    if ((dir = opendir(dbdir)) != NULL) {
+	while ((dirent = readdir(dir)) != NULL) {
+	    fname = dirent->d_name;
+	    n = strlen(fname);
+	    if (strcmp(fname + n - 4, filter) == 0) {
+		row[0] = fname;
+		gtk_list_store_append(store, &iter);
+		if (win->role == NATIVE_DB) {
+		    row[1] = get_descrip(fname, dbdir);
+		    gtk_list_store_set (store, &iter, 0, row[0], 1, row[1], 
+					2, dbdir, -1);
+		    g_free(row[1]);
+		} else { /* RATS */
+		    gtk_list_store_set (store, &iter, 0, row[0], 1, dbdir, -1);
+		}	
+		i++;
+	    }
+	}
+	closedir(dir);
+    }
+#endif
 
     if (i == 0) {
 	errbox(_("No database files found"));

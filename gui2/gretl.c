@@ -1245,7 +1245,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), dlabel);
    
-    mdata->listbox = list_box_create (mdata, GTK_BOX(box), 3, titles);
+    mdata->listbox = list_box_create (mdata, GTK_BOX(box), 3, 0, titles);
     gtk_widget_show(box);
 
     gtk_drag_dest_set (mdata->listbox,
