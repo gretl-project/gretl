@@ -1577,7 +1577,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     err = readhdr(hdrfile, pdinfo);
     if (err) return err;
     else 
-	pprintf(prn, _("\nReading header file %s\n"), hdrfile);
+	pprintf(prn, I_("\nReading header file %s\n"), hdrfile);
 
     /* deal with case where first col. of data file contains
        "marker" strings */
@@ -1601,14 +1601,14 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     }
 
     /* print out basic info from the files read */
-    pprintf(prn, _("periodicity: %d, maxobs: %d, "
+    pprintf(prn, I_("periodicity: %d, maxobs: %d, "
 	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
-    pprintf(prn, _("\nReading "));
+    pprintf(prn, I_("\nReading "));
     pprintf(prn, (pdinfo->time_series == TIME_SERIES) ? 
-	    _("time-series") : _("cross-sectional"));
-    pprintf(prn, _(" datafile"));
+	    I_("time-series") : _("cross-sectional"));
+    pprintf(prn, I_(" datafile"));
     if (strlen(datfile) > 40) pprintf(prn, "\n");
     pprintf(prn, " %s\n\n", datfile);
 
@@ -1673,7 +1673,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     if (prepZ(pZ, pdinfo)) return E_ALLOC;
 
     /* print out basic info */
-    pprintf(prn, _("periodicity: %d, maxobs: %d, "
+    pprintf(prn, I_("periodicity: %d, maxobs: %d, "
 	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
@@ -3407,8 +3407,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 
     strcpy(ppaths->datfile, fname);
 
-    pprintf(prn, _("\nRead datafile %s\n"), fname);
-    pprintf(prn, _("periodicity: %d, maxobs: %d, "
+    pprintf(prn, I_("\nRead datafile %s\n"), fname);
+    pprintf(prn, I_("periodicity: %d, maxobs: %d, "
 	   "observations range: %s-%s\n\n"), pdinfo->pd, pdinfo->n,
 	    pdinfo->stobs, pdinfo->endobs);
 

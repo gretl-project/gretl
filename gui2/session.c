@@ -421,7 +421,7 @@ void do_open_session (GtkWidget *w, gpointer data)
     free_session();
     session_init();
 
-    fprintf(stderr, _("\nReading session file %s\n"), scriptfile);
+    fprintf(stderr, I_("\nReading session file %s\n"), scriptfile);
 
     if (parse_savefile(scriptfile, &session, &rebuild)) 
 	return;
