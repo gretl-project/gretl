@@ -1237,38 +1237,41 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     pid_t pid;
 #endif
 
-    if (data_file_open) {
-	fp = fopen(".Rprofile", "r");
-	if (fp != NULL) {
-	    fclose(fp);
-	    if (copyfile(".Rprofile", ".Rprofile.gretltmp")) {
-		errbox("Couldn't move existing .Rprofile out of the way");
-		return;
-	    }
-	}
-	fp = fopen(".Rprofile", "w");
-	if (fp == NULL) {
-	    errbox("Couldn't write R startup file");
+    if (!data_file_open) {
+	errbox("Please open a data file first");
+	return;
+    }
+
+    fp = fopen(".Rprofile", "r");
+    if (fp != NULL) {
+	fclose(fp);
+	if (copyfile(".Rprofile", ".Rprofile.gretltmp")) {
+	    errbox("Couldn't move existing .Rprofile out of the way");
 	    return;
 	}
-	sprintf(Rdata, "%sRdata.tmp", paths.userdir);
-        sprintf(line, "store -r %s", Rdata); 
-	if (check_cmd(line) || cmd_init(line) ||
-	    write_data(Rdata, command.list, Z, datainfo, OPT_R)) {
-	    errbox("Write of R data file failed");
-	    fclose(fp);
-	    return; 
-	}
-	if (dataset_is_time_series(datainfo)) {
-	    fprintf(fp, "source(\"%s\")\n", Rdata);
-	    fprintf(fp, "ls()\n");
-	} else {
-	    fprintf(fp, "gretldata <- read.table(\"%s\")\n", Rdata);
-	    fprintf(fp, "attach(gretldata)\n");
-	    fprintf(fp, "ls(2)\n");
-	}
-	fclose(fp);
     }
+    fp = fopen(".Rprofile", "w");
+    if (fp == NULL) {
+	errbox("Couldn't write R startup file");
+	return;
+    }
+    sprintf(Rdata, "%sRdata.tmp", paths.userdir);
+    sprintf(line, "store -r %s", Rdata); 
+    if (check_cmd(line) || cmd_init(line) ||
+	write_data(Rdata, command.list, Z, datainfo, OPT_R)) {
+	errbox("Write of R data file failed");
+	fclose(fp);
+	return; 
+    }
+    if (dataset_is_time_series(datainfo)) {
+	fprintf(fp, "source(\"%s\")\n", Rdata);
+	fprintf(fp, "ls()\n");
+    } else {
+	fprintf(fp, "gretldata <- read.table(\"%s\")\n", Rdata);
+	fprintf(fp, "attach(gretldata)\n");
+	fprintf(fp, "ls(2)\n");
+    }
+    fclose(fp);
 
 #ifdef G_OS_WIN32
     CreateChildProcess(Rcommand);
@@ -1313,12 +1316,19 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 static void Rcleanup (void)
 {
     FILE *fp;
+    char Rdata[MAXLEN];
+
+    sprintf(Rdata, "%sRdata.tmp", paths.userdir);
+    remove(Rdata);
 
     fp = fopen(".Rprofile.gretltmp", "r");
     if (fp != NULL) {
 	fclose(fp);
-	copyfile(".Rprofile.gretltmp", ".Rprofile");
-	remove(".Rprofile.gretltmp");
+	if (copyfile(".Rprofile.gretltmp", ".Rprofile")) 
+	    errbox("Error restoring .Rprofile from\n"
+		   "the temporary copy, .Rprofile.gretltmp");
+	else 
+	    remove(".Rprofile.gretltmp");
     }
 }
 

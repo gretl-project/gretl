@@ -74,7 +74,7 @@ COMPILE = ../libtool --mode=compile $(CC) -c -I.. -I./src $(CFLAGS)
 
 $(LIBGRETL): $(OBJS) $(LOBJS) ../Makefile
 	../libtool --mode=link $(CC) -o $(LIBGRETL) $(LOBJS) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 7:0:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 8:0:0
 
 $(LOBJS): Makefile
 

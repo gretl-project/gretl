@@ -720,17 +720,23 @@ static void object_popup_show (GtkIconListItem *item, GdkEventButton *event)
 
     switch (gobj->sort) {
     case 'm': 
-	w = model_popup; break;
+	w = model_popup; 
+	break;
     case 'g': 
-	w = graph_popup; break;
+	w = graph_popup; 
+	break;
     case 'd': 
-	w = data_popup; break;
+	w = data_popup; 
+	break;
     case 'i': 
-	w = info_popup; break;
+	w = info_popup; 
+	break;
     case 's': 
 	set_addgraph_mode(); 
-	w = session_popup; break;
-    default: break;
+	w = session_popup; 
+	break;
+    default: 
+	break;
     }
 	
     gtk_menu_popup(GTK_MENU(w), NULL, NULL, NULL, NULL,
