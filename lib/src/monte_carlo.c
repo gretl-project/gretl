@@ -1947,12 +1947,6 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case GENR:
 		err = generate(pZ, pdinfo, linecpy, lastmod);
-#if 0
-		if (err) {
-		    printf("genr gave err = %d\n", err);
-		    print_gretl_errmsg(prn);
-		}
-#endif
 		break;
 
 	    case SIM:

@@ -518,22 +518,19 @@ static genatom *parse_token (const char *s, char op,
 					      &genr->err);
 			scalar = 1;
 		    }
-		}
-		if (func == T_CRIT) {
+		} else if (func == T_CRIT) {
 		    if (!genr->err) {
 			val = evaluate_critval(str, (const double **) *genr->pZ,
 					       genr->pdinfo,
 					       &genr->err);
 			scalar = 1;
 		    }
-		}
-		else if (MODEL_DATA_ELEMENT(func)) {
+		} else if (MODEL_DATA_ELEMENT(func)) {
 		    val = get_model_data_element(str, genr,
 						 genr->pmod, 
 						 func);
 		    scalar = 1;
-		}
-		else if (BIVARIATE_STAT(func)) {
+		} else if (BIVARIATE_STAT(func)) {
 		    val = evaluate_bivariate_statistic(str, genr,
 						       func);
 		    scalar = 1;
@@ -3069,28 +3066,25 @@ static double
 get_model_data_element (const char *s, GENERATE *genr,
 			MODEL *pmod, int idx)
 {
-    int lv, vi;
+    int lv, vi = 0;
     double x = NADBL;
+
+    DPRINTF(("get_model_data_element: looking at '%s'\n", s));
 
     if (pmod == NULL) return x;
 
     if (idx == T_RHO) {
 	if (!(numeric_string(s))) {
 	    genr->err = E_INVARG;
-	}
-	else if (dot_atof(s) == 1 && 
-		 (pmod->ci == CORC || pmod->ci == HILU)) {
+	} else if (dot_atof(s) == 1 && (pmod->ci == CORC || pmod->ci == HILU)) {
 	    x = gretl_model_get_double(pmod, "rho_in");
-	}
-	else if (pmod->ci != AR && dot_atof(s) == 1) {
+	} else if (pmod->ci != AR && dot_atof(s) == 1) {
 	    x = pmod->rho;
-	}
-	else if (pmod->arinfo == NULL || 
-		 pmod->arinfo->arlist == NULL || 
-		 pmod->arinfo->rho == NULL) {
+	} else if (pmod->arinfo == NULL || 
+		   pmod->arinfo->arlist == NULL || 
+		   pmod->arinfo->rho == NULL) {
 	    genr->err = E_INVARG;
-	}
-	else if (!(vi = listpos(atoi(s), pmod->arinfo->arlist))) {
+	} else if (!(vi = listpos(atoi(s), pmod->arinfo->arlist))) {
 	    genr->err = E_INVARG;
 	} else {
 	    x = pmod->arinfo->rho[vi];
@@ -3099,20 +3093,18 @@ get_model_data_element (const char *s, GENERATE *genr,
 
     else if (idx == T_VCV) {
 	x = genr_vcv(s, genr->pdinfo, pmod);
-	if (na(x)) genr->err = E_INVARG;
+	if (na(x)) {
+	    genr->err = E_INVARG;
+	}
     }
 
     else if (idx == T_COEFF || idx == T_STDERR) {
 	if (pmod == NULL || pmod->list == NULL) {
 	    genr->err = E_INVARG;
-	    return NADBL;
-	}
-
-	if (pmod->ci == ARMA) {
+	} else if (pmod->ci == ARMA) {
 	    vi = arma_model_stat_pos(s, pmod);
 	    if (vi < 0) {
 		genr->err = E_INVARG;
-		return NADBL;
 	    }
 	} else {
 	    lv = numeric_string(s)? atoi(s) : varindex(genr->pdinfo, s);
@@ -3120,20 +3112,27 @@ get_model_data_element (const char *s, GENERATE *genr,
 
 	    if (vi < 2) {
 		genr->err = E_INVARG;
-		return NADBL;
 	    } else {
 		vi -= 2;
 	    }
 	}
 
-	if (idx == T_COEFF && pmod->coeff != NULL) { 
-	    x = pmod->coeff[vi];
-	} else if (pmod->sderr != NULL) {
-	    x = pmod->sderr[vi];
-	} else {
-	    genr->err = E_INVARG;
+	if (!genr->err) {
+	    if (idx == T_COEFF && pmod->coeff != NULL) { 
+		x = pmod->coeff[vi];
+	    } else if (pmod->sderr != NULL) {
+		x = pmod->sderr[vi];
+	    } else {
+		genr->err = E_INVARG;
+	    }
 	}
     } 
+
+    if (genr->err) {
+	gretl_errno = genr->err;
+    }
+
+    DPRINTF(("get_model_data_element: err = %d\n", genr->err));
 
     return x;
 }

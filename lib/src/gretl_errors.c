@@ -155,12 +155,18 @@ char *get_gretl_msg (void)
 
 int print_gretl_errmsg (PRN *prn)
 {
+    int ret = 0;
+
     if (*gretl_errmsg != '\0') {
 	pprintf(prn, "%s\n", gretl_errmsg);
-	return 1;
+	ret = 1;
     } else {
-	return 0;
-    }
+	char *str = get_errmsg(gretl_errno, NULL, prn);
+
+	if (str != NULL) ret = 1;
+    } 
+
+    return ret;
 }
 
 int print_gretl_msg (PRN *prn)
