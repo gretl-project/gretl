@@ -32,7 +32,7 @@
         le variabili nella <repl>lista-variabili</repl> e stima il nuovo
         modello. Se si aggiunge più di una variabile, verrà mostrata la
         statistica <mathvar>F</mathvar> e il suo p-value per le nuove variabili
-        (solo per la procedura OLS). Un p-value inferiore 0.05 significa che i
+        (solo per la procedura OLS). Un p-value inferiore a 0.05 indica che i
         coefficienti sono congiuntamente significativi al livello del 5 per
         cento.
       </para>
@@ -129,8 +129,8 @@
 	non vincolato e i pedici <mathvar>u</mathvar> e <mathvar>r</mathvar>
 	denotano il modello non vincolato (unrestricted) e quello vincolato
 	(restricted). Si noti che i valori critici per queste statistiche non
-	sono quelli usuali; quando può essere calcolato viene mostrato un intevallo
-	di p-value.
+	sono quelli usuali; inoltre, quando è possibile calcolarlo, viene 
+        mostrato un intevallo per il p-value.
       </para>
     </description>
 
@@ -179,7 +179,7 @@
       </para>
 
       <para context="cli">
-	<repl quote="true">lags</repl> è una lista di ritardi nei residui, conclusa
+	<repl quote="true">ritardi</repl> è una lista di ritardi nei residui, conclusa
 	da un punto e virgola. Nell'esempio precedente, il termine di errore è
 	specificato come
 	<equation status="display" 
@@ -351,9 +351,9 @@
         minimo e massimo. Una linea trasversale sulla scatola indica la mediana.
 	</para> 
 
-      <para>Nel caso dei grafici a tacca, una tacca indica i limiti dell'intervallo
-	di confidenza approssimato al 90 per cento per la mediana, ottenuto col metodo
-        bootstrap.</para>
+      <para>Nel caso dei grafici a tacca ("notches"), una tacca indica i limiti
+        dell'intervallo di confidenza approssimato al 90 per cento per la
+        mediana, ottenuto col metodo bootstrap.</para>
 
       <para context="gui">Dopo ogni variabile specificata nel comando
 	boxplot, è possibile aggiungere un'espressione booleana tra
@@ -396,7 +396,7 @@
 
     <usage>
       <arguments>
-        <argument>obs</argument>
+        <argument>osservazione</argument>
       </arguments>
       <examples>
         <example>chow 25</example>
@@ -411,7 +411,7 @@
       <para>
 	Va eseguito dopo una regressione OLS. Crea una variabile
         dummy che vale 1 a partire dal punto di rottura specificato da
-	<repl>obs</repl> fino alla fine del campione, 0 altrove; inoltre
+	<repl>osservazione</repl> fino alla fine del campione, 0 altrove; inoltre
         crea dei termini di interazione tra questa dummy e le variabili
         indipendenti originali, stima una regressione che include
         questi termini e calcola una statistica <mathvar>F</mathvar>,
@@ -454,7 +454,7 @@
         e ne mostra l'errore standard e il p-value per l'ipotesi nulla
         che la somma sia zero.
       </para>
-      <para>Si noti la differenza tra questo test e il <cmdref
+      <para>Si noti la differenza tra questo test e <cmdref
 	  targ="omit"/>, che assume come ipotesi nulla l'uguaglianza a zero
           di <emphasis>tutti</emphasis> i coefficienti di un gruppo di variabili
           indipendenti.</para>
@@ -680,7 +680,7 @@
       <para>
 	Mostra i valori della funzione di autocorrelazione per la
 	<repl>variabile</repl> specificata (dal nome o dal numero).
-	Si veda Ramanathan, Capitolo 11.7.  È quindi
+	Si veda Ramanathan, Capitolo 11.7.  È definita come
 	<equation status="inline" 
 	  tex="$\rho(u_t, u_{t-s})$"
 	  ascii="rho(u(t), u(t-s))"
@@ -745,7 +745,7 @@
 
     <usage>
       <arguments>
-        <argument>dist</argument>
+        <argument>distribuzione</argument>
         <argument>param1</argument>
 	<argument optional="true">param2</argument>
       </arguments>
@@ -757,13 +757,13 @@
     </usage>
 
     <description>
-      <para>Se <repl>dist</repl> è <lit>t</lit>, <lit>X</lit> o
+      <para>Se la <repl>distribuzione</repl> è <lit>t</lit>, <lit>X</lit> o
 	<lit>F</lit>, mostra i valori critici per le distribuzioni
         <mathvar>t</mathvar> di student, chi-quadro o <mathvar>F</mathvar>,
 	per i valori di significatività usuali, con i gradi di libertà
 	specificati, dati da <repl>param1</repl> per la t e la chi-quadro,
         o <repl>param1</repl> e <repl>param2</repl> per la
-	<mathvar>F</mathvar>. Se <repl>dist</repl> è <lit>d</lit>,
+	<mathvar>F</mathvar>. Se la <repl>distribuzione</repl> è <lit>d</lit>,
 	mostra i valori superiore e inferiore della statistica di 
         Durbin-Watson al livello di significatività del 5 per cento, per
         il dato numero di osservazioni <repl>param1</repl>, e per l'intervallo
@@ -789,7 +789,7 @@
         la previsione della variabile dipendente per l'osservazione 
 	<mathvar>k</mathvar> + 1; la seconda usa le prime
         <mathvar>k</mathvar> + 1 osservazioni per generare una previsione
-        per l'osservazione <mathvar>k</mathvar> + 2 e cos' via (dove
+        per l'osservazione <mathvar>k</mathvar> + 2 e così via (dove
 	<mathvar>k</mathvar> è il numero dei parametri nel modello originale).
 	Viene mostrata, anche graficamente, la somma cumulata degli errori 
         scalati di previsione. L'ipotesi nulla della stabilità dei parametri
@@ -921,7 +921,7 @@
     <description>
       <para>
 	Calcola la differenza prima di ogni variabile nella <repl>lista-variabili</repl>
-	e la immagazzina in una nuova variabile il cui nome è prefissato con
+	e la salva in una nuova variabile il cui nome è prefissato con
 	<lit>d_</lit>.  Quindi <cmd>diff x y</cmd> crea le nuove variabili
 	<lit>d_x = x(t) - x(t-1)</lit> e <lit>d_y = y(t) - y(t-1)</lit>.
       </para>
@@ -946,7 +946,7 @@
       <para>
 	Termina un blocco di comandi di qualsiasi tipo.
         Ad esempio, <cmd>end system</cmd> termina un <cmdref targ="system"/>
-        di equazioni.
+        (sistema di equazioni).
       </para>
     </description>
 
@@ -1339,7 +1339,7 @@
 	    <func>zeromiss</func> (l'operazione inversa di
 	    <func>misszero</func>), <func>nobs</func> (riporta il numero di
 	    osservazioni valide in una data serie), <func>missing</func>
-            (per ogni osservazione, vale 1 se l'argomento ha un valore mancante
+            (per ogni osservazione, vale 1 se l'argomento ha un valore mancante,
             0 altrimenti).</para>
 	</li>
 	<li><para>Numeri pseudo-casuali: <func>uniform</func>,
@@ -1350,8 +1350,8 @@
       <para>
 	Tutte le funzioni viste sopra, con l'eccezione di
 	<func>cov</func>, <func>corr</func>, <func>pvalue</func>,
-	<func>uniform</func> e <func>normal</func> hanno come argomento
-	singolo il nome di una variabile (attenzione: non è possibile
+	<func>uniform</func> e <func>normal</func> hanno come unico argomento
+	il nome di una variabile (attenzione: non è possibile
 	indicare le variabili con il loro numero identificativo in una
         formula <cmd>genr</cmd>) o un'espressione che si risolve in una
 	variabie (ad es. <lit>ln((x1+x2)/2)</lit>). <func>cov</func> e
@@ -1364,12 +1364,12 @@
         argomenti, producono delle serie pseudo-casuali estratte da distribuzioni
 	uniformi (0&ndash;1) e normale standard (si veda anche il comando
 	<cmdref targ="set"/> con l'opzione <lit>seed</lit>).
-	Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister;
+	Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
         <footnote><para>Si veda Matsumoto e Nishimura
         (1998). L'implementazione è fornita da <program>glib</program>, se è
         disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
-        </footnote> per le serie dalla distribuzione normale, viene usato il
-        metodo di Box and Muller (1958), prendendo l'input dal Mersenne Twister.</para>
+        </footnote>; per le serie dalla distribuzione normale, viene usato il
+        metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.</para>
 
       <para>Oltre agli operatori e alle funzioni mostrati, ci sono alcuni
         usi speciali del comando <cmd>genr</cmd>:
@@ -1458,14 +1458,14 @@
       </ilist> 
 
       <para>
-	<emphasis>Nota</emphasis>: nel programma a riga di comando,
-        i comandi <cmd>genr</cmd> che recuperano dati relativi al modello
+	<emphasis>Nota</emphasis>: nella versione a riga di comando del programma
+        i comandi <cmd>genr</cmd> che estraggono dati relativi al modello
 	si riferiscono sempre al modello stimato per ultimo. Questo vale anche
         per la versione grafica del programma se si usa <cmd>genr</cmd> nel
         <quote>terminale di gretl</quote> o si immette una formula usando
         l'opzione <quote>Definisci nuova variabile</quote> nel menù Variabile
-        della finestra principale. Usando la versione grafica, però, è anche
-        possibile recuperare i dati di qualunque modello mostrato in una
+        della finestra principale. Usando la versione grafica, però, è
+        possibile anche estrarre i dati da qualunque modello mostrato in una
         finestra (anche se non è il modello più recente) usando il menù
         <quote>Dati modello</quote> nella finestra del modello.</para>
 
@@ -1502,9 +1502,9 @@
       </para>
 
       <para>
-	<tabref targ="tab-genr"/> mostra vari esempi di utilizzo di
-	<cmd>genr</cmd>, con note esplicative; ecco qualche consiglio
-        sull'uso delle variabili dummy:
+	La <tabref targ="tab-genr"/> mostra vari esempi di utilizzo di
+	<cmd>genr</cmd>, con note esplicative; ecco qualche esempio di
+        utilizzo delle variabili dummy:
       </para>
 
       <ilist>
@@ -1530,7 +1530,7 @@
       </ilist>
 
       <table id="tab-genr" title="Esempi di utilizzo del comando genr"
-	lhead="Formula" rhead="Comment">
+	lhead="Formula" rhead="Commento">
 	<row>
 	  <cell><lit>y = x1^3</lit></cell>
 	  <cell><lit>x1</lit> al cubo</cell>
@@ -1886,7 +1886,8 @@
 	Questo test è disponibile solo dopo aver stimato un modello con
         il comando <cmdref targ="pooled"/> (si veda anche <cmd>panel</cmd>
         e <cmd>setobs</cmd>). Testa il semplice modello <quote>pooled</quote>
-        contro le principali alternative: il modello a effetti fissi e quello
+        (con tutte le osservazioni considerate indistintamente) contro 
+        le principali alternative: il modello a effetti fissi e quello
         a effetti casuali.</para>
 
       <para>
@@ -2033,7 +2034,7 @@
         originale con la procedura dei minimi quadrati ponderati.
         Viene riportato il risultato finale.</para>
 
-      <para>La serie dei pesi è composta così
+      <para>La serie dei pesi è composta da
 	<equation status="inline"
 	  tex="$1/\sqrt{e^{y^*}}$"
 	  ascii="1/sqrt(exp(y*))"
@@ -2093,7 +2094,7 @@
         Importa dati da un file in formato valori separati da virgole
         (CSV: comma-separated values), che può essere facilmente
         prodotto da un foglio elettronico. Il file deve contenere i nomi
-        delle variabili sulla prima riga e una matrice rettangolari di
+        delle variabili sulla prima riga e una matrice rettangolare di
         dati nelle righe rimanenti. Le variabili devono essere disposte
 	<quote>per osservazione</quote> (una colonna per variabile, ogni
         riga rappresenta un'osservazione).
@@ -2117,7 +2118,7 @@
 
     <description>
       <para>
-	Mostra le informazioni aggiuntive immagazzinate nel file di dati
+	Mostra le informazioni aggiuntive contenute nel file di dati
         attuale.
       </para>
     </description>
@@ -2836,12 +2837,11 @@
         nome o numero) sono moltiplicate per <repl>x</repl>, che può
         essere un valore numerico o il nome di una variabile già
         definita. I prodotti verranno chiamati con il
-        <repl>suffisso</repl> specificato (massimo 3 caratteri)
-	(maximum 3 characters), troncando i nomi delle variabili
-        originali se ce n'è bisogno per motivi di spazio. Ad esempio, si
-        supponga di voler creare la versione procapite di una serie di
-        variabili, usando la variabile <lit>pop</lit> (popolazione).
-        Lo si può fare con i comandi seguenti:</para>
+        <repl>suffisso</repl> specificato (massimo 3 caratteri),
+        troncando i nomi delle variabili originali se ce n'è bisogno per motivi
+        di spazio. Ad esempio, si supponga di voler creare la versione
+        procapite di una serie di variabili, usando la variabile <lit>pop</lit>
+        (popolazione).  Lo si può fare con i comandi seguenti:</para>
       
       <code>
 	genr invpop = 1/pop
@@ -3087,7 +3087,7 @@
 	Vengono mostrate anche le statistiche di selezione del modello
         (descritte in Ramanathan, capitolo 4.3).</para>
 
-      <para context="cli">È possibile recuperare alcune variabili
+      <para context="cli">È possibile salvare alcune variabili
       interne generate durante la stima, usando il comando <cmdref
       targ="genr"/> subito dopo questo comando.
       </para>
@@ -3359,8 +3359,8 @@
         interpretato come un panel (unione di dati cross section e serie
         storiche). L'impostazione predefinita corrisponde all'opzione
 	<lit>--time-series</lit> e prevede di interpretare il dataset
-        come pila di serie storiche (blocchi successivi di dati
-        contengono serie storiche per ogni unità cross section).
+        come una pila di serie storiche (costituita da blocchi successivi 
+        di dati che contengono serie storiche per ogni unità cross section).
 	Usando l'opzione <lit>--cross-section</lit> il dataset viene
         letto come una pila di dati cross-section (blocchi successivi di
         dati contengono dati cross section per ognuno dei periodi
@@ -4092,7 +4092,7 @@
           di tipo cross section. Le opzioni corrispondono alle HC0, HC1,
           HC2 e HC3 discusse da Davidson e MacKinnon nel capitolo 5 di
           <book>Econometric Theory and Methods</book>.  HC0 produce
-          quelli che di solito vengono chiamati<quote>errori standard di
+          quelli che di solito vengono chiamati <quote>errori standard di
           White</quote>.</cell> </row>
 	<row>
 	  <cell><lit>garch_vcv</lit></cell>
@@ -4114,7 +4114,7 @@
           <lit>hpfilt</lit> sotto il comando <cmd>genr</cmd>). Il valore
           predefinito è 100 volte il quadrato della periodicità, ossia
           100 per i dati annuali, 1600 per i dati trimestrali e così
-          via).</cell>
+          via.</cell>
 	</row>
       </table>
 
@@ -4209,7 +4209,7 @@
         esempi precedenti, l'interpretazione verrà applicata a tutte le
         serie del dataset. Se <repl quote="true">valore</repl> è seguito
         da una lista di variabili, indicate per nome o numero,
-        l'interpretazione è confinata solo alle variabili specificate.
+        l'interpretazione è limitata solo alle variabili specificate.
         Così, nel secondo esempio, il valore 100 è interpretato come
         codice per <quote>mancante</quote>, ma solo per la variabile
         <lit>x2</lit>.
@@ -4339,7 +4339,7 @@
 	Il quarto modo, che usa <lit>--restrict</lit>, limita il
         campione alle osservazioni che soddisfano la condizione Booleana
 	specificata secondo la sintassi del comando <cmdref
-        targ="genr"/>).</para>
+        targ="genr"/>.</para>
 
       <para>Con la forma <lit>--no-missing</lit>, se viene specificata
       una <repl>lista-variabili</repl>, vengono scartate le osservazioni
@@ -4446,7 +4446,7 @@
           <lit>sq_y</lit> = <lit>y</lit> al quadrato e (opzionalmente)
           <lit>x_y</lit> = <lit>x</lit> per <lit>y</lit>.
 	Se una particolare variabile è una dummy, non ne viene fatto il
-        quadrato, visto che si ottiene la stessa variabile.
+        quadrato, visto che si otterrebbe la stessa variabile.
       </para>
     </description>
 
@@ -4586,7 +4586,7 @@
       <options>
         <option>
 	  <flag>--complete</flag>
-	  <effect>Crea un documento completo</effect>
+	  <effect>crea un documento completo</effect>
         </option>
       </options>
     </usage>
@@ -4804,7 +4804,7 @@
       <para context="cli">
 	Viene calcolata una regressione separata per ognuna delle
         variabili nella <repl>lista-variabili</repl>. Il risultato di
-        ogni equazione include i test <mathvar>F</mathvar>per i vincoli
+        ogni equazione include i test <mathvar>F</mathvar> per i vincoli
         di uguaglianza a zero su tutti i ritardi delle variabili; un
         test <mathvar>F</mathvar>-test per la significatività del
         ritardo massimo; la scomposizione della varianza della
@@ -4814,7 +4814,7 @@
 	Le decomposizioni della varianza e le funzioni di
         impulso-risposta sono basate sulla decomposizione di Cholesky
         della matrice di covarianza contemporanea, e in questo contesto
-        l'ordine incui vengono date le variabili stocastiche conta.
+        l'ordine in cui vengono date le variabili stocastiche conta.
 	La prima variabile nella lista viene considerata come la
 	<quote>più esogena</quote> all'interno del periodo.</para> 
 
