@@ -5,7 +5,7 @@ use strict;
 my ($line, $texline, $foo, $figfile);
 my $manual = "./manual.xml";
 my $textmp = "./eqntmp";
-my $i = 0;
+# my $i = 0;
 
 open (MAN, "<$manual") || die "Can't open $manual";
 
@@ -18,11 +18,11 @@ sub printtex {
     print TEX "$texline";
     print TEX "\\end{document}\n";
     close (TEX);
-    print "printed tex file $i\n"; $i++;
+    # print "printed tex file $i\n"; $i++;
     system ("latex $textmp");
-    system ("dvips -o $textmp.eps $textmp -E");
+    system ("dvips gv foo-o $textmp.eps $textmp -E");
     system ("convert -density 100x100 $textmp.eps $figfile.png");
-    system ("cp $textmp.tex $textmp$i.tex");
+    # system ("cp $textmp.tex $textmp$i.tex");
     system ("rm -f $textmp.*");
 }
 
