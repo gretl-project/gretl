@@ -19,7 +19,7 @@
 
 /* generate.c for gretl */
 
-/* #define GENR_DEBUG */
+#define GENR_DEBUG
 
 #include "libgretl.h"
 #include "internal.h"
@@ -46,15 +46,17 @@ struct _GENERATE {
 };
 
 struct _genatom {
-    int level;
-    int scalar;
+    char level;
+    char scalar;
     int varnum;
     int tmpvar;
-    int lag;
+    char lag;
     double val;
-    int func;
+    char func;
     char op;
+    char popped;
     char str[ATOMLEN];
+    genatom *parent;
 };
 
 static double calc_xy (double x, double y, char op, int t);
@@ -94,8 +96,8 @@ static double *get_model_series (double **Z, const DATAINFO *pdinfo,
 static double *get_random_series (DATAINFO *pdinfo, int fn);
 static double *get_mp_series (const char *s, GENERATE *genr,
 			      int fn, int *err);
-static double *get_tmp_series (double **Z, const DATAINFO *pdinfo, 
-			       int fn, int varnum, int *err);
+static double *get_tmp_series (double *x, const DATAINFO *pdinfo, 
+			       int fn, int *err);
 
 static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATE *genr, int fn);
@@ -104,9 +106,10 @@ static double get_model_data_element (const char *s, GENERATE *genr,
 static double get_model_statistic (const MODEL *pmod, int idx, int *err);
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
 static double evaluate_math_function (double arg, int fn, int *err);
+static double evaluate_missval_func (double arg, int fn);
 static double evaluate_bivariate_statistic (const char *s, 
 					    GENERATE *genr, 
-					    int idx, int *err);
+					    int fn);
 static double evaluate_pvalue (const char *s, double **Z,
 			       const DATAINFO *pdinfo, int *err);
 
@@ -155,13 +158,13 @@ enum transformations {
 
 enum retrieve {
     R_ESS = 1,
-    R_NOBS,
     R_T,
     R_RSQ,
     R_SIGMA,
     R_DF,
     R_LNL,
     R_TRSQ,
+    R_NOBS,
     R_PD
 };
 
@@ -176,7 +179,11 @@ enum {
     STACK_POP,
     STACK_GET,
     STACK_RESET,
-    STACK_GET_CHILDREN,
+    STACK_DEPEND,
+    STACK_POP_CHILDREN,
+    STACK_EAT_CHILDREN,
+    STACK_BOOKMARK,
+    STACK_RESUME,
     STACK_DESTROY
 };
 
@@ -230,13 +237,17 @@ static char *math[] = {
                           f == T_ATAN || f == T_INT || f == T_ABS || \
                           f == T_SQRT)
 
-#define SCALAR_SCOPE(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
-                         t == T_CORR || t == T_COV || \
-                         t == T_VAR || t == T_MEDIAN || t == T_MIN || \
-                         t == T_SST || t == T_MAX || t == T_NOBS)
+#define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
+                            t == T_VAR || t == T_MEDIAN || t == T_MIN || \
+                            t == T_SST || t == T_MAX || t == T_NOBS)
+
+#define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
 #define MODEL_DATA_ELEMENT(f) (f == T_COEFF || f == T_STDERR || \
                                f == T_RHO || f == T_VCV)
+
+#define MISSVAL_FUNC(f) (f == T_MISSING || f == T_MISSZERO || \
+                         f == T_ZEROMISS)
 
 #ifdef HAVE_MPFR
 # define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
@@ -246,6 +257,23 @@ static char *math[] = {
 
 #define MAXTERMS  64
 #define TOKLEN   128
+
+#ifdef GENR_DEBUG
+# include <stdarg.h>
+static void dprintf (const char *format, ...)
+{
+   va_list args;
+
+   va_start(args, format);
+   vfprintf(stderr, format, args);
+   va_end(args);
+
+   return;
+}
+# define DPRINTF(x) dprintf x
+#else 
+# define DPRINTF(x)
+#endif /* GENR_DEBUG */
 
 /* ...................................................... */
 
@@ -271,45 +299,50 @@ static genatom *make_atom (int scalar, int varnum,
     *atom->str = '\0';
     strncat(atom->str, str, ATOMLEN - 1);
 
+    atom->parent = NULL;
+    atom->popped = 0;
+
     return atom;
 }
 
+#ifdef GENR_DEBUG
 static int print_atom (genatom *atom)
 {
     if (atom == NULL) return 1;
 
-    printf(" atom->level = %d\n", atom->level);
+    fprintf(stderr, " atom->level = %d\n", atom->level);
 
-    printf(" atom->scalar = %d\n", atom->scalar);
+    fprintf(stderr, " atom->scalar = %d\n", atom->scalar);
 
     if (atom->varnum >= 0) {
-	printf(" atom->varnum = %d\n", atom->varnum);
+	fprintf(stderr, " atom->varnum = %d\n", atom->varnum);
     }
     if (atom->tmpvar >= 0) {
-	printf(" atom->tmpvar = %d\n", atom->tmpvar);
+	fprintf(stderr, " atom->tmpvar = %d\n", atom->tmpvar);
     }
     if (atom->lag > 0) {
-	printf(" atom->lag = %d\n", atom->lag);
+	fprintf(stderr, " atom->lag = %d\n", atom->lag);
     }
     if (atom->scalar) {
-	printf(" atom->val = %g\n", atom->val);
+	fprintf(stderr, " atom->val = %g\n", atom->val);
     }
     if (atom->func > 0) {
-	printf(" atom->func = %d\n", atom->func);
+	fprintf(stderr, " atom->func = %d\n", atom->func);
     }
 
     if (*atom->str) {
-	printf(" atom->str = '%s'\n", atom->str);
+	fprintf(stderr, " atom->str = '%s'\n", atom->str);
     }    
 
     if (isprint(atom->op)) {
-	printf(" atom->op = '%c'\n", atom->op);
+	fprintf(stderr, " atom->op = '%c'\n", atom->op);
     } else {
-	printf(" atom->op = %d\n", atom->op);
+	fprintf(stderr, " atom->op = %d\n", atom->op);
     }
 
     return 0;
 }
+#endif
 
 static int get_lagvar (const char *s, int *lag, GENERATE *genr)
 {
@@ -367,10 +400,11 @@ static genatom *parse_token (const char *s, char op,
 	    }
 	    v = varindex(genr->pdinfo, s);
 	    if (v == genr->pdinfo->v) { 
-		fprintf(stderr, "unrecognized varname '%s'\n", s);
+		sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
+			s);
 		genr->err = E_UNKVAR;
 	    } else {
-		fprintf(stderr, "recognized var '%s' (#%d)\n", s, v);
+		DPRINTF(("recognized var '%s' (#%d)\n", s, v));
 	    }
 
 	    if (v == INDEXNUM) { /* internal index variable */
@@ -389,15 +423,15 @@ static genatom *parse_token (const char *s, char op,
 	    /* try for lag variable first */
 	    v = get_lagvar(s, &lag, genr);
 	    if (v != 0) {
-		fprintf(stderr, "recognized var #%d lag %d\n", v, lag);
+		DPRINTF(("recognized var #%d lag %d\n", v, lag));
 	    } else {
 		/* try for a function */
 		v = -1;
 		func = math_word_index(s);
 		if (func) {
-		    fprintf(stderr, "recognized function #%d\n", func);
+		    DPRINTF(("recognized function #%d\n", func));
 		    if (MP_MATH(func) || func == T_PVALUE ||
-			MODEL_DATA_ELEMENT(func)) {
+			BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
 			genr->err = get_arg_string(str, s);
 		    } 
 		    if (func == T_PVALUE) {
@@ -414,9 +448,10 @@ static genatom *parse_token (const char *s, char op,
 						     func);
 			scalar = 1;
 		    }
-		    if (SCALAR_SCOPE(func)) { 
-			fprintf(stderr, "function returns scalar\n");
-			/* do stuff */
+		    else if (BIVARIATE_STAT(func)) {
+			val = evaluate_bivariate_statistic(str, genr,
+							   func);
+			scalar = 1;
 		    }
 		} else {
 		    /* not a variable of function: dead end? */
@@ -442,15 +477,15 @@ static genatom *parse_token (const char *s, char op,
 	int i = model_variable_index(s);
 
 	if (i > 0) {
-	    fprintf(stderr, "recognized '%s' as model variable, index #%d\n", 
-		    s, i);
+	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
+		    s, i));
 	    val = get_model_statistic(genr->pmod, i, &genr->err);
 	    scalar = 1;
 	} else {
 	    i = dataset_var_index(s);
 	    if (i > 0) {
-		fprintf(stderr, "recognized '%s' as dataset var, index #%d\n", 
-			s, i);
+		DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
+			s, i));
 		val = get_dataset_statistic(genr->pdinfo, i);
 		scalar = 1;
 	    } else {
@@ -475,14 +510,14 @@ static genatom *parse_token (const char *s, char op,
 
 static double calc_stack (double val, int op)
 {
-    static double valstack[STACKSIZE]; /* ? */
+    static double valstack[STACKSIZE]; /* how big should this be? */
     static int nvals;
     int i;
     double x = 0.0;
 
     if (op == STACK_PUSH) {
 	if (nvals == STACKSIZE - 1) {
-	    fprintf(stderr, "stack depth exceeded\n");
+	    fprintf(stderr, "genr: stack depth exceeded\n");
 	    return x;
 	} else {
 	    for (i=nvals; i>0; i--) {
@@ -492,12 +527,12 @@ static double calc_stack (double val, int op)
 	    nvals++;
 	}
     }
-    else if (op == STACK_POP) {
+    else if (op == STACK_POP && nvals > 0) {
 	x = valstack[0];
-	for (i=0; i<nvals; i++) {
+	for (i=0; i<STACKSIZE-1; i++) {
 	    valstack[i] = valstack[i+1];
 	}
-	if (nvals > 0) nvals--;
+	nvals--;
     }
     else if (op == STACK_RESET) {
 	for (i=0; i<STACKSIZE; i++) {
@@ -524,11 +559,63 @@ static void reset_calc_stack (void)
     calc_stack(0., STACK_RESET);
 }
 
+#define must_know_children(f) (f == T_NOBS || f == T_MEAN || f == T_SUM || \
+                               f == T_SD || f == T_VAR || f == T_SST || \
+                               f == T_MEDIAN || f == T_MIN || f == T_MAX || \
+                               f == T_DIFF || f == T_LDIFF || \
+                               f == T_CUM || f == T_SORT)
+
+
+static int real_stack_eat_children (genatom *parent, 
+				    genatom **atoms, int n)
+{
+    int i, j, ndel = 0;
+
+    for (i=0; i<n; i++) {
+	if ((atoms[i])->parent == parent) {
+	    free(atoms[i]);
+	    DPRINTF(("freed child atom, pos %d\n", i));
+	    for (j=i; j<n-1; j++) {
+		atoms[j] = atoms[j+1];
+	    }
+	    atoms[n-1] = NULL;
+	    ndel++;
+	    i--;
+	    n--;
+	}
+    }
+
+    DPRINTF(("ate %d children\n", ndel));
+
+    return ndel;
+}
+
+static void real_stack_set_parentage (genatom **atoms, int n)
+{
+    int i, j, level;
+
+    for (i=n-1; i>=0; i--) {
+	if (must_know_children((atoms[i])->func)) {
+	    level = (atoms[i])->level;
+	    for (j=i-1; j>=0; j--) {
+		if ((atoms[j])->level > level) {
+		    DPRINTF(("marking atom %d as parent of atom %d\n",
+			    i, j));
+		    (atoms[j])->parent = atoms[i];
+		} 
+		else break;
+	    }
+	    i = j;
+	}
+    }
+}
+
 static genatom *atom_stack (genatom *atom, int op)
 {
     static genatom **atoms;
     static int n_atoms;
     static int n_popped;
+    static int bookmark;
     genatom *ret = NULL;
     int j;
 
@@ -543,6 +630,7 @@ static genatom *atom_stack (genatom *atom, int op)
 	    ret = atoms[n_popped++];
 	}
     } else if (op == STACK_RESET) {
+	for (j=0; j<n_atoms; j++) (atoms[j])->popped = 0;
 	n_popped = 0;
     } else if (op == STACK_DESTROY) {
 	for (j=0; j<n_atoms; j++) free(atoms[j]);
@@ -550,17 +638,25 @@ static genatom *atom_stack (genatom *atom, int op)
 	atoms = NULL;
 	n_atoms = 0;
 	n_popped = 0;
-    } else if (op == STACK_GET_CHILDREN) {
-	int pos = -1;
+    } else if (op == STACK_POP_CHILDREN && atom != NULL) {
+	for (j=0; j<n_atoms; j++) {
+	    if ((atoms[j])->parent == atom && !(atoms[j])->popped) {
+		ret = atoms[j];
+		(atoms[j])->popped = 1;
+		break;
+	    }
+	}
+    } else if (op == STACK_EAT_CHILDREN && atom != NULL) {
+	int ndel = real_stack_eat_children(atom, atoms, n_atoms);
 
-	for (j=0; j<n_atoms && pos < 0; j++) {
-	    if (atoms[j] == atom) pos = j;
-	}
-	for (j=pos-1; j>=0; j--) {
-	    if ((atoms[j])->level > atom->level) {
-		fprintf(stderr, "atoms[%d] is a child of this one\n", j);
-	    } else break;
-	}
+	n_atoms -= ndel;
+	bookmark -= ndel; /* is this always right? */
+    } else if (op == STACK_DEPEND) {
+	real_stack_set_parentage(atoms, n_atoms);
+    } else if (op == STACK_BOOKMARK) {
+	bookmark = n_popped;
+    } else if (op == STACK_RESUME) {
+	n_popped = bookmark;
     }
 
     return ret;
@@ -618,19 +714,78 @@ static genatom *pop_atom (void)
     return atom_stack(NULL, STACK_POP);
 }
 
+static genatom *pop_child_atom (genatom *atom)
+{
+    return atom_stack(atom, STACK_POP_CHILDREN);
+}
+
 static void reset_atom_stack (void)
 {
     atom_stack(NULL, STACK_RESET);
 }
 
-static void show_child_atoms (genatom *atom)
-{
-    atom_stack(atom, STACK_GET_CHILDREN);
-}
-
 static void destroy_atom_stack (void)
 {
     atom_stack(NULL, STACK_DESTROY);
+}
+
+static void atom_stack_set_parentage (void)
+{
+    atom_stack(NULL, STACK_DEPEND);
+}
+
+static void atom_eat_children (genatom *atom)
+{
+    atom_stack(atom, STACK_EAT_CHILDREN);
+}
+
+static void atom_stack_bookmark (void)
+{
+    atom_stack(NULL, STACK_BOOKMARK);
+}
+
+static void atom_stack_resume (void)
+{
+    atom_stack(NULL, STACK_RESUME);
+}
+
+static double get_lag_at_obs (int v, int lag, double **Z, 
+			      const DATAINFO *pdinfo, int t)
+{
+    int lt;
+    double x = NADBL;
+
+    /* stacked X-section needs rather special handling */
+    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	lt = t - lag * pdinfo->pd;
+	if (lt >= 0 && lt < pdinfo->n) {
+	    x = Z[v][lt];
+	}
+    }
+    else if (dated_daily_data(pdinfo)) {
+	lt = t - lag;
+	while (lt >= 0 && na(Z[v][lt])) lt--;
+	x = Z[v][lt];
+    } 
+    else { /* the "standard" time-series case */
+	lt = t - lag;
+	if (lt >= 0 && lt < pdinfo->n) {
+	    x = Z[v][lt];
+	}
+    }
+
+    /* post-process missing panel values */
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	char *p, obs[OBSLEN];
+	int j;
+
+	ntodate(obs, t, pdinfo);
+	p = strchr(obs, ':');
+	j = atoi(p + 1);
+	if (j <= lag) x = NADBL;
+    }
+
+    return x;
 }
 
 static double eval_atom (genatom *atom, GENERATE *genr, int t, 
@@ -642,13 +797,13 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
        observation from a series */
     if (atom->scalar) {
 	x = atom->val;
-	fprintf(stderr, "eval_atom: got scalar = %g\n", x);
+	DPRINTF(("eval_atom: got scalar = %g\n", x));
     } 
 
     /* case of temporary variables */
     if (atom->tmpvar >= 0) {
 	x = genr->tmpZ[atom->tmpvar][t];
-	fprintf(stderr, "eval_atom: got temp obs = %g\n", x);
+	DPRINTF(("eval_atom: got temp obs = %g\n", x));
     }
 
     /* trend/index variables */
@@ -660,16 +815,13 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
     else if (atom->varnum >= 0) {
 	if (!atom->lag) {
 	    x = (*genr->pZ)[atom->varnum][t];
-	    fprintf(stderr, "eval_atom: got data obs (var %d) = %g\n", 
-		    atom->varnum, x);
+	    DPRINTF(("eval_atom: got data obs (var %d) = %g\n", 
+		    atom->varnum, x));
 	} else {
-	    int tl = t - atom->lag;
-
-	    if (tl >= 0 && tl < genr->pdinfo->n) {
-		x = (*genr->pZ)[atom->varnum][tl];
-	    }
-	    fprintf(stderr, "eval_atom: got lagged data obs (var %d, "
-		    "lag %d)= %g\n", atom->varnum, atom->lag, x);
+	    x = get_lag_at_obs(atom->varnum, atom->lag, (*genr->pZ),
+			       genr->pdinfo, t);
+	    DPRINTF(("eval_atom: got lagged data obs (var %d, "
+		    "lag %d) = %g\n", atom->varnum, atom->lag, x));
 	}
     }
 
@@ -677,8 +829,13 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
     else if (atom->func) {
 	if (STANDARD_MATH(atom->func)) {
 	    x = evaluate_math_function(a, atom->func, &genr->err);
-	    fprintf(stderr, "evaluated func %d arg %g, "
-		    "giving %g\n", atom->func, a, x);
+	    DPRINTF(("evaluated math func %d arg %g, "
+		    "-> %g\n", atom->func, a, x));
+	}
+	else if (MISSVAL_FUNC(atom->func)) {
+	    x = evaluate_missval_func(a, atom->func);
+	    DPRINTF(("evaluated missval func %d arg %g, "
+		    "-> %g\n", atom->func, a, x));
 	}
     }
 
@@ -755,21 +912,93 @@ static int add_mp_series_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
+static double *eval_compound_arg (GENERATE *genr,
+				  genatom *this_atom)
+{
+    int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
+    genatom *atom;
+    double *xtmp;
+
+    xtmp = malloc(genr->pdinfo->n * sizeof *xtmp);
+    if (xtmp == NULL) {
+	genr->err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	double xbak = 0.0, x = 0.0;
+	int level = 0;
+
+	reset_atom_stack();
+	while ((atom = pop_child_atom(this_atom))) {
+	    double y = eval_atom(atom, genr, t, x);
+
+	    if (genr->err) break;
+	    if (y == NADBL) {
+		x = NADBL;
+	    } else {
+		if (atom->level < level) {
+		    x = calc_pop();
+		}
+		x = calc_xy(x, y, atom->op, t);
+	    }
+	    if (atom->level > level) { 
+		calc_push(xbak);
+	    }
+	    level = atom->level;
+	    xbak = x;
+	}
+	if (genr->err) break;
+	xtmp[t] = x;
+    }
+
+    return xtmp;
+}
+
 static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
 {
-    double *x;
+    double *x, *y;
 
-    /* diff, sort, cum : FIXME compund args */
-    x = get_tmp_series(*genr->pZ, (const DATAINFO *) genr->pdinfo, 
-		       atom->func, atom->varnum, &genr->err);
-    if (x == NULL) return 1;
+    atom_stack_set_parentage();
 
-    if (genr_add_var(genr, x)) {
-	free(x);
+    /* evaluate possibly compound arg */
+    x = eval_compound_arg(genr, atom);
+    if (x == NULL) return genr->err;
+
+    y = get_tmp_series(x, (const DATAINFO *) genr->pdinfo, 
+		       atom->func, &genr->err);
+    if (y == NULL) return genr->err;
+
+    free(x);
+
+    if (genr_add_var(genr, y)) {
+	free(y);
 	return E_ALLOC;
     }
 
     atom->tmpvar = genr->tmpv - 1;
+    atom_eat_children(atom);
+
+    return genr->err;
+}
+
+static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
+{
+    double *x, y;
+
+    atom_stack_set_parentage();
+
+    x = eval_compound_arg(genr, atom);
+    if (x == NULL) return genr->err;
+
+    y = evaluate_statistic(x, genr, atom->func);
+    free(x);
+
+    if (genr->err) return genr->err;
+
+    atom->val = y;
+    atom->scalar = 1;
+    atom_eat_children(atom);
 
     return genr->err;
 }
@@ -780,38 +1009,37 @@ static int evaluate_genr (GENERATE *genr)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
     genatom *atom;
-    int err = 0;
 
     reset_atom_stack();
-    while (!err && (atom = pop_atom())) {
+    while (!genr->err && (atom = pop_atom())) {
 	if (atom->varnum == UHATNUM || atom->varnum == YHATNUM) {
-	    err = add_model_series_to_genr(genr, atom);
+	    genr->err = add_model_series_to_genr(genr, atom);
 	}
 	else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
-	    err = add_random_series_to_genr(genr, atom);
+	    genr->err = add_random_series_to_genr(genr, atom);
 	}
 	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
 		 atom->func == T_CUM || atom->func == T_SORT) {
-	    /* FIXME: compound args */
-	    err = add_tmp_series_to_genr(genr, atom);
+	    atom_stack_bookmark();
+	    genr->err = add_tmp_series_to_genr(genr, atom);
+	    atom_stack_resume();
+	}
+	else if (UNIVARIATE_STAT(atom->func)) {
+	    atom_stack_bookmark();
+	    genr->err = add_statistic_to_genr(genr, atom);
+	    atom_stack_resume();
 	}
 	else if (MP_MATH(atom->func)) {
-	    err = add_mp_series_to_genr(genr, atom);
-	}
-	else if (atom->func == T_MEAN) {
-	    show_child_atoms(atom);
-	}
+	    genr->err = add_mp_series_to_genr(genr, atom);
+	}	
     }
 
-    if (err) {
-	genr->err = err;
-	return err;
-    }
+    if (genr->err) return genr->err;
 
     genr->scalar = 1;
     reset_atom_stack();
     while ((atom = pop_atom())) {
-	if (!atom->scalar) genr->scalar = 0;
+	if (!atom->scalar && atom->level == 0) genr->scalar = 0;
     }
 
     if (genr->scalar) t2 = t1;
@@ -824,35 +1052,38 @@ static int evaluate_genr (GENERATE *genr)
 	while ((atom = pop_atom())) {
 	    double y = eval_atom(atom, genr, t, x);
 
-	    if (err) break;
+	    if (genr->err) break;
 	    if (y == NADBL) {
 		x = NADBL;
 	    } else {
 		if (atom->level < level) {
 		    x = calc_pop();
-		    fprintf(stderr, "popped %g\n", x);
+		    DPRINTF(("popped %g\n", x));
 		}
+#ifdef GENR_DEBUG
 		if (t == t1) { 
 		    fprintf(stderr, "calc_xy: in: x=%g, y=%g, ", x, y);
 		    if (isprint(atom->op)) fprintf(stderr, "op='%c'\n", atom->op);
 		    else fprintf(stderr, "op=%d\n", atom->op);
 		}
+#endif
 		x = calc_xy(x, y, atom->op, t);
-		if (t == t1) fprintf(stderr, "calc_xy: out: x=%g\n", x); 
+#ifdef GENR_DEBUG
+		if (t == t1) fprintf(stderr, "calc_xy: out: x=%g\n", x);
+#endif 
 	    }
 	    if (atom->level > level) {
 		calc_push(xbak);
-		fprintf(stderr, "pushed %g\n", xbak);
+		DPRINTF(("pushed %g\n", xbak));
 	    }
 	    level = atom->level;
 	    xbak = x;
 	}
-	if (err) break;
+	if (genr->err) break;
 	genr->xvec[t] = x;
     }
 
-    genr->err = err;
-    return err;
+    return genr->err;
 }
 
 /* ...................................................... */
@@ -925,6 +1156,8 @@ static int string_arg_function (const char *s)
 	!strncmp(s, "stderr", 6) ||
 	!strncmp(s, "rho", 3) ||
 	!strncmp(s, "vcv", 3) ||
+	!strncmp(s, "corr", 4) ||
+	!strncmp(s, "cov", 3) ||
 	!strncmp(s, "pvalue", 6) ||
 	!strncmp(s, "mpow", 4) ||
 	!strncmp(s, "mlog", 4)) {
@@ -949,7 +1182,7 @@ static int token_is_function (char *s, GENERATE *genr, int level)
     ret = (wlen > 0 && *p == '(' && p[strlen(p)-1] == ')'); 
 
     if (ret) {
-	fprintf(stderr, "token is function...\n");
+	DPRINTF(("token is function...\n"));
 	if (string_arg_function(s)) {
 	    return ret;
 	} else {
@@ -974,7 +1207,7 @@ static int stack_op_and_token (const char *s, GENERATE *genr, int level)
     char op = 0;
     size_t n;
 
-    fprintf(stderr, "stack_op_and_token: looking at '%s'\n", s);
+    DPRINTF(("stack_op_and_token: looking at '%s'\n", s));
 
     if (op_level(*s)) {
 	/* leading character is an operator */
@@ -982,8 +1215,10 @@ static int stack_op_and_token (const char *s, GENERATE *genr, int level)
 	s++;
     } 
 
+#ifdef GENR_DEBUG
     if (isprint(op)) fprintf(stderr, "op = '%c'\n", op);
     else fprintf(stderr, "op = %d\n", op);
+#endif
 
     if (*s == '#') {
 	char *term = get_paren_term(atoi(s + 1));
@@ -1008,20 +1243,19 @@ static int stack_op_and_token (const char *s, GENERATE *genr, int level)
 	
 	if (!token_is_atomic(tok, genr) &&
 	    !token_is_function(tok, genr, level)) {
-	    fprintf(stderr, "token is not atomic...\n");
+	    DPRINTF(("token is not atomic...\n"));
 	    genr->err = math_tokenize(tok, genr, ++level);
 	} else {
 	    genatom *atom;
 
-	    if (*tok == '\0') fprintf(stderr, "got a blank token\n");
-	    fprintf(stderr, "token = '%s'\n", tok);
+	    if (*tok == '\0') fprintf(stderr, "genr: got a blank token\n");
+	    DPRINTF(("token = '%s'\n", tok));
 	    atom = parse_token(tok, op, genr, level);
-	    if (atom == NULL) {
-		genr->err = 1;
-		fprintf(stderr, "stack_op_and_token: parse_token() failed\n");
-	    } else {
+	    if (atom != NULL) {
 		genr->err = push_atom(atom);
+#ifdef GENR_DEBUG
 		if (!genr->err) fprintf(stderr, "pushed atom OK\n");
+#endif
 	    }
 	}
     }
@@ -1067,13 +1301,13 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	if (*p == '(') inparen++;
 	else if (*p == ')') inparen--;
 	if (inparen < 0) {
-	    fprintf(stderr, "error: inparen < 0: '%s'\n", s);
+	    DPRINTF(("error: inparen < 0: '%s'\n", s));
 	    return E_UNBAL;
 	}
 
 	if (!inparen && op_level(*p)) {
 	    if (p - q > TOKLEN - 1) {
-		fprintf(stderr, "error: token too long: '%s'\n", q);
+		fprintf(stderr, "genr error: token too long: '%s'\n", q);
 		return 1;
 	    }
 	    if (p - q > 0) {
@@ -1088,7 +1322,7 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 
     if (*q) {
 	if (strlen(q) > TOKLEN - 1) {
-	    fprintf(stderr, "error: remainder too long: '%s'\n", q);
+	    fprintf(stderr, "genr error: remainder too long: '%s'\n", q);
 	    return 1;
 	}
 	strcpy(tok, q);
@@ -1163,7 +1397,7 @@ int insert_paren (char *s, int pos, char lr)
 	s[rpos] = ')';
 	cut = cutstr(s, lpos, rpos);
 	if (cut == NULL) return 1;
-	fprintf(stderr, "Made atom: '%s'\n", cut);
+	DPRINTF(("Made atom: '%s'\n", cut));
 	push_paren_term(cut);
 	pterm_sub(s + lpos, termnum++, rpos - lpos + 1);
     }
@@ -1534,7 +1768,9 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     char newvar[32];
     int oldv = pdinfo->v;
     GENERATE genr;
+#ifdef GENR_DEBUG
     genatom *atom;
+#endif
 
     *gretl_errmsg = '\0';
 
@@ -1559,9 +1795,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	fix_decimal_commas(s);
 #endif
 
-#ifdef GENR_DEBUG
-    fprintf(stderr, "\n*** starting genr, s='%s'\n", s);
-#endif
+    DPRINTF(("\n*** starting genr, s='%s'\n", s));
  
     if (strcmp(s, "dummy") == 0) {
 	genr.err = dummy(pZ, pdinfo);
@@ -1636,19 +1870,20 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	genr.err = E_ALLOC;
 	goto genr_return;
     }
-#ifdef GENR_DEBUG
-    fprintf(stderr, "after parenthesize: s='%s'\n", s);
-#endif
+
+    DPRINTF(("after parenthesize: s='%s'\n", s));
 
     genr.err = math_tokenize(s, &genr, 0);
 
     destroy_paren_term_stack();
 
+#ifdef GENR_DEBUG
     i = 0;
     while ((atom = pop_atom())) {
-	printf("*** atom %d ***\n", i++);
+	fprintf(stderr, "*** atom %d ***\n", i++);
 	print_atom(atom);
     }
+#endif
 
     if (!genr.err) {
 	evaluate_genr(&genr);
@@ -1916,8 +2151,10 @@ static double *get_random_series (DATAINFO *pdinfo, int fn)
     return x;
 }
 
-/* below: functions taking series (z) as input and returning a scalar statistic */
-/* thinks: should these be rolling calculations? */
+/* below: functions taking series (z) as input and returning a 
+   scalar statistic.  The whole series must be evaluated before
+   these stats can be calculated.
+*/
 
 static double evaluate_statistic (double *z, GENERATE *genr, int fn)
 {
@@ -1990,17 +2227,17 @@ static double evaluate_pvalue (const char *s, double **Z,
 
 static double 
 evaluate_bivariate_statistic (const char *s, GENERATE *genr, 
-			      int idx, int *err)
+			      int fn)
 {
     double x = NADBL;
 
-    if (idx == T_COV) {
+    if (fn == T_COV) {
 	x = genr_cov(s, genr->pZ, genr->pdinfo);
-	if (na(x)) *err = E_INVARG;
+	if (na(x)) genr->err = E_INVARG;
     }
-    else if (idx == T_CORR) {
+    else if (fn == T_CORR) {
 	x = genr_corr(s, genr->pZ, genr->pdinfo);
-	if (na(x)) *err = E_INVARG;
+	if (na(x)) genr->err = E_INVARG;
     }
 
     return x;
@@ -2028,17 +2265,19 @@ static double evaluate_missval_func (double arg, int fn)
     return x;
 }
 
-static double *get_tmp_series (double **Z, const DATAINFO *pdinfo, 
-			       int fn, int varnum, int *err)
+/* below: create a temporary series after evaluating the full-
+   length argument. 
+*/
+
+static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo, 
+			       int fn, int *err)
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2; 
-    double *x, *mvec;
+    double *x;
     double xx, yy;
 
     x = malloc(pdinfo->n * sizeof *x); 
     if (x == NULL) return NULL;
-
-    mvec = Z[varnum];
 
     if (fn == T_DIFF) {
 	for (t=t1+1; t<=t2; t++) {
@@ -2300,14 +2539,6 @@ static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
     }
 
     return x;
-}
-
-/* ...........................................................*/
-
-static double get_obsnum_boolean (double val, int t)
-{
-    if ((int) val == t + 1) return 1.0; /* FIXME? */
-    else return 0.0;
 }
 
 /* ...........................................................*/
@@ -3101,18 +3332,16 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
     char s[64], parmbit[VNAMELEN];
     double xx, *rhot;
 
-#ifdef GENR_DEBUG
-    fprintf(stderr, "rhodiff: param = '%s'\n", param);
-#endif
+
+    DPRINTF(("rhodiff: param = '%s'\n", param));
+
     maxlag = _count_fields(param);
     rhot = malloc(maxlag * sizeof *rhot);
     if (rhot == NULL) return E_ALLOC;
     if (maxlag > pdinfo->t1) t1 = maxlag;
     else t1 = pdinfo->t1;
 
-#ifdef GENR_DEBUG
-    fprintf(stderr, "rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1);
-#endif
+    DPRINTF(("rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1));
 
     /* parse "param" string */
     j = strlen(param);
@@ -3120,9 +3349,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
     for (i=0; i<j; i++) {
 	if ((i == 0 || param[i] == ' ') && i < (j - 1)) {
 	    sscanf(param + i + (i? 1: 0), "%8s", parmbit); 
-#ifdef GENR_DEBUG
-	    fprintf(stderr, "rhodiff: parmbit = '%s'\n", parmbit);
-#endif
+	    DPRINTF(("rhodiff: parmbit = '%s'\n", parmbit));
 	    if (isalpha((unsigned char) parmbit[0])) {
 		nv = varindex(pdinfo, parmbit);
 		if (nv == v) {
@@ -3141,9 +3368,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 
     for (i=1; i<=list[0]; i++) {
 	j = list[i];
-#ifdef GENR_DEBUG
-	fprintf(stderr, "rhodiff: doing list[%d] = %d\n", i, list[i]);
-#endif
+	DPRINTF(("rhodiff: doing list[%d] = %d\n", i, list[i]));
 	/* make name and label */
 	strcpy(s, pdinfo->varname[j]);
 	_esl_trunc(s, 7);
