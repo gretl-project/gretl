@@ -33,8 +33,19 @@
       <owner>gretl</owner>
       <type>string</type>
       <locale name="C">
-        <short>TRAMO/SEATS directory</short>
-        <long>Directory containing TRAMO/SEATS binaries</long>
+        <short>TRAMO directory</short>
+        <long>Working directory for the TRAMO program</long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/apps/gretl/x12adir</key>
+      <applyto>/apps/gretl/x12adir</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <locale name="C">
+        <short>X-12-ARIMA directory</short>
+        <long>Working directory for the X-12-ARIMA program</long>
       </locale>
     </schema>
 
@@ -121,6 +132,30 @@
       <locale name="C">
         <short>Preferred calculator</short>
         <long>The calculator to be invoked from the gretl toolbar</long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/apps/gretl/tramo</key>
+      <applyto>/apps/gretl/tramo</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <default>tramo</default>
+      <locale name="C">
+        <short>Path to tramo binary</short>
+        <long>Name of tramo binary (or full path if needed)</long>
+      </locale>
+    </schema>
+
+    <schema>
+      <key>/schemas/apps/gretl/x12a</key>
+      <applyto>/apps/gretl/x12a</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <default>x12a</default>
+      <locale name="C">
+        <short>Path to X-12-ARIMA binary</short>
+        <long>Name of X-12-ARIMA binary (or full path if needed)</long>
       </locale>
     </schema>
 
