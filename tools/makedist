@@ -29,16 +29,6 @@ cd gretl-$version && make distclean
 # come back up a level
 cd ${topdir}/..
 
-# clean out additional stuff
-echo "removing various unwanted files..."
-find gretl-$version -name "*CVS" | xargs rm -rf
-find gretl-$version -name "*.bak" | xargs rm -f
-find gretl-$version -name "*.old" | xargs rm -f
-find gretl-$version -name ".xvpics" | xargs rm -rf
-find gretl-$version -name "*~" | xargs rm -f
-find gretl-$version -name ".#*" | xargs rm -f
-find gretl-$version -name "*.tar.gz" | xargs rm -f
-
 # retain only the relevant parts of the doc tree
 rm -rf gretl-$version/doc
 mkdir gretl-$version/doc
@@ -49,6 +39,15 @@ cp -ap gretl/doc/manual-a4.pdf gretl-$version/doc
 cp -ap gretl/doc/manual-html gretl-$version/doc
 cp -ap gretl/doc/figures gretl-$version/doc
 find gretl-$version/doc -name "*CVS" | xargs rm -rf
+
+echo "removing various unwanted files..."
+find gretl-$version -name "*CVS" | xargs rm -rf
+find gretl-$version -name "*.bak" | xargs rm -f
+find gretl-$version -name "*.old" | xargs rm -f
+find gretl-$version -name ".xvpics" | xargs rm -rf
+find gretl-$version -name "*~" | xargs rm -f
+find gretl-$version -name ".#*" | xargs rm -f
+find gretl-$version -name "*.tar.gz" | xargs rm -f
 
 # make the archive and remove the dist dir
 echo "making archive..."

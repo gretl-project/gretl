@@ -585,8 +585,6 @@ static char *convert16to7 (char *src, int count)
     return dest;    
 }
 
-#define NEW_ALLOC 1
-
 static void rowptr_init (struct rowdescr *row)
 {
     row->last = 0;
@@ -613,17 +611,15 @@ static int allocate_row_col (int row, int col, wbook *book)
 	newlastrow = (row/16 + 1) * 16;
 	rowptr = realloc(rowptr, newlastrow * sizeof *rowptr);
 	if (rowptr == NULL) return 1;
-#ifdef NEW_ALLOC
 	for (i=lastrow; i<newlastrow; i++) {
-# ifdef FULL_EDEBUG
+#ifdef FULL_EDEBUG
 	    fprintf(stderr, "allocate: initing rowptr[%d]\n", i);
-# endif
-	    rowptr_init(&rowptr[i]);
-	    fprintf(stderr, "rowptr[%d].end=%d\n", i, rowptr[i].end);
-	}
-#else
-	memset(rowptr + lastrow, 0, (newlastrow - lastrow) * sizeof *rowptr);
 #endif
+	    rowptr_init(&rowptr[i]);
+#ifdef FULL_EDEBUG
+	    fprintf(stderr, "rowptr[%d].end=%d\n", i, rowptr[i].end);
+#endif
+	}
 	lastrow = newlastrow;
     }
 
@@ -640,14 +636,9 @@ static int allocate_row_col (int row, int col, wbook *book)
 #endif
 	rowptr[row].cells = realloc(rowptr[row].cells, newcol * sizeof(char *));
 	if (rowptr[row].cells == NULL) return 1;
-#ifdef NEW_ALLOC
 	for (i=rowptr[row].end; i<newcol; i++) {
 	    rowptr[row].cells[i] = NULL;
 	}
-#else
-	memset(rowptr[row].cells + rowptr[row].end, 0, (newcol - rowptr[row].end)
-	       * sizeof(char *));
-#endif
 	rowptr[row].end = newcol;
     } 
  

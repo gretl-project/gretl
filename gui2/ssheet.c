@@ -223,7 +223,7 @@ static void add_data_column (spreadsheet *sheet)
 
 	/* any padding cols */
 	for (i=1; i<=sheet->padcols; i++) {
-	    gtk_list_store_set(new_store, &new_iter, newcolnum+i, "", -1);
+	    gtk_list_store_set(new_store, &new_iter, newcolnum + i, "", -1);
 	}	
 
 	/* editable flags */
@@ -675,7 +675,7 @@ static gint get_data_col_width (void)
 {
     static gint width;
 
-    if (width == 0) width = get_string_width("000000.000000");
+    if (width == 0) width = get_string_width("-000000.000000");
     return width;
 }
 
@@ -851,6 +851,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     GtkWidget *scroller, *main_vbox;
     GtkWidget *status_box, *mbar;
     GtkItemFactory *ifac;
+    int sheetwidth;
 
     if (sheet != NULL) {
 	gdk_window_raise(sheet->win->window);
@@ -865,9 +866,11 @@ void show_spreadsheet (DATAINFO *pdinfo)
 	return;
     }
 
+    sheetwidth = get_obs_col_width() + 6 * get_data_col_width() + 14;
+
     sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
-    gtk_widget_set_size_request(sheet->win, 600, 400);
+    gtk_window_set_default_size(GTK_WINDOW(sheet->win), sheetwidth, 400);
 
     main_vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 5); 
