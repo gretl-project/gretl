@@ -126,6 +126,9 @@ time_t get_time_from_stamp_file (const char *fname)
 	"Oct", "Nov", "Dec"
     };
 
+#if 0
+    return 1047790800;
+#endif
 
     fp = fopen(fname, "r");
     if (fp == NULL) return (time_t) 0;

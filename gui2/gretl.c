@@ -2124,6 +2124,9 @@ drag_data_received  (GtkWidget *widget,
 	return;
 
     if (strncmp(dfname, "file://", 7) == 0) skip = 7;
+#ifdef G_OS_WIN32
+    if (strncmp(dfname, "file:///", 8) == 0) skip = 8;
+#endif
 
     /* there may be multiple files: we ignore all but the first */
     *tmp = 0;
@@ -2132,12 +2135,6 @@ drag_data_received  (GtkWidget *widget,
 	strncat(tmp, dfname + skip, pos - skip);
     } else
 	strcat(tmp, dfname + skip);
-
-#ifdef G_OS_WIN32
-    if (unmangle(tmp, tryscript)) return;
-    strcpy(tmp, tryscript);
-    tryscript[0] = '\0';
-#endif
 
     suff = strrchr(tmp, '.');
     if (suff && (!strncmp(suff, ".gretl", 6) || 
