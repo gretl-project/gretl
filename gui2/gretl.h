@@ -52,6 +52,7 @@
 # include "locale.h"
 #endif
 
+#define GRETL_BUFSIZE 8192
 #define MAXSTR 255
 #define GNULL (gconstpointer) NULL
 

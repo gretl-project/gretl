@@ -882,9 +882,9 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 			 long expected, struct rbuf *rbuf)
 {
     int res = 0;
-    static char cbuf[8192];
+    static char cbuf[GRETL_BUFSIZE];
     size_t allocated;
-    int nrealloc;
+    int nchunks;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
@@ -913,21 +913,28 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     }
 
     /* Read from fd while there is available data. */
-    nrealloc = 2;
-    allocated = 8192;
+    nchunks = 1;
+    allocated = GRETL_BUFSIZE;
     do {
 	res = iread(fd, cbuf, sizeof cbuf);
 	if (res > 0) {
 	    if (fp == NULL) {
 		if ((size_t) (*len + res) > allocated) {
-		    *getbuf = realloc(*getbuf, nrealloc * 8192);
-		    nrealloc++;
-		    allocated += 8192;
+		    nchunks *= 2;
+		    *getbuf = realloc(*getbuf, nchunks * GRETL_BUFSIZE);
 		    if (*getbuf == NULL) {
 			return -2;
 		    }
+		    allocated = nchunks * GRETL_BUFSIZE;
+#ifdef BUFDEBUG
+		    fprintf(stderr, "allocated = %d\n", (int) allocated);
+#endif
 		}
 		memcpy(*getbuf + *len, cbuf, res);
+#ifdef BUFDEBUG
+		fprintf(stderr, "copied %d bytes to buffer at %p\n", 
+			res, (void *) *getbuf);
+#endif
 	    } else {
 		if (fwrite(cbuf, 1, res, fp) < (unsigned) res)
 		    return -2;

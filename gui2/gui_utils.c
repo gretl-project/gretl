@@ -183,7 +183,7 @@ gchar *menu_translate (const gchar *path, gpointer p)
 int copyfile (const char *src, const char *dest) 
 {
     FILE *srcfd, *destfd;
-    char buf[8192];
+    char buf[GRETL_BUFSIZE];
     size_t n;
 
     if (!strcmp(src, dest)) return 1;

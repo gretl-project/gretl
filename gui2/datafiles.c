@@ -67,7 +67,6 @@ enum {
 } page_file_codes;
 
 #define N_PS_FILES 3
-#define BUFSIZE 8192
 
 /* ........................................................... */
 
@@ -408,9 +407,9 @@ static gint populate_remote_db_list (windata_t *win)
     gint i;
     time_t remtime;
 
-    if ((getbuf = mymalloc(BUFSIZE)) == NULL)
+    if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL)
 	return 1;
-    memset(getbuf, 0, BUFSIZE);
+    memset(getbuf, 0, GRETL_BUFSIZE);
 
     *errbuf = 0;
     err = retrieve_url(LIST_DBS, NULL, NULL, 0, &getbuf, errbuf);

@@ -924,9 +924,9 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 			 long expected, struct rbuf *rbuf)
 {
     int res = 0;
-    static char cbuf[8192];
+    static char cbuf[GRETL_BUFSIZE];
     size_t allocated;
-    int nrealloc;
+    int nchunks;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
@@ -955,19 +955,19 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     }
 
     /* Read from fd while there is available data. */
-    nrealloc = 2;
-    allocated = 8192;
+    nchunks = 1;
+    allocated = GRETL_BUFSIZE;
     do {
 	res = iread(fd, cbuf, sizeof cbuf);
 	if (res > 0) {
 	    if (fp == NULL) {
 		if ((size_t) (*len + res) > allocated) {
-		    *getbuf = realloc(*getbuf, nrealloc * 8192);
-		    nrealloc++;
-		    allocated += 8192;
+		    nchunks *= 2;
+		    *getbuf = realloc(*getbuf, nchunks * GRETL_BUFSIZE);
 		    if (*getbuf == NULL) {
 			return -2;
 		    }
+		    allocated = nchunks * GRETL_BUFSIZE;
 		}
 		memcpy(*getbuf + *len, cbuf, res);
 	    } else {
@@ -1043,7 +1043,7 @@ static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
 /* ........................................................... */
 
 static int iread (int fd, char *buf, int len)
-/* Read at most LEN bytes from FD, storing them to BUF. */
+/* Read at most len bytes from FD, storing them to buf. */
 {
     int res;
 
@@ -1057,7 +1057,7 @@ static int iread (int fd, char *buf, int len)
 /* ........................................................... */
 
 static int iwrite (int fd, char *buf, int len)
-/* Write LEN bytes from BUF to FD.  This is similar to iread(), but
+/* Write len bytes from buf to fd.  This is similar to iread(), but
    doesn't bother with select().  Unlike iread(), it makes sure that
    all of BUF is actually written to FD, so callers needn't bother
    with checking that the return value equals to LEN.  Instead, you

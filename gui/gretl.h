@@ -48,6 +48,7 @@
 #include "helpfiles.h"
 
 #define MAXSTR 255
+#define GRETL_BUFSIZE 8192
 
 /* basic global program vars */
 extern double **Z;

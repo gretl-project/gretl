@@ -382,9 +382,9 @@ static gint populate_remote_dblist (windata_t *ddata)
     gint i;
     time_t remtime;
 
-    if ((getbuf = mymalloc(8192)) == NULL)
+    if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL)
 	return 1;
-    clear(getbuf, 8192);
+    clear(getbuf, GRETL_BUFSIZE);
 
     errbuf[0] = '\0';
     err = retrieve_url(LIST_DBS, NULL, NULL, 0, &getbuf, errbuf);
