@@ -783,17 +783,10 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
     gtk_widget_show (tempwid);
     look[code]->entry[*tbl_len - 2] = tempwid;
 
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT (tempwid), "activate", 
-			(pval)? GTK_SIGNAL_FUNC (get_pvalue) :
-			GTK_SIGNAL_FUNC (get_critical), look);
-
-#else
-    g_signal_connect (G_OBJECT (tempwid), "activate", 
-		      (pval)? G_CALLBACK (get_pvalue) : 
-		      G_CALLBACK (get_critical),
-		      look);
-#endif    
+    g_signal_connect(G_OBJECT(tempwid), "activate", 
+		     (pval)? G_CALLBACK(get_pvalue) : 
+		     G_CALLBACK(get_critical),
+		     look);
 }
 
 /* .................................................................. */
@@ -969,14 +962,9 @@ static void add_test_entry (GtkWidget *tbl, gint *tbl_len,
 			       tempwid, 1, 2, *tbl_len - 1, *tbl_len);
     gtk_widget_show (tempwid);
     test[code]->entry[*tbl_len - 2] = tempwid;
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT (tempwid), "activate", 
-			GTK_SIGNAL_FUNC (h_test), test);
 
-#else
-    g_signal_connect (G_OBJECT (tempwid), "activate", 
-		      G_CALLBACK (h_test), test);
-#endif
+    g_signal_connect(G_OBJECT(tempwid), "activate", 
+		     G_CALLBACK(h_test), test);
 }
 
 /* ........................................................... */
@@ -1151,15 +1139,9 @@ static GretlChild *gretl_child_new (const gchar *title)
 
     gtk_window_set_position(GTK_WINDOW(gchild->win), GTK_WIN_POS_MOUSE);
 
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(gchild->win), "destroy",
-		       GTK_SIGNAL_FUNC(gretl_child_destroy),
-		       gchild);
-#else
     g_signal_connect(G_OBJECT(gchild->win), "destroy",
                      G_CALLBACK(gretl_child_destroy),
                      gchild);
-#endif
 
     return gchild;
 }
@@ -1239,19 +1221,11 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_box_pack_start (GTK_BOX(dialog->action_area), 
 			tempwid, TRUE, TRUE, 0);
 
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			(code == CALC_PVAL)? GTK_SIGNAL_FUNC(get_pvalue) :
-			(code == CALC_DIST)? GTK_SIGNAL_FUNC(get_critical) :
-			GTK_SIGNAL_FUNC(h_test),
-			statp);
-#else
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
 		      (code == CALC_DIST)? G_CALLBACK(get_critical) :
 		      G_CALLBACK(h_test),
 		      statp);
-#endif
 
     gtk_widget_show (tempwid);
 
@@ -1261,24 +1235,13 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_box_pack_start (GTK_BOX(dialog->action_area), 
 			tempwid, TRUE, TRUE, 0);
 
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			(code == CALC_TEST)? GTK_SIGNAL_FUNC(trash_test) :
-			GTK_SIGNAL_FUNC(trash_look),
-			statp);
-    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			GTK_SIGNAL_FUNC(delete_widget), 
-			dialog->win);
-
-#else
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      (code == CALC_TEST)? G_CALLBACK(trash_test) :
-		      G_CALLBACK(trash_look),
-		      statp);
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK(delete_widget), 
-		      dialog->win);
-#endif
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     (code == CALC_TEST)? G_CALLBACK(trash_test) :
+		     G_CALLBACK(trash_look),
+		     statp);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog->win);
 
     gtk_widget_show(tempwid);
 

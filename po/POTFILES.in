@@ -6,7 +6,6 @@ lib/src/dbread.c
 lib/src/describe.c
 lib/src/discrete.c
 lib/src/estimate.c
-lib/src/foo.c
 lib/src/generate.c
 lib/src/genstack.c
 lib/src/graphing.c
@@ -107,5 +106,6 @@ plugin/sysest.c
 plugin/tobit.c
 plugin/tramo_options.c
 plugin/tramo-x12a.c
+plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c

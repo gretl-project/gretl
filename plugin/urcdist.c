@@ -18,6 +18,12 @@
 
 #include <zlib.h>
 
+#undef URDEBUG
+
+#ifdef URDEBUG
+FILE *fdb;
+#endif
+
 enum urc_errs {
     URC_OK,
     URC_BAD_PARAM,
@@ -107,7 +113,7 @@ static int urcval (int niv, int itv, int nobs, double arg,
 
     /* Open data file */
     sprintf(datfile, "%sdata%curcdata.gz", path, SLASH);
-    fz = gzopen(datfile, "r");
+    fz = gzopen(datfile, "rb");
     if (fz == NULL) {
 	return URC_NOT_FOUND;
     }
@@ -124,9 +130,10 @@ static int urcval (int niv, int itv, int nobs, double arg,
     sscanf(line, "%s %d %d %d %d", code, &urc.nz, &urc.nreg,
 	   &urc.model, &urc.minsize);
 
-#if 0
-    printf("code=%s nz=%d, nreg=%d, model=%d, minsize=%d\n",
-	   code, urc.nz, urc.nreg, urc.model, urc.minsize);
+#ifdef URDEBUG
+    fprintf(fdb, "code=%s nz=%d, nreg=%d, model=%d, minsize=%d\n",
+	    code, urc.nz, urc.nreg, urc.model, urc.minsize);
+    fflush(fdb);
 #endif
 
     if (urc.model == 2 || urc.model == 4) {
@@ -694,15 +701,22 @@ double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
     double val;
     int check;
 
-#if 0
-    printf("mackinnon_pvalue: tval=%g, n=%d, niv=%d, itv=%d\n",
-	   tval, n, niv, itv);
+#ifdef URDEBUG
+    fdb = fopen("debug.txt", "w");
+    fprintf(fdb, "mackinnon_pvalue: tval=%g, n=%d, niv=%d, itv=%d\n",
+	    tval, n, niv, itv);
+    fprintf(fdb, "mackinnon_pvalue: path='%s'\n", path);
+    fflush(fdb);
 #endif
 
     check = urcval(niv, itv, n, tval, &val, path);
 
+#ifdef URDEBUG
+    fclose(fdb);
+#endif
+
     if (check == URC_NOT_FOUND) {
-	*path = '\0';
+	path[0] = '\0';
     }
 
     if (check != URC_OK && check != URC_SMALL_SAMPLE) {

@@ -394,7 +394,9 @@ test_forloop_element (const char *s, LOOPSET *loop,
 
     if (s == NULL) return 1;
 
-    fprintf(stderr, "testing '%s'\n", s);
+#ifdef LOOP_DEBUG
+    fprintf(stderr, "testing forloop element '%s'\n", s);
+#endif
 
     if (i == 0) {
 	ngot = sscanf(s, "%8[^=]=%8s", lhs, rhs) + 1;
@@ -654,12 +656,11 @@ static int get_max_iters (void)
 static int loop_count_too_high (LOOPSET *loop)
 {
     static int max_iters = 0;
-
-    loop->ntimes += 1;
+    int nt = loop->ntimes + 1;
 
     if (loop->type == FOR_LOOP) {
 	/* FIXME */
-	if (loop->ntimes >= MAX_FOR_TIMES) {
+	if (nt >= MAX_FOR_TIMES) {
 	    sprintf(gretl_errmsg, _("Reached maximum interations, %d"),
 		    MAX_FOR_TIMES);
 	    loop->err = 1;
@@ -669,7 +670,7 @@ static int loop_count_too_high (LOOPSET *loop)
 	    max_iters = get_max_iters();
 	}
 
-	if (loop->ntimes >= max_iters) {
+	if (nt >= max_iters) {
 	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
 		    max_iters);
 	    loop->err = 1;
@@ -758,6 +759,10 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	    cont = eval_numeric_condition(loop->ineq,
 					  Z[loop->lvar][0],
 					  loop->rval);
+	}
+
+	if (cont) {
+	    loop->ntimes += 1;
 	}
     }
 
@@ -1666,7 +1671,7 @@ static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths)
 
 	fputs("<obs>", fp);
 	for (i=0; i<loop->nstore; i++) {
-	    x = loop->storeval[loop->ntimes*i + t];
+	    x = loop->storeval[loop->ntimes * i + t];
 	    if (na(x)) {
 		fputs("NA ", fp);
 	    } else {
