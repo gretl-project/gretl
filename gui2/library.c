@@ -2223,6 +2223,38 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
 
 /* ........................................................... */
 
+void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
+{
+    gint err;
+    void *handle;
+    int (*range_mean_graph) (int, double **, const DATAINFO *, 
+			     PRN *);
+    PRN *prn;
+
+    if (gui_open_plugin("range-mean", &handle)) return;
+    range_mean_graph = get_plugin_function("range_mean_graph", handle);
+
+    if (range_mean_graph == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(handle);
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return; 
+    }
+
+    err = range_mean_graph (mdata->active_var, Z, datainfo, prn);
+
+    close_plugin(handle);
+
+    /* FIXME TRAMO */
+    view_buffer(prn, 78, 350, _("gretl: Range-mean model"), TRAMO, NULL);
+}
+
+/* ........................................................... */
+
 void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
