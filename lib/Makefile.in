@@ -57,16 +57,10 @@ minpacksrc = $(topsrc)/minpack
 VPATH = $(libsrc):$(cephessrc):$(minpacksrc)
 
 SRCS = calendar.c compare.c dataio.c describe.c discrete.c \
-	estimate.c generate.c graphing.c gretl_errors.c \
+	estimate.c generate.c graphing.c gretl_errors.c gretl_matrix.c \
 	gretl_utils.c interact.c modelprint.c monte_carlo.c nls.c nonparam.c \
-	printout.c pvalues.c random.c strutils.c subsample.c system.c \
-	texprint.c var.c
-
-HDRS = libgretl.h gretl_commands.h estimate.h gretl_utils.h gretl_errors.h pvalues.h \
-	random.h compare.h dataio.h generate.h strutils.h describe.h \
-	printout.h modelprint.h version.h texprint.h var.h interact.h graphing.h \
-	monte_carlo.h nonparam.h discrete.h subsample.h system.h nls.h calendar.h \
-	internal.h ../cephes/libprob.h ../minpack/minpack.h
+	printout.c pvalues.c qr_estimate.c random.c strutils.c subsample.c \
+	system.c texprint.c var.c
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c drand.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \

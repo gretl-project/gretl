@@ -47,11 +47,11 @@ extern int _addtolist (const int *oldlist, const int *addvars,
 		       int model_count);
 
 /* private function prototypes */
-static int xpxxpy_func (const int *list, int t1, int t2, 
+static int form_xpxxpy (const int *list, int t1, int t2, 
 			double **Z, int nwt, double rho,
 			double *xpx, double *xpy);
 static void regress (MODEL *pmod, double *xpy, double **Z, 
-		     int n, int nv, double rho);
+		     int n, double rho);
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
 static double dwstat (int order, MODEL *pmod, double **Z);
@@ -73,16 +73,12 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z);
 static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
 
-/* #define USE_LAPACK */
-
-#ifdef USE_LAPACK
-static int ijtok (int i, int j, int n);
-static void lapack_std_errs (double *xpx, double *sderr, 
-			     double sigma, int nv);
-static int lapack_cholbeta (MODEL *pmod, double *xpy, 
-			    double **Z, int nv);
-#endif
-
+/* use Choleski or QR for regression? */
+static int use_qr;
+void set_use_qr (int set)
+{
+    use_qr = set;
+}
 
 static int reorganize_uhat_yhat (MODEL *pmod) 
 {
@@ -152,6 +148,24 @@ static int ar_info_init (MODEL *pmod, int nterms)
 	pmod->arinfo->arlist[i] = 0;
 	pmod->arinfo->sderr[i] = pmod->arinfo->rho[i] = NADBL;
     }
+
+    return 0;
+}
+
+static int get_model_df (MODEL *pmod, double rho)
+{
+    if (rho != 0.0) pmod->nobs -= 1;
+    pmod->ncoeff = pmod->list[0] - 1;
+
+    pmod->dfd = pmod->nobs - pmod->ncoeff;
+    if (pmod->dfd < 0) {
+	pmod->errcode = E_DF;
+        sprintf(gretl_errmsg, _("No. of obs (%d) is less than no. "
+		"of parameters (%d)"), pmod->nobs, pmod->ncoeff);
+	return 1;
+    }
+
+    pmod->dfn = pmod->ncoeff - pmod->ifc;
 
     return 0;
 }
@@ -288,39 +302,42 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     l0 = model.list[0];  /* holds 1 + number of coeffs */
     model.ncoeff = l0 - 1; 
-    model.nobs = t2 - t1 + 1;
     if (effobs) model.nobs = effobs;
+    else model.nobs = t2 - t1 + 1;
 
     /* check degrees of freedom */
-    if (model.nobs < model.ncoeff) { 
-	model.errcode = E_DF;
-        sprintf(gretl_errmsg, _("No. of obs (%d) is less than no. "
-		"of parameters (%d)"), model.nobs, model.ncoeff);
+    if (get_model_df(&model, rho)) {
         return model; 
     }
 
-    /* allocation for xpx, xpy, coeff */
-    l = l0 - 1;
-    nxpx = l * (l + 1) / 2;
-    xpy = malloc((l0 + 1) * sizeof *xpy);
-    model.xpx = malloc((nxpx + 1) * sizeof(double));
-    model.coeff = malloc(l0 * sizeof(double));
-    if (xpy == NULL || model.xpx == NULL || model.coeff == NULL) {
-	model.errcode = E_ALLOC;
-	return model;
+    if (use_qr) {
+	extern int gretl_qr_regress (MODEL *pmod, double **Z, int fulln);
+
+	gretl_qr_regress(&model, *pZ, pdinfo->n);
+    } else {
+	/* allocation for xpx, xpy, coeff */
+	l = l0 - 1;
+	nxpx = l * (l + 1) / 2;
+	xpy = malloc((l0 + 1) * sizeof *xpy);
+	model.xpx = malloc((nxpx + 1) * sizeof(double));
+	model.coeff = malloc(l0 * sizeof(double));
+	if (xpy == NULL || model.xpx == NULL || model.coeff == NULL) {
+	    model.errcode = E_ALLOC;
+	    return model;
+	}
+
+	/* initialize xpy, xpx */
+	for (i=0; i<=l0; i++) xpy[i] = 0.0;
+	for (i=0; i<=nxpx; i++) model.xpx[i] = 0.0;
+
+	/* calculate regression results */
+	form_xpxxpy(model.list, t1, t2, *pZ, nwt, rho,
+		    model.xpx, xpy);
+	model.tss = xpy[l0];
+
+	regress(&model, xpy, *pZ, n, rho);
+	free(xpy);
     }
-
-    /* initialize xpy, xpx */
-    for (i=0; i<=l0; i++) xpy[i] = 0.0;
-    for (i=0; i<=nxpx; i++) model.xpx[i] = 0.0;
-
-    /* calculate regression results */
-    xpxxpy_func(model.list, t1, t2, *pZ, nwt, rho,
-		model.xpx, xpy);
-    model.tss = xpy[l0];
-
-    regress(&model, xpy, *pZ, n, l0 - 1, rho);
-    free(xpy);
 
     if (model.errcode) {
 	return model;
@@ -414,7 +431,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 /* .......................................................... */
 
-static int xpxxpy_func (const int *list, int t1, int t2, 
+static int form_xpxxpy (const int *list, int t1, int t2, 
 			double **Z, int nwt, double rho,
 			double *xpx, double *xpy)
 /*
@@ -436,106 +453,99 @@ static int xpxxpy_func (const int *list, int t1, int t2,
         xpy[list[0]] = y'y
 */
 {
-    int i, j, li, lj, m, l0 = list[0], yno = list[1], t;
-    double xx, z1, z2;
-
-    i = l0 - 1;
-    m = i * (i + 1) / 2;
+    int i, j, t;
+    int li, lj, m;
+    int l0 = list[0], yno = list[1];
+    double x, z1, z2;
+    int qdiff = (rho != 0.0);
 
     xpy[0] = xpy[l0] = 0.0;
 
-    if (rho != 0.0) {
-	for (t=t1+1; t<=t2; t++) {
-	    xx = Z[yno][t] - rho * Z[yno][t-1];
-	    xpy[0] += xx;
-	    xpy[l0] += xx * xx;
-	}
-    }
-    else if (nwt) {
-	for (t=t1; t<=t2; t++) {
-	    xx = Z[yno][t] * Z[nwt][t];       
-	    xpy[0] += xx;
-	    xpy[l0] += xx * xx;
-	}
-    } 
-    else for (t=t1; t<=t2; t++) {
-        xx = Z[yno][t]; 
-        xpy[0] += xx;
-        xpy[l0] += xx * xx;
-    }
+    for (t=t1; t<=t2; t++) {
+	if (t == t1 && qdiff) continue;
+        x = Z[yno][t]; 
+	if (qdiff) x -= rho * Z[yno][t-1];
+	else if (nwt) x *= Z[nwt][t];
+        xpy[0] += x;
+        xpy[l0] += x * x;
+    }	
 
     if (xpy[l0] <= 0.0) {
          return yno; 
     }    
+
     m = 0;
 
     if (rho) {
+	/* quasi-difference the data */
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
 	    z1 = li? rho: 0.0;
 	    for (j=i; j<=l0; j++) {
 		lj = list[j];
 		z2 = (lj)? rho: 0.0;
-		xx = 0.0;
+		x = 0.0;
 		for (t=t1+1; t<=t2; t++) {
-		    xx += (Z[li][t] - z1 * Z[li][t-1]) * 
+		    x += (Z[li][t] - z1 * Z[li][t-1]) * 
 			(Z[lj][t] - z2 * Z[lj][t-1]);
 		}
-		if (floateq(xx, 0.0) && li == lj)  {
+		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}
-		xpx[++m] = xx;
+		xpx[++m] = x;
 	    }
-	    xx = 0.0;
+	    x = 0.0;
 	    for (t=t1+1; t<=t2; t++) {
-		xx += (Z[yno][t] - rho * Z[yno][t-1]) *
+		x += (Z[yno][t] - rho * Z[yno][t-1]) *
 		    (Z[li][t] - z1 * Z[li][t-1]);
 	    }
-	    xpy[i-1] = xx;
+	    xpy[i-1] = x;
 	}
     }
     else if (nwt) {
+	/* weight the data */
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
 	    for (j=i; j<=l0; j++) {
 		lj = list[j];
-		xx = 0.0;
+		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    z1 = Z[nwt][t];
-		    xx += z1 * z1 * Z[li][t] * Z[lj][t];
+		    x += z1 * z1 * Z[li][t] * Z[lj][t];
 		}
-		if (floateq(xx, 0.0) && li == lj)  {
+		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}   
-		xpx[++m] = xx;
+		xpx[++m] = x;
 	    }
-	    xx = 0;
+	    x = 0;
 	    for (t=t1; t<=t2; t++) {
 		z1 = Z[nwt][t];
-		xx += z1 * z1 * Z[yno][t] * Z[li][t];
+		x += z1 * z1 * Z[yno][t] * Z[li][t];
 	    }
-	    xpy[i-1] = xx;
+	    xpy[i-1] = x;
 	}
     }
     else {
+	/* no quasi-differencing or weighting wanted */
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
 	    for (j=i; j<=l0; j++) {
 		lj = list[j];
-		xx = 0.0;
+		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    xx += Z[li][t] * Z[lj][t];
+		    x += Z[li][t] * Z[lj][t];
 		}
-		if (floateq(xx, 0.0) && li == lj)  {
+		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}
-		xpx[++m] = xx;
+		xpx[++m] = x;
 	    }
-	    xx = 0.0;
+	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
-		xx += Z[yno][t] * Z[li][t];
+		x += Z[yno][t] * Z[li][t];
 	    }
-	    xpy[i-1] = xx;
+	    xpy[i-1] = x;
 	}
     }
 
@@ -571,10 +581,10 @@ static int make_ess (MODEL *pmod, double **Z)
 /* .......................................................... */
 
 static void regress (MODEL *pmod, double *xpy, double **Z, 
-		     int n, int nv, double rho)
+		     int n, double rho)
 /*
-        This function takes xpx, the X'X matrix ouput
-        by xpxxpy_func(), and xpy, which is X'y, and
+        This function takes xpx, the X'X matrix output
+        by form_xpxxpy(), and xpy (X'y), and
         computes ols estimates and associated statistics.
 
         n = no. of observations per series in data set
@@ -587,38 +597,24 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
         sderr = vector of standard errors of regression coefficients
 */
 {
-    int t, nobs, yno, nwt = pmod->nwt;
-    int t1 = pmod->t1, t2 = pmod->t2;
-    double ysum, ypy, zz, ess, tss, rss = 0.0;
+    int v, t, yno = pmod->list[1];
+    double ysum, ypy, zz, tss, rss = 0.0;
     double den = 0.0, sgmasq = 0.0;
+    double *diag = NULL;
     int err = 0;
-#ifndef USE_LAPACK
-    double *diag;
-    int v;
-#endif
 
-    yno = pmod->list[1];
+    pmod->sderr = malloc((pmod->ncoeff + 1) * sizeof *pmod->sderr);
+    pmod->yhat = malloc(n * sizeof *pmod->yhat);
+    pmod->uhat = malloc(n * sizeof *pmod->uhat);
 
-    if ((pmod->sderr = calloc(nv+1, sizeof(double))) == NULL ||
-	(pmod->yhat = calloc(n, sizeof(double))) == NULL ||
-	(pmod->uhat = calloc(n, sizeof(double))) == NULL) {
+    if (pmod->sderr == NULL || pmod->yhat == NULL ||
+	pmod->uhat == NULL) {
         pmod->errcode = E_ALLOC;
         return;
-    }
+    }	
 
-    nobs = pmod->nobs;
-    if (rho) pmod->nobs = nobs = t2 - t1;
-    pmod->ncoeff = nv;
-
-    pmod->dfd = nobs - nv;
-    if (pmod->dfd < 0) { 
-       pmod->errcode = E_DF; 
-       return; 
-    }
-
-    pmod->dfn = nv - pmod->ifc;
     ysum = xpy[0];
-    ypy = xpy[nv + 1];
+    ypy = xpy[pmod->ncoeff + 1];
 #ifdef NO_LHS_ZERO
     if (floateq(ypy, 0.0)) { 
         pmod->errcode = E_YPY;
@@ -626,7 +622,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     }
 #endif
 
-    zz = ysum * ysum/nobs;
+    zz = ysum * ysum / pmod->nobs;
     tss = ypy - zz;
 #ifdef NO_LHS_CONST
     if (floatlt(tss, 0.0)) { 
@@ -636,36 +632,25 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 #endif
 
     /*  Choleski-decompose X'X and find the coefficients */
-#ifdef USE_LAPACK
-    err = lapack_cholbeta(pmod, xpy, Z, nv);
-    if (err) {
-        pmod->errcode = err;
-        return;
-    }     
-    ess = pmod->ess;
-    rss = ypy - ess;
-#else
-    err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, nv);
+    err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, pmod->ncoeff);
     if (err) {
         pmod->errcode = err;
         return;
     }   
     
     if (rho) {
-	pmod->ess = ess = ypy - rss;
+	pmod->ess = ypy - rss;
     } else {
 	make_ess(pmod, Z);
-	ess = pmod->ess;
-	rss = ypy - ess;
+	rss = ypy - pmod->ess;
     }
-#endif /* USE_LAPACK */
 
-    if (ess < SMALL && ess > (-SMALL)) {
-	pmod->ess = ess = 0.0;
-    } else if (ess < 0.0) { 
+    if (pmod->ess < SMALL && pmod->ess > (-SMALL)) {
+	pmod->ess = 0.0;
+    } else if (pmod->ess < 0.0) { 
         /*  pmod->errcode = E_ESS; */ 
 	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
-		ess);
+		pmod->ess);
         return; 
     }
 
@@ -673,7 +658,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	pmod->sigma = 0.0;
 	pmod->adjrsq = NADBL;
     } else {
-	sgmasq = ess/pmod->dfd;
+	sgmasq = pmod->ess / pmod->dfd;
 	pmod->sigma = sqrt(sgmasq);
 	den = tss * pmod->dfd;
     }
@@ -690,18 +675,19 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     if (pmod->errcode) return;
 
     if (tss > 0) {
-	pmod->rsq = 1 - (ess/tss);
+	pmod->rsq = 1 - (pmod->ess/tss);
 	if (pmod->dfd > 0) {
-	    pmod->adjrsq = 1 - (ess * (nobs-1)/den);
+	    pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1)/den);
 	    if (!pmod->ifc) {  
-		pmod->rsq = corrrsq(nobs, &Z[yno][t1], pmod->yhat + t1);
+		pmod->rsq = corrrsq(pmod->nobs, &Z[yno][pmod->t1], 
+				    pmod->yhat + pmod->t1);
 		pmod->adjrsq = 
-		    1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
+		    1 - ((1 - pmod->rsq)*(pmod->nobs - 1)/pmod->dfd);
 	    }
 	}
     }
 
-    if (pmod->ifc && nv == 1) {
+    if (pmod->ifc && pmod->ncoeff == 1) {
         zz = 0.0;
         pmod->dfn = 1;
     }
@@ -713,16 +699,16 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     }
 
     /* Calculation of WLS stats in agreement with GNU R */
-    if (nwt && !(pmod->wt_dummy)) {
-	int wobs = nobs;
+    if (pmod->nwt && !(pmod->wt_dummy)) {
+	int wobs = pmod->nobs;
 	double w2, wmean = 0.0, wsum = 0.0;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) { 
-	    if (Z[nwt][t] == 0) {
+	    if (Z[pmod->nwt][t] == 0) {
 		wobs--;
 		pmod->dfd -= 1;
 	    } else {
-		w2 = Z[nwt][t] * Z[nwt][t];
+		w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t];
 		wmean += w2 * Z[yno][t];
 		wsum += w2;
 	    }
@@ -730,33 +716,28 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	wmean /= wsum;
 	zz = 0.0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (Z[nwt][t] == 0) continue;
-	    w2 = Z[nwt][t] * Z[nwt][t]; 
+	    if (Z[pmod->nwt][t] == 0) continue;
+	    w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
 	    zz += w2 * (Z[yno][t] - wmean) * (Z[yno][t] - wmean);
 	}
-	pmod->fstt = ((zz - ess) * pmod->dfd)/(pmod->dfn * ess);
-	pmod->rsq = (1 - (ess/zz));
-	pmod->adjrsq = 1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
+	pmod->fstt = ((zz - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
+	pmod->rsq = (1 - (pmod->ess / zz));
+	pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
     }
 
-#ifdef USE_LAPACK
-    lapack_std_errs(pmod->xpx, pmod->sderr, pmod->sigma, nv);
-#else
-    diag = malloc((nv+1) * sizeof *diag); 
-
+    diag = malloc((pmod->ncoeff + 1) * sizeof *diag); 
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
 	return;
     }
 
-    diaginv(pmod->xpx, xpy, diag, nv);
+    diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
 
-    for (v=1; v<=nv; v++) { 
+    for (v=1; v<=pmod->ncoeff; v++) { 
        pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
     }
 
     free(diag); 
-#endif /* USE_LAPACK */
     
     return;  
 }
@@ -764,10 +745,6 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 /* .......................................................... */
 
 #ifdef USE_LAPACK
-
-#include "../../plugin/f2c.h"
-#include "../../plugin/clapack_double.h"
-
 static int ijtok (int i, int j, int n)
 {
     int s, subt = 0;
@@ -775,83 +752,6 @@ static int ijtok (int i, int j, int n)
     for (s=1; s<=j; s++) subt += s;
     return i + j * n - subt;
 }
-
-static int lapack_cholbeta (MODEL *pmod, double *xpy, 
-			    double **Z, int nv)
-{
-    char EQUED, FACT = 'N', UPLO = 'L';
-    integer K = nv;
-    integer INFO, NRHS = 1;
-    int i, nxpx;
-    double *AP, *B;
-    double *AFP = NULL, *S = NULL, *X = NULL, *WORK = NULL;
-    double RCOND, FERR, BERR;
-    integer *IWORK = NULL;
-
-    nxpx = K * (K + 1) / 2;
-
-    AFP = malloc((nxpx + 1) * sizeof *AFP);
-    X = malloc(K * sizeof *X);
-    WORK = malloc(3 * K * sizeof *WORK);
-    IWORK = malloc(K * sizeof *IWORK);
-
-    if (AFP == NULL || X == NULL || WORK == NULL || IWORK == NULL) {
-	free(AFP);
-	free(X);
-	free(WORK);
-	free(IWORK);
-	return E_ALLOC;
-    }
-    
-    AP = pmod->xpx + 1;
-    B = xpy + 1;
-
-    dppsvx_(&FACT, &UPLO, &K, &NRHS, AP, AFP + 1, &EQUED, S, B, &K, 
-	    X, &K, &RCOND, &FERR, &BERR, WORK, IWORK, &INFO);
-
-#ifdef LA_TEST
-    printf("DPPSVX exit code = %d\n", (int) INFO);
-    printf("RCOND = %g\n", RCOND);
-    printf("FERR = %g\n", FERR);
-    printf("BERR = %g\n", BERR);
-#endif
-
-    if (INFO != 0 || FERR > 1.0e-4) {
-	return E_SINGULAR;
-    }
-
-    for (i=1; i<=nv; i++) {
-	pmod->coeff[i] = X[i-1];
-    }
-
-    free(pmod->xpx);
-    pmod->xpx = AFP;
-    free(X);
-    free(WORK);
-    free(IWORK);
-
-    make_ess(pmod, Z);
-    
-    return INFO;
-}
-
-static void lapack_std_errs (double *xpx, double *sderr, 
-			     double sigma, int nv)
-{
-    char UPLO = 'L';
-    integer INFO, K = nv;
-    double *AP = xpx + 1;
-    int i, k, m;
-
-    dpptri_(&UPLO, &K, AP, &INFO);
-
-    m = 1;
-    for (i=0; i<nv; i++) {
-	k = ijtok(i, i, nv);
-	sderr[m++] = sigma * sqrt(AP[k]);
-    }    
-}
-
 #endif /* USE_LAPACK */
 
 /* .......................................................... */
@@ -1240,10 +1140,10 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 static double corrrsq (int nobs, const double *y, const double *yhat)
 /* finds alternative R^2 value when there's no intercept */
 {
-    double xx;
+    double x;
 
-    xx = _corr(nobs, y, yhat);
-    return xx * xx;
+    x = _corr(nobs, y, yhat);
+    return x * x;
 }
 
 /* ........................................................... */
@@ -1251,21 +1151,22 @@ static double corrrsq (int nobs, const double *y, const double *yhat)
 static int hatvar (MODEL *pmod, double **Z)
 /* finds fitted values and residuals */
 {
-    int yno, xno, i, t, nwt = pmod->nwt;
-    double xx;
+    int xno, i, t;
+    int yno = pmod->list[1];
+    double x;
 
-    yno = pmod->list[1];
     for (t=pmod->t1; t<=pmod->t2; t++) {
         for (i=1; i<=pmod->ncoeff; i++) {
             xno = pmod->list[i+1];
-	    xx = Z[xno][t];
-	    if (nwt) xx = xx * Z[nwt][t];
-            pmod->yhat[t] += pmod->coeff[i] * xx;
+	    x = Z[xno][t];
+	    if (pmod->nwt) x = x * Z[pmod->nwt][t];
+            pmod->yhat[t] += pmod->coeff[i] * x;
         }
-	xx = Z[yno][t];
-	if (nwt) xx = xx * Z[nwt][t];
-        pmod->uhat[t] = xx - pmod->yhat[t];                
+	x = Z[yno][t];
+	if (pmod->nwt) x = x * Z[pmod->nwt][t];
+        pmod->uhat[t] = x - pmod->yhat[t];                
     }
+
     return 0;
 }
 
@@ -1401,7 +1302,10 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt */
-	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
+	if (!corc_model.errcode && corc_model.dfd == 0) {
+	    corc_model.errcode = E_DF;
+	}
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, pdinfo);
@@ -1446,17 +1350,17 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
 {
     int t, v;
-    double xx;
+    double x;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	xx = Z[i][t];
+	x = Z[i][t];
 	for (v=1; v<=pmod->ncoeff - pmod->ifc; v++) {
-	    xx -= pmod->coeff[v] * Z[pmod->list[v+1]][t];
+	    x -= pmod->coeff[v] * Z[pmod->list[v+1]][t];
 	}
 	if (pmod->ifc) {
-	    xx -= pmod->coeff[pmod->ncoeff] / pmod->dw;
+	    x -= pmod->coeff[pmod->ncoeff] / pmod->dw;
 	}
-	uhat[t] = xx;
+	uhat[t] = x;
     }
 }
 
@@ -1625,7 +1529,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	return tsls;
     }
 
-    xpxxpy_func(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0,
+    form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0,
 		xpx, xpy);
     cholbeta(xpx, xpy, NULL, NULL, nv);    
     diaginv(xpx, xpy, diag, nv);
@@ -1648,15 +1552,20 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     tsls.ci = TSLS;
 
     /* put the original list back */
-    for (i=2; i<=list1[0]; i++) tsls.list[i] = list1[i];
+    for (i=2; i<=list1[0]; i++) 
+	tsls.list[i] = list1[i];
+
     /* put the yhats into the model */
-    for (t=tsls.t1; t<=tsls.t2; t++) tsls.yhat[t] = yhat[t];
+    for (t=tsls.t1; t<=tsls.t2; t++) 
+	tsls.yhat[t] = yhat[t];
 
     free(list1); free(list2);
     free(s1list); free(s2list);
     free(yhat); 
+
     dataset_drop_vars(newlist[0], pZ, pdinfo);
     free(newlist);
+
     return tsls;
 }
 
@@ -1716,6 +1625,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	    (*pZ)[v][t] = aux.yhat[t]; 
 	shrink = pdinfo->v - v - 1;
     }
+
     if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
 
     clear_model(&aux, pdinfo);
