@@ -256,7 +256,9 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
     int idf = gretl_model_get_int(pmod, "idf");
 
     print_ll(pmod, prn);
+#if 0
     info_stats_lines(pmod, prn);
+#endif
 
     if (idf > 0 && !na(lmin)) {
 	double X2 = pmod->nobs * log(lmin);
@@ -990,7 +992,7 @@ static void print_model_heading (const MODEL *pmod,
 		pmod->order);
 	break;	
     case AUX_SYS:
-	pprintf(prn, "\n%s %d: ", 
+	pprintf(prn, "%s %d: ", 
 		(utf)? _("Equation") : I_("Equation"), pmod->ID + 1);
 	break;	
     case AUX_VAR:
@@ -1091,9 +1093,9 @@ static void print_model_heading (const MODEL *pmod,
 
     /* list of instruments for TSLS */
     if (pmod->ci == TSLS) {
-	int systype = gretl_model_get_int(pmod, "systype");
+	int method = gretl_model_get_int(pmod, "method");
 
-	if (systype != SYS_FIML && systype != SYS_LIML) {
+	if (method != SYS_FIML && method != SYS_LIML) {
 	    print_tsls_instruments (pmod->list, pdinfo, prn);
 	}
     }
@@ -1554,7 +1556,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	essline(pmod, prn, 0);
-	if (gretl_model_get_int(pmod, "systype") == SYS_LIML) {
+	if (gretl_model_get_int(pmod, "method") == SYS_LIML) {
 	    print_liml_equation_data(pmod, prn);
 	}
 	print_middle_table_end(prn);

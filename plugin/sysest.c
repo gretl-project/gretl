@@ -98,7 +98,7 @@ static void kronecker_place (gretl_matrix *X,
 static int make_sys_X_block (gretl_matrix *X,
 			     const MODEL *pmod,
 			     const double **Z, 
-			     int t1, int systype)
+			     int t1, int method)
 {
     int i, t;
     const double *Xi;
@@ -106,7 +106,7 @@ static int make_sys_X_block (gretl_matrix *X,
     X->cols = pmod->ncoeff;
 
     for (i=0; i<X->cols; i++) {
-	if (systype == SYS_3SLS || systype == SYS_FIML || systype == SYS_TSLS) {
+	if (method == SYS_3SLS || method == SYS_FIML || method == SYS_TSLS) {
 	    Xi = tsls_get_Xi(pmod, Z, i);
 	} else {
 	    Xi = Z[pmod->list[i+2]];
@@ -218,12 +218,13 @@ system_sigma (const gretl_equation_system *sys, MODEL **models, int m)
 /* compute SUR or 3SLS parameter estimates (or restricted OLS, TSLS) */
 
 static int 
-calculate_sys_coefficients (const gretl_equation_system *sys,
+calculate_sys_coefficients (gretl_equation_system *sys,
 			    MODEL **models, const double **Z,
 			    gretl_matrix *X, gretl_matrix *uhat,
 			    gretl_matrix *y, int m, int mk)
 {
-    int systype = system_get_type(sys);
+    int method = system_get_method(sys);
+    int nr = system_n_restrictions(sys);
     gretl_matrix *vcv;
     int i, j, k, j0;
     int err = 0;
@@ -261,8 +262,10 @@ calculate_sys_coefficients (const gretl_equation_system *sys,
     /* single-equation methods: need to multiply by an
        estimate of sigma */
 
-    if (systype == SYS_OLS || systype == SYS_TSLS) {
+    if (method == SYS_OLS || method == SYS_TSLS) {
 	double s = system_sigma(sys, models, m);
+
+	gretl_matrix_multiply_by_scalar(vcv, s * s);
 
 	for (i=0; i<m; i++) {
 	    for (j=0; j<models[i]->ncoeff; j++) {
@@ -271,7 +274,14 @@ calculate_sys_coefficients (const gretl_equation_system *sys,
 	}
     }
 
-    gretl_matrix_free(vcv);
+    if (nr == 0) {
+	gretl_matrix *b = gretl_matrix_copy(y);
+
+	system_attach_coeffs(sys, b);
+	system_attach_vcv(sys, vcv);
+    } else {
+	gretl_matrix_free(vcv);
+    }
 
     return err;
 }
@@ -281,7 +291,7 @@ calculate_sys_coefficients (const gretl_equation_system *sys,
 static void add_results_to_dataset (gretl_equation_system *sys, 
 				    MODEL *pmod, int i, int *pj,
 				    double **Z, DATAINFO *pdinfo,
-				    int systype)
+				    int method)
 {
     int t;
 
@@ -294,10 +304,10 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 	    }
 	}
 	sprintf(pdinfo->varname[*pj], "uhat_s%02d", i + 1);
-	if (systype == SYS_SUR) {
+	if (method == SYS_SUR) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("SUR residual, equation %d"), 
 		    i + 1);
-	} else if (systype == SYS_3SLS) {
+	} else if (method == SYS_3SLS) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("3SLS residual, equation %d"), 
 		    i + 1);
 	} else {
@@ -316,10 +326,10 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 	    }
 	}	
 	sprintf(pdinfo->varname[*pj], "yhat_s%02d", i + 1);
-	if (systype == SYS_SUR) {
+	if (method == SYS_SUR) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("SUR fitted value, equation %d"), 
 		    i + 1);
-	} else if (systype == SYS_3SLS) {
+	} else if (method == SYS_3SLS) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("3SLS fitted value, equation %d"), 
 		    i + 1);
 	} else {
@@ -344,25 +354,25 @@ static int in_list (const int *list, int k)
 static int *
 system_model_list (gretl_equation_system *sys, int i, int *freeit)
 {
-    int systype = system_get_type(sys);
+    int method = system_get_method(sys);
     int *list = NULL;
 
     *freeit = 0;
 
-    if (systype == SYS_SUR || systype == SYS_3SLS ||
-	systype == SYS_OLS || systype == SYS_TSLS) {
+    if (method == SYS_SUR || method == SYS_3SLS ||
+	method == SYS_OLS || method == SYS_TSLS) {
 	list = system_get_list(sys, i);
     }
 
-    if (systype == SYS_3SLS || systype == SYS_TSLS) {
+    if (method == SYS_3SLS || method == SYS_TSLS) {
 	/* is list already in tsls form? */
 	if (list != NULL && !in_list(list, LISTSEP)) {
 	    list = NULL;
 	}
     }
 
-    if (systype == SYS_FIML || systype == SYS_LIML ||
-	((systype == SYS_3SLS || systype == SYS_TSLS) 
+    if (method == SYS_FIML || method == SYS_LIML ||
+	((method == SYS_3SLS || method == SYS_TSLS) 
 	 && list == NULL)) {
 	list = compose_tsls_list(sys, i);
 	*freeit = 1;
@@ -373,11 +383,11 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
 
 static void
 print_system_overidentification_test (const gretl_equation_system *sys,
-				      int systype, PRN *prn)
+				      int method, PRN *prn)
 {
     int df = system_get_overid_df(sys);
 
-    if (systype == SYS_FIML && df > 0) {
+    if (method == SYS_FIML && df > 0) {
 	double ll = system_get_ll(sys);
 	double llu = system_get_llu(sys);
 	double X2;
@@ -389,31 +399,32 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 
 	X2 = 2.0 * (llu - ll);
 
-	pprintf(prn, "\n%s:\n", _("LR over-identification test"));
+	pprintf(prn, "%s:\n", _("LR over-identification test"));
 	pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), ll);
 	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
 		df, X2, _("with p-value"), chisq(X2, df));
 	pputc(prn, '\n');
-    } else if ((systype == SYS_3SLS || systype == SYS_SUR) && df > 0) {
+    } else if ((method == SYS_3SLS || method == SYS_SUR) && df > 0) {
 	double X2 = system_get_X2(sys);
 
 	if (na(X2) || X2 == 0.0) {
 	    return;
 	}
 
-	pprintf(prn, "\n%s:\n", _("Hansen-Sargan over-identification test"));
+	pprintf(prn, "%s:\n", _("Hansen-Sargan over-identification test"));
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
 		df, X2, _("with p-value"), chisq(X2, df));
 	pputc(prn, '\n');
     }
 }
 
-/* Hansen-Sargan overidentification test for the system as a whole,
-   as in Davidson and MacKinnon, ETM, p. 532 and equation (12.61).
-   See also D and M, Estimation and Inference in Econometrics,
-   equation (18.60) for a more computation-friendly statement of
-   the criterion function.
+/* Hansen-Sargan overidentification test for the system as a whole, as
+   in Davidson and MacKinnon, ETM: p. 511 and equation (12.25) for the
+   case of SUR; p. 532 and equation (12.61) for the case of 3SLS.  See
+   also D and M, Estimation and Inference in Econometrics, equation
+   (18.60) for a more computation-friendly statement of the criterion
+   function.
 */
 
 static int hansen_sargan_test (gretl_equation_system *sys, 
@@ -468,7 +479,7 @@ static int hansen_sargan_test (gretl_equation_system *sys,
     err = gretl_invert_symmetric_matrix(WTW);
     if (err) goto bailout;
 
-    /* set up vectors of 3SLS residuals, transposed, times W:
+    /* set up vectors of SUR or 3SLS residuals, transposed, times W:
        these are stacked in an m * nx matrix
     */
     for (i=0; i<m; i++) {
@@ -522,7 +533,7 @@ static int hansen_sargan_test (gretl_equation_system *sys,
     return err;
 }
 
-static int basic_system_allocate (int systype, 
+static int basic_system_allocate (int method, 
 				  int m, int T, int mk, int nr,
 				  MODEL ***models,
 				  gretl_matrix **uhat, 
@@ -566,11 +577,11 @@ static int basic_system_allocate (int systype,
        matrices, unless we're testing a set of restrictions
     */
 
-    if (nr == 0 && (systype == SYS_OLS || systype == SYS_TSLS)) {
+    if (nr == 0 && (method == SYS_OLS || method == SYS_TSLS)) {
 	return 0;
     }
 
-    if (systype != SYS_LIML) {
+    if (method != SYS_LIML) {
 	*X = gretl_matrix_alloc(ldx, ldx);
 	if (*X == NULL) {
 	    return E_ALLOC;
@@ -586,13 +597,19 @@ static int basic_system_allocate (int systype,
 
 static int 
 save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
-			MODEL **models, int iters, double ***pZ, DATAINFO *pdinfo,
-			PRN *prn)
+			MODEL **models, double ***pZ, DATAINFO *pdinfo,
+			gretlopt opt, PRN *prn)
 {
-    int systype = system_get_type(sys);
+    const char *sysname = gretl_system_get_name(sys);
+    int method = system_get_method(sys);
+    int iters = system_iters(sys);
     int m = system_n_equations(sys);
     int i, j = 0;
     int err = 0;
+
+    if (opt & OPT_Q) {
+	return 0;
+    }    
 
     if (system_save_uhat(sys)) {
 	j = pdinfo->v;
@@ -606,29 +623,36 @@ save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
     }
 
     pputc(prn, '\n');
-    pprintf(prn, _("Equation system, %s\n\n"), system_get_full_string(sys));
+
+    if (sysname != NULL) {
+	pprintf(prn, "%s, %s\n", _("Equation system"), sysname);
+	pprintf(prn, "%s: %s\n", _("Estimator"), 
+		system_get_full_string(sys, opt));
+    } else {
+	pprintf(prn, "%s, %s\n", _("Equation system"),
+		system_get_full_string(sys, opt));
+    }
 
     if (iters > 0) {
 	pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
-	if (systype == SYS_SUR) {
+	if (method == SYS_SUR || method == SYS_FIML) {
 	    pprintf(prn, "%s = %g\n", _("Log-likelihood"), system_get_ll(sys));
 	}
     }
 
+    pputc(prn, '\n');
+
     for (i=0; i<m; i++) {
 	printmodel(models[i], pdinfo, OPT_NONE, prn);
-	add_results_to_dataset(sys, models[i], i, &j, *pZ, pdinfo, systype);
-	if (systype == SYS_3SLS || systype == SYS_FIML || 
-	    systype == SYS_TSLS) {
-	    tsls_free_data(models[i]);
+	if (!err) {
+	    add_results_to_dataset(sys, models[i], i, &j, *pZ, pdinfo, 
+				   method);
 	}
     }
 
-    if (!err) {
-	print_system_vcv(sigma, prn);
-	if (systype == SYS_FIML || systype == SYS_3SLS || systype == SYS_SUR) {
-	    print_system_overidentification_test(sys, systype, prn);
-	}
+    print_system_vcv(sigma, prn);
+    if (method == SYS_FIML || method == SYS_3SLS || method == SYS_SUR) {
+	print_system_overidentification_test(sys, method, prn);
     }
 
     return err;
@@ -722,7 +746,7 @@ augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
 #define SYS_LL_TOL 1.0e-12
 
 int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
-		     PRN *prn)
+		     gretlopt opt, PRN *prn)
 {
     int i, j, k, T, t, m = 0;
     int v, l, mk, krow, nr;
@@ -736,7 +760,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *Xi = NULL, *Xj = NULL, *M = NULL;
     MODEL **models = NULL;
 
-    int systype = system_get_type(sys);
+    int method = system_get_method(sys);
     double llbak = -1.0e9;
     int single_equation = 0;
     int do_iteration = 0;
@@ -744,17 +768,17 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     int iters = 0;
     int err = 0;
 
-    if (system_doing_iteration(sys)) {
+    if (opt & OPT_T) {
 	do_iteration = 1;
     }
     
     nr = system_n_restrictions(sys);
 
-    if (systype == SYS_OLS || systype == SYS_TSLS) {
+    if (method == SYS_OLS || method == SYS_TSLS) {
 	single_equation = 1;
     }
 
-    if (nr > 0 && systype == SYS_3SLS) {
+    if (nr > 0 && method == SYS_3SLS) {
 	/* doing 3SLS with restrictions */
 	r3sls = 1;
     }
@@ -780,11 +804,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     system_set_n_obs(sys, T);
 
     /* allocate models etc */
-    err = basic_system_allocate(systype, m, T, mk, nr, &models,
+    err = basic_system_allocate(method, m, T, mk, nr, &models,
 				&uhat, &sigma, &X, &y);
     if (err) goto cleanup;
 	    
-    if (systype == SYS_FIML || systype == SYS_LIML) {
+    if (method == SYS_FIML || method == SYS_LIML) {
 	print_equation_system_info(sys, pdinfo, prn);
     }
 
@@ -801,12 +825,12 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    break;
 	}
 
-	if (systype == SYS_SUR || systype == SYS_OLS) {
+	if (method == SYS_SUR || method == SYS_OLS) {
 	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
-	} else if (systype == SYS_3SLS || systype == SYS_FIML ||
-		   systype == SYS_TSLS) {
+	} else if (method == SYS_3SLS || method == SYS_FIML ||
+		   method == SYS_TSLS) {
 	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_S);
-	} else if (systype == SYS_LIML) {
+	} else if (method == SYS_LIML) {
 	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_N);
 	}
 
@@ -822,7 +846,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
 	pmod->ID = i;
 	pmod->aux = AUX_SYS;
-	gretl_model_set_int(pmod, "systype", systype);
+	gretl_model_set_int(pmod, "method", method);
 
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(uhat, i, t, pmod->uhat[t + pdinfo->t1]);
@@ -831,13 +855,13 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (err) goto cleanup;
 
-    if (systype == SYS_LIML) {
+    if (method == SYS_LIML) {
 	system_attach_models(sys, models);
 	err = liml_driver(sys, pZ, sigma, pdinfo, prn);
 	system_unattach_models(sys);
 	if (!err) {
-	    err = save_and_print_results(sys, sigma, models, 0,
-					 pZ, pdinfo, prn);
+	    err = save_and_print_results(sys, sigma, models,
+					 pZ, pdinfo, opt, prn);
 	}
 	goto cleanup;
     }
@@ -886,7 +910,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	int kcol = 0;
 
 	err = make_sys_X_block(Xi, models[i], (const double **) *pZ, 
-			       pdinfo->t1, systype);
+			       pdinfo->t1, method);
 
 	for (j=0; j<m && !err; j++) { 
 	    const gretl_matrix *Xk;
@@ -898,7 +922,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		    continue;
 		}
 		err = make_sys_X_block(Xj, models[j], (const double **) *pZ, 
-				       pdinfo->t1, systype);
+				       pdinfo->t1, method);
 		Xk = Xj;
 	    } else {
 		Xk = Xi;
@@ -942,7 +966,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	/* loop over the m vertically-arranged blocks */
 
 	make_sys_X_block(Xi, models[i], (const double **) *pZ, 
-			 pdinfo->t1, systype);
+			 pdinfo->t1, method);
 
 	for (j=0; j<models[i]->ncoeff; j++) { /* loop over the rows within each of 
 						 the m blocks */
@@ -1017,7 +1041,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	} 
     } 
 
-    if (nr == 0 && (systype == SYS_3SLS || systype == SYS_SUR)) {
+    if (nr == 0 && (method == SYS_3SLS || method == SYS_SUR)) {
 	/* do this while we have sigma-inverse available */
 	hansen_sargan_test(sys, sigma, uhat, (const double **) *pZ, pdinfo->t1);
     }
@@ -1025,7 +1049,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     /* refresh sigma (non-inverted) */
     gls_sigma_from_uhat(sys, sigma, uhat, m, T);
 
-    if (systype == SYS_FIML) {
+    system_set_iters(sys, iters);
+
+    if (method == SYS_FIML) {
 	/* set up convenience pointers */
 	system_attach_uhat(sys, uhat);
 	system_attach_models(sys, models);
@@ -1040,8 +1066,8 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
  print_save: 
 
     if (!err) {
-	err = save_and_print_results(sys, sigma, models, iters,
-				     pZ, pdinfo, prn);
+	err = save_and_print_results(sys, sigma, models, 
+				     pZ, pdinfo, opt, prn);
     }
 
  cleanup:
@@ -1055,10 +1081,18 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_free(uhat);
 
     if (models != NULL) {
+	double ess = 0.0;
+
 	for (i=0; i<m; i++) {
+	    ess += models[i]->ess;
+	    if (method == SYS_3SLS || method == SYS_FIML || 
+		method == SYS_TSLS) {
+		tsls_free_data(models[i]);
+	    }
 	    free_model(models[i]);
 	}
 	free(models);
+	system_set_ess(sys, ess);
     }
 
     pdinfo->t1 = orig_t1;

@@ -320,7 +320,7 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
 
 static void 
 fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
-			 gretl_matrix *sigma)
+			 gretl_matrix *sigma, int iters)
 {
     MODEL *pmod;
     const double *y;
@@ -350,6 +350,9 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     /* record restricted and unrestricted log-likelihood */
     system_set_ll(fsys->sys, fsys->ll);
     system_set_llu(fsys->sys, fsys->llu);
+
+    /* record number of iterations taken */
+    system_set_iters(fsys->sys, iters);
 }
 
 /* form the LHS stacked vector for the artificial regression */
@@ -1003,7 +1006,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
     over_identification_test(fsys, pZ, pdinfo);
 
     /* write the results into the parent system */
-    fiml_transcribe_results(fsys, (const double **) *pZ, t1, sigma);
+    fiml_transcribe_results(fsys, (const double **) *pZ, t1, sigma, iters);
 
  bailout:
     

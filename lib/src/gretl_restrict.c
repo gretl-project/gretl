@@ -474,6 +474,10 @@ real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
     return rset;
 }
 
+/* check that the coefficients referenced in a restriction are
+   within bounds, relative to the equation or system that is
+   to be restricted */
+
 static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 			       int bnum, int eq)
 {
@@ -492,7 +496,10 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 	    ret = 0;
 	}
     } else {
-	if (bnum >= rset->pmod->ncoeff) {
+	if (eq > 0) {
+	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
+		    eq + 1);
+	} else if (bnum >= rset->pmod->ncoeff) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
 		    bnum);
 	} else {
@@ -618,6 +625,9 @@ restriction_set_parse_line (gretl_restriction_set *rset, const char *line)
     return real_restriction_set_parse_line(rset, line, 0);
 }
 
+/* special set-up for a set of cross-equation restrictions, for
+   a system of equations */
+
 gretl_restriction_set *
 cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 {
@@ -675,6 +685,8 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 
     return rset;
 }
+
+/* execute the test, for a single equation */
 
 static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 {
@@ -792,6 +804,12 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     return err;
 }
 
+/* Respond to "end restrict": in the case of a single equation, go
+   ahead and do the test; in the case of a system of equations,
+   form the restriction matrices R and q and attach these to the
+   equation system.
+*/
+
 int
 gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
 {
@@ -824,6 +842,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset, PRN *prn)
 	}	
 	if (!err) {
 	    system_set_restriction_matrices(rset->sys, R, q);
+	    destroy_restriction_set(rset);
 	}
     }
 

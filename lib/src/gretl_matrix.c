@@ -1074,29 +1074,30 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 
 double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
 				 const gretl_matrix *b, int bflag,
-				 int *err)
+				 int *errp)
 {
-    gretl_matrix *c;
+    gretl_matrix *c = NULL;
     double ret = NADBL;
-    int my_err;
+    int err = 0;
 
     c = gretl_matrix_alloc(1, 1);
     if (c == NULL) {
-	if (err != NULL) {
-	    *err = GRETL_MATRIX_ERR;
-	}
-	return ret;
+	err = E_ALLOC;
     }
 
-    my_err = gretl_matrix_multiply_mod(a, aflag, b, bflag, c);
+    if (!err) {
+	err = gretl_matrix_multiply_mod(a, aflag, b, bflag, c);
+    }
 
-    if (my_err == GRETL_MATRIX_OK) {
+    if (!err) {
 	ret = c->val[0];
-    } else if (err != NULL) {
-	*err = my_err;
     }
 	
     gretl_matrix_free(c);
+
+    if (errp != NULL) {
+	*errp = err;
+    }
 
     return ret;
 }
@@ -1912,37 +1913,36 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  */
 
 double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
-				 int *err)
+				 int *errp)
 {
-    gretl_matrix *tmp;
+    gretl_matrix *tmp = NULL;
     double ret = NADBL;
-
-    *err = 0;
+    int err = 0;
 
     if (b->rows != X->rows ||
 	X->rows != X->cols ||
 	b->cols != 1) {
-	*err = GRETL_MATRIX_NON_CONFORM;
-	return ret;
+	err = GRETL_MATRIX_NON_CONFORM;
     }
 
-    tmp = gretl_matrix_alloc(1, b->rows);
-    if (tmp == NULL) {
-	*err = GRETL_MATRIX_NOMEM;
-	return ret;
+    if (!err) {
+	tmp = gretl_matrix_alloc(1, b->rows);
+	if (tmp == NULL) {
+	    err = GRETL_MATRIX_NOMEM;
+	}
     }
 
-    *err = gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
-				     X, GRETL_MOD_NONE,
-				     tmp);
+    if (!err) {
+	err = gretl_matrix_multiply_mod(b, GRETL_MOD_TRANSPOSE,
+					X, GRETL_MOD_NONE,
+					tmp);
+    }
 
-    if (!*err) {
+    if (!err) {
 	ret = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
 				       b, GRETL_MOD_NONE,
-				       err);
+				       errp);
     }
-
-    if (*err) ret = NADBL;
 
     gretl_matrix_free(tmp);
 
@@ -1953,7 +1953,7 @@ double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
  * gretl_matrix_A_X_A_prime:
  * @A: m * k matrix.
  * @X: k * k matrix.
- * @err: pointer to error code variable.
+ * @errp: pointer to error code variable.
  *
  * Computes A * X * A'.
  * 
@@ -1964,17 +1964,17 @@ double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 
 gretl_matrix *
 gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
-			  int *err)
+			  int *errp)
 {
     gretl_matrix *tmp = NULL;
     gretl_matrix *ret = NULL;
     int m = A->rows;
     int k = A->cols;
 
-    *err = 0;
+    *errp = 0;
 
     if (X->rows != k || X->cols != k) {
-	*err = GRETL_MATRIX_NON_CONFORM;
+	*errp = GRETL_MATRIX_NON_CONFORM;
 	return NULL;
     }
 
@@ -1984,23 +1984,23 @@ gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
     if (tmp == NULL || ret == NULL) {
 	gretl_matrix_free(tmp);
 	gretl_matrix_free(ret);
-	*err = GRETL_MATRIX_NOMEM;
+	*errp = GRETL_MATRIX_NOMEM;
 	return NULL;
     }
 
-    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+    *errp = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
 				     X, GRETL_MOD_NONE,
 				     tmp);
 
-    if (!*err) {
-	*err = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
+    if (!*errp) {
+	*errp = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 					 A, GRETL_MOD_TRANSPOSE,
 					 ret);
     }
 
     gretl_matrix_free(tmp);
 
-    if (*err) {
+    if (*errp) {
 	gretl_matrix_free(ret);
 	ret = NULL;
     }
