@@ -27,7 +27,15 @@ Gretl_Folder contenuta all'interno in una posizione adatta all'installazione
 funzionare ma potrebbero verificarsi problemi con i caratteri. L'immagine disco è
 documentata brevemente nel file
 <a href="./README.pdf">README.pdf</a>, che contiene suggerimenti da seguire nel caso
-in cui i caratteri non appaiano correttamente.</p>
+in cui i caratteri non appaiano correttamente. Se gretl non funziona correttamente
+su Panther, è possibile fare il debug in questo modo: aprire una finestra di terminale
+X11, andare nella directory in cui è stato installato il pacchetto (es.
+<kbd>cd cartella_gretl</kbd>), andare nella directory <kbd>bin</kbd> ed
+eseguire il comando</p>
+<pre>
+./gretl.sh
+</pre>
+<p>Dovrebbero apparire alcune indicazioni utili per capire cosa c'è che non va.</p>
 
 <p>Si noti che questo pacchetto dipende dal sistema X11 di Apple (il porting di
 Apple per Mac del sistema X Window).</p>
