@@ -27,18 +27,17 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
 	chapters/trouble.xml chapters/biblio.xml
 
-all: pdf altpdf html chm # thumbs altthumbs
+all: $(DOC).pdf $(ALTDOC).pdf html chm # thumbs altthumbs
 
-pdf: $(DOC).tex jadetex.cfg lucidabr.tex
-	-pdfjadetex $(DOC)
-	-pdfjadetex $(DOC)
-	-pdfjadetex $(DOC)
+$(DOC).pdf: $(DOC).tex jadetex.cfg lucidabr.tex
+	if [ ! -f $(DOC).log ] ; then pdfjadetex $(DOC) ; fi
+	-grep undefined $(DOC).log >/dev/null && pdfjadetex $(DOC)
+	-grep undefined $(DOC).log >/dev/null && pdfjadetex $(DOC)
 
-altpdf: $(ALTDOC).tex jadetex.cfg lucidabr.tex
-	echo "Running pdfjadetex on $(ALTDOC)"
-	-pdfjadetex $(ALTDOC)
-	-pdfjadetex $(ALTDOC)
-	-pdfjadetex $(ALTDOC)
+$(ALTDOC).pdf: $(ALTDOC).tex jadetex.cfg lucidabr.tex
+	if [ ! -f $(ALTDOC).log ] ; then pdfjadetex $(ALTDOC) ; fi
+	-grep undefined $(ALTDOC).log >/dev/null && pdfjadetex $(ALTDOC)
+	-grep undefined $(ALTDOC).log >/dev/null && pdfjadetex $(ALTDOC)
 
 pdftest: $(TESTDOC).tex jadetex.cfg 
 	-pdfjadetex $(TESTDOC)
