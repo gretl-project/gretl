@@ -1,6 +1,7 @@
 /* TRAMO/SEATS, X-12-ARIMA plugin for gretl */
 
 #include "libgretl.h"
+#include <gtk/gtk.h>
 
 #ifdef OS_WIN32
 # include <windows.h>
@@ -10,7 +11,8 @@ typedef enum {
     D11,     /* seasonally adjusted series */
     D12,     /* trend/cycle */
     D13      /* irregular component */
-} x12a_series;
+    TRIGRAPH /* graph showing all of the above */
+} x12a_objects;
 
 const char *x12a_series_strings[] = {
     "d11", "d12", "d13"
@@ -28,7 +30,81 @@ const char *default_mdl = {
     "(2 1 0)(0 1 1) X\n"
     "(0 2 2)(0 1 1) X\n"
     "(2 1 2)(0 1 1)\n"
-};    
+};  
+
+typedef struct {
+    GtkWidget *check;
+    char save;
+    unsigned short v;
+} opt_info;
+
+typedef struct {
+    GtkWidget *dialog;
+    opt_info opt[4];
+    int savevars;
+} x12a_request;
+
+static int x12a_dialog (x12a_request *request)
+{
+    GtkWidget *vbox, *tmp;
+    gint ret;
+
+    request->dialog = gtk_dialog_new_with_buttons ("X-12-ARIMA",
+					  NULL,
+					  GTK_DIALOG_MODAL | 
+					  GTK_DIALOG_DESTROY_WITH_PARENT,
+					  GTK_STOCK_OK,
+					  GTK_RESPONSE_ACCEPT,
+					  GTK_STOCK_CANCEL,
+					  GTK_RESPONSE_REJECT,
+					  NULL);
+
+    tmp = gtk_label_new ("Save to data set");
+    gtk_widget_show(tmp);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+
+    tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    request->opt[D11].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+
+    tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    request->opt[D12].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+
+    tmp = gtk_check_button_new_with_label(_("Irregular"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    request->opt[D13].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+
+    tmp = gtk_hseparator_new();
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    
+    tmp = gtk_check_button_new_with_label(_("Generate graph"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
+    request->opt[TRIGRAPH].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+
+    gtk_widget_show(vbox);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(request->dialog)->vbox),
+		       vbox, FALSE, FALSE, 5);
+
+    ret = gtk_dialog_run (GTK_DIALOG(request->dialog));
+
+    switch (ret) {
+    case GTK_RESPONSE_ACCEPT: return 1;
+    case GTK_RESPONSE_REJECT: return 0;	
+    }  
+
+    return 0;
+}
 
 int write_tramo_data (char *fname, int varnum, 
 		      double ***pZ, DATAINFO *pdinfo, 
@@ -266,6 +342,22 @@ int *make_savelist (void)
     return list;
 }
 
+static int set_opts (x12a_request *request)
+{
+    int i;
+
+    request->savevars = 0;
+
+    for (i=0; i<4; i++) {
+	if (GTK_TOGGLE_BUTTON(request->opt[i].check)->active) {
+	    request->opt[i].save = 1;
+	    if (i != TRIGRAPH) request->savevars++;
+	} else {
+	    request->opt[i].save = 0;
+	} 
+    }
+}
+
 int write_x12a_data (char *fname, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     PATHS *paths, int *graph,
@@ -277,6 +369,19 @@ int write_x12a_data (char *fname, int varnum,
     int *savelist = NULL;
     double x;
     FILE *fp = NULL;
+    x12a_request request;
+    int doit;
+
+    doit = x12a_dialog(&request); 
+
+    if (!doit) {
+	gtk_widget_destroy(request.dialog);
+	return 0;
+    }
+
+    set_opts(&request);
+
+    gtk_widget_destroy(request.dialog);
 
     *gretl_errmsg = 0;
 

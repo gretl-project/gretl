@@ -2259,6 +2259,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
     if (gui_open_plugin("tramo-x12a", &handle)) return;
 
+    *fname = 0;
     if (opt == TRAMO) {
 	write_ts_data = get_plugin_function("write_tramo_data", handle);
     } else { /* X12A */
@@ -2291,6 +2292,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	       _("X-12-ARIMA command failed"));
 	gretl_print_destroy(prn);
 	return;
+    } else {
+	if (*fname == 0) return;
     }
 
     g_file_get_contents (fname, &databuf, NULL, &error);
