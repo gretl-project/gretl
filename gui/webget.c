@@ -19,7 +19,7 @@
 
 /* webget.c for gretl -- based on parts of GNU Wget */
 
-#define WDEBUG
+/* #define WDEBUG */
 
 #include "gretl.h"
 
@@ -51,8 +51,9 @@ extern int errno;
 extern int h_errno;
 #endif
 
+extern int use_proxy; /* gui_utils.c */
+
 #define DEFAULT_HTTP_PORT 80
-#define DEFAULT_FTP_PORT 21
 #define MINVAL(x, y) ((x) < (y) ? (x) : (y))
 
 #define TEXTHTML_S "text/html"
@@ -89,13 +90,6 @@ extern int h_errno;
 #define HTTP_STATUS_NOT_IMPLEMENTED	501
 #define HTTP_STATUS_BAD_GATEWAY		502
 #define HTTP_STATUS_UNAVAILABLE		503
-
-enum uflags {
-    URELATIVE     = 0x0001,      /* Is URL relative? */
-    UNOPROTO      = 0x0002,      /* Is URL without a protocol? */
-    UABS2REL      = 0x0004,      /* Convert absolute to relative? */
-    UREL2ABS      = 0x0008       /* Convert relative to absolute? */
-};
 
 enum {
     HG_OK, 
@@ -466,9 +460,7 @@ static int http_process_type (const char *hdr, void *arg)
     char **result = (char **)arg;
     char *p;
 
-    *result = g_strdup(hdr);
     p = strrchr (hdr, ';');
-    g_free(*result); /* added 03/25/01 */
     if (p) {
 	int len = p - hdr;
 
@@ -494,8 +486,7 @@ static int numdigit (long a)
 {
     int res = 1;
 
-    while ((a /= 10) != 0)
-	++res;
+    while ((a /= 10) != 0) ++res;
     return res;
 }
 
@@ -515,71 +506,12 @@ static char *herrmsg (int error)
 
 /* ........................................................... */
 
-static void
-base64_encode (const char *s, char *store, int length)
-{
-    /* Conversion table.  */
-    static char tbl[64] = {
-	'A','B','C','D','E','F','G','H',
-	'I','J','K','L','M','N','O','P',
-	'Q','R','S','T','U','V','W','X',
-	'Y','Z','a','b','c','d','e','f',
-	'g','h','i','j','k','l','m','n',
-	'o','p','q','r','s','t','u','v',
-	'w','x','y','z','0','1','2','3',
-	'4','5','6','7','8','9','+','/'
-    };
-    int i;
-    unsigned char *p = (unsigned char *)store;
-
-    /* Transform the 3x8 bits to 4x6 bits, as required by base64.  */
-    for (i = 0; i < length; i += 3) {
-	*p++ = tbl[s[0] >> 2];
-	*p++ = tbl[((s[0] & 3) << 4) + (s[1] >> 4)];
-	*p++ = tbl[((s[1] & 0xf) << 2) + (s[2] >> 6)];
-	*p++ = tbl[s[2] & 0x3f];
-	s += 3;
-    }
-    /* Pad the result if necessary...  */
-    if (i == length + 1)
-	*(p - 1) = '=';
-    else if (i == length + 2)
-	*(p - 1) = *(p - 2) = '=';
-    /* ...and zero-terminate it.  */
-    *p = '\0';
-}
-
-/* ........................................................... */
-
-#define BASE64_LENGTH(len) (4 * (((len) + 2) / 3))
-
-static char *
-basic_authentication_encode (const char *user, const char *passwd,
-                             const char *header)
-{
-    char *t1, *t2, *res;
-    int len1 = strlen(user) + 1 + strlen(passwd);
-    int len2 = BASE64_LENGTH(len1);
-
-    t1 = malloc(len1 + 1);
-    sprintf(t1, "%s:%s", user, passwd);
-    t2 = malloc(1 + len2);
-    base64_encode(t1, t2, len1);
-    res = malloc(len2 + 11 + strlen (header));
-    sprintf (res, "%s: Basic %s\r\n", header, t2);
-
-    return res;
-}
-
-/* ........................................................... */
-
 static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, 
 		       int *dt, struct urlinfo *proxy)
 {
     char *request, *type, *command, *path;
-    char *pragma_h, *useragent, *range;
+    char *pragma_h, *range, useragent[16];
     char *all_headers = NULL;
-    char *proxyauth = NULL;
     struct urlinfo *conn;
     int sock, hcount, num_written, all_length, statcode;
     long contlen, contrange;
@@ -594,8 +526,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     hs->remote_time = NULL;
     hs->error = NULL;
 
-    /* If we're using a proxy, we will be connecting to the proxy
-       server. */
+    /* If we're using a proxy, we'll connect to the proxy server. */
     conn = (proxy != NULL)? proxy : u;
 
     err = make_connection(&sock, conn->host, conn->port);
@@ -641,11 +572,12 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     } else 
 	fp = NULL; /* use local buffer instead */
 
-    if (proxy && proxy->user && proxy->passwd) 
-	    proxyauth = basic_authentication_encode (proxy->user, proxy->passwd,
-						     "Proxy-Authorization");
+    if (proxy) {
+	path = mymalloc(strlen(paths.dbhost_ip) + strlen(u->path) + 8);
+	sprintf(path, "http://%s%s", paths.dbhost_ip, u->path);
+    } else 
+	path = u->path; 
 
-    path = u->path; 
     command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
     if (*dt & SEND_NOCACHE)
 	pragma_h = "Pragma: no-cache\r\n";
@@ -653,7 +585,6 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	pragma_h = "";
 
     range = NULL;
-    useragent = mymalloc(16); 
     sprintf(useragent, "gretl-%s", version_string);
 #ifdef G_OS_WIN32
     strcat(useragent, "w");
@@ -663,17 +594,16 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		       + strlen(useragent)
 		       + strlen(u->host) + numdigit(u->port)
 		       + strlen(HTTP_ACCEPT)
-		       + (proxyauth ? strlen (proxyauth) : 0)
 		       + strlen(pragma_h)
 		       + 64);
     sprintf(request, "%s %s HTTP/1.0\r\n"
 	    "User-Agent: %s\r\n"
 	    "Host: %s:%d\r\n"
 	    "Accept: %s\r\n"
-	    "%s%s\r\n",
+	    "%s\r\n",
 	    command, path, useragent, u->host, u->port, HTTP_ACCEPT,
-	    proxyauth ? proxyauth : "", pragma_h); 
-    free(useragent);
+	    pragma_h); 
+    if (proxy) free(path);
 
 #ifdef WDEBUG
     fprintf(stderr, "Request:\n%s", request);
@@ -694,11 +624,10 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     statcode = -1;
     *dt &= ~RETROKF;
 
-    /* Before reading anything, initialize rbuf */
     rbuf_initialize(&rbuf, sock);
-
     all_headers = NULL;
     all_length = 0;
+
     /* Header-fetching loop */
     hcount = 0;
     while (1) {
@@ -713,7 +642,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	/* Check for errors.  */
 	if (status == HG_EOF && *hdr) {
 #ifdef WDEBUG
-	    fprintf(stderr, "Got status == HG_EOF\n");
+	    fprintf(stderr, "Got status = HG_EOF\n");
 #endif
 	    free(hdr);
 	    free(type);
@@ -723,7 +652,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    return HEOF;
 	} else if (status == HG_ERROR) {
 #ifdef WDEBUG
-	    fprintf(stderr, "Got status == HG_ERROR\n");
+	    fprintf(stderr, "Got status = HG_ERROR\n");
 #endif
 	    free(hdr);
 	    free(type);
@@ -871,13 +800,13 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
 static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 {
-    int count;
+    int count = 0;
     char *tms;
     uerr_t err;
     struct http_stat hstat;	/* HTTP status */
 
-    count = 0;
     *dt = 0 | ACCEPTRANGES;
+
     /* THE loop */
     do {
 	++count;
@@ -987,8 +916,6 @@ static void freeurl (struct urlinfo *u, int complete)
     free(u->url);
     free(u->host);
     free(u->path);
-    free(u->user);
-    free(u->passwd);
     if (complete) {
 	free(u);
 	u = NULL;
@@ -1046,7 +973,6 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     if (rbuf && RBUF_FD(rbuf) == fd) {
 	while ((res = rbuf_flush(rbuf, c, sizeof c)) != 0) {
 	    if (fp == NULL) {
-		/*  strncat(*getbuf, c, res); */
 		memcpy(*getbuf, c, res);
 	    } else 
 		if (fwrite(c, 1, res, fp) < (unsigned)res)
@@ -1066,10 +992,9 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 		    if (*getbuf == NULL)
 			return -2;
 		}
-		/*  strncat(*getbuf, c, res); */  
 		memcpy(*getbuf + *len, c, res);
 	    } else
-		if (fwrite(c, 1, res, fp) < (unsigned)res)
+		if (fwrite(c, 1, res, fp) < (unsigned) res)
 		    return -2;
 	    *len += res;
 	    if (show_progress(res, expected, SP_NONE) < 0)
@@ -1089,8 +1014,12 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
 {
     unsigned long addr;
 
-    addr = (unsigned long)inet_addr(hostname);
-    if ((int)addr != -1) {
+    addr = (unsigned long) inet_addr(hostname);
+#ifdef WDEBUG
+    fprintf(stderr, "store_hostaddress: hostname='%s', addr=%ld\n",
+	    hostname, addr);
+#endif
+    if ((int) addr != -1) {
 	memcpy(where, &addr, 4);
 	return 1;
     } else
@@ -1194,7 +1123,7 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate)
     const char *cgi = "/gretl/cgi-bin/gretl_update.cgi";
     struct urlinfo *proxy = NULL; 
 
-    if (gretlproxy.host != NULL)
+    if (use_proxy && gretlproxy.host != NULL)
 	proxy = &gretlproxy;
 
     u = newurl();
@@ -1330,6 +1259,7 @@ int update_query (void)
 int proxy_init (const char *dbproxy)
 {
     char *p;
+    size_t iplen;
 
     gretlproxy.url = NULL;
     gretlproxy.proto = URLHTTP;
@@ -1337,13 +1267,11 @@ int proxy_init (const char *dbproxy)
     gretlproxy.filesave = 0;
     gretlproxy.path = NULL; 
     gretlproxy.local = NULL;
-    gretlproxy.user = NULL;
-    gretlproxy.passwd = NULL;
     if (gretlproxy.host)
 	free(gretlproxy.host);
     gretlproxy.host = NULL;
 
-    if (!strlen(dbproxy)) return 0;
+    if (!use_proxy || !strlen(dbproxy)) return 0;
 
     p = strrchr(dbproxy, ':');
     if (p == NULL) {
@@ -1353,9 +1281,14 @@ int proxy_init (const char *dbproxy)
     }
     gretlproxy.port = atoi(p + 1);
     gretlproxy.host = mymalloc(16);
-    gretlproxy.host[0] = '\0';
     if (gretlproxy.host == NULL) return 1;
-    strncat(gretlproxy.host, dbproxy, p - dbproxy);
+    iplen = p - dbproxy;
+    if (iplen > 15) {
+	errbox("HTTP proxy: first field must be an IP number");
+	return 1;	
+    }
+    gretlproxy.host[0] = '\0';
+    strncat(gretlproxy.host, dbproxy, iplen);
 #ifdef WDEBUG
     fprintf(stderr, "dbproxy: host='%s', port=%d\n", 
 	    gretlproxy.host, gretlproxy.port);
@@ -1376,12 +1309,12 @@ int retrieve_url (int opt, const char *dbase, const char *series,
 {
     uerr_t result;
     struct urlinfo *u;
+    struct urlinfo *proxy = NULL; 
     int dt;
     const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
     size_t dblen = 0L;
-    struct urlinfo *proxy = NULL; 
 
-    if (gretlproxy.host != NULL)
+    if (use_proxy && gretlproxy.host != NULL)
 	proxy = &gretlproxy;
 
     if (dbase != NULL)

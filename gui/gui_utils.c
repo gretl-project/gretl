@@ -48,6 +48,7 @@ extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
+int use_proxy;
 
 /* filelist stuff */
 #define MAXRECENT 4
@@ -97,7 +98,6 @@ extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 /* font handling */
 static char fontspec[MAXLEN] = 
 "-b&h-lucidatypewriter-medium-r-normal-sans-12-*-*-*-*-*-*-*";
-/* "-misc-fixed-medium-r-*-*-*-120-*-*-*-*-*-*" */
 GdkFont *fixed_font;
 
 static int usecwd;
@@ -106,13 +106,19 @@ int olddat;
 typedef struct {
     char *key;         /* config file variable name */
     char *description; /* How the field will show up in the options dialog */
-    char *radio;       /* in case of radio button pair, alternate string */
+    char *link;        /* in case of radio button pair, alternate string */
     void *var;         /* pointer to variable */
     char type;         /* 'U' (user) or 'R' (root) for string, 'B' for boolean */
-    int len;           /* storage size for string variable */
+    int len;           /* storage size for string variable (also see Note) */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
 } RCVARS;
+
+/* Note: actually "len" above is overloaded: if an rc_var is of type 'B'
+   (boolean) and not part of a radio group, then a non-zero value for
+   len will link the var's toggle button with the sensitivity of the
+   preceding rc_var's entry field.  For example, the "use_proxy" button
+   controls the sensitivity of the "dbproxy" entry widget. */
 
 RCVARS rc_vars[] = {
     {"gretldir", "Main gretl directory", NULL, paths.gretldir, 
@@ -135,6 +141,8 @@ RCVARS rc_vars[] = {
      'U', 16, 2, NULL},
     {"dbproxy", "HTTP proxy (ipnumber:port)", NULL, dbproxy, 
      'U', 21, 2, NULL},
+    {"useproxy", "Use HTTP proxy", NULL, &use_proxy, 
+     'B', 1, 2, NULL},
     {"calculator", "Calculator", NULL, calculator, 
      'U', MAXSTR, 3, NULL},
     {"editor", "Editor", NULL, editor, 
@@ -1827,10 +1835,20 @@ void options_dialog (gpointer data)
 
 /* .................................................................. */
 
+static void flip_sensitive (GtkWidget *w, gpointer data)
+{
+    GtkWidget *entry = GTK_WIDGET(data);
+    
+    gtk_widget_set_sensitive(entry, GTK_TOGGLE_BUTTON(w)->active);
+}
+
+/* .................................................................. */
+
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
     GtkWidget *box, *inttbl, *chartbl, *tempwid = NULL;
     int i, tbl_len, tbl_num, tbl_col;
+    RCVARS *rc = NULL;
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 10);
@@ -1866,22 +1884,32 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
     i = 0;
     while (rc_vars[i].key != NULL) {
-	if (rc_vars[i].tab == tab) {
-	    if (rc_vars[i].type == 'B' 
-		&& rc_vars[i].radio == NULL) { /* simple boolean variable */
+	rc = &rc_vars[i];
+	if (rc->tab == tab) {
+	    if (rc->type == 'B' 
+		&& rc->link == NULL) { /* simple boolean variable */
 		tempwid = gtk_check_button_new_with_label 
-		    (rc_vars[i].description);
+		    (rc->description);
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num, tbl_num + 1);
-		if (*(int *)(rc_vars[i].var))
+		if (*(int *)(rc->var))
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), TRUE);
 		else
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), FALSE);
+		/* special case: link between toggle and preceding entry */
+		if (rc->len) {
+		    gtk_widget_set_sensitive(rc_vars[i-1].widget,
+					     GTK_TOGGLE_BUTTON(tempwid)->active);
+		    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+				       GTK_SIGNAL_FUNC(flip_sensitive),
+				       rc_vars[i-1].widget);
+		}
+		/* end link to entry */
 		gtk_widget_show (tempwid);
-		rc_vars[i].widget = tempwid;
+		rc->widget = tempwid;
 		tbl_col++;
 		if (tbl_col == 2) {
 		    tbl_col = 0;
@@ -1889,15 +1917,15 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    gtk_table_resize (GTK_TABLE (inttbl), tbl_num + 1, 2);
 		}
 	    } 
-	    else if (rc_vars[i].type == 'B') { /* radio-button dichotomy */
-		int val = *(int *)(rc_vars[i].var);
+	    else if (rc->type == 'B') { /* radio-button dichotomy */
+		int val = *(int *)(rc->var);
 		GSList *group;
 
 		tbl_num += 2;
 		gtk_table_resize (GTK_TABLE(inttbl), tbl_num + 1, 2);
 
 		tempwid = gtk_radio_button_new_with_label(NULL, 
-							  rc_vars[i].description);
+							  rc->description);
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num - 2, tbl_num - 1);    
@@ -1905,9 +1933,9 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
 		gtk_widget_show (tempwid);
-		rc_vars[i].widget = tempwid;
+		rc->widget = tempwid;
 		group = gtk_radio_button_group(GTK_RADIO_BUTTON(tempwid));
-		tempwid = gtk_radio_button_new_with_label(group, rc_vars[i].radio);
+		tempwid = gtk_radio_button_new_with_label(group, rc->link);
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num - 1, tbl_num);  
@@ -1918,7 +1946,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    } else { /* string variable */
 		tbl_len++;
 		gtk_table_resize (GTK_TABLE (chartbl), tbl_len, 2);
-		tempwid = gtk_label_new (rc_vars[i].description);
+		tempwid = gtk_label_new (rc->description);
 		gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
 		gtk_table_attach_defaults (GTK_TABLE (chartbl), 
 					   tempwid, 0, 1, tbl_len-1, tbl_len);
@@ -1927,9 +1955,9 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		tempwid = gtk_entry_new ();
 		gtk_table_attach_defaults (GTK_TABLE (chartbl), 
 					   tempwid, 1, 2, tbl_len-1, tbl_len);
-		gtk_entry_set_text (GTK_ENTRY (tempwid), rc_vars[i].var);
+		gtk_entry_set_text (GTK_ENTRY (tempwid), rc->var);
 		gtk_widget_show (tempwid);
-		rc_vars[i].widget = tempwid;
+		rc->widget = tempwid;
 	    } 
 	}
 	i++;

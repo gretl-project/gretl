@@ -124,7 +124,6 @@ struct urlinfo
     unsigned short filesave;      /* 1 for file, 0 for buffer */
     char *path; 
     char **local;                 /* ptr to local buffer or filename */
-    char *user, *passwd;          /* Username and password */
     char errbuf[80];
 };
 
