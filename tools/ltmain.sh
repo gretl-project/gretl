@@ -2208,7 +2208,12 @@ EOF
 	   { test "$prefer_static_libs" = no || test -z "$old_library"; }; then
 	  if test "$installed" = no; then
 	    notinst_deplibs="$notinst_deplibs $lib"
-	    need_relink=yes
+            case $host in
+              *HP*) need_relink=yes
+              ;;
+              *) need_relink=no
+              ;;
+            esac
 	  fi
 	  # This is a shared library
 	
