@@ -239,7 +239,7 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     int i, t;
 
     /* correct uhat and yhat; also correct ESS/SSR and standard error,
-       per equation, FWIW */
+       per equation */
 
     for (i=0; i<fsys->g; i++) {
 	pmod = system_get_model(fsys->sys, i);
@@ -251,9 +251,11 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
 	    pmod->yhat[t + t1] = y[t + t1] - u;
 	    pmod->ess += u * u;
 	}
-	pmod->sigma = sqrt(pmod->ess / pmod->nobs); /* df correction?? */
+	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     }
 
+    /* no df correction for pmod->sigma or sigma matrix */
+    
     gretl_matrix_copy_values(sigma, fsys->sigma);
 }
 
@@ -560,8 +562,8 @@ static void fiml_B_update (fiml_system *fsys)
 static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 {
     double tr;
-    double detG;
-    double detS;
+    double ldetG;
+    double ldetS;
     int i, j, t;
     int err;
 
@@ -580,22 +582,22 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
        the original matrix */
 
     gretl_matrix_copy_values(fsys->Gtmp, fsys->G);
-    detG = gretl_LU_determinant(fsys->Gtmp);
-    if (na(detG)) {
+    ldetG = gretl_matrix_log_abs_determinant(fsys->Gtmp);
+    if (na(ldetG)) {
 	return 1;
     }
 
     gretl_matrix_copy_values(fsys->Stmp, fsys->sigma);
-    detS = gretl_LU_determinant(fsys->Stmp);
-    if (na(detS)) {
+    ldetS = gretl_matrix_log_determinant(fsys->Stmp);
+    if (na(ldetS)) {
 	return 1;
     }
 
     /* Davidson and MacKinnon, ETM, equation (12.80) */
 
     fsys->ll -= (fsys->gn / 2.0) * LN_2_PI;
-    fsys->ll -= (fsys->n / 2.0) * log(detS);
-    fsys->ll += fsys->n * log(fabs(detG));
+    fsys->ll -= (fsys->n / 2.0) * ldetS;
+    fsys->ll += fsys->n * ldetG;
 
     gretl_matrix_copy_values(fsys->Stmp, fsys->sigma);
     err = gretl_invert_symmetric_matrix(fsys->Stmp);   
@@ -736,8 +738,11 @@ static int fiml_get_std_errs (fiml_system *fsys)
 	return E_ALLOC;
     }
 
-    err = gretl_matrix_ols(fsys->arty, fsys->artx, fsys->artb, 
-			   vcv, NULL, &s2);
+    /* These are "Rhat" standard errors: check Calzolari
+       and Panattoni on this */
+
+    err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
+			       vcv, NULL, &s2);
     if (!err) {
 	MODEL *pmod;
 	int i, j, k = 0;
@@ -753,14 +758,14 @@ static int fiml_get_std_errs (fiml_system *fsys)
 	}
     }
 
-    /* fixme: make further use of vcv? */
+    /* fixme: further use for vcv? */
     gretl_matrix_free(vcv);
 
     return err;
 }
 
 /* Driver function for FIML as described in Davidson and MacKinnon,
-   ETM, chap 12, section 5.  Near to ready now.
+   ETM, chap 12, section 5.
 */
 
 #define FIML_ITER_MAX 250
@@ -780,6 +785,8 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
     if (fsys == NULL) {
 	return E_ALLOC;
     }
+
+    pputs(prn, "\n*** FIML: experimental, work in progress ***\n\n");
 
 #if FDEBUG
 # ifdef KLEIN_INIT
@@ -805,7 +812,7 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 	goto bailout;
     } else {
 	llbak = fsys->ll;
-	pprintf(prn, "*** initial ll = %g ***\n", fsys->ll);
+	pprintf(prn, "*** initial ll = %.8g\n", fsys->ll);
     }    
 
     while (crit > tol && iters < FIML_ITER_MAX) {
@@ -838,7 +845,7 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 	    break;
 	}
 
-	pprintf(prn, "*** iteration %3d: step = %g, ll = %g\n", iters + 1, 
+	pprintf(prn, "*** iteration %3d: step = %g, ll = %.8g\n", iters + 1, 
 		step, fsys->ll);
 
 	crit = fsys->ll - llbak;
@@ -848,10 +855,10 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
     }
 
     if (crit > tol) {
-	pprintf(prn, "Tolerance of %g was not met\n", tol);
+	pprintf(prn, "\nTolerance of %g was not met\n", tol);
 	err = 1;
     } else {
-	pprintf(prn, "Tolerance %g, criterion %g\n", tol, crit);
+	pprintf(prn, "\nTolerance %g, criterion %g\n", tol, crit);
     }
 
     if (!err) {

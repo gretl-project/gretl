@@ -106,7 +106,11 @@ double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
 
 gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
 
-double gretl_LU_determinant (gretl_matrix *a);
+double gretl_matrix_determinant (gretl_matrix *a);
+
+double gretl_matrix_log_determinant (gretl_matrix *a);
+
+double gretl_matrix_log_abs_determinant (gretl_matrix *a);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
@@ -124,6 +128,10 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,
 		      gretl_vector *uhat, double *s2);
+
+int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
+			  gretl_vector *b, gretl_matrix *vcv,
+			  gretl_vector *uhat, double *s2);
 
 double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 				 int *err);

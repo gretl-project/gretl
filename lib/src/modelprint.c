@@ -1056,7 +1056,9 @@ static void print_model_heading (const MODEL *pmod,
 
     /* list of instruments for TSLS */
     if (pmod->ci == TSLS) {
-	print_tsls_instruments (pmod->list, pdinfo, prn);
+	if (gretl_model_get_int(pmod, "systype") != FIML) {
+	    print_tsls_instruments (pmod->list, pdinfo, prn);
+	}
     }
 
     /* VCV variants */
@@ -1674,12 +1676,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (pmod->ntests > 0) {
 	print_model_tests(pmod, prn);
     }
-
-#if 0
-    if (PLAIN_FORMAT(prn->format) && pmod->aux == AUX_ADF) {
-	info_stats_lines(pmod, prn);
-    }
-#endif
 
     if (!PLAIN_FORMAT(prn->format)) {
 	model_format_end(prn);

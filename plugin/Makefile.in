@@ -58,6 +58,7 @@ else
 endif  
 
 SRCS = excel_import.c \
+	fiml.c \
 	gnumeric_import.c \
 	import_common.c \
 	johansen.c \
@@ -186,28 +187,28 @@ mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
 
 johansen.la: johansen.lo 
-	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
-sysest.la: sysest.lo 
+sysest.la: sysest.lo fiml.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 leverage.la: leverage.lo 
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 nistcheck.la: nistcheck.lo 
-	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
 arma.la: arma.lo 
-	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
 arma_x12.la: arma_x12.lo 
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 logistic.la: logistic.lo
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
 
 tobit.la: tobit.lo
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
 
 garch.la: garch.lo fcp.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)

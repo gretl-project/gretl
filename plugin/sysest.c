@@ -21,11 +21,11 @@
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
 
-#define TRY_FIML
+/* fiml.c */
+extern int fiml_driver (gretl_equation_system *sys, const double **Z, 
+			gretl_matrix *sigma, const DATAINFO *pdinfo, 
+			PRN *prn);
 
-#ifdef TRY_FIML
-#include "fiml.c"
-#endif
 
 static int in_list (const int *list, int k)
 {
@@ -120,12 +120,16 @@ gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e,
 
     /* construct sigma: s_{ij} = e'_i * e_j / T  */
     for (i=0; i<m; i++) {
-	for (j=0; j<m; j++) {
+	for (j=i; j<m; j++) {
 	    xx = 0.0;
 	    for (t=0; t<T; t++) {
 		xx += gretl_matrix_get(e, i, t) * gretl_matrix_get(e, j, t);
 	    }
-	    gretl_matrix_set(sigma, i, j, xx / T);
+	    xx /= T;
+	    gretl_matrix_set(sigma, i, j, xx);
+	    if (j != i) {
+		gretl_matrix_set(sigma, j, i, xx);
+	    }
 	}
     }
 
@@ -141,7 +145,7 @@ gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
     if (sigma == NULL) return NULL;
 
     gls_sigma_from_uhat(sigma, e, m, T);
-    gretl_invert_general_matrix(sigma);
+    gretl_invert_symmetric_matrix(sigma);
 
     return sigma;
 }
@@ -152,6 +156,7 @@ static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat)
     double fit;
 
     pmod->ess = 0.0;
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	fit = 0.0;
 	for (i=0; i<pmod->ncoeff; i++) {
@@ -164,7 +169,9 @@ static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat)
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+    /* is a df correction wanted here? */
+
+    pmod->sigma = sqrt(pmod->ess / pmod->nobs);
 }
 
 static int 
@@ -299,15 +306,17 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
 int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn)
 {
-    int i, j, k, m, T, t, v, l, mk, krow;
+    int i, j, k, m, T, t;
+    int v, l, mk, krow;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int orig_t1 = t1, orig_t2 = t2;
     gretl_matrix *X = NULL;
-    gretl_matrix *uhat = NULL, *sigma = NULL;
+    gretl_matrix *uhat = NULL;
+    gretl_matrix *sigma = NULL;
     gretl_matrix *Xi = NULL, *Xj = NULL, *M = NULL;
     double *tmp_y = NULL;
-    int systype = system_get_type(sys);
     MODEL **models = NULL;
+    int systype = system_get_type(sys);
     int err = 0;
 
     if (system_adjust_t1t2(sys, &t1, &t2, (const double **) *pZ)) {
@@ -333,8 +342,8 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     models = malloc(m * sizeof *models);
     if (models == NULL) {
-	restore_sample(pdinfo, orig_t1, orig_t2);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     for (i=0; i<m; i++) {
@@ -343,8 +352,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    for (j=0; j<i; j++) {
 		free_model(models[j]);
 	    }
-	    restore_sample(pdinfo, orig_t1, orig_t2);
-	    return E_ALLOC;
+	    free(models);
+	    models = NULL;
+	    err = E_ALLOC;
+	    goto bailout;
 	}
     }
 
@@ -356,7 +367,6 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* just testing for now */
     if (systype == FIML) {
 	print_fiml_sys_info(sys, pdinfo, prn);
     }
@@ -487,17 +497,14 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gls_sigma_from_uhat(sigma, uhat, m, T);
 
     if (systype == FIML) {
-#ifdef TRY_FIML
-	pputs(prn, "\n*** FIML: experimental, work in progress! ***\n\n");
 	system_attach_uhat(sys, uhat);
 	system_attach_models(sys, models);
 	uhat = NULL;
-	fiml_driver(sys, (const double **) *pZ, sigma, pdinfo, prn);
-#else
-	pputs(prn, "Sorry, FIML is not implemented yet.\n"
-	      "The following are really just 3SLS estimates.\n");
-#endif
-    }
+	err = fiml_driver(sys, (const double **) *pZ, sigma, pdinfo, prn);
+	if (err) {
+	    goto bailout;
+	}
+    } 
 
     j = 0;
     if (system_save_uhat(sys)) {
@@ -538,10 +545,12 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     free(tmp_y);
 
-    for (i=0; i<m; i++) {
-	free_model(models[i]);
+    if (models != NULL) {
+	for (i=0; i<m; i++) {
+	    free_model(models[i]);
+	}
+	free(models);
     }
-    free(models);
 
     restore_sample(pdinfo, orig_t1, orig_t2);
 

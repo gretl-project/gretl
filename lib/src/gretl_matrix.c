@@ -699,19 +699,13 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
     pputc(prn, '\n');
 }
 
-/**
- * gretl_LU_determinant:
- * @a: gretl_matrix.
- *
- * Compute the determinant of the square matrix @a using the LU
- * factorization.  Matrix @a is not preserved: it is overwritten
- * by the factorization.
- * 
- * Returns: the determinant, or #NABDL on failure.
- * 
- */
+/* calculate determinant using LU factorization.
+   if logdet != 0, return the log of the determinant.
+   if logdet != 0 and absval != 0, return the log of the
+   absolute value of the determinant.  
+*/   
 
-double gretl_LU_determinant (gretl_matrix *a)
+static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
 {
     integer info;
     integer m = a->rows;
@@ -737,17 +731,102 @@ double gretl_LU_determinant (gretl_matrix *a)
 	return NADBL;
     }
 
-    det = 1.0;
-    for (i=0; i<n; i++) {
-	if (ipiv[i] != i + 1) {
-	    det = -det;
+    if (logdet) {
+	int negcount = 0;
+
+	/* not sure if this is worth the bother: but do we get a bit
+	   more numerical accuracy in some cases by adding logs,
+	   rather than by multiplying terms then taking the log of the
+	   product? 
+	*/
+
+	det = 0.0;
+	for (i=0; i<n; i++) {
+	    double aii = a->val[mdx(a, i, i)];
+
+	    if (aii == 0.0) {
+		fputs("gretl_matrix_log_determinant: determinant = 0\n", stderr);
+		det = NADBL;
+		break;
+	    }
+
+	    if (ipiv[i] != i + 1) {
+		aii = -aii;
+	    }
+	    if (aii < 0) {
+		aii = -aii;
+		negcount++;
+	    }
+	    det += log(aii);
 	}
-	det *= a->val[mdx(a, i, i)];
+	if (!absval && negcount % 2) {
+	    fputs("gretl_matrix_log_determinant: determinant is < 0\n", stderr);
+	    det = NADBL;
+	}
+    } else {
+	det = 1.0;
+	for (i=0; i<n; i++) {
+	    if (ipiv[i] != i + 1) {
+		det = -det;
+	    }
+	    det *= a->val[mdx(a, i, i)];
+	}
     }
 
     free(ipiv);
 
     return det;
+}
+
+/**
+ * gretl_matrix_determinant:
+ * @a: gretl_matrix.
+ *
+ * Compute the determinant of the square matrix @a using the LU
+ * factorization.  Matrix @a is not preserved: it is overwritten
+ * by the factorization.
+ * 
+ * Returns: the determinant, or #NABDL on failure.
+ * 
+ */
+
+double gretl_matrix_determinant (gretl_matrix *a)
+{
+    return gretl_LU_determinant(a, 0, 0);
+}
+
+/**
+ * gretl_matrix_log_determinant:
+ * @a: gretl_matrix.
+ *
+ * Compute the log of the determinant of the square matrix @a using LU
+ * factorization.  Matrix @a is not preserved: it is overwritten
+ * by the factorization.
+ * 
+ * Returns: the determinant, or #NABDL on failure.
+ * 
+ */
+
+double gretl_matrix_log_determinant (gretl_matrix *a)
+{
+    return gretl_LU_determinant(a, 1, 0);
+}
+
+/**
+ * gretl_matrix_log_abs_determinant:
+ * @a: gretl_matrix.
+ *
+ * Compute the log of the absolute value of the determinant of the 
+ * square matrix @a using LU factorization.  Matrix @a is not 
+ * preserved: it is overwritten by the factorization.
+ * 
+ * Returns: the determinant, or #NABDL on failure.
+ * 
+ */
+
+double gretl_matrix_log_abs_determinant (gretl_matrix *a)
+{
+    return gretl_LU_determinant(a, 1, 1);
 }
 
 /**
@@ -1434,6 +1513,53 @@ int gretl_matrix_rows (const gretl_matrix *m)
 /* ....................................................... */
 
 static int
+get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
+		 const double *s, gretl_matrix *vcv, double *s2)
+{
+    double sigma2;
+    double aik, ajk, vij;
+    int m = A->cols;
+    int T = A->rows;
+    int i, j, k;
+
+    sigma2 = 0.0;
+    for (i=m; i<T; i++) {
+	sigma2 += B->val[i] * B->val[i];
+    }
+    sigma2 /= T - m;
+
+    /* Get X'X, based on the work done by the SV decomp:
+       squares of singular values, premultiplied by V and
+       postmultiplied by V-transpose 
+    */
+
+    for (i=0; i<m; i++) {
+	for (j=i; j<m; j++) {
+	    vij = 0.0;
+	    for (k=0; k<m; k++) {
+		aik = A->val[mdx(A, k, i)];
+		ajk = A->val[mdx(A, k, j)];
+		vij += aik * s[k] * s[k] * ajk;
+	    }
+	    vcv->val[mdx(vcv, i, j)] = vij;
+	    if (j != i) {
+		vcv->val[mdx(vcv, j, i)] = vij;
+	    }
+	}
+    }
+
+    if (gretl_invert_symmetric_matrix(vcv)) return 1;
+
+    gretl_matrix_multiply_by_scalar(vcv, sigma2);  
+
+    if (s2 != NULL) {
+	*s2 = sigma2;
+    }
+
+    return 0;
+}
+
+static int
 get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
 	     const gretl_vector *b, gretl_matrix *vcv,
 	     double *s2)
@@ -1480,6 +1606,117 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
 	}
 	uhat->val[i] = uh;
     }
+}
+
+int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
+			  gretl_vector *b, gretl_matrix *vcv,
+			  gretl_vector *uhat, double *s2)
+{
+    gretl_vector *A = NULL;
+    gretl_matrix *B = NULL;
+
+    int T = X->rows;
+    int k = X->cols;
+
+    integer m = T;
+    integer n = k;
+    integer nrhs = 1;
+    integer lda = T;
+    integer ldb = T;
+    integer lwork = -1;
+    integer rank;
+    integer info;
+
+    double rcond = -1.0;
+    double *work = NULL;
+    double *work2 = NULL;
+    double *s = NULL;
+
+    int err = GRETL_MATRIX_OK;
+
+    if (gretl_vector_get_length(b) != k) {
+	err = GRETL_MATRIX_NON_CONFORM;
+	goto bailout;
+    }
+
+    A = gretl_matrix_copy(X);
+    if (A == NULL) {
+	err = GRETL_MATRIX_NOMEM;
+	goto bailout;
+    }
+
+    B = gretl_matrix_copy(y);
+    if (B == NULL) {
+	err = GRETL_MATRIX_NOMEM;
+	goto bailout;
+    }
+
+    /* for singular values of A */
+    s = malloc(k * sizeof *s);
+    if (s == NULL) {
+	err = GRETL_MATRIX_NOMEM; 
+	goto bailout;
+    }
+
+    work = malloc(sizeof *work);
+    if (work == NULL) {
+	err = GRETL_MATRIX_NOMEM; 
+	goto bailout;
+    } 
+
+    /* workspace query */
+    dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	fputs(wspace_fail, stderr);
+	goto bailout;
+    }	
+
+    lwork = (integer) work[0];
+
+    work2 = realloc(work, lwork * sizeof *work);
+    if (work2 == NULL) {
+	err = GRETL_MATRIX_NOMEM; 
+	goto bailout;
+    } 
+
+    work = work2;
+
+    /* get actual solution */
+    dgelss_(&m, &n, &nrhs, A->val, &lda, B->val, &ldb, s, &rcond,
+	    &rank, work, &lwork, &info);
+
+    if (info != 0) {
+	err = GRETL_MATRIX_ERR;
+    }
+
+    if (rank < k) {
+	fprintf(stderr, "dgelss: rank of X = %d\n", (int) rank);
+    }
+
+    if (!err) {
+	int i;
+
+	for (i=0; i<k; i++) {
+	    b->val[i] = B->val[i];
+	}
+	if (vcv != NULL) {
+	    err = get_svd_ols_vcv(A, B, s, vcv, s2);
+	}
+	if (uhat != NULL) {
+	    get_ols_uhat(y, X, b, uhat);
+	}
+    }
+
+    bailout:
+
+    gretl_matrix_free(A);
+    gretl_matrix_free(B);
+    free(work);
+    free(s);
+
+    return err;
 }
 
 /**

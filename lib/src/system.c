@@ -99,10 +99,12 @@ print_ident (const identity *pident, const DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, "Identity: %s = %s ", 
 	    pdinfo->varname[pident->depvar],
 	    pdinfo->varname[pident->atoms[0].varnum]);
+
     for (i=1; i<pident->n_atoms; i++) {
 	pprintf(prn, "%c %s ", (pident->atoms[i].op == OP_PLUS)? '+' : '-',
 		pdinfo->varname[pident->atoms[i].varnum]);
     }
+
     pputc(prn, '\n');
 }
 
@@ -124,7 +126,7 @@ void print_fiml_sys_info (const gretl_equation_system *sys,
     }
 
     if (sys->instr_vars != NULL) {
-	pputs(prn, "Instruments:");
+	pputs(prn, "Exogenous variables:");
 	for (i=1; i<=sys->instr_vars[0]; i++) {
 	    pprintf(prn, " %s", pdinfo->varname[sys->instr_vars[i]]);
 	}
@@ -140,8 +142,9 @@ static int gretl_system_type_from_string (const char *str)
     int i = 0;
 
     while (gretl_system_type_strings[i] != NULL) {
-	if (!strcmp(str, gretl_system_type_strings[i]))
+	if (!strcmp(str, gretl_system_type_strings[i])) {
 	    return i;
+	}
 	i++;
     }
 
@@ -510,26 +513,6 @@ int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 		if (ident->atoms[j].varnum == rhsvar) {
 		    return (ident->atoms[j].op == OP_PLUS)? 1 : -1;
 		}
-	    }
-	}
-    }
-
-    return 0;
-}
-
-int eval_identity (double *targ, identity *ident,
-		   const double **Z, int t1, int t2)
-{
-    int i, k, t;
-
-    for (t=t1; t<=t2; t++) {
-	targ[t] = 0.0;
-	for (i=0; i<ident->n_atoms; i++) {
-	    k = ident->atoms[i].varnum;
-	    if (ident->atoms[i].op == OP_PLUS) {
-		targ[t] += Z[k][t];
-	    } else {
-		targ[t] -= Z[k][t];
 	    }
 	}
     }
