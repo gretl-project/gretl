@@ -2700,10 +2700,7 @@ void view_session (void)
     gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(scroller), "button_press_event",
-		       GTK_SIGNAL_FUNC(session_icon_click), NULL);
-#else
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(scroller), "button_press_event",
 		     G_CALLBACK(session_icon_click), NULL);
 #endif
