@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-02-22 11:26-0500\n"
-"PO-Revision-Date: 2005-01-08 18:31+0100\n"
+"PO-Revision-Date: 2005-02-22 22:56+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -432,21 +432,21 @@ msgstr ""
 "(dev'essere alfabetico)."
 
 #: lib/src/dataio.c:794
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Varname contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Il nome della variabile contiene il carattere non valido 0x%x\n"
+"Il nome della variabile contiene il carattere non valido '%c'\n"
 "Usare solo lettere, numeri e trattino basso"
 
 #: lib/src/dataio.c:800
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "First char of varname (0x%x) is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Il primo carattere della variabile ('%c') è errato\n"
+"Il primo carattere della variabile (0x%x) è errato\n"
 "(dev'essere alfabetico)."
 
 #: lib/src/dataio.c:804
@@ -1586,28 +1586,25 @@ msgid "The two population variances are equal"
 msgstr "Le varianze delle due popolazioni sono uguali"
 
 #: lib/src/describe.c:1859
-#, fuzzy
 msgid "Covariance matrix"
-msgstr "Matrice di covarianza dei coefficienti"
+msgstr "Matrice di covarianza"
 
 #: lib/src/describe.c:1865
-#, fuzzy
 msgid "Inverse of covariance matrix"
-msgstr "Matrice di covarianza dei coefficienti"
+msgstr "Inversa della matrice di covarianza"
 
 #: lib/src/describe.c:1881
 msgid "Mahalanobis distances from the centroid"
-msgstr ""
+msgstr "Distanze di Mahalanobis dal centroide"
 
 #: lib/src/describe.c:1882
-#, fuzzy
 msgid "using the variables:"
-msgstr "%d variabili elencate:\n"
+msgstr "usando le variabili:"
 
 #: lib/src/describe.c:1917
-#, fuzzy, c-format
+#, c-format
 msgid "Distances saved as '%s'"
-msgstr "Comandi salvati in %s\n"
+msgstr "Distanze salvate in '%s'"
 
 #: lib/src/discrete.c:285
 #, c-format
@@ -1626,7 +1623,7 @@ msgstr ""
 
 #: lib/src/estimate.c:692
 msgid "Omitted due to exact collinearity:"
-msgstr ""
+msgstr "Omesse per perfetta collinearità:"
 
 #: lib/src/estimate.c:823 lib/src/estimate.c:1920 plugin/arma.c:555
 #: plugin/arma_x12.c:658
@@ -1964,9 +1961,8 @@ msgid "period"
 msgstr "periodo"
 
 #: lib/src/generate.c:4159
-#, fuzzy
 msgid "cross-sectional unit index"
-msgstr "dati cross section"
+msgstr "indice delle unità cross section"
 
 #: lib/src/generate.c:4220 lib/src/generate.c:4326 lib/src/generate.c:4339
 #: lib/src/var.c:790
@@ -2787,12 +2783,12 @@ msgstr "Scelto %d come seme per il generatore di numeri pseudocasuali\n"
 #: lib/src/libset.c:312
 #, c-format
 msgid "Baxter-King approximation = %d\n"
-msgstr ""
+msgstr "Approssimazione di Baxter-King = %d\n"
 
 #: lib/src/libset.c:331
 #, c-format
 msgid "Baxter-King band = %d-%d periods\n"
-msgstr ""
+msgstr "Banda di Baxter-King band = %d-%d periodi\n"
 
 #: lib/src/missing.c:495
 #, c-format
@@ -3065,7 +3061,7 @@ msgstr "Tobit"
 
 #: lib/src/modelprint.c:570 gui/selector.c:546 gui2/selector.c:816
 msgid "Poisson"
-msgstr ""
+msgstr "Poisson"
 
 #: lib/src/modelprint.c:571 gui/selector.c:548 gui2/selector.c:818
 msgid "Pooled OLS"
@@ -3460,13 +3456,13 @@ msgid "The loop control variable must be a scalar"
 msgstr "La variabile di controllo del loop deve essere uno scalare"
 
 #: lib/src/monte_carlo.c:475
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The index in a 'for' loop must be a single character in the range '%c' to '%"
 "c'"
 msgstr ""
-"La variabile indice in un loop di tipo 'for' dev'essere la variabile "
-"speciale 'i'"
+"La variabile indice in un loop di tipo 'for' dev'essere un solo carattere "
+"nell'intervallo da '%c' a '%c'"
 
 #: lib/src/monte_carlo.c:544
 msgid "Ending value for loop index must be greater than starting value."
@@ -3593,11 +3589,11 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:2897
 msgid "error evaluating 'if'"
-msgstr ""
+msgstr "errore nel valutare 'if'"
 
 #: lib/src/monte_carlo.c:2905
 msgid "indeterminate condition for 'if'"
-msgstr ""
+msgstr "condizione indeterminata per 'if'"
 
 #: lib/src/nls.c:203 plugin/fractals.c:224
 msgid "There were missing data values"
@@ -5371,7 +5367,7 @@ msgstr "/Dati/_Componenti principali"
 
 #: gui/gretl.c:328 gui2/gretl.c:387
 msgid "/Data/_Mahalanobis distances"
-msgstr ""
+msgstr "/Dati/_Distanze di Mahalanobis"
 
 #: gui/gretl.c:330 gui2/gretl.c:389
 msgid "/Data/sep4"
@@ -5715,9 +5711,8 @@ msgid "/Model/To_bit..."
 msgstr "/Modello/TO_BIT..."
 
 #: gui/gretl.c:447 gui2/gretl.c:509
-#, fuzzy
 msgid "/Model/Poi_sson..."
-msgstr "/Modello/_PROBIT..."
+msgstr "/Modello/Poi_sson..."
 
 #: gui/gretl.c:448 gui2/gretl.c:510
 msgid "/Model/Lo_gistic..."
@@ -5946,9 +5941,8 @@ msgid "Weight variable"
 msgstr "Variabile pesi"
 
 #: gui/selector.c:581 gui2/selector.c:851
-#, fuzzy
 msgid "Offset variable"
-msgstr "Variabile pesi"
+msgstr "Variabile offset"
 
 #: gui/selector.c:585 gui2/selector.c:855
 msgid "List of AR lags"
@@ -8195,7 +8189,7 @@ msgstr "Mostra bordo completo"
 
 #: gui2/gpt_dialog.c:610
 msgid "Use only one y axis"
-msgstr ""
+msgstr "Usa solo un asse y"
 
 #: gui2/gpt_dialog.c:624
 msgid "Hide fitted line"
@@ -8992,14 +8986,12 @@ msgid "/Model data/Add to data set/log likelihood"
 msgstr "/Dati modello/Aggiungi al dataset/Logaritmo verosimiglianza"
 
 #: gui2/gui_utils.c:2554 gui2/gui_utils.c:2604
-#, fuzzy
 msgid "/Model data/Add to data set/Akaike Information Criterion"
-msgstr "/Dati modello/Aggiungi al dataset/Logaritmo verosimiglianza"
+msgstr "/Dati modello/Aggiungi al dataset/Criterio di informazione di Akaike"
 
 #: gui2/gui_utils.c:2556 gui2/gui_utils.c:2606
-#, fuzzy
 msgid "/Model data/Add to data set/Bayesian Information Criterion"
-msgstr "/Dati modello/Aggiungi al dataset/Gradi di libertà"
+msgstr "/Dati modello/Aggiungi al dataset/Criterio di informazione Bayesiano"
 
 #: gui2/gui_utils.c:2561 gui2/gui_utils.c:2611
 msgid "/Model data/Add to data set/predicted error variance"
@@ -9218,7 +9210,7 @@ msgstr "Componenti principali"
 
 #: gui2/library.c:591 gui2/menustate.c:297 gui2/menustate.c:322
 msgid "Mahalanobis distances"
-msgstr ""
+msgstr "Distanze di Mahalanobis"
 
 #: gui2/library.c:595
 msgid "frequency distribution"
@@ -9262,7 +9254,7 @@ msgstr "Mostra i risultati della regressione"
 
 #: gui2/library.c:777
 msgid "test down from maximum lag order"
-msgstr ""
+msgstr "test dal massimo ordine di ritardi all'indietro"
 
 #: gui2/library.c:780
 msgid "include a trend"
@@ -9554,9 +9546,8 @@ msgid "gretl: range-mean statistics"
 msgstr "gretl: statistiche range-mean"
 
 #: gui2/library.c:3051
-#, fuzzy
 msgid "gretl: Hurst exponent"
-msgstr "gretl: note di sessione"
+msgstr "gretl: esponente di Hurst"
 
 #: gui2/library.c:3078
 msgid "Periodogram command failed"
@@ -9637,15 +9628,14 @@ msgid "log likelihood from model %d"
 msgstr "Logaritmo della verosimiglianza del modello %d"
 
 #: gui2/library.c:3388
-#, fuzzy, c-format
+#, c-format
 msgid "Akaike Information Criterion from model %d"
-msgstr "Criterio di informazione di Akaike"
+msgstr "Criterio di informazione di Akaike dal modello %d"
 
 #: gui2/library.c:3395
-#, fuzzy, c-format
+#, c-format
 msgid "Bayesian Information Criterion from model %d"
-msgstr ""
-"Non è disponibile alcun valore $bic (Criterio di Informazione Bayesiano)"
+msgstr "Criterio di Informazione Bayesiano dal modello %d"
 
 #: gui2/library.c:3643 gui2/library.c:3707 gui2/library.c:4308
 msgid "Out of memory in display buffer"
@@ -9690,9 +9680,9 @@ msgid "Couldn't find xterm or rxvt"
 msgstr "Impossibile trovare xterm o rxvt"
 
 #: gui2/library.c:4251
-#, fuzzy, c-format
+#, c-format
 msgid "Too many series in plot: maximum is %d"
-msgstr "Troppi vincoli (il massimo è %d)"
+msgstr "Troppe serie nel grafico: il massimo è %d"
 
 #: gui2/library.c:4484
 #, c-format
@@ -9938,7 +9928,7 @@ msgstr "Test delle successioni"
 
 #: gui2/menustate.c:222 gui2/menustate.c:252
 msgid "Hurst exponent"
-msgstr ""
+msgstr "Esponente di Hurst"
 
 #: gui2/menustate.c:224 gui2/menustate.c:253
 msgid "Edit attributes"
@@ -10569,7 +10559,7 @@ msgstr "/Aggiungi _Variabile"
 
 #: gui2/ssheet.c:1258
 msgid "Sorry, can't edit more than 1600 rows"
-msgstr ""
+msgstr "Impossibile modificare più di 1600 righe"
 
 #: gui2/textutil.c:68
 msgid "gretl: replace"
@@ -10816,46 +10806,41 @@ msgid "Gradients at last iteration"
 msgstr "Gradienti all'ultima iterazione"
 
 #: plugin/fractals.c:41
-#, fuzzy
 msgid "Rescaled-range plot for"
-msgstr "Grafico range-mean di"
+msgstr "Grafico a intervallo riscalato di"
 
 #: plugin/fractals.c:43
-#, fuzzy
 msgid "log(sample size)"
-msgstr "Ampiezza campionaria"
+msgstr "log(ampiezza campionaria)"
 
 #: plugin/fractals.c:43
 msgid "log(R/S)"
-msgstr ""
+msgstr "log(R/S)"
 
 #: plugin/fractals.c:232
-#, fuzzy
 msgid "Sample is too small for Hurst exponent"
-msgstr "Il campione è troppo piccolo per un grafico range-mean\n"
+msgstr "Il campione è troppo piccolo per l'esponente di Hurst"
 
 #: plugin/fractals.c:242
 #, c-format
 msgid "Rescaled range figures for %s"
-msgstr ""
+msgstr "Valori a intervallo riscalato per %s"
 
 #: plugin/fractals.c:245
 msgid "(logs are to base 2)"
-msgstr ""
+msgstr "(i logaritmi sono in base 2)"
 
 #: plugin/fractals.c:257
-#, fuzzy
 msgid "Error estimating Hurst exponent model\n"
-msgstr "Errore nella stima del modello range-mean\n"
+msgstr "Errore nella stima del modello con esponente di Hurst\n"
 
 #: plugin/fractals.c:260
-#, fuzzy
 msgid "Regression results"
-msgstr "Mostra i risultati della regressione"
+msgstr "Risultati della regressione"
 
 #: plugin/fractals.c:265
 msgid "Estimated Hurst exponent"
-msgstr ""
+msgstr "Esponente di Hurst stimato"
 
 #: plugin/garch.c:580 plugin/garch.c:587
 msgid "Error in garch command"
@@ -11037,26 +11022,23 @@ msgid "Error estimating fixed effects model\n"
 msgstr "Errore nella stima del modello a effetti fissi\n"
 
 #: plugin/panel_data.c:662
-#, fuzzy
 msgid ""
 "Fixed effects estimator\n"
 "allows for differing intercepts by cross-sectional unit\n"
 "slope standard errors in parentheses, p-values in brackets\n"
 msgstr ""
-"Stimatore per effetti fissi\n"
+"Stimatore a effetti fissi\n"
 "Consente intercette diverse per ogni unità cross section\n"
 "Errori standard della pendenza tra parentesi tonde, p-value tra quadre\n"
-"a_i = intercette)\n"
-"\n"
 
 #: plugin/panel_data.c:667
 msgid "a_i = intercepts"
-msgstr ""
+msgstr "a_i = intercette"
 
 #: plugin/panel_data.c:712
 #, c-format
 msgid "%d group means were subtracted from the data"
-msgstr ""
+msgstr "%d medie di gruppo sono state sottratte dai dati"
 
 #: plugin/panel_data.c:717
 #, c-format
@@ -11068,15 +11050,12 @@ msgstr ""
 "Varianza dei residui: %g/(%d - %d) = %g\n"
 
 #: plugin/panel_data.c:721
-#, fuzzy
 msgid "Joint significance of unit dummy variables:\n"
-msgstr ""
-"Significatività congiunta delle variabili dummy unitarie:\n"
-" F(%d, %d) = %g con p-value %g\n"
+msgstr "Significatività congiunta delle variabili dummy unitarie:\n"
 
 #: plugin/panel_data.c:723
 msgid "Joint significance of differing group means:\n"
-msgstr ""
+msgstr "Significatività congiunta delle differenti medie dei gruppi:\n"
 
 #: plugin/panel_data.c:730
 msgid ""
@@ -11093,16 +11072,15 @@ msgid "Error estimating random effects model\n"
 msgstr "Errore nella stima del modello a effetti casuali\n"
 
 #: plugin/panel_data.c:829
-#, fuzzy
 msgid ""
 "                         Random effects estimator\n"
 "           allows for a unit-specific component to the error term\n"
 "           (standard errors in parentheses, p-values in brackets)\n"
 "\n"
 msgstr ""
-"                    Stimatore per effetti casuali\n"
+"                      Stimatore a effetti casuali\n"
 "   Consente che il termine di errore sia specifico per ogni unità\n"
-"                    (errori standard tra parentesi)\n"
+"      (errori standard tra parentesi tonde, p-value tra quadre)\n"
 "\n"
 
 #: plugin/panel_data.c:887
@@ -11248,9 +11226,8 @@ msgid "Eigenvectors (component loadings)"
 msgstr "Autovettori (pesi della componente)"
 
 #: plugin/poisson.c:337
-#, fuzzy
 msgid "poisson: the dependent variable must be count data"
-msgstr "Nessuna variabile indipendente è stata omessa"
+msgstr "poisson: la variabile dipendente deve rappresentare dati di conteggio"
 
 #: plugin/progress_bar.c:77
 msgid "gretl: loading data"
