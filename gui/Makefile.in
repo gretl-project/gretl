@@ -47,7 +47,7 @@ endif
 ifeq ($(have_gnome),)
   have_gnome = yes
 endif
-ifeq ($(gnome_install_prefix),"auto")
+ifeq ($(gnome_install_prefix),auto)
   gnome_prefix = `gnome-config --prefix`
 else
   gnome_prefix = $(gnome_install_prefix)
