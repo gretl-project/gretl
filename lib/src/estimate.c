@@ -34,7 +34,9 @@
    not getting any garbage results.
 */
 
-#define TINY 5.0e-9 /* was 1.0e-13, produced poor results on NIST Filip
+/* TINY was set at 5.0e-9 */
+
+#define TINY 1e-9 /* was 1.0e-13, produced poor results on NIST Filip
 		       test */
 #define SMALL 1.0e-8
 
