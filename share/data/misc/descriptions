@@ -11,5 +11,6 @@
 "longley","Annual U.S. labor-market data"
 "leverage","Illustrates detection of incorrect data"
 "mrw","Mankiw, Romer and Weil cross-country data"
+"np","Nelson and Plosser (JME, 1982) US macro data"
 "sw_ch12","International macro data (Stock and Watson)"
 "sw_ch14","Unemployment and inflation (Stock and Watson)"
