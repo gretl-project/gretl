@@ -1,7 +1,7 @@
 # !/bin/sh
 
 XMLDCL=/opt/jade/share/xml.dcl
-WORKDIR=./manual-html
+WORKDIR=./manual.html
 DB_STYLESHEET=manual-both.dsl
 
 if [ ! -r $1 ]

@@ -78,7 +78,6 @@ typedef enum {
     MODELTAB,
     MPOLS,
     MULTIPLY,
-    MVAVG,
     NLS,
     NULLDATA,
     OLS,     
@@ -127,10 +126,9 @@ typedef enum {
 
 #define NEEDS_TWO_VARS(c)  ((c) == AR || (c) == ARCH || (c) == COINT || \
                            (c) == CORC || (c) == HCCM || (c) == HILU || \
-                           (c) == HSK || (c) == LOGIT || (c) == MVAVG || \
+                           (c) == HSK || (c) == LOGIT || (c) == SPEARMAN || \
                            (c) == OLS || (c) == POOLED || (c) == PROBIT || \
-                           (c) == TSLS || (c) == VAR || (c) == WLS || \
-                           (c) == SPEARMAN)
+                           (c) == TSLS || (c) == VAR || (c) == WLS)
 
 #define TEXTSAVE_OK(c) (c == ADD || \
                         c == ADDTO || \

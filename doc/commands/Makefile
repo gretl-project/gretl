@@ -5,8 +5,8 @@ XML_CFLAGS = `pkg-config --cflags libxml-2.0 libxslt`
 XML_LIBS = `pkg-config --libs libxml-2.0 libxslt`
 
 # and these too
-GRETL_CFLAGS = `gretl-config --cflags`
-GRETL_LIBS = `gretl-config --libs`
+GRETL_CFLAGS = `pkg-config --cflags gretl`
+GRETL_LIBS = `pkg-config --libs gretl`
 
 progs: xsltrans skeleton reflow validate
 

@@ -12,7 +12,6 @@ DSL = manual-both.dsl
 ALTDSL = manual-a4.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
-HTMLDIR = manual-html
 
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
@@ -63,23 +62,23 @@ $(CMDLIST): $(CMDREF) $(MANXSL)
 
 html: manual.xml db2html $(DSL) $(HMATHSS) 
 	./db2html manual.xml
-	./texmath2png.pl manual-html/equation-list.sgml
+	./texmath2png.pl manual.html/equation-list.sgml
 
 # make windows HTML help file for gretl
 
 topdoc = .
 
 chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml 
-	mkdir -p htmlhelp/figures
-	cp $(topdoc)/figures/*.png htmlhelp/figures
-	for f in htmlhelp/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
-	cd htmlhelp && \
+	mkdir -p manual.chm/figures
+	cp $(topdoc)/figures/*.png manual.chm/figures
+	for f in manual.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
+	cd manual.chm && \
 	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl \
 	tex.math.in.alt=latex && $(HHC) gretl.hhp
 
 clean:
 	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex
-	rm -rf manual-html htmlhelp
+	rm -rf manual.html manual.chm
 
 texclean:
 	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex
