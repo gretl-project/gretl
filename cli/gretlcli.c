@@ -1251,8 +1251,9 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	pprintf(prn, _("Data written OK\n"));
-	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) 
+	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) { 
 	    pprintf(prn, _("Warning: case markers not saved in binary datafile\n"));
+	}
 	break;
 
     case TESTUHAT:

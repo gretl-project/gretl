@@ -155,15 +155,14 @@
       or graph the residuals and fitted values, and to run various
       diagnostic tests on the model.</para>  
 
-    <para>There is also an option to reprint the regression output in
-      &latex; format.  This is not fully implemented yet, but works
-      for OLS models.  You can print the results in a tabular format
-      (similar to what's in the output window, but properly typeset)
-      or as an equation, across the page.  For each of these options
-      you can choose to preview the typeset product, or save the
-      output to file for incorporation in a &latex; document.
-      Previewing requires that you have a functioning &tex; system on
-      your computer.</para> 
+    <para>For most models there is also an option to reprint the
+      regression output in &latex; format.  You can print the results
+      in a tabular format (similar to what's in the output window, but
+      properly typeset) or as an equation, across the page.  For each
+      of these options you can choose to preview the typeset product,
+      or save the output to file for incorporation in a &latex;
+      document.  Previewing requires that you have a functioning &tex;
+      system on your computer.</para>
 
     <para>To import <application>gretl</application> output into a
       word processor, you may copy and paste from an output window,

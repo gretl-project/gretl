@@ -30,6 +30,7 @@
 #include <libxml/parser.h>
 
 #define QUOTE '\''
+#define SCALAR_DIGITS 12
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
 
@@ -1133,10 +1134,11 @@ int write_data (const char *fname, const int *list,
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) return 1;
 	for (i=1; i<=l0; i++) {
-	    if (pdinfo->vector[list[i]])
+	    if (pdinfo->vector[list[i]]) {
 		pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp);
-	    else
-		pmax[i-1] = get_precision(&Z[list[i]][0], 1);
+	    } else {
+		pmax[i-1] = SCALAR_DIGITS;
+	    }
 	}	
     }
 
@@ -2826,7 +2828,9 @@ static int write_xmldata (const char *fname, const int *list,
     if (sz > 100000) {
 	fprintf(stderr, _("Writing %ld Kbytes of data\n"), sz / 1024);
 	if (ppaths == NULL) sz = 0L;
-    } else sz = 0L;
+    } else {
+	sz = 0L;
+    }
 
     if (sz) {
 	if (open_plugin(PROGRESS_BAR, &handle) == 0) {
@@ -2836,16 +2840,19 @@ static int write_xmldata (const char *fname, const int *list,
 		close_plugin(&handle);
 		sz = 0;
 	    }
-	} else sz = 0;
+	} else {
+	    sz = 0;
+	}
     }
 
     if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
 
     for (i=1; i<=list[0]; i++) {
-	if (pdinfo->vector[list[i]])
+	if (pdinfo->vector[list[i]]) {
 	    pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp);
-	else
-	    pmax[i-1] = get_precision(Z[list[i]], 1);
+	} else {
+	    pmax[i-1] = SCALAR_DIGITS;
+	}
     }
 
     ntodate(startdate, pdinfo->t1, pdinfo);
@@ -2859,7 +2866,6 @@ static int write_xmldata (const char *fname, const int *list,
 		 "<gretldata name=\"%s\" frequency=\"%d\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
 		 datname, pdinfo->pd, startdate, enddate);
-
     } else {
 	fprintf(fp, "<?xml version=\"1.0\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
@@ -2881,8 +2887,11 @@ static int write_xmldata (const char *fname, const int *list,
 	strcpy(type, "cross-section"); break;
     }
 
-    if (opt) gzprintf(fz, "type=\"%s\">\n", type);
-    else fprintf(fp, "type=\"%s\">\n", type);
+    if (opt) {
+	gzprintf(fz, "type=\"%s\">\n", type);
+    } else {
+	fprintf(fp, "type=\"%s\">\n", type);
+    }
 
     /* first deal with description, if any */
     if (pdinfo->descrip != NULL) {
@@ -2910,6 +2919,7 @@ static int write_xmldata (const char *fname, const int *list,
     /* then listing of variable names and labels */
     if (opt) gzprintf(fz, "<variables count=\"%d\">\n", list[0]);
     else fprintf(fp, "<variables count=\"%d\">\n", list[0]);
+
     for (i=1; i<=list[0]; i++) {
 	xmlbuf = xml_encode(pdinfo->varname[list[i]]);
 	if (xmlbuf == NULL) return 1;
@@ -2919,12 +2929,13 @@ static int write_xmldata (const char *fname, const int *list,
 	    free(xmlbuf);
 	}
 	if (!pdinfo->vector[list[i]]) {
-	    if (opt) 
-		gzprintf(fz, "\n role=\"scalar\" value=\"%.*f\"",
+	    if (opt) { 
+		gzprintf(fz, "\n role=\"scalar\" value=\"%.*g\"",
 			 pmax[i-1], Z[list[i]][0]);
-	    else 
-		fprintf(fp, "\n role=\"scalar\" value=\"%.*f\"",
+	    } else {
+		fprintf(fp, "\n role=\"scalar\" value=\"%.*g\"",
 			 pmax[i-1], Z[list[i]][0]);
+	    }
 	}
 	if (pdinfo->label[list[i]][0]) {
 	    xmlbuf = xml_encode(pdinfo->label[list[i]]);
@@ -2943,12 +2954,13 @@ static int write_xmldata (const char *fname, const int *list,
     else fputs("</variables>\n", fp);
 
     /* then listing of observations */
-    if (opt)
+    if (opt) {
 	gzprintf(fz, "<observations count=\"%d\" labels=\"%s\">\n",
 		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
-    else
+    } else {
 	fprintf(fp, "<observations count=\"%d\" labels=\"%s\">\n",
 		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
+    }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (opt) gzputs(fz, "<obs");
@@ -2972,8 +2984,9 @@ static int write_xmldata (const char *fname, const int *list,
 	}
 	if (opt) gzputs(fz, "</obs>\n");
 	else fputs("</obs>\n", fp);
-	if (sz && t && ((t - pdinfo->t1) % 50 == 0)) 
+	if (sz && t && ((t - pdinfo->t1) % 50 == 0)) { 
 	    (*show_progress) (50, tsamp, SP_NONE);
+	}
     }
 
     if (opt) gzprintf(fz, "</observations>\n</gretldata>\n");

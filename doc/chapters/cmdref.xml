@@ -2084,7 +2084,9 @@
 	values of the specified variables; if no list is given, prints
 	the values of all variables in the current data file.  If the
 	<literal>-o</literal> flag is given the data are printed by
-	observation, otherwise they are printed by variable.
+	observation, otherwise they are printed by variable.  If the
+	<literal>-t</literal> is given the data are printed by
+	variable to 10 significant digits.
       </para>
 
       <para>
@@ -2201,6 +2203,19 @@
 
     </sect2>
 
+    <sect2 id="reset"><title>reset</title>
+
+      <para>
+	Must immediately follow the estimation of a model via OLS.
+	Carries out Ramsey's RESET test for model specification
+	(non-linearity) by adding the square and the cube of the
+	fitted values to the regression and calculating the
+	<emphasis>F</emphasis> statistic for the null hypothesis that
+	the parameters on the two added terms are zero.
+      </para>
+
+    </sect2>
+
     <sect2 id="rhodiff"><title>rhodiff</title>
 
       <informaltable role="cmd" frame="none">
@@ -2208,7 +2223,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>rholist</replaceable> 
+	      <entry><replaceable>rholist</replaceable>
 		<literal>;</literal>
 		<replaceable>varlist</replaceable>
 	      </entry>
@@ -2228,15 +2243,14 @@
       </informaltable>
 
       <para>
-	Creates rho-differenced counterparts of the variables
-	(given by number or by name) in
-	<replaceable>varlist</replaceable> and adds them to the data
-	set, using the suffix <literal>#</literal> for the new variables.
-	Given variable <varname>v1</varname> in
-	<replaceable>varlist</replaceable>, and entries
-	<varname>r1</varname> and <varname>r2</varname> in
+	Creates rho-differenced counterparts of the variables (given
+	by number or by name) in <replaceable>varlist</replaceable>
+	and adds them to the data set, using the suffix
+	<literal>#</literal> for the new variables. Given variable
+	<varname>v1</varname> in <replaceable>varlist</replaceable>,
+	and entries <varname>r1</varname> and <varname>r2</varname> in
 	<replaceable>rholist</replaceable>, <varname>v1# = v1(t) -
-	r1*v1(t-1) - r2*v1(t-2)</varname> is created. The
+	  r1*v1(t-1) - r2*v1(t-2)</varname> is created. The
 	<replaceable>rholist</replaceable> entries can be given as
 	numerical values or as the names of variables previously
 	defined.
@@ -2278,13 +2292,13 @@
 	approximate a downward sloping line this suggests the variance
 	is decreasing in the mean.</para>
 
-      <para>Besides the
-	graph, gretl displays the means and ranges for each subsample,
-	along with the slope coefficient for an OLS regression of the
-	range on the mean and the p-value for the null hypothesis that
-	this slope is zero.  If the slope coefficient is significant
-	at the 10 percent significance level then the fitted line from
-	the regression of range on mean is shown on the graph.
+      <para>Besides the graph, gretl displays the means and ranges for
+	each subsample, along with the slope coefficient for an OLS
+	regression of the range on the mean and the p-value for the
+	null hypothesis that this slope is zero.  If the slope
+	coefficient is significant at the 10 percent significance
+	level then the fitted line from the regression of range on
+	mean is shown on the graph.
       </para>
 
     </sect2>
@@ -2330,9 +2344,9 @@
 	randomness of deviations from the median, for a variable named
 	<varname>x1</varname> with a non-zero median, you can do the
 	following:</para> 
-	  <programlisting>
+      <programlisting>
 	    genr signx1 = x1 - median(x1)
-	    runs signx1</programlisting>
+	runs signx1</programlisting>
 
     </sect2>
 
@@ -2343,7 +2357,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry><replaceable>yvar</replaceable> 
+	      <entry><replaceable>yvar</replaceable>
 		<literal>;</literal>
 		<replaceable>xvarlist</replaceable>
 	      </entry>
@@ -2351,9 +2365,8 @@
 	    <row>
 	      <entry></entry>
 	      <entry><command>scatters</command>
-		<replaceable>yvarlist</replaceable> 
-		<literal>;</literal>
-		<replaceable>xvar</replaceable>
+		<replaceable>yvarlist</replaceable>
+		<literal>;</literal> <replaceable>xvar</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -2448,8 +2461,8 @@
 	series or panel, when the data have been read in as simple
 	undated series.  <replaceable>periodicity</replaceable> must
 	be an integer; <replaceable>startobs</replaceable> is a string
-	representing the date or panel ID of the first
-	observation. See also <xref linkend="panel"/>.
+	representing the date or panel ID of the first observation.
+	See also <xref linkend="panel"/>.
       </para>
 
     </sect2>
@@ -2461,8 +2474,10 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>value</replaceable> <literal>[</literal>
-		<replaceable>varlist</replaceable> <literal>]</literal>
+	      <entry><replaceable>value</replaceable>
+		<literal>[</literal>
+		<replaceable>varlist</replaceable>
+		<literal>]</literal>
 	      </entry>
 	    </row>
 	    <row>
@@ -2511,10 +2526,10 @@
       </informaltable>
 
       <para>
-	A <command>!</command> at the beginning of a command
-	line is interpreted as an escape to the user's shell.  Thus
-	arbitrary shell commands can be executed from within the
-	program (not available under MS Windows).
+	A <command>!</command> at the beginning of a command line is
+	interpreted as an escape to the user's shell.  Thus arbitrary
+	shell commands can be executed from within the program (not
+	available under MS Windows).
       </para>
 
     </sect2>
@@ -2526,9 +2541,8 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>startobs
-		endobs y a0 a1 a2</replaceable> 
-		&hellip;
+	      <entry><replaceable>startobs endobs y a0 a1
+		  a2</replaceable> &hellip;
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2546,8 +2560,8 @@
 	      <entry></entry>
 	      <entry><command>sim 15 25 y 10 0.8 x</command>
 	      </entry>
-	      <entry>creates 
-		  <varname>y(t) = 10 + 0.8*y(t-1) + x(t)*y(t-2)</varname>
+	      <entry>creates <varname>y(t) = 10 + 0.8*y(t-1) +
+		  x(t)*y(t-2)</varname>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2561,8 +2575,8 @@
 	<replaceable>y</replaceable> must have been defined earlier
 	with appropriate initial values. The formula used is
 	<varname>y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) +
-	  &hellip;</varname> The <varname>ai(t)</varname> may either be
-	numerical constants or variable names previously defined.
+	  &hellip;</varname> The <varname>ai(t)</varname> may either
+	be numerical constants or variable names previously defined.
       </para>
 
     </sect2>
@@ -2580,17 +2594,17 @@
 	    <row>
 	      <entry></entry>
 	      <entry><command>smpl -o</command>
-		  <replaceable>dummyvar</replaceable>
+		<replaceable>dummyvar</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
 	      <entry><command>smpl -o</command>
-		</entry>
+	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry><command>smpl -r</command> 
+	      <entry><command>smpl -r</command>
 		<replaceable>condition</replaceable>
 	      </entry>
 	    </row>	
@@ -2638,30 +2652,29 @@
 	    <row>
 	      <entry><command>smpl 1960.2 ;</command>
 	      </entry>
-	      <entry>keep <replaceable>endobs</replaceable>
-		unchanged
-		</entry>
+	      <entry>keep <replaceable>endobs</replaceable> unchanged
+	      </entry>
 	    </row>
 	    <row>
 	      <entry><command>smpl ; 1984.3</command>
 	      </entry>
 	      <entry>keep <replaceable>startobs</replaceable>
 		unchanged
-		</entry>
+	      </entry>
 	    </row>
 	    <row>
 	      <entry><command>smpl -o dum1</command>
 	      </entry>
 	      <entry>draw sample of observations where
 		<literal>dum1=1</literal>
-		</entry>
+	      </entry>
 	    </row>
 	    <row>
 	      <entry><command>smpl -r income > 30000</command>
 	      </entry>
-	      <entry>sample cases where <varname>income</varname> has a
-		value greater than 30000.
-		</entry>
+	      <entry>sample cases where <varname>income</varname> has
+		a value greater than 30000.
+	      </entry>
 	    </row>
 	  </tbody>
 	</tgroup>
@@ -2685,8 +2698,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>x y</replaceable> 
-		&opto;
+	      <entry><replaceable>x y</replaceable> &opto;
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2711,7 +2723,7 @@
 
       <programlisting>
 	  genr altx = -x
-	  spearman altx y</programlisting>
+	spearman altx y</programlisting>
 
     </sect2>
 
@@ -2722,8 +2734,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry><replaceable>varlist</replaceable>
-		&opto;
+	      <entry><replaceable>varlist</replaceable> &opto;
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2752,9 +2763,9 @@
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry><replaceable>datafile</replaceable>
-		[ <replaceable>varlist</replaceable> ]
-		[ <replaceable>flag</replaceable> ] 
+	      <entry><replaceable>datafile</replaceable> [
+		<replaceable>varlist</replaceable> ] [
+		<replaceable>flag</replaceable> ] 
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2768,7 +2779,10 @@
 
       <para>
 	If <replaceable>varlist</replaceable> is absent, the values of
-	all the variables in the current data set will be stored.
+	all the data series in the current data set will be stored.
+	Note that any scalar variables will not be saved
+	automatically: if you wish to save scalars you must explicitly
+	list them in <replaceable>varlist</replaceable>.
       </para>
 
       <para>
@@ -2824,8 +2838,8 @@
 	      <entry><literal>-t</literal>
 	      </entry>
 	      <entry>Store the data in <quote>traditional</quote> ESL
-		  format, with an ascii data file and a separate
-		  informative header file.
+		format, with an ascii data file and a separate
+		informative header file.
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2850,9 +2864,9 @@
 
       <para>
 	Print summary statistics for the variables in
-	<replaceable>varlist</replaceable>, or for all the variables in
-	the data set if <replaceable>varlist</replaceable> is omitted.
-	Output consists of the mean, standard deviation (sd),
+	<replaceable>varlist</replaceable>, or for all the variables
+	in the data set if <replaceable>varlist</replaceable> is
+	omitted. Output consists of the mean, standard deviation (sd),
 	coefficient of variation (= sd/mean), median, minimum,
 	maximum, skewness coefficient, and excess kurtosis.
       </para>
@@ -2890,16 +2904,15 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>depvar varlist1</replaceable> 
+	      <entry><replaceable>depvar varlist1</replaceable>
 		<literal>;</literal>
-		<replaceable>varlist2</replaceable> 
-		&opto;
+		<replaceable>varlist2</replaceable> &opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Example: </entry>
 	      <entry><command>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5
-		x6</command>
+		  x6</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2907,8 +2920,8 @@
       </informaltable>
 
       <para>
-	Computes two-stage least squares (TSLS) estimates
-	of parameters.  <replaceable>depvar</replaceable> is the
+	Computes two-stage least squares (TSLS) estimates of
+	parameters.  <replaceable>depvar</replaceable> is the
 	dependent variable, <replaceable>varlist1</replaceable> is the
 	list of independent variables (including right-hand side
 	endogenous variables) in the structural equation for which
@@ -2974,7 +2987,8 @@
 
       <para>
 	Prints a listing of variables currently available.
-	<command>list</command> and <command>ls</command> are synonyms.  
+	<command>list</command> and <command>ls</command> are
+	synonyms.  
       </para>
 
     </sect2>
@@ -3001,7 +3015,7 @@
 	p-value.
       </para>
 
-	<para role="bodge">&nbsp;</para>
+      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -3012,8 +3026,8 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry><replaceable>weightvar depvar indepvars</replaceable>
-		&opto;
+	      <entry><replaceable>weightvar depvar
+		  indepvars</replaceable> &opto;
 	      </entry>
 	    </row>
 	  </tbody>

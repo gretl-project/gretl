@@ -911,7 +911,12 @@ data.
 
 (1) "Standard": the data are saved gretl xml format.
 (2) As above, but using gzip compression.  This saves disk space; it may be
-    useful for large datasets.  
+    useful for large datasets. 
+
+Note that if you wish to save the values of any scalars generated in a gretl
+session (as opposed to data series), you should use the "store" command in the
+gretl console window or a gretl script, and specify a list of variables to
+save.
 
 #
 tsls

@@ -1176,8 +1176,10 @@ Examples:        store mydata.gdt
                  store mydatabin.gdt -o 2 3 4
 
 Filename is the name of the file in which the values should be stored.  If
-varlist is absent, the values of all the variables will be stored, otherwise
-only those variables specified will be written to file.
+varlist is absent, the values of all the data series will be stored, otherwise
+only those variables specified will be written to file.  Note that scalar
+variables will not be included in the data file unless you specifically
+request this by including them in varlist.
 
 Possible values of the optional "flag" are as follows:
 
