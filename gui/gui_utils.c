@@ -1215,6 +1215,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     dialog_table_setup(vwin);
 
+    /* arrange for clean-up when dialog is destroyed */
+    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
+		       GTK_SIGNAL_FUNC(free_windata), vwin);
+
     /* close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
@@ -1235,14 +1239,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     /* popup menu? */
     if (role == VIEW_SERIES) {
 	series_view_build_popup(vwin);
-	gtk_signal_connect (GTK_OBJECT(vwin->w), "button_press_event",
+	gtk_signal_connect (GTK_OBJECT(vwin->vbox), "button_press_event",
 			    GTK_SIGNAL_FUNC(popup_menu_handler), 
 			    (gpointer) vwin->popup);
     } 
-
-    /* clean up when dialog is destroyed */
-    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(free_windata), vwin);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
@@ -2184,13 +2184,12 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
     GdkModifierType mods;
 
     gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
-    
+
     if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
 	GdkEventButton *bevent = (GdkEventButton *) event; 
 	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
-	/* return TRUE; */
-	return FALSE;
+	return TRUE;
     }
     return FALSE;
 }
