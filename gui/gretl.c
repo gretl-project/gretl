@@ -19,6 +19,8 @@
 
 /* gretl.c : main for gretl */
 
+#define DND 1  /* drag n drop debugging */
+
 #include "gretl.h"
 #include <dirent.h>
 
@@ -523,6 +525,16 @@ int main (int argc, char *argv[])
 {
     int opt, err = 0, gui_get_data = 0;
     char dbname[MAXLEN];
+#ifdef DND
+    FILE *dp;
+    int i;
+
+    dp = fopen("c:\\userdata\\gretl\\debug.txt", "w");
+    if (dp == NULL) exit(EXIT_FAILURE);
+    for (i=0; i<argc; i++)
+	fprintf(dp, "argv[%d] = '%s'\n", i, argv[i]);
+    fflush(dp);
+#endif
 
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc("startup");
