@@ -34,8 +34,6 @@
 # endif
 #endif
 
-#include "gretl_cmdlist.h"
-
 extern int _omitfromlist (int *list, const int *omitvars, int newlist[],
 			  const DATAINFO *pdinfo, const int model_count);
 
@@ -130,18 +128,6 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 int subsetted_command (const char *cmd)
 {    
     if (strcmp(cmd, "deriv") == 0) return NLS;
-    return 0;
-}
-
-/* ........................................................... */
-
-int command_number (const char *cmd)
-{    
-    int i;
-
-    for (i=0; i<NC; i++) {
-	if (strcmp(cmd, gretl_commands[i]) == 0) return i;
-    }
     return 0;
 }
 
@@ -447,7 +433,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     /* trap bogus commands */ 
     if (command->ci == 0) {
-	command->ci = command_number(command->cmd);
+	command->ci = gretl_command_number(command->cmd);
 	if (command->ci == 0) {
 	    command->errcode = 1;
 	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
@@ -868,7 +854,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     if (cmd == NULL) {
 	pputs(prn, _("\nValid gretl commands are:\n"));
 	for (i=1; i<NC; i++) {
-	    pprintf(prn, "%-9s", gretl_commands[i]);
+	    pprintf(prn, "%-9s", gretl_command_word(i));
 	    if (i%8 == 0) pputs(prn, "\n");
 	    else pputs(prn, " ");
 	}
@@ -881,18 +867,12 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     strncat(cmdcopy, cmd, 8);
 
     ok = 0;
-    for (i=1; i<NC; i++) {
-	if (!strcmp(gretl_commands[i], cmd)) {
-	    ok = 1;
-	    break;
-	}
-    }
+
+    if (gretl_command_number(cmd) > 0) ok = 1;
+
     if (!ok && aliased(cmdcopy)) {
-	for (i=1; i<NC; i++) {
-	    if (!strcmp(gretl_commands[i], cmdcopy)) {
-		ok = 1;
-		break;
-	    }
+	if (gretl_command_number(cmdcopy) > 0) {
+	    ok = 1;
 	}
     }
 

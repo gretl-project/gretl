@@ -276,7 +276,7 @@ static int real_helpfile_init (int cli)
 	    if (match >= 0) {
 		int t, m = (heads[match])->ntopics;
 
-		t = command_number(topicword);
+		t = gretl_command_number(topicword);
 		if (t > 0) (heads[match])->topics[m] = t;
 		else (heads[match])->topics[m] = 
 			 extra_command_number(topicword);
@@ -370,7 +370,7 @@ static void add_help_topics (windata_t *hwin, int script)
 	    if ((heads[i])->topics[j] < NC) {
 		sprintf(helpitem.path, "%s/%s/%s", 
 			mpath, _((heads[i])->name), 
-			gretl_commands[(heads[i])->topics[j]]);
+			gretl_command_word((heads[i])->topics[j]));
 	    } else {
 		sprintf(helpitem.path, "%s/%s/%s", 
 			mpath, _((heads[i])->name), 
@@ -551,7 +551,7 @@ void edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		while (*q && !isspace(*q)) q++;
 	    *word = '\0';
 	    strncat(word, p, (q - p > 8)? 8 : q - p);
-	    pos = pos_from_cmd(command_number(word));
+	    pos = pos_from_cmd(gretl_command_number(word));
 	} 
 	
 	real_do_help(pos, 1);

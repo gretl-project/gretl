@@ -1079,7 +1079,7 @@ static char *model_cmd_str (MODEL *pmod)
     str = malloc(MAXLEN);
     if (str == NULL) return NULL;
 
-    sprintf(str, "%s ", gretl_commands[pmod->ci]);
+    sprintf(str, "%s ", gretl_command_word(pmod->ci));
 
     if (pmod->ci == AR) {
         store_list(pmod->arinfo->arlist, str);

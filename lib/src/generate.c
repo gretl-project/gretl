@@ -787,17 +787,11 @@ static int evaluate_genr (GENERATE *genr)
 	    level = atom->level;
 	    xbak = x;
 	}
-	if (!genr->err && npop != npush) {
-	    int expush = npush - npop;
-
+	if (!genr->err && npop > npush) {
 	    /* excess pushes are harmless? */
-	    if (expush > 0) {
-		while (expush--) calc_pop(); 
-	    } else {
-		fprintf(stderr, "genr error: npush = %d, npop = %d\n",
-			npush, npop);
-		genr->err = 1;
-	    }
+	    fprintf(stderr, "genr error: npush = %d, npop = %d\n",
+		    npush, npop);
+	    genr->err = 1;
 	}
 	reset_calc_stack();
 	if (genr->err) break;

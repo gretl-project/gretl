@@ -1033,7 +1033,7 @@ void get_cmd_ci (const char *line, CMD *command)
 	command->ci = -1;
 	return;
     }
-    if ((command->ci = command_number(command->cmd)) == 0) {
+    if ((command->ci = gretl_command_number(command->cmd)) == 0) {
 	command->errcode = 1;
 	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
 		command->cmd);

@@ -31,7 +31,6 @@
 #endif
 
 #ifdef G_OS_WIN32 
-# include "../lib/src/gretl_cmdlist.h"
 # include <io.h>
 #else
 # include <unistd.h>
@@ -1992,7 +1991,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     mp_results *mpvals = NULL;
 
     action = sr->code;
-    strcpy(estimator, gretl_commands[action]);
+    strcpy(estimator, gretl_command_word(action));
 
     buf = sr->cmdlist;    
     if (*buf == 0) return;
@@ -2144,7 +2143,7 @@ void do_model (GtkWidget *widget, gpointer p)
     selector *sr = (selector *) p;  
 
     action = sr->code;
-    strcpy(estimator, gretl_commands[action]);
+    strcpy(estimator, gretl_command_word(action));
 
     buf = sr->cmdlist;    
     if (buf == NULL || *buf == 0) return;
@@ -2991,7 +2990,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 
     line[0] = '\0';
     msg[0] = '\0';
-    sprintf(line, "%s%s", gretl_commands[action], liststr);
+    sprintf(line, "%s%s", gretl_command_word(action), liststr);
     free(liststr);
 
     if (verify_and_record_command(line)) return;

@@ -30,15 +30,9 @@
 #include <readline/readline.h>
 #include <readline/history.h> 
 
-#ifdef WIN32
-# ifndef CLI
-#  include "gretl_cmdlist.h"
-# endif
-#endif
-
 extern char *xmalloc();
 
-char *dupstr (char *s) 
+char *dupstr (const char *s) 
 {
     char *r = xmalloc(strlen(s) + 1);
 
@@ -53,25 +47,20 @@ static char *command_generator (char *text, int state)
    to start from scratch; without any state (i.e. STATE == 0), then we
    start at the top of the list. */
 {
-    static int list_index, len;
-    char *name;
+    static int list_index;
+    const char *cword;
 
-    /* If this is a new word to complete, initialize now.  This includes
-       saving the length of TEXT for efficiency, and initializing the index
-       variable to 0. */
+    /* If this is a new word to complete, initialize now. */
     if (!state) {
 	list_index = 0;
-	len = strlen (text);
     }
 
     /* Return the next name which partially matches from the command list. */
-    while ((name = gretl_commands[list_index]) && list_index < NC) {
-	list_index++;
-	if (strncmp(name, text, len) == 0) {
-	    return dupstr(name);
-	}
+    cword = gretl_command_complete_next(text, list_index++);
+    if (cword != NULL) {
+	return dupstr(cword);
     }
-
+    
     return NULL;
 }
 

@@ -341,17 +341,12 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 				     start, -1);
 
 	if (bit != NULL && *bit != 0) {
-	    const char *complete = NULL;
-	    int i, len = strlen(bit);
-
-	    for (i=0; i<NC; i++) {
-		if (strncmp(bit, gretl_commands[i], len) == 0)
-		    complete = gretl_commands[i];
-	    }
+	    const char *complete = gretl_command_complete(bit);
 
 	    g_free(bit);
-
-	    if (complete != NULL) replace_command_line(cw, complete);
+	    if (complete != NULL) {
+		replace_command_line(cw, complete);
+	    }
 	}
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
 	return TRUE;
