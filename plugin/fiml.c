@@ -147,52 +147,7 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
     return fsys;
 }
 
-/* use the full residuals matrix to form the cross-equation covariance
-   matrix; then invert this and do a Cholesky decomposition
-*/ 
-
-static int fiml_form_sigma_and_psi (fiml_system *fsys)
-{
-    int err;
-
-    err = gretl_matrix_multiply_mod(fsys->uhat, GRETL_MOD_TRANSPOSE,
-				    fsys->uhat, GRETL_MOD_NONE,
-				    fsys->sigma);
-
-    gretl_matrix_divide_by_scalar(fsys->sigma, fsys->n);
-
-#if FDEBUG
-    gretl_matrix_print(fsys->sigma, "fiml sigma", NULL);
-#endif
-
-    if (!err) {
-	gretl_matrix_copy_values(fsys->psi, fsys->sigma);
-	err = gretl_invert_symmetric_matrix(fsys->psi);
-    }
-
-    if (!err) {
-	err = gretl_matrix_cholesky_decomp(fsys->psi);
-	gretl_square_matrix_transpose(fsys->psi);
-	gretl_matrix_zero_lower(fsys->psi);
-    }
-
-#if FDEBUG
-    gretl_matrix_print(fsys->psi, "fiml psi", NULL);
-#endif
-
-    return err;
-}
-
-static int fiml_transcribe_results (fiml_system *fsys)
-{
-    int err = 0;
-
-    /* to be written */
-
-    return err;
-}
-
-/* calculate residuals as YG - WB */
+/* calculate FIML residuals as YG - WB */
 
 static void fiml_form_uhat (fiml_system *fsys, const double **Z, int t1)
 {
@@ -224,6 +179,65 @@ static void fiml_form_uhat (fiml_system *fsys, const double **Z, int t1)
 #if FDEBUG
     gretl_matrix_print(fsys->uhat, "fiml uhat", NULL);
 #endif
+}
+
+/* use the full residuals matrix to form the cross-equation covariance
+   matrix; then invert this and do a Cholesky decomposition to find
+   psi-transpose
+*/ 
+
+static int 
+fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
+{
+    int err;
+
+    /* YG - WB */
+    fiml_form_uhat(fsys, Z, t1);
+
+    /* Davidson and MacKinnon, ETM, equation (12.81) */
+
+    err = gretl_matrix_multiply_mod(fsys->uhat, GRETL_MOD_TRANSPOSE,
+				    fsys->uhat, GRETL_MOD_NONE,
+				    fsys->sigma);
+
+    gretl_matrix_divide_by_scalar(fsys->sigma, fsys->n);
+
+#if FDEBUG
+    gretl_matrix_print(fsys->sigma, "fiml Sigma", NULL);
+#endif
+
+    if (!err) {
+	gretl_matrix_copy_values(fsys->psi, fsys->sigma);
+	err = gretl_invert_symmetric_matrix(fsys->psi);
+    }
+
+#if FDEBUG
+    gretl_matrix_print(fsys->psi, "Sigma-inverse", NULL);
+#endif
+
+    if (!err) {
+	err = gretl_matrix_cholesky_decomp(fsys->psi);
+	/* we actually want the transpose of psi (ETM, under eq (12.86) */
+	gretl_square_matrix_transpose(fsys->psi);
+	gretl_matrix_zero_lower(fsys->psi);
+    }
+
+    /* I've checked, and psi * psi-transpose does equal sigma-inverse */
+
+#if FDEBUG
+    gretl_matrix_print(fsys->psi, "fiml Psi-transpose", NULL);
+#endif
+
+    return err;
+}
+
+static int fiml_transcribe_results (fiml_system *fsys)
+{
+    int err = 0;
+
+    /* to be written */
+
+    return err;
 }
 
 /* form the LHS stacked vector for the artificial regression */
@@ -344,11 +358,15 @@ static void fiml_uhat_init (fiml_system *fsys)
     gretl_matrix_print(fsys->uhat, "uhat from 3SLS", NULL);
 }
 
-static void klein_PC_init (fiml_system *fsys)
+/* check: initialize coefficients from "known" MLE:
+   see http://www.stanford.edu/~clint/bench/kleinfm2.tsp
+*/
+
+static void klein_MLE_init (fiml_system *fsys)
 {
     MODEL *pmod;
     int i, j, k = 0;
-    const double PC_params[] = {
+    const double klein_params[] = {
 	18.34327218344233, -.2323887662328997, .3856730901020590, .8018443391624640,
 	27.26386576310186, -.8010060259538374, 1.051852141335067, -.1480990630401963,
 	5.794287580524262, .2341176397831136, .2846766802287325, .2348346571073103
@@ -357,7 +375,7 @@ static void klein_PC_init (fiml_system *fsys)
     for (i=0; i<fsys->g; i++) {
 	pmod = system_get_model(fsys->sys, i);
 	for (j=0; j<pmod->ncoeff; j++) {
-	    pmod->coeff[j] = PC_params[k++];
+	    pmod->coeff[j] = klein_params[k++];
 	}
     }
 }
@@ -382,7 +400,7 @@ rhs_var_in_eqn (const gretl_equation_system *sys, int eq, int v)
 
 /* initialize Gamma matrix based on 3SLS estimates plus identities */
 
-static int fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
+static void fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const MODEL *pmod;
@@ -392,10 +410,6 @@ static int fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
     for (j=0; j<fsys->nendo; j++) {
 	/* outer loop across columns (equations) */
 	lv = enlist[j + 1];
-#if FDEBUG
-	printf("G: working on equation %d (%s, %s)\n", j+1, 
-	       pdinfo->varname[lv], (j < fsys->g)? "stochastic" : "identity");
-#endif
 	for (i=0; i<fsys->nendo; i++) {
 	    rv = enlist[i + 1];
 	    if (j == i) {
@@ -404,40 +418,32 @@ static int fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 		/* column pertains to stochastic equation */
 		vi = rhs_var_in_eqn(fsys->sys, j, rv);
 		if (vi > 0) {
-#if FDEBUG
-		    printf(" endog var %s is included\n", pdinfo->varname[rv]);
-#endif
 		    pmod = system_get_model(fsys->sys, j);
 		    gretl_matrix_set(fsys->G, i, j, -pmod->coeff[vi-2]);
 		} else {
-#if FDEBUG
-		    printf(" endog var %s is excluded\n", pdinfo->varname[rv]);
-#endif
 		    gretl_matrix_set(fsys->G, i, j, 0.0);
 		}
 	    } else {
 		/* column pertains to identity */
 		vi = -1 * rhs_var_in_identity(fsys->sys, lv, rv);
-#if FDEBUG
-		if (vi) {
-		    printf(" var %s has coeff %d\n", pdinfo->varname[rv], vi);
-		}
-#endif
 		gretl_matrix_set(fsys->G, i, j, vi);
 	    }
 	}
     }
 
 #if FDEBUG
-    gretl_matrix_print(fsys->G, "fiml G", NULL);
+    printf("Order of columns (and rows):");
+    for (i=1; i<=enlist[0]; i++) {
+	printf(" %s", pdinfo->varname[enlist[i]]);
+    }
+    putchar('\n');
+    gretl_matrix_print(fsys->G, "fiml Gamma", NULL);
 #endif
-
-    return 0;
 }
 
 /* update Gamma matrix with revised parameter estimates */
 
-static int fiml_G_update (fiml_system *fsys)
+static void fiml_G_update (fiml_system *fsys)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);    
     const MODEL *pmod;
@@ -456,15 +462,13 @@ static int fiml_G_update (fiml_system *fsys)
     }
 
 #if FDEBUG
-    gretl_matrix_print(fsys->G, "fiml G", NULL);
+    gretl_matrix_print(fsys->G, "fiml Gamma", NULL);
 #endif
-
-    return 0;
 }
 
 /* initialize B matrix based on 3SLS estimates and identities */
 
-static int fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
+static void fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
@@ -475,49 +479,42 @@ static int fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
     for (j=0; j<fsys->nendo; j++) {
 	lv = enlist[j + 1];
 	/* outer loop across columns (equations) */
-#if FDEBUG
-	printf("B: working on equation %d (%s, %s)\n", j+1, 
-	       pdinfo->varname[lv], (j < fsys->g)? "stochastic" : "identity");
-#endif
 	for (i=0; i<fsys->nexo; i++) {
 	    rv = exlist[i + 1];
 	    if (j < fsys->g) {
 		/* column pertains to stochastic equation */
 		vi = rhs_var_in_eqn(fsys->sys, j, rv);
 		if (vi > 0) {
-#if FDEBUG
-		    printf(" exog var %s is included\n", pdinfo->varname[rv]);
-#endif
 		    pmod = system_get_model(fsys->sys, j);
 		    gretl_matrix_set(fsys->B, i, j, pmod->coeff[vi-2]);
 		} else {
-#if FDEBUG
-		    printf(" exog var %s is excluded\n", pdinfo->varname[rv]);
-#endif
 		    gretl_matrix_set(fsys->B, i, j, 0.0);
 		}
 	    } else {
 		vi = rhs_var_in_identity(fsys->sys, lv, rv);
-#if FDEBUG
-		if (vi) {
-		    printf(" var %s has coeff %d\n", pdinfo->varname[rv], vi);
-		}
-#endif
 		gretl_matrix_set(fsys->B, i, j, vi);
 	    }
 	}
     }
 
 #if FDEBUG
+    printf("Order of columns:");
+    for (i=1; i<=enlist[0]; i++) {
+	printf(" %s", pdinfo->varname[enlist[i]]);
+    }
+    putchar('\n');
+    printf("Order of rows:");
+    for (i=1; i<=exlist[0]; i++) {
+	printf(" %s", pdinfo->varname[exlist[i]]);
+    }
+    putchar('\n');
     gretl_matrix_print(fsys->B, "fiml B", NULL);
 #endif
-
-    return 0;
 }
 
 /* update B matrix with revised parameter estimates */
 
-static int fiml_B_update (fiml_system *fsys)
+static void fiml_B_update (fiml_system *fsys)
 {
     const int *exlist = system_get_instr_vars(fsys->sys);
     const MODEL *pmod;
@@ -536,8 +533,6 @@ static int fiml_B_update (fiml_system *fsys)
 #if FDEBUG
     gretl_matrix_print(fsys->B, "fiml B", NULL);
 #endif
-
-    return 0;
 }
 
 #define LN_2_PI 1.837877066409345
@@ -554,12 +549,9 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 
     fsys->ll = 0.0;
 
-    /* form residuals: YG - WB */
-    fiml_form_uhat(fsys, Z, t1);
-
-    /* form \hat{Sigma} (ETM, equation 12.81), invert, 
+    /* form \hat{\Sigma} (ETM, equation 12.81), invert, 
        and Cholesky-decompose to get \Psi */
-    err = fiml_form_sigma_and_psi(fsys);
+    err = fiml_form_sigma_and_psi(fsys, Z, t1);
     if (err) {
 	fprintf(stderr, "fiml_form_sigma_and_psi: failed\n");
 	return err;
@@ -579,6 +571,8 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
     if (na(detS)) {
 	return 1;
     }
+
+    /* Davison and MacKinnon, ETM, equation (12.80) */
 
     fsys->ll -= (fsys->gn / 2.0) * LN_2_PI;
     fsys->ll -= (fsys->n / 2.0) * log(detS);
@@ -612,7 +606,8 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 }
 
 /* calculate instrumented version of endogenous variables, using
-   the restricted reduced form: WB\Gamma^{-1}
+   the restricted reduced form: WB\Gamma^{-1}.  Davidson and
+   MacKinnon, ETM, equation (12.70)
 */
 
 static int fiml_endog_rhs (fiml_system *fsys, const double **Z, int t1)
@@ -660,21 +655,27 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
     MODEL *pmod;
     double llbak = fsys->ll;
     double minstep = 1.0e-06;
-    double step = 8.0;
+    double step = 4.0;
     int improved = 0;
     int err = 0;
 
+    /* make a backup copy of the current parameter estimates */
     copy_estimates_to_btmp(fsys);
 
+#if FDEBUG
     gretl_matrix_print(fsys->btmp, "parameter estimates", NULL);
     gretl_matrix_print(fsys->artb, "estimated gradients", NULL);
+#endif
 
     while (!improved && !err && step > minstep) {
 	double bk, delta;
 	int i, j, k = 0;
 
+#if FDEBUG
 	printf(" step = %g\n", step);
+#endif
 
+	/* new coeff = old + gradient * step */
 	for (i=0; i<fsys->g; i++) {
 	    pmod = system_get_model(fsys->sys, i);
 	    for (j=0; j<pmod->ncoeff; j++) {
@@ -685,7 +686,7 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
 	    }
 	}
 
-	/* transcribe the new param estimates into Gamma and B */
+	/* write the new estimates into the G and B matrices */
 	fiml_G_update(fsys);
 	fiml_B_update(fsys);
 
@@ -693,10 +694,8 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
 	err = fiml_ll(fsys, Z, t1);
 	if (!err) {
 	    if (fsys->ll > llbak) {
-		printf(" new ll = %g, OK\n", fsys->ll);
 		improved = 1;
 	    } else {
-		printf(" new ll = %g, trying again\n", fsys->ll);
 		step /= 2.0;
 	    } 
 	}
@@ -706,7 +705,7 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1)
 }
 
 /* get standard errors for FIML estimates from the covariance
-   matrix from the artificial regression
+   matrix of the artificial regression
 */
 
 static int fiml_get_std_errs (fiml_system *fsys)
@@ -726,7 +725,7 @@ static int fiml_get_std_errs (fiml_system *fsys)
 	MODEL *pmod;
 	int i, j, k = 0;
 
-	gretl_matrix_multiply_by_scalar(vcv, 1.0 / s2);
+	gretl_matrix_divide_by_scalar(vcv, s2);
 
 	for (i=0; i<fsys->g; i++) {
 	    pmod = system_get_model(fsys->sys, i);
@@ -737,11 +736,14 @@ static int fiml_get_std_errs (fiml_system *fsys)
 	}
     }
 
+    /* fixme: make further use of this? */
+    gretl_matrix_free(vcv);
+
     return err;
 }
 
 /* Beginnings of a driver function for FIML as described in Davidson
-   and MacKinnon, ETM, chap 12, sect 5.
+   and MacKinnon, ETM, chap 12, sect 5.  Not ready yet.
 */
 
 #define FIML_ITER_MAX 250
@@ -751,9 +753,9 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 		 const DATAINFO *pdinfo, PRN *prn)
 {
     fiml_system *fsys;
-    double llbak = -1.0e9;
+    double llbak;
     double crit = 1.0;
-    double tol = 1.0e-08;
+    double tol = 1.0e-09;
     int iters = 0;
     int err = 0;
 
@@ -766,12 +768,20 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 # ifdef KLEIN_INIT
     /* check ll calc. and gradients: 
        try starting from "known" MLE values for Klein model 1 */
-    klein_PC_init(fsys);
+    klein_MLE_init(fsys);
 # else
     /* check uhat calculation: set intial uhat based from 3SLS */
     fiml_uhat_init(fsys);
 # endif
 #endif
+
+    /* AC, 29/11/04: When we try the Klein model 1 using the MLE
+       benchmark to start from, the loglikelihood calculation
+       seems to be fine, but the artificial regression is not: it's
+       producing substantial gradient estimates... need to track
+       this down.  Quite likely the Kronecker multiplication
+       with Psi is borked...
+    */
 
     /* intialize Gamma coefficient matrix */
     fiml_G_init(fsys, pdinfo);
@@ -779,12 +789,13 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
     /* intialize B coefficient matrix */
     fiml_B_init(fsys, pdinfo);
 
-    /* intial loglikelihood */
+    /* initial loglikelihood */
     err = fiml_ll(fsys, Z, pdinfo->t1);
     if (err) {
 	fprintf(stderr, "fiml_ll: failed\n");
 	goto bailout;
     } else {
+	llbak = fsys->ll;
 	pprintf(prn, "*** initial ll = %g ***\n", fsys->ll);
     }    
 
