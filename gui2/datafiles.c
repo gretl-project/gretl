@@ -744,7 +744,7 @@ void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
     msg = g_strdup_printf(_("Do you want to restructure the current panel data set\n"
 			    "as stacked time series?"));
 
-    resp = yes_no_dialog(_("gretl: panel structure"), msg, 0);
+    resp = yes_no_dialog(_("gretl: panel data structure"), msg, 0);
 
     if (resp == YES_BUTTON) {
 	void *handle;

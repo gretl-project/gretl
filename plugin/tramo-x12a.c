@@ -283,9 +283,13 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     if (opt == TRAMO) {
 	fprintf(fp, "plot '-' using 1 title '%s' w impulses\n", I_("irregular"));
     } else {
-	fprintf(fp, "set bars 0\nset origin 0.0,0.0\n"
-		"plot '-' using :(1.0):($1-1.0) title '%s' w yerrorbars, \\\n"
-		"1.0 notitle\n", I_("irregular"));
+	char title[32];
+
+	sprintf(title, "%s - 1", I_("irregular"));
+	fprintf(fp, "set bars 0\n"
+		"set origin 0.0,0.0\n"
+		"plot '-' using ($1-1.0) title '%s' w impulses\n",
+		title);
     }
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	fprintf(fp, "%g\n", Z[D13 + 1][t]);
@@ -364,7 +368,7 @@ static int add_series_from_file (const char *fname, int code,
 
     fp = fopen(sfname, "r");
     if (fp == NULL) {
-	sprintf(errmsg, "%s %s", _("Couldn't open"), sfname);
+	sprintf(errmsg, _("Couldn't open %s"), sfname);
 	return 1;
     }
 

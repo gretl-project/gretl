@@ -709,8 +709,10 @@ int panel_autocorr_test (MODEL *pmod, int order,
     if (tmpinfo == NULL) return E_ALLOC;
     make_reduced_data_info(tmpinfo, pdinfo, order);
 
+#ifdef PDEBUG
     fprintf(stderr, "Created data set, n=%d, pd=%d, vars=%d, stobs='%s'\n", 
 	    tmpinfo->n, tmpinfo->pd, tmpinfo->v, tmpinfo->stobs);
+#endif
 
     /* allocate the auxiliary regression list */
     aclist = malloc((nv + 1) * sizeof *aclist);

@@ -75,4 +75,5 @@ plugin/progress_bar-2.c
 plugin/progress_bar.c
 plugin/range-mean.c
 plugin/stats_tables.c
+plugin/tramo-x12a.c
 plugin/workbook.c
