@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-09-20 10:00+0100\n"
+"PO-Revision-Date: 2004-09-20 23:50+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2656,7 +2656,7 @@ msgstr ""
 #: lib/src/modelprint.c:490 gui/selector.c:507 gui2/model_table.c:355
 #: gui2/selector.c:751
 msgid "OLS"
-msgstr "KMNK"
+msgstr ""
 
 #: lib/src/modelprint.c:491
 msgid "WLS"
@@ -2677,27 +2677,27 @@ msgstr ""
 #: lib/src/modelprint.c:495 lib/src/modelprint.c:1961
 #: lib/src/modelprint.c:1963 lib/src/modelprint.c:1967
 msgid "AR"
-msgstr ""
+msgstr "AR"
 
 #: lib/src/modelprint.c:496 gui/selector.c:541 gui2/selector.c:785
 msgid "LAD"
-msgstr ""
+msgstr "LAD"
 
 #: lib/src/modelprint.c:497 gui/selector.c:509 gui2/selector.c:753
 msgid "HCCM"
-msgstr ""
+msgstr "HCCM"
 
 #: lib/src/modelprint.c:498 gui/selector.c:521 gui2/selector.c:765
 msgid "Probit"
-msgstr ""
+msgstr "Probit"
 
 #: lib/src/modelprint.c:499 gui/selector.c:519 gui2/selector.c:763
 msgid "Logit"
-msgstr ""
+msgstr "Logit"
 
 #: lib/src/modelprint.c:500 gui/selector.c:523 gui2/selector.c:767
 msgid "Tobit"
-msgstr ""
+msgstr "Tobit"
 
 #: lib/src/modelprint.c:501 gui/selector.c:527 gui2/selector.c:771
 msgid "Pooled OLS"
@@ -2709,43 +2709,43 @@ msgstr ""
 
 #: lib/src/modelprint.c:503 gui/selector.c:525 gui2/selector.c:769
 msgid "Logistic"
-msgstr ""
+msgstr "Logistic"
 
 #: lib/src/modelprint.c:504 gui/selector.c:537 gui2/selector.c:781
 msgid "GARCH"
-msgstr ""
+msgstr "GARCH"
 
 #: lib/src/modelprint.c:506
 msgid "Cochrane--Orcutt"
-msgstr ""
+msgstr "Cochrane--Orcutt"
 
 #: lib/src/modelprint.c:507 gui/selector.c:513 gui2/selector.c:757
 msgid "Cochrane-Orcutt"
-msgstr ""
+msgstr "Cochrane-Orcutt"
 
 #: lib/src/modelprint.c:510
 msgid "Hildreth--Lu"
-msgstr ""
+msgstr "Hildreth--Lu"
 
 #: lib/src/modelprint.c:511 gui/selector.c:515 gui2/selector.c:759
 msgid "Hildreth-Lu"
-msgstr ""
+msgstr "Hildreth-Lu"
 
 #: lib/src/modelprint.c:514
 msgid "Prais--Winsten"
-msgstr ""
+msgstr "Prais--Winsten"
 
 #: lib/src/modelprint.c:515 gui/selector.c:517 gui2/selector.c:761
 msgid "Prais-Winsten"
-msgstr ""
+msgstr "Prais-Winsten"
 
 #: lib/src/modelprint.c:527 gui/selector.c:535 gui2/selector.c:779
 msgid "ARMAX"
-msgstr ""
+msgstr "ARMAX"
 
 #: lib/src/modelprint.c:529 gui2/dialogs.c:2055
 msgid "ARMA"
-msgstr ""
+msgstr "ARMA"
 
 #: lib/src/modelprint.c:723 lib/src/modelprint.c:725 lib/src/modelprint.c:728
 #: gui/selector.c:560 gui2/selector.c:804
@@ -2826,7 +2826,7 @@ msgstr ""
 #: gui/selector.c:696 gui2/model_table.c:754 gui2/model_table.c:864
 #: gui2/selector.c:923
 msgid "Dependent variable"
-msgstr "Zmienna zale¿ana"
+msgstr ""
 
 #: lib/src/modelprint.c:1005
 msgid "Variable used as weight"
