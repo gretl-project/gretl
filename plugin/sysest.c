@@ -420,7 +420,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		Xk = Xi;
 	    }
 	    M->rows = Xi->cols;
-	    M->cols = Xj->cols;
+	    M->cols = Xk->cols;
 	    err = gretl_matrix_multiply_mod ((const gretl_matrix *) Xi, 
 					     GRETL_MOD_TRANSPOSE,
 					     (const gretl_matrix *) Xk, 
