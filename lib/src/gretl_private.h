@@ -124,4 +124,6 @@ int get_vcv_index (MODEL *pmod, int i, int j, int n);
 
 int path_append (char *file, const char *path);
 
+void difflist (int *biglist, int *smalist, int *targ);
+
 #endif /* GRETL_PRIVATE_H */

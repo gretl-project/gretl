@@ -4367,7 +4367,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	goto bailout;
     }
 
-    if (fname != ppaths->datfile) {
+    if (ppaths != NULL && fname != ppaths->datfile) {
 	strcpy(ppaths->datfile, fname);
     }
 

@@ -993,6 +993,125 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
     return 0;
 }
 
+static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
+			int *varlist, int *depvars,
+			double ***pZ, DATAINFO *pdinfo,
+			int order, int neqns, int idx, int *k, 
+			int pause, PRN *prn)
+{
+    MODEL testmod;
+    double F = NADBL;
+    int robust = gretl_model_get_int(varmod, "robust");
+    int *shortlist = NULL, *outlist = NULL;
+    int end, err = 0;
+    int j, l;
+
+    if (robust) {
+	outlist = malloc(varmod->list[0] * sizeof *outlist);
+	if (outlist == NULL) return E_ALLOC;
+    }
+
+    shortlist = malloc((varmod->list[0] + 1) * sizeof *shortlist);
+    if (shortlist == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+    
+    shortlist[0] = varlist[0] - order;
+    shortlist[1] = varlist[1];
+
+    pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
+
+    for (j=0; j<neqns; j++) {
+	reset_list(shortlist, varlist);
+	for (l=1; l<=order; l++) {
+	    idx = l + 1 + j * order;
+	    if (idx > shortlist[0]) break;
+	    shortlist[idx] = varlist[idx + order];
+	}
+	end = 0;
+	for (l=shortlist[0]; l>idx; l--) {
+	    shortlist[l] = varlist[varlist[0] - end];
+	    end++;
+	}
+	pprintf(prn, _("All lags of %-8s "), 
+		pdinfo->varname[depvars[j]]);
+
+	if (robust) {
+	    difflist(varmod->list, shortlist, outlist);
+	    F = robust_omit_F(outlist, varmod);
+	    if (na(F)) err = 1;
+	} else {
+	    testmod = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    err = testmod.errcode;
+	    if (!err) {
+		F = ((testmod.ess - varmod->ess) / order) / 
+		    (varmod->ess / varmod->dfd);
+	    }
+	    clear_model(&testmod, pdinfo);
+	}
+	if (err) break;
+
+	pprintf(prn, "F(%d, %d) = %f, ", order, varmod->dfd, F);
+	pprintf(prn, _("p-value %f\n"), fdist(F, order, varmod->dfd));
+	if (var != NULL) {
+	    var->Fvals[*k] = F;
+	    *k += 1;
+	}
+    }
+
+    if (order > 1 && !err) {
+	pprintf(prn, _("All vars, lag %-6d "), order);
+	reset_list(shortlist, varlist);
+	idx = 2;
+	for (j=1; j<=neqns*(order); j++) {
+	    if (j % order) {
+		shortlist[idx] = varlist[j+1];
+		idx++;
+	    }
+	}
+	end = 0;
+	for (l=shortlist[0]; l>=idx; l--) {
+	    shortlist[l] = varlist[varlist[0]-end];
+	    end++;
+	}
+
+	if (robust) {
+	    difflist(varmod->list, shortlist, outlist);
+	    F = robust_omit_F(outlist, varmod);
+	    if (na(F)) err = 1;
+	} else {
+	    testmod = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    err = testmod.errcode;
+	    if (!err) {
+		F = ((testmod.ess - varmod->ess) / neqns) / 
+		    (varmod->ess / varmod->dfd);
+	    }
+	    clear_model(&testmod, pdinfo);
+	}
+
+	if (!err) {
+	    pprintf(prn, "F(%d, %d) = %f, ", neqns, varmod->dfd, F);
+	    pprintf(prn, _("p-value %f\n"), fdist(F, neqns, varmod->dfd)); 
+	    if (var != NULL) {
+		var->Fvals[*k] = F;
+		*k += 1;
+	    }
+	}
+    }
+
+    pputc(prn, '\n');
+    if (!err && pause) page_break(0, NULL, 0);
+
+ bailout:
+    free(shortlist);
+    if (outlist != NULL) {
+	free(outlist);
+    }   
+
+    return err;
+}
+
 /* ...................................................................  */
 
 static int real_var (int order, const LIST inlist, 
@@ -1017,12 +1136,11 @@ static int real_var (int order, const LIST inlist,
        Run the regressions and print the results.
     */
 
-    int i, j, index, k, l, listlen, end, neqns = 0;
-    int *list = NULL, *varlist = NULL, *depvars = NULL, *shortlist = NULL;
+    int i, idx, k, l, listlen, end, neqns = 0;
+    int *list = NULL, *varlist = NULL, *depvars = NULL;
     char *detlist = NULL;
-    int t1, t2, oldt1, oldt2, dfd = 0;
+    int t1, t2, oldt1, oldt2;
     int missv = 0, misst = 0;
-    double essu = 0.0, F = 0.0;
     MODEL var_model;
     GRETL_VAR *var = NULL;
     int save = (flags & VAR_SAVE);
@@ -1051,15 +1169,14 @@ static int real_var (int order, const LIST inlist,
 
     varlist = malloc((listlen + 1) * sizeof *varlist);
     depvars = malloc((listlen + 1) * sizeof *depvars);
-    shortlist = malloc(listlen * sizeof *shortlist);
 
-    if (varlist == NULL || depvars == NULL || shortlist == NULL) {
+    if (varlist == NULL || depvars == NULL) {
 	err = E_ALLOC;
 	goto var_bailout;
     }
 
     varlist[0] = listlen;
-    index = 2; /* skip beyond the counter and the dep var */
+    idx = 2; /* skip beyond the counter and the dep var */
     end = listlen;
 
     /* now fill out the list */
@@ -1079,8 +1196,8 @@ static int real_var (int order, const LIST inlist,
 		int lnum = laggenr(list[i], l, 1, pZ, pdinfo);
 
 		if (lnum > 0) {
-		    varlist[index] = lnum; 
-		    index++;
+		    varlist[idx] = lnum; 
+		    idx++;
 		} else {
 		    err = E_ALLOC;
 		    goto var_bailout;
@@ -1120,7 +1237,6 @@ static int real_var (int order, const LIST inlist,
     if (flags & VAR_PRINT_MODELS) {
 	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
     }
-    shortlist[0] = listlen - order;
 
     /* apparatus for saving the residuals */
     if (resids != NULL) {
@@ -1162,86 +1278,38 @@ static int real_var (int order, const LIST inlist,
 	    printmodel(pmod, pdinfo, prn);
 	}
 
-	if (flags & VAR_DO_FTESTS) {
-	    /* keep some results for hypothesis testing */
-	    essu = pmod->ess;
-	    dfd = pmod->dfd;	    
-	}
-
 	if (flags & VAR_IMPULSE_RESPONSES) {
 	    /* store info in var structure */
 	    err = add_model_data_to_var(var, pmod, i);
 	    if (err) goto var_bailout;
-	} else {
-	    clear_model(&var_model, pdinfo);
-	}
+	} 
 
 	if (resids != NULL) {
-	    /* estimate equations for Johansen test too (use var_model) */
+	    /* estimate equations for Johansen test */
+	    MODEL jmod;
+
 	    varlist[1] = resids->levels_list[i + 1]; 
-	    var_model = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
+	    jmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 	    if (flags & VAR_PRINT_MODELS) {
-		var_model.aux = VAR;
-		printmodel(&var_model, pdinfo, prn);
+		jmod.aux = VAR;
+		printmodel(&jmod, pdinfo, prn);
 	    }
-	    resids->uhat[i + neqns] = var_model.uhat;
-	    var_model.uhat = NULL;
-	    clear_model(&var_model, pdinfo);
+	    resids->uhat[i + neqns] = jmod.uhat;
+	    jmod.uhat = NULL;
+	    clear_model(&jmod, pdinfo);
 	}
 
 	if (flags & VAR_DO_FTESTS) {
-	    /* now build truncated lists for hypothesis tests */
-	    shortlist[1] = varlist[1];
-	    pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
-
-	    for (j=0; j<neqns; j++) {
-		reset_list(shortlist, varlist);
-		for (l=1; l<=order; l++) {
-		    index = l + 1 + j * order;
-		    if (index > shortlist[0]) break;
-		    shortlist[index] = varlist[index + order];
-		}
-		end = 0;
-		for (l=shortlist[0]; l>index; l--) {
-		    shortlist[l] = varlist[varlist[0] - end];
-		    end++;
-		}
-		pprintf(prn, _("All lags of %-8s "), 
-			pdinfo->varname[depvars[j]]);
-		var_model = lsq(shortlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
-		F = ((var_model.ess - essu) / order) / (essu / dfd);
-		clear_model(&var_model, pdinfo);
-		pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
-		pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
-		if (save) var->Fvals[k++] = F;
-	    }
-
-	    if (order > 1) {
-		pprintf(prn, _("All vars, lag %-6d "), order);
-		reset_list(shortlist, varlist);
-		index = 2;
-		for (j=1; j<=neqns*(order); j++) {
-		    if (j % order) {
-			shortlist[index] = varlist[j+1];
-			index++;
-		    }
-		}
-		end = 0;
-		for (l=shortlist[0]; l>=index; l--) {
-		    shortlist[l] = varlist[varlist[0]-end];
-		    end++;
-		}
-		var_model = lsq(shortlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
-		F = ((var_model.ess - essu) / neqns) / (essu / dfd);
-		clear_model(&var_model, pdinfo);
-		pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
-		pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
-		if (save) var->Fvals[k++] = F;
-	    }
-
-	    pputc(prn, '\n');
-	    if (pause) page_break(0, NULL, 0);
+	    var_F_tests(pmod, (save)? var : NULL,
+			varlist, depvars,
+			pZ, pdinfo, order, neqns, 
+			idx, &k, pause, prn);
 	}
+
+	if (1) { /* FIXME? */
+	    clear_model(&var_model, pdinfo);
+	}
+
     }
     pputc(prn, '\n');
 
@@ -1249,7 +1317,6 @@ static int real_var (int order, const LIST inlist,
 
     free(list);
     free(varlist);
-    free(shortlist);
     free(depvars);
     free(detlist);
 

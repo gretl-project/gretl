@@ -390,21 +390,26 @@ int do_fcp (const int *list, double **Z,
 
 /* sanity/dimension check */
 
-static int check_garch_list (const int *list, int **plist)
+static int *get_garch_list (const int *list, int *err)
 {
+    int *ret = NULL;
     int i, p = list[1], q = list[2];
-    int err = 0, add0 = 1;
+    int add0 = 1;
+
+    *err = 0;
 
     /* rule out pure AR in variance */
     if (p > 0 && q == 0) {
 	gretl_errmsg_set(_("Error in garch command"));
-	err = E_DATA;
+	*err = E_DATA;
+	return NULL;
     }
 
     /* rule out excessive total GARCH terms */
     else if (p + q > 5) {
 	gretl_errmsg_set(_("Error in garch command"));
-	err = E_DATA;
+	*err = E_DATA;
+	return NULL;
     }
 
     /* insert constant if not present */
@@ -414,20 +419,21 @@ static int check_garch_list (const int *list, int **plist)
 	    break;
 	}
     }
-    *plist = malloc((list[0] + 1 + add0) * sizeof **plist);
-    if (*plist == NULL) {
-	err = E_ALLOC;
+
+    ret = malloc((list[0] + 1 + add0) * sizeof *ret);
+    if (ret == NULL) {
+	*err = E_ALLOC;
     } else {
-	(*plist)[0] = list[0] + add0;
+	ret[0] = list[0] + add0;
 	for (i=1; i<=list[0]; i++) {
-	    (*plist)[i] = list[i];
+	    ret[i] = list[i];
 	}
 	if (add0) {
-	    (*plist)[i] = 0;
+	    ret[i] = 0;
 	}
     }
 
-    return err;
+    return ret;
 }
 
 /* make regresson list for initial OLS */
@@ -455,16 +461,19 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL model;
     int *list, *ols_list;
+    int err;
 
     gretl_model_init(&model, NULL);
 
-    model.errcode = check_garch_list(cmdlist, &list);
-    if (model.errcode) {
+    list = get_garch_list(cmdlist, &err);
+    if (err) {
+	model.errcode = err;
 	return model;
     }
 
     ols_list = make_ols_list(list);
     if (ols_list == NULL) {
+	free(list);
 	model.errcode = E_ALLOC;
 	return model;
     }
@@ -477,7 +486,56 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     } 
 
     free(ols_list);
+
     do_fcp(list, *pZ, pdinfo, &model, prn, opt); 
+
+    free(list);
 
     return model;
 }
+
+#ifdef STANDALONE
+
+int main (void) 
+{
+    char *fname;
+    MODEL model;
+    double **Z = NULL;
+    DATAINFO *datainfo;
+    PRN *prn;
+    int *list;
+    int err;
+
+    datainfo = datainfo_new();
+    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
+
+    /* 4 1 1 999 1 */
+
+    list = malloc(5 * sizeof *list);
+    list[0] = 4;
+    list[1] = list[2] = list[4] = 1;
+    list[3] = 999;
+
+    fname = malloc(128 * sizeof *fname);
+    strcpy(fname, "/opt/esl/share/gretl/data/misc/b-g.gdt");
+
+    err = get_xmldata(&Z, &datainfo, fname, 
+		      NULL, DATA_NONE, prn, 0);
+
+    if (!err) {
+	model = garch_model(list, &Z, datainfo,
+			    prn, OPT_NONE);
+    } 
+
+    free_Z(Z, datainfo);
+    clear_model(&model, NULL);
+    free_datainfo(datainfo);
+    gretl_print_destroy(prn);
+    free(list);
+    free(fname);
+
+    return 0;
+}
+
+
+#endif

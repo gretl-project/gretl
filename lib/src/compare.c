@@ -159,7 +159,7 @@ omit_from_list (int *list, const int *omitvars, int *newlist,
 
 /* ........................................................... */
 
-static void difflist (int *biglist, int *smalist, int *targ)
+void difflist (int *biglist, int *smalist, int *targ)
 {
     int i, j, k, match;
 

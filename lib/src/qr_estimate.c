@@ -747,7 +747,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     /* VCV and standard errors */
     if (opts & OPT_R) { 
 	gretl_model_set_int(pmod, "robust", 1);
-	if ((opts & OPT_T) & !get_force_hc()) {
+	if ((opts & OPT_T) && !get_force_hc()) {
 	    qr_make_hac(pmod, Z, xpxinv);
 	} else {
 	    qr_make_hccme(pmod, Z, Q, xpxinv);

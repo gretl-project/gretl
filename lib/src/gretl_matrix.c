@@ -833,6 +833,8 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
  * 
  */
 
+#define SIMPLE_MATH
+
 int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 			       const gretl_matrix *b, int bflag,
 			       gretl_matrix *c)
@@ -842,12 +844,14 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     int rrows, rcols;
     const int atr = (aflag == GRETL_MOD_TRANSPOSE);
     const int btr = (bflag == GRETL_MOD_TRANSPOSE);
+#ifdef SIMPLE_MATH
+    int aidx, bidx;
+    double targ;
+#else
     const double *a_row, *a_col;
     const double *b_row, *b_col;
     double *c_row, *c_col;
-#ifdef PARTIAL_OPT
-    int aidx, bidx;
-#endif
+#endif    
 
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
@@ -877,8 +881,9 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     }
 
 #ifdef SIMPLE_MATH
-    /* This version represents the math quite clearly, but is very
-       wasteful of multiplications. */
+    /* This version represents the math quite clearly, but seems to be
+       wasteful of multiplications. 
+    */
     for (i=0; i<lrows; i++) {
 	for (j=0; j<rcols; j++) {
 	    targ = 0.0;
@@ -890,31 +895,12 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	    c->val[mdx(c,i,j)] = targ;
 	}
     }
-#endif
-
-#ifdef PARTIAL_OPT
-    /* This is a partial optimization, using pointers for the
-       product matrix only.  Still fairly easy to follow. */
-    c_row = c->val;
-    for (i=0; i < c->rows; i++) {
-	c_col = c_row;
-	for (j=0; j < c->cols; j++) {
-	    *c_col = 0.0;
-	    for (k=0; k<lcols; k++) {
-		aidx = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
-		bidx = (btr)? mdxtr(b,k,j) : mdx(b,k,j);
-		*c_col += a->val[aidx] * b->val[bidx];
-	    }
-	    c_col += c->rows;
-	}
-	c_row++;
-    }
 #else
-    /* This is a fuller optimization: it uses pointer addition to
+    /* This is an attempt at optimization: it uses pointer addition to
        avoid multiplications wherever possible, in the course of
-       finding the addresses of the terms to be multiplied.  It is
-       rather hard to follow, but should be faster for large matrices,
-       I think.
+       finding the addresses of the terms to be multiplied.  I
+       expected it to be faster, but in testing to date it is actually
+       slower.  Hmm.
     */
 
     /* initialize row and column pointers */
