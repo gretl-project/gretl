@@ -12,8 +12,15 @@ version 1.0.3
   values to a specified number of significant digits or decimal places
 - Fix bug in command echo for "store" and a few others
 - Add selector for variables to be saved when doing "Save as"
-  or "Export" (gtk 2.0 version only)
-- Add PNG graphs to win32 version
+  or "Export" (gtk-2 version only)
+- Add PNG graphs to win32 version, and standardize on PNG graphs for
+  all display including graph editing
+- Update win32 version to gtk version 2.2.0
+- Most development is now taking place on the gtk-2 version, and
+  I strongly recommend the use of gtk-2 for gretl on Linux (although 
+  the gretl rpm binary package uses gtk-1.2 for broader backwards 
+  compatibility, and I am trying to maintain this older version in 
+  a tolerably up to date state)
 - Raise shared library revision number to 3
 
 12/09/02 version 1.0.2
