@@ -3589,7 +3589,7 @@ static void clear_files_list (int filetype, char **filep)
     };
 
     for (i=0; i<MAXRECENT; i++) {
-	sprintf(itempath, "%s/%d. %s", _(pathstart[filetype - 1]),
+	sprintf(itempath, "%s/%d. %s", pathstart[filetype - 1],
 		i+1, endbit(tmpname, filep[i], -1));
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) 
@@ -3617,8 +3617,7 @@ void mkfilelist (int filetype, const char *fname)
             break;
         }
     }
-    if (match == 0) 
-	return; /* file is on top: no change in list */
+    if (match == 0) return; /* file is on top: no change in list */
 
     /* clear menu files list before rebuilding */
     clear_files_list(filetype, filep);
@@ -3812,7 +3811,7 @@ void add_files_to_menu (int filetype)
 	N_("/File/Open command file/sep")
     };
     const gchar *mpath[] = {
-	N_("/File/_Open data"),
+	N_("/File/Open data"),
 	N_("/Session"),
 	N_("/File/Open command file")
     };
@@ -3829,8 +3828,7 @@ void add_files_to_menu (int filetype)
 	callfunc = set_script_from_filelist;
 	filep = scriptp;
     }
-    else
-	return;
+    else return;
 
     /* See if there are any files to add */
     if (filep[0][0] == '\0') return;
@@ -3842,8 +3840,7 @@ void add_files_to_menu (int filetype)
 	w = gtk_item_factory_get_widget(mdata->ifac, msep[filetype - 1]);
 	if (w == NULL) {
 	    fileitem.path = mymalloc(80);
-	    strcpy(fileitem.path, mpath[filetype - 1]);
-	    strcat(fileitem.path, "/sep");
+	    strcpy(fileitem.path, msep[filetype - 1]);
 	    fileitem.accelerator = NULL;
 	    fileitem.callback = NULL;
 	    fileitem.callback_action = 0;
@@ -3855,8 +3852,7 @@ void add_files_to_menu (int filetype)
     /* put the files under the menu separator */
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i][0]) {
-	    if (fileitem.path == NULL)
-		fileitem.path = mymalloc(80);
+	    if (fileitem.path == NULL) fileitem.path = mymalloc(80);
 	    fileitem.accelerator = NULL;
 	    fileitem.callback_action = i; 
 	    fileitem.item_type = NULL;

@@ -41,7 +41,10 @@ static int printvars (FILE *fp, int t, const int *list, double **Z)
 {
     int i, miss = 0;
     double xx;
-    
+
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
     for (i=1; i<=list[0]; i++)  {
 	xx = Z[list[i]][t];
 	if (na(xx)) {
@@ -51,6 +54,9 @@ static int printvars (FILE *fp, int t, const int *list, double **Z)
 	    fprintf(fp, "%g ", xx);
 	}
     }
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
     fprintf(fp, "\n");
     return miss;
 }
@@ -496,7 +502,13 @@ int gnuplot_display (const PATHS *ppaths)
 
 static void print_xrange (FILE *fp, double xmin, double xmax)
 {
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
     fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
 }
 
 /**
@@ -735,6 +747,9 @@ int gnuplot (LIST list, const int *lines,
 	    else fputc('\n', fq);
 	}
     } 
+#ifdef LOCAL_NUMERIC
+	setlocale(LC_NUMERIC, "C");
+#endif
     if (ols_ok) 
 	fprintf(fq, _("%f + %f*x title 'least squares fit' w lines\n"),
 		a, b);
@@ -755,6 +770,9 @@ int gnuplot (LIST list, const int *lines,
 	    }
 	    fprintf(fq, "e\n");
 	}
+#ifdef LOCAL_NUMERIC
+	setlocale(LC_NUMERIC, "");
+#endif
 	free(yvar1);
 	free(yvar2);
     } else {
@@ -771,6 +789,7 @@ int gnuplot (LIST list, const int *lines,
 	    fprintf(fq, "e\n");
 	}
     }
+
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fq, "pause -1\n");
@@ -864,6 +883,9 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
 		pdinfo->varname[plotlist[i+1]]);
 	fprintf(fp, "plot '-' using 1:2\n");
 
+#ifdef LOCAL_NUMERIC
+	setlocale(LC_NUMERIC, "C");
+#endif
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    m = (yvar)? plotlist[i+1] : xvar;
 	    xx = (*pZ)[m][t];
@@ -875,6 +897,9 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
 	    else fprintf(fp, "%f\n", xx);
 	}
 	fprintf(fp, "e\n");
+#ifdef LOCAL_NUMERIC
+	setlocale(LC_NUMERIC, "");
+#endif
     } 
     fprintf(fp, "set nomultiplot\n");
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
@@ -905,6 +930,10 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     int i, K = freq->numbins;
 
     if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     fprintf(fp, "# frequency plot\n");
 
@@ -989,6 +1018,10 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	fprintf(fp, "%f %f\n", freq->midpt[i], lambda * freq->f[i]);
     fprintf(fp, "e\n");
 
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
+
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fp, "pause -1\n");
 #endif
@@ -1016,6 +1049,9 @@ int plot_fcast_errs (const int n, const double *obs,
 	    "w errorbars\n", varname);
 
     /* send data inline */
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
     for (t=0; t<n; t++)
 	fprintf(fp, "%f %f\n", obs[t], depvar[t]);
     fprintf(fp, "e\n");
@@ -1025,6 +1061,9 @@ int plot_fcast_errs (const int n, const double *obs,
     for (t=0; t<n; t++)
 	fprintf(fp, "%f %f %f\n", obs[t], yhat[t], maxerr[t]);
     fprintf(fp, "e\n");
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fp, "pause -1\n");
@@ -1172,6 +1211,9 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
     } 
 
     /* supply the data to gnuplot inline */
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
     miss = 0;
     plotn = plot->t2 - plot->t1 + 1;
     for (i=1; i<=datlines; i++) {  
@@ -1189,6 +1231,9 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	}
 	fprintf(fp, "e\n");
     }
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fflush(fp);
     if (dump) fclose(fp);

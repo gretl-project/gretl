@@ -367,7 +367,8 @@ int corrgram (const int varno, const int order, double ***pZ,
 	}
 	acf[l] = _corr(nobs-l, x, y);
     }
-    pprintf(prn, _("\nAutocorrelation function for %s\n\n"), pdinfo->varname[varno]);
+    pprintf(prn, _("\nAutocorrelation function for %s\n\n"), 
+	    pdinfo->varname[varno]);
 
     /* add Box-Pierce statistic */
     box = 0;
@@ -439,12 +440,18 @@ int corrgram (const int varno, const int order, double ***pZ,
 	fprintf(fq, "plot '-' using 1:2 w impulses\n");
     }
     /* send data inline */
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
     for (l=1; l<=m; l++) 
 	fprintf(fq, "%d %f\n", l, acf[l]);
     fprintf(fq, "e\n");
     for (l=1; l<=maxlag; l++) 
 	fprintf(fq, "%f %f\n", l + .1, pacf[l-1]);
     fprintf(fq, "e\n");
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fq, "pause -1\n");
@@ -548,7 +555,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 		 PATHS *ppaths, const int batch, 
 		 const int opt, PRN *prn)
 {
-    double *autocov, *omega, *hhat;
+    double *autocov, *omega, *hhat, *savexx = NULL;
     double xx, yy, varx, w;
     int err = 0, k, xmax, L, nT; 
     int nobs, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -633,11 +640,13 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 	fprintf(fq, "plot '-' using 1:2 w lines\n");
     }
 
-    pprintf(prn, "\nPeriodogram for %s\n", pdinfo->varname[varno]);
-    pprintf(prn, "Number of observations = %d\n", nobs);
+    pprintf(prn, _("\nPeriodogram for %s\n"), pdinfo->varname[varno]);
+    pprintf(prn, _("Number of observations = %d\n"), nobs);
     if (opt) 
-	pprintf(prn, "Using Bartlett lag window, length %d\n\n", L);
-    pprintf(prn, " omega  scaled frequency  periods  spectral density\n\n");
+	pprintf(prn, _("Using Bartlett lag window, length %d\n\n"), L);
+    pprintf(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
+
+    if (!batch && fq) savexx = malloc((1 + nobs/2) * sizeof *savexx);
 
     varx = _esl_variance(t1, t2, &(*pZ)[varno][0]);
     varx *= (double) (nobs - 1) / nobs;
@@ -652,7 +661,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 	xx /= 2 * M_PI;
 	pprintf(prn, " %.4f%9d%16.2f%14.4f\n", yy, t, 
 		(double) (nobs / 2) / (2 * t), xx);
-	if (!batch) fprintf(fq, "%d %f\n", t, xx);
+	if (!batch && fq && savexx) savexx[t] = xx;
 	if (t <= nT) {
 	    omega[t-1] = yy;
 	    hhat[t-1] = xx;
@@ -661,12 +670,24 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     pprintf(prn, "\n");
 
     if (!batch && fq) {
-	fprintf(fq, "e\n");
-#ifdef OS_WIN32
-	fprintf(fq, "pause -1\n");
+	if (savexx == NULL) {
+	    fclose(fq);
+	} else {
+#ifdef LOCAL_NUMERIC
+	    setlocale(LC_NUMERIC, "C");
 #endif
-	fclose(fq);
-	err = gnuplot_display(ppaths);
+	    for (t=1; t<=nobs/2; t++) fprintf(fq, "%d %f\n", t, savexx[t]);
+#ifdef LOCAL_NUMERIC
+	    setlocale(LC_NUMERIC, "");
+#endif
+	    fprintf(fq, "e\n");
+#ifdef OS_WIN32
+	    fprintf(fq, "pause -1\n");
+#endif
+	    fclose(fq);
+	    free(savexx);
+	    err = gnuplot_display(ppaths);
+	}
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {

@@ -102,8 +102,4 @@ int _ztoxy (int v1, int v2, double *px, double *py,
 
 int _reserved (const char *str);
 
-#ifdef ENABLE_NLS
-int _get_local_decpoint (void);
-#endif
-
 #endif /* GRETL_INTERNAL_H */

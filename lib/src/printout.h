@@ -59,6 +59,8 @@ void print_white_vcv (const MODEL *pmod, PRN *prn);
 
 int page_break (const int n, int *lineno, const int quit_option);
 
+void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
+
 int printdata (LIST list, 
 	       double ***pZ, const DATAINFO *pdinfo, 
 	       int pause, int byobs, PRN *prn);

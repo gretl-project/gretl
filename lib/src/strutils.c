@@ -144,6 +144,28 @@ int haschar (char c, const char *str)
 }
 
 /**
+ * charsub:
+ * @str: the string to operate on.
+ * @find: the character to replace.
+ * @repl: the replacement character.
+ *
+ * Replaces all occurrences of @find with @repl in @str.
+ *
+ * Returns: the (possibly modified) string.
+ */
+
+char *charsub (char *str, char find, char repl)
+{
+    char *p = str;
+
+    while (*p) {
+	if (*p == find) *p = repl;
+	p++;
+    }
+    return str;
+}
+
+/**
  * _isnumber:
  * @str: the string to examine.
  *
@@ -504,12 +526,64 @@ int doing_nls (void)
 #endif
 }
 
-#ifdef ENABLE_NLS
-int _get_local_decpoint (void)
-{
-    struct lconv *lc;
+/**
+ * get_local_decpoint:
+ *
+ * Returns: the character representing a decimal point in the current locale.
+ *
+ */
 
-    lc = localeconv();
-    return *lc->decimal_point;
-}
+int get_local_decpoint (void)
+{
+#ifdef ENABLE_NLS
+    struct lconv *lc;
+    static int decpoint;
+
+    if (decpoint == 0) {
+	lc = localeconv();
+	decpoint = *lc->decimal_point;
+    }
+    return decpoint;
+#else
+    return '.';
 #endif
+}
+
+/**
+ * obs_str_to_double:
+ * @obs: string representation of observation number.
+ *
+ * Returns: the floating-point counterpart of @obs.
+ */
+
+double obs_str_to_double (const char *obs)
+{
+    char tmp[9];
+    static int decpoint;
+
+    if (decpoint == 0) decpoint = get_local_decpoint();
+
+    strcpy(tmp, obs);
+    charsub(tmp, ':', decpoint);
+    return atof(tmp);
+}
+
+/**
+ * colonize_obs:
+ * @obs: string representation of observation number.
+ *
+ * Converts a decimal point in @obs to a colon.  Locale sensitive.
+ *
+ * Returns: the (possibly) modified obs string.
+ */
+
+char *colonize_obs (char *obs)
+{
+    static int decpoint;
+
+    if (decpoint == 0) decpoint = get_local_decpoint();
+
+    charsub(obs, decpoint, ':');
+    if (decpoint != '.') charsub(obs, '.', ':');
+    return obs;
+}

@@ -1351,14 +1351,13 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
     ntodate(date2, t2, pdinfo);
     pprintf(prn, _("\nFull data range: %s - %s (n = %d)\n"),
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
-    pprintf(prn, _("Model estimation range:  %s - %s"), date1, date2);
+    pprintf(prn, _("Model estimation range: %s - %s"), date1, date2);
     if (pmod->nobs == pdinfo->n) pprintf(prn, "\n");
     else pprintf(prn, " (n = %d)\n", pmod->nobs); 
 
     pprintf(prn, _("Standard error of residuals = %f\n"), pmod->sigma);
     
-    if (pdinfo->pd == 1) pprintf(prn, "\n Obs ");
-    else pprintf(prn, "\n\n     Obs ");
+    pprintf(prn, "\n     Obs ");
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, pdinfo->varname[pmod->list[1]]);
 	if (i == 2) strcpy(label, _("fitted"));
@@ -1378,12 +1377,10 @@ static void varheading (const int v1, const int v2,
 {
     int mv;
         
-    if (pdinfo->pd == 1) pprintf(prn, "\n Obs ");
-    else pprintf(prn, "\n\n     Obs ");
+    pprintf(prn, "\n     Obs ");
     for (mv=v1; mv<=v2; ++mv) 
 	pprintf(prn, "%13s", pdinfo->varname[list[mv]]);
-    pprintf(prn, "\n");
-    pprintf(prn, "\n");
+    pprintf(prn, "\n\n");
 }
 
 /* ........................................................... */
@@ -1454,7 +1451,7 @@ static int get_signif (double *x, int n)
     char decpoint = '.';
 
 #ifdef ENABLE_NLS
-    decpoint = _get_local_decpoint();
+    decpoint = get_local_decpoint();
 #endif
 
     for (i=0; i<n; i++) {
@@ -1568,6 +1565,28 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 }
 
 /**
+ * print_obs_marker:
+ * @t: observation number.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print a string (label, date or obs number) representing the given @t.
+ *
+ */
+
+void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
+{
+    if (pdinfo->markers) { 
+	pprintf(prn, "%8s ", pdinfo->S[t]); 
+    } else {
+	char tmp[9]; 
+
+	ntodate(tmp, t, pdinfo);
+	pprintf(prn, "%8s ", tmp);
+    }
+}
+
+/**
  * printdata:
  * @list: list of variables to print.
  * @pZ: pointer to data matrix.
@@ -1589,8 +1608,8 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     register int t;
     int gui, isconst; 
     int *pmax = NULL; 
-    int pd = pdinfo->pd, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    double xx, xdate, sd0 = pdinfo->sd0;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    double xx;
     int *tmplist = NULL, freelist = 0;
     char line[96];
 
@@ -1681,21 +1700,10 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 		if (pdinfo->markers) { /* data marker strings present */
 		    sprintf(line, "%8s ", pdinfo->S[t]);
 		} else {
-		    xdate = date(t, pd, sd0);
-		    if (pd == 1) {
-			sprintf(line, "%4d ", (int) xdate);
-		    } 
-		    else if (dataset_is_daily(pdinfo)) {
-			char datestr[9];
-			
-			ntodate(datestr, t, pdinfo);
-			sprintf(line, "%8s ", datestr);
-		    }
-		    else if (pd < 10) {
-			sprintf(line, "%8.1f ", xdate);
-		    } else {
-			sprintf(line, "%8.2f ", xdate);
-		    }
+		    char tmp[9];
+
+		    ntodate(tmp, t, pdinfo);
+		    sprintf(line, "%8s ", tmp);
 		} /* end print obs marker */
 		for (v=v1; v<=v2; v++) {
 		    xx = (*pZ)[list[v]][t];
@@ -1741,9 +1749,9 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 int print_fit_resid (const MODEL *pmod, double ***pZ, 
 		     DATAINFO *pdinfo, PRN *prn)
 {
-    int pmax, depvar, t, nfit, ast = 0;
-    int pd = pdinfo->pd, t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
-    double xx, xdate, sd0 = pdinfo->sd0;
+    int pmax, depvar, t, nfit, anyast = 0;
+    int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
+    double xx;
     char fcastline[32];
 
     depvar = pmod->list[1];
@@ -1766,38 +1774,26 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
     for (t=0; t<n; t++) {
 	if (t == t1 && t) pprintf(prn, "\n");
 	if (t == t2 + 1) pprintf(prn, "\n");
-	if (pdinfo->markers) { /* data marker strings present */
-	    pprintf(prn, "%8s ", pdinfo->S[t]); 
-	} else {
-	    if (dataset_is_daily(pdinfo)) {
-		char datestr[9];
 
-		ntodate(datestr, t, pdinfo);
-		pprintf(prn, "%8s ", datestr);
-	    } else {
-		xdate = date(t, pd, sd0);
-		if (pd == 1) 
-		    pprintf(prn, "%4d ", (int) xdate);
-		else if (pd < 10) 
-		    pprintf(prn, "%8.1f ", xdate);
-		else 
-		    pprintf(prn, "%8.2f ", xdate);
-	    }
-	}
+	print_obs_marker(t, pdinfo, prn);
+
 	if (na((*pZ)[depvar][t]) || na((*pZ)[nfit][t])) { 
 	    pprintf(prn, "\n");
 	} else {
+	    int ast;
+
 	    xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
 	    ast = (fabs(xx) > 2.5 * pmod->sigma);
-	    pprintf(prn, "%12.*f%12.*f%12.*f%s\n", 
+	    if (ast) anyast = 1;
+	    pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
 		    pmax, (*pZ)[depvar][t],
 		    pmax, (*pZ)[nfit][t], pmax, xx,
 		    (ast)? " *" : "");
 	}
     }
     pprintf(prn, "\n");
-    if (ast) pprintf(prn, _("Note: * denotes a residual in excess of "
-		     "2.5 standard errors\n"));
+    if (anyast) pprintf(prn, _("Note: * denotes a residual in excess of "
+			       "2.5 standard errors\n"));
     return 0;
 }
 

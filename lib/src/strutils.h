@@ -42,6 +42,8 @@ void delchar (int c, char *str);
 
 int haschar (char c, const char *str);
 
+char *charsub (char *str, char find, char repl);
+
 void lower (char *str);
 
 void clear (char *str, int len);
@@ -61,5 +63,11 @@ int pprintf (PRN *prn, const char *template, ...);
 char *safecpy (char *targ, const char *src, int n);
 
 int doing_nls (void);
+
+int get_local_decpoint (void);
+
+double obs_str_to_double (const char *obs);
+
+char *colonize_obs (char *obs);
 
 #endif /* STRUTILS_H */

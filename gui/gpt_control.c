@@ -823,20 +823,6 @@ void gpt_save_dialog (void)
 
 /* ........................................................... */
 
-static void charsub (int c_old, int c_new, char *str)
-{
-    size_t i, n = strlen(str);
-
-    for (i=0; i<n; i++) {
-	if (str[i] == c_old) {
-	    str[i] = c_new;
-	    break;
-	}
-    }
-}
-
-/* ........................................................... */
-
 static int chop_comma (char *str)
 {
     size_t i, n = strlen(str);
@@ -855,24 +841,21 @@ static int chop_comma (char *str)
 
 static void get_gpt_data (char *line, double *x, double *y)
 {
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
     if (x != NULL) {
-	if (sscanf(line, "%lf %lf", x, y) == 2) return;
-	if (sscanf(line, "%lf", x) == 1) {
-	    *y = NADBL;
-	    return;
-	}
-	if (sscanf(line, "%*s %lf", y) == 1) {
-	    *x = NADBL;
-	    return;
+	if (sscanf(line, "%lf %lf", x, y) != 2) {
+	    if (sscanf(line, "%lf", x) == 1) *y = NADBL;
+	    else if (sscanf(line, "%*s %lf", y) == 1) *x = NADBL;
 	}
 	*x = NADBL; *y = NADBL;
-	return;
     } else {
-	if (sscanf(line, "%*s %lf", y) == 1) return;
-	*y = NADBL;
+	if (sscanf(line, "%*s %lf", y) != 1) *y = NADBL;
     }
-
-    return;
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
 }
 
 /* ........................................................... */
@@ -1059,7 +1042,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	tmp = strstr(line, "using");
 	if (tmp && tmp[11] == '*') {
             safecpy(plot->lines[i].scale, tmp + 12, 7);
-	    charsub(')', '\0', plot->lines[i].scale);
+	    charsub(plot->lines[i].scale, ')', '\0');
 	} else {
 	    if (tmp) 
 		strcpy(plot->lines[i].scale, "1.0");
@@ -1247,12 +1230,18 @@ static void get_data_xy (png_plot_t *plot, int x, int y,
     }
 }
 
-static double x_to_date (double x)
+static void x_to_date (double x, int pd, char *str)
 {
     int yr = (int) x;
-    int qtr = (int) ((x - yr + .25) * 4);
+    double t, frac = 1.0 / pd;
+    int subper = (int) ((x - yr + frac) * pd);
+    static int decpoint;
 
-    return yr + qtr / 10.0;
+    if (decpoint == 0) decpoint = get_local_decpoint();
+
+    t = yr + subper / ((pd < 10)? 10.0 : 100.0);
+    sprintf(str, "%.*f", (pd < 10)? 1 : 2, t);
+    charsub(str, decpoint, ':');
 }
 
 static void create_selection_gc (png_plot_t *plot)
@@ -1315,12 +1304,12 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
-	if (plot->pd == 4) 
-	    sprintf(label, "%.1f", x_to_date(data_x));
-	else
-	    sprintf(label, (plot->xint)? "%.0f" : "%.4g", data_x);
+	if (plot->pd == 4 || plot->pd == 12) {
+	    x_to_date(data_x, plot->pd, label);
+	} else
+	    sprintf(label, (plot->xint)? "%7.0f" : "%7.4g", data_x);
 	if (!na(data_y)) {
-	    sprintf(label_y, (plot->yint)? ", %.0f" : ", %.4g", data_y);
+	    sprintf(label_y, (plot->yint)? " %-7.0f" : " %-7.4g", data_y);
 	    strcat(label, label_y);
 	}
 	if (plot->zoom->active && (state & GDK_BUTTON1_MASK)) {
@@ -1447,10 +1436,16 @@ static int make_new_png (png_plot_t *plot, int view)
 	}
 
 	/* switch to zoomed data range */
+#ifdef LOCAL_NUMERIC
+	setlocale(LC_NUMERIC, "C");
+#endif
 	fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom->xmin,
 		plot->zoom->xmax);
 	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom->ymin,
 		plot->zoom->ymax);
+#ifdef LOCAL_NUMERIC
+	setlocale(LC_NUMERIC, "");
+#endif
 
 	while (fgets(line, MAXLEN-1, fpin)) {
 	    if (strncmp(line, "set xrange", 10) &&
@@ -1650,9 +1645,15 @@ static int get_plot_yrange (png_plot_t *plot)
 	if (fpin == NULL) return 1;
 
 	/* read the y-axis min and max from the ascii graph */
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
 	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
 	    if (sscanf(line, "%lf", &(y[i])) == 1) i++;
 	}
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
 
 	fclose(fpin);
 	remove("gptdumb.txt");
@@ -1688,6 +1689,9 @@ static int get_plot_ranges (png_plot_t *plot)
     fp = fopen(plot->spec->fname, "r");
     if (fp == NULL) return 0;
 
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "C");
+#endif
     while (fgets(line, MAXLEN-1, fp)) {
 	if (sscanf(line, "set xrange [%lf:%lf]", 
 		   &plot->xmin, &plot->xmax) == 2) 
@@ -1698,6 +1702,9 @@ static int get_plot_ranges (png_plot_t *plot)
 	    plot->title = 1;	
 	if (!strncmp(line, "plot ", 5)) break;
     }
+#ifdef LOCAL_NUMERIC
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fclose(fp);
 

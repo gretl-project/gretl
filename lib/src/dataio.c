@@ -31,6 +31,8 @@
 
 #define QUOTE '\''
 
+#define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
+
 static int prepZ (double ***pZ, const DATAINFO *pdinfo);
 static int writelbl (const char *lblfile, const int *list, 
 		     const DATAINFO *pdinfo);
@@ -45,29 +47,16 @@ static int xmlfile (const char *fname);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
-#ifdef ENABLE_NLS
-static void charsub (char *str, char find, char repl)
-{
-    char *p = str;
 
-    while (*p) {
-	if (*p == find) *p = repl;
-	p++;
-    }
-}
-#endif
-
-static double atod (char *s, DATAINFO *pdinfo)
+static double atod (char *s, const DATAINFO *pdinfo)
 {
-#ifdef ENABLE_NLS
     static int local_decpoint;
 
-    if (local_decpoint == 0) local_decpoint = _get_local_decpoint();
+    if (local_decpoint == 0) local_decpoint = get_local_decpoint();
 
     if (local_decpoint != pdinfo->decpoint) {
 	charsub(s, pdinfo->decpoint, local_decpoint);
     }
-#endif
     return atof(s);
 }
 
@@ -159,7 +148,7 @@ static double get_date_x (int pd, const char *obs)
 
 	if (ed >= 0) x = ed;
     } else 
-	x = atof(obs); 
+	x = obs_str_to_double(obs); 
 
     return x;
 }
@@ -254,6 +243,14 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     return 0;
 }
 
+static char locale_friendly_delim (void)
+{
+    if (',' == get_local_decpoint())
+	return ' ';
+    else
+	return ',';
+}
+
 /**
  * datainfo_new:
  *
@@ -284,7 +281,7 @@ DATAINFO *datainfo_new (void)
     dinfo->varname = NULL;
     dinfo->label = NULL;    
     dinfo->markers = 0;  
-    dinfo->delim = ',';
+    dinfo->delim = locale_friendly_delim();
     dinfo->decpoint = '.';
     dinfo->S = NULL;
     dinfo->descrip = NULL;
@@ -368,7 +365,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 
     pdinfo->S = NULL;
     pdinfo->markers = 0;
-    pdinfo->delim = ',';
+    pdinfo->delim = locale_friendly_delim();
     pdinfo->descrip = NULL;
     
     return 0;
@@ -531,7 +528,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 		    return 1;
 		}
 		numstr[23] = 0;
-		Z[i][t] = atof(numstr);
+		Z[i][t] = atod(numstr, pdinfo);
 		if (i < pdinfo->v - 1)
 		    offset += strlen(numstr) + 1;
 	    }
@@ -650,6 +647,10 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     fscanf(fp, "%d", &pdinfo->pd);
     fscanf(fp, "%s", pdinfo->stobs);
     fscanf(fp, "%s", pdinfo->endobs);
+
+    colonize_obs(pdinfo->stobs);
+    colonize_obs(pdinfo->endobs);
+
     pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
     pdinfo->n = -1;
     pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
@@ -724,8 +725,7 @@ static int check_date (const char *date)
     gretl_errmsg[0] = 0;
 
     for (i=0; i<n; i++) {
-	if (!isdigit((unsigned char) date[i]) && date[i] != '.' 
-	    && date[i] != ':') {
+	if (!isdigit((unsigned char) date[i]) && !IS_DATE_SEP(date[i])) {
 	    if (isprint((unsigned char) date[i]))
 		sprintf(gretl_errmsg, 
 			_("Bad character '%c' in date string"), date[i]);
@@ -768,7 +768,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 
     n = strlen(date);
     for (i=1; i<n; i++) {
-        if (date[i] == '.' || date[i] == ':') {
+        if (IS_DATE_SEP(date[i])) {
 	    dotpos1 = i;
 	    break;
 	}
@@ -781,7 +781,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     }
     n = strlen(pdinfo->stobs);
     for (i=1; i<n; i++) {
-        if (pdinfo->stobs[i] == '.' || pdinfo->stobs[i] == ':') {
+        if (IS_DATE_SEP(pdinfo->stobs[i])) {
 	    dotpos2 = i;
 	    break;
 	}
@@ -819,25 +819,29 @@ int dateton (const char *date, const DATAINFO *pdinfo)
  * 
  */
 
-void ntodate (char *datestr, int nt, const DATAINFO *pdinfo)
-/* print to datestr the calendar representation of nt */
+void ntodate (char *datestr, int t, const DATAINFO *pdinfo)
+/* print to datestr the calendar representation of t */
 {
-    double xn;
+    double x;
+    static int decpoint;
+
+    if (decpoint == 0) decpoint = get_local_decpoint();
 
     if (dated_daily_data(pdinfo)) {
-	daily_date_string(datestr, nt, pdinfo);
+	daily_date_string(datestr, t, pdinfo);
 	return;
     }
 
-    xn = date(nt, pdinfo->pd, pdinfo->sd0);
+    x = date(t, pdinfo->pd, pdinfo->sd0);
 
     if (pdinfo->pd == 1) {
-        int n = (int) xn;
+        int n = (int) x;
 
         sprintf(datestr, "%d", n);
     } else {
-	if (pdinfo->pd < 10) sprintf(datestr, "%.1f", xn);
-	else sprintf(datestr, "%.2f", xn);
+	if (pdinfo->pd < 10) sprintf(datestr, "%.1f", x);
+	else sprintf(datestr, "%.2f", x);
+	charsub(datestr, decpoint, ':');
     }
 }
 
@@ -1114,7 +1118,6 @@ int write_data (const char *fname, const int *list,
     }
     else if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
-	double xdate;
 	char delim;
 	
 	if (opt == GRETL_DATA_CSV) delim = pdinfo->delim;
@@ -1130,12 +1133,10 @@ int write_data (const char *fname, const int *list,
 	    if (pdinfo->S != NULL) 
 		fprintf(fp, "%s%c", pdinfo->S[t], delim);
 	    else {
-		xdate = date(t, pdinfo->pd, pdinfo->sd0);
-		if (pdinfo->pd == 1) 
-		    fprintf(fp, "\"%d\"%c", (int) xdate, delim);
-		else if (pdinfo->pd < 10) 
-		    fprintf(fp, "\"%.1f\"%c", xdate, delim);
-		else fprintf(fp, "\"%.2f\"%c", xdate, delim);
+		char tmp[9];
+
+		ntodate(tmp, t, pdinfo);
+		fprintf(fp, "\"%s\"%c", tmp, delim);
 	    }
 	    for (i=1; i<=l0; i++) { 
 		xx = (pdinfo->vector[list[i]])? 
@@ -1280,12 +1281,12 @@ static double obs_float (const DATAINFO *pdinfo, int end)
     int i, x1, x2 = 0;
 
     if (end) {
-	xx = atof(pdinfo->endobs);
-	if ((i = haschar('.', pdinfo->endobs)) > 0)
+	xx = obs_str_to_double(pdinfo->endobs);
+	if ((i = haschar(':', pdinfo->endobs)) > 0)
 	   x2 = atoi(pdinfo->endobs + i + 1) - 1;
     } else {
-	xx = atof(pdinfo->stobs);
-	if ((i = haschar('.', pdinfo->stobs)) > 0)
+	xx = obs_str_to_double(pdinfo->stobs);
+	if ((i = haschar(':', pdinfo->stobs)) > 0)
 	   x2 = atoi(pdinfo->stobs + i + 1) - 1;
     }
     x1 = (int) xx;
@@ -1697,20 +1698,20 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		strcpy(subper, lbl1+5);
 		if (n1 == 6) {
 		    pprintf(prn, _("quarter %s?\n"), subper);
-		    sprintf(pdinfo->stobs, "%s.%s", year, subper);
-		    pdinfo->sd0 = atof(pdinfo->stobs);
+		    sprintf(pdinfo->stobs, "%s:%s", year, subper);
+		    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
 		    strncpy(pdinfo->endobs, lbl2, 4);
-		    pdinfo->endobs[4] = '.';
+		    pdinfo->endobs[4] = ':';
 		    strcat(pdinfo->endobs, lbl2+5);
 		    pdinfo->pd = 4;
 		    return 4;
 		}
 		if (n1 == 7) {
 		    pprintf(prn, _("month %s?\n"), subper);
-		    sprintf(pdinfo->stobs, "%s.%s", year, subper);
-		    pdinfo->sd0 = atof(pdinfo->stobs);
+		    sprintf(pdinfo->stobs, "%s:%s", year, subper);
+		    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
 		    strncpy(pdinfo->endobs, lbl2, 4);
-		    pdinfo->endobs[4] = '.';
+		    pdinfo->endobs[4] = ':';
 		    strcat(pdinfo->endobs, lbl2+5);
 		    pdinfo->pd = 12;
 		    return 12;
@@ -1933,8 +1934,10 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, _("Out of memory\n"));
 	return 1;
     }
+    csvinfo->delim = delim;
 
     pprintf(prn, _("parsing %s...\n"), fname);
+    pprintf(prn, _("using delimiter '%c'\n"), delim);
 
     /* count chars and fields in first line */
     if (fread(&cbak, 1, 1, fp) == 0 || cbak == '\n') {
@@ -1995,7 +1998,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     if (!blank_1) {
 	rewind(fp);
 	c = 0; i = 0;
-	while (c != delim) {
+	while (c != delim && c != '\n' && c != '\r' && i < 32) {
 	    fread(&c, 1, 1, fp);
 	    field_1[i++] = c;
 	}
@@ -2128,7 +2131,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 		if (missval) 
 		    csvZ[nv][t] = NADBL;
 		else
-		    csvZ[nv][t] = atof(numstr);
+		    csvZ[nv][t] = atod(numstr, csvinfo);
 		missval = 0;
 	    }
 	    if (k == ncols) break;
@@ -2711,7 +2714,7 @@ static int write_xmldata (const char *fname, const int *list,
     char decpoint = '.';
 
 #ifdef ENABLE_NLS
-    decpoint = _get_local_decpoint();
+    decpoint = get_local_decpoint();
 #endif
 
     err = 0;
@@ -2992,15 +2995,13 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 {
     int i;
     double x;
-#ifdef ENABLE_NLS
     static int local_decpoint;
 
-    if (local_decpoint == 0) local_decpoint = _get_local_decpoint();
+    if (local_decpoint == 0) local_decpoint = get_local_decpoint();
 
     if (local_decpoint != pdinfo->decpoint) {
 	charsub(s, pdinfo->decpoint, local_decpoint);
     }
-#endif
 
     for (i=1; i<pdinfo->v; i++) {
 	if (!pdinfo->vector[i]) continue;
@@ -3278,6 +3279,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	}
 	strncpy(pdinfo->stobs, tmp, 8);
 	pdinfo->stobs[8] = '\0';
+	colonize_obs(pdinfo->stobs);
 	free(tmp);
     }
 
@@ -3299,6 +3301,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	}
 	strncpy(pdinfo->endobs, tmp, 8);
 	pdinfo->endobs[8] = '\0';
+	colonize_obs(pdinfo->endobs);
 	free(tmp);
     }
 

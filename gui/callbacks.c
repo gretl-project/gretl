@@ -57,6 +57,7 @@ void selectrow (GtkCList *clist, gint row, gint column,
 	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_name));
 	gtk_entry_append_text(GTK_ENTRY (active_edit_name), 
 			      datainfo->varname[mydata->active_var]);
+	gtk_entry_append_text(GTK_ENTRY (active_edit_name), " ");
     }
     /* response to double-click */
     if (event != NULL && event->type == GDK_2BUTTON_PRESS 

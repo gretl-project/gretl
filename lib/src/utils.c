@@ -1747,7 +1747,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     MODEL fmod; 
     int *list, orig_v, ft1, ft2, v1, err = 0;
     int i, j, k, t, nfcast, fn, fv;
-    double xdate, tval, maxerr, *yhat, *sderr, *depvar;
+    double tval, maxerr, *yhat, *sderr, *depvar;
     char t1str[9], t2str[9];
 
     if (pmod->ci != OLS || !pmod->ifc) return E_OLSONLY;
@@ -1883,8 +1883,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     tval = _tcrit95(pmod->dfd);
     pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
 	    pmod->dfd, tval);
-    if (pdinfo->pd == 1) pprintf(prn, "\n Obs ");
-    else pprintf(prn, "\n\n     Obs ");
+    pprintf(prn, "\n     Obs ");
     pprintf(prn, "%13s", pdinfo->varname[v1]);
     pprintf(prn, "%13s", _("prediction"));
     pprintf(prn, "%14s", _(" std. error"));
@@ -1892,23 +1891,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     pprintf(prn, "\n");
 
     for (t=0; t<nfcast; t++) {
-	if (pdinfo->markers) { 
-	    pprintf(prn, "%8s ", pdinfo->S[t]); 
-	} else {
-	    xdate = date(t + ft1, pdinfo->pd, pdinfo->sd0);
-	    if (dataset_is_daily(pdinfo)) {
-		char datestr[9];
-
-		ntodate(datestr, t, pdinfo);
-		pprintf(prn, "%8s ", datestr);
-	    }
-	    if (pdinfo->pd == 1) 
-		pprintf(prn, "%4d ", (int) xdate);
-	    else if (pdinfo->pd < 10) 
-		pprintf(prn, "%8.1f ", xdate);
-	    else 
-		pprintf(prn, "%8.2f ", xdate);
-	}
+	print_obs_marker(t + ft1, pdinfo, prn);
 	_printxs(depvar[t], 15, PRINT, prn);
 	_printxs(yhat[t], 15, PRINT, prn);
 	_printxs(sderr[t], 15, PRINT, prn);

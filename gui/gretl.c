@@ -642,10 +642,6 @@ int main (int argc, char *argv[])
     make_userdir(&paths);
 #endif/* G_OS_WIN32 */
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
-
     if (argc > 1) {
 	int opt = parseopt(argv[1]);
 
@@ -1060,12 +1056,22 @@ void set_sample_label (DATAINFO *pdinfo)
 
 #define NAME_BUFFER_LEN 32
 
+#define FONT_DEBUG
+
 static int get_windows_font (char *fontspec)
 {
     HDC h_dc;
     HGDIOBJ h_font;
     TEXTMETRIC tm;
     char name[NAME_BUFFER_LEN];
+#ifdef FONT_DEBUG
+    FILE *fp;
+    char fname[MAXLEN];
+
+    sprintf(fname, "%sdebug.txt", paths.userdir);
+    fp = fopen(fname, "w");
+    if (fp == NULL) return 1;
+#endif
 
     h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);
     if (h_dc == NULL) return 1;
@@ -1076,10 +1082,18 @@ static int get_windows_font (char *fontspec)
 	return 1;
     }
 
+#ifdef FONT_DEBUG
+    fprintf(fp, "h_dc is OK, h_font is OK, SelectObject worked\n");
+#endif    
+
     if (GetTextFace(h_dc, NAME_BUFFER_LEN, name) <= 0) {
 	DeleteDC(h_dc);
 	return 1;
     }
+
+#ifdef FONT_DEBUG
+    fprintf(fp, "GetTextFace gave '%s'\n", name);
+#endif    
 
     if (!GetTextMetrics(h_dc, &tm)) {
 	DeleteDC(h_dc);
@@ -1092,6 +1106,12 @@ static int get_windows_font (char *fontspec)
 	ReleaseDC(0, screen);
 	DeleteDC(h_dc);
 	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-*-*-*-*", name, pix_height);
+#ifdef FONT_DEBUG
+	fprintf(fp, "scaleY=%g, tm.tmHeight=%ld, pix_height=%d\n"
+		"fontspec: %s\n", scaleY, tm.tmHeight, pix_height,
+		fontspec);
+	fclose(fp);
+#endif    
 	return 0;
     }
 }
