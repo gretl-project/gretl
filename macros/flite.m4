@@ -16,7 +16,7 @@ AC_ARG_WITH(flite-prefix,[  --with-flite-prefix=PFX   Prefix where FLITE is inst
   AC_MSG_CHECKING(for FLITE)
   if test x"${FLITE_LIBS}" = x ; then  
      FLITE_CFLAGS="-I$flite_config_prefix/include"
-     FLITE_LIBS="-L$flite_config_prefix/lib -lflite -lm"
+     FLITE_LIBS="-L$flite_config_prefix/lib -lflite_cmu_us_kal16 -lflite_usenglish -lflite_cmulex -lflite -lm"
   fi
 
   ac_save_CFLAGS="$CFLAGS"
@@ -32,11 +32,11 @@ dnl
 #include <flite/flite.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-int 
-main (void)
+extern cst_voice *register_cmu_us_kal (void);
+int main (void)
 {
   flite_init();
+  register_cmu_us_kal();
   system ("touch conf.flitetest");
   return 0;
 }

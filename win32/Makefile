@@ -8,6 +8,7 @@ topsrc = ..
 libdir  = $(topsrc)/lib/src
 extradir = ../gui2/gtkextra-lite
 plugindir = ../plugin
+guidir = $(topsrc)/gui2
 imports = ./import-libs
 
 # tools
@@ -28,7 +29,7 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas -lf2c
 
 # flags/defines
-CFLAGS = -I. -I$(libdir) -I$(extradir) -I$(plugindir) -DUSE_GMP
+CFLAGS = -I. -I$(libdir) -I$(extradir) -I$(plugindir) -I$(guidir) -DUSE_GMP
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths

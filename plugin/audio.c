@@ -69,6 +69,11 @@ enum dataset_comments {
 };
 
 #define DEFAULT_FORCE 96 /* volume of MIDI notes */
+
+#ifndef G_OS_WIN32
+# define MIDI_PROG "timidity" /* MIDI player to be used */
+# define MIDI_OPT  "-A500"    /* option to pass to MIDI player */
+#endif
     
 typedef struct _datapoint datapoint;
 typedef struct _dataset dataset;
@@ -876,20 +881,19 @@ static int audio_fork (const char *fname)
 
 static int audio_fork (const char *fname)
 {
-    gchar *argv[5];
+    gchar *argv[4];
     gboolean run;
     int i;
     
-    argv[0] = g_strdup("timidity");
-    argv[1] = g_strdup("-A");
-    argv[2] = g_strdup("600");
-    argv[3] = g_strdup(fname);
-    argv[4] = NULL;
+    argv[0] = g_strdup(MIDI_PROG);
+    argv[1] = g_strdup(MIDI_OPT);
+    argv[2] = g_strdup(fname);
+    argv[3] = NULL;
 
     run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
                         NULL, NULL, NULL, NULL);
 
-    for (i=0; i<5; i++) {
+    for (i=0; i<4; i++) {
 	g_free(argv[i]);
     }
 
@@ -907,7 +911,6 @@ static void fork_err_set (int signum)
 
 static int audio_fork (const char *fname)
 {
-    const char *prog = "timidity";
     pid_t pid;
 
     fork_err = 0;
@@ -919,7 +922,7 @@ static int audio_fork (const char *fname)
 	perror("fork");
 	return 1;
     } else if (pid == 0) {
-	execlp(prog, prog, "-A", "600", fname, NULL);
+	execlp(MIDI_PROG, MIDI_PROG, MIDI_OPT, fname, NULL);
 	perror("execlp");
 	kill(getppid(), SIGUSR1);
 	_exit(EXIT_FAILURE);
@@ -928,7 +931,7 @@ static int audio_fork (const char *fname)
     sleep(1);
 
     if (fork_err) {
-	fprintf(stderr, "%s: %s", _("Command failed"), prog);
+	fprintf(stderr, "%s: %s", _("Command failed"), MIDI_PROG);
     }
 
     return fork_err;

@@ -78,8 +78,7 @@ endif
 ifeq ($(HAVE_AUDIO),1)
   PLUGINS += audio.la
   AUDIO_CFLAGS = $(FLITE_CFLAGS)
-  AUDIO_LIBS = $(FLITE_LIBS) -lflite_cmu_us_kal16 \
-     -lflite_usenglish -lflite_cmulex -lflite -lm
+  AUDIO_LIBS = $(FLITE_LIBS)
 endif  
 
 ifeq ($(LIBOLE2_LIBS),)

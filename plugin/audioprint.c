@@ -39,10 +39,10 @@ audioprint_summary (GRETLSUMMARY *summ, const DATAINFO *pdinfo,
 	if (lo > 1) {
 	    pprintf(prn, "%s, ", pdinfo->varname[lv]);
 	}
-	pprintf(prn, "mean, %.4g, ", summ->coeff[v]);
-	pprintf(prn, "median, %.4g, ", summ->xmedian[v]);
-	pprintf(prn, "minimum, %.4g, ", summ->xpx[v]);
-	pprintf(prn, "maximum, %.4g, ", summ->xpy[v]);
+	pprintf(prn, "mean, %.4g,\n", summ->coeff[v]);
+	pprintf(prn, "median, %.4g,\n", summ->xmedian[v]);
+	pprintf(prn, "minimum, %.4g,\n", summ->xpx[v]);
+	pprintf(prn, "maximum, %.4g,\n", summ->xpy[v]);
 	pprintf(prn, "standard deviation, %.4g.\n", summ->sderr[v]);
     }
 }
@@ -106,14 +106,13 @@ static void
 audioprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
 			   int c, PRN *prn)
 {
-    pprintf(prn, "%s (variable number %d): ", pdinfo->varname[cf->list[c]],
-	    cf->list[c]);
-    pprintf(prn, "point estimate %.4g, 95%% confidence interval ", cf->coeff[c-2]);
+    pprintf(prn, "Variable %d, '%s', ", cf->list[c], pdinfo->varname[cf->list[c]]);
+    pprintf(prn, "point estimate %.4g, 95%% confidence interval, ", cf->coeff[c-2]);
 
     if (isnan(cf->maxerr[c-2])) {
-	pputs(prn, "undefined\n");	
+	pputs(prn, "undefined.\n");	
     } else {
-	pprintf(prn, "%.4g to %.4g\n", 
+	pprintf(prn, "%.4g to %.4g.\n", 
 		cf->coeff[c-2] - cf->maxerr[c-2],
 		cf->coeff[c-2] + cf->maxerr[c-2]);
     }

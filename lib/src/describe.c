@@ -226,123 +226,6 @@ double doornik_chisq (double skew, double kurt, int n)
  *
  */
 
-#if 0
-
-FREQDIST *old_freqdist (double ***pZ, const DATAINFO *pdinfo, 
-			int varno, int params)
-{
-    FREQDIST *freq;
-    double *x = NULL;
-    double xx, xmin, xmax, xbar, sdx;
-    double skew, kurt;
-    int i, k, n, t;
-    int maxend = 16;
-
-    freq = malloc(sizeof *freq);
-    if (freq == NULL) return NULL;
-
-    gretl_errno = 0;
-    gretl_errmsg[0] = '\0';
-    freq->midpt = NULL;
-    freq->endpt = NULL;
-    freq->f = NULL;
-
-    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
-    if (x == NULL) {
-	sprintf(gretl_errmsg, _("Out of memory in frequency distribution"));
-	free(freq);
-	return NULL;
-    }
-
-    n = ztox(varno, x, *pZ, pdinfo);
-    if (n < 8) {
-	gretl_errno = E_DATA;
-	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
-		"distribution for variable %s"), pdinfo->varname[varno]);
-	free(x);
-	return freq;
-    }
-
-    freq->t1 = pdinfo->t1; 
-    freq->t2 = pdinfo->t2;
-
-    strcpy(freq->varname, pdinfo->varname[varno]);
-
-    if (_isconst(0, n-1, x)) {
-	gretl_errno = 1;
-	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
-	return freq;
-    }    
-    
-    moments(0, n-1, x, &freq->xbar, &freq->sdx, &skew, &kurt, params);
-    xbar = freq->xbar;
-    sdx = freq->sdx;
-
-    freq->endpt = malloc((maxend + 1) * sizeof *freq->endpt);
-    freq->midpt = malloc(maxend * sizeof *freq->midpt);
-    freq->f = malloc(maxend * sizeof *freq->f);
-    if (freq->endpt == NULL || freq->midpt == NULL ||
-	freq->f == NULL) {
-	gretl_errno = E_ALLOC;
-	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
-	free(x);
-	return freq;
-    }
-    
-    gretl_minmax(0, n-1, x, &xmin, &xmax);
-    freq->n = n;
-    freq->endpt[0] = xmin;
-
-    xx = xbar - 3.75 * sdx;
-    sdx /= 2.0; 
-    while (xx < xmin) xx += sdx;
-    freq->endpt[1] = xx;
-    freq->endpt[maxend] = xmax;
-    for (t=2; t<maxend; t++) {
-	xx += sdx;
-	if (xx > xmax) {
-	    freq->endpt[t] = xmax;
-	    break;
-	}
-	freq->endpt[t] = xx;
-    }
-    freq->numbins = t;
-
-    for (k=0; k<freq->numbins; k++) {
-	freq->f[k] = 0;
-	freq->midpt[k] = (freq->endpt[k] + freq->endpt[k+1]) / 2.0;
-    }
-
-    for (i=0; i<n; i++) {
-	xx = x[i];
-	if (xx < freq->endpt[1]) {
-	    freq->f[0] += 1;
-	    continue;
-	}
-	if (xx >= freq->endpt[freq->numbins]) {
-	    freq->f[freq->numbins-1] += 1;
-	    continue;
-	}
-	for (k=1; k<freq->numbins; k++) {
-	    if (freq->endpt[k] <= xx && xx <freq->endpt[k+1]) {
-		freq->f[k] += 1;
-	    }
-	}
-    }
-
-    if (freq->n > 7) {
-	freq->chisqu = doornik_chisq(skew, kurt, freq->n); 
-    } else {
-	freq->chisqu = NADBL;
-    }
-
-    free(x);
-
-    return freq;
-}
-
-#endif
-
 FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
 		    int varno, int params)
 {
@@ -425,6 +308,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     }
     
     freq->endpt[0] = xmin - .5 * binwidth;
+
     if (xmin > 0.0 && freq->endpt[0] < 0.0) {
 	double rshift;
 
@@ -847,9 +731,9 @@ int corrgram (int varno, int order, double ***pZ,
 
 /* ...................................................... */
 
-static int roundup_half (int i)
+static int roundup_mod (int i, double x)
 {
-    return (int) ceil((double) i / 2.0);
+    return (int) ceil((double) x * i);
 }
 
 /* ...................................................... */
@@ -986,29 +870,30 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	autocov[k] /= nobs;
     }
 
-    xmax = roundup_half(nobs);
+    xmax = roundup_mod(nobs, 2.0);
 
     if (do_graph && gnuplot_init(ppaths, PLOT_PERIODOGRAM, &fq) == 0) {
 	char titlestr[80];
 
 	fprintf(fq, "# periodogram\n");
 	fprintf(fq, "set xtics nomirror\n"); 
-	if (pdinfo->pd == 4)
+	if (pdinfo->pd == 4) {
 	    fprintf(fq, "set x2label '%s'\n", I_("quarters"));
-	else if (pdinfo->pd == 12)
+	} else if (pdinfo->pd == 12) {
 	    fprintf(fq, "set x2label '%s'\n", I_("months"));
-	else if (pdinfo->pd == 1 && pdinfo->time_series == TIME_SERIES)
+	} else if (pdinfo->pd == 1 && pdinfo->time_series == TIME_SERIES) {
 	    fprintf(fq, "set x2label '%s'\n", I_("years"));
-	else
+	} else {
 	    fprintf(fq, "set x2label '%s'\n", I_("periods"));
+	}
 	fprintf(fq, "set x2range [0:%d]\n", xmax);
 	fprintf(fq, "set x2tics(");
 	k = (nobs / 2) / 6;
 	for (t=1; t<=nobs/2; t += k) {
 	    fprintf(fq, "\"%.1f\" %d, ", 
-		    (double) (nobs / 2) / (2 * t), t);
+		    (double) nobs / t, 4 * t);
 	}
-	fprintf(fq, "\"\" %d)\n", nobs);
+	fprintf(fq, "\"\" %d)\n", 2 * nobs);
 	fprintf(fq, "set xlabel '%s'\n", I_("scaled frequency"));
 	fprintf(fq, "set xzeroaxis\n");
 	fprintf(fq, "set nokey\n");
@@ -1021,7 +906,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	else {
 	    fprintf(fq, "'\n");
 	}
-	fprintf(fq, "set xrange [0:%d]\n", xmax);
+	fprintf(fq, "set xrange [0:%d]\n", roundup_mod(nobs, 0.5));
 	fprintf(fq, "plot '-' using 1:2 w lines\n");
     }
 
@@ -1058,7 +943,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	}
 	xx /= 2 * M_PI;
 	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
-		(double) (nobs / 2) / (2 * t), xx);
+		(double) nobs / t, xx);
 	if (savexx != NULL) savexx[t] = xx;
 	if (t <= nT) {
 	    omega[t-1] = yy;

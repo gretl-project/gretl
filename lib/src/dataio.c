@@ -3371,10 +3371,26 @@ static int xmlfile (const char *fname)
     return ret;
 } 
 
+#undef WDBG
+
 static int file_has_suffix (const char *fname, const char *sfx)
 {
     const char *p = strrchr(fname, '.');
     int ret = 1;
+
+#ifdef WDBG
+ {
+    static int i;
+    char tmp[16];
+    FILE *fdg;
+
+    sprintf(tmp, "debug%d.txt", ++i);
+    fdg = fopen(tmp, "w");
+    fprintf(fdg, "file_has_suffix: testing '%s' for the suffix '%s'\n",
+	    fname, sfx);
+    fclose(fdg);
+ }
+#endif
 
     if (p == NULL) return 0;
 
@@ -3426,6 +3442,10 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_NATIVE_DB;
     if (file_has_suffix(fname, "rat"))
 	return GRETL_RATS_DB;
+    if (file_has_suffix(fname, "csv"))
+	return GRETL_CSV_DATA;
+    if (file_has_suffix(fname, "txt"))
+	return GRETL_CSV_DATA;
 
     addpath(fname, ppaths, 0); 
 
@@ -3438,14 +3458,10 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     }
 
     /* look at extension */
-    if (file_has_suffix(fname, "csv")) 
-	ftype = GRETL_CSV_DATA;
-    else if (file_has_suffix(fname, "txt"))
-	ftype = GRETL_CSV_DATA;
-    else if (file_has_suffix(fname, "box"))
+    if (file_has_suffix(fname, "box"))
 	ftype = GRETL_BOX_DATA;
 
-    /* then take a peek at content */
+    /* take a peek at content */
     for (i=0; i<80; i++) {
 	c = getc(fp);
 	if (c == EOF || c == '\n') break;
@@ -3462,8 +3478,6 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     switch (ftype) {
     case GRETL_NATIVE_DATA: 
 	return GRETL_NATIVE_DATA;
-    case GRETL_CSV_DATA: 
-	return GRETL_CSV_DATA;
     case GRETL_BOX_DATA: 
 	if (strcmp(teststr, "00**") == 0) return GRETL_BOX_DATA;
 	else {
