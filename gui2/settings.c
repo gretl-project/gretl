@@ -1183,11 +1183,18 @@ void read_rc (void)
     int err;
 
     while (rc_vars[i].key != NULL) {
+#ifdef OLD_REGISTRY
 	err = read_reg_val ((rc_vars[i].type == 'R')? 
 			    HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 			    get_reg_base(rc_vars[i].key),
 			    rc_vars[i].key, 
 			    value);
+#else
+	err = read_reg_val (HKEY_CURRENT_USER, 
+			    get_reg_base(rc_vars[i].key),
+			    rc_vars[i].key, 
+			    value);
+#endif
 	if (!err) {
 	    if (rc_vars[i].type == 'B') {
 		str_to_boolvar(value, rc_vars[i].var);
