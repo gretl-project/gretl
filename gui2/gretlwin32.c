@@ -72,8 +72,11 @@ int create_child_process (char *prog, char *env)
 
 char *slash_convert (char *str, int which)
 {
-    char *p = str;
+    char *p;
 
+    if (str == NULL) return NULL;
+
+    p = str;
     while (*p) {
 	if (which == FROM_BACKSLASH) {
 	    if (*p == '\\') *p = '/';

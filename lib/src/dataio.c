@@ -2591,6 +2591,7 @@ static void check_first_field (const char *line, char delim,
 	    field1[i++] = *line++;
 	}
 	field1[i] = '\0';
+	iso_to_ascii(field1);
 	pprintf(prn, M_("   first field: '%s'\n"), field1);
 	lower(field1);
 	if (!strcmp(field1, "obs") || !strcmp(field1, "date") ||
@@ -2871,6 +2872,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     p = line;
     if (delim == ' ' && *p == ' ') p++;
+    iso_to_ascii(p);
     pprintf(prn, M_("   line: %s\n"), p);
     
     numcount = 0;
@@ -3386,9 +3388,23 @@ static int xmlfile (const char *fname)
 static int file_has_suffix (const char *fname, const char *sfx)
 {
     const char *p = strrchr(fname, '.');
+    int ret = 1;
 
-    if (p != NULL && !strcmp(p + 1, sfx)) return 1;
-    else return 0;
+    if (p == NULL) return 0;
+
+    p++;
+    while (*p && *sfx) {
+	int c = *sfx;
+
+	if (*p != c && *p != toupper(c)) {
+	    ret = 0;
+	    break;
+	}
+	p++;
+	sfx++;
+    }
+
+    return ret;
 }
 
 /**
@@ -3412,8 +3428,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 
     /* might be a script file? (watch out for DOS-mangled names) */
     if (file_has_suffix(fname, "inp") ||
-	file_has_suffix(fname, "gre") ||
-	file_has_suffix(fname, "GRE"))
+	file_has_suffix(fname, "gre"))
 	return GRETL_SCRIPT;
     if (file_has_suffix(fname, "gretl"))
 	return GRETL_SCRIPT; 
@@ -3470,6 +3485,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	    return GRETL_UNRECOGNIZED;
 	}
     }
+
     return GRETL_NATIVE_DATA; /* FIXME? */
 }
 

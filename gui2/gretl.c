@@ -249,12 +249,7 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_SAVE_AS },
     { N_("/File/Save data as/_gzipped..."), NULL, file_save, SAVE_GZDATA, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
-#ifdef notdef
-    { N_("/File/Save data as/_alternative formats/_single precision binary..."), 
-      NULL, file_save, SAVE_BIN1, NULL, GNULL },
-    { N_("/File/Save data as/_alternative formats/_double precision binary..."),
-      NULL, file_save, SAVE_BIN2, NULL, GNULL },
-#endif 
+
     /* File, Export data */
     { N_("/File/_Export data"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/Export data/_CSV..."), NULL, file_save, EXPORT_CSV, NULL, GNULL },
@@ -296,10 +291,6 @@ GtkItemFactoryEntry data_items[] = {
       NULL, newdata_callback, 24, NULL, GNULL }, 
     { N_("/File/Create data set/cross-sectional"), 
       NULL, newdata_callback, 0, NULL, GNULL }, 
-#ifdef notdef  
-    { N_("/File/Create data set/panel"), 
-      NULL, start_panel_callback, 0, NULL, GNULL }, 
-#endif 
     { N_("/File/Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL, GNULL },
     { N_("/File/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
@@ -357,9 +348,6 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_SAVE },
     { N_("/Session/Save _as..."), "", save_session_callback, SAVE_RENAME, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
-#ifdef not_yet
-    { N_("/Session/_Delete"), NULL, delete_session_callback, 0, NULL, NULL },
-#endif
 
     /* Data menu */
     { N_("/_Data"), NULL, NULL, 0, "<Branch>", NULL },
@@ -751,6 +739,7 @@ int main (int argc, char *argv[])
     gretl_rand_init();
     helpfile_init();
     session_init();
+    init_fileptrs();
 
     /* get the data file, if specified on the command line */
     if (!gui_get_data) {
@@ -846,7 +835,6 @@ int main (int argc, char *argv[])
     clip_init(mdata->w);
 #endif
 
-    init_fileptrs();
     add_files_to_menu(FILE_LIST_DATA);
     add_files_to_menu(FILE_LIST_SESSION);
     add_files_to_menu(FILE_LIST_SCRIPT);
@@ -1637,30 +1625,6 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 /* ........................................................... */
 
 #ifndef G_OS_WIN32
-
-#if 0
-void old_gretl_fork (const char *prog, const char *arg)
-{
-    pid_t pid;
-
-    signal(SIGCHLD, SIG_IGN);
-
-    pid = fork();
-    if (pid == -1) {
-	errbox(_("Couldn't fork"));
-	perror("fork");
-	return;
-    } else if (pid == 0) {
-	if (arg != NULL) {
-	    execlp(prog, prog, arg, NULL);
-	} else {
-	    execlp(prog, prog, NULL);
-	}
-	perror("execlp");
-	_exit(EXIT_FAILURE);
-    }
-}
-#endif
 
 int gretl_fork (const char *prog, const char *arg)
 {

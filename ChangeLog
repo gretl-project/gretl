@@ -1,6 +1,12 @@
 version 1.2.6
 - add Hodrick-Prescott filter, as hpfilt function in the
   genr command
+- revamp xls importer: should now be substantially more
+  robust
+- begin adding experimental audio graph feature for visually
+  impaired users
+- improve handling of non-ASCII characters in data files
+- more fixes for build process
 
 5/04/2004 version 1.2.5
 - fix problem with acf and pacf calculations

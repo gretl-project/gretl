@@ -363,28 +363,6 @@ static const char *get_reg_base (const char *key)
     return "gretl";
 }
 
-int check_for_prog (const char *prog)
-{
-    int ret = 1;
-    char tmp[MAXLEN];
-    WIN32_FIND_DATA find_data;
-    HANDLE hfind;
-
-    if (prog == NULL || *prog == 0) return 0;
-
-    hfind = FindFirstFile(prog, &find_data);
-    if (hfind == INVALID_HANDLE_VALUE) ret = 0;
-    FindClose(hfind);
-
-    if (ret == 0) {
-	char *p;
-
-	ret = SearchPath(NULL, prog, NULL, MAXLEN, tmp, &p);
-    }
-
-    return ret;
-}
-
 static void set_tramo_x12a_dirs (void)
 {
     set_tramo_ok(check_for_prog(tramo));
@@ -392,26 +370,6 @@ static void set_tramo_x12a_dirs (void)
 }
 
 # else /* not G_OS_WIN32 */
-
-int check_for_prog (const char *prog)
-{
-    char tmp[MAXLEN];
-    int ret = 0;
-
-    if (prog == NULL || *prog == 0) return 0;
-
-    if (!strcmp(prog, "latex")) {
-	strcpy(tmp, "latex x.tex > /dev/null");
-    } else {
-	sprintf(tmp, "%s > /dev/null 2>&1", prog);
-    }
-
-    ret = gretl_spawn(tmp) == 0;
-
-    if (!strcmp(prog, "latex")) remove("x.log");
-
-    return ret;
-}
 
 static int my_mkdir (const char *dirname)
 {
@@ -479,6 +437,50 @@ static void set_tramo_x12a_dirs (void)
 # endif /* G_OS_WIN32 */
 
 #endif /* tramo || x12a */
+
+#ifdef G_OS_WIN32
+int check_for_prog (const char *prog)
+{
+    int ret = 1;
+    char tmp[MAXLEN];
+    WIN32_FIND_DATA find_data;
+    HANDLE hfind;
+
+    if (prog == NULL || *prog == 0) return 0;
+
+    hfind = FindFirstFile(prog, &find_data);
+    if (hfind == INVALID_HANDLE_VALUE) ret = 0;
+    FindClose(hfind);
+
+    if (ret == 0) {
+	char *p;
+
+	ret = SearchPath(NULL, prog, NULL, MAXLEN, tmp, &p);
+    }
+
+    return ret;
+}
+#else
+int check_for_prog (const char *prog)
+{
+    char tmp[MAXLEN];
+    int ret = 0;
+
+    if (prog == NULL || *prog == 0) return 0;
+
+    if (!strcmp(prog, "latex")) {
+	strcpy(tmp, "latex x.tex > /dev/null");
+    } else {
+	sprintf(tmp, "%s > /dev/null 2>&1", prog);
+    }
+
+    ret = gretl_spawn(tmp) == 0;
+
+    if (!strcmp(prog, "latex")) remove("x.log");
+
+    return ret;
+}
+#endif
 
 /* ........................................................... */
 
@@ -943,7 +945,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     set_use_qr(useqr);
 
-#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 #endif
 
@@ -970,6 +972,20 @@ static void boolvar_to_str (void *b, char *s)
 }
 
 #endif
+
+/* .................................................................. */
+
+static void initialize_file_lists (void)
+{
+    int i;
+
+    /* initialize lists of recently opened files */
+    for (i=0; i<MAXRECENT; i++) { 
+	datalist[i][0] = 0;
+	sessionlist[i][0] = 0;
+	scriptlist[i][0] = 0;
+    }
+}
 
 /* .................................................................. */
 
@@ -1017,6 +1033,8 @@ static void read_rc (void)
 	"recent_script_files"
     };	
 
+    initialize_file_lists();
+
     client = gconf_client_get_default();
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1047,13 +1065,6 @@ static void read_rc (void)
 	}
     }
 
-    /* initialize lists of recently opened files */
-    for (i=0; i<MAXRECENT; i++) { 
-	datalist[i][0] = 0;
-	sessionlist[i][0] = 0;
-	scriptlist[i][0] = 0;
-    }
-
     for (i=0; i<3; i++) {
 	int j;
 
@@ -1078,9 +1089,11 @@ static void read_rc (void)
     set_gp_colors();
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
-# if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+
+# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 # endif
+
 # ifdef ENABLE_NLS
     set_lcnumeric();
 # endif
@@ -1119,6 +1132,8 @@ static void read_rc (void)
     char gpath[MAXSTR];
     int i;
 
+    initialize_file_lists();
+
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(gpath, "/gretl/%s/%s", rc_vars[i].description, 
 		rc_vars[i].key);
@@ -1133,12 +1148,6 @@ static void read_rc (void)
 	}
     }
 
-    /* initialize lists of recently opened files */
-    for (i=0; i<MAXRECENT; i++) { 
-	datalist[i][0] = 0;
-	sessionlist[i][0] = 0;
-	scriptlist[i][0] = 0;
-    }
     /* get recent file lists */
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(gpath, "/gretl/recent data files/%d", i);
@@ -1277,6 +1286,8 @@ void read_rc (void)
     int i = 0;
     char rpath[MAXSTR], value[MAXSTR];
 
+    initialize_file_lists();
+
     if (get_network_settings() && *paths.userdir != '\0') {
 	win32_make_user_dirs();
 	for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1316,12 +1327,6 @@ void read_rc (void)
 	}
     }
 
-    /* initialize lists of recently opened files */
-    for (i=0; i<MAXRECENT; i++) { 
-	datalist[i][0] = 0;
-	sessionlist[i][0] = 0;
-	scriptlist[i][0] = 0;
-    }
     /* get recent file lists */
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(rpath, "recent data files\\%d", i);
@@ -1346,9 +1351,11 @@ void read_rc (void)
     set_gp_colors();
 
     set_paths(&paths, 0, 1);
-# if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+
+# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 # endif
+
     set_fixed_font();
     set_app_font(NULL);
 
@@ -1401,6 +1408,8 @@ static void read_rc (void)
     fp = fopen(rcfile, "r");
     if (fp == NULL) return;
 
+    initialize_file_lists();
+
     i = 0;
     while (rc_vars[i].var != NULL) {
 	if (fgets(line, MAXLEN, fp) == NULL) break;
@@ -1424,13 +1433,6 @@ static void read_rc (void)
 	    }
 	}
 	i++;
-    }
-
-    /* get lists of recently opened files */
-    for (i=0; i<MAXRECENT; i++) { 
-	datalist[i][0] = 0;
-	sessionlist[i][0] = 0;
-	scriptlist[i][0] = 0;
     }
 
     if (gotrecent || (fgets(line, MAXLEN, fp) != NULL && 
@@ -1468,9 +1470,11 @@ static void read_rc (void)
     set_gp_colors();
 
     set_paths(&paths, 0, 1);
+
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 # endif
+
 # ifdef ENABLE_NLS
     set_lcnumeric();
 # endif
@@ -2028,6 +2032,7 @@ static void printfilelist (int filetype, FILE *fp)
     }
 
     for (i=0; i<MAXRECENT; i++) {
+	if (filep[i] == NULL) continue;
 	sprintf(rpath, "%s\\%d", sections[filetype - 1], i);
 	write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
     }
@@ -2470,7 +2475,9 @@ static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
 	if (dirname[n - 1] != '/') {
 	    strcat(paths.userdir, "/");
 	}
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 	set_tramo_x12a_dirs();
+#endif
 	close_dialog(ddata);
     }
 }

@@ -150,8 +150,9 @@ struct plugin_function plugin_functions[] = {
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
 
-    /* audio graphs */
+    /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },
+    { "read_window_text",  P_AUDIO },
 
     /* sentinel */
     { NULL, 0 }

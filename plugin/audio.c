@@ -30,6 +30,7 @@
 #include "midi_utils.h"
 
 #include <glib.h>
+#include <gtk/gtk.h>
 
 #if GLIB_CHECK_VERSION(2,0,0)
 # define GLIB2
@@ -49,9 +50,7 @@ extern cst_voice *register_cmu_us_kal (void);
 
 #ifdef G_OS_WIN32
 # define COBJMACROS
-# define _UNICODE
-# include <tchar.h>
-# include <sapi/sapi.h>
+# include <sapi.h>
 #endif
 
 const char *track_hdr = "MTrk";
@@ -594,13 +593,39 @@ static void min_max (const double *x, double *min, double *max,
 
 #if defined(HAVE_FLITE)
 
+static int save_dataset_comments (const dataset *dset)
+{
+    int i, j;
+    cst_voice *v;
+    cst_wave *w, *fullw = NULL;
+
+    flite_init();
+    v = register_cmu_us_kal();
+
+    j = 0;
+    for (i=0; i<N_COMMENTS; i++) {
+	if (dset->comments[i] != NULL) {
+	    if (j == 0) {
+		fullw = flite_text_to_wave(dset->comments[i], v);
+	    } else {
+		w = flite_text_to_wave(dset->comments[i], v);
+		concat_wave(fullw, w);
+		delete_wave(w);
+	    }
+	    j++;
+	}
+    }
+
+    cst_wave_save_riff(fullw, "gretl_flite.wav");
+    delete_wave(fullw);
+}
+
 static void speak_dataset_comments (const dataset *dset)
 {
     int i;
     cst_voice *v;
 
     flite_init();
-
     v = register_cmu_us_kal();
 
     for (i=0; i<N_COMMENTS; i++) {
@@ -649,7 +674,7 @@ static void speak_dataset_comments (const dataset *dset)
     if (SUCCEEDED(hr)) {
 	for (i=0; i<N_COMMENTS; i++) {
 	    if (dset->comments[i] != NULL) {
-		wchar_t *w = wide_string(dset->comments[i]);
+		WCHAR *w = wide_string(dset->comments[i]);
 
 		ISpVoice_Speak(v, w, 0, NULL);
 		free(w);
@@ -657,6 +682,7 @@ static void speak_dataset_comments (const dataset *dset)
 	}
         ISpVoice_Release(v);
     } 
+    CoUninitialize();
 }
 
 #endif
@@ -933,9 +959,73 @@ int midi_play_graph (const char *fname, const char *userdir)
 
     audio_fork(outname);
 
-#ifdef DEBUG
-    fprintf(stderr, "midi_play_graph, returning\n");
-#endif
+    return 0;
+}
+
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+
+#ifdef HAVE_FLITE
+
+static int speak_buffer (const char *buf)
+{
+    cst_voice *v;
+
+    flite_init();
+    v = register_cmu_us_kal();
+
+    flite_text_to_speech(buf, v, "play");
 
     return 0;
 }
+
+#else
+
+static int speak_buffer (const char *buf)
+{
+    ISpVoice *v = NULL;
+    HRESULT hr;
+    WCHAR *w;
+
+    hr = CoInitialize(NULL);
+    if (!SUCCEEDED(hr)) return 1;
+    hr = CoCreateInstance(&CLSID_SpVoice, 
+                          NULL, 
+                          CLSCTX_ALL, 
+                          &IID_ISpVoice, 
+                          (void **) &v);
+    if (!SUCCEEDED(hr)) {
+	CoUninitialize();
+	return 1;
+    }
+
+    w = wide_string(dset->comments[i]);
+    ISpVoice_Speak(v, w, 0, NULL);
+
+    free(w);
+    ISpVoice_Release(v);
+    CoUninitialize();
+
+    return 0;
+}
+
+#endif
+
+int read_window_text (GtkTextView *view)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter start, end;
+    gchar *window_text;
+
+    tbuf = gtk_text_view_get_buffer(view);
+    gtk_text_buffer_get_start_iter(tbuf, &start);
+    gtk_text_buffer_get_end_iter(tbuf, &end);
+    window_text = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+
+    speak_buffer(window_text);
+
+    g_free(window_text);
+
+    return 0;
+}
+
+#endif

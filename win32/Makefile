@@ -165,7 +165,7 @@ all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
 -include $(OBJS:.o=.d)
 
 $(CLIPROG): $(CLIOBJ) 
-	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB) -lmingwex
+	$(CC) -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB) -lmingwex -s
 
 $(GUIPROG): $(GUIOBJ) $(WRES)
 	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng $(ZLIB_LIB) -lmingwex -s

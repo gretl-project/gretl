@@ -151,6 +151,7 @@
              <keyword>resample</keyword>
 	     <keyword>stderr</keyword>
 	     <keyword>cum</keyword>
+             <keyword>hpfilt</keyword>
 	     <keyword>missing</keyword>
 	     <keyword>misszero</keyword>
 	     <keyword>corr</keyword>

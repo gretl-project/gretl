@@ -596,6 +596,24 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+static void audio_render_window (windata_t *vwin)
+{
+    void *handle;
+    int (*read_window_text) (GtkTextView *);
+
+    read_window_text = gui_get_plugin_function("read_window_text", 
+					       &handle);
+    if (read_window_text == NULL) {
+        return;
+    }
+
+    (*read_window_text) ((GtkTextView *) vwin->w);
+
+    close_plugin(handle);
+}
+#endif
+
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
 #ifndef OLD_GTK
@@ -623,6 +641,11 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    return TRUE;
 	}	
     }
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+    else if (key->keyval == GDK_a) {
+	audio_render_window(vwin);
+    }
+#endif
 #ifdef G_OS_WIN32
     else if (key->keyval == GDK_c) {
 	GdkModifierType mods;
