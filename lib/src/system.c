@@ -52,6 +52,7 @@ struct _gretl_equation_system {
     int type;                   /* estimation method, really */
     int n_equations;            /* number of stochastic equations */
     int n_identities;           /* number of identities */
+    int n_restrictions;         /* number of linear restrictions */
     int n_obs;                  /* number of observations per equation */
     char flags;                 /* to record options (e.g. save residuals) */
     double ll;                  /* log-likelihood (restricted) */
@@ -61,6 +62,8 @@ struct _gretl_equation_system {
     int *endog_vars;            /* list of endogenous variables */
     int *instr_vars;            /* list of instruments (exogenous vars) */
     identity **idents;          /* set of identities */
+    gretl_matrix *R;            /* LHS of any linear restrictions */
+    gretl_matrix *q;            /* RHS of any linear restrictions */  
     const gretl_matrix *uhat;   /* residuals, all equations: convenience pointer,
                                    not to be freed */
     MODEL **models;             /* set of pointers to per-equation models: just
@@ -260,6 +263,11 @@ gretl_equation_system_new (int type, const char *name)
 
     sys->n_equations = 0;
     sys->n_identities = 0;
+    sys->n_restrictions = 0;
+
+    sys->R = NULL;
+    sys->q = NULL;
+
     sys->n_obs = 0;
     sys->flags = 0;
 
@@ -305,6 +313,11 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     free(sys->instr_vars);
 
     free(sys->name);
+
+    if (sys->n_restrictions > 0) {
+	gretl_matrix_free(sys->R);
+	gretl_matrix_free(sys->q);
+    }
 
     free(sys);
 }
@@ -744,6 +757,16 @@ const char *system_get_full_string (const gretl_equation_system *sys)
     }
 }
 
+const gretl_matrix *system_get_R_matrix (const gretl_equation_system *sys)
+{
+    return sys->R;
+}
+
+const gretl_matrix *system_get_q_matrix (const gretl_equation_system *sys)
+{
+    return sys->q;
+}
+
 int system_save_uhat (const gretl_equation_system *sys)
 {
     return sys->flags & GRETL_SYSTEM_SAVE_UHAT;
@@ -761,7 +784,7 @@ int system_doing_iteration (const gretl_equation_system *sys)
     } else {
 	return 0;
     }
-}   
+} 
 
 int system_n_equations (const gretl_equation_system *sys)
 {
@@ -771,6 +794,11 @@ int system_n_equations (const gretl_equation_system *sys)
 int system_n_indentities (const gretl_equation_system *sys)
 {
     return sys->n_identities;
+}
+
+int system_n_restrictions (const gretl_equation_system *sys)
+{
+    return sys->n_restrictions;
 }
 
 int system_n_obs (const gretl_equation_system *sys)

@@ -33,7 +33,8 @@ enum gretl_system_types {
 enum equation_system_flags {
     GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
     GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
-    GRETL_SYSTEM_ITERATE   = 1 << 2
+    GRETL_SYSTEM_ITERATE   = 1 << 2,
+    GRETL_SYSTEM_RESTRICT  = 1 << 3
 };
 
 gretl_equation_system *system_start (const char *line);
@@ -64,6 +65,7 @@ int system_doing_iteration (const gretl_equation_system *sys);
 
 int system_n_equations (const gretl_equation_system *sys);
 int system_n_identities (const gretl_equation_system *sys);
+int system_n_restrictions (const gretl_equation_system *sys);
 
 int system_n_obs (const gretl_equation_system *sys);
 void system_set_n_obs (gretl_equation_system *sys, int n);
@@ -81,6 +83,9 @@ int *compose_tsls_list (gretl_equation_system *sys, int i);
 int system_get_depvar (const gretl_equation_system *sys, int i);
 
 const char *gretl_system_short_string (const MODEL *pmod);
+
+const gretl_matrix *system_get_R_matrix (const gretl_equation_system *sys);
+const gretl_matrix *system_get_q_matrix (const gretl_equation_system *sys);
 
 int system_get_type (const gretl_equation_system *sys);
 

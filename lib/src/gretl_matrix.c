@@ -192,6 +192,20 @@ gretl_matrix *gretl_matrix_copy (const gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_copy_transpose:
+ * @m: source matrix to be copied.
+ *
+ * Returns: an allocated copy of the tranpose of @m, or %NULL on failure.  
+ * 
+ */
+
+gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m)
+{
+    return gretl_matrix_copy_mod(m, GRETL_MOD_TRANSPOSE);
+}
+
+
+/**
  * gretl_matrix_free:
  * @m: matrix to be freed.
  *

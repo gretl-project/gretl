@@ -53,6 +53,8 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows);
 
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
+gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);
+
 gretl_vector *gretl_column_vector_from_array (const double *x, 
 					      int n, int mod);
 

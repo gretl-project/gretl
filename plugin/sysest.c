@@ -543,7 +543,8 @@ static int hansen_sargan_test (gretl_equation_system *sys,
     return err;
 }
 
-static int basic_system_allocate (int systype, int m, int T, int mk,
+static int basic_system_allocate (int systype, 
+				  int m, int T, int mk, int nr,
 				  MODEL ***models,
 				  gretl_matrix **uhat, 
 				  gretl_matrix **sigma,
@@ -551,6 +552,7 @@ static int basic_system_allocate (int systype, int m, int T, int mk,
 				  gretl_matrix **y)
 {
     MODEL **pmods;
+    int ldx = mk + nr;
     int i, j;
 
     /* allocate a model for each stochastic equation */
@@ -582,11 +584,11 @@ static int basic_system_allocate (int systype, int m, int T, int mk,
     }    
 
     if (systype != LIML) {
-	*X = gretl_matrix_alloc(mk, mk);
+	*X = gretl_matrix_alloc(ldx, ldx);
 	if (*X == NULL) {
 	    return E_ALLOC;
 	}
-	*y = gretl_vector_alloc(mk);
+	*y = gretl_vector_alloc(ldx);
 	if (*y == NULL) {
 	    return E_ALLOC;
 	}
@@ -672,6 +674,44 @@ double sur_ll (gretl_equation_system *sys, const gretl_matrix *uhat,
     return ll;
 }
 
+static int 
+augment_X_with_restrictions (gretl_matrix *X, int mk, 
+			     gretl_equation_system *sys)
+{
+    const gretl_matrix *R;
+    gretl_matrix *Rt;
+
+    R = system_get_R_matrix(sys);
+    if (R == NULL) return 1;
+
+    Rt = gretl_matrix_copy_transpose(R);
+    if (Rt == NULL) return 1;
+
+    kronecker_place(X, R, mk, 0, 1.0);
+    kronecker_place(X, Rt, 0, mk, 1.0);
+
+    gretl_matrix_free(Rt);
+
+    return 0;
+}
+
+static int 
+augment_y_with_restrictions (gretl_matrix *y, int mk, int nr,
+			     gretl_equation_system *sys)
+{
+    const gretl_matrix *q;    
+    int i;
+
+    q = system_get_q_matrix(sys);
+    if (q == NULL) return 1;
+
+    for (i=0; i<nr; i++) {
+	gretl_vector_set(y, mk + i, gretl_vector_get(q, i));
+    }
+
+    return 0;
+}
+
 /* general function that forms the basis for SUR, 3SLS, FIML and LIML
    estimates
 */
@@ -683,7 +723,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn)
 {
     int i, j, k, m, T, t;
-    int v, l, mk, krow;
+    int v, l, mk, krow, nr;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int orig_t1 = t1, orig_t2 = t2;
     gretl_matrix *X = NULL;
@@ -694,12 +734,15 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     MODEL **models = NULL;
     int systype = system_get_type(sys);
     double llbak = -1.0e9;
-    int do_iteration = 0, iters = 0;
+    int do_iteration = 0;
+    int iters = 0;
     int err = 0;
 
     if (system_doing_iteration(sys)) {
 	do_iteration = 1;
     }
+    
+    nr = system_n_restrictions(sys);
 
     /* get uniform sample starting and ending points */
     if (system_adjust_t1t2(sys, &t1, &t2, (const double **) *pZ)) {
@@ -724,7 +767,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     system_set_n_obs(sys, T);
 
     /* allocate models etc */
-    err = basic_system_allocate(systype, m, T, mk, &models,
+    err = basic_system_allocate(systype, m, T, mk, nr, &models,
 				&uhat, &sigma, &X, &y);
     if (err) goto cleanup;
 	    
@@ -841,6 +884,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (err) goto cleanup;
 
+    if (nr > 0) {
+	/* cross-equation restrictions imposed */
+	augment_X_with_restrictions(X, mk, sys);
+    }
+
     if (!do_iteration) {
 	gretl_matrix_free(Xj);
 	Xj = NULL;
@@ -873,6 +921,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    }
 	    gretl_vector_set(y, v++, yv);
 	}
+    }
+
+    if (nr > 0) {
+	/* cross-equation restrictions imposed */
+	augment_y_with_restrictions(y, mk, nr, sys);
     }
 
     /* depending on whether we used OLS or TSLS at the first stage above,
