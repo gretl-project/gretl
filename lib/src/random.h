@@ -17,9 +17,8 @@
  *
  */
 
-void gretl_rand_init (void);
-
-void gretl_rand_free (void);
+#ifndef RANDOM_H
+#define RANDOM_H
 
 void gretl_rand_set_seed (unsigned int seed);
 
@@ -30,4 +29,6 @@ void gretl_normal_dist (double *a, int t1, int t2);
 unsigned int gretl_rand_int (void);
 
 unsigned int gretl_rand_int_max (unsigned int max);
+
+#endif /* RANDOM_H */
 

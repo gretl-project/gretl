@@ -1974,27 +1974,25 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case SMPL:
 		if (cmd.opt) {
-		    if (restore_full_sample(pZ, ppdinfo, cmd.opt)) {
-			err = 1;
+		    err = restore_full_sample(pZ, ppdinfo, cmd.opt);
+		    if (err) {
+			errmsg(err, prn);
 			break;
+		    } else {
+			err = restrict_sample(linecpy, pZ, ppdinfo, 
+					      cmd.list, cmd.opt);
 		    }
-		    if (restrict_sample(linecpy, pZ, ppdinfo, 
-					cmd.list, cmd.opt)) {
-			err = 1;
-			break;
-		    }
-		    pdinfo = *ppdinfo;
+		} else if (!strcmp(linecpy, "smpl full") ||
+			   !strcmp(linecpy, "smpl --full")) {
+		    err = restore_full_sample(pZ, ppdinfo, OPT_C);
+		} else { 
+		    err = set_sample(linecpy, *ppdinfo);
+		}
+
+		if (err) {
+		    errmsg(err, prn);
 		} else {
-		    /* FIXME */
-#if 0
-		    gretl_errmsg_set(_("loop: only the '-o' and '-r' forms of the smpl "
-				       " command may be used.\n"));
-#else
-		    sprintf(gretl_errmsg, 
-			    _("command: '%s'\nThis is not available in a loop.\n"),
-			    linecpy);
-#endif  
-		    err = 1;
+		    print_smpl(*ppdinfo, get_full_length_n(), prn);
 		}
 		break;
 

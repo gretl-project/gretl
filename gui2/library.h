@@ -37,7 +37,7 @@ int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 #endif
 
-int library_command_init (void);
+void library_command_init (void);
 
 void library_command_free (void);
 

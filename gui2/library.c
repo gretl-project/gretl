@@ -77,14 +77,14 @@ void exit_free_modelspec (void)
 
 /* ........................................................... */
 
-int library_command_init (void)
+void library_command_init (void)
 {
-    return gretl_cmd_init(&cmd);
+    libgretl_init(&cmd);
 }
 
 void library_command_free (void)
 {
-    gretl_cmd_free(&cmd);
+    libgretl_cleanup(&cmd);
 }
 
 const int *get_cmd_list (void)
@@ -4609,19 +4609,25 @@ int execute_script (const char *runfile, const char *buf,
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
 	    looprun = 0;
-	} else if (gretl_executing_function()) {
-	    /* FIXME!!! */
-	    ;
 	} else { 
 	    int bslash;
+	    char *gotline;
 
 	    *line = '\0';
-	    if ((fb && fgets(line, MAXLEN, fb) == NULL) ||
-		(fb == NULL && bufgets(line, MAXLEN, buf) == NULL)) {
+
+	    if (gretl_executing_function()) {
+		gotline = gretl_function_get_line(line, MAXLEN);
+	    } else if (fb != NULL) {
+		gotline = fgets(line, MAXLEN, fb);
+	    } else {
+		gotline = bufgets(line, MAXLEN, buf);
+	    }
+
+	    if (gotline == NULL) {
 		/* done reading */
 		goto endwhile;
 	    }
-
+		
 	    while ((bslash = top_n_tail(line))) {
 		/* handle backslash-continued lines */
 		*tmp = '\0';
@@ -4748,6 +4754,27 @@ static unsigned char gp_flags (int batch, gretlopt opt)
 
 /* ........................................................... */
 
+static int handle_user_defined_function (char *line, int *fncall)
+{
+    int ufunc = gretl_is_user_function(line);
+    int err = 0;
+
+    /* allow for nested function calls */
+    if (ufunc && gretl_compiling_function()) {
+	return 0;
+    }
+
+    /* an actual function call */
+    else if (ufunc) {
+	err = gretl_function_start_exec(line);
+	*fncall = 1;
+    } 
+
+    return err;
+}
+
+/* ........................................................... */
+
 int gui_exec_line (char *line, 
 		   LOOPSET **plp, int *plstack, int *plrun, 
 		   PRN *prn, int exec_code, 
@@ -4755,6 +4782,7 @@ int gui_exec_line (char *line,
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
     int dbdata = 0, do_arch = 0, do_nls = 0, renumber;
+    int fncall = 0;
     int loopstack = *plstack, looprun = *plrun;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
@@ -4773,6 +4801,15 @@ int gui_exec_line (char *line,
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
 	    exec_code);
 #endif
+
+    /* catch any user-defined functions */
+    err = handle_user_defined_function(line, &fncall);
+    if (err) {
+	errmsg(err, prn);
+	return err;
+    } else if (fncall) {
+	return 0;
+    }  
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
@@ -5782,6 +5819,11 @@ int gui_exec_line (char *line,
 		       "in libgretl\n"), cmd.cmd);
 	break;
     } /* end of command switch */
+
+    /* clean up in case a user function bombed */
+    if (err && gretl_executing_function()) {
+	gretl_function_error();
+    }    
 
     /* log the specific command? */
     if (exec_code == CONSOLE_EXEC && !err) {

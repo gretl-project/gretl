@@ -2527,3 +2527,24 @@ int gretl_spawn_quiet (const char *cmdline)
 }
 
 #endif
+
+/* library init and cleanup functions */
+
+void libgretl_init (CMD *cmd)
+{
+    if (cmd != NULL && gretl_cmd_init(cmd)) {
+	exit(EXIT_FAILURE);
+    }
+
+    gretl_rand_init();
+}
+
+void libgretl_cleanup (CMD *cmd)
+{
+    if (cmd != NULL) {
+	gretl_cmd_free(cmd);
+    }
+
+    gretl_rand_free();
+    gretl_functions_cleanup();
+}

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "gretl_private.h"
 #include "gretl_func.h"
 
 #define CALLSTACK_DEPTH 8
@@ -320,6 +321,7 @@ static void delete_ufunc_from_list (ufunc *fun)
 	free_ufunc(fun);
 	free(ufuns);
 	ufuns = NULL;
+	n_ufuns = 0;
     } else {
 	int i, gotit = 0;
 
@@ -502,6 +504,11 @@ int gretl_function_append_line (const char *line)
 	return err;
     }
 
+    if (!strncmp(line, "function", 8)) {
+	strcpy(gretl_errmsg, "You can't define a function within a function");
+	return 1;
+    }
+
     nl = fun->n_lines;
     lines = realloc(fun->lines, (nl + 1) * sizeof *lines);
     if (lines == NULL) {
@@ -547,9 +554,12 @@ int gretl_function_start_exec (const char *line)
 	return E_ALLOC;
     } 
 
-    push_fncall(call);
+    err = push_fncall(call);
+    if (err) {
+	free_fncall(call);
+    }
 
-    return 0;
+    return err;
 }
 
 static int dollar_term_length (const char *s)
@@ -638,4 +648,10 @@ void gretl_functions_cleanup (void)
 {
     callstack_destroy();
     ufuncs_destroy();
+}
+
+void gretl_function_error (void)
+{
+    callstack_destroy();
+    executing = 0;
 }

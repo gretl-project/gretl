@@ -1,4 +1,4 @@
-/* gretl - The Gnu Regression, Econometrics and Time-series Library
+/*
  * Copyright (C) 1999-2004 Ramu Ramanathan and Allin Cottrell
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 #ifndef GRETL_UTILS_H
 #define GRETL_UTILS_H
 
-#include <stdio.h>
+#include "libgretl.h"
 
 enum model_selection_criteria {
     C_SGMASQ = 0,
@@ -105,8 +105,8 @@ enum model_selection_criteria {
 #define dataset_is_panel(p) (p->time_series == STACKED_TIME_SERIES \
                             || p->time_series == STACKED_CROSS_SECTION)
 
-
 #include <float.h>
+
 #define floateq(x, y) (fabs((x) - (y)) < DBL_EPSILON)
 #define floatneq(x, y) (fabs((x) - (y)) > DBL_EPSILON)
 #define floatgt(x, y) ((x) - (y) > DBL_EPSILON)
@@ -115,6 +115,10 @@ enum model_selection_criteria {
 #define NADBL -999.0
 
 /* functions follow */
+
+void libgretl_init (CMD *cmd);
+
+void libgretl_cleanup (CMD *cmd);
  
 double date (int nt, int pd, const double sd0);
 

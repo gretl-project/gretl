@@ -369,7 +369,7 @@ int main (int argc, char *argv[])
 
     logo();     /* print version info */
     session_time(stdout);
-    fb = stdin; /* may be reset later wth "run" command */
+    fb = stdin; /* may be reset later with "run" command */
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 
@@ -452,12 +452,7 @@ int main (int argc, char *argv[])
 	noalloc("models"); 
     }
 
-    if (gretl_cmd_init(&cmd)) {
-	noalloc(_("command list")); 
-    }
-
-    /* initialize random number generator */
-    gretl_rand_init();
+    libgretl_init(&cmd);
 
     /* print list of variables */
     if (data_status) {
@@ -571,8 +566,6 @@ int main (int argc, char *argv[])
     free_model(models[1]);
     free(models);
 
-    gretl_cmd_free(&cmd);
-
     if (data_status) free_datainfo(datainfo);
 
     if (runfile_open && fb != NULL) fclose(fb);
@@ -584,7 +577,8 @@ int main (int argc, char *argv[])
 
     if (!batch) remove(paths.plotfile);
     gretl_print_destroy(prn);
-    gretl_rand_free();
+
+    libgretl_cleanup(&cmd);
 
     return 0;
 }
@@ -1629,6 +1623,10 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		       "in gretlcli\n"), cmd.cmd);
 	err = 1;
 	break;
+    }
+
+    if (err && gretl_executing_function()) {
+	gretl_function_error();
     }
 
     if (!err && (is_model_cmd(cmd.cmd) || do_nls || do_arch)

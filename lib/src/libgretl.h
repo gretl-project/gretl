@@ -397,6 +397,7 @@ struct _VCV {
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"
+#include "interact.h"
 #include "estimate.h"
 #include "generate.h"
 #include "gretl_paths.h"
@@ -411,7 +412,6 @@ struct _VCV {
 #include "printout.h"
 #include "modelprint.h"
 #include "texprint.h"
-#include "interact.h"
 #include "graphing.h"
 #include "random.h"
 #include "monte_carlo.h"

@@ -81,10 +81,6 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 
 int ready_for_command (const char *line);
 
-int gretl_cmd_init (CMD *cmd);
-
-void gretl_cmd_free (CMD *cmd);
-
 void safe_print_line (const char *line, PRN *prn);
 
 #endif /* INTERACT_H */

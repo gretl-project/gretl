@@ -34,4 +34,6 @@ int gretl_function_start_exec (const char *line);
 
 char *gretl_function_get_line (char *line, int len);
 
+void gretl_function_error (void);
+
 #endif /* GRETL_FUNC_H */

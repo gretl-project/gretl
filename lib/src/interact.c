@@ -2074,6 +2074,8 @@ int ready_for_command (const char *line)
 	"nulldata", 
 	"import", 
 	"pvalue",
+	"print",
+	"printf",
 	"eval",
 	"!",
 	"(*", 
@@ -2082,8 +2084,8 @@ int ready_for_command (const char *line)
 	"set", 
 	"critical", 
 	"seed", 
-	"genr",
 	"function",
+	"noecho",
 	NULL 
     };
     const char **p = ok_cmds;
@@ -2092,16 +2094,14 @@ int ready_for_command (const char *line)
 	return 1;
     }
 
-    if (*line == 'q' || 
-	*line == 'x' || 
-	*line == '\0' || 
-	*line == '#') {
+    if (*line == 'q' || *line == 'x' || *line == '#') {
 	return 1;
     }
 
     while (*p) {
-	if (strncmp(line, *p, strlen(*p)) == 0)
+	if (strncmp(line, *p, strlen(*p)) == 0) {
 	    return 1;
+	}
 	p++;
     }
 

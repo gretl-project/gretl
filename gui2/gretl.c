@@ -824,10 +824,8 @@ int main (int argc, char *argv[])
     if (models[0] == NULL || models[1] == NULL || models[2] == NULL) 
 	noalloc(_("models")); 
 
-    if (library_command_init())
-	noalloc(_("command list")); 
+    library_command_init();
 
-    gretl_rand_init();
     helpfile_init();
     session_init();
     init_fileptrs();
@@ -980,8 +978,6 @@ int main (int argc, char *argv[])
     remove(paths.plotfile);
 
     destroy_file_collections();
-
-    gretl_rand_free();
 
     return EXIT_SUCCESS;
 }

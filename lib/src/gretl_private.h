@@ -130,4 +130,16 @@ int takenotes (int quit_opt);
 
 char *get_month_name (char *mname, int m);
 
+/* init and cleanup functions */
+
+int gretl_cmd_init (CMD *cmd);
+
+void gretl_cmd_free (CMD *cmd);
+
+void gretl_functions_cleanup (void);
+
+void gretl_rand_init (void);
+
+void gretl_rand_free (void);
+
 #endif /* GRETL_PRIVATE_H */
