@@ -219,13 +219,14 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
 {
     gretl_matrix *X;
-    int i, t, j = 0;
+    int i, j, t;
     int start = (pmod->ifc)? 3 : 2;
 
     X = gretl_matrix_alloc(pmod->nobs, pmod->ncoeff);
     if (X == NULL) return NULL;
 
     /* copy independent vars into matrix X */
+    j = 0;
     for (i=start; i<=pmod->list[0]; i++) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    X->val[j++] = Z[pmod->list[i]][t];
