@@ -662,16 +662,9 @@ void file_save_callback (GtkWidget *w, gpointer data)
     guint u = 0;
     windata_t *vwin = (windata_t *) data;
 
-#ifndef OLD_GTK
     if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
 	u = SAVE_OUTPUT;
-    } 
-#else
-    if (gtk_object_get_data(GTK_OBJECT(vwin->dialog), "text_out")) {
-	u = SAVE_OUTPUT;
-    } 
-#endif
-    else {
+    } else {
 	switch (vwin->role) {
 	case EDIT_SCRIPT:
 	case VIEW_SCRIPT:

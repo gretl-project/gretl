@@ -277,7 +277,7 @@
       over the years 1950&ndash;1992.  The data are available in
       <application>gretl</application> format; please see the
       <application>gretl</application> <ulink
-	url="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html">data
+	url="http://gretl.sourceforge.net/gretl_data.html">data
 	site</ulink> (this is a free download, although it is not
       included in the main <application>gretl</application>
       package).</para>  

@@ -529,8 +529,8 @@
 
     <varlistentry><term>Gretl data page</term>
       <listitem><para><ulink
-	    url="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html">
-	    <literal>http://ricardo.ecn.wfu.edu/gretl/gretl_data.html</literal></ulink></para>
+	    url="http://gretl.sourceforge.net/gretl_data.html">
+	    <literal>http://gretl.sourceforge.net/gretl_data.html</literal></ulink></para>
       </listitem>
     </varlistentry>
 

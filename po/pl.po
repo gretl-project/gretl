@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-26 13:22-0400\n"
-"PO-Revision-Date: 2004-11-05 02:00+0100\n"
+"PO-Revision-Date: 2004-11-06 02:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1067,7 +1067,7 @@ msgstr "Korelogram"
 
 #: lib/src/describe.c:610 lib/src/describe.c:675
 msgid "lag"
-msgstr ""
+msgstr "opó¼nienia"
 
 #: lib/src/describe.c:635
 msgid "Partial autocorrelations"
@@ -1075,7 +1075,7 @@ msgstr "Funkcja autokorelacji cz±stkowej (PACF)"
 
 #: lib/src/describe.c:637
 msgid "to lag"
-msgstr ""
+msgstr "do opó¼nienia"
 
 #: lib/src/describe.c:682
 msgid "ACF for"
@@ -1138,7 +1138,7 @@ msgstr "Spektrum dla %s"
 #: lib/src/describe.c:904
 #, c-format
 msgid "Bartlett window, length %d"
-msgstr "wagi-okna Bartletta, d³ugo¶ci %d"
+msgstr "wagi Bartletta, d³ugo¶ci %d"
 
 #: lib/src/describe.c:919
 #, c-format
@@ -1160,7 +1160,7 @@ msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr ""
-"Wykorzystano wagi-okno Bartletta, d³ugo¶ci %d\n"
+"Wykorzystano wagi Bartletta, d³ugo¶ci %d\n"
 "\n"
 
 #: lib/src/describe.c:923
@@ -1207,68 +1207,72 @@ msgstr "(obserwacje z brakuj±cymi danymi oznaczonymi $-999$ zosta³y pominiête)"
 #: lib/src/describe.c:1046 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:236
 msgid "Mean"
-msgstr ""
+msgstr "¶rednia"
 
 #: lib/src/describe.c:1047 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:236
 msgid "Median"
-msgstr ""
+msgstr "Mediana"
 
 #: lib/src/describe.c:1048 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:236
 msgid "Minimum"
-msgstr ""
+msgstr "Minimalna"
 
 #: lib/src/describe.c:1049 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:236
 msgid "Maximum"
-msgstr ""
+msgstr "Maksymalna"
 
 #: lib/src/describe.c:1050
 msgid "Standard deviation"
-msgstr ""
+msgstr "Odchylenie Standardowe"
 
 #: lib/src/describe.c:1051 gui2/guiprint_common.c:151
 #: gui2/guiprint_common.c:259
 msgid "C.V."
-msgstr ""
+msgstr "Wsp. zmienno¶ci"
 
 #: lib/src/describe.c:1052 gui2/guiprint_common.c:151
 #: gui2/guiprint_common.c:259
 msgid "Skewness"
-msgstr ""
+msgstr "Sko¶no¶æ"
 
 #: lib/src/describe.c:1053 gui2/guiprint_common.c:151
 msgid "Ex. kurtosis"
-msgstr ""
+msgstr "Kurtoza"
 
 #: lib/src/describe.c:1060 lib/src/describe.c:1123
 msgid "Summary Statistics"
-msgstr ""
+msgstr "Statystyki opisowe"
 
 #: lib/src/describe.c:1061
 #, c-format
 msgid "for the variable '%s' (%d valid observations)"
-msgstr ""
+msgstr "dla zmiennej '%s' (%d prawid³owych obserwacji)"
 
 #: lib/src/describe.c:1126 lib/src/describe.c:1151 lib/src/modelprint.c:1096
 #: gui2/guiprint_common.c:120 gui2/guiprint_common.c:144
 #: gui2/guiprint_common.c:229 gui2/guiprint_common.c:253
 #: gui2/guiprint_common.c:872 gui2/guiprint_common.c:929
 msgid "Variable"
-msgstr ""
+msgstr "Zmienna"
 
 #: lib/src/describe.c:1128
 msgid ""
 "      MEAN           MEDIAN           MIN             MAX\n"
 "\n"
 msgstr ""
+"      SREDNIA        MEDIANA          MINIMALNA       MAKSYMALNA\n"
+"\n"
 
 #: lib/src/describe.c:1152
 msgid ""
 "      S.D.            C.V.            SKEW          EXCSKURT\n"
 "\n"
 msgstr ""
+"      ODCH.STAND.     WSP.ZMIEN.      SKOSNOSC       KURTOZA\n"
+"\n"
 
 #: lib/src/describe.c:1240
 #, c-format
@@ -3406,7 +3410,7 @@ msgstr ""
 #: lib/src/printout.c:89 lib/src/printout.c:129
 #, c-format
 msgid "gretl version %s\n"
-msgstr ""
+msgstr "gretl wersja %s\n"
 
 #: lib/src/printout.c:90
 msgid "Copyright Ramu Ramanathan and Allin Cottrell"
@@ -3423,7 +3427,7 @@ msgstr ""
 
 #: lib/src/printout.c:104
 msgid "copyright Allin Cottrell.\n"
-msgstr ""
+msgstr "copyright Allin Cottrell.\n"
 
 #: lib/src/printout.c:105
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
@@ -3464,6 +3468,8 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %g) = %g\n"
 "\n"
 msgstr ""
+"z p-value = prob(Chi-kwadrat(%d) > %g) = %g\n"
+"\n"
 
 #: lib/src/printout.c:208
 #, c-format
@@ -4002,7 +4008,7 @@ msgstr ""
 
 #: lib/src/system.c:78
 msgid "Three-Stage Least Squares"
-msgstr ""
+msgstr "Potrójna metoda najmniejszych kwadratów"
 
 #: lib/src/system.c:79
 msgid "Full Information Maximum Likelihood"
@@ -4060,7 +4066,7 @@ msgstr "zmienna czasowa t"
 #: lib/src/var.c:852
 #, c-format
 msgid "%s = log difference of %s"
-msgstr "%s = pierwsze ró¿nice logarytmu z %s"
+msgstr "%s = pierwsze ró¿nice z logarytmów %s"
 
 #: lib/src/var.c:853
 #, c-format
@@ -4108,7 +4114,7 @@ msgstr ""
 #: lib/src/var.c:1497
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
-msgstr "Krok %d: test na pierwiastek jednostkowy dla %s\n"
+msgstr "Krok %d: test na pierwiastek jednostkowy dla zmiennej %s\n"
 
 #: lib/src/var.c:1520
 #, fuzzy, c-format
@@ -4128,6 +4134,10 @@ msgid ""
 "(b) The unit-root hypothesis is rejected for the residuals (uhat) from the \n"
 "    cointegrating regression.\n"
 msgstr ""
+"\n"
+"Kointegracja wystêpuje, je¿eli ka¿dy wykorzystywany proces jest zintegrowany,\n"
+"tzn. hipoteza zerowa o pierwiastku jednostkowym nie jest odrzucanaoraz proces resztowy (uhat) z równania kointegracyjnego nie jest zintegrowany - I(0),\n"
+"tzn. hipoteza zerowa o pierwiastku jednostkowym jest odrzucana.\n"
 
 #: lib/src/var.c:1638 gui2/library.c:700
 msgid "test without constant"
@@ -4479,22 +4489,22 @@ msgstr ""
 
 #: cli/gretlcli.c:1473
 msgid "Command is malformed\n"
-msgstr ""
+msgstr "B³êdna komenda\n"
 
 #: cli/gretlcli.c:1477
 #, c-format
 msgid "Couldn't open script \"%s\"\n"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie pliku skryptu \"%s\"\n"
 
 #: cli/gretlcli.c:1485
 #, c-format
 msgid "%s opened OK\n"
-msgstr ""
+msgstr "Plik %s poprawnie otwarty\n"
 
 #: cli/gretlcli.c:1504 gui2/library.c:5769
 #, c-format
 msgid "setting data frequency = %d\n"
-msgstr ""
+msgstr "parametr okresowo¶æ danych = %d\n"
 
 #: cli/gretlcli.c:1561 gui2/library.c:5832
 msgid "Failed to generate squares\n"
@@ -5678,16 +5688,16 @@ msgstr ""
 
 #: gui/guiprint.c:166 gui2/guiprint.c:690
 msgid "Failed to generate graph"
-msgstr ""
+msgstr "B³±d w generowaniu wykresu"
 
 #: gui/selector.c:271 gui2/selector.c:462
 msgid "You must select an X-axis variable"
-msgstr ""
+msgstr "Nale¿y wybraæ zmienn± dla osi X"
 
 #: gui/selector.c:274 gui/selector.c:387 gui2/selector.c:465
 #: gui2/selector.c:595
 msgid "You must select a Y-axis variable"
-msgstr ""
+msgstr "Nale¿y wybraæ zmienn± dla osi Y"
 
 #: gui/selector.c:277 gui2/selector.c:468
 msgid "You must select a dependent variable"
@@ -5703,7 +5713,7 @@ msgstr "Nale¿y wyspecyfikowaæ listê opó¼nieñ"
 
 #: gui/selector.c:431 gui2/selector.c:639
 msgid "You must select a Z-axis variable"
-msgstr ""
+msgstr "Nale¿y wybraæ zmienn± dla osi Z"
 
 #: gui/selector.c:433 gui2/selector.c:641
 msgid "You must select a factor variable"
@@ -5711,7 +5721,7 @@ msgstr ""
 
 #: gui/selector.c:483 gui2/selector.c:703
 msgid "You must specify a set of instrumental variables"
-msgstr ""
+msgstr "Nale¿y wyspecyfikowaæ zmiene - instrumenty"
 
 #: gui/selector.c:518 gui2/selector.c:759
 msgid "Heteroskedasticity corrected"
@@ -8024,11 +8034,11 @@ msgstr ""
 
 #: gui2/gpt_control.c:4063 gui2/guiprint.c:107 gui2/series_view.c:99
 msgid "Cannot open the clipboard"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie schowka"
 
 #: gui2/gpt_control.c:4140
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
-msgstr ""
+msgstr "Wklej wykres wykorzystuj±c polecenie: Edycja/Wklej specjalnie/Rysunek (EMF)"
 
 #: gui2/graph_page.c:262
 msgid "The graph page is full"
@@ -8089,7 +8099,7 @@ msgstr ""
 
 #: gui2/gtkfontselhack.c:85
 msgid "abcdefghijk ABCDEFGHIJK"
-msgstr "abcdefghijk ABCDEFGHIJK"
+msgstr ""
 
 #: gui2/gtkfontselhack.c:239
 msgid "Font name"
@@ -8410,55 +8420,55 @@ msgstr "/_LaTeX"
 
 #: gui2/gui_utils.c:160 gui2/gui_utils.c:229
 msgid "/LaTeX/_View"
-msgstr ""
+msgstr "/LaTeX/_Poka¿"
 
 #: gui2/gui_utils.c:161 gui2/gui_utils.c:230
 msgid "/LaTeX/View/_Tabular"
-msgstr ""
+msgstr "/LaTeX/Poka¿/_Tabela"
 
 #: gui2/gui_utils.c:163 gui2/gui_utils.c:231
 msgid "/LaTeX/View/_Equation"
-msgstr ""
+msgstr "/LaTeX/Poka¿/_Równanie"
 
 #: gui2/gui_utils.c:165 gui2/gui_utils.c:232
 msgid "/LaTeX/_Save"
-msgstr ""
+msgstr "/LaTeX/_Zapisz"
 
 #: gui2/gui_utils.c:166 gui2/gui_utils.c:233
 msgid "/LaTeX/Save/_Tabular"
-msgstr ""
+msgstr "/LaTeX/_Zapisz/_Tabela"
 
 #: gui2/gui_utils.c:167 gui2/gui_utils.c:234
 msgid "/LaTeX/Save/Tabular/as _document"
-msgstr ""
+msgstr "LaTeX/Zapisz/Tabela/jako _dokument"
 
 #: gui2/gui_utils.c:169 gui2/gui_utils.c:236
 msgid "/LaTeX/Save/Tabular/as _fragment"
-msgstr ""
+msgstr "LaTeX/Zapisz/Tabela/jako _fragment"
 
 #: gui2/gui_utils.c:171 gui2/gui_utils.c:238
 msgid "/LaTeX/Save/_Equation"
-msgstr ""
+msgstr "LaTeX/Zapisz/_Równanie"
 
 #: gui2/gui_utils.c:172 gui2/gui_utils.c:239
 msgid "/LaTeX/Save/Equation/as _document"
-msgstr ""
+msgstr "LaTeX/Zapisz/Równanie/jako _dokument"
 
 #: gui2/gui_utils.c:174 gui2/gui_utils.c:241
 msgid "/LaTeX/Save/Equation/as _fragment"
-msgstr ""
+msgstr "LaTeX/Zapisz/Równanie/jako _fragment"
 
 #: gui2/gui_utils.c:176 gui2/gui_utils.c:243
 msgid "/LaTeX/_Copy"
-msgstr ""
+msgstr "LaTeX/_Kopiuj"
 
 #: gui2/gui_utils.c:177 gui2/gui_utils.c:244
 msgid "/LaTeX/Copy/_Tabular"
-msgstr ""
+msgstr "LaTeX/Kopiuj/_Tabela"
 
 #: gui2/gui_utils.c:178 gui2/gui_utils.c:245
 msgid "/LaTeX/Copy/_Equation"
-msgstr ""
+msgstr "LaTeX/Kopiuj/_Równanie"
 
 #: gui2/gui_utils.c:262 gui2/gui_utils.c:279 gui2/series_view.c:49
 #: gui2/series_view.c:67
@@ -8475,15 +8485,15 @@ msgstr "/Edycja/Kopiuj _wszystko/jako _LaTeX"
 
 #: gui2/gui_utils.c:835
 msgid "Unrecognized data type"
-msgstr ""
+msgstr "Nierozpoznany typ danych"
 
 #: gui2/gui_utils.c:861
 msgid "Failed to import spreadsheet data"
-msgstr ""
+msgstr "B³±d importu arkusza danych"
 
 #: gui2/gui_utils.c:995
 msgid "gretl: open data"
-msgstr ""
+msgstr "gretl: otwórz plik danych"
 
 #: gui2/gui_utils.c:996
 msgid ""
@@ -8497,7 +8507,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:1015
 msgid "gretl: open session"
-msgstr ""
+msgstr "gretl: otwórz plik sesji"
 
 #: gui2/gui_utils.c:1016
 msgid ""
@@ -8512,11 +8522,11 @@ msgstr ""
 #: gui2/gui_utils.c:1055
 #, c-format
 msgid "Couldn't open session file %s"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie pliku sesji %s"
 
 #: gui2/gui_utils.c:1069
 msgid "Couldn't write session notes file"
-msgstr ""
+msgstr "Niemo¿liwe zapisanie notanika sesji"
 
 #: gui2/gui_utils.c:1076
 msgid "Couldn't open output file for writing"
@@ -8546,7 +8556,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:1132
 msgid "Buffer is empty"
-msgstr ""
+msgstr "Bufor jest pusty"
 
 #: gui2/gui_utils.c:1142
 msgid "Data info saved"
@@ -8558,7 +8568,7 @@ msgstr "Notatki zapisano"
 
 #: gui2/gui_utils.c:1167
 msgid "Can't open file for writing"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie pliku do pisania"
 
 #: gui2/gui_utils.c:1178
 #, c-format
@@ -9468,7 +9478,7 @@ msgstr "Tabela modeli nie mo¿e zawieraæ modeli estymowanych nieliniow± MNK"
 
 #: gui2/model_table.c:117
 msgid "Sorry, ARMA models can't be put in the model table"
-msgstr "Tabela modeli nie mo¿e zawieraæ modeli AMRA"
+msgstr "Tabela modeli nie mo¿e zawieraæ modeli ARMA"
 
 #: gui2/model_table.c:124
 msgid "Sorry, TSLS models can't be put in the model table"
@@ -9516,7 +9526,7 @@ msgstr "R-kwadrat"
 
 #: gui2/model_table.c:559
 msgid "Adj. R**2"
-msgstr "Skr. R**2"
+msgstr "Skor. R**2"
 
 #: gui2/model_table.c:652 gui2/model_table.c:734 gui2/model_table.c:852
 #: gui2/model_table.c:954
@@ -9541,7 +9551,7 @@ msgstr "Model %d"
 #: gui2/model_table.c:706 gui2/model_table.c:968
 #, fuzzy
 msgid "t-statistics in parentheses"
-msgstr "statystyka $t$ w nawiasach"
+msgstr "Statystyka $t$ w nawiasach"
 
 #: gui2/model_table.c:708 gui2/model_table.c:804 gui2/model_table.c:911
 msgid "Standard errors in parentheses"

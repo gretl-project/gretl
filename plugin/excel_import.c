@@ -78,6 +78,7 @@ static double get_le_double (const unsigned char *rec)
         unsigned char cc[8];
         double d;
     } dconv;
+
     unsigned char *d;
     const unsigned char *s;
     int i;
@@ -417,10 +418,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    if (ptr[6] == 0xff && ptr[7] == 0xff) {
 		unsigned char fcode = ptr[0];
 
-#ifdef EDEBUG
-		fprintf(stderr, " non floating-point value, code = 0x%u\n", 
-			(unsigned) fcode);
-#endif
 		if (fcode == 0x0) {
 		    /* string formula: record target for following 
 		       STRING record */

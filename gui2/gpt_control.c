@@ -274,7 +274,7 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 
     if (wstr != NULL && *wstr != '\0') {
 #ifndef OLD_GTK
-	gchar *trstr = my_locale_from_utf8(wstr);
+	gchar *trstr = force_locale_from_utf8(wstr);
 
 	if (trstr != NULL) {
 	    strncat(targ, trstr, n-1);

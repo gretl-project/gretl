@@ -90,6 +90,10 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 static void buf_edit_save (GtkWidget *widget, gpointer data);
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
 
+#ifndef OLD_GTK
+static int maybe_recode_file (const char *fname);
+#endif
+
 static void close_model (gpointer data, guint close, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1012,55 +1016,6 @@ void verify_open_session (gpointer userdata)
     do_open_session(NULL, userdata);
 }
 
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
-
-static int maybe_recode_file (const char *fname)
-{
-    if (0) {
-	FILE *fin, *fout;
-	char trname[MAXLEN];
-	char line[128];
-	gchar *trbuf;
-	int err = 0;
-
-	fin = fopen(fname, "r");
-	if (fin == NULL) {
-	    return 1;
-	}
-
-	sprintf(trname, "%s.tr", fname);
-
-	fout = fopen(trname, "w");
-	if (fout == NULL) {
-	    fclose(fin);
-	    return 1;
-	}	
-
-	while (fgets(line, sizeof line, fin) && !err) {
-	    trbuf = my_locale_from_utf8(line);
-	    if (trbuf != NULL) {
-		fputs(trbuf, fout);
-	    } else {
-		err = 1;
-	    }
-	}
-
-	fclose(fin);
-	fclose(fout);
-
-	if (!err) {
-	    err = copyfile(trname, fname);
-	    remove(trname);
-	}
-
-	return err;
-    }
-
-    return 0;
-}
-
-#endif
-
 /* ........................................................... */
 
 void save_session (char *fname) 
@@ -1122,7 +1077,7 @@ void save_session (char *fname)
     gretl_print_destroy(prn);
 
     /* output may need re-encoding, UTF-8 to locale? */
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+#ifndef OLD_GTK
     maybe_recode_file(fname2);
 #endif
     
@@ -3130,6 +3085,86 @@ static int seven_bit_string (const unsigned char *s)
     return 1;
 }
 
+static int seven_bit_file (const char *fname)
+{
+    FILE *fp;
+    char line[128];
+    int ascii = 1;
+    
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	return 1;
+    }
+
+    while (fgets(line, sizeof line, fp)) {
+	if (!seven_bit_string(line)) {
+	    ascii = 0;
+	    break;
+	}
+    }
+
+    fclose(fp);
+
+    return ascii;
+}
+
+static int maybe_recode_file (const char *fname)
+{
+    const gchar *charset;
+
+    if (g_get_charset(&charset)) {
+	/* locale uses UTF-8 */
+	return 0;
+    }
+
+    if (seven_bit_file(fname)) {
+	return 0;
+    } else {
+	FILE *fin, *fout;
+	char trname[MAXLEN];
+	char line[128];
+	gchar *trbuf;
+	int err = 0;
+
+	fin = fopen(fname, "r");
+	if (fin == NULL) {
+	    return 1;
+	}
+
+	sprintf(trname, "%s.tr", fname);
+
+	fout = fopen(trname, "w");
+	if (fout == NULL) {
+	    fclose(fin);
+	    return 1;
+	}	
+
+	while (fgets(line, sizeof line, fin) && !err) {
+	    trbuf = my_locale_from_utf8(line);
+	    if (trbuf != NULL) {
+		fputs(trbuf, fout);
+		if (trbuf != line) {
+		    g_free(trbuf);
+		}
+	    } else {
+		err = 1;
+	    }
+	}
+
+	fclose(fin);
+	fclose(fout);
+
+	if (!err) {
+	    err = copyfile(trname, fname);
+	    remove(trname);
+	}
+
+	return err;
+    }
+
+    return 0;
+}
+
 gchar *my_filename_from_utf8 (char *fname)
 {
     gchar *trfname;
@@ -3154,18 +3189,21 @@ gchar *my_filename_from_utf8 (char *fname)
     return fname;
 }
 
-gchar *my_locale_from_utf8 (const gchar *src)
+static gchar *
+real_locale_from_utf8 (const gchar *src, int force)
 {
     gchar *trstr;
     gsize bytes;
     GError *err = NULL;
+    const gchar *cset = NULL;
+
+    if (!force && g_get_charset(&cset)) {
+	return (gchar *) src;
+    }
 
     trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
 
     if (err != NULL) {
-	const gchar *cset = NULL;
-
-	g_get_charset(&cset);
 	if (cset != NULL) {
 	    sprintf(errtext, "g_locale_from_utf8 failed for charset '%s'",
 		    cset);
@@ -3178,6 +3216,16 @@ gchar *my_locale_from_utf8 (const gchar *src)
     }
 
     return trstr;
+}
+
+gchar *my_locale_from_utf8 (const gchar *src)
+{
+    return real_locale_from_utf8(src, 0);
+}
+
+gchar *force_locale_from_utf8 (const gchar *src)
+{
+    return real_locale_from_utf8(src, 1);
 }
 
 gchar *my_filename_to_utf8 (char *fname)

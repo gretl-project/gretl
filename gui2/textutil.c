@@ -452,14 +452,18 @@ int prn_to_clipboard (PRN *prn, int copycode)
 	    if (copycode != COPY_TEXT_AS_RTF) {
 		memcpy(clipboard_buf, trbuf, len + 1);
 	    }
-	    g_free(trbuf);
+	    if (trbuf != prn->buf) {
+		g_free(trbuf);
+	    }
 	}
     } else { /* copying TeX, RTF or CSV */
 	size_t len = strlen(prn->buf);
 
 	fprintf(stderr, "Copying to clipboard, %d bytes\n", (int) len);
 	clipboard_buf = mymalloc(len + 1);
-	if (clipboard_buf == NULL) return 1;
+	if (clipboard_buf == NULL) {
+	    return 1;
+	}
 	memcpy(clipboard_buf, prn->buf, len + 1);
     }
 

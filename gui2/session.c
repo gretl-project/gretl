@@ -3107,15 +3107,15 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     }
 
 # ifdef ENABLE_NLS
-    trbuf = my_locale_from_utf8(savestuff);
+    trbuf = force_locale_from_utf8(savestuff);
     if (trbuf != NULL) {
-	fprintf(fp, "%s", trbuf);
+	fputs(trbuf, fp);
 	g_free(trbuf);
     } else {
-	fprintf(fp, "%s", savestuff);
+	fputs(savestuff, fp);
     }
 # else
-    fprintf(fp, "%s", savestuff);
+    fputs(savestuff, fp);
 # endif
 
     g_free(savestuff); 

@@ -2918,7 +2918,7 @@ static void msgbox (const char *msg, int err)
     MessageBox(NULL, (trmsg != NULL)? trmsg : msg, "gretl", 
 	       MB_OK | ((err)? MB_ICONERROR : MB_ICONINFORMATION));
 
-    if (trmsg != NULL) {
+    if (trmsg != NULL && trmsg != msg) {
 	g_free(trmsg);
     }
 }

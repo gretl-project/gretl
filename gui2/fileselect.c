@@ -287,7 +287,9 @@ static void save_editable_content (int action, const char *fname,
     trbuf = my_locale_from_utf8(buf);
     if (trbuf != NULL) {
 	system_print_buf(trbuf, fp);
-	g_free(trbuf);
+	if (trbuf != buf) {
+	    g_free(trbuf);
+	}
     }
 #else
     system_print_buf(buf, fp);
@@ -449,15 +451,12 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
     if (OPEN_DATA_ACTION(action)) {
 	strcpy(trydatfile, fname);
 	verify_open_data(NULL, action);
-    }
-    else if (APPEND_DATA_ACTION(action)) {
+    } else if (APPEND_DATA_ACTION(action)) {
 	strcpy(trydatfile, fname);
 	do_open_data(NULL, NULL, action);
-    }
-    else if (action == OPEN_SCRIPT) {
+    } else if (action == OPEN_SCRIPT) {
 	filesel_open_script(fname);
-    }
-    else if (action == OPEN_SESSION) {
+    } else if (action == OPEN_SESSION) {
 	filesel_open_session(fname);
     }
 
@@ -465,18 +464,22 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 
     /* now for the save options */
 
-    if (action > SAVE_BIN2 && action != EXPORT_DAT && dat_ext(fname, 1)) 
+    if (action > SAVE_BIN2 && action != EXPORT_DAT && dat_ext(fname, 1)) { 
 	return;
+    }
 
-    if (check_maybe_add_ext(fname, action, data)) return;
+    if (check_maybe_add_ext(fname, action, data)) {
+	return;
+    }
 
     if (SAVE_DATA_ACTION(action)) {
 	int overwrite = 0;
 
-	if (!strcmp(fname, paths.datfile)) overwrite = 1;
+	if (!strcmp(fname, paths.datfile)) {
+	    overwrite = 1;
+	}
 	do_store(fname, action_to_opt(action), overwrite);
-    }
-    else if (action == SAVE_GNUPLOT) {
+    } else if (action == SAVE_GNUPLOT) {
 	int err = 0;
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
@@ -488,33 +491,27 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	} else if (err == 2) {
 	    infobox(_("There were missing observations"));
 	}
-    }
-    else if (action == SAVE_THIS_GRAPH) {
+    } else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
 	save_this_graph(plot, fname);
-    }
-    else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
+    } else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 
 	err = ps_print_plots(fname, action, data);
 	if (!err) infobox(_("boxplots saved"));
 	else errbox(_("boxplot save failed"));
-    }
-    else if (action == SAVE_SESSION) {
+    } else if (action == SAVE_SESSION) {
 	save_session(fname);
-    }
-    else if (SAVE_TEX_ACTION(action)) {
+    } else if (SAVE_TEX_ACTION(action)) {
 	MODEL *pmod = (MODEL *) data;
 
 	do_save_tex(fname, action, pmod); 
-    }
-    else if (action == SET_PATH) {
+    } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
 	filesel_set_path_callback(fname, strvar);
-    }
-    else {
+    } else {
 	windata_t *vwin = (windata_t *) data;
 
 	save_editable_content(action, fname, vwin);
@@ -741,7 +738,7 @@ void file_selector (const char *msg, int action, gpointer data)
     }
 
     free(filter);
-    if (trmsg != NULL) {
+    if (trmsg != NULL && trmsg != msg) {
 	g_free(trmsg);
     }
 

@@ -150,7 +150,9 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
     CloseClipboard();
 
-    if (tr != NULL) free(tr);
+    if (tr != NULL && tr != buf) {
+	free(tr);
+    }
 
     free(winbuf);
 
@@ -341,7 +343,9 @@ void winprint (char *fullbuf, char *selbuf)
     GlobalFree(pdlg.hDevNames);
 
 #ifdef ENABLE_NLS
-    if (printbuf != NULL) {
+    if (printbuf != NULL && 
+	printbuf != fullbuf && 
+	printbuf != selbuf) {
 	g_free(printbuf);
     }
 #endif
