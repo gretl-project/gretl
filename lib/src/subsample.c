@@ -884,15 +884,13 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	new_t1 = get_sample_increment(newstart);
 	if (new_t1) {
 	    new_t1 = pdinfo->t1 + new_t1;
-	    if (new_t1 < 0) {
-		strcpy(gretl_errmsg, _("Observation number out of bounds"));
-	    }	
 	} else {
 	    new_t1 = dateton(newstart, pdinfo);
 	}
-	if (*gretl_errmsg) {
+	if (new_t1 < 0 || new_t1 >= pdinfo->n) {
+	    strcpy(gretl_errmsg, _("Observation number out of bounds"));
 	    return 1;
-	}
+	}	
     }
 
     if (strcmp(newstop, ";")) {
@@ -902,7 +900,6 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	} else {
 	    new_t2 = dateton(newstop, pdinfo);
 	}
-	if (*gretl_errmsg) return 1;
 	if (new_t2 < 0 || new_t2 >= pdinfo->n) {
 	    strcpy(gretl_errmsg, _("error in new ending obs"));
 	    return 1;

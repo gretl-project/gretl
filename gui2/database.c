@@ -318,13 +318,17 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	strcpy(VARLABEL(datainfo, dbv), sinfo->descrip);
 	get_db_padding(sinfo, datainfo, &pad1, &pad2);
 
+	fprintf(stderr, "pad1 = %d, pad2 = %d\n", pad1, pad2);
+
 	if (pad1 > 0) {
 	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
 	    for (t=0; t<pad1; t++) {
 		Z[dbv][t] = NADBL;
 	    }
 	    start = pad1;
-	} else start = 0;
+	} else {
+	    start = 0;
+	}
 
 	if (pad2 > 0) {
 	    fprintf(stderr, "Padding at end, %d obs\n", pad2);
@@ -332,7 +336,9 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 		Z[dbv][t] = NADBL;
 	    }
 	    stop = n - pad2;
-	} else stop = n;
+	} else {
+	    stop = n;
+	}
 
 	/* fill in actual data values */
 	fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);

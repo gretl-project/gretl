@@ -1017,11 +1017,12 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 
     if (!dotpos1 && !dotpos2) {
 	n = atoi(date) - atoi(pdinfo->stobs);
-	if (n < 0 || (pdinfo->n != -1 && n > pdinfo->n)) {
+	if (pdinfo->n != -1 && n > pdinfo->n) { /* ?? */
 	    sprintf(gretl_errmsg, _("Observation number out of bounds"));
 	    return -1; 
+	} else {
+	    return n;
 	}
-        else return n;
     }
 
     safecpy(startmajstr, pdinfo->stobs, dotpos2);

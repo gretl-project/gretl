@@ -23,7 +23,7 @@
 
 #include "libgretl.h"
 
-/* #define DB_DEBUG */
+#undef DB_DEBUG
 
 #define RECNUM long
 #define NAMELENGTH 16
@@ -902,6 +902,7 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
     fprintf(stderr, "startskip = %d\n", skip);
     fprintf(stderr, "endskip = %d\n", endskip);
     fprintf(stderr, "goodobs = %d\n", goodobs);
+    fprintf(stderr, "compfac = %d\n", compfac);
     fprintf(stderr, "starting date = %s\n", sinfo->stobs);
 #endif
 
