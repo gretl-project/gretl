@@ -727,6 +727,8 @@ void do_help (gpointer data, guint code, GtkWidget *widget)
 	strcpy(cmdstr, "graphing");
     else if (code == GR_DUMMY)
 	strcpy(cmdstr, "factorized");
+    else if (code == GR_BOX || code == GR_NBOX)
+	strcpy(cmdstr, "boxplots");
     else if (code == ONLINE)
 	strcpy(cmdstr, "online");
     else if (code == MARKERS)

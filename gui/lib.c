@@ -2434,21 +2434,22 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata)
 /* ........................................................... */
 
 extern int 
-boxplots (const int *list, double **pZ, const DATAINFO *pdinfo);
+boxplots (const int *list, double **pZ, const DATAINFO *pdinfo, 
+	  int notches);
 
 void do_box_graph (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext;
-    gint err; 
+    gint err, code = ddata->code; 
 
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (*edttext == '\0') return;
 
     clear(line, MAXLEN);
-    sprintf(line, "boxplot %s", edttext);
+    sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", edttext);
 
     if (check_cmd(line) || cmd_init(line)) return;
-    err = boxplots(command.list, &Z, datainfo);
+    err = boxplots(command.list, &Z, datainfo, (code == GR_NBOX));
     if (err) errbox("boxplot command failed");
 }
 

@@ -30,6 +30,7 @@
 
 typedef struct {
     double median;
+    double conf[2];
     double uq, lq;
     double max, min;
     double xbase;
@@ -157,6 +158,8 @@ static gint popup_activated (GtkWidget *w, gpointer data)
         file_selector("Save boxplot file", paths.userdir, 
                       SAVE_BOXPLOT_XPM, ptr);
 #endif
+    else if (!strcmp(item, "Help"))
+	do_help (NULL, GR_BOX, NULL);
     else if (!strcmp(item, "Close")) { 
 	gtk_widget_destroy(grp->popup);
 	grp->popup = NULL;
@@ -182,7 +185,8 @@ static GtkWidget *build_menu (gpointer data)
 	"Copy to clipboard",
 #else
 	"Save as XPM...",
-#endif	
+#endif
+	"Help",
         "Close",
 	NULL
     };
@@ -355,6 +359,16 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     sprintf(numstr, "%.4g", (grp->gmax + grp->gmin) / 2.0);
     setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
+
+    /* special string for notched plots */
+    if (grp->plots[0].conf[0] != -999.0) {
+	setup_text (grp->area, grp->pixmap, gc, pc, 
+		    "notches show bootstrapped 90% confidence intervals "
+		    "for medians", 
+		    grp->width / 2.0,
+		    grp->height * headroom / 3.0,
+		    GTK_JUSTIFY_CENTER);
+    }
 }
 
 /* ............................................................. */
@@ -370,6 +384,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     double xcenter = plot->xbase + boxwidth / 2.0;
     double scale = (1.0 - headroom) * height / (gmax - gmin);
     double median, uq, lq, maxval, minval;
+    double conflo, confhi = 0.;
     GdkRectangle rect;
     GdkGC *gc = NULL;
     /* GdkGC *whitegc = NULL; */
@@ -386,32 +401,92 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     maxval = ybase + (gmax - plot->max) * scale;
     minval = ybase + (gmax - plot->min) * scale;
 
-    /* draw inter-quartile box */
-    if (pc != NULL) 
-	gtk_plot_pc_draw_rectangle (pc,
-				    FALSE,
-				    plot->xbase, uq,
-				    boxwidth,
-				    lq - uq);
-    else {
-	rect.x = plot->xbase;
-	rect.y = uq;
-	rect.width = boxwidth;
-	rect.height = uq - lq; 	
-	gdk_draw_rectangle (pixmap, 
-			    gc, 
-			    FALSE, /* filled ? */
-			    plot->xbase, 
-			    uq, 
-			    boxwidth, 
-			    lq - uq);
-	gtk_widget_draw (area, &rect);
+    if (plot->conf[0] != -999.0) { /* confidence intervals defined */
+	if (plot->conf[1] > plot->uq) 
+	    confhi = uq;
+	else
+	    confhi = ybase + (gmax - plot->conf[1]) * scale;
+	if (plot->conf[0] < plot->lq) 
+	    conflo = lq;
+	else
+	    conflo = ybase + (gmax - plot->conf[0]) * scale;
+    }
+
+    /* no notches: draw simple inter-quartile box */
+    if (confhi == 0.) {
+	if (pc != NULL) 
+	    gtk_plot_pc_draw_rectangle (pc,
+					FALSE,
+					plot->xbase, uq,
+					boxwidth,
+					lq - uq);
+	else {
+	    rect.x = plot->xbase;
+	    rect.y = uq;
+	    rect.width = boxwidth;
+	    rect.height = uq - lq; 	
+	    gdk_draw_rectangle (pixmap, 
+				gc, 
+				FALSE, /* filled ? */
+				plot->xbase, 
+				uq, 
+				boxwidth, 
+				lq - uq);
+	    gtk_widget_draw (area, &rect);
+	}
+    } else { /* draw notched boxes */
+	if (pc != NULL) {
+	    GtkPlotPoint points[10];
+
+	    points[0].x = points[6].x = points[7].x = points[9].x = 
+		plot->xbase;
+	    points[0].y = points[1].y = uq;
+	    points[1].x = points[2].x = points[4].x = points[5].x =
+		plot->xbase + boxwidth;
+	    points[5].y = points[6].y = lq;
+	    points[3].y = points[8].y = median;
+	    points[2].y = points[9].y = confhi;
+	    points[4].y = points[7].y = conflo;
+	    points[8].x = plot->xbase + .10 * boxwidth;
+	    points[3].x = plot->xbase + .90 * boxwidth;
+
+	    gtk_plot_pc_draw_polygon (pc,
+				      FALSE, /* filled ? */
+				      points,
+				      10);
+	} else {
+	    GdkPoint points[10];
+
+	    rect.x = plot->xbase;
+	    rect.y = uq;
+	    rect.width = boxwidth;
+	    rect.height = uq - lq; 
+
+	    points[0].x = points[6].x = points[7].x = points[9].x = 
+		plot->xbase;
+	    points[0].y = points[1].y = uq;
+	    points[1].x = points[2].x = points[4].x = points[5].x =
+		plot->xbase + boxwidth;
+	    points[5].y = points[6].y = lq;
+	    points[3].y = points[8].y = median;
+	    points[2].y = points[9].y = confhi;
+	    points[4].y = points[7].y = conflo;
+	    points[8].x = plot->xbase + .10 * boxwidth;
+	    points[3].x = plot->xbase + .90 * boxwidth;
+
+	    gdk_draw_polygon (pixmap,
+			      gc,
+			      FALSE, /* filled ? */
+			      points,
+			      10);
+	    gtk_widget_draw (area, &rect);
+	}
     }
 
     /* draw line at median */
-    points[0] = plot->xbase;
+    points[0] = plot->xbase + ((confhi > 0.)? (0.1 * boxwidth) : 0.0);
     points[1] = points[3] = median;
-    points[2] = plot->xbase + boxwidth;
+    points[2] = plot->xbase + ((confhi > 0.)? (0.9 * boxwidth) : boxwidth);
     draw_line(points, area, pixmap, gc, pc); /* was whitegc */
 
     /* draw line to maximum value */
@@ -498,6 +573,32 @@ make_area (PLOTGROUP *grp)
 
 /* ............................................................. */
 
+static int 
+compare_doubles (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+     
+    return (*da > *db) - (*da < *db);
+}
+
+/* ............................................................. */
+
+static double 
+median (double *x, const int n)
+{
+    int n2;
+    double xx;
+
+    qsort(x, n, sizeof *x, compare_doubles);
+
+    n2 = n/2;
+    xx = (n % 2)? x[n2] : 0.5 * (x[n2 - 1] + x[n2]);
+    return xx;
+}
+
+/* ............................................................. */
+
 static double 
 quartiles (const double *x, const int n, BOXPLOT *box)
 {
@@ -522,13 +623,49 @@ quartiles (const double *x, const int n, BOXPLOT *box)
 
 /* ............................................................. */
 
+#define ITERS 560
+#define CONFIDENCE 90
+
 static int 
-compare_doubles (const void *a, const void *b)
+median_interval (double *x, int n, double *low, double *high)
+     /* obtain bootstrap estimate of 90% confidence interval
+	for the sample median of data series x; return low and
+	high values in 'low' and 'high' */
 {
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
-     
-    return (*da > *db) - (*da < *db);
+    double *medians, *samp;
+    int i, j, t;
+
+    medians = malloc (ITERS * sizeof *medians);
+    if (medians == NULL) return 1;
+
+    samp = malloc (n * sizeof *samp);
+    if (samp == NULL) {
+	free(medians);
+	return 1;
+    }
+
+    for (i=0; i<ITERS; i++) {
+	/* sample with replacement from x */
+	for (j=0; j<n; j++) {
+	    t = rand() / (RAND_MAX / n + 1);
+	    samp[j] = x[t];
+	}
+	/* find the median of the sample */
+	medians[i] = median(samp, n);
+    }
+
+    /* sort the sample medians */
+    qsort(medians, ITERS, sizeof *medians, compare_doubles);
+    
+    /* return the right values */
+    j = 100 / ((100 - CONFIDENCE) / 2);
+    *low = medians[ITERS / j];
+    *high = medians[ITERS - ITERS/j];
+
+    free(samp);
+    free(medians);
+
+    return 0;
 }
 
 /* At this point we need to borrow a few functions from gtkplotps.c,
@@ -596,17 +733,38 @@ five_numbers (gpointer data)
 
     if (bufopen(&prn)) return 1;
 
-    pprintf(&prn, "Five-number summar%s\n\n"
-	    "%22s%12s%12s%12s%12s\n",
-	    (grp->nplots > 1)? "ies" : "y",
-	    "minimum", "Q1", "median", "Q3", "maxmimum");
+    if (grp->plots[0].conf[0] == -999.0) { /* no confidence intervals */
+	pprintf(&prn, "Five-number summar%s\n\n"
+		"%20s%10s%10s%10s%10s\n",
+		(grp->nplots > 1)? "ies" : "y",
+		"min", "Q1", "median", "Q3", "max");
 
-    for (i=0; i<grp->nplots; i++) {
-	pprintf(&prn, "%-10s%12g%12g%12g%12g%12g\n",
-		grp->plots[i].varname, grp->plots[i].min, 
-		grp->plots[i].lq, grp->plots[i].median,
-		grp->plots[i].uq, grp->plots[i].max);
+	for (i=0; i<grp->nplots; i++) {
+	    pprintf(&prn, "%-10s%10g%10g%10g%10g%10g\n",
+		    grp->plots[i].varname, grp->plots[i].min, 
+		    grp->plots[i].lq, grp->plots[i].median,
+		    grp->plots[i].uq, grp->plots[i].max);
+	}
+    } else { /* confidence intervals */
+	char intstr[24];
+
+	pprintf(&prn, "Five-number summar%s with bootstrapped confidence "
+		"interval for median\n\n"
+		"%18s%10s%10s%17s%10s%10s\n",
+		(grp->nplots > 1)? "ies" : "y",
+		"min", "Q1", "median", "(90% interval)", "Q3", "max");
+
+	for (i=0; i<grp->nplots; i++) {
+	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 
+		    grp->plots[i].conf[1]);
+	    pprintf(&prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
+		    grp->plots[i].varname, grp->plots[i].min, 
+		    grp->plots[i].lq, grp->plots[i].median,
+		    intstr,
+		    grp->plots[i].uq, grp->plots[i].max);
+	}
     }
+
     (void) view_buffer(&prn, 78, 240, "gretl: 5 numbers", BXPLOT,
                        view_items);
 
@@ -615,7 +773,8 @@ five_numbers (gpointer data)
 
 /* ............................................................. */
 
-int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
+int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo,
+	      int notches)
 {
     int i, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
@@ -647,6 +806,16 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
 	quartiles(x, n, &plotgrp->plots[i]);
+	/* notched boxplots wanted? */
+	if (notches) {
+	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
+				&plotgrp->plots[i].conf[1])) {
+		errbox ("Couldn't obtain confidence interval");
+		plotgrp->plots[i].conf[0] = 
+		    plotgrp->plots[i].conf[1] = -999.0;
+	    }
+	} else 
+	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = -999.0;
 	strcpy(plotgrp->plots[i].varname, pdinfo->varname[list[i+1]]);
     }
     free(x);
@@ -739,8 +908,8 @@ static int cb_copy_image (gpointer data)
 	    pPal = (RGBQUAD*)(pBmp + sizeof(BITMAPINFOHEADER));
 
 	    pPal[0].rgbReserved = pPal[1].rgbReserved = 0;
-	    pPal[0].rgbRed = pPal[0].rgbGreen = pPal[0].rgbBlue = 0;
-	    pPal[1].rgbRed = pPal[1].rgbGreen = pPal[1].rgbBlue = 255;
+	    pPal[0].rgbRed = pPal[0].rgbGreen = pPal[0].rgbBlue = 255;
+	    pPal[1].rgbRed = pPal[1].rgbGreen = pPal[1].rgbBlue = 0;
 	  
 	    bRet = TRUE;
 	    GlobalUnlock (hDIB);
@@ -770,7 +939,7 @@ static int cb_copy_image (gpointer data)
 		for (x=0; x<grp->width; x++) {
 		    pixel = gdk_image_get_pixel(image, x, y);
 		    if (pixel != white_pixel) ch |= (1 << i);
-		    if ((x + 1) % 8 == 0) {
+		    if (x % 8 == 7) {
 			pData[j++] = ch;
 			i = 0;
 			ch = 0;
@@ -850,26 +1019,6 @@ int plot_to_xpm (const char *fname, gpointer data)
 	    else fprintf(fp, ".");
 	}
 	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
-    }
-
-    if (1) {
-	int x, y, ch, bits[8];
-
-	for (y=0; y<grp->height; y++) {
-	    i = 0; ch = 0;
-	    for (x=0; x<grp->width; x++) {
-		pixel = gdk_image_get_pixel(image, x, y);
-		if (pixel == white_pixel) bits[i] = 0;
-		else bits[i] = 1;
-		ch |= bits[i] << i;
-		if (x && x % 8 == 0) {
-		    fprintf(stderr, "%d ", ch);
-		    i = 0;
-		    ch = 0;
-		}
-	    }
-	    fprintf(stderr, "\n");
-	}
     }
 
     gdk_image_destroy(image);

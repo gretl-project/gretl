@@ -294,7 +294,7 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
     int i;
 
     switch (code) {
-    case GR_BOX:
+    case GR_BOX: case GR_NBOX:
 	gfunc = do_box_graph;
 	strcpy(title, "gretl: boxplots");
 	strcpy(request, "Enter var names or numbers:");

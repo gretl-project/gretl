@@ -72,6 +72,28 @@ positive, then the corresponding uhat square is used instead.  Weighted least
 square estimation is then performed on the original model.
 
 #
+boxplots
+Exploratory data analysis
+
+These plots (after Tukey and Chambers) display the distribution of a variable.
+The central box encloses the middle 50 percent of the data, i.e. it is bounded
+by the first and third quartiles.  The "whiskers" extend to the minimum and
+maximum values.  A line is drawn across the box at the median.  
+
+In the case of notched boxes, the notch shows the limits of an approximate 90
+percent confidence interval.  This is obtained by the bootstrap method, which
+could take a while if the data series is very long.
+
+Clicking the mouse in the boxplots window brings up a menu which enables you
+to save the plots as encapsulated postscript (EPS) or as a full-page
+postscript file.  Under the X window system you can also save the window as an
+XPM file; under MS Windows you can copy it to the clipboard as a bitmap.  The
+menu also gives you the option of opening a summary window which displays
+five-number summaries (minimum, first quartile, median, third quartile,
+maxmimum), plus a confidence interval for the median if the "notched" option
+was chosen.
+
+#
 chow
 Chow test for structural homogeneity
 
