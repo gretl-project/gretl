@@ -35,6 +35,7 @@
 # include <sys/stat.h>
 # include <sys/types.h>
 # include <fcntl.h>
+# include <errno.h>
 # include "gtkfontselhack.h"
 #endif
 
@@ -336,6 +337,22 @@ static int check_for_prog (const char *prog)
     return (gretl_spawn(tmp) == 0);
 }
 
+static int my_mkdir (const char *dirname)
+{
+    int err = 0;
+    extern int errno;
+
+    errno = 0;
+
+    if (mkdir(dirname, 0755)) {
+	if (errno != EEXIST) { 
+	    fprintf(stderr, "%s: %s\n", dirname, strerror(errno));
+	    err = 1;
+	}
+    }
+    return err;
+}
+
 static void set_tramo_x12a_dirs (void)
 {
     char dirname[MAXLEN];
@@ -362,23 +379,24 @@ static void set_tramo_x12a_dirs (void)
 	closedir(test);
     }
 #  ifdef HAVE_X12A
-    mkdir(x12adir, 0755);
+    my_mkdir(x12adir);
 #  endif
 #  ifdef HAVE_TRAMO
+    if (my_mkdir(tramodir)) return;
     sprintf(dirname, "%s/output", tramodir);
-    mkdir(dirname, 0755);
+    my_mkdir(dirname);
     sprintf(dirname, "%s/graph", tramodir);
-    mkdir(dirname, 0755);
+    if (my_mkdir(dirname)) return;
     sprintf(dirname, "%s/graph/acf", tramodir);
-    mkdir(dirname, 0755);
+    my_mkdir(dirname);
     sprintf(dirname, "%s/graph/filters", tramodir);
-    mkdir(dirname, 0755);
+    my_mkdir(dirname);
     sprintf(dirname, "%s/graph/forecast", tramodir);
-    mkdir(dirname, 0755);
+    my_mkdir(dirname);
     sprintf(dirname, "%s/graph/series", tramodir);
-    mkdir(dirname, 0755);
+    my_mkdir(dirname);
     sprintf(dirname, "%s/graph/spectra", tramodir);
-    mkdir(dirname, 0755);
+    my_mkdir(dirname);
 #  endif /* HAVE_TRAMO */
 }
 

@@ -1254,6 +1254,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     print_model_tests(pmod, prn);
 
  close_format:
+    if (PLAIN_FORMAT(prn->format) && pmod->aux == AUX_ADF) {
+	print_aicetc(pmod, prn);
+    }
     if (!PLAIN_FORMAT(prn->format)) {
 	model_format_end(prn);
     }

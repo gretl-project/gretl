@@ -4015,7 +4015,7 @@ static int get_latex_path (char *latex_path)
 
 #else
 
-static int spawn_latex (char *texbase)
+static int spawn_latex (char *texsrc)
 {
     GError *error = NULL;
     gchar *errout = NULL, *sout = NULL;
@@ -4023,7 +4023,7 @@ static int spawn_latex (char *texbase)
 	"latex",
 	"\\batchmode",
 	"\\input",
-	texbase,
+	texsrc,
 	NULL
     };
     int ok, status;
@@ -4076,9 +4076,9 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     int dot, err = LATEX_OK;
     windata_t *mydata = NULL;
     MODEL *pmod = NULL;
+    char *texshort = NULL;
 #ifdef G_OS_WIN32
     static char latex_path[MAXLEN];
-    char *texshort = NULL;
 #endif
 
     if (code != LATEX_VIEW_MODELTABLE) {
@@ -4123,18 +4123,18 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 
     dot = dotpos(texfile);
     *texbase = 0;
-    strncat(texbase, texfile, dot);     
+    strncat(texbase, texfile, dot);
+
+    texshort = strrchr(texbase, SLASH) + 1;
+    if (texshort == NULL) {
+	errbox(_("Failed to process TeX file"));
+	return;
+    }  
 
 #ifdef G_OS_WIN32
     if (*latex_path == 0 && get_latex_path(latex_path)) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
-	return;
-    }
-
-    texshort = strrchr(texbase, SLASH) + 1;
-    if (texshort == NULL) {
-	errbox(_("Failed to process TeX file"));
 	return;
     }
 
@@ -4149,7 +4149,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	}	
     }
 #else
-    err = spawn_latex(texbase);
+    err = spawn_latex(texshort);
     if (err == LATEX_OK) {
 	gretl_fork(viewdvi, texbase);
     }

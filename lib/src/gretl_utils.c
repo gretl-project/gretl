@@ -2650,6 +2650,8 @@ int gretl_spawn (const char *cmdline)
     int ok, status;
     int ret = 0;
 
+    *gretl_errmsg = '\0';
+
     signal(SIGCHLD, SIG_DFL);
 
     ok = g_spawn_command_line_sync (cmdline,
@@ -2690,6 +2692,8 @@ int gretl_spawn (const char *cmdline)
 int gretl_spawn (const char *cmdline)
 {
     int err;
+
+    *gretl_errmsg = '\0';
 
     err = system(cmdline);
     if (err) {
