@@ -1,4 +1,7 @@
-version 1.0.3
+02/04/03 version 1.0.3
+- Add PNG graphs to win32 version, and standardize on PNG graphs for
+  all display including graph editing
+- Add facility to identify labeled data-points in a scatter plot
 - further fix to pathnames with .Rprofile for win32
 - LaTeX view: fix for dvi file living in a directory with
   spaces in its name on win32
@@ -13,11 +16,15 @@ version 1.0.3
 - Fix bug in command echo for "store" and a few others
 - Add selector for variables to be saved when doing "Save as"
   or "Export"
+- Add facility to browse for programs under the Preferences, 
+  General, Programs tab
 - Add facility to copy data to clipboard as CSV
-- Add PNG graphs to win32 version, and standardize on PNG graphs for
-  all display including graph editing
 - Update win32 version to gtk version 2.2.0
+- Bring various details of the gtk-1.2 build in line with the
+  gtk-2.0 version
 - Add configuration option to avoid libreadline dependency
+  ("--without-readline") and build the gretl rpm without readline
+- Updates to manual
 - Raise shared library revision number to 3
 
 12/09/02 version 1.0.2

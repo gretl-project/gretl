@@ -37,7 +37,12 @@
       </listitem>
       <listitem><para><guimenuitem>Copy to clipboard</guimenuitem>: MS
 	  Windows only, lets you paste the graph into Windows
-	  applications such as MS Word.</para>
+	  applications such as MS Word.<footnote><para>For best
+	  results when pasting graphs into MS Office applications,
+	  choose the application's <quote>Edit, Paste
+	  Special...</quote> menu item, and select the option
+	  <quote>Picture (Enhanced Metafile)</quote>.</para>
+	  </footnote></para>
       </listitem>
       <listitem><para><guimenuitem>Edit</guimenuitem>: Opens a
 	  controller for the plot which lets you adjust various

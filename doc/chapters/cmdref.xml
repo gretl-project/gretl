@@ -129,6 +129,8 @@
 	for adding variables.  The example above adds variables number
 	5, 7 and 9 to Model 2.
       </para>
+      
+      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -701,8 +703,8 @@
 	gnuplot graph of the distribution is displayed.  
       </para>
 
-      <para role="bodge">&nbsp;</para>
-      <para role="bodge">&nbsp;</para>
+      <!-- <para role="bodge">&nbsp;</para> -->
+      <!-- <para role="bodge">&nbsp;</para> -->
       <!-- BODGE to make genr section title not an orphan -->
 
       </sect2>
@@ -1316,8 +1318,6 @@
 	  are stored under the name <varname>uhat</varname>.
       </para>
 
-     <para role="bodge">&nbsp;</para> 
-
     </sect2>
 
     <sect2 id="hsk"><title>hsk</title>
@@ -1619,6 +1619,8 @@
 	variables <varname>l_x</varname> = ln(<varname>x</varname>)
 	and <varname>l_y</varname> = ln(<varname>y</varname>).
       </para>
+
+      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -1935,6 +1937,8 @@
 	command. The coefficient covariance matrix is printed if the
 	<literal>-o</literal> flag is given.
       </para>
+
+     <para role="bodge">&nbsp;</para> 
 
     </sect2>
 
@@ -3194,7 +3198,6 @@
       </tgroup>
     </table>
 
-    <para role="bodge">&nbsp;</para>
     <para role="bodge">&nbsp;</para>
     <para role="bodge">&nbsp;</para>
 

@@ -319,10 +319,6 @@
 	      icons.  For details see <xref
 	      linkend="session"/>.
 	    </para></listitem>
-	  <listitem><para><guimenuitem>Add last graph</guimenuitem>:
-	      Capture the last graph shown in the form of a session
-	      icon, so that it can be revisited and manipulated.
-	    </para></listitem>
 	  <listitem><para><guimenuitem>Open</guimenuitem>: Open a
 	      previously saved session file.
 	    </para></listitem>
@@ -532,7 +528,7 @@
 	  default program is <filename>calc.exe</filename> under MS
 	  Windows, or <filename>xcalc</filename> under the X window
 	  system.  You can change the program under the <quote>File,
-	    Preferences, General</quote> menu, <quote>Toolbar</quote>
+	    Preferences, General</quote> menu, <quote>Programs</quote>
 	  tab.</para></listitem>
       <listitem><para>Launch an editor or word processor.  The default
 	  is <filename>winword.exe</filename> under MS Windows,
@@ -555,9 +551,6 @@
 	  commands).</para></listitem>
       <listitem><para>Open the dialog box for defining a
 	  graph.</para></listitem>
-      <listitem><para>Capture the last displayed graph for
-	  editing.  (This button is not shown under Linux, where a
-	  graph can be captured via its popup menu.)</para></listitem>
       <listitem><para>Open a window listing the datasets associated
 	  with Ramanathan's <citetitle>Introductory
 	    Econometrics</citetitle> (or this button can be configured

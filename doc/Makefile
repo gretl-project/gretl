@@ -6,6 +6,7 @@ JADE = jade
 SAXON = saxon
 CONVERT = convert # from ImageMagick suite
 HHC = wine "c:/Program Files/HTML Help Workshop/hhc.exe"
+WEBDIR = /home/cottrell/stats/esl/website
 
 DOC = manual
 SRC = $(DOC).xml
@@ -75,3 +76,6 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex
 	rm -rf $(DOC)-html htmlhelp
+
+install: 
+	cp manual.pdf manual-a4.pdf $(WEBDIR)
