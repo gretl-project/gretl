@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-09-27 23:50+0100\n"
+"PO-Revision-Date: 2004-09-29 23:55+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1142,7 +1142,7 @@ msgstr ""
 #: lib/src/describe.c:919 lib/src/describe.c:1470 lib/src/describe.c:1472
 #, c-format
 msgid "Number of observations = %d\n"
-msgstr ""
+msgstr "Liczba obserwacji = %d\n"
 
 #: lib/src/describe.c:921
 #, c-format
@@ -1290,7 +1290,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test istotno¶ci dla dwóch ¶rednich (za³o¿enie: %s wariancje)\n"
+"Test dla ¶rednich w dwóch populacjach (za³o¿enie: %s wariancje)\n"
 "\n"
 
 #: lib/src/describe.c:1468
@@ -1304,11 +1304,11 @@ msgstr "równe"
 #: lib/src/describe.c:1473
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
-msgstr "   Ró¿nica pomiêdzy ¶rednimu z próby = %g - %g = %g\n"
+msgstr "   Ró¿nica pomiêdzy ¶rednimu z prób = %g - %g = %g\n"
 
 #: lib/src/describe.c:1475
 msgid "   Null hypothesis: The two population means are the same.\n"
-msgstr "   Hipoteza zerowa: Dwie ¶rednie dla populacji s± jednakowe.\n"
+msgstr "   Hipoteza zerowa: ¶rednie z dwóch populacji s± jednakowe.\n"
 
 #: lib/src/describe.c:1476
 #, c-format
@@ -1344,7 +1344,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test równo¶ci dwóch wariancji\n"
+"Test równo¶ci wariancji w dwóch populacjach\n"
 "\n"
 
 #: lib/src/describe.c:1542
@@ -1355,11 +1355,11 @@ msgstr "   Stosunek wariancji z prób = %g\n"
 #: lib/src/describe.c:1543 lib/src/modelprint.c:657 lib/src/modelprint.c:678
 #: lib/src/modelprint.c:696 gui2/library.c:1210 gui2/library.c:1244
 msgid "Null hypothesis"
-msgstr ""
+msgstr "Hipoteza zerowa"
 
 #: lib/src/describe.c:1544
 msgid "The two population variances are equal"
-msgstr "dwie wariancje z populacji s± równe"
+msgstr "Wariancje z dwóch populacji s± równe"
 
 #: lib/src/discrete.c:162
 #, c-format
@@ -1947,7 +1947,7 @@ msgstr "B³±d w danych"
 
 #: lib/src/gretl_errors.c:32
 msgid "Exact or near collinearity encountered"
-msgstr "Wystgêpuje dok³adna lub bliska wspó³liniowo¶æ"
+msgstr "Wystêpuje dok³adna lub bliska wspó³liniowo¶æ"
 
 #: lib/src/gretl_errors.c:33
 msgid "Insufficient degrees of freedom for regression"
@@ -5996,11 +5996,11 @@ msgstr ""
 
 #: gui/ssheet.c:468 gui2/ssheet.c:723
 msgid "Warning: there were missing observations"
-msgstr ""
+msgstr "Uwaga: znajduj± siê puste obserwacje w bazie"
 
 #: gui/ssheet.c:470 gui2/ssheet.c:725
 msgid "Data updated OK"
-msgstr ""
+msgstr "Baza danych zaktualizowana"
 
 #: gui/ssheet.c:555 gui2/dialogs.c:697 gui2/ssheet.c:1221 gui2/ssheet.c:1243
 msgid ""
@@ -6214,11 +6214,11 @@ msgstr "B³êdne dane"
 
 #: gui2/calculator.c:152
 msgid "Incomplete entry for hypothesis test"
-msgstr "Niekompletne dane dla hipotezy testowej"
+msgstr "Niekompletne dane dla testowanej hipotezy"
 
 #: gui2/calculator.c:160
 msgid "Invalid entry for hypothesis test"
-msgstr "B³êdne dane dla hipotezy testowej"
+msgstr "B³êdne dane dla testowanej hipotezy"
 
 #: gui2/calculator.c:220 gui2/calculator.c:318 gui2/calculator.c:343
 #: gui2/calculator.c:356
@@ -6256,7 +6256,7 @@ msgstr "B³êdy standardowe"
 
 #: gui2/calculator.c:474
 msgid "Gaussian sampling distribution"
-msgstr "rozk³ad standardowy z próby"
+msgstr "rozk³ad standaryzowany z próby"
 
 #: gui2/calculator.c:479
 #, c-format
@@ -6378,7 +6378,7 @@ msgstr "Statystyka testowa: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:706
 msgid "Null hypothesis: The population variances are equal\n"
-msgstr "Hipoteza zerowa: Wariancje w populacjach s± równe\n"
+msgstr "Hipoteza zerowa: Wariancje w dwóch populacjach s± równe\n"
 
 #: gui2/calculator.c:708
 #, c-format
@@ -7026,11 +7026,11 @@ msgstr ""
 
 #: gui2/database.c:103 gui2/database.c:105
 msgid "Error retrieving data from server"
-msgstr ""
+msgstr "B³±d odbioru danych z serwera (brak po³±czenia)"
 
 #: gui2/database.c:131 gui2/database.c:1414
 msgid "Retrieving data..."
-msgstr ""
+msgstr "Odbieranie danych..."
 
 #: gui2/database.c:179
 msgid "gretl: display database series"
@@ -7042,7 +7042,7 @@ msgstr ""
 
 #: gui2/database.c:215 gui2/fileselect.c:483
 msgid "There were missing observations"
-msgstr ""
+msgstr "Znajduj± siê puste obserwcje w bazie"
 
 #: gui2/database.c:258
 msgid ""
@@ -7119,7 +7119,7 @@ msgstr ""
 
 #: gui2/database.c:697 gui2/datafiles.c:1012
 msgid "Network status: OK"
-msgstr ""
+msgstr "Stan po³±czenia z sieci±: OK"
 
 #: gui2/database.c:748
 #, c-format
@@ -7128,7 +7128,7 @@ msgstr ""
 
 #: gui2/database.c:1038
 msgid "Couldn't open RATS data file"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie pliku danych RATS"
 
 #: gui2/database.c:1076 gui2/database.c:1101
 msgid "Name"
@@ -7140,12 +7140,12 @@ msgstr ""
 
 #: gui2/database.c:1294
 msgid "Couldn't open database"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie pliku danych"
 
 #: gui2/database.c:1352
 #, c-format
 msgid "Network status: %s"
-msgstr ""
+msgstr "Stan po³±czenia z sieci±: %s"
 
 #: gui2/database.c:1481
 #, c-format
@@ -7165,11 +7165,11 @@ msgstr ""
 #: gui2/database.c:1743
 #, c-format
 msgid "Can't open folder %s"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie katalogu %s"
 
 #: gui2/database.c:1844 gui2/datafiles.c:869
 msgid "No database files found"
-msgstr ""
+msgstr "Nie znaleziono pliku danych"
 
 #: gui2/datafiles.c:622
 msgid "gretl: data header"
