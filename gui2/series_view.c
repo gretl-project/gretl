@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "textutil.h"
 #include "dlgutils.h"
+#include "clipboard.h"
 
 typedef struct {
     char label[OBSLEN];

@@ -51,9 +51,6 @@ FILE *dbg;
 /* functions private to gretl.c */
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 static GtkWidget *make_main_window (int gui_get_data);
-#ifndef G_OS_WIN32
-static void clip_init (GtkWidget *w);
-#endif
 
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
@@ -108,7 +105,6 @@ double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
 
 int plot_count, data_status, orig_vars;
-gchar *clipboard_buf; /* for copying models as LaTeX */
 float gui_scale;
 
 /* defaults for some options */
@@ -908,9 +904,6 @@ int main (int argc, char *argv[])
 #ifndef G_OS_WIN32
     /* Let a first-time user set the working dir */
     first_time_set_user_dir(); 
-
-    /* enable special copying to clipboard */
-    clip_init(mdata->w);
 #endif
 
     add_files_to_menus();
@@ -1458,82 +1451,6 @@ drag_data_received  (GtkWidget *widget,
 	verify_open_data(NULL, 0);
     }	
 }
-
-/* ........................................................... */
-
-#ifndef G_OS_WIN32
-
-static void gretl_clipboard_get (GtkClipboard *clip,
-				 GtkSelectionData *selection_data,
-				 guint info,
-				 gpointer p)
-{
-    gchar *str;
-    gint length;
-
-    str = clipboard_buf; /* global */
-    if (str == NULL) return;
-    length = strlen(str);
-
-    if (info == TARGET_STRING) {
-	gtk_selection_data_set (selection_data,
-				GDK_SELECTION_TYPE_STRING,
-				8 * sizeof(gchar), 
-				(guchar *) str, 
-				length);
-    } else if (info == TARGET_TEXT || info == TARGET_COMPOUND_TEXT) {
-	guchar *text;
-	gchar c;
-	GdkAtom seltype;
-	gint format;
-	gint new_length;
-
-	c = str[length];
-	str[length] = '\0';
-	gdk_string_to_compound_text(str, &seltype, &format, 
-				    &text, &new_length);
-	gtk_selection_data_set(selection_data, seltype, format, 
-			       text, new_length);
-	gdk_free_compound_text(text);
-	str[length] = c;
-    }
-}
-
-/* ........................................................... */
-
-static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
-{
-    free(clipboard_buf);
-    clipboard_buf = NULL;
-}
-
-/* ........................................................... */
-
-static void clip_init (GtkWidget *w)
-{
-    GtkClipboard *clip;
-    GtkTargetEntry targets[] = {
-	{ "STRING", 0, TARGET_STRING },
-	{ "TEXT",   0, TARGET_TEXT }, 
-	{ "COMPOUND_TEXT", 0, TARGET_COMPOUND_TEXT }
-    };
-
-    gint n_targets = sizeof targets / sizeof targets[0];
-
-    clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
-
-    if (!gtk_clipboard_set_with_owner(clip,
-				      targets, n_targets,
-				      gretl_clipboard_get,
-				      gretl_clipboard_clear,
-				      G_OBJECT(w))) {
-	fprintf(stderr, "Failed to initialize clipboard\n");
-    }
-}
-
-#endif /* G_OS_WIN32 */
-
-/* ........................................................... */
 
 static int native_datafile (void)
 {

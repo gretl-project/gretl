@@ -23,7 +23,7 @@
 #include "textbuf.h"
 #include "guiprint.h"
 #include "model_table.h"
-
+#include "clipboard.h"
 
 /* find-and-replace related materials */
 
@@ -429,8 +429,7 @@ int prn_to_clipboard (PRN *prn, int copycode)
 {
     if (prn->buf == NULL) return 0;
 
-    if (clipboard_buf) g_free(clipboard_buf);
-    clipboard_buf = NULL;
+    gretl_clipboard_free();
 
     if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
 	/* need to convert from utf8 */
@@ -464,9 +463,8 @@ int prn_to_clipboard (PRN *prn, int copycode)
 	memcpy(clipboard_buf, prn->buf, len + 1);
     }
 
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY, 
-			    GDK_CURRENT_TIME);
+    gretl_clipboard_set(copycode);
+
     return 0;
 }
 
@@ -476,19 +474,26 @@ int prn_to_clipboard (PRN *prn, int copycode)
 {
     size_t len;
     
-    if (prn->buf == NULL) return 0;
-    len = strlen(prn->buf);
-    if (len == 0) return 0;
+    if (prn->buf == NULL) {
+	return 0;
+    }
 
-    if (clipboard_buf) g_free(clipboard_buf);
+    len = strlen(prn->buf);
+    if (len == 0) {
+	return 0;
+    }
+
+    gretl_clipboard_free();
+
     clipboard_buf = mymalloc(len + 1);
-    if (clipboard_buf == NULL) return 1;
+    if (clipboard_buf == NULL) {
+	return 1;
+    }
 
     memcpy(clipboard_buf, prn->buf, len + 1);
 
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY,
-			    GDK_CURRENT_TIME);
+    gretl_clipboard_set(copycode);
+
     return 0;
 }
 

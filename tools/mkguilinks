@@ -16,6 +16,7 @@ for f in \
   boxplots.c boxplots.h \
   calculator.c guiprint_common.c \
   callbacks.c callbacks.h \
+  clipboard.c clipboard.h \
   cmdstack.c cmdstack.h \
   console.c console.h \
   database.c database.h \

@@ -153,7 +153,8 @@ enum exec_codes {
 enum clipstuff {
     TARGET_STRING,
     TARGET_TEXT,
-    TARGET_COMPOUND_TEXT
+    TARGET_COMPOUND_TEXT,
+    TARGET_RTF
 };
 
 enum copy_variants {

@@ -40,7 +40,6 @@
 #include "../pixmaps/gretl.xpm"  /* program icon for X */
 
 /* functions private to gretl.c */
-static void clip_init (GtkWidget *w);
 static GtkWidget *make_main_window (int gui_get_data);
 
 static void set_up_main_menu (void);
@@ -98,7 +97,6 @@ double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
 
 int plot_count, data_status, orig_vars;
-gchar *clipboard_buf; /* for copying models as LaTeX */
 float gui_scale;
 
 /* defaults for some options */
@@ -755,9 +753,6 @@ int main (int argc, char *argv[])
     /* Let a first-time user set the working dir */
     first_time_set_user_dir(); 
 
-    /* enable special copying to clipboard */
-    clip_init(mdata->w);
-
     add_files_to_menus();
 
     session_menu_state(FALSE);
@@ -1307,76 +1302,6 @@ drag_data_received  (GtkWidget *widget,
 	verify_open_data(NULL, 0);
     }	
 }
-
-/* ........................................................... */
-
-static gint 
-special_selection_get (GtkWidget *widget,
-		       GtkSelectionData *selection_data,
-		       guint info,
-		       guint time)
-{
-    gchar *str;
-    gint length;
-
-    str = clipboard_buf;
-    if (str == NULL) return TRUE;
-    length = strlen(str);
-  
-    if (info == TARGET_STRING) {
-	gtk_selection_data_set (selection_data,
-				GDK_SELECTION_TYPE_STRING,
-				8 * sizeof(gchar), 
-				(guchar *) str, 
-				length);
-    } else if (info == TARGET_TEXT || info == TARGET_COMPOUND_TEXT) {
-	guchar *text;
-	gchar c;
-	GdkAtom encoding;
-	gint format;
-	gint new_length;
-
-	c = str[length];
-	str[length] = '\0';
-	gdk_string_to_compound_text(str, &encoding, &format, 
-				    &text, &new_length);
-	gtk_selection_data_set(selection_data, encoding, format, 
-			       text, new_length);
-	gdk_free_compound_text(text);
-	str[length] = c;
-    }
-
-#if 0
-    g_free(str);
-    clipboard_buf = NULL;
-#endif
-
-    return TRUE;
-}
-
-/* ........................................................... */
-
-static void clip_init (GtkWidget *w)
-{
-    GdkAtom clipboard_atom = GDK_NONE;
-    GtkTargetEntry targets[] = {
-	{ "STRING", 0, TARGET_STRING },
-	{ "TEXT",   0, TARGET_TEXT }, 
-	{ "COMPOUND_TEXT", 0, TARGET_COMPOUND_TEXT }
-    };
-
-    gint n_targets = sizeof(targets) / sizeof(targets[0]);
-  
-    clipboard_atom = gdk_atom_intern("CLIPBOARD", FALSE);
-    gtk_selection_add_targets(w, GDK_SELECTION_PRIMARY,
-			      targets, n_targets);
-    gtk_selection_add_targets(w, clipboard_atom,
-			      targets, n_targets);
-    gtk_signal_connect (GTK_OBJECT(mdata->w), "selection_get",
-			GTK_SIGNAL_FUNC(special_selection_get), NULL);    
-}
-
-/* ........................................................... */
 
 static int native_datafile (void)
 {
