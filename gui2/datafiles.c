@@ -19,7 +19,7 @@
 
 /* datafiles.c : for gretl */
 
-#undef COLL_DEBUG
+#undef COLL_DEBUG 
 
 #include "gretl.h"
 #include "datafiles.h"
@@ -272,14 +272,10 @@ static file_collection *collection_stack (file_collection *coll, int op)
 		ret = coll;
 	    }
 	}
-    } else if (op == STACK_POP_DATA) {
-        if (n_data_popped < n_data) {
-            ret = datacoll[n_data_popped++];
-        }
-    } else if (op == STACK_POP_PS) {
-        if (n_ps_popped < n_ps) {
-            ret = pscoll[n_ps_popped++];
-        }
+    } else if (op == STACK_POP_DATA && n_data_popped < n_data) {
+	ret = datacoll[n_data_popped++];
+    } else if (op == STACK_POP_PS && n_ps_popped < n_ps) {
+	ret = pscoll[n_ps_popped++];
     } else if (op == STACK_RESET_DATA) {
 	n_data_popped = 0;
     } else if (op == STACK_RESET_PS) {
@@ -386,8 +382,9 @@ static int test_dir_for_file_collections (const char *dname, DIR *dir)
 static int dont_go_there (const char *s)
 {
     if (!strcmp(s, "..") || strstr(s, ".inp") || strstr(s, ".gdt") || 
-	strstr(s, ".gretl") || strstr(s, ".hdr"))
+	strstr(s, ".gretl") || strstr(s, ".hdr")) {
 	return 1;
+    }
 
     return 0;
 }
@@ -401,7 +398,9 @@ static int seek_file_collections (const char *topdir)
     char *tmp = unslash(topdir);
 
     dir = opendir(tmp);
-    if (dir == NULL) return 1;
+    if (dir == NULL) {
+	return 1;
+    }
 
 #ifdef COLL_DEBUG
     fprintf(stderr, "seeking file collections in '%s'\n", topdir);
@@ -461,6 +460,7 @@ static void print_script_collections (void)
     file_collection *coll;
 
     printf("\n*** Script collections:\n");
+
     while ((coll = pop_ps_collection())) {
 	print_collection(coll);
     }
@@ -475,8 +475,12 @@ static int build_file_collections (void)
 
     if (!built) {
 	err = seek_file_collections(paths.datadir);
-	if (!err) err = seek_file_collections(paths.scriptdir);
-	if (!err) err = seek_file_collections(paths.userdir);
+	if (!err) {
+	    err = seek_file_collections(paths.scriptdir);
+	}
+	if (!err) {
+	    err = seek_file_collections(paths.userdir);
+	}
 	built = 1;
     }
 
@@ -519,7 +523,9 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     index = full_path(coll->path, coll->descfile);
 
     fp = gretl_fopen(index, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	return 1;
+    }
 
 #ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox)));
@@ -882,13 +888,17 @@ static gint populate_remote_db_list (windata_t *win)
 
 static void build_datafiles_popup (windata_t *win)
 {
-    if (win->popup != NULL) return;
+    if (win->popup != NULL) {
+	/* already done */
+	return;
+    }
 
     win->popup = gtk_menu_new();
 
     add_popup_item(_("Info"), win->popup, 
 		   G_CALLBACK(display_datafile_info), 
 		   win);
+
     add_popup_item(_("Open"), win->popup, 
 		   G_CALLBACK(browser_open_data), 
 		   win);
@@ -907,6 +917,7 @@ int browser_busy (guint code)
 	    return 1;
 	}
     }
+
     return 0;
 }
 
@@ -972,10 +983,10 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
     gtk_box_pack_start(GTK_BOX(main_vbox), filebox, TRUE, TRUE, 0);
 
-    /* popup menu? */
     if (code == TEXTBOOK_DATA) { 
 	file_collection *coll;
 
+	/* crate popup menu */
 	build_datafiles_popup(fdata);
 
 	while ((coll = pop_data_collection())) {
@@ -984,9 +995,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 			      (gpointer) fdata->popup);
 	}
 	reset_data_stack();
-    }
-
-    if (code == REMOTE_DB) {
+    } else if (code == REMOTE_DB) {
 	GtkWidget *hbox;
 
 	hbox = gtk_hbox_new(FALSE, 0);
@@ -1006,6 +1015,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
     g_signal_connect(G_OBJECT(openbutton), "clicked",
 		     G_CALLBACK(browse_func), fdata);
+
     if (code != NATIVE_DB && code != RATS_DB && code != REMOTE_DB) {
        	g_signal_connect(G_OBJECT(openbutton), "clicked", 
 			 G_CALLBACK(delete_widget), fdata->w); 
@@ -1041,6 +1051,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     }
 
     if (err) {
+	errbox(_("Couldn't open database"));
 	gtk_widget_destroy(fdata->w);
     } else {
 	gtk_widget_show_all(fdata->w); 
@@ -1283,6 +1294,7 @@ static GtkWidget *files_notebook (windata_t *fdata, int code)
 	} else {
 	    coll = pop_ps_collection();
 	}
+
 	if (coll == NULL) break;
 
 	listpage = files_window(fdata);
@@ -1323,7 +1335,12 @@ static int populate_notebook_filelists (windata_t *win,
 {
     file_collection *coll;
     const char *title;
+    int gotcol = 0;
     int j;
+
+    if (win == NULL) {
+	return 1;
+    }
 
     while (1) {
 	if (code == TEXTBOOK_DATA) {
@@ -1332,10 +1349,18 @@ static int populate_notebook_filelists (windata_t *win,
 	    coll = pop_ps_collection();
 	}
 
-	if (coll == NULL) break;
+	if (coll != NULL) {
+	    gotcol = 1;
+	} else {
+	    break;
+	}
 
 	win->listbox = coll->page;
 	populate_filelist(win, coll);
+    }
+
+    if (!gotcol) {
+	return 1;
     }
 
     if (code == TEXTBOOK_DATA) {

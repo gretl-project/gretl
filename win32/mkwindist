@@ -45,23 +45,18 @@ mkdir -p windist/gretl/db
 mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/plugins/data
-mkdir -p windist/gretl/locale/de/LC_MESSAGES
-mkdir -p windist/gretl/locale/es/LC_MESSAGES
-mkdir -p windist/gretl/locale/fr/LC_MESSAGES
-mkdir -p windist/gretl/locale/it/LC_MESSAGES
-mkdir -p windist/gretl/locale/ja/LC_MESSAGES
-mkdir -p windist/gretl/locale/pl/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/de/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/it/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/ja/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/pl/LC_MESSAGES
+
+for lang in de es fr it ja pl tr ; do
+   mkdir -p windist/gretl/locale/${lang}/LC_MESSAGES
+   mkdir -p windist/gretl/lib/locale/${lang}/LC_MESSAGES
+done
+
 mkdir -p windist/gretl/lib/gtk-2.0/2.4.0/engines
 mkdir -p windist/gretl/lib/gtk-2.0/2.4.0/loaders
 mkdir -p windist/gretl/lib/pango/1.4.0/modules
 mkdir -p windist/gretl/etc/gtk-2.0
 mkdir -p windist/gretl/etc/pango
+
 # mkdir -p windist/gretl/share/themes/Default/gtk-2.0
 # mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
 
@@ -155,7 +150,7 @@ add_file ${TOPDIR}/share/bcih/fedstl.idx gretl/db/fedstl.idx
 
 # translations (make sure they're up to date first)
 make -C mo
-for lang in de es fr it ja pl ; do
+for lang in de es fr it ja pl tr ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
 done
 

@@ -1254,7 +1254,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     int err = 0;
 
 #ifdef G_OS_WIN32
-    if (pdinfo == NULL && datainfo->v > 1600) {
+    if (pdinfo == NULL && datainfo->n > 1600) {
 	errbox(_("Sorry, can't edit more than 1600 rows"));
 	return;
     }    

@@ -1777,20 +1777,34 @@ static int n_string_digits (int k)
 
 char *unique_savename (char *vname, DATAINFO *pdinfo, int vmax)
 {
-    int i, k = 0;
+    int suf = 0;
+    int i;
 
     for (i=1; i<vmax; i++) {
-	if (!strcmp(pdinfo->varname[i], vname)) {
-	    k++;
+	char base[VNAMELEN];
+	char *test = pdinfo->varname[i];
+	int k = 0;
+
+	if (!strcmp(test, vname)) {
+	    k = 1;
+	} else if (sscanf(test, "%[^0-9]%d", base, &k) == 2) {
+	    if (!strcmp(base, vname)) {
+		k++;
+	    } else {
+		k = 0;
+	    }
+	}
+	if (k > suf) {
+	    suf = k;
 	}
     }
 	
-    if (k > 0) {
+    if (suf > 0) {
 	char tmp[VNAMELEN];
-	int n = n_string_digits(k);
+	int n = n_string_digits(suf);
 
 	sprintf(tmp, "%.*s", 8 - n, vname);
-	sprintf(vname, "%s%d", tmp, k);
+	sprintf(vname, "%s%d", tmp, suf);
     } 
 
     return vname;
