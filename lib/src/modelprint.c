@@ -1329,7 +1329,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	int iters = gretl_model_get_int(pmod, "iters");
 
 	if (iters > 0) {
-	    pprintf(prn, "Convergence achieved after %d iterations\n", iters);
+	    pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
 	}
     }
 

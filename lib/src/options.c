@@ -254,6 +254,7 @@ static int valid_long_opt (int ci, const char *lopt)
     for (i=0; gretl_opts[i].o != 0; i++) {
 	if (ci == gretl_opts[i].ci && !strcmp(lopt, gretl_opts[i].longopt)) {
 	    opt = gretl_opts[i].o;
+	    break;
 	}
     }
 
