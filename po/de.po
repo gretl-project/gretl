@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretll-1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-04 15:11-0500\n"
-"PO-Revision-Date: 2005-01-06 07:58+0100\n"
+"PO-Revision-Date: 2005-01-07 07:59+0100\n"
 "Last-Translator: Markus Hahn <markus.hahn@rub.de>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1910,7 +1910,7 @@ msgstr ""
 
 #: lib/src/generate.c:1753
 msgid "internal variable"
-msgstr ""
+msgstr "interne Variable"
 
 #: lib/src/generate.c:1756
 #: lib/src/generate.c:1765
@@ -7729,11 +7729,11 @@ msgstr ""
 
 #: gui2/callbacks.c:773
 msgid "Invalid number of observations"
-msgstr ""
+msgstr "Ungültige Anzahl an Beobachtungen"
 
 #: gui2/callbacks.c:793
 msgid "gretl: create data set"
-msgstr ""
+msgstr "gretl: Erzeuge Datensatz"
 
 #: gui2/callbacks.c:794
 msgid "Number of observations:"
@@ -7749,7 +7749,7 @@ msgstr ""
 
 #: gui2/cmdstack.c:431
 msgid "The command log is empty"
-msgstr ""
+msgstr "Der Befehlslog ist leer"
 
 #: gui2/console.c:84
 msgid "Closing redirected output file"
@@ -7791,6 +7791,8 @@ msgid ""
 "There is already a variable of this name\n"
 "in the dataset.  OK to overwrite it?"
 msgstr ""
+"Es existiert bereits eine Variable mit diesem Namen\n"
+"im Datensatz. Überschreiben OK?"
 
 #: gui2/database.c:313
 #: gui2/library.c:2660
@@ -7799,7 +7801,7 @@ msgstr ""
 #: gui2/library.c:3195
 #: gui2/ssheet.c:402
 msgid "Out of memory attempting to add variable"
-msgstr ""
+msgstr "Zu wenig Speicher beim Versuch die Variable hinzuzufügen"
 
 #: gui2/database.c:371
 msgid "Couldn't access binary data"
@@ -7822,22 +7824,22 @@ msgstr ""
 #: gui2/session.c:160
 #: gui2/session.c:2344
 msgid "Display"
-msgstr ""
+msgstr "Anzeigen"
 
 #: gui2/database.c:509
 #: gui2/session.c:430
 msgid "Graph"
-msgstr ""
+msgstr "Graph"
 
 #: gui2/database.c:512
 msgid "Import"
-msgstr ""
+msgstr "Importieren"
 
 #: gui2/database.c:515
 #: gui2/gui_utils.c:1441
 #: gui2/gui_utils.c:1463
 msgid "Find..."
-msgstr ""
+msgstr "Suchen..."
 
 #: gui2/database.c:519
 msgid "Codebook"
@@ -7885,7 +7887,7 @@ msgstr ""
 #: gui2/database.c:663
 #: gui2/datafiles.c:994
 msgid "Network status: OK"
-msgstr ""
+msgstr "Netzwerkstatus: OK"
 
 #: gui2/database.c:711
 #, c-format
@@ -7894,26 +7896,26 @@ msgstr ""
 
 #: gui2/database.c:1001
 msgid "Couldn't open RATS data file"
-msgstr ""
+msgstr "Konnte RATS-Datendatei"
 
 #: gui2/database.c:1039
 #: gui2/database.c:1064
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: gui2/database.c:1041
 #: gui2/database.c:1066
 msgid "Observations"
-msgstr ""
+msgstr "Beoabachtungen"
 
 #: gui2/database.c:1258
 msgid "Couldn't open database"
-msgstr ""
+msgstr "Konnte Datenbank nicht öffnen"
 
 #: gui2/database.c:1316
 #, c-format
 msgid "Network status: %s"
-msgstr ""
+msgstr "Netzwerkstatus: %s"
 
 #: gui2/database.c:1445
 #, c-format
@@ -7922,23 +7924,25 @@ msgstr ""
 
 #: gui2/database.c:1620
 msgid "Error unzipping compressed data"
-msgstr ""
+msgstr "Fehler beim Entzippen der gepackten Dasten"
 
 #: gui2/database.c:1624
 msgid ""
 "Database installed.\n"
 "Open it now?"
 msgstr ""
+"Datenbank installiert.\n"
+"Jetzt öffnen?"
 
 #: gui2/database.c:1707
 #, c-format
 msgid "Can't open folder %s"
-msgstr ""
+msgstr "Kann Verzeichniss %s nicht öffnen"
 
 #: gui2/database.c:1809
 #: gui2/datafiles.c:871
 msgid "No database files found"
-msgstr ""
+msgstr "Keine Datenbank gefunden"
 
 #: gui2/datafiles.c:624
 msgid "gretl: data header"
@@ -7956,7 +7960,7 @@ msgstr ""
 #: gui2/datafiles.c:734
 #: gui2/datafiles.c:739
 msgid "Not installed"
-msgstr ""
+msgstr "Nicht installiert"
 
 #: gui2/datafiles.c:743
 msgid "Unknown: access error"
@@ -7964,37 +7968,37 @@ msgstr ""
 
 #: gui2/datafiles.c:748
 msgid "Not up to date"
-msgstr ""
+msgstr "Nicht auf letztem Stand"
 
 #: gui2/datafiles.c:750
 msgid "Up to date"
-msgstr ""
+msgstr "Auf letztem Stand"
 
 #: gui2/datafiles.c:889
 #: gui2/datafiles.c:1016
 msgid "Info"
-msgstr ""
+msgstr "Info"
 
 #: gui2/datafiles.c:892
 #: gui2/datafiles.c:1004
 msgid "Open"
-msgstr ""
+msgstr "Öffnen"
 
 #: gui2/datafiles.c:941
 msgid "gretl: practice files"
-msgstr ""
+msgstr "gretl: Übungsdateien"
 
 #: gui2/datafiles.c:946
 msgid "gretl: data files"
-msgstr ""
+msgstr "gretl: Datendatei"
 
 #: gui2/datafiles.c:952
 msgid "gretl: database files"
-msgstr ""
+msgstr "gretl: Satenbankdateien"
 
 #: gui2/datafiles.c:957
 msgid "gretl: databases on server"
-msgstr ""
+msgstr "gretl: Datenbanken auf Server"
 
 #: gui2/datafiles.c:1004
 msgid "Get series listing"
@@ -8002,16 +8006,16 @@ msgstr ""
 
 #: gui2/datafiles.c:1016
 msgid "Install"
-msgstr ""
+msgstr "Installation"
 
 #: gui2/datafiles.c:1025
 msgid "Find"
-msgstr ""
+msgstr "Suchen"
 
 #: gui2/datafiles.c:1070
 #: gui2/datafiles.c:1139
 msgid "File"
-msgstr ""
+msgstr "Datei"
 
 #: gui2/datafiles.c:1071
 #: gui2/datafiles.c:1140
@@ -8022,7 +8026,7 @@ msgstr ""
 #: gui2/datafiles.c:1074
 #: gui2/datafiles.c:1143
 msgid "Script"
-msgstr ""
+msgstr "Skript"
 
 #: gui2/datafiles.c:1075
 #: gui2/datafiles.c:1144
@@ -8032,21 +8036,21 @@ msgstr ""
 #: gui2/datafiles.c:1076
 #: gui2/datafiles.c:1145
 msgid "Data"
-msgstr ""
+msgstr "Daten"
 
 #: gui2/datafiles.c:1079
 #: gui2/datafiles.c:1083
 #: gui2/datafiles.c:1148
 #: gui2/datafiles.c:1152
 msgid "Database"
-msgstr ""
+msgstr "Datenbank"
 
 #: gui2/datafiles.c:1080
 #: gui2/datafiles.c:1084
 #: gui2/datafiles.c:1149
 #: gui2/datafiles.c:1153
 msgid "Source"
-msgstr ""
+msgstr "Quelle"
 
 #: gui2/datafiles.c:1085
 #: gui2/datafiles.c:1154
@@ -8055,11 +8059,11 @@ msgstr ""
 
 #: gui2/dialogs.c:178
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: gui2/dialogs.c:188
 msgid "No"
-msgstr ""
+msgstr "Nein"
 
 #: gui2/dialogs.c:224
 msgid ""
@@ -8084,7 +8088,7 @@ msgstr ""
 #: gui2/dialogs.c:376
 #: gui2/dialogs.c:440
 msgid "comma (,)"
-msgstr ""
+msgstr "Komma (,)"
 
 #: gui2/dialogs.c:388
 msgid "space"
@@ -8110,13 +8114,13 @@ msgstr ""
 #: gui2/dialogs.c:538
 #: gui2/dialogs.c:680
 msgid "Copy as:"
-msgstr ""
+msgstr "Kopiere als:"
 
 #: gui2/dialogs.c:565
 #: gui2/dialogs.c:713
 #: gui2/textutil.c:735
 msgid "plain text"
-msgstr ""
+msgstr "einfacher Text"
 
 #: gui2/dialogs.c:952
 #: gui2/dialogs.c:957
@@ -8125,19 +8129,19 @@ msgstr ""
 
 #: gui2/dialogs.c:953
 msgid "average of observations"
-msgstr ""
+msgstr "Druchschnitt der Beobachtungen"
 
 #: gui2/dialogs.c:954
 msgid "sum of observations"
-msgstr ""
+msgstr "Summe der Beobachtungen"
 
 #: gui2/dialogs.c:955
 msgid "first observation"
-msgstr ""
+msgstr "erste Beobachtung"
 
 #: gui2/dialogs.c:956
 msgid "last observation"
-msgstr ""
+msgstr "letzte Beobachtung"
 
 #: gui2/dialogs.c:983
 msgid "gretl: variable attributes"
@@ -8145,11 +8149,11 @@ msgstr ""
 
 #: gui2/dialogs.c:989
 msgid "name of variable:"
-msgstr ""
+msgstr "Name der Variable:"
 
 #: gui2/dialogs.c:1014
 msgid "description:"
-msgstr ""
+msgstr "Beschreibung:"
 
 #: gui2/dialogs.c:1041
 msgid "display name (shown in graphs):"
@@ -8163,7 +8167,7 @@ msgstr ""
 #: gui2/dialogs.c:1455
 #, c-format
 msgid "Observations: %d"
-msgstr ""
+msgstr "Beoabachtungen: %d"
 
 #: gui2/dialogs.c:1346
 msgid "gretl: set sample"
@@ -8171,11 +8175,11 @@ msgstr ""
 
 #: gui2/dialogs.c:1358
 msgid "There are no dummy variables in the current sample"
-msgstr ""
+msgstr "Es gibt keine Dummyvariablen in dem aktuellen Sample"
 
 #: gui2/dialogs.c:1360
 msgid "There are no dummy variables in the dataset"
-msgstr ""
+msgstr "Es gibt keine Dummyvariablen im Datensatz"
 
 #: gui2/dialogs.c:1366
 msgid "Name of dummy variable to use:"
@@ -8192,11 +8196,11 @@ msgstr ""
 
 #: gui2/dialogs.c:1424
 msgid "Start:"
-msgstr ""
+msgstr "Start:"
 
 #: gui2/dialogs.c:1435
 msgid "End:"
-msgstr ""
+msgstr "Ende:"
 
 #: gui2/dialogs.c:1694
 msgid "Native code"
@@ -8293,7 +8297,7 @@ msgstr ""
 
 #: gui2/dialogs.c:2159
 msgid "density estimation options"
-msgstr ""
+msgstr "Optionen für Dichteschätzung"
 
 #: gui2/dialogs.c:2168
 #: plugin/kernel.c:133
@@ -8319,11 +8323,11 @@ msgstr "gretl-Info"
 
 #: gui2/dialogs.c:2497
 msgid "Structure of dataset"
-msgstr ""
+msgstr "Struktur des Datensatzes"
 
 #: gui2/dialogs.c:2498
 msgid "Time series frequency"
-msgstr ""
+msgstr "Zeitreihenfrequenz"
 
 #: gui2/dialogs.c:2499
 msgid "Days in week"
@@ -8354,7 +8358,7 @@ msgstr ""
 
 #: gui2/dialogs.c:2604
 msgid "No changes were made"
-msgstr ""
+msgstr "Es wurden keine änderungen vorgenommen"
 
 #: gui2/dialogs.c:2661
 #: gui2/menustate.c:385
@@ -8420,7 +8424,7 @@ msgstr "Tagesdaten"
 
 #: gui2/dialogs.c:2777
 msgid "hourly data"
-msgstr ""
+msgstr "stündliche Daten"
 
 #: gui2/dialogs.c:2778
 #: gui2/dialogs.c:2798
@@ -8454,19 +8458,21 @@ msgid ""
 "Do you want to restructure the current panel data set\n"
 "as %s?"
 msgstr ""
+"Wollen Sie den aktuellen Paneldatensatz\n"
+"als %s restrukturieren?"
 
 #: gui2/dialogs.c:3203
 msgid "gretl: panel structure"
-msgstr ""
+msgstr "gretl: Panelstruktur"
 
 #: gui2/dialogs.c:3215
 msgid "Failed to change panel structure"
-msgstr ""
+msgstr "Ändern der Panelstruktur fehlgeschlagen"
 
 #: gui2/dialogs.c:3217
 #, c-format
 msgid "Panel structure changed to %s"
-msgstr ""
+msgstr "Panelstruktur in %s geändert"
 
 #: gui2/dlgutils.c:35
 msgid "Apply"
@@ -8482,15 +8488,15 @@ msgstr "Rückwärts"
 
 #: gui2/dlgutils.c:39
 msgid "Find next"
-msgstr ""
+msgstr "Nächstes finden"
 
 #: gui2/dlgutils.c:391
 msgid "add to current restriction"
-msgstr ""
+msgstr "Füge zu aktuellen Restriktionen hinzu"
 
 #: gui2/dlgutils.c:398
 msgid "replace current restriction"
-msgstr ""
+msgstr "erstze aktuelle Restriktion"
 
 #: gui2/dlgutils.c:444
 msgid "(Please refer to Help for guidance)"
@@ -8499,24 +8505,24 @@ msgstr ""
 #: gui2/filelists.c:256
 #: gui2/filelists.c:475
 msgid "/File/Open data"
-msgstr ""
+msgstr "/Datei/Öffne Daten"
 
 #: gui2/filelists.c:257
 #: gui2/filelists.c:476
 msgid "/Session"
-msgstr ""
+msgstr "/Session"
 
 #: gui2/filelists.c:470
 msgid "/File/Open data/sep"
-msgstr ""
+msgstr "/Datei/Öffne Daten/sep"
 
 #: gui2/filelists.c:471
 msgid "/Session/sep"
-msgstr ""
+msgstr "/Session/sep"
 
 #: gui2/filelists.c:472
 msgid "/File/Open command file/sep"
-msgstr ""
+msgstr "/Datei/Öffne Befehlsdatei/sep"
 
 #: gui2/fileselect.c:164
 msgid ""
@@ -8527,7 +8533,7 @@ msgstr ""
 #: gui2/fileselect.c:279
 #: gui2/library.c:330
 msgid "Couldn't open file for writing"
-msgstr ""
+msgstr "Konnte Datei nicht zum Schreiben öffnen"
 
 #: gui2/fileselect.c:296
 msgid "File saved OK"
@@ -8669,7 +8675,7 @@ msgstr "Gretl-Datendateien (*.dat)"
 
 #: gui2/fileselect.c:755
 msgid "File dialog box error"
-msgstr ""
+msgstr "Datei-Dialogbox-Fehler"
 
 #: gui2/gpt_control.c:216
 msgid " Click to set label position"
@@ -8684,7 +8690,7 @@ msgstr ""
 #: gui2/session.c:3255
 #, c-format
 msgid "Couldn't write to %s"
-msgstr ""
+msgstr "Konnte nicht nach %s schreiben"
 
 #: gui2/gpt_control.c:407
 #: gui2/gpt_control.c:472
@@ -8700,12 +8706,12 @@ msgstr ""
 #: gui2/gpt_control.c:440
 #: gui2/session.c:436
 msgid "Failed to copy graph file"
-msgstr ""
+msgstr "Kopieren der Graphdatei fehlgeschlagen"
 
 #: gui2/gpt_control.c:474
 #: gui2/session.c:460
 msgid "Graph saved"
-msgstr ""
+msgstr "Graph gespeichert"
 
 #: gui2/gpt_control.c:774
 #: gui2/gpt_control.c:1005
@@ -8714,7 +8720,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:911
 msgid "Couldn't open graph file"
-msgstr ""
+msgstr "Konnte Graphdatei nicht öffnen"
 
 #: gui2/gpt_control.c:956
 msgid "Plot file is corrupted"
@@ -8723,25 +8729,25 @@ msgstr ""
 #: gui2/gpt_control.c:1565
 #: gui2/gpt_control.c:1658
 msgid "monochrome"
-msgstr ""
+msgstr "einfarbig"
 
 #: gui2/gpt_control.c:1569
 #: gui2/gpt_control.c:1685
 msgid "Save as postscript (EPS)..."
-msgstr ""
+msgstr "Speichern als Postskript (EPS)..."
 
 #: gui2/gpt_control.c:1574
 #: gui2/gpt_control.c:1582
 #: gui2/gpt_control.c:1609
 #: gui2/gpt_dialog.c:347
 msgid "Save gnuplot graph"
-msgstr ""
+msgstr "Speichern gnuplot-Graph"
 
 #: gui2/gpt_control.c:1577
 #: gui2/gpt_control.c:1682
 #: gui2/gpt_control.c:1687
 msgid "Save as Windows metafile (EMF)..."
-msgstr ""
+msgstr "Speichern als Windows-Metafile (EMF)..."
 
 #: gui2/gpt_control.c:1589
 #: gui2/gpt_control.c:1701
@@ -8761,7 +8767,7 @@ msgstr ""
 #: gui2/gpt_control.c:1622
 #: gui2/gpt_control.c:1696
 msgid "Zoom..."
-msgstr ""
+msgstr "Zoom..."
 
 #: gui2/gpt_control.c:1630
 msgid " Drag to define zoom rectangle"
@@ -8777,7 +8783,7 @@ msgstr ""
 #: gui2/gui_utils.c:1436
 #: gui2/gui_utils.c:1458
 msgid "Print..."
-msgstr ""
+msgstr "Drucken..."
 
 #: gui2/gpt_control.c:1641
 #: gui2/gpt_control.c:1703
@@ -8786,11 +8792,11 @@ msgstr ""
 #: gui2/session.c:2315
 #: gui2/session.c:2325
 msgid "Edit"
-msgstr ""
+msgstr "Bearbeiten"
 
 #: gui2/gpt_control.c:1657
 msgid "color"
-msgstr ""
+msgstr "Farbe"
 
 #: gui2/gpt_control.c:1805
 #: gui2/gpt_control.c:1878
@@ -8807,7 +8813,7 @@ msgstr ""
 
 #: gui2/gpt_control.c:2554
 msgid "gretl: gnuplot graph"
-msgstr ""
+msgstr "gretl: gnuplot-Graph"
 
 #: gui2/gpt_control.c:2631
 msgid " Click on graph for pop-up menu"
@@ -8817,7 +8823,7 @@ msgstr ""
 #: gui2/guiprint.c:107
 #: gui2/series_view.c:100
 msgid "Cannot open the clipboard"
-msgstr ""
+msgstr "Kann die Zwischenablage nicht öffnen"
 
 #: gui2/gpt_control.c:2942
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
@@ -8825,13 +8831,13 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:65
 msgid "Title of plot"
-msgstr ""
+msgstr "Title des Plots"
 
 #: gui2/gpt_dialog.c:66
 #: gui2/gpt_dialog.c:67
 #: gui2/gpt_dialog.c:68
 msgid "Title for axis"
-msgstr ""
+msgstr "Titel für die Achsen"
 
 #: gui2/gpt_dialog.c:192
 msgid "Invalid label position, must be X,Y"
@@ -8847,7 +8853,7 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:549
 msgid "Show full border"
-msgstr ""
+msgstr "Zeige vollen Rahmen"
 
 #: gui2/gpt_dialog.c:565
 msgid "Hide fitted line"
@@ -8860,25 +8866,25 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:608
 msgid "TrueType font"
-msgstr ""
+msgstr "TrueType-Schriftart"
 
 #: gui2/gpt_dialog.c:669
 #, c-format
 msgid "Fill color"
-msgstr ""
+msgstr "Füllfarbe"
 
 #: gui2/gpt_dialog.c:671
 #, c-format
 msgid "Color %d"
-msgstr ""
+msgstr "Farbe %d"
 
 #: gui2/gpt_dialog.c:718
 msgid "Output to file"
-msgstr ""
+msgstr "Ausgabe in Datei"
 
 #: gui2/gpt_dialog.c:730
 msgid "output format"
-msgstr ""
+msgstr "Ausgabeformat"
 
 #: gui2/gpt_dialog.c:742
 msgid "Save to file..."
@@ -8907,7 +8913,7 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:878
 msgid "y axis"
-msgstr ""
+msgstr "y-Achse"
 
 #: gui2/gpt_dialog.c:906
 msgid "Labels"
@@ -8924,7 +8930,7 @@ msgstr "Text"
 
 #: gui2/gpt_dialog.c:965
 msgid "position (X,Y)"
-msgstr ""
+msgstr "Position (X, Y)"
 
 #: gui2/gpt_dialog.c:1018
 msgid "justification"
@@ -8932,15 +8938,15 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:1055
 msgid "X-axis"
-msgstr ""
+msgstr "X-Achse"
 
 #: gui2/gpt_dialog.c:1057
 msgid "Y-axis"
-msgstr ""
+msgstr "Y-Achse"
 
 #: gui2/gpt_dialog.c:1059
 msgid "Y2-axis"
-msgstr ""
+msgstr "Y2-Achse"
 
 #: gui2/gpt_dialog.c:1108
 msgid "auto axis range"
@@ -8966,11 +8972,11 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:1206
 msgid "gretl plot controls"
-msgstr ""
+msgstr "gretl-Plotbefehle"
 
 #: gui2/graph_page.c:262
 msgid "The graph page is full"
-msgstr ""
+msgstr "Die Graphenseite ist leer"
 
 #: gui2/graph_page.c:407
 #: gui2/library.c:4572
@@ -8981,7 +8987,7 @@ msgstr ""
 
 #: gui2/graph_page.c:558
 msgid "The graph page is empty"
-msgstr ""
+msgstr "Die Graphenseite ist leer"
 
 #: gui2/gretl.c:306
 msgid "/File/Preferences/_Menu font..."
@@ -8992,8 +8998,9 @@ msgid "/Help/Manual in PDF"
 msgstr "/Hilfe/Handbuch in PDF"
 
 #: gui2/gretl.c:723
+#, fuzzy
 msgid "The GNOME 2.0 econometrics package"
-msgstr ""
+msgstr "Das GNOME 2.0 Ökonometrie-Packet"
 
 #: gui2/gretlwin32.c:82
 #: gui2/gui_utils.c:3358
@@ -9053,7 +9060,7 @@ msgstr "Vorschautext"
 
 #: gui2/gtkfontselhack.c:254
 msgid "The text to display in order to demonstrate the selected font."
-msgstr ""
+msgstr "Der Text, der angzeigt werden soll, um die ausgewählte Schriftart zu demonstrieren,"
 
 #: gui2/gtkfontselhack.c:260
 msgid "Filter"
@@ -9061,35 +9068,35 @@ msgstr "Filter"
 
 #: gui2/gtkfontselhack.c:261
 msgid "The filter for acceptable fonts."
-msgstr ""
+msgstr "Der Filter für akzeptierbare Schriftarten"
 
 #: gui2/gtkfontselhack.c:376
 msgid "_Family:"
-msgstr ""
+msgstr "Familie:"
 
 #: gui2/gtkfontselhack.c:382
 msgid "_Style:"
-msgstr ""
+msgstr "Style:"
 
 #: gui2/gtkfontselhack.c:388
 msgid "Si_ze:"
-msgstr ""
+msgstr "Größe:"
 
 #: gui2/gtkfontselhack.c:517
 msgid "_Preview:"
-msgstr ""
+msgstr "Vorschau:"
 
 #: gui2/gtkfontselhack.c:1397
 msgid "Font Selection"
-msgstr ""
+msgstr "Schriftartenauswahl"
 
 #: gui2/guiprint.c:102
 msgid "Copy buffer was empty"
-msgstr ""
+msgstr "Kopierzwischenspeicher war leer"
 
 #: gui2/guiprint.c:664
 msgid "print gretl graph"
-msgstr ""
+msgstr "drucke gretl-Graph"
 
 #: gui2/guiprint_common.c:105
 #, c-format
@@ -9100,7 +9107,7 @@ msgstr ""
 #: gui2/guiprint_common.c:209
 #, c-format
 msgid "for the variable %s (%d valid observations)"
-msgstr ""
+msgstr "für die Variable %s (%d gültige Beobachtungen)"
 
 #: gui2/guiprint_common.c:116
 msgid "(missing values denoted by -999 will be skipped)"
@@ -9108,7 +9115,7 @@ msgstr ""
 
 #: gui2/guiprint_common.c:150
 msgid "Std. Dev."
-msgstr ""
+msgstr "Std. Abw."
 
 #: gui2/guiprint_common.c:202
 #, c-format
@@ -9121,7 +9128,7 @@ msgstr ""
 
 #: gui2/guiprint_common.c:254
 msgid "Std.\\ Dev."
-msgstr ""
+msgstr "Std.\\ Abw."
 
 #: gui2/guiprint_common.c:254
 msgid "Ex.\\ kurtosis"
@@ -9135,17 +9142,17 @@ msgstr ""
 #: gui2/guiprint_common.c:347
 #: gui2/guiprint_common.c:451
 msgid "skipping any missing values"
-msgstr ""
+msgstr "alle fehlenden Werte auslassen"
 
 #: gui2/guiprint_common.c:355
 #: gui2/guiprint_common.c:459
 msgid "Coefficient covariance matrix"
-msgstr ""
+msgstr "Kovarianzmatrix der Koeffizienten"
 
 #: gui2/guiprint_common.c:448
 #, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
-msgstr ""
+msgstr "Korrelationskoeffizienten beim Verwenden der Beobachtungen %s--%s"
 
 #: gui2/guiprint_common.c:453
 #, c-format
@@ -9161,7 +9168,7 @@ msgstr ""
 #: gui2/guiprint_common.c:583
 #, c-format
 msgid "Standard error of residuals = %g"
-msgstr ""
+msgstr "Standardfehler der Residuen = %g"
 
 #: gui2/guiprint_common.c:640
 msgid ""
@@ -9179,31 +9186,33 @@ msgid ""
 "For 95 percent confidence intervals, $t(%d, .025) = %.3f$\n"
 "\n"
 msgstr ""
+"Für 95-Prozent-Konfidenzintervalle, $t(%d, .025) = %.3f\n"
+"\n"
 
 #: gui2/guiprint_common.c:742
 #: gui2/guiprint_common.c:865
 #, no-c-format
 msgid "95\\% confidence interval"
-msgstr ""
+msgstr "95\\%-Konfidenzintervall"
 
 #: gui2/guiprint_common.c:777
 #, c-format
 msgid "For 95 percent confidence intervals, t(%d, .025) = %.3f"
-msgstr ""
+msgstr "Für 95-Prozent-Konfidenzintervalle, t(%d, .025) = %.3f"
 
 #: gui2/guiprint_common.c:794
 #: gui2/guiprint_common.c:922
 #, no-c-format
 msgid "95% confidence interval"
-msgstr ""
+msgstr "95%-Konfidenzintervall"
 
 #: gui2/guiprint_common.c:869
 msgid "low"
-msgstr ""
+msgstr "niedrig"
 
 #: gui2/guiprint_common.c:869
 msgid "high"
-msgstr ""
+msgstr "hoch"
 
 #: gui2/gui_utils.c:118
 #: gui2/gui_utils.c:187
@@ -9487,7 +9496,7 @@ msgstr "/Bearbeiten/Alles kopieren/als LaTeX"
 
 #: gui2/gui_utils.c:865
 msgid "Unrecognized data type"
-msgstr ""
+msgstr "Unerkannter Datentyp"
 
 #: gui2/gui_utils.c:891
 msgid "Failed to import spreadsheet data"
@@ -9561,7 +9570,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:1175
 msgid "Buffer is empty"
-msgstr ""
+msgstr "Zwischenspeicher ist leer"
 
 #: gui2/gui_utils.c:1185
 msgid "Data info saved"
@@ -9763,7 +9772,7 @@ msgstr "/Modelldaten/Zum Datensatz hinzufügen/Freiheitsgrade"
 #: gui2/gui_utils.c:2671
 #, c-format
 msgid "%s/against time"
-msgstr ""
+msgstr "%s/gegen Zeit"
 
 #: gui2/gui_utils.c:2674
 #, c-format
@@ -9773,12 +9782,12 @@ msgstr ""
 #: gui2/gui_utils.c:2695
 #, c-format
 msgid "%s/against %s"
-msgstr ""
+msgstr "%s/gegen %s"
 
 #: gui2/gui_utils.c:2711
 #, c-format
 msgid "%s/against %s and %s"
-msgstr ""
+msgstr "%s/gegen %s und %s"
 
 #: gui2/gui_utils.c:2737
 msgid "/Graphs/dumsep"
@@ -9808,7 +9817,7 @@ msgstr "/Tests/Heteroskedastizität (gruppenweise)"
 
 #: gui2/gui_utils.c:2858
 msgid "x12sep"
-msgstr ""
+msgstr "x12sep"
 
 #: gui2/gui_utils.c:2865
 msgid "view X-12-ARIMA output"
@@ -9834,14 +9843,16 @@ msgstr ""
 #: gui2/gui_utils.c:2949
 #, c-format
 msgid "to %s"
-msgstr ""
+msgstr "zu %s"
 
 #: gui2/gui_utils.c:3039
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Variable name %s... is too long\n"
 "(the max is 8 characters)"
 msgstr ""
+"Variablenname %s... ist too long\n"
+"(Das Max ist 8 Zeichen)"
 
 #: gui2/gui_utils.c:3045
 #, c-format
@@ -9914,7 +9925,7 @@ msgstr "Dienstprogramme"
 #: gui2/helpfiles.c:1310
 #: gui2/helpfiles.c:1358
 msgid "String was not found."
-msgstr ""
+msgstr "Zeichenkette wurde nicht gefunden."
 
 #: gui2/helpfiles.c:1201
 #: gui2/helpfiles.c:1308
@@ -9924,7 +9935,7 @@ msgstr ""
 
 #: gui2/helpfiles.c:1440
 msgid "gretl: find"
-msgstr ""
+msgstr "gretl: Suchen"
 
 #: gui2/helpfiles.c:1444
 msgid " Find what:"
@@ -9949,16 +9960,16 @@ msgstr ""
 
 #: gui2/library.c:382
 msgid "Out of memory in frequency distribution"
-msgstr ""
+msgstr "Zu wenig Speicher für Häufigkeitsverteilung"
 
 #: gui2/library.c:384
 msgid "Out of memory in frequency distribution\n"
-msgstr ""
+msgstr "Zu wenig Speicher für Häufigkeitsverteilung\n"
 
 #: gui2/library.c:530
 #: gui2/library.c:536
 msgid "correlation matrix"
-msgstr ""
+msgstr "Korrelationsmatrix"
 
 #: gui2/library.c:543
 msgid "principal components"
@@ -9966,11 +9977,11 @@ msgstr ""
 
 #: gui2/library.c:547
 msgid "frequency distribution"
-msgstr ""
+msgstr "Häufigkeitsverteilung"
 
 #: gui2/library.c:552
 msgid "runs test"
-msgstr ""
+msgstr "Runs-Test"
 
 #: gui2/library.c:557
 #: gui2/library.c:563
@@ -11215,7 +11226,7 @@ msgstr ""
 
 #: gui2/settings.c:216
 msgid "RATS data directory"
-msgstr ""
+msgstr "RATS-Datenverzeichnis"
 
 #: gui2/settings.c:218
 msgid "Database server name"
@@ -11383,12 +11394,12 @@ msgstr ""
 
 #: gui2/textutil.c:705
 msgid "Copied selection to clipboard"
-msgstr ""
+msgstr "Auswahl zur Zwischenablage kopiert"
 
 #: gui2/textutil.c:732
 #, c-format
 msgid "Copied contents of window as %s"
-msgstr ""
+msgstr "Inhalte des Fenster als %s kopiert"
 
 #: gui2/toolbar.c:97
 msgid "manual.pdf"
@@ -11445,7 +11456,7 @@ msgstr ""
 
 #: gui2/webget.c:792
 msgid "Host not found"
-msgstr ""
+msgstr "Host nicht gefunden"
 
 #: gui2/webget.c:794
 msgid "Unknown error"
@@ -11472,12 +11483,19 @@ msgid ""
 "Would you like to exit from gretl and update your installation now?\n"
 "(You can run gretl_updater.exe later if you prefer.)"
 msgstr ""
+"Neue Dateien sind von der gretl-Website verfügbar.\n"
+"Diese Dateien haben zusammen eine Größe von %u Bytes.\n"
+"\n"
+"Möchten Sie gretl beenden und Ihre Installation jetzt updaten?\n"
+"(Sie können gretl_updater.exe später ausführen, wenn Sie möchten.)"
 
 #: gui2/webget.c:1712
 msgid ""
 "New files are available from the gretl web site\n"
 "http://gretl.sourceforge.net/"
 msgstr ""
+"Neue Dateien sind von der gretl-Website verfügbar\n"
+"http://gretl.sourceforge.net/"
 
 #: gui2/webget.c:1716
 msgid ""
@@ -11559,7 +11577,7 @@ msgstr ""
 #: plugin/excel_import.c:1330
 #: plugin/gnumeric_import.c:652
 msgid "No worksheets found"
-msgstr ""
+msgstr "Keine Arbeitsblätter gefunden"
 
 #: plugin/excel_import.c:1361
 msgid "Failed to process Excel file"
@@ -11705,33 +11723,35 @@ msgstr ""
 #: plugin/kernel.c:135
 #, c-format
 msgid "bandwidth = %g"
-msgstr ""
+msgstr "Bandbreite = %g"
 
 #: plugin/kernel.c:138
 #, c-format
 msgid "Estimated density of %s"
-msgstr ""
+msgstr "Geschätzte Dichte of %s"
 
 #: plugin/kernel.c:243
 msgid "Insufficient observations for density estimation"
-msgstr ""
+msgstr "Zu  wenig Beobachtungen für Dichteschätzung"
 
 #: plugin/leverage.c:112
 #: plugin/pca.c:132
 msgid "Variables to save:"
-msgstr ""
+msgstr "Zu speichernde Variablen:"
 
 #: plugin/leverage.c:119
 #: plugin/leverage.c:246
 #: plugin/leverage.c:471
+#, fuzzy
 msgid "leverage"
-msgstr ""
+msgstr "Leverage"
 
 #: plugin/leverage.c:133
 #: plugin/leverage.c:272
 #: plugin/leverage.c:472
+#, fuzzy
 msgid "influence"
-msgstr ""
+msgstr "Influence"
 
 #: plugin/leverage.c:147
 #: plugin/leverage.c:473
@@ -11749,31 +11769,33 @@ msgstr ""
 #: plugin/logistic.c:50
 #: plugin/logistic.c:192
 msgid "Invalid value for the maximum of the dependent variable"
-msgstr ""
+msgstr "Ungültiger Wert für das Maximum der abhängigen Variable"
 
 #: plugin/logistic.c:78
 msgid "Logistic model"
-msgstr ""
+msgstr "Logisches Modell"
 
 #: plugin/logistic.c:96
 msgid ""
 "Maximum (asymptote) for the\n"
 "dependent variable"
 msgstr ""
+"Maximum (Asymptote) für die\n"
+"abhängige Variable"
 
 #: plugin/logistic.c:169
 msgid "Illegal non-positive value of the dependent variable"
-msgstr ""
+msgstr "Unzulässiger nichtpositiver Wert der abhängigen Variaable"
 
 #: plugin/mp_ols.c:131
 #, c-format
 msgid "Missing observations for variable '%s'"
-msgstr ""
+msgstr "Fehlende Beobachtungen für die Variable '%s'"
 
 #: plugin/mp_ols.c:140
 #, c-format
 msgid "Variable '%s' is all zeros"
-msgstr ""
+msgstr "Variable '%s' besteht nur aus Nullen"
 
 #: plugin/mp_ols.c:823
 #, c-format
@@ -11782,7 +11804,7 @@ msgstr ""
 
 #: plugin/panel_data.c:393
 msgid "Error estimating fixed effects model\n"
-msgstr ""
+msgstr "Fehler beim Schätzen des Fixed-Effects-Modells\n"
 
 #: plugin/panel_data.c:401
 msgid ""
@@ -11799,6 +11821,8 @@ msgid ""
 "\n"
 "Residual variance: %g/(%d - %d) = %g\n"
 msgstr ""
+"\n"
+"Residuenvarianz: %g(%d - %d) = %g\n"
 
 #: plugin/panel_data.c:441
 #, c-format
@@ -11816,7 +11840,7 @@ msgstr ""
 
 #: plugin/panel_data.c:545
 msgid "Error estimating random effects model\n"
-msgstr ""
+msgstr "Fehler beim Schätzen des Random-Effects-Modells\n"
 
 #: plugin/panel_data.c:549
 msgid ""
@@ -11845,6 +11869,9 @@ msgid ""
 "Breusch-Pagan test statistic:\n"
 " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"
 msgstr ""
+"\n"
+"Breusch-Pagan-Teststatistik:\n"
+" LM = %g mit p-Wert = prob(Chi-Quadrat(1) > %g) = %g\n"
 
 #: plugin/panel_data.c:635
 msgid ""
@@ -11903,7 +11930,7 @@ msgstr ""
 
 #: plugin/panel_data.c:928
 msgid "based on the FGLS residuals"
-msgstr ""
+msgstr "basiert auf den FGLS-Residuen"
 
 #: plugin/panel_data.c:989
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
@@ -11923,7 +11950,7 @@ msgstr ""
 
 #: plugin/pca.c:160
 msgid "All components"
-msgstr ""
+msgstr "Alle Komponenten"
 
 #: plugin/pca.c:232
 msgid "Principal Components Analysis"
@@ -11955,16 +11982,16 @@ msgstr "gretl: lese Schriftarten"
 
 #: plugin/progress_bar.c:161
 msgid "Retrieving"
-msgstr ""
+msgstr "Abrufen"
 
 #: plugin/progress_bar.c:165
 msgid "Storing"
-msgstr ""
+msgstr "Speichern"
 
 #: plugin/progress_bar.c:169
 #, c-format
 msgid "Scanning %ld fonts"
-msgstr ""
+msgstr "Scanne %ld-Schriftarten"
 
 #: plugin/range-mean.c:58
 msgid "range-mean plot for"
@@ -12013,23 +12040,29 @@ msgid ""
 msgstr ""
 
 #: plugin/stats_tables.c:320
-#, no-c-format
+#, fuzzy, no-c-format
 msgid ""
 "5% critical values for Durbin-Watson statistic\n"
 "\n"
 msgstr ""
+"5%-Kritische-Werte für Durbin-Watson-Statistik\n"
+"\n"
 
 #: plugin/stats_tables.c:321
 msgid ""
 "              Number of explanatory variables (excluding the constant):\n"
 "\n"
 msgstr ""
+"              Anzahl der erklärenden Variablen (ausgenommen die Konstante):\n"
+"\n"
 
 #: plugin/stats_tables.c:342
 msgid ""
 "Critical values for standard normal distribution\n"
 "\n"
 msgstr ""
+"Kritische Werte für Standardnormalverteilung\n"
+"\n"
 
 #: plugin/stats_tables.c:343
 #: plugin/stats_tables.c:373
@@ -12057,6 +12090,8 @@ msgid ""
 "Critical values for Student's t distribution\n"
 "\n"
 msgstr ""
+"Kritische Werte für Students t-Verteilung\n"
+"\n"
 
 #: plugin/stats_tables.c:385
 msgid "inf."
@@ -12067,6 +12102,8 @@ msgid ""
 "Critical values for Chi-square distribution\n"
 "\n"
 msgstr ""
+"Kritische Werte für Chi-Quadrat-Verteilung\n"
+"\n"
 
 #: plugin/stats_tables.c:405
 msgid ""
@@ -12088,7 +12125,7 @@ msgstr ""
 
 #: plugin/sysest.c:79
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr ""
+msgstr "Breusch-Pagan-Test für diagonale Kovarianzmatrix"
 
 #: plugin/sysest.c:412
 #, c-format
@@ -12131,7 +12168,7 @@ msgstr ""
 
 #: plugin/tramo_options.c:357
 msgid "Time-series model only"
-msgstr ""
+msgstr "Nur Zeitreihenmodell"
 
 #: plugin/tramo_options.c:363
 msgid "Standard automatic analysis"
@@ -12139,23 +12176,23 @@ msgstr ""
 
 #: plugin/tramo_options.c:449
 msgid "Output"
-msgstr ""
+msgstr "Ausgabe"
 
 #: plugin/tramo_options.c:452
 msgid "Output window:"
-msgstr ""
+msgstr "Ausgabefenster:"
 
 #: plugin/tramo_options.c:458
 msgid "Full details"
-msgstr ""
+msgstr "Volle Details"
 
 #: plugin/tramo_options.c:484
 msgid "Reduced output"
-msgstr ""
+msgstr "Reduzierte Ausgabe"
 
 #: plugin/tramo_options.c:514
 msgid "Save to data set:"
-msgstr ""
+msgstr "Speichere in Datensatz"
 
 #: plugin/tramo_options.c:520
 #: plugin/tramo-x12a.c:208
@@ -12175,7 +12212,7 @@ msgstr ""
 #: plugin/tramo_options.c:550
 #: plugin/tramo-x12a.c:230
 msgid "Generate graph"
-msgstr ""
+msgstr "Generiere Graph"
 
 #: plugin/tramo_options.c:571
 msgid "Log transformation"
@@ -12292,6 +12329,8 @@ msgid ""
 "TRAMO can't handle more than 600 observations.\n"
 "Please select a smaller sample."
 msgstr ""
+"TRAMO kann nicht mehr als 600 Beobachtungen behandeln.\n"
+"Bitte wählen Sie ein kleineres Sample."
 
 #: plugin/vif.c:130
 msgid "Variance Inflation Factors"
@@ -12299,7 +12338,7 @@ msgstr ""
 
 #: plugin/vif.c:132
 msgid "Minimum possible value = 1.0"
-msgstr ""
+msgstr "Minimaler möglicher Wert = 1.0"
 
 #: plugin/vif.c:133
 msgid "Values > 10.0 may indicate a collinearity problem"
