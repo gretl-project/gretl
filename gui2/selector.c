@@ -1043,7 +1043,8 @@ static void selector_init (selector *sr, guint code, const char *title)
     GtkWidget *base, *hsep;
     int dlgheight = 300;
 
-    if (code == WLS || code == AR) dlgheight = 350;
+    if (MODEL_CODE(code) && datainfo->v > 10) dlgheight = 400;
+    else if (code == WLS || code == AR) dlgheight = 350;
     else if (code == TSLS) dlgheight = 400;
     else if (code == VAR) dlgheight = 420;
 

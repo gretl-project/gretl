@@ -275,10 +275,17 @@ static int op_level (int c)
 
 /* ...................................................... */
 
-static void count_ops (char *s, int opcount[])
+static int count_ops (char *s, int *opcount)
 {
-    while (*s++) 
-	opcount[op_level(*s)] += 1;
+    int level, maxlevel = 0;
+
+    while (*s++) {
+	level = op_level(*s);
+	opcount[level] += 1;
+	if (level > maxlevel) maxlevel = level;
+    }
+
+    return maxlevel;
 }
 
 /* ...................................................... */
@@ -291,6 +298,7 @@ static int insert_paren (char *s, int pos, char lr)
     for (i=n+1; i>=pos+1; i--) s[i] = s[i - 1];
     if (lr == 'L') s[pos + 1] = '(';
     else s[pos + 1] = ')';
+
     return 0;
 }
 
@@ -298,17 +306,21 @@ static int insert_paren (char *s, int pos, char lr)
 
 static int paren_state (char c, int *state, char lr)
 {
+    int s = *state;
+
     if (c == '(') {
 	if (lr == 'L') {
-	    if (*state > 0) *state -= 1;
-	} else *state += 1;
+	    if (s > 0) s--;
+	} else s++;
     }
     else if (c == ')') {
 	if (lr == 'R') {
-	    if (*state > 0) *state -= 1;
-	} else *state += 1;
+	    if (s > 0) s--;
+	} else s++;
     }
-    return *state;
+
+    *state = s;
+    return s;
 }
 
 /* ...................................................... */
@@ -318,16 +330,16 @@ static int parenthesize (char *str)
     int i, k, oppos, n = strlen(str);
     int level1 = 0, level2;  
     int priority, start, lpins, inparens;
-    int rpar, pbak;
+    int rpar, pbak, maxlevel;
     int opcount[LEVELS + 1];
 
     for (i=0; i<=LEVELS; i++) opcount[i] = 0;
-    count_ops(str, opcount);
+    maxlevel = count_ops(str, opcount);
 
     priority = 1;
     k = 0;
     oppos = 0;
-    while (priority < LEVELS) {
+    while (priority <= maxlevel) {
 	if (opcount[priority] == 0) {
 	    priority++;
 	    continue;
@@ -666,7 +678,7 @@ static int handle_type2 (int type2, char *word, char *sexpr,
 			 MODEL *pmod) 
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
-    int i, vi, nt, lv, ig;
+    int i, vi, nt, lv;
     double xx;
     int err = 0;
 
@@ -805,9 +817,9 @@ static int handle_type2 (int type2, char *word, char *sexpr,
 	    }
 	} 
 	else {
-	    ig = evalexp(sexpr, nt, mvec, genr->xvec, 
+	    err = evalexp(sexpr, nt, mvec, genr->xvec, 
 			 *pZ, pdinfo, pmod, genr);
-	    if (ig != 0) {  
+	    if (err) {  
 		err = E_IGNONZERO;
 	    } else {
 		for (i=t1; i<=t2; i++) mvec[i] = genr->xvec[i];
