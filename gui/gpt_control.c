@@ -3004,6 +3004,10 @@ static int get_plot_ranges (png_plot_t *plot)
 #endif /* PNG_COMMENTS */
 
 #if 0
+    fprintf(stderr, "coords = %d\n", coords);
+#endif
+
+#if 0
     fprintf(stderr, "png: pixel_xmin=%d, xmax=%d, ymin=%d, ymax=%d\n",
 	    plot->pixel_xmin, plot->pixel_xmax, plot->pixel_ymin,
 	    plot->pixel_ymax);
