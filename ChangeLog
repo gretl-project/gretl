@@ -7,6 +7,8 @@ version 1.0.9
 - Add a new means of grabbing fitted values from a regression:
   "genr newname = yhat" (parallels "uhat")
 - Updates to manual
+- Spanish version: provide access to English help files as well
+  as Spanish
 
 05/02/03 version 1.0.8
 - Require lapack

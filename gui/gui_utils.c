@@ -1089,10 +1089,14 @@ static gchar *make_viewer_title (int role, const char *fname)
     gchar *title = NULL;
 
     switch (role) {
-    case HELP: 
+    case GUI_HELP: 
 	title = g_strdup(_("gretl: help")); break;
     case CLI_HELP:
 	title = g_strdup(_("gretl: command syntax")); break;
+    case GUI_HELP_ENGLISH: 
+	title = g_strdup("gretl: help"); break;
+    case CLI_HELP_ENGLISH:
+	title = g_strdup("gretl: command syntax"); break;
     case VIEW_LOG:
 	title = g_strdup(_("gretl: command log")); break;
     case CONSOLE:
@@ -1249,7 +1253,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     return vwin;
 }
 
-/* ........................................................... */
+#define help_role(r) (r == CLI_HELP || \
+                      r == GUI_HELP || \
+                      r == CLI_HELP_ENGLISH || \
+                      r == GUI_HELP_ENGLISH)
 
 windata_t *view_file (char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role, 
@@ -1263,9 +1270,8 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gchar *title;
     static GtkStyle *style;
     int show_viewbar = (role != CONSOLE &&
-			role != HELP &&
-			role != CLI_HELP && 
-			role != VIEW_DATA);
+			role != VIEW_DATA &&
+			!help_role(role));
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
 			role == VIEW_LOG);
@@ -1345,7 +1351,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	if (tempstr[0] == '?') 
 	    colptr = (role == CONSOLE)? &red : &blue;
 	if (tempstr[0] == '#') {
-	    if (role == HELP || role == CLI_HELP) {
+	    if (help_role(role)) {
 		tempstr[0] = ' ';
 		nextcolor = &red;
 	    } else {

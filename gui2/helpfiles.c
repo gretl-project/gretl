@@ -22,6 +22,14 @@
 #include "gretl.h"
 #include "treeutils.h"
 
+#ifdef ENABLE_NLS
+static int translated_helpfile = -1;
+static char *english_gui_helpfile;
+static char *english_script_helpfile;
+static int english_gui_help_length;
+static int english_script_help_length;
+#endif
+
 /* helpfile stuff */
 struct help_head_t {
     char *name;
@@ -32,6 +40,8 @@ struct help_head_t {
 
 static int gui_help_length, script_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
+
+static windata_t *helpwin (int script, int english);
 
 /* searching stuff */
 static int look_for_string (const char *haystack, const char *needle, 
@@ -49,6 +59,13 @@ GtkItemFactoryEntry help_items[] = {
     { N_("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
+
+#ifdef ENABLE_NLS
+GtkItemFactoryEntry english_help_items[] = {
+    { N_("/_Find"), NULL, menu_find, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL}
+};
+#endif
 
 /* ......................................................... */
 
@@ -116,6 +133,59 @@ static char *help_string_from_cmd (int cmd)
     return NULL;    
 }
 
+#ifdef ENABLE_NLS
+static void set_english_help_file (int script)
+{
+    char *helpfile, *tmp;
+    int len;
+    FILE *fp;
+
+    if (script) helpfile = paths.cmd_helpfile;
+    else helpfile = paths.helpfile;
+
+    len = strlen(helpfile) + 1 - 3;
+    tmp = malloc(len);
+
+    if (tmp != NULL) {
+	*tmp = 0;
+	strncat(tmp, helpfile, len - 1);
+	if (script) {
+	    english_script_helpfile = tmp;
+	} else {
+	    english_gui_helpfile = tmp;
+	}
+	fp = fopen(tmp, "r");
+	if (fp != NULL) {
+	    char testline[MAXLEN];
+
+	    len = 0;
+	    while (fgets(testline, MAXLEN-1, fp)) {
+		if (*testline != '@') len++;
+	    }
+	    fclose(fp);
+	    if (script) english_script_help_length = len;
+	    else english_gui_help_length = len;
+	}
+    }
+}
+
+static void set_translated_helpfile (void)
+{
+    char *p = strrchr(paths.helpfile, '.');
+
+    if (p && strcmp(p, ".hlp") && strcmp(p, ".txt")) { 
+	translated_helpfile = 1;
+    } else {
+	translated_helpfile = 0;
+    }
+
+    if (translated_helpfile == 1) {
+	set_english_help_file(0);
+	set_english_help_file(1);
+    }
+}
+#endif
+
 /* ......................................................... */
 
 static int real_helpfile_init (int cli)
@@ -128,6 +198,11 @@ static int real_helpfile_init (int cli)
     int length = 0, memfail = 0;
 
     helpfile = (cli)? paths.cmd_helpfile : paths.helpfile;
+
+#ifdef ENABLE_NLS
+    if (translated_helpfile < 0) 
+	set_translated_helpfile();
+#endif
 
     /* first pass: find length and number of topics */
     fp = fopen(helpfile, "r");
@@ -241,6 +316,29 @@ static char *get_gui_help_string (int pos)
 
 /* ........................................................... */
 
+#ifdef ENABLE_NLS
+static void english_help_callback (gpointer p, int script, 
+				   GtkWidget *w)
+{
+    helpwin(script, 1);
+}
+
+static void add_english_help_item (windata_t *hwin, int script)
+{
+    GtkItemFactoryEntry helpitem;
+    gchar mpath[] = "/_English";
+
+    helpitem.accelerator = NULL;
+    helpitem.callback_action = script; 
+    helpitem.item_type = NULL;
+    helpitem.path = mpath;
+    helpitem.callback = english_help_callback; 
+    gtk_item_factory_create_item(hwin->ifac, &helpitem, NULL, 1);
+}
+#endif
+
+/* ........................................................... */
+
 static void add_help_topics (windata_t *hwin, int script)
 {
     int i, j;
@@ -285,19 +383,46 @@ static void add_help_topics (windata_t *hwin, int script)
 
 /* ........................................................... */
 
-static windata_t *helpwin (int script) 
+static windata_t *helpwin (int script, int english) 
 {
     windata_t *vwin = NULL;
+    GtkItemFactoryEntry *items = help_items;
+    char *helpfile;
+    int helpcode;
 
     if (script) {
-	vwin = view_file(paths.cmd_helpfile, 0, 0, 78, 400, 
-			 CLI_HELP, help_items);
-	add_help_topics(vwin, 1);
+	helpfile = paths.cmd_helpfile;
+	helpcode = CLI_HELP;
     } else {
-	vwin = view_file(paths.helpfile, 0, 0, 78, 400, 
-			 HELP, help_items);
-	add_help_topics(vwin, 0);
+	helpfile = paths.helpfile;
+	helpcode = GUI_HELP;
     }
+
+    if (helpfile == NULL) return NULL;
+
+#ifdef ENABLE_NLS
+    if (english) {
+	if (script) {
+	    helpcode = CLI_HELP_ENGLISH;
+	    helpfile = english_script_helpfile;
+	} else {
+	    helpcode = GUI_HELP_ENGLISH;
+	    helpfile = english_gui_helpfile;
+	}
+	items = english_help_items;
+    }
+#endif
+
+    vwin = view_file(helpfile, 0, 0, 77, 400, helpcode, items);
+
+    if (!english) 
+	add_help_topics(vwin, script);
+
+#ifdef ENABLE_NLS
+    if (translated_helpfile && !english) 
+	add_english_help_item(vwin, script);
+#endif
+
     return vwin;
 }
 
@@ -341,7 +466,7 @@ static void real_do_help (guint pos, int cli)
     GtkTextMark *vis;
 
     if (w == NULL) {
-	windata_t *hwin = helpwin(cli);
+	windata_t *hwin = helpwin(cli, 0);
 
 	if (hwin != NULL) {
 	    if (cli) w = script_help_view = hwin->w;
