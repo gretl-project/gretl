@@ -3388,7 +3388,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED)) {
 	    return;
 	} else {
-	    sprintf(tmp, "\"%s\" %s.dvi", viewdvi, texbase);
+	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
 	    if (WinExec(tmp, SW_SHOWNORMAL) < 32)
 		win_show_error();	
 	}
