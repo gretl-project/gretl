@@ -372,6 +372,16 @@ static GtkWidget *next_button (GtkWidget *box)
     return w;
 }
 
+static GtkWidget *back_button (GtkWidget *box)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_GO_BACK);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, TRUE, 0);
+
+    return w;
+}
 
 /* ........................................................... */
 
@@ -3088,7 +3098,8 @@ GtkWidget *standard_button (int code)
 	N_("Close"),
 	N_("Apply"),
 	N_("Help"),
-	N_("Next")
+	N_("Forward"),
+	N_("Back")
     };
 
     return gtk_button_new_with_label(_(button_strings[code]));
@@ -3114,6 +3125,12 @@ enum {
     DATAWIZ_TIME_SERIES_INFO,
     DATAWIZ_PANEL_INFO,
     DATAWIZ_CONFIRM
+};
+
+enum {
+    DW_FORWARD = 0,
+    DW_BACK    = 1,
+    DW_CANCEL = -1
 };
 
 static void datatmp_init (void)
@@ -3145,7 +3162,7 @@ static const char *title_from_wizcode (int code)
 {
     const char *titles[] = {
 	N_("Dataset structure"),
-	N_("Time-series information"),
+	N_("Time series information"),
 	N_("Panel data information"),
 	N_("Confirm changes")
     };
@@ -3157,12 +3174,12 @@ static const char *title_from_wizcode (int code)
     }
 }
 
-struct pd_info {
+struct freq_info {
     int pd;
     const char *label;
 };
 
-struct pd_info ts_info[] = {
+struct freq_info ts_info[] = {
     {  1, N_("Annual") },
     {  4, N_("Quarterly") },
     { 12, N_("Monthly") },
@@ -3174,6 +3191,16 @@ struct pd_info ts_info[] = {
     {  0, N_("Special") },
 };
 
+struct pan_info {
+    int code;
+    const char *label;
+}
+
+struct pan_info panel_info[] = {
+    { STACKED_TIME_SERIES,   N_("Stacked time series") },
+    { STACKED_CROSS_SECTION, N_("Stacked cross sections") }
+};
+
 static int radio_default (int code)
 {
     if (code == DATAWIZ_SET_TYPE) {
@@ -3181,8 +3208,7 @@ static int radio_default (int code)
     } else if (code == DATAWIZ_TIME_SERIES_INFO) {
 	return dtmp.pd;
     } else if (code == DATAWIZ_PANEL_INFO) { 
-	if (dtmp.time_series == STACKED_TIME_SERIES) return 0;
-	if (dtmp.time_series == STACKED_CROSS_SECTION) return 1;
+	return dtmp.time_series;
     }
 
     return 0;
@@ -3200,6 +3226,18 @@ static const char *datawiz_pd_to_str (int pd)
     return "";
 }
 
+static const char *datawiz_pantype_to_str (int code)
+{
+    int i;
+
+    for (i=0; i<2; i++) {
+	if (code == panel_info[i].code) {
+	    return panel_info[i].label;
+	}
+    }
+    return "";
+}
+
 static int datawiz_i_to_pd (int i)
 {
     if (i < 9) {
@@ -3207,7 +3245,16 @@ static int datawiz_i_to_pd (int i)
     } else {
 	return 0;
     }
-}  
+}
+
+static int datawiz_i_to_panel (int i)
+{
+    if (i < 2) {
+	return panel_info[i].code;
+    } else {
+	return 0;
+    }
+} 
 
 static const char *datawiz_radio_strings (int wizcode, int i)
 {
@@ -3217,9 +3264,8 @@ static const char *datawiz_radio_strings (int wizcode, int i)
 	if (i == 2) return N_("Panel");
     } else if (wizcode == DATAWIZ_TIME_SERIES_INFO) {
 	return datawiz_pd_to_str(i);
-    } else if (wizcode == DATAWIZ_PANEL_INFO) {   
-	if (i == 0) return N_("Stacked time series");
-	if (i == 1) return N_("Stacked cross sections");
+    } else if (wizcode == DATAWIZ_PANEL_INFO) {  
+	return datawiz_pantype_to_str(i);
     }
 
     return "";
@@ -3232,6 +3278,11 @@ static void datawiz_set_radio_opt (GtkWidget *w, int *setvar)
     *setvar = val;
 }
 
+static void set_back_code (GtkWidget *w, int *ret)
+{
+    *ret = DW_BACK;
+}
+
 static int datawiz_dialog (int code)
 {
     GtkWidget *dialog;
@@ -3242,10 +3293,10 @@ static int datawiz_dialog (int code)
     int deflt = radio_default(code);
     int setval = 0;
     int *setvar = NULL;
-    int i, ret = 0;
+    int i, ret = DW_FORWARD;
 
     if (code == DATAWIZ_CONFIRM) {
-	return -1;
+	return DW_CANCEL; /* fixme */
     }
 
     dialog = simple_dialog_new(_(title_from_wizcode(code)));
@@ -3261,6 +3312,9 @@ static int datawiz_dialog (int code)
     } else if (code == DATAWIZ_TIME_SERIES_INFO) {
 	nopts = 9;
 	setvar = &dtmp.pd;
+    } else if (code == DATAWIZ_PANEL_INFO) {
+	nopts = 2;
+	setvar = &dtmp.time_series;
     }
 
     /* radio options? */
@@ -3268,6 +3322,8 @@ static int datawiz_dialog (int code)
 
 	if (code == DATAWIZ_TIME_SERIES_INFO) {
 	    setval = datawiz_i_to_pd(i);
+	} else if (code == DATAWIZ_PANEL_INFO) {
+	    setval = datawiz_i_to_panel(i);
 	} else {
 	    setval = i;
 	}
@@ -3294,6 +3350,18 @@ static int datawiz_dialog (int code)
 
 	gtk_widget_show(button);
     }
+
+    /* Create a "Back" button? */
+    if (code > DATAWIZ_SET_TYPE) {
+	tempwid = back_button(GTK_DIALOG(dialog)->action_area);
+	g_signal_connect(G_OBJECT(tempwid), "clicked", 
+			 G_CALLBACK(delete_widget), 
+			 dialog);
+	g_signal_connect(G_OBJECT(tempwid), "clicked", 
+			 G_CALLBACK(set_back_code), 
+			 &ret);
+	gtk_widget_show(tempwid);  
+    }  
 
     /* Create the "Next" or "OK" button */
     if (code == DATAWIZ_CONFIRM) {
@@ -3330,7 +3398,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 
     /* step 1: show choice of structures */
     ret = datawiz_dialog(DATAWIZ_SET_TYPE);
-    if (ret == -1) {
+    if (ret == DW_CANCEL) {
 	return;
     }
 
@@ -3340,13 +3408,13 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
     } else if (dtmp.time_series == STRUCTURE_UNKNOWN) {
 	ret = datawiz_dialog(DATAWIZ_PANEL_INFO);
     }
-    if (ret == -1) {
+    if (ret == DW_CANCEL) {
 	return;
     }
 
     /* step 3: confirm changes */
     ret = datawiz_dialog(DATAWIZ_CONFIRM);
-    if (ret == -1) {
+    if (ret == DW_CANCEL) {
 	return;
     }
 
