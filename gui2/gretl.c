@@ -1290,8 +1290,8 @@ static GtkWidget *make_main_window (int gui_get_data)
 	_("Variable name"), 
 	_("Descriptive label")
     };
-    int mainwin_width = 520;
-    int mainwin_height = 400;
+    int mainwin_width = 540;  /* was 520 */
+    int mainwin_height = 420; /* was 400 */
 
     gui_scale = get_gui_scale();
 

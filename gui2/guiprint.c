@@ -277,12 +277,76 @@ void winprint (char *fullbuf, char *selbuf)
 #include <libgnomeprintui/gnome-print-dialog.h>
 #include <libgnomeprintui/gnome-print-job-preview.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#define GRETL_PRINT_CONFIG_FILE "gretl-print-config"
+#define GRETL_PBM_TMP           "gretltmp.pbm"
+
+static GnomePrintConfig *load_gretl_print_config_from_file (void)
+{
+    gchar *file_name;
+    gboolean res;
+    gchar *contents;
+    GnomePrintConfig *gretl_print_config;
+	
+    file_name = gnome_util_home_file(GRETL_PRINT_CONFIG_FILE);
+
+    res = g_file_get_contents(file_name, &contents, NULL, NULL);
+    g_free(file_name);
+
+    if (res) {
+	gretl_print_config = gnome_print_config_from_string(contents, 0);
+	g_free(contents);
+    } else {
+	gretl_print_config = gnome_print_config_default();
+    }
+
+    return gretl_print_config;
+}
+
+static void
+save_gretl_print_config_to_file (GnomePrintConfig *gretl_print_config)
+{
+    gint fd;
+    gchar *str;
+    gint bytes;
+    gchar *file_name;
+    gboolean res;
+
+    g_return_if_fail(gretl_print_config != NULL);
+
+    str = gnome_print_config_to_string(gretl_print_config, 0);
+    g_return_if_fail(str != NULL);
+	
+    file_name = gnome_util_home_file(GRETL_PRINT_CONFIG_FILE);
+
+    fd = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+    g_free(file_name);
+
+    if (fd == -1) goto save_error;
+	
+    bytes = strlen(str);
+    res = (write(fd, str, bytes) == bytes);
+
+    if (!res) goto save_error;
+	
+    close(fd);
+    g_free(str);
+	
+    return;
+	
+ save_error:
+    g_warning("gretl cannot save print config file.");
+    g_free(str);
+}
 
 void winprint (char *fullbuf, char *selbuf)
 {
-    GnomePrintConfig *print_config;
-    GnomePrintContext *gpc;
     GnomePrintJob *job;
+    GnomePrintContext *gpc;
+    GnomePrintConfig *config;
     GtkWidget *dialog;
     gint response;
     gboolean preview = FALSE;
@@ -293,12 +357,14 @@ void winprint (char *fullbuf, char *selbuf)
     int x, y, line, page;
     size_t len;
 
-    job = gnome_print_job_new(NULL);
+    config = load_gretl_print_config_from_file();
+    job = gnome_print_job_new(config);
+    gpc = gnome_print_job_get_context(job);
+    config = gnome_print_job_get_config(job);
 
     dialog = gnome_print_dialog_new(job, 
 				    "print gretl output", 
 				    0);
-
     response = gtk_dialog_run(GTK_DIALOG(dialog));
 
     switch (response) {
@@ -308,21 +374,23 @@ void winprint (char *fullbuf, char *selbuf)
 	preview = TRUE;
 	break;
     default:
-	gtk_widget_destroy (dialog);
+	g_object_unref(G_OBJECT(config));
+	g_object_unref(G_OBJECT(gpc));
+	g_object_unref(G_OBJECT(job));
+	gtk_widget_destroy(dialog);
 	free(fullbuf);
 	free(selbuf);
 	return;
     }
 
-    gpc = gnome_print_job_get_context(job);
     gnome_print_beginpage(gpc, _("gretl output"));
 
     font = gnome_font_find_closest("Courier", 10);
-    font_name = gnome_font_get_name (font);
+    font_name = gnome_font_get_name(font);
     /* g_print ("Found font: %s\n", font_name); */
 
     gnome_print_setfont(gpc, font);
-    gnome_print_setrgbcolor(gpc, 0, 0, 0);
+    /* gnome_print_setrgbcolor(gpc, 0, 0, 0); */
 
     time_string(hdrstart);
     if (selbuf != NULL) p = selbuf;
@@ -354,7 +422,7 @@ void winprint (char *fullbuf, char *selbuf)
 	gnome_print_showpage(gpc);
     }
 
-    /* gnome_print_job_close(job); */
+    gnome_print_job_close(job);
 
     if (preview) {
 	gtk_widget_show(gnome_print_job_preview_new(job, "Print preview"));
@@ -362,11 +430,14 @@ void winprint (char *fullbuf, char *selbuf)
 	gnome_print_job_print(job);
     }
 
-    gnome_print_context_close(gpc);
+    save_gretl_print_config_to_file(config);
+
+    g_object_unref(G_OBJECT(config));
+    g_object_unref(G_OBJECT(gpc));
+    g_object_unref(G_OBJECT(job));
 
     gtk_widget_destroy (dialog);
     gnome_font_unref(font);
-    /* gnome_print_config_unref(print_config); */
 
     free(fullbuf);
     if (selbuf) free(selbuf);
@@ -394,54 +465,113 @@ print_image_from_pixbuf (GnomePrintContext *gpc, GdkPixbuf *pixbuf)
     }
 }
 
+static GdkPixbuf *png_mono_pixbuf (const char *fname)
+{
+    FILE *fsrc, *ftmp;
+    char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
+    GdkPixbuf *pbuf = NULL;
+
+    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
+    if (mktemp(temp) == NULL) return NULL;
+
+    ftmp = fopen(temp, "w");
+    if (ftmp == NULL) return NULL;
+
+    fsrc = fopen(fname, "r");
+    if (fsrc == NULL) {
+	fclose(ftmp);
+	remove(temp);
+	return NULL;
+    }
+
+    fprintf(ftmp, "set term pbm mono\n"
+	    "set output '%s%s'\n", 
+	    paths.userdir, GRETL_PBM_TMP);
+
+    while (fgets(fline, MAXLEN-1, fsrc)) {
+	if (strncmp(fline, "set term", 8) && 
+	    strncmp(fline, "set output", 10)) {
+	    fputs(fline, ftmp);
+	}
+    }
+
+    fclose(fsrc);
+    fclose(ftmp);
+
+    /* run gnuplot on the temp plotfile */
+    sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
+    if (system(cmd)) {
+	remove(temp);
+	return NULL;
+    }
+
+    remove(temp);
+
+    build_path(paths.userdir, GRETL_PBM_TMP, temp, NULL);
+    pbuf = gdk_pixbuf_new_from_file(temp, NULL);
+    remove(temp);
+
+    return pbuf;
+}
+
 void gnome_print_graph (const char *fname)
 {
     GnomePrintJob *job;
+    GnomePrintConfig *config;
     GnomePrintContext *gpc; 
     GdkPixbuf *pbuf;
     GtkWidget *dialog;
+    gboolean preview = FALSE;
     gint response;
     char tmp[MAXLEN];
     int image_left_x = 530, image_bottom_y = 50;
     int width, height;
 
-    job = gnome_print_job_new(NULL);
-
-    if (!job) return;
+    config = load_gretl_print_config_from_file();
+    job = gnome_print_job_new(config);
+    gpc = gnome_print_job_get_context(job);
+    config = gnome_print_job_get_config(job);
 
     dialog = gnome_print_dialog_new(job, 
 				    _("print gretl graph"), 
 				    0);
+    response = gtk_dialog_run(GTK_DIALOG(dialog));
 
-    response = gtk_dialog_run (GTK_DIALOG (dialog));
-    gtk_widget_destroy(dialog);
-
-    if (response == GNOME_PRINT_DIALOG_RESPONSE_CANCEL) {
+    switch (response) {
+    case GNOME_PRINT_DIALOG_RESPONSE_PRINT:
+	break;
+    case GNOME_PRINT_DIALOG_RESPONSE_PREVIEW:
+#if 0
+	preview = TRUE;
+	break;
+#else
+	/* preview doesn't work for images */
+	dummy_call();
+#endif
+    default:
+	g_object_unref(G_OBJECT(config));
+	g_object_unref(G_OBJECT(gpc));
+	g_object_unref(G_OBJECT(job));
+	gtk_widget_destroy(dialog);
 	return;
     }
-    if (response == GNOME_PRINT_DIALOG_RESPONSE_PREVIEW) {
-	errbox("Not yet implemented");
-	return;
-    }    
 
-    /* run gnuplot on the plotfile to generate pngtmp */
-    sprintf(tmp, "\"%s\" \"%s\"", paths.gnuplot, fname);
-    if (system(tmp)) {
+    pbuf = png_mono_pixbuf(fname);
+   
+    if (pbuf == NULL) {
 	errbox(_("Failed to generate graph"));
-	gnome_print_job_close(job);
+	g_object_unref(G_OBJECT(config));
+	g_object_unref(G_OBJECT(gpc));
+	g_object_unref(G_OBJECT(job));
+	gtk_widget_destroy(dialog);
 	return;
     }
 
-    build_path(paths.userdir, "gretltmp.png", tmp, NULL);
-    pbuf = gdk_pixbuf_new_from_file(tmp, NULL);
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
     remove(tmp);
 
-    gpc = gnome_print_job_get_context(job);
-
     gnome_print_beginpage(gpc, _("gretl output"));
-
     gnome_print_gsave(gpc);
     gnome_print_translate(gpc, image_left_x, image_bottom_y);
     gnome_print_rotate(gpc, 90);
@@ -450,9 +580,21 @@ void gnome_print_graph (const char *fname)
     gnome_print_grestore(gpc);
     gnome_print_showpage(gpc);
 
-    /* finalize */
     gnome_print_job_close(job);
-    gnome_print_job_print(job);
+
+    if (preview) {
+	gtk_widget_show(gnome_print_job_preview_new(job, "Print preview"));
+    } else {
+	gnome_print_job_print(job);
+    }  
+
+    save_gretl_print_config_to_file(config);
+
+    g_object_unref(G_OBJECT(config));
+    g_object_unref(G_OBJECT(gpc));
+    g_object_unref(G_OBJECT(job));
+
+    gtk_widget_destroy(dialog);
 }
 
 #endif /* G_OS_WIN32, USE_GNOME */

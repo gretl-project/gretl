@@ -543,8 +543,8 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     return err;
 }
 
-static int box_pierce (int varno, int order, double **Z, 
-		       DATAINFO *pdinfo, double *bp, double *lb)
+static int ljung_box (int varno, int order, double **Z, 
+		      DATAINFO *pdinfo, double *lb)
 {
     double *x, *y, *acf;
     int k, l, nobs, n = pdinfo->n; 
@@ -571,14 +571,11 @@ static int box_pierce (int varno, int order, double **Z,
 	acf[l] = _corr(nobs-l, x, y);
     }
 
-    /* compute Box-Pierce and Ljung-Box statistics */
-    *bp = 0;
+    /* compute Ljung-Box statistic */
     *lb = 0;
     for (t=1; t<=order; t++) { 
-	*bp += acf[t] * acf[t];
 	*lb += acf[t] * acf[t] / (nobs - t);
     }
-    *bp *= nobs;
     *lb *= nobs * (nobs + 2.0);
 
     free(x);
@@ -706,7 +703,7 @@ int autocorr_test (MODEL *pmod, int order,
     int *newlist;
     MODEL aux;
     int i, k, t, n = pdinfo->n, v = pdinfo->v; 
-    double trsq, LMF, bp, lb;
+    double trsq, LMF, lb;
     int err = 0;
 
     if (dataset_is_panel(pdinfo)) {
@@ -803,11 +800,8 @@ int autocorr_test (MODEL *pmod, int order,
 	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
 		_("Chi-square"), order, trsq, chisq(trsq, order));
 
-	/* add Box-Pierce Q and Ljung-Box Q' */
-	if (box_pierce(v, order, *pZ, pdinfo, &bp, &lb) == 0) {
-	    pprintf(prn, "Box-Pierce Q = %g %s = P(%s(%d) > %g) = %.3g\n", 
-		    bp, _("with p-value"), _("Chi-square"), order,
-		    bp, chisq(bp, order));
+	/* add Ljung-Box Q' */
+	if (ljung_box(v, order, *pZ, pdinfo, &lb) == 0) {
 	    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
 		    lb, _("with p-value"), _("Chi-square"), order,
 		    lb, chisq(lb, order));
@@ -1105,24 +1099,24 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 #endif
 	/* plot with 95% confidence bands, if not batch mode */
 	if (prn->fp == NULL && gnuplot_init(ppaths, &fq) == 0) {
-	    fprintf(fq, "# CUSUM test\n");
+	    fputs("# CUSUM test\n", fq);
 	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
-	    fprintf(fq, "set xzeroaxis\n");
+	    fputs("set xzeroaxis\n", fq);
 	    fprintf(fq, "set title \"%s\"\n",
 		    /* xgettext:no-c-format */
 		    I_("CUSUM plot with 95% confidence band"));
-	    fprintf(fq, "set nokey\n");
+	    fputs("set nokey\n", fq);
 	    fprintf(fq, "plot %f+%f*x w l 1, \\\n", xx - K*yy, yy);
 	    fprintf(fq, "%f-%f*x w l 1, \\\n", -xx + K*yy, yy);
-	    fprintf(fq, "'-' using 1:2 w lp\n");
+	    fputs("'-' using 1:2 w lp\n", fq);
 	    for (j=0; j<n_est; j++) { 
 		t = pmod->t1 + K + j;
 		fprintf(fq, "%d %f\n", t, W[j]);
 	    }
-	    fprintf(fq, "e\n");
+	    fputs("e\n", fq);
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-	    fprintf(fq, "pause -1\n");
+	    fputs("pause -1\n", fq);
 #endif
 	    fclose(fq);
 	    err = gnuplot_display(ppaths);

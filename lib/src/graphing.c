@@ -460,6 +460,37 @@ static int gp_png_wants_color (void)
 }
 
 /**
+ * get_gretl_png_fontspec:
+ *
+ * Checks the environment for settings of GRETL_PNG_GRAPH_FONT and
+ * GRETL_PNG_GRAPH_FONT_SIZE.  If both are non-NULL, constructs and
+ * returns a string such as " font 'verdana' 8", suitable for
+ * insertion into a gnuplot invocation of the png (libgd) driver.
+ *
+ * Returns: the allocated fontspec string, or NULL if the appropriate
+ * environment variables are not defined.
+ */
+
+char *get_gretl_png_fontspec (void)
+{
+    const char *grfont = NULL;
+    const char *grfsize = NULL;
+    char *fontspec = NULL;
+
+    grfont = getenv("GRETL_PNG_GRAPH_FONT");
+    grfsize = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
+
+    if (grfont != NULL && grfsize != NULL) {
+	fontspec = malloc(strlen(grfont) + strlen(grfsize) + 10);
+	if (fontspec == NULL) {
+	    return NULL;
+	}
+	sprintf(fontspec, " font '%s' %s", grfont, grfsize);
+    } 
+    return fontspec;
+}
+
+/**
  * gnuplot_init:
  * @ppaths: pointer to path information struct.
  * @fpp: pointer to stream to be opened.
@@ -484,22 +515,13 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
     if (*fpp == NULL) return 1;
 
     if (GRETL_GUI(ppaths)) {
-	const char *grfont = NULL;
-	const char *grfsize = NULL;
-	char fontspec[32];
-
-	grfont = getenv("GRETL_PNG_GRAPH_FONT");
-	grfsize = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
-	if (grfont != NULL && grfsize != NULL) {
-	    sprintf(fontspec, " font '%s' %s", grfont, grfsize);
-	} else {
-	    *fontspec = 0;
-	}
+	char *fontspec = get_gretl_png_fontspec();
 
 	fprintf(*fpp, "set term png%s%s\n", 
-		(gp_png_wants_color())? " color" : "", fontspec);
-
+		(gp_png_wants_color())? " color" : "", 
+		(fontspec != NULL)? fontspec : "");
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
+	free(fontspec);
     }
 #else /* not GNUPLOT_PNG */
     *fpp = fopen(ppaths->plotfile, "w");

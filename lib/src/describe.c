@@ -328,7 +328,6 @@ static int get_pacf (double *pacf, int *maxlag, int varnum,
 
     pdinfo->t1 = 0;
 
-    *maxlag = 14;
     if (*maxlag > nobs / 2 - 1) *maxlag = nobs / 2 - 1;
 
     list = malloc((*maxlag + 3) * sizeof *list);
@@ -388,8 +387,9 @@ int corrgram (int varno, int order, double ***pZ,
 	      DATAINFO *pdinfo, PATHS *ppaths, 
 	      int batch, PRN *prn)
 {
-    double *x, *y, *acf, *xl, box;
+    double *x, *y, *acf, *xl, box, pm;
     double *pacf = NULL;
+    double maxspike = 0, minspike = 0;
     int err = 0, k, l, m, nobs, n = pdinfo->n; 
     int maxlag = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
@@ -419,11 +419,11 @@ int corrgram (int varno, int order, double ***pZ,
 
     switch (pdinfo->pd) {
     case 4: 
-	m = (nobs <= 20)? nobs - 5 : 16;
+	m = (nobs <= 20)? nobs - 5 : 14;
 	break;
     case 12: 
     case 52: 
-	m = (nobs <= 40)? nobs - 13 : 36;
+	m = (nobs <= 40)? nobs - 13 : 28;
 	break;
     case 24: 
 	m = (nobs <= 100)? nobs - 25 : 96;
@@ -448,18 +448,22 @@ int corrgram (int varno, int order, double ***pZ,
 	    y[k] = (*pZ)[varno][t-l];
 	}
 	acf[l] = _corr(nobs-l, x, y);
+	if (acf[l] > maxspike) maxspike = acf[l];
+	if (acf[l] < minspike) minspike = acf[l];
     }
 
     sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
 	    pdinfo->varname[varno]);
     pprintf(prn, "\n%s\n\n", gretl_tmp_str);
 
-    /* add Box-Pierce statistic */
+    /* add Ljung-Box statistic */
     box = 0;
-    for (t=1; t<=m; t++) 
-	box += acf[t] * acf[t];
-    box *= m;
-    pprintf(prn, _("Box-Pierce Q statistic = %.4f\n"), box);
+    for (t=1; t<=m; t++) { 
+	box += acf[t] * acf[t] / (nobs - t);
+    }
+    box *= nobs * (nobs + 2.0);
+
+    pprintf(prn, "Ljung-Box Q' = %.4f\n", box);
     pprintf(prn, _("Degrees of freedom = %d, p-value = %.4f\n\n"),
 	    m, chisq(box, m));
 
@@ -489,6 +493,7 @@ int corrgram (int varno, int order, double ***pZ,
 	err = E_ALLOC;
 	goto getout;
     }
+    maxlag = m;
     err = get_pacf(pacf, &maxlag, varno, pZ, pdinfo);
     pacf[0] = acf[1];
     if (!err) {
@@ -499,6 +504,8 @@ int corrgram (int varno, int order, double ***pZ,
 	    pputs(prn, ":\n\n");
 	for (l=1; l<=maxlag; l++) {
 	    pprintf(prn, "%5d)%7.3f", l, pacf[l-1]);
+	    if (pacf[l-1] > maxspike) maxspike = pacf[l-1];
+	    if (pacf[l-1] < minspike) minspike = pacf[l-1];
 	    if (l%5 == 0) pputs(prn, "\n");
 	}
     }
@@ -507,40 +514,63 @@ int corrgram (int varno, int order, double ***pZ,
 
     if (gnuplot_init(ppaths, &fq)) return E_FOPEN;
 
-    fprintf(fq, "# correlogram\n");
-    fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
-    fprintf(fq, "set xzeroaxis\n");
-    fprintf(fq, "set title \"%s %s\"\n", I_("Correlogram for"), 
-	    pdinfo->varname[varno]);
-    if (maxlag) {
-	fprintf(fq, "plot '-' using 1:2 title '%s' "
-		"w impulses, \\\n'-' using 1:2 title '%s",
-		_("autocorrelations"), _("partial autocorrelations"));
-	if (maxlag < m)
-	    fprintf(fq, "(%s %d)' w impulses\n", I_("to lag"), maxlag);
-	else
-	    fprintf(fq, "' w impulses\n");
-    } else {
-	fprintf(fq, "set nokey\n");
-	fprintf(fq, "plot '-' using 1:2 w impulses\n");
-    }
+    /* for confidence bands */
+    pm = 1.0 / sqrt((double) nobs);
 
-    /* send data inline */
+    fprintf(fq, "# correlogram\n");
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
-    for (l=1; l<=m; l++) 
-	fprintf(fq, "%d %f\n", l, acf[l]);
-    fprintf(fq, "e\n");
-    for (l=1; l<=maxlag; l++) 
-	fprintf(fq, "%f %f\n", l + .1, pacf[l-1]);
-    fprintf(fq, "e\n");
+
+    /* create two separate plots */
+    fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fq);
+    fputs("set xzeroaxis\n", fq);
+    fputs("set key top right\n", fq); 
+    fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
+    fprintf(fq, "set yrange [%g:%g]\n", 1.2 * minspike, 1.2 * maxspike);
+
+    /* upper plot: Autocorrelation Function or ACF) */
+    fputs("set origin 0.0,0.50\n", fq);
+    fprintf(fq, "set title \"%s %s\"\n", I_("ACF for"), 
+	    pdinfo->varname[varno]);
+    fprintf(fq, "set xrange [0:%d]\n", m + 1);
+    fprintf(fq, "plot \\\n"
+	    "'-' using 1:2 w impulses title '', \\\n"
+	    "%g lt 2 title '%s', \\\n"
+	    "%g lt 2 title ''\n", pm, 
+	    "+- 1.96/T^0.5",
+	    -pm);
+    for (l=1; l<=m; l++) {
+	fprintf(fq, "%d %g\n", l, acf[l]);
+    }
+    fputs("e\n", fq);
+
+    /* lower plot: Partial Autocorrelation Function or PACF) */
+    fputs("set origin 0.0,0.0\n", fq);
+    fprintf(fq, "set title \"%s %s\"\n", I_("PACF for"), 
+	    pdinfo->varname[varno]);
+    fprintf(fq, "set xrange [0:%d]\n", maxlag + 1);
+    fprintf(fq, "plot \\\n"
+	    "'-' using 1:2 w impulses title '', \\\n"
+	    "%g lt 2 title '%s', \\\n"
+	    "%g lt 2 title ''\n", pm,
+	    "+- 1.96/T^0.5",
+	    -pm);
+    fputs("plot '-' using 1:2 w impulses\n", fq);
+    for (l=1; l<=maxlag; l++) {
+	fprintf(fq, "%g %g\n", l + .1, pacf[l-1]);
+    }
+    fputs("e\n", fq);
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
+    fputs("set nomultiplot\n", fq);
+
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fq, "pause -1\n");
+    fputs("pause -1\n", fq);
 #endif
     fclose(fq);
     err = gnuplot_display(ppaths);

@@ -78,7 +78,8 @@ typedef enum {
     PLOT_ZOOMING        = 1 << 3,
     PLOT_NO_LABELS      = 1 << 4,
     PLOT_PNG_COORDS     = 1 << 5,
-    PLOT_DONT_ZOOM      = 1 << 6    
+    PLOT_DONT_ZOOM      = 1 << 6,
+    PLOT_DONT_EDIT      = 1 << 7
 } plot_flags;
 
 typedef enum {
@@ -97,6 +98,7 @@ typedef enum {
 #define plot_has_no_labels(p)   (p->flags & PLOT_NO_LABELS)
 #define plot_has_png_coords(p)  (p->flags & PLOT_PNG_COORDS)
 #define plot_not_zoomable(p)    (p->flags & PLOT_DONT_ZOOM)
+#define plot_not_editable(p)    (p->flags & PLOT_DONT_EDIT)
 
 #define plot_has_title(p)       (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)      (p->format & PLOT_XLABEL)
@@ -266,9 +268,12 @@ static int add_or_remove_png_term (const char *fname, int add)
     }
 
     if (add) {
-	fprintf(ftmp, "set term png\n"
-		"set output '%sgretltmp.png'\n", 
+	char *fontspec = get_gretl_png_fontspec();
+
+	fprintf(ftmp, "set term png%s\n", (fontspec != NULL)? fontspec : "");
+	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
+	free(fontspec);
     }
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
@@ -1263,19 +1268,23 @@ static int cant_zoom (const char *line)
 static int cant_edit (const char *line)
 {
     if (strncmp(line, "# mult", 6) == 0) {
-	errbox(_("Sorry, can't edit multiple scatterplots"));
+	/* multiple scatterplots */
 	return 1;
     }
     if (strncmp(line, "# CUSUM", 7) == 0) {
-	errbox(_("Sorry, can't edit CUSUM plots"));
+	/* graph from CUSUM test */
+	return 1;
+    }
+    if (strncmp(line, "# corre", 7) == 0) {
+	/* correlogram */
 	return 1;
     }
     if (strncmp(line, "# sampl", 7) == 0) {
-	errbox(_("Sorry, can't edit sampling distribution plots"));
+	/* sampling distribution graph (stats calculator) */
 	return 1;
     }
     if (strstr(line, "no auto-parse")) {
-	errbox(_("Sorry, can't edit this plot"));
+	/* general prohibition on gui plot editing */
 	return 1;
     }
     return 0;
@@ -2170,7 +2179,7 @@ static void build_plot_menu (png_plot_t *plot)
 	    i++;
 	    continue;
 	}
-	if (plot_has_controller(plot) &&
+	if ((plot_has_controller(plot) || plot_not_editable(plot)) &&
 	    !strcmp(plot_items[i], "Edit")) {
 	    i++;
 	    continue;
@@ -2700,6 +2709,9 @@ static int get_plot_ranges (png_plot_t *plot)
 		plot->format |= PLOT_Y2AXIS;
 	    } else if (cant_zoom(line)) {
 		plot->flags |= PLOT_DONT_ZOOM;
+	    } 
+	    if (cant_edit(line)) {
+		plot->flags |= PLOT_DONT_EDIT;
 	    }
 	}
 	if (!strncmp(line, "plot ", 5)) break;
@@ -2827,6 +2839,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_widget_ref(plot->shell);
     gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 
+    gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
 
     vbox = gtk_vbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
@@ -2842,16 +2855,14 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     gtk_widget_show(canvas_hbox);
 
     /*  eventbox and hbox for status area  */
-    if (plot_has_xrange) {
-	plot->statusarea = gtk_event_box_new();
-	gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
+    plot->statusarea = gtk_event_box_new();
+    gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
 
-	status_hbox = gtk_hbox_new (FALSE, 2);
-	gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
-	gtk_widget_show (status_hbox);
-	gtk_container_set_resize_mode (GTK_CONTAINER (status_hbox),
-				       GTK_RESIZE_QUEUE);
-    }
+    status_hbox = gtk_hbox_new (FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
+    gtk_widget_show (status_hbox);
+    gtk_container_set_resize_mode (GTK_CONTAINER (status_hbox),
+				   GTK_RESIZE_QUEUE);
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
@@ -2874,7 +2885,6 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     /* create the contents of the status area */
     if (plot_has_xrange) {
-
 	/* the cursor label (position indicator) */
 	label_frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(label_frame), GTK_SHADOW_IN);
@@ -2882,38 +2892,43 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	plot->cursor_label = gtk_label_new(" ");
 	gtk_container_add(GTK_CONTAINER(label_frame), plot->cursor_label);
 	gtk_widget_show(plot->cursor_label);
+    }
 
-	/* the statusbar */
-	plot->statusbar = gtk_statusbar_new();
-	gtk_widget_set_size_request(plot->statusbar, 1, -1);
-	gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
-				      GTK_RESIZE_QUEUE);
-	plot->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
-						  "plot_message");
-	gtk_statusbar_push (GTK_STATUSBAR (plot->statusbar),
-			    plot->cid, _(" Click on graph for pop-up menu"));
+    /* the statusbar */
+    plot->statusbar = gtk_statusbar_new();
+    gtk_widget_set_size_request(plot->statusbar, 1, -1);
+    gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
+				  GTK_RESIZE_QUEUE);
+    gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
+    plot->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
+					      "plot_message");
+    gtk_statusbar_push (GTK_STATUSBAR (plot->statusbar),
+			plot->cid, _(" Click on graph for pop-up menu"));
+    
+    if (plot_has_xrange) {
 	g_signal_connect (G_OBJECT (plot->canvas), "motion_notify_event",
 			  G_CALLBACK(motion_notify_event), plot);
     }
 
     /* pack the widgets */
-
     gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
 
     /* fill the status area */
     if (plot_has_xrange) {
 	gtk_box_pack_start(GTK_BOX(status_hbox), label_frame, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
     }
+
+    gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0); 
 
     /* show stuff */
     gtk_widget_show(plot->canvas);
 
     if (plot_has_xrange) {
 	gtk_widget_show(label_frame);
-	gtk_widget_show(plot->statusbar);
-	gtk_widget_show(plot->statusarea);
     }
+
+    gtk_widget_show(plot->statusbar);
+    gtk_widget_show(plot->statusarea);
 
     gtk_widget_realize (plot->canvas);
     gdk_window_set_back_pixmap (plot->canvas->window, NULL, FALSE);

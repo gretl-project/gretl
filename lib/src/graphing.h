@@ -87,6 +87,8 @@ int graph (const LIST list,
 	   double **Z, const DATAINFO *pdinfo, 
 	   int oflag, PRN *prn);
 
+char *get_gretl_png_fontspec (void);
+
 int gnuplot_init (PATHS *ppaths, FILE **fpp);
 
 int gnuplot_display (const PATHS *ppaths);

@@ -13,6 +13,7 @@ version 1.0.4
   and GRETL_PNG_GRAPH_FONT_SIZE (e.g. "verdana" and "8") for
   generation of PNG graphs when gnuplot is linked to gd, and
   gd has TrueType font support enabled
+- update libtool to 1.4.3 and autoreconf
 - raise library revision number to 4
 
 02/04/03 version 1.0.3
