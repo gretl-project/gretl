@@ -17,7 +17,7 @@
  *
  */
 
-/* #define CHILD_DEBUG */
+#undef CHILD_DEBUG
 
 #include "gretl.h"
 #include "gretlwin32.h"
@@ -223,7 +223,9 @@ void win_help (void)
 	found = 1;
     }
 
-    if (!found) errbox(_("Couldn't access help file"));
+    if (!found) {
+	errbox(_("Couldn't access help file"));
+    }
 }
 
 #ifdef HUSH_RUNTIME_WARNINGS
@@ -310,7 +312,9 @@ static void try_to_get_windows_font (void)
 	g_object_unref(G_OBJECT(pc));
 	gtk_widget_destroy(w);
 
-	if (match) set_app_font(fontspec);
+	if (match) {
+	    set_app_font(fontspec);
+	}
 	g_free(fontspec);
     }
 }
@@ -458,7 +462,7 @@ static int win_copy_buf (char *buf, int format, size_t buflen)
 
     EmptyClipboard();
 
-    if (doing_nls() && format == COPY_TEXT) { 
+    if (doing_nls() && format == COPY_TEXT || format == COPY_TEXT_AS_RTF) { 
 	tr = my_locale_from_utf8(buf);
 	if (tr == NULL) {
 	    CloseClipboard();
