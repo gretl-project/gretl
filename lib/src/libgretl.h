@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#ifdef BUILDING_LIB
+#ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 

@@ -51,7 +51,7 @@ CEPHES_OBJ = $(wildcard ../cephes/*.lo)
 
 LIBTOOL = $(topsrc)/libtool
 
-override CFLAGS += -I. -I./src -I.. $(XML_CFLAGS) -DBUILDING_LIB
+override CFLAGS += -I. -I./src -I.. $(XML_CFLAGS) -DHAVE_CONFIG_H
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
