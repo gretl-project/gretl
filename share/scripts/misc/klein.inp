@@ -12,15 +12,8 @@ ols Wp 0 X X1 A
 tsls C 0 P P1 W ; 0 G T A Wg P1 K1 X1
 tsls I 0 P P1 K1 ; 0 G T A Wg P1 K1 X1
 tsls Wp 0 X X1 A ; 0 G T A Wg P1 K1 X1
-# Three-Stage Least Squares
-system type=3sls
- equation C 0 P P1 W
- equation I 0 P P1 K1
- equation Wp 0 X X1 A
- instr 0 G T A Wg P1 K1 X1
-end system
-# and FIML
-system type=fiml
+# Now set the model up as a system
+system name="Klein Model 1"
  equation C 0 P P1 W 
  equation I 0 P P1 K1
  equation Wp 0 X X1 A
@@ -29,6 +22,9 @@ system type=fiml
  identity X = C + I + G
  endog C I Wp P W X
 end system
-
+# and estimate it in various ways
+estimate "Klein Model 1" method=3sls
+estimate "Klein Model 1" method=fiml
+estimate "Klein Model 1" method=liml
 
 
