@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.0.6\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-15 14:24-0400\n"
+"POT-Creation-Date: 2004-10-17 09:51-0400\n"
 "PO-Revision-Date: 2003-03-22 21:18+0900\n"
 "Last-Translator: Masayuki Hatta <mhatta@po.airs.net>\n"
 "Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
@@ -293,8 +293,8 @@ msgstr ""
 msgid "Date strings inconsistent"
 msgstr ""
 
-#: lib/src/dataio.c:963 lib/src/generate.c:4969 lib/src/subsample.c:760
-#: lib/src/subsample.c:785
+#: lib/src/dataio.c:963 lib/src/generate.c:4969 lib/src/subsample.c:775
+#: lib/src/subsample.c:800
 #, c-format
 msgid "Observation number out of bounds"
 msgstr ""
@@ -935,12 +935,12 @@ msgstr ""
 msgid "frequency (%d) does not make seem to make sense"
 msgstr ""
 
-#: lib/src/dbread.c:960 lib/src/subsample.c:753 lib/src/subsample.c:776
+#: lib/src/dbread.c:960 lib/src/subsample.c:768 lib/src/subsample.c:791
 #, c-format
 msgid "error reading smpl line"
 msgstr ""
 
-#: lib/src/dbread.c:975 lib/src/generate.c:4971 lib/src/subsample.c:810
+#: lib/src/dbread.c:975 lib/src/generate.c:4971 lib/src/subsample.c:825
 #, c-format
 msgid "Invalid null sample"
 msgstr ""
@@ -2146,7 +2146,7 @@ msgstr ""
 msgid "gretlcli.hlp"
 msgstr ""
 
-#: lib/src/gretl_restrict.c:186 lib/src/gretl_restrict.c:472 lib/src/nls.c:544
+#: lib/src/gretl_restrict.c:186 lib/src/gretl_restrict.c:472 lib/src/nls.c:550
 #, c-format
 msgid "parse error in '%s'\n"
 msgstr ""
@@ -2383,8 +2383,8 @@ msgid ""
 "var number %d duplicated in the command list.\n"
 msgstr ""
 
-#: lib/src/interact.c:1770 lib/src/nls.c:104 lib/src/nls.c:550
-#: lib/src/nls.c:601 lib/src/pvalues.c:236 lib/src/pvalues.c:259
+#: lib/src/interact.c:1770 lib/src/nls.c:104 lib/src/nls.c:556
+#: lib/src/nls.c:607 lib/src/pvalues.c:236 lib/src/pvalues.c:259
 #: lib/src/pvalues.c:285
 #, c-format
 msgid "Unknown variable '%s'"
@@ -2945,7 +2945,7 @@ msgstr ""
 msgid "Statistics based on the rho-differenced data"
 msgstr ""
 
-#: lib/src/modelprint.c:1349 lib/src/nls.c:757 lib/src/nls.c:834
+#: lib/src/modelprint.c:1349 lib/src/nls.c:763 lib/src/nls.c:840
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr ""
@@ -3207,53 +3207,53 @@ msgstr ""
 msgid "Perfect fit achieved\n"
 msgstr ""
 
-#: lib/src/nls.c:463
+#: lib/src/nls.c:469
 msgid "In Gauss-Newton Regression:\n"
 msgstr ""
 
-#: lib/src/nls.c:469
+#: lib/src/nls.c:475
 msgid "Failed to calculate Jacobian"
 msgstr ""
 
-#: lib/src/nls.c:617 lib/src/nls.c:883 lib/src/nls.c:907
+#: lib/src/nls.c:623 lib/src/nls.c:889 lib/src/nls.c:913
 msgid "No regression function has been specified"
 msgstr ""
 
-#: lib/src/nls.c:697
+#: lib/src/nls.c:703
 msgid "NLS: The supplied derivatives seem to be incorrect"
 msgstr ""
 
-#: lib/src/nls.c:701
+#: lib/src/nls.c:707
 msgid ""
 "Warning: The supplied derivatives may be incorrect, or perhaps\n"
 "the data are ill-conditioned for this function.\n"
 msgstr ""
 
-#: lib/src/nls.c:703
+#: lib/src/nls.c:709
 #, c-format
 msgid ""
 "%d out of %d gradients looked suspicious.\n"
 "\n"
 msgstr ""
 
-#: lib/src/nls.c:750 lib/src/nls.c:827
+#: lib/src/nls.c:756 lib/src/nls.c:833
 msgid "Invalid NLS specification"
 msgstr ""
 
-#: lib/src/nls.c:764 lib/src/nls.c:842
+#: lib/src/nls.c:770 lib/src/nls.c:848
 #, c-format
 msgid "NLS: failed to converge after %d iterations"
 msgstr ""
 
-#: lib/src/nls.c:933
+#: lib/src/nls.c:939
 msgid "Using numerical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:936
+#: lib/src/nls.c:942
 msgid "Using analytical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:939
+#: lib/src/nls.c:945
 #, c-format
 msgid "Tolerance = %g\n"
 msgstr ""
@@ -3818,53 +3818,53 @@ msgstr "/ÊÑ¿ô(_V)"
 msgid "automatic sub-sampling dummy"
 msgstr ""
 
-#: lib/src/subsample.c:604
+#: lib/src/subsample.c:619
 msgid "Sub-sample command failed mysteriously"
 msgstr ""
 
-#: lib/src/subsample.c:623
+#: lib/src/subsample.c:638
 #, c-format
 msgid "'%s' is not a dummy variable"
 msgstr ""
 
-#: lib/src/subsample.c:625 lib/src/subsample.c:628
+#: lib/src/subsample.c:640 lib/src/subsample.c:643
 msgid "No observations would be left!"
 msgstr ""
 
-#: lib/src/subsample.c:630 lib/src/subsample.c:635
+#: lib/src/subsample.c:645 lib/src/subsample.c:650
 msgid "No observations were dropped!"
 msgstr ""
 
-#: lib/src/subsample.c:767
+#: lib/src/subsample.c:782
 msgid "error in new starting obs"
 msgstr ""
 
-#: lib/src/subsample.c:804
+#: lib/src/subsample.c:819
 msgid "error in new ending obs"
 msgstr ""
 
-#: lib/src/subsample.c:963
+#: lib/src/subsample.c:978
 #, c-format
 msgid "Out of memory expanding data set\n"
 msgstr ""
 
-#: lib/src/subsample.c:966
+#: lib/src/subsample.c:981
 #, c-format
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr ""
 
-#: lib/src/subsample.c:1037 lib/src/subsample.c:1043 lib/src/subsample.c:1060
+#: lib/src/subsample.c:1052 lib/src/subsample.c:1058 lib/src/subsample.c:1075
 msgid "missing values"
 msgstr ""
 
-#: lib/src/subsample.c:1049
+#: lib/src/subsample.c:1064
 #, c-format
 msgid ""
 "\n"
 "Number of observations (rows) with missing data values = %d (%.2f%%)\n"
 msgstr ""
 
-#: lib/src/subsample.c:1052
+#: lib/src/subsample.c:1067
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"

@@ -441,8 +441,11 @@ static MODEL GNR (double *fvec, double *fjac)
 	    /* dependent variable (NLS residual) */
 	    j = 0;
 	    for (t=0; t<pdinfo->n; t++) {
-		if (t < t1 || t > t2) nZ[i][t] = NADBL;
-		else nZ[i][t] = fvec[j++];
+		if (t < t1 || t > t2) {
+		    nZ[i][t] = NADBL;
+		} else {
+		    nZ[i][t] = fvec[j++];
+		}
 	    }
 	} else {
 	    if (nlspec.mode == ANALYTIC_DERIVS) {
@@ -450,8 +453,11 @@ static MODEL GNR (double *fvec, double *fjac)
 	    } else {
 		j = T * (i - 1);
 		for (t=0; t<pdinfo->n; t++) {
-		    if (t < t1 || t > t2) nZ[i][t] = NADBL;
-		    else nZ[i][t] = fjac[j++];
+		    if (t < t1 || t > t2) {
+			nZ[i][t] = NADBL;
+		    } else {
+			nZ[i][t] = fjac[j++];
+		    }
 		}
 	    }
 	}

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-15 14:24-0400\n"
-"PO-Revision-Date: 2004-10-12 22:00+0100\n"
+"POT-Creation-Date: 2004-10-17 09:51-0400\n"
+"PO-Revision-Date: 2004-10-16 20:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -308,8 +308,8 @@ msgstr "B³êdny znak '%d' w ³añcuchu danych"
 msgid "Date strings inconsistent"
 msgstr "Niezgodny ³añcuch znaków"
 
-#: lib/src/dataio.c:963 lib/src/generate.c:4969 lib/src/subsample.c:760
-#: lib/src/subsample.c:785
+#: lib/src/dataio.c:963 lib/src/generate.c:4969 lib/src/subsample.c:775
+#: lib/src/subsample.c:800
 #, c-format
 msgid "Observation number out of bounds"
 msgstr "Numer obserwacji poza zakresem"
@@ -977,12 +977,12 @@ msgstr ""
 msgid "frequency (%d) does not make seem to make sense"
 msgstr "Nie ma sensu tworzenia szeregu o tej okresowo¶ci (%d)"
 
-#: lib/src/dbread.c:960 lib/src/subsample.c:753 lib/src/subsample.c:776
+#: lib/src/dbread.c:960 lib/src/subsample.c:768 lib/src/subsample.c:791
 #, c-format
 msgid "error reading smpl line"
 msgstr "B³±d wczytania lini z poleceniem zakresu próby (smpl)"
 
-#: lib/src/dbread.c:975 lib/src/generate.c:4971 lib/src/subsample.c:810
+#: lib/src/dbread.c:975 lib/src/generate.c:4971 lib/src/subsample.c:825
 #, c-format
 msgid "Invalid null sample"
 msgstr "B³±d zakresu próby - pusta próba"
@@ -1933,7 +1933,7 @@ msgstr ""
 
 #: lib/src/graphing.c:1661
 msgid "Test statistic for normality"
-msgstr "Test normalnosci rozkladu:"
+msgstr "Test normalnosci rozkladu"
 
 #: lib/src/graphing.c:1663
 #, c-format
@@ -2214,7 +2214,7 @@ msgstr ""
 msgid "gretlcli.hlp"
 msgstr ""
 
-#: lib/src/gretl_restrict.c:186 lib/src/gretl_restrict.c:472 lib/src/nls.c:544
+#: lib/src/gretl_restrict.c:186 lib/src/gretl_restrict.c:472 lib/src/nls.c:550
 #, c-format
 msgid "parse error in '%s'\n"
 msgstr ""
@@ -2451,8 +2451,8 @@ msgid ""
 "var number %d duplicated in the command list.\n"
 msgstr ""
 
-#: lib/src/interact.c:1770 lib/src/nls.c:104 lib/src/nls.c:550
-#: lib/src/nls.c:601 lib/src/pvalues.c:236 lib/src/pvalues.c:259
+#: lib/src/interact.c:1770 lib/src/nls.c:104 lib/src/nls.c:556
+#: lib/src/nls.c:607 lib/src/pvalues.c:236 lib/src/pvalues.c:259
 #: lib/src/pvalues.c:285
 #, c-format
 msgid "Unknown variable '%s'"
@@ -2551,7 +2551,7 @@ msgstr ""
 
 #: lib/src/interact.c:2127
 msgid "Data written OK.\n"
-msgstr ""
+msgstr "Plik danych zapisany: OK\n"
 
 #: lib/src/interact.c:2129
 msgid "Warning: case markers not saved in binary datafile\n"
@@ -2926,7 +2926,7 @@ msgstr ""
 #: gui/selector.c:696 gui2/model_table.c:760 gui2/model_table.c:875
 #: gui2/selector.c:923
 msgid "Dependent variable"
-msgstr "Zmienna zale¿na (Y):"
+msgstr "Zmienna zale¿na (Y)"
 
 #: lib/src/modelprint.c:1006
 msgid "Variable used as weight"
@@ -3013,7 +3013,7 @@ msgstr ""
 msgid "Statistics based on the rho-differenced data"
 msgstr ""
 
-#: lib/src/modelprint.c:1349 lib/src/nls.c:757 lib/src/nls.c:834
+#: lib/src/modelprint.c:1349 lib/src/nls.c:763 lib/src/nls.c:840
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr ""
@@ -3278,53 +3278,53 @@ msgstr ""
 msgid "Perfect fit achieved\n"
 msgstr ""
 
-#: lib/src/nls.c:463
+#: lib/src/nls.c:469
 msgid "In Gauss-Newton Regression:\n"
 msgstr ""
 
-#: lib/src/nls.c:469
+#: lib/src/nls.c:475
 msgid "Failed to calculate Jacobian"
 msgstr ""
 
-#: lib/src/nls.c:617 lib/src/nls.c:883 lib/src/nls.c:907
+#: lib/src/nls.c:623 lib/src/nls.c:889 lib/src/nls.c:913
 msgid "No regression function has been specified"
 msgstr ""
 
-#: lib/src/nls.c:697
+#: lib/src/nls.c:703
 msgid "NLS: The supplied derivatives seem to be incorrect"
 msgstr ""
 
-#: lib/src/nls.c:701
+#: lib/src/nls.c:707
 msgid ""
 "Warning: The supplied derivatives may be incorrect, or perhaps\n"
 "the data are ill-conditioned for this function.\n"
 msgstr ""
 
-#: lib/src/nls.c:703
+#: lib/src/nls.c:709
 #, c-format
 msgid ""
 "%d out of %d gradients looked suspicious.\n"
 "\n"
 msgstr ""
 
-#: lib/src/nls.c:750 lib/src/nls.c:827
+#: lib/src/nls.c:756 lib/src/nls.c:833
 msgid "Invalid NLS specification"
 msgstr ""
 
-#: lib/src/nls.c:764 lib/src/nls.c:842
+#: lib/src/nls.c:770 lib/src/nls.c:848
 #, c-format
 msgid "NLS: failed to converge after %d iterations"
 msgstr ""
 
-#: lib/src/nls.c:933
+#: lib/src/nls.c:939
 msgid "Using numerical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:936
+#: lib/src/nls.c:942
 msgid "Using analytical derivatives\n"
 msgstr ""
 
-#: lib/src/nls.c:939
+#: lib/src/nls.c:945
 #, c-format
 msgid "Tolerance = %g\n"
 msgstr ""
@@ -3957,53 +3957,53 @@ msgstr ""
 msgid "automatic sub-sampling dummy"
 msgstr ""
 
-#: lib/src/subsample.c:604
+#: lib/src/subsample.c:619
 msgid "Sub-sample command failed mysteriously"
 msgstr ""
 
-#: lib/src/subsample.c:623
+#: lib/src/subsample.c:638
 #, c-format
 msgid "'%s' is not a dummy variable"
 msgstr ""
 
-#: lib/src/subsample.c:625 lib/src/subsample.c:628
+#: lib/src/subsample.c:640 lib/src/subsample.c:643
 msgid "No observations would be left!"
 msgstr ""
 
-#: lib/src/subsample.c:630 lib/src/subsample.c:635
+#: lib/src/subsample.c:645 lib/src/subsample.c:650
 msgid "No observations were dropped!"
 msgstr ""
 
-#: lib/src/subsample.c:767
+#: lib/src/subsample.c:782
 msgid "error in new starting obs"
 msgstr "b³±d w nowej startowej obserwacji"
 
-#: lib/src/subsample.c:804
+#: lib/src/subsample.c:819
 msgid "error in new ending obs"
 msgstr "b³±d w nowej koñcowej obserwacji"
 
-#: lib/src/subsample.c:963
+#: lib/src/subsample.c:978
 #, c-format
 msgid "Out of memory expanding data set\n"
 msgstr "Brak pamiêci dla rozszerzenia zbioru danych\n"
 
-#: lib/src/subsample.c:966
+#: lib/src/subsample.c:981
 #, c-format
 msgid "Missing sub-sample information; can't merge data\n"
 msgstr ""
 
-#: lib/src/subsample.c:1037 lib/src/subsample.c:1043 lib/src/subsample.c:1060
+#: lib/src/subsample.c:1052 lib/src/subsample.c:1058 lib/src/subsample.c:1075
 msgid "missing values"
 msgstr ""
 
-#: lib/src/subsample.c:1049
+#: lib/src/subsample.c:1064
 #, c-format
 msgid ""
 "\n"
 "Number of observations (rows) with missing data values = %d (%.2f%%)\n"
 msgstr ""
 
-#: lib/src/subsample.c:1052
+#: lib/src/subsample.c:1067
 #, c-format
 msgid ""
 "Total number of missing data values = %d (%.2f%% of total data values)\n"
@@ -4054,7 +4054,7 @@ msgstr ""
 
 #: lib/src/texprint.c:547 gui2/model_table.c:802
 msgid "$t$-statistics in parentheses"
-msgstr ""
+msgstr "statystyka $t$ w nawiasach"
 
 #: lib/src/var.c:351 lib/src/var.c:362
 #, c-format
@@ -4250,12 +4250,12 @@ msgstr ""
 
 #: lib/src/var.c:2227 gui/selector.c:539 gui2/selector.c:783
 msgid "VAR"
-msgstr ""
+msgstr "VAR"
 
 #: lib/src/var.c:2266
 #, c-format
 msgid "residual from VAR system, equation %d"
-msgstr ""
+msgstr "reszty z modelu VAR, równanie %d"
 
 #: cli/gretlcli.c:90
 #, c-format
@@ -5449,7 +5449,7 @@ msgstr ""
 
 #: gui/gretl.c:1142 gui/gretl.c:1345 gui2/gretl.c:1350 gui2/gretl.c:1531
 msgid " No datafile loaded "
-msgstr ""
+msgstr "Brak zbioru danych"
 
 #: gui/gretl.c:1159 gui2/dialogs.c:2228 gui2/gretl.c:1367
 msgid "Annual"
@@ -5499,7 +5499,7 @@ msgstr ""
 
 #: gui/gretl.c:1226 gui2/gretl.c:1435
 msgid " Unsaved data "
-msgstr ""
+msgstr "Niezapisane dane"
 
 #: gui/gretl.c:1296 gui2/gretl.c:1476
 msgid "ID #"
@@ -5995,11 +5995,11 @@ msgstr "_Obserwacje"
 
 #: gui/ssheet.c:49 gui2/ssheet.c:63
 msgid "/Observation/_Append obs"
-msgstr "/Obserwacje/_Do³±czyæ obs"
+msgstr "/Obserwacje/_Do³±cz obserwacjê"
 
 #: gui/ssheet.c:50 gui2/ssheet.c:65
 msgid "/Observation/_Insert obs"
-msgstr "/Obserwacje/_Wstawiæ obs"
+msgstr "/Obserwacje/_Wstaw obserwacjê"
 
 #: gui/ssheet.c:52
 msgid "/Variable/_Add"
@@ -6820,7 +6820,7 @@ msgstr ""
 
 #: gui2/callbacks.c:423 gui2/callbacks.c:570
 msgid "gretl: add var"
-msgstr "gretl: dodawanie zmiennej do bazy"
+msgstr "gretl: definiowanie nowej zmiennej"
 
 #: gui2/callbacks.c:424 gui2/callbacks.c:571
 msgid "Enter formula for new variable:"
@@ -6840,11 +6840,11 @@ msgstr ""
 
 #: gui2/callbacks.c:510
 msgid "gretl: restrict sample"
-msgstr ""
+msgstr "gretl: restrykcje dla podpróby"
 
 #: gui2/callbacks.c:511
 msgid "Enter boolean condition for selecting cases:"
-msgstr ""
+msgstr "Wprowad¼ wyra¿enie typu boolean dla wyselekcjonowania obserwacji"
 
 #: gui2/callbacks.c:516
 msgid "gretl: set data frequency"
@@ -7414,11 +7414,11 @@ msgstr ""
 
 #: gui2/dialogs.c:274
 msgid "add to current restriction"
-msgstr ""
+msgstr "dodaj do bie¿±cych restrykcji"
 
 #: gui2/dialogs.c:281
 msgid "replace current restriction"
-msgstr ""
+msgstr "zamieñ bie¿±ce restrykcje"
 
 #: gui2/dialogs.c:396
 msgid "(Please refer to Help for guidance)"
@@ -7539,20 +7539,20 @@ msgstr "gretl: zakres próby"
 
 #: gui2/dialogs.c:1779
 msgid "There are no dummy variables in the current sample"
-msgstr ""
+msgstr "Brak zmiennych 0-1 w bie¿±cej podpróbie"
 
 #: gui2/dialogs.c:1781
 msgid "There are no dummy variables in the dataset"
-msgstr ""
+msgstr "Brak zmiennych 0-1 w bazie danych"
 
 #: gui2/dialogs.c:1787
 msgid "Name of dummy variable to use:"
-msgstr ""
+msgstr "Wybierz zmienn± 0-1 do utworzenia podpróby:"
 
 #: gui2/dialogs.c:1817
 #, c-format
 msgid "Number of observations to select (max %d)"
-msgstr ""
+msgstr "Liczba obserwacji do losowego wyboru podpróby (max %d)"
 
 #: gui2/dialogs.c:1838
 msgid "Set sample range"
@@ -7679,7 +7679,7 @@ msgstr "Nie mo¿na otworzyæ pliku dla zapisu"
 
 #: gui2/fileselect.c:298
 msgid "File saved OK"
-msgstr "Plik zapisanio - OK"
+msgstr "Plik zapisanio: OK"
 
 #: gui2/fileselect.c:440
 msgid "Couldn't open the specified file"
@@ -8500,15 +8500,15 @@ msgstr ""
 #: gui2/gui_utils.c:262 gui2/gui_utils.c:279 gui2/series_view.c:49
 #: gui2/series_view.c:67
 msgid "/Edit/Copy _all"
-msgstr ""
+msgstr "/Edycja/Kopiuj _wszystko"
 
 #: gui2/gui_utils.c:263 gui2/gui_utils.c:280
 msgid "/Edit/Copy all/as plain _text"
-msgstr ""
+msgstr "/Edycja/Kopiuj _wszystko/jako _ASCII"
 
 #: gui2/gui_utils.c:264 gui2/gui_utils.c:281
 msgid "/Edit/Copy all/as _LaTeX"
-msgstr ""
+msgstr "/Edycja/Kopiuj _wszystko/jako _LaTeX"
 
 #: gui2/gui_utils.c:793
 msgid "Unrecognized data type"
@@ -8810,17 +8810,17 @@ msgstr ""
 
 #: gui2/gui_utils.c:2818
 msgid "residuals from equation"
-msgstr ""
+msgstr "reszty z równania"
 
 #: gui2/gui_utils.c:2828
 #, c-format
 msgid "response of %s"
-msgstr ""
+msgstr "odpowiedz impulsowa %s"
 
 #: gui2/gui_utils.c:2846
 #, c-format
 msgid "to %s"
-msgstr ""
+msgstr "na %s"
 
 #: gui2/gui_utils.c:2943
 #, c-format
@@ -9024,7 +9024,7 @@ msgstr ""
 
 #: gui2/library.c:927
 msgid "Sub-sampling done"
-msgstr ""
+msgstr "Podpróba utworzona"
 
 #: gui2/library.c:1002
 #, c-format
@@ -9243,11 +9243,11 @@ msgstr ""
 
 #: gui2/library.c:2807
 msgid "gretl: TRAMO analysis"
-msgstr ""
+msgstr "gretl: analiza TRAMO"
 
 #: gui2/library.c:2808
 msgid "gretl: X-12-ARIMA analysis"
-msgstr ""
+msgstr "gretl: analiza X-12-ARIMA"
 
 #: gui2/library.c:2856
 msgid "gretl: range-mean statistics"
@@ -9297,32 +9297,32 @@ msgstr "B³±d w do³±czaniu zmiennych"
 
 #: gui2/library.c:3100 gui2/library.c:3133 gui2/library.c:3214
 msgid "variable added"
-msgstr ""
+msgstr "Zmienna dodana do bazy"
 
 #: gui2/library.c:3158
 #, c-format
 msgid "error sum of squares from model %d"
-msgstr ""
+msgstr "Suma kwadratów reszt z modelu %d"
 
 #: gui2/library.c:3165
 #, c-format
 msgid "R-squared from model %d"
-msgstr ""
+msgstr "R-kwadrat z modelu %d"
 
 #: gui2/library.c:3171
 #, c-format
 msgid "T*R-squared from model %d"
-msgstr ""
+msgstr "T*R-kwadrat z modelu %d"
 
 #: gui2/library.c:3177
 #, c-format
 msgid "degrees of freedom from model %d"
-msgstr ""
+msgstr "Stopnie swobody modelu %d"
 
 #: gui2/library.c:3184
 #, c-format
 msgid "std err of residuals from model %d"
-msgstr ""
+msgstr "B³±d standardowy reszt modelu %d"
 
 #: gui2/library.c:3191
 #, c-format
@@ -9380,6 +9380,8 @@ msgid ""
 "There is already a data file of this name.\n"
 "OK to overwrite it?"
 msgstr ""
+"Plik danych o tej nazwie ju¿ istnieje.\n"
+"Czy nadpiaæ istniej±cy plik?"
 
 #: gui2/library.c:4257
 #, c-format
@@ -9387,11 +9389,13 @@ msgid ""
 "Write of data file failed\n"
 "%s"
 msgstr ""
+"B³±d zapisu pliku danych\n"
+"%s"
 
 #: gui2/library.c:4279
 #, c-format
 msgid "%s written OK"
-msgstr ""
+msgstr "%s zapisany: OK"
 
 #: gui2/library.c:4422
 msgid "Sorry, can't format this model"
@@ -9403,11 +9407,11 @@ msgstr ""
 
 #: gui2/library.c:4522
 msgid "LaTeX file saved"
-msgstr ""
+msgstr "Plik LaTeX zapisany"
 
 #: gui2/library.c:4551
 msgid "Couldn't open script"
-msgstr ""
+msgstr "Nie mo¿liwe otworcie pliku skryptu"
 
 #: gui2/library.c:4572 gui2/library.c:4622
 msgid "No commands to execute"
@@ -9443,7 +9447,7 @@ msgstr ""
 
 #: gui2/library.c:5462
 msgid "'open' command is malformed"
-msgstr ""
+msgstr "B³êdne polecenie 'open'"
 
 #: gui2/library.c:5649
 msgid "Script done\n"
@@ -9551,7 +9555,7 @@ msgstr "Model %d"
 #: gui2/model_table.c:706 gui2/model_table.c:968
 #, fuzzy
 msgid "t-statistics in parentheses"
-msgstr "B³êdy ocen w nawiasach"
+msgstr "statystyka $t$ w nawiasach"
 
 #: gui2/model_table.c:708 gui2/model_table.c:804 gui2/model_table.c:911
 msgid "Standard errors in parentheses"
@@ -9635,7 +9639,7 @@ msgstr ""
 #: gui2/objectsave.c:321
 #, c-format
 msgid "%s saved\n"
-msgstr ""
+msgstr "%s zapisano\n"
 
 #: gui2/objectsave.c:297 gui2/objectsave.c:319
 #, c-format
@@ -9665,12 +9669,12 @@ msgstr "Wybór zmiennych do zapisania w pliku"
 
 #: gui2/series_view.c:47 gui2/series_view.c:66
 msgid "/Edit/_Copy selection"
-msgstr ""
+msgstr "/Edycja/_Kopiuj wybór"
 
 #: gui2/series_view.c:50 gui2/series_view.c:59 gui2/series_view.c:68
 #: gui2/series_view.c:77
 msgid "/Edit/_Format..."
-msgstr ""
+msgstr "/Edycja/_Format wy¶wietlania..."
 
 #: gui2/series_view.c:51 gui2/series_view.c:69
 msgid "/_Series"
@@ -9710,7 +9714,7 @@ msgstr "poka¿ dok³adnie"
 
 #: gui2/session.c:128 gui2/session.c:2061
 msgid "Arrange icons"
-msgstr ""
+msgstr "Uporz±dkuj ikony"
 
 #: gui2/session.c:129 gui2/session.c:2063
 msgid "Close window"
@@ -9838,7 +9842,7 @@ msgstr ""
 
 #: gui2/session.c:2714
 msgid "current session"
-msgstr ""
+msgstr "bie¿±ca sesja"
 
 #: gui2/session.c:3026 gui2/session.c:3068
 msgid "plot commands saved"
@@ -9946,11 +9950,11 @@ msgstr "Wykorzystaj folder user gretla jako domy¶lny"
 
 #: gui2/settings.c:224
 msgid "Use \".dat\" as default datafile suffix"
-msgstr "Wykorzystaj \".dat\" jako domy¶lne rozszerzenie plików danych"
+msgstr " \".dat\" - domy¶lne rozszerzenie plików danych"
 
 #: gui2/settings.c:225
 msgid "Use \".gdt\" as default suffix"
-msgstr "Wykorzystaj \".gdt\" jako domy¶lne rozszrzenie plików danych"
+msgstr " \".gdt\" - domy¶lne rozszrzenie plików danych"
 
 #: gui2/settings.c:227
 msgid "Use QR decomposition"
@@ -10098,7 +10102,7 @@ msgstr "Przek³amana linia statusu pliku"
 
 #: gui2/webget.c:998
 msgid "(no description)"
-msgstr ""
+msgstr "(brak opisu)"
 
 #: gui2/webget.c:1704
 #, c-format
@@ -10130,17 +10134,19 @@ msgstr ""
 
 #: gui2/webget.c:1729
 msgid "No new files"
-msgstr ""
+msgstr "Brak nowych plików"
 
 #: gui2/webget.c:1763
 msgid ""
 "Failed to parse HTTP proxy:\n"
 "format must be ipnumber:port"
 msgstr ""
+"B³±d w sk³adni HTTP proxy:\n"
+"format musi byæ zgodny z numerem IP:port"
 
 #: gui2/webget.c:1772
 msgid "HTTP proxy: first field must be an IP number"
-msgstr ""
+msgstr "HTTP proxy: pierwsze pole musi byæ numerem IP"
 
 #: plugin/arma.c:409
 msgid "Error in arma command"
@@ -10277,11 +10283,11 @@ msgstr "Rozpocznij import od:"
 
 #: plugin/import_common.c:290
 msgid "column:"
-msgstr "kolumna:"
+msgstr "kolumny:"
 
 #: plugin/import_common.c:298
 msgid "row:"
-msgstr "wiersz:"
+msgstr "wiersza:"
 
 #: plugin/johansen.c:250 plugin/johansen.c:252 plugin/johansen.c:360
 msgid "Eigenvalue"
@@ -10422,6 +10428,10 @@ msgid ""
 "                     (standard errors in parentheses)\n"
 "\n"
 msgstr ""
+"                         Random effects estimator\n"
+"           allows for a unit-specific component to the error term\n"
+"                     (b³êdy ocen w nawiasach)\n"
+"\n"
 
 #: plugin/panel_data.c:420
 msgid ""
@@ -10916,6 +10926,9 @@ msgstr ""
 
 #~ msgid "Error in command loop: aborting\n"
 #~ msgstr "B³±d w poleceniu loop: wykonanie przerwano\n"
+
+#~ msgid "Data written OK\n"
+#~ msgstr "Plik danych zapisany: OK\n"
 
 #~ msgid "Error saving graph"
 #~ msgstr "B³±d w zapisie wykresu"

@@ -354,10 +354,13 @@
 
   <sect1 id="missing-data"><title>Missing data values</title>
 
-    <para>These are represented internally as &minus;999.  In a
-      native-format data file they should be represented as
-      <literal>NA</literal>. When importing CSV data
-      <application>gretl</application> accepts any of three
+    <para>These are represented internally as
+      <literal>DBL_MAX</literal>, the largest floating-point number
+      that can be represented on the system (which is likely to be at
+      least 10 to the power 300, and so should not be confused with
+      legitimate data values).  In a native-format data file they
+      should be represented as <literal>NA</literal>. When importing
+      CSV data <application>gretl</application> accepts any of three
       representations of missing values: &minus;999, the string
       <literal>NA</literal>, or simply a blank cell.  Blank cells
       should, of course, be properly delimited, e.g.
@@ -373,7 +376,8 @@
 	  standard deviation, etc.) under the
 	  <command>summary</command> command, missing values are
 	  simply skipped and the sample size adjusted
-	  appropriately.</para></listitem>
+	  appropriately.</para>
+      </listitem>
       <listitem><para>In running regressions
 	  <application>gretl</application> first adjusts the beginning
 	  and end of the sample range, truncating the sample if need
@@ -382,18 +386,24 @@
 	  first differences and so on; missing values at the end of
 	  the range are not uncommon due to differential updating of
 	  series and possibly the inclusion of
-	  leads.</para></listitem>  
-      <listitem><para>If <application>gretl</application> detects any
-	  missing values <quote>inside</quote> the (possibly
-	  truncated) sample range for a regression it gives an error
-	  message and refuses to produce estimates.</para></listitem>
+	  leads.</para>
+      </listitem>  
     </itemizedlist>
 
-    <para>Missing values in the middle of a dataset are a problem. In
-      a cross-sectional dataset it may be possible to move the
-      offending observations to the beginning or the end of the file,
-      but obviously this won't do with time series data.  For those
-      who know what they are doing (!), the
+    <para>If <application>gretl</application> detects any missing
+      values <quote>inside</quote> the (possibly truncated) sample
+      range for a regression, the result depends on the character of
+      the dataset and the estimator chosen.  In the case of
+      cross-sectional data, <application>gretl</application> will
+      automatically skip the missing observations when calculating the
+      regression results, unless the estimator is two-stage least
+      squares or one of the system estimators such as SUR.  In the
+      case of time-series or panel data, or if the estimator is one of
+      those just mentioned, the program gives an error message and
+      refuses to produce estimates.</para>
+
+    <para>Missing values in the middle of a time-series dataset are a
+      problem. For those who know what they are doing (!), the
       <command>misszero</command> function is provided under the
       <command>genr</command> command.  By doing
     </para> 

@@ -408,8 +408,9 @@ static int block_retained (const char *s)
     return 0;
 }
 
-static char *make_panel_sig (const DATAINFO *pdinfo,
-			     const char *mask)
+static char *make_panel_signature (const DATAINFO *pdinfo,
+				   const char *mask,
+				   int mt1, int mt2)
 {
     char *sig;
     size_t sz = pdinfo->n + pdinfo->n / pdinfo->pd;
@@ -423,28 +424,33 @@ static char *make_panel_sig (const DATAINFO *pdinfo,
 	    if (t > 0 && t % pdinfo->pd == 0) {
 		i++;
 	    } 
-	    sig[i++] = (mask[t] != 0)? '1' : '0';
+	    if (t < mt1 || t > mt2) {
+		sig[i++] = '0';
+	    } else {
+		sig[i++] = (mask[t - mt1] != 0)? '1' : '0';
+	    }
 	}
     }
 
     return sig;
 }
 
-static void
-maybe_reconstitute_panel (const DATAINFO *pdinfo,
-			  const char *mask,
-			  DATAINFO *subinfo)
+static int 
+real_mask_leaves_balanced_panel (const char *mask,
+				 const DATAINFO *pdinfo,
+				 int *new_blocks,
+				 int mt1, int mt2)
 {
     int i;
     int ok_blocks = 0, unbal = 0;
     int nblocks = pdinfo->n / pdinfo->pd;
-    char *sig = make_panel_sig(pdinfo, mask);
+    char *sig = make_panel_signature(pdinfo, mask, mt1, mt2);
     char *sig_0 = NULL;
 
     /* FIXME: allow for possibility that starting obs is not 1:1 */
 
     if (sig == NULL) {
-	return;
+	return 0;
     }
 
     for (i=0; i<nblocks; i++) {
@@ -468,8 +474,38 @@ maybe_reconstitute_panel (const DATAINFO *pdinfo,
     }
 
     free(sig);
-	
-    if (!unbal && ok_blocks > 1) {
+
+    if (new_blocks != NULL) {
+	*new_blocks = ok_blocks;
+    }
+
+    return (ok_blocks > 0 && unbal == 0);
+}
+
+int model_mask_leaves_balanced_panel (const MODEL *pmod,
+				      const DATAINFO *pdinfo)
+{
+    return real_mask_leaves_balanced_panel(pmod->missmask, 
+					   pdinfo, NULL,
+					   pmod->t1, pmod->t2);
+}
+
+/* when subsampling cases from a panel dataset, if the resulting
+   dataset is still a balanced panel then automatically set the
+   interpretation of the reduced dataset as a panel
+*/
+
+static void
+maybe_reconstitute_panel (const DATAINFO *pdinfo,
+			  const char *mask,
+			  DATAINFO *subinfo)
+{
+    int bal, ok_blocks = 0;
+
+    bal = real_mask_leaves_balanced_panel(mask, pdinfo, &ok_blocks,
+					  0, pdinfo->n - 1);
+
+    if (bal && ok_blocks > 1) {
 	char line[32];
 	int pd = subinfo->n / ok_blocks;
 	gretlopt opt = OPT_C;

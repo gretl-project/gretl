@@ -321,6 +321,39 @@ static void model_stats_init (MODEL *pmod)
     pmod->rsq = pmod->adjrsq = NADBL;
 }
 
+static int 
+lsq_check_for_missing_obs (MODEL *pmod, DATAINFO *pdinfo,
+			   const double **Z, int *misst)
+{
+    int missv = 0;
+
+    if (dataset_is_panel(pdinfo)) {
+	/* compensate for missing obs if they preserve a
+	   balanced panel */
+	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
+			    Z, NULL);
+	if (pmod->missmask != NULL) {
+	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
+		free(pmod->missmask);
+		pmod->missmask = NULL;
+		missv = adjust_t1t2(pmod, pmod->list, 
+				    &pmod->t1, &pmod->t2,
+				    Z, misst);
+	    }
+	}
+    } else if (dataset_is_time_series(pdinfo)) {
+	/* we'll reject missing obs within adjusted sample */
+	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
+			    Z, misst);
+    } else {
+	/* cross-section: we'll compensate for missing obs */
+	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
+			    Z, NULL);
+    }
+
+    return missv;
+}
+
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
@@ -414,18 +447,18 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	mdl.nwt = 0;
     }
 
-    /* check for missing obs in sample */
-    if (dataset_is_time_series(pdinfo) ||
-	dataset_is_panel(pdinfo)) {
-	/* we'll reject missing obs within adjusted sample */
-	missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2,
-			    (const double **) *pZ, &misst);
-    } else {
-	/* cross-section: we'll compensate for missing obs */
-	missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2,
-			    (const double **) *pZ, NULL);
-    }
-	
+    /* sanity checks */
+    if (mdl.t1 < 0 || mdl.t2 > pdinfo->n - 1) {
+        mdl.errcode = E_NODATA;
+        goto lsq_abort;
+    }  
+
+    /* adjust sample range and check for missing obs */
+    missv = lsq_check_for_missing_obs(&mdl, pdinfo,
+				      (const double **) *pZ,
+				      &misst);
+
+    /* react to presence of missing obs */
     if (missv) {
 	if (dated_daily_data(pdinfo)) {
 	    if (repack_missing_daily_obs(&mdl, *pZ, pdinfo)) {
@@ -444,12 +477,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
     yno = mdl.list[1];
     
-    /* check for availability of data */
-    if (mdl.t1 < 0 || mdl.t2 > pdinfo->n - 1) {
-        mdl.errcode = E_NODATA;
-        goto lsq_abort;
-    }                   
-
     /* check for unknown vars in list */
     for (i=1; i<=mdl.list[0]; i++) {
         if (mdl.list[i] > pdinfo->v - 1) {

@@ -96,6 +96,9 @@ int undo_daily_repack (MODEL *pmod, double **Z,
 int repack_missing_daily_obs (MODEL *pmod, double **Z, 
 			      const DATAINFO *pdinfo);
 
+int model_mask_leaves_balanced_panel (const MODEL *pmod,
+				      const DATAINFO *pdinfo);
+
 int list_dups (const int *list, int ci);
 
 int gretl_forecast (int t1, int t2, int nv, 
