@@ -1,0 +1,13 @@
+;; Add the following to your ~/.emacs file to get the full
+;; benefit of gretl-mode
+
+(setq auto-mode-alist
+      (cons '("\\.inp$" . gretl-mode) auto-mode-alist))
+(autoload 'gretl-mode "gretl" nil t)
+(add-hook 'gretl-mode-hook
+          (lambda ()
+            (abbrev-mode 1)
+            (auto-fill-mode 1)
+            (if (eq window-system 'x)
+                (font-lock-mode 1))))
+
