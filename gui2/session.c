@@ -2762,11 +2762,23 @@ static void gtk_entry_set_has_frame (GtkEntry *entry, gboolean b)
 static void size_name_entry (GtkWidget *w, const char *name)
 {
     PangoLayout *layout;
-    PangoFontDescription *pfd;
     PangoRectangle logrect;
+    PangoFontDescription *pfd;
+#ifdef USE_GNOME
+    GtkSettings *settings;
+    gchar *fontname;
+
+    settings = gtk_settings_get_default();
+    g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
+#endif    
 
     layout = gtk_entry_get_layout(GTK_ENTRY(w));
+#ifdef USE_GNOME
+    pfd = pango_font_description_from_string(fontname);
+    g_free(fontname);
+#else
     pfd = pango_font_description_from_string(get_app_fontname());
+#endif
     pango_layout_set_font_description(layout, pfd);
 
     pango_layout_get_pixel_extents(layout, NULL, &logrect);

@@ -261,11 +261,6 @@ const char *get_scriptpage (void)
     return scriptpage;
 }
 
-const char *get_app_fontname (void)
-{
-    return appfontname;
-}
-
 /* ........................................................... */
 
 void set_fixed_font (void)
@@ -283,6 +278,12 @@ void set_fixed_font (void)
 /* ........................................................... */
 
 #if !defined(USE_GNOME) && !defined(OLD_GTK)
+
+const char *get_app_fontname (void)
+{
+    return appfontname;
+}
+
 void set_app_font (const char *fontname)
 {
     GtkSettings *settings;
@@ -313,6 +314,7 @@ void set_app_font (const char *fontname)
 	pango_font_description_free(pfd);
     }
 }
+
 #endif
 
 /* .................................................................. */

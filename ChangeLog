@@ -1,3 +1,7 @@
+version 1.2.8
+- correct Spanish help strings
+- fix font problem in session window
+
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)
 - update Spanish helpfiles 
