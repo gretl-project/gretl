@@ -29,6 +29,7 @@
 #endif
 
 static void print_float_10 (const double x, PRN *prn);
+static void print_float_16 (const double x, PRN *prn);
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			const int c, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
@@ -509,8 +510,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     if (pmod->ci == PROBIT || pmod->ci == LOGIT) 
 	return print_discrete_stats(pmod, pdinfo, prn);
 
-    pprintf(prn, _("      VARIABLE      COEFFICIENT      STDERROR       "
-	    "T STAT    2Prob(t > |T|)\n\n"));
+    
+    pprintf(prn, _("      VARIABLE      COEFFICIENT        STDERROR       "
+	    "T STAT   2Prob(t > |T|)\n\n"));
 
     if (pmod->ifc) {
 	if (print_coeff(pdinfo, pmod, ncoeff, prn))
@@ -880,6 +882,31 @@ static void fix_exponent (char *s)
 
 /* ......................................................... */ 
 
+static void print_float_16 (double x, PRN *prn)
+{
+    char numstr[24], final[24];
+    char *p;
+    int i, tmp, forept = 0;
+
+    sprintf(numstr, "%#.*G", 6, x);
+
+    p = strchr(numstr, '.');
+    if (p != NULL) forept = p - numstr;
+    tmp = 6 - forept;
+    *final = 0;
+    for (i=0; i<tmp; i++) strcat(final, " ");
+
+    tmp = strlen(numstr) - 1;
+    if (numstr[tmp] == '.') numstr[tmp] = 0;
+
+    strcat(final, numstr);
+
+    tmp = 16 - strlen(final);
+    for (i=0; i<tmp; i++) strcat(final, " ");
+
+    pprintf(prn, "%s", final);
+}
+
 static void print_float_10 (const double x, PRN *prn)
 {
     int pad;
@@ -993,29 +1020,29 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     pprintf(prn, " %3d) %8s ", pmod->list[c], cname);
     if (freeit) free(cname);
-    _bufspace(6, prn);
+    _bufspace(3, prn); /* CHANGED was 6 */
     if (isnan(pmod->coeff[c-1])) {
-	pprintf(prn, "%10s", _("undefined"));
+	pprintf(prn, "%16s", _("undefined")); /* "%10s" */
 	gotnan = 1;
     }
-    else print_float_10 (pmod->coeff[c-1], prn);
-    _bufspace(4, prn);
+    else print_float_16 (pmod->coeff[c-1], prn);
+    _bufspace(2, prn); /* CHANGED was 4 */
     if (isnan(pmod->sderr[c-1])) {
-	pprintf(prn, "%10s", _("undefined"));
-	pprintf(prn, "%12s", _("undefined"));
-	pprintf(prn, "%14s", _("undefined"));
+	pprintf(prn, "%16s", _("undefined")); /* "%10s" */
+	pprintf(prn, "%7s", _("undefined")); /* "%12s" */
+	pprintf(prn, "%11s", _("undefined")); /* "%14s" */
 	pvalue = 999.0;
 	gotnan = 1;
     } else {
-	print_float_10 (pmod->sderr[c-1], prn); 
+	print_float_16 (pmod->sderr[c-1], prn); 
 	if (pmod->sderr[c-1] > 0.) {
 	    t = pmod->coeff[c-1] / pmod->sderr[c-1];
 	    if (pmod->aux == AUX_ADF) {
 		pvalue = 1.;
-		pprintf(prn, " %12.3f %13s", t, _("unknown"));
+		pprintf(prn, " %7.3f %11s", t, _("unknown")); /* " %12.3f %13s" */
 	    } else {
 		pvalue = tprob(t, pmod->dfd);
-		pprintf(prn, " %12.3f %14f", t, pvalue);
+		pprintf(prn, " %7.3f %11f", t, pvalue); /* " %12.3f %14f" */
 	    }
 	} 
 	else {
@@ -1467,11 +1494,63 @@ static void printz (const double *z, const DATAINFO *pdinfo,
     pprintf(prn, "\n");
 }
 
-/* ........................................................... */
+#define SMAX 7  /* stipulated max. significant digits */
+
+#ifdef TRY_NEW_CODE
+static int get_signif (double *x, int n) 
+{
+    char *p, numstr[24];
+    int t, sig = 0, smax = 0;
+
+    for (t=0; t<n; t++) {
+	if (na(x[t])) continue;
+	sprintf(numstr, "%.*G", SMAX, x[t]);
+	sig = strlen(numstr);
+	p = numstr;
+	while (*p == '-' || *p == '.' || *p == '0') {
+	    p++;
+	    sig--;
+	}
+	if (strchr(p, '.')) sig--;
+	if ((p = strchr(numstr, 'E'))) sig -= strlen(p);
+	if (sig > smax) smax = sig;
+    }
+
+    return (smax > SMAX)? SMAX : smax;
+}
+
+static int bufprintnum (char *buf, double x, int signif, int width)
+{
+    char numstr[24], final[24];
+    char *p;
+    int i, tmp, forept = 0;
+
+    sprintf(numstr, "%#.*G", signif, x);
+    p = strchr(numstr, '.');
+    if (p != NULL) forept = p - numstr;
+    tmp = signif - forept;
+    *final = 0;
+    for (i=0; i<tmp; i++) strcat(final, " ");
+    tmp = strlen(numstr) - 1;
+    if (numstr[tmp] == '.') numstr[tmp] = 0;
+    strcat(final, numstr);
+
+    p = strchr(final, '.');
+    if (p != NULL && !strchr(p, 'E')) {
+	int trail = strlen(p + 1);
+
+	if (trail > signif) p[signif+1] = 0;
+    }
+
+    tmp = width - strlen(final);
+    for (i=0; i<tmp; i++) strcat(buf, " ");
+    strcat(buf, final);
+
+    return 0;
+}
+#else /* don't TRY_NEW_CODE */
 
 /* #define PRN_DEBUG */
-
-#define SMAX 7  /* stipulated max. signif. digits */
 
 static int get_signif (double *x, int n)
      /* return either (a) the number of significant digits in
@@ -1598,6 +1677,8 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 
     return 0;
 }
+
+#endif /* TRY_NEW_CODE alternation */
 
 /**
  * print_obs_marker:
