@@ -91,8 +91,9 @@ long get_epoch_day (const char *date)
     long temp;
     int year, month, day;
 
-    if (sscanf(date, "%d/%d/%d", &year, &month, &day) != 3)
+    if (sscanf(date, "%d/%d/%d", &year, &month, &day) != 3) {
 	return -1;
+    }
 
     if (year < 0 || month < 0 || day < 0) return -1;
     if (year > 9999 || month > 12 || day > 31) return -1;

@@ -111,6 +111,7 @@ struct _GENERATE {
     char local;
     double *xvec;
     int varnum;
+    int obs;
     char varname[VNAMELEN];
     char label[MAXLABEL];
     int tmpv;

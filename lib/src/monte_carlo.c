@@ -303,6 +303,8 @@ static int get_int_value (const char *s, const DATAINFO *pdinfo,
     return ret;
 }
 
+#define maybe_date(s) (strchr(s, ':') || strchr(s, '/'))
+
 static int parse_as_indexed_loop (LOOPSET *loop,
 				  const DATAINFO *pdinfo,
 				  const double **Z,
@@ -310,7 +312,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 				  const char *start,
 				  const char *end)
 {
-    int nstart = 0, nend = 0;
+    int nstart = -1, nend = -1;
     int err = 0;
 
     if (lvar != NULL && strcmp(lvar, "i")) {
@@ -321,11 +323,21 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
     if (!err) {
-	nstart = get_int_value(start, pdinfo, Z, &err);
+	if (maybe_date(start)) {
+	    nstart = dateton(start, pdinfo);
+	}
+	if (nstart < 0) {
+	    nstart = get_int_value(start, pdinfo, Z, &err);
+	}
     }
 
     if (!err) {
-	nend = get_int_value(end, pdinfo, Z, &err);
+	if (maybe_date(end)) {
+	    nend = dateton(end, pdinfo);
+	}
+	if (nend < 0) {
+	    nend = get_int_value(end, pdinfo, Z, &err);
+	}
     }
 
     if (!err && nend <= nstart) {
@@ -469,9 +481,9 @@ test_forloop_element (const char *s, LOOPSET *loop,
 }
 
 static int 
-parse_as_full_for_loop (LOOPSET *loop,
-			DATAINFO *pdinfo, double ***pZ,
-			const char *s)
+parse_as_for_loop (LOOPSET *loop,
+		   DATAINFO *pdinfo, double ***pZ,
+		   const char *s)
 {
     char *p = strchr(s, '(');
     int err = 0;
@@ -586,7 +598,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
     }
 
     else if (strstr(line, "loop for") != NULL) {
-	err = parse_as_full_for_loop(loop, pdinfo, pZ, line);
+	err = parse_as_for_loop(loop, pdinfo, pZ, line);
     }
 
     else if (sscanf(line, "loop %8s", lvar) == 1) {

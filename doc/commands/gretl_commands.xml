@@ -1534,6 +1534,14 @@
 	<lit>ibm[1970:01:23]</lit>.
       </para>
 
+      <para>An individual observation in a series can be modified via
+	<lit>genr</lit>.  To do this, a valid observation number or
+	date, in square brackets, must be appended to the name of the
+	variable on the left-hand side of the formula.  For example,
+	<lit>genr x[3] = 30</lit> or <lit>genr x[1950:04] =
+	  303.7</lit>.
+      </para>
+
       <para>
 	<tabref targ="tab-genr"/> gives several examples of uses of
 	<cmd>genr</cmd> with explanatory notes; here are a

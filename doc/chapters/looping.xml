@@ -97,7 +97,10 @@
       <para>The starting and ending values for the index can be given
 	in numerical form, or by reference to predefined variables.
 	In the latter case the variables are evaluated once, when the
-	loop is set up.</para>
+	loop is set up.  In addition, with time series data you can
+	give the starting and ending values in the form of dates, as
+	in<command>loop i=1950:1..1999:4</command>.
+      </para>
 
     </sect2>
 

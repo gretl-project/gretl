@@ -220,6 +220,7 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
     genr->local = 0;
     genr->xvec = NULL;
     genr->varnum = 0;
+    genr->obs = -1;
     *genr->varname = '\0';
     *genr->label = '\0';
     genr->tmpv = 0;
@@ -1773,14 +1774,27 @@ expand_operator_abbrev (char *s, const char *lhs, char op)
     return 0;
 }
 
-static int split_genr_formula (char *lhs, char *s)
+static void excise_obs (char *s)
 {
-    char *p = strchr(s, '=');
+    char *p, *q;
+
+    if ((p = strchr(s, '[')) && (q = strchr(p, ']'))) {
+	memmove(p, q + 1, strlen(q));
+    }
+}
+
+static int split_genr_formula (char *lhs, char *s, int obs)
+{
+    char *p;
     int err = 0;
+
+    if (obs >= 0) {
+	excise_obs(s);
+    }    
 
     *lhs = '\0';
 
-    if (p != NULL) {
+    if ((p = strchr(s, '=')) != NULL) {
 	char op = 0;
 
 	*p = '\0';
@@ -1856,6 +1870,8 @@ static void copy_compress (char *targ, const char *src, int len)
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATE *genr)
 {
+    char vname[VNAMELEN], obs[VNAMELEN];
+
     if (line == NULL || *line == '\0') return;
 
     /* skip over " genr " (or "eval") */
@@ -1870,11 +1886,18 @@ static void get_genr_formula (char *formula, const char *line,
 	while (isspace((unsigned char) *line)) line++;
     }
 
-    if (gretl_executing_function()) {
-	char test[8];
+    /* allow for generating a single value in a series */
+    if (sscanf(line, "%8[^[][%8[^]]", vname, obs) == 2) {
+	genr->obs = dateton(obs, genr->pdinfo);
 
+	if (genr->obs < 0 || genr->obs >= genr->pdinfo->n) {
+	    genr->obs = -1;
+	}
+    }
+
+    if (gretl_executing_function()) {
 	/* allow for generation of vars local to function */
-	if (sscanf(line, "my %7s =", test)) {
+	if (sscanf(line, "my %8s =", vname)) {
 	    genr->local = 1;
 	    line += 3;
 	}
@@ -2048,7 +2071,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* split into lhs = rhs */
-    if ((genr.err = split_genr_formula(newvar, s))) {
+    if ((genr.err = split_genr_formula(newvar, s, genr.obs))) {
 	return genr.err;
     }
     
@@ -2069,6 +2092,16 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
+	}
+    }
+
+    /* special case of generating a single observation */
+    if (genr.obs >= 0) {
+	if (genr.varnum >= pdinfo->v) {
+	    return E_UNKVAR;
+	}
+	if (!pdinfo->vector[genr.varnum]) {
+	    return E_DATA;
 	}
     }
 
@@ -2161,10 +2194,10 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 {
     int t, n = pdinfo->n, v = genr->varnum;
-    int modify = 0, was_scalar = 0;
+    int modify = 0, was_scalar = 0, vectorize = 0;
     double xx;
 
-    /* is the new variable an addition to data set? */
+    /* is the new variable an addition to the data set? */
     if (v >= pdinfo->v) {
 	if (dataset_add_vars(1, pZ, pdinfo)) {
 	    return E_ALLOC;
@@ -2174,11 +2207,18 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	modify = 1;
 	if (!pdinfo->vector[v]) {
 	    was_scalar = 1;
+	} else if (genr->scalar) {
+	    vectorize = 1;
 	}
     }
 
     strcpy(VARLABEL(pdinfo, v), genr->label);
-    pdinfo->vector[v] = !genr->scalar;
+
+    if (!vectorize) {
+	/* do not coerce existing vectors into scalars */
+	pdinfo->vector[v] = !genr->scalar;
+    }
+
     if (genr->local) {
 	/* record as a var local to a particular function
 	   stack depth */
@@ -2189,12 +2229,24 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "add_new_var: adding %s '%s' (#%d, %s)\n",
-	    (genr->scalar)? "scalar" : "vector",
+	    (genr->scalar && !vectorize)? "scalar" : "vector",
 	    pdinfo->varname[v], v,
 	    (modify)? "replaced" : "newly created");
 #endif
 
-    if (genr->scalar) {
+    if (genr->obs >= 0) {
+	/* replacing single observation */
+	if (genr->scalar) {
+	    (*pZ)[v][genr->obs] = xx;
+	} else {
+	    (*pZ)[v][genr->obs] = genr->xvec[genr->obs];
+	}
+    } else if (vectorize) {
+	/* expand result */
+	for (t=0; t<n; t++) {
+	    (*pZ)[v][t] = xx;
+	}
+    } else if (genr->scalar) {
 	strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = xx;
@@ -3135,20 +3187,36 @@ static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
 
 /* ...........................................................*/
 
+static void fix_daily_date (char *s)
+{
+    while (*s) {
+	if (*s == ':') *s = '/';
+	s++;
+    }
+}
+
 static double get_obs_value (const char *s, double **Z, 
 			     const DATAINFO *pdinfo)
 {
     char vname[VNAMELEN], obs[OBSLEN];
 
-    if (sscanf(s, "%8[^[][%8[^]]]", vname, obs) != 2) {
+    if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) != 2) {
 	return NADBL;
     } else {
 	int i = varindex(pdinfo, vname);
-	int t = dateton(obs, pdinfo);
 
-	if (i < pdinfo->v && pdinfo->vector[i] && 
-	    t >= 0 && t < pdinfo->n) {
-	    return Z[i][t];
+	if (i < pdinfo->v && pdinfo->vector[i]) {
+	    int t;
+
+	    if (dated_daily_data(pdinfo)) {
+		fix_daily_date(obs);
+	    }
+
+	    t = dateton(obs, pdinfo);
+
+	    if (t >= 0 && t < pdinfo->n) {
+		return Z[i][t];
+	    }
 	}
     }
     return NADBL;
@@ -4551,26 +4619,45 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 static void genr_msg (GENERATE *genr, int oldv)
 {
     double x;
+    int scalar = genr->scalar;
+    int mutant = 0;
 
     if (!strcmp(genr->varname, "argv")) return;
 
     if (!genr->save) {
 	x = genr->xvec[genr->pdinfo->t1];
-	if (na(x)) strcpy(gretl_msg, " NA");
-	else sprintf(gretl_msg, " %g", x);
+	if (na(x)) {
+	    strcpy(gretl_msg, " NA");
+	} else {
+	    sprintf(gretl_msg, " %g", x);
+	}
 	return;
     }
 
+    if (genr->varnum < oldv) {
+	if (genr->pdinfo->vector[genr->varnum]) {
+	    scalar = 0;
+	} else if (!genr->scalar) {
+	    mutant = 1;
+	}
+    }
+
     sprintf(gretl_msg, "%s %s %s (ID %d)", 
+	    (genr->obs >= 0)? _("Modified") :
 	    (genr->varnum < oldv)? _("Replaced") : _("Generated"), 
-	    (genr->scalar)? _("scalar") : _("vector"),
+	    (mutant)? _("variable") :
+	    (scalar)? _("scalar") : _("vector"),
 	    genr->varname, genr->varnum);
-    if (genr->scalar) {
+
+    if (scalar) {
 	char numstr[24];
 
 	x = genr->xvec[genr->pdinfo->t1];
-	if (na(x)) strcpy(numstr, " = NA");
-	else sprintf(numstr, " = %g", x);
+	if (na(x)) {
+	    strcpy(numstr, " = NA");
+	} else {
+	    sprintf(numstr, " = %g", x);
+	}
 	strcat(gretl_msg, numstr);
     }
 }

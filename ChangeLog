@@ -17,6 +17,8 @@ version 1.3.0
 - add a genr "special": genr markers = ... can be used to
   manipulate the observation marker strings -- details in
   panel.pdf
+- support "genr varname[obs] = ..." for setting individual
+  observations in a series
 - add "vif" command to calculate Variance Inflation Factors
   for independent variables in a regression; also available
   in the model window under Tests/collinearity
