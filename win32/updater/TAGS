@@ -1,0 +1,121 @@
+
+untgz.c,659
+#    define F_OK 29,471
+#    define mkdir(mkdir32,519
+#    define strdup(strdup33,567
+#    define unlink(unlink34,612
+#    define access(access35,656
+#    define mkdir(mkdir37,715
+#define REGTYPE	44,820
+#define AREGTYPE 45,861
+#define LNKTYPE 46,903
+#define SYMTYPE 47,936
+#define CHRTYPE 48,973
+#define BLKTYPE 49,1019
+#define DIRTYPE 50,1061
+#define FIFOTYPE 51,1099
+#define CONTTYPE 52,1140
+#define BLOCKSIZE 54,1178
+struct tar_headertar_header56,1201
+union tar_buffer tar_buffer77,1759
+int getoct(95,2075
+#define ISSPECIAL(ISSPECIAL114,2337
+int ExprMatch 116,2390
+int makedir 142,2835
+int untar 181,3490
+int untgz 280,5500
+
+update_client.c,265
+enum cgi_options cgi_options22,491
+    QUERY 23,510
+    GRAB_FILE24,525
+static void msgbox 27,543
+void errbox 36,764
+void infobox 41,820
+static void ws_cleanup 47,878
+static int ws_startup 52,931
+void listerr 74,1418
+void usage 88,1705
+int main 98,1943
+
+webget.c,2768
+#define DEFAULT_HTTP_PORT 50,1279
+#define DEFAULT_FTP_PORT 51,1308
+#define MINVAL(MINVAL52,1336
+#define TEXTHTML_S 54,1382
+#define HTTP_ACCEPT 55,1413
+#define H_20X(H_20X58,1482
+#define H_PARTIAL(H_PARTIAL59,1536
+#define H_REDIRECTED(H_REDIRECTED60,1598
+#define HTTP_STATUS_OK	65,1802
+#define HTTP_STATUS_CREATED	66,1831
+#define HTTP_STATUS_ACCEPTED	67,1864
+#define HTTP_STATUS_NO_CONTENT	68,1898
+#define HTTP_STATUS_PARTIAL_CONTENTS	69,1934
+#define HTTP_STATUS_MULTIPLE_CHOICES	72,2000
+#define HTTP_STATUS_MOVED_PERMANENTLY	73,2041
+#define HTTP_STATUS_MOVED_TEMPORARILY	74,2083
+#define HTTP_STATUS_NOT_MODIFIED	75,2125
+#define HTTP_STATUS_BAD_REQUEST	78,2188
+#define HTTP_STATUS_UNAUTHORIZED	79,2225
+#define HTTP_STATUS_FORBIDDEN	80,2262
+#define HTTP_STATUS_NOT_FOUND	81,2297
+#define HTTP_STATUS_INTERNAL	84,2359
+#define HTTP_STATUS_NOT_IMPLEMENTED	85,2393
+#define HTTP_STATUS_BAD_GATEWAY	86,2433
+#define HTTP_STATUS_UNAVAILABLE	87,2470
+enum uflags uflags89,2508
+    URELATIVE 90,2522
+    URELATIVE     = 0x0001,90,2522
+    UNOPROTO 91,2578
+    UNOPROTO      = 0x0002,91,2578
+    UABS2REL 92,2644
+    UABS2REL      = 0x0004,92,2644
+    UREL2ABS 93,2713
+    UREL2ABS      = 0x0008 93,2713
+    HG_OK,97,2793
+    HG_ERROR,98,2805
+    HG_EOF99,2820
+enum header_get_flags header_get_flags102,2835
+    HG_NONE 103,2860
+    HG_NO_CONTINUATIONS 104,2877
+    HG_NO_CONTINUATIONS = 0x2 104,2877
+const char *dbhost_ip 107,2912
+enum cgi_options cgi_options149,4624
+    QUERY 150,4643
+    GRAB_FILE151,4658
+void clear 154,4676
+void *mymalloc 159,4744
+static char *time_str 170,4909
+static int rbuf_peek 187,5233
+static int header_get 202,5561
+static int header_strdup 248,6678
+static int skip_lws 254,6798
+static int header_process 263,6966
+static void rbuf_initialize 281,7379
+static int parse_http_status_line 288,7523
+struct http_process_range_closure http_process_range_closure348,9064
+static int http_process_range 354,9177
+static int http_process_none 388,10084
+static int http_process_type 401,10357
+#define FREEHSTAT(FREEHSTAT420,10758
+static int numdigit 428,10940
+static char *herrmsg 437,11040
+static uerr_t gethttp 451,11353
+#define MAXTRY 734,18376
+static uerr_t http_loop 738,18461
+static size_t rbuf_flush 811,19927
+static struct urlinfo *newurl 829,20419
+static void freeurl 841,20676
+static int get_contents 855,21048
+static int store_hostaddress 896,21909
+static uerr_t make_connection 908,22146
+static int iread 932,22804
+static int iwrite 944,23024
+static char *print_option 965,23576
+#define MAXLEN 977,23747
+int read_reg_val 979,23767
+static void str_to_boolvar 1012,24720
+void read_registry 1020,24894
+struct urlinfo *proxy_init 1034,25227
+int retrieve_url 1078,26281

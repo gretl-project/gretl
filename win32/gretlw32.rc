@@ -1,0 +1,12 @@
+#include <windows.h>
+
+/* icon for the program itself -- color picture of Gretel */
+icon_0 ICON "icons/icon0.ico"
+
+/* icon for data files */
+icon_1 ICON "icons/icon1.ico"
+
+/* icon for session files -- two-tone version of Gretel */
+icon_2 ICON "icons/icon2.ico"
+
+

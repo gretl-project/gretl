@@ -1,0 +1,46 @@
+This directory contains materials for building the win32 version of
+gretl.  The files are set up for cross-compilation under Linux using
+the mingw C compiler -- it should be possible to modify them for a
+native mingw build on the win32 platform.
+
+If you want to build gretl for win32 yourself you will need to get
+some additional files, and to modify the scripts here to suit your own
+setup.
+
+1. Additional files:
+
+* GTK+ for win32 (with iconv and libintl)
+  See http://www.gimp.org/~tml/gimp/win32/
+
+* libxml
+
+* libreadline
+
+* zlib
+
+For all of the above, you need DLLs, import libraries (.a) and
+headers.  See http://mingwrep.sourceforge.net/ for a repository of
+such packages.
+
+* The Inno Setup compiler for making a self-installing executable
+  See http://www.jrsoftware.org/
+
+* The gnuplot for win32 distribution.  
+  See ftp://ftp.gnuplot.info/pub/gnuplot/
+
+
+2. Modifications to scripts:
+
+* At the top of the shell script, mkwindist, you will need to enter
+correct settings for (a) the location of the zipfile containing gnuplot
+for win32 and (b) the path to the Inno Setup compiler.
+
+* Near the top of the Makefile in this directory, enter the correct
+path for the glib-2.0 headers on your system.
+
+* You may have to change the path to the perl interpreter in the perl
+scripts builddate.pl and windist/make_iss.pl
+
+
+Allin Cottrell
+July, 2002

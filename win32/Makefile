@@ -2,20 +2,17 @@
 # using mingw compiler
 
 # Directories
-topsrc = /home/cottrell/stats/esl/gretl
+topsrc = ..
 libdir  = $(topsrc)/lib/src
 extradir = ./gtkextra-lib
-imports = ./a_libs
+imports = ./import-libs
+glibinc = /usr/local/cross-tools/mingw32/include/glib-2.0
 
 # tools
 CC = mingw32-gcc -fnative-struct -Wall
 AS = mingw32-as
 DLLWRAP = mingw32-dllwrap
 DLLTOOL = mingw32-dlltool
-
-# outputs
-CLIPROG = gretlcli.exe
-GUIPROG = gretlw32.exe
 
 # libraries
 GTKLIBS = -L$(imports) -lglib-2.0.dll -lgtk.dll -lgdk.dll
@@ -28,8 +25,8 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
 LDFLAGS = -s 
-GLIBINC = -I./include/glib-2.0 -I$(extradir) 
-CFLAGS = -I. -I$(libdir) -I./include -DHAVE_READLINE -DOS_WIN32 $(GLIBINC)
+GLIBINC = -I$(glibinc) -I$(extradir) 
+CFLAGS = -I. -I$(libdir) -DHAVE_READLINE -DOS_WIN32 $(GLIBINC)
 
 # source paths
 vpath %.c $(libdir)
@@ -41,6 +38,13 @@ vpath %.c $(topsrc)/plugin/libole2
 vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui:$(extradir):$(topsrc)/plugin
 
 #### End of system configuration section. ####
+
+CLIPROG = gretlcli.exe
+GUIPROG = gretlw32.exe
+UPDATER = gretl_updater.exe
+PLUGINS = dlls/stats_tables.dll dlls/panel_data.dll dlls/longname.dll \
+	dlls/progress_bar.dll dlls/gnumeric_import.dll \
+	dlls/excel_import.dll # dlls/mp_ols.dll
 
 WRES    = gretlw32_res.o
 RC      = mingw32-windres
@@ -77,7 +81,7 @@ EXTRAHDR = $(EXTRASRC:.c=.h)
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
 # targets begin
-all: dll extra-dll plugin $(CLIPROG) $(GUIPROG) 
+all: dirs dll extra-dll plugin $(CLIPROG) $(GUIPROG) 
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
@@ -100,24 +104,33 @@ $(WRES): gretlw32.rc
 	$(RC) $(RCFLAGS) gretlw32.rc $(RCOUT)
 	$(RES2COFF)
 
-dist: $(CLIPROG) $(GUIPROG) dll extra-dll plugin
+$(UPDATER):
+	make -C updater
+
+dirs:
+	mkdir -p dlls 
+	mkdir -p plugins 
+	mkdir -p libgretl
+
+dist: $(CLIPROG) $(GUIPROG) dll extra-dll plugin $(UPDATER)
 	./mkwindist 
 
 topclean:
 	rm -f *.o *.exe
 
 clean:
-	rm -f *.o $(CLIPROG) $(GUIPROG) dlls/libgretl.dll libgretl/* 
-	rm -f dlls/stats_tables.dll dlls/panel_data.dll plugins/*
-	rm -f dlls/libgtkextra-lite.dll
+	rm -f *.o *.def $(CLIPROG) $(GUIPROG) dlls/libgretl.dll libgretl/* 
+	rm -f plugins/* $(PLUGINS)
+	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
+	rm -f gretl.stamp build.h
+	rm -f windist/MANIFEST windist/gretl.iss 
+	rm -rf windist/gretl windist/gnuplot windist/Output
 
 # make a dll of libgretl...
 
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll
-plugin: dlls/stats_tables.dll dlls/panel_data.dll dlls/longname.dll \
-	dlls/progress_bar.dll dlls/gnumeric_import.dll \
-	dlls/excel_import.dll # dlls/mp_ols.dll
+plugin: $(PLUGINS)
 
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 
@@ -129,8 +142,8 @@ dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 
 dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
-	--output-def a_libs/libgtkextra-lite.def \
-	--implib a_libs/libgtkextra-lite.a \
+	--output-def $(imports)/libgtkextra-lite.def \
+	--implib $(imports)/libgtkextra-lite.a \
 	-o $@ $^ $(GTKLIBS)
 
 dlls/stats_tables.dll: stats_tables.o dllinit.o 
