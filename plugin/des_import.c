@@ -17,15 +17,18 @@
  *
  */
 
-#include <gtk/gtk.h>
+/* Reader for the datasets that accompany Wooldridge's "Introductory
+   Econometrics: A Modern Approach" (South-Western)
+*/
 
-#ifdef G_OS_WIN32
+#ifdef OS_WIN32
 # include "../winconfig.h"
 #else
 # include "../config.h"
 #endif
 
 #include "libgretl.h"
+#include <errno.h>
 #include <zlib.h>
 
 /* #define VERBOSE 1 */
@@ -39,10 +42,6 @@ typedef struct {
     double sd0;
     int ignore[MAXIGNORE+1];
 } DESINFO;
-
-/* Reader for the datasets that accompany Wooldridge's "Introductory
-   Econometrics: A Modern Approach" (South-Western)
-*/
 
 static int blankline (const char *line)
 {
@@ -207,7 +206,10 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
     DATAINFO *dinfo = NULL;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	sprintf(errbuf, _("Couldn't open %s"), fname);
+	return 1;
+    }
 
     /* order of events: (1) filename (upper case);
        (2) listing of vars; (3) Obs line; (4) Numbered listing
@@ -232,7 +234,7 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
 	}
 	else if (blocknum == 2) {
 	    if (sscanf(line, "%*s %d", &n) != 1) {
-		sprintf(errbuf, "Failed to read number of observations");
+		sprintf(errbuf, _("Failed to parse number of observations"));
 		err = 1;
 	    }
 	}
@@ -249,13 +251,13 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
 		    *ppinfo = dinfo;
 		    donealloc = 1;
 		} else {
-		    sprintf(errbuf, "Out of memory");
+		    sprintf(errbuf, _("Out of memory"));
 		    err = 1;
 		}
 	    }
 
 	    if (!err && sscanf(line, "%d. %9s", &i, varname) != 2) {
-		sprintf(errbuf, "Failed to read variables info block");
+		sprintf(errbuf, _("Failed to retrieve description of data"));
 		err = 1;
 	    } else {
 		char *p = go_to_field(line, 3);
@@ -271,7 +273,7 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
 		    dinfo->label[v2][0] = 0;
 		    strncat(dinfo->label[v2], p, MAXLABEL - 1);
 		} else 
-		    printf("ignoring variable '%s'\n", varname);
+		    fprintf(stderr, "ignoring variable '%s'\n", varname);
 	    }
 	}
 	else break;
@@ -285,81 +287,14 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
     return err;
 }
 
-#ifdef OLDCODE
-static int read_raw (const char *fname, DESINFO *des,
-		     DATAINFO *pdinfo, double **Z,
-		     char *errbuf)
-{
-    FILE *fp;
-    int i, t, des_i;
-    char value[16];
-    int err = 0;
-    int literal = 0, litcol = 0;
-
-    fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
-
-    for (t=0; t<pdinfo->n; t++) {
-	des_i = 1;
-	for (i=1; i<pdinfo->v; i++) {
-	    while (1) {
-		if (des_ignore(des_i, des)) {
-		    fscanf(fp, "%s", value);
-#ifdef VVERBOSE
-		    fprintf(stderr, "ignoring data(%d,%d) '%s'\n", 
-			    des_i, t, value);
-#endif	
-		    des_i++;
-		} else break;
-	    }
-	    if (fscanf(fp, "%15s", value) != 1) {
-		sprintf(errbuf, "scan fail on data[%d][%d]", i, t);
-		err = 1;
-	    } else {
-#ifdef VVERBOSE
-		fprintf(stderr, "got data[%d][%d] = '%s'\n", i, t, value);
-#endif
-		if (*value == '"') {
-		    literal = 1;
-		    if (i > litcol) litcol = i;
-		}
-		else {
-		    if (strcmp(value, ".") == 0) {
-#ifdef VVERBOSE
-			fprintf(stderr, "got a missing value\n"); 
-#endif
-			Z[i][t] = NADBL;
-		    } else {
-			Z[i][t] = atof(value);
-		    }
-		}
-	    }
-	    if (err) break;
-	    des_i++;
-	}
-	if (err) break;
-    }
-
-    if (literal)
-	sprintf(errbuf, "Data file contains non-numeric entries");
-
-    if (litcol)
-	sprintf(errbuf, "%s: found literal data in col %d",
-		fname, litcol + 1);
-
-    fclose(fp);
-    return err;
-}
-#endif
-
 static int gz_get_value (gzFile fz, char *value)
 {
     char buf[2];
-    int r, started = 0;
+    int r, started = 0, read = 0;
 
     *value = 0;
 
-    while ((r = gzread(fz, buf, 1)) > 0) {
+    while ((r = gzread(fz, buf, 1)) > 0 && read < 15) {
 	if (isspace((unsigned char) *buf)) {
 	    if (started) break;
 	    else continue;
@@ -367,12 +302,39 @@ static int gz_get_value (gzFile fz, char *value)
 	    started = 1;
 	    buf[1] = 0;
 	    strcat(value, buf);
+	    read++;
 	}
     }
 
     if (*value) return 1;
     else return 0;
 }
+
+static int check_atof (char *numstr, char *errbuf)
+{
+    char *test;
+    extern int errno;
+
+    (void) strtod(numstr, &test);
+
+    if (strcmp(numstr, test) == 0) {
+        sprintf(errbuf, _("'%s' -- no numeric conversion performed!"), numstr);
+        return 1;
+    }
+    if (test[0] != '\0') {
+        if (isprint(test[0]))
+            sprintf(errbuf, _("Extraneous character '%c' in data"), test[0]);
+        else
+            sprintf(errbuf, _("Extraneous character (0x%x) in data"), test[0]);
+        return 1;
+    }
+    if (errno == ERANGE) {
+        sprintf(errbuf, _("'%s' -- number out of range!"), numstr);
+        return 1;
+    }
+    return 0;
+}
+
 
 static int read_gz_raw (const char *fname, DESINFO *des,
 			DATAINFO *pdinfo, double **Z,
@@ -385,7 +347,10 @@ static int read_gz_raw (const char *fname, DESINFO *des,
     int literal = 0, litcol = 0;
 
     fz = gzopen(fname, "rb");
-    if (fz == NULL) return 1;
+    if (fz == NULL) {
+	sprintf(errbuf, _("Couldn't open %s"), fname);
+	return 1;
+    }
 
     for (t=0; t<pdinfo->n; t++) {
 	des_i = 1;
@@ -401,7 +366,7 @@ static int read_gz_raw (const char *fname, DESINFO *des,
 		} else break;
 	    }
 	    if (gz_get_value(fz, value) != 1) {
-		sprintf(errbuf, "scan fail on data[%d][%d]", i, t);
+		sprintf(errbuf, _("Failed to parse data values at obs %d"), t);
 		err = 1;
 	    } else {
 #ifdef VVERBOSE
@@ -418,7 +383,8 @@ static int read_gz_raw (const char *fname, DESINFO *des,
 #endif
 			Z[i][t] = NADBL;
 		    } else {
-			Z[i][t] = atof(value);
+			err = check_atof(value, errbuf);
+			if (!err) Z[i][t] = atof(value);
 		    }
 		}
 	    }
@@ -429,10 +395,10 @@ static int read_gz_raw (const char *fname, DESINFO *des,
     }
 
     if (literal)
-	sprintf(errbuf, "Data file contains non-numeric entries");
+	sprintf(errbuf, _("%s: contains non-numeric entries"), fname);
 
     if (litcol)
-	sprintf(errbuf, "%s: found literal data in col %d",
+	sprintf(errbuf, _("%s: found non-numeric data in column %d"),
 		fname, litcol + 1);
 
     gzclose(fz);
@@ -458,7 +424,7 @@ int des_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     err = read_des (fname, &des, &newZ, &newinfo, errbuf);
 
     /* modify datainfo based on time-series info gathered */
-    if (des.pd) {
+    if (!err && des.pd) {
 	newinfo->pd = des.pd;
 	newinfo->sd0 = des.sd0;
 	ntodate(newinfo->stobs, newinfo->t1, newinfo);
@@ -466,14 +432,15 @@ int des_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	newinfo->time_series = des.ts;
     }
 
-    switch_ext(rawfile, fname, "raw.gz");
-    err = read_gz_raw(rawfile, &des, newinfo, newZ, errbuf);
-    if (err) {
-	sprintf(errbuf, "Problem reading %s", rawfile);
-	return 1;
-    }    
+    if (!err) {
+	switch_ext(rawfile, fname, "raw.gz");
+	err = read_gz_raw(rawfile, &des, newinfo, newZ, errbuf);
+    }
 
-    if (*pZ == NULL) { /* FIXME */
+    if (err) {
+	free_Z(newZ, newinfo);
+	free_datainfo(newinfo);
+    } else {
 	*pZ = newZ;
 	*pdinfo = *newinfo;
     } 

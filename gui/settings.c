@@ -20,6 +20,7 @@
 /* settings.c for gretl */
 
 #include "gretl.h"
+#include <unistd.h>
 
 #ifdef G_OS_WIN32
 # include <windows.h>

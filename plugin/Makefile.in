@@ -66,7 +66,7 @@ excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
 
 des_import.so: des_import.lo 
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) -lz
+	$(LINK) -o $@ $^ $(GRETLLIB) -lz
 
 mp_ols.so: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
@@ -87,7 +87,7 @@ excel_import.lo: excel_import.c import_common.c xltypes.h $(GRETLLIB)
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
 
 des_import.lo: des_import.c $(GRETLLIB)
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
+	$(COMPILE) $(GRETLINC) $<
 
 workbook.lo: workbook.c biff.h
 	$(COMPILE) $(GRETLINC) $(LIBOLE2_CFLAGS) $<

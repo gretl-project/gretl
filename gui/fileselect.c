@@ -389,7 +389,7 @@ void file_selector (char *msg, int action, gpointer data)
 {
     OPENFILENAME of;
     int retval;
-    char fname[MAXLEN], endname[64], startd[MAXLEN];
+    char fname[MAXLEN], endname[64], startdir[MAXLEN];
     char *filter;
     gchar *trmsg;
 
@@ -403,7 +403,7 @@ void file_selector (char *msg, int action, gpointer data)
 	&& !strcmp(paths.datfile + strlen(paths.datfile) - 4, 
 		(olddat)? ".dat" : ".gdt")) {
 	strcpy(fname, paths.datfile + slashpos(paths.datfile) + 1);
-	get_base(startd, paths.datfile, SLASH);
+	get_base(startdir, paths.datfile, SLASH);
     }
 
     if (nls_on) {
@@ -428,7 +428,7 @@ void file_selector (char *msg, int action, gpointer data)
     of.nMaxFile = sizeof fname;
     of.lpstrFileTitle = endname;
     of.nMaxFileTitle = sizeof endname;
-    of.lpstrInitialDir = startd;
+    of.lpstrInitialDir = startdir;
     of.lpstrTitle = trmsg;
     of.lpstrDefExt = NULL;
     of.Flags = OFN_HIDEREADONLY;

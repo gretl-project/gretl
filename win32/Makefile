@@ -72,9 +72,9 @@ CLIOBJ = $(CLISRC:.c=.o)
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
 	calculator.c fileselect.c htmlprint.c guiprint.c boxplots.c \
-	selector.c
+	selector.c settings.c helpfiles.c 
 GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
-	webget.h htmlprint.h guiprint.h selector.h
+	webget.h htmlprint.h guiprint.h selector.h settings.h helpfiles.h
 GUIOBJ = $(GUISRC:.c=.o)
 
 EXTRASRC = gtkitementry.c gtksheet.c gtkiconlist.c \
@@ -187,7 +187,7 @@ dlls/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 
 dlls/des_import.dll: des_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS)
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lz.dll
 
 dlls/longname.dll: longname.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
