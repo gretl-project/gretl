@@ -19,6 +19,8 @@
 
 /* monte_carlo.h for gretl */
 
+#define MAXLOOP 10000 /* bodge to prevent runaways */
+
 typedef enum {
     COUNT_LOOP,
     WHILE_LOOP,

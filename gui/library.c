@@ -3442,24 +3442,24 @@ int execute_script (const char *runfile, const char *buf,
 		continue;
 	    }
 	    i = 0;
-	    while (j != 1000 && loop_condition(i, &loop, Z, datainfo)) {
+	    while (j != MAXLOOP && loop_condition(i, &loop, Z, datainfo)) {
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
-			j = 999;
+			j = MAXLOOP - 1;
 			i = loop.ntimes;
 		    }
 		}
 		i++;
 	    }
-	    if (j != 1000) 
+	    if (j != MAXLOOP) 
 		print_loop_results(&loop, datainfo, prn, &paths, 
 				   &model_count, loopstorefile);
 	    looprun = 0;
 	    monte_carlo_free(&loop);
-	    if (j == 1000) return 1;
+	    if (j == MAXLOOP) return 1;
 	} else { /* end if Monte Carlo stuff */
 	    line[0] = '\0';
 	    if ((fb && fgets(line, MAXLEN, fb) == NULL) ||

@@ -411,18 +411,18 @@ int main (int argc, char *argv[])
 		continue;
 	    }
 	    i = 0;
-	    while (j != 1000 && loop_condition(i, &loop, Z, datainfo)) {
+	    while (j != MAXLOOP && loop_condition(i, &loop, Z, datainfo)) {
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(&prn, "loop: i = %d\n\n", i + 1);
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, &prn)) {
 			printf(_("Error in command loop: aborting\n"));
-			j = 999;
+			j = MAXLOOP - 1;
 		    }
 		}
 		i++;
 	    }
-	    if (j != 1000) {
+	    if (j != MAXLOOP) {
 		print_loop_results(&loop, datainfo, &prn, &paths, 
 				   &model_count, loopstorefile);
 		errfatal = 0;
@@ -430,7 +430,7 @@ int main (int argc, char *argv[])
 	    looprun = 0;
 	    monte_carlo_free(&loop);
 	    clear(line, MAXLINE);
-	    if (j == 1000) return 1;
+	    if (j == MAXLOOP) return 1;
 #ifdef HAVE_READLINE
 	} else if (!runit && !batch) { /* normal interactive use */
 	    rl_gets(&line_read, (loopstack)? 1 : 0);

@@ -22,6 +22,7 @@
 #include "libgretl.h"
 
 #define USE_DCOLUMN 1
+#define PRECISION 6
 
 /* ......................................................... */
 
@@ -31,31 +32,17 @@ static void tex_print_float (const double x, const int tab, PRN *prn)
 	tab symbol (for equation-style regression printout).
      */
 {
-    char number[16], final[16], exp[4];
-    char *p;
+    char number[16];
 
-    sprintf(number, "%#.6G", x);
+    sprintf(number, "%#.*g", PRECISION, x);
 
     if (!tab) {
-	if (x < 0.) sprintf(final, "$-$%s", number + 1);
-	else sprintf(final, "%s", number);
+	if (x < 0.) pprintf(prn, "$-$%s", number + 1);
+	else pprintf(prn, "%s", number);
     } else {
-	if (x < 0.) sprintf(final, "& $-$ & %s", number + 1);
-	else sprintf(final, "& $+$ & %s", number);
+	if (x < 0.) pprintf(prn, "& $-$ & %s", number + 1);
+	else pprintf(prn, "& $+$ & %s", number);
     }
-
-    if ((p = strstr(final, "E-"))) {
-	strcpy(exp, p + 2);
-	strcpy (p, "E$-$");
-	strcat(p + 4, exp);
-    }
-    else if ((p = strstr(final, "E+"))) {
-	strcpy(exp, p + 2);
-	strcpy (p, "E$+$");
-	strcat(p + 4, exp);
-    }
-
-    pprintf(prn, "%s", final);
 }
 
 /**
@@ -81,9 +68,56 @@ char *tex_escape (char *targ, const char *src)
     return targ;
 }
 
-/* ......................................................... */ 
+#ifdef USE_DCOLUMN /* for better LaTeX formatting */
 
-#ifndef USE_DCOLUMN
+#define PRECISION 6
+#define UPPER_F_LIMIT (pow(10, PRECISION))
+#define LOWER_F_LIMIT (pow(10, -4))
+
+static void dcol_float (double xx, char *numstr)
+{
+    double a = fabs(xx);
+
+    sprintf(numstr, "%#.*g", PRECISION, xx);
+
+    if (a >= UPPER_F_LIMIT || a < LOWER_F_LIMIT) {
+	int expon;
+	char *p, exponstr[8];
+
+	p = strchr(numstr, 'e');
+	expon = atoi(p + 2);
+	strcpy(p, "\\mbox{e");
+	sprintf(exponstr, "%c%02d}", (xx > 10)? '+' : '-', expon);
+	strcat(numstr, exponstr);
+    }
+}
+
+static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+			     const int c, PRN *prn)
+{
+    char tmp[16], coeff[32], stderr[32];
+    double t_ratio = pmod->coeff[c-1] / pmod->sderr[c-1];
+    
+    tmp[0] = '\0';
+    tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
+
+    dcol_float(pmod->coeff[c-1], coeff);
+    dcol_float(pmod->sderr[c-1], stderr);
+
+    pprintf(prn, "%s &\n"
+	    "  %s &\n"
+	    "    %s &\n"
+	    "      %.4f &\n"
+	    "        %.4f \\\\\n",  
+	    tmp,
+	    coeff,
+	    stderr,
+	    t_ratio,
+	    tprob(t_ratio, pmod->dfd));	
+}
+
+#else /* old-style TeX tabular format */
+
 static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			     const int c, PRN *prn)
 {
@@ -115,26 +149,7 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    tprob(pmod->coeff[c-1]/pmod->sderr[c-1], 
 		  pmod->dfd));	
 }
-#else
-static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			     const int c, PRN *prn)
-{
-    char tmp[16];
-    
-    tmp[0] = '\0';
-    tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
-    pprintf(prn, "%s &\n"
-	    "  %#G &\n"
-	    "    %#G &\n"
-	    "      %.4f &\n"
-	    "        %.4f \\\\\n",  
-	    tmp,
-	    pmod->coeff[c-1],
-	    pmod->sderr[c-1],
-	    pmod->coeff[c-1]/pmod->sderr[c-1],
-	    tprob(pmod->coeff[c-1]/pmod->sderr[c-1], 
-		  pmod->dfd));	
-}
+
 #endif /* DCOLUMN */
 
 /* ......................................................... */
@@ -220,24 +235,24 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     /* t-stats in row beneath */
     if (pmod->ifc) {
 	pprintf(prn, "& ");
-	pprintf(prn, "& {\\small $(%.2f)$} ", const_tstat);
+	pprintf(prn, "& {\\small $(%.3f)$} ", const_tstat);
     } 
     for (i=2; i<=ncoeff; i++) {
         tstat = pmod->coeff[i-1]/pmod->sderr[i-1];
-	if (i == 2) pprintf(prn, "& & \\small{$(%.2f)$} ", tstat);
-	else pprintf(prn, "& & & \\small{$(%.2f)$} ", tstat);
+	if (i == 2) pprintf(prn, "& & \\small{$(%.3f)$} ", tstat);
+	else pprintf(prn, "& & & \\small{$(%.3f)$} ", tstat);
     }
     pprintf(prn, "\n\\end{tabular}}\n\n");
 
     /* additional info (R^2 etc) */
     pprintf(prn, "\\vspace{.8ex}\n");
-    pprintf(prn, "$T = %d,\\, \\bar{R}^2 = %.3f,\\, F(%d,%d) = %.3f,\\, "
-	    "\\hat{\\sigma} = %f$\n",
+    pprintf(prn, "$T = %d,\\, \\bar{R}^2 = %.3f,\\, F(%d,%d) = %#g,\\, "
+	    "\\hat{\\sigma} = %#g$\n",
 	   pmod->nobs, pmod->adjrsq, pmod->dfn, 
 	   pmod->dfd, pmod->fstt, pmod->sigma);
 
-    pprintf(prn, "\n($t$-statistics in parentheses)\n"
-	    "\\end{center}\n");
+    pprintf(prn, "\n(%s)\n\\end{center}\n", 
+	    _("$t$-statistics in parentheses"));
 
     if (standalone) 
 	pprintf(prn, "\n\\end{document}\n");
@@ -247,37 +262,38 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
 static void tex_depvarstats (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "Mean of dep.\\ var. & $%#G$ &"
-	    "S.D. of dep. variable & %f\\\\\n", 
-	    pmod->ybar, pmod->sdy);
+    pprintf(prn, "%s & $%#g$ & %s & %#g\\\\\n", 
+	    _("Mean of dep.\\ var."), pmod->ybar, 
+	    _("S.D. of dep. variable"), pmod->sdy);
 }
 
 static void tex_essline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "ESS & %#G &"
-	    "Std Err of Resid. ($\\hat{\\sigma}$) & %#G\\\\\n",
-	    pmod->ess, pmod->sigma);
+    pprintf(prn, "%s & %#g &"
+	    "%s ($\\hat{\\sigma}$) & %#g\\\\\n",
+	    _("ESS"), pmod->ess, 
+	    _("Std Err of Resid."), pmod->sigma);
 }
 
 static void tex_rsqline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "$R^2$  & %#G &"
-	    "$\\bar{R}^2$        & $%#G$ \\\\\n",
+    pprintf(prn, "$R^2$  & %#g &"
+	    "$\\bar{R}^2$        & $%#g$ \\\\\n",
 	    pmod->rsq, pmod->adjrsq);
 }
 
 static void tex_Fline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "F-statistic (%d, %d) & %#G &"
-	    "p-value for F()          & %#G\\\\\n",
-	    pmod->dfn, pmod->dfd, pmod->fstt,
-	    fdist(pmod->fstt, pmod->dfn, pmod->dfd));
+    pprintf(prn, "%s (%d, %d) & %#g &"
+	    "%s          & %#g\\\\\n",
+	    _("F-statistic"), pmod->dfn, pmod->dfd, pmod->fstt,
+	    _("p-value for F()"), fdist(pmod->fstt, pmod->dfn, pmod->dfd));
 }
 
 static void tex_dwline (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "Durbin--Watson stat. & $%#G$ &"
-	    "$\\hat{\\rho}$ & $%f$ \n",
+    pprintf(prn, "%s & $%#g$ & $\\hat{\\rho}$ & $%#g$ \n",
+	    _("Durbin--Watson stat."), 
 	    pmod->dw, pmod->rho);
 }
 
@@ -285,18 +301,19 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 {
     pprintf(prn, 
 	    "\\vspace{1em}\n\n"
-	    "Model selection statistics\n\n"
+	    "%s\n\n"
 	    "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n");
+	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n",
+	    _("Model selection statistics"));
     pprintf(prn, 
-	    "\\textsc{sgmasq}  &  %#G  &"  
-	    "\\textsc{aic}     &  %#G  &"  
-	    "\\textsc{fpe}     &  %#G  \\\\\n"
-	    "\\textsc{hq}      &  %#G  &"
-	    "\\textsc{schwarz} &  %#G  &"  
-	    "\\textsc{shibata} &  %#G  \\\\\n"
-	    "\\textsc{gcv}     &  %#G  &"  
-	    "\\textsc{rice}    &  %#G\n",
+	    "\\textsc{sgmasq}  &  %#g  &"  
+	    "\\textsc{aic}     &  %#g  &"  
+	    "\\textsc{fpe}     &  %#g  \\\\\n"
+	    "\\textsc{hq}      &  %#g  &"
+	    "\\textsc{schwarz} &  %#g  &"  
+	    "\\textsc{shibata} &  %#g  \\\\\n"
+	    "\\textsc{gcv}     &  %#g  &"  
+	    "\\textsc{rice}    &  %#g\n",
 	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
 	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
 	    pmod->criterion[6], pmod->criterion[7]);
@@ -348,6 +365,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     int t1 = pmod->t1, t2 = pmod->t2;
     char tmp[16];
     char startdate[9], enddate[9];
+    char pt = get_local_decpoint();
 
     modelprint_setup_obs(pmod, &t1, &t2);
 
@@ -370,6 +388,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     pprintf(prn, "\\begin{center}\n");
 
     tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
+    
     pprintf(prn, "\\textbf{Model %d: %s estimates using the %d "
 	    "observations %s--%s}\\\\\n"
 	    "Dependent variable: %s", 
@@ -388,15 +407,16 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 	    "\\begin{tabular*}{\\textwidth}"
 	    "{@{\\extracolsep{\\fill}}\n"
 	    "l%% col 1: varname\n"
-	    "  D{.}{.}{-1}%% col 2: coeff\n"
-	    "    D{.}{.}{-1}%% col 3: stderr\n"
-	    "      D{.}{.}{4}%% col 4: t-stat\n"
-	    "        D{.}{.}{4}}%% col 5: p-value\n"
+	    "  D{%c}{%c}{-1}%% col 2: coeff\n"
+	    "    D{%c}{%c}{-1}%% col 3: stderr\n"
+	    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
+	    "        D{%c}{%c}{4}}%% col 5: p-value\n"
 	    "Variable &\n"
 	    "  \\multicolumn{1}{c}{Coefficient} &\n"
 	    "    \\multicolumn{1}{c}{Std.\\ Error} &\n"
 	    "      \\multicolumn{1}{c}{$t$-statistic} &\n"
-	    "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n");
+	    "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n",
+	    pt, pt, pt, pt, pt, pt, pt, pt);
 #else
     pprintf(prn, "\\vspace{1em}\n\n"
 	  "\\begin{tabular*}{\\textwidth}"

@@ -22,7 +22,9 @@
 #include "libgretl.h"
 #include "internal.h"
 
-#define TINY 1.0e-13
+/* #define TINY 1.0e-13 */
+#define TINY (DBL_EPSILON * 100)
+
 #define SMALL 1.0e-8
 
 typedef struct {
