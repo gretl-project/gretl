@@ -1441,12 +1441,6 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     fclose(fbin);
 
     remove(ggzname);
-    build_path(paths.binbase, dbname, tmp, ".idx");
-    copyfile(idxname, tmp);
-    build_path(paths.binbase, dbname, tmp, ".bin");
-    copyfile(binname, tmp);
-    remove(idxname);
-    remove(binname); 
 
     return 0;
 }
@@ -1465,8 +1459,10 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), 
 		       mydata->active_var, 0, &dbname);
 
-    if ((ggzname = mymalloc(MAXLEN)) == NULL)
+    if ((ggzname = mymalloc(MAXLEN)) == NULL) {
 	return;
+    }
+
     build_path(paths.binbase, dbname, ggzname, ".ggz");
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -1476,8 +1472,9 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 #endif
     if (err) {
         if (strlen(errbuf)) errbox(errbuf);
-	else 
+	else { 
 	    errbox(_("Error retrieving data from server"));
+	}
 	free(ggzname);
 	return;
     } 
@@ -1485,8 +1482,9 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     err = ggz_extract(errbuf, dbname, ggzname);
     if (err) {
 	if (strlen(errbuf)) errbox(errbuf);
-	else 
+	else {
 	    errbox(_("Error unzipping compressed data"));
+	}
     } else {
 	infobox(_("database installed"));
 	populate_filelist(mydata);

@@ -546,10 +546,11 @@ void display_db_series_list (int action, char *fname, char *buf)
     g_signal_connect(G_OBJECT(dbwin->w), "destroy", 
 		     G_CALLBACK(destroy_db_win), dbwin);
     
-    if (buf == NULL && strrchr(fname, SLASH)) 
+    if (buf == NULL && strrchr(fname, SLASH)) {
 	titlestr = strrchr(fname, SLASH) + 1;
-    else 
+    } else {
 	titlestr = fname;
+    }
 
     gtk_window_set_title(GTK_WINDOW(dbwin->w), titlestr);
 
@@ -1390,8 +1391,9 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
 	    if (errbuf[strlen(errbuf)-1] == '\n')
 		errbuf[strlen(errbuf)-1] = 0;
 	    update_statusline(win, errbuf);
-	} else 
+	} else { 
 	    update_statusline(win, _("Error retrieving data from server"));
+	}
     } else {
 	update_statusline(win, "OK");
 	display_db_series_list(REMOTE_SERIES, fname, getbuf);
@@ -1410,7 +1412,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 {
     FILE *fidx, *fbin;
     size_t idxlen, bytesleft, bgot;
-    char idxname[MAXLEN], binname[MAXLEN], tmp[MAXLEN];
+    char idxname[MAXLEN], binname[MAXLEN];
     char gzbuf[BUFSIZE];
     gzFile fgz;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -1477,12 +1479,6 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     fclose(fbin);
 
     remove(ggzname);
-    build_path(paths.binbase, dbname, tmp, ".idx");
-    copyfile(idxname, tmp);
-    build_path(paths.binbase, dbname, tmp, ".bin");
-    copyfile(binname, tmp);
-    remove(idxname);
-    remove(binname); 
 
     return 0;
 }
@@ -1501,7 +1497,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
 			 win->active_var, 0, &dbname);
     
-    fprintf(stderr, "grab_remote_db(): getting='%s'\n", dbname);
+    fprintf(stderr, "grab_remote_db(): dbname = '%s'\n", dbname);
 
     ggzname = malloc(MAXLEN);
     if (ggzname == NULL) return;
@@ -1525,6 +1521,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     } 
 
     err = ggz_extract(errbuf, dbname, ggzname);
+
     if (err) {
 	if (strlen(errbuf)) errbox(errbuf);
 	else errbox(_("Error unzipping compressed data"));
