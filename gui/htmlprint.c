@@ -255,8 +255,7 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 		   PRN *htm)
 {
     int i, ncoeff;
-    char startdate[8];
-    char enddate[8];
+    char startdate[9], enddate[9];
     int t1 = pmod->t1, t2 = pmod->t2;
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;

@@ -573,11 +573,11 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 int set_obs (char *line, DATAINFO *pdinfo, int opt)
 {
     int pd, pos, i, len, dc = 0, bad = 0;
-    char stobs[8], endobs[8], endbit[7];
+    char stobs[9], endobs[9], endbit[7];
 
     gretl_errmsg[0] = '\0';
 
-    if (sscanf(line, "%*s %d %7s", &pd, stobs) != 2) {
+    if (sscanf(line, "%*s %d %8s", &pd, stobs) != 2) {
 	strcpy(gretl_errmsg, "Failed to parse line as frequency, startobs");
 	return 1;
     }
@@ -588,6 +588,7 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 		"frequency (%d) does not make seem to make sense", pd);
 	return 1;
     }
+
     /* is stobs acceptable? */
     len = strlen(stobs);
     for (i=0; i<len; i++) {
@@ -610,14 +611,14 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 	strcpy(gretl_errmsg, "no '.' allowed in starting obs with frequency 1");
 	return 1;
     }    
-    if ((pd > 1 && pd < 10 && strlen(stobs+pos) != 2) ||
-	(pd >= 10 && pd < 100 && strlen(stobs+pos) != 3)) {
+    if ((pd > 1 && pd < 10 && strlen(stobs + pos) != 2) ||
+	(pd >= 10 && pd < 100 && strlen(stobs + pos) != 3)) {
 	sprintf(gretl_errmsg, "starting obs '%s' is incompatible with frequency", 
 		stobs);
 	return 1;
     }
     if (pd > 1) {
-	strcpy(endbit, stobs+pos+1);
+	strcpy(endbit, stobs + pos + 1);
 	dc = atoi(endbit);
 	if (dc < 0 || dc > pd) {
 	    sprintf(gretl_errmsg, 
@@ -1603,12 +1604,12 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     int *list, orig_v, ft1, ft2, v1, err = 0;
     int i, j, k, t, nfcast, fn, fv;
     double xdate, tval, maxerr, *yhat, *sderr, *depvar;
-    char t1str[8], t2str[8];
+    char t1str[9], t2str[9];
 
     if (pmod->ci != OLS || !pmod->ifc) return E_OLSONLY;
 
     /* parse dates */
-    if (sscanf(str, "%*s %7s %7s", t1str, t2str) != 2) 
+    if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) 
 	return E_OBS; 
     ft1 = dateton(t1str, pdinfo->pd, pdinfo->stobs);
     ft2 = dateton(t2str, pdinfo->pd, pdinfo->stobs);

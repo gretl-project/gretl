@@ -91,8 +91,8 @@ typedef struct {
     char varname[16];
     char descrip[MAXLABEL];
     int nobs;
-    char stobs[8];
-    char endobs[8];
+    char stobs[9];
+    char endobs[9];
     int pd;
     int offset;
     int err;
@@ -562,11 +562,11 @@ void display_db_series_list (int action, char *fname, char *buf)
 static int check_serinfo (char *str, char *sername)
 {
     char pdc;
-    char stobs[8], endobs[8], n[6];
+    char stobs[9], endobs[9], n[6];
     char msg[64];
 
     if (!isalpha((unsigned char) sername[0]) || 
-	sscanf(str, "%c %7s %*s %7s %*s %*s %5s", 
+	sscanf(str, "%c %8s %*s %8s %*s %*s %5s", 
 	       &pdc, stobs, endobs, n) != 4 || 
 	!isdigit((unsigned char) stobs[0]) || 
 	!isdigit((unsigned char) endobs[0]) ||
@@ -957,7 +957,7 @@ static int read_RATSDirect (GtkWidget *widget, FILE *fp,
 {
     RATSDirect rdir;
     DATEINFO dinfo;
-    char pd = 0, pdstr[3], endobs[8], datestuff[48];    
+    char pd = 0, pdstr[3], endobs[9], datestuff[48];    
     gchar *row[3];
     int startfrac = 0;
 

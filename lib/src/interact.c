@@ -676,12 +676,12 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 	error */
 {
     int t, t1, t2, vi;
-    char t1str[8], t2str[8], varname[9];
+    char t1str[9], t2str[9], varname[9];
 
     *t1str = '\0'; *t2str = '\0';
 
     /* the varname should either be in the 2nd or 4th position */
-    if (sscanf(line, "%*s %7s %7s %8s", t1str, t2str, varname) != 3) {
+    if (sscanf(line, "%*s %8s %8s %8s", t1str, t2str, varname) != 3) {
 	if (sscanf(line, "%*s" "%8s", varname) != 1) return -1;
     }
 

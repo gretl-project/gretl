@@ -116,7 +116,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 {
     gchar *edttext;
     char dataspec[32];
-    char *test, stobs[8], endobs[8], firstvar[9];
+    char *test, stobs[9], endobs[9], firstvar[9];
     double sd0, ed0;
 
     edttext = gtk_entry_get_text (GTK_ENTRY (data->edit));
@@ -124,7 +124,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     if (dataspec[0] == '\0') return;
 
     /* check validity of dataspec */
-    if (sscanf(dataspec, "%7s %7s %8s", stobs, endobs, firstvar) != 3) {
+    if (sscanf(dataspec, "%8s %8s %8s", stobs, endobs, firstvar) != 3) {
 	errbox("Insufficient dataset information supplied");
 	return;
     }

@@ -584,8 +584,7 @@ static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
 			       const DATAINFO *pdinfo, PRN *prn)
 {
     int i, nc = plmod->ncoeff;
-    char startdate[8];
-    char enddate[8];
+    char startdate[9], enddate[9];
     int t1 = plmod->t1, t2 = plmod->t2;
 
     ntodate(startdate, t1, pdinfo);

@@ -1386,7 +1386,7 @@ static int _getxvec (char *ss, double *xxvec,
 		for (i=0; i<n; i++) xxvec[i] = pdinfo->sd0 + i;
 	    else if (pdinfo->time_series == TIME_SERIES && 
 		     (pdinfo->pd == 4 || pdinfo->pd == 12)) {
-		char obsstr[8];
+		char obsstr[9];
 		
 		for (i=0; i<n; i++) {
 		    ntodate(obsstr, i, pdinfo);

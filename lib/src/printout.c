@@ -356,8 +356,8 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, ncoeff;
-    char startdate[8];
-    char enddate[8];
+    char startdate[9];
+    char enddate[9];
     int t1 = pmod->t1, t2 = pmod->t2;
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
@@ -754,7 +754,7 @@ void printfreq (FREQDIST *freq, PRN *prn)
 
 void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 {
-    char date1[8], date2[8];
+    char date1[9], date2[9];
 
     if (fulln) {
 	pprintf(prn, "Full data set: %d observations\n"
@@ -1250,7 +1250,7 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
 			    PRN *prn)
 {
     int i;
-    char label[9], date1[8], date2[8]; 
+    char label[9], date1[9], date2[9]; 
 
     ntodate(date1, pmod->t1, pdinfo);
     ntodate(date2, pmod->t2, pdinfo);

@@ -1119,13 +1119,13 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 
 void do_setobs (GtkWidget *widget, dialog_t *ddata)
 {
-    char *edttext, pdstr[8], stobs[8];
+    char *edttext, pdstr[8], stobs[9];
     int err, opt;
 
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (*edttext == '\0') return;
 
-    sscanf(edttext, "%7s %7s", pdstr, stobs);
+    sscanf(edttext, "%7s %8s", pdstr, stobs);
 	
     clear(line, MAXLEN);
     sprintf(line, "setobs %s %s ", pdstr, stobs);

@@ -665,7 +665,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     int *chowlist = NULL;
     int newvars = pmod->list[0] - 1;
     int i, t, v = pdinfo->v, n = pdinfo->n;
-    char chowdate[8], s[9];
+    char chowdate[9], s[9];
     MODEL chow_mod;
     double F;
     int split = 0, err = 0;
@@ -678,7 +678,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
     _init_model(&chow_mod, pdinfo);
 
-    if (sscanf(line, "%*s %7s", chowdate) != 1) 
+    if (sscanf(line, "%*s %8s", chowdate) != 1) 
 	err = E_PARSE;
     else {
 	split = dateton(chowdate, pdinfo->pd, pdinfo->stobs) - 1;
@@ -814,7 +814,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     int xno, yno = pmod->list[1];
     int T = pmod->t2 - pmod->t1 + 1, K = pmod->ncoeff;
     MODEL cum_mod;
-    char cumdate[8];
+    char cumdate[9];
     double wbar, xx, yy, sigma, hct;
     double *cresid = NULL, *W = NULL, *xvec = NULL;
     FILE *fq;

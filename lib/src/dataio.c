@@ -878,7 +878,7 @@ static int writehdr (const char *hdrfile, const int *list,
 {
     FILE *fp;
     int bin = 0, i;
-    char startdate[8], enddate[8];
+    char startdate[9], enddate[9];
 
     if (opt == GRETL_DATA_FLOAT) bin = 1;
     else if (opt == GRETL_DATA_DOUBLE) bin = 2;
@@ -2503,7 +2503,7 @@ static int write_xmldata (const char *fname, const int *list,
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    char startdate[8], enddate[8], datname[MAXLEN], type[32];
+    char startdate[9], enddate[9], datname[MAXLEN], type[32];
     char *xmlbuf = NULL;
     long sz = 0L;
     void *handle;
