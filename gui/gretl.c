@@ -854,6 +854,8 @@ static void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Model/Autoregressive estimation...", s);
 	flip(mdata->ifac, "/Model/Vector Autoregression...", s);
 	flip(mdata->ifac, "/Model/Cointegration test...", s);
+	flip(mdata->ifac, "/Sample/Compact data...", 
+	     s && (datainfo->pd == 4 || datainfo->pd == 12));
     }
 }
 

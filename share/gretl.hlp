@@ -177,19 +177,26 @@ Writing data to a lower frequency
 
 When you add to a dataset a series that is of higher frequency, it is
 necessary to "compact" the new series.  For instance, a monthly series will
-have to be compacted to fit into a quarterly dataset.  You are offered three
-options for the compacting:
+have to be compacted to fit into a quarterly dataset.  In addition, you may
+sometimes want to compact an entire dataset to a lower frequency (perhaps,
+prior to adding a lower-frequency variable to the dataset).
 
-1. Averaging: the value written to the dataset will be the arithmetic mean of
+You are offered four options for compacting:
+
+1. Averaging: The value written to the dataset will be the arithmetic mean of
    the relevant series values.  For instance the value written for the first
    quarter of 1990 will be the average of the values for January, February and
    March of 1990.
 
-2. End-of-period values.  The value written to the dataset is the last
+2. Summing: The value written to the dataset will be the sum of the relevant
+   higher-frequency values.  For example, the first-quarter value will be the
+   sum of the January, February and March values.
+
+3. End-of-period values: The value written to the dataset is the last
    relevant value from the higher-frequency data.  For example, the first
    quarter of 1990 will get the March 1990 value.
 
-3. Start-of-period values.  The value written to the dataset is the first
+4. Start-of-period values: The value written to the dataset is the first
    relevant value from the higher-frequency data.  For example, the first
    quarter of 1990 will get the January 1990 value.
 
