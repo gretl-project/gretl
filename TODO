@@ -1,3 +1,5 @@
+Complete the TeX, HTML and RTF printing functions.
+
 Summary stats: don't bomb out when one variable is all missing,
 if there are variables which are not all missing?
 

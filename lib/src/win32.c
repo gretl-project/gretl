@@ -23,13 +23,14 @@
 
 /* ............................................................ */
 
-static int readw (char *word, FILE *fp)
+static int readw (char *word, FILE *fp, int *space)
 /*  	reads characters from file fp into word until end of file or new line
-	is encountered.  
+	is encountered.  Ignores quote characters.
 */
 {
     int c, n = 0, ncr = 0;
     *word = '\0';
+    *space = 0;
 
     while ((c=getc(fp)) != EOF) switch (c) {
 
@@ -38,6 +39,8 @@ static int readw (char *word, FILE *fp)
         ncr++;
         if (n) return ncr;
         else continue;
+    case '"':
+	continue;
     case '\r':
     case 27:
     case '\t':
@@ -52,6 +55,7 @@ static int readw (char *word, FILE *fp)
         }
         *word++ = c;
         n++;
+	if (c == 32) *space = 1;
         continue;
     }
     *word = '\0';
@@ -64,17 +68,10 @@ static void path_defaults (PATHS *ppaths, char *callname)
 {
     int drive = callname[0];
 
-    if (drive == 'c' || drive == 'C') {
-	strcpy(ppaths->gretldir, "c:\\userdata\\gretl");
-	strcpy(ppaths->userdir, "c:\\userdata\\gretl\\user");
-	strcpy(ppaths->gnuplot, "c:\\userdata\\gp371w32\\wgnupl32.exe");
-	strcpy(ppaths->pgnuplot, "c:\\userdata\\gp371w32\\pgnuplot.exe");
-    } else {
-	sprintf(ppaths->gretldir, "%c:\\live\\gretl", drive);
-	sprintf(ppaths->userdir, "%c:\\live\\gretl\\user", drive);
-	sprintf(ppaths->gnuplot, "%c:\\live\\gp371w32\\wgnupl32.exe", drive);
-	sprintf(ppaths->pgnuplot, "%c:\\live\\gp371w32\\pgnuplot.exe", drive);
-    }
+    sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
+    sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
+    sprintf(ppaths->gnuplot, "%c:\\userdata\\gp371w32\\wgnupl32.exe", drive);
+    sprintf(ppaths->pgnuplot, "%c:\\userdata\\gp371w32\\pgnuplot.exe", drive);
 }
 
 /* ............................................................ */
@@ -85,6 +82,7 @@ void set_win_paths (char *callname, PATHS *ppaths, const int reset,
     FILE *fp;
     char s[MAXLEN], cfgname[MAXLEN], *progname;
     const char *cfgstr = "libgretl.cfg";
+    int grspace, usspace, gnspace;
 
     ppaths->currdir[0] = 0;
 
@@ -102,12 +100,24 @@ void set_win_paths (char *callname, PATHS *ppaths, const int reset,
 	if (fp == NULL) fp = fopen(cfgname, "r");
 	if (fp == NULL) path_defaults(ppaths, callname);
 	else {
-	    readw(s, fp);
-	    strncpy(ppaths->gretldir, s, MAXLEN - 1);
-	    readw(s, fp);
-	    strncpy(ppaths->userdir, s, MAXLEN - 1);
-	    readw(s, fp);
-	    strncpy(ppaths->gnuplot, s, MAXLEN - 1);
+	    readw(s, fp, &grspace);
+	    if (grspace) {
+		strcpy(ppaths->gretldir, "\"");
+		strncat(ppaths->gretldir, s, MAXLEN - 3);
+	    } else
+		strncpy(ppaths->gretldir, s, MAXLEN - 1);
+	    readw(s, fp, &usspace);
+	    if (usspace) {
+		strcpy(ppaths->userdir, "\"");
+		strncat(ppaths->userdir, s, MAXLEN - 3);
+	    } else
+		strncpy(ppaths->userdir, s, MAXLEN - 1);
+	    readw(s, fp, &gnspace);
+	    if (gnspace) {
+		strcpy(ppaths->gnuplot, "\"");
+		strncat(ppaths->gnuplot, s, MAXLEN - 3);
+	    } else
+		strncpy(ppaths->gnuplot, s, MAXLEN - 1);
 	    fclose(fp);
 	}
     }
@@ -121,14 +131,35 @@ void set_win_paths (char *callname, PATHS *ppaths, const int reset,
 	strcpy(ppaths->cmd_helpfile, ppaths->gretldir);
 	strcat(ppaths->cmd_helpfile, "\\gretlcli.hlp");
     } else strcat(ppaths->helpfile, "\\gretlcli.hlp");
+    if (grspace) {
+	strcat(ppaths->datadir, "\"");
+	strcat(ppaths->scriptdir, "\"");
+	strcat(ppaths->helpfile, "\"");
+	if (gui) 
+	    strcat(ppaths->cmd_helpfile, "\"");
+    }
+
     if (ppaths->userdir[strlen(ppaths->userdir) - 2] != SLASH)
 	strcat(ppaths->userdir, SLASHSTR);
 
     strcpy(ppaths->plotfile, ppaths->userdir);
     strcat(ppaths->plotfile, "gpttmp.plt");
     get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
+    if (usspace) {
+	strcat(ppaths->userdir, "\"");
+	strcat(ppaths->plotfile, "\"");
+    }
+
+    get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
     strcat(ppaths->pgnuplot, "pgnuplot.exe");
+    if (grspace) {
+	strcat(ppaths->gnuplot, "\"");
+	strcat(ppaths->pgnuplot, "\"");
+    }
+
     strcpy(ppaths->dbhost_ip, "152.17.150.2");
 }
+
+
 
 
