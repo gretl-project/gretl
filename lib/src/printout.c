@@ -375,7 +375,7 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
     ntodate(date2, pdinfo->t2, pdinfo);
     pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
-    pprintf(prn, "%s:  %s - %s", ("Current sample"), date1, date2);
+    pprintf(prn, "%s:  %s - %s", _("Current sample"), date1, date2);
     if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) {
 	pputc(prn, '\n');
     } else {

@@ -162,9 +162,9 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
     }
 
     if (opt) { /* print raw and ranked data */
-	pputs(prn, "\n     Obs ");
-	pprintf(prn, "%13s%13s%13s%13s\n\n", pdinfo->varname[vx], "rank",
-	       pdinfo->varname[vy], "rank");
+	pprintf(prn, "\n     %s ", _("Obs"));
+	pprintf(prn, "%13s%13s%13s%13s\n\n", pdinfo->varname[vx], _("rank"),
+	       pdinfo->varname[vy], _("rank"));
 	i = 0;
 	for (t=t1; t<=t2; t++) {
 	    print_obs_marker(t, pdinfo, prn);
@@ -177,7 +177,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
 		_printxs(ry[i], 15, PRINT, prn);
 		i++;
 	    }
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
     }
     free(sx);
