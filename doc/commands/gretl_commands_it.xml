@@ -1364,13 +1364,12 @@
         argomenti, producono delle serie pseudo-casuali estratte da distribuzioni
 	uniformi (0&ndash;1) e normale standard (si veda anche il comando
 	<cmdref targ="set"/> con l'opzione <lit>seed</lit>).
-	Le serie dalla distribuzione uniforme sono generate usando il
-        ???Twister di Mersenne???;<footnote><para>Si veda Matsumoto e Nishimura
+	Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister;
+        <footnote><para>Si veda Matsumoto e Nishimura
         (1998). L'implementazione è fornita da <program>glib</program>, se è
         disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
         </footnote> per le serie dalla distribuzione normale, viene usato il
-        metodo di Box and Muller (1958), prendendo l'input dal 
-        ???Mersenne Twister???.</para>
+        metodo di Box and Muller (1958), prendendo l'input dal Mersenne Twister.</para>
 
       <para>Oltre agli operatori e alle funzioni mostrati, ci sono alcuni
         usi speciali del comando <cmd>genr</cmd>:
@@ -1800,12 +1799,12 @@
 	    the options here is <quote>Edit plot commands</quote>,
 	    which opens an editing window with the actual gnuplot
 	    commands displayed. You can edit these commands and either
-	    save them for future processing or send them to gnuplot
+	    save them for future processing o send them to gnuplot
 	    (with the <quote>File/Send to gnuplot</quote> menu item in
 	    the plot commands editing window).</para>
 	</li>
 	<li><para>Another way to save the plot commands (or to save
-	    the displayed plot in formats other than EPS or PNG) is to
+	    the displayed plot in formats other than EPS o PNG) is to
 	    use <quote>Edit</quote> item on a graph's pop-up menu to
 	    invoke the graphical controller, then click on the
 	    <quote>Output to file</quote> tab in the controller.  You
@@ -2215,7 +2214,7 @@
         l'algoritmo del simplesso di Barrodale&ndash;Roberts; viene
         mostrato un messaggio di avvertimento se la soluzione non è
         unica. Gli errori standard sono derivati attraverso la procedura
-        bootstrap con 500 estrazioni. ???with 500 drawings???
+        bootstrap con 500 estrazioni.
       </para>
     </description>
 
@@ -2517,9 +2516,9 @@
         metodo EM (Expectation&ndash;Maximization, si veda Ruud, 2000,
 	capitolo 27).  Visto che il modello è nonlineare, le pendenze
         dipendono dai valori delle variabili indipendenti: le pendenze
-        riportate solo valutate nelle medie di queste variabili. La
+        riportate sono valutate nelle medie di queste variabili. La
         statistica chi-quadro testa l'ipotesi nulla che tutti i
-        coefficienti siano pari a zero, eccetto che per la costante.
+        coefficienti tranne la costante siano pari a zero.
       </para>
 
       <para>
@@ -3190,43 +3189,39 @@
 
     <description>
       <para>
-	Gretl is able to access databases at Wake Forest University
-	(your computer must be connected to the internet for this to
-	work).</para>
+	Gretl può accedere ai database della Wake Forest University
+	(se il computer è connesso a internet).</para>
 
-      <para>Under the <quote>File, Browse databases</quote> menu,
-	select the item <quote>on database server</quote>. A window
-	should appear, showing a listing of the gretl databases
-	available at Wake Forest. (Depending on your location and the
-	speed of your internet connection, this may take a few
-	seconds.)  Along with the name of the database and a short
-	description, there will appear a <quote>Local status</quote>
-	entry: this shows whether you have the database installed
-	locally (on the hard drive of your computer) and if so,
-	whether or not it is up to date with the version on the
-	server.</para>
+      <para>Dal menù <quote>File, Consulta database</quote>, selezionare
+	<quote>Sul server di database</quote>: apparirà una finestra che
+        mostra i database disponibili alla Wake Forest (a seconda della
+        località e della velocità della connessione internet,
+        l'operazione può richiedere alcuni secondi). Oltre al nome del
+        database e a una breve descrizione, apparirà un campo
+        <quote>Stato</quote>, che mostra se il database è stato
+        installato localmente (sul disco del computer), e, in caso
+        positivo, se la versione installata è aggiornata con quella
+        disponibile sul server.</para>
 
-      <para>If you have a given database installed locally, and it is
-	up to date, there is no advantage in accessing it via the
-	server.  But for a database that is not already installed and
-	up to date, you may wish to get a listing of the data series:
-	click on <quote>Get series listing</quote>.  This brings up a
-	further window, from which you can display the values of a
-	chosen data series, graph those values, or import them into
-	gretl's workspace.  These tasks can be accomplished using the
-	<quote>Series</quote> menu, or via the popup menu that appears
-	when you click the right mouse button on a given series.  You
-	can also search the listing for a variable of interest (the
-	<quote>Find</quote> menu item).</para>
+      <para>Se un database è stato installato localmente ed è
+      aggiornato, non c'è nessun vantaggio nell'accedervi attraverso il
+      server, ma per un database non installato o aggiornato, può essere
+      utile scaricare un elenco delle serie di dati, facendo clic su
+      <quote>Scarica l'elenco delle serie</quote>. Apparirà una nuova
+      finestra da cui è possibile visualizzare i valori di una serie
+      scelta, vederne il grafico o importarle in gretl. È possibile
+      effettuare queste operazioni usando il menù <quote>Serie</quote>,
+      o attraverso il menù pop-up che appare facendo clic col tasto
+      destro su una serie. È anche possibile cercare nell'elenco una
+      variabile in particolare, usando il comando <quote>Trova</quote>
+      del menù.</para>
 
-      <para>If you want faster access to the data, or wish to access
-	the database offline, then select the line showing the
-	database you want, in the initial database window, and press
-	the <quote>Install</quote> button.  This will download the
-	database in compressed format, then uncompress it and install
-	it on your hard drive. Thereafter you should be able to find
-	it under the <quote>File, Browse databases, gretl
-	  native</quote> menu.</para>
+      <para>Per poter accedere a un database anche offline, selezionare la
+      riga del database desiderato nella prima finestra e premere il pulsante 
+      <quote>Installa</quote>. Il database verrà scaricato in formato
+      compresso, verrà decompresso e installato sul proprio disco fisso,
+      in modo da poter essere caricato usando il menù <quote>File,
+      Consulta database, gretl</quote>.</para>
 
     </description>
   </command>
@@ -3235,29 +3230,29 @@
 
     <usage>
       <arguments>
-        <argument>datafile</argument>
+        <argument>file-dati</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	Opens a data file.  If a data file is already open, it is
-	replaced by the newly opened one.  The program will try to
-	detect the format of the data file (native, pain text, CSV or
-	BOX1).
+	Apre un file di dati. Se è già stato aperto un file di dati,
+        esso viene sostituito da quello selezionato. Il programma cerca
+        di determinare il formato del file di dati (gretl, testo
+        semplice, CSV o	BOX1).
       </para>
 
       <para>
-	This command can also be used to open a database (gretl or
-	RATS 4.0) for reading.  In that case it should be followed by
-	the <cmdref targ="data"/> command to extract particular series
-	from the database.
+	Questo comando può essere usato anche per aprire un database (gretl o
+	RATS 4.0) per la lettura. In questo caso, dev'essere seguito dal comando
+	<cmdref targ="data"/> per estrarre una particolare serie dal
+        database.
       </para>
     </description>
 
     <gui-access>
       <menu-path>/File/Apri dati</menu-path>
-      <other-access>Drag a data file into gretl (MS Windows or Gnome)</other-access>
+      <other-access>Trascinare un file di dati in gretl (MS Windows o Gnome)</other-access>
     </gui-access>
 
   </command>
@@ -3266,21 +3261,21 @@
 
     <usage>
       <arguments>
-        <argument>filename</argument>
-        <argument>option</argument>
+        <argument>file-output</argument>
+        <argument>opzione</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--append</flag>
-	  <effect>append to file</effect>
+	  <effect>aggiunge al file</effect>
         </option>
         <option>
 	  <flag>--close</flag>
-	  <effect>close file</effect>
+	  <effect>chiude il file</effect>
         </option>
         <option>
 	  <flag>--write</flag>
-	  <effect>overwrite file</effect>
+	  <effect>sovrascrive il file</effect>
         </option>
       </options>
       <examples>
@@ -3290,24 +3285,22 @@
     </usage>
 
     <description>
-      <para>Diverts output to <repl>filename</repl>, until further
-	notice.  Use the flag <lit>--append</lit> to append output to
-	an existing file or <lit>--write</lit> to start a new file
-	(or overwrite an existing one).  Only one file can be opened
-	in this way at any given time.</para>
+      <para>Scrive i risultati sul <repl>file-output</repl>, fino a nuovo
+        ordine. Usando l'opzione <lit>--append</lit>, i risultati
+        vengono aggiunti a un file esistente, mentre <lit>--write</lit>
+        apre un nuovo file (o ne sovrascrive uno esistente). Può essere
+        aperto solo un file alla volta.</para>
 
-      <para>The <lit>--close</lit> flag is used to close an output
-	file that was previously opened as above.  Output will then
-	revert to the default stream.</para>
+      <para>L'opzione <lit>--close</lit> può essere usata per chiudere
+      un file di output aperto in precedenza, tornando a scrivere i
+      risultati sul canale predefinito.</para>
 
-      <para>In the first example command above, the file
-	<filename>regress.txt</filename> is opened for writing, and in
-	the second it is closed.  This would make sense as a sequence
-	only if some commands were issued before the
-	<lit>--close</lit>.  For example if an <cmd>ols</cmd> command
-	intervened, its output would go to
-	<filename>regress.txt</filename> rather than the
-	screen.</para>
+      <para>Nel primo degli esempi precedenti viene aperto il file
+	<filename>regress.txt</filename>, mentre nel secondo viene
+        chiuso. Se prima del comando <lit>--close</lit> fosse
+        eseguito un comando <cmd>ols</cmd>, i risultati della
+        regressione verrebbero scritti su
+        <filename>regress.txt</filename> invece che sullo schermo.</para>
     </description>
 
   </command>
@@ -3319,65 +3312,64 @@
       <options>
         <option>
 	  <flag>--cross-section</flag>
-	  <effect>stacked cross sections</effect>
+	  <effect>pila di dati cross section</effect>
         </option>
         <option>
 	  <flag>--time-series</flag>
-	  <effect>stacked time series</effect>
+	  <effect>pila di dati serie storiche</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para context="gui">
-	The two options here are <quote>stacked time series</quote>
-	and <quote>stacked cross sections</quote>. Gretl must know
-	which way your data are organized if you want to make use of
-	the "Pooled OLS" model command and its associated panel
-	diagnostics.</para>
+        Le due opzioni <quote>--time-series</quote> e
+        <quote>--cross-section</quote> indicano a gretl come sono
+        organizzati i dati, in modo da poter usare il comando 
+	"Pooled OLS" e i relativi comandi di diagnosi panel.</para>
 
-      <para context="gui">Stacked time series means that the blocks in
-	the data file take the form of time series for each of the
-	cross-sectional units in turn.  For example, the first 10 rows
-	of data might represent the values of certain variables for
-	country A over 10 periods, the next 10 rows the values for
-	country B over the same 10 periods, and so on.</para>
+      <para context="gui"><quote>Pila di dati serie storiche</quote>
+      significa che i dati nel file sono organizzati in blocchi di serie
+      storiche per ognuna delle unità cross section. Ad esempio, le
+      prime 10 righe dei dati rappresentano i valori di alcune variabili
+      per il paese A lungo 10 periodi, le 10 righe seguenti i valori per
+      il paese B lungo 10 periodi, e così via.</para>
 
-      <para context="gui">Stacked cross sections means that the blocks in
-	the data file take the form of cross sections for each of the
-	time periods in turn.  For example, the first 6 rows of data
-	might represent the values of certain variables for countries
-	A to F for the year 1970, the next 6 rows the values for the
-	same countries in 1971, and so on.</para>
+      <para context="gui"><quote>Pila di dati cross section</quote>
+      significa che i dati nel file sono organizzati in blocchi di dati
+      cross section per ognuno dei periodi temporali. Ad esempio, le
+      prime 6 righe dei dati rappresentano i valori di alcune variabili
+      per i paesi da A a F nell'anno 1970, le 6 righe seguenti i valori
+      per gli stessi paesi nel 1971, e così via.</para>
 
-      <para context="gui">If you save your data file after setting this
-	attribute, the information will be recorded in the data file
-	and you won't have to set it again.</para>  
+      <para context="gui">Se si salva il file di dati dopo aver impostato
+      questo attributo, l'informazione verrà mantenuta nel file e non
+      sarà necessario impostare di nuovo l'attributo in futuro.</para>  
 
-      <para context="gui">Note that this menu item does not change the
-	structure of your panel data set, it simply fixes the
-	interpretation of that structure on gretl's part.  If you want
-	to convert a panel data set currently in stacked cross section
-	form to stacked time series, use the menu item
-	<quote>Restructure panel</quote>.
+      <para context="gui">Si noti che questo comando non modifica la
+      struttura del dataset panel, ma imposta solo il modo in cui gretl
+      interpreta la struttura. Per convertire un dataset dal formato
+      <quote>pila di cross section</quote> a quello <quote>pila di serie
+      storiche</quote> o viceversa, occorre usare il comando
+      <quote>Ristruttura panel</quote>.
       </para>
 
-      <para context="cli">Request that the current data set be
-	interpreted as a panel (pooled cross section and time series).
-	By default, or with the <lit>--time-series</lit> flag, the
-	data set is taken to be in the form of stacked time series
-	(successive blocks of data contain time series for each
-	cross-sectional unit).  With the <lit>--cross-section</lit>
-	flag, the data set is read as stacked cross-sections
-	(successive blocks contain cross sections for each time
-	period).  See also
-	<cmdref targ="setobs"/>.
+      <para context="cli">Richiede che il dataset in uso sia
+        interpretato come un panel (unione di dati cross section e serie
+        storiche). L'impostazione predefinita corrisponde all'opzione
+	<lit>--time-series</lit> e prevede di interpretare il dataset
+        come pila di serie storiche (blocchi successivi di dati
+        contengono serie storiche per ogni unità cross section).
+	Usando l'opzione <lit>--cross-section</lit> il dataset viene
+        letto come una pila di dati cross-section (blocchi successivi di
+        dati contengono dati cross section per ognuno dei periodi
+        temporali). Si veda anche <cmdref targ="setobs"/>.
       </para>
 
     </description>
 
     <gui-access>
-      <menu-path>/Sample/interpret as panel</menu-path>
+      <menu-path>/Campione/Interpreta come panel</menu-path>
     </gui-access>
 
   </command>
@@ -3392,33 +3384,32 @@
       <options>
         <option>
 	  <flag>--save-all</flag>
-	  <effect>Save all components</effect>
+	  <effect>salva tutte le componenti</effect>
         </option>
         <option>
 	  <flag>--save</flag>
-	  <effect>Save major components</effect>
+	  <effect>salva le componenti principali</effect>
         </option>
       </options>
     </usage>
 
     <description>
-      <para>Principal Components Analysis.  Prints the eigenvalues of
-	the correlation matrix for the variables in
-	<repl>lista-variabili</repl> along with the proportion of the joint
-	variance accounted for by each component.  Also prints the
-	corresponding eigenvectors (or <quote>component
-	  loadings</quote>).</para>  
+      <para>Analisi delle componenti principali. Mostra gli autovalori
+      della matrice di correlazione per le variabili nella
+	<repl>lista-variabili</repl>, insieme alla proporzione della
+        varianza comune spiegata da ogni componente. Mostra anche i
+        corrispondenti autovettori (o <quote>pesi della componente</quote>).</para>  
 
-      <para>If the <lit>--save</lit> flag is given, components with
-	eigenvalues greater than 1.0 are saved to the dataset as
-	variables, with names <lit>PC1</lit>, <lit>PC2</lit> and so
-	on.  These artificial variables are formed as the sum of
-	(component loading) times (standardized <lit>Xi</lit>), where
-	<lit>Xi</lit> denotes the <mathvar>i</mathvar>th variable in
-	<repl>lista-variabili</repl>.</para>
+      <para>Usando l'opzione <lit>--save</lit>, le componenti con
+      autovalori maggiori di 1.0 vengono salvati nel dataset come
+      variabili, con i nomi <lit>PC1</lit>, <lit>PC2</lit> e così via.
+      Queste variabili artificiali sono definite come la somma di
+	(peso della componente) moltiplicato per (<lit>Xi</lit>
+        standardizzato), dove <lit>Xi</lit> denota la variabile
+        <mathvar>i</mathvar>-esima nella <repl>lista-variabili</repl>.</para>
 
-      <para>If the <lit>--save-all</lit> flag is given, all of the
-	components are saved as described above.</para> 
+      <para>Usando l'opzione <lit>--save-all</lit>, vengono salvate
+      tutte le componenti, come descritto sopra.</para> 
     </description>
 
     <gui-access>
@@ -3437,32 +3428,33 @@
       <options>
         <option>
 	  <flag>--bartlett</flag>
-	  <effect>use Bartlett lag window</effect>
+	  <effect>usa la finestra di Bartlett</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Computes and displays (and if not in batch mode, graphs) the
-	spectrum of the specified variable.  Without the
-	<lit>--bartlett</lit> flag the sample periodogram is given;
-	with the flag a Bartlett lag window of length
+	Calcola e mostra (graficamente se non si è in modalità batch)
+        lo spettro della variabile specificata. Senza l'opzione
+	<lit>--bartlett</lit>, viene mostrato il periodogramma nel
+        campione, usando l'opzione, lo spettro viene stimato usando una
+        finestra di Bartlett per i ritardi di lunghezza
 	<equation status="inline"
 	  tex="$2\sqrt{T}$"
 	  ascii="2*sqrt(T)"
-	  graphic="tworootT"/> (where <mathvar>T</mathvar> is the
-	sample size) is used in estimating the spectrum (see Chapter
-	18 of Greene's <book>Econometric Analysis</book>). When the
-	sample periodogram is printed, a <mathvar>t</mathvar>-test for
-	fractional integration of the series (<quote>long
-	  memory</quote>) is also given: the ipotesi nulla is that
-	the integration order is zero.
+	  graphic="tworootT"/> (dove <mathvar>T</mathvar> è l'ampiezza
+          del campione); si veda il capitolo 18 di <book>Econometric
+          Analysis</book> di Greene. Se viene mostrato il periodogramma
+          del campione, viene mostrato anche il test <mathvar>t</mathvar>
+          per l'integrazione frazionale della serie (<quote>memoria
+          lunga</quote>): l'ipotesi nulla è che l'ordine di integrazione
+          sia zero.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/spectrum</menu-path>
+      <menu-path>/Variabile/Spettro</menu-path>
       <other-access>Menù pop-up nella finestra principale (selezione singola)</other-access>
     </gui-access>
 
@@ -3477,18 +3469,18 @@
       <options>
         <option>
 	  <flag>--one-scale</flag>
-	  <effect>force a single scale</effect>
+	  <effect>forza una scala sola</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Plots the values for specified variables, for the range of
-	observations currently in effect, using ASCII symbols.  Each
-	line stands for an observation and the values are plotted
-	horizontally.  By default the variables are scaled
-	appropriately.  See also <cmdref targ="gnuplot"/>.
+	Disegna i valori delle variabili indicate per l'intervallo di
+        osservazioni attuale, usando simboli ASCII. Ogni riga
+        rappresenta un'osservazione e i valori sono disegnati
+        orizzontalmente. Il comportamento predefinito è di scalare la
+        variabili in modo appropriato. Si veda anche <cmdref targ="gnuplot"/>.
       </para>
     </description>
 
@@ -3511,14 +3503,13 @@
     </usage>
 
     <description>
-      <para>Estimates a model via OLS (see <cmdref targ="ols"/> for
-	details on syntax), and flags it as a pooled or panel model,
-	so that the <cmdref targ="hausman"/> test item becomes
-	available.</para>
+      <para>Stima un modello con OLS (si veda <cmdref targ="ols"/> per i
+      dettagli sulla sintassi) e lo marca come modello pooled o panel,
+      rendendo disponibile il comando <cmdref targ="hausman"/>.</para>
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Pooled OLS</menu-path>
+      <menu-path>/Modello/POOLED - Pooled OLS (panel)</menu-path>
     </gui-access>
 
   </command>
@@ -3528,16 +3519,16 @@
     <usage>
       <arguments>
 	<argument>lista-variabili</argument>
-	<argument alternate="true">string_literal</argument>
+	<argument alternate="true">stringa-letterale</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--byobs</flag>
-	  <effect>by observations</effect>
+	  <effect>per osservazione</effect>
 	</option>
 	<option>
 	  <flag>--ten</flag>
-	  <effect>use 10 significant digits</effect>
+	  <effect>usa 10 cifre significative</effect>
 	</option>
       </options>
       <examples>
@@ -3548,24 +3539,24 @@
 
     <description>
       <para>
-	If <repl>lista-variabili</repl> is given, prints the values of the
-	specified variables; if no list is given, prints the values of
-	all variables in the current data file. If the
-	<lit>--byobs</lit> flag is given the data are printed by
-	observation, otherwise they are printed by variable.  If the
-	<lit>--ten</lit> flag is given the data are printed by
-	variable to 10 significant digits.
+	Se viene indicata una <repl>lista-variabili</repl>, stampa i
+        valori delle variabili specificate, altrimenti stampa i valori
+        di tutte le variabili nel dataset in uso. Usando l'opzione
+	<lit>--byobs</lit> i dati vengono stampati per osservazione,
+        altrimenti sono stampati per variabile. Usando l'opzione
+	<lit>--ten</lit> i dati vengono stampati per variabile con 10
+        cifre significative.
       </para>
 
       <para>
-	If the argument to <cmd>print</cmd> is a literal string (which
-	must start with a double-quote, <lit>"</lit>), the string is
-	printed as is.  See also <cmdref
+	Se l'argomento di <cmd>print</cmd> è una stringa letterale (che
+        deve iniziare con le virgolette doppie <lit>"</lit>), la stringa
+        viene stampata così come è stata indicata. Si veda anche <cmdref
 	  targ="printf"/>.</para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Display values</menu-path>
+      <menu-path>/Dati/Mostra valori</menu-path>
     </gui-access>
 
   </command>
@@ -3574,29 +3565,28 @@
 
     <usage>
       <arguments>
-        <argument>format</argument>
-        <argument>args</argument>
+        <argument>formato</argument>
+        <argument>argomenti</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	Prints scalar values under the control of a format string
-	(providing a small subset of the <lit>printf()</lit> statement
-	in the C programming language). Recognized formats are
-	<lit>%g</lit> and <lit>%f</lit>, in each case with the various
-	modifiers available in C.  Examples: the format
-	<lit>%.10g</lit> prints a value to 10 significant figures;
-	<lit>%12.6f</lit> prints a value to 6 decimal places, with a
-	width of 12 characters.</para>  
+	Stampa valori scalari nel formato indicato da una stringa di
+        formato (che supporta un piccolo sottoinsieme del comando
+        <lit>printf()</lit> del linguaggio di programmazione C). I
+        formati riconosciuti sono <lit>%g</lit> e <lit>%f</lit>, con i
+        vari modificatori disponibili in C. Esempi: la stringa <lit>%.10g</lit>
+        stampa un valore con 10 cifre significative; <lit>%12.6f</lit>
+        stampa un valore con 6 cifre decimali e una larghezza di 12
+        caratteri.</para>  
 
-      <para>The format string itself must be enclosed in double
-	quotes.  The values to be printed must follow the format
-	string, separated by commas.  These values should take the
-	form of either (a) the names of variables in the dataset, or
-	(b) expressions that are valid for the <cmd>genr</cmd>
-	command.  The following example prints the values of two
-	variables plus that of a calculated expression:</para>
+      <para>La stringa di formato deve essere racchiusa tra virgolette
+        doppie, i valori da stampare devono seguire la stringa di
+        formato, separati da virgole. I valori possono avere due forme:
+	i nomi di variabili nel dataset, oppure espressioni valide per
+        il comando <cmd>genr</cmd>. L'esempio seguente stampa i valori
+        di due variabili e quello di un'espressione calcolata:</para>
 
       <code>
 	ols 1 0 2 3
@@ -3606,11 +3596,11 @@
       </code>
 
       <para>
-	The maximum length of a format string is 127 characters.  The
-	escape sequences <lit>\n</lit> (newline), <lit>\t</lit> (tab),
-	<lit>\v</lit> (vertical tab) and <lit>\\</lit> (literal
-	backslash) are recognized.  To print a literal percent sign,
-	use <lit>%%</lit>.</para>
+	La lunghezza massima di una stringa di formato è di 127
+        caratteri. Vengono riconosciute le sequenze di escape
+	<lit>\n</lit> (newline), <lit>\t</lit> (tab),
+	<lit>\v</lit> (tab verticale) e <lit>\\</lit> (barra inversa).
+        Per stampare un segno di percentuale, si usi <lit>%%</lit>.</para>
     </description>
 
   </command>
@@ -3633,20 +3623,20 @@
 
     <description>
       <para>
-	The dependent variable should be a binary variable. Maximum
-	likelihood estimates of the coefficients on
-	<repl>variabili-indipendenti</repl> are obtained via iterated least squares
-	(the EM or Expectation&ndash;Maximization method).  As the
-	model is nonlinear the slopes depend on the values of the
-	independent variables: the reported slopes are evaluated at
-	the means of those variables.  The chi-square statistic tests
-	the ipotesi nulla that all coefficients are zero apart from
-	the constant.
+	Stima un modello probit, per variabili dipendenti binarie.
+        Le stime di massima verosimiglianza dei coefficienti delle
+	<repl>variabili-indipendenti</repl> sono ottenute con i minimi
+        quadrati iterati (il metodo EM, Expectation&ndash;Maximization).
+	Poiché il modello è non-lineare, le pendenze dipendono dai
+        valori delle variabili indipendenti: le pendenze riportate sono
+        valutate nelle medie di queste variabili. La statistica
+        chi-quadro testa l'ipotesi nulla che tutti i coefficienti tranne
+        la costante siano pari a zero.
       </para>
 
       <para>
-	Probit for analysis of proportions is not implemented in
-	<program>gretl</program> at this point.
+	Il probit per l'analisi delle proporzioni non è ancora stato
+        implementato in	<program>gretl</program>.
       </para>
     </description>
 
@@ -3660,9 +3650,9 @@
 
     <usage>
       <arguments>
-        <argument>dist</argument>
-        <argument optional="true">params</argument>
-	<argument>xval</argument>
+        <argument>distribuzione</argument>
+        <argument optional="true">parametri</argument>
+	<argument>valore-x</argument>
       </arguments>
       <examples>
         <example>pvalue z zscore</example>
@@ -3675,20 +3665,20 @@
 
     <description>
       <para>
-	Computes the area to the right of <repl>xval</repl> in the
-	specified distribution (<lit>z</lit> for Gaussian,
-	<lit>t</lit> for Student's <mathvar>t</mathvar>, <lit>X</lit>
-	for chi-square, <lit>F</lit> for <mathvar>F</mathvar> and
-	<lit>G</lit> for gamma).  For the <mathvar>t</mathvar> and
-	chi-square distributions the degrees of freedom must be given;
-	for <mathvar>F</mathvar> numerator and denominator degrees of
-	freedom are required; and for gamma the mean and variance are
-	needed.
+	Calcola l'area alla destra del <repl>valore-x</repl> nella
+        distribuzione indicata (<lit>z</lit> per la Gaussiana,
+	<lit>t</lit> per la <mathvar>t</mathvar> di Student, <lit>X</lit>
+	per la chi-quadro, <lit>F</lit> per la <mathvar>F</mathvar> e
+	<lit>G</lit> per la gamma).  Per le distribuzioni
+        <mathvar>t</mathvar> e chi-quadro vanno indicati i gradi di
+        libertà; per la <mathvar>F</mathvar> sono richiesti i gradi di
+        libertà al numeratore e al denominatore; per la gamma sono
+        richieste la media e la varianza.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Utilità/p-value finder</menu-path>
+      <menu-path>/Utilità/Calcola p-value</menu-path>
     </gui-access>
 
   </command>
@@ -3713,19 +3703,19 @@
 
     <description>
       <para>
-	Computes parameter estimates using the Prais&ndash;Winsten
-	procedure, an implementation of feasible GLS which is designed
-	to handle first-order autocorrelation of the error term.  The
-	procedure is iterated, as with <cmdref targ="corc"/>; the
-	difference is that while Cochrane&ndash;Orcutt discards the
-	first observation, Prais&ndash;Winsten makes use of it. See,
-	for example, Chapter 13 of Greene's <book>Econometric
-	  Analysis</book> (2000) for details.
+	Calcola le stime dei parametri usando la procedura
+        Prais&ndash;Winsten, un'implementazione GLS sviluppata per
+        gestire l'autocorrelazione del primo ordine nel termine di
+        errore. La procedura viene iterata, così come in <cmdref
+        targ="corc"/>; la differenza è che mentre Cochrane&ndash;Orcutt
+        tralascia la prima osservazione, Prais&ndash;Winsten ne fa uso.
+        Per i dettagli, si veda per esempio il capitolo 13 di
+        <book>Econometric Analysis</book> (2000) di Greene.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Serie storiche/Prais-Winsten</menu-path>
+      <menu-path>/Modello/Serie storiche/PWE - Prais-Winsten</menu-path>
     </gui-access>
 
   </command>
@@ -3734,13 +3724,13 @@
 
     <description>
       <para>
-	Exits from the program, giving you the option of saving the
-	output from the session on the way out.  
+	Esce dal programma, dando la possibilità di salvare i
+        risultati della sessione.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/File/Exit</menu-path>
+      <menu-path>/File/Esci</menu-path>
     </gui-access>
 
   </command>
@@ -3749,24 +3739,23 @@
 
     <usage>
       <arguments>
-        <argument>varnumber</argument>
-        <argument>newname</argument>
+        <argument>numero-var</argument>
+        <argument>nuovo-nome</argument>
       </arguments>
     </usage>
 
     <description>
-      <para>Changes the name of the variable with identification
-	number <repl>varnumber</repl> to <repl>newname</repl>.  The
-	<repl>varnumber</repl> must be between 1 and the number of
-	variables in the dataset.  The new name must be of 8
-	characters maximum, must start with a letter, and must be
-	composed of only letters, digits, and the underscore
-	character.
+      <para>Modifica il nome di una variabile con numero identificativo
+	<repl>numero-var</repl> in <repl>nuovo-nome</repl>. Il
+	<repl>numero-var</repl> deve essere compreso tra 1 e il numero
+        di variabili nel dataset. Il nuovo nome deve essere luno al
+        massimo 8 caratteri, deve iniziare con una lettera e deve essere
+        composto di sole lettere, numeri e il carattere trattino basso.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/Edit attributes</menu-path>
+      <menu-path>/Variabile/Modifica attributi</menu-path>
       <other-access>Menù pop-up nella finestra principale (selezione singola)</other-access>
     </gui-access>
 
@@ -3777,17 +3766,17 @@
 
     <description>
       <para>
-	Va eseguito dopo la stima di un modello via OLS. Carries out
-	Ramsey's RESET test for model specification (non-linearity) by
-	adding the square and the cube of the fitted values to the
-	regression and calculating the <mathvar>F</mathvar> statistic
-	for the ipotesi nulla that the parameters on the two added
-	terms are zero.
+	Va eseguito dopo la stima di un modello via OLS. Esegue il test
+	RESET di Ramsey per la specificazione del moello
+        (non-linearità), aggiungendo alla regressione il quadrato e il
+        cubo dei valori stimati e calcolando la statistica
+        <mathvar>F</mathvar> per l'ipotesi nulla che i coefficienti dei due
+        termini aggiunti siano pari a zero.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Test/Ramsey's RESET</menu-path>
+      <menu-path>Finestra del modello, /Test/RESET - Ramsey</menu-path>
     </gui-access>
 
   </command>
@@ -3796,7 +3785,7 @@
 
     <usage>
       <arguments>
-        <argument>rholist</argument>
+        <argument>lista-rho</argument>
         <argument separated="true">lista-variabili</argument>
       </arguments>
       <examples>
@@ -3807,15 +3796,15 @@
 
     <description>
       <para>
-	Creates rho-differenced counterparts of the variables (given
-	by number or by name) in <repl>lista-variabili</repl> and adds them to
-	the data set, using the suffix <lit>#</lit> for the new
-	variables. Given variable <lit>v1</lit> in
-	<repl>lista-variabili</repl>, and entries <lit>r1</lit> and
-	<lit>r2</lit> in <repl>rholist</repl>, <lit>v1# = v1(t) -
-	  r1*v1(t-1) - r2*v1(t-2)</lit> is created. The
-	<repl>rholist</repl> entries can be given as numerical values
-	or as the names of variables previously defined.
+	Crea delle versioni rho-differenziate delle variabili indicate
+        (con numero o con nome) nella <repl>lista-variabili</repl> e le
+        aggiunge al dataset, usando il suffisso <lit>#</lit> per le
+        nuove variabili. Ad esempio, data la variabile <lit>v1</lit> nella
+	<repl>lista-variabili</repl> e i valori <lit>r1</lit> e
+	<lit>r2</lit> nella <repl>lista-rho</repl>, viene creata
+        <lit>v1# = v1(t) - r1*v1(t-1) - r2*v1(t-2)</lit>. I valori nella
+	<repl>lista-rho</repl> possono essere specificati sotto forma di
+        valori numerici o di nomi di variabili definite in precedenza.
       </para>
     </description>
 
@@ -3832,38 +3821,38 @@
 
     <description>
       <para>
-	Range&ndash;mean plot: this command creates a simple graph to
-	help in deciding whether a time series,
-	<mathvar>y</mathvar>(t), has constant variance or not.  We
-	take the full sample t=1,...,T and divide it into small
-	subsamples of arbitrary size <mathvar>k</mathvar>. The first
-	subsample is formed by
-	<mathvar>y</mathvar>(1),...,<mathvar>y</mathvar>(k), the
-	second is <mathvar>y</mathvar>(k+1), ...,
-	<mathvar>y</mathvar>(2k), and so on.  For each subsample we
-	calculate the sample mean and range (= maximum minus minimum),
-	and we construct a graph with the means on the horizontal axis
-	and the ranges on the vertical. So each subsample is
-	represented by a point in this plane.  If the variance of the
-	series is constant we would expect the subsample range to be
-	independent of the subsample mean; if we see the points
-	approximate an upward-sloping line this suggests the variance
-	of the series is increasing in its mean; and if the points
-	approximate a downward sloping line this suggests the variance
-	is decreasing in the mean.</para>
+	Grafico Range&ndash;mean: questo comando crea un semplice
+        grafico che aiuta a capire se una serie storica
+	<mathvar>y</mathvar>(t) ha varianza costante o no. L'intero
+        campione t=1,...,T viene diviso in piccoli sotto-campioni di
+        dimensione arbitraria <mathvar>k</mathvar>. Il primo
+        sotto-campione è formato da
+        <mathvar>y</mathvar>(1), ... ,<mathvar>y</mathvar>(k), il secondo
+        da <mathvar>y</mathvar>(k+1), ... , <mathvar>y</mathvar>(2k), e
+        così via.  Per ogni sotto-campione, vengono calcolati la media e
+        il campo di variazione (range: il valore massimo meno quello
+        minimo) e viene costruito un grafico con le medie sull'asse
+        orizzontale e i campi di variazione su quello verticale, in modo
+        che ogni sotto-campione sia rappresentato da un punto sul piano.
+	Se la varianza della serie è costante, ci si aspetta che il
+        campo di variazione del sotto-campione sia indipendente dalla
+        media del sotto-campione; se i punti si dispongono su una linea
+        crescente, la varianza della serie cresce al crescere della
+        media, viceversa se i punti si dispongono su una linea
+        decrescente.</para>
 
-      <para>Besides the graph, gretl displays the means and ranges for
-	each subsample, along with the slope coefficient for an OLS
-	regression of the range on the mean and the p-value for the
-	ipotesi nulla that this slope is zero.  If the slope
-	coefficient is significant at the 10 percent significance
-	level then the fitted line from the regression of range on
-	mean is shown on the graph.
+      <para>Oltre al grafico, gretl mostra anche le medie e i campi di
+      variazione per ogni sotto-campione, insieme al coefficiente di
+      pendenza della regressione OLS del campo di variazione sulla media
+      e il p-value per l'ipotesi nulla che la pendenza sia zero.
+      Se il coefficiente di pendenza è significativo al livello del 10
+      per cento, viene mostrata sul grafico la linea stimata della
+      regressione del campo di variazione sulla media.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/Range-mean graph</menu-path>
+      <menu-path>/Variabile/Grafico range-mean</menu-path>
     </gui-access>
 
   </command>
@@ -3872,19 +3861,19 @@
 
     <usage>
       <arguments>
-        <argument>inputfile</argument>
+        <argument>file-input</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	Execute the commands in <repl>inputfile</repl> then return
-	control to the interactive prompt.
+	Esegue i comandi nel <repl>file-input</repl> e restituisce il
+        controllo al prompt interattivo.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Run icon in script window</menu-path>
+      <menu-path>Icona Esegui nella finestra comandi</menu-path>
     </gui-access>
 
   </command>
@@ -3899,11 +3888,11 @@
 
     <description>
       <para>
-	Carries out the nonparametric <quote>runs</quote> test for
-	randomness of the specified variable.  If you want to test for
-	randomness of deviations from the median, for a variable named
-	<lit>x1</lit> with a non-zero median, you can do the
-	following:</para>
+	Esegue il test non parametrico <quote>delle successioni</quote>
+        per la casualità della variabile specificata. Per 
+        testare la casualità delle deviazioni dalla mediana per una
+        variabile chiamata <lit>x1</lit> con una mediana diversa da
+        zero, eseguire i comandi seguenti:</para>
 
       <code>
 	genr signx1 = x1 - median(x1)
@@ -3912,7 +3901,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/Runs test</menu-path>
+      <menu-path>/Variabile/Test delle successioni</menu-path>
     </gui-access>
 
   </command>
@@ -3921,49 +3910,50 @@
     label="Setting the sample">
 
     <description>
-      <para>The Sample menu offers several ways of selecting a
-      sub-sample from the current dataset.</para>
+      <para>Il menù Campione offre vari modi di selezionare un
+      sotto-campione dal dataset in uso.</para>
 
       <para>
-	If you choose <quote>Sample/Define based on dummy...</quote>
-	you are prompted to select a dummy (indicator) variable, which
-	must have the values 0 or 1 at each observation.  The sample
-	will be restricted to observations for which the dummy's value
-	is 1.</para>
+	Scegliendo <quote>Campione/Imposta in base a dummy...</quote>,
+	viene chiesto di scegliere una variabile dummy (indicatrice),
+        che può avere solo valori 0 o 1 per ogni osservazione. Il
+        campione verrà limitato alle osservazioni per cui la variabile
+        dummy vale 1.</para>
 
-      <para>If you choose <quote>Sample/Restrict based on
-	  criterion...</quote> you need to supply a Boolean (logical)
-	expression, of the same sort that you would use to define a
-	dummy variable.  For example the expression <quote>sqft >
-	  1400</quote> will select only cases for which the variable
-	sqft has a value greater than 1400. Conditions may be
-	concatenated using the logical operators <quote>&amp;</quote>
-	(AND) and <quote>|</quote> (OR), and may be negated using
+      <para>Scegliendo <quote>Campione/Imposta in base a
+      condizione...</quote>, viene chiesto di inserire un'espressione
+      Booleana (logica), dello stesso tipo di quella che si userebbe per
+      definire una variabile dummy. Ad esempio, l'espressione
+      <quote>sqft > 1400</quote> selezionerà solo le osservazioni per
+      cui la variabile sqft ha un valore maggiore di 1400. Le condizioni
+      possono essere concatenate con gli operatori logici <quote>&amp;</quote>
+	(AND) e <quote>|</quote> (OR) e possono essere negate usando
 	<quote>!</quote> (NOT).</para>
 
-      <para>The menu item <quote>Sample/Drop all obs with missing
-	  values</quote> redefines the sample to exclude all
-	observations for which values of one or more variables are
-	missing (leaving only complete cases).</para>  
+      <para>Il comando <quote>Campione/Scarta valori mancanti</quote>
+      ridefinisce il campione in modo da escludere tutte le osservazioni
+      per cui i valori di una o più variabili sono mancanti (lasciando
+      nel campione solo i casi completi).</para>  
 
-      <para>To select observations for which a particular variable has
-	no missing values, use <quote>Sample/Restrict based on
-	  criterion...</quote> and supply the Boolean condition
-	<quote>!missing(nome-variabile)</quote> (replace
-	<quote>nome-variabile</quote> with the name of the variable you want
-	to use).</para>  
+      <para>Per selezionare le osservazioni per cui solo una particolare
+      variabile non ha valori mancanti, occorre usare
+      <quote>Campione/Imposta in base a condizione...</quote> e inserire
+      la condizione Booleana <quote>!missing(nome-variabile)</quote>
+      (sostiuire <quote>nome-variabile</quote> con il nome della
+      variabile che si intende usare).</para>  
 
-      <para>If the observations are named, you can re-sample to
-	exclude a particular observation using, say, obs!="France" as
-	the Boolean criterion.  The observation name must be enclosed
-	in double quotes.</para>
+      <para>Se sono state associate etichette alle osservazioni, è possibile
+      escludere una particolare osservazione dal campione impostando una
+      condizione del tipo obs!="Francia". L'etichetta dell'osservazione deve
+      essere racchiuso tra virgolette doppie.</para>
 
-      <para>One point should be noted about defining a sample based on
-	a dummy variable, a Boolean expression, or on the missing
-	values criterion: Any <quote>structural</quote> information in
-	the data header file (regarding the time series or panel
-	nature of the data) is lost.  You may reimpose structure with
-	<quote>Sample/Set frequency, oss-iniziale...</quote>.</para>
+      <para>Occore tenere presente che ridefinendo il campione basandosi
+      su una variabile dummy, un'espressione Booleana o sul criterio
+      delle osservazioni mancanti: tutte le informazioni
+      <quote>strutturali</quote> contenute nel file con la descrizione
+      dei dati (a proposito della struttura di serie storiche o di panel
+      dei dati) vengono perse. È possibile reimpostare la struttura
+      originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
     </description>
   </command>
@@ -3986,38 +3976,40 @@
 
     <description>
       <para context="cli">
-	Plots pairwise scatters of <repl>variabile-y</repl> against all the
-	variables in <repl>lista-variabili-x</repl>, or of all the variables in
-	<repl>lista-variabili-y</repl> against <repl>variabile-x</repl>.  The first
-	example above puts variable 1 on the <mathvar>y</mathvar>-axis
-	and draws four graphs, the first having variable 2 on the
-	<mathvar>x</mathvar>-axis, the second variable 3 on the
-	<mathvar>x</mathvar>-axis, and so on.  The second example
-	plots each of variables 1 through 6 against variable 7 on the
-	<mathvar>x</mathvar>-axis. Scanning a set of such plots can be
-	a useful step in exploratory data analysis.  The maximum
-	number of plots is six; any extra variable in the list will be
-	ignored.
+	Produce grafici a dispersione della <repl>variabile-y</repl>
+        rispetto ad ognuna delle variabili nella
+        <repl>lista-variabili-x</repl>, oppure di tutte le variabili
+        nella <repl>lista-variabili-y</repl> rispetto alla
+        <repl>variabile-x</repl>.  Il primo esempio visto sopra assegna
+        la variabile 1 all'asse <mathvar>y</mathvar> e produce quattro
+        grafici, il primo con la variabile 2 sull'asse
+	<mathvar>x</mathvar>, il secondo con la variabile 3 sull'asse
+	<mathvar>x</mathvar>, e così via. Il secondo esempio rappresenta
+	ognuna delle variabili da 1 a 6 rispetto alla variabile 7
+        sull'asse <mathvar>x</mathvar>. Questi gruppi di grafici sono
+        utili nell'analisi esplorativa dei dati. È possibile creare fino
+        a sei grafici alla volta, eventuali variabili in sovrappiù
+        saranno ignorate.
       </para>
       <para context="gui">
-	Draws a set of pairwise scatters of the selected <quote>Y-axis
-	  variable</quote> against each of the selected <quote>X-axis
-	  variables</quote> in turn.  Scanning a set of such plots can
-	be a useful step in exploratory data analysis.  The maximum
-	number of plots is six; any extra variables in the X-axis list
-	will be ignored.
+	Produce grafici a dispersione della <quote>Variabile asse
+        Y</quote> selezionata rispetto ad ognuna delle <quote>Variabili
+        asse X</quote> selezionate. Questi gruppi di grafici sono utili
+        nell'analisi esplorativa dei dati. È possibile creare fino a sei
+        grafici alla volta, eventuali variabili in sovrappiù saranno
+        ignorate.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Multiple scatterplots</menu-path>
+      <menu-path>/Dati/Grafici multipli a dispersione</menu-path>
     </gui-access>
 
   </command>
 
   <command name="seed" section="Obsolete" context="cli">
     <description>
-      <para>Obsolete command.  See <cmdref targ="set"/>.
+      <para>Comando obsoleto.  Si veda <cmdref targ="set"/>.
       </para>
     </description>
   </command>
@@ -4026,12 +4018,12 @@
     label="Random seed">
 
     <description>
-      <para>Requires an integer as input.  Sets the seed for the
-	pseudo-random number generator used by the random uniform and
-	random normal options under the Data, Add variables menu.  By
-	default the seed is set when the program is started, using the
-	system time.  If you want to obtain repeatable sequences of
-	pseudo-random numbers you need to set the seed manually.
+      <para>Richiede un argomento intero. Imposta il seme del generatore
+      di numeri pseudo-casuali usato dalle opzioni Variabile casuale
+      uniforme e normale nel menù Dati, Aggiungi variabili. Di solito il
+      seme è impostato al momento dell'avvio del programma usando
+      l'orologio di sistema, ma per ottenere sequenze ripetibili di
+      numeri pseudo-casuali occorre impostarlo manualmente.
       </para>
     </description>
   </command>
@@ -4040,50 +4032,51 @@
 
     <usage>
       <arguments>
-        <argument>variable</argument>
-        <argument>value</argument>
+        <argument>variabile</argument>
+        <argument>valore</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	Set the values of various program parameters.  The given value
-	remains in force for the duration of the gretl session unless
-	it is changed by a further call to <cmd>set</cmd>.  The
-	parameters that can be set in this way are enumerated below.
-	Note that the settings of <lit>hac_lag</lit> and
-	<lit>hc_version</lit> are used when the <lit>--robust</lit>
-	option is given to the <cmd>ols</cmd> command. 
+	Imposta i valori di vari parametri del programma. Il valore
+        impostato rimane in vigore per la durata della sessione di
+        gretl, a meno di non essere modificato da un ulteriore
+        esecuzione del comando <cmd>set</cmd>. I parametri che possono
+        essere impostati in questo modo sono elencati di seguito.
+	Si noti che le impostazioni di <lit>hac_lag</lit> e
+	<lit>hc_version</lit> sono usate quando viene data l'opzione
+        <lit>--robust</lit> al comando <cmd>ols</cmd>. 
       </para>
 
       <table lwidth="80pt" rwidth="320pt">
 	<row>
 	  <cell><lit>echo</lit></cell>
-	  <cell>values: <lit>off</lit> or <lit>on</lit> (the default).
-	    Suppress or resume the echoing of commands in gretl's
-	    output.</cell>
+	  <cell>valori: <lit>off</lit> o <lit>on</lit> (valore predefinito).
+	    Sopprime o ripristina l'indicazione dei comandi eseguiti nell'output
+            dei risultati.</cell>
 	</row>
 	<row>
 	  <cell><lit>qr</lit></cell>
-	  <cell>values: <lit>on</lit> or <lit>off</lit> (the default).
-	    Use QR rather than Cholesky decomposition in calculating
-	    OLS estimates.</cell>
+	  <cell>valori: <lit>on</lit> o <lit>off</lit> (valore predefinito).
+	    Usa la decomposizione QR invece di quella di Cholesky nel
+            calcolo delle stime OLS.</cell>
 	</row>
 	<row>
 	  <cell><lit>hac_lag</lit></cell>
-	  <cell>values: <lit>nw1</lit> (the default) or
-	    <lit>nw2</lit>, or an integer.  Sets the maximum lag
-	    value, <mathvar>p</mathvar>, used when calculating HAC
-	    (Heteroskedasticity and Autocorrelation Consistent)
-	    standard errors using the Newey-West approach, for time
-	    series data. <lit>nw1</lit> and <lit>nw2</lit> represent
-	    two variant automatic calculations based on the sample
-	    size, <mathvar>T</mathvar>: for nw1, 
+	  <cell>valori: <lit>nw1</lit> (valore predefinito) o
+	    <lit>nw2</lit>, o un intero.  Imposta il massimo valore di
+            ritardo, <mathvar>p</mathvar>, usato nel calcolo degli
+            errori standard HAC (Heteroskedasticity and Autocorrelation Consistent)
+	    con l'approccio Newey-West, per le serie storiche.
+            <lit>nw1</lit> e <lit>nw2</lit> rappresentano due varianti
+            di calcolo automatico basate sulla dimensione del campione,
+	    <mathvar>T</mathvar>: per nw1, 
 	  <equation status="inline"
 	    tex="$p = 0.75 \times T^{1/3}$"
 	    ascii="p = 0.75 * T^(1/3)"
 	    graphic="nw1"/>,
-	    and for nw2, 
+	    e per nw2, 
 	  <equation status="inline"
 	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
@@ -4092,36 +4085,35 @@
 	</row>
 	<row>
 	  <cell><lit>hc_version</lit></cell>
-	  <cell>values: 0 (the default), 1, 2 or 3. Sets the variant
-	    used when calculating Heteroskedasticity Consistent
-	    standard errors with cross-sectional data.  The options
-	    correspond to the HC0, HC1, HC2 and HC3 discussed by
-	    Davidson and MacKinnon in <book>Econometric Theory and
-	      Methods</book>, chapter 5.  HC0 produces what are
-	    usually called <quote>White's standard
-	      errors</quote>.</cell>
-	</row>
+	  <cell>valori: 0 (valore predefinito), 1, 2 o 3. Imposta la
+          variante da usare nel calcolo degli errori standard HAC
+          (Heteroskedasticity and Autocorrelation Consistent) con dati
+          di tipo cross section. Le opzioni corrispondono alle HC0, HC1,
+          HC2 e HC3 discusse da Davidson e MacKinnon nel capitolo 5 di
+          <book>Econometric Theory and Methods</book>.  HC0 produce
+          quelli che di solito vengono chiamati<quote>errori standard di
+          White</quote>.</cell> </row>
 	<row>
 	  <cell><lit>garch_vcv</lit></cell>
-	  <cell>values: <lit>unset</lit>, <lit>hessian</lit>,
-	    <lit>im</lit> (information matrix) , <lit>op</lit> (outer
-	    product matrix), <lit>qml</lit> (QML estimator),
-	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifies the
-	    variant that will be used for estimating the coefficient
-	    matrice di covarianza, for GARCH models.  If <lit>unset</lit>
-	    is given (the default) then the Hessian is used unless the
-	    <quote>robust</quote> option is given for the garch
-	    command, in which case QML is used.</cell>
+	  <cell>valori: <lit>unset</lit>, <lit>hessian</lit>,
+	    <lit>im</lit> (matrice di informazione) , <lit>op</lit>
+            (matrice dei prodotti esterni), <lit>qml</lit> (stimatore QML),
+	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifica la
+            variante da usare per stimare la matrice di covarianza dei
+            coefficienti nei modelli GARCH.  Se si usa <lit>unset</lit>
+	    (valore predefinito), viene usata l'Hessiana, a meno di
+            usare l'opzione <quote>robust</quote> col comando garch, nel
+            qual caso viene usato QML.</cell>
 	</row>
 	<row>
 	  <cell><lit>hp_lambda</lit></cell>
-	  <cell>values: <lit>auto</lit> (the default), or a numerical
-	  value.  Sets the smoothing parameter for the
-	  Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit>
-	  function under the <cmd>genr</cmd> command).  The default is
-	  to use 100 times the square of the periodicity, which gives
-	  100 for annual data, 1600 for quarterly data, and so
-	  on).</cell>
+	  <cell>valori: <lit>auto</lit> (valore predefinito), o un
+          valore numerico. Imposta il parametro di livellamento per
+          il filtro di Hodrick&ndash;Prescott (si veda la funzione
+          <lit>hpfilt</lit> sotto il comando <cmd>genr</cmd>). Il valore
+          predefinito è 100 volte il quadrato della periodicità, ossia
+          100 per i dati annuali, 1600 per i dati trimestrali e così
+          via).</cell>
 	</row>
       </table>
 
@@ -4133,7 +4125,7 @@
 
     <usage>
       <arguments>
-        <argument>periodicity</argument>
+        <argument>periodicità</argument>
         <argument>oss-iniziale</argument>
       </arguments>
       <examples>
@@ -4145,44 +4137,43 @@
 
     <description>
       <para context="cli">
-	Force the program to interpret the current data set as time
-	series or panel, when the data have been read in as simple
-	undated series.  <repl>periodicity</repl> must be an integer;
-	<repl>oss-iniziale</repl> is a string representing the date or
-	panel ID of the first observation. See also <cmdref
-	  targ="panel"/>.
+	Forza il programma a interpretare il dataset in uso come serie
+        storiche o panel, invece che come serie semplici non datate.
+	La <repl>periodicità</repl> deve essere un valore intero, mentre
+	<repl>oss-iniziale</repl> è una stringa che rappresenta la data
+        o il numero identificativo panel della prima osservazione. Si
+        veda anche <cmdref targ="panel"/>.
       </para>
       <para context="gui">
-	Use this command to force the program to interpret the current
-	data set as time series or panel, when the data have been read
-	in as simple undated series.  Two parameters are needed: an
-	integer frequency and a starting observation string (usually a
-	date).  Here are some examples of valid input:</para>
+	Usare questo comando per forzare il programma a interpretare il
+        dataset in uso come serie storiche o panel, invece che come
+        serie semplici non datate. Servono due parametri: una frequenza
+        intera e una stringa che indica l'osservazione iniziale (di
+        solito una data). Ecco alcuni esempi:</para>
 
       <table context="gui">
 	<row>
 	  <cell>4 1990:1</cell>
-	  <cell>Interpret the data as quarterly, starting in 1990,
+	  <cell>Interpreta i dati come trimestrali a partire dal 1990,
 	    Q1</cell>
 	</row>
 	<row>
 	  <cell>12 1978:03</cell>
-	  <cell>Interpret as monthly, starting in March 1978</cell>
+	  <cell>Interpreta i dati come mensili a partire da Marzo 1978</cell>
 	</row>
 	<row>
 	  <cell>20 1:01</cell>
-	  <cell>Frequency 20, starting with obs 1.01 (panel
-	    data)</cell>
+	  <cell>Frequenza 20, inizio all'osservazione 1.01 (dati panel)</cell>
 	</row>
 	<row>
 	  <cell>5 1972/01/20</cell>
-	  <cell>Daily data (5-day week), starting January 20,
-	    1972</cell>
+	  <cell>Dati giornalieri (settimane di 5 giorni), a partire dal
+          20 Gennaio 1972</cell>
 	</row>
 	<row>
 	  <cell>7 2002/01/20</cell>
-	  <cell>Daily data (7-day week), starting January 20,
-	    2002</cell>
+          <cell>Dati giornalier (settimane di 7 giorni), a partire dal
+          20 Gennaio 2002</cell>
 	</row>
       </table>
 
@@ -4199,7 +4190,7 @@
 
     <usage>
       <arguments>
-        <argument>value</argument>
+        <argument>valore</argument>
         <argument optional="true">lista-variabili</argument>
       </arguments>
       <examples>
@@ -4210,38 +4201,37 @@
 
     <description>
       <para context="cli">
-	Get the program to interpret some specific numerical data
-	value (the first parameter to the command) as a code for
-	<quote>missing</quote>, in the case of imported data.  If this
-	value is the only parameter, as in the first example above,
-	the interpretation will be applied to all series in the data
-	set.  If <repl quote="true">value</repl> is followed by a list
-	of variables, by nome o numero, the interpretation is
-	confined to the specified variable(s). Thus in the second
-	example the data value 100 is interpreted as a code for
-	<quote>missing</quote>, but only for the variable
-	<lit>x2</lit>.
+	Imposta il programma in modo da interpretare un dato valore
+        numerico (il primo parametro indicato al comando) come codice
+        per i <quote>valori mancanti</quote> nei dati importati. Se
+        questo valore è l'unico parametro fornito, come nel primo degli
+        esempi precedenti, l'interpretazione verrà applicata a tutte le
+        serie del dataset. Se <repl quote="true">valore</repl> è seguito
+        da una lista di variabili, indicate per nome o numero,
+        l'interpretazione è confinata solo alle variabili specificate.
+        Così, nel secondo esempio, il valore 100 è interpretato come
+        codice per <quote>mancante</quote>, ma solo per la variabile
+        <lit>x2</lit>.
       </para>
       
       <para context="gui">
-	Set a numerical value that will be interpreted as "missing" or
-	"not applicable", either for a particular data series (under
-	the Variable menu) or globally for the entire data set (under
-	the Sample menu).</para> 
+	Imposta un valore numerico che verrà interpretato come
+        "mancante" o "non applicabile", per una particolare serie (sotto
+        il menù Variabile) o globalmente per l'intero dataset (sotto il
+        menù Campione).</para> 
       
       <para context="gui">
-	Gretl has its own internal coding for missing values, but
-	sometimes imported data may employ a different code.  For
-	example, if a particular series is coded such that a value of
-	-1 indicates "not applicable", you can select "Set missing
-	value code" under the Variable menu and type in the value "-1"
-	(without the quotes).  Gretl will then read the -1s as missing
-	observations.</para>
+      Gretl ha un codice interno per i valori mancanti, che non sempre
+      può coincidere con quello usato dai dati importati. Ad esempio, se
+      una serie usa il valore -1 col significato di "non disponibile", è
+      possibile selezionare "Imposta codice valori mancanti" nel menù
+      Variabile e immettere il valore "-1" (senza le virgolette); gretl
+      interpreterà quindi i valori -1 come osservazioni mancanti.</para>
 
     </description>
 
     <gui-access>
-      <menu-path>/Sample/Set missing value code</menu-path>
+      <menu-path>/Campione/Imposta codice valori mancanti</menu-path>
     </gui-access>
 
   </command>
@@ -4250,7 +4240,7 @@
 
     <usage>
       <arguments>
-        <argument>shellcommand</argument>
+        <argument>comando-shell</argument>
       </arguments>
       <examples>
         <example>! ls -al</example>
@@ -4260,9 +4250,11 @@
 
     <description>
       <para>
-	A <cmd>!</cmd> at the beginning of a command line is
-	interpreted as an escape to the user's shell.  Thus arbitrary
-	shell commands can be executed from within <program>gretl</program>.
+	Un <cmd>!</cmd> all'inizio di una riga di comando è
+        interpretato come passaggio all'interprete di comandi (shell)
+        dell'utente sul sistema operativo in uso. In questo modo è
+        possibile eseguire comandi shell arbitrari dall'interno di
+	<program>gretl</program>.
       </para>
     </description>
 
@@ -4274,7 +4266,7 @@
     <usage>
       <arguments>
         <argument optional="true">oss-iniziale oss-finale</argument>
-	<argument>nome-variabile</argument>
+	<argument>variabile</argument>
 	<argument>a0 a1 a2 &hellip;</argument>
       </arguments>
       <examples>
@@ -4285,22 +4277,23 @@
 
     <description>
       <para>
-	Simulates values for <repl>nome-variabile</repl> for the current
-	sample range, or for the range <repl>oss-iniziale</repl> through
-	<repl>oss-finale</repl> if these optional arguments are given. The
-	variable <repl>y</repl> must have been defined earlier with
-	appropriate initial values. The formula used is 
+	Simula valori per la <repl>variabile</repl> nell'intervallo del
+        campione in uso, o per l'intervallo che va da <repl>oss-iniziale</repl>
+        a <repl>oss-finale</repl>, se vengono dati questi parametri
+        opzionali. La variabile <repl>y</repl> deve essere stata
+        definita in precedenza con valori iniziali appropriati. La
+        formula usata è
 	<equation status="display"
 	  tex="\[y_t=a_{0t} + a_{1t}y_{t-1} + a_{2t}y_{t-2} + \dots\]"
 	  ascii="y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ..."
 	  graphic="simformula"/> 
-	The <lit>ai(t)</lit> terms may be
-	either numerical constants or variable names previously
-	defined; these terms may be prefixed with a minus sign.
+	I termini <lit>ai(t)</lit> possono essere costanti numeriche o
+        nomi di variabili definite in precedenza e possono essere
+        preceduti dal segno meno.
       </para>
 
-      <para>This command is deprecated.  You should use <cmdref
-	  targ="genr"/> instead.</para>
+      <para>L'uso di questo comando è sconsigliato. Si consiglia di usare <cmdref
+	  targ="genr"/>.</para>
     </description>
 
   </command>
@@ -4315,7 +4308,7 @@
 	<altform><lit>smpl</lit> <repl>oss-iniziale oss-finale</repl></altform>
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
 	<altform><lit>smpl</lit> <repl>variabile-dummy</repl> <lit>--dummy</lit></altform>
-	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
+	<altform><lit>smpl</lit> <repl>condizione</repl> <lit>--restrict</lit></altform>
 	<altform><lit>smpl</lit> <lit>--no-missing [</lit> <repl>lista-variabili</repl> <lit>]</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
@@ -4329,54 +4322,54 @@
 
     <description>
       <para>
-	Resets the sample range.  The new range can be defined in
-	several ways.  In the first alternate form (and the first two
-	examples) above, <repl>oss-iniziale</repl> and <repl>oss-finale</repl>
-	must be consistent with the periodicity of the data.  Either
-	one may be replaced by a semicolon to leave the value
-	unchanged.  In the second form, the integers <repl>i</repl>
-	and <repl>j</repl> (which may be positive or negative, and
-	should be signed) are taken as offsets relative to the
-	existing sample range. In the third form <repl>variabile-dummy</repl>
-	must be an indicator variable with values 0 or 1 at each
-	observation; the sample will be restricted to observations
-	where the value is 1. The fourth form, using
-	<lit>--restrict</lit>, restricts the sample to observations
-	that satisfy the given Boolean condition (which is specified
-	according to the syntax of the <cmdref targ="genr"/>
-	command).</para>
+	Reimposta l'intervallo del campione. Il nuovo intervallo può
+        essere definito in vari modi. Nel primo modo (corrispondente ai
+        primi due esempi precedenti) <repl>oss-iniziale</repl> e
+        <repl>oss-finale</repl> devono essere coerenti con la
+        periodicità dei dati. Una delle due può essere sostituita da un
+        punto e virgola per lasciare intatto il valore attuale. Nel
+        secondo modo, gli interi <repl>i</repl> e <repl>j</repl> (che
+        possono essere positivi o negativi e vanno indicati con il
+        segno) sono presi come spostamenti relativi ai punti iniziale e
+        finale del campione in uso. Nel terzo modo,
+        <repl>variabile-dummy</repl> deve essere una variabile
+        indicatrice che assume solo valori 0 o 1 e il campione verrà
+        ristretto alle osservazioni per cui la variabile dummy vale 1.
+	Il quarto modo, che usa <lit>--restrict</lit>, limita il
+        campione alle osservazioni che soddisfano la condizione Booleana
+	specificata secondo la sintassi del comando <cmdref
+        targ="genr"/>).</para>
 
-      <para>With the <lit>--no-missing</lit> form, if
-	<repl>lista-variabili</repl> is specified an observation is dropped if
-	and only if at least one of the variables in
-	<repl>lista-variabili</repl> has a missing value at that observation;
-	otherwise observations are dropped if <emphasis>any</emphasis>
-	variable has a missing value.</para>
+      <para>Con la forma <lit>--no-missing</lit>, se viene specificata
+      una <repl>lista-variabili</repl>, vengono scartate le osservazioni
+      per cui almeno una delle variabili nella <repl>lista-variabili</repl>
+      ha un valore mancante, altrimenti vengono scartate le osservazioni
+      per cui <emphasis>una qualsiasi</emphasis> variabile ha un valore
+      mancante.</para>
 
-      <para>The final form, <lit>smpl full</lit>, restores the full
-	data range.
+      <para>La forma finale, <lit>smpl full</lit>, ripristina
+      l'intervallo completo del campione.
       </para>
 
-      <para>The internal variable <lit>obs</lit> may be used with the
-	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude
-	particular observations from the sample.  For example,
-	<lit>smpl obs!=4 --restrict</lit> will drop just the fourth
-	observation. If the data points are identified by labels,
-	<lit>smpl obs!="USA" --restrict</lit> will drop the
-	observation with label <quote>USA</quote>.</para>
+      <para>La variabile interna <lit>obs</lit> può essere usata con la
+      forma <lit>--restrict</lit> di <lit>smpl</lit> per escludere
+      particolari osservazioni dal campione. Ad esempio,
+	<lit>smpl obs!=4 --restrict</lit> scarterà la quarta
+        osservazione. Se le osservazioni sono identificate da etichette, 
+	<lit>smpl obs!="USA" --restrict</lit> scarterà l'osservazione a
+        cui è associata l'etichetta <quote>USA</quote>.</para>
 
-      <para>
-	One point should be noted about the <lit>--dummy</lit>,
-	<lit>--restrict</lit> and <lit>--no-missing</lit> forms of
-	<lit>smpl</lit>: Any <quote>structural</quote> information in
-	the data file (regarding the time series or panel nature of
-	the data) is lost when this command is issued.  You may
-	reimpose structure with the <cmdref targ="setobs"/> command.
+      <para>Per le forme <lit>--dummy</lit>, <lit>--restrict</lit> e
+      <lit>--no-missing</lit> di <lit>smpl</lit>, occore tenere presente
+      che tutte le informazioni <quote>strutturali</quote> contenute nel
+      file dei dati (a proposito della struttura di serie storiche o di
+      panel dei dati) vengono perse. È possibile reimpostare la
+      struttura originale con il comando <cmdref targ="setobs"/>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Sample</menu-path>
+      <menu-path>/Campione</menu-path>
     </gui-access>
 
   </command>
@@ -4392,29 +4385,30 @@
       <options>
         <option>
 	  <flag>--verbose</flag>
-	  <effect>print ranked data</effect>
+	  <effect>mostra i dati ordinati</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para context="cli">
-	Prints Spearman's rank correlation coefficient for the two
-	variables <mathvar>x</mathvar> and <mathvar>y</mathvar>. The
-	variables do not have to be ranked manually in advance; the
-	function takes care of this.
+	Mostra il coefficiente di correlazione di rango di Spearman per
+        le variabili <mathvar>x</mathvar> e <mathvar>y</mathvar>. Le
+        variabili non devono essere state ordinate manualmente in
+        precedenza, se ne occupa la funzione.
       </para>
 
       <para context="gui">
-	Prints Spearman's rank correlation coefficient for a specified
-	pair of variables.  The variables do not have to be ranked
-	manually in advance; the function takes care of this.</para>
+	Mostra il coefficiente di correlazione di rango di Spearman 
+        per una coppia di variabili.  Le variabili non devono essere
+        state ordinate manualmente in precedenza, se ne occupa la
+        funzione.</para>
 
       <para>
-	The automatic ranking is from largest to smallest (i.e. the
-	largest data value gets rank 1).  If you need to invert this
-	ranking, create a new variable which is the negative of the
-	original first.  For example:
+	L'ordinamento automatico è dal massimo al minimo (ossia il
+        valore massimo nei dati assume il rango 1). Se occorre invertire
+        l'ordinamento, creare una variabile che è il negativo della
+        variabile originale, ad esempio:
       </para>
 
       <code>
@@ -4423,7 +4417,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Rank correlation</menu-path>
+      <menu-path>/Modello/SPEARMAN - Correlazione di rango</menu-path>
     </gui-access>
 
   </command>
@@ -4437,26 +4431,26 @@
       <options>
         <option>
 	  <flag>--cross</flag>
-	  <effect>generate cross-products as well as squares</effect>
+	  <effect>genera anche i prodotti incrociati, oltre ai quadrati</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Generates new variables which are squares of the variables in
-	<repl>lista-variabili</repl> (plus cross-products if the
-	<lit>--cross</lit> option is given).  For example, <cmd>square
-	  x y</cmd> will generate <lit>sq_x</lit> = <lit>x</lit>
-	squared, <lit>sq_y</lit> = <lit>y</lit> squared and
-	(optionally) <lit>x_y</lit> = <lit>x</lit> times <lit>y</lit>.
-	If a particular variable is a dummy variable it is not squared
-	because we will get the same variable.  
+	Genera nuove variabili che sono i quadrati delle variabili nella
+	<repl>lista-variabili</repl> (con anche i prodotti incrociati,
+        se si usa l'opzione <lit>--cross</lit>). Ad esempio, <cmd>square
+          x y</cmd> genera <lit>sq_x</lit> = <lit>x</lit> al quadrato,
+          <lit>sq_y</lit> = <lit>y</lit> al quadrato e (opzionalmente)
+          <lit>x_y</lit> = <lit>x</lit> per <lit>y</lit>.
+	Se una particolare variabile è una dummy, non ne viene fatto il
+        quadrato, visto che si ottiene la stessa variabile.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi variabili/squares of variables</menu-path>
+      <menu-path>/Dati/Aggiungi variabili/Quadrati delle variabili selezionate</menu-path>
     </gui-access>
 
   </command>
@@ -4466,61 +4460,61 @@
 
     <usage>
       <arguments>
-        <argument>datafile</argument>
+        <argument>file-dati</argument>
         <argument optional="true">lista-variabili</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--csv</flag>
-	  <effect>use CSV format</effect>
+	  <effect>usa il formato CSV</effect>
         </option>
         <option>
 	  <flag>--gnu-octave</flag>
-	  <effect>use GNU Octave format</effect>
+	  <effect>usa il formato GNU Octave</effect>
         </option>
         <option>
 	  <flag>--gnu-R</flag>
-	  <effect>use GNU R format</effect>
+	  <effect>usa il formato GNU R</effect>
         </option>
         <option>
 	  <flag>--traditional</flag>
-	  <effect>use traditional ESL format</effect>
+	  <effect>usa il formato tradizionale ESL</effect>
         </option>
         <option>
 	  <flag>--gzipped</flag>
-	  <effect>apply gzip compression</effect>
+	  <effect>comprime con gzip</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Saves either the entire dataset or, if a <repl>lista-variabili</repl>
-	is supplied, a specified subset of the variables in the
-	current dataset, to the file given by
-	<repl>datafile</repl>.</para>
+	Salva l'intero dataset, o un sottoinsieme delle variabili se è
+        stata indicata una <repl>lista-variabili</repl>, nel file
+        indicato con <repl>file-dati</repl>.</para>
 
       <para>
-	By default the data are saved in <quote>native</quote> gretl
-	format, but the option flags permit saving in several
-	alternative formats.  CSV (Comma-Separated Values) data may be
-	read into spreadsheet programs, and can also be manipulated
-	using a text editor.  The formats of <program>Octave</program>
-	and <program>R</program> are designed for use with the
-	respective programs.  Gzip compression may be useful for large
-	datasets.  See <manref targ="datafiles"/> for details on the
-	various formats.</para>
+	L'impostazione predefinita è di salvare i dati nel formato
+        <quote>interno</quote> di gretl, ma le opzioni del comando
+        permettono di usare formati alternativi. I dati CSV
+        (Comma-Separated Values, dati separati da virgole) possono
+        essere letti dai programmi di foglio elettronico e possono
+        essere modificati con un editor di testi. I formati
+	<program>Octave</program> e <program>R</program> sono destinati
+        ad essere usati con i rispettivi programmi. La compressione con
+        gzip può essere utile per grandi dataset. Si veda <manref
+        targ="datafiles"/> per i dettagli sui vari formati.</para>
 
       <para>
-	Note that any scalar variables will not be saved
-	automatically: if you wish to save scalars you must explicitly
-	list them in <repl>lista-variabili</repl>.
+	Si noti che le variabili scalari non saranno salvate
+        automaticamente: per salvarli occorre includerli esplicitamente
+        nella <repl>lista-variabili</repl>.
       </para>  
 	
     </description>
 
     <gui-access>
-      <menu-path>/File/Save data; /File/Export data</menu-path>
+      <menu-path>/File/Salva dati; /File/Esporta dati</menu-path>
     </gui-access>
 
   </command>
@@ -4535,17 +4529,17 @@
 
     <description>
       <para>
-	Print summary statistics for the variables in
-	<repl>lista-variabili</repl>, or for all the variables in the data set
-	if <repl>lista-variabili</repl> is omitted. Output consists of the
-	mean, standard deviation (sd), coefficient of variation (=
-	sd/mean), median, minimum, maximum, skewness coefficient, and
-	excess kurtosis.
+	Mostra le statistiche descrittive per le variabili nella
+	<repl>lista-variabili</repl>, o per tutte le variabili nel
+        dataset, se non si indica una <repl>lista-variabili</repl>.
+        L'output comprende media, deviazione standard, coefficiente
+        di variazione (= deviazione standard / media), mediana, minimo,
+        massimo, coefficiente di asimmetria, curtosi.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Summary statistics</menu-path>
+      <menu-path>/Dati/Statistiche descrittive</menu-path>
       <other-access>Menù pop-up nella finestra principale</other-access>
     </gui-access>
 
@@ -4555,8 +4549,8 @@
 
     <usage>
       <arguments>
-        <argument>type</argument>
-        <argument>savevars</argument>
+        <argument>tipo</argument>
+        <argument>salva-variabili</argument>
       </arguments>
       <examples>
         <example>system type=sur</example>
@@ -4567,15 +4561,16 @@
 
     <description>
       <para>
-	Starts a system of equations.  At present two types of system
-	are supported: <cmd>sur</cmd> (Seemingly Unrelated
-	Regressions) and <cmd>3sls</cmd> (Three-Stage Least Squares).
-	In the optional <cmd>save=</cmd> field of the command you can
-	specify whether to save the residuals (<cmd>resids</cmd>)
-	and/or the fitted values (<cmd>fitted</cmd>).  The system must
-	contain at least two equations specified using the
-	<cmd>equation</cmd> command, and it must be terminated with
-	the line <cmd>end system</cmd>.
+	Crea un sistema di equazioni. Al momento sono supportati due
+        sistemi: <cmd>sur</cmd> (Seemingly Unrelated Regressions:
+        regressioni apparentemente non collegate) e <cmd>3sls</cmd>
+        (Three-Stage Least Squares: minimi quadrati a tre stadi). Nel
+        campo opzionale <cmd>save=</cmd> del comando è possibile
+        specificare se salvare i residui (<cmd>resids</cmd>) e/o
+	i valori stimati (<cmd>fitted</cmd>). Il sistema deve contenere
+        almeno due equazioni specificate con il comando
+        <cmd>equation</cmd> e deve essere chiuso con la riga <cmd>end
+        system</cmd>.
       </para>
     </description>
 
@@ -4590,26 +4585,26 @@
       <options>
         <option>
 	  <flag>--complete</flag>
-	  <effect>Create a complete document</effect>
+	  <effect>Crea un documento completo</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Va eseguito dopo la stima di un modello.  Prints the estimated
-	model in the form of a &latex; table.  If a nomefile is
-	specified using the <lit>-f</lit> flag output goes to that
-	file, otherwise it goes to a file with a name of the form
-	<filename>model_N.tex</filename>, where <lit>N</lit> is the
-	number of models estimated to date in the current session. See
-	also <cmdref targ="eqnprint"/>.
+	Va eseguito dopo la stima di un modello.  Stampa il modello
+        stimato sotto forma di tabella &latex;.  Se viene specificato un
+        nome di file dopo l'opzione <lit>-f</lit>, l'output viene
+        scritto nel file, altrimenti viene scritto in un file col nome
+	<filename>model_N.tex</filename>, dove <lit>N</lit> è il numero
+        dei modelli stimati finora nella sessione in corso.
+	Si veda anche <cmdref targ="eqnprint"/>.
       </para>
 
       <para>
-	If the <lit>--complete</lit> flag is given the &latex; file is
-	a complete document, ready for processing; otherwise it must
-	be included in a document.
+	Usando l'opzione <lit>--complete</lit>, il file &latex; è un
+        documento completo, pronto per essere processato; altrimenti il
+        file va incluso in un documento.
       </para>
     </description>
 
@@ -4624,15 +4619,15 @@
 
     <description>
       <para>
-	Must follow a model estimation command.  Gives the frequency
-	distribution for the residual from the model along with a
-	chi-square test for normality, based on the procedure
-	suggested by Doornik and Hansen (1984).
+	Deve seguire un comando di stima. Mostra la distribuzione di
+        frequenza dei residui del modello, insieme a un test chi-quadro
+        per la normalità, basato sulla procedura suggerita da Doornik
+        e Hansen (1984).
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Test/normality of residual</menu-path>
+      <menu-path>Finestra del modello, /Test/Normalità dei residui</menu-path>
     </gui-access>
 
   </command>
@@ -4657,15 +4652,14 @@
     </usage>
 
     <description>
-      <para>Estimates a Tobit model.  This model may be appropriate
-	when the dependent variable is <quote>truncated</quote>.  For
-	example, positive and zero values of purchases of durable
-	goods on the part of individual households are observed, and
-	no negative values, yet decisions on such purchases may be
-	thought of as outcomes of an underlying, unobserved
-	disposition to purchase that may be negative in some cases.
-	For details see Greene's <book>Econometric Analysis</book>,
-	Chapter 20.</para>
+      <para>Stima un modello Tobit. Il modello può essere appropriato
+      quando la variabile dipendente è <quote>troncata</quote>. Ad
+      esempio, vengono osservati valori positivi o nulli della spesa dei
+      consumatori per beni durevoli, ma non valori negativi; tuttavia le
+      decisioni di spesa possono essere pensate come derivanti da una
+      propensione al consumo, sottostante e non osservata, che può anche
+      essere negativa in alcuni casi. Per i dettagli si veda il capitolo
+      20 di <book>Econometric Analysis</book> di Greene.</para>
     </description>
 
     <gui-access>
@@ -4681,7 +4675,7 @@
       <arguments>
         <argument>variabile-dipendente</argument>
         <argument>variabili-indipendenti</argument>
-	<argument separated="true">instruments</argument>
+	<argument separated="true">strumenti</argument>
       </arguments>
       <options>
         <option>
@@ -4690,7 +4684,7 @@
         </option>
 	<option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>errori standard robusti</effect>
         </option>
       </options>      
       <examples>
@@ -4700,37 +4694,36 @@
 
     <description>
       <para context="cli">
-	Computes two-stage least squares (TSLS or IV) estimates:
-	<repl>variabile-dipendente</repl> is the dependent variable,
-	<repl>variabili-indipendenti</repl> is the list of independent variables
-	(including right-hand side endogenous variables) in the
-	structural equation for which TSLS estimates are needed; and
-	<repl>instruments</repl> is the combined list of exogenous and
-	predetermined variables in all the equations. If the
-	<repl>instruments</repl> list is not at least as long as
-	<repl>variabili-indipendenti</repl>, the model is not identified.</para>
+	Calcola le stime minimi quadrati a due stadi (TSLS o IV), date
+        la <repl>variabile-dipendente</repl> e la lista di
+	<repl>variabili-indipendenti</repl> (incluse le variabili
+        esogene) nell'equazione strutturale per cui sono richieste le
+        stime TSLS; <repl>strumenti</repl> è la lista completa delle
+        variabili esogene e predeterminate in tutte le equazioni. Se la
+        lista degli <repl>instruments</repl> non è lunga almeno quanto
+        quella delle <repl>variabili-indipendenti</repl>, il modello non
+        è identificato.</para>
 
       <para context="cli">
-	In the above example, the <lit>y</lit>s are the endogenous
-	variables and the <lit>x</lit>s are the exogenous and
-	predetermined variables.  
+	Nell'esempio precedente, le <lit>y</lit> sono le variabili
+        endogene e le <lit>x</lit> sono le variabili esogene e
+        predeterminate.
       </para>
 
       <para context="gui">
-	This command requires the selection of two lists of variables:
-	the independent variables to appear in the given model and a
-	set of "instruments".  The latter comprises the exogenous
-	and/or predetermined variables that may be used as regressors
-	to derive fitted values for the right-hand side endogenous
-	variables.</para>
+	Questo comando richiede la scelta di due liste di variabili; le
+        variabili indipendenti che appaiono nel modello e un elenco di
+        "strumenti". Questi ultimi comprendono le variabili esogene e/o
+        altre variabili predeterminate che possono essere usate come
+        regressori per derivare valori stimati delle variabili endogene
+        del modello.</para>
 
-      <para context="gui">If some of the right-hand side variables for
-	the model are exogenous, they should be referenced in both
-	lists.</para>
+      <para context="gui">Se alcune delle variabili del modello sono
+      esogene, vanno incluse in entrambe le liste.</para>
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Two-Stage least Squares</menu-path>
+      <menu-path>/Modello/TSLS - Minimi quadrati a due stadi</menu-path>
     </gui-access>
 
   </command>
@@ -4742,12 +4735,12 @@
       <arguments>
         <argument>ordine</argument>
         <argument>lista-variabili</argument>
-	<argument separated="true">detlist</argument>
+	<argument separated="true">lista-deterministica</argument>
       </arguments>
       <options>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print impulse responses etc.</effect>
+	  <effect>non mostrare risposte-impulsi ecc.</effect>
         </option>
       </options>
       <examples>
@@ -4758,76 +4751,76 @@
     <description>
 
       <para context="gui">
-	This command requires specification of:</para>
+	Questo comando richiede la specificazione di:</para>
 
       <ilist context="gui">
-	<li><para context="gui">- the dependent variable for the first
-	    equation in the VAR system;</para>
+	<li><para context="gui">- La variabile dipendente per la prima
+        equazione nel sistema VAR;</para>
 	</li>
 
-	<li><para context="gui">- the lag order, that is, the number of
-	    lags of each variable that should be included in the
-	    system;</para>
+	<li><para context="gui">- L'ordine di ritardi, ossia il numero
+        di ritardi di ogni variabile presente nel sistema;</para>
 	</li>
 
-	<li><para context="gui">- any "deterministic" terms (e.g. the
-	    constant, a time trend, seasonal dummy variables and so
-	    on); and</para>
+	<li><para context="gui">- Eventuali termini "deterministici" (ad
+        es. la costante, un trend temporale, variabili dummy stagionali
+        e così via; e</para>
 	</li>
 
-	<li><para context="gui">- a list of independent variables, lags
-	    of which will be included on the right-hand side of the
-	    equations (note: do not include lagged variables in this
-	    list -- they will be added automatically).</para>
+	<li><para context="gui">- Una lista di variabili indipendenti,
+        i cui ritardi saranno inclusi a destra delle equazioni (nota:
+        non includere variabili ritardate in questa lista, verranno
+        aggiunte automaticamente).</para>
 	</li>
       </ilist>
 
-      <para context="gui">A separate regression will be run for
-	variable in the system.  Output for each equation includes
-	F-tests for zero restrictions on all lags of each of the
-	variables and an F-test for the maximum lag, along with
-	forecast variance decompositions and impulse response
-	functions.</para>  
+      <para context="gui">Viene calcolata una regressione separata per
+      ogni variabile del sistema; i risultati comprendono i test F per i
+      vincoli di uguaglianza a zero su tutti i ritardi della variabili e
+      un test F per il ritardo massimo, oltre alla scomposizione della
+      varianza della previsione e alle funzioni di
+      impulso-risposta.</para>  
 
       <para context="cli">
-	Sets up and estimates (using OLS) a vector autoregression
-	(VAR).  The first argument specifies the lag order, then
-	follows the setup for the first equation.  Don't include lags
-	among the elements of <repl>lista-variabili</repl> &mdash; they will
-	be added automatically.  The semi-colon separates the
-	stochastic variables, for which <repl>order</repl> lags will
-	be included, from deterministic terms in <repl>detlist</repl>,
-	such as the constant, a time trend, and dummy
-	variables.</para>
+	Imposta e stima (usando OLS) un'autoregressione vettoriale (VAR).
+        Il primo argomento specifica l'ordine di ritardo, quindi segue
+        l'impostazione della prima equazione. Non includere i ritardi
+        tra gli elementi della <repl>lista-variabili</repl> &mdash;
+        verranno aggiunti automaticamente. Il punto e virgola separa le
+        variabili stocastiche, per cui verrà incluso un numero di
+        ritardi pari a <repl>ordine</repl>, dai termini deterministici
+        presenti nella <repl>lista-deterministica</repl>, come la
+        costante, un trend temporale o variabili dummy.</para>
 
       <para context="cli">
-	In fact, gretl is able to recognize the more common
-	deterministic variables (constant, time trend, dummy variables
-	with no values other than 0 and 1) as such, so these do not
-	have to placed after the semi-colon.  More complex
-	deterministic variables (e.g. a time trend interacted with a
-	dummy variable) must be put after the semi-colon.</para>
+	gretl è in grado di riconoscere le più comuni variabili
+        deterministiche (costante, trend temporale, variabili dummy con
+        valori 0 o 1), quindi queste non devono necessariamente essere
+        elencate dopo il punto e virgola. Variabili deterministiche più
+        complesse (ad es. un trend temporale moltiplicato per una
+        variabile dummy) devono invece essere indicate esplicitamente.</para>
 
       <para context="cli">
-	A separate regression is run for each variable in
-	<repl>lista-variabili</repl>. Output for each equation includes
-	<mathvar>F</mathvar>-tests for zero restrictions on all lags
-	of each of the variables; an <mathvar>F</mathvar>-test for the
-	significance of the maximum lag; forecast variance
-	decompositions; and impulse response functions.</para>
+	Viene calcolata una regressione separata per ognuna delle
+        variabili nella <repl>lista-variabili</repl>. Il risultato di
+        ogni equazione include i test <mathvar>F</mathvar>per i vincoli
+        di uguaglianza a zero su tutti i ritardi delle variabili; un
+        test <mathvar>F</mathvar>-test per la significatività del
+        ritardo massimo; la scomposizione della varianza della
+        previsione e le funzioni di impulso-risposta.</para>
 
       <para>
-	The variance decompositions and impulse responses are based on
-	the Cholesky decomposition of the contemporaneous covariance
-	matrix, and in this context the order in which the
-	(stochastic) variables are given matters.  The first variable
-	in the list is assumed to be <quote>most exogenous</quote>
-	within-period.</para> 
+	Le decomposizioni della varianza e le funzioni di
+        impulso-risposta sono basate sulla decomposizione di Cholesky
+        della matrice di covarianza contemporanea, e in questo contesto
+        l'ordine incui vengono date le variabili stocastiche conta.
+	La prima variabile nella lista viene considerata come la
+	<quote>più esogena</quote> all'interno del periodo.</para> 
 
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Serie storiche/Vector autoregression</menu-path>
+      <menu-path>/Modello/Serie storiche/VAR - Autoregressione vettoriale</menu-path>
     </gui-access>
 
   </command>
@@ -4836,8 +4829,8 @@
 
     <description>
       <para>
-	Prints a listing of variables currently available.
-	<cmd>list</cmd> and <cmd>ls</cmd> are synonyms.  
+	Mostra un elenco delle variabili disponibili.
+	<cmd>list</cmd> e <cmd>ls</cmd> sono sinonimi. 
       </para>
     </description>
 
@@ -4855,20 +4848,20 @@
 
     <description>
       <para context="cli">
-	Calculates the <mathvar>F</mathvar> statistic for the null
-	hypothesis that the population variances for the variables
-	<repl>var1</repl> and <repl>var2</repl> are equal, and shows
-	its p-value.
+	Calcola la statistica <mathvar>F</mathvar> per l'ipotesi nulla
+        che le varianze della popolazione per le variabili
+	<repl>var1</repl> e <repl>var2</repl> siano uguali e mostra il
+        p-value.
       </para>
       <para context="gui">
-	Calculates the <mathvar>F</mathvar> statistic for the null
-	hypothesis that the population variances are equal for the
-	two selected variables, and shows its p-value.
+        Calcola la statistica <mathvar>F</mathvar> per l'ipotesi nulla
+        che le varianze della popolazione per le variabili selezionate
+        siano uguali e mostra il p-value.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Difference of variances</menu-path>
+      <menu-path>/Dati/Differenza delle varianze</menu-path>
     </gui-access>
 
   </command>
@@ -4878,7 +4871,7 @@
 
     <usage>
       <arguments>
-        <argument>wtvar</argument>
+        <argument>variabile-pesi</argument>
         <argument>variabile-dipendente</argument>
 	<argument>variabili-indipendenti</argument>
       </arguments>
@@ -4892,27 +4885,28 @@
 
     <description>
       <para context="cli">
-	Computes weighted least squares estimates using
-	<repl>wtvar</repl> as the weight, <repl>variabile-dipendente</repl> as the
-	dependent variable, and <repl>variabili-indipendenti</repl> as the list of
-	independent variables.  Specifically, an OLS regression is run
-	on <repl>wtvar</repl> <lit>*</lit> <repl>variabile-dipendente</repl> against
-	<repl>wtvar</repl> <lit>*</lit> <repl>variabili-indipendenti</repl>. If the
-	<repl>wtvar</repl> is a dummy variable, this is equivalent to
-	eliminating all observations with value zero for
-	<repl>wtvar</repl>.
+	Calcola stime con minimi quadrati ponderati usando
+	<repl>variabile-pesi</repl> come pesi. In pratica viene
+        calcolata una regressione OLS di <repl>variabile-pesi</repl>
+        <lit>*</lit> <repl>variabile-dipendente</repl> rispetto a
+        <repl>variabile-pesi</repl> <lit>*</lit>
+        <repl>variabili-indipendenti</repl>. Se la
+	<repl>variabile-pesi</repl> è una variabile dummy, la procedura
+        equivale a eliminare tutte le osservazioni per cui
+        <repl>variabile-pesi</repl> vale zero.
       </para>
       <para context="gui">
-	Let "wtvar" denote the variable selected in the "Weight
-	variable" box.  An OLS regression is run, where the dependent
-	variable is the product of wtvar and the selected dependent
-	variable, and the independent variables are also multiplied by
-	wtvar.  If wtvar is a dummy variable, this is equivalent to
-	eliminating all observations with value zero for wtvar.</para>
+	Detta "variabile-pesi" la variabile scelta nel campo "Variabile
+        pesi", viena stimata una regressione OLS in cui la variabile
+        dipendente è il prodotto della variabile dipendente selezionata
+        e della variabile-pesi, e anche le variabili indipendenti sono
+        moltiplicate per la variabile-pesi. Se la variabile-pesi è una
+        variabile dummy, ciò equivale a eliminare tutte le osservazioni
+        per cui variabile-pesi vale zero.</para>
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Weighted Least Squares</menu-path>
+      <menu-path>/Modello/WLS - Minimi quadrati ponderati</menu-path>
     </gui-access>
 
   </command>
