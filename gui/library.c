@@ -749,6 +749,35 @@ gint dump_cmd_stack (const char *fname, int insert_open_data)
 
 /* ........................................................... */
 
+int work_done (void)
+     /* See whether user has done any work, to determine whether or
+	not to offer the option of saving commands/output.  Merely
+	running a script, or opening a data file, or a few other
+	trivial actions, do not count as "work done". */
+{
+    int i, work = 0;
+    const char *s;
+
+    for (i=0; i<n_cmds; i++) {
+	s = cmd_stack[i];
+	if (strlen(s) > 2 && 
+	    strncmp(s, "run ", 4) &&
+	    strncmp(s, "open", 4) &&
+	    strncmp(s, "help", 4) &&
+	    strncmp(s, "impo", 4) &&
+	    strncmp(s, "info", 4) &&
+	    strncmp(s, "labe", 4) &&
+	    strncmp(s, "list", 4) &&
+	    strncmp(s, "quit", 4)) {
+	    work = 1;
+	    break;
+	}
+    }
+    return work;
+}
+
+/* ........................................................... */
+
 void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 {
     PRN *prn;

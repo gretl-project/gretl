@@ -29,6 +29,7 @@ extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
+extern int work_done (void); /* library.c */
 extern void show_spreadsheet (DATAINFO *pdinfo);
 
 GtkWidget *open_dialog;
@@ -695,38 +696,6 @@ void menu_exit_check (GtkWidget *w, gpointer data)
     if (ret == FALSE) gtk_main_quit();
 }
 
-/* ........................................................... */
-
-int work_done (void)
-     /* See whether user has done any work, to determine whether or
-	not to offer the option of saving commands/output.  Merely
-	running a script, or opening a data file, or a few other
-	trivial actions, do not count as "work done". */
-{
-    FILE *fp;
-    char line[MAXLEN];
-    int work = 0;
-    
-    fp = fopen(cmdfile, "r");
-    if (fp == NULL) return -1;
-    while (fgets(line, MAXLEN-1, fp)) {
-	if (strlen(line) > 2 && 
-	    strncmp(line, "run ", 4) &&
-	    strncmp(line, "open", 4) &&
-	    strncmp(line, "help", 4) &&
-	    strncmp(line, "impo", 4) &&
-	    strncmp(line, "info", 4) &&
-	    strncmp(line, "labe", 4) &&
-	    strncmp(line, "list", 4) &&
-	    strncmp(line, "quit", 4)) {
-	    work = 1;
-	    break;
-	}
-    }
-    fclose(fp);
-    return work;
-}
-
 /* ......................................................... */
 
 static void save_data_callback (void)
@@ -738,7 +707,6 @@ static void save_data_callback (void)
 }
 
 #ifdef USE_GNOME
-/* ......................................................... */
 
 int yes_no_dialog (char *title, char *message, int cancel)
 {

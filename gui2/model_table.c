@@ -33,10 +33,11 @@ static void print_rtf_row_spec (PRN *prn, int tall);
 #define MAX_TABLE_MODELS 6
 
 #ifdef GNULL /* issue: gtk+-1.2 versus gtk+-2.0 */
+
 GtkItemFactoryEntry model_table_items[] = {
 # ifdef USE_GNOME
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },     
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },  
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },   
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
@@ -47,7 +48,9 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/_LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
+
 #else
+
 GtkItemFactoryEntry model_table_items[] = {
 # ifdef USE_GNOME
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
@@ -62,6 +65,7 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/_LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, },
     { NULL, NULL, NULL, 0, NULL }
 };
+
 #endif /* GNULL */
 
 static int real_model_table_list_length (void)

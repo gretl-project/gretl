@@ -36,6 +36,8 @@ extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
+extern int work_done (void); /* library.c */
+
 GtkWidget *open_dialog;
 int session_saved;
 
@@ -705,6 +707,8 @@ void menu_exit_check (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+#if 0 /* see replacement in library.c */
+
 int work_done (void)
      /* See whether user has done any work, to determine whether or
 	not to offer the option of saving commands/output.  Merely
@@ -734,6 +738,8 @@ int work_done (void)
     fclose(fp);
     return work;
 }
+
+#endif /* 0 */
 
 /* ......................................................... */
 

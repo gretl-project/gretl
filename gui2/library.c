@@ -58,7 +58,9 @@ int gui_exec_line (char *line,
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (int gui);
 static char *bufgets (char *s, int size, const char *buf);
+#ifndef G_OS_WIN32
 static int get_terminal (char *s);
+#endif
 
 int echo_off;               /* don't echo commands */
 int replay;                 /* are we replaying old session commands or not? */
@@ -715,6 +717,35 @@ gint dump_cmd_stack (const char *fname, int insert_open_data)
 	fclose(fp);
 
     return 0;
+}
+
+/* ........................................................... */
+
+int work_done (void)
+     /* See whether user has done any work, to determine whether or
+	not to offer the option of saving commands/output.  Merely
+	running a script, or opening a data file, or a few other
+	trivial actions, do not count as "work done". */
+{
+    int i, work = 0;
+    const char *s;
+
+    for (i=0; i<n_cmds; i++) {
+	s = cmd_stack[i];
+	if (strlen(s) > 2 && 
+	    strncmp(s, "run ", 4) &&
+	    strncmp(s, "open", 4) &&
+	    strncmp(s, "help", 4) &&
+	    strncmp(s, "impo", 4) &&
+	    strncmp(s, "info", 4) &&
+	    strncmp(s, "labe", 4) &&
+	    strncmp(s, "list", 4) &&
+	    strncmp(s, "quit", 4)) {
+	    work = 1;
+	    break;
+	}
+    }
+    return work;
 }
 
 /* ........................................................... */
