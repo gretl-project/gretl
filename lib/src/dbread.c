@@ -646,7 +646,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 }
 
 /**
- * get_rats_data:
+ * get_rats_data_by_series_number:
  * @fname: name of RATS 4.0 database to read from
  * @series_number: number of the series within the database
  * @sinfo: holds info on the given series (input)
@@ -664,8 +664,7 @@ int get_rats_data_by_series_number (const char *fname,
 				    int series_number,
 				    SERIESINFO *sinfo, 
 				    double **Z)
-/* series are numbered from 1 for this function.
-   We need to know the specific filename. */
+     /* series are numbered from 1 for this function */
 {
     FILE *fp;
     int offset;
