@@ -1046,9 +1046,10 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    goto genr_return;
 
 		default:
-		    if (strlen(word) != 0) 
+		    if (strlen(word) != 0) { 
 			sprintf(gretl_errmsg, 
 				_("%s is not a variable or function"), word);
+		    }
 		    err = E_UNSPEC;
 		    goto genr_return;
 

@@ -230,6 +230,11 @@ int _isnumber (const char *str)
     extern int errno;
     int ret = 1;
 
+    if (!strcmp(str, "inf") || !strcmp(str, "nan")) {
+	/* could be variable names: they are not valid numbers */
+	return 0;
+    }
+
     errno = 0;
 
 #ifdef ENABLE_NLS
