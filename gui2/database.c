@@ -764,7 +764,7 @@ static void db_drag_connect (windata_t *dbwin)
 
 /* ........................................................... */
 
-static int populate_series_list (windata_t *win, PATHS *ppaths)
+static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
 {
     GtkListStore *store;
     GtkTreeIter iter;    
@@ -774,7 +774,7 @@ static int populate_series_list (windata_t *win, PATHS *ppaths)
     size_t n;
     int err = 0;
 
-    strcpy(dbidx, win->fname);
+    strcpy(dbidx, dbwin->fname);
     strcat(dbidx, ".idx");
     fp = fopen(dbidx, "r");
     if (fp == NULL) {
@@ -783,7 +783,7 @@ static int populate_series_list (windata_t *win, PATHS *ppaths)
     }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
-			   (GTK_TREE_VIEW(win->listbox)));
+			   (GTK_TREE_VIEW(dbwin->listbox)));
     gtk_list_store_clear (store);
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
 
