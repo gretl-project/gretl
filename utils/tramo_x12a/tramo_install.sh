@@ -21,3 +21,8 @@ cd $DEST
 wget $SITE/$PKG
 unzip $PKG && rm $PKG
 tar xvfz TSU.TGZ && rm TSU.TGZ
+mkdir docs
+cd docs
+wget $SITE/manualdos.pdf
+wget $SITE/updatedos.pdf
+wget $SITE/guide.pdf

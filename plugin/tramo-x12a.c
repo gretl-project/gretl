@@ -8,17 +8,26 @@
 #endif
 
 typedef enum {
+    TRAMO,
+    X12A
+} opt_codes;
+
+typedef enum {
     D11,     /* seasonally adjusted series */
     D12,     /* trend/cycle */
     D13,     /* irregular component */
     TRIGRAPH /* graph showing all of the above */
-} x12a_objects;
+} tx_objects;
 
 const char *x12a_series_strings[] = {
     "d11", "d12", "d13"
 };
 
-const char *x12a_descrip_formats[] = {
+const char *tramo_series_strings[] = {
+    "safin.t", "trfin.t", "irreg.t"
+};
+
+const char *tx_descrip_formats[] = {
     N_("seasonally adjusted %s"),
     N_("trend/cycle for %s"),
     N_("irregular component of %s")
@@ -46,7 +55,7 @@ typedef struct {
 #if GTK_MAJOR_VERSION == 1
     int ret;
 #endif
-} x12a_request;
+} tx_request;
 
 #ifdef G_OS_WIN32
 static int win_fork_prog (char *cmdline, const char *dir)
@@ -82,21 +91,21 @@ static int win_fork_prog (char *cmdline, const char *dir)
 #endif
 
 #if GTK_MAJOR_VERSION == 1
-static void x12a_dialog_ok (GtkWidget *w, x12a_request *request)
+static void tx_dialog_ok (GtkWidget *w, tx_request *request)
 {
     request->ret = 1;
     gtk_widget_hide(request->dialog);
     gtk_main_quit();
 }
 
-static void x12a_dialog_cancel (GtkWidget *w, x12a_request *request)
+static void tx_dialog_cancel (GtkWidget *w, tx_request *request)
 {
     gtk_widget_hide(request->dialog);
     gtk_main_quit();
 }
 #endif
 
-static int x12a_dialog (x12a_request *request)
+static int tx_dialog (tx_request *request)
 {
     GtkWidget *hbox, *vbox, *tmp;
 #if GTK_MAJOR_VERSION >= 2
@@ -170,7 +179,7 @@ static int x12a_dialog (x12a_request *request)
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (request->dialog)->action_area), 
                         tmp, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(x12a_dialog_ok), request);
+                       GTK_SIGNAL_FUNC(tx_dialog_ok), request);
     gtk_widget_grab_default (tmp);
     gtk_widget_show (tmp);
 
@@ -179,7 +188,7 @@ static int x12a_dialog (x12a_request *request)
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (request->dialog)->action_area), 
                         tmp, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(x12a_dialog_cancel), request);
+                       GTK_SIGNAL_FUNC(tx_dialog_cancel), request);
     gtk_widget_show (tmp);
 
     gtk_widget_show (request->dialog);
@@ -189,92 +198,14 @@ static int x12a_dialog (x12a_request *request)
 #endif
 }
 
-int write_tramo_data (char *fname, int varnum, 
-		      double ***pZ, DATAINFO *pdinfo, 
-		      PATHS *paths, int *graph,
-		      const char *tramo,
-		      const char *tramodir)
+static void get_seats_command (char *seats, const char *tramo)
 {
-    int i, t;
-    int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    double x;
-    char tmp[9], varname[9], cmd[MAXLEN];
-    int startyr, startper;
-    FILE *fp = NULL;
+    char *p;
 
-    *gretl_errmsg = 0;
-
-    if (!pdinfo->vector[varnum]) {
-	sprintf(gretl_errmsg, "%s %s", pdinfo->varname[varnum], 
-		_("is a scalar"));
-	return 1;
-    }
-
-    sprintf(varname, pdinfo->varname[varnum]);
-    lower(varname);
-    sprintf(fname, "%s%c%s", tramodir, SLASH, varname);
-
-    fp = fopen(fname, "w");
-    if (fp == NULL) return 1;
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif   
-
-    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
-    startyr = (int) x;
-    sprintf(tmp, "%g", x);
-    startper = atoi(strchr(tmp, '.') + 1);
-
-    fprintf(fp, "%s\n", pdinfo->varname[varnum]);
-    fprintf(fp, "%d %d %d %d\n", tsamp, startyr, startper, pdinfo->pd);
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; ) {
-	for (i=0; i<pdinfo->pd; i++) {
-	    if (t == pdinfo->t1) {
-		i += startper - 1;
-	    }
-	    if (na((*pZ)[varnum][t])) {
-		fprintf(fp, "-99999 ");
-	    } else {
-		fprintf(fp, "%g ", (*pZ)[varnum][t]);
-	    }
-	    t++;
-	}
-	fputs("\n", fp);
-    }
-
-    /* FIXME: make these values configurable */
-    fprintf(fp, "$INPUT lam=-1,iatip=1,aio=2,va=3.3,noadmiss=1,seats=2,$\n");
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
-
-    if (fp != NULL) {
-	fclose(fp);
-    }
-
-#ifdef notdef /* testing */
-    sprintf(cmd, "cd %s && ./tramo -i %s >/dev/null && "
-	    "mv seats.itr serie && ./seats -OF %s", 
-	    tramodir, varname, varname);
-#endif
-
-#ifdef OS_WIN32 
-    sprintf(cmd, "\"%s\" -i %s", tramo, varname);
-    win_fork_prog(cmd, tramodir);
-#else
-    sprintf(cmd, "cd \"%s\" && \"%s\" -i %s >/dev/null", tramodir, tramo, varname);
-    system(cmd);
-#endif
-
-    strcpy(tmp, pdinfo->varname[varnum]);
-    lower(tmp);
-    sprintf(fname, "%s%coutput%c%s.out", tramodir, SLASH, SLASH, varname); 
-    /* N.B. ".OUT" for seats */
-
-    return 0;
+    strcpy(seats, tramo);
+    p = strrchr(seats, SLASH);
+    if (p != NULL) strcpy(p + 1, "seats");
+    else strcpy(seats, "seats");
 }
 
 static void truncate (char *str, int n)
@@ -284,8 +215,8 @@ static void truncate (char *str, int n)
     if (len > n) str[n] = 0;
 }
 
-static int graph_x12a_series (double **Z, DATAINFO *pdinfo, 
-			      PATHS *paths)
+static int graph_series (double **Z, DATAINFO *pdinfo, 
+			 PATHS *paths, int opt)
 {
     FILE *fp = NULL;
     int t;
@@ -298,14 +229,22 @@ static int graph_x12a_series (double **Z, DATAINFO *pdinfo,
 
     /* FIXME tics? */
 
-    fputs("# X-12-ARIMA tri-graph (no auto-parse)\n", fp);
+    if (opt == TRAMO) {
+	fputs("# TRAMO/SEATS tri-graph (no auto-parse)\n", fp);
+    } else {
+	fputs("# X-12-ARIMA tri-graph (no auto-parse)\n", fp);
+    }
 
     fputs("set multiplot\nset size 1.0,0.32\n", fp);
 
-    /* irregular component */
-    fprintf(fp, "set bars 0\nset origin 0.0,0.0\n"
-	    "plot '-' using :(1.0):($1-1.0) w yerrorbars title '%s', \\\n"
-	    "1.0 notitle\n", I_("irregular"));
+    /* irregular component */    
+    if (opt == TRAMO) {
+	fprintf(fp, "plot '-' using 1 w impulses title '%s'\n", I_("irregular"));
+    } else {
+	fprintf(fp, "set bars 0\nset origin 0.0,0.0\n"
+		"plot '-' using :(1.0):($1-1.0) w yerrorbars title '%s', \\\n"
+		"1.0 notitle\n", I_("irregular"));
+    }
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	fprintf(fp, "%g\n", Z[D13 + 1][t]);
     }
@@ -362,9 +301,9 @@ static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
     strcpy(targinfo->label[targv], srcinfo->label[srcv]);
 }
 
-static int add_x12a_series (const char *fname, int code,
-			    double **Z, DATAINFO *pdinfo,
-			    int v)
+static int add_series_from_file (const char *fname, int code,
+				 double **Z, DATAINFO *pdinfo,
+				 int v, int opt)
 {
     FILE *fp;
     char *p, line[128], varname[16], sfname[MAXLEN], date[8];
@@ -372,9 +311,14 @@ static int add_x12a_series (const char *fname, int code,
     int d, yr, per, err = 0;
     int t;
 
-    strcpy(sfname, fname);
-    p = strrchr(sfname, '.');
-    if (p != NULL) strcpy(p + 1, x12a_series_strings[code]);
+    if (opt == TRAMO) {
+	sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
+		tramo_series_strings[code]);
+    } else {
+	strcpy(sfname, fname);
+	p = strrchr(sfname, '.');
+	if (p != NULL) strcpy(p + 1, x12a_series_strings[code]);
+    }
 
     fp = fopen(sfname, "r");
     if (fp == NULL) {
@@ -384,33 +328,55 @@ static int add_x12a_series (const char *fname, int code,
 
     /* formulate name of new variable to add */
     strcpy(varname, pdinfo->varname[0]);
-    truncate(varname, 4);
-    strcat(varname, "_");
-    strcat(varname, x12a_series_strings[code]);
+    if (opt == TRAMO) {
+	truncate(varname, 5);
+	strcat(varname, "_");
+	strncat(varname, tramo_series_strings[code], 2);
+    } else {
+	truncate(varname, 4);
+	strcat(varname, "_");
+	strcat(varname, x12a_series_strings[code]);
+    }
 
     /* copy varname and label into place */
     strcpy(pdinfo->varname[v], varname);
-    sprintf(pdinfo->label[v], _(x12a_descrip_formats[code]), pdinfo->varname[0]);
+    sprintf(pdinfo->label[v], _(tx_descrip_formats[code]), pdinfo->varname[0]);
 
     for (t=0; t<pdinfo->n; t++) Z[v][t] = NADBL;
 
-    /* grab the data from the x12arima file */
-    while (fgets(line, 127, fp)) {
-	if (*line == 'd' || *line == '-') continue;
-	if (sscanf(line, "%d %lf", &d, &x) != 2) {
-	    err = 1; 
-	    break;
+    if (opt == TRAMO) {
+	int i = 0;
+
+	t = pdinfo->t1;
+	while (fgets(line, 127, fp)) {
+	    i++;
+	    if (i >= 7 && sscanf(line, " %lf", &x) == 1) {
+		Z[v][t++] = x;
+	    }
+	    if (t >= pdinfo->n) {
+		err = 1;
+		break;
+	    }
 	}
-	yr = d / 100;
-	per = d % 100;
-	sprintf(date, "%d.%d", yr, per);
-	t = dateton(date, pdinfo);
-	/* fprintf(stderr, "date='%s', t=%d\n", date, t); */
-	if (t < 0 || t >= pdinfo->n) {
-	    err = 1;
-	    break;
+    } else {
+	/* grab the data from the x12arima file */
+	while (fgets(line, 127, fp)) {
+	    if (*line == 'd' || *line == '-') continue;
+	    if (sscanf(line, "%d %lf", &d, &x) != 2) {
+		err = 1; 
+		break;
+	    }
+	    yr = d / 100;
+	    per = d % 100;
+	    sprintf(date, "%d.%d", yr, per);
+	    t = dateton(date, pdinfo);
+	    /* fprintf(stderr, "date='%s', t=%d\n", date, t); */
+	    if (t < 0 || t >= pdinfo->n) {
+		err = 1;
+		break;
+	    }
+	    Z[v][t] = x;
 	}
-	Z[v][t] = x;
     }
 
     fclose(fp);
@@ -418,7 +384,7 @@ static int add_x12a_series (const char *fname, int code,
     return err;
 }
 
-static void set_opts (x12a_request *request)
+static void set_opts (tx_request *request)
 {
     int i;
 
@@ -434,14 +400,65 @@ static void set_opts (x12a_request *request)
     }
 }
 
-static int write_spc_file (const char *fname, 
-			   double **Z, DATAINFO *pdinfo, 
-			   int varnum, int *varlist, 
-			   x12a_request *request)
+static int write_tramo_file (const char *fname, 
+			     double **Z, DATAINFO *pdinfo,
+			     int varnum) 
 {
     double x;
     FILE *fp;
-    int i, j, t;
+    int startyr, startper, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, t;
+    char tmp[8];
+
+    fp = fopen(fname, "w");
+    if (fp == NULL) return 1;
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif   
+
+    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
+    startyr = (int) x;
+    sprintf(tmp, "%g", x);
+    startper = atoi(strchr(tmp, '.') + 1);
+
+    fprintf(fp, "%s\n", pdinfo->varname[varnum]);
+    fprintf(fp, "%d %d %d %d\n", tsamp, startyr, startper, pdinfo->pd);
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; ) {
+	for (i=0; i<pdinfo->pd; i++) {
+	    if (t == pdinfo->t1) {
+		i += startper - 1;
+	    }
+	    if (na(Z[varnum][t])) {
+		fprintf(fp, "-99999 ");
+	    } else {
+		fprintf(fp, "%g ", Z[varnum][t]);
+	    }
+	    t++;
+	}
+	fputs("\n", fp);
+    }
+
+    /* FIXME: make these values configurable */
+    fprintf(fp, "$INPUT lam=-1,iatip=1,aio=2,va=3.3,noadmiss=1,seats=2,$\n");
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fp);
+
+    return 0;
+}
+
+static int write_spc_file (const char *fname, 
+			   double **Z, DATAINFO *pdinfo, 
+			   int varnum, int *varlist) 
+{
+    double x;
+    FILE *fp;
+    int i, t;
     int startyr, startper;
     char tmp[8];
 
@@ -477,16 +494,6 @@ static int write_spc_file (const char *fname,
     /* FIXME: make these values configurable */
     fputs("automdl{}\nx11{", fp);
 
-    /* construct list of vars to be grabbed */
-    varlist[0] = 0;
-    j = 1;
-    for (i=0; i<TRIGRAPH; i++) {
-	if (request->opt[TRIGRAPH].save || request->opt[i].save) {
-	    varlist[0] += 1;
-	    varlist[j++] = i;
-	}
-    }
-    
     if (varlist[0] > 0) {
 	if (varlist[0] == 1) {
 	    fprintf(fp, " save=%s ", x12a_series_strings[varlist[1]]); 
@@ -510,6 +517,20 @@ static int write_spc_file (const char *fname,
     return 0;
 }
 
+static void form_varlist (int *varlist, tx_request *request)
+{
+    int i, j = 1;
+
+    varlist[0] = 0;
+
+    for (i=0; i<TRIGRAPH; i++) {
+	if (request->opt[TRIGRAPH].save || request->opt[i].save) {
+	    varlist[0] += 1;
+	    varlist[j++] = i;
+	}
+    }
+}
+
 static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
 {
     targ->sd0 = src->sd0;
@@ -521,15 +542,15 @@ static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
 }
 
 static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				 double **x12Z, DATAINFO *x12info,
-				 int *varlist, x12a_request *request)
+				 double **tmpZ, DATAINFO *tmpinfo,
+				 int *varlist, tx_request *request)
 {
     int i, v, j, addvars = 0;
 
     /* how many vars are wanted, and new? */
     for (i=1; i<=varlist[0]; i++) {
 	if (request->opt[varlist[i]].save && 
-	    varindex(pdinfo, x12info->varname[i]) == pdinfo->v) {
+	    varindex(pdinfo, tmpinfo->varname[i]) == pdinfo->v) {
 	    addvars++;
 	}
     }
@@ -542,11 +563,11 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     j = pdinfo->v - addvars;
     for (i=1; i<=varlist[0]; i++) {
 	if (request->opt[varlist[i]].save) {
-	    v = varindex(pdinfo, x12info->varname[i]);
+	    v = varindex(pdinfo, tmpinfo->varname[i]);
 	    if (v < pdinfo->v) {
-		copy_variable(*pZ, pdinfo, v, x12Z, x12info, i);
+		copy_variable(*pZ, pdinfo, v, tmpZ, tmpinfo, i);
 	    } else {
-		copy_variable(*pZ, pdinfo, j++, x12Z, x12info, i);
+		copy_variable(*pZ, pdinfo, j++, tmpZ, tmpinfo, i);
 	    }
 	}
     }
@@ -554,18 +575,18 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-int write_x12a_data (char *fname, int varnum, 
-		     double ***pZ, DATAINFO *pdinfo, 
-		     PATHS *paths, int *graph,
-		     const char *x12a, const char *x12adir)
+int write_tx_data (char *fname, int varnum, 
+		   double ***pZ, DATAINFO *pdinfo, 
+		   PATHS *paths, int *graph,
+		   const char *prog, const char *workdir)
 {
-    int i, doit, err = 0;
+    int i, opt, doit, err = 0;
     char varname[9], cmd[MAXLEN];
     int varlist[4];
     FILE *fp = NULL;
-    x12a_request request;
-    double **x12Z;
-    DATAINFO *x12info;
+    tx_request request;
+    double **tmpZ;
+    DATAINFO *tmpinfo;
 
     /* sanity check */
     *gretl_errmsg = 0;
@@ -575,8 +596,12 @@ int write_x12a_data (char *fname, int varnum,
 	return 1;
     }
 
+    /* figure out which program we're using */
+    if (strstr(prog, "tramo") != NULL) opt = TRAMO;
+    else opt = X12A;
+
     /* show dialog and get option settings */
-    doit = x12a_dialog(&request); 
+    doit = tx_dialog(&request); 
     if (!doit) {
 	gtk_widget_destroy(request.dialog);
 	return 0;
@@ -585,61 +610,96 @@ int write_x12a_data (char *fname, int varnum,
     gtk_widget_destroy(request.dialog);
 
     /* create little temporary dataset */
-    x12info = create_new_dataset(&x12Z, 4, pdinfo->n, 0);
-    if (x12info == NULL) return E_ALLOC;
-    copy_basic_data_info(x12info, pdinfo);
+    tmpinfo = create_new_dataset(&tmpZ, 4, pdinfo->n, 0);
+    if (tmpinfo == NULL) return E_ALLOC;
+    copy_basic_data_info(tmpinfo, pdinfo);
 
-    /* make a default x12a.mdl file if it doesn't already exist */
-    sprintf(fname, "%s%cx12a.mdl", x12adir, SLASH);
-    fp = fopen(fname, "r");
-    if (fp == NULL) {
-	fp = fopen(fname, "w");
-	if (fp == NULL) return 1;
-	fprintf(fp, "%s", default_mdl);
-	fclose(fp);
-    } else {
-	fclose(fp);
-    }
+    if (opt == X12A) { 
+	/* make a default x12a.mdl file if it doesn't already exist */
+	sprintf(fname, "%s%cx12a.mdl", workdir, SLASH);
+	fp = fopen(fname, "r");
+	if (fp == NULL) {
+	    fp = fopen(fname, "w");
+	    if (fp == NULL) return 1;
+	    fprintf(fp, "%s", default_mdl);
+	    fclose(fp);
+	} else {
+	    fclose(fp);
+	}
+    } 
 
     sprintf(varname, pdinfo->varname[varnum]);
+    form_varlist(varlist, &request);
 
-    /* write out the .spc file for x12a */
-    sprintf(fname, "%s%c%s.spc", x12adir, SLASH, varname);
-    write_spc_file(fname, *pZ, pdinfo, varnum, varlist, &request);
+    if (opt == X12A) { 
+	/* write out the .spc file for x12a */
+	sprintf(fname, "%s%c%s.spc", workdir, SLASH, varname);
+	write_spc_file(fname, *pZ, pdinfo, varnum, varlist);
+    } else { /* TRAMO */
+	lower(varname);
+	sprintf(fname, "%s%c%s", workdir, SLASH, varname);
+	write_tramo_file(fname, *pZ, pdinfo, varnum);
+    }
 
-    /* run the x12a program */
+    /* run the program */
+    if (opt == X12A) {
 #ifdef G_OS_WIN32
-    sprintf(cmd, "\"%s\" %s -r -p -q", x12a, varname);
-    err = win_fork_prog(cmd, x12adir);
+	sprintf(cmd, "\"%s\" %s -r -p -q", prog, varname);
+	err = win_fork_prog(cmd, workdir);
 #else
-    sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", x12adir, x12a, varname);
-    err = system(cmd);
+	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", workdir, prog, varname);
+	err = system(cmd);
 #endif
+    } else { /* TRAMO */
+	char seats[MAXLEN];
+
+#ifdef OS_WIN32 
+	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
+	win_fork_prog(cmd, workdir);
+	get_seats_command(seats, prog);
+	sprintf(cmd, "\"%s\" -OF %s", seats, varname);
+	win_fork_prog(cmd, workdir);
+#else
+	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 
+		varname);
+	err = system(cmd);
+	if (!err) {
+	    get_seats_command(seats, prog);
+	    sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, seats, varname);
+	    err = system(cmd);
+	}
+#endif
+    }
     
     if (!err) {
-	sprintf(fname, "%s%c%s.out", x12adir, SLASH, varname); 
+	if (opt == X12A) {
+	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
+	} else {
+	    sprintf(fname, "%s%coutput%c%s.OUT", workdir, SLASH, SLASH, varname);
+	} 
 
 	/* save vars locally if needed; graph if wanted */
 	if (varlist[0] > 0) {
-	    copy_variable(x12Z, x12info, 0, *pZ, pdinfo, varnum);
+	    copy_variable(tmpZ, tmpinfo, 0, *pZ, pdinfo, varnum);
 	    for (i=1; i<=varlist[0]; i++) {
-		err = add_x12a_series(fname, varlist[i], x12Z, x12info, i);
+		err = add_series_from_file((opt == X12A)? fname : workdir, 
+					   varlist[i], tmpZ, tmpinfo, i, opt);
 	    }
 	    if (request.opt[TRIGRAPH].save) {
-		err = graph_x12a_series(x12Z, x12info, paths);
+		err = graph_series(tmpZ, tmpinfo, paths, opt);
 		if (!err) *graph = 1;
 	    }
 	}
 
 	/* now save the local vars to main dataset, if wanted */
 	if (request.savevars > 0) {
-	    err = save_vars_to_dataset(pZ, pdinfo, x12Z, x12info, varlist, &request);
+	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, varlist, &request);
 	}
     }
 
-    free_Z(x12Z, x12info);
-    clear_datainfo(x12info, CLEAR_FULL);
-    free(x12info);
+    free_Z(tmpZ, tmpinfo);
+    clear_datainfo(tmpinfo, CLEAR_FULL);
+    free(tmpinfo);
 
     return err;
 }

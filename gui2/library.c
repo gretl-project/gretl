@@ -2240,7 +2240,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     gchar *databuf;
     GError *error = NULL;
     void *handle;
-    int (*write_ts_data) (char *, int, 
+    int (*write_tx_data) (char *, int, 
 			  double ***, DATAINFO *, 
 			  PATHS *, int *,
 			  const char *, const char *);
@@ -2260,13 +2260,9 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     if (gui_open_plugin("tramo-x12a", &handle)) return;
 
     *fname = 0;
-    if (opt == TRAMO) {
-	write_ts_data = get_plugin_function("write_tramo_data", handle);
-    } else { /* X12A */
-	write_ts_data = get_plugin_function("write_x12a_data", handle);
-    }
+    write_tx_data = get_plugin_function("write_tx_data", handle);
 
-    if (write_ts_data == NULL) {
+    if (write_tx_data == NULL) {
 	errbox(_("Couldn't load plugin function"));
 	close_plugin(handle);
 	return;
@@ -2278,10 +2274,10 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     if (opt == TRAMO) {
-	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
+	err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
 			     &paths, &graph, tramo, tramodir);
     } else { /* X12A */
-	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
+	err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
 			     &paths, &graph, x12a, x12adir);
     }
 
