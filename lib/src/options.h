@@ -26,5 +26,6 @@ const char *print_flags (gretlopt oflags, int ci);
 
 const char **get_opts_for_command (int ci);
 
+int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 
 #endif /* OPTIONS_H */

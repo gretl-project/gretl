@@ -186,7 +186,7 @@ int model_command_init (char *line, CMD *cmd, int ID)
 
     if (bufopen(&echo)) return 1;
 
-    echo_cmd(cmd, datainfo, line, 0, 1, echo);
+    echo_cmd(cmd, datainfo, line, 0, 1, 0, echo);
 
     if (add_command_to_mstack(mstack, echo->buf)) {
 	err = 1;

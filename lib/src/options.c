@@ -420,3 +420,17 @@ const char *print_flags (gretlopt oflags, int ci)
 
     return flagstr;
 }
+
+int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn)
+{
+    if (ci == OLS && (opt & OPT_P)) {
+	const char *flagstr = print_flags(OPT_P, OLS);
+
+	pprintf(prn, _("Warning: option%s ignored outside of loop"), 
+		flagstr);
+	pputc(prn, '\n');
+	return 1;
+    }
+
+    return 0;
+}

@@ -1426,19 +1426,27 @@ static void trim_to_length (char *s, int oklen)
 
 static void 
 real_safe_print_line (const char *line, int cli, int batch, 
-		      int script, PRN *prn)
+		      int script, int loopstack, PRN *prn)
 {
     char tmp[SAFELEN];
     const char *split = " \\";
+    const char *leader;
+    const char *leaders[] = { "? ", "> " };
     const char *p, *q;
     int n, out, rem;
 
     if (!cli && batch) return;
 
+    if (loopstack) {
+	leader = leaders[1];
+    } else {
+	leader = leaders[0];
+    }
+
     if (cli) {
-	printf("%s", (batch)? "? " : " ");
+	printf("%s", (batch)? leader : " ");
     } else if (script) {
-	pputs(prn, "? "); /* was "\n? " */
+	pputs(prn, leader); 
     }	
 
     rem = n = strlen(line);
@@ -1462,9 +1470,9 @@ real_safe_print_line (const char *line, int cli, int batch,
     }
 }
 
-void safe_print_line (const char *line, PRN *prn)
+void safe_print_line (const char *line, int loopstack, PRN *prn)
 {
-    real_safe_print_line(line, 0, 0, 1, prn);
+    real_safe_print_line(line, 0, 0, 1, loopstack, prn);
 }
 
 /**
@@ -1474,6 +1482,7 @@ void safe_print_line (const char *line, PRN *prn)
  * @line: "raw" command line to be echoed.
  * @batch: set to 1 for batch mode, 0 for interactive.
  * @gui: 1 for the gretl GUI, 0 for command-line program.
+ * @loopstack: 1 if stacking commands for a loop, else 0.
  * @prn: pointer to gretl printing struct.
  *
  * Echoes the user command represented by @pcmd and @line.
@@ -1484,16 +1493,30 @@ void safe_print_line (const char *line, PRN *prn)
                        c == MPOLS || c == SCATTERS || c == GNUPLOT || \
                        c == LOGISTIC || c == GARCH || c == EQUATION)
 
-void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, PRN *prn)
-     /* echo a given command: depending on the circumstances, either
-	to stdout or to a buffer, or both */
+/* The following may appear to be absurdly complicated.  Nonetheless,
+   I _think_ it is only as complex as it has to be, given the several 
+   dimensions in play:
 
+   * batch mode vs interactive mode ("batch" param)
+   * command client program vs gui program ("gui" param)
+   * stacking loop commands or not ("loopstack" param)
+   
+   If you are tempted to optimize one or other aspect, please make
+   sure you have not broken one of the others in the process.
+*/
+
+void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
+	       int batch, int gui, int loopstack, PRN *prn)
 {
     int i, err, gotsep = 1;
+    char leadchar = '?';
     int cli = !gui;
 
     if (line == NULL) return;
+
+    if (loopstack) {
+	leadchar = '>';
+    }
 
 #if 0
     fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt=%ld, batch=%d, "
@@ -1503,11 +1526,11 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 #endif
 
     /* special case: gui "store" command, which could overflow the
-       "line" length; also I'm not sure whether we should record
-       gui "store" in the command script; we'll record it, but
-       commented out.
+       line length; also I'm not sure whether we should record gui
+       "store" in the command script.  As a compromise we'll record it,
+       but commented out. (FIXME: loop context?)
     */
-    if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop? */
+    if (gui && !batch && cmd->ci == STORE) {  
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
 	    const char *flagstr = print_flags(cmd->opt, cmd->ci);
@@ -1525,7 +1548,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	gotsep = 0;
     }
 
-    /* command is preceded by a "savename" to which a object will
+    /* command is preceded by a "savename" to which an object will
        be assigned */
     if (*cmd->savename && gui && !batch) {
 	pprintf(prn, "%s <- ", cmd->savename);
@@ -1535,32 +1558,42 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	/* command has a list of args to be printed */
 	if (cli) {
 	    if (batch) {
-		printf("\n? %s", cmd->cmd);
+		printf("\n%c %s", leadchar, cmd->cmd);
 	    } else {
 		printf(" %s", cmd->cmd);
 	    }
-	    if (cmd->ci == RHODIFF) printf(" %s;", cmd->param);
-	    else if (*cmd->param && !hold_param(cmd->ci)) {
+	    if (cmd->ci == RHODIFF) {
+		printf(" %s;", cmd->param);
+	    } else if (*cmd->param && !hold_param(cmd->ci)) {
 		printf(" %s", cmd->param);
 	    }
 	}
 	if (!batch) {
 	    pprintf(prn, "%s", cmd->cmd);
-	    if (cmd->ci == RHODIFF) pprintf(prn, " %s;", cmd->param);
-	    else if (*cmd->param && !hold_param(cmd->ci)) {
+	    if (cmd->ci == RHODIFF) {
+		pprintf(prn, " %s;", cmd->param);
+	    } else if (*cmd->param && !hold_param(cmd->ci)) {
 		pprintf(prn, " %s", cmd->param);
 	    }
 	}
 
 	/* if list is very long, break it up over lines */
 	if (cmd->ci == STORE) {
-	    if (cli) printf(" \\\n");
-	    if (!batch) pputs(prn, " \\\n");
+	    if (cli) {
+		printf(" \\\n");
+	    }
+	    if (!batch) {
+		pputs(prn, " \\\n");
+	    }
 	}
 	for (i=1; i<=cmd->list[0]; i++) {
 	    if (cmd->list[i] == LISTSEP) {
-		if (cli) printf(" ;");
-		if (!batch) pputs(prn, " ;");
+		if (cli) {
+		    printf(" ;");
+		}
+		if (!batch) {
+		    pputs(prn, " ;");
+		}
 		gotsep = (cmd->ci != MPOLS)? 1 : 0;
 		continue;
 	    }
@@ -1589,8 +1622,12 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	/* corrgm and gnuplot: param comes last */
 	if ((cmd->ci == CORRGM || cmd->ci == GNUPLOT || cmd->ci == LOGISTIC)
 	    && *cmd->param) { 
-	    if (cli) printf(" %s", cmd->param);
-	    if (!batch) pprintf(prn, " %s", cmd->param);
+	    if (cli) {
+		printf(" %s", cmd->param);
+	    }
+	    if (!batch) {
+		pprintf(prn, " %s", cmd->param);
+	    }
 	}
 
 	/* check for duplicated vars */
@@ -1600,38 +1637,50 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		   err);
 	    cmd->ci = VARDUP;
 	}
-    } /* end if !cmd->nolist */
+    } /* end if command has list of variables */
 
     else if ((cmd->ci == GENR || cmd->ci == SMPL) && 
 	     strlen(line) > SAFELEN - 2) {
-	real_safe_print_line(line, cli, batch, 0, prn);
+	real_safe_print_line(line, cli, batch, 0, loopstack, prn);
     }
 
     else if (strcmp(cmd->cmd, "quit")) {
 	if (cli) {
-	    if (batch) printf("? %s", line);
-	    else printf(" %s", line);
+	    if (batch) {
+		printf("%c %s", leadchar, line);
+	    } else {
+		printf(" %s", line);
+	    }
 	}
-	if (!batch) pputs(prn, line);
+	if (!batch) {
+	    pputs(prn, line);
+	}
     }
 
+    /* add printout of any options to the command */
     if (cmd->opt) {
 	const char *flagstr;
 	int ci = cmd->ci;
 
-	if (ci == END && !strcmp(cmd->param, "nls")) {
+	if (cmd->ci == END && !strcmp(cmd->param, "nls")) {
 	    ci = NLS;
 	}
 	flagstr = print_flags(cmd->opt, ci);
-	if (cli) fputs(flagstr, stdout);
-	if (!batch) pputs(prn, flagstr);
+	if (cli) {
+	    fputs(flagstr, stdout);
+	}
+	if (!batch) {
+	    pputs(prn, flagstr);
+	}
     }
 
-    if (cli) putchar('\n');
+    if (cli) {
+	putchar('\n');
+    }
 
     if (!batch) {
 	pputc(prn, '\n');
-	if (prn != NULL && prn->fp) {
+	if (prn != NULL && prn->fp != NULL) {
 	    fflush(prn->fp);
 	}
     }
@@ -1650,13 +1699,9 @@ static const char *flag_present (const char *s, char f, int *quoted)
     while (*s) {
 	if (*s == '"') inquote = !inquote;
 	if (!inquote) {
-	    if (*s == '-') gotdash = 1;
-	    else if (gotdash && *s == f && *(s+1)) {
-#if 0
-		/* blank out the flag and following in the
-		   original string? */
-		*s = 0;
-#endif
+	    if (*s == '-') {
+		gotdash = 1;
+	    } else if (gotdash && *s == f && *(s+1)) {
 		s++;
 		while (*s) {
 		    if (isspace(*s)) s++;
@@ -1670,8 +1715,9 @@ static const char *flag_present (const char *s, char f, int *quoted)
 		    *quoted = 0;
 		    return s;
 		}
+	    } else {
+		gotdash = 0;
 	    }
-	    else gotdash = 0;
 	}
 	s++;
     }

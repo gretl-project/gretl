@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-09-20 23:50+0100\n"
+"PO-Revision-Date: 2004-09-27 23:50+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -976,7 +976,7 @@ msgstr ""
 #: lib/src/dbread.c:974 lib/src/generate.c:4431 lib/src/subsample.c:629
 #, c-format
 msgid "Invalid null sample"
-msgstr ""
+msgstr "B³±d zakresu próby - pusta próba"
 
 #: lib/src/dbread.c:1088
 msgid "No database has been opened"
@@ -1289,33 +1289,36 @@ msgid ""
 "Equality of means test (assuming %s variances)\n"
 "\n"
 msgstr ""
+"\n"
+"Test istotno¶ci dla dwóch ¶rednich (za³o¿enie: %s wariancje)\n"
+"\n"
 
 #: lib/src/describe.c:1468
 msgid "unequal"
-msgstr ""
+msgstr "ró¿ne"
 
 #: lib/src/describe.c:1468
 msgid "equal"
-msgstr ""
+msgstr "równe"
 
 #: lib/src/describe.c:1473
 #, c-format
 msgid "   Difference between sample means = %g - %g = %g\n"
-msgstr ""
+msgstr "   Ró¿nica pomiêdzy ¶rednimu z próby = %g - %g = %g\n"
 
 #: lib/src/describe.c:1475
 msgid "   Null hypothesis: The two population means are the same.\n"
-msgstr ""
+msgstr "   Hipoteza zerowa: Dwie ¶rednie dla populacji s± jednakowe.\n"
 
 #: lib/src/describe.c:1476
 #, c-format
 msgid "   Estimated standard error = %g\n"
-msgstr ""
+msgstr "   B³±d standardowy estymatora = %g\n"
 
 #: lib/src/describe.c:1477
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
-msgstr ""
+msgstr "   Statystyka testu: t(%d) = %g\n"
 
 #: lib/src/describe.c:1478 lib/src/describe.c:1546
 #, c-format
@@ -1323,12 +1326,16 @@ msgid ""
 "   p-value (two-tailed) = %g\n"
 "\n"
 msgstr ""
+"   p-value (dwustronny obszar krytyczny) = %g\n"
+"\n"
 
 #: lib/src/describe.c:1480 lib/src/describe.c:1548
 msgid ""
 "   The difference is not statistically significant.\n"
 "\n"
 msgstr ""
+"   Ró¿nica nie jest istotna statystycznie.\n"
+"\n"
 
 #: lib/src/describe.c:1541
 msgid ""
@@ -1336,11 +1343,14 @@ msgid ""
 "Equality of variances test\n"
 "\n"
 msgstr ""
+"\n"
+"Test równo¶ci dwóch wariancji\n"
+"\n"
 
 #: lib/src/describe.c:1542
 #, c-format
 msgid "   Ratio of sample variances = %g\n"
-msgstr ""
+msgstr "   Stosunek wariancji z prób = %g\n"
 
 #: lib/src/describe.c:1543 lib/src/modelprint.c:657 lib/src/modelprint.c:678
 #: lib/src/modelprint.c:696 gui2/library.c:1210 gui2/library.c:1244
@@ -1349,7 +1359,7 @@ msgstr ""
 
 #: lib/src/describe.c:1544
 msgid "The two population variances are equal"
-msgstr ""
+msgstr "dwie wariancje z populacji s± równe"
 
 #: lib/src/discrete.c:162
 #, c-format
@@ -1599,7 +1609,7 @@ msgstr ""
 
 #: lib/src/generate.c:1985
 msgid " (scalar)"
-msgstr ""
+msgstr " (skalar)"
 
 #: lib/src/generate.c:2065
 #, c-format
@@ -1903,24 +1913,24 @@ msgstr ""
 
 #: lib/src/graphing.c:1604
 msgid "Test statistic for normality"
-msgstr ""
+msgstr "Test statystyczny o normalno¶ci rozk³adu"
 
 #: lib/src/graphing.c:1606
 #, c-format
 msgid "Chi-squared(2) = %.3f, pvalue %.5f"
-msgstr ""
+msgstr "Chi-kwadrat(2) = %.3f, pvalue %.5f"
 
 #: lib/src/graphing.c:1649
 msgid "Frequency distribution for"
-msgstr ""
+msgstr "Czêsto¶ci rozk³adu dla"
 
 #: lib/src/graphing.c:1732
 msgid "95 percent confidence interval"
-msgstr ""
+msgstr "95 procentowy przedzia³ ufno¶ci"
 
 #: lib/src/graphing.c:1802
 msgid "+- sqrt(h(t))"
-msgstr ""
+msgstr "+- sqrt(h(t))"
 
 #: lib/src/graphing.c:2230
 #, c-format
@@ -4722,15 +4732,15 @@ msgstr ""
 
 #: gui/gretl.c:290 gui2/gretl.c:348
 msgid "/Utilities/Statistical tables"
-msgstr ""
+msgstr "/Utilities/Tablice statystyczne"
 
 #: gui/gretl.c:291 gui2/gretl.c:349
 msgid "/Utilities/p-value finder"
-msgstr ""
+msgstr "/Utilities/Wyznaczanie p-value"
 
 #: gui/gretl.c:292 gui2/gretl.c:350
 msgid "/Utilities/Test statistic calculator"
-msgstr ""
+msgstr "/Utilities/Kalkulator testów"
 
 #: gui/gretl.c:293 gui2/gretl.c:352
 msgid "/Utilities/sep"
@@ -6821,15 +6831,15 @@ msgstr ""
 
 #: gui2/callbacks.c:558 gui2/callbacks.c:565 gui2/callbacks.c:571
 msgid "Enter two variables by name or number:"
-msgstr ""
+msgstr "Wprowadz nazwy dwóch zmiennych lub ich numery ID"
 
 #: gui2/callbacks.c:564
 msgid "gretl: means test"
-msgstr ""
+msgstr "gretl: test dla dwóch ¶rednich"
 
 #: gui2/callbacks.c:570
 msgid "gretl: variances test"
-msgstr ""
+msgstr "gret: test dla dwóch wariancji"
 
 #: gui2/callbacks.c:582 gui2/callbacks.c:587
 msgid "gretl: missing code"
@@ -7072,7 +7082,7 @@ msgstr ""
 
 #: gui2/database.c:518 gui2/gui_utils.c:1348 gui2/gui_utils.c:1370
 msgid "Find..."
-msgstr ""
+msgstr "Szukaj..."
 
 #: gui2/database.c:526
 msgid "Codebook"
@@ -7399,7 +7409,7 @@ msgstr "prosty tekst ASCII"
 
 #: gui2/dialogs.c:1426 gui2/dialogs.c:1431
 msgid "not set"
-msgstr "nie wybrana"
+msgstr "niewybrana"
 
 #: gui2/dialogs.c:1427
 msgid "average of observations"
@@ -7497,11 +7507,11 @@ msgstr "Domy¶lna metoda agregacji"
 
 #: gui2/dialogs.c:2502
 msgid "Compact by averaging"
-msgstr "Agregowanie obserwacji do ¶redniej"
+msgstr "Agregowanie obserwacji przez ¶redni± w okresie"
 
 #: gui2/dialogs.c:2520
 msgid "Compact by summing"
-msgstr "Agregowanie obserwacji do sumy"
+msgstr "Agregowanie obserwacji przez sumê w okresie"
 
 #: gui2/dialogs.c:2537
 msgid "Use end-of-period values"
@@ -7546,7 +7556,7 @@ msgstr "Agregowanie danych dziennych do tygodniowych"
 
 #: gui2/dialogs.c:2783
 msgid "gretl error"
-msgstr ""
+msgstr "B³±d gretla"
 
 #: gui2/dialogs.c:2784
 msgid "gretl info"
@@ -7564,122 +7574,122 @@ msgstr ""
 
 #: gui2/fileselect.c:280 gui2/library.c:338
 msgid "Couldn't open file for writing"
-msgstr ""
+msgstr "Nie mo¿na otworzyæ pliku dla zapisu"
 
 #: gui2/fileselect.c:295
 msgid "File saved OK"
-msgstr ""
+msgstr "Plik zapisanio - OK"
 
 #: gui2/fileselect.c:437
 msgid "Couldn't open the specified file"
-msgstr ""
+msgstr "Niemo¿liwe otwarcie specyfikowanego pliku"
 
 #: gui2/fileselect.c:481
 msgid "graph saved"
-msgstr ""
+msgstr "Wykres zapisany"
 
 #: gui2/fileselect.c:494
 msgid "boxplots saved"
-msgstr ""
+msgstr "Wykres boxplots zapisany"
 
 #: gui2/fileselect.c:495
 msgid "boxplot save failed"
-msgstr ""
+msgstr "B³±d w zapisie wykresu boxplot"
 
 #: gui2/fileselect.c:540 gui2/fileselect.c:577
 msgid "postscript files (*.eps)"
-msgstr ""
+msgstr "pliki postscriptowe (*.eps)"
 
 #: gui2/fileselect.c:541
 msgid "xfig files (*.fig)"
-msgstr ""
+msgstr "pliki xfig (*.fig)"
 
 #: gui2/fileselect.c:542
 msgid "LaTeX files (*.tex)"
-msgstr ""
+msgstr "pliki LaTeX (*.tex)"
 
 #: gui2/fileselect.c:543
 msgid "PNG files (*.png)"
-msgstr ""
+msgstr "pliki PNG (*.png)"
 
 #: gui2/fileselect.c:544 gui2/fileselect.c:579
 msgid "gnuplot files (*.plt)"
-msgstr ""
+msgstr "pliki gnuplot (*.plt)"
 
 #: gui2/fileselect.c:545 gui2/fileselect.c:645
 msgid "all files (*.*)"
-msgstr ""
+msgstr "Wszystkie pliki (*.*)"
 
 #: gui2/fileselect.c:567 gui2/fileselect.c:568 gui2/fileselect.c:569
 #: gui2/fileselect.c:570 gui2/fileselect.c:571 gui2/fileselect.c:590
 #: gui2/fileselect.c:591
 msgid "gretl data files (*.gdt)"
-msgstr ""
+msgstr "pliki danych gretla (*.gdt)"
 
 #: gui2/fileselect.c:572 gui2/fileselect.c:574
 msgid "gretl command files (*.inp)"
-msgstr ""
+msgstr "pliki poleceñ gretla (*.imp)"
 
 #: gui2/fileselect.c:573 gui2/fileselect.c:592
 msgid "gretl script files (*.inp)"
-msgstr ""
+msgstr "pliki poleceñ skryptowych gretla (*.inp)"
 
 #: gui2/fileselect.c:575 gui2/fileselect.c:585
 msgid "text files (*.txt)"
-msgstr ""
+msgstr "pliki tekstowe (*.txt)"
 
 #: gui2/fileselect.c:576 gui2/fileselect.c:593
 msgid "session files (*.gretl)"
-msgstr ""
+msgstr "pliki sesji gretla (*.gretl)"
 
 #: gui2/fileselect.c:578
 msgid "postscript files (*.ps)"
-msgstr ""
+msgstr "pliki postscript (*.ps)"
 
 #: gui2/fileselect.c:580 gui2/fileselect.c:594 gui2/fileselect.c:595
 msgid "CSV files (*.csv)"
-msgstr ""
+msgstr "pliki CSV (*.csv)"
 
 #: gui2/fileselect.c:581 gui2/fileselect.c:582
 msgid "GNU R files (*.R)"
-msgstr ""
+msgstr "pliki programu GNU R (*.R)"
 
 #: gui2/fileselect.c:583
 msgid "GNU Octave files (*.m)"
-msgstr ""
+msgstr "pliki programu GNU Octve (*.m)"
 
 #: gui2/fileselect.c:584
 msgid "PcGive files (*.dat)"
-msgstr ""
+msgstr "pliki danych PcGive (*.dat)"
 
 #: gui2/fileselect.c:586 gui2/fileselect.c:587 gui2/fileselect.c:588
 #: gui2/fileselect.c:589
 msgid "TeX files (*.tex)"
-msgstr ""
+msgstr "pliki TeX (*.tex)"
 
 #: gui2/fileselect.c:596 gui2/fileselect.c:597
 msgid "ASCII files (*.txt)"
-msgstr ""
+msgstr "pliki tekstowe ASCII (*.txt)"
 
 #: gui2/fileselect.c:598
 msgid "BOX data files (*.box)"
-msgstr ""
+msgstr "pliki danych BOX (*.box)"
 
 #: gui2/fileselect.c:599 gui2/fileselect.c:600
 msgid "Gnumeric files (*.gnumeric)"
-msgstr ""
+msgstr "pliki Gnumeric (*.gnumeric)"
 
 #: gui2/fileselect.c:601 gui2/fileselect.c:602
 msgid "Excel files (*.xls)"
-msgstr ""
+msgstr "pliki MS Excel (*.xls)"
 
 #: gui2/fileselect.c:603
 msgid "program files (*.exe)"
-msgstr ""
+msgstr "pliki aplikacji (*.exe)"
 
 #: gui2/fileselect.c:606
 msgid "gretl data files (*.dat)"
-msgstr ""
+msgstr "pliki danych gretla (*.dat)"
 
 #: gui2/fileselect.c:739
 msgid "File dialog box error"
@@ -7913,12 +7923,12 @@ msgstr ""
 #: gui2/gpt_control.c:2960 gui2/gpt_control.c:2991 gui2/gui_utils.c:1343
 #: gui2/gui_utils.c:1365
 msgid "Print..."
-msgstr ""
+msgstr "Drukuj..."
 
 #: gui2/gpt_control.c:2964 gui2/gpt_control.c:2996 gui2/session.c:155
 #: gui2/session.c:163 gui2/session.c:2083 gui2/session.c:2093
 msgid "Edit"
-msgstr ""
+msgstr "Edycja"
 
 #: gui2/gpt_control.c:3007
 msgid "color"
@@ -8003,7 +8013,7 @@ msgstr ""
 
 #: gui2/gretlwin32.c:151 gui2/gretlwin32.c:154
 msgid "gretl.chm"
-msgstr ""
+msgstr "gretl.chm"
 
 #: gui2/gretlwin32.c:163
 msgid "Couldn't access help file"
@@ -8011,7 +8021,7 @@ msgstr ""
 
 #: gui2/gtkfontselhack.c:85
 msgid "abcdefghijk ABCDEFGHIJK"
-msgstr ""
+msgstr "abcdefghijk ABCDEFGHIJK"
 
 #: gui2/gtkfontselhack.c:239
 msgid "Font name"
@@ -8090,11 +8100,11 @@ msgstr ""
 #: gui2/guiprint_common.c:211
 #, c-format
 msgid "Summary Statistics, using the observations %s--%s"
-msgstr ""
+msgstr "Statystyki opisowe dla obserwacji z próby %s--%s"
 
 #: gui2/guiprint_common.c:223
 msgid "(missing values denoted by $-999$ will be skipped)"
-msgstr ""
+msgstr "(obserwacje z brakuj±cymi danymi oznaczonymi $-999$ zosta³y pominiête)"
 
 #: gui2/guiprint_common.c:259
 msgid "Std.\\ Dev."
@@ -8107,25 +8117,25 @@ msgstr ""
 #: gui2/guiprint_common.c:353
 #, c-format
 msgid "Correlation coefficients, using the observations %s - %s"
-msgstr ""
+msgstr "Wspó³czynniki korelacji liniowej dla obserwacji z próby %s-%s"
 
 #: gui2/guiprint_common.c:356 gui2/guiprint_common.c:460
 msgid "skipping any missing values"
-msgstr ""
+msgstr "pominiêto brakuj±ce dane"
 
 #: gui2/guiprint_common.c:364 gui2/guiprint_common.c:468
 msgid "Coefficient covariance matrix"
-msgstr ""
+msgstr "Macierz wspó³czynników kowariancji"
 
 #: gui2/guiprint_common.c:457
 #, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
-msgstr ""
+msgstr "Wspó³czynniki korelacji liniowej dla obserwcji z próby %s--%s"
 
 #: gui2/guiprint_common.c:462
 #, c-format
 msgid "5\\%% critical value (two-tailed) = %.4f for n = %d"
-msgstr ""
+msgstr "Warto¶æ krytyczna wsp. korelacji = %.4f, dla 5\\%% dwustronnego obszaru krytycznego i n = %d"
 
 #: gui2/guiprint_common.c:567 gui2/guiprint_common.c:593
 msgid "Full data range:"
@@ -8236,7 +8246,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:131 gui2/gui_utils.c:199
 msgid "/Tests/sep1"
-msgstr ""
+msgstr "/Tests/sep1"
 
 #: gui2/gui_utils.c:132 gui2/gui_utils.c:200
 msgid "/Tests/non-linearity (squares)"
@@ -8252,7 +8262,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:135 gui2/gui_utils.c:203
 msgid "/Tests/sep2"
-msgstr ""
+msgstr "/Tests/sep2"
 
 #: gui2/gui_utils.c:136 gui2/gui_utils.c:204
 msgid "/Tests/autocorrelation"
@@ -8324,7 +8334,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:157 gui2/gui_utils.c:225
 msgid "/_LaTeX"
-msgstr ""
+msgstr "/_LaTeX"
 
 #: gui2/gui_utils.c:158 gui2/gui_utils.c:226
 msgid "/LaTeX/_View"
@@ -8486,7 +8496,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:1340 gui2/gui_utils.c:1362
 msgid "Save as..."
-msgstr ""
+msgstr "Zapisz jako..."
 
 #: gui2/gui_utils.c:1341 gui2/gui_utils.c:1363
 msgid "Send to gnuplot"
@@ -8494,31 +8504,31 @@ msgstr ""
 
 #: gui2/gui_utils.c:1345 gui2/gui_utils.c:1367
 msgid "Run"
-msgstr ""
+msgstr "Wykonaj"
 
 #: gui2/gui_utils.c:1346 gui2/gui_utils.c:1368
 msgid "Copy"
-msgstr ""
+msgstr "Kopiuj"
 
 #: gui2/gui_utils.c:1347 gui2/gui_utils.c:1369
 msgid "Paste"
-msgstr ""
+msgstr "Wklej"
 
 #: gui2/gui_utils.c:1349 gui2/gui_utils.c:1371
 msgid "Replace..."
-msgstr ""
+msgstr "Zamieñ..."
 
 #: gui2/gui_utils.c:1350 gui2/gui_utils.c:1372
 msgid "Undo"
-msgstr ""
+msgstr "Cofnij"
 
 #: gui2/gui_utils.c:1351 gui2/gui_utils.c:1373
 msgid "Help on command"
-msgstr ""
+msgstr "Pomoc dla poleceñ"
 
 #: gui2/gui_utils.c:1352 gui2/gui_utils.c:1374
 msgid "LaTeX"
-msgstr ""
+msgstr "LaTeX"
 
 #: gui2/gui_utils.c:1353 gui2/gui_utils.c:1375
 msgid "Add to dataset..."
@@ -8526,7 +8536,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:1569
 msgid "gretl: help"
-msgstr ""
+msgstr "gretl: help"
 
 #: gui2/gui_utils.c:1571
 msgid "gretl: command syntax"
@@ -8601,11 +8611,11 @@ msgstr ""
 
 #: gui2/gui_utils.c:2504 gui2/gui_utils.c:2547
 msgid "/Model data/Add to data set/R-squared"
-msgstr ""
+msgstr "/Model data/Add to data set/R-kwadrat"
 
 #: gui2/gui_utils.c:2506 gui2/gui_utils.c:2549
 msgid "/Model data/Add to data set/T*R-squared"
-msgstr ""
+msgstr "/Model data/Add to data set/T*R-kwadrat"
 
 #: gui2/gui_utils.c:2511 gui2/gui_utils.c:2554
 msgid "/Model data/Add to data set/log likelihood"
@@ -8617,7 +8627,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:2521 gui2/gui_utils.c:2564
 msgid "/Model data/sep1"
-msgstr ""
+msgstr "/Model data/sep1"
 
 #: gui2/gui_utils.c:2522 gui2/gui_utils.c:2565
 msgid "/Model data/Define new variable..."

@@ -69,7 +69,7 @@ int parseopt (const char **argv, int argc, char *fname, int *english);
 int shell (const char *arg);
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, PRN *prn);
+	       int batch, int gui, int loopstack, PRN *prn);
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
@@ -81,7 +81,7 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 
 int ready_for_command (const char *line);
 
-void safe_print_line (const char *line, PRN *prn);
+void safe_print_line (const char *line, int loopstack, PRN *prn);
 
 #endif /* INTERACT_H */
 

@@ -1731,6 +1731,12 @@ void get_cmd_ci (const char *line, CMD *command)
     /* allow for leading spaces */
     while (isspace(*line)) line++;
 
+    if (*line == '#') {
+	command->nolist = 1;
+	command->ci = CMD_COMMENT;
+	return;
+    }
+
     if (sscanf(line, "%s", command->cmd) != 1 || 
 	*line == '(' || *line == '#') {
 	command->nolist = 1;
@@ -1854,11 +1860,6 @@ int loop_exec (LOOPSET *loop, char *line,
 #endif
 	    strcpy(linecpy, loop->lines[j]);
 
-	    /* fixme: this is silly: we pulled the option flags
-	       out, stuck them back in again, and now we're
-	       reading them out again!
-	    */
-
 	    err = catchflags(linecpy, &cmd.opt);
 	    if (err) {
 		break;
@@ -1883,7 +1884,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    }
 
 	    if (!(*echo_off) && loop->type == INDEX_LOOP) {
-		echo_cmd(&cmd, pdinfo, linecpy, 0, 1, prn);
+		echo_cmd(&cmd, pdinfo, linecpy, 0, 1, 0, prn);
 	    }
 
 	    switch (cmd.ci) {
@@ -2064,6 +2065,9 @@ int loop_exec (LOOPSET *loop, char *line,
     }
 
     if (lastmod != models[0]) {
+	/* to get genr commands that reference model statistics --
+	   after the loop has finished -- to come out right
+	*/
 	swap_models(&models[0], &loop->models[m]);
     }
 
@@ -2071,7 +2075,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
     if (line != NULL) {
 	*line = '\0';
-    }    
+    }  
 
     return err;
 }

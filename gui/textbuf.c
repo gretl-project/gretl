@@ -119,7 +119,7 @@ void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
 	    nextcolor = NULL;
 	}
 
-	if (*readbuf == '#' || *readbuf == '?') {
+	if (*readbuf == '#' || *readbuf == '?' || *readbuf == '>') {
 	    colptr = &blue;
 	} 
 

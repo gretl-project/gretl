@@ -626,16 +626,24 @@ int main (int argc, char *argv[])
     return 0;
 }
 
-static void printf_strip (char *s)
+static void printf_strip (char *s, int loopstack)
 {
-    int i, n = strlen(s);
+    int i, n;
+
+    while (isspace((unsigned char) *s)) s++;
+
+    n = strlen(s);
 
     for (i=n-1; i>0; i--) {
 	if (isspace(s[i]) || s[i] == '\r') s[i] = '\0';
 	else break;
     }
 
-    printf("%s\n", s);
+    if (loopstack) {
+	printf("> %s\n", s);
+    } else {
+	printf("%s\n", s);
+    }
 }
 
 static int handle_user_defined_function (char *line, int *fncall)
@@ -712,7 +720,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd.ci == CMD_COMMENT && !echo_off) {
-	printf_strip(linebak);
+	printf_strip(linebak, loopstack);
     }
 
     if ((err = cmd.errcode)) {
@@ -743,7 +751,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	} else {
 	    if (!echo_off) {
 		echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 
-			 0, cmdprn);
+			 0, 1, cmdprn);
 	    }
 	    loop = add_to_loop(line, cmd.ci, cmd.opt,
 			       datainfo, &Z, loop, 
@@ -758,9 +766,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     if (!echo_off) {
-	echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 0, 
+	echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 0, 0,
 		 cmdprn);
     }
+
+    check_for_loop_only_options(cmd.ci, cmd.opt, prn);
 
     switch (cmd.ci) {
 

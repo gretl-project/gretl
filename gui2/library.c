@@ -470,7 +470,7 @@ gint cmd_init (char *cmdstr)
 
     if (bufopen(&echo)) return 1;
 
-    echo_cmd(&cmd, datainfo, cmdstr, 0, 1, echo);
+    echo_cmd(&cmd, datainfo, cmdstr, 0, 1, 0, echo);
 
     err = add_command_to_stack(echo->buf);
 
@@ -2042,7 +2042,7 @@ void do_model (GtkWidget *widget, gpointer p)
     *modelgenr = '\0';
     if (check_model_cmd(line, modelgenr)) return;
 
-    echo_cmd(&cmd, datainfo, line, 0, 1, NULL);
+    echo_cmd(&cmd, datainfo, line, 0, 1, 0, NULL);
     if (cmd.ci == VARDUP) {
 	errbox(_("A variable was duplicated in the list of regressors"));
 	return;
@@ -2205,7 +2205,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 
     if (check_model_cmd(line, NULL)) return;
 
-    echo_cmd(&cmd, datainfo, line, 0, 1, NULL);
+    echo_cmd(&cmd, datainfo, line, 0, 1, 0, NULL);
 
     if (bufopen(&prn)) return;
 
@@ -4533,7 +4533,7 @@ static int ok_script_file (const char *runfile)
     return 1;
 }
 
-static void output_line (const char *line, PRN *prn) 
+static void output_line (const char *line, int loopstack, PRN *prn) 
 {
     int n = strlen(line);
 
@@ -4541,9 +4541,13 @@ static void output_line (const char *line, PRN *prn)
 	(line[n-1] == ')' && line[n-2] == '*')) {
 	pprintf(prn, "\n%s\n", line);
     } else if (line[0] == '#') {
-	pprintf(prn, "%s\n", line);
+	if (loopstack) {
+	    pprintf(prn, "> %s\n", line);;
+	} else {
+	    pprintf(prn, "%s\n", line);
+	}
     } else if (!string_is_blank(line)) {
-	safe_print_line(line, prn);
+	safe_print_line(line, loopstack, prn);
     }
 }
 
@@ -4659,7 +4663,7 @@ int execute_script (const char *runfile, const char *buf,
 		if (strncmp(line, "(* saved objects:", 17) == 0) { 
 		    strcpy(line, "quit"); 
 		} else if (!echo_off) {
-		    output_line(line, prn);
+		    output_line(line, loopstack, prn);
 		}
 		strcpy(tmp, line);
 		exec_err = gui_exec_line(line, &loop, &loopstack, 
@@ -4918,6 +4922,8 @@ int gui_exec_line (char *line,
     } else {
 	outprn = prn;
     }
+
+    check_for_loop_only_options(cmd.ci, cmd.opt, prn);
 
     switch (cmd.ci) {
 

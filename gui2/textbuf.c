@@ -377,7 +377,7 @@ void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
 	    nextcolor = PLAIN_TEXT;
 	}
 
-	if (*readbuf == '#' || *readbuf == '?') {
+	if (*readbuf == '#' || *readbuf == '?' || *readbuf == '>') {
 	    thiscolor = BLUE_TEXT;
 	} 
 
