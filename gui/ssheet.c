@@ -116,8 +116,8 @@ static void name_var_dialog (void)
 		 _("Enter name for new variable\n"
 		 "(max. 8 characters)"),
 		 NULL, 
-		 _("Apply"), name_new_var, mdata, 
-		 _("Cancel"), 0, 0);
+		 name_new_var, mdata, 
+		 0, 0);
 }
 
 /* ........................................................... */
@@ -128,8 +128,8 @@ static void new_case_dialog (void)
 		 _("Enter case marker for new obs\n"
 		 "(max. 8 characters)"),
 		 NULL, 
-		 _("Apply"), name_new_obs, mdata, 
-		 _("Cancel"), 0, 0);
+		 name_new_obs, mdata, 
+		 0, 0);
 }
 
 /* ........................................................... */

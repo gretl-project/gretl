@@ -869,11 +869,11 @@ static void selector_init (selector *sr, guint code, const char *title)
 }    
 
 static void 
-build_selector_buttons (selector *sr, const char *oktxt, void (*okfunc)())
+build_selector_buttons (selector *sr, void (*okfunc)())
 {
     GtkWidget *tmp;
 
-    tmp = gtk_button_new_with_label(oktxt);
+    tmp = gtk_button_new_with_label(_("OK"));
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
 		       tmp, TRUE, TRUE, 0);
@@ -915,8 +915,7 @@ build_selector_buttons (selector *sr, const char *oktxt, void (*okfunc)())
     }
 }
 
-void selection_dialog (const char *title, const char *oktxt, 
-		       void (*okfunc)(), guint cmdcode) 
+void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode) 
 {
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox, *indepvar_hbox;
@@ -1104,7 +1103,7 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
-    build_selector_buttons(sr, oktxt, okfunc);
+    build_selector_buttons(sr, okfunc);
 
     gtk_widget_show(sr->dlg);
     /* gtk_main(); */
@@ -1190,8 +1189,7 @@ static GtkWidget *selection_top_label (int code)
     return label;
 }
 
-void simple_selection (const char *title, const char *oktxt, 
-		       void (*okfunc)(), guint cmdcode,
+void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p) 
 {
     GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
@@ -1335,7 +1333,7 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
-    build_selector_buttons(sr, oktxt, okfunc);
+    build_selector_buttons(sr, okfunc);
 
     gtk_widget_show(sr->dlg);
 
@@ -1384,10 +1382,11 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
 void data_save_selection_wrapper (int file_code)
 {
     simple_selection((file_code == COPY_CSV)? 
-                     _("Copy data") : _("Save data"), _("Apply"),
-                     data_save_selection_callback, file_code, 
-                     NULL);
-    gtk_main();
+		     _("Copy data") : _("Save data"), 
+		     data_save_selection_callback, file_code, 
+		     NULL);
+    gtk_main(); /* the corresponding gtk_main_quit() is in
+		   the function destroy_selector() */
 }
 
 struct list_maker {

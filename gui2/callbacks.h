@@ -7,6 +7,12 @@
 
 /* functions follow */
 
+#if GTK_MAJOR_VERSION == 1
+void selectrow (GtkCList *clist, gint row, gint column, 
+                GdkEventButton *event, gpointer data);
+
+#else
+
 void listbox_select_row (GtkTreeSelection *selection, gpointer data);
 
 gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,
@@ -14,6 +20,7 @@ gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,
 
 gboolean listbox_drag (GtkWidget *widget, GdkEventMotion *event,
 		       gpointer data);
+#endif
  
 void open_data (gpointer data, guint dir_code, GtkWidget *widget);
 

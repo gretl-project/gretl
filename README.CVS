@@ -3,10 +3,17 @@ GTK 1.2 for the gretl GUI, you need to carry out this preliminary
 step first:
 
 #!bin/sh
-for f in calculator.c guiprint_common.c gpt_control.c gpt_control.h \
-  model_table.c model_table.h objectsave.c objectsave.h \
-  session.c session.h webget.c webget.h library.c library.h \
-  datafiles.c datafiles.h database.h ; do
+for f in \
+  calculator.c guiprint_common.c \
+  callbacks.c callbacks.h \
+  database.c database.h \
+  datafiles.c datafiles.h \
+  gpt_control.c gpt_control.h \
+  model_table.c model_table.h \
+  objectsave.c objectsave.h \
+  session.c session.h \
+  webget.c webget.h \
+  library.c library.h ; do
     rm -f gui/$f
     cp -ap gui2/$f gui
 done

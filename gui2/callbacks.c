@@ -20,15 +20,61 @@
 /* callbacks.c for gretl */
 
 #include "gretl.h"
-#include "treeutils.h"
 #include "selector.h"
 #include "session.h"
 #include "database.h"
 #include "datafiles.h"
 
+#if !GLIB_CHECK_VERSION(2,0,0)
+# define OLD_GTK
+#endif
+
+#ifdef OLD_GTK
+# include <gtkextra/gtkiconfilesel.h>
+#else
+# include "treeutils.h"
+#endif
+
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 
+#ifdef OLD_GTK
+GtkWidget *active_edit_id = NULL;
+GtkWidget *active_edit_name = NULL;
+GtkWidget *active_edit_text = NULL;
+#endif
+
 /* ......................................................... */
+
+static void doubleclick_action (windata_t *win)
+{
+    switch (win->role) {
+    case MAINWIN:
+	display_var();
+	break;
+    case TEXTBOOK_DATA:
+	browser_open_data(NULL, win);
+	break;
+    case PS_FILES:
+	browser_open_ps(NULL, win);
+	break;
+    case NATIVE_DB:
+    case RATS_DB:	    
+	open_db_list(NULL, win); 
+	break;
+    case REMOTE_DB:
+	open_remote_db_list(NULL, win);
+	break;
+    case NATIVE_SERIES:
+    case RATS_SERIES:
+    case REMOTE_SERIES:
+	gui_get_series(win, 0, NULL);
+	break;
+    default:
+	break;
+    }
+}
+
+#ifndef OLD_GTK
 
 void listbox_select_row (GtkTreeSelection *selection, gpointer data)
 {
@@ -47,43 +93,15 @@ void listbox_select_row (GtkTreeSelection *selection, gpointer data)
     gtk_tree_path_free (path);
 }
 
-/* ......................................................... */
-
 gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,
 			   windata_t *win)
 {
     if (event != NULL && event->type == GDK_2BUTTON_PRESS 
 	&& event->button == 1) {
-	switch (win->role) {
-	case MAINWIN:
-	    display_var();
-	    break;
-	case TEXTBOOK_DATA:
-	    browser_open_data(NULL, win);
-	    break;
-	case PS_FILES:
-	    browser_open_ps(NULL, win);
-	    break;
-	case NATIVE_DB:
-	case RATS_DB:	    
-	    open_db_list(NULL, win); 
-	    break;
-	case REMOTE_DB:
-	    open_remote_db_list(NULL, win);
-	    break;
-	case NATIVE_SERIES:
-	case RATS_SERIES:
-	case REMOTE_SERIES:
-	    gui_get_series(win, 0, NULL);
-	    break;
-	default:
-	    break;
-	}
+	doubleclick_action(win);
     }
     return FALSE;
 }
-
-/* ........................................................... */
 
 gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
 		       gpointer data)
@@ -136,6 +154,50 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
     return FALSE;
 }
 
+#else /* now an old gtk function */
+
+void selectrow (GtkCList *clist, gint row, gint column, 
+	        GdkEventButton *event, gpointer data) 
+{
+    gchar *numstr, *edttext, addvar[VNAMELEN];
+    windata_t *win = (windata_t *) data;
+
+    if (win == mdata) { /* main window */
+	gtk_clist_get_text(GTK_CLIST(clist), row, 0, &numstr);
+	win->active_var = atoi(numstr);
+    } else {
+	win->active_var = row;
+    }
+
+    if (active_edit_id != NULL) {
+	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_id));
+	if (strlen(edttext)) sprintf(addvar, " %d", win->active_var);
+	else sprintf(addvar, "%d", win->active_var);
+	gtk_entry_append_text(GTK_ENTRY (active_edit_id), addvar);
+    }
+    else if (active_edit_name != NULL) {
+	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_name));
+	gtk_entry_append_text(GTK_ENTRY (active_edit_name), 
+			      datainfo->varname[win->active_var]);
+	gtk_entry_append_text(GTK_ENTRY (active_edit_name), " ");
+    }
+# if 0
+    else if (active_edit_text != NULL) {
+	gtk_text_insert (GTK_TEXT (active_edit_text), fixed_font, 
+			 NULL, NULL, datainfo->varname[win->active_var],
+			 strlen(datainfo->varname[win->active_var]));
+    }
+# endif
+
+    /* response to double-click */
+    if (event != NULL && event->type == GDK_2BUTTON_PRESS 
+	&& event->button == 1) {
+	doubleclick_action(win);
+    }
+}
+
+#endif /* old versus new gtk */
+
 /* ........................................................... */
 
 void open_data (gpointer data, guint code, GtkWidget *widget)
@@ -177,8 +239,7 @@ void open_script (gpointer data, guint action, GtkWidget *widget)
 {
     if (action == OPEN_SCRIPT) {
 	file_selector(_("Open script file"), action, NULL);
-    }
-    else if (action == OPEN_SESSION) {
+    } else if (action == OPEN_SESSION) {
 	file_selector(_("Open session file"), action, NULL);
     }
 }
@@ -242,33 +303,13 @@ void dummy_call (void)
 
 /* ........................................................... */
 
-/* contortions are needed here to get around the fact that the
-   output of strftime (used in print_time()) will not be UTF-8 */
-
-/* actually, I now think the above is mistaken -- Oct 02 */
-
 void print_report (gpointer data, guint unused, GtkWidget *widget)
 {
     PRN *prn;
-#ifdef BROKEN_NLS /* was ENABLE_NLS */ 
-    gchar *utfbuf;
-    gsize wrote;
-#endif  
 
     if (bufopen(&prn)) return;
 
-#ifdef BROKEN_NLS
-    bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
-#endif
     data_report (datainfo, &paths, prn);
-#ifdef BROKEN_NLS
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
-    utfbuf = g_locale_to_utf8(prn->buf, -1, NULL, &wrote, NULL);
-    if (utfbuf != NULL) {
-	free(prn->buf);
-	prn->buf = utfbuf;
-    }
-#endif    
     view_buffer(prn, 77, 400, _("gretl: data summary"), 
 		DATA_REPORT, NULL);
 }
@@ -406,17 +447,6 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 		okfunc, mydata, 
 		action, varclick);   
 }
-
-/* ........................................................... */
-
-#ifdef notdef
-void add_omit_callback (gpointer data, guint action, GtkWidget *widget)
-{
-    windata_t *vwin = (windata_t *) data;
-
-    simple_selection ("gretl: model tests", do_add_omit, action, vwin);
-}
-#endif
 
 /* ........................................................... */
 
@@ -690,9 +720,16 @@ void file_save_callback (GtkWidget *w, gpointer data)
     guint u = 0;
     windata_t *vwin = (windata_t *) data;
 
+#ifndef OLD_GTK
     if (g_object_get_data(G_OBJECT(vwin->dialog), "text_out")) {
 	u = SAVE_OUTPUT;
-    } else {
+    } 
+#else
+    if (gtk_object_get_data(GTK_OBJECT(vwin->dialog), "text_out")) {
+	u = SAVE_OUTPUT;
+    } 
+#endif
+    else {
 	switch (vwin->role) {
 	case EDIT_SCRIPT:
 	case VIEW_SCRIPT:

@@ -52,11 +52,9 @@ typedef struct {
 
 void clear_selector (void);
 
-void selection_dialog (const char *title, const char *oktxt, 
-		       void (*okfunc)(), guint cmdcode);
+void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode);
 
-void simple_selection (const char *title, const char *oktxt, 
-		       void (*okfunc)(), guint cmdcode,
+void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p);
 
 void data_save_selection_wrapper (int file_code);

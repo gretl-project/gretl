@@ -45,14 +45,14 @@ void random_dialog (gpointer data, guint code, GtkWidget *widget)
 		     _("Enter name for variable, and\n"
 		     "minimum and maximum values:"), 
 		     "unif 0 1",  
-		     _("Apply"), do_random, NULL, 
-		     _("  Cancel  "), GENR_UNIFORM, GENR);
+		     do_random, NULL, 
+		     GENR_UNIFORM, GENR);
     } else if (code == GENR_NORMAL) {
 	edit_dialog (_("gretl: normal variable"), 
 		     _("Enter name, mean and standard deviation:"), 
 		     "norm 0 1", 
-		     _("Apply"), do_random, NULL, 
-		     _("  Cancel  "), GENR_NORMAL, GENR);
+		     do_random, NULL, 
+		     GENR_NORMAL, GENR);
     }
 }
 
@@ -268,8 +268,8 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
 		 _("Enter start and end obs for new data set\n"
 		 "and name of first var to add:"), 
 		 obsstr, 
-		 _("Apply"), prep_spreadsheet, wdata, 
-		 _(" Cancel "), 0, 0);
+		 prep_spreadsheet, wdata, 
+		 0, 0);
     g_free(obsstr);
 }
 
@@ -287,8 +287,8 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 		 "The example below is suitable for 20 units\n"
 		 "observed over 10 periods"), 
 		 "1.01 10.20 newvar", 
-		 _("Apply"), prep_spreadsheet, wdata, 
-		 _(" Cancel "), 0, 0);
+		 prep_spreadsheet, wdata, 
+		 0, 0);
 }
 
 /* ........................................................... */
@@ -296,7 +296,7 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 {
     simple_selection (_("gretl: data transformations"), 
-		      _("Apply"), add_logs_etc, add_code, NULL);    
+		      add_logs_etc, add_code, NULL);    
 }
 
 /* ........................................................... */
@@ -364,8 +364,8 @@ static void window_set_die_with_main (GtkWidget *w)
 /* ........................................................... */
 
 void edit_dialog (char *diagtxt, char *infotxt, char *deftext, 
-		  char *oktxt, void (*okfunc)(), void *okptr,
-		  char *canceltxt, guint cmdcode, guint varclick)
+		  void (*okfunc)(), void *okptr,
+		  guint cmdcode, guint varclick)
 {
     dialog_t *d;
     GtkWidget *tempwid;
@@ -448,7 +448,7 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
     gtk_widget_grab_focus (d->edit);
 
     /* Create the "OK" button */
-    tempwid = gtk_button_new_with_label (oktxt);
+    tempwid = gtk_button_new_with_label (_("OK"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -462,7 +462,7 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
 
     /* Create a "Cancel" button */
     if (cmdcode != CREATE_USERDIR) {
-	tempwid = gtk_button_new_with_label (canceltxt);
+	tempwid = gtk_button_new_with_label (_("Cancel"));
 	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			    tempwid, TRUE, TRUE, FALSE);

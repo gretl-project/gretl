@@ -1483,6 +1483,6 @@ void first_time_set_user_dir (void)
                  _("You seem to be using gretl for the first time.\n"
 		   "Please enter a directory for gretl user files."),
                  paths.userdir, 
-                 _("OK"), real_set_userdir, NULL,
-		 _("  Cancel  "), CREATE_USERDIR, 0);
+                 real_set_userdir, NULL,
+		 CREATE_USERDIR, 0);
 }

@@ -22,8 +22,8 @@ void start_panel_dialog (gpointer data, guint pd_code, GtkWidget *widget);
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget);
 
 void edit_dialog (char *diagtxt, char *infotxt, char *deftext, 
-		  char *oktxt, void (*okfunc)(), void *okptr,
-		  char *canceltxt, guint hlpcode, guint varclick);
+		  void (*okfunc)(), void *okptr,
+		  guint hlpcode, guint varclick);
 
 void about_dialog (gpointer data);
 
