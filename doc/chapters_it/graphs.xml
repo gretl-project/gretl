@@ -93,7 +93,7 @@
       dei semplici <quote>grafici ASCII</quote>.</para>
 
     <figure id="fig-plot" float="1" pgwide="1">
-      <title>La finestra di modifica dei grafici gnuplot di gretl</title>
+      <title>Finestra di modifica dei grafici gnuplot di gretl</title>
       <screenshot>
 	<screeninfo>finestra di modifica dei grafici</screeninfo>
 	<graphic fileref="&figures;/plot_control" align="center"/>
