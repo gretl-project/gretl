@@ -137,6 +137,7 @@ char dbproxy[21];
 char editor[MAXSTR] = "emacs";
 char calculator[MAXSTR] = "xcalc";
 char viewdvi[MAXSTR] = "xdvi";
+char viewps[MAXSTR] = "gv";
 
 #ifdef USE_GNOME
 char Rcommand[MAXSTR] = "R --gui=gnome";

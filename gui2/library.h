@@ -240,7 +240,7 @@ int verify_and_record_command (char *line);
 
 /* other */
 
-int latex_compile (const char *texshort);
+int latex_compile (char *texshort);
 
 #endif /* LIBRARY_H */
 

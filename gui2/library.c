@@ -4356,7 +4356,7 @@ static int get_latex_path (char *latex_path)
 
 #elif defined (OLD_GTK)
 
-static int spawn_latex (const char *texsrc)
+static int spawn_latex (char *texsrc)
 {
     char tmp[MAXLEN];
     struct stat sbuf;
@@ -4376,7 +4376,7 @@ static int spawn_latex (const char *texsrc)
 
 #else
 
-static int spawn_latex (const char *texsrc)
+static int spawn_latex (char *texsrc)
 {
     GError *error = NULL;
     gchar *errout = NULL, *sout = NULL;
@@ -4429,10 +4429,11 @@ static int spawn_latex (const char *texsrc)
 
 #endif /* !G_OS_WIN32 */
 
-int latex_compile (const char *texshort)
+int latex_compile (char *texshort)
 {
 #ifdef G_OS_WIN32
     static char latex_path[MAXLEN];
+    char tmp[MAXLEN];
 #endif
     int err = LATEX_OK;
 

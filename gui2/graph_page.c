@@ -130,23 +130,23 @@ static int tex_graph_setup (int ng, FILE *fp)
     }
 
     if (ng == 1) {
-	strcpy(fname, "gretl_graphpage_1");
+	sprintf(fname, "%s_1", gpage_base);
 	fprintf(fp, "\\includegraphics[scale=1.2]{%s}\n", fname);
     }
 
     else if (ng == 2) {
-	sprintf(fname, "gretl_gpage_%d", 1);
+	sprintf(fname, "%s_%d", gpage_base, 1);
 	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
 	fprintf(fp, "\\vspace{%gin}\n\n", vspace);
-	sprintf(fname, "gretl_graphpage_%d", 2);
+	sprintf(fname, "%s_%d", gpage_base, 2);
 	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
     }
 
     else if (ng == 3) {
-	scale = 0.8;
+	scale = 0.9;
 	vspace = 0.25;
 	for (i=0; i<3; i++) {
-	    sprintf(fname, "gretl_gpage_%d", i + 1);
+	    sprintf(fname, "%s_%d", gpage_base, i + 1);
 	    fprintf(fp, "\\includegraphics[scale=%g]{%s}\n\n",
 		    scale, fname);
 	    fprintf(fp, "\\vspace{%gin}\n", vspace);
@@ -158,7 +158,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 	vspace = 0.25;
 	fputs("\\begin{tabular}{cc}\n", fp);
 	for (i=0; i<ng; i++) {
-	    sprintf(fname, "gretl_graphpage_%d", i + 1);
+	    sprintf(fname, "%s_%d", gpage_base, i + 1);
 	    fprintf(fp, "\\includegraphics[scale=%g]{%s}",
 		    scale, fname);
 	    if (i % 2 == 0) {
@@ -305,13 +305,65 @@ static int get_dvips_path (char *path)
     return (ret == 0);
 }
 
+#elif !defined(OLD_GTK)
+
+#include <signal.h>
+
+static int spawn_dvips (char *texsrc)
+{
+    GError *error = NULL;
+    gchar *sout = NULL;
+    gchar *argv[] = {
+	"dvips",
+	texsrc,
+	NULL
+    };
+    int ok, status;
+    int ret = 0;
+
+    signal(SIGCHLD, SIG_DFL);
+
+    ok = g_spawn_sync (paths.userdir, /* working dir */
+		       argv,
+		       NULL,    /* envp */
+		       G_SPAWN_SEARCH_PATH,
+		       NULL,    /* child_setup */
+		       NULL,    /* user_data */
+		       &sout,   /* standard output */
+		       NULL,    /* standard error */
+		       &status, /* exit status */
+		       &error);
+
+    if (!ok) {
+	errbox(error->message);
+	g_error_free(error);
+	ret = LATEX_EXEC_FAILED;
+    } else if (status != 0) {
+	gchar *errmsg;
+
+	errmsg = g_strdup_printf("%s\n%s", 
+				 _("Failed to process TeX file"),
+				 sout);
+	errbox(errmsg);
+	g_free(errmsg);
+	ret = 1;
+    }
+
+    if (sout != NULL) g_free(sout);
+
+    return ret;
+}
+
 #endif
 
 int dvips_compile (char *texshort)
 {
-    char *fname, tmp[MAXLEN];
+    char *fname;
 #ifdef G_OS_WIN32
     static char dvips_path[MAXLEN];
+#endif
+#if defined(G_OS_WIN32) || defined(OLD_GTK)
+    char tmp[MAXLEN];
 #endif
     int err = 0;
 
@@ -320,7 +372,7 @@ int dvips_compile (char *texshort)
     remove(fname);
 	
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
     if (*dvips_path == 0 && get_dvips_path(dvips_path)) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
@@ -331,10 +383,12 @@ int dvips_compile (char *texshort)
     if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return 1;
     }
+#elif defined(OLD_GTK)
+    sprintf(tmp, "cd \"%s\" && dvips %s", paths.userdir, texshort);
+    err = system(tmp);
 #else
-    sprintf(tmp, "dvips %s", texshort);
-    err = gretl_spawn(tmp);
-#endif /* G_OS_WIN32 */
+    err = spawn_dvips(texshort);
+#endif 
 
     return err;
 }
