@@ -441,7 +441,7 @@ static int factorized_vars (double ***pZ,
  * Returns: the return value from the system command.
  */
 
-#define GPGTK 1
+#undef GPGTK 
 
 #ifdef GPGTK
 # include <signal.h>
@@ -533,10 +533,11 @@ int gnuplot (LIST list, const int *lines,
 
     if ((fq = fopen(plotfile, "w")) == NULL) return E_FOPEN;
 
-
+#ifdef GPGTK
     if (!batch && strstr(ppaths->gnuplot, "plot_gtk")) {
 	fprintf(fq, "gtkfunc \"Save as icon\" %d\n", SIGUSR1);
     }
+#endif
 
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
 	if (get_timevar(pdinfo, s2) >= 0) {
