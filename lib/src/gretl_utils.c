@@ -540,82 +540,60 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
     return 0;
 }
 
-/*
-  criterion[0] = SGMASQ (Sigma squared)
-  criterion[1] = AIC (Akaike Information Criterion)
-  criterion[2] = FPE (Final prediction Error)
-  criterion[3] = HQ (Hannan-Quinn)
-  criterion[4] = SCHWARZ (Schwarz Bayesian)
-  criterion[5] = SHIBATA
-  criterion[6] = GCV
-  criterion[7] = RICE  
-*/
+/* ....................................................... */
 
-void gretl_aic_etc (MODEL *pmod)
-/*
-    Compute model selection criteria -- needs nobs, ncoeff
-    and ess from model.
-*/
+static void calculate_criteria (double *criterion, double ess, 
+				int nobs, int ncoeff)
 {
     double zz, zx, ersq, zn;
-    double ess = pmod->ess;
-    int nobs = pmod->nobs, ncoeff = pmod->ncoeff;
 
     zz = (double) (nobs - ncoeff);
-    pmod->criterion[0] = ess/zz;
+    criterion[C_SGMASQ]  = ess / zz;
     ersq = ess / nobs;
-    pmod->criterion[2] = ersq * (nobs + ncoeff) / zz;
+    criterion[C_FPE]     = ersq * (nobs + ncoeff) / zz;
     zz = 2.0 * ncoeff / nobs;
-    pmod->criterion[1] = ersq * exp(zz);
-    pmod->criterion[5] = ersq * (1.0 + zz);
-    pmod->criterion[7] = ((1-zz) > 0.0)? ersq/(1-zz) : NADBL;
+    criterion[C_AIC]     = ersq * exp(zz);
+    criterion[C_SHIBATA] = ersq * (1.0 + zz);
+    criterion[C_RICE]    = ((1-zz) > 0.0)? ersq / (1 - zz) : NADBL;
     zn = (double) nobs;
     zx = log(zn);
-    pmod->criterion[3] = ersq * pow(zx, zz);
+    criterion[C_HQ]      = ersq * pow(zx, zz);
     zz = (double) ncoeff;
-    zz = zz/zn;
-    pmod->criterion[4] = ersq * pow(zn, zz);
+    zz /= zn;
+    criterion[C_BIC]     = ersq * pow(zn, zz);
     zz = 1.0 - zz;
-    pmod->criterion[6] = ersq/(zz*zz);
+    criterion[C_GCV]     = ersq / (zz * zz);
 }
 
-/* ....................................................... */
+/* Compute model selection criteria */
+
+void gretl_aic_etc (MODEL *pmod)
+{
+    calculate_criteria(pmod->criterion, pmod->ess, pmod->nobs,
+		       pmod->ncoeff);
+}
 
 void _criteria (const double ess, int nobs, int ncoeff, 
 		PRN *prn)
 {
-    double zz, zx, ersq, zn;
     double criterion[8];
-    
-    zz = (double) (nobs - ncoeff);
-    criterion[0] = ess/zz;
-    ersq = ess/nobs;
-    criterion[2] = ersq * (nobs + ncoeff) / zz;
-    zz = 2.0 * ncoeff/nobs;
-    criterion[1] = ersq * exp(zz);
-    criterion[5] = ersq * (1.0 + zz);
-    criterion[7] = ((1-zz) > 0.0)? ersq/(1-zz) : NADBL;
-    zn = (double) nobs;
-    zx = log(zn);
-    criterion[3] = ersq * pow(zx, zz);
-    zz = (double) ncoeff;
-    zz = zz/zn;
-    criterion[4] = ersq * pow(zn, zz);
-    zz = 1.0 - zz;
-    criterion[6] = ersq/(zz*zz);
 
+    calculate_criteria(criterion, ess, nobs, ncoeff);
+    
     pprintf(prn, _("Using ess = %f, %d observations, %d coefficients\n"), 
-	   ess, nobs, ncoeff);
+	    ess, nobs, ncoeff);
     pputs(prn, _("\nMODEL SELECTION STATISTICS\n\n"));	
     pprintf(prn, "SGMASQ    %13g     AIC       %13g     FPE       %12g\n"
 	    "HQ        %13g     SCHWARZ   %13g     SHIBATA   %12g\n"
 	    "GCV       %13g",
-	    criterion[0], criterion[1], 
-	    criterion[2], criterion[3], 
-	    criterion[4], criterion[5], criterion[6]);
-    if (criterion[7] > 0.0) pprintf(prn, "     RICE      %13g\n", 
-					  criterion[7]);
-    else pputs(prn, "     RICE          undefined\n");
+	    criterion[C_SGMASQ], criterion[C_AIC], 
+	    criterion[C_FPE], criterion[C_HQ], 
+	    criterion[C_BIC], criterion[C_SHIBATA], criterion[C_GCV]);
+    if (criterion[C_RICE] > 0.0) {
+	pprintf(prn, "     RICE      %13g\n", criterion[C_RICE]);
+    } else {
+	pputs(prn, "     RICE          undefined\n");
+    }
     pputc(prn, '\n');
 }
 
@@ -1466,12 +1444,22 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     return NADBL;
 }
 
+static void maybe_delete_x12_file (const MODEL *pmod)
+{
+    char *fname = NULL;
+
+    fname = gretl_model_get_data(pmod, "x12a_output");
+    if (fname != NULL) remove(fname);
+}
+
 static void destroy_all_data_items (MODEL *pmod)
 {
     model_data_item *item;
     int i;
 
     if (pmod->n_data_items == 0) return;
+
+    maybe_delete_x12_file(pmod);
 
     for (i=0; i<pmod->n_data_items; i++) {
 	item = pmod->data_items[i];
@@ -1528,7 +1516,7 @@ void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->aux = AUX_NONE;
     *gretl_msg = '\0';
     
-    for (i=0; i<8; i++) {
+    for (i=0; i<C_MAX; i++) {
 	pmod->criterion[i] = NADBL;
     }
 

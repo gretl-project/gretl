@@ -1420,22 +1420,22 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
 
     pprintf(prn, "  %s\n\n", _("MODEL SELECTION STATISTICS"));	
     pputs(prn, "  SGMASQ    ");
-    print_aicetc_value(pmod->criterion[0], prn);
+    print_aicetc_value(pmod->criterion[C_SGMASQ], prn);
     pputs(prn, "     AIC       ");
-    print_aicetc_value(pmod->criterion[1], prn);
+    print_aicetc_value(pmod->criterion[C_AIC], prn);
     pputs(prn, "     FPE       ");
-    print_aicetc_value(pmod->criterion[2], prn);
+    print_aicetc_value(pmod->criterion[C_FPE], prn);
     pputs(prn, "\n  HQ        ");
-    print_aicetc_value(pmod->criterion[3], prn);
+    print_aicetc_value(pmod->criterion[C_HQ], prn);
     pputs(prn, "     SCHWARZ   ");
-    print_aicetc_value(pmod->criterion[4], prn);
+    print_aicetc_value(pmod->criterion[C_BIC], prn);
     pputs(prn, "     SHIBATA   ");
-    print_aicetc_value(pmod->criterion[5], prn);
+    print_aicetc_value(pmod->criterion[C_SHIBATA], prn);
     pputs(prn, "\n  GCV       ");
-    print_aicetc_value(pmod->criterion[6], prn);
+    print_aicetc_value(pmod->criterion[C_GCV], prn);
     pputs(prn, "     RICE      ");
-    if (pmod->criterion[7] > 0.0) {
-	print_aicetc_value(pmod->criterion[7], prn);
+    if (pmod->criterion[C_RICE] > 0.0) {
+	print_aicetc_value(pmod->criterion[C_RICE], prn);
     } else {
 	pputs(prn, _("undefined"));
     }
@@ -1878,22 +1878,22 @@ static void print_arma_stats (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
-	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[1]);
-	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[4]);
+	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[C_AIC]);
+	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[C_BIC]);
     }
     else if (RTF_FORMAT(prn->format)) {
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("AIC"), pmod->criterion[1]);
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("BIC"), pmod->criterion[4]);
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("AIC"), pmod->criterion[C_AIC]);
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("BIC"), pmod->criterion[C_BIC]);
     }
     else if (TEX_FORMAT(prn->format)) {
 	char xstr[32];
 
 	tex_dcolumn_double(pmod->lnL, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
-	tex_dcolumn_double(pmod->criterion[1], xstr);
+	tex_dcolumn_double(pmod->criterion[C_AIC], xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("AIC"), xstr);
-	tex_dcolumn_double(pmod->criterion[4], xstr);
+	tex_dcolumn_double(pmod->criterion[C_BIC], xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("BIC"), xstr);
     }
 }
@@ -1986,12 +1986,13 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 	    "\\textsc{schwarz} & %g & "  
 	    "\\textsc{shibata} & %g \\\\\n"
 	    "\\textsc{gcv}     & %g & ",  
-	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
-	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
-	    pmod->criterion[6]);
+	    pmod->criterion[C_SGMASQ], pmod->criterion[C_AIC], 
+	    pmod->criterion[C_FPE], pmod->criterion[C_HQ], 
+	    pmod->criterion[C_BIC], pmod->criterion[C_SHIBATA],
+	    pmod->criterion[C_GCV]);
 
-    if (pmod->criterion[7] > 0.0) 
-	pprintf(prn, "\\textsc{rice}    & %g\n", pmod->criterion[7]);
+    if (pmod->criterion[C_RICE] > 0.0) 
+	pprintf(prn, "\\textsc{rice}    & %g\n", pmod->criterion[C_RICE]);
     else
 	pprintf(prn, "\\textsc{rice}    & %s\n", I_("undefined"));
     

@@ -80,8 +80,7 @@ double _esl_sst (int t1, int t2, const double *x);
 
 void gretl_aic_etc (MODEL *pmod);
 
-void _criteria (const double ess, int nobs, int ncoeff, 
-		PRN *prn);
+void _criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		  const double **Z, int *misst);

@@ -236,14 +236,10 @@ static int add_unique_output_file (MODEL *pmod, const char *path)
     sprintf(unique, "%s.XXXXXX", fname);
     if (mktemp(unique) == NULL) return 1;
 
-    free(pmod->params[0]);
-    pmod->params[0] = NULL;
-    
     err = rename(fname, unique);
     if (!err) {
-	pmod->params[0] = malloc(strlen(unique) + 1);
-	if (pmod->params[0] == NULL) err = 1;
-	else strcpy(pmod->params[0], unique);
+	gretl_model_set_data(pmod, "x12a_output", g_strdup(unique),
+			     strlen(fname) + 1);
     } 
 
     return err;
@@ -310,8 +306,8 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
 	    if (!strcmp(statname, "nobs")) pmod->nobs = (int) x;
 	    else if (!strcmp(statname, "lnlkhd")) pmod->lnL = x;
-	    else if (!strcmp(statname, "aic")) pmod->criterion[1] = x;
-	    else if (!strcmp(statname, "bic")) pmod->criterion[4] = x;
+	    else if (!strcmp(statname, "aic")) pmod->criterion[C_AIC] = x;
+	    else if (!strcmp(statname, "bic")) pmod->criterion[C_BIC] = x;
 	}
     }
 

@@ -534,16 +534,6 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-static void maybe_delete_x12_file (const MODEL *pmod)
-{
-    if (pmod->params != NULL && pmod->params[0] != NULL &&
-	*pmod->params[0] != '\0') {
-	remove(pmod->params[0]);
-    }
-}
-
-/* ........................................................... */
-
 static void delete_unnamed_model (GtkWidget *widget, gpointer data) 
 {
     MODEL *pmod = (MODEL *) data;
@@ -553,9 +543,6 @@ static void delete_unnamed_model (GtkWidget *widget, gpointer data)
     }
 
     if (pmod->name == NULL) {
-	if (arma_by_x12a(pmod)) {
-	    maybe_delete_x12_file(pmod);
-	}
 	free_model(pmod);
     }
 }
@@ -2597,20 +2584,22 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
+    char *fname;
 
-    if (pmod != NULL && pmod->params != NULL &&
-	pmod->params[0] != NULL && *pmod->params[0] != '\0') {
-	char *p = strrchr(pmod->params[0], '.');
+    if (pmod == NULL) return;
 
-	if (p != NULL && strlen(p) > 4) {
-	    gchar *tmp = g_strdup(pmod->params[0]);
+    fname = gretl_model_get_data(pmod, "x12a_output");
+    if (fname != NULL) {
+	char *p = strrchr(fname, '.');
+
+	if (p != NULL && strlen(p) == 7) {
+	    gchar *tmp = g_strdup(fname);
 
 	    sprintf(p, ".%d", pmod->ID);
-	    rename(tmp, pmod->params[0]);
+	    rename(tmp, fname);
 	    g_free(tmp);
 	}
-	
-	view_file(pmod->params[0], 0, 0, 78, 350, VIEW_FILE);
+	view_file(fname, 0, 0, 78, 350, VIEW_FILE);
     }
 }
 
