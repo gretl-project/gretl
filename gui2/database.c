@@ -22,7 +22,6 @@
 #include "gretl.h"
 #include "treeutils.h"
 #include "boxplots.h"
-#include "dbread.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -43,9 +42,6 @@ static int populate_series_list (windata_t *dbwin, PATHS *ppaths);
 static int populate_remote_series_list (windata_t *dbwin, char *buf);
 static int rats_populate_series_list (windata_t *dbwin);
 static SERIESINFO *get_series_info (windata_t *ddata, int action);
-static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
-static void get_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
-			 int *pad1, int *pad2);
 static void update_statusline (windata_t *windat, char *str);
 static void data_compact_dialog (int spd, int *target_pd, 
 				 gint *compact_method);
@@ -65,22 +61,6 @@ GtkItemFactoryEntry db_items[] = {
     { N_("/_Find"), NULL, menu_find, 1, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
-
-/* ........................................................... */
-
-static double get_date_x (int pd, const char *obs)
-{
-    double x = 1.0;
-
-    if (pd == 5 || pd == 7) { /* daily data */
-	long ed = get_epoch_day(obs);
-
-	if (ed >= 0) x = ed;
-    } else 
-	x = obs_str_to_double(obs); 
-
-    return x;
-}
 
 /* ........................................................... */
 
@@ -248,51 +228,63 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
 /* ........................................................... */
 
-static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
+static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 {
     gint err = 0;
     double *xvec;
     int n, v, t, start, stop, pad1 = 0, pad2 = 0;
     int compact_method = COMPACT_AVG;
 
-    if (data_status) { /* data already in gretl's workspace */
-	err = check_import(sinfo, datainfo);
-	if (err) return;
+    if (data_status) { 
+	/* we already have data in gretl's workspace */
+	err = check_db_import(sinfo, datainfo);
+	if (err) {
+	    errbox(get_gretl_errmsg());
+	    return;
+	}
+
 	if (dataset_add_vars(1, &Z, datainfo)) {
 	    errbox(_("Out of memory adding series"));
 	    return;
 	}
+
 	v = datainfo->v;
 	n = datainfo->n;
-	/* is the frequency of the new var higher? */
+
 	if (sinfo->pd > datainfo->pd) {
+	    /* the frequency of the new var is higher */
 	    if (datainfo->pd != 1 && datainfo->pd != 4 &&
 		sinfo->pd != 12) {
 		errbox(_("Sorry, can't handle this conversion yet!"));
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
+
 	    data_compact_dialog(sinfo->pd, &datainfo->pd, &compact_method);
+
 	    if (compact_method == COMPACT_NONE) {
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
 	    if (sinfo->pd == 12 && datainfo->pd == 4) {
-		mon_to_quart(&xvec, (*dbZ)[1], sinfo, compact_method);
+		mon_to_quart(&xvec, dbZ[1], sinfo, compact_method);
 	    }
 	    else if (datainfo->pd == 1) {
-		to_annual(&xvec, (*dbZ)[1], sinfo, compact_method);
+		to_annual(&xvec, dbZ[1], sinfo, compact_method);
 	    }
-	} else {  /* series does not need compacting */
+	} else {  
+	    /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
 	    for (t=0; t<sinfo->nobs; t++) 
-		xvec[t] = (*dbZ)[1][t];
+		xvec[t] = dbZ[1][t];
 	}
+
+	/* FIXME xvec could be NULL */
 
 	/* common stuff for adding a var */
 	strcpy(datainfo->varname[v-1], sinfo->varname);
 	strcpy(VARLABEL(datainfo, v-1), sinfo->descrip);
-	get_padding(sinfo, datainfo, &pad1, &pad2);
+	get_db_padding(sinfo, datainfo, &pad1, &pad2);
 
 	if (pad1 > 0) {
 	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
@@ -313,8 +305,8 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 	for (t=start; t<stop; t++) 
 	    Z[v-1][t] = xvec[t-pad1];
 	free(xvec);
-    } else {  /* no datafile open: start new working data set 
-		 with this db series */
+    } else {  
+	/* no data open: start new data set with this db series */
 	datainfo->pd = sinfo->pd;
 	strcpy(datainfo->stobs, sinfo->stobs);
 	strcpy(datainfo->endobs, sinfo->endobs);
@@ -329,13 +321,15 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 
 	start_new_Z(&Z, datainfo, 0);
 
-	if (dbwin->role == NATIVE_SERIES) 
+	if (dbwin->role == NATIVE_SERIES) {
 	    err = get_db_data(dbwin->fname, sinfo, &Z);
-	else if (dbwin->role == REMOTE_SERIES)
+	} else if (dbwin->role == REMOTE_SERIES) {
 	    err = get_remote_db_data(dbwin, sinfo, &Z);
-	else if (dbwin->role == RATS_SERIES)
-	    err = get_rats_data(dbwin->fname, dbwin->active_var + 1,
-				sinfo, &Z);
+	} else if (dbwin->role == RATS_SERIES) {
+	    err = get_rats_data_by_series_number(dbwin->fname, 
+						 dbwin->active_var + 1,
+						 sinfo, &Z);
+	}
 
 	if (err == DB_NOT_FOUND) {
 	    errbox(_("Couldn't access binary data"));
@@ -405,13 +399,15 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     dbdinfo->sd0 = get_date_x(dbdinfo->pd, dbdinfo->stobs);
     set_time_series(dbdinfo);
 
-    if (dbcode == NATIVE_SERIES) 
+    if (dbcode == NATIVE_SERIES) { 
 	err = get_db_data(dbwin->fname, sinfo, &dbZ);
-    else if (dbcode == REMOTE_SERIES) 
+    } else if (dbcode == REMOTE_SERIES) {
 	err = get_remote_db_data(dbwin, sinfo, &dbZ);
-    else if (dbcode == RATS_SERIES)
-	err = get_rats_data(dbwin->fname, dbwin->active_var + 1, 
-			    sinfo, &dbZ);
+    } else if (dbcode == RATS_SERIES) {
+	err = get_rats_data_by_series_number(dbwin->fname, 
+					     dbwin->active_var + 1, 
+					     sinfo, &dbZ);
+    }
 
     if (dbcode == RATS_SERIES && err == DB_MISSING_DATA) {
 	infobox(_("Warning: series has missing observations"));
@@ -429,7 +425,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     else if (action == DB_GRAPH) 
 	graph_dbdata(&dbZ, dbdinfo);
     else if (action == DB_IMPORT) 
-	add_dbdata(dbwin, &dbZ, sinfo);
+	add_dbdata(dbwin, dbZ, sinfo);
 
     free_Z(dbZ, dbdinfo);
     free_datainfo(dbdinfo);
@@ -856,10 +852,13 @@ static int rats_populate_series_list (windata_t *dbwin)
     }
 
     /* extract catalog from RATS file */
-    tbl = read_RATS_db(fp);
+    tbl = read_rats_db(fp);
     fclose(fp);
 
-    if (tbl == NULL) return 1;
+    if (tbl == NULL) {
+	errbox(get_gretl_errmsg());
+	return 1;
+    }
 
     insert_and_free_db_table(tbl, GTK_TREE_VIEW(dbwin->listbox));
 
@@ -897,39 +896,6 @@ static GtkWidget *database_window (windata_t *dbwin)
 
 /* ........................................................... */
 
-static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
-{
-    double sd0, sdn_new, sdn_old;
-
-    if (sinfo->pd < pdinfo->pd) {
-	errbox(_("You can't add a lower frequency series to a\nhigher "
-	       "frequency working data set."));
-	return 1;
-    }
-
-    sd0 = get_date_x(sinfo->pd, sinfo->stobs);
-    sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
-    sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);
-    if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
-	errbox(_("Observation range does not overlap\nwith the working "
-	       "data set"));
-	return 1;
-    }
-
-    return 0;
-}
-
-/* ........................................................... */
-
-static void get_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
-			 int *pad1, int *pad2)
-{
-    *pad1 = dateton(sinfo->stobs, pdinfo); 
-    *pad2 = pdinfo->n - sinfo->nobs - *pad1;
-} 
-
-/* ........................................................... */
-
 static SERIESINFO *get_series_info (windata_t *win, int action)
 /* get series info from list box line */
 {
@@ -958,7 +924,7 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
 
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
 			 win->active_var, 0, &temp);
-    sinfo->varname[0] = 0;
+    *sinfo->varname = 0;
     strncat(sinfo->varname, temp, 8);
     g_free(temp);
 

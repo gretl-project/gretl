@@ -606,7 +606,7 @@ void exec_line (char *line, PRN *prn)
 
     case ADF: case COINT: case COINT2:
     case CORR:
-    case CRITERIA: case CRITICAL:
+    case CRITERIA: case CRITICAL: case DATA:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
     case GRAPH: case PLOT: case LABEL:
@@ -1000,6 +1000,8 @@ void exec_line (char *line, PRN *prn)
 	} else if (check == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, 
 			      data_status, prn, 0);
+	} else if (check == GRETL_NATIVE_DB || check == GRETL_RATS_DB) {
+	    set_db_name(datfile);
 	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, 
 			   data_status, prn);
@@ -1011,7 +1013,9 @@ void exec_line (char *line, PRN *prn)
 	strncpy(paths.datfile, datfile, MAXLEN-1);
 	fullZ = NULL;
 	data_status = 1;
-	varlist(datainfo, prn);
+	if (datainfo->v > 0) {
+	    varlist(datainfo, prn);
+	}
 	paths.currdir[0] = '\0';
 	break;
 
@@ -1245,8 +1249,9 @@ void exec_line (char *line, PRN *prn)
     case SETOBS:
 	err = set_obs(line, datainfo, oflag);
 	if (err) errmsg(err, prn);
-	else 
+	else if (datainfo->n > 0) {
 	    print_smpl(datainfo, 0, prn);
+	}
 	break;
 
     case SETMISS:

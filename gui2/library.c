@@ -4145,7 +4145,7 @@ int gui_exec_line (char *line,
 
     case ADF: case COINT: case COINT2:
     case CORR:
-    case CRITERIA: case CRITICAL:
+    case CRITERIA: case CRITICAL: case DATA:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
     case GRAPH: case PLOT: case LABEL:
@@ -4556,14 +4556,17 @@ int gui_exec_line (char *line,
 	if (data_status & HAVE_DATA) 
 	    close_session();
 	check = detect_filetype(datfile, &paths, prn);
-	if (check == GRETL_CSV_DATA)
+	if (check == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, datainfo, datfile, prn);
-	else if (check == GRETL_BOX_DATA)
+	} else if (check == GRETL_BOX_DATA) {
 	    err = import_box(&Z, datainfo, datfile, prn);
-	else if (check == GRETL_XML_DATA)
+	} else if (check == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn, 0);
-	else
+	} else if (check == GRETL_NATIVE_DB || check == GRETL_RATS_DB) {
+	    set_db_name(datfile);
+	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, data_status, prn);
+	}
 	if (err) {
 	    gui_errmsg(err);
 	    break;
@@ -4572,8 +4575,10 @@ int gui_exec_line (char *line,
 	if (check == GRETL_CSV_DATA || check == GRETL_BOX_DATA)
 	    data_status |= IMPORT_DATA;
 	/* below: was (exec_code != REBUILD_EXEC), not 0 */
-	register_data(paths.datfile, 0);
-	varlist(datainfo, prn);
+	if (datainfo->v > 0) {
+	    register_data(paths.datfile, 0);
+	    varlist(datainfo, prn);
+	}
 	*paths.currdir = '\0'; 
 	break;
 
@@ -4774,7 +4779,7 @@ int gui_exec_line (char *line,
     case SETOBS:
 	err = set_obs(line, datainfo, oflag);
 	if (err) errmsg(err, prn);
-	else {
+	else if (datainfo->n > 0) {
 	    set_sample_label(datainfo);
 	    print_smpl(datainfo, 0, prn);
 	}

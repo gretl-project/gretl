@@ -38,6 +38,7 @@ typedef enum {
     CRITERIA,
     CRITICAL,
     CUSUM,
+    DATA,
     DELEET,
     DIFF,
     ELSE,

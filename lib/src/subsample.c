@@ -305,10 +305,15 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 
     nf = _count_fields(line);
 
+    if (nf == 3 && pdinfo->n == 0) {
+	/* database special */
+	return db_set_sample(line, pdinfo);
+    }
+
     if (nf == 1) return 0;
 	
     if (nf == 2) {
-	if (sscanf(line, "%s %s", cmd, newstart) != 2) {
+	if (sscanf(line, "%4s %8s", cmd, newstart) != 2) {
 	    sprintf(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
@@ -322,7 +327,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	    return 0;
 	}
     }
-    if (sscanf(line, "%s %s %s", cmd, newstart, newstop) != 3) {
+    if (sscanf(line, "%4s %8s %8s", cmd, newstart, newstop) != 3) {
 	sprintf(gretl_errmsg, _("error reading smpl line"));
 	return 1;
     }

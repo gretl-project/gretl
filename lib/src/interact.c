@@ -215,6 +215,7 @@ static int aliased (char *cmd)
                        c == SYSTEM || \
                        c == LEVERAGE || \
                        c == NLS || \
+                       c == DATA || \
 	               c == GENR)
 
 /* ........................................................... */
@@ -1350,6 +1351,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     case CRITICAL:
 	err = print_critical(line, prn);
+	break;
+
+    case DATA:
+	err = db_get_series(line, pZ, datainfo, prn);
 	break;
 
     case DIFF:

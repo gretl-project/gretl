@@ -40,6 +40,7 @@ char *gretl_commands[] = {
     "criteria",
     "critical",
     "cusum",
+    "data",
     "delete",
     "diff",
     "else",

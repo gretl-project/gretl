@@ -351,6 +351,7 @@ struct _VCV {
 #include "compare.h"
 #include "pvalues.h"
 #include "dataio.h"
+#include "dbread.h"
 #include "strutils.h"
 #include "describe.h"
 #include "printout.h"

@@ -691,7 +691,7 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     }
 
     /* does frequency make sense? */
-    if (pd < 1 || pd > pdinfo->n) {
+    if (pd < 1 || (pdinfo->n > 0 && pd > pdinfo->n)) {
 	sprintf(gretl_errmsg, 
 		_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;
@@ -756,10 +756,13 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 
     /* adjust data info struct */
     pdinfo->pd = pd;
-    if (ed0 == 0L) 
+
+    if (ed0 == 0L) {
 	pdinfo->sd0 = atof(stobs);
-    else
+    } else {
 	pdinfo->time_series = TIME_SERIES;
+    }
+
     ntodate(pdinfo->stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
@@ -772,7 +775,10 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 
     /* and report */
     fprintf(stderr, _("setting data frequency = %d\n"), pd);
-    fprintf(stderr, _("data range: %s - %s\n"), pdinfo->stobs, pdinfo->endobs);
+    if (pdinfo->n > 0) {
+	fprintf(stderr, _("data range: %s - %s\n"), pdinfo->stobs, pdinfo->endobs);
+    }
+
     return 0;
 }
 
@@ -1483,6 +1489,7 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
 
     newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
     if (newZ == NULL) return E_ALLOC;
+
     for (i=0; i<newvars; i++) {
 	newZ[v+i] = malloc(n * sizeof **newZ);
 	if (newZ[v+i] == NULL) return E_ALLOC;
@@ -1491,7 +1498,8 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
 
     varname = realloc(pdinfo->varname, (v + newvars) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
-    else pdinfo->varname = varname;
+
+    pdinfo->varname = varname;
     for (i=0; i<newvars; i++) {
 	pdinfo->varname[v+i] = malloc(9);
 	if (pdinfo->varname[v+i] == NULL) return E_ALLOC;
@@ -1511,9 +1519,11 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
 
     vector = realloc(pdinfo->vector, (v + newvars));
     if (vector == NULL) return E_ALLOC;
-    else pdinfo->vector = vector;
-    for (i=0; i<newvars; i++) 
+
+    pdinfo->vector = vector;
+    for (i=0; i<newvars; i++) {
 	pdinfo->vector[v+i] = 1;
+    }
 
     pdinfo->v += newvars;
     return 0;

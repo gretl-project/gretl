@@ -131,7 +131,7 @@ static void dataset_dates_defaults (DATAINFO *pdinfo)
 
 /* ......................................................... */
 
-static double get_date_x (int pd, const char *obs)
+double get_date_x (int pd, const char *obs)
 {
     double x = 1.0;
 
@@ -809,12 +809,14 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	    break;
 	}
     }
+
     if (dotpos1) {
         safecpy(majstr, date, dotpos1);
         maj = atoi(majstr);
         strcpy(minstr, date + dotpos1 + 1);
         min = atoi(minstr);
     }
+
     n = strlen(pdinfo->stobs);
     for (i=1; i<n; i++) {
         if (IS_DATE_SEP(pdinfo->stobs[i])) {
@@ -822,10 +824,12 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	    break;
 	}
     }
+
     if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
 	sprintf(gretl_errmsg, _("Date strings inconsistent"));
 	return -1;  
     }
+
     if (!dotpos1 && !dotpos2) {
 	n = atoi(date) - atoi(pdinfo->stobs);
 	if (n < 0 || (pdinfo->n != -1 && n > pdinfo->n)) {
@@ -834,6 +838,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	}
         else return n;
     }
+
     safecpy(startmajstr, pdinfo->stobs, dotpos2);
     startmaj = atoi(startmajstr);
     strcpy(startminstr, pdinfo->stobs + dotpos2 + 1);
@@ -2753,6 +2758,28 @@ void close_plugin (void *handle)
 #endif
 }
 
+static int file_has_suffix (const char *fname, const char *sfx)
+{
+    const char *p = strrchr(fname, '.');
+    size_t n;
+
+    if (p != NULL && (n = strlen(p)) > 3) {
+	char *q, s[9];
+
+	*s = 0;
+	strncat(s, p + 1, 8);
+	q = s;
+	while (*q) {
+	    *q = tolower(*q);
+	    q++;
+	}
+
+	if (!strcmp(s, sfx)) return 1;
+    }
+
+    return 0;
+}
+
 /**
  * detect_filetype:
  * @fname: name of file to examine.
@@ -2774,18 +2801,21 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
-    if (n > 4 && (!strcmp(fname + n - 4, ".inp") ||
-		  !strcmp(fname + n - 4, ".INP") ||
-		  !strcmp(fname + n - 4, ".GRE"))) 
+    if (file_has_suffix(fname, "inp") ||
+	file_has_suffix(fname, "gre"))
 	return GRETL_SCRIPT;
-    if (n > 6 && !strcmp(fname + n - 6, ".gretl")) 
+    if (file_has_suffix(fname, "gretl"))
 	return GRETL_SCRIPT; 
-    if (n > 9 && !strcmp(fname + n - 9, ".gnumeric")) 
+    if (file_has_suffix(fname, "gnumeric"))
 	return GRETL_GNUMERIC;
-    if (n > 4 && !strcmp(fname + n - 4, ".xls")) 
+    if (file_has_suffix(fname, "xls"))
 	return GRETL_EXCEL;
-    if (n > 4 && !strcmp(fname + n - 4, ".des")) 
+    if (file_has_suffix(fname, "des"))
 	return GRETL_DES_DATA;
+    if (file_has_suffix(fname, "bin"))
+	return GRETL_NATIVE_DB;
+    if (file_has_suffix(fname, "rat"))
+	return GRETL_RATS_DB;
 
     addpath(fname, ppaths, 0); 
 

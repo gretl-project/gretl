@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef DBREAD_H
+#define DBREAD_H
+
 enum {
     DB_OK = 0,
     DB_MISSING_DATA,
@@ -59,14 +62,30 @@ struct _SERIESINFO {
     int undated;
 };
 
-db_table *read_RATS_db (FILE *fp);
+db_table *read_rats_db (FILE *fp);
 
-int get_rats_data (const char *fname, const int series_number,
-		   SERIESINFO *sinfo, double ***pZ);
+int get_rats_data_by_series_number (const char *fname, 
+				    int series_number,
+				    SERIESINFO *sinfo, 
+				    double ***pZ);
 
 int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
-		  gint method);
+		  int method);
 
 int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
-	       gint method);
+	       int method);
 
+void set_db_name (const char *fname);
+
+int db_set_sample (const char *line, DATAINFO *pdinfo);
+
+int db_get_series (const char *line, double ***pZ, DATAINFO *datainfo, 
+		   PRN *prn);
+
+void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
+		     int *pad1, int *pad2);
+
+int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
+
+
+#endif /* DBREAD_H */

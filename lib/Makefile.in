@@ -57,7 +57,7 @@ cephessrc = $(topsrc)/cephes
 minpacksrc = $(topsrc)/minpack
 VPATH = $(libsrc):$(cephessrc):$(minpacksrc)
 
-SRCS = calendar.c compare.c dataio.c describe.c discrete.c \
+SRCS = calendar.c compare.c dataio.c dbread.c describe.c discrete.c \
 	estimate.c generate.c graphing.c gretl_errors.c gretl_matrix.c \
 	gretl_utils.c interact.c modelprint.c monte_carlo.c nls.c nonparam.c \
 	printout.c pvalues.c qr_estimate.c random.c strutils.c subsample.c \
