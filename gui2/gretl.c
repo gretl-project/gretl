@@ -1599,7 +1599,8 @@ static void check_for_extra_data (void)
     DIR *dir;
     extern char pwtpath[MAXLEN]; /* datafiles.c */
     extern char jwpath[MAXLEN];  /* datafiles.c */
-    int gotpwt = 0, gotwool = 0;
+    extern char dgpath[MAXLEN];  /* datafiles.c */
+    int gotpwt = 0, gotwool = 0, gotguj = 0;
 
     /* first check for Penn World Table */
     build_path(paths.datadir, "pwt56", pwtpath, NULL); 
@@ -1634,6 +1635,23 @@ static void check_for_extra_data (void)
     }
 
     if (!gotwool) *jwpath = 0;
+
+    /* and for Gujarati data */
+    build_path(paths.datadir, "gujarati", dgpath, NULL); 
+    /* try at system level */
+    if ((dir = opendir(dgpath)) != NULL) {
+        closedir(dir);
+        gotguj = 1;
+    } else {
+        build_path(paths.userdir, "gujarati", dgpath, NULL); 
+	/* and at user level */
+        if ((dir = opendir(dgpath)) != NULL) {
+            closedir(dir);
+            gotguj = 1;
+        }
+    }
+
+    if (!gotguj) *dgpath = 0;
 }
 
 /* ........................................................... */

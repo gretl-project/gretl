@@ -36,6 +36,7 @@ extern GtkItemFactoryEntry sample_script_items[];
 
 char pwtpath[MAXLEN];
 char jwpath[MAXLEN];
+char dgpath[MAXLEN];
 static int file_sel_open = 0;
 
 static GtkWidget *files_window (windata_t *fdata);
@@ -55,6 +56,7 @@ enum {
     RAMU_DATA = 0,
     GREENE_DATA,
     JW_DATA,
+    DG_DATA,
     PWT_DATA,
     MAX_DATA,
     RAMU_PS,
@@ -134,6 +136,8 @@ static int read_data_descriptions (windata_t *fdata)
 	build_path(pwtpath, "descriptions", fname, NULL);
     else if (fdata->role == JW_DATA)
 	build_path(jwpath, "jw_descriptions", fname, NULL);
+    else if (fdata->role == DG_DATA)
+	build_path(dgpath, "dg_descriptions", fname, NULL);
     else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
@@ -194,6 +198,8 @@ static void browse_header (GtkWidget *w, gpointer data)
 	build_path(paths.datadir, fname, hdrname, ".gdt");
     else if (file_code == JW_DATA) 
 	build_path(jwpath, fname, hdrname, ".gdt");
+    else if (file_code == DG_DATA) 
+	build_path(dgpath, fname, hdrname, ".gdt");
     else if (file_code == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
@@ -235,6 +241,8 @@ void browser_open_data (GtkWidget *w, gpointer data)
 	build_path(paths.datadir, datname, trydatfile, ".gdt");
     else if (file_code == JW_DATA) 
 	build_path(jwpath, datname, trydatfile, ".gdt");
+    else if (file_code == DG_DATA) 
+	build_path(dgpath, datname, trydatfile, ".gdt");
     else if (file_code == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
@@ -879,6 +887,7 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 static int page_missing (int i)
 {
     if (i == JW_DATA && *jwpath == '\0') return 1;
+    if (i == DG_DATA && *dgpath == '\0') return 1;
     if (i == PWT_DATA && *pwtpath == '\0') return 1;
     if (i == PWT_PS && *pwtpath == '\0') return 1;
     return 0;
@@ -902,6 +911,7 @@ static GtkWidget *files_notebook (windata_t *fdata,
 	"Ramanathan",
 	"Greene",
 	"Wooldridge",
+	"Gujarati",
 	"Penn World Table"
     };
     const gchar *ps_tab_labels[] = {
