@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-07-23 08:47-0400\n"
+"POT-Creation-Date: 2002-07-24 09:27-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3129,60 +3129,68 @@ msgstr ""
 msgid "gretl: using these basic search paths:\n"
 msgstr ""
 
-#: lib/src/utils.c:1278 lib/src/utils.c:1281
+#: lib/src/utils.c:1277
+msgid "gretl_hlp.txt"
+msgstr ""
+
+#: lib/src/utils.c:1279 lib/src/utils.c:1282
 msgid "gretlcli_hlp.txt"
 msgstr ""
 
-#: lib/src/utils.c:1346 lib/src/utils.c:1349
+#: lib/src/utils.c:1346
+msgid "gretl.hlp"
+msgstr ""
+
+#: lib/src/utils.c:1348 lib/src/utils.c:1351
 msgid "gretlcli.hlp"
 msgstr ""
 
-#: lib/src/utils.c:1851
+#: lib/src/utils.c:1853
 msgid "forecasting model failed in fcast_with_errs()\n"
 msgstr ""
 
-#: lib/src/utils.c:1889
+#: lib/src/utils.c:1891
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr ""
 
-#: lib/src/utils.c:1893
+#: lib/src/utils.c:1895
 msgid "prediction"
 msgstr ""
 
-#: lib/src/utils.c:1894
+#: lib/src/utils.c:1896
 msgid " std. error"
 msgstr ""
 
-#: lib/src/utils.c:1895
+#: lib/src/utils.c:1897
 #, c-format
 msgid "   95%% confidence interval\n"
 msgstr ""
 
-#: lib/src/utils.c:2139
+#: lib/src/utils.c:2141
 msgid ""
 "The current data frequency, 1, is not compatible with panel data.\n"
 "Please see the 'setobs' command.\n"
 msgstr ""
 
-#: lib/src/utils.c:2151
+#: lib/src/utils.c:2153
 msgid "Failed to set panel structure\n"
 msgstr ""
 
-#: lib/src/utils.c:2155
+#: lib/src/utils.c:2157
 #, c-format
 msgid "Panel structure set to %s\n"
 msgstr ""
 
-#: lib/src/utils.c:2157
+#: lib/src/utils.c:2159
 msgid "stacked cross sections"
 msgstr ""
 
-#: lib/src/utils.c:2157
+#: lib/src/utils.c:2159
 msgid "stacked time series"
 msgstr ""
 
-#: lib/src/utils.c:2158
+#: lib/src/utils.c:2160
 #, c-format
 msgid "(%d units observed in each of %d periods)\n"
 msgstr ""
@@ -4884,11 +4892,35 @@ msgstr ""
 msgid "Stacked cross sections"
 msgstr ""
 
+#: gui/datafiles.c:703
+msgid "annual data"
+msgstr ""
+
+#: gui/datafiles.c:704
+msgid "quarterly data"
+msgstr ""
+
+#: gui/datafiles.c:705
+msgid "monthly data"
+msgstr ""
+
+#: gui/datafiles.c:706
+msgid "weekly data"
+msgstr ""
+
+#: gui/datafiles.c:707 gui/datafiles.c:708
+msgid "daily data"
+msgstr ""
+
+#: gui/datafiles.c:709
+msgid "hourly data"
+msgstr ""
+
 #: gui/datafiles.c:723
 #, c-format
 msgid ""
 "Do you want to register the current data set\n"
-"as %s data?"
+"as %s?"
 msgstr ""
 
 #: gui/datafiles.c:725

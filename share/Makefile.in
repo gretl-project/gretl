@@ -36,7 +36,7 @@ install_help:
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(INSTALL_DATA) gretl.hlp $(gretldir)/gretl.hlp
 	$(INSTALL_DATA) gretlcli.hlp $(gretldir)/gretlcli.hlp
-	for f in gretlcli.hlp.* ; do \
+	for f in gretl.hlp.* gretlcli.hlp.* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/$$f ; done
 
 installdirs:

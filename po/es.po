@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.999\n"
-"POT-Creation-Date: 2002-07-23 08:47-0400\n"
-"PO-Revision-Date: 2002-07-23 16:54-0400\n"
+"POT-Creation-Date: 2002-07-24 09:27-0400\n"
+"PO-Revision-Date: 2002-07-24 09:30-0400\n"
 "Last-Translator: \n"
 "Language-Team:  <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3515,37 +3515,45 @@ msgstr "Intentando %s\n"
 msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: usando los siguientes caminos de búsqueda básicos:\n"
 
-#: lib/src/utils.c:1278 lib/src/utils.c:1281
-msgid "gretlcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
+#: lib/src/utils.c:1277
+msgid "gretl_hlp.txt"
+msgstr "gretl_hlp_es.txt"
 
-#: lib/src/utils.c:1346 lib/src/utils.c:1349
+#: lib/src/utils.c:1279 lib/src/utils.c:1282
+msgid "gretlcli_hlp.txt"
+msgstr "gretlcli_hlp_es.txt"
+
+#: lib/src/utils.c:1346
+msgid "gretl.hlp"
+msgstr "gretl.hlp.es"
+
+#: lib/src/utils.c:1348 lib/src/utils.c:1351
 msgid "gretlcli.hlp"
 msgstr "gretlcli.hlp.es"
 
-#: lib/src/utils.c:1851
+#: lib/src/utils.c:1853
 msgid "forecasting model failed in fcast_with_errs()\n"
 msgstr "el modelo de predicción falló en fcast_with_errs()\n"
 
-#: lib/src/utils.c:1889
+#: lib/src/utils.c:1891
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr " Para intervalos de confianza 95%%, t(%d, .025) = %.3f\n"
 
-#: lib/src/utils.c:1893
+#: lib/src/utils.c:1895
 msgid "prediction"
 msgstr "predicción"
 
-#: lib/src/utils.c:1894
+#: lib/src/utils.c:1896
 msgid " std. error"
 msgstr " desv. típica"
 
-#: lib/src/utils.c:1895
+#: lib/src/utils.c:1897
 #, c-format
 msgid "   95%% confidence interval\n"
 msgstr "   Intervalo de confianza 95%% \n"
 
-#: lib/src/utils.c:2139
+#: lib/src/utils.c:2141
 msgid ""
 "The current data frequency, 1, is not compatible with panel data.\n"
 "Please see the 'setobs' command.\n"
@@ -3553,24 +3561,24 @@ msgstr ""
 "La frecuencia de datos actual, 1, no es compatible con datos de panel.\n"
 "Por favor, mire la instrucción 'setobs'.\n"
 
-#: lib/src/utils.c:2151
+#: lib/src/utils.c:2153
 msgid "Failed to set panel structure\n"
 msgstr "Fallo al organizar la estructura del panel\n"
 
-#: lib/src/utils.c:2155
+#: lib/src/utils.c:2157
 #, c-format
 msgid "Panel structure set to %s\n"
 msgstr "Estructura de panel asignada a %s\n"
 
-#: lib/src/utils.c:2157
+#: lib/src/utils.c:2159
 msgid "stacked cross sections"
 msgstr "secciones cruzadas apiladas"
 
-#: lib/src/utils.c:2157
+#: lib/src/utils.c:2159
 msgid "stacked time series"
 msgstr "series temporales apiladas"
 
-#: lib/src/utils.c:2158
+#: lib/src/utils.c:2160
 #, c-format
 msgid "(%d units observed in each of %d periods)\n"
 msgstr "(%d unidades observadas en cada %d periodos)\n"
@@ -5388,14 +5396,44 @@ msgstr "Series temporales apiladas"
 msgid "Stacked cross sections"
 msgstr "Secciones cruzadas apiladas"
 
+#: gui/datafiles.c:703
+#, fuzzy
+msgid "annual data"
+msgstr "anual"
+
+#: gui/datafiles.c:704
+#, fuzzy
+msgid "quarterly data"
+msgstr "trimestralmente"
+
+#: gui/datafiles.c:705
+#, fuzzy
+msgid "monthly data"
+msgstr "mensualmente"
+
+#: gui/datafiles.c:706
+#, fuzzy
+msgid "weekly data"
+msgstr "semanal"
+
+#: gui/datafiles.c:707 gui/datafiles.c:708
+#, fuzzy
+msgid "daily data"
+msgstr "diaria"
+
+#: gui/datafiles.c:709
+#, fuzzy
+msgid "hourly data"
+msgstr "horaria"
+
 #: gui/datafiles.c:723
 #, c-format
 msgid ""
 "Do you want to register the current data set\n"
-"as %s data?"
+"as %s?"
 msgstr ""
 "¿Desea registrar el conjunto de datos actual\n"
-"como datos %s?"
+"como %s?"
 
 #: gui/datafiles.c:725
 msgid "gretl: time series data"
