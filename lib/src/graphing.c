@@ -471,6 +471,7 @@ static int gp_png_wants_color (void)
 
 int gnuplot_init (PATHS *ppaths, FILE **fpp)
 {
+#ifdef GNUPLOT_PNG
     if (GRETL_GUI(ppaths)) {
 	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
 	if (mktemp(ppaths->plotfile) == NULL) return 1;
@@ -487,6 +488,10 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
 #endif
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
     }
+#else /* not GNUPLOT_PNG */
+    *fpp = fopen(ppaths->plotfile, "w");
+    if (*fpp == NULL) return 1;
+#endif
     return 0;
 }
 
@@ -504,16 +509,24 @@ int gnuplot_display (const PATHS *ppaths)
     int err = 0;
     char plotcmd[MAXLEN];
 
-#ifdef OS_WIN32
+#ifdef GNUPLOT_PNG
+# ifdef OS_WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
-    /* note: we need the "persist" when showing a plot via gretlcli,
-       since regular gnuplot is invoked */
+# else
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
 	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
-    err = system(plotcmd);
-#endif /* OS_WIN32 */
+    if (system(plotcmd)) err = 1;
+# endif /* OS_WIN32 */
+#else  
+# ifdef OS_WIN32
+    sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
+# else
+    sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+    if (system(plotcmd)) err = 1;
+# endif /* OS_WIN32 */
+#endif /* GNUPLOT_PNG */
     return err;
 }
 
@@ -862,6 +875,9 @@ int gnuplot (LIST list, const int *lines,
     setlocale(LC_NUMERIC, "");
 #endif
 
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+    fputs("pause -1\n", fq);
+#endif
     fclose(fq);
 
     if (!batch) {
@@ -970,6 +986,9 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 #endif
     } 
     fputs("set nomultiplot\n", fp);
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+    fputs("\npause -1\n", fp);
+#endif
     fclose(fp);
     err = gnuplot_display(ppaths);
     free(plotlist);
@@ -1093,6 +1112,9 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     setlocale(LC_NUMERIC, "");
 #endif
 
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+    fputs("pause -1\n", fp);
+#endif
     if (fp) fclose(fp);
     return gnuplot_display(ppaths);
 }
@@ -1136,6 +1158,9 @@ int plot_fcast_errs (int n, const double *obs,
     setlocale(LC_NUMERIC, "");
 #endif
 
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+    fprintf(fp, "pause -1\n");
+#endif
     fclose(fp);
 
     return gnuplot_display(ppaths);
@@ -1340,11 +1365,14 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	if (fp == NULL) return 1;
     } else {     
 	/* output to gnuplot, for screen or other "term" */
+#ifdef GNUPLOT_PIPE
+	fp = spec->fp; /* pipe */
+#else
 	if (spec->fp == NULL) {
 	    fp = fopen(ppaths->plotfile, "w");
 	}
 	if (fp == NULL) return 1;
-
+#endif /* GNUPLOT_PIPE */
 	if (fname != NULL) { 
 	    /* file, not screen display */
 	    fprintf(fp, "set term %s\n", termstr);
@@ -1365,30 +1393,31 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	fclose(fp);
     }
     
+#ifndef GNUPLOT_PIPE
     if (!dump) {
 	char plotcmd[MAXLEN];
-#ifdef OS_WIN32
+# ifdef OS_WIN32
 	int winshow = 0;
 
 	if (fname == NULL) { /* sending plot to screen */
 	    fputs("pause -1\n", fp);
 	    winshow = 1;
 	} 
-#endif
+# endif
 	fclose(fp);
 	spec->fp = NULL;
 	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-#ifdef OS_WIN32
+# ifdef OS_WIN32
 	if (winshow) {
 	    err = (WinExec(plotcmd, SW_SHOWNORMAL) < 32);
 	} else {
 	    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 	}
-#else
+# else
 	if (system(plotcmd)) err = 1;
-#endif 
+# endif 
     }
-
+#endif /* GNUPLOT_PIPE */
     if (miss) err = 2;
     return err;
 }
