@@ -20,9 +20,146 @@
 /* texprint.c for gretl - LaTeX output from modeling */
 
 #include "libgretl.h"
+#include <stdarg.h>
 
-#define USE_DCOLUMN 1
 #define PRECISION 6
+/* #define TEX_ASCII 1 */
+
+#ifdef TEX_ASCII
+
+struct translation {
+    unsigned code;		/* code being translated */
+    const char *string;		/* translation string */
+};
+
+static struct translation const tex_translations [] = {
+    {191, "?`"},		/* inverted question mark */
+    {192, "\\`A"},		/* capital A with grave accent */
+    {193, "\\'A"},		/* capital A with acute accent */
+    {194, "\\^A"},		/* capital A with circumflex accent */
+    {195, "\\~A"},		/* capital A with tilde */
+    {196, "\\\"A"},		/* capital A diaeresis */
+    {197, "\\AA{}"},		/* capital A with ring above */
+    {198, "\\AE{}"},		/* capital diphthong A with E */
+    {199, "\\c{C}"},		/* capital C with cedilla */
+    {200, "\\`E"},		/* capital E with grave accent */
+    {201, "\\'E"},		/* capital E with acute accent */
+    {202, "\\^E"},		/* capital E with circumflex accent */
+    {203, "\\\"E"},		/* capital E with diaeresis */
+    {204, "\\`I"},		/* capital I with grave accent */
+    {205, "\\'I"},		/* capital I with acute accent */
+    {206, "\\^I"},		/* capital I with circumflex accent */
+    {207, "\\\"I"},		/* capital I with diaeresis */
+    {208, ""},    		/* capital Eth, Icelandic */
+    {209, "\\~N"},		/* capital N with tilde */
+    {210, "\\`O"},		/* capital O with grave accent */
+    {211, "\\'O"},		/* capital O with acute accent */
+    {212, "\\^O"},		/* capital O with circumflex accent */
+    {213, "\\~O"},		/* capital O with tilde */
+    {214, "\\\"O"},		/* capital O with diaeresis */
+    {215, "\\times "},    	/* multiply sign */
+    {216, "\\O{}"},		/* capital O with oblique stroke */
+    {217, "\\`U"},		/* capital U with grave accent */
+    {218, "\\'U"},		/* capital U with acute accent */
+    {219, "\\^U"},		/* capital U with circumflex accent */
+    {220, "\\\"U"},		/* capital U with diaeresis */
+    {221, "\\'Y"},		/* capital Y with acute accent */
+    {222, ""},    		/* capital THORN, Icelandic */
+    {223, "\\ss{}"},		/* small german sharp s */
+    {224, "\\`a"},		/* small a with grave accent */
+    {225, "\\'a"},		/* small a with acute accent */
+    {226, "\\^a"},		/* small a with circumflex accent */
+    {227, "\\~a"},		/* small a with tilde */
+    {228, "\\\"a"},		/* small a with diaeresis */
+    {229, "\\aa{}"},		/* small a with ring above */
+    {230, "\\ae{}"},		/* small diphthong a with e */
+    {231, "\\c{c}"},		/* small c with cedilla */
+    {232, "\\`e"},		/* small e with grave accent */
+    {233, "\\'e"},		/* small e with acute accent */
+    {234, "\\^e"},		/* small e with circumflex accent */
+    {235, "\\\"e"},		/* small e with diaeresis */
+    {236, "\\`{\\i}"},		/* small i with grave accent */
+    {237, "\\'{\\i}"},		/* small i with acute accent */
+    {238, "\\^{\\i}"},		/* small i with circumflex accent */
+    {239, "\\\"{\\i}"},		/* small i with diaeresis */
+    {240, ""},    		/* small eth, Icelandic */
+    {241, "\\~n"},		/* small n with tilde */
+    {242, "\\`o"},		/* small o with grave accent */
+    {243, "\\'o"},		/* small o with acute accent */
+    {244, "\\^o"},		/* small o with circumflex accent */
+    {245, "\\~o"},		/* small o with tilde */
+    {246, "\\\"o"},		/* small o with diaeresis */
+    {247, ""},    		/* division sign */
+    {248, "\\o{}"},		/* small o with oblique stroke */
+    {249, "\\`u"},		/* small u with grave accent */
+    {250, "\\'u"},		/* small u with acute accent */
+    {251, "\\^u"},		/* small u with circumflex accent */
+    {252, "\\\"u"},		/* small u with diaeresis */
+    {253, "\\'y"},		/* small y with acute accent */
+    {254, ""},    		/* small thorn, Icelandic */
+    {255, "\\\"y"},		/* small y with diaeresis */
+    {0, NULL}
+};
+
+static char *latin1_to_tex (const char *src)
+{
+    static char *dest;
+    char add[2];
+    size_t buflen, len = strlen(src);
+    unsigned char c;
+
+    buflen = 2 * len;
+    if (buflen < 16) buflen = 16;
+    dest = malloc(buflen);
+    if (dest == NULL) return NULL;
+
+    *dest = 0;
+    add[1] = 0;
+
+    while ((c = *src)) {
+	if (c > 255) continue;
+	if (buflen - strlen(dest) <= 8) {
+	    buflen *= 2;
+	    dest = realloc(dest, buflen);
+	    if (dest == NULL) return NULL;
+	}
+	if (c >= 191) {
+	    strcat(dest, tex_translations[c - 191].string);
+	} else {
+	    *add = c;
+	    strcat(dest, add);
+	}
+	src++;
+    }
+    return dest;
+}
+
+#endif /* TEX_ASCII */
+
+static int recode_pprintf (PRN *prn, const char *template, ...)
+{
+    va_list args;
+    char tmp[1024]; /* watch out, can't use for big chunks */
+    int err;
+#ifdef TEX_ASCII
+    char *trans;
+#endif
+
+    va_start(args, template);
+    vsprintf(tmp, template, args);
+    va_end(args);
+
+#ifdef TEX_ASCII
+    trans = latin1_to_tex(tmp);
+    if (trans == NULL) return 1;
+    err = pprintf(prn, "%s", trans);
+    free(trans);    
+#else
+    err = pprintf(prn, "%s", tmp);
+#endif
+
+    return err;
+}
 
 /* ......................................................... */
 
@@ -68,9 +205,6 @@ char *tex_escape (char *targ, const char *src)
     return targ;
 }
 
-#ifdef USE_DCOLUMN /* for better LaTeX formatting */
-
-#define PRECISION 6
 #define UPPER_F_LIMIT (pow(10, PRECISION))
 #define LOWER_F_LIMIT (pow(10, -4))
 
@@ -115,42 +249,6 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    t_ratio,
 	    tprob(t_ratio, pmod->dfd));	
 }
-
-#else /* old-style TeX tabular format */
-
-static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			     const int c, PRN *prn)
-{
-    int n;
-    double decbit;
-    char intstr[16], decstr[9], tmp[16];
-    
-    n = (int) pmod->coeff[c-1];
-    decbit = pmod->coeff[c-1] - n;
-    if (pmod->coeff[c-1] < 0) {
-	decbit = -decbit;
-	if (n == 0) strcpy(intstr, "-0");
-	else sprintf(intstr, "%d", n);
-    }
-    else sprintf(intstr, "%d", n);
-    sprintf(decstr, "%f", decbit);
-
-    tmp[0] = '\0';
-    tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
-    pprintf(prn, "%s &\n"
-	    "  $%s$&%s &\n"
-	    "    $%f$ &\n"
-	    "      $%.4f$ &\n"
-	    "        $%f$ \\\\\n",  
-	    tmp,
-	    intstr, decstr+2,
-	    pmod->sderr[c-1],
-	    pmod->coeff[c-1]/pmod->sderr[c-1],
-	    tprob(pmod->coeff[c-1]/pmod->sderr[c-1], 
-		  pmod->dfd));	
-}
-
-#endif /* DCOLUMN */
 
 /* ......................................................... */
 
@@ -248,11 +346,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     pprintf(prn, "\\vspace{.8ex}\n");
     pprintf(prn, "$T = %d,\\, \\bar{R}^2 = %.3f,\\, F(%d,%d) = %#g,\\, "
 	    "\\hat{\\sigma} = %#g$\n",
-	   pmod->nobs, pmod->adjrsq, pmod->dfn, 
-	   pmod->dfd, pmod->fstt, pmod->sigma);
+	    pmod->nobs, pmod->adjrsq, pmod->dfn, 
+	    pmod->dfd, pmod->fstt, pmod->sigma);
 
-    pprintf(prn, "\n(%s)\n\\end{center}\n", 
-	    _("$t$-statistics in parentheses"));
+    recode_pprintf(prn, "\n(%s)\n\\end{center}\n", 
+		   I_("$t$-statistics in parentheses"));
 
     if (standalone) 
 	pprintf(prn, "\n\\end{document}\n");
@@ -260,60 +358,75 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
-static void tex_depvarstats (const MODEL *pmod, PRN *prn)
-{
-    pprintf(prn, "%s & $%#g$ & %s & %#g\\\\\n", 
-	    _("Mean of dep.\\ var."), pmod->ybar, 
-	    _("S.D. of dep. variable"), pmod->sdy);
-}
+/* stats printing functions */
 
-static void tex_essline (const MODEL *pmod, PRN *prn)
+static void tex_depvarstats (const MODEL *pmod, PRN *prn,
+			     char *x1str, char *x2str)
 {
-    pprintf(prn, "%s & %#g &"
-	    "%s ($\\hat{\\sigma}$) & %#g\\\\\n",
-	    _("ESS"), pmod->ess, 
-	    _("Std Err of Resid."), pmod->sigma);
-}
+    dcol_float(pmod->ybar, x1str);
+    dcol_float(pmod->sdy, x2str);
+    recode_pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
+		   I_("Mean of dependent variable"), x1str,
+		   I_("S.D. of dependent variable"), x2str);
+} 
 
-static void tex_rsqline (const MODEL *pmod, PRN *prn)
+static void tex_essline (const MODEL *pmod, PRN *prn,
+			 char *x1str, char *x2str)
 {
-    pprintf(prn, "$R^2$  & %#g &"
-	    "$\\bar{R}^2$        & $%#g$ \\\\\n",
-	    pmod->rsq, pmod->adjrsq);
-}
+    dcol_float(pmod->ess, x1str);
+    dcol_float(pmod->sigma, x2str);
+    recode_pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\sigma}$) & %s \\\\\n",
+		   I_("Sum of squared residuals"), x1str,
+		   I_("Standard error of residuals"), x2str);
+} 
 
-static void tex_Fline (const MODEL *pmod, PRN *prn)
+static void tex_rsqline (const MODEL *pmod, PRN *prn,
+			 char *x1str, char *x2str)
 {
-    pprintf(prn, "%s (%d, %d) & %#g &"
-	    "%s          & %#g\\\\\n",
-	    _("F-statistic"), pmod->dfn, pmod->dfd, pmod->fstt,
-	    _("p-value for F()"), fdist(pmod->fstt, pmod->dfn, pmod->dfd));
-}
+    dcol_float(pmod->rsq, x1str);
+    dcol_float(pmod->adjrsq, x2str);
+    recode_pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
+		   I_("Unadjusted $R^2$"), x1str, 
+		   I_("Adjusted $\\bar{R}^2$"), x2str);
+} 
 
-static void tex_dwline (const MODEL *pmod, PRN *prn)
+static void tex_fline (const MODEL *pmod, PRN *prn,
+		       char *x1str, char *x2str)
 {
-    pprintf(prn, "%s & $%#g$ & $\\hat{\\rho}$ & $%#g$ \n",
-	    _("Durbin--Watson stat."), 
-	    pmod->dw, pmod->rho);
-}
+    dcol_float(pmod->fstt, x1str);
+    dcol_float(fdist(pmod->fstt, pmod->dfn, pmod->dfd), x2str);
+    recode_pprintf(prn, "%s (%d, %d) & %s \\\\\n %s & %s \\\\\n",
+		   I_("F-statistic"), pmod->dfn, pmod->dfd, x1str,
+		   I_("p-value for F()"), x2str);
+} 
+
+static void tex_dwline (const MODEL *pmod, PRN *prn,
+			char *x1str, char *x2str)
+{
+    dcol_float(pmod->dw, x1str);
+    dcol_float(pmod->rho, x2str);
+    recode_pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\rho}$) & %s \n",
+		   I_("Durbin--Watson statistic"), x1str, 
+		   I_("First-order autocorrelation coeff."), x2str);
+} 
 
 static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 {
+    recode_pprintf(prn, 
+		   "\\vspace{1em}\n\n"
+		   "%s\n\n"
+		   "\\vspace{1em}\n\n"
+		   "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n",
+		   I_("Model selection statistics"));
     pprintf(prn, 
-	    "\\vspace{1em}\n\n"
-	    "%s\n\n"
-	    "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n",
-	    _("Model selection statistics"));
-    pprintf(prn, 
-	    "\\textsc{sgmasq}  &  %#g  &"  
-	    "\\textsc{aic}     &  %#g  &"  
-	    "\\textsc{fpe}     &  %#g  \\\\\n"
-	    "\\textsc{hq}      &  %#g  &"
-	    "\\textsc{schwarz} &  %#g  &"  
-	    "\\textsc{shibata} &  %#g  \\\\\n"
-	    "\\textsc{gcv}     &  %#g  &"  
-	    "\\textsc{rice}    &  %#g\n",
+	    "\\textsc{sgmasq}  & %#g & "  
+	    "\\textsc{aic}     & %#g & "  
+	    "\\textsc{fpe}     & %#g \\\\\n"
+	    "\\textsc{hq}      & %#g & "
+	    "\\textsc{schwarz} & %#g & "  
+	    "\\textsc{shibata} & %#g \\\\\n"
+	    "\\textsc{gcv}     & %#g & "  
+	    "\\textsc{rice}    & %#g\n",
 	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
 	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
 	    pmod->criterion[6], pmod->criterion[7]);
@@ -324,24 +437,19 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 
 static const char *tex_estimator_string (int ci)
 {
-    if (ci == OLS || ci == VAR) return _("OLS");
-    else if (ci == WLS) return _("WLS"); 
-    else if (ci == ARCH) return _("WLS (ARCH)");
-    else if (ci == CORC) return _("Cochrane--Orcutt");
-    else if (ci == HILU) return _("Hildreth--Lu");
-    else if (ci == TSLS) return _("TSLS");
-    else if (ci == HSK) return _("Heteroskedasticity");
-    else if (ci == AR) return _("AR");
-    else if (ci == HCCM) return _("HCCM");
-    else if (ci == PROBIT) return _("Probit");
-    else if (ci == LOGIT) return _("Logit");
-    else if (ci == POOLED) return _("Pooled OLS");
+    if (ci == OLS || ci == VAR) return I_("OLS");
+    else if (ci == WLS) return I_("WLS"); 
+    else if (ci == ARCH) return I_("WLS (ARCH)");
+    else if (ci == CORC) return I_("Cochrane--Orcutt");
+    else if (ci == HILU) return I_("Hildreth--Lu");
+    else if (ci == TSLS) return I_("TSLS");
+    else if (ci == HSK) return I_("Heteroskedasticity");
+    else if (ci == AR) return I_("AR");
+    else if (ci == HCCM) return I_("HCCM");
+    else if (ci == PROBIT) return I_("Probit");
+    else if (ci == LOGIT) return I_("Logit");
+    else if (ci == POOLED) return I_("Pooled OLS");
     else return "";
-}
-
-static void tex_end_table (PRN *prn)
-{
-    pprintf(prn, "\\end{tabular*}\n\n");
 }
 
 /**
@@ -363,8 +471,8 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 {
     int i, ncoeff = pmod->list[0];
     int t1 = pmod->t1, t2 = pmod->t2;
-    char tmp[16];
-    char startdate[9], enddate[9];
+    char tmp[16], x1str[32], x2str[32];
+    char startdate[9], enddate[9], topstr[128];
     char pt = get_local_decpoint();
 
     modelprint_setup_obs(pmod, &t1, &t2);
@@ -374,63 +482,49 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     ntodate(enddate, t2, pdinfo);
 
     if (standalone) {
-#ifdef USE_DCOLUMN
-	pprintf(prn, "\\documentclass{article}\n\\usepackage{dcolumn}\n"
-		"\\begin{document}\n\n"
-		"\\thispagestyle{empty}\n");
-#else
 	pprintf(prn, "\\documentclass{article}\n"
-		"\\begin{document}\n\n"
-		"\\thispagestyle{empty}\n");
+		"\\usepackage{dcolumn}\n");
+#ifndef TEX_ASCII
+	pprintf(prn, "\\usepackage[T1]{fontenc}\n");
 #endif
+	pprintf(prn, "\\begin{document}\n\n"
+		"\\thispagestyle{empty}\n");
     }
 
     pprintf(prn, "\\begin{center}\n");
 
     tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
+
+    sprintf(topstr, I_("Model %d: %s estimates using the %d observations %s--%s"),
+	    pmod->ID, tex_estimator_string(pmod->ci), pmod->nobs,
+	    startdate, enddate);
     
-    pprintf(prn, "\\textbf{Model %d: %s estimates using the %d "
-	    "observations %s--%s}\\\\\n"
-	    "Dependent variable: %s", 
-	    pmod->ID, tex_estimator_string(pmod->ci), pmod->nobs, 
-	    startdate, enddate, tmp);
+    recode_pprintf(prn, "\\textbf{%s}\\\\\n%s: %s", 
+		   topstr, I_("Dependent variable"), tmp);
 
     if (pmod->ci == WLS || pmod->ci == ARCH) { 
 	tex_escape(tmp, pdinfo->varname[pmod->nwt]);
-	pprintf(prn, "\\\\\nVariable used as weight: %s\n\n", tmp);
+	recode_pprintf(prn, "\\\\\n%s: %s\n\n", I_("Variable used as weight"), tmp);
     } else
 	pprintf(prn, "\n\n");
 
     /* start table of coefficients */
-#ifdef USE_DCOLUMN
-    pprintf(prn, "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}"
-	    "{@{\\extracolsep{\\fill}}\n"
-	    "l%% col 1: varname\n"
-	    "  D{%c}{%c}{-1}%% col 2: coeff\n"
-	    "    D{%c}{%c}{-1}%% col 3: stderr\n"
-	    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
-	    "        D{%c}{%c}{4}}%% col 5: p-value\n"
-	    "Variable &\n"
-	    "  \\multicolumn{1}{c}{Coefficient} &\n"
-	    "    \\multicolumn{1}{c}{Std.\\ Error} &\n"
-	    "      \\multicolumn{1}{c}{$t$-statistic} &\n"
-	    "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n",
-	    pt, pt, pt, pt, pt, pt, pt, pt);
-#else
-    pprintf(prn, "\\vspace{1em}\n\n"
-	  "\\begin{tabular*}{\\textwidth}"
-	  "{@{\\extracolsep{\\fill}}\n"
-	  "l%%  col 1: varname\n"
-	  "  r@{\\extracolsep{0pt}.}l%% col 2: first part of coeff\n"
-	  "    @{\\extracolsep{\\fill}}rrr}%% cols 3,4,5: stderr, "
-	  "tstat, pvalue\n"
-	  "Variable &\n"
-	  "  \\multicolumn{2}{c}{Coefficient} &\n"
-	  "    \\multicolumn{1}{c}{Std.\\ Error} &\n"
-	  "      \\multicolumn{1}{c}{$t$-statistic} &\n"
-	  "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n");
-#endif /* USE_DCOLUMN */
+    recode_pprintf(prn, "\\vspace{1em}\n\n"
+		   "\\begin{tabular*}{\\textwidth}"
+		   "{@{\\extracolsep{\\fill}}\n"
+		   "l%% col 1: varname\n"
+		   "  D{%c}{%c}{-1}%% col 2: coeff\n"
+		   "    D{%c}{%c}{-1}%% col 3: stderr\n"
+		   "      D{%c}{%c}{-1}%% col 4: t-stat\n"
+		   "        D{%c}{%c}{4}}%% col 5: p-value\n"
+		   "Variable &\n"
+		   "  \\multicolumn{1}{c}{%s} &\n"
+		   "    \\multicolumn{1}{c}{%s} &\n"
+		   "      \\multicolumn{1}{c}{%s} &\n"
+		   "        \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
+		   pt, pt, pt, pt, pt, pt, pt, pt,
+		   I_("Coefficient"), I_("Std.\\ Error"), 
+		   I_("$t$-statistic"), I_("p-value"));
 
     if (pmod->ifc) {
 	tex_print_coeff(pdinfo, pmod, ncoeff, prn);
@@ -438,33 +532,35 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     }
     for (i=2; i<=ncoeff; i++) tex_print_coeff(pdinfo, pmod, i, prn);
 
-    tex_end_table(prn); /* end table of coefficients */
+    pprintf(prn, "\\end{tabular*}\n\n");
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF)
 	goto stop_tex;
 
     if (pmod->ci == CORC || pmod->ci == HILU)
-	pprintf(prn, "\\vspace{1em}\n"
-		"Statistics based on quasi-differenced "
-		"data ($\\rho=%g$)\n\n", pmod->rhot[1]);
+	recode_pprintf(prn, "\\vspace{1em}\n%s ($\\rho=%g$)\n\n", 
+		       I_("Statistics based on quasi-differenced data"), 
+		       pmod->rhot[1]);
 
     pprintf(prn, 
 	    "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlr}\n");
+	    "\\begin{tabular}{lD{%c}{%c}{-1}}\n",
+	    pt, pt, pt, pt);
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR) {
-	tex_rsqline(pmod, prn);
+	tex_rsqline(pmod, prn, x1str, x2str);
     } else {
-	if (pmod->ci != CORC && pmod->ci != HILU)
-	    tex_depvarstats(pmod, prn);
-	tex_essline(pmod, prn);
-	tex_rsqline(pmod, prn);
-	tex_Fline(pmod, prn);
-	tex_dwline(pmod, prn);
+	if (pmod->ci != CORC && pmod->ci != HILU) {
+	    tex_depvarstats(pmod, prn, x1str, x2str);
+	}
+	tex_essline(pmod, prn, x1str, x2str);
+	tex_rsqline(pmod, prn, x1str, x2str);
+	tex_fline(pmod, prn, x1str, x2str);
+	tex_dwline(pmod, prn, x1str, x2str);
     }
 
-    tex_end_table(prn);
+    pprintf(prn, "\\end{tabular}\n\n");
     
     tex_print_aicetc(pmod, prn);
 
