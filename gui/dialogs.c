@@ -337,11 +337,6 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
     int i;
 
     switch (code) {
-    case GR_BOX: case GR_NBOX:
-	gfunc = do_box_graph;
-	strcpy(title, _("gretl: boxplots"));
-	strcpy(request, _("Enter var names or numbers:"));
-	break;
     case GR_DUMMY:
 	gfunc = do_dummy_graph;
 	strcpy(title, _("gretl: define plot"));
@@ -356,11 +351,6 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
 	gfunc = do_graph;
 	strcpy(title, _("gretl: define graph"));
 	strcpy(request, _("Enter var names or numbers (X comes last):"));
-	break;
-    case GR_PLOT:
-	gfunc = do_graph;
-	strcpy(title, _("gretl: time-series plot"));
-	strcpy(request, _("Enter var names or numbers:"));
 	break;
     case SCATTERS:
 	gfunc = do_scatters;

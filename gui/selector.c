@@ -22,9 +22,16 @@
 #include "gretl.h"
 #include "selector.h"
 
+extern GtkWidget *open_dialog; /* dialogs.c */
+
 static int default_var;
 static int *xlist;
 static int *instlist;
+
+static gint list_sorter (gconstpointer a, gconstpointer b)
+{
+    return GPOINTER_TO_INT(b) - GPOINTER_TO_INT(a);
+}
 
 static void set_weight_var (gint i, selector *sr)
 {
@@ -135,10 +142,10 @@ static void remove_right_var (gint i, selector *sr)
 
 static void remove_from_right_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(sr->rightvars)->selection;
+    GList *mylist = g_list_copy(GTK_CLIST(sr->rightvars)->selection);
+    mylist = g_list_sort(mylist, list_sorter);
 
-    if (mylist != NULL) 
-	g_list_foreach(mylist, (GFunc) remove_right_var, sr);
+    g_list_foreach(mylist, (GFunc) remove_right_var, sr);
 }
 
 static void remove_instrument (gint i, selector *sr)
@@ -148,10 +155,10 @@ static void remove_instrument (gint i, selector *sr)
 
 static void remove_instrument_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(sr->extra)->selection;
+    GList *mylist = g_list_copy(GTK_CLIST(sr->extra)->selection);
+    mylist = g_list_sort(mylist, list_sorter);
 
-    if (mylist != NULL) 
-	g_list_foreach(mylist, (GFunc) remove_instrument, sr);
+    g_list_foreach(mylist, (GFunc) remove_instrument, sr);
 }
 
 static void clear_vars (GtkWidget *w, selector *sr)
@@ -262,7 +269,6 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
 
-    fprintf(stderr, "cmdlist: '%s'\n", sr->cmdlist);
     if (err) 
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 }
@@ -272,6 +278,7 @@ static void destroy_selector (GtkWidget *w, selector *sr)
     gtk_main_quit();
     free(sr->cmdlist);
     free(sr);
+    open_dialog = NULL;
 }
 
 static char *est_str (int cmdnum)
@@ -533,36 +540,27 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     gtk_widget_show(tmp);
 }
 
-static void selector_init (selector *sr)
+static int screen_scalar (int i, int c)
 {
-    sr->dlg = NULL;
+    if ((MODEL_CODE(c) || c == LAGS || c == DIFF || c == LDIFF)
+	&& datainfo->vector[i] == 0)
+	return 1;
+    return 0;
+}
+
+static void selector_init (selector *sr, guint code, const char *title)
+{
     sr->varlist = NULL;
     sr->depvar = NULL;
     sr->rightvars = NULL;
     sr->default_check = NULL;
     sr->extra = NULL;
-    sr->code = 0;
     sr->cmdlist = NULL;
     sr->data = NULL;
-}
 
-void selection_dialog (const char *title, const char *oktxt, 
-		       void (*okfunc)(), guint cmdcode) 
-{
-    GtkWidget *right_vbox, *tmp;
-    GtkWidget *big_hbox, *indepvar_hbox;
-    GtkWidget *button_vbox, *scroller;
-    selector *sr;
-    char topstr[48];
-    int i;
-
-    sr = mymalloc(sizeof *sr);
-    if (sr == NULL) return;
-    selector_init(sr);
-
-    sr->code = cmdcode;
-
+    sr->code = code;
     sr->dlg = gtk_dialog_new();
+    open_dialog = sr->dlg;
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
     gtk_signal_connect (GTK_OBJECT (sr->dlg), "destroy", 
@@ -579,7 +577,74 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), TRUE);
 
     gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
-    /* gtk_window_set_default_size(GTK_WINDOW(sr->dlg), 363, 380); */
+}    
+
+static void 
+build_selector_buttons (selector *sr, const char *oktxt, void (*okfunc)())
+{
+    GtkWidget *tmp;
+
+    tmp = gtk_button_new_with_label (oktxt);
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
+		       tmp, TRUE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
+		       GTK_SIGNAL_FUNC(construct_cmdlist), sr);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
+		       GTK_SIGNAL_FUNC(okfunc), sr);
+    gtk_signal_connect_object(GTK_OBJECT (tmp), "clicked", 
+			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
+			      GTK_OBJECT(sr->dlg));
+    gtk_widget_show(tmp);
+    gtk_widget_grab_default(tmp);
+
+    tmp = gtk_button_new_with_label(_("Clear"));
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
+		       tmp, TRUE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
+		       GTK_SIGNAL_FUNC(clear_vars), sr);
+    gtk_widget_show(tmp);
+
+    tmp = gtk_button_new_with_label(_("Cancel"));
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
+		       tmp, TRUE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+                       GTK_SIGNAL_FUNC(delete_widget), sr->dlg);
+    gtk_widget_show(tmp);
+
+    if (sr->code != PRINT) {
+	tmp = gtk_button_new_with_label(_("Help"));
+	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
+			   tmp, TRUE, TRUE, 0);
+	gtk_signal_connect(GTK_OBJECT (tmp), "clicked", 
+			   GTK_SIGNAL_FUNC(context_help), 
+			   GINT_TO_POINTER(sr->code));
+	gtk_widget_show(tmp);
+    }
+}
+
+void selection_dialog (const char *title, const char *oktxt, 
+		       void (*okfunc)(), guint cmdcode) 
+{
+    GtkWidget *right_vbox, *tmp;
+    GtkWidget *big_hbox, *indepvar_hbox;
+    GtkWidget *button_vbox, *scroller;
+    selector *sr;
+    char topstr[48];
+    int i;
+
+    if (open_dialog != NULL) {
+	gdk_window_raise(open_dialog->window);
+	return;
+    }
+
+    sr = mymalloc(sizeof *sr);
+    if (sr == NULL) return;
+
+    selector_init(sr, cmdcode, title);
 
     if (MODEL_CODE(cmdcode))
 	sprintf(topstr, "%s model", est_str(cmdcode));
@@ -605,6 +670,7 @@ void selection_dialog (const char *title, const char *oktxt,
 	gchar id[5];
 
         if (hidden_var(i, datainfo)) continue;
+	if (screen_scalar(i, cmdcode)) continue;
 	sprintf(id, "%d", i);
 	row[0] = id;
 	row[1] = datainfo->varname[i];
@@ -660,8 +726,8 @@ void selection_dialog (const char *title, const char *oktxt,
     
     tmp = gtk_button_new_with_label (_("<- Remove"));
     gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
-    gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-                        GTK_SIGNAL_FUNC(remove_from_right_callback), sr);
+    gtk_signal_connect_after (GTK_OBJECT(tmp), "clicked", 
+			      GTK_SIGNAL_FUNC(remove_from_right_callback), sr);
     gtk_widget_show(tmp);
 
     gtk_box_pack_start(GTK_BOX(indepvar_hbox), button_vbox, TRUE, TRUE, 0);
@@ -685,7 +751,7 @@ void selection_dialog (const char *title, const char *oktxt,
 	    row[1] = datainfo->varname[xlist[i]];
 	    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	}
-    } else if (MODEL_CODE(cmdcode)) {
+    } else if (MODEL_CODE(cmdcode) && cmdcode != COINT) {
 	    gchar *row[2];
 
 	    row[0] = "0";
@@ -696,7 +762,7 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80);
     gtk_widget_set_usize (sr->rightvars, 80, 120);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
-				  GTK_SELECTION_SINGLE);
+				  GTK_SELECTION_EXTENDED);
     gtk_signal_connect(GTK_OBJECT(sr->rightvars), "button_press_event",
 		       (GtkSignalFunc) remove_right_click, sr);
     /* gtk_clist_set_column_visibility (GTK_CLIST(sr->rightvars), 0, FALSE); */
@@ -720,50 +786,13 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
-    tmp = gtk_button_new_with_label (oktxt);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(construct_cmdlist), sr);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(okfunc), sr);
-    gtk_signal_connect_object(GTK_OBJECT (tmp), "clicked", 
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(sr->dlg));
-    gtk_widget_show(tmp);
-    gtk_widget_grab_default(tmp);
-
-    tmp = gtk_button_new_with_label(_("Clear"));
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(clear_vars), sr);
-    gtk_widget_show(tmp);
-
-    tmp = gtk_button_new_with_label(_("Cancel"));
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(delete_widget), sr->dlg);
-    gtk_widget_show(tmp);
-
-    tmp = gtk_button_new_with_label(_("Help"));
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT (tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(context_help), 
-		       GINT_TO_POINTER(cmdcode));
-    gtk_widget_show(tmp);
+    build_selector_buttons (sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
     gtk_main();
 }
 
-static char *addvar_str (int cmdnum)
+static char *get_topstr (int cmdnum)
 {
     switch (cmdnum) {    
     case LOGS:
@@ -780,6 +809,12 @@ static char *addvar_str (int cmdnum)
 	return _("to add");
     case OMIT:
 	return _("to omit");
+    case PRINT:
+	return _("to display");
+    case GR_PLOT: 
+    case GR_BOX: 
+    case GR_NBOX:
+	return _("to plot");
     default:
 	return "";
     }
@@ -833,32 +868,19 @@ void simple_selection (const char *title, const char *oktxt,
     char topstr[64];
     int i;
 
+    if (open_dialog != NULL) {
+	gdk_window_raise(open_dialog->window);
+	return;
+    }
+
     sr = mymalloc(sizeof *sr);
     if (sr == NULL) return;
-    selector_init(sr);
 
-    sr->code = cmdcode;
+    selector_init(sr, cmdcode, title);
+
     sr->data = p;
 
-    sr->dlg = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
-
-    gtk_signal_connect (GTK_OBJECT (sr->dlg), "destroy", 
-			GTK_SIGNAL_FUNC (destroy_selector), 
-			sr);    
-
-    gtk_container_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(sr->dlg)->vbox), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 5);
-
-    gtk_container_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(sr->dlg)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 5);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), TRUE);
-
-    gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
-
-    sprintf(topstr, "Select variables %s", addvar_str(cmdcode));
+    sprintf(topstr, "Select variables %s", get_topstr(cmdcode));
     tmp = gtk_label_new(topstr);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 			       tmp, TRUE, TRUE, 0);
@@ -904,6 +926,7 @@ void simple_selection (const char *title, const char *oktxt,
 	    gchar id[5];
 
 	    if (hidden_var(i, datainfo)) continue;
+	    if (screen_scalar(i, cmdcode)) continue;
 	    sprintf(id, "%d", i);
 	    row[0] = id;
 	    row[1] = datainfo->varname[i];
@@ -953,7 +976,7 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80);
     gtk_widget_set_usize (sr->rightvars, 80, 120);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
-				  GTK_SELECTION_SINGLE);
+				  GTK_SELECTION_EXTENDED);
     gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
     gtk_widget_show(sr->rightvars); 
 
@@ -969,44 +992,7 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
-    tmp = gtk_button_new_with_label (oktxt);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(construct_cmdlist), sr);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(okfunc), sr);
-    gtk_signal_connect_object(GTK_OBJECT (tmp), "clicked", 
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(sr->dlg));
-    gtk_widget_show(tmp);
-    gtk_widget_grab_default(tmp);
-
-    tmp = gtk_button_new_with_label(_("Clear"));
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(clear_vars), sr);
-    gtk_widget_show(tmp);
-
-    tmp = gtk_button_new_with_label(_("Cancel"));
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(delete_widget), sr->dlg);
-    gtk_widget_show(tmp);
-
-    tmp = gtk_button_new_with_label(_("Help"));
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
-		       tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT (tmp), "clicked", 
-		       GTK_SIGNAL_FUNC(context_help), 
-		       GINT_TO_POINTER(cmdcode));
-    gtk_widget_show(tmp);
+    build_selector_buttons (sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
     gtk_main();

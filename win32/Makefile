@@ -59,9 +59,10 @@ CLIOBJ = $(CLISRC:.c=.o)
 
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
-	calculator.c fileselect.c htmlprint.c guiprint.c boxplots.c
+	calculator.c fileselect.c htmlprint.c guiprint.c boxplots.c \
+	selector.c
 GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
-	webget.h htmlprint.h guiprint.h
+	webget.h htmlprint.h guiprint.h selector.h
 GUIOBJ = $(GUISRC:.c=.o)
 
 EXTRASRC = gtkitementry.c gtksheet.c gtkiconlist.c \
@@ -80,7 +81,7 @@ $(GUIPROG): $(GUIOBJ) $(WRES)
 
 $(CLIOBJ): $(CLI_SRC) 
 
-$(GUIOBJ): $(GUISRC) $(GUIHDR) # guistamp
+$(GUIOBJ): $(GUISRC) $(GUIHDR) guistamp
 
 guistamp:
 	./builddate.pl > build.h
@@ -117,7 +118,7 @@ dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl/libgretl.def \
 	--implib libgretl/libgretl.a \
-	-o $@ $^ -lm -L./a_libs -lxml -lz
+	-o $@ $^ -lm -L./a_libs -lxml -lz.dll
 
 dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \

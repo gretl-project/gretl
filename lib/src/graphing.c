@@ -1193,10 +1193,14 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
     if (!dump) {
 	char plotcmd[MAXLEN];
 
-	fprintf(fp, "pause -1\n");
+	if (fname == NULL) fprintf(fp, "pause -1\n");
 	fclose(fp);
+#ifdef notdef /* doesn't work on some systems */
 	sprintf(plotcmd, "\"%s\" < \"%s\"", ppaths->pgnuplot, ppaths->plotfile); 
 	if (system(plotcmd)) err = 1;
+#endif
+	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+	if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
     }
 #endif
     if (miss) err = 2;

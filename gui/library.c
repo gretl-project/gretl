@@ -741,6 +741,42 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+void do_coint (GtkWidget *widget, gpointer p)
+{
+    selector *sr = (selector *) p;
+    char *edttext;
+    PRN *prn;
+    int err = 0, order = 0;
+
+    edttext = sr->cmdlist;
+    if (*edttext == 0) return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "coint %s", edttext);
+
+    /* check the command and initialize output buffer */
+    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+
+    order = atoi(command.param);
+    if (!order) {
+	errbox(_("Couldn't read cointegration order"));
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    err = coint(order, command.list, &Z, datainfo, prn);
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+	return;
+    } 
+
+    view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
+		COINT, view_items);
+}
+
+/* ........................................................... */
+
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext;
@@ -2619,8 +2655,9 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 /* ........................................................... */
 
-void display_selected (GtkWidget *widget, dialog_t *ddata)
+void display_selected (GtkWidget *widget, gpointer p)
 {
+    selector *sr = (selector *) p;
     char *edttext; 
     PRN *prn;
     int ig = 0;
@@ -2632,7 +2669,7 @@ void display_selected (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Out of memory!"));
 	return;
     }
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    edttext = sr->cmdlist;
     if (*edttext == '\0') return;
 
     clear(line, MAXLEN);
@@ -2741,13 +2778,14 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-void do_box_graph (GtkWidget *widget, dialog_t *ddata)
+void do_box_graph (GtkWidget *widget, gpointer p)
 {
+    selector *sr = (selector *) p;
     char *edttext;
-    gint err, code = ddata->code; 
+    gint err, code = sr->code; 
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    edttext = sr->cmdlist;
+    if (*edttext == 0) return;
 
     if (strchr(edttext, '('))
 	err = boolean_boxplots(edttext, &Z, datainfo, (code == GR_NBOX));
@@ -2808,17 +2846,12 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s%s", (imp)? "-m " : "", edttext);
-    if (ddata->code == GR_PLOT) { 
-	strcat(line, " time");
-    }
 
     if (check_cmd(line) || cmd_init(line)) return;
     lines = mymalloc(command.list[0] - 1);
     if (lines == NULL) return;
-    for (i=0; i<command.list[0]-1 ; i++) {
-	if (ddata->code == GR_PLOT) lines[i] = 1;
-	else lines[i] = 0;
-    }
+    for (i=0; i<command.list[0]-1 ; i++) 
+	lines[i] = 0;
 
     if (imp) {
 	err = gnuplot(command.list, NULL, &Z, datainfo,
@@ -2827,6 +2860,37 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
 	err = gnuplot(command.list, lines, &Z, datainfo,
 		      &paths, &plot_count, 0, 1, 0);
     }
+    if (err == -999)
+	errbox(_("No data were available to graph"));
+    else if (err < 0) errbox(_("gnuplot command failed"));
+    else register_graph();
+
+    free(lines);
+}
+
+/* ........................................................... */
+
+void do_ts_graph (GtkWidget *widget, gpointer p)
+{
+    selector *sr = (selector *) p;
+    char *edttext;
+    gint i, err, *lines = NULL;
+
+    edttext = sr->cmdlist;
+    if (*edttext == 0) return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "gnuplot %s time", edttext);
+
+    if (check_cmd(line) || cmd_init(line)) return;
+    lines = mymalloc(command.list[0] - 1);
+    if (lines == NULL) return;
+    for (i=0; i<command.list[0]-1 ; i++) 
+	lines[i] = 1;
+
+    err = gnuplot(command.list, lines, &Z, datainfo,
+		  &paths, &plot_count, 0, 1, 0);
+
     if (err == -999)
 	errbox(_("No data were available to graph"));
     else if (err < 0) errbox(_("gnuplot command failed"));

@@ -423,7 +423,7 @@ int coint (const int order, const LIST list, double ***pZ,
 {
     int i, t, n, nv, l0 = list[0];
     MODEL coint_model;
-    int *cointlist;
+    int *cointlist = NULL;
 
     _init_model(&coint_model, pdinfo);
 
@@ -440,7 +440,8 @@ int coint (const int order, const LIST list, double ***pZ,
 	for (i=0; i<=l0; i++) cointlist[i] = list[i];
 	cointlist[l0 + 1] = 0;
 	cointlist[0] += 1;
-    } else copylist(&cointlist, list);
+    } else 
+	copylist(&cointlist, list);
     
     coint_model = lsq(cointlist, pZ, pdinfo, OLS, 1, 0.0); 
     coint_model.aux = AUX_COINT;

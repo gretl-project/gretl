@@ -183,8 +183,8 @@ GtkItemFactoryEntry model_items[] = {
     { _("/Edit/Copy _all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
     { _("/Edit/Copy _all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
     { _("/_Tests"), NULL, NULL, 0, "<Branch>" },    
-    { _("/Tests/omit variables"), NULL, add_omit_callback, OMIT, NULL },
-    { _("/Tests/add variables"), NULL, add_omit_callback, ADD, NULL },
+    { _("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
+    { _("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
     { _("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
     { _("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
     { _("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },
@@ -3344,7 +3344,7 @@ void prn_to_clipboard (PRN *prn)
 
 /* .................................................................. */
 
-#define SPECIAL_COPY(h) ((h == COPY_LATEX || h == COPY_RTF))
+#define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
 
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {

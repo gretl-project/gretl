@@ -64,6 +64,8 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata);
 
 /* model-related functions */
 
+void do_coint (GtkWidget *widget, gpointer p);
+
 void do_forecast (GtkWidget *widget, dialog_t *ddata);
 
 void do_add_omit (GtkWidget *widget, gpointer p);
@@ -140,11 +142,13 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata);
 
 void do_graph (GtkWidget *widget, dialog_t *ddata);
 
-void do_box_graph (GtkWidget *widget, dialog_t *ddata);
+void do_ts_graph (GtkWidget *widget, gpointer p);
+
+void do_box_graph (GtkWidget *widget, gpointer p);
 
 void do_dummy_graph (GtkWidget *widget, dialog_t *ddata);
 
-void display_selected (GtkWidget *widget, dialog_t *ddata);
+void display_selected (GtkWidget *widget, gpointer p);
 
 void display_var (void);
 

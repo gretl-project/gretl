@@ -335,6 +335,43 @@ void add_omit_callback (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+void selector_callback (gpointer data, guint action, GtkWidget *widget)
+{
+    char title[36];
+    windata_t *vwin = (windata_t *) data;
+    void (*okfunc)() = NULL;
+
+    if (action == COINT) {
+	selection_dialog (_("gretl: cointegration test"), _("Estimate"), 
+			  do_coint, COINT);
+	return;
+    }
+
+    switch (action) {
+    case ADD:
+    case OMIT:
+	strcpy(title, _("gretl: model tests"));
+	okfunc = do_add_omit;
+	break;
+    case PRINT:
+	strcpy(title, _("gretl: display vars"));
+	okfunc = display_selected;
+	break;
+    case GR_BOX: case GR_NBOX:
+	strcpy(title, _("gretl: boxplots"));
+	okfunc = do_box_graph;
+	break;
+    case GR_PLOT:
+	strcpy(title, _("gretl: time-series plot"));
+	okfunc = do_ts_graph;
+	break;
+    }
+
+    simple_selection (title, _("Apply"), okfunc, action, vwin);
+}
+
+/* ........................................................... */
+
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[36], query[MAXLABEL], defstr[MAXLEN];
@@ -409,13 +446,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(defstr, "1");
 	okfunc = do_dialog_cmd;
 	break;
-    case COINT:
-	strcpy(title, _("gretl: cointegration test"));
-	strcpy(query, _("Enter spec. for cointegration test:\n"
-	       "(lag_order depvar indepvars)"));
-	okfunc = do_dialog_cmd;
-	varclick = 1;
-	break;
     case SPEARMAN:
 	strcpy(title, _("gretl: rank correlation"));
 	strcpy(query, _("Enter two variables by name or number:"));
@@ -435,12 +465,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: variances test"));
 	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
-	varclick = 1;
-	break;
-    case PRINT:
-	strcpy(title, _("gretl: display vars"));
-	strcpy(query, _("Enter variable names or numbers:"));
-	okfunc = display_selected;
 	varclick = 1;
 	break;
     case GENR:
@@ -486,6 +510,9 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(defstr, "0");
 	okfunc = do_dialog_cmd;
 	break;
+    default:
+	errbox("Bug: unrecognized action code in gretl_callback");
+	return;
     }
 
     edit_dialog(title, query, defstr, 1,
