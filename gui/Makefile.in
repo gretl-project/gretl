@@ -78,7 +78,7 @@ SHELL = /bin/sh
 LIBTOOL = ../libtool
 PROG  = gretl_x11
 
-VPATH = $(topsrc)/gui:$(topsrc)/cli:..
+vpath %.c = $(topsrc)/gui
 
 SRCS = boxplots.c calculator.c callbacks.c console.c database.c datafiles.c \
 	dialogs.c fileselect.c gpt_control.c gretl.c guiprint.c \
@@ -88,17 +88,17 @@ OBJS = $(SRCS:.c=.o)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
-	$(CC) $(CFLAGS) -MM  $< > .deps/$*.d 
+	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): depdir $(query_gtkextra_lib) $(OBJS) 
+$(PROG): .deps $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
+
+.deps:
+	mkdir $@
 
 -include .deps/*.d
 
 .PHONY:
-
-depdir:
-	mkdir -p .deps
 
 gtkextra-lib: 
 	rm -f ./gtkextra && $(LN_S) ./gtkextra-lite ./gtkextra
