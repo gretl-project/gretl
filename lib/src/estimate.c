@@ -830,7 +830,7 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
   constant.  */
 {
     int i, j, k, kk, l, jm1;
-    double e, d, d1, test, xx;
+    double e, d, d1, d2, test, xx;
 
     if (coeff != NULL) {
 	for (j=0; j<nv; j++) {
@@ -857,10 +857,9 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
             d += xx * xx;
             k += nv-l;
         }
-        test = xpx[kk] - d;
-	fprintf(stderr, "test: xpx[%d] = %g, d = %g, test = %g\n",
-		kk, xpx[kk], d, test);
-        if (test <= TINY) {
+        d2 = xpx[kk] - d;
+	test = d2 / xpx[kk];
+        if (test < TINY) {
 	    fprintf(stderr, "cholbeta: test = %g\n", test);
 	    if (rss != NULL) *rss = -1.0;
 	    return E_SINGULAR;
@@ -868,7 +867,7 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
 	if (test < SMALL) {
 	    strcpy(gretl_msg, _("Warning: data matrix close to singularity!"));
 	}
-        e = 1 / sqrt(test);
+        e = 1 / sqrt(d2);
         xpx[kk] = e;
         xpy[j] = (xpy[j] - d1) * e;
         for (i=j+1; i<=nv; i++) {
