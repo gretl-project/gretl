@@ -4380,7 +4380,7 @@
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
 	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
-	<altform><lit>smpl</lit> <lit>--no-missing [</lit><repl>varlist</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
@@ -4389,6 +4389,7 @@
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
 	<example>smpl x > 3000 --restrict</example>
+	<example>smpl y > 3000 --restrict --cumulate</example>
 	<example>smpl 100 --random</example>
       </examples>
     </usage>
@@ -4413,11 +4414,12 @@
 	command).</para>
 
       <para>With the <lit>--no-missing</lit> form, if
-	<repl>varlist</repl> is specified an observation is dropped if
-	and only if at least one of the variables in
-	<repl>varlist</repl> has a missing value at that observation;
-	otherwise observations are dropped if <emphasis>any</emphasis>
-	variable has a missing value.</para>
+	<repl>varlist</repl> is specified observations are selected on
+	condition that all variables in <repl>varlist</repl> have
+	valid values at that observation; otherwise, if no
+	<repl>varlist</repl> is given, observations are selected on
+	condition that <emphasis>all</emphasis> variables have valid
+	(non-missing) values.</para>
 
       <para>With the <lit>--random</lit> flag, the specified number of
 	cases are selected from the full dataset at random.  If you
@@ -4428,6 +4430,14 @@
       <para>The final form, <lit>smpl full</lit>, restores the full
 	data range.
       </para>
+
+      <para>Note that sample restrictions are not, by default,
+	cumulative: with the exception of the <quote>+i -j</quote>
+	form, the baseline for any <lit>smpl</lit> command is the full
+	data set.  If you wish the command to act in a cumulative
+	manner, so that a given restriction is added to any already in
+	force, you can add the option flag <lit>--cumulate</lit> to
+	the end of the command.</para>
 
       <para>The internal variable <lit>obs</lit> may be used with the
 	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude

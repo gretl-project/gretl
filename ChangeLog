@@ -25,8 +25,15 @@
   context of the genr command
 - add a new "smpl" option: "smpl 100 --random" selects 100
   observations from the dataset at random
+- another "smpl" option: "--cumulate" makes restrictions
+  cumulative, rather than starting from the full data set with
+  each restriction specified
 - allow the "--robust" option to the "var" command
 - fix for effect of Up/Down keys in main gretl window
+- gretlcli in batch mode: pass "#"-style comments through
+  to the output
+- fix HCCME bug: used way too much memory with large data
+  sets
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

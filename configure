@@ -5045,7 +5045,7 @@ fi;
 # Check whether --with-gtksourceview or --without-gtksourceview was given.
 if test "${with_gtksourceview+set}" = set; then
   withval="$with_gtksourceview"
-  if test "x${withval}" = "xno"
+  if test "x${withval}" = "xno" || test "$try_gnome" = "no"
 then
   try_sourceview=no
 else

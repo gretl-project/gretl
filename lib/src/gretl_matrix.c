@@ -89,42 +89,34 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows)
 }
 
 /**
- * gretl_diagonal_matrix:
- * @d: pointer to location of diagonal elements.
- * @n: number of diagonal elements.
+ * gretl_column_vector_from_array:
+ * @x: pointer to array of elements.
+ * @n: number of elements.
  * @mod: modifier flag: either %GRETL_MOD_NONE, or %GRETL_MOD_SQUARE
- * to place the squares of the elements of @d on the diagonal.
+ * to use the squares of the elements of @x.
  *
- * Returns: pointer to a newly allocated diagonal gretl_matrix, or %NULL
- * on failure.  
+ * Returns: pointer to a newly allocated gretl_vector containing
+ * the elements of x (or their squares), or %NULL on failure.  
  * 
  */
 
-gretl_matrix *gretl_diagonal_matrix (const double *d, int n, int mod)
+gretl_vector *
+gretl_column_vector_from_array (const double *x, int n, int mod)
 {
-    gretl_matrix *m;
-    double x;
-    int i, j;
-
-    m = real_gretl_matrix_alloc(n, n, 0);
-    if (m == NULL) return NULL;
+    gretl_matrix *v;
+    double xi;
+    int i;
+    
+    v = gretl_column_vector_alloc(n);
+    if (v == NULL) return NULL;
 
     for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    if (i == j) {
-		x = *d++;
-		if (mod == GRETL_MOD_SQUARE) {
-		    m->val[mdx(m, i, j)] = x * x;
-		} else {
-		    m->val[mdx(m, i, j)] = x; 
-		}
-	    } else {
-		m->val[mdx(m, i, j)] = 0.0;
-	    }
-	}
+	xi = *x++;
+	if (mod == GRETL_MOD_SQUARE) v->val[i] = xi * xi;
+	else v->val[i] = xi;
     }
 
-    return m;
+    return v;
 }
 
 /* ....................................................... */

@@ -334,9 +334,6 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	gretl_matrix_add_to(vcv, gammaj);
     }
 
-    gretl_matrix_free(X);
-    X = NULL;
-
     gretl_matrix_multiply_mod(xpxinv, GRETL_MOD_TRANSPOSE,
 			      vcv, GRETL_MOD_NONE,
 			      wtj);
@@ -363,21 +360,24 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     return err;
 }
 
-#define FOO
+/* Multiply X transpose into D, treating D as if it were
+   a diagonal matrix -- although in fact it is just a vector,
+   for economy of storage.  Result into R.
+*/
 
 static void do_X_prime_diag (const gretl_matrix *X,
-			     const gretl_vector *d,
-			     gretl_matrix *Y)
+			     const gretl_vector *D,
+			     gretl_matrix *R)
 {
+    const double *d;
     double x;
-    int n = X->cols;
-    int m = X->rows;
     int i, j;
 
-    for (i=0; i<m; i++) {
-	for (j=0; j<n; j++) {
-	    x = X->val[mdx(X, i, j)];
-	    Y->val[mdx(Y, j, i)] = d->val[j] * x;
+    for (i=0; i<R->rows; i++) {
+	d = D->val;
+	for (j=0; j<R->cols; j++) {
+	    x = X->val[mdx(X, j, i)];
+	    R->val[mdx(R, i, j)] = x * (*d++);
 	}
     }
 }
@@ -402,14 +402,8 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
 
-#ifdef FOO
-    diag = gretl_column_vector_alloc(m);
-    for (t=0; t<m; t++) {
-	diag->val[t] = pmod->uhat[t] * pmod->uhat[t];
-    }
-#else
-    diag = gretl_diagonal_matrix(pmod->uhat, m, GRETL_MOD_SQUARE);
-#endif
+    diag = gretl_column_vector_from_array(pmod->uhat + pmod->t1, m,
+					  GRETL_MOD_SQUARE);
     if (diag == NULL) {
 	err = 1;
 	goto bailout;
@@ -429,7 +423,6 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
 	gretl_model_set_int(pmod, "hc_version", hc_version);
     }
 
-#ifdef FOO
     if (hc_version == 1) {
 	for (t=0; t<m; t++) {
 	    diag->val[t] *= (double) m / (m - n);
@@ -452,41 +445,10 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     }
 
     do_X_prime_diag(X, diag, tmp1);
-#else
-    if (hc_version == 1) {
-	for (t=0; t<m; t++) {
-	    diag->val[mdx(diag, t, t)] *= (double) m / (m - n);
-	}
-    } else if (hc_version > 1) {
-	/* do the h_t calculations */
-	for (t=0; t<m; t++) {
-	    double q, ht = 0.0;
-
-	    for (i=0; i<n; i++) {
-		q = Q->val[mdx(Q, t, i)];
-		ht += q * q;
-	    }
-	    if (hc_version == 2) {
-		diag->val[mdx(diag, t, t)] /= (1.0 - ht);
-	    } else { /* HC3 */
-		diag->val[mdx(diag, t, t)] /= (1.0 - ht) * (1.0 - ht);
-	    }
-	}
-    }
-
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      diag, GRETL_MOD_NONE,
-			      tmp1);
-#endif
 
     gretl_matrix_multiply(tmp1, X, tmp2);
     gretl_matrix_multiply(xpxinv, tmp2, tmp3); 
     gretl_matrix_multiply(tmp3, xpxinv, tmp2);
-
-    gretl_matrix_free(X);
-    X = NULL;
-    gretl_matrix_free(tmp1);
-    tmp1 = NULL;
 
     /* tmp2 now holds HCCM */
     for (i=0; i<n; i++) {
