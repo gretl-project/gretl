@@ -58,12 +58,12 @@ then
   then
     mv $output ${output}.junk
   fi
-  echo "about to copy cascading stylesheet and admon graphics to temp dir"
+  echo "about to copy cascading stylesheet to temp dir"
   cp ${HTML_STYLESHEET} ${TMPDIR}/
-  mkdir ${TMPDIR}/stylesheet-images
-  cp ${ADMON_GRAPHICS} ${TMPDIR}/stylesheet-images
-  mkdir ${TMPDIR}/figures
-  cp figures/*.png ${TMPDIR}/figures
+  # mkdir ${TMPDIR}/stylesheet-images
+  # cp ${ADMON_GRAPHICS} ${TMPDIR}/stylesheet-images
+  # mkdir ${TMPDIR}/figures
+  # cp figures/*.png ${TMPDIR}/figures
   echo "about to rename temporary directory to $output"
   mv ${TMPDIR} $output
 else

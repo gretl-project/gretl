@@ -489,7 +489,7 @@ void about_dialog (gpointer data)
 			  authors, 
 			  "An econometrics program for the gnome desktop "
 			  "issued under the GNU General Public License.  "
-			  "http://www.ecn.wfu.edu/gretl/",
+			  "http://gretl.sourceforge.net/",
 			  gnome_pixmap_file("gretl-gnome-logo.xpm") 
 			  );
 
@@ -566,7 +566,7 @@ void about_dialog (gpointer data)
     tempstr = g_strdup_printf ("gretl, version %s\n"
 			       "Copyright (C) 2000 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://www.ecn.wfu.edu/gretl",
+			       "http://gretl.sourceforge.net/",
 			       version_string);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);

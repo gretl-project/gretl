@@ -1090,6 +1090,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	fprintf(fp, "e\n");
     }
 
+    fflush(fp);
     if (dump) fclose(fp);
     
 #ifdef OS_WIN32

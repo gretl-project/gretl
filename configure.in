@@ -21,7 +21,7 @@ have_zlib="no"
 have_gtk="no"
 have_gtkextra="no"
 have_gnome="no"
-have_gtkhtml="no"
+dnl have_gtkhtml="no"
 need_libbind="no"
 MAKE="make"
 
@@ -46,6 +46,7 @@ AC_ARG_WITH(gmake,
 )
 AC_SUBST(MAKE)
 
+AC_PROG_CC
 AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
 AC_PROG_INSTALL
@@ -56,8 +57,6 @@ AC_PROG_LIBTOOL
 dnl We want these before the checks, so the checks can modify their values.
 test -z "$CFLAGS"  && CFLAGS= auto_cflags=1
 test -z "$CC" && cc_specified=yes
-
-AC_PROG_CC
 
 dnl
 dnl if the user hasn't specified CFLAGS, then
@@ -139,9 +138,9 @@ test x"${GNOME}" = xyes && AC_DEFINE(USE_GNOME)
 if test x"${GNOME}" = xyes
 then
 	have_gnome=yes
-	AC_CHECK_LIB(gtkhtml, gtk_html_new,have_gtkhtml="yes" ; \
-	HTMLLIB="-lgtkhtml" ; AC_DEFINE(USE_GTKHTML),,`gnome-config --libs gtkhtml`)
-	AC_SUBST(have_gtkhtml)
+	dnl AC_CHECK_LIB(gtkhtml, gtk_html_new,have_gtkhtml="yes" ; \
+	dnl HTMLLIB="-lgtkhtml" ; AC_DEFINE(USE_GTKHTML),,`gnome-config --libs gtkhtml`)
+	dnl AC_SUBST(have_gtkhtml)
 fi
 AC_SUBST(have_gnome)
 
@@ -511,8 +510,9 @@ Configuration:
   Use gnuplot for graphs:		${have_gnuplot}
   Use LaTeX for typesetting output:	${have_latex}
   Build with gnome support:             ${have_gnome}
-  Build with gtkhtml support:           ${have_gtkhtml}
 
 Now type '$MAKE' to build gretl.
 "
 fi
+
+dnl Build with gtkhtml support:           ${have_gtkhtml}

@@ -102,8 +102,11 @@ install-gnome: $(PROG) installdirs
 	$(INSTALL_DATA) gnome/gretl.png $(gpixmaps)
 	$(tooldir)/mkinstalldirs $(ghelpdir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C
-	$(INSTALL_DATA) gnome/gretl.html $(ghelpdir)/C
+	$(tooldir)/mkinstalldirs $(ghelpdir)/C/figures
 	$(INSTALL_DATA) gnome/topic.dat $(ghelpdir)/C
+	$(INSTALL_DATA) ../doc/manual/*.html $(ghelpdir)/C
+	$(INSTALL_DATA) ../doc/manual/*.css $(ghelpdir)/C
+	$(INSTALL_DATA) ../doc/figures/*.png $(ghelpdir)/C/figures
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(bindir) 

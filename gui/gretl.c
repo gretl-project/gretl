@@ -171,7 +171,7 @@ extern void set_panel_structure (gpointer data, guint u, GtkWidget *w);
 #ifdef USE_GNOME
 static void gnome_help (void)
 {
-    static GnomeHelpMenuEntry help_entry = { "gretl", "index.html" };
+    static GnomeHelpMenuEntry help_entry = { "gretl", "gretl.html" };
 
     gnome_help_display(NULL, &help_entry);
 }
@@ -400,7 +400,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/Help/_Script commands syntax", NULL, helpwin, 1, NULL },
     { "/Help/sep7", NULL, NULL, 0, "<Separator>" },
 #ifdef USE_GNOME
-    { "/Help/Gnome help", NULL, gnome_help, 0, NULL },
+    { "/Help/Manual in HTML", NULL, gnome_help, 0, NULL },
 #endif
     { "/Help/_About gretl", NULL, about_dialog, 0, NULL }
 };
@@ -1521,20 +1521,20 @@ static void netscape_open (const char *url)
 static void gretl_website (void)
 {
 #ifdef OS_WIN32
-    if (goto_url("http://www.ecn.wfu.edu/gretl/"))
+    if (goto_url("http://gretl.sourceforge.net/"))
 	errbox("Failed to open URL");
 #else
-    netscape_open("http://www.ecn.wfu.edu/gretl/");
+    netscape_open("http://gretl.sourceforge.net/");
 #endif
 }
 
 static void gretl_pdf (void)
 {
 #ifdef OS_WIN32
-    if (goto_url("http://www.ecn.wfu.edu/gretl/manual.pdf"))
+    if (goto_url("http://gretl.sourceforge.net/manual.pdf"))
 	errbox("Failed to open URL");
 #else
-    netscape_open("http://www.ecn.wfu.edu/gretl/manual.pdf");
+    netscape_open("http://gretl.sourceforge.net/manual.pdf");
 #endif
 }
 

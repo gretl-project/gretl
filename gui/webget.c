@@ -1197,12 +1197,12 @@ int update_query (void)
 #else
 	if (admin) {
 	    strcpy(infotxt, "New files are available from the gretl web site\n"
-		   "http://ricardo.ecn.wfu.edu/gretl/");
+		   "http://gretl.sourceforge.net/");
 	    fp = fopen(testfile, "w");
 	} else {
 	    strcpy(infotxt, "You may want to let the system administrator know\n"
 		   "that new files are available from the gretl web site\n"
-		   "http://ricardo.ecn.wfu.edu/gretl/");
+		   "http://gretl.sourceforge.net/");
 	    fp = fopen(hometest, "w");
 	}
 	if (fp != NULL) {

@@ -203,7 +203,7 @@
 (define %html-ext% ".html")
 
 ;; Name for the root HTML document (default "book1")
-(define %root-filename% "index")
+(define %root-filename% "gretl")
 
 (element application ($mono-seq$))
 (element command ($mono-seq$))
