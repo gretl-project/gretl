@@ -403,9 +403,18 @@ static void fix_exponent (char *s)
 {
     char *p;
 
+#if 0
     if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
 	memmove(p+1, p+2, strlen(p+1));
     }
+#else
+    if ((p = strstr(s, "E+0")) || (p = strstr(s, "E-0"))
+	|| (p = strstr(s, "e+0")) || (p = strstr(s, "e-0"))) {
+	if (strlen(p) == 5) {
+	    memmove(p+2, p+3, strlen(p+2));
+	}
+    }
+#endif
 }
 
 /* For some reason sprintf using "%#G" seems to stick an extra
@@ -416,9 +425,7 @@ static void fix_exponent (char *s)
 
 static void cut_extra_zero (char *numstr, int digits)
 {
-    char *p;
-
-    if ((p = strchr(numstr, 'E')) || (p = strchr(numstr, 'e'))) {
+    if (strchr(numstr, 'E') == NULL && strchr(numstr, 'e') == NULL) {
 	int s = strspn(numstr, "-.,0");
 	int p = (strchr(numstr + s, '.') || strchr(numstr + s, ','));
 

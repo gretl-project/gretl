@@ -635,7 +635,7 @@ text, LaTeX or Rich Text Format).  Here is how to do it:
 
 3. When you are done estimating the models, open the icon view of your gretl
    session (by selecting "icon view" under the Session menu in the main gretl
-   window, or by clicking the "session icon view" icon on the gretl toolbar.
+   window, or by clicking the "session icon view" icon on the gretl toolbar).
 
 4. In session icon view, there is an icon labeled "Model table". Decide which
    model you wish to appear in the left-most column of the model table and add

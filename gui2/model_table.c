@@ -414,7 +414,7 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
     } else if (rtf) {
 	pprintf(prn, "\\qc %s\\cell ", 
-		(same_df)? _("R\\super 2") : _("Adj. R\\super 2"));
+		(same_df)? "R{\\super 2}" : _("Adj. R{\\super 2}"));
     } else {
 	pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
     }
@@ -445,7 +445,7 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	}
     }
     if (rtf) pputs(prn, "\\intbl \\row\n\n");
-    pputs(prn, "\n\n");
+    else pputs(prn, "\n\n");
 }
 
 int display_model_table (void)
@@ -610,6 +610,18 @@ static void tex_print_model_table (void)
     prn_to_clipboard(prn, COPY_LATEX);
 }
 
+static void print_rtf_row_spec (PRN *prn)
+{
+    int i, cols = 1 + real_model_list_length();
+    int col1 = 1000;
+
+    pputs(prn, "{\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262");
+    for (i=0; i<cols; i++) {
+	pprintf(prn, "\\cellx%d", col1 +  i * 1400);
+    }
+    pputs(prn, "\n");
+}
+
 static void rtf_print_model_table (void)
 {
     int j, ci;
@@ -628,10 +640,11 @@ static void rtf_print_model_table (void)
 
     ci = common_estimator();
 
-    pputs(prn, "{rtf1\n\\par \\qc ");
+    pputs(prn, "{\\rtf1\n");
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
+	pputs(prn, "\\par \\qc ");
 	pprintf(prn, I_("%s estimates"), 
 		I_(estimator_string(ci, prn->format)));
 	pputs(prn, "\n");
@@ -641,9 +654,9 @@ static void rtf_print_model_table (void)
 	    datainfo->varname[grand_list[1]]);
 
     /* RTF row stuff */
+    print_rtf_row_spec(prn);
 
-
-    pputs(prn, "\\intbl ");
+    pputs(prn, "\\intbl \\qc \\cell ");
     for (j=0; j<model_list_len; j++) {
 	char modhd[16];
 
@@ -656,7 +669,7 @@ static void rtf_print_model_table (void)
     if (ci == 0) {
 	char est[12];
 
-	pputs(prn, "\\intbl ");
+	pputs(prn, "\\intbl \\qc \\cell ");
 
 	for (j=0; j<model_list_len; j++) {
 	    if (model_list[j] == NULL) continue;
@@ -680,8 +693,9 @@ static void rtf_print_model_table (void)
 	    I_("** indicates significance at the 5 percent level"));
 
     if (binary) {
-	pprintf(prn, "\\par \\qc %s\n", I_("For logit and probit, $R^2$ is "
-					   "McFadden's pseudo-$R^2$"));
+	pprintf(prn, "\\par \\qc %s\n", I_("For logit and probit, "
+					   "R{\\super 2} is "
+					   "McFadden's pseudo-R{\\super 2}"));
     }
 
     pputs(prn, "}\n");

@@ -1744,8 +1744,12 @@ static void mp_other_stats (const mp_results *mpvals, PRN *prn)
 
     sprintf(fstr, "F(%d, %d)", mpvals->dfn, mpvals->dfd);
     pprintf(prn, "%-*s", len, fstr);
-    gretl_print_fullwidth_double(mpvals->fstt, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
+    if (na(mpvals->fstt)) {
+	pprintf(prn, "            %s", _("undefined"));
+    } else {
+	gretl_print_fullwidth_double(mpvals->fstt, GRETL_MP_DIGITS, prn);
+    }
+
 }
 
 /* ....................................................... */

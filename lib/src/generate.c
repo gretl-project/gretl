@@ -2824,10 +2824,10 @@ static void genr_msg (GENERATE *genr, int nv)
 
 static int ismatch (int lv, const int *list)
 {
-    int n;
+    int i;
 
-    for (n=1; n<=list[0]; n++) 
-        if (lv == list[n]) return n;
+    for (i=list[0]; i>=1; i--)
+        if (lv == list[i]) return i;
     return 0;
 }
 
