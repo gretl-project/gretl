@@ -5236,7 +5236,6 @@
 	  <effect>mostra impulso-risposta</effect>
         </option>
         <option>
-        <option>
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
         </option>

@@ -22,8 +22,10 @@
 #include "gretl.h"
 #include "textbuf.h"
 
-#ifndef OLD_GTK
-#include "treeutils.h"
+#ifdef OLD_GTK
+# include "dlgutils.h"
+#else
+# include "treeutils.h"
 #endif
 
 #undef HDEBUG
