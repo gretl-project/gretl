@@ -45,6 +45,8 @@ typedef struct {
     int savevars;
 } x12a_request;
 
+#if GTK_MAJOR_VERSION >= 2
+
 static int x12a_dialog (x12a_request *request)
 {
     GtkWidget *vbox, *tmp;
@@ -103,6 +105,8 @@ static int x12a_dialog (x12a_request *request)
 
     return 0;
 }
+
+#endif
 
 int write_tramo_data (char *fname, int varnum, 
 		      double ***pZ, DATAINFO *pdinfo, 
@@ -176,12 +180,11 @@ int write_tramo_data (char *fname, int varnum,
 	    tramodir, varname, varname);
 #endif
 #ifdef OS_WIN32 /* FIXME */
-    sprintf(cmd, "tramo -i %s", 
-	    tramodir, varname);
+    /* get into tramodir first */
+    sprintf(cmd, "\"%s\" -i %s", tramo, varname);
     WinExec(cmd, SW_SHOWMINIMIZED);
 #else
-    sprintf(cmd, "cd %s && %s -i %s >/dev/null", 
-	    tramodir, tramo, varname);
+    sprintf(cmd, "cd \"%s\" && \"%s\" -i %s >/dev/null", tramodir, tramo, varname);
     system(cmd);
 #endif
 
