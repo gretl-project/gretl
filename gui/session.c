@@ -43,6 +43,7 @@
 
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
+gint yes_no_dialog (char *title, char *msg, int cancel);
 
 /* "session" struct and "errtext" are globals */
 
@@ -912,10 +913,8 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	gchar text[100];
 	sprintf(text,"Really delete '%s'?", myobject->name);
 	if (myobject->sort == 'm') {
-	yes_no_dialog ("gretl: delete", 
-		       text, 0,
-		       delete_session_model, myobject, 
-		       delete_session_model, NULL);
+	    if (!yes_no_dialog("gretl: delete", text, 0)) 
+		delete_session_model(NULL, myobject);
 	}
     }
     else if (strcmp(item, "Rename") == 0) {
