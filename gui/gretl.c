@@ -20,9 +20,9 @@
 /* gretl.c : main for gretl */
 
 #include "gretl.h"
+#include <dirent.h>
 
 #ifndef G_OS_WIN32
-# include <dirent.h>
 # include <unistd.h>
 /* program icon */
 # include "pixmaps/gretl.xpm"

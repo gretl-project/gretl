@@ -7,7 +7,9 @@ my $texopt = "12pt";
 my $texpackage = "\\usepackage{mathtime}";
 # end configurable options
 
+my @figfiles;
 my ($line, $eqn, $foo, $figfile);
+my ($i, $n, $match);
 my $textmp = "./eqntmp";
 
 sub usage
@@ -20,11 +22,6 @@ grab_equations.pl -- A program for making png images of equations from
 
 EndUsage
 }
-
-if (@ARGV == 0) { &usage; }
-my $doc = $ARGV[0];
-
-open (DOC, "<$doc") || die "Can't open $doc";
 
 sub printtex {
     open (TEX, ">$textmp.tex") || die "Can't open $textmp";
@@ -41,6 +38,11 @@ sub printtex {
     system ("rm -f $textmp.*");
 }
 
+if (@ARGV == 0) { &usage; }
+my $doc = $ARGV[0];
+
+open (DOC, "<$doc") || die "Can't open $doc";
+
 while ($line = <DOC>) {
     if ($line =~ /\<(informal|inline|)equation\>/) { 
 	$eqn = $line;
@@ -52,6 +54,18 @@ while ($line = <DOC>) {
 	    print "got fileref $1\n";
 	    $figfile = $1;
 	}
+	$n = @figfiles;
+	$match = 0;
+	for ($i = 0; $i < $n && !$match; $i++) {
+	    if ($figfiles[$i] eq $figfile) { 
+		$match = 1;
+	    }
+	}
+	if ($match) {
+	    print "$figfile: already done, skipping\n";
+	    next; 
+	}
+	push(@figfiles, $figfile);
 	if ($eqn =~ /\<texmath\>((?:.|\s)*)\<\/texmath\>/) {
 	    print "got texmath $1\n";
 	    $eqn = $1;

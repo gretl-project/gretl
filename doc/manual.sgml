@@ -6,6 +6,7 @@
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
+<!ENTITY chisq SYSTEM "chisqu.def">
 ]>
 
 <!-- =============Document Header ============================= -->
@@ -106,8 +107,8 @@
 	      include all the estimators and tests that a professional
 	      econometrician might require, it supports the export of
 	      data to the formats of (<ulink
-		url="http://www.r-project.org">GNU R</ulink>) and
-	      (<ulink url="www.octave.org">GNU Octave</ulink>) for
+		url="http://www.r-project.org/">GNU R</ulink>) and
+	      (<ulink url="http://www.octave.org/">GNU Octave</ulink>) for
 	      further analysis (see <xref linkend="app-c"/>).</para>
 	  </listitem>
 	</varlistentry>
@@ -180,8 +181,9 @@
       <orderedlist>
 	<listitem><para>Download the latest
 	    <application>gretl</application> source package from
-	    <ulink url="http://gretl.sourceforge.net/">SourceForge</ulink>.
-	  </para></listitem>
+	    <ulink
+	    url="http://gretl.sourceforge.net/">gretl.sourceforge.net</ulink>.
+	    </para></listitem>
 	
 	<listitem><para>Unzip and untar the package.  On a system with
 	    the GNU utilities available, the command would be
@@ -229,12 +231,10 @@
       <para>
 	The MS Windows version comes as a self-extracting executable.
 	Installation is just a matter of downloading
-	<filename>gretl_install.exe</filename> from <ulink
-	  url="http://ricardo.ecn.wfu.edu/gretl/win32/">Wake Forest
-	  University</ulink> and running this program. You will be
-	prompted for a location to install the package (the default is
-	<filename>c:\userdata\gretl</filename>).
-      </para> 
+	<filename>gretl_install.exe</filename> and running this
+	program. You will be prompted for a location to install the
+	package (the default is
+	<filename>c:\userdata\gretl</filename>).  </para>
 
     </sect2>
 
@@ -493,17 +493,14 @@
 	      </para></listitem>
 	  <listitem><para><guimenuitem>p-value finder</guimenuitem>:
 	      Open a window which enables you to look up p-values from
-	      the Gaussian, <emphasis>t</emphasis>,
-	      &khgr;<superscript>2</superscript>,
+	      the Gaussian, <emphasis>t</emphasis>, &chisq;,
 	      <emphasis>F</emphasis> or gamma distributions. See also
 	      the <command>pvalue</command> command in
 	      <xref linkend="cmdref"/>.</para></listitem>
 	  <listitem><para><guimenuitem>statistical
 		tables</guimenuitem>: Look up critical values for
 	      commonly used distributions (Gaussian,
-	      <emphasis>t</emphasis>,
-	      &khgr;<superscript>2</superscript>,
-	      <emphasis>F</emphasis> and
+	      <emphasis>t</emphasis>, &chisq;, <emphasis>F</emphasis> and
 	      Durbin&ndash;Watson).</para></listitem>
 	  <listitem><para><guimenuitem>test calculator</guimenuitem>:
 	      Calculate test statistics and p-values for a range of
@@ -1750,7 +1747,7 @@
       more, see the gnuplot <ulink
 	url="http://ricardo.ecn.wfu.edu/gnuplot.html">online
 	manual</ulink> or <ulink
-	url="http://www.gnuplot.org">gnuplot.org</ulink>.</para>
+	url="http://www.gnuplot.org/">gnuplot.org</ulink>.</para>
 
     <para>See also the entry for <command>gnuplot</command> in 
       <xref linkend="cmdref"/> below&mdash;and the
@@ -2394,22 +2391,19 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>add</command>
+	      <entry><command>add</command>
 		<replaceable>varlist</replaceable> 
 		&opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>add 5 7 9</command>
+	      <entry><command>add 5 7 9</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>add xx yy zz -o</command>
+	      <entry><command>add xx yy zz -o</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2418,11 +2412,11 @@
 
       <para>
 	Must be invoked after an estimation command.  The variables in
-	<replaceable>varlist</replaceable> will be added to the
+	<replaceable>varlist</replaceable> are added to the
 	previous model and the new model estimated.  If more than one
-	variable is added, then the <emphasis>F</emphasis> statistic
+	variable is added, the <emphasis>F</emphasis> statistic
 	for the added variables will be printed (for the OLS procedure
-	only) along with the p-value for it.  A p-value below 0.05
+	only) along with its p-value.  A p-value below 0.05
 	means that the coefficients are jointly significant at the 5
 	percent level. A number of internal variables may be retrieved
 	using the <command>genr</command> command, provided
@@ -2440,15 +2434,13 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>addto</command> 
+	      <entry><command>addto</command> 
 		<replaceable>modelID varlist</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Example:</entry>
-	      <entry>
-		<command>addto 2 5 7 9</command>
+	      <entry><command>addto 2 5 7 9</command>
 	      </entry> 
 	    </row>
 	  </tbody>
@@ -2478,8 +2470,7 @@
 	    </row>
 	    <row>
 	      <entry>Example:</entry>
-	      <entry>
-		<command>adf 2 x1</command>
+	      <entry><command>adf 2 x1</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2494,7 +2485,7 @@
 	  <informalequation>
 	    <graphic fileref="figures/adf1.png"/>
 	    <texmath>
-	      $$(1-L)x_t=m+gx_{t-1}+\epsilon_t$$
+	      \[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]
 	    </texmath>
 	  </informalequation>
 	  The null hypothesis is that
@@ -2507,7 +2498,7 @@
 	  <informalequation>
 	    <graphic fileref="figures/adf2.png"/>
 	    <texmath>
-	      $$F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}$$
+	      \[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]
 	    </texmath>
 	  </informalequation>
 	  where <emphasis>T</emphasis> is the sample size,
@@ -2527,8 +2518,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>ar</command>
+	      <entry><command>ar</command>
 		<replaceable>lags</replaceable>
 		<literal>;</literal>
 		<replaceable>depvar indepvars</replaceable> 
@@ -2545,11 +2535,11 @@
       </informaltable>
 
       <para>
-	Computes the estimates of a model using the generalized
+	Computes parameter estimates using the generalized
 	Cochrane&ndash;Orcutt iterative procedure (see Section 9.5 of
-	Ramanathan). Iteration is terminated when successive error sum
-	of squares do not vary by more than 0.005 percent or when 20
-	iterations have been done. <replaceable>lags</replaceable> is
+	Ramanathan). Iteration is terminated when successive error sums
+	of squares do not differ by more than 0.005 percent or after 20
+	iterations. <replaceable>lags</replaceable> is
 	a list of lags in the residuals, terminated by a semicolon. In
 	the above example, the error term is specified as 
 	<inlineequation>
@@ -2562,10 +2552,9 @@
 	<para>
 	<replaceable>depvar</replaceable> is the dependent variable
 	and <replaceable>indepvars</replaceable> is the list of
-	independent variables separated by spaces.  Use the number
-	zero for a constant term.  If the <literal>-o</literal> flag
-	is present, the covariance matrix of regression coefficients
-	will be printed. Residuals of the transformed regression are
+	independent variables.  If the <literal>-o</literal> flag
+	is given, the covariance matrix of regression coefficients
+	is printed. Residuals of the transformed regression are
 	stored under the name <varname>uhat</varname>, which can be
 	retrieved by <command>genr</command>.  A number of other
 	internal variables may be retrieved using the
@@ -2582,16 +2571,14 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>arch</command> 
+	      <entry><command>arch</command> 
 		<replaceable>order depvar indepvars</replaceable> 
 		&opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Example:</entry>
-	      <entry>
-		<command>arch 4 y 0 x1 x2 x3</command>
+	      <entry><command>arch 4 y 0 x1 x2 x3</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2627,21 +2614,18 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>chow</command>
+	      <entry><command>chow</command>
 		<replaceable>obs</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:  </entry>
-	      <entry>
-		<command>chow 25</command>
+	      <entry><command>chow 25</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>chow 1988.1</command>
+	      <entry><command>chow 1988.1</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2671,20 +2655,17 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>   
-		<command>coint</command> 
+	      <entry><command>coint</command> 
 		<replaceable>order depvar indepvar</replaceable>
 	      </entry>
 	    </row>
 	    <row><entry>Examples:</entry>
-	      <entry>
-		<command>coint 2 y x</command>
+	      <entry><command>coint 2 y x</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>coint 4 y x1 x2</command>
+	      <entry><command>coint 4 y x1 x2</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2711,31 +2692,26 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>corc</command>
+	      <entry><command>corc</command>
 		<replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry> 
-		<command>corc 1 0 2 4 6 7</command> 
+	      <entry><command>corc 1 0 2 4 6 7</command> 
 	      </entry>
 	    </row>
 	    <row><entry></entry>
-	      <entry>  
-		<command>corc -o 1 0 2 4 6 7</command>
+	      <entry><command>corc -o 1 0 2 4 6 7</command>
 	      </entry>
 	    </row>
 	    <row><entry></entry>
-	      <entry> 
-		<command>corc y 0 x1 x2 x3</command>
+	      <entry><command>corc y 0 x1 x2 x3</command>
 	      </entry>
 	    </row>
 	    <row><entry></entry>
-	      <entry> 
-		<command>corc -o y 0 x1 x2 x3</command>
+	      <entry><command>corc -o y 0 x1 x2 x3</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2743,18 +2719,17 @@
       </informaltable>
 
       <para>
-	Computes the estimates of a model using the
+	Computes parameter estimates using the
 	Cochrane&ndash;Orcutt iterative procedure (see Section 9.4 of
 	Ramanathan) with <replaceable>depvar</replaceable> as the
 	dependent variable and <replaceable>indepvars</replaceable> as
-	the list of independent variables separated by spaces.  Use
-	the number zero for a constant term. Iteration is terminated
+	the list of independent variables.  Iteration is terminated
 	when successive &rho; values do not differ by more than 0.001
-	or when 20 iterations have been done.  If the
-	<literal>-o</literal> flag is present, the covariance matrix
-	of regression coefficients will be printed.  Residuals of this
+	or after 20 iterations.  If the
+	<literal>-o</literal> flag is given, the covariance matrix
+	of regression coefficients is printed.  Residuals of this
 	transformed regression are stored under the name
-	<varname>uhat</varname>.  A number of other internal variables
+	<varname>uhat</varname>.  Various internal variables
 	may be retrieved using the <command>genr</command> command,
 	provided <command>genr</command> is invoked immediately after
 	this command.
@@ -2769,21 +2744,18 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>corr</command>
+	      <entry><command>corr</command>
 		[ <replaceable>varlist</replaceable> ]
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>corr 1 3 5</command>
+	      <entry><command>corr 1 3 5</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		<command>corr y x1 x2 x3</command>
+	      <entry><command>corr y x1 x2 x3</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2791,11 +2763,12 @@
       </informaltable>
 
       <para>
-	<command>corr</command> prints correlation coefficients for
-	all pairs of variables in the data set (missing values denoted
-	by &minus;999 are skipped).  <command>corr</command>
-	<replaceable>varlist</replaceable> prints the correlation
-	coefficients for the variables in the list.
+	If no <replaceable>varlist</replaceable> is given, prints
+	correlation coefficients for all pairs of variables in the
+	data set (missing values denoted by &minus;999 are skipped).
+	<command>corr</command> <replaceable>varlist</replaceable>
+	prints the correlation coefficients for the variables in the
+	given list.
       </para>
 
     </sect2>
@@ -2808,8 +2781,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>  
-		<command>corrgm</command>
+	      <entry><command>corrgm</command>
 		<replaceable>variable</replaceable> 
 		[ <replaceable>maxlag</replaceable> ]
 	      </entry>
@@ -2830,7 +2802,7 @@
 	</inlineequation> where 
 	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> is the
 	<emphasis>t</emphasis>th observation of the variable 
-	<emphasis>u</emphasis>u and <emphasis>s</emphasis> is the number of lags.
+	<emphasis>u</emphasis> and <emphasis>s</emphasis> is the number of lags.
       </para>
 
       <para>
@@ -2839,9 +2811,8 @@
 	  the correlogram and prints the Box-Pierce
 	  <emphasis>Q</emphasis> statistic for testing the null
 	  hypothesis that the series is <quote>white noise</quote>.
-	  This is asymptotically distributed as
-	  &khgr;<superscript>2</superscript> with degrees of freedom
-	  equal to the number of lags used.
+	  This is asymptotically distributed as &chisq; with degrees
+	  of freedom equal to the number of lags used.
       </para>
 
       <para>
@@ -2860,15 +2831,13 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>criteria</command> 
+	      <entry><command>criteria</command> 
 		<replaceable>ess T k</replaceable>
 	      </entry>
 	    </row>
 	    <row>
-	      <entry>Example: </entry>
-	      <entry> 
-		<command>criteria 23.45 45 8</command>
+	      <entry>Example:</entry>
+	      <entry><command>criteria 23.45 45 8</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2935,8 +2904,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>      
-		<command>diff</command>
+	      <entry><command>diff</command>
 		<replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
@@ -2967,7 +2935,7 @@
 
       <para>
 	Must follow the estimation of a model via OLS.  Prints the
-	estimated model in the form of a &latex; equation, to a file
+	estimates in the form of a &latex; equation, to a file
 	with a name of the form <filename>equation_N.tex</filename>,
 	where <varname>N</varname> is the number of models estimated
 	to date in the current session.  This can be incorporated in a
@@ -2983,22 +2951,19 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>fcast</command>
+	      <entry><command>fcast</command>
 		[ <replaceable>startobs endobs</replaceable> ]
 		<replaceable>newvarname</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry> 
-		<command>fcast 1997.1 1999.4 f1</command>
+	      <entry><command>fcast 1997.1 1999.4 f1</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		<command>fcast f2</command>
+	      <entry><command>fcast f2</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -3029,8 +2994,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>fcasterr</command> 
+	      <entry><command>fcasterr</command> 
 		<replaceable>startobs endobs</replaceable> 
 		&opto;
 	      </entry>
@@ -3074,8 +3038,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>  
-		<command>freq</command>
+	      <entry><command>freq</command>
 		<replaceable>var</replaceable> 
 	      </entry>
 	    </row>
@@ -3086,7 +3049,7 @@
       <para>
 	  Prints the frequency distribution for
 	  <replaceable>var</replaceable> (given by name or number);
-	  the results of a &khgr;<superscript>2</superscript> test for
+	  the results of a &chisq; test for
 	  normality are also reported. In interactive mode a gnuplot
 	  graph of the distribution is generated.  
       </para>
@@ -3100,8 +3063,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>genr</command> 
+	      <entry><command>genr</command> 
 		<replaceable>newvar</replaceable>
 		  = <replaceable>formula</replaceable>
 	      </entry>
@@ -3458,16 +3420,14 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>gnuplot</command>
+	      <entry><command>gnuplot</command>
 		<replaceable>yvars xvar</replaceable>
 		<literal>[ -o | -m ]</literal>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>  
-		<command>gnuplot -z</command> 
+	      <entry><command>gnuplot -z</command> 
 		<replaceable>yvar xvar dummy</replaceable>
 	      </entry>
 	    </row>
@@ -3521,16 +3481,14 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>graph</command>
+	      <entry><command>graph</command>
 		<replaceable>var1 var2</replaceable>
 		&opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>graph</command> 
+	      <entry><command>graph</command> 
 		<replaceable>var1 var2 var3</replaceable>
 	      </entry>
 	    </row>
@@ -3562,8 +3520,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage</entry>
-	      <entry>  
-		<command>hccm</command>
+	      <entry><command>hccm</command>
 		<replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>  
@@ -3588,7 +3545,7 @@
       <para>
 	<command>help</command> gives a list of available commands.
 	<command>help</command> <replaceable>command</replaceable>
-	describes <replaceable>command</replaceable> (e.g.\
+	describes <replaceable>command</replaceable> (e.g.
 	<command>help smpl</command>).  You can type
 	<command>man</command> instead of <command>help</command> if
 	you like. 
@@ -3603,35 +3560,30 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>hilu</command>
+	      <entry><command>hilu</command>
 		<replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry> 
-		<command>hilu 1 0 2 4 6 7</command>  
+	      <entry><command>hilu 1 0 2 4 6 7</command>  
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>  
-		<command>hilu -o y 0 x1 x2 x3</command>
+	      <entry><command>hilu -o y 0 x1 x2 x3</command>
 	      </entry>
 	    </row>
 	  </tbody>
 	</tgroup>
       </informaltable>
 
-      <para> <command>hilu</command> computes the estimates of a model
-	  using the Hildreth&ndash;Lu search procedure (fine tuned by
-	  the CORC procedure) with <replaceable>depvar</replaceable>
-	  as the dependent variable and
-	  <replaceable>indepvars</replaceable> as the list of
-	  independent variables separated by spaces.  Use the number
-	  zero for a constant term. The error sum of squares of the
+      <para>Computes parameter estimates using the Hildreth&ndash;Lu
+	  search procedure (fine tuned by the CORC procedure) with
+	  <replaceable>depvar</replaceable> as the dependent variable
+	  and <replaceable>indepvars</replaceable> as the list of
+	  independent variables. The error sum of squares of the
 	  transformed model is graphed against the value of rho from
 	  &minus;0.99 to 0.99.  If the <literal>-o</literal> flag is
 	  present, the covariance matrix of regression coefficients
@@ -3648,8 +3600,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>hsk</command> 
+	      <entry><command>hsk</command> 
 		<replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
@@ -3664,8 +3615,8 @@
 	predicts the log of the square of residuals (using squares of
 	independent variables but not their cross products) from which
 	weighted least squares estimates are obtained.  If the
-	<literal>-o</literal> flag is present, the covariance matrix of
-	regression coefficients will be printed.  A number of internal
+	<literal>-o</literal> flag is given, the covariance matrix of
+	regression coefficients is printed.  Various internal
 	variables may be retrieved using the <command>genr</command>
 	command, provided <command>genr</command> is invoked
 	immediately after this command.
@@ -3680,15 +3631,13 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>import</command>
+	      <entry><command>import</command>
 		<replaceable>csvfile</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>import -o</command>
+	      <entry><command>import -o</command>
 		<replaceable>boxfile</replaceable>
 	      </entry>
 	    </row>
@@ -3745,8 +3694,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>lags</command>
+	      <entry><command>lags</command>
 		<replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
@@ -3776,8 +3724,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>ldiff</command>
+	      <entry><command>ldiff</command>
 		<replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
@@ -3824,8 +3771,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>lmtest</command> 
+	      <entry><command>lmtest</command> 
 		&opto;
 	      </entry>
 	    </row>
@@ -3834,20 +3780,17 @@
       </informaltable>
 
       <para>
-	This command must immediately follow an <command>ols</command>
-	command. It prints the Lagrange multiplier test statistics
-	(and associated p-values) for nonlinearity and
-	heteroskedasticity (White's test) or, if the
-	<literal>-o</literal> flag is present, for serial correlation
-	up to the periodicity.  The corresponding auxiliary regression
-	coefficients are also printed out.  See Ramanathan, Chapters
-	7, 8, and 9 for details. Only the squared independent
-	variables are used and not their cross products.
-      </para>
-
-      <para>
-	If the internal creation of squares causes exact
-	multicollinearity, LM test statistics cannot be obtained.
+	Must immediately follow an <command>ols</command>
+	command. Prints the Lagrange multiplier test statistics (and
+	associated p-values) for nonlinearity and heteroskedasticity
+	(White's test) or, if the <literal>-o</literal> flag is
+	present, for serial correlation up to the periodicity.  The
+	corresponding auxiliary regression coefficients are also
+	printed out.  See Ramanathan, Chapters 7, 8, and 9 for
+	details. Only the squared independent variables are used and
+	not their cross products.  (If the internal creation of
+	squares causes exact multicollinearity, LM test statistics
+	cannot be obtained.)
       </para>
 
     </sect2>
@@ -3859,8 +3802,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>    
-		<command>logit</command>
+	      <entry><command>logit</command>
 		<replaceable>depvar indepvars</replaceable>
 	      </entry>
 	    </row>
@@ -3876,7 +3818,7 @@
 	  (see Ruud, 2000, ch. 27).  As the model is nonlinear the
 	  slopes depend on the values of the independent variables:
 	  the reported slopes are evaluated at the means of those
-	  variables. The &khgr;<superscript>2</superscript> statistic
+	  variables. The &chisq; statistic
 	  tests the null hypothesis that all coefficients are zero
 	  apart from the constant.
       </para>
@@ -3902,8 +3844,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>    
-		<command>logs</command>
+	      <entry><command>logs</command>
 		<replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
@@ -3929,42 +3870,36 @@
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>loop</command>
+	      <entry><command>loop</command>
 		<replaceable>number_of_times</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>loop while</command>
+	      <entry><command>loop while</command>
 		<replaceable>condition</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>loop for i=</command>
+	      <entry><command>loop for i=</command>
 		<replaceable>start</replaceable><command>..</command>
 		  <replaceable>end</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>loop 1000</command>
+	      <entry><command>loop 1000</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>loop while essdiff > .00001</command>
+	      <entry><command>loop while essdiff > .00001</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>loop for i=1991..2000</command>
+	      <entry><command>loop for i=1991..2000</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -3997,8 +3932,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>meantest</command>
+	      <entry><command>meantest</command>
 		<replaceable>var1 var2</replaceable>
 		&opto;
 	      </entry>
@@ -4029,21 +3963,18 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>     
-		<command>multiply</command> 
+	      <entry><command>multiply</command> 
 		<replaceable>x suffix varlist</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>multiply invpop pc 3 4 5 6</command>
+	      <entry><command>multiply invpop pc 3 4 5 6</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		  <command>multiply 1000 big x1 x2 x3</command>
+	      <entry><command>multiply 1000 big x1 x2 x3</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -4078,15 +4009,13 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>nulldata</command>
+	      <entry><command>nulldata</command>
 		<replaceable>series_length</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Example:</entry>
-	      <entry>    
-		<command>nulldata 100</command>
+	      <entry><command>nulldata 100</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -4114,34 +4043,29 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>  
-		<command>ols</command>
+	      <entry><command>ols</command>
 		<replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples: </entry>
-	      <entry>
-		<command>ols 1 0 2 4 6 7</command>  
+	      <entry><command>ols 1 0 2 4 6 7</command>  
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>      
-		<command>ols -o 1 0 2 4 6 7</command>
+	      <entry><command>ols -o 1 0 2 4 6 7</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>      
-		<command>ols y 0 x1 x2 x3</command>
+	      <entry><command>ols y 0 x1 x2 x3</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>      
-		<command>ols -o y 0 x1 x2 x3</command>
+	      <entry><command>ols -o y 0 x1 x2 x3</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -4152,21 +4076,21 @@ executed.  Loops cannot be nested.</para>
 	Computes ordinary least squares estimates with
 	<replaceable>depvar</replaceable> as the dependent variable
 	and <replaceable>indepvars</replaceable> as the list of
-	independent variables. The <literal>-o</literal> flag will
-	print the covariance matrix of regression coefficients.  The
-	variables can be specified either by names or by their number.
-	Use the number zero for a constant term. The program also
-	prints the p-values for <emphasis>t</emphasis> (two-tailed)
-	and <emphasis>F</emphasis>-statistics.  A p-value below 0.01
-	indicates significance at the 1 percent level and is denoted
-	by <literal>***</literal>.  <literal>**</literal> indicates
-	significance between 1 and 5 percent and <literal>*</literal>
-	indicates significance between 5 and 10 percent levels. Model
-	selection statistics (described in Ramanathan, Section 4.3)
-	are also printed.  A number of internal variables may be
-	retrieved using the <command>genr</command> command, provided
-	<command>genr</command> is invoked immediately after this
-	command.
+	independent variables. The <literal>-o</literal> flag calls
+	for printing of the covariance matrix of regression
+	coefficients.  The variables may be specified by name or
+	number; use the number zero for a constant term. The program
+	also prints the p-values for <emphasis>t</emphasis>
+	(two-tailed) and <emphasis>F</emphasis>-statistics.  A p-value
+	below 0.01 indicates significance at the 1 percent level and
+	is denoted by <literal>***</literal>.  <literal>**</literal>
+	indicates significance between 1 and 5 percent and
+	<literal>*</literal> indicates significance between 5 and 10
+	percent levels. Model selection statistics (described in
+	Ramanathan, Section 4.3) are also printed.  Various internal
+	variables may be retrieved using the <command>genr</command>
+	command, provided <command>genr</command> is invoked
+	immediately after this command.
       </para>
 
     </sect2>
@@ -4178,22 +4102,19 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>        
-		<command>omit</command>
+	      <entry><command>omit</command>
 		<replaceable>varlist</replaceable> 
 		&opto;
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>omit 5 7 9</command> 
+	      <entry><command>omit 5 7 9</command> 
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>     
-		<command>omit xx yy zz</command>
+	      <entry><command>omit xx yy zz</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -4202,14 +4123,14 @@ executed.  Loops cannot be nested.</para>
 
       <para>
 	This command must be invoked after an estimation command. The
-	variables in <replaceable>varlist</replaceable> will be
+	variables in <replaceable>varlist</replaceable> are
 	omitted from the previous model and the new model estimated.
 	If more than one variable is omitted, the Wald
 	<emphasis>F</emphasis>-statistic for the omitted variables
-	will be printed along with the p-value for it (for the OLS
+	will be printed along with its p-value (for the OLS
 	procedure only).  A p-value below 0.05 means that the
 	coefficients are jointly significant at the 5 percent level.
-	A number of internal variables may be retrieved using the
+	Various internal variables may be retrieved using the
 	<command>genr</command> command, provided
 	<command>genr</command> is invoked immediately after this
 	command. The coefficient covariance matrix is printed if the
@@ -4225,22 +4146,20 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>omitfrom</command> 
+	      <entry><command>omitfrom</command> 
 		<replaceable>modelID varlist</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Example: </entry>
-	      <entry> 
-		<command>omitfrom 2 5 7 9</command>
+	      <entry><command>omitfrom 2 5 7 9</command>
 	      </entry>
 	    </row>
 	  </tbody>
 	</tgroup>
       </informaltable>
 
-      <para> Works like the <command>omit</command> command, except
+      <para>Works like the <command>omit</command> command, except
 	that you specify a previous model (using its ID number, which
 	is printed at the start of the model output) to take as the
 	base for omitting variables.  The example above omits
@@ -4256,8 +4175,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>open</command>
+	      <entry><command>open</command>
 		<replaceable>datafile</replaceable>
 	      </entry>
 	    </row>
@@ -4319,19 +4237,19 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>  <command>plot x1</command></entry>
+	      <entry><command>plot x1</command></entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>  <command>plot x1 x2</command></entry>
+	      <entry><command>plot x1 x2</command></entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>  <command>plot 3 7</command>  </entry>
+	      <entry><command>plot 3 7</command>  </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>  <command>plot -o x1 x2</command></entry>
+	      <entry><command>plot -o x1 x2</command></entry>
 	    </row>
 	  </tbody>
 	</tgroup>
@@ -4401,8 +4319,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>probit</command> 
+	      <entry><command>probit</command> 
 		<replaceable>depvar indepvars</replaceable>
 	      </entry>
 	    </row>
@@ -4418,9 +4335,9 @@ executed.  Loops cannot be nested.</para>
 	  Expectation&ndash;Maximization method).  As the model is
 	  nonlinear the slopes depend on the values of the independent
 	  variables: the reported slopes are evaluated at the means of
-	  those variables.  The &khgr;<superscript>2</superscript>
-	  statistic tests the null hypothesis that all coefficients
-	  are zero apart from the constant.
+	  those variables.  The &chisq; statistic tests the null
+	  hypothesis that all coefficients are zero apart from the
+	  constant.
       </para>
 
       <para>
@@ -4458,7 +4375,7 @@ executed.  Loops cannot be nested.</para>
 	      <entry></entry>
 	      <entry><command>pvalue 3</command> 
 		<replaceable>df xvalue</replaceable>
-		  (&khgr;<superscript>2</superscript> distribution)
+		  (&chisq; distribution)
 	      </entry>
 	    </row>
 	    <row>
@@ -4489,7 +4406,7 @@ executed.  Loops cannot be nested.</para>
 	  use <literal>z</literal>, <literal>t</literal>,
 	  <literal>X</literal>, <literal>F</literal> and
 	  <literal>G</literal> for the normal, <emphasis>t</emphasis>,
-	  &khgr;<superscript>2</superscript>, <emphasis>F</emphasis>,
+	  &chisq;, <emphasis>F</emphasis>,
 	  and gamma distributions respectively.
       </para>
 
@@ -4511,8 +4428,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>     
-		<command>rhodiff</command>
+	      <entry><command>rhodiff</command>
 		<replaceable>rholist</replaceable> 
 		<literal>;</literal>
 		<replaceable>varlist</replaceable>
@@ -4520,14 +4436,12 @@ executed.  Loops cannot be nested.</para>
 	    </row>
 	    <row>
 	      <entry>Examples: </entry>
-	      <entry>
-		<command>rhodiff .65 ; 2 3 4</command>
+	      <entry><command>rhodiff .65 ; 2 3 4</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		<command>rhodiff r1 r2 ; x1 x2 x3</command>
+	      <entry><command>rhodiff r1 r2 ; x1 x2 x3</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -4558,8 +4472,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>run</command>
+	      <entry><command>run</command>
 		<replaceable>inputfile</replaceable>
 	      </entry>
 	    </row>
@@ -4583,8 +4496,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>runs</command>
+	      <entry><command>runs</command>
 		<replaceable>varname</replaceable>
 	      </entry>
 	    </row>
@@ -4613,8 +4525,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>scatters</command>
+	      <entry><command>scatters</command>
 		<replaceable>yvar</replaceable> 
 		<literal>;</literal>
 		<replaceable>xvarlist</replaceable>
@@ -4622,8 +4533,7 @@ executed.  Loops cannot be nested.</para>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>scatters</command>
+	      <entry><command>scatters</command>
 		<replaceable>yvarlist</replaceable> 
 		<literal>;</literal>
 		<replaceable>xvar</replaceable>
@@ -4631,14 +4541,12 @@ executed.  Loops cannot be nested.</para>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>scatters 1 ; 2 3 4 5</command>
+	      <entry><command>scatters 1 ; 2 3 4 5</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		<command>scatters 1 2 3 4 5 6 ; time</command>
+	      <entry><command>scatters 1 2 3 4 5 6 ; time</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -4670,8 +4578,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>  
-		<command>seed</command>
+	      <entry><command>seed</command>
 		<replaceable>integer</replaceable> 
 	      </entry>
 	    </row>
@@ -4698,27 +4605,23 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>setobs</command>
+	      <entry><command>setobs</command>
 		<replaceable>periodicity startobs</replaceable> 
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>setobs 4 1990.1</command> 
+	      <entry><command>setobs 4 1990.1</command> 
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		<command>setobs 12 1978.03</command> 
+	      <entry><command>setobs 12 1978.03</command> 
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry> 
-		<command>setobs 20 1.01</command>
+	      <entry><command>setobs 20 1.01</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -4744,8 +4647,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>!</command>
+	      <entry><command>!</command>
 		<replaceable>shellcommand</replaceable>
 	      </entry>
 	    </row>
@@ -4769,8 +4671,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>     
-		<command>sim</command> 
+	      <entry><command>sim</command> 
 		<replaceable>startobs
 		endobs y a0 a1 a2</replaceable> 
 		&hellip;
@@ -4782,8 +4683,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Examples:</entry>
-	      <entry>
-		<command>sim 1979.2 1983.1 y 0 0.9</command>
+	      <entry><command>sim 1979.2 1983.1 y 0 0.9</command>
 	      </entry>
 	      <entry>creates <varname>y(t) =  0.9*y(t-1)</varname>
 	      </entry>
@@ -4820,28 +4720,24 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>smpl</command> 
+	      <entry><command>smpl</command> 
 		<replaceable>startobs endobs</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		  <command>smpl -o</command>
+	      <entry><command>smpl -o</command>
 		  <replaceable>dummyvar</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		  <command>smpl -o</command>
+	      <entry><command>smpl -o</command>
 		</entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		  <command>smpl -r</command> 
+	      <entry><command>smpl -r</command> 
 		<replaceable>condition</replaceable>
 	      </entry>
 	    </row>	
@@ -4936,8 +4832,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>spearman</command>
+	      <entry><command>spearman</command>
 		<replaceable>x y</replaceable> 
 		&opto;
 	      </entry>
@@ -4976,8 +4871,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>square</command>
+	      <entry><command>square</command>
 		<replaceable>x y</replaceable>
 		&opto;
 	      </entry>
@@ -5007,8 +4901,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry> 
-		<command>store</command>
+	      <entry><command>store</command>
 		<replaceable>datafile</replaceable>
 		[ <replaceable>varlist</replaceable> ]
 		[ <replaceable>flag</replaceable> ] 
@@ -5097,24 +4990,21 @@ executed.  Loops cannot be nested.</para>
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>
-		<command>summary</command>
+	      <entry><command>summary</command>
 	      </entry>
 	      <entry>print summary statistics for all variables in the
 		file
 	      </entry>
 	    </row>
 	    <row>
-	      <entry>
-		<command>summary 3 7 9</command>
+	      <entry><command>summary 3 7 9</command>
 	      </entry>
 	      <entry>summary statistics for variables number 3, 7, and
 		9
 	      </entry>
 	    </row>
 	    <row>
-	      <entry>
-		<command>summary x y z</command>
+	      <entry><command>summary x y z</command>
 	      </entry>
 	      <entry>summary statistics for the variables
 		<varname>x</varname>, <varname>y</varname>, and
@@ -5149,23 +5039,10 @@ executed.  Loops cannot be nested.</para>
 
     <sect2 id="testuhat"><title>testuhat</title>
 
-      <informaltable frame="none">
-	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
-	  <tbody>
-	    <row>
-	      <entry>Usage:</entry>
-	      <entry>
-		<command>testuhat</command>
-	      </entry>
-	    </row>
-	  </tbody>
-	</tgroup>
-      </informaltable>
-
       <para>
 	Must follow a model estimation command.  Gives the frequency
 	distribution for the residual from the model along with a
-	&khgr;<superscript>2</superscript> test for normality.
+	&chisq; test for normality.
       </para>
 
     </sect2>
@@ -5177,8 +5054,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage: </entry>
-	      <entry> 
-		<command>tsls</command> 
+	      <entry><command>tsls</command> 
 		<replaceable>depvar varlist1</replaceable> 
 		<literal>;</literal>
 		<replaceable>varlist2</replaceable> 
@@ -5187,8 +5063,7 @@ executed.  Loops cannot be nested.</para>
 	    </row>
 	    <row>
 	      <entry>Example: </entry>
-	      <entry>
-		<command>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5
+	      <entry><command>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5
 		x6</command>
 	      </entry>
 	    </row>
@@ -5226,21 +5101,18 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>
-		<command>var</command> 
+	      <entry><command>var</command> 
 		<replaceable>order depvar indepvar</replaceable>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry>Examples: </entry>
-	      <entry>
-		<command>var 4 x1 const time x2 x3</command>
+	      <entry><command>var 4 x1 const time x2 x3</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry>
-		<command>var 3 1 0 2 3 4</command>
+	      <entry><command>var 3 1 0 2 3 4</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -5270,8 +5142,7 @@ executed.  Loops cannot be nested.</para>
 	  <tbody>
 	    <row>
 	      <entry>Usage:</entry>
-	      <entry>      
-		<command>vartest</command>
+	      <entry><command>vartest</command>
 		<replaceable>var1 var2</replaceable>
 	      </entry>
 	    </row>
@@ -5295,9 +5166,8 @@ executed.  Loops cannot be nested.</para>
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage: </entry>
-	      <entry> 
-		<command>wls</command>
+	      <entry>Usage:</entry>
+	      <entry><command>wls</command>
 		<replaceable>weightvar depvar indepvars</replaceable>
 		&opto;
 	      </entry>
@@ -5602,7 +5472,7 @@ executed.  Loops cannot be nested.</para>
 	  are only the defaults; they can be customized.  See the
 	  <ulink
 	    url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">readline 
-	    homepage</ulink>.</para>
+	    manual</ulink>.</para>
       </footnote> The most common of these are:
     </para>
 
@@ -5839,8 +5709,8 @@ executed.  Loops cannot be nested.</para>
       <informalequation>
 	<graphic fileref="figures/poly.png"/>
 	<texmath>
-	  $$y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
-	  +\beta_{10}x^{10}_t+\epsilon$$
+	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
+	  +\beta_{10}x^{10}_t+\epsilon\]
 	</texmath>
       </informalequation>
       <application>gretl</application> refuses to produce estimates
@@ -5861,7 +5731,7 @@ executed.  Loops cannot be nested.</para>
       <informalequation>
 	<graphic fileref="figures/nistr2.png"/> 
       <texmath> 
-	$$R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}$$ 
+	\[R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}\] 
       </texmath> 
       </informalequation>
       There is no universal agreement among statisticians on the
@@ -5889,8 +5759,8 @@ executed.  Loops cannot be nested.</para>
       <informalequation>
 	<graphic fileref="figures/nistr1.png"/>
 	<texmath>
-	  $$r_1=\frac{\sum^T_2(y_t-\bar{y})(y_{t-1}-\bar{y})} {\sum^T_1
-	  (y_t - \bar{y})^2}$$
+	  \[r_1=\frac{\sum^T_2(y_t-\bar{y})(y_{t-1}-\bar{y})} {\sum^T_1
+	  (y_t - \bar{y})^2}\]
 	</texmath>
       </informalequation>
       
@@ -5957,7 +5827,7 @@ executed.  Loops cannot be nested.</para>
 	<informalequation>
         <graphic fileref="figures/linreg.png"/>
 	<texmath>
-	  $$y_t = \alpha + \beta x_t + \epsilon_t$$
+	  \[y_t = \alpha + \beta x_t + \epsilon_t\]
 	</texmath>
         </informalequation>
 	      
@@ -6003,7 +5873,7 @@ executed.  Loops cannot be nested.</para>
 	<informalequation>
 	  <graphic fileref="figures/yhat.png"/>
 	  <texmath>
-	    $$\hat{y}_t = a + b x_t$$
+	    \[\hat{y}_t = a + b x_t\]
 	  </texmath>
 	</informalequation> 
 
@@ -6012,7 +5882,7 @@ executed.  Loops cannot be nested.</para>
 	<informalequation>
 	  <graphic fileref="figures/resid.png"/>
 	  <texmath>
-	    $$\hat{\epsilon}_t = y_t - \hat{y}_t$$
+	    \[\hat{\epsilon}_t = y_t - \hat{y}_t\]
 	  </texmath>
 	</informalequation> 
 
@@ -6209,7 +6079,7 @@ executed.  Loops cannot be nested.</para>
       selection dialogs) make use of Adrian Feguin's
       <application>gtkextra</application> library. You can find
       gtkextra at <ulink
-	url="gtkextra.sourceforge.net">sourceforge</ulink>. 
+	url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>. 
     </para>
 
     <para>
@@ -6219,13 +6089,9 @@ executed.  Loops cannot be nested.</para>
       C compiler, <application>gcc</application>, ported for use with
       win32) and linked against the Microsoft C library,
       <filename>msvcrt.dll</filename>.  It uses Tor Lillqvist's port
-      of GTK to win32. Mingw lives at <ulink
-	url="http://www.mingw.org/">mingw.org</ulink> and Tor's pages
-      can be found <ulink
-	url="http://user.sgic.fi/~tml/gimp/win32/">here</ulink>. The
-      (free, open-source) Windows installer program is courtesy of
-      Jordan Russell (<ulink
-	url="http://www.jrsoftware.org/">jrsoftware.org</ulink>).
+      of GTK to win32. The (free, open-source) Windows installer
+      program is courtesy of Jordan Russell (<ulink
+      url="http://www.jrsoftware.org/">jrsoftware.org</ulink>).
     </para>
 
     <para>I'm hopeful that some users with coding skills may consider
@@ -6324,6 +6190,143 @@ executed.  Loops cannot be nested.</para>
 	space-separated elements in this command string will be
 	processed; any extra elements are ignored.
       </para>
+
+  </appendix>
+
+  <appendix id="app-d"><title>Listing of URLs</title>
+
+<para>Below is a listing of the full URLs of websites mentioned in the
+      text, in their order of appearance.</para>
+
+<variablelist>
+
+<varlistentry><term>GNU R homepage</term>
+ <listitem><para><ulink url="http://www.r-project.org/">
+  <literal>http://www.r-project.org/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>GNU Octave homepage</term>
+ <listitem><para><ulink url="http://www.octave.org/">
+  <literal>http://www.octave.org/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Gretl homepage</term>
+ <listitem><para><ulink url="http://gretl.sourceforge.net/">
+  <literal>http://gretl.sourceforge.net/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Census Bureau, Data Extraction Service</term>
+ <listitem><para><ulink url="http://www.census.gov/ftp/pub/DES/www/welcome.html">
+  <literal>http://www.census.gov/ftp/pub/DES/www/welcome.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Gretl data page</term>
+ <listitem><para><ulink url="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html">
+  <literal>http://ricardo.ecn.wfu.edu/gretl/gretl_data.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Estima (RATS)</term>
+ <listitem><para><ulink url="http://www.estima.com/">
+  <literal>http://www.estima.com/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Penn World Table</term>
+ <listitem><para><ulink url="http://pwt.econ.upenn.edu/">
+  <literal>http://pwt.econ.upenn.edu/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Gnuplot homepage</term>
+ <listitem><para><ulink url="http://www.gnuplot.org/">
+  <literal>http://www.gnuplot.org/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Gnuplot online manual</term>
+ <listitem><para><ulink url="http://ricardo.ecn.wfu.edu/gnuplot.html">
+  <literal>http://ricardo.ecn.wfu.edu/gnuplot.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>GNU Readline manual</term>
+ <listitem><para><ulink url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">
+  <literal>http://cnswww.cns.cwru.edu/~chet/readline/readline.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>NIST regression test main page</term>
+ <listitem><para><ulink url="http://www.nist.gov/itl/div898/strd/general/main.html">
+  <literal>http://www.nist.gov/itl/div898/strd/general/main.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>NIST data page</term>
+ <listitem><para><ulink url="http://www.nist.gov/itl/div898/strd/general/dataarchive.html">
+  <literal>http://www.nist.gov/itl/div898/strd/general/dataarchive.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>InfoZip homepage</term>
+ <listitem><para><ulink url="http://www.info-zip.org/pub/infozip/zlib/">
+  <literal>http://www.info-zip.org/pub/infozip/zlib/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>GNU Readline homepage</term>
+ <listitem><para><ulink url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">
+  <literal>http://cnswww.cns.cwru.edu/~chet/readline/rltop.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>GTK+ homepage</term>
+ <listitem><para><ulink url="http://www.gtk.org/">
+  <literal>http://www.gtk.org/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Gtkextra homepage</term>
+ <listitem><para><ulink url="http://gtkextra.sourceforge.net/">
+  <literal>http://gtkextra.sourceforge.net/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Mingw (gcc for win32) homepage</term>
+ <listitem><para><ulink url="http://www.mingw.org/">
+  <literal>http://www.mingw.org/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>GTK+ port for win32</term>
+ <listitem><para><ulink url="http://user.sgic.fi/~tml/gimp/win32/">
+  <literal>http://user.sgic.fi/~tml/gimp/win32/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>JRSoftware</term>
+ <listitem><para><ulink url="http://www.jrsoftware.org/">
+  <literal>http://www.jrsoftware.org/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>Gnome desktop homepage</term>
+ <listitem><para><ulink url="http://www.gnome.org/">
+  <literal>http://www.gnome.org/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>GNU R manual</term>
+ <listitem><para><ulink url="http://cran.r-project.org/doc/manuals/R-intro.pdf">
+  <literal>http://cran.r-project.org/doc/manuals/R-intro.pdf</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+    </variablelist>
 
   </appendix>
 

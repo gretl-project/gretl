@@ -2,8 +2,6 @@
 
 (element (informalequation texmath)
  (make display-group
-   ;; space-after: %block-sep%
-   start-indent: %body-start-indent%
    (literal "BEGINTEXMATH")
    (literal (data (current-node)))
    (literal "ENDTEXMATH")))

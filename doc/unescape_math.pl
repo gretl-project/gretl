@@ -5,6 +5,7 @@ use strict;
 my $line;
 my $textmp = "./tmp.tex";
 my $inmath = 0;
+my $begin;
 
 sub usage
 {
@@ -36,15 +37,15 @@ sub unescape {
 }
 
 while ($line = <MAN>) {
-    if ($line =~ /BEGINTEXMATH/) {
+    $begin = 0;
+    if ($line =~ s/BEGINTEXMATH//) {
         $inmath = 1;
-        $line =~ s/BEGINTEXMATH//;
+	$begin = 1;
     }
-    if ($line =~ /ENDTEXMATH/) {
+    if ($line =~ s/ENDTEXMATH//) {
         $inmath = 0;
-        $line =~ s/ENDTEXMATH//;
     }    
-    if ($inmath) {
+    if ($inmath || $begin) {
 	unescape();
     }
     print TMP "$line";

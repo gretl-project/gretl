@@ -45,7 +45,7 @@
 ;; Use #t for final version?
 (define %footnote-ulinks%
   ;; Generate footnotes for ULinks?
-  #t)
+  #f)
 
 ;; If set to #f, the table will span the entire page width.
 (define %simplelist-column-width% 

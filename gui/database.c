@@ -24,10 +24,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <zlib.h>
-
-#ifndef G_OS_WIN32
 #include <dirent.h>
-#endif
+
 #ifdef OTHER_ARCH
 #include <netinet/in.h>
 #endif
