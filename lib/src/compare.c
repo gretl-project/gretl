@@ -539,6 +539,51 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     return err;
 }
 
+static int box_pierce (const int varno, const int order, double **Z, 
+		       DATAINFO *pdinfo, double *bp, double *lb)
+{
+    double *x, *y, *acf;
+    int k, l, nobs, n = pdinfo->n; 
+    int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int list[2];
+
+    list[0] = 1;
+    list[1] = varno;
+    _adjust_t1t2(NULL, list, &t1, &t2, Z, NULL);
+    nobs = t2 - t1 + 1;
+
+    x = malloc(n * sizeof *x);
+    y = malloc(n * sizeof *y);
+    acf = malloc((order + 1) * sizeof *acf);
+    if (x == NULL || y == NULL || acf == NULL)
+	return E_ALLOC;    
+
+    for (l=1; l<=order; l++) {
+	for (t=t1+l; t<=t2; t++) {
+	    k = t - (t1+l);
+	    x[k] = Z[varno][t];
+	    y[k] = Z[varno][t-l];
+	}
+	acf[l] = _corr(nobs-l, x, y);
+    }
+
+    /* compute Box-Pierce and Ljung-Box statistics */
+    *bp = 0;
+    *lb = 0;
+    for (t=1; t<=order; t++) { 
+	*bp += acf[t] * acf[t];
+	*lb += acf[t] * acf[t] / (nobs - t);
+    }
+    *bp *= nobs;
+    *lb *= nobs * (nobs + 2.0);
+
+    free(x);
+    free(y);
+    free(acf);
+
+    return 0;
+}
+
 /**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
@@ -562,7 +607,7 @@ int autocorr_test (MODEL *pmod, int order,
     int *newlist;
     MODEL aux;
     int i, k, t, n = pdinfo->n, v = pdinfo->v; 
-    double trsq, LMF;
+    double trsq, LMF, bp, lb;
     int err = 0;
 
     exchange_smpl(pmod, pdinfo);
@@ -623,22 +668,29 @@ int autocorr_test (MODEL *pmod, int order,
 	    (aux.nobs - pmod->ncoeff - order)/order; 
 
 	pprintf(prn, _("\nTest statistic: LMF = %f,\n"), LMF);
-	pprintf(prn, _("with p-value = prob(F(%d,%d) > %f) = %f\n"), 
+	pprintf(prn, _("with p-value = prob(F(%d,%d) > %g) = %.3g\n"), 
 		order, aux.nobs - pmod->ncoeff - order, LMF,
 		fdist(LMF, order, aux.nobs - pmod->ncoeff - order));
 
 	pprintf(prn, _("\nAlternative statistic: TR^2 = %f,\n"), trsq);
-	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
+	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %.3g\n\n"), 
 		order, trsq, chisq(trsq, order));
+
+	/* add Box-Pierce Q and Ljung-Box Q' */
+	if (box_pierce(v, order, *pZ, pdinfo, &bp, &lb) == 0) {
+	    pprintf(prn, "Box-Pierce Q = %g with p-value = "
+		    "P(Chi-square(%d) > %g) = %.3g\n", bp, order,
+		    bp, chisq(bp, order));
+	    pprintf(prn, "Ljung-Box Q' = %g with p-value = "
+		    "P(Chi-square(%d) > %g) = %.3g\n", lb, order,
+		    lb, chisq(lb, order));
+	}
 
 	if (test != NULL) {
 	    strcpy(test->type, _("LM test for autocorrelation"));
 	    sprintf(test->h_0, _("no autocorrelation up to order %d"), order);
-	    /* sprintf(test->teststat, "TR^2 = %f", trsq); */
-	    /* sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
-	       order, trsq, chisq(trsq, order)); */
 	    sprintf(test->teststat, "LMF = %f", trsq);
-	    sprintf(test->pvalue, _("prob(F(%d,%d) > %f) = %f"), order, 
+	    sprintf(test->pvalue, _("prob(F(%d,%d) > %g) = %.3g"), order, 
 		    aux.nobs - pmod->ncoeff - order, LMF,
 		    fdist(LMF, order, 
 			  aux.nobs - pmod->ncoeff - order));	

@@ -647,6 +647,14 @@ int gnuplot (LIST list, const int *lines,
     if (isdummy(xvar, t1, t2, *pZ)) {
 	fputs("set xrange[-1:2]\n", fq);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fq);
+    } else {
+	double xmin, xmax, xrange;
+
+	_minmax(t1, t2, (*pZ)[xvar], &xmin, &xmax);
+	xrange = xmax - xmin;
+	xmin -= xrange * .025;
+	xmax += xrange * .025;
+	fprintf(fq, "set xrange [%g:%g]\n", xmin, xmax);
     }
 
     if (tscale) { /* two or more vars plotted against time */

@@ -2837,6 +2837,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     PRN *prn;
     char *runfile = NULL, fname[MAXLEN];
     int err, button, changed = 0;
+    windata_t *mydata = NULL;
 
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
@@ -2844,20 +2845,29 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     else if (code == SESSION_EXEC) runfile = cmdfile;
 
     if (data != NULL) {
-	windata_t *mydata = (windata_t *) data;
-
+	mydata = (windata_t *) data;
 	changed = mydata->active_var;
     }
 
-    if (changed && code == SCRIPT_EXEC) {
-	button = yes_no_dialog(_("gretl: run script"), _("Save changes first?"), 1);
+#ifdef notdef
+    if (code == SCRIPT_EXEC && changed) {
+	button = yes_no_dialog(_("gretl: run script"), 
+			       _("Save changes first?"), 1);
 	if (button == CANCEL_BUTTON)
 	    return;
 	if (button == YES_BUTTON)
 	    auto_save_script(data, 1, NULL);
     }
+#endif
 
-    err = execute_script(runfile, NULL, NULL, prn, code);
+    if (data != NULL) { /* get commands from script edit buffer */
+	gchar *buf = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+
+	err = execute_script(NULL, buf, NULL, NULL, prn, code);
+	g_free(buf);
+    } else
+	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
+
     gretl_print_destroy(prn);
 
     if (err == -1) return;
@@ -3085,44 +3095,82 @@ void do_save_tex (char *fname, const int code, MODEL *pmod)
 
 /* ........................................................... */
 
-int execute_script (const char *runfile, 
+static int bufgets (char *s, int size, const char *buf)
+{
+    int i;
+    static const char *p;
+
+    if (!s) {
+	p = NULL;
+	return 0;
+    }
+
+    if (p == NULL) p = buf;
+
+    if (p && *p == 0) return 0;
+
+    *s = 0;
+    for (i=0; i<size; i++) {
+	s[i] = p[i];
+	if (p[i] == 0) break;
+	if (p[i] == '\n') {
+	    s[i] = 0;
+	    break;
+	}
+    }
+    /* FIXME */
+    p += i + 1;
+    return 1;
+}
+
+/* ........................................................... */
+
+int execute_script (const char *runfile, const char *buf,
 		    SESSION *psession, SESSIONBUILD *rebuild,
 		    PRN *prn, int exec_code)
      /* run commands in runfile, output to prn */
 {
-    FILE *fb;
+    FILE *fb = NULL;
     int cont, exec_err = 0;
     int i, j = 0, loopstack = 0, looprun = 0;
     char tmp[MAXLEN];
     LOOPSET loop;            /* struct for monte carlo loop */
 
-    fb = fopen(runfile, "r");
-    if (fb == NULL) {
-	errbox(_("Couldn't open script"));
-	return -1;
-    }
+    if (runfile != NULL) { /* we'll get commands from file */
+	fb = fopen(runfile, "r");
+	if (fb == NULL) {
+	    errbox(_("Couldn't open script"));
+	    return -1;
+	}
 
-    /* check that the file has something in it */
-    cont = 0;
-    while (fgets(tmp, MAXLEN-1, fb)) {
-	if (strlen(tmp)) {
-	    for (i=0; i<strlen(tmp); i++) {
-		if (!isspace(tmp[i])) {
-		    cont = 1;
-		    break;
+	/* check that the file has something in it */
+	cont = 0;
+	while (fgets(tmp, MAXLEN-1, fb)) {
+	    if (strlen(tmp)) {
+		for (i=0; i<strlen(tmp); i++) {
+		    if (!isspace(tmp[i])) {
+			cont = 1;
+			break;
+		    }
 		}
 	    }
+	    if (cont) break;
 	}
-	if (cont) break;
-    }
-    fclose(fb);
+	fclose(fb);
 
-    if (!cont) {
+	if (!cont) {
+	    errbox(_("No commands to execute"));
+	    return -1;
+	}
+    }
+
+    if ((runfile != NULL && !cont) || (buf == NULL || !strlen(buf))) {
 	errbox(_("No commands to execute"));
 	return -1;
     }
-    
-    fb = fopen(runfile, "r");
+
+    if (runfile != NULL) fb = fopen(runfile, "r");
+    else bufgets(NULL, 0, buf);
 
     /* reset model count to 0 if starting/saving session */
     if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
@@ -3178,7 +3226,8 @@ int execute_script (const char *runfile,
 	    if (j == 1000) return 1;
 	} else { /* end if Monte Carlo stuff */
 	    line[0] = '\0';
-	    if (fgets(line, MAXLEN, fb) == NULL) 
+	    if ((fb && fgets(line, MAXLEN, fb) == NULL) ||
+		bufgets(line, MAXLEN, buf) == 0) 
 		goto endwhile;
 	    while ((cont = top_n_tail(line))) {
 		if (cont == E_ALLOC) {
@@ -3186,7 +3235,10 @@ int execute_script (const char *runfile,
 		    return 1;
 		}
 		*tmp = '\0';
-		fgets(tmp, MAXLEN-1, fb);
+		if (fb)
+		    fgets(tmp, MAXLEN-1, fb);
+		else
+		    bufgets(tmp, MAXLEN-1, buf); 
 		strcat(line, tmp);
 		compress_spaces(line);
 	    }
@@ -3213,6 +3265,7 @@ int execute_script (const char *runfile,
 	} /* end alternative to Monte Carlo stuff */
     } /* end while() */
  endwhile:
+    if (fb) fclose(fb);
     if (psession && rebuild) /* recreating a gretl session */
 	clear_model(&models[0], psession, rebuild, datainfo);
     return 0;
@@ -3903,7 +3956,7 @@ static int gui_exec_line (char *line,
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    return 1;
 	}
-	execute_script(runfile, NULL, NULL, prn, SESSION_EXEC);
+	execute_script(runfile, NULL, NULL, NULL, prn, SESSION_EXEC);
 	/* pprintf(prn, "run command not available in script mode\n"); */
 	break;
 
@@ -4156,8 +4209,7 @@ static void replace_string_dialog (struct search_replace *s)
     s->r_entry = gtk_entry_new();
     gtk_signal_connect(GTK_OBJECT (s->r_entry), 
 			"activate", 
-			GTK_SIGNAL_FUNC (dummy_call),
-	                NULL);
+		       GTK_SIGNAL_FUNC (replace_string_callback), s);
     gtk_widget_show (s->r_entry);
     gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
@@ -4173,7 +4225,7 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_signal_connect(GTK_OBJECT(s->w), "destroy",
 		       gtk_main_quit, NULL);
 
-    /* find button -- make this the default */
+    /* replace button -- make this the default */
     button = gtk_button_new_with_label (_("Replace all"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 

@@ -855,7 +855,7 @@ void save_session (char *fname)
     gui_logo(prn->fp);
     session_time(prn->fp);
     pprintf(prn, _("Output from %s\n"), fname);
-    execute_script(fname, NULL, NULL, prn, SAVE_SESSION_EXEC); 
+    execute_script(fname, NULL, NULL, NULL, prn, SAVE_SESSION_EXEC); 
     gretl_print_destroy(prn);
 
     sprintf(msg, _("session saved to %s -\n"), savedir);

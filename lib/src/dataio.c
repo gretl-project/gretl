@@ -601,6 +601,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     fscanf(fp, "%s", pdinfo->stobs);
     fscanf(fp, "%s", pdinfo->endobs);
     pdinfo->sd0 = atof(pdinfo->stobs);
+    pdinfo->n = -1;
     pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
     pdinfo->extra = 0;    
 

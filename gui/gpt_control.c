@@ -1112,8 +1112,9 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
 typedef struct png_plot_t {
-    GtkWidget *window, *area, *popup;
+    GtkWidget *window, *area, *popup, *status;
     GPT_SPEC *spec;
+    double xmin, xmax;
 } png_plot_t;
 
 /* Size of drawing area */
@@ -1126,7 +1127,7 @@ extern void gnome_print_graph (const char *fname);
 
 /* experimental drawing stuff */
 
-#define DRAWING 1
+/* #define DRAWING 1 */
 
 #ifdef DRAWING
 
@@ -1160,9 +1161,17 @@ button_press_event (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
+#endif /* end experimental drawing */
+
+double data_x (png_plot_t *plot, int x)
+{
+    return plot->xmin + ((double) x - 58.0) / (620.0 - 58.0) *
+	(plot->xmax - plot->xmin);
+}
+
 static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
-		     GdkPixmap *pixmap)
+		     png_plot_t *plot)
 {
     int x, y;
     GdkModifierType state;
@@ -1174,14 +1183,16 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
         y = event->y;
         state = event->state;
     }
-    
+
+#ifdef notdef    
     if (state & GDK_BUTTON1_MASK && pixmap != NULL)
         draw_brush (widget, x, y, pixmap);
+#endif
+
+    fprintf(stderr, "x=%g, y=%d\n", data_x(plot, x), y);
   
     return TRUE;
 }
-
-#endif /* end experimental drawing */
 
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
@@ -1310,12 +1321,30 @@ static void plot_quit (GtkWidget *w, png_plot_t *plot)
     free(plot);
 }
 
+static int get_xrange (png_plot_t *plot)
+{
+    FILE *fp;
+    char line[MAXLEN];
+
+    fp = fopen(plot->spec->fname, "r");
+    if (fp == NULL) return 0;
+    while (fgets(line, MAXLEN-1, fp)) {
+	if (sscanf(line, "set xrange [%lf:%lf]", &plot->xmin, &plot->xmax) == 2) {
+	    fclose(fp);
+	    return 1;
+	}
+    }
+    fclose(fp);
+    return 0;
+}
+
 int gnuplot_show_png (char *plotfile)
 {
-    GtkWidget *w;
+    GtkWidget *w, *vbox;
     GdkPixmap *dbuf_pixmap = NULL; 
     GtkWidget *drawing_area;
     png_plot_t *plot;
+    int plot_has_xrange;
 
     plot = mymalloc(sizeof *plot);
     if (plot == NULL) return 1;
@@ -1327,13 +1356,21 @@ int gnuplot_show_png (char *plotfile)
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);
 
+    /* parse this file for x range */
+    plot_has_xrange = get_xrange(plot);
+
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(w), "gretl: gnuplot graph"); 
     plot->window = w;
 
+    vbox = gtk_vbox_new(FALSE, 0);
+
     /* Restrict window resizing to size of drawing buffer */
+#ifdef notdef
     gtk_widget_set_usize(GTK_WIDGET(w), WIDTH, HEIGHT);
     gtk_window_set_policy(GTK_WINDOW(w), TRUE, FALSE, FALSE);
+#endif
+    gtk_container_add(GTK_CONTAINER(w), vbox);
 
     gtk_signal_connect(GTK_OBJECT(w), "destroy",
 		       GTK_SIGNAL_FUNC(plot_quit), plot);
@@ -1343,30 +1380,32 @@ int gnuplot_show_png (char *plotfile)
     /* Create drawing-area widget */
     drawing_area = gtk_drawing_area_new();
     plot->area = drawing_area;
-#ifdef DRAWING
     gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
                            | GDK_BUTTON_PRESS_MASK
                            | GDK_POINTER_MOTION_MASK
                            | GDK_POINTER_MOTION_HINT_MASK);
-#else
-    gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK
-                           | GDK_LEAVE_NOTIFY_MASK
-                           | GDK_BUTTON_PRESS_MASK);
-#endif
     gtk_widget_set_sensitive(drawing_area, TRUE);
 
-#ifdef DRAWING
-    gtk_signal_connect (GTK_OBJECT (drawing_area), "motion_notify_event",
-                        (GtkSignalFunc) motion_notify_event, dbuf_pixmap);
-    gtk_signal_connect (GTK_OBJECT (drawing_area), "button_press_event",
-                        (GtkSignalFunc) button_press_event, dbuf_pixmap);
-#else
     gtk_signal_connect(GTK_OBJECT(drawing_area), "button_press_event", 
                        GTK_SIGNAL_FUNC(plot_popup), plot);
+
+    plot->status = NULL;
+    if (plot_has_xrange) {
+	plot->status = gtk_statusbar_new();
+	gtk_signal_connect (GTK_OBJECT (drawing_area), "motion_notify_event",
+			    (GtkSignalFunc) motion_notify_event, plot);
+    }
+
+#ifdef notdef
+    gtk_container_add(GTK_CONTAINER(w), drawing_area);
+    if (plot->status != NULL)
+	gtk_container_add(GTK_CONTAINER(w), plot->status);
 #endif
 
-    gtk_container_add(GTK_CONTAINER(w), drawing_area);
+    gtk_box_pack_start(GTK_BOX(vbox), drawing_area, FALSE, FALSE, 0);
+    if (plot->status != NULL)
+	gtk_box_pack_start(GTK_BOX(vbox), plot->status, FALSE, FALSE, 0);
 
     gtk_widget_show_all(w);
 

@@ -170,7 +170,7 @@ void do_save_html (char *fname, const int code, MODEL *pmod);
 
 void do_save_text (char *fname, MODEL *pmod);
 
-int execute_script (const char *runfile, 
+int execute_script (const char *runfile, const char *buf,
 		    SESSION *psession, SESSIONBUILD *rebuild,
 		    PRN *prn, int exec_code);
 

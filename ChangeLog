@@ -8,6 +8,9 @@ version 0.993
 - add inclusive inequality operators '>=' and '<=' to genr
 - fix bug in genr: operator priority was not being fully respected
   in all cases
+- add Box-Pierce and Ljung-Box stats to autocorrelation test
+- fix unfinished bug in Replace function for script edit window
+- fix bug that crept in, in reading old-format data files
 
 04/01/2002 version 0.992
 - bounds checking for critical values look-up; also add this

@@ -710,7 +710,7 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
     print_session();
 #endif
 
-    if (execute_script(fname, psession, rebuild, prn, REBUILD_EXEC)) 
+    if (execute_script(fname, NULL, psession, rebuild, prn, REBUILD_EXEC)) 
 	errbox(_("Error recreating session"));
 #ifdef SESSION_DEBUG
     fprintf(stderr, "recreate_session: after execute_script()\n");
