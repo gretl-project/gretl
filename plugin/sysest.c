@@ -150,7 +150,7 @@ gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e,
     return 0;
 }
 
-/* compute SUR or 3SLS parameter residuals */
+/* compute SUR or 3SLS parameter (or OLS or TSLS) residuals */
 
 static void 
 sys_resids (int systype, MODEL *pmod, const double **Z, gretl_matrix *uhat)
@@ -172,8 +172,8 @@ sys_resids (int systype, MODEL *pmod, const double **Z, gretl_matrix *uhat)
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    /* df correction? */
-    if (systype == SYS_OLS) {
+    /* df correction? apply one for single-equation methods? */
+    if (systype == SYS_OLS || systype == SYS_TSLS) {
 	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
     } else {
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
@@ -239,7 +239,7 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 	j0 += models[i]->ncoeff;
     }
 
-    if (systype == SYS_OLS) {
+    if (systype == SYS_OLS || systype == SYS_TSLS) {
 	int nr = system_n_restrictions(sys);
 	double s = system_sigma(models, m, nr);
 
