@@ -5,7 +5,7 @@
 key            en                    es                         it
 
 args           "Arguments:  "        "Argumentos: "             "Argomenti:  "
-arg            "Argument:   "        "Argumento:  "             "Argumento:  "
+arg            "Argument:   "        "Argumento:  "             "Argomento:  "
 altforms       "Alternate forms:  "  "Formas alternativas: "    "Forme alternative: " 
 opts           "Options:    "        "Opciones:   "             "Opzioni:    "
 opt            "Option:     "        "Opción:     "             "Opzione:    "

@@ -30,7 +30,7 @@
       <para context="cli">
 	Va invocato dopo un comando di stima. Aggiunge al modello precedente
         le variabili nella <repl>lista-variabili</repl> e stima il nuovo
-        modello. Se si aggiunge più di una variabile, verrà mostrata la
+        modello. Se si aggiunge più di una variabile, verranno mostrati la
         statistica <mathvar>F</mathvar> e il suo p-value per le nuove variabili
         (solo per la procedura OLS). Un p-value inferiore a 0.05 indica che i
         coefficienti sono congiuntamente significativi al livello del 5 per
@@ -155,9 +155,9 @@
 	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
 	graphic="adf1"/></para>
 
-      <para>Se l'ordine di ritardi, <mathvar>p</mathvar>, è maggiore di 0,
-        saranno inclusi <mathvar>p</mathvar> ritardi della variabile dipendente
-        nei regressori di ognuna delle regressioni calcolate per il test.
+      <para>Se l'ordine di ritardi, <mathvar>p</mathvar>, è maggiore di 0, ai
+        regressori di ognuna delle regressioni calcolate per il test saranno
+        aggiunti <mathvar>p</mathvar> ritardi della variabile dipendente.
       </para>
 
       <para>I <emphasis>p-</emphasis>value per questo test sono basati su
@@ -343,7 +343,7 @@
       <para>Il funzionamento predefinito utilizza la funzione ARMA 
 	<quote>interna</quote> di gretl; nel caso di un modello ARMA
 	univariato, è anche possibile usare <program>X-12-ARIMA</program>
-	(se si è installato il pacchetto <program>X-12-ARIMA</program> per gretl).
+	(se è stato installato il pacchetto <program>X-12-ARIMA</program> per gretl).
       </para>
 
       <para context="cli">Le opzioni mostrate in precedenza possono anche
@@ -351,10 +351,10 @@
 	disponibile se si usa <program>X-12-ARIMA</program> per la stima.</para>
 
       <para>L'algoritmo interno di gretl per ARMA è in gran parte dovuto
-	a Riccardo <quote>Jack</quote> Lucchetti.  Utilizza una procedura di
+	a Riccardo <quote>Jack</quote> Lucchetti: utilizza una procedura di
 	massima verosimiglianza condizionale, implementata attraverso la stima 
 	iterata	con minimi quadrati della regressione del prodotto esterno del
-	gradiente (OPG). Si veda <manref targ="jack-arma"/> per la logica della
+	gradiente (OPG). Si veda l'<manref targ="jack-arma"/> per la logica della
 	procedura. I coefficienti AR (e quelli per gli eventuali regressori 
 	aggiuntivi) sono inizializzati usando una auto-regressione OLS, mentre
 	i coefficienti MA sono inizializzati a zero.</para>
@@ -413,7 +413,7 @@
       <para context="gui">Dopo ogni variabile specificata nel comando
 	boxplot, è possibile aggiungere un'espressione booleana tra
         parentesi per limitare il campione per la variabile in questione.
-	Ocorre inserire uno spazio tra il nome o il numero della variabile
+	Occorre inserire uno spazio tra il nome o il numero della variabile
         e l'espressione. Si supponga di avere dati sui salari di uomini e
         donne e di avere una variabile dummy <lit>GENERE</lit> che vale 1
 	per gli uomini e 0 per le donne. In questo caso, è possibile generare
@@ -507,7 +507,7 @@
 	Deve essere usato dopo una regressione. Calcola la somma dei 
         coefficienti delle variabili nella <repl>lista-variabili</repl>
         e ne mostra l'errore standard e il p-value per l'ipotesi nulla
-        che la somma sia zero.
+        che la loro somma sia zero.
       </para>
       <para>Si noti la differenza tra questo test e <cmdref
 	  targ="omit"/>, che assume come ipotesi nulla l'uguaglianza a zero
@@ -586,8 +586,8 @@
       <para>
 	La tabella seguente fornisce un esempio di interpretazione dei
 	risultati del test nel caso di 3 variabili. <lit>H0</lit> denota
-        ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
-        ilnumero delle relazioni di cointegrazione.</para>
+        l'ipotesi nulla, <lit>H1</lit> l'ipotesi alternativa e <lit>c</lit>
+        il numero delle relazioni di cointegrazione.</para>
 
       <code>
                  Rango    Test traccia       Test Lmax
@@ -749,11 +749,11 @@
       <para>
 	Vengono mostrate anche le autocorrelazioni parziali, ossia al
 	netto dell'effetto dei ritardi intermedi. Il comando produce anche
-	un grafico del correlogramma e mostra la statistica di Box&ndash;Pierce
-	<mathvar>Q</mathvar> per testare l'ipotesi nulla che la serie sia
-	<quote>white noise</quote> (priva di autocorrelazione). La statistica
-        si distribuisce asintoticamente come chi-quadro con gradi di libertà pari
-        al numero di ritardi specificati.
+        un grafico del correlogramma e mostra la statistica
+        <mathvar>Q</mathvar> di Box&ndash;Pierce per testare l'ipotesi nulla
+        che la serie sia <quote>white noise</quote> (priva di
+        autocorrelazione). La statistica si distribuisce asintoticamente come
+        chi-quadro con gradi di libertà pari al numero di ritardi specificati.
       </para>
 
       <para>
@@ -1186,7 +1186,7 @@
 	Dopo aver stimato un modello OLS è possibile usare questo comando
         per rappresentare i valori stimati su un intervallo di osservazioni
 	specificato, insieme agli errori standard stimati per queste previsioni
-        e agli intervalli di confifenza al 95 per cento.</para>  
+        e agli intervalli di confidenza al 95 per cento.</para>  
 
       <para>Gli errori standard sono calcolati nel modo descritto da Wooldridge
         nel capitolo 6 del suo <book>Introductory Econometrics</book>.
@@ -1381,7 +1381,7 @@
 
       <para>
 	Gli <emphasis>operatori Booleani</emphasis> disponibili sono
-	(ancora, in ordine di precedenza): <lit>!</lit> (negazione),
+	(ancora in ordine di precedenza): <lit>!</lit> (negazione),
 	<lit>&amp;</lit> (AND logico), <lit>|</lit> (OR logico),
 	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
 	<lit>&gt;=</lit> (maggiore o uguale), <lit>&lt;=</lit>
@@ -1401,7 +1401,7 @@
 	    <func>log</func> è un sinonimo), <func>sin</func>,
 	    <func>sqrt</func> (radice quadrata).</para>
 	</li>
-	<li><para>Funzione statistiche: <func>max</func> (valore
+	<li><para>Funzioni statistiche: <func>max</func> (valore
             massimo in una serie), <func>min</func> (minimo),
 	    <func>mean</func> (media aritmetica), <func>median</func>,
 	    <func>var</func> (varianza) <func>sd</func> (deviazione
@@ -1410,7 +1410,7 @@
 	    (covarianza), <func>corr</func> (coefficiente di correlazione),
 	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
 	    (somma cumulata), <func>resample</func> (ricampiona una serie
-            con rimpiazzo, a scopo di boostrap), <func>hpfilt</func> (filtro
+            con rimpiazzo, utile per il bootstrap), <func>hpfilt</func> (filtro
             di Hodrick&ndash;Prescott: produce la componente di
             <quote>ciclo</quote> della serie).</para>
 	</li>
@@ -1455,8 +1455,8 @@
       
       <para>
 	<func>uniform()</func> e <func>normal()</func>, che non richiedono
-        argomenti, producono delle serie pseudo-casuali estratte da distribuzioni
-	uniformi (0&ndash;1) e normale standard (si veda anche il comando
+        argomenti, producono delle serie pseudo-casuali estratte dalle distribuzioni
+	uniforme (0&ndash;1) e normale standard (si veda anche il comando
 	<cmdref targ="set"/> con l'opzione <lit>seed</lit>).
 	Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
         <footnote><para>Si veda Matsumoto e Nishimura
@@ -1481,7 +1481,7 @@
             nel primo trimestre e 0 altrove, <lit>dummy_2</lit> che vale 1
             nel secondo trimestre e 0 altrove, e così via.</para>
 	</li>
-	<li><para><cmd>genr paneldum</cmd> crea una serie di variabily dummy
+	<li><para><cmd>genr paneldum</cmd> crea una serie di variabili dummy
             da usare in un dataset di tipo panel &mdash; si veda
 	    <cmdref targ="panel"/>.</para>
 	</li>
@@ -1552,7 +1552,7 @@
       </ilist> 
 
       <para>
-	<emphasis>Nota</emphasis>: nella versione a riga di comando del programma
+	<emphasis>Nota</emphasis>: nella versione a riga di comando del programma,
         i comandi <cmd>genr</cmd> che estraggono dati relativi al modello
 	si riferiscono sempre al modello stimato per ultimo. Questo vale anche
         per la versione grafica del programma se si usa <cmd>genr</cmd> nel
@@ -1579,9 +1579,9 @@
 	Ad esempio, <lit>genr dum = (t=15)</lit> crea una variabile dummy
 	che vale 1 per l'osservazione 15 e 0 altrove. La variabile
         <lit>obs</lit> è simile ma più flessibile: è possibile usarla per
-        isolare alcune osservazioni indicandol con una data o un nome.
+        isolare alcune osservazioni indicandole con una data o un nome.
         Ad esempio, <lit>genr d = (obs&gt;1986:4)</lit> o 
-        <lit>genr d = (obs="CA")</lit>. L'ultima forma richiede che le
+        <lit>genr d = (obs="CA")</lit>. L'ultima forma richiede che
         siano definite delle etichette, da usare tra virgolette doppie,
         per le osservazioni.</para>
 
@@ -1605,7 +1605,7 @@
 
       <para>
 	La <tabref targ="tab-genr"/> mostra vari esempi di utilizzo di
-	<cmd>genr</cmd>, con note esplicative; ecco qualche esempio di
+	<cmd>genr</cmd>, con alcune note esplicative; ecco qualche esempio di
         utilizzo delle variabili dummy:
       </para>
 
@@ -1996,7 +1996,7 @@
 	Il modello a effetti fissi aggiunge una variabile dummy per
         tutte le unità cross section tranne una, permettendo così
         all'intercetta della regressione di variare per ogni unità.
-	Viene eseguito un test <mathvar>F</mathvar> per la
+	Viene poi eseguito un test <mathvar>F</mathvar> per la
         significatività congiunta di queste dummy. Il modello a effetti
         casuali scompone la varianza dei residui in due parti: una
         specifica all'unità cross section e una specifica all'osservazione
@@ -2200,7 +2200,7 @@
         dati nelle righe rimanenti. Le variabili devono essere disposte
 	<quote>per osservazione</quote> (una colonna per variabile, ogni
         riga rappresenta un'osservazione).
-	Si veda <manref targ="datafiles"/> per i dettagli.
+	Si veda il <manref targ="datafiles"/> per i dettagli.
       </para>
 
       <para>
@@ -2429,7 +2429,7 @@
 	  graphic="dffit"/>. Per una discussione dei residui
           studentizzati e dei valori DFFITS si veda G. S. Maddala,
         <book>Introduction to Econometrics</book>, capitolo 12 e anche
-        Belsley, Kuh e Welsch (1980). In breve i <quote>residui previsti</quote>
+        Belsley, Kuh e Welsch (1980). In breve, i <quote>residui previsti</quote>
 	sono la differenza tra il valore osservato e il valore stimato 
         della variabile dipendente all'osservazione
         <mathvar>t</mathvar>, ottenuti da una regressione in cui
@@ -2440,7 +2440,7 @@
       </para>
 
       <para context="cli">Se si usa l'opzione <lit>--save</lit>, il
-      leverage, il valore di influenza e il valore DFFITS sono aggiunti
+      leverage, il valore di influenza e il valore DFFITS vengono aggiunti
       al dataset in uso.</para>
 
       <para context="gui">
@@ -2502,14 +2502,14 @@
         una combinazione dei test seguenti: test dei moltiplicatori di
         Lagrange per la non-linearità (logaritmi e quadrati), test di
         White per l'eteroschedasticità e test LMF per la correlazione
-        seriale fino alla periodicità (si veda Kiviet, 1986). Vengono
-        mostrati anche i coefficienti delle corrispondenti regressioni
+        seriale di ordine pari alla periodicità (si veda Kiviet, 1986),
+        mostrando anche i coefficienti delle corrispondenti regressioni
         ausiliarie. Si veda Ramanathan, capitoli 7, 8 e 9 per i
         dettagli. Nel caso del test di White, vengono usati solo i
         quadrati delle variabili indipendenti, non i loro prodotti
         incrociati. Nel caso del test sull'autocorrelazione, se il
-        p-value della statistica LMF è minore di 0.05 (e il modello non
-        è stao stimato in origine con errori standard robusti), vengono
+        p-value della statistica LMF è minore di 0.05 (e il modello
+        non è stato stimato con errori standard robusti), vengono
         calcolati e mostrati errori standard robusti rispetto alla
         correlazione seriale. Per i dettagli sul calcolo di questi
         errori standard, si veda Wooldridge (2002, capitolo 12).
@@ -2560,7 +2560,7 @@
         Se la variabile dipendente è una percentuale, compresa tra 0 e
         100, il valore predefinito di <mathvar>y<super>*</super></mathvar>
         è 100. È possibile indicare un valore diverso per il massimo,
-        usando la sintassi opzionale <lit>ymax=</lit><repl>valore</repl>
+        usando la sintassi opzionale <lit>ymax=</lit><repl>valore</repl>,
         che segue la lista dei regressori. Il valore fornito deve essere
         maggiore di tutti i valori osservati della variabile dipendente.
       </para>
@@ -2701,9 +2701,9 @@
         numerica, oppure <quote><lit>for</lit></quote> seguito da un
         intervallo di valori per la variabile interna <lit>i</lit> che
         funge da indice, o ancora <quote><lit>for</lit></quote> seguito
-        da tre espressioni tra parentesim separate da punti e virgola.
+        da tre espressioni tra parentesi separate da punti e virgola.
         Nell'ultima forma, l'espressione a sinistra inizializza una
-        variabile, quella centrale imposta una condizione perché l'iterazione
+        variabile, quella centrale imposta la condizione perché l'iterazione
         continui, e l'ultima espressione imposta un incremento o un decremento
         da applicare all'inizio della seconda iterazione e di quelle successive
  	(si tratta di una forma ristretta dell'istruzione <lit>for</lit> nel
@@ -2716,11 +2716,11 @@
         <cmd>genr</cmd>, <cmd>ols</cmd>, <cmd>print</cmd>, <cmd>printf</cmd>
         <cmd>pvalue</cmd>, <cmd>sim</cmd>, <cmd>smpl</cmd>, <cmd>store</cmd> e
         <cmd>summary</cmd>, <cmd>if</cmd>, <cmd>else</cmd> e <cmd>endif</cmd>.
-        Si esce dalla modalità loop con l'istruzione <cmd>endloop</cmd>: a
+        Si esce dalla modalità loop con l'istruzione <cmd>endloop</cmd>: solo a
         questo punto i comandi indicati vengono eseguiti.
       </para>
 
-      <para>Si veda <manref targ="looping"/> per ulteriori dettagli,
+      <para>Si veda il <manref targ="looping"/> per ulteriori dettagli,
       esempi e per la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
       ad essere usata nelle simulazioni Monte Carlo).</para>
     </description>
