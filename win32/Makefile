@@ -34,6 +34,7 @@ GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk
 # source paths
 vpath %.c $(libdir)
 vpath %.c $(topsrc)/cephes
+vpath %.c $(topsrc)/minpack
 vpath %.c $(topsrc)/cli
 vpath %.c $(topsrc)/gui2
 vpath %.c $(extradir)
@@ -87,7 +88,7 @@ RES2COFF = echo gretlw32_res.o
 LIBSRC = estimate.c compare.c gretl_utils.c gretl_errors.c pvalues.c dataio.c \
        generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
        interact.c graphing.c gretl_win32.c monte_carlo.c nonparam.c discrete.c \
-       subsample.c calendar.c system.c random.c
+       subsample.c calendar.c system.c random.c nls.c
 LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
@@ -111,6 +112,9 @@ PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
 	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
 	stdtr.c unity.c polevl.c const.c
 PROBOBJ = $(PROBSRC:.c=.o)
+
+MINSRC = chkder.c dpmpar.c enorm.c lmder1.c lmder.c lmpar.c qrfac.c qrsolv.c
+MINOBJ = $(MINSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
 
@@ -176,10 +180,10 @@ plugin: $(PLUGINS)
 
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 
-dlls/libgretl.dll: $(LIBOBJ) dllinit.o
+dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lgmp -lmingwex $(GLIBLIB)
+	-o $@ $^ -lf2c -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lgmp -lmingwex $(GLIBLIB)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
