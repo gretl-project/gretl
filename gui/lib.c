@@ -778,6 +778,13 @@ void console (void)
     prnclose(&prn);
     view_file(fname, 1, 0, 78, 400, "gretl console", console_items);
     gtk_text_set_point(GTK_TEXT(console_view), 2);
+
+    GTK_TEXT(console_view)->cursor_pos_x = 
+	2 * gdk_char_width(fixed_font, 'X');
+    gtk_editable_set_position(GTK_EDITABLE(console_view), 2);
+    gtk_editable_changed(GTK_EDITABLE(console_view));
+    gtk_widget_grab_focus (console_view);
+
 }
 
 /* ........................................................... */
@@ -817,6 +824,7 @@ gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
     currpos = GTK_EDITABLE(console_view)->current_pos;
     xpos = GTK_TEXT(console_view)->cursor_pos_x / cw; 
     linelen = last_console_line_len();
+
     if ((currpos < len - linelen) || 
 	(backkey(key) && xpos < 3)) {
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
@@ -2964,11 +2972,13 @@ static int gui_exec_line (char *line,
     if (*plstack) get_cmd_ci(line, &command);
     else getcmd(line, datainfo, &command, &ignore, &Z, &cmds);
     if (command.ci == -2) { /* line was a comment, pass */
-/*  	cmds.fp = fopen(cmdfile, "a"); */
-/*  	if (cmds.fp) { */
-/*  	    pprintf(&cmds, "%s\n", linecopy); */
-/*  	    fclose(cmds.fp); */
-/*  	} */
+#ifdef notdef
+ 	cmds.fp = fopen(cmdfile, "a");
+ 	if (cmds.fp) {
+ 	    pprintf(&cmds, "%s\n", linecopy);
+ 	    fclose(cmds.fp);
+ 	}
+#endif
 	return 0;
     }
     if (command.ci < 0) return 0; /* nothing there */
@@ -3104,6 +3114,10 @@ static int gui_exec_line (char *line,
 	} else if (rebuild)
 	    add_test_to_model(ptest, models[0]);
 	clear_model(models[1], NULL, NULL);
+	break;
+
+    case BXPLOT:
+	err = boxplots (command.list, &Z, datainfo, (oflag != 0));
 	break;
 
     case CHOW:

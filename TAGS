@@ -574,7 +574,7 @@ void file_get_line 195,5787
 int main 207,6065
 void exec_line 471,12514
 
-gui/boxplots.c,718
+gui/boxplots.c,748
 } BOXPLOT;BOXPLOT38,1060
 } PLOTGROUP;PLOTGROUP48,1253
 double headroom 50,1267
@@ -583,25 +583,26 @@ configure_event 69,1799
 expose_event 95,2390
 box_key_handler 112,2832
 static gint popup_activated 139,3511
-static GtkWidget *build_menu 175,4639
-static gint box_popup 210,5509
-setup_text 225,5918
-draw_line 270,7015
-place_plots 290,7561
-gtk_boxplot_yscale 321,8532
-gtk_area_boxplot 364,10055
-destroy_boxplots 492,13604
-make_area 504,13858
-median 545,15123
-quartiles 560,15400
-compare_doubles 584,15901
-#define ITERS 594,16152
-median_interval 597,16183
-int ps_print_plots 648,17403
-five_numbers 696,18458
-int boxplots 724,19208
-static int cb_copy_image 793,20976
-int plot_to_xpm 930,24122
+static GtkWidget *build_menu 177,4706
+static gint box_popup 213,5584
+setup_text 228,5993
+draw_line 273,7090
+place_plots 293,7636
+gtk_boxplot_yscale 324,8607
+gtk_area_boxplot 377,10438
+destroy_boxplots 524,14715
+make_area 536,14969
+compare_doubles 577,16231
+median 588,16497
+quartiles 603,16774
+#define ITERS 626,17263
+#define CONFIDENCE 627,17281
+median_interval 630,17316
+int ps_print_plots 679,18571
+five_numbers 727,19626
+int boxplots 776,21052
+static int cb_copy_image 848,22901
+int plot_to_xpm 985,26047
 
 gui/calculator.c,873
 #define NTESTS 22,797
@@ -968,62 +969,62 @@ void menu_find 692,21200
 void datafile_find 702,21464
 void context_help 709,21648
 void do_help 718,21861
-static void update_header 763,23080
-static void close_console 784,23644
-static void close_help 792,23803
-void windata_init 799,23934
-void free_windata 814,24283
-windata_t *view_buffer 840,25030
-int view_file 935,28051
-void flip 1098,33077
-static void model_panel_menu_state 1107,33303
-static void model_menu_state 1114,33492
-static void lmmenu_state 1135,34419
-static void latex_menu_state 1148,34860
-static void model_save_state 1155,35025
-static void set_up_viewer_menu 1163,35267
-static void add_vars_to_plot_menu 1204,36517
-static void plot_dummy_call 1251,37895
-static void add_dummies_to_plot_menu 1261,38196
-static void check_model_menu 1312,39928
-int view_model 1347,41407
-void setup_column 1448,44848
-static void msgbox 1462,45267
-static void msgbox 1471,45453
-static void msgbox 1481,45662
-void errbox 1521,46811
-void infobox 1528,46934
-int validate_varname 1535,47058
-void options_dialog 1568,47920
-static void make_prefs_tab 1632,50324
-static void apply_changes 1710,52805
-void write_rc 1745,53747
-static void read_rc 1762,54183
-void write_rc 1816,55523
-void read_rc 1832,55909
-void write_rc 1875,57058
-static void read_rc 1899,57639
-static void font_selection_ok 1978,59673
-void font_selector 1994,60096
-static void close_find_dialog 2033,61419
-static void find_in_help 2041,61620
-static void find_in_clist 2077,62849
-static int look_for_string 2114,63890
-static void cancel_find 2129,64299
-static void find_string_dialog 2137,64503
-void buf_to_clipboard 2212,67121
-void text_copy 2230,67525
-void make_menu_item 2312,69459
-void allocate_fileptrs 2326,69871
-void mkfilelist 2339,70121
-char *endbit 2404,71851
-static void gnome_printfilelist 2438,72501
-static void win_printfilelist 2465,73094
-static void printfilelist 2491,73701
-void add_files_to_menu 2519,74261
-int open_plugin 2594,76323
-void *get_plugin_function 2618,76866
-void close_plugin 2641,77339
+static void update_header 765,23157
+static void close_console 786,23721
+static void close_help 794,23880
+void windata_init 801,24011
+void free_windata 816,24360
+windata_t *view_buffer 842,25107
+int view_file 937,28128
+void flip 1100,33154
+static void model_panel_menu_state 1109,33380
+static void model_menu_state 1116,33569
+static void lmmenu_state 1137,34496
+static void latex_menu_state 1150,34937
+static void model_save_state 1157,35102
+static void set_up_viewer_menu 1165,35344
+static void add_vars_to_plot_menu 1206,36594
+static void plot_dummy_call 1253,37972
+static void add_dummies_to_plot_menu 1263,38273
+static void check_model_menu 1314,40005
+int view_model 1349,41484
+void setup_column 1450,44925
+static void msgbox 1464,45344
+static void msgbox 1473,45530
+static void msgbox 1483,45739
+void errbox 1523,46888
+void infobox 1530,47011
+int validate_varname 1537,47135
+void options_dialog 1570,47997
+static void make_prefs_tab 1634,50401
+static void apply_changes 1712,52882
+void write_rc 1747,53824
+static void read_rc 1764,54260
+void write_rc 1818,55600
+void read_rc 1834,55986
+void write_rc 1877,57135
+static void read_rc 1901,57716
+static void font_selection_ok 1980,59750
+void font_selector 1996,60173
+static void close_find_dialog 2035,61496
+static void find_in_help 2043,61697
+static void find_in_clist 2079,62926
+static int look_for_string 2116,63967
+static void cancel_find 2131,64376
+static void find_string_dialog 2139,64580
+void buf_to_clipboard 2214,67198
+void text_copy 2232,67602
+void make_menu_item 2314,69536
+void allocate_fileptrs 2328,69948
+void mkfilelist 2341,70198
+char *endbit 2406,71928
+static void gnome_printfilelist 2440,72578
+static void win_printfilelist 2467,73171
+static void printfilelist 2493,73778
+void add_files_to_menu 2521,74338
+int open_plugin 2596,76400
+void *get_plugin_function 2620,76943
+void close_plugin 2643,77416
 
 gui/guiprint.c,1053
 int win_copy_rtf 47,1762
@@ -1177,30 +1178,23 @@ void display_selected 2325,61081
 void display_fit_resid 2377,62411
 void do_graph_var 2396,62913
 void do_scatters 2417,63487
-void do_box_graph 2439,64111
-void do_dummy_graph 2457,64582
-void do_graph 2488,65451
-void display_var 2527,66538
-static void auto_save_script 2541,66869
-static void do_run_script 2563,67441
-void do_open_script 2588,68091
-void do_new_script 2620,68985
-void do_open_csv_box 2636,69422
-void do_store 2660,69934
-void view_latex 2710,71191
-void do_save_tex 2745,72117
-int execute_script 2766,72590
-static int ready_for_command 2874,75497
-static int script_model_test 2893,76077
-static int gui_exec_line 2937,77431
-void view_script_default 3677,98138
-
-gui/median_conf_int.c,99
-#define ITERS 5,58
-compare_doubles 8,89
-median 17,286
-median_interval 30,484
-int main 73,1417
+void do_box_graph 2440,64128
+void do_dummy_graph 2458,64671
+void do_graph 2489,65540
+void display_var 2528,66627
+static void auto_save_script 2542,66958
+static void do_run_script 2564,67530
+void do_open_script 2589,68180
+void do_new_script 2621,69074
+void do_open_csv_box 2637,69511
+void do_store 2661,70023
+void view_latex 2711,71280
+void do_save_tex 2746,72206
+int execute_script 2767,72679
+static int ready_for_command 2875,75586
+static int script_model_test 2894,76166
+static int gui_exec_line 2938,77520
+void view_script_default 3678,98227
 
 gui/plotps.c,100
 static void psleave 38,1428

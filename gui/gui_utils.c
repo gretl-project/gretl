@@ -1092,6 +1092,7 @@ int view_file (char *filename, int editable, int del_file,
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
 
     gtk_widget_show(dialog);
+
     return 0;
 }
 

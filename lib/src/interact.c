@@ -179,6 +179,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	strcpy(command->cmd, "genr");
     if (strcmp(command->cmd, "ls") == 0) 
 	strcpy(command->cmd, "list");
+    if (strcmp(command->cmd, "boxplots") == 0) 
+	strcpy(command->cmd, "boxplot");
     if (strcmp(command->cmd, "man") == 0) 
 	strcpy(command->cmd, "help");
     if (strcmp(command->cmd, "sample") == 0) 
@@ -245,6 +247,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == SEED ||
 	command->ci == NULLDATA) {
 	command->nolist = 1;
+	if (!strncmp(line, "man ", 4)) n--;
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
 	    sscanf(line + n + 1, "%s", command->param);
