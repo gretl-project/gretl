@@ -101,7 +101,7 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 	strcat(dbbin, ".bin");
     }
 
-    fp = fopen(dbbin, "rb");
+    fp = fopen(db_name, "rb");
     if (fp == NULL) return 1;
     
     fseek(fp, (long) sinfo->offset, SEEK_SET);
@@ -116,6 +116,141 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
     return 0;
 }
 
+static void get_native_series_comment (SERIESINFO *sinfo, const char *s)
+{
+    size_t n = strlen(sinfo->varname);
+    const char *p = s + n + 1;
+    int i;
+
+    while (*p) {
+	if (isspace(*p)) p++;
+	else break;
+    }
+
+    *sinfo->descrip = 0;
+    strncat(sinfo->descrip, p, MAXLABEL - 1);
+
+    n = strlen(sinfo->descrip) - 1;
+    
+    for (i=n; i>0; i--) {
+	if (isspace(sinfo->descrip[i])) sinfo->descrip[i] = 0;
+	else if (sinfo->descrip[i] == '\r' || sinfo->descrip[i] == '\n') {
+	    sinfo->descrip[i] = 0;
+	}
+	else break;
+    }
+}
+
+static int get_native_series_pd (SERIESINFO *sinfo, char pdc)
+{
+    sinfo->pd = 1;
+    sinfo->undated = 0;
+
+    if (pdc == 'M') sinfo->pd = 12;
+    else if (pdc == 'Q') sinfo->pd = 4;
+    else if (pdc == 'B') sinfo->pd = 5;
+    else if (pdc == 'D') sinfo->pd = 7;
+    else if (pdc == 'U') sinfo->undated = 1;
+    else return 1;
+
+    return 0;
+}
+
+static int get_native_series_obs (SERIESINFO *sinfo, 
+				  const char *stobs,
+				  const char *endobs)
+{
+    if (strchr(stobs, '/')) { /* daily data */
+	const char *q = stobs;
+	const char *p = strchr(stobs, '/');
+
+	if (p - q == 4) strcpy(sinfo->stobs, q + 2);
+	q = endobs;
+	p = strchr(endobs, '/');
+	if (p && p - q == 4) strcpy(sinfo->endobs, q + 2);
+    } else {
+	*sinfo->stobs = 0;
+	*sinfo->endobs = 0;
+	strncat(sinfo->stobs, stobs, 8);
+	strncat(sinfo->endobs, endobs, 8);
+    }
+
+    return 0;
+}
+
+static int 
+get_native_series_info (const char *series, SERIESINFO *sinfo)
+{
+    FILE *fp;
+    char dbidx[MAXLEN];
+    char sername[9];
+    char line1[256], line2[72];
+    char stobs[11], endobs[11];
+    char *p, pdc;
+    int offset = 0;
+    int gotit = 0, err = 0;
+    int n;
+
+    strcpy(dbidx, db_name);
+    p = strstr(dbidx, ".bin");
+    if (p != NULL) {
+	strcpy(p, ".idx");
+    } else {
+	strcat(dbidx, ".idx");
+    }
+
+    fp = fopen(dbidx, "r");
+    if (fp == NULL) {
+	strcpy(gretl_errmsg, _("Couldn't open database index file"));
+	return 1;
+    }
+
+    while (!gotit) {
+
+	if (fgets(line1, 255, fp) == NULL) break;
+
+	if (*line1 == '#') continue;
+	line1[255] = 0;
+
+	if (sscanf(line1, "%8s", sername) != 1) break;
+	sername[8] = 0;
+
+	if (!strcmp(series, sername)) {
+	    gotit = 1;
+	    strcpy(sinfo->varname, sername);
+	}
+
+	fgets(line2, 71, fp);
+	line2[71] = 0;
+
+	if (gotit) {
+	    get_native_series_comment(sinfo, line1);
+	    if (sscanf(line2, "%c %10s %*s %10s %*s %*s %d", 
+		       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
+		strcpy(gretl_errmsg,
+		       _("Failed to parse series information"));
+		err = 1;
+	    } else {
+		get_native_series_pd(sinfo, pdc);
+		get_native_series_obs(sinfo, stobs, endobs);
+		sinfo->offset = offset;
+	    }
+	} else {
+	    if (sscanf(line2, "%*c %*s %*s %*s %*s %*s %d", &n) != 1) {
+		err = 1;
+	    } else {
+		offset += n * sizeof(dbnumber);
+	    }
+	}
+    }
+
+    fclose(fp);
+
+    if (!gotit) err = 1;
+
+    return err;
+}
+
 /* ........................................................... */
 
 static int get_endobs (char *datestr, int startyr, int startfrac, 
@@ -126,20 +261,25 @@ static int get_endobs (char *datestr, int startyr, int startfrac,
 
     endyr = startyr + n / pd;
     endfrac = startfrac - 1 + n % pd;
+
     if (endfrac >= pd) {
 	endyr++;
 	endfrac -= pd;
     }
+
     if (endfrac == 0) {
 	endyr--;
 	endfrac = pd;
-    }    
-    if (pd == 1)
+    }   
+ 
+    if (pd == 1) {
 	sprintf(datestr, "%d", endyr);
-    else if (pd == 4)
+    } else if (pd == 4) {
 	sprintf(datestr, "%d.%d", endyr, endfrac);
-    else if (pd == 12)
+    } else if (pd == 12) {
 	sprintf(datestr, "%d.%02d", endyr, endfrac);
+    }
+
     return 0;
 }
 
@@ -579,15 +719,14 @@ get_rats_series_offset_by_name (FILE *fp,
 }
 
 static int 
-get_rats_series_info_by_name (const char *fname, 
-			      const char *series_name,
+get_rats_series_info_by_name (const char *series_name,
 			      SERIESINFO *sinfo)
 {
     FILE *fp;
     int offset;
     int ret = DB_OK;
 
-    fp = fopen(fname, "rb");
+    fp = fopen(db_name, "rb");
     if (fp == NULL) return DB_NOT_FOUND;
     
     offset = get_rats_series_offset_by_name(fp, series_name, sinfo);
@@ -877,7 +1016,7 @@ static double **new_dbZ (int n)
     return Z;
 }
 
-/* main function for getting a series out of a RATS database, using the
+/* main function for getting a series out of a database, using the
    command-line client or in script or console mode
 */
 
@@ -890,11 +1029,14 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     SERIESINFO sinfo;
     double **dbZ;
     int err = 0;
+    int rats = 0;
 
     if (*db_name == 0) {
 	strcpy(gretl_errmsg, _("No database has been opened"));
 	return 1;
-    }    
+    }   
+
+    if (strstr(db_name, ".rat")) rats = 1;
 
     *linecpy = 0;
     strncat(linecpy, line, MAXLEN - 1);
@@ -908,10 +1050,15 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	if (sscanf(linecpy, "%15s", series) != 1)
 	    return E_PARSE;
     }
+    
+    /* FIXME: allow for multiple series on one command line */
 
     /* find the series information in the database */
-    err = get_rats_series_info_by_name (db_name, series, &sinfo);
-
+    if (rats) {
+	err = get_rats_series_info_by_name (series, &sinfo);
+    } else {	
+	err = get_native_series_info (series, &sinfo);
+    } 
 
     if (err) {
 	return 1;
@@ -924,7 +1071,11 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    err = get_rats_data_by_offset (db_name, &sinfo, dbZ);
+    if (rats) {
+	err = get_rats_data_by_offset (db_name, &sinfo, dbZ);
+    } else {
+	get_native_db_data (db_name, &sinfo, dbZ);
+    }
 
     if (!err) {
 	err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, comp_method);

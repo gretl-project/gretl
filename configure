@@ -23445,6 +23445,8 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
    fi
    CFLAGS="$CFLAGS $GTK_CFLAGS"
    LIBS="$LIBS $GTK_LIBS"
+   GLIB_CFLAGS=`glib-config --cflags`
+   GLIB_LIBS=`glib-config --libs`
    if test ${try_gtkextra} = yes ; then
 
 # Check whether --with-gtkextra-prefix or --without-gtkextra-prefix was given.

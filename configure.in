@@ -359,6 +359,8 @@ if test "$have_gtk" = "no" ; then
    fi
    CFLAGS="$CFLAGS $GTK_CFLAGS"
    LIBS="$LIBS $GTK_LIBS"
+   GLIB_CFLAGS=`glib-config --cflags`
+   GLIB_LIBS=`glib-config --libs`
    if test ${try_gtkextra} = yes ; then
       AM_PATH_GTK_EXTRA(0.99.15,have_gtkextra="yes",have_gtkextra="no")
    fi

@@ -601,6 +601,7 @@ static int check_serinfo (char *str, char *sername)
 	errbox(msg);
 	return 1;
     }
+
     return 0;
 }
 
