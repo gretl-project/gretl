@@ -1154,7 +1154,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 #ifdef OLD_GTK
     tempwid = gtk_button_new_with_label(_("OK"));
 #else
-    tempwid = standard_button(GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
 #endif
 
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
@@ -1193,7 +1193,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 #ifdef OLD_GTK
     tempwid = gtk_button_new_with_label(_("Close"));
 #else
-    tempwid = standard_button(GTK_STOCK_CLOSE);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
 #endif
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(dialog->action_area), 

@@ -3072,7 +3072,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	gretl_print_destroy(prn);
     }
 
-    /* or from the model table? (gtk-1.2?) */
+    /* or from the model table? */
     else if (vwin->role == VIEW_MODELTABLE && SPECIAL_COPY(how)) {
 	if (how == COPY_LATEX) {
 	    tex_print_model_table(NULL, 0, NULL);

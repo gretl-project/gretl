@@ -1317,7 +1317,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     gtk_widget_show (button);
 
     /* Create the "OK" button */
-    tempwid = standard_button(GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -1330,7 +1330,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     gtk_widget_show (tempwid);
 
     /* Create the "Cancel" button */
-    tempwid = standard_button(GTK_STOCK_CANCEL);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -1340,7 +1340,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     gtk_widget_show (tempwid);
 
     /* Create a "Help" button */
-    tempwid = standard_button(GTK_STOCK_HELP);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_HELP);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);

@@ -2052,7 +2052,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     /* Create the "OK" button */
 #ifndef OLD_GTK
-    tempwid = standard_button(GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
 #else
     tempwid = gtk_button_new_with_label ("OK");
 #endif
@@ -2073,7 +2073,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     /* Create the "Cancel" button */
 #ifndef OLD_GTK
-    tempwid = standard_button(GTK_STOCK_CANCEL);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
 #else
     tempwid = gtk_button_new_with_label (_("Cancel"));
 #endif
@@ -2097,7 +2097,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     /* Create a "Help" button */
 #ifndef OLD_GTK
-    tempwid = standard_button(GTK_STOCK_HELP);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_HELP);
 #else
     tempwid = gtk_button_new_with_label (_("Help"));
 #endif

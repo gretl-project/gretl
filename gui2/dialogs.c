@@ -182,7 +182,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     gtk_widget_grab_focus (d->edit);
 
     /* Create the "OK" button */
-    tempwid = standard_button (GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
@@ -196,7 +196,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     /* Create a "Cancel" button */
     if (cmdcode != CREATE_USERDIR) {
-	tempwid = standard_button (GTK_STOCK_CANCEL);
+	tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
 	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			    tempwid, TRUE, TRUE, 0);
@@ -208,7 +208,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     /* Create a "Help" button if wanted */
     if (cmdcode && cmdcode != PRINT && cmdcode != CREATE_USERDIR) {
-	tempwid = standard_button (GTK_STOCK_HELP);
+	tempwid = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			    tempwid, TRUE, TRUE, 0);
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
@@ -403,7 +403,7 @@ void about_dialog (gpointer data)
     gtk_widget_show (label);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, label);
 
-    tempwid = standard_button(GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 			tempwid, FALSE, FALSE, 0);
@@ -738,7 +738,7 @@ void delimiter_dialog (void)
     gtk_widget_show (hbox);
 
     /* Create the "OK" button */
-    tempwid = standard_button (GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
@@ -888,7 +888,7 @@ void copy_format_dialog (windata_t *vwin)
     gtk_widget_show (hbox);
 
     /* Create the "OK" button */
-    tempwid = standard_button (GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
@@ -898,7 +898,7 @@ void copy_format_dialog (windata_t *vwin)
     gtk_widget_show (tempwid);
 
     /* "Cancel" button */
-    tempwid = standard_button (GTK_STOCK_CANCEL);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
@@ -1142,7 +1142,7 @@ void varinfo_dialog (int varnum, int full)
     }
 
     /* Create the "OK" button */
-    tempwid = standard_button(GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (vset->dlg)->action_area), 
 			tempwid, TRUE, TRUE, 0);
@@ -1152,7 +1152,7 @@ void varinfo_dialog (int varnum, int full)
     gtk_widget_show (tempwid);
 
     /* And a Cancel button */
-    tempwid = standard_button(GTK_STOCK_CANCEL);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
 			tempwid, TRUE, TRUE, 0);
@@ -1162,7 +1162,7 @@ void varinfo_dialog (int varnum, int full)
 
     /* And a Help button? */
     if (full) {
-	tempwid = standard_button(GTK_STOCK_HELP);
+	tempwid = gtk_button_new_from_stock(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
 	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
 			    tempwid, TRUE, TRUE, 0);
@@ -1412,7 +1412,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     }
 
     /* Create the "OK" button */
-    tempwid = standard_button(GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (rset->dlg)->action_area), 
 			tempwid, TRUE, TRUE, 0);
@@ -1421,7 +1421,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_grab_default (tempwid);
 
     /* And a Cancel button */
-    tempwid = standard_button(GTK_STOCK_CANCEL);
+    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(rset->dlg)->action_area), 
 			tempwid, TRUE, TRUE, 0);
@@ -1515,7 +1515,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 		       hbox, FALSE, FALSE, 5);
     
     /* Create the "OK" button */
-    tmp = standard_button(GTK_STOCK_OK);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (opts->dlg)->action_area), 
 			tmp, TRUE, TRUE, 0);
@@ -1524,7 +1524,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_grab_default (tmp);
 
     /* And a Cancel button */
-    tmp = standard_button(GTK_STOCK_CANCEL);
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(opts->dlg)->action_area), 
 			tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT (tmp), "clicked", 

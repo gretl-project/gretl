@@ -495,7 +495,7 @@ void options_dialog (gpointer data)
     make_prefs_tab (notebook, 4);
     make_prefs_tab (notebook, 5);
    
-    tempwid = standard_button (GTK_STOCK_OK);
+    tempwid = gtk_button_new_from_stock (GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 
@@ -507,7 +507,7 @@ void options_dialog (gpointer data)
 		      dialog);
     gtk_widget_show (tempwid);
 
-    tempwid = standard_button (GTK_STOCK_CANCEL);
+    tempwid = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 
@@ -517,7 +517,7 @@ void options_dialog (gpointer data)
 		      dialog);
     gtk_widget_show (tempwid);
 
-    tempwid = standard_button (GTK_STOCK_APPLY);
+    tempwid = gtk_button_new_from_stock (GTK_STOCK_APPLY);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 

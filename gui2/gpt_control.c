@@ -249,7 +249,11 @@ static GtkWidget *standard_button (int code)
 #define g_object_set_data(o,s,d) gtk_object_set_data(o,s,d)
 #define g_object_get_data(o,s)   gtk_object_get_data(o,s)
 
-#endif /* OLD_GTK */
+#else
+
+#define standard_button(s) gtk_button_new_from_stock(s)
+
+#endif /* gtk versions */
 
 /* ........................................................... */
 
