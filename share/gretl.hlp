@@ -82,7 +82,7 @@ maximum values.  A line is drawn across the box at the median.
 
 In the case of notched boxes, the notch shows the limits of an approximate 90
 percent confidence interval.  This is obtained by the bootstrap method, which
-could take a while if the data series is very long.
+can take a while if the data series is very long.
 
 Clicking the mouse in the boxplots window brings up a menu which enables you
 to save the plots as encapsulated postscript (EPS) or as a full-page

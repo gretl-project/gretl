@@ -358,7 +358,7 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 
     /* special on-screen string for notched plots */
-    if (pc == NULL && grp->plots[0].conf[0] != -999.0) {
+    if (pc == NULL && grp->plots[0].conf[0] != -999.0 && grp->width >=460) {
 	setup_text (grp->area, grp->pixmap, gc, pc, 
 		    "notches show bootstrapped 90% confidence intervals "
 		    "for medians", 
@@ -1048,20 +1048,23 @@ int plot_to_xpm (const char *fname, gpointer data)
 static void read_boxrc (PLOTGROUP *grp)
 {
     FILE *fp;
-    char *homedir;
-    char line[80], boxrc[MAXLEN];
-    char key[18], val[32];
 
     grp->gmax = grp->gmin = -999.0;
 
-    homedir = getenv("HOME");
-    if (homedir == NULL) homedir = paths.userdir;
+    fp = fopen(".boxplotrc", "r");
+    if (fp == NULL) {
+	char *homedir, boxrc[MAXLEN];
 
-    sprintf(boxrc, "%s%s.boxplotrc", homedir,
-	    (homedir[strlen(homedir)-1] != SLASH)? SLASHSTR : "");
+	homedir = getenv("HOME");
+	if (homedir == NULL) homedir = paths.userdir;
+	sprintf(boxrc, "%s%s.boxplotrc", homedir,
+		(homedir[strlen(homedir)-1] != SLASH)? SLASHSTR : "");
+	fp = fopen(boxrc, "r");
+    }
 
-    fp = fopen(boxrc, "r");
     if (fp != NULL) {
+	char line[80], key[18], val[32];
+
 	while (fgets(line, 79, fp)) {
 	    if (line[0] == '#') continue;
 	    if (sscanf(line, "%17s = %31s", key, val) == 2) {
