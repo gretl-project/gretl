@@ -24,6 +24,7 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+# include <io.h>
 #endif
 
 #ifdef GNUPLOT_PNG
@@ -2307,9 +2308,73 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
    it on the clipboard.
 */
 
+/* Weirdness: when an emf is put on the clipboard as below (it doesn't
+   matter whether the short method is used, or the long one that is
+   invoked when CLIPTEST is defined), Word 2000 behaves thus: a
+   straight "Paste" puts in a version of the graph with squashed up
+   numbers on the axes and no legend text; but a "Paste special"
+   (where one accepts the default of pasting it as an enhanced
+   metafile) puts in an accurate version with correct text.  Go
+   figure.
+*/
+
+/* #define CLIPTEST 1 */
+
+#ifdef CLIPTEST
 static int emf_to_clip (char *emfname)
 {
-    HENHMETAFILE hemf, hemf2;
+    LPBYTE emfbuf;
+    UINT emflen;
+    HENHMETAFILE hemf, hemfclip, hemftest;
+
+    hemf = GetEnhMetaFile(emfname);
+    if (hemf == NULL) {
+        errbox(_("Gnuplot error creating graph"));
+	return 1;
+    }
+
+    emflen = GetEnhMetaFileBits(hemf, 0, NULL);
+    if (emflen == 0) {
+        errbox(_("Gnuplot error creating graph"));
+	return 1;
+    }
+
+    emfbuf = mymalloc(emflen);
+    if (emfbuf == NULL) {
+	DeleteEnhMetaFile(hemf);
+	return 1;
+    }
+
+    emflen = GetEnhMetaFileBits(hemf, emflen, emfbuf);
+    DeleteEnhMetaFile(hemf); /* close the handle */
+
+    sprintf(errtext, "Read %u bytes from emf file", emflen);
+    infobox(errtext);
+
+    if (!OpenClipboard(NULL)) {
+	errbox(_("Cannot open the clipboard"));
+	return 1;
+    }
+
+    EmptyClipboard();
+
+    hemfclip = SetEnhMetaFileBits(emflen, emfbuf);
+    SetClipboardData(CF_ENHMETAFILE, hemfclip);
+    
+    CloseClipboard();
+
+    /* test */
+    hemftest = CopyEnhMetaFile(hemfclip, "c:\\userdata\\gretl\\user\\clipbd.emf");
+    DeleteEnhMetaFile(hemftest);
+
+    free(emfbuf);
+
+    return 0;
+}
+#else
+static int emf_to_clip (char *emfname)
+{
+    HENHMETAFILE hemf, hemfclip;
 
     if (!OpenClipboard(NULL)) {
 	errbox(_("Cannot open the clipboard"));
@@ -2319,8 +2384,8 @@ static int emf_to_clip (char *emfname)
     EmptyClipboard();
 
     hemf = GetEnhMetaFile(emfname);
-    hemf2 = CopyEnhMetaFile(hemf, NULL);
-    SetClipboardData(CF_ENHMETAFILE, hemf2);
+    hemfclip = CopyEnhMetaFile(hemf, NULL);
+    SetClipboardData(CF_ENHMETAFILE, hemfclip);
 
     CloseClipboard();
 
@@ -2328,6 +2393,7 @@ static int emf_to_clip (char *emfname)
 
     return 0;
 }
+#endif /* CLIPTEST */
 
 static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
 {
@@ -2338,8 +2404,10 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
     gchar *emfname = NULL;
     int err;
 
+    /* create temporary file to hold the special gnuplot commands */
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
 
+    /* open the gnuplot source file for the graph */
     fq = fopen(spec->fname, "r");
     if (fq == NULL) {
 	errbox(_("Couldn't access graph info"));
@@ -2347,6 +2415,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
 	return;
     }
 
+    /* generate gnuplot source file to make emf */
     emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
     pprintf(prn, "set term emf\n");
     pprintf(prn, "set output '%s'\n", emfname);
@@ -2359,22 +2428,20 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
     gretl_print_destroy(prn);
     fclose(fq);
 
+    /* get gnuplot to create the emf file */
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
-
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-
     g_free(plotcmd);
     remove(plottmp);
     
     if (err) {
         errbox(_("Gnuplot error creating graph"));
-	goto emf_bailout;
+    } else {
+	/* copy from emf on disk onto clipboard */
+	emf_to_clip(emfname);
     }
 
-    emf_to_clip(emfname);
-
- emf_bailout:
     remove(emfname);
     g_free(emfname);
 }

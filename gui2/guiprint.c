@@ -1136,6 +1136,7 @@ void texprint_fcast_with_errs (const FITRESID *fr,
 	    "  & \\multicolumn{2}{c}{%s} \\\\\n",
 	    I_("Obs"), vname,
 	    I_("prediction"), I_("std. error"),
+	    /* xgettext:no-c-format */
 	    I_("95\\% confidence interval"));
 
     pprintf(prn, "& & & & \\multicolumn{1}{c}{low} & "
@@ -1186,7 +1187,9 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n", 
 	    I_("Obs"), fr->depvar, I_("prediction"), 
-	    I_("std. error"), I_("95% confidence interval"));
+	    I_("std. error"),
+	    /* xgettext:no-c-format */
+	    I_("95% confidence interval"));
 
     for (t=0; t<fr->nobs; t++) {
 	pprintf(prn, "\\qr ");
@@ -1255,7 +1258,9 @@ void texprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
     pprintf(prn, " & %s%%\n"
 	    " & \\multicolumn{1}{c}{%s}%%\n"
 	    "  & \\multicolumn{2}{c}{%s}\\\\\n",
-	    I_("Variable"), I_("Coefficient"), I_("95\\% confidence interval"));
+	    I_("Variable"), I_("Coefficient"),
+	    /* xgettext:no-c-format */
+	    I_("95\\% confidence interval"));
 
     pprintf(prn, " & & & \\multicolumn{1}{c}{%s}%%\n"
 	    "  & \\multicolumn{1}{c}{%s}\\\\\n",
@@ -1315,7 +1320,9 @@ void rtfprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\intbl \\row\n", 
-	    I_("Variable"), I_("Coefficient"), I_("95% confidence interval"));
+	    I_("Variable"), I_("Coefficient"), 
+	    /* xgettext:no-c-format */
+	    I_("95% confidence interval"));
 
     if (cf->ifc) {
 	rtfprint_coeff_interval(cf, pdinfo, ncoeff, prn);

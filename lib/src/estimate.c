@@ -1859,9 +1859,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 /**
  * ar_func:
- * @list: dependent variable plus list of regressors and list of lags.
- * @pos: position in list of separator between independent variables and
- * list of lags.
+ * @list: list of lags plus dependent variable and list of regressors.
+ * @pos: position in list of separator (dummy element) between lag list
+ * and specification of dependent and independent variables.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @model_count: count of models estimated so far.
@@ -1918,8 +1918,12 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	err = hilu_corc(&xx, reglist, pZ, pdinfo, CORC, prn);
 	if (err) ar.errcode = err;
 	else ar = lsq(reglist, pZ, pdinfo, CORC, 1, xx);
-	*model_count += 1;
-	ar.ID = *model_count;
+	if (model_count != NULL) {
+	    *model_count += 1;
+	    ar.ID = *model_count;
+	} else {
+	    ar.ID = 0;
+	}
 	printmodel(&ar, pdinfo, prn); 
 	free(arlist);
 	free(reglist);
@@ -2010,8 +2014,13 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     ar.ifc = _hasconst(reglist);
     if (ar.ifc) ar.dfn -= 1;
     ar.ci = AR;
-    *model_count += 1;
-    ar.ID = *model_count;
+
+    if (model_count != NULL) {
+	*model_count += 1;
+	ar.ID = *model_count;
+    } else {
+	ar.ID = 0;
+    }
 
     /* special computation of fitted values */
     for (t=t1; t<=t2; t++) {
@@ -2398,8 +2407,9 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 		if (model_count != NULL) {
 		    *model_count += 1;
 		    archmod.ID = *model_count;
-		} else 
+		} else {
 		    archmod.ID = -1;
+		}
 		archmod.ci = ARCH;
 		archmod.order = order;
 		printmodel(&archmod, pdinfo, prn);
