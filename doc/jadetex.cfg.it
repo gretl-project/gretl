@@ -11,6 +11,8 @@
 }
 \clubpenalty=5000
 \widowpenalty=5000
+%% http://lists.oasis-open.org/archives/docbook-apps/200305/msg00359.html
+\raggedbottom \topskip 1\topskip plus \normalbaselineskip
 \input lucidabr.tex
 \usepackage[italian]{babel}
 \usepackage[pdftex]{thumbpdf}
