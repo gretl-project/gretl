@@ -29,6 +29,7 @@
 #endif
 
 #include "pixmaps/model.xpm"
+#include "pixmaps/boxplot.xpm"
 #include "pixmaps/gnuplot.xpm"
 #include "pixmaps/xfm_sc.xpm"
 #include "pixmaps/xfm_info.xpm"
@@ -977,6 +978,32 @@ static char *graph_str (GRAPHT *graph)
 
 /* ........................................................... */
 
+static char *boxplot_str (GRAPHT *graph)
+{
+    FILE *fp;
+    char *str = NULL;
+
+    fp = fopen(graph->fname, "r");
+    if (fp != NULL) {
+	char vname[9], line[48];
+
+	str = malloc (MAXLEN);
+	if (str == NULL) return NULL;
+	str[0] = '\0';
+
+	while (fgets(line, 47, fp) && strlen(str) < MAXLEN-10) {
+	    if (sscanf(line, "%*d varname = %8s", vname) == 1) { 
+		strcat(str, vname);
+		strcat(str, " ");
+	    }
+	}
+	fclose(fp);
+    }
+    return str;
+}
+
+/* ........................................................... */
+
 gui_obj *session_add_object (gpointer data, int sort)
 {
     gui_obj *gobj;
@@ -1034,8 +1061,17 @@ gui_obj *session_add_object (gpointer data, int sort)
 				 str, NULL);
 	    free(str);
 	}
+    }    
+    else if (sort == 'b') {
+	char *str = boxplot_str(graph);
+
+	gobj->data = graph;
+	if (str != NULL) {
+	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon->entry), 
+				 str, NULL);
+	    free(str);
+	}
     }
-    else if (sort == 'b') gobj->data = graph;
     else if (sort == 'd') gobj->data = paths.datfile;
     else if (sort == 'i') gobj->data = paths.hdrfile;
     else if (sort == 's') gobj->data = cmdfile;
@@ -1105,7 +1141,8 @@ gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort)
 
     switch (sort) {
     case 'm': image = model_xpm; break;
-    case 'b': case 'g': image = gnuplot_xpm; break;
+    case 'b': image = boxplot_xpm; break;
+    case 'g': image = gnuplot_xpm; break;
     case 'd': image = dot_sc_xpm; break;
     case 'i': image = xfm_info_xpm; break;
     case 's': image = text_xpm; break;
