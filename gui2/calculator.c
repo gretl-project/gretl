@@ -159,6 +159,7 @@ static void get_critical (GtkWidget *w, gpointer data)
     void (*tcrit)(int, PRN *, int) = NULL;
     void (*chicrit)(int, PRN *, int) = NULL;
     int i, n = -1, df = -1, err = 0;
+    int winheight = 300;
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
@@ -208,9 +209,11 @@ static void get_critical (GtkWidget *w, gpointer data)
 	switch (i) {
 	case 0:
 	    (*norm_table)(prn, 1);
+	    winheight = 340;
 	    break;
 	case 1:
 	    (*tcrit)(df, prn, 1);
+	    winheight = 340;
 	    break;
 	case 2:
 	    (*chicrit)(df, prn, 1);
@@ -237,7 +240,7 @@ static void get_critical (GtkWidget *w, gpointer data)
     if (err) {
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 77, 300, _("gretl: statistical table"), 
+	view_buffer(prn, 77, winheight, _("gretl: statistical table"), 
 		    STAT_TABLE, NULL);
     }
 }
@@ -255,9 +258,10 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(pval[0]->book));
-    sprintf(cmd, "pvalue %d ", i+1);
+    sprintf(cmd, "pvalue %d ", i + 1);
     
     switch (i) {
+
     case 0: /* normal */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
 	xx = getval(tmp, NULL, 0); /* value */
@@ -276,6 +280,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	xx /= val; 
 	sprintf(cmd, "pvalue 1 %g", xx);
 	break;
+
     case 1: /* t */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
 	df = atoi(tmp);   /* df */
@@ -312,6 +317,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
 	if (printnum(cmd, tmp, 1)) return;
 	break;
+
     case 3: /* F */
 	for (j=0; j<2; j++) {
 	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
@@ -325,19 +331,23 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
 	if (printnum(cmd, tmp, 1)) return;
 	break;
+
     case 4: /* gamma */
 	for (j=0; j<3; j++) {
 	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
 	    if (printnum(cmd, tmp, 1)) return;
 	}
 	break;
+
     default:
 	break;
     }
 
     if (bufopen(&prn)) return;
+
     batch_pvalue(cmd, Z, datainfo, prn);
     view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
+
     return;
 }
 

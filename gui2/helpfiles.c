@@ -203,10 +203,10 @@ static void set_english_help_file (int script)
 	strcpy(tmp, helpfile);
 #ifdef G_OS_WIN32
 	p = strrchr(tmp, '_');
-	if (p) strcpy(p, ".txt");
+	if (p != NULL) strcpy(p, ".txt");
 #else
 	p = strrchr(tmp, '.');
-	if (p) *p = 0;
+	if (p != NULL) *p = 0;
 #endif
 	if (script) {
 	    english_script_helpfile = tmp;
@@ -247,14 +247,14 @@ static void set_translated_helpfile (void)
 
 #ifdef G_OS_WIN32
     p = strrchr(paths.helpfile, '_');
-    if (p && strncmp(p, "_hlp", 4)) { 
+    if (p != NULL && strncmp(p, "_hlp", 4)) { 
 	translated_helpfile = 1;
     } else {
 	translated_helpfile = 0;
     }
 #else
     p = strrchr(paths.helpfile, '.');
-    if (p && strcmp(p, ".hlp")) { 
+    if (p != NULL && strcmp(p, ".hlp")) { 
 	translated_helpfile = 1;
     } else {
 	translated_helpfile = 0;
@@ -641,53 +641,74 @@ static void add_help_topics (windata_t *hwin, int script)
 
     /* put the topics under the menu heading */
     for (i=0; hds[i] != NULL; i++) {
+
+	if ((hds[i])->ntopics == 0) continue;
+
 	hitem.callback_action = 0; 
 	hitem.item_type = "<Branch>";
 	hitem.path = g_strdup_printf("%s/%s", mpath, _((hds[i])->name));
 	hitem.callback = NULL; 
+
 	gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
 	g_free(hitem.path);
 
 	for (j=0; j<(hds[i])->ntopics; j++) {
+	    int topic_ok = 1;
+
 	    hitem.callback_action = (hds[i])->pos[j]; 
 	    hitem.item_type = NULL;
 	    hitem.path = NULL;
+
 	    if ((hds[i])->topicnames != NULL) {
 		hitem.path = 
 		    g_strdup_printf("%s/%s/%s", 
 				    mpath, _((hds[i])->name), 
 				    (hds[i])->topicnames[j]);
 #ifdef HDEBUG
-		    fprintf(stderr, "(1) Built help topic path from\n"
-			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
-			    (hds[i])->topicnames[j]);
+		fprintf(stderr, "(1) Built help topic path from\n"
+			" '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
+			(hds[i])->topicnames[j]);
 #endif
 	    } else {
-		if ((hds[i])->topics[j] < NC) {
+		int tnum = (hds[i])->topics[j];
+
+		if (tnum < NC) {
+		    /* a regular gretl command */
 		    hitem.path = 
 			g_strdup_printf("%s/%s/%s", 
 					mpath, _((hds[i])->name), 
-					gretl_command_word((hds[i])->topics[j]));
+					gretl_command_word(tnum));
 #ifdef HDEBUG
 		    fprintf(stderr, "(2) Built help topic path from\n"
 			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
-			    gretl_command_word((hds[i])->topics[j]));
+			    gretl_command_word(tnum));
 #endif
-		} else {
-		    hitem.path = 
-			g_strdup_printf("%s/%s/%s", 
-					mpath, _((hds[i])->name), 
-					get_gui_help_string((hds[i])->pos[j]));
+		} else if (!script) {
+		    /* a gui special item? */
+		    char *gstr = get_gui_help_string((hds[i])->pos[j]);
+
+		    if (gstr != NULL) {
+			hitem.path = 
+			    g_strdup_printf("%s/%s/%s", 
+					    mpath, _((hds[i])->name), gstr);
 #ifdef HDEBUG
-		    fprintf(stderr, "(3) Built help topic path from\n"
-			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
-			    get_gui_help_string((hds[i])->pos[j]));
+			fprintf(stderr, "(3) Built help topic path from\n"
+				" '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
+				gstr);
 #endif
+		    } else {
+			topic_ok = 0;
+		    }
+		} else {
+		    topic_ok = 0;
 		}
 	    }
-	    hitem.callback = (script)? do_script_help : do_gui_help; 
-	    gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
-	    g_free(hitem.path);
+
+	    if (topic_ok) {
+		hitem.callback = (script)? do_script_help : do_gui_help; 
+		gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
+		g_free(hitem.path);
+	    }
 	}
     }
 }
@@ -735,12 +756,14 @@ static windata_t *helpwin (int script, int english)
 
     vwin = view_file(helpfile, 0, 0, 80, 400, helpcode);
 
-    if (!english) 
+    if (!english) {
 	add_help_topics(vwin, script);
+    }
 
 #ifdef ENABLE_NLS
-    if (translated_helpfile && !english) 
+    if (translated_helpfile && !english) {
 	add_english_help_item(vwin, script);
+    }
 #endif
 
     return vwin;
@@ -796,13 +819,15 @@ static void real_do_help (guint pos, int cli)
     gfloat adj;
 #endif
 
-
     if (w == NULL) {
 	windata_t *hwin = helpwin(cli, 0);
 
 	if (hwin != NULL) {
-	    if (cli) w = script_help_view = hwin->w;
-	    else w = gui_help_view = hwin->w;
+	    if (cli) {
+		w = script_help_view = hwin->w;
+	    } else {
+		w = gui_help_view = hwin->w;
+	    }
 	}
 #ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(w), "destroy",

@@ -226,9 +226,6 @@ void nls_init (void)
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE); 
     iso_gettext("@CLI_INIT");
-# ifdef WIN32
-    bind_textdomain_codeset (PACKAGE, "CP850");
-# endif
 
     putenv("LC_NUMERIC=");
     setlocale(LC_NUMERIC, "");
@@ -328,6 +325,12 @@ int main (int argc, char *argv[])
 	    break;
 	}
     } else cli_get_data = 1;
+
+#ifdef WIN32
+    if (!batch) {
+	bind_textdomain_codeset (PACKAGE, "CP850");
+    }
+#endif
 
     logo();     /* print version info */
     session_time(stdout);

@@ -32,7 +32,6 @@
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
-static int pdton (int pd);
 static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs);
 
 /* .......................................................  */
@@ -129,6 +128,8 @@ double gretl_covar (int n, const double *zx, const double *zy)
     return sxy/(nn - 1);
 }
 
+#define PDTON(p) (((p) == 1)? 1 : ((p) < 10)? 10 : 100)
+
 /**
  * date:
  * @nt: observation number (zero-based).
@@ -143,19 +144,20 @@ double date (int nt, int pd, const double sd0)
     int ysd = (int) sd0, yy, pp, yp;
     double dd;
 
-    if (pd == 1) 
+    if (pd == 1) {
 	return ((double) (ysd + nt));  
+    }
 
-    pp = (nt) % pd + pdton(pd) * (sd0 - ysd) + .5;
+    pp = nt % pd + PDTON(pd) * (sd0 - ysd) + .5;
     if (pp != pd)  {
-        yy = ysd + (nt)/pd  + (pp/pd) + .5;
+        yy = ysd + nt/pd  + pp/pd + .5;
         yp = pp % pd;
     }  else {
-        yy = ysd + (nt)/pd + .5;
+        yy = ysd + nt/pd + .5;
         yp = pp;
     }
 
-    dd = (pd < 10)? 0.1: 0.01;
+    dd = (pd < 10)? 0.1 : 0.01;
 
     return (yy + yp * dd);
 }
@@ -369,15 +371,6 @@ void gretl_minmax (int t1, int t2, const double zx[],
 	    *min = xt < *min ? xt : *min;
 	}
     }
-}
-
-/* .......................................................     */
-
-static int pdton (int pd)
-{
-    if (pd == 1) return 1;
-    if (pd < 10) return 10;
-    return 100;
 }
 
 /* ..........................................................  */

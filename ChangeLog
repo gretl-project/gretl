@@ -6,10 +6,13 @@ version 1.2.6
 - begin adding experimental audio graph feature for visually
   impaired users
 - improve handling of non-ASCII characters in data files
+- fixes for Spanish help files
 - more fixes for build process
 - GNU Octave data export: write all data as single matrix
 - fix printing of "periods" in periodogram output (thanks to
   Tadeusz Kufel)
+- fix generation of periodic dummy variables for daily data
+  (again thanks to Tadeusz Kufel)
 - with gtk >= 2.4.0 on Linux, use the new gtk file chooser
 - update the Windows gtk version to 2.4.1
 

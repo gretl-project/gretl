@@ -369,8 +369,9 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     }
 
     case BIFF_FORMULA: { 
-	saved_ref = NULL;
 	const guint8 *result = q->data + 6;
+
+	saved_ref = NULL;
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got FORMULA, row=%d, col=%d\n", row, col);

@@ -24122,6 +24122,7 @@ rm -f conftest.err conftest.$ac_objext \
   rm -f conf.lapacktest
 
 
+if test x"${have_audio}" = xyes ; then
 
 # Check whether --with-flite-prefix or --without-flite-prefix was given.
 if test "${with_flite_prefix+set}" = set; then
@@ -24200,7 +24201,7 @@ fi
      echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
      have_flite="yes"
-  cat >>confdefs.h <<\_ACEOF
+    cat >>confdefs.h <<\_ACEOF
 #define HAVE_FLITE 1
 _ACEOF
 
@@ -24283,6 +24284,7 @@ rm -f conftest.err conftest.$ac_objext \
 
   rm -f conf.flitetest
 
+fi
 
 
 

@@ -304,12 +304,14 @@ esac
 AM_PATH_LAPACK(, have_lapack="yes")
 
 dnl
-dnl Check for FLITE 
+dnl Check for FLITE?
 dnl
-AM_PATH_FLITE(, 
-  have_flite="yes"
-  AC_DEFINE(HAVE_FLITE)
-)
+if test x"${have_audio}" = xyes ; then
+  AM_PATH_FLITE(, 
+    have_flite="yes"
+    AC_DEFINE(HAVE_FLITE)
+  )
+fi
 
 dnl
 dnl Check for gnuplot, and its PNG capacity
