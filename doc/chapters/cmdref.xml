@@ -274,8 +274,7 @@
 	    <row>
 	      <entry>Arguments:</entry>
 	      <entry><replaceable>p q</replaceable>
-	      <literal>;</literal>
-		<replaceable>depvar</replaceable>
+		<literal>;</literal> <replaceable>depvar</replaceable>
 		<literal>[ -v | -x ]</literal>
 	      </entry>
 	    </row>
@@ -300,23 +299,41 @@
 	respectively.  If the <literal>-v</literal>
 	(<quote>verbose</quote>) flag is given, details of the
 	iterative estimation procedure are shown.
-	</para>
+      </para>
 
       <para>The default is to use the <quote>native</quote> gretl ARMA
 	function; the <literal>-x</literal> flag calls for use of the
 	<application>X-12-ARIMA</application> program instead (this
 	will work only if the <application>X-12-ARIMA</application>
-	package for gretl is installed.
+	package for gretl is installed).
       </para>
 
       <para>The native gretl ARMA algorithm is largely due to Riccardo
 	<quote>Jack</quote> Lucchetti.  It uses a conditional maximum
 	likelihood procedure, implemented via iterated least squares
 	estimation of the outer product of the gradient (OPG)
-	regression.  See <xref linkend="jack-arma"/> for
-	the logic of the procedure.  The AR coefficients are
-	initialized using an OLS auto-regression, and the MA
-	coefficients are initialized at zero.</para> 
+	regression.  See <xref linkend="jack-arma"/> for the logic of
+	the procedure.  The AR coefficients are initialized using an
+	OLS auto-regression, and the MA coefficients are initialized
+	at zero.</para>
+
+      <para>The AIC value given in connection with ARMA models is
+	calculated according to the definition used in
+	<application>X-12-ARIMA</application>, namely
+	  <informalequation>
+	  <alt role="tex">\[\mbox{AIC}=-2L+2k\]</alt>
+	  <graphic fileref="figures/aic"/>
+	  </informalequation> where <emphasis>L</emphasis> is the
+	log-likelihood and <emphasis>k</emphasis> is the total number
+	of parameters estimated. The <quote>frequency</quote> figure
+	  printed in connection with AR and MA roots is the &lgr;
+	  value that solves
+	  <informalequation>
+	  <alt role="tex">\[z=re^{i2\pi\lambda}\]</alt>
+	  <graphic fileref="figures/lambda"/>
+	  </informalequation> where <emphasis>z</emphasis> is the root
+	  in question and <emphasis>r</emphasis> is its modulus.
+      </para>
 
     </sect2>
 
