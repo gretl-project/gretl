@@ -19,13 +19,13 @@
 
 /* generate.c for gretl */
 
-#define GENR_DEBUG
+/* #define GENR_DEBUG */
 
 #include "libgretl.h"
 #include "internal.h"
 
 static int cstack (double *xstack, double *xvec, char op, 
-		   const DATAINFO *pdinfo, int scalar);
+		   const DATAINFO *pdinfo, int expand);
 static int domath (double *xvec, const double *mvec, int nt, 
 		   const DATAINFO *pdinfo, int *scalar);
 static int evalexp (char *ss, int nt, double *mvec, double *xvec, 
@@ -644,7 +644,8 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 #ifdef GENR_DEBUG
 	fprintf(stderr, "s='%s', zeroing mvec, xvec\n", s);
 #endif
-	for (i=t1; i<=t2; i++) mvec[i] = genr.xvec[i] = 0.0;
+	/* for (i=t1; i<=t2; i++) mvec[i] = genr.xvec[i] = 0.0; */
+	for (i=0; i<pdinfo->n; i++) mvec[i] = genr.xvec[i] = 0.0;
 
 	indx1 = strrchr(s, '('); /* point to last '(' */
 	if (indx1 == NULL) { /* no left parenthesis */
@@ -983,8 +984,8 @@ static void expand_vec (double *xx, const DATAINFO *pdinfo)
 
 /* ............................................................ */
 
-static int cstack (double *xstack, double *xvec, char op, 
-		   const DATAINFO *pdinfo, int scalar)
+static int cstack (double *mstack, double *xvec, char op, 
+		   const DATAINFO *pdinfo, int expand)
      /* calculate stack vector */
 {
     register int t;
@@ -992,48 +993,48 @@ static int cstack (double *xstack, double *xvec, char op,
     double xx, yy, *st2;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
 
-#ifdef GENR_DEBUG
-    fprintf(stderr, "in cstack(): scalar=%d\n", scalar);
-#endif
-
     st2 = malloc(pdinfo->n * sizeof *st2);
     if (st2 == NULL) return E_ALLOC;
 
-    if (scalar) {
-	for (t=0; t<t1; t++) xstack[t] = NADBL;
-	for (t=t2+1; t<pdinfo->n; t++) xstack[t] = NADBL;
+#ifdef GENR_DEBUG
+    fprintf(stderr, "in cstack() with op='%c', expand=%d\n", op, expand);
+#endif
+
+    if (expand) {
+	for (t=0; t<t1; t++) mstack[t] = NADBL;
+	for (t=t2+1; t<pdinfo->n; t++) mstack[t] = NADBL;
     }
 
-    for (t=t1; t<=t2; t++) st2[t] = xstack[t];
+    for (t=t1; t<=t2; t++) st2[t] = mstack[t];
 
     switch (op) {
     case '\0':
-	for (t=t1; t<=t2; t++) xstack[t] = xvec[t];
+	for (t=t1; t<=t2; t++) mstack[t] = xvec[t];
 	break;
     case '+':
-	for (t=t1; t<=t2; t++) xstack[t] += xvec[t];
+	for (t=t1; t<=t2; t++) mstack[t] += xvec[t];
 	break;
     case '|':
 	for (t=t1; t<=t2; t++) {
-	    xstack[t] = xstack[t] + xvec[t];
-	    if (floatneq(xstack[t], 0.)) xstack[t] = 1.0;
+	    mstack[t] = mstack[t] + xvec[t];
+	    if (floatneq(mstack[t], 0.)) mstack[t] = 1.0;
 	}
 	break;
     case '-':
-	for (t=t1; t<=t2; t++) xstack[t] -= xvec[t];
+	for (t=t1; t<=t2; t++) mstack[t] -= xvec[t];
 	break;
     case '*':
-	for (t=t1; t<=t2; t++) xstack[t] *= xvec[t];
+	for (t=t1; t<=t2; t++) mstack[t] *= xvec[t];
 	break;
     case '&':
 	for (t=t1; t<=t2; t++) {
-	    xstack[t] = xstack[t] * xvec[t];
-	    if (xstack[t] != 0.) xstack[t] = 1.0;
+	    mstack[t] = mstack[t] * xvec[t];
+	    if (mstack[t] != 0.) mstack[t] = 1.0;
 	}
 	break;
     case '%':
 	for (t=t1; t<=t2; t++) 
-	    xstack[t] = (double) ((int) xstack[t] % (int) xvec[t]);
+	    mstack[t] = (double) ((int) mstack[t] % (int) xvec[t]);
 	break;
     case '/':
 	for (t=t1; t<=t2; t++)  {
@@ -1043,12 +1044,12 @@ static int cstack (double *xstack, double *xvec, char op,
 		free(st2);
 		return 1;
 	    }
-	    xstack[t] /= xx;
+	    mstack[t] /= xx;
 	}
 	break;
     case '^':
 	for (t=t1; t<=t2; t++) {
-	    xx = xstack[t];
+	    xx = mstack[t];
 	    yy = xvec[t];
 	    ny = (long) yy;
 	    if ((floateq(xx, 0.0) && yy <= 0.0) || 
@@ -1059,59 +1060,59 @@ static int cstack (double *xstack, double *xvec, char op,
 		free(st2);
 		return 1;
 	    }
-	    if (floateq(xx, 0.0)) xstack[t] = 0.0;
-	    else xstack[t] = pow(xx, yy);
+	    if (floateq(xx, 0.0)) mstack[t] = 0.0;
+	    else mstack[t] = pow(xx, yy);
 	}
 	break;
     case '<':
 	for (t=t1; t<=t2; t++) 
-            if (xstack[t] < xvec[t]) xstack[t] = 1.0;
-            else xstack[t] = 0.0;
+            if (mstack[t] < xvec[t]) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
 	break;
     case '>':
 	for (t=t1; t<=t2; t++) 
-            if (xstack[t] > xvec[t]) xstack[t] = 1.0;
-            else xstack[t] = 0.0;
+            if (mstack[t] > xvec[t]) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
 	break;
     case '=':
 	for (t=t1; t<=t2; t++) 
-            if (floateq(xstack[t], xvec[t])) xstack[t] = 1.0;
-            else xstack[t] = 0.0;
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
 	break;
     case NEQ: /* not equals */
 	for (t=t1; t<=t2; t++) 
-            if (floateq(xstack[t], xvec[t])) xstack[t] = 0.0;
-            else xstack[t] = 1.0;
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 0.0;
+            else mstack[t] = 1.0;
 	break;
     case GEQ: /* greater than or equal */
 	for (t=t1; t<=t2; t++) {
-            if (floateq(xstack[t], xvec[t])) xstack[t] = 1.0;
-            else if (xstack[t] > xvec[t]) xstack[t] = 1.0;
-	    else xstack[t] = 0.0;
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 1.0;
+            else if (mstack[t] > xvec[t]) mstack[t] = 1.0;
+	    else mstack[t] = 0.0;
 	}
 	break;
     case LEQ: /* less than or equal */
 	for (t=t1; t<=t2; t++) {
-            if (floateq(xstack[t], xvec[t])) xstack[t] = 1.0;
-	    else if (xstack[t] < xvec[t]) xstack[t] = 1.0;
-            else xstack[t] = 0.0;
+            if (floateq(mstack[t], xvec[t])) mstack[t] = 1.0;
+	    else if (mstack[t] < xvec[t]) mstack[t] = 1.0;
+            else mstack[t] = 0.0;
 	}
 	break;
     case '!':
 	for (t=t1; t<=t2; t++)
-	    if (floatneq(xvec[t], 0.0)) xstack[t] = 0.0;
-	    else xstack[t] = 1.0;
+	    if (floatneq(xvec[t], 0.0)) mstack[t] = 0.0;
+	    else mstack[t] = 1.0;
 	break;
     } /* end of operator switch */
 
     for (t=t1; t<=t2; t++) 
-        if (na(xvec[t]) || na(st2[t])) xstack[t] = NADBL;
+        if (na(xvec[t]) || na(st2[t])) mstack[t] = NADBL;
 
-    if (scalar) {
+    if (expand) {
 #ifdef GENR_DEBUG
-	fprintf(stderr, "cstack: calling expand_vec()\n");
+	fprintf(stderr, "cstack: calling expand_vec() on mstack\n");
 #endif
-	expand_vec(xstack, pdinfo);
+	expand_vec(mstack, pdinfo);
     }
 
     free(st2);
@@ -1252,8 +1253,9 @@ static int domath (double *xvec, const double *mvec, int nt,
 	    x[++i] = xx;
 	}
 
-	if (nt == T_MEAN)
+	if (nt == T_MEAN) {
 	    xx = _esl_mean(0, i, x);
+	}
 	else if (nt == T_SUM) {
 	    xx = _esl_mean(0, i, x);
 	    xx *= (i + 1);
@@ -1338,7 +1340,7 @@ static int domath (double *xvec, const double *mvec, int nt,
 
     if (*scalar) {
 #ifdef GENR_DEBUG
-	fprintf(stderr, "domath: calling expand_vec()\n");
+	fprintf(stderr, "domath: calling expand_vec() on xvec\n");
 #endif
 	expand_vec(xvec, pdinfo);
     }
@@ -1353,26 +1355,39 @@ static int evalexp (char *ss, int nt, double *mvec, double *xvec,
 		    const MODEL *pmod, GENERATE *genr)
 {
     char s3[MAXLEN], op2, op3;
-    int ig;
+    int ig, v, expand;
     int *pscalar = &(genr->scalar);
+
+    if (SCALAR_SCOPE(nt)) {
+	pscalar = NULL;
+	genr->scalar = 1;
+    }
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "evalexp: ss='%s'\n", ss);
+    fprintf(stderr, "         nt = %d, scalar_scope? %s\n", nt,
+	   SCALAR_SCOPE(nt)? "Yes" : "No" );
 #endif
-
-    if (SCALAR_SCOPE(nt)) pscalar = NULL;
 
     /* evaluate expression inside parentheses and value in xvec */
     op3 = '\0';
     do {
+	/* don't expand real, vector variables */
+	expand = genr->scalar;
+	v = varindex(pdinfo, ss);
+	if (v == UHATNUM || (v < pdinfo->v && pdinfo->vector[v])) expand = 0;
 	getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
 	    ig = getxvec(s3, mvec, Z, pdinfo, pmod, pscalar);
 	    if (ig != 0) return ig;
-	    cstack(xvec, mvec, op3, pdinfo, genr->scalar);
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "evalexp, about to do cstack: ss='%s'\n", ss);
+#endif	    
+	    cstack(xvec, mvec, op3, pdinfo, expand);
 	    op3 = op2;
         }
     } while (strlen(ss) > 0);
+
     return 0;
 }
 
@@ -1563,7 +1578,7 @@ static int getxvec (char *s, double *xvec,
 	} 
 	else { /* a regular variable */
 #ifdef GENR_DEBUG
-	    fprintf(stderr, "R_VARNAME: v=%d, name=%s\n",
+	    fprintf(stderr, "get_xvec: R_VARNAME: v=%d, name=%s\n",
 		    v, pdinfo->varname[v]);
 #endif
 	    for (t=0; t<n; t++) 
@@ -2059,7 +2074,7 @@ static int createvar (double *xvec, char *snew, char *sleft,
 	fprintf(stderr, "createvar: added %s\n", ss);
 #endif
 	pdinfo->vector[mv] = 0;
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<pdinfo->n; t++) { 
 #ifdef GENR_DEBUG
 	    fprintf(stderr, "   putting xvec[%d]=%g into pos %d\n", t, xvec[t], t);
 #endif

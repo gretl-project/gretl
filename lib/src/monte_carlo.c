@@ -173,7 +173,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 
 int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 {
-    int t = pdinfo->t2;
+    int t;
     const int LOOPMAX = 80000; /* bodge: safety measure */
 
     if (ploop->lvar && ploop->ntimes > LOOPMAX) 
@@ -183,11 +183,11 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
     if (ploop->rvar > 0) {
 	ploop->ntimes += 1;
 	if (ploop->ineq == GT) {
-	    if (Z[ploop->lvar][t] > Z[ploop->rvar][t])
+	    if (Z[ploop->lvar][0] > Z[ploop->rvar][0])
 		return 1;
 	    else return 0;
 	} else {
-	    if (Z[ploop->lvar][t] < Z[ploop->rvar][t])
+	    if (Z[ploop->lvar][0] < Z[ploop->rvar][0])
 		return 1;
 	    else return 0;
 	}
@@ -204,10 +204,10 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
     /* case of inequality between a var and a number */
 	ploop->ntimes += 1;
 	if (ploop->ineq == GT) {
-	    if (Z[ploop->lvar][t] > ploop->rval) return 1;
+	    if (Z[ploop->lvar][0] > ploop->rval) return 1;
 	    else return 0;
 	} else {
-	    if (Z[ploop->lvar][t] < ploop->rval) return 1;
+	    if (Z[ploop->lvar][0] < ploop->rval) return 1;
 	    else return 0;
 	}
     }

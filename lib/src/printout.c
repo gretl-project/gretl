@@ -596,25 +596,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	print_aicetc(pmod, prn);
 	pmax_line(pmod, pdinfo, prn);
     }
-    else if (pmod->ci == HSK || pmod->ci == ARCH) {
-	pprintf(prn, _("Statistics based on the weighted data:\n\n"
-	       "R-squared is suppressed as it is not meaningful.  The "
-	       "F-statistic tests\nthe hypothesis that all parameters "
-	       "including the constant term are zero.\n\n"));
-	if (essline(pmod, prn, 1)) return gotnan;
-	if (Fline(pmod, prn)) gotnan = 1;
-	dwline(pmod, prn);
-	pprintf(prn, _("\nStatistics based on the original data:\n\n"
-	       "R-squared is computed as the square of the correlation "
-	       "between observed and\nfitted values of the dependent "
-	       "variable.\n\n"));
-	depvarstats(pmod, prn);
-	if (essline(pmod, prn, 0)) return gotnan;
-	rsqline(pmod, prn); 
-	print_aicetc(pmod, prn);
-	pmax_line(pmod, pdinfo, prn);
-    }
-    else if (pmod->ci == WLS && pmod->wt_dummy == 0) {
+    else if (pmod->ci == HSK || pmod->ci == ARCH ||
+	     (pmod->ci == WLS && pmod->wt_dummy == 0)) {
 #ifdef RAMANATHAN
 	pprintf(prn, _("Statistics based on the weighted data:\n\n"
 	       "R-squared is suppressed as it is not meaningful.  The "

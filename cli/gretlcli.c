@@ -224,7 +224,6 @@ int main (int argc, char *argv[])
     setlocale(LC_ALL, "");
     bindtextdomain(PACKAGE, LOCALEDIR);
     textdomain(PACKAGE);
-    fprintf(stderr, "done NLS thing\n");
 #endif
 
     datainfo = datainfo_new();
