@@ -806,6 +806,11 @@ void refresh_data (void)
 
 /* ........................................................... */
 
+void edit_info_state (gboolean s)
+{
+    flip(mdata->ifac, "/Data/Edit info", s);
+}
+
 void main_menubar_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
@@ -822,8 +827,7 @@ void main_menubar_state (gboolean s)
     flip(mdata->ifac, "/Model", s);
 
     if (s) {
-	flip(mdata->ifac, "/Data/Edit info", 
-	     !(data_status & BOOK_DATA));
+	edit_info_state(!(data_status & BOOK_DATA));
     }
 }
 
@@ -1087,7 +1091,7 @@ void set_sample_label (DATAINFO *pdinfo)
 	if (data_status & MODIFIED_DATA) {
 	    strcat(labeltxt, "* ");
 	} else if (data_status & GZIPPED_DATA) {
-	    strcat(labeltxt, "[z] ");
+	    strcat(labeltxt, "[gz] ");
 	}
 	if (datalabel != NULL) {
 	    gtk_label_set_text(GTK_LABEL(datalabel), labeltxt);

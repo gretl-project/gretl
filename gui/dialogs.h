@@ -9,6 +9,8 @@ enum {
     GRETL_CANCEL
 } buttons;
 
+extern GtkWidget *open_dialog;
+
 /* functions follow */
 
 void errbox (const char *msg);

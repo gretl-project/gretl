@@ -288,7 +288,11 @@ void gretl_fork (const char *prog, const char *arg);
  
 void main_menubar_state (gboolean s);
 
+void edit_info_state (gboolean s);
+
 void populate_varlist (void);
+
+void clear_varlist (GtkWidget *widget);
 
 void clear_sample_label (void);
 

@@ -22,8 +22,6 @@
 #include "gretl.h"
 #include "selector.h"
 
-extern GtkWidget *open_dialog; /* dialogs.c */
-
 static int default_var;
 static int *xlist;
 static int *auxlist;

@@ -726,11 +726,15 @@ void register_data (char *fname, const char *user_fname,
     } else if (!(data_status & IMPORT_DATA)) {
 	if (strstr(paths.datfile, paths.datadir) != NULL) {
 	    data_status |= BOOK_DATA;
+	    data_status &= ~USER_DATA;
 	} else {
+	    data_status &= ~BOOK_DATA;
 	    data_status |= USER_DATA; 
 	}
 	if (is_gzipped(paths.datfile)) {
 	    data_status |= GZIPPED_DATA;
+	} else {
+	    data_status &= ~GZIPPED_DATA;
 	}
     }
 

@@ -10,6 +10,8 @@ enum {
     HELP_BUTTON
 } buttons;
 
+extern GtkWidget *open_dialog;
+
 /* functions follow */
 
 void errbox (const char *msg);

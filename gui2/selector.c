@@ -23,9 +23,6 @@
 #include "selector.h"
 #include "treeutils.h"
 
-extern GtkWidget *open_dialog;            /* dialogs.c */
-extern void clear_varlist (GtkWidget *w); /* gretl.c */
-
 enum {
     SR_VARLIST,
     SR_RIGHTVARS,

@@ -363,8 +363,6 @@ void free_command_stack (void)
 
 void clear_data (void)
 {
-    extern void clear_varlist (GtkWidget *widget);
-
     *paths.datfile = 0;
     restore_sample();
     if (Z != NULL) free_Z(Z, datainfo); 
@@ -1661,9 +1659,6 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 
 void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w)
 {
-    extern GtkWidget *open_dialog;
-    extern void panel_structure_dialog (DATAINFO *, GtkWidget *);
-
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;
@@ -4305,7 +4300,8 @@ int do_store (char *savename, unsigned long oflag, int overwrite)
 	data_status = (HAVE_DATA | USER_DATA);
 	if (is_gzipped(paths.datfile)) {
 	    data_status |= GZIPPED_DATA;
-	}
+	} 
+	edit_info_state(TRUE);
 	set_sample_label(datainfo);	
     }
 
