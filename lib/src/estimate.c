@@ -2070,8 +2070,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (tmplist == NULL) err = E_ALLOC;
 	else {
 	    tmplist[0] = listlen - 1;
-	    for (i=1; i<=tmplist[0]; i++) 
-		tmplist[i] = pmod->list[i+1];
+	    for (i=1; i<=tmplist[0]; i++) {
+		tmplist[i] = pmod->list[i + 1 + pmod->ifc];
+	    }
 	}
     }
 
@@ -2136,6 +2137,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     clear_model(&white, pdinfo);
+
     shrink = pdinfo->v - v;
     if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
 
