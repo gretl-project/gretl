@@ -1,10 +1,10 @@
 version 1.2.1
 - Add Cristian Rigamonti's Italian translation
 - More flexible and general support for collections of data
-  files or script file
+  files or script files
 - Add support for the data files from Davidson & MacKinnon,
   Econometric Theory and Methods (ETM)
-- Make the NIST linear regression test suite available as a
+- Make the NIST linear regression test suite available via a
   plugin
 - Add ARMA model to the variable menu (plus "arma" command)
   (thanks to Jack Lucchetti)
@@ -19,6 +19,7 @@ version 1.2.1
 - Add a logistic model command and menu item
 - Fixes for reading of recent RATS databases (thanks to John
   Frain for a useful bug report)
+- Some updates to the manual and help files
 
 12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)

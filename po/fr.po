@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "POT-Creation-Date: 2004-01-13 16:51-0500\n"
-"PO-Revision-Date: 2003-12-09 22:19-0500\n"
+"PO-Revision-Date: 2004-01-16 13:23-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -523,7 +523,7 @@ msgstr "et juste une année\n"
 
 #: lib/src/dataio.c:2117
 msgid "   but the dates are not complete and consistent\n"
-msgstr ""
+msgstr "   mais les dates ne sont pas complètes et consistantes\n"
 
 #: lib/src/dataio.c:2124
 #, c-format
@@ -1519,7 +1519,7 @@ msgstr "Estimation généralisée de Cochrane-Orcutt"
 #: lib/src/estimate.c:2514
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
-msgstr ""
+msgstr "ITER             ESS           % CHANGEMENT"
 
 #: lib/src/estimate.c:2658
 msgid "variable"
@@ -2192,11 +2192,11 @@ msgstr ""
 
 #: lib/src/gretl_errors.c:88
 msgid "The convergence criterion was not met"
-msgstr ""
+msgstr "Le critère de convergence n'est pas respecté"
 
 #: lib/src/gretl_errors.c:89
 msgid "The operation was canceled"
-msgstr ""
+msgstr "L'opération a été annulée"
 
 #: lib/src/gretl_utils.c:587
 #, c-format
@@ -2557,9 +2557,8 @@ msgid "S.D. of dependent variable"
 msgstr "Écart-type de la variable dépendante"
 
 #: lib/src/modelprint.c:117 lib/src/modelprint.c:139 lib/src/modelprint.c:155
-#, fuzzy
 msgid "Mean of residuals"
-msgstr "résidus"
+msgstr "Moyenne des résiduels"
 
 #: lib/src/modelprint.c:121 lib/src/modelprint.c:143 lib/src/modelprint.c:162
 #: lib/src/modelprint.c:223 lib/src/modelprint.c:232 lib/src/modelprint.c:233
@@ -2740,14 +2739,12 @@ msgid "NLS"
 msgstr "NLS"
 
 #: lib/src/modelprint.c:502 gui/dialogs.c:1473 gui2/dialogs.c:1490
-#, fuzzy
 msgid "ARMA"
-msgstr "ARIMA"
+msgstr "ARMA"
 
 #: lib/src/modelprint.c:503 gui/selector.c:488 gui2/selector.c:726
-#, fuzzy
 msgid "Logistic"
-msgstr "Logit"
+msgstr "Logistique"
 
 #: lib/src/modelprint.c:505
 msgid "Cochrane--Orcutt"
@@ -2940,20 +2937,20 @@ msgstr "Similaire à une fonction logarithmique"
 #: lib/src/modelprint.c:1754 lib/src/modelprint.c:1759
 #: lib/src/modelprint.c:1768
 msgid "AIC"
-msgstr ""
+msgstr "AIC"
 
 #: lib/src/modelprint.c:1755 lib/src/modelprint.c:1760
 #: lib/src/modelprint.c:1770
 msgid "BIC"
-msgstr ""
+msgstr "BIC"
 
 #: lib/src/modelprint.c:1781
 msgid "AR roots"
-msgstr ""
+msgstr "racines AR"
 
 #: lib/src/modelprint.c:1793
 msgid "MA roots"
-msgstr ""
+msgstr "racines MA"
 
 #: lib/src/modelprint.c:1818 lib/src/modelprint.c:1837
 #: lib/src/modelprint.c:1860
@@ -3036,7 +3033,7 @@ msgstr "Echec de la convergence après %d itérations"
 
 #: lib/src/monte_carlo.c:258
 msgid "Loop condition not satisfied at first round"
-msgstr ""
+msgstr "Condition de boucle n'est pas satisfaite après une première itération"
 
 #: lib/src/monte_carlo.c:633
 #, c-format
@@ -3211,9 +3208,8 @@ msgid "Obs"
 msgstr "Obs"
 
 #: lib/src/nonparam.c:166 lib/src/nonparam.c:167
-#, fuzzy
 msgid "rank"
-msgstr "Étendue"
+msgstr "rang"
 
 #: lib/src/nonparam.c:222
 msgid ""
@@ -3438,9 +3434,8 @@ msgid "Full data range"
 msgstr "Étendue complète des données"
 
 #: lib/src/printout.c:378
-#, fuzzy
 msgid "Current sample"
-msgstr "Échantillon courant:  %s - %s"
+msgstr "Échantillon courant"
 
 #: lib/src/printout.c:583
 msgid ""
@@ -6210,27 +6205,24 @@ msgid "End:"
 msgstr "Fin:"
 
 #: gui/dialogs.c:1485 gui2/dialogs.c:1502
-#, fuzzy
 msgid "AR order:"
-msgstr "ordre de délai:"
+msgstr "ordre AR:"
 
 #: gui/dialogs.c:1492 gui2/dialogs.c:1509
-#, fuzzy
 msgid "MA order:"
-msgstr "ordre de délai:"
+msgstr "ordre MA:"
 
 #: gui/dialogs.c:1504 gui2/dialogs.c:1521
 msgid "Show details of iterations"
-msgstr ""
+msgstr "Afficher les détails des itérations"
 
 #: gui/dialogs.c:1518 gui2/dialogs.c:1534
-#, fuzzy
 msgid "Use X-12-ARIMA"
-msgstr "gretl: analyse X-12-ARIMA"
+msgstr "Utilisation de X-12-ARIMA"
 
 #: gui/dialogs.c:1525 gui2/dialogs.c:1541
 msgid "Native code (experimental)"
-msgstr ""
+msgstr "Code natif (expérimental)"
 
 #: gui/dialogs.c:1600
 msgid "gretl error"
@@ -6447,7 +6439,7 @@ msgstr "position clé"
 
 #: gui/gpt_control.c:871 gui2/gpt_control.c:871
 msgid "Show full border"
-msgstr ""
+msgstr "Afficher les frontières complètes"
 
 #: gui/gpt_control.c:887 gui2/gpt_control.c:887
 msgid "Hide fitted line"
@@ -7004,23 +6996,20 @@ msgid "/Utilities/Start GNU R"
 msgstr "/Utilitaires/lancer GNU R"
 
 #: gui/gretl.c:296 gui2/gretl.c:349
-#, fuzzy
 msgid "/Utilities/NIST test suite"
-msgstr "/Utilitaires/tables statistiques"
+msgstr "/Utilitaires/suite de test NIST"
 
 #: gui/gretl.c:297 gui2/gretl.c:350
-#, fuzzy
 msgid "/Utilities/NIST test suite/basic"
-msgstr "/Utilitaires/Calcul de test statistique"
+msgstr "/Utilitaires/suite de tests NIST/à la base"
 
 #: gui/gretl.c:298 gui2/gretl.c:351
-#, fuzzy
 msgid "/Utilities/NIST test suite/verbose"
-msgstr "/Utilitaires/tables statistiques"
+msgstr "/Utilitaires/suite de tests NIST/mode explicatif"
 
 #: gui/gretl.c:299 gui2/gretl.c:352
 msgid "/Utilities/NIST test suite/very verbose"
-msgstr ""
+msgstr "/Utilitaires/suite de tests NIST/mode hyper explicatif"
 
 #: gui/gretl.c:302 gui2/gretl.c:355
 msgid "/_Session"
@@ -7393,9 +7382,8 @@ msgid "/Variable/_Augmented Dickey-Fuller test"
 msgstr "/Variable/Test _augmenté de Dickey-Fuller"
 
 #: gui/gretl.c:433 gui2/gretl.c:505
-#, fuzzy
 msgid "/Variable/ARMA model"
-msgstr "/Variable/_Ajouter"
+msgstr "/Variable/modèle ARMA"
 
 #: gui/gretl.c:435 gui2/gretl.c:507
 msgid "/Variable/X-12-ARIMA analysis"
@@ -7506,9 +7494,8 @@ msgid "/Model/_Probit..."
 msgstr "/Modèle/_Probit..."
 
 #: gui/gretl.c:469 gui2/gretl.c:543
-#, fuzzy
 msgid "/Model/Logistic..."
-msgstr "/Modèle/_Logit..."
+msgstr "/Modèle/Logistique..."
 
 #: gui/gretl.c:470 gui2/gretl.c:544
 msgid "/Model/Least _Absolute Deviation..."
@@ -7706,9 +7693,8 @@ msgid "Spectrum (Bartlett)"
 msgstr "Spectre (Bartlett)"
 
 #: gui/gretl.c:1331 gui/gretl.c:1363 gui2/gretl.c:1387 gui2/gretl.c:1417
-#, fuzzy
 msgid "ARMA model"
-msgstr "Modèle"
+msgstr "Modèle ARMA"
 
 #: gui/gretl.c:1333 gui/gretl.c:1364 gui2/gretl.c:1389 gui2/gretl.c:1418
 msgid "Dickey-Fuller test"
@@ -8532,13 +8518,12 @@ msgid "%s/by %s"
 msgstr "%s/par %s"
 
 #: gui/gui_utils.c:2620 gui2/gui_utils.c:2620
-#, fuzzy
 msgid "/Model data/x12sep"
-msgstr "/Données du modèle/sep1"
+msgstr "/Données du modèle/x12sep"
 
 #: gui/gui_utils.c:2621 gui2/gui_utils.c:2621
 msgid "/Model data/view X-12-ARIMA output"
-msgstr ""
+msgstr "/Données du modèle/afficher les sorties de X-12-ARIMA"
 
 #: gui/gui_utils.c:2671 gui2/gui_utils.c:2671
 msgid "/Graphs"
@@ -8903,9 +8888,8 @@ msgid "Sorry, not implemented yet!"
 msgstr "Désolé, pas encore complété!"
 
 #: gui/library.c:2382 gui2/library.c:2382
-#, fuzzy
 msgid "gretl: ARMA"
-msgstr "gretl: test ARCH"
+msgstr "gretl: test ARMA"
 
 #: gui/library.c:2427 gui2/library.c:2427
 #, c-format
@@ -10444,54 +10428,51 @@ msgid "/Add _Variable"
 msgstr "/Ajouter _Variable"
 
 #: plugin/arma.c:416
-#, fuzzy
 msgid "Error in arma command"
-msgstr "Erreur de syntaxe dans la ligne de commande"
+msgstr "Erreur la commande arma"
 
 #: plugin/arma.c:700
 msgid "Maximum number of subiterations reached: quitting"
-msgstr ""
+msgstr "Nombre maximum de sous-itérations atteint: abandon"
 
 #: plugin/arma.c:705
 #, c-format
 msgid "  constant        = %.8g (gradient = %#.6g)\n"
-msgstr ""
+msgstr "  constante       = %.8g (gradient = %#.6g)\n"
 
 #: plugin/arma.c:708
 #, c-format
 msgid "  ar%d coefficient = %.8g (gradient = %#.6g)\n"
-msgstr ""
+msgstr "  ar%d coefficient = %.8g (gradient = %#.6g)\n"
 
 #: plugin/arma.c:712
 #, c-format
 msgid "  ma%d coefficient = %.8g (gradient = %#.6g)\n"
-msgstr ""
+msgstr "  ma%d coefficient = %.8g (gradient = %#.6g)\n"
 
 #: plugin/arma.c:715
 #, c-format
 msgid "  steplength = %.6g (subiterations = %d)\n"
-msgstr ""
+msgstr "  longueur du pas = %.6g (subiterations = %d)\n"
 
 #: plugin/arma.c:720
 #, c-format
 msgid ""
 "  criterion = %g\n"
 "\n"
-msgstr ""
+msgstr "  critère = %g\n\n"
 
 #: plugin/arma_x12.c:631
-#, fuzzy
 msgid "Syntax error in arma command"
-msgstr "Erreur de syntaxe dans la ligne de commande"
+msgstr "Erreur de syntaxe dans la commande arma"
 
 #: plugin/arma_x12.c:667 plugin/tramo-x12a.c:760
 msgid "is a scalar"
 msgstr "est un scalaire"
 
 #: plugin/arma_x12.c:713
-#, fuzzy
 msgid "Failed to execute x12arima"
-msgstr "Échec de génération du graphe"
+msgstr "Échec d'exécution x12arima"
 
 #: plugin/excel_import.c:109
 #, c-format
@@ -10610,24 +10591,20 @@ msgid "row:"
 msgstr "rangée:"
 
 #: plugin/johansen.c:244
-#, fuzzy
 msgid "Rank"
-msgstr "Étendue"
+msgstr "Rang"
 
 #: plugin/johansen.c:244
-#, fuzzy
 msgid "Eigenvalue"
-msgstr "valeur"
+msgstr "valeur de Eigen"
 
 #: plugin/johansen.c:245
-#, fuzzy
 msgid "Trace test"
-msgstr "test des variances"
+msgstr "test trace"
 
 #: plugin/johansen.c:246
-#, fuzzy
 msgid "Lmax test"
-msgstr "test des moyennes"
+msgstr "test Lmax"
 
 #: plugin/johansen.c:260
 msgid "Failed to find eigenvalues\n"
@@ -10654,26 +10631,24 @@ msgid "No leverage points were found"
 msgstr "Aucune point de puissance n'a été trouvé"
 
 #: plugin/logistic.c:50 plugin/logistic.c:185
-#, fuzzy
 msgid "Invalid value for the maximum of the dependent variable"
-msgstr "Moyenne de la variable dépendante"
+msgstr "Valeur invalide pour le maximum de la variable dépendante"
 
 #: plugin/logistic.c:78
-#, fuzzy
 msgid "Logistic model"
-msgstr "modèle MCO"
+msgstr "Modèle logistique"
 
 #: plugin/logistic.c:96
-#, fuzzy
 msgid ""
 "Maximum (asymptote) for the\n"
 "dependent variable"
-msgstr "Moyenne de la variable dépendante"
+msgstr ""
+"Maximum (asymptote) pour la\n"
+"variable dépendante"
 
 #: plugin/logistic.c:166
-#, fuzzy
 msgid "Illegal non-positive value of the dependent variable"
-msgstr "Moyenne de la variable dépendante"
+msgstr "Valeur illégale non positive de la variable dépendante"
 
 #: plugin/mp_ols.c:129
 #, c-format
