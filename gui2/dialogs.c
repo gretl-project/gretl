@@ -47,7 +47,7 @@ void random_dialog (gpointer data, guint code, GtkWidget *widget)
 	edit_dialog (_("gretl: uniform variable"), 
 		     _("Enter name for variable, and\n"
 		       "minimum and maximum values:"), 
-		     "unif 0 100",  
+		     "unif 0 1",  
 		     do_random, NULL, 
 		     GENR_UNIFORM, GENR);
     } else if (code == GENR_NORMAL) {

@@ -2189,12 +2189,12 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
 {
     char *buf;
     char tmp[32], vname[9];
-    float f1, f2;
+    double f1, f2;
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
 
-    if (sscanf(buf, "%s %f %f", tmp, &f1, &f2) != 3) {
+    if (sscanf(buf, "%31s %lf %lf", tmp, &f1, &f2) != 3) {
 	if (ddata->code == GENR_NORMAL) 
 	    errbox(_("Specification is malformed\n"
 		   "Should be like \"foo 1 2.5\""));
@@ -2210,22 +2210,22 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Range is non-positive!"));
 	return;
     }
-	
-    strncpy(vname, tmp, 8);
-    vname[8] = '\0';
+
+    *vname = 0;
+    strncat(vname, tmp, 8);
     if (validate_varname(vname)) return;
 
     clear(line, MAXLEN);
 
     if (ddata->code == GENR_NORMAL) {
 	if (f1 != 0. || f2 != 1.)
-	    sprintf(line, "genr %s = %.3f * normal() + %.3f", 
+	    sprintf(line, "genr %s = %g * normal() + %g", 
 		    vname, f2, f1);
 	else sprintf(line, "genr %s = normal()", vname); 
     } else {
-	if (f1 != 0. || f2 != 100.)
-	    sprintf(line, "genr %s = %.3f + (uniform() * %.3f)", 
-		    vname, f1, (f2 - f1)/100.);
+	if (f1 != 0. || f2 != 1.)
+	    sprintf(line, "genr %s = %g + (uniform() * %g)", 
+		    vname, f1, (f2 - f1));
 	else sprintf(line, "genr %s = uniform()", vname); 
     }
 
