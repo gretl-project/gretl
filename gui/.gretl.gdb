@@ -1,2 +1,2 @@
-set args /home/allin/taxes.gdt 
+set args  
 run

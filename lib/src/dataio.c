@@ -2225,6 +2225,8 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 
 #define UTF const xmlChar *
 
+/* #define XML_DEBUG */
+
 static char *simple_fname (char *dest, const char *src)
 {
     char *p;
@@ -2248,6 +2250,10 @@ static char *xml_encode (char *buf)
     char *xmlbuf, *p;
     size_t sz = strlen(buf) + 1;
 
+#ifdef XML_DEBUG
+    fprintf(stderr, "xml_encode: original buffer size=%d\n", sz);
+#endif
+
     p = buf;
     while (*buf++) {
 	if (*buf == '&') sz += 4;
@@ -2258,9 +2264,12 @@ static char *xml_encode (char *buf)
 
     xmlbuf = malloc(sz);
     if (xmlbuf == NULL) {
-	fprintf(stderr, "out of memory in XML encoding\n");
+	sprintf(gretl_errmsg, "out of memory in XML encoding\n");
 	return NULL;
     }
+#ifdef XML_DEBUG
+    fprintf(stderr, "xml_encode: malloc'd xmlbuf at size %d\n", sz);
+#endif
     p = xmlbuf;
     while (*buf) {
 	if (*buf == '&') {
@@ -2278,6 +2287,11 @@ static char *xml_encode (char *buf)
 	buf++;
     }
     xmlbuf[sz-1] = '\0';
+
+#ifdef XML_DEBUG
+    fprintf(stderr, "done xml_encode: xmlbuf='%s'\n", xmlbuf);
+#endif
+
     return xmlbuf;
 }
 
@@ -2303,8 +2317,8 @@ static int write_xmldata (const char *fname, const int *list,
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    char startdate[8], enddate[8], datname[MAXLEN], type[24];
-    char *xmlbuf;
+    char startdate[8], enddate[8], datname[MAXLEN], type[32];
+    char *xmlbuf = NULL;
 
     err = 0;
     if (opt) {
@@ -2315,13 +2329,13 @@ static int write_xmldata (const char *fname, const int *list,
 	if (fp == NULL) err = 1;
     }
     if (err) {
-	fprintf(stderr, "Couldn't open %s for writing\n", fname);
+	sprintf(gretl_errmsg, "Couldn't open %s for writing\n", fname);
 	return 1;
     }
 
     pmax = malloc(list[0] * sizeof *pmax);
     if (pmax == NULL) {
-	fprintf(stderr, "Out of memory\n");
+	sprintf(gretl_errmsg, "Out of memory\n");
 	return 1;
     } 
     for (i=1; i<=list[0]; i++) 
@@ -2368,11 +2382,17 @@ static int write_xmldata (const char *fname, const int *list,
 	xmlbuf = xml_encode(pdinfo->descrip);
 	if (xmlbuf == NULL) return 1;
 	else {
-	    if (opt)
-		gzprintf(fz, "<description>\n%s</description>\n", xmlbuf);
+	    if (opt) {
+		gzputs(fz, "<description>\n");
+		gzputs(fz, xmlbuf);
+		gzputs(fz, "</description>\n");
+	    }
 	    else
 		fprintf(fp, "<description>\n%s</description>\n", xmlbuf);
 	    free(xmlbuf);
+#ifdef XML_DEBUG
+	    fprintf(stderr, "xmlbuf encoded buffer freed\n");
+#endif
 	}
     }
 
@@ -2396,12 +2416,12 @@ static int write_xmldata (const char *fname, const int *list,
 		free(xmlbuf);
 	    }
 	} else {
-	    if (opt) gzprintf(fz, "/>\n");
-	    else fprintf(fp, "/>\n");
+	    if (opt) gzputs(fz, "/>\n");
+	    else fputs("/>\n", fp);
 	}
     }
-    if (opt) gzprintf(fz, "</variables>\n");
-    else fprintf(fp, "</variables>\n");
+    if (opt) gzputs(fz, "</variables>\n");
+    else fputs("</variables>\n", fp);
 
     /* then listing of observations */
     if (opt)
@@ -2411,25 +2431,25 @@ static int write_xmldata (const char *fname, const int *list,
 	fprintf(fp, "<observations count=\"%d\" labels=\"%s\">\n",
 		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (opt) gzprintf(fz, "<obs");
-	else fprintf(fp, "<obs");
+	if (opt) gzputs(fz, "<obs");
+	else fputs("<obs", fp);
 	if (pdinfo->markers && pdinfo->S != NULL) {
 	    if (opt) gzprintf(fz, " label=\"%s\">", pdinfo->S[t]);
 	    else fprintf(fp, " label=\"%s\">", pdinfo->S[t]);
 	} else {
-	    if (opt) gzprintf(fz, ">");
+	    if (opt) gzputs(fz, ">");
 	    else fputs(">", fp);
 	}
 	for (i=1; i<=list[0]; i++) {
 	    if (na(Z(list[i], t))) {
-		if (opt) gzprintf(fz, "-999 ");
-		else fprintf(fp, "-999 ");
+		if (opt) gzputs(fz, "-999 ");
+		else fputs("-999 ", fp);
 	    } else {
 		if (opt) gzprintf(fz, "%.*f ", pmax[i-1], Z(list[i], t));
 		else fprintf(fp, "%.*f ", pmax[i-1], Z(list[i], t));
 	    }
 	}
-	if (opt) gzprintf(fz, "</obs>\n");
+	if (opt) gzputs(fz, "</obs>\n");
 	else fputs("</obs>\n", fp);
     }
 

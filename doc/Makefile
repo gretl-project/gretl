@@ -38,9 +38,12 @@ html: $(SRC) db2html $(DSL) $(HMATHSS)
 	./db2html $(SRC)
 	./texmath2png.pl manual-html/equation-list.sgml
 
-html-help:
-	cd htmlhelp && \
-	saxon ../$(SRC) $(XSLDIR)/htmlhelp/htmlhelp.xsl tex.math.in.alt=latex
+htmlhelp:
+	cd gretlhlp && \
+	saxon ../$(SRC) ../gretlhlp.xsl tex.math.in.alt=latex
+	mkdir -p gretlhlp/figures
+	cp figures/*.png gretlhlp/figures
+	cd gretlhlp/figures && ./mkgif
 
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex

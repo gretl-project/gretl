@@ -13,10 +13,17 @@ version 0.98
 - change default user directory to ~/gretl under unix
 - add option to make cwd rather than userdir the default
   for file opening and saving
+- Change the default data format to XML (optionally gzipped)
+  but retain backward compatibility with old ascii data
+  format
+- add dependency on libxml (dll suplied for win32)
 - switch from ".dat" to ".gdt" as default filename extension
   for gretl datafiles (but add option to GUI to use ".dat")
 - changing to storing data header info in buffer rather than using
   repeated file I/O
+- add drag and drop support for datafiles under win32, 
+  register the .gdt suffix for gretl datafiles, and add an icon
+  for these files
 
 version 0.97
 - fix breakage of var command in GUI
