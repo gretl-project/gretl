@@ -46,7 +46,7 @@ I have therefore taken some time to construct specifically auditory
 representations of the content of some gretl windows (so far, only a
 few).  These representations (a) skip some detail which cannot be
 given perspicuously in auditory mode, while (b) offering some
-(hopefully) helpful redundancy in respect of the basics.  q
+(hopefully) helpful redundancy in respect of the basics. 
 
 Dependencies
 ============
@@ -63,7 +63,7 @@ Relevant URLs.  For flite, see:
 
   http://www.speech.cs.cmu.edu/flite/
 
-and for the Windows spi, see:
+and for the Windows sapi, see:
 
   http://www.microsoft.com/speech/download/sdk51/
 
@@ -74,7 +74,7 @@ MIDI player: On linux this is typically timidity,
 and on Windows it is typically Winamp.  On Linux you can choose a MIDI
 player (and its options) using an environment variable (see below).
 On Windows the MIDI player is whatever is offered by the Windows
-ShellExecute() function applied to a MIDI file.
+ShellExecute() function as applied to a MIDI file.
 
 How To
 ======
@@ -113,7 +113,7 @@ Assuming gretl was built with audio support, here are the controls:
     get a brief speech-synthesized description followed by a MIDI
     play-through of the graph.
 
-(2) When a gretl text window is diplayed, again press the "a" key to
+(2) When a gretl text window is displayed, again press the "a" key to
     get an audio representation.  Press "x" to stop the read-out.  In
     some cases the read-out will be a simple TTS rendering of the
     visible content of the window, which may or may not be very useful
@@ -137,7 +137,8 @@ default (which is a bit too quiet on my system).  Personally, I use
 
   GRETL_MIDI_PLAYER="timidity -A500 -ig"
 
-to get timidity to present its Gtk user interface.
+to get timidity to present its Gtk user interface (see the timidity
+manpage for details).
 
 Allin Cottrell
 Wake Forest university
