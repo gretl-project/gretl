@@ -27,6 +27,8 @@ double chisq (const double zx, const int k);
 
 double normal (const double zx);
 
+double rhocrit95 (const int n);
+
 double batch_pvalue (const char *str, 
 		     const double *Z, const DATAINFO *pdinfo, 
                      print_t *prn);

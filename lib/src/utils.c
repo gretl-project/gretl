@@ -452,34 +452,27 @@ void free_corrmat (CORRMAT *corrmat)
 
 CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
 /* computes pairwise correlation coefficients for 
-   variables in list, other than a constant, from
-   obs pdinfo->t1 to pdinfo->t2.  
+   variables in list, skipping any constants, from
+   observation pdinfo->t1 to pdinfo->t2.  
 */
 {
     CORRMAT *corrmat;
-    int *p;
-    int i = 0, j, lo, n, nij, mm;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int *p = NULL;
+    int i, j, lo, nij, mm;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n; 
 
     corrmat = malloc(sizeof *corrmat);
     if (corrmat == NULL) return NULL;
 
-    if (list == NULL) {
-	p = malloc(pdinfo->v * sizeof *p);
-	if (p == NULL) {
-	    free(corrmat);
-	    return NULL;
-	}
-	p[0] = pdinfo->v - 1;
-	for (j=1; j<pdinfo->v; j++) p[j] = j;
-    } else {
-	copylist(&p, list);
-    }
+    copylist(&p, list);
+    if (p == NULL) {
+	free(corrmat);
+	return NULL;
+    }	
 
-    n = pdinfo->n;
     /* drop any constants from list */
     for (i=1; i<=p[0]; i++) {
-	if (isconst(pdinfo->t1, pdinfo->t2, &(*pZ)[n * p[i]])) {
+	if (isconst(t1, t2, &(*pZ)[n * p[i]])) {
 	    list_exclude(i, p);
 	    i--;
 	}
@@ -488,8 +481,10 @@ CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
 
     lo = corrmat->list[0];  
     corrmat->n = t2 - t1 + 1;
+    fprintf(stderr, "set corrmat->n = %d\n", corrmat->n);
     mm = (lo * (lo + 1))/2;
-    if ((corrmat->xpx = malloc(mm * sizeof(double))) == NULL) {
+    corrmat->xpx = malloc(mm * sizeof(double));
+    if (corrmat->xpx == NULL) {
 	free_corrmat(corrmat);
 	return NULL;
     }
@@ -505,6 +500,9 @@ CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
 				     &(*pZ)[n * corrmat->list[j] + t1]);
 	}
     }
+
+    corrmat->t1 = t1;
+    corrmat->t2 = t2;
 
     return corrmat;
 }

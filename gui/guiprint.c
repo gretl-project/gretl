@@ -826,13 +826,26 @@ void texprint_corrmat (CORRMAT *corr,
 {
     register int i, j;
     int lo, ljnf, nf, li2, p, k, index, ij2;
-    char tmp[16];
+    char date1[9], date2[9], tmp[16];
     enum { FIELDS = 5 };
 
-    pprintf(prn, "\\begin{center}\n"
-	    "\\begin{tabular}{rrrrr}\n");
+    fprintf(stderr, "texprint_corrmat: corrmat->n = %d\n", corr->n);
+
+    ntodate(date1, corr->t1, pdinfo);
+    ntodate(date2, corr->t2, pdinfo);
 
     lo = corr->list[0];
+
+    pprintf(prn, "\\begin{center}\n"
+	    "Correlation coefficients, using the observations "
+	    "%s--%s\\\\\n(skipping any missing values)\\\\\n", 
+	    date1, date2);
+    pprintf(prn, "5\\%% critical value (two-tailed) = "
+	    "%.3f for n = %d\\\\\n", rhocrit95(corr->n), corr->n);
+
+    pprintf(prn, "\\vspace{8pt}\n\\begin{tabular}{rrr%s}\n",
+	    (lo == 3)? "r" : (lo == 4)? "rr" : "rrr");
+
     for (i=0; i<=lo/FIELDS; i++) {
 	nf = i * FIELDS;
 	li2 = lo - nf;
@@ -851,7 +864,7 @@ void texprint_corrmat (CORRMAT *corr,
 	/* insert spacers */
 	for (j=1; j<=p; ++j) 
 	    pprintf(prn, "\\rule{13ex}{0pt} & ");
-	pprintf(prn, "\\\\\[-4pt]\n");    
+	pprintf(prn, "\\\\\[-6pt]\n");    
 
 	/* print rectangular part, if any, of matrix */
 	for (j=1; j<=nf; j++) {
@@ -872,8 +885,10 @@ void texprint_corrmat (CORRMAT *corr,
 	    }
 	    pprintf(prn, "(%d\\\\\n", corr->list[ij2]);
 	}
-	pprintf(prn, "\\end{tabular}\n\\end{center}\n");
+	pprintf(prn, "\\\\\n");
     }
+    pprintf(prn, "\\end{tabular}\n\\end{center}\n");
+    
 }
 
 /* .................................................................. */

@@ -89,7 +89,7 @@ typedef struct {
 } GRETLSUMMARY;
 
 typedef struct {
-    int n;
+    int n, t1, t2;
     int *list;
     double *xpx;
 } CORRMAT;

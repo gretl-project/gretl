@@ -50,7 +50,7 @@ double tcrit95 (const int df)
 
 /* ...................................................................	*/
 
-double _rhocrit95 (const int n)
+double rhocrit95 (const int n)
      /* 95 percent critical value of sample correlation coeff. */
 {
     double x = 1.960;

@@ -33,7 +33,6 @@
 
 extern void _mxout (const double *rr, const int *list, const int ci,
 		    const DATAINFO *pdinfo, const int batch, print_t *prn);
-extern double _rhocrit95 (const int n);
 
 /* ........................................................... */
 
@@ -776,7 +775,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 {
     prhdr("Correlation Coefficients", pdinfo, CORR, prn);
     pprintf(prn, "              5%% critical value (two-tailed) = "
-	    "%.3f for n = %d\n\n", _rhocrit95(corr->n), corr->n);
+	    "%.3f for n = %d\n\n", rhocrit95(corr->n), corr->n);
 
     _mxout(corr->xpx, corr->list, CORR, pdinfo, batch, prn);
 }
@@ -811,7 +810,7 @@ int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo,
     lo = list[0];
     prhdr("Correlation Coefficients", pdinfo, CORR, prn);
     pprintf(prn, "              5%% critical value (two-tailed) = "
-	    "%.3f for n = %d\n\n", _rhocrit95(len), len);
+	    "%.3f for n = %d\n\n", rhocrit95(len), len);
 
     for (i=1; i<=lo; i++) {   
 	for (j=i;j<=lo; j++)  {

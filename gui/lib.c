@@ -568,7 +568,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     /* execute the command */
     switch (action) {
     case CORR:
-	/* err = esl_corrmx(command.list, &Z, datainfo, 1, TEXT, &prn); */
 	corr = corrlist(command.list, &Z, datainfo);
 	if (corr == NULL) {
 	    errbox("Failed to generate correlation matrix");
