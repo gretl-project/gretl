@@ -158,7 +158,7 @@ static gretl_equation_system *gretl_equation_system_new (int type)
     sys->type = type;
     sys->n_equations = 0;
     sys->n_identities = 0;
-    sys->nobs = 0;
+    sys->n_obs = 0;
     sys->flags = 0;
     sys->lists = NULL;
     sys->endog_vars = NULL;
