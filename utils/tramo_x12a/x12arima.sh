@@ -56,10 +56,10 @@ cat > $THISDIR/x12a_make.diff << EOF
  DEST      = .
  EXTHDRS         =
 -FFLAGS    = -c -C -g -Nl99
-+FFLAGS    = #-c -C -g -Nl99
++FFLAGS    = -O2
  HDRS            =
 -LDFLAGS   = -g -dn -Bstatic
-+LDFLAGS   = #-g -dn -Bstatic
++LDFLAGS   = -s
  LDMAP     = 
  LIBS      =
  MAKEFILE  = Makefile

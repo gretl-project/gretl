@@ -32,9 +32,12 @@ int main (int argc, char *argv[])
    workdir = argv[argc - 1];
 
    si.cb = sizeof si;
+#ifdef notdef
    si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
    si.wShowWindow = SW_HIDE;
-   si.dwFlags    = STARTF_USESTDHANDLES;
+#else
+   si.dwFlags = STARTF_USESTDHANDLES;
+#endif
    si.hStdInput  = GetStdHandle (STD_INPUT_HANDLE);
    si.hStdOutput = GetStdHandle (STD_OUTPUT_HANDLE);
    si.hStdError  = GetStdHandle (STD_ERROR_HANDLE);

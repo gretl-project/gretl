@@ -1361,8 +1361,8 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     }
 
     if (gui_open_plugin("panel_data", &handle)) return;
-    panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
 
+    panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
     if (panel_diagnostics == NULL) {
 	errbox(_("Couldn't load plugin function"));
 	close_plugin(handle);
@@ -1381,8 +1381,6 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     view_buffer(prn, 78, 400, _("gretl: panel model diagnostics"), 
 		PANEL, view_items);
 }
-
-
 
 /* ........................................................... */
 

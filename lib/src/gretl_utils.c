@@ -2241,7 +2241,7 @@ int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
     else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
         char Tstr[8];
 
-        if (sscanf(pdinfo->endobs, "%[^.].%d", Tstr, nunits) != 2)
+        if (sscanf(pdinfo->endobs, "%[^:]:%d", Tstr, nunits) != 2)
             err = 1;
         else 
             *T = atoi(Tstr);
@@ -2292,11 +2292,11 @@ int balanced_panel (const DATAINFO *pdinfo)
     if ((pdinfo->t2 - pdinfo->t1 + 1) % pdinfo->pd)
         return 0;
 
-    if (sscanf(pdinfo->endobs, "%[^.].%s", unit, period) == 2) {
-        if (atoi(period) != pdinfo->pd)
-            return 0;
-    } else 
+    if (sscanf(pdinfo->endobs, "%[^:]:%s", unit, period) == 2) {
+        if (atoi(period) != pdinfo->pd) return 0;
+    } else {
         return 0;
+    }
 
     return 1;
 }

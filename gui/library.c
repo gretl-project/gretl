@@ -2399,9 +2399,7 @@ extern char tramodir[];
 extern char x12a[];
 extern char x12adir[];
 
-#define CHUNK 8192
-
-static int file_get_contents (const char *fname, char **bufp)
+static char *file_get_contents (const char *fname)
 {
     char *buf, *p;
     FILE *fp;
@@ -2409,35 +2407,33 @@ static int file_get_contents (const char *fname, char **bufp)
     int c;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) return NULL;
 
-    buf = malloc(CHUNK);
+    buf = malloc(BUFSIZ);
     if (buf == NULL) {
 	fclose(fp);
-	return 1;
+	return NULL;
     }
-    alloced = CHUNK;
+    alloced = BUFSIZ;
 
     i = 0;
     while ((c = getc(fp)) != EOF) {
 	if (i + 2 == alloced) { /* allow for terminating 0 */
-	    p = realloc(buf, alloced + CHUNK);
+	    p = realloc(buf, alloced + BUFSIZ);
 	    if (p == NULL) {
 		free(buf);
 		fclose(fp);
-		return 1;
+		return NULL;
 	    }
 	    buf = p;
-	    alloced += CHUNK;
+	    alloced += BUFSIZ;
 	}
 	buf[i++] = c;
     }
     buf[i] = 0;
 
     fclose(fp);
-    *bufp = buf;
-
-    return 0;
+    return buf;
 }
 
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
@@ -2497,7 +2493,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	if (*fname == 0) return;
     }	
 
-    if (file_get_contents(fname, &databuf) || databuf == NULL) {
+    databuf = file_get_contents(fname);
+    if (databuf == NULL) {
 	errbox((opt == TRAMO)? _("TRAMO command failed") : 
 	       _("X-12-ARIMA command failed"));
 	gretl_print_destroy(prn);
