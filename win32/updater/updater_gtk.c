@@ -49,6 +49,10 @@ static void getout (int err)
 	fclose(flg);
     }
 
+    if (*get_fname && prog_opt != UPDATER_GET_FILE) {
+	remove(get_fname);
+    }
+
     if (err) {
 	exit(EXIT_FAILURE);
     } 
@@ -574,12 +578,13 @@ static gint real_program (void)
 
     getout(err);
 
+    gtk_main_quit();
+
     return TRUE;
 }
 
 static gint cancel_callback (void)
 {
-    fprintf(stderr, "Cancel was clicked\n");
     gtk_main_quit();
     return FALSE;
 }
@@ -699,6 +704,8 @@ int main (int argc, char *argv[])
     gtk_init(&argc, &argv);
     create_main_window();
     gtk_main();
+
+    getout(0);
 
     return 0;
 }
