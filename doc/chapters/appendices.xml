@@ -401,7 +401,7 @@
     packages. If the latter option sounds attractive, and you are
     interested in using free, open source software, I would recommend
     taking a look at either GNU R (<ulink
-      url="http://www.r-project.org/">r-project.org</ulink>) or
+      url="http://www.r-project.org/">r-project.org</ulink>) or GNU Octave
     (<ulink url="http://www.octave.org/">www.octave.org</ulink>). These
     programs are very close to the commercial programs S and Matlab
     respectively. 
