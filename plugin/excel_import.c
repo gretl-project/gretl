@@ -288,25 +288,28 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
     switch (rectype) {
     case SST: {
 	char *ptr = rec + 8;
-	int i;
+	int i, sz, oldsz = sstsize;
 
+#if 1
 	if (sst != NULL) {
 	    fprintf(stderr, "Got a second string table: this is nonsense\n");
 	    return 0;
 	}
+#endif
 
-	sstsize = getshort(rec, 4);
-	sst = malloc(sstsize * sizeof *sst);
+	sz = getshort(rec, 4);
+	sstsize += sz;
+	sst = realloc(sst, sstsize * sizeof *sst);
 	if (sst == NULL) return 1;
 #ifdef EDEBUG
-	fprintf(stderr, "Got SST: malloced sst at size %d (%d bytes), %p\n", 
+	fprintf(stderr, "Got SST: allocated sst at size %d (%d bytes), %p\n", 
 		sstsize, sstsize * sizeof *sst, (void *) sst);
 #endif
-	for (i=0; i<sstsize; i++) {
+	for (i=oldsz; i<sstsize; i++) {
 	    /* careful: initialize all to NULL */
 	    sst[i] = NULL;
 	}
-	for (i=0; i<sstsize && (ptr - rec)<reclen; i++) {
+	for (i=oldsz; i<sstsize && (ptr - rec)<reclen; i++) {
 	    sst[i] = copy_unicode_string(&ptr);
 	}
 	if (i < sstsize) {
@@ -489,7 +492,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 static char *mark_string (char *instr) 
 {
     int len = strlen(instr);
-    char *out = malloc(len+2);
+    char *out = malloc(len + 2);
 
     if (out == NULL) return NULL;
 

@@ -1,8 +1,8 @@
 simple_client.c is code for a trivial illustrative client program for
-libgretl, "client".  By looking at this code you should be able to get
-the basic idea of how to send information to libgretl, and how one might
-deal with the struct that libgretl returns.  You should install the
-gretl library and headers (i.e. "make install" in the parent to this
-directory) before trying to compile the client.
+libgretl.  By looking at this code you should be able to get the basic
+idea of how to send information to libgretl, and how one might deal with
+the struct that libgretl returns.  You should install the gretl library
+and headers (i.e. "make install" in the parent to this directory) before
+trying to compile the client.
 
 

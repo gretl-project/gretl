@@ -318,8 +318,8 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
 		480.0 * scale, 360.0 * scale);
 	fname = gpage_fname(".png", i);
     } else {
+	fputs("set encoding iso_8859_1\n", fq);
 	fprintf(fq, "set term postscript eps%s\n", (color)? " color" : "");
-	fputs("set encoding iso_8859_1\n", fp);
 	fname = gpage_fname(".ps", i);
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
@@ -493,7 +493,7 @@ static int make_gp_output (void)
     }
 
     fname = gpage_fname(".plt", 0);
-    remove(fname); 
+    remove(fname);
 
     return err;
 }

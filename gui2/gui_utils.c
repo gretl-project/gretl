@@ -1064,27 +1064,19 @@ void system_print_buf (const gchar *buf, FILE *fp)
     int cbak = 0;
 
     while (*p) {
-#ifdef G_OS_WIN32
-	/* eliminate any singleton CRs */
-	if (cbak == '\r' && *p != '\n') {
-	    putc('\n', fp);
+	if (*p == '\r') {
+	    if (*(p+1) != '\n') {
+		putc('\n', fp);
+	    } 
+	} else {
 	    putc(*p, fp);
 	}
-#else
-	/* eliminate all CRs (FIXME Mac OS?) */
-	if (*p != '\r') {
-	    putc(*p, fp);
-	}
-#endif
 	cbak = *p;
 	p++;
     }
 
-    /* ensure file end with newline */
+    /* ensure file ends with newline */
     if (cbak != '\n') {
-#ifdef G_OS_WIN32
-	putc('\r', fp);
-#endif
 	putc('\n', fp);
     }
 }

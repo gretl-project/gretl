@@ -22,10 +22,12 @@
 #include <stdio.h>
 #include "gretl_matrix.h"
 
-enum leverage_save_opts {
+enum series_save_opts {
     SAVE_LEVERAGE  = 1 << 0,
     SAVE_INFLUENCE = 1 << 1,
-    SAVE_DFFITS    = 1 << 2
+    SAVE_DFFITS    = 1 << 2,
+    SAVE_TREND     = 1 << 3,
+    SAVE_CYCLE     = 1 << 4
 };
 
 enum aux_codes {

@@ -459,6 +459,12 @@ int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
 	    print_result_error(digits, v1, v2, s, prn);
 	    return 0;
 	}
+	/* special case: exact fit, zero standard error */
+	if (certvals->sderr[i] == 0.0) {
+	    double x = pow(10.0, -digits);
+
+	    if (pmod->sderr[i] < x) return 1;
+	}
 	sprintf(v1, "%#.*g", digits, certvals->sderr[i]);
 	sprintf(v2, "%#.*g", digits, pmod->sderr[i]);
 	if (doubles_differ(v1, v2)) {
