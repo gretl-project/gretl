@@ -3566,18 +3566,14 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 #endif
 	return 1;
     } else {
-	double y[16];
+	double y[16] = {0};
+	int y_numwidth[16] = {0};
+	int y2_numwidth[16] = {0};
 	char numstr[32];
-	int y_numwidth[16];
-	int y2_numwidth[16];
-	int i, j;
+	int i, j, k, imin;
 
 	fpin = fopen(dumbtxt, "r");
 	if (fpin == NULL) return 1;
-
-	for (i=0; i<16; i++) {
-	    y_numwidth[i] = y2_numwidth[i] = 0;
-	}
 
 	/* read the y-axis min and max from the ascii graph */
 #ifdef ENABLE_NLS
@@ -3585,19 +3581,27 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 #endif
 	i = j = 0;
 	while (i < 16 && fgets(line, MAXLEN-1, fpin)) {
-	    if (sscanf(line, "%lf", &(y[i])) == 1) {
-		sscanf(line, "%31s", numstr);
-		numstr[31] = 0;
+	    const char *s = line;
+	    int nsp = 0;
+
+	    while (isspace((unsigned char) *s)) {
+	        nsp++;
+	        s++;
+            }
+	    if (nsp > 5) {
+		/* not a y-axis number */
+		continue; 
+	    }
+	    if (sscanf(s, "%lf", &y[i]) == 1) {
+		sscanf(s, "%31s", numstr);
 		y_numwidth[i++] = strlen(numstr);
 	    }
 	    if (plot_has_y2axis(plot) && j < 16) {
 		double y2;
-		char *p;
 
-		p = strrchr(line, ' ');
-		if (p != NULL && sscanf(p, "%lf", &y2) == 1) {
-		    sscanf(p, "%31s", numstr);
-		    numstr[31] = 0;
+		s = strrchr(s, ' ');
+		if (s != NULL && sscanf(s, "%lf", &y2) == 1) {
+		    sscanf(s, "%31s", numstr);
 		    y2_numwidth[j++] = strlen(numstr);
 		}
 	    }
@@ -3607,32 +3611,21 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 #endif
 
 	fclose(fpin);
+#ifndef POINTS_DEBUG
 	remove(dumbtxt);
+#endif
 
-	if (x2axis) {
-	    if (i > 3 && y[1] > y[i-2]) {
-		int k;
+	imin = (x2axis)? 1 : 0;
 
-		plot->ymin = y[i-2];
-		plot->ymax = y[1];
-		for (k=1; k<i-2; k++) {
-		    if (y_numwidth[k] > max_ywidth) {
-			max_ywidth = y_numwidth[k];
-		    }
+	if (i > (imin + 2) && y[imin] > y[i-2]) {
+	    plot->ymin = y[i-2];
+	    plot->ymax = y[imin];
+	    for (k=imin; k<i-2; k++) {
+		if (y_numwidth[k] > max_ywidth) {
+		    max_ywidth = y_numwidth[k];
 		}
 	    }
-	} else {	
-	    if (i > 2 && y[0] > y[i-2]) {
-		int k;
-
-		plot->ymin = y[i-2];
-		plot->ymax = y[0];
-		for (k=0; k<i-2; k++) {
-		    if (y_numwidth[k] > max_ywidth) 
-			max_ywidth = y_numwidth[k];
-		}
-	    }
-	}
+	}	    
 
 #ifdef POINTS_DEBUG
 	fprintf(stderr, "Reading y range from text plot: plot->ymin=%g, "
@@ -3640,10 +3633,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 #endif
 
 	if (plot_has_y2axis(plot)) {
-	    int k;
-	    int start = (x2axis)? 1 : 0;
-
-	    for (k=start; k<j-2; k++) {
+	    for (k=imin; k<j-2; k++) {
 		if (y2_numwidth[k] > max_y2width) {
 		    max_y2width = y2_numwidth[k];
 		}
