@@ -2,6 +2,10 @@
 
 #include <stdio.h>
 #include <glib.h>
+
+#include <wctype.h>
+#include <wchar.h>
+
 #include "biff.h"
 #include "importer.h"
 
