@@ -255,7 +255,8 @@ msgstr ""
 msgid "space for comments"
 msgstr ""
 
-#: ../lib/src/dataio.c:821 ../lib/src/dataio.c:833 ../gui/session.c:315
+#: ../lib/src/dataio.c:821 ../lib/src/dataio.c:833 ../lib/src/dataio.c:1697
+#: ../lib/src/dataio.c:2037 ../gui/session.c:315
 #, c-format
 msgid "Couldn't open %s\n"
 msgstr ""
@@ -414,11 +415,6 @@ msgid ""
 "  in that case its row 1 entry should be blank, or should say 'obs' or "
 "'date'.\n"
 "- The remainder of the file must be a rectangular array of data.\n"
-msgstr ""
-
-#: ../lib/src/dataio.c:1697 ../lib/src/dataio.c:2037
-#, c-format
-msgid "couldn't open %s\n"
 msgstr ""
 
 #: ../lib/src/dataio.c:1703 ../lib/src/dataio.c:2043 ../cli/common.c:147
@@ -3074,10 +3070,10 @@ msgid ""
 msgstr ""
 
 #: ../lib/src/win32.c:40
-msgid "couldn't open registry\n"
+msgid "Couldn't open registry\n"
 msgstr ""
 
-#: ../cli/common.c:54 ../cli/gretlcli.c:769 ../gui/library.c:3582
+#: ../cli/common.c:54
 msgid "Failed to add new variable.\n"
 msgstr ""
 
@@ -3145,18 +3141,18 @@ msgstr ""
 #: ../cli/gretlcli.c:141
 msgid ""
 "\n"
-"gretlcli: error executing script: halting.\n"
+"gretlcli: error executing script: halting\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:148 ../gui/gretl.c:453
 #, c-format
-msgid "Couldn't allocate memory for %s.\n"
+msgid "Couldn't allocate memory for %s\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:154 ../gui/library.c:3219 ../gui/library.c:3307
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
-"the reference model was estimated.\n"
+"the reference model was estimated\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:163 ../gui/library.c:136 ../gui/library.c:3190
@@ -3169,7 +3165,7 @@ msgid "Can't do this: there is no model %d\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:171
-msgid "This command only available for OLS models at present.\n"
+msgid "This command only available for OLS models at present\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:217 ../gui/gretl.c:625
@@ -3181,7 +3177,7 @@ msgid "command line"
 msgstr ""
 
 #: ../cli/gretlcli.c:272 ../gui/gretl.c:617
-msgid "Can't open file to save commands.\n"
+msgid "Can't open file to save commands\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:323 ../gui/gretl.c:639
@@ -3204,7 +3200,7 @@ msgid "Type \"open filename\" to open a data set\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:372 ../gui/library.c:3099
-msgid "No commands in loop.\n"
+msgid "No commands in loop\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:380 ../gui/library.c:3107
@@ -3212,20 +3208,20 @@ msgid "Error in command loop: aborting\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:417
-msgid "Out of memory loading command line.\n"
+msgid "Out of memory loading command line\n"
 msgstr ""
 
-#: ../cli/gretlcli.c:481
-msgid "You must open a data file first.\n"
+#: ../cli/gretlcli.c:481 ../gui/library.c:3246
+msgid "You must open a data file first\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:503
 #, c-format
-msgid "Command '%s' ignored; not available in loop mode.\n"
+msgid "Command '%s' ignored; not available in loop mode\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:510 ../gui/library.c:3289
-msgid "Failed to add command to loop stack.\n"
+msgid "Failed to add command to loop stack\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:573 ../gui/library.c:3361
@@ -3246,11 +3242,11 @@ msgid "Failed to shrink the data set"
 msgstr ""
 
 #: ../cli/gretlcli.c:672 ../gui/library.c:3489
-msgid "You can't end a loop here, you haven't started one.\n"
+msgid "You can't end a loop here, you haven't started one\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:690 ../gui/library.c:3507
-msgid "Couldn't open tex file for writing.\n"
+msgid "Couldn't open tex file for writing\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:692 ../gui/library.c:3509
@@ -3259,11 +3255,20 @@ msgid "Model printed to %s\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:700 ../cli/gretlcli.c:720 ../gui/library.c:3517
-msgid "Error retrieving fitted values.\n"
+msgid "Error retrieving fitted values\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:725 ../gui/library.c:3541
-msgid "Retrieved fitted values as \"autofit\".\n"
+msgid "Retrieved fitted values as \"autofit\"\n"
+msgstr ""
+
+#: ../cli/gretlcli.c:737 ../cli/gretlcli.c:753 ../cli/gretlcli.c:792
+#: ../gui/library.c:3553 ../gui/library.c:3566 ../gui/library.c:3607
+msgid "gnuplot command failed\n"
+msgstr ""
+
+#: ../cli/gretlcli.c:769 ../gui/library.c:3582
+msgid "Failed to add new variable\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:780
@@ -3272,26 +3277,21 @@ msgid ""
 "(with values 1 or 0)\n"
 msgstr ""
 
-#: ../cli/gretlcli.c:792 ../cli/gretlcli.c:737 ../cli/gretlcli.c:753
-#: ../gui/library.c:3607../gui/library.c:3553 ../gui/library.c:3566
-msgid "gnuplot command failed\n"
-msgstr ""
-
 #: ../cli/gretlcli.c:830 ../gui/library.c:3649
-msgid "import command is malformed.\n"
+msgid "import command is malformed\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:841 ../gui/library.c:3663
-msgid "You should now use the \"print\" command to verify the data.\n"
+msgid "You should now use the \"print\" command to verify the data\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:843 ../gui/library.c:3665
 msgid ""
-"If they are OK, use the  \"store\" command to save them in gretl format.\n"
+"If they are OK, use the  \"store\" command to save them in gretl format\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:851
-msgid "'open' command is malformed.\n"
+msgid "'open' command is malformed\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:856
@@ -3299,27 +3299,27 @@ msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
 msgstr ""
 
 #: ../cli/gretlcli.c:861
-msgid "OK, staying with current data set.\n"
+msgid "OK, staying with current data set\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:941 ../gui/library.c:3762
-msgid "Loop count missing or invalid.\n"
+msgid "Loop count missing or invalid\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:946
-msgid "Enter commands for loop.  Type 'endloop' to get out.\n"
+msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:954 ../gui/library.c:3772
-msgid "Data series length count missing or invalid.\n"
+msgid "Data series length count missing or invalid\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:959 ../gui/library.c:3777
-msgid "Data series too long.\n"
+msgid "Data series too long\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:966 ../gui/library.c:3783
-msgid "Failed to create empty data set.\n"
+msgid "Failed to create empty data set\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:993 ../gui/library.c:3818
@@ -3345,16 +3345,16 @@ msgid "writing session output to %s%s\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1038 ../gui/library.c:3835
-msgid "This command requires a list of variables.\n"
+msgid "This command requires a list of variables\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1049
-msgid "Command is malformed.\n"
+msgid "Command is malformed\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1053
 #, c-format
-msgid "Couldn't open script \"%s\".\n"
+msgid "Couldn't open script \"%s\"\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1061
@@ -3363,11 +3363,11 @@ msgid "%s opened OK\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1069 ../gui/library.c:3860
-msgid "scatters command not available in batch mode.\n"
+msgid "scatters command not available in batch mode\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1073 ../gui/library.c:3864
-msgid "scatters command failed.\n"
+msgid "scatters command failed\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1079 ../gui/library.c:3870
@@ -3380,11 +3380,11 @@ msgid "shell command not implemented in win32\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1131 ../gui/library.c:3929
-msgid "Failed to generate squares.\n"
+msgid "Failed to generate squares\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1134 ../gui/library.c:3932
-msgid "Squares generated OK.\n"
+msgid "Squares generated OK\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1145 ../gui/library.c:3946
@@ -3393,23 +3393,23 @@ msgid "store: using filename %s\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1147 ../gui/library.c:3948
-msgid "store: no filename given.\n"
+msgid "store: no filename given\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1152 ../gui/library.c:3953
-msgid "write of data file failed.\n"
+msgid "write of data file failed\n"
 msgstr ""
 
-#: ../cli/gretlcli.c:1155 ../gui/library.c:3957
-msgid "Data written OK.\n"
+#: ../cli/gretlcli.c:1155
+msgid "Data written OK\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1157 ../gui/library.c:3959
-msgid "Warning: case markers not saved in binary datafile.\n"
+msgid "Warning: case markers not saved in binary datafile\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1163 ../gui/library.c:3966
-msgid "Out of memory attempting to add variable.\n"
+msgid "Out of memory attempting to add variable\n"
 msgstr ""
 
 #: ../cli/gretlcli.c:1210
@@ -4730,17 +4730,6 @@ msgstr ""
 msgid "About gretl"
 msgstr ""
 
-#: ../gui/dialogs.c:638
-#, c-format
-msgid "gretl, version %s\n"
-msgstr ""
-
-#: ../gui/dialogs.c:642
-msgid ""
-"Copyright (C) 2000-2001 Allin Cottrell <cottrell@wfu.edu>\n"
-"Homepage: http://gretl.sourceforge.net/"
-msgstr ""
-
 #: ../gui/dialogs.c:651
 msgid "About"
 msgstr ""
@@ -5101,7 +5090,7 @@ msgid "/File/_Create data set/time-series/annual"
 msgstr ""
 
 #: ../gui/gretl.c:230
-msgid "/F_(ile/_Create data set/time-series/quarterly"
+msgid "/File/_Create data set/time-series/quarterly"
 msgstr ""
 
 #: ../gui/gretl.c:232
@@ -7129,7 +7118,7 @@ msgstr ""
 
 #: ../gui/library.c:2764 ../gui/session.c:1322
 #, c-format
-msgid "couldn't write to %s"
+msgid "Couldn't write to %s"
 msgstr ""
 
 #: ../gui/library.c:2773
@@ -7200,7 +7189,7 @@ msgstr ""
 #: ../gui/library.c:3150
 msgid ""
 "\n"
-"Error executing script: halting.\n"
+"Error executing script: halting\n"
 msgstr ""
 
 #: ../gui/library.c:3207
@@ -7211,19 +7200,15 @@ msgid ""
 msgstr ""
 
 #: ../gui/library.c:3213
-msgid "This command is only available for OLS models at present.\n"
-msgstr ""
-
-#: ../gui/library.c:3246
-msgid "You must open a data file first\n"
+msgid "This command is only available for OLS models at present\n"
 msgstr ""
 
 #: ../gui/library.c:3283
-msgid "Sorry, this command is not available in loop mode.\n"
+msgid "Sorry, this command is not available in loop mode\n"
 msgstr ""
 
 #: ../gui/library.c:3596
-msgid "script mode: gnuplot command ignored.\n"
+msgid "script mode: gnuplot command ignored\n"
 msgstr ""
 
 #: ../gui/library.c:3674
@@ -7231,7 +7216,7 @@ msgid "'open' command is malformed"
 msgstr ""
 
 #: ../gui/library.c:3753
-msgid "Sorry, Monte Carlo loops not available in this mode.\n"
+msgid "Sorry, Monte Carlo loops not available in this mode\n"
 msgstr ""
 
 #: ../gui/library.c:3829
@@ -7239,15 +7224,15 @@ msgid "Script done\n"
 msgstr ""
 
 #: ../gui/library.c:3830
-msgid "Please use the Close button to exit.\n"
+msgid "Please use the Close button to exit\n"
 msgstr ""
 
 #: ../gui/library.c:3847
-msgid "Run command failed.\n"
+msgid "Run command failed\n"
 msgstr ""
 
 #: ../gui/library.c:3851
-msgid "Infinite loop detected in script.\n"
+msgid "Infinite loop detected in script\n"
 msgstr ""
 
 #: ../gui/library.c:3884
@@ -7257,6 +7242,10 @@ msgstr ""
 #: ../gui/library.c:3944
 #, c-format
 msgid "store: using filename %s.gz\n"
+msgstr ""
+
+#: ../gui/library.c:3957
+msgid "Data written OK.\n"
 msgstr ""
 
 #: ../gui/library.c:4009
@@ -7502,7 +7491,7 @@ msgid "Apply Changes"
 msgstr ""
 
 #: ../gui/webget.c:160 ../gui/webget.c:166
-msgid "Couldn't find usable socket driver.\n"
+msgid "Couldn't find usable socket driver\n"
 msgstr ""
 
 #: ../gui/webget.c:493

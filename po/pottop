@@ -1,0 +1,17 @@
+# po template for gretl
+# Copyright (C) 2002 Allin Cottrell
+# This file is distributed under the same license as the gretl package.
+# Allin Cottrell <cottrell@wfu.edu>, 2002.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: gretl 0.991\n"
+"POT-Creation-Date: 2002-03-14 10:45-0500\n"
+"PO-Revision-Date: 2002-03-14 10:51-0500\n"
+"Last-Translator: none <none@none>\n"
+"Language-Team: none <none@none>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
