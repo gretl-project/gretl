@@ -4737,11 +4737,10 @@ static void output_line (const char *line, int loopstack, PRN *prn)
     }
 }
 
-/* ........................................................... */
+/* run commands from runfile or buf, output to prn */
 
 int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code)
-     /* run commands from runfile or buf, output to prn */
 {
     FILE *fb = NULL;
     char tmp[MAXLEN];

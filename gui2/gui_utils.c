@@ -305,12 +305,14 @@ int copyfile (const char *src, const char *dest)
 	errbox(errtext);
 	return 1; 
     }
+
     if ((destfd = fopen(dest, "wb")) == NULL) {
 	sprintf(errtext, _("Couldn't write to %s"), dest);
 	errbox(errtext);
 	fclose(srcfd);
 	return 1;
     }
+
     while ((n = fread(buf, 1, sizeof buf, srcfd)) > 0) {
 	fwrite(buf, 1, n, destfd);
     }
@@ -366,15 +368,13 @@ static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
     return vmax;
 }
 
-/* ........................................................... */
-
-/* Below: Keep a record of (most) windows that are open, so they 
-   can be destroyed en masse when a new data file is opened, to
-   prevent weirdness that could arise if (e.g.) a model window
-   that pertains to a previously opened data file remains open
-   after the data set has been changed.  Script windows are
-   exempt, otherwise they are likely to disappear when their
-   "run" control is activated, which we don't want.
+/* Below: Keep a record of (most) windows that are open, so they can
+   be destroyed en masse when a new data file is opened, to prevent
+   weirdness that could arise if (e.g.) a model window that pertains
+   to a previously opened data file remains open after the data set
+   has been changed.  Script windows are exempt, otherwise they are
+   likely to disappear when their "run" control is activated, which we
+   don't want.
 */
 
 enum winstack_codes {
@@ -842,7 +842,7 @@ int get_worksheet_data (char *fname, int datatype, int append,
     err = (*sheet_get_data)(fname, &Z, datainfo, errprn);
     close_plugin(handle);
 
-    if (err == -1) { /* the user canceled the import */
+    if (err == -1) {
 	fprintf(stderr, "data import canceled\n");
 	if (gui_get_data != NULL) *gui_get_data = 1;
 	return 0;
@@ -880,16 +880,15 @@ static void copy_utf8_filename (char *targ, const char *src)
 #endif
 }
 
-/* ........................................................... */
+/* cases for do_open_data: 
+   - called from dialog: user has said Yes to opening data file,
+     although a data file is already open (or user wants to append
+     data)
+   - reached without dialog, in expert mode or when no datafile
+     is open yet
+*/
 
 void do_open_data (GtkWidget *w, gpointer data, int code)
-     /* cases: 
-	- called from dialog: user has said Yes to opening data file,
-	although a data file is already open (or user wants to append
-	data)
-	- reached without dialog, in expert mode or when no datafile
-	is open yet
-     */
 {
     gint datatype, err = 0;
     dialog_t *d = NULL;
@@ -977,12 +976,10 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     } 
 }
 
-/* ........................................................... */
+/* give user choice of not opening selected datafile, if there's
+   already a datafile open and we're not in "expert" mode */
 
 void verify_open_data (gpointer userdata, int code)
-     /* give user choice of not opening selected datafile,
-	if there's already a datafile open and we're not
-	in "expert" mode */
 {
     if (data_status && !expert) {
 	int resp = 
@@ -997,12 +994,10 @@ void verify_open_data (gpointer userdata, int code)
     do_open_data(NULL, userdata, code);
 }
 
-/* ........................................................... */
+/* give user choice of not opening session file, if there's already a
+   datafile open and we're not in "expert" mode */
 
 void verify_open_session (gpointer userdata)
-     /* give user choice of not opening session file,
-	if there's already a datafile open and we're not
-	in "expert" mode */
 {
     if (data_status && !expert) {
 	int resp = 
@@ -1016,6 +1011,55 @@ void verify_open_session (gpointer userdata)
 
     do_open_session(NULL, userdata);
 }
+
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+
+static int maybe_recode_file (const char *fname)
+{
+    if (0) {
+	FILE *fin, *fout;
+	char trname[MAXLEN];
+	char line[128];
+	gchar *trbuf;
+	int err = 0;
+
+	fin = fopen(fname, "r");
+	if (fin == NULL) {
+	    return 1;
+	}
+
+	sprintf(trname, "%s.tr", fname);
+
+	fout = fopen(trname, "w");
+	if (fout == NULL) {
+	    fclose(fin);
+	    return 1;
+	}	
+
+	while (fgets(line, sizeof line, fin) && !err) {
+	    trbuf = my_locale_from_utf8(line);
+	    if (trbuf != NULL) {
+		fputs(trbuf, fout);
+	    } else {
+		err = 1;
+	    }
+	}
+
+	fclose(fin);
+	fclose(fout);
+
+	if (!err) {
+	    err = copyfile(trname, fname);
+	    remove(trname);
+	}
+
+	return err;
+    }
+
+    return 0;
+}
+
+#endif
 
 /* ........................................................... */
 
@@ -1077,6 +1121,11 @@ void save_session (char *fname)
     execute_script(fname, NULL, prn, SAVE_SESSION_EXEC); 
     gretl_print_destroy(prn);
 
+    /* output may need re-encoding, UTF-8 to locale? */
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+    maybe_recode_file(fname2);
+#endif
+    
     sprintf(msg, _("session saved to %s -\n"), savedir);
     strcat(msg, _("commands: "));
     strcat(msg, (spos)? fname + spos + 1 : fname);
@@ -1208,11 +1257,7 @@ void free_windata (GtkWidget *w, gpointer data)
 
     if (vwin != NULL) {
 	if (vwin->w) { 
-#ifndef OLD_GTK
 	    gchar *undo = g_object_get_data(G_OBJECT(vwin->w), "undo");
-#else
-	    gchar *undo = gtk_object_get_data(GTK_OBJECT(vwin->w), "undo");
-#endif
 	    
 	    if (undo) g_free(undo);
 	}
@@ -1459,11 +1504,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 #endif
 
     if (text_out || vwin->role == SCRIPT_OUT) {
-#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
-#else
-	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
-#endif
     }
 
     hbox = gtk_hbox_new(FALSE, 0);
@@ -2646,6 +2687,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    if (pmod->list[j] == LISTSEP) break;
 	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) 
 		continue;
+
 	    varitem.callback_action = pmod->list[j]; 
 	    double_underscores(tmp, datainfo->varname[pmod->list[j]]);
 	    varitem.path = 
