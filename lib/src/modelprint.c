@@ -763,10 +763,11 @@ static void print_model_heading (const MODEL *pmod,
 	break;	
     case AUX_SUR:
 	pprintf(prn, "\n%s %d: ", 
-		(utf)? _("Equation") : I_("Equation"), 
-		pmod->ID + 1);
+		(utf)? _("Equation") : I_("Equation"), pmod->ID + 1);
 	break;	
     case VAR:
+	pprintf(prn, "\n%s %d: ", 
+		(utf)? _("Equation") : I_("Equation"), pmod->ID);
 	break;
     case AUX_ADD:
     default:

@@ -886,6 +886,7 @@ static int real_var (int order, const LIST list,
 	/* run an OLS regression for the current dependent var */
 	*pmod = lsq(varlist, pZ, pdinfo, VAR, 1, 0.0);
 	pmod->aux = VAR;
+	pmod->ID = i + 1;
 
 	/* save the residuals if required */
 	if (resids != NULL) {
