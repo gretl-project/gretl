@@ -1,105 +1,54 @@
-dnl readline detection
-dnl based on curses.m4 from gnome
-dnl
-dnl What it does:
-dnl =============
-dnl
-dnl - Determine which version of readline is installed on your system
-dnl   and set the -I/-L/-l compiler entries and add a few preprocessor
-dnl   symbols 
-dnl - Do an AC_SUBST on the READLINE_INCLUDES and READLINE_LIBS so that
-dnl   @READLINE_INCLUDES@ and @READLINE_LIBS@ will be available in
-dnl   Makefile.in's
-dnl - Modify the following configure variables (these are the only
-dnl   readline.m4 variables you can access from within configure.in)
-dnl   READLINE_INCLUDES - contains -I's
-dnl   READLINE_LIBS       - sets -L and -l's appropriately
-dnl   has_readline        - exports result of tests to rest of configure
-dnl
-dnl Usage:
-dnl ======
-dnl 1) Add lines indicated below to acconfig.h
-dnl 2) call AC_CHECK_READLINE after AC_PROG_CC in your configure.in
-dnl 3) Make sure to add @READLINE_INCLUDES@ to your preprocessor flags
-dnl 4) Make sure to add @READLINE_LIBS@ to your linker flags or LIBS
-dnl
-dnl Notes with automake:
-dnl - call AM_CONDITIONAL(HAS_READLINE, test "$has_readline" = true) from
-dnl   configure.in
-dnl - your Makefile.am can look something like this
-dnl   -----------------------------------------------
-dnl   INCLUDES= blah blah blah $(READLINE_INCLUDES) 
-dnl   if HAS_READLINE
-dnl   READLINE_TARGETS=name_of_readline_prog
-dnl   endif
-dnl   bin_PROGRAMS = other_programs $(READLINE_TARGETS)
-dnl   other_programs_SOURCES = blah blah blah
-dnl   name_of_readline_prog_SOURCES = blah blah blah
-dnl   other_programs_LDADD = blah
-dnl   name_of_readline_prog_LDADD = blah $(READLINE_LIBS)
-dnl   -----------------------------------------------
-dnl
-dnl
-dnl The following lines should be added to acconfig.h:
-dnl ==================================================
-dnl
-dnl #undef HAS_READLINE
-dnl 
-dnl /*=== End new stuff for acconfig.h ===*/
-dnl 
 
+# Configure paths for readline, for gretl
+# Allin Cottrell, April 2003
 
-AC_DEFUN(AC_CHECK_READLINE,[
-	search_readline=false
-	has_readline=false
-
-	AC_SUBST(READLINE_LIBS)
-	AC_SUBST(READLINE_INCLUDES)
-
-	AC_ARG_WITH(readline,
-	  [  --with-readline[=dir]  Compile with readline/locate base dir [no compile]],
-	  if test "x$withval" = "xno" ; then
-		search_readline=false
-	  elif test "x$withval" != "xyes" ; then
-		READLINE_LIBS="$LIBS -L$withval/lib -lreadline"
-		READLINE_INCLUDES="-I$withval/include"
-		search_readline=false
-		AC_DEFINE(HAS_READLINE)
-		has_readline=true
-	  else
-	  	search_readline=true
-	  fi
-	)
-
-	if $search_readline
-	then
-		AC_SEARCH_READLINE()
-	fi
-])
-	
+dnl AM_PATH_READLINE([ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl Test for READLINE, and define READLINE_CFLAGS and READLINE_LIBS.
 dnl
-dnl Parameters: directory filename cureses_LIBS curses_INCLUDES nicename
-dnl
-AC_DEFUN(AC_READLINE, [
-    if $search_readline
-    then
-        if test -f $1/$2
-	then
-	    AC_MSG_RESULT(Found readline in $1/$2)
- 	    READLINE_LIBS="$3"
-	    READLINE_INCLUDES="$4"
-	    search_readline=false
-            AC_DEFINE(HAS_READLINE)
-            has_readline=true
-	fi
-    fi
-])
+AC_DEFUN(AM_PATH_READLINE,
+[dnl 
+AC_ARG_WITH(readline-prefix,[  --with-readline-prefix=PFX   Prefix where readline is installed (optional)],
+            readline_config_prefix="$withval", readline_config_prefix="")
 
-AC_DEFUN(AC_SEARCH_READLINE, [
-    AC_CHECKING("location of readline.h file")
+  READLINE_CFLAGS="-I$readline_config_prefix/include"
+  READLINE_LIBS="-L$readline_config_prefix/lib -lreadline"
 
-    AC_READLINE(/usr/include, readline.h, -lreadline,, "readline in /usr/include")
-    AC_READLINE(/usr/include/readline, readline.h, -lreadline, -I/usr/include/readline, "readline in /usr/include/readline")
-    AC_READLINE(/usr/local/include, readline.h, -L/usr/local/lib -lreadline, -I/usr/local/include, "readline in /usr/local")
-    AC_READLINE(/usr/local/include/readline, readline.h, -L/usr/local/lib -L/usr/local/lib/readline -lreadline, -I/usr/local/include/readline, "readline in /usr/local/include/readline")
-] ) 
+  ac_save_CFLAGS="$CFLAGS"
+  ac_save_LIBS="$LIBS"
+  CFLAGS="$CFLAGS $READLINE_CFLAGS"
+  LIBS="$READLINE_LIBS $LIBS"
+
+  dnl check for readline header
+  AC_CHECK_HEADER(readline/readline.h, have_rl_header="yes", have_rl_header="no")
+
+  dnl check for the libraries that readline depends on
+  AC_CHECK_LIB(termcap, tgetent, termcap_lib=-ltermcap,
+  [AC_CHECK_LIB(curses, tgetent, termcap_lib=-lcurses,
+  [AC_CHECK_LIB(ncurses, tgetent, termcap_lib=-lncurses,
+  termcap_lib='')])])
+
+  AC_CHECK_LIB(readline, readline, have_readline="yes" ; \
+     AC_DEFINE(HAVE_READLINE),,$termcap_lib)
+  AC_SUBST(have_readline)
+
+  AC_CHECK_LIB(readline, rl_completion_matches, AC_DEFINE(NEW_READLINE),,$termcap_lib)
+  AC_SUBST(new_readline)
+
+  dnl remove any extraneous stuff from the flags and libs lines
+  if test "$READLINE_CFLAGS" = "-I/include" ; then 
+     READLINE_CFLAGS=""
+  fi
+  if test "$READLINE_LIBS" = "-L/lib -lreadline" ; then 
+     READLINE_LIBS="-lreadline"
+  fi
+
+  dnl append the termcap lib portion
+  READLINE_LIBS="$READLINE_LIBS $termcap_lib"
+
+  dnl we're now ready to write stuff out
+  AC_SUBST(READLINE_CFLAGS)
+  AC_SUBST(READLINE_LIBS)
+
+  CFLAGS="$ac_save_CFLAGS"
+  LIBS="$ac_save_LIBS"
+],[])

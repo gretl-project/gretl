@@ -247,17 +247,7 @@ dnl
 dnl Check for libreadline for use with gretlcli
 dnl
 if test "$try_readline" = "yes" ; then
-   AC_CHECK_HEADER(readline/readline.h,have_readline="yes")
-   AC_CHECK_LIB(readline,readline,have_readline="yes" ; \
-     CLI_LIBS="-lreadline -lncurses" ; AC_DEFINE(HAVE_READLINE),,-lncurses)
-   AC_SUBST(have_readline)
-   AC_SUBST(CLI_LIBS)
-   if test "$have_readline" = yes; then
-     RL_OBJ="complete.o"
-   fi
-   AC_SUBST(RL_OBJ)
-   AC_CHECK_LIB(readline,rl_completion_matches,AC_DEFINE(NEW_READLINE),,-lncurses)
-   AC_SUBST(new_readline)
+   AM_PATH_READLINE(have_readline="yes", have_readline="no")
 fi
 
 dnl
@@ -292,9 +282,9 @@ dnl
 dnl Check for LAPACK 
 dnl Apple will be different
 dnl
-LAPACK_CFLAGS="-I$(srcdir)/plugin"
+LAPACK_CFLAGS="-I${srcdir}/plugin"
 case $host_os in
-  *darwin*) LAPACK_LIBS="-framework veclib"
+  *darwin*) LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
   ;; 
 esac
 AM_PATH_LAPACK(, have_lapack="yes")

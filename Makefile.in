@@ -9,8 +9,6 @@ CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
-CLI_LIBS = @CLI_LIBS@
-RL_OBJ = @RL_OBJ@
 have_gtk = @have_gtk@
 
 ifeq ($(CC),)

@@ -1,19 +1,19 @@
 topsrc = @top_srcdir@
 
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-bindir = @bindir@
 CC = @CC@
 CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
-LN = @LN_S@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+datadir = @datadir@
+localedir = $(datadir)/locale
+
 have_readline = @have_readline@
-have_zlib = @have_zlib@
-have_gtk = @have_gtk@
-CLI_LIBS = @CLI_LIBS@
-RL_OBJ = @RL_OBJ@
-USE_NLS = @USE_NLS@
+READLINE_LIBS = @READLINE_LIBS@
+READLINE_CFLAGS = @READLINE_CFLAGS@
 
 GMP_CFLAGS = @GMP_CFLAGS@
 
@@ -23,21 +23,13 @@ endif
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
 endif
-ifeq ($(LN),)
-  LN = ln -sf
-endif
-ifeq ($(USE_NLS),yes)
-  datadir = @datadir@
-  localedir = $(datadir)/locale
-  DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
+ifeq ($(have_readline),yes)
+  RL_OBJ = complete.o
 endif
 
 GRETLLIB = ../lib/libgretl-1.0.la
 
-# General compile options and libs:
-LIBS = $(CLI_LIBS)
-
-# Directories
+# Working directories
 tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
 VPATH = $(topsrc)/cli
@@ -47,7 +39,9 @@ VPATH = $(topsrc)/cli
 SRCS = gretlcli.c common.c complete.c
 OBJS = gretlcli.o $(RL_OBJ)
 
-override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(GMP_CFLAGS) $(DEFS)
+DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
+
+override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(GMP_CFLAGS) $(READLINE_CFLAGS) $(DEFS)
 
 CLI = gretlcli
 LIBTOOL = ../libtool
@@ -57,7 +51,7 @@ LIBTOOL = ../libtool
 	$(CC) -MM -MG -I.. -I$(topsrc) -I$(libsrc) $(DEFS) $< >$*.d 2>/dev/null
 
 $(CLI): $(OBJS)
-	../libtool --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(CLI_LIBS) 
+	../libtool --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(READLINE_LIBS) 
 
 -include gretlcli.d
 
