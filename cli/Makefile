@@ -60,6 +60,9 @@ clean:
 	rm -f *.o $(CLI) core 
 	rm -rf ./.libs
 
+depend:
+	makedepend -Y../lib/src *.c 
+
 # DO NOT DELETE
 
 complete.o: ../config.h ../lib/src/libgretl.h ../lib/src/commands.h

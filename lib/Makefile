@@ -93,118 +93,122 @@ clean:
 tags:
 	cd $(srcdir)/../.. && etags lib/src/*.c cli/*.c gui/*.c
 
+depend:
+	makedepend -Y src/*.c && \
+	cat Makefile | sed s+^src/++ > Makefile.tmp && \
+	mv Makefile.tmp Makefile
 
 # DO NOT DELETE
 
-src/compare.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/compare.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/compare.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/compare.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/compare.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/compare.o: src/subsample.h src/internal.h
-src/dataio.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/dataio.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/dataio.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/dataio.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/dataio.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
-src/dataio.o: src/internal.h
-src/describe.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/describe.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/describe.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/describe.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/describe.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/describe.o: src/subsample.h src/internal.h
-src/discrete.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/discrete.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/discrete.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/discrete.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/discrete.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/discrete.o: src/subsample.h src/internal.h
-src/errors.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/errors.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/errors.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/errors.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/errors.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
-src/estimate.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/estimate.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/estimate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/estimate.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/estimate.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/estimate.o: src/subsample.h src/internal.h
-src/generate.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/generate.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/generate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/generate.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/generate.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/generate.o: src/subsample.h src/internal.h
-src/graphing.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/graphing.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/graphing.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/graphing.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/graphing.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/graphing.o: src/subsample.h src/internal.h src/graphing.h
-src/interact.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/interact.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/interact.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/interact.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/interact.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/interact.o: src/subsample.h src/internal.h src/cmdlist.h
-src/monte_carlo.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/monte_carlo.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/monte_carlo.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/monte_carlo.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/monte_carlo.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/monte_carlo.o: src/subsample.h src/internal.h
-src/nonparam.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/nonparam.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/nonparam.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/nonparam.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/nonparam.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/nonparam.o: src/subsample.h src/internal.h
-src/printout.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/printout.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/printout.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/printout.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/printout.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/printout.o: src/subsample.h src/internal.h src/version.h
-src/pvalues.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/pvalues.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/pvalues.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/pvalues.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/pvalues.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/pvalues.o: src/subsample.h
-src/strutils.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/strutils.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/strutils.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/strutils.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/strutils.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/strutils.o: src/subsample.h
-src/subsample.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/subsample.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/subsample.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/subsample.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/subsample.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/subsample.o: src/subsample.h src/internal.h
-src/texprint.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/texprint.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/texprint.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/texprint.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/texprint.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/texprint.o: src/subsample.h
-src/utils.o: ../config.h src/libgretl.h src/commands.h src/errors.h
-src/utils.o: src/estimate.h src/generate.h src/utils.h src/compare.h
-src/utils.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
-src/utils.o: src/printout.h src/texprint.h src/var.h src/interact.h
-src/utils.o: src/graphing.h src/monte_carlo.h src/nonparam.h src/discrete.h
-src/utils.o: src/subsample.h src/internal.h
-src/var.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/var.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/var.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/var.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/var.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
-src/var.o: src/internal.h
-src/win32.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-src/win32.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-src/win32.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-src/win32.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-src/win32.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
+compare.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+compare.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+compare.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+compare.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+compare.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+compare.o: src/subsample.h src/internal.h
+dataio.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+dataio.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+dataio.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+dataio.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+dataio.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
+dataio.o: src/internal.h
+describe.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+describe.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+describe.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+describe.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+describe.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+describe.o: src/subsample.h src/internal.h
+discrete.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+discrete.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+discrete.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+discrete.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+discrete.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+discrete.o: src/subsample.h src/internal.h
+errors.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+errors.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+errors.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+errors.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+errors.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
+estimate.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+estimate.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+estimate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+estimate.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+estimate.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+estimate.o: src/subsample.h src/internal.h
+generate.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+generate.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+generate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+generate.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+generate.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+generate.o: src/subsample.h src/internal.h
+graphing.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+graphing.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+graphing.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+graphing.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+graphing.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+graphing.o: src/subsample.h src/internal.h
+interact.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+interact.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+interact.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+interact.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+interact.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+interact.o: src/subsample.h src/internal.h src/cmdlist.h
+monte_carlo.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+monte_carlo.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+monte_carlo.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+monte_carlo.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+monte_carlo.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+monte_carlo.o: src/subsample.h src/internal.h
+nonparam.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+nonparam.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+nonparam.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+nonparam.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+nonparam.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+nonparam.o: src/subsample.h src/internal.h
+printout.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+printout.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+printout.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+printout.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+printout.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+printout.o: src/subsample.h src/internal.h src/version.h
+pvalues.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+pvalues.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+pvalues.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+pvalues.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+pvalues.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+pvalues.o: src/subsample.h
+strutils.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+strutils.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+strutils.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+strutils.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+strutils.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+strutils.o: src/subsample.h
+subsample.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+subsample.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+subsample.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+subsample.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+subsample.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+subsample.o: src/subsample.h src/internal.h
+texprint.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+texprint.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+texprint.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+texprint.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+texprint.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+texprint.o: src/subsample.h
+utils.o: ../config.h src/libgretl.h src/commands.h src/errors.h
+utils.o: src/estimate.h src/generate.h src/utils.h src/compare.h
+utils.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
+utils.o: src/printout.h src/texprint.h src/var.h src/interact.h
+utils.o: src/graphing.h src/monte_carlo.h src/nonparam.h src/discrete.h
+utils.o: src/subsample.h src/internal.h
+var.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+var.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+var.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+var.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+var.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
+var.o: src/internal.h
+win32.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+win32.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+win32.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+win32.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+win32.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
