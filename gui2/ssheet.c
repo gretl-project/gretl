@@ -24,7 +24,11 @@
 #include <ctype.h>
 #include <float.h>
 
-#define SSDEBUG
+#if (GTK_MINOR_VERSION < 2) 
+# define OLD_SELECTION
+#endif
+
+#undef SSDEBUG
 
 typedef struct {
     GtkWidget *view;
@@ -109,6 +113,8 @@ static void set_locator_label (spreadsheet *sheet, GtkTreePath *path,
 
 /* .................................................................. */
 
+#ifndef OLD_SELECTION
+
 static GtkTreeViewColumn *get_column_by_number (GtkTreeView *view, int colnum)
 {
     GList *collist = gtk_tree_view_get_columns(view);
@@ -132,8 +138,6 @@ static GtkTreeViewColumn *get_column_by_number (GtkTreeView *view, int colnum)
 
     return (gotcol)? column : NULL;
 }
-
-/* .................................................................. */
 
 static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
@@ -172,6 +176,8 @@ static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
     /* couldn't find a "next cell" to go to */
 }
 
+#endif
+
 /* .................................................................. */
 
 static gint sheet_cell_edited (GtkCellRendererText *cell,
@@ -201,7 +207,9 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       colnum, new_text, -1);
 	    sheet_modified = 1;
 	}
+#ifndef OLD_SELECTION
 	move_to_next_cell(sheet, path, column);
+#endif
 	gtk_tree_path_free(path);
 	g_free(old_text);
     }
@@ -586,6 +594,8 @@ static void build_sheet_popup (spreadsheet *sheet)
 
 /* ......................................................... */
 
+#ifndef OLD_SELECTION
+
 static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 {
     GtkTreePath *path = NULL;
@@ -631,6 +641,8 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 
     return TRUE; /* is this right? */
 }
+
+#endif /* !OLD_SELECTION */
 
 /* ........................................................... */
 
@@ -875,13 +887,58 @@ static void create_sheet_cell_renderers (spreadsheet *sheet)
     sheet->datacell = r;
 }
 
+#ifdef OLD_SELECTION
+
+/* relatively minimal version for gtk 2.0.N */
+
+static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
+				     spreadsheet *sheet)
+{   
+    GdkModifierType mods; 
+
+    if (event->type != GDK_BUTTON_PRESS) {
+	return FALSE;
+    }
+
+    gdk_window_get_pointer(view->window, NULL, NULL, &mods);
+
+    if (mods & GDK_BUTTON3_MASK) {
+	GdkEventButton *bevent = (GdkEventButton *) event;
+
+	gtk_menu_popup (GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
+			bevent->button, bevent->time);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean update_selected (GtkTreeSelection *selection, spreadsheet *sheet)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreePath *path;
+    GtkTreeViewColumn *column;
+
+    gtk_tree_view_get_cursor(view, &path, &column);
+
+    if (path && column) {
+	gtk_tree_view_set_cursor(view, path, column, TRUE);
+	set_locator_label(sheet, path, column);
+	gtk_tree_path_free(path);
+    }
+
+    return FALSE;
+}
+
+#else
+
 /* Below: prevent cursor movement outside of the data area */
 
 static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key, 
 				   spreadsheet *sheet)
 {
     if (key->keyval == GDK_Tab) {
-	/* FIXME: translate this to Down or Right */
+	/* FIXME: translate this to Down or Right? */
 	return TRUE;
     }
 
@@ -906,15 +963,17 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
     return FALSE;
 }
 
+/* fuller version of "catch_spreadsheet_click" for gtk 2.2 and higher */
+
 static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 				     spreadsheet *sheet)
 {   
     GdkModifierType mods; 
     gint ret = FALSE;
 
-#ifdef SSDEBUG
+# ifdef SSDEBUG
     fprintf(stderr, "** catch_spreadsheet_click()\n");
-#endif
+# endif
 
     if (event->type != GDK_BUTTON_PRESS) {
 	return FALSE;
@@ -935,9 +994,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	GtkTreePath *path;
 	GtkTreeViewColumn *column;
 
-#ifdef SSDEBUG
+# ifdef SSDEBUG
 	fprintf(stderr, "Got button 1 click\n");
-#endif
+# endif
 
 	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
 				      (gint) bevent->x, 
@@ -948,9 +1007,9 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	    gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
 	    gint colnum = GPOINTER_TO_INT(p);
 
-#ifdef SSDEBUG
+# ifdef SSDEBUG
 	    fprintf(stderr, "Clicked column: colnum = %d\n", colnum);
-#endif
+# endif
 
 	    if (colnum == 0) {
 		/* don't respond to a click in a non-data column */
@@ -965,12 +1024,14 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	gtk_tree_path_free(path);
     }
 
-#ifdef SSDEBUG
+# ifdef SSDEBUG
     fprintf(stderr, "catch_spreadsheet_click returning %d\n", ret);
-#endif
+# endif
 
     return ret;
 }
+
+#endif /* end of gtk >= 2.2 code */
 
 /* ........................................................... */
 
@@ -1071,12 +1132,19 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
 
     /* set the selection property on the tree view */
     select = gtk_tree_view_get_selection (GTK_TREE_VIEW(view));
+#ifdef OLD_SELECTION
+    gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
+
+    g_signal_connect (G_OBJECT(select), "changed",
+		      G_CALLBACK(update_selected), sheet);
+#else
     gtk_tree_selection_set_mode(select, GTK_SELECTION_NONE);
 
     g_signal_connect (G_OBJECT(view), "cursor-changed",
 		      G_CALLBACK(update_cell_position), sheet);
     g_signal_connect (G_OBJECT(view), "key_press_event",
 		      G_CALLBACK(catch_spreadsheet_key), sheet);
+#endif
 
     return view;
 }
