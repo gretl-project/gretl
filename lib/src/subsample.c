@@ -153,8 +153,8 @@ int set_sample_dummy (const char *line,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
 		      const int opt)
      /* sub-sample the data set, based on the criterion of skipping
-	all observations with missing data values, or using as a
-	mask a specified dummy variable, or masking with a specified
+	all observations with missing data values; or using as a
+	mask a specified dummy variable;, or masking with a specified
 	boolean condition */
 {
     double xx, *dum = NULL;
@@ -169,31 +169,30 @@ int set_sample_dummy (const char *line,
 	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0))
 	missobs = 1; 
 
-    if (missobs) {
-	/* construct missing obs dummy on the fly */
+    if (missobs) { /* construct missing obs dummy on the fly */
 	dum = malloc(n * sizeof *dum);
 	if (dum == NULL) return E_ALLOC;
 	sn = 0;
 	for (t=0; t<n; t++) {
 	    dum[t] = 1.0;
 	    for (i=1; i<oldinfo->v; i++) {
-		if (na((*oldZ)[i][t])) {
+		if (oldinfo->vector[i] && na((*oldZ)[i][t])) {
 		    dum[t] = 0.;
 		    break;
 		}
 	    }
 	    if (floateq(dum[t], 1.0)) sn++;
 	}
-    } else if (opt == OPT_O) {  
-	/* the name of a dummy variable was passed in */
+    } 
+    else if (opt == OPT_O) { /* the name of a dummy var was given */ 
 	dumnum = varindex(oldinfo, dumv);
 	if (dumnum == oldinfo->v) {
 	    sprintf(gretl_errmsg, "Variable '%s' not defined", dumv);
 	    return 1;
 	} 
 	sn = isdummy(dumnum, oldinfo->t1, oldinfo->t2, *oldZ, n);
-    } else if (opt == OPT_R) {
-	/* construct dummy from boolean expression */	
+    } 
+    else if (opt == OPT_R) { /* construct dummy from boolean */
 	GENERATE genr;
 	char formula[MAXLEN];
 
@@ -243,6 +242,7 @@ int set_sample_dummy (const char *line,
 	strcpy(oldinfo->varname[subnum], "subdum");
 	strcpy(oldinfo->label[subnum], "automatic sub-sampling dummy");
     }
+
     for (t=0; t<n; t++) {
 	if (missobs) 
 	    (*oldZ)[subnum][t] = dum[t];
@@ -251,6 +251,7 @@ int set_sample_dummy (const char *line,
 	    (*oldZ)[subnum][t] = (*oldZ)[dumnum][t];
     }
 
+    /* set up the sub-sampled datainfo */
     newinfo->n = sn;
     newinfo->v = oldinfo->v;
     if (start_new_Z(newZ, newinfo, 1)) {
@@ -272,13 +273,17 @@ int set_sample_dummy (const char *line,
     }
 
     /* copy across data and case markers, if any */
+    for (i=1; i<oldinfo->v; i++) 
+	if (!oldinfo->vector[i])
+	    (*newZ)[i][0] = (*oldZ)[i][0];
     st = 0;
     for (t=0; t<n; t++) {
 	xx = (missobs)? dum[t] : (*oldZ)[dumnum][t];
 	if (xx == 1.) {
-	    for (i=1; i<oldinfo->v; i++) 
-		(*newZ)[i][st] = (*oldZ)[i][t];
-	    if (oldinfo->markers) 
+	    for (i=1; i<oldinfo->v; i++) {
+		if (oldinfo->vector[i]) 
+		    (*newZ)[i][st] = (*oldZ)[i][t];
+	    } if (oldinfo->markers) 
 		strcpy(S[st], oldinfo->S[t]);
 	    st++;
 	}
@@ -356,13 +361,17 @@ static int datamerge (double ***fullZ, DATAINFO *fullinfo,
 
     if (newvars <= 0) return 0;
 
-    dumn = varindex(subinfo, "subdum");
+    dumn = varindex(subinfo, "subdum"); 
     if (dumn == subinfo->v) return E_NOMERGE;
 
+    /* allocate expanded data array */
     newZ = realloc(*fullZ, subinfo->v * sizeof **fullZ);
     if (newZ != NULL) {
 	for (i=0; i<newvars; i++) {
-	    newZ[fullinfo->v+i] = malloc(n * sizeof **newZ);
+	    if (subinfo->vector[fullinfo->v+i])
+		newZ[fullinfo->v+i] = malloc(n * sizeof **newZ);
+	    else
+		newZ[fullinfo->v+i] = malloc(sizeof **newZ);
 	    if (newZ[fullinfo->v+i] == NULL) {
 		err = 1;
 		break;
@@ -373,23 +382,27 @@ static int datamerge (double ***fullZ, DATAINFO *fullinfo,
     if (err) return E_ALLOC;
     else *fullZ = newZ;
 
+    for (i=fullinfo->v; i<subinfo->v; i++) 
+	if (!subinfo->vector[i])
+	   (*fullZ)[i][0] = (*subZ)[i][0]; 
+
     subt = 0;
     for (t=0; t<n; t++) {
 	if ((*fullZ)[dumn][t] == 1.0) {
 	    for (i=fullinfo->v; i<subinfo->v; i++) {
-		(*fullZ)[i][t] = (*subZ)[i][subt];
+		if (subinfo->vector[i]) 
+		    (*fullZ)[i][t] = (*subZ)[i][subt];
 	    }
 	    subt++;
 	} else {
 	    for (i=fullinfo->v; i<subinfo->v; i++) { 
-		(*fullZ)[i][t] = NADBL;
+		if (subinfo->vector[i]) 
+		    (*fullZ)[i][t] = NADBL;
 	    }
 	}
     }
 
     fullinfo->v = subinfo->v;
-    fullinfo->varname = subinfo->varname;
-    fullinfo->label = subinfo->label;
 
     return 0;
 }
@@ -404,12 +417,14 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     gretl_errmsg[0] = '\0';
 
+    /* simple case: merely a change of start or end of sample */
     if (*subZ == NULL) {
         (*datainfo)->t1 = 0;
         (*datainfo)->t2 = (*datainfo)->n - 1;
         return 0;
     }
 
+    /* reset n to full series length */
     n = (*fullinfo)->n;
 
     /* in case any new vars added, try to merge them in */
@@ -419,6 +434,12 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
     if (err == E_NOMERGE)
         sprintf(gretl_errmsg, 
 		"Missing sub-sample information; can't merge data\n");
+
+    /* reattach the malloc'd elements, which might have moved */
+    (*fullinfo)->varname = (*subinfo)->varname;
+    (*fullinfo)->label = (*subinfo)->label;
+    (*fullinfo)->vector = (*subinfo)->vector;
+    (*fullinfo)->descrip = (*subinfo)->descrip;    
 
     /* zero out the "subdum" dummy variable */
     i = varindex(*fullinfo, "subdum");
@@ -431,11 +452,12 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
     free_Z(*subZ, *subinfo); 
     *subZ = NULL;
     *fullZ = NULL;
+
     /* and data info struct */
     *subinfo = *datainfo;
     *datainfo = *fullinfo;
     clear_datainfo(*subinfo, 1);
-    /* FIXME should free subinfo and/or fullinfo? Maybe not! */
+
     free(*subinfo);
     *subinfo = NULL;
     *fullinfo = NULL;

@@ -542,7 +542,8 @@ static gint stack_model (int gui)
 	    modelspec[m+1].subdum = NULL;
 	    if (fullZ != NULL) {
 		fullinfo->varname = datainfo->varname;
-		fullinfo->label = datainfo->label;			
+		fullinfo->label = datainfo->label;
+		fullinfo->vector = datainfo->vector;
 		attach_subsample_to_model(models[0], &fullZ, fullinfo);
 	    }
 	    save_model_spec(models[0], &modelspec[m], fullinfo);
@@ -2829,9 +2830,11 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
     /* is this a "session" file? */
     ret = saved_objects(scriptfile);
     if (ret == -1) {
-	errbox("Couldn't open file");
+	sprintf(errtext, "Couldn't open %s", tryscript);
+	errbox(errtext);
 	delete_from_filelist(2, tryscript);
 	delete_from_filelist(3, tryscript);
+	return;
     }
     else if (ret > 0) {
 	verify_open_session(NULL);
