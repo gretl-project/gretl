@@ -139,11 +139,11 @@ enum extra_cmds {
     EDIT_NOTES,
     CLI_HELP,
     GUI_HELP,
-    CMD_MAX
+    GUI_CMD_MAX
 };
 
 enum file_ops {
-    OPEN_DATA = CMD_MAX + 1, /* don't collide with extra_cmds */
+    OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */
     OPEN_DB,
     OPEN_RATSDB,
     OPEN_SCRIPT,
@@ -184,11 +184,11 @@ enum file_ops {
     SAVE_THIS_GRAPH,
     SAVE_GP_CMDS,
     SAVE_CONSOLE,
-    OP_MAX
+    FILE_OP_MAX
 };
 
 enum browser_codes {
-    RAMU_DATA = OP_MAX + 1, /* don't collide with file_ops enum */
+    RAMU_DATA = FILE_OP_MAX + 1, /* don't collide with file_ops enum */
     RAMU_PS,
     GREENE_DATA,
     GREENE_PS,

@@ -41,6 +41,7 @@ static void destroy_progress (GtkWidget *widget, ProgressData *pdata)
     pdata->window = NULL;
     g_free(pdata);
     pdata = NULL;
+    fprintf(stderr, "Done destroy progress, pdata NULL\n");
 }
 
 /* ........................................................... */
@@ -125,7 +126,7 @@ int show_progress (long res, long expected, int flag)
 
     if (expected == 0) return 0;
 
-    if (flag == SP_FINISH) {
+    if (res < 0 || flag == SP_FINISH) {
 	if (pdata != NULL) {
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
 	}
@@ -156,12 +157,12 @@ int show_progress (long res, long expected, int flag)
 
     offs += res;
 
-    if (offs >= expected && pdata != NULL) {
+    if (offs > expected && pdata != NULL) {
 	gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
 	return 0;
     }
 
-    if (pdata != NULL) {
+    if (offs <= expected && pdata != NULL) {
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
 				      (gdouble) ((double) offs / expected));
 	while (gtk_events_pending()) gtk_main_iteration();

@@ -3059,8 +3059,8 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
         if (!xmlStrcmp(cur->name, (UTF) "variable")) {
 	    tmp = xmlGetProp(cur, (UTF) "name");
 	    if (tmp) {
-		strncpy(pdinfo->varname[i], tmp, 8);
-		pdinfo->varname[i][8] = '\0';
+		pdinfo->varname[i][0] = 0;
+		strncat(pdinfo->varname[i], tmp, 8);
 		free(tmp);
 	    } else {
 		sprintf(gretl_errmsg, _("Variable %d has no name"), i);
@@ -3068,8 +3068,8 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "label");
 	    if (tmp) {
-		strncpy(pdinfo->label[i], tmp, MAXLABEL-1);
-		pdinfo->label[i][MAXLABEL-1] = '\0';
+		pdinfo->label[i][0] = 0;
+		strncat(pdinfo->label[i], tmp, MAXLABEL-1);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "role");
@@ -3181,8 +3181,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	if ((*pZ)[i] == NULL) return 1;
     }
 
-    for (t=0; t<pdinfo->n; t++)
-	(*pZ)[0][t] = 1.0;
+    for (t=0; t<pdinfo->n; t++) (*pZ)[0][t] = 1.0;
 
     /* now get individual obs info: labels and values */
     cur = node->xmlChildrenNode;
@@ -3194,7 +3193,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return 1;
     }
 
-    if (progress) (*show_progress)(0, progress, SP_LOAD_INIT);
+    if (progress) (*show_progress)(0L, progress, SP_LOAD_INIT);
 
     t = 0;
     while (cur != NULL) {
@@ -3223,11 +3222,11 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	}	    
 	cur = cur->next;
 	if (progress && t > 0 && t % 50 == 0) 
-	    (*show_progress) (50, pdinfo->n, SP_NONE);
+	    (*show_progress) (50L, (long) pdinfo->n, SP_NONE);
     }
 
     if (progress) {
-	(*show_progress)(0, pdinfo->n, SP_FINISH);
+	(*show_progress)(0L, (long) pdinfo->n, SP_FINISH);
 	close_plugin(handle);
     }
 
