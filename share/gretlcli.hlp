@@ -270,9 +270,11 @@ eqnprint
 @Printing
 Usage:          eqnprint
                 eqnprint -o
+                eqnprint -f filename
 
 Must follow the estimation of a model via OLS.  Prints the estimated model in
-the form of a LaTeX equation, to a file with a name of the form
+the form of a LaTeX equation.  If a filename is specified using the "-f" flag
+output goes to that file, otherwise it goes to a file with a name of the form
 "equation_N.tex", where N is the number of models estimated to date in the
 current session.  This can be incorporated in a LaTeX document.  See also the
 tabprint command.
@@ -1350,12 +1352,14 @@ tabprint
 @Printing
 Usage:          tabprint
                 tabprint -o
+                tabprint -f filename
 
 Must follow the estimation of a model via OLS.  Prints the estimated model in
-the form of a LaTeX tabular environment, to a file with a name of the form
-"model_N.tex", where N is the number of models estimated to date in the
-current session.  This can be incorporated in a LaTeX document.  See also the
-eqnprint command.
+the form of a LaTeX tabular environment.  If a filename is specified using the
+"-f" flag output goes to that file, otherwise it goes to a file with a name of
+the form "model_N.tex", where N is the number of models estimated to date in
+the current session.  This can be incorporated in a LaTeX document.  See also
+the eqnprint command.
 
 If the -o flag is given the LaTeX file is a complete document, ready for
 processing; otherwise it must be included in a document.
