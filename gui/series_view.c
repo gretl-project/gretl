@@ -176,7 +176,6 @@ static void series_view_print (windata_t *vwin)
 static void series_view_sort (windata_t *vwin, guint action, GtkWidget *w)
 {
     int err;
-    windata_t *vwin = (windata_t *) data;
     series_view_t *sview = (series_view_t *) vwin->data;
     
     err = series_view_allocate(sview);

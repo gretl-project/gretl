@@ -3031,8 +3031,8 @@ void display_selected (GtkWidget *widget, gpointer p)
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 {
     PRN *prn;
-    int err;
     windata_t *mydata = (windata_t *) data;
+    windata_t *vwin;
     MODEL *pmod = (MODEL *) mydata->data;
     FITRESID *fr;
 
@@ -3043,6 +3043,7 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);
     } else {
+	text_print_fit_resid(fr, datainfo, prn);
 	vwin = view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
 			   view_items);
 	vwin->data = fr;

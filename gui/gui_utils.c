@@ -2077,12 +2077,12 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	if (how == COPY_LATEX) { 
 	    texprint_fit_resid(fr, datainfo, prn);
 	} 
-	else if (how == COPY_RTF) { 
+	else { /* RTF */
 	    /* rtfprint_fit_resid(fr, datainfo, prn); */
 	    ;
 	}
 
-	prn_to_clipboard(prn, how);
+	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
     }   
@@ -2096,12 +2096,12 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	if (how == COPY_LATEX) { 
 	    texprint_fcast_with_errs(fr, datainfo, prn);
 	} 
-	else if (how == COPY_RTF) { 
+	else { /* RTF */
 	    /* rtfprint_fcast_with_errs(fr, datainfo, prn); */
 	    ;
 	}
 
-	prn_to_clipboard(prn, how);
+	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
     } 
@@ -2124,10 +2124,11 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	if (bufopen(&prn)) return;
 
-	if (how == COPY_LATEX) 
+	if (how == COPY_LATEX) { 
 	    tex_print_model(pmod, datainfo, 0, prn);
-	else if (how == COPY_LATEX_EQUATION)
+	} else if (how == COPY_LATEX_EQUATION) {
 	    tex_print_equation(pmod, datainfo, 0, prn);
+	}
 
 	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);

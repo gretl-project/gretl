@@ -657,31 +657,48 @@ void texprint_fcast_with_errs (const FITRESID *fr,
 			       PRN *prn)
 {
     int t;
-    double *maxerr;
+    double maxerr;
+    char actual[32], fitted[32], sderr[32], lo[32], hi[32];
+    char pt = get_local_decpoint();
 
-    maxerr = mymalloc(fr->nobs * sizeof *maxerr);
-    if (maxerr == NULL) return;
-
-    pprintf(prn, I_(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
+    pprintf(prn, I_("For 95 percent confidence intervals, "
+		    "$t(%d, .025) = %.3f$\n\n"), 
 	    fr->pmax, fr->tval);
-    pprintf(prn, "\n     Obs ");
-    pprintf(prn, "%12s", fr->depvar);
-    pprintf(prn, "%*s", UTF_WIDTH(I_("prediction"), 14), _("prediction"));
-    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
-    pprintf(prn, _("   95%% confidence interval\n"));
-    pprintf(prn, "\n");
+
+    pprintf(prn, "\\begin{center}\n"
+	    "\\begin{tabular}{%%\n"
+	    "r%% col 1: obs\n"
+	    "  l%% col 2: varname\n"
+	    "    D{%c}{%c}{-1}%% col 3: fitted\n"
+	    "      D{%c}{%c}{-1}%% col 4: std error\n"
+	    "        D{%c}{%c}{-1}%% col 5: conf int lo\n"
+	    "         D{%c}{%c}{-1}}%% col 5: conf int hi\n",
+	    pt, pt, pt, pt, pt, pt, pt, pt);
+
+    pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s}\n"
+	    " & \\multicolumn{1}{c}{%s}\n"
+	    "  & \\multicolumn{2}{c}{%s} \\\\\n",
+	    I_("Obs"), fr->depvar,
+	    I_("prediction"), I_("std. error"),
+	    I_("95\\% confidence interval"));
+
+    pprintf(prn, "& & & & \\multicolumn{1}{c}{low} & "
+	    "\\multicolumn{1}{c}{high} \\\\\n");
 
     for (t=0; t<fr->nobs; t++) {
+	maxerr = fr->tval * fr->sderr[t];
+	tex_dcolumn_double(fr->actual[t], actual);
+	tex_dcolumn_double(fr->fitted[t], fitted);
+	tex_dcolumn_double(fr->sderr[t], sderr);
+	tex_dcolumn_double(fr->fitted[t] - maxerr, lo);
+	tex_dcolumn_double(fr->fitted[t] + maxerr, hi);
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	_printxs(fr->actual[t], 15, PRINT, prn);
-	_printxs(fr->fitted[t], 15, PRINT, prn);
-	_printxs(fr->sderr[t], 15, PRINT, prn);
-	maxerr[t] = fr->tval * fr->sderr[t];
-	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
-	pprintf(prn, " -");
-	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
-	pprintf(prn, "\n");
+	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
+		actual, fitted, sderr, lo, hi);
     }
+
+    pprintf(prn, "\\end{tabular}\n"
+	    "\\end{center}\n\n");
 }
 
 /* .................................................................. */
