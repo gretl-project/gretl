@@ -864,7 +864,7 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
 
     nf = count_fields(line);
 
-#if SUBDEBUG
+#ifdef SUBDEBUG
     fprintf(stderr, "set_sample: line='%s', nf=%d, pdinfo=%p\n", 
 	    line, nf, (void *) pdinfo);
     if (pdinfo != NULL) {
@@ -894,6 +894,8 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
 	    return 0;
 	}
     }
+
+    /* now we're looking at nf = 3 case */
 
     if (sscanf(line, "%4s %10s %10s", cmd, newstart, newstop) != 3) {
 	strcpy(gretl_errmsg, _("error reading smpl line"));

@@ -280,17 +280,16 @@ static void console_exec (void)
 		  CONSOLE_EXEC, NULL);
 
     if (looprun) { 
-	if (loop_exec(loop, execline, 
-		      &Z, &datainfo, models,
-		      &echo_off, console_prn)) {
-	    return;
-	}
+	loop_exec(loop, execline, &Z, &datainfo, models,
+		  &echo_off, console_prn);
 	gretl_loop_destroy(loop);
 	loop = NULL;
 	looprun = 0;
     }    
 
-    if (console_prn->fp == NULL) redirected = 0;
+    if (console_prn->fp == NULL) {
+	redirected = 0;
+    }
 
 #ifndef OLD_GTK
     gtk_text_buffer_get_end_iter(buf, &start);

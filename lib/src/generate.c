@@ -1956,12 +1956,16 @@ static void copy_compress (char *targ, const char *src, int len)
     targ[j] = '\0';
 }
 
-/* ........................................................... */
+#define OBS_DEBUG 0
 
 static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 {
     char *test;
     int t = -1;
+
+#if OBS_DEBUG
+    fprintf(stderr, "plain_obs_number: looking at '%s'\n", obs);
+#endif
 
     errno = 0;
 
@@ -1970,12 +1974,13 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
     if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
 	fprintf(stderr, "plain_obs_number: failed on '%s'\n", obs);
     } else {
-	t = atoi(obs); 
-	if (t < 0 || t >= pdinfo->n) {
-	    t = -1;
-	}
+	t = atoi(obs) - 1; /* convert from 1-based to 0-based */ 
     } 
-    
+
+    if (t >= pdinfo->n) {
+	t = -1;
+    }
+
     return t;
 }
 
@@ -1987,7 +1992,13 @@ static void fix_calendar_date (char *s)
     }
 }
 
-#undef OBS_DEBUG
+/* Given what looks like an observation number or date within "[" and
+   "]", try to determine the observation number.  This is quite tricky
+   since we try to handle both dates and plain observation numbers
+   (and in addition, variables representing the latter); and we may
+   have to deal with the translation from 1-based indexing in user
+   space to 0-based indexing for internal purposes.
+*/
 
 int get_t_from_obs_string (char *s, const double **Z, 
 			   const DATAINFO *pdinfo)
@@ -2004,11 +2015,15 @@ int get_t_from_obs_string (char *s, const double **Z,
 
     t = dateton(s, pdinfo);
 
+#if OBS_DEBUG
+    fprintf(stderr, " dateton gives t = %d\n", t);
+#endif
+
     if (t < 0) {
 	if (isdigit((unsigned char) *s)) {
 	    t = plain_obs_number(s, pdinfo);
 #if OBS_DEBUG
-	    fprintf(stderr, " plain_obs_number: t = %d\n", t);
+	    fprintf(stderr, " plain_obs_number gives t = %d\n", t);
 #endif
 	} else {
 	    int v = varindex(pdinfo, s);
@@ -2032,6 +2047,10 @@ int get_t_from_obs_string (char *s, const double **Z,
 		}
 	    }
 	}
+    }
+
+    if (t < 0) {
+	sprintf(gretl_errmsg, _("Observation number out of bounds"));
     }
 
 #if OBS_DEBUG
@@ -2066,6 +2085,10 @@ static void get_genr_formula (char *formula, const char *line,
     if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
 	genr->obs = get_t_from_obs_string(obs, (const double **) *genr->pZ, 
 					  genr->pdinfo);
+	if (genr->obs < 0) {
+	    genr->err = 1;
+	    return;
+	}
     }
 
     if (gretl_executing_function()) {
@@ -2287,6 +2310,15 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    genr_msg(&genr, oldv);
 	}
 	return genr.err;
+    } else if (!strcmp(s, "unit")) {
+	genr.err = genrunit(pZ, pdinfo);
+	if (!genr.err) {
+	    strcpy(genr.varname, s);
+	    genr.varnum = varindex(pdinfo, s);
+	    genr_unset_scalar(&genr);
+	    genr_msg(&genr, oldv);
+	}
+	return genr.err;	
     } else if (strncmp(s, "toler=", 6) == 0) {
 	genr.err = gentoler(s + 6);
 	return genr.err;
@@ -4125,7 +4157,59 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
     return real_paneldum(pZ, pdinfo, 1);
 }
 
-/* ........................................................  */
+/**
+ * genrunit:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * (For panel data only) adds to the data set an index variable 
+ * that uniquely identifies the cross-sectional units.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int genrunit (double ***pZ, DATAINFO *pdinfo)
+{
+    int xt = 0;
+    int i, t;
+
+    if (pdinfo->structure != STACKED_TIME_SERIES &&
+	pdinfo->structure != STACKED_CROSS_SECTION) {
+	strcpy(gretl_errmsg, "'genr unit' can be used only with "
+	       "panel data");
+	return 1;
+    }
+
+    i = varindex(pdinfo, "unit");
+
+    if (i == pdinfo->v) {
+	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    }
+
+    strcpy(pdinfo->varname[i], "unit");
+    strcpy(VARLABEL(pdinfo, i), _("cross-sectional unit index"));
+
+    if (pdinfo->structure == STACKED_CROSS_SECTION) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t % pdinfo->pd == 0) {
+		xt = 1;
+	    }
+	    (*pZ)[i][t] = (double) xt++;
+	}
+    } else {
+	/* stacked time series */
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t % pdinfo->pd == 0) {
+		xt++;
+	    }
+	    (*pZ)[i][t] = (double) xt;
+	}
+    }    
+
+    return 0;
+}
+
+/* make special time variable for panel data */
 
 static void 
 make_panel_time_var (double *x, const DATAINFO *pdinfo)

@@ -761,32 +761,55 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 
 int check_varname (const char *varname)
 {
-    int i, n = strlen(varname);
+    int testchar = 'a';
+    int ret = 0;
 
     *gretl_errmsg = '\0';
 
     if (gretl_is_reserved(varname)) {
-	return VARNAME_RESERVED;
-    }
-    
-    if (!(isalpha((unsigned char) *varname))) {
-        sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
-				"(first must be alphabetical)"), *varname);
-        return VARNAME_FIRSTCHAR;
+	ret = VARNAME_RESERVED;
+    } else if (!(isalpha((unsigned char) *varname))) {
+	testchar = *varname;
+        ret = VARNAME_FIRSTCHAR;
+    } else {
+	const char *p = varname;
+
+	while (*p && testchar == 'a') {
+	    if (!(isalpha((unsigned char) *p))  
+		&& !(isdigit((unsigned char) *p))
+		&& *p != '_') {
+		testchar = *p;
+		ret = VARNAME_BADCHAR;
+	    }
+	    p++;
+	}
     }
 
-    for (i=1; i<n; i++) {
-        if (!(isalpha((unsigned char) varname[i]))  
-            && !(isdigit((unsigned char) varname[i]))
-            && varname[i] != '_') {
-	    sprintf(gretl_errmsg, _("Varname contains illegal character 0x%x\n"
-				    "Use only letters, digits and underscore"), 
-		    (unsigned) varname[i]);
-            return VARNAME_BADCHAR;
-        }
+    if (testchar != 'a') {
+	if (isprint((unsigned char) testchar)) {
+	    if (ret == VARNAME_FIRSTCHAR) {
+		sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
+					"(first must be alphabetical)"), 
+			(unsigned char) testchar);
+	    } else {
+		sprintf(gretl_errmsg, _("Varname contains illegal character '%c'\n"
+					"Use only letters, digits and underscore"), 
+			(unsigned char) testchar);
+	    }
+	} else {
+	    if (ret == VARNAME_FIRSTCHAR) {
+		sprintf(gretl_errmsg, _("First char of varname (0x%x) is bad\n"
+					"(first must be alphabetical)"), 
+			(unsigned) testchar);
+	    } else {
+		sprintf(gretl_errmsg, _("Varname contains illegal character 0x%x\n"
+					"Use only letters, digits and underscore"), 
+			(unsigned) testchar);
+	    }
+	}
     }
 
-    return 0;
+    return ret;
 }   
 
 /* ................................................ */
@@ -955,26 +978,27 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 
 /* ................................................ */
 
-static int check_date (const char *date)
+static int bad_date_string (const char *s)
 {
-    int i, n = strlen(date);
+    int err = 0;
 
-    *gretl_errmsg = 0;
+    *gretl_errmsg = '\0';
 
-    for (i=0; i<n; i++) {
-	if (!isdigit((unsigned char) date[i]) && !IS_DATE_SEP(date[i])) {
-	    if (isprint((unsigned char) date[i])) {
+    while (*s && !err) {
+	if (!isdigit((unsigned char) *s) && !IS_DATE_SEP(*s)) {
+	    if (isprint((unsigned char) *s)) {
 		sprintf(gretl_errmsg, 
-			_("Bad character '%c' in date string"), date[i]);
+			_("Bad character '%c' in date string"), *s);
 	    } else {
 		sprintf(gretl_errmsg, 
-			_("Bad character %d in date string"), date[i]);
+			_("Bad character %d in date string"), *s);
 	    }
-	    return 1;
+	    err = 1;
 	}
+	s++;
     }
 
-    return 0;
+    return err;
 }
 
 static void maybe_unquote_label (char *targ, const char *src)
@@ -992,6 +1016,20 @@ static void maybe_unquote_label (char *targ, const char *src)
     }
 }
 
+static int get_dot_pos (const char *s)
+{
+    int i, pos = 0;
+
+    for (i=0; *s != '\0'; i++, s++) {
+	if (IS_DATE_SEP(*s)) {
+	    pos = i;
+	    break;
+	}
+    }
+
+    return pos;
+}
+
 /**
  * dateton:
  * @date: string representation of date for processing.
@@ -1007,99 +1045,106 @@ static void maybe_unquote_label (char *targ, const char *src)
 
 int dateton (const char *date, const DATAINFO *pdinfo)
 {
-    int dotpos1 = 0, dotpos2 = 0, maj = 0, min = 0, n, i;
-    char majstr[5], minstr[3];
-    char startmajstr[5], startminstr[3];
-    int startmaj, startmin;
+    int t, n = -1;
+
+    /* first check if this is calendar data and if so,
+       treat accordingly */
 
     if (calendar_data(pdinfo)) {
 	if (pdinfo->markers && pdinfo->S != NULL) {
-	    for (i=0; i<pdinfo->n; i++) {
-		if (!strcmp(date, pdinfo->S[i])) {
-		    return i;
+	    /* "hard-wired" calendar dates as strings */
+	    for (t=0; t<pdinfo->n; t++) {
+		if (!strcmp(date, pdinfo->S[t])) {
+		    /* handled */
+		    return t;
 		}
 	    }
-	    /* try allowing for 2- versus 4-digit years */
+	    /* try allowing for 2- versus 4-digit years? */
 	    if (strlen(pdinfo->S[0]) == 10 &&
 		(!strncmp(pdinfo->S[0], "19", 2) || 
 		 !strncmp(pdinfo->S[0], "20", 2))) {
-		for (i=0; i<pdinfo->n; i++) {
-		    if (!strcmp(date, pdinfo->S[i] + 2)) {
-			return i;
+		for (t=0; t<pdinfo->n; t++) {
+		    if (!strcmp(date, pdinfo->S[t] + 2)) {
+			/* handled */
+			return t;
 		    }
 		}		
 	    }
+	    /* out of options: abort */
 	    return -1;
 	} else {
-	    return calendar_obs_number(date, pdinfo);
+	    /* automatic calendar dates */
+	    n = calendar_obs_number(date, pdinfo);
 	} 
-    } else if (dataset_is_daily(pdinfo) ||
-	       dataset_is_weekly(pdinfo) ||
-	       custom_time_series(pdinfo)) {
-	/* undated time series */
-	if (sscanf(date, "%d", &i) && i > 0 && i <= pdinfo->n) {
-	    return i - 1;
+    } 
+
+    /* now try treating as an undated time series */
+
+    else if (dataset_is_daily(pdinfo) ||
+	     dataset_is_weekly(pdinfo) ||
+	     custom_time_series(pdinfo)) {
+	if (sscanf(date, "%d", &t) && t > 0) {
+	    n = t - 1;
 	}
-    } else if (pdinfo->markers && pdinfo->S != NULL) {
+    } 
+
+    /* string observation markers other than dates? */
+
+    else if (pdinfo->markers && pdinfo->S != NULL) {
 	char test[OBSLEN];
 
 	maybe_unquote_label(test, date);
-	for (i=0; i<pdinfo->n; i++) {
-	    if (!strcmp(test, pdinfo->S[i])) {
-		return i;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!strcmp(test, pdinfo->S[t])) {
+		/* handled */
+		return t;
 	    }
 	}
     }
 
-    if (check_date(date)) {
-	return -1;
-    }
+    /* treat as "regular" numeric obs number or date */
 
-    n = strlen(date);
-    for (i=1; i<n; i++) {
-        if (IS_DATE_SEP(date[i])) {
-	    dotpos1 = i;
-	    break;
+    else {
+	int dotpos1, dotpos2;
+
+	if (bad_date_string(date)) {
+	    return -1;
 	}
-    }
 
-    if (dotpos1) {
-        safecpy(majstr, date, dotpos1);
-        maj = atoi(majstr);
-        strcpy(minstr, date + dotpos1 + 1);
-        min = atoi(minstr);
-    }
+	dotpos1 = get_dot_pos(date);
+	dotpos2 = get_dot_pos(pdinfo->stobs);
 
-    n = strlen(pdinfo->stobs);
-    for (i=1; i<n; i++) {
-        if (IS_DATE_SEP(pdinfo->stobs[i])) {
-	    dotpos2 = i;
-	    break;
-	}
-    }
-
-    if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
-	sprintf(gretl_errmsg, _("Date strings inconsistent"));
-	return -1;  
-    }
-
-    if (!dotpos1 && !dotpos2) {
-	n = atoi(date) - atoi(pdinfo->stobs);
-	if (pdinfo->n > 0 && n > pdinfo->n) { 
-	    /* n = -1 in case of establishing a new dataset */
-	    sprintf(gretl_errmsg, _("Observation number out of bounds"));
-	    return -1; 
+	if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
+	    sprintf(gretl_errmsg, _("Date strings inconsistent"));
+	} else if (!dotpos1 && !dotpos2) {
+	    n = atoi(date) - atoi(pdinfo->stobs);
 	} else {
-	    return n;
+	    char majstr[5] = {0};
+	    char minstr[3] = {0};
+	    char majstr0[5] = {0};
+	    char minstr0[3] = {0};
+
+	    int maj, min;
+	    int maj0, min0;
+
+	    strncat(majstr, date, dotpos1);
+	    maj = atoi(majstr);
+	    strncat(minstr, date + dotpos1 + 1, 2);
+	    min = atoi(minstr);	    
+
+	    strncat(majstr0, pdinfo->stobs, dotpos2);
+	    maj0 = atoi(majstr0);
+	    strncat(minstr0, pdinfo->stobs + dotpos2 + 1, 2);
+	    min0 = atoi(minstr0);
+    
+	    n = pdinfo->pd * (maj - maj0) + (min - min0);
 	}
     }
 
-    safecpy(startmajstr, pdinfo->stobs, dotpos2);
-    startmaj = atoi(startmajstr);
-    strcpy(startminstr, pdinfo->stobs + dotpos2 + 1);
-    startmin = atoi(startminstr);
-    n = pdinfo->pd * (maj - startmaj);
-    n += min - startmin;
+    if (pdinfo->n > 0 && n >= pdinfo->n) {
+	sprintf(gretl_errmsg, _("Observation number out of bounds"));
+	n = -1; 
+    }
    
     return n;
 }
