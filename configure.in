@@ -176,7 +176,7 @@ dnl
 dnl Check for libreadline for use withgretlcli
 dnl
 AC_CHECK_LIB(readline, readline,have_readline="yes" ; \
-  CLI_LIBS="-lreadline -ltermcap" ; AC_DEFINE(HAVE_READLINE),,-ltermcap)
+  CLI_LIBS="-lreadline -lncurses" ; AC_DEFINE(HAVE_READLINE),,-lncurses)
 AC_SUBST(have_readline)
 AC_SUBST(CLI_LIBS)
 if test "$have_readline" = yes; then

@@ -10574,7 +10574,7 @@ if test "${ac_cv_lib_readline_readline+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lreadline -ltermcap $LIBS"
+LIBS="-lreadline -lncurses $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
@@ -10625,7 +10625,7 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_readline_readline" >&5
 echo "${ECHO_T}$ac_cv_lib_readline_readline" >&6
 if test $ac_cv_lib_readline_readline = yes; then
   have_readline="yes" ; \
-  CLI_LIBS="-lreadline -ltermcap" ; cat >>confdefs.h <<\_ACEOF
+  CLI_LIBS="-lreadline -lncurses" ; cat >>confdefs.h <<\_ACEOF
 #define HAVE_READLINE 1
 _ACEOF
 
