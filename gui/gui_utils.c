@@ -1682,7 +1682,7 @@ static void model_menu_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
-static void lmmenu_state (GtkItemFactory *ifac, gboolean s)
+static void ols_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/Tests/non-linearity (squares)", s);
     flip(ifac, "/Tests/non-linearity (logs)", s);
@@ -1691,6 +1691,7 @@ static void lmmenu_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/Tests/Chow test", s);
     flip(ifac, "/Tests/CUSUM test", s);
     flip(ifac, "/Tests/ARCH", s);
+    flip(ifac, "/Tests/influential observations", s);
 }
 
 /* ........................................................... */
@@ -1756,7 +1757,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
 	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
 
-	lmmenu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
+	ols_menu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
 
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	    model_menu_state(vwin->ifac, FALSE);

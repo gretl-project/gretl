@@ -48,6 +48,8 @@ int dummy (double ***pZ, DATAINFO *pdinfo);
 int paneldum (double ***pZ, DATAINFO *pdinfo, 
 	      int opt);
 
+int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
+
 int plotvar (double ***pZ, DATAINFO *pdinfo, 
 	     const char *period);
 

@@ -1203,13 +1203,13 @@ static int cstack (double *mstack, double *xvec, char op,
 
 /* ........................................................  */
 
-static int panel_missing (int t, const DATAINFO *pdinfo)
+int panel_unit_first_obs (int t, const DATAINFO *pdinfo)
 {
     char *p, obs[9];
 
     ntodate(obs, t, pdinfo);
     p = strchr(obs, ':');
-    if (atoi(p + 1) == 1) return 1;
+    if (p != NULL && atoi(p + 1) == 1) return 1;
     return 0;
 }
 
@@ -1283,7 +1283,7 @@ static int domath (double *xvec, const double *mvec, int nt,
     case T_DIFF:
 	for (t=t1+1; t<=t2; t++) {
 	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
-		panel_missing(t, pdinfo)) {
+		panel_unit_first_obs(t, pdinfo)) {
 		xvec[t] = NADBL;
 		continue;
 	    }
@@ -1300,7 +1300,7 @@ static int domath (double *xvec, const double *mvec, int nt,
     case T_LDIFF:
 	for (t=t1+1; t<=t2; t++) {
 	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
-		panel_missing(t, pdinfo)) {
+		panel_unit_first_obs(t, pdinfo)) {
 		xvec[t] = NADBL;
 		continue;
 	    }
