@@ -658,14 +658,14 @@ static void dump_model_cmds (FILE *fp, int m)
 
 /* ........................................................... */
 
-gint dump_cmd_stack (const char *fname)
+gint dump_cmd_stack (const char *fname, int insert_open_data)
      /* ship out the stack of commands entered in the current
 	session */
 {
     FILE *fp;
     int i, j;
 
-    if (fname == NULL) return 0;
+    if (fname == NULL || *fname == '\0') return 0;
 
     if (!strcmp(fname, "stderr")) {
 	fp = stderr;
@@ -675,6 +675,41 @@ gint dump_cmd_stack (const char *fname)
 	if (fp == NULL) {
 	    errbox(_("Couldn't open command file for writing"));
 	    return 1;
+	}
+    }
+
+    /* Check: Did we open any datafile in this session?  If not,
+       the session may have involved importing data from a
+       database; the data may or may not have been saved as a
+       gretl datafile.  If we're really saving the session for
+       future use, we'd better insert an "open" command.
+    */
+
+    if (insert_open_data) {
+	int opened_data = 0;
+
+	for (i=0; i<n_cmds; i++) {
+	    if (!strncmp(cmd_stack[i], "open ", 5)) {
+		opened_data = 1;
+		break;
+	    }
+	}
+
+	if (!opened_data) {
+	    if (*paths.datfile == '\0') {
+		/* current data not saved yet */
+		infobox(_("Please give the current dataset a name"));
+		file_selector(_("Save data file"), SAVE_DATA, NULL);
+	    }
+	    if (*paths.datfile != '\0') {
+		/* prepend an "open" command for the current data file */
+		fprintf(fp, "open %s\n", paths.datfile);
+	    } else {
+		/* the user canceled the saving of the data */
+		fclose(fp);
+		remove(fname);
+		return 1;
+	    }
 	}
     }
 
@@ -1031,7 +1066,7 @@ void view_log (void)
     strcpy(fname, paths.userdir);
     strcat(fname, "session.inp");
 
-    if (dump_cmd_stack(fname)) return;
+    if (dump_cmd_stack(fname, 0)) return;
 
     view_file(fname, 0, 0, 78, 370, VIEW_LOG, log_items);
 }
@@ -5198,7 +5233,7 @@ int gui_exec_line (char *line,
 void view_script_default (void)
      /* for "session" use */
 {
-    if (dump_cmd_stack(cmdfile)) return;
+    if (dump_cmd_stack(cmdfile, 0)) return;
 
     view_file(cmdfile, 0, 0, 77, 350, EDIT_SCRIPT, NULL);
 }

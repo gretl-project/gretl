@@ -3,6 +3,13 @@ version 1.1.5
   tsls and ar model selections
 - Model window, graph menu: if there are two independent vars,
   offer the option of a 3D fitted/actual plot
+- Set sampl range: in this dialog, give as default the current
+  sample range, not the full data range
+- When a session uses data imported from a database, be smarter
+  on saving the session: ensure the script includes a command
+  to open a datafile (get this saved first if need be)
+- Database browser window: close this when a database is
+  selected
 - Start on adding facility to do graphs, tests on models that
   were estimated on different sub-samples
 

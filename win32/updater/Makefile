@@ -2,13 +2,13 @@ CC = mingw32-gcc -W -Wall -DOS_WIN32 -mms-bitfields
 # CC = gcc -Wall -DWDEBUG
 SRC = update_client.c webget.c untgz.c
 OBJ = update_client.o webget.o untgz.o
-CFLAGS = -I../include -I../../lib/src
+CFLAGS = -I../include -I../../lib/src -I..
 TESTLIBS = -L/usr/local/lib -lz
 WINLIBS = -L../import-libs -lz.dll -lwsock32
 
 PROG = gretl_updater.exe
 
-vpath %.h ../../lib/src
+vpath %.h ../../lib/src ../../win32/updater
 vpath %.c ../../win32/updater
 
 $(PROG): $(OBJ) version.h

@@ -2369,7 +2369,7 @@ static void auto_store (void)
 	oflag = 'z';
     }
 
-    if (data_status & USER_DATA) {
+    if ((data_status & USER_DATA) && *paths.datfile) {
 	do_store(paths.datfile, oflag, 1);
     } else {
 	file_selector(_("Save data file"), SAVE_DATA, NULL);

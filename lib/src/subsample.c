@@ -55,7 +55,9 @@ int attach_subsample_to_model (MODEL *pmod, double ***fullZ,
 static int subsampled (double **Z, const DATAINFO *pdinfo, 
 		       const int subnum)
      /* Is the data set currently "sub-sampled" via selection of 
-	cases?  Use this func _only_ if subnum tests < pdinfo->v */
+	cases?  Use this func _only_ if subnum tests < pdinfo->v,
+        i.e. only if the dummy variable exists. 
+     */
 {
     int t, n = pdinfo->n;
 
@@ -175,7 +177,7 @@ int set_sample_dummy (const char *line,
 		      unsigned char oflag)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values; or using as a
-	mask a specified dummy variable;, or masking with a specified
+	mask a specified dummy variable, or masking with a specified
 	boolean condition */
 {
     double xx, *dum = NULL;
@@ -273,7 +275,7 @@ int set_sample_dummy (const char *line,
 	if (missobs) {
 	    (*oldZ)[subnum][t] = dum[t];
 	} else if (oflag == 'o') {
-	    /* ?possibility of missing values here? */
+	    /* possibility of missing values here? */
 	    (*oldZ)[subnum][t] = (*oldZ)[dumnum][t];
 	}
     }
@@ -300,18 +302,25 @@ int set_sample_dummy (const char *line,
     }
 
     /* copy across data and case markers, if any */
-    for (i=1; i<oldinfo->v; i++) 
-	if (!oldinfo->vector[i])
+
+    for (i=1; i<oldinfo->v; i++) {
+	if (!oldinfo->vector[i]) {
+	    /* copy any scalars */
 	    (*newZ)[i][0] = (*oldZ)[i][0];
+	}
+    }
+
     st = 0;
     for (t=0; t<n; t++) {
 	xx = (missobs)? dum[t] : (*oldZ)[dumnum][t];
 	if (xx == 1.) {
 	    for (i=1; i<oldinfo->v; i++) {
-		if (oldinfo->vector[i]) 
+		if (oldinfo->vector[i]) {
 		    (*newZ)[i][st] = (*oldZ)[i][t];
-	    } if (oldinfo->markers) 
+		}
+	    } if (oldinfo->markers) {
 		strcpy(S[st], oldinfo->S[t]);
+	    }
 	    st++;
 	}
     }

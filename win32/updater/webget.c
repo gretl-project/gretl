@@ -39,6 +39,7 @@
 
 #include "webget.h"
 #include "version.h"
+#include "updater.h"
 
 #ifndef errno
 extern int errno;

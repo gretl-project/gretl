@@ -733,13 +733,13 @@ void save_session (char *fname)
     else *savedir = 0;
 
 #ifdef CMD_DEBUG
-    dump_cmd_stack("stderr");
+    dump_cmd_stack("stderr", 0);
 #endif
 
     /* save commands, by dumping the command stack */
     if (haschar('.', fname) < 0)
 	strcat(fname, ".gretl");
-    if (dump_cmd_stack(fname)) return;
+    if (dump_cmd_stack(fname, 1)) return;
 
     get_base(session_base, fname, '.');
 

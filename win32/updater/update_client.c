@@ -12,16 +12,9 @@
 # include <winsock.h>
 #endif
 
-#define MAXLEN 512
+#include "updater.h"
 
-extern int retrieve_url (int opt, char *fname, char **savebuf, char *localfile,
-			 char *errbuf, time_t filedate);
-extern void clear (char *str, const int len);
-extern int untgz (char *fname);
-extern void *mymalloc (size_t size);
-#ifdef OS_WIN32
-extern int read_reg_val (HKEY tree, char *keyname, char *keyval);
-#endif
+#define MAXLEN 512
 
 enum cgi_options {
     QUERY = 1,
@@ -89,13 +82,18 @@ void listerr (char *buf, char *fname)
 {
     char errbuf[256];
 
-    errbuf[0] = '\0';
-    if (fname != NULL) 
+    *errbuf = '\0';
+
+    if (fname != NULL) {
 	sprintf(errbuf, "Error retrieving '%s'", fname);
-    else 
+    } else {
 	sprintf(errbuf, "Error retrieving file listing");
-    if (strlen(buf)) 
+    }
+
+    if (*buf != '\0') {
 	strcat(errbuf, buf);
+    }
+
     errbox(errbuf);
 }
 
@@ -132,6 +130,7 @@ time_t get_time_from_stamp_file (const char *fname)
 
     fp = fopen(fname, "r");
     if (fp == NULL) return (time_t) 0;
+
     if (fscanf(fp, "%3s %3s %d %d:%d:%d %*s %d", 
 	       wday, mon, &stime.tm_mday, &stime.tm_hour,
 	       &stime.tm_min, &stime.tm_sec, &stime.tm_year) != 7) {
@@ -169,8 +168,7 @@ int main (int argc, char *argv[])
     time_t filedate;
 
 #ifdef OS_WIN32
-    if (ws_startup())
-	exit(EXIT_FAILURE);
+    if (ws_startup()) exit(EXIT_FAILURE);
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
 	errbox("Couldn't get the path to the gretl installation\n"
@@ -195,15 +193,18 @@ int main (int argc, char *argv[])
 	usage(argv[0]);
 
     if (argc == 1) {
+	/* no arguments: a default update */
 	getbuf = mymalloc(8192);
-	if (getbuf == NULL) 
-	    exit(EXIT_FAILURE);
+	if (getbuf == NULL) exit(EXIT_FAILURE);
+
 	clear(getbuf, 8192);
+
 	err = retrieve_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
 	if (err) {
 	   listerr(errbuf, fname);
 	   return 1;
 	}
+
 	i = 0;
 	while ((line = strtok((i)? NULL: getbuf, "\n"))) {
 	    i++;

@@ -151,11 +151,11 @@ RCVARS rc_vars[] = {
     {"tramo", N_("path to tramo"), NULL, tramo, 
      'R', MAXSTR, 3, NULL},
 #endif
-#ifdef OLD_HAVE_X12A
+#ifdef G_OS_WIN32
     {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
      'R', MAXSTR, 3, NULL},
 #endif
-#ifdef OLD_HAVE_TRAMO
+#ifdef G_OS_WIN32
     {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
      'R', MAXSTR, 3, NULL},
 #endif
@@ -254,7 +254,7 @@ void get_default_dir (char *s)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
-#ifdef HAVE_TRAMO
+# ifdef HAVE_TRAMO
 void set_tramo_ok (int set)
 {
     static int ok;
@@ -264,9 +264,9 @@ void set_tramo_ok (int set)
 	flip(mdata->ifac, "/Variable/TRAMO analysis", ok);
     }
 }
-#endif
+# endif /* HAVE_TRAMO */
 
-#ifdef HAVE_X12A
+# ifdef HAVE_X12A
 void set_x12a_ok (int set)
 {
     static int ok;
@@ -276,10 +276,22 @@ void set_x12a_ok (int set)
 	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ok);
     }
 }
-#endif
+# endif /* HAVE_X12A */
 
-#ifdef G_OS_WIN32
-static int win32_check_for_prog (const char *prog)
+# ifdef G_OS_WIN32
+
+static const char *get_reg_base (const char *key)
+{
+    if (strncmp(key, "x12a", 4) == 0) {
+        return "x12arima";
+    }
+    if (strncmp(key, "tramo", 5) == 0) {
+        return "tramo";
+    }
+    return "gretl";
+}
+
+static int check_for_prog (const char *prog)
 {
     int ret = 1;
     char tmp[MAXLEN];
@@ -300,8 +312,16 @@ static int win32_check_for_prog (const char *prog)
 
     return ret;
 }
-#else
-static int unix_check_for_prog (const char *prog)
+
+static void set_tramo_x12a_dirs (void)
+{
+    set_tramo_ok(check_for_prog(tramo));
+    set_x12a_ok(check_for_prog(x12a));
+}
+
+# else /* not G_OS_WIN32 */
+
+static int check_for_prog (const char *prog)
 {
     char tmp[MAXLEN];
 
@@ -310,38 +330,25 @@ static int unix_check_for_prog (const char *prog)
     sprintf(tmp, "%s > /dev/null 2>&1", prog);
     return (system(tmp) == 0);
 }
-#endif
-
-static int check_for_prog (const char *prog)
-{
-#ifdef G_OS_WIN32
-    return win32_check_for_prog(prog);
-#else
-    return unix_check_for_prog(prog);
-#endif
-}
 
 static void set_tramo_x12a_dirs (void)
 {
-#ifndef G_OS_WIN32
     char cmd[MAXLEN];
     DIR *test;
-#endif
 
-#ifdef HAVE_TRAMO 
+#  ifdef HAVE_TRAMO 
     set_tramo_ok(check_for_prog(tramo));
     if (*tramodir == 0) {
 	build_path(paths.userdir, "tramo", tramodir, NULL);
     }
-#endif
-#ifdef HAVE_X12A
+#  endif
+#  ifdef HAVE_X12A
     set_x12a_ok(check_for_prog(x12a));
     if (*x12adir == 0) {
 	build_path(paths.userdir, "x12arima", x12adir, NULL);
     }
-#endif
+#  endif
 
-#ifndef G_OS_WIN32
     /* don't make dir structure (yet) if userdir doesn't exist */
     test = opendir(paths.userdir);
     if (test == NULL) {
@@ -349,11 +356,11 @@ static void set_tramo_x12a_dirs (void)
     } else {
 	closedir(test);
     }
-# ifdef HAVE_X12A
+#  ifdef HAVE_X12A
     sprintf(cmd, "mkdir -p %s", x12adir);
     system(cmd);
-# endif
-# ifdef HAVE_TRAMO
+#  endif
+#  ifdef HAVE_TRAMO
     sprintf(cmd, "mkdir -p %s/output", tramodir);
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/acf", tramodir);
@@ -366,10 +373,12 @@ static void set_tramo_x12a_dirs (void)
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
     system(cmd);
-# endif /* HAVE_TRAMO */
-#endif /* not win32 */
+#  endif /* HAVE_TRAMO */
 }
-#endif /* tramo or x12a */
+
+# endif /* G_OS_WIN32 */
+
+#endif /* tramo || x12a */
 
 /* ........................................................... */
 
@@ -875,17 +884,6 @@ static void read_rc (void)
 /* end of gnome versions, now win32 */
 #elif defined(G_OS_WIN32)
 
-static const char *get_reg_base (const char *key)
-{
-    if (strncmp(key, "x12a", 4) == 0) {
-	return "x12arima";
-    }
-    if (strncmp(key, "tramo", 5) == 0) {
-	return "tramo";
-    }
-    return "gretl";
-}
-
 void write_rc (void) 
 {
     int i = 0;
@@ -894,12 +892,16 @@ void write_rc (void)
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].type == 'B') {
 	    boolvar_to_str(rc_vars[i].var, val);
-	    write_reg_val(HKEY_CURRENT_USER, "gretl", rc_vars[i].key, val);
+	    write_reg_val(HKEY_CURRENT_USER, 
+			  "gretl", 
+			  rc_vars[i].key, 
+			  val);
 	} else {
 	    write_reg_val((rc_vars[i].type == 'R')? 
 			  HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 			  get_reg_base(rc_vars[i].key),
-			  rc_vars[i].key, rc_vars[i].var);
+			  rc_vars[i].key, 
+			  rc_vars[i].var);
 	}
 	i++;
     }
@@ -915,12 +917,15 @@ void read_rc (void)
 {
     int i = 0;
     char rpath[MAXSTR], value[MAXSTR];
+    int err;
 
     while (rc_vars[i].key != NULL) {
-	if (read_reg_val((rc_vars[i].type == 'R')? 
-			 HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
-			 get_reg_base(rc_vars[i].key),
-			 rc_vars[i].key, value) == 0) {
+	err = read_reg_val ((rc_vars[i].type == 'R')? 
+			    HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
+			    get_reg_base(rc_vars[i].key),
+			    rc_vars[i].key, 
+			    value);
+	if (!err) {
 	    if (rc_vars[i].type == 'B') {
 		str_to_boolvar(value, rc_vars[i].var);
 	    } else {

@@ -864,13 +864,16 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
 {
-    char fname[MAXLEN];
     int button;
     extern int replay; /* lib.c */
 
+#ifdef ALWAYS_SAVE_SESSION
+    char fname[MAXLEN];
+
     strcpy(fname, paths.userdir);
     strcat(fname, "session.inp");
-    dump_cmd_stack(fname);
+    dump_cmd_stack(fname, 0);
+#endif
 
     /* FIXME: should make both save_session_callback() and
        save_data_callback() blocking functions */

@@ -501,7 +501,9 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	sprintf(query, _("New starting obs (min = %s)\n"
 		"and ending obs (max = %s):"), 
 		datainfo->stobs, datainfo->endobs);
-	sprintf(defstr, "%s %s", datainfo->stobs, datainfo->endobs);
+	ntodate(startdate, datainfo->t1, datainfo);
+	ntodate(enddate, datainfo->t2, datainfo);
+	sprintf(defstr, "%s %s", startdate, enddate);
 	okfunc = change_sample;
 	break;
     case SMPLDUM:

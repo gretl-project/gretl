@@ -100,7 +100,7 @@ print "\n[Icons]\n";
 print "Name: \"{group}\\gretl\"; Filename: \"{app}\\gretlw32.exe\"\n";
 print "Name: \"{group}\\Gretl Web Site\"; Filename: \"{app}\\gretl_website.url\"\n";
 print "Name: \"{group}\\gretl updater\"; Filename: \"{app}\\gretl_updater.exe\"\n";
-print "Name: \"{group}\\uninstall gretl\"; Filename: \"{app}\\uninst000.exe\"\n";
+print "Name: \"{group}\\uninstall gretl\"; Filename: \"{app}\\unins000.exe\"\n";
 print "Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretlw32.exe\"; WorkingDir: \"{app}\"\n";
 
 print "\n[Registry]\n";
