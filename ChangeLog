@@ -16,6 +16,7 @@ version 1.2.8
   ('-c' or '--dump')
 - small fixes for nonlinear least squares
 - Replace fixed IP address for database server with hostname
+- Update Windows version to gtk 2.4.3 runtime
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)
