@@ -43,7 +43,8 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo,
 MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 		      const char *param);
 
-MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo);
+MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, 
+		   PRN *prn);
 
 MODEL tsls_func (LIST list, const int pos, 
 		 double ***pZ, DATAINFO *pdinfo);

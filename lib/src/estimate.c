@@ -3089,11 +3089,11 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo)
+MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     MODEL tmod;
     void *handle;
-    MODEL (* tobit_estimate) (int *, double ***, DATAINFO *);
+    MODEL (* tobit_estimate) (int *, double ***, DATAINFO *, PRN *);
 
     *gretl_errmsg = '\0';
 
@@ -3104,7 +3104,7 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo)
 	return tmod;
     }
 
-    tmod = (*tobit_estimate) (list, pZ, pdinfo);
+    tmod = (*tobit_estimate) (list, pZ, pdinfo, prn);
 
     close_plugin(handle);
 

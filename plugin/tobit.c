@@ -30,6 +30,8 @@
 
 /* #define DEBUG */
 
+#define DEFAULT_MAX_ITER 1000
+
 typedef struct _tobit_info tobit_info;
 
 struct _tobit_info {
@@ -46,6 +48,20 @@ struct _tobit_info {
     double *e;
     double *f;
 };
+
+static int get_maxiter (void)
+{
+    char *mistr = getenv("GRETL_MAX_ITER");
+    int mi = DEFAULT_MAX_ITER;
+
+    if (mistr != NULL) {
+	if (!sscanf(mistr, "%d", &mi)) {
+	    mi = DEFAULT_MAX_ITER;
+	}
+    }
+
+    return mi;
+}
 
 /* Below: we are buying ourselves a considerable simplification when it comes
    to the tobit_ll function.  That function needs access to the orginal y
@@ -174,6 +190,12 @@ static int tobit_ll (double *theta, const double **X, double **Z, tobit_info *to
     double x, llt;
     int i, t;
 
+    if (siginv < 0.0) {
+	fprintf(stderr, "tobit_ll: got a negative variance\n");
+	if (!do_score) tobit->ll2 = -1.0e10;
+	return 1;
+    }
+
     /* calculate ystar, e, f, and P vectors */
     for (t=0; t<tobit->n; t++) {
 	tobit->ystar[t] = theta[0];
@@ -252,18 +274,20 @@ static int tobit_ll (double *theta, const double **X, double **Z, tobit_info *to
     return 0;
 }
 
-#ifdef STANDALONE /* the test program, not the plugin */
-
-static void print_iter_info (double *theta, int m, double ll)
+static void print_iter_info (int iter, double *theta, int m, double ll,
+			     PRN *prn)
 {
     int i;
 
-    printf("\n*** theta and ll ***\n");
+    pprintf(prn, "\n*** iteration %d: theta and ll ***\n", iter);
     for (i=0; i<m; i++) {
-	printf("%#12.5g ", theta[i]);
+	if (i && i % 5 == 0) pputc(prn, '\n');
+	pprintf(prn, "%#12.5g ", theta[i]);
     }
-    printf("%#12.5g\n\n", ll);
+    pprintf(prn, "\n    ll = %g\n\n", ll);
 }
+
+#ifdef STANDALONE /* the test program, not the plugin */
 
 static void print_tobit_stats (double *beta, int k, double sigma, 
 			       gretl_matrix *VCV, double ll)
@@ -390,7 +414,8 @@ static int write_tobit_stats (MODEL *pmod, tobit_info *tobit, const double **X,
 
 /* Main Tobit iterative loop */
 
-static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
+static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
+		     PRN *prn)
 {
     MODEL tmod;
     tobit_info tobit;
@@ -412,9 +437,10 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
     gretl_matrix *tmp = NULL; 
 
     /* convergence-related stuff */
+    int iters, itermax;
     double tol = 1.0e-09;
     double smallstep = 1.0e-06;
-    double convcrit = 1.0e20;
+    double crit = 1.0e20;
     double stepsize = 0.25;
 
     err = tobit_init(&tobit, pmod);
@@ -437,10 +463,13 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
 	goto bailout;
     }
 
-    while (convcrit > tol) {
+    iters = 0;
+    itermax = get_maxiter();
+
+    while (crit > tol && iters++ < itermax && !err) {
 
 	/* compute loglikelihood and score matrix */
-	tobit_ll(tobit.theta, X, tZ, &tobit, 1); 
+	err = tobit_ll(tobit.theta, X, tZ, &tobit, 1); 
 
 	/* BHHH via OPG regression (OPT_A -> "this is an auxiliary regression") */
 	tmod = lsq(tobit.list, &tZ, tinfo, OLS, OPT_A, 0.0);
@@ -458,7 +487,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
 	/* see if we've gone up... (0 means "don't compute score") */
 	tobit_ll(tobit.deltmp, X, tZ, &tobit, 0); 
 
-	while (tobit.ll2 < tobit.ll && stepsize > smallstep) { 
+	while (tobit.ll2 < tobit.ll && stepsize > smallstep && !err) { 
 	    /* ...if not, halve steplength, as with ARMA models */
 	    stepsize *= 0.5;
 	    for (i=0; i<=k; i++) {
@@ -474,13 +503,22 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
 	/* actually update parameter estimates */
 	for (i=0; i<=k; i++) {
 	    tobit.theta[i] += tobit.delta[i];
-	}  
+	}
 
-#ifdef STANDALONE                   
-	print_iter_info(tobit.theta, k+1, tobit.ll);
-#endif
+	print_iter_info(iters, tobit.theta, k+1, tobit.ll, prn);
 
-	convcrit = tobit.ll2 - tobit.ll;                 
+	if (tobit.theta[k] < 0.0) {
+	    err = 1;
+	    break;
+	}
+
+	crit = tobit.ll2 - tobit.ll;  
+    }
+
+    if (crit > tol || err != 0) {
+	pmod->errcode = E_NOCONV;
+	err = 1;
+	goto bailout;
     }
 
     /* recover estimate of variance */
@@ -579,9 +617,13 @@ censored_frac (const double *y, const DATAINFO *pdinfo)
 int main (int argc, char *argv[])
 {
     MODEL model;
+    PRN *prn;
     const char *datafile;
     int err;
     int *list;
+
+    /* printing mechanism */
+    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 
     /* basic dataset apparatus */
     DATAINFO *pdinfo = NULL;
@@ -600,8 +642,8 @@ int main (int argc, char *argv[])
     err = import_csv(&Z, &pdinfo, datafile, NULL);
     if (err) exit(EXIT_FAILURE);
 
-    printf("Perc. of censored observations = %.3f\n", 
-	   censored_frac(Z[1], pdinfo));
+    pprintf(prn, "Perc. of censored observations = %.3f\n", 
+	    censored_frac(Z[1], pdinfo));
 
     list = make_ols_list(pdinfo->v);
     if (list == NULL) exit(EXIT_FAILURE);
@@ -614,7 +656,7 @@ int main (int argc, char *argv[])
     }    
 
     /* do the actual analysis */
-    err = do_tobit((const double **) Z, pdinfo, &model); 
+    err = do_tobit((const double **) Z, pdinfo, &model, prn); 
 
     /* clean up -- not really needed in a standalone program, but
        we want to be able to check for memory leaks.
@@ -627,6 +669,8 @@ int main (int argc, char *argv[])
     free_Z(Z, pdinfo);
     free_datainfo(pdinfo);
 
+    gretl_print_destroy(prn);
+
     return err;
 }
 
@@ -634,7 +678,8 @@ int main (int argc, char *argv[])
 
 /* the driver function for the plugin */
 
-MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo) 
+MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
+		      PRN *prn) 
 {
     MODEL model;
 
@@ -645,7 +690,7 @@ MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo)
     }    
 
     /* do the actual Tobit analysis */
-    do_tobit((const double **) *pZ, pdinfo, &model); 
+    do_tobit((const double **) *pZ, pdinfo, &model, prn); 
 
     return model;
 }

@@ -445,7 +445,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		*new = logit_probit(newlist, pZ, pdinfo, orig->ci);
 	    }
 	    else if (orig->ci == TOBIT) {
-		*new = tobit_model(newlist, pZ, pdinfo);
+		*new = tobit_model(newlist, pZ, pdinfo, NULL);
 	    }
 	    else if (orig->ci == LAD) {
 		*new = lad(newlist, pZ, pdinfo);
@@ -645,7 +645,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    new->aux = AUX_OMIT;
 	}
 	else if (orig->ci == TOBIT) {
-	    *new = tobit_model(tmplist, pZ, pdinfo);
+	    *new = tobit_model(tmplist, pZ, pdinfo, NULL);
 	}
 	else if (orig->ci == LAD) {
 	    *new = lad(tmplist, pZ, pdinfo);

@@ -1207,7 +1207,8 @@ void exec_line (char *line, PRN *prn)
 	} else if (cmd.ci == LOGISTIC) {
 	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
 	} else {
-	    *models[0] = tobit_model(cmd.list, &Z, datainfo);
+	    *models[0] = tobit_model(cmd.list, &Z, datainfo,
+				     (cmd.opt & OPT_V)? prn : NULL);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);

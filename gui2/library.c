@@ -2330,7 +2330,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case TOBIT:
-	*pmod = tobit_model(cmd.list, &Z, datainfo);
+	*pmod = tobit_model(cmd.list, &Z, datainfo, NULL); /* FIXME */
 	err = model_output(pmod, prn);
 	break;
 
@@ -5596,7 +5596,8 @@ int gui_exec_line (char *line,
 	} else if (cmd.ci == LOGISTIC) {
 	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
 	} else {
-	    *models[0] = tobit_model(cmd.list, &Z, datainfo);
+	    *models[0] = tobit_model(cmd.list, &Z, datainfo,
+				     (cmd.opt & OPT_V)? outprn : NULL);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);

@@ -925,6 +925,7 @@ struct gretl_opt gretl_opts[] = {
     { STORE,    OPT_R, "gnu-R" },
     { STORE,    OPT_T, "traditional" },
     { STORE,    OPT_Z, "gzipped" },
+    { TOBIT,    OPT_V, "verbose" },
     { VAR,      OPT_Q, "quiet" },    
     { 0,        0L,    NULL }
 };
