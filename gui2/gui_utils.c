@@ -670,10 +670,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }	
 
     /* trash the practice files window that launched the query? */
-    if (fwin != NULL) {
-	gtk_widget_destroy(fwin->w);
-	fwin->w = NULL;
-    }
+    if (fwin != NULL) gtk_widget_destroy(fwin->w);
 
     strcpy(paths.datfile, trydatfile);
 
@@ -928,10 +925,14 @@ void free_windata (GtkWidget *w, gpointer data)
 	    
 	    if (undo) g_free(undo);
 	}
+
+	/* menu stuff */
 	if (vwin->popup) 
 	    gtk_widget_destroy(GTK_WIDGET(vwin->popup));
 	if (vwin->ifac) 
-	    g_object_unref(G_OBJECT(vwin->ifac));  
+	    g_object_unref(G_OBJECT(vwin->ifac));
+
+	/* data specific to certain windows */
 	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
 	    free_summary(vwin->data); 
 	else if (vwin->role == CORR)
@@ -946,10 +947,10 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_gretl_mp_results(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
 	    free_series_view(vwin->data);
+
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
 	free(vwin);
-	vwin = NULL;
     }
 }
 
@@ -2108,7 +2109,7 @@ int prn_to_clipboard (PRN *prn, int copycode)
     }
 
     gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY,
+			    GDK_SELECTION_PRIMARY, 
 			    GDK_CURRENT_TIME);
     return 0;
 }
