@@ -246,7 +246,11 @@ print_coint_vecs (struct eigval *evals, const gretl_matrix *vr,
 	double ev, x = 0.0;
 	int col = evals[i].idx;
 
-	pprintf(prn, "%s: %g\n", _("Eigenvalue"), evals[i].v);
+	if (k > 1) {
+	    pprintf(prn, "(%d) %s = %g\n", i + 1, _("Eigenvalue"), evals[i].v);
+	} else {
+	    pprintf(prn, "%s = %g\n", _("Eigenvalue"), evals[i].v);
+	}
 
 	pprintf(prn, " %s: [ ", _("cointegrating vector"));
 	for (j=0; j<rows; j++) {
@@ -276,7 +280,7 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
     gretl_matrix *Suu = NULL, *Svv = NULL, *Suv = NULL;
     gretl_matrix *Inv = NULL, *TmpL = NULL, *TmpR = NULL, *M = NULL;
     double *eigvals = NULL;
-    int err = 0;
+    int r = 0, err = 0;
 
     Suu = j_matrix_from_array(X, k, k);
     Svv = j_matrix_from_array(Y, k, k);
@@ -358,10 +362,13 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 		_("Lmax test"), _("p-value"));
 
 	for (i=0; i<k; i++) {
-	    /* 0 was T below, but Doornik does not use sample size */
+	    /* second-last arg below was T, but Doornik does not use sample size */
 	    gamma_par_asymp(trace[i], lambdamax[i], 2 , k-i, 0, pval);
 	    pprintf(prn, "%4d%11.4f%11.4f [%6.4f]%11.4f [%6.4f]\n", \
 		    i, evals[i].v, trace[i], pval[0], lambdamax[i], pval[1]);
+	    if (pval[0] < 0.05) {
+		r++;
+	    }
 	}
 	pputc(prn, '\n');
 
@@ -371,7 +378,17 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	    /* tmpR holds the eigenvectors */
 	    johansen_normalize(TmpR, Svv, 0);
 	}
-	print_coint_vecs(evals, TmpR, 1, prn);
+
+	if (r > 0) {
+	    pprintf(prn, _("Cointegrating vectors (trace test, "
+		    "5%% significance level):"), r);
+	    pputc(prn, '\n');
+	    print_coint_vecs(evals, TmpR, r, prn);
+	} else {
+	    pprintf(prn, _("No cointegrating vectors (trace test, "
+		    "5%% significance level)"));
+	    pputc(prn, '\n');
+	}
 
 	free(eigvals);
 	free(evals);
