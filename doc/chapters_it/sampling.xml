@@ -114,10 +114,13 @@
     visti sopra, cosa conterrà il sotto-campione? Tutti gli individui
     con reddito superiore a 50.000 euro o solo le donne con reddito
     superiore a 50.000 euro? La risposta corretta è la seconda: la
-    seconda restrizione si aggiunge alla prima. Se si vuole applicare
-    una nuova restrizione indipendentemente da quelle applicate in
-    precedenza, occorre prima re-impostare il campione alla sua
-    lunghezza originaria, usando
+    seconda restrizione si aggiunge alla prima, ossia la restrizione
+    finale è il prodotto logico della nuova restrizione e di tutte le
+    restrizioni precedenti.
+    </para>
+    <para>Se si vuole applicare una nuova restrizione indipendentemente da
+    quelle applicate in precedenza, occorre prima re-impostare il campione alla
+    sua lunghezza originaria, usando
     </para>
 
     <programlisting>
@@ -166,10 +169,16 @@
     modelli, di calcolo delle statistiche ecc. Nel caso della
     restrizione, il programma crea una copia ridotta del dataset e la
     tratta come un semplice dataset di tipo cross-section non datato.
+    <footnote><para>Con una eccezione: se si parte da un dataset panel
+    bilanciato e la restrizione è tale da preservare la struttura di panel
+    bilanciato (ad esempio perché implica la cancellazione di tutte le
+    osservazioni per una unità cross-section), allora il dataset ridotto
+    è ancora trattato come panel.</para></footnote>.
     Se si vuole re-imporre un'interpretazione di tipo "serie
-    storiche" o "panel" al dataset ridotto, occorre usare il comando
-    <xref linkend="cmd-setobs"/> (e <xref linkend="cmd-panel"/>, se
-      appropriato).</para> 
+    storiche" o "panel" al dataset ridotto, occorre usare il comando <xref
+    linkend="cmd-setobs"/>, o il comando dal menù <quote>Campione, Struttura
+    dataset</quote>, se appropriato).
+    </para> 
 
     <para>Il fatto che una <quote>restrizione</quote> del campione
     comporti la creazione di una copia ridotta del dataset originale

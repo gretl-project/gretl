@@ -204,11 +204,11 @@
 	  </row>
 	  <row>
 	    <entry>Nonlinearità (quadrati)</entry>
-	    <entry><command>lmtest</command></entry>
+	    <entry><command>lmtest --squares</command></entry>
 	  </row>
 	  <row>
 	    <entry>Nonlinearità (logaritmi)</entry>
-	    <entry><command>lmtest</command></entry>
+	    <entry><command>lmtest --logs</command></entry>
 	  </row>
 	  <row>
 	    <entry>Nonlinearità (RESET di Ramsey)</entry>
@@ -216,7 +216,7 @@
 	  </row>
 	  <row>
 	    <entry>Eteroschedasticità (test di White)</entry>
-	    <entry><command>lmtest</command></entry>
+	    <entry><command>lmtest --white</command></entry>
 	  </row>
 	  <row>
 	    <entry>Osservazioni influenti</entry>
@@ -224,7 +224,7 @@
 	  </row>
 	  <row>
 	    <entry>Autocorrelazione (ordine pari alla frequenza)</entry>
-	    <entry><command>lmtest -o</command></entry>
+	    <entry><command>lmtest --autocorr</command></entry>
 	  </row>
 	  <row>
 	    <entry>Chow (break strutturale)</entry>

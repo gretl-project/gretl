@@ -141,6 +141,23 @@
           <quote>mele</quote>, <quote>pere</quote> e
           <quote>pesche</quote> ad ogni iterazione.
       </para>
+      <para>Per eseguire un loop su una lista di variabili contigue nel
+       dataset, è possibile indicare i nomi della prima e dell'ultima
+       variabile nella lista, separate da
+       <quote><literal>..</literal></quote>, invece di dover indicare
+       tutti i nomi. Ad esempio, ipotizzando di avere 50 variabili
+       <literal>AK</literal>, <literal>AL</literal>, &hellip;,
+       <literal>WY</literal>, che contengono livelli di reddito per gli
+       stati degli USA, per stimare una regressione del reddito sul tempo
+       per ognuno degli stati, basta eseguire:
+       </para>
+
+      <programlisting>
+       genr time
+       loop foreach i AL..WY
+          ols $i const time
+       endloop</programlisting>
+
 
     </sect2>
 
@@ -265,16 +282,15 @@
         singoli coefficienti durante tutte le iterazioni, ed esaminare nel
         dettaglio la distribuzione di frequenza delle stime.</para>
 
-      <para>Il comando <command>nulldata</command> è utile per le procedure
+      <para>Il comando <xref linkend="cmd-nulldata"/> è utile per le procedure
         Monte Carlo: invece di aprire un <quote>vero</quote> dataset,
         <command>nulldata 50</command> (ad esempio) apre un finto dataset
         da 50 osservazioni, che contiene solo la costante e una variabile
         indice. Successivamente è possibile aggiungervi variabili usando il
         comando <command>genr</command>.</para>  
 
-      <para>Si veda il comando <command>seed</command> nel
-      <xref linkend="cmdref"/> per informazioni su come generare numeri
-      pseudo-casuali in modo ripetibile.</para>
+      <para>Si veda il comando <xref linkend="cmd-set"/> per informazioni su
+      come generare numeri pseudo-casuali in modo ripetibile.</para>
 
     </sect2>
 
