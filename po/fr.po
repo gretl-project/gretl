@@ -1,45 +1,43 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Free Software Foundation, Inc.
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Messages français pour GNU concernant gretl.
+# Copyright © 2002 Free Software Foundation, Inc.
+# Michel Robitaille <robitail@IRO.UMontreal.CA>, traducteur depuis/since 1996.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: GNU gretl 0.996\n"
 "POT-Creation-Date: 2002-09-06 17:21-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2002-09-06 08:00-0500\n"
+"Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
+"Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8-bit\n"
 
 #: lib/src/compare.c:150 lib/src/generate.c:2657
 msgid "Replaced"
-msgstr ""
+msgstr "Remplacé"
 
 #: lib/src/compare.c:384
 #, c-format
 msgid "Non-linearity test (%s)"
-msgstr ""
+msgstr "Test de non linéarité (%s)"
 
 #: lib/src/compare.c:385
 msgid "squares"
-msgstr ""
+msgstr "carrés"
 
 #: lib/src/compare.c:385
 msgid "logs"
-msgstr ""
+msgstr "logarithmes"
 
 #: lib/src/compare.c:386
 msgid "relationship is linear"
-msgstr ""
+msgstr "la relation est linéraire"
 
 #: lib/src/compare.c:642 lib/src/graphing.c:682 lib/src/graphing.c:690
 #: lib/src/printout.c:838
 msgid "residual"
-msgstr ""
+msgstr "résiduel"
 
 #: lib/src/compare.c:646
 msgid "lagging uhat failed"
@@ -50,8 +48,11 @@ msgstr ""
 #: lib/src/modelprint.c:937 lib/src/modelprint.c:946 lib/src/printout.c:171
 #: lib/src/printout.c:181 lib/src/printout.c:188 lib/src/printout.c:214
 #: lib/src/printout.c:225 gui2/library.c:1265
+#, fuzzy
 msgid "Test statistic"
 msgstr ""
+"\n"
+"Test statistique: LMF = %f,\n"
 
 #: lib/src/compare.c:672 lib/src/compare.c:678 lib/src/compare.c:684
 #: lib/src/compare.c:687 lib/src/describe.c:538 lib/src/modelprint.c:513
@@ -62,28 +63,32 @@ msgid "with p-value"
 msgstr ""
 
 #: lib/src/compare.c:677
+#, fuzzy
 msgid "Alternative statistic"
 msgstr ""
+"\n"
+"Statistique alternatives: TR^2 = %f,\n"
 
 #: lib/src/compare.c:679 lib/src/compare.c:684 lib/src/compare.c:687
 #: lib/src/modelprint.c:931 lib/src/modelprint.c:940 lib/src/modelprint.c:1407
 #: lib/src/modelprint.c:1425 lib/src/printout.c:182 lib/src/printout.c:226
 #: lib/src/printout.c:343
+#, fuzzy
 msgid "Chi-square"
-msgstr ""
+msgstr "carrés"
 
 #: lib/src/compare.c:692
 msgid "LM test for autocorrelation"
-msgstr ""
+msgstr "test LM pour l'autocorrélation"
 
 #: lib/src/compare.c:693
 #, c-format
 msgid "no autocorrelation up to order %d"
-msgstr ""
+msgstr "pas d'autocorrélation de l'ordre de %d"
 
 #: lib/src/compare.c:775
 msgid "dummy variable for Chow test"
-msgstr ""
+msgstr "variable bidon pour le test Chow"
 
 #: lib/src/compare.c:801
 #, c-format
@@ -104,8 +109,9 @@ msgid "no structural break"
 msgstr ""
 
 #: lib/src/compare.c:934
+#, fuzzy
 msgid "CUSUM test for stability of parameters"
-msgstr ""
+msgstr "Test CUSUM pour la stabilité des paramètres"
 
 #: lib/src/compare.c:935
 #, c-format
@@ -126,6 +132,9 @@ msgid ""
 "('*' indicates a value outside of 95%% confidence band):\n"
 "\n"
 msgstr ""
+"Somme cumulée des résiduels échelonnés\n"
+"('*' indique une valeur en dehors du 95%% de l'intervalle de confiance):\n"
+"\n"
 
 #: lib/src/compare.c:962
 #, c-format
@@ -134,14 +143,17 @@ msgid ""
 "Harvey-Collier t(%d) = %g with p-value %.4g\n"
 "\n"
 msgstr ""
+"\n"
+"Test Harvey-Collier(%d) = %g avec valeur p %.4g\n"
+"\n"
 
 #: lib/src/compare.c:966
 msgid "CUSUM test for parameter stability"
-msgstr ""
+msgstr "Test CUSUM pour la stabilité des paramètres"
 
 #: lib/src/compare.c:967
 msgid "no change in parameters"
-msgstr ""
+msgstr "pas de changement dans les paramètres"
 
 #: lib/src/compare.c:1026
 msgid "This test is only relevant for pooled models\n"
@@ -168,8 +180,9 @@ msgid "Couldn't access GMP plugin\n"
 msgstr ""
 
 #: lib/src/compare.c:1119
+#, fuzzy
 msgid "Failed to parse mp_ols command\n"
-msgstr ""
+msgstr "Échec de stockage des commentaires des données\n"
 
 #: lib/src/dataio.c:247
 msgid "auto-generated constant"
@@ -179,17 +192,19 @@ msgstr ""
 #: lib/src/dataio.c:505
 #, c-format
 msgid "WARNING: binary data read error at var %d"
-msgstr ""
+msgstr "AVERTISSEMENT: erreur de lecture des données binaires à la variable %d"
 
 #: lib/src/dataio.c:464 lib/src/dataio.c:548
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr ""
+"AVERTISSEMENT: erreur de lecture de données ascii à la variable %d, "
+"observation %d"
 
 #: lib/src/dataio.c:523
 #, c-format
 msgid "WARNING: ascii data read error at obs %d"
-msgstr ""
+msgstr "AVERTISSEMENT: erreur de lecture de données ascii à l'observation %d"
 
 #: lib/src/dataio.c:537
 #, c-format
@@ -220,7 +235,7 @@ msgstr ""
 #: lib/src/dataio.c:620
 #, c-format
 msgid "Couldn't open file %s"
-msgstr ""
+msgstr "Ne peut ouvrir le fichier %s"
 
 #: lib/src/dataio.c:628
 #, c-format
@@ -228,43 +243,46 @@ msgid ""
 "Opened header file %s\n"
 "Couldn't find list of variables (must be terminated with a semicolon)"
 msgstr ""
+"Fichier d'en-tête ouvert %s\n"
+"Ne peut repérer la liste des variables (doit être terminé par un point-"
+"virgule)"
 
 #: lib/src/dataio.c:733
 msgid "Failed to store data comments\n"
-msgstr ""
+msgstr "Échec de stockage des commentaires des données\n"
 
 #: lib/src/dataio.c:757
 #, c-format
 msgid "Bad character '%c' in date string"
-msgstr ""
+msgstr "Caractère erroné '%c' dans la chaîne de la date"
 
 #: lib/src/dataio.c:760
 #, c-format
 msgid "Bad character %d in date string"
-msgstr ""
+msgstr "Caractère erroné %d dans la chaîne de la date"
 
 #: lib/src/dataio.c:816
 msgid "Date strings inconsistent"
-msgstr ""
+msgstr "Chaînes de data inconsistentes"
 
 #: lib/src/dataio.c:822
 msgid "Observation number out of bounds"
-msgstr ""
+msgstr "Nombre d'observations hors gamme"
 
 #: lib/src/dataio.c:883
 msgid "space for comments"
-msgstr ""
+msgstr "espace pour commentaires"
 
 #: lib/src/dataio.c:910 lib/src/dataio.c:922 lib/src/dataio.c:1980
 #: lib/src/dataio.c:2342 gui/session.c:363 gui2/session.c:412
 #, c-format
 msgid "Couldn't open %s\n"
-msgstr ""
+msgstr "Ne peut ouvrir %s\n"
 
 #: lib/src/dataio.c:916
 #, c-format
 msgid "No info in %s\n"
-msgstr ""
+msgstr "Pas d'info dans %s\n"
 
 #: lib/src/dataio.c:926
 #, c-format
@@ -272,10 +290,12 @@ msgid ""
 "Data info in file %s:\n"
 "\n"
 msgstr ""
+"Infos sur les données dans le fichier %s:\n"
+"\n"
 
 #: lib/src/dataio.c:938
 msgid " (none)\n"
-msgstr ""
+msgstr " (aucun)\n"
 
 #: lib/src/dataio.c:1064
 msgid ""
@@ -285,27 +305,30 @@ msgstr ""
 
 #: lib/src/dataio.c:1085
 msgid "Write of header file failed"
-msgstr ""
+msgstr "Échec d'écriture de l'en-tête du fichier"
 
 #: lib/src/dataio.c:1089
 msgid "Write of labels file failed"
-msgstr ""
+msgstr "Échec d'écriture des étiquettes du fichier"
 
 #: lib/src/dataio.c:1250
+#, fuzzy
 msgid "time series"
-msgstr ""
+msgstr "séries temporelles"
 
 #: lib/src/dataio.c:1252
 msgid "panel"
 msgstr ""
 
 #: lib/src/dataio.c:1254
+#, fuzzy
 msgid "undated"
-msgstr ""
+msgstr "Non daté"
 
 #: lib/src/dataio.c:1261
+#, fuzzy
 msgid "annual"
-msgstr ""
+msgstr "Annuel"
 
 #: lib/src/dataio.c:1263 gui/database.c:1624 gui2/database.c:1666
 msgid "quarterly"
@@ -320,12 +343,14 @@ msgid "hourly"
 msgstr ""
 
 #: lib/src/dataio.c:1269
+#, fuzzy
 msgid "weekly"
-msgstr ""
+msgstr "Hebdomadaire"
 
 #: lib/src/dataio.c:1271 lib/src/dataio.c:1273
+#, fuzzy
 msgid "daily"
-msgstr ""
+msgstr "Quotidien"
 
 #: lib/src/dataio.c:1275 lib/src/modelprint.c:1199 lib/src/modelprint.c:1277
 msgid "unknown"
@@ -337,10 +362,12 @@ msgid ""
 "Data file %s\n"
 "as of %s\n"
 msgstr ""
+"Fichier de données %s\n"
+"en tant que %s\n"
 
 #: lib/src/dataio.c:1301
 msgid "(unsaved)"
-msgstr ""
+msgstr "(non sauvegardé)"
 
 #: lib/src/dataio.c:1305 gui/database.c:760 gui2/database.c:796
 msgid "Description"
@@ -359,18 +386,21 @@ msgid "Range"
 msgstr ""
 
 #: lib/src/dataio.c:1320
+#, fuzzy
 msgid "Listing of variables"
 msgstr ""
+"Liste des variables: \n"
+"\n"
 
 #: lib/src/dataio.c:1371
 #, c-format
 msgid "Bad data label in %s"
-msgstr ""
+msgstr "Étiquette de données erronée dans %s"
 
 #: lib/src/dataio.c:1382
 #, c-format
 msgid "extraneous label for var '%s'\n"
-msgstr ""
+msgstr "étiquette superflue pour la variable '%s'\n"
 
 #: lib/src/dataio.c:1579
 #, c-format
@@ -378,21 +408,25 @@ msgid ""
 "\n"
 "Reading header file %s\n"
 msgstr ""
+"\n"
+"Lecture du fichier d'en-tète %s\n"
 
 #: lib/src/dataio.c:1603 lib/src/dataio.c:1675
 #, c-format
 msgid "periodicity: %d, maxobs: %d, observations range: %s-%s\n"
-msgstr ""
+msgstr "périodicité: %d, obs. max: %d, étendue des observations: %s-%s\n"
 
 #: lib/src/dataio.c:1607
 msgid ""
 "\n"
 "Reading "
 msgstr ""
+"\n"
+"Lecture en cours "
 
 #: lib/src/dataio.c:1609
 msgid "time-series"
-msgstr ""
+msgstr "séries temporelles"
 
 #: lib/src/dataio.c:1609
 msgid "cross-sectional"
@@ -400,20 +434,20 @@ msgstr ""
 
 #: lib/src/dataio.c:1610
 msgid " datafile"
-msgstr ""
+msgstr " fichier de données"
 
 #: lib/src/dataio.c:1703
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr ""
+msgstr "   première étiquette de rangée \"%s\", dernière étiquette \"%s\"\n"
 
 #: lib/src/dataio.c:1712
 msgid "   label strings too long for dates?\n"
-msgstr ""
+msgstr "   chaînes des étiquettes trop longues pour les dates?\n"
 
 #: lib/src/dataio.c:1718
 msgid "   label strings can't be consistent dates\n"
-msgstr ""
+msgstr "   chaînes des étiquettes ne peuvent être des dates consistentes\n"
 
 #: lib/src/dataio.c:1723
 msgid "trying to parse row labels as dates...\n"
@@ -422,12 +456,12 @@ msgstr ""
 #: lib/src/dataio.c:1732
 #, c-format
 msgid "   %s: probably a year... "
-msgstr ""
+msgstr "   %s: probablement une année... "
 
 #: lib/src/dataio.c:1734
 #, c-format
 msgid "   %s: out of bounds for a year?\n"
-msgstr ""
+msgstr "   %s: hors gamme pour une année?\n"
 
 #: lib/src/dataio.c:1737
 msgid "   but I can't make sense of the extra bit\n"
@@ -435,17 +469,17 @@ msgstr ""
 
 #: lib/src/dataio.c:1741
 msgid "and just a year\n"
-msgstr ""
+msgstr "et juste une année\n"
 
 #: lib/src/dataio.c:1752
 #, c-format
 msgid "quarter %s?\n"
-msgstr ""
+msgstr "trimestre %s\n"
 
 #: lib/src/dataio.c:1762
 #, c-format
 msgid "month %s?\n"
-msgstr ""
+msgstr "mois %s?\n"
 
 #: lib/src/dataio.c:1772
 msgid "   definitely not a four-digit year\n"
@@ -453,7 +487,7 @@ msgstr ""
 
 #: lib/src/dataio.c:1809
 msgid "Data frequency does not match"
-msgstr ""
+msgstr "Fréquence des données ne concorde pas"
 
 #: lib/src/dataio.c:1814
 msgid "New data not conformable for appending"
@@ -461,15 +495,15 @@ msgstr ""
 
 #: lib/src/dataio.c:1836
 msgid "Starting observation does not match"
-msgstr ""
+msgstr "Début des observation ne concorde pas"
 
 #: lib/src/dataio.c:1840
 msgid "Ending observation does not match"
-msgstr ""
+msgstr "Fin des observation ne concorde pas"
 
 #: lib/src/dataio.c:1849
 msgid "Starting point of new data does not fit"
-msgstr ""
+msgstr "Point de départ des nouvelles données ne correspond pas"
 
 #: lib/src/dataio.c:1853
 msgid "Inconsistency in observation markers"
@@ -497,7 +531,7 @@ msgstr ""
 #: lib/src/dataio.c:1986 lib/src/dataio.c:2348 cli/common.c:146
 #: plugin/excel_import.c:704 plugin/gnumeric_import.c:493
 msgid "Out of memory\n"
-msgstr ""
+msgstr "Mémoire épuisée\n"
 
 #: lib/src/dataio.c:1991 lib/src/dataio.c:2352
 msgid "parsing"
@@ -785,8 +819,9 @@ msgid "Reading"
 msgstr ""
 
 #: lib/src/dataio.c:3252
+#, fuzzy
 msgid "of data"
-msgstr ""
+msgstr " fichier de données"
 
 #: lib/src/dataio.c:3258 lib/src/dataio.c:3440 plugin/gnumeric_import.c:283
 #: plugin/gnumeric_import.c:385
@@ -875,9 +910,9 @@ msgid ""
 msgstr ""
 
 #: lib/src/describe.c:374
-#, c-format
+#, fuzzy, c-format
 msgid "Autocorrelation function for %s"
-msgstr ""
+msgstr "pas d'autocorrélation de l'ordre de %d"
 
 #: lib/src/describe.c:383
 #, c-format
@@ -901,8 +936,9 @@ msgid "lag"
 msgstr ""
 
 #: lib/src/describe.c:416
+#, fuzzy
 msgid "Partial autocorrelations"
-msgstr ""
+msgstr "test LM pour l'autocorrélation"
 
 #: lib/src/describe.c:418 lib/src/describe.c:441
 msgid "to lag"
@@ -913,12 +949,14 @@ msgid "Correlogram for"
 msgstr ""
 
 #: lib/src/describe.c:439
+#, fuzzy
 msgid "autocorrelations"
-msgstr ""
+msgstr "test LM pour l'autocorrélation"
 
 #: lib/src/describe.c:439
+#, fuzzy
 msgid "partial autocorrelations"
-msgstr ""
+msgstr "test LM pour l'autocorrélation"
 
 #: lib/src/describe.c:535
 msgid "Test for fractional integration"
@@ -929,16 +967,20 @@ msgid "Estimated degree of integration"
 msgstr ""
 
 #: lib/src/describe.c:537
+#, fuzzy
 msgid "test statistic"
 msgstr ""
+"\n"
+"Test statistique: LMF = %f,\n"
 
 #: lib/src/describe.c:582
 msgid "Missing values within sample -- can't do periodogram"
 msgstr ""
 
 #: lib/src/describe.c:588
+#, fuzzy
 msgid "Insufficient observations for periodogram"
-msgstr ""
+msgstr "Observations manquantes pour la variable '%s'"
 
 #: lib/src/describe.c:592
 #, c-format
@@ -946,12 +988,14 @@ msgid "'%s' is a constant"
 msgstr ""
 
 #: lib/src/describe.c:631
+#, fuzzy
 msgid "quarters"
-msgstr ""
+msgstr "carrés"
 
 #: lib/src/describe.c:633
+#, fuzzy
 msgid "months"
-msgstr ""
+msgstr "mois %s?\n"
 
 #: lib/src/describe.c:635
 msgid "years"
@@ -1021,9 +1065,9 @@ msgid "undefined"
 msgstr ""
 
 #: lib/src/describe.c:769
-#, c-format
+#, fuzzy, c-format
 msgid "%s, using the observations %s - %s"
-msgstr ""
+msgstr "Observations manquantes pour la variable '%s'"
 
 #: lib/src/describe.c:773 lib/src/describe.c:803 gui/guiprint.c:390
 #: gui2/guiprint.c:451
@@ -1841,9 +1885,9 @@ msgid "Test statistic for normality"
 msgstr ""
 
 #: lib/src/graphing.c:1000
-#, c-format
+#, fuzzy, c-format
 msgid "Chi-squared(2) = %.3f, pvalue %.5f"
-msgstr ""
+msgstr "prob(Chi-carré(%d) > %f) = %f"
 
 #: lib/src/graphing.c:1035
 msgid "Frequency distribution for"
@@ -2208,8 +2252,9 @@ msgid "Durbin-Watson statistic"
 msgstr ""
 
 #: lib/src/modelprint.c:250 lib/src/modelprint.c:261 lib/src/modelprint.c:268
+#, fuzzy
 msgid "First-order autocorrelation coeff."
-msgstr ""
+msgstr "test LM pour l'autocorrélation"
 
 #: lib/src/modelprint.c:260
 msgid "Durbin--Watson statistic"
@@ -2323,12 +2368,14 @@ msgid "Breusch-Pagan test for"
 msgstr ""
 
 #: lib/src/modelprint.c:606 lib/src/modelprint.c:607
+#, fuzzy
 msgid "autocorrelation up to order"
-msgstr ""
+msgstr "pas d'autocorrélation de l'ordre de %d"
 
 #: lib/src/modelprint.c:610 lib/src/modelprint.c:611
+#, fuzzy
 msgid "first-order autocorrelation"
-msgstr ""
+msgstr "test LM pour l'autocorrélation"
 
 #: lib/src/modelprint.c:616 lib/src/modelprint.c:617
 msgid "Test for ARCH of order"
@@ -2358,20 +2405,22 @@ msgid "Weight var is a dummy variable, effective obs ="
 msgstr ""
 
 #: lib/src/modelprint.c:729
+#, fuzzy
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT       SLOPE\n"
-msgstr ""
+msgstr "      VARIABLE         COEFFICIENT          ERREUR STD\n"
 
 #: lib/src/modelprint.c:732
 msgid "(at mean)"
 msgstr ""
 
 #: lib/src/modelprint.c:734
+#, fuzzy
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |"
 "T|)\n"
 "\n"
-msgstr ""
+msgstr "      VARIABLE         COEFFICIENT          ERREUR STD\n"
 
 #: lib/src/modelprint.c:756 lib/src/modelprint.c:771 lib/src/modelprint.c:783
 msgid "Coefficient"
@@ -2477,8 +2526,9 @@ msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
 msgstr ""
 
 #: lib/src/modelprint.c:1595 plugin/mp_ols.c:407
+#, fuzzy
 msgid "      VARIABLE         COEFFICIENT                  STD. ERROR\n"
-msgstr ""
+msgstr "      VARIABLE         COEFFICIENT          ERREUR STD\n"
 
 #: lib/src/monte_carlo.c:101 lib/src/monte_carlo.c:112
 #, c-format
@@ -4031,8 +4081,9 @@ msgstr ""
 
 #: gui/calculator.c:679 gui/calculator.c:728 gui2/calculator.c:681
 #: gui2/calculator.c:731
+#, fuzzy
 msgid "chi-square"
-msgstr ""
+msgstr "carrés"
 
 #: gui/calculator.c:680 gui/calculator.c:729 gui2/calculator.c:682
 #: gui2/calculator.c:732
@@ -4543,8 +4594,9 @@ msgstr ""
 
 #: gui/callbacks.c:527 gui/callbacks.c:532 gui2/callbacks.c:541
 #: gui2/callbacks.c:546
+#, fuzzy
 msgid "gretl: missing code"
-msgstr ""
+msgstr "gretl: stockage des données"
 
 #: gui/callbacks.c:528 gui/callbacks.c:533 gui2/callbacks.c:542
 #: gui2/callbacks.c:547
@@ -4783,11 +4835,11 @@ msgid "Couldn't open descriptions file"
 msgstr ""
 
 #: gui/datafiles.c:104 gui2/datafiles.c:113
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Couldn't open data descriptions file\n"
 "%s"
-msgstr ""
+msgstr "Ne peut ouvrir le fichier %s"
 
 #: gui/datafiles.c:157 gui2/datafiles.c:168
 msgid "gretl: data header"
@@ -4902,12 +4954,14 @@ msgid "annual data"
 msgstr ""
 
 #: gui/datafiles.c:705 gui2/datafiles.c:725
+#, fuzzy
 msgid "quarterly data"
-msgstr ""
+msgstr "Trimestriel"
 
 #: gui/datafiles.c:706 gui2/datafiles.c:726
+#, fuzzy
 msgid "monthly data"
-msgstr ""
+msgstr "Mensuel"
 
 #: gui/datafiles.c:707 gui2/datafiles.c:727
 msgid "weekly data"
@@ -5448,12 +5502,14 @@ msgid "Print..."
 msgstr ""
 
 #: gui/gpt_control.c:1481 gui2/gpt_control.c:1484
+#, fuzzy
 msgid "Failed to generate PNG file"
-msgstr ""
+msgstr "Échec de traitement du fichier Excel"
 
 #: gui/gpt_control.c:1575 gui2/gpt_control.c:1578
+#, fuzzy
 msgid "Failed to create pixbuf from file"
-msgstr ""
+msgstr "Échec de traitement du fichier Excel"
 
 #: gui/gpt_control.c:1585 gui2/gpt_control.c:1588
 msgid "Malformed PNG file for graph"
@@ -6313,15 +6369,15 @@ msgstr ""
 
 #: gui/gretl.c:1000 gui2/gretl.c:1051
 msgid "Annual"
-msgstr ""
+msgstr "Annuel"
 
 #: gui/gretl.c:1002 gui2/gretl.c:1053
 msgid "Quarterly"
-msgstr ""
+msgstr "Trimestriel"
 
 #: gui/gretl.c:1004 gui2/gretl.c:1055
 msgid "Monthly"
-msgstr ""
+msgstr "Mensuel"
 
 #: gui/gretl.c:1006 gui2/gretl.c:1057
 msgid "Hourly"
@@ -6329,15 +6385,15 @@ msgstr ""
 
 #: gui/gretl.c:1008 gui2/gretl.c:1059
 msgid "Weekly"
-msgstr ""
+msgstr "Hebdomadaire"
 
 #: gui/gretl.c:1010 gui/gretl.c:1012 gui2/gretl.c:1061 gui2/gretl.c:1063
 msgid "Daily"
-msgstr ""
+msgstr "Quotidien"
 
 #: gui/gretl.c:1014 gui2/gretl.c:1065
 msgid "Unknown"
-msgstr ""
+msgstr "Inconnnu"
 
 #: gui/gretl.c:1018 gui2/gretl.c:1069
 msgid "Panel"
@@ -6345,7 +6401,7 @@ msgstr ""
 
 #: gui/gretl.c:1020 gui2/gretl.c:1071
 msgid "Undated"
-msgstr ""
+msgstr "Non daté"
 
 #: gui/gretl.c:1030 gui2/gretl.c:1081
 #, c-format
@@ -7668,11 +7724,11 @@ msgid "Couldn't make backup of data file"
 msgstr ""
 
 #: gui/library.c:3145 gui2/library.c:2979
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Write of data file failed\n"
 "%s"
-msgstr ""
+msgstr "Échec d'écriture de l'en-tête du fichier"
 
 #: gui/library.c:3154 gui2/library.c:2988
 #, c-format
@@ -8536,8 +8592,9 @@ msgid "The filter for acceptable fonts."
 msgstr ""
 
 #: gui2/gtkfontselhack.c:376
+#, fuzzy
 msgid "_Family:"
-msgstr ""
+msgstr "Quotidien"
 
 #: gui2/gtkfontselhack.c:382
 msgid "_Style:"
@@ -8568,8 +8625,9 @@ msgid "Sorry, can't format this model"
 msgstr ""
 
 #: gui2/library.c:3118
+#, fuzzy
 msgid "Failed to process TeX file"
-msgstr ""
+msgstr "Échec de traitement du fichier Excel"
 
 #: gui2/selector.c:1382
 msgid "Too many items were selected"
@@ -8593,20 +8651,22 @@ msgid "Model is already saved"
 msgstr ""
 
 #: gui2/session.c:424
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "\n"
 "Reading session file %s\n"
 msgstr ""
+"\n"
+"Lecture du fichier d'en-tète %s\n"
 
 #: gui2/session.c:587 gui2/session.c:600
 msgid "Warning: session file is corrupted"
 msgstr ""
 
 #: gui2/session.c:612
-#, c-format
+#, fuzzy, c-format
 msgid "Warning: couldn't open graph file %s"
-msgstr ""
+msgstr "Ne peut ouvrir le fichier %s"
 
 #: gui2/session.c:1750
 msgid "Correlations"
@@ -8637,16 +8697,16 @@ msgstr ""
 #: plugin/excel_import.c:114
 #, c-format
 msgid "%s: Invalid BOF record"
-msgstr ""
+msgstr "%s: enregistrement BOF invalide"
 
 #: plugin/excel_import.c:121
 #, c-format
 msgid "%s: No BOF record found"
-msgstr ""
+msgstr "%s: pas d'enregistrement BOF trouvé"
 
 #: plugin/excel_import.c:328
 msgid "String index too large"
-msgstr ""
+msgstr "Index de chaîne trop gros"
 
 #: plugin/excel_import.c:443
 msgid "String record without preceding string formula"
@@ -8662,15 +8722,15 @@ msgstr ""
 
 #: plugin/excel_import.c:719 plugin/gnumeric_import.c:508
 msgid "No worksheets found"
-msgstr ""
+msgstr "Pas de feuille de travail trouvée"
 
 #: plugin/excel_import.c:746
 msgid "Failed to process Excel file"
-msgstr ""
+msgstr "Échec de traitement du fichier Excel"
 
 #: plugin/excel_import.c:768
 msgid "No data found.\n"
-msgstr ""
+msgstr "Pas de données repérées.\n"
 
 #: plugin/excel_import.c:778
 msgid "One or more variable names are missing.\n"
@@ -8689,15 +8749,15 @@ msgstr ""
 
 #: plugin/gnumeric_import.c:212 plugin/gnumeric_import.c:219
 msgid "Expected to find a variable name"
-msgstr ""
+msgstr "Attendait trouver un nom de variable"
 
 #: plugin/gnumeric_import.c:256
 msgid "Found an extraneous row of text"
-msgstr ""
+msgstr "Rangée de texte superflue trouvée"
 
 #: plugin/gnumeric_import.c:260
 msgid "Found an extraneous column of text"
-msgstr ""
+msgstr "Colonne de texte superflue trouvée"
 
 #: plugin/gnumeric_import.c:295 plugin/gnumeric_import.c:397
 msgid "File of the wrong type, root node not Workbook"
@@ -8705,13 +8765,15 @@ msgstr ""
 
 #: plugin/gnumeric_import.c:526
 msgid "error in wsheet_setup()"
-msgstr ""
+msgstr "erreur dans wsheet_setup()"
 
 #: plugin/import_common-2.c:36 plugin/import_common.c:36
 msgid ""
 "\n"
 "Please rename this variable and try again"
 msgstr ""
+"\n"
+"SVP renommer cette variable et essayer à nouveau"
 
 #: plugin/import_common-2.c:205
 msgid "Sheet to import:"
@@ -8736,16 +8798,16 @@ msgstr ""
 #: plugin/mp_ols.c:107
 #, c-format
 msgid "Missing observations for variable '%s'"
-msgstr ""
+msgstr "Observations manquantes pour la variable '%s'"
 
 #: plugin/mp_ols.c:114
 #, c-format
 msgid "Variable '%s' is all zeros"
-msgstr ""
+msgstr "Variable '%s' est pleine de zéros"
 
 #: plugin/mp_ols.c:818
 msgid "Error sum of squares is not > 0"
-msgstr ""
+msgstr "Erreur sur la somme des carrées qui n'est pas > que 0"
 
 #: plugin/panel_data.c:42
 #, c-format
@@ -8870,15 +8932,16 @@ msgstr ""
 
 #: plugin/progress_bar-2.c:67 plugin/progress_bar.c:61
 msgid "gretl: loading data"
-msgstr ""
+msgstr "gretl: chargement des données"
 
 #: plugin/progress_bar-2.c:69 plugin/progress_bar.c:61
 msgid "gretl: storing data"
-msgstr ""
+msgstr "gretl: stockage des données"
 
 #: plugin/progress_bar-2.c:71
+#, fuzzy
 msgid "gretl: scanning fonts"
-msgstr ""
+msgstr "gretl: chargement des données"
 
 #: plugin/progress_bar-2.c:138 plugin/progress_bar.c:129
 msgid "Retrieving"
@@ -8943,10 +9006,12 @@ msgid ""
 "Critical values for Student's t distribution\n"
 "\n"
 msgstr ""
+"Valeurs critiques pour la distribution de Student\n"
+"\n"
 
 #: plugin/stats_tables.c:382
 msgid "inf."
-msgstr ""
+msgstr "inf."
 
 #: plugin/stats_tables.c:401
 msgid ""
@@ -8966,7 +9031,7 @@ msgstr ""
 
 #: plugin/workbook.c:408
 msgid "Reading file...\n"
-msgstr ""
+msgstr "Lecture du fichier...\n"
 
 #: plugin/workbook.c:511
 msgid "Password protected workbooks are not supported yet."
@@ -8975,11 +9040,36 @@ msgstr ""
 #: plugin/workbook.c:609 plugin/workbook.c:661
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
 msgstr ""
+"Ce fichier n'est pas un fichier 'OLE' -- il peut être trop vieux pour être "
+"lu par gretl\n"
 
 #: plugin/workbook.c:611
 msgid "Unexpected error reading the file\n"
-msgstr ""
+msgstr "Erreur inattendue durant la lecture du fichier\n"
 
 #: plugin/workbook.c:663
 msgid "Unexpected error reading the file"
-msgstr ""
+msgstr "Erreur inattendue durant la lecture du fichier"
+
+#~ msgid "with p-value = prob(F(%d,%d) > %g) = %.3g\n"
+#~ msgstr "with valeur de p = prob(F(%d,%d) > %g) = %.3g\n"
+
+#~ msgid "prob(F(%d,%d) > %g) = %.3g"
+#~ msgstr "prob(F(%d,%d) > %g) = %.3g"
+
+#~ msgid " time-series"
+#~ msgstr " séries temporelles"
+
+#~ msgid ""
+#~ "Description:\n"
+#~ "\n"
+#~ msgstr ""
+#~ "Description:\n"
+#~ "\n"
+
+#~ msgid ""
+#~ "%s data, %s - %s (n = %d)\n"
+#~ "\n"
+#~ msgstr ""
+#~ "%s données, %s - %s (n = %d)\n"
+#~ "\n"
