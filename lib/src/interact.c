@@ -2113,7 +2113,7 @@ int simple_commands (CMD *cmd, const char *line,
     switch (cmd->ci) {
 
     case ADF:
-	if (!isdigit(*cmd->param)) {
+	if (!isdigit(*cmd->param) && *cmd->param != '-') {
 	    pputs(prn, _("adf: lag order must be given first\n"));
 	    break;
 	}
@@ -2141,10 +2141,12 @@ int simple_commands (CMD *cmd, const char *line,
 	    break;
 	}
 	corrmat = corrlist(cmd->list, (const double **) *pZ, datainfo);
-	if (corrmat == NULL) 
+	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
-	else printcorr(corrmat, datainfo, prn);
-	free_corrmat(corrmat);
+	} else {
+	    printcorr(corrmat, datainfo, prn);
+	    free_corrmat(corrmat);
+	}
 	break;
 
     case ESTIMATE:
@@ -2166,8 +2168,9 @@ int simple_commands (CMD *cmd, const char *line,
 
     case CRITERIA:
 	err = parse_criteria(line, (const double **) *pZ, datainfo, prn);
-	if (err) 
+	if (err) { 
 	    pputs(prn, _("Error in computing model selection criteria.\n"));
+	}
 	break;
 
     case CRITICAL:
@@ -2180,9 +2183,11 @@ int simple_commands (CMD *cmd, const char *line,
 
     case DIFF:
 	err = list_diffgenr(cmd->list, pZ, datainfo);
-	if (err) 
+	if (err) {
 	    pputs(prn, _("Error adding first differences of variables.\n"));
-	else varlist(datainfo, prn);
+	} else {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case KPSS:
@@ -2196,35 +2201,45 @@ int simple_commands (CMD *cmd, const char *line,
 
     case LDIFF:
 	err = list_ldiffgenr(cmd->list, pZ, datainfo);
-	if (err) 
+	if (err) {
 	    pputs(prn, _("Error adding log differences of variables.\n"));
-	else varlist(datainfo, prn);
+	} else {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case LAGS:
 	err = list_laggenr(cmd->list, pZ, datainfo); 
-	if (err) 
+	if (err) {
 	    pputs(prn, _("Error adding lags of variables.\n"));
-	else varlist(datainfo, prn);
+	} else {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case LOGS:
 	err = list_loggenr(cmd->list, pZ, datainfo);
-	if (err) 
+	if (err) {
 	    pputs(prn, _("Error adding logs of variables.\n"));
-	else varlist(datainfo, prn);
+	} else {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case SQUARE:
 	err = list_xpxgenr(cmd->list, pZ, datainfo, cmd->opt);
-	if (err) 
+	if (err) {
 	    pputs(prn, _("Failed to generate squares\n"));
-	else varlist(datainfo, prn);
+	} else {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case MULTIPLY:
 	err = gretl_multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
-	if (!err) varlist(datainfo, prn);
+	if (!err) {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case GRAPH:
@@ -2247,10 +2262,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case INFO:
-	if (datainfo->descrip != NULL) 
+	if (datainfo->descrip != NULL) {
 	    pprintf(prn, "%s\n", datainfo->descrip);
-	else 
+	} else {
 	    pputs(prn, _("No data information is available.\n"));
+	}
 	break;
 
     case LABEL:
@@ -2276,21 +2292,27 @@ int simple_commands (CMD *cmd, const char *line,
 
     case RHODIFF:
 	err = rhodiff(cmd->param, cmd->list, pZ, datainfo);
-	if (err) errmsg(err, prn);
-	else varlist(datainfo, prn);
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case SIM:
 	err = simulate(line, *pZ, datainfo);
-	if (err) errmsg(err, prn);
-	else print_gretl_msg(prn);
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    print_gretl_msg(prn);
+	}
 	break;
 
     case SUMMARY:
 	summ = summary(cmd->list, (const double **) *pZ, datainfo, prn);
-	if (summ == NULL) 
+	if (summ == NULL) {
 	    pputs(prn, _("generation of summary stats failed\n"));
-	else {
+	} else {
 	    print_summary(summ, datainfo, prn);
 	    free_summary(summ);
 	}
@@ -2338,9 +2360,10 @@ int simple_commands (CMD *cmd, const char *line,
 	    break;
 	}
 	pprintf(prn, _("Data written OK.\n"));
-	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && datainfo->markers) 
+	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && datainfo->markers) {
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));
+	}
 	break;
 
     default:

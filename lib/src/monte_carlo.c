@@ -2114,6 +2114,7 @@ int loop_exec (LOOPSET *loop, char *line,
 {
     CMD cmd;
     MODEL *lastmod = models[0];
+    char errline[MAXLINE];
     char linecpy[MAXLINE];
     int m = 0, ignore = 0;
     int modnum = 0;
@@ -2159,6 +2160,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    fprintf(stderr, "loop->lines[%d] = '%s'\n", j, loop->lines[j]);
 #endif
 	    strcpy(linecpy, loop->lines[j]);
+	    strcpy(errline, loop->lines[j]);
 
 	    cmd.opt = get_gretl_options(linecpy, &err);
 	    if (err) break;
@@ -2395,7 +2397,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
     if (err) {
 	errmsg(err, prn);
-	pprintf(prn, ">> %s\n", linecpy);
+	pprintf(prn, ">> %s\n", errline);
     } else if (loop->err) {
 	errmsg(loop->err, prn);
 	err = loop->err;

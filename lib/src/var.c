@@ -1631,6 +1631,46 @@ static int *adf_prepare_vars (int order, int varno,
     return list;
 }
 
+static int auto_adjust_order (int *list, int order_max,
+			      double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL kmod;
+    double tstat, pval = 1.0;
+    int i, k = order_max;
+
+    for (k=order_max; k>=0; k--) {
+	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	if (kmod.errcode) {
+	    clear_model(&kmod);
+	    fprintf(stderr, "adf: model failed in auto_adjust_order()\n");
+	    k = -1;
+	    break;
+	}
+	tstat = kmod.coeff[k] / kmod.sderr[k];
+	clear_model(&kmod);
+	pval = 2.0 * normal(tstat);
+	if (pval > 0.10) {
+	    for (i=k+2; i<list[0]; i++) {
+		list[i] = list[i+1];
+	    }
+	    list[0] -= 1;
+	} else {
+	    break;
+	}
+    }
+
+    return k;
+}
+
+static void copy_list_values (int *targ, const int *src)
+{
+    int i;
+
+    for (i=0; i<=src[0]; i++) {
+	targ[i] = src[i];
+    }
+}
+
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, int cointcode,
@@ -1654,18 +1694,43 @@ static int real_adf_test (int varno, int order, int niv,
 	N_("with constant and trend"),
 	N_("with constant and quadratic trend")
     };
+
+    MODEL dfmod;
+
     int orig_nvars = pdinfo->v;
     int blurb_done = 0;
-    MODEL dfmod;
+    int auto_order = 0;
+    int order_max = 0;
     int *list;
+    int *biglist = NULL;
     char pvstr[48];
     double DFt, pv;
     char mask[4] = {0};
     int i, itv;
+    int err = 0;
+
+    if (order < 0) {
+	auto_order = 1;
+	order = -order;
+    }
+
+    order_max = order;
 
     list = adf_prepare_vars(order, varno, pZ, pdinfo);
     if (list == NULL) {
 	return E_ALLOC;
+    }
+
+    if (auto_order) {
+	int tmp = list[0];
+
+	list[0] = order + 5;
+	biglist = copylist(list);
+	if (biglist == NULL) {
+	    free(list);
+	    return E_ALLOC;
+	}
+	list[0] = tmp;
     }
 
     gretl_model_init(&dfmod);
@@ -1699,6 +1764,11 @@ static int real_adf_test (int varno, int order, int niv,
 	    continue;
 	}
 
+	if (auto_order) {
+	    order = order_max;
+	    copy_list_values(list, biglist);
+	}
+
 	list[0] = 2 + order + i;
 
 	if (i > 0) {
@@ -1708,19 +1778,33 @@ static int real_adf_test (int varno, int order, int niv,
 	if (i >= 2) {
 	    list[3 + order] = gettrend(pZ, pdinfo, 0);
 	    if (list[3 + order] == TREND_FAILED) {
-		return 1;
+		err = 1;
+		goto bailout;
 	    }
 	}
+
 	if (i > 2) {
 	    list[4 + order] = gettrend(pZ, pdinfo, 1);
 	    if (list[4 + order] == TREND_FAILED) {
-		return 1;
+		err = 1;
+		goto bailout;
 	    }
-	}	    
+	}
+
+	if (auto_order) {
+	    order = auto_adjust_order(list, order_max, pZ, pdinfo);
+	    if (order < 0) {
+		err = 1;
+		clear_model(&dfmod);
+		goto bailout;
+	    }
+	}
 
 	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (dfmod.errcode) {
-	    return dfmod.errcode;
+	    err = dfmod.errcode;
+	    clear_model(&dfmod);
+	    goto bailout;
 	}
 
 	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
@@ -1788,14 +1872,21 @@ static int real_adf_test (int varno, int order, int niv,
 	clear_model(&dfmod);
     }
 
-    if (cointcode >= 0) {
+    if (!err && cointcode >= 0) {
 	pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
     }
 
+ bailout:
+
     free(list);
+
+    if (biglist != NULL) {
+	free(biglist);
+    }
+
     dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
 
-    return 0;
+    return err;
 }
 
 /**

@@ -165,7 +165,8 @@ struct genr_func funcs[] = {
     { T_CNORM,    "cnorm" },
     { T_RESAMPLE, "resample" },
     { T_HPFILT,   "hpfilt" },    
-    { T_BKFILT,   "bkfilt" },    
+    { T_BKFILT,   "bkfilt" },  
+    { T_VARNUM,   "varnum" },
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
 #endif
@@ -182,7 +183,8 @@ struct genr_func funcs[] = {
 
 #define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
-                            t == T_SST || t == T_MAX || t == T_NOBS)
+                            t == T_SST || t == T_MAX || t == T_NOBS || \
+                            t == T_VARNUM)
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
@@ -514,11 +516,13 @@ static genatom *parse_token (const char *s, char op,
 	    /* try for a function first */
 	    lag = 0;
 	    v = -1;
+
 	    func = get_genr_function(s);
+
 	    if (func) {
 		DPRINTF(("recognized function #%d (%s)\n", func, 
 			 get_func_word(func)));
-		if (MP_MATH(func) || func == T_PVALUE || func == T_CRIT ||
+		if (MP_MATH(func) || func == T_PVALUE || func == T_CRIT || 
 		    BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
 		    genr->err = get_arg_string(str, s, func, genr);
 		} 
@@ -536,6 +540,8 @@ static genatom *parse_token (const char *s, char op,
 					       &genr->err);
 			scalar = 1;
 		    }
+		} else if (func == T_VARNUM) {
+		    scalar = 1;
 		} else if (MODEL_DATA_ELEMENT(func)) {
 		    val = get_model_data_element(str, genr,
 						 genr->pmod, 
@@ -904,27 +910,54 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
     return genr->err;
 }
 
+static double genr_get_varnum (GENERATE *genr, genatom *atom)
+{
+    double val = NADBL;
+    genatom *child;
+
+    child = pop_child_atom(atom);	
+    if (child != NULL) {
+	if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
+	    val = child->varnum;
+	} 
+    }
+
+    if (pop_child_atom(atom)) {
+	/* should have only one child */
+	genr->err = E_SYNTAX;
+    }
+
+    DPRINTF(("genr_get_varnum: got %g\n", val));
+
+    return val;
+}
+
 static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
 {
-    double *x, y;
+    double val;
 
     atom_stack_set_parentage(genr);
 
-    x = eval_compound_arg(genr, atom);
-    if (x == NULL) return genr->err;
+    if (atom->func == T_VARNUM) {
+	val = genr_get_varnum(genr, atom);
+    } else {
+	double *x = eval_compound_arg(genr, atom);
 
-    y = evaluate_statistic(x, genr, atom->func);
-    free(x);
+	if (x == NULL) return genr->err;
+
+	val = evaluate_statistic(x, genr, atom->func);
+	free(x);
+    }
 
     if (genr->err) return genr->err;
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "add_statistic_to_genr:\n atom->func = %d (%s), val = %g, "
 	    "now atom->scalar = 1\n", atom->func, get_func_word(atom->func),
-	    y);
+	    val);
 #endif
 
-    atom->val = y;
+    atom->val = val;
     atom->scalar = 1;
     atom_eat_children(atom);
 
@@ -941,6 +974,7 @@ static int evaluate_genr (GENERATE *genr)
 
     /* pre-processing of certain sorts of terms */
     reset_atom_stack(genr);
+
     while (!genr->err && (atom = pop_atom(genr))) {
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;
@@ -1187,24 +1221,26 @@ static int catch_special_operators (char *s)
 	if (*s == '!' && *(s+1) == '=') {
 	    *s = NEQ;
 	    lshift = 1;
-	}
-	else if (*s == '>' && *(s+1) == '=') {
+	} else if (*s == '>' && *(s+1) == '=') {
 	    *s = GEQ;
 	    lshift = 1;
-	}
-	else if (*s == '<' && *(s+1) == '=') {
+	} else if (*s == '<' && *(s+1) == '=') {
 	    *s = LEQ;
 	    lshift = 1;
-	}
-	else if (*s == '*' && *(s+1) == '*') {
+	} else if (*s == '*' && *(s+1) == '*') {
 	    *s = '^';
 	    lshift = 1;
-	}
-	else if ((*s == '-' || *s == '+') && unary_op_context(p, s)) {
+	} else if ((*s == '-' || *s == '+') && unary_op_context(p, s)) {
 	    int np; /* "need (to insert) parentheses" ? */
 
 	    err = insert_ghost_zero(p, s, &np);
 	    s += 1 + np;
+	} else if (*s == '&' && *(s+1) == '&') {
+	    lshift = 1;
+	} else if (*s == '|' && *(s+1) == '|') {
+	    lshift = 1;
+	} else if (*s == '=' && *(s+1) == '=') {
+	    lshift = 1;
 	}
 
 	if (lshift) {
@@ -2956,9 +2992,9 @@ static double *get_random_series (DATAINFO *pdinfo, int fn)
     return x;
 }
 
-/* below: functions taking series (z) as input and returning a 
-   scalar statistic.  The whole series must be evaluated before
-   these stats can be calculated.
+/* below: functions taking series (z) as input and returning a scalar
+   statistic.  The whole series must be evaluated before these stats
+   can be calculated.
 */
 
 static double evaluate_statistic (double *z, GENERATE *genr, int fn)
@@ -2991,24 +3027,18 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
 
     if (fn == T_MEAN) {
 	x = gretl_mean(0, i, tmp);
-    }
-    else if (fn == T_SUM) {
+    } else if (fn == T_SUM) {
 	x = gretl_mean(0, i, tmp);
 	x *= (i + 1);
-    }
-    else if (fn == T_SD) {
+    } else if (fn == T_SD) {
 	x = gretl_stddev(0, i, tmp);
-    }
-    else if (fn == T_VAR) {
+    } else if (fn == T_VAR) {
 	x = gretl_variance(0, i, tmp);
-    }
-    else if (fn == T_SST) {
+    } else if (fn == T_SST) {
 	x = gretl_sst(0, i, tmp);
-    }
-    else if (fn == T_MEDIAN) {
+    } else if (fn == T_MEDIAN) {
 	x = gretl_median(tmp, i + 1);
-    }
-    else if (fn == T_MIN || fn == T_MAX) {
+    } else if (fn == T_MIN || fn == T_MAX) {
 	double min, max;
 
 	gretl_minmax(0, i, tmp, &min, &max);
