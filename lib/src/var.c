@@ -521,6 +521,8 @@ int adf_test (const int order, const int varno, double ***pZ,
 			      {5.34, 6.25, 7.16, 8.27}}; /* infinity */
     
 
+    if (varno == 0) return E_DATA;
+
     _init_model(&adf_model, pdinfo);
     k = 3 + order;
     adflist = malloc((5 + order) * sizeof(int));
