@@ -396,7 +396,7 @@ print_image_from_pixbuf (GnomePrintContext *gpc, GdkPixbuf *pixbuf)
 
 void gnome_print_graph (const char *fname)
 {
-    GnomePrintMaster *gpm;
+    GnomePrintJob *job;
     GnomePrintContext *gpc; 
     GdkPixbuf *pbuf;
     GtkWidget *dialog;
@@ -405,13 +405,13 @@ void gnome_print_graph (const char *fname)
     int image_left_x = 530, image_bottom_y = 50;
     int width, height;
 
-    gpm = gnome_print_master_new();
+    job = gnome_print_job_new(NULL);
 
-    if (!gpm) return;
+    if (!job) return;
 
-    dialog = gnome_print_dialog_new_from_master(gpm, 
-						_("print gretl graph"), 
-						0);
+    dialog = gnome_print_dialog_new(job, 
+				    _("print gretl graph"), 
+				    0);
 
     response = gtk_dialog_run (GTK_DIALOG (dialog));
     gtk_widget_destroy(dialog);
@@ -428,7 +428,7 @@ void gnome_print_graph (const char *fname)
     sprintf(tmp, "\"%s\" \"%s\"", paths.gnuplot, fname);
     if (system(tmp)) {
 	errbox(_("Failed to generate graph"));
-	gnome_print_master_close(gpm);
+	gnome_print_job_close(job);
 	return;
     }
 
@@ -438,7 +438,7 @@ void gnome_print_graph (const char *fname)
     height = gdk_pixbuf_get_height(pbuf);
     remove(tmp);
 
-    gpc = gnome_print_master_get_context(gpm);
+    gpc = gnome_print_job_get_context(job);
 
     gnome_print_beginpage(gpc, _("gretl output"));
 
@@ -451,8 +451,8 @@ void gnome_print_graph (const char *fname)
     gnome_print_showpage(gpc);
 
     /* finalize */
-    gnome_print_master_close(gpm);
-    gnome_print_master_print(gpm);
+    gnome_print_job_close(job);
+    gnome_print_job_print(job);
 }
 
 #endif /* G_OS_WIN32, USE_GNOME */
