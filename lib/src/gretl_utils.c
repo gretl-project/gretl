@@ -318,30 +318,35 @@ int gretl_isconst (int t1, int t2, const double *x)
     return 1;
 }
 
-/* ............................................................  */
+/* returns mean of array x from obs t1 through t2 */
 
 double gretl_mean (int t1, int t2, const double *x)
-/* returns mean of array x from obs t1 through t2 */
 {
     int n;
     register int t;
     double xbar, sum = 0.0;
 
     n = t2 - t1 + 1;
-    if (n <= 0) return NADBL;
-
-    for (t=t1; t<=t2; t++) {
-	if (!(na(x[t]))) 
-	    sum += x[t];
-	else 
-	    n--;
+    if (n <= 0) {
+	return NADBL;
     }
 
-    xbar = sum/n;
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    sum += x[t];
+	} else {
+	    n--;
+	}
+    }
+
+    xbar = sum / n;
     sum = 0.0;
 
-    for (t=t1; t<=t2; t++) 
-	if (!(na(x[t]))) sum += (x[t] - xbar); 
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    sum += (x[t] - xbar); 
+	}
+    }
 
     return xbar + sum / n;
 }
@@ -423,7 +428,9 @@ double gretl_variance (int t1, int t2, const double *x)
     if (n == 0) return NADBL;
 
     xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) return NADBL;
+    if (na(xbar)) {
+	return NADBL;
+    }
 
     sumsq = 0.0;
     for (i=t1; i<=t2; i++) {
@@ -448,7 +455,9 @@ double gretl_sst (int t1, int t2, const double *x)
     if (t2 - t1 + 1 == 0) return NADBL;
 
     xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) return NADBL;
+    if (na(xbar)) {
+	return NADBL;
+    }
 
     sumsq = 0.0;
     for (i=t1; i<=t2; i++) {
@@ -569,55 +578,145 @@ void gretl_criteria (const double ess, int nobs, int ncoeff,
     pputc(prn, '\n');
 }
 
-/* ....................................................... */
+static char *model_missmask (const int *list, int t1, int t2,
+			     const double **Z, int dwt)
+{
+    char *mask;
+    double xx;
+    int i, t;
+
+    mask = calloc(t2 - t1 + 1, sizeof *mask);
+    if (mask == NULL) {
+	return NULL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) continue;
+	    xx = Z[list[i]][t];
+	    if (dwt) {
+		xx *= Z[dwt][t];
+	    }
+	    if (na(xx)) {
+		/* FIXME dwt case and nobs?? */
+		mask[t - t1] = 1;
+		break;
+	    }
+	}
+    }
+
+    return mask;
+}
+
+/* Drop first/last observations from sample if missing obs encountered.
+   Also check for missing vals within the remaining sample: in case
+   missing values are encountered there, either (a) construct a mask
+   for them (if misst == NULL), or (b) flag an error.
+*/
 
 int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		 const double **Z, int *misst)
-     /* drop first/last observations from sample if missing obs 
-	encountered -- also check for missing vals within the
-        remaining sample */
 {
     int i, t, dwt = 0, t1min = *t1, t2max = *t2;
+    int missobs, ret = 0;
     double xx;
 
-    if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) 
+    if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) {
+	/* we have a weight variable which is a 0/1 dummy */
 	dwt = pmod->nwt;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) continue;
-	for (t=t1min; t<t2max; t++) {
-	    xx = Z[list[i]][t];
-	    if (dwt) xx *= Z[dwt][t];
-	    if (na(xx)) t1min += 1;
-	    else break;
-	}
     }
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) continue;
-	for (t=t2max; t>t1min; t--) {
-	    xx = Z[list[i]][t];
-	    if (dwt) xx *= Z[dwt][t];
-	    if (na(xx)) t2max -= 1;
-	    else break;
-	}
-    } 
-    if (misst != NULL) {
+
+    /* advance start of sample range to skip missing obs? */
+    for (t=t1min; t<t2max; t++) {
+	missobs = 0;
 	for (i=1; i<=list[0]; i++) {
 	    if (list[i] == LISTSEP) continue;
-	    for (t=t1min; t<=t2max; t++) {
+	    xx = Z[list[i]][t];
+	    if (dwt) {
+		xx *= Z[dwt][t];
+	    }
+	    if (na(xx)) {
+		missobs = 1;
+		break;
+	    }
+	}
+	if (missobs) {
+	    t1min++;
+	} else {
+	    break;
+	}
+    }
+
+    /* retard end of sample range to skip missing obs? */
+    for (t=t2max; t>t1min; t--) {
+	missobs = 0;
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) continue;
+	    xx = Z[list[i]][t];
+	    if (dwt) {
+		xx *= Z[dwt][t];
+	    }
+	    if (na(xx)) {
+		missobs = 1;
+		break;
+	    }
+	}
+	if (missobs) {
+	    t2max--;
+	} else {
+	    break;
+	}	
+    }
+
+    /* check for missing values within remaining range */
+    if (misst != NULL) {
+	for (t=t1min; t<=t2max; t++) {
+	    for (i=1; i<=list[0]; i++) {
+		if (list[i] == LISTSEP) continue;
 		xx = Z[list[i]][t];
-		if (dwt) xx *= Z[dwt][t];
+		if (dwt) {
+		    xx *= Z[dwt][t];
+		}
 		if (na(xx)) {
 		    *misst = t + 1;
-		    return list[i];
+		    ret = list[i];
+		    break;
 		}
+	    }
+	    if (ret) {
+		break;
 	    }
 	}     
     }
 
-    *t1 = t1min; *t2 = t2max;
+#if 1
+    /* construct a mask for missing values within remaining range? */
+    else if (pmod != NULL) {
+	missobs = 0;
+	for (t=t1min; t<=t2max; t++) {
+	    for (i=1; i<=list[0]; i++) {
+		if (list[i] == LISTSEP) continue;
+		xx = Z[list[i]][t];
+		if (dwt) {
+		    xx *= Z[dwt][t];
+		}
+		if (na(xx)) {
+		    missobs++;
+		    break;
+		}
+	    }
+	}
+	if (missobs > 0) {
+	    /* FIXME: special treatment if no valid obs left? */
+	    pmod->missmask = model_missmask(list, t1min, t2max, Z, dwt);
+	}
+    }    
+#endif
 
-    return 0;
+    *t1 = t1min; 
+    *t2 = t2max;
+
+    return ret;
 }
 
 /* ........................................................... */

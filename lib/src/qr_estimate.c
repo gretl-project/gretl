@@ -27,6 +27,9 @@
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
 #define ESSZERO      1e-22 /* SSR < this counts as zero */
 
+#define model_missing(m,t)     (m->missmask != NULL && \
+                                m->missmask[t - m->t1] != 0)
+
 /* In fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are
@@ -172,7 +175,9 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		if (dwt && Z[dwt][t] == 0.0) {
 		    pmod->yhat[t] = NADBL;
 		} else {
-		    if (!dwt) y *= Z[pmod->nwt][t];
+		    if (!dwt) {
+			y *= Z[pmod->nwt][t];
+		    }
 		    pmod->yhat[t] = yhat->val[i];
 		    pmod->uhat[t] = y - yhat->val[i];
 		    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
@@ -210,7 +215,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	}
 #else
 	for (t=0; t<fulln; t++) {
-	    if (t < pmod->t1 || t > pmod->t2) {
+	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
 		pmod->yhat[t] = yhat->val[i];
@@ -241,14 +246,18 @@ static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
     j = 0;
     for (i=start; i<=pmod->list[0]; i++) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    X->val[j++] = Z[pmod->list[i]][t];
+	    if (!model_missing(pmod, t)) {
+		X->val[j++] = Z[pmod->list[i]][t];
+	    }
 	}
     }
 
     /* insert constant */
     if (pmod->ifc) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    X->val[j++] = 1.0;
+	    if (!model_missing(pmod, t)) {
+		X->val[j++] = 1.0;
+	    }
 	}
     }
 
@@ -511,6 +520,9 @@ static double get_model_data (MODEL *pmod, const double **Z,
     j = 0;
     for (i=start; i<=pmod->list[0]; i++) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (model_missing(pmod, t)) {
+		continue;
+	    }
 	    x = Z[pmod->list[i]][t];
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
@@ -530,6 +542,9 @@ static double get_model_data (MODEL *pmod, const double **Z,
     /* insert constant last (numerical issues) */
     if (pmod->ifc) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (model_missing(pmod, t)) {
+		continue;
+	    }	    
 	    x = Z[0][t]; /* in some special cases the constant is pre-transformed */
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
@@ -549,6 +564,9 @@ static double get_model_data (MODEL *pmod, const double **Z,
     /* copy dependent variable into y vector */
     j = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
+	    continue;
+	}		
 	x = Z[pmod->list[1]][t];
 	if (dwt) {
 	    if (Z[dwt][t] == 0.0) continue;

@@ -290,6 +290,7 @@ struct _MODEL {
                                     observation, and number of obs */
     char *subdum;                /* keep track of sub-sample in force
                                     when model was estimated */
+    char *missmask;              /* missing observations mask */
     SAMPLE smpl;                 /* numeric start and end of current sample
                                     when model was estimated */
     int ncoeff, dfn, dfd;        /* number of coefficents; degrees of

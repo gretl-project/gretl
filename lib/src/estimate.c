@@ -42,13 +42,15 @@
 #define STATZERO  0.5e-14
 #define ESSZERO   1.0e-22
 
+#undef XPX_DEBUG
+
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			int c, PRN *prn);
 
 /* private function prototypes */
 static int form_xpxxpy (const int *list, int t1, int t2, 
 			double **Z, int nwt, double rho, int pwe,
-			double *xpx, double *xpy);
+			double *xpx, double *xpy, const char *mask);
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho);
 static int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
@@ -68,9 +70,71 @@ static int zerror (int t1, int t2, int yno, int nwt, double ***pZ);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		       double ***pZ);
 static int tsls_match (const int *list1, const int *list2, int *newlist);
-static double wt_dummy_mean (const MODEL *pmod, double **Z); 
-static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
+
+#define missing_masked(m,t,t1) (m != NULL && m[t-t1] != 0)
+#define model_missing(m,t)     (m->missmask != NULL && \
+                                m->missmask[t - m->t1] != 0)
+
+
+static void model_depvar_stats (MODEL *pmod, const double **Z)
+{
+    double xx, sum = 0.0;
+    int yno = pmod->list[1];
+    int t, dwt = 0;
+
+    if (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy")) {
+	dwt = pmod->nwt;
+    }
+
+    pmod->ybar = pmod->sdy = NADBL;
+
+    if (pmod->nobs <= 0) {
+	return;
+    }
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (dwt && Z[pmod->nwt][t] == 0.0) {
+	    continue;
+	}
+	if (!model_missing(pmod, t)) {
+	    sum += Z[yno][t];
+	}
+    }
+
+    pmod->ybar = sum / pmod->nobs;
+
+    sum = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (dwt && Z[pmod->nwt][t] == 0.0) {
+	    continue;
+	}	
+	if (!model_missing(pmod, t)) {
+	    sum += (Z[yno][t] - pmod->ybar); 
+	}
+    }
+
+    pmod->ybar = pmod->ybar + sum / pmod->nobs;
+
+    if (fabs(pmod->ybar) < STATZERO) {
+	pmod->ybar = 0.0;
+    }
+
+    sum = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (dwt && Z[pmod->nwt][t] == 0.0) {
+	    continue;
+	}
+	if (!model_missing(pmod, t)) {
+	    xx = Z[yno][t] - pmod->ybar;
+	    sum += xx * xx;
+	}
+    }
+
+    sum = (pmod->nobs > 1)? sum / (pmod->nobs - 1) : 0.0;
+
+    pmod->sdy = (sum >= 0)? sqrt(sum) : NADBL;
+}
 
 static int reorganize_uhat_yhat (MODEL *pmod) 
 {
@@ -277,8 +341,9 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 
     if (gretl_model_get_int(pmod, "wt_dummy")) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (floateq(Z[pmod->nwt][t], 0.0)) 
+	    if (Z[pmod->nwt][t] == 0.0) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	    }
 	}
     } else {
 	double x;
@@ -386,7 +451,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     mdl.ci = ci;
 
     /* Doing weighted least squares? */
-    mdl.nwt = 0;
     if (ci == WLS) { 
 	mdl.nwt = mdl.list[1];
 	if (gretl_iszero(mdl.t1, mdl.t2, (*pZ)[mdl.nwt])) {
@@ -395,13 +459,25 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	effobs = isdummy((*pZ)[mdl.nwt], mdl.t1, mdl.t2);
 	if (effobs) {
+	    /* the weight var is a dummy, with effobs 1s */
 	    gretl_model_set_int(&mdl, "wt_dummy", 1);
 	}
+    } else {
+	mdl.nwt = 0;
     }
 
     /* check for missing obs in sample */
-    if ((missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2, 
-			     (const double **) *pZ, &misst))) {
+    if (dataset_is_time_series(pdinfo) ||
+	dataset_is_panel(pdinfo)) {
+	/* we'll reject missing obs within adjusted sample */
+	missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2,
+			    (const double **) *pZ, &misst);
+    } else {
+	/* we'll compensate for missing obs */
+	missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2,
+			    (const double **) *pZ, NULL);
+    }	
+    if (missv) {
 	if (!dated_daily_data(pdinfo)) {
 	    sprintf(gretl_errmsg, _("Missing value encountered for "
 		    "variable %d, obs %d"), missv, misst);
@@ -412,7 +488,9 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (ci == WLS) dropwt(mdl.list);
+    if (ci == WLS) {
+	dropwt(mdl.list);
+    }
     yno = mdl.list[1];
     
     /* check for availability of data */
@@ -441,10 +519,12 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* if regressor list contains a constant, place it first */
     i = gretl_hasconst(mdl.list);
     mdl.ifc = (i > 1);
-    if (i > 2) rearrange_list(mdl.list);
+    if (i > 2) {
+	rearrange_list(mdl.list);
+    }
 
     /* Check for presence of lagged dependent variable? 
-       Don't bother if this is an auxiliary regression. */
+       (Don't bother if this is an auxiliary regression.) */
     if (!(opts & OPT_A)) {
 	ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
 	if (ldepvar) {
@@ -459,8 +539,14 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     l0 = mdl.list[0];  /* holds 1 + number of coeffs */
     mdl.ncoeff = l0 - 1; 
-    if (effobs) mdl.nobs = effobs;
-    else mdl.nobs = mdl.t2 - mdl.t1 + 1;
+    if (effobs) {
+	mdl.nobs = effobs; /* FIXME? */
+    } else {
+	mdl.nobs = mdl.t2 - mdl.t1 + 1;
+	if (mdl.missmask != NULL) {
+	    mdl.nobs -= model_missval_count(&mdl);
+	}
+    }
 
     /* check degrees of freedom */
     if (get_model_df(&mdl)) {
@@ -491,12 +577,26 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	    return mdl;
 	}
 
-	for (i=0; i<=l0; i++) xpy[i] = 0.0;
-	for (i=0; i<nxpx; i++) mdl.xpx[i] = 0.0;
+	for (i=0; i<=l0; i++) {
+	    xpy[i] = 0.0;
+	}
+	for (i=0; i<nxpx; i++) {
+	    mdl.xpx[i] = 0.0;
+	}
 
 	/* calculate regression results, Cholesky style */
 	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho, 
-		    pwe, mdl.xpx, xpy);
+		    pwe, mdl.xpx, xpy, mdl.missmask);
+
+#ifdef XPX_DEBUG
+	for (i=0; i<=l0; i++) {
+	    fprintf(stderr, "xpy[%d] = %g\n", i, xpy[i]);
+	}
+	for (i=0; i<nxpx; i++) {
+	    fprintf(stderr, "xpx[%d] = %g\n", i, mdl.xpx[i]);
+	}
+	fputc('\n', stderr);
+#endif
 
 	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
 	free(xpy);
@@ -507,14 +607,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get the mean and sd of depvar and make available */
-    if (mdl.ci == WLS && gretl_model_get_int(&mdl, "wt_dummy")) {
-	mdl.ybar = wt_dummy_mean(&mdl, *pZ);
-	mdl.sdy = wt_dummy_stddev(&mdl, *pZ);
-    } else {
-	mdl.ybar = gretl_mean(mdl.t1, mdl.t2, (*pZ)[yno]);
-	mdl.sdy = gretl_stddev(mdl.t1, mdl.t2, (*pZ)[yno]);
-	if (fabs(mdl.ybar) < STATZERO) mdl.ybar = 0.0;
-    }
+    model_depvar_stats(&mdl, (const double **) *pZ);
 
     /* Doing an autoregressive procedure? */
     if (ci == CORC || ci == HILU || ci == PWE) {
@@ -567,7 +660,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 static int form_xpxxpy (const int *list, int t1, int t2, 
 			double **Z, int nwt, double rho, int pwe,
-			double *xpx, double *xpy)
+			double *xpx, double *xpy, const char *mask)
 /*
         This function forms the X'X matrix and X'y vector
 
@@ -606,6 +699,9 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     xpy[0] = xpy[l0] = 0.0;
 
     for (t=t1; t<=t2; t++) {
+	if (missing_masked(mask, t, t1)) {
+	    continue;
+	}
 	x = Z[yno][t]; 
 	if (qdiff) {
 	    if (pwe && t == t1) {
@@ -625,6 +721,8 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     }    
 
     m = 0;
+
+    /* FIXME: missing values and quasi-differencing */
 
     if (qdiff) {
 	/* quasi-difference the data */
@@ -657,8 +755,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    }
 	    xpy[i-1] = x;
 	}
-    }
-    else if (nwt) {
+    } else if (nwt) {
 	/* weight the data */
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
@@ -666,23 +763,26 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		lj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    z1 = Z[nwt][t];
-		    x += z1 * z1 * Z[li][t] * Z[lj][t];
+		    if (!missing_masked(mask, t, t1)) {
+			z1 = Z[nwt][t];
+			x += z1 * z1 * Z[li][t] * Z[lj][t];
+		    }
 		}
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}   
 		xpx[m++] = x;
 	    }
-	    x = 0;
+	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
-		z1 = Z[nwt][t];
-		x += z1 * z1 * Z[yno][t] * Z[li][t];
+		if (!missing_masked(mask, t, t1)) {
+		    z1 = Z[nwt][t];
+		    x += z1 * z1 * Z[yno][t] * Z[li][t];
+		}
 	    }
 	    xpy[i-1] = x;
 	}
-    }
-    else {
+    } else {
 	/* no quasi-differencing or weighting wanted */
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
@@ -690,7 +790,9 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		lj = list[j];
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
-		    x += Z[li][t] * Z[lj][t];
+		    if (!missing_masked(mask, t, t1)) {
+			x += Z[li][t] * Z[lj][t];
+		    }
 		}
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
@@ -699,7 +801,9 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    }
 	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
-		x += Z[yno][t] * Z[li][t];
+		if (!missing_masked(mask, t, t1)) {
+		    x += Z[yno][t] * Z[li][t];
+		}
 	    }
 	    xpy[i-1] = x;
 	}
@@ -717,8 +821,12 @@ static int make_ess (MODEL *pmod, double **Z)
     double yhat, resid;
 
     pmod->ess = 0.0;
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (nwt && Z[nwt][t] == 0.0) {
+	    continue;
+	}
+	if (model_missing(pmod, t)) {
 	    continue;
 	}
 	yhat = 0.0;
@@ -731,6 +839,7 @@ static int make_ess (MODEL *pmod, double **Z)
 	}
 	pmod->ess += resid * resid;
     }
+
     return 0;
 }
 
@@ -861,7 +970,9 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	pmod->fstt = NADBL;
     } else {
 	pmod->fstt = (rss - zz * pmod->ifc) / (sgmasq * pmod->dfn);
-	if (pmod->fstt < 0.0) pmod->fstt = 0.0;
+	if (pmod->fstt < 0.0) {
+	    pmod->fstt = 0.0;
+	}
     }
 
     diag = malloc(pmod->ncoeff * sizeof *diag); 
@@ -964,7 +1075,9 @@ static int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
 
     /* solve for the regression coefficients */
     if (coeff != NULL) {
-	for (j=0; j<nv-1; j++) coeff[j] = 0.0;
+	for (j=0; j<nv-1; j++) {
+	    coeff[j] = 0.0;
+	}
 	coeff[nv-1] = xpy[nv] * xpx[kk];
 	for (j=nv-1; j>=1; j--) {
 	    d = xpy[j];
@@ -1341,15 +1454,22 @@ static int hatvar (MODEL *pmod, int n, double **Z)
 	pmod->yhat[t] = pmod->uhat[t] = NADBL;
     }
     for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (model_missing(pmod, t)) {
+	    continue;
+	}
 	pmod->yhat[t] = 0.0;
         for (i=0; i<pmod->ncoeff; i++) {
             xno = pmod->list[i+2];
 	    x = Z[xno][t];
-	    if (pmod->nwt) x *= Z[pmod->nwt][t];
+	    if (pmod->nwt) {
+		x *= Z[pmod->nwt][t];
+	    }
             pmod->yhat[t] += pmod->coeff[i] * x;
         }
 	x = Z[yno][t];
-	if (pmod->nwt) x *= Z[pmod->nwt][t];
+	if (pmod->nwt) {
+	    x *= Z[pmod->nwt][t];
+	}
         pmod->uhat[t] = x - pmod->yhat[t];                
     }
 #endif
@@ -1870,7 +1990,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0, 0,
-		    xpx, xpy);
+		    xpx, xpy, NULL); /* FIXME mask? */
 	cholbeta(xpx, xpy, NULL, NULL, nv);    
 	diaginv(xpx, xpy, diag, nv);
 	for (i=0; i<tsls.ncoeff; i++) {
@@ -2087,7 +2207,9 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     hsklist[2] = yno;
 
     /* put the original indep vars into the WLS list */
-    for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
+    for (v=lo+1; v>=3; v--) {
+	hsklist[v] = list[v-1];
+    }
 
     clear_model(&hsk);
     hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
@@ -2681,7 +2803,9 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 	}
     }
 
-    if (drop) strcat(gretl_msg, _("omitted because all obs are zero."));
+    if (drop) {
+	strcat(gretl_msg, _("omitted because all obs are zero."));
+    }
 }
 
 /* .........................................................   */
@@ -2715,7 +2839,9 @@ static int zerror (int t1, int t2, int yno, int nwt, double ***pZ)
 	xx = 0.0;
 	for (t=t1; t<=t2; t++) {
 	    xx = (*pZ)[nwt][t] * (*pZ)[yno][t];
-	    if (floatneq(xx, 0.0)) return 0;
+	    if (floatneq(xx, 0.0)) {
+		return 0;
+	    }
 	}
 	return 1;
     }
@@ -2790,60 +2916,6 @@ static int tsls_match (const int *list1, const int *list2, int *newlist)
     newlist[0] = index;
 
     return 0;
-}
-
-/* ............................................................  */
-
-static double wt_dummy_mean (const MODEL *pmod, double **Z) 
-/* returns mean of dependent variable in WLS model w. dummy weight */
-{
-    int m = pmod->nobs, yno = pmod->list[1];
-    register int t;
-    double sum = 0.0;
-
-    if (m <= 0) return NADBL;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (floateq(Z[pmod->nwt][t], 0.0)) continue;
-	else {
-	    if (na(Z[yno][t])) {
-		m--;
-		continue;
-	    } else {
-		sum += Z[yno][t]; 
-	    }
-	}
-    }
-
-    return sum / m;
-}
-
-/* .............................................................  */
-
-static double wt_dummy_stddev (const MODEL *pmod, double **Z) 
-/*  returns standard deviation of dep. var. in WLS model
-    with a dummy variable for weight.
-*/
-{
-    int m = pmod->nobs, yno = pmod->list[1];
-    register int t;
-    double sumsq, xx, xbar;
-
-    if (m == 0) return NADBL;
-    xbar = wt_dummy_mean(pmod, Z);
-    if (na(xbar)) return NADBL;
-    sumsq = 0.0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-        xx = Z[yno][t] - xbar;
-        if (floatneq(Z[pmod->nwt][t], 0.0) && !na(Z[yno][t]))
-	    sumsq += xx * xx;
-    }
-
-    sumsq = (m > 1)? sumsq / (m-1) : 0.0;
-
-    if (sumsq >= 0) return sqrt(sumsq);
-    else return NADBL;
 }
 
 /**
@@ -2964,12 +3036,16 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    } else {
 		wlist[0] = list[0] + 1;
 		nwt = wlist[1] = pdinfo->v - 1; /* weight var */
-		for (i=2; i<=wlist[0]; i++) wlist[i] = list[i-1];
+		for (i=2; i<=wlist[0]; i++) {
+		    wlist[i] = list[i-1];
+		}
 		nv = pdinfo->v - order - 1;
 		for (t=archmod.t1; t<=archmod.t2; t++) {
 		    xx = archmod.yhat[t];
-		    if (xx <= 0.0) xx = (*pZ)[nv][t];
-		    (*pZ)[nwt][t] = 1/sqrt(xx);
+		    if (xx <= 0.0) {
+			xx = (*pZ)[nv][t];
+		    }
+		    (*pZ)[nwt][t] = 1.0 / sqrt(xx);
 		}
 
 		strcpy(pdinfo->varname[nwt], "1/sigma");

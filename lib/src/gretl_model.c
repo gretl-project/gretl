@@ -273,6 +273,7 @@ static void gretl_model_init_pointers (MODEL *pmod)
 {
     pmod->list = NULL;
     pmod->subdum = NULL;
+    pmod->missmask = NULL;
     pmod->coeff = NULL;
     pmod->sderr = NULL;
     pmod->yhat = NULL;
@@ -377,9 +378,15 @@ void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo)
 
 static void clear_ar_info (MODEL *pmod)
 {
-    if (pmod->arinfo->arlist) free(pmod->arinfo->arlist);
-    if (pmod->arinfo->rho) free(pmod->arinfo->rho);
-    if (pmod->arinfo->sderr) free(pmod->arinfo->sderr);
+    if (pmod->arinfo->arlist) {
+	free(pmod->arinfo->arlist);
+    }
+    if (pmod->arinfo->rho) {
+	free(pmod->arinfo->rho);
+    }
+    if (pmod->arinfo->sderr) {
+	free(pmod->arinfo->sderr);
+    }
 
     free(pmod->arinfo);
     pmod->arinfo = NULL;
@@ -394,6 +401,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod = %p\n"
 	    " pmod->list = %p\n"
 	    " pmod->subdum = %p\n"
+	    " pmod->missmask = %p\n"
 	    " pmod->coeff = %p\n"
 	    " pmod->sderr = %p\n"
 	    " pmod->yhat = %p\n"
@@ -406,12 +414,13 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->tests = %p\n"
 	    " pmod->data = %p\n", msg,
 	    (void *) pmod, (void *) pmod->list, 
-	    (void *) pmod->subdum, (void *) pmod->coeff,
-	    (void *) pmod->sderr, (void *) pmod->yhat, 
-	    (void *) pmod->uhat, (void *) pmod->xpx,
-	    (void *) pmod->vcv, (void *) pmod->name, 
-	    (void *) pmod->params, (void *) pmod->arinfo, 
-	    (void *) pmod->tests, (void *) pmod->data);
+	    (void *) pmod->subdum, (void *) pmod->missmask, 
+	    (void *) pmod->coeff, (void *) pmod->sderr, 
+	    (void *) pmod->yhat, (void *) pmod->uhat, 
+	    (void *) pmod->xpx, (void *) pmod->vcv, 
+	    (void *) pmod->name, (void *) pmod->params, 
+	    (void *) pmod->arinfo, (void *) pmod->tests, 
+	    (void *) pmod->data);
 }
 
 #endif /* MODEL_DEBUG */
@@ -433,6 +442,7 @@ void clear_model (MODEL *pmod)
 #endif
 	if (pmod->list) free(pmod->list);
 	if (pmod->subdum) free(pmod->subdum);
+	if (pmod->missmask) free(pmod->missmask);
 	if (pmod->coeff) free(pmod->coeff);
 	if (pmod->sderr) free(pmod->sderr);
 	if (pmod->yhat) free(pmod->yhat);
@@ -616,6 +626,21 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
     return err;
 }
 
+static char *copy_missmask (const MODEL *pmod)
+{
+    char *mask;
+    int n = pmod->t2 - pmod->t1 + 1;
+
+    mask = malloc(n);
+    if (mask == NULL) {
+	return NULL;
+    }
+
+    memcpy(mask, pmod->missmask, n);
+
+    return mask;
+}
+
 /**
  * copy_model:
  * @targ: pointer to #MODEL to copy to.
@@ -648,6 +673,9 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 	return 1;
     if (src->subdum != NULL && 
 	(targ->subdum = copy_subdum(src->subdum, pdinfo->n)) == NULL) 
+	return 1;
+    if (src->missmask != NULL && 
+	(targ->missmask = copy_missmask(src)) == NULL) 
 	return 1;
 
     if (src->xpx != NULL &&
@@ -816,5 +844,20 @@ void model_list_to_string (int *list, char *buf)
 	    strcat(buf, numstr);
 	}
     }
+}
+
+int model_missval_count (const MODEL *pmod)
+{
+    int mc = 0;
+
+    if (pmod->missmask != NULL) {
+	int t;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (pmod->missmask[t - pmod->t1]) mc++;
+	}
+    }
+
+    return mc;
 }
 

@@ -519,6 +519,7 @@ int undo_repack_missing (double **Z, const DATAINFO *pdinfo,
 
     tmpmiss = malloc(misscount * sizeof *tmpmiss);
     if (tmpmiss == NULL) return 1;
+
     tmpgood = malloc((pdinfo->t2 - pdinfo->t1 + 1 - misscount) 
 		     * sizeof *tmpgood);
     if (tmpgood == NULL) {
@@ -529,20 +530,27 @@ int undo_repack_missing (double **Z, const DATAINFO *pdinfo,
     for (i=1; i<pdinfo->v; i++) {
 	if (!pdinfo->vector[i]) continue;
 	g = 0;
-	for (t=pdinfo->t1; t<=pdinfo->t2 - misscount; t++)
+	for (t=pdinfo->t1; t<=pdinfo->t2 - misscount; t++) {
 	     tmpgood[g++] = Z[i][t];
+	}
 	m = 0;
-	for (t=pdinfo->t2 + 1 - misscount; t<=pdinfo->t2; t++)
+	for (t=pdinfo->t2 + 1 - misscount; t<=pdinfo->t2; t++) {
 	    tmpmiss[m++] = Z[i][t];
+	}
 	m = 0;
 	g = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (missvec[t]) Z[i][t] = tmpmiss[m++];
-	    else Z[i][t] = tmpgood[g++];
+	    if (missvec[t]) {
+		Z[i][t] = tmpmiss[m++];
+	    } else {
+		Z[i][t] = tmpgood[g++];
+	    }
 	}
     }
+
     free(tmpmiss);
     free(tmpgood);
+
     return 0;
 }
 
@@ -554,6 +562,7 @@ int repack_missing (double **Z, const DATAINFO *pdinfo,
 
     tmpmiss = malloc(misscount * sizeof *tmpmiss);
     if (tmpmiss == NULL) return 1;
+
     tmpgood = malloc((pdinfo->t2 - pdinfo->t1 + 1 - misscount) 
 		     * sizeof *tmpgood);
     if (tmpgood == NULL) {
@@ -562,22 +571,31 @@ int repack_missing (double **Z, const DATAINFO *pdinfo,
     }
 
     for (i=1; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) continue;
+	if (!pdinfo->vector[i]) {
+	    continue;
+	}
 	m = 0;
 	g = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (missvec[t]) tmpmiss[m++] = Z[i][t];
-	    else tmpgood[g++] = Z[i][t];
+	    if (missvec[t]) {
+		tmpmiss[m++] = Z[i][t];
+	    } else {
+		tmpgood[g++] = Z[i][t];
+	    }
 	}
 	g = 0;
-	for (t=pdinfo->t1; t<=pdinfo->t2 - misscount; t++)
+	for (t=pdinfo->t1; t<=pdinfo->t2 - misscount; t++) {
 	     Z[i][t] = tmpgood[g++];
+	}
 	m = 0;
-	for (t=pdinfo->t2 + 1 - misscount; t<=pdinfo->t2; t++)
+	for (t=pdinfo->t2 + 1 - misscount; t<=pdinfo->t2; t++) {
 	    Z[i][t] = tmpmiss[m++];
+	}
     }
+
     free(tmpmiss);
     free(tmpgood);
+
     return 0;
 }
 
