@@ -3530,6 +3530,7 @@ static const char *ret_string (int ret)
     if (ret == DW_CANCEL) return "DW_CANCEL";
     if (ret == DW_FORWARD) return "DW_FORWARD";
     if (ret == DW_BACK) return "DW_BACK";
+    return "MISSING_STRING";
 }
 #endif
 

@@ -53,6 +53,8 @@ struct _ObsButton
     GtkEntry entry;
   
     GtkAdjustment *adjustment;
+
+    const DATAINFO *pdinfo;
   
     GdkWindow *panel;
   

@@ -48,6 +48,7 @@ struct _ObsButton
     GtkEntry entry;
   
     GtkAdjustment *adjustment;
+    const DATAINFO *pdinfo;
   
     GdkWindow *panel;
     GtkShadowType shadow_type;
@@ -71,7 +72,7 @@ struct _ObsButtonClass
 
 GtkType		obs_button_get_type	   (void);
 
-GtkWidget*	obs_button_new		   (GtkAdjustment  *adjustment);
+GtkWidget*	obs_button_new		   (GtkAdjustment  *adjustment, const DATAINFO *pdinfo);
 
 gfloat  	obs_button_get_value       (ObsButton  *obs_button);
 
