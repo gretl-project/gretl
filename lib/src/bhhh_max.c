@@ -44,7 +44,6 @@ struct _model_info {
     int iters;        /* number of iterations taken */
     double ll;        /* log-likelihood */
     double ll2;       /* test log-likelihood value */
-    int *list;        /* OPG regression list */
     double *theta;    /* vector of parameters */
     double **series;  /* additional series */
 
@@ -85,7 +84,6 @@ void model_info_free (model_info *model)
     int i;
 
     free(model->theta);
-    free(model->list);
 
     if (model->series != NULL) {
 	for (i=0; i<model->n_series; i++) {
@@ -100,6 +98,8 @@ void model_info_free (model_info *model)
 
     free(model);
 }
+
+/* accessor functions for (private) model_info struct */
 
 MODEL *model_info_capture_OPG_model (model_info *model)
 {
@@ -239,14 +239,14 @@ static int model_info_init (model_info *model, const double *init_coeff)
 
     k = model->k;  
 
-    model->list = make_opg_list(k);
     model->theta = malloc(k * sizeof *model->theta);
 
-    if (model->list == NULL || model->theta == NULL) {
+    if (model->theta == NULL) {
 	model_info_free(model);
 	return 1;
     }    
 
+    /* allocate series */
     if (n_series > 0) {
 	model->series = malloc(n_series * sizeof *model->series);
 	if (model->series == NULL) {
@@ -284,7 +284,6 @@ model_info *model_info_new (void)
     if (mi != NULL) {
 	mi->theta = NULL;
 	mi->series = NULL;
-	mi->list = NULL;
 	mi->pmod = NULL;
 	mi->VCV = NULL;
 	mi->n_series = 0;
@@ -298,12 +297,13 @@ static void bhhh_iter_info (int iter, double *theta, int m, double ll,
 {
     int i;
 
-    pprintf(prn, "\n*** iteration %d: theta and ll ***\n", iter);
+    pprintf(prn, "\n*** %s %d: theta, ll ***\n", ("iteration"), iter);
     for (i=0; i<m; i++) {
 	if (i && i % 5 == 0) pputc(prn, '\n');
 	pprintf(prn, "%#12.5g ", theta[i]);
     }
-    pprintf(prn, "\n    steplength = %g, ll = %g\n", steplength, ll);
+    pprintf(prn, "\n    %s = %g, ll = %g\n", _("step length"),
+	    steplength, ll);
 }
 
 /**
@@ -330,6 +330,7 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 {
     /* OPG model */
     MODEL *bmod;
+    int *blist;
 
     /* temporary artificial dataset */
     double **tZ = NULL;
@@ -348,18 +349,26 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
     if (err) return E_ALLOC;
 
     k = model->k;
+    blist = make_opg_list(k);
+    if (blist == NULL) {
+	return E_ALLOC;
+    }
 
     delta = malloc(k * sizeof *delta);
     ctemp = malloc(k * sizeof *ctemp);
     if (delta == NULL || ctemp == NULL) {
 	free(delta);
 	free(ctemp);
+	free(blist);
 	return E_ALLOC;
     }
 
     /* create temp dataset for OPG regression: k vars plus constant */    
     tinfo = create_new_dataset(&tZ, k + 1, model->n, 0);
     if (tinfo == NULL) {
+	free(delta);
+	free(ctemp);
+	free(blist);
 	return E_ALLOC;
     } 
 
@@ -386,7 +395,7 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 	loglik(model->theta, X, tZ, model, 1); 
 
 	/* BHHH via OPG regression */
-	*bmod = lsq(model->list, &tZ, tinfo, OLS, OPT_A, 0.0);
+	*bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
 	if (bmod->errcode) {
 	    err = E_NOCONV;
 	    break;
@@ -454,7 +463,7 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 
 	    /* run OPG once more using QR, to get packed VCV */
 	    set_use_qr(1);
-	    *bmod = lsq(model->list, &tZ, tinfo, OLS, OPT_A, 0.0);
+	    *bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
 	    set_use_qr(qr_bak);
 	    model->pmod = bmod;
 	    gretl_model_set_int(bmod, "iters", iters);
@@ -462,9 +471,10 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 	model->iters = iters;
     }
 
-    /* free all temp stuff */
+    /* free all remaining temp stuff */
     free_Z(tZ, tinfo);
-    free_datainfo(tinfo);  
+    free_datainfo(tinfo); 
+    free(blist);
 
     if (bmod != model->pmod) {
 	free(bmod);

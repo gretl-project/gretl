@@ -590,7 +590,8 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     int i, t, dwt = 0, t1min = *t1, t2max = *t2;
     double xx;
 
-    if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) dwt = pmod->nwt;
+    if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) 
+	dwt = pmod->nwt;
 
     for (i=1; i<=list[0]; i++) {
 	for (t=t1min; t<t2max; t++) {
@@ -689,12 +690,13 @@ void set_miss (LIST list, const char *param, double **Z,
 	    continue;
 	}
 	count = real_setmiss(missval, list[i], Z, pdinfo);
-	if (count) 
+	if (count) { 
 	    pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
 		    pdinfo->varname[list[i]], count);
-	else 
+	} else { 
 	    pprintf(prn, _("%s: Didn't find any matching observations\n"),
 		    pdinfo->varname[list[i]]);
+	}
     }
 }
 
@@ -799,11 +801,15 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
-    if (opt == OPT_S) pdinfo->time_series = STACKED_TIME_SERIES;
-    else if (opt == OPT_C) pdinfo->time_series = STACKED_CROSS_SECTION;
-    else if (pdinfo->sd0 >= 1.0) 
+    if (opt == OPT_S) {
+	pdinfo->time_series = STACKED_TIME_SERIES;
+    } else if (opt == OPT_C) {
+	pdinfo->time_series = STACKED_CROSS_SECTION;
+    } else if (pdinfo->sd0 >= 1.0) {
         pdinfo->time_series = TIME_SERIES; /* but might be panel? */
-    else pdinfo->time_series = 0;
+    } else {
+	pdinfo->time_series = 0;
+    }
 
     return 0;
 }
@@ -1340,13 +1346,16 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 
     newZ = realloc(*pZ, (v + 1) * sizeof *newZ);  
     if (newZ == NULL) return E_ALLOC;
+
     newZ[v] = malloc(n * sizeof **newZ);
     if (newZ[v] == NULL) return E_ALLOC;
+
     *pZ = newZ;
 
     varname = realloc(pdinfo->varname, (v + 1) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
+
     pdinfo->varname[v] = malloc(VNAMELEN);
     if (pdinfo->varname[v] == NULL) return E_ALLOC;
     pdinfo->varname[v][0] = '\0';
@@ -1355,6 +1364,7 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 	varinfo = realloc(pdinfo->varinfo, (v + 1) * sizeof *varinfo);
 	if (varinfo == NULL) return E_ALLOC;
 	else pdinfo->varinfo = varinfo;
+
 	pdinfo->varinfo[v] = malloc(sizeof **varinfo);
 	if (pdinfo->varinfo[v] == NULL) return E_ALLOC;
 	gretl_varinfo_init(pdinfo->varinfo[v]);
@@ -1363,6 +1373,7 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     vector = realloc(pdinfo->vector, (v + 1));
     if (vector == NULL) return E_ALLOC;
     else pdinfo->vector = vector;
+
     pdinfo->vector[v] = 0;
 
     pdinfo->v += 1;
@@ -1642,16 +1653,20 @@ int _full_model_list (MODEL *pmod, int **plist)
     if (pmod->ci == WLS) { 
 	mylist = malloc(((*plist)[0] + 2) * sizeof *mylist);
 	if (mylist == NULL) return -1;
-	for (i=1; i<=(*plist)[0]; i++) 
+
+	for (i=1; i<=(*plist)[0]; i++) {
 	    mylist[i+1] = (*plist)[i];
+	}
 	mylist[0] = (*plist)[0] + 1;
 	mylist[1] = pmod->nwt;
     }
     else if (pmod->ci == AR) {
 	pos = pmod->arinfo->arlist[0] + 1;
 	len = pos + (*plist)[0] + 2;
+
 	mylist = malloc(len * sizeof *mylist);
 	if (mylist == NULL) return -1;
+
 	mylist[0] = len - 2;
 	for (i=1; i<pos; i++) mylist[i] = pmod->arinfo->arlist[i];
 	mylist[pos] = LISTSEP;
@@ -1674,9 +1689,6 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     int depvar, t, nfit = 0;
     int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
     int genfit = 0;
-#if 0
-    char fcastline[32];
-#endif
     FITRESID *fr;
 
     if (pmod->ci == ARMA) {
@@ -1688,16 +1700,6 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     if (pmod->data != NULL) {
 	t2 += get_misscount(pmod);
     }
-
-#if 0
-    if (pmod->ci != NLS && pmod->ci != ARMA) genfit = 1;
-    if (genfit) {
-	sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
-		pdinfo->endobs);
-	nfit = fcast(fcastline, pmod, pdinfo, pZ); 
-	if (nfit < 0) return NULL; 
-    }
-#endif
 
     fr = fit_resid_new(n, 0);
     if (fr == NULL) return NULL;
@@ -1797,7 +1799,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	return fr;
     }
 
-    /* bodge (rejected in case of subsampled data) */
+    /* bodge (reject in case of subsampled data) */
     if (pmod->data != NULL) {
 	fr->err = E_DATA;
 	return fr;
@@ -1924,7 +1926,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     FITRESID *fr;
     int err;
 
-    fr = get_fcast_with_errs (str, pmod, pZ, pdinfo, prn);
+    fr = get_fcast_with_errs(str, pmod, pZ, pdinfo, prn);
     if (fr == NULL) {
 	return E_ALLOC;
     } 
@@ -1976,8 +1978,9 @@ int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
 
 	spec->subdum = malloc(fullinfo->n * sizeof *spec->subdum);
 	if (spec->subdum == NULL) return 1;
-	for (t=0; t<fullinfo->n; t++)
+	for (t=0; t<fullinfo->n; t++) {
 	    spec->subdum[t] = pmod->subdum[t];
+	}
     }
 
     return 0;

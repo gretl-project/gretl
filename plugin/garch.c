@@ -37,75 +37,63 @@
 int do_fcp (const int *list, const double **Z, 
 	    const DATAINFO *pdinfo, PRN *prn)
 {
-    integer ninit, nfinsm;
+    integer t1, t2;
     doublereal *yobs, *xobs;
-    integer nend, nexo, nstoch;
-    integer nobs;
+    integer nexo, nobs;
     doublereal *umc, *ydet, *yy;
     integer ncoeff, ncoefb;
     doublereal *coeff, *d, *oldc;
     doublereal *vc, *res2;
     doublereal *res, *sigma;
-    doublereal *a;
     doublereal *ystoc;
-    doublereal *amax, *amin;
+    doublereal *a, *amax, *amin;
     doublereal *b;
     integer iters, info;
     
     int i, p, q, ynum;
 
     /* FIXME: how exactly should these be set? */
-    nend = 1;
     nexo = 0;
-    nstoch = 1;
     ncoeff = 1;
     ncoefb = 1;
 
-    nfinsm = nobs = pdinfo->t2 - pdinfo->t1 + 1;
-    ninit = 1;
+    t2 = nobs = pdinfo->t2 - pdinfo->t1 + 1;
+    t1 = 1;
 
     p = list[1];
     q = list[2];
     ynum = list[4];
 
-    yobs = malloc((nend * nobs + 1) * sizeof *yobs);
-    ydet = malloc((nend * nobs + 1) * sizeof *ydet);
-    ystoc = malloc((nend * nobs + 1) * sizeof *ystoc);
+    yobs = malloc((nobs + 1) * sizeof *yobs);
+    ydet = malloc((nobs + 1) * sizeof *ydet);
+    ystoc = malloc((nobs + 1) * sizeof *ystoc);
 
-    res2 = malloc((nend * nobs + 1) * sizeof *res2);
-    for (i=1; i<=nend*nobs; i++) {
+    res2 = malloc((nobs + 1) * sizeof *res2);
+    for (i=1; i<=nobs; i++) {
 	res2[i] = 0.0;
     }
 
-    umc = malloc((nstoch + 1) * sizeof *umc);
-    for (i=1; i<=nstoch; i++) {
-	umc[i] = 0.0;
-    }
+    umc = malloc(2 * sizeof *umc);
+    umc[1] = 0.0;
 
-    res = malloc((nstoch * nobs + 1) * sizeof *res);
-    for (i=1; i<=nstoch*nobs; i++) {
+    res = malloc((nobs + 1) * sizeof *res);
+    for (i=1; i<=nobs; i++) {
 	res[i] = 0.0;
     }    
 
-    sigma = malloc((nstoch * nstoch + 1) * sizeof *sigma);
-    for (i=1; i<=nstoch*nstoch; i++) {
-	sigma[i] = 0.0;
-    }
+    sigma = malloc(2 * sizeof *sigma);
+    sigma[1] = 0.0;
 
-    oldc = malloc((nend + 1) * sizeof *oldc);
-    yy = malloc((nend + 1) * sizeof *yy);
-    for (i=1; i<=nend; i++) {
-	oldc[i] = yy[i] = 0.0;
-    } 
+    oldc = malloc(2 * sizeof *oldc);
+    yy = malloc(2 * sizeof *yy);
+    oldc[1] = yy[1] = 0.0;
 
-    a = malloc((nend * nend + 1) * sizeof *a);
-    for (i=1; i<=nend*nend; i++) {
-	a[i] = 0.0;
-    }
+    a = malloc(2 * sizeof *a);
+    a[1] = 0.0;
 
-    amax = malloc((nend * nobs + 1) * sizeof *amax);
-    amin = malloc((nend * nobs + 1) * sizeof *amin);
-    for (i=1; i<=nend*nobs; i++) {
+    amax = malloc((nobs + 1) * sizeof *amax);
+    amin = malloc((nobs + 1) * sizeof *amin);
+    for (i=1; i<=nobs; i++) {
 	amax[i] = amin[i] = 0.0;
     }
 
@@ -115,13 +103,18 @@ int do_fcp (const int *list, const double **Z,
 	coeff[i] = b[i] = 0.0;
     }    
 
-    d = malloc((nend * ncoeff + 1) * sizeof *d);
+    d = malloc((ncoeff + 1) * sizeof *d);
     vc = malloc((ncoeff * ncoeff + 1) * sizeof *vc);
-    for (i=1; i<=nend*ncoeff; i++) {
+    for (i=1; i<=ncoeff; i++) {
 	d[i] = vc[i] = 0.0;
     } 
 
-    xobs = NULL;
+    if (nexo > 0) {
+	xobs = malloc((nobs * nexo + 1) * sizeof *xobs);
+	/* now fill in exog var values */
+    } else {
+	xobs = NULL;
+    }
 
     for (i=1; i<=nobs; i++) {
 	ystoc[i] = ydet[i] = yobs[i] = Z[ynum][i-1];
@@ -140,18 +133,16 @@ int do_fcp (const int *list, const double **Z,
     amax[4] = 0.1; /* initial alpha_1 */
     amax[5] = 0.1; /* initial beta_1 */
 
-    printf("ninit=%d\n"
-	   "nfinsm=%d\n"
-	   "nend=%d\n"
+    printf("t1=%d\n"
+	   "t2=%d\n"
 	   "nobs=%d\n"
 	   "nexo=%d\n"
-	   "nstoch=%d\n"
 	   "ncoeff=%d\n",
-	   (int) ninit, (int) nfinsm, (int) nend, (int) nobs, 
-	   (int) nexo, (int) nstoch, (int) ncoeff);
+	   (int) t1, (int) t2, (int) nobs, 
+	   (int) nexo, (int) ncoeff);
 
-    vsanal_(&ninit, &nfinsm, &yobs[1], &nend, &nobs,
-	    xobs, &nexo, &umc[1], &nstoch, &ydet[1], 
+    vsanal_(&t1, &t2, &yobs[1], &nobs,
+	    xobs, &nexo, &umc[1], &ydet[1], 
 	    &yy[1], &coeff[1], &ncoeff, &d[1], &oldc[1], 
 	    &vc[1], &res2[1], &res[1], &sigma[1], &a[1], &ystoc[1], 
 	    &amax[1], &amin[1], &b[1], &ncoefb, &iters, &info, prn);
@@ -168,7 +159,7 @@ int do_fcp (const int *list, const double **Z,
 	pprintf(prn, "Convergence reached, with tolerance = %g\n", 
 	       amax[1]);
 	pputs(prn, "\nRegression coefficient estimates:\n");
-	for (i=1; i<=nend+nexo; i++) {
+	for (i=1; i<=1+nexo; i++) {
 	    pprintf(prn, "     [%d]: %#14.6g (%#.6g)\n", i, amax[i+1],
 		   amax[i+1+ncoeff]);
 	}

@@ -3,7 +3,8 @@ version 1.2.4
   context 
 - Fix bug: when saved via the objectname mechanism, arma models
   were appearing both as saved models and as saved text
-
+- Fix bug: autocorrelation test from model window Tests menu
+  was broken by new options mechanism
 
 2/24/2004 version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack

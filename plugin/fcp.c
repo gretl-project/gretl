@@ -5,6 +5,7 @@
 
 #include "libgretl.h"
 #include "f2c.h"
+#include "fcp.P"
 
 /* Table of constant values */
 
@@ -44,8 +45,8 @@ static real c_b164 = 2.f;
 /* DHTDP SONO LE DERIVATE DI HT RISPETTO A TUTTI I PARAMETRI */
 
 /* Subroutine */ int vsanal_(integer *ninit, integer *nfinsm, doublereal *
-	yobs, integer *nend, integer *iread, doublereal *xobs, integer *nexo, 
-	doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *yy, 
+	yobs, integer *iread, doublereal *xobs, integer *nexo, 
+	doublereal *umc, doublereal *ydet, doublereal *yy, 
 	doublereal *coeff, integer *ncoeff, doublereal *d__, doublereal *oldc,
 	 doublereal *vc, doublereal *res2, doublereal *res, doublereal *sigma,
 	 doublereal *a, doublereal *ystoc, doublereal *amax, doublereal *amin,
@@ -58,7 +59,7 @@ static real c_b164 = 2.f;
 #endif
 
     /* System generated locals */
-    integer yobs_dim1, yobs_offset, xobs_dim1, xobs_offset, ydet_dim1, 
+    integer yobs_dim1, yoff, xobs_dim1, xoff, ydet_dim1, 
 	    ydet_offset, d_dim1, d_offset, vc_dim1, vc_offset, ystoc_dim1, 
 	    ystoc_offset, res2_dim1, res2_offset, amax_dim1, amax_offset, 
 	    amin_dim1, amin_offset, sigma_dim1, sigma_offset, a_dim1, 
@@ -68,8 +69,8 @@ static real c_b164 = 2.f;
     /* Builtin functions */
     double d_lg10(doublereal *);
     integer s_wsle(cilist *), do_lio(integer *, integer *, char *, ftnlen), 
-	    e_wsle(void), s_wsfe(cilist *), do_fio(integer *, char *, ftnlen),
-	     e_wsfe(void);
+	e_wsle(void), s_wsfe(cilist *), do_fio(integer *, char *, ftnlen),
+	e_wsfe(void);
     double sqrt(doublereal);
 
     /* Local variables */
@@ -77,11 +78,6 @@ static real c_b164 = 2.f;
     static integer i__, j, ih, ik;
     static doublereal fu, ht[3009], pp[141], zt[6], vc5[169]	/* was [13][
 	    13] */, aux[7];
-    extern /* Subroutine */ int ols_(integer *, integer *, doublereal *, 
-	    integer *, integer *, doublereal *, integer *, doublereal *, 
-	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, integer *, doublereal *);
     static integer izo, nzo;
     static doublereal aux3[13], svc5[13];
     static integer nzo1;
@@ -94,35 +90,12 @@ static real c_b164 = 2.f;
     static doublereal param[13], betin[4], dhtdp[39117]	/* was [13][3009] */, 
 	    sderr[13], pappo, toler1, toler2, toler3;
     static integer ivolt2;
-    extern /* Subroutine */ int garcfh_(integer *, integer *, doublereal *, 
-	    integer *, integer *, doublereal *, integer *, doublereal *, 
-	    integer *, doublereal *, doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    doublereal *, integer *, doublereal *, doublereal *, doublereal *,
-	     doublereal *, integer *, doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, integer *, integer *, doublereal *, 
-	    doublereal *, doublereal *), garcim_(integer *, integer *, 
-	    doublereal *, integer *, integer *, doublereal *, integer *, 
-	    doublereal *, integer *, doublereal *, doublereal *, integer *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, integer *,
-	     integer *, doublereal *, integer *, doublereal *, doublereal *, 
-	    doublereal *, doublereal *, integer *, doublereal *, integer *, 
-	    doublereal *, doublereal *, doublereal *, integer *, integer *, 
-	    doublereal *, doublereal *, doublereal *);
     static doublereal flikel[50];
     static integer nparam;
     static doublereal reldis, rellog;
-    extern doublereal valunc_(doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, doublereal *, 
-	    integer *, integer *, integer *, doublereal *, integer *, 
-	    doublereal *, integer *, doublereal *, doublereal *, doublereal *,
-	     integer *, integer *, doublereal *);
     static doublereal parpre[13], partrc[650]	/* was [13][50] */;
     static integer ivolta;
     static doublereal tollog, sumgra, totdis;
-    extern /* Subroutine */ int vsrstr_(doublereal *, integer *, doublereal *,
-	     integer *);
 
     /* Fortran I/O blocks */
     static cilist io___41 = { 0, 6, 0, 0, 0 };
@@ -135,43 +108,43 @@ static real c_b164 = 2.f;
 /*     of the parameters on entry */
 
     /* Parameter adjustments */
-    a_dim1 = *nend;
+    a_dim1 = 1;
     a_offset = 1 + a_dim1;
     a -= a_offset;
     --oldc;
     --yy;
-    amin_dim1 = *nend;
+    amin_dim1 = 1;
     amin_offset = 1 + amin_dim1;
     amin -= amin_offset;
-    amax_dim1 = *nend;
+    amax_dim1 = 1;
     amax_offset = 1 + amax_dim1;
     amax -= amax_offset;
-    ystoc_dim1 = *nend;
+    ystoc_dim1 = 1;
     ystoc_offset = 1 + ystoc_dim1;
     ystoc -= ystoc_offset;
-    res2_dim1 = *nend;
+    res2_dim1 = 1;
     res2_offset = 1 + res2_dim1;
     res2 -= res2_offset;
-    ydet_dim1 = *nend;
+    ydet_dim1 = 1;
     ydet_offset = 1 + ydet_dim1;
     ydet -= ydet_offset;
-    yobs_dim1 = *nend;
-    yobs_offset = 1 + yobs_dim1;
-    yobs -= yobs_offset;
+    yobs_dim1 = 1;
+    yoff = 1 + yobs_dim1;
+    yobs -= yoff;
     xobs_dim1 = *nexo;
-    xobs_offset = 1 + xobs_dim1;
-    xobs -= xobs_offset;
-    sigma_dim1 = *nstoch;
+    xoff = 1 + xobs_dim1;
+    xobs -= xoff;
+    sigma_dim1 = 1;
     sigma_offset = 1 + sigma_dim1;
     sigma -= sigma_offset;
-    res_dim1 = *nstoch;
+    res_dim1 = 1;
     res_offset = 1 + res_dim1;
     res -= res_offset;
     --umc;
     vc_dim1 = *ncoeff;
     vc_offset = 1 + vc_dim1;
     vc -= vc_offset;
-    d_dim1 = *nend;
+    d_dim1 = 1;
     d_offset = 1 + d_dim1;
     d__ -= d_offset;
     --coeff;
@@ -197,8 +170,8 @@ static real c_b164 = 2.f;
 
 /* NUMBER OF PARAMETERS OF UNCONCENTRATED LIKELIHOOD */
     nparam = *ncoeff + 1 + nalfa + nbeta;
-    if (*nexo <= 5 && *iread <= 3009 && *ncoeff <= 7 && *nend <= 1 && nparam 
-	    <= 13 && (nparam * nparam + nparam) / 2 <= 141 && *nstoch <= 3) {
+    if (*nexo <= 5 && *iread <= 3009 && *ncoeff <= 7 && nparam <= 13 
+        && (nparam * nparam + nparam) / 2 <= 141 && 1 <= 3) {
 	goto L2;
     }
     *info = 1;
@@ -269,12 +242,12 @@ L1:
 /* TO GENERATE HISTORICAL VALUES */
 
 /* THIS IS ONLY TO CALCULATE MATRIX OF REGRESSORS (G) */
-    ols_(ninit, nfinsm, &yobs[yobs_offset], nend, iread, &xobs[xobs_offset], 
-	    nexo, &umc[1], nstoch, &yy[1], c__, ncoeff, &oldc[1], &vc[
-	    vc_offset], &ystoc[ystoc_offset], &amax[amax_offset], aux, &b[1], 
-	    ncoefb, g);
+    ols_(ninit, nfinsm, &yobs[yoff], iread, &xobs[xoff], 
+	 nexo, &umc[1], &yy[1], c__, ncoeff, &oldc[1], 
+	 &vc[vc_offset], &ystoc[ystoc_offset], &amax[amax_offset], aux, 
+	 &b[1], ncoefb, g);
 /* L1650: */
-    i__1 = *nstoch;
+    i__1 = 1;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	umc[i__] = 0.f;
 /* L2063: */
@@ -294,8 +267,8 @@ L1:
 /* COMPUTE RESIDUALS FOR COVARIANCE MATRIX */
 /* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
 	fu = valunc_(c__, ncoeff, &res2[res2_offset], &res[res_offset], &ydet[
-		ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &xobs[
-		xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+		ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &xobs[
+		xoff], iread, nexo, &umc[1], ninit, 
 		nfinsm, param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &
 		nalfa, &nbeta, ht);
 /*      WRITE(6,7500)FU */
@@ -313,8 +286,8 @@ L1:
 	    partrc[i__ + nzo * 13 - 14] = param[i__ - 1];
 	}
 /* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	garcim_(ninit, nfinsm, &yobs[yobs_offset], nend, iread, &xobs[
-		xobs_offset], nexo, &umc[1], nstoch, &ydet[ydet_offset], c__, 
+	garcim_(ninit, nfinsm, &yobs[yoff], iread, &xobs[
+		xoff], nexo, &umc[1], &ydet[ydet_offset], c__, 
 		ncoeff, &res2[res2_offset], &res[res_offset], &ystoc[
 		ystoc_offset], &toler1, &nzo, &ivolta, vc5, &ih, g, pp, aux3, 
 		param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &nalfa, &
@@ -353,8 +326,8 @@ L8766:
 /* COMPUTE RESIDUALS FOR COVARIANCE MATRIX */
 /* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
 	fu = valunc_(c__, ncoeff, &res2[res2_offset], &res[res_offset], &ydet[
-		ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &xobs[
-		xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+		ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &xobs[
+		xoff], iread, nexo, &umc[1], ninit, 
 		nfinsm, param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &
 		nalfa, &nbeta, ht);
 /*      WRITE(6,7500)FU */
@@ -371,8 +344,8 @@ L8766:
 	    partrc[i__ + nzo * 13 - 14] = param[i__ - 1];
 	}
 /* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	garcfh_(ninit, nfinsm, &yobs[yobs_offset], nend, iread, &xobs[
-		xobs_offset], nexo, &umc[1], nstoch, &ydet[ydet_offset], c__, 
+	garcfh_(ninit, nfinsm, &yobs[yoff], iread, &xobs[
+		xoff], nexo, &umc[1], &ydet[ydet_offset], c__, 
 		ncoeff, &res2[res2_offset], &res[res_offset], &ystoc[
 		ystoc_offset], &toler2, &nzo, &ivolt2, vc5, &ih, g, pp, aux3, 
 		param, &nparam, &b[1], ncoefb, &alfa0, alfa, beta, &nalfa, &
@@ -494,8 +467,8 @@ L999:
 /* SUBROUTINE FOR OLS ESTIMATION */
 
 /* Subroutine */ int ols_(integer *ninit, integer *nfinsm, doublereal *yobs, 
-	integer *nend, integer *iread, doublereal *xobs, integer *nexo, 
-	doublereal *umc, integer *nstoch, doublereal *yy, doublereal *c__, 
+	integer *iread, doublereal *xobs, integer *nexo, 
+	doublereal *umc, doublereal *yy, doublereal *c__, 
 	integer *ncoeff, doublereal *oldc, doublereal *vc, doublereal *ystoc, 
 	doublereal *amax, doublereal *aux, doublereal *b, integer *ncoefb, 
 	doublereal *g)
@@ -506,7 +479,7 @@ L999:
 	    "MAIN UNCHANGED\002)";
 
     /* System generated locals */
-    integer yobs_dim1, yobs_offset, xobs_dim1, xobs_offset, vc_dim1, 
+    integer yobs_dim1, yoff, xobs_dim1, xoff, vc_dim1, 
 	    vc_offset, ystoc_dim1, ystoc_offset, amax_dim1, amax_offset, i__1,
 	     i__2, i__3;
 
@@ -519,33 +492,25 @@ L999:
     static doublereal deltc;
     static integer iexpl;
     static doublereal relinc, derivo;
-    extern /* Subroutine */ int vsdmig_(doublereal *, integer *, integer *, 
-	    doublereal *, integer *), vsmode_(doublereal *, doublereal *, 
-	    integer *, integer *, integer *, doublereal *, integer *, 
-	    doublereal *, doublereal *, doublereal *, integer *, integer *), 
-	    vsrstr_(doublereal *, integer *, doublereal *, integer *);
 
     /* Fortran I/O blocks */
     static cilist io___60 = { 0, 6, 0, fmt_101, 0 };
 
-
-
-
     /* Parameter adjustments */
     --oldc;
     --yy;
-    amax_dim1 = *nend;
+    amax_dim1 = 1;
     amax_offset = 1 + amax_dim1;
     amax -= amax_offset;
-    ystoc_dim1 = *nend;
+    ystoc_dim1 = 1;
     ystoc_offset = 1 + ystoc_dim1;
     ystoc -= ystoc_offset;
-    yobs_dim1 = *nend;
-    yobs_offset = 1 + yobs_dim1;
-    yobs -= yobs_offset;
+    yobs_dim1 = 1;
+    yoff = 1 + yobs_dim1;
+    yobs -= yoff;
     xobs_dim1 = *nexo;
-    xobs_offset = 1 + xobs_dim1;
-    xobs -= xobs_offset;
+    xoff = 1 + xobs_dim1;
+    xobs -= xoff;
     --umc;
     --aux;
     vc_dim1 = *ncoeff;
@@ -560,9 +525,9 @@ L999:
     vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
     i__1 = *nfinsm;
     for (ic = *ninit; ic <= i__1; ++ic) {
-	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xobs_offset], nexo, iread, 
-		&ic, &yobs[yobs_offset], nend, &umc[1], &b[1], &amax[ic * 
-		amax_dim1 + 1], nstoch, ncoefb);
+	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, iread, 
+		&ic, &yobs[yoff], &umc[1], &b[1], &amax[ic * 
+		amax_dim1 + 1], ncoefb);
 /* L88: */
     }
     i__1 = *ncoeff;
@@ -585,9 +550,9 @@ L999:
 	    }
 	    c__[iexpl] = oldc[1] + deltc;
 	    vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
-	    vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xobs_offset], nexo, 
-		    iread, &ic, &yobs[yobs_offset], nend, &umc[1], &b[1], &yy[
-		    1], nstoch, ncoefb);
+	    vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, 
+		    iread, &ic, &yobs[yoff], &umc[1], &b[1], &yy[
+		    1], ncoefb);
 	    deltc = c__[iexpl] - oldc[1];
 	    derivo = (yy[1] - amax[ic * amax_dim1 + 1]) / deltc;
 	    c__[iexpl] = oldc[1];
@@ -661,22 +626,16 @@ L99:
 
 doublereal valunc_(doublereal *c__, integer *ncoeff, doublereal *res2, 
 	doublereal *res, doublereal *ydet, doublereal *yobs, doublereal *
-	ystoc, doublereal *xobs, integer *nend, integer *iread, integer *nexo,
-	 doublereal *umc, integer *nstoch, integer *ninit, integer *nfinsm, 
+	ystoc, doublereal *xobs, integer *iread, integer *nexo,
+	 doublereal *umc, integer *ninit, integer *nfinsm, 
 	doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, 
 	doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
 	 integer *nbeta, doublereal *ht)
 {
-#if 0
-    /* Format strings */
-    static char fmt_200[] = "(\002 ALFA0,ALFA1,BETA1=\002,3g15.6)";
-    static char fmt_101[] = "(\002 VALUNC: HT NEGATIV=\002,g15.6)";
-#endif
-
     /* System generated locals */
-    integer ydet_dim1, ydet_offset, yobs_dim1, yobs_offset, res2_dim1, 
+    integer ydet_dim1, ydet_offset, yobs_dim1, yoff, res2_dim1, 
 	    res2_offset, ystoc_dim1, ystoc_offset, res_dim1, res_offset, 
-	    xobs_dim1, xobs_offset, i__1, i__2;
+	    xobs_dim1, xoff, i__1, i__2;
     doublereal ret_val;
 
     /* Builtin functions */
@@ -685,40 +644,28 @@ doublereal valunc_(doublereal *c__, integer *ncoeff, doublereal *res2,
 
     /* Local variables */
     static integer i__, i1, i2, ic, iculo, indiet;
-    extern /* Subroutine */ int vsmode_(doublereal *, doublereal *, integer *,
-	     integer *, integer *, doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, integer *, integer *);
     static doublereal uncvar;
-    extern /* Subroutine */ int vsrstr_(doublereal *, integer *, doublereal *,
-	     integer *);
-
-#if 0
-    /* Fortran I/O blocks */
-    static cilist io___68 = { 0, 6, 0, fmt_200, 0 };
-    static cilist io___69 = { 0, 6, 0, fmt_101, 0 };
-#endif
-
 
     /* Parameter adjustments */
     --c__;
     --ht;
-    ystoc_dim1 = *nend;
+    ystoc_dim1 = 1;
     ystoc_offset = 1 + ystoc_dim1;
     ystoc -= ystoc_offset;
-    yobs_dim1 = *nend;
-    yobs_offset = 1 + yobs_dim1;
-    yobs -= yobs_offset;
-    ydet_dim1 = *nend;
+    yobs_dim1 = 1;
+    yoff = 1 + yobs_dim1;
+    yobs -= yoff;
+    ydet_dim1 = 1;
     ydet_offset = 1 + ydet_dim1;
     ydet -= ydet_offset;
-    res2_dim1 = *nend;
+    res2_dim1 = 1;
     res2_offset = 1 + res2_dim1;
     res2 -= res2_offset;
     xobs_dim1 = *nexo;
-    xobs_offset = 1 + xobs_dim1;
-    xobs -= xobs_offset;
+    xoff = 1 + xobs_dim1;
+    xobs -= xoff;
     --umc;
-    res_dim1 = *nstoch;
+    res_dim1 = 1;
     res_offset = 1 + res_dim1;
     res -= res_offset;
     --param;
@@ -756,9 +703,9 @@ L662:
     vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
     i__1 = *nfinsm;
     for (ic = *ninit; ic <= i__1; ++ic) {
-	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xobs_offset], nexo, iread, 
-		&ic, &yobs[yobs_offset], nend, &umc[1], &b[1], &ydet[ic * 
-		ydet_dim1 + 1], nstoch, ncoefb);
+	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, iread, 
+		&ic, &yobs[yoff], &umc[1], &b[1], &ydet[ic * 
+		ydet_dim1 + 1], ncoefb);
 /* L506: */
     }
     i__1 = *nfinsm;
@@ -815,20 +762,6 @@ L270:
 	    ht[ic] += ht[ic - i__] * beta[i__];
 	}
 L272:
-#if 0
-	if (ht[ic] < 0.f) {
-	    s_wsfe(&io___68);
-	    do_fio(&c__1, (char *)&(*alfa0), (ftnlen)sizeof(doublereal));
-	    do_fio(&c__1, (char *)&alfa[1], (ftnlen)sizeof(doublereal));
-	    do_fio(&c__1, (char *)&beta[1], (ftnlen)sizeof(doublereal));
-	    e_wsfe();
-	}
-	if (ht[ic] <= 0.f) {
-	    s_wsfe(&io___69);
-	    do_fio(&c__1, (char *)&ht[ic], (ftnlen)sizeof(doublereal));
-	    e_wsfe();
-	}
-#endif
 /* ARBITRARIO */
 	if (ht[ic] <= 0.f) {
 	    ht[ic] = 1e-7f;
@@ -850,15 +783,15 @@ L272:
 /* COMPUTE MATRIX OF RESIDUALS (RES) AND THEIR COVARIANCE MATRIX (SIGMA) */
 /* ********************************************************************** */
 
-/* Subroutine */ int sig_(integer *ninit, integer *nfinsm, doublereal *yobs, 
-	integer *nend, integer *iread, doublereal *umc, doublereal *xobs, 
-	integer *nexo, integer *nstoch, doublereal *yy, doublereal *c__, 
-	integer *ncoeff, doublereal *res, doublereal *sigma, doublereal *
-	ystoc, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *
-	alfa, doublereal *beta, integer *nalfa, integer *nbeta)
+int sig_(integer *ninit, integer *nfinsm, doublereal *yobs, 
+	 integer *iread, doublereal *umc, doublereal *xobs, 
+	 integer *nexo, doublereal *yy, doublereal *c__, 
+	 integer *ncoeff, doublereal *res, doublereal *sigma, doublereal *
+	 ystoc, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *
+	 alfa, doublereal *beta, integer *nalfa, integer *nbeta)
 {
     /* System generated locals */
-    integer yobs_dim1, yobs_offset, xobs_dim1, xobs_offset, ystoc_dim1, 
+    integer yobs_dim1, yoff, xobs_dim1, xoff, ystoc_dim1, 
 	    ystoc_offset, sigma_dim1, sigma_offset, res_dim1, res_offset, 
 	    i__1;
 
@@ -867,26 +800,22 @@ L272:
 
     /* Local variables */
     static integer i__, k, ic;
-    extern /* Subroutine */ int vsmode_(doublereal *, doublereal *, integer *,
-	     integer *, integer *, doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, integer *, integer *), vsrstr_(
-	    doublereal *, integer *, doublereal *, integer *);
 
     /* Parameter adjustments */
     --yy;
-    ystoc_dim1 = *nend;
+    ystoc_dim1 = 1;
     ystoc_offset = 1 + ystoc_dim1;
     ystoc -= ystoc_offset;
-    yobs_dim1 = *nend;
-    yobs_offset = 1 + yobs_dim1;
-    yobs -= yobs_offset;
+    yobs_dim1 = 1;
+    yoff = 1 + yobs_dim1;
+    yobs -= yoff;
     xobs_dim1 = *nexo;
-    xobs_offset = 1 + xobs_dim1;
-    xobs -= xobs_offset;
-    sigma_dim1 = *nstoch;
+    xoff = 1 + xobs_dim1;
+    xobs -= xoff;
+    sigma_dim1 = 1;
     sigma_offset = 1 + sigma_dim1;
     sigma -= sigma_offset;
-    res_dim1 = *nstoch;
+    res_dim1 = 1;
     res_offset = 1 + res_dim1;
     res -= res_offset;
     --umc;
@@ -899,8 +828,8 @@ L272:
     vsrstr_(&c__[1], ncoeff, &b[1], ncoefb);
     i__1 = *nfinsm;
     for (ic = *ninit; ic <= i__1; ++ic) {
-	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xobs_offset], nexo, iread, 
-		&ic, &yobs[yobs_offset], nend, &umc[1], &b[1], &yy[1], nstoch,
+	vsmode_(&ystoc[ic * ystoc_dim1 + 1], &xobs[xoff], nexo, iread, 
+		&ic, &yobs[yoff], &umc[1], &b[1], &yy[1], 
 		 ncoefb);
 	res[ic * res_dim1 + 1] = ystoc[ic * ystoc_dim1 + 1] - yy[1];
 /* L1035: */
@@ -959,8 +888,8 @@ L3:
 /* ********************HESSTOBI******************************************* */
 
 
-/* Subroutine */ int check_(doublereal *param, integer *ncoeff, integer *
-	nparam)
+int check_(doublereal *param, integer *ncoeff, integer *
+	   nparam)
 {
     /* System generated locals */
     integer i__1;
@@ -977,8 +906,6 @@ L3:
 /*     IF ALFA AND BETA ARE LESS THAN ZERO THEY ARE SET TO ZERO */
 /*     ALSO THE SUM OF ALFA AND BETA IS CONTROLLED AND IF IT IS BIGGER */
 /*     THAN ONE THE ALFA AND BETA ARE NORMALIZED (DIVIDED BY SUM) */
-
-
 
     /* Parameter adjustments */
     --param;
@@ -1015,28 +942,27 @@ L4:
 } /* check_ */
 
 
-
 /*     MATRICE DI INFORMAZIONE DIAGONALE A BLOCCHI */
 
 /*     I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
 /*     C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
 
 
-/* Subroutine */ int garcim_(integer *ninit, integer *nfinsm, doublereal *
-	yobs, integer *nend, integer *iread, doublereal *xobs, integer *nexo, 
-	doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *c__, 
-	integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc,
-	 doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5, 
-	integer *ih, doublereal *g, doublereal *pp, doublereal *aux3, 
-	doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, 
-	doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
-	 integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt)
+int garcim_(integer *ninit, integer *nfinsm, doublereal *
+	    yobs, integer *iread, doublereal *xobs, integer *nexo, 
+	    doublereal *umc, doublereal *ydet, doublereal *c__, 
+	    integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc,
+	    doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5, 
+	    integer *ih, doublereal *g, doublereal *pp, doublereal *aux3, 
+	    doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, 
+	    doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
+	    integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt)
 {
     /* Format strings */
     static char fmt_640[] = "(\002 IER5=\002,i5)";
 
     /* System generated locals */
-    integer yobs_dim1, yobs_offset, xobs_dim1, xobs_offset, ydet_dim1, 
+    integer yobs_dim1, yoff, xobs_dim1, xoff, ydet_dim1, 
 	    ydet_offset, ystoc_dim1, ystoc_offset, res2_dim1, res2_offset, 
 	    res_dim1, res_offset, i__1, i__2, i__3;
     doublereal d__1;
@@ -1064,19 +990,10 @@ L4:
     static doublereal bigd, sdue;
     static integer nexp;
     static doublereal step[13], stre, rsuh, suno, asum2[7], r2suh;
-    extern /* Subroutine */ int check_(doublereal *, integer *, integer *);
     static doublereal cappa;
     static integer nabet, ncall, iculo;
     static doublereal r2suh3;
     static integer nabet1, ncoef1, indiet;
-    extern doublereal valunc_(doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, doublereal *, 
-	    integer *, integer *, integer *, doublereal *, integer *, 
-	    doublereal *, integer *, doublereal *, doublereal *, doublereal *,
-	     integer *, integer *, doublereal *);
-    extern /* Subroutine */ int vsdmig_(doublereal *, integer *, integer *, 
-	    doublereal *, integer *);
     static doublereal oldstp;
 
     /* Fortran I/O blocks */
@@ -1087,22 +1004,22 @@ L4:
 
     /* Parameter adjustments */
     --ht;
-    ystoc_dim1 = *nend;
+    ystoc_dim1 = 1;
     ystoc_offset = 1 + ystoc_dim1;
     ystoc -= ystoc_offset;
-    res2_dim1 = *nend;
+    res2_dim1 = 1;
     res2_offset = 1 + res2_dim1;
     res2 -= res2_offset;
-    ydet_dim1 = *nend;
+    ydet_dim1 = 1;
     ydet_offset = 1 + ydet_dim1;
     ydet -= ydet_offset;
-    yobs_dim1 = *nend;
-    yobs_offset = 1 + yobs_dim1;
-    yobs -= yobs_offset;
+    yobs_dim1 = 1;
+    yoff = 1 + yobs_dim1;
+    yobs -= yoff;
     xobs_dim1 = *nexo;
-    xobs_offset = 1 + xobs_dim1;
-    xobs -= xobs_offset;
-    res_dim1 = *nstoch;
+    xoff = 1 + xobs_dim1;
+    xobs -= xoff;
+    res_dim1 = 1;
     res_offset = 1 + res_dim1;
     res -= res_offset;
     --umc;
@@ -1478,8 +1395,8 @@ L5656:
 /* 604   FORMAT(' D0,DAC,DUB =',3G16.8/) */
     if (*ivolta == 1) {
 	f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-		ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-		xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+		ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+		xobs[xoff], iread, nexo, &umc[1], ninit, 
 		nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &
 		beta[1], nalfa, nbeta, &ht[1]);
     }
@@ -1492,8 +1409,8 @@ L5656:
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
     f2 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     if (f2 > f1) {
@@ -1511,8 +1428,8 @@ L5656:
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
     f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     goto L325;
@@ -1531,8 +1448,8 @@ L307:
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
     f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
 L325:
@@ -1563,8 +1480,8 @@ L329:
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
     f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     ++ncall;
@@ -1587,8 +1504,8 @@ L341:
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
     f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     ++ncall;
@@ -1610,8 +1527,8 @@ L400:
 /*      WRITE(6,7700) */
 /*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
     fs = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     ++ncall;
@@ -1714,7 +1631,7 @@ L133:
     if (nab == 0) {
 	goto L299;
     }
-    i__1 = *nstoch;
+    i__1 = 1;
     for (ieq = 1; ieq <= i__1; ++ieq) {
 /*      IDPNDN=NAM(IEQ) */
 /*      NC=ICOEFF(IEQ) */
@@ -1756,8 +1673,8 @@ L299:
 /* *********************************************************************** */
 
 /* Subroutine */ int garcfh_(integer *ninit, integer *nfinsm, doublereal *
-	yobs, integer *nend, integer *iread, doublereal *xobs, integer *nexo, 
-	doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *c__, 
+	yobs, integer *iread, doublereal *xobs, integer *nexo, 
+	doublereal *umc, doublereal *ydet, doublereal *c__, 
 	integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc,
 	 doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5, 
 	integer *ih, doublereal *g, doublereal *pp, doublereal *aux3, 
@@ -1774,7 +1691,7 @@ L299:
     static char fmt_1203[] = "(/,\002 COMPUTED COEFFICIENTS\002)";
 
     /* System generated locals */
-    integer yobs_dim1, yobs_offset, xobs_dim1, xobs_offset, ydet_dim1, 
+    integer yobs_dim1, yoff, xobs_dim1, xoff, ydet_dim1, 
 	    ydet_offset, ystoc_dim1, ystoc_offset, res2_dim1, res2_offset, 
 	    res_dim1, res_offset, i__1, i__2, i__3, i__4;
     doublereal d__1;
@@ -1804,21 +1721,12 @@ L299:
     static doublereal bigd, sdue;
     static integer nexp;
     static doublereal step[13], stre, rsuh, suno, asum2[7], r2suh, usuh2;
-    extern /* Subroutine */ int check_(doublereal *, integer *, integer *);
     static doublereal cappa;
     static integer nabet, ncall, iculo;
     static doublereal r2suh3;
     static integer nabet1, ncoef1;
     static doublereal dhdpdp[676]	/* was [13][13][4] */;
     static integer indiet;
-    extern doublereal valunc_(doublereal *, integer *, doublereal *, 
-	    doublereal *, doublereal *, doublereal *, doublereal *, 
-	    doublereal *, integer *, integer *, integer *, doublereal *, 
-	    integer *, integer *, integer *, doublereal *, integer *, 
-	    doublereal *, integer *, doublereal *, doublereal *, doublereal *,
-	     integer *, integer *, doublereal *);
-    extern /* Subroutine */ int vsdmig_(doublereal *, integer *, integer *, 
-	    doublereal *, integer *);
     static doublereal oldstp;
 
     /* Fortran I/O blocks */
@@ -1832,22 +1740,22 @@ L299:
 
     /* Parameter adjustments */
     --ht;
-    ystoc_dim1 = *nend;
+    ystoc_dim1 = 1;
     ystoc_offset = 1 + ystoc_dim1;
     ystoc -= ystoc_offset;
-    res2_dim1 = *nend;
+    res2_dim1 = 1;
     res2_offset = 1 + res2_dim1;
     res2 -= res2_offset;
-    ydet_dim1 = *nend;
+    ydet_dim1 = 1;
     ydet_offset = 1 + ydet_dim1;
     ydet -= ydet_offset;
-    yobs_dim1 = *nend;
-    yobs_offset = 1 + yobs_dim1;
-    yobs -= yobs_offset;
+    yobs_dim1 = 1;
+    yoff = 1 + yobs_dim1;
+    yobs -= yoff;
     xobs_dim1 = *nexo;
-    xobs_offset = 1 + xobs_dim1;
-    xobs -= xobs_offset;
-    res_dim1 = *nstoch;
+    xoff = 1 + xobs_dim1;
+    xobs -= xoff;
+    res_dim1 = 1;
     res_offset = 1 + res_dim1;
     res -= res_offset;
     --umc;
@@ -2455,8 +2363,8 @@ L5656:
 /* 604   FORMAT(' D0,DAC,DUB =',3G16.8/) */
     if (*ivolta == 1) {
 	f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-		ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-		xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+		ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+		xobs[xoff], iread, nexo, &umc[1], ninit, 
 		nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &
 		beta[1], nalfa, nbeta, &ht[1]);
     }
@@ -2467,8 +2375,8 @@ L5656:
     }
     check_(&param[1], ncoeff, nparam);
     f2 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     if (f2 > f1) {
@@ -2484,8 +2392,8 @@ L5656:
     }
     check_(&param[1], ncoeff, nparam);
     f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     goto L325;
@@ -2502,8 +2410,8 @@ L307:
     }
     check_(&param[1], ncoeff, nparam);
     f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
 L325:
@@ -2532,8 +2440,8 @@ L329:
     }
     check_(&param[1], ncoeff, nparam);
     f1 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     ++ncall;
@@ -2554,8 +2462,8 @@ L341:
     }
     check_(&param[1], ncoeff, nparam);
     f3 = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     ++ncall;
@@ -2575,8 +2483,8 @@ L400:
     }
     check_(&param[1], ncoeff, nparam);
     fs = -valunc_(&c__[1], ncoeff, &res2[res2_offset], &res[res_offset], &
-	    ydet[ydet_offset], &yobs[yobs_offset], &ystoc[ystoc_offset], &
-	    xobs[xobs_offset], nend, iread, nexo, &umc[1], nstoch, ninit, 
+	    ydet[ydet_offset], &yobs[yoff], &ystoc[ystoc_offset], &
+	    xobs[xoff], iread, nexo, &umc[1], ninit, 
 	    nfinsm, &param[1], nparam, &b[1], ncoefb, alfa0, &alfa[1], &beta[
 	    1], nalfa, nbeta, &ht[1]);
     ++ncall;
@@ -2679,7 +2587,7 @@ L133:
     if (nab == 0) {
 	goto L299;
     }
-    i__3 = *nstoch;
+    i__3 = 1;
     for (ieq = 1; ieq <= i__3; ++ieq) {
 /*      IDPNDN=NAM(IEQ) */
 /*      NC=ICOEFF(IEQ) */
@@ -2735,8 +2643,8 @@ L299:
 /* or restrictions on the sum (Cobb-Douglas), etc. */
 /* The first time must return only the value of NCOEFB. */
 
-/* Subroutine */ int vsrstr_(doublereal *c__, integer *ncoeff, doublereal *b, 
-	integer *ncoefb)
+int vsrstr_(doublereal *c__, integer *ncoeff, doublereal *b, 
+	    integer *ncoefb)
 {
     /* Initialized data */
 
@@ -2780,8 +2688,8 @@ L99:
 /*     *                                                                * */
 /*     ****************************************************************** */
 
-/* Subroutine */ int vsdmig_(doublereal *g, integer *ig, integer *n, 
-	doublereal *aux, integer *ier)
+int vsdmig_(doublereal *g, integer *ig, integer *n, 
+	    doublereal *aux, integer *ier)
 {
     /* System generated locals */
     integer i__1, i__2, i__3;
@@ -3023,10 +2931,10 @@ L32:
 /* Model: Bollerslev and Ghysels */
 
 
-/* Subroutine */ int vsmode_orig(doublereal *y, doublereal *x, integer *nexo, 
-	integer *iread, integer *i__, doublereal *yl, integer *nend, 
-	doublereal *u, doublereal *a, doublereal *z__, integer *nstoch, 
-	integer *ncoeff)
+int vsmode_orig(doublereal *y, doublereal *x, integer *nexo, 
+		integer *iread, integer *i__, doublereal *yl,
+		doublereal *u, doublereal *a, doublereal *z__,
+		integer *ncoeff)
 {
     /* System generated locals */
     integer x_dim1, x_offset, yl_dim1, yl_offset;
@@ -3038,7 +2946,7 @@ L32:
     x_offset = 1 + x_dim1;
     x -= x_offset;
     --z__;
-    yl_dim1 = *nend;
+    yl_dim1 = 1;
     yl_offset = 1 + yl_dim1;
     yl -= yl_offset;
     --y;
@@ -3052,9 +2960,9 @@ L32:
 } /* vsmode_ */
 
 int vsmode_(doublereal *y, doublereal *x, integer *nexo, 
-	     integer *iread, integer *i__, doublereal *yl, integer *nend, 
-	     doublereal *u, doublereal *a, doublereal *z__, integer *nstoch, 
-	     integer *ncoeff)
+	    integer *iread, integer *i__, doublereal *yl,
+	    doublereal *u, doublereal *a, doublereal *z__,
+	    integer *ncoeff)
 {
     /* System generated locals */
     integer x_dim1, x_offset, yl_dim1, yl_offset, j;
@@ -3064,7 +2972,7 @@ int vsmode_(doublereal *y, doublereal *x, integer *nexo,
     x_offset = 1 + x_dim1;
     x -= x_offset;
     --z__;
-    yl_dim1 = *nend;
+    yl_dim1 = 1;
     yl_offset = 1 + yl_dim1;
     yl -= yl_offset;
     --y;

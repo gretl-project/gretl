@@ -20,6 +20,7 @@ LIBOLE2_LIBS = @LIBOLE2_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
+FLIB = @FLIB@
 HAVE_X12A = @HAVE_X12A@
 HAVE_TRAMO = @HAVE_TRAMO@
 
@@ -148,7 +149,7 @@ tobit.la: tobit.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
 
 garch.la: garch.lo fcp.lo
-	$(LINK) -o $@ $^ $(GRETLLIB) 
+	$(LINK) -o $@ $^ $(GRETLLIB) $(FLIB)
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

@@ -87,6 +87,8 @@ static int ma_out_of_bounds (int q, const double *ma_coeff)
     cmplx *roots = NULL;
     int i, err = 0;
 
+    /* we'll use a budget version of the "arma_roots" function here */
+
     temp  = malloc((q+1) * sizeof *temp);
     tmp2  = malloc((q+1) * sizeof *tmp2);
     roots = malloc(q * sizeof *roots);
@@ -229,7 +231,7 @@ static int arma_ll (double *coeff,
 	    }
 
 	    /* update OPG data set */
-	    x = e[t] / s2; /* sqrt(s2)? */
+	    x = e[t] / s2; /* sqrt(s2)? does it matter? */
 	    for (i=0; i<nc; i++) {
 		Z[i+1][t] = -de[i][t] * x;
 	    }

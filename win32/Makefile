@@ -72,7 +72,8 @@ PLUGINSRC = \
         arma_x12.c \
 	workbook.c \
 	logistic.c \
-	tobit.c
+	tobit.c \
+	garch.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -82,7 +83,7 @@ PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/johansen.dll plugins/arma.dll plugins/arma_x12.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll \
-	plugins/logistic.dll plugins/tobit.dll
+	plugins/logistic.dll plugins/tobit.dll plugins/garch.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -298,6 +299,10 @@ plugins/logistic.dll: logistic.o dllinit.o
 plugins/tobit.dll: tobit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/garch.dll: garch.o fcp.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lf2c
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
