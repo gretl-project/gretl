@@ -2264,12 +2264,25 @@ static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
-static void vif_menu_check (GtkItemFactory *ifac, const MODEL *pmod)
+static void minimal_model_check (GtkItemFactory *ifac, const MODEL *pmod)
 {
-    int nvif = pmod->ncoeff - pmod->ifc;
+    if (pmod->ncoeff == 1) {
+	flip(ifac, "/Tests/omit variables", FALSE);
+	flip(ifac, "/Tests/sum of coefficients", FALSE);
 
-    if (nvif <= 1) {
+	if (pmod->ifc) {
+	    flip(ifac, "/Tests/heteroskedasticity", FALSE);
+	    flip(ifac, "/Tests/non-linearity (squares)", FALSE);
+	    flip(ifac, "/Tests/non-linearity (logs)", FALSE);
+	}
+    }
+
+    if (pmod->ncoeff - pmod->ifc <= 1) {
 	flip(ifac, "/Tests/collinearity", FALSE);
+    }
+
+    if (pmod->missmask != NULL) {
+	flip(ifac, "/Tests/CUSUM test", FALSE);
     }
 }
 
@@ -2293,7 +2306,7 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	}
     }
 
-    vif_menu_check(ifac, pmod);
+    minimal_model_check(ifac, pmod);
 }
 
 /* ........................................................... */

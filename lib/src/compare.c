@@ -1075,7 +1075,13 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     double F;
     int split = 0, err = 0;
 
-    if (pmod->ci != OLS) return E_OLSONLY;
+    if (pmod->ci != OLS) {
+	return E_OLSONLY;
+    }
+
+    if (pmod->missmask) {
+	return E_DATA;
+    }
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
@@ -1237,7 +1243,13 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     FILE *fq = NULL;
     int err = 0;
 
-    if (pmod->ci != OLS) return E_OLSONLY;
+    if (pmod->ci != OLS) {
+	return E_OLSONLY;
+    }
+
+    if (pmod->missmask != NULL) {
+	return E_DATA;
+    }
 
     n_est = T - K;
     /* set sample based on model to be tested */
@@ -1253,14 +1265,11 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     }
 
     if (!err) {
-	gretl_model_init(&cum_mod);
-	for (j=0; j<n_est; j++) {
+	for (j=0; j<n_est && !err; j++) {
 	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_C, 0.0);
 	    err = cum_mod.errcode;
 	    if (err) {
 		errmsg(err, prn);
-		clear_model(&cum_mod);
-		break;
 	    } else {
 		t = pdinfo->t2 + 1;
 		yy = 0.0;
@@ -1279,6 +1288,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		clear_model(&cum_mod);
 		pdinfo->t2 += 1;
 	    }
+	    clear_model(&cum_mod); 
 	}
     }
 

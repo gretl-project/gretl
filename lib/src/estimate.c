@@ -2466,7 +2466,6 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
 	if (check < 1) {
 	    fprintf(stderr, I_("generation of squares failed\n"));
-	    free(tmplist);
 	    err = E_SQUARES;
 	}
     }
