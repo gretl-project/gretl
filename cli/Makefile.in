@@ -82,7 +82,7 @@ complete.o: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
 complete.o: ../lib/src/interact.h ../lib/src/graphing.h
 complete.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 complete.o: ../lib/src/discrete.h ../lib/src/subsample.h
-complete.o: ../lib/src/calendar.h ../lib/src/equation_system.h
+complete.o: ../lib/src/calendar.h ../lib/src/system.h
 gretlcli.o: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 gretlcli.o: ../lib/src/estimate.h ../lib/src/generate.h
 gretlcli.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
@@ -92,4 +92,4 @@ gretlcli.o: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
 gretlcli.o: ../lib/src/interact.h ../lib/src/graphing.h
 gretlcli.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gretlcli.o: ../lib/src/discrete.h ../lib/src/subsample.h
-gretlcli.o: ../lib/src/calendar.h ../lib/src/equation_system.h common.c
+gretlcli.o: ../lib/src/calendar.h ../lib/src/system.h common.c

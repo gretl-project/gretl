@@ -25,8 +25,14 @@ typedef struct _gretl_equation_system gretl_equation_system;
 struct _gretl_equation_system {
     int type;
     int n_equations;
+    char flags;
     int **lists;
 };
+
+enum {
+    GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
+    GRETL_SYSTEM_SAVE_YHAT = 1 << 1
+} gretl_system_flags;
 
 gretl_equation_system *parse_system_start_line (const char *line);
 

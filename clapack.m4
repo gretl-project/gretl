@@ -13,15 +13,15 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
      lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
   fi
 
-  AC_MSG_CHECKING(for LAPACK)
-	
-  AC_CHECK_LIB(f2c,dmax,FLIB="f2c",FLIB="none")
+  AC_CHECK_LIB(f2c,c_sqrt,FLIB="f2c",FLIB="none")
   if test $FLIB = "none" ; then
-    AC_CHECK_LIB(g2c,dmax,FLIB="g2c",FLIB="none")
+    AC_CHECK_LIB(g2c,c_sqrt,FLIB="g2c",FLIB="none")
   fi
   if test $FLIB = "none" ; then
      echo "*** Couldn't find either libf2c or libg2c"
   fi
+
+  AC_MSG_CHECKING(for LAPACK)
 
   LAPACK_CFLAGS="-I$lapack_config_prefix/include -I./plugin"
   LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas -l$FLIB"
@@ -61,7 +61,7 @@ main ()
      if test -f conf.lapacktest ; then
        :
      else
-       echo "*** Could not run GNU MP test program, checking why..."
+       echo "*** Could not run LAPACK test program, checking why..."
        CFLAGS="$CFLAGS $LAPACK_CFLAGS"
        LIBS="$LIBS $LAPACK_LIBS"
        AC_TRY_LINK([
@@ -75,8 +75,8 @@ main ()
          echo "*** to the installed location.  Also, make sure you have run"
          echo "*** ldconfig if that is required on your system."
          echo "***" ],
-       [ echo "*** The test program failed to compile or link. See the file config.log for the"
-         echo "*** exact error that occured. This usually means LAPACK was incorrectly installed"
+       [ echo "*** The test program failed to compile or link. See config.log for the"
+         echo "*** exact error that occured. This may mean LAPACK was incorrectly installed"
          echo "*** or that you have moved LAPACK since it was installed." ])
          CFLAGS="$ac_save_CFLAGS"
          LIBS="$ac_save_LIBS"

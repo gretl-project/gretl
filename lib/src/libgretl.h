@@ -340,7 +340,7 @@ typedef struct {
 #include "discrete.h"
 #include "subsample.h"
 #include "calendar.h"
-#include "equation_system.h"
+#include "system.h"
 #ifdef OS_WIN32
 # include "gretl_win32.h"
 #endif

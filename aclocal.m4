@@ -6294,7 +6294,7 @@ main ()
      if test -f conf.lapacktest ; then
        :
      else
-       echo "*** Could not run GNU MP test program, checking why..."
+       echo "*** Could not run LAPACK test program, checking why..."
        CFLAGS="$CFLAGS $LAPACK_CFLAGS"
        LIBS="$LIBS $LAPACK_LIBS"
        AC_TRY_LINK([
@@ -6308,8 +6308,8 @@ main ()
          echo "*** to the installed location.  Also, make sure you have run"
          echo "*** ldconfig if that is required on your system."
          echo "***" ],
-       [ echo "*** The test program failed to compile or link. See the file config.log for the"
-         echo "*** exact error that occured. This usually means LAPACK was incorrectly installed"
+       [ echo "*** The test program failed to compile or link. See config.log for the"
+         echo "*** exact error that occured. This may mean LAPACK was incorrectly installed"
          echo "*** or that you have moved LAPACK since it was installed." ])
          CFLAGS="$ac_save_CFLAGS"
          LIBS="$ac_save_LIBS"

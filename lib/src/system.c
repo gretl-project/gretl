@@ -65,6 +65,7 @@ static gretl_equation_system *gretl_equation_system_new (int type)
 
     sys->type = type;
     sys->n_equations = 0;
+    sys->flags = 0;
     sys->lists = NULL;
 
     return sys;
@@ -134,6 +135,15 @@ gretl_equation_system *parse_system_start_line (const char *line)
 	sys = gretl_equation_system_new(systype);
     } else {
 	strcpy(gretl_errmsg, _(badsystem));
+    }
+
+    if (strstr(line, "save=")) {
+	if (strstr(line, "resids") || strstr(line, "uhat")) {
+	    sys->flags |= GRETL_SYSTEM_SAVE_UHAT;
+	}
+	if (strstr(line, "fitted") || strstr(line, "yhat")) {
+	    sys->flags |= GRETL_SYSTEM_SAVE_YHAT;
+	}
     }
 
     return sys;
