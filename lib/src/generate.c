@@ -3232,23 +3232,32 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* get the parameter terms */
     for (i=0; i<m; i++) {
+	int neg = 0;
+	const char *p = parm;
+
 	*parm = '\0';
 	strncat(parm, toks[i + vtok + 1], sizeof parm - 1);
-	if (isalpha((unsigned char) *parm)) {
-	    pv = varindex(pdinfo, parm);
+
+	if (*parm == '-') {
+	    neg = 1;
+	    p++;
+	}
+
+	if (isalpha((unsigned char) *p)) {
+	    pv = varindex(pdinfo, p);
 	    if (pv == 0 || pv >= pdinfo->v) {
-		sprintf(gretl_errmsg, _("Bad varname '%s' in sim"), parm);
+		sprintf(gretl_errmsg, _("Bad varname '%s' in sim"), p);
 		err = 1;
 		goto sim_bailout;
 	    } else {
 		isconst[i] = !pdinfo->vector[pv];
-		/*  fprintf(fp, "param[%d] is a variable, %d\n", i, pv); */ 
 		a[i] = (isconst[i])? (*pZ)[pv][0] : (double) pv;
 	    }
 	} else {
-	    a[i] = dot_atof(parm);
-	    /*  fprintf(fp, "param[%d] is a constant = %f\n", i, a[i]); */ 
+	    a[i] = dot_atof(p);
 	}
+
+	if (neg) a[i] = -a[i];
     }
 
     if (t1 < m - 1) t1 = m - 1;
@@ -3260,12 +3269,19 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 		if (i == 0) xx += a[i];
 		else xx += a[i] * (*pZ)[nv][t-i];
 	    } else {
+		int neg = 0;
+
 		pv = (int) a[i];
+		if (pv < 0) {
+		    neg = 1;
+		    pv = -pv;
+		}
 		yy = (*pZ)[pv][t];
 		if (na(yy)) {
 		    xx = NADBL;
 		    break;
 		}
+		if (neg) yy = -yy;
 		if (i == 0) xx += yy;
 		else xx += yy * (*pZ)[nv][t-i];
 	    }

@@ -19,8 +19,6 @@
 
 /* monte_carlo.h for gretl */
 
-#define MAXLOOP 20000 /* bodge to prevent runaways */
-
 #if defined(ENABLE_GMP)
 #include <gmp.h>
 typedef mpf_t bigval;

@@ -1102,6 +1102,7 @@ int catchflag (char *line, unsigned char *oflag)
      */
 {
     int i, opt, n = strlen(line);
+    char cmdword[9];
 
     *oflag = 0;
 
@@ -1110,11 +1111,17 @@ int catchflag (char *line, unsigned char *oflag)
     /* to enable reading of trad. esl input files */
     if (line[n-2] == ';' && isspace(line[n-1])) {
 	line[n-2] = '\0';
-	n = strlen(line);
+	n -= 2;
     } else if (line[n-1] == ';') {
 	line[n-1] = '\0';
-	n = strlen(line);
+	n--;
     }
+
+    /* some commands do not take a "flag", and "-%c" may have
+       some other meaning */
+    sscanf(line, "%8s", cmdword);
+    if (!strcmp(cmdword, "genr") || 
+	!strcmp(cmdword, "sim")) return 0;
 
     for (i=4; i<n-1; i++) {
 	if (line[i] == '-' && 

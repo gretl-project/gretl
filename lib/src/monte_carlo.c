@@ -176,50 +176,45 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
 
+#define MAXLOOP 20000
+
 int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 {
-    int t;
-
-    if (ploop->lvar && ploop->ntimes > MAXLOOP) 
-	return 0;
+    int t, cont = 0;
 
     /* case of an inequality between variables */
     if (ploop->rvar > 0) {
 	ploop->ntimes += 1;
+	if (ploop->ntimes >= MAXLOOP) return 0; /* safety measure */
 	if (ploop->ineq == GT) {
-	    if (Z[ploop->lvar][0] > Z[ploop->rvar][0])
-		return 1;
-	    else return 0;
+	    cont = (Z[ploop->lvar][0] > Z[ploop->rvar][0]);
 	} else {
-	    if (Z[ploop->lvar][0] < Z[ploop->rvar][0])
-		return 1;
-	    else return 0;
+	    cont = (Z[ploop->lvar][0] < Z[ploop->rvar][0]);
 	}
     } 
     else if (ploop->lvar == INDEXNUM) {  /* a 'for' loop */
 	t = genr_scalar_index(0, 0); /* fetch index */
-	if (t == ploop->ntimes) return 0;
-	else {
+	if (t < ploop->ntimes) {
 	    genr_scalar_index(2, 1); /* increment index */
-	    return 1;
+	    cont = 1;
 	}
     }
     else if (ploop->lvar) {
 	/* case of inequality between a var and a number */
 	ploop->ntimes += 1;
+	if (ploop->ntimes >= MAXLOOP) return 0; /* safety measure */
 	if (ploop->ineq == GT) {
-	    if (Z[ploop->lvar][0] > ploop->rval) return 1;
-	    else return 0;
+	    cont = (Z[ploop->lvar][0] > ploop->rval);
 	} else {
-	    if (Z[ploop->lvar][0] < ploop->rval) return 1;
-	    else return 0;
+	    cont = (Z[ploop->lvar][0] < ploop->rval);
 	}
     }
     else {
 	/* case of a simple count */
-	if (k < ploop->ntimes) return 1;
-	else return 0;
+	if (k < ploop->ntimes) cont = 1;
     }
+
+    return cont;
 }
 
 /* ......................................................  */

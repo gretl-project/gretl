@@ -255,7 +255,7 @@ void nls_init (void)
 int main (int argc, char *argv[])
 {
     int cont = 0, cli_get_data = 0;
-    int cmd_overflow = 0;
+    int cmd_overflow = 0, aborted = 0;
     char tmp[MAXLINE];
     PRN *prn;
 
@@ -450,18 +450,18 @@ int main (int argc, char *argv[])
 		continue;
 	    }
 	    i = 0;
-	    while (j != MAXLOOP && loop_condition(i, &loop, Z, datainfo)) {
+	    while (!aborted && loop_condition(i, &loop, Z, datainfo)) {
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			printf(_("Error in command loop: aborting\n"));
-			j = MAXLOOP - 1;
+			aborted = 1;
 		    }
 		}
 		i++;
 	    }
-	    if (j != MAXLOOP) {
+	    if (!aborted) {
 		if (loop.type != FOR_LOOP) {
 		    print_loop_results(&loop, datainfo, prn, &paths, 
 				       &model_count, loopstorefile);
@@ -471,7 +471,7 @@ int main (int argc, char *argv[])
 	    looprun = 0;
 	    monte_carlo_free(&loop);
 	    clear(line, MAXLINE);
-	    if (j == MAXLOOP) return 1;
+	    if (aborted) return 1;
 	}
 	else { /* not looprun */
 #ifdef HAVE_READLINE

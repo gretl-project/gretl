@@ -3890,15 +3890,20 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	}
 
 	plswait = gdk_cursor_new(GDK_WATCH);
+	gdk_window_set_cursor(mdata->w->window, plswait);
+#if 0
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
-			 GDK_POINTER_MOTION_MASK,
+			 GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
+			 GDK_BUTTON_RELEASE_MASK,
 			 NULL, plswait,
 			 GDK_CURRENT_TIME); /* FIXME: localize the grab? */
+#endif
 
 	err = execute_script(NULL, buf, prn, code);
 	g_free(buf);
+	gdk_window_set_cursor(mdata->w->window, NULL);
 	gdk_cursor_destroy(plswait);
-	gdk_pointer_ungrab(GDK_CURRENT_TIME);
+	/* gdk_pointer_ungrab(GDK_CURRENT_TIME); */
     } else {
 	/* get commands from file */
 	err = execute_script(runfile, NULL, prn, code);
@@ -3911,6 +3916,9 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     refresh_data();
 
     view_file(fname, 1, 1, 78, 450, SCRIPT_OUT);
+
+    /* re-establish command echo */
+    echo_off = 0;
 }
 
 /* ........................................................... */
@@ -4420,7 +4428,7 @@ int execute_script (const char *runfile, const char *buf,
 {
     FILE *fb = NULL;
     int exec_err = 0;
-    int i, j = 0, loopstack = 0, looprun = 0;
+    int i, j = 0, loopstack = 0, looprun = 0, aborted = 0;
     char tmp[MAXLEN];
     LOOPSET loop;            /* struct for monte carlo loop */
 
@@ -4510,25 +4518,25 @@ int execute_script (const char *runfile, const char *buf,
 		continue;
 	    }
 	    i = 0;
-	    while (j != MAXLOOP && loop_condition(i, &loop, Z, datainfo)) {
+	    while (!aborted && loop_condition(i, &loop, Z, datainfo)) {
 		if (loop.type == FOR_LOOP && !echo_off)
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
-			j = MAXLOOP - 1;
+			aborted = 1;
 			i = loop.ntimes;
 		    }
 		}
 		i++;
 	    }
-	    if (j != MAXLOOP && loop.type != FOR_LOOP) {
+	    if (!aborted && loop.type != FOR_LOOP) {
 		print_loop_results(&loop, datainfo, prn, &paths, 
 				   &model_count, loopstorefile);
 	    }
 	    looprun = 0;
 	    monte_carlo_free(&loop);
-	    if (j == MAXLOOP) return 1;
+	    if (aborted) return 1;
 	} else { 
 	    /* end if Monte Carlo stuff */
 	    int bslash;
