@@ -1,5 +1,26 @@
 <SECTION>
 <FILE>bhhh_max</FILE>
+model_info_free
+model_info_new
+model_info_capture_OPG_model
+model_info_get_VCV
+model_info_get_theta
+model_info_get_t1
+model_info_get_t2
+model_info_get_n
+model_info_get_iters
+model_info_get_pqr
+model_info_get_ll
+model_info_get_series
+model_info_set_pqr
+model_info_set_n_series
+model_info_set_k
+model_info_get_k
+model_info_set_t1_t2
+model_info_set_opts
+model_info_set_tol
+model_info_set_ll
+bhhh_max
 </SECTION>
 
 <SECTION>
