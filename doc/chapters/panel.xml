@@ -4,83 +4,64 @@
 
   <sect1 id="panel-structure"><title>Panel structure</title>
 
-    <para>Panel data (pooled cross-section and time-series) require
-      special care.  Here are some pointers.</para>
+    <para>Panel data are inherently three dimensional &mdash; the
+      dimensions being variable, cross-sectional unit, and
+      time-period.  For representation in a textual computer file (and
+      also for gretl's internal calculations) these three dimensions
+      must somehow be flattened into two.  This
+      <quote>flattening</quote> involves taking layers of the data
+      that would naturally stack in a third dimension, and stacking
+      them in the vertical dimension.</para>
 
-    <para>Consider a data set composed of observations on each of
-      <emphasis>n</emphasis> cross-sectional units (countries, states,
-      persons or whatever) in each of <emphasis>T</emphasis> periods.
-      Let each observation comprise the values of
-      <emphasis>k</emphasis> variables of interest.  The data set then
-      contains <emphasis>knT</emphasis> values.</para>
-
-    <para>The data should be arranged <quote>by observation</quote>:
-      each row represents an observation; each column contains the
-      values of a particular variable. The data matrix then has
-      <emphasis>nT</emphasis> rows and <emphasis>k</emphasis> columns.
-      That leaves open the matter of how the rows should be arranged.
-      There are two possibilities.<footnote><para>If you don't intend
-	  to make any conceptual or statistical distinction between
-	  cross-sectional and temporal variation in the data you can
-	  arrange the rows arbitrarily, but this is probably wasteful
-	  of information.</para>
-      </footnote></para>
+    <para><application>Gretl</application> always expects data to be
+      arranged <quote>by observation</quote>, that is, such that each
+      row represents an observation (and each variable occupies one
+      and only one column).  In this context the flattening of a panel
+      data set can be done in either of two ways:</para>
 
     <itemizedlist>
-      <listitem><para>Rows grouped by <emphasis>unit</emphasis>. Think
-	  of the data matrix as composed of <emphasis>n</emphasis>
-	  blocks, each having <emphasis>T</emphasis> rows. The first
-	  block of <emphasis>T</emphasis> rows contains the
-	  observations on cross-sectional unit 1 for each of the
-	  periods; the next block contains the observations on unit 2
-	  for all periods; and so on.  In effect, the data matrix is a
-	  set of time-series data sets, stacked
-	  vertically.</para></listitem>
-      <listitem><para>Rows grouped by <emphasis>period</emphasis>.
-	  Think of the data matrix as composed of
-	  <emphasis>T</emphasis> blocks, each having
-	  <emphasis>n</emphasis> rows. The first
-	  <emphasis>n</emphasis> rows contain the observations for
-	  each of the cross-sectional units in period 1; the next
-	  block contains the observations for all units in period 2;
-	  and so on.  The data matrix is a set of cross-sectional data
-	  sets, stacked vertically.</para></listitem>
+      <listitem><para>
+	  Stacked cross-sections: the successive vertical blocks each
+	  comprise a cross-section for a given period.</para>
+      </listitem>
+      <listitem><para>
+	  Stacked time-series: the successive vertical blocks each
+	  comprise a time series for a given cross-sectional
+	  unit.</para>
+      </listitem>
     </itemizedlist>
 
-    <para>You may use whichever arrangement is more convenient.  The
-      first is perhaps easier to keep straight.  If you use the second
-      then of course you must ensure that the cross-sectional units
-      appear in the same order in each of the period data blocks.
-      Under <application>gretl</application>'s
-      <guimenu>Sample</guimenu> menu you will find an item
-      <quote>Restructure panel</quote> which allows you to convert
-      from stacked cross-section form to stacked time series.</para>
+    <para>You may use whichever arrangement is more convenient. Under
+      <application>gretl</application>'s <guimenu>Sample</guimenu>
+      menu you will find an item <quote>Restructure panel</quote>
+      which allows you to convert from stacked cross section form to
+      stacked time series.</para>
 
     <para>When you import panel data into
-    <application>gretl</application> from a spreadsheet or comma
-    separated format, the panel nature of the data will not be
-    recognized automatically (most likely the data will be treated as
-    <quote>undated</quote>).  Getting the data recognized correctly is
-    a two-step process: first, establish the periodicity of the data
-    and the starting observation; second, establish the structure of
-    the data (stacked time series or stacked cross-sections).</para>
+      <application>gretl</application> from a spreadsheet or comma
+      separated format, the panel nature of the data will not be
+      recognized automatically (most likely the data will be treated
+      as <quote>undated</quote>).  Getting the data recognized
+      correctly is a two-step process: first, establish the
+      periodicity of the data and the starting observation; second,
+      establish the structure of the data (stacked time series or
+      stacked cross-sections).</para>
 
     <orderedlist>
       <listitem>
-	<para>For panel data the <emphasis>periodicity</emphasis>
-	  equals the number of time periods, in the case of stacked
-	  time series, or the number of cross-sectional unit, in the
-	  case of stacked cross-sections.  (In either case it is the
-	  number of rows in each block of the data matrix.)</para> 
-	<para>The <emphasis>starting observation</emphasis> should be
-	  set in the form <literal>1:1</literal> (for periodicity less
-	  than 10) or <literal>1:01</literal> (for periodicity between
-	  10 and 99; add another leading zero if the periodicity is
-	  100 or greater).  In this colon-separated pair of numbers,
-	  the leading number represents the data-block and the
-	  trailing number represents the entry within that block.
+	<para>In the context of panel data the
+	  <emphasis>periodicity</emphasis> equals the number of rows
+	  per block of data.  In the case of stacked time series, this
+	  is the number of time periods; in the case of stacked
+	  cross-sections it is the number of cross-sectional units.
+	</para> 
+	<para>In most cases the <emphasis>starting
+	    observation</emphasis> should be set as
+	  <literal>1:1</literal>.  In this colon-separated pair of
+	  numbers, the leading number represents the data-block and
+	  the trailing number represents the entry within that block.
 	  (Thus for example, with stacked time series the observation
-	  label <literal>3:02</literal> denotes the observation for
+	  label <literal>3:2</literal> denotes the observation for
 	  unit 3, period 2.)</para>
 	<para>The periodicity and starting observation can be set
 	  using the script command <command>setobs</command> or the
@@ -99,8 +80,8 @@
 	  cross-sections).  If no option is given, stacked time series
 	  is assumed.  The <quote>interpret as panel</quote> menu item
 	  brings up a dialog box where you select stacked time series
-	  or stacked cross-sections.</para>
-	</listitem>
+	  or stacked cross sections.</para>
+      </listitem>
     </orderedlist>
 
   </sect1>
@@ -110,7 +91,7 @@
     <para>In a panel study you may wish to construct dummy variables
       of one or both of the following sorts: (a) dummies as unique
       identifiers for the cross-sectional units, and (b) dummies as
-      unique identifiers of the time periods.  The former may be used
+      unique identifiers for the time periods.  The former may be used
       to allow the intercept of the regression to differ across the
       units, the latter to allow the intercept to differ across
       periods.</para>
