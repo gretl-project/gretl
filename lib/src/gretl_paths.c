@@ -529,6 +529,13 @@ int gretl_using_gui (const PATHS *ppaths)
     return ppaths->status & GRETL_USING_GUI;
 }
 
+static void ensure_slash (char *str)
+{
+    if (str[strlen(str) - 1] != SLASH) {
+	strcat(str, SLASHSTR);
+    }
+}
+
 /* .......................................................... */
 
 void show_paths (PATHS *ppaths)
@@ -553,12 +560,14 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	char *home;
 
 	home = getenv("GRETL_HOME");
-	if (home != NULL)
+	if (home != NULL) {
 	    strcpy(ppaths->gretldir, home);
-	else
-	    strcpy(ppaths->gretldir, "c:\\userdata\\gretl");
+	    ensure_slash(ppaths->gretldir);
+	} else {
+	    strcpy(ppaths->gretldir, "c:\\userdata\\gretl\\");
+	}
 
-	sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
+	sprintf(ppaths->binbase, "%sdb\\", ppaths->gretldir);
 	strcpy(ppaths->ratsbase, "f:\\"); 
 
 	strcpy(ppaths->x12a, "c:\\userdata\\x12arima\\x12a.exe");
@@ -572,29 +581,30 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	ppaths->currdir[0] = '\0';
 
 	strcpy(ppaths->pngfont, "verdana 8");
+    } else {
+	ensure_slash(ppaths->gretldir);
     }
 
-    sprintf(ppaths->datadir, "%s\\data\\", ppaths->gretldir);
-    sprintf(ppaths->scriptdir, "%s\\scripts\\", ppaths->gretldir);
+    sprintf(ppaths->datadir, "%sdata\\", ppaths->gretldir);
+    sprintf(ppaths->scriptdir, "%sscripts\\", ppaths->gretldir);
 
     if (gui) {
-	sprintf(ppaths->helpfile, "%s\\%s", ppaths->gretldir,
+	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
 		_("gretl_hlp.txt"));
-	sprintf(ppaths->cmd_helpfile, "%s\\%s", ppaths->gretldir,
+	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
 	ppaths->status = GRETL_USING_GUI;
     } else { 
-	sprintf(ppaths->helpfile, "%s\\%s", ppaths->gretldir,
+	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
 	ppaths->status = 0;
     }
 
-    if (ppaths->userdir[strlen(ppaths->userdir) - 1] != SLASH)
-	strcat(ppaths->userdir, "\\");
+    ensure_slash(ppaths->userdir);
 
     *ppaths->plotfile = '\0';
 
-    sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%s\\share\\gtksourceview-1.0"
+    sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sshare\\gtksourceview-1.0"
 	    "\\language-specs", ppaths->gretldir);
     putenv(envstr);
 
@@ -613,6 +623,7 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	home = getenv("GRETL_HOME");
 	if (home != NULL) {
 	    strcpy(ppaths->gretldir, home);
+	    ensure_slash(ppaths->gretldir);
 	} else {
 	    strcpy(ppaths->gretldir, GRETL_PREFIX);
 	    strcat(ppaths->gretldir, "/share/gretl/");
@@ -645,7 +656,9 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	strcpy(ppaths->x12a, "x12a");
 	sprintf(ppaths->x12adir, "%sx12arima", ppaths->userdir);
 #endif
-    } 
+    } else {
+	ensure_slash(ppaths->gretldir);
+    }
 
     sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);
     sprintf(ppaths->scriptdir, "%sscripts/", ppaths->gretldir);
@@ -661,6 +674,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 		_("gretlcli.hlp"));
 	ppaths->status = 0;
     }
+
+    ensure_slash(ppaths->userdir);
 
     *ppaths->plotfile = '\0';
 
