@@ -31,6 +31,7 @@ extern void grab_remote_db (GtkWidget *w, gpointer data);
 extern gint populate_dbfilelist (windata_t *ddata);
 
 extern GtkItemFactoryEntry sample_script_items[];
+extern GdkColor gray;
 
 char pwtpath[MAXLEN];
 char woolpath[MAXLEN];
@@ -49,6 +50,7 @@ static int read_ps_descriptions (windata_t *fdata)
     FILE *fp;
     char line[MAXLEN], fname[MAXLEN];
     gchar *row[3];
+    gint i;
 
     if (fdata->role == PWT_PS)
 	build_path(pwtpath, "ps_descriptions", fname, NULL);
@@ -63,17 +65,21 @@ static int read_ps_descriptions (windata_t *fdata)
 	errbox(_("Couldn't open descriptions file"));
 	return 1;
     }
-    
+
+    i = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
-	if (line[0] == '#')
-	    continue;
+	if (line[0] == '#') continue;
 	line[MAXLEN-1] = 0;
 	row[0] = strtok(line, "\"");
 	(void) strtok(NULL, "\"");
 	row[1] = strtok(NULL, "\"");
 	(void) strtok(NULL, "\"");
 	row[2] = strtok(NULL, "\"");
-	gtk_clist_append(GTK_CLIST (fdata->listbox), row);
+	gtk_clist_append(GTK_CLIST(fdata->listbox), row);
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(fdata->listbox), i, &gray);
+	}
+	i++;
     }
     fclose(fp);
 
@@ -89,6 +95,7 @@ static int read_data_descriptions (windata_t *fdata)
     char line[MAXLEN], fname[MAXLEN];
     char descrip[80];
     gchar *row[2];
+    gint i;
 
     if (fdata->role == RAMU_DATA) 
 	build_path(paths.datadir, "descriptions", fname, NULL);
@@ -109,7 +116,8 @@ static int read_data_descriptions (windata_t *fdata)
 	errbox(errtext);
 	return 1;
     }
-    
+
+    i = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
         if (line[0] == '#') continue;
         line[MAXLEN-1] = 0;
@@ -119,7 +127,12 @@ static int read_data_descriptions (windata_t *fdata)
                    fname, descrip) == 2) {
 	    row[0] = fname;
 	    row[1] = descrip;
-	    gtk_clist_append(GTK_CLIST (fdata->listbox), row);
+	    gtk_clist_append(GTK_CLIST(fdata->listbox), row);
+	    if (i % 2) {
+		gtk_clist_set_background(GTK_CLIST(fdata->listbox), 
+					 i, &gray);
+	    }
+	    i++;
 	}
     }
 
@@ -325,6 +338,7 @@ static gint populate_remote_dblist (windata_t *ddata)
 
     i = 0;
     getbufline(NULL, NULL, 1);
+
     while (getbufline(getbuf, line, 0)) {
 	if (strstr(line, "idx")) continue;
 	if (process_line(line, fname, &remtime))
@@ -338,6 +352,9 @@ static gint populate_remote_dblist (windata_t *ddata)
 	    row[1] = line + 2;
 	row[2] = status;
 	gtk_clist_append(GTK_CLIST(ddata->listbox), row);
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(ddata->listbox), i, &gray);
+	}
 	i++;
     }
 

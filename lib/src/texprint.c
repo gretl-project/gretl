@@ -35,7 +35,7 @@ static void tex_print_float (double x, int tab, PRN *prn)
 
     if (!tab) {
 	if (x < 0.) pprintf(prn, "$-$%s", number + 1);
-	else pprintf(prn, "%s", number);
+	else pputs(prn, number);
     } else {
 	if (x < 0.) pprintf(prn, "& $-$ & %s", number + 1);
 	else pprintf(prn, "& $+$ & %s", number);
@@ -214,17 +214,17 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     char tmp[16];
 
     if (standalone) {
-	pprintf(prn, "\\documentclass[11pt]{article}\n");
+	pputs(prn, "\\documentclass[11pt]{article}\n");
 
 #ifdef ENABLE_NLS
-	pprintf(prn, "\\usepackage[latin1]{inputenc}\n\n");
+	pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
 #endif
 
-	pprintf(prn, "\\begin{document}\n\n"
+	pputs(prn, "\\begin{document}\n\n"
 		"\\thispagestyle{empty}\n\n");
     }
 
-    pprintf(prn, "\\begin{center}\n");
+    pputs(prn, "\\begin{center}\n");
 
     if (pmod->ifc) {
 	const_coeff = pmod->coeff[pmod->list[0]-1];
@@ -240,8 +240,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    "\\begin{tabular}{rc"
 	    "%s", (pmod->ifc)? "c" : "c@{\\,}l");
     start = (pmod->ifc)? 1 : 2;
-    for (i=start; i<ncoeff; i++) pprintf(prn, "cc@{\\,}l");
-    pprintf(prn, "}\n");
+    for (i=start; i<ncoeff; i++) pputs(prn, "cc@{\\,}l");
+    pputs(prn, "}\n");
 
     /* dependent variable */
     tmp[0] = '\0';
@@ -261,11 +261,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	tex_escape(tmp, pdinfo->varname[pmod->list[i]]);
 	pprintf(prn, " & %s ", tmp);
     }
-    pprintf(prn, "\\\\\n");
+    pputs(prn, "\\\\\n");
 
     /* t-stats in row beneath */
     if (pmod->ifc) {
-	pprintf(prn, "& ");
+	pputs(prn, "& ");
 	pprintf(prn, "& {\\small $(%.3f)$} ", const_tstat);
     } 
     for (i=2; i<=ncoeff; i++) {
@@ -273,10 +273,10 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (i == 2) pprintf(prn, "& & \\small{$(%.3f)$} ", tstat);
 	else pprintf(prn, "& & & \\small{$(%.3f)$} ", tstat);
     }
-    pprintf(prn, "\n\\end{tabular}}\n\n");
+    pputs(prn, "\n\\end{tabular}}\n\n");
 
     /* additional info (R^2 etc) */
-    pprintf(prn, "\\vspace{.8ex}\n");
+    pputs(prn, "\\vspace{.8ex}\n");
 
     if (na(pmod->fstt)) { /* LAD model */
 	pprintf(prn, "$T = %d,\\, \\sum |\\hat{u}_t| = %g$\n",
@@ -289,14 +289,14 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (!floateq(pmod->rho_in, 0.0)) {
 	    pprintf(prn, ", $\\, \\rho$ = %.4g", pmod->rho_in);
 	}
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 
     pprintf(prn, "\n(%s)\n\\end{center}\n", 
 	    I_("$t$-statistics in parentheses"));
 
     if (standalone) {
-	pprintf(prn, "\n\\end{document}\n");
+	pputs(prn, "\n\\end{document}\n");
     }
 
     return 0;

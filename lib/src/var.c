@@ -344,7 +344,7 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	clear_model(&var_model, pdinfo);
 	/* now build truncated lists for hyp. tests */
 	shortlist[1] = varlist[1];
-	pprintf(prn, _("\nF-tests of zero restrictions:\n\n"));
+	pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
 	for (j=0; j<neqns; j++) {
 	    reset_list(shortlist, varlist);
 	    for (l=1; l<=order; l++) {
@@ -388,10 +388,10 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
 	    pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
 	}
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	if (pause) page_break(0, NULL, 0);
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     free(varlist);
     free(shortlist);
@@ -429,7 +429,7 @@ int coint (int order, const LIST list, double ***pZ,
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	adf_test(order, list[i], pZ, pdinfo, prn);
     }
 
@@ -460,10 +460,10 @@ int coint (int order, const LIST list, double ***pZ,
     strcpy(pdinfo->varname[nv], "uhat");
 
     /* Run ADF test on these residuals */
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
     adf_test(order, pdinfo->v - 1, pZ, pdinfo, prn);
 
-    pprintf(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
+    pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 	    "(a) The unit-root hypothesis is not rejected for the individual"
 	    " variables.\n(b) The unit-root hypothesis is rejected for the "
 	    "residuals (uhat) from the \n    cointegrating regression.\n"
@@ -671,7 +671,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     MODEL mamod;
 
     if (list[0] != 2) {
-	pprintf(prn, "mvavg: takes a list of two variables\n");
+	pputs(prn, "mvavg: takes a list of two variables\n");
 	return 1;
     }
     
@@ -704,11 +704,11 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    return err;
 	}	
 	if (step == 1) {
-	    pprintf(prn, "\n ADJ       ESS      ADJ       ESS      "
+	    pputs(prn, "\n ADJ       ESS      ADJ       ESS      "
 		    "ADJ       ESS      ADJ       ESS     \n");
 	}
 	pprintf(prn, "%5.2f %10.4g", a, mamod.ess);
-	if (step%4 == 0) pprintf(prn, "\n");
+	if (step%4 == 0) pputs(prn, "\n");
 	else _bufspace(3, prn);
 	if (step == 1 || mamod.ess < essmin) {
 	    essmin = mamod.ess;
@@ -725,7 +725,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     mamod = lsq(malist, pZ, pdinfo, OLS, 1, 0.0);
     printmodel(&mamod, pdinfo, prn);
 
-    pprintf(prn, "\nEstimates of original parameters:\n");
+    pputs(prn, "\nEstimates of original parameters:\n");
     pprintf(prn, "constant: %.4g\n", mamod.coeff[2]);
     pprintf(prn, "slope:    %.4g\n", mamod.coeff[1] / (1 - a));
     pprintf(prn, "adaptive coefficient: %.2f\n", a);

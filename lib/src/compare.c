@@ -716,14 +716,14 @@ int autocorr_test (MODEL *pmod, int order,
 				   PRN *, GRETLTEST *);
 
 	if (open_plugin("panel_data", &handle)) {
-	    pprintf(prn, _("Couldn't access panel plugin\n"));
+	    pputs(prn, _("Couldn't access panel plugin\n"));
 	    return 1;
 	}
 
 	panel_autocorr_test = get_plugin_function("panel_autocorr_test", 
 						  handle);
 	if (panel_autocorr_test == NULL) {
-	    pprintf(prn, _("Couldn't load plugin function\n"));
+	    pputs(prn, _("Couldn't load plugin function\n"));
 	    close_plugin(handle);
 	    return 1;
 	}
@@ -1073,7 +1073,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	xx = 0.948*sqrt((double) (T-K));
 	yy = 2.0*xx/(T-K);
 
-	pprintf(prn, _("Cumulated sum of scaled residuals\n"
+	pputs(prn, _("Cumulated sum of scaled residuals\n"
 		"('*' indicates a value outside of 95%% confidence band):\n\n"));
     
 	for (j=0; j<n_est; j++) {
@@ -1159,12 +1159,12 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn) 
 {
     if (pmod->ci != POOLED) {
-	pprintf(prn, _("This test is only relevant for pooled models\n"));
+	pputs(prn, _("This test is only relevant for pooled models\n"));
 	return 1;
     }
 
     if (!balanced_panel(pdinfo)) {
-	pprintf(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
+	pputs(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
 		"You need to have the same number of observations\n"
 		"for each cross-sectional unit"));
 	return 1;
@@ -1173,12 +1173,12 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
 
 	if (open_plugin("panel_data", &handle)) {
-	    pprintf(prn, _("Couldn't access panel plugin\n"));
+	    pputs(prn, _("Couldn't access panel plugin\n"));
 	    return 1;
 	}
 	panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
 	if (panel_diagnostics == NULL) {
-	    pprintf(prn, _("Couldn't load plugin function\n"));
+	    pputs(prn, _("Couldn't load plugin function\n"));
 	    close_plugin(handle);
 	    return 1;
 	}
@@ -1239,20 +1239,20 @@ int mp_ols (const LIST list, const char *pos,
     int err = 0;
 
     if (open_plugin("mp_ols", &handle)) {
-	pprintf(prn, _("Couldn't access GMP plugin\n"));
+	pputs(prn, _("Couldn't access GMP plugin\n"));
 	return 1;
     }
 
     mplsq = get_plugin_function("mplsq", handle);
     if (mplsq == NULL) {
-	pprintf(prn, _("Couldn't load plugin function\n"));
+	pputs(prn, _("Couldn't load plugin function\n"));
 	err = 1;
     }
 
     if (!err && *pos) { /* got a list of polynomial terms? */
 	err = make_mp_lists(list, pos, &tmplist, &polylist);
 	if (err) {
-	    pprintf(prn, _("Failed to parse mp_ols command\n"));
+	    pputs(prn, _("Failed to parse mp_ols command\n"));
 	}
 	reglist = tmplist;
     } 

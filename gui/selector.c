@@ -1222,3 +1222,51 @@ void data_save_selection_wrapper (int file_code)
                      data_save_selection_callback, file_code, 
                      NULL);
 }
+
+struct list_maker {
+    char *liststr;
+    int n_items;
+    size_t len;
+    int overflow;
+};
+
+static void selection_add_item (gint i, struct list_maker *lmkr)
+{
+    gchar *varnum = NULL;
+
+    if (lmkr->len > MAXLEN - 12) {
+	lmkr->overflow = 1;
+	return;
+    }
+
+    if (gtk_clist_get_text(GTK_CLIST(mdata->listbox), i, 0, &varnum)) {   
+	strcat(lmkr->liststr, " ");
+	strcat(lmkr->liststr, varnum);
+	lmkr->len += strlen(varnum) + 1;
+	lmkr->n_items += 1;
+    }
+}
+
+char *mdata_selection_to_string (void)
+{
+    GList *mylist = GTK_CLIST(mdata->listbox)->selection;
+    struct list_maker lmkr;    
+
+    lmkr.liststr = mymalloc(MAXLEN);
+    if (lmkr.liststr == NULL) return NULL;
+    lmkr.liststr[0] = 0;
+    lmkr.n_items = lmkr.overflow = 0;
+    lmkr.len = 0;
+
+    if (mylist != NULL) {
+	g_list_foreach(mylist, (GFunc) selection_add_item, 
+		       &lmkr);
+    }
+
+    if (lmkr.overflow) {
+	errbox(_("Too many items were selected"));
+	lmkr.liststr[0] = 0;
+    }
+
+    return lmkr.liststr;
+}

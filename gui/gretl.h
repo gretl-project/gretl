@@ -31,11 +31,14 @@
 
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
-#include "libgretl.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include "libgretl.h"
+
 #include "gretltypes.h"
 #include "gui_utils.h"
 #include "callbacks.h"
@@ -98,6 +101,8 @@ enum extra_cmds {
     MARKERS,
     STORE_MODEL,
     VAR_SUMMARY,
+    CORR_SELECTED,
+    SUMMARY_SELECTED,
     GENR_NORMAL,
     GENR_UNIFORM,
     ONLINE,

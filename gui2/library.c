@@ -678,6 +678,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case CORR_SELECTED:
 	strcpy(line, "corr");
 	strcat(line, liststr);
+	free(liststr);
 	strcat(title, _("correlation matrix"));
 	action = CORR;
 	break;
@@ -698,6 +699,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case SUMMARY_SELECTED:
 	strcpy(line, "summary");
 	strcat(line, liststr);
+	free(liststr);
 	strcat(title, _("summary statistics"));
 	action = SUMMARY;
 	break;

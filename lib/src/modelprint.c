@@ -49,7 +49,7 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
 
 static void noconst (PRN *prn)
 {
-    pprintf(prn, _("The model has no constant term.\n"  
+    pputs(prn, _("The model has no constant term.\n"  
 	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
 	    "Econometrics.\n"
 	    "R-squared is the square of the correlation between the "
@@ -198,7 +198,7 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		pmod->ess);
 
 	if (pmod->correct == 0 && utf) {
-	    pprintf(prn, _("\nWarning: solution is probably not unique\n"));
+	    pputs(prn, _("\nWarning: solution is probably not unique\n"));
 	}
     }
 }
@@ -586,10 +586,10 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 
     else if (TEX_FORMAT(prn->format)) {
 	if (pmod->ntests > 0) {
-	    pprintf(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
+	    pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
 	    for (i=0; i<pmod->ntests; i++) {
 		if (i > 0) {
-		    pprintf(prn, "\\vspace{1ex}\n");;
+		    pputs(prn, "\\vspace{1ex}\n");;
 		}
 		get_test_type_string(&pmod->tests[i], type_str, prn->format);
 		get_test_stat_string(&pmod->tests[i], test_str, prn->format);
@@ -603,7 +603,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 			I_("Test statistic"), test_str, 
 			I_("with p-value"), pval_str);
 	    }
-	    pprintf(prn, "\\end{raggedright}\n");
+	    pputs(prn, "\\end{raggedright}\n");
 	}
     }
 
@@ -699,7 +699,7 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     case AUX_ADD:
     default:
-	if (pmod->ID < 0) pprintf(prn, "\n");
+	if (pmod->ID < 0) pputs(prn, "\n");
 	else if (pmod->name) {
 	    pprintf(prn, "\n%s:\n", pmod->name);
 	} else {
@@ -728,9 +728,9 @@ static void print_model_heading (const MODEL *pmod,
 		pmod->nobs);
     }
 
-    if (tex) pprintf(prn, "\\\\\n");
-    else if (RTF_FORMAT(prn->format)) pprintf(prn, "\\par\n");
-    else pprintf(prn, "\n");
+    if (tex) pputs(prn, "\\\\\n");
+    else if (RTF_FORMAT(prn->format)) pputs(prn, "\\par\n");
+    else pputs(prn, "\n");
 
     /* special names for dependent variable in cases of certain sorts
        of auxiliary regressions */
@@ -758,7 +758,7 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->ci == WLS || pmod->ci == ARCH) {
 	if (tex) {
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
-	    pprintf(prn, "\\\\\n");
+	    pputs(prn, "\\\\\n");
 	}
 	pprintf(prn, "%s: %s\n", 
 		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
@@ -782,27 +782,27 @@ static void print_model_heading (const MODEL *pmod,
 		pmod->nobs);
     }
 
-    if (RTF_FORMAT(prn->format)) pprintf(prn, "\\par\n");
-    else pprintf(prn, "\n");
+    if (RTF_FORMAT(prn->format)) pputs(prn, "\\par\n");
+    else pputs(prn, "\n");
 }
 
 static void model_format_start (PRN *prn)
 {
     if (TEX_FORMAT(prn->format)) {
 	if (STANDALONE(prn->format)) {
-	    pprintf(prn, "\\documentclass{article}\n"
+	    pputs(prn, "\\documentclass{article}\n"
 		    "\\usepackage{dcolumn}\n");
 #ifdef ENABLE_NLS
-	    pprintf(prn, "\\usepackage[latin1]{inputenc}\n");
+	    pputs(prn, "\\usepackage[latin1]{inputenc}\n");
 #endif
-	    pprintf(prn, "\\begin{document}\n\n"
+	    pputs(prn, "\\begin{document}\n\n"
 		    "\\thispagestyle{empty}\n");
 	}
-	pprintf(prn, "\\begin{center}\n");
+	pputs(prn, "\\begin{center}\n");
     }
 
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, "{\\rtf1\\par\n\\qc ");
+	pputs(prn, "{\\rtf1\\par\n\\qc ");
 	return;
     }
 }
@@ -824,12 +824,12 @@ static void print_coeff_table_start (PRN *prn, int discrete)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	if (discrete) {
-	    pprintf(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
+	    pputs(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
 			   "       T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
 		    "                 %s\n", _("(at mean)"));
 	} else {
-	    pprintf(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
+	    pputs(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
 			   "       T STAT   2Prob(t > |T|)\n\n"));
 	}
     }
@@ -888,27 +888,27 @@ static void print_coeff_table_start (PRN *prn, int discrete)
 static void print_coeff_table_end (PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
     else if (TEX_FORMAT(prn->format)) {
-	pprintf(prn, "\\end{tabular*}\n\n");
+	pputs(prn, "\\end{tabular*}\n\n");
     }
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, "}\n\n");
+	pputs(prn, "}\n\n");
     }
 }
 
 static void model_format_end (PRN *prn)
 {
     if (TEX_FORMAT(prn->format)) {
-	pprintf(prn, "\n\\end{center}\n");
+	pputs(prn, "\n\\end{center}\n");
 	if (STANDALONE(prn->format)) {
-	    pprintf(prn, "\n\\end{document}\n"); 
+	    pputs(prn, "\n\\end{document}\n"); 
 	}
     }
 
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, "\n}\n");
+	pputs(prn, "\n}\n");
     }
 }  
 
@@ -962,13 +962,13 @@ static void print_middle_table_start (PRN *prn)
 static void print_middle_table_end (PRN *prn)
 {
     if (TEX_FORMAT(prn->format)) {
-	pprintf(prn, "\\end{tabular}\n\n");
+	pputs(prn, "\\end{tabular}\n\n");
     }
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, "\\par\n");
+	pputs(prn, "\\par\n");
     }
     else {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 }
 
@@ -1216,7 +1216,7 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
 	pmod->aux == AUX_AR) return;
 
     if (pmod->dfd == 0) {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	return;
     }
 
@@ -1230,7 +1230,7 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
     if (pmod->criterion[7] > 0.0) pprintf(prn, "     RICE      %#11g\n", 
 					  pmod->criterion[7]);
     else pprintf(prn, "     RICE        %s\n", _("undefined"));
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /* ......................................................... */ 
@@ -1328,15 +1328,15 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     }
 
     if (do_pval) {
-	if (pvalue < 0.01) pprintf(prn, " ***");
-	else if (pvalue < 0.05) pprintf(prn, " **");
-	else if (pvalue < 0.10) pprintf(prn, " *");
+	if (pvalue < 0.01) pputs(prn, " ***");
+	else if (pvalue < 0.05) pputs(prn, " **");
+	else if (pvalue < 0.10) pputs(prn, " *");
     } 
     else if (pmod->list[c] != 0 && pmod->slope != NULL) { /* LOGIT, PROBIT */
 	gretl_print_value (pmod->slope[c-1], prn);
     }
 
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     return gotnan;
 }
@@ -1365,7 +1365,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }    
 
-    pprintf(prn, RTF_COEFF_ROW);
+    pputs(prn, RTF_COEFF_ROW);
 
     pprintf(prn, " \\qr %d\\cell \\ql %s\\cell", pmod->list[c], 
 	    varname);
@@ -1407,19 +1407,19 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     if (do_pval) {
 	if (pvalue < 0.01) 
-	    pprintf(prn, " \\ql ***\\cell");
+	    pputs(prn, " \\ql ***\\cell");
 	else if (pvalue < 0.05) 
-	    pprintf(prn, " \\ql **\\cell");
+	    pputs(prn, " \\ql **\\cell");
 	else if (pvalue < 0.10) 
-	    pprintf(prn, " \\ql *\\cell");
+	    pputs(prn, " \\ql *\\cell");
 	else 
-	    pprintf(prn, " \\ql \\cell");
+	    pputs(prn, " \\ql \\cell");
     } else if (pmod->list[c] != 0 && pmod->slope != NULL) { /* LOGIT, PROBIT */
 	rtf_print_double(pmod->slope[c-1], prn);
     }
 
  rtf_coeff_getout:
-    pprintf(prn, " \\intbl \\row\n");
+    pputs(prn, " \\intbl \\row\n");
 
     return gotnan;
 }
@@ -1510,7 +1510,7 @@ static void print_discrete_statistics (const MODEL *pmod,
     double pc_correct = 100 * (double) pmod->correct / pmod->nobs;
 
     if (PLAIN_FORMAT(prn->format)) {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	pprintf(prn, "%s %s = %.3f\n", _("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	pprintf(prn, "%s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
@@ -1524,11 +1524,11 @@ static void print_discrete_statistics (const MODEL *pmod,
 		    _("Likelihood ratio test"), _("Chi-square"), 
 		    i, pmod->chisq, _("p-value"), chisq(pmod->chisq, i));
 	}
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
 	pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
@@ -1543,7 +1543,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
 		    i, pmod->chisq, I_("p-value"), chisq(pmod->chisq, i));
 	}
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 
     else if (TEX_FORMAT(prn->format)) {
@@ -1552,7 +1552,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pprintf(prn, "\\begin{center}\n$^*$%s\n\\end{center}\n", 
 		I_("Evaluated at the mean"));
 
-	pprintf(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
+	pputs(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
 	pprintf(prn, "%s %s = %.3f\\\\\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	pprintf(prn, "%s = %d (%.1f percent)\\\\\n", 
@@ -1568,7 +1568,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 		    I_("Likelihood ratio test"), 
 		    i, pmod->chisq, I_("p-value"), chisq(pmod->chisq, i));
 	}
-	pprintf(prn, "\\end{raggedright}\n");
+	pputs(prn, "\\end{raggedright}\n");
     }
 }
 
@@ -1597,7 +1597,7 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
     else
 	pprintf(prn, "\\textsc{rice}    & %s\n", I_("undefined"));
     
-    pprintf(prn, "\\end{tabular*}\n\n");
+    pputs(prn, "\\end{tabular*}\n\n");
 }
 
 /* ....................................................... */
@@ -1638,9 +1638,9 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
 	pprintf(prn, " \\qc %#g\\cell", pmod->criterion[7]);
     else
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
-    pprintf(prn, " \\qr \\cell \\qr \\cell");
+    pputs(prn, " \\qr \\cell \\qr \\cell");
 
-    pprintf(prn, " \\intbl \\row}\n\n");
+    pputs(prn, " \\intbl \\row}\n\n");
 }
 
 /* ....................................................... */
@@ -1654,24 +1654,24 @@ static void mp_other_stats (const mp_results *mpvals, PRN *prn)
     
     pprintf(prn, "%-*s", len, _("Standard error"));
     gretl_print_fullwidth_double(mpvals->sigma, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
     gretl_print_fullwidth_double(mpvals->ess, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
     gretl_print_fullwidth_double(mpvals->rsq, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
     gretl_print_fullwidth_double(mpvals->adjrsq, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     sprintf(fstr, "F(%d, %d)", mpvals->dfn, mpvals->dfd);
     pprintf(prn, "%-*s", len, fstr);
     gretl_print_fullwidth_double(mpvals->fstt, GRETL_MP_DIGITS, prn);
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /* ....................................................... */
@@ -1690,7 +1690,7 @@ static void print_mpvals_coeff (const mp_results *mpvals,
     gretl_print_fullwidth_double(mpvals->sderr[cnum], 
 				 GRETL_MP_DIGITS, prn); 
 
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /* ....................................................... */
@@ -1707,7 +1707,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
     ntodate(enddate, mpvals->t2, pdinfo);
 
     if (!PLAIN_FORMAT(prn->format)) {
-	pprintf(prn, "FIXME: this is still to be implemented!\n\n");
+	pputs(prn, "FIXME: this is still to be implemented!\n\n");
     }
 
     if (PLAIN_FORMAT(prn->format)) {
@@ -1717,7 +1717,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 	pprintf(prn, "%s: %s\n\n", _("Dependent variable"),
 		mpvals->varnames[0]);
 
-	pprintf(prn, _("      VARIABLE         COEFFICIENT          "
+	pputs(prn, _("      VARIABLE         COEFFICIENT          "
 		       "        STD. ERROR\n"));
     }
 
@@ -1728,7 +1728,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
     for (i=2; i<=ncoeff; i++) {
 	print_mpvals_coeff(mpvals, i, prn);
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     mp_other_stats (mpvals, prn);
 }

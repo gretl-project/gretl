@@ -497,14 +497,14 @@ int pprintf (PRN *prn, const char *template, ...)
 
 /**
  * pputs:
- * @s: constant string to print,
  * @prn: gretl printing struct.
+ * @s: constant string to print,
  * 
  * Returns: 0 on successful completion, 1 on memory allocation
  * failure.
  */
 
-int pputs (const char *s, PRN *prn)
+int pputs (PRN *prn, const char *s)
 {
     size_t blen;
 

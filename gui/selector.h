@@ -57,3 +57,5 @@ void simple_selection (const char *title, const char *oktxt,
 		       gpointer p);
 
 void data_save_selection_wrapper (int file_code);
+
+char *mdata_selection_to_string (void);

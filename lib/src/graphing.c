@@ -130,12 +130,12 @@ static void drawline (int nn, PRN *prn)
 {
     int t;
 
-    pprintf(prn, "       |+");
+    pputs(prn, "       |+");
     for (t=1; t<=nn; ++t) {
-	if(t%10 == 0) pprintf(prn, "+");
-	else pprintf(prn, "-");
+	if(t%10 == 0) pputs(prn, "+");
+	else pputs(prn, "-");
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /**
@@ -179,7 +179,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     if (x == NULL || y == NULL) return E_ALLOC;
 
     l0 = list[0];
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
     ncols = 70;
     nc2 = ncols/2;
     vy = list[1];
@@ -196,7 +196,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pprintf(prn, _("%25cNOTE: o stands for %s\n\n%8c"), ' ', s1, ' ');
 	sprintf(word, "x-min = %g", xmin);
 	ls = 8 + strlen(word);
-	pprintf(prn, "%s", word);
+	pputs(prn, word);
 	sprintf(word, "x-max = %g", xmax);
 	ls = 78-ls-strlen(word);
 	_bufspace(ls, prn);
@@ -204,7 +204,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	if (cntrline) {
 	    iy = (-xmin/xrange)*ncols;
 	    _bufspace(iy+7, prn);
-	    pprintf(prn, "0.0\n"); 
+	    pputs(prn, "0.0\n"); 
 	}
 	drawline(ncols, prn);
 	/* plot values */
@@ -224,12 +224,12 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	    px[ix+1] = 'o';
 	    for (i=0; i<=ncols+1; i++) 
 		pprintf(prn, "%c", px[i]); 
-	    if (ix == ncols) pprintf(prn, "\n");
+	    if (ix == ncols) pputs(prn, "\n");
 	}
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
-	pprintf(prn, "\n\n");
+	pputs(prn, "\n\n");
 	free(x);
 	free(y);
 	return 0;
@@ -256,24 +256,24 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	       ' ', s1, s2, ' ');
 	sprintf(word, "xy-min = %g", xymin);
 	ls = 8 + strlen(word);
-	pprintf(prn, "%s", word);
+	pputs(prn, word);
 	sprintf(word, "xy-max = %g", xymax);
 	ls = 78-ls-strlen(word);
 	_bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     }
     else {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	sprintf(word, "        o-min = %g", ymin);
 	ls = strlen(word);
-	pprintf(prn, "%s", word);
+	pputs(prn, word);
 	sprintf(word, "o-max = %g", ymax);
 	ls = 78-ls-strlen(word);
 	_bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
 	sprintf(word, "        x-min = %g", xmin);
 	ls = strlen(word);
-	pprintf(prn, "%s", word);
+	pputs(prn, word);
 	sprintf(word, "x-max = %g", xmax);
 	ls = 78-ls-strlen(word);
 	_bufspace(ls, prn);
@@ -285,12 +285,12 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	otherwise it prints an "x" for the first variable and an "o" for the
 	second variable.
     */
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
     cntrline = (floatgt(xymax, 0) && floatlt(xymin, 0))? 1 : 0;
     if (cntrline) {
 	iz = (-xymin/xyrange)*ncols;
 	_bufspace(iz+7, prn);
-	pprintf(prn, "0.0\n");
+	pputs(prn, "0.0\n");
     }
     drawline(ncols, prn);
 #ifdef ENABLE_NLS
@@ -319,12 +319,12 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	    px[iy+1] = 'x';
 	}
 	for (i=0; i<=ncols+1; i++) pprintf(prn, "%c", px[i]);
-	if (ix == ncols || iy == ncols) pprintf(prn, "\n");
+	if (ix == ncols || iy == ncols) pputs(prn, "\n");
     }
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
-    pprintf(prn, "\n\n");
+    pputs(prn, "\n\n");
     free(x);
     free(y);
     return 0;
@@ -365,7 +365,7 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
     l0 = list[0];
     vy = list[1];
 
@@ -400,7 +400,7 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 	_graphyzx(list, y, uhat, x, -m, pdinfo->varname[vy], 
 		  pdinfo->varname[vx], pdinfo, oflag, prn);
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
     free(x); free(y); free(uhat);
     return 0;
 }
@@ -1394,7 +1394,7 @@ int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
     range_mean_graph = get_plugin_function("range_mean_graph", handle);
 
     if (range_mean_graph == NULL) {
-        pprintf(prn, _("Couldn't load plugin function\n"));
+        pputs(prn, _("Couldn't load plugin function\n"));
         close_plugin(handle);
         return 1;
     }

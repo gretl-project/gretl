@@ -62,7 +62,7 @@ void compress_spaces (char *str);
 
 int pprintf (PRN *prn, const char *template, ...);
 
-int pputs (const char *s, PRN *prn);
+int pputs (PRN *prn, const char *s);
 
 char *safecpy (char *targ, const char *src, int n);
 

@@ -1421,7 +1421,7 @@ char *mdata_selection_to_string (int n_required)
 	return lmkr.liststr;
     }
 
-    if (n_required && lmkr.n_items !=  n_required) {
+    if (n_required && lmkr.n_items != n_required) {
 	gchar *msg;
 
 	msg = g_strdup_printf(_("Please select %d variables first"),

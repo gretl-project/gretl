@@ -1574,18 +1574,37 @@ static void start_editing_png_plot (png_plot_t *plot)
     }
 }
 
+static gint color_popup_activated (GtkWidget *w, gpointer data)
+{
+    gchar *item = (gchar *) data;
+    gint color = strcmp(item, _("monochrome"));
+
+    GtkWidget *color_menu = gtk_object_get_data(GTK_OBJECT(w), "menu");
+    GtkWidget *parent = (GTK_MENU(color_menu))->parent_menu_item;
+    gchar *parent_item = gtk_object_get_data(GTK_OBJECT(parent), "string");
+    png_plot_t *plot = gtk_object_get_data(GTK_OBJECT(parent), "plot");
+
+    if (!strcmp(parent_item, _("Save as postscript (EPS)..."))) {
+	strcpy(plot->spec->termtype, "postscript");
+	if (color) strcat(plot->spec->termtype, " color");
+	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+		      plot->spec);
+    } 
+
+    gtk_widget_destroy(color_menu);
+    gtk_widget_destroy(plot->popup);
+    plot->popup = NULL;
+
+    return TRUE;
+}
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
     gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "plot");
     png_plot_t *plot = (png_plot_t *) ptr;
 
-    if (!strcmp(item, _("Save as postscript (EPS)..."))) {
-	strcpy(plot->spec->termtype, "postscript");
-	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
-		      plot->spec);
-    }
-    else if (!strcmp(item, _("Save as PNG..."))) {
+    if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
         file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
     }
@@ -1628,7 +1647,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 
 static GtkWidget *build_plot_menu (png_plot_t *plot)
 {
-    GtkWidget *menu, *item;    
+    GtkWidget *menu, *color_menu, *item;    
     const char *regular_items[] = {
         N_("Save as postscript (EPS)..."),
 	N_("Save as PNG..."),
@@ -1647,8 +1666,27 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	N_("Close"),
 	NULL
     };
+    const char *color_items[] = {
+	N_("color"),
+	N_("monochrome"),
+	NULL
+    };
     const char **plot_items;
-    int i = 0;
+    int i;
+
+    color_menu = gtk_menu_new();
+
+    i = 0;
+    while (color_items[i]) {
+        item = gtk_menu_item_new_with_label(_(color_items[i]));
+        gtk_signal_connect(GTK_OBJECT(item), "activate",
+			   (GtkSignalFunc) color_popup_activated,
+			   _(color_items[i]));
+        gtk_object_set_data(GTK_OBJECT(item), "menu", color_menu);
+        gtk_widget_show(item);
+        gtk_menu_shell_append(GTK_MENU_SHELL(color_menu), item);
+        i++;
+    }	
 
     menu = gtk_menu_new();
 
@@ -1658,6 +1696,7 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	plot_items = regular_items;
     }
 
+    i = 0;
     while (plot_items[i]) {
 	if (plot->statusbar == NULL &&
 	    !strcmp(plot_items[i], "Zoom...")) {
@@ -1680,13 +1719,18 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	    continue;
 	}
         item = gtk_menu_item_new_with_label(_(plot_items[i]));
-        gtk_signal_connect(GTK_OBJECT(item), "activate",
-                           (GtkSignalFunc) plot_popup_activated,
-                           _(plot_items[i]));
         gtk_object_set_data(GTK_OBJECT(item), "plot", plot);
-        GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
         gtk_widget_show(item);
         gtk_menu_append(GTK_MENU(menu), item);
+
+	if (!strcmp(plot_items[i], _("Save as postscript (EPS)..."))) {
+	    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), color_menu);
+	    gtk_object_set_data(GTK_OBJECT(item), "string", _(plot_items[i]));
+	} else {
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			       GTK_SIGNAL_FUNC(plot_popup_activated),
+			       _(plot_items[i]));
+	}
         i++;
     }
 

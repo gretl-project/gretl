@@ -54,7 +54,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
     size_t nn;
 
     if (list[0] != 2) {
-	pprintf(prn, _("spearman command requires two variables\n"));
+	pputs(prn, _("spearman command requires two variables\n"));
 	return 1;
     }
 
@@ -157,12 +157,12 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pprintf(prn, _("z-score = %f, with one-tailed p-value %f\n"), z, 
 		normal(z));
     } else {
-	pprintf(prn, _("Sample is too small to calculate a p-value based on "
+	pputs(prn, _("Sample is too small to calculate a p-value based on "
 		"the normal distribution\n"));
     }
 
     if (opt) { /* print raw and ranked data */
-	pprintf(prn, "\n     Obs ");
+	pputs(prn, "\n     Obs ");
 	pprintf(prn, "%13s%13s%13s%13s\n\n", pdinfo->varname[vx], "rank",
 	       pdinfo->varname[vy], "rank");
 	i = 0;
@@ -177,7 +177,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
 		_printxs(ry[i], 15, PRINT, prn);
 		i++;
 	    }
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
 	}
     }
     free(sx);
@@ -219,7 +219,7 @@ int runs_test (const int varno, double **Z, const DATAINFO *pdinfo,
 	else x[nn++] = xx;
     }
     if (nn <= 1) {
-	pprintf(prn, _("\nInsufficient data for runs test\n"));
+	pputs(prn, _("\nInsufficient data for runs test\n"));
 	free(x);
 	return 1;
     }

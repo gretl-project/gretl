@@ -210,7 +210,7 @@ double batch_pvalue (const char *str,
 	    if (strcmp(fstr, pdinfo->varname[i]) == 0) {
 		xval = get_xvalue(i, Z, pdinfo);
 		if (na(xval)) {
-		    pprintf(prn, _("\nstatistic has missing value code\n"));
+		    pputs(prn, _("\nstatistic has missing value code\n"));
 		    return NADBL;
 		}		
 		break;
@@ -227,7 +227,7 @@ double batch_pvalue (const char *str,
 	if (xval < 0.0) tmp = -1.0 * xval;
 	xx = normal(tmp);
 	if (xx < 0) {
-	    pprintf(prn, _("\np-value calculation failed\n"));
+	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}	
 	pprintf(prn, _("\nStandard normal: area to the %s "
@@ -240,12 +240,12 @@ double batch_pvalue (const char *str,
     case '2':
     case 't':
 	if (!*fstr || !*df1str) {
-	    pprintf(prn, _("\npvalue for t: missing parameter\n"));
+	    pputs(prn, _("\npvalue for t: missing parameter\n"));
 	    return -1;
 	}
 	xx = tprob(xval, df1);
 	if (xx < 0) {
-	    pprintf(prn, _("\np-value calculation failed\n"));
+	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
 	pprintf(prn, _("\nt(%d): area to the %s of %f = %.4g\n"), 
@@ -260,12 +260,12 @@ double batch_pvalue (const char *str,
     case 'x':
     case 'X':
 	if (!*fstr || !*df1str) {
-	    pprintf(prn, _("\npvalue for chi-square: missing parameter\n"));
+	    pputs(prn, _("\npvalue for chi-square: missing parameter\n"));
 	    return -1;
 	}
 	xx = chisq(xval, df1);
 	if (xx < 0) {
-	    pprintf(prn, _("\np-value calculation failed\n"));
+	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
 	pprintf(prn, _("\nChi-square(%d): area to the right of %f = %.4g\n"), 
@@ -277,12 +277,12 @@ double batch_pvalue (const char *str,
     case 'f':
     case 'F':
 	if (!*fstr || !*df1str || !*df2str) {
-	    pprintf(prn, _("\npvalue for F: missing parameter\n"));
+	    pputs(prn, _("\npvalue for F: missing parameter\n"));
 	    return -1;
 	}
 	xx = fdist(xval, df1, df2);
 	if (xx < 0) {
-	    pprintf(prn, _("\np-value calculation failed\n"));
+	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
 	pprintf(prn, _("\nF(%d, %d): area to the right of %f = %.4g\n"), 
@@ -295,7 +295,7 @@ double batch_pvalue (const char *str,
     case 'G':
 	xx = _gammadist(mean, variance, xval, 2);
 	if (na(xx))
-	    pprintf(prn, _("\nError computing gamma distribution\n"));
+	    pputs(prn, _("\nError computing gamma distribution\n"));
 	else
 	    pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
 		    "\n area to the right of %f = %.4g\n"), 
@@ -304,7 +304,7 @@ double batch_pvalue (const char *str,
 	return xx;
 
     default:
-	pprintf(prn, _("\nunrecognized pvalue code\n"));
+	pputs(prn, _("\nunrecognized pvalue code\n"));
 	return NADBL;
     }
 }
@@ -557,16 +557,16 @@ int print_critical (const char *line, PRN *prn)
     if (open_plugin("stats_tables", &handle)) return 1;
 
     if (parse_critical_input(line, &i, &df, &n)) {
-	pprintf(prn, _("Invalid input\n"));
+	pputs(prn, _("Invalid input\n"));
 	err = 1;
     }
 
     if ((0 < i && i < 4 && df <= 0) || (i == 3 && n <= 0)) {
-	pprintf(prn, _("Invalid degrees of freedom\n"));
+	pputs(prn, _("Invalid degrees of freedom\n"));
 	err = 1;
     }
     else if (i == 4 && n <= 0) {
-	pprintf(prn, _("Invalid sample size\n"));
+	pputs(prn, _("Invalid sample size\n"));
 	err = 1;
     }    
 
@@ -595,7 +595,7 @@ int print_critical (const char *line, PRN *prn)
     }
 
     if (i != 3 && funp == NULL)  {
-	pprintf(prn, _("Couldn't load plugin function\n"));
+	pputs(prn, _("Couldn't load plugin function\n"));
 	close_plugin(handle);
 	return 1;
     }

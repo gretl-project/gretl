@@ -1230,7 +1230,7 @@ void exec_line (char *line, PRN *prn)
 	    pputs(prn, _("Failed to generate squares\n"));
 	    err = 1;
 	} else {
-	    pprintf(prn, _("Squares generated OK\n"));
+	    pputs(prn, _("Squares generated OK\n"));
 	    varlist(datainfo, prn);
 	}
 	break;
@@ -1243,7 +1243,7 @@ void exec_line (char *line, PRN *prn)
 	if (strlen(command.param)) {
 	    pprintf(prn, _("store: using filename %s\n"), command.param);
 	} else {
-	    pprintf(prn, _("store: no filename given\n"));
+	    pputs(prn, _("store: no filename given\n"));
 	    break;
 	}
 	if (write_data(command.param, command.list, Z, datainfo, 
@@ -1251,16 +1251,16 @@ void exec_line (char *line, PRN *prn)
 	    fprintf(stderr, _("write of data file failed\n"));
 	    break;
 	}
-	pprintf(prn, _("Data written OK\n"));
+	pputs(prn, _("Data written OK\n"));
 	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) { 
-	    pprintf(prn, _("Warning: case markers not saved in binary datafile\n"));
+	    pputs(prn, _("Warning: case markers not saved in binary datafile\n"));
 	}
 	break;
 
     case TESTUHAT:
 	if ((err = model_test_start(0, prn, 0))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
-	    pprintf(prn, _("Out of memory attempting to add variable\n"));
+	    pputs(prn, _("Out of memory attempting to add variable\n"));
 	    err = 1;
 	    break;
 	}

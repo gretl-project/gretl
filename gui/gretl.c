@@ -20,6 +20,7 @@
 /* gretl.c : main for gretl */
 
 #include "gretl.h"
+#include "guiprint.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -57,7 +58,8 @@ extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
 static void clip_init (GtkWidget *w);
 static GtkWidget *make_main_window (int gui_get_data);
-static GtkWidget *build_var_menu (void);
+static GtkWidget *build_var_popup (void);
+static void build_selection_popup (void);
 static gint popup_activated (GtkWidget *widget, gpointer data);
 static void check_for_extra_data (void);
 static void set_up_main_menu (void);
@@ -69,9 +71,11 @@ GtkWidget *toolbar_box = NULL; /* shared with settings.c */
 
 static GtkWidget *datalabel;
 static GtkWidget *main_vbox;
-static GtkWidget *gretl_toolbar = NULL;
+static GtkWidget *gretl_toolbar;
+static GtkWidget *selection_popup;
+
 GtkTooltips *gretl_tips;
-GdkColor red, blue;
+GdkColor red, blue, gray;
 
 static int popup_connected;
 int *default_list = NULL;
@@ -322,7 +326,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Display values"), NULL, NULL, 0, "<Branch>" },
     { N_("/Data/Display values/_all variables"), NULL, display_data, 0, NULL },
     { N_("/Data/Display values/_selected variables..."), 
-      NULL, selector_callback, PRINT, NULL },
+      NULL, display_selected, 0, NULL },
     { N_("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL },
     { N_("/Data/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/_Graph specified vars"), NULL, NULL, 0, "<Branch>" },
@@ -709,11 +713,13 @@ int main (int argc, char *argv[])
     gretl_tips = gtk_tooltips_new();
     colorize_tooltips(gretl_tips);
 
-    /* make red, blue available globally for colorizing text */
+    /* make red, blue, gray available globally for colorizing text */
     gdk_color_parse("#ff0000", &red);
     gdk_color_parse("#0000ff", &blue);
-    if (!gdk_color_alloc(gdk_colormap_get_system(), &red) ||
-	!gdk_color_alloc(gdk_colormap_get_system(), &blue)) 
+    gdk_color_parse("#eeeeee", &gray);
+    if (!gdk_colormap_alloc_color(gdk_colormap_get_system(), &red, FALSE, TRUE) ||
+	!gdk_colormap_alloc_color(gdk_colormap_get_system(), &blue, FALSE, TRUE) ||
+	!gdk_colormap_alloc_color(gdk_colormap_get_system(), &gray, FALSE, TRUE)) 
 	noalloc(_("colors"));
 
     /* create main window */
@@ -864,20 +870,50 @@ void restore_sample_state (gboolean s)
 
 /* ........................................................... */
 
+static void augment_selection_count (gint i, gint *nsel)
+{
+    *nsel += 1;
+}
+
+static gint get_mdata_selection (void)
+{
+    GList *mylist = GTK_CLIST(mdata->listbox)->selection;
+    gint selcount = 0;
+
+    if (mylist != NULL) {
+	g_list_foreach(mylist, (GFunc) augment_selection_count, 
+		       &selcount);
+    }
+    return selcount;
+}
+
+/* ........................................................... */
+
 gint main_popup (GtkWidget *widget, GdkEventButton *event, 
 		 gpointer data)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
 
-    if (mdata->active_var == 0) return FALSE;
+    if (mdata->active_var == 0) {
+	return FALSE;
+    }
+
     topwin = gtk_widget_get_parent_window(mdata->listbox);
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
+
     if (mods & GDK_BUTTON3_MASK) { 
-	if (mdata->popup) g_free(mdata->popup);
-	mdata->popup = build_var_menu();
-	gtk_menu_popup(GTK_MENU(mdata->popup), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
+	gint selcount = get_mdata_selection();
+
+	if (selcount == 1) {
+	    if (mdata->popup) g_free(mdata->popup);
+	    mdata->popup = build_var_popup();
+	    gtk_menu_popup(GTK_MENU(mdata->popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	} else if (selcount > 1) {
+	    gtk_menu_popup(GTK_MENU(selection_popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	}
     }
     return TRUE;
 }
@@ -891,19 +927,29 @@ gint populate_clist (GtkWidget *widget, DATAINFO *datainfo)
     gint i;
 
     gtk_clist_clear(GTK_CLIST (widget));
+
     for (i=0; i<datainfo->v; i++) {
 	if (hidden_var(i, datainfo)) continue;
 	sprintf(id, "%d", i);
 	row[0] = id;
 	row[1] = datainfo->varname[i];
 	row[2] = datainfo->label[i];
-	gtk_clist_append(GTK_CLIST (widget), row);
+	gtk_clist_append(GTK_CLIST(widget), row);
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(widget), i, &gray);
+	}
     }
+
     mdata->active_var = 1;
-    if (mdata->active_var > datainfo->v - 1)
+    if (mdata->active_var > datainfo->v - 1) {
 	mdata->active_var -= 1;
+    }
+
+    gtk_clist_set_selectable(GTK_CLIST(mdata->listbox), 
+			     0, FALSE);
+
     gtk_clist_select_row 
-	(GTK_CLIST (mdata->listbox), mdata->active_var, 1);  
+	(GTK_CLIST(mdata->listbox), mdata->active_var, 1);  
 
     if (!popup_connected) {
 	gtk_signal_connect(GTK_OBJECT(mdata->listbox),
@@ -911,6 +957,7 @@ gint populate_clist (GtkWidget *widget, DATAINFO *datainfo)
 			   (GtkSignalFunc) main_popup, NULL);
 	popup_connected = 1;
     }
+
     return 0;
 }
 
@@ -1022,6 +1069,8 @@ static float get_gui_scale (void)
     return scale;
 }
 
+
+
 /* .................................................................. */
 
 static GtkWidget *list_box_create (GtkBox *box, char *titles[]) 
@@ -1036,7 +1085,7 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
     view = gtk_clist_new_with_titles (3, titles);
     gtk_clist_column_titles_passive(GTK_CLIST(view));
     gtk_clist_set_selection_mode (GTK_CLIST (view), 
-				  GTK_SELECTION_BROWSE);
+				  GTK_SELECTION_EXTENDED); /* was BROWSE */
     gtk_clist_set_column_width (GTK_CLIST (view), 
 				0, listbox_id_width * gui_scale);
     gtk_clist_set_column_justification (GTK_CLIST (view), 0, 
@@ -1150,6 +1199,9 @@ static GtkWidget *make_main_window (int gui_get_data)
     /* get a monospaced font for various windows */
     load_fixed_font();
 
+    /* build popup menu for multiple selections */
+    build_selection_popup();
+
     gtk_widget_show_all(mdata->w); 
 
     return dlabel;
@@ -1219,7 +1271,7 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-static GtkWidget *build_var_menu (void)
+static GtkWidget *build_var_popup (void)
 {
     static char *var_items[]={
 	N_("Display values"),
@@ -1254,6 +1306,48 @@ static GtkWidget *build_var_menu (void)
 	gtk_menu_append(GTK_MENU(var_menu), var_item);
     }
     return var_menu;
+}
+
+static gint selection_popup_click (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (!strcmp(item, _("Display values"))) 
+	display_selected(NULL, 0, NULL); 
+    else if (!strcmp(item, _("Descriptive statistics"))) 
+	do_menu_op(NULL, SUMMARY_SELECTED, NULL);
+    else if (!strcmp(item, _("Correlation matrix"))) 
+	do_menu_op(NULL, CORR_SELECTED, NULL);
+    else if (!strcmp(item, _("Time series plot"))) 
+	plot_from_selection(NULL, GR_PLOT, NULL);
+    else if (!strcmp(item, _("Copy to clipboard"))) 
+	csv_selected_to_clipboard();
+    return TRUE;
+}
+
+static void build_selection_popup (void)
+{
+    const char *items[] = {
+	N_("Display values"),
+	N_("Descriptive statistics"),
+	N_("Correlation matrix"),
+	N_("Time series plot"),
+	N_("Copy to clipboard"),
+    };
+
+    GtkWidget *item;
+    int i;
+
+    selection_popup = gtk_menu_new();
+
+    for (i=0; i<(sizeof items / sizeof items[0]); i++) {
+	item = gtk_menu_item_new_with_label(_(items[i]));
+	gtk_signal_connect(GTK_OBJECT(item), "activate",
+			   GTK_SIGNAL_FUNC(selection_popup_click),
+			   _(items[i]));
+	gtk_widget_show(item);
+	gtk_menu_append(GTK_MENU(selection_popup), item);
+    }
 }
 
 /* ........................................................... */

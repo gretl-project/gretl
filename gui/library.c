@@ -653,16 +653,29 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     char title[48];
     int err = 0;
     windata_t *vwin;
+    gchar *liststr = NULL;
     gpointer obj = NULL;
     gint hsize = 78, vsize = 380;
 
     clear(line, MAXLEN);
     strcpy(title, "gretl: ");
 
+    if (action == CORR_SELECTED || action == SUMMARY_SELECTED) {
+	liststr = mdata_selection_to_string();
+	if (liststr == NULL) return;
+    }
+
     switch (action) {
     case CORR:
 	strcpy(line, "corr");
 	strcat(title, _("correlation matrix"));
+	break;
+    case CORR_SELECTED:
+	strcpy(line, "corr");
+	strcat(line, liststr);
+	free(liststr);
+	strcat(title, _("correlation matrix"));
+	action = CORR;
 	break;
     case FREQ:
 	sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
@@ -677,6 +690,13 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case SUMMARY:
 	strcpy(line, "summary");
 	strcat(title, _("summary statistics"));
+	break;
+    case SUMMARY_SELECTED:
+	strcpy(line, "summary");
+	strcat(line, liststr);
+	free(liststr);
+	strcat(title, _("summary statistics"));
+	action = SUMMARY;
 	break;
     case VAR_SUMMARY:
 	sprintf(line, "summary %s", datainfo->varname[mdata->active_var]);
@@ -2985,13 +3005,19 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 /* ........................................................... */
 
-void display_selected (GtkWidget *widget, gpointer p)
+void display_selected (gpointer data, guint action, GtkWidget *widget)
 {
-    selector *sr = (selector *) p;
-    char *edttext; 
+    char *liststr; 
     PRN *prn;
     int ig = 0;
     CMD prcmd;
+    int width = 78;
+
+    /* We use a local "CMD" here, since we don't want to record the
+       printing of a variable or variables as part of the command
+       script every time a user chooses to view variables in the gui
+       program.
+    */
 
     prcmd.list = malloc(sizeof(int));
     prcmd.param = malloc(1);
@@ -2999,11 +3025,13 @@ void display_selected (GtkWidget *widget, gpointer p)
 	errbox(_("Out of memory!"));
 	return;
     }
-    edttext = sr->cmdlist;
-    if (*edttext == '\0') return;
+
+    liststr = mdata_selection_to_string();
+    if (liststr == NULL) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "print %s", edttext);
+    sprintf(line, "print%s", liststr);
+    free(liststr);
     getcmd(line, datainfo, &prcmd, &ig, &Z, NULL);
     if (prcmd.errcode) {
 	gui_errmsg(prcmd.errcode);
@@ -3016,7 +3044,7 @@ void display_selected (GtkWidget *widget, gpointer p)
 	free(prcmd.param);
 	display_var();
 	return;
-    } 
+    }
 
     if (prcmd.list[0] * datainfo->n > MAXDISPLAY) { /* use disk file */
 	char fname[MAXLEN];
@@ -3025,7 +3053,7 @@ void display_selected (GtkWidget *widget, gpointer p)
 
 	printdata(prcmd.list, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA, NULL);
+	view_file(fname, 0, 1, width, 350, VIEW_DATA, view_items);
     } else { /* use buffer */
 	int err;
 
@@ -3036,7 +3064,8 @@ void display_selected (GtkWidget *widget, gpointer p)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);
+	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, 
+		    view_items);
     }
     free(prcmd.list);
     free(prcmd.param);
@@ -3248,6 +3277,36 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     } else {
 	register_graph();
     }
+
+    free(lines);
+}
+
+/* ........................................................... */
+
+void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
+{
+    char *liststr;
+    gint i, err, *lines = NULL;
+
+    liststr = mdata_selection_to_string();
+    if (liststr == NULL) return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "gnuplot%s time", liststr);
+    free(liststr);
+
+    if (check_cmd(line) || cmd_init(line)) return;
+    lines = mymalloc(command.list[0] - 1);
+    if (lines == NULL) return;
+    for (i=0; i<command.list[0]-1 ; i++) lines[i] = 1;
+
+    err = gnuplot(command.list, lines, &Z, datainfo,
+		  &paths, &plot_count, 0, 1, 0);
+
+    if (err == -999)
+	errbox(_("No data were available to graph"));
+    else if (err < 0) errbox(_("gnuplot command failed"));
+    else register_graph();
 
     free(lines);
 }

@@ -32,7 +32,7 @@ print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
   
 void _bufspace (int n, PRN *prn)
 {
-    if (n > 0) while (n--) pprintf(prn, " ");
+    if (n > 0) while (n--) pputs(prn, " ");
 }
 
 /**
@@ -127,7 +127,7 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
     int i, ncoeff = cf->list[0];
 
     pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, tcrit95(cf->df));
-    pprintf(prn, _("      VARIABLE      COEFFICIENT      95%% CONFIDENCE "
+    pputs(prn, _("      VARIABLE      COEFFICIENT      95%% CONFIDENCE "
 	    "INTERVAL\n\n"));      
 
     if (cf->ifc) {
@@ -139,7 +139,7 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	print_coeff_interval(cf, pdinfo, i, prn);
     }
 
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /* ........................................................... */
@@ -185,8 +185,8 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
     }
     pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
 	    spc, add->score);
-    if (add->score == 1) pprintf(prn, _("has improved.\n"));
-    else pprintf(prn, _("have improved.\n\n"));
+    if (add->score == 1) pputs(prn, _("has improved.\n"));
+    else pputs(prn, _("have improved.\n\n"));
 }
 
 /* ........................................................... */
@@ -210,7 +210,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 		fdist(omit->F, omit->dfn, omit->dfd));
     }
     else if (omit->discrete && omit->dfn > 0 && omitvars[0] > 1) {
-	pprintf(prn, _("  Null hypothesis: the regression parameters "
+	pputs(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
 	for (i = 1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
@@ -264,7 +264,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
     m = corrmat->list[0];
     ncoeffs = (m * (m + 1))/2;
 
-    pprintf(prn, _("\nPairwise correlation coefficients:\n\n"));
+    pputs(prn, _("\nPairwise correlation coefficients:\n\n"));
     while (k < ncoeffs) {
         for (i=1; i<=m; i++) {
 	    k++;
@@ -286,7 +286,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 	    }
         }
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /**
@@ -308,12 +308,12 @@ void printfreq (FREQDIST *freq, PRN *prn)
 	   freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);
     pprintf(prn, _("number of bins = %d, mean = %.3f, sd = %.3f\n"), 
 	   freq->numbins, freq->xbar, freq->sdx);
-    pprintf(prn, _("\n       interval          midpt      frequency\n\n"));
+    pputs(prn, _("\n       interval          midpt      frequency\n\n"));
 
     for (k=0; k<=K; k++) {
 	*word = '\0';
-	if (k == 0) pprintf(prn, "          <  ");
-	else if (k == K) pprintf(prn, "          >= ");
+	if (k == 0) pputs(prn, "          <  ");
+	else if (k == K) pputs(prn, "          >= ");
 	else pprintf(prn, "%10.3g - ", freq->endpt[k]);
 	if (k == K) sprintf(word, "%.3g", freq->endpt[k]);
 	else sprintf(word, "%.3g", freq->endpt[k+1]);
@@ -321,13 +321,13 @@ void printfreq (FREQDIST *freq, PRN *prn)
 	nlw = 10 - strlen(word);
 	_bufspace(nlw, prn);
 	sprintf(word, " %.3g", freq->midpt[k]);
-	pprintf(prn, "%s", word);
+	pputs(prn, word);
 	nlw = 10 - strlen(word);
 	_bufspace(nlw, prn);
 	pprintf(prn, "%6d  ", freq->f[k]);
 	i = 36.0 * freq->f[k]/freq->n;
-	while (i--) pprintf(prn, "*");
-	pprintf(prn, "\n");
+	while (i--) pputs(prn, "*");
+	pputs(prn, "\n");
     }
 
     if (!na(freq->chisqu)) {
@@ -365,7 +365,7 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pprintf(prn, "%s:  %s - %s", ("Current sample"), date1, date2);
     if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) 
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     else pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);  
 }
 
@@ -447,7 +447,7 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     tmp = 2 * digits + 5 - strlen(final);
     for (i=0; i<tmp; i++) strcat(final, " ");
 
-    pprintf(prn, "%s", final);
+    pputs(prn, final);
 }
 
 /* ......................................................... */ 
@@ -482,7 +482,7 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 		GRETL_DIGITS, cf->coeff[c-1] - cf->maxerr[c-1],
 		GRETL_DIGITS, cf->coeff[c-1] + cf->maxerr[c-1]);
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /**
@@ -540,7 +540,7 @@ void print_white_vcv (const MODEL *pmod, PRN *prn)
 	    index++;
 	}
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /* ......................................................... */ 
@@ -632,7 +632,7 @@ void text_print_matrix (const double *rr, const int *list,
 	    _bufspace(9 - strlen(s), prn);
 	    pprintf(prn, "%3d) %s", ljnf, s);
 	}
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	lineno += 2;
 
 	/* print rectangular part, if any, of matrix */
@@ -658,7 +658,7 @@ void text_print_matrix (const double *rr, const int *list,
 	    }
 	    pprintf(prn, "   (%d\n", list[ij2]);
 	}
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 }
 
@@ -672,7 +672,7 @@ static void printgx (const double xx, PRN *prn)
 
     sprintf(word, "%11g", xx);
     lw = strlen(word);
-    pprintf(prn, "%s", word);
+    pputs(prn, word);
     _bufspace(13 - lw, prn);
 } 
 
@@ -772,30 +772,30 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 		yname, pdinfo->varname[list[2]], yname, 
 		pdinfo->varname[list[2]]);
     for (i=nrows; i>=0; --i) {
-	if (i && i == yzero) pprintf(prn, "        0.0  ");
+	if (i && i == yzero) pputs(prn, "        0.0  ");
 	else if (i == nrows || i%5 == 0) {
 	    xx = ymin + ((ymax-ymin) * i/nrows);
 	    printgx(xx, prn);
 	}
 	else _bufspace(13, prn);
 	for (j=0; j<=ncols+1; ++j) pprintf(prn, "%c", p[i][j]);
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
     _bufspace(13, prn);
-    pprintf(prn, "|");
-    for (j=0; j<=ncols; j++) if (j%10 == 0) pprintf(prn, "+");
-    else pprintf(prn, "-");
-    pprintf(prn, "\n");
+    pputs(prn, "|");
+    for (j=0; j<=ncols; j++) if (j%10 == 0) pputs(prn, "+");
+    else pputs(prn, "-");
+    pputs(prn, "\n");
     _bufspace(14, prn);
     sprintf(word, "%g", xmin);
     lx = strlen(word);
     lw = 13 + lx;
-    pprintf(prn, "%s", word);
+    pputs(prn, word);
     sprintf(word, "%s", xname);
     ly = strlen(word);
     ls = 30 - lx - ly/2;
     _bufspace(ls, prn);
-    pprintf(prn, "%s", word);
+    pputs(prn, word);
     lw = lw + ls + ly; 
     sprintf(word, "%g", xmax);
 
@@ -821,7 +821,7 @@ static void fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     pprintf(prn, _("\nFull data range: %s - %s (n = %d)\n"),
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pprintf(prn, _("Model estimation range: %s - %s"), date1, date2);
-    if (fr->nobs == pdinfo->n) pprintf(prn, "\n");
+    if (fr->nobs == pdinfo->n) pputs(prn, "\n");
     else pprintf(prn, " (n = %d)\n", fr->nobs); 
 
     pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
@@ -833,7 +833,7 @@ static void fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
 	if (i == 3) strcpy(label, _("residuals"));
 	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 /* ........................................................... */
@@ -846,10 +846,10 @@ static void varheading (int v1, int v2,
 {
     int mv;
         
-    pprintf(prn, "\n     Obs ");
+    pputs(prn, "\n     Obs ");
     for (mv=v1; mv<=v2; ++mv) 
 	pprintf(prn, "%13s", pdinfo->varname[list[mv]]);
-    pprintf(prn, "\n\n");
+    pputs(prn, "\n\n");
 }
 
 /* ........................................................... */
@@ -861,9 +861,9 @@ void _printxs (double xx, int n, int ci, PRN *prn)
 
     printxx(xx, s, ci);
     ls = strlen(s);
-    pprintf(prn, " ");
+    pputs(prn, " ");
     _bufspace(n-3-ls, prn);
-    pprintf(prn, "%s", s);
+    pputs(prn, s);
 }
 
 /* ........................................................... */
@@ -878,9 +878,9 @@ static void printstr_ten (PRN *prn, double xx, int *ls)
     lwrd = strlen(str);
     if (*ls+lwrd > 78) {
 	*ls = 0;
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
-    pprintf(prn, "%s", str);
+    pputs(prn, str);
     *ls += lwrd;
 }
 
@@ -896,9 +896,9 @@ static void printstr (PRN *prn, double xx, int *ls)
     lwrd = strlen(str);
     if (*ls+lwrd > 78) {
 	*ls = 0;
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
-    pprintf(prn, "%s", str);
+    pputs(prn, str);
     *ls += lwrd;
 }
 
@@ -920,7 +920,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 	if (opt == OPT_T) printstr_ten(prn, xx, &ls);
 	else printstr(prn, xx, &ls);
     }
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 }
 
 #define SMAX 7  /* stipulated max. significant digits */
@@ -1116,7 +1116,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     l0 = list[0];
 
     if (l0 == 0) {
-	pprintf(prn, "No data\n");
+	pputs(prn, "No data\n");
 	if (freelist) free(list);
 	return 0;
     }
@@ -1136,7 +1136,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	} 
     }
     if (list[0] < l0) {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	l0 = list[0];
     }
 
@@ -1166,13 +1166,13 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     }
 
     if (option != OPT_O) { /* not by observations, but by variable */
-	if (list[0] > 0) pprintf(prn, "\n");
+	if (list[0] > 0) pputs(prn, "\n");
 	for (j=1; j<=list[0]; j++) {
 	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[list[j]]);
 	    print_smpl (pdinfo, 0, prn);
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
 	    printz((*pZ)[list[j]], pdinfo, prn, option);
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
 	}
 	return 0;
     }
@@ -1228,7 +1228,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	    } /* end of t loop */
 	} /* end if nvj5 */
     } /* end for j loop */
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
     lineno++;
     if (freelist) free(list);
     free(pmax);
@@ -1247,13 +1247,13 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     fit_resid_head(fr, pdinfo, prn); 
 
     for (t=0; t<n; t++) {
-	if (t == fr->t1 && t) pprintf(prn, "\n");
-	if (t == fr->t2 + 1) pprintf(prn, "\n");
+	if (t == fr->t1 && t) pputs(prn, "\n");
+	if (t == fr->t2 + 1) pputs(prn, "\n");
 
 	print_obs_marker(t, pdinfo, prn);
 
 	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
 	} else {
 	    int ast;
 
@@ -1266,8 +1266,8 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 		    (ast)? " *" : "");
 	}
     }
-    pprintf(prn, "\n");
-    if (anyast) pprintf(prn, _("Note: * denotes a residual in excess of "
+    pputs(prn, "\n");
+    if (anyast) pputs(prn, _("Note: * denotes a residual in excess of "
 			       "2.5 standard errors\n"));
     return 0;
 }
@@ -1287,12 +1287,12 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 
     pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
 	    fr->df, fr->tval);
-    pprintf(prn, "\n     Obs ");
+    pputs(prn, "\n     Obs ");
     pprintf(prn, "%12s", fr->depvar);
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
     pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
     pprintf(prn, _("   95%% confidence interval\n"));
-    pprintf(prn, "\n");
+    pputs(prn, "\n");
 
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
@@ -1301,9 +1301,9 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	_printxs(fr->sderr[t], 15, PRINT, prn);
 	maxerr[t] = fr->tval * fr->sderr[t];
 	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
-	pprintf(prn, " -");
+	pputs(prn, " -");
 	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 
     if (plot) {

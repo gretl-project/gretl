@@ -938,13 +938,13 @@ int get_info (const char *hdrfile, PRN *prn)
 #ifndef OS_WIN32
 		delchar('\r', s);
 #endif
-		pprintf(prn, "%s", s);
+		pputs(prn, s);
 		i++;
 	    }
 	} while (s != NULL && strncmp(s, ENDCOMMENT, 2));
     }
-    if (i == 0) pprintf(prn, _(" (none)\n"));
-    pprintf(prn, "\n");
+    if (i == 0) pputs(prn, _(" (none)\n"));
+    pputs(prn, "\n");
 
     if (hdr != NULL) fclose(hdr);
     return 0;
@@ -1621,11 +1621,11 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
-    pprintf(prn, I_("\nReading "));
-    pprintf(prn, (pdinfo->time_series == TIME_SERIES) ? 
+    pputs(prn, I_("\nReading "));
+    pputs(prn, (pdinfo->time_series == TIME_SERIES) ? 
 	    I_("time-series") : _("cross-sectional"));
-    pprintf(prn, I_(" datafile"));
-    if (strlen(datfile) > 40) pprintf(prn, "\n");
+    pputs(prn, I_(" datafile"));
+    if (strlen(datfile) > 40) pputs(prn, "\n");
     pprintf(prn, " %s\n\n", datfile);
 
     if (gzsuff) {
@@ -1727,18 +1727,18 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 	return 0;
 
     if (n1 > 7) {
-	pprintf(prn, _("   label strings too long for dates?\n"));
+	pputs(prn, _("   label strings too long for dates?\n"));
 	pdinfo->pd = 1;
 	pdinfo->sd0 = 1.0;
 	return -1;
     }
     if (n1 != n2) {
-	pprintf(prn, _("   label strings can't be consistent dates\n"));
+	pputs(prn, _("   label strings can't be consistent dates\n"));
 	return -1;
     }
 
     /* does it look like it starts with a year? */
-    pprintf(prn, _("trying to parse row labels as dates...\n"));
+    pputs(prn, _("trying to parse row labels as dates...\n"));
     if (n1 >= 4) {
 	if (isdigit((unsigned char) lbl1[0]) 
 	    && isdigit((unsigned char) lbl1[1]) &&
@@ -1752,11 +1752,11 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		pprintf(prn, _("   %s: out of bounds for a year?\n"), year);
 	    }
 	    if (n1 == 5) {
-		pprintf(prn, _("   but I can't make sense of the extra bit\n"));
+		pputs(prn, _("   but I can't make sense of the extra bit\n"));
 		return -1;
 	    }
 	    if (n1 == 4) {
-		pprintf(prn, _("and just a year\n"));
+		pputs(prn, _("and just a year\n"));
 		strcpy(pdinfo->stobs, year);
 		pdinfo->sd0 = atof(pdinfo->stobs);
 		/* need more checking!! FIXME */
@@ -1787,14 +1787,14 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		    return 12;
 		}
 	    }
-	} else pprintf(prn, _("   definitely not a four-digit year\n"));
+	} else pputs(prn, _("   definitely not a four-digit year\n"));
     }
 
     return -1;
 }
 
 #define MSG(p, s, g) do { \
-                        if (g) pprintf(p, s); \
+                        if (g) pputs(p, s); \
                         else pprintf(p, "   %s\n", s); \
                      } while (0); 
 
@@ -2001,7 +2001,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 
     csvinfo = datainfo_new();
     if (csvinfo == NULL) {
-	pprintf(prn, _("Out of memory\n"));
+	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
     csvinfo->delim = delim;
@@ -2011,20 +2011,20 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 
     /* count chars and fields in first line */
     if (fread(&cbak, 1, 1, fp) == 0 || cbak == '\n') {
-	pprintf(prn, _("   empty first line!\n"));
+	pputs(prn, _("   empty first line!\n"));
 	fclose(fp);
 	return 1;
     }
     if (cbak == delim) {
 	blank_1 = 1;
-	pprintf(prn, _("   first field is blank (dates?)\n"));
+	pputs(prn, _("   first field is blank (dates?)\n"));
 	ncols++;
     }
     maxlen++;
     while (fread(&c, 1, 1, fp)) {
 	if ((c == '\n' || c == '\r') && cbak == ',') {
 	    bad_commas = 1;
-	    pprintf(prn, _("   file has trailing commas (lame)\n"));
+	    pputs(prn, _("   file has trailing commas (lame)\n"));
 	}
 	if (c == '\n') break;
 	cbak = c;
@@ -2051,7 +2051,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 		    pprintf(prn, _("   ...but row %d has %d fields: aborting\n"),
 			    csvinfo->n, chkcols);
 		    fclose(fp);
-		    pprintf(prn, msg);
+		    pputs(prn, msg);
 		    return 1;
 		}
 	    }
@@ -2078,7 +2078,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, _("   first field: '%s'\n"), field_1);
 	lower(field_1);
 	if (strcmp(field_1, "obs") == 0 || strcmp(field_1, "date") == 0) {
-	    pprintf(prn, _("   seems to be observation label\n"));
+	    pputs(prn, _("   seems to be observation label\n"));
 	    obs_1 = 1;
 	    skipvar = 1;
 	}
@@ -2093,7 +2093,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     /* end initial checking */
 
     if (csvinfo->n == 0) {
-	pprintf(prn, _("Invalid data file\n"));
+	pputs(prn, _("Invalid data file\n"));
 	free(csvinfo);
 	return 1;
     }
@@ -2117,7 +2117,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* parse the variable names, truncating to 8 chars */
-    pprintf(prn, _("scanning for variable names...\n"));
+    pputs(prn, _("scanning for variable names...\n"));
     fgets(line, maxlen + 1, fp);
     trim_csv_line(line);
     if (delim != ' ') delchar(' ', line);
@@ -2134,7 +2134,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	k++;
 	if (strlen(varname) == 0 || varname[0] == '\n') {
 	    pprintf(prn, _("   variable name %d is missing: aborting\n"), k);
-	    pprintf(prn, msg);
+	    pputs(prn, msg);
 	    goto csv_bailout;
 	}
 	if (k == 1 && skipvar) {
@@ -2157,7 +2157,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     if (pdinfo->decpoint != ',') setlocale(LC_NUMERIC, "C");
 #endif
 
-    pprintf(prn, _("scanning for row labels and data...\n"));
+    pputs(prn, _("scanning for row labels and data...\n"));
     for (t=0; t<csvinfo->n; t++) {
 	ok = 0;
 	fgets(line, maxlen + 1, fp);
@@ -2229,9 +2229,9 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     csvinfo->t2 = csvinfo->n - 1;
     if (blank_1 || obs_1) markertest = test_label(csvinfo, prn);
     if ((blank_1 || obs_1) && (markertest > 0))
-	pprintf(prn, _("taking date information from row labels\n\n"));
+	pputs(prn, _("taking date information from row labels\n\n"));
     else {
-	pprintf(prn, _("treating these as undated data\n\n"));
+	pputs(prn, _("treating these as undated data\n\n"));
 	dataset_dates_defaults(csvinfo);
     }	
     if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) 
@@ -2370,7 +2370,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 
     boxinfo = datainfo_new();
     if (boxinfo == NULL) {
-	pprintf(prn, _("Out of memory\n"));
+	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
 
@@ -2411,7 +2411,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     maxline += 2;
 
     /* allocate space for data etc */
-    pprintf(prn, _("allocating memory for data... "));
+    pputs(prn, _("allocating memory for data... "));
     if (start_new_Z(&boxZ, boxinfo, 0)) return E_ALLOC;
     varstart = malloc((boxinfo->v - 1) * sizeof *varstart);
     if (varstart == NULL) return E_ALLOC;
@@ -2419,11 +2419,11 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     if (varsize == NULL) return E_ALLOC;
     line = malloc(maxline);
     if (line == NULL) return E_ALLOC;
-    pprintf(prn, _("done\n"));
+    pputs(prn, _("done\n"));
 
     fp = fopen(fname, "r");
     if (fp == NULL) return 1;
-    pprintf(prn, _("reading variable information...\n"));
+    pputs(prn, _("reading variable information...\n"));
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -2451,7 +2451,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 #ifdef notdef  
 	    /* This is wrong!  How do you identify character data? */
 	    if (line[51] != '2') {
-		pprintf(prn, _("   Non-numeric data: will be skipped\n"));
+		pputs(prn, _("   Non-numeric data: will be skipped\n"));
 		varstart[v] = 0;
 		varsize[v] = 0;
 		v++;
@@ -2536,7 +2536,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     setlocale(LC_NUMERIC, "");
 #endif
 
-    pprintf(prn, _("done reading data\n"));
+    pputs(prn, _("done reading data\n"));
     fclose(fp);
 
     free(varstart);
@@ -2699,7 +2699,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     case GRETL_BOX_DATA: 
 	if (strcmp(teststr, "00**") == 0) return GRETL_BOX_DATA;
 	else {
-	    pprintf(prn, _("box file seems to be malformed\n"));
+	    pputs(prn, _("box file seems to be malformed\n"));
 	    return GRETL_UNRECOGNIZED;
 	}
     }

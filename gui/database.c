@@ -31,6 +31,8 @@
 #include <netinet/in.h>
 #endif
 
+extern GdkColor gray;
+
 #define RECNUM long
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
@@ -652,6 +654,7 @@ static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
     FILE *fp;
     size_t n;
     int err = 0;
+    gint i;
 
     strcpy(dbidx, dbdat->fname);
     strcat(dbidx, ".idx");
@@ -660,6 +663,8 @@ static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
 	errbox(_("Couldn't open database index file"));
 	return 1;
     }
+
+    i = 0;
     while (1) {
 	if (fgets(line1, 255, fp) == NULL) break;
 	if (*line1 == '#') continue;
@@ -681,6 +686,11 @@ static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
 
 	if (!err) err = check_serinfo(line2, sername);
 	gtk_clist_append(GTK_CLIST(dbdat->listbox), row);
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(dbdat->listbox), 
+				     i, &gray);
+	}
+	i++;
     }
     fclose(fp);
     dbdat->active_var = 0;
@@ -696,8 +706,11 @@ static int populate_remote_series_list (windata_t *dbdat, char *buf)
     gchar *row[3];
     char sername[9], line1[150], line2[150];
     int n, err = 0;
+    gint i;
 
     getbufline(NULL, NULL, 1);
+
+    i = 0;
     while (1) {
 	if (getbufline(buf, line1, 0) == 0) break;
 	if (line1[0] == '#') continue;
@@ -716,6 +729,11 @@ static int populate_remote_series_list (windata_t *dbdat, char *buf)
 	row[2] = line2;
 	if (!err) err = check_serinfo(line2, sername);
 	gtk_clist_append(GTK_CLIST(dbdat->listbox), row);
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(dbdat->listbox), 
+				     i, &gray);
+	}
+	i++;
     }
     return 0;
 }
@@ -1081,7 +1099,7 @@ static int read_RATSDirect (GtkWidget *widget, FILE *fp,
     sprintf(datestuff, "%c  %d%s - %s  n = %d\n", pd, (int) dinfo.year, 
 	   pdstr, endobs, (int) rdir.datapoints);
     row[2] = datestuff;
-    gtk_clist_append(GTK_CLIST (widget), row);
+    gtk_clist_append(GTK_CLIST(widget), row);
 
     /* recursive call to follow the chain of pointers and find
        all the series in the file */
@@ -1573,9 +1591,13 @@ gint populate_dbfilelist (windata_t *ddata)
 	    if (ddata->role == NATIVE_DB) { 
 		row[1] = get_descrip(fname, dbdir);
 	    }
-	    gtk_clist_append(GTK_CLIST (ddata->listbox), row);
-	    gtk_clist_set_row_data(GTK_CLIST (ddata->listbox), i, dbdir);
+	    gtk_clist_append(GTK_CLIST(ddata->listbox), row);
+	    gtk_clist_set_row_data(GTK_CLIST(ddata->listbox), i, dbdir);
 	    if (row[1]) g_free(row[1]);
+	    if (i % 2) {
+		gtk_clist_set_background(GTK_CLIST(ddata->listbox), 
+					 i, &gray);
+	    }
 	    i++;
 	}
     }
@@ -1596,6 +1618,10 @@ gint populate_dbfilelist (windata_t *ddata)
 		gtk_clist_append(GTK_CLIST (ddata->listbox), row);
 		gtk_clist_set_row_data(GTK_CLIST (ddata->listbox), i, dbdir);
 		if (row[1]) g_free(row[1]);
+		if (i % 2) {
+		    gtk_clist_set_background(GTK_CLIST(ddata->listbox), 
+					     i, &gray);
+		}
 		i++;
 	    }
 	}

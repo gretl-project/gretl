@@ -387,10 +387,6 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: model tests"));
 	okfunc = do_add_omit;
 	break;
-    case PRINT:
-	strcpy(title, _("gretl: display vars"));
-	okfunc = display_selected;
-	break;
     case GR_BOX: case GR_NBOX:
 	strcpy(title, _("gretl: boxplots"));
 	okfunc = do_box_graph;

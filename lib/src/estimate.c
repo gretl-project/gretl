@@ -1195,14 +1195,14 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		return err;
 	    }
 	    if (step == 1) {
-		pprintf(prn, "\n RHO       ESS      RHO       ESS      "
+		pputs(prn, "\n RHO       ESS      RHO       ESS      "
 			"RHO       ESS      RHO       ESS     \n");
 	    }
 	    ssr[nn] = ess = corc_model.ess;
 	    rh[nn] = rho;
 	    nn++;
 	    pprintf(prn, "%5.2f %10.4g", rho, ess);
-	    if (step%4 == 0) pprintf(prn, "\n");
+	    if (step%4 == 0) pputs(prn, "\n");
 	    else _bufspace(3, prn);
 	    if (step == 1) essmin = ess;
 	    essmin = (ess < essmin)? ess : essmin;
@@ -1214,7 +1214,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	rho0 = rho = finalrho;
 	pprintf(prn, _("\n\nESS is minimum for rho = %.2f\n\n"), rho);
 	_graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
-	pprintf(prn, _("\n\nFine-tune rho using the CORC procedure...\n\n")); 
+	pputs(prn, _("\n\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt */
 	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	if ((err = corc_model.errcode)) {
@@ -1223,10 +1223,10 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    return err;
 	}
 	rho0 = rho = corc_model.rho;
-	pprintf(prn, _("\nPerforming iterative calculation of rho...\n\n"));
+	pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
     }
 
-    pprintf(prn, "                 ITER       RHO        ESS\n");
+    pputs(prn, "                 ITER       RHO        ESS\n");
 
     while (diff > 0.001) {
 	iter++;
@@ -1954,7 +1954,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     pprintf(prn, "%s\n\n", _("Generalized Cochrane-Orcutt estimation"));
     _bufspace(17, prn);
-    pprintf(prn, "ITER             ESS           %% CHANGE\n\n");
+    pputs(prn, "ITER             ESS           %% CHANGE\n\n");
 
     /* now loop while ess is changing */
     while (diff > 0.005) {

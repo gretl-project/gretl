@@ -2136,9 +2136,9 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
     for (i=0; i<n; i++) {
 	pprintf(prn, "%3d) %-10s", i, pdinfo->varname[i]);
 	if ((i+1) % 5 == 0) 
-	    pprintf(prn, "\n");
+	    pputs(prn, "\n");
     }
-    if (n % 5) pprintf(prn, "\n");
+    if (n % 5) pputs(prn, "\n");
 }
 
 /**

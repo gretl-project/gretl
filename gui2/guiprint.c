@@ -507,7 +507,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	sprintf(tmp, I_("for the variable %s (%d valid observations)"), 
 		pdinfo->varname[summ->list[1]], summ->n);
 	pprintf(prn, "%s\\par\n\n", tmp);
-	pprintf(prn, "{" VAR_SUMM_ROW "\\intbl ");
+	pputs(prn, "{" VAR_SUMM_ROW "\\intbl ");
     } else {
 	strcpy(tmp, I_("(missing values denoted by -999 will be skipped)"));
 	pprintf(prn, "%s\\par\n\n", tmp);
@@ -563,7 +563,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	printfrtf(summ->xkurt[v], prn, 1);
     }
 
-    pprintf(prn, "}}\n");
+    pputs(prn, "}}\n");
 }
 
 /* ............................................................. */
@@ -613,7 +613,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 	sprintf(tmp, I_("for the variable %s (%d valid observations)"), 
 		vname, summ->n);
 	pprintf(prn, "%s\\\\[8pt]\n\n", tmp);
-	pprintf(prn, "\\begin{tabular}{rrrr}\n");
+	pputs(prn, "\\begin{tabular}{rrrr}\n");
     } else {
 	strcpy(tmp, I_("(missing values denoted by $-999$ will be "
 		"skipped)"));
@@ -641,8 +641,8 @@ void texprint_summary (GRETLSUMMARY *summ,
 	printftex(summ->xmedian[v], prn, 0);
 	printftex(summ->xpx[v], prn, 0);
 	printftex(summ->xpy[v], prn, 1);
-	if (v == lo) pprintf(prn, "[10pt]\n\n");
-	else pprintf(prn, "\n");
+	if (v == lo) pputs(prn, "[10pt]\n\n");
+	else pputs(prn, "\n");
     }
 
     if (lo > 1) pprintf(prn, "%s & ", I_("Variable"));
@@ -667,10 +667,10 @@ void texprint_summary (GRETLSUMMARY *summ,
 	printftex(xcv, prn, 0);
 	printftex(summ->xskew[v], prn, 0);
 	printftex(summ->xkurt[v], prn, 1);
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
     }
 
-    pprintf(prn, "\\end{tabular}\n\\end{center}\n");
+    pputs(prn, "\\end{tabular}\n\\end{center}\n");
     
 }
 
@@ -700,31 +700,31 @@ static void rtf_outxx (double xx, PRN *prn)
 
 static void rtf_corr_row (int lo, PRN *prn)
 {
-    pprintf(prn, "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262");
+    pputs(prn, "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262");
 
     if (lo == 2) {
-	pprintf(prn, "\\cellx1500\\cellx3000\\cellx3500\n");
+	pputs(prn, "\\cellx1500\\cellx3000\\cellx3500\n");
     }
     else if (lo == 3) {
-	pprintf(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx5000\n");
+	pputs(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx5000\n");
     }
     else if (lo == 4) {
-	pprintf(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
+	pputs(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
 		"\\cellx6500\n");
     }
     else {
-	pprintf(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
+	pputs(prn, "\\cellx1500\\cellx3000\\cellx4500\\cellx6000"
 		"\\cellx7500\\cellx8000\n");
     }
 
-    pprintf(prn, "\\intbl ");
+    pputs(prn, "\\intbl ");
 }
 
 /* ......................................................... */ 
 
 static void rtf_table_pad (int pad, PRN *prn)
 {
-    while (pad--) pprintf(prn, "\\cell ");
+    while (pad--) pputs(prn, "\\cell ");
 }
 
 /* ......................................................... */ 
@@ -784,7 +784,7 @@ rtfprint_matrix (const double *vec, const int *list,
 
 	/* print rectangular part, if any, of matrix */
 	for (j=1; j<=nf; j++) {
-	    pprintf(prn, "\\intbl "); 
+	    pputs(prn, "\\intbl "); 
 	    if (pad) rtf_table_pad(pad, prn);
 	    for (k=1; k<=p; k++) {
 		index = ijton(j, nf+k, lo);
@@ -799,7 +799,7 @@ rtfprint_matrix (const double *vec, const int *list,
 
 	/* print upper triangular part of matrix */
 	for (j=1; j<=p; ++j) {
-	    pprintf(prn, "\\intbl "); 
+	    pputs(prn, "\\intbl "); 
 	    rtf_table_pad(pad + j - 1, prn);
 	    ij2 = nf + j;
 	    for (k=j; k<=p; k++) {
@@ -813,7 +813,7 @@ rtfprint_matrix (const double *vec, const int *list,
 	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[ij2]);
 	}
     }
-    pprintf(prn, "}}\n");
+    pputs(prn, "}}\n");
 }
 
 /* ........................................................... */
@@ -863,7 +863,7 @@ texprint_matrix (const double *vec, const int *list,
 		I_("Coefficient covariance matrix"));
     }
 
-    pprintf(prn, "\\vspace{8pt}\n");
+    pputs(prn, "\\vspace{8pt}\n");
 
     if (ci == CORR) {
 	pprintf(prn, "\\begin{tabular}{rrr%s}\n",
@@ -871,11 +871,11 @@ texprint_matrix (const double *vec, const int *list,
     } else {
 	char pt = get_local_decpoint();
 
-	pprintf(prn, "\\begin{tabular}{");
+	pputs(prn, "\\begin{tabular}{");
 	for (i=0; i<=lo && i<fields; i++) {
 	    pprintf(prn, "D{%c}{%c}{-1}", pt, pt);
 	}
-	pprintf(prn, "r}\n");
+	pputs(prn, "r}\n");
     }
 
     for (i=0; i<=lo/fields; i++) {
@@ -900,9 +900,9 @@ texprint_matrix (const double *vec, const int *list,
 	/* insert spacers */
 	if (ci == CORR) {
 	    for (j=1; j<=p; ++j) {
-		pprintf(prn, "\\rule{13ex}{0pt} & ");
+		pputs(prn, "\\rule{13ex}{0pt} & ");
 	    }
-	    pprintf(prn, "\\\\\[-6pt]\n"); 
+	    pputs(prn, "\\\\\[-6pt]\n"); 
 	}   
 
 	/* print rectangular part, if any, of matrix */
@@ -921,7 +921,7 @@ texprint_matrix (const double *vec, const int *list,
 	/* print upper triangular part of matrix */
 	for (j=1; j<=p; ++j) {
 	    ij2 = nf + j;
-	    for (k=0; k<j-1; k++) pprintf(prn, " & ");
+	    for (k=0; k<j-1; k++) pputs(prn, " & ");
 	    for (k=j; k<=p; k++) {
 		index = ijton(ij2, nf+k, lo);
 		if (ci == CORR) {
@@ -932,9 +932,9 @@ texprint_matrix (const double *vec, const int *list,
 	    }
 	    pprintf(prn, "(%d\\\\\n", list[ij2]);
 	}
-	pprintf(prn, "\\\\\n");
+	pputs(prn, "\\\\\n");
     }
-    pprintf(prn, "\\end{tabular}\n\\end{center}\n");
+    pputs(prn, "\\end{tabular}\n\\end{center}\n");
 }
 
 /* ........................................................... */
@@ -958,18 +958,18 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     ntodate(date1, fr->t1, pdinfo);
     ntodate(date2, fr->t2, pdinfo);
 
-    pprintf(prn, "\\begin{raggedright}\n");
-    pprintf(prn, I_("Full data range:"));
+    pputs(prn, "\\begin{raggedright}\n");
+    pputs(prn, I_("Full data range:"));
     pprintf(prn, " %s--%s ($n$ = %d)\\\\\n", 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
-    pprintf(prn, I_("Model estimation range:"));
+    pputs(prn, I_("Model estimation range:"));
     pprintf(prn, " %s--%s", date1, date2);
 
-    if (fr->nobs == pdinfo->n) pprintf(prn, "\\\\\n");
+    if (fr->nobs == pdinfo->n) pputs(prn, "\\\\\n");
     else pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
 
-    pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
-    pprintf(prn, "\n\\end{raggedright}\n");
+    pputs(prn, I_("Standard error of residuals = %g"), fr->sigma);
+    pputs(prn, "\n\\end{raggedright}\n");
 }
 
 /* ........................................................... */
@@ -984,12 +984,12 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     ntodate(date1, fr->t1, pdinfo);
     ntodate(date2, fr->t2, pdinfo);
 
-    pprintf(prn, "{\\rtf1\\par\n\\qc ");
-    pprintf(prn, I_("Full data range:"));
+    pputs(prn, "{\\rtf1\\par\n\\qc ");
+    pputs(prn, I_("Full data range:"));
     pprintf(prn, " %s - %s\\par\n", pdinfo->stobs, pdinfo->endobs);
 
-    pprintf(prn, "\\qc ");
-    pprintf(prn, I_("Model estimation range:")); 
+    pputs(prn, "\\qc ");
+    pputs(prn, I_("Model estimation range:")); 
     pprintf(prn, " %s - %s (n = %d)\\par\n", date1, date2, fr->nobs);
 
     sprintf(tmp, I_("Standard error of residuals = %g"), 
@@ -1020,14 +1020,14 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	    vname, I_("fitted"), I_("residuals"));
 
     for (t=0; t<n; t++) {
-	if (t == fr->t1 && t) pprintf(prn, "\\\\\n");
-	if (t == fr->t2 + 1) pprintf(prn, "\\\\\n");
+	if (t == fr->t1 && t) pputs(prn, "\\\\\n");
+	if (t == fr->t2 + 1) pputs(prn, "\\\\\n");
 
 	print_obs_marker(t, pdinfo, prn);
-	pprintf(prn, " & ");
+	pputs(prn, " & ");
 	
 	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
-	    pprintf(prn, "\\\\\n");
+	    pputs(prn, "\\\\\n");
 	} else {
 	    int ast;
 
@@ -1041,10 +1041,10 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	}
     }
 
-    pprintf(prn, "\\end{tabular}\n"
+    pputs(prn, "\\end{tabular}\n"
 	    "\\end{center}\n\n");
 
-    if (anyast) pprintf(prn, I_("\\textit{Note}: * denotes a residual "
+    if (anyast) pputs(prn, I_("\\textit{Note}: * denotes a residual "
 				"in excess of 2.5 standard errors\n\n"));
 }
 
@@ -1064,7 +1064,7 @@ void rtfprint_fit_resid (const FITRESID *fr,
 
     rtf_fit_resid_head(fr, pdinfo, prn);
 
-    pprintf(prn, "{" FR_ROW "\\intbl ");
+    pputs(prn, "{" FR_ROW "\\intbl ");
     pprintf(prn, 
 	    " \\qc \\cell"
 	    " \\qc %s\\cell"
@@ -1075,12 +1075,12 @@ void rtfprint_fit_resid (const FITRESID *fr,
 	    fr->depvar, I_("fitted"), I_("residual"));
 
     for (t=0; t<n; t++) {
-	pprintf(prn, "\\qr ");
+	pputs(prn, "\\qr ");
 	print_obs_marker(t, pdinfo, prn);
-	pprintf(prn, "\\cell"); 
+	pputs(prn, "\\cell"); 
 	
 	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
-	    pprintf(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
+	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
 		    " \\intbl \\row\n"); 
 	} else {
 	    int ast;
@@ -1096,12 +1096,12 @@ void rtfprint_fit_resid (const FITRESID *fr,
 	}
     }
 
-    pprintf(prn, "}\n");
+    pputs(prn, "}\n");
     if (anyast) {
 	pprintf(prn, "\\par\n\\qc %s \\par\n",
 		I_("Note: * denotes a residual in excess of 2.5 standard errors"));
     }
-    pprintf(prn, "}\n");
+    pputs(prn, "}\n");
 }
 
 /* .................................................................. */
@@ -1120,7 +1120,7 @@ void texprint_fcast_with_errs (const FITRESID *fr,
 		    "$t(%d, .025) = %.3f$\n\n"), 
 	    fr->df, fr->tval);
 
-    pprintf(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+    pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
 
     pprintf(prn, "\\begin{center}\n"
 	    "\\begin{tabular}{%%\n"
@@ -1142,8 +1142,8 @@ void texprint_fcast_with_errs (const FITRESID *fr,
 	    /* xgettext:no-c-format */
 	    I_("95\\% confidence interval"));
 
-    pprintf(prn, "& & & & \\multicolumn{1}{c}{low} & "
-	    "\\multicolumn{1}{c}{high} \\\\\n");
+    pputs(prn, "& & & & \\multicolumn{1}{c}{low} & "
+	  "\\multicolumn{1}{c}{high} \\\\\n");
 
     for (t=0; t<fr->nobs; t++) {
 	maxerr = fr->tval * fr->sderr[t];
@@ -1157,7 +1157,7 @@ void texprint_fcast_with_errs (const FITRESID *fr,
 		actual, fitted, sderr, lo, hi);
     }
 
-    pprintf(prn, "\\end{tabular}\n"
+    pputs(prn, "\\end{tabular}\n"
 	    "\\end{center}\n\n");
 }
 
@@ -1181,7 +1181,7 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n", tmp);
 
-    pprintf(prn, "{" FC_ROW "\\intbl ");
+    pputs(prn, "{" FC_ROW "\\intbl ");
     pprintf(prn, 
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -1195,9 +1195,9 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    I_("95% confidence interval"));
 
     for (t=0; t<fr->nobs; t++) {
-	pprintf(prn, "\\qr ");
+	pputs(prn, "\\qr ");
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	pprintf(prn, "\\cell"); 
+	pputs(prn, "\\cell"); 
 	maxerr = fr->tval * fr->sderr[t];
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);
@@ -1207,7 +1207,7 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 		GRETL_DIGITS, fr->fitted[t] + maxerr);
     }
 
-    pprintf(prn, "}}\n");
+    pputs(prn, "}}\n");
 }
 
 /* .................................................................. */
@@ -1239,7 +1239,7 @@ texprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 	tex_dcolumn_double(cf->coeff[c-1] + cf->maxerr[c-1], hi);
 	pprintf(prn, "%s & %s", lo, hi);
     }
-    pprintf(prn, "\\\\\n");
+    pputs(prn, "\\\\\n");
 }
 
 /* .................................................................. */
@@ -1252,7 +1252,7 @@ void texprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 
     pprintf(prn, "$t(%d, .025) = %.3f$\n\n", cf->df, tcrit95(cf->df));
 
-    pprintf(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+    pputs(prn, "%% The table below needs the \"dcolumn\" package\n\n");
 
     pprintf(prn, "\\begin{center}\n"
 	    "\\begin{tabular}{rrD{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n",
@@ -1278,8 +1278,8 @@ void texprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	texprint_coeff_interval(cf, pdinfo, i, prn);
     }
 
-    pprintf(prn, "\\end{tabular}\n"
-	    "\\end{center}\n");
+    pputs(prn, "\\end{tabular}\n"
+	  "\\end{center}\n");
 }
 
 /* .................................................................. */
@@ -1300,7 +1300,7 @@ rtfprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 		GRETL_DIGITS, cf->coeff[c-1] - cf->maxerr[c-1], 
 		GRETL_DIGITS, cf->coeff[c-1] + cf->maxerr[c-1]);
     }
-    pprintf(prn, " \\intbl \\row\n");
+    pputs(prn, " \\intbl \\row\n");
 }
 
 /* .................................................................. */
@@ -1316,7 +1316,7 @@ void rtfprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
     pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, .025) = %.3f\\par\n\\par\n", 
 	    cf->df, tcrit95(cf->df));
 
-    pprintf(prn, "{" CF_ROW "\\intbl ");
+    pputs(prn, "{" CF_ROW "\\intbl ");
     pprintf(prn, 
 	    " \\qc \\cell"
 	    " \\qc %s\\cell"
@@ -1336,7 +1336,7 @@ void rtfprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	rtfprint_coeff_interval(cf, pdinfo, i, prn);
     }
 
-    pprintf(prn, "}}\n");
+    pputs(prn, "}}\n");
 }
 
 /* .................................................................. */
@@ -1471,7 +1471,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 	    xx = (datainfo->vector[list[i]])? 
 		Z[list[i]][t] : Z[list[i]][0];
 	    if (na(xx)) {
-		pprintf(prn, "NA");
+		pputs(prn, "NA");
 	    } else {
 		pprintf(prn, "%.*f", pmax[i-1], xx);
 	    }

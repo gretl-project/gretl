@@ -628,15 +628,15 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     int i, ok;
 
     if (cmd == NULL) {
-	pprintf(prn, _("\nValid gretl commands are:\n"));
+	pputs(prn, _("\nValid gretl commands are:\n"));
 	for (i=1; i<NC; i++) {
 	    pprintf(prn, "%-9s", commands[i]);
-	    if (i%8 == 0) pprintf(prn, "\n");
-	    else pprintf(prn, " ");
+	    if (i%8 == 0) pputs(prn, "\n");
+	    else pputs(prn, " ");
 	}
-	pprintf(prn, "\n");
-	pprintf(prn, _("\nFor help on a specific command, type: help cmdname"));
-	pprintf(prn, _(" (e.g. help smpl)\n"));
+	pputs(prn, "\n");
+	pputs(prn, _("\nFor help on a specific command, type: help cmdname"));
+	pputs(prn, _(" (e.g. help smpl)\n"));
 	return 0;
     }
 
@@ -672,7 +672,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	delchar('\n', line);
 	ok = !strcmp(cmdcopy, line);
 	if (!ok) continue;
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	do {
 	    if (fgets(tmp, MAXLEN, fq) == NULL) {
 		fclose(fq);
@@ -715,7 +715,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     else if (isdigit(essstr[0])) ess = atof(essstr);
     else return 1;
     if (ess < 0) {
-	pprintf(prn, _("ess: negative value is out of bounds.\n"));
+	pputs(prn, _("ess: negative value is out of bounds.\n"));
 	return 1;
     }
     if (isalpha((unsigned char) Tstr[0]) &&
@@ -724,7 +724,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     else if (isdigit(Tstr[0])) T = atoi(Tstr);
     else return 1;
     if (T < 0) {
-	pprintf(prn, _("T: negative value is out of bounds.\n"));
+	pputs(prn, _("T: negative value is out of bounds.\n"));
 	return 1;
     }
     if (isalpha((unsigned char) kstr[0]) &&
@@ -733,7 +733,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     else if (isdigit(kstr[0])) k = atoi(kstr);
     else return 1;
     if (k < 0) {
-	pprintf(prn, _("k: negative value is out of bounds.\n"));
+	pputs(prn, _("k: negative value is out of bounds.\n"));
 	return 1;
     }    
     _criteria(ess, T, k, prn);
@@ -934,7 +934,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	if (oflag) { 
 	    pprintf(prn, " -%c", getflag(oflag));
 	}
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	return;
     }
 
@@ -954,7 +954,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 		printf(" %s", pcmd->param);
 	}
 	if (!batch) {
-	    pprintf(prn, "%s", pcmd->cmd);
+	    pputs(prn, pcmd->cmd);
 	    if (pcmd->ci == RHODIFF) pprintf(prn, " %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
 		     && pcmd->ci != AR && pcmd->ci != CORRGM
@@ -964,12 +964,12 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	/* if list is very long, break it up over lines */
 	if (pcmd->ci == STORE) {
 	    if (!gui) printf(" \\\n");
-	    if (!batch) pprintf(prn, " \\\n");
+	    if (!batch) pputs(prn, " \\\n");
 	}
 	for (i=1; i<=pcmd->list[0]; i++) {
 	    if (pcmd->list[i] == 999) {
 		if (!gui) printf(" ;");
-		if (!batch) pprintf(prn, " ;");
+		if (!batch) pputs(prn, " ;");
 		got999 = (pcmd->ci != MPOLS)? 1 : 0;
 		continue;
 	    }
@@ -985,7 +985,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 		    pprintf(prn, " %s", pdinfo->varname[pcmd->list[i]]);
 		else pprintf(prn, " %d", pcmd->list[i]);
 		if (i > 1 && i < pcmd->list[0] && (i+1) % 10 == 0) 
-		    pprintf(prn, " \\\n"); /* break line */
+		    pputs(prn, " \\\n"); /* break line */
 	    }
 	}
 	/* corrgm: param comes last */
@@ -1005,7 +1005,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    if (batch) printf("? %s", line);
 	    else printf(" %s", line);
 	}
-	if (!batch) pprintf(prn, "%s", line);
+	if (!batch) pputs(prn, line);
     }
     if (oflag) { 
 	flagc = getflag(oflag);
@@ -1014,7 +1014,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
     }
     if (!gui) putchar('\n');
     if (!batch) {
-	pprintf(prn, "\n");
+	pputs(prn, "\n");
 	if (prn != NULL && prn->fp) fflush(prn->fp);
     }
 }
@@ -1062,7 +1062,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case ADF:
 	if (!isdigit(cmd->param[0])) {
-	    pprintf(prn, _("adf: lag order must be given first\n"));
+	    pputs(prn, _("adf: lag order must be given first\n"));
 	    break;
 	}
 	order = atoi(cmd->param);
@@ -1079,12 +1079,12 @@ int simple_commands (CMD *cmd, const char *line,
 	if (cmd->list[0] > 3) {
 	    err = esl_corrmx(cmd->list, pZ, datainfo, pause, prn);
 	    if (err) 
-		pprintf(prn, _("Error in generating correlation matrix\n"));
+		pputs(prn, _("Error in generating correlation matrix\n"));
 	    break;
 	}
 	corrmat = corrlist(cmd->list, pZ, datainfo);
 	if (corrmat == NULL) 
-	    pprintf(prn, _("Couldn't allocate memory for correlation matrix.\n"));
+	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	else printcorr(corrmat, datainfo, prn);
 	free_corrmat(corrmat);
 	break;
@@ -1092,7 +1092,7 @@ int simple_commands (CMD *cmd, const char *line,
     case CRITERIA:
 	err = parse_criteria(line, datainfo, pZ, prn);
 	if (err) 
-	    pprintf(prn, _("Error in computing model selection criteria.\n"));
+	    pputs(prn, _("Error in computing model selection criteria.\n"));
 	break;
 
     case CRITICAL:
@@ -1102,28 +1102,28 @@ int simple_commands (CMD *cmd, const char *line,
     case DIFF:
 	err = list_diffgenr(cmd->list, pZ, datainfo);
 	if (err) 
-	    pprintf(prn, _("Error adding first differences of variables.\n"));
+	    pputs(prn, _("Error adding first differences of variables.\n"));
 	else varlist(datainfo, prn);
 	break;
 
     case LDIFF:
 	err = list_ldiffgenr(cmd->list, pZ, datainfo);
 	if (err) 
-	    pprintf(prn, _("Error adding log differences of variables.\n"));
+	    pputs(prn, _("Error adding log differences of variables.\n"));
 	else varlist(datainfo, prn);
 	break;
 
     case LAGS:
 	err = lags(cmd->list, pZ, datainfo); 
 	if (err) 
-	    pprintf(prn, _("Error adding lags of variables.\n"));
+	    pputs(prn, _("Error adding lags of variables.\n"));
 	else varlist(datainfo, prn);
 	break;
 
     case LOGS:
 	err = logs(cmd->list, pZ, datainfo);
 	if (err < cmd->list[0]) 
-	    pprintf(prn, _("Error adding logs of variables.\n"));
+	    pputs(prn, _("Error adding logs of variables.\n"));
 	if (err > 0) { 
 	    varlist(datainfo, prn);
 	    err = 0;
@@ -1147,7 +1147,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case RMPLOT:
 	if (cmd->list[0] != 1) {
-	    pprintf(prn, _("This command requires one variable.\n"));
+	    pputs(prn, _("This command requires one variable.\n"));
 	    err = 1;
 	} else {
 	    err = rmplot(cmd->list, *pZ, datainfo, prn, paths);
@@ -1159,7 +1159,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (datainfo->descrip != NULL) 
 	    pprintf(prn, "%s\n", datainfo->descrip);
 	else 
-	    pprintf(prn, _("No data information is available.\n"));
+	    pputs(prn, _("No data information is available.\n"));
 	break;
 
     case LABELS:
@@ -1181,7 +1181,7 @@ int simple_commands (CMD *cmd, const char *line,
     case SUMMARY:
 	summ = summary(cmd->list, pZ, datainfo, prn);
 	if (summ == NULL) 
-	    pprintf(prn, _("generation of summary stats failed\n"));
+	    pputs(prn, _("generation of summary stats failed\n"));
 	else {
 	    print_summary(summ, datainfo, pause, prn);
 	    free_summary(summ);

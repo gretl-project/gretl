@@ -505,7 +505,7 @@ void _criteria (const double ess, int nobs, int ncoeff,
 
     pprintf(prn, _("Using ess = %f, %d observations, %d coefficients\n"), 
 	   ess, nobs, ncoeff);
-    pprintf(prn, _("\nMODEL SELECTION STATISTICS\n\n"));	
+    pputs(prn, _("\nMODEL SELECTION STATISTICS\n\n"));	
     pprintf(prn, "SGMASQ    %13g     AIC       %13g     FPE       %12g\n"
 	    "HQ        %13g     SCHWARZ   %13g     SHIBATA   %12g\n"
 	    "GCV       %13g",
@@ -514,8 +514,8 @@ void _criteria (const double ess, int nobs, int ncoeff,
 	    criterion[4], criterion[5], criterion[6]);
     if (criterion[7] > 0.0) pprintf(prn, "     RICE      %13g\n", 
 					  criterion[7]);
-    else pprintf(prn, "     RICE          undefined\n");
-    pprintf(prn, "\n");
+    else pputs(prn, "     RICE          undefined\n");
+    pputs(prn, "\n");
 }
 
 /* ....................................................... */
@@ -614,7 +614,7 @@ void set_miss (LIST list, const char *param, double **Z,
 	    pprintf(prn, _("Set %d value%s to \"missing\"\n"), count,
 		    (count > 1)? "s" : "");
 	else
-	    pprintf(prn, _("Didn't find any matching observations\n"));
+	    pputs(prn, _("Didn't find any matching observations\n"));
 	return;
     }
 
@@ -2270,7 +2270,7 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
     int old_ts = pdinfo->time_series;
 
     if (pdinfo->pd == 1) {
-	pprintf(prn, _("The current data frequency, 1, is not "
+	pputs(prn, _("The current data frequency, 1, is not "
 		"compatible with panel data.\nPlease see the 'setobs' "
 		"command.\n"));
 	return 1;
@@ -2282,7 +2282,7 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
 	pdinfo->time_series = STACKED_TIME_SERIES;
 
     if (get_panel_structure(pdinfo, &nunits, &T)) {
-	pprintf(prn, _("Failed to set panel structure\n"));
+	pputs(prn, _("Failed to set panel structure\n"));
 	pdinfo->time_series = old_ts;
 	return 1;
     } else {
