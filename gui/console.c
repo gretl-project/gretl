@@ -153,6 +153,7 @@ static void console_exec (void)
 {
     static int redirected;
     int len, loopstack = 0, looprun = 0;
+    int oldv = datainfo->v;
     gchar *c_line; 
     char execline[MAXLEN];
     extern GdkColor red;
@@ -208,6 +209,11 @@ static void console_exec (void)
     /* scroll to end of buffer */
     len = gtk_text_get_length(GTK_TEXT(console_view));
     gtk_editable_set_position(GTK_EDITABLE(console_view), len);
+
+    /* update variable listing in main window */
+    if (datainfo->v != oldv || !strncmp(execline, "rename", 6)) {
+	populate_varlist();
+    }
 }
 
 void show_gretl_console (void)

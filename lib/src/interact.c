@@ -313,11 +313,14 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 
     if (sscanf(line, "%d %8s", &vnum, vname) != 2) {
 	cmd->errcode = E_DATA;
+	sprintf(gretl_errmsg, "rename: %s", 
+		_("requires a variable number and a new name"));
 	return;
     }
 
-    if (vnum > 999 || vnum < 1) {
+    if (vnum >= pdinfo->v || vnum < 1) {
 	cmd->errcode = E_DATA;
+	sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), vnum);
 	return;
     } 
 
@@ -1501,9 +1504,9 @@ static int do_outfile_command (unsigned char flag, char *fname,
     return 1; /* not reached */
 }
 
-static int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
-			    DATAINFO *pdinfo, unsigned char oflag,
-			    PRN *prn)
+int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
+		     DATAINFO *pdinfo, unsigned char oflag,
+		     PRN *prn)
 {
     void *handle = NULL;
     int (*pca_from_corrmat) (CORRMAT *, double ***, DATAINFO *,

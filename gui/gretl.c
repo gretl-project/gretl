@@ -1394,6 +1394,8 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
 	do_menu_op(NULL, SUMMARY_SELECTED, NULL);
     else if (!strcmp(item, _("Correlation matrix"))) 
 	do_menu_op(NULL, CORR_SELECTED, NULL);
+    else if (!strcmp(item, _("Principal components"))) 
+	do_menu_op(NULL, PCA, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
     else if (!strcmp(item, _("Copy to clipboard"))) 
@@ -1407,6 +1409,7 @@ static void build_selection_popup (void)
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Correlation matrix"),
+	N_("Principal components"),
 	N_("Time series plot"),
 	N_("Copy to clipboard"),
     };

@@ -823,7 +823,8 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     clear(line, MAXLEN);
     strcpy(title, "gretl: ");
 
-    if (action == CORR_SELECTED || action == SUMMARY_SELECTED) {
+    if (action == CORR_SELECTED || action == SUMMARY_SELECTED ||
+	action == PCA) {
 	liststr = mdata_selection_to_string(0);
 	if (liststr == NULL) return;
     }
@@ -839,6 +840,12 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	free(liststr);
 	strcat(title, _("correlation matrix"));
 	action = CORR;
+	break;
+    case PCA:
+	strcpy(line, "pca");
+	strcat(line, liststr);
+	free(liststr);
+	strcat(title, _("principal components"));
 	break;
     case FREQ:
 	sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
@@ -896,6 +903,16 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	break;
     case RUNS:
 	err = runs_test(command.list[1], Z, datainfo, prn);
+	break;
+    case PCA:
+	obj = corrlist(command.list, &Z, datainfo);
+	if (obj == NULL) {
+	    errbox(_("Failed to generate correlation matrix"));
+	    gretl_print_destroy(prn);
+	    return;
+	} else {
+	    err = call_pca_plugin((CORRMAT *) obj, &Z, datainfo, 0, prn);
+	}
 	break;
     case SUMMARY:
     case VAR_SUMMARY:	
@@ -5090,8 +5107,6 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	else {
 	    pprintf(prn, "%s\n", get_gretl_msg()); 
-	    if (exec_code == CONSOLE_EXEC)
-		populate_varlist();
 	}
 	break;
 

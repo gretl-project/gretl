@@ -146,6 +146,7 @@ static void console_exec (void)
 {
     static int redirected;
     int loopstack = 0, looprun = 0;
+    int oldv = datainfo->v;
     gchar *c_line; 
     char execline[MAXLEN];
     GtkTextBuffer *buf;
@@ -206,6 +207,11 @@ static void console_exec (void)
     mark = gtk_text_buffer_create_mark(buf, NULL, &start, FALSE);
     gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW(console_view),
 					mark);
+
+    /* update variable listing in main window */
+    if (datainfo->v != oldv || !strncmp(execline, "rename", 6)) {
+	populate_varlist();
+    }
 }
 
 void show_gretl_console (void)

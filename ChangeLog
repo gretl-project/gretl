@@ -3,6 +3,7 @@ version 1.2.0
 - add "printf" command for generating formatted output
 - "delete" command: add the ability to delete a specific
   variable, identified by its number
+- Make principal components analysis available via the GUI
 - When adding a variable to the dataset from a model window,
   give the user a chance to edit the name and description
 - Windows: add option to emulate Windows look (via WIMP)

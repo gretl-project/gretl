@@ -915,7 +915,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gtk_object_unref(GTK_OBJECT(vwin->popup));
 	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
 	    free_summary(vwin->data); 
-	if (vwin->role == CORR)
+	if (vwin->role == CORR || vwin->role == PCA)
 	    free_corrmat(vwin->data);
 	else if (vwin->role == FCASTERR || vwin->role == FCAST)
 	    free_fit_resid(vwin->data);

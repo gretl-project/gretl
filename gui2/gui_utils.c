@@ -1000,7 +1000,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	/* data specific to certain windows */
 	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
 	    free_summary(vwin->data); 
-	else if (vwin->role == CORR)
+	else if (vwin->role == CORR || vwin->role == PCA)
 	    free_corrmat(vwin->data);
 	else if (vwin->role == FCASTERR || vwin->role == FCAST)
 	    free_fit_resid(vwin->data);

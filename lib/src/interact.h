@@ -71,6 +71,10 @@ int simple_commands (CMD *cmd, const char *line,
 		     int batch, unsigned char oflag, 
 		     PRN *prn);
 
+int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
+		     DATAINFO *pdinfo, unsigned char oflag,
+		     PRN *prn);
+
 int ready_for_command (const char *line);
 
 #endif /* INTERACT_H */

@@ -457,6 +457,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Correlation matrix/_selected variables"), NULL, do_menu_op, 
       CORR_SELECTED, NULL, GNULL },
 
+    { N_("/Data/_Principal components"), NULL, do_menu_op, PCA, NULL, GNULL },
+
     { N_("/Data/sep4"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Difference of means"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/Difference of means/assuming equal variances..."), NULL, 
@@ -1115,6 +1117,8 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 	flip(mdata->ifac, "/Variable", (selcount == 1));
 	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
 	     (selcount > 1));
+	flip(mdata->ifac, "/Data/Principal components", 
+	     (selcount > 1));
     }
 }
 
@@ -1639,6 +1643,8 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
 	do_menu_op(NULL, SUMMARY_SELECTED, NULL);
     else if (!strcmp(item, _("Correlation matrix"))) 
 	do_menu_op(NULL, CORR_SELECTED, NULL);
+    else if (!strcmp(item, _("Principal components"))) 
+	do_menu_op(NULL, PCA, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
     else if (!strcmp(item, _("Copy to clipboard"))) 
@@ -1652,6 +1658,7 @@ static void build_selection_popup (void)
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Correlation matrix"),
+	N_("Principal components"),
 	N_("Time series plot"),
 	N_("Copy to clipboard"),
     };
@@ -1662,7 +1669,7 @@ static void build_selection_popup (void)
     selection_popup = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!dataset_is_time_series(datainfo) && i == 3) {
+	if (!dataset_is_time_series(datainfo) && i == 4) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
@@ -1712,6 +1719,8 @@ static void build_main_popups (void)
 
 	old_time_series = time_series;
     }
+    /* emit signal of selection changed to get popups configured
+       properly? */
 }
 
 /* ........................................................... */
