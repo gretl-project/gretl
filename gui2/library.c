@@ -4630,62 +4630,6 @@ void do_save_tex (char *fname, int code, MODEL *pmod)
 
 /* ........................................................... */
 
-enum {
-    END_OF_BUF,
-    GOT_LF,
-    GOT_CR,
-    GOT_CRLF
-};
-
-char *bufgets (char *s, int size, const char *buf)
-{
-    int i, status = END_OF_BUF;
-    static const char *p;
-
-    /* mechanism for resetting p */
-    if (s == NULL || size == 0) {
-	p = NULL;
-	return 0;
-    }
-
-    /* start at beginning of buffer */
-    if (p == NULL) p = buf;
-
-    /* signal that we've reached the end of the buffer */
-    if (p && *p == 0) return NULL;
-
-    *s = 0;
-    /* advance to line-end, end of buffer, or maximum size,
-       whichever comes first */
-    for (i=0; i<size; i++) {
-	s[i] = p[i];
-	if (p[i] == 0) {
-	    break;
-	}
-	if (p[i] == '\r') {
-	    s[i] = 0;
-	    if (p[i+1] == '\n') {
-		status = GOT_CRLF;
-	    } else {
-		status = GOT_CR;
-	    }
-	    break;
-	}
-	if (p[i] == '\n') {
-	    s[i] = 0;
-	    status = GOT_LF;
-	    break;
-	}
-    }
-
-    /* advance the buffer pointer */
-    p += i;
-    if (status == GOT_CR || status == GOT_LF) p++;
-    else if (status == GOT_CRLF) p += 2;
-
-    return s;
-}
-
 #if 0
 static const char *exec_string (int i)
 {

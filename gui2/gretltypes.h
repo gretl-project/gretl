@@ -20,6 +20,10 @@
 #ifndef GRETLTYPES_H
 #define GRETLTYPES_H
 
+#ifdef USE_GTKSOURCEVIEW
+# include <gtksourceview/gtksourceview.h>
+#endif
+
 typedef struct _dialog_t dialog_t;
 typedef struct _windata_t windata_t;
 

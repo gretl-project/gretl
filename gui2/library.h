@@ -59,8 +59,6 @@ gint bufopen (PRN **pprn);
 
 PRN *bufopen_with_size (size_t sz);
 
-char *bufgets (char *s, int size, const char *buf);
-
 gint check_cmd (char *line);
  
 gint cmd_init (char *line);

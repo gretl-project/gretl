@@ -7,6 +7,7 @@ version 1.2.6
   impaired users
 - improve handling of non-ASCII characters in data files
 - more fixes for build process
+- GNU Octave data export: write all data as single matrix
 
 5/04/2004 version 1.2.5
 - fix problem with acf and pacf calculations

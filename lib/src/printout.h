@@ -99,3 +99,5 @@ int do_printf (const char *line, double ***pZ,
 	       PRN *prn);
 
 int in_usa (void);
+
+char *bufgets (char *s, size_t size, const char *buf);

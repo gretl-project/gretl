@@ -413,16 +413,13 @@
     Also as mentioned above, <application>gretl</application> offers
     the facility of exporting data in the formats of both Octave and
     R.  In the case of Octave, the <application>gretl</application>
-    data set is saved thus: the first variable listed for export is
-    treated as the dependent variable and is saved as a vector,
-    <varname>y</varname>, while the remaining variables are saved
-    jointly as a matrix, <varname>X</varname>. You can pull the
-    <varname>X</varname> matrix apart if you wish, once the data are
-    loaded in Octave. See the Octave manual for details. As for R, the
-    exported data file preserves any time series structure that is
-    apparent to <application>gretl</application>. The series are saved
-    as individual structures. The data should be brought into R using
-    the <command>source()</command> command.
+    data set is saved as a single matrix, <varname>X</varname>. You
+    can pull the <varname>X</varname> matrix apart if you wish, once
+    the data are loaded in Octave; see the Octave manual for details.
+    As for R, the exported data file preserves any time series
+    structure that is apparent to <application>gretl</application>.
+    The series are saved as individual structures. The data should be
+    brought into R using the <command>source()</command> command.
   </para>
 
   <para>

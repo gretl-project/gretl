@@ -2,10 +2,18 @@
    text-to-speech
 */
 
-enum {
-    MATRIX_CORR,
-    MATRIX_VCV
-} matrix_types;
+#include "gretltypes.h"
+#include "gretl_enums.h"
+
+static void 
+audioprint_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+{
+    if (pmod->ci != OLS) {
+	pputs(prn, "Sorry, this model is not O.L.S.  I can't read it.\n");
+    } else {
+	pputs(prn, "O.L.S. model: not quite ready for speaking yet.\n");
+    }
+}
 
 static void 
 audioprint_summary (GRETLSUMMARY *summ, const DATAINFO *pdinfo,
@@ -17,29 +25,37 @@ audioprint_summary (GRETLSUMMARY *summ, const DATAINFO *pdinfo,
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
 
-    pprintf(prn, "Summary Statistics, using the observations %s to %s\n",
-	    date1, date2);
+    if (lo == 1) {
+	pprintf(prn, "Summary Statistics for the variable '%s' using the "
+		"observations %s to %s.\n",
+		pdinfo->varname[summ->list[1]], date1, date2);
+    } else {
+	pprintf(prn, "Summary Statistics, using the observations %s to %s.\n",
+		date1, date2);
+    }
 
     for (v=0; v<lo; v++) {
 	lv = summ->list[v+1];
-	pprintf(prn, "%s: ", pdinfo->varname[lv]);
-	pprintf(prn, "mean %.4g, ", summ->coeff[v]);
-	pprintf(prn, "median %.4g, ", summ->xmedian[v]);
-	pprintf(prn, "minimum %.4g, ", summ->xpx[v]);
-	pprintf(prn, "maximum %.4g, ", summ->xpy[v]);
-	pprintf(prn, "standard deviation %.4g.\n", summ->sderr[v]);
+	if (lo > 1) {
+	    pprintf(prn, "%s, ", pdinfo->varname[lv]);
+	}
+	pprintf(prn, "mean, %.4g, ", summ->coeff[v]);
+	pprintf(prn, "median, %.4g, ", summ->xmedian[v]);
+	pprintf(prn, "minimum, %.4g, ", summ->xpx[v]);
+	pprintf(prn, "maximum, %.4g, ", summ->xpy[v]);
+	pprintf(prn, "standard deviation, %.4g.\n", summ->sderr[v]);
     }
 }
 
 static void
 audioprint_matrix (const double *vec, const int *list,
-		   int t1, int t2, int n, int code,
+		   int t1, int t2, int n, int ci,
 		   const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, k;
     int lo = list[0];
 
-    if (code == MATRIX_CORR) {
+    if (ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
 	ntodate(date1, t1, pdinfo);
@@ -57,14 +73,14 @@ audioprint_matrix (const double *vec, const int *list,
 	for (j=i; j<=lo; j++) {
 	    k = ijton(i, j, lo);
 	    if (i == j) {
-		if (code == MATRIX_CORR) continue;
-		pprintf(prn, "%s: ", pdinfo->varname[list[i]]);
+		if (ci == CORR) continue;
+		pprintf(prn, "%s, ", pdinfo->varname[list[i]]);
 	    } else {
-		pprintf(prn, "%s and %s: ", 
+		pprintf(prn, "%s and %s, ", 
 			pdinfo->varname[list[i]],
 			pdinfo->varname[list[j]]);
 	    }
-	    if (code == MATRIX_CORR) {
+	    if (ci == CORR) {
 		pprintf(prn, "%.3f.\n", vec[k]);
 	    } else {
 		pprintf(prn, "%.4g.\n", vec[k]);
@@ -81,7 +97,7 @@ audioprint_corrmat (CORRMAT *corr,
 		    PRN *prn)
 {
     audioprint_matrix(corr->xpx, corr->list, corr->t1, corr->t2,
-		      corr->n, MATRIX_CORR, pdinfo, prn);
+		      corr->n, CORR, pdinfo, prn);
 }
 
 /* .................................................................. */
@@ -123,32 +139,41 @@ audioprint_vcv (const VCV *vcv, const DATAINFO *pdinfo,
 		PRN *prn)
 {
     audioprint_matrix(vcv->vec, vcv->list, 0, 0, 0,
-		      MATRIX_VCV, pdinfo, prn);
+		      COVAR, pdinfo, prn);
 }
 
 /* .................................................................. */
 
 #ifdef HAVE_FLITE
 
-static int speak_buffer (const char *buf)
+static int speak_buffer (const char *buf, int (*should_stop)())
 {
     cst_voice *v;
+    char line[128];
 
     flite_init();
     v = register_cmu_us_kal();
 
-    flite_text_to_speech(buf, v, "play");
-
+    bufgets(NULL, 0, buf);
+    while (bufgets(line, 127, buf)) {
+	if (should_stop()) {
+	    flite_text_to_speech("OK, stopping", v, "play");
+	    break;
+	}
+	flite_text_to_speech(line, v, "play");
+    }
+	
     return 0;
 }
 
 #else
 
-static int speak_buffer (const char *buf)
+static int speak_buffer (const char *buf, int (*should_stop)())
 {
     ISpVoice *v = NULL;
     HRESULT hr;
     WCHAR *w;
+    char line[128];
 
     hr = CoInitialize(NULL);
     if (!SUCCEEDED(hr)) return 1;
@@ -162,10 +187,17 @@ static int speak_buffer (const char *buf)
 	return 1;
     }
 
-    w = wide_string(dset->comments[i]);
-    ISpVoice_Speak(v, w, 0, NULL);
+    bufgets(NULL, 0, buf);
+    while (bufgets(line, 127, buf)) {
+	if (should_stop()) {
+	    ISpVoice_Speak(v, L"OK, stopping", 0, NULL);
+	    break;
+	}
+	w = wide_string(line);
+	ISpVoice_Speak(v, w, 0, NULL);
+	free(w);
+    }
 
-    free(w);
     ISpVoice_Release(v);
     CoUninitialize();
 
@@ -174,39 +206,57 @@ static int speak_buffer (const char *buf)
 
 #endif
 
-#include "gretltypes.h"
+static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
+				int (*should_stop)())
+{
+    PRN *prn;
+
+    prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
+    if (prn == NULL) return 1;
+    
+
+    /* descriptive statistics */
+    if (role == SUMMARY || role == VAR_SUMMARY) {
+	GRETLSUMMARY *summ = (GRETLSUMMARY *) data;
+
+	audioprint_summary(summ, pdinfo, prn);
+    }
+    else if (role == CORR) {
+	CORRMAT *corr = (CORRMAT *) data;
+
+	audioprint_corrmat(corr, pdinfo, prn);
+    }
+    else if (role == COVAR) {
+	VCV *vcv = (VCV *) data;
+
+	audioprint_vcv(vcv, pdinfo, prn);
+    }
+    else if (role == VIEW_MODEL) {
+	MODEL *pmod = (MODEL *) data;
+
+	audioprint_model(pmod, pdinfo, prn);
+    }
+
+    speak_buffer(prn->buf, should_stop);
+    gretl_print_destroy(prn);
+
+    return 0;
+}
 
 #ifdef GLIB2
 
-int read_window_text (windata_t *vwin, const DATAINFO *pdinfo)
+int read_window_text (windata_t *vwin, const DATAINFO *pdinfo,
+		      int (*should_stop)())
 {
-    /* descriptive statistics */
-    if (vwin->role == SUMMARY) {
-	GRETLSUMMARY *summ = (GRETLSUMMARY *) vwin->data;
-	PRN *prn;
-	
-	prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-	if (prn == NULL) return 1;
+    int err = 0;
 
-	audioprint_summary(summ, pdinfo, prn);
-	speak_buffer(prn->buf);
-	gretl_print_destroy(prn);
-    }
-
-    /* correlation matrix */
-    else if (vwin->role == CORR) {
-	CORRMAT *corr = (CORRMAT *) vwin->data;
-	PRN *prn;
-
-	prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
-	if (prn == NULL) return 1;
-
-	audioprint_corrmat(corr, pdinfo, prn);
-	speak_buffer(prn->buf);
-	gretl_print_destroy(prn);
-    }
-
-    else {
+    if (vwin->role == SUMMARY ||
+	vwin->role == VAR_SUMMARY ||
+	vwin->role == CORR ||
+	vwin->role == COVAR ||
+	vwin->role == VIEW_MODEL) {
+	err = audio_print_special(vwin->role, vwin->data, pdinfo, should_stop);
+    } else {
 	GtkTextBuffer *tbuf;
 	GtkTextIter start, end;
 	gchar *window_text;
@@ -216,26 +266,35 @@ int read_window_text (windata_t *vwin, const DATAINFO *pdinfo)
 	gtk_text_buffer_get_end_iter(tbuf, &end);
 	window_text = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 
-	speak_buffer(window_text);
+	err = speak_buffer(window_text, should_stop);
 	g_free(window_text);
     }
 
-    return 0;
+    return err;
 }
 
 #else
 
-int read_window_text (windata_t *vwin, const DATAINFO *pdinfo)
+int read_window_text (windata_t *vwin, const DATAINFO *pdinfo,
+		      int (*should_stop)())
 {
-    gchar *window_text;
+    int err = 0;
 
-    window_text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+    if (vwin->role == SUMMARY ||
+	vwin->role == VAR_SUMMARY ||
+	vwin->role == CORR ||
+	vwin->role == COVAR ||
+	vwin->role == VIEW_MODEL) {
+	err = audio_print_special(vwin->role, vwin->data, pdinfo, should_stop);
+    } else {
+	gchar *window_text;
 
-    speak_buffer(window_text);
+	window_text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+	err = speak_buffer(window_text, should_stop);
+	g_free(window_text);
+    }
 
-    g_free(window_text);
-
-    return 0;
+    return err;
 }
 
 #endif /* GTK versions */

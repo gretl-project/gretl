@@ -67,6 +67,8 @@ enum dataset_comments {
     XRANGE_COMMENT,
     N_COMMENTS
 };
+
+#define DEFAULT_FORCE 96 /* volume of MIDI notes */
     
 typedef struct _datapoint datapoint;
 typedef struct _dataset dataset;
@@ -816,7 +818,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 	track->notes[i].dtime = dtx;
 	track->notes[i].duration = dux;
 	track->notes[i].pitch = 36 + (int) (ypos + 0.5);
-	track->notes[i].force = 64;
+	track->notes[i].force = DEFAULT_FORCE;
 
 #ifdef DEBUG
 	fprintf(stderr, "Obs %d: x = %g, y = %g, ypos = %g\n", i, 

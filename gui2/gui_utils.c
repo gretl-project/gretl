@@ -597,10 +597,28 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 }
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+
+static int set_or_get_audio_stop (int set, int val)
+{
+    static int audio_quit;
+
+    if (set) audio_quit = val;
+
+    return audio_quit;
+}
+
+static int should_stop_talking (void)
+{
+    while (gtk_events_pending())
+	gtk_main_iteration();
+
+    return set_or_get_audio_stop(0, 0);
+}
+
 static void audio_render_window (windata_t *vwin)
 {
     void *handle;
-    int (*read_window_text) (GtkWidget *);
+    int (*read_window_text) (windata_t *, const DATAINFO *, int (*)());
 
     read_window_text = gui_get_plugin_function("read_window_text", 
 					       &handle);
@@ -608,10 +626,12 @@ static void audio_render_window (windata_t *vwin)
         return;
     }
 
-    (*read_window_text) (vwin->w);
+    set_or_get_audio_stop(1, 0);
+    (*read_window_text) (vwin, datainfo, &should_stop_talking);
 
     close_plugin(handle);
 }
+
 #endif
 
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
@@ -644,6 +664,9 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     else if (key->keyval == GDK_a) {
 	audio_render_window(vwin);
+    }
+    else if (key->keyval == GDK_x) {
+	set_or_get_audio_stop(1, 1);
     }
 #endif
 #ifdef G_OS_WIN32

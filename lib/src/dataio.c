@@ -1397,26 +1397,12 @@ int write_data (const char *fname, const int *list,
 	    fprintf(fp, ")\n");
 	}
     }
-    else if (opt == GRETL_DATA_OCTAVE) { /* export GNU Octave */
-	/* write out info on dependent variable */
-	fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n", 
-		pdinfo->varname[list[1]], n);
-	/* write out column of values of dep. var. */
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	    if (pmax[0] == PMAX_NOT_AVAILABLE) {
-		fprintf(fp, "%.12g\n", Z[list[1]][t]);
-	    } else {
-		fprintf(fp, "%.*f\n", pmax[0], 
-			(pdinfo->vector[list[i]])? 
-			Z[list[1]][t] : Z[list[1]][0]);
-	    }
-	}
-	/* write out info for indep vars matrix */
+    else if (opt == GRETL_DATA_OCTAVE) { 
+	/* GNU Octave: write out data as a matrix */
 	fprintf(fp, "# name: X\n# type: matrix\n# rows: %d\n# columns: %d\n", 
-		n, list[0] - 1);
-	/* write out indep. var. matrix */
+		n, list[0]);
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    for (i=2; i<=list[0]; i++) {
+	    for (i=1; i<=list[0]; i++) {
 		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.12g ", Z[list[i]][t]);
 		} else {
