@@ -746,7 +746,10 @@ static int got_valid_varnames (wbook *book, int ncols, int skip)
 	    return VARNAMES_NOTSTR;
 	}
 	test = rowptr[t].cells[i] + 1;
-	if (check_varname(test)) {
+	/* "obs" in first col is OK, though not thereafter */
+	if (i == skip+book->col_offset && !strcmp(test, "obs")) {
+	    ; /* pass along */
+	} else if (check_varname(test)) {
 	    return VARNAMES_INVALID;
 	}
     }
