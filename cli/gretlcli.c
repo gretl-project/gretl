@@ -69,7 +69,7 @@ MODEL tmpmod;
 FILE *dat, *fb;
 int i, j, dot, opt, err, errfatal, oflag, batch;
 int runit, loopstack, looprun;
-int data_file_open, runfile_open;
+int data_status, runfile_open;
 int model_count;            /* keep a tally of models estimated */
 int plot_count;             /* graphs via gnuplot */
 int ignore;                 /* trap for comments */
@@ -281,7 +281,8 @@ int main (int argc, char *argv[])
 	if (err == GRETL_UNRECOGNIZED) 
 	    exit(EXIT_FAILURE);
 	if (err == GRETL_NATIVE_DATA)
-	    err = get_data(&Z, datainfo, &paths, data_file_open, prn.fp);
+	    err = get_data(&Z, datainfo, paths.datfile, &paths, 
+			   data_status, prn.fp);
 	else if (err == GRETL_CSV_DATA)
 	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
 	else if (err == GRETL_BOX_DATA)
@@ -298,7 +299,7 @@ int main (int argc, char *argv[])
 		if (err == E_FOPEN) show_paths(&paths);
 		return EXIT_FAILURE;
 	    }
-	    data_file_open = 1;
+	    data_status = 1;
 	    if (!batch) 
 		pprintf(cmds, "open %s\n", paths.datfile);
 	}
@@ -330,7 +331,7 @@ int main (int argc, char *argv[])
     /* initialize random number generator */
     srand((unsigned int) time(NULL));
 
-    if (data_file_open) varlist(datainfo, &prn);
+    if (data_status) varlist(datainfo, &prn);
     /* check for help file */
     if (!batch) {
 	dat = fopen(paths.helpfile, "r");
@@ -343,7 +344,7 @@ int main (int argc, char *argv[])
 	    show_paths(&paths);
 	}
     } 
-    if (!batch && !runit && !data_file_open) 
+    if (!batch && !runit && !data_status) 
 	fprintf(stderr, "Type \"open filename\" to open a data set\n");
 
 #ifdef HAVE_READLINE
@@ -440,7 +441,7 @@ int main (int argc, char *argv[])
     free(models);
     free(command.list);
     free(command.param);
-    if (data_file_open) free_datainfo(datainfo);
+    if (data_status) free_datainfo(datainfo);
     if (fullinfo != NULL) {
 	clear_datainfo(fullinfo, 1);
 	free(fullinfo);
@@ -473,7 +474,7 @@ void exec_line (char *line, PRN *prn)
     double rho;
 
     /* are we ready for this? */
-    if (!data_file_open && !ignore && !ready_for_command(line)) {
+    if (!data_status && !ignore && !ready_for_command(line)) {
 	fprintf(stderr, "You must open a data file first.\n");
 	err = 1;
 	return;
@@ -826,7 +827,7 @@ void exec_line (char *line, PRN *prn)
 	else
 	    err = import_csv(&Z, datainfo, datfile, prn);
 	if (!err) { 
-	    data_file_open = 1;
+	    data_status = 1;
 	    print_smpl(datainfo, 0, prn);
 	    varlist(datainfo, prn);
 	    pprintf(prn, "You should now use the \"print\" command "
@@ -842,7 +843,7 @@ void exec_line (char *line, PRN *prn)
 	    pprintf(prn, "'open' command is malformed.\n");
 	    break;
 	}
-	if (data_file_open && !(batch) 
+	if (data_status && !(batch) 
 	    && strcmp(datfile, paths.datfile)) {
 	    fprintf(stderr, "Opening a new data file closes the "
 		    "present one.  Proceed? (y/n) ");
@@ -853,21 +854,21 @@ void exec_line (char *line, PRN *prn)
 		break;
 	    }
 	}
-	strncpy(paths.datfile, datfile, MAXLEN-1);
-	check = detect_filetype(paths.datfile, &paths, prn);
+	check = detect_filetype(datfile, &paths, prn);
 	if (check == GRETL_CSV_DATA)
-	    err = import_csv(&Z, datainfo, paths.datfile, prn);
+	    err = import_csv(&Z, datainfo, datfile, prn);
 	else if (check == GRETL_BOX_DATA)
-	    err = import_box(&Z, datainfo, paths.datfile, prn);
+	    err = import_box(&Z, datainfo, datfile, prn);
 	else 
-	    err = get_data(&Z, datainfo, &paths, 
-			   data_file_open, prn->fp);
+	    err = get_data(&Z, datainfo, datfile, &paths, 
+			   data_status, prn->fp);
 	if (err) {
 	    errmsg(err, prn);
 	    break;
 	}
+	strncpy(paths.datfile, datfile, MAXLEN-1);
 	fullZ = NULL;
-	data_file_open = 1;
+	data_status = 1;
 	varlist(datainfo, prn);
 	paths.currdir[0] = '\0';
 	break;
@@ -948,11 +949,11 @@ void exec_line (char *line, PRN *prn)
 	    err = 1;
 	    break;
 	}
-	err = open_nulldata(&Z, datainfo, data_file_open, 
+	err = open_nulldata(&Z, datainfo, data_status, 
 			    nulldata_n, prn);
 	if (err) 
 	    pprintf(prn, "Failed to create empty data set.\n");
-	else data_file_open = 1;	
+	else data_status = 1;	
 	break;
 
     case OLS:

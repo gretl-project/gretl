@@ -1179,9 +1179,10 @@ void gz_switch_ext (char *targ, char *src, char *ext)
  * get_data:
  * @pZ: pointer to data set.
  * @pdinfo: data information struct.
+ * @datfile: name of file to try.
  * @ppaths: path information struct.
  * @data_status: indicator for whether a data file is currently open
- * in gretl's work space (1) or not (0).
+ * in gretl's work space (not-0) or not (0).
  * @fp: file pointer from which data may be read.
  * 
  * Read data from file into gretl's work space, allocating space as
@@ -1191,43 +1192,44 @@ void gz_switch_ext (char *targ, char *src, char *ext)
  *
  */
 
-int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths, 
 	      const int data_status, FILE *fp) 
 {
 
     FILE *dat = NULL;
     gzFile fgz = NULL;
     int err, zipped = 0;
+    char hdrfile[MAXLEN], lblfile[MAXLEN];
 
     gretl_errmsg[0] = '\0';
 
     /* get filenames organized */
-    clear(ppaths->hdrfile, MAXLEN); 
-    zipped = has_gz_suffix(ppaths->datfile);
-    if (addpath(ppaths->datfile, ppaths, 0) == NULL && !zipped) {
-	strcat(ppaths->datfile, ".gz");
-	if (addpath(ppaths->datfile, ppaths, 0) == NULL)
+    hdrfile[0] = '\0';
+    zipped = has_gz_suffix(datfile);
+    if (addpath(datfile, ppaths, 0) == NULL && !zipped) {
+	strcat(datfile, ".gz");
+	if (addpath(datfile, ppaths, 0) == NULL)
 	    return E_FOPEN;
 	else
 	    zipped = 1;
     }
 	
     if (!zipped) {
-	switch_ext(ppaths->hdrfile, ppaths->datfile, "hdr");
-	switch_ext(ppaths->lblfile, ppaths->datfile, "lbl");
+	switch_ext(hdrfile, datfile, "hdr");
+	switch_ext(lblfile, datfile, "lbl");
     } else {
-	gz_switch_ext(ppaths->hdrfile, ppaths->datfile, "hdr");
-	gz_switch_ext(ppaths->lblfile, ppaths->datfile, "lbl");
+	gz_switch_ext(hdrfile, datfile, "hdr");
+	gz_switch_ext(lblfile, datfile, "lbl");
     }
 
     /* clear any existing data info */
     if (data_status) clear_datainfo(pdinfo, 0);
 
     /* read data header file */
-    err = readhdr(ppaths->hdrfile, pdinfo);
+    err = readhdr(hdrfile, pdinfo);
     if (err) return err;
     else 
-	fprintf(fp, "\nReading header file %s\n", ppaths->hdrfile);
+	fprintf(fp, "\nReading header file %s\n", hdrfile);
 
     /* deal with case where first col. of data file contains
        "marker" strings */
@@ -1240,13 +1242,13 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
 
     /* Invoke data (Z) reading function */
     if (zipped) {
-	fgz = gzopen(ppaths->datfile, "rb");
+	fgz = gzopen(datfile, "rb");
 	if (fgz == NULL) return E_FOPEN;
     } else {
 	if (pdinfo->bin)
-	    dat = fopen(ppaths->datfile, "rb");
+	    dat = fopen(datfile, "rb");
 	else
-	    dat = fopen(ppaths->datfile, "r");
+	    dat = fopen(datfile, "r");
 	if (dat == NULL) return E_FOPEN;
     }
 
@@ -1259,8 +1261,8 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
     fprintf(fp, (pdinfo->time_series == TIME_SERIES) ? 
 	    "time-series" : "cross-sectional");
     fprintf(fp, " datafile");
-    if (strlen(ppaths->datfile) > 40) putc('\n', fp);
-    fprintf(fp, " %s\n\n", ppaths->datfile);
+    if (strlen(datfile) > 40) putc('\n', fp);
+    fprintf(fp, " %s\n\n", datfile);
 
     if (zipped) {
 	err = gz_readdata(fgz, pdinfo, *pZ); 
@@ -1270,12 +1272,17 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
 	fclose(dat);
     }
     if (err) return err;
-    err = readlbl(ppaths->lblfile, pdinfo);
-    if (err) return err;
 
     /* Set sample range to entire length of dataset by default */
     pdinfo->t1 = 0; 
     pdinfo->t2 = pdinfo->n - 1;
+
+    strcpy(ppaths->datfile, datfile);
+    strcpy(ppaths->hdrfile, hdrfile);
+    strcpy(ppaths->lblfile, lblfile);
+
+    err = readlbl(lblfile, pdinfo);
+    if (err) return err;    
 
     return 0;
 }

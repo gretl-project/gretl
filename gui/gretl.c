@@ -108,7 +108,7 @@ DATAINFO *datainfo;
 DATAINFO *subinfo;
 DATAINFO *fullinfo;
 char *errtext;
-char cmdfile[MAXLEN], scriptfile[MAXLEN];
+char cmdfile[MAXLEN], scriptfile[MAXLEN], trydatfile[MAXLEN];
 char line[MAXLEN];
 PATHS paths;                /* useful paths */
 CMD command;                /* gretl command struct */
@@ -117,7 +117,7 @@ double *subZ;               /* sub-sampled data set */
 double *fullZ;              /* convenience pointer */
 MODEL **models;             /* gretl models structs */
 SESSION session;            /* hold models, graphs */
-SESSIONBUILD rebuild;          /* rebuild session later */
+SESSIONBUILD rebuild;       /* rebuild session later */
 
 int plot_count, data_status, orig_vars;
 PRN *cmds;
@@ -606,7 +606,7 @@ int main (int argc, char *argv[])
 	case GRETL_UNRECOGNIZED:
 	    exit(EXIT_FAILURE);
 	case GRETL_NATIVE_DATA:
-	    err = get_data(&Z, datainfo, &paths, data_status, 
+	    err = get_data(&Z, datainfo, paths.datfile, &paths, data_status, 
 			   stderr);
 	    break;
 	case GRETL_CSV_DATA:

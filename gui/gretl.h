@@ -72,6 +72,7 @@ extern gchar *clipboard_buf;
 /* global filenames */
 extern char cmdfile[MAXLEN];
 extern char scriptfile[MAXLEN];
+extern char trydatfile[MAXLEN];
 
 /* global error string */
 extern char *errtext;

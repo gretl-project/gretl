@@ -273,12 +273,10 @@ void file_selector (char *msg, char *startdir, int action,
 
     strncpy(remember_dir, fname, slashpos(fname));
 
-    if (action == OPEN_DATA) {
-	strcpy(paths.datfile, fname);
+    if (action == OPEN_DATA || action == OPEN_CSV || action == OPEN_BOX) {
+	strcpy(trydatfile, fname);
 	verify_open_data(NULL);
     }
-    else if (action == OPEN_CSV || action == OPEN_BOX) 
-	do_open_csv_box(fname, action);
     else if (action == OPEN_SCRIPT) {
 	int spos;
 
@@ -395,12 +393,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     strncat(title, test, 40);
     strcpy(remember_dir, path);
 
-    if (action == OPEN_DATA) {
-	strcpy(paths.datfile, fname);
+    if (action == OPEN_DATA || action == OPEN_CSV || action == OPEN_BOX) {
+	strcpy(trydatfile, fname);
 	verify_open_data(NULL);
     }
-    else if (action == OPEN_CSV || action == OPEN_BOX) 
-	do_open_csv_box(fname, action);
     else if (action == OPEN_SCRIPT) {
 	int spos;
 

@@ -67,7 +67,7 @@ int has_gz_suffix (const char *fname);
 void gz_switch_ext (char *targ, char *src, char *ext);
 
 int get_data (double **pZ, DATAINFO *pdinfo, 
-	      PATHS *ppaths, 
+	      char *datfile, PATHS *ppaths, 
 	      const int data_status,
 	      FILE *fp);
 

@@ -457,28 +457,32 @@ void do_open_data (GtkWidget *w, gpointer data)
 
     /* check file type first */
     if (bufopen(&prn)) return;
-    datatype = detect_filetype(paths.datfile, &paths, prn);
+    datatype = detect_filetype(trydatfile, &paths, prn);
     gretl_print_destroy(prn);
 
     /* will this work right? */
     close_session();
 
     if (datatype == GRETL_CSV_DATA) {
-	do_open_csv_box(paths.datfile, OPEN_CSV);
+	do_open_csv_box(trydatfile, OPEN_CSV);
 	return;
     }
     else if (datatype == GRETL_BOX_DATA) {
-	do_open_csv_box(paths.datfile, OPEN_BOX);
+	do_open_csv_box(trydatfile, OPEN_BOX);
 	return;
     }
     else 	
-	err = get_data(&Z, datainfo, &paths, data_status, stderr);
+	err = get_data(&Z, datainfo, trydatfile, &paths, data_status, stderr);
+
     if (err) {
 	gui_errmsg(err);
 	return;
     }	
+
     /* trash the practice files window that launched the query? */
     if (fwin) gtk_widget_destroy(fwin->w); 
+
+    strcpy(paths.datfile, trydatfile);
 
     register_data(paths.datfile, 1);
 }
@@ -522,7 +526,7 @@ void verify_open_session (gpointer userdata)
 static void set_data_from_filelist (gpointer data, guint i, 
 				    GtkWidget *widget)
 {
-    strcpy(paths.datfile, datap[i]);
+    strcpy(trydatfile, datap[i]); 
     verify_open_data(NULL);
 }
 

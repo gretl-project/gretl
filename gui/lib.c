@@ -2695,6 +2695,7 @@ void do_open_csv_box (char *fname, int code)
     if (err) return;
 
     data_status |= IMPORT_DATA;
+    strcpy(paths.datfile, fname);
 
     register_data(fname, 1);
 }
@@ -3410,18 +3411,18 @@ static int gui_exec_line (char *line,
 	    errbox("'open' command is malformed");
 	    break;
 	}
-	strncpy(paths.datfile, datfile, MAXLEN-1);
-	check = detect_filetype(paths.datfile, &paths, prn);
+	check = detect_filetype(datfile, &paths, prn);
 	if (check == GRETL_CSV_DATA)
-	    err = import_csv(&Z, datainfo, paths.datfile, prn);
+	    err = import_csv(&Z, datainfo, datfile, prn);
 	else if (check == GRETL_BOX_DATA)
-	    err = import_box(&Z, datainfo, paths.datfile, prn);
+	    err = import_box(&Z, datainfo, datfile, prn);
 	else 	
-	    err = get_data(&Z, datainfo, &paths, data_status, stderr);
+	    err = get_data(&Z, datainfo, datfile, &paths, data_status, stderr);
 	if (err) {
 	    gui_errmsg(err);
 	    break;
 	}
+	strncpy(paths.datfile, datfile, MAXLEN-1);
 	if (check == GRETL_CSV_DATA || check == GRETL_BOX_DATA)
 	    data_status |= IMPORT_DATA;
 	register_data(paths.datfile, (exec_code != REBUILD_EXEC));
