@@ -1144,6 +1144,7 @@ void write_rc (void)
 {
     int i = 0;
     char val[6];
+    int err;
 
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].type == 'B') {
@@ -1153,18 +1154,19 @@ void write_rc (void)
 			  rc_vars[i].key, 
 			  val);
 	} else {
-#ifdef OLD_REGISTRY
-	    write_reg_val((rc_vars[i].type == 'R')? 
-			  HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
-			  get_reg_base(rc_vars[i].key),
-			  rc_vars[i].key, 
-			  rc_vars[i].var);
-#else
-	    write_reg_val(HKEY_CURRENT_USER, 
-			  get_reg_base(rc_vars[i].key),
-			  rc_vars[i].key, 
-			  rc_vars[i].var);
-#endif
+	    err = 0;
+	    if (rc_vars[i].type == 'R') {
+		err = write_reg_val(HKEY_CLASSES_ROOT, 
+				    get_reg_base(rc_vars[i].key),
+				    rc_vars[i].key, 
+				    rc_vars[i].var);
+	    }
+	    if (rc_vars[i].type != 'R' || err) {
+		write_reg_val(HKEY_CURRENT_USER, 
+			      get_reg_base(rc_vars[i].key),
+			      rc_vars[i].key, 
+			      rc_vars[i].var);
+	    }
 	}
 	i++;
     }
@@ -1183,18 +1185,19 @@ void read_rc (void)
     int err;
 
     while (rc_vars[i].key != NULL) {
-#ifdef OLD_REGISTRY
-	err = read_reg_val ((rc_vars[i].type == 'R')? 
-			    HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
-			    get_reg_base(rc_vars[i].key),
-			    rc_vars[i].key, 
-			    value);
-#else
-	err = read_reg_val (HKEY_CURRENT_USER, 
-			    get_reg_base(rc_vars[i].key),
-			    rc_vars[i].key, 
-			    value);
-#endif
+	err = 0;
+	if (rc_vars[i].type == 'R') {
+	    err = read_reg_val (HKEY_CLASSES_ROOT, 
+				get_reg_base(rc_vars[i].key),
+				rc_vars[i].key, 
+				value);
+	}
+	if (rc_vars[i].type != 'R' || err) {
+	    err = read_reg_val (HKEY_CURRENT_USER, 
+				get_reg_base(rc_vars[i].key),
+				rc_vars[i].key, 
+				value);
+	}	    
 	if (!err) {
 	    if (rc_vars[i].type == 'B') {
 		str_to_boolvar(value, rc_vars[i].var);

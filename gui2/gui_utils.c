@@ -2153,7 +2153,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
 #else
-    gtk_object_set_data(GTK_OBJECT(vwin->dialog), "ddata", vwin);
     gtk_signal_connect(GTK_OBJECT(vwin->dialog), "key_press_event", 
 		       GTK_SIGNAL_FUNC(catch_viewer_key), 
 		       vwin);

@@ -1091,7 +1091,8 @@ static unsigned char isflag (unsigned char c)
 {
     if (c == 'o' || c == 'c' || c == 'i' || c == 'm' ||
 	c == 'r' || c == 's' || c == 't' || c == 'l' ||
-	c == 'a' || c == 'z' || c == 'w' || c == 'q') {
+	c == 'a' || c == 'z' || c == 'w' || c == 'q' ||
+	c == 'n' || c == 'v') {
 	return c;
     }
     return 0;
@@ -2319,7 +2320,8 @@ int is_model_cmd (const char *line)
 	!strncmp(line, "logit", 5)  ||
 	!strncmp(line, "probit", 6) ||
 	!strncmp(line, "end nls", 7) ||
-	!strncmp(line, "ar", 2)) {
+	!strncmp(line, "arma", 4) ||
+	!strncmp(line, "ar ", 3)) {
 	return 1;
     }
 

@@ -1003,7 +1003,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	setlocale(LC_NUMERIC, "");
 #endif
 	fprintf(fq, "e\n");
-#ifdef WIN32
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
 	fprintf(fq, "pause -1\n");
 #endif
 	fclose(fq);

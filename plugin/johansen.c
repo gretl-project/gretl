@@ -241,7 +241,9 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
 	/* first col shows cointegration rank under H0, 
 	   second shows associated eigenvalue */
-	pputs(prn, _("\nRank Eigenvalue Trace test [p.val.]  Lmax test [p.val.]\n"));
+	pprintf(prn, "\n%s %s %s %s   %s %s\n", _("Rank"), _("Eigenvalue"), 
+		_("Trace test"), _("p-value"),
+		_("Lmax test"), _("p-value"));
 
 	for (i=0; i<k; i++) {
 	    gamma_par_asymp(trace[i], lambdamax[i], 2 , k-i, T, pval);

@@ -252,7 +252,7 @@ int read_nist_file (const char *fname,
     char fullname[128];
 
 #ifdef WIN32
-    sprintf(fullname, "nist\\%s", fname);
+    sprintf(fullname, "%s\\%s", datadir, fname);
     fp = fopen(fullname, "r");
 #else
     sprintf(fullname, "%s/%s", datadir, fname);

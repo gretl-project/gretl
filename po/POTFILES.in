@@ -56,6 +56,7 @@ gui/series_view.c
 gui/session.c
 gui/settings.c
 gui/ssheet.c
+gui/textbuf.c
 gui/webget.c
 gui2/boxplots.c
 gui2/calculator.c
@@ -68,6 +69,7 @@ gui2/fileselect.c
 gui2/font_filter.c
 gui2/gpt_control.c
 gui2/gretl.c
+gui2/gretlwin32.c
 gui2/gtkfontselhack.c
 gui2/guiprint.c
 gui2/guiprint_common.c
@@ -82,8 +84,11 @@ gui2/series_view.c
 gui2/session.c
 gui2/settings.c
 gui2/ssheet.c
+gui2/textbuf.c
 gui2/treeutils.c
 gui2/webget.c
+plugin/arma.c
+plugin/arma_x12.c
 plugin/excel_import.c
 plugin/gnumeric_import.c
 plugin/import_common.c

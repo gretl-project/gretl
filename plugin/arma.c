@@ -106,6 +106,7 @@ static double update_fcast_errs (double *e, const double *y,
     for (t=0; t<n; t++) {
 
 	if (na(y[t])) continue;
+
 	e[t] = y[t] - coeff[0];
 
 	for (i=0; i<p; i++) {
@@ -119,6 +120,7 @@ static double update_fcast_errs (double *e, const double *y,
 	    if (k < 0) continue;
 	    e[t] -= coeff[i+p+1] * e[k];
 	}
+
 	s2 += e[t] * e[t];
     }
 
@@ -338,7 +340,7 @@ static int check_arma_list (const int *list)
     else if (list[1] + list[2] == 0) err = 1;
 
     if (err) {
-	gretl_errmsg_set(_("Syntax error in arma command"));
+	gretl_errmsg_set(_("Error in arma command"));
     }
     
     return err;
@@ -509,7 +511,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     /* calculate log-likelihood */
     ll = get_ll(e, an);
 
-    while (crit > tol && iters++ < itermax) {
+    while (crit > tol && iters++ < itermax && !isnan(ll)) {
 
 	pprintf(prn, "Iteration %d\n", iters);
         pprintf(prn, "  log likelihood = %g\n", ll);

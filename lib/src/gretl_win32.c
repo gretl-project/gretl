@@ -110,6 +110,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     ppaths->gretldir[0] = '\0';
     read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", ppaths->gretldir);
     if (ppaths->gretldir[0] == '\0') {
+	read_reg_val(HKEY_CURRENT_USER, "gretl", "gretldir", ppaths->gretldir);
+    }
+    if (ppaths->gretldir[0] == '\0') {
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
     }
 
@@ -121,6 +124,9 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 
     ppaths->gnuplot[0] = '\0';
     read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gnuplot", ppaths->gnuplot);
+    if (ppaths->gnuplot[0] == '\0') {
+	read_reg_val(HKEY_CURRENT_USER, "gretl", "gnuplot", ppaths->gnuplot);;
+    }
     if (ppaths->gnuplot[0] == '\0') {
 	sprintf(ppaths->gnuplot, 
 		"%c:\\userdata\\gnuplot\\wgnuplot.exe", drive);
