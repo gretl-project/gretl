@@ -136,7 +136,23 @@ if test x"${XMLCONF}" != x ; then
   AC_SUBST(XML_LIBS)
 fi
 
-dnl See if gnome libole2 is available?
+PIXBUFCONF=''
+AC_DEFUN(AC_LIB_PIXBUF,
+[AC_CHECK_PROGS(PIXBUFCONF,gdk-pixbuf-config,)])
+
+AC_LIB_PIXBUF
+if test x"${PIXBUFCONF}" != x ; then
+   PIXBUF_CFLAGS=`$PIXBUFCONF --cflags`
+   PIXBUF_LIBS=`$PIXBUFCONF --libs`
+   AC_SUBST(PIXBUF_CFLAGS)
+   AC_SUBST(PIXBUF_LIBS)
+else
+   echo
+   echo "* gretl needs the gdk-pixbuf library."
+   exit     
+fi
+
+dnl See if gnome libole2 is available
 OLE_LIBS=`glib-config --libs`
 OLE_CFLAGS="-I. -I.. -DHAVE_UNISTD_H `glib-config --cflags`"
 if test x"${tryole}" != xno ; then
@@ -180,6 +196,24 @@ then
 	have_gnuplot=yes
 fi
 
+AC_DEFUN(AC_CHECK_PNG, )
+
+AC_CHECK_PNG
+gnuplot_png=no
+AC_MSG_CHECKING(for PNG support in gnuplot)
+echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
+if test x"${gnuplot_png}" = xyes
+then
+   AC_MSG_RESULT(yes)
+   AC_DEFINE(GNUPLOT_PNG)
+else
+   AC_MSG_RESULT(no)
+   echo
+   echo "* gretl needs PNG support in gnuplot."
+   echo "* The current version of gnuplot is available from www.gnuplot.info"
+   exit
+fi
+
 AC_DEFUN(AC_PROG_LATEX,
 [AC_CHECK_PROG(LATEX,latex,yes)])
 
@@ -209,11 +243,6 @@ AC_SUBST(have_gnome)
 fi
 
 AC_SUBST(gnome_prefix)
-
-AC_DEFUN(AC_CHECK_ARCH, )
-
-AC_CHECK_ARCH
-echo $host_cpu | grep i.86 > /dev/null || AC_DEFINE(OTHER_ARCH)
 
 if test "$build_gui" = "yes"
 then

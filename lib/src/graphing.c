@@ -432,31 +432,37 @@ static int factorized_vars (double ***pZ,
     return 0;
 }
 
-
-
 /**
- * gnuplot_tmpname:
+ * gnuplot_init:
  * @ppaths: pointer to path information struct.
+ * @fpp: pointer to stream to be opened.
  *
- * Writes a unique temporary filename into the plotfile member of @ppaths,
- * if GNUPLOT_PNG is defined.
+ * If GNUPLOT_PNG is defined and we're in GUI mode, writes a unique
+ * temporary filename into the plotfile member of @ppaths; opens
+ * plotfile for writing as @fpp; If GNUPLOT_PNG is defined and we're in 
+ * GUI mode, writes PNG terminal type into plotfile.
  *
  * Returns: 0 on success, 1 on failure
  */
 
-int gnuplot_tmpname (PATHS *ppaths)
+int gnuplot_init (PATHS *ppaths, FILE **fpp)
 {
 #ifdef GNUPLOT_PNG
     if (GRETL_GUI(ppaths)) {
 	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
-	if (mktemp(ppaths->plotfile)) 
-	    return 0;
-	else return 1;
-    } else
-	return 0;
+	if (mktemp(ppaths->plotfile) == NULL) return 1;
+    }
+    *fpp = fopen(ppaths->plotfile, "w");
+    if (*fpp == NULL) return 1;
+    if (GRETL_GUI(ppaths)) {
+	fprintf(*fpp, "set term png color\n");
+	fprintf(*fpp, "set output 'gretltmp.png'\n");
+    }
 #else
-    return 0;
+    *fpp = fopen(ppaths->plotfile, "w");
+    if (*fpp == NULL) return 1;
 #endif
+    return 0;
 }
 
 /**
@@ -510,7 +516,7 @@ int gnuplot (LIST list, const int *lines,
 	     PATHS *ppaths, int *plot_count, 
 	     const int batch, const int gui, const int opt)
 {
-    FILE *fq;
+    FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
     int i, j, oddman = 0;
     char s1[9], s2[9], xlabel[12], withstring[8];
@@ -530,12 +536,10 @@ int gnuplot (LIST list, const int *lines,
 	*plot_count += 1; 
 	sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
 		*plot_count);
-    } else 
-	gnuplot_tmpname(ppaths);
-
-    if ((fq = fopen(ppaths->plotfile, "w")) == NULL) return E_FOPEN;
-
-    GNUPLOT_HDR(ppaths, fq);
+	fq = fopen(ppaths->plotfile, "w");
+	if (fq == NULL) return E_FOPEN;
+    } else
+	if (gnuplot_init(ppaths, &fq)) return E_FOPEN;
 
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
 	if (get_timevar(pdinfo, s2) >= 0) {
@@ -781,7 +785,7 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
 {
     int i, t, err = 0, xvar, yvar, *plotlist;
     int nplots, m;
-    FILE *fp;
+    FILE *fp = NULL;
     double xx;
 
     if (pos > 2) { /* plot several yvars against one xvar */
@@ -810,10 +814,9 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
     if (plotlist[0] > 6) plotlist[0] = 6;
     nplots = plotlist[0];
 
-    gnuplot_tmpname(ppaths);
-    fp = fopen(ppaths->plotfile, "w");
+    if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+
     fprintf(fp, "# multiple scatterplots\n");
-    GNUPLOT_HDR(ppaths, fp);
     fprintf(fp, "set size 1.0,1.0\nset origin 0.0,0.0\n"
 	    "set multiplot\n");
     fputs("set nokey\n", fp);
@@ -881,15 +884,12 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
 int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 {
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
-    FILE *fp;
+    FILE *fp = NULL;
     int i, K = freq->numbins;
 
-    gnuplot_tmpname(ppaths);
-    fp = fopen(ppaths->plotfile, "w");
-    if (fp == NULL) return E_FOPEN;
+    if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
 
     fprintf(fp, "# frequency plot\n");
-    GNUPLOT_HDR(ppaths, fp);
 
     if (dist) {
 	double propn, plotmin = 0.0, plotmax = 0.0;
@@ -986,14 +986,12 @@ int plot_fcast_errs (const int n, const double *obs,
 		     const double *maxerr, const char *varname, 
 		     PATHS *ppaths)
 {
-    FILE *fp;
+    FILE *fp = NULL;
     int t;
 
-    gnuplot_tmpname(ppaths);
-    fp = fopen(ppaths->plotfile, "w");
-    if (fp == NULL) return E_FOPEN;
+    if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+
     fprintf(fp, "# forecasts with 95 pc conf. interval\n");
-    GNUPLOT_HDR(ppaths, fp);
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2 title 'fitted' w lines , \\\n"

@@ -817,7 +817,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     char cumdate[9];
     double wbar, xx, yy, sigma, hct;
     double *cresid = NULL, *W = NULL, *xvec = NULL;
-    FILE *fq;
+    FILE *fq = NULL;
     int err = 0;
 
     if (pmod->ci != OLS) return E_OLSONLY;
@@ -905,10 +905,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	}
 
 	/* plot with 95% confidence bands, if not batch mode */
-	if (prn->fp == NULL &&
-	    gnuplot_tmpname(ppaths) == 0 && 
-	    (fq = fopen(ppaths->plotfile, "w"))) { 
-	    GNUPLOT_HDR(ppaths, fq);
+
+	if (prn->fp == NULL && gnuplot_init(ppaths, &fq) == 0) {
 	    fprintf(fq, "# CUSUM test\n");
 	    fprintf(fq, "set xlabel \"observation\"\n");
 	    fprintf(fq, "set xzeroaxis\n");

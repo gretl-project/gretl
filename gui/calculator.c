@@ -341,12 +341,10 @@ static double f_crit (const int df1, const int df2)
 static void htest_graph (int dist, double x, int df1, int df2)
 {
     double xx, prange, spike = 0.0;
-    FILE *fp;
-    char plotcmd[MAXLEN];
+    FILE *fp = NULL;
 
-    gnuplot_tmpname(&paths);
-    fp = fopen(paths.plotfile, "w");
-    if (fp == NULL) return;
+    if (gnuplot_init(&paths, &fp)) return;
+
     fprintf(fp, "# sampling distribution\n");
 
     fprintf(fp, "set key right top\n");
@@ -413,15 +411,11 @@ static void htest_graph (int dist, double x, int df1, int df2)
     fprintf(fp, "pause -1\n");
 #endif
     if (fp) fclose(fp);
-#ifdef G_OS_WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, paths.plotfile);
-    WinExec(plotcmd, SW_SHOWNORMAL);
-#else
-    sprintf(plotcmd, "%s -persist %s", 
-	    paths.gnuplot, paths.plotfile);
-    if (system(plotcmd))
+
+    if (gnuplot_display(&paths))
 	errbox(_("gnuplot command failed"));
-#endif
+    else
+	register_graph();
 }
 
 /* ........................................................... */

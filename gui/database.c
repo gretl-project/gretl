@@ -26,7 +26,7 @@
 #include <zlib.h>
 #include <dirent.h>
 
-#ifdef OTHER_ARCH
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 #include <netinet/in.h>
 #endif
 
@@ -158,7 +158,7 @@ static int get_db_data (const char *dbbase, SERIESINFO *sinfo, double ***pZ)
     return 0;
 }
 
-#ifdef OTHER_ARCH
+#if G_BYTE_ORDER == G_BIG_ENDIAN
 typedef struct {
     long frac;
     short exp;
@@ -184,7 +184,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
     int t, err, n = sinfo->nobs;
     dbnumber val;
     size_t offset;
-#ifdef OTHER_ARCH
+#if G_BYTE_ORDER == G_BIG_ENDIAN
     netfloat nf;
 #endif
     
@@ -193,7 +193,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
     clear(getbuf, 8192);
 
     update_statusline(dbdat, _("Retrieving data..."));
-#ifdef OTHER_ARCH
+#if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_url(GRAB_NBO_DATA, dbbase, sinfo->varname, 0, &getbuf, 
 		       errbuf);
 #else
@@ -214,17 +214,17 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 
     offset = 0L;
     for (t=0; t<n; t++) {
-#ifndef OTHER_ARCH
-	/* just read floats -- ok for ix86 at least */
-	memcpy(&val, getbuf + offset, sizeof(dbnumber));
-	offset += sizeof(dbnumber);
-#else
-	/* alternative: go via network byte order */
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+	/* go via network byte order */
 	memcpy(&(nf.frac), getbuf + offset, sizeof(long));
 	offset += sizeof(long);
 	memcpy(&(nf.exp), getbuf + offset, sizeof(short));
 	offset += sizeof(short);
 	val = retrieve_float(nf);
+#else
+	/* just read floats */
+	memcpy(&val, getbuf + offset, sizeof(dbnumber));
+	offset += sizeof(dbnumber);
 #endif
         sprintf(numstr, "%g", val); 
         (*pZ)[1][t] = atof(numstr);
@@ -1281,7 +1281,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     char gzbuf[BUFSIZE];
     gzFile fgz;
     unsigned i;
-#ifdef OTHER_ARCH
+#if G_BYTE_ORDER == G_BIG_ENDIAN
     size_t offset;
     netfloat nf;
     float val;
@@ -1323,7 +1323,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     fclose(fidx);
 
     while (1) {
-#ifdef OTHER_ARCH
+#if G_BYTE_ORDER == G_BIG_ENDIAN
         if ((bgot = gzread(fgz, gzbuf, sizeof(long) + sizeof(short))) > 0) {
 	    /* read "netfloats" and write floats */
 	    memcpy(&(nf.frac), gzbuf, sizeof(long));
@@ -1372,10 +1372,10 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 	return;
     sprintf(ggzname, "%stmp_%s.ggz", paths.binbase, dbname);
 
-#ifndef OTHER_ARCH
-    err = retrieve_url(GRAB_DATA, dbname, NULL, 1, &ggzname, errbuf);
-#else
+#if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_url(GRAB_NBO_DATA, dbname, NULL, 1, &ggzname, errbuf);
+#else
+    err = retrieve_url(GRAB_DATA, dbname, NULL, 1, &ggzname, errbuf);
 #endif
     if (err) {
         if (strlen(errbuf)) errbox(errbuf);

@@ -314,7 +314,7 @@ int corrgram (const int varno, const int order, double ***pZ,
     int err = 0, k, l, m, nobs, n = pdinfo->n; 
     int maxlag = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
-    FILE *fq;
+    FILE *fq = NULL;
 
     list[0] = 1;
     list[1] = varno;
@@ -420,10 +420,8 @@ int corrgram (const int varno, const int order, double ***pZ,
     pprintf(prn, "\n");
     if (maxlag%5 > 0) pprintf(prn, "\n");
 
-    gnuplot_tmpname(ppaths);
-    fq = fopen(ppaths->plotfile, "w");
-    if (fq == NULL) return E_FOPEN;
-    GNUPLOT_HDR(ppaths, fq);
+    if (gnuplot_init(ppaths, &fq)) return E_FOPEN;
+
     fprintf(fq, "# correlogram\n");
     fprintf(fq, "set xlabel \"lag\"\n");
     fprintf(fq, "set xzeroaxis\n");
@@ -597,10 +595,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 
     xmax = roundup_half(nobs);
 
-    if (!batch) {
-	gnuplot_tmpname(ppaths);
-	fq = fopen(ppaths->plotfile, "w");
-	GNUPLOT_HDR(ppaths, fq);
+    if (!batch && gnuplot_init(ppaths, &fq) == 0) {
 	fprintf(fq, "# periodogram\n");
 	fprintf(fq, "set xtics nomirror\n"); 
 	if (pdinfo->pd == 4)
@@ -658,7 +653,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     }
     pprintf(prn, "\n");
 
-    if (!batch) {
+    if (!batch && fq) {
 	fprintf(fq, "e\n");
 #ifdef OS_WIN32
 	fprintf(fq, "pause -1\n");
