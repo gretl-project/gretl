@@ -499,7 +499,7 @@
 	      <xref linkend="cmdref"/>.</para></listitem>
 	  <listitem><para><guimenuitem>statistical
 		tables</guimenuitem>: Look up critical values for
-	      commonly used distributions (Gaussian,
+	      commonly used distributions (normal or Gaussian,
 	      <emphasis>t</emphasis>, &chisq;, <emphasis>F</emphasis> and
 	      Durbin&ndash;Watson).</para></listitem>
 	  <listitem><para><guimenuitem>test calculator</guimenuitem>:
@@ -617,46 +617,44 @@
 	  <listitem><para><guimenuitem>Set range</guimenuitem>: Select
 	      a different starting and/or ending point for the current
 	      sample, within the range of data
-	      available.</para></listitem> 
-	  <listitem><para><guimenuitem>Restore full
-		range</guimenuitem>
-	      self-explanatory.</para></listitem>
-	  <listitem><para><guimenuitem>Set frequency,
-		startobs</guimenuitem>: Impose a particular
+	      available.</para>
+              </listitem>
+              <listitem><para><guimenuitem>Restore full
+	      range</guimenuitem>: self-explanatory.</para></listitem>
+	      <listitem><para><guimenuitem>Set frequency,
+	      startobs</guimenuitem>: Impose a particular
 	      interpretation of the data in terms of frequency and
 	      starting point.  This is primarily intended for use with
 	      panel data; see <xref linkend="panel"/>.</para>
-	  </listitem>  
-	  <listitem><para><guimenuitem>Define, based on
-		dummy</guimenuitem>: Given a dummy (indicator) variable
-	      with values 0 or 1, this drops from the current sample
-	      all observations for which the dummy variable has value
-	      0.</para></listitem>
-	  <listitem><para><guimenuitem>Restrict, based on
-		criterion</guimenuitem>: Similar to the item above,
+	      </listitem> <listitem><para><guimenuitem>Define, based
+	      on dummy</guimenuitem>: Given a dummy (indicator)
+	      variable with values 0 or 1, this drops from the current
+	      sample all observations for which the dummy variable has
+	      value 0.</para></listitem>
+	      <listitem><para><guimenuitem>Restrict, based on
+	      criterion</guimenuitem>: Similar to the item above,
 	      except that you don't need a pre-defined variable: you
 	      supply a Boolean expression (e.g. <literal>sqft &gt;
-		1400</literal>) and the sample is restricted to
+	      1400</literal>) and the sample is restricted to
 	      observations satisfying that condition. See the help for
-	      <command>genr</command> in
-	      <xref linkend="cmdref"/> for details on the Boolean
-	      operators that can be used.</para></listitem>
-	  <listitem><para><guimenuitem>Drop all obs with missing
-		values</guimenuitem>: Drop from the current sample all
+	      <command>genr</command> in <xref linkend="cmdref"/> for
+	      details on the Boolean operators that can be
+	      used.</para></listitem>
+	      <listitem><para><guimenuitem>Drop all obs with missing
+	      values</guimenuitem>: Drop from the current sample all
 	      observations for which at least one variable has a
 	      missing value (see <xref linkend="missing-data"/>.
-	     </para></listitem>
-	  <listitem><para><guimenuitem>Count missing
-		values</guimenuitem>: Give a report on observations
-	      where data values are missing. May be useful in
-	      examining a panel data set, where it's quite common to
-	      encounter missing values.</para></listitem>
-	  <listitem><para><guimenuitem>Add case markers</guimenuitem>
-	      Prompts for the name of a text file containing
-	      <quote>case markers</quote> (short strings identifying
-	      the individual observations) and adds this information
-	      to the data set.  See <xref linkend="datafiles"/>.
-	     </para></listitem>
+	      </para></listitem> <listitem><para><guimenuitem>Count
+	      missing values</guimenuitem>: Give a report on
+	      observations where data values are missing. May be
+	      useful in examining a panel data set, where it's quite
+	      common to encounter missing values.</para></listitem>
+	      <listitem><para><guimenuitem>Add case
+	      markers</guimenuitem> Prompts for the name of a text
+	      file containing <quote>case markers</quote> (short
+	      strings identifying the individual observations) and
+	      adds this information to the data set.  See <xref
+	      linkend="datafiles"/>.  </para></listitem>
 	</itemizedlist>
       </listitem>
       <listitem><para><guimenu>Variable menu</guimenu> Most items
@@ -1680,7 +1678,7 @@
 	calculated for each country and regressed against the 1960
 	level of real GDP, to see if there is evidence for
 	<quote>convergence</quote> (i.e. faster growth on the part of
-	countries starting from low base).</para>
+	countries starting from a low base).</para>
 
       <example id="examp-pwt">
 	<title>Use of the Penn World Table</title>
@@ -1700,7 +1698,7 @@
 	  (* No again.  Try dropping Africa? *) 
 	  genr afdum = (CCODE = 1)
 	  genr afslope = afdum * gdp60 
-	  ols gdpgro const afdum gdp60 afslope2 
+	  ols gdpgro const afdum gdp60 afslope 
 	</programlisting>
       </example>
     </sect1>
@@ -2874,7 +2872,7 @@
       </para>
 
       <para>
-	The Harvey&ndash;Collier <emphasis>t</emphasis> statistic for
+	The Harvey&ndash;Collier <emphasis>t</emphasis>-statistic for
 	testing the null hypothesis of parameter stability is also
 	quoted.  See Chapter 7 of Greene's <citetitle>Econometric
 	  Analysis</citetitle> for details.
@@ -3542,7 +3540,7 @@
     <sect2 id="help"><title>help</title>
 
       <para>
-	<command>help</command> gives a list of available commands.
+	Gives a list of available commands.
 	<command>help</command> <replaceable>command</replaceable>
 	describes <replaceable>command</replaceable> (e.g.
 	<command>help smpl</command>).  You can type
@@ -3678,7 +3676,7 @@
     <sect2 id="labels"><title>labels</title>
 
       <para>
-	<command>labels</command> prints out the informative labels
+	Prints out the informative labels
 	for any variables that have been generated using
 	<command>genr</command>, and any labels added to the data set
 	via the GUI.
@@ -4272,7 +4270,7 @@ executed.  Loops cannot be nested.</para>
       </para>
 
       <informaltable frame="none">
-	<tgroup cols="2">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
 	      <entry><command>print</command></entry>
@@ -5065,7 +5063,7 @@ executed.  Loops cannot be nested.</para>
       </informaltable>
 
       <para>
-	This command computes two-stage least squares (TSLS) estimates
+	Computes two-stage least squares (TSLS) estimates
 	of parameters.  <replaceable>depvar</replaceable> is the
 	dependent variable, <replaceable>varlist1</replaceable> is the
 	list of independent variables (including right-hand side
@@ -5221,11 +5219,6 @@ executed.  Loops cannot be nested.</para>
 	      (<command>wls</command>)</entry>
 	    <entry>Heteroskedasticity, exclusion of selected
 	      observations</entry>
-	  </row>
-	  <row>
-	    <entry>HCCM (<command>hccm</command>)</entry>
-	    <entry>Heteroskedasticity corrected covariance
-	      matrix</entry>
 	  </row>
 	  <row>
 	    <entry>HCCM (<command>hccm</command>)</entry>
@@ -5540,7 +5533,7 @@ executed.  Loops cannot be nested.</para>
 	<listitem>
 	  <para>With <command>freq</command>, you can't at
 	  present specify user-defined ranges as
-	  in <application>ESL</application>.  A chi-square test for
+	  in <application>ESL</application>.  A &chisq; test for
 	  normality has been added to the output of this command.
 	  </para>
 	</listitem>
@@ -5548,7 +5541,7 @@ executed.  Loops cannot be nested.</para>
 
       <para>
 	Note also that the command-line syntax for running a batch job
-	is simplified. For <application>ESL</application> you type,
+	is simplified. For <application>ESL</application> you typed,
 	e.g. 
 	<programlisting> 
 	  esl -b datafile &lt; inputfile &gt; outputfile 
@@ -5634,7 +5627,7 @@ executed.  Loops cannot be nested.</para>
 
     <table id="tab-linreg" frame="none">
       <title>NIST linear regression tests</title>
-      <tgroup cols="3">
+      <tgroup cols="3"><colspec colnum="1" colwidth="&cmdcol;"/>
 	<thead>
 	  <row>
 	    <entry>Dataset</entry>
@@ -5751,8 +5744,8 @@ executed.  Loops cannot be nested.</para>
 
       <informalequation>
 	<alt>
-	  \[r_1=\frac{\sum^T_2(y_t-\bar{y})(y_{t-1}-\bar{y})} {\sum^T_1
-	  (y_t - \bar{y})^2}\]
+	  \[r_1=\frac{\sum^T_{t=2}(y_t-\bar{y})(y_{t-1}-\bar{y})} 
+                     {\sum^T_{t=1}(y_t - \bar{y})^2}\]
 	</alt>
 	<graphic fileref="figures/nistr1.png"/>
       </informalequation>
@@ -6179,7 +6172,7 @@ executed.  Loops cannot be nested.</para>
 	the Gnome desktop (<ulink
 	  url="http://www.gnome.org/">gnome.org</ulink>) was detected
 	at compile time, or <command>xterm -e R</command> if Gnome was
-	not found. Please note that (at present) at most three
+	not found. Please note that at most three
 	space-separated elements in this command string will be
 	processed; any extra elements are ignored.
       </para>
