@@ -5,14 +5,15 @@ version 1.2.8
 - add option to export data to PcGive .dat format (thanks to
   Michal Kurcewicz)
 - enable TRAMO analysis of annual time-series data
-- Windows version: ensure user directory gets created
+- Windows version: ensure user directory gets created!
 - hccm command: ensure that the F-stat shown for the model
   is based on the robust covariance matrix; also ensure
-  the robust F is shown when robust standard errors are
+  the robust F-stat is used when robust standard errors are
   selected with the ols command
 - add start-up option to dump gretl configuration to a text file
   ('-c' or '--dump')
 - small fixes for nonlinear least squares
+- Replace fixed IP address for database server with hostname
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)
