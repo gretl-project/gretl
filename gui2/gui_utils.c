@@ -37,7 +37,6 @@
 # include <gtksourceview/gtksourceview.h>
 # include <gtksourceview/gtksourcelanguage.h>
 # include <gtksourceview/gtksourcelanguagesmanager.h>
-# include <gtksourceview/gtksourceprintjob.h>
 #endif
 
 char *storelist = NULL;
@@ -174,7 +173,8 @@ GtkItemFactoryEntry edit_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
       "<StockItem>", GTK_STOCK_COPY },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY},
+    { N_("/Edit/Copy _all"), "", text_copy, COPY_TEXT, 
+      "<StockItem>", GTK_STOCK_COPY},
     { N_("/Edit/_Paste"), NULL, text_paste, 0, "<StockItem>", GTK_STOCK_PASTE },
     { N_("/Edit/_Replace..."), NULL, text_replace, 0, 
       "<StockItem>", GTK_STOCK_FIND_AND_REPLACE },
@@ -1574,7 +1574,8 @@ gtk_source_buffer_load_with_encoding (GtkSourceBuffer *sbuf,
     return TRUE;
 }
 
-static void source_buffer_insert_file (GtkSourceBuffer *sbuf, const char *filename)
+static void source_buffer_insert_file (GtkSourceBuffer *sbuf, 
+				       const char *filename)
 {
     GtkSourceLanguagesManager *manager;    
     GtkSourceLanguage *language = NULL;
@@ -1603,7 +1604,8 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf, const char *filena
 
 #endif
 
-static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, int role)
+static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, 
+				     int role)
 {
     FILE *fp;
     GtkTextIter iter;    

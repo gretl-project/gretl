@@ -42,8 +42,9 @@ static void scalar_to_clipboard (windata_t *vwin, guint a, GtkWidget *w);
 
 GtkItemFactoryEntry series_view_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
+      "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), "", text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
     { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL, GNULL },
     { N_("/_Series"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Series/_Sort"), NULL, series_view_sort, 0, NULL, GNULL },

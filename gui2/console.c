@@ -30,10 +30,13 @@ extern int gui_exec_line (char *line,
 
 GtkItemFactoryEntry console_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, NULL, GNULL },
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, 
+      "<StockItem>", GTK_STOCK_SAVE_AS },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
+      "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), "", text_copy, COPY_TEXT, 
+      "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 

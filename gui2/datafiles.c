@@ -32,8 +32,6 @@
 #define BROWSER_BUSY    1
 #define BROWSER_OK      0
 
-extern GtkItemFactoryEntry sample_script_items[];
-
 char pwtpath[MAXLEN];
 char jwpath[MAXLEN];
 char dgpath[MAXLEN];
@@ -280,7 +278,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
-    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT, sample_script_items);
+    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT, NULL);
 } 
 
 /* ........................................................... */

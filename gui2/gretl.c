@@ -348,7 +348,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/New command file"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/New command file/regular script"), NULL, do_new_script, 0, 
       "<StockItem>", GTK_STOCK_NEW },
-    { N_("/File/New command file/Monte Carlo loop"), NULL, do_new_script, 1, 
+    { N_("/File/New command file/Monte Carlo loop"), "", do_new_script, 1, 
       "<StockItem>", GTK_STOCK_NEW },
     { N_("/File/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
 
