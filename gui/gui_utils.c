@@ -1303,6 +1303,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
+
     return vwin;
 }
 
@@ -1818,7 +1819,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	    model_arch_menu_state(vwin->ifac, FALSE);
 	}
     } else if (vwin->role == VAR && vwin->data != NULL) {
-	GRETl_VAR *var = (GRETL_VAR *) vwin->data;
+	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 	const char *name = gretl_var_get_name(var);
 
 	if (name != NULL && *name != '\0') {
