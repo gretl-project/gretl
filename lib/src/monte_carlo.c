@@ -40,7 +40,9 @@ typedef double bigval;
 
 enum inequalities {
     GT = 1,
-    LT
+    LT,
+    GTE,
+    LTE
 };
 
 enum loop_types {
@@ -230,10 +232,16 @@ static int parse_as_while_loop (LOOPSET *loop,
     int v;
     int err = 0;
 
-    if (strstr(op, ">")) {
+    if (strstr(op, ">=")) {
+	loop->ineq = GTE;
+    } else if (strstr(op, ">")) {
 	loop->ineq = GT;
-    } else {
+    } else if (strstr(op, "<=")) {
+	loop->ineq = LTE;
+    } else if (strstr(op, "<")) {
 	loop->ineq = LT;
+    } else {
+	err = 1;
     }
 
     v = varindex(pdinfo, lvar);
@@ -396,7 +404,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	goto bailout;
     }
 
-    if (sscanf(line, "loop while %[^ <>]%[ <>] %s", lvar, op, rvar) == 3) {
+    if (sscanf(line, "loop while %[^ <>=]%[ <>=] %s", lvar, op, rvar) == 3) {
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
     }
 
@@ -485,6 +493,10 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	}
 	if (loop->ineq == GT) {
 	    cont = (Z[loop->lvar][0] > Z[loop->rvar][0]);
+	} else if (loop->ineq == GTE) {
+	    cont = (Z[loop->lvar][0] >= Z[loop->rvar][0]);
+	} else if (loop->ineq == LTE) {
+	    cont = (Z[loop->lvar][0] <= Z[loop->rvar][0]);
 	} else {
 	    cont = (Z[loop->lvar][0] < Z[loop->rvar][0]);
 	}
@@ -509,6 +521,10 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	}
 	if (loop->ineq == GT) {
 	    cont = (Z[loop->lvar][0] > loop->rval);
+	} else if (loop->ineq == GTE) {
+	    cont = (Z[loop->lvar][0] >= loop->rval);
+	} else if (loop->ineq == LTE) {
+	    cont = (Z[loop->lvar][0] <= loop->rval);
 	} else {
 	    cont = (Z[loop->lvar][0] < loop->rval);
 	}
