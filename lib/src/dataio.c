@@ -20,6 +20,8 @@
 #include "libgretl.h"
 #include "internal.h"
 #include <zlib.h>
+#include <ctype.h>
+#include <errno.h>
 
 #define QUOTE '\''
 
@@ -1616,19 +1618,72 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 
 /* ................................................. */
 
+static char *unspace (char *s)
+{
+    size_t i, n = strlen(s);
+
+    for (i=n-1; i>0; i--) { 
+	if (s[i] == ' ') s[i] = '\0';
+	else break;
+    }
+    return s;
+}
+
+/* ................................................. */
+
+static int parse_varline (char *line, 
+			  unsigned *varstart, unsigned *varsize, 
+			  int v, int *realv,
+			  DATAINFO *binfo, print_t *prn)
+{
+    char tmp[8];
+
+    strncpy(binfo->varname[*realv], line+11, 8);
+    binfo->varname[*realv][8] = '\0';
+    unspace(binfo->varname[*realv]);
+    lower(binfo->varname[*realv]);
+    pprintf(prn, " variable %d: '%s'\n", v+1, binfo->varname[*realv]);
+    if (line[51] != '2') {
+	pprintf(prn, "   Non-numeric data: will be skipped\n");
+	varstart[v] = 0;
+	varsize[v] = 0;
+	return 0;
+    }
+    strncpy(tmp, line+52, 6);
+    tmp[6] = '\0';
+    varstart[v] = atoi(tmp) - 1;
+    pprintf(prn, "   starting col. %d, ", varstart[v]);
+    strncpy(tmp, line+58, 4);
+    tmp[4] = '\0';
+    varsize[v] = atoi(tmp);
+    pprintf(prn, "field width %d, ", varsize[v]);
+    strncpy(tmp, line+62, 2);
+    tmp[2] = '\0';
+    pprintf(prn, "decimal places %d\n", atoi(tmp));
+    strncpy(binfo->label[*realv], line+87, 99);
+    binfo->label[*realv][99] = '\0';
+    unspace(binfo->label[*realv]);
+    pprintf(prn, "   definition: '%s'\n", binfo->label[*realv]);
+    *realv += 1;
+
+    return 0;
+}
+
+/* ................................................. */
+
 int import_box (double **pZ, DATAINFO *pdinfo, 
 		const char *fname, print_t *prn)
 {
-    size_t i, varstart;
-    int c, cc, j, t, nv, start, write;
-    int maxline, sepcount, dotest;
-    int nonnum, missing, miss_warned;
-    char field1[40], field2[40];
-    unsigned *varsize, *nonnum_warned, *allmiss;
-    char *line, numstr[32];
+    int c, cc, i, t, v, realv, gotdata;
+    int maxline, dumpvars;
+    char tmp[48];
+    unsigned *varsize, *varstart;
+    char *test, *line;
+    double x;
     FILE *fp;
     DATAINFO boxinfo;
     double *boxZ = NULL;
+    extern int errno;
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -1638,40 +1693,35 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 
     pprintf(prn, "parsing %s...\n", fname);
 
-    /* find max line length and number of observations on
-       a first pass through the file */
-    maxline = sepcount = i = cc = 0;
-    boxinfo.n = boxinfo.v = 0;
-    dotest = 0;
+    /* first pass: find max line length, number of vars and number
+       of observations, plus basic sanity check */
+    cc = maxline = 0;
+    boxinfo.n = 0;
+    boxinfo.v = 1;
     do {
-	if (dotest == 1) dotest = 2;
 	c = getc(fp); 
+	if (c != EOF && c != 10 && !isprint((unsigned char) c)) {
+	    pprintf(prn, "Binary data (%d) encountered: this is not a valid "
+		   "BOX1 file\n", c);
+	    fclose(fp);
+	    return 1;
+	}
 	if (c == '\n') {
-	    i = 0;
-	    dotest = 1;
-	    if (cc > maxline)
-		maxline = cc;
+	    if (cc > maxline) maxline = cc;
 	    cc = 0;
-	    if (sepcount == 1)
-		boxinfo.v += 1;
-	    if (sepcount == 3) 
-		boxinfo.n += 1;
+	    if ((c=getc(fp)) != EOF) {
+		tmp[0] = c; cc++;
+	    } else break;
+	    if ((c=getc(fp)) != EOF) {
+		tmp[1] = c; cc++;
+	    } else break;
+	    tmp[2] = '\0';
+	    if (!strcmp(tmp, "03")) boxinfo.v += 1;
+	    else if (!strcmp(tmp, "99")) boxinfo.n += 1;
 	} else
 	    cc++;
-	if (dotest == 2 && c != 13) {
-	    numstr[i++] = c;
-	    if (i == 3) {
-		numstr[i] = '\0';
-		if (strcmp(numstr, "00-") == 0) 
-		    sepcount++;
-		dotest = 0;
-	    }
-	} 
     } while (c != EOF);
     fclose(fp);
-
-    boxinfo.v -= 2;
-    boxinfo.n -= 1;
 
     pprintf(prn, "   found %d variables\n", boxinfo.v - 1);
     pprintf(prn, "   found %d observations\n", boxinfo.n);
@@ -1682,128 +1732,95 @@ int import_box (double **pZ, DATAINFO *pdinfo,
     pprintf(prn, "allocating memory for data... ");
     if (start_new_Z(&boxZ, &boxinfo, 0)) return E_ALLOC;
     boxinfo.markers = 0;
-    varsize = malloc(boxinfo.v * sizeof *varsize);
+    varstart = malloc((boxinfo.v - 1) * sizeof *varstart);
+    if (varstart == NULL) return E_ALLOC;
+    varsize = malloc((boxinfo.v - 1) * sizeof *varsize);
     if (varsize == NULL) return E_ALLOC;
-    nonnum_warned = malloc(boxinfo.v * sizeof *nonnum_warned);
-    if (nonnum_warned == NULL) return E_ALLOC;
-    allmiss = malloc(boxinfo.v * sizeof *allmiss);
-    if (allmiss == NULL) return E_ALLOC;
     line = malloc(maxline);
     if (line == NULL) return E_ALLOC;
     pprintf(prn, "done\n");
 
-    /* do the actual reading */
     fp = fopen(fname, "r");
     if (fp == NULL) return 1;
-    pprintf(prn, "reading variable info from box file...\n");
-    i = 0;
-    do { 
-	c = getc(fp);  /* ignore first 6 lines of box file */
-	if (c == '\n') i++;
-    } while (i < 6); 
+    pprintf(prn, "reading variable information...\n");
 
-    for (nv=1; nv<boxinfo.v; nv++) { /* one line per variable at this point */
-	allmiss[nv] = 1;
-	fgets(line, maxline-1, fp);
-	top_n_tail(line);
-	j = 0;
-	for (i=1; i<strlen(line); i++) {
-	    if (isspace((unsigned char) line[i-1]) && 
-		!isspace((unsigned char) line[i])) j++;
-	    if (j == 2) {
-		start = i;
-		break;
+    /* second pass: get detailed info on variables */
+    v = 0; realv = 1; t = 0;
+    dumpvars = 0; gotdata = 0;
+    while (fgets(line, maxline, fp)) {
+	strncpy(tmp, line, 2);
+	switch (atoi(tmp)) {
+	case 0: /* comment */
+	    break;
+	case 1: /* BOX info (ignored for now) */
+	    break;
+	case 2: /* raw data records types (ignored for now) */
+	    break;
+	case 3: /* variable info */
+	    parse_varline(line, varstart, varsize, v, &realv, &boxinfo, prn);
+	    v++;
+	    break;
+	case 4: /* category info (ignored for now) */
+	    break;
+	case 99: /* data line */
+	    realv = 1;
+ 	    for (i=0; i<v; i++) {
+		if (varstart[i] == 0 && varsize[i] == 0) {
+		    if (!gotdata) dumpvars++;
+		    continue;
+		}
+		strncpy(tmp, line + varstart[i], varsize[i]);
+		tmp[varsize[i]] = '\0';
+		x = strtod(tmp, &test);
+#ifdef BOX_DEBUG
+		fprintf(stderr, "read %d chars from pos %d: '%s' -> %g\n",
+			varsize[i], varstart[i], tmp, x); 
+#endif
+		if (!strcmp(tmp, test)) {
+		    pprintf(prn, "'%s' -- no numeric conversion performed!", tmp);
+		    x = -999.0;
+		}
+		if (test[0] != '\0') {
+		    if (isprint(test[0]))
+			pprintf(prn, "Extraneous character '%c' in data", 
+				test[0]);
+		    else
+			pprintf(prn, "Extraneous character (0x%x) in data", 
+				test[0]);
+		    x = -999.0;
+		}
+		if (errno == ERANGE) {
+		    pprintf(prn, "'%s' -- number out of range!", tmp);
+		    x = -999.0;
+		}
+		boxZ[boxinfo.n * realv + t] = x;
+#ifdef BOX_DEBUG
+		fprintf(stderr, "setting Z[%d][%d] = %g\n", realv, t, x);
+#endif
+		realv++;
 	    }
+	    t++;
+	    gotdata = 1;
+	    break;
+	default:
+	    break;
 	}
-	sscanf(line, "%39s %39s", field1, field2);
-	j = write = 0;
-	for (i=0; i<strlen(field1); i++) {
-	    if (isalpha((unsigned char) field1[i])) write = 1;
-	    if (j == 8) 
-		write = 0;
-	    if (write) 
-		boxinfo.varname[nv][j++] = field1[i];
-	}
-	boxinfo.varname[nv][j] = '\0';
-	lower(boxinfo.varname[nv]);
-	pprintf(prn, "   variable %d: '%s'\n", nv, boxinfo.varname[nv]);
-
-	if (nv == 1) {
-	    safecpy(numstr, field2 + 5, 2);
-	    varstart = atoi(numstr);
-	}
-	safecpy(numstr, field2 + 8, 3);
-	varsize[nv-1] = atoi(numstr);
-
-	safecpy(boxinfo.label[nv], line + start, MAXLABEL - 1);
-	boxinfo.label[nv][MAXLABEL-1] = '\0';
     }
 
-    i = 0;
-    while (1) {
-	fgets(line, maxline-1, fp);
-	if (strncmp(line, "00--", 4) == 0) i++;
-	if (i == 2) break;
-    }
-
-    /* grab data values from box file */
-    miss_warned = 0;
-    for (i=0; i<boxinfo.v; i++)
-	nonnum_warned[i] = 0;
-    pprintf(prn, "reading data values...\n");
-    t = 0;
-    while (c != EOF) {
-	/* throw away the first non-data numbers */
-	for (i=0; i<varstart-1; i++) { 
-	    c = getc(fp); 
-	}
-        for (nv=1; nv<boxinfo.v; nv++) { 
-	    missing = 1;
-	    nonnum = 0;
-	    for (i=0; i<varsize[nv-1]; i++) {
-		if (c == EOF) break;
-		c = getc(fp);
-		if (!isspace((unsigned char) c)) missing = 0;
-		if (isalpha((unsigned char) c)) nonnum = 1; 
-	        numstr[i] = c;
-	    }
-	    if (c == EOF) break;
-	    numstr[i] = 0;
-	    if (missing && !miss_warned) {
-		pprintf(prn, "   WARNING: there were missing values\n");
-		miss_warned = 1;
-	    }
-	    if (nonnum && nonnum_warned[nv-1] == 0) {
-		pprintf(prn, "   WARNING: the variable '%s' has non-numeric "
-			"values (e.g. '%s').\n"
-			"      Substituting the missing value code, -999.0.\n",
-			boxinfo.varname[nv], numstr);
-		nonnum_warned[nv-1] = 1;
-	    }
-	    if (!missing && !nonnum) {
-		boxZ[boxinfo.n * nv + t] = atof(numstr);
-		allmiss[nv] = 0;
-	    } else
-		boxZ[boxinfo.n * nv + t] = -999.0;
-	}
-	c = getc(fp);
-	t++;
-    }
-    pprintf(prn, "done\n");
+    pprintf(prn, "done reading data\n");
     fclose(fp);
 
-    for (i=1; i<boxinfo.v; i++) {
-	if (allmiss[i])
-	    pprintf(prn, "WARNING: variable '%s': all values missing\n",
-		    boxinfo.varname[i]);
-    }
-
+    free(varstart);
     free(varsize);
-    free(nonnum_warned);
-    free(allmiss);
     free(line);
 
     dataset_dates_defaults(&boxinfo);
+
+    if (dumpvars) {
+	dataset_drop_vars(dumpvars, &boxZ, &boxinfo);
+	pprintf(prn, "Warning: discarded %d non-numeric variable(s)\n", 
+		dumpvars);
+    }
 
     if (*pZ == NULL) {
 	*pZ = boxZ;

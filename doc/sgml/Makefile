@@ -1,6 +1,6 @@
 # XMLDCL = /opt/jade/share/xml.dcl
 MANUAL = manual
-DSL = gretl_texmath.dsl
+DSL = gretl-both.dsl
 HDSL = gretl_htmlmath.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl

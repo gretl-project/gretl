@@ -31,7 +31,7 @@ ifeq ($(have_gnome),)
   have_gnome = yes
 endif
 ifeq ($(have_gtkhtml),)
-  have_gtkhtml = yes
+  have_gtkhtml = no
 endif
 ifeq ($(have_gtkextra),no)
   EXTRAL = -L./gtkextra
