@@ -52,6 +52,9 @@ int system_n_equations (const gretl_equation_system *sys);
 
 int system_n_indep_vars (const gretl_equation_system *sys);
 
+int system_adjust_t1t2 (const gretl_equation_system *sys,
+			int *t1, int *t2, const double **Z);
+
 int *system_get_list (const gretl_equation_system *sys, int i);
 
 int system_get_depvar (const gretl_equation_system *sys, int i);

@@ -594,6 +594,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	dwt = pmod->nwt;
 
     for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) continue;
 	for (t=t1min; t<t2max; t++) {
 	    xx = Z[list[i]][t];
 	    if (dwt) xx *= Z[dwt][t];
@@ -602,6 +603,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	}
     }
     for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) continue;
 	for (t=t2max; t>t1min; t--) {
 	    xx = Z[list[i]][t];
 	    if (dwt) xx *= Z[dwt][t];
@@ -611,6 +613,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     } 
     if (misst != NULL) {
 	for (i=1; i<=list[0]; i++) {
+	    if (list[i] == LISTSEP) continue;
 	    for (t=t1min; t<=t2max; t++) {
 		xx = Z[list[i]][t];
 		if (dwt) xx *= Z[dwt][t];

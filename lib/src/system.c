@@ -212,7 +212,8 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	err = 1;
         goto system_bailout;
     }
-	
+
+    pputc(prn, '\n');
     pprintf(prn, _("Equation system, %s\n\n"),
 	    gretl_system_long_strings[sys->type]);
 
@@ -261,6 +262,19 @@ const char *gretl_system_short_string (const MODEL *pmod)
 
     return gretl_system_short_strings[i];
 }
+
+int system_adjust_t1t2 (const gretl_equation_system *sys,
+			int *t1, int *t2, const double **Z)
+{
+    int i, misst, err = 0;
+
+    for (i=0; i<sys->n_equations && !err; i++) {
+	err = adjust_t1t2(NULL, sys->lists[i], t1, t2, Z, &misst);
+    }
+
+    return err;
+}
+
 
 /* simple accessor functions */
 

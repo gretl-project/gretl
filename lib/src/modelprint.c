@@ -1383,6 +1383,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     if (pmod->aux == AUX_SYS) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
+	essline(pmod, prn, 0);
 	print_middle_table_end(prn);
 	goto close_format;
     }    
