@@ -3,7 +3,7 @@ version 1.3.0
   frequency greater than 99, and the "panel" command did not
   obey the "cross-section" option (thanks to Mihai Nica for
   the report)
-- update Windows version to gtk 2.4.7
+- update Windows version to gtk 2.4.9
 - fix for SUR systems with differing numbers of regressors
   across equations (thanks to Jack Lucchetti)
 - slight improvement to main window treeview focusing in
@@ -14,6 +14,10 @@ version 1.3.0
 - add a genr "special": genr markers = ... can be used to
   manipulate the observation marker strings -- details in
   panel.pdf
+- switch to St Louis Fed database as gretl "sample" database
+  (the BCIH database is getting too out-of-date)
+- add the Anscombe Quartet to the gretl data files
+- small gui fixes
 
 7/23/2004 version 1.2.9
 - fixes for LaTeX printing of autoregressive models

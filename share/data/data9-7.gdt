@@ -32,7 +32,7 @@ DATA9-7:
 <variable name="PRICE"
  label="average real price index of a new car"/>
 <variable name="INCOME"
- label="per cap. disposable personal income (thousands of 1982 dollars)"/>
+ label="per cap. disposable personal income (000s of 1982 dollars)"/>
 <variable name="PRIME"
  label="prime interest rate (percent)"/>
 <variable name="UNEMP"

@@ -287,6 +287,8 @@ static void set_sample_label_special (void)
 	    " n = %d"), fullinfo->n, datainfo->n);
     gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
 
+    time_series_menu_state(FALSE);
+    panel_menu_state(FALSE);
 }
 
 /* ........................................................... */
@@ -884,13 +886,15 @@ int bool_subsample (gretlopt opt)
 	return 1;
     }
 
-    /* save the full data set for later use */
+    /* save the full data set for later use (is this right?) */
     save_full_dataset();
 
+    /* special for undated data */
     set_sample_label_special();
+
     restore_sample_state(TRUE);
 
-    if (opt == 0) {
+    if (opt & OPT_M) {
 	infobox(_("Sample now includes only complete observations"));
     } else {
 	infobox(_("Sub-sampling done"));

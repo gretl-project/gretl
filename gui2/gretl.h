@@ -123,6 +123,10 @@ int gretl_fork (const char *prog, const char *arg);
  
 void main_menubar_state (gboolean s);
 
+void time_series_menu_state (gboolean s);
+
+void panel_menu_state (gboolean s);
+
 void edit_info_state (gboolean s);
 
 void populate_varlist (void);

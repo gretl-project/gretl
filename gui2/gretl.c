@@ -1052,7 +1052,7 @@ static GtkItemFactoryEntry time_series_model_items[] = {
                                 (d->pd == 4 || d->pd == 12 || \
                                  d->pd == 5 || d->pd == 7))
 
-static void time_series_menu_state (gboolean s)
+void time_series_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
@@ -1087,7 +1087,9 @@ static void time_series_menu_state (gboolean s)
 						 mdata, 1);
 		}
 	    }
-	}	
+	}
+
+	build_main_popups();
     }
 }
 
