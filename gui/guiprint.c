@@ -290,8 +290,8 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	    " \\intbl \\row\n",
 	    I_("Mean"), I_("Median"), I_("Minimum"), I_("Maximum"));
 
-    for (v=1; v<=lo; v++) {
-	lv = summ->list[v];
+    for (v=0; v<lo; v++) {
+	lv = summ->list[v+1];
 	xbar = summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
@@ -311,8 +311,8 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	    " \\intbl \\row\n",
 	    I_("Std. Dev."), I_("C.V."), I_("Skewness"), I_("Ex. kurtosis"));
 
-    for (v=1; v<=lo; v++) {
-	lv = summ->list[v];
+    for (v=0; v<lo; v++) {
+	lv = summ->list[v+1];
 	if (lo > 1)
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
 	xbar = summ->coeff[v];
@@ -392,8 +392,8 @@ void texprint_summary (GRETLSUMMARY *summ,
 	    "   & \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
 	    I_("Mean"), I_("Median"), I_("Minimum"), I_("Maximum"));
 
-    for (v=1; v<=lo; v++) {
-	lv = summ->list[v];
+    for (v=0; v<lo; v++) {
+	lv = summ->list[v+1];
 	xbar = summ->coeff[v];
 	if (lo > 1) {
 	    tex_escape(vname, pdinfo->varname[lv]);
@@ -403,7 +403,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 	printftex(summ->xmedian[v], prn, 0);
 	printftex(summ->xpx[v], prn, 0);
 	printftex(summ->xpy[v], prn, 1);
-	if (v == lo) pputs(prn, "[10pt]\n\n");
+	if (v == lo - 1) pputs(prn, "[10pt]\n\n");
 	else pputs(prn, "\n");
     }
 
@@ -415,8 +415,8 @@ void texprint_summary (GRETLSUMMARY *summ,
 	    "   & \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
 	    I_("Std.\\ Dev."), I_("C.V."), I_("Skewness"), I_("Ex.\\ kurtosis"));
 
-    for (v=1; v<=lo; v++) {
-	lv = summ->list[v];
+    for (v=0; v<lo; v++) {
+	lv = summ->list[v+1];
 	if (lo > 1) {
 	    tex_escape(vname, pdinfo->varname[lv]);
 	    pprintf(prn, "%s & ", vname);
@@ -983,22 +983,22 @@ texprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
     tex_escape(vname, pdinfo->varname[cf->list[c]]);
     pprintf(prn, " %3d) & %8s & ", cf->list[c], vname);
 
-    if (isnan(cf->coeff[c-1])) {
+    if (isnan(cf->coeff[c-2])) {
 	pprintf(prn, "\\multicolumn{1}{c}{%s} & ", I_("undefined"));
     } else {
 	char coeff[32];
 
-	tex_dcolumn_double(cf->coeff[c-1], coeff);
+	tex_dcolumn_double(cf->coeff[c-2], coeff);
 	pprintf(prn, "%s & ", coeff);
     }
 
-    if (isnan(cf->maxerr[c-1])) {
+    if (isnan(cf->maxerr[c-2])) {
 	pprintf(prn, "\\multicolumn{2}{c}{%s}", I_("undefined"));
     } else {
 	char lo[32], hi[32];
 
-	tex_dcolumn_double(cf->coeff[c-1] - cf->maxerr[c-1], lo);
-	tex_dcolumn_double(cf->coeff[c-1] + cf->maxerr[c-1], hi);
+	tex_dcolumn_double(cf->coeff[c-2] - cf->maxerr[c-2], lo);
+	tex_dcolumn_double(cf->coeff[c-2] + cf->maxerr[c-2], hi);
 	pprintf(prn, "%s & %s", lo, hi);
     }
     pputs(prn, "\\\\\n");
@@ -1031,11 +1031,6 @@ void texprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	    "  & \\multicolumn{1}{c}{%s}\\\\\n",
 	    I_("low"), I_("high"));
 
-    if (cf->ifc) {
-	texprint_coeff_interval(cf, pdinfo, ncoeff, prn);
-	ncoeff--;
-    }
-
     for (i=2; i<=ncoeff; i++) {
 	texprint_coeff_interval(cf, pdinfo, i, prn);
     }
@@ -1053,14 +1048,14 @@ rtfprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
     pprintf(prn, "\\qr %d)\\cell \\qc %s\\cell", cf->list[c], 
 	    pdinfo->varname[cf->list[c]]);
 
-    printfrtf(cf->coeff[c-1], prn, 0);
+    printfrtf(cf->coeff[c-2], prn, 0);
 
-    if (isnan(cf->maxerr[c-1])) {
+    if (isnan(cf->maxerr[c-2])) {
 	pprintf(prn, "\\qc %s\\cell ", I_("undefined"));
     } else {
 	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ", 
-		GRETL_DIGITS, cf->coeff[c-1] - cf->maxerr[c-1], 
-		GRETL_DIGITS, cf->coeff[c-1] + cf->maxerr[c-1]);
+		GRETL_DIGITS, cf->coeff[c-2] - cf->maxerr[c-2], 
+		GRETL_DIGITS, cf->coeff[c-2] + cf->maxerr[c-2]);
     }
     pputs(prn, " \\intbl \\row\n");
 }
@@ -1088,11 +1083,6 @@ void rtfprint_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	    I_("Variable"), I_("Coefficient"),
 	    /* xgettext:no-c-format */
 	    I_("95% confidence interval"));
-
-    if (cf->ifc) {
-	rtfprint_coeff_interval(cf, pdinfo, ncoeff, prn);
-	ncoeff--;
-    }
 
     for (i=2; i<=ncoeff; i++) {
 	rtfprint_coeff_interval(cf, pdinfo, i, prn);

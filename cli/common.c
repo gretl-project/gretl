@@ -27,7 +27,7 @@ int numeric_check_model (MODEL *pmod,
 {
     int j;
 
-    for (j=1; j<=pmod->ncoeff; j++) {
+    for (j=0; j<pmod->ncoeff; j++) {
 	if (isnan(pmod->coeff[j])) {
 	    int i, t;
 
@@ -118,10 +118,10 @@ int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 		(plp->models[plp->nmod - 1])->ID = cmdnum;
 	    } else { /* loop a fixed number of times */
 		if (plp->lmodels == NULL) {
-		    plp->lmodels = malloc(sizeof(LOOP_MODEL));
+		    plp->lmodels = malloc(sizeof *plp->lmodels);
 		} else {
 		    plp->lmodels = realloc(plp->lmodels, plp->nmod
-					     * sizeof(LOOP_MODEL));
+					     * sizeof *plp->lmodels);
 		}
 		if (plp->lmodels == NULL) return 1;
 	    }
@@ -159,12 +159,15 @@ int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    swap_models(&models[0], &plp->models[m]);
 	    (plp->models[m])->ID = cmdnum;
 	    /* "correct" is being borrowed here, to mark the '-o' */
-	    if (oflag) (plp->models[m])->correct = 1;
+	    if (oflag) {
+		/* covariance matrix wanted */
+		(plp->models[m])->correct = 1;
+	    }
 	    tmpmodel = plp->models[m];
 	} else { 
 	    /* looping a fixed number of times */
 	    if (lround == 0 && loop_model_init(&plp->lmodels[plp->nmod - 1], 
-					      models[0], cmdnum)) { 
+					       models[0], cmdnum)) { 
 		pputs(prn, _("Failed to initialize model for loop\n"));
 		return 1;
 	    } else if (update_loop_model(plp, cmdnum, models[0])) { 
@@ -188,10 +191,9 @@ int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	if (lround == 0) {
 	    plp->nprn += 1;
 	    if (plp->prns == NULL) 
-		plp->prns = malloc(sizeof(LOOP_PRINT));
+		plp->prns = malloc(sizeof *plp->prns);
 	    else 
-		plp->prns = realloc(plp->prns, (plp->nprn) 
-				    * sizeof(LOOP_PRINT));
+		plp->prns = realloc(plp->prns, (plp->nprn) * sizeof *plp->prns);
 	    if (loop_print_init(&plp->prns[plp->nprn-1], 
 				command.list, cmdnum)) { 
 		pputs(prn, _("Failed to initalize print struct for loop\n"));
@@ -247,10 +249,10 @@ int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	}
 	for (i=0; i<command.list[0]; i++) {
 	    if (datainfo->vector[command.list[i+1]]) { 
-		plp->storeval[i*plp->ntimes + lround] = 
+		plp->storeval[i * plp->ntimes + lround] = 
 		    Z[command.list[i+1]][datainfo->t1 + 1];
 	    } else {
-		plp->storeval[i*plp->ntimes + lround] = 
+		plp->storeval[i * plp->ntimes + lround] = 
 		    Z[command.list[i+1]][0];
 	    }
 	}	

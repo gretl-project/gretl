@@ -75,7 +75,7 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 static int qr_make_vcv (MODEL *pmod, gretl_matrix *v)
 {
     const int nv = pmod->ncoeff;
-    const int nterms = (nv * nv + nv) / 2;
+    const int nterms = nv * (nv + 1) / 2;
     double x;
     int i, j, k;
 
@@ -278,8 +278,8 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
     }
 
     /* allocate storage in model struct */
-    pmod->coeff = malloc((n + 1) * sizeof *pmod->coeff);
-    pmod->sderr = malloc((n + 1) * sizeof *pmod->sderr);
+    pmod->coeff = malloc(n * sizeof *pmod->coeff);
+    pmod->sderr = malloc(n * sizeof *pmod->sderr);
     pmod->yhat = malloc(fulln * sizeof *pmod->yhat);
     pmod->uhat = malloc(fulln * sizeof *pmod->uhat);
     if (pmod->coeff == NULL || pmod->sderr == NULL || 
@@ -323,7 +323,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
     /* OLS coefficients */
     gretl_matmult(R, g, b);
     for (i=0; i<n; i++) {
-	pmod->coeff[i+1] = b->val[i];
+	pmod->coeff[i] = b->val[i];
     }
 
     /* write vector of fitted values into y */
@@ -349,7 +349,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
     for (i=0; i<n; i++) {
 	double x = gretl_matrix_get(xpxinv, i, i);
 
-	pmod->sderr[i+1] = pmod->sigma * sqrt(x);
+	pmod->sderr[i] = pmod->sigma * sqrt(x);
     }
 
     /* set up covar matrix (triangular) */

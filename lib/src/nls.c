@@ -320,8 +320,8 @@ static int add_std_errs_to_model (MODEL *pmod)
 
     if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
 
-    for (i=1; i<=pmod->ncoeff; i++) {
-	k = ijton(i, i, pmod->ncoeff);
+    for (i=0; i<pmod->ncoeff; i++) {
+	k = ijton(i+1, i+1, pmod->ncoeff);
 	if (pmod->vcv[k] == 0.0) pmod->sderr[i] = 0.0;
 	else if (pmod->vcv[k] > 0.0) pmod->sderr[i] = sqrt(pmod->vcv[k]);
 	else pmod->sderr[i] = NADBL;
@@ -335,7 +335,7 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
     int i;
 
     for (i=0; i<pmod->ncoeff; i++) {
-	pmod->coeff[i+1] = coeff[i];
+	pmod->coeff[i] = coeff[i];
     }
 }
 

@@ -1014,13 +1014,13 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			}
 			if (nt == T_COEFF && pmod->coeff != NULL) { 
 			    for (i=0; i<n; i++) 
-				genr.xvec[i] = pmod->coeff[vi-1];
+				genr.xvec[i] = pmod->coeff[vi-2];
 #ifdef GENR_DEBUG
-			    fprintf(stderr, "got coeff=%g\n", pmod->coeff[vi-1]);
+			    fprintf(stderr, "got coeff=%g\n", pmod->coeff[vi-2]);
 #endif
 			} else if (pmod->sderr != NULL) {
 			    for (i=0; i<n; i++) 
-				genr.xvec[i] = pmod->sderr[vi-1];
+				genr.xvec[i] = pmod->sderr[vi-2];
 			} else {
 			    err = E_INVARG;
 			    goto genr_return;

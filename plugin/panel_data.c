@@ -36,7 +36,7 @@ typedef struct {
 static void print_panel_const (MODEL *panelmod, PRN *prn)
 {
     char numstr[18];
-    int i = panelmod->list[0] - 1;
+    int i = panelmod->list[0] - 2;
 
     sprintf(numstr, "(%.5g)", panelmod->sderr[i]);
     pprintf(prn, _(" constant: %14.5g %15s\n"), 
@@ -53,7 +53,7 @@ static void print_panel_coeff (MODEL *pmod, MODEL *panelmod,
 
     sprintf(numstr, "(%.5g)", panelmod->sderr[i]);
     pprintf(prn, "%9s: %14.5g %15s\n", 
-	    pdinfo->varname[pmod->list[i+1]],
+	    pdinfo->varname[pmod->list[i+2]],
 	    panelmod->coeff[i], numstr);
 }
 
@@ -242,8 +242,8 @@ static double bXb (double *b, double **X, int n)
 
     for (i=1; i<=n; i++) {
 	row = 0.0;
-	for (j=1; j<=n; j++) row += b[j] * X[j][i];
-	xx += b[i] * row;
+	for (j=1; j<=n; j++) row += b[j-1] * X[j][i];
+	xx += b[i-1] * row;
     }
     return xx;
 }
@@ -258,18 +258,23 @@ static int haus_invert (hausman_t *haus)
 
     a = malloc((n + 1) * sizeof *a);
     if (a == NULL) return 1;
+
     for (i=1; i<=n; i++) {
 	a[i] = malloc((n + 1) * sizeof **a);
 	if (a[i] == NULL) return 1;
     }
+
     y = malloc((n + 1) * sizeof *y);
     if (y == NULL) return 1;
+
     for (i=1; i<=n; i++) {
 	y[i] = malloc((n + 1) * sizeof **y);
 	if (y[i] == NULL) return 1;
     }
+
     col = malloc((n + 1) * sizeof *col);
     if (col == NULL) return 1;
+
     idx = malloc((n + 1) * sizeof *idx);
     if (idx == NULL) return 1;
 
@@ -284,6 +289,7 @@ static int haus_invert (hausman_t *haus)
     }
 
     err = lu_decomp(a, n, idx);
+
     if (!err) {
 	for (j=1; j<=n; j++) {
 	    for (i=1; i<=n; i++) col[i] = 0.0;
@@ -348,6 +354,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     lsdv = lsq(dvlist, pZ, pdinfo, OLS, 0, 0.0);
+
     if (lsdv.errcode) {
 	var = NADBL;
 	pputs(prn, _("Error estimating fixed effects model\n"));
@@ -361,17 +368,21 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		"unit\n"
 		"         (slope standard errors in parentheses, a_i = "
 		"intercepts)\n\n"));
-	for (i=1; i<pmod->list[0] - 1; i++) {
+
+	for (i=0; i<pmod->list[0] - 2; i++) {
 	    print_panel_coeff(&lsdv, &lsdv, pdinfo, i, prn);
 	    haus->bdiff[i] = lsdv.coeff[i];
-	} for (i=pmod->list[0]; i<=dvlist[0]; i++) {
+	}
+ 
+	for (i=pmod->list[0]; i<=dvlist[0]; i++) {
 	    char dumstr[9];
 
 	    if (i < dvlist[0]) 
-		lsdv.coeff[i-1] += lsdv.coeff[dvlist[0] - 1];
+		lsdv.coeff[i-2] += lsdv.coeff[dvlist[0] - 2];
 	    sprintf(dumstr, "a_%d", i - pmod->list[0] + 1);
-	    pprintf(prn, "%9s: %14.4g\n", dumstr, lsdv.coeff[i-1]);
+	    pprintf(prn, "%9s: %14.4g\n", dumstr, lsdv.coeff[i-2]);
 	}
+
 	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
 		lsdv.ess, pdinfo->n, lsdv.ncoeff, var);
 	F = (pmod->ess - lsdv.ess) * lsdv.dfd /
@@ -455,7 +466,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 		"error term\n"
 		"                     (standard errors in parentheses)\n\n"));
 	print_panel_const(&remod, prn);
-	for (i=1; i<relist[0] - 1; i++) {
+	for (i=0; i<relist[0] - 2; i++) {
 	    print_panel_coeff(pmod, &remod, pdinfo, i, prn);
 	    haus->bdiff[i] -= remod.coeff[i];
 	}
@@ -528,7 +539,7 @@ static int do_hausman_test (hausman_t *haus, PRN *prn)
     int i, ns = haus->ns;
     int nterms = (ns * ns + ns) / 2;
 
-    for (i=1; i<=ns; i++)
+    for (i=0; i<ns; i++)
  	pprintf(prn, "b%d_FE - beta%d_RE = %g\n", i, i, haus->bdiff[i]);
     pprintf(prn, "\n");
 
@@ -572,9 +583,9 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (nunits > pmod->ncoeff) {
 	ns = haus.ns = pmod->ncoeff - 1;
-	haus.bdiff = malloc(pmod->ncoeff * sizeof(double));
+	haus.bdiff = malloc(pmod->ncoeff * sizeof *haus.bdiff);
 	if (haus.bdiff == NULL) return E_ALLOC;
-	haus.sigma = malloc(((ns * ns + ns) / 2) * sizeof(double));
+	haus.sigma = malloc(((ns * ns + ns) / 2) * sizeof *haus.sigma);
 	if (haus.sigma == NULL) return E_ALLOC; 
     }   
     

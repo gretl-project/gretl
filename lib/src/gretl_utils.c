@@ -388,7 +388,7 @@ int _hasconst (const int *list)
     int i;
 
     for (i=2; i<=list[0]; i++) 
-        if (list[i] == 0) return 1;
+        if (list[i] == 0) return i;
 
     return 0;
 }
@@ -495,11 +495,11 @@ void gretl_aic_etc (MODEL *pmod)
     zz = (double) (nobs - ncoeff);
     pmod->criterion[0] = ess/zz;
     ersq = ess/nobs;
-    pmod->criterion[2] = ersq * (nobs+ncoeff)/zz;
-    zz = 2.0 * ncoeff/nobs;
+    pmod->criterion[2] = ersq * (nobs + ncoeff) / zz;
+    zz = 2.0 * ncoeff / nobs;
     pmod->criterion[1] = ersq * exp(zz);
-    pmod->criterion[5] = ersq *(1.0+zz);
-    pmod->criterion[7] = (1-zz)>0.0? ersq/(1-zz): NADBL;
+    pmod->criterion[5] = ersq * (1.0 + zz);
+    pmod->criterion[7] = ((1-zz) > 0.0)? ersq/(1-zz) : NADBL;
     zn = (double) nobs;
     zx = log(zn);
     pmod->criterion[3] = ersq * pow(zx, zz);
@@ -521,11 +521,11 @@ void _criteria (const double ess, int nobs, int ncoeff,
     zz = (double) (nobs - ncoeff);
     criterion[0] = ess/zz;
     ersq = ess/nobs;
-    criterion[2] = ersq * (nobs+ncoeff)/zz;
+    criterion[2] = ersq * (nobs + ncoeff) / zz;
     zz = 2.0 * ncoeff/nobs;
     criterion[1] = ersq * exp(zz);
-    criterion[5] = ersq *(1.0+zz);
-    criterion[7] = (1-zz)>0.0? ersq/(1-zz): NADBL;
+    criterion[5] = ersq * (1.0 + zz);
+    criterion[7] = ((1-zz) > 0.0)? ersq/(1-zz) : NADBL;
     zn = (double) nobs;
     zx = log(zn);
     criterion[3] = ersq * pow(zx, zz);
@@ -1720,17 +1720,17 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 
     /* now work on pointer members */
     _init_model(targ, pdinfo);
-    if ((targ->coeff = copyvec(src->coeff, src->ncoeff + 1)) == NULL)
+    if ((targ->coeff = copyvec(src->coeff, src->ncoeff)) == NULL)
 	return 1;
-    if ((targ->sderr = copyvec(src->sderr, src->ncoeff + 1))  == NULL)  
+    if ((targ->sderr = copyvec(src->sderr, src->ncoeff))  == NULL)  
 	return 1;
     if ((targ->uhat = copyvec(src->uhat, pdinfo->n)) == NULL) return 1;
     if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) return 1;
-    if ((targ->xpx = copyvec(src->xpx, m + 1)) == NULL) return 1;
+    if ((targ->xpx = copyvec(src->xpx, m)) == NULL) return 1;
     if (src->subdum != NULL && 
 	(targ->subdum = copyvec(src->subdum, pdinfo->n)) == NULL) return 1;
     if (src->vcv != NULL && 
-	(targ->vcv = copyvec(src->vcv, m + 1)) == NULL) return 1;
+	(targ->vcv = copyvec(src->vcv, m)) == NULL) return 1;
 
     if (src->arinfo != NULL) {
 	targ->arinfo = copy_ar_info(src->arinfo);
@@ -1739,7 +1739,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     }
 
     if (src->slope != NULL &&
-	(targ->slope = copyvec(src->slope, src->ncoeff + 1)) == NULL)
+	(targ->slope = copyvec(src->slope, src->ncoeff)) == NULL)
 	    return 1;
 
     m = src->list[0];
@@ -1797,8 +1797,8 @@ int _forecast (int t1, int t2, int nv,
 	    }
 	    zz = zz + xx * zr;
 	} /* end if ARMODEL */
-	for (v=1; !miss && v<=pmod->ncoeff; v++) {
-	    k = pmod->list[v+1];
+	for (v=0; !miss && v<pmod->ncoeff; v++) {
+	    k = pmod->list[v+2];
 	    xx = (*pZ)[k][t];
 	    if (na(xx)) {
 		zz = NADBL;
@@ -1806,11 +1806,13 @@ int _forecast (int t1, int t2, int nv,
 	    }
 	    if (!miss && ARMODEL) {
 		xx = (*pZ)[k][t];
-		for (i=1; i<=arlist[0]; i++) 
+		for (i=1; i<=arlist[0]; i++) {
 		    xx -= pmod->arinfo->rho[i] * (*pZ)[k][t - arlist[i]];
+		}
 	    }
-	    if (!miss) 
+	    if (!miss) {
 		zz = zz + xx * pmod->coeff[v];
+	    }
 	}
 	(*pZ)[nv][t] = zz;
     }
@@ -1926,6 +1928,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     /* parse dates */
     if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) 
 	return NULL; /* E_OBS */ 
+
     ft1 = dateton(t1str, pdinfo);
     ft2 = dateton(t2str, pdinfo);
     if (ft1 < 0 || ft2 < 0 || ft2 < ft1) return NULL; /* E_OBS */
@@ -2023,7 +2026,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 
     /* find the fitted values */
     t = 0;
-    for (i=orig_v-1; i<fv-1; i++) {
+    for (i=orig_v-2; i<fv-2; i++) {
 	fr->fitted[t] = fmod.coeff[i];
 	t++;
     }    
@@ -2398,8 +2401,8 @@ mp_results *gretl_mp_results_new (int totvar)
 
     mpvals->ncoeff = totvar;
 
-    mpvals->coeff = malloc(totvar * sizeof(double));
-    mpvals->sderr = malloc(totvar * sizeof(double));
+    mpvals->coeff = malloc(totvar * sizeof *mpvals->coeff);
+    mpvals->sderr = malloc(totvar * sizeof *mpvals->sderr);
     mpvals->varnames = NULL;
     mpvals->varlist = NULL;
 
@@ -2490,13 +2493,13 @@ CONFINT *get_model_confints (const MODEL *pmod)
     cf = malloc(sizeof *cf);
     if (cf == NULL) return NULL;
 
-    cf->coeff = malloc((ncoeff + 1) * sizeof *cf->coeff);
+    cf->coeff = malloc(ncoeff * sizeof *cf->coeff);
     if (cf->coeff == NULL) {
 	free(cf);
 	return NULL;
     }
 
-    cf->maxerr = malloc((ncoeff + 1) * sizeof *cf->maxerr);
+    cf->maxerr = malloc(ncoeff * sizeof *cf->maxerr);
     if (cf->maxerr == NULL) {
 	free(cf);
 	free(cf->coeff);
@@ -2511,7 +2514,7 @@ CONFINT *get_model_confints (const MODEL *pmod)
 	return NULL;
     }
 
-    for (i=1; i<=ncoeff; i++) { /* FIXME? */
+    for (i=0; i<ncoeff; i++) { /* FIXME? */
 	cf->coeff[i] = pmod->coeff[i];
 	cf->maxerr[i] = (pmod->sderr[i] > 0)? t * pmod->sderr[i] : 0;
     }

@@ -133,7 +133,7 @@ static void sur_resids (MODEL *pmod, double **Z, gretl_matrix *uhat)
     for (t=0; t<T; t++) {
 	fit = 0.0;
 	for (i=0; i<k; i++) {
-	    fit += pmod->coeff[i+1] * Z[pmod->list[i+2]][t];
+	    fit += pmod->coeff[i] * Z[pmod->list[i+2]][t];
 	}
 	pmod->yhat[t] = fit;
 	pmod->uhat[t] = Z[pmod->list[1]][t] - fit;
@@ -173,8 +173,8 @@ calculate_sur_coefficients (MODEL **models, double **Z,
 
     for (i=0; i<m; i++) {
 	for (j=0; j<k; j++) {
-	    (models[i])->coeff[j+1] = gretl_vector_get(coeff, i * k + j);
-	    (models[i])->sderr[j+1] = 
+	    (models[i])->coeff[j] = gretl_vector_get(coeff, i * k + j);
+	    (models[i])->sderr[j] = 
 		sqrt(gretl_matrix_get(vcv, i * k + j, i * k + j));
 	}
 	sur_resids(models[i], Z, uhat);

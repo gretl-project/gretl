@@ -205,8 +205,8 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     pmod->arinfo->rho[1] = pmod->rho_in = rho;
 
     if (pmod->ifc) {
-	pmod->coeff[pmod->ncoeff] /= (1.0 - rho);
-	pmod->sderr[pmod->ncoeff] /= (1.0 - rho);
+	pmod->coeff[pmod->ncoeff-1] /= (1.0 - rho);
+	pmod->sderr[pmod->ncoeff-1] /= (1.0 - rho);
     }
 
     pmod->uhat[pmod->t1] = NADBL;
@@ -214,13 +214,13 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 
     for (t=pmod->t1+1; t<=pmod->t2; t++) {
 	x = Z[yno][t] - rho * Z[yno][t-1];
-	for (i=1; i<=pmod->ncoeff - pmod->ifc; i++) {
+	for (i=0; i<pmod->ncoeff - pmod->ifc; i++) {
 	    x -= pmod->coeff[i] * 
-		(Z[pmod->list[i+1]][t] - 
-		 rho * Z[pmod->list[i+1]][t-1]);
+		(Z[pmod->list[i+2]][t] - 
+		 rho * Z[pmod->list[i+2]][t-1]);
 	}
 	if (pmod->ifc) 
-	    x -= (1 - rho) * pmod->coeff[pmod->ncoeff];
+	    x -= (1 - rho) * pmod->coeff[pmod->ncoeff-1];
 	pmod->uhat[t] = x;
 	pmod->yhat[t] = Z[yno][t] - x;
     }
@@ -401,9 +401,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* drop any vars that are all zero and repack the list */
     omitzero(&mdl, pdinfo, *pZ);
 
-    /* if regressor list contains a constant, place it last */
-    mdl.ifc = _hasconst(mdl.list);
-    if (mdl.ifc) rearrange_list(mdl.list);
+    /* if regressor list contains a constant, place it first */
+    i = _hasconst(mdl.list);
+    if (i > 1) mdl.ifc = 1; 
+    if (i > 2) rearrange_list(mdl.list);
 
     /* check for presence of lagged dependent variable */
     mdl.ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
@@ -428,15 +429,15 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	int nxpx = l * (l + 1) / 2;
 
 	xpy = malloc((l0 + 1) * sizeof *xpy);
-	mdl.xpx = malloc((nxpx + 1) * sizeof *mdl.xpx);
-	mdl.coeff = malloc(l0 * sizeof *mdl.coeff);
+	mdl.xpx = malloc(nxpx * sizeof *mdl.xpx);
+	mdl.coeff = malloc(mdl.ncoeff * sizeof *mdl.coeff);
 	if (xpy == NULL || mdl.xpx == NULL || mdl.coeff == NULL) {
 	    mdl.errcode = E_ALLOC;
 	    return mdl;
 	}
 
 	for (i=0; i<=l0; i++) xpy[i] = 0.0;
-	for (i=0; i<=nxpx; i++) mdl.xpx[i] = 0.0;
+	for (i=0; i<nxpx; i++) mdl.xpx[i] = 0.0;
 
 	/* calculate regression results, Choleski style */
 	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho,
@@ -568,7 +569,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}
-		xpx[++m] = x;
+		xpx[m++] = x;
 	    }
 	    x = 0.0;
 	    for (t=t1+1; t<=t2; t++) {
@@ -592,7 +593,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}   
-		xpx[++m] = x;
+		xpx[m++] = x;
 	    }
 	    x = 0;
 	    for (t=t1; t<=t2; t++) {
@@ -615,7 +616,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}
-		xpx[++m] = x;
+		xpx[m++] = x;
 	    }
 	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
@@ -624,6 +625,15 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    xpy[i-1] = x;
 	}
     }
+
+#if 0
+    for (i=0; i<=m; i++) {
+	fprintf(stderr, "xpx[%d] = %g\n", i, xpx[i]);
+    }
+    for (i=0; i<=l0; i++) {
+	fprintf(stderr, "xpy[%d] = %g\n", i, xpy[i]);
+    }
+#endif
 
     return 0; 
 }
@@ -643,7 +653,7 @@ static int make_ess (MODEL *pmod, double **Z)
 	}
 	yhat = 0.0;
 	for (i=2; i<=l0; i++) {
-	    yhat += pmod->coeff[i-1] * Z[pmod->list[i]][t];
+	    yhat += pmod->coeff[i-2] * Z[pmod->list[i]][t];
 	}
 	resid = Z[yno][t] - yhat;
 	if (nwt) {
@@ -698,7 +708,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     double *diag = NULL;
     int i, err = 0;
 
-    pmod->sderr = malloc((pmod->ncoeff + 1) * sizeof *pmod->sderr);
+    pmod->sderr = malloc(pmod->ncoeff * sizeof *pmod->sderr);
     pmod->yhat = malloc(n * sizeof *pmod->yhat);
     pmod->uhat = malloc(n * sizeof *pmod->uhat);
 
@@ -787,7 +797,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	pmod->fstt = (rss - zz * pmod->ifc) / (sgmasq * pmod->dfn);
     }
 
-    diag = malloc((pmod->ncoeff + 1) * sizeof *diag); 
+    diag = malloc(pmod->ncoeff * sizeof *diag); 
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
 	return;
@@ -795,7 +805,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
 
-    for (v=1; v<=pmod->ncoeff; v++) { 
+    for (v=0; v<pmod->ncoeff; v++) { 
        pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
     }
 
@@ -818,29 +828,28 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
   nv is the number of regression coefficients including the 
   constant.  */
 {
-    int nm1, i, j, k, kk, l, jm1;
+    int i, j, k, kk, l, jm1;
     double e, d, d1, test, xx;
 
     if (coeff != NULL) {
-	for (j=0; j<=nv; j++) {
+	for (j=0; j<nv; j++) {
 	    coeff[j] = 0.0;
 	}
     }
 
-    nm1 = nv - 1;
-    e = 1.0 / sqrt(xpx[1]);
-    xpx[1] = e;
+    e = 1.0 / sqrt(xpx[0]);
+    xpx[0] = e;
     xpy[1] *= e;
-    for (i=2; i<=nv; i++) {
+    for (i=1; i<nv; i++) {
 	xpx[i] *= e;
     }
-    kk = nv + 1;
+
+    kk = nv;
 
     for (j=2; j<=nv; j++) {
 	/* diagonal elements */
         d = d1 = 0.0;
-        k = j;
-        jm1 = j - 1;
+        k = jm1 = j - 1;
         for (l=1; l<=jm1; l++) {
             xx = xpx[k];
             d1 += xx * xpy[l];
@@ -863,9 +872,9 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
 	    /* off-diagonal elements */
             kk++;
             d = 0.0;
-            k = j;
+            k = j - 1;
             for (l=1; l<=jm1; l++) {
-                d += xpx[k] * xpx[k - j + i];
+                d += xpx[k] * xpx[k-j+i];
                 k += nv - l;
             }
             xpx[kk] = (xpx[kk] - d) * e;
@@ -882,15 +891,15 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
     if (rss != NULL) *rss = d;
 
     if (coeff != NULL) {
-	coeff[nv] = xpy[nv] * xpx[kk];
-	for (j=nm1; j>=1; j--) {
+	coeff[nv-1] = xpy[nv] * xpx[kk];
+	for (j=nv-1; j>=1; j--) {
 	    d = xpy[j];
-	    for (i=nv; i>=j+1; i--) {
+	    for (i=nv-1; i>=j; i--) {
 		kk--;
 		d -= coeff[i] * xpx[kk];
 	    }
 	    kk--;
-	    coeff[j] = d * xpx[kk];
+	    coeff[j-1] = d * xpx[kk];
 	}  
     } 
 
@@ -909,10 +918,11 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
         nv = no. of regression coefficients
 */
 {
-    int kk = 1, l, m, nstop, k, i, j;
+    int kk, l, m, k, i, j;
+    const int nxpx = nv * (nv + 1) / 2;
     double d, e;
 
-    nstop = nv * (nv + 1) / 2;
+    kk = 0;
 
     for (l=1; l<=nv-1; l++) {
         d = xpx[kk];
@@ -924,7 +934,7 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
 	}
         for (i=l+1; i<=nv; i++) {
             d = 0.0;
-            k = i + m;
+            k = i + m - 1;
             for (j=l; j<=i-1; j++) {
                 d += xpy[j] * xpx[k];
                 k += nv - j;
@@ -934,9 +944,10 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
             e += d * d;
         }
         kk += nv + 1 - l;
-        diag[l] = e;
+        diag[l-1] = e;
     }
-    diag[nv] = xpx[nstop] * xpx[nstop];
+
+    diag[nv-1] = xpx[nxpx-1] * xpx[nxpx-1];
 }
 
 /**
@@ -957,8 +968,10 @@ int makevcv (MODEL *pmod)
     double d;
 
     if (pmod->vcv != NULL) return 0;
+    if (pmod->xpx == NULL) return 1;
 
-    mst = kk = nxpx;
+    mst = nxpx;
+    kk = nxpx - 1;
 
     pmod->vcv = malloc(nxpx * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) return E_ALLOC;
@@ -969,10 +982,10 @@ int makevcv (MODEL *pmod)
 	d = pmod->xpx[kk];
 	if (i > 0) {
 	    for (j=kk+1; j<=kk+i; j++) {
-		d -= pmod->xpx[j] * pmod->vcv[j-1];
+		d -= pmod->xpx[j] * pmod->vcv[j];
 	    }
 	}
-	pmod->vcv[kk-1] = d * pmod->xpx[kk];
+	pmod->vcv[kk] = d * pmod->xpx[kk];
 	/* find off-diagonal elements indexed by kj */
 	kj = kk;
 	kk = kk - i - 2;
@@ -992,7 +1005,7 @@ int makevcv (MODEL *pmod)
 		l = kj + i - k;
 		d += pmod->vcv[m-1] * pmod->xpx[l];
 	    }
-	    pmod->vcv[kj-1] = (-1.0) * d * pmod->xpx[l-1];
+	    pmod->vcv[kj] = (-1.0) * d * pmod->xpx[l-1];
 	}
     }
 
@@ -1203,8 +1216,8 @@ static int hatvar (MODEL *pmod, double **Z)
     double x;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-        for (i=1; i<=pmod->ncoeff; i++) {
-            xno = pmod->list[i+1];
+        for (i=0; i<pmod->ncoeff; i++) {
+            xno = pmod->list[i+2];
 	    x = Z[xno][t];
 	    if (pmod->nwt) x *= Z[pmod->nwt][t];
             pmod->yhat[t] += pmod->coeff[i] * x;
@@ -1401,11 +1414,11 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	x = Z[i][t];
-	for (v=1; v<=pmod->ncoeff - pmod->ifc; v++) {
-	    x -= pmod->coeff[v] * Z[pmod->list[v+1]][t];
-	}
 	if (pmod->ifc) {
-	    x -= pmod->coeff[pmod->ncoeff] / pmod->dw;
+	    x -= pmod->coeff[0] / pmod->dw;
+	}
+	for (v=pmod->ifc; v<pmod->ncoeff; v++) {
+	    x -= pmod->coeff[v] * Z[pmod->list[v+2]][t];
 	}
 	uhat[t] = x;
     }
@@ -1550,8 +1563,8 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     tsls.ess = 0.0;
     for (t=tsls.t1; t<=tsls.t2; t++) {
 	xx = 0.0;
-	for (i=1; i<=tsls.ncoeff; i++) {
-	    xx += tsls.coeff[i] * (*pZ)[list1[i+1]][t];
+	for (i=0; i<tsls.ncoeff; i++) {
+	    xx += tsls.coeff[i] * (*pZ)[list1[i+2]][t];
 	}
 	yhat[t] = xx; 
 	tsls.uhat[t] = (*pZ)[tsls.list[1]][t] - xx;
@@ -1561,9 +1574,9 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     nv = s2list[0] - 1;
     nxpx = nv * (nv + 1) / 2;
-    xpx = malloc((nxpx + 1) * sizeof *xpx);
+    xpx = malloc(nxpx * sizeof *xpx);
     xpy = malloc((s2list[0] + 1) * sizeof *xpy);
-    diag = malloc(s2list[0] * sizeof *diag);
+    diag = malloc((s2list[0] - 1) * sizeof *diag);
 
     if (xpy == NULL || xpx == NULL || diag == NULL) {
 	free(list1); free(list2);
@@ -1580,7 +1593,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 		xpx, xpy);
     cholbeta(xpx, xpy, NULL, NULL, nv);    
     diaginv(xpx, xpy, diag, nv);
-    for (i=1; i<=tsls.ncoeff; i++) {
+    for (i=0; i<tsls.ncoeff; i++) {
 	tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
     }
     free(diag); 
@@ -1588,7 +1601,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     free(xpy);
 
     tsls.rsq = corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
-			yhat + tsls.t1);
+		       yhat + tsls.t1);
     tsls.adjrsq = 
 	1 - ((1 - tsls.rsq)*(tsls.nobs - 1)/tsls.dfd);
     tsls.fstt = tsls.rsq*tsls.dfd/(tsls.dfn*(1-tsls.rsq));
@@ -1812,7 +1825,7 @@ static int whites_standard_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 		varhat += x * y;
 	    }
 	    varhat /= (auxmod.ess * auxmod.ess);
-	    pmod->sderr[i-1] = sqrt(varhat);
+	    pmod->sderr[i-2] = sqrt(varhat);
 	}
 
 	clear_model(&auxmod, pdinfo);
@@ -1946,7 +1959,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	    xx = xx * (nobs - 1) / nobs -
 		(nobs - 1) * st[i] * st[j] / (nobs * nobs);
 #ifndef WHITES_STD_ERRS
-	    if (i == j) hccm.sderr[i] = sqrt(xx);
+	    if (i == j) hccm.sderr[i-1] = sqrt(xx);
 #endif
 	    hccm.vcv[index++] = xx;
 	}
@@ -2178,7 +2191,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 		double x = (*pZ)[list[1]][t-1];
 
 		for (i=2; i<=list[0]; i++) {
-		    x -= armod.coeff[i-1] * (*pZ)[list[i]][t-1];
+		    x -= armod.coeff[i-2] * (*pZ)[list[i]][t-1];
 		}
 		(*pZ)[av][t] = x;
 	    }
@@ -2192,14 +2205,14 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 		double y = (*pZ)[list[1]][t];
 
 		for (i=2; i<=list[0]; i++) {
-		    y -= rho * armod.coeff[i-1] * (*pZ)[list[i]][t-1];
+		    y -= rho * armod.coeff[i-2] * (*pZ)[list[i]][t-1];
 		}
 		(*pZ)[v][t] = y;
 	    }
 	}
 
 	if (j > 0) {
-	    rho = armod.coeff[list[0]];
+	    rho = armod.coeff[list[0]-1];
 	    ess = armod.ess;
 	    clear_model(&armod, pdinfo);
 	} 
@@ -2211,7 +2224,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	if (armod.errcode) break;
 
 	/* essdiff = fabs(ess - armod.ess) / ess; */
-	essdiff = fabs(rho - armod.coeff[list[0]]) / rho;
+	essdiff = fabs(rho - armod.coeff[list[0]-1]) / rho;
 
 	if (++j > 20) break;
     }
@@ -2234,8 +2247,8 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     } else {
 	armod.arinfo->arlist[0] = 1;
 	armod.arinfo->arlist[1] = 1;
-	armod.arinfo->rho[1] = armod.coeff[list[0]];
-	armod.arinfo->sderr[1] = armod.sderr[list[0]];
+	armod.arinfo->rho[1] = armod.coeff[list[0]-1];
+	armod.arinfo->sderr[1] = armod.sderr[list[0]-1];
     }
 
     /* special computation of additional stats */
@@ -2396,8 +2409,8 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	/* special computation of uhat */
 	for (t=t1; t<=t2; t++) {
 	    xx = (*pZ)[yno][t];
-	    for (j=1; j<reglist[0]; j++) {
-		xx -= ar.coeff[j] * (*pZ)[reglist[j+1]][t];
+	    for (j=0; j<reglist[0]-1; j++) {
+		xx -= ar.coeff[j] * (*pZ)[reglist[j+2]][t];
 	    }
 	    (*pZ)[v][t] = xx;
 	}
@@ -2421,7 +2434,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 		xx = (*pZ)[reglist[i]][t];
 		for (j=1; j<=arlist[0]; j++) {
 		    lag = arlist[j];
-		    xx -= rhomod.coeff[j] * (*pZ)[reglist[i]][t-lag];
+		    xx -= rhomod.coeff[j-1] * (*pZ)[reglist[i]][t-lag];
 		}
 		(*pZ)[vc][t] = xx;
 	    }
@@ -2459,11 +2472,11 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
 	for (j=2; j<=reglist[0]; j++) 
-	    xx += ar.coeff[j-1] * (*pZ)[reglist[j]][t];
+	    xx += ar.coeff[j-2] * (*pZ)[reglist[j]][t];
 	ar.uhat[t] = (*pZ)[yno][t] - xx;
 	for (j=1; j<=arlist[0]; j++)
 	    if (t - t1 >= arlist[j]) 
-		xx += rhomod.coeff[j] * ar.uhat[t - arlist[j]];
+		xx += rhomod.coeff[j-1] * ar.uhat[t - arlist[j]];
 	ar.yhat[t] = xx;
     }
 
@@ -2493,8 +2506,10 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     } else {
 	for (i=0; i<=arlist[0]; i++) { 
 	    ar.arinfo->arlist[i] = arlist[i];
-	    ar.arinfo->rho[i] = rhomod.coeff[i];
-	    ar.arinfo->sderr[i] = rhomod.sderr[i];
+	    if (i >= 1) {
+		ar.arinfo->rho[i] = rhomod.coeff[i-1];
+		ar.arinfo->sderr[i] = rhomod.sderr[i-1];
+	    }
 	}
     }
 
@@ -2566,7 +2581,7 @@ static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 
 /* .........................................................   */
 
-void rearrange_list (int *list)
+void old_rearrange_list (int *list)
 /* checks a list for a constant term (ID # 0), and if present, 
    move it to the last position
 */
@@ -2579,6 +2594,22 @@ void rearrange_list (int *list)
             list[0] = lo;
             list[lo] = 0;
             return;
+        }
+    }
+}
+
+void rearrange_list (int *list)
+/* checks a list for a constant term (ID # 0), and if present, 
+   move it to the first dep var position
+*/
+{
+    int i, v;
+
+    for (v=list[0]; v>2; v--) {
+        if (list[v] == 0)  {
+	    for (i=v; i>2; i--) list[i] = list[i-1];
+	    list[2] = 0;
+	    return;
         }
     }
 }

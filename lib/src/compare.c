@@ -815,7 +815,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
 
     auxlist = malloc(pmod->list[0] * sizeof *auxlist);
     ahat = malloc(pdinfo->n * sizeof *ahat);
-    robust = malloc((pmod->ncoeff + 1) * sizeof *robust);
+    robust = malloc(pmod->ncoeff * sizeof *robust);
 
     if (auxlist == NULL || ahat == NULL || robust == NULL) {
 	free(auxlist);
@@ -852,17 +852,17 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
 	if (auxmod.errcode) {
 	    fprintf(stderr, "Error estimating auxiliary model, code=%d\n", 
 		    auxmod.errcode);
-	    pmod->sderr[i-1] = NADBL;
+	    pmod->sderr[i-2] = NADBL;
 	} else {
 	    /* compute robust standard error */
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
 		ahat[t] = pmod->uhat[t] * auxmod.uhat[t];
 	    }
 	    vhat = get_vhat(ahat, g, pmod->t1, pmod->t2);
-	    sderr = pmod->sderr[i-1] / pmod->sigma;
+	    sderr = pmod->sderr[i-2] / pmod->sigma;
 	    sderr = sderr * sderr;
 	    sderr *= sqrt(vhat);
-	    robust[i-1] = sderr;
+	    robust[i-2] = sderr;
 	}
 
 	clear_model(&auxmod, pdinfo);
@@ -1092,7 +1092,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     if (!err) {
 	/* take the original regression list, add a split dummy
 	   and interaction terms. */
-	if (pmod->ifc == 0) newvars += 1;
+	if (pmod->ifc == 0) newvars++;
 
 	if (dataset_add_vars(newvars, pZ, pdinfo)) {
 	    newvars = 0;
@@ -1106,8 +1106,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
     if (!err) {
 	chowlist[0] = pmod->list[0] + newvars;
-	for (i=1; i<=pmod->list[0]; i++) 
+	for (i=1; i<=pmod->list[0]; i++) { 
 	    chowlist[i] = pmod->list[i];
+	}
 
 	/* generate the split variable */
 	for (t=0; t<n; t++) 
@@ -1118,15 +1119,18 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 
 	/* and the interaction terms */
 	for (i=1; i<newvars; i++) {
-	    for (t=0; t<n; t++)
-		(*pZ)[v+i][t] = 
-		    (*pZ)[v][t] * (*pZ)[pmod->list[1+i]][t];
-	    strcpy(s, pdinfo->varname[pmod->list[1+i]]); 
+	    int orig = i + 1 + pmod->ifc;
+
+	    for (t=0; t<n; t++) {
+		(*pZ)[v+i][t] = (*pZ)[v][t] * 
+		    (*pZ)[pmod->list[orig]][t];
+	    }
+	    strcpy(s, pdinfo->varname[pmod->list[orig]]); 
 	    _esl_trunc(s, 5);
 	    strcpy(pdinfo->varname[v+i], "sd_");
 	    strcat(pdinfo->varname[v+i], s);
 	    sprintf(VARLABEL(pdinfo, v+i), "splitdum * %s", 
-		    pdinfo->varname[pmod->list[1+i]]);
+		    pdinfo->varname[pmod->list[orig]]);
 	    chowlist[pmod->list[0]+1+i] = v+i;
 	}
 
@@ -1255,7 +1259,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		for (i=1; i<=K; i++) {
 		    xno = cum_mod.list[i+1];
 		    xvec[i-1] = (*pZ)[xno][t];
-		    yy += cum_mod.coeff[i] * (*pZ)[xno][t];
+		    yy += cum_mod.coeff[i-1] * (*pZ)[xno][t];
 		}
 		cresid[j] = (*pZ)[yno][t] - yy;
 		cum_mod.ci = CUSUM;
@@ -1686,15 +1690,16 @@ int sum_test (LIST sumvars, MODEL *pmod,
 	    for (i=1; i<=sumvars[0]; i++) {
 		pprintf(prn, "%s ", pdinfo->varname[sumvars[i]]);
 	    }
+	    /* FIXME: check indexing of summod.coeff[] below */
 	    pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), 
-		    summod.coeff[testcoeff - 1]);
-	    if (!na(summod.sderr[testcoeff - 1])) {
+		    summod.coeff[testcoeff - 2]);
+	    if (!na(summod.sderr[testcoeff - 2])) {
 		double tval;
 
 		pprintf(prn, "   %s = %g\n", _("Standard error"),
-			summod.sderr[testcoeff - 1]);
-		tval = summod.coeff[testcoeff - 1] / 
-		    summod.sderr[testcoeff - 1];
+			summod.sderr[testcoeff - 2]);
+		tval = summod.coeff[testcoeff - 2] / 
+		    summod.sderr[testcoeff - 2];
 		pprintf(prn, "   t(%d) = %g ", summod.dfd, tval);
 		pprintf(prn, _("with p-value = %f\n"), 
 			tprob(tval, summod.dfd));

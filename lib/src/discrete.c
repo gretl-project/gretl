@@ -220,8 +220,15 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmod.ci = opt;
     free(dmodlist);
 
+    /* in case using QR, where vcv is precalculated */
+    if (dmod.vcv != NULL) {
+	free(dmod.vcv);
+	dmod.vcv = NULL;
+    }
+
     /* form the Hessian */
     if (dmod.xpx != NULL) free(dmod.xpx);
+    /* if (dmod.vcv != NULL) free(dmod.vcv); */
     dmod.xpx = hessian(&dmod, *pZ, n, opt);
     if (dmod.xpx == NULL) {
 	free(xbar);
@@ -232,26 +239,27 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     /* obtain negative inverse of Hessian */
     choleski(dmod.xpx, dmod.ncoeff); 
-    diag = malloc((dmod.ncoeff + 1) * sizeof(double)); 
+    diag = malloc(dmod.ncoeff * sizeof *diag); 
     if (diag == NULL) {
 	free(xbar);
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
 
-    xpx = copyvec(dmod.xpx, 1 + dmod.ncoeff * (dmod.ncoeff + 1) / 2);
+    xpx = copyvec(dmod.xpx, dmod.ncoeff * (dmod.ncoeff + 1) / 2);
     neginv(xpx, diag, dmod.ncoeff);
 
     /* std errors: square roots of diagonal elements */
-    for (i=1; i<=dmod.ncoeff; i++) 
+    for (i=0; i<dmod.ncoeff; i++) {
 	dmod.sderr[i] = sqrt(diag[i]);
+    }
     free(diag);
     free(xpx);
 
     /* apparatus for calculating slopes at means */
     xx = 0.0;
     for (i=0; i<dmod.ncoeff; i++) {
-	xx += dmod.coeff[i+1] * xbar[i];
+	xx += dmod.coeff[i] * xbar[i];
     }
     free(xbar);
 
@@ -260,7 +268,7 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     else
 	fbx = _norm_pdf(xx);
 
-    dmod.slope = malloc((dmod.ncoeff + 1) * sizeof(double));
+    dmod.slope = malloc(dmod.ncoeff * sizeof(double));
     if (dmod.slope == NULL) {
 	dmod.errcode = E_ALLOC;
 	return dmod;
@@ -268,7 +276,7 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     for (i=0; i<dmod.ncoeff; i++) {
 	if (dmod.list[i+2] == 0) continue;
-	dmod.slope[i+1] = dmod.coeff[i+1] * fbx;
+	dmod.slope[i] = dmod.coeff[i] * fbx;
     }
 
     /* calculate additional statistics */
@@ -293,20 +301,21 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 static double *hessian (MODEL *pmod, double **Z, const int n, 
 			const int opt) 
 {
-    int i, j, li, lj, l0 = pmod->list[0], m, t;
+    int i, j, li, lj, m, t;
+    const int l0 = pmod->list[0];
     double xx, *wt, *xpx;
 
     i = l0 - 1;
     m = i * (i + 1) / 2;
 
-    xpx = malloc((m+1) * sizeof *xpx);
+    xpx = malloc(m * sizeof *xpx);
     if (xpx == NULL) return NULL;
-    xpx[0] = NADBL;
 
     if ((wt = hess_wts(pmod, Z, n, opt)) == NULL) {
 	free(xpx);
 	return NULL;
     }
+
     m = 0;
     for (i=2; i<=l0; i++) {
 	li = pmod->list[i];
@@ -320,12 +329,12 @@ static double *hessian (MODEL *pmod, double **Z, const int n,
 		free(wt);
 		return NULL;
 	    }
-	    xpx[++m] = -xx;
+	    xpx[m++] = -xx;
 	}
     }
-/*      for (i=1; i<=m; i++)  */
-/*    	printf("xpx[%d] = %10.6f\n", i, xpx[i]); */
+
     free(wt);
+
     return xpx; 
 }
 
@@ -343,7 +352,7 @@ static double *hess_wts (MODEL *pmod, double **Z, const int n,
 	bx = 0.0;
 	q = 2.0 * Z[pmod->list[1]][t] - 1.0;
 	for (i=0; i<pmod->ncoeff; i++) {
-	    bx += pmod->coeff[i+1] * Z[pmod->list[i+2]][t];
+	    bx += pmod->coeff[i] * Z[pmod->list[i+2]][t];
 	}
 	if (opt == LOGIT) {
 	    wt[t] = -1.0 * _logit(bx) * (1.0 - _logit(bx));
@@ -363,14 +372,16 @@ static int neginv (double *xpx, double *diag, int nv)
   X'X must be Choleski-decomposed already.
 */
 {
-    int kk = 1, l, m, nstop, k, i, j;
+    int kk, l, m, k, i, j;
+    const int nxpx = nv * (nv + 1) / 2;
     double d, e, *tmp;
 
     tmp = malloc((nv + 1) * sizeof *tmp);
     if (tmp == NULL) return 1;
     for (i=0; i<=nv; i++) tmp[i] = 0.0;
 
-    nstop = nv * (nv + 1)/2;
+    kk = 0;
+
     for (l=1; l<=nv-1; l++) {
         d = xpx[kk];
         tmp[l] = d;
@@ -380,7 +391,7 @@ static int neginv (double *xpx, double *diag, int nv)
 	    for (j=1; j<=l-1; j++) m += nv - j;
         for (i=l+1; i<=nv; i++) {
             d = 0.0;
-            k = i + m;
+            k = i + m - 1;
             for (j=l; j<=i-1; j++) {
                 d += tmp[j] * xpx[k];
                 k += nv - j;
@@ -390,10 +401,13 @@ static int neginv (double *xpx, double *diag, int nv)
             e += d * d;
         }
         kk += nv + 1 - l;
-        diag[l] = e;
+        diag[l-1] = e;
     }
-    diag[nv] = xpx[nstop] * xpx[nstop];
+
+    diag[nv-1] = xpx[nxpx-1] * xpx[nxpx-1];
+
     free(tmp);
+
     return 0;
 }
 
@@ -402,35 +416,33 @@ static int neginv (double *xpx, double *diag, int nv)
 static int choleski (double *xpx, int nv)
      /* Choleski decomposition of X'X */
 {
-    int nm1, i, j, k, kk, l, jm1;
+    int i, j, k, kk, l, jm1;
     double e, d, d1, test, xx;
 
-    nm1 = nv - 1;
-    e = 1/sqrt(xpx[1]);
-    xpx[1] = e;
-    for (i=2; i<=nv; i++) xpx[i] *= e;
-    kk = nv + 1;
+    e = 1 / sqrt(xpx[0]);
+    xpx[0] = e;
+    for (i=1; i<nv; i++) xpx[i] *= e;
+
+    kk = nv;
 
     for (j=2; j<=nv; j++) {
     /* diagonal elements */
         d = d1 = 0.0;
-        k = j;
-        jm1 = j - 1;
+        k = jm1 = j - 1;
         for (l=1; l<=jm1; l++) {
             xx = xpx[k];
             d += xx * xx;
             k += nv-l;
         }
         test = xpx[kk] - d;
-        if (test <= TINY) 
-           return 1;
-        e = 1/sqrt(test);
+        if (test <= TINY) return 1;
+        e = 1 / sqrt(test);
         xpx[kk] = e;
         /* off-diagonal elements */
         for (i=j+1; i<=nv; i++) {
             kk++;
             d = 0.0;
-            k = j;
+            k = j - 1;
             for (l=1; l<=jm1; l++) {
                 d += xpx[k] * xpx[k-j+i];
                 k += nv - l;
@@ -439,6 +451,7 @@ static int choleski (double *xpx, int nv)
         }
         kk++;
     }
+
     return 0; 
 }
 

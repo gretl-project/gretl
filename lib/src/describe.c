@@ -926,7 +926,7 @@ void print_summary (GRETLSUMMARY *summ,
 {
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv, lineno = 4;
-    char tmp[96];
+    char tmp[128];
 
     prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
     if (lo == 1) {
@@ -943,10 +943,10 @@ void print_summary (GRETLSUMMARY *summ,
             "             MAX\n\n"));
 
 
-    for (v=1; v<=lo; v++) {
+    for (v=0; v<lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
-	lv = summ->list[v];
+	lv = summ->list[v+1];
 	xbar = summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "%-10s", pdinfo->varname[lv]);
@@ -966,10 +966,10 @@ void print_summary (GRETLSUMMARY *summ,
     pputs(prn, _("      S.D.            C.V.           "
 	 " SKEW          EXCSKURT\n\n"));
 
-    for (v=1; v<=lo; v++) {
+    for (v=0; v<lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
-	lv = summ->list[v];
+	lv = summ->list[v+1];
 	if (lo > 1)
 	    pprintf(prn, "%-10s", pdinfo->varname[lv]);
 	else _bufspace(2, prn);
@@ -1024,7 +1024,7 @@ GRETLSUMMARY *summary (LIST list,
 		       double ***pZ, const DATAINFO *pdinfo,
 		       PRN *prn) 
 {
-    int mm, lo;
+    int lo = list[0];
     int v, *tmp = NULL;
     GRETLSUMMARY *summ;
     double xbar, std, low, high, skew, kurt, *x = NULL;
@@ -1033,29 +1033,26 @@ GRETLSUMMARY *summary (LIST list,
     if (summ == NULL) return NULL;
     summ->list = NULL;
 
-    lo = list[0];
-    mm = lo + 1;
-
-    if ((summ->xskew = malloc(mm * sizeof(double))) == NULL) return NULL;
-    if ((summ->xkurt = malloc(mm * sizeof(double))) == NULL) return NULL;
-    if ((summ->xmedian = malloc(mm * sizeof(double))) == NULL) return NULL;
-    if ((summ->coeff = malloc(mm * sizeof(double))) == NULL) return NULL;
-    if ((summ->sderr = malloc(mm * sizeof(double))) == NULL) return NULL;
-    if ((summ->xpx = malloc(mm * sizeof(double))) == NULL) return NULL;
-    if ((summ->xpy = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((summ->xskew = malloc(lo * sizeof(double))) == NULL) return NULL;
+    if ((summ->xkurt = malloc(lo * sizeof(double))) == NULL) return NULL;
+    if ((summ->xmedian = malloc(lo * sizeof(double))) == NULL) return NULL;
+    if ((summ->coeff = malloc(lo * sizeof(double))) == NULL) return NULL;
+    if ((summ->sderr = malloc(lo * sizeof(double))) == NULL) return NULL;
+    if ((summ->xpx = malloc(lo * sizeof(double))) == NULL) return NULL;
+    if ((summ->xpy = malloc(lo * sizeof(double))) == NULL) return NULL;
     if ((x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x)) == NULL) 
 	return NULL;
 
-    for (v=1; v<=lo; v++)  {
-	summ->n = ztox(list[v], x, *pZ, pdinfo);
+    for (v=0; v<lo; v++)  {
+	summ->n = ztox(list[v+1], x, *pZ, pdinfo);
 	if (summ->n < 2) { /* zero or one observations */
 	    if (summ->n == 0)
 		pprintf(prn, _("Dropping %s: sample range contains no valid "
-			"observations\n"), pdinfo->varname[list[v]]);
+			"observations\n"), pdinfo->varname[list[v+1]]);
 	    else
 		pprintf(prn, _("Dropping %s: sample range has only one "
-			"obs, namely %g\n"), pdinfo->varname[list[v]], x[0]);
-	    list_exclude(v, list);
+			"obs, namely %g\n"), pdinfo->varname[list[v+1]], x[0]);
+	    list_exclude(v+1, list);
 	    if (list[0] == 0) {
 		free_summary(summ);
 		free(x);
@@ -1066,20 +1063,23 @@ GRETLSUMMARY *summary (LIST list,
 		continue;
 	    }
 	}
+
 	_minmax(0, summ->n-1, x, &low, &high);	
 	moments(0, summ->n-1, x, &xbar, &std, &skew, &kurt, 1);
+
 	summ->xpx[v] = low;
 	summ->xpy[v] = high;
 	summ->coeff[v] = xbar;
 	summ->sderr[v] = std;
 	summ->xskew[v] = skew;
 	summ->xkurt[v] = kurt;
+
 	if (summ->n > 1) {
 	    summ->xmedian[v] = gretl_median(x, summ->n);
 	} else {
 	    summ->xmedian[v] = x[1];
 	}
-    }
+    } /* end loop over variables in list */
 
     copylist(&tmp, list);
     summ->list = tmp;

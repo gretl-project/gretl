@@ -2030,6 +2030,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	errbox(_("Error saving model information"));
 	return;
     }
+
     /* make copy of most recent model */
     if (copy_model(models[2], pmod, datainfo))
 	errbox(_("Out of memory copying model"));

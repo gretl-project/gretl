@@ -160,7 +160,7 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
 
     if (n <= 0) return NULL;
 
-    pmod->varlist = malloc ((l0 + 1) * sizeof(int));
+    pmod->varlist = malloc ((l0 + 1) * sizeof *pmod->varlist);
     if (pmod->varlist == NULL) return NULL;
     pmod->varlist[0] = l0;
 
@@ -271,24 +271,25 @@ static void free_mpZ (mpf_t **mpZ, int v, int n)
 static void mp_model_free (MPMODEL *pmod)
 {
     int i, l0 = pmod->list[0];
+    int nt = l0 * (l0 + 1) / 2;
 
     free (pmod->list);
     free (pmod->varlist);
 
     if (pmod->coeff != NULL) {
-	for (i=0; i<=pmod->ncoeff; i++) 
+	for (i=0; i<pmod->ncoeff; i++) 
 	    mpf_clear (pmod->coeff[i]);
 	free (pmod->coeff);
     }
 
     if (pmod->sderr != NULL) {    
-	for (i=0; i<=pmod->ncoeff; i++) 
+	for (i=0; i<pmod->ncoeff; i++) 
 	    mpf_clear (pmod->sderr[i]);
 	free (pmod->sderr);
     }
 
     if (pmod->xpx != NULL) {
-	for (i=0; i<=(l0-1)*l0/2; i++) 
+	for (i=0; i<nt; i++) 
 	    mpf_clear (pmod->xpx[i]);
 	free (pmod->xpx);
     }
@@ -326,11 +327,12 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
 static void get_mp_varname (const MPMODEL *pmod, const DATAINFO *pdinfo,
 			    int c, char *vname)
 {
+    /* FIXME nightmare !!! */
     int realv = (pmod->polyvar)? 
 	pmod->list[0] - pmod->polylist[0] : 0;
 
     if (pmod->polyvar && c >= realv 
-	&& !(pmod->ifc && c == pmod->list[0])
+	&& !(pmod->ifc && c == 2)
 	&& !(pmod->ifc == 0 && c == realv)) {
 	int pwrpos = c - realv + pmod->ifc;
 
@@ -495,11 +497,6 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
 	results->sderr[i] = mpf_get_d (pmod->sderr[i]);
     }
 
-    if (pmod->ifc || (!pmod->ifc && pmod->list[0] == 2)) {
-	results->coeff[0] = mpf_get_d (pmod->coeff[pmod->ncoeff]);
-	results->sderr[0] = mpf_get_d (pmod->sderr[pmod->ncoeff]);
-    } 
-
     results->sigma = mpf_get_d (pmod->sigma);
     results->ess = mpf_get_d (pmod->ess);
     results->rsq = mpf_get_d (pmod->rsq);
@@ -508,10 +505,6 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
     if (results->varnames != NULL) { /* will use results for printing */
 	int ncoeff = pmod->list[0];
 
-	if (pmod->ifc) {
-	    get_mp_varname(pmod, pdinfo, ncoeff, results->varnames[ncoeff]);
-	    ncoeff--;
-	}
 	for (i=2; i<=ncoeff; i++) {
 	    get_mp_varname(pmod, pdinfo, i, results->varnames[i]);
 	}
@@ -622,7 +615,7 @@ int mplsq (const int *list, const int *polylist,
 
     mp_regress(&model, xpxxpy, mpZ, model.nobs, errbuf);
 
-    for (i=0; i<=l0; i++) mpf_clear (xpxxpy.xpy[i]);
+    for (i=0; i<l0; i++) mpf_clear (xpxxpy.xpy[i]);
     free(xpxxpy.xpy);
     xpxxpy.xpy = NULL;
 
@@ -644,7 +637,9 @@ int mplsq (const int *list, const int *polylist,
 
 static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 {
-    int i, j, li, lj, m, l0 = list[0], yno = list[1], t;
+    int i, j, li, lj, m, t;
+    const int l0 = list[0];
+    const int yno = list[1];
     mpf_t xx, yy, z1, z2, tmp;
     MPXPXXPY xpxxpy;
 
@@ -652,13 +647,13 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
     m = i * (i + 1) / 2;
 
     if ((xpxxpy.xpy = malloc((l0 + 1) * sizeof(mpf_t))) == NULL ||
-	(xpxxpy.xpx = malloc((m + 1) * sizeof(mpf_t))) == NULL) {
+	(xpxxpy.xpx = malloc(m * sizeof(mpf_t))) == NULL) {
         xpxxpy.errcode = E_ALLOC;
         return xpxxpy;
     }
 
     for (i=0; i<=l0; i++) mpf_init(xpxxpy.xpy[i]);
-    for (i=0; i<=m; i++) mpf_init(xpxxpy.xpx[i]);
+    for (i=0; i<m; i++) mpf_init(xpxxpy.xpx[i]);
 
     mpf_init(xx);
     mpf_init(yy);
@@ -674,10 +669,12 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 	mpf_mul (yy, xx, xx);
 	mpf_add (xpxxpy.xpy[l0], xpxxpy.xpy[l0], yy);
     }
+
     if (mpf_sgn (xpxxpy.xpy[l0]) == 0) {
          xpxxpy.ivalue = yno; 
          return xpxxpy; 
     }    
+
     m = 0;
 
     for (i=2; i<=l0; i++) {
@@ -693,7 +690,7 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
                 xpxxpy.ivalue = li;
                 return xpxxpy;  
             }
-            mpf_set (xpxxpy.xpx[++m], xx);
+            mpf_set (xpxxpy.xpx[m++], xx);
         }
         mpf_set (xx, MPF_ZERO);
         for (t=0; t<n; t++) {
@@ -702,6 +699,7 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 	}
         mpf_set (xpxxpy.xpy[i-1], xx);
     }
+
     xpxxpy.ivalue = 0;
 
     mpf_clear(xx);
@@ -727,12 +725,12 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     nv = xpxxpy.nv;
     yno = pmod->list[1];
 
-    if ((pmod->sderr = malloc((nv + 1) * sizeof(mpf_t))) == NULL) {
+    if ((pmod->sderr = malloc(nv * sizeof(mpf_t))) == NULL) {
         pmod->errcode = E_ALLOC;
         return;
     }
 
-    for (i=0; i<nv+1; i++) mpf_init (pmod->sderr[i]);
+    for (i=0; i<nv; i++) mpf_init (pmod->sderr[i]);
 
     mpf_init (den);
     mpf_init (sgmasq);
@@ -857,22 +855,22 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 	mpf_div (pmod->fstt, pmod->fstt, tmp);
     }
 
-    diag = malloc((nv + 1) * sizeof *diag); 
+    diag = malloc(nv * sizeof *diag); 
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
 	return;
     }
 
-    for (i=0; i<nv+1; i++) mpf_init (diag[i]);
+    for (i=0; i<nv; i++) mpf_init (diag[i]);
 
     mp_diaginv(xpxxpy, diag);
 
-    for (v=1; v<=nv; v++) { 
+    for (v=0; v<nv; v++) { 
 	mpf_sqrt (zz, diag[v]);
 	mpf_mul (pmod->sderr[v], pmod->sigma, zz);
     }
 
-    for (i=0; i<nv+1; i++) mpf_clear (diag[i]);
+    for (i=0; i<nv; i++) mpf_clear (diag[i]);
     free(diag); 
 
     mpf_clear (den);
@@ -891,7 +889,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 
 static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 {
-    int nm1, i, j, k, kk, l, jm1, nv;
+    int i, j, k, kk, l, jm1, nv;
     mpf_t e, d, d1, test, xx, tmp;
     MPCHOLBETA cb;
 
@@ -899,11 +897,12 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
     cb.errcode = 0; 
     mpf_init (cb.rss);
 
-    if ((cb.coeff = malloc((nv + 1) * sizeof(mpf_t))) == NULL) {
+    if ((cb.coeff = malloc(nv * sizeof(mpf_t))) == NULL) {
         cb.errcode = E_ALLOC;
         return cb;
     }
-    for (j=0; j<nv+1; j++) mpf_init (cb.coeff[j]);
+
+    for (j=0; j<nv; j++) mpf_init (cb.coeff[j]);
 
     mpf_init (e);
     mpf_init (d);
@@ -914,22 +913,21 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 
     cb.xpxxpy = xpxxpy;
 
-    nm1 = nv - 1;
-    mpf_sqrt (tmp, xpxxpy.xpx[1]);
+    mpf_sqrt (tmp, xpxxpy.xpx[0]);
     mpf_div (e, MPF_ONE, tmp);
-    mpf_set (xpxxpy.xpx[1], e);
+    mpf_set (xpxxpy.xpx[0], e);
     mpf_mul(xpxxpy.xpy[1], xpxxpy.xpy[1], e);
-    for (i=2; i<=nv; i++) { 
+    for (i=1; i<nv; i++) { 
 	mpf_mul (xpxxpy.xpx[i], xpxxpy.xpx[i], e);
     }
-    kk = nv + 1;
+
+    kk = nv;
 
     for (j=2; j<=nv; j++) {
 	/* diagonal elements */
 	mpf_set (d, MPF_ZERO);
 	mpf_set (d1,MPF_ZERO);
-        k = j;
-        jm1 = j - 1;
+        k = jm1 = j - 1;
         for (l=1; l<=jm1; l++) {
 	    mpf_set (xx, xpxxpy.xpx[k]);
 	    mpf_mul (tmp, xx, xpxxpy.xpy[l]);
@@ -953,7 +951,7 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         for (i=j+1; i<=nv; i++) {
             kk++;
             mpf_set (d, MPF_ZERO);
-            k = j;
+            k = j - 1;
             for (l=1; l<=jm1; l++) {
 		mpf_mul (tmp, xpxxpy.xpx[k], xpxxpy.xpx[k-j+i]);
 		mpf_add (d, d, tmp);
@@ -964,23 +962,27 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         }
         kk++;
     }
+
     kk--;
     mpf_set (d, MPF_ZERO);
+
     for(j=1; j<=nv; j++) {
 	mpf_mul (tmp, xpxxpy.xpy[j], xpxxpy.xpy[j]);
 	mpf_add (d, d, tmp);
     }
+
     mpf_set (cb.rss, d);
-    mpf_mul (cb.coeff[nv], xpxxpy.xpy[nv], xpxxpy.xpx[kk]);
-    for(j=nm1; j>=1; j--) {
+    mpf_mul (cb.coeff[nv-1], xpxxpy.xpy[nv], xpxxpy.xpx[kk]);
+
+    for (j=nv-1; j>=1; j--) {
 	mpf_set (d, xpxxpy.xpy[j]);
-        for (i=nv; i>=j+1; i--) {
+        for (i=nv-1; i>=j; i--) {
             kk--;
 	    mpf_mul (tmp, cb.coeff[i], xpxxpy.xpx[kk]);
 	    mpf_sub (d, d, tmp);
         }
         kk--;
-	mpf_mul (cb.coeff[j], d, xpxxpy.xpx[kk]);
+	mpf_mul (cb.coeff[j-1], d, xpxxpy.xpx[kk]);
     }   
 
     mpf_clear (e);
@@ -997,15 +999,17 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 
 static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
 {
-    int kk = 1, l, m, nstop, k, i, j, nv;
+    int kk, l, m, k, i, j;
+    const int nv = xpxxpy.nv;
+    const int nxpx = nv * (nv + 1) / 2;
     mpf_t d, e, tmp;
 
     mpf_init (d);
     mpf_init (e);
     mpf_init (tmp);
 
-    nv = xpxxpy.nv;
-    nstop = nv * (nv+1)/2;
+    kk = 0;
+
     for (l=1; l<=nv-1; l++) {
 	mpf_set (d, xpxxpy.xpx[kk]);
 	mpf_set (xpxxpy.xpy[l], d);
@@ -1015,7 +1019,7 @@ static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
 	    for (j=1; j<=l-1; j++) m += nv - j;
         for (i=l+1; i<=nv; i++) {
 	    mpf_set (d, MPF_ZERO); 
-            k = i + m;
+            k = i + m - 1;
             for (j=l; j<=i-1; j++) {
 		mpf_mul (tmp, xpxxpy.xpy[j], xpxxpy.xpx[k]);
 		mpf_add (d, d, tmp);
@@ -1028,10 +1032,10 @@ static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
 	    mpf_add (e, e, tmp);
         }
         kk += nv + 1 - l;
-        mpf_set (diag[l], e);
+        mpf_set (diag[l-1], e);
     }
 
-    mpf_mul (diag[nv], xpxxpy.xpx[nstop], xpxxpy.xpx[nstop]);
+    mpf_mul (diag[nv-1], xpxxpy.xpx[nxpx-1], xpxxpy.xpx[nxpx-1]);
 
     mpf_clear (d);
     mpf_clear (e);
@@ -1046,14 +1050,13 @@ static int mp_rearrange (int *list)
    else 0.
 */
 {
-    int lo = list[0], v;
+    int i, v;
 
-    for (v=2; v<=lo; v++) {
+    for (v=list[0]; v>2; v--) {
         if (list[v] == 0)  {
-            list_exclude(v, list);
-            list[0] = lo;
-            list[lo] = 0;
-            return 1;
+	    for (i=v; i>2; i--) list[i] = list[i-1];
+	    list[2] = 0;
+	    return 1;
         }
     }
     return 0;

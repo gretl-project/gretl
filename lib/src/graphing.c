@@ -760,8 +760,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 
 	tmplist[0] = 3;
 	tmplist[1] = list[1];
-	tmplist[2] = list[2];	
-	tmplist[3] = 0;	
+	tmplist[2] = 0;
+	tmplist[3] = list[2];	
 	_init_model(&plotmod, pdinfo);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
@@ -771,7 +771,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    if (opt == OPT_FA ||
 		tprob(b / plotmod.sderr[1], plotmod.dfd) < .10) {
 		ols_ok = 1;
-		a = plotmod.coeff[2];
+		a = plotmod.coeff[0];
 	    }
 	}
 	clear_model(&plotmod, pdinfo);

@@ -279,6 +279,7 @@ int read_nist_file (const char *fname,
     if (strstr(fname, "Pontius")) npoly = 1;
     if (strstr(fname, "Filip")) npoly = 9;
     if (strstr(fname, "Wampler")) npoly = 4;
+
     if (strstr(fname, "NoInt")) noint = 1;
     else noint = 0;
 
@@ -449,25 +450,38 @@ int doubles_differ (const char *v1, const char *v2)
 int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
 		   int digits)
 {
-    int i;
-    char v1[48], v2[48];
+    int i, nc = pmod->ncoeff;
+    char v1[48], v2[48], s[24];
 
-    for (i=0; i<pmod->ncoeff; i++) {
-	sprintf(v1, "%#.*g", digits, certvals->coeff[i]);
-	sprintf(v2, "%#.*g", digits, pmod->coeff[i + noint]);
+    if (pmod->ifc) {
+	sprintf(v1, "%#.*g", digits, certvals->coeff[0]);
+	sprintf(v2, "%#.*g", digits, pmod->coeff[nc-1]);
 	if (doubles_differ(v1, v2)) {
-	    char s[16];
-
-	    sprintf(s, "coeff for %s", (i > 0)? dinfo->varname[i+1] : "const");
+	    strcpy(s, "coeff for const");
 	    print_result_error(digits, v1, v2, s);
 	    return 0;
 	}
-	sprintf(v1, "%#.*g", digits, certvals->sderr[i]);
-	sprintf(v2, "%#.*g", digits, pmod->sderr[i + noint]);
+	sprintf(v1, "%#.*g", digits, certvals->sderr[0]);
+	sprintf(v2, "%#.*g", digits, pmod->sderr[nc-1]);
 	if (doubles_differ(v1, v2)) {
-	    char s[16];
-
-	    sprintf(s, "std err for %s", (i > 0)? dinfo->varname[i+1] : "const");
+	    strcpy(s, "std err for const");
+	    print_result_error(digits, v1, v2, s);
+	    return 0; 
+	}
+    }
+	
+    for (i=0; i<pmod->ncoeff-pmod->ifc; i++) {
+	sprintf(v1, "%#.*g", digits, certvals->coeff[i+pmod->ifc]);
+	sprintf(v2, "%#.*g", digits, pmod->coeff[i]);
+	if (doubles_differ(v1, v2)) {
+	    sprintf(s, "coeff for %s", dinfo->varname[i+1]);
+	    print_result_error(digits, v1, v2, s);
+	    return 0;
+	}
+	sprintf(v1, "%#.*g", digits, certvals->sderr[i+pmod->ifc]);
+	sprintf(v2, "%#.*g", digits, pmod->sderr[i]);
+	if (doubles_differ(v1, v2)) {
+	    sprintf(s, "std err for %s", dinfo->varname[i+1]);
 	    print_result_error(digits, v1, v2, s);
 	    return 0; 
 	}
@@ -799,10 +813,10 @@ int run_gretl_comparison (const char *datname,
 
 	if (model->ifc) {
 	    printf(" gretl coefficient[0] = %#.10g\n", 
-		   model->coeff[model->ncoeff]);
+		   model->coeff[model->ncoeff-1]);
 	}
-	for (i=1; i<=model->ncoeff - model->ifc; i++) {
-	    printf(" gretl coefficient[%d] = %#.10g\n", i, 
+	for (i=0; i<model->ncoeff - model->ifc; i++) {
+	    printf(" gretl coefficient[%d] = %#.10g\n", i + model->ifc, 
 		   model->coeff[i]);
 	}
     }
@@ -814,10 +828,7 @@ int run_gretl_comparison (const char *datname,
 
 	for (t=0; t<dinfo->n; t++) xx += (*pZ)[1][t] *  (*pZ)[1][t];
 	model->rsq = 1.0 - model->ess / xx;
-    } else {
-	model->coeff[0] = model->coeff[model->ncoeff];
-	model->sderr[0] = model->sderr[model->ncoeff];
-    }
+    } 
 
     acc = get_accuracy(model, certvals, dinfo);
 

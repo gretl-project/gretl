@@ -156,20 +156,20 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 {
     char tmp[16], coeff[64], sderr[64], tratio[64], pval[64];
 
-    if (isnan(pmod->coeff[c-1]) || na(pmod->coeff[c-1])) {
+    if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->coeff[c-1], coeff);
+	tex_dcolumn_double(pmod->coeff[c-2], coeff);
     }
 
-    if (isnan(pmod->sderr[c-1]) || na(pmod->sderr[c-1])) {
+    if (isnan(pmod->sderr[c-2]) || na(pmod->sderr[c-2])) {
 	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->sderr[c-1], sderr);
-	sprintf(tratio, "%.4f", pmod->coeff[c-1] / pmod->sderr[c-1]);
-	sprintf(pval, "%.4f", tprob(pmod->coeff[c-1] / pmod->sderr[c-1], 
+	tex_dcolumn_double(pmod->sderr[c-2], sderr);
+	sprintf(tratio, "%.4f", pmod->coeff[c-2] / pmod->sderr[c-2]);
+	sprintf(pval, "%.4f", tprob(pmod->coeff[c-2] / pmod->sderr[c-2], 
 				    pmod->dfd));
     }    
 
@@ -199,7 +199,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	char slope[32];
 
 	if (pmod->list[c]) {
-	    tex_dcolumn_double(pmod->slope[c-1], slope);
+	    tex_dcolumn_double(pmod->slope[c-2], slope);
 	}
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
@@ -252,7 +252,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 {
 
     int i, start, constneg = 0, ncoeff = pmod->list[0];
-    double tstat, const_tstat = 0, const_coeff = 0;
+    double tstat;
     char tmp[16];
 
     if (standalone) {
@@ -267,14 +267,6 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     pputs(prn, "\\begin{center}\n");
-
-    if (pmod->ifc) {
-	const_coeff = pmod->coeff[pmod->list[0]-1];
-	const_tstat = pmod->coeff[pmod->list[0]-1]
-	    / pmod->sderr[pmod->list[0]-1];
-	if (const_coeff < 0.) constneg = 1;
-	ncoeff--;
-    }
 
     /* tabular header */
     pprintf(prn, "{\\setlength{\\tabcolsep}{.5ex}\n"
@@ -292,27 +284,20 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     start++;
     /* coefficients times indep vars */
-    if (pmod->ifc) tex_print_float(const_coeff, 0, prn);
-    else {
-	tex_escape(tmp, pdinfo->varname[pmod->list[2]]);
-	tex_print_float(pmod->coeff[1], 0, prn);
-	pprintf(prn, " & %s ", tmp);
-    }
+    tex_escape(tmp, pdinfo->varname[pmod->list[2]]);
+    tex_print_float(pmod->coeff[0], 0, prn);
+    pprintf(prn, " & %s ", tmp);
     for (i=start; i<=ncoeff; i++) {
-	tex_print_float(pmod->coeff[i-1], 1, prn);
+	tex_print_float(pmod->coeff[i-2], 1, prn);
 	tex_escape(tmp, pdinfo->varname[pmod->list[i]]);
 	pprintf(prn, " & %s ", tmp);
     }
     pputs(prn, "\\\\\n");
 
     /* t-stats in row beneath */
-    if (pmod->ifc) {
-	pputs(prn, "& ");
-	pprintf(prn, "& {\\small $(%.3f)$} ", const_tstat);
-    } 
-    for (i=2; i<=ncoeff; i++) {
-        tstat = pmod->coeff[i-1]/pmod->sderr[i-1];
-	if (i == 2) pprintf(prn, "& & \\small{$(%.3f)$} ", tstat);
+    for (i=0; i<ncoeff; i++) {
+        tstat = pmod->coeff[i]/pmod->sderr[i];
+	if (i == 0) pprintf(prn, "& & \\small{$(%.3f)$} ", tstat);
 	else pprintf(prn, "& & & \\small{$(%.3f)$} ", tstat);
     }
     pputs(prn, "\n\\end{tabular}}\n\n");

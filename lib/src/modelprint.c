@@ -328,7 +328,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
     double sderr, h = 0.0;
     int i = pmod->ldepvar, T = pmod->nobs - 1;
 
-    sderr = pmod->sderr[i-1];
+    sderr = pmod->sderr[i-2];
 
     if (pmod->ess <= 0.0 || (T * sderr * sderr) >= 1.0) return;
 
@@ -374,7 +374,7 @@ static int least_signif_coeff (const MODEL *pmod)
     int i, k = 0;
     double tstat, tmin = 4.0;
     
-    for (i=1; i <= pmod->ncoeff - pmod->ifc; i++) {
+    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
 	tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	if (tstat < tmin) {
 	    tmin = tstat;
@@ -382,7 +382,7 @@ static int least_signif_coeff (const MODEL *pmod)
 	}
     }
     if (tprob(tmin, pmod->dfd) > .10) {
-	return pmod->list[k+1];
+	return pmod->list[k+2];
     }
     return 0;
 }
@@ -961,23 +961,9 @@ static void model_format_end (PRN *prn)
 static int print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0, gotnan = 0;
-    int ncoeff = pmod->list[0];
+    int n = pmod->list[0];
 
-    if (pmod->ifc) {
-	if (PLAIN_FORMAT(prn->format)) {
-	    err = print_coeff(pdinfo, pmod, ncoeff, prn);
-	}
-	else if (TEX_FORMAT(prn->format)) {
-	    err = tex_print_coeff(pdinfo, pmod, ncoeff, prn);
-	}
-	else if (RTF_FORMAT(prn->format)) {
-	    err = rtf_print_coeff(pdinfo, pmod, ncoeff, prn);
-	}
-	if (err) gotnan = 1;
-	ncoeff--;
-    }
-
-    for (i=2; i<=ncoeff; i++) {
+    for (i=2; i<=n; i++) {
 	if (PLAIN_FORMAT(prn->format)) {
 	    err = print_coeff(pdinfo, pmod, i, prn);
 	}
@@ -1393,26 +1379,26 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     _bufspace(2, prn);
 
     /* print coeff value if well-defined */
-    if (isnan(pmod->coeff[c-1]) || na(pmod->coeff[c-1])) {
+    if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
 	gotnan = 1;
     } else {
-	gretl_print_value (pmod->coeff[c-1], prn);
+	gretl_print_value (pmod->coeff[c-2], prn);
     }
 
     _bufspace(2, prn);
 
     /* get out if std error is undefined */
-    if (isnan(pmod->sderr[c-1]) || na(pmod->sderr[c-1])) {
+    if (isnan(pmod->sderr[c-2]) || na(pmod->sderr[c-2])) {
 	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
 	return 1;
     }
 
-    gretl_print_value (pmod->sderr[c-1], prn); 
+    gretl_print_value (pmod->sderr[c-2], prn); 
 
     /* std error is well-defined, but is it positive? */
-    if (pmod->sderr[c-1] > 0.) {
-	t = pmod->coeff[c-1] / pmod->sderr[c-1];
+    if (pmod->sderr[c-2] > 0.) {
+	t = pmod->coeff[c-2] / pmod->sderr[c-2];
 	if (t >= 1000.0) {
 	    pprintf(prn, " %#7.2G", t);
 	} else {
@@ -1440,7 +1426,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	else if (pvalue < 0.10) pputs(prn, " *");
     } 
     else if (pmod->list[c] != 0 && pmod->slope != NULL) { /* LOGIT, PROBIT */
-	gretl_print_value (pmod->slope[c-1], prn);
+	gretl_print_value (pmod->slope[c-2], prn);
     }
 
     pputs(prn, "\n");
@@ -1484,24 +1470,24 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     pprintf(prn, " \\qr %d\\cell \\ql %s\\cell", pmod->list[c], 
 	    varname);
 
-    if (isnan(pmod->coeff[c-1]) || na(pmod->coeff[c-1])) {
+    if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	gotnan = 1;
     } else {
-	rtf_print_double(pmod->coeff[c-1], prn);
+	rtf_print_double(pmod->coeff[c-2], prn);
     }
 
-    if (isnan(pmod->sderr[c-1]) || na(pmod->sderr[c-1])) {
+    if (isnan(pmod->sderr[c-2]) || na(pmod->sderr[c-2])) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	goto rtf_coeff_getout;
     } 
 
-    rtf_print_double(pmod->sderr[c-1], prn); 
+    rtf_print_double(pmod->sderr[c-2], prn); 
 
-    if (pmod->sderr[c-1] > 0.) {
-	t = pmod->coeff[c-1] / pmod->sderr[c-1];
+    if (pmod->sderr[c-2] > 0.) {
+	t = pmod->coeff[c-2] / pmod->sderr[c-2];
 	pprintf(prn, " \\qc %.4f\\cell", t);
 	if (pmod->aux == AUX_ADF) {
 	    do_pval = 0;
@@ -1529,7 +1515,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	else 
 	    pputs(prn, " \\ql \\cell");
     } else if (pmod->list[c] != 0 && pmod->slope != NULL) { /* LOGIT, PROBIT */
-	rtf_print_double(pmod->slope[c-1], prn);
+	rtf_print_double(pmod->slope[c-2], prn);
     }
 
  rtf_coeff_getout:
@@ -1817,15 +1803,11 @@ static void mp_other_stats (const mp_results *mpvals, PRN *prn)
 static void print_mpvals_coeff (const mp_results *mpvals, 
 				int c, PRN *prn)
 {
-    int cnum = c - 1;
+    pprintf(prn, " %3d) %8s ", mpvals->varlist[c+2], mpvals->varnames[c+2]);
 
-    pprintf(prn, " %3d) %8s ", mpvals->varlist[c], mpvals->varnames[c]);
-
-    if (mpvals->ifc && c == mpvals->ncoeff) cnum = 0;
-
-    gretl_print_fullwidth_double(mpvals->coeff[cnum], 
+    gretl_print_fullwidth_double(mpvals->coeff[c], 
 				 GRETL_MP_DIGITS, prn);
-    gretl_print_fullwidth_double(mpvals->sderr[cnum], 
+    gretl_print_fullwidth_double(mpvals->sderr[c], 
 				 GRETL_MP_DIGITS, prn); 
 
     pputs(prn, "\n");
@@ -1836,11 +1818,11 @@ static void print_mpvals_coeff (const mp_results *mpvals,
 void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 			  PRN *prn)
 {
-    int i, ncoeff;
+    int i;
     char startdate[9], enddate[9];
+    int ncoeff = mpvals->ncoeff;
     int nobs = mpvals->t2 - mpvals->t1 + 1;
 
-    ncoeff = mpvals->ncoeff;
     ntodate(startdate, mpvals->t1, pdinfo);
     ntodate(enddate, mpvals->t2, pdinfo);
 
@@ -1861,11 +1843,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 		       "        STD. ERROR\n"));
     }
 
-    if (mpvals->ifc) {
-	print_mpvals_coeff(mpvals, ncoeff, prn);
-	ncoeff--;
-    }
-    for (i=2; i<=ncoeff; i++) {
+    for (i=0; i<ncoeff; i++) {
 	print_mpvals_coeff(mpvals, i, prn);
     }
     pputs(prn, "\n");

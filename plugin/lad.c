@@ -80,7 +80,7 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
     if (pmod->errcode == 0) {
 
 	for (i=0; i<n; i++) {
-	    pmod->coeff[i+1] = x[i];
+	    pmod->coeff[i] = x[i];
 	}
 
 	pmod->ess = 0.0;
@@ -585,7 +585,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
     /* initialize means and standard deviations */
     for (i=0; i<pmod->ncoeff; i++) {
 	coeffs[i][ITERS] = 0.0;
-	pmod->sderr[i+1] = 0.0;
+	pmod->sderr[i] = 0.0;
     }
 
     /* find means of coeff estimates */
@@ -599,10 +599,10 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
     /* find standard deviations */
     for (i=0; i<pmod->ncoeff; i++) {
 	for (k=0; k<ITERS; k++) {
-	   pmod->sderr[i+1] += (coeffs[i][k] - coeffs[i][ITERS]) *
+	   pmod->sderr[i] += (coeffs[i][k] - coeffs[i][ITERS]) *
 	       (coeffs[i][k] - coeffs[i][ITERS]);
 	}
-	pmod->sderr[i+1] = sqrt(pmod->sderr[i+1] / ITERS);
+	pmod->sderr[i] = sqrt(pmod->sderr[i] / ITERS);
     }
 
     free(sample);

@@ -610,8 +610,8 @@ int adf_test (int order, int varno, double ***pZ,
 
     /* do the more familiar Dickey-Fuller t-test first */
     adflist[0] = 3;
-    adflist[2] = _lagvarnum(varno, 1, pdinfo);
-    adflist[3] = 0;
+    adflist[2] = 0;
+    adflist[3] = _lagvarnum(varno, 1, pdinfo);
 
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
     if (adf_model.errcode) {
@@ -799,7 +799,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     printmodel(&mamod, pdinfo, prn);
 
     pputs(prn, "\nEstimates of original parameters:\n");
-    pprintf(prn, "constant: %.4g\n", mamod.coeff[2]);
+    pprintf(prn, "constant: %.4g\n", mamod.coeff[0]);
     pprintf(prn, "slope:    %.4g\n", mamod.coeff[1] / (1 - a));
     pprintf(prn, "adaptive coefficient: %.2f\n", a);
 	   
@@ -822,7 +822,7 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
     _init_model(&tmod, pdinfo);
 
     tlist[0] = 3;
-    tlist[3] = 0;
+    tlist[2] = 0;
 
     for (i=1; i<=varlist[0]; i++) {
 	double tstat;
@@ -836,14 +836,14 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
 	}
 	vl = _lagvarnum(v, 1, pdinfo);
 	tlist[1] = v;
-	tlist[2] = vl;
+	tlist[3] = vl;
 	tmod = lsq(tlist, pZ, pdinfo, OLS, 0, 0.0);
 	if (tmod.errcode) {
 	    trends = -1;
 	    clear_model(&tmod, pdinfo);
 	    break;
 	}
-	tstat = tmod.coeff[2] / tmod.sderr[2];
+	tstat = tmod.coeff[0] / tmod.sderr[0];
 	if (tprob(tstat, tmod.dfd) < 0.05) {
 	    trends = 1;
 	}

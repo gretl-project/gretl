@@ -328,23 +328,23 @@ int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
 {
     int i, ncoeff = pmod->ncoeff;
 
-    plmod->sum_coeff = malloc((ncoeff + 1) * sizeof *plmod->sum_coeff);
+    plmod->sum_coeff = malloc(ncoeff * sizeof *plmod->sum_coeff);
     if (plmod->sum_coeff == NULL) return 1;
 
-    plmod->ssq_coeff = malloc((ncoeff + 1) * sizeof *plmod->ssq_coeff);
+    plmod->ssq_coeff = malloc(ncoeff * sizeof *plmod->ssq_coeff);
     if (plmod->ssq_coeff == NULL) goto cleanup;
 
-    plmod->sum_sderr = malloc((ncoeff + 1) * sizeof *plmod->sum_sderr);
+    plmod->sum_sderr = malloc(ncoeff * sizeof *plmod->sum_sderr);
     if (plmod->sum_sderr == NULL) goto cleanup;
 
-    plmod->ssq_sderr = malloc((ncoeff + 1) * sizeof *plmod->ssq_sderr);
+    plmod->ssq_sderr = malloc(ncoeff * sizeof *plmod->ssq_sderr);
     if (plmod->ssq_sderr == NULL) goto cleanup;
 
     plmod->list = NULL;
     copylist(&plmod->list, pmod->list);
     if (plmod->list == NULL) goto cleanup;
 
-    for (i=0; i<=ncoeff; i++) {
+    for (i=0; i<ncoeff; i++) {
 #ifdef ENABLE_GMP
 	mpf_init(plmod->sum_coeff[i]);
 	mpf_init(plmod->ssq_coeff[i]);
@@ -490,7 +490,7 @@ int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod)
 
     plmod = &ploop->lmodels[i];
 
-    for (j=1; j<=pmod->ncoeff; j++) {
+    for (j=0; j<pmod->ncoeff; j++) {
 #ifdef ENABLE_GMP
 	mpf_set_d(m, pmod->coeff[j]);
 	mpf_add(plmod->sum_coeff[j], plmod->sum_coeff[j], m);
@@ -591,6 +591,8 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 	/*  pprintf(prn, "loop command %d: %s\n\n", i+1, ploop->lines[i]); */
 	if (ploop->lvar) {
 	    if (ploop->ci[i] == OLS) {
+		double dfadj, sqrta;
+
 		pmod = ploop->models[ploop->next_model];
 
 		*model_count += 1;
@@ -598,20 +600,27 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 
 		/* std. errors are asymptotic; degrees of freedom
 		 correction is not wanted */
-		if (pmod->vcv) free(pmod->vcv);
-		pmod->vcv = NULL;
-
+		dfadj = (double) pmod->dfd / pmod->nobs;
+		sqrta = sqrt(dfadj);
 		pmod->sigma = sqrt((1.0 / pmod->nobs) * pmod->ess);
-		makevcv(pmod);
-		for (j=1; j<=pmod->ncoeff; j++) {
-		    pmod->sderr[j] *= 
-			sqrt((double) pmod->dfd /(double) pmod->nobs);
+		for (j=0; j<pmod->ncoeff; j++) {
+		    pmod->sderr[j] *= sqrta;
 		}
 		printmodel(pmod, pdinfo, prn);
+
 		if (pmod->correct) {
-		    /* -o flag was given */
+		    /* bodge: coding for -o flag, for covariance matrix */
+		    if (pmod->vcv) {
+			int nc = pmod->ncoeff;
+			int nt = nc * (nc + 1) / 2;
+
+			for (i=0; i<nt; i++) pmod->vcv[i] *= dfadj;
+		    } else {
+			makevcv(pmod);
+		    }
 		    outcovmx(pmod, pdinfo, 0, prn);
 		}
+
 		ploop->next_model += 1;	    
 		continue;
 	    }
@@ -640,7 +649,7 @@ static void free_loop_model (LOOP_MODEL *plmod)
 #ifdef ENABLE_GMP
     int i;
 
-    for (i=0; i<=plmod->ncoeff; i++) {
+    for (i=0; i<plmod->ncoeff; i++) {
 	mpf_clear(plmod->sum_coeff[i]);
 	mpf_clear(plmod->sum_sderr[i]);
 	mpf_clear(plmod->ssq_coeff[i]);
@@ -738,7 +747,7 @@ static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
 		 "      Variable     coefficients   coefficients   std. errors"
 		 "    std. errors\n\n"));
 
-    for (i=1; i<=plmod->ncoeff; i++) {
+    for (i=0; i<plmod->ncoeff; i++) {
 	print_loop_coeff(pdinfo, plmod, i, loopnum, prn);
     }
     pputs(prn, "\n");
@@ -752,6 +761,7 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 {
 #ifdef ENABLE_GMP
     mpf_t c1, c2, m, sd1, sd2;
+    unsigned long ln = n;
 
     mpf_init(c1);
     mpf_init(c2);
@@ -759,30 +769,30 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     mpf_init(sd1);
     mpf_init(sd2);
 
-    mpf_div_ui(c1, plmod->sum_coeff[c], (unsigned long) n);
+    mpf_div_ui(c1, plmod->sum_coeff[c], ln);
     mpf_mul(m, c1, c1);
-    mpf_mul_ui(m, m, (unsigned long) n);
+    mpf_mul_ui(m, m, ln);
     mpf_sub(m, plmod->ssq_coeff[c], m);
-    mpf_div_ui(sd1, m, (unsigned long) n);
+    mpf_div_ui(sd1, m, ln);
     if (mpf_cmp_d(sd1, 0.0) > 0) {
 	mpf_sqrt(sd1, sd1);
     } else {
 	mpf_set_d(sd1, 0.0);
     }
 
-    mpf_div_ui(c2, plmod->sum_sderr[c], (unsigned long) n);
+    mpf_div_ui(c2, plmod->sum_sderr[c], ln);
     mpf_mul(m, c2, c2);
-    mpf_mul_ui(m, m, (unsigned long) n);
+    mpf_mul_ui(m, m, ln);
     mpf_sub(m, plmod->ssq_sderr[c], m);
-    mpf_div_ui(sd2, m, (unsigned long) n);
+    mpf_div_ui(sd2, m, ln);
     if (mpf_cmp_d(sd2, 0.0) > 0) {
 	mpf_sqrt(sd2, sd2);
     } else {
 	mpf_set_d(sd2, 0.0);
     }
 
-    pprintf(prn, " %3d) %8s ", plmod->list[c+1], 
-	   pdinfo->varname[plmod->list[c+1]]);
+    pprintf(prn, " %3d) %8s ", plmod->list[c+2], 
+	   pdinfo->varname[plmod->list[c+2]]);
 
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
 	    mpf_get_d(c2), mpf_get_d(sd2));
@@ -803,8 +813,8 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     var2 = (plmod->ssq_sderr[c] - n * m2 * m2) / n;
     sd2 = (var2 <= 0.0)? 0 : sqrt((double) var2);
 
-    pprintf(prn, " %3d) %8s ", plmod->list[c+1], 
-	   pdinfo->varname[plmod->list[c+1]]);
+    pprintf(prn, " %3d) %8s ", plmod->list[c+2], 
+	   pdinfo->varname[plmod->list[c+2]]);
 
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
 	    (double) m2, (double) sd2);

@@ -130,11 +130,6 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
     pputs(prn, _("      VARIABLE      COEFFICIENT      95%% CONFIDENCE "
 	    "INTERVAL\n\n"));      
 
-    if (cf->ifc) {
-	print_coeff_interval(cf, pdinfo, ncoeff, prn);
-	ncoeff--;
-    }
-
     for (i=2; i<=ncoeff; i++) {
 	print_coeff_interval(cf, pdinfo, i, prn);
     }
@@ -286,7 +281,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
     char corrstring[25];
 
     m = corrmat->list[0];
-    ncoeffs = (m * (m + 1))/2;
+    ncoeffs = (m * (m + 1)) / 2;
 
     pputs(prn, _("\nPairwise correlation coefficients:\n\n"));
     while (k < ncoeffs) {
@@ -498,20 +493,20 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 
     _bufspace(3, prn);
 
-    if (isnan(cf->coeff[c-1])) {
+    if (isnan(cf->coeff[c-2])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
     } else {
-	gretl_print_value (cf->coeff[c-1], prn);
+	gretl_print_value (cf->coeff[c-2], prn);
     }
 
     _bufspace(2, prn);
 
-    if (isnan(cf->maxerr[c-1])) {
+    if (isnan(cf->maxerr[c-2])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
     } else {
 	pprintf(prn, " (%#.*g, %#.*g)", 
-		GRETL_DIGITS, cf->coeff[c-1] - cf->maxerr[c-1],
-		GRETL_DIGITS, cf->coeff[c-1] + cf->maxerr[c-1]);
+		GRETL_DIGITS, cf->coeff[c-2] - cf->maxerr[c-2],
+		GRETL_DIGITS, cf->coeff[c-2] + cf->maxerr[c-2]);
     }
     pputs(prn, "\n");
 }
