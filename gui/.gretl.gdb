@@ -1,2 +1,2 @@
-set args data4-7 
+set args /home/allin/pacf.dat 
 run

@@ -594,19 +594,6 @@ static int roundup_half (int i)
     return (int) ceil((double) i / 2.0);
 }
 
-#ifdef notdef
-/* Not sure what I was doing here 8-/ */
-static int old_roundup_half (int i)
-{
-    int j;
-
-    j = 10 * (int) ((i / 2) / 10.0 + .5);
-    if (j < i / 2) j += 5;
-    else if (j - i / 2 > 5) j-= 5;
-    return j;
-}
-#endif
-
 /* ...................................................... */
 
 static int fract_int (int n, double *hhat, double *omega, PRN *prn)
@@ -642,8 +629,8 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     if (!tmp.errcode) {
 	tstat = tmp.coeff[1] / tmp.sderr[1];
 	pprintf(prn, "\n%s\n"
-		"  %s = %f\n"
-		"  %s: t(%d) = %f, %s %.4f\n",
+		"  %s = %g\n"
+		"  %s: t(%d) = %g, %s %.4f\n",
 		_("Test for fractional integration"),
 		_("Estimated degree of integration"), tmp.coeff[1], 
 		_("test statistic"), tmp.dfd, tstat, 
@@ -682,6 +669,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     int err = 0, k, xmax, L, nT; 
     int nobs, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
+    int do_graph = !batch;
     FILE *fq = NULL;
 
     list[0] = 1;
@@ -690,16 +678,17 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
-	pprintf(prn, "\n%s",
-		_("Missing values within sample -- can't do periodogram"));
+	strcpy(gretl_errmsg, 
+	       _("Missing values within sample -- can't do periodogram"));
 	return 1;
     }    
 
-    if (nobs < 9) {
-	pprintf(prn, "\n%s",
-		_("Insufficient observations for periodogram"));
+    if (nobs < 12) {
+	strcpy(gretl_errmsg,
+	       _("Insufficient observations for periodogram"));
 	return 1;
     }
+
     if (_isconst(t1, t2, &(*pZ)[varno][0])) {
 	sprintf(gretl_tmp_str, _("'%s' is a constant"), pdinfo->varname[varno]);
 	pprintf(prn, "\n%s\n", gretl_tmp_str);
@@ -722,6 +711,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	return E_ALLOC;
 
     xx = _esl_mean(t1, t2, (*pZ)[varno]);
+
     /* find autocovariances */
     for (k=1; k<=L; k++) {
 	autocov[k] = 0;
@@ -734,7 +724,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     xmax = roundup_half(nobs);
 
-    if (!batch && gnuplot_init(ppaths, &fq) == 0) {
+    if (do_graph && gnuplot_init(ppaths, &fq) == 0) {
 	char titlestr[80];
 
 	fprintf(fq, "# periodogram\n");
@@ -764,10 +754,16 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	    sprintf(titlestr, I_("Bartlett window, length %d"), L);
 	    fprintf(fq, " (%s)'\n", titlestr);
 	}
-	else
+	else {
 	    fprintf(fq, "'\n");
+	}
 	fprintf(fq, "set xrange [0:%d]\n", xmax);
 	fprintf(fq, "plot '-' using 1:2 w lines\n");
+    }
+
+    if (fq == NULL) {
+	do_graph = 0;
+	err = 1;
     }
 
     pprintf(prn, _("\nPeriodogram for %s\n"), pdinfo->varname[varno]);
@@ -776,10 +772,18 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	pprintf(prn, _("Using Bartlett lag window, length %d\n\n"), L);
     pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
 
-    if (!batch && fq) savexx = malloc((1 + nobs/2) * sizeof *savexx);
+    if (do_graph) { 
+	savexx = malloc((1 + nobs/2) * sizeof *savexx);
+	if (savexx == NULL) {
+	    err = 1;
+	    fclose(fq);
+	    do_graph = 0;
+	}
+    }
 
     varx = _esl_variance(t1, t2, &(*pZ)[varno][0]);
     varx *= (double) (nobs - 1) / nobs;
+
     for (t=1; t<=nobs/2; t++) {
 	yy = 2 * M_PI * t / (double) nobs;
 	xx = varx; 
@@ -791,7 +795,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	xx /= 2 * M_PI;
 	pprintf(prn, " %.4f%9d%16.2f%14.4f\n", yy, t, 
 		(double) (nobs / 2) / (2 * t), xx);
-	if (!batch && fq && savexx) savexx[t] = xx;
+	if (do_graph) savexx[t] = xx;
 	if (t <= nT) {
 	    omega[t-1] = yy;
 	    hhat[t-1] = xx;
@@ -799,31 +803,26 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     }
     pputs(prn, "\n");
 
-    if (!batch && fq) {
-	if (savexx == NULL) {
-	    fclose(fq);
-	} else {
+    if (do_graph) {
 #ifdef ENABLE_NLS
-	    setlocale(LC_NUMERIC, "C");
+	setlocale(LC_NUMERIC, "C");
 #endif
-	    for (t=1; t<=nobs/2; t++) fprintf(fq, "%d %f\n", t, savexx[t]);
+	for (t=1; t<=nobs/2; t++) fprintf(fq, "%d %f\n", t, savexx[t]);
 #ifdef ENABLE_NLS
-	    setlocale(LC_NUMERIC, "");
+	setlocale(LC_NUMERIC, "");
 #endif
-	    fprintf(fq, "e\n");
+	fprintf(fq, "e\n");
 #ifdef OS_WIN32
-	    fprintf(fq, "pause -1\n");
+	fprintf(fq, "pause -1\n");
 #endif
-	    fclose(fq);
-	    free(savexx);
-	    err = gnuplot_display(ppaths);
-	}
+	fclose(fq);
+	free(savexx);
+	err = gnuplot_display(ppaths);
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {
 	pprintf(prn, "\n%s\n",
 		_("Fractional integration test failed"));
-	err = 1;
     }
 
     free(autocov);
