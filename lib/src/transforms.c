@@ -336,11 +336,12 @@ check_add_transform (int vnum, const double *x,
 */
 
 static int get_transform (int ci, int v, int aux, 
-			  double ***pZ, DATAINFO *pdinfo)
+			  double ***pZ, DATAINFO *pdinfo,
+			  int startlen)
 {
     char vname[VNAMELEN];
     char label[MAXLABEL];
-    int vno, len, err = 0;
+    int len, vno = -1, err = 0;
     double *vx;
 
     vx = testvec(pdinfo->n);
@@ -371,7 +372,7 @@ static int get_transform (int ci, int v, int aux,
 	make_transform_label(label, pdinfo->varname[v], ci, aux);
     }
     
-    for (len=8; len<=VNAMELEN; len++) {
+    for (len=startlen; len<=VNAMELEN; len++) {
 
 	if (len == VNAMELEN) {
 	    /* last resort: hack the name */
@@ -419,7 +420,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 
     newlag = 1;
 
-    lno = get_transform(LOGS, v, lag, pZ, pdinfo);
+    lno = get_transform(LAGS, v, lag, pZ, pdinfo, 8);
 
     if (lno < oldv) {
 	newlag = 0;
@@ -436,7 +437,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
-    return get_transform(LOGS, v, 0, pZ, pdinfo);
+    return get_transform(LOGS, v, 0, pZ, pdinfo, 8);
 }
 
 /* diffgenr: create first difference (or log difference) of variable v,
@@ -451,7 +452,7 @@ int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
 	return -1;
     }
 
-    return get_transform((ldiff)? LDIFF : DIFF, v, 0, pZ, pdinfo);
+    return get_transform((ldiff)? LDIFF : DIFF, v, 0, pZ, pdinfo, 8);
 }
 
 /* xpxgenr: create square or cross-product, if the target variable
@@ -468,7 +469,54 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    return get_transform(SQUARE, vi, vj, pZ, pdinfo);
+    return get_transform(SQUARE, vi, vj, pZ, pdinfo, 8);
+}
+
+static int 
+get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
+{
+    int width = 8 - trim;
+    int len, maxlen = 0;
+    int i, j;
+
+    for (i=1; i<=list[0]; i++) {
+	len = strlen(pdinfo->varname[list[i]]);
+	if (len > maxlen) {
+	    maxlen = len;
+	}
+    }
+
+    if (maxlen <= width) {
+	/* no problem: generated names will fit in 8 chars */
+	return 8;
+    }
+
+    for (len=width; len<=maxlen; len++) {
+	int conflict = 0;
+
+	for (i=1; i<=list[0]; i++) {
+	    for (j=i+1; j<=list[0]; j++) {
+		if (!strncmp(pdinfo->varname[list[i]],
+			     pdinfo->varname[list[j]],
+			     len)) {
+		    conflict = 1;
+		    break;
+		}
+	    }
+	    if (conflict) {
+		break;
+	    }
+	}
+	if (!conflict) {
+	    break;
+	}
+    }
+
+    if (len < 8) {
+	len = 8;
+    }
+
+    return len;
 }
 
 /**
@@ -486,7 +534,10 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 int list_loggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int lognum, i, v;
+    int startlen;
     int n_ok = 0;
+
+    startlen = get_starting_length(list, pdinfo, 2);
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
@@ -498,7 +549,7 @@ int list_loggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}
 
-	lognum = loggenr(v, pZ, pdinfo);
+	lognum = get_transform(LOGS, v, 0, pZ, pdinfo, startlen);
 	if (lognum > 0) {
 	    n_ok++;
 	}
@@ -523,11 +574,15 @@ int list_laggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int lagnum, l, i, v;
     int maxlag = pdinfo->pd;
+    int startlen;
 
     /* play safe with panel data */
     if (dataset_is_panel(pdinfo)) {
 	maxlag = 1;
     }
+
+    startlen = get_starting_length(list, pdinfo, 
+				   (maxlag > 9)? 3 : 2);
     
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
@@ -535,7 +590,7 @@ int list_laggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}
 	for (l=1; l<=maxlag; l++) {
-	    lagnum = laggenr(v, l, pZ, pdinfo);
+	    lagnum = get_transform(LAGS, v, l, pZ, pdinfo, startlen);
 	    if (lagnum < 0) {
 		return 1;
 	    }
@@ -560,13 +615,17 @@ int list_laggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 
 int list_diffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    int i;
+    int i, v, startlen;
+
+    startlen = get_starting_length(list, pdinfo, 2);
     
     for (i=1; i<=list[0]; i++) {
-	if (diffgenr(list[i], pZ, pdinfo, 0) < 0) {
+	v = list[i];
+	if (get_transform(DIFF, v, 0, pZ, pdinfo, startlen) < 0) {
 	    return 1;
 	}
     }
+
     return 0;
 }
 
@@ -585,13 +644,17 @@ int list_diffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 
 int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    int i;
+    int i, v, startlen;
+
+    startlen = get_starting_length(list, pdinfo, 3);
     
     for (i=1; i<=list[0]; i++) {
-	if (diffgenr(list[i], pZ, pdinfo, 1) < 0) {
+	v = list[i];
+	if (get_transform(LDIFF, v, 0, pZ, pdinfo, startlen) < 0) {
 	    return 1;
 	}
     }
+
     return 0;
 }
 
@@ -613,7 +676,10 @@ int list_xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt)
 {
     int xnum, i, j, vi, vj;
+    int startlen;
     int n_ok = 0;
+
+    startlen = get_starting_length(list, pdinfo, 3);
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
@@ -625,7 +691,7 @@ int list_xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    continue;
 	}
 
-	xnum = xpxgenr(vi, vi, pZ, pdinfo);
+	xnum = get_transform(SQUARE, vi, vi, pZ, pdinfo, startlen);
 	if (xnum > 0) {
 	    n_ok++;
 	}
