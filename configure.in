@@ -484,7 +484,7 @@ main ()
   AC_SUBST(GTK_EXTRA_LIBS)
 ])
 
-AM_PATH_GTKEXTRA(0.99.15,,exit)
+AM_PATH_GTKEXTRA(0.99.15, ,echo "Bad version")
 AC_SUBST(have_gtkextra)
 
 # end of "build_gui" conditionality
