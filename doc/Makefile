@@ -58,7 +58,8 @@ htmlhelp:
 	saxon ../$(SRC) ../gretlhlp.xsl tex.math.in.alt=latex
 	mkdir -p gretlhlp/figures
 	cp figures/*.png gretlhlp/figures
-	cd gretlhlp/figures && ./mkgif
+	for f in gretlhlp/figures/*.png ; do
+	convert $f ${f%.png}.gif ; done
 	zip -r gretlhlp.zip gretlhlp/*
 
 clean:
