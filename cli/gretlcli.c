@@ -57,7 +57,6 @@ char datfile[MAXLEN];
 char outfile[MAXLEN];
 char hdrfile[MAXLEN];
 char syscmd[MAXLEN];
-char msg[80];
 double **Z;                   /* data set */
 double **subZ;                /* sub-sampled data set */
 double **fullZ;               /* convenience pointer */
@@ -1061,7 +1060,7 @@ void exec_line (char *line, PRN *prn)
 	if (err) { 
 	    errmsg(err, prn);
 	} else {
-	    pprintf(prn, "%s\n", get_gretl_msg());
+	    print_gretl_msg(prn);
 	}	
 	break;
 
@@ -1462,10 +1461,11 @@ void exec_line (char *line, PRN *prn)
 
     case SIM:
 	err = simulate(line, &Z, datainfo);
-	if (err) 
+	if (err) { 
 	    errmsg(err, prn);
-	else 
-	    pprintf(prn, "%s\n", get_gretl_msg());
+	} else {
+	    print_gretl_msg(prn);
+	}
 	break;
 
     case SMPL:

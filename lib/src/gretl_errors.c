@@ -153,6 +153,13 @@ char *get_gretl_msg (void)
     return gretl_msg;
 }
 
+void print_gretl_msg (PRN *prn)
+{
+    if (*gretl_msg != '\0') {
+	pprintf(prn, "%s\n", gretl_errmsg);
+    }	
+}
+
 /**
  * gretl_errmsg_set:
  * @str: an error message

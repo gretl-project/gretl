@@ -1751,7 +1751,9 @@ make_genr_label (GENERATE *genr, char *genrs, const char *vname)
     int llen = 0;
 
     if (vname != NULL) {
-	if (!strncmp(vname, "$nl", 3) || !strncmp(vname, "__", 2)) {
+	if (!strncmp(vname, "$nl", 3) || 
+	    !strncmp(vname, "__", 2) ||
+	    !strcmp(vname, "argv")) {
 	    return;
 	} else {
 	    int mc = get_model_count();
@@ -1798,6 +1800,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 #endif
 
     *gretl_errmsg = *s = *genrs = '\0';
+    *gretl_msg = '\0';
 
     genr_init(&genr, pZ, pdinfo, pmod);
 
@@ -1878,8 +1881,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
     /* special case of generating observation labels */
     if (!strcmp(newvar, "markers")) {
-	genr.err = generate_obs_markers((const double **) *pZ, 
-					pdinfo, s);
+	genr.err = generate_obs_markers(pZ, pdinfo, s);
 	return genr.err;
     }
 
@@ -1936,8 +1938,11 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	if (genr.save) {
 	    const char *vname;
 
-	    if (genr.varnum < oldv) vname = newvar;
-	    else vname = NULL;
+	    if (genr.varnum < oldv) {
+		vname = newvar;
+	    } else {
+		vname = NULL;
+	    }
 	    make_genr_label(&genr, genrs, vname);
 	    genr.err = add_new_var(pZ, pdinfo, &genr);
 	} else {
@@ -4251,6 +4256,8 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 static void genr_msg (GENERATE *genr, int oldv)
 {
     double x;
+
+    if (!strcmp(genr->varname, "argv")) return;
 
     if (!genr->save) {
 	x = genr->xvec[genr->pdinfo->t1];

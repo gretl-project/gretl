@@ -1682,6 +1682,34 @@ void gretl_print_attach_file (PRN *prn, FILE *fp)
     prn->format = GRETL_PRINT_FORMAT_PLAIN;
 }
 
+static int realloc_prn_buffer (PRN *prn, size_t blen)
+{
+    char *tmp;
+    int err = 0;
+
+#ifdef PRN_DEBUG
+    fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
+	    prn->bufsize - blen, prn->buf, 2 * prn->bufsize);
+#endif
+    prn->bufsize *= 2; 
+
+    tmp = realloc(prn->buf, prn->bufsize); 
+
+    if (tmp == NULL) {
+	err = 1;
+    } else {
+	prn->buf = tmp;
+#ifdef PRN_DEBUG
+	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
+		prn->bufsize, (void *) prn->buf);
+#endif
+    }
+
+    memset(prn->buf + blen, 0, 1);
+
+    return err;
+}
+
 /**
  * pprintf:
  * @prn: gretl printing struct.
@@ -1726,23 +1754,15 @@ int pprintf (PRN *prn, const char *template, ...)
     if (prn->buf == NULL) return 1;
 
     blen = strlen(prn->buf);
-    if (prn->bufsize - blen < 1024) { 
-	char *tmp;
 
-#ifdef PRN_DEBUG
- 	fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
- 		prn->bufsize - blen, prn->buf, 2 * prn->bufsize);
-#endif
-	prn->bufsize *= 2; 
-	tmp = realloc(prn->buf, prn->bufsize); 
-	if (tmp == NULL) return 1;
-	prn->buf = tmp;
-#ifdef PRN_DEBUG
- 	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
- 		prn->bufsize, (void *) prn->buf);
-#endif
-	memset(prn->buf + blen, 0, 1);
+    if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
+	if (blen > MAXLEN - 32) return 1;
+    } else if (prn->bufsize - blen < 1024) {
+	if (realloc_prn_buffer(prn, blen)) {
+	    return 1;
+	}
     }
+
     va_start(args, template);
 #ifdef PRN_DEBUG
     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
@@ -1767,6 +1787,8 @@ int pprintf (PRN *prn, const char *template, ...)
 
 int pputs (PRN *prn, const char *s)
 {
+    size_t blen;
+
     if (prn == NULL) return 0;
 
     if (prn->fp != NULL) {
@@ -1776,24 +1798,17 @@ int pputs (PRN *prn, const char *s)
 
     if (prn->buf == NULL) return 1;
 
+    blen = strlen(prn->buf);
+
     if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	/* a fixed-length buffer */
-	strcpy(prn->buf, s);
-    } else {
-	size_t blen = strlen(prn->buf);
-
-	if (prn->bufsize - blen < 1024) { 
-	    char *tmp;
-
-	    prn->bufsize *= 2; 
-	    tmp = realloc(prn->buf, prn->bufsize); 
-	    if (tmp == NULL) return 1;
-	    prn->buf = tmp;
-	    memset(prn->buf + blen, 0, 1);
+	if (blen + strlen(s) > MAXLEN - 1) return 1;
+    } else if (prn->bufsize - blen < 1024) {
+	if (realloc_prn_buffer(prn, blen)) {
+	    return 1;
 	}
-
-	strcpy(prn->buf + blen, s);
     }
+
+    strcpy(prn->buf + blen, s);
 
     return 0;
 }
@@ -1809,6 +1824,8 @@ int pputs (PRN *prn, const char *s)
 
 int pputc (PRN *prn, int c)
 {
+    size_t blen;
+
     if (prn == NULL) return 0;
 
     if (prn->fp != NULL) {
@@ -1818,60 +1835,76 @@ int pputc (PRN *prn, int c)
 
     if (prn->buf == NULL) return 1;
 
+    blen = strlen(prn->buf);
+
     if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	/* a fixed-length buffer */
-	prn->buf[0] = c;
-	prn->buf[1] = '\0';
-    } else {
-	size_t blen = strlen(prn->buf);
-
-	if (prn->bufsize - blen < 1024) { 
-	    char *tmp;
-
-	    prn->bufsize *= 2; 
-	    tmp = realloc(prn->buf, prn->bufsize); 
-	    if (tmp == NULL) return 1;
-	    prn->buf = tmp;
+	if (blen > MAXLEN - 2) return 1;
+    } else if (prn->bufsize - blen < 1024) {
+	if (realloc_prn_buffer(prn, blen)) {
+	    return 1;
 	}
-
-	prn->buf[blen] = c;
-	prn->buf[blen + 1] = '\0';
     }
+
+    prn->buf[blen] = c;
+    prn->buf[blen + 1] = '\0';
 
     return 0;
 }
 
 /* apparatus for user-defined printf statements */
 
-/* #define PRINTF_DEBUG */
+#define PRINTF_DEBUG
 
-static int print_arg (const char **pfmt, double val, PRN *prn)
+#define is_format_char(c) (c == 'f' || c == 'g' || c == 'd' || c == 's')
+
+static int print_arg (const char **pfmt, double val, 
+		      const char *str, PRN *prn)
 {
     char fmt[16];
     int fc = *(*pfmt + 1);
     size_t n = 0;
     int err = 0;
 
-    *fmt = '%';
+    fmt[0] = '%';
 
-    if (fc == 'g' || fc == 'f') {
+    if (is_format_char(fc)) {
 	fmt[1] = fc;
 	fmt[2] = '\0';
 	n = 2;
     } else {
-	sscanf(*pfmt + 1, "%14[^gf]", fmt + 1);
+	sscanf(*pfmt + 1, "%14[^gfs]", fmt + 1);
 	n = strlen(fmt);
 	fc = *(*pfmt + n);
 	fmt[n] = fc;
 	fmt[++n] = '\0';
     }
 
-    if (n == 0 || (fc != 'g' && fc != 'f')) err = 1;
-    else {
+    if (n == 0 || !is_format_char(fc)) {
+	err = 1;
+    } else if (fc == 's') {
+	if (str == NULL) {
+	    fprintf(stderr, "NULL string in printf\n");
+	    err = 1;
+	} else {
 #ifdef PRINTF_DEBUG
-	fprintf(stderr, "fmt='%s', val = %g\n", fmt, val);
+	    fprintf(stderr, "fmt='%s', val = '%s'\n", fmt, str);
 #endif
-	pprintf(prn, fmt, val);
+	    pprintf(prn, fmt, str);
+	    *pfmt += n;	
+	}
+    } else {
+#ifdef PRINTF_DEBUG
+	if (fc == 'd') {
+	    fprintf(stderr, "fmt='%s', val = %d\n", fmt, (int) val);
+	} else {
+	    fprintf(stderr, "fmt='%s', val = %g\n", fmt, val);
+	}
+#endif
+	if (fc == 'd') {
+	    pprintf(prn, fmt, (int) val);
+	} else {
+	    pprintf(prn, fmt, val);
+	}
 	*pfmt += n;
     }
     
@@ -1921,7 +1954,7 @@ static int output_format_only (const char *s, PRN *prn)
 
 static int get_generated_value (const char *argv, double *val,
 				double ***pZ, DATAINFO *pdinfo,
-				MODEL *pmod)
+				MODEL *pmod, int t)
 {
     char *genline = malloc(strlen(argv) + 12);
     int err = 0;
@@ -1936,7 +1969,13 @@ static int get_generated_value (const char *argv, double *val,
 	err = generate(pZ, pdinfo, genline, pmod);
 	free(genline);
 	if (!err) {
-	    *val = (*pZ)[pdinfo->v - 1][0];
+	    int v = pdinfo->v - 1;
+
+	    if (pdinfo->vector[v]) {
+		*val = (*pZ)[v][0];
+	    } else {
+		*val = (*pZ)[v][t];
+	    }
 	    err = dataset_drop_vars(1, pZ, pdinfo);
 	}
     }
@@ -1968,16 +2007,21 @@ static char *get_arg (char *line)
     return ret;
 }
 
-int do_printf (const char *line, double ***pZ, 
-	       DATAINFO *pdinfo, MODEL *pmod,
-	       PRN *prn)
+static int real_do_printf (const char *line, double ***pZ, 
+			   DATAINFO *pdinfo, MODEL *pmod,
+			   PRN *prn, int t)
 {
     const char *p;
     char format[128];
     char *argv, *str = NULL;
     double *vals = NULL;
-    int i, argc = 0, cnvc = 0, inparen = 0;
-    int err = 0;
+    int argc = 0, cnvc = 0, inparen = 0;
+    int markerpos = -1;
+    int i, err = 0;
+
+    if (t < 0) {
+	t = pdinfo->t1;
+    }
 
 #ifdef PRINTF_DEBUG
     fprintf(stderr, "do_printf: line='%s'\n", line);
@@ -1985,7 +2029,10 @@ int do_printf (const char *line, double ***pZ,
 
     *gretl_errmsg = '\0';
 
-    line += 7; /* skip "printf" */
+    if (!strncmp(line, "printf ", 7)) {
+	line += 7;
+    }
+
     if (sscanf(line, "\"%127[^\"]\"", format) != 1) {
 	return 1;
     }
@@ -2034,31 +2081,52 @@ int do_printf (const char *line, double ***pZ,
     }
 
     strcpy(str, line);
-    for (i=0; i<argc; i++) {
-	int v;
 
+    for (i=0; i<argc; i++) {
 	argv = get_arg((i > 0)? NULL : str);
 	chopstr(argv);
-	v = varindex(pdinfo, argv);
-	if (v < pdinfo->v) {
-	    /* simple varname */
-	    if (pdinfo->vector[v]) vals[i] = (*pZ)[v][pdinfo->t1];
-	    else vals[i] = (*pZ)[v][0];
+
+	if (!strcmp(argv, "marker")) {
+	    if (markerpos >= 0 || pdinfo->S == NULL) {
+		err = 1;
+	    } else {
+		markerpos = i;
+		vals[i] = 0.0;
+	    }
 	} else {
-	    err = get_generated_value(argv, &vals[i], pZ, pdinfo, pmod);
+	    int v = varindex(pdinfo, argv);
+
+	    if (v < pdinfo->v) {
+		/* simple existent varname */
+		if (pdinfo->vector[v]) {
+		    vals[i] = (*pZ)[v][t];
+		} else {
+		    vals[i] = (*pZ)[v][0];
+		}
+	    } else {
+		err = get_generated_value(argv, &vals[i], pZ, pdinfo, 
+					  pmod, t);
+	    }
 	}
-	if (err) goto printf_bailout;
+	if (err) {
+	    goto printf_bailout;
+	}
     }    
 
     p = format;
     i = 0;
     while (*p && !err) {
+	const char *marker = NULL;
+
 	if (*p == '%') {
 	    if (*(p + 1) == '%') {
 		pputc(prn, '%');
 		p += 2;
 	    } else {
-		err = print_arg(&p, vals[i++], prn);
+		if (i == markerpos) {
+		    marker = pdinfo->S[t];
+		} 
+		err = print_arg(&p, vals[i++], marker, prn);
 	    }
 	} else if (*p == '\\') {
 	    err = handle_escape(*(p + 1), prn);
@@ -2069,6 +2137,10 @@ int do_printf (const char *line, double ***pZ,
 	}
     }
 
+    if (err) {
+	pputc(prn, '\n');
+    }
+
  printf_bailout:
     free(vals);
     free(str);
@@ -2076,6 +2148,50 @@ int do_printf (const char *line, double ***pZ,
     return err;
 }
 
+int do_printf (const char *line, double ***pZ, 
+	       DATAINFO *pdinfo, MODEL *pmod,
+	       PRN *prn)
+{
+    return real_do_printf(line, pZ, pdinfo, pmod, prn, -1);
+}
+
+/* originating command is of form:
+
+     genr markers=f1,f2,f3,...
+
+   we're assuming that we're just getting the f* part here
+*/
+
+int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s)
+{
+    PRN prn;
+    char buf[MAXLEN];
+    int t, err = 0;
+
+    if (pdinfo->S == NULL) {
+	char **S = allocate_case_markers(pdinfo->n);
+
+	if (S == NULL) {
+	    return E_ALLOC;
+	} else {
+	    pdinfo->S = S;
+	    pdinfo->markers = 1;
+	}
+    }
+
+    gretl_print_attach_buffer(&prn, buf);
+    
+    for (t=0; t<pdinfo->n && !err; t++) {
+	buf[0] = '\0';
+	err = real_do_printf(s, pZ, pdinfo, NULL, &prn, t);
+	if (!err) {
+	    pdinfo->S[t][0] = '\0';
+	    strncat(pdinfo->S[t], buf, OBSLEN - 1);
+	}
+    }
+	
+    return err;
+}
 
 int in_usa (void)
 {

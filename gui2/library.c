@@ -5258,7 +5258,7 @@ int gui_exec_line (char *line,
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    pprintf(prn, "%s\n", get_gretl_msg()); 
+	    print_gretl_msg(prn);
 	}
 	break;
 
@@ -5617,7 +5617,7 @@ int gui_exec_line (char *line,
 	if (err) { 
 	    errmsg(err, prn);
 	} else {
-	    pprintf(prn, "%s\n", get_gretl_msg()); 
+	    print_gretl_msg(prn);
 	}
 	break;
 

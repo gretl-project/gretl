@@ -102,6 +102,8 @@ int do_printf (const char *line, double ***pZ,
 	       DATAINFO *pdinfo, MODEL *pmod,
 	       PRN *prn);
 
+int generate_obs_markers (double ***pZ, DATAINFO *pdinfo, char *s);
+
 int in_usa (void);
 
 char *bufgets (char *s, size_t size, const char *buf);
