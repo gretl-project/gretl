@@ -110,7 +110,19 @@ static int make_texfile (const PATHS *ppaths, const int model_count,
     else return 0;
 }
 
-/* ......................................................... */
+/**
+ * tex_print_equation:
+ * @pmod:  pointer to gretl MODEL struct.
+ * @pdinfo:  information regarding the data set.
+ * @standalone: indicator variable.
+ * @prn: gretl printing struct.
+ *
+ * Prints a gretl model in the form of a LaTeX equation, either as
+ * a stand-alone document or as a fragment of LaTeX source for
+ * insertion into document.
+ * 
+ * Returns: an integer.
+ */
 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			const int standalone, print_t *prn)
