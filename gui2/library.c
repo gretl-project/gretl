@@ -3167,11 +3167,6 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 			 NULL, plswait,
 			 GDK_CURRENT_TIME);
 
-#ifdef G_OS_WIN32
-	while (gtk_events_pending())
-	    gtk_main_iteration();
-#endif
-
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
 
