@@ -598,7 +598,7 @@ enum {
 
 static void make_gtitle (FILE *fp, int code, const char *n1, const char *n2)
 {
-    char title[64];
+    char title[128];
 
     switch (code) {
     case GTITLE_VLS:
@@ -697,7 +697,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
     int i, j, oddman = 0;
-    char s1[9], s2[9], xlabel[12], withstring[8];
+    char s1[MAXDISP], s2[MAXDISP], xlabel[MAXDISP], withstring[8];
     char depvar[9];
     int tscale = 0;   /* time series scaling needed? */
     int ts_plot = 1;  /* plotting against time on x-axis? */

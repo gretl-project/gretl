@@ -41,7 +41,7 @@ extern int _parse_lagvar (const char *varname, LAGVAR *plagv,
 			  DATAINFO *pdinfo);
 
 static int _full_list (const DATAINFO *pdinfo, CMD *command);
-
+static void get_tex_filename (const char *line, CMD *cmd);
 
 /* ........................................................... */
 
@@ -358,6 +358,11 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci = -1;
 	return;
     }
+
+    /* tex printing commands can take a filename parameter */
+    if (command->ci == EQNPRINT || command->ci == TABPRINT) {
+	get_tex_filename(line, command);
+    } 
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(command->ci)) {
@@ -1152,14 +1157,17 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
 /* .......................................................... */
 
-static const char *flag_present (const char *s, char f)
+/* Look for a flag of the form "-x".  Make sure it's outside of
+   any quotes */
+
+static const char *flag_present (const char *s, char f, int *quoted)
 {
-    int quoted = 0;
+    int inquote = 0;
     int gotdash = 0;
 
     while (*s) {
-	if (*s == '"') quoted = !quoted;
-	if (!quoted) {
+	if (*s == '"') inquote = !inquote;
+	if (!inquote) {
 	    if (*s == '-') gotdash = 1;
 	    else if (gotdash && *s == f && *(s+1)) {
 		s++;
@@ -1167,7 +1175,14 @@ static const char *flag_present (const char *s, char f)
 		    if (isspace(*s)) s++;
 		    else break;
 		}
-		if (*s == '"' && *(s+1)) return s + 1;
+		if (*s == '"' && *(s+1)) {
+		    *quoted = 1;
+		    return s + 1;
+		}
+		if (*s != '"' && *(s+1)) {
+		    *quoted = 0;
+		    return s;
+		}
 	    }
 	    else gotdash = 0;
 	}
@@ -1181,13 +1196,15 @@ static char *get_flag_field  (const char *s, char f)
 {
     const char *p;
     char *ret = NULL;
+    int quoted = 0;
 
-    if ((p = flag_present(s, f)) != NULL) {
+    if ((p = flag_present(s, f, &quoted)) != NULL) {
 	const char *q = p;
 	size_t len = 0;
 
 	while (*q) {
-	    if (*q == '"') break;
+	    if (quoted && *q == '"') break;
+	    if (!quoted && isspace(*q)) break;
 	    q++;
 	    len++;
 	}
@@ -1236,6 +1253,19 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
     }  
 
     return 0;
+}
+
+/* .......................................................... */
+
+static void get_tex_filename (const char *line, CMD *cmd)
+{
+    char *p;
+
+    p = get_flag_field(line + 8, 'f');
+    if (p != NULL) {
+	free(cmd->param);
+	cmd->param = p;
+    }    
 }
 
 /* .......................................................... */

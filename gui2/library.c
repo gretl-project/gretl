@@ -4350,6 +4350,7 @@ int gui_exec_line (char *line,
 	}
 	if ((err = script_model_test(0, prn, (command.ci == EQNPRINT)))) 
 	    break;
+	strcpy(texfile, command.param);
 	if (command.ci == EQNPRINT)
 	    err = eqnprint(models[0], datainfo, &paths, 
 			   texfile, model_count, oflag);

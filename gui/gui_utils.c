@@ -1275,7 +1275,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     title = make_viewer_title(role, filename);
     vwin = common_viewer_new(role, (title != NULL)? title : filename, 
-			     NULL, !doing_script);
+			     NULL, !doing_script && role != CONSOLE);
     g_free(title);
     if (vwin == NULL) return NULL; 
 

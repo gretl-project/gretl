@@ -223,8 +223,10 @@ static int make_texfile (const PATHS *ppaths, int model_count,
 {
     prn->buf = NULL;
 
-    sprintf(texfile, "%s%s_%d.tex", ppaths->userdir,
-	    (equation)? "equation" : "model", model_count);
+    if (*texfile == 0) {
+	sprintf(texfile, "%s%s_%d.tex", ppaths->userdir,
+		(equation)? "equation" : "model", model_count);
+    }
 
     prn->fp = fopen(texfile, "w");
     if (prn->fp == NULL) return 1;

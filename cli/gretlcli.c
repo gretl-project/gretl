@@ -816,6 +816,7 @@ void exec_line (char *line, PRN *prn)
 
     case EQNPRINT:
     case TABPRINT:
+	strcpy(texfile, command.param);
 	if ((err = model_test_start(0, prn, (command.ci == EQNPRINT)))) 
 	    break;
 	if (command.ci == EQNPRINT)

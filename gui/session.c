@@ -2153,14 +2153,15 @@ static int silent_remember (MODEL **ppmod, DATAINFO *pdinfo)
 
     if ((pmod->name = malloc(64)) == NULL) return 1;
 
-    pmod->name[0] = 0;
+    *pmod->name = 0;
     strncat(pmod->name, rebuild.model_name[session.nmodels], 63);
 
     if (session.nmodels == 0) {
-	session.models = malloc(sizeof(MODEL *));
+	session.models = malloc(sizeof *session.models);
     } else {
 	session.models = realloc(session.models, 
-				   (session.nmodels + 1) * sizeof(MODEL *));
+				 (session.nmodels + 1) * 
+				 sizeof *session.models);
     }
 
     if (session.models == NULL) return 1;
@@ -2182,38 +2183,30 @@ static int silent_remember (MODEL **ppmod, DATAINFO *pdinfo)
     return 0;
 }
 
-static int save_model_copy (MODEL **ppmod, DATAINFO *pdinfo)
-{
-    static int save;
-    MODEL *pmod = *ppmod; /* copy _current_ pointer! */
-
-    if (save) {
-	int i;
-
-	for (i=0; i<rebuild.nmodels; i++) {
-	    if (pmod->ID == rebuild.model_ID[i]) {
-		return silent_remember(ppmod, pdinfo);
-	    }
-	}
-    }
-    save = 1;
-
-    clear_model(pmod, pdinfo); /* hmm */
-
-    return 0;
-}
-
-int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuild)
+int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, 
+			 int rebuilding)
 {
     /* The standard behavior here is simply to clear the model
        for future use.  But if we're rebuilding a gretl session
        then we stack the given model pointer and substitute a
        new blank model for the next use.
     */
+    if (rebuilding) {
+	static int save;
 
-    if (rebuild) {
-	;
+	if (save) {
+	    int i;
+
+	    for (i=0; i<rebuild.nmodels; i++) {
+		if ((*ppmod)->ID == rebuild.model_ID[i]) {
+		    return silent_remember(ppmod, pdinfo);
+		}
+	    }
+	}
+	save = 1;
+	clear_model(*ppmod, pdinfo);
     } else {
+	/* no rebuild, no need to save */
 	clear_model(*ppmod, pdinfo);
     }
 
