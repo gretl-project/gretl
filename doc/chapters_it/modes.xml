@@ -25,12 +25,12 @@
       <quote><filename>.inp</filename></quote>.</para>
 
     <para>Per aprire uno script di diversa provenienza, occorre usare
-    il menù <guimenuitem>File, Apri file comandi</guimenuitem>; per
+    il comando del menù <guimenuitem>File, Apri file comandi</guimenuitem>; per
     creare uno script da zero, occorre usare <guimenuitem>File, Nuovo
     file comandi</guimenuitem> dal menù, oppure il pulsante
     <guimenuitem>Nuovo file comandi</guimenuitem> dalla barra degli
     strumenti. In entrambi i casi si aprirà una finestra comandi (si
-    veda <xref linkend="fig-scriptwin"/>).</para>
+    veda la <xref linkend="fig-scriptwin"/>).</para>
 
     <figure id="fig-scriptwin" float="1" pgwide="1">
      <title>Finestra comandi, modifica di un file di comandi</title>
@@ -61,7 +61,7 @@
     possibile usare il comando del menù <guimenuitem>Aiuto, Comandi:
     sintassi</guimenuitem>, o eseguire la versione a riga di comando
     del programma <application>gretlcli</application> e consultare il
-    suo aiuto, oppure consultare la <xref linkend="cmdref"/> in questo
+    suo aiuto, oppure consultare il <xref linkend="cmdref"/> in questo
     manuale. In aggiunta, il pacchetto
     <application>gretl</application> contiene più di 70 script
     <quote>di esempio</quote>: la maggior parte di essi sono
@@ -82,7 +82,7 @@
 
     <para>È anche possibile, se si vuole, usare insieme l'interfaccia
     grafica e le funzionalità di script, sfruttando le comodità
-    offerte da ognuno dei due approcci: ecco alcuni suggerimenti.
+    offerte da ognuno dei due approcci. Ecco alcuni suggerimenti:
     </para>
 
     <itemizedlist>
@@ -95,8 +95,8 @@
       </para>
       </listitem>
       <listitem><para>Partire da un nuovo file script e scrivere i
-      comandi necessari per eseguire le necessarie trasformazioni su
-      un dataset (si veda il comando <command>genr</command> nella
+      comandi necessari per eseguire le trasformazioni desiderate su
+      un dataset (si veda il comando <command>genr</command> nel
       <xref linkend="cmdref"/>). Tipicamente è possibile svolgere
       questo tipo di operazioni in modo più efficace scrivendo una
       sequenza ben ragionata di comandi, piuttosto che puntando e
@@ -161,7 +161,7 @@
     oggetti testuali identificati da un nome (anche questi appariranno
     nella finestra della sessione, da cui sarà possibile aprirli in
     seguito). Ad esempio, questo comando invia i risultati di un test
-    Dickey&ndash;Fuller aumentanto a un <quote>oggetto testo</quote>
+    Dickey&ndash;Fuller aumentato a un <quote>oggetto testo</quote>
     chiamato <literal>ADF1</literal> e li mostra in una finestra:</para>
     <programlisting>
       ADF1 &lt;- adf 2 x1
@@ -208,7 +208,7 @@
 	<quote>sessione</quote> per tenere traccia del proprio lavoro
         e richiamarlo in un secondo momento. L'idea di base è quella
         di fornire uno spazio che contiene, sotto forma di icone, vari
-        oggetti relativi alla sessione di lavoro in corso (si veda
+        oggetti relativi alla sessione di lavoro in corso (si veda la
       <xref linkend="fig-session"/>). È possibile aggiungere oggetti
       in questo spazio e salvarli assieme alla sessione, in modo che
       siano disponibili ad una successiva riapertura della sessione.
@@ -237,7 +237,7 @@
         relativa. L'icona <guimenuitem>Dataset</guimenuitem> è un po'
         più complessa: un doppio clic apre i dati nel foglio di lavoro
         integrato, mentre facendo clic col tasto destro del mouse si
-        ottiene un menù con altre azioni possibil.
+        ottiene un menù con altre azioni possibili.
 	</para>
 
       <para>Per aggiungere un modello alla finestra di sessione,
@@ -267,14 +267,14 @@
 
     </sect2>
 
-    <sect2 id="model-table"><title>The model table</title>   
+    <sect2 id="model-table"><title>La tabella modelli</title>   
 
       <para>
-	Nella ricerca econometrica è prassi stimare vari modelli con una
-        variabile dipendente comune &mdash; mentre i modelli differiscono
+	Nella ricerca econometrica è prassi comune stimare vari modelli con una
+        variabile dipendente comune, mentre i modelli differiscono
         tra loro per le variabili indipendenti o per lo stimatore usato.
 	In questa situazione è comodo poter rappresentare i risultati
-        delle regressioni in forma di una tabella dove ogni colonna
+        delle regressioni sotto forma di una tabella dove ogni colonna
         contiene i risultati (stime dei coefficienti e errori standard)
         per un dato modello e ogni riga contiene le stime per una certa
         variabile nei differenti modelli.</para>
@@ -295,7 +295,7 @@
             icona</guimenuitem> o <guimenuitem>Salva come icona e chiudi</guimenuitem>.
 	    </para>
 	</listitem>
-	<listitem><para>Ripetere il punto 1 per gli alri modelli da
+	<listitem><para>Ripetere il punto 1 per gli altri modelli da
         includere nella tabella (fino a un massimo di sei modelli).
 	</para>
 	</listitem>
@@ -333,7 +333,7 @@
 	</listitem>
       </orderedlist>
 
-      <para>Un semplice esempio della tabella modelli di
+      <para>Un semplice esempio di tabella modelli di
       <application>gretl</application> è mostrato in <xref
 	  linkend="fig-model-table"/>.</para>
 
@@ -373,9 +373,8 @@
 
       <para>Su sistemi diversi da MS Windows, può essere necessario modificare
         l'impostazione del programma per visualizzare il postscript,
-        che si trova nella sezione
-        <guimenuitem>Programmi</guimenuitem> della finestra di dialogo
-        delle Preferenze di gretl (nel menù
+        attraverso la sezione <guimenuitem>Programmi</guimenuitem> della
+        finestra di dialogo delle Preferenze di gretl (nel menù
         <guimenuitem>File</guimenuitem> della finestra principale).
         Su Windows può essere necessario dover impostare le regole di
         associazione dei file in modo che sia usato il visualizzatore
@@ -391,7 +390,7 @@
       riutilizzare in seguito, è utile selezionare <guimenuitem>Salva
       come&hellip;</guimenuitem> dal menù Sessione prima di uscire da
       <application>gretl</application>. Per riaprire la sessione in
-      seguito, è possibile</para>
+      seguito, è possibile:</para>
 
       <itemizedlist>
 	<listitem>

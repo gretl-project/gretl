@@ -6,7 +6,7 @@
   <sect1 id="starting-regression"><title>Eseguire una regressione</title>
 
     <para>Questa introduzione è dedicata prevalentemente alla versione grafica
-      del programma; si veda <xref linkend="cmdref"/> e <xref linkend="cli"/>
+      del programma; si veda il <xref linkend="cmdref"/> e il <xref linkend="cli"/>
       per i dettagli sulla versione a riga di comando del programma,
       <application>gretlcli</application>.
     </para>
@@ -15,12 +15,12 @@
       È possibile fornire il nome di un file di dati da aprire come argomento
       a <application>gretl</application>, ma per il momento non facciamolo:
       avviamo semplicemente il programma<footnote><para>Per comodità, in questo
-      manuale mi riferirò al client grafico del programma semplicemente come a
-      <application>gretl</application>; si noti comunque che il nome specifico
+      manuale chiamerò semplicemente <application>gretl</application> il client
+      grafico del programma; si noti comunque che il nome specifico
       del programma è differente a seconda della piattaforma: su Linux si chiama
       <filename>gretl_x11</filename>, mentre su MS Windows è
       <filename>gretlw32.exe</filename>. Sui sistemi Linux viene installato anche
-      uno script chiamato <filename>gretl</filename>, si veda anche <xref
+      uno script chiamato <filename>gretl</filename>, si veda anche il <xref
       linkend="optarg"/>.</para></footnote>. Apparirà la finestra principale (che
       di solito mostra le informazioni sul dataset, ma che ora è vuota) e vari
       menù, alcuni dei quali disabilitati.
@@ -34,9 +34,9 @@
       <guimenuitem>Apri dati, File di esempio,
       Ramanathan&hellip;</guimenuitem>. Si dovrebbe aprire una seconda
       finestra, che presenta un elenco dei file di dati forniti con il
-      pacchetto (si veda <xref linkend="fig-datafiles"/>). La numerazione
+      pacchetto (si veda la <xref linkend="fig-datafiles"/>). La numerazione
       dei file corrisponde all'organizzazione dei capitoli di
-      Ramanathan (2002), che contiene la discussione dell'analisi di questi
+      Ramanathan (2002), che descrive l'analisi di questi
       dati, ma i dati sono utilizzabili per fare pratica anche senza avere
       il testo.
     </para>
@@ -51,9 +51,9 @@
 
     <para>
       Selezionando una riga in questa finestra e facendo clic su
-      <quote>Info</quote>, si aprirà il <quote>file di descrizione</quote>
-      per il dataset in questione, che contiene informazioni a
-      proposito della fonte dei dati e della definizione delle variabili.
+      <quote>Info</quote>, si aprirà una finestra di descrizione del
+      dataset in questione (che può contenere informazioni a
+      proposito della fonte dei dati e della definizione delle variabili).
       Se si trova un file interessante, è possibile aprirlo facendo clic su
       <quote>Apri</quote>, o semplicemente facendo doppio clic sul nome del
       file. Per il momento, apriamo <filename>data3-6</filename>.
@@ -72,7 +72,7 @@
       dell'econometria, la funzione di consumo. La finestra dei dati
       dovrebbe ora contenere il nome del file di dati in uso, l'intervallo
       completo dei dati e quello del campione, i nomi delle variabili,
-      insieme a delle loro brevi descrizioni (si veda
+      insieme a delle loro brevi descrizioni (si veda la
       <xref linkend="fig-mainwin"/>).
     </para>
 
@@ -88,7 +88,7 @@
       OK, cosa possiamo fare ora? Le varie opzioni dei menù dovrebbero
       essere abbastanza chiare: per ora ci concentreremo sul menù Modello,
       ma una panoramica di tutti i menù della finestra principale è fornita
-      più avanti in <xref linkend="menus"/>.
+      più avanti (si veda <xref linkend="menus"/>).
     </para>
 
     <para>
@@ -96,7 +96,7 @@
     di stima econometrica: quella più semplice e nota è rappresentata dai
     minimi quadrati ordinari (Ordinary Least Squares - OLS). Scegliendo
     OLS, si apre una finestra di dialogo che richiede una
-    <emphasis>specificazione del modello</emphasis>; si veda <xref
+    <emphasis>specificazione del modello</emphasis>; si veda la <xref
 	linkend="fig-selector"/>.
     </para>
 
@@ -190,10 +190,10 @@
       comando per inviare i risultati direttamente a una stampante.
     </para>
 
-    <tip><para>Quando si incolla o si importano dei risultati di
+    <tip><para>Quando si incollano o si importano dei risultati di
 	<application>gretl</application> sotto forma di testo semplice in
         un word processor, conviene selezionare un carattere a spaziatura
-        fissa, in stile macchina da scrivere (ad es. il Courier) per
+        fissa, in stile macchina da scrivere (ad es. il Courier), per
         preservare il formato tabulare dei risultati. Selezionare un
         carattere non troppo grande (Courier da 10 punti dovrebbe andare
         bene) eviterà  che le righe dei risultati vengano spezzate nei
@@ -219,7 +219,7 @@
 	  <listitem><para><guimenuitem>Apri dati</guimenuitem>: apre
               un file di dati in formato interno di
               <application>gretl</application> o lo importa da altri
-	      formati. Si veda <xref
+	      formati. Si veda il <xref
 		linkend="datafiles"/>.</para></listitem>
 	  <listitem><para><guimenuitem>Aggiungi dati</guimenuitem>: Aggiunge
               dati al dataset in uso, da un file di dati di
@@ -230,12 +230,12 @@
               </para></listitem>
 	  <listitem><para><guimenuitem>Salva dati come</guimenuitem>:
 	      salva il dataset in uso in formato interno, con la possibilità
-              di usare la compressione gzip. Si veda <xref linkend="datafiles"/>.
+              di usare la compressione gzip. Si veda il <xref linkend="datafiles"/>.
 	    </para></listitem>
 	  <listitem><para><guimenuitem>Esporta dati</guimenuitem>:
 	      salva il dataset in uso in formato CSV (valori separati da virgole),
-              o nei formati di GNU R o GNU Octave. Si veda
-	      <xref linkend="datafiles"/> e anche <xref
+              o nei formati di GNU R o GNU Octave. Si veda il
+	      <xref linkend="datafiles"/> e anche l'<xref
 		linkend="app-advanced"/>.</para></listitem>
 	  <listitem><para><guimenuitem>Abbandona dataset</guimenuitem>:
               cancella dalla memoria il dataset in uso. Di solito questa
@@ -266,7 +266,7 @@
 	      o sopprime il controllo per la disponibilità in rete di
               aggiornamenti di <application>gretl</application>; configura o
               disattiva la barra degli strumenti nella finestra principale.
-              Si veda <xref linkend="optarg"/> per i dettagli.</para></listitem>
+              Si veda il <xref linkend="optarg"/> per i dettagli.</para></listitem>
           <listitem><para><guimenuitem>Esci</guimenuitem>: abbandona il programma.
               Se non si è in modalità esperto, verrà proposto di salvare il
               lavoro svolto.</para></listitem>
@@ -285,14 +285,14 @@
 	      apre una finestra che mostra i p-value per le distribuzioni
 	      Gaussiana, <emphasis>t</emphasis>, chi-quadro,
 	      <emphasis>F</emphasis> o gamma. Si veda anche il comando
-	      <command>pvalue</command> nella <xref
+	      <command>pvalue</command> nel <xref
 		linkend="cmdref"/>.</para></listitem>
 	  <listitem><para><guimenuitem>Calcola test</guimenuitem>: calcola
               le statistiche test e i p-value per una serie di test di ipotesi
               di uso comune (media della popolazione, varianza e proporzione,
               differenza delle medie o delle varianze e proporzioni). Occorre
 	      inserire nella finestra di dialogo le necessarie statistiche del
-              campione. Alcuni semplici test necessitano che sia indicata una
+              campione. Alcuni semplici test richiedono che sia indicata una
               serie di dati, invece che delle statistiche del campione: si veda
 	      <quote>Differenza delle medie</quote> e
 	      <quote>Differenza delle varianze</quote> nel menù Dati.</para></listitem>
@@ -300,13 +300,12 @@
               una finestra di <quote>terminale</quote> in cui è possibile digitare
               dei comandi, come se si stesse usando la versione a riga di comando
 	      <application>gretlcli</application>, invece di quella con interfaccia
-              grafica. Si veda la <xref linkend="cmdref"/>.
+              grafica. Si veda il <xref linkend="cmdref"/>.
 	    </para></listitem> 
 	  <listitem><para><guimenuitem>Avvia Gnu R</guimenuitem>:
 	      Avvia <application>R</application> (se è presente sul sistema) e vi
               carica una copia del dataset in uso in
-              <application>gretl</application>.  Si veda
-	  <xref linkend="app-advanced"/>.
+              <application>gretl</application>.  Si veda l'<xref linkend="app-advanced"/>.
 	    </para></listitem>
 	  <listitem><para><guimenuitem>Test NIST</guimenuitem>: controlla
               l'accuratezza numerica di
@@ -360,7 +359,7 @@
               verticali), un grafico X&ndash;Y <quote>con
               fattore</quote> (ossia, con i punti colorati in modo
               diverso a seconda del valore di una data variabile
-              dummy), un boxplot e un grafico 3D.  Si veda <xref
+              dummy), un boxplot e un grafico 3D.  Si veda il <xref
               linkend="chap-graphs"/> per i dettagli.</para>
 	  </listitem>
 	  <listitem><para><guimenuitem>Grafici multipli a
@@ -431,7 +430,7 @@
 	  <listitem><para><guimenuitem>Imposta frequenza e
           inizio</guimenuitem>: impone una particolare interpretazione
           dei dati in termine di frequenza e punto di partenza. Può
-          essere utile con dati panel; si veda <xref
+          essere utile con dati panel; si veda il <xref
           linkend="chap-panel"/>.</para>
 	  </listitem> 
 	  <listitem><para><guimenuitem>Compatta dati</guimenuitem>:
@@ -450,7 +449,7 @@
           basta fornire una condizione Booleana (ad es.
 	  <literal>sqft &gt; 1400</literal>) e il campione sarà
           ristretto alle osservazioni che soddisfano la condizione. Si
-          veda la voce <command>genr</command> nella <xref
+          veda la voce <command>genr</command> nel <xref
 	    linkend="cmdref"/> per maggiori dettagli sugli operatori
             Booleani che possono essere usati.</para>
 	  </listitem>
@@ -476,7 +475,7 @@
           testo che contiene <quote>marcatori per le
           osservazioni</quote> (brevi stringhe che identificano
           singole osservazioni) e aggiunge queste informazioni al
-          dataset. Si veda <xref linkend="datafiles"/>.</para>
+          dataset. Si veda il <xref linkend="datafiles"/>.</para>
 	  </listitem>
 	  <listitem><para><guimenuitem>Interpreta come serie
           storiche</guimenuitem>: apre una finestra di dialogo che
@@ -486,7 +485,7 @@
           panel</guimenuitem>: apre una finestra di dialogo che
           permette di interpretare un dataset panel come composto di
           una pila di serie storiche o una pila di dati cross-section
-          (si veda <xref linkend="chap-panel"/>).</para></listitem>
+          (si veda il <xref linkend="chap-panel"/>).</para></listitem>
 	  <listitem><para><guimenuitem>Ristruttura
           panel</guimenuitem>: permette di convertire un dataset panel
           da una struttura "pila di dati cross-section" a una "pila di
@@ -496,7 +495,7 @@
 	</itemizedlist>
       </listitem>
 
-      <listitem><para><guimenu>Menù variabile</guimenu> La maggior
+      <listitem><para><guimenu>Menù variabile</guimenu>: la maggior
       parte di questi comandi operano su una sola variabile alla
       volta. La variabile <quote>attiva</quote> viene impostata
       facendo clic sulla riga che la contiene nella finestra
@@ -508,7 +507,7 @@
       una o più variabili esistenti). Per la sintassi di queste
       formule, si veda la sezione <quote>Definisci nuova
       variabile</quote> della guida in linea o la voce
-      <command>genr</command> nella <xref linkend="cmdref"/>. Un
+      <command>genr</command> nel <xref linkend="cmdref"/>. Un
       semplice esempio:
 	  <programlisting> 
 	    pippo = x1 * x2</programlisting> creerà la nuova variabile
@@ -517,16 +516,16 @@
           In queste formule, le variabili devono essere indicate per
           nome, non per numero identificativo.</para></listitem> 
 
-      <listitem><para><guimenu>Menù modello</guimenu> Per i dettagli
+      <listitem><para><guimenu>Menù modello</guimenu>: per i dettagli
       sui vari stimatori offerti in questo menù, si consulti
-	  <xref linkend="estimators"/> e la <xref
+	  <xref linkend="estimators"/> e il <xref
 	linkend="cmdref"/>, oppure il capitolo <quote>Stima</quote>
-        della guida in linea. Si veda anche <xref
+        della guida in linea. Si veda anche il <xref
 	    linkend="chap-nls"/> a proposito della stima di modelli
             non lineari.</para></listitem>
 
-      <listitem><para><guimenu>Menù Aiuto</guimenu> Se ne raccomanda
-      l'uso! Fornisce dettagli sulla sintassi dei comandi e delle
+      <listitem><para><guimenu>Menù Aiuto</guimenu>: usatelo!
+      Fornisce dettagli sulla sintassi dei comandi e delle
       finestre di dialogo.</para></listitem>   
 
     </itemizedlist>
@@ -556,7 +555,7 @@
           batch.</para></listitem>
       <listitem><para>Apri il terminale di gretl. Una scorciatoia per il
           comando del menù <quote>Terminale di Gretl</quote> (si veda <xref
-	    linkend="menus"/> sopra).</para></listitem>
+	    linkend="menus"/>).</para></listitem>
       <listitem><para>Apri la finestra di sessione di gretl.</para></listitem>
       <listitem><para>Apri il sito web di <application>gretl</application>
           nel proprio browser (funziona solo se si è connessi a internet
@@ -573,7 +572,7 @@
           con i minimi quadrati ordinari.</para></listitem>
       <listitem><para>Apri una finestra che elenca i dataset relativi al libro
           <citetitle>Introductory Econometrics</citetitle> di Ramanathan (e anche
-          i dataset del libro di Jeffrey Wooldridge, se sono installati; si veda
+          i dataset del libro di Jeffrey Wooldridge, se sono installati; si veda il
 	  <xref linkend="optarg"/>).</para></listitem>
     </orderedlist>
 

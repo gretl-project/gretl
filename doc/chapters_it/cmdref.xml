@@ -76,8 +76,7 @@
     <para>La <xref linkend="tab-estim"/> mostra gli stimatori disponibili
       nel menù Modello nella finestra principale di
       <application>gretl</application>. I corrispondenti comandi (se
-      esistono) sono mostrati tra parentesi. Per i dettagli, consultare
-      la voce corrispondente ad ogni comando nella 
+      esistono) sono mostrati tra parentesi; per i dettagli, consultare
       <xref linkend="cmd-cmd"/>.</para>
 
     <table id="tab-estim" frame="none">

@@ -337,19 +337,19 @@
   
       <para>
 	<application>gretl</application> non ha problemi a compattare
-        serie di dati ad alta frequenza (ad es. mensili) trasformandole
-        in una frequenza più bassa (ad es. trimestrale): questo viene
-        fatto prendendo la media. Tuttavia, non c'è modo di convertire
-        dati a bassa frequenza in alta frequenza, quindi se si intende
-        importare serie con frequenza diversa da un database
-	<emphasis>occorre iniziare ad importare le serie con la
+        serie di dati ad alta frequenza (ad es. mensile) trasformandole
+        in una frequenza più bassa (ad es. trimestrale) utilizzando uno
+        dei 4 metodi supportati (media dei dati nel periodo, somma dei dati
+        nel periodo, dato di inizio periodo, dato di fine periodo).
+        Tuttavia, non c'è modo di convertire dati a bassa frequenza in alta
+        frequenza, quindi se si intende importare serie con frequenza diversa
+        da un database <emphasis>occorre iniziare ad importare le serie con la
         frequenza minore</emphasis>. In questo modo, il dataset di
-	<application>gretl</application> verrà inizializzato con la
-        frequenza più bassa e i dati a frequenza maggiore potranno
-        essere importati in seguito (verranno compattati
-        automaticamente). Se invece si inizia ad importare dati ad alta
-        frequenza, non sarà possibile importare serie a frequenza più
-        bassa in seguito.</para>
+        <application>gretl</application> verrà inizializzato con la frequenza
+        più bassa e i dati a frequenza maggiore potranno essere importati in
+        seguito (verranno compattati automaticamente). Se invece si inizia ad
+        importare dati ad alta frequenza, non sarà possibile importare serie a
+        frequenza più bassa in seguito.</para>
 
     </sect2>
 

@@ -208,7 +208,7 @@
     
     Se occorre che il campione sia riproducibile, occorre per prima
     cosa impostare il seme del generatore di numeri casuali, usando
-      <xref linkend="cmd-set"/>.</para>
+    il comando <xref linkend="cmd-set"/>.</para>
 
     <para>Questo tipo di campionamento è un esempio di
       <quote>restrizione</quote> del campione: viene infatti generata

@@ -255,12 +255,9 @@
     possibile trovare gnuplot a <ulink
     url="http://www.gnuplot.info/">gnuplot.info</ulink>. Al momento della
     scrittura di questo manuale, la versione ufficiale più recente di
-    gnuplot è la 3.7.3 (del Dicembre 2002). Se si ha esperienza nella
-    compilazione del codice sorgente, raccomando di installare la versione
-    3.8j0 o superiore (disponibile in pacchetto sorgente da <ulink
-      url="http://sourceforge.net/projects/gnuplot/">sourceforge.net/projects/gnuplot</ulink>).
+    gnuplot è la 4.0 (dell'Aprile 2004).
     La versione MS Windows di <application>gretl</application> comprende
-    una versione di gnuplot 3.8j0 per Windows; sul sito web di gretl è
+    la versione 4.0 di gnuplot per Windows; sul sito web di gretl è
     possibile trovare un pacchetto rpm di gnuplot 3.8j0 per sistemi Linux x86.
   </para>
 
@@ -379,7 +376,7 @@
     <application>gretl</application> (tranne quando viene usato il plugin
     per precisione multipla, e allora i risultati sono mostrati con 12
     cifre). Se occorre esaminare un valore più da vicino, basta per prima
-    cosa salvarlo (si veda <xref linkend="cmd-genr"/>) e poi visualizzarlo
+    cosa salvarlo (si veda il comando <xref linkend="cmd-genr"/>) e poi visualizzarlo
     usando il comando <command>print --ten</command> (si veda <xref
     linkend="cmdref"/>): verrà mostrato con 10 cifre significative.</para>
 

@@ -121,7 +121,7 @@
       <para><command>loop for (r=0.01; r&lt;.991; r+=.01)</command></para>
 
       <para>La variable <varname>r</varname> assumerà i valori 0.01, 0.02,
-        &hellip;, 0.99 nel giro di 100 iterazioni. Si noti che a causa della
+        &hellip;, 0.99 nel giro di 99 iterazioni. Si noti che a causa della
         precisione limitata dell'aritmetica in virgola mobile usata dal
         computer, può dover essere necessario usare una condizione di
         continuazione come quella mostrata sopra,

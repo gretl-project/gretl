@@ -1,0 +1,261 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="functions"><title>Funzioni definite dall'utente</title>
+
+  <sect1 id="func-intro">
+    <title>Introduzione</title>
+
+    <para>A partire dalla versione 1.3.0, <application>gretl</application>
+      contiene un meccanismo per definire funzioni all'interno di uno script,
+      con una sintassi in qualche modo simile a quella della shell
+      <application>bash</application>.  Allo stato attuale, il meccanismo
+      non è ancora <quote>scolpito nella pietra</quote> e sono benvenuti
+      commenti e suggerimenti, oltre che l'aiuto per correggere eventuali bug.
+      </para>
+
+  </sect1>
+
+  <sect1 id="func-define">
+    <title>Definire una funzione</title>
+
+    <para>Occorre definire una funzione prima di poterla utilizzare. La sintassi
+      per farlo è la seguente:</para>
+
+    <programlisting>
+      function <replaceable>nome-funzione</replaceable>
+         <replaceable>corpo della funzione</replaceable>
+      end function</programlisting>
+
+    <para>
+      Il <replaceable>nome-funzione</replaceable> identifica la funzione
+      in modo univoco: deve iniziare con una lettera e può essere lungo
+      al massimo 31 caratteri (eventuali caratteri in più verranno troncati)
+      e non può contenere spazi. Se si tenta di definire una funzione con
+      lo stesso nome di un comando di <application>gretl</application> o
+      di una funzione preesistente, si otterrà un'errore.
+      </para>
+
+    <para>
+      Il <replaceable>corpo della funzione</replaceable> è composto da
+      comandi <application>gretl</application> o funzioni definite dall'utente
+      (ossia, le funzioni possono essere nidificate). Una funzione può
+      persino chiamare sé stessa (ossia, le funzioni possono essere ricorsive),
+      fino a un massimo di 8 <quote>livelli di ricorsività</quote>, ma questo
+      valore è provvisorio, potrà essere aumentato se sembra troppo restrittivo.
+      Se il corpo della funzione può contenere chiamate ad altre funzioni
+      non può però contenere definizioni di altre funzioni, ossia non è
+      possibile definire una funzione all'interno di un'altra funzione.
+    </para>
+
+    <para>
+      Le funzioni possono essere chiamate, ma non definite, all'interno di un
+      loop (si veda il <xref linkend="looping"/>).</para>
+
+  </sect1>
+
+  <sect1 id="func-params">
+    <title>Parametri delle funzioni</title>
+
+    <para>I parametri (se ne esistono) di una funzione utente sono definiti
+      implicitamente (come in <application>bash</application>) facendovi
+      riferimento nel corpo della funzione, usando <literal>$1</literal> per il
+      primo parametro, <literal>$2</literal> per il secondo, e così via.
+      Questi riferimenti numerati saranno sostituiti dagli argomenti forniti
+      quando la funzione viene chiamata.</para>
+
+    <para>La sostituzione dei parametri è una semplice sostituzione di stringhe,
+      non c'è modo di <quote>passare i parametri per valore</quote>, come avviene
+      in alcuni linguaggi di programmazione.</para>
+
+  </sect1>
+
+  <sect1 id="func-call">
+    <title>Chiamare una funzione</title>
+
+    <para>Una funzione utente viene chiamata, o invocata, usando il
+      suo nome, eventualmente seguito da argomenti; se si usano due o
+      più argomenti, vanno separati da virgole. Ad esempio:
+    </para>
+
+    <programlisting>
+      funz <replaceable>arg1</replaceable>, <replaceable>arg2</replaceable></programlisting>
+
+    <para>
+      Se vengono forniti più argomenti di quanti ne siano usati nel
+      corpo della funzione (si veda sopra), gli argomenti in eccesso
+      vengono semplicemente ignorati. Nel caso gli argomenti forniti
+      siano di meno di quelli definiti nel corpo della funzione, si
+      assume che gli argomenti mancanti abbiano valore nullo.
+    </para>
+
+    <para>Gli argomenti di una funzione possono avere la forma di termini
+      singoli o di liste. Ecco un semplice esempio:
+    </para>
+
+    <programlisting>
+      # Definizione della funzione
+      function stima-ols
+      open $1
+      ols $2 0 $3
+      end function
+      # Chiamata della funzione
+      stima-ols funz data4-1, 1, 2 3 4</programlisting>
+
+    <para>
+      La funzione viene chiamata con tre argomenti, il terzo dei quali
+      è una lista di regressori. L'effetto è di aprire il file di dati
+      <literal>data4-1</literal> e di eseguire una regressione indicata
+      dal comando <literal>ols 1 0 2 3 4</literal>.</para>
+
+    <para>Si noti che se si vuole che una funzione calcoli un valore
+      risultante da una regressione, senza essere interessati all'intero
+      insieme dei risultati, è possibile usare l'opzione
+      <literal>--quiet</literal> con il il comando di stima.</para>
+
+  </sect1>
+
+  <sect1 id="func-scope">
+    <title>Ampiezza delle variabili</title>
+
+    <para>In modalità predefinita, tutte le variabili sono <quote>globali</quote>: c'è un
+      registro dei nomi di variabile condiviso dallo script principale
+      e da qualunque funzione venga chiamata da esso. Le variabili nello script
+      principale possono essere lette e modificate dall'interno delle funzioni,
+      e le nuove variabili create all'interno delle funzioni vengono aggiunte
+      all'elenco del dataset.
+    </para>
+
+    <para>In alcuni casi, tuttavia, può essere utile creare variabili
+      che siano locali, confinate a una particolare funzione. È possibile
+      farlo usando la parola chiave <literal>my</literal> con
+      <literal>genr</literal>. Se all'interno di una funzione si scrive</para>
+
+    <programlisting>
+      genr x = <replaceable>espressione</replaceable></programlisting>
+
+    <para>viene creata una variabile globale (o viene modificata la variabile
+      globale <varname>x</varname> se esiste già). Ma scrivendo
+    </para>
+
+    <programlisting>
+      genr my x = <replaceable>espressione</replaceable></programlisting>
+
+    <para>viene creata una nuova variabile <varname>x</varname> locale
+      alla funzione, che scomparirà una volta che la funzione è stata
+      eseguita. Se esiste già una variabile <varname>x</varname> al di fuori
+      della funzione, essa verrà <quote>mascherata</quote>: la variabile
+      <varname>x</varname> esterna sarà inaccessibile all'interno della funzione
+      e non sarà modificabile da comandi come <literal>genr x =</literal> &hellip; 
+      finché l'esecuzione della funzione non sarà terminata.
+    </para>
+
+    <para>Questo comportamento è illustrato dallo script di esempio in ???
+      <xref linkend="func-scope-example"/>.</para>
+
+    <para>Quando una funzione, ad es. <literal>fun1</literal>, chiama un'altra
+      funzione, <literal>fun2</literal>, tutte le variabili locali
+      (<literal>my</literal>) di <literal>fun1</literal> sono ereditate
+      automaticamente dalla funzione <quote>figlia</quote>
+      <literal>fun2</literal>. Queste variabili, tuttavia, possono essere
+      mascherate nel modo descritto in precedenza creando delle variabili
+      con lo stesso nome all'interno della funzione
+      <literal>fun2</literal>.</para>
+
+  </sect1>
+
+  <sect1 id="func-return">
+    <title>Valore di uscita (sua assenza)</title>
+
+    <para>Non c'è modo di ottenere un valore di uscita da una funzione
+      di <application>gretl</application>, come è possibile fare in molti
+      linguaggi di programmazione. Questo non è un limite vincolante,
+      visto che è possibile raggiungere lo stesso scopo generando una o
+      più variabili globali all'interno della funzione, che conserveranno
+      tutti i valori a cui si vuole accedere una volta terminata l'esecuzione
+      della funzione.</para>
+
+  </sect1>
+
+  <sect1 id="func-errors">
+    <title>Controllo degli errori</title>
+
+    <para>Quando gretl legge e <quote>compila</quote> una definizione
+      di funzione, esegue un controllo degli errori minimale: controlla
+      che il nome della funzione sia accettabile e che non si tenti
+      di definire una funzione all'interno di una funzione
+      (si veda <xref linkend="func-define"/>). Se il corpo
+      della funzione contiene comandi non validi, verrà segnalato solo
+      quando la funzione viene chiamata.</para>
+
+  </sect1>
+
+  <sect1 id="func-scope-example">
+    <title>Esempio che mostra l'ampiezza delle variabili</title>
+
+    <para>Lo script seguente illustra la differenza tra le variabili
+      globali e locali. Si noti che le funzioni possono essere definite
+      in qualsiasi punto dello script, a patto di definirle prima di
+      usarle.</para>
+
+    <programlisting>
+      set echo off
+
+      genr testvar = 1
+      printf "Fuori, testvar vale %d\n", testvar  
+
+      function pippo
+         # genera una variabile locale
+         genr my testvar = 2
+         printf "In pippo: testvar vale %d\n", testvar
+         pluto
+         printf "Tornando in pippo, testvar vale %d\n", testvar
+         # genera una variabile globale
+         genr glob = 15
+      end function
+
+      function pluto
+         genr my testvar = 3
+         printf "In pluto, testvar vale %d\n", testvar
+      end function
+
+      # Chiama pippo, che chiama pluto
+      foo
+      printf "Tornando fuori, testvar vale %d, glob vale %d\n", \
+      testvar, glob 
+      # Elenca le variabili globali
+      ls 
+    </programlisting>
+
+    <para>Eseguendo lo script si ottiene:</para>
+
+    <programlisting>
+      gretl versione 1.3.0 ...
+      ? nulldata 5
+      Periodicità: 1, oss. max.: 5,
+      intervallo: 1-5
+      ? set echo off
+      Generato lo scalare testvar (ID 2) = 1
+      Fuori, testvar vale 1
+      Generato lo scalare testvar (ID 3) = 2
+      In pippo, testvar vale 2
+      Generato lo scalare testvar (ID 4) = 3
+      In pluto, testvar vale 3
+      Tornando in pippo, testvar vale 2
+      Generato lo scalare glob (ID 4) = 15
+      Tornando fuori, testvar vale 1, glob vale 15
+      4 variabili elencate:
+      0) const       1) index       2) testvar     3) glob
+    </programlisting>      
+    
+  </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

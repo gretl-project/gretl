@@ -3,13 +3,13 @@
 
   <chapter id="cli"><title>L'interfaccia a riga di comando</title>
 
-  <sect1 id="cli-console"><title>Gretl in console</title>
+  <sect1 id="cli-console"><title>Gretl sul terminale</title>
 
     <para>
       Il pacchetto <application>gretl</application> include il programma
       a riga di comando <application>gretlcli</application>. Su Linux è
-      possibile esegurlo in console o in un xterm (o simili), mentre su
-      MS Windows può essere eseguito in una finestra della console (quella
+      possibile esegurlo in un terminale testuale o in un xterm (o simili), mentre su
+      MS Windows può essere eseguito in una finestra di terminale (quella
       che di solito viene chiamata <quote>prompt di MS-DOS</quote>).
       <application>gretlcli</application> ha un file di aiuto, a cui si
       accede inserendo il comando <quote>help</quote> al prompt. Inoltre,
@@ -20,7 +20,7 @@
     <para>
       Se <application>gretlcli</application> è linkato alla libreria
       <application>readline</application> (ciò avviene automaticamente
-      nella versione MS Windows version, si veda anche l'<xref
+      nella versione MS Windows, si veda anche l'<xref
 	linkend="app-technote"/>), è possibile richiamare e modificare
       i comandi già eseguiti, inoltre è disponibile il completamento
       automatico dei comandi. Per muoversi nella lista dei comandi già
