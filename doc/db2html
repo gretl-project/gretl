@@ -1,7 +1,8 @@
 #!/bin/sh
 
-HTML_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.74b/frames/docbook.css
-ADMON_GRAPHICS=/usr/share/sgml/docbook-dsssl-1.74b/images/*.gif
+DSSSLDIR=/usr/share/sgml/docbook-dsssl-1.77
+HTML_STYLESHEET=$DSSSLDIR/frames/docbook.css
+ADMON_GRAPHICS=$DSSSLDIR/images/*.gif
 XMLDCL=/opt/jade/share/xml.dcl
 
 TMPDIR=DBTOHTML_OUTPUT_DIR$$
