@@ -661,8 +661,7 @@ static int lm_calculate (double *fvec, double *fjac)
 	err = 1;
 	break;
     case 0:
-	pputs(prn, _("Invalid NLS specification"));
-	pputs(prn, "\n");
+	strcpy(gretl_errmsg, _("Invalid NLS specification"));
 	err = 1;
 	break;
     case 1:
@@ -675,7 +674,9 @@ static int lm_calculate (double *fvec, double *fjac)
     case 5:
     case 6:
     case 7:
-	pputs(prn, _("NLS failed to converge\n"));
+	sprintf(gretl_errmsg, 
+		_("NLS: failed to converge after %d iterations"),
+		nlspec.iters);
 	err = 1;
 	break;
     default:
@@ -762,8 +763,7 @@ static int lm_approximate (double *fvec, double *fjac)
 	err = 1;
 	break;
     case 0:
-	pputs(prn, _("Invalid NLS specification"));
-	pputs(prn, "\n");
+	strcpy(gretl_errmsg, _("Invalid NLS specification"));
 	err = 1;
 	break;
     case 1:
@@ -777,7 +777,8 @@ static int lm_approximate (double *fvec, double *fjac)
     case 6:
     case 7:
     case 8:
-	pprintf(prn, _("NLS failed to converge after %d iterations\n"),
+	sprintf(gretl_errmsg, 
+		_("NLS: failed to converge after %d iterations"),
 		nlspec.iters);
 	err = 1;
 	break;
@@ -814,7 +815,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     _init_model(&nlsmod, maininfo);
 
     if (nlspec.nlfunc == NULL) {
-	sprintf(gretl_errmsg, _("No regression function has been specified"));
+	strcpy(gretl_errmsg, _("No regression function has been specified"));
 	nlsmod.errcode = E_PARSE;
 	return nlsmod;
     }   
@@ -834,7 +835,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     }
 
     if (nlspec.nparam == 0) {
-	sprintf(gretl_errmsg, _("No regression function has been specified"));
+	strcpy(gretl_errmsg, _("No regression function has been specified"));
 	clear_nls_spec();
 	nlsmod.errcode = E_PARSE;
 	return nlsmod;
@@ -854,10 +855,10 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 
     if (!err) {
 	if (nlspec.mode == NUMERIC_DERIVS) {
-	    pprintf(prn, _("Using numerical derivatives\n"));
+	    pputs(prn, _("Using numerical derivatives\n"));
 	    err = lm_approximate(fvec, fjac);
 	} else {
-	    pprintf(prn, _("Using analytical derivatives\n"));
+	    pputs(prn, _("Using analytical derivatives\n"));
 	    err = lm_calculate(fvec, fjac);
 	}
     }
