@@ -1663,6 +1663,29 @@ int print_as_locale (const char *s, FILE *fp)
 
 #endif /* ENABLE_NLS */
 
+int min_unique_length (int v, const DATAINFO *pdinfo, int start)
+{
+    int i, len, match, maxlen;
+    const char *targ = pdinfo->varname[v];
+
+    maxlen = strlen(targ);
+
+    for (len=start; len<=maxlen; len++) {
+	match = 0;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (i != v && !strncmp(targ, pdinfo->varname[i], len)) {
+		match = 1;
+		break;
+	    }
+	}
+	if (match == 0) {
+	    break;
+	}
+    }
+
+    return len;
+}
+
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
 {
     int i, j, conflict;

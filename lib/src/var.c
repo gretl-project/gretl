@@ -773,18 +773,16 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
     return index;
 }
 
-/* ...................................................................  */
+/* Given an "ordinary" variable name, construct the name of the
+   corresponding first difference and find its ID number
+*/
 
-static int diffvarnum (int index, const DATAINFO *pdinfo)
-     /* Given an "ordinary" variable name, construct the name of the
-	corresponding first difference and find its ID number */
+static int diffvarnum (int v, const DATAINFO *pdinfo)
 {
-    char diffname[16], s[16];
-    
-    strcpy(s, pdinfo->varname[index]);
-    gretl_trunc(s, 6);
+    char diffname[VNAMELEN];
+
     strcpy(diffname, "d_");
-    strcat(diffname, s);
+    strncat(diffname, pdinfo->varname[v], 8); /* or 6 */
 
     return varindex(pdinfo, diffname);
 }
@@ -800,11 +798,11 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo,
 
     /* compose the varname */
     if (logdiff) {
-	sprintf(s, "ld_%s", pdinfo->varname[iv]);
+	strcpy(s, "ld_");
     } else {
-	sprintf(s, "d_%s", pdinfo->varname[iv]);
+	strcpy(s, "d_");
     }
-    gretl_trunc(s, VNAMELEN - 1);
+    strncat(s, pdinfo->varname[iv], 8);
 
     /* "s" should now contain the new variable name --
      check whether it already exists: if so, get out */
@@ -918,7 +916,7 @@ static int lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
 
     *lagname = '\0';
     strncat(lagname, pdinfo->varname[iv], 8);
-    sprintf(ext, "{-%d}", lag);
+    sprintf(ext, "_%d", lag);
     strcat(lagname, ext);
 
     return varindex(pdinfo, lagname);

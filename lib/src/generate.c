@@ -368,20 +368,6 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
     return v;
 }
 
-static int premade_lag (const char *s, GENERATE *genr)
-{
-    int v, len = strlen(s);
-
-    if (len < VNAMELEN && s[len - 1] == '}') {
-	v = varindex(genr->pdinfo, s);
-	if (v < genr->pdinfo->v) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
 /* also used in do_printf function */
 
 int get_generated_value (const char *argv, double *val,
@@ -1283,9 +1269,6 @@ static int token_is_atomic (const char *s, GENERATE *genr)
     /* treat lag variable as atom */
     if (get_lagvar(s, NULL, genr)) return 1;
 
-    /* pre-defined lag variable */
-    if (premade_lag(s, genr)) return 1;
-
     while (*s) {
 	/* token is non-atomic if it contains an operator,
 	   or parentheses */
@@ -1447,7 +1430,6 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
     char tok[TOKLEN];
     const char *q, *p;
     int inparen = 0;
-    int inbrace = 0;
     int strip = strip_wrapper_parens(s);
 
     if (strip) {
@@ -1483,15 +1465,13 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 
 	if (*p == '(') inparen++;
 	else if (*p == ')') inparen--;
-	else if (*p == '{') inbrace++;
-	else if (*p == '}') inbrace--;
 
 	if (inparen < 0) {
 	    DPRINTF(("error: inparen < 0: '%s'\n", s));
 	    return E_UNBAL;
 	}
 
-	if (!inparen && !inbrace && op_level(*p)) {
+	if (!inparen && op_level(*p)) {
 	    if (p - q > TOKLEN - 1) {
 		fprintf(stderr, "genr error: token too long: '%s'\n", q);
 		return 1;
@@ -4015,8 +3995,6 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     return vi;
 }
 
-/* ......................................................  */
-
 /* laggenr: create Z[iv][t-lag] if this variable does not
    already exist.  
 
@@ -4028,8 +4006,7 @@ int newlag; /* library global */
 int laggenr (int parent, int lag, int opt, double ***pZ, 
 	     DATAINFO *pdinfo)
 {
-    char word[32];
-    char s[32];
+    char s[32], ext[6];
     int lno;
     double *lx;
 
@@ -4050,8 +4027,8 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
 
     *s = '\0';
     strncat(s, pdinfo->varname[parent], 8);
-    sprintf(word, "{-%d}", lag);
-    strcat(s, word);
+    sprintf(ext, "_%d", lag);
+    strcat(s, ext);
     lno = varindex(pdinfo, s);
 
     /* put the lag values into array lx */
@@ -4275,64 +4252,72 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
     double xx;
     char s[32];
 
-    if (dataset_add_vars(l0, pZ, pdinfo)) return -1;
+    if (dataset_add_vars(l0, pZ, pdinfo)) {
+	return -1;
+    }
 
     nlogs = 0;
+
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (v == 0) continue; /* don't try to take log of constant */
-	/* and don't try to take the log of a dummy variable */
-	if (isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2)) {
+	if (v >= nvar) {
+	    varerror(s);
 	    continue;
 	}
-	if (v < nvar)  { 
-	    newv = nvar + nlogs;
-	    le_zero = 0;
+	if (v == 0) {
+	    /* don't try to take log of constant */ 
+	    continue; 
+	}
+	if (isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2)) {
+	    /* and don't try to take the log of a dummy variable */
+	    continue;
+	}
 
-	    for (t=0; t<n; t++) {
+	newv = nvar + nlogs;
+	le_zero = 0;
+
+	for (t=0; t<n; t++) {
+	    (*pZ)[newv][t] = NADBL;
+	}
+
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    xx = (pdinfo->vector[v])? (*pZ)[v][t] : (*pZ)[v][0];
+	    if (xx <= 0.0) {
 		(*pZ)[newv][t] = NADBL;
-	    }
-
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = (pdinfo->vector[v])? (*pZ)[v][t] : (*pZ)[v][0];
-		if (xx <= 0.0) {
-		    (*pZ)[newv][t] = NADBL;
-		    if (!na(xx)) {
-			sprintf(gretl_errmsg, 
-				_("Log error: Variable '%s', obs %d,"
-				  " value = %g\n"), pdinfo->varname[v],
-				t+1, xx);
-			le_zero = 1;
-		    }
+		if (!na(xx)) {
+		    sprintf(gretl_errmsg, 
+			    _("Log error: Variable '%s', obs %d,"
+			      " value = %g\n"), pdinfo->varname[v],
+			    t+1, xx);
+		    le_zero = 1;
 		}
-		else (*pZ)[newv][t] = log(xx); 
+	    } else {
+		(*pZ)[newv][t] = log(xx); 
 	    }
+	}
 
-	    if (le_zero) {
-		continue;
+	if (le_zero) {
+	    continue;
+	}
+
+	/* create name for new var */
+	strcpy(s, "l_");
+	strncat(s, pdinfo->varname[v], 
+		min_unique_length(v, pdinfo, 6));
+	strcpy(pdinfo->varname[newv], s);
+
+	/* write description of new var */
+	strcpy(s, _(" = log of "));
+	strcat(s, pdinfo->varname[v]);
+	strcpy(VARLABEL(pdinfo, newv), s);
+
+	/* have we duplicated an existing var? */
+	check = descindex(pdinfo, VARLABEL(pdinfo, newv));
+	if (check < nvar && pdinfo->vector[check]) {
+	    if (vars_identical((*pZ)[check], (*pZ)[newv], n)) {
+		nlogs--;
 	    }
-
-	    /* create name for new var */
-	    strcpy(s, "l_");
-	    strcat(s, pdinfo->varname[v]);
-	    gretl_trunc(s, VNAMELEN - 1);
-	    strcpy(pdinfo->varname[newv], s);
-
-	    /* write description of new var */
-	    strcpy(s, _(" = log of "));
-	    strcat(s, pdinfo->varname[v]);
-	    strcpy(VARLABEL(pdinfo, newv), s);
-
-	    /* have we duplicated an existing var? */
-	    check = descindex(pdinfo, VARLABEL(pdinfo, newv));
-	    if (check < nvar) {
-		if (pdinfo->vector[check]) {
-		    if (vars_identical((*pZ)[check], (*pZ)[newv], n)) {
-			nlogs--;
-		    } 
-		}
-	    } 
-	} else varerror(s);
+	} 
 
 	nlogs++;
     }
@@ -4343,9 +4328,14 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* shrink Z if warranted (not all vars logged) */
-    if (nlogs < l0) dataset_drop_vars(l0 - nlogs, pZ, pdinfo);
+    if (nlogs < l0) {
+	dataset_drop_vars(l0 - nlogs, pZ, pdinfo);
+    }
 
-    if (nlogs == 0) nlogs = -1;
+    if (nlogs == 0) {
+	/* what if all were already present? */
+	nlogs = -1;
+    }
 
     return nlogs;
 }

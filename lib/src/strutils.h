@@ -132,6 +132,8 @@ void unescape_url (char *url);
 
 char *iso_to_ascii (char *s);
 
+int min_unique_length (int v, const DATAINFO *pdinfo, int start);
+
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);
 
 char *append_dir (char *fname, const char *dir);

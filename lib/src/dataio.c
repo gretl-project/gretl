@@ -2722,6 +2722,11 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 	pprintf(prn, M_("Data file has trailing commas\n"));
     }
 
+    if (maxlen > 0) {
+	/* allow for newline and null terminator */
+	maxlen += 2;
+    }
+
     return maxlen;
 }
 
@@ -2991,7 +2996,7 @@ static char *get_csv_descrip (FILE *fp)
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PATHS *ppaths, PRN *prn)
 {
-    int ncols, chkcols, nrows = 0;
+    int ncols, chkcols, nrows;
     int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;
     int i, k, t, blank_1 = 0, obs_1 = 0, trail, maxlen;
     char csvstr[CSVSTRLEN];
@@ -3040,7 +3045,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, &trail, prn);    
     if (maxlen <= 0) {
 	goto csv_bailout;
-    }
+    } 
 
     if (!gotdelim) {
 	/* set default delimiter */
@@ -3052,12 +3057,12 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     pprintf(prn, M_("using delimiter '%c'\n"), delim);
-    pprintf(prn, M_("   longest line: %d characters\n"), maxlen + 1);
+    pprintf(prn, M_("   longest line: %d characters\n"), maxlen - 1);
 
     if (trail && delim != ',') trail = 0;
 
     /* create buffer to hold lines */
-    line = malloc(maxlen + 1);
+    line = malloc(maxlen);
     if (line == NULL) {
 	pputs(prn, M_("Out of memory\n"));
 	goto csv_bailout;
@@ -3066,8 +3071,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     rewind(fp);
     
     /* read lines, check for consistency in number of fields */
-    chkcols = ncols = gotdata = 0;
-    while (fgets(line, maxlen + 1, fp)) {
+    chkcols = ncols = nrows = gotdata = 0;
+    while (fgets(line, maxlen, fp)) {
 	/* skip comment lines */
 	if (*line == '#') {
 	    continue;
@@ -3139,7 +3144,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     /* parse the line containing variable names */
     pputs(prn, M_("scanning for variable names...\n"));
 
-    while (fgets(line, maxlen + 1, fp)) {
+    while (fgets(line, maxlen, fp)) {
 	if (*line == '#' || string_is_blank(line)) {
 	    continue;
 	} else {
@@ -3221,7 +3226,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     pputs(prn, M_("scanning for row labels and data...\n"));
 
     t = 0;
-    while (fgets(line, maxlen + 1, fp)) {
+    while (fgets(line, maxlen, fp)) {
 	int nv;
 
 	if (*line == '#' || string_is_blank(line)) {
