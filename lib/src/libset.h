@@ -31,6 +31,8 @@ enum vcv_codes {
 
 int get_garch_vcv_version (void);
 
+int get_force_hc (void);
+
 double get_hp_lambda (void);
 
 #endif /* LIBSET_H */

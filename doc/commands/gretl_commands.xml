@@ -4166,6 +4166,17 @@
 	      errors</quote>.</cell>
 	</row>
 	<row>
+	  <cell><lit>force_hc</lit></cell> <cell>values: off (the
+	    default) or on.  By default, with time-series data and
+	    when the <lit>--robust</lit> option is given with
+	    <cmd>ols</cmd>, the HAC estimator is used.  If you set
+	    <lit>force_hc</lit> to <quote>on</quote>, this forces
+	    calculation of the regular Heteroskedasticity Consistent
+	    Covariance Matrix (which does not take autocorrelation
+	    into account).
+	  </cell>
+	</row>
+	<row>
 	  <cell><lit>garch_vcv</lit></cell>
 	  <cell>values: <lit>unset</lit>, <lit>hessian</lit>,
 	    <lit>im</lit> (information matrix) , <lit>op</lit> (outer

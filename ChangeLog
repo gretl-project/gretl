@@ -34,6 +34,9 @@
   to the output
 - fix HCCME bug: used way too much memory with large data
   sets
+- add a new "set" option, "force_hc": if set to "on", then
+  the robust option to ols always produces plain HC standard
+  errors, not HAC (by default, HAC is used with time-series)
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

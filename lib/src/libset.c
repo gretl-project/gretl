@@ -47,6 +47,14 @@ double get_hp_lambda (void)
     return hp_lambda;
 }
 
+static int get_or_set_force_hc (int f)
+{
+    static int force;
+
+    if (f >= 0) force = f;
+    return force;
+}
+
 static int get_or_set_garch_vcv (int v)
 {
     static int variant;
@@ -71,6 +79,16 @@ static void set_garch_vcv_variant (const char *s)
 int get_garch_vcv_version (void)
 {
     return get_or_set_garch_vcv(-1);
+}
+
+static void set_force_hc (int f)
+{
+    get_or_set_force_hc(f);
+}
+
+int get_force_hc (void)
+{
+    return get_or_set_force_hc(-1);
 }
 
 int get_hac_lag (int m)
@@ -142,6 +160,17 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 	    if (!strcmp(setarg, "0") || !strcmp(setarg, "1") ||
 		!strcmp(setarg, "2") || !strcmp(setarg, "3")) {
 		robust_opts.hc_version = atoi(setarg);
+		err = 0;
+	    }
+	}
+	else if (!strcmp(setobj, "force_hc")) {
+	    /* use HCCM, not HAC, even for time series */
+	    if (!strcmp(setarg, "on")) { 
+		set_force_hc(1);
+		err = 0;
+	    }
+	    else if (!strcmp(setarg, "off")) { 
+		set_force_hc(0);
 		err = 0;
 	    }
 	}
