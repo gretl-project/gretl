@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159-1.00a-pretest-20010806 (Web2C 7.3.3.1) (format=pdfjadetex 2001.9.17)  21 SEP 2001 09:43
+This is pdfTeX, Version 3.14159-1.00a-pretest-20010806 (Web2C 7.3.3.1) (format=pdfjadetex 2001.9.17)  28 SEP 2001 15:08
 **manual
 (./manual.tex{/usr/share/texmf/tex/pdftex/base/pdftex.cfg}
 JadeTeX 2001/07/19: 3.11
@@ -707,18 +707,18 @@ File: figures/plot_control.png Graphic file (type png)
 
 ] [29.0.26] [30.0.26]
 LaTeX Font Info:    Font shape `T1/hlst/bx/n' in size <12.02377> not available
-(Font)              Font shape `T1/hlst/b/n' tried instead on input line 17298.
+(Font)              Font shape `T1/hlst/b/n' tried instead on input line 17299.
 
 LaTeX Font Info:    Font shape `T1/hlst/b/n' will be
-(Font)              scaled to size 11.2238pt on input line 17298.
+(Font)              scaled to size 11.2238pt on input line 17299.
  [31.0.26
 
 ]
 LaTeX Font Info:    Font shape `T1/hlst/m/it' in size <9.03365> not available
-(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 18568
+(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 18569
 .
 LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
-(Font)              scaled to size 8.70477pt on input line 18568.
+(Font)              scaled to size 8.70477pt on input line 18569.
  [32.0.26] [33.0.26] [34.0.26] [35.0.26
 
 ] [36.0.26] [37.0.26] [38.0.26] [39.0.26] [40.0.26
@@ -726,34 +726,34 @@ LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
 has been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.23944 {1}}
+l.23945 {1}}
             \Seq%] [41.0.26] [42.0.26] [43.0.26
 ! pdfTeX warning (ext4): destination with the same identifier (name{gnuplot}) h
 as been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.26400 {1}}
+l.26401 {1}}
             \Node%] [44.0.26] [45.0.26] [46.0.26] [47.0.26] [48.0.26] [49.0.26]
 [50.0.26] [51.0.26] [52.0.26] [53.0.26] [54.0.26] [55.0.26
 ! pdfTeX warning (ext4): destination with the same identifier (name{tsls}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.36190       \endPar{}
+l.36191       \endPar{}
                        \endNode{}\endSeq{}\endDisplayGroup{}\endNode{}\endSe...
 ] [56.0.26] [57.0.26] [58.0.26
 
 ] [59.0.26
 
 ]
-Overfull \hbox (17.09665pt too wide) in paragraph at lines 39154--39162
+Overfull \hbox (17.09665pt too wide) in paragraph at lines 39155--39163
  []/hlhr8t@9.57112pt/These are de-scribed in de-tail in [][]Chap-ter 11[][]. Th
 ey are briefly sum-ma-rized in Ta-ble~\ref{cmdtab}. 
  []
 
 [60.0.26] [61.0.26]
 LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
-(Font)              scaled to size 8.70477pt on input line 39696.
+(Font)              scaled to size 8.70477pt on input line 39697.
  [62.0.26
 
 ] [63.0.26] [64.0.26] [65.0.26
@@ -763,7 +763,7 @@ LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
 ] [69.0.26
 
 ]
-Overfull \hbox (2.51035pt too wide) in paragraph at lines 42659--42666
+Overfull \hbox (2.51035pt too wide) in paragraph at lines 42660--42667
  []/hlhr8t@9.57112pt/Greene, William H. (2000) /hlhri8t@9.57112pt/Econo-met-ric
  Analy-sis/hlhr8t@9.57112pt/, 4th edi-tion, Up-per Sad-dle River, NJ: Prentice-
 
@@ -785,4 +785,4 @@ r.enc}</usr/local/psfonts/lucida/lstb.pfb></usr/local/psfonts/lucida/lsto.pfb><
 /usr/local/psfonts/lucida/lbmo.pfb></usr/local/psfonts/lucida/lstr.pfb></usr/lo
 cal/psfonts/lucida/lbd.pfb></usr/local/psfonts/lucida/lbi.pfb></usr/local/psfon
 ts/lucida/lbr.pfb>
-Output written on manual.pdf (76 pages, 663949 bytes).
+Output written on manual.pdf (76 pages, 663950 bytes).

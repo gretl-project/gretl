@@ -44,6 +44,7 @@ ifeq ($(have_gnome),yes)
   desktopdir = $(gnome_prefix)/share/gnome/apps/Applications
   gpixmaps = $(gnome_prefix)/share/pixmaps
   ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
+  query_install_gnome = install-gnome
 else
   LIBS = `gtk-config --libs` ../lib/libgretl.la $(EXTRAL) -lgtkextra
   GUI_CFLAGS = `gtk-config --cflags` 
@@ -83,13 +84,13 @@ $(PROG): $(OBJS) ../Makefile gtkextralib
 
 .PHONY:
 
-install: $(PROG) installdirs
+install: $(PROG) installdirs $(query_install_gnome)
 	../libtool $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
 	$(INSTALL_PROGRAM) ../gretl_sh $(bindir)/gretl
 	$(INSTALL_DATA) gretl-logo.xpm $(gretldir)
 	$(INSTALL_DATA) ../COPYING $(gretldir)
 
-install-strip: $(PROG) installdirs
+install-strip: $(PROG) installdirs $(query_install_gnome)
 	../libtool $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
 	$(INSTALL_PROGRAM) ../gretl_sh $(bindir)/gretl
 	$(INSTALL_DATA) gretl-logo.xpm $(gretldir)
