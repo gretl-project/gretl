@@ -71,6 +71,7 @@ extern int *default_list;
 extern char *storelist;
 extern gchar datalabel[64];
 extern gchar *clipboard_buf;
+extern float gui_scale;
 
 /* global filenames */
 extern char cmdfile[MAXLEN];

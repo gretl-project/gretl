@@ -810,6 +810,9 @@ static GtkWidget *database_window (windata_t *ddata)
     int cols = 3;
     int full_width = 750, listbox_height = 320;
 
+    full_width *= gui_scale;
+    listbox_height *= gui_scale;
+
     box = gtk_vbox_new (FALSE, 0);
 
     ddata->listbox = list_box_create (ddata, GTK_BOX(box), cols, 0, titles);

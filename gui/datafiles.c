@@ -531,6 +531,9 @@ static GtkWidget *files_window (windata_t *fdata)
 
     parent = gtk_frame_new (NULL);
 
+    full_width *= gui_scale;
+    file_height *= gui_scale;
+
     gtk_widget_set_usize (parent, full_width, file_height);
     gtk_widget_show (parent);
 
@@ -547,6 +550,7 @@ static GtkWidget *files_window (windata_t *fdata)
     gtk_clist_set_selection_mode (GTK_CLIST (fdata->listbox), 
 				  GTK_SELECTION_BROWSE);
     for (i=0; i<cols; i++) {
+	col_width[i] *= gui_scale;
 	gtk_clist_set_column_width (GTK_CLIST (fdata->listbox), i,
 				    col_width[i]);
 	gtk_clist_set_column_justification (GTK_CLIST (fdata->listbox), i, 

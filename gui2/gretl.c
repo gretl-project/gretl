@@ -138,6 +138,7 @@ SESSIONBUILD rebuild;       /* rebuild session later */
 int plot_count, data_status, orig_vars;
 PRN *cmds;
 gchar *clipboard_buf; /* for copying models as LaTeX */
+float gui_scale;
 
 /* Is NLS translation in effect? */
 int nls_on;
@@ -1182,6 +1183,29 @@ static void try_to_get_windows_font (void)
 
 /* ......................................................... */
 
+static float get_gui_scale (void)
+{
+    GtkSettings *settings;
+    gchar *fontname = NULL;
+    int fsize;
+    float scale = 1.0;
+
+    settings = gtk_settings_get_default();
+
+    g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
+
+    if (fontname != NULL) {
+	if (sscanf(fontname, "%*s %d", &fsize) == 1) {
+	    scale = fsize / 10.0;
+	}
+	g_free(fontname);
+    }
+
+    return scale;
+}
+
+/* ......................................................... */
+
 static GtkWidget *make_main_window (int gui_get_data) 
 {
     GtkWidget *box, *dlabel, *align;
@@ -1192,6 +1216,11 @@ static GtkWidget *make_main_window (int gui_get_data)
     };
     int listbox_data_width = 500;
     int listbox_file_height = 300;
+
+    gui_scale = get_gui_scale();
+
+    listbox_data_width *= gui_scale;
+    listbox_file_height *= gui_scale;
 
     mdata->data = NULL;  
     mdata->listbox = NULL;

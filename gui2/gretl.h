@@ -76,6 +76,7 @@ extern char line[1024];
 extern int *default_list;
 extern char *storelist;
 extern gchar *clipboard_buf;
+extern float gui_scale;
 
 /* global filenames */
 extern char cmdfile[MAXLEN];

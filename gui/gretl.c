@@ -123,6 +123,7 @@ SESSIONBUILD rebuild;       /* rebuild session later */
 int plot_count, data_status, orig_vars;
 PRN *cmds;
 gchar *clipboard_buf; /* for copying models as LaTeX */
+float gui_scale;
 
 /* Is NLS translation in effect? */
 int nls_on;
@@ -1044,6 +1045,29 @@ static int get_windows_font (char *fontspec)
     }
 }
 #endif /* USE_WINFONT */
+
+/* ......................................................... */
+
+static float get_gui_scale (void)
+{
+    GtkSettings *settings;
+    gchar *fontname = NULL;
+    int fsize;
+    float scale = 1.0;
+
+    settings = gtk_settings_get_default();
+
+    g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
+
+    if (fontname != NULL) {
+	if (sscanf(fontname, "%*s %d", &fsize) == 1) {
+	    scale = fsize / 10.0;
+	}
+	g_free(fontname);
+    }
+
+    return scale;
+}
 
 /* ......................................................... */
 

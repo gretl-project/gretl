@@ -91,6 +91,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
     GtkCellRenderer *renderer; 
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
+    int viewsize = 100;
 
     store = gtk_list_store_new (2, G_TYPE_INT, G_TYPE_STRING);
 
@@ -146,7 +147,8 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
 
     gtk_box_pack_start(box, scroller, TRUE, TRUE, 0);
 
-    gtk_widget_set_size_request(view, 100, -1);
+    viewsize *= gui_scale;
+    gtk_widget_set_size_request(view, viewsize, -1);
     gtk_widget_show(view);
     gtk_widget_show(scroller);
 
@@ -917,6 +919,8 @@ static int screen_scalar (int i, int c)
 static void selector_init (selector *sr, guint code, const char *title)
 {
     GtkWidget *base, *hsep;
+    int dlgwidth = 340, dlgheight = 300;
+
     sr->varlist = NULL;
     sr->depvar = NULL;
     sr->rightvars = NULL;
@@ -931,7 +935,10 @@ static void selector_init (selector *sr, guint code, const char *title)
     open_dialog = sr->dlg;
 
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
-    gtk_widget_set_size_request(sr->dlg, 340, 300);
+
+    dlgwidth *= gui_scale;
+    dlgheight *= gui_scale;
+    gtk_widget_set_size_request(sr->dlg, dlgwidth, dlgheight);
     /* gtk_window_set_resizable(GTK_WINDOW(sr->dlg), FALSE); */
 
     g_signal_connect (G_OBJECT(sr->dlg), "destroy", 

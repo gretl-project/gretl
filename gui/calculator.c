@@ -232,7 +232,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     lookup_t **pval = (lookup_t **) data;
     gint i, j;
     int df;
-    double val, xx;
+    double val, xx, zz;
     gchar *tmp, cmd[128];
     PRN *prn;
     extern GtkItemFactoryEntry view_items[];

@@ -655,8 +655,8 @@ static void tsls_box (selector *sr, GtkWidget *right_vbox)
 	gtk_clist_append(GTK_CLIST(sr->extra), row);
     }
 
-    gtk_clist_set_column_width (GTK_CLIST(sr->extra), 1, 80);
-    gtk_widget_set_usize (sr->extra, 80, 120);
+    gtk_clist_set_column_width (GTK_CLIST(sr->extra), 1, 80 * gui_scale);
+    gtk_widget_set_usize (sr->extra, 80 * gui_scale, 120 * gui_scale);
 
     gtk_widget_show(sr->extra); 
     gtk_container_add(GTK_CONTAINER(scroller), sr->extra);
@@ -938,8 +938,8 @@ void selection_dialog (const char *title, const char *oktxt,
 	    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	}
 
-	gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80);
-	gtk_widget_set_usize (sr->rightvars, 80, 120);
+	gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80 * gui_scale);
+	gtk_widget_set_usize (sr->rightvars, 80 * gui_scale, 120 * gui_scale);
 	gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
 				      GTK_SELECTION_EXTENDED);
 	gtk_signal_connect(GTK_OBJECT(sr->rightvars), "button_press_event",
@@ -1112,8 +1112,8 @@ void simple_selection (const char *title, const char *oktxt,
 	    gtk_clist_append(GTK_CLIST(sr->varlist), row);
 	}
     }
-    gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80);
-    gtk_widget_set_usize (sr->varlist, 80, 120);
+    gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80 * gui_scale);
+    gtk_widget_set_usize (sr->varlist, 80 * gui_scale, 120 * gui_scale);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),
 				  GTK_SELECTION_EXTENDED);
     gtk_signal_connect(GTK_OBJECT(sr->varlist), "button_press_event",
@@ -1154,8 +1154,8 @@ void simple_selection (const char *title, const char *oktxt,
     sr->rightvars = gtk_clist_new(2);
     gtk_clist_clear(GTK_CLIST(sr->rightvars));
 
-    gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80);
-    gtk_widget_set_usize (sr->rightvars, 80, 120);
+    gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80 * gui_scale);
+    gtk_widget_set_usize (sr->rightvars, 80 * gui_scale, 120 * gui_scale);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
 				  GTK_SELECTION_EXTENDED);
     gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
