@@ -507,10 +507,10 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 		year, yearmiss);
     
     pprintf(prn, _("\nNumber of observations (rows) with missing data "
-	    "values = %d (%d%%)\n"), missobs, 
-	    (int) (100.0 * missobs / (pdinfo->t2 - pdinfo->t1 + 1)));
-    pprintf(prn, _("Total number of missing data values = %d (%d%% "
+	    "values = %d (%.1f%%)\n"), missobs, 
+	    (100.0 * missobs / (pdinfo->t2 - pdinfo->t1 + 1)));
+    pprintf(prn, _("Total number of missing data values = %d (%.1f%% "
 	    "of total data values)\n"), missval, 
-	    (int) (100.0 * missval / totvals));
+	    (100.0 * missval / totvals));
     return missval;
 }

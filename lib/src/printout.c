@@ -398,7 +398,7 @@ static void cut_extra_zero (char *numstr, int digits)
 
     if (p == NULL) {
 	int s = strspn(numstr, "-.,0");
-	int p = (s == 0 && (strchr(numstr, '.') || strchr(numstr, ',')));
+	int p = (strchr(numstr + s, '.') || strchr(numstr + s, ','));
 
 	numstr[s + p + digits] = '\0';
     }
@@ -440,6 +440,7 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     if (numstr[tmp] == decpoint) {
 	numstr[tmp] = 0;
     }
+
     cut_extra_zero(numstr, digits);
 
     strcat(final, numstr);
