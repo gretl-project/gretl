@@ -1515,7 +1515,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	list[i] = i - 1;
     }
 
-    gretl_model_init(&fmod, finfo);
+    gretl_model_init(&fmod);
 
     /* loop across the observations for which we want forecasts
        and standard errors */
@@ -1535,11 +1535,11 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 		    - (*pZ)[j][k + ft1]; 
 	    }
 	}
-	clear_model(&fmod, finfo);
+	clear_model(&fmod);
 	fmod = lsq(list, &fZ, finfo, OLS, OPT_A, 0.0);
 	if (fmod.errcode) {
 	    fr->err = fmod.errcode;
-	    clear_model(&fmod, finfo);
+	    clear_model(&fmod);
 	    goto fcast_bailout;
 	}
 	fr->fitted[k] = fmod.coeff[0];
@@ -1553,7 +1553,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	fr->actual[k] = (*pZ)[pmod->list[1]][k + ft1];
     }
 
-    clear_model(&fmod, finfo);
+    clear_model(&fmod);
 
     fr->tval = tcrit95(pmod->dfd);
     strcpy(fr->depvar, pdinfo->varname[yno]);
@@ -1619,7 +1619,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     getcmd(model_spec, pdinfo, &command, &ignore, pZ, NULL);
 
-    gretl_model_init(tmpmod, pdinfo);
+    gretl_model_init(tmpmod);
 
     switch(command.ci) {
     case AR:
@@ -1661,7 +1661,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     if (tmpmod->errcode) {
 	err = 1;
-	clear_model(tmpmod, pdinfo);
+	clear_model(tmpmod);
     }
 
     if (command.list) free(command.list);

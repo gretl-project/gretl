@@ -756,7 +756,8 @@ MODEL arma_x12_model (int *list, const double **Z,
     int t1, t2;
     MODEL armod;
 
-    gretl_model_init(&armod, pdinfo);  
+    gretl_model_init(&armod);  
+    gretl_model_smpl_init(&armod, pdinfo);
 
     if (check_arma_list(list)) {
 	armod.errcode = E_UNSPEC;

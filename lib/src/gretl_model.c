@@ -291,24 +291,19 @@ static void gretl_model_init_pointers (MODEL *pmod)
 /**
  * gretl_model_init:
  * @pmod: pointer to #MODEL.
- * @pdinfo: pointer to dataset information (or %NULL).
  *
  * Initializes a gretl #MODEL, including setting its pointer members
  * to %NULL.  If @pdinfo is not %NULL, sets the start and end of the
  * model's sample to the current dataset values.
  */
 
-void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
+void gretl_model_init (MODEL *pmod)
 {
     int i;
 
     if (pmod == NULL) return;
 
     pmod->ID = 0;
-    if (pdinfo != NULL) {
-	pmod->smpl.t1 = pdinfo->t1;
-	pmod->smpl.t2 = pdinfo->t2;
-    }
 
     pmod->ntests = 0;
     pmod->nparams = 0;
@@ -327,10 +322,23 @@ void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
     *gretl_msg = '\0';
 }
 
+/**
+ * gretl_model_init:
+ * @pmod: pointer to #MODEL.
+ * @pdinfo: dataset information.
+ *
+ * Sets the start and end of the model's sample to the current dataset
+ * values.
+ */
+
+void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
+{
+    pmod->smpl.t1 = pdinfo->t1;
+    pmod->smpl.t2 = pdinfo->t2;
+}
 
 /**
  * gretl_model_new:
- * @pdinfo: pointer to data information struct (or %NULL).
  * 
  * Allocates memory for a gretl MODEL struct and initializes the struct,
  * using gretl_model_init().
@@ -338,11 +346,11 @@ void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
  * Returns: pointer to #MODEL (or %NULL if allocation fails).
  */
 
-MODEL *gretl_model_new (const DATAINFO *pdinfo)
+MODEL *gretl_model_new (void)
 {
     MODEL *pmod = malloc(sizeof *pmod);
 
-    gretl_model_init(pmod, pdinfo);
+    gretl_model_init(pmod);
     return pmod;
 }
 
@@ -361,6 +369,7 @@ void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo)
 
     pdinfo->t1 = pmod->smpl.t1;
     pdinfo->t2 = pmod->smpl.t2;
+
     pmod->smpl.t1 = t1;
     pmod->smpl.t2 = t2;
 }
@@ -411,14 +420,13 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 /**
  * clear_model:
  * @pmod: pointer to #MODEL.
- * @pdinfo: pointer to dataset information (or %NULL).
  *
  * Clears a gretl #MODEL, freeing all allocated storage and setting
  * pointer members to %NULL.  Also frees any data pointers attached
  * via gretl_model_set_data().
  */
 
-void clear_model (MODEL *pmod, const DATAINFO *pdinfo)
+void clear_model (MODEL *pmod)
 {
     if (pmod != NULL) {
 #ifdef MODEL_DEBUG
@@ -456,7 +464,8 @@ void clear_model (MODEL *pmod, const DATAINFO *pdinfo)
 	destroy_all_data_items(pmod);
     }
 
-    gretl_model_init(pmod, pdinfo);
+    /* this may be redundant */
+    gretl_model_init(pmod);
 }
 
 /* ........................................................... */

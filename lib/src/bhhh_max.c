@@ -537,7 +537,7 @@ int bhhh_max (LL_FUNC loglik,
     }
 
     /* initialize OPG model */
-    bmod = gretl_model_new(NULL);
+    bmod = gretl_model_new();
 
     iters = 0;
     itermax = get_maxiter();
@@ -559,7 +559,7 @@ int bhhh_max (LL_FUNC loglik,
 	    ctemp[i] = model->theta[i] + delta[i];
 	} 
 	
-	clear_model(bmod, NULL);
+	clear_model(bmod);
 
 	/* see if we've gone up... (0 = "don't compute score") */
 	err = loglik(ctemp, X, tZ, model, 0); 

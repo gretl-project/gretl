@@ -114,7 +114,7 @@ enum plot_type_codes {
  
 int plot (const LIST list, 
 	  double **Z, const DATAINFO *pdinfo, 
-	  gretlopt oflag, int pause, PRN *prn);
+	  gretlopt oflag, PRN *prn);
 
 int graph (const LIST list, 
 	   double **Z, const DATAINFO *pdinfo, 

@@ -243,3 +243,19 @@ int get_use_qr (void)
 
     return use_qr;
 }
+
+/* pause between screens of output? (cli operation, not in
+   batch mode) */
+
+static int gretl_text_pause;
+
+void gretl_set_text_pause (int p)
+{
+    gretl_text_pause = p;
+}
+
+int gretl_get_text_pause (void)
+{
+    return gretl_text_pause;
+}
+

@@ -330,7 +330,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     for (i=0; i<m; i++) {
-	models[i] = gretl_model_new(pdinfo);
+	models[i] = gretl_model_new();
 	if (models[i] == NULL) {
 	    for (j=0; j<i; j++) {
 		free_model(models[j]);

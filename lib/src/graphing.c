@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 #include "var.h"
+#include "libset.h"
 #include "../../cephes/libprob.h"
 
 #include <unistd.h>
@@ -264,7 +265,6 @@ static void drawline (int nn, PRN *prn)
  * @pdinfo: data information struct.
  * @oflag: if non-zero, forces two variables to be plotted on the same
  * scale (otherwise they will be scaled to fit).
- * @pause: if non-zero, pause after showing each screen of data.
  * @prn: gretl printing struct.
  *
  * Plot (using ascii graphics) either one or two variables, as given
@@ -274,7 +274,7 @@ static void drawline (int nn, PRN *prn)
  */
 
 int plot (const LIST list, double **Z, const DATAINFO *pdinfo, 
-	  gretlopt oflag, int pause, PRN *prn)
+	  gretlopt oflag, PRN *prn)
 /*
 	plot var1 ;		plots var1 values
 	plot var1 var2 ;	plots var1 and var2 values
@@ -293,8 +293,11 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     double xyrange, xxx, yy;
     double *x, *y;
 
+    int pause = gretl_get_text_pause();
+
     x = malloc(pdinfo->n * sizeof *x);
     y = malloc(pdinfo->n * sizeof *y);
+
     if (x == NULL || y == NULL) return E_ALLOC;
 
     l0 = list[0];
@@ -321,36 +324,43 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word); 
 	if (cntrline) {
-	    iy = (-xmin/xrange)*ncols;
+	    iy = -(xmin / xrange) * ncols;
 	    bufspace(iy+7, prn);
 	    pputs(prn, "0.0\n"); 
 	}
 	drawline(ncols, prn);
-	/* plot values */
-	lineno = 3;
+
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
+
+	lineno = 1;
 	for (t=t1; t<=t2; ++t) {
 	    xxx = Z[vy][t];
 	    if (na(xxx)) continue;
-	    if (pause) page_break(1, &lineno, 0);
-	    lineno++;
+	    if (pause && (lineno % PAGELINES == 0)) {
+		takenotes(0);
+		lineno = 1;
+	    }
 	    prntdate(t, n, pdinfo, prn);
 	    ix = (floatneq(xrange, 0.0))? ((xxx-xmin)/xrange) * ncols : nc2;
 	    initpx(ncols, px);
 	    if (cntrline) px[iy+1] = '|';
 	    px[ix+1] = 'o';
-	    for (i=0; i<=ncols+1; i++) 
+	    for (i=0; i<=ncols+1; i++) {
 		pprintf(prn, "%c", px[i]); 
+	    }
 	    if (ix == ncols) pputc(prn, '\n');
+	    lineno++;
 	}
+
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
 	pputs(prn, "\n\n");
 	free(x);
 	free(y);
+
 	return 0;
     }
 
@@ -370,6 +380,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     pprintf(prn, _("%17cNOTE: o stands for %s,   x stands for %s\n%17c+ means %s "
 	   "and %s are equal when scaled\n"), ' ', s1, s2, ' ', s1, s2);
     lineno = 6;
+
     if (oflag & OPT_O) {
 	pprintf(prn, _("%20c%s and %s are plotted on same scale\n\n%8c"),
 	       ' ', s1, s2, ' ');
@@ -380,8 +391,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	ls = 78-ls-strlen(word);
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
-    }
-    else {
+    } else {
 	pputc(prn, '\n');
 	sprintf(word, "        o-min = %g", ymin);
 	ls = strlen(word);
@@ -398,10 +408,11 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     }
-    /*  First x and y values are scaled, then it checks to see which scaled
-	value is smaller and prints that one first, then prints the larger
-	scaled value. If the scaled values are equal then it prints a "+" ,
-	otherwise it prints an "x" for the first variable and an "o" for the
+
+    /*  First x and y values are scaled, then we check to see which scaled
+	value is smaller: print that one first, then print the larger
+	scaled value. If the scaled values are equal then print a "+" ,
+	otherwise prints an "x" for the first variable and an "o" for the
 	second variable.
     */
     pputc(prn, '\n');
@@ -412,15 +423,23 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pputs(prn, "0.0\n");
     }
     drawline(ncols, prn);
+
 #ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
+    setlocale(LC_NUMERIC, "C");
 #endif
+
+    lineno = 1;
     for (t=t1; t<=t2; ++t) {
-	if (pause) page_break(1, &lineno, 0);
-	lineno++;
+	if (pause && (lineno % PAGELINES == 0)) {
+	    takenotes(0);
+	    lineno = 1;
+	}
+
 	xxx = Z[vy][t];
 	yy = Z[vz][t];
+
 	if (na(xxx) || na(yy)) continue;
+
 	prntdate(t, n, pdinfo, prn);
 	if (oflag & OPT_O) {
 	    ix = (floatneq(xyrange, 0.0))? ((xxx-xymin)/xyrange) * ncols : nc2;
@@ -431,18 +450,29 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	    iy = (floatneq(yrange, 0.0))? ((yy-ymin)/yrange) * ncols : nc2;
 	}
 	initpx(ncols, px);
-	if (iz) px[iz+1] = '|';
-	if (ix == iy) px[ix+1] = '+';
-	else {
+	if (iz) {
+	    px[iz+1] = '|';
+	}
+	if (ix == iy) {
+	    px[ix+1] = '+';
+	} else {
 	    px[ix+1] = 'o';
 	    px[iy+1] = 'x';
 	}
-	for (i=0; i<=ncols+1; i++) pprintf(prn, "%c", px[i]);
+
+	for (i=0; i<=ncols+1; i++) {
+	    pprintf(prn, "%c", px[i]);
+	}
+
 	if (ix == ncols || iy == ncols) pputc(prn, '\n');
+
+	lineno++;
     }
+
 #ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
+    setlocale(LC_NUMERIC, "");
 #endif
+
     pputs(prn, "\n\n");
     free(x);
     free(y);
@@ -988,7 +1018,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	tmplist[1] = list[1];
 	tmplist[2] = 0;
 	tmplist[3] = list[2];	
-	gretl_model_init(&plotmod, pdinfo);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (!plotmod.errcode) {
 	    /* is the fit significant? */
@@ -998,7 +1027,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		a = plotmod.coeff[0];
 	    }
 	}
-	clear_model(&plotmod, pdinfo);
+	clear_model(&plotmod);
     }
 
     adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
@@ -1446,7 +1475,6 @@ int gnuplot_3d (LIST list, const char *literal,
 	gretl_minmax(t1, t2, (*pZ)[list[2]], &umin, &umax);
 	gretl_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
 
-	gretl_model_init(&pmod, pdinfo);
 	pmod = lsq(tmplist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (!pmod.errcode && !na(pmod.fstt) &&
 	    (fdist(pmod.fstt, pmod.dfn, pmod.dfd) < .10 ||
@@ -1461,7 +1489,7 @@ int gnuplot_3d (LIST list, const char *literal,
 		    pmod.coeff[0], pmod.coeff[1],
 		    pmod.coeff[2]);
 	} 
-	clear_model(&pmod, pdinfo);
+	clear_model(&pmod);
     }
 
     fprintf(fq, "set xlabel '%s'\n", get_series_name(pdinfo, list[2]));

@@ -419,7 +419,7 @@ static MODEL GNR (double *fvec, double *fjac)
 
     ninfo = create_new_dataset(&nZ, nlspec.nparam + 1, pdinfo->n, 0);
     if (ninfo == NULL) {
-	gretl_model_init(&gnr, NULL);
+	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
@@ -428,7 +428,7 @@ static MODEL GNR (double *fvec, double *fjac)
     if (nlist == NULL) {
 	free_Z(nZ, ninfo);
 	free_datainfo(ninfo);
-	gretl_model_init(&gnr, NULL);
+	gretl_model_init(&gnr);
 	gnr.errcode = E_ALLOC;
 	return gnr;
     }
@@ -876,7 +876,8 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     int origv = maininfo->v;
     int err = 0;
 
-    gretl_model_init(&nlsmod, maininfo);
+    gretl_model_init(&nlsmod);
+    gretl_model_smpl_init(&nlsmod, maininfo);
 
     if (nlspec.nlfunc == NULL) {
 	strcpy(gretl_errmsg, _("No regression function has been specified"));

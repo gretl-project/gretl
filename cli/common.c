@@ -20,6 +20,8 @@
 
 /* common.c -- material in common between cli and gui clients */
 
+#include "libset.h"
+
 static void substitute_dollar_i (char *str)
 {
     char *p;
@@ -46,6 +48,8 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     GRETLSUMMARY *summ;
     gretlopt lsqopt = 0L;
     int err = 0;
+
+    gretl_set_text_pause(0);
 
     strcpy(linecpy, plp->lines[cmdnum]);
 
@@ -105,7 +109,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 		}
 		if (plp->models == NULL) return 1;
 
-		plp->models[plp->nmod - 1] = gretl_model_new(datainfo);
+		plp->models[plp->nmod - 1] = gretl_model_new();
 		if (plp->models[plp->nmod - 1] == NULL) {
 		    return 1;
 		}
@@ -122,7 +126,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	} /* end of basic round 0 setup */
 
 	/* estimate the model called for */
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 
 	if (cmd.ci == OLS || cmd.ci == WLS) {
 	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
@@ -146,7 +150,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    (models[0])->ID = lround + 1;
 	    printmodel(models[0], datainfo, prn); 
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, prn);
+		outcovmx(models[0], datainfo, prn);
 	    }
 	}
 	else if (plp->type != COUNT_LOOP) { /* conditional loop */
@@ -172,12 +176,11 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 
     case PRINT:
 	if (strlen(cmd.param)) {
-	    simple_commands(&cmd, linecpy, &Z, datainfo, &paths,
-			    0, prn);
+	    simple_commands(&cmd, linecpy, &Z, datainfo, &paths, prn);
 	    break;
 	}
 	if (plp->type != COUNT_LOOP) {
-	    printdata(cmd.list, &Z, datainfo, 0, cmd.opt, prn);
+	    printdata(cmd.list, &Z, datainfo, cmd.opt, prn);
 	    break;
 	}
 	if (lround == 0) {
@@ -262,7 +265,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	if (summ == NULL) {
 	    pputs(prn, _("generation of summary stats failed\n"));
 	} else {
-	    print_summary(summ, datainfo, 0, prn);
+	    print_summary(summ, datainfo, prn);
 	    free_summary(summ);
 	}	    
 	break; 

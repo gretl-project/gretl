@@ -24,7 +24,7 @@
 
 #include "libgretl.h"
 #include "gretl_private.h"
-
+#include "gretl_list.h"
 #include "bhhh_max.h"
 
 #include "../cephes/polrt.c"
@@ -443,12 +443,11 @@ static int ar_init_by_ols (const int *list, double *coeff,
     MODEL armod;
     int i, j, t, err = 0;
 
-    gretl_model_init(&armod, NULL);  
+    gretl_model_init(&armod);  
 
-    alist = malloc((av + 1) * sizeof *alist);
+    alist = gretl_list_new(av);
     if (alist == NULL) return 1;
 
-    alist[0] = av;
     alist[1] = 1;
     alist[2] = 0;
     for (i=0; i<p; i++) {
@@ -497,7 +496,7 @@ static int ar_init_by_ols (const int *list, double *coeff,
     clear_datainfo(ainfo, CLEAR_FULL);
     free(ainfo);
 
-    clear_model(&armod, NULL);
+    clear_model(&armod);
 
     return err;
 }
@@ -593,7 +592,8 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     MODEL armod;
     model_info *arma;
 
-    gretl_model_init(&armod, NULL);  
+    gretl_model_init(&armod); 
+    gretl_model_smpl_init(&armod, pdinfo);
 
     if (check_arma_list(list)) {
 	armod.errcode = E_UNSPEC;

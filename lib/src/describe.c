@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 #include "gretl_matrix.h"
+#include "libset.h"
 
 #include <unistd.h>
 
@@ -767,7 +768,6 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     list[2] = 0;
     list[3] = 2;
 
-    gretl_model_init(&tmp, &tmpdinfo);
     tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, OPT_A, 0);
 
     if (!tmp.errcode) {
@@ -783,7 +783,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 	err = tmp.errcode;
     }
 
-    clear_model(&tmp, &tmpdinfo);
+    clear_model(&tmp);
     free_Z(tmpZ, &tmpdinfo);
     clear_datainfo(&tmpdinfo, CLEAR_FULL);
 
@@ -1098,7 +1098,6 @@ static void print_summary_single (GRETLSUMMARY *summ,
  * print_summary:
  * @summ: gretl summary statistics struct.
  * @pdinfo: information on the data set.
- * @pause: if non-zero, pause after showing each screen of info.
  * @prn: gretl printing struct.
  *
  * Print the summary statistics for a given variable.
@@ -1107,10 +1106,12 @@ static void print_summary_single (GRETLSUMMARY *summ,
 
 void print_summary (GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
-		    int pause, PRN *prn)
+		    PRN *prn)
 {
     double xbar, std, xcv;
-    int lo = summ->list[0], v, lv, lineno = 4;
+    int lo = summ->list[0], v, lv;
+    int pause = gretl_get_text_pause();
+    int lineno;
     char tmp[128];
 
     if (lo == 1) {
@@ -1126,9 +1127,12 @@ void print_summary (GRETLSUMMARY *summ,
     pputs(prn, _("      MEAN           MEDIAN           MIN"
             "             MAX\n\n"));
 
+    lineno = 1;
     for (v=0; v<lo; v++) {
-	if (pause) page_break(1, &lineno, 0);
-	lineno++;
+	if (pause && (lineno % PAGELINES == 0)) {
+	    takenotes(0);
+	    lineno = 1;
+	}
 	lv = summ->list[v+1];
 	pprintf(prn, "%-10s", pdinfo->varname[lv]);
 	xbar = summ->coeff[v];
@@ -1137,19 +1141,22 @@ void print_summary (GRETLSUMMARY *summ,
 	printf15(summ->xpx[v], prn);
 	printf15(summ->xpy[v], prn);
 	pputc(prn, '\n');
+	lineno++;
     }
-
-    if (pause) page_break(lo + 2, &lineno, 0);
-    lineno += 2;
     pputc(prn, '\n');
+
+    if (pause) takenotes(0);
 
     pprintf(prn, "\n%s  ", _("Variable"));
     pputs(prn, _("      S.D.            C.V.           "
 	 " SKEW          EXCSKURT\n\n"));
 
+    lineno = 1;
     for (v=0; v<lo; v++) {
-	if (pause) page_break(1, &lineno, 0);
-	lineno++;
+	if (pause && (lineno % PAGELINES == 0)) {
+	    takenotes(0);
+	    lineno = 1;
+	}
 	lv = summ->list[v+1];
 	pprintf(prn, "%-10s", pdinfo->varname[lv]);
 
@@ -1163,6 +1170,7 @@ void print_summary (GRETLSUMMARY *summ,
 	printf15(summ->xskew[v], prn);
 	printf15(summ->xkurt[v], prn);
 	pputc(prn, '\n');
+	lineno++;
     }
     pputc(prn, '\n');
 }
@@ -1356,7 +1364,6 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
  * matrix_print_corr:
  * @corr: gretl correlation matrix
  * @pdinfo: data information struct.
- * @pause: = 1 to pause after showing each screen of info.
  * @prn: gretl printing struct.
  *
  * Prints a gretl correlation matrix.
@@ -1364,7 +1371,7 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
  */
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
-			int pause, PRN *prn)
+			PRN *prn)
 {
     char tmp[96];
 
@@ -1372,7 +1379,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
     sprintf(tmp, _("5%% critical value (two-tailed) = "
 	    "%.4f for n = %d"), rhocrit95(corr->n), corr->n);
     center_line(tmp, prn, 1);
-    text_print_matrix(corr->xpx, corr->list, NULL, pdinfo, pause, prn);
+    text_print_matrix(corr->xpx, corr->list, NULL, pdinfo, prn);
 }
 
 /**
@@ -1380,7 +1387,6 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
  * @list: gives the ID numbers of the variables to process.
  * @pZ: pointer to the data matrix.
  * @pdinfo: data information struct.
- * @pause: if non-zero, pause after showing each screen of info.
  * @prn: gretl printing struct.
  *
  * Computes and prints the correlation matrix for the specified list
@@ -1390,13 +1396,13 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
  */
 
 int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo, 
-		int pause, PRN *prn)
+		PRN *prn)
 {
     CORRMAT *corr;
 
     corr = corrlist(list, pZ, pdinfo);
     if (corr == NULL) return 1;
-    matrix_print_corr(corr, pdinfo, pause, prn);
+    matrix_print_corr(corr, pdinfo, prn);
     free_corrmat(corr);
     return 0;
 }

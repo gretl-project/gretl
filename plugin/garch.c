@@ -463,7 +463,7 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     int *list, *ols_list;
     int err;
 
-    gretl_model_init(&model, NULL);
+    gretl_model_init(&model);
 
     list = get_garch_list(cmdlist, &err);
     if (err) {

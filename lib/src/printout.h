@@ -22,6 +22,8 @@
 #define GRETL_DIGITS 6
 #define GRETL_MP_DIGITS 12
 
+#define PAGELINES 21
+
 /* functions follow */
  
 void session_time (FILE *fp);
@@ -48,15 +50,15 @@ void print_smpl (const DATAINFO *pdinfo,
 
 int outcovmx (MODEL *pmod, 
 	      const DATAINFO *pdinfo, 
-	      int pause, PRN *prn);
+	      PRN *prn);
 
-int page_break (int n, int *lineno, int quit_option);
+int page_pause (void);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
 int printdata (LIST list, 
 	       double ***pZ, const DATAINFO *pdinfo, 
-	       int pause, gretlopt oflag, PRN *prn);
+	       gretlopt oflag, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 
 			  const DATAINFO *pdinfo, 
@@ -72,7 +74,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 
 void text_print_matrix (const double *rr, const int *list, 
 			MODEL *pmod, const DATAINFO *pdinfo, 
-			int pause, PRN *prn);
+			PRN *prn);
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
 

@@ -119,7 +119,7 @@ static double group_means_variance (MODEL *pmod,
     if (meanmod.errcode) xx = NADBL;
     else xx = meanmod.sigma * meanmod.sigma;
 
-    clear_model(&meanmod, NULL);
+    clear_model(&meanmod);
     free(list);
 #ifdef PDEBUG
     fprintf(stderr, "gmv: done freeing stuff\n");
@@ -293,7 +293,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	vcv_slopes(haus, &lsdv, nunits, 0);
     }
 
-    clear_model(&lsdv, NULL);
+    clear_model(&lsdv);
     dataset_drop_vars(nunits - 1, pZ, pdinfo);
     free(dvlist);
 
@@ -379,7 +379,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	vcv_slopes(haus, &remod, nunits, 1);
     }
 
-    clear_model(&remod, NULL);
+    clear_model(&remod);
     free_Z(reZ, reinfo);
     clear_datainfo(reinfo, CLEAR_FULL);
     free(reinfo);
@@ -714,7 +714,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     }
 
     free(aclist);
-    clear_model(&aux, tmpinfo); 
+    clear_model(&aux); 
 
     free_Z(tmpZ, tmpinfo);
     clear_datainfo(tmpinfo, CLEAR_FULL);

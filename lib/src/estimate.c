@@ -359,7 +359,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	return hccm_func(list, pZ, pdinfo);
     }
 
-    gretl_model_init(&mdl, pdinfo);
+    gretl_model_init(&mdl);
+    gretl_model_smpl_init(&mdl, pdinfo);
     model_stats_init(&mdl);
 
     if (pwe) {
@@ -1448,17 +1449,17 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
-    gretl_model_init(&corc_model, pdinfo);
+    gretl_model_init(&corc_model);
 
     if (opt == PWE) lsqopt |= OPT_P;
 
     if (opt == HILU) { /* Do Hildreth-Lu first */
 	step = 1;
 	for (rho = -0.990; rho < 1.0; rho += .01) {
-	    clear_model(&corc_model, pdinfo);
+	    clear_model(&corc_model);
 	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
 	    if ((err = corc_model.errcode)) {
-		clear_model(&corc_model, pdinfo);
+		clear_model(&corc_model);
 		return err;
 	    }
 	    ess = corc_model.ess;
@@ -1509,7 +1510,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    corc_model.errcode = E_DF;
 	}
 	if ((err = corc_model.errcode)) {
-	    clear_model(&corc_model, pdinfo);
+	    clear_model(&corc_model);
 	    return err;
 	}
 	rho0 = rho = corc_model.rho;
@@ -1522,7 +1523,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     while (diff > 0.001) {
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
-	clear_model(&corc_model, pdinfo);
+	clear_model(&corc_model);
 	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
 #if 0
 	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
@@ -1531,7 +1532,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		corc_model.uhat[corc_model.t1+1]);
 #endif
 	if ((err = corc_model.errcode)) {
-	    clear_model(&corc_model, pdinfo);
+	    clear_model(&corc_model);
 	    return err;
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
@@ -1545,7 +1546,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     pprintf(prn, _("                final %11.5f\n\n"), rho);
-    clear_model(&corc_model, pdinfo);
+    clear_model(&corc_model);
 
     *toprho = rho;
 
@@ -1688,7 +1689,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
-    gretl_model_init(&tsls, pdinfo);
+    gretl_model_init(&tsls);
 
     list1 = malloc(pos * sizeof *list1);
     list2 = malloc((list[0] - pos + 1) * sizeof *list2);
@@ -1756,7 +1757,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	/* run first-stage regression */
-	clear_model(&tsls, pdinfo);
+	clear_model(&tsls);
 	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tsls.errcode) {
 	    goto tsls_bailout;
@@ -1782,7 +1783,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* second-stage regression */
-    clear_model(&tsls, pdinfo);
+    clear_model(&tsls);
     tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_D, 0.0);
     if (tsls.errcode) {
 	goto tsls_bailout;
@@ -1906,7 +1907,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     int i, j, l0 = pmod->list[0], check, shrink;
     MODEL aux;
 
-    gretl_model_init(&aux, pdinfo);
+    gretl_model_init(&aux);
 
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
@@ -1962,7 +1963,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 
     if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
 
-    clear_model(&aux, pdinfo);
+    clear_model(&aux);
 
     free(tmplist);
     free(list);
@@ -1991,8 +1992,6 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     MODEL hsk;
 
     *gretl_errmsg = '\0';
-
-    gretl_model_init(&hsk, pdinfo);
 
     lo = list[0];         /* number of vars in original list */
     yno = list[1];        /* ID number of original dependent variable */
@@ -2049,7 +2048,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     /* put the original indep vars into the WLS list */
     for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
 
-    clear_model(&hsk, pdinfo);
+    clear_model(&hsk);
     hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_D, 0.0);
     hsk.ci = HSK;
 
@@ -2104,7 +2103,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     *gretl_errmsg = '\0';
 
-    gretl_model_init(&hccm, pdinfo);
+    gretl_model_init(&hccm);
 
     n = pdinfo->n;
     t1 = pdinfo->t1; t2 = pdinfo->t2;
@@ -2269,7 +2268,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if ((err = list_members_replaced(pmod->list, pdinfo, pmod->ID)))
 	return err;
 
-    gretl_model_init(&white, pdinfo);
+    gretl_model_init(&white);
 
     lo = pmod->list[0];
     yno = pmod->list[1];
@@ -2352,7 +2351,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    clear_model(&white, pdinfo);
+    clear_model(&white);
 
     shrink = pdinfo->v - v;
     if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
@@ -2389,8 +2388,8 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     *gretl_errmsg = '\0';
 
-    gretl_model_init(&ar, pdinfo);
-    gretl_model_init(&rhomod, pdinfo);
+    gretl_model_init(&ar);
+    gretl_model_init(&rhomod);
 
     arlist = malloc(pos * sizeof *arlist);
     reglist = malloc((list[0] - pos + 2) * sizeof *reglist);
@@ -2483,7 +2482,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	ryno = vc = v + i;
 
 	/* now estimate the rho terms */
-	if (iter > 1) clear_model(&rhomod, pdinfo);
+	if (iter > 1) clear_model(&rhomod);
 	rhomod = lsq(rholist, pZ, pdinfo, OLS, OPT_A, 0.0);
 
 	/* and rho-transform the data */
@@ -2502,7 +2501,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	}
 
 	/* estimate the transformed model */
-	clear_model(&ar, pdinfo);
+	clear_model(&ar);
 	ar = lsq(reglist2, pZ, pdinfo, OLS, OPT_A, 0.0);
 
         if (iter > 1) diff = 100 * (ar.ess - ess)/ess;
@@ -2574,7 +2573,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     printmodel(&ar, pdinfo, prn);    
 
     free(arlist);
-    clear_model(&rhomod, pdinfo);
+    clear_model(&rhomod);
 
     return ar;
 }
@@ -2818,7 +2817,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
-    gretl_model_init(&archmod, pdinfo);
+    gretl_model_init(&archmod);
 
     /* assess the lag order */
     if (order < 1) {
@@ -2865,7 +2864,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	/* run aux. regression */
-	clear_model(&archmod, pdinfo);
+	clear_model(&archmod);
 	archmod = lsq(arlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	err = archmod.errcode;
     }
@@ -2917,7 +2916,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
 		strcpy(pdinfo->varname[nwt], "1/sigma");
 
-		clear_model(&archmod, pdinfo);
+		clear_model(&archmod);
 		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_D, 0.0);
 
 		archmod.ci = ARCH;
@@ -3001,7 +3000,7 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     arma_model = get_plugin_function("arma_model", &handle);
 
     if (arma_model == NULL) {
-	gretl_model_init(&armod, NULL);
+	gretl_model_init(&armod);
 	armod.errcode = E_FOPEN;
 	return armod;
     }
@@ -3043,7 +3042,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 
     arma_x12_model = get_plugin_function("arma_x12_model", &handle);
     if (arma_x12_model == NULL) {
-	gretl_model_init(&armod, NULL);
+	gretl_model_init(&armod);
 	armod.errcode = E_FOPEN;
 	return armod;
     }
@@ -3084,7 +3083,7 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 
     logistic_estimate = get_plugin_function("logistic_estimate", &handle);
     if (logistic_estimate == NULL) {
-	gretl_model_init(&lmod, NULL);
+	gretl_model_init(&lmod);
 	lmod.errcode = E_FOPEN;
 	return lmod;
     }
@@ -3121,7 +3120,7 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     tobit_estimate = get_plugin_function("tobit_estimate", &handle);
     if (tobit_estimate == NULL) {
-	gretl_model_init(&tmod, NULL);
+	gretl_model_init(&tmod);
 	tmod.errcode = E_FOPEN;
 	return tmod;
     }
@@ -3161,7 +3160,7 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     garch_model = get_plugin_function("garch_model", &handle);
 
     if (garch_model == NULL) {
-	gretl_model_init(&gmod, NULL);
+	gretl_model_init(&gmod);
 	gmod.errcode = E_FOPEN;
 	return gmod;
     }

@@ -28,22 +28,24 @@
  */
 
 #define free_model(p) if (p != NULL) { \
-                             clear_model(p, NULL); \
+                             clear_model(p); \
                              free(p); \
                           }
 
 #define AR_MODEL(c) (c == AR || c == CORC || c == PWE || c == HILU)
 
 
-MODEL *gretl_model_new (const DATAINFO *pdinfo);
+MODEL *gretl_model_new (void);
 
-void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo);
+void gretl_model_init (MODEL *pmod);
+
+void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo);
 
 void gretl_model_set_auxiliary (MODEL *pmod, int aux);
 
 void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
 
-void clear_model (MODEL *pmod, const DATAINFO *pdinfo);
+void clear_model (MODEL *pmod);
 
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size);
 

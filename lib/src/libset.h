@@ -35,5 +35,9 @@ int get_force_hc (void);
 
 double get_hp_lambda (void);
 
+void gretl_set_text_pause (int p);
+
+int gretl_get_text_pause (void);
+
 #endif /* LIBSET_H */
 

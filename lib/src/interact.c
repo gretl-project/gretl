@@ -1849,7 +1849,7 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     int pause, PRN *prn)
+		     PRN *prn)
      /* common code for command-line and GUI client programs, where
 	the command doesn't require special handling on the client
 	side */
@@ -1882,7 +1882,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case CORR:
 	if (cmd->list[0] > 3) {
-	    err = esl_corrmx(cmd->list, pZ, datainfo, pause, prn);
+	    err = esl_corrmx(cmd->list, pZ, datainfo, prn);
 	    if (err) 
 		pputs(prn, _("Error in generating correlation matrix\n"));
 	    break;
@@ -1963,7 +1963,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case PLOT:
-	plot(cmd->list, *pZ, datainfo, cmd->opt, pause, prn);
+	plot(cmd->list, *pZ, datainfo, cmd->opt, prn);
 	break;
 
     case RMPLOT:
@@ -1998,7 +1998,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (strlen(cmd->param)) {
 	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, pZ, datainfo, pause, cmd->opt, prn);
+	    printdata(cmd->list, pZ, datainfo, cmd->opt, prn);
 	}
 	break;
 
@@ -2007,7 +2007,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (summ == NULL) 
 	    pputs(prn, _("generation of summary stats failed\n"));
 	else {
-	    print_summary(summ, datainfo, pause, prn);
+	    print_summary(summ, datainfo, prn);
 	    free_summary(summ);
 	}
 	break; 

@@ -153,7 +153,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     double *xbar, *diag, *xpx = NULL;
     MODEL dmod;
 
-    gretl_model_init(&dmod, pdinfo);
+    gretl_model_init(&dmod);
     
     /* check whether depvar is binary */
     dummy = isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
@@ -231,7 +231,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	if (fabs(dmod.lnL - Lbak) < .000005) break; 
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
-	clear_model(&dmod, NULL);
+	clear_model(&dmod);
 	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
 	if (dmod.errcode) {
 	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);

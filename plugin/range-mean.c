@@ -206,7 +206,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     err = do_range_mean_plot(m, rmZ, yhat, pdinfo->varname[varnum], 
 			     ppaths);
 
-    clear_model(&rmmod, NULL);
+    clear_model(&rmmod);
     free_Z(rmZ, rminfo);
     clear_datainfo(rminfo, CLEAR_FULL);
     free(rminfo);

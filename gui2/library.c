@@ -296,9 +296,9 @@ void clear_data (void)
     main_menubar_state(FALSE);
 
     /* clear everything out */
-    clear_model(models[0], NULL);
-    clear_model(models[1], NULL);
-    clear_model(models[2], NULL);
+    clear_model(models[0]);
+    clear_model(models[1]);
+    clear_model(models[2]);
 
     free_command_stack(); 
     free_modelspec(modelspec);
@@ -584,7 +584,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	} 
-	matrix_print_corr(obj, datainfo, 0, prn);
+	matrix_print_corr(obj, datainfo, prn);
 	break;
     case FREQ:
 	obj = freqdist(&Z, datainfo, mdata->active_var, 1);
@@ -616,7 +616,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	}	    
-	print_summary(obj, datainfo, 0, prn);
+	print_summary(obj, datainfo, prn);
 	break;
     }
     if (err) gui_errmsg(err);
@@ -1085,7 +1085,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     if (check_cmd(line) || bufopen(&prn)) return;
 
-    pmod = gretl_model_new(datainfo);
+    pmod = gretl_model_new();
     if (pmod == NULL) {
 	errbox(_("Out of memory"));
 	gretl_print_destroy(prn);
@@ -1103,7 +1103,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
-        clear_model(pmod, NULL); 
+        clear_model(pmod); 
         return;
     }
 
@@ -1261,16 +1261,16 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	} else {
 	    strcpy(line, "lmtest -l");
 	}
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	err = auxreg(NULL, pmod, models[0],
 		     &Z, datainfo, aux, prn, &test, 0);
 	if (err) {
 	    gui_errmsg(err);
-	    clear_model(models[0], NULL);
+	    clear_model(models[0]);
 	    gretl_print_destroy(prn);
 	    return;
 	} else {
-	    clear_model(models[0], NULL); 
+	    clear_model(models[0]); 
 	    strcat(title, _("(non-linearity)"));
 	    if (add_test_to_model(&test, pmod) == 0)
 		print_test_to_window(&test, mydata->w);
@@ -1638,7 +1638,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 
     if (bufopen(&prn)) return;
 
-    clear_model(models[1], NULL);
+    clear_model(models[1]);
     exchange_smpl(pmod, datainfo);
     *models[1] = arch(order, pmod->list, &Z, datainfo, 
 		      prn, &test);
@@ -1649,11 +1649,11 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	    print_test_to_window(&test, mydata->w);
 	}
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[1], datainfo, 0, prn);
+	    outcovmx(models[1], datainfo, prn);
 	}
     }
 
-    clear_model(models[1], NULL);
+    clear_model(models[1]);
     exchange_smpl(pmod, datainfo);
 
     view_buffer(prn, 78, 400, _("gretl: ARCH test"), ARCH, NULL);
@@ -1928,7 +1928,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
     if (bufopen(&prn)) return;
 
-    pmod = gretl_model_new(datainfo);
+    pmod = gretl_model_new();
     if (pmod == NULL) {
 	errbox(_("Out of memory"));
 	return;
@@ -2003,7 +2003,7 @@ void do_model (GtkWidget *widget, gpointer p)
     if (bufopen(&prn)) return;
 
     if (action != VAR) {
-	pmod = gretl_model_new(datainfo);
+	pmod = gretl_model_new();
 	if (pmod == NULL) {
 	    errbox(_("Out of memory"));
 	    return;
@@ -2167,7 +2167,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 
     if (bufopen(&prn)) return;
 
-    pmod = gretl_model_new(datainfo);
+    pmod = gretl_model_new();
     if (pmod == NULL) {
 	errbox(_("Out of memory"));
 	return;
@@ -2861,7 +2861,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 	errbox(_("Error generating covariance matrix"));
     } else {
 	text_print_matrix (vcv->vec, vcv->list, 
-			   pmod, datainfo, 0, prn);
+			   pmod, datainfo, prn);
 	view_buffer(prn, 78, 300, _("gretl: coefficient covariances"), 
 		    COVAR, vcv);
     }
@@ -3355,13 +3355,13 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	err = printdata(NULL, &Z, datainfo, 0, OPT_O, prn);
+	err = printdata(NULL, &Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
-	err = printdata(NULL, &Z, datainfo, 0, OPT_O, prn);
+	err = printdata(NULL, &Z, datainfo, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -3420,14 +3420,14 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	printdata(prcmd.list, &Z, datainfo, 0, OPT_O, prn);
+	printdata(prcmd.list, &Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, width, 350, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
 	if (bufopen(&prn)) return;
-	err = printdata(prcmd.list, &Z, datainfo, 0, OPT_O, prn);
+	err = printdata(prcmd.list, &Z, datainfo, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -3835,14 +3835,14 @@ void display_var (void)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	printdata(list, &Z, datainfo, 0, OPT_O, prn);
+	printdata(list, &Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 28, height, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
 	if (bufopen(&prn)) return;
-	err = printdata(list, &Z, datainfo, 0, OPT_O, prn);
+	err = printdata(list, &Z, datainfo, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -4842,7 +4842,7 @@ int gui_exec_line (char *line,
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
-			      0, outprn);
+			      outprn);
 	if (err) errmsg(err, prn);
 	else if (cmd.ci == DATA) {
 	    register_data(NULL, NULL, 0);
@@ -4853,7 +4853,7 @@ int gui_exec_line (char *line,
     case OMIT:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
     plain_add_omit:
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO)
 	    err = auxreg(cmd.list, models[0], models[1], 
 			 &Z, datainfo, AUX_ADD, outprn, NULL, cmd.opt);
@@ -4862,16 +4862,16 @@ int gui_exec_line (char *line,
 			    &Z, datainfo, outprn, cmd.opt);
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	} else {
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
 	    if (!(cmd.opt & OPT_Q)) {
 		swap_models(&models[0], &models[1]);
 	    }
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, outprn);
+		outcovmx(models[0], datainfo, outprn);
 	    }
 	}
 	break;	
@@ -4887,7 +4887,7 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
 	    break;
 	} 
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, &tmpmod, models[1], 
@@ -4898,18 +4898,18 @@ int gui_exec_line (char *line,
 	}
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    break;
 	} else {
 	    if (!(cmd.opt & OPT_Q)) {
 		swap_models(&models[0], &models[1]);
 	    }
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, outprn);
+		outcovmx(models[0], datainfo, outprn);
 	    }
 	}
-	clear_model(&tmpmod, NULL);
+	clear_model(&tmpmod);
 	break;
 
     case AR:
@@ -4921,13 +4921,13 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn);
+	    outcovmx(models[0], datainfo, outprn);
 	}
 	break;
 
     case ARCH:
 	order = atoi(cmd.param);
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
 			  outprn, ptest);
 	if ((err = (models[1])->errcode)) 
@@ -4936,16 +4936,16 @@ int gui_exec_line (char *line,
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, outprn);
+		outcovmx(models[0], datainfo, outprn);
 	    }
 	} else if (rebuild) {
 	    add_test_to_model(ptest, models[0]);
 	}
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	break;
 
     case ARMA:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 #ifdef HAVE_X12A
 	if (cmd.opt & OPT_X) {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
@@ -4964,12 +4964,12 @@ int gui_exec_line (char *line,
 	}	
 	printmodel(models[0], datainfo, outprn);
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn);
+	    outcovmx(models[0], datainfo, outprn);
 	}	
 	break;
 
     case GARCH:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	*models[0] = garch(cmd.list, &Z, datainfo, 
 			   ((cmd.opt & OPT_V)? prn : NULL), cmd.opt);
 	if ((err = (models[0])->errcode)) { 
@@ -4978,7 +4978,7 @@ int gui_exec_line (char *line,
 	}
 	printmodel(models[0], datainfo, outprn);
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn);
+	    outcovmx(models[0], datainfo, outprn);
 	}	    
 	break;
 
@@ -5040,7 +5040,7 @@ int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn);
+	    outcovmx(models[0], datainfo, outprn);
 	}
 	break;
 
@@ -5052,7 +5052,7 @@ int gui_exec_line (char *line,
             break;
         }
         printmodel(models[0], datainfo, outprn);
-        /* if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); */
+        /* if (cmd.opt) outcovmx(models[0], datainfo, prn); */
         break;
 
     case CORRGM:
@@ -5113,7 +5113,7 @@ int gui_exec_line (char *line,
 	    do_nls = 1;
 	    printmodel(models[0], datainfo, outprn);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, outprn);
+		outcovmx(models[0], datainfo, outprn);
 	    }
 	}
 	else if (!strcmp(cmd.param, "restrict")) {
@@ -5302,7 +5302,7 @@ int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn);
+	    outcovmx(models[0], datainfo, outprn);
 	}
 	break;
 
@@ -5400,14 +5400,14 @@ int gui_exec_line (char *line,
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_SQ, outprn, ptest, 0);
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_LOG, outprn, ptest, 0);
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    if (err) errmsg(err, prn);
 	}
 	/* autocorrelation or heteroskedasticity */
@@ -5446,7 +5446,7 @@ int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn); 
+	    outcovmx(models[0], datainfo, outprn); 
 	}
 	break;
 
@@ -5517,7 +5517,7 @@ int gui_exec_line (char *line,
 	    }
 	}
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn); 
+	    outcovmx(models[0], datainfo, outprn); 
 	}
 	break;
 
@@ -5760,7 +5760,7 @@ int gui_exec_line (char *line,
 	    (models[0])->errcode = E_NAN;
 	/* is this OK? */
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, outprn); 
+	    outcovmx(models[0], datainfo, outprn); 
 	}
 	break;		
 

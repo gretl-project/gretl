@@ -121,4 +121,6 @@ int path_append (char *file, const char *path);
 
 void difflist (int *biglist, int *smalist, int *targ);
 
+int takenotes (int quit_opt);
+
 #endif /* GRETL_PRIVATE_H */

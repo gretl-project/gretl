@@ -272,7 +272,7 @@ MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     int dv = list[1];
     MODEL lmod;
 
-    gretl_model_init(&lmod, pdinfo); 
+    gretl_model_init(&lmod); 
 
     lmax = get_lmax((*pZ)[dv], pdinfo, param);
 

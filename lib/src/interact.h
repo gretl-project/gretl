@@ -73,7 +73,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     int batch, PRN *prn);
+		     PRN *prn);
 
 int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,

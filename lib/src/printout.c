@@ -22,11 +22,13 @@
 #include "libgretl.h"
 #include "gretl_private.h" 
 #include "version.h"
+#include "gretl_list.h"
+#include "libset.h"
 
 #include <stdarg.h>
 #include <time.h>
 
-/* #define PRN_DEBUG */
+#undef PRN_DEBUG
 
 static void 
 print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
@@ -548,7 +550,6 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
  * outcovmx:
  * @pmod: pointer to model.
  * @pdinfo: data information struct.
- * @pause: if non-zero, pause after displaying each screen of information.
  * @prn: gretl printing struct.
  * 
  * Print to @prn the variance-covariance matrix for the parameter
@@ -557,8 +558,7 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause, 
-	      PRN *prn)
+int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int k, nbeta = 0;
     int *tmplist = NULL;
@@ -572,10 +572,9 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
 	nbeta = pmod->list[0] - 1;
     }
 
-    tmplist = malloc((nbeta + 1) * sizeof *tmplist);
+    tmplist = gretl_list_new(nbeta);
     if (tmplist == NULL) return E_ALLOC;
 
-    tmplist[0] = nbeta;
     for (k=1; k<=tmplist[0]; k++) {
 	tmplist[k] = pmod->list[k+1];
     }
@@ -584,7 +583,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
 	if (makevcv(pmod)) return E_ALLOC;
     }
 
-    text_print_matrix(pmod->vcv, tmplist, pmod, pdinfo, pause, prn);  
+    text_print_matrix(pmod->vcv, tmplist, pmod, pdinfo, prn);  
 
     free(tmplist);
 
@@ -621,45 +620,43 @@ static void outxx (const double xx, int ci, PRN *prn)
     }
 }
 
-static int takenotes (int quit_option)
+int takenotes (int quit_opt)
 {
-    char s[4];
+    char resp[4];
 
-    if (quit_option)
+    if (quit_opt) {
 	puts(_("\nTake notes then press return key to continue (or q to quit)"));
-    else
+    } else {
 	puts(_("\nTake notes then press return key to continue"));
+    }
     fflush(stdout);
-    fgets(s, 3, stdin);
-    if (quit_option && s[0] == 'q') return 1;
+
+    fgets(resp, sizeof resp, stdin);
+
+    if (quit_opt && *resp == 'q') return 1;
+
     return 0;
 }
 
 /**
- * page_break:
- * @n: line offset (will be added to *lineno).
- * @lineno: pointer to line number (or NULL).
- * @quit_option: if non-zero, give the user the option of quitting.
+ * page_pause:
  * 
- * Break "page" when printing a large amount of information.
+ * Pause after a "page" of text, and give the user the option of
+ * breaking out of the printing routine.
  * 
- * Returns: 1 if @quit_option is non-zero and the user chose to quit,
- * otherwise 0.
+ * Returns: 1 if the user chose to quit, otherwise 0.
  */
 
-int page_break (int n, int *lineno, int quit_option)
+int page_pause (void)
 {
-    if (lineno != NULL && *lineno + n <= 20) return 0;
-    if (takenotes(quit_option)) return 1;
-    if (lineno != NULL) *lineno = 1;
-    return 0;
+    return takenotes(1);
 }
 
 /* ........................................................ */
 
 void text_print_matrix (const double *rr, const int *list, 
 			MODEL *pmod, const DATAINFO *pdinfo, 
-			int pause, PRN *prn)
+			PRN *prn)
      /*  Given a one dimensional array, which represents a
 	 symmetric matrix, prints out an upper triangular matrix
 	 of any size. 
@@ -678,9 +675,10 @@ void text_print_matrix (const double *rr, const int *list,
     int nls = (pmod != NULL && pmod->ci == NLS);
     int arma = (pmod != NULL && pmod->ci == ARMA);
     int garch = (pmod != NULL && pmod->ci == GARCH);
+    int pause = gretl_get_text_pause();
     char s[16];
     enum { FIELDS = 5 };
-    
+
     if (pmod != NULL) covhdr(prn);
 
     m = 1;
@@ -691,7 +689,10 @@ void text_print_matrix (const double *rr, const int *list,
 	li2 = lo - nf;
 	p = (li2 > FIELDS) ? FIELDS : li2;
 	if (p == 0) break;
-	if (pause) page_break(3, &lineno, 0);
+
+	if (pause && i > 0) {
+	    takenotes(0);
+	}
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
@@ -709,21 +710,28 @@ void text_print_matrix (const double *rr, const int *list,
 	lineno += 2;
 
 	/* print rectangular part, if any, of matrix */
+	lineno = 1;
 	for (j=0; j<nf; j++) {
-	    if (pause) page_break(1, &lineno, 0);
-	    lineno++;
+	    if (pause && (lineno % PAGELINES == 0)) {
+		takenotes(0);
+		lineno = 1;
+	    }
 	    for (k=0; k<p; k++) {
 		index = ijton(j, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
 	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
 		    j+1 : list[j+1]);
+	    lineno++;
 	}
 
 	/* print upper triangular part of matrix */
+	lineno = 1;
 	for (j=0; j<p; ++j) {
-	    if (pause) page_break(1, &lineno, 0);
-	    lineno++;
+	    if (pause && (lineno % PAGELINES == 0)) {
+		takenotes(0);
+		lineno = 1;
+	    }
 	    ij2 = nf + j;
 	    bufspace(14 * j, prn);
 	    for (k=j; k<p; k++) {
@@ -732,6 +740,7 @@ void text_print_matrix (const double *rr, const int *list,
 	    }
 	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
 		    ij2+1 : list[ij2+1]);
+	    lineno++;
 	}
 	pputc(prn, '\n');
     }
@@ -785,16 +794,20 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 	gretl_minmax(t1, t2, zy2, &y2min, &y2max);
 	ymin = (y1min < y2min)? y1min : y2min;
 	ymax = (y1max > y2max)? y1max : y2max;
+    } else {
+	gretl_minmax(t1, t2, zy1, &ymin, &ymax);
     }
-    else gretl_minmax(t1, t2, zy1, &ymin, &ymax);
+
     yrange = ymax - ymin;
     xzero = yzero = 0;
-    /* setting the number of columns and rows to be used */
+
+    /* set the number of columns and rows to be used */
     ncols = 60;
     if (oflag & OPT_O) nrows = 40;
     else nrows = option ? 16 : 18 ;
     nr2 = nrows/2;
     nc2 = ncols/2;
+
     gretl_minmax(t1, t2, zx, &xmin, &xmax);
     xrange = xmax - xmin;
 
@@ -803,33 +816,33 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 	p[i][0] = (i%5 == 0)? '+' : '|'; 
 	for (j=1; j<=ncols+1; j++) p[i][j] = ' ';
     }
-    /*
-      if min is < 0 and max > 0, draw line at zero value
-    */
-    if (xmin <0 && xmax >0) {
-	xzero = 0.5 -1.0*xmin*ncols/xrange;
+
+    if (xmin < 0 && xmax > 0) {
+	xzero = 0.5 - xmin * ncols / xrange;
 	for (i=0; i<=nrows; i++) p[i][xzero+1] = '|';
     }
-    if (ymin <0 && ymax >0) {
-	yzero = 0.5 -1.0*ymin*nrows/yrange;
+    if (ymin < 0 && ymax > 0) {
+	yzero = 0.5 - ymin * nrows / yrange;
 	for (j=0; j<=ncols; j++) p[yzero][j+1] = '-';
     }
+
     /*  loop replaces blanks in PICTURE with o's that correspond to the
 	scaled values of the specified variables */
-    if (option) for (i=0; i<n; ++i) {
-	ix = (floatneq(xrange, 0.0))? 
-	    ((zx[i] - xmin)/xrange)*ncols : nc2;
-	iy1 = (floatneq(yrange, 0.0))? 
-	    ((zy1[i] - ymin)/yrange)*nrows : nr2;
-	iy2 = (floatneq(yrange, 0.0))? 
-	    ((zy2[i] - ymin)/yrange)*nrows : nr2;
-	if (iy1 != iy2) {
-	    p[iy1][ix+1] = 'o';
-	    p[iy2][ix+1] = 'x';
+    if (option) {
+	for (i=0; i<n; ++i) {
+	    ix = (floatneq(xrange, 0.0))? 
+		((zx[i] - xmin)/xrange)*ncols : nc2;
+	    iy1 = (floatneq(yrange, 0.0))? 
+		((zy1[i] - ymin)/yrange)*nrows : nr2;
+	    iy2 = (floatneq(yrange, 0.0))? 
+		((zy2[i] - ymin)/yrange)*nrows : nr2;
+	    if (iy1 != iy2) {
+		p[iy1][ix+1] = 'o';
+		p[iy2][ix+1] = 'x';
+	    }
+	    else p[iy1][ix+1] = '+';
 	}
-	else p[iy1][ix+1] = '+';
-    }
-    else for (i=0; i<n; ++i) {
+    } else for (i=0; i<n; ++i) {
 	ix = (floatneq(xrange, 0.0))? 
 	    ((zx[i] - xmin)/xrange)*ncols : nc2;
 	iy1 = (floatneq(yrange, 0.0))? 
@@ -839,22 +852,30 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 
     /* loop prints out the matrix PICTURE that is stored in the
        2-dimensional p matrix. */
-    if (!option) pprintf(prn, "%14s\n", yname);
-    else if (list) 
+    if (!option) {
+	pprintf(prn, "%14s\n", yname);
+    } else if (list) {
 	pprintf(prn, _("%7co stands for %s and x stands for %s (+ means they "
 		"are equal)\n\n%9s, %s\n"), ' ', 
 		yname, pdinfo->varname[list[2]], yname, 
 		pdinfo->varname[list[2]]);
+    }
+
     for (i=nrows; i>=0; --i) {
-	if (i && i == yzero) pputs(prn, "        0.0  ");
-	else if (i == nrows || i%5 == 0) {
+	if (i && i == yzero) {
+	    pputs(prn, "        0.0  ");
+	} else if (i == nrows || i%5 == 0) {
 	    xx = ymin + ((ymax-ymin) * i/nrows);
 	    printgx(xx, prn);
+	} else {
+	    bufspace(13, prn);
 	}
-	else bufspace(13, prn);
-	for (j=0; j<=ncols+1; ++j) pprintf(prn, "%c", p[i][j]);
+	for (j=0; j<=ncols+1; ++j) {
+	    pprintf(prn, "%c", p[i][j]);
+	}
 	pputc(prn, '\n');
     }
+
     bufspace(13, prn);
     pputc(prn, '|');
     for (j=0; j<=ncols; j++) {
@@ -862,6 +883,7 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 	else pputc(prn, '-');
     }
     pputc(prn, '\n');
+
     bufspace(14, prn);
     sprintf(word, "%g", xmin);
     lx = strlen(word);
@@ -1219,7 +1241,6 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
  * @list: list of variables to print.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @pause: if non-zero, pause after each screen of data.
  * @oflag: if = OPT_O, print the data by observation (series in columns);
  *          if = OPT_T, print the data to 10 significant digits.
  * @prn: gretl printing struct.
@@ -1231,7 +1252,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
  */
 
 int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo, 
-	       int pause, gretlopt oflag, PRN *prn)
+	       gretlopt oflag, PRN *prn)
 {
     int l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
     register int t;
@@ -1241,6 +1262,8 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     double xx;
     int *tmplist = NULL, freelist = 0;
     char line[96];
+
+    int pause = gretl_get_text_pause();
 
     if (prn->buf != NULL) gui = 1;
     else gui = 0;
@@ -1330,11 +1353,12 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	nvj5 = l0 - j5;
 	v1 = j5 +1;
 	if (nvj5) {
+	    /* starting a new block of variables */
 	    v2 = (ncol > nvj5)? nvj5 : ncol;
 	    v2 += j5;
 	    varheading(v1, v2, pdinfo, list, prn);
-	    if (pause && page_break(1, &lineno, 1)) return 0;
-	    lineno++;
+	    if (pause && j > 0 && takenotes(1)) return 0;
+	    lineno = 1;
 	    for (t=t1; t<=t2; t++) {
 		char obs_string[OBSLEN];
 
@@ -1350,16 +1374,12 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 		}
 		if (pprintf(prn, "%s\n", line))
 		    return 1;
-		if (pause && page_break(1, &lineno, 1)) return 0;
-		lineno++;
-		if (pause) {
-		    if ((t-t1+1) % 21 == 0) {
-			varheading(v1, v2, pdinfo, list, prn);
-			if (page_break(1, &lineno, 1)) return 0;
-			lineno++;
-		    }
+		if (pause && (lineno % PAGELINES == 0)) {
+		    if (takenotes(1)) return 0;
+		    lineno = 1;
 		}
-	    } /* end of t loop */
+		lineno++;
+	    } /* end of printing obs (t) loop */
 	} /* end if nvj5 */
     } /* end for j loop */
 

@@ -685,7 +685,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 		} else {
 		    makevcv(pmod);
 		}
-		outcovmx(pmod, pdinfo, 0, prn);
+		outcovmx(pmod, pdinfo, prn);
 	    }
 
 	    ploop->next_model += 1;	    

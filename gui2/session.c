@@ -2425,7 +2425,7 @@ static int silent_remember (MODEL **ppmod, DATAINFO *pdinfo)
     session.models[session.nmodels] = pmod;
     session.nmodels += 1;
 
-    tmp = gretl_model_new(pdinfo);
+    tmp = gretl_model_new();
     if (tmp == NULL) return 1;
 
     *ppmod = tmp; /* replaced */
@@ -2467,10 +2467,10 @@ int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo,
 	    }
 	}
 	save = 1;
-	clear_model(*ppmod, pdinfo);
+	clear_model(*ppmod);
     } else {
 	/* no rebuild, no need to save */
-	clear_model(*ppmod, pdinfo);
+	clear_model(*ppmod);
     }
 
     return 0;

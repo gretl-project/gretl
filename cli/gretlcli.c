@@ -29,6 +29,7 @@
 #include "var.h"
 #include "gretl_restrict.h"
 #include "modelspec.h"
+#include "libset.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -270,8 +271,8 @@ int clear_data (void)
     fullZ = NULL;
     data_status = 0;
 
-    clear_model(models[0], NULL);
-    clear_model(models[1], NULL);
+    clear_model(models[0]);
+    clear_model(models[1]);
 
     free_modelspec(modelspec);
     modelspec = NULL;
@@ -429,8 +430,8 @@ int main (int argc, char *argv[])
     models = malloc(2 * sizeof *models);
     if (models == NULL) noalloc("models"); 
 
-    models[0] = gretl_model_new(datainfo);
-    models[1] = gretl_model_new(datainfo);
+    models[0] = gretl_model_new();
+    models[1] = gretl_model_new();
 
     if (models[0] == NULL || models[1] == NULL) 
 	noalloc("models"); 
@@ -651,6 +652,9 @@ void exec_line (char *line, PRN *prn)
 	       (runit)? NULL : cmdprn);
     }
 
+    /* tell the lib if we should pause between screens */
+    gretl_set_text_pause(!batch);
+
     /* if in batch mode, echo comments in input */
     if (batch && cmd.ci == CMD_COMMENT && !echo_off) {
 	printf_strip(linebak);
@@ -709,7 +713,7 @@ void exec_line (char *line, PRN *prn)
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
-			      !batch, prn);
+			      prn);
 	if (err) errmsg(err, prn);
 	break;
 
@@ -717,7 +721,7 @@ void exec_line (char *line, PRN *prn)
     case OMIT:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
     plain_add_omit:
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, models[0], models[1], 
 			 &Z, datainfo, AUX_ADD, prn, NULL, cmd.opt);
@@ -727,16 +731,16 @@ void exec_line (char *line, PRN *prn)
 	}
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	} else {
 	    /* for command-line use, we keep a "stack" of 
 	       two models, and recycle the places */
 	    if (!(cmd.opt & OPT_Q)) {
 		swap_models(&models[0], &models[1]);
 	    } 
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, !batch, prn);
+		outcovmx(models[0], datainfo, prn);
 	    }
 	}
 	break;	
@@ -752,7 +756,7 @@ void exec_line (char *line, PRN *prn)
 	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
 	    break;
 	} 
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, &tmpmod, models[1], 
@@ -763,22 +767,22 @@ void exec_line (char *line, PRN *prn)
 	}
 	if (err) {
 	    errmsg(err, prn);
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    break;
 	} else {
 	    if (!(cmd.opt & OPT_Q)) {
 		swap_models(&models[0], &models[1]);
 	    }
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, !batch, prn);
+		outcovmx(models[0], datainfo, prn);
 	    }
 	}
-	clear_model(&tmpmod, NULL);
+	clear_model(&tmpmod);
 	break;
 
     case AR:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
 			     datainfo, prn);
 	if ((err = (models[0])->errcode)) { 
@@ -786,13 +790,13 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, !batch, prn);
+	    outcovmx(models[0], datainfo, prn);
 	}
 	break;
 
     case ARCH:
 	order = atoi(cmd.param);
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
 			  prn, NULL);
 	if ((err = (models[1])->errcode)) 
@@ -801,14 +805,14 @@ void exec_line (char *line, PRN *prn)
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]); 
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, !batch, prn);
+		outcovmx(models[0], datainfo, prn);
 	    }
 	}
-	clear_model(models[1], NULL);
+	clear_model(models[1]);
 	break;
 
     case ARMA:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 #ifdef HAVE_X12A
 	if (cmd.opt & OPT_X) {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
@@ -826,13 +830,13 @@ void exec_line (char *line, PRN *prn)
 	} else {	
 	    printmodel(models[0], datainfo, prn);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, !batch, prn);
+		outcovmx(models[0], datainfo, prn);
 	    }	    
 	}	
 	break;
 
     case GARCH:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	*models[0] = garch(cmd.list, &Z, datainfo, 
 			  ((cmd.opt & OPT_V)? prn : NULL), cmd.opt);
 	if ((err = (models[0])->errcode)) { 
@@ -840,7 +844,7 @@ void exec_line (char *line, PRN *prn)
 	} else {	
 	    printmodel(models[0], datainfo, prn);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, !batch, prn);
+		outcovmx(models[0], datainfo, prn);
 	    }	    
 	}	
 	break;
@@ -878,7 +882,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -886,19 +890,19 @@ void exec_line (char *line, PRN *prn)
 	}
 	printmodel(models[0], datainfo, prn); 
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, !batch, prn);
+	    outcovmx(models[0], datainfo, prn);
 	}
 	break;
 
     case LAD:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	*models[0] = lad(cmd.list, &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
 	}
 	printmodel(models[0], datainfo, prn);
-	/* if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); */
+	/* if (cmd.opt) outcovmx(models[0], datainfo, prn); */
 	break;
 
     case CORRGM:
@@ -948,7 +952,7 @@ void exec_line (char *line, PRN *prn)
 	    sys = NULL;
 	} 
 	else if (!strcmp(cmd.param, "nls")) {
-	    clear_model(models[0], NULL);
+	    clear_model(models[0]);
 	    *models[0] = nls(&Z, datainfo, prn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
@@ -957,7 +961,7 @@ void exec_line (char *line, PRN *prn)
 	    do_nls = 1;
 	    printmodel(models[0], datainfo, prn);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, !batch, prn);
+		outcovmx(models[0], datainfo, prn);
 	    }
 	}
 	else if (!strcmp(cmd.param, "restrict")) {
@@ -1127,7 +1131,7 @@ void exec_line (char *line, PRN *prn)
 
     case HCCM:
     case HSK:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	if (cmd.ci == HCCM) {
 	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
 	} else {
@@ -1139,7 +1143,7 @@ void exec_line (char *line, PRN *prn)
 	}
 	printmodel(models[0], datainfo, prn);
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, !batch, prn);
+	    outcovmx(models[0], datainfo, prn);
 	}
 	break;
 
@@ -1240,22 +1244,22 @@ void exec_line (char *line, PRN *prn)
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_SQ, prn, NULL, 0);
-	    clear_model(models[1], NULL);
+	    clear_model(models[1]);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_S) break;
-	    if (!err && !batch && page_break(0, NULL, 1)) break; 
+	    if (!err && !batch && page_pause()) break; 
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_LOG, prn, NULL, 0);
-	    clear_model(models[1], NULL); 
+	    clear_model(models[1]); 
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_L) break;
-	    if (!err && !batch && page_break(0, NULL, 1)) break;
+	    if (!err && !batch && page_pause()) break;
 	}
 	/* autocorrelation */
 	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
@@ -1276,7 +1280,7 @@ void exec_line (char *line, PRN *prn)
     case LOGIT:
     case PROBIT:
     case TOBIT:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
 	} else if (cmd.ci == LOGISTIC) {
@@ -1291,7 +1295,7 @@ void exec_line (char *line, PRN *prn)
 	}
 	printmodel(models[0], datainfo, prn);
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, !batch, prn); 
+	    outcovmx(models[0], datainfo, prn); 
 	}
 	break;
 
@@ -1345,18 +1349,18 @@ void exec_line (char *line, PRN *prn)
     case OLS:
     case WLS:
     case POOLED:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    clear_model(models[0], NULL);
+	    clear_model(models[0]);
 	    break;
 	}
 	if (!(cmd.opt & OPT_Q)) {
 	    printmodel(models[0], datainfo, prn);
 	}
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, !batch, prn); 
+	    outcovmx(models[0], datainfo, prn); 
 	}
 	break;
 
@@ -1617,16 +1621,16 @@ void exec_line (char *line, PRN *prn)
 	    err = E_ALLOC;
 	    break;
 	}
-	if ((err = get_gretl_errno())) 
+	if ((err = get_gretl_errno())) { 
 	    errmsg(err, prn);
-	else {
+	} else {
 	    printfreq(freq, prn); 
 	    free_freq(freq);
 	}
 	break;
 
     case TSLS:
-	clear_model(models[0], NULL);
+	clear_model(models[0]);
 	*models[0] = tsls_func(cmd.list, atoi(cmd.param), 
 			       &Z, datainfo, cmd.opt);
 	if ((err = (models[0])->errcode)) {
@@ -1634,9 +1638,8 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	printmodel(models[0], datainfo, prn);
-	/* is this OK? */
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, !batch, prn); 
+	    outcovmx(models[0], datainfo, prn); 
 	}
 	break;
 

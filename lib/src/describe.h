@@ -53,7 +53,7 @@ GRETLSUMMARY *summary (LIST list,
 
 void print_summary (GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
-		    int pause, PRN *prn); 
+		    PRN *prn); 
 
 void free_summary (GRETLSUMMARY *summ);
 
@@ -64,7 +64,7 @@ void free_corrmat (CORRMAT *corrmat);
 
 int esl_corrmx (LIST list, 
 		double ***pZ, const DATAINFO *pdinfo, 
-		int pause, PRN *prn);
+		PRN *prn);
 
 int means_test (LIST list, 
 		double **Z, const DATAINFO *pdinfo, 
@@ -75,7 +75,7 @@ int vars_test (LIST list,
 	       PRN *prn);
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
-			int pause, PRN *prn);
+			PRN *prn);
 
 double gretl_median (const double *x, int n);
 

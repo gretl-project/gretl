@@ -112,7 +112,7 @@ gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo,
 
     if (var->models != NULL) {
 	for (i=0; i<neqns; i++) {
-	    var->models[i] = gretl_model_new(pdinfo);
+	    var->models[i] = gretl_model_new();
 	    if (var->models[i] == NULL) {
 		err = 1;
 		for (j=0; j<i; j++) {
@@ -152,7 +152,7 @@ void gretl_var_free (GRETL_VAR *var)
 
     if (var->models != NULL) {
 	for (i=0; i<var->neqns; i++) {
-	    clear_model(var->models[i], NULL);
+	    clear_model(var->models[i]);
 	    free(var->models[i]);
 	}
 	free(var->models);
@@ -406,7 +406,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	}
 
 	if (pause && block < blockmax - 1) {
-	    page_break(0, NULL, 0);
+	    takenotes(0);
 	}
     }
 
@@ -706,7 +706,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	}
 
 	if (pause && block < blockmax - 1) {
-	    page_break(0, NULL, 0);
+	    takenotes(0);
 	}
     }
 
@@ -1048,7 +1048,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 		F = ((testmod.ess - varmod->ess) / order) / 
 		    (varmod->ess / varmod->dfd);
 	    }
-	    clear_model(&testmod, pdinfo);
+	    clear_model(&testmod);
 	}
 	if (err) break;
 
@@ -1087,7 +1087,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 		F = ((testmod.ess - varmod->ess) / neqns) / 
 		    (varmod->ess / varmod->dfd);
 	    }
-	    clear_model(&testmod, pdinfo);
+	    clear_model(&testmod);
 	}
 
 	if (!err) {
@@ -1101,7 +1101,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
     }
 
     pputc(prn, '\n');
-    if (!err && pause) page_break(0, NULL, 0);
+    if (!err && pause) takenotes(0);
 
  bailout:
     free(shortlist);
@@ -1232,7 +1232,7 @@ static int real_var (int order, const LIST inlist,
     } 
 
     /* even in case of VAR_IMPULSE_RESPONSES this may be used */
-    gretl_model_init(&var_model, pdinfo);
+    gretl_model_init(&var_model);
 
     if (flags & VAR_PRINT_MODELS) {
 	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
@@ -1296,7 +1296,7 @@ static int real_var (int order, const LIST inlist,
 	    }
 	    resids->uhat[i + neqns] = jmod.uhat;
 	    jmod.uhat = NULL;
-	    clear_model(&jmod, pdinfo);
+	    clear_model(&jmod);
 	}
 
 	if (flags & VAR_DO_FTESTS) {
@@ -1307,7 +1307,7 @@ static int real_var (int order, const LIST inlist,
 	}
 
 	if (1) { /* FIXME? */
-	    clear_model(&var_model, pdinfo);
+	    clear_model(&var_model);
 	}
 
     }
@@ -1431,7 +1431,7 @@ int coint (int order, const LIST list, double ***pZ,
     MODEL coint_model;
     int *cointlist = NULL;
 
-    gretl_model_init(&coint_model, pdinfo);
+    gretl_model_init(&coint_model);
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
@@ -1491,7 +1491,7 @@ int coint (int order, const LIST list, double ***pZ,
 	    "cannot be \nread from the usual statistical tables.)\n"));
 
     /* clean up and get out */
-    clear_model(&coint_model, pdinfo);
+    clear_model(&coint_model);
     free(cointlist);
     dataset_drop_vars(1, pZ, pdinfo);
 
@@ -1542,7 +1542,7 @@ int adf_test (int order, int varno, double ***pZ,
 
     if (varno == 0) return E_DATA;
 
-    gretl_model_init(&adf_model, pdinfo);
+    gretl_model_init(&adf_model);
     k = 3 + order;
 
     adflist = malloc((5 + order) * sizeof *adflist);
@@ -1610,7 +1610,7 @@ int adf_test (int order, int varno, double ***pZ,
 	    pdinfo->varname[varno], pdinfo->varname[varno],
 	    adf_model.coeff[1], DFt, adf_model.nobs, pval);
 
-    clear_model(&adf_model, pdinfo);
+    clear_model(&adf_model);
 
     /* then do ADF test using F-statistic */
     adflist[0] = 4 + order;
@@ -1639,7 +1639,7 @@ int adf_test (int order, int varno, double ***pZ,
     printmodel(&adf_model, pdinfo, prn);
     essu = adf_model.ess;
     T = adf_model.nobs;
-    clear_model(&adf_model, pdinfo);
+    clear_model(&adf_model);
 
     shortlist[0] = adflist[0] - 2;
     shortlist[1] = adflist[1];
@@ -1654,7 +1654,7 @@ int adf_test (int order, int varno, double ***pZ,
     }	
 
     F = (adf_model.ess - essu) * (T - k)/(2 * essu);
-    clear_model(&adf_model, pdinfo);
+    clear_model(&adf_model);
 
     row = -1;
     if (T > 500) row = 5;
@@ -1695,7 +1695,7 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
     int trends = 0;
     MODEL tmod;
 
-    gretl_model_init(&tmod, pdinfo);
+    gretl_model_init(&tmod);
 
     tlist[0] = 3;
     tlist[2] = 0;
@@ -1716,14 +1716,14 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
 	tmod = lsq(tlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tmod.errcode) {
 	    trends = -1;
-	    clear_model(&tmod, pdinfo);
+	    clear_model(&tmod);
 	    break;
 	}
 	tstat = tmod.coeff[0] / tmod.sderr[0];
 	if (tprob(tstat, tmod.dfd) < 0.05) {
 	    trends = 1;
 	}
-	clear_model(&tmod, pdinfo);
+	clear_model(&tmod);
 	if (trends) break;
     }
 

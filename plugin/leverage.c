@@ -339,8 +339,6 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
     slist[slist[0]] = pdinfo->v - 1; /* last var added */  
     k = slist[0] - 2;
 
-    gretl_model_init(&smod, NULL);
-
     for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
 	dum[t] = 1.0;
 	if (t > pmod->t1) dum[t-1] = 0.0;
@@ -350,7 +348,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	} else {
 	    suhat[t] = smod.coeff[k] / smod.sderr[k];
 	}
-	clear_model(&smod, NULL);
+	clear_model(&smod);
     }
 
     if (!err) {

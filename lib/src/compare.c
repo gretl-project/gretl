@@ -168,7 +168,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     int *list = *plist;
     int pos, mc = get_model_count();
 
-    gretl_model_init(&rep, NULL);
+    gretl_model_init(&rep);
 
     if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
 	rep.errcode = hilu_corc(&rho, list, pZ, pdinfo, NULL, 1, orig->ci, prn);
@@ -285,7 +285,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
        original model was estimated */
     exchange_smpl(orig, pdinfo);
 
-    gretl_model_init(&aux, pdinfo);
+    gretl_model_init(&aux);
 
     if (addvars == NULL) {
 	listlen = orig->list[0] - orig->ifc;
@@ -344,7 +344,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 	    if (addvars == NULL) {
 		free(tmplist); 
 	    }
-	    clear_model(new, pdinfo);
+	    clear_model(new);
 	}
     } /* end if AUX_ADD */
 
@@ -389,7 +389,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 		    test->pvalue = chisq(trsq, df);
 		}
 	    } /* ! aux.errcode */
-	    clear_model(&aux, pdinfo);
+	    clear_model(&aux);
 	    /* shrink for uhat */
 	    dataset_drop_vars(1, pZ, pdinfo);
 	}
@@ -715,7 +715,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pmod->ci != OLS) return E_OLSONLY;
 
-    gretl_model_init(&aux, pdinfo);
+    gretl_model_init(&aux);
 
     if (pmod->ncoeff + 2 >= pdinfo->t2 - pdinfo->t1)
 	return E_DF;
@@ -778,7 +778,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     free(newlist);
     dataset_drop_vars(2, pZ, pdinfo); 
-    clear_model(&aux, pdinfo); 
+    clear_model(&aux); 
 
     return err;
 }
@@ -838,7 +838,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
 
     auxlist[0] = pmod->list[0] - 1;
 
-    gretl_model_init(&auxmod, pdinfo);
+    gretl_model_init(&auxmod);
 
     /* loop across the indep vars in the original model */
     for (i=2; i<=pmod->list[0]; i++) {
@@ -874,7 +874,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
 	    robust[i-2] = sderr;
 	}
 
-	clear_model(&auxmod, pdinfo);
+	clear_model(&auxmod);
     }
 
     /* save original model data */
@@ -950,7 +950,7 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     exchange_smpl(pmod, pdinfo);
-    gretl_model_init(&aux, pdinfo);
+    gretl_model_init(&aux);
 
     if (order <= 0) order = pdinfo->pd;
 
@@ -1043,7 +1043,7 @@ int autocorr_test (MODEL *pmod, int order,
 
     free(newlist);
     dataset_drop_vars(k, pZ, pdinfo); 
-    clear_model(&aux, pdinfo); 
+    clear_model(&aux); 
 
     if (pval < 0.05 && !gretl_model_get_int(pmod, "robust")) {
 	autocorr_standard_errors(pmod, pZ, pdinfo, prn);
@@ -1085,7 +1085,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
        original model was estimated */
     exchange_smpl(pmod, pdinfo);
 
-    gretl_model_init(&chow_mod, pdinfo);
+    gretl_model_init(&chow_mod);
 
     if (sscanf(line, "%*s %8s", chowdate) != 1) 
 	err = E_PARSE;
@@ -1167,7 +1167,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		test->pvalue = fdist(F, newvars, chow_mod.dfd);
 	    }
 	}
-	clear_model(&chow_mod, pdinfo);
+	clear_model(&chow_mod);
     }
 
     /* clean up extra variables */
@@ -1257,13 +1257,13 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     }
 
     if (!err) {
-	gretl_model_init(&cum_mod, pdinfo);
+	gretl_model_init(&cum_mod);
 	for (j=0; j<n_est; j++) {
 	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_C, 0.0);
 	    err = cum_mod.errcode;
 	    if (err) {
 		errmsg(err, prn);
-		clear_model(&cum_mod, pdinfo);
+		clear_model(&cum_mod);
 		break;
 	    } else {
 		t = pdinfo->t2 + 1;
@@ -1280,7 +1280,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		cresid[j] /= sqrt(1.0 + xx);
 		/*  printf("w[%d] = %g\n", t, cresid[j]); */
 		wbar += cresid[j];
-		clear_model(&cum_mod, pdinfo);
+		clear_model(&cum_mod);
 		pdinfo->t2 += 1;
 	    }
 	}
@@ -1758,7 +1758,7 @@ int sum_test (LIST sumvars, MODEL *pmod,
        original model was estimated */
     exchange_smpl(pmod, pdinfo);
 
-    gretl_model_init(&summod, pdinfo);
+    gretl_model_init(&summod);
 
     if (!err) {
 	summod = replicate_estimator(pmod, &tmplist, pZ, pdinfo, OPT_A, 
@@ -1791,7 +1791,7 @@ int sum_test (LIST sumvars, MODEL *pmod,
     }
 
     free(tmplist);
-    clear_model(&summod, pdinfo);
+    clear_model(&summod);
     dataset_drop_vars(add, pZ, pdinfo);
     gretl_print_destroy(nullprn);
 
