@@ -59,7 +59,7 @@ mentre il link a destra consente di cercare il pacchetto su
 </tr>
 <tr bgcolor="#E0E0E0">
   <td><a href="ftp://ftp.gnome.org/pub/GNOME/stable/latest/sources/">gdk-pixbuf</a></td>
-  <td>Raccomandato [<a href="#note1">1</a>]</td>
+  <td>Richiesto</td>
   <td>Gestisce i grafici in formato PNG; rende interattivi i grafici di gnuplot</td>
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gdk-pixbuf">Cerca</a></td>
 </tr>
@@ -79,7 +79,7 @@ mentre il link a destra consente di cercare il pacchetto su
 </tr>
 <tr bgcolor="#E0E0E0">
   <td><a href="ftp://ftp.gnome.org/pub/GNOME/sources/libole2/">libole2</a></td>
-  <td>Opzionale [<a href="#note2">2</a>]</td>
+  <td>Opzionale [<a href="#note1">1</a>]</td>
   <td>Importa dati da MS Excel</td>
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libole2">Cerca</a></td>
 </tr>
@@ -93,12 +93,7 @@ mentre il link a destra consente di cercare il pacchetto su
 
 <h3>Note</h3>
 
-<p><a name="note1">1.</a> Se si compila gretl in proprio, è possibile rimuovere la
-dipendenza da gdk-pixbuf dando l'opzione <tt>--disable-png-comments</tt> a
-<tt>configure</tt>.  Si otterranno ancora grafici corretti, ma non interattivi.</p>
-
-
-<p><a name="note2">2.</a> Le parti rilevanti del codice di libole2 sono
+<p><a name="note1">1.</a> Le parti rilevanti del codice di libole2 sono
 incluse nel pacchetto sorgenti di gretl e vengono compilate se libole2 
 non viene trovato sul sistema.</p>
 
