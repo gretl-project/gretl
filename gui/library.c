@@ -2416,7 +2416,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifdef TRAMO_X12
+#ifdef HAVE_TRAMO
 extern char tramo[];
 extern char tramodir[];
 #endif
