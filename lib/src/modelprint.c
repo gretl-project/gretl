@@ -105,9 +105,9 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	    return 1;
 	}
 
-	pprintf(prn, "  %s = %#g\n", _("Sum of squared residuals"), 
+	pprintf(prn, "  %s = %g\n", _("Sum of squared residuals"), 
 		wt? pmod->ess_wt : pmod->ess);
-	pprintf(prn, "  %s = %#g\n", _("Standard error of residuals"), 
+	pprintf(prn, "  %s = %g\n", _("Standard error of residuals"), 
 		wt? pmod->sigma_wt : pmod->sigma);
 	return 0;
     }
@@ -122,9 +122,9 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	    return 1;
 	}
 
-	pprintf(prn, RTFTAB "%s = %#g\n", I_("Sum of squared residuals"), 
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
 		wt? pmod->ess_wt : pmod->ess);
-	pprintf(prn, RTFTAB "%s = %#g\n", I_("Standard error of residuals"), 
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of residuals"), 
 		wt? pmod->sigma_wt : pmod->sigma);
 	return 0;
     }
@@ -267,9 +267,9 @@ static void dwline (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	if (!na(pmod->dw)) {
-	    pprintf(prn, "  %s = %#g\n", _("Durbin-Watson statistic"), 
+	    pprintf(prn, "  %s = %g\n", _("Durbin-Watson statistic"), 
 		    pmod->dw);
-	    pprintf(prn, "  %s = %#g\n", _("First-order autocorrelation coeff."), 
+	    pprintf(prn, "  %s = %g\n", _("First-order autocorrelation coeff."), 
 		    pmod->rho);
 	} 
     }
@@ -285,9 +285,9 @@ static void dwline (const MODEL *pmod, PRN *prn)
 
     else if (RTF_FORMAT(prn->format)) {
 	if (!na(pmod->dw)) {
-	    pprintf(prn, RTFTAB "%s = %#g\n", I_("Durbin-Watson statistic"), 
+	    pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin-Watson statistic"), 
 		    pmod->dw);
-	    pprintf(prn, RTFTAB "%s = %#g\n", I_("First-order autocorrelation coeff."), 
+	    pprintf(prn, RTFTAB "%s = %g\n", I_("First-order autocorrelation coeff."), 
 		    pmod->rho);
 	} 
     }
@@ -309,7 +309,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
     if (PLAIN_FORMAT(prn->format)) {
 	char tmp[128];
 
-	sprintf(tmp, _("Durbin's h stat. %#g  First-order autocorr. coeff %#g"), 
+	sprintf(tmp, _("Durbin's h stat. %g  First-order autocorr. coeff %g"), 
 		h, pmod->rho);
 	pprintf(prn, "  %s\n", tmp);
 
@@ -322,7 +322,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
 	char tmp[128];
 
 	h = pmod->rho * sqrt(T/(1 - T * sderr * sderr));
-	sprintf(tmp, I_("Durbin's h stat. %#g  First-order autocorr. coeff %#g"), 
+	sprintf(tmp, I_("Durbin's h stat. %g  First-order autocorr. coeff %g"), 
 		h, pmod->rho);
 	pprintf(prn, RTFTAB "%s\n", tmp);
 

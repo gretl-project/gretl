@@ -975,9 +975,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 
 	if (prn->fp == NULL && gnuplot_init(ppaths, &fq) == 0) {
 	    fprintf(fq, "# CUSUM test\n");
-	    fprintf(fq, "set xlabel \"observation\"\n");
+	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
 	    fprintf(fq, "set xzeroaxis\n");
-	    fprintf(fq, "set title \"CUSUM plot with 95%% confidence band\"\n");
+	    fprintf(fq, "set title \"%s\"\n",
+		    I_("CUSUM plot with 95%% confidence band"));
 	    fprintf(fq, "set nokey\n");
 	    fprintf(fq, "plot %f+%f*x w l 1, \\\n", xx - K*yy, yy);
 	    fprintf(fq, "%f-%f*x w l 1, \\\n", -xx + K*yy, yy);

@@ -362,7 +362,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	spike = .25;
 	fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
 	fprintf(fp, "set yrange [0:.50]\n");
-	fprintf(fp, "set xlabel \"%s\"\n", I_("standard errors"));
+	fprintf(fp, "set xlabel \"%s\"\n", I_("Standard errors"));
     }
     if (dist == 1 || dist == 3) { /* t, F */
 	fprintf(fp, "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n");
@@ -668,7 +668,7 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
 
     *tbl_len += 1;
     gtk_table_resize (GTK_TABLE (tbl), *tbl_len, 2);
-    tempwid = gtk_label_new (label);
+    tempwid = gtk_label_new (_(label));
     gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
     gtk_table_attach_defaults (GTK_TABLE (tbl), 
 			       tempwid, 0, 1, *tbl_len - 1, *tbl_len);
@@ -678,12 +678,14 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
 			       tempwid, 1, 2, *tbl_len - 1, *tbl_len);
     gtk_widget_show (tempwid);
     look[code]->entry[*tbl_len - 2] = tempwid;
-    if (pval)
+
+    if (pval) {
 	g_signal_connect (G_OBJECT (tempwid), "activate", 
 			  G_CALLBACK (get_pvalue), look);
-    else
+    } else {
 	g_signal_connect (G_OBJECT (tempwid), "activate", 
 			  G_CALLBACK (get_critical), look);
+    }
 }
 
 /* .................................................................. */
@@ -767,33 +769,33 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
    
     switch (code) {
     case 0: /* normal */
-	add_lookup_entry(tbl, &tbl_len, _("value"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("mean"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[1]), "0");
-	add_lookup_entry(tbl, &tbl_len, _("std. deviation"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("std. deviation"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[2]), "1");
 	break;
     case 1: /* t */
-	add_lookup_entry(tbl, &tbl_len, _("df"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("value"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("mean"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("df"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[2]), "0");
-	add_lookup_entry(tbl, &tbl_len, _("std. deviation"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("std. deviation"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[3]), "1");
 	break;
     case 2: /* chi-square */
-	add_lookup_entry(tbl, &tbl_len, _("df"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("x-value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("df"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, code, 1);
 	break;
     case 3: /* F */
-	add_lookup_entry(tbl, &tbl_len, _("dfn"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("dfd"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("F-value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("dfn"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("dfd"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("F-value"), pval, code, 1);
 	break;
     case 4: /* gamma */
-	add_lookup_entry(tbl, &tbl_len, _("mean"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("variance"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, _("x-value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("variance"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, code, 1);
 	break;
     default:
 	break;

@@ -831,11 +831,11 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
 
     pprintf(prn, _("Standard error of residuals = %f\n"), pmod->sigma);
     
-    pprintf(prn, "\n     Obs ");
+    pprintf(prn, "\n     %s ", _("Obs"));
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, pdinfo->varname[pmod->list[1]]);
 	if (i == 2) strcpy(label, _("fitted"));
-	if (i == 3) strcpy(label, _("residual"));
+	if (i == 3) strcpy(label, _("residuals"));
 	pprintf(prn, "%13s", label);
     }
     pprintf(prn, "\n");

@@ -381,7 +381,7 @@ int corrgram (int varno, int order, double ***pZ,
 	box += acf[t] * acf[t];
     box *= m;
     pprintf(prn, _("Box-Pierce Q statistic = %.4f\n"), box);
-    pprintf(prn, _("Degrees of freedom = %d, significance level = %.4f\n\n"),
+    pprintf(prn, _("Degrees of freedom = %d, p-value = %.4f\n\n"),
 	    m, chisq(box, m));
 
     for (t=1; t<=m; t++) {
