@@ -623,8 +623,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #ifdef notyet
 
 static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
-                           double **srcZ, DATAINFO *srcinfo, int srcv,
-			   char *mask)
+                           double **srcZ, DATAINFO *srcinfo, int srcv)
 {
     int t;
 
@@ -638,13 +637,14 @@ static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
     strcpy(targinfo->label[targv], srcinfo->label[srcv]);
 }
 
-static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
+static void make_reduced_data_info (DATAINFO *targ, DATAINFO *src, int order)
 {
+    /* FIXME!!! */
     targ->sd0 = src->sd0;
     strcpy(targ->stobs, src->stobs); 
     targ->t1 = src->t1;
     targ->t2 = src->t2;
-    targ->pd = src->pd; /* FIXME */
+    targ->pd = src->pd - order; 
     targ->time_series = src->time_series;
 }
 
@@ -664,16 +664,15 @@ int panel_autocorr_test (MODEL *pmod, int order,
     double **tmpZ;
     DATAINFO *tmpinfo;
     MODEL aux;
-    int i, k, t, n = pdinfo->n, v = pdinfo->v; 
-    char *mask;
-    double trsq, LMF, bp, lb;
-    int nobs, err = 0;
+    int i, t; 
+    double trsq, LMF;
+    int nv, nunits, nobs, err = 0;
+    int sn = pdinfo->t2 - pdinfo->t1 + 1;
 
-    /* basic checks: need to set "nobs" first */
+    /* basic checks */
     if (order <= 0) order = 1;
-    if (order > nobs - 1) return E_DF;
-    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1)
-	return E_DF;
+    if (order > pdinfo->pd - 1) return E_DF;
+    if (pmod->ncoeff + order >= sn) return E_DF;
 
     if (!balanced_panel(pdinfo)) {
         pprintf(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
@@ -682,35 +681,45 @@ int panel_autocorr_test (MODEL *pmod, int order,
         return 1;
     }
 
+    /* get number of cross-sectional units */
+    nunits = sn / pdinfo->pd;
+
+    /* we lose "order" observations for each unit */
+    nobs = sn - nunits * order;
+
+    /* the required number of variables */
+    nv = pmod->list[0] + order;
+
     /* create little temporary dataset */
-    /* FIXME values to use here */
-    tmpinfo = create_new_dataset(&tmpZ, 4, pdinfo->n, 0);
+    tmpinfo = create_new_dataset(&tmpZ, nv, nobs, 0);
     if (tmpinfo == NULL) return E_ALLOC;
-    copy_basic_data_info(tmpinfo, pdinfo);
+    make_reduced_data_info(tmpinfo, pdinfo);
 
-    _init_model(&aux, pdinfo);
-
-    k = order + 1;
-    aclist = malloc((pmod->list[0] + k) * sizeof *aclist);
-
+    /* allocate the auxiliary regression list */
+    aclist = malloc((nv + 1) * sizeof *aclist);
     if (aclist == NULL) {
 	err = E_ALLOC;
     } else {
-	aclist[0] = pmod->list[0] + order;
-	/* FIXME */
-	for (i=2; i<=pmod->list[0]; i++) aclist[i] = pmod->list[i];
-	if (dataset_add_vars(1, &tmpZ, tmpinfo)) {
-	    k = 0;
-	    err = E_ALLOC;
+	/* copy across the original indep vars, and make
+	   the new regression list while we're at it */
+	for (i=2; i<=pmod->list[0]; i++) {
+	    if (pmod->list[i] == 0) { /* the constant */
+		aclist[i] = 0;
+	    } else {
+		aclist[i] = i - 1;
+		/* copy variable here */
+	    }
 	}
     }
-
+	
     if (!err) {
 	/* add uhat to data set */
-	for (t=0; t<n; t++)
+	for (t=0; t<n; t++) {
 	    tmpZ[v][t] = NADBL;
-	for (t = pmod->t1; t<= pmod->t2; t++)
+	}
+	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    tmpZ[v][t] = pmod->uhat[t];
+	}
 	strcpy(tmpinfo->varname[v], "uhat");
 	strcpy(tmpinfo->label[v], _("residual"));
 	/* then lags of same */
