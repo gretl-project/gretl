@@ -697,6 +697,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 {
     int t, n = pdinfo->n, v = genr->varnum;
+    int old_scalar = 0;
     double xx;
 
     if (genr->special) return 0;
@@ -704,7 +705,8 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     if (v >= pdinfo->v) {
 	if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 	strcpy(pdinfo->varname[v], genr->varname);
-    } 
+    } else 
+	if (!pdinfo->vector[v]) old_scalar = 1;
 
     strcpy(pdinfo->label[v], genr->label);
     pdinfo->vector[v] = !genr->scalar;
@@ -714,6 +716,10 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = genr->xvec[0];
     } else {
+	if (old_scalar) {
+	    (*pZ)[v] = realloc((*pZ)[v], pdinfo->n * sizeof ***pZ);
+	    if ((*pZ)[v] == NULL) return E_ALLOC;
+	}
 	if (_isconst(pdinfo->t1, pdinfo->t2, genr->xvec)) {
 	    for (t=0; t<n; t++) (*pZ)[v][t] = xx;
 	} else {
