@@ -481,7 +481,6 @@ CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
 
     lo = corrmat->list[0];  
     corrmat->n = t2 - t1 + 1;
-    fprintf(stderr, "set corrmat->n = %d\n", corrmat->n);
     mm = (lo * (lo + 1))/2;
     corrmat->xpx = malloc(mm * sizeof(double));
     if (corrmat->xpx == NULL) {

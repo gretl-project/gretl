@@ -501,7 +501,6 @@ static void r_print_aicetc (const MODEL *pmod, print_t *prn)
     if (pmod->dfd == 0) return;
 
     pprintf(prn, "\\par Model Selection Statistics\\par\n\n");
-    /* need table setup */
     pprintf(prn, "{" SELST_ROW
 	    " \\ql SGMASQ\\cell"
 	    " \\qr %g\\cell"
@@ -640,10 +639,10 @@ static void printfrtf (const double zz, print_t *prn, int endrow)
 
 #define SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx1600\\cellx3200\\cellx4800\\cellx6400" \
-                   "\\cellx8000\n\\intbl"
+                   "\\cellx8000\n"
 
 #define VAR_SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                   "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n\\intbl"
+                   "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n"
 
 /* ............................................................. */
 
@@ -665,12 +664,12 @@ void rtfprint_summary (GRETLSUMMARY *summ,
     if (lo == 1) {
 	pprintf(prn, "for the variable %s (%d valid observations)\\par\n\n", 
 		pdinfo->varname[summ->list[1]], summ->n);
-	pprintf(prn, "{" VAR_SUMM_ROW);
+	pprintf(prn, "{" VAR_SUMM_ROW "\\intbl ");
     } else {
 	pprintf(prn, "(missing values denoted by -999 will be "
 		"skipped)\\par\n\n");
 	pprintf(prn, "{" SUMM_ROW
-		" \\qc {\\i Variable}\\cell");
+		"\\intbl \\qc {\\i Variable}\\cell");
     }
 
     pprintf(prn, 
@@ -685,16 +684,14 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	lv = summ->list[v];
 	xbar = summ->coeff[v];
 	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
 	printfrtf(xbar, prn, 0);
 	printfrtf(summ->xmedian[v], prn, 0);
 	printfrtf(summ->xpx[v], prn, 0);
 	printfrtf(summ->xpy[v], prn, 1);
-	if (v == lo) pprintf(prn, "[10pt]\n\n");
-	else pprintf(prn, "\n");
     }
 
-    if (lo > 1) pprintf(prn, " \\qc {\\i Variable}\\cell");
+    if (lo > 1) pprintf(prn, "\\intbl \\qc {\\i Variable}\\cell");
     pprintf(prn, 
 	    " \\qr {\\i S.D}\\cell"
 	    " \\qr {\\i C.V.}\\cell"
@@ -706,7 +703,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
     for (v=1; v<=lo; v++) {
 	lv = summ->list[v];
 	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
@@ -715,10 +712,9 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	printfrtf(xcv, prn, 0);
 	printfrtf(summ->xskew[v], prn, 0);
 	printfrtf(summ->xkurt[v], prn, 1);
-	pprintf(prn, "\n");
     }
 
-    pprintf(prn, "}\n\n\\par\n");
+    pprintf(prn, "}}\n");
 }
 
 /* ............................................................. */
@@ -818,6 +814,80 @@ static void outxx (const double xx, print_t *prn)
     else pprintf(prn, "$%.3f$ & ", xx);
 }
 
+static void rtf_outxx (const double xx, print_t *prn)
+{
+    if (na(xx)) pprintf(prn, "undefined\\cell ");
+    else pprintf(prn, "%.3f\\cell ", xx);
+}
+
+#define CORR_ROW "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                 "\\cellx1500\\cellx3000\\cellx4500\\cellx6000" \
+                 "\\cellx7500\\cellx8000\n"
+
+/* ......................................................... */ 
+
+void rtfprint_corrmat (CORRMAT *corr,
+		       const DATAINFO *pdinfo, 
+		       print_t *prn)
+{
+    register int i, j;
+    int lo, ljnf, nf, li2, p, k, index, ij2;
+    char date1[9], date2[9], tmp[16];
+    enum { FIELDS = 5 };
+
+    ntodate(date1, corr->t1, pdinfo);
+    ntodate(date2, corr->t2, pdinfo);
+
+    pprintf(prn, "{\\rtf1\\par\n\\qc "
+	    "Correlation coefficients, using the observations %s - %s\\par\n"
+	    "(skipping any missing values)\\par\n",
+	    date1, date2);
+    pprintf(prn, "5%% critical value (two-tailed) = "
+	    "%.3f for n = %d\\par\\par\n", rhocrit95(corr->n), corr->n);
+    
+    lo = corr->list[0];
+
+    for (i=0; i<=lo/FIELDS; i++) {
+	nf = i * FIELDS;
+	li2 = lo - nf;
+	p = (li2 > FIELDS) ? FIELDS : li2;
+	if (p == 0) break;
+
+	pprintf(prn, CORR_ROW "\\intbl ");
+	/* print the varname headings */
+	for (j=1; j<=p; ++j)  {
+	    ljnf = corr->list[j + nf];
+	    pprintf(prn, "%d) %s\\cell %s", ljnf, pdinfo->varname[ljnf],
+		    (j == p)? "\\intbl \\row\n" : "");
+	}
+	
+	/* print rectangular part, if any, of matrix */
+	for (j=1; j<=nf; j++) {
+	    pprintf(prn, "\\intbl "); 
+	    for (k=1; k<=p; k++) {
+		index = ijton(j, nf+k, lo);
+		rtf_outxx(corr->xpx[index], prn);
+	    }
+	    pprintf(prn, "(%d \\intbl \\row\n", corr->list[j]);
+	}
+
+	/* print upper triangular part of matrix */
+	for (j=1; j<=p; ++j) {
+	    pprintf(prn, "\\intbl "); 
+	    ij2 = nf + j;
+	    for (k=0; k<j-1; k++) pprintf(prn, "\\cell ");
+	    for (k=j; k<=p; k++) {
+		index = ijton(ij2, nf+k, lo);
+		rtf_outxx(corr->xpx[index], prn);
+	    }
+	    pprintf(prn, "(%d \\intbl \\row\n", corr->list[ij2]);
+	}
+	pprintf(prn, "\\intbl \\intbl \\row\n");
+    }
+    pprintf(prn, "}}\n");
+    
+}
+
 /* ......................................................... */ 
 
 void texprint_corrmat (CORRMAT *corr,
@@ -828,8 +898,6 @@ void texprint_corrmat (CORRMAT *corr,
     int lo, ljnf, nf, li2, p, k, index, ij2;
     char date1[9], date2[9], tmp[16];
     enum { FIELDS = 5 };
-
-    fprintf(stderr, "texprint_corrmat: corrmat->n = %d\n", corr->n);
 
     ntodate(date1, corr->t1, pdinfo);
     ntodate(date2, corr->t2, pdinfo);

@@ -2254,12 +2254,22 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
-    if (mydata->action == CORR && how == COPY_LATEX) {
+    if (mydata->action == CORR 
+	&& (how == COPY_LATEX || how == COPY_RTF)) {
 	CORRMAT *corr = (CORRMAT *) mydata->data;
 
 	if (bufopen(&prn)) return;
-	texprint_corrmat(corr, datainfo, &prn);
-	buf_to_clipboard(prn.buf);
+	if (how == COPY_LATEX) {
+	    texprint_corrmat(corr, datainfo, &prn);
+	    buf_to_clipboard(prn.buf);
+	} else {
+	    rtfprint_corrmat(corr, datainfo, &prn);
+#ifdef G_OS_WIN32
+	    win_copy_rtf(prn.buf);
+#else
+	    buf_to_clipboard(prn.buf);
+#endif
+	}
 	prnclose(&prn);
 	return;
     }
