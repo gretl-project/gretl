@@ -188,24 +188,24 @@ static int test_label 1589,39729
 int merge_data 1701,43031
 static void trim_csv_line 1827,46161
 int import_csv 1858,46838
-int add_case_markers 2140,54305
-static char *unspace 2181,55135
-int import_box 2210,55694
-static int xmlfile 2413,61068
-int open_plugin 2436,61422
-void *get_plugin_function 2455,61909
-void close_plugin 2469,62175
-int detect_filetype 2491,62630
-#define UTF 2557,64412
-static char *simple_fname 2561,64466
-static char *xml_encode 2579,64826
-static int write_xmldata 2645,66203
-static int process_varlist 2844,71740
-static int process_values 2934,73743
-static int process_observations 2953,74195
-static long get_filesize 3072,76974
-int get_xmldata 3100,77673
-char *get_xml_description 3281,82051
+int add_case_markers 2140,54309
+static char *unspace 2181,55139
+int import_box 2210,55698
+static int xmlfile 2413,61072
+int open_plugin 2436,61426
+void *get_plugin_function 2455,61913
+void close_plugin 2469,62179
+int detect_filetype 2491,62634
+#define UTF 2557,64416
+static char *simple_fname 2561,64470
+static char *xml_encode 2579,64830
+static int write_xmldata 2645,66207
+static int process_varlist 2844,71744
+static int process_values 2934,73747
+static int process_observations 2953,74199
+static long get_filesize 3072,76978
+int get_xmldata 3100,77677
+char *get_xml_description 3281,82055
 
 lib/src/dataio.h,673
     GRETL_DATA_FLOAT 24,915
@@ -339,41 +339,41 @@ lib/src/errors.h,1150
     E_MAX80,1694
 } error_codes;error_codes81,1704
 
-lib/src/estimate.c,1061
+lib/src/estimate.c,1042
 #define TINY 25,882
 #define SMALL 26,903
 } XPXXPY;XPXXPY34,1021
 } CHOLBETA;CHOLBETA41,1121
-static int reorganize_uhat_yhat 82,2886
-MODEL lsq 130,4112
-static XPXXPY _xpxxpy_func 354,10368
-static void _regress 477,14047
-static CHOLBETA _cholbeta 630,18024
-static void _diaginv 716,20412
-int makevcv 765,21679
-static double _dwstat 841,23485
-static double _rhohat 866,24173
-static double _altrho 894,24876
-static double _corrrsq 923,25560
-static int _hatvar 935,25840
-static void _dropwt 958,26441
-int hilu_corc 986,27223
-static void _autores 1074,30035
-MODEL tsls_func 1103,30785
-static int _get_aux_uhat 1291,36558
-MODEL hsk_func 1365,38598
-MODEL hccm_func 1449,40928
-int whites_test 1566,43541
-MODEL ar_func 1682,46414
-static void _omitzero 1874,52121
-static void _tsls_omitzero 1917,53283
-static void _rearrange 1930,53576
-static int _zerror 1949,53987
-static int _lagdepvar 1972,54491
-static int _tsls_match 2003,55410
-static double _wt_dummy_mean 2031,56181
-static double _wt_dummy_stddev 2053,56704
-MODEL arch 2094,57916
+static int reorganize_uhat_yhat 77,2757
+MODEL lsq 125,3983
+static XPXXPY xpxxpy_func 349,10227
+static void regress 472,13880
+static CHOLBETA cholbeta 655,18577
+static void diaginv 741,20880
+int makevcv 790,22146
+static double dwstat 866,23952
+static double rhohat 891,24639
+static double altrho 918,25318
+static double corrrsq 946,25979
+static int hatvar 957,26248
+static void dropwt 980,26848
+int hilu_corc 1008,27629
+static void autores 1096,30439
+MODEL tsls_func 1124,31173
+static int get_aux_uhat 1312,36883
+MODEL hsk_func 1386,38921
+MODEL hccm_func 1470,41249
+int whites_test 1587,43861
+MODEL ar_func 1703,46734
+static void omitzero 1895,52435
+static void tsls_omitzero 1937,53586
+static void rearrange 1950,53866
+static int zerror 1969,54276
+static int lagdepvar 1991,54749
+static int tsls_match 2022,55666
+static double wt_dummy_mean 2050,56436
+static double wt_dummy_stddev 2072,56958
+MODEL arch 2113,58168
 
 lib/src/estimate.h,0
 
@@ -664,7 +664,7 @@ int runs_test 221,5880
 
 lib/src/nonparam.h,0
 
-lib/src/printout.c,1896
+lib/src/printout.c,1897
 #define isnan(isnan28,973
 static int dec 52,1921
 static void noconst 67,2218
@@ -691,42 +691,42 @@ const char *estimator_string 428,11448
 static void print_model_tests 447,12156
 void modelprint_setup_obs 463,12554
 int printmodel 480,13006
-void gretl_print_add 637,17931
-void gretl_print_omit 685,19715
-static void print_aicetc 722,21084
-static int make_list 748,21976
-void printcorr 775,22569
-void printfreq 816,23540
-void print_smpl 863,24966
-static void fix_exponent 886,25672
-static void print_float_10 899,25935
-static void print_coeff_interval 948,27032
-static int print_coeff 975,27849
-void _print_rho 1023,29107
-int outcovmx 1053,29894
-void print_white_vcv 1081,30580
-static void outxx 1100,31023
-static int takenotes 1112,31313
-int page_break 1138,31982
-void _mxout 1148,32264
-    enum { FIELDS 1166,33055
-static void printgx 1218,34223
-void _graphyzx 1231,34493
-static void fit_resid_head 1363,38288
-static void varheading 1395,39333
-void _printxs 1413,39828
-void _printstr 1427,40099
-static void printz 1445,40435
-#define SMAX 1464,40889
-static int get_signif 1466,40943
-static int bufprintnum 1529,42588
-int printdata 1602,44452
-int print_fit_resid 1758,48216
-void _print_ar 1823,49985
-static int print_discrete_coeff 1838,50470
-static int print_discrete_stats 1870,51302
-void gretl_print_destroy 1916,52726
-PRN *gretl_print_new 1946,53435
+void gretl_print_add 666,19003
+void gretl_print_omit 714,20787
+static void print_aicetc 751,22156
+static int make_list 777,23048
+void printcorr 804,23641
+void printfreq 845,24612
+void print_smpl 892,26038
+static void fix_exponent 915,26744
+static void print_float_10 928,27007
+static void print_coeff_interval 977,28104
+static int print_coeff 1004,28921
+void _print_rho 1052,30179
+int outcovmx 1082,30966
+void print_white_vcv 1110,31652
+static void outxx 1129,32095
+static int takenotes 1141,32385
+int page_break 1167,33054
+void _mxout 1177,33336
+    enum { FIELDS 1195,34127
+static void printgx 1247,35295
+void _graphyzx 1260,35565
+static void fit_resid_head 1392,39360
+static void varheading 1424,40405
+void _printxs 1442,40900
+void _printstr 1456,41171
+static void printz 1474,41507
+#define SMAX 1493,41961
+static int get_signif 1495,42015
+static int bufprintnum 1558,43660
+int printdata 1631,45524
+int print_fit_resid 1787,49288
+void _print_ar 1852,51057
+static int print_discrete_coeff 1867,51542
+static int print_discrete_stats 1899,52374
+void gretl_print_destroy 1945,53798
+PRN *gretl_print_new 1975,54507
 
 lib/src/printout.h,0
 

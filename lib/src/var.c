@@ -279,9 +279,9 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* how long will our list have to be? */
     listlen = get_listlen(list, order, *pZ, pdinfo);
 
-    varlist = malloc((listlen + 1) * sizeof(int));
-    depvars = malloc((listlen + 1) * sizeof(int));
-    shortlist = malloc(listlen * sizeof(int));
+    varlist = malloc((listlen + 1) * sizeof *varlist);
+    depvars = malloc((listlen + 1) * sizeof *depvars);
+    shortlist = malloc(listlen * sizeof *shortlist);
     if (varlist == NULL || depvars == NULL || shortlist == NULL)
 	return E_ALLOC;
 
@@ -523,8 +523,8 @@ int adf_test (const int order, const int varno, double ***pZ,
 
     _init_model(&adf_model, pdinfo);
     k = 3 + order;
-    adflist = malloc((5 + order) * sizeof(int));
-    shortlist = malloc(k * sizeof(int));
+    adflist = malloc((5 + order) * sizeof *adflist);
+    shortlist = malloc(k * sizeof *shortlist);
     if (adflist == NULL || shortlist == NULL) return E_ALLOC;
 
     i = pdinfo->t1;
