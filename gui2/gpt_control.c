@@ -1080,6 +1080,9 @@ int read_plotfile (GPT_SPEC *plot, const char *fname)
 	    plot->code = FCASTERR;
 	    continue;
 	}
+	/* try ignoring an unknown comment line? */
+	if (strncmp(line, "# ", 2) == 0) continue;
+
 	if (strncmp(line, "set ", 4)) break;
 	if (parse_set_line(plot, line, &i)) goto plot_bailout;
     }

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.0.1\n"
 "POT-Creation-Date: 2002-11-26 14:33-0500\n"
-"PO-Revision-Date: 2002-11-27 15:47+0100\n"
+"PO-Revision-Date: 2002-12-01 23:10-0500\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -9526,7 +9526,7 @@ msgstr "Explorando %ld fuentes"
 
 #: plugin/range-mean.c:37
 msgid "range-mean plot for"
-msgstr "gráfico rango-media de "
+msgstr "gráfico rango-media de"
 
 #: plugin/range-mean.c:38
 msgid "with least squares fit"

@@ -55,7 +55,7 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     fprintf(fp, "set title '%s %s %s'\n", 
 	    I_("range-mean plot for"), varname, 
 	    (yhat == NULL)? "" : I_("with least squares fit"));
-    fprintf(fp, "set xlabel '%s'\nset ylabel '%s\n",
+    fprintf(fp, "set xlabel '%s'\nset ylabel '%s'\n",
 	    I_("mean"), I_("range"));
     fprintf(fp, "plot \\\n'-' using 1:2 w points");
     if (yhat != NULL) {

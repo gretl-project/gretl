@@ -392,6 +392,10 @@ static int add_series_from_file (const char *fname, int code,
 
     for (t=0; t<pdinfo->n; t++) Z[v][t] = NADBL;
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     if (opt == TRAMO) {
 	int i = 0;
 
@@ -426,6 +430,10 @@ static int add_series_from_file (const char *fname, int code,
 	    Z[v][t] = x;
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fclose(fp);
 

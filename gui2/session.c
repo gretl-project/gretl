@@ -925,6 +925,10 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     FILE *fp;
     gchar *msg, *savestuff;
     windata_t *mydata = (windata_t *) data;
+#ifdef ENABLE_NLS
+    gsize bytes;
+    gchar *trbuf;
+#endif
 
     savestuff = textview_get_text(GTK_TEXT_VIEW(mydata->w));
 
@@ -938,7 +942,14 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
 	return;
     }
 
+#ifdef ENABLE_NLS
+    trbuf = g_locale_from_utf8(savestuff, -1, NULL, &bytes, NULL);
+    fprintf(fp, "%s", trbuf);
+    g_free(trbuf);
+#else
     fprintf(fp, "%s", savestuff);
+#endif
+
     g_free(savestuff); 
     fclose(fp);
     if (!quiet) infobox(_("plot commands saved"));

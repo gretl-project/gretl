@@ -1337,7 +1337,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
     int thiscolor, nextcolor;
-    char tempstr[MAXSTR], *fle = NULL;
+    char tempstr[MAXSTR], *chunk = NULL, *fle = NULL;
     FILE *fd = NULL;
     windata_t *vwin;
     gchar *title;
@@ -1412,12 +1412,23 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     memset(tempstr, 0, sizeof tempstr);
     while (fgets(tempstr, sizeof tempstr - 1, fd)) {
-	if (tempstr[0] == '@') continue;
-	if (tempstr[0] == '?') 
+#ifdef ENABLE_NLS
+	if (role == GR_PLOT) {
+	    if (!g_utf8_validate(tempstr, sizeof tempstr, NULL)) {
+		gsize bytes;
+
+		chunk = g_locale_to_utf8(tempstr, -1, NULL, &bytes, NULL);
+	    } else chunk = tempstr;
+	} else chunk = tempstr;
+#else
+	chunk = tempstr;
+#endif
+	if (*chunk == '@') continue;
+	if (*chunk == '?') 
 	    thiscolor = (role == CONSOLE)? RED_TEXT : BLUE_TEXT;
-	if (tempstr[0] == '#') {
+	if (*chunk == '#') {
 	    if (role == HELP || role == CLI_HELP) {
-		tempstr[0] = ' ';
+		*chunk = ' ';
 		nextcolor = RED_TEXT;
 	    } else
 		thiscolor = BLUE_TEXT;
@@ -1425,21 +1436,24 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	    nextcolor = PLAIN_TEXT;
 	switch (thiscolor) {
 	case PLAIN_TEXT:
-	    gtk_text_buffer_insert(tbuf, &iter, tempstr, -1);
+	    gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
 	    break;
 	case BLUE_TEXT:
 	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      tempstr, -1,
+						      chunk, -1,
 						      "bluetext", NULL);
 	    break;
 	case RED_TEXT:
 	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      tempstr, -1,
+						      chunk, -1,
 						      "redtext", NULL);
 	    break;
 	}
 	thiscolor = nextcolor;
 	memset(tempstr, 0, sizeof tempstr);
+	if (chunk != NULL && chunk != tempstr) {
+	    free(chunk);
+	}
     }
     fclose(fd);
 

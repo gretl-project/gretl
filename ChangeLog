@@ -2,6 +2,9 @@ version 1.0.2
 - generalize support for TRAMO and X-12-ARIMA to gtk-1.2
   version, and win32 version
 - add installation script for tramo program
+- make range-mean graph editable via gui
+- fix utf8/character encoding issue with editing gnuplot
+  commands and sending the commands to gnuplot
 
 11/27/02 version 1.0.1
 - fix to configure script in re. glib-2.0
