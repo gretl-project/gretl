@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "guiprint.h"
+#include "console.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -297,7 +298,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/p-value finder"), NULL, stats_calculator, 0, NULL },
     { N_("/Utilities/Test statistic calculator"), NULL, stats_calculator, 2, NULL },
     { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Utilities/Gretl console"), NULL, console, 0, NULL },
+    { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Start GNU R"), NULL, startR, 0, NULL },
 
@@ -1727,7 +1728,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;
 	case 2:
 	    toolxpm = mini_sh_xpm;
-	    toolfunc = console;
+	    toolfunc = show_gretl_console;
 	    break;
 	case 3:
 	    toolxpm = mini_session_xpm;

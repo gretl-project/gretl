@@ -44,7 +44,7 @@ void remember_model (gpointer data, guint close, GtkWidget *widget);
 
 int try_add_model_to_session (MODEL *pmod);
 
-MODEL *get_session_model_by_name (const char *modname);
+void *get_session_object_by_name (const char *name, char *which);
 
 void delete_model_from_session (MODEL *pmod);
 

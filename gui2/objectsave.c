@@ -20,20 +20,32 @@
 /* objectsave.c for gretl: save models estimated via commands */
 
 #include "gretl.h"
+#include "gpt_control.h"
 #include "objectsave.h"
 
 enum {
-    OBJ_CMD_NONE,
-    OBJ_CMD_SHOW,
-    OBJ_CMD_FREE
+    OBJ_NONE,
+    OBJ_MODEL_SHOW,
+    OBJ_MODEL_FREE,
+    OBJ_GRAPH_SHOW,
+    OBJ_GRAPH_FREE
 };
 
-static int match_object_command (const char *s)
+static int match_object_command (const char *s, char sort)
 {
-    if (strcmp(s, "show") == 0) return OBJ_CMD_SHOW;
-    if (strcmp(s, "free") == 0) return OBJ_CMD_FREE;    
+    if (sort == 'm') {
+	if (*s == 0) return OBJ_MODEL_SHOW; /* default */
+	if (strcmp(s, "show") == 0) return OBJ_MODEL_SHOW;
+	if (strcmp(s, "free") == 0) return OBJ_MODEL_FREE; 
+    }
 
-    return OBJ_CMD_NONE;
+    if (sort == 'g') {
+	if (*s == 0) return OBJ_GRAPH_SHOW; /* default */
+	if (strcmp(s, "show") == 0) return OBJ_GRAPH_SHOW;
+	if (strcmp(s, "free") == 0) return OBJ_GRAPH_FREE; 
+    }    
+
+    return OBJ_NONE;
 }
 
 static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
@@ -100,38 +112,35 @@ static void get_word_and_command (const char *s, char *word,
 }
 
 static int parse_object_request (const char *line, 
-				 char *objname, MODEL **ppmod,
+				 char *objname, void **pptr,
 				 PRN *prn)
 {
     char word[MAXSAVENAME];
     char cmdstr[9];
+    char sort = 0;
     int action;
 
+    /* get object name (if any) and dot element */
     get_word_and_command(line, word, cmdstr);
 
-    if (*cmdstr == 0) action = OBJ_CMD_SHOW;
-    else action = match_object_command(cmdstr);
+    /* see if the object name actually belongs to an object */
+    *pptr = get_session_object_by_name(word, &sort);
 
-    if (action == OBJ_CMD_NONE) {
-	/* FIXME error message meeded? */
-	return action;
-    }
-
-    *ppmod = get_session_model_by_name(word);
-
-    if (*ppmod) {
-	strcpy(objname, word);
-	if (action == OBJ_CMD_SHOW || OBJ_CMD_FREE) {
-	    return action;
-	}
-    } else {
-	/* no match for "word" */
+    if (*pptr == NULL) {
+	/* no matching object */
 	if (*cmdstr) {
 	    pprintf(prn, _("%s: no such object\n"), word);
 	}
+	return OBJ_NONE;
     }
 
-    return OBJ_CMD_NONE;
+    action = match_object_command(cmdstr, sort);
+
+    if (action != OBJ_NONE) {
+	strcpy(objname, word);
+    } 
+
+    return action;
 }
 
 /* public interface below */
@@ -191,20 +200,29 @@ int saved_object_action (const char *line,
 {
     int action;
     char savename[MAXSAVENAME];
-    MODEL *pmod;
+    void *ptr;
 
-    action = parse_object_request(line, savename, &pmod, prn);
+    action = parse_object_request(line, savename, &ptr, prn);
 
-    if (action == OBJ_CMD_SHOW && pmod != NULL) {
-	show_saved_model(pmod, pdinfo);
-	return 1;
+    if (action == OBJ_NONE || ptr == NULL) return 0;
+
+    if (action == OBJ_MODEL_SHOW) {
+	show_saved_model((MODEL *) ptr, pdinfo);
     } 
 
-    if (action == OBJ_CMD_FREE && pmod != NULL) {
-	delete_model_from_session(pmod);
+    else if (action == OBJ_MODEL_FREE) {
+	delete_model_from_session((MODEL *) ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
-	return 1;
     }
 
-    return 0;
+    else if (action == OBJ_GRAPH_SHOW) {
+	GRAPHT *graph = (GRAPHT *) ptr;
+	display_session_graph_png(graph->fname);
+    } 
+
+    else if (action == OBJ_GRAPH_FREE) {
+	fprintf(stderr, "Got request to delete graph\n");
+    }
+
+    return 1;
 }

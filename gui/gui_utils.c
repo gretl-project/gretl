@@ -26,6 +26,7 @@
 
 #include "guiprint.h"
 #include "series_view.h"
+#include "console.h"
 
 char *storelist = NULL;
 
@@ -49,8 +50,6 @@ static void buf_edit_save (GtkWidget *widget, gpointer data);
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
-extern gboolean console_handler (GtkWidget *w, GdkEventKey *key, 
-				 gpointer user_data);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 extern void do_leverage (gpointer data, guint u, GtkWidget *w);
 
@@ -253,7 +252,7 @@ enum winstack_codes {
     STACK_QUERY
 };
 
-static void winstack (int code, GtkWidget *w, gpointer ptest)
+static int winstack (int code, GtkWidget *w, gpointer ptest)
 {
     static int n_windows;
     static GtkWidget **wstack;
@@ -322,9 +321,9 @@ void winstack_destroy (void)
     winstack(STACK_DESTROY, NULL, NULL);
 }
 
-void winstack_match_data (gpointer p)
+int winstack_match_data (gpointer p)
 {
-    winstack(STACK_QUERY, NULL, p);
+    return winstack(STACK_QUERY, NULL, p);
 }
 
 static void winstack_add (GtkWidget *w)
@@ -1338,8 +1337,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     /* special case: the gretl console */
     if (role == CONSOLE) {
+	gtk_signal_connect(GTK_OBJECT(vwin->w), "button_release_event",
+			   GTK_SIGNAL_FUNC(console_mouse_handler), NULL);
 	gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
-			   (GtkSignalFunc) console_handler, NULL);
+			   GTK_SIGNAL_FUNC(console_key_handler), NULL);
     } 
 
     if (doing_script) {

@@ -20,10 +20,13 @@
 /* gui_utils.c for gretl */
 
 #include "gretl.h"
+
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include "guiprint.h"
 #include "series_view.h"
+#include "console.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -58,8 +61,6 @@ static void buf_edit_save (GtkWidget *widget, gpointer data);
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
-extern gboolean console_handler (GtkWidget *w, GdkEventKey *key, 
-				 gpointer user_data);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 extern void do_leverage (gpointer data, guint u, GtkWidget *w);
 
@@ -340,9 +341,9 @@ void winstack_destroy (void)
     winstack(STACK_DESTROY, NULL, NULL);
 }
 
-void winstack_match_data (gpointer p)
+int winstack_match_data (gpointer p)
 {
-    winstack(STACK_QUERY, NULL, p);
+    return winstack(STACK_QUERY, NULL, p);
 }
 
 static void winstack_add (GtkWidget *w)
@@ -1468,8 +1469,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     /* special case: the gretl console */
     if (role == CONSOLE) {
+	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
+			 G_CALLBACK(console_mouse_handler), NULL);
 	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
-			 G_CALLBACK(console_handler), NULL);
+			 G_CALLBACK(console_key_handler), NULL);
     } 
 
     if (doing_script) {

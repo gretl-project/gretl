@@ -375,14 +375,24 @@ static int real_add_model_to_session (MODEL *pmod)
 
 /* ........................................................... */
 
-MODEL *get_session_model_by_name (const char *modname)
+void *get_session_object_by_name (const char *name, char *which)
 {
     int i;
 
     for (i=0; i<session.nmodels; i++) {
-	if (strcmp(modname, (session.models[i])->name) == 0) 
+	if (strcmp(name, (session.models[i])->name) == 0) {
+	    *which = 'm';
 	    return session.models[i];
+	}
     }
+
+    for (i=0; i<session.ngraphs; i++) {
+	if (strcmp(name, (session.graphs[i])->name) == 0) {
+	    *which = 'g';
+	    return session.graphs[i];
+	}
+    }
+
     return NULL;
 }
 

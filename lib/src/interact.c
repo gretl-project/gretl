@@ -247,11 +247,20 @@ static void get_savename (char *line, CMD *command)
 {
     *command->savename = 0;
 
-    if (strstr(line, " := ") && 
-	sscanf(line, "%s :=", command->savename) == 1) {
-	int len = strcspn(line, "=");
+    if (strstr(line, " := ")) {
+	int n, len;
+	char *p = line;
 
-	_shiftleft(line, len + 1);
+	while (*p && isspace(*p)) p++;
+	if (*p == '"') p++;
+
+	len = strcspn(p, "=");
+	if (len < 3) return;
+	n = len - 2;
+	if (n > MAXSAVENAME - 1) n = MAXSAVENAME - 1;
+	strncat(command->savename, p, n);
+	charsub(command->savename, '"', 0);
+	_shiftleft(line, len + 1 + (p - line));
     }
 }
 

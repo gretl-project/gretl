@@ -3343,6 +3343,8 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     if (code == SCRIPT_EXEC) {
 	runfile = scriptfile;
+	sprintf(line, "run %s", scriptfile);
+	verify_and_record_command(line);
     } else if (code == SESSION_EXEC) {
 	runfile = cmdfile;
     }
@@ -3753,6 +3755,20 @@ static char *bufgets (char *s, int size, const char *buf)
     return s;
 }
 
+#if 1
+static const char *exec_string (int i)
+{
+    switch (i) {
+    case CONSOLE_EXEC: return "CONSOLE_EXEC";
+    case SCRIPT_EXEC: return "SCRIPT_EXEC";
+    case SESSION_EXEC: return "SESSION_EXEC";
+    case REBUILD_EXEC: return "REBUILD_EXEC";
+    case SAVE_SESSION_EXEC: return "SAVE_SESSION_EXEC";
+    default: return "Unknown";
+    }
+}
+#endif
+
 /* ........................................................... */
 
 int execute_script (const char *runfile, const char *buf,
@@ -3765,6 +3781,11 @@ int execute_script (const char *runfile, const char *buf,
     int i, j = 0, loopstack = 0, looprun = 0;
     char tmp[MAXLEN];
     LOOPSET loop;            /* struct for monte carlo loop */
+
+#if 1
+    fprintf(stderr, "execute_script, exec_code = %d (%s)\n",
+	    exec_code, exec_string(exec_code));
+#endif
 
 #if 0
     debug_print_model_info(models[0], "Start of execute_script, models[0]");
@@ -3824,6 +3845,7 @@ int execute_script (const char *runfile, const char *buf,
     loop.storeval = NULL;
     loop.nmod = 0;
 
+#if 0
     /* Put the action of running this script into the command log? */
     if (exec_code == SCRIPT_EXEC && runfile != NULL) {
 	char runcmd[MAXLEN];
@@ -3832,8 +3854,9 @@ int execute_script (const char *runfile, const char *buf,
 	check_cmd(runcmd);
 	cmd_init(runcmd);
     }
+#endif
 
-    command.cmd[0] = '\0';
+    *command.cmd = '\0';
 
     while (strcmp(command.cmd, "quit")) {
 	if (looprun) { /* Are we doing a Monte Carlo simulation? */
@@ -3992,6 +4015,11 @@ int gui_exec_line (char *line,
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
+
+#if 1
+    fprintf(stderr, "gui_exec_line: exec_code = %d (%s)\n",
+	    exec_code, exec_string(exec_code));
+#endif
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
@@ -4517,7 +4545,7 @@ int gui_exec_line (char *line,
 #ifdef CMD_DEBUG
 	fprintf(stderr, "OPEN in gui_exec_line, datfile='%s'\n", datfile);
 #endif
-	if (data_status & HAVE_DATA)
+	if (data_status & HAVE_DATA) 
 	    close_session();
 	check = detect_filetype(datfile, &paths, prn);
 	if (check == GRETL_CSV_DATA)
@@ -4535,9 +4563,10 @@ int gui_exec_line (char *line,
 	strncpy(paths.datfile, datfile, MAXLEN-1);
 	if (check == GRETL_CSV_DATA || check == GRETL_BOX_DATA)
 	    data_status |= IMPORT_DATA;
-	register_data(paths.datfile, (exec_code != REBUILD_EXEC));
+	/* below: was (exec_code != REBUILD_EXEC), not 0 */
+	register_data(paths.datfile, 0);
 	varlist(datainfo, prn);
-	paths.currdir[0] = '\0'; 
+	*paths.currdir = '\0'; 
 	break;
 
     case LEVERAGE:
@@ -4720,7 +4749,9 @@ int gui_exec_line (char *line,
 	    return 1;
 	}
 	/* was SESSION_EXEC below */
-	err = execute_script(runfile, NULL, NULL, NULL, prn, exec_code);
+	err = execute_script(runfile, NULL, NULL, NULL, prn, 
+			     (exec_code == CONSOLE_EXEC)? SCRIPT_EXEC :
+			     exec_code);
 	break;
 
     case SCATTERS:

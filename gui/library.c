@@ -26,6 +26,7 @@
 #include "series_view.h"
 #include "gpt_control.h"
 #include "boxplots.h"
+#include "objectsave.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -37,13 +38,13 @@ static int data_option (int flag);
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, PRN *prn);
 
+int gui_exec_line (char *line, 
+		   LOOPSET *plp, int *plstack, int *plrun, 
+		   SESSION *psession, SESSIONBUILD *rebuild,
+		   PRN *prn, int exec_code, 
+		   const char *myname); 
+
 /* private functions */
-static int gui_exec_line (char *line, 
-			  LOOPSET *plp, int *plstack, int *plrun, 
-			  SESSION *psession, SESSIONBUILD *rebuild,
-			  PRN *prn, int exec_code, 
-			  const char *myname); 
-static void console_exec (void);
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (int gui);
 static char *bufgets (char *s, int size, const char *buf);
@@ -59,15 +60,6 @@ GtkItemFactoryEntry log_items[] = {
 #ifdef USE_GNOME
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-GtkItemFactoryEntry console_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, NULL },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
     { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
@@ -135,11 +127,9 @@ typedef struct {
 } model_stack;
 
 /* file scope state variables */
-static GtkWidget *console_view;
 static int ignore;
 static int oflag;
 static char loopstorefile[MAXLEN];
-static char errline[MAXLEN] = ""; /* for use with the console */
 static model_stack *mstack;
 static int n_mstacks;
 static int model_count;
@@ -960,177 +950,6 @@ void view_log (void)
     if (dump_cmd_stack(fname)) return;
 
     view_file(fname, 0, 0, 78, 370, VIEW_LOG, log_items);
-}
-
-/* ........................................................... */
-
-void console (void)
-{
-    PRN *prn;
-    char fname[MAXLEN];
-    windata_t *vwin;
-
-    if (console_view != NULL) {
-	gdk_window_show(console_view->parent->window);
-	gdk_window_raise(console_view->parent->window);
-	return;
-    }
-
-    if (!user_fopen("console_tmp", fname, &prn)) return;
-
-    pprintf(prn, _("gretl console: type 'help' for a list of commands\n? "));
-    gretl_print_destroy(prn);
-    vwin = view_file(fname, 1, 0, 78, 400, CONSOLE, console_items);
-    console_view = vwin->w;
-    gtk_signal_connect(GTK_OBJECT(console_view), "destroy",
-		       GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-		       &console_view);
-    
-    gtk_text_set_point(GTK_TEXT(console_view), 52);
-
-    GTK_TEXT(console_view)->cursor_pos_x = 
-	2 * gdk_char_width(fixed_font, 'X');
-    gtk_editable_set_position(GTK_EDITABLE(console_view), 52);
-    gtk_editable_changed(GTK_EDITABLE(console_view));
-    gtk_widget_grab_focus (console_view);
-
-}
-
-/* ........................................................... */
-
-static int backkey (GdkEventKey *key)
-{
-    if (key->keyval == GDK_BackSpace || 
-	key->keyval == GDK_Left) return 1;
-    return 0;
-}
-
-/* ........................................................... */
-
-static int last_console_line_len (void)
-{
-    int i, c, len;
-
-    len = gtk_text_get_length(GTK_TEXT(console_view));
-    for (i=len; i>0; i--) {
-	c = GTK_TEXT_INDEX(GTK_TEXT(console_view), i - 1);
-	if (c == '\n') break; 
-    }
-    return len - i - 2;
-}
-
-/* ........................................................... */
-
-gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
-{
-    static int lastkey;
-    int cw = gdk_char_width(fixed_font, 'X'); 
-    int len = gtk_text_get_length (GTK_TEXT(console_view));
-    int adjust, currpos, linelen, xpos, savekey = key->keyval;
-    GdkModifierType mods;
-
-    /* null action if not at prompt */
-    currpos = GTK_EDITABLE(console_view)->current_pos;
-    xpos = GTK_TEXT(console_view)->cursor_pos_x / cw; 
-    linelen = last_console_line_len();
-
-    if ((currpos < len - linelen) || 
-	(backkey(key) && xpos < 3)) {
-	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
-	return TRUE;
-    }
-    /* make return key execute the command */
-    if (key->keyval == GDK_Return) {
-	console_exec();
-	key->keyval = GDK_End;
-	return FALSE;
-    }
-    /* make up-arrow recall last command entered */
-    if (key->keyval == GDK_Up) {
-#ifdef CMD_DEBUG
-	fprintf(stderr, "errline: '%s', n_cmds = %d\n", errline, n_cmds);
-#endif
-	key->keyval = GDK_VoidSymbol;
-	if (lastkey != GDK_Up) {
-	    if (errline[0] != '\0') {
-		gtk_editable_insert_text(GTK_EDITABLE(console_view), 
-					 errline, 
-					 strlen(errline),
-					 &len);
-	    } else if (n_cmds > 0 && 
-		       strncmp(cmd_stack[n_cmds-1], "open", 4)) {
-		gtk_editable_insert_text(GTK_EDITABLE(console_view), 
-					 cmd_stack[n_cmds-1], 
-					 strlen(cmd_stack[n_cmds-1]) - 1,
-					 &len);
-	    }
-	}
-    }
-    /* down-arrow clears line */
-    if (lastkey == GDK_Up && key->keyval == GDK_Down) {
-	key->keyval = GDK_VoidSymbol;
-	adjust = GTK_TEXT(console_view)->cursor_pos_x / cw - 2;
-	gtk_editable_delete_text(GTK_EDITABLE(console_view), 
-				 len - adjust, len);
-    }  
-    /* response to Ctrl-A: go to start of typing area */
-    gdk_window_get_pointer(console_view->window, NULL, NULL, &mods);
-    if (mods & GDK_CONTROL_MASK && 
-	gdk_keyval_to_upper(key->keyval) == GDK_A) {
-	gtk_editable_set_position(GTK_EDITABLE(console_view), 
-				  len - last_console_line_len());	
-	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
-	return TRUE;
-    }
-    lastkey = savekey;
-    return FALSE;
-}
-
-/* ........................................................... */
-
-void console_exec (void)
-{
-    PRN *prn;
-    int len, loopstack = 0, looprun = 0;
-    gchar *c_line; 
-    char execline[MAXLEN];
-    extern GdkColor red;
-
-    len = gtk_text_get_length (GTK_TEXT(console_view));
-    c_line = gtk_editable_get_chars(GTK_EDITABLE(console_view), 
-				    len - last_console_line_len(), len);
-    top_n_tail(c_line);
-
-    if (strcmp(c_line, "quit") == 0 || strcmp(c_line, "q") == 0) {
-	gtk_widget_destroy(console_view->parent->parent->parent);
-	g_free(c_line);
-	return;
-    }
-
-    if (bufopen(&prn)) {
-	g_free(c_line);
-	return;
-    }
-
-    strncpy(execline, c_line, MAXLEN - 1);
-    g_free(c_line);
-    gui_exec_line(execline, NULL, &loopstack, &looprun, NULL, NULL, 
-		  prn, CONSOLE_EXEC, NULL);
-
-    /* put results into console window */
-    gtk_text_freeze(GTK_TEXT(console_view));
-    gtk_editable_insert_text(GTK_EDITABLE(console_view), 
-			     "\n", 1, &len);
-
-    gtk_text_insert(GTK_TEXT(console_view), fixed_font, 
-		    NULL, NULL, prn->buf, strlen(prn->buf));
-    gretl_print_destroy(prn);
-
-    gtk_text_insert(GTK_TEXT(console_view), fixed_font,
-		    &red, NULL, "\n? ", 3);
-    gtk_text_thaw(GTK_TEXT(console_view));
-    len = gtk_text_get_length (GTK_TEXT(console_view));
-    gtk_editable_set_position(GTK_EDITABLE(console_view), len);
 }
 
 /* ........................................................... */
@@ -3582,8 +3401,14 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
-    if (code == SCRIPT_EXEC) runfile = scriptfile;
-    else if (code == SESSION_EXEC) runfile = cmdfile;
+    if (code == SCRIPT_EXEC) {
+	runfile = scriptfile;
+	sprintf(line, "run %s", scriptfile);
+	verify_and_record_command(line);
+    }
+    else if (code == SESSION_EXEC) {
+	runfile = cmdfile;
+    }
 
     if (data != NULL) { /* get commands from file view buffer */
 	GdkCursor *cursor;
@@ -4021,16 +3846,7 @@ int execute_script (const char *runfile, const char *buf,
     loop.storeval = NULL;
     loop.nmod = 0;
 
-    /* Put the action of running this script into the command log? */
-    if (exec_code == SCRIPT_EXEC && runfile != NULL) {
-	char runcmd[MAXLEN];
-
-	sprintf(runcmd, "run %s", runfile);
-	check_cmd(runcmd);
-	cmd_init(runcmd);
-    }
-
-    command.cmd[0] = '\0';
+    *command.cmd = '\0';
 
     while (strcmp(command.cmd, "quit")) {
 	if (looprun) { /* Are we doing a Monte Carlo simulation? */
@@ -4110,9 +3926,12 @@ int execute_script (const char *runfile, const char *buf,
 	} /* end alternative to Monte Carlo stuff */
     } /* end while() */
  endwhile:
+
     if (fb) fclose(fb);
+
     if (psession && rebuild) /* recreating a gretl session */
 	save_model_copy(&models[0], psession, rebuild, datainfo);
+
     return 0;
 }
 
@@ -4163,11 +3982,11 @@ static int script_model_test (const int id, PRN *prn, const int ols_only)
 
 /* ........................................................... */
 
-static int gui_exec_line (char *line, 
-			  LOOPSET *plp, int *plstack, int *plrun, 
-			  SESSION *psession, SESSIONBUILD *rebuild,
-			  PRN *prn, int exec_code, 
-			  const char *myname) 
+int gui_exec_line (char *line, 
+		   LOOPSET *plp, int *plstack, int *plrun, 
+		   SESSION *psession, SESSIONBUILD *rebuild,
+		   PRN *prn, int exec_code, 
+		   const char *myname) 
 {
     int i, err = 0, check = 0, rebuilding = 0, order, nulldata_n, lines[1];
     double rho;
@@ -4178,6 +3997,12 @@ static int gui_exec_line (char *line,
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
+
+    /* catch requests relating to saved objects, which are not
+       really "commands" as such */
+    if (saved_object_action(line, datainfo, prn)) {
+	return 0;
+    }
 
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));
@@ -4217,9 +4042,6 @@ static int gui_exec_line (char *line,
 
     if (command.errcode) {
         errmsg(command.errcode, prn);
-	if (exec_code == CONSOLE_EXEC) {
-	    strcpy(errline, linecopy);
-	}
         return 1;
     }
 
@@ -4604,10 +4426,6 @@ static int gui_exec_line (char *line,
     case GNUPLOT:
 	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
 	    break;
-	if (plp != NULL) {
-	    pprintf(prn, _("script mode: gnuplot command ignored\n"));
-	    break;
-	}
 	if (oflag == OPT_M) { /* plot with impulses */
 	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
 			  &paths, &plot_count, 1, 0, OPT_M);
@@ -4617,8 +4435,14 @@ static int gui_exec_line (char *line,
 			  &Z, datainfo, &paths, &plot_count, 
 			  0, 0, 0);
 	}
-	if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
-	else register_graph();
+	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
+	else {
+	    if (plp == NULL) register_graph();
+	    else {
+		err = maybe_save_graph(&command, paths.plotfile,
+				       GRETL_GNUPLOT_GRAPH);
+	    }
+	}
 	break;
 
     case HAUSMAN:
@@ -4842,6 +4666,7 @@ static int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
+	maybe_save_model(&command, &models[0], datainfo);
 	break;
 
 #ifdef ENABLE_GMP
@@ -4894,7 +4719,9 @@ static int gui_exec_line (char *line,
 	    return 1;
 	}
 	/* was SESSION_EXEC below */
-	err = execute_script(runfile, NULL, NULL, NULL, prn, exec_code);
+	err = execute_script(runfile, NULL, NULL, NULL, prn, 
+			     (exec_code == CONSOLE_EXEC)? SCRIPT_EXEC :
+			     exec_code);
 	break;
 
     case SCATTERS:
@@ -5074,12 +4901,7 @@ static int gui_exec_line (char *line,
 
     /* log the specific command? */
     if (exec_code == CONSOLE_EXEC) {
-	if (err) 
-	    strcpy(errline, line);
-	else {
-	    cmd_init(line);
-	    errline[0] = '\0';
-	}
+	cmd_init(line);
     }
 
     if ((is_model_cmd(command.cmd) || !strncmp(line, "end nls", 7))
