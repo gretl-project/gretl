@@ -83,6 +83,8 @@ double gretl_matrix_get (const gretl_matrix *m, int i, int j);
 
 int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);
 
+int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
+
 int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 			       const gretl_matrix *b, int bflag,
 			       gretl_matrix *c);

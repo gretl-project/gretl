@@ -193,6 +193,31 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
     return GRETL_MATRIX_OK;
 }
 
+/* ....................................................... */
+
+int 
+gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int i, n;
+
+    if (targ->rows != src->rows || targ->cols != src->cols) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (targ->packed != src->packed) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (src->packed) {
+	n = (src->rows * src->rows + src->rows) / 2;
+    } else {
+	n = src->rows * src->cols;
+    }
+    
+    for (i=0; i<n; i++) targ->val[i] += src->val[i];
+
+    return GRETL_MATRIX_OK;
+}
 
 /* ....................................................... */
 
@@ -349,16 +374,15 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 
     if (lcols != rrows) {
 	fputs("gretl_matrix_multiply_mod: matrices not conformable\n", stderr);
-	fprintf(stderr, "left-hand cols = %d, right-hand rows = %d\n",
-		lcols, rrows);	
+	fprintf(stderr, " Requested (%d x %d) * (%d x %d) = (%d x %d)\n",
+		lrows, lcols, rrows, rcols, c->rows, c->cols);
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
     if (c->rows != lrows || c->cols != rcols) {
 	fputs("gretl_matrix_multiply_mod: matrices not conformable\n", stderr);
-	fprintf(stderr, "Product cols = %d, right-hand cols = %d;\n"
-		"Product rows = %d, left-hand rows = %d\n",
-		c->cols, rcols, c->rows, lrows);
+	fprintf(stderr, " Requested (%d x %d) * (%d x %d) = (%d x %d)\n",
+		lrows, lcols, rrows, rcols, c->rows, c->cols);
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
