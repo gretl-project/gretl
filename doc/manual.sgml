@@ -197,8 +197,7 @@
 	    <programlisting>
 	      ./configure 
 	      make
-	      make install 
-	    </programlisting> 
+	      make install</programlisting> 
 
 	    However, you should probably do <command>./configure
 	    --help</command> first to see what options are available.
@@ -452,7 +451,7 @@
 
     <itemizedlist>
       <listitem><para><guimenu>File menu</guimenu></para>
-	<itemizedlist>
+	<itemizedlist mark="dash">
 	  <listitem><para><guimenuitem>Open data</guimenuitem>: Open a
 	      native <application>gretl</application> data file or
 	      import from other formats.  See
@@ -534,7 +533,7 @@
 	  </para></listitem>
 
       <listitem><para><guimenu>Data menu</guimenu></para>
-	<itemizedlist>
+	<itemizedlist mark="dash">
 	  <listitem><para><guimenuitem>Display values</guimenuitem>:
 	      pops up a window with a simple (not editable) printout
 	      of the values of the variables (either all of them or a
@@ -613,7 +612,7 @@
 	</itemizedlist>
       </listitem>
       <listitem><para><guimenu>Sample menu</guimenu></para>
-	<itemizedlist>
+	<itemizedlist mark="dash">
 	  <listitem><para><guimenuitem>Set range</guimenuitem>: Select
 	      a different starting and/or ending point for the current
 	      sample, within the range of data
@@ -671,8 +670,7 @@
 	  <xref linkend="cmdref"/>.  
 	  One simple example:
 	  <programlisting> 
-	    foo = x1 * x2 
-	  </programlisting> 
+	    foo = x1 * x2</programlisting> 
 	  will create
 	  a new variable <varname>foo</varname> as the product of the
 	  existing variables <varname>x1</varname> and
@@ -964,7 +962,7 @@
 	    <filename>.hdr</filename>.  This file contains, in
 	    order:</para>
 
-	  <itemizedlist>
+	  <itemizedlist mark="dash">
 	    <listitem><para>(Optional) <emphasis>comments</emphasis>
 		on the data, set off by the opening string
 		<literal>(*</literal> and the closing string
@@ -1007,8 +1005,7 @@
 	  Data compiled by Graham Elliott. 
 	  *) 
 	  lmoney lincome intrate ; 
-	  1 1900 1989 BYOBS 
-	</programlisting>
+	  1 1900 1989 BYOBS</programlisting>
 
 	The corresponding data file contains three columns of data, each
 	having 90 entries.</para>
@@ -1155,8 +1152,7 @@
       G0M910  Composite index of 11 leading indicators (1987=100) 
       M 1948.01 - 1995.11  n = 575
       currbal Balance of Payments: Balance on Current Account; SA 
-      Q 1960.1 - 1999.4 n = 160
-    </programlisting>
+      Q 1960.1 - 1999.4 n = 160</programlisting>
   
     <para>The first field is the series name.  The second is a
       description of the series (maximum 128 characters).  On the
@@ -1175,8 +1171,7 @@
       data, following a hash mark.  For example:</para>
 
     <programlisting>
-    # Federal Reserve Board (interest rates)
-    </programlisting>
+    # Federal Reserve Board (interest rates)</programlisting>
 
     <para>The corresponding binary database file holds the data
 	values, represented as <quote>floats</quote>, that is,
@@ -1588,8 +1583,7 @@
 	observation thereafter, 0 otherwise, do</para>
 
       <programlisting>
-	genr index genr dum = ((index-1)%30) = 0
-      </programlisting>
+	genr index genr dum = ((index-1)%30) = 0</programlisting>
 
     </sect1>
 
@@ -1645,8 +1639,7 @@
 	(* sample based on this dummy *) 
 	smpl -o dum 
 	(* recreate the obs. structure, for 56 units *) 
-	setobs 29 1.01 56.29
-      </programlisting>
+	setobs 29 1.01 56.29</programlisting>
 
       <para>You can now run regressions on the restricted data set
 	without having to use the <command>wls</command> command.  If
@@ -1829,8 +1822,7 @@
 	    genr b = coeff(x)
 	    (* and print them to file *) 
 	    store foo.dat a b 
-	  endloop
-    </programlisting>
+	  endloop</programlisting>
     </example>
 
     <para>This loop will print out summary statistics for the `a' and
@@ -1942,8 +1934,7 @@
 	  genr alpha = coeff(0) 
 	  genr beta = coeff(x1) 
 	  genr gamma = coeff(x2)
-	  print alpha beta gamma
-    </programlisting>
+	  print alpha beta gamma</programlisting>
       </example>
 
   </sect1>
@@ -1968,8 +1959,7 @@
 	  loop for i=1991..2000
 	    smpl -r (year=i)
 	    summary 1 2 3 4
-	  endloop
-	</programlisting>
+	  endloop</programlisting>
       </example>
 
     </sect1>
@@ -2172,8 +2162,7 @@
       <command>open</command> command).  A line of the form:
       
       <programlisting> 
-	(* ! myfile.dat *) 
-      </programlisting> 
+	(* ! myfile.dat *)</programlisting> 
 
       will (a) cause <application>gretlcli</application> to load
       <filename>myfile.dat</filename>, but will (b) be ignored as a
@@ -2761,11 +2750,10 @@
 
       <para>
 	If no <replaceable>varlist</replaceable> is given, prints
-	correlation coefficients for all pairs of variables in the
-	data set (missing values denoted by &minus;999 are skipped).
-	<command>corr</command> <replaceable>varlist</replaceable>
-	prints the correlation coefficients for the variables in the
-	given list.
+	pairwise correlation coefficients for all variables in the
+	data set.  <command>corr</command>
+	<replaceable>varlist</replaceable> prints the correlation
+	coefficients for the variables in the given list.
       </para>
 
     </sect2>
@@ -3043,10 +3031,9 @@
 
       <para>
 	  Prints the frequency distribution for
-	  <replaceable>var</replaceable> (given by name or number);
-	  the results of a &chisq; test for
-	  normality are also reported. In interactive mode a gnuplot
-	  graph of the distribution is generated.  
+	  <replaceable>var</replaceable> (given by name or number) along
+	  with a &chisq; test for normality. In interactive mode a gnuplot
+	  graph of the distribution is displayed.  
       </para>
 
       </sect2>
@@ -3264,7 +3251,9 @@
 	GUI, however, you have the option of retrieving data from any
 	model currently displayed in a window (whether or not it's the
 	most recent model).  You do this under the <quote>Model
-	  data</quote> menu in the model's window.
+	  data</quote> menu in the model's window.</para>
+	
+       <para>
 	<xref linkend="tab-genr"/> gives several examples of uses of
 	<command>genr</command> with explanatory notes; here are a
 	couple of tips on dummy variables:
@@ -3280,8 +3269,7 @@
 	    <programlisting>
 	      genr d1 = (x=1)
 	      genr d2 = (x=2)
-	      genr d3 = (x=3)
-	    </programlisting>
+	      genr d3 = (x=3)</programlisting>
 	  </para>
 	</listitem>
 
@@ -3290,8 +3278,7 @@
 
 	   <programlisting>
 	      genr d = x&gt;y
-	      genr z = (x*d)+(y*(1-d))
-	    </programlisting>
+	      genr z = (x*d)+(y*(1-d))</programlisting>
 	  </para>
 	</listitem>
       </itemizedlist>
@@ -3906,14 +3893,11 @@ the (internal) index variable <varname>i</varname>.  Within a loop,
 only six commands can be used: <command>genr</command>,
 <command>ols</command>, <command>print</command>,
 <command>smpl</command>, <command>store</command> and
-<command>summary</command> (store cannott be used in a
-<quote>while</quote> loop).  With genr and ols it is possible to do
-quite a lot.  You exit the mode of entering loop commands with
-<command>endloop</command>: at this point the stacked commands are
-executed.  Loops cannot be nested.</para>
-
-      <para>
-	See <xref linkend="looping"/> for details.
+<command>summary</command> (store can't be used in a
+<quote>while</quote> loop).  You exit the mode of entering loop
+commands with <command>endloop</command>: at this point the stacked
+commands are executed.  Loops cannot be nested.  See <xref
+linkend="looping"/> for details.
       </para>
 
     </sect2>
@@ -4264,42 +4248,38 @@ executed.  Loops cannot be nested.</para>
 
     <sect2 id="print"><title>print</title>
 
-      <para>
-	Prints the values of the specified variables for the current
-	data range (see <command>smpl</command>).
-      </para>
-
       <informaltable frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry><command>print</command></entry>
-	      <entry>prints the entire file by variables </entry>
-	    </row>
-	    <row>
-	      <entry><command>print -o</command></entry>
-	      <entry>prints the entire file by observations in a
-		tabular form </entry>
-	    </row>
-	    <row>
-	      <entry><command>print 3 6</command></entry>
-	      <entry>prints variables number 3 and 6 by variables
+	      <entry>Usage:</entry>
+	      <entry><command>print</command>
+		[ <replaceable>varlist</replaceable> ]
+		&opto;
 	      </entry>
+	    </row>	    <row>
+	      <entry>Examples:</entry>
+	      <entry><command>print</command></entry>
 	    </row>
 	    <row>
-	      <entry><command>print x y z</command></entry>
-	      <entry>prints <varname>x</varname>,
-		<varname>y</varname> and <varname>z</varname> by
-		variables </entry>
+	      <entry></entry>
+	      <entry><command>print x y</command></entry>
 	    </row>
 	    <row>
-	      <entry><command>print -o x y</command></entry>
-	      <entry>prints <varname>x</varname> and
-		<varname>y</varname> by observations</entry>
-	    </row> 
-	  </tbody> 
+	      <entry></entry>
+	      <entry><command>print 1 2 3 -o</command>  </entry>
+	    </row>
+	  </tbody>
 	</tgroup>
       </informaltable>
+
+      <para>
+	If <replaceable>varlist</replaceable> is given, prints the
+	values of the specified variables, otherwise prints the values
+	of all variables in the current data file.  If the
+	<literal>-o</literal> flag is given the data are printed by
+	observation, otherwise they are printed by variable.
+      </para>
 
     </sect2>
 
@@ -4472,10 +4452,8 @@ executed.  Loops cannot be nested.</para>
       </informaltable>
 
       <para>
-	If the file <replaceable>inputfile</replaceable> contains
-	script commands, this command will execute them one by one.
-	This is a useful way of executing batch commands within an
-	interactive session.
+	Execute the commands in <replaceable>inputfile</replaceable>
+	then return control to the interactive prompt.
       </para>
 
     </sect2>
@@ -4500,12 +4478,10 @@ executed.  Loops cannot be nested.</para>
 	randomness of the specified variable.  If you want to test for
 	randomness of deviations from the median, for a variable named
 	<varname>x1</varname> with a non-zero median, you can do the
-	following: 
+	following:</para> 
 	  <programlisting>
 	    genr signx1 = x1 - median(x1)
-	    runs signx1
-	  </programlisting>
-      </para>
+	    runs signx1</programlisting>
 
     </sect2>
 
@@ -4620,13 +4596,12 @@ executed.  Loops cannot be nested.</para>
       </informaltable>
 
       <para>
-	Use this command to force the program to interpret the current
-	data set as time series or panel, when the data have been read
-	in as simple undated series.
-	<replaceable>periodicity</replaceable> must be an integer;
-	<replaceable>startobs</replaceable> is a string representing
-	the date or panel ID of the first observation. See also
-	<xref linkend="panel"/>.
+	Force the program to interpret the current data set as time
+	series or panel, when the data have been read in as simple
+	undated series.  <replaceable>periodicity</replaceable> must
+	be an integer; <replaceable>startobs</replaceable> is a string
+	representing the date or panel ID of the first
+	observation. See also <xref linkend="panel"/>.
       </para>
 
     </sect2>
@@ -4751,7 +4726,7 @@ executed.  Loops cannot be nested.</para>
       </para>
 
       <informaltable frame="none">
-	<tgroup cols="2">
+	<tgroup cols="2"><colspec colnum="1" colwidth="2in"/>
 	  <tbody>
 	    <row>
 	      <entry><command>smpl 3 10</command>
@@ -4850,8 +4825,7 @@ executed.  Loops cannot be nested.</para>
 
       <programlisting>
 	  genr altx = -x
-	  spearman altx y
-      </programlisting>
+	  spearman altx y</programlisting>
 
     </sect2>
 
@@ -5544,12 +5518,10 @@ executed.  Loops cannot be nested.</para>
 	is simplified. For <application>ESL</application> you typed,
 	e.g. 
 	<programlisting> 
-	  esl -b datafile &lt; inputfile &gt; outputfile 
-	</programlisting> 
+	  esl -b datafile &lt; inputfile &gt; outputfile</programlisting> 
 	while for <application>gretlcli</application> you type: 
 	<programlisting>
-	  gretlcli -b inputfile &gt; outputfile 
-	</programlisting> 
+	  gretlcli -b inputfile &gt; outputfile</programlisting> 
 	The
 	inputfile is treated as a program argument; it should specify
 	a datafile to use internally, using the syntax <command>open
@@ -5766,8 +5738,7 @@ executed.  Loops cannot be nested.</para>
       genr ssy = sum(devy * devy) 
       smpl 2 ; 
       genr ssyy1 = sum(devy * devy1) 
-      genr rnist = ssyy1 / ssy
-    </programlisting>
+      genr rnist = ssyy1 / ssy</programlisting>
 
     <para>The figure <varname>rnist</varname> was then compared with the
       certified value.
