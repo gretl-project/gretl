@@ -55,6 +55,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
+static void print_poisson_stats (const MODEL *pmod, PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
@@ -564,6 +565,7 @@ const char *estimator_string (int ci, int format)
     else if (ci == PROBIT) return N_("Probit");
     else if (ci == LOGIT) return N_("Logit");
     else if (ci == TOBIT) return N_("Tobit");
+    else if (ci == POISSON) return N_("Poisson");
     else if (ci == POOLED) return N_("Pooled OLS");
     else if (ci == NLS) return N_("NLS");
     else if (ci == LOGISTIC) return N_("Logistic");
@@ -1503,7 +1505,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	model_format_start(prn);
     } else if (pmod->ci == ARMA || pmod->ci == GARCH || 
 	       pmod->ci == TOBIT || pmod->ci == WLS ||
-	       pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	       pmod->ci == LOGIT || pmod->ci == PROBIT ||
+	       pmod->ci == POISSON) {
 	int iters = gretl_model_get_int(pmod, "iters");
 
 	if (iters > 0) {
@@ -1533,6 +1536,15 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_discrete_statistics(pmod, pdinfo, prn);
 	goto close_format;
     }
+
+    if (pmod->ci == POISSON) {
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	print_poisson_stats(pmod, prn);
+	info_stats_lines(pmod, prn);
+	print_middle_table_end(prn);
+	goto close_format;
+    }	
 
     if (pmod->ci == TOBIT) {
 	print_middle_table_start(prn);
@@ -2194,13 +2206,11 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "  %s: %d (%.1f%%)\n", _("Censored observations"), cenc, cenpc);
 	pprintf(prn, "  %s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
-    }
-    else if (RTF_FORMAT(prn->format)) {
+    } else if (RTF_FORMAT(prn->format)) {
 	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenc, cenpc);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
-    }
-    else if (TEX_FORMAT(prn->format)) {
+    } else if (TEX_FORMAT(prn->format)) {
 	char xstr[32];
 
 	pprintf(prn, "%s & \\multicolumn{1}{r}{%.1f\\%%} \\\\\n", 
@@ -2212,19 +2222,32 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_poisson_stats (const MODEL *pmod, PRN *prn)
+{
+
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+    } else if (RTF_FORMAT(prn->format)) {
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+    } else if (TEX_FORMAT(prn->format)) {
+	char xstr[32];
+
+	tex_dcolumn_double(pmod->lnL, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
+    }
+}
+
 static void print_arma_stats (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
 	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[C_AIC]);
 	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[C_BIC]);
-    }
-    else if (RTF_FORMAT(prn->format)) {
+    } else if (RTF_FORMAT(prn->format)) {
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("AIC"), pmod->criterion[C_AIC]);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("BIC"), pmod->criterion[C_BIC]);
-    }
-    else if (TEX_FORMAT(prn->format)) {
+    } else if (TEX_FORMAT(prn->format)) {
 	char xstr[32];
 
 	tex_dcolumn_double(pmod->lnL, xstr);

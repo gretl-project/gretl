@@ -878,6 +878,7 @@ int is_model_cmd (const char *s)
 	!strncmp(s, "logit", 5)  ||
 	!strncmp(s, "probit", 6) ||
 	!strncmp(s, "tobit", 5) ||
+	!strncmp(s, "poisson", 7) ||
 	!strncmp(s, "garch", 5) ||
 	!strncmp(s, "logistic", 8) ||
 	!strncmp(s, "end nls", 7) ||
@@ -2119,6 +2120,9 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	break;
     case TOBIT:
 	*tmpmod = tobit_model(cmd.list, pZ, pdinfo, NULL);
+	break;
+    case POISSON:
+	*tmpmod = poisson_model(cmd.list, pZ, pdinfo, NULL);
 	break;
     case OLS:
     case WLS:

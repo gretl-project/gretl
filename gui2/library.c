@@ -2310,6 +2310,12 @@ void do_model (GtkWidget *widget, gpointer p)
 	err = model_output(pmod, prn);
 	break;
 
+    case POISSON:
+	*pmod = poisson_model(cmd.list, &Z, datainfo,
+			      (cmd.opt & OPT_V)? prn : NULL);
+	err = model_output(pmod, prn);
+	break;
+
     case ARMA:
 	*pmod = arma(cmd.list, (const double **) Z, datainfo, 
 		     (cmd.opt & OPT_V)? prn : NULL); 
@@ -5363,8 +5369,9 @@ int gui_exec_line (char *line,
     case RUNS: case SPEARMAN: case PCA:
     case OUTFILE: case RMPLOT: case HURST: case MAHAL:
 	err = simple_commands(&cmd, line, &Z, datainfo, outprn);
-	if (err) errmsg(err, prn);
-	else if (cmd.ci == DATA) {
+	if (err) {
+	    errmsg(err, prn);
+	} else if (cmd.ci == DATA) {
 	    register_data(NULL, NULL, 0);
 	}
 	break;
@@ -5397,8 +5404,12 @@ int gui_exec_line (char *line,
     case ADDTO:
     case OMITFROM:
 	i = atoi(cmd.param);
-	if ((err = script_model_test(cmd.ci, i, prn))) break;
-	if (i == (models[0])->ID) goto plain_add_omit;
+	if ((err = script_model_test(cmd.ci, i, prn))) {
+	    break;
+	}
+	if (i == (models[0])->ID) {
+	    goto plain_add_omit;
+	}
 	err = re_estimate(modelspec_get_command_by_id(modelspec, i), 
 			  &tmpmod, &Z, datainfo);
 	if (err) {
@@ -5433,7 +5444,6 @@ int gui_exec_line (char *line,
 			     datainfo, cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
-	    break;
 	}
 	break;
 
@@ -5469,9 +5479,9 @@ int gui_exec_line (char *line,
 #endif
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
-	    break;
-	}	
-	printmodel(models[0], datainfo, cmd.opt, outprn);
+	} else {	
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
+	}
 	break;
 
     case GARCH:
@@ -5479,9 +5489,9 @@ int gui_exec_line (char *line,
 	*models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case BXPLOT:
@@ -5497,31 +5507,39 @@ int gui_exec_line (char *line,
     case CHOW:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = chow_test(line, models[0], &Z, datainfo, outprn, ptest);
-	if (err) errmsg(err, prn);
-	else if (rebuild) 
+	if (err) {
+	    errmsg(err, prn);
+	} else if (rebuild) {
 	    add_test_to_model(models[0], ptest);
+	}
 	break;
 
     case COEFFSUM:
         if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case CUSUM:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = cusum_test(models[0], &Z, datainfo, outprn, ptest);
-	if (err) errmsg(err, prn);
-	else if (rebuild) 
+	if (err) {
+	    errmsg(err, prn);
+	} else if (rebuild) { 
 	    add_test_to_model(models[0], ptest);
+	}
 	break;
 
     case RESET:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = reset_test(models[0], &Z, datainfo, outprn, ptest);
-	if (err) errmsg(err, prn);
-	else if (rebuild) 
+	if (err) {
+	    errmsg(err, prn);
+	} else if (rebuild) {
 	    add_test_to_model(models[0], ptest);
+	}
 	break;
 
     case CORC:
@@ -5537,9 +5555,9 @@ int gui_exec_line (char *line,
 	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case LAD:
@@ -5547,15 +5565,17 @@ int gui_exec_line (char *line,
         *models[0] = lad(cmd.list, &Z, datainfo);
         if ((err = (models[0])->errcode)) {
             errmsg(err, prn);
-            break;
-        }
-        printmodel(models[0], datainfo, cmd.opt, outprn);
+        } else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
+	}
         break;
 
     case CORRGM:
 	order = atoi(cmd.param);
 	err = corrgram(cmd.list[1], order, &Z, datainfo, 1, outprn);
-	if (err) pprintf(prn, _("Failed to generate correlogram\n"));
+	if (err) {
+	    pprintf(prn, _("Failed to generate correlogram\n"));
+	}
 	break;
 
     case DELEET:
@@ -5599,8 +5619,7 @@ int gui_exec_line (char *line,
 		errmsg(err, prn);
 	    }
 	    sys = NULL;
-	} 
-	else if (!strcmp(cmd.param, "nls")) {
+	} else if (!strcmp(cmd.param, "nls")) {
 	    clear_or_save_model(&models[0], datainfo, rebuild);
 	    *models[0] = nls(&Z, datainfo, outprn);
 	    if ((err = (models[0])->errcode)) {
@@ -5609,13 +5628,13 @@ int gui_exec_line (char *line,
 	    }
 	    do_nls = 1;
 	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
-	else if (!strcmp(cmd.param, "restrict")) {
+	} else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, prn);
-	    if (err) errmsg(err, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    }
 	    rset = NULL;
-	}   
-	else {
+	} else {
 	    err = 1;
 	}
 	break;
@@ -5643,8 +5662,9 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Couldn't format model\n"));
 	    break;
 	}
-	if ((err = script_model_test(cmd.ci, 0, prn))) 
+	if ((err = script_model_test(cmd.ci, 0, prn))) {
 	    break;
+	}
 	strcpy(texfile, cmd.param);
 	if (cmd.ci == EQNPRINT) {
 	    err = eqnprint(models[0], datainfo, texfile, cmd.opt);
@@ -5665,17 +5685,19 @@ int gui_exec_line (char *line,
 	    err *= -1;
 	    printf(_("Error retrieving fitted values\n"));
 	    errmsg(err, prn);
-	    break;
+	} else {
+	    err = 0;
+	    varlist(datainfo, prn);
 	}
-	err = 0;
-	varlist(datainfo, prn);
 	break;
 
     case FCASTERR:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = fcast_with_errs(line, models[0], &Z, datainfo, outprn,
 			      (cmd.opt != 0)); 
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case FIT:
@@ -5785,9 +5807,9 @@ int gui_exec_line (char *line,
 	*models[0] = hsk_func(cmd.list, &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case HELP:
@@ -5931,31 +5953,40 @@ int gui_exec_line (char *line,
     case LOGIT:
     case PROBIT:
     case TOBIT:
+    case POISSON:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
 	} else if (cmd.ci == LOGISTIC) {
 	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
-	} else {
+	} else if (cmd.ci == TOBIT) {
 	    *models[0] = tobit_model(cmd.list, &Z, datainfo,
 				     (cmd.opt & OPT_V)? outprn : NULL);
+	} else {
+	    *models[0] = poisson_model(cmd.list, &Z, datainfo,
+				       (cmd.opt & OPT_V)? outprn : NULL);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case MODELTAB:
 	err = modeltab_parse_line(line, models[0], prn);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case NLS:
 	err = nls_parse_line(line, (const double **) Z, datainfo);
-	if (err) errmsg(err, prn);
-	else gretl_cmd_set_context(&cmd, NLS);
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    gretl_cmd_set_context(&cmd, NLS);
+	}
 	break;
 
     case NULLDATA:
@@ -5976,9 +6007,9 @@ int gui_exec_line (char *line,
 	err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
 	if (err) { 
 	    pprintf(prn, _("Failed to create empty data set\n"));
-	    break;
+	} else {
+	    register_data(NULL, NULL, 0);
 	}
-	register_data(NULL, NULL, 0);
 	break;
 
     case OLS:
@@ -5993,9 +6024,9 @@ int gui_exec_line (char *line,
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
 #ifdef ENABLE_GMP
@@ -6053,13 +6084,16 @@ int gui_exec_line (char *line,
 
     case SET:
 	err = parse_set_line(line, &echo_off, prn);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case SETOBS:
 	err = set_obs(line, datainfo, cmd.opt);
-	if (err) errmsg(err, prn);
-	else {
+	if (err) {
+	    errmsg(err, prn);
+	} else {
 	    if (datainfo->n > 0) {
 		set_sample_label(datainfo);
 		print_smpl(datainfo, 0, prn);
@@ -6181,9 +6215,9 @@ int gui_exec_line (char *line,
 			       &Z, datainfo, cmd.opt);
 	if ((err = (models[0])->errcode)) {
 	    errmsg((models[0])->errcode, prn);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;		
 
     case VAR:

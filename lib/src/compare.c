@@ -251,6 +251,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     case TOBIT:
 	rep = tobit_model(list, pZ, pdinfo, NULL);
 	break;
+    case POISSON:
+	rep = poisson_model(list, pZ, pdinfo, NULL);
+	break;
     case LAD:
 	rep = lad(list, pZ, pdinfo);
 	break;

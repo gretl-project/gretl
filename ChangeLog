@@ -1,4 +1,5 @@
 version 1.3.3
+- Add "poisson" command (thanks to Jack Lucchetti)
 - Fix memory leak in VAR command with impulse responses, in the
   command-line program
 - Fix bug: possible crash in "loop foreach" if an invalid variable

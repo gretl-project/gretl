@@ -52,7 +52,8 @@ enum {
     P_AUDIO,
     P_URCDIST,
     P_KERNEL,
-    P_FRACTAL
+    P_FRACTAL,
+    P_POISSON
 } plugin_codes;
 
 struct plugin_info {
@@ -93,7 +94,8 @@ struct plugin_info plugins[] = {
     { P_AUDIO,           "audio" },
     { P_URCDIST,         "urcdist" },
     { P_KERNEL,          "kernel" },
-    { P_FRACTAL,         "fractals" }
+    { P_FRACTAL,         "fractals" },
+    { P_POISSON,         "poisson" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -161,6 +163,7 @@ struct plugin_function plugin_functions[] = {
     { "logistic_estimate", P_LOGISTIC },
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
+    { "poisson_estimate",  P_POISSON },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },

@@ -852,7 +852,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 			     datainfo, cmd.opt, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
-	    break;
 	}
 	break;
 
@@ -904,25 +903,33 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case CHOW:
         if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = chow_test(line, models[0], &Z, datainfo, prn, NULL);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case COEFFSUM:
         if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case CUSUM:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = cusum_test(models[0], &Z, datainfo, prn, NULL);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case RESET:
         if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = reset_test(models[0], &Z, datainfo, prn, NULL);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 	
     case CORC:
@@ -938,9 +945,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, prn); 
 	}
-	printmodel(models[0], datainfo, cmd.opt, prn); 
 	break;
 
     case LAD:
@@ -948,15 +955,18 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	*models[0] = lad(cmd.list, &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    break;
+	    clear_model(models[0]);
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case CORRGM:
 	order = atoi(cmd.param);
 	err = corrgram(cmd.list[1], order, &Z, datainfo, batch, prn);
-	if (err) pputs(prn, _("Failed to generate correlogram\n"));
+	if (err) {
+	    pputs(prn, _("Failed to generate correlogram\n"));
+	}
 	break;
 
     case DELEET:
@@ -1003,7 +1013,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    printmodel(models[0], datainfo, cmd.opt, prn);
 	} else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, prn);
-	    if (err) errmsg(err, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    }
 	    rset = NULL;
 	} else {
 	    err = 1;
@@ -1050,16 +1062,18 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err *= -1;
 	    pputs(prn, _("Error retrieving fitted values\n"));
 	    errmsg(err, prn);
-	    break;
+	} else {
+	    err = 0;
+	    varlist(datainfo, prn);
 	}
-	err = 0;
-	varlist(datainfo, prn);
 	break;
 
     case FCASTERR:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = fcast_with_errs(line, models[0], &Z, datainfo, prn, cmd.opt); 
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case FIT:
@@ -1162,9 +1176,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	*models[0] = hsk_func(cmd.list, &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case HELP:
@@ -1311,26 +1325,34 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case LOGIT:
     case PROBIT:
     case TOBIT:
+    case POISSON:
 	clear_model(models[0]);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
 	} else if (cmd.ci == LOGISTIC) {
 	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
-	} else {
+	} else if (cmd.ci == TOBIT) {
 	    *models[0] = tobit_model(cmd.list, &Z, datainfo,
 				     (cmd.opt & OPT_V)? prn : NULL);
+	} else {
+	    *models[0] = poisson_model(cmd.list, &Z, datainfo,
+				       (cmd.opt & OPT_V)? prn : NULL);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    break;
+	    clear_model(models[0]);
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case NLS:
 	err = nls_parse_line(line, (const double **) Z, datainfo);
-	if (err) errmsg(err, prn);
-	else gretl_cmd_set_context(&cmd, NLS);
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    gretl_cmd_set_context(&cmd, NLS);
+	}
 	break;
 
     case NULLDATA:
@@ -1370,9 +1392,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    clear_model(models[0]);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
 #ifdef ENABLE_GMP
@@ -1391,7 +1413,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case PERGM:
 	err = periodogram(cmd.list[1], &Z, datainfo, batch, cmd.opt, prn);
-	if (err) pputs(prn, _("Failed to generate periodogram\n"));
+	if (err) {
+	    pputs(prn, _("Failed to generate periodogram\n"));
+	}
 	break;
 
     case PRINTF:
@@ -1399,9 +1423,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case PVALUE:
-	if (batch || runit || (sscanf(line, "%s %s", s1, s2) == 2))
+	if (batch || runit || (sscanf(line, "%s %s", s1, s2) == 2)) {
 	    batch_pvalue(line, (const double **) Z, datainfo, prn);
-	else interact_pvalue();
+	} else {
+	    interact_pvalue();
+	}
 	break;
 
     case QUIT:
@@ -1471,13 +1497,16 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case SET:
 	err = parse_set_line(line, &echo_off, prn);
-	if (err) errmsg(err, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case SETOBS:
 	err = set_obs(line, datainfo, cmd.opt);
-	if (err) errmsg(err, prn);
-	else {
+	if (err) {
+	    errmsg(err, prn);
+	} else {
 	    if (datainfo->n > 0) {
 		print_smpl(datainfo, 0, prn);
 	    } else {
@@ -1576,9 +1605,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 			       &Z, datainfo, cmd.opt);
 	if ((err = (models[0])->errcode)) {
 	    errmsg((models[0])->errcode, prn);
-	    break;
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
-	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case VAR:

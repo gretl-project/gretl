@@ -3773,6 +3773,54 @@ MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 }
 
 /**
+ * poisson_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: printing struct for iteration info (or NULL is this is not
+ * wanted).
+ *
+ * Estimate the Poisson regression model given in @list using ML.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    MODEL pmodel;
+    void *handle;
+    int (* poisson_estimate) (MODEL *, const double **, DATAINFO *, PRN *);
+
+    *gretl_errmsg = '\0';
+
+    /* run an initial OLS to "set the model up" and check for errors.
+       the poisson_estimate_driver function will overwrite the
+       coefficients etc.
+    */
+
+    pmodel = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+
+    if (pmodel.errcode) {
+        return pmodel;
+    }
+
+    poisson_estimate = get_plugin_function("poisson_estimate", &handle);
+
+    if (poisson_estimate == NULL) {
+	pmodel.errcode = E_FOPEN;
+	return pmodel;
+    }
+
+    (*poisson_estimate) (&pmodel, (const double **) *pZ, pdinfo, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&pmodel);
+
+    return pmodel;
+}
+
+/**
  * garch:
  * @list: dependent variable plus arch and garch orders
  * @pZ: pointer to data matrix

@@ -49,6 +49,9 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn);
 
+MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+		     PRN *prn);
+
 MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	     PRN *prn);
 

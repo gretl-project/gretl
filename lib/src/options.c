@@ -26,7 +26,7 @@
                         c == OMIT || c == TSLS || c == LOGIT || \
                         c == PROBIT || c == TOBIT || c == ARMA || \
                         c == AR || c == LOGISTIC || c == NLS || \
-                        c == GARCH)
+                        c == GARCH || c == POISSON)
 
 struct gretl_option {
     int ci;              /* command index (context) */
@@ -106,6 +106,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_W, "write" },
     { PANEL,    OPT_C, "cross-section" },
     { PANEL,    OPT_S, "time-series" },
+    { POISSON,  OPT_V, "verbose" },
     { POOLED,   OPT_T, "iterate" },
     { POOLED,   OPT_V, "verbose" },
     { POOLED,   OPT_W, "unit-weights" },

@@ -84,7 +84,8 @@ SRCS = excel_import.c \
 	tobit.c \
 	garch.c \
 	urcdist.c \
-	vif.c 
+	vif.c \
+	poisson.c
 
 PLUGINS = arma.la \
 	arma_x12.la \
@@ -107,6 +108,7 @@ PLUGINS = arma.la \
 	tobit.la \
 	urcdist.la \
 	vif.la \
+	poisson.la \
 	$(TXPLUGIN)
 
 ifeq ($(have_gmp),yes)
@@ -214,6 +216,9 @@ logistic.la: logistic.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
 
 tobit.la: tobit.lo
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
+
+poisson.la: poisson.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
 
 garch.la: garch.lo fcp.lo

@@ -97,6 +97,7 @@ enum gretl_cmd_codes {
     PCA,
     PERGM,
     PLOT,    
+    POISSON,
     POOLED,
     PRINT, 
     PRINTF,

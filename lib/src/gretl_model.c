@@ -981,19 +981,20 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 
 int mle_aic_bic (MODEL *pmod, int addk)
 {
+    int err = 0;
+
     if (na(pmod->lnL)) {
 	pmod->criterion[C_AIC] = NADBL;
 	pmod->criterion[C_BIC] = NADBL;
-
-	return 1;
+	err = 1;
     } else {
 	int k = pmod->ncoeff + addk;
 
 	pmod->criterion[C_AIC] = -2.0 * pmod->lnL + 2.0 * k;
 	pmod->criterion[C_BIC] = -2.0 * pmod->lnL + k * log(pmod->nobs);
-
-	return 0;
     }
+
+    return err;
 }
 
 
