@@ -117,8 +117,9 @@ RCVARS rc_vars[] = {
      'R', MAXSTR, 3, NULL},
     {"calculator", N_("Calculator"), NULL, calculator, 
      'U', MAXSTR, 3, NULL},
-    {"editor", N_("Editor"), NULL, editor, 
-     'U', MAXSTR, 3, NULL},
+#ifdef SELECT_EDITOR
+    {"editor", N_("Editor"), NULL, editor, 'U', MAXSTR, 3, NULL},
+#endif
 #ifdef HAVE_X12A
     {"x12a", N_("path to x12arima"), NULL, x12a, 
      'R', MAXSTR, 3, NULL},
