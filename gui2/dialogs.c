@@ -1979,7 +1979,7 @@ int select_var_from_list (const int *list, const char *query)
     gtk_combo_set_popdown_strings(GTK_COMBO(combo), varlist); 
 
 #ifndef OLD_GTK
-    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), 8);
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), 9);
 #endif
     gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), 

@@ -646,7 +646,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
     int i, j, oddman = 0;
     char s1[MAXDISP], s2[MAXDISP], xlabel[MAXDISP], withstring[8];
-    char depvar[VNAMELEN];
+    char depvar[VNAMELEN], ols_line[128] = {0};
     int yscale = 0;   /* two y axis scales needed? */
     int ts_plot = 1;  /* plotting against time on x-axis? */
     int pdist = 0;    /* plotting probability dist. */
@@ -726,10 +726,11 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (!plotmod.errcode) {
 	    /* is the fit significant? */
-	    b = plotmod.coeff[1];
-	    if (tprob(b / plotmod.sderr[1], plotmod.dfd) < .10) {
+	    if (tprob(plotmod.coeff[1] / plotmod.sderr[1], plotmod.dfd) < .10) {
 		ols_ok = 1;
-		a = plotmod.coeff[0];
+                sprintf(ols_line, "%g + %g*x title '%s' w lines\n", 
+		        plotmod.coeff[0], plotmod.coeff[1], 
+		        I_("least squares fit"));
 	    }
 	}
 	clear_model(&plotmod);
@@ -918,14 +919,16 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    }
 	    fprintf(fq, " '-' using 1:($2) title '%s' %s", 
 		    s1, withstring);
-	    if (i < (lo - 1) || ols_ok) fputs(" , \\\n", fq); 
-	    else fputc('\n', fq);
+	    if (i < (lo - 1) || ols_ok) {
+	        fputs(" , \\\n", fq); 
+	    } else {
+	        fputc('\n', fq);
+	    }
 	}
     } 
 
-    if (ols_ok) {
-	fprintf(fq, "%g + %g*x title '%s' w lines\n", a, b, 
-		I_("least squares fit"));
+    if (*ols_line != '\0') {
+        fputs(ols_line, fq);
     }
 
     /* multi impulse plot? calculate offset for lines */
