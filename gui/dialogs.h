@@ -4,9 +4,9 @@
 #define DIALOGS_H
 
 enum {
-    YES_BUTTON,
-    NO_BUTTON,
-    CANCEL_BUTTON
+    GRETL_YES,
+    GRETL_NO,
+    GRETL_CANCEL
 } buttons;
 
 /* functions follow */

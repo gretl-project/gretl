@@ -747,7 +747,7 @@ void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
     resp = yes_no_dialog(_("gretl: panel structure"), msg, 0);
     g_free(msg);
 
-    if (resp == YES_BUTTON) {
+    if (resp == GRETL_YES) {
 	void *handle;
 	int (*switch_panel_orientation)(double **, DATAINFO *);
 
@@ -806,7 +806,7 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
 	msg = g_strdup_printf(_("Do you want to register the current data set\n"
 		"as %s?"), _(label));
 	resp = yes_no_dialog(_("gretl: time series data"), msg, 0);
-	if (resp == YES_BUTTON) {
+	if (resp == GRETL_YES) {
 	    if (!(datainfo->time_series == TIME_SERIES)) {
 		data_status |= MODIFIED_DATA;
 	    }

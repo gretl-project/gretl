@@ -640,14 +640,16 @@ void verify_open_data (gpointer userdata, int code)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_status && !expert && 
-	yes_no_dialog (_("gretl: open data"), 
-		       _("Opening a new data file will automatically\n"
-		       "close the current one.  Any unsaved work\n"
-		       "will be lost.  Proceed to open data file?"), 0))
-	return;
-    else 
-	do_open_data(NULL, userdata, code);
+    if (data_status && !expert) {
+	int resp = 
+	    yes_no_dialog (_("gretl: open data"), 
+			   _("Opening a new data file will automatically\n"
+			     "close the current one.  Any unsaved work\n"
+			     "will be lost.  Proceed to open data file?"), 0);
+	if (resp == GRETL_NO) return;
+    } 
+
+    do_open_data(NULL, userdata, code);
 }
 
 /* ........................................................... */
@@ -657,14 +659,17 @@ void verify_open_session (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_status && !expert &&
-	yes_no_dialog (_("gretl: open session"), 
-		       _("Opening a new session file will automatically\n"
-		       "close the current session.  Any unsaved work\n"
-		       "will be lost.  Proceed to open session file?"), 0))
-	return;
-    else 
-	do_open_session(NULL, userdata);
+    if (data_status && !expert) {
+	int resp = 
+	    yes_no_dialog (_("gretl: open session"), 
+			   _("Opening a new session file will automatically\n"
+			     "close the current session.  Any unsaved work\n"
+			     "will be lost.  Proceed to open session file?"), 0);
+
+	if (resp == GRETL_NO) return;
+    }
+
+    do_open_session(NULL, userdata);
 }
 
 /* ........................................................... */
@@ -1546,15 +1551,16 @@ static void auto_save_script (windata_t *vwin)
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 {
     if (SCRIPT_IS_CHANGED(vwin)) {
-	int button;
+	int resp = 
+	    yes_no_dialog(_("gretl: script"), 
+			  _("Save changes?"), 1);
 
-	button = yes_no_dialog(_("gretl: script"), 
-			       _("Save changes?"), 1);
-
-	if (button == CANCEL_BUTTON)
+	if (resp == GRETL_CANCEL) {
 	    return TRUE;
-	if (button == YES_BUTTON)
+	}
+	if (resp == GRETL_YES) {
 	    auto_save_script(vwin);
+	}
     }
     return FALSE;
 }

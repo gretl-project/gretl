@@ -909,9 +909,10 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 void open_info (gpointer data, guint edit, GtkWidget *widget)
 {
     if (datainfo->descrip == NULL) {
-	if (!yes_no_dialog(_("gretl: add info"), 
-			   _("The data file contains no informative comments.\n"
-			   "Would you like to add some now?"), 0)) {
+	if (yes_no_dialog(_("gretl: add info"), 
+			  _("The data file contains no informative comments.\n"
+			    "Would you like to add some now?"), 
+			  0) == GRETL_YES) {
 	    edit_header(NULL, 0, NULL);
 	}
     } else {
@@ -3273,15 +3274,15 @@ static void maybe_restore_full_data (void)
     if (mdata->ifac != NULL) {
 	GtkWidget *w = gtk_item_factory_get_item(mdata->ifac, 
 						 "/Sample/Restore full range");
-	gint resp;
 
 	if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
-	    resp = yes_no_dialog(_("gretl: save data"), 
-				 _("The data set is currently sub-sampled.\n"
-				   "Would you like to restore the full range?"), 0);
-	    if (resp == 0) {
+	    int resp = 
+		yes_no_dialog(_("gretl: save data"), 
+			      _("The data set is currently sub-sampled.\n"
+				"Would you like to restore the full range?"), 1);
+	    if (resp == GRETL_YES) {
 		restore_sample(NULL, 0, NULL);
-	    } else of (resp == -1 || resp > 1) {
+	    } else if (resp == GRETL_CANCEL || resp < 0) {
 		return 1;
 	    }
 	} 
@@ -3320,7 +3321,8 @@ int do_store (char *mydatfile, int opt, int overwrite)
 		fclose(fp);
 		if (yes_no_dialog(_("gretl: save data"), 
 				  _("There is already a data file of this name.\n"
-				    "OK to overwrite it?"), 0)) {
+				    "OK to overwrite it?"), 
+				  0) == GRETL_NO) {
 		    goto store_get_out;
 		}
 	    }

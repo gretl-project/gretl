@@ -478,14 +478,14 @@ void close_session (void)
 void verify_clear_data (void)
 {
     if (!expert) {
-        int button = yes_no_dialog ("gretl",                      
-				    _("Clearing the data set will end\n"
-				      "your current session.  Continue?"), 0);
-        if (button != YES_BUTTON) 
+        if (yes_no_dialog ("gretl",                      
+			   _("Clearing the data set will end\n"
+			     "your current session.  Continue?"), 
+			   0) != GRETL_YES) {
             return;
+	}
+	close_session();
     }
-    close_session();
-}
 
 /* ........................................................... */
 
@@ -1681,7 +1681,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	gchar *msg;
 
 	msg = g_strdup_printf(_("Really delete %s?"), obj->name);
-	if (!yes_no_dialog(_("gretl: delete"), msg, 0)) {
+	if (yes_no_dialog(_("gretl: delete"), msg, 0) == GRETL_YES) {
 	    delete_session_object(obj);
 	}
 	g_free(msg);

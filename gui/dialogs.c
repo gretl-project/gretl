@@ -700,7 +700,11 @@ int yes_no_dialog (char *title, char *message, int cancel)
 
     button = gnome_dialog_run_and_close (GNOME_DIALOG (dialog));
 
-    return button;
+    if (button == 0) return GRETL_YES;
+    if (button == 1) return GRETL_NO;
+    if (button == 2) return GRETL_CANCEL;
+
+    return GRETL_CANCEL;
 }
 
 #else /* not USE_GNOME */
@@ -733,9 +737,9 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    yesdata.dialog = nodata.dialog = canceldata.dialog 
        = dialog;
    yesdata.ret = nodata.ret = canceldata.ret = &ret; 
-   yesdata.button = 0;
-   nodata.button = 1;
-   canceldata.button = -1;
+   yesdata.button = GRETL_YES;
+   nodata.button = GRETL_NO;
+   canceldata.button = GRETL_CANCEL;
    
    gtk_grab_add (dialog);
    gtk_window_set_title (GTK_WINDOW (dialog), title);
@@ -809,24 +813,24 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	button = yes_no_dialog ("gretl", 		      
 				_("Do you want to save the commands and\n"
 				"output from this gretl session?"), 1);
-	if (button == YES_BUTTON) {
+	if (button == GRETL_YES) {
 	    save_session_callback(NULL, 1, NULL);
 	    return TRUE; /* bodge */
 	}
 	/* button -1 = wm close */
-	else if (button == CANCEL_BUTTON || button == -1) return TRUE;
-	/* else button = 1, NO: so fall through */
+	else if (button == GRETL_CANCEL || button == -1) return TRUE;
+	/* else button = GRETL_NO: so fall through */
     }
 
     if (data_status & MODIFIED_DATA) {
 	button = yes_no_dialog ("gretl", 
 				_("Do you want to save changes you have\n"
 				"made to the current data set?"), 1);
-	if (button == YES_BUTTON) {
+	if (button == GRETL_YES) {
 	    save_data_callback();
 	    return TRUE; 
 	}
-	else if (button == CANCEL_BUTTON || button == -1) return TRUE;
+	else if (button == GRETL_CANCEL || button == -1) return TRUE;
     }    
 
     write_rc();

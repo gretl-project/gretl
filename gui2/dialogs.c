@@ -709,9 +709,9 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
     gtk_widget_destroy (dialog);
 
     switch (ret) {
-    case GTK_RESPONSE_ACCEPT: return YES_BUTTON; 
-    case GTK_RESPONSE_NO: return NO_BUTTON; 
-    default: return -1;
+    case GTK_RESPONSE_ACCEPT: return GRETL_YES; 
+    case GTK_RESPONSE_NO: return GRETL_NO; 
+    default: return GRETL_CANCEL;
     }
 }
 
@@ -720,15 +720,15 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
 {
     char fname[MAXLEN];
-    int button;
+    int resp;
     extern int replay; /* lib.c */
     const char regular_save_msg[] = {
 	N_("Do you want to save the commands and\n"
-	  "output from this gretl session?")
+	   "output from this gretl session?")
     };
     const char session_save_msg[] = {
 	N_("Do you want to save the changes you made\n"
-	  "to this session?")
+	   "to this session?")
     };
 	
     strcpy(fname, paths.userdir);
@@ -741,29 +741,29 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     if (!expert && !replay && 
 	(session_changed(0) || (work_done() && !session_saved))) {
 
-	button = yes_no_dialog ("gretl", 
-				(session_file_is_open()) ?
-				_(session_save_msg) : _(regular_save_msg), 
-				1);		      
+	resp = yes_no_dialog ("gretl", 
+			      (session_file_is_open()) ?
+			      _(session_save_msg) : _(regular_save_msg), 
+			      1);		      
 
-	if (button == YES_BUTTON) {
+	if (resp == GRETL_YES) {
 	    save_session_callback(NULL, SAVE_RENAME, NULL);
 	    return TRUE; /* bodge */
 	}
-	/* button -1 = wm close */
-	else if (button == CANCEL_BUTTON || button == -1) return TRUE;
-	/* else button = 1, NO: so fall through */
+	/* resp -1 = wm close */
+	else if (resp == GRETL_CANCEL || resp == -1) return TRUE;
+	/* else resp = GRETL_NO: so fall through */
     }
 
     if (data_status & MODIFIED_DATA) {
-	button = yes_no_dialog ("gretl", 
-				_("Do you want to save changes you have\n"
-				  "made to the current data set?"), 1);
-	if (button == YES_BUTTON) {
+	resp = yes_no_dialog ("gretl", 
+			      _("Do you want to save changes you have\n"
+				"made to the current data set?"), 1);
+	if (resp == GRETL_YES) {
 	    save_data_callback();
 	    return TRUE; 
 	}
-	else if (button == CANCEL_BUTTON || button == -1) return TRUE;
+	else if (resp == GRETL_CANCEL || resp == -1) return TRUE;
     }    
 
     write_rc();

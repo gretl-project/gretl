@@ -7,6 +7,9 @@ version 1.0.4
   including crashes
 - fix bug in coefficient printing: sometimes values were being
   truncated at 5 figures
+- when dataset is sub-sampled, add dialog offering option to
+  restore full data range when saving data
+- raise library revision number to 4
 
 02/04/03 version 1.0.3
 - Add PNG graphs to win32 version, and standardize on PNG graphs for
