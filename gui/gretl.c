@@ -1280,49 +1280,38 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 #ifdef G_OS_WIN32
     CreateChildProcess(Rcommand);
 #else
-    /* can't get gnome_execute to work yet */
-    if (0 && strcmp(Rcommand, "R --gui=gnome") == 0) {
-	char * const gargv[] = {"R", "--gui=gnome", NULL};
-
-	pid = gnome_execute_async(NULL, 2, gargv);
-	if (pid == -1) {
-	    errbox("Couldn't start R");
-	    return;
-	}
-    } else {
-	s0 = mymalloc(64);
-	s1 = mymalloc(32);
-	s2 = mymalloc(32);
-	if (s0 == NULL || s0 == NULL || s0 == NULL)
-	    return;
-	s0[0] = s1[0] = s2[0] = 0;
-	i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
-	if (i == 0) {
-	    errbox("No command was supplied to start R");
-	    free(s0); free(s1); free(s2);
-	    return;
-	}
-
-	pid = fork();
-
-	if (pid == -1) {
-	    errbox("Couldn't fork");
-	    perror("fork");
-	    return;
-	} else if (pid == 0) {  
-	    if (i == 1)
-		execlp(s0, s0, NULL);
-	    else if (i == 2)
-		execlp(s0, s0, s1, NULL);
-	    else if (i == 3)
-		execlp(s0, s0, s1, s2, NULL);
-	    perror("execlp");
-	    _exit(EXIT_FAILURE);
-	}
-	free(s0); 
-	free(s1); 
-	free(s2);
+    s0 = mymalloc(64);
+    s1 = mymalloc(32);
+    s2 = mymalloc(32);
+    if (s0 == NULL || s0 == NULL || s0 == NULL)
+	return;
+    s0[0] = s1[0] = s2[0] = 0;
+    i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
+    if (i == 0) {
+	errbox("No command was supplied to start R");
+	free(s0); free(s1); free(s2);
+	return;
     }
+
+    pid = fork();
+
+    if (pid == -1) {
+	errbox("Couldn't fork");
+	perror("fork");
+	return;
+    } else if (pid == 0) {  
+	if (i == 1)
+	    execlp(s0, s0, NULL);
+	else if (i == 2)
+	    execlp(s0, s0, s1, NULL);
+	else if (i == 3)
+	    execlp(s0, s0, s1, s2, NULL);
+	perror("execlp");
+	_exit(EXIT_FAILURE);
+    }
+    free(s0); 
+    free(s1); 
+    free(s2);
 #endif 
 }
 
