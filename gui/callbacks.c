@@ -45,8 +45,10 @@ void selectrow (GtkCList *clist, gint row, gint column,
     if (mydata == mdata) { /* main window */
 	gtk_clist_get_text(GTK_CLIST(clist), row, 0, &numstr);
 	mydata->active_var = atoi(numstr);
-    } else 
+    } else {
 	mydata->active_var = row;
+    }
+
     if (active_edit_id) {
 	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_id));
 	if (strlen(edttext)) sprintf(addvar, " %d", mydata->active_var);
@@ -59,6 +61,7 @@ void selectrow (GtkCList *clist, gint row, gint column,
 			      datainfo->varname[mydata->active_var]);
 	gtk_entry_append_text(GTK_ENTRY (active_edit_name), " ");
     }
+
     /* response to double-click */
     if (event != NULL && event->type == GDK_2BUTTON_PRESS 
 	&& event->button == 1) {

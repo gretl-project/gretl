@@ -1015,6 +1015,9 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
     setup_column(view, 1, listbox_varname_width * gui_scale);
     setup_column(view, 2, listbox_label_width * gui_scale);
 
+    gtk_signal_connect_after (GTK_OBJECT (view), "select_row",
+			      GTK_SIGNAL_FUNC (selectrow), (gpointer) mdata);
+
     scroller = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
