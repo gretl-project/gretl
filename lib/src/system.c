@@ -31,16 +31,19 @@ struct _gretl_equation_system {
 };
 
 enum {
-    SUR = 0
+    SUR = 0,
+    THREESLS
 } gretl_system_types;
 
 const char *gretl_system_type_strings[] = {
     "sur",
+    "3sls",
     NULL
 };
 
 const char *gretl_system_long_strings[] = {
     "Seemingly Unrelated Regressions",
+    "Three-Stage Least Squares",
     NULL
 };
 
@@ -176,7 +179,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	return 1;
     }
 
-    if (sys->type != SUR) {
+    if (sys->type != SUR && sys->type != THREESLS) {
 	err = 1;
 	strcpy(gretl_errmsg, _(badsystem));
 	goto system_bailout;
@@ -188,15 +191,20 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	goto system_bailout;
     }
 
-    for (i=1; i<sys->n_equations; i++) {
-	if (sys->lists[i][0] != sys->lists[0][0]) {
-	    err = 1;
-	    strcpy(gretl_errmsg, _(sursquare));
+    system_est = NULL;
+
+    if (sys->type == SUR) {
+	for (i=1; i<sys->n_equations; i++) {
+	    if (sys->lists[i][0] != sys->lists[0][0]) {
+		err = 1;
+		strcpy(gretl_errmsg, _(sursquare));
+	    }
+	    if (err) goto system_bailout;
 	}
-	if (err) goto system_bailout;
+
+	system_est = get_plugin_function("sur", &handle);
     }
 
-    system_est = get_plugin_function("sur", &handle);
     if (system_est == NULL) {
 	err = 1;
         goto system_bailout;
@@ -218,6 +226,18 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     return err;
 }
 
+int system_n_indep_vars (const gretl_equation_system *sys)
+{
+    int i, nvi, nv = 0;
+
+    for (i=0; i<sys->n_equations; i++) {
+	nvi = sys->lists[i][0] - 1;
+	if (nvi > nv) nv = nvi;
+    }
+
+    return nv;
+}
+
 /* simple accessor functions */
 
 int system_save_uhat (const gretl_equation_system *sys)
@@ -233,11 +253,6 @@ int system_save_yhat (const gretl_equation_system *sys)
 int system_n_equations (const gretl_equation_system *sys)
 {
     return sys->n_equations;
-}
-
-int system_n_indep_vars (const gretl_equation_system *sys)
-{
-    return sys->lists[0][0] - 1;
 }
 
 int *system_get_list (const gretl_equation_system *sys, int i)

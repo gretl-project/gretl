@@ -149,9 +149,10 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			    d->edit, TRUE, TRUE, FALSE);
 
 	/* make the Enter key do the business */
-	if (okfunc) 
+	if (okfunc) { 
 	    gtk_signal_connect (GTK_OBJECT (d->edit), "activate", 
 				GTK_SIGNAL_FUNC (okfunc), (gpointer) d);
+	}
 
 	gtk_entry_set_visibility (GTK_ENTRY (d->edit), TRUE);
 	if (deftext) {
@@ -1086,6 +1087,8 @@ void varinfo_dialog (int varnum, int full)
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->name_entry, FALSE, FALSE, 0);
     gtk_widget_show(vset->name_entry); 
+    gtk_signal_connect(GTK_OBJECT(vset->name_entry), "activate", 
+		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
@@ -1106,6 +1109,9 @@ void varinfo_dialog (int varnum, int full)
 		       VARLABEL(datainfo, varnum));
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 0);
     gtk_widget_show(vset->label_entry);
+    gtk_signal_connect(GTK_OBJECT(vset->label_entry), "activate", 
+		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
+
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox); 
@@ -1122,7 +1128,9 @@ void varinfo_dialog (int varnum, int full)
 			   DISPLAYNAME(datainfo, varnum));
 	gtk_box_pack_start(GTK_BOX(hbox), 
 			   vset->display_name_entry, FALSE, FALSE, 0);
-	gtk_widget_show(vset->display_name_entry); 
+	gtk_widget_show(vset->display_name_entry);
+	gtk_signal_connect(GTK_OBJECT(vset->display_name_entry), "activate", 
+			   GTK_SIGNAL_FUNC(really_set_variable_info), vset);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);

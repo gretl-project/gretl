@@ -1,0 +1,14 @@
+# Klein's "Model 1" (1950)
+open klein.gdt
+genr W = Wp + Wg
+genr A = t - 1931
+genr P1 = P(-1)
+genr X1 = X(-1)
+ols C 0 P P1 W 
+ols I 0 P P1 K1
+ols Wp 0 X X1 A
+tsls C 0 P P1 W ; 0 G T A Wg P1 K1 X1
+tsls I 0 P P1 K1 ; 0 G T A Wg P1 K1 X1
+tsls Wp 0 X X1 A ; 0 G T A Wg P1 K1 X1
+
+

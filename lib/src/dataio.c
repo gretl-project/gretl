@@ -2506,9 +2506,9 @@ static int count_csv_fields (const char *line, char delim)
 	if (*p == delim) nf++;
 	cbak = *p;
 	p++;
-#if 0
+#if 1
 	/* Problem: this should be read as a implicit "NA"? */
-	if (*p == '\0' && cbak == delim) {
+	if (*p == '\0' && cbak == delim && cbak != ',') {
 	    nf--;
 	}
 #endif

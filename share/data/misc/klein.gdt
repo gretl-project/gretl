@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="klein" frequency="1" startobs="1920" endobs="1941" type="time-series">
+<description>Data for Klein's &quot;Model 1&quot; (1950), reproduced as
+Table A16.2 in Greene's Econometric Analysis, 4e.
+
+Reference:
+
+L. Klein, Economic Fluctuations in the United States,
+1921-1941, New York: John Wiley and Sons, 1950.</description>
+<variables count="13">
+<variable name="C"
+ label="consumption"
+/>
+<variable name="P"
+ label="corporate profits"
+/>
+<variable name="Wp"
+ label="private wages"
+/>
+<variable name="I"
+ label="investment"
+/>
+<variable name="K1"
+ label="lagged capital stock"
+/>
+<variable name="X"
+ label="equilibrium demand"
+/>
+<variable name="Wg"
+ label="government wages"
+/>
+<variable name="G"
+ label="government nonwage spending"
+/>
+<variable name="T"
+ label="indirect business taxes plus net exports"
+/>
+<variable name="W"
+ label="W = Wp + Wg"
+/>
+<variable name="A"
+ label="A = t"
+/>
+<variable name="P1"
+ label="P1 = P(-1)"
+/>
+<variable name="X1"
+ label="X1 = X(-1)"
+/>
+</variables>
+<observations count="22" labels="false">
+<obs>39.8 12.7 28.8 2.7 180.1 44.9 2.2 2.4 3.4 31.0 1920 NA NA </obs>
+<obs>41.9 12.4 25.5 -0.2 182.8 45.6 2.7 3.9 7.7 28.2 1921 12.7 44.9 </obs>
+<obs>45.0 16.9 29.3 1.9 182.6 50.1 2.9 3.2 3.9 32.2 1922 12.4 45.6 </obs>
+<obs>49.2 18.4 34.1 5.2 184.5 57.2 2.9 2.8 4.7 37.0 1923 16.9 50.1 </obs>
+<obs>50.6 19.4 33.9 3 189.7 57.1 3.1 3.5 3.8 37.0 1924 18.4 57.2 </obs>
+<obs>52.6 20.1 35.4 5.1 192.7 61.0 3.2 3.3 5.5 38.6 1925 19.4 57.1 </obs>
+<obs>55.1 19.6 37.4 5.6 197.8 64.0 3.3 3.3 7.0 40.7 1926 20.1 61.0 </obs>
+<obs>56.2 19.8 37.9 4.2 203.4 64.4 3.6 4.0 6.7 41.5 1927 19.6 64.0 </obs>
+<obs>57.3 21.1 39.2 3 207.6 64.5 3.7 4.2 4.2 42.9 1928 19.8 64.4 </obs>
+<obs>57.8 21.7 41.3 5.1 210.6 67.0 4.0 4.1 4.0 45.3 1929 21.1 64.5 </obs>
+<obs>55.0 15.6 37.9 1 215.7 61.2 4.2 5.2 7.7 42.1 1930 21.7 67.0 </obs>
+<obs>50.9 11.4 34.5 -3.4 216.7 53.4 4.8 5.9 7.5 39.3 1931 15.6 61.2 </obs>
+<obs>45.6 7.0 29.0 -6.2 213.3 44.3 5.3 4.9 8.3 34.3 1932 11.4 53.4 </obs>
+<obs>46.5 11.2 28.5 -5.1 207.1 45.1 5.6 3.7 5.4 34.1 1933 7.0 44.3 </obs>
+<obs>48.7 12.3 30.6 -3 202.0 49.7 6.0 4.0 6.8 36.6 1934 11.2 45.1 </obs>
+<obs>51.3 14.0 33.2 -1.3 199.0 54.4 6.1 4.4 7.2 39.3 1935 12.3 49.7 </obs>
+<obs>57.7 17.6 36.8 2.1 197.7 62.7 7.4 2.9 8.3 44.2 1936 14.0 54.4 </obs>
+<obs>58.7 17.3 41.0 2 199.8 65.0 6.7 4.3 6.7 47.7 1937 17.6 62.7 </obs>
+<obs>57.5 15.3 38.2 -1.9 201.8 60.9 7.7 5.3 7.4 45.9 1938 17.3 65.0 </obs>
+<obs>61.6 19.0 41.6 1.3 199.9 69.5 7.8 6.6 8.9 49.4 1939 15.3 60.9 </obs>
+<obs>65.0 21.1 45.0 3.3 201.2 75.7 8.0 7.4 9.6 53.0 1940 19.0 69.5 </obs>
+<obs>69.7 23.5 53.3 4.9 204.5 88.4 8.5 13.8 11.6 61.8 1941 21.1 75.7 </obs>
+</observations>
+</gretldata>

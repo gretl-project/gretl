@@ -229,7 +229,7 @@ int sur (gretl_equation_system *sys,
     /* number of equations */
     m = system_n_equations(sys);
 
-    /* number of indep vars per equation */
+    /* (max) number of indep vars per equation */
     k = system_n_indep_vars(sys);
 
     /* number of observations per series */
@@ -271,7 +271,6 @@ int sur (gretl_equation_system *sys,
 #ifdef LDEBUG 
     pprintf(prn, "gls sigma inverse matrix\n");
     simple_matrix_print(sigma, m, m, prn);
-    /* OK so far, it seems */
 #endif
 
     /* Xi = data matrix for equation i, specified in lists[i] */
