@@ -1397,9 +1397,15 @@ void varinfo_dialog (int varnum, int full)
 {
     GtkWidget *tempwid, *hbox;
     struct varinfo_settings *vset;
+    int entrylen = 8, canedit = 1;
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
+
+    if (strlen(datainfo->varname[varnum]) > 8) {
+	entrylen = strlen(datainfo->varname[varnum]);
+	canedit = 0;
+    }
 
     vset->varnum = varnum;
     vset->dlg = gtk_dialog_new();
@@ -1421,16 +1427,17 @@ void varinfo_dialog (int varnum, int full)
     gtk_widget_show(tempwid);
 
 #ifdef OLD_GTK
-    vset->name_entry = gtk_entry_new_with_max_length(8);
+    vset->name_entry = gtk_entry_new_with_max_length(entrylen);
 #else
     vset->name_entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), 8);
-    gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), 11);
+    gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), entrylen);
+    gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), entrylen + 3);
 #endif
     gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
 		       datainfo->varname[varnum]);
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->name_entry, FALSE, FALSE, 0);
+    gtk_entry_set_editable(GTK_ENTRY(vset->name_entry), canedit);
     gtk_widget_show(vset->name_entry); 
 #ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(vset->name_entry), "activate", 
@@ -1800,7 +1807,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 			       datainfo->varname[mdata->active_var]);
 	}
 #ifndef OLD_GTK
-	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), VNAMELEN);
+	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 8);
 #endif
 	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry), FALSE);
 

@@ -2938,27 +2938,30 @@ static int process_csv_obs (const char *str, int i, int t,
 
 /* pick up any comments following the data block in a CSV file */
 
-static char *get_csv_descrip (char *line, int maxlen, FILE *fp)
+static char *get_csv_descrip (FILE *fp)
 {
+    char line[MAXLEN];
     char *desc = NULL;
 
-    while (fgets(line, maxlen, fp)) {
-	int len = strlen(line);
-	char *tmp;
-
+    while (fgets(line, MAXLEN, fp)) {
+	tailstrip(line);
 	if (desc == NULL) {
-	    desc = gretl_strdup(line);
+	    desc = malloc(strlen(line) + 2);
 	    if (desc == NULL) {
 		return NULL;
 	    }
+	    sprintf(desc, "%s\n", line);
 	} else {
-	    tmp = realloc(desc, strlen(desc) + len + 1);
+	    char *tmp;
+
+	    tmp = realloc(desc, strlen(desc) + strlen(line) + 2);
 	    if (tmp == NULL) {
 		free(desc);
 		return NULL;
 	    }
 	    desc = tmp;
 	    strcat(desc, line);
+	    strcat(desc, "\n");
 	}
     }
 
@@ -3073,7 +3076,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	if (string_is_blank(line)) {
 	    if (gotdata) {
 		if (*pZ == NULL) {
-		    descrip = get_csv_descrip(line, maxlen + 1, fp);
+		    descrip = get_csv_descrip(fp);
 		}
 		break;
 	    } else {

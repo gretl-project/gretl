@@ -79,21 +79,28 @@ double gretl_median (const double *x, int n)
 
 /* ........................................................... */
 
-int moments (int t1, int t2, const double *zx, 
+int moments (int t1, int t2, const double *x, 
 	     double *xbar, double *std, 
 	     double *skew, double *kurt, int k)
      /* k is the "degrees of freedom loss": it will generally be one,
 	other than when dealing with a regression residual */
 {
-    int t, n = t2 - t1 + 1;
+    int t, n;
     double dev, var;
     double s, s2, s3, s4;
     int allstats = 1;
 
-    if (skew == NULL && kurt == NULL) allstats = 0;
+    if (skew == NULL && kurt == NULL) {
+	allstats = 0;
+    }
 
-    if (gretl_isconst(t1, t2, zx)) {
-	*xbar = zx[t1];
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) break;
+    }
+    t1 = t;
+
+    if (gretl_isconst(t1, t2, x)) {
+	*xbar = x[t1];
 	*std = 0.0;
 	if (allstats) {
 	    *skew = *kurt = NADBL;
@@ -102,15 +109,34 @@ int moments (int t1, int t2, const double *zx,
     }
 
     s = 0.0;
-    for (t=t1; t<=t2; t++) s += zx[t];
+    n = 0;
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    s += x[t];
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	*xbar = *std = NADBL;
+	if (allstats) {
+	    *skew = *kurt = 0.0;
+	}	
+	return 1;
+    }
 
     *xbar = s / n;
     var = 0.0;
-    if (allstats) *skew = *kurt = 0.0;
+    if (allstats) {
+	*skew = *kurt = 0.0;
+    }
 
     s2 = s3 = s4 = 0.0;
     for (t=t1; t<=t2; t++) {
-	dev = zx[t] - *xbar;
+	if (na(x[t])) {
+	    continue;
+	}
+	dev = x[t] - *xbar;
 	s2 += dev * dev;
 	if (allstats) {
 	    s3 += pow(dev, 3);
@@ -118,11 +144,13 @@ int moments (int t1, int t2, const double *zx,
 	}
     }
 
-    var = s2 / (n-k);
+    var = s2 / (n - k);
 
     if (var < 0.0) {
 	*std = NADBL;
-	if (allstats) *skew = *kurt = NADBL;
+	if (allstats) {
+	    *skew = *kurt = NADBL;
+	}
 	return 1;
     }
 
@@ -196,6 +224,8 @@ static double b2_to_z2 (double b1, double b2, double n)
 
     return z2;
 }
+
+
 
 double doornik_chisq (double skew, double kurt, int n)
      /* Bowman-Shenton as modified by Doornik & Hansen */

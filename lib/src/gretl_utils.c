@@ -323,7 +323,9 @@ int gretl_isconst (int t1, int t2, const double *x)
     double xx = x[t1];
 
     for (t=t1+1; t<=t2; t++) {
-	if (floatneq(x[t], xx)) return 0;
+	if (floatneq(x[t], xx)) {
+	    return 0;
+	}
     }
     return 1;
 }
