@@ -43,6 +43,9 @@ find gretl-$version/doc -name "*CVS" | xargs rm -rf
 echo "removing various unwanted files..."
 rm -rf gretl-$version/lib/src/lapack
 rm -rf gretl-$version/autom4te.cache
+rm -f gretl-$version/myconf 
+rm -f gretl-$version/gmp.m4
+rm -f gretl-$version/clapack.m4 
 find gretl-$version -name "*CVS" | xargs rm -rf
 find gretl-$version -name "*.bak" | xargs rm -f
 find gretl-$version -name "*.old" | xargs rm -f

@@ -187,8 +187,8 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
 	p_value_string(lr, trends? 3 : 2, k, HA_NO_RESTRICTIONS, prn);
 
-	pputs(prn, "\nAlternative hypothesis: one cointegrating "
-	      "relation\n\n");
+	pputs(prn, _("\nAlternative hypothesis: one cointegrating "
+	      "relation\n\n"));
 	lr = - T * log(1.0 - eigvals[0]);
 	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
 	p_value_string(lr, trends? 3 : 2, k, HA_H_PLUS_ONE, prn);
