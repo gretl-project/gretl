@@ -839,7 +839,7 @@ five_numbers (gpointer data)
 
 	for (i=0; i<grp->nplots; i++) {
 	    if (grp->plots[i].bool != NULL) {
-		pprintf(prn, "%s\n%10s%10g%10g%10g%10g%10g\n",
+		pprintf(prn, "%s\n %10s%9g%10g%10g%10g%10g\n",
 			grp->plots[i].varname, grp->plots[i].bool,
 			grp->plots[i].min, 
 			grp->plots[i].lq, grp->plots[i].median,
@@ -854,9 +854,10 @@ five_numbers (gpointer data)
     } else { /* confidence intervals */
 	char intstr[32];
 
-	pprintf(prn, "%s\n\n%18s%10s%10s%17s%10s%10s\n",
+	pprintf(prn, "%s\n\n%s%18s%10s%10s%17s%10s%10s\n",
 		_("Five-number summary with bootstrapped confidence "
 		  "interval for median"),
+		(grp->plots[0].bool != NULL)? " " : "",
 		"min", "Q1", _("median"), 
 		/* xgettext:no-c-format */
 		_("(90% interval)"), 
@@ -867,7 +868,7 @@ five_numbers (gpointer data)
 		    grp->plots[i].conf[1]);
 
 	    if (grp->plots[i].bool != NULL) {
-		pprintf(prn, "%s\n%-10s%8g%10g%10g%17s%10g%10g\n",
+		pprintf(prn, "%s\n %10s%8g%10g%10g%17s%10g%10g\n",
 			grp->plots[i].varname, grp->plots[i].bool,
 			grp->plots[i].min, 
 			grp->plots[i].lq, grp->plots[i].median,
