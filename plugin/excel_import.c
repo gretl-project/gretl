@@ -19,8 +19,8 @@
 
 /*
   Based on xls2csv (David Rysdam, 1998), as distributed in the 
-  "catdoc" package by Vitus Wagner, with some help from the Gnumeric
-  excel plugin.
+  "catdoc" package by Vitus Wagner, with help from the Gnumeric
+  excel plugin by Michael Meeks.
 */
 
 #include <stdio.h>
@@ -28,11 +28,20 @@
 #include <string.h>
 #include <time.h>
 #include <gtk/gtk.h>
-#include "libgretl.h"
+
+#ifdef STANDALONE
+# include <gretl/libgretl.h>
+#else
+# include "libgretl.h"
+#endif
+
 #include "xltypes.h"
 #include "importer.h"
 
-#ifdef EDEBUG
+/* from workbook.c */
+extern int wbook_get_info (const char *fname, wbook *book);
+
+#ifdef STANDALONE
 static void print_sheet (void);
 static void print_value (const char *value);
 #endif
@@ -71,13 +80,17 @@ static char *format_double (char *rec, int offset)
     return buffer;
 }
 
-static int process_sheet (FILE *input, const char *filename) 
+static int process_sheet (FILE *input, const char *filename, 
+			  unsigned offset) 
 {    
     long rectype;
     long reclen;
     int eof_flag = 0;
     unsigned char rec[MAX_MS_RECSIZE];
-    int err = 0, itemsread = 1;
+    int err = 0, itemsread = 1, gotdata = 0;
+
+    if (offset)
+	fseek(input, (long) offset, SEEK_SET);
 
     while (itemsread) {
 	fread(rec, 2, 1, input);
@@ -111,6 +124,12 @@ static int process_sheet (FILE *input, const char *filename)
 	    break;
 	reclen = 0;
 
+	/* bodge: needs fixing */
+	if (rectype == LABEL || rectype == NUMBER) gotdata = 1;
+	if (gotdata && rectype == BOF) {
+	    break;
+	}	  	
+
 	itemsread = fread(buffer, 2, 1, input);
 	reclen = getshort(buffer, 0);
 	if (reclen && reclen < MAX_MS_RECSIZE && reclen > 0) {
@@ -123,10 +142,10 @@ static int process_sheet (FILE *input, const char *filename)
 	    err = 1;
 	    break;
 	}
-	if (rectype == MSEOF) 
+	if (rectype == MSEOF)
 	    eof_flag = 1;
 	else 
-	    eof_flag = 0;	
+	    eof_flag = 0;
     }
 
     fclose(input);
@@ -313,6 +332,22 @@ static int process_item (int rectype, int reclen, char *rec)
 	prow->cells[col] = g_strdup(format_double(rec, 6));
 	break;
     }
+    case RK: {
+	int row, col;
+	double v;
+	struct rowdescr *prow;
+	char tmp[32];
+
+	saved_reference = NULL;
+	row = getshort(rec, 0) - startrow; 
+	col = getshort(rec, 2);
+	if (allocate(row, col)) return 1;
+	prow = rowptr + row;
+	v = biff_get_rk(rec + 6);
+	sprintf(tmp, "%.10g", v);
+	prow->cells[col] = g_strdup(tmp);
+	break;
+    }
     case MULRK: {
 	int i, row, col, ncols;
 	double v;
@@ -385,8 +420,7 @@ static int process_item (int rectype, int reclen, char *rec)
     }	    
     case BOF: 
 	if (rowptr) {
-	    sprintf(errbuf, "BOF when current sheet is not flushed");
-	    return 1;
+	    fprintf(stderr, "BOF when current sheet is not flushed\n");
 	}
 	break;
     case MSEOF: 
@@ -538,7 +572,7 @@ static void free_sheet (void)
     lastrow = 0;
 }
 
-#ifdef EDEBUG
+#ifdef STANDALONE
 static void print_sheet (void) 
 {
     int i, j;
@@ -596,9 +630,12 @@ static int first_col_strings (wbook *book)
 {
     int t, i = book->col_offset;
     
-    for (t=1+book->row_offset; t<=lastrow; t++) 
+    for (t=1+book->row_offset; t<=lastrow; t++) {
+	fprintf(stderr, "rowptr[%d].cells[%d]: '%s'\n", t, i,
+		rowptr[t].cells[i]);
 	if (!IS_STRING(rowptr[t].cells[i]))
 	    return 0;
+    }
     return 1;
 }
 
@@ -630,14 +667,42 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     wbook book;
     int err = 0;
 
+    errbuf = errtext;
+    errbuf[0] = '\0';
+
     wbook_init(&book);
 
-    errbuf = errtext;
-    *errbuf = 0;
+    if (wbook_get_info(fname, &book)) {
+	sprintf(errbuf, "Failed to get workbook info");
+	err = 1;
+    }
+    else if (book.nsheets == 0) {
+	sprintf(errbuf, "No worksheets found");
+	err = 1;
+    }
+    else {
+	int i;
 
+	for (i=0; i<book.nsheets; i++) {
+	    fprintf(stderr, "%d: '%s' at offset %u\n", i, 
+		    book.sheetnames[i], book.byte_offsets[i]);
+	}
+    }
+
+    if (!err) {
+	if (book.nsheets > 1) wsheet_menu(&book, 1);
+	else wsheet_menu(&book, 0);
+    }
+
+    if (err || book.selected == -1) goto getout; 
+
+    /* processing for specific worksheet */
     fp = fopen(fname, "rb");
     if (fp == NULL) return 1;
-    err = process_sheet(fp, fname);
+    if (book.selected > 0)
+	err = process_sheet(fp, fname, book.byte_offsets[book.selected]);
+    else
+	err = process_sheet(fp, fname, 0);
 
     if (err) {
 	if (*errbuf == 0)
@@ -668,10 +733,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    goto getout; 
 	}
 
-	wsheet_menu(&book, 0);
-
-	if (book.selected == -1) goto getout; 
-
+#ifndef STANDALONE
 	if (!got_varnames(&book, ncols)) {
 	    sprintf(errbuf, "One or more variable names are missing");
 	    err = 1;
@@ -757,28 +819,28 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		pdinfo->S = S;
 	    }
 	}
+#endif /* STANDALONE */
     }
 
-#ifdef EDEBUG
+#ifdef STANDALONE
     if (!err) {
 	print_sheet();
-        fflush(stdout);
     } 
 #endif
 
  getout:
-    free_sheet();
-    
+    wbook_free(&book);
     return err;
 }  
 
-
-#ifdef notdef
+#ifdef STANDALONE
 int main (int argc, char *argv[])
 {
     char *filename;
     int i, err;
     char errtext[128];
+
+    gtk_init(NULL, NULL);
  
     for (i=1; i<argc; i++) {
         filename = argv[i];

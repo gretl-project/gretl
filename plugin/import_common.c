@@ -67,11 +67,33 @@ static int obs_column (char *label)
     return 0;
 }
 
+static void wbook_print_info (wbook *book) 
+{
+    int i;
+
+    fprintf(stderr, "Found %d sheet%s\n", book->nsheets,
+	    (book->nsheets > 1)? "s" : "");
+    
+    for (i=0; i<book->nsheets; i++)
+	fprintf(stderr, "%d: '%s'\n", i, book->sheetnames[i]);
+}
+
+static void wbook_free (wbook *book)
+{
+    int i;
+
+    for (i=0; i<book->nsheets; i++)
+	free(book->sheetnames[i]);
+    free(book->sheetnames);
+    free(book->byte_offsets);
+}
+
 static void wbook_init (wbook *book)
 {
     book->nsheets = 0;
     book->col_offset = book->row_offset = 0;
     book->sheetnames = NULL;
+    book->byte_offsets = NULL;
     book->selected = 0;
 }
 

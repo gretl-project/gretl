@@ -353,26 +353,6 @@ static int wbook_record_name (char *name, wbook *book)
     return 0;
 }
 
-static void wbook_free (wbook *book)
-{
-    int i;
-
-    for (i=0; i<book->nsheets; i++)
-	free(book->sheetnames[i]);
-    free(book->sheetnames);    
-}
-
-static void wbook_print_info (wbook *book) 
-{
-    int i;
-
-    fprintf(stderr, "Found %d sheet%s\n", book->nsheets,
-	    (book->nsheets > 1)? "s" : "");
-    
-    for (i=0; i<book->nsheets; i++)
-	fprintf(stderr, "%d: '%s'\n", i, book->sheetnames[i]);
-}
-
 static int wbook_get_info (const char *fname, wbook *book) 
 {
     xmlDocPtr doc;
@@ -449,7 +429,6 @@ int wsheet_setup (wsheet *sheet, wbook *book, int n)
     return 0;
 }
 
-
 static int wsheet_labels_complete (wsheet *sheet)
 {
     int t, rows = sheet->maxrow + 1 - sheet->row_offset;
@@ -499,7 +478,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	wbook_print_info(&book);
 
     if (book.nsheets == 0) {
-	sprintf(errbuf, "No sheets found");
+	sprintf(errbuf, "No worksheets found");
     }
     else if (book.nsheets > 1) {
 	wsheet_menu(&book, 1);
@@ -511,7 +490,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (sheetnum >= 0) {
-	sprintf(errbuf, "Getting data");
+	fprintf(stderr, "Getting data...\n");
 	if (wsheet_setup(&sheet, &book, sheetnum)) {
 	    sprintf(errbuf, "error in wsheet_setup()");
 	    err = 1;
@@ -520,7 +499,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    if (!err) 
 		wsheet_print_info(&sheet);
 	}
-    }
+    } /* else?? */
 
     wbook_free(&book);
 

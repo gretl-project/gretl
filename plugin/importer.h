@@ -22,7 +22,8 @@ typedef struct {
     int selected;
     int col_offset, row_offset;
     char **sheetnames;
-    GtkWidget *colspin, *rowspin;
+    guint32 *byte_offsets;
+    void *colspin, *rowspin;
 } wbook;
 
 typedef struct {
