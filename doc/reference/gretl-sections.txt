@@ -1,4 +1,8 @@
 <SECTION>
+<FILE>bhhh_max</FILE>
+</SECTION>
+
+<SECTION>
 <FILE>calendar</FILE>
 daily_date_string
 daily_obs_number
@@ -7,15 +11,6 @@ get_misscount
 missobs_vector
 repack_missing
 undo_repack_missing
-</SECTION>
-
-<SECTION>
-<FILE>cmdlist</FILE>
-</SECTION>
-
-<SECTION>
-<FILE>commands</FILE>
-cmd_codes
 </SECTION>
 
 <SECTION>
@@ -58,6 +53,10 @@ ntodate
 open_nulldata
 start_new_Z
 write_data
+</SECTION>
+
+<SECTION>
+<FILE>dbread</FILE>
 </SECTION>
 
 <SECTION>
@@ -160,6 +159,18 @@ gretl_LU_solve
 </SECTION>
 
 <SECTION>
+<FILE>gretl_model</FILE>
+</SECTION>
+
+<SECTION>
+<FILE>gretl_paths</FILE>
+</SECTION>
+
+<SECTION>
+<FILE>gretl_string_table</FILE>
+</SECTION>
+
+<SECTION>
 <FILE>gretl_utils</FILE>
 NADBL
 addpath
@@ -259,6 +270,10 @@ MODEL
 MODELSPEC
 GRAPHT
 PRN
+</SECTION>
+
+<SECTION>
+<FILE>libset</FILE>
 </SECTION>
 
 <SECTION>
@@ -365,6 +380,31 @@ model_sample_issue
 restore_full_sample
 set_sample
 set_sample_dummy
+</SECTION>
+
+<SECTION>
+<FILE>system</FILE>
+system_start
+gretl_equation_system_append
+system_parse_line
+gretl_equation_system_finalize
+gretl_equation_system_destroy
+system_save_uhat
+system_save_yhat
+system_n_equations
+system_n_identities
+system_n_obs
+system_max_indep_vars
+system_n_indep_vars
+system_adjust_t1t2
+system_get_list
+compose_tsls_list
+system_get_depvar
+gretl_system_short_string
+system_get_type
+system_get_endog_vars
+system_get_instr_vars
+print_fiml_sys_info
 </SECTION>
 
 <SECTION>

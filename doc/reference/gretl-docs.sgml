@@ -1,24 +1,33 @@
-<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
+<!ENTITY gretl-bhhh-max SYSTEM "sgml/bhhh_max.sgml">
 <!ENTITY gretl-calendar SYSTEM "sgml/calendar.sgml">
-<!ENTITY gretl-commands SYSTEM "sgml/commands.sgml">
 <!ENTITY gretl-compare SYSTEM "sgml/compare.sgml">
 <!ENTITY gretl-dataio SYSTEM "sgml/dataio.sgml">
+<!ENTITY gretl-dbread SYSTEM "sgml/dbread.sgml">
 <!ENTITY gretl-describe SYSTEM "sgml/describe.sgml">
 <!ENTITY gretl-discrete SYSTEM "sgml/discrete.sgml">
 <!ENTITY gretl-estimate SYSTEM "sgml/estimate.sgml">
 <!ENTITY gretl-generate SYSTEM "sgml/generate.sgml">
 <!ENTITY gretl-graphing SYSTEM "sgml/graphing.sgml">
+<!ENTITY gretl-gretl-commands SYSTEM "sgml/gretl_commands.sgml">
 <!ENTITY gretl-gretl-errors SYSTEM "sgml/gretl_errors.sgml">
 <!ENTITY gretl-gretl-matrix SYSTEM "sgml/gretl_matrix.sgml">
+<!ENTITY gretl-gretl-model SYSTEM "sgml/gretl_model.sgml">
+<!ENTITY gretl-gretl-paths SYSTEM "sgml/gretl_paths.sgml">
+<!ENTITY gretl-gretl-string-table SYSTEM "sgml/gretl_string_table.sgml">
 <!ENTITY gretl-gretl-utils SYSTEM "sgml/gretl_utils.sgml">
 <!ENTITY gretl-gretl-win32 SYSTEM "sgml/gretl_win32.sgml">
 <!ENTITY gretl-interact SYSTEM "sgml/interact.sgml">
 <!ENTITY gretl-libgretl SYSTEM "sgml/libgretl.sgml">
+<!ENTITY gretl-libset SYSTEM "sgml/libset.sgml">
 <!ENTITY gretl-modelprint SYSTEM "sgml/modelprint.sgml">
 <!ENTITY gretl-monte-carlo SYSTEM "sgml/monte_carlo.sgml">
 <!ENTITY gretl-nonparam SYSTEM "sgml/nonparam.sgml">
+<!ENTITY gretl-options SYSTEM "sgml/options.sgml">
+<!ENTITY gretl-plugins SYSTEM "sgml/plugins.sgml">
 <!ENTITY gretl-printout SYSTEM "sgml/printout.sgml">
 <!ENTITY gretl-pvalues SYSTEM "sgml/pvalues.sgml">
+<!ENTITY gretl-qr-estimate SYSTEM "sgml/qr_estimate.sgml">
 <!ENTITY gretl-random SYSTEM "sgml/random.sgml">
 <!ENTITY gretl-strutils SYSTEM "sgml/strutils.sgml">
 <!ENTITY gretl-subsample SYSTEM "sgml/subsample.sgml">
@@ -38,24 +47,32 @@
   General Public License.  This document describes the libgretl API.
   It is at an early stage, and is incomplete.</para>    
 
+    &gretl-bhhh-max;
     &gretl-calendar;    
-    &gretl-commands;
     &gretl-compare;
     &gretl-dataio;
+    &gretl-dbread;
     &gretl-describe;
     &gretl-discrete;
     &gretl-estimate;
     &gretl-generate;
     &gretl-graphing;
+	&gretl-gretl-commands;
     &gretl-gretl-errors;
     &gretl-gretl-matrix;
+	&gretl-gretl-model;
+	&gretl-gretl-paths;
+	&gretl-gretl-string-table;
     &gretl-gretl-utils;
     &gretl-gretl-win32;
     &gretl-interact;
     &gretl-libgretl;
+	&gretl-libset;
     &gretl-modelprint;
     &gretl-monte-carlo;
     &gretl-nonparam;
+    &gretl-options;
+    &gretl-plugins;
     &gretl-printout;
     &gretl-pvalues;
     &gretl-random;
