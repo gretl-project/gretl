@@ -38,7 +38,7 @@
 #include "pixmaps/rhohat.xpm"
 #include "pixmaps/summary.xpm"
 
-#define SESSION_DEBUG
+/* #define SESSION_DEBUG */
 
 static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
