@@ -2160,12 +2160,8 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 
     infobox(prn->buf);
     gretl_print_destroy(prn);
-    paths.datfile[0] = '\0';
-    populate_main_varlist();
-    data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
-    set_sample_label(datainfo);
-    orig_vars = datainfo->v;
-    menubar_state(TRUE);
+    *paths.datfile = '\0';
+    register_data(NULL, NULL, 0);
 }
 
 /* ........................................................... */
@@ -4503,7 +4499,7 @@ int gui_exec_line (char *line,
 	if (err < 0) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	} else {
-	    if (exec_code == CONSOLE_EXEC) {
+	    if (exec_code == CONSOLE_EXEC && *command.savename == '\0') {
 		register_graph();
 	    } else if (exec_code == SCRIPT_EXEC) {
 		pprintf(prn, _("wrote %s\n"), paths.plotfile);
@@ -4710,12 +4706,8 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Failed to create empty data set\n"));
 	    break;
 	}
-	paths.datfile[0] = '\0';
-	populate_main_varlist();
-	data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
-	set_sample_label(datainfo);
-	orig_vars = datainfo->v;
-	menubar_state(TRUE);
+	*paths.datfile = '\0';
+	register_data(NULL, NULL, 0);
 	break;
 
     case OLS:

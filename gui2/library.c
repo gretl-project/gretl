@@ -2173,11 +2173,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     infobox(prn->buf);
     gretl_print_destroy(prn);
     *paths.datfile = '\0';
-    populate_varlist();
-    data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
-    set_sample_label(datainfo);
-    orig_vars = datainfo->v;
-    main_menubar_state(TRUE);
+    register_data(NULL, NULL, 0);
 }
 
 /* ........................................................... */
@@ -4530,7 +4526,7 @@ int gui_exec_line (char *line,
 	}
 	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	else {
-	    if (exec_code == CONSOLE_EXEC) {
+	    if (exec_code == CONSOLE_EXEC && *command.savename == '\0') {
 		register_graph();
 	    } else if (exec_code == SCRIPT_EXEC) {
 		pprintf(prn, _("wrote %s\n"), paths.plotfile);
@@ -4737,11 +4733,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	*paths.datfile = '\0';
-	populate_varlist();
-	data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
-	set_sample_label(datainfo);
-	orig_vars = datainfo->v;
-	main_menubar_state(TRUE);
+	register_data(NULL, NULL, 0);
 	break;
 
     case OLS:
