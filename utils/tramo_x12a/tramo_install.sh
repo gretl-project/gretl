@@ -3,13 +3,19 @@
 # grab and install TRAMO on linux
 
 # You can supply an installation root, e.g. /usr/local or /opt,
-# otherwise it goes right here.  In any case it goes into a subdir
+# on the command line.  In any case it goes into a subdir
 # named "tramo".
 
 TRAMOROOT=$1
 if [ "x$TRAMOROOT" = "x" ] ; then
-   TRAMOROOT=.
+   echo -n "Path for installation? (default is /opt): " 
+   read TRAMOROOT
+   if [ "x$TRAMOROOT" = "x" ] ; then
+      TRAMOROOT="/opt"
+   fi  
 fi
+
+echo "Installing in $TRAMOROOT"
 
 SITE="http://www.bde.es/servicio/software/tramo"
 PKG="linux.exe"

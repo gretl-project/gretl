@@ -3,13 +3,19 @@
 # grab and build x12a for Linux
 
 # You can supply an installation root, e.g. /usr/local or /opt,
-# otherwise it goes right here.  In any case it goes into a subdir
+# on the command line.  In any case it goes into a subdir
 # named "x12arima".
 
 X12ROOT=$1
 if [ "x$X12ROOT" = "x" ] ; then
-   X12ROOT=.
+   echo -n "Path for installation? (default is /opt): " 
+   read X12ROOT
+   if [ "x$X12ROOT" = "x" ] ; then
+      X12ROOT="/opt"
+   fi  
 fi
+
+echo "Installing in $X12ROOT"
 
 SITE="http://www.census.gov/ts/x12a/final/unix"
 SRC="omegasrc.tar.Z"
@@ -36,6 +42,43 @@ tar xvfz $PSDOCS && rm $PSDOCS
 mv ./src/x12a.mdl ./src/test.spc $DEST
 
 # patch the Makefile for Linux
+cat > $THISDIR/x12a_make.diff << EOF
+--- src/Makefile.orig	Thu Nov 21 11:45:26 2002
++++ src/Makefile	Thu Nov 21 11:45:03 2002
+@@ -1,12 +1,12 @@
+ #
+-FC        = f77
+-LINKER    = f77
+-PROGRAM         = x12a
++FC        = g77
++LINKER    = g77
++PROGRAM   = ../x12a
+ DEST      = .
+ EXTHDRS         =
+-FFLAGS    = -c -C -g -Nl99
++FFLAGS    = #-c -C -g -Nl99
+ HDRS            =
+-LDFLAGS   = -g -dn -Bstatic
++LDFLAGS   = #-g -dn -Bstatic
+ LDMAP     = 
+ LIBS      =
+ MAKEFILE  = Makefile
+@@ -208,11 +208,11 @@
+ \$(PROGRAM):     \$(OBJS) \$(LIBS)
+ 	\$(LINKER) -o \$@ \$(OBJS) \$(LDMAP) \$(LIBS) \$(LDFLAGS)
+ 
+-clean:;         @del -f \$(OBJS)
++clean:;         @rm -f \$(OBJS)
+ 
+ install:   \$(PROGRAM)
+ 	@echo Installing \$(PROGRAM) in \$(DEST)
+-	@if not \$(DEST)x==.x copy \$(PROGRAM) \$(DEST)
++	@install \$(PROGRAM) \$(DEST)
+ ### OPUS MKMF:  Do not remove this line!  Automatic dependencies follow.
+ 
+ aaamain.o:  cchars.i error.cmn hiddn.cmn lex.i ssap.prm stdio.i title.cmn \\
+EOF
+
 patch -p0 < $THISDIR/x12a_make.diff
 
 # remove DOS file termination chars
