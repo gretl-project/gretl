@@ -394,13 +394,16 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* fprintf(stderr, "got filename '%s'\n", command->param); */
 	    _shiftleft(remainder, strlen(command->param));
 	    /* unquote the filename */
-	    for (i=0; i<strlen(command->param) - 2; i++)
+	    for (i=0; i<strlen(command->param) - 2; i++) {
 		command->param[i] = command->param[i+1];
+	    }
 	    command->param[i] = '\0';
-	    strcpy(line, remainder);
 	    nf--;
 	    n = 0;
-	    linelen = strlen(line);
+	    if (nf > 0) {
+		strcpy(line, remainder);	
+		linelen = strlen(line);
+	    }
 	}
     } /* end if STORE && nf */
 
@@ -428,10 +431,12 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    strcpy(remainder, line + n + 1);
 	    sscanf(remainder, "%s", command->param);
 	    _shiftleft(remainder, strlen(command->param));
-	    strcpy(line, remainder);
 	    nf--;
 	    n = 0;
-	    linelen = strlen(line);
+	    if (nf > 0) {
+		strcpy(line, remainder);
+		linelen = strlen(line);
+	    }
 	} 
     }
 
@@ -912,6 +917,12 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 {
     int i, err, got999 = 1;
     char flagc;
+
+#if 0
+    fprintf(stderr, "echo_cmd: line='%s', gui=%d, oflag=%d, batch=%d "
+	    "param='%s', nolist=%d\n", line, gui, oflag, batch, pcmd->param,
+	    pcmd->nolist);
+#endif
 
     if (strcmp(line, "quit") == 0 || line[0] == '!' ||
 	strlen(line) == 0) return;

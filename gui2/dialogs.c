@@ -38,35 +38,6 @@ int session_saved;
 
 /* ........................................................... */
 
-int make_default_storelist (void)
-{
-    int i;
-    char numstr[5];
-
-    if (storelist != NULL) free(storelist);
-    storelist = NULL;
-
-    /* if there are very many variables, we won't offer
-       a selection, but just save them all */
-    if (datainfo->v < 50) {
-	storelist = mymalloc(datainfo->v * 4);
-	if (storelist == NULL) return 1;
-
-	strcpy(storelist, "1 ");
-	for (i=2; i<datainfo->v; i++) {
-	    if (hidden_var(i, datainfo)) continue;
-	    if (!datainfo->vector[i]) continue;
-	    sprintf(numstr, "%d ", i);
-	    strcat(storelist, numstr);
-	}
-	storelist[strlen(storelist) - 1] = '\0';
-    }
-
-    return 0;
-}
-
-/* ........................................................... */
-
 void random_dialog (gpointer data, guint code, GtkWidget *widget) 
 {
     if (code == GENR_UNIFORM) {

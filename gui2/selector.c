@@ -1452,23 +1452,15 @@ static const char *data_save_title (int code)
 static void data_save_selection_callback (GtkWidget *w, gpointer p)
 {
     selector *sr = (selector *) p;
-    gchar *selvars;
-    size_t len;
 
-    selvars = sr->cmdlist;  
+    if (sr->cmdlist == NULL || *sr->cmdlist == 0) return;
 
-    if (selvars == NULL) return;
-
-    len = strlen(selvars);
-    if (len == 0) return;
-
-    if (len >= MAXLEN || (storelist && !strcmp(storelist, selvars))) {
+    if (storelist != NULL) {
 	free(storelist);
-	storelist = NULL; /* default list -- don't need to be explicit */
-    } else {
-	if (storelist != NULL) free(storelist);
-	storelist = g_strdup(selvars);
+	storelist = NULL;
     }
+
+    storelist = g_strdup(sr->cmdlist);
 
     file_selector(data_save_title(sr->code), sr->code, NULL);
 }

@@ -2123,8 +2123,6 @@ static void auto_store (void)
 {
     int opt = 0;
 
-    if (make_default_storelist()) return;
-
     /* if there's already a datafile, and it's gzipped, then
        arrange for the new store to be gzipped too */
     if (strlen(paths.datfile) && is_gzipped(paths.datfile)) {
