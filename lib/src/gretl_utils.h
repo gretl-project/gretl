@@ -97,7 +97,7 @@ int print_list_to_buffer (const int *list, char *buf, size_t len);
 
 void list_exclude (int n, int *list);
 
-int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt);
+int set_obs (const char *line, DATAINFO *pdinfo, unsigned long opt);
 
 void set_miss (LIST list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn);

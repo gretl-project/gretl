@@ -270,10 +270,10 @@ static void save_editable_content (int action, const char *fname,
 
 #if defined(ENABLE_NLS) && !defined(OLD_GTK)
     trbuf = g_locale_from_utf8(buf, -1, NULL, &bytes, NULL);
-    fprintf(fp, "%s", trbuf);
+    system_print_buf(trbuf, fp);
     g_free(trbuf);
 #else
-    fprintf(fp, "%s", buf);
+    system_print_buf(buf, fp);
 #endif
 
     g_free(buf);

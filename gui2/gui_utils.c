@@ -1058,6 +1058,37 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
+void system_print_buf (const gchar *buf, FILE *fp)
+{
+    const char *p = buf;
+    int cbak = 0;
+
+    while (*p) {
+#ifdef G_OS_WIN32
+	/* eliminate any singleton CRs */
+	if (cbak == '\r' && *p != '\n') {
+	    putc('\n', fp);
+	    putc(*p, fp);
+	}
+#else
+	/* eliminate all CRs (FIXME Mac OS?) */
+	if (*p != '\r') {
+	    putc(*p, fp);
+	}
+#endif
+	cbak = *p;
+	p++;
+    }
+
+    /* ensure file end with newline */
+    if (cbak != '\n') {
+#ifdef G_OS_WIN32
+	putc('\r', fp);
+#endif
+	putc('\n', fp);
+    }
+}
+
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 {
     if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
@@ -1078,7 +1109,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 #else
 	    text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
 #endif
-	    fprintf(fp, "%s", text);
+	    system_print_buf(text, fp);
 	    fclose(fp);
 	    g_free(text);
 	    sprintf(buf, _("Saved %s\n"), vwin->fname);

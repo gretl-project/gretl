@@ -124,4 +124,6 @@ int get_worksheet_data (char *fname, int datatype, int append,
 
 char *double_underscores (char *targ, const char *src);
 
+void system_print_buf (const gchar *buf, FILE *fp);
+
 #endif /* GUI_UTILS_H */

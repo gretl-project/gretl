@@ -34,6 +34,7 @@
 #endif
 
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
+extern double **fullZ;
 
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id;
@@ -626,6 +627,12 @@ void delete_var_by_id (int id)
     int list[2];
     int renumber, resp;
     gchar *msg;
+
+    if (fullZ != NULL) {
+	errbox(_("Can't delete a variable when in sub-sample"
+		 " mode\n"));
+	return;
+    }    
 
     msg = g_strdup_printf(_("Really delete %s?"), datainfo->varname[id]);
     resp = yes_no_dialog(_("gretl: delete"), msg, 0);

@@ -712,9 +712,9 @@ void set_miss (LIST list, const char *param, double **Z,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
+int set_obs (const char *line, DATAINFO *pdinfo, unsigned long opt)
 {
-    int pd, pos, i, len, dc = 0, bad = 0;
+    int pd, i, len, bad = 0;
     char stobs[OBSLEN], endobs[OBSLEN], endbit[7], *p;
     long ed0 = 0L;
 
@@ -752,20 +752,23 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
 	    pdinfo->sd0 = 1.0;
 	}
     } else {
-	/* is stobs acceptable? */
-	len = strlen(stobs);
+	int maj = 0, min = 0, dc = 0, pos;
+
+	len = pos = strlen(stobs);
 	for (i=0; i<len; i++) {
 	    if (stobs[i] != '.' && !isdigit((unsigned char) stobs[i])) {
 		bad = 1;
 		break;
 	    }
-	    if (stobs[i] == '.') dc++;
+	    if (stobs[i] == '.') {
+		if (dc == 0) pos = i;
+		dc++;
+	    }
 	}
 	if (bad || dc > 1) {
 	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
-	pos = dotpos(stobs);
 	if (pd > 1 && pos == len) {
 	    strcpy(gretl_errmsg, _("starting obs must contain a '.' with "
 		   "frequency > 1"));
@@ -775,22 +778,28 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
 	    strcpy(gretl_errmsg, _("no '.' allowed in starting obs with "
 		   "frequency 1"));
 	    return 1;
-	}    
-	if ((pd > 1 && pd < 10 && strlen(stobs + pos) != 2) ||
-	    (pd >= 10 && pd < 100 && strlen(stobs + pos) != 3)) {
-	    sprintf(gretl_errmsg, _("starting obs '%s' is incompatible with "
-		    "frequency"), stobs);
-	    return 1;
-	}
+	}  
+
 	if (pd > 1) {
+	    maj = atoi(stobs);
 	    strcpy(endbit, stobs + pos + 1);
-	    dc = atoi(endbit);
-	    if (dc < 0 || dc > pd) {
+	    min = atoi(endbit);
+	    if (min < 0 || min > pd) {
 		sprintf(gretl_errmsg, 
 			_("starting obs '%s' is incompatible with frequency"), 
 			stobs);
 		return 1;
 	    }	    
+	    if (pd > 10) {
+		int pdp = pd / 10, minlen = 2;
+		char fmt[12];
+
+		while ((pdp = pdp / 10)) minlen++;
+		sprintf(fmt, "%%d.%%0%dd", minlen);
+		sprintf(stobs, fmt, maj, min);
+	    } else {
+		sprintf(stobs, "%d.%d", maj, min);
+	    }
 	}
     }
 

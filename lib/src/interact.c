@@ -387,8 +387,6 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
     }
 }
 
-
-
 /**
  * getcmd:
  * @line: the command line (string).
@@ -863,7 +861,10 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 
 	/* check command->list for scalars */
-	if (!ar && !poly && command->ci != PRINT && command->ci != STORE) {
+	if (!ar && !poly && 
+	    command->ci != PRINT && 
+	    command->ci != STORE &&
+	    command->ci != DELEET) {
 	    if (!pdinfo->vector[command->list[lnum-1]]) {
 		command->errcode = 1;
 		sprintf(gretl_errmsg, 

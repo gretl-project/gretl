@@ -3680,6 +3680,12 @@ void delete_selected_vars (void)
 
     if (liststr == NULL) return;
 
+    if (fullZ != NULL) {
+	errbox(_("Can't delete a variable when in sub-sample"
+		 " mode\n"));
+	return;
+    }
+
     msg = g_strdup_printf(_("Really delete %s?"), liststr);
     if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
 	g_free(msg);

@@ -1,6 +1,6 @@
 version 1.2.5
 - fix problem with acf and pacf calculations
-- add Prais-Winsten estimator for AR1 models 
+- add Prais-Winsten estimator for AR1 models ("pwe" command)
 - fix bugs in gretl "graph page"
 - fix some translation bugs
 - fix headers for compilation on Mac OS X
@@ -12,6 +12,10 @@ version 1.2.5
   form of stacked cross-sections
 - plain text output: give option of copying as RTF (puts the
   output into Courier New at 9 points)
+- in gui, disallow deleting variables when sub-sampled
+- setobs command: be more flexible in regard to the format of
+  the "startobs" field
+- saving text files: try to improve handling of CR/LF
 
 3/30/2004 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables

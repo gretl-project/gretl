@@ -49,7 +49,7 @@ static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
 #undef EDEBUG
-/* #define FULL_EDEBUG */
+#undef FULL_EDEBUG
 
 #define EXCEL_IMPORTER
 
@@ -466,6 +466,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 
 	if (!saved_reference) {
 	    pprintf(prn, _("String record without preceding string formula"));
+	    pputc(prn, '\n');
 	    break;
 	}
 	len = getshort(rec, 0);

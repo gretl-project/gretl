@@ -159,7 +159,7 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 
 	tex_dcolumn_double(pmod->ess, x1str);
 	tex_dcolumn_double(pmod->sigma, x2str);
-	pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\sigma}$) & %s \\\\\n",
+	pprintf(prn, "%s & %s \\\\\n%s ($\\hat{\\sigma}$) & %s \\\\\n",
 		I_("Sum of squared residuals"), x1str,
 		I_("Standard error of residuals"), x2str);
     }
@@ -344,7 +344,7 @@ static void dwline (const MODEL *pmod, PRN *prn)
 
 	tex_dcolumn_double(pmod->dw, x1str);
 	tex_dcolumn_double(pmod->rho, x2str);
-	pprintf(prn, "%s & %s \\\\\n %s & %s \n",
+	pprintf(prn, "%s & %s \\\\\n%s & %s \\\\\n",
 		I_("Durbin--Watson statistic"), x1str, 
 		I_("First-order autocorrelation coeff."), x2str);
     }
@@ -603,28 +603,31 @@ void get_test_pval_string (const GRETLTEST *test, char *str, int format)
 	break;
     case GRETL_TEST_F:
     case GRETL_TEST_RESET:
-	if (tex) 
+	if (tex) {
 	    sprintf(str, "$P$($F(%d, %d) >$ %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
-	else 
+	} else {
 	    sprintf(str, "P(F(%d, %d) > %g) = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
+	}
 	break;
     case GRETL_TEST_LMF:
-	if (tex) 
-	    sprintf(str, "$P$($\\chi^2_{%d} >$ %g) = %g", 
-		    test->dfn, test->value, test->pvalue);
-	else
-	    sprintf(str, "P(Chi-Square(%d) > %g) = %g", 
-		    test->dfn, test->value, test->pvalue);
+	if (tex) {
+	    sprintf(str, "$P$($F(%d, %d) >$ %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	} else {
+	    sprintf(str, "P(F(%d,%d) > %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	}
 	break;
     case GRETL_TEST_HARVEY_COLLIER:
-	if (tex)
+	if (tex) {
 	    sprintf(str, "$P$($t_{%d} >$ %g)  = %g", 
 		    test->dfn, test->value, test->pvalue);
-	else
+	} else {
 	    sprintf(str, "P(t(%d) > %g) = %g", 
 		    test->dfn, test->value, test->pvalue);
+	}
 	break;
     case GRETL_TEST_NORMAL_CHISQ:
 	sprintf(str, "%g", test->pvalue);

@@ -4075,11 +4075,21 @@ static int get_png_bounds_info (png_bounds_t *bounds)
    Go figure.  (This is on win98)
 */
 
+#include <gdk/gdkwin32.h>
+
 static int emf_to_clip (char *emfname)
 {
+    HWND mainw;
     HENHMETAFILE hemf, hemfclip;
+    HANDLE htest;
 
-    if (!OpenClipboard(NULL)) {
+    mainw = GDK_WINDOW_HWND(mdata->w->window);
+    if (mainw == NULL) {
+	errbox("Got NULL HWND");
+	return 1;
+    }	
+
+    if (!OpenClipboard(mainw)) {
 	errbox(_("Cannot open the clipboard"));
 	return 1;
     }
@@ -4087,9 +4097,22 @@ static int emf_to_clip (char *emfname)
     EmptyClipboard();
 
     hemf = GetEnhMetaFile(emfname);
-    hemfclip = CopyEnhMetaFile(hemf, NULL);
+    if (hemf == NULL) {
+	errbox("Couldn't get handle to graphic metafile");
+	return 1;
+    }
 
-    SetClipboardData(CF_ENHMETAFILE, hemfclip);
+    hemfclip = CopyEnhMetaFile(hemf, NULL);
+    if (hemfclip == NULL) {
+	errbox("Couldn't copy graphic metafile");
+	return 1;
+    }    
+
+    htest = SetClipboardData(CF_ENHMETAFILE, hemfclip);
+    if (htest == NULL) {
+	errbox("Failed to put data on clipboard");
+	return 1;
+    }  	
 
     CloseClipboard();
 
@@ -4156,7 +4179,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 	err = winprint_graph(emfname);
     }
 
-    remove(emfname); 
+    /* remove(emfname); */
     g_free(emfname);
 }
 
