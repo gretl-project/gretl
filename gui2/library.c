@@ -593,12 +593,14 @@ static gint stack_model (int gui)
     }
 
     /* record the way this model was estimated (GUI or not) */
-    if (model_origin == NULL) 
+    if (model_origin == NULL) {
 	model_origin = malloc(sizeof *model_origin);
-    else
+    } else {
 	model_origin = myrealloc(model_origin, 
 				 model_count * sizeof *model_origin);
+    }
     if (model_origin == NULL) return 1;
+
     last_model = (gui == 1)? 'g' : 's';
     model_origin[model_count - 1] = last_model;
 
@@ -607,10 +609,11 @@ static gint stack_model (int gui)
 		   is open, these models are immediately discarded.  So
 		   if we want to be able to refer back to them later we
 		   need to record their specification */
-	if (modelspec == NULL) 
+	if (modelspec == NULL) {
 	    modelspec = mymalloc(2 * sizeof *modelspec);
-	else 
+	} else {
 	    modelspec = myrealloc(modelspec, (m+2) * sizeof *modelspec);
+	}
 	if (modelspec == NULL) return 1;
 	else {
 	    modelspec[m].cmd = mymalloc(MAXLEN);
@@ -5162,9 +5165,10 @@ int gui_exec_line (char *line,
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	if (printmodel(models[0], datainfo, prn))
+	if (oflag != 'q' && printmodel(models[0], datainfo, prn)) {
 	    (models[0])->errcode = E_NAN;
-	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
+	}
+	if (oflag == 'o') outcovmx(models[0], datainfo, 0, prn); 
 	break;
 
 #ifdef ENABLE_GMP

@@ -1180,8 +1180,10 @@ void exec_line (char *line, PRN *prn)
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn);
-	if (optflag) outcovmx(models[0], datainfo, !batch, prn); 
+	if (optflag != 'q') {
+	    printmodel(models[0], datainfo, prn);
+	}
+	if (optflag == 'o') outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
 #ifdef ENABLE_GMP
@@ -1453,10 +1455,11 @@ void exec_line (char *line, PRN *prn)
 	&& !err) { 
 	int m = model_count;
 
-	if (modelspec == NULL) 
+	if (modelspec == NULL) {
 	    modelspec = malloc(2 * sizeof *modelspec);
-	else 
+	} else {
 	    modelspec = realloc(modelspec, (m+1) * (sizeof *modelspec));
+	}
 	if (modelspec == NULL) noalloc(_("model command"));
 
 	modelspec[m-1].cmd = malloc(MAXLEN);

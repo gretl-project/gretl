@@ -19,6 +19,8 @@ version 1.1.5
 - Windows version: bug fixes for gretl_updater.exe, and add a
   simple logging mechanism to aid in trouble-shooting
 - Windows: add the ability to print a gnuplot graph directly
+- ols command: add '-q' (quiet) option to suppress printing of 
+  results
 
 10/06/2003 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter

@@ -173,7 +173,17 @@ void winprint (char *fullbuf, char *selbuf)
     memset(&pdlg, 0, sizeof pdlg);
     pdlg.lStructSize = sizeof pdlg;
     pdlg.Flags = PD_RETURNDC | PD_NOPAGENUMS;
-    PrintDlg(&pdlg);
+
+    printok = PrintDlg(&pdlg);
+    if (!printok) {
+	/* canceled */
+	free(fullbuf); 
+	if (selbuf) {
+	    free(selbuf);
+	}
+	return;
+    }
+
     dc = pdlg.hDC;
     
     /* use Textmappingmode, that's easiest to map the fontsize */
@@ -293,7 +303,14 @@ int winprint_graph (char *emfname)
     memset(&pdlg, 0, sizeof pdlg);
     pdlg.lStructSize = sizeof pdlg;
     pdlg.Flags = PD_RETURNDC | PD_NOPAGENUMS;
-    PrintDlg(&pdlg);
+
+    printok = PrintDlg(&pdlg);
+    if (!printok) {
+	/* canceled */
+	DeleteEnhMetaFile(hemf);
+	return 0; 
+    }
+
     dc = pdlg.hDC;
 
     memset(&di, 0, sizeof di);

@@ -1320,8 +1320,6 @@ int gnuplot_3d (LIST list, const char *literal,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    if (flags & GP_FA)
-
     if (1) {
 	MODEL pmod;
 	double umin, umax, vmin, vmax;

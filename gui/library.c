@@ -5110,9 +5110,10 @@ int gui_exec_line (char *line,
 	}
 	++model_count;
 	(models[0])->ID = model_count;
-	if (printmodel(models[0], datainfo, prn))
+	if (oflag != 'q' && printmodel(models[0], datainfo, prn)) {
 	    (models[0])->errcode = E_NAN;
-	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
+	}
+	if (oflag == 'o') outcovmx(models[0], datainfo, 0, prn); 
 	break;
 
 #ifdef ENABLE_GMP

@@ -2431,15 +2431,17 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
     GtkWidget *parent = (GTK_MENU(plot->color_popup))->parent_menu_item;
     gchar *parent_item = gtk_object_get_data(GTK_OBJECT(parent), "string");
 
+    gtk_widget_destroy(plot->color_popup);
+    gtk_widget_destroy(plot->popup);
+    plot->color_popup = NULL;
+    plot->popup = NULL;
+
     if (!strcmp(parent_item, _("Save as postscript (EPS)..."))) {
 	strcpy(plot->spec->termtype, "postscript");
 	if (color) strcat(plot->spec->termtype, " color");
 	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      plot->spec);
     } 
-
-    gtk_widget_destroy(plot->color_popup);
-    gtk_widget_destroy(plot->popup);
 
     return TRUE;
 }
@@ -2450,6 +2452,14 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "plot");
     png_plot_t *plot = (png_plot_t *) ptr;
     int killplot = 0;
+
+    gtk_widget_destroy(plot->popup);
+    plot->popup = NULL;
+
+    if (plot->color_popup != NULL) {
+	gtk_widget_destroy(plot->color_popup);
+	plot->color_popup = NULL;
+    }
 
     if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
@@ -2486,14 +2496,6 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     else if (!strcmp(item, _("Close"))) { 
 	killplot = 1;
     } 
-
-    gtk_widget_destroy(plot->popup);
-    plot->popup = NULL;
-
-    if (plot->color_popup != NULL) {
-	gtk_widget_destroy(plot->color_popup);
-	plot->color_popup = NULL;
-    }
 
     if (killplot) gtk_widget_destroy(plot->shell);
 
