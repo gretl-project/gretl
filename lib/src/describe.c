@@ -86,17 +86,17 @@ double gretl_median (const double *x, int n)
 	return NADBL;
     }
 
-    for (t=0; t<n; t++) {
-	if (na(x[t])) {
-	    n--;
-	    continue;
+    n2 = n;
+    n = 0;
+    for (t=0; t<n2; t++) {
+	if (!na(x[t])) {
+	    sx[n++] = x[t];
 	}
-	sx[t] = x[t];
     }
 
     qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
 
-    n2p = (n2 = n/2) + 1;
+    n2p = (n2 = n / 2) + 1;
     med = (n % 2)? sx[n2p - 1] : 0.5 * (sx[n2 - 1] + sx[n2p - 1]);
 
     free(sx);

@@ -671,6 +671,8 @@ static void force_english (void)
     putenv("LC_ALL=C");
     textdomain("none");
 # endif
+
+    force_english_help();
 }
 
 #endif /* ENABLE_NLS */
@@ -720,7 +722,7 @@ int main (int argc, char *argv[])
     gtk_init(&argc, &argv);
 #endif /* USE_GNOME */
 
-    set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
+    set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
 
 #ifdef G_OS_WIN32
     gretl_win32_init(argv[0]);

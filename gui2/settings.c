@@ -260,6 +260,16 @@ const char *get_scriptpage (void)
 
 /* ........................................................... */
 
+static gretlopt set_paths_opt = OPT_X;
+
+void force_english_help (void)
+{
+    set_paths_opt |= OPT_N;
+    set_paths(&paths, set_paths_opt);
+}
+
+/* ........................................................... */
+
 void set_fixed_font (void)
 {
 #ifndef OLD_GTK
@@ -996,7 +1006,7 @@ void write_rc (void)
 
     g_object_unref(G_OBJECT(client));
 
-    set_paths(&paths, 0, 1);
+    set_paths(&paths, set_paths_opt);
 }
 
 static void read_rc (void) 
@@ -1066,7 +1076,7 @@ static void read_rc (void)
     set_use_qr(useqr);
     set_gp_colors();
 
-    set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
+    set_paths(&paths, set_paths_opt);
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
@@ -1100,7 +1110,7 @@ void write_rc (void)
 
     gnome_config_sync();
 
-    set_paths(&paths, 0, 1);
+    set_paths(&paths, set_paths_opt);
 }
 
 static void read_rc (void) 
@@ -1146,7 +1156,7 @@ static void read_rc (void)
     set_use_qr(useqr);
     set_gp_colors();
 
-    set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
+    set_paths(&paths, set_paths_opt);
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
@@ -1192,7 +1202,7 @@ void write_rc (void)
 
     save_file_lists();
 
-    set_paths(&paths, 0, 1);
+    set_paths(&paths, set_paths_opt);
 }
 
 static int get_network_settings (void)
@@ -1314,7 +1324,7 @@ void read_rc (void)
     set_use_qr(useqr);
     set_gp_colors();
 
-    set_paths(&paths, 0, 1);
+    set_paths(&paths, set_paths_opt);
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
@@ -1358,7 +1368,7 @@ void write_rc (void)
 
     fclose(rc);
 
-    set_paths(&paths, 0, 1);
+    set_paths(&paths, set_paths_opt);
 }
 
 static void read_rc (void) 
@@ -1445,7 +1455,7 @@ static void read_rc (void)
     set_use_qr(useqr);
     set_gp_colors();
 
-    set_paths(&paths, 0, 1);
+    set_paths(&paths, set_paths_opt);
 
 # if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();

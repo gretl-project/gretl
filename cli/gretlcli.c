@@ -447,10 +447,10 @@ int main (int argc, char *argv[])
 	noalloc(_("command line"));
     } 
 
-    set_paths(&paths, 1, 0); /* 1 = defaults, 0 = not gui */
+    set_paths(&paths, OPT_D); /* defaults, not gui */
 #ifdef WIN32
     cli_read_registry(tmp, &paths);
-    set_paths(&paths, 0, 0); /* not defaults; use registry info */
+    set_paths(&paths, OPT_NONE); /* not defaults; use registry info */
 #else
     make_userdir();
 #endif /* WIN32 */

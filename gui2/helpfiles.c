@@ -460,8 +460,7 @@ static int assemble_topic_list (struct help_head_t **heads, int nh,
 		pos++;
 	    }
 	}
-    }
-    else {
+    } else {
 	while (fgets(test, sizeof test, fp)) {
 	    if (topic == 1) {
 		sscanf(test, "%31s", word);
@@ -509,8 +508,7 @@ get_help_length (struct help_head_t ***pheads, int *pnh, int *length,
 		len++;
 	    }
 	}
-    }
-    else {
+    } else {
 	while (!err && fgets(test, sizeof test, fp)) {
 	    if (*test == '@') {
 		chopstr(test);

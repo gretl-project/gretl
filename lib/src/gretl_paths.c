@@ -637,11 +637,12 @@ void show_paths (const PATHS *ppaths)
 
 #ifdef WIN32
 
-int set_paths (PATHS *ppaths, int defaults, int gui)
+int set_paths (PATHS *ppaths, gretlopt opt)
 {
     char envstr[MAXLEN];
 
-    if (defaults) {
+    if (opt & OPT_D) {
+	/* set defaults */
 	char *home;
 
 	home = getenv("GRETL_HOME");
@@ -658,7 +659,7 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	strcpy(ppaths->x12a, "c:\\userdata\\x12arima\\x12a.exe");
 	strcpy(ppaths->x12adir, "c:\\userdata\\x12arima");
 
-	if (gui) {
+	if (opt & OPT_X) {
 	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
 	} else {
 	    ppaths->dbhost[0] = '\0';
@@ -676,11 +677,18 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
     sprintf(ppaths->datadir, "%sdata\\", ppaths->gretldir);
     sprintf(ppaths->scriptdir, "%sscripts\\", ppaths->gretldir);
 
-    if (gui) {
-	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
-		_("gretl_hlp.txt"));
-	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
+    if (opt & OPT_X) {
+	/* gui program */
+	if (opt & OPT_N) {
+	    /* force english */
+	    sprintf(ppaths->helpfile, "%sgretl_hlp.txt", ppaths->gretldir);
+	    sprintf(ppaths->cmd_helpfile, "%sgretlcli_hlp.txt", ppaths->gretldir);
+	} else {
+	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
+		    _("gretl_hlp.txt"));
+	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
+	}
 	gretl_paths.status |= GRETL_USING_GUI;
     } else { 
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
@@ -703,9 +711,9 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 
 #else /* not Windows */
 
-int set_paths (PATHS *ppaths, int defaults, int gui)
+int set_paths (PATHS *ppaths, gretlopt opt)
 {
-    if (defaults) {
+    if (opt & OPT_D) {
 	char *home;
 
 	home = getenv("GRETL_HOME");
@@ -720,7 +728,7 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
 	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
 
-	if (gui) {
+	if (opt & OPT_X) {
 	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
 	} else {
 	    ppaths->dbhost[0] = '\0';
@@ -752,12 +760,18 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 
     sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);
     sprintf(ppaths->scriptdir, "%sscripts/", ppaths->gretldir);
-    
-    if (gui) {
-	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
-		_("gretl.hlp"));
-	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
-		_("gretlcli.hlp"));
+
+    if (opt & OPT_X) {
+	if (opt & OPT_N) {
+	    /* force english */
+	    sprintf(ppaths->helpfile, "%sgretl.hlp", ppaths->gretldir);
+	    sprintf(ppaths->cmd_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
+	} else {
+	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
+		    _("gretl.hlp"));
+	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
+		    _("gretlcli.hlp"));
+	}
 	gretl_paths.status |= GRETL_USING_GUI;
     } else {
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,

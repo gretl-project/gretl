@@ -13,6 +13,8 @@ void write_rc (void);
 
 void dump_rc (void);
 
+void force_english_help (void);
+
 void options_dialog (gpointer data);
 
 void font_selector (gpointer data, guint which, GtkWidget *widget);

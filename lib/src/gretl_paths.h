@@ -33,7 +33,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
 void show_paths (const PATHS *ppaths);
 
-int set_paths (PATHS *ppaths, int defaults, int gui);
+int set_paths (PATHS *ppaths, gretlopt opt);
 
 const char *gretl_lib_path (void);
 

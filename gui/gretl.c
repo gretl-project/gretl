@@ -535,6 +535,7 @@ static void destroy (GtkWidget *widget, gpointer data)
 }
 
 #ifdef ENABLE_NLS
+
 void nls_init (void)
 {
     char *mylang = getenv("GRETL_LANG");
@@ -550,6 +551,14 @@ void nls_init (void)
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
 }
+
+static void force_english (void)
+{
+    setlocale (LC_ALL, "C");
+
+    force_english_help();
+}
+
 #endif /* ENABLE_NLS */
 
 int main (int argc, char *argv[])
@@ -577,7 +586,7 @@ int main (int argc, char *argv[])
     gtk_init(&argc, &argv);
 #endif
 
-    set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
+    set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
     set_rcfile();
     init_fileptrs();
 
@@ -624,7 +633,7 @@ int main (int argc, char *argv[])
 
 #ifdef ENABLE_NLS
 	if (english) {
-	    setlocale (LC_ALL, "C");
+	    force_english();
 	    if (argc == 2) {
 		gui_get_data = 1;
 	    }

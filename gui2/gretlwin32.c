@@ -70,8 +70,6 @@ int create_child_process (char *prog, char *env)
     return ret;
 }
 
-#ifndef G_OS_WIN32
-
 void startR (const char *Rcommand)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
@@ -134,8 +132,6 @@ void startR (const char *Rcommand)
     sprintf(line, "\"%s\" %s %s", Rcommand, supp1, supp2);
     create_child_process(line, NULL);
 }
-
-#endif /* ! G_OS_WIN32 */
 
 char *slash_convert (char *str, int which)
 {

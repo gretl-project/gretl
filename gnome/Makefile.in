@@ -67,10 +67,11 @@ install-help-2:
 	$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/C/figures
 	# Italian help files
 	cat $(docdir)/manual_it.xml | sed s+fileref=\"figures/[^\"]*+\&.png+g \
-	  > $(ghelpdir)/it/gretl.xml
+	  | sed s+chapters_it+chapters+g > $(ghelpdir)/it/gretl.xml
 	for f in $(docdir)/chapters_it/*.xml ; do \
 	  cat $$f | sed s+fileref=\"figures/[^\"]*+\&.png+g > \
 	  $(ghelpdir)/it/chapters/`basename $$f` ; done
+	$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/it/figures
 	$(INSTALL_DATA) $(docdir)/figures_it/*.png $(ghelpdir)/it/figures
 	make -C $(omfdir) install
 
@@ -82,6 +83,7 @@ install-help-1:
 	-$(INSTALL_DATA) $(topsrc)/gnome/topic.dat $(ghelpdir)/it
 	-$(INSTALL_DATA) $(docdir)/manual_it.html/*.html $(ghelpdir)/it
 	-$(INSTALL_DATA) $(docdir)/manual_it.html/*.css $(ghelpdir)/it
+	-$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/it/figures
 	-$(INSTALL_DATA) $(docdir)/figures_it/*.png $(ghelpdir)/it/figures
 
 install-gconf-keys:
