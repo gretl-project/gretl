@@ -140,6 +140,30 @@
 
   </command>
 
+  <command name="append" section="Dataset" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>file-dati</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+       Apre un file di dati e aggiunge il suo contenuto al dataset
+       corrente, se i nuovi dati sono compatibili. Il programma cerca
+       di riconoscere il formato del file di dati (interno, testo semplice,
+       CSV, o BOX1).
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Append data</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="ar" section="Estimation" label="Stima autoregressiva">
 
     <usage>
@@ -2599,6 +2623,10 @@
 	  <flag>--progressive</flag>
 	  <effect>abilita modalità speciali di alcuni comandi</effect>
 	</option>
+        <option>
+          <flag>--verbose</flag>
+          <effect>mostra i dettagli dei comandi genr</effect>
+        </option>
       </options>
       <examples>
         <example>loop 1000</example>
