@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-03 14:41-0500\n"
+"POT-Creation-Date: 2005-01-04 15:11-0500\n"
 "PO-Revision-Date: 2005-01-04 14:55+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
@@ -41,9 +41,9 @@ msgstr ""
 
 #: lib/src/compare.c:66 lib/src/compare.c:78 lib/src/compare.c:322
 #: lib/src/compare.c:828 lib/src/compare.c:1083 lib/src/describe.c:1733
-#: lib/src/gretl_restrict.c:787 lib/src/modelprint.c:732
-#: lib/src/modelprint.c:753 lib/src/modelprint.c:771 lib/src/modelprint.c:1432
-#: lib/src/modelprint.c:1441 lib/src/modelprint.c:1450 lib/src/strutils.c:711
+#: lib/src/gretl_restrict.c:787 lib/src/modelprint.c:739
+#: lib/src/modelprint.c:760 lib/src/modelprint.c:778 lib/src/modelprint.c:1439
+#: lib/src/modelprint.c:1448 lib/src/modelprint.c:1457 lib/src/strutils.c:711
 #: lib/src/var.c:1933 gui2/library.c:1229 gui2/library.c:1263
 #: plugin/panel_data.c:1396
 msgid "Test statistic"
@@ -59,11 +59,11 @@ msgid "with p-value = %g\n"
 msgstr "con p-value = %g\n"
 
 #: lib/src/compare.c:79 lib/src/compare.c:1091 lib/src/compare.c:1096
-#: lib/src/modelprint.c:269 lib/src/modelprint.c:651 lib/src/modelprint.c:658
-#: lib/src/modelprint.c:1435 lib/src/modelprint.c:1444
-#: lib/src/modelprint.c:2248 lib/src/modelprint.c:2272 lib/src/printout.c:234
-#: lib/src/system.c:705 plugin/panel_data.c:929 plugin/panel_data.c:1404
-#: plugin/sysest.c:403 plugin/sysest.c:414
+#: lib/src/modelprint.c:273 lib/src/modelprint.c:658 lib/src/modelprint.c:665
+#: lib/src/modelprint.c:1442 lib/src/modelprint.c:1451
+#: lib/src/modelprint.c:2255 lib/src/modelprint.c:2279 lib/src/printout.c:234
+#: lib/src/system.c:723 plugin/panel_data.c:929 plugin/panel_data.c:1404
+#: plugin/sysest.c:80 plugin/sysest.c:508 plugin/sysest.c:519
 msgid "Chi-square"
 msgstr "Chi-quadro"
 
@@ -115,13 +115,13 @@ msgid "relationship is linear"
 msgstr "la relazione è lineare"
 
 #: lib/src/compare.c:829 lib/src/compare.c:1085 lib/src/compare.c:1090
-#: lib/src/compare.c:1096 lib/src/describe.c:914 lib/src/modelprint.c:270
-#: lib/src/modelprint.c:733 lib/src/modelprint.c:754 lib/src/modelprint.c:772
-#: lib/src/modelprint.c:1435 lib/src/modelprint.c:1444
-#: lib/src/modelprint.c:1453 lib/src/printout.c:235 lib/src/printout.c:241
-#: lib/src/system.c:677 lib/src/system.c:706 gui2/library.c:1230
+#: lib/src/compare.c:1096 lib/src/describe.c:914 lib/src/modelprint.c:274
+#: lib/src/modelprint.c:740 lib/src/modelprint.c:761 lib/src/modelprint.c:779
+#: lib/src/modelprint.c:1442 lib/src/modelprint.c:1451
+#: lib/src/modelprint.c:1460 lib/src/printout.c:235 lib/src/printout.c:241
+#: lib/src/system.c:695 lib/src/system.c:724 gui2/library.c:1230
 #: gui2/library.c:1264 plugin/panel_data.c:1397 plugin/panel_data.c:1403
-#: plugin/sysest.c:404 plugin/sysest.c:415
+#: plugin/sysest.c:81 plugin/sysest.c:509 plugin/sysest.c:520
 msgid "with p-value"
 msgstr "con p-value"
 
@@ -297,7 +297,7 @@ msgstr "Variabili"
 msgid "Sum of coefficients"
 msgstr "Somma dei coefficienti"
 
-#: lib/src/compare.c:1914 lib/src/modelprint.c:2324
+#: lib/src/compare.c:1914 lib/src/modelprint.c:2331
 msgid "Standard error"
 msgstr "Errore Standard"
 
@@ -385,7 +385,7 @@ msgid "Bad varname '%s' in sim"
 msgstr "Nome di variabile errato '%s' in sim"
 
 #: lib/src/compat.c:885 lib/src/generate.c:4440 lib/src/gretl_list.c:284
-#: lib/src/gretl_utils.c:1638 lib/src/modelprint.c:1150
+#: lib/src/gretl_utils.c:1638 lib/src/modelprint.c:1157
 msgid "Replaced"
 msgstr "Sostituito"
 
@@ -565,7 +565,7 @@ msgstr "giornaliero"
 msgid "special"
 msgstr "speciale"
 
-#: lib/src/dataio.c:1768 lib/src/modelprint.c:1929 lib/src/var.c:1743
+#: lib/src/dataio.c:1768 lib/src/modelprint.c:1936 lib/src/var.c:1743
 msgid "unknown"
 msgstr "sconosciuto"
 
@@ -590,7 +590,7 @@ msgstr "Descrizione"
 msgid "Type of data"
 msgstr "Tipo di dati"
 
-#: lib/src/dataio.c:1808 lib/src/modelprint.c:2079 lib/src/modelprint.c:2087
+#: lib/src/dataio.c:1808 lib/src/modelprint.c:2086 lib/src/modelprint.c:2094
 msgid "Frequency"
 msgstr "Frequenza"
 
@@ -1362,12 +1362,12 @@ msgid "Fractional integration test failed"
 msgstr "Test per integrazione frazionale fallito"
 
 #: lib/src/describe.c:1119 lib/src/describe.c:1120 lib/src/estimate.c:2882
-#: lib/src/estimate.c:2883 lib/src/modelprint.c:361 lib/src/modelprint.c:371
-#: lib/src/modelprint.c:386 lib/src/modelprint.c:1802
-#: lib/src/modelprint.c:1812 lib/src/modelprint.c:1848
-#: lib/src/modelprint.c:1909 lib/src/modelprint.c:1916
-#: lib/src/modelprint.c:1917 lib/src/modelprint.c:1918
-#: lib/src/modelprint.c:1940 lib/src/modelprint.c:2344 lib/src/printout.c:212
+#: lib/src/estimate.c:2883 lib/src/modelprint.c:368 lib/src/modelprint.c:378
+#: lib/src/modelprint.c:393 lib/src/modelprint.c:1809
+#: lib/src/modelprint.c:1819 lib/src/modelprint.c:1855
+#: lib/src/modelprint.c:1916 lib/src/modelprint.c:1923
+#: lib/src/modelprint.c:1924 lib/src/modelprint.c:1925
+#: lib/src/modelprint.c:1947 lib/src/modelprint.c:2351 lib/src/printout.c:212
 #: lib/src/printout.c:464 lib/src/printout.c:472 lib/src/printout.c:531
 #: lib/src/printout.c:532 lib/src/texprint.c:251 lib/src/texprint.c:257
 #: lib/src/texprint.c:258 lib/src/texprint.c:259 gui2/guiprint_common.c:72
@@ -1435,7 +1435,7 @@ msgstr "Statistiche descrittive"
 msgid "for the variable '%s' (%d valid observations)"
 msgstr "per la variabile '%s' (%d osservazioni valide)"
 
-#: lib/src/describe.c:1253 lib/src/describe.c:1279 lib/src/modelprint.c:1222
+#: lib/src/describe.c:1253 lib/src/describe.c:1279 lib/src/modelprint.c:1229
 #: gui2/guiprint_common.c:119 gui2/guiprint_common.c:142
 #: gui2/guiprint_common.c:220 gui2/guiprint_common.c:247
 #: gui2/guiprint_common.c:863 gui2/guiprint_common.c:920
@@ -1559,8 +1559,8 @@ msgstr ""
 msgid "   Ratio of sample variances = %g\n"
 msgstr "   Rapporto delle varianze campionarie = %g\n"
 
-#: lib/src/describe.c:1731 lib/src/modelprint.c:731 lib/src/modelprint.c:752
-#: lib/src/modelprint.c:770 gui2/library.c:1228 gui2/library.c:1262
+#: lib/src/describe.c:1731 lib/src/modelprint.c:738 lib/src/modelprint.c:759
+#: lib/src/modelprint.c:777 gui2/library.c:1228 gui2/library.c:1262
 msgid "Null hypothesis"
 msgstr "Ipotesi nulla"
 
@@ -1659,7 +1659,7 @@ msgstr ""
 "La seconda lista di variabili deve contenere almeno %d variabili non "
 "presenti nella prima."
 
-#: lib/src/estimate.c:2686 lib/src/modelprint.c:523
+#: lib/src/estimate.c:2686 lib/src/modelprint.c:530
 msgid "White's test for heteroskedasticity"
 msgstr "Test di White per l'eteroschedasticità"
 
@@ -1971,7 +1971,7 @@ msgid "Modified"
 msgstr "Modificato"
 
 #: lib/src/generate.c:4440 lib/src/gretl_utils.c:1638
-#: lib/src/modelprint.c:1151
+#: lib/src/modelprint.c:1158
 msgid "Generated"
 msgstr "Generato"
 
@@ -2127,7 +2127,8 @@ msgstr "Troppe parentesi nidificate.  genr non eseguito"
 msgid "Argument must be an integer"
 msgstr "L'argomento dev'essere intero"
 
-#: lib/src/gretl_errors.c:43 cli/gretlcli.c:169 gui2/library.c:5033
+#: lib/src/gretl_errors.c:43 lib/src/system.c:849 cli/gretlcli.c:169
+#: gui2/library.c:5033
 msgid "Sorry, command not available for this estimator"
 msgstr "Spiacente, il comando non è disponibile per questo stimatore"
 
@@ -2792,7 +2793,7 @@ msgid "Mean of residuals"
 msgstr "Media dei residui"
 
 #: lib/src/modelprint.c:123 lib/src/modelprint.c:144 lib/src/modelprint.c:162
-#: lib/src/modelprint.c:288 lib/src/modelprint.c:297 lib/src/modelprint.c:298
+#: lib/src/modelprint.c:295 lib/src/modelprint.c:304 lib/src/modelprint.c:305
 msgid "Sum of squared residuals"
 msgstr "Somma dei quadrati dei residui"
 
@@ -2800,11 +2801,11 @@ msgstr "Somma dei quadrati dei residui"
 msgid "Standard error of residuals"
 msgstr "Errore standard dei residui"
 
-#: lib/src/modelprint.c:175 lib/src/modelprint.c:2332
+#: lib/src/modelprint.c:175 lib/src/modelprint.c:2339
 msgid "Unadjusted R-squared"
 msgstr "R-quadro"
 
-#: lib/src/modelprint.c:179 lib/src/modelprint.c:2336
+#: lib/src/modelprint.c:179 lib/src/modelprint.c:2343
 msgid "Adjusted R-squared"
 msgstr "R-quadro corretto"
 
@@ -2832,25 +2833,30 @@ msgstr "Criterio di informazione di Akaike"
 msgid "Schwarz Bayesian criterion"
 msgstr "Criterio bayesiano di Schwarz"
 
-#: lib/src/modelprint.c:212 lib/src/modelprint.c:2207
-#: lib/src/modelprint.c:2212 lib/src/modelprint.c:2221
+#: lib/src/modelprint.c:212 lib/src/modelprint.c:2214
+#: lib/src/modelprint.c:2219 lib/src/modelprint.c:2228
 msgid "AIC"
 msgstr "AIC"
 
-#: lib/src/modelprint.c:213 lib/src/modelprint.c:2208
-#: lib/src/modelprint.c:2213 lib/src/modelprint.c:2223
+#: lib/src/modelprint.c:213 lib/src/modelprint.c:2215
+#: lib/src/modelprint.c:2220 lib/src/modelprint.c:2230
 msgid "BIC"
 msgstr "BIC"
 
-#: lib/src/modelprint.c:268 plugin/sysest.c:400
+#: lib/src/modelprint.c:272 plugin/sysest.c:505
 msgid "LR over-identification test"
 msgstr "Test LR di sovra-identificazione"
 
-#: lib/src/modelprint.c:286 lib/src/modelprint.c:293 lib/src/modelprint.c:294
+#: lib/src/modelprint.c:276
+#, fuzzy
+msgid "Equation is just identified"
+msgstr "Sistema di equazioni"
+
+#: lib/src/modelprint.c:293 lib/src/modelprint.c:300 lib/src/modelprint.c:301
 msgid "Sum of absolute residuals"
 msgstr "Somma dei residui assoluti"
 
-#: lib/src/modelprint.c:305
+#: lib/src/modelprint.c:312
 msgid ""
 "\n"
 "Warning: solution is probably not unique\n"
@@ -2858,329 +2864,329 @@ msgstr ""
 "\n"
 "Attenzione: la soluzione probabilmente non è unica\n"
 
-#: lib/src/modelprint.c:320 lib/src/modelprint.c:323 lib/src/modelprint.c:1245
-#: lib/src/modelprint.c:1273 lib/src/modelprint.c:2249
-#: lib/src/modelprint.c:2273 lib/src/modelprint.c:2304 lib/src/var.c:1103
+#: lib/src/modelprint.c:327 lib/src/modelprint.c:330 lib/src/modelprint.c:1252
+#: lib/src/modelprint.c:1280 lib/src/modelprint.c:2256
+#: lib/src/modelprint.c:2280 lib/src/modelprint.c:2311 lib/src/var.c:1103
 #: lib/src/var.c:1135 lib/src/var.c:1743 lib/src/var.c:1746
 #: plugin/johansen.c:362 plugin/johansen.c:363
 msgid "p-value"
 msgstr "p-value"
 
-#: lib/src/modelprint.c:334
+#: lib/src/modelprint.c:341
 msgid "p-value for"
 msgstr "p-value per"
 
-#: lib/src/modelprint.c:345 lib/src/modelprint.c:348 lib/src/modelprint.c:351
+#: lib/src/modelprint.c:352 lib/src/modelprint.c:355 lib/src/modelprint.c:358
 msgid "Degrees of freedom"
 msgstr "Gradi di libertà"
 
-#: lib/src/modelprint.c:359 lib/src/modelprint.c:384
+#: lib/src/modelprint.c:366 lib/src/modelprint.c:391
 msgid "F-statistic"
 msgstr "Statistica F"
 
-#: lib/src/modelprint.c:400 lib/src/modelprint.c:419
+#: lib/src/modelprint.c:407 lib/src/modelprint.c:426
 msgid "Durbin-Watson statistic"
 msgstr "Statistica Durbin-Watson"
 
-#: lib/src/modelprint.c:402 lib/src/modelprint.c:414 lib/src/modelprint.c:421
+#: lib/src/modelprint.c:409 lib/src/modelprint.c:421 lib/src/modelprint.c:428
 msgid "First-order autocorrelation coeff."
 msgstr "Coefficiente di autocorrelazione del prim'ordine"
 
-#: lib/src/modelprint.c:413
+#: lib/src/modelprint.c:420
 msgid "Durbin--Watson statistic"
 msgstr "Statistica Durbin-Watson"
 
-#: lib/src/modelprint.c:444 lib/src/modelprint.c:455
+#: lib/src/modelprint.c:451 lib/src/modelprint.c:462
 #, c-format
 msgid "Durbin's h stat. %g"
 msgstr "Stat. h di Durbin %g"
 
-#: lib/src/modelprint.c:447 lib/src/modelprint.c:458
+#: lib/src/modelprint.c:454 lib/src/modelprint.c:465
 #, c-format
 msgid "(Using variable %d for h stat, with T' = %d)"
 msgstr "(Usando la variabile %d per la statistica h, con T' = %d)"
 
-#: lib/src/modelprint.c:468
+#: lib/src/modelprint.c:475
 msgid "Durbin's $h$ statistic"
 msgstr "Statistica $h$ di Durbin"
 
-#: lib/src/modelprint.c:506
+#: lib/src/modelprint.c:513
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
 msgstr "Escludendo la costante, il p-value è massimo per la variabile %d (%s)"
 
-#: lib/src/modelprint.c:517
+#: lib/src/modelprint.c:524
 msgid "Auxiliary regression for non-linearity test (squared terms)"
 msgstr ""
 "Regressione ausiliaria per il test di non linearità (con termini quadratici)"
 
-#: lib/src/modelprint.c:520
+#: lib/src/modelprint.c:527
 msgid "Auxiliary regression for non-linearity test (log terms)"
 msgstr ""
 "Regressione ausiliaria per il test di non linearità (con termini logaritmici)"
 
-#: lib/src/modelprint.c:525
+#: lib/src/modelprint.c:532
 msgid "Augmented regression for Chow test"
 msgstr "Regressione aumentata per il test Chow"
 
-#: lib/src/modelprint.c:527
+#: lib/src/modelprint.c:534
 msgid "Cointegrating regression -- "
 msgstr "Regressione di cointegrazione -- "
 
-#: lib/src/modelprint.c:528
+#: lib/src/modelprint.c:535
 msgid "Cointegrating regression - "
 msgstr "Regressione di cointegrazione - "
 
-#: lib/src/modelprint.c:530
+#: lib/src/modelprint.c:537
 msgid "Augmented Dickey--Fuller regression"
 msgstr "Regressione aumentata Dickey--Fuller"
 
-#: lib/src/modelprint.c:531
+#: lib/src/modelprint.c:538
 msgid "Augmented Dickey-Fuller regression"
 msgstr "Regressione aumentata Dickey-Fuller"
 
-#: lib/src/modelprint.c:533
+#: lib/src/modelprint.c:540
 msgid "Dickey--Fuller regression"
 msgstr "Regressione Dickey--Fuller"
 
-#: lib/src/modelprint.c:534
+#: lib/src/modelprint.c:541
 msgid "Dickey-Fuller regression"
 msgstr "Regressione Dickey-Fuller"
 
-#: lib/src/modelprint.c:536
+#: lib/src/modelprint.c:543
 msgid "KPSS regression"
 msgstr "Regressione KPSS"
 
-#: lib/src/modelprint.c:538
+#: lib/src/modelprint.c:545
 msgid "Auxiliary regression for RESET specification test"
 msgstr "Regressione ausiliaria per il test RESET di specificazione"
 
-#: lib/src/modelprint.c:540
+#: lib/src/modelprint.c:547
 msgid "Groupwise heteroskedasticity"
 msgstr "Eteroschedasticità di gruppo"
 
-#: lib/src/modelprint.c:550 lib/src/system.c:108 gui/selector.c:521
+#: lib/src/modelprint.c:557 lib/src/system.c:112 gui/selector.c:521
 #: gui2/model_table.c:356 gui2/selector.c:778
 msgid "OLS"
 msgstr "OLS"
 
-#: lib/src/modelprint.c:551 lib/src/modelprint.c:589
+#: lib/src/modelprint.c:558 lib/src/modelprint.c:596
 msgid "WLS"
 msgstr "WLS"
 
-#: lib/src/modelprint.c:552
+#: lib/src/modelprint.c:559
 msgid "WLS (ARCH)"
 msgstr "WLS (ARCH)"
 
-#: lib/src/modelprint.c:553 lib/src/system.c:109
+#: lib/src/modelprint.c:560 lib/src/system.c:113
 msgid "TSLS"
 msgstr "TSLS"
 
-#: lib/src/modelprint.c:554
+#: lib/src/modelprint.c:561
 msgid "Heteroskedasticity-corrected"
 msgstr "WLS corrette per l'eteroschedasticità"
 
-#: lib/src/modelprint.c:555 lib/src/modelprint.c:2092
-#: lib/src/modelprint.c:2094 lib/src/modelprint.c:2098
+#: lib/src/modelprint.c:562 lib/src/modelprint.c:2099
+#: lib/src/modelprint.c:2101 lib/src/modelprint.c:2105
 msgid "AR"
 msgstr "AR"
 
-#: lib/src/modelprint.c:556 gui/selector.c:555 gui2/selector.c:812
+#: lib/src/modelprint.c:563 gui/selector.c:555 gui2/selector.c:812
 msgid "LAD"
 msgstr "LAD"
 
-#: lib/src/modelprint.c:557 gui/selector.c:535 gui2/selector.c:792
+#: lib/src/modelprint.c:564 gui/selector.c:535 gui2/selector.c:792
 msgid "Probit"
 msgstr "Probit"
 
-#: lib/src/modelprint.c:558 gui/selector.c:533 gui2/selector.c:790
+#: lib/src/modelprint.c:565 gui/selector.c:533 gui2/selector.c:790
 msgid "Logit"
 msgstr "Logit"
 
-#: lib/src/modelprint.c:559 gui/selector.c:537 gui2/selector.c:794
+#: lib/src/modelprint.c:566 gui/selector.c:537 gui2/selector.c:794
 msgid "Tobit"
 msgstr "Tobit"
 
-#: lib/src/modelprint.c:560 gui/selector.c:541 gui2/selector.c:798
+#: lib/src/modelprint.c:567 gui/selector.c:541 gui2/selector.c:798
 msgid "Pooled OLS"
 msgstr "Pooled OLS"
 
-#: lib/src/modelprint.c:561
+#: lib/src/modelprint.c:568
 msgid "NLS"
 msgstr "NLS"
 
-#: lib/src/modelprint.c:562 gui/selector.c:539 gui2/selector.c:796
+#: lib/src/modelprint.c:569 gui/selector.c:539 gui2/selector.c:796
 msgid "Logistic"
 msgstr "Logistico"
 
-#: lib/src/modelprint.c:563 gui/selector.c:551 gui2/selector.c:808
+#: lib/src/modelprint.c:570 gui/selector.c:551 gui2/selector.c:808
 msgid "GARCH"
 msgstr "GARCH"
 
-#: lib/src/modelprint.c:565
+#: lib/src/modelprint.c:572
 msgid "Cochrane--Orcutt"
 msgstr "Cochrane--Orcutt"
 
-#: lib/src/modelprint.c:566 gui/selector.c:527 gui2/selector.c:784
+#: lib/src/modelprint.c:573 gui/selector.c:527 gui2/selector.c:784
 msgid "Cochrane-Orcutt"
 msgstr "CORC - Cochrane-Orcutt"
 
-#: lib/src/modelprint.c:569
+#: lib/src/modelprint.c:576
 msgid "Hildreth--Lu"
 msgstr "Hildreth--Lu"
 
-#: lib/src/modelprint.c:570 gui/selector.c:529 gui2/selector.c:786
+#: lib/src/modelprint.c:577 gui/selector.c:529 gui2/selector.c:786
 msgid "Hildreth-Lu"
 msgstr "HILU - Hildreth-Lu"
 
-#: lib/src/modelprint.c:573
+#: lib/src/modelprint.c:580
 msgid "Prais--Winsten"
 msgstr "Prais--Winsten"
 
-#: lib/src/modelprint.c:574 gui/selector.c:531 gui2/selector.c:788
+#: lib/src/modelprint.c:581 gui/selector.c:531 gui2/selector.c:788
 msgid "Prais-Winsten"
 msgstr "Prais-Winsten"
 
-#: lib/src/modelprint.c:584 gui/selector.c:549 gui2/selector.c:806
+#: lib/src/modelprint.c:591 gui/selector.c:549 gui2/selector.c:806
 msgid "ARMAX"
 msgstr "ARMAX"
 
-#: lib/src/modelprint.c:584 gui2/dialogs.c:1654
+#: lib/src/modelprint.c:591 gui2/dialogs.c:1654
 msgid "ARMA"
 msgstr "ARMA"
 
-#: lib/src/modelprint.c:587
+#: lib/src/modelprint.c:594
 msgid "Maximum Likelihood"
 msgstr "Massima verosimiglianza"
 
-#: lib/src/modelprint.c:789 lib/src/modelprint.c:791 lib/src/modelprint.c:794
+#: lib/src/modelprint.c:796 lib/src/modelprint.c:798 lib/src/modelprint.c:801
 #: gui/selector.c:574 gui2/selector.c:831
 msgid "Instruments"
 msgstr "Strumenti"
 
-#: lib/src/modelprint.c:858 lib/src/modelprint.c:861
+#: lib/src/modelprint.c:865 lib/src/modelprint.c:868
 #, c-format
 msgid "Serial correlation-robust standard errors, lag order %d\n"
 msgstr ""
 "Errori standard robusti rispetto alla correlazione seriale, ordine di "
 "ritardo %d\n"
 
-#: lib/src/modelprint.c:878 lib/src/modelprint.c:884
+#: lib/src/modelprint.c:885 lib/src/modelprint.c:891
 msgid "Heteroskedasticity-robust standard errors"
 msgstr "Errori standard robusti rispetto all'eteroschedasticità"
 
-#: lib/src/modelprint.c:879 lib/src/modelprint.c:885
+#: lib/src/modelprint.c:886 lib/src/modelprint.c:892
 msgid "variant"
 msgstr "variante"
 
-#: lib/src/modelprint.c:900
+#: lib/src/modelprint.c:907
 msgid "Standard errors based on Hessian"
 msgstr "Errori standard basati sull'Hessiana"
 
-#: lib/src/modelprint.c:903
+#: lib/src/modelprint.c:910
 msgid "Standard errors based on Information Matrix"
 msgstr "Errori standard basati sulla matrice di informazione"
 
-#: lib/src/modelprint.c:906
+#: lib/src/modelprint.c:913
 msgid "Standard errors based on Outer Products matrix"
 msgstr "Errori standard basati sulla matrice dei prodotti esterni"
 
-#: lib/src/modelprint.c:909
+#: lib/src/modelprint.c:916
 msgid "QML standard errors"
 msgstr "Errori standard QML"
 
-#: lib/src/modelprint.c:913
+#: lib/src/modelprint.c:920
 msgid "Bollerslev--Wooldridge standard errors"
 msgstr "Errori standard di Bollerslev--Wooldridge"
 
-#: lib/src/modelprint.c:915
+#: lib/src/modelprint.c:922
 msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Errori standard di Bollerslev-Wooldridge"
 
-#: lib/src/modelprint.c:975 lib/src/modelprint.c:977
+#: lib/src/modelprint.c:982 lib/src/modelprint.c:984
 msgid "Breusch-Godfrey test for"
 msgstr "Test Breusch-Godfrey per"
 
-#: lib/src/modelprint.c:980 lib/src/modelprint.c:981
+#: lib/src/modelprint.c:987 lib/src/modelprint.c:988
 msgid "autocorrelation up to order"
 msgstr "autocorrelazione fino all'ordine"
 
-#: lib/src/modelprint.c:984 lib/src/modelprint.c:985
+#: lib/src/modelprint.c:991 lib/src/modelprint.c:992
 msgid "first-order autocorrelation"
 msgstr "autocorrelazione del prim'ordine"
 
-#: lib/src/modelprint.c:990 lib/src/modelprint.c:991
+#: lib/src/modelprint.c:997 lib/src/modelprint.c:998
 msgid "Test for ARCH of order"
 msgstr "Test per ARCH di ordine"
 
-#: lib/src/modelprint.c:996 lib/src/modelprint.c:1000
+#: lib/src/modelprint.c:1003 lib/src/modelprint.c:1007
 msgid "Equation"
 msgstr "Equazione"
 
-#: lib/src/modelprint.c:1009 gui2/session.c:686
+#: lib/src/modelprint.c:1016 gui2/session.c:686
 msgid "Model"
 msgstr "Modello"
 
-#: lib/src/modelprint.c:1016 lib/src/modelprint.c:1017
-#: lib/src/modelprint.c:1035 lib/src/modelprint.c:1036
+#: lib/src/modelprint.c:1023 lib/src/modelprint.c:1024
+#: lib/src/modelprint.c:1042 lib/src/modelprint.c:1043
 #, c-format
 msgid "%s estimates using the %d observations %s%s%s"
 msgstr "Stime %s usando le %d osservazioni %s%s%s"
 
-#: lib/src/modelprint.c:1025 lib/src/modelprint.c:1026
+#: lib/src/modelprint.c:1032 lib/src/modelprint.c:1033
 #, c-format
 msgid "%s estimates using %d observations from %s%s%s"
 msgstr "Stime %s usando %d osservazioni da  %s%s%s"
 
-#: lib/src/modelprint.c:1031 lib/src/modelprint.c:1032
+#: lib/src/modelprint.c:1038 lib/src/modelprint.c:1039
 msgid "Missing or incomplete observations dropped"
 msgstr "Sono state scartate osservazioni mancanti o incomplete"
 
-#: lib/src/modelprint.c:1044 lib/src/modelprint.c:1045
+#: lib/src/modelprint.c:1051 lib/src/modelprint.c:1052
 #, c-format
 msgid "%s estimates using %d observations"
 msgstr "stime %s usando %d osservazioni"
 
-#: lib/src/modelprint.c:1050 lib/src/modelprint.c:1051
+#: lib/src/modelprint.c:1057 lib/src/modelprint.c:1058
 #, c-format
 msgid "Included %d cross-sectional units"
 msgstr "Incluse %d unità cross section"
 
-#: lib/src/modelprint.c:1061 lib/src/modelprint.c:1066
-#: lib/src/modelprint.c:1071 lib/src/modelprint.c:1077
-#: lib/src/modelprint.c:1086 lib/src/modelprint.c:2389 gui/selector.c:727
+#: lib/src/modelprint.c:1068 lib/src/modelprint.c:1073
+#: lib/src/modelprint.c:1078 lib/src/modelprint.c:1084
+#: lib/src/modelprint.c:1093 lib/src/modelprint.c:2396 gui/selector.c:727
 #: gui2/model_table.c:760 gui2/model_table.c:875 gui2/selector.c:950
 msgid "Dependent variable"
 msgstr "Variabile dipendente"
 
-#: lib/src/modelprint.c:1120 lib/src/modelprint.c:1121
+#: lib/src/modelprint.c:1127 lib/src/modelprint.c:1128
 msgid "Allowing for groupwise heteroskedasticity"
 msgstr "Eteroschedasticità di gruppo permessa"
 
-#: lib/src/modelprint.c:1123 lib/src/modelprint.c:1124
+#: lib/src/modelprint.c:1130 lib/src/modelprint.c:1131
 msgid "Weights based on per-unit error variances"
 msgstr "Pesi basati sulle varianze degli errori per unità"
 
-#: lib/src/modelprint.c:1136
+#: lib/src/modelprint.c:1143
 msgid "Variable used as weight"
 msgstr "Variabile usata come peso"
 
-#: lib/src/modelprint.c:1158 lib/src/modelprint.c:1159
+#: lib/src/modelprint.c:1165 lib/src/modelprint.c:1166
 msgid "Weight var is a dummy variable, effective obs ="
 msgstr "La variabile dei pesi è una variabile dummy, osservazioni effettive ="
 
-#: lib/src/modelprint.c:1202
+#: lib/src/modelprint.c:1209
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT       SLOPE\n"
 msgstr ""
 "      VARIABILE     COEFFICIENTE        ERRORE STD      STAT T      "
 "PENDENZA\n"
 
-#: lib/src/modelprint.c:1205
+#: lib/src/modelprint.c:1212
 msgid "(at mean)"
 msgstr "(alla media)"
 
-#: lib/src/modelprint.c:1207
+#: lib/src/modelprint.c:1214
 msgid ""
 "      PARAMETER      ESTIMATE          STDERROR       T STAT   2Prob(t > |"
 "T|)\n"
@@ -3190,7 +3196,7 @@ msgstr ""
 "T|)\n"
 "\n"
 
-#: lib/src/modelprint.c:1210
+#: lib/src/modelprint.c:1217
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |"
 "T|)\n"
@@ -3200,15 +3206,15 @@ msgstr ""
 "T|)\n"
 "\n"
 
-#: lib/src/modelprint.c:1219
+#: lib/src/modelprint.c:1226
 msgid "Parameter"
 msgstr "Parametro"
 
-#: lib/src/modelprint.c:1220
+#: lib/src/modelprint.c:1227
 msgid "Estimate"
 msgstr "Stima"
 
-#: lib/src/modelprint.c:1223 gui2/guiprint_common.c:863
+#: lib/src/modelprint.c:1230 gui2/guiprint_common.c:863
 #: gui2/guiprint_common.c:920
 msgid "Coefficient"
 msgstr "Coefficiente"
@@ -3216,27 +3222,27 @@ msgstr "Coefficiente"
 #  I "\\" servono perchè la stringa finisce in un sorgente LaTeX.
 #  Il primo "\" viene rimosso automaticamente e rimane "\ " per 
 #  indicare lo spazio in LaTeX.
-#: lib/src/modelprint.c:1243
+#: lib/src/modelprint.c:1250
 msgid "Std.\\ Error"
 msgstr "Errore\\ Std."
 
-#: lib/src/modelprint.c:1244
+#: lib/src/modelprint.c:1251
 msgid "$t$-statistic"
 msgstr "statistica $t$"
 
-#: lib/src/modelprint.c:1245 lib/src/modelprint.c:1261
+#: lib/src/modelprint.c:1252 lib/src/modelprint.c:1268
 msgid "Slope"
 msgstr "Pendenza"
 
-#: lib/src/modelprint.c:1260 lib/src/modelprint.c:1272
+#: lib/src/modelprint.c:1267 lib/src/modelprint.c:1279
 msgid "Std. Error"
 msgstr "Errore Std."
 
-#: lib/src/modelprint.c:1261 lib/src/modelprint.c:1273
+#: lib/src/modelprint.c:1268 lib/src/modelprint.c:1280
 msgid "t-statistic"
 msgstr "statistica t"
 
-#: lib/src/modelprint.c:1380
+#: lib/src/modelprint.c:1387
 msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
 "fitted values of the dependent variable"
@@ -3244,129 +3250,129 @@ msgstr ""
 "R-quadro è calcolato come il quadrato della correlazione tra i valori\n"
 "osservati e quelli stimati della variabile dipendente"
 
-#: lib/src/modelprint.c:1387 lib/src/modelprint.c:1391
-#: lib/src/modelprint.c:1395
+#: lib/src/modelprint.c:1394 lib/src/modelprint.c:1398
+#: lib/src/modelprint.c:1402
 msgid "Statistics based on the weighted data"
 msgstr "Statistiche basate sui dati ponderati"
 
-#: lib/src/modelprint.c:1402 lib/src/modelprint.c:1406
-#: lib/src/modelprint.c:1410
+#: lib/src/modelprint.c:1409 lib/src/modelprint.c:1413
+#: lib/src/modelprint.c:1417
 msgid "Statistics based on the original data"
 msgstr "Statistiche basate sui dati originali"
 
-#: lib/src/modelprint.c:1417 lib/src/modelprint.c:1421
-#: lib/src/modelprint.c:1425
+#: lib/src/modelprint.c:1424 lib/src/modelprint.c:1428
+#: lib/src/modelprint.c:1432
 msgid "Statistics based on the rho-differenced data"
 msgstr "Statistiche basate sui dati rho-differenziati"
 
-#: lib/src/modelprint.c:1462 lib/src/modelprint.c:1464
-#: lib/src/modelprint.c:1469 lib/src/modelprint.c:2184
-#: lib/src/modelprint.c:2189 lib/src/modelprint.c:2199
-#: lib/src/modelprint.c:2206 lib/src/modelprint.c:2211
-#: lib/src/modelprint.c:2219 lib/src/modelprint.c:2244
-#: lib/src/modelprint.c:2268 lib/src/modelprint.c:2299 plugin/sysest.c:640
+#: lib/src/modelprint.c:1469 lib/src/modelprint.c:1471
+#: lib/src/modelprint.c:1476 lib/src/modelprint.c:2191
+#: lib/src/modelprint.c:2196 lib/src/modelprint.c:2206
+#: lib/src/modelprint.c:2213 lib/src/modelprint.c:2218
+#: lib/src/modelprint.c:2226 lib/src/modelprint.c:2251
+#: lib/src/modelprint.c:2275 lib/src/modelprint.c:2306 plugin/sysest.c:748
 msgid "Log-likelihood"
 msgstr "Log-verosimiglianza"
 
-#: lib/src/modelprint.c:1503 lib/src/nls.c:773 lib/src/nls.c:850
-#: plugin/sysest.c:638
+#: lib/src/modelprint.c:1510 lib/src/nls.c:773 lib/src/nls.c:850
+#: plugin/sysest.c:746
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
 msgstr "Convergenza raggiunta dopo %d iterazioni\n"
 
-#: lib/src/modelprint.c:2028
+#: lib/src/modelprint.c:2035
 msgid "Estimates of the AR coefficients"
 msgstr "Stime dei coefficienti AR"
 
-#: lib/src/modelprint.c:2043
+#: lib/src/modelprint.c:2050
 msgid "Sum of AR coefficients"
 msgstr "Somma dei coefficienti AR"
 
-#: lib/src/modelprint.c:2057
+#: lib/src/modelprint.c:2064
 msgid "                        Real  Imaginary    Modulus  Frequency"
 msgstr "                        Reale Immaginario  Modulo   Frequenza"
 
-#: lib/src/modelprint.c:2079 lib/src/modelprint.c:2087
+#: lib/src/modelprint.c:2086 lib/src/modelprint.c:2094
 msgid "Real"
 msgstr "Reale"
 
-#: lib/src/modelprint.c:2079 lib/src/modelprint.c:2087
+#: lib/src/modelprint.c:2086 lib/src/modelprint.c:2094
 msgid "Imaginary"
 msgstr "Immaginario"
 
-#: lib/src/modelprint.c:2079 lib/src/modelprint.c:2087
+#: lib/src/modelprint.c:2086 lib/src/modelprint.c:2094
 msgid "Modulus"
 msgstr "Modulo"
 
-#: lib/src/modelprint.c:2109 lib/src/modelprint.c:2113
-#: lib/src/modelprint.c:2123 lib/src/modelprint.c:2147
-#: lib/src/modelprint.c:2151 lib/src/modelprint.c:2161
+#: lib/src/modelprint.c:2116 lib/src/modelprint.c:2120
+#: lib/src/modelprint.c:2130 lib/src/modelprint.c:2154
+#: lib/src/modelprint.c:2158 lib/src/modelprint.c:2168
 msgid "Root"
 msgstr "Radice"
 
-#: lib/src/modelprint.c:2130 lib/src/modelprint.c:2132
-#: lib/src/modelprint.c:2136
+#: lib/src/modelprint.c:2137 lib/src/modelprint.c:2139
+#: lib/src/modelprint.c:2143
 msgid "MA"
 msgstr "MA"
 
-#: lib/src/modelprint.c:2182 lib/src/modelprint.c:2187
-#: lib/src/modelprint.c:2195
+#: lib/src/modelprint.c:2189 lib/src/modelprint.c:2194
+#: lib/src/modelprint.c:2202
 msgid "Censored observations"
 msgstr "Osservazioni censurate"
 
-#: lib/src/modelprint.c:2183 lib/src/modelprint.c:2188
+#: lib/src/modelprint.c:2190 lib/src/modelprint.c:2195
 msgid "sigma"
 msgstr "sigma"
 
-#: lib/src/modelprint.c:2238 lib/src/modelprint.c:2262
-#: lib/src/modelprint.c:2291
+#: lib/src/modelprint.c:2245 lib/src/modelprint.c:2269
+#: lib/src/modelprint.c:2298
 msgid "Mean of"
 msgstr "Media di"
 
-#: lib/src/modelprint.c:2240 lib/src/modelprint.c:2264
+#: lib/src/modelprint.c:2247 lib/src/modelprint.c:2271
 msgid "Number of cases 'correctly predicted'"
 msgstr "Numero dei casi 'previsti correttamente'"
 
-#: lib/src/modelprint.c:2242 lib/src/modelprint.c:2266
-#: lib/src/modelprint.c:2296
+#: lib/src/modelprint.c:2249 lib/src/modelprint.c:2273
+#: lib/src/modelprint.c:2303
 msgid "at mean of independent vars"
 msgstr "nella media delle variabili indipendenti"
 
-#: lib/src/modelprint.c:2248 lib/src/modelprint.c:2272
-#: lib/src/modelprint.c:2303
+#: lib/src/modelprint.c:2255 lib/src/modelprint.c:2279
+#: lib/src/modelprint.c:2310
 msgid "Likelihood ratio test"
 msgstr "Test del rapporto di verosimiglianza"
 
-#: lib/src/modelprint.c:2255
+#: lib/src/modelprint.c:2262
 msgid "McFadden's pseudo-R-squared"
 msgstr "Pseudo-R-quadro di McFadden"
 
-#: lib/src/modelprint.c:2261 lib/src/modelprint.c:2288
+#: lib/src/modelprint.c:2268 lib/src/modelprint.c:2295
 msgid "Evaluated at the mean"
 msgstr "Valutato nella media"
 
-#: lib/src/modelprint.c:2279
+#: lib/src/modelprint.c:2286
 msgid "McFadden's pseudo-R{\\super 2}"
 msgstr "Pseudo-R{\\super 2} di McFadden"
 
-#: lib/src/modelprint.c:2294
+#: lib/src/modelprint.c:2301
 msgid "Number of cases `correctly predicted'"
 msgstr "Numero dei casi 'previsti correttamente'"
 
-#: lib/src/modelprint.c:2310
+#: lib/src/modelprint.c:2317
 msgid "McFadden's pseudo-$R^2$"
 msgstr "Pseudo-$R^2$ di McFadden"
 
-#: lib/src/modelprint.c:2328
+#: lib/src/modelprint.c:2335
 msgid "Error Sum of Squares"
 msgstr "Somma dei quadrati degli errori"
 
-#: lib/src/modelprint.c:2386
+#: lib/src/modelprint.c:2393
 #, c-format
 msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
 msgstr "Stime OLS a precisione multipla usando le %d osservazioni %s-%s\n"
 
-#: lib/src/modelprint.c:2392
+#: lib/src/modelprint.c:2399
 msgid "      VARIABLE         COEFFICIENT                  STD. ERROR\n"
 msgstr "      VARIABILE        COEFFICIENTE                 ERRORE STD.\n"
 
@@ -4210,75 +4216,75 @@ msgid ""
 msgstr ""
 "Numero totale di valori mancanti dei dati = %d (%.2f%% del totale dati)\n"
 
-#: lib/src/system.c:104
+#: lib/src/system.c:108
 msgid "SUR"
 msgstr "SUR"
 
-#: lib/src/system.c:105
+#: lib/src/system.c:109
 msgid "3SLS"
 msgstr "3SLS"
 
-#: lib/src/system.c:106
+#: lib/src/system.c:110
 msgid "FIML"
 msgstr "FIML"
 
-#: lib/src/system.c:107
+#: lib/src/system.c:111
 msgid "LIML"
 msgstr "LIML"
 
-#: lib/src/system.c:114
+#: lib/src/system.c:118
 msgid "Seemingly Unrelated Regressions"
 msgstr "Regressioni apparentemente non collegate"
 
-#: lib/src/system.c:115
+#: lib/src/system.c:119
 msgid "Three-Stage Least Squares"
 msgstr "Minimi quadrati a tre stadi"
 
-#: lib/src/system.c:116
+#: lib/src/system.c:120
 msgid "Full Information Maximum Likelihood"
 msgstr "Massima verosimiglianza ad informazione completa"
 
-#: lib/src/system.c:117
+#: lib/src/system.c:121
 msgid "Limited Information Maximum Likelihood"
 msgstr "Massima verosimiglianza ad informazione limitata"
 
-#: lib/src/system.c:118
+#: lib/src/system.c:122
 msgid "Ordinary Least Squares"
 msgstr "Minimi quadrati ordinari"
 
-#: lib/src/system.c:119
+#: lib/src/system.c:123
 msgid "Two-Stage Least Squares"
 msgstr "Minimi quadrati a due stadi"
 
-#: lib/src/system.c:123
+#: lib/src/system.c:127
 msgid "No system of equations has been defined"
 msgstr "Non è stato definito alcun sistema di equazioni"
 
-#: lib/src/system.c:124
+#: lib/src/system.c:128
 msgid "Unrecognized equation system type"
 msgstr "Tipo di sistema di equazioni non riconosciuto"
 
-#: lib/src/system.c:125
+#: lib/src/system.c:129
 msgid "An equation system must have at least two equations"
 msgstr "Un sistema di equazioni deve avere almeno due equazioni"
 
-#: lib/src/system.c:675
+#: lib/src/system.c:693
 msgid "F test for the specified restrictions"
 msgstr "Test F per i vincoli specificati"
 
-#: lib/src/system.c:702
+#: lib/src/system.c:720
 msgid "LR test for the specified restrictions"
 msgstr "Test LR per i vincoli specificati"
 
-#: lib/src/system.c:703 plugin/sysest.c:401
+#: lib/src/system.c:721 plugin/sysest.c:506
 msgid "Restricted log-likelihood"
 msgstr "Log-verosimiglianza vincolata"
 
-#: lib/src/system.c:704 plugin/sysest.c:402
+#: lib/src/system.c:722 plugin/sysest.c:507
 msgid "Unrestricted log-likelihood"
 msgstr "Log-verosimiglianza non vincolata"
 
-#: lib/src/system.c:1065
+#: lib/src/system.c:1090
 #, c-format
 msgid "iterated %s"
 msgstr "%s iterato"
@@ -5765,8 +5771,8 @@ msgstr "Ripristinato il campione completo"
 msgid "Couldn't fork"
 msgstr "Impossibile fare fork"
 
-#: gui/gretl.c:1406 gui/selector.c:1603 gui2/cmdstack.c:342 gui2/gretl.c:1563
-#: gui2/selector.c:1863
+#: gui/gretl.c:1406 gui/selector.c:1618 gui2/cmdstack.c:342 gui2/gretl.c:1563
+#: gui2/selector.c:1878
 msgid "Save data file"
 msgstr "Salva file di dati"
 
@@ -5863,13 +5869,13 @@ msgstr "Lista dei ritardi AR"
 msgid "Y-axis variable"
 msgstr "Variabile asse Y"
 
-#: gui/selector.c:647 gui/selector.c:1247 gui2/selector.c:849
-#: gui2/selector.c:1478
+#: gui/selector.c:647 gui/selector.c:1262 gui2/selector.c:849
+#: gui2/selector.c:1493
 msgid "Y-axis variables"
 msgstr "Variabili asse Y"
 
-#: gui/selector.c:649 gui/selector.c:1249 gui2/selector.c:847
-#: gui2/selector.c:1480
+#: gui/selector.c:649 gui/selector.c:1264 gui2/selector.c:847
+#: gui2/selector.c:1495
 msgid "X-axis variables"
 msgstr "Variabili asse X"
 
@@ -5895,13 +5901,13 @@ msgstr "Imposta come predefinito"
 msgid "lag order:"
 msgstr "Ordine dei ritardi:"
 
-#: gui/selector.c:834 gui/selector.c:1268 gui2/selector.c:1049
-#: gui2/selector.c:1491
+#: gui/selector.c:834 gui/selector.c:1283 gui2/selector.c:1049
+#: gui2/selector.c:1506
 msgid "Add ->"
 msgstr "Aggiungi ->"
 
-#: gui/selector.c:840 gui/selector.c:1274 gui/selector.c:1543
-#: gui2/selector.c:1055 gui2/selector.c:1497 gui2/selector.c:1752
+#: gui/selector.c:840 gui/selector.c:1289 gui/selector.c:1558
+#: gui2/selector.c:1055 gui2/selector.c:1512 gui2/selector.c:1767
 msgid "<- Remove"
 msgstr "<- Rimuovi"
 
@@ -5909,184 +5915,184 @@ msgstr "<- Rimuovi"
 msgid "Deterministic variables"
 msgstr "Variabili deterministiche"
 
-#: gui/selector.c:999 gui2/dialogs.c:1662 gui2/selector.c:1245
+#: gui/selector.c:1008 gui2/dialogs.c:1662 gui2/selector.c:1254
 msgid "AR order:"
 msgstr "Ordine AR:"
 
-#: gui/selector.c:1001 gui2/selector.c:1247
+#: gui/selector.c:1010 gui2/selector.c:1256
 msgid "ARCH p:"
 msgstr "ARCH p:"
 
-#: gui/selector.c:1011 gui2/dialogs.c:1669 gui2/selector.c:1257
+#: gui/selector.c:1020 gui2/dialogs.c:1669 gui2/selector.c:1266
 msgid "MA order:"
 msgstr "Ordine MA:"
 
-#: gui/selector.c:1013 gui2/selector.c:1259
+#: gui/selector.c:1022 gui2/selector.c:1268
 msgid "ARCH q:"
 msgstr "ARCH q:"
 
-#: gui/selector.c:1044 gui2/selector.c:1289
+#: gui/selector.c:1055 gui2/selector.c:1300
 msgid "Robust standard errors"
 msgstr "Errori standard robusti"
 
-#: gui/selector.c:1056 gui2/selector.c:1301
+#: gui/selector.c:1067 gui2/selector.c:1312
 msgid "configure"
 msgstr "configura"
 
-#: gui/selector.c:1072 gui2/selector.c:1316
+#: gui/selector.c:1087 gui2/selector.c:1331
 msgid "Show impulse responses"
 msgstr "Mostra impulso-risposta"
 
-#: gui/selector.c:1075 gui2/selector.c:1319
+#: gui/selector.c:1090 gui2/selector.c:1334
 msgid "Show details of regressions"
 msgstr "Mostra i dettagli delle regressioni"
 
-#: gui/selector.c:1078 gui2/dialogs.c:1681 gui2/selector.c:1322
+#: gui/selector.c:1093 gui2/dialogs.c:1681 gui2/selector.c:1337
 msgid "Show details of iterations"
 msgstr "Mostra i dettagli delle iterazioni"
 
-#: gui/selector.c:1097 gui2/dialogs.c:2415 gui2/dlgutils.c:32
+#: gui/selector.c:1112 gui2/dialogs.c:2415 gui2/dlgutils.c:32
 #: plugin/leverage.c:175 plugin/logistic.c:123 plugin/pca.c:190
 #: plugin/tramo-x12a.c:253
 msgid "OK"
 msgstr "OK"
 
-#: gui/selector.c:1111 gui2/session.c:143 gui2/session.c:150
+#: gui/selector.c:1126 gui2/session.c:143 gui2/session.c:150
 #: gui2/session.c:2386
 msgid "Clear"
 msgstr "Pulisci"
 
-#: gui/selector.c:1119 gui2/dialogs.c:198 gui2/dlgutils.c:33
+#: gui/selector.c:1134 gui2/dialogs.c:198 gui2/dlgutils.c:33
 #: gui2/textutil.c:133 plugin/leverage.c:191 plugin/logistic.c:141
 #: plugin/pca.c:206 plugin/progress_bar.c:118
 msgid "Cancel"
 msgstr "Annulla"
 
-#: gui/selector.c:1128 gui2/boxplots.c:195 gui2/boxplots.c:226
+#: gui/selector.c:1143 gui2/boxplots.c:195 gui2/boxplots.c:226
 #: gui2/dlgutils.c:36 gui2/gpt_control.c:1614 gui2/gpt_control.c:1704
 #: gui2/gui_utils.c:1447 gui2/gui_utils.c:1469 gui2/session.c:145
 #: gui2/session.c:151 gui2/session.c:2394
 msgid "Help"
 msgstr "Aiuto"
 
-#: gui/selector.c:1168 gui2/menustate.c:300 gui2/menustate.c:320
-#: gui2/selector.c:1405
+#: gui/selector.c:1183 gui2/menustate.c:300 gui2/menustate.c:320
+#: gui2/selector.c:1420
 msgid "XY scatterplot"
 msgstr "Grafico X-Y a dispersione"
 
-#: gui/selector.c:1170 gui2/selector.c:1407
+#: gui/selector.c:1185 gui2/selector.c:1422
 msgid "plot with impulses"
 msgstr "Grafico X-Y a impulsi"
 
-#: gui/selector.c:1172 gui2/selector.c:1409
+#: gui/selector.c:1187 gui2/selector.c:1424
 msgid "3D plot"
 msgstr "Grafico 3D"
 
-#: gui/selector.c:1174 gui2/selector.c:1411
+#: gui/selector.c:1189 gui2/selector.c:1426
 msgid "multiple scatterplots"
 msgstr "Grafici multipli a dispersione"
 
-#: gui/selector.c:1176 gui2/selector.c:1413
+#: gui/selector.c:1191 gui2/selector.c:1428
 msgid "factorized plot"
 msgstr "Grafico X-Y con fattore"
 
-#: gui/selector.c:1245 gui2/selector.c:1476
+#: gui/selector.c:1260 gui2/selector.c:1491
 msgid "Independent variables"
 msgstr "Variabili indipendenti"
 
-#: gui/selector.c:1251 gui2/selector.c:1021
+#: gui/selector.c:1266 gui2/selector.c:1021
 msgid "Factor (dummy)"
 msgstr "Fattore (dummy)"
 
-#: gui/selector.c:1253 gui2/selector.c:1028
+#: gui/selector.c:1268 gui2/selector.c:1028
 msgid "Z-axis variable"
 msgstr "Variabile asse Z"
 
-#: gui/selector.c:1358 gui2/selector.c:1569
+#: gui/selector.c:1373 gui2/selector.c:1584
 msgid "Select variables for logging"
 msgstr "Selezionare le variabili di cui calcolare il logaritmo"
 
-#: gui/selector.c:1360 gui2/selector.c:1571
+#: gui/selector.c:1375 gui2/selector.c:1586
 msgid "Select variables for lagging"
 msgstr "Selezionare le variabili di cui calcolare i ritardi"
 
-#: gui/selector.c:1362 gui2/selector.c:1573
+#: gui/selector.c:1377 gui2/selector.c:1588
 msgid "Select variables to square"
 msgstr "Selezionare le variabili di cui calcolare il quadrato"
 
-#: gui/selector.c:1364 gui2/selector.c:1575
+#: gui/selector.c:1379 gui2/selector.c:1590
 msgid "Select variables to difference"
 msgstr "Selezionare le variabili da differenziare"
 
-#: gui/selector.c:1366 gui2/selector.c:1577
+#: gui/selector.c:1381 gui2/selector.c:1592
 msgid "Select variables to log-difference"
 msgstr "Selezionare le variabili per la differenza logaritmica"
 
-#: gui/selector.c:1368 gui2/selector.c:1579
+#: gui/selector.c:1383 gui2/selector.c:1594
 msgid "Select variables to add"
 msgstr "Selezionare le variabili da aggiungere"
 
-#: gui/selector.c:1370 gui2/selector.c:1581
+#: gui/selector.c:1385 gui2/selector.c:1596
 msgid "Select variables to omit"
 msgstr "Selezionare le variabili da omettere"
 
-#: gui/selector.c:1372 gui2/selector.c:1583
+#: gui/selector.c:1387 gui2/selector.c:1598
 msgid "Select coefficients to sum"
 msgstr "Selezionare i coefficienti da sommare"
 
-#: gui/selector.c:1374 gui2/selector.c:1585
+#: gui/selector.c:1389 gui2/selector.c:1600
 msgid "Select variables to display"
 msgstr "Selezionare le variabili da mostrare"
 
-#: gui/selector.c:1378 gui2/selector.c:1589
+#: gui/selector.c:1393 gui2/selector.c:1604
 msgid "Select variables to plot"
 msgstr "Selezionare le variabili per il grafico"
 
-#: gui/selector.c:1467 gui2/selector.c:1692
+#: gui/selector.c:1482 gui2/selector.c:1707
 msgid "Available vars"
 msgstr "Variabili disponibili"
 
-#: gui/selector.c:1475 gui2/selector.c:1700
+#: gui/selector.c:1490 gui2/selector.c:1715
 msgid "Selected vars"
 msgstr "Variabili selezionate"
 
-#: gui/selector.c:1529 gui2/selector.c:1737
+#: gui/selector.c:1544 gui2/selector.c:1752
 msgid "Select ->"
 msgstr "Aggiungi ->"
 
-#: gui/selector.c:1536 gui2/selector.c:1745
+#: gui/selector.c:1551 gui2/selector.c:1760
 msgid "All ->"
 msgstr "Tutte ->"
 
-#: gui/selector.c:1594 gui2/selector.c:1856
+#: gui/selector.c:1609 gui2/selector.c:1871
 msgid "Save CSV data file"
 msgstr "Salva file di dati CSV"
 
-#: gui/selector.c:1597 gui2/selector.c:1859
+#: gui/selector.c:1612 gui2/selector.c:1874
 msgid "Save R data file"
 msgstr "Salva file di dati R"
 
-#: gui/selector.c:1599 gui2/selector.c:1861
+#: gui/selector.c:1614 gui2/selector.c:1876
 msgid "Save octave data file"
 msgstr "Salva file di dati octave"
 
-#: gui/selector.c:1601 gui2/selector.c:1598
+#: gui/selector.c:1616 gui2/selector.c:1613
 msgid "Select variables to copy"
 msgstr "Selezionare le variabili da copiare"
 
-#: gui/selector.c:1632 gui2/selector.c:1894
+#: gui/selector.c:1647 gui2/selector.c:1909
 msgid "Copy data"
 msgstr "Copia i dati"
 
-#: gui/selector.c:1632 gui2/selector.c:1894 plugin/tramo-x12a.c:204
+#: gui/selector.c:1647 gui2/selector.c:1909 plugin/tramo-x12a.c:204
 msgid "Save data"
 msgstr "Salva i dati"
 
-#: gui/selector.c:1678 gui2/selector.c:1833
+#: gui/selector.c:1693 gui2/selector.c:1848
 msgid "Too many items were selected"
 msgstr "Troppi elementi selezionati"
 
-#: gui/selector.c:1685 gui2/selector.c:1841
+#: gui/selector.c:1700 gui2/selector.c:1856
 #, c-format
 msgid "Please select %d variables first"
 msgstr "Selezionare prima %d variabili"
@@ -10031,11 +10037,11 @@ msgstr "Legge il valore attuale, o imposta un nuovo valore"
 msgid "Choose->"
 msgstr "Scegli->"
 
-#: gui2/selector.c:1474
+#: gui2/selector.c:1489
 msgid "Variables to test"
 msgstr "Variabili da testare"
 
-#: gui2/selector.c:1596
+#: gui2/selector.c:1611
 msgid "Select variables to save"
 msgstr "Seleziona le variabili da salvare"
 
@@ -10672,7 +10678,7 @@ msgstr "Attenzione: ci sono valori mancanti\n"
 msgid " (using Hessian)"
 msgstr " (usando l'Hessiana)"
 
-#: plugin/fiml.c:872
+#: plugin/fiml.c:873
 msgid "Gradients at last iteration"
 msgstr "Gradienti all'ultima iterazione"
 
@@ -11211,47 +11217,52 @@ msgstr ""
 "test a una coda.\n"
 "\n"
 
-#: plugin/sysest.c:47
+#: plugin/sysest.c:46
 msgid "Cross-equation VCV for residuals"
 msgstr "Matrice varianza-covarianza tra equazioni per i residui"
 
-#: plugin/sysest.c:48
+#: plugin/sysest.c:47
 msgid "correlations above the diagonal"
 msgstr "correlazioni sopra la diagonale"
 
-#: plugin/sysest.c:71
+#: plugin/sysest.c:70
 msgid "log determinant"
 msgstr "log determinante"
 
-#: plugin/sysest.c:307
+#: plugin/sysest.c:79
+#, fuzzy
+msgid "Breusch-Pagan test for diagonal covariance matrix"
+msgstr "Errore nella generazione della matrice di covarianza"
+
+#: plugin/sysest.c:412
 #, c-format
 msgid "SUR residual, equation %d"
 msgstr "Residuo SUR, equazione %d"
 
-#: plugin/sysest.c:310
+#: plugin/sysest.c:415
 #, c-format
 msgid "3SLS residual, equation %d"
 msgstr "Residuo 3SLS, equazione %d"
 
-#: plugin/sysest.c:329
+#: plugin/sysest.c:434
 #, c-format
 msgid "SUR fitted value, equation %d"
 msgstr "Valore stimato SUR, equazione %d"
 
-#: plugin/sysest.c:332
+#: plugin/sysest.c:437
 #, c-format
 msgid "3SLS fitted value, equation %d"
 msgstr "Valore stimato 3SLS, equazione %d"
 
-#: plugin/sysest.c:413
+#: plugin/sysest.c:518
 msgid "Hansen-Sargan over-identification test"
 msgstr "Test di sovra-identificazione di Hansen-Sargan"
 
-#: plugin/sysest.c:629 plugin/sysest.c:633
+#: plugin/sysest.c:737 plugin/sysest.c:741
 msgid "Equation system"
 msgstr "Sistema di equazioni"
 
-#: plugin/sysest.c:630
+#: plugin/sysest.c:738
 msgid "Estimator"
 msgstr "Stimatore"
 

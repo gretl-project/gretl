@@ -209,7 +209,7 @@ MINOBJ = $(MINSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
 
-MOFILES = mo/es.mo mo/fr.mo mo/it.mo
+MOFILES = mo/de.po mo/es.mo mo/fr.mo mo/it.mo mo/pl.mo
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
