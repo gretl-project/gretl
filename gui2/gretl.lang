@@ -138,7 +138,8 @@
 	     <keyword>abs</keyword> 
 	     <keyword>rho</keyword> 
 	     <keyword>sqrt</keyword> 
-	     <keyword>sum</keyword> 
+	     <keyword>sum</keyword>
+             <keyword>nobs</keyword> 
 	     <keyword>normal</keyword>
 	     <keyword>uniform</keyword> 
 	     <keyword>stderr</keyword>

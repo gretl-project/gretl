@@ -316,10 +316,14 @@ static void parse_numbers (GtkWidget *widget, gpointer data)
     gchar *entrytext;
     char label[32];
 
-    /* FIXME error checking here? */
     entrytext = gtk_entry_get_text(GTK_ENTRY(sheet->sheet_entry));
     if (entrytext == NULL) return;
-    sprintf(label, "%.*f", DEFAULT_PRECISION, atof(entrytext));
+
+    if (check_atof(entrytext)) {
+	*label = 0;
+    } else {
+	sprintf(label, "%.*f", DEFAULT_PRECISION, atof(entrytext));
+    }
     gtk_sheet_set_cell(sheet, sheet->active_cell.row,
                        sheet->active_cell.col, GTK_JUSTIFY_RIGHT, label); 
 }
@@ -408,20 +412,24 @@ static gint activate_sheet_cell (GtkWidget *w, gint row, gint column,
 
     sheet_entry = GTK_ENTRY(gtk_sheet_get_entry(sheet));
 
-    if (sheet->column[column].name && sheet->row[row].name)
+    if (sheet->column[column].name && sheet->row[row].name) {
         sprintf(cell,"  %s:%s  ", 
                 sheet->column[column].name, 
                 sheet->row[row].name);
-    else 
+    } else {
         sprintf(cell,"  %s:%d  ", sheet->column[column].name, row);
+    }
 
     gtk_label_set(GTK_LABEL(locator), cell);
     gtk_entry_set_max_length(GTK_ENTRY(topentry),
                              GTK_ENTRY(sheet_entry)->text_max_length);
-    if ((text = gtk_entry_get_text(GTK_ENTRY(gtk_sheet_get_entry(sheet)))))
+
+    if ((text = gtk_entry_get_text(GTK_ENTRY(gtk_sheet_get_entry(sheet))))) {
         gtk_entry_set_text(GTK_ENTRY(topentry), text);
-    else
+    } else {
         gtk_entry_set_text(GTK_ENTRY(topentry), "");
+    }
+
     return TRUE;
 }
 
@@ -658,10 +666,11 @@ void show_spreadsheet (DATAINFO *pdinfo)
 
     GTK_SHEET_SET_FLAGS(gretlsheet, GTK_SHEET_AUTORESIZE);
 
-    if (pdinfo != NULL)
+    if (pdinfo != NULL) {
 	add_skel_to_sheet(gretlsheet);
-    else 
+    } else {
 	add_data_to_sheet(gretlsheet);
+    }
 
     gtk_widget_show(sheetwin);
 }

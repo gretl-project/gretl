@@ -1506,93 +1506,55 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 #ifdef USE_GTKSOURCEVIEW
 
-#define READ_BUFFER_SIZE   4096
-
-static gboolean 
-gtk_source_buffer_load_with_encoding (GtkSourceBuffer *sbuf,
-				      const gchar *filename,
-				      const gchar *encoding,
-				      GError **error)
+static int 
+gtk_source_buffer_load_file (GtkSourceBuffer *sbuf, 
+			     const char *fname,
+			     int role)
 {
-    GIOChannel *io;
-    GtkTextIter iter;
-    gchar *buffer;
-    gboolean reading;
-	
-    g_return_val_if_fail (sbuf != NULL, FALSE);
-    g_return_val_if_fail (filename != NULL, FALSE);
-    g_return_val_if_fail (GTK_IS_SOURCE_BUFFER (sbuf), FALSE);
+    FILE *fp;
+    GtkTextIter iter;    
+    char readbuf[MAXSTR], *chunk = NULL;
 
-    *error = NULL;
-
-    io = g_io_channel_new_file (filename, "r", error);
-    if (!io) {
-	return FALSE;
-    }
-
-    if (g_io_channel_set_encoding (io, encoding, error) != G_IO_STATUS_NORMAL) {
-	fprintf(stderr, "Failed to set encoding:\n%s\n%s",
-		filename, (*error)->message);
-	return FALSE;
-    }
+    fp = fopen(fname, "r");
+    if (fp == NULL) return 1;
 
     gtk_source_buffer_begin_not_undoable_action (sbuf);
 
-    gtk_text_buffer_set_text (GTK_TEXT_BUFFER (sbuf), "", 0);
-    buffer = g_malloc (READ_BUFFER_SIZE);
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", 0);
+    gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
 
-    reading = TRUE;
-    while (reading) {
-	gsize bytes_read;
-	GIOStatus status;
-		
-	status = g_io_channel_read_chars (io, buffer,
-					  READ_BUFFER_SIZE, &bytes_read,
-					  error);
-	switch (status) {
-	case G_IO_STATUS_EOF:
-	    reading = FALSE;
-	    /* fall through */
-				
-	case G_IO_STATUS_NORMAL:
-	    if (bytes_read == 0) {
-		continue;
-	    }
-				
-	    gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (sbuf), 
-					  &iter);
-	    gtk_text_buffer_insert (GTK_TEXT_BUFFER (sbuf),
-				    &iter, buffer, bytes_read);
-	    break;
-				
-	case G_IO_STATUS_AGAIN:
-	    continue;
+    memset(readbuf, 0, sizeof readbuf);
 
-	case G_IO_STATUS_ERROR:
-	default:
-	    /* because of error in input we clear already loaded text */
-	    gtk_text_buffer_set_text (GTK_TEXT_BUFFER (sbuf), "", 0);
-				
-	    reading = FALSE;
-	    break;
+    while (fgets(readbuf, sizeof readbuf - 1, fp)) {
+#ifdef ENABLE_NLS
+	if (!g_utf8_validate(readbuf, sizeof readbuf, NULL)) {
+	    gsize bytes;
+
+	    chunk = g_locale_to_utf8(readbuf, -1, NULL, &bytes, NULL);
+	} else {
+	    chunk = readbuf;
+	}
+#else
+	chunk = readbuf;
+#endif
+	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, chunk, -1);
+	memset(readbuf, 0, sizeof readbuf);
+	if (chunk != NULL && chunk != readbuf) {
+	    g_free(chunk);
+	    chunk = NULL;
 	}
     }
-    g_free (buffer);
+    fclose(fp);
 	
-    gtk_source_buffer_end_not_undoable_action (sbuf);
+    gtk_source_buffer_end_not_undoable_action(sbuf);
 
-    g_io_channel_unref (io);
-
-    if (*error)
-	return FALSE;
-
-    gtk_text_buffer_set_modified (GTK_TEXT_BUFFER (sbuf), FALSE);
+    gtk_text_buffer_set_modified(GTK_TEXT_BUFFER(sbuf), FALSE);
 
     /* move cursor to the beginning */
-    gtk_text_buffer_get_start_iter (GTK_TEXT_BUFFER (sbuf), &iter);
-    gtk_text_buffer_place_cursor (GTK_TEXT_BUFFER (sbuf), &iter);
+    gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sbuf), &iter);
+    gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sbuf), &iter);
 
-    return TRUE;
+    return 0;
 }
 
 static void source_buffer_insert_file (GtkSourceBuffer *sbuf, 
@@ -1601,9 +1563,8 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf,
 {
     GtkSourceLanguagesManager *manager;    
     GtkSourceLanguage *language = NULL;
-    GError *err = NULL;
 		
-    manager = g_object_get_data (G_OBJECT (sbuf), "languages-manager");
+    manager = g_object_get_data(G_OBJECT (sbuf), "languages-manager");
 
     if (role == GR_PLOT) {
 	language = 
@@ -1616,17 +1577,13 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf,
     }
 
     if (language == NULL) {
-	g_object_set (G_OBJECT(sbuf), "highlight", FALSE, NULL);
+	g_object_set(G_OBJECT(sbuf), "highlight", FALSE, NULL);
     } else {
-	g_object_set (G_OBJECT(sbuf), "highlight", TRUE, NULL);
-	gtk_source_buffer_set_language (sbuf, language);
+	g_object_set(G_OBJECT(sbuf), "highlight", TRUE, NULL);
+	gtk_source_buffer_set_language(sbuf, language);
     }
 
-    gtk_source_buffer_load_with_encoding (sbuf, filename, "utf-8", &err);
-
-    if (err != NULL) {
-	g_error_free(err);
-    }
+    gtk_source_buffer_load_file(sbuf, filename, role);
 }
 
 #endif
@@ -1650,12 +1607,10 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
     while (fgets(readbuf, sizeof readbuf - 1, fp)) {
 #ifdef ENABLE_NLS
-	if (role == GR_PLOT) {
-	    if (!g_utf8_validate(readbuf, sizeof readbuf, NULL)) {
-		gsize bytes;
+	if (!g_utf8_validate(readbuf, sizeof readbuf, NULL)) {
+	    gsize bytes;
 
-		chunk = g_locale_to_utf8(readbuf, -1, NULL, &bytes, NULL);
-	    } else chunk = readbuf;
+	    chunk = g_locale_to_utf8(readbuf, -1, NULL, &bytes, NULL);
 	} else chunk = readbuf;
 #else
 	chunk = readbuf;
@@ -1690,6 +1645,7 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 	memset(readbuf, 0, sizeof readbuf);
 	if (chunk != NULL && chunk != readbuf) {
 	    free(chunk);
+	    chunk = NULL;
 	}
     }
     fclose(fp);

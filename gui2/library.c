@@ -3313,6 +3313,11 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	g_free(cmdline);
 #else
 	pid_t pid;
+	char term[6] = "xterm";
+
+	if (system("which xterm >/dev/null")) {
+	    strcpy(term, "rxvt");
+	}	
 
 	signal(SIGCHLD, SIG_IGN);
 	pid = fork();
@@ -3321,7 +3326,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	    perror("fork");
 	    return;
 	} else if (pid == 0) {
-	    execlp("xterm", "xterm", "+sb", "+ls",
+	    execlp(term, term, "+sb", "+ls",
 		   "-geometry", "40x4", "-title",
 		   "gnuplot: type q to quit",
 		   "-e", paths.gnuplot, paths.plotfile, "-", 

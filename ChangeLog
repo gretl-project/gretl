@@ -5,6 +5,8 @@ version 1.1.4
 - Auto-detect gnuplot's ability to use "filledcurve" style
 - Translate a few untranslated strings in gtk-1.2 version
 - Graph labels: make 3 labels configurable rather than just 2
+- Editing gnuplot commands: fix for accented characters
+
 
 10/01/2003 version 1.1.3
 - Fix crashing bug in viewing dataset info

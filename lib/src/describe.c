@@ -221,8 +221,8 @@ static double doornik_chisq (double skew, double kurt, int n)
  *
  */
 
-FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
-		    int varno, int params)
+FREQDIST *old_freqdist (double ***pZ, const DATAINFO *pdinfo, 
+			int varno, int params)
 {
     FREQDIST *freq;
     double *x = NULL;
@@ -246,14 +246,16 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 	free(freq);
 	return NULL;
     }
+
     n = ztox(varno, x, *pZ, pdinfo);
-    if (n < 3) {
+    if (n < 8) {
 	gretl_errno = E_DATA;
 	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
 		"distribution for variable %s"), pdinfo->varname[varno]);
 	free(x);
 	return freq;
     }
+
     freq->t1 = pdinfo->t1; 
     freq->t2 = pdinfo->t2;
 
@@ -269,9 +271,9 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     xbar = freq->xbar;
     sdx = freq->sdx;
 
-    freq->endpt = malloc((maxend + 1) * sizeof(double));
-    freq->midpt = malloc(maxend * sizeof(double));
-    freq->f = malloc(maxend * sizeof(int));
+    freq->endpt = malloc((maxend + 1) * sizeof *freq->endpt);
+    freq->midpt = malloc(maxend * sizeof *freq->midpt);
+    freq->f = malloc(maxend * sizeof *freq->f);
     if (freq->endpt == NULL || freq->midpt == NULL ||
 	freq->f == NULL) {
 	gretl_errno = E_ALLOC;
@@ -301,8 +303,9 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
     for (k=0; k<freq->numbins; k++) {
 	freq->f[k] = 0;
-	freq->midpt[k] = (freq->endpt[k] + freq->endpt[k+1])/2;
+	freq->midpt[k] = (freq->endpt[k] + freq->endpt[k+1]) / 2.0;
     }
+
     for (i=0; i<n; i++) {
 	xx = x[i];
 	if (xx < freq->endpt[1]) {
@@ -313,9 +316,131 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 	    freq->f[freq->numbins-1] += 1;
 	    continue;
 	}
-	for (k=1; k<freq->numbins; k++) 
-	    if (freq->endpt[k] <= xx && xx <freq->endpt[k+1])
+	for (k=1; k<freq->numbins; k++) {
+	    if (freq->endpt[k] <= xx && xx <freq->endpt[k+1]) {
 		freq->f[k] += 1;
+	    }
+	}
+    }
+
+    if (freq->n > 7) {
+	freq->chisqu = doornik_chisq(skew, kurt, freq->n); 
+    } else {
+	freq->chisqu = NADBL;
+    }
+
+    free(x);
+
+    return freq;
+}
+
+/* &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& */
+
+FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
+		    int varno, int params)
+{
+    FREQDIST *freq;
+    double *x = NULL;
+    double xx, xmin, xmax, xbar, sdx;
+    double skew, kurt;
+    double range, binwidth;
+    int i, k, n;
+    int nbins;
+
+    freq = malloc(sizeof *freq);
+    if (freq == NULL) return NULL;
+
+    gretl_errno = 0;
+    gretl_errmsg[0] = '\0';
+
+    freq->midpt = NULL;
+    freq->endpt = NULL;
+    freq->f = NULL;
+
+    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
+    if (x == NULL) {
+	sprintf(gretl_errmsg, _("Out of memory in frequency distribution"));
+	free(freq);
+	return NULL;
+    }
+
+    n = ztox(varno, x, *pZ, pdinfo);
+    if (n < 8) {
+	gretl_errno = E_DATA;
+	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
+		"distribution for variable %s"), pdinfo->varname[varno]);
+	free(x);
+	return freq;
+    }
+
+    freq->t1 = pdinfo->t1; 
+    freq->t2 = pdinfo->t2;
+    freq->n = n;
+
+    strcpy(freq->varname, pdinfo->varname[varno]);
+
+    if (_isconst(0, n-1, x)) {
+	gretl_errno = 1;
+	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
+	return freq;
+    }    
+    
+    moments(0, n-1, x, &freq->xbar, &freq->sdx, &skew, &kurt, params);
+    xbar = freq->xbar;
+    sdx = freq->sdx;
+
+    _minmax(0, n-1, x, &xmin, &xmax);
+    range = xmax - xmin;
+    
+    if (n < 16) {
+	nbins = 6; /* ? */
+    } else if (n >= 2500) {
+	nbins = 50;
+    } else {
+	nbins = (int) sqrt((double) n);
+    }
+
+    freq->numbins = nbins;
+    binwidth = range / (nbins - 1);
+
+    freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
+    freq->midpt = malloc(nbins * sizeof *freq->midpt);
+    freq->f = malloc(nbins * sizeof *freq->f);
+    if (freq->endpt == NULL || freq->midpt == NULL ||
+	freq->f == NULL) {
+	gretl_errno = E_ALLOC;
+	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
+	free(x);
+	return freq;
+    }
+    
+    freq->endpt[0] = xmin - .5 * binwidth;
+    freq->endpt[freq->numbins] = xmax + .5 * binwidth;
+    
+    for (k=0; k<freq->numbins; k++) {
+	freq->f[k] = 0;
+	if (k > 0) {
+	    freq->endpt[k] = freq->endpt[k-1] + binwidth;
+	}
+	freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
+    }
+
+    for (i=0; i<n; i++) {
+	xx = x[i];
+	if (xx < freq->endpt[1]) {
+	    freq->f[0] += 1;
+	    continue;
+	}
+	if (xx >= freq->endpt[freq->numbins]) {
+	    freq->f[freq->numbins-1] += 1;
+	    continue;
+	}
+	for (k=1; k<freq->numbins; k++) {
+	    if (freq->endpt[k] <= xx && xx < freq->endpt[k+1]) {
+		freq->f[k] += 1;
+		break;
+	    }
+	}
     }
 
     if (freq->n > 7) {
