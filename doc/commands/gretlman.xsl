@@ -160,6 +160,10 @@
   <quote><xsl:apply-templates/></quote>
 </xsl:template>
 
+<xsl:template match="footnote">
+  <footnote><xsl:apply-templates/></footnote>
+</xsl:template>
+
 <xsl:template match="filename">
   <filename><xsl:apply-templates/></filename>
 </xsl:template>

@@ -23,14 +23,14 @@
   </bibliomixed>
 
   <bibliomixed>
-    Davidson, R. and MacKinnon, J. G. (2004) <title>Econometric Theory
-      and Methods</title>, New York: Oxford University Press.
-  </bibliomixed>
-
-  <bibliomixed>
     Davidson, R. and MacKinnon, J. G. (1993) <title>Estimation and
       Inference in Econometrics</title>, New York: Oxford University
     Press.
+  </bibliomixed>
+
+  <bibliomixed>
+    Davidson, R. and MacKinnon, J. G. (2004) <title>Econometric Theory
+      and Methods</title>, New York: Oxford University Press.
   </bibliomixed>
 
   <bibliomixed>
@@ -80,6 +80,16 @@
   <bibliomixed>
     Maddala, G. S. (1992) <title>Introduction to Econometrics</title>,
     2nd edition, Englewood Cliffs, NJ: Prentice-Hall. 
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Matsumoto, M. and Nishimura, T.
+      (1998) <title>Mersenne twister: a 623-dimensionally
+	equidistributed uniform pseudo-random number
+	generator</title>, </bibliomset> <bibliomset
+      relation='journal'><title>ACM Transactions on Modeling and
+	Computer Simulation</title>, 8: 1.
+    </bibliomset>
   </bibliomixed>  
 
   <bibliomixed>

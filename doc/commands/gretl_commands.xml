@@ -998,22 +998,26 @@
 	    deviation), <func>sst</func> (sum of squared deviations
 	    from the mean), <func>sum</func>, <func>cov</func>
 	    (covariance), <func>corr</func> (correlation coefficient),
-	    <func>pvalue</func>.</para>
+	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
+	    (cumulate, or running sum).</para>
 	</li>
 	<li><para>Time-series functions: <func>diff</func> (first
 	    difference), <func>ldiff</func> (log-difference, or first
 	    difference of natural logs).  To generate lags of a
 	    variable <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>,
 	    where <lit>N</lit> represents the desired lag length; to
-	    generate leads, use <cmd>x(+N)</cmd>;</para>
+	    generate leads, use <cmd>x(+N)</cmd>.</para>
 	</li>
-	<li><para>Miscellaneous: <func>cum</func> (cumulate),
-	    <func>sort</func>, <func>uniform</func>,
-	    <func>normal</func>, <func>misszero</func> (replace the
-	    missing observation code in a given series with zeros),
-	    <cmd>zeromiss</cmd> (the inverse operation to
-	    <cmd>misszero</cmd>), <func>nobs</func> (return the number
-	    of valid observations in a given data series).</para>
+	<li><para>Dataset functions: <func>misszero</func> (replace
+	    the missing observation code in a given series with
+	    zeros), <func>zeromiss</func> (the inverse operation to
+	    <func>misszero</func>), <func>nobs</func> (return the
+	    number of valid observations in a given data series),
+	    <func>missing</func> (at each observation, 1 if the
+	    argument has a missing value, 0 otherwise).</para>
+	</li>
+	<li><para>Pseudo-random numbers: <func>uniform</func>,
+	    <func>normal</func>.</para>
 	</li>
       </ilist> 
 
@@ -1027,7 +1031,7 @@
 	evaluates to a variable (e.g. <lit>ln((x1+x2)/2)</lit>).
 	<func>cov</func> and <func>corr</func> both require two
 	arguments, and return respectively the covariance and the
-	correlation coefficient between two named variables. The
+	correlation coefficient between variables. The
 	<func>pvalue</func> function takes the same arguments as the
 	<cmd>pvalue</cmd> command (see below), but in this context
 	commas should be placed between the arguments.
@@ -1036,8 +1040,12 @@
 	uniform (0&ndash;1) and standard normal distributions
 	respectively (see also the <cmdref targ="set"/> command,
 	<lit>seed</lit> option).  Uniform series are generated using
-	the C library function <func>rand()</func>; for normal series
-	the method of Box and Muller (1958) is used.</para>
+	the Mersenne Twister;<footnote><para>See Matsumoto and
+	    Nishimura (1998).  The implementation is provided by
+	    <program>glib</program>, if available, or by the C code
+	    written by Nishimura and Matsumoto.</para></footnote> for
+	normal series the method of Box and Muller (1958) is used,
+	taking input from the Mersenne Twister.</para>
 
       <para>Besides the operators and functions just noted there are
 	some special uses of <cmd>genr</cmd>:
@@ -1147,16 +1155,32 @@
 	last regression.</para>
 
       <para>
-	Three other <quote>internal</quote> variables are available:
+	Two <quote>internal</quote> dataset variables are available:
 	<lit>$nobs</lit> holds the number of observations in the
-	current sample range (note that this may or may not equal the
-	value of <lit>$T</lit>, the number of observations used in
-	estimating the last model).  The variable <lit>t</lit> serves
-	as an index of the observations. Thus for instance <lit>genr
-	  dum = (t=15)</lit> will generate a dummy variable that has
-	value 1 for observation 15, 0 otherwise.  The variable
-	<lit>$pd</lit> holds the frequency or periodicity of the data
-	(e.g. 4 for quarterly data).</para>
+	current sample range (which may or may not equal the value of
+	<lit>$T</lit>, the number of observations used in estimating
+	the last model), and <lit>$pd</lit> holds the frequency or
+	periodicity of the data (e.g. 4 for quarterly data).</para>
+
+      <para>The variable <lit>t</lit> serves as an index of the
+	observations. Thus for instance <lit>genr dum = (t=15)</lit>
+	will generate a dummy variable that has value 1 for
+	observation 15, 0 otherwise.  The variable <lit>obs</lit> is
+	similar but more flexible: you can use this to pick out
+	particular observations by date or name.  For example,
+	<lit>genr d = (obs&gt;1986:4)</lit> or <lit>genr d =
+	  (obs="CA")</lit>. The last form presumes that the
+	observations are labeled; the label must be put in double
+	quotes.</para>
+
+      <para>Scalar values can be pulled from a series in the context
+	of a <lit>genr</lit> formula, using the syntax
+	<repl>varname</repl><lit>[</lit><repl>obs</repl><lit>]</lit>.
+	The <repl>obs</repl> value can be given by number or date.
+	Examples: <lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  For daily
+	data, the form <repl>YYYY:MM:DD</repl> must be used, e.g.
+	<lit>ibm[1970:01:23]</lit>.
+      </para>
 
       <para>
 	<tabref targ="tab-genr"/> gives several examples of uses of
@@ -1279,6 +1303,11 @@
 	  <cell><lit>genr bar = 3 * normal()</lit></cell>
 	  <cell>normal pseudo-random variable, &mu; = 0, &sigma; =
 	    3</cell>
+	</row>
+	<row>
+	  <cell><lit>genr samp = !missing(x)</lit></cell>
+	  <cell>= 1 for observations where the variable
+	    x is not missing.</cell>
 	</row>
       </table>
 
@@ -3329,12 +3358,12 @@
 	observation with label <quote>USA</quote>.</para>
 
       <para>
-	One point should be noted about the <lit>--dummy</lit> and
-	<lit>--restrict</lit> forms of <lit>smpl</lit>: Any
-	<quote>structural</quote> information in the data file
-	(regarding the time series or panel nature of the data) is
-	lost when this command is issued.  You may reimpose structure
-	with <cmdref targ="setobs"/> command.
+	One point should be noted about the <lit>--dummy</lit>,
+	<lit>--restrict</lit> and <lit>--no-missing</lit> forms of
+	<lit>smpl</lit>: Any <quote>structural</quote> information in
+	the data file (regarding the time series or panel nature of
+	the data) is lost when this command is issued.  You may
+	reimpose structure with <cmdref targ="setobs"/> command.
       </para>
     </description>
 

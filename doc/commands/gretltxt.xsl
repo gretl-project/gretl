@@ -237,4 +237,7 @@ Other access: <xsl:apply-templates/>
   <xsl:text>[/CELL]&#xa;</xsl:text>
 </xsl:template>
 
+<xsl:template match="footnote">
+</xsl:template>
+
 </xsl:stylesheet>

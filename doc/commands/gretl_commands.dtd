@@ -62,7 +62,7 @@
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
-                func | manref | cmdref| tabref | cmd)*>
+                func | manref | cmdref| tabref | footnote | cmd)*>
 
 <!ELEMENT code (#PCDATA)>
 
@@ -93,6 +93,8 @@
 <!ATTLIST tabref
    targ    CDATA #REQUIRED
 >
+
+<!ELEMENT footnote (para)+>
 
 <!ELEMENT table (row)+>
 <!ELEMENT row (cell)+>
