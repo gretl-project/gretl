@@ -488,6 +488,7 @@ void close_session (void)
 {
     clear_data(1); /* this was (0): why?? */
     free_session();
+    free_model_list();
     session_menu_state(FALSE);
     session_file_open = 0;
     if (iconview != NULL) 
@@ -495,6 +496,7 @@ void close_session (void)
     session_changed(0);
     winstack_destroy();
     clear_selector();
+
     plot_count = 0;
     zero_boxplot_count();
 }
