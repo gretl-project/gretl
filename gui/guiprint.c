@@ -590,15 +590,17 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     ntodate(date2, fr->t2, pdinfo);
 
     pprintf(prn, "\\begin{raggedright}\n");
-    pprintf(prn, I_("Full data range: %s--%s ($n$ = %d)\\\\\n"),
+    pprintf(prn, I_("Full data range:"));
+    pprintf(prn, " %s--%s ($n$ = %d)\\\\\n", 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
-    pprintf(prn, I_("Model estimation range: %s--%s"), date1, date2);
+    pprintf(prn, I_("Model estimation range:"));
+    pprintf(prn, " %s--%s", date1, date2);
 
     if (fr->nobs == pdinfo->n) pprintf(prn, "\\\\\n");
     else pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
 
-    pprintf(prn, I_("Standard error of residuals = %f\n"), fr->sigma);
-    pprintf(prn, "\\end{raggedright}\n");
+    pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
+    pprintf(prn, "\n\\end{raggedright}\n");
 }
 
 /* ........................................................... */
@@ -613,19 +615,18 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     ntodate(date1, fr->t1, pdinfo);
     ntodate(date2, fr->t2, pdinfo);
 
-    sprintf(tmp, I_("Full data range: %s - %s"),
-	    pdinfo->stobs, pdinfo->endobs);
-    pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
+    pprintf(prn, "{\\rtf1\\par\n\\qc ");
+    pprintf(prn, I_("Full data range:"));
+    pprintf(prn, " %s - %s\\par\n", pdinfo->stobs, pdinfo->endobs);
 
-    sprintf(tmp, I_("Model estimation range: %s - %s (n = %d)"), 
-		    date1, date2, fr->nobs);
-    pprintf(prn, "\\qc %s\\par\n", tmp);
+    pprintf(prn, "\\qc ");
+    pprintf(prn, I_("Model estimation range:")); 
+    pprintf(prn, " %s - %s (n = %d)\\par\n", date1, date2, fr->nobs);
 
     sprintf(tmp, I_("Standard error of residuals = %g"), 
 		    fr->sigma);
     pprintf(prn, "\\qc %s\\par\n", tmp);
 }
-
 /* ........................................................... */
 
 void 
@@ -792,7 +793,7 @@ void texprint_fcast_with_errs (const FITRESID *fr,
 
 #define FC_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                 "\\cellx800\\cellx2200\\cellx3600\\cellx5000" \
-                "\\cellx6400\\cellx7800\n"
+                "\\cellx7800\n"
 
 void rtfprint_fcast_with_errs (const FITRESID *fr, 
 			       const DATAINFO *pdinfo, 
@@ -814,21 +815,10 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
-	    " \\qr %s\\cell"
-	    " \\ql %s\\cell"
-	    " \\intbl \\row\n", /* need to merge last two cells */
+	    " \\qc %s\\cell"
+	    " \\intbl \\row\n", 
 	    I_("Obs"), fr->depvar, I_("prediction"), 
-	    I_("std. error"), I_("95%"), I_("interval"));
-
-    pprintf(prn, 
-	    " \\qc \\cell"
-	    " \\qc \\cell"
-	    " \\qc \\cell"
-	    " \\qc \\cell"
-	    " \\qc %s\\cell"
-	    " \\qc %s\\cell"
-	    " \\intbl \\row\n",
-	    I_("low"), I_("high")); 
+	    I_("std. error"), I_("95% confidence interval"));
 
     for (t=0; t<fr->nobs; t++) {
 	pprintf(prn, "\\qr ");
@@ -838,11 +828,30 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);
 	printfrtf(fr->sderr[t], prn, 0);
-	printfrtf(fr->fitted[t] - maxerr, prn, 0);
-	printfrtf(fr->fitted[t] + maxerr, prn, 1);
+	pprintf(prn, "\\qc (%#*g, %#*g)\\cell \\intbl \\row\n", 
+		GRETL_DIGITS, fr->fitted[t] - maxerr, 
+		GRETL_DIGITS, fr->fitted[t] + maxerr);
     }
 
     pprintf(prn, "}}\n");
+}
+
+/* .................................................................. */
+
+void texprint_confints (const CONFINT *cf, 
+			const DATAINFO *pdinfo, 
+			PRN *prn)
+{
+    dummy_call();
+}
+
+/* .................................................................. */
+
+void rtfprint_confints (const CONFINT *cf, 
+			const DATAINFO *pdinfo, 
+			PRN *prn)
+{
+    dummy_call();
 }
 
 /* .................................................................. */

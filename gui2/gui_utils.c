@@ -1742,8 +1742,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
     /* reinstate role == MPOLS below when ready */
     if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR || vwin->role == FCASTERR ||
-	vwin->role == FCAST) {
+	|| vwin->role == CORR || vwin->role == FCASTERR
+	|| vwin->role == FCAST || vwin->role == COEFFINT) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -2182,6 +2182,24 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	} 
 	else if (how == COPY_RTF) { 
 	    rtfprint_fcast_with_errs(fr, datainfo, prn);
+	}
+
+	prn_to_clipboard(prn, how);
+	gretl_print_destroy(prn);
+	return;
+    }  
+
+    /* coefficient confidence intervals */
+    if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
+	CONFINT *cf = (CONFINT *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    texprint_confints(cf, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    rtfprint_confints(cf, datainfo, prn);
 	}
 
 	prn_to_clipboard(prn, how);

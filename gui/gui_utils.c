@@ -1688,8 +1688,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     gtk_accel_group_attach(accel, GTK_OBJECT (window));
 
     if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR || vwin->role == FCASTERR ||
-	vwin->role == FCAST) {
+	|| vwin->role == CORR || vwin->role == FCASTERR
+	|| vwin->role == FCAST || vwin->role == COEFFINT) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -2044,11 +2044,11 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
 	    texprint_summary(summ, datainfo, prn);
-	    prn_to_clipboard(prn);
 	} else { /* RTF */
 	    rtfprint_summary(summ, datainfo, prn);
-	    prn_to_clipboard(prn);
 	}
+
+	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2060,12 +2060,12 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) { 
 	    texprint_corrmat(corr, datainfo, prn);
-	    prn_to_clipboard(prn);
 	} 
 	else { /* RTF */
 	    rtfprint_corrmat(corr, datainfo, prn);
-	    prn_to_clipboard(prn);
 	}
+
+	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2080,8 +2080,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    texprint_fit_resid(fr, datainfo, prn);
 	} 
 	else { /* RTF */
-	    /* rtfprint_fit_resid(fr, datainfo, prn); */
-	    ;
+	    rtfprint_fit_resid(fr, datainfo, prn);
 	}
 
 	prn_to_clipboard(prn);
@@ -2099,14 +2098,31 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    texprint_fcast_with_errs(fr, datainfo, prn);
 	} 
 	else { /* RTF */
-	    /* rtfprint_fcast_with_errs(fr, datainfo, prn); */
-	    ;
+	    rtfprint_fcast_with_errs(fr, datainfo, prn);
 	}
 
 	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
     } 
+
+    /* coefficient confidence intervals */
+    if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
+	CONFINT *cf = (CONFINT *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    texprint_confints(cf, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    rtfprint_confints(cf, datainfo, prn);
+	}
+
+	prn_to_clipboard(prn);
+	gretl_print_destroy(prn);
+	return;
+    }  
   
     /* or it's a model window we're copying from? */
     if (vwin->role == VIEW_MODEL &&
