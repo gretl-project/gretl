@@ -2256,6 +2256,8 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 {
     int i;
 
+    if (varname == NULL) return pdinfo->v;
+
     if (!strcmp(varname, "uhat")) return UHATNUM; 
     if (!strcmp(varname, "t"))    return TNUM;
     if (!strcmp(varname, "i"))    return INDEXNUM;
