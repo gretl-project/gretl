@@ -77,8 +77,21 @@ void gretl_matrix_free (gretl_matrix *m)
 {
     if (m == NULL) return;
 
-    free(m->val);
+    if (m->val != NULL) free(m->val);
     free(m);
+}
+
+/* ....................................................... */
+
+double *gretl_matrix_steal_data (gretl_matrix *m)
+{
+    double *vals = NULL;
+
+    if (m != NULL) {
+	vals = m->val;
+	m->val = NULL;
+    }
+    return vals;
 }
 
 /* ....................................................... */

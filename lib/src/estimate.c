@@ -617,6 +617,10 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		if (floateq(x, 0.0) && li == lj)  {
 		    return li;
 		}
+#if 0
+		fprintf(stderr, "xpx[%d] is sum(Z[%d]*Z[%d])\n", 
+			m, li, lj);
+#endif
 		xpx[m++] = x;
 	    }
 	    x = 0.0;

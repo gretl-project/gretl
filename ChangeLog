@@ -6,6 +6,7 @@ version 1.1.0
 - Add option to use QR decomposition instead of Cholesky for
   calculating regression results
 - Clean-up: remove all wasted array elements
+- Update to libtool 1.5
 
 05/26/03 version 1.0.9
 - Add non-linear least squares ("nls" command, Levenberg-

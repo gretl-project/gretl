@@ -3,7 +3,7 @@
 	-lf2c -lm   (in that order)
 */
 
-#include "../plugin/f2c.h"
+#include "f2c.h"
 
 /* Subroutine */ int lmder1_(U_fp fcn, integer *m, integer *n, doublereal *x, 
 	doublereal *fvec, doublereal *fjac, integer *ldfjac, doublereal *tol, 

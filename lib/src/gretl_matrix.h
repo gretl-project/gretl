@@ -65,6 +65,8 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
 
 void gretl_matrix_free (gretl_matrix *m);
 
+double *gretl_matrix_steal_data (gretl_matrix *m);
+
 double gretl_matrix_get (const gretl_matrix *m, int i, int j);
 
 int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);

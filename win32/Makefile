@@ -25,6 +25,7 @@ CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
 GRETLLIB = -L$(imports) -lgretl -lintl.dll
 LIBS = -lm $(GRETLLIB) -ladvapi32
+LAPACK_LIBS = -llapack -lblas -lf2c
 
 # flags/defines
 LDFLAGS = -s 
@@ -55,7 +56,6 @@ CHECKER = nisttest.exe
 PLUGINSRC = \
 	excel_import.c \
 	gnumeric_import.c \
-	gretl_matrix.c \
 	johansen.c \
 	lad.c \
 	leverage.c \
@@ -88,7 +88,7 @@ RES2COFF = echo gretlw32_res.o
 LIBSRC = estimate.c compare.c gretl_utils.c gretl_errors.c pvalues.c dataio.c \
        generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
        interact.c graphing.c gretl_win32.c monte_carlo.c nonparam.c discrete.c \
-       subsample.c calendar.c system.c random.c nls.c
+       subsample.c calendar.c system.c random.c nls.c gretl_matrix.c qr_estimate.c 
 LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
@@ -115,7 +115,7 @@ PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
 PROBOBJ = $(PROBSRC:.c=.o)
 
 MINSRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
-	qrfac.c qrsolv.c dlog10.c
+	qrfac.c qrsolv.c
 MINOBJ = $(MINSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
@@ -185,7 +185,8 @@ DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lf2c -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lgmp -lmingwex $(GLIBLIB)
+	-o $@ $^ -lf2c -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lgmp \
+	-lmingwex $(GLIBLIB) $(LAPACK_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
@@ -238,17 +239,17 @@ plugins/mp_ols.dll: mp_ols.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
 
-plugins/sur.dll: sur.o gretl_matrix.o dllinit.o
+plugins/sur.dll: sur.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -llapack -lblas -lf2c
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-plugins/johansen.dll: johansen.o gretl_matrix.o dllinit.o
+plugins/johansen.dll: johansen.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -llapack -lblas -lf2c
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-plugins/leverage.dll: leverage.o gretl_matrix.o dllinit.o
+plugins/leverage.dll: leverage.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -llapack -lblas -lf2c
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<

@@ -71,9 +71,7 @@ CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c drand.c expx2.c \
 MINPACK_SRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder.c lmder1.c lmdif.c lmpar.c \
 	qrfac.c qrsolv.c 
 
-OBJS = $(SRCS:.c=.o)
 LOBJS = $(SRCS:.c=.lo)
-AUX_OBJ = $(CEPHES_SRC:.c=.o) $(MINPACK_SRC:.c=.o)
 AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 
 LIBTOOL = ../libtool
@@ -82,15 +80,15 @@ override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) $(G
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
-%.o: %.c
-	$(COMPILE) $<
+%.lo: %.c
+	$(COMPILE) -o $@ $<
 	$(CC) -MM -MG -I$(libsrc) $< > $*.d 2>/dev/null
 
-$(LIBGRETL): $(OBJS) $(LOBJS) $(AUX_OBJ) $(AUX_LOBJ)
+$(LIBGRETL): $(LOBJS) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 0:8:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:9:0
 
--include $(OBJS:.o=.d)
+-include $(LOBJS:.lo=.d)
 
 .PHONY: 
 

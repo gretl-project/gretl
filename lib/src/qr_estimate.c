@@ -72,6 +72,23 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
     }
 }
 
+static int get_vcv_index (MODEL *pmod, int i, int j, int n)
+{
+    int k, vi, vj;
+
+    if (pmod->ifc) {
+	vi = 1 + (i + 1) % n;
+	vj = 1 + (j + 1) % n;
+    } else {
+	vi = i + 1;
+	vj = j + 1;
+    }
+
+    k = ijton(vi, vj, n);
+
+    return k;
+}
+
 static int qr_make_vcv (MODEL *pmod, gretl_matrix *v)
 {
     const int nv = pmod->ncoeff;
@@ -84,7 +101,7 @@ static int qr_make_vcv (MODEL *pmod, gretl_matrix *v)
 
     for (i=0; i<nv; i++) {
 	for (j=0; j<=i; j++) {
-	    k = ijton(i+1, j+1, nv);
+	    k = get_vcv_index(pmod, i, j, nv);
 	    x = gretl_matrix_get(v, i, j);
 	    x *= pmod->sigma * pmod->sigma;
 	    pmod->vcv[k] = x;
@@ -152,15 +169,17 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 static double get_model_data (MODEL *pmod, const double **Z, 
 			      gretl_matrix *Q, gretl_matrix *y)
 {
-    int i, j, t;
+    int i, j, t, start;
     double x, ypy = 0.0;
     int t1 = pmod->t1;
 
     if (pmod->rho) t1++;
 
+    start = (pmod->ifc)? 3 : 2;
+
     /* copy independent vars into matrix Q */
     j = 0;
-    for (i=2; i<=pmod->list[0]; i++) {
+    for (i=start; i<=pmod->list[0]; i++) {
 	for (t=t1; t<=pmod->t2; t++) {
 	    x = Z[pmod->list[i]][t];
 	    if (pmod->nwt) {
@@ -169,6 +188,17 @@ static double get_model_data (MODEL *pmod, const double **Z,
 		x -= pmod->rho * Z[pmod->list[i]][t-1];
 	    }
 	    Q->val[j++] = x;
+	}
+    }
+
+    /* insert constant last (numerical issues) */
+    if (pmod->ifc) {
+	for (t=t1; t<=pmod->t2; t++) {
+	    if (pmod->nwt) {
+		Q->val[j++] = Z[pmod->nwt][t];
+	    } else {
+		Q->val[j++] = 1.0;
+	    }
 	}
     }
 
@@ -189,6 +219,33 @@ static double get_model_data (MODEL *pmod, const double **Z,
     pmod->tss = get_tss(y->val, pmod->nobs, pmod->ifc);
 
     return ypy;
+}
+
+static void save_coefficients (MODEL *pmod, gretl_matrix *b,
+			       int n)
+{
+    pmod->coeff = gretl_matrix_steal_data(b);
+
+    if (pmod->ifc) {
+	int i;
+	double tmp = pmod->coeff[n-1];
+
+	for (i=n-1; i>0; i--) pmod->coeff[i] = pmod->coeff[i-1];
+	pmod->coeff[0] = tmp;
+    }
+}
+
+static void save_standard_errors (MODEL *pmod, gretl_matrix *xpxinv,
+				  int n)
+{
+    int i, k;
+
+    for (i=0; i<n; i++) {
+	double x = gretl_matrix_get(xpxinv, i, i);
+
+	k = (pmod->ifc)? (i + 1) % n : i;
+	pmod->sderr[k] = pmod->sigma * sqrt(x);
+    }
 }
 
 int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
@@ -278,12 +335,11 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
     }
 
     /* allocate storage in model struct */
-    pmod->coeff = malloc(n * sizeof *pmod->coeff);
     pmod->sderr = malloc(n * sizeof *pmod->sderr);
     pmod->yhat = malloc(fulln * sizeof *pmod->yhat);
     pmod->uhat = malloc(fulln * sizeof *pmod->uhat);
-    if (pmod->coeff == NULL || pmod->sderr == NULL || 
-	pmod->yhat == NULL || pmod->uhat == NULL) {
+    if (pmod->sderr == NULL || pmod->yhat == NULL || 
+	pmod->uhat == NULL) {
 	err = E_ALLOC;
 	goto qr_cleanup;
     }
@@ -322,9 +378,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
 
     /* OLS coefficients */
     gretl_matmult(R, g, b);
-    for (i=0; i<n; i++) {
-	pmod->coeff[i] = b->val[i];
-    }
+    save_coefficients(pmod, b, n);
 
     /* write vector of fitted values into y */
     gretl_matmult(Q, g, y);    
@@ -345,12 +399,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
 		      R, GRETL_MOD_TRANSPOSE,
 		      xpxinv);
 
-    /* get standard errors */
-    for (i=0; i<n; i++) {
-	double x = gretl_matrix_get(xpxinv, i, i);
-
-	pmod->sderr[i] = pmod->sigma * sqrt(x);
-    }
+    save_standard_errors(pmod, xpxinv, n);
 
     /* set up covar matrix (triangular) */
     qr_make_vcv(pmod, xpxinv);

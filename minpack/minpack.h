@@ -28,5 +28,5 @@ extern int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x,
 extern doublereal dpmpar_(integer *i__);
 
 
-#endif
+#endif /* GRETL_MINPACK_H */
 

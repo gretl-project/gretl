@@ -23,7 +23,7 @@
 
 #include "libgretl.h" 
 #include "internal.h"
-#include "../../plugin/f2c.h"
+#include "f2c.h"
 #include "../../minpack/minpack.h"  
 
 enum {

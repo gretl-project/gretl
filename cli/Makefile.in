@@ -58,10 +58,10 @@ $(CLI): $(OBJS)
 .PHONY :
 
 install: $(CLI) installdirs
-	$(LIBTOOL) $(INSTALL_PROGRAM) $(CLI) $(bindir)/$(CLI)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(CLI) $(bindir)/$(CLI)
 
 install-strip: $(CLI) installdirs
-	$(LIBTOOL) $(INSTALL_PROGRAM) -s $(CLI) $(bindir)/$(CLI)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(CLI) $(bindir)/$(CLI)
 
 installdirs: $(tooldir)/mkinstalldirs
 	$(tooldir)/mkinstalldirs $(bindir)

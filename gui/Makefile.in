@@ -104,10 +104,10 @@ gtkextra-lib:
 	make -C gtkextra-lite
 
 install: $(PROG) install-data $(query_install_gnome)
-	$(LIBTOOL) $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
 
 install-strip: $(PROG) install-data $(query_install_gnome)
-	$(LIBTOOL) $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
 
 install-data: installdirs
 	$(INSTALL_PROGRAM) ../gretl_sh $(bindir)/gretl
@@ -115,7 +115,7 @@ install-data: installdirs
 	$(INSTALL_DATA) $(topsrc)/COPYING $(gretldir)
 
 install-exec: $(PROG) installdirs 
-	$(LIBTOOL) $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
 
 install-gnome: $(PROG) installdirs 
 	$(MAKE) -C ../gnome install

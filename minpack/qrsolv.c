@@ -3,7 +3,7 @@
 	-lf2c -lm   (in that order)
 */
 
-#include "../plugin/f2c.h"
+#include "f2c.h"
 
 /* Subroutine */ int qrsolv_(integer *n, doublereal *r__, integer *ldr, 
 	integer *ipvt, doublereal *diag, doublereal *qtb, doublereal *x, 

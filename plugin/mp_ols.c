@@ -34,6 +34,7 @@
 static mpf_t MPF_ONE;
 static mpf_t MPF_ZERO;
 static mpf_t MPF_MINUS_ONE;
+static mpf_t MPF_TINY;
 
 /* struct to hold model results */
 typedef struct {
@@ -90,6 +91,7 @@ static void mpf_constants_init (void)
     mpf_init_set_d (MPF_ONE, 1.0);
     mpf_init_set_d (MPF_ZERO, 0.0);
     mpf_init_set_d (MPF_MINUS_ONE, -1.0);
+    mpf_init_set_d (MPF_TINY, 1.0e-25);
 }
 
 static void mpf_constants_clear (void)
@@ -97,6 +99,7 @@ static void mpf_constants_clear (void)
     mpf_clear (MPF_ONE);
     mpf_clear (MPF_ZERO);
     mpf_clear (MPF_MINUS_ONE);
+    mpf_clear (MPF_TINY);
 }
 
 static void free_mpZ (mpf_t **mpZ, int v, int n)
@@ -909,7 +912,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 {
     int i, j, k, kk, l, jm1, nv;
-    mpf_t e, d, d1, test, xx, tmp;
+    mpf_t e, d, d1, test, rtest, xx, tmp;
     MPCHOLBETA cb;
 
     nv = xpxxpy.nv; 
@@ -927,6 +930,7 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
     mpf_init (d);
     mpf_init (d1);
     mpf_init (test);
+    mpf_init (rtest);
     mpf_init (xx);
     mpf_init (tmp);
 
@@ -956,9 +960,11 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
             k += nv-l;
         }
 	mpf_sub (test, xpxxpy.xpx[kk], d);
-        if (mpf_sgn(test) != 1) {
-           mpf_set (cb.rss, MPF_MINUS_ONE); 
-           return cb;
+	mpf_div (rtest, test, xpxxpy.xpx[kk]);
+        if (mpf_sgn(test) != 1 || mpf_cmp(rtest, MPF_TINY) < 0) {
+	    fprintf(stderr, "mp_cholbeta: rtest = %g\n", mpf_get_d(rtest));
+	    mpf_set (cb.rss, MPF_MINUS_ONE); 
+	    goto mp_cholbeta_abort;
         }   
 	mpf_sqrt (tmp, test);
 	mpf_div (e, MPF_ONE, tmp);
@@ -1002,12 +1008,15 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         }
         kk--;
 	mpf_mul (cb.coeff[j-1], d, xpxxpy.xpx[kk]);
-    }   
+    }  
+
+ mp_cholbeta_abort:
 
     mpf_clear (e);
     mpf_clear (d);
     mpf_clear (d1);
     mpf_clear (test);
+    mpf_clear (rtest);
     mpf_clear (xx);
     mpf_clear (tmp);
  
