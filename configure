@@ -7477,7 +7477,7 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-  min_gtkextra_version=0.99.13
+  min_gtkextra_version=0.99.15
   echo "$as_me:7481: checking for GTKEXTRA - version >= $min_gtkextra_version" >&5
 echo $ECHO_N "checking for GTKEXTRA - version >= $min_gtkextra_version... $ECHO_C" >&6
   no_gtkextra=""

@@ -18,6 +18,7 @@ rm -f gretl/doc/manual.aux gretl/doc/manual.log gretl/doc/manual.toc
 rm -f gretl/doc/manual.out
 cp -ap gretl/* gretl-$version
 find gretl-$version -name "*CVS" | xargs rm -rf
+find gretl-$version -name ".xvpics" | xargs rm -rf
 tar cvfz $tarfile gretl-$version
 rm -rf gretl-$version
 
