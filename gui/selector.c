@@ -861,8 +861,10 @@ static void selector_init (selector *sr, guint code, const char *title)
 
     sr->code = code;
     sr->error = 0;
+
     sr->dlg = gtk_dialog_new();
     open_dialog = sr->dlg;
+
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
     gtk_signal_connect (GTK_OBJECT (sr->dlg), "destroy", 
@@ -1265,6 +1267,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
     sr->varlist = gtk_clist_new(2);
     gtk_clist_clear(GTK_CLIST(sr->varlist));
+
     if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM) {
         add_omit_list(p, sr);
     } else {
@@ -1282,7 +1285,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     }
 
     gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80 * gui_scale);
-    gtk_widget_set_usize (sr->varlist, 80 * gui_scale, 120 * gui_scale);
+    gtk_widget_set_usize (sr->varlist, 80 * gui_scale, 180 * gui_scale);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),
 				  GTK_SELECTION_EXTENDED);
     gtk_signal_connect(GTK_OBJECT(sr->varlist), "button_press_event",
@@ -1380,8 +1383,7 @@ static const char *data_save_title (int code)
 static void data_save_selection_callback (GtkWidget *w, gpointer p)
 {
     selector *sr = (selector *) p;
-
-    gtk_widget_destroy(sr->dlg);
+    int code = sr->code;
 
     if (sr->cmdlist == NULL || *sr->cmdlist == 0) return;
 
@@ -1392,8 +1394,10 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
 
     storelist = g_strdup(sr->cmdlist);
 
+    gtk_widget_destroy(sr->dlg);
+
     if (sr->code != COPY_CSV) {
-        file_selector(data_save_title(sr->code), sr->code, NULL);
+        file_selector(data_save_title(code), code, NULL);
     }
 }
 

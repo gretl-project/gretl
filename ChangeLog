@@ -20,7 +20,7 @@ version 1.2.2
 - Fix bug: bad behavior when you put an Excel file to open
   on the gretl command line, then cancel the import
 - Fix bug: X-Y plot with "factor separation" went wrong in
-  some cases
+  some cases (spotted by Ignacio Diaz-Emparanza)
 - Fix bug: weighted least squares with a dummy variable for
   the weight crashed gretl when using QR decomposition
 - Fix bug: a syntactically incorrect "genr" expression could

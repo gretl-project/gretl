@@ -527,14 +527,15 @@ void file_selector (const char *msg, int action, gpointer data)
 
     set_startdir(startdir);
 
-    /* special case: default save of data */
-    if ((action == SAVE_DATA || action == SAVE_GZDATA) && 
-	paths.datfile[0]) {
+    /* special case: saving data in native format */
+    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
 	char *savename = suggested_savename(paths.datfile);
 
 	strcpy(fname, savename);
 	g_free(savename);
-	get_base(startdir, paths.datfile, SLASH);
+	if (!(data_status & BOOK_DATA)) {
+	    get_base(startdir, paths.datfile, SLASH);
+	}
     }
 
     /* special case: setting program path */
@@ -897,8 +898,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	g_object_set_data(G_OBJECT(filesel), "model", data);
     }
 
-    else if ((action == SAVE_DATA || action == SAVE_GZDATA) 
-	     && paths.datfile[0]) {
+    else if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
 	char *savename = suggested_savename(paths.datfile);
 
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
@@ -990,16 +990,13 @@ void file_selector (const char *msg, int action, gpointer data)
 	     action == SAVE_TEX_TAB_FRAG || action == SAVE_TEX_EQ_FRAG) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
 
-    else if ((action == SAVE_DATA || action == SAVE_GZDATA) 
-	     && paths.datfile[0]) {
+    else if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
 	char *savename = suggested_savename(paths.datfile);
 	char startd[MAXLEN];
 
-	fprintf(stderr, "action = %d (SAVE_DATA || SAVE_GZDATA)\n", action);
-
 	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
 			   savename);
-	if (get_base(startd, paths.datfile, SLASH) == 1) {
+	if (!(data_status & BOOK_DATA) && get_base(startd, paths.datfile, SLASH)) {
 	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
 	    gotdir = 1;
 	}
