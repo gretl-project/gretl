@@ -2070,7 +2070,9 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     windata_t *vwin;
 
     vwin = common_viewer_new(role, title, pbuf, 1);
-    if (vwin == NULL) return NULL;
+    if (vwin == NULL) {
+	return NULL;
+    }
 
 #ifdef OLD_GTK
     create_text(vwin, hsize, vsize, TRUE);

@@ -846,15 +846,9 @@ static void real_do_help (guint pos, int cli)
 		w = gui_help_view = hwin->w;
 	    }
 	}
-#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(w), "destroy",
 			 G_CALLBACK(gtk_widget_destroyed),
 			 (cli)? &script_help_view : &gui_help_view);
-#else
-	gtk_signal_connect(GTK_OBJECT(w), "destroy",
-			   GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-			   (cli)? &script_help_view : &gui_help_view);	
-#endif	
     } else {
 	gdk_window_show(w->parent->window);
 	gdk_window_raise(w->parent->window);

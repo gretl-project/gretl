@@ -266,8 +266,22 @@ static void free_rebuild (void)
 
 static void edit_session_notes (void)
 {
-    edit_buffer(&session.notes, 80, 400, _("gretl: session notes"),
-		EDIT_NOTES);
+    static GtkWidget *notes_window;
+
+    if (notes_window == NULL) {
+	windata_t *vwin;
+
+	vwin = edit_buffer(&session.notes, 80, 400, 
+			   _("gretl: session notes"),
+			   EDIT_NOTES);
+	notes_window = vwin->dialog;
+	g_signal_connect(G_OBJECT(vwin->dialog), "destroy",
+			 G_CALLBACK(gtk_widget_destroyed),
+			 &notes_window);
+    } else {
+	gdk_window_show(notes_window->window);
+	gdk_window_raise(notes_window->window);
+    }
 }
 
 /* .................................................................. */

@@ -35,12 +35,13 @@
 
 static void free_sheet (void);
 static int allocate_row_col (int row, int col, wbook *book);
-static char *copy_unicode_string (unsigned char *src, int *skip);
+static char *copy_unicode_string (unsigned char *src, int remlen, 
+				  int *skip, int *slop);
 static char *convert8to7 (const unsigned char *s, int count);
 static char *convert16to7 (const unsigned char *s, int count);
 static char *mark_string (char *str);
 
-#define EDEBUG
+#undef EDEBUG
 #undef MEMDEBUG
 
 #define EXCEL_IMPORTER
@@ -218,6 +219,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 {
     struct rowdescr *prow = NULL;
     static char **string_targ;
+    static int slop; /* SST overslop */
     unsigned char *ptr = NULL;
     int row = 0, col = 0, xfref = 0;
     double val;
@@ -241,7 +243,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     switch (q->ls_op) {
 
     case BIFF_SST: {
-	int i, skip, oldsz = sstsize;
+	int i, skip, remlen, oldsz = sstsize;
 	guint16 sz;
 
 	if (sst != NULL) {
@@ -264,17 +266,17 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    sst[i] = NULL;
 	}
 	ptr = q->data + 8;
-	for (i=oldsz; i<sstsize && (ptr - q->data) < q->length; i++) {
+	for (i=oldsz; i<sstsize; i++) {
+	    remlen = q->length - (ptr - q->data);
 #ifdef EDEBUG
-	    fprintf(stderr, "Working on sst[%d], data offset=%d, length=%d\n", 
-		    i, (int) (ptr - q->data), (int) q->length);
+	    fprintf(stderr, "Working on sst[%d], data offset=%d, remlen=%d\n", 
+		    i, (int) (ptr - q->data), remlen);
 #endif
-	    sst[i] = copy_unicode_string(ptr, &skip);
+	    if (remlen <= 0) {
+		break;
+	    }
+	    sst[i] = copy_unicode_string(ptr, remlen, &skip, &slop);
 	    ptr += skip;
-#ifdef EDEBUG
-	    fprintf(stderr, "skip = %d, data offset now = %d\n", 
-		    skip, (int) (ptr - q->data));
-#endif
 	}
 	if (i < sstsize) {
 	    sstnext = i;
@@ -284,17 +286,22 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
     case BIFF_CONTINUE: 
 #ifdef EDEBUG
-	fprintf(stderr, "Got CONTINUE, sstnext = %d\n", sstnext);
+	fprintf(stderr, "Got CONTINUE, sstnext = %d, len = %d\n", 
+		sstnext, (int) q->length);
 #endif
 	if (sstnext > 0) {
-	    int i, skip;
+	    int i, skip, remlen;
 
-	    ptr = q->data;
-	    for (i=sstnext; i<sstsize && (ptr - q->data) < q->length; i++) {
+	    ptr = q->data + slop; 
+	    for (i=sstnext; i<sstsize; i++) {
+		remlen = q->length - (ptr - q->data);
+		if (remlen <= 0) {
+		    break;
+		}
 #ifdef EDEBUG
 		fprintf(stderr, "Working on sst[%d]\n", i);
 #endif
-		sst[i] = copy_unicode_string(ptr, &skip);
+		sst[i] = copy_unicode_string(ptr, remlen, &skip, &slop);
 		ptr += skip;
 	    }
 	    if (i < sstsize) {
@@ -409,15 +416,9 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 			(unsigned) fcode);
 #endif
 		if (fcode == 0x0) {
-#if 1
-		    pprintf(prn, "Sorry, can't handle string formulas in "
-			    "worksheet");
-		    return 1;
-#else
 		    /* string formula: record target for following 
 		       STRING record */
 		    string_targ = prow->cells + col;
-#endif
 		} else if (fcode == 0x1) {
 		    /* boolean value */
 		    prow->cells[col] = g_strdup((ptr[2])? "1" : "0");
@@ -451,7 +452,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    fprintf(stderr, "String record without preceding string formula\n");
 #endif
 	} else {
-	    char *tmp = copy_unicode_string(q->data, NULL);
+	    char *tmp = copy_unicode_string(q->data, 0, NULL, NULL);
 
 	    *string_targ = mark_string(tmp);
 #ifdef EDEBUG
@@ -656,21 +657,30 @@ static char *mark_string (char *str)
 }    
 
 static char *
-copy_unicode_string (unsigned char *src, int *skip) 
+copy_unicode_string (unsigned char *src, int remlen, 
+		     int *skip, int *slop) 
 {
     int count = MS_OLE_GET_GUINT16(src);
     unsigned char flags = *(src + 2);
     int this_skip = 3, skip_to_next = 3;
     int csize = (flags & 0x01)? 2 : 1;
 
+#ifdef EDEBUG
+    fprintf(stderr, "copy_unicode_string: count = %d, csize = %d\n",
+	    count, csize);
+    if (flags & 0x08) {
+	fprintf(stderr, " contains Rich-Text info\n");
+    }
+    if (flags & 0x04) {
+	fprintf(stderr, " contains Far-East info\n");
+    }    
+#endif
+
     skip_to_next += count * csize;
 
     if (flags & 0x08) {
 	guint16 rich_text_info_len = 0;
 
-#ifdef EDEBUG
-	fprintf(stderr, "copy_unicode_string: contains Rich-Text info\n");
-#endif
 	rich_text_info_len = 4 * MS_OLE_GET_GUINT16(src + 3);
 	this_skip += 2;
 	skip_to_next += 2 + rich_text_info_len;
@@ -680,9 +690,6 @@ copy_unicode_string (unsigned char *src, int *skip)
 	guint32 far_east_info_len = 0;
 	int far_east_offset = 3;
 
-#ifdef EDEBUG
-	fprintf(stderr, "copy_unicode_string: contains Far-East info\n");
-#endif
 	if (flags & 0x08) {
 	    far_east_offset = 5;
 	}
@@ -694,6 +701,15 @@ copy_unicode_string (unsigned char *src, int *skip)
     /* skip for the next read */
     if (skip != NULL) {
 	*skip = skip_to_next;
+    }
+
+    /* size check */
+    if (slop != NULL) {
+	if (remlen > 0 && this_skip + count > remlen) {
+	    *slop = this_skip + count - remlen + 1;
+	} else {
+	    *slop = 0;
+	}
     }
 
     if (csize == 1) {
