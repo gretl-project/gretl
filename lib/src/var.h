@@ -48,9 +48,6 @@ int adf_test (int order, const int varno,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn);
 
-int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, 
-	      PRN *prn);
-
 int johansen_test (int order, const LIST list, 
 		   double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn);
