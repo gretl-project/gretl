@@ -1720,8 +1720,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     if (role == VAR || role == VIEW_SERIES || role == VIEW_SCALAR) {
 	GtkItemFactoryEntry *menu_items;
 
-	if (role == VAR) menu_items = var_items;
-	else menu_items = get_series_view_menu_items(role);
+	if (role == VAR) {
+	    menu_items = var_items;
+	} else {
+	    menu_items = get_series_view_menu_items(role);
+	}
 	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);

@@ -478,9 +478,13 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
 	err = go_gnuplot(plot, fname, &paths);
-	if (err == 0) infobox(_("graph saved"));
-	else if (err == 1) errbox(_("gnuplot command failed"));
-	else if (err == 2) infobox(_("There were missing observations"));
+	if (err == 0) {
+	    infobox(_("graph saved"));
+	} else if (err == 1) {
+	    errbox(_("gnuplot command failed"));
+	} else if (err == 2) {
+	    infobox(_("There were missing observations"));
+	}
     }
     else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;

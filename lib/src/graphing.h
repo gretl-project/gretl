@@ -109,6 +109,10 @@ enum plot_type_codes {
     PLOT_LEVERAGE,
     PLOT_TYPE_MAX
 };
+
+#define frequency_plot_code(c) (c == PLOT_FREQ_SIMPLE || \
+				c == PLOT_FREQ_NORMAL || \
+				c == PLOT_FREQ_GAMMA)
     
 /* functions follow */
  
@@ -121,6 +125,8 @@ int graph (const LIST list,
 	   gretlopt oflag, PRN *prn);
 
 const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype);
+
+const char *get_gretl_emf_term_line (int plottype, int color);
 
 const char *get_timevar_name (DATAINFO *pdinfo);
 
@@ -152,8 +158,8 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths);
 
 void free_plotspec (GPT_SPEC *spec);
 
-int termtype_to_termstr (const char *termtype, char *termstr,
-			 const PATHS *ppaths);
+int get_termstr (const GPT_SPEC *spec, char *termstr,
+		 const PATHS *ppaths);
 
 int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
 	    PATHS *ppaths);

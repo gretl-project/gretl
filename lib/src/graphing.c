@@ -29,6 +29,7 @@
 
 #ifdef _WIN32
 # include <windows.h>
+# define EMF_USER_COLORS
 #else
 # include <glib.h>
 # if GLIB_CHECK_VERSION(2,0,0)
@@ -739,6 +740,49 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
 #endif
 
     return png_term_line;
+}
+
+/**
+ * get_gretl_emf_term_line:
+ * @plottype: 
+ *
+ * Constructs a suitable line for sending to gnuplot to invoke
+ * the EMF "terminal".  
+ *
+ * Returns: the term string, "set term emf ..."
+ */
+
+const char *get_gretl_emf_term_line (int plottype, int color)
+{
+    static char emf_term_line[256];
+
+    if (!color) {
+	strcpy(emf_term_line, "set term emf mono dash");
+	return emf_term_line;
+    }
+
+#ifdef EMF_USER_COLORS
+    if (frequency_plot_code(plottype)) {
+	sprintf(emf_term_line, "set term emf color %s",
+		get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE));
+    } else {
+	int i;
+
+	strcpy(emf_term_line, "set term emf color ");
+	for (i=0; i<3; i++) {
+	    const char *colstr = get_gnuplot_pallette(i, 0);
+
+	    if (*colstr != '\0') {
+		strcat(emf_term_line, colstr);
+		strcat(emf_term_line, " ");
+	    }
+	}
+    }
+#else
+    strcpy(emf_term_line, "set term emf color");
+#endif
+
+    return emf_term_line;
 }
 
 /**
@@ -1856,28 +1900,35 @@ void free_plotspec (GPT_SPEC *spec)
 
 /* ........................................................... */
 
-int termtype_to_termstr (const char *termtype, char *termstr,
-			 const PATHS *ppaths)
+int get_termstr (const GPT_SPEC *spec, char *termstr,
+		 const PATHS *ppaths)
 {
     int cmds = 0;
 
-    if (!strcmp(termtype, "postscript color")) 
+    if (!strcmp(spec->termtype, "postscript color")) {
 	strcpy(termstr, "postscript eps color"); 
-    else if (!strcmp(termtype, "postscript")) 
+    } else if (!strcmp(spec->termtype, "postscript")) {
 	strcpy(termstr, "postscript eps"); 
-    else if (!strcmp(termtype, "fig")) 
+    } else if (!strcmp(spec->termtype, "fig")) {
 	strcpy(termstr, "fig");
-    else if (!strcmp(termtype, "latex")) 
+    } else if (!strcmp(spec->termtype, "latex")) {
 	strcpy(termstr, "latex");
-    else if (!strcmp(termtype, "png")) { 
+    } else if (!strcmp(spec->termtype, "png")) { 
 	const char *png_str = 
-	    get_gretl_png_term_line(ppaths, PLOT_REGULAR);
+	    get_gretl_png_term_line(ppaths, spec->code);
 
 	strcpy(termstr, png_str + 9);
-    }
-    else if (!strcmp(termtype, "plot commands")) 
+    } else if (!strcmp(spec->termtype, "emf color")) {
+	const char *emf_str = 
+	    get_gretl_emf_term_line(spec->code, 1);
+
+	strcpy(termstr, emf_str + 9);
+    } else if (!strcmp(spec->termtype, "plot commands")) { 
 	cmds = 1;
-    else strcpy(termstr, termtype);
+    } else {
+	strcpy(termstr, spec->termtype);
+    }
+
     return cmds;
 }
 
@@ -2103,7 +2154,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
     int err = 0, miss;
     char termstr[72];
 
-    dump = termtype_to_termstr(spec->termtype, termstr, ppaths);
+    dump = get_termstr(spec, termstr, ppaths);
 
     if (dump) {  
 	/* dump of gnuplot commands to named file */

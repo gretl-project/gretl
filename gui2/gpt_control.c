@@ -1768,7 +1768,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	return;
     }
  
-    cmds = termtype_to_termstr(plot->termtype, termstr, &paths);
+    cmds = get_termstr(plot, termstr, &paths);
   
     if (cmds) {
 	if (copyfile(plot->fname, fname)) { 
@@ -1780,7 +1780,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 #ifdef ENABLE_NLS
 	if (strstr(termstr, "postscript")) {
 	    pprintf(prn, "set encoding iso_8859_1\n");
-	}
+	} 
 #endif /* ENABLE_NLS */	
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
@@ -2896,14 +2896,24 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 
     if (!strcmp(parent_item, _("Save as postscript (EPS)..."))) {
 	strcpy(plot->spec->termtype, "postscript");
-	if (color) strcat(plot->spec->termtype, " color");
+	if (color) {
+	    strcat(plot->spec->termtype, " color");
+	}
+	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+		      plot->spec);
+    } 
+    else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
+	strcpy(plot->spec->termtype, "emf");
+	if (color) {
+	    strcat(plot->spec->termtype, " color");
+	}
 	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      plot->spec);
     } 
 #ifdef G_OS_WIN32
     else if (!strcmp(parent_item, _("Copy to clipboard"))) {
 	win32_process_graph(plot->spec, color, WIN32_TO_CLIPBOARD);
-    }
+    } 
     else if (!strcmp(parent_item, _("Print"))) {
 	win32_process_graph(plot->spec, color, WIN32_TO_PRINTER);
     }    
@@ -2935,7 +2945,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
     }
     else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
-	context_help (NULL, GINT_TO_POINTER(RANGE_MEAN));
+	context_help(NULL, GINT_TO_POINTER(RANGE_MEAN));
     }
 #ifndef OLD_GTK
     else if (!strcmp(item, _("Clear data labels"))) { 
@@ -2977,8 +2987,14 @@ static void build_plot_menu (png_plot_t *plot)
 {
     GtkWidget *item;    
     const char *regular_items[] = {
+#ifdef G_OS_WIN32
+	N_("Save as Windows metafile (EMF)..."),
+#endif
 	N_("Save as PNG..."),
         N_("Save as postscript (EPS)..."),
+#ifndef G_OS_WIN32
+	N_("Save as Windows metafile (EMF)..."),
+#endif
 #ifdef G_OS_WIN32
 	N_("Copy to clipboard"),
 #endif
@@ -3018,6 +3034,7 @@ static void build_plot_menu (png_plot_t *plot)
     } else {
 	plot_items = regular_items;
 	plot->color_popup = gtk_menu_new();
+
 	i = 0;
 	while (color_items[i]) {
 	    item = gtk_menu_item_new_with_label(_(color_items[i]));
@@ -3036,6 +3053,7 @@ static void build_plot_menu (png_plot_t *plot)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(plot->color_popup), item);
 	    i++;
 	}
+
 #ifdef OLD_GTK
 	gtk_signal_connect(GTK_OBJECT(plot->color_popup), "destroy",
 			   GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
@@ -3082,7 +3100,9 @@ static void build_plot_menu (png_plot_t *plot)
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(plot->popup), item);
 
-	if (!strcmp(plot_items[i], "Save as postscript (EPS)...") ||
+	/* items with color sub-menu */
+	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...") ||
+	    !strcmp(plot_items[i], "Save as postscript (EPS)...") ||
 	    !strcmp(plot_items[i], "Copy to clipboard") ||
 	    !strcmp(plot_items[i], "Print")) {
 	    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), plot->color_popup);
@@ -3100,6 +3120,7 @@ static void build_plot_menu (png_plot_t *plot)
 	}
         i++;
     }
+
 #ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(plot->popup), "destroy",
 		       GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
@@ -4244,12 +4265,8 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     }
 
     /* generate gnuplot source file to make emf */
+    pprintf(prn, "%s\n", get_gretl_emf_term_line(spec->code, color));
     emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
-    if (color) {
-	pprintf(prn, "set term emf\n");
-    } else {
-	pprintf(prn, "set term emf mono dash\n");
-    }
     pprintf(prn, "set output '%s'\n", emfname);
     pprintf(prn, "set size 0.8,0.8\n");
     while (fgets(plotline, MAXLEN-1, fq)) {
