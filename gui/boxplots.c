@@ -880,7 +880,7 @@ static int cb_copy_image (gpointer data)
     if (pInfo) {
 	pInfo->biSize   = sizeof(BITMAPINFOHEADER);
 	pInfo->biWidth  = grp->width;
-	pInfo->biHeight = -grp->height; /* top-down */
+	pInfo->biHeight = grp->height; 
 	pInfo->biPlanes = 1;
 	pInfo->biBitCount = 1;
 	pInfo->biCompression = BI_RGB; /* none */
@@ -888,7 +888,7 @@ static int cb_copy_image (gpointer data)
 	pInfo->biXPelsPerMeter =
 	    pInfo->biYPelsPerMeter = 0;
 	/* color map size */
-	pInfo->biClrUsed = 2;
+	pInfo->biClrUsed = 0; /* all */
 	pInfo->biClrImportant = 0; /* all */
           
 	GlobalUnlock (hDIB);
@@ -907,9 +907,11 @@ static int cb_copy_image (gpointer data)
 
 	    pPal = (RGBQUAD*)(pBmp + sizeof(BITMAPINFOHEADER));
 
+	    /* white, for cleared bits */
+	    pPal[0].rgbBlue = pPal[0].rgbGreen = pPal[0].rgbRed = 255;
+	    /* black, for set bits */
+	    pPal[1].rgbBlue = pPal[1].rgbGreen = pPal[1].rgbRed = 0;
 	    pPal[0].rgbReserved = pPal[1].rgbReserved = 0;
-	    pPal[0].rgbRed = pPal[0].rgbGreen = pPal[0].rgbBlue = 255;
-	    pPal[1].rgbRed = pPal[1].rgbGreen = pPal[1].rgbBlue = 0;
 	  
 	    bRet = TRUE;
 	    GlobalUnlock (hDIB);
@@ -927,22 +929,21 @@ static int cb_copy_image (gpointer data)
 
 	if (pData) {
 	    int x, y;
-	    unsigned char ch;
+	    unsigned char c;
 	    
 	    /* calculate real offset */
 	    pData += (sizeof(BITMAPINFOHEADER) + palsize);
 
 	    /* FIXME: are the bits, and the rows, in the right order? */
-	    j = 0;
-	    for (y=0; y<grp->height; y++) {
-		i = 0; ch = 0;
+	    for (y=grp->height-1; y>=0; y--) {
+		i = 0; c = 0;
 		for (x=0; x<grp->width; x++) {
 		    pixel = gdk_image_get_pixel(image, x, y);
-		    if (pixel != white_pixel) ch |= (1 << i);
-		    if (x % 8 == 7) {
-			pData[j++] = ch;
+		    if (pixel != white_pixel) c |= (1 << i);
+		    if (i == 7) { /* done 8 bits */
+			*pData++ = c;
 			i = 0;
-			ch = 0;
+			c = 0;
 		    }
 		}
 	    }
