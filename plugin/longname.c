@@ -1,6 +1,8 @@
 /* longname plugin for gretl -- allow win98 and higher to
    access the win32 function GetLongPathName() */
 
+#include <windows.h>
+
 int real_unmangle (const char *dosname, char *longname, int maxlen)
 {
     int err = GetLongPathName(dosname, longname, maxlen);
