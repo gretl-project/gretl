@@ -32,8 +32,26 @@
 # include <windows.h>
 #endif
 
+#ifdef GP_TEST
+# include <glib.h>
+#endif
+
 extern double _gamma_func (double x);
 extern double _gammadist (double s1, double s2, double x, int control);
+
+/* ........................................................ */
+
+#ifdef GP_TEST
+static void gp_print (FILE *fp, char *str)
+{
+    char *trans;
+    gint wrote;
+
+    trans = g_locale_from_utf8 (str, -1, NULL, &wrote, NULL));
+    fprintf(fp, "%s", trans);
+    g_free(trans);
+}
+#endif
 
 /* ........................................................ */
 
@@ -42,9 +60,6 @@ static int printvars (FILE *fp, int t, const int *list, double **Z)
     int i, miss = 0;
     double xx;
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
     for (i=1; i<=list[0]; i++)  {
 	xx = Z[list[i]][t];
 	if (na(xx)) {
@@ -54,9 +69,6 @@ static int printvars (FILE *fp, int t, const int *list, double **Z)
 	    fprintf(fp, "%g ", xx);
 	}
     }
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
     fprintf(fp, "\n");
     return miss;
 }
@@ -213,6 +225,9 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	drawline(ncols, prn);
 	/* plot values */
 	lineno = 3;
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "C");
+#endif
 	for (t=t1; t<=t2; ++t) {
 	    xxx = Z[vy][t];
 	    if (na(xxx)) continue;
@@ -227,6 +242,9 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 		pprintf(prn, "%c", px[i]); 
 	    if (ix == ncols) pprintf(prn, "\n");
 	}
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
 	pprintf(prn, "\n\n");
 	free(x);
 	free(y);
@@ -291,6 +309,9 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pprintf(prn, "0.0\n");
     }
     drawline(ncols, prn);
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "C");
+#endif
     for (t=t1; t<=t2; ++t) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
@@ -316,6 +337,9 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	for (i=0; i<=ncols+1; i++) pprintf(prn, "%c", px[i]);
 	if (ix == ncols || iy == ncols) pprintf(prn, "\n");
     }
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
     pprintf(prn, "\n\n");
     free(x);
     free(y);
@@ -455,7 +479,8 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
     *fpp = fopen(ppaths->plotfile, "w");
     if (*fpp == NULL) return 1;
     if (GRETL_GUI(ppaths)) {
-	fprintf(*fpp, "set term png color\n");
+	/* fprintf(*fpp, "set term png color\n"); */
+	fprintf(*fpp, "set term png\n");
 	fprintf(*fpp, "set output 'gretltmp.png'\n");
     }
 #else
@@ -790,9 +815,6 @@ int gnuplot (LIST list, const int *lines,
 	    }
 	    fprintf(fq, "e\n");
 	}
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
 	free(yvar1);
 	free(yvar2);
     } else {
@@ -809,7 +831,9 @@ int gnuplot (LIST list, const int *lines,
 	    fprintf(fq, "e\n");
 	}
     }
-
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fq, "pause -1\n");
