@@ -3114,16 +3114,20 @@
     <description>
       <para>
        La distanza di Mahalanobis è la distanza tra due punti in uno spazio
-       <mathvar>N</mathvar>-dimensionale, scalata rispetto alla variazione
-       statistica in ogni componente del punto. Ad esempio, se
-       <mathvar>p</mathvar> e <mathvar>q</mathvar> sono due punti dalla stessa
-       distribuzione con matrice di covarianza <mathvar>C</mathvar>, la distanza
-       di Mahalanobis è data da
+       <mathvar>k</mathvar>-dimensionale, scalata rispetto alla variazione
+       statistica in ogni dimensione dello spazio. Ad esempio, se
+       <mathvar>p</mathvar> e <mathvar>q</mathvar> sono due osservazioni su
+       un insieme di <mathvar>k</mathvar> variabili con matrice di covarianza
+       <mathvar>C</mathvar>, la distanza di Mahalanobis tra le due osservazioni
+       è data da
        <equation status="display"
         tex="\[\sqrt{(p-q)^'C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inversa * (p - q))"
-          graphic="mahal"/> che corrisponde alla distanza euclidea se la matrice
-       di covarianza è la matrice identità.
+          graphic="mahal"/> dove
+       <equation status="inline" tex="$(p-q)$" ascii="(p - q)"/> è un
+       vettore a <mathvar>k</mathvar> dimensioni. Se la matrice di covarianza è
+       la matrice identità, la distanza di Mahalanobis corrisponde alla distanza
+       Euclidea.
       </para>
 
       <para>Lo spazio in cui vengono calcolate le distanze è definito dalle
