@@ -27,7 +27,7 @@
 
 #include "libgretl.h"
 
-#define VERBOSE 1
+/* #define VERBOSE 1 */
 
 #define MAXIGNORE 4
 #define DESLINE 1024
@@ -276,7 +276,7 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
     }
 
     if (!err)
-	fprintf(stderr, "%s: got %d real vars, %d observations\n", 
+	fprintf(stderr, "Read %s:\ngot %d real variables, %d observations\n", 
 	       fname, dinfo->v, dinfo->n);
 
     fclose(fp);
