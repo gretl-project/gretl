@@ -24,13 +24,13 @@
 typedef struct fiml_system_ fiml_system;
 
 struct fiml_system_ {
-    int n;
-    int g;
-    int gn;
-    gretl_equation_system *sys;
-    gretl_vector *ydot;
-    gretl_matrix *xdot;
-    gretl_matrix *sdot;
+    int n;                  /* number of observations per equation */
+    int g;                  /* number of (stochastic) equations */
+    int gn;                 /* convenience: g * n = number of obs in stacked vectors */
+    gretl_equation_system *sys; /* pointer to "parent" equation system */
+    gretl_vector *ydot;     /* stacked gn-vector: dependent variables */
+    gretl_matrix *xdot;     /* stacked matrix of indep vars */
+    gretl_matrix *sdot;     /* big kronecker-ized covariance matrix */
 };
 
 static int 
@@ -38,7 +38,7 @@ fill_fiml_ydot (fiml_system *fsys, const double **Z, int t1)
 {
     int i, t;
 
-    /* stack the dependent variables vertically */
+    /* stack the g dependent variables vertically */
     for (i=0; i<fsys->g; i++) {
 	int k = system_get_depvar(fsys->sys, i);
 
@@ -87,19 +87,15 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
     fsys->sdot = NULL;
 
     fsys->ydot = gretl_vector_alloc(fsys->gn);
-    if (fsys->ydot == NULL) goto bailout;
-
     fsys->sdot = gretl_matrix_alloc(fsys->gn, fsys->gn);
-    if (fsys->sdot == NULL) goto bailout;
-	
     fsys->xdot = gretl_matrix_alloc(fsys->gn, fsys->gn); /* FIXME dimensions */
-    if (fsys->sdot == NULL) goto bailout;
+
+    if (fsys->ydot == NULL || fsys->sdot == NULL || fsys->xdot == NULL) {
+	fiml_system_destroy(fsys);
+	fsys = NULL;
+    }
 
     return fsys;
-
- bailout:
-    fiml_system_destroy(fsys);
-    return NULL;
 }
 
 static int 
@@ -118,6 +114,10 @@ make_fiml_dataset (fiml_system *fsys, const double **Z, const DATAINFO *pdinfo)
 
     return 0;
 }
+
+/* Below: this is meant to grow into a driver function for FIML as
+   described in Davidson and McKinnon, ETM, chap 12, sect 5.
+*/
 
 int fiml_driver (gretl_equation_system *sys, const double **Z, const DATAINFO *pdinfo)
 {
