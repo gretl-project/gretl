@@ -48,6 +48,7 @@ static void wsheet_init (wsheet *sheet)
     sheet->Z = NULL;
     sheet->varname = NULL;
     sheet->label = NULL;
+    sheet->name = NULL;
 }
 
 static void wsheet_free (wsheet *sheet)
@@ -194,22 +195,27 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 		if (tmp) {
 		    vtype = atoi(tmp);
 		    free(tmp);
+		} else { /* a formula perhaps? */
+		    sprintf(errbuf, "Couldn't get value for col %d, row %d.\n"
+			    "Maybe there's a formula in the sheet?",
+			    i, t);
+		    err = 1;
 		}
 		/* check the top-left cell */
-		if (i_real == 0 && t_real == 0) {
+		if (!err && i_real == 0 && t_real == 0) {
 		    if (VTYPE_IS_NUMERIC(vtype)) {
 			sprintf(errbuf, "Expected to find a variable name");
 			err = 1;
 		    }
 		}
-		else if (i_real >= 1 && t_real == 0 && 
+		else if (! err && i_real >= 1 && t_real == 0 && 
 			 !(vtype == VALUE_STRING)) {
 		    /* ought to be a varname here */
 		    sprintf(errbuf, "Expected to find a variable name");
 		    err = 1;
 		}
 		if (!err && (tmp = xmlNodeGetContent(p))) {
-		    if (VTYPE_IS_NUMERIC(vtype) ||vtype == VALUE_STRING) {
+		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 			if (i_real == 0) 
 			    strncat(sheet->label[t_real], tmp, 8);
 		    }
@@ -230,18 +236,20 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 	p = p->next;
     }
 
-    for (i=0; i<cols; i++)
-	if (leftcols[i]) sheet->text_cols += 1;
-    for (t=0; t<rows; t++)
-	if (toprows[t]) sheet->text_rows += 1;
+    if (!err) {
+	for (i=0; i<cols; i++)
+	    if (leftcols[i]) sheet->text_cols += 1;
+	for (t=0; t<rows; t++)
+	    if (toprows[t]) sheet->text_rows += 1;
 
-    if (sheet->text_rows > 1) {
-	sprintf(errbuf, "Found an extraneous row of text");
-	err = 1;
-    }
-    if (sheet->text_cols > 1) {
-	sprintf(errbuf, "Found an extraneous column of text");
-	err = 1;
+	if (sheet->text_rows > 1) {
+	    sprintf(errbuf, "Found an extraneous row of text");
+	    err = 1;
+	}
+	if (sheet->text_cols > 1) {
+	    sprintf(errbuf, "Found an extraneous column of text");
+	    err = 1;
+	}
     }
 
     free(toprows);
@@ -279,11 +287,9 @@ static int wsheet_get_data (const char *fname, wsheet *sheet)
 	return 1;
     }
 
-    wsheet_init(sheet);
-
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
-    while (cur != NULL && !got_sheet) {
+    while (!err && cur != NULL && !got_sheet) {
 	if (!xmlStrcmp(cur->name, (UTF) "Sheets")) {
 	    int sheetcount = 0;
 
@@ -322,8 +328,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet)
 			}
 			else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "Cells")) {
-			    /* error handling needed */
-			    wsheet_parse_cells(snode, sheet);
+			    err = wsheet_parse_cells(snode, sheet);
 			}
 			snode = snode->next;
 		    }
@@ -498,6 +503,8 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (book.selected == -1) err = -1;
+
+    wsheet_init(&sheet);
 
     if (!err && sheetnum >= 0) {
 	fprintf(stderr, "Getting data...\n");

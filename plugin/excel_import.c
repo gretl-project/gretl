@@ -666,7 +666,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     FILE *fp;
     wbook book;
     int err = 0;
-    double **newZ;
+    double **newZ = NULL;
     DATAINFO *newinfo;
 
     errbuf = errtext;

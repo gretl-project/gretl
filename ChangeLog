@@ -8,6 +8,7 @@ version 0.995
 - handle spaces in filenames when stacking the "open" command
 - fix bug with editing gnuplot graphs
 - try to get win32 LaTeX view working properly
+- bugfixes for gnumeric and excel spreadsheet importers
 
 04/21/2002 version 0.994
 - fix bugs in win32 copy to clipboard

@@ -622,7 +622,7 @@ static void get_worksheet_data (const char *fname, int datatype,
 
     if (datatype == GRETL_GNUMERIC) {
 	if (gui_open_plugin("gnumeric_import", &handle)) return;
-	sheet_get_data = get_plugin_function("gbook_get_data", handle);
+	sheet_get_data = get_plugin_function("wbook_get_data", handle);
     }
     else if (datatype == GRETL_EXCEL) {
 	if (gui_open_plugin("excel_import", &handle)) return;
