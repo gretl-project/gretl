@@ -754,48 +754,6 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 }
 
 /* ........................................................... */
-    
-int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
-{
-    int t, n = pdinfo->n, v = genr->varnum;
-    int old_scalar = 0;
-    double xx;
-
-    if (genr->special) return 0;
-
-    /* is the new variable an addition to data set? */
-    if (v >= pdinfo->v) {
-	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
-	strcpy(pdinfo->varname[v], genr->varname);
-    } else 
-	if (!pdinfo->vector[v]) old_scalar = 1;
-
-    strcpy(pdinfo->label[v], genr->label);
-    pdinfo->vector[v] = !genr->scalar;
-    xx = genr->xvec[pdinfo->t1];
-
-    if (genr->scalar) {
-	strcat(pdinfo->label[v], _(" (scalar)"));
-	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
-	(*pZ)[v][0] = xx;
-    } else {
-	if (old_scalar) {
-	    (*pZ)[v] = realloc((*pZ)[v], pdinfo->n * sizeof ***pZ);
-	    if ((*pZ)[v] == NULL) return E_ALLOC;
-	}
-	if (_isconst(pdinfo->t1, pdinfo->t2, genr->xvec)) {
-	    for (t=0; t<n; t++) (*pZ)[v][t] = xx;
-	} else {
-	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-		(*pZ)[v][t] = genr->xvec[t];
-	}
-    }
-    if (genr->xvec != NULL) free(genr->xvec);
-    return 0;
-}
-
-/* ........................................................... */
 
 static int _full_list (const DATAINFO *pdinfo, CMD *command)
 /* create a gretl "list" containing all the vars in the data set,

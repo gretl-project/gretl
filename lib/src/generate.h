@@ -32,17 +32,6 @@ typedef enum {
 } genr_numbers;
 
 typedef struct {
-    double *xvec;
-    int varnum;
-    char varname[9];
-    char label[MAXLABEL];
-    int errcode;
-    char msg[MAXLABEL];
-    int special;
-    int scalar; 
-} GENERATE;
-
-typedef struct {
     int lag;
     int varnum;
     char varname[9];
@@ -50,9 +39,9 @@ typedef struct {
 
 /* functions follow */
  
-GENERATE generate (double ***pZ, DATAINFO *pdinfo, 
-		   const char *line, int model_count, 
-		   MODEL *pmod, int oflag);
+int generate (double ***pZ, DATAINFO *pdinfo, 
+	      const char *line, int model_count, 
+	      MODEL *pmod, int oflag);
 
 int dummy (double ***pZ, DATAINFO *pdinfo);
 

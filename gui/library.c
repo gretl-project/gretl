@@ -2052,26 +2052,21 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
 
 static void finish_genr (MODEL *pmod)
 {
-    GENERATE genr;
+    int err;
 
     if (pmod != NULL)
-	genr = generate(&Z, datainfo, line, model_count, 
-			pmod, 0); 
+	err = generate(&Z, datainfo, line, model_count, 
+		       pmod, 0); 
     else
-	genr = generate(&Z, datainfo, line, model_count, 
-			(last_model == 's')? models[0] : models[2], 
-			0); 
-    if (genr.errcode) {
-	gui_errmsg(genr.errcode);
+	err = generate(&Z, datainfo, line, model_count, 
+		       (last_model == 's')? models[0] : models[2], 0); 
+    if (err) {
+	gui_errmsg(err);
 	free(cmd_stack[n_cmds-1]);
 	n_cmds--;
     } else {
-	if (add_new_var(datainfo, &Z, &genr)) 
-	    errbox(_("Failed to add new variable"));
-	else {
-	    populate_clist(mdata->listbox, datainfo);
-	    data_status |= MODIFIED_DATA;
-	}
+	populate_clist(mdata->listbox, datainfo);
+	data_status |= MODIFIED_DATA;
     }
 }
 
@@ -3840,23 +3835,15 @@ static int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	{
-	    GENERATE genr;
-
-	    genr = generate(&Z, datainfo, line, model_count,
-			    (last_model == 's')? models[0] : models[2], 
-			    oflag);
-	    if ((err = genr.errcode)) 
-		errmsg(genr.errcode, prn);
-	    else {
-		if (add_new_var(datainfo, &Z, &genr)) {
-		    pprintf(prn, _("Failed to add new variable\n"));
-		} else {
-		    pprintf(prn, "%s", genr.msg); 
-		    if (exec_code == CONSOLE_EXEC)
-			populate_clist(mdata->listbox, datainfo);
-		}
-	    }
+	err = generate(&Z, datainfo, line, model_count,
+		       (last_model == 's')? models[0] : models[2], 
+		       oflag);
+	if (err) 
+	    errmsg(err, prn);
+	else {
+	    pprintf(prn, "%s\n", get_gretl_msg()); 
+	    if (exec_code == CONSOLE_EXEC)
+		populate_clist(mdata->listbox, datainfo);
 	}
 	break;
 

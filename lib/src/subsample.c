@@ -193,19 +193,13 @@ int set_sample_dummy (const char *line,
 	sn = isdummy(dumnum, oldinfo->t1, oldinfo->t2, *oldZ);
     } 
     else if (opt == OPT_R) { /* construct dummy from boolean */
-	GENERATE genr;
 	char formula[MAXLEN];
+	int err;
 
 	/* + 4 below to omit the word "smpl" */
 	sprintf(formula, "subdum=%s", line + 4);
-	genr = generate(oldZ, oldinfo, formula, 0, NULL, 1);
-	if (genr.errcode) {
-	    return 1;
-	}
-	if (add_new_var(oldinfo, oldZ, &genr)) {
-	    strcpy(gretl_errmsg, _("Failed to add sub-sampling dummy variable"));
-	    return 1;
-	}
+	err = generate(oldZ, oldinfo, formula, 0, NULL, 1);
+	if (err) return err;
 	subnum = varindex(oldinfo, "subdum");
 	dumnum = subnum;
 	sn = isdummy(subnum, oldinfo->t1, oldinfo->t2, *oldZ);

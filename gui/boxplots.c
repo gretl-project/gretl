@@ -1498,11 +1498,6 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     }
     free(s);
 
-    if (dataset_add_vars(nbool, pZ, pdinfo)) {
-	err = 1;
-	nbool = 0;
-    }
-
     /* now we add nbool new variables, with ID numbers origv,
        origv + 1, and so on.  These are the original variables
        that have boolean conditions attached, masked by those
@@ -1510,20 +1505,19 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 
     k = origv;
     for (i=1; i<=list[0] && !err; i++) {
-	if (bools[i-1] != NULL) {
-	    int t;
-	    GENERATE genr;
+	if (bools[i-1] != NULL) { /* FIXME new genr */
+	    int t, err;
 	    char formula[80];
 	    
 	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
-	    genr = generate(pZ, pdinfo, formula, 0, NULL, 0);
-	    if (genr.errcode) {
+	    err = generate(pZ, pdinfo, formula, 0, NULL, 0);
+	    if (err) {
 		errbox(_("boxplots: generation of dummy variable failed"));
 		fprintf(stderr, "%s\n", get_gretl_errmsg());
 		err = 1;
 	    } else {
 		for (t=0; t<n; t++) {
-		    if (genr.xvec[t] == 1.0) 
+		    if ((*pZ)[k][t] == 1.0) 
 			(*pZ)[k][t] = (*pZ)[list[i]][t];
 		    else 
 			(*pZ)[k][t] = NADBL;
@@ -1531,7 +1525,6 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		strcpy(pdinfo->varname[k], pdinfo->varname[list[i]]);
 		list[i] = k++;
 	    }
-	    free(genr.xvec);
 	}
     }
 

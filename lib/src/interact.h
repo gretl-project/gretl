@@ -54,8 +54,6 @@ int help (const char *cmd, const char *helpfile, PRN *prn);
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
 	   double ***pZ);
 
-int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr);
-
 int parseopt (const char *s);
 
 int shell (const char *arg);

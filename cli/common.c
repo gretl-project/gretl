@@ -24,7 +24,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		    PRN *prn) 
      /* special version of command executor for loop construct */
 {
-    int i, m, oflag = 0;
+    int i, err, m, oflag = 0;
     char linecpy[MAXLEN];
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
@@ -44,20 +44,12 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     switch (command.ci) {
 
     case GENR:
-	{
-	    GENERATE genr;
-
-	    genr = generate(&Z, datainfo, linecpy, model_count,
-			    tmpmodel, oflag);
-	    if (genr.errcode) {
-		errmsg(genr.errcode, prn);
-		return 1;
-	    } 
-	    else if (add_new_var(datainfo, &Z, &genr)) {
-		pprintf(prn, _("Failed to add new variable.\n"));
-		return 1;
-	    }
-	}
+	err = generate(&Z, datainfo, linecpy, model_count,
+		       tmpmodel, oflag);
+	if (err) {
+	    errmsg(err, prn);
+	    return 1;
+	} 
 	break;
 
     case OLS:

@@ -23,6 +23,7 @@
 
 int gretl_errno;
 char gretl_errmsg[ERRLEN];
+char gretl_msg[ERRLEN];
 
 const char *gretl_error_messages[] = {
     NULL,
@@ -137,4 +138,9 @@ int get_gretl_errno (void)
 char *get_gretl_errmsg (void)
 {
     return gretl_errmsg;
+}
+
+char *get_gretl_msg (void)
+{
+    return gretl_msg;
 }

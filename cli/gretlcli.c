@@ -775,19 +775,12 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case GENR:
-	{
-	    GENERATE genr;
-
-	    genr = generate(&Z, datainfo, line, model_count,
-			    models[0], oflag);
-	    if ((err = genr.errcode)) 
-		errmsg(err, prn);
-	    else {
-		if (add_new_var(datainfo, &Z, &genr)) 
-		    pprintf(prn, _("Failed to add new variable\n"));
-		else pprintf(prn, "%s", genr.msg);
-	    }
-	}
+	err = generate(&Z, datainfo, line, model_count,
+		       models[0], oflag);
+	if (err) 
+	    errmsg(err, prn);
+	else 
+	    pprintf(prn, "%s\n", get_gretl_msg());	
 	break;
 
     case GNUPLOT:

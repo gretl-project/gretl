@@ -776,16 +776,19 @@ void get_cmd_ci (const char *line, CMD *command)
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 {
-    GENERATE genr;
     char formula[MAXLEN];
-    int ret = -1;
+    int err, ret = -1;
 
     /* + 2 below to omit "if" */
     sprintf(formula, "iftest=%s", line + 2);
-    genr = generate(pZ, pdinfo, formula, 0, NULL, 1);
-    if (!genr.errcode && genr.xvec != NULL) {
-	ret = (genr.xvec[0] > 0);
-        free(genr.xvec);
+    err = generate(pZ, pdinfo, formula, 0, NULL, 1);
+    if (!err) {
+	int v = varindex(pdinfo, "iftest");
+	
+	if (v < pdinfo->v) {
+	    ret = (*pZ)[v][0];
+	    dataset_drop_vars(1, pZ, pdinfo);
+	}
     }
     return ret;
 }

@@ -23,6 +23,7 @@
 
 extern int gretl_errno;
 extern char gretl_errmsg[ERRLEN];
+extern char gretl_msg[ERRLEN];
 
 typedef enum {
     E_DATA = 2,
@@ -89,3 +90,5 @@ void errmsg (const int errcode, PRN *prn);
 int get_gretl_errno (void);
 
 char *get_gretl_errmsg (void);
+
+char *get_gretl_msg (void);
