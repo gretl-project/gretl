@@ -29,7 +29,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#undef LOOP_DEBUG
+#define LOOP_DEBUG 0
 
 #if defined(ENABLE_GMP)
 # include <gmp.h>
@@ -120,8 +120,6 @@ struct LOOPSET_ {
     char ineq;
     char brk;
 
-    int stopval;
-
     controller left;
     controller right;
     controller init;
@@ -184,6 +182,10 @@ static double loop_controller_get_value (controller *clr, const double **Z)
     } else if (clr->vnum > 0) {
 	ret = Z[clr->vnum][0];
     }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_controller_get_value: returning %g\n", ret);
+#endif
 
     return ret;
 }
@@ -274,7 +276,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     child->parent = loop;
     child->level = loop->level + 1;
 
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
     fprintf(stderr, "child loop %p has parent %p\n", 
 	    (void *) child, (void *) child->parent);
 #endif
@@ -397,21 +399,15 @@ loop_get_int_value (const LOOPSET *loop, const char *s,
 		    const double **Z, const DATAINFO *pdinfo,
 		    int *err)
 {
-    int ret = 0;
+    int ret = LOOP_VAL_UNDEF;
 
     if (numeric_string(s)) {
 	ret = atoi(s);
-    } else {
-	int v = ok_loop_var(loop, pdinfo, s);
-
-	if (v == LOOP_VAL_BAD) {
-	    *err = 1;
-	} else if (v == LOOP_VAL_UNDEF) {
-	    ret = LOOP_VAL_UNDEF;
-	} else {
-	    ret = Z[v][0];
-	}
     } 
+
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_get_int_value: returning %d\n", ret);
+#endif
 
     return ret;
 }
@@ -475,6 +471,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    nstart = loop_get_int_value(loop, start, Z, pdinfo, &err);
 	}
 	if (nstart == LOOP_VAL_UNDEF) {
+	    loop->init.vnum = LOOP_VAL_UNDEF;
 	    strncat(loop->init.vname, start, VNAMELEN - 1);
 	    missing = 1;
 	}
@@ -489,6 +486,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    nend = loop_get_int_value(loop, end, Z, pdinfo, &err);
 	}
 	if (nend == LOOP_VAL_UNDEF) {
+	    loop->right.vnum = LOOP_VAL_UNDEF;
 	    strncat(loop->right.vname, end, VNAMELEN - 1);
 	    missing = 1;
 	}
@@ -501,11 +499,13 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
     if (!err) {
-	loop->init.val = nstart;
-	loop->right.val = nend;
+	if (nstart != LOOP_VAL_UNDEF) {
+	    loop->init.val = nstart;
+	} 
 
-	loop->left.vnum = 0;
-	loop->right.vnum = 0;
+	if (nend != LOOP_VAL_UNDEF) {
+	    loop->right.val = nend;
+	} 
 
 	if (missing) {
 	    loop->itermax = LOOP_VAL_UNDEF;
@@ -520,9 +520,12 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	}
 
 	loop->ichar = ichar;
-	/* set up internal variable for genr */
-	loop_scalar_index(ichar, 1, loop->init.val);
     }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "parse_as_indexed_loop: init.val=%g, right.val=%g\n", 
+	    loop->init.val, loop->right.val);
+#endif
 
     return err;
 }
@@ -534,10 +537,6 @@ static int parse_as_count_loop (LOOPSET *loop,
 {
     int nt, err = 0;
 
-    /* note: "lvar" may be a numeric constant or a variable:
-       if it is a variable it is evaluated only once,
-       immediately prior to iteration
-    */
     nt = loop_get_int_value(loop, lvar, Z, pdinfo, &err);
 
     if (!err && nt <= 0 && nt != LOOP_VAL_UNDEF) {
@@ -546,8 +545,10 @@ static int parse_as_count_loop (LOOPSET *loop,
     }
 
     if (!err) {
-	loop->itermax = nt;
 	loop->type = COUNT_LOOP;
+	loop->init.val = 0;
+	loop->right.val = nf;
+	loop->itermax = nt;
     }
 
     return err;
@@ -563,7 +564,7 @@ test_forloop_element (const char *s, LOOPSET *loop,
 
     if (s == NULL) return 1;
 
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
     fprintf(stderr, "testing forloop element '%s'\n", s);
 #endif
 
@@ -694,6 +695,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 				char *s)
 {
     char vn1[VNAMELEN], vn2[VNAMELEN];
+    int v1, v2;
     int nf = 0;
     int err = 0;
 
@@ -702,8 +704,6 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
     if (sscanf(s, "%8[^.]..%8s", vn1, vn2) != 2) {
 	err = 1;
     } else {
-	int v1, v2;
-
 	v1 = varindex(pdinfo, vn1);
 	v2 = varindex(pdinfo, vn2);
 
@@ -733,6 +733,8 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
     
     if (!err) {
 	loop->type = EACH_LOOP;
+	loop->init.val = 0;
+	loop->right.val = nf;
 	loop->itermax = nf;
     }    
 
@@ -798,6 +800,8 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 
 	if (!err) {
 	    loop->type = EACH_LOOP;
+	    loop->init.val = 0;
+	    loop->right.val = nf;
 	    loop->itermax = nf;
 	}
     }
@@ -877,14 +881,14 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
     char ichar;
     int err = 0;
 
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
     fprintf(stderr, "parse_loopline: ploop = %p, loopstack = %d\n",
 	    (void *) ploop, loopstack);
 #endif
 
     if (ploop == NULL) {
 	/* starting from scratch */
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
 	fprintf(stderr, "parse_loopline: starting from scratch\n");
 #endif
 	loop = gretl_loop_new(NULL, 0);
@@ -894,7 +898,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	}
     } else if (loopstack > ploop->level) {
 	/* have to nest this loop */
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
 	fprintf(stderr, "parse_loopline: adding child\n");
 #endif
 	loop = gretl_loop_new(ploop, loopstack);
@@ -942,7 +946,8 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	err = 1;
     }
 
-    if (!err && loop->left.vnum == 0 && loop->itermax < 2) {
+    if (!err && loop->left.vnum == 0 && 
+	loop->itermax < 2 && loop->itermax != LOOP_VAL_UNDEF) {
 	strcpy(gretl_errmsg, _("Loop count missing or invalid\n"));
 	err = 1;
     }
@@ -1092,7 +1097,7 @@ static void controller_init (controller *clr)
 
 static void gretl_loop_init (LOOPSET *loop)
 {
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
     fprintf(stderr, "gretl_loop_init: initing loop at %p\n", (void *) loop);
 #endif
 
@@ -1575,7 +1580,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
     }
 
     for (i=0; i<loop->ncmds; i++) {
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
 	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
 		i+1, i, loop->lines[i]);
 #endif
@@ -1695,7 +1700,7 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 
     *gretl_errmsg = '\0';
 
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
     fprintf(stderr, "add_to_loop: loop = %p, loopstack = %d, line = '%s'\n", 
 	    (void *) loop, *loopstack, line);
 #endif
@@ -1766,7 +1771,7 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 
 	loop->ncmds += 1;
 
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
 	fprintf(stderr, "loop: ncmds=%d, line[%d] = '%s'\n",
 		loop->ncmds, nc, loop->lines[nc]);
 #endif
@@ -2233,24 +2238,15 @@ connect_loop_control_vars (LOOPSET *loop, const double **Z,
     }
 
     if (!err && loop->itermax == LOOP_VAL_UNDEF) {
-	if (loop->type == COUNT_LOOP) {
-	    v = varindex(pdinfo, loop->right.vname);
-	    if (v >= pdinfo->v) {
-		err = 1;
-	    } else {
-		loop->itermax = Z[v][0];
-	    }
+	double initv, maxv;
+
+	initv = loop_initval(loop, Z);
+	maxv = loop_rval(loop, Z);
+
+	if (na(initv) || na(maxv)) {
+	    err = 1;
 	} else {
-	    if (loop->stopval == LOOP_VAL_UNDEF) {
-		v = varindex(pdinfo, loop->right.vname);
-		if (v >= pdinfo->v) {
-		    err = 1;
-		} else {
-		    loop->itermax = Z[v][0] - loop->init.val + 1;
-		}
-	    } else {
-		loop->itermax = loop->stopval - loop->init.val + 1;
-	    }
+	    loop->itermax = maxv - initv + 1;
 	}
     }    
 
@@ -2268,10 +2264,11 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 
     if (!err) {
 	if (loop->type == FOR_LOOP) {
-	    Z[loop->left.vnum][0] = loop_initval(loop, (const double **) Z);
+	    Z[loop->left.vnum][0] = loop->init.val;
 	} else if (indexed_loop(loop)) {
-	    loop_scalar_index(loop->ichar, 1, 
-			      loop_initval(loop, (const double **) Z));
+	    int init_int = (int) loop->init.val;
+
+	    loop_scalar_index(loop->ichar, 1, init_int);
 	}
 
 	set_active_loop(loop);
@@ -2353,7 +2350,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
     gretl_set_text_pause(0);
 
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
 #endif
 
@@ -2363,7 +2360,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	int childnum = 0;
 	int j;
 
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
 
@@ -2372,7 +2369,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	}
 
 	for (j=0; !err && j<loop->ncmds; j++) {
-#ifdef LOOP_DEBUG
+#if LOOP_DEBUG
 	    fprintf(stderr, "loop->lines[%d] = '%s'\n", j, loop->lines[j]);
 #endif
 	    strcpy(linecpy, loop->lines[j]);
@@ -2668,6 +2665,11 @@ int loop_scalar_index (int c, int opt, int put)
     int i = loop_index_char_pos(c);
     int ret = -1;
 
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_scalar_index: c='%c', opt=%d, put=%d\n", 
+	    c, opt, put);
+#endif
+
     if (i >= 0) {
 	if (opt == 1) {
 	    idx[i] = put;
@@ -2676,6 +2678,10 @@ int loop_scalar_index (int c, int opt, int put)
 	}
 	ret = idx[i];
     }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_scalar_index: returning %d\n", ret);
+#endif
 
     return ret;
 }
