@@ -38,6 +38,10 @@
 # include <windows.h>
 #endif
 
+#if !GLIB_CHECK_VERSION(2,0,0)
+# define OLD_GTK
+#endif
+
 #ifdef OLD_GTK
 # include <gdk-pixbuf/gdk-pixbuf.h>
 #endif
@@ -1978,8 +1982,13 @@ static void model_drag_connect (GtkWidget *w, MODEL *pmod)
     gtk_drag_source_set(w, GDK_BUTTON1_MASK,
                         &model_table_drag_target,
                         1, GDK_ACTION_COPY);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(w), "drag_data_get",
+		       GTK_SIGNAL_FUNC(drag_model), pmod);
+#else
     g_signal_connect(G_OBJECT(w), "drag_data_get",
                      G_CALLBACK(drag_model), pmod);
+#endif
 }
 
 /* ........................................................... */
@@ -2331,7 +2340,7 @@ static void session_build_popups (void)
 
 static void iconview_connect_signals (GtkWidget *iconview)
 {
-#ifdef OLD_GDK
+#ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(iconview), "destroy",
 		     GTK_SIGNAL_FUNC(session_view_free), NULL);
     gtk_signal_connect(GTK_OBJECT(iconview), "key_press_event",
@@ -2379,8 +2388,13 @@ void view_session (void)
     gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(scroller), "button_press_event",
+		       GTK_SIGNAL_FUNC(session_icon_click), NULL);
+#else
     g_signal_connect(G_OBJECT(scroller), "button_press_event",
 		     G_CALLBACK(session_icon_click), NULL);
+#endif
 
     gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
 
@@ -2403,7 +2417,7 @@ void view_session (void)
 
 #ifdef OLD_GTK
 
-static void create_gobj_icon (gui_obj *gobj, const char **data)
+static void create_gobj_icon (gui_obj *gobj, char **data)
 {
     GdkPixmap *pixmap;
     GdkBitmap *mask;
@@ -2424,7 +2438,7 @@ static void create_gobj_icon (gui_obj *gobj, const char **data)
     gtk_container_add(GTK_CONTAINER(gobj->icon), image);
     gtk_widget_show(image);
 
-    if (sort == 't') table_drag_setup(gobj->icon);
+    if (gobj->sort == 't') table_drag_setup(gobj->icon);
 
     gobj->label = gtk_label_new(gobj->name);
 
@@ -2493,7 +2507,11 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     default: break;
     }
 
+#ifdef OLD_GTK
+    create_gobj_icon (gobj, data);
+#else
     create_gobj_icon (gobj, (const char **) data);
+#endif
 
     return gobj;
 } 
