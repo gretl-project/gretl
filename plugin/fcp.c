@@ -44,14 +44,14 @@ static real c_b164 = 2.f;
 /*      CONSISTENT AND ROBUST. */
 /* DHTDP SONO LE DERIVATE DI HT RISPETTO A TUTTI I PARAMETRI */
 
-/* Subroutine */ int vsanal_(integer *ninit, integer *nfinsm, doublereal *
-	yobs, integer *iread, doublereal *xobs, integer *nexo, 
-	doublereal *umc, doublereal *ydet, doublereal *yy, 
-	doublereal *coeff, integer *ncoeff, doublereal *d__, doublereal *oldc,
-	 doublereal *vc, doublereal *res2, doublereal *res, doublereal *sigma,
-	 doublereal *a, doublereal *ystoc, doublereal *amax, doublereal *amin,
-	 doublereal *b, integer *ncoefb, integer *iters, integer *info,
-         PRN *prn)
+int vsanal_(integer *ninit, integer *nfinsm, doublereal *
+	    yobs, integer *iread, doublereal *xobs, integer *nexo, 
+	    doublereal *umc, doublereal *ydet, doublereal *yy, 
+	    doublereal *coeff, integer *ncoeff, doublereal *d__, doublereal *oldc,
+	    doublereal *vc, doublereal *res2, doublereal *res, doublereal *sigma,
+	    doublereal *a, doublereal *ystoc, doublereal *amax, doublereal *amin,
+	    doublereal *b, integer *ncoefb, integer *iters, integer *info,
+	    PRN *prn)
 {
     /* Format strings */
 #ifdef PRINT_LL
@@ -466,12 +466,12 @@ L999:
 
 /* SUBROUTINE FOR OLS ESTIMATION */
 
-/* Subroutine */ int ols_(integer *ninit, integer *nfinsm, doublereal *yobs, 
-	integer *iread, doublereal *xobs, integer *nexo, 
-	doublereal *umc, doublereal *yy, doublereal *c__, 
-	integer *ncoeff, doublereal *oldc, doublereal *vc, doublereal *ystoc, 
-	doublereal *amax, doublereal *aux, doublereal *b, integer *ncoefb, 
-	doublereal *g)
+int ols_(integer *ninit, integer *nfinsm, doublereal *yobs, 
+	 integer *iread, doublereal *xobs, integer *nexo, 
+	 doublereal *umc, doublereal *yy, doublereal *c__, 
+	 integer *ncoeff, doublereal *oldc, doublereal *vc, doublereal *ystoc, 
+	 doublereal *amax, doublereal *aux, doublereal *b, integer *ncoefb, 
+	 doublereal *g)
 {
     /* Format strings */
     static char fmt_101[] = "(\002 OLS: MATRIX IS SINGULAR\002,/,\002 ITERAT"
@@ -2929,35 +2929,6 @@ L32:
 
 
 /* Model: Bollerslev and Ghysels */
-
-
-int vsmode_orig(doublereal *y, doublereal *x, integer *nexo, 
-		integer *iread, integer *i__, doublereal *yl,
-		doublereal *u, doublereal *a, doublereal *z__,
-		integer *ncoeff)
-{
-    /* System generated locals */
-    integer x_dim1, x_offset, yl_dim1, yl_offset;
-
-/* *********************************************************** */
-/* MEAN EQUATION (LINEAR REGRESSION) */
-    /* Parameter adjustments */
-    x_dim1 = *nexo;
-    x_offset = 1 + x_dim1;
-    x -= x_offset;
-    --z__;
-    yl_dim1 = 1;
-    yl_offset = 1 + yl_dim1;
-    yl -= yl_offset;
-    --y;
-    --u;
-    --a;
-
-    /* Function Body */
-    z__[1] = a[1] + u[1];
-/* **************************************************** */
-    return 0;
-} /* vsmode_ */
 
 int vsmode_(doublereal *y, doublereal *x, integer *nexo, 
 	    integer *iread, integer *i__, doublereal *yl,
