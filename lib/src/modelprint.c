@@ -1330,7 +1330,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     int gotnan = 0;
     int is_discrete = (pmod->ci == PROBIT || pmod->ci == LOGIT);
 
-    if (prn == NULL || (opt & OPT_Q)) return 0;
+    if (prn == NULL || (opt & OPT_Q)) {
+	return 0;
+    }
 
     if (prn->format != GRETL_PRINT_FORMAT_PLAIN) {
 	model_format_start(prn);

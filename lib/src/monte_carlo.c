@@ -1236,6 +1236,7 @@ static int update_loop_print (LOOPSET *loop, int cmdnum,
 static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
 				PRN *prn, PATHS *ppaths)
 {
+    char linecpy[MAXLINE];
     int i;
 
     if (loop->type != COUNT_LOOP) {
@@ -1248,7 +1249,10 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 		i+1, i, loop->lines[i]);
 #endif
 	if (!loop->progressive && loop->ci[i] == OLS) {
-	    gretlopt opt = get_gretl_options(loop->lines[i], NULL);
+	    gretlopt opt;
+
+	    strcpy(linecpy, loop->lines[i]);
+	    opt = get_gretl_options(linecpy, NULL);
 	    
 	    if (opt & OPT_P) {
 		/* deferred printing of model was requested */
@@ -1406,7 +1410,7 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 	top_n_tail(line);
 
 	if (ci == PRINT && loop->type != COUNT_LOOP) {
-	    /* fixme: what's going on here */
+	    /* fixme: what's going on here? */
 	    loop->ci[nc] = 0;
 	} else {
 	    loop->ci[nc] = ci;
@@ -1975,7 +1979,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    lastmod = loop->models[m];
 		    model_count_minus();
 		} else {
-		    (models[0])->ID = ++modnum; /* FIXME */
+		    (models[0])->ID = ++modnum; /* FIXME? */
 		    printmodel(models[0], pdinfo, cmd.opt, prn);
 		    lastmod = models[0];
 		}
@@ -2045,7 +2049,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case PVALUE:
-		batch_pvalue(loop->lines[j], (const double **) *pZ, pdinfo, prn);
+		batch_pvalue(linecpy, (const double **) *pZ, pdinfo, prn);
 		break;
 
 	    default: 
