@@ -195,3 +195,8 @@ void gretl_errmsg_set (const char *str)
 	strncat(gretl_errmsg, str, ERRLEN - 1);
     }
 }
+
+void gretl_errmsg_clear (void)
+{
+    *gretl_errmsg = '\0';
+}

@@ -273,7 +273,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int nunits, int *unit_obs, int T,
 		    hausman_t *haus, PRN *prn) 
 {
-    int i, t, start, oldv = pdinfo->v;
+    int i, j, t, start, oldv = pdinfo->v;
     int dvlen, ndum = 0;
     int *dvlist;
     double var, F;
@@ -284,8 +284,13 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    ndum++;
 	}
     }
+
     dvlen = pmod->list[0] + ndum;
     ndum--; 
+
+#ifdef PDEBUG
+    fprintf(stderr, "ndum = %d, dvlen = %d\n", ndum, dvlen);
+#endif
 
     /* We can be assured there's an intercept in the original
        regression */
@@ -301,23 +306,36 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     start = 0;
-    for (i=0; i<ndum; i++) {
+    j = 0;
+    for (i=0; i<nunits; i++) {
+	int dv = oldv + j;
+
 	if (unit_obs[i] < 2) {
+	    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+		start += T;
+	    } else {
+		start++;
+	    }
 	    continue;
 	}
+	sprintf(pdinfo->varname[dv], "unit_%d", i + 1);
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[oldv+i][t] = 0.0;
+	    (*pZ)[dv][t] = 0.0;
 	}
 	if (pdinfo->time_series == STACKED_TIME_SERIES) {
 	    for (t=start; t<start+T; t++) {
-		(*pZ)[oldv+i][t] = 1.0;
+		(*pZ)[dv][t] = 1.0;
 	    }
 	    start += T;
 	} else {
 	    for (t=start; t<pdinfo->n; t += nunits) {
-		(*pZ)[oldv+i][t] = 1.0;
+		(*pZ)[dv][t] = 1.0;
 	    }
 	    start++;
+	}
+	j++;
+	if (j == ndum) {
+	    break;
 	}
     }
 
@@ -326,22 +344,25 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     for (i=1; i<=pmod->list[0]; i++) {
 	dvlist[i] = pmod->list[i];
     }
-    for (i=1; i<=ndum; i++) {
-	dvlist[pmod->list[0] + i] = oldv + i - 1;
+    for (i=0; i<ndum; i++) {
+	dvlist[pmod->list[0] + i + 1] = oldv + i;
     }
 
 #ifdef PDEBUG
-    fprintf(stderr, "LSDV: about to run OLS\n");
+    printlist(dvlist, "dvlist");
 #endif
 
     lsdv = lsq(dvlist, pZ, pdinfo, OLS, OPT_A, 0.0);
+
+#ifdef PDEBUG
+    printmodel(&lsdv, pdinfo, OPT_NONE, prn);
+#endif
 
     if (lsdv.errcode) {
 	var = NADBL;
 	pputs(prn, _("Error estimating fixed effects model\n"));
 	errmsg(lsdv.errcode, prn);
     } else {
-	haus->sigma_e = lsdv.sigma;
 	var = lsdv.sigma * lsdv.sigma;
 	pputs(prn, 
 	      _("                          Fixed effects estimator\n"
@@ -353,21 +374,29 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	/* skip the constant in this printing */
 	for (i=1; i<pmod->list[0] - 1; i++) {
 	    print_panel_coeff(&lsdv, &lsdv, pdinfo, i, prn);
-	    haus->bdiff[i-1] = lsdv.coeff[i];
+	    if (haus != NULL) {
+		haus->bdiff[i-1] = lsdv.coeff[i];
+	    }
 	}
 
-	for (i=0; i<=ndum; i++) {
+	j = 0;
+	for (i=0; i<nunits; i++) {
 	    /* print per-unit intercept estimates */
 	    char dumstr[VNAMELEN];
 	    double x;
 
-	    if (i == ndum) {
+	    if (unit_obs[i] < 2) {
+		continue;
+	    }
+
+	    if (j == ndum) {
 		x = lsdv.coeff[0];
 	    } else {
-		x = lsdv.coeff[i + pmod->list[0] - 1] + lsdv.coeff[0];
+		x = lsdv.coeff[j + pmod->list[0] - 1] + lsdv.coeff[0];
 	    }
 	    sprintf(dumstr, "a_%d", i + 1);
 	    pprintf(prn, "%*s: %14.4g\n", VNAMELEN, dumstr, x);
+	    j++;
 	}
 
 	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
@@ -380,8 +409,11 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		     "the pooled OLS model\nis adequate, in favor of the fixed "
 		     "effects alternative.)\n\n"));
 
-	makevcv(&lsdv);
-	vcv_slopes(haus, &lsdv, nunits, 0);
+	if (haus != NULL) {
+	    makevcv(&lsdv);
+	    haus->sigma_e = lsdv.sigma;
+	    vcv_slopes(haus, &lsdv, nunits, 0);
+	}
     }
 
     clear_model(&lsdv);
@@ -595,7 +627,7 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
 	    }
 	    start++;
 	}
-	ubar[i] /= (double) effT; 
+	ubar[i] /= (double) unit_obs[i]; 
 	eprime += ubar[i] * ubar[i];
     }
 
@@ -754,6 +786,7 @@ static int effective_T (int *unit_obs, int nunits)
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		       PRN *prn)
 {
+    int unbal = gretl_model_get_int(pmod, "unbalanced");
     int nunits, ns, T;
     int effn, effT;
     int *unit_obs = NULL;
@@ -791,24 +824,33 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    nunits, T, effn, effT);
 #endif
 
-    if (effn > pmod->ncoeff) {
+    if (!unbal && effn > pmod->ncoeff) {
 	ns = pmod->ncoeff - 1;
 	err = haus_alloc(&haus, ns);
 	if (err) {
 	    goto bailout;
 	}
     }   
-    
-    pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
-		   "cross-sectional units\n "
-		   "                        observed over %d periods\n\n"), 
-	    effn, effT);
 
-    var2 = LSDV(pmod, pZ, pdinfo, nunits, unit_obs, T, &haus, prn);
+    if (!unbal) {
+	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
+		       "cross-sectional units\n "
+		       "                        observed over %d periods\n\n"), 
+		effn, effT);
+    }
+
+    var2 = LSDV(pmod, pZ, pdinfo, nunits, unit_obs, T, 
+		(unbal)? NULL : &haus, prn);
 
 #ifdef PDEBUG
     fprintf(stderr, "panel_diagnostics: LSDV gave variance = %g\n", var2);
 #endif
+
+    if (unbal) {
+	pprintf(prn, "Omitting random effects model since "
+		"panel is unbalanced\n");
+	goto bailout;
+    }
 
     breusch_pagan_LM(pmod, pdinfo, nunits, unit_obs, T, effT, prn);
 
@@ -1000,6 +1042,8 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
     int orig_v = pdinfo->v;
     int i, iter = 0;
 
+    gretl_errmsg_clear();
+
     if (opt & OPT_T) {
 	/* iterating: no degrees-of-freedom correction */
 	wlsopt |= OPT_N; 
@@ -1035,6 +1079,8 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (opt & OPT_T) {
 	if (singleton_check(unit_obs, nunits)) {
+	    gretl_errmsg_set(_("Can't produce ML estimates: "
+			       "some units have only one observation"));
 	    mdl.errcode = E_DF;
 	    goto bailout;
 	}
@@ -1083,8 +1129,12 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
 
 	if (opt & OPT_V) {
-	    pprintf(prn, "\n*** %s %d ***\n", _("iteration"), 
-		    iter);
+	    if (opt & OPT_T) {
+		pprintf(prn, "\n*** %s %d ***\n", _("iteration"), 
+			iter);
+	    } else {
+		pputc(prn, '\n');
+	    }
 	    pputs(prn, " unit    variance\n");
 	    for (i=0; i<nunits; i++) {
 		if (unit_obs[i] > 0) {

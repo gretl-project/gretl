@@ -101,3 +101,5 @@ int print_gretl_msg (PRN *prn);
 int print_gretl_errmsg (PRN *prn);
 
 void gretl_errmsg_set (const char *str);
+
+void gretl_errmsg_clear (void);
