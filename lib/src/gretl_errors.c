@@ -105,7 +105,7 @@ const char *gretl_error_messages[] = {
 
 char *get_errmsg (const int errcode, char *errtext, PRN *prn)
 {
-    if (errcode < E_MAX && gretl_error_messages[errcode]) {
+    if (errcode > 0 && errcode < E_MAX && gretl_error_messages[errcode]) {
 	if (errtext == NULL) {
 	    pprintf(prn, "%s\n", _(gretl_error_messages[errcode]));
 	    return NULL;

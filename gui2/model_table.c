@@ -345,17 +345,14 @@ static void center_in_field (const char *s, int width, PRN *prn)
     }
 }
 
-static const char *short_estimator_string (const MODEL *pmod, 
-					   int format)
+static const char *short_estimator_string (int ci, int format)
 {
-    int ci = pmod->ci;
-
     if (ci == HSK) return N_("HSK");
     else if (ci == CORC) return N_("CORC");
     else if (ci == HILU) return N_("HILU");
     else if (ci == ARCH) return N_("ARCH");
     else if (ci == POOLED) return N_("OLS");
-    else return estimator_string(pmod, format);
+    else return estimator_string(ci, format);
 }
 
 static const char *get_asts (double pval)

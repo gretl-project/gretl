@@ -1239,6 +1239,12 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     if (prn->format != GRETL_PRINT_FORMAT_PLAIN) {
 	model_format_start(prn);
+    } else if (pmod->ci == ARMA || pmod->ci == TOBIT) {
+	int iters = gretl_model_get_int(pmod, "iters");
+
+	if (iters > 0) {
+	    pprintf(prn, "Convergence achieved after %d iterations\n", iters);
+	}
     }
 
     print_model_heading (pmod, pdinfo, prn);

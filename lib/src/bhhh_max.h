@@ -17,21 +17,41 @@
  * Boston, MA 02111-1307, USA.
  */
 
+enum {
+    PRESERVE_OPG_MODEL = 1 << 0,
+    FULL_VCV_MATRIX    = 1 << 1
+} bhhh_opts;
+
 typedef struct _model_info model_info;
 
 struct _model_info {
-    int k;
-    int p, q, r;
-    int t1, t2, n;
-    int n_series;
-    double ll;
-    double ll2;
-    int *list;
-    double *theta;
-    double *delta;
-    double *deltmp;
-    double **series;
-    gretl_matrix *VCV;
+
+    /* members that should be set by caller of bhhh_max: */
+
+    int k;              /* number of parameters */
+    int p, q, r;        /* for use with ARMA: AR, MA orders and number of
+                           other regressors */
+    int t1, t2;         /* starting and ending point of sample */
+    int n_series;       /* number of additional series needed in the
+                           likelihood and/or score calculations */
+    double tol;         /* tolerance for convergence */
+    unsigned char opts; /* options from among bhhh_opts */
+
+    /* members set within bhhh_max: */
+
+    int n;            /* length of series */
+    double ll;        /* log-likelihood */
+    double ll2;       /* temporary log-likelihood value */
+    double s2;        /* error variance */
+    int *list;        /* OPG regression list */
+    double *theta;    /* vector of parameters */
+    double **series;  /* additional series */
+
+    /* full VCV matrix from OPG regression, if (opts & FULL_VCV_MATRIX) */
+    gretl_matrix *VCV; 
+
+    /* pointer to OPG model, if (opts & PRESERVE_OPG_MODEL) */
+    MODEL *pmod;
 };
 
 void model_info_free (model_info *model);
@@ -39,4 +59,4 @@ void model_info_free (model_info *model);
 int bhhh_max (int (*loglik) (double *, const double **, double **,
 			     model_info *, int), 
 	      const double **X, const double *init_coeff,
-	      int n_init_coeff, model_info *model, PRN *prn);
+	      model_info *model, PRN *prn);
