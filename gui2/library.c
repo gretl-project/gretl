@@ -5750,7 +5750,6 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Failed to create empty data set\n"));
 	    break;
 	}
-	*paths.datfile = '\0';
 	register_data(NULL, NULL, 0);
 	break;
 

@@ -239,6 +239,46 @@ void nls_init (void)
 }
 #endif /* ENABLE_NLS */
 
+void free_modelspec (void)
+{
+    int i = 0;
+
+    if (modelspec != NULL) {
+	while (modelspec[i].cmd != NULL) {
+	    free(modelspec[i].cmd);
+	    if (modelspec[i].subdum != NULL) {
+		free(modelspec[i].subdum);
+	    }
+	    i++;
+	}
+	free(modelspec);
+	modelspec = NULL;
+    }
+}
+
+int clear_data (void)
+{
+    int err = 0;
+
+    *paths.datfile = 0;
+    err = restore_full_sample(&subZ, &fullZ, &Z,
+			      &subinfo, &fullinfo, &datainfo);
+    if (Z != NULL) free_Z(Z, datainfo); 
+    clear_datainfo(datainfo, CLEAR_FULL);
+    Z = NULL;
+    fullZ = NULL;
+    data_status = 0;
+
+    clear_model(models[0], NULL);
+    clear_model(models[1], NULL);
+
+    free_modelspec();
+    modelspec = NULL;
+
+    model_count = 0;
+
+    return err;
+}
 
 int main (int argc, char *argv[])
 {
@@ -539,15 +579,7 @@ int main (int argc, char *argv[])
     free(line);
 
     if (modelspec != NULL) {
-	i = 0;
-	while (modelspec[i].cmd != NULL) {
-	    free(modelspec[i].cmd);
-	    if (modelspec[i].subdum != NULL) {
-		free(modelspec[i].subdum);
-	    }
-	    i++;
-	}
-	free(modelspec);
+	free_modelspec();
     }
 
     if (!batch) remove(paths.plotfile);
@@ -1098,10 +1130,14 @@ void exec_line (char *line, PRN *prn)
 	    pputs(prn, _("import command is malformed\n"));
 	    break;
 	}
-	if (cmd.opt)
+	if (data_status) {
+	    clear_data();
+	}
+	if (cmd.opt) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
-	else
+	} else {
 	    err = import_csv(&Z, &datainfo, datfile, &paths, prn);
+	}
 	if (!err) { 
 	    data_status = 1;
 	    print_smpl(datainfo, 0, prn);
@@ -1135,6 +1171,10 @@ void exec_line (char *line, PRN *prn)
 	    }
 	}
 
+	if (data_status && !dbdata) {
+	    clear_data();
+	}
+
 	if (chk == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, datfile, &paths, prn);
 	} else if (chk == GRETL_BOX_DATA) {
@@ -1154,7 +1194,6 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	strncpy(paths.datfile, datfile, MAXLEN-1);
-	fullZ = NULL;
 	data_status = 1;
 	if (datainfo->v > 0 && !dbdata) {
 	    varlist(datainfo, prn);
@@ -1264,11 +1303,16 @@ void exec_line (char *line, PRN *prn)
 	    err = 1;
 	    break;
 	}
+	if (data_status) {
+	    clear_data();
+	}	
 	err = open_nulldata(&Z, datainfo, data_status, 
 			    nulldata_n, prn);
-	if (err) 
+	if (err) { 
 	    pputs(prn, _("Failed to create empty data set\n"));
-	else data_status = 1;	
+	} else {
+	    data_status = 1;
+	}
 	break;
 
     case OLS:
