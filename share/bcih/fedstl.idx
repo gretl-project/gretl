@@ -1,0 +1,985 @@
+# St Louis Fed (various series, large)
+commerci  Commercial Paper Outstanding - All Issuers; Bn. $; SA
+M  1970.01 - 1993.06  n = 282
+currdd  Currency Component of Money Stock plus Demand Deposits; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+currns  Currency Component of Money Stock; Bn. $; NSA
+M  1947.01 - 2004.07  n = 691
+currsl  Currency Component of Money Stock; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+dddfcbns  Demand Deposits due to Foreign Commercial Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 545
+dddfoins  Demand Deposits due to Foreign Official Institutions; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+debtns  Outstanding Credit Mkt. Debt of Gov. and Private Nonfin. Sectors; Bn. $; NSA
+M  1959.02 - 2002.02  n = 517
+debtsl  Outstanding Credit Mkt. Debt of Gov. and Private Nonfin. Sectors; Bn. $; SA
+M  1959.02 - 2002.02  n = 517
+demdepns  Demand Deposits at Commercial Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+demdepsl  Demand Deposits at Commercial Banks; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+eurons  Overnight and Term Euro$; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+imfns  Institutional Money Funds; Bn. $; NSA
+M  1974.01 - 2004.07  n = 367
+imfsl  Institutional Money Funds; Bn. $; SA
+M  1974.01 - 2004.07  n = 367
+ira  Total IRA and Keough Accounts; Bn. $; NSA
+M  1962.11 - 2004.07  n = 501
+iracb  IRA and Keough Accounts at Commercial Banks; Bn. $; NSA
+M  1967.12 - 2004.07  n = 440
+lgtdcbns  Large Time Deposits at Commercial Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+lgtdcbsl  Large Time Deposits at Commercial Banks; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+lgtdti  Large Time Deposits at Thrift Institutions; Bn. $; SA
+M  1970.02 - 2004.07  n = 414
+lqdassns  Liquid Assets; Bn. $; NSA
+M  1959.01 - 1998.09  n = 477
+lqdasssl  Liquid Assets; Bn. $; SA
+M  1959.01 - 1998.09  n = 477
+ltdns  Large Time Deposits, Total; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+ltdsl  Large Time Deposits, Total; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+m1ns  M1 Money Stock; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+m1sl  M1 Money Stock; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+m2ns  M2 Money Stock; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+m2sl  M2 Money Stock; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+m3ns  M3 Money Stock; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+m3sl  M3 Money Stock; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+mzmns  Money Zero Maturity Money Stock; Bn. $; NSA
+M  1974.01 - 2004.07  n = 367
+mzmsl  Money Zero Maturity Money Stock; Bn. $; SA
+M  1974.01 - 2004.07  n = 367
+mzmown  Money Zero Maturity Own Rate
+M  1974.01 - 2004.07  n = 367
+m3sl  M3 Money Stock; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+nbcb  U.S. Gov. Deposits, Note Balances at Depository Institutions; Bn. $; NSA
+M  1978.11 - 2004.07  n = 309
+nonfcp  Commercial Paper Outstanding of Nonfin. Companies; Bn. $; SA
+M  1970.01 - 1993.06  n = 282
+ocdns  Other Checkable Deposits; Bn. $; NSA
+M  1963.01 - 2004.07  n = 499
+ocdsl  Other Checkable Deposits; Bn. $; SA
+M  1963.01 - 2004.07  n = 499
+rmfns  Retail Money Funds; Bn. $; NSA
+M  1973.11 - 2004.07  n = 369
+rmfsl  Retail Money Funds; Bn. $; SA
+M  1973.11 - 2004.07  n = 369
+rpns  Overnight and Term RPs; Bn. $; NSA
+M  1970.01 - 2004.07  n = 415
+savingns  Savings Deposits, Total; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+savingsl  Savings Deposits, Total; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+stdcbns  Small Time Deposits at Commercial Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+stdcbsl  Small Time Deposits at Commercial Banks; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+stdns  Small Time Deposits, Total; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+stdsl  Small Time Deposits, Total; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+stdti  Small Time Deposits at Thrift Institutions; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+svgcbns  Savings Deposits at Commercial Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+svgcbsl  Savings Deposits at Commercial Banks; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+svgti  Savings Deposits at Thrift Institutions; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+svstcbns  Savings and Small Time Deposits at Commercial Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+svstcbsl  Savings and Small Time Deposits at Commercial Banks; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+svstns  Savings and Small Time Deposits, Total; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+svstsl  Savings and Small Time Deposits, Total; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+tcdsl  Total Checkable Deposits; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+tottcbsl  Total Time Deposits at Commercial Banks; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+tottdp  Total Time Deposits at all Depository Institutions; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+tssrr  Time and Savings Deposits subject to Reserve Requirements; Bn. $; NSA
+M  1929.01 - 1987.10  n = 706
+tvcksns  Travelers' Checks Outstanding; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+tvckssl  Travelers' Checks Outstanding; Bn. $; SA
+M  1959.01 - 2004.07  n = 547
+usgdcb  U.S. Gov. Demand Deposits at Commercial Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+usgvddns  U.S. Gov. Demand Deposits and Note Balances; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+ba3m  3-Month Bankers Acceptances Rate
+M  1941.01 - 2000.06  n = 714
+ba6m  6-Month Bankers Acceptances Rate
+M  1976.01 - 2000.06  n = 294
+cd1m  1-Month Certificate of Deposit Rate; Secondary Mkt.
+M  1965.12 - 2004.07  n = 464
+cd3m  3-Month Certificate of Deposit Rate; Secondary Mkt.
+M  1964.06 - 2004.07  n = 482
+cd6m  6-Month Certificate of Deposit Rate; Secondary Mkt.
+M  1964.06 - 2004.07  n = 482
+cp1m  1-Month Prime Commercial Paper Rate
+M  1971.04 - 1997.08  n = 317
+cp3m  3-Month Prime Commercial Paper Rate
+M  1971.04 - 1997.08  n = 317
+cp6m  6-Month Prime Commercial Paper Rate
+M  1970.01 - 1997.08  n = 332
+mdiscrt  Discount Rate
+M  1950.01 - 2002.12  n = 636
+fedfunds  Federal Funds Rate
+M  1954.07 - 2004.07  n = 601
+fha30  30-year F.H.A. Mortgage Rate
+M  1964.01 - 2000.06  n = 438
+gs3m  3-Month Treasury Constant Maturity Rate
+M  1982.01 - 2004.07  n = 271
+gs6m  6-Month Treasury Constant Maturity Rate
+M  1982.01 - 2004.07  n = 271
+gs1  One-year Treasury Constant Maturity Rate
+M  1953.04 - 2004.07  n = 616
+gs2  Two-year Treasury Constant Maturity Rate
+M  1976.06 - 2004.07  n = 338
+gs3  Three-year Treasury Constant Maturity Rate
+M  1953.04 - 2004.07  n = 616
+gs5  Five-year Treasury Constant Maturity Rate
+M  1953.04 - 2004.07  n = 616
+gs7  Seven-Year Treasury Constant Maturity Rate
+M  1969.07 - 2004.07  n = 421
+gs10  Ten-year Treasury Constant Maturity Rate
+M  1953.04 - 2004.07  n = 616
+gs20  Twenty-Year Treasury Constant Maturity Rate
+M  1953.04 - 2004.07  n = 616
+gs30  Thirty-year Treasury Constant Maturity Rate
+M  1977.02 - 2002.01  n = 300
+ltbd  Long-Term U.S. Gov. Securities; Excluding Flower Bonds
+M  1972.08 - 1996.09  n = 290
+ltgovtbd  Long-Term U.S. Gov. Securities; Including Flower Bonds
+M  1925.01 - 2000.06  n = 906
+mprime  Bank Prime Loan Rate
+M  1949.01 - 2004.07  n = 667
+tb3ms  3-Month Treasury Bill Rate, Secondary Mkt.
+M  1934.01 - 2004.07  n = 847
+tb6ms  6-Month Treasury Bill Rate, Secondary Mkt.
+M  1958.12 - 2004.07  n = 548
+tb1ys  1-Year Treasury Bill Rate, Secondary Mkt.
+M  1959.07 - 2001.07  n = 505
+tb3ma  3-Month Treasury Bill Rate, Auction Average
+M  1941.02 - 2000.06  n = 713
+tb6ma  6-Month Treasury Bill Rate, Auction Average
+M  1960.01 - 2000.06  n = 486
+tb1ya  1-Year Treasury Bill Rate, Auction Average
+M  1959.04 - 2000.06  n = 493
+cpn1m  1-Month AA Nonfin. Commercial Paper
+M  1997.01 - 2004.07  n = 91
+cpn2m  2-Month AA Nonfin. Commercial Paper
+M  1997.01 - 2004.07  n = 91
+cpn3m  3-Month AA Nonfin. Commercial Paper
+M  1997.01 - 2004.07  n = 91
+cpf1m  1-Month AA Financial Commercial Paper
+M  1997.01 - 2004.07  n = 91
+cpf2m  2-Month AA Financial Commercial Paper
+M  1997.01 - 2004.07  n = 91
+cpf3m  3-Month AA Financial Commercial Paper
+M  1997.01 - 2004.07  n = 91
+aaa  Moody's Seasoned Aaa Corporate Bond Yield
+M  1919.01 - 2004.07  n = 1027
+baa  Moody's Seasoned Baa Corporate Bond Yield
+M  1919.01 - 2004.07  n = 1027
+tp3ha32  30-1/2-Year 3-3/8% Treasury Inflation-Indexed Bond, Due 4/15/2032 
+M  2001.11 - 2004.07  n = 33
+tp30a29  30-Year 3-7/8% Treasury Inflation-Indexed Bond, Due 4/15/2029 
+M  1999.04 - 2004.07  n = 64
+tp30a28  30-Year 3-5/8% Treasury Inflation-Indexed Bond, Due 4/15/2028 
+M  1998.05 - 2004.07  n = 75
+tp10l13  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2013 
+M  2003.08 - 2004.07  n = 12
+tp10l12  10-Year 3% Treasury Inflation-Indexed Note, Due 7/15/2012 
+M  2002.08 - 2004.07  n = 24
+tp10j12  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2012 
+M  2002.02 - 2004.07  n = 30
+tp10j11  10-Year 3-1/2% Treasury Inflation-Indexed Note, Due 1/15/2011 
+M  2001.02 - 2004.07  n = 42
+tp10j10  10-Year 4-1/4% Treasury Inflation-Indexed Note, Due 1/15/2010 
+M  2000.02 - 2004.07  n = 54
+tp10j09  10-Year 3-7/8% Treasury Inflation-Indexed Note, Due 1/15/2009 
+M  1999.01 - 2004.07  n = 67
+tp10j08  10-Year 3-5/8% Treasury Inflation-Indexed Note, Due 1/15/2008 
+M  1998.02 - 2004.07  n = 78
+tp10j07  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2007 
+M  1997.02 - 2004.07  n = 90
+adjborns  Adjustment plus Seasonal Borrowings; Bn. $; NSA
+M  1959.01 - 2003.01  n = 529
+adjresns  Adj. Reserves; Adj. Monetary Base - Currency held by nonbank public; Bn. $; NSA
+M  1918.01 - 2004.07  n = 1039
+adjressl  Adj. Reserves; Adj. Monetary Base - Currency held by nonbank public; Bn. $; SA
+M  1918.01 - 2004.07  n = 1039
+ambns  Adjusted Monetary Base; Bn. $; NSA; St. Louis
+M  1918.01 - 2004.07  n = 1039
+ambsl  Adjusted Monetary Base; Bn. $; SA; St. Louis
+M  1918.01 - 2004.07  n = 1039
+bogambns  Adjusted Monetary Base; Bn. $; NSA; Board of Governors
+M  1959.01 - 2004.07  n = 547
+bogambsl  Adjusted Monetary Base; Bn. $; SA; Board of Governors
+M  1959.01 - 2004.07  n = 547
+bognonbr  Non-Borrowed Reserves; Bn. $; SA; Board of Governors'
+M  1959.01 - 2004.07  n = 547
+bogumbns  Monetary Base; Not Adj. for Changes in Res. Requirements; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+borrow  Total Borrowings at Federal Reserve Banks; Bn. $; NSA
+M  1919.01 - 2004.07  n = 1027
+currcir  Currency in Circulation; Bn. $; NSA
+M  1917.08 - 2004.07  n = 1044
+excresns  Excess Reserves at Federal Reserve Banks; Bn. $; NSA
+M  1929.01 - 2004.07  n = 907
+extendns  Extended Credit; Bn. $; NSA
+M  1975.05 - 2003.01  n = 333
+nforbres  Net Free or Borrowed Reserves; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+ram  Reserve Adjustment Magnitude; Bn. $; NSA
+M  1980.10 - 2004.08  n = 287
+reqresns  Required Reserves; Not Adj. for Changes in Reserve Requirements; Bn. $; NSA
+M  1929.01 - 2004.07  n = 907
+resbalns  Reserve Bals with Fed Reserve Banks; NA for Changes in Res. Requirements; Bn. $; NSA
+M  1950.01 - 2004.07  n = 655
+rsbkcrns  Reserve Bank Credit; Bn. $; NSA
+M  1989.04 - 2004.07  n = 184
+sbasens  St. Louis Source Base; Bn. $; NSA
+M  1918.01 - 2004.07  n = 1039
+seaborr  Seasonal Borrowings by Depository Institutions from Fed Reserve Banks; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+totresns  Total Reserves; Not Adjusted for Changes in Reserve Requirements; Bn. $; NSA
+M  1929.01 - 2004.07  n = 907
+trarr  Total Reserves; Adjusted for Changes in Reserve Requirements; Bn. $; NSA
+M  1959.01 - 2004.07  n = 547
+treasury  Treasury Deposits with Federal Reserve Banks; Bn. $; NSA
+M  1986.01 - 2004.07  n = 223
+vault  Vault Cash to Satisfy Req. Reserves; NA for Changes in Res. Requirements; Bn. $; NSA
+M  1959.11 - 2004.07  n = 537
+busloans  Commercial and Industrial Loans at all Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+consumer  Consumer Loans at all Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+invest  Total Investments at all Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+loaninv  Total Loans and Investments at all Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+loans  Total Loans and Leases at Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+realln  Real Estate Loans at all Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+othsec  Other Securities at all Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+usgsec  U.S. Gov. Securities at all Commercial Banks; Bn. $; SA
+M  1947.01 - 2004.07  n = 691
+totalsl  Total Consumer Credit Outstanding; Bn. $; SA
+M  1943.01 - 2004.06  n = 738
+totalns  Total Consumer Credit Outstanding; Bn. $; NSA
+M  1943.01 - 2004.06  n = 738
+autosl  Total Automobile Credit Outstanding; Bn. $; SA
+M  1943.01 - 1999.04  n = 676
+autons  Total Automobile Credit Outstanding; Bn. $; NSA
+M  1943.01 - 1999.04  n = 676
+revolsl  Total Revolving Credit Outstanding; Bn. $; SA
+M  1968.01 - 2004.06  n = 438
+revolns  Total Revolving Credit Outstanding; Bn. $; NSA
+M  1968.01 - 2004.06  n = 438
+othersl  Total Other Credit Outstanding; Bn. $; SA
+M  1943.01 - 1999.04  n = 676
+otherns  Total Other Credit Outstanding; Bn. $; NSA
+M  1943.01 - 1999.04  n = 676
+afcedef  Federal Gov.: Current Expenditures plus Gross Investment: Natl Defense; Bn. $
+A  1952 - 2001  n = 50
+afcemc  Federal Gov.: Current Expenditures & Gross Investment: Medicare; Mn. $
+A  1966 - 1997  n = 32
+afcemk  Federal Gov.: Current Expenditures & Gross Investment: Medicaid; Mn. $
+A  1966 - 1997  n = 32
+afceneti  Federal Gov.: Current Expenditures & Gross Investment: Net Interest Paid; Bn. $
+A  1952 - 2001  n = 50
+afceoasi  Federal Gov.: Old Age/Survivors Insurance; Mn. $
+A  1952 - 1997  n = 46
+afcess  Federal Gov.: Social Security; Disability Insurance, Mn. $
+A  1957 - 1997  n = 41
+afdef  Federal Gov. Surplus or Deficit (-) (NIPA Basis); Bn. $
+A  1929 - 2003  n = 75
+afexpnd  Federal Gov.: Current Expenditures; Bn. $
+A  1929 - 2003  n = 75
+afgsl  Federal Grants in Aid to State and Local Gov.s; Bn. $
+A  1929 - 2003  n = 75
+afrecpt  Federal Gov. Receipts; Bn. $
+A  1929 - 2003  n = 75
+aslce  State and Local Gov. Current Expenditures; Bn. $
+A  1929 - 2000  n = 72
+aslceaid  State and Local Gov.; Income Support, Social Security, Welfare; Mn. $
+A  1952 - 1997  n = 46
+aslcecs  State and Local Gov. Current Expenditures; Civilian Safety; Mn. $
+A  1952 - 1997  n = 46
+aslceed  State and Local Gov. Current Expenditures; Education; Bn. $
+A  1952 - 2001  n = 50
+aslcemc  State and local Gov. Current Expenditures; Medical Care; Mn. $
+A  1952 - 1997  n = 46
+aslcet  State and Local Gov. Current Expenditures; Transportation; Bn. $
+A  1952 - 2001  n = 50
+aslctax  State and Local Gov. Corporate Profits; Tax Accruals; Bn. $
+A  1929 - 2002  n = 74
+aslexpnd  State and Local Gov.: Current Expenditures; Bn. $
+A  1929 - 2002  n = 74
+aslpitax  State and Local Gov.: Personal Income Tax Receipts, Bn. $
+A  1929 - 2002  n = 74
+aslptax  State and Local Gov.: Property Tax; Bn. $
+A  1929 - 2002  n = 74
+aslrecpt  State and Local Gov.: Receipts; Bn. $
+A  1929 - 2002  n = 74
+aslrsi  State/Local Gov. Receipts: Contributions for Social Insurance; Bn. $
+A  1942 - 2002  n = 61
+aslstax  State and Local Gov.: Sales Taxes; Bn. $
+A  1929 - 2002  n = 74
+businv  Business Inventories; for Mfrs, Retailers and Merchant Wholesalers; Mn. $; SA
+M  1980.12 - 2004.06  n = 283
+ccfc  Corporate Consumption of Fixed Capital; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+civa  Corporate Inventory Valuation Adjustment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+cncf  Corporate Net Cash Flow; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+dcbcca  Domestic Corporate Business Capital Consumption Adjustment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+dividend  Corporate Profits: Dividends in Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+eciben  Employment Cost Index: Benefits; Private Industry Workers SA, June 1989=100
+Q  1980.1 - 2004.2  n = 98
+ecicom  Employment Cost Index: Compensation; Private Industry Workers SA, June 1989=100
+Q  1980.1 - 2004.2  n = 98
+eciwag  Employment Cost Index: Wages & Salaries; Private Industry Workers SA; June 1989=100
+Q  1980.1 - 2004.2  n = 98
+fctax  Federal Gov. Corporate Tax Accruals; Bn. $ SAAR
+A  1929 - 2003  n = 75
+fdefx  National Defense Consumption Expenditures: Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fdhbatn  Federal Debt: Held by Agencies & Trust; End of Month Totals; Bn. $, NSA
+Q  1981.1 - 2004.1  n = 93
+fdhbfin  Federal Debt: Held by Foreign & Internatl Investors; End Month; Bn. $, NSA
+Q  1970.1 - 2004.1  n = 137
+fdhbfrbn  Federal Debt: Held by Federal Reserve Banks; End of Month Totals; Bn. $, NSA
+Q  1970.1 - 2004.1  n = 137
+fdhbpin  Federal Debt: Held by Private Investors; End of Month Totals; Bn. $, NSA
+Q  1970.1 - 2004.1  n = 137
+fgce  Federal Gov. Consumption Expenditures and Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fgcec92  Real Federal Consumption Expenditures and Gross Investment; Bn. ch. SAAR
+Q  1959.3 - 1999.2  n = 160
+fgdef  Federal Gov. Surplus or Deficit; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fgsl  Federal Grants-in-Aid to State and Local Gov.s; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fndefx  Nondefense Consumption Expenditures and Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fpitax  Federal Gov. Personal Income Tax Receipts; Bn. $ SAAR
+A  1946 - 2002  n = 57
+frsi  Federal Gov. Receipts: Contributions for Social Insurance; Bn. $ SAAR
+A  1929 - 2003  n = 75
+fyfr  Federal Receipts FY; Mn. $
+A  1901 - 2009  n = 109
+fyfsd  Federal Surplus or Deficit (-) FY; Mn. $
+A  1901 - 2009  n = 109
+fygfd  Gross Federal Debt FY; Bn. $
+A  1939 - 2005  n = 67
+fygfdpub  Gross Federal Debt Held by Public FY; Bn. $
+A  1939 - 2005  n = 67
+fyoint  Federal Outlays: Interest FY; Mn. $
+A  1940 - 2009  n = 70
+fyonet  Federal Net Outlays FY; Mn. $
+A  1901 - 2009  n = 109
+gce  Gov. Consumption Expenditures and Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+gcec92  Real Gov. Consumption, Expenditures and Gross Investment; Bn. ch. 1992 $ SAAR
+Q  1959.3 - 1999.2  n = 160
+gfdebt  Gross Federal Gov. Debt; End of Month Totals; Bn. $; SA
+Q  1953.1 - 1998.4  n = 184
+altsales  Light Weight Vehicle Sales; Auto and Light Truck; Mn. Units; SAAR
+M  1976.01 - 2004.07  n = 343
+houst  Total New Privately-Owned Housing Units Started; 000s Units; SAAR
+M  1959.01 - 2004.07  n = 547
+houst1f  New Private Housing Units Started; One-Unit Structures; 000s Units; SA
+M  1959.01 - 2004.07  n = 547
+indpro  Total Industrial Production Index; 1992=100 SA
+M  1921.01 - 2004.07  n = 1003
+isratio  Inventory/Sales Ratio: Total Business; SA
+M  1992.01 - 2004.06  n = 150
+mfgoph  Private Manufacturing: Output Per Hour of All Persons; 1992=100
+A  1949 - 2001  n = 41
+mfgprod  Private Manufacturing: Multifactor Productivity; 1982=100
+A  1949 - 2001  n = 41
+napm  ISM; Composite Index; SA; Percent
+M  1948.01 - 2004.08  n = 680
+neworder  Manufacturers New Orders; Nondefence Excluding Aircraft & Parts; Mn. $; SA
+M  1992.02 - 2004.07  n = 150
+nfdebt  Federal Gov. Debt: Net; End of Month Totals; Bn. $; SA
+Q  1955.1 - 1998.4  n = 176
+oilprice  Oil Price Domestic: West Texas Intermediate; < 1982=Posted Price, $/Barrel
+M  1946.01 - 2004.08  n = 704
+hcompbs  Private Business Sector: Hourly Compensation; SA, 1992=100
+Q  1947.1 - 2004.2  n = 230
+ophpbs  Private Business Sector: Output Per Hour of All Persons; SA, 1992=100
+Q  1947.1 - 2004.2  n = 230
+compnfb  Compensation Per Hour: Nonfarm Business Sector; SA, 1992=100
+Q  1947.1 - 2004.2  n = 230
+comprnfb  Real Compensation Per Hour in Nonfarm Business Sector; SA, 1992=100
+Q  1947.1 - 2004.2  n = 230
+ophnfb  Nonfarm Business Sector: Output Per Hour of All Persons; SA, 1992=100
+Q  1947.1 - 2004.2  n = 230
+ophmfg  Manufacturing Sector: Output Per Hour of All Persons; SA, 1992=100
+Q  1987.1 - 2004.2  n = 70
+cumfg  Capacity Utilization: Manufacturing; SA, Percent of Capacity
+Q  1948.1 - 2002.3  n = 219
+tcu  Total Industry Capacity Utilization Rates; Percent of Capacity SA
+M  1967.01 - 2004.07  n = 451
+ulcmfg  Manufacturing Sector: Unit Labor Cost; SA, 1992=100
+Q  1987.1 - 2004.2  n = 70
+ulcnfb  Nonfarm Business Sector: Unit Labor Cost; SA, 1992=100
+Q  1947.1 - 2004.2  n = 230
+rentin  Rental Income of Persons with CCAdj; Bn. $; SAAR
+Q  1947.1 - 2004.2  n = 230
+rrsfs  Real Retail and Food Services Sales; Using CPI (1982-84=100) as Deflator; Mn; SA
+M  1992.01 - 2004.07  n = 151
+rsafs  Retail and Food Services Sales; Mn. $; SA
+M  1992.01 - 2004.07  n = 151
+rsafsna  Retail and Food Services Sales; Mn. $; NSA
+M  1992.01 - 2004.07  n = 151
+rsxfs  Retail Sales Excluding Food Services; Mn. $; SA
+M  1992.01 - 2004.07  n = 151
+slce  State and Local Consumption Expenditures and Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+slcec92  Real State & Local Gov. Consump. Expenditures & Gross Inv.; Bn. ch. 1992 $ SAAR
+Q  1959.3 - 1999.2  n = 160
+sldef  State and Local Surplus or Deficit; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+tgdef  Total Gov. Surplus/Deficit[-]; (NIPA Basis) Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+tdsp  Total Debt Service Payments; as Percent of Disposable Personal Income
+Q  1980.1 - 2004.1  n = 97
+cdsp  Consumer Debt Service Payments as Percent of Disposable Personal Income
+Q  1980.1 - 2003.1  n = 93
+trsp500  S&P 500 Total Return; Monthly Dividend Reinvest 1970-88 Then Daily (EOP)
+M  1970.01 - 2003.12  n = 408
+umcsent  Consumer Sentiment; University of Michigan; 1966Q1=100; NSA
+M  1978.01 - 2004.07  n = 319
+wascur  Wages and Salaries; SAAR Bn. $
+Q  1947.1 - 2004.2  n = 230
+cbi  Change in Business Inventories; SAAR Bn. $
+Q  1947.1 - 2004.2  n = 230
+cbic96  Real Change in Private Inventories; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+coe  Compensation of Employees; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+cofc  Consumption of Fixed Capital (GNP); Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+cpatax  Corporate Profits After Tax with IVA and CCAdj; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+cprofit  Corporate Profits with IVA and CCAdj; Bn. $ SAAR
+Q  1959.1 - 2004.2  n = 182
+nfcpatax  Nonfin. Corporate Business Profits After Tax; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+dgi  National Defense Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+dgic96  Real National Defense Gross Investment; Bn. ch. 2000 $, SAAR
+Q  1947.1 - 2004.2  n = 230
+pcedgc96  Real Personal Consumption Expenditures: Durable Goods; Bn. ch. 2000 $, SAAR
+M  1959.01 - 2004.07  n = 547
+pcedg  Personal Consumption Expenditues: Durable Goods; Bn. $ SAAR
+M  1959.01 - 2004.07  n = 547
+dspi  Disposable Personal Income; Bn. $ SAAR
+M  1959.01 - 2004.07  n = 547
+dspic96  Real Disposable Personal Income; Bn. ch. 2000 $, SAAR
+M  1959.01 - 2004.07  n = 547
+dpi  Disposable Personal Income; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+dpic92  Real Disposable Personal Income; Bn. ch. 1992 $ SAAR
+Q  1959.1 - 1999.2  n = 162
+pi  Personal Income; Bn. $ SAAR
+M  1959.01 - 2004.07  n = 547
+expgs  Exports of Goods And Services; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+expgsc96  Real Exports of Goods & Services; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+impgs  Imports of Goods and Services; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+impgsc96  Real Imports of Goods and Services; Bn. ch. 2000 $ SAAR
+Q  1953.1 - 2004.2  n = 206
+netexp  Net Exports of Goods and Services; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+netexc96  Real Net Exports of Goods & Services; Bn. ch. 2000 $, SAAR
+Q  1959.1 - 2004.2  n = 182
+fgce  Federal Gov. Consumption Expenditures and Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fgcec96  Real Federal Consump. Expenditures & Gross Investment; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+fgexpnd  Federal Gov.: Current Expenditures; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fgrecpt  Federal Gov. Receipts; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+gexpnd  Gov. Current Expenditures; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+grecpt  Gov. Receipts; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+finsal  Final Sales; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+finslc96  Real Final Sales of Domestic Product; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+fpi  Fixed Private Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+fpic96  Real Fixed Private Domestic Investment; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+gce  Gov. Consumption Expenditures and Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+gcec96  Real Gov. Consumption Expenditures & Gross Investment; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+gdp  Gross Domestic Product; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+gdp96  Real Gross Domestic Product; Bn. Fixed 1996 $, SAAR
+Q  1967.1 - 2003.3  n = 147
+gdpc96  Real Gross Domestic Product; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+gdpdef  Gross Domestic Product Implicit Price Deflator; 2000=100; SA
+Q  1947.1 - 2004.2  n = 230
+gdpctpi  Gross Domestic Product Chain-Type Price Index; 2000=100; SA
+Q  1947.1 - 2004.2  n = 230
+gnp  Gross National Product; Bn. $ SAAR
+Q  1959.1 - 2004.2  n = 182
+gnp92  Real Gross National Product; Bn. Fixed 1992 $ SAAR
+Q  1959.3 - 1999.2  n = 160
+gnpc96  Real Gross National Product; Bn. ch. 2000 $, SAAR
+Q  1947.1 - 2004.2  n = 230
+gnpctpi  Gross National Product Chain-Type Price Index; 2000=100; SA
+Q  1947.1 - 2004.2  n = 230
+gnpdef  Gross National Product Implicit Price Deflator; 2000=100; SA
+Q  1947.1 - 2004.2  n = 230
+gpdi  Gross Private Domestic Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+gpdic96  Real Gross Private Domestic Investment; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+gpdictpi  Gross Private Domestic Investment Chain-Type Price Index; (2000=100) SA
+Q  1959.1 - 2004.2  n = 182
+gpsave  Gross Private Savings; Bn. $ SAAR
+Q  1959.1 - 2004.2  n = 182
+gsave  Gross Savings; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+psave  Personal Saving; Bn. $ SAAR
+Q  1959.1 - 2004.2  n = 182
+psavert  Personal Savings Rate; Percent SAAR
+M  1959.01 - 2004.07  n = 547
+ibt  Indirect Business Tax and Nontax Liability; Bn. $ SAAR
+Q  1946.1 - 2003.3  n = 231
+ndgi  Federal Nondefense Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+ndgic96  Real Federal Nondefense: Gross Investment; Bn. ch. 2000 $, SAAR
+Q  1947.1 - 2004.2  n = 230
+pce  Personal Consumption Expenditures; Bn. $ SAAR
+M  1959.01 - 2004.07  n = 547
+pcec96  Real Personal Consumption Expenditures; Bn. ch. 2000 $, SAAR
+M  1959.01 - 2004.07  n = 547
+pcectpi  Personal Consumption Expenditures Chain-Type Price Index; 2000=100 SA
+Q  1947.1 - 2004.2  n = 230
+pcedg  Personal Consumption Expenditues: Durable Goods; Bn. $ SAAR
+M  1959.01 - 2004.07  n = 547
+pcedgc96  Real Personal Consumption Expenditures: Durable Goods; Bn. ch. 2000 $, SAAR
+M  1959.01 - 2004.07  n = 547
+pcend  Personal Consumption Expenditures: Nondurable Goods; Bn. $ SAAR
+M  1959.01 - 2004.07  n = 547
+pcendc96  Real Personal Consumption Expenditures: Nondurable Goods; Bn. ch. 2000 $, SAAR
+M  1959.01 - 2004.07  n = 547
+pces  Personal Consumption Expenditures: Services; Bn. $ SAAR
+M  1959.01 - 2004.07  n = 547
+pcesc96  Real Personal Consumption Expenditures: Services; Bn. ch. 2000 $, SAAR
+M  1959.01 - 2004.07  n = 547
+nicur  National Income; Bn. $ SAAR
+Q  1959.1 - 2004.2  n = 182
+netfi  Net Foreign Investment; Bn. $ SAAR
+Q  1959.1 - 2004.2  n = 182
+pnfic96  Real Private Nonresidential Fixed Investment; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+prfic96  Real Private Residential Fixed Investment; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+nripdc96  Real Nonresidential Investment: Eguipment & Software; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+propinc  Proprietors Income with IVA and CCAdj; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+slce  State and Local Consumption Expenditures and Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+slcec96  Real State & Local Consump. Expenditures & Gross Investment; Bn. ch. 2000 $, SAAR
+Q  1953.1 - 2004.2  n = 206
+slexpnd  State and Local Gov. Current Expenditures; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+slinv  State and Local Gov. Gross Investment; Bn. $ SAAR
+Q  1947.1 - 2004.2  n = 230
+slinvc96  Real State & Local Gov.: Gross Investment; Bn. ch. 2000 $, SAAR
+Q  1947.1 - 2004.2  n = 230
+cpiaucsl  Consumer Price Index All Urban Consumers: Total; 1982-84=100 SA
+M  1947.01 - 2004.07  n = 691
+cpiaucns  Consumer Price Index: Total; All Urban Consumers; 1982-84=100 NSA
+M  1946.01 - 2004.07  n = 703
+cpiengsl  Consumer Price Index All Urban Consumers: Energy; 1982-84=100 SA
+M  1957.01 - 2004.07  n = 571
+cpiengns  Consumer Price Index All Urban Consumers: Energy; 1982-84=100 NSA
+M  1957.01 - 2004.07  n = 571
+cpilegsl  Consumer Price Index All Urban Consumers: Less Energy; 1982-84=100 SA
+M  1957.01 - 2004.07  n = 571
+cpilegns  Consumer Price Index All Urban Consumers: Less Energy; 1982-84=100 NSA
+M  1957.01 - 2004.07  n = 571
+cpilfesl  Consumer Price Index All Urban Consumers: Less Food & Energy; 1982-84=100 SA
+M  1957.01 - 2004.07  n = 571
+cpilfens  Consumer Price Index All Urban Consumers: Less Food & Energy; 1982-84=100 NSA
+M  1957.01 - 2004.07  n = 571
+cpiufdsl  Consumer Price Index All Urban Consumers: Food; 1982-84=100 SA
+M  1947.01 - 2004.07  n = 691
+cpiufdns  Consumer Price Index All Urban Consumers: Food; 1982-84=100 NSA
+M  1946.01 - 2004.07  n = 703
+cpiulfsl  Consumer Price Index All Urban Consumers: Less Food; 1982-84=100 SA
+M  1947.01 - 2004.07  n = 691
+cpiulfns  Consumer Price Index All Urban Consumers: Less Food; 1982-84=100 NSA
+M  1946.01 - 2004.07  n = 703
+pfcgef  PPI - Finished Consumer Goods Excluding Foods; 1982=100 SA
+M  1947.04 - 2004.07  n = 688
+ppiaco  PPI - All Commodities; 1982=100 NSA
+M  1946.01 - 2004.07  n = 703
+ppicem  PPI - Crude Energy Materials; 1982=100 NSA
+M  1974.01 - 2004.07  n = 367
+ppicff  PPI - Crude Foodstuffs and Feedstuffs; 1982=100 SA
+M  1969.01 - 2004.07  n = 427
+ppicpe  PPI - Capital Equipment; 1982=100 SA
+M  1947.04 - 2004.07  n = 688
+ppicrm  PPI - Crude Materials for Further Processing; 1982=100 SA
+M  1947.04 - 2004.07  n = 688
+ppieng  PPI - Fuel Related Products and Power; 1982=100 NSA
+M  1946.01 - 2004.07  n = 703
+ppifcf  PPI - Finished Consumer Foods; 1982=100 SA
+M  1947.04 - 2004.07  n = 688
+ppifcg  PPI - Finished Consumer Goods; 1982=100 SA
+M  1947.04 - 2004.07  n = 688
+ppifeg  PPI - Finished Energy Goods; 1982=100 SA
+M  1974.01 - 2004.07  n = 367
+ppifgs  PPI - Finished Goods; 1982=100 SA
+M  1947.04 - 2004.07  n = 688
+ppifle  PPI - Finished Goods Less Energy; 1982=100 SA
+M  1975.01 - 2004.07  n = 355
+ppiflf  PPI - Finished Goods Less Foods; 1982=100 SA
+M  1967.01 - 2004.07  n = 451
+ppiidc  PPI - Industrial Commodities; 1982=100 NSA
+M  1946.01 - 2004.07  n = 703
+ppiieg  PPI - Intermediate Energy Goods; 1982=100 SA
+M  1974.01 - 2004.07  n = 367
+ppiiff  PPI - Intermediate Foods and Feeds; 1982=100 SA
+M  1967.01 - 2004.07  n = 451
+ppiitm  PPI - Intermediate Materials; 1982=100 SA
+M  1947.04 - 2004.07  n = 688
+ppilfe  PPI - Finished Goods less Food and Energy; 1982=100 SA
+M  1974.01 - 2004.07  n = 367
+ce16ov  Civilian Employment; 16 years and older; Thousands; SA
+M  1948.01 - 2004.07  n = 679
+civpart  Civilian Participation Rate; Percent; SA
+M  1948.01 - 2004.07  n = 679
+clf16ov  Civilian Labor Force; Thousands; SA
+M  1948.01 - 2004.07  n = 679
+cnp16ov  Civilian Non-Institutional Population; 16 Years and Over; 000s; NSA
+M  1948.01 - 2004.07  n = 679
+emratio  Employment Ratio; Civilian Employment/Civilian Non. Inst. Pop.; % SA
+M  1948.01 - 2004.07  n = 679
+helpwant  Index of Help Wanted Advertising; in Newspapers; 1987=100; SA
+M  1951.01 - 2004.07  n = 643
+manemp  U.S. Manufacturing Employment; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+payems  Payroll Employment; of Wage and Salary Workers; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+pop  Total Population of U.S.; Thousands; NSA
+M  1952.01 - 2004.05  n = 629
+srvprd  U.S. Employment in Service Producing Industries; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+uemp15ov  Civilian Unemployed for 15 Weeks and Over; Thousands; SA
+M  1948.01 - 2004.07  n = 679
+uemplt5  Civilians Unemployed for Less Than 5 Weeks; Thousands; SA
+M  1948.01 - 2004.07  n = 679
+uempmed  Median Duration of Unemployment; SA, Weeks
+M  1967.07 - 2004.07  n = 445
+unemploy  Unemployment Level; All Civilian Workers; Thousands; SA
+M  1948.01 - 2004.07  n = 679
+unrate  Unemployment Rate; Percent SA
+M  1948.01 - 2004.07  n = 679
+uscons  Employment in Construction; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+usfire  Employment in Finance, Insurance, and Real Estate; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+usgood  Employment in Goods Producing Sectors; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+usgovt  Employment in Gov.; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+usmine  Employment in Mining; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+usserv  Employment in Services; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+ustpu  Employment in Transportation and Public Utilities; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+ustrade  Employment in Retail Trade Industry; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+uswtrade  Employment in Wholesale Trade Industry; Thousands; SA
+M  1939.01 - 2004.07  n = 787
+exusal  U.S. $ to one Australian Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exauus  Austrian Schillings to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+exbeus  Belgian Francs to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+excaus  Canadian $ to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exchus  Chinese Yuan to one U.S. Dollar; Exchange Rate
+M  1981.01 - 2004.08  n = 284
+exdnus  Danish Krones to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exusec  U.S. $ to one European Currency Unit
+M  1978.12 - 1998.12  n = 241
+exuseu  One US dollar to one European Euros; Foreign Exchange Rate: EMU
+M  1999.01 - 2004.08  n = 68
+exfnus  Finnish Markkas to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+exfrus  French Francs to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+exgeus  German Marks to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+exgrus  Greek Drachmas to one U.S. Dollar; Exchange Rate
+M  1981.04 - 2000.12  n = 237
+exhkus  Hong Kong $ to one U.S. Dollar; Exchange Rate
+M  1981.01 - 2004.08  n = 284
+exinus  Indian Rupees to one U.S. Dollar; Exchange Rate
+M  1973.01 - 2004.08  n = 380
+exusir  U.S. $ to one Irish Pound; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+exitus  Italian Lire to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+exjpus  Japanese Yen to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exmaus  Malaysian Ringgits to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exmxus  Mexican Pesos to one U.S. Dollar; Exchange Rate
+M  1993.11 - 2004.08  n = 130
+exneus  Dutch Guilders to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2001.12  n = 372
+exusnz  U.S. $ to one New Zealand Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exnous  Norwegian Krones to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+expous  Portugese Escudos to one U.S. Dollar; Exchange Rate
+M  1973.01 - 2001.12  n = 348
+exsius  Singapore $ to one U.S. Dollar; Exchange Rate
+M  1981.01 - 2004.08  n = 284
+exsfus  South African Rands to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exkous  South Korean Won to one U.S. Dollar; Exchange Rate
+M  1981.04 - 2004.08  n = 281
+exspus  Spanish Pesetas to one U.S. Dollar; Exchange Rate
+M  1973.01 - 2001.12  n = 348
+exslus  Sri Lankan Rupees to one U.S. Dollar; Exchange Rate
+M  1973.01 - 2004.08  n = 380
+exsdus  Swedish Kronas to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+exszus  Swiss Francs to one U.S. Dollar; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+extaus  New Taiwan $ to one U.S. Dollar; Exchange Rate
+M  1983.10 - 2004.08  n = 251
+exthus  Thai Baht to one U.S. Dollar; Exchange Rate
+M  1981.01 - 2004.08  n = 284
+exusuk  U.S. $ to one British Pound; Exchange Rate
+M  1971.01 - 2004.08  n = 404
+twexbmth  Trade-Weighted Exchange Index of U.S. Dollar: Broad
+M  1973.01 - 2004.08  n = 380
+bc  Dollar Index: Price-adjusted Broad
+M  1973.01 - 2004.08  n = 380
+twexmmth  Trade-Weighted Exchange Index of U.S. Dollar: Major Currency
+M  1973.01 - 2004.08  n = 380
+nc  Dollar Index: Price-adjusted Major Currencies
+M  1973.01 - 2004.08  n = 380
+twexomth  Trade-Wtd Exchange Index of U.S. Dollar: Other Important Trading Partners
+M  1973.01 - 2004.08  n = 380
+oc  Dollar Index: Price-adjusted Other Important Trading Partners
+M  1973.01 - 2004.08  n = 380
+bopx  Exports of Goods, Services and Income; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxm  Exports of Merchandise, Adjusted, excluding Military; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsv  Exports of Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsvmt  Exports: Transfers Under U.S. Military Agency Contracts; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsvt  Exports of Services: Travel; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsvp  Exports of Services: Passenger Fares; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsvot  Exports of Other Transportation Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsvr  Exports of Services: Royalties and Licensing Fees; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsvo  Exports of Other Private Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxsvg  Exports of U.S. Gov. Miscellaneous Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxr  Income Receipts on U.S. Assets Abroad; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxmd  Income Receipts on U.S. Direct Investment Abroad; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxmp  Other Private Income Receipts on U.S. Assets Abroad; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopxmg  U.S. Gov. Income Receipts on Assets Abroad; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopm  Imports of Goods, Services and Income; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmm  Imports of Merchandise, Adjusted, excluding Military; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsv  Imports of Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsvmt  Imports of Services: Direct Defense Expenditures; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsvt  Imports of Services: Travel; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsvp  Imports of Services: Passenger Fares; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsvot  Imports of Other Transportation Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsvr  Imports of Services: Royalties and Licensing Fees; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsvo  Imports of Other Private Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmsvg  Imports of U.S. Gov. Miscellaneous Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmi  Income Payments on Foreign Assets in U.S.; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmd  Income Payments on Foreign Direct Investment in U.S.; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmp  Other Private Income Payments on Foreign Assets in U.S.; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopmg  U.S. Gov. Income Payments on Foreign Assets in U.S.; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopg  Unilateral Transfers, Net; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopgg  U.S. Gov. Grants excluding Military; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopgp  U.S. Gov. Pensions and Other Transfers; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopgr  U.S. Gov. Remittances and Other Transfers; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopbm  Balance on Merchandise Trade; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopbsv  Balance on Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopbgs  Balance of Payments: Balance on Goods and Services; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopbii  Balance of Payments: Balance on Investment Income; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopbca  Balance of Payments: Balance on Current Account; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopo  U.S. Assets Abroad, Net: Outflow (-); Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopoo  U.S. Official Reserve Assets Abroad, Net; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopogld  U.S. Reserve Assets Abroad: Gold; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+boposdr  U.S. Reserve Assets Abroad: Special Drawing Rights; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopoimf  U.S. Reserve Position in IMF; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopof  U.S. Reserves of Foreign Currencies; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopog  U.S. Gov. Assets Abroad, excl Official Reserves, Net; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopogc  U.S. Gov. Assets Abroad, Net: Credits & Other Long-Term Assets; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopogcr  Repayments on U.S. Credits & Other Long-Term Assets Abroad; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopogf  U.S. Foreign Currency Holdings & Other Short-Term Assets, Net; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopop  U.S. Private Assets Abroad, Net; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopopd  U.S. Private Direct Investment Abroad; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopops  U.S. Private Assets: Foreign Securities; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopopf  U.S. Private Assets: Claims on Foreigners Reported by Nonbanks; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopopo  U.S. Private Assets: Claims Reported by U.S. Banks, nie; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopi  Foreign Assets in U.S., Net: Capital Inflow (+); Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopio  Foreign Official Assets in U.S., Net; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopiog  Foreign Official Assets in U.S.: U.S. Gov. Securities; Bn. $; SA
+Q  1973.1 - 2004.1  n = 125
+bopiogt  Foreign Official Assets in U.S.: Treasury Securities; Bn. $; SA
+Q  1973.1 - 2004.1  n = 125
+bopiogo  Foreign Official Assets: Other U.S. Gov. Securities; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopiol  Foreign Official Assets: Other U.S. Gov. Liabilities; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopiou  Foreign Official Assets: U.S. Liabilities Reported by U.S. Banks, nie; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopioo  Other Foreign Official Assets; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopip  Other Foreign Assets in U.S., Net; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopipd  Other Foreign Assets in U.S., Net: Direct Investment; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopipt  Other Foreign Assets in U.S., Net: U.S. Treasury Securities; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopipg  Other Foreign Assets in U.S., Net: Gov. Non-Treasury Securities; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopipf  U.S. Liabilities to Unaffiliated Foreigners Reported by U.S. Nonbanks; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopipo  Other Foreign Assets in U.S.: U.S. Liabilities Reptd by U.S. Banks, nie; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopsdr  Other Foreign Assets in U.S.: Allocation of SDRs; Bn. $; SA
+Q  1960.1 - 2004.1  n = 177
+bopgstb  Balance of Payments: Trade Balance - Goods and Services; Mn. $; SA
+M  1992.01 - 2004.06  n = 150
+bopgtb  Balance of Payments: Trade Balance - Goods; Mn. $; SA
+M  1992.01 - 2004.06  n = 150
+bopstb  Balance of Payments: Trade Balance - Services; Mn. $; SA
+M  1992.01 - 2004.06  n = 150
+bopgexp  Balance of Payments: Exports of Goods; Mn. $; SA
+M  1992.01 - 2004.06  n = 150
+bopgimp  Balance of Payments: Imports of Goods; Mn. $; SA
+M  1992.01 - 2004.06  n = 150
+bopsexp  Balance of Payments: Exports of Services; Mn. $; SA
+M  1992.01 - 2004.06  n = 150
+bopsimp  Balance of Payments: Imports of Services; Mn. $; SA
+M  1992.01 - 2004.06  n = 150
+expca  Exports: Canada; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+expfr  Exports: France; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+expge  Exports: Germany; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+expjp  Exports: Japan; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+expmx  Exports: Mexico; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+expuk  Exports: United Kingdom; Free Alongside Ship Value (f.a.s.); Mn. $, NSA
+M  1974.01 - 2004.06  n = 366
+impca  Imports: Canada; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+impfr  Imports: France; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+impge  Imports: Germany; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+impjp  Imports: Japan; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+impmx  Imports: Mexico; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366
+impuk  Imports: United Kingdom; f.a.s. Value; Mn. $; NSA
+M  1974.01 - 2004.06  n = 366

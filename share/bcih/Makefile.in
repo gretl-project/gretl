@@ -7,18 +7,18 @@ prefix = @prefix@
 gretldir = $(prefix)/share/gretl
 VPATH = $(topsrc)/share/bcih
 
-bcih.bin: mkbin bcih.dat
+fedstl.bin: mkbin fedstl.dat
 	./mkbin $(topsrc)/share/bcih 
 
 mkbin: mkbin.c
 	$(CC) -o $@ $<
 
 install: bcih.bin
-	$(INSTALL_DATA) bcih.bin $(gretldir)/db/bcih.bin
-	$(INSTALL_DATA) $(topsrc)/share/bcih/bcih.idx $(gretldir)/db/bcih.idx
+	$(INSTALL_DATA) fedstl.bin $(gretldir)/db/fedstl.bin
+	$(INSTALL_DATA) $(topsrc)/share/bcih/fedstl.idx $(gretldir)/db/fedstl.idx
 
 clean:
-	rm -f mkbin bcih.bin
+	rm -f mkbin fedstl.bin
 
 distclean: clean
 	rm -f Makefile
