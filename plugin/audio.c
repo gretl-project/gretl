@@ -312,6 +312,14 @@ static void dataset_free (dataset *dset)
 const char *cent_str (int cent)
 {
     switch (cent) {
+    case 14:
+	return "fourteen";
+    case 15:
+	return "fifteen";
+    case 16:
+	return "sixteen";
+    case 17:
+	return "seventeen";
     case 18:
 	return "eighteen";
     case 19:
@@ -461,6 +469,18 @@ static void tail_strip_line (char *line)
     }
 }
 
+static int get_data_x_y (const char *line, double *x, double *y)
+{
+    if (sscanf(line, "%lf %lf", x, y) == 2) return 0;
+
+    if (sscanf(line, "%lf ?", x) == 1) {
+	*y = NADBL;
+	return 0;
+    }
+
+    return 1;
+}
+
 static int read_datafile (const char *fname, dataset *dset)
 {
     char line[256];
@@ -546,7 +566,7 @@ static int read_datafile (const char *fname, dataset *dset)
 		continue;
 	    }
 
-	    if (sscanf(line, "%lf %lf", &x, &y) != 2) {
+	    if (get_data_x_y(line, &x, &y)) {
 		fprintf(stderr, "Couldn't read data on line %d\n", i + 1);
 		err = 1;
 	    } else {
@@ -585,8 +605,10 @@ static void points_min_max (const datapoint *points,
     for (i=1; i<n; i++) {
 	if (points[i].x < *xmin) *xmin = points[i].x;
 	if (points[i].x > *xmax) *xmax = points[i].x;
-	if (points[i].y < *ymin) *ymin = points[i].y;
-	if (points[i].y > *ymax) *ymax = points[i].y;
+	if (!na(points[i].y)) {
+	    if (points[i].y < *ymin) *ymin = points[i].y;
+	    if (points[i].y > *ymax) *ymax = points[i].y;
+	}
     }
 }
 
@@ -598,8 +620,10 @@ static void min_max (const double *x, double *min, double *max,
     *min = *max = x[0];
 
     for (i=1; i<n; i++) {
-	if (x[i] < *min) *min = x[i];
-	if (x[i] > *max) *max = x[i];
+	if (!na(x[i])) {
+	    if (x[i] < *min) *min = x[i];
+	    if (x[i] > *max) *max = x[i];
+	}
     }
 }
 
@@ -806,7 +830,11 @@ static int play_dataset (midi_spec *spec, midi_track *track,
     for (i=0; i<dset->n; i++) {
 	double dtx, dux, ypos;
 
-	ypos = (dset->points[i].y - ymin) * yscale;
+	if (!na(dset->points[i].y)) {	
+	    ypos = (dset->points[i].y - ymin) * yscale;
+	} else {
+	    ypos = NADBL;
+	}
 
 	if (i == 0) {
 	    dtx = 0.0;
@@ -822,8 +850,13 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
 	track->notes[i].dtime = dtx;
 	track->notes[i].duration = dux;
-	track->notes[i].pitch = 36 + (int) (ypos + 0.5);
-	track->notes[i].force = DEFAULT_FORCE;
+	if (!na(ypos)) {
+	    track->notes[i].pitch = 36 + (int) (ypos + 0.5);
+	    track->notes[i].force = DEFAULT_FORCE;
+	} else {
+	    track->notes[i].pitch = 36;
+	    track->notes[i].force = 0;
+	}	    
 
 #ifdef DEBUG
 	fprintf(stderr, "Obs %d: x = %g, y = %g, ypos = %g\n", i, 
@@ -845,8 +878,15 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 	    } else {
 		yi = dset->intercept + dset->slope * dset->points[i].x;
 	    }
-	    ypos = (yi - ymin) * yscale;
-	    track->notes[i].pitch = 36 + (int) (ypos + 0.5);
+
+	    if (!na(yi)) {
+		ypos = (yi - ymin) * yscale;
+		track->notes[i].pitch = 36 + (int) (ypos + 0.5);
+		track->notes[i].force = DEFAULT_FORCE;
+	    } else {
+		track->notes[i].pitch = 36;
+		track->notes[i].force = 0;
+	    }
 #ifdef DEBUG
 	    fprintf(stderr, "Series2, Obs %d: x = %g, y = %g, ypos = %g\n", i, 
 		    dset->points[i].x, yi, ypos);
@@ -855,6 +895,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 		    track->notes[i].pitch);
 #endif
 	}
+
 	track->channel = 1;
 	track->patch = PC_MARIMBA; 
 	write_midi_track(track, spec);

@@ -3721,6 +3721,11 @@ void do_graph_var (int varnum)
 
     if (varnum <= 0) return;
 
+    if (!dataset_is_time_series(datainfo)) {
+	do_freqplot(NULL, 0, NULL);
+	return;
+    }
+
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s time", datainfo->varname[varnum]);
     if (verify_and_record_command(line)) return;

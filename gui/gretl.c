@@ -995,21 +995,25 @@ static void check_varmenu_state (GtkCList *list, gint i, gint j,
 
 /* ........................................................... */
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-
-static gint catch_audio_key (GtkWidget *w, GdkEventKey *key, 
-			     windata_t *vwin)
+static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
+#ifdef HAVE_FLITE
     if (key->keyval == GDK_a) {
 	audio_render_window(vwin, AUDIO_LISTBOX);
     } else if (key->keyval == GDK_x) {
 	audio_render_window(NULL, AUDIO_LISTBOX);
     }
-
-    return FALSE;
-}
-
 #endif
+
+    if (key->keyval == GDK_e) {
+	varinfo_dialog(mdata->active_var, 1);
+    } 
+    else if (key->keyval == GDK_t) {
+	do_graph_var(mdata->active_var);
+    } 
+
+    return 1;
+}
 
 /* ........................................................... */
 
@@ -1060,9 +1064,9 @@ void populate_varlist (void)
 	gtk_signal_connect(GTK_OBJECT(mdata->listbox),
 			   "button_press_event",
 			   GTK_SIGNAL_FUNC(main_varclick), NULL);
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+#ifdef HAVE_FLITE
 	gtk_signal_connect (GTK_OBJECT(mdata->listbox), "key_press_event",
-			    GTK_SIGNAL_FUNC(catch_audio_key),
+			    GTK_SIGNAL_FUNC(catch_mdata_key),
 			    mdata);
 	gtk_widget_grab_focus(mdata->listbox);
 #endif

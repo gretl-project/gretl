@@ -1081,6 +1081,9 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_e) {
 	varinfo_dialog(mdata->active_var, 1);
     } 
+    else if (key->keyval == GDK_t) {
+	do_graph_var(mdata->active_var);
+    } 
 
     return FALSE;
 }
