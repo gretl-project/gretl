@@ -20,7 +20,7 @@ static int create_font_test_rig (void)
 	return 1;
     }	
 
-    font_test_lang = pango_language_from_string("en_US");
+    font_test_lang = pango_language_from_string("eng");
 
     return 0;
 }
@@ -46,25 +46,22 @@ static gboolean font_is_latin_monospaced (PangoFontDescription *desc)
     return (x1 == x2);
 }
 
-static gboolean font_is_latin_text_font (PangoFontDescription *desc,
-					 PangoContext *context) 
+static gboolean font_is_latin_text_font (PangoFontDescription *desc)
 {
-    PangoCoverage *coverage;
-    PangoFont *pfont;
+    PangoCoverage *coverage = NULL;
+    PangoFont *pfont = NULL;
     gboolean ok = FALSE;
 
-    pfont = pango_context_load_font(context, desc);
+    pfont = pango_context_load_font(font_test_context, desc);
     if (pfont == NULL) return FALSE;
 
     coverage = pango_font_get_coverage(pfont, font_test_lang);
     if (coverage == NULL) return FALSE;
 
-    if (pango_coverage_get(coverage, 'A') == PANGO_COVERAGE_EXACT) {
+    if (pango_coverage_get(coverage, 'i') == PANGO_COVERAGE_EXACT &&
+	pango_coverage_get(coverage, 'W') == PANGO_COVERAGE_EXACT) {
 	ok = TRUE;
     } 
-
-    /* what needs to be unref'd now? */
-    /* g_object_unref(G_OBJECT(lang)); */
 
     return ok;
 }
@@ -78,7 +75,7 @@ static gboolean weird_font (const gchar *name)
 }
 
 /* We can test for a font for "latin text" compatibility, via the heuristic
-   of seeing if it contains the letter 'A' in US English.  Given the
+   of seeing if it contains the letters 'i' and 'W' in English.  Given the
    latin text characteristic, we can then see if the font is monospaced
    by checking whether or not the letters 'i' and 'W' come out the
    same width. */
@@ -86,7 +83,6 @@ static gboolean weird_font (const gchar *name)
 #define SHOW_PROGRESS 1
 
 static gboolean validate_font_family (const gchar *familyname, 
-				      PangoContext *context,
 				      gint filter,
 				      gint n_families,
 				      gboolean cache_built)
@@ -102,8 +98,8 @@ static gboolean validate_font_family (const gchar *familyname,
 #endif
 
     if (!cache_built) { /* we haven't set up the cache yet */
-	gchar *fontname;
-	PangoFontDescription *desc;
+	gchar *fontname = NULL;
+	PangoFontDescription *desc = NULL;
 
 #ifdef FONT_FILTER_DEBUG
 	fprintf(dbg, "Checking font family '%s'\n", familyname);
@@ -137,25 +133,54 @@ static gboolean validate_font_family (const gchar *familyname,
 
 	fontname = g_strdup_printf("%s 10", familyname);
 	desc = pango_font_description_from_string(fontname);
-	g_free(fontname);
 
 	if (desc != NULL) {
-	    if (font_is_latin_text_font(desc, context)) {
-		/* extend the cache */
-		latin_families = g_realloc(latin_families, (n_latin + 1) * sizeof *latin_families);
-		monospaced = g_realloc(monospaced, (n_latin + 1) * sizeof *monospaced);
+	    int memerr = 0;
 
-		latin_families[n_latin] = g_strdup(familyname);
-		is_latin = TRUE;
-		if (font_is_latin_monospaced(desc)) {
-		    is_mono = monospaced[n_latin] = TRUE;
+#ifdef FONT_FILTER_DEBUG
+	    fprintf(dbg, "Got pango_font_description for '%s'\n", fontname);
+	    fprintf(dbg, "Doing font_is_latin_text_font() test\n");
+	    fflush(dbg);
+#endif
+	    if (font_is_latin_text_font(desc)) {
+#ifdef FONT_FILTER_DEBUG
+		fprintf(dbg, "%s passed font_is_latin_text_font() test\n", fontname);
+		fflush(dbg);
+#endif
+		/* extend the cache */
+		if (latin_families == NULL) {
+		    latin_families = malloc(sizeof *latin_families);
 		} else {
-		    is_mono = monospaced[n_latin] = FALSE;
+		    latin_families = realloc(latin_families, (n_latin + 1) * sizeof *latin_families);
 		}
-		n_latin++;
+		if (latin_families == NULL) memerr = 1;
+
+		if (monospaced == NULL) {
+		    monospaced = malloc(sizeof *monospaced);
+		} else {
+		    monospaced = realloc(monospaced, (n_latin + 1) * sizeof *monospaced);
+		}
+		if (monospaced == NULL) memerr = 1;
+
+		if (!memerr) {
+		    latin_families[n_latin] = g_strdup(familyname);
+		    is_latin = TRUE;
+#ifdef FONT_FILTER_DEBUG
+		    fprintf(dbg, "Doing monospace test for '%s'\n", fontname);
+		    fflush(dbg);
+#endif
+		    if (font_is_latin_monospaced(desc)) {
+			is_mono = monospaced[n_latin] = TRUE;
+		    } else {
+			is_mono = monospaced[n_latin] = FALSE;
+		    }
+		    n_latin++;
+		}
 	    }
 	    pango_font_description_free(desc);
 	}
+
+	g_free(fontname);
 
     } else if (filter != GTK_FONT_HACK_NONE) { /* refer to the cached information */
 	gint i;

@@ -1201,7 +1201,9 @@ static float get_gui_scale (void)
 
     if (fontname != NULL) {
 	if (sscanf(fontname, "%*s %d", &fsize) == 1) {
-	    scale = fsize / 10.0;
+	    if (fsize > 10.0) {
+		scale = fsize / 10.0;
+	    }
 	}
 	g_free(fontname);
     }

@@ -682,7 +682,7 @@ cmp_families (const void *a, const void *b)
   return g_utf8_collate (a_name, b_name);
 }
 
-/* #define FONT_FILTER_DEBUG */
+#define FONT_FILTER_DEBUG
 
 #ifdef FONT_FILTER_DEBUG
 FILE *dbg;
@@ -719,6 +719,14 @@ gtk_font_selection_hack_show_available_fonts (GtkFontSelectionHack *fontsel)
       if (create_font_test_rig()) fontsel->filter = GTK_FONT_HACK_NONE;
   }
 
+#ifdef FONT_FILTER_DEBUG
+  for (i=0; i<n_families; i++) {
+      const gchar *name = pango_font_family_get_name (families[i]);
+      fprintf(dbg, "Font family %d: '%s'\n", i + 1, name);
+  }
+  fflush(dbg);
+#endif
+
   got_ok = FALSE;
   for (i=0; i<n_families; i++)
     {
@@ -732,7 +740,7 @@ gtk_font_selection_hack_show_available_fonts (GtkFontSelectionHack *fontsel)
 
       /* validate the font? */
       if (fontsel->filter != GTK_FONT_HACK_NONE && 
-	  !validate_font_family (name, context, fontsel->filter, n_families, cache_built)) {
+	  !validate_font_family (name, fontsel->filter, n_families, cache_built)) {
 #ifdef FONT_FILTER_DEBUG
 	  fprintf(dbg, "Skipping font '%s'\n", name);
 	  fflush(dbg);
