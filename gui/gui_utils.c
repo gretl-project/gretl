@@ -393,6 +393,9 @@ void *myrealloc (void *ptr, size_t size)
 
 /* ........................................................... */
 
+/* FIXME: if there are saved models, we need to delete them since
+   they will be totally messed up after a change of data set */
+
 void register_data (const char *fname, int record)
 {    
     char datacmd[MAXLEN];
@@ -448,6 +451,9 @@ void do_open_data (GtkWidget *w, gpointer data)
     datatype = detect_filetype(paths.datfile, &paths, prn);
     gretl_print_destroy(prn);
 
+    /* will this work right? */
+    close_session();
+
     if (datatype == 2) {
 	do_open_csv_box(paths.datfile, OPEN_CSV);
 	return;
@@ -476,7 +482,23 @@ void verify_open_data (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_file_open && expert[0] == 'f') { 
+    extern int replay; /* lib.c */
+    extern int work_done (void); /* dialogs.c */
+
+    fprintf(stderr, "session_saved = %d\n", session_saved);
+
+    if (data_file_open && 
+	!session_saved && 
+	expert[0] == 'f' && 
+	!replay && work_done()) {
+	edit_dialog ("gretl: open data", 
+		     "Opening a new data file will automatically\n"
+		     "close the current one.  You may want to save\n"
+		     "your work first.  Proceed to open data file?", NULL, 0,
+		     "Yes", do_open_data, userdata, 
+		     "No", NULL, NULL, 0, 0);
+    }
+    else if (data_file_open && expert[0] == 'f') { 
 	edit_dialog ("gretl: open data", 
 		     "Opening a new data file will automatically\n"
 		     "close the current one.  Proceed?", NULL, 0,

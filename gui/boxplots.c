@@ -61,8 +61,6 @@ double scalepos = 60.0;
 char boxfont[64] = "Helvetica";
 int boxfontsize = 12;
 
-extern void file_selector (char *msg, char *startdir, int action, 
-                           gpointer data);
 extern char remember_dir[MAXLEN];
 
 int ps_print_plots (const char *fname, int flag, gpointer data);

@@ -25,9 +25,6 @@
 # include <windows.h>
 #endif
 
-extern void file_selector (char *msg, char *startdir, int action, 
-			   gpointer data);
-
 struct gpt_titles_t {
     char *description; /* How the field will show up in the options dialog */
     short tab;         /* which tab (if any) does the item fall under? */

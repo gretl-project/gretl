@@ -665,7 +665,7 @@ static int data_work_done (void)
 
 /* ........................................................... */
 
-static int work_done (void)
+int work_done (void)
      /* See whether user has done any work, to determine whether or
 	not to offer the option of saving commands/output.  Merely
 	running a script, or opening a data file, or a few other
@@ -848,6 +848,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 {
     char fname[MAXLEN];
     int button;
+    extern int replay; /* lib.c */
 
     strcpy(fname, paths.userdir);
     strcat(fname, "session.inp");
@@ -856,7 +857,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     /* FIXME: should make both save_session_callback() and
        save_data_callback() blocking functions */
 
-    if (expert[0] == 'f' && work_done() && !session_saved) {
+    if (expert[0] == 'f' && !replay && work_done() && !session_saved) {
 	button = yes_no_dialog ("gretl", 		      
 				"Do you want to save the commands and\n"
 				"output from this gretl session?", 1);

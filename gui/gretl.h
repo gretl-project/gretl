@@ -206,15 +206,15 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 /* functions defined in files other than gretl.c */
 
+void file_selector (char *msg, char *startdir, int action, gpointer data);
 int retrieve_url (int opt, const char *dbase, const char *series, 
 		  int filesave, char **saver, char *errbuf);
-
 void gui_get_series (gpointer data, guint bci_code, 
 		     GtkWidget *widget);
-
 int update_query (void); 
-
 void display_files (gpointer data, guint code, GtkWidget *widget);
+void gpt_save_dialog (void);
+
 
 #ifndef G_OS_WIN32
 void set_wm_icon (GtkWidget *w, gpointer data);

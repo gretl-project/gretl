@@ -39,9 +39,6 @@
 
 #define SESSION_DEBUG
 
-extern void file_selector (char *msg, char *startdir, int action, 
-			   gpointer data);
-
 static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
@@ -281,7 +278,7 @@ void do_open_session (GtkWidget *w, gpointer data)
 	}
     }
 
-    clear_data();
+    clear_data(1);
     free_session();
     session_init();
 
@@ -312,12 +309,13 @@ void do_open_session (GtkWidget *w, gpointer data)
 
 void close_session (void)
 {
-    clear_data();
+    clear_data(0);
     free_session();
     session_state(FALSE);
     session_close_state(FALSE);
     session_file_open = 0;
-    /* FIXME - more to do here (icon window?) */
+    if (iconview != NULL) 
+	gtk_widget_destroy(iconview);
 }
 
 /* ........................................................... */
@@ -365,6 +363,7 @@ void free_session (void)
     session.models = NULL;
     session.ngraphs = 0;
     session.graphs = NULL;
+    session.name[0] = '\0';
 }
 
 /* ........................................................... */
@@ -574,6 +573,7 @@ int recreate_session (char *fname, SESSION *psession, session_t *rebuild)
      /* called on start-up when a "session" file is loaded */
 {
     print_t *prn;
+    extern int replay; /* lib.c */
 
     /* no printed output wanted */
     prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
@@ -586,6 +586,7 @@ int recreate_session (char *fname, SESSION *psession, session_t *rebuild)
 	errbox("Error recreating session");
     free_rebuild(rebuild);
     gretl_print_destroy(prn);
+    replay = 1; /* no fresh commands have been entered yet */
     return 0;
 }
 

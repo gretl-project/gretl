@@ -29,8 +29,6 @@ extern void browser_open_ps (GtkWidget *w, gpointer data);
 extern void open_db_clist (GtkWidget *w, gpointer data);
 extern void open_remote_clist (GtkWidget *w, gpointer data);
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
-extern void file_selector (char *msg, char *startdir, int action, 
-			  gpointer data);
 
 GtkWidget *active_edit_id = NULL;
 GtkWidget *active_edit_name = NULL;

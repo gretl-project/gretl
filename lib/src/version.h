@@ -20,6 +20,6 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-const char *version_string = "0.97p1";
+const char *version_string = "0.98";
 
 #endif

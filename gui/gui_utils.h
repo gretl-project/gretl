@@ -41,7 +41,7 @@ void *mymalloc (size_t size);
 
 void *myrealloc (void *ptr, size_t size);
 
-void clear_data (void);
+void clear_data (int full);
 
 void register_data (const char *fname, int record);
 
@@ -52,6 +52,8 @@ void datafile_find (GtkWidget *widget, gpointer data);
 void verify_open_session (gpointer userdata);
 
 void save_session (char *fname);
+
+void helpfile_init (void);
 
 void helpwin (gpointer data, guint script, GtkWidget *widget);
 

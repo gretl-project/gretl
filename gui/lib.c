@@ -54,6 +54,8 @@ static gint stack_model (int gui);
 
 GtkWidget *console_view;    /* shared with gui_utils.c */
 GtkWidget *console_dialog;  /* ditto */
+int replay;                 /* shared to indicate whether we're just
+			       replaying old session commands or not */
 
 GtkItemFactoryEntry log_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },    
@@ -209,12 +211,14 @@ void free_command_stack (void)
 
 /* ........................................................... */
 
-void clear_data (void)
+void clear_data (int full)
 {
     extern void clear_clist (GtkWidget *widget);
 
-    clear(paths.hdrfile, MAXLEN); 
-    clear(paths.datfile, MAXLEN);
+    if (full) {
+	clear(paths.hdrfile, MAXLEN); 
+	clear(paths.datfile, MAXLEN);
+    }
     restore_sample(NULL, 0, NULL);
     clear_datainfo(datainfo, 0);
     if (Z != NULL) free(Z);
@@ -300,6 +304,7 @@ gint check_cmd (char *line)
 	gui_errmsg(command.errcode, command.errmsg);
 	return 1;
     } 
+    replay = 0; /* we're not just replaying saved session commands */
     return 0;
 }
 

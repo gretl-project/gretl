@@ -41,8 +41,6 @@
 #include "pixmaps/mini.ofolder.xpm"
 
 /* functions from other gretl GUI files */
-extern void helpfile_init (void);
-extern void gpt_save_dialog (void);   /* gpt_control.c */
 extern void free_modelspec (void);    /* lib.c */
 extern void allocate_fileptrs (void); /* gui_utils.c */
 extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
@@ -170,7 +168,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/_Open data/sep1", NULL, NULL, 0, "<Separator>" },    
     { "/File/_Open data/import CSV...", NULL, open_data, OPEN_CSV, NULL },
     { "/File/_Open data/import BOX...", NULL, open_data, OPEN_BOX, NULL },
-    { "/File/C_lear data set", NULL, clear_data, 0, NULL },
+    { "/File/C_lear data set", NULL, clear_data, 1, NULL },
     { "/File/_Browse databases/_gretl native", NULL, display_files, 
       NATIVE_DB, NULL },
     { "/File/_Browse databases/_RATS 4", NULL, display_files, 

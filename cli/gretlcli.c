@@ -59,7 +59,6 @@ DATAINFO *subinfo;            /* info on sub-sampled data set */
 DATAINFO *fullinfo;           /* convenience pointer */
 FREQDIST *freq;               /* struct for freq distributions */
 CMD command;                  /* struct for command characteristics */
-GENERATE genr;                /* genr_func return struct */
 PATHS paths;                  /* useful paths */
 LOOPSET loop;                 /* struct for monte carlo loop */
 print_t *cmds;
@@ -756,14 +755,18 @@ void exec_line (char *line, print_t *prn)
 	break;
 
     case GENR:
-	genr = genr_func(&Z, datainfo, line, model_count,
-			 models[0], oflag);
-	if ((err = genr.errcode)) 
-	    errmsg(err, genr.errmsg, prn);
-	else {
-	    if (add_new_var(datainfo, &Z, &genr)) 
-		pprintf(prn, "Failed to add new variable.\n");
-	    else pprintf(prn, "%s", genr.msg);
+	{
+	    GENERATE genr;
+
+	    genr = genr_func(&Z, datainfo, line, model_count,
+			     models[0], oflag);
+	    if ((err = genr.errcode)) 
+		errmsg(err, genr.errmsg, prn);
+	    else {
+		if (add_new_var(datainfo, &Z, &genr)) 
+		    pprintf(prn, "Failed to add new variable.\n");
+		else pprintf(prn, "%s", genr.msg);
+	    }
 	}
 	break;
 
