@@ -147,7 +147,8 @@ static double get_date_x (int pd, const char *obs)
 {
     double x = 1.0;
 
-    if (pd == 5 || pd == 7) { /* daily data */
+    if ((pd == 5 || pd == 7) && strlen(obs) > 4) { 
+	/* daily data */
 	long ed = get_epoch_day(obs);
 
 	if (ed >= 0) x = ed;

@@ -1512,8 +1512,12 @@ static void build_var_popup (windata_t *win)
     win->popup = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!dataset_is_time_series(datainfo) && (i == 2 ||
-	    i == 6 || i == 7 || i == 8 || i == 9)) {
+	if (i == 2 && !dataset_is_time_series(datainfo) &&
+	    datainfo->time_series != STACKED_TIME_SERIES) {
+	    continue;
+	}
+	if (!dataset_is_time_series(datainfo) && 
+	    (i == 6 || i == 7 || i == 8 || i == 9)) {
 	    continue;
 	}
 	var_item = gtk_menu_item_new_with_label(_(var_items[i]));
