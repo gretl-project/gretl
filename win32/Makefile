@@ -13,7 +13,6 @@ imports = ./import-libs
 CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
-DLLTOOL = $(MGW_PREFIX)-dlltool
 
 # libraries
 GTKLIBS := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
@@ -100,9 +99,10 @@ PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
 PROBHDR = mconf.h
 PROBOBJ = $(PROBSRC:.c=.o)
 
-MO = mo/es.mo
+MO = mo/es.mo mo/fr.mo
 
 # targets begin
+
 all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
 	$(CHECKER) $(MO)
 
