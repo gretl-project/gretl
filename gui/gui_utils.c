@@ -1239,7 +1239,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     /* popup menu? */
     if (role == VIEW_SERIES) {
 	series_view_build_popup(vwin);
-	gtk_signal_connect_object (GTK_OBJECT(vwin->vbox), "button_press_event",
+	gtk_signal_connect_object (GTK_OBJECT(vwin->w), "button_press_event",
 				   GTK_SIGNAL_FUNC(popup_menu_handler), 
 				   GTK_OBJECT(vwin->popup));
     } 

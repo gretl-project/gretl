@@ -186,7 +186,6 @@ static GtkWidget *build_menu (gpointer data)
                            (GtkSignalFunc) box_popup_activated,
                            _(items[i]));
 	gtk_object_set_data(GTK_OBJECT(item), "group", data);
-        GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
         gtk_widget_show(item);
         gtk_menu_append(GTK_MENU(menu), item);
 	i++;
@@ -597,6 +596,7 @@ make_area (PLOTGROUP *grp)
     grp->area = gtk_drawing_area_new ();
 
     gtk_widget_set_events (grp->area, GDK_EXPOSURE_MASK
+			   | GDK_ENTER_NOTIFY_MASK
 			   | GDK_LEAVE_NOTIFY_MASK
 			   | GDK_BUTTON_PRESS_MASK);
     
