@@ -73,18 +73,18 @@ distdepend: depend
 complete.o: ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 complete.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 complete.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
-complete.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
-complete.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
-complete.o: ../lib/src/interact.h ../lib/src/graphing.h
+complete.o: ../lib/src/dataio.h ../lib/src/strutils.h ../config.h
+complete.o: ../lib/src/describe.h ../lib/src/printout.h ../lib/src/texprint.h
+complete.o: ../lib/src/var.h ../lib/src/interact.h ../lib/src/graphing.h
 complete.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 complete.o: ../lib/src/discrete.h ../lib/src/subsample.h
 complete.o: ../lib/src/calendar.h
 gretlcli.o: ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 gretlcli.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 gretlcli.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
-gretlcli.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
-gretlcli.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
-gretlcli.o: ../lib/src/interact.h ../lib/src/graphing.h
+gretlcli.o: ../lib/src/dataio.h ../lib/src/strutils.h ../config.h
+gretlcli.o: ../lib/src/describe.h ../lib/src/printout.h ../lib/src/texprint.h
+gretlcli.o: ../lib/src/var.h ../lib/src/interact.h ../lib/src/graphing.h
 gretlcli.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gretlcli.o: ../lib/src/discrete.h ../lib/src/subsample.h
 gretlcli.o: ../lib/src/calendar.h common.c
