@@ -453,9 +453,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	err = liml_driver(sys, pZ, sigma, pdinfo, prn);
 	if (err) {
 	    goto bailout;
+	} else {
+	    goto save_and_print;
 	}
-	/* FIXME */
-	goto bailout;
     }
 
     Xi = gretl_matrix_alloc(T, k);
@@ -552,6 +552,8 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    goto bailout;
 	}
     } 
+
+ save_and_print:
 
     j = 0;
     if (system_save_uhat(sys)) {

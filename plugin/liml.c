@@ -50,7 +50,6 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
     for (i=1; i<=list[0]; i++) {
 	if (!on_exo_list(exlist, list[i])) {
 	    reglist[1] = list[i];
-
 #if LDEBUG
 	    fprintf(stderr, "resids_to_E, aux reg: dependent var %s\n",
 		    pdinfo->varname[reglist[1]]);
@@ -204,7 +203,7 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
     int err = 0;
 
     /* create special dependent variable: the original y minus fitted
-      y based on the RHS endogenous variables
+       y based on the RHS endogenous variables
     */
 
     y = malloc(pdinfo->n * sizeof *y);
@@ -235,7 +234,7 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
     list[0] = 1;
     list[1] = oldv; /* dep var is the newly added var */
     j = 2;
-    /* put all included exog vars in list */
+    /* put all included exog vars on the RHS */
     for (i=2; i<=olsmod->list[0]; i++) {
 	if (on_exo_list(exlist, olsmod->list[i])) {
 	    list[0] += 1;
@@ -258,9 +257,6 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
 		bi = gretl_vector_get(g, k++);
 	    }
 	    olsmod->coeff[i] = bi;
-#if LDEBUG
-	    fprintf(stderr, "beta_hat[%d] = %g\n", i, bi);
-#endif
 	}
     }
 
@@ -268,6 +264,27 @@ liml_get_betahat (MODEL *olsmod, int *list, const int *exlist,
     dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
 
     return err;
+}
+
+static void liml_set_residuals_etc (MODEL *pmod, const double **Z)
+{
+    double yhat;
+    int depvar = pmod->list[1];
+    int i, t;
+
+    pmod->ess = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	yhat = 0.0;
+	for (i=0; i<pmod->ncoeff; i++) {
+	    yhat += pmod->coeff[i] * Z[pmod->list[i+2]][t];
+	}
+	pmod->yhat[t] = yhat;
+	pmod->uhat[t] = Z[depvar][t] - yhat;
+	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+    }
+
+    pmod->sigma = pmod->ess / pmod->nobs;
 }
 
 static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
@@ -301,6 +318,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     printlist(olsmod->list, "OLS model list");
 #endif
 
+    /* make regression list using included exogenous vars */
     reglist = liml_make_reglist(exlist, olsmod->list, &k);
     if (reglist == NULL) {
 	return E_ALLOC;
@@ -335,7 +353,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     gretl_matrix_print(W0, "W0", NULL);
 #endif
 
-    /* now re-estimate using all exogenous vars */
+    /* re-set the regression list using all exogenous vars */
     reglist[0] = 1 + exlist[0];
     for (i=2; i<=reglist[0]; i++) {
 	reglist[i] = exlist[i-1];
@@ -372,23 +390,26 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     printf("smallest eigenvalue: %g\n\n", lmin);
     free(lambda);
 
+    /* estimates of coeffs on included endogenous vars */
     g = liml_get_gamma_hat(W0, W1, lmin);
     if (g == NULL) {
 	err = 1;
 	goto bailout;
     }
 
-#if LDEBUG
-    for (i=0; i<k-1; i++) {
-	printf("gamma_hat[%d] = %g\n", i, gretl_matrix_get(g, i, 0));
-	    
-    }
-#endif
-
+    /* estimates of coeffs on included exogenous vars */
     err = liml_get_betahat(olsmod, reglist, exlist, g, pZ, pdinfo);
     if (err) {
 	goto bailout;
     }
+
+    /* correct yhat, uhat, ESS, sigma */
+    liml_set_residuals_etc(olsmod, (const double **) *pZ);
+
+    /* FIXME: need to compute correct standard errors (full VCV?)
+       also need to compute log-likelihood, AIC, BIC, and 
+       LR test for overidentification 
+    */
 
  bailout:
 
@@ -417,6 +438,8 @@ int liml_driver (gretl_equation_system *sys, double ***pZ,
     for (i=0; i<g; i++) {
 	liml_do_equation(sys, i, pZ, pdinfo, prn);
     }
+
+    /* FIXME: need to correct the cross-equation VCV estimates */
 
     return err;
 }
