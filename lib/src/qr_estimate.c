@@ -780,6 +780,8 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 
 #if 0
 
+/* might be worth trying, but not ready yet */
+
 int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 		       gretlopt opts)
 {
@@ -907,7 +909,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
     xpxinv = gretl_matrix_alloc(n, n);
     if (xpxinv == NULL) {
 	err = E_ALLOC;
-	goto qr_cleanup;
+	goto svd_cleanup;
     }
 
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
@@ -920,7 +922,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	if ((opts & OPT_T) && !get_force_hc()) {
 	    qr_make_hac(pmod, Z, xpxinv);
 	} else {
-	    qr_make_hccme(pmod, Z, Q, xpxinv);
+	    qr_make_hccme(pmod, Z, A, xpxinv);
 	}
     } else {
 	qr_make_regular_vcv(pmod, xpxinv);
@@ -934,7 +936,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
     qr_compute_f_stat(pmod, opts);
 
  svd_cleanup:
-    gretl_matrix_free(Q);
+    gretl_matrix_free(A);
     gretl_matrix_free(B);
 
     free(work);
