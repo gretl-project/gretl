@@ -1430,6 +1430,7 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 static int make_new_png (png_plot_t *plot, int view)
 {
     int err = 0;
+    char fullname[MAXLEN], sysline[MAXLEN];
 
     if (view == PNG_ZOOM) {
 	FILE *fpin, *fpout;
@@ -1437,8 +1438,9 @@ static int make_new_png (png_plot_t *plot, int view)
 
 	fpin = fopen(plot->spec->fname, "r");
 	if (fpin == NULL) return 1;
-	
-	fpout = fopen("zoomplot.gp", "w");
+
+	sprintf(fullname, "%szoomplot.gp", paths.userdir);
+	fpout = fopen(fullname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
 	    return 1;
@@ -1465,8 +1467,9 @@ static int make_new_png (png_plot_t *plot, int view)
 	fclose(fpout);
 	fclose(fpin);
 
-	err = system("gnuplot zoomplot.gp");
-	remove("zoomplot.gp");
+	sprintf(sysline, "gnuplot %s", fullname);
+	err = system(sysline);
+	/* remove(fullname); */
     } else { /* PNG_UNZOOM */
 	char syscmd[36];
 
@@ -1479,7 +1482,8 @@ static int make_new_png (png_plot_t *plot, int view)
 	return 1;
     }
 
-    render_pngfile("gretltmp.png", plot, view);
+    sprintf(fullname, "%sgretltmp.png", paths.userdir);
+    render_pngfile(fullname, plot, view);
 
     return 0;
 }
@@ -1569,6 +1573,7 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
     pbuf = gdk_pixbuf_new_from_file(fname);
     if (pbuf == NULL) {
 	errbox(_("Failed to create pixbuf from file"));
+	fprintf(stderr, "fname='%s'\n", fname);
 	remove(fname);
 	return;
     }
@@ -1616,13 +1621,15 @@ static void plot_quit (GtkWidget *w, png_plot_t *plot)
 static int get_plot_yrange (png_plot_t *plot)
 {
     FILE *fpin, *fpout;
-    char line[MAXLEN];
+    char line[MAXLEN], dumbgp[MAXLEN], dumbtxt[MAXLEN];
     int err = 0, x2axis = 0;
 
     fpin = fopen(plot->spec->fname, "r");
     if (fpin == NULL) return 1;
-    
-    fpout = fopen("dumbplot.gp", "w");
+
+    sprintf(dumbgp, "%sdumbplot.gp", paths.userdir);
+    sprintf(dumbtxt, "%sgptdumb.txt", paths.userdir);
+    fpout = fopen(dumbgp, "w");
     if (fpout == NULL) {
 	fclose(fpin);
 	return 1;
@@ -1633,7 +1640,7 @@ static int get_plot_yrange (png_plot_t *plot)
 	if (strstr(line, "set term")) 
 	    fputs("set term dumb\n", fpout);
 	else if (strstr(line, "set output")) 
-	    fputs("set output 'gptdumb.txt'\n", fpout);
+	    fprintf(fpout, "set output '%s'\n", dumbtxt);
 	else fputs(line, fpout);
 	if (strstr(line, "x2range")) x2axis = 1;
     }
@@ -1641,8 +1648,9 @@ static int get_plot_yrange (png_plot_t *plot)
     fclose(fpin);
     fclose(fpout);
 
-    err = system("gnuplot dumbplot.gp");
-    remove("dumbplot.gp");
+    sprintf(line, "gnuplot %s", dumbgp);
+    err = system(line);
+    remove(dumbgp);
 
     if (err) 
 	return 1;
@@ -1650,22 +1658,22 @@ static int get_plot_yrange (png_plot_t *plot)
 	double y[16];
 	int i = 0;
 
-	fpin = fopen("gptdumb.txt", "r");
+	fpin = fopen(dumbtxt, "r");
 	if (fpin == NULL) return 1;
 
 	/* read the y-axis min and max from the ascii graph */
 #ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
+	setlocale(LC_NUMERIC, "C");
 #endif
 	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
 	    if (sscanf(line, "%lf", &(y[i])) == 1) i++;
 	}
 #ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
+	setlocale(LC_NUMERIC, "");
 #endif
 
 	fclose(fpin);
-	remove("gptdumb.txt");
+	remove(dumbtxt);
 
 	if (x2axis) {
 	    if (i > 3 && y[1] > y[i-2]) {
@@ -1734,6 +1742,7 @@ int gnuplot_show_png (char *plotfile)
 {
     png_plot_t *plot;
     int plot_has_xrange;
+    char fullname[MAXLEN];
 
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
@@ -1876,7 +1885,8 @@ int gnuplot_show_png (char *plotfile)
     gtk_signal_connect(GTK_OBJECT(plot->canvas), "expose_event",
 		       GTK_SIGNAL_FUNC(plot_expose), plot->pixmap);
 
-    render_pngfile("gretltmp.png", plot, PNG_START);
+    sprintf(fullname, "%sgretltmp.png", paths.userdir);
+    render_pngfile(fullname, plot, PNG_START);
 
     return 0;
 }

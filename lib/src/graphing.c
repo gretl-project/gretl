@@ -495,7 +495,7 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
 #else /* see if the png terminal wants the "color" parameter */
 	fprintf(*fpp, "set term png%s\n", (gp_png_wants_color())? " color" : "");
 #endif
-	fprintf(*fpp, "set output 'gretltmp.png'\n");
+	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
     }
 #else /* not GNUPLOT_PNG */
     *fpp = fopen(ppaths->plotfile, "w");
