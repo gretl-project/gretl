@@ -37,14 +37,12 @@
 int do_fcp (const int *list, const double **Z, 
 	    const DATAINFO *pdinfo, PRN *prn)
 {
-    integer ninit, nfinsm, ifrom, ito;
-    integer inyear, nfinyr;
+    integer ninit, nfinsm;
     doublereal *yobs, *xobs;
-    integer nend, nexo;
-    integer iread;
-    integer nstoch;
+    integer nend, nexo, nstoch;
+    integer nobs;
     doublereal *umc, *ydet, *yy;
-    integer ncoeff;
+    integer ncoeff, ncoefb;
     doublereal *coeff, *d, *oldc;
     doublereal *vc, *res2;
     doublereal *res, *sigma;
@@ -52,41 +50,30 @@ int do_fcp (const int *list, const double **Z,
     doublereal *ystoc;
     doublereal *amax, *amin;
     doublereal *b;
-    integer ncoefb;
     integer iters, info;
     
-    int i, nobs;
-    int p, q, ynum;
+    int i, p, q, ynum;
 
-    inyear = 1;
-    nfinyr = 99;
-    ifrom = 1;
+    /* FIXME: how exactly should these be set? */
     nend = 1;
     nexo = 0;
     nstoch = 1;
     ncoeff = 1;
     ncoefb = 1;
 
-    /* FIXME */
-    ito = nobs = pdinfo->t2 - pdinfo->t1 + 1;
+    nfinsm = nobs = pdinfo->t2 - pdinfo->t1 + 1;
+    ninit = 1;
 
     p = list[1];
     q = list[2];
     ynum = list[4];
 
-    if (ifrom < inyear) inyear = ifrom;
-    if (ito > nfinyr) nfinyr = ito;
-    iread = nfinyr - inyear + 1;
+    yobs = malloc((nend * nobs + 1) * sizeof *yobs);
+    ydet = malloc((nend * nobs + 1) * sizeof *ydet);
+    ystoc = malloc((nend * nobs + 1) * sizeof *ystoc);
 
-    ninit = ifrom - inyear + 1;
-    nfinsm = ito - inyear + 1;
-    
-    yobs = malloc((nend * iread + 1) * sizeof *yobs);
-    ydet = malloc((nend * iread + 1) * sizeof *ydet);
-    ystoc = malloc((nend * iread + 1) * sizeof *ystoc);
-
-    res2 = malloc((nend * iread + 1) * sizeof *res2);
-    for (i=1; i<=nend*iread; i++) {
+    res2 = malloc((nend * nobs + 1) * sizeof *res2);
+    for (i=1; i<=nend*nobs; i++) {
 	res2[i] = 0.0;
     }
 
@@ -95,8 +82,8 @@ int do_fcp (const int *list, const double **Z,
 	umc[i] = 0.0;
     }
 
-    res = malloc((nstoch * iread + 1) * sizeof *res);
-    for (i=1; i<=nstoch*iread; i++) {
+    res = malloc((nstoch * nobs + 1) * sizeof *res);
+    for (i=1; i<=nstoch*nobs; i++) {
 	res[i] = 0.0;
     }    
 
@@ -116,9 +103,9 @@ int do_fcp (const int *list, const double **Z,
 	a[i] = 0.0;
     }
 
-    amax = malloc((nend * iread + 1) * sizeof *amax);
-    amin = malloc((nend * iread + 1) * sizeof *amin);
-    for (i=1; i<=nend*iread; i++) {
+    amax = malloc((nend * nobs + 1) * sizeof *amax);
+    amin = malloc((nend * nobs + 1) * sizeof *amin);
+    for (i=1; i<=nend*nobs; i++) {
 	amax[i] = amin[i] = 0.0;
     }
 
@@ -136,7 +123,7 @@ int do_fcp (const int *list, const double **Z,
 
     xobs = NULL;
 
-    for (i=1; i<=iread; i++) {
+    for (i=1; i<=nobs; i++) {
 	ystoc[i] = ydet[i] = yobs[i] = Z[ynum][i-1];
     }
 
@@ -153,7 +140,17 @@ int do_fcp (const int *list, const double **Z,
     amax[4] = 0.1; /* initial alpha_1 */
     amax[5] = 0.1; /* initial beta_1 */
 
-    vsanal_(&ninit, &nfinsm, &yobs[1], &nend, &iread,
+    printf("ninit=%d\n"
+	   "nfinsm=%d\n"
+	   "nend=%d\n"
+	   "nobs=%d\n"
+	   "nexo=%d\n"
+	   "nstoch=%d\n"
+	   "ncoeff=%d\n",
+	   (int) ninit, (int) nfinsm, (int) nend, (int) nobs, 
+	   (int) nexo, (int) nstoch, (int) ncoeff);
+
+    vsanal_(&ninit, &nfinsm, &yobs[1], &nend, &nobs,
 	    xobs, &nexo, &umc[1], &nstoch, &ydet[1], 
 	    &yy[1], &coeff[1], &ncoeff, &d[1], &oldc[1], 
 	    &vc[1], &res2[1], &res[1], &sigma[1], &a[1], &ystoc[1], 

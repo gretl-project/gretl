@@ -3023,7 +3023,7 @@ L32:
 /* Model: Bollerslev and Ghysels */
 
 
-/* Subroutine */ int vsmode_(doublereal *y, doublereal *x, integer *nexo, 
+/* Subroutine */ int vsmode_orig(doublereal *y, doublereal *x, integer *nexo, 
 	integer *iread, integer *i__, doublereal *yl, integer *nend, 
 	doublereal *u, doublereal *a, doublereal *z__, integer *nstoch, 
 	integer *ncoeff)
@@ -3050,4 +3050,33 @@ L32:
 /* **************************************************** */
     return 0;
 } /* vsmode_ */
+
+int vsmode_(doublereal *y, doublereal *x, integer *nexo, 
+	     integer *iread, integer *i__, doublereal *yl, integer *nend, 
+	     doublereal *u, doublereal *a, doublereal *z__, integer *nstoch, 
+	     integer *ncoeff)
+{
+    /* System generated locals */
+    integer x_dim1, x_offset, yl_dim1, yl_offset, j;
+
+    /* Parameter adjustments */
+    x_dim1 = *nexo;
+    x_offset = 1 + x_dim1;
+    x -= x_offset;
+    --z__;
+    yl_dim1 = *nend;
+    yl_offset = 1 + yl_dim1;
+    yl -= yl_offset;
+    --y;
+    --u;
+    --a;
+
+    z__[1] = a[1] + u[1];
+
+    for (j = 0; j < *nexo; j++) {
+	z__[1] += a[j + 2] * x[*i__ * x_dim1 + j + 2];
+    }
+
+    return 0;
+} 
 
