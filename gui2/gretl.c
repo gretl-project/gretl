@@ -2016,7 +2016,7 @@ static GtkWidget *image_button_new (GdkPixmap *pix, GdkBitmap *mask,
     GtkWidget *image = gtk_image_new_from_pixmap(pix, mask);
     GtkWidget *button = gtk_button_new();
 
-    gtk_widget_set_size_request(button, 24, 24);
+    gtk_widget_set_size_request(button, 26, 24);
 
     gtk_container_add (GTK_CONTAINER(button), image);
     g_signal_connect (G_OBJECT(button), "clicked",

@@ -119,6 +119,7 @@ done
 
 # database files
 add_file ${TOPDIR}/share/bcih/README gretl/db/README
+make -C ${TOPDIR}/build/share/bcih
 add_file ${TOPDIR}/build/share/bcih/bcih.bin gretl/db/bcih.bin
 add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx 
 
