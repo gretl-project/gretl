@@ -1,14 +1,20 @@
 DOC = nist
 SRC = $(DOC).xml
 DSL = $(DOC)-both.dsl
+XMLDCL = /opt/jade/share/xml.dcl
 HMATHSS = ../HTMLMath.dsl
-HTMLDIR = $(DOC)-html
 
-all: html
+all: nist.html
 
-html: $(SRC) ../db2html $(DSL) $(HMATHSS) 
-	../db2html $(SRC)
-	../texmath2png.pl $(DOC)-html/equation-list.sgml
+nist.html: $(SRC) $(DSL) $(HMATHSS) figures
+	jade -t sgml -i html -V nochunks -d $(DSL)\#html $(XMLDCL) $< > $@
+	../texmath2png.pl equation-list.sgml
+
+.PHONY:
+
+figures:
+	mkdir -p figures
 
 clean:
-	rm -f *.html
+	rm -f *.html equation-list.sgml
+	rm -rf figures
