@@ -727,8 +727,8 @@ int work_done (void)
 static void save_data_callback (void)
 {
     file_save(NULL, SAVE_DATA, NULL);
-    data_status ^= MODIFIED_DATA;
-    fprintf(stderr, "changed data_status\n");
+    if (data_status & MODIFIED_DATA)
+	data_status ^= MODIFIED_DATA;
     /* FIXME: need to do more here */
 }
 
