@@ -21,7 +21,6 @@
 
 #include "libgretl.h"
 #include "internal.h"
-#include <stdio.h>
 
 #define TINY 1.0e-13
 #define SMALL 1.0e-8

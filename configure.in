@@ -5,13 +5,17 @@ dnl
 AC_INIT(./lib/src/version.h)
 AC_PREREQ(2.12)
 AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADER(lib/src/gretlconfig.h)
 AC_CONFIG_AUX_DIR(`pwd`/tools)
 
-dnl What version of gretl are we building?
-dnl
+PACKAGE=gretl
 VERSION=`grep const ./lib/src/version.h | sed -e 's/^.*"\(.*\)";$/\1/'`
-echo "configuring for gretl $VERSION"
+AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
+AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
+
+echo "configuring for $PACKAGE $VERSION"
 
 dnl Variables controlling the gretl build
 build_gui="yes"
@@ -26,6 +30,8 @@ have_gnome="no"
 need_libbind="no"
 png_graphics="yes"
 MAKE="make"
+
+AM_GNU_GETTEXT([external])
 
 AC_ARG_ENABLE(gui,
 [  --enable-gui		  Enable gui [default=yes]],
@@ -87,7 +93,7 @@ fi,
 tryole=yes)
 
 AC_PROG_CC
-AC_CANONICAL_HOST
+dnl AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
 AC_PROG_INSTALL
 
@@ -617,7 +623,7 @@ dnl Create output
 dnl
 CFLAGS="$ac_save_CFLAGS"
 LIBS="$ac_save_LIBS"
-AC_OUTPUT([
+AC_OUTPUT([ 
 Makefile 
 gretl_sh 
 gretl-config 
@@ -626,6 +632,7 @@ gui/gnome/gretl.keys
 cli/Makefile 
 lib/Makefile 
 plugin/Makefile
+po/Makefile.in 
 share/Makefile
 ])
 

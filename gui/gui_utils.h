@@ -11,6 +11,10 @@ void read_rc (void);
 void window_print (windata_t *mydata, guint u, GtkWidget *widget);
 #endif
 
+#ifdef ENABLE_NLS
+gchar *menu_translate (const gchar *path, gpointer p);
+#endif
+
 void load_fixed_font (void);
 
 void write_rc (void);

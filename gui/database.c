@@ -126,10 +126,10 @@ enum db_data_actions {
 };
 
 GtkItemFactoryEntry db_items[] = {
-    { _("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL},
-    { _("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL },
-    { _("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL },
-    { _("/_Find"), NULL, menu_find, 1, NULL },
+    { N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL},
+    { N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL },
+    { N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL },
+    { N_("/_Find"), NULL, menu_find, 1, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
@@ -476,6 +476,9 @@ static void set_up_db_menu (GtkWidget *window, windata_t *dbdat,
 
     dbdat->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
 					NULL);
+#ifdef ENABLE_NLS
+    gtk_item_factory_set_translate_func(dbdat->ifac, menu_translate, NULL, NULL);
+#endif
     gtk_item_factory_create_items (dbdat->ifac, n_items, items, dbdat);
     dbdat->mbar = gtk_item_factory_get_widget(dbdat->ifac, "<main>");
 }

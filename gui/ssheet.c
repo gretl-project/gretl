@@ -47,14 +47,14 @@ static void sheet_clear (gpointer *data, guint all, GtkWidget *w);
 static void get_data_from_sheet (void);
 
 static GtkItemFactoryEntry sheet_items[] = {
-    { _("/_Observation"), NULL, NULL, 0, "<Branch>" },
-    { _("/Observation/_Append obs"), NULL, sheet_add_obs, 0, NULL },
-    { _("/Observation/_Insert obs"), NULL, sheet_insert_obs, 0, NULL },
-    { _("/_Variable"), NULL, NULL, 0, "<Branch>" },
-    { _("/Variable/_Add"), NULL, sheet_add_var, 0, NULL },
-    { _("/_Clear"), NULL, NULL, 0, "<Branch>" },
-    { _("/_Clear/_Selected cells"), NULL, sheet_clear, 0, NULL },
-    { _("/_Clear/_All data"), NULL, sheet_clear, 1, NULL }
+    { N_("/_Observation"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Observation/_Append obs"), NULL, sheet_add_obs, 0, NULL },
+    { N_("/Observation/_Insert obs"), NULL, sheet_insert_obs, 0, NULL },
+    { N_("/_Variable"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Variable/_Add"), NULL, sheet_add_var, 0, NULL },
+    { N_("/_Clear"), NULL, NULL, 0, "<Branch>" },
+    { N_("/_Clear/_Selected cells"), NULL, sheet_clear, 0, NULL },
+    { N_("/_Clear/_All data"), NULL, sheet_clear, 1, NULL }
 };
 
 /* ........................................................... */
@@ -264,10 +264,10 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 static GtkWidget *build_menu (GtkWidget *sheet)
 {
     static char *items[]={
-        _("Add Variable"),
-        _("Add Observation"),
-        _("Insert Observation"),
-        _("Clear Cells")
+        N_("Add Variable"),
+        N_("Add Observation"),
+        N_("Insert Observation"),
+        N_("Clear Cells")
     };
     GtkWidget *menu;
     GtkWidget *item;
@@ -581,6 +581,9 @@ void show_spreadsheet (DATAINFO *pdinfo)
     accel = gtk_accel_group_new();
     ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
 				accel);
+#ifdef ENABLE_NLS
+    gtk_item_factory_set_translate_func(ifac, menu_translate, NULL, NULL);
+#endif
     gtk_item_factory_create_items(ifac, 
 				  sizeof sheet_items / sizeof sheet_items[0],
 				  sheet_items, sheetwin);

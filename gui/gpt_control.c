@@ -52,10 +52,10 @@ GPT_RANGE axis_range[3];
 #define NTITLES 4
 
 struct gpt_titles_t gpt_titles[] = {
-    {_("Title of plot"), 0, NULL},
-    {_("Title for axis"), 1, NULL},
-    {_("Title for axis"), 2, NULL},
-    {_("Title for axis"), 3, NULL},
+    {N_("Title of plot"), 0, NULL},
+    {N_("Title for axis"), 1, NULL},
+    {N_("Title for axis"), 2, NULL},
+    {N_("Title for axis"), 3, NULL},
 };
 
 /* ........................................................... */

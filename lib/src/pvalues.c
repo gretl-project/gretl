@@ -35,7 +35,7 @@ static void _enterdf (const char *str);
 
 double _gammadist (double s1, double s2, double x, int control);
 
-const char negval[] = _("\nEnter x value (value < 0 will exit menu): "); 
+const char negval[] = N_("\nEnter x value (value < 0 will exit menu): "); 
 
 /**
  * _tcrit95:
@@ -501,7 +501,7 @@ static void _pnormal (void)
 {
     double xx, zx; 
 
-    printf("%s", negval);
+    printf("%s", _(negval));
     zx = _getvalue();
     if(zx < 0.0) return;
     xx = normal(zx);
@@ -520,7 +520,7 @@ static void _ptvalue (void)
     _enterdf(" ");
     n = (int) _getvalue();
     if (n <= 0) return;
-    printf("%s", negval);
+    printf("%s", _(negval));
     zx = _getvalue();
     if(zx < 0.0) return;
     xsq = zx * zx;
@@ -540,7 +540,7 @@ static void _pchisq (void)
     _enterdf(" ");
     n = (int) _getvalue();
     if (n <= 0) return;
-    printf("%s", negval);
+    printf("%s", _(negval));
     zx = _getvalue();
     if(zx < 0.0) return;
     xx = chisq(zx, n);
@@ -562,7 +562,7 @@ static void _pfvalue (void)
     _enterdf(_(" for the denominator "));
     n = (int) _getvalue();
     if (n <= 0) return;
-    printf("%s", negval);
+    printf("%s", _(negval));
     zx = _getvalue();
     if (zx < 0.0) return;
     xx = fdist(zx, m, n);
@@ -584,7 +584,7 @@ static void _pgamma (void)
     printf(_("\nEnter the variance: "));
     variance = _getvalue();
     if (variance <= 0) return;
-    printf("%s", negval);
+    printf("%s", _(negval));
     zx = _getvalue();
     if (zx < 0.0) return;
     xx = 1.0 - _gammadist(mean, variance, zx, 2);

@@ -25,6 +25,9 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "gretlconfig.h" /* to specify NLS or not */
+#include "gettext.h"
+
 #define MAXLABEL 128  /* maximum length of decsriptive labels for variables */
 #define MAXLEN 512    /* max length of "long" strings */
 #define ERRLEN 256    /* max length of libgretl error messages */
@@ -32,10 +35,6 @@
 #ifndef M_PI
 # define M_PI 3.14159265358979323846
 #endif
-
-#ifndef __GNOME_I18N_H__
-#define _(String)  (String)
-#endif /* __GNOME_I18N_H__ */
 
 typedef enum {
     GRETL_PRINT_STDOUT,

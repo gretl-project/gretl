@@ -188,17 +188,17 @@ static GtkWidget *build_menu (gpointer data)
 {
     GtkWidget *menu, *item;    
     static char *items[] = {
-        _("Five-number summary"),
-	_("Save to session as icon"),
-        _("Save as EPS..."),
-        _("Save as PS..."),
+        N_("Five-number summary"),
+	N_("Save to session as icon"),
+        N_("Save as EPS..."),
+        N_("Save as PS..."),
 #ifdef G_OS_WIN32
-	_("Copy to clipboard"),
+	N_("Copy to clipboard"),
 #else
-	_("Save as XPM..."),
+	N_("Save as XPM..."),
 #endif
-	_("Help"),
-        _("Close"),
+	N_("Help"),
+        N_("Close"),
 	NULL
     };
     int i = 0;

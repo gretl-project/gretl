@@ -25,6 +25,7 @@ GTK_EXTRA_CFLAGS = @GTK_EXTRA_CFLAGS@
 GTK_EXTRA_LIBS = @GTK_EXTRA_LIBS@
 PIXBUF_CFLAGS = @PIXBUF_CFLAGS@
 PIXBUF_LIBS = @PIXBUF_LIBS@
+USE_NLS = @USE_NLS@
 
 ifeq ($(CC),)
   CC = gcc
@@ -56,8 +57,13 @@ else
   LIBS = $(GTK_LIBS) $(GTK_EXTRA_LIBS) ../lib/libgretl.la
   GUI_CFLAGS = $(GTK_CFLAGS) $(GTK_EXTRA_CFLAGS)
 endif
+ifeq ($(USE_NLS),yes)
+  datadir = @datadir@
+  localedir = $(datadir)/locale
+  DEFS = -DLOCALEDIR=\"$(localedir)\"
+endif
 
-override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(PIXBUF_CFLAGS)
+override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(PIXBUF_CFLAGS) $(DEFS)
 override LIBS += $(PIXBUF_LIBS)
 
 # Directories

@@ -52,46 +52,46 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 /* "session" struct and "errtext" are globals */
 
 static char *model_items[] = {
-    _("Display"),
-    _("Delete")
+    N_("Display"),
+    N_("Delete")
 };
 
 static char *graph_items[] = {
-    _("Display"),
-    _("Edit using GUI"),
-    _("Edit plot commands"),
-    _("Delete")
+    N_("Display"),
+    N_("Edit using GUI"),
+    N_("Edit plot commands"),
+    N_("Delete")
 };
 
 static char *dataset_items[] = {
-    _("Edit"),
-    _("Save..."),
-    _("Export as CSV...")
+    N_("Edit"),
+    N_("Save..."),
+    N_("Export as CSV...")
 };
 
 static char *info_items[] = {
-    _("View"),
-    _("Edit"),
+    N_("View"),
+    N_("Edit"),
 };
 
 static char *session_items[] = {
-    _("Save"),
+    N_("Save"),
 #ifdef GNUPLOT_PNG
-    _("Save As...")
+    N_("Save As...")
 #else
-    _("Save As..."),
-    _("Add last graph")
+    N_("Save As..."),
+    N_("Add last graph")
 #endif
 };
 
 GtkItemFactoryEntry gp_edit_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { _("/File/_Save"), NULL, auto_save_gp, 0, NULL },
-    { _("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL },
-    { _("/File/Send to _gnuplot"), NULL, gp_to_gnuplot, 0, NULL },
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
+    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL },
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL },
+    { N_("/File/Send to _gnuplot"), NULL, gp_to_gnuplot, 0, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 

@@ -61,80 +61,80 @@ int replay;                 /* shared, to indicate whether we're just
 int echo_off;               /* don't echo commands */
 
 GtkItemFactoryEntry log_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { _("/File/_Save As..."), NULL, file_save, SAVE_CMDS, NULL },
-    { _("/File/_Run"), NULL, do_run_script, SESSION_EXEC, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
+    { N_("/File/_Save As..."), NULL, file_save, SAVE_CMDS, NULL },
+    { N_("/File/_Run"), NULL, do_run_script, SESSION_EXEC, NULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { _("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry console_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { _("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, NULL },
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry script_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { _("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, NULL },
-    { _("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, NULL },
+    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { _("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { _("/Edit/_Paste"), NULL, text_paste, 0, NULL },
-    { _("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
-    { _("/Edit/_Undo"), NULL, text_undo, 0, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL },
+    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
+    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry sample_script_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { _("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, NULL },
-    { _("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
+    { N_("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, NULL },
+    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { _("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry script_out_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { _("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, NULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { _("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry view_items[] = {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { _("/_File"), NULL, NULL, 0, "<Branch>" },     
-    { _("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
-const char *CANTDO = _("Can't do this: no model has been estimated yet\n");
+const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 
 typedef struct {
     int ID, cmdnum;

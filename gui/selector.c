@@ -376,31 +376,31 @@ static char *est_str (int cmdnum)
 {
     switch (cmdnum) {
     case OLS:
-	return "OLS";
+	return _("OLS");
     case HCCM:
-	return "HCCM";
+	return _("HCCM");
     case HSK:
-	return "Heteroskedasticity corrected";
+	return _("Heteroskedasticity corrected");
     case CORC:
-	return "Cochrane-Orcutt";
+	return _("Cochrane-Orcutt");
     case HILU:
-	return "Hildreth-Lu";
+	return _("Hildreth-Lu");
     case LOGIT:
-	return "Logit";
+	return _("Logit");
     case PROBIT:
-	return "Probit";
+	return _("Probit");
     case POOLED:
-	return "Pooled OLS";
+	return _("Pooled OLS");
     case WLS:
-	return "Weighted least squares";
+	return _("Weighted least squares");
     case TSLS:
-	return "Two-stage least squares";
+	return _("Two-stage least squares");
     case AR:
-	return "Autoregressive";
+	return _("Autoregressive");
     case VAR:
-	return "VAR";
+	return _("VAR");
     case COINT:
-	return "Cointegration";
+	return _("Cointegration");
     default:
 	return "";
     }
@@ -463,9 +463,9 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
     GtkWidget *tmp, *x_hbox;
 
     if (sr->code == SCATTERS)
-	tmp = gtk_label_new("Y-axis variable");
+	tmp = gtk_label_new(_("Y-axis variable"));
     else
-	tmp = gtk_label_new("X-axis variable");
+	tmp = gtk_label_new(_("X-axis variable"));
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
@@ -495,9 +495,9 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
     GtkWidget *tmp, *depvar_hbox;
 
     if (sr->code == VAR)
-	tmp = gtk_label_new ("First dependent variable");
+	tmp = gtk_label_new (_("First dependent variable"));
     else
-	tmp = gtk_label_new ("Dependent variable");
+	tmp = gtk_label_new (_("Dependent variable"));
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
@@ -522,7 +522,7 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
     gtk_box_pack_start(GTK_BOX(right_vbox), depvar_hbox, FALSE, FALSE, 0);
     gtk_widget_show(depvar_hbox); 
 
-    sr->default_check = gtk_check_button_new_with_label("Set as default");
+    sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
     gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, TRUE, 0);
     gtk_widget_show(sr->default_check); 
 
@@ -538,7 +538,7 @@ static void lag_order_spin (selector *sr, GtkWidget *right_vbox)
     gfloat order = datainfo->pd;
 
     midhbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new("lag order:");
+    tmp = gtk_label_new(_("lag order:"));
     adj = gtk_adjustment_new(order, 1, 24, 1, 1, 1);
     sr->extra = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start (GTK_BOX (midhbox), tmp, FALSE, FALSE, 5);
@@ -785,15 +785,15 @@ void selection_dialog (const char *title, const char *oktxt,
     selector_init(sr, cmdcode, title);
 
     if (MODEL_CODE(cmdcode))
-	sprintf(topstr, "%s model", est_str(cmdcode));
+	strcpy(topstr, est_str(cmdcode));
     else if (cmdcode == GR_XY)
-	strcpy(topstr, "XY scatterplot");
+	strcpy(topstr, _("XY scatterplot"));
     else if (cmdcode == GR_IMP)
-	strcpy(topstr, "plot with impulses");
+	strcpy(topstr, _("plot with impulses"));
     else if (cmdcode == SCATTERS)
-	strcpy(topstr, "multiple scatterplots");
+	strcpy(topstr, _("multiple scatterplots"));
     else if (cmdcode == GR_DUMMY)
-	strcpy(topstr, "factorized plot");
+	strcpy(topstr, _("factorized plot"));
     else
 	strcpy(topstr, "fixme need string");
 
@@ -858,13 +858,13 @@ void selection_dialog (const char *title, const char *oktxt,
     
     /* lower right: selected (independent) variables */
     if (MODEL_CODE(cmdcode))
-	tmp = gtk_label_new("Independent variables");
+	tmp = gtk_label_new(_("Independent variables"));
     else if (cmdcode == GR_XY || cmdcode == GR_IMP)
-	tmp = gtk_label_new("Y-axis variables");
+	tmp = gtk_label_new(_("Y-axis variables"));
     else if (cmdcode == SCATTERS)
-	tmp = gtk_label_new("X-axis variables");
+	tmp = gtk_label_new(_("X-axis variables"));
     else if (cmdcode == GR_DUMMY)
-	tmp = gtk_label_new("Factor (dummy)");
+	tmp = gtk_label_new(_("Factor (dummy)"));
     
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
@@ -956,25 +956,25 @@ static char *get_topstr (int cmdnum)
 {
     switch (cmdnum) {    
     case LOGS:
-	return _("for logging");
+	return _("Select variables for logging");
     case LAGS:
-	return _("for lagging");
+	return _("Select variables for lagging");
     case SQUARE:
-	return _("to square");
+	return _("Select variables to square");
     case DIFF:
-	return _("to difference");
+	return _("Select variables to difference");
     case LDIFF:
-	return _("to log-difference");
+	return _("Select variables to log-difference");
     case ADD:
-	return _("to add");
+	return _("Select variables to add");
     case OMIT:
-	return _("to omit");
+	return _("Select variables to omit");
     case PRINT:
-	return _("to display");
+	return _("Select variables to display");
     case GR_PLOT: 
     case GR_BOX: 
     case GR_NBOX:
-	return _("to plot");
+	return _("Select variables to plot");
     default:
 	return "";
     }
@@ -1040,7 +1040,7 @@ void simple_selection (const char *title, const char *oktxt,
 
     sr->data = p;
 
-    sprintf(topstr, "Select variables %s", get_topstr(cmdcode));
+    strcpy(topstr, get_topstr(cmdcode));
     tmp = gtk_label_new(topstr);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 			       tmp, TRUE, TRUE, 0);
@@ -1050,7 +1050,7 @@ void simple_selection (const char *title, const char *oktxt,
     top_hbox = gtk_hbox_new(FALSE, 0); 
     gtk_box_set_homogeneous(GTK_BOX(top_hbox), TRUE);
 
-    tmp = gtk_label_new("Available vars");
+    tmp = gtk_label_new(_("Available vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
 
@@ -1058,7 +1058,7 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
 
-    tmp = gtk_label_new("Selected vars");
+    tmp = gtk_label_new(_("Selected vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, TRUE, TRUE, 5);
     gtk_widget_show(tmp);
 

@@ -219,6 +219,14 @@ int main (int argc, char *argv[])
 #ifdef OS_WIN32
     strcpy(tmp, argv[0]);
 #endif
+
+#ifdef ENABLE_NLS
+    setlocale(LC_ALL, "");
+    bindtextdomain(PACKAGE, LOCALEDIR);
+    textdomain(PACKAGE);
+    fprintf(stderr, "done NLS thing\n");
+#endif
+
     datainfo = datainfo_new();
     if (datainfo == NULL)
 	noalloc(_("data information"));

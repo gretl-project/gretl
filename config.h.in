@@ -20,6 +20,12 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifndef CONFIG_H
 #define CONFIG_H
 
+/* for NLS use */
+#define PACKAGE gretl
+
+/* Native language support? */
+#undef ENABLE_NLS
+
 /* Location of shared gretl files */
 #define GRETL "/usr/local/share/gretl"
 

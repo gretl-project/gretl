@@ -129,137 +129,146 @@ typedef struct {
    controls the sensitivity of the "dbproxy" entry widget. */
 
 RCVARS rc_vars[] = {
-    {"gretldir", _("Main gretl directory"), NULL, paths.gretldir, 
+    {"gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
      'R', MAXLEN, 1, NULL},
-    {"userdir", _("User's gretl directory"), NULL, paths.userdir, 
+    {"userdir", N_("User's gretl directory"), NULL, paths.userdir, 
      'U', MAXLEN, 1, NULL},
-    {"gnuplot", _("Command to launch gnuplot"), NULL, paths.gnuplot, 
+    {"gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
      'R', MAXLEN, 1, NULL},
-    {"Rcommand", _("Command to launch GNU R"), NULL, Rcommand, 
+    {"Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
      'R', MAXSTR, 1, NULL},
-    {"viewdvi", _("Command to view DVI files"), NULL, viewdvi, 
+    {"viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
      'R', MAXSTR, 1, NULL},
-    {"expert", _("Expert mode (no warnings)"), NULL, &expert, 
+    {"expert", N_("Expert mode (no warnings)"), NULL, &expert, 
      'B', 0, 1, NULL},
-    {"updater", _("Tell me about gretl updates"), NULL, &updater, 
+    {"updater", N_("Tell me about gretl updates"), NULL, &updater, 
      'B', 0, 1, NULL},
-    {"binbase", _("gretl database directory"), NULL, paths.binbase, 
+    {"binbase", N_("gretl database directory"), NULL, paths.binbase, 
      'U', MAXLEN, 2, NULL},
-    {"ratsbase", _("RATS data directory"), NULL, paths.ratsbase, 
+    {"ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
      'U', MAXLEN, 2, NULL},
-    {"dbhost_ip", _("Database server IP"), NULL, paths.dbhost_ip, 
+    {"dbhost_ip", N_("Database server IP"), NULL, paths.dbhost_ip, 
      'U', 16, 2, NULL},
-    {"dbproxy", _("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
+    {"dbproxy", N_("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
      'U', 21, 2, NULL},
-    {"useproxy", _("Use HTTP proxy"), NULL, &use_proxy, 
+    {"useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
      'B', 1, 2, NULL},
-    {"calculator", _("Calculator"), NULL, calculator, 
+    {"calculator", N_("Calculator"), NULL, calculator, 
      'U', MAXSTR, 3, NULL},
-    {"editor", _("Editor"), NULL, editor, 
+    {"editor", N_("Editor"), NULL, editor, 
      'U', MAXSTR, 3, NULL},
-    {"toolbar", _("Show gretl toolbar"), NULL, &want_toolbar, 
+    {"toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
      'B', 0, 3, NULL},
-    {"usecwd", _("Use current working directory as default"), 
-     _("Use gretl user directory as default"), &usecwd, 'B', 0, 4, NULL},
-    {"olddat", _("Use \".dat\" as default datafile suffix"), 
-     _("Use \".gdt\" as default suffix"), &olddat, 'B', 0, 5, NULL},
-    {"fontspec", _("Fixed font"), NULL, fontspec, 'U', MAXLEN, 0, NULL},
+    {"usecwd", N_("Use current working directory as default"), 
+     N_("Use gretl user directory as default"), &usecwd, 'B', 0, 4, NULL},
+    {"olddat", N_("Use \".dat\" as default datafile suffix"), 
+     N_("Use \".gdt\" as default suffix"), &olddat, 'B', 0, 5, NULL},
+    {"fontspec", N_("Fixed font"), NULL, fontspec, 'U', MAXLEN, 0, NULL},
     {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
 
 GtkItemFactoryEntry model_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" },
-    { _("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
-    { _("/File/Save to session as icon"), NULL, remember_model, 0, NULL },
-    { _("/File/Save as icon and close"), NULL, remember_model, 1, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
+    { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL },
+    { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { _("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/Copy _all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
-    { _("/Edit/Copy _all/as _HTML"), NULL, text_copy, COPY_HTML, NULL },
-    { _("/Edit/Copy _all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
-    { _("/Edit/Copy _all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
-    { _("/_Tests"), NULL, NULL, 0, "<Branch>" },    
-    { _("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
-    { _("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
-    { _("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
-    { _("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
-    { _("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },
-    { _("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
-    { _("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
-    { _("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL },
-    { _("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
-    { _("/Tests/CUSUM test"), NULL, do_cusum, 0, NULL },
-    { _("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
-    { _("/Tests/normality of residual"), NULL, do_resid_freq, 0, NULL },
-    { _("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, 0, NULL },
-    { _("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
-    { _("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>" },
-    { _("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>" },
-    { _("/_Model data"), NULL, NULL, 0, "<Branch>" },
-    { _("/_Model data/Display actual, fitted, residual"), NULL, 
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/Copy _all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/Copy _all/as _HTML"), NULL, text_copy, COPY_HTML, NULL },
+    { N_("/Edit/Copy _all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
+    { N_("/Edit/Copy _all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
+    { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
+    { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
+    { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
+    { N_("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
+    { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },
+    { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
+    { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL },
+    { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
+    { N_("/Tests/CUSUM test"), NULL, do_cusum, 0, NULL },
+    { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
+    { N_("/Tests/normality of residual"), NULL, do_resid_freq, 0, NULL },
+    { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, 0, NULL },
+    { N_("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
+    { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>" },
+    { N_("/_Model data"), NULL, NULL, 0, "<Branch>" },
+    { N_("/_Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
-    { _("/_Model data/Forecasts with standard errors"), NULL, 
+    { N_("/_Model data/Forecasts with standard errors"), NULL, 
       model_test_callback, FCAST, NULL },
-    { _("/_Model data/Confidence intervals for coefficients"), NULL, 
+    { N_("/_Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
-    { _("/_Model data/Add to data set/fitted values"), NULL, 
+    { N_("/_Model data/Add to data set/fitted values"), NULL, 
       fit_resid_callback, 1, NULL },
-    { _("/_Model data/Add to data set/residuals"), NULL, 
+    { N_("/_Model data/Add to data set/residuals"), NULL, 
       fit_resid_callback, 0, NULL },
-    { _("/_Model data/Add to data set/squared residuals"), NULL, 
+    { N_("/_Model data/Add to data set/squared residuals"), NULL, 
       fit_resid_callback, 2, NULL },
-    { _("/_Model data/Add to data set/error sum of squares"), NULL, 
+    { N_("/_Model data/Add to data set/error sum of squares"), NULL, 
       model_stat_callback, ESS, NULL },
-    { _("/_Model data/Add to data set/standard error of residuals"), NULL, 
+    { N_("/_Model data/Add to data set/standard error of residuals"), NULL, 
       model_stat_callback, SIGMA, NULL },
-    { _("/_Model data/Add to data set/R-squared"), NULL, 
+    { N_("/_Model data/Add to data set/R-squared"), NULL, 
       model_stat_callback, R2, NULL },
-    { _("/_Model data/Add to data set/T*R-squared"), NULL, 
+    { N_("/_Model data/Add to data set/T*R-squared"), NULL, 
       model_stat_callback, TR2, NULL },
-    { _("/_Model data/Add to data set/log likelihood"), NULL, 
+    { N_("/_Model data/Add to data set/log likelihood"), NULL, 
       model_stat_callback, LNL, NULL },
-    { _("/_Model data/Add to data set/degrees of freedom"), NULL, 
+    { N_("/_Model data/Add to data set/degrees of freedom"), NULL, 
       model_stat_callback, DF, NULL },
-    { _("/_Model data/coefficient covariance matrix"), NULL, 
+    { N_("/_Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL },
-    { _("/_Model data/sep1"), NULL, NULL, 0, "<Separator>" },
-    { _("/_Model data/Define new variable..."), NULL, model_test_callback, 
+    { N_("/_Model data/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/_Model data/Define new variable..."), NULL, model_test_callback, 
       MODEL_GENR, NULL },
-    { _("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
-    { _("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
-    { _("/LaTeX/View/_Tabular"), NULL, view_latex, 0, NULL },
-    { _("/LaTeX/View/_Equation"), NULL, view_latex, 1, NULL },
-    { _("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
-    { _("/LaTeX/Save/_Tabular"), NULL, file_save, SAVE_TEX_TAB, NULL },
-    { _("/LaTeX/Save/_Equation"), NULL, file_save, SAVE_TEX_EQ, NULL },
-    { _("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
-    { _("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
-    { _("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
+    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/View/_Tabular"), NULL, view_latex, 0, NULL },
+    { N_("/LaTeX/View/_Equation"), NULL, view_latex, 1, NULL },
+    { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Save/_Tabular"), NULL, file_save, SAVE_TEX_TAB, NULL },
+    { N_("/LaTeX/Save/_Equation"), NULL, file_save, SAVE_TEX_EQ, NULL },
+    { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
+    { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry help_items[] = {
-    { _("/_Topics"), NULL, NULL, 0, "<Branch>" },    
-    { _("/_Find"), NULL, menu_find, 0, NULL },
+    { N_("/_Topics"), NULL, NULL, 0, "<Branch>" },    
+    { N_("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry edit_items[] = {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { _("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif    
-    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { _("/Edit/_Paste"), NULL, text_paste, 0, NULL },
-    { _("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
-    { _("/Edit/_Undo"), NULL, text_undo, 0, NULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL },
+    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
+    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
+
+#ifdef ENABLE_NLS
+
+gchar *menu_translate (const gchar *path, gpointer p)
+{
+    return (_(path));
+}
+
+#endif
 
 /* ........................................................... */
 
@@ -1449,18 +1458,20 @@ static void make_viewbar (windata_t *vwin)
     GdkBitmap *mask;
     GdkColormap *colormap;
     int i;
-    static char *viewstrings[] = {_("Save"),
-				  _("Save as..."),
-				  _("Print..."),
-				  _("Run"),
-				  _("Copy selection"), 
-				  _("Paste"),
-				  _("Find..."),
-				  _("Replace..."),
-				  _("Undo"),
-				  _("Help on command"),
-				  _("Close"),
-				  NULL};
+    static char *viewstrings[] = {
+	N_("Save"),
+	N_("Save as..."),
+	N_("Print..."),
+	N_("Run"),
+	N_("Copy selection"), 
+	N_("Paste"),
+	N_("Find..."),
+	N_("Replace..."),
+	N_("Undo"),
+	N_("Help on command"),
+	N_("Close"),
+	NULL
+    };
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
 
@@ -2056,65 +2067,65 @@ static void model_latex_copy_state (GtkItemFactory *ifac, gboolean s)
 
 static void model_panel_menu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, _("/Tests/panel diagnostics"), s);
+    flip(ifac, "/Tests/panel diagnostics", s);
 }
 
 /* ........................................................... */
 
 static void model_ml_menu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, _("/Model data/Add to data set/log likelihood"), s);
+    flip(ifac, "/Model data/Add to data set/log likelihood", s);
 }
 
 /* ........................................................... */
 
 static void model_menu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, _("/Tests/non-linearity (squares)"), s);
-    flip(ifac, _("/Tests/non-linearity (logs)"), s);
-    flip(ifac, _("/Tests/autocorrelation"), s);
-    flip(ifac, _("/Tests/heteroskedasticity"), s);
-    flip(ifac, _("/Tests/Chow test"), s);
-    flip(ifac, _("/Tests/CUSUM test"), s);
-    flip(ifac, _("/Tests/ARCH"), s);
-    flip(ifac, _("/Tests/normality of residual"), s);
-    flip(ifac, _("/Graphs"), s);
-    flip(ifac, _("/Model data/Display actual, fitted, residual"), s);
-    flip(ifac, _("/Model data/Forecasts with standard errors"), s);
-    flip(ifac, _("/Model data/Add to data set/residuals"), s);
-    flip(ifac, _("/Model data/Add to data set/squared residuals"), s);
-    flip(ifac, _("/Model data/Add to data set/error sum of squares"), s);
-    flip(ifac, _("/Model data/Add to data set/standard error of residuals"), s);
-    flip(ifac, _("/Model data/Add to data set/R-squared"), s);
-    flip(ifac, _("/Model data/Add to data set/T*R-squared"), s);    
+    flip(ifac, "/Tests/non-linearity (squares)", s);
+    flip(ifac, "/Tests/non-linearity (logs)", s);
+    flip(ifac, "/Tests/autocorrelation", s);
+    flip(ifac, "/Tests/heteroskedasticity", s);
+    flip(ifac, "/Tests/Chow test", s);
+    flip(ifac, "/Tests/CUSUM test", s);
+    flip(ifac, "/Tests/ARCH", s);
+    flip(ifac, "/Tests/normality of residual", s);
+    flip(ifac, "/Graphs", s);
+    flip(ifac, "/Model data/Display actual, fitted, residual", s);
+    flip(ifac, "/Model data/Forecasts with standard errors", s);
+    flip(ifac, "/Model data/Add to data set/residuals", s);
+    flip(ifac, "/Model data/Add to data set/squared residuals", s);
+    flip(ifac, "/Model data/Add to data set/error sum of squares", s);
+    flip(ifac, "/Model data/Add to data set/standard error of residuals", s);
+    flip(ifac, "/Model data/Add to data set/R-squared", s);
+    flip(ifac, "/Model data/Add to data set/T*R-squared", s);    
 }
 
 /* ........................................................... */
 
 static void lmmenu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, _("/Tests/non-linearity (squares)"), s);
-    flip(ifac, _("/Tests/non-linearity (logs)"), s);
-    flip(ifac, _("/Tests/autocorrelation"), s);
-    flip(ifac, _("/Tests/heteroskedasticity"), s);
-    flip(ifac, _("/Tests/Chow test"), s);
-    flip(ifac, _("/Tests/CUSUM test"), s);
-    flip(ifac, _("/Tests/ARCH"), s);
+    flip(ifac, "/Tests/non-linearity (squares)", s);
+    flip(ifac, "/Tests/non-linearity (logs)", s);
+    flip(ifac, "/Tests/autocorrelation", s);
+    flip(ifac, "/Tests/heteroskedasticity", s);
+    flip(ifac, "/Tests/Chow test", s);
+    flip(ifac, "/Tests/CUSUM test", s);
+    flip(ifac, "/Tests/ARCH", s);
 }
 
 /* ........................................................... */
 
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, _("/LaTeX"), s);
+    flip(ifac, "/LaTeX", s);
 }
 
 /* ........................................................... */
 
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, _("/File/Save to session as icon"), s);
-    flip(ifac, _("/File/Save as icon and close"), s);
+    flip(ifac, "/File/Save to session as icon", s);
+    flip(ifac, "/File/Save as icon and close", s);
 }
 
 /* ........................................................... */
@@ -2130,6 +2141,9 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     accel = gtk_accel_group_new();
     vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
 				      accel);
+#ifdef ENABLE_NLS
+    gtk_item_factory_set_translate_func(vwin->ifac, menu_translate, NULL, NULL);
+#endif
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
     gtk_accel_group_attach(accel, GTK_OBJECT (window));
@@ -2289,40 +2303,40 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     int s, ok = 1;
 
     if (Z == NULL) {
-	flip(mwin->ifac, _("/File/Save to sesssion as icon"), FALSE);
-	flip(mwin->ifac, _("/File/Save as icon and close"), FALSE);
-	flip(mwin->ifac, _("/Edit/Copy all"), FALSE);
-	flip(mwin->ifac, _("/Model data"), FALSE);
-	flip(mwin->ifac, _("/Tests"), FALSE);
-	flip(mwin->ifac, _("/Graphs"), FALSE);
-	flip(mwin->ifac, _("/Model data"), FALSE);
-	flip(mwin->ifac, _("/LaTeX"), FALSE);
+	flip(mwin->ifac, "/File/Save to sesssion as icon", FALSE);
+	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
+	flip(mwin->ifac, "/Edit/Copy all", FALSE);
+	flip(mwin->ifac, "/Model data", FALSE);
+	flip(mwin->ifac, "/Tests", FALSE);
+	flip(mwin->ifac, "/Graphs", FALSE);
+	flip(mwin->ifac, "/Model data", FALSE);
+	flip(mwin->ifac, "/LaTeX", FALSE);
 	return;
     }
 
     if (quiet_sample_check(pmod)) ok = 0;
     s = GTK_WIDGET_IS_SENSITIVE
-	(gtk_item_factory_get_item(mwin->ifac, _("/Tests/omit variables")));
+	(gtk_item_factory_get_item(mwin->ifac, "/Tests/omit variables"));
     if ((s && ok) || (!s && !ok)) return;
     s = !s;
 
-    flip(mwin->ifac, _("/Tests/omit variables"), s);
-    flip(mwin->ifac, _("/Tests/add variables"), s);
-    flip(mwin->ifac, _("/Tests/non-linearity (squares)"), s);
-    flip(mwin->ifac, _("/Tests/non-linearity (logs)"), s);
-    flip(mwin->ifac, _("/Tests/autocorrelation"), s);
-    flip(mwin->ifac, _("/Tests/heteroskedasticity"), s);
-    flip(mwin->ifac, _("/Tests/Chow test"), s);
-    flip(mwin->ifac, _("/Tests/CUSUM test"), s);
-    flip(mwin->ifac, _("/Tests/ARCH"), s);
-    flip(mwin->ifac, _("/Graphs"), s);
-    flip(mwin->ifac, _("/Model data/Display actual, fitted, residual"), s);
-    flip(mwin->ifac, _("/Model data/Forecasts with standard errors"), s);
-    flip(mwin->ifac, _("/Model data/Confidence intervals for coefficients"), s);
-    flip(mwin->ifac, _("/Model data/Add to data set/fitted values"), s);
-    flip(mwin->ifac, _("/Model data/Add to data set/residuals"), s);
-    flip(mwin->ifac, _("/Model data/Add to data set/squared residuals"), s);
-    flip(mwin->ifac, _("/Model data/Define new variable..."), s);
+    flip(mwin->ifac, "/Tests/omit variables", s);
+    flip(mwin->ifac, "/Tests/add variables", s);
+    flip(mwin->ifac, "/Tests/non-linearity (squares)", s);
+    flip(mwin->ifac, "/Tests/non-linearity (logs)", s);
+    flip(mwin->ifac, "/Tests/autocorrelation", s);
+    flip(mwin->ifac, "/Tests/heteroskedasticity", s);
+    flip(mwin->ifac, "/Tests/Chow test", s);
+    flip(mwin->ifac, "/Tests/CUSUM test", s);
+    flip(mwin->ifac, "/Tests/ARCH", s);
+    flip(mwin->ifac, "/Graphs", s);
+    flip(mwin->ifac, "/Model data/Display actual, fitted, residual", s);
+    flip(mwin->ifac, "/Model data/Forecasts with standard errors", s);
+    flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", s);
+    flip(mwin->ifac, "/Model data/Add to data set/fitted values", s);
+    flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
+    flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
+    flip(mwin->ifac, "/Model data/Define new variable...", s);
 }
 
 /* ........................................................... */
@@ -2484,7 +2498,7 @@ static void msgbox (const char *msg, int err)
     if (err)
 	button = gtk_button_new_with_label(_("Close"));
     else
-	button = gtk_button_new_with_label("OK");
+	button = gtk_button_new_with_label(_("OK"));
     gtk_table_attach_defaults(GTK_TABLE(table), button, 1, 2, 1, 2);
   
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
@@ -3538,12 +3552,14 @@ static void clear_files_list (int filetype, char **filep)
     char tmpname[MAXSTR];
     gchar itempath[80];
     int i;
-    gchar *pathstart[] = {_("/File/Open data"), 
-			  _("/Session/Open"),
-			  _("/File/Open command file")};
+    const gchar *pathstart[] = {
+	N_("/File/Open data"), 
+	N_("/Session/Open"),
+	N_("/File/Open command file")
+    };
 
     for (i=0; i<MAXRECENT; i++) {
-	sprintf(itempath, "%s/%d. %s", pathstart[filetype - 1],
+	sprintf(itempath, "%s/%d. %s", _(pathstart[filetype - 1]),
 		i+1, endbit(tmpname, filep[i], -1));
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) 
@@ -3760,12 +3776,16 @@ void add_files_to_menu (int filetype)
     void (*callfunc)();
     GtkItemFactoryEntry fileitem;
     GtkWidget *w;
-    gchar *msep[] = {_("/File/Open data/sep"),
-		     _("/Session/sep"),
-		     _("/File/Open command file/sep")};
-    gchar *mpath[] = {_("/File/_Open data"),
-		     _("/Session"),
-		     _("/File/Open command file")};
+    const gchar *msep[] = {
+	"/File/Open data/sep",
+	"/Session/sep",
+	"/File/Open command file/sep"
+    };
+    const gchar *mpath[] = {
+	N_("/File/_Open data"),
+	N_("/Session"),
+	N_("/File/Open command file")
+    };
 
     fileitem.path = NULL;
 

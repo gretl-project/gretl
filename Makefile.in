@@ -29,7 +29,7 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib plugin cli gui
+SUBDIRS = lib cli gui plugin po
 
 .PHONY :
 

@@ -101,13 +101,13 @@ drag_data_received  (GtkWidget          *widget,
 char *optrun = NULL, *optdb = NULL;
 
 static const struct poptOption options[] = {
-	{"run", 'r', POPT_ARG_STRING, &optrun, 0, 
-	 N_("open a script file on startup"), N_("SCRIPT")},
-	{"db", 'd', POPT_ARG_STRING, &optdb, 0, 
-	 N_("open a database on startup"), N_("DATABASE")},
-	{"webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
-	 N_("open a remote (web) database on startup"), N_("REMOTE_DB")},
-	{NULL, '\0', 0, NULL, 0}
+    {"run", 'r', POPT_ARG_STRING, &optrun, 0, 
+     N_("open a script file on startup"), N_("SCRIPT")},
+    {"db", 'd', POPT_ARG_STRING, &optdb, 0, 
+     N_("open a database on startup"), N_("DATABASE")},
+    {"webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
+     N_("open a remote (web) database on startup"), N_("REMOTE_DB")},
+    {NULL, '\0', 0, NULL, 0}
 };
 #endif /* USE_GNOME */
 
@@ -195,252 +195,252 @@ static int unmangle (const char *dosname, char *longname);
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
 GtkItemFactoryEntry data_items[] = {
-    { _("/_File"), NULL, NULL, 0, "<Branch>" },
-    { _("/File/_Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
-    { _("/File/_Open data/sample file/Ramanathan..."), NULL, 
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/_Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
+    { N_("/File/_Open data/sample file/Ramanathan..."), NULL, 
       display_files, RAMU_DATA, NULL },
-    { _("/File/_Open data/sample file/Greene..."), NULL, 
+    { N_("/File/_Open data/sample file/Greene..."), NULL, 
       display_files, GREENE_DATA, NULL },
-    { _("/File/_Open data/sample file/Penn World Table..."), NULL, 
+    { N_("/File/_Open data/sample file/Penn World Table..."), NULL, 
       display_files, PWT_DATA, NULL },
-    { _("/File/_Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
-    { _("/File/_Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
-    { _("/File/_Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
-    { _("/File/_Open data/import Gnumeric..."), NULL, open_data, 
+    { N_("/File/_Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
+    { N_("/File/_Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
+    { N_("/File/_Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
+    { N_("/File/_Open data/import Gnumeric..."), NULL, open_data, 
       OPEN_GNUMERIC, NULL },
-    { _("/File/_Open data/import Excel..."), NULL, open_data, 
+    { N_("/File/_Open data/import Excel..."), NULL, open_data, 
       OPEN_EXCEL, NULL },
-    { _("/File/_Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
-    { _("/File/_Append data/from Gnumeric..."), NULL, open_data, 
+    { N_("/File/_Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
+    { N_("/File/_Append data/from Gnumeric..."), NULL, open_data, 
       APPEND_GNUMERIC, NULL },
-    { _("/File/_Append data/from Excel..."), NULL, open_data, 
+    { N_("/File/_Append data/from Excel..."), NULL, open_data, 
       APPEND_EXCEL, NULL },
-    { _("/File/_Save data"), NULL, auto_store, 0, NULL },
-    { _("/File/Save data _as/_standard format..."), NULL, file_save, 
+    { N_("/File/_Save data"), NULL, auto_store, 0, NULL },
+    { N_("/File/Save data _as/_standard format..."), NULL, file_save, 
       SAVE_DATA, NULL },
-    { _("/File/Save data _as/_gzipped..."), NULL, 
+    { N_("/File/Save data _as/_gzipped..."), NULL, 
       file_save, SAVE_GZDATA, NULL },
 #ifdef notdef
-    { _("/File/Save data _as/_alternative formats/_single precision binary..."), 
+    { N_("/File/Save data _as/_alternative formats/_single precision binary..."), 
       NULL, file_save, SAVE_BIN1, NULL },
-    { _("/File/Save data _as/_alternative formats/_double precision binary..."),
+    { N_("/File/Save data _as/_alternative formats/_double precision binary..."),
       NULL, file_save, SAVE_BIN2, NULL },
 #endif 
-    { _("/File/_Export data/_CSV..."), NULL, file_save, 
+    { N_("/File/_Export data/_CSV..."), NULL, file_save, 
       EXPORT_CSV, NULL },
-    { _("/File/_Export data/GNU _R..."), NULL, file_save, 
+    { N_("/File/_Export data/GNU _R..."), NULL, file_save, 
       EXPORT_R, NULL },
-    { _("/File/_Export data/GNU _octave..."), NULL, file_save, 
+    { N_("/File/_Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL },
-    { _("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
-    { _("/File/sep0"), NULL, NULL, 0, "<Separator>" },
-    { _("/File/_Browse databases/_gretl native"), NULL, display_files, 
+    { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
+    { N_("/File/sep0"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/_Browse databases/_gretl native"), NULL, display_files, 
       NATIVE_DB, NULL },
-    { _("/File/_Browse databases/_RATS 4"), NULL, display_files, 
+    { N_("/File/_Browse databases/_RATS 4"), NULL, display_files, 
       RATS_DB, NULL },
-    { _("/File/_Browse databases/sep1"), NULL, NULL, 0, "<Separator>" },
-    { _("/File/_Browse databases/on database _server"), NULL, display_files, 
+    { N_("/File/_Browse databases/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/_Browse databases/on database _server"), NULL, display_files, 
       REMOTE_DB, NULL },
-    { _("/File/_Create data set/time-series/annual"), 
+    { N_("/File/_Create data set/time-series/annual"), 
       NULL, newdata_dialog, 1, NULL },    
-    { _("/File/_Create data set/time-series/quarterly"), 
+    { N_("/File/_Create data set/time-series/quarterly"), 
       NULL, newdata_dialog, 4, NULL },    
-    { _("/File/_Create data set/time-series/monthly"), 
+    { N_("/File/_Create data set/time-series/monthly"), 
       NULL, newdata_dialog, 12, NULL }, 
-    { _("/File/_Create data set/time-series/high frequency/weekly"), 
+    { N_("/File/_Create data set/time-series/high frequency/weekly"), 
       NULL, newdata_dialog, 52, NULL }, 
-    { _("/File/_Create data set/time-series/high frequency/daily (5-day week)"), 
+    { N_("/File/_Create data set/time-series/high frequency/daily (5-day week)"), 
       NULL, newdata_dialog, 5, NULL }, 
-    { _("/File/_Create data set/time-series/high frequency/daily (7-day week)"), 
+    { N_("/File/_Create data set/time-series/high frequency/daily (7-day week)"), 
       NULL, newdata_dialog, 7, NULL }, 
-    { _("/File/_Create data set/time-series/high frequency/hourly"), 
+    { N_("/File/_Create data set/time-series/high frequency/hourly"), 
       NULL, newdata_dialog, 24, NULL }, 
-    { _("/File/_Create data set/cross-sectional"), 
+    { N_("/File/_Create data set/cross-sectional"), 
       NULL, newdata_dialog, 0, NULL }, 
 #ifdef notdef  
-    { _("/File/_Create data set/panel"), 
+    { N_("/File/_Create data set/panel"), 
       NULL, start_panel_dialog, 0, NULL }, 
 #endif 
-    { _("/File/_Create data set/simulation"), NULL, gretl_callback, 
+    { N_("/File/_Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL },
-    { _("/File/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/sep1"), NULL, NULL, 0, "<Separator>" },
 #ifndef GNUPLOT_PNG
-    { _("/File/Save last graph"), NULL, gpt_save_dialog, 0, NULL }, 
-    { _("/File/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/Save last graph"), NULL, gpt_save_dialog, 0, NULL }, 
+    { N_("/File/sep2"), NULL, NULL, 0, "<Separator>" },
 #endif
-    { _("/File/_View command log"), NULL, view_log, 0, NULL },
-    { _("/File/sep2a"), NULL, NULL, 0, "<Separator>" },
-    { _("/File/Open command file/user file..."), NULL, open_script, 
+    { N_("/File/_View command log"), NULL, view_log, 0, NULL },
+    { N_("/File/sep2a"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/Open command file/user file..."), NULL, open_script, 
       OPEN_SCRIPT, NULL },
-    { _("/File/Open command file/practice file/Ramanathan..."), NULL, 
+    { N_("/File/Open command file/practice file/Ramanathan..."), NULL, 
       display_files, RAMU_PS, NULL },
-    { _("/File/Open command file/practice file/Greene..."), NULL, 
+    { N_("/File/Open command file/practice file/Greene..."), NULL, 
       display_files, GREENE_PS, NULL },
-    { _("/File/Open command file/practice file/Penn World Table..."), NULL, 
+    { N_("/File/Open command file/practice file/Penn World Table..."), NULL, 
       display_files, PWT_PS, NULL },
-    { _("/File/New command file/regular script"), NULL, do_new_script, 0, NULL },
-    { _("/File/New command file/Monte Carlo loop"), NULL, 
+    { N_("/File/New command file/regular script"), NULL, do_new_script, 0, NULL },
+    { N_("/File/New command file/Monte Carlo loop"), NULL, 
       do_new_script, 1, NULL },
-    { _("/File/sep3"), NULL, NULL, 0, "<Separator>" },
-    { _("/File/_Preferences/_General..."), NULL, options_dialog, 0, NULL },
-    { _("/File/_Preferences/_Fixed font..."), NULL, font_selector, 0, NULL },
-    { _("/File/sep5"), NULL, NULL, 0, "<Separator>" },
-    { _("/File/E_xit"), NULL, menu_exit_check, 0, NULL },
-    { _("/_Utilities"), NULL, NULL, 0, "<Branch>" },
-    { _("/Utilities/Statistical tables"), NULL, stats_calculator, 1, NULL },
-    { _("/Utilities/p-value finder"), NULL, stats_calculator, 0, NULL },
-    { _("/Utilities/Test statistic calculator"), NULL, stats_calculator, 2, NULL },
-    { _("/Utilities/sep"), NULL, NULL, 0, "<Separator>" },
-    { _("/Utilities/Gretl console"), NULL, console, 0, NULL },
-    { _("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },
-    { _("/Utilities/Start GNU R"), NULL, startR, 0, NULL },
-    { _("/_Session"), NULL, NULL, 0, "<Branch>" },
-    { _("/Session/_Icon view"), NULL, view_session, 0, NULL },
+    { N_("/File/sep3"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/_Preferences/_General..."), NULL, options_dialog, 0, NULL },
+    { N_("/File/_Preferences/_Fixed font..."), NULL, font_selector, 0, NULL },
+    { N_("/File/sep5"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/E_xit"), NULL, menu_exit_check, 0, NULL },
+    { N_("/_Utilities"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Utilities/Statistical tables"), NULL, stats_calculator, 1, NULL },
+    { N_("/Utilities/p-value finder"), NULL, stats_calculator, 0, NULL },
+    { N_("/Utilities/Test statistic calculator"), NULL, stats_calculator, 2, NULL },
+    { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Utilities/Gretl console"), NULL, console, 0, NULL },
+    { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Utilities/Start GNU R"), NULL, startR, 0, NULL },
+    { N_("/_Session"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Session/_Icon view"), NULL, view_session, 0, NULL },
 #ifndef GNUPLOT_PNG
-    { _("/Session/_Add last graph"), NULL, add_last_graph, 0, NULL },
+    { N_("/Session/_Add last graph"), NULL, add_last_graph, 0, NULL },
 #endif
-    { _("/Session/sep0"), NULL, NULL, 0, "<Separator>" },
-    { _("/Session/_Open..."), NULL, open_script, OPEN_SESSION, NULL },
-    { _("/Session/sep1"), NULL, NULL, 0, "<Separator>" },
-    { _("/Session/_Save"), NULL, save_session_callback, 0, NULL },
-    { _("/Session/Save _as..."), NULL, save_session_callback, 1, NULL },
-    { _("/_Data"), NULL, NULL, 0, "<Branch>" },
-    { _("/Data/_Display values/all variables"), NULL, display_data, 0, NULL },
-    { _("/Data/_Display values/selected variables..."), 
+    { N_("/Session/sep0"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Session/_Open..."), NULL, open_script, OPEN_SESSION, NULL },
+    { N_("/Session/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Session/_Save"), NULL, save_session_callback, 0, NULL },
+    { N_("/Session/Save _as..."), NULL, save_session_callback, 1, NULL },
+    { N_("/_Data"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Data/_Display values/all variables"), NULL, display_data, 0, NULL },
+    { N_("/Data/_Display values/selected variables..."), 
       NULL, selector_callback, PRINT, NULL },
-    { _("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL },
-    { _("/Data/sep1"), NULL, NULL, 0, "<Separator>" },
-    { _("/Data/_Graph specified vars/Time series plot..."), 
+    { N_("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL },
+    { N_("/Data/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/_Graph specified vars/Time series plot..."), 
       NULL, selector_callback, GR_PLOT, NULL },
-    { _("/Data/_Graph specified vars/X-Y scatter..."), 
+    { N_("/Data/_Graph specified vars/X-Y scatter..."), 
       NULL, selector_callback, GR_XY, NULL },
-    { _("/Data/_Graph specified vars/X-Y with impulses..."), 
+    { N_("/Data/_Graph specified vars/X-Y with impulses..."), 
       NULL, selector_callback, GR_IMP, NULL },
-    { _("/Data/_Graph specified vars/X-Y with factor separation..."), 
+    { N_("/Data/_Graph specified vars/X-Y with factor separation..."), 
       NULL, selector_callback, GR_DUMMY, NULL },
-    { _("/Data/_Multiple scatterplots..."), 
+    { N_("/Data/_Multiple scatterplots..."), 
       NULL, selector_callback, SCATTERS, NULL},
-    { _("/Data/_Graph specified vars/Boxplots..."), 
+    { N_("/Data/_Graph specified vars/Boxplots..."), 
       NULL, selector_callback, GR_BOX, NULL },
-    { _("/Data/_Graph specified vars/Notched boxplots..."), 
+    { N_("/Data/_Graph specified vars/Notched boxplots..."), 
       NULL, selector_callback, GR_NBOX, NULL },
-    { _("/Data/sep2"), NULL, NULL, 0, "<Separator>" },
-    { _("/Data/_Read info"), NULL, open_info, 0, NULL },
-    { _("/Data/Edit _info"), NULL, edit_header, 0, NULL },
-    { _("/Data/Print description"), NULL, print_report, 0, NULL },
-    { _("/Data/sep3"), NULL, NULL, 0, "<Separator>" },
-    { _("/Data/_Summary statistics"), NULL, do_menu_op, SUMMARY, NULL },
-    { _("/Data/_Correlation matrix"), NULL, do_menu_op, CORR, NULL },
-    { _("/Data/sep4"), NULL, NULL, 0, "<Separator>" },
-    { _("/Data/Difference of means/assuming equal variances..."), NULL, 
+    { N_("/Data/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/_Read info"), NULL, open_info, 0, NULL },
+    { N_("/Data/Edit _info"), NULL, edit_header, 0, NULL },
+    { N_("/Data/Print description"), NULL, print_report, 0, NULL },
+    { N_("/Data/sep3"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/_Summary statistics"), NULL, do_menu_op, SUMMARY, NULL },
+    { N_("/Data/_Correlation matrix"), NULL, do_menu_op, CORR, NULL },
+    { N_("/Data/sep4"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Difference of means/assuming equal variances..."), NULL, 
       gretl_callback, MEANTEST, NULL },
-    { _("/Data/Difference of means/assuming unequal variances..."), NULL, 
+    { N_("/Data/Difference of means/assuming unequal variances..."), NULL, 
       gretl_callback, MEANTEST2, NULL },
-    { _("/Data/Difference of variances..."), NULL, gretl_callback, VARTEST, NULL },
-    { _("/Data/sep5"), NULL, NULL, 0, "<Separator>" },
-    { _("/Data/Add variables/time trend"), NULL, add_time, 0, NULL },
-    { _("/Data/Add variables/index variable"), NULL, add_time, 1, NULL },
-    { _("/Data/Add variables/logs of variables..."), NULL, 
+    { N_("/Data/Difference of variances..."), NULL, gretl_callback, VARTEST, NULL },
+    { N_("/Data/sep5"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Add variables/time trend"), NULL, add_time, 0, NULL },
+    { N_("/Data/Add variables/index variable"), NULL, add_time, 1, NULL },
+    { N_("/Data/Add variables/logs of variables..."), NULL, 
       addvars_dialog, LOGS, NULL },
-    { _("/Data/Add variables/lags of variables..."), NULL, 
+    { N_("/Data/Add variables/lags of variables..."), NULL, 
       addvars_dialog, LAGS, NULL },
-    { _("/Data/Add variables/squares of variables..."), NULL, 
+    { N_("/Data/Add variables/squares of variables..."), NULL, 
       addvars_dialog, SQUARE, NULL },
-    { _("/Data/Add variables/periodic dummies"), NULL, add_dummies, 0, NULL },
-    { _("/Data/Add variables/panel dummies"), NULL, add_dummies, 1, NULL },
-    { _("/Data/Add variables/first differences..."), NULL, 
+    { N_("/Data/Add variables/periodic dummies"), NULL, add_dummies, 0, NULL },
+    { N_("/Data/Add variables/panel dummies"), NULL, add_dummies, 1, NULL },
+    { N_("/Data/Add variables/first differences..."), NULL, 
       addvars_dialog, DIFF, NULL },
-    { _("/Data/Add variables/log differences..."), NULL, 
+    { N_("/Data/Add variables/log differences..."), NULL, 
       addvars_dialog, LDIFF, NULL },
-    { _("/Data/Add variables/sep"), NULL, NULL, 0, "<Separator>" },
-    { _("/Data/Add variables/random normal..."), NULL, random_dialog, 0, NULL },
-    { _("/Data/Add variables/random uniform..."), NULL, random_dialog, 1, NULL },
-    { _("/Data/Add variables/seed generator..."), NULL, gretl_callback, 
+    { N_("/Data/Add variables/sep"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Add variables/random normal..."), NULL, random_dialog, 0, NULL },
+    { N_("/Data/Add variables/random uniform..."), NULL, random_dialog, 1, NULL },
+    { N_("/Data/Add variables/seed generator..."), NULL, gretl_callback, 
       SEED, NULL },
-    { _("/Data/Refresh window"), NULL, refresh_data, 0, NULL },
-    { _("/_Sample"), NULL, NULL, 0, "<Branch>" },
-    { _("/Sample/_Set range..."), NULL, gretl_callback, SMPL, NULL },
-    { _("/Sample/_Restore full range"), NULL, restore_sample, 1, NULL },
-    { _("/Sample/sep1"), NULL, NULL, 0, "<Separator>" },    
-    { _("/Sample/Set _frequency, startobs..."), NULL, gretl_callback, 
+    { N_("/Data/Refresh window"), NULL, refresh_data, 0, NULL },
+    { N_("/_Sample"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Sample/_Set range..."), NULL, gretl_callback, SMPL, NULL },
+    { N_("/Sample/_Restore full range"), NULL, restore_sample, 1, NULL },
+    { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>" },    
+    { N_("/Sample/Set _frequency, startobs..."), NULL, gretl_callback, 
       SETOBS, NULL },
-    { _("/Sample/sep2"), NULL, NULL, 0, "<Separator>" },   
-    { _("/Sample/_Define, based on dummy..."), NULL, gretl_callback, 
+    { N_("/Sample/sep2"), NULL, NULL, 0, "<Separator>" },   
+    { N_("/Sample/_Define, based on dummy..."), NULL, gretl_callback, 
       SMPLDUM, NULL },
-    { _("/Sample/_Restrict, based on criterion..."), NULL, gretl_callback, 
+    { N_("/Sample/_Restrict, based on criterion..."), NULL, gretl_callback, 
       SMPLBOOL, NULL },
-    { _("/Sample/sep3"), NULL, NULL, 0, "<Separator>" },  
-    { _("/Sample/Drop all obs with _missing values"), NULL, bool_subsample, 
+    { N_("/Sample/sep3"), NULL, NULL, 0, "<Separator>" },  
+    { N_("/Sample/Drop all obs with _missing values"), NULL, bool_subsample, 
       0, NULL },
-    { _("/Sample/_Count missing values"), NULL, count_missing, 0, NULL },
-    { _("/Sample/Set missing _value code..."), NULL, gretl_callback, 
+    { N_("/Sample/_Count missing values"), NULL, count_missing, 0, NULL },
+    { N_("/Sample/Set missing _value code..."), NULL, gretl_callback, 
       GSETMISS, NULL },
-    { _("/Sample/sep4"), NULL, NULL, 0, "<Separator>" },  
-    { _("/Sample/_Add case markers..."), NULL, gretl_callback, MARKERS, NULL },
-    { _("/Sample/sep5"), NULL, NULL, 0, "<Separator>" },
-    { _("/Sample/_Interpret as time series..."), NULL, time_series_dialog, 0, NULL },
-    { _("/Sample/Interpret as _panel..."), NULL, gui_set_panel_structure, 0, NULL },
-    { _("/_Variable"), NULL, NULL, 0, "<Branch>" },
-    { _("/Variable/Find..."), NULL, find_var, 0, NULL },
-    { _("/Variable/_Display values"), NULL, display_var, 0, NULL },
-    { _("/Variable/_Summary statistics"), NULL, do_menu_op, 
+    { N_("/Sample/sep4"), NULL, NULL, 0, "<Separator>" },  
+    { N_("/Sample/_Add case markers..."), NULL, gretl_callback, MARKERS, NULL },
+    { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Sample/_Interpret as time series..."), NULL, time_series_dialog, 0, NULL },
+    { N_("/Sample/Interpret as _panel..."), NULL, gui_set_panel_structure, 0, NULL },
+    { N_("/_Variable"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Variable/Find..."), NULL, find_var, 0, NULL },
+    { N_("/Variable/_Display values"), NULL, display_var, 0, NULL },
+    { N_("/Variable/_Summary statistics"), NULL, do_menu_op, 
       VAR_SUMMARY, NULL },
-    { _("/Variable/_Time series plot"), NULL, do_graph_var, 0, NULL },
-    { _("/Variable/_Frequency distribution"), NULL, do_menu_op, 
+    { N_("/Variable/_Time series plot"), NULL, do_graph_var, 0, NULL },
+    { N_("/Variable/_Frequency distribution"), NULL, do_menu_op, 
       FREQ, NULL },
-    { _("/Variable/Frequency plot/simple"), NULL, do_freqplot, 0, NULL },
-    { _("/Variable/Frequency plot/against Normal"), NULL, do_freqplot, 
+    { N_("/Variable/Frequency plot/simple"), NULL, do_freqplot, 0, NULL },
+    { N_("/Variable/Frequency plot/against Normal"), NULL, do_freqplot, 
       NORMAL, NULL },
-    { _("/Variable/Frequency plot/against Gamma"), NULL, do_freqplot, 
+    { N_("/Variable/Frequency plot/against Gamma"), NULL, do_freqplot, 
       GAMMA, NULL },
-    { _("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
-    { _("/Variable/Correlogram"), NULL, gretl_callback, CORRGM, NULL }, 
-    { _("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL }, 
-    { _("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
-    { _("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
+    { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Variable/Correlogram"), NULL, gretl_callback, CORRGM, NULL }, 
+    { N_("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL }, 
+    { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
+    { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL },
-    { _("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
-    { _("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
-    { _("/Variable/_Rename"), NULL, gretl_callback, RENAME, NULL },
-    { _("/Variable/_Edit label"), NULL, gretl_callback, RELABEL, NULL },
-    { _("/Variable/Set missing value code..."), NULL, gretl_callback, 
+    { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
+    { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Variable/_Rename"), NULL, gretl_callback, RENAME, NULL },
+    { N_("/Variable/_Edit label"), NULL, gretl_callback, RELABEL, NULL },
+    { N_("/Variable/Set missing value code..."), NULL, gretl_callback, 
       VSETMISS, NULL },
-    { _("/Variable/sep3"), NULL, NULL, 0, "<Separator>" },
-    { _("/Variable/Simulate..."), NULL, gretl_callback, SIM, NULL },
-    { _("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
-    { _("/Variable/Delete last variable"), NULL, delete_var, 0, NULL },
-    { _("/_Model"), NULL, NULL, 0, "<Branch>" },
-    { _("/Model/_Ordinary Least Squares..."), NULL, model_callback, OLS, NULL },
-    { _("/Model/_Weighted Least Squares..."), NULL, model_callback, WLS, NULL },
-    { _("/Model/sep1"),  NULL, NULL, 0, "<Separator>" },
-    { _("/Model/HCC_M..."), NULL, model_callback, HCCM, NULL },
-    { _("/Model/H_eteroskedasticity corrected..."), NULL, model_callback, 
+    { N_("/Variable/sep3"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Variable/Simulate..."), NULL, gretl_callback, SIM, NULL },
+    { N_("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
+    { N_("/Variable/Delete last variable"), NULL, delete_var, 0, NULL },
+    { N_("/_Model"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Model/_Ordinary Least Squares..."), NULL, model_callback, OLS, NULL },
+    { N_("/Model/_Weighted Least Squares..."), NULL, model_callback, WLS, NULL },
+    { N_("/Model/sep1"),  NULL, NULL, 0, "<Separator>" },
+    { N_("/Model/HCC_M..."), NULL, model_callback, HCCM, NULL },
+    { N_("/Model/H_eteroskedasticity corrected..."), NULL, model_callback, 
       HSK, NULL },
-    { _("/Model/sep2"),  NULL, NULL, 0, "<Separator>" },
-    { _("/Model/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL },
-    { _("/Model/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
-    { _("/Model/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
-    { _("/Model/sep3"),  NULL, NULL, 0, "<Separator>" },
-    { _("/Model/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
-    { _("/Model/Cointe_gration test..."), NULL, selector_callback, COINT, NULL },
-    { _("/Model/_Two-Stage Least Squares..."), NULL, model_callback, TSLS, NULL },
-    { _("/Model/sep4"),  NULL, NULL, 0, "<Separator>" },
-    { _("/Model/_Logit..."), NULL, model_callback, LOGIT, NULL },
-    { _("/Model/_Probit..."), NULL, model_callback, PROBIT, NULL },
-    { _("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL },
-    { _("/Model/_Pooled OLS (panel)..."), NULL, model_callback, POOLED, NULL },
-    { _("/_Help"), NULL, NULL, 0, "<LastBranch>" },
-    { _("/Help/_GUI commands"), NULL, do_gui_help, 0, NULL },
-    { _("/Help/_Script commands syntax"), NULL, do_script_help, 1, NULL },
-    { _("/Help/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Model/sep2"),  NULL, NULL, 0, "<Separator>" },
+    { N_("/Model/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL },
+    { N_("/Model/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
+    { N_("/Model/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
+    { N_("/Model/sep3"),  NULL, NULL, 0, "<Separator>" },
+    { N_("/Model/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
+    { N_("/Model/Cointe_gration test..."), NULL, selector_callback, COINT, NULL },
+    { N_("/Model/_Two-Stage Least Squares..."), NULL, model_callback, TSLS, NULL },
+    { N_("/Model/sep4"),  NULL, NULL, 0, "<Separator>" },
+    { N_("/Model/_Logit..."), NULL, model_callback, LOGIT, NULL },
+    { N_("/Model/_Probit..."), NULL, model_callback, PROBIT, NULL },
+    { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL },
+    { N_("/Model/_Pooled OLS (panel)..."), NULL, model_callback, POOLED, NULL },
+    { N_("/_Help"), NULL, NULL, 0, "<LastBranch>" },
+    { N_("/Help/_GUI commands"), NULL, do_gui_help, 0, NULL },
+    { N_("/Help/_Script commands syntax"), NULL, do_script_help, 1, NULL },
+    { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>" },
 #if defined(USE_GNOME)
-    { _("/Help/Manual in HTML"), NULL, gnome_help, 0, NULL },
-    { _("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Help/Manual in HTML"), NULL, gnome_help, 0, NULL },
+    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
 #elif defined(G_OS_WIN32)
-    { _("/Help/Manual in HTML"), NULL, win_help, 0, NULL },
-    { _("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Help/Manual in HTML"), NULL, win_help, 0, NULL },
+    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
 #endif
-    { _("/Help/_About gretl"), NULL, about_dialog, 0, NULL }
+    { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL }
 };
 
 #ifndef G_OS_WIN32
@@ -549,6 +549,12 @@ int main (int argc, char *argv[])
     for (i=0; i<argc; i++)
 	fprintf(dp, "argv[%d] = '%s'\n", i, argv[i]);
     fflush(dp);
+#endif
+
+#ifdef ENABLE_NLS
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, LOCALEDIR);
+    textdomain (PACKAGE);
 #endif
 
     if ((errtext = malloc(MAXLEN)) == NULL) 
@@ -819,20 +825,19 @@ void menubar_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
 
-    flip(mdata->ifac, _("/File/Append data"), s);
-    flip(mdata->ifac, _("/File/Clear data set"), s);
-    flip(mdata->ifac, _("/File/Save data"), s);
-    flip(mdata->ifac, _("/File/Save data as"), s);
-    flip(mdata->ifac, _("/File/Export data"), s);
-    flip(mdata->ifac, _("/File/Create data set"), !s);
-    flip(mdata->ifac, _("/Data"), s);
-    flip(mdata->ifac, _("/Sample"), s);
-    flip(mdata->ifac, _("/Variable"), s);
-    flip(mdata->ifac, _("/Model"), s);
+    flip(mdata->ifac, "/File/Append data", s);
+    flip(mdata->ifac, "/File/Clear data set", s);
+    flip(mdata->ifac, "/File/Save data", s);
+    flip(mdata->ifac, "/File/Save data as", s);
+    flip(mdata->ifac, "/File/Export data", s);
+    flip(mdata->ifac, "/File/Create data set", !s);
+    flip(mdata->ifac, "/Data", s);
+    flip(mdata->ifac, "/Sample", s);
+    flip(mdata->ifac, "/Variable", s);
+    flip(mdata->ifac, "/Model", s);
 
     if (s && (data_status & BOOK_DATA))
-	flip(mdata->ifac, _("/Data/Edit info"), 0);
-
+	flip(mdata->ifac, "/Data/Edit info", 0);
 }
 
 /* ........................................................... */
@@ -840,8 +845,8 @@ void menubar_state (gboolean s)
 void graphmenu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, _("/File/Save last graph"), s);
-	flip(mdata->ifac, _("/Session/Add last graph"), s);
+	flip(mdata->ifac, "/File/Save last graph", s);
+	flip(mdata->ifac, "/Session/Add last graph", s);
     }
 }
 
@@ -850,8 +855,8 @@ void graphmenu_state (gboolean s)
 void panel_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, _("/Model/Pooled OLS (panel)..."), s);
-	flip(mdata->ifac, _("/Data/Add variables/panel dummies"), s);
+	flip(mdata->ifac, "/Model/Pooled OLS (panel)...", s);
+	flip(mdata->ifac, "/Data/Add variables/panel dummies", s);
     }
 }
 
@@ -860,9 +865,9 @@ void panel_menu_state (gboolean s)
 void session_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, _("/Session/Icon view"), s);
-	flip(mdata->ifac, _("/Session/Save"), s);
-	flip(mdata->ifac, _("/Session/Save as..."), s);
+	flip(mdata->ifac, "/Session/Icon view", s);
+	flip(mdata->ifac, "/Session/Save", s);
+	flip(mdata->ifac, "/Session/Save as...", s);
     }	
 }
 
@@ -871,8 +876,8 @@ void session_state (gboolean s)
 void restore_sample_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, _("/Sample/Restore full range"), s);
-	flip(mdata->ifac, _("/Variable/Delete last variable"), !s);
+	flip(mdata->ifac, "/Sample/Restore full range", s);
+	flip(mdata->ifac, "/Variable/Delete last variable", !s);
     }
 }
 
@@ -986,10 +991,10 @@ void set_sample_label (DATAINFO *pdinfo)
 
     panel_menu_state(dataset_is_panel(pdinfo));
 
-    flip(mdata->ifac, _("/Sample/Interpret as time series..."), 
+    flip(mdata->ifac, "/Sample/Interpret as time series...", 
 	 !(dataset_is_time_series(pdinfo)));
 
-    flip(mdata->ifac, _("/Sample/Interpret as panel..."), 
+    flip(mdata->ifac, "/Sample/Interpret as panel...", 
 	 !(pdinfo->pd == 1));
 
     sprintf(labeltxt, _("%s: Full range %s - %s; current sample"
@@ -1188,7 +1193,10 @@ static void set_up_main_menu (void)
 
     main_accel = gtk_accel_group_new();
     mdata->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
-				     main_accel);
+					main_accel);
+#ifdef ENABLE_NLS
+    gtk_item_factory_set_translate_func(mdata->ifac, menu_translate, NULL, NULL);
+#endif    
     gtk_item_factory_create_items (mdata->ifac, n_items, data_items, NULL);
     mdata->mbar = gtk_item_factory_get_widget (mdata->ifac, "<main>");
     gtk_accel_group_attach(main_accel, GTK_OBJECT (mdata->w));
@@ -1239,21 +1247,21 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 static GtkWidget *build_var_menu (void)
 {
     static char *var_items[]={
-	_("Display values"),
-	_("Descriptive statistics"),
-	_("Time series plot"),
-	_("Frequency distribution"),
-	_("Frequency plot"),
-	_("Boxplot"),
-	_("Correlogram"),
-	_("Spectrum"),
-	_("Dickey-Fuller test"),
-	_("Runs test"),
-	_("Rename"),
-	_("Edit label"),
-	_("Delete"),
-	_("Simulate..."),
-	_("Define new variable...")
+	N_("Display values"),
+	N_("Descriptive statistics"),
+	N_("Time series plot"),
+	N_("Frequency distribution"),
+	N_("Frequency plot"),
+	N_("Boxplot"),
+	N_("Correlogram"),
+	N_("Spectrum"),
+	N_("Dickey-Fuller test"),
+	N_("Runs test"),
+	N_("Rename"),
+	N_("Edit label"),
+	N_("Delete"),
+	N_("Simulate..."),
+	N_("Define new variable...")
     };
 
     GtkWidget *var_menu;
@@ -1603,16 +1611,16 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     GdkBitmap *mask;
     GdkColormap *colormap;
     int i;
-    static char *toolstrings[] = {_("launch calculator"), 
-				  _("launch editor"), 
-				  _("open gretl console"),
-				  _("session icon view"),
-				  _("gretl website"), 
-				  _("gretl manual (PDF)"),
-				  _("show help"), 
-				  _("X-Y graph"), 
-				  _("Capture last graph for editing"),
-				  _("open dataset"),
+    static char *toolstrings[] = {N_("launch calculator"), 
+				  N_("launch editor"), 
+				  N_("open gretl console"),
+				  N_("session icon view"),
+				  N_("gretl website"), 
+				  N_("gretl manual (PDF)"),
+				  N_("show help"), 
+				  N_("X-Y graph"), 
+				  N_("Capture last graph for editing"),
+				  N_("open dataset"),
 				  NULL
     };
     gchar **toolxpm = NULL;
