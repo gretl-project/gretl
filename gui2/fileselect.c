@@ -24,6 +24,7 @@
 #include "fileselect.h"
 #include "boxplots.h"
 #include "gpt_control.h"
+#include "session.h"
 
 extern GtkItemFactoryEntry script_items[];
 extern GtkItemFactoryEntry sample_script_items[];

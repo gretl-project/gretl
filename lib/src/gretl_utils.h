@@ -128,9 +128,6 @@ MODEL *gretl_model_new (DATAINFO *pdinfo);
 
 void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
 
-int save_model_copy (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
-		     DATAINFO *pdinfo);
-
 void clear_model (MODEL *pmod, DATAINFO *pdinfo);
 
 void debug_print_model_info (const MODEL *pmod, const char *msg);

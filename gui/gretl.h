@@ -44,7 +44,6 @@
 #include "callbacks.h"
 #include "dialogs.h"
 #include "library.h"
-#include "session.h"
 #include "settings.h"
 #include "helpfiles.h"
 
@@ -57,8 +56,6 @@ extern PATHS paths;
 extern CMD command;
 extern PRN *cmds;
 extern MODEL **models;
-extern SESSION session;
-extern SESSIONBUILD rebuild;
 
 /* global counters */
 extern int plot_count;

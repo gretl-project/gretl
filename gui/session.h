@@ -35,6 +35,8 @@ enum {
 
 void session_menu_state (gboolean s);
 
+int named_graph_aleady_present (const char *grname);
+
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code);
 
@@ -44,7 +46,7 @@ void remember_model (gpointer data, guint close, GtkWidget *widget);
 
 int try_add_model_to_session (MODEL *pmod);
 
-MODEL *get_session_model_by_name (const char *modname);
+void *get_session_object_by_name (const char *name, char *which);
 
 void delete_model_from_session (MODEL *pmod);
 
@@ -62,9 +64,9 @@ void free_session (void);
 
 int saved_objects (char *fname);
 
-int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild);
+int parse_savefile (char *fname);
 
-int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild);
+int recreate_session (char *fname);
 
 void view_session (void);
 
@@ -73,5 +75,11 @@ void save_session_callback (GtkWidget *w, guint i, gpointer data);
 void session_file_manager (int action, const char *fname);
 
 int session_file_is_open (void);
+
+int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuild);
+
+void print_saved_object_specs (const char *session_base, FILE *fp);
+
+int print_session_notes (const char *fname);
 
 #endif /* SESSION_H */

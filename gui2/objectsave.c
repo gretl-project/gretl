@@ -20,6 +20,7 @@
 /* objectsave.c for gretl: save models estimated via commands */
 
 #include "gretl.h"
+#include "session.h"
 #include "gpt_control.h"
 #include "objectsave.h"
 

@@ -25,6 +25,7 @@
 #include "gpt_control.h"
 #include "guiprint.h"
 #include "console.h"
+#include "session.h"
 
 #include <dirent.h>
 
@@ -135,8 +136,6 @@ double **Z;                 /* data set */
 double **subZ;              /* sub-sampled data set */
 double **fullZ;             /* convenience pointer */
 MODEL **models;             /* gretl models structs */
-SESSION session;            /* hold models, graphs */
-SESSIONBUILD rebuild;       /* rebuild session later */
 
 int plot_count, data_status, orig_vars;
 PRN *cmds;

@@ -25,7 +25,6 @@
 /* from library.c */
 extern int gui_exec_line (char *line, 
 			  LOOPSET *plp, int *plstack, int *plrun, 
-			  SESSION *psession, SESSIONBUILD *rebuild,
 			  PRN *prn, int exec_code, 
 			  const char *myname);
 
@@ -165,7 +164,7 @@ static void console_exec (void)
 
     strncpy(execline, c_line, MAXLEN - 1);
     g_free(c_line);
-    gui_exec_line(execline, NULL, &loopstack, &looprun, NULL, NULL, 
+    gui_exec_line(execline, NULL, &loopstack, &looprun, 
 		  prn, CONSOLE_EXEC, NULL);
     push_history_line(execline);
 

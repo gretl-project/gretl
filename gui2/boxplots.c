@@ -20,6 +20,7 @@
 /* boxplots for gretl */
 
 #include "gretl.h"
+#include "session.h"
 #include "boxplots.h"
 #include "gtkplot-lite.h"
 

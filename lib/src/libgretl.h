@@ -131,8 +131,6 @@ typedef struct _ARINFO ARINFO;
 typedef struct _MODEL MODEL;
 typedef struct _MODELSPEC MODELSPEC;
 typedef struct _GRAPHT GRAPHT;
-typedef struct _SESSION SESSION;
-typedef struct _SESSIONBUILD SESSIONBUILD;
 typedef struct _PRN PRN;
 typedef struct _FITRESID FITRESID;
 typedef struct _CONFINT CONFINT;
@@ -287,21 +285,6 @@ struct _GRAPHT {
     char name[24];
     char fname[MAXLEN];
 }; 
-
-struct _SESSION {
-    char name[32];
-    int nmodels;
-    int ngraphs;
-    MODEL **models;
-    GRAPHT **graphs;
-    char *notes;
-};
-
-struct _SESSIONBUILD {
-    int nmodels;
-    int *model_ID;
-    char **model_name;
-};
 
 struct _PRN {
     FILE *fp;

@@ -27,6 +27,7 @@
 #include "guiprint.h"
 #include "series_view.h"
 #include "console.h"
+#include "session.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -754,9 +755,9 @@ void verify_open_session (gpointer userdata)
 
 void save_session (char *fname) 
 {
-    int i, spos;
+    int spos;
     char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
-    char session_base[MAXLEN], tmp[MAXLEN];
+    char session_base[MAXLEN];
     FILE *fp;
     PRN *prn;
 
@@ -770,8 +771,7 @@ void save_session (char *fname)
 #endif
 
     /* save commands, by dumping the command stack */
-    if (haschar('.', fname) < 0)
-	strcat(fname, ".gretl");
+    if (haschar('.', fname) < 0) strcat(fname, ".gretl");
     if (dump_cmd_stack(fname)) return;
 
     get_base(session_base, fname, '.');
@@ -783,52 +783,17 @@ void save_session (char *fname)
 	errbox(errtext);
 	return;
     }
-    fprintf(fp, "(* saved objects:\n");
 
-    /* save session models */
-    for (i=0; i<session.nmodels; i++) {
-	fprintf(fp, "model %d \"%s\"\n", 
-		(session.models[i])->ID, 
-		(session.models[i])->name);
-    }
+    print_saved_object_specs(session_base, fp);
 
-    /* save session graphs */
-    for (i=0; i<session.ngraphs; i++) {
-	/* formulate save name for graph */
-	sprintf(tmp, "%sGraph_%d", session_base, i + 1);
-	/* does the constructed filename differ from the
-	   current one? */
-	if (strcmp((session.graphs[i])->fname, tmp)) {
-	    if (copyfile((session.graphs[i])->fname, tmp)) {
-		continue;
-	    } else {
-		remove((session.graphs[i])->fname);
-		strcpy((session.graphs[i])->fname, tmp);
-	    }
-	}
-	fprintf(fp, "%s %d \"%s\" %s\n", 
-		((session.graphs[i])->sort == GRETL_BOXPLOT)?
-		"plot" : "graph",
-		(session.graphs[i])->ID, 
-		(session.graphs[i])->name, 
-		(session.graphs[i])->fname);
-    }
-
-    fprintf(fp, "*)\n");
     fclose(fp);
 
     /* delete any extraneous graph files */
     session_file_manager(REALLY_DELETE_ALL, NULL);
 
-    /* save session notes, if any */
-    if (session.notes != NULL && strlen(session.notes)) {
-	switch_ext(fname2, fname, "Notes");
-	fp = fopen(fname2, "w");
-	if (fp != NULL) {
-	    fprintf(fp, "%s", session.notes);
-	    fclose(fp);
-	} else
-	    errbox(_("Couldn't write session notes file"));
+    switch_ext(fname2, fname, "Notes");
+    if (print_session_notes(fname2)) {
+	errbox(_("Couldn't write session notes file"));
     }
 
     /* save output */
@@ -842,7 +807,7 @@ void save_session (char *fname)
     gui_logo(prn->fp);
     session_time(prn->fp);
     pprintf(prn, _("Output from %s\n"), fname);
-    execute_script(fname, NULL, NULL, NULL, prn, SAVE_SESSION_EXEC); 
+    execute_script(fname, NULL, prn, SAVE_SESSION_EXEC); 
     gretl_print_destroy(prn);
 
     sprintf(msg, _("session saved to %s -\n"), savedir);

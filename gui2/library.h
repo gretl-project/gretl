@@ -59,6 +59,8 @@ void gui_errmsg (const int errcode);
 
 void register_graph (void);
 
+void clear_data (void);
+
 /* sample-related functions */
 
 void change_sample (GtkWidget *widget, dialog_t *ddata);
@@ -202,7 +204,6 @@ void do_save_tex (char *fname, int code, MODEL *pmod);
 void do_save_text (char *fname, MODEL *pmod);
 
 int execute_script (const char *runfile, const char *buf,
-		    SESSION *psession, SESSIONBUILD *rebuild,
 		    PRN *prn, int exec_code);
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget);

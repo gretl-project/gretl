@@ -21,6 +21,7 @@
    the native MS file selector under MS Windows */
 
 #include "gretl.h"
+#include "session.h"
 
 extern GtkItemFactoryEntry script_items[];
 extern GtkItemFactoryEntry sample_script_items[];

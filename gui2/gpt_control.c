@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "gpt_control.h"
+#include "session.h"
 
 /* #define POINTS_DEBUG 1 */
 

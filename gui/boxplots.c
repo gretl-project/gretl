@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "boxplots.h"
+#include "session.h"
 
 #include <gtkextra/gtkextra.h>
 

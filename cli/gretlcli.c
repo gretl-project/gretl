@@ -578,7 +578,7 @@ void exec_line (char *line, PRN *prn)
 	    return;
 	} else {
 	    if (!echo_off) 
-		echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 
+		echo_cmd(&command, datainfo, line, (batch || runit)? 1 : 0, 
 			 0, oflag, cmds);
 	    if (command.ci != ENDLOOP) {
 		if (add_to_loop(&loop, line, command.ci, oflag)) 
@@ -589,7 +589,7 @@ void exec_line (char *line, PRN *prn)
     }
 
     if (!echo_off && command.ci != ENDLOOP) 
-	echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 0, 
+	echo_cmd(&command, datainfo, line, (batch || runit)? 1 : 0, 0, 
 		 oflag, cmds);
 
 #ifdef notdef

@@ -21,6 +21,8 @@
 
 #include "gretl.h"
 #include "ssheet.h"
+#include "session.h"
+
 #ifdef G_OS_WIN32 
 # include "../lib/src/version.h"
 # include "build.h"

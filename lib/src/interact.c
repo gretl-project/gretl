@@ -1014,11 +1014,14 @@ int shell (const char *arg)
  * @oflag:
  * @prn: pointer to gretl printing struct.
  *
- * Echoes the use command represented by @pcmd and @line.
+ * Echoes the user command represented by @pcmd and @line.
  * 
  */
 
-void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
+#define hold_param(c) (c == TSLS || c == AR || c == CORRGM || \
+                       c == MPOLS || c == SCATTERS || c == GNUPLOT)
+
+void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       int batch, int gui, int oflag, PRN *prn)
      /* echo a given command: depending on the circumstances, either
 	to stdout or to a buffer, or both */
@@ -1026,13 +1029,14 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 {
     int i, err, got999 = 1;
     char flagc;
+    int cli = !gui;
 
     if (line == NULL) return;
 
 #if 0
     fprintf(stderr, "echo_cmd: line='%s', gui=%d, oflag=%d, batch=%d "
-	    "param='%s', nolist=%d\n", line, gui, oflag, batch, pcmd->param,
-	    pcmd->nolist);
+	    "param='%s', nolist=%d\n", line, gui, oflag, batch, cmd->param,
+	    cmd->nolist);
 #endif
 
     /* special case: gui "store" command, which could overflow the
@@ -1040,8 +1044,8 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
        gui "store" in the command script; we'll record it, but
        commented out.
     */
-    if (gui && !batch && pcmd->ci == STORE) {  /* FIXME monte carlo loop */
-	pprintf(prn, "# store '%s'", pcmd->param);
+    if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop */
+	pprintf(prn, "# store '%s'", cmd->param);
 	if (oflag) { 
 	    pprintf(prn, " -%c", getflag(oflag));
 	}
@@ -1052,81 +1056,94 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
     if (strcmp(line, "quit") == 0 || line[0] == '!' ||
 	strlen(line) == 0) return;
 
-    if (pcmd->ci == AR) got999 = 0;
+    if (cmd->ci == AR) got999 = 0;
 
-    if (!pcmd->nolist) { /* print list of params to command */
-	if (!gui) {
-	    if (!batch) printf(" %s", pcmd->cmd);
-	    else printf("\n? %s", pcmd->cmd);
-	    if (pcmd->ci == RHODIFF) printf(" %s;", pcmd->param);
-	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
-		     && pcmd->ci != AR && pcmd->ci != CORRGM
-		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS
-		     && pcmd->ci != GNUPLOT) 
-		printf(" %s", pcmd->param);
+    /* command is preceded by a "savename" to which a object will
+       be assigned */
+    if (*cmd->savename && gui && !batch) {
+	pprintf(prn, "%s <- ", cmd->savename);
+    }
+
+    if (!cmd->nolist) { 
+	/* command has a list of args to be printed */
+	if (cli) {
+	    if (batch) {
+		printf("\n? %s", cmd->cmd);
+	    } else {
+		printf(" %s", cmd->cmd);
+	    }
+	    if (cmd->ci == RHODIFF) printf(" %s;", cmd->param);
+	    else if (strlen(cmd->param) && !hold_param(cmd->ci)) {
+		printf(" %s", cmd->param);
+	    }
 	}
 	if (!batch) {
-	    pputs(prn, pcmd->cmd);
-	    if (pcmd->ci == RHODIFF) pprintf(prn, " %s;", pcmd->param);
-	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
-		     && pcmd->ci != AR && pcmd->ci != CORRGM
-		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS
-		     && pcmd->ci != GNUPLOT) 
-		pprintf(prn, " %s", pcmd->param);
+	    pputs(prn, cmd->cmd);
+	    if (cmd->ci == RHODIFF) pprintf(prn, " %s;", cmd->param);
+	    else if (strlen(cmd->param) && !hold_param(cmd->ci)) {
+		pprintf(prn, " %s", cmd->param);
+	    }
 	}
+
 	/* if list is very long, break it up over lines */
-	if (pcmd->ci == STORE) {
-	    if (!gui) printf(" \\\n");
+	if (cmd->ci == STORE) {
+	    if (cli) printf(" \\\n");
 	    if (!batch) pputs(prn, " \\\n");
 	}
-	for (i=1; i<=pcmd->list[0]; i++) {
-	    if (pcmd->list[i] == 999) {
-		if (!gui) printf(" ;");
+	for (i=1; i<=cmd->list[0]; i++) {
+	    if (cmd->list[i] == 999) {
+		if (cli) printf(" ;");
 		if (!batch) pputs(prn, " ;");
-		got999 = (pcmd->ci != MPOLS)? 1 : 0;
+		got999 = (cmd->ci != MPOLS)? 1 : 0;
 		continue;
 	    }
-	    if (!gui) {
+	    if (cli) {
 		if (got999) 
-		    printf(" %s", pdinfo->varname[pcmd->list[i]]);
-		else printf(" %d", pcmd->list[i]);
-		if (i > 1 && i < pcmd->list[0] && (i+1) % 10 == 0) 
-		    printf(" \\\n"); /* break line */
+		    printf(" %s", pdinfo->varname[cmd->list[i]]);
+		else printf(" %d", cmd->list[i]);
+		if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) 
+		    printf(" \\\n"); /* line continuation */
 	    }
 	    if (!batch) {
 		if (got999) 
-		    pprintf(prn, " %s", pdinfo->varname[pcmd->list[i]]);
-		else pprintf(prn, " %d", pcmd->list[i]);
-		if (i > 1 && i < pcmd->list[0] && (i+1) % 10 == 0) 
-		    pputs(prn, " \\\n"); /* break line */
+		    pprintf(prn, " %s", pdinfo->varname[cmd->list[i]]);
+		else pprintf(prn, " %d", cmd->list[i]);
+		if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) 
+		    pputs(prn, " \\\n"); /* line continuation */
 	    }
 	}
+
 	/* corrgm and gnuplot: param comes last */
-	if ((pcmd->ci == CORRGM || pcmd->ci == GNUPLOT)
-	    && strlen(pcmd->param)) { 
-	    if (!gui) printf(" %s", pcmd->param);
-	    if (!batch) pprintf(prn, " %s", pcmd->param);
+	if ((cmd->ci == CORRGM || cmd->ci == GNUPLOT)
+	    && strlen(cmd->param)) { 
+	    if (cli) printf(" %s", cmd->param);
+	    if (!batch) pprintf(prn, " %s", cmd->param);
 	}
-	err = _list_dups(pcmd->list, pcmd->ci);
+
+	err = _list_dups(cmd->list, cmd->ci);
 	if (err) {
 	    printf(_("\nvar number %d duplicated in the command list.\n"),
 		   err);
-	    pcmd->ci = 999;
+	    cmd->ci = 999;
 	}
-    } /* end if !pcmd->nolist */
-    else if (strcmp (pcmd->cmd, "quit")) {
-	if (!gui) {
+    } /* end if !cmd->nolist */
+
+    else if (strcmp (cmd->cmd, "quit")) {
+	if (cli) {
 	    if (batch) printf("? %s", line);
 	    else printf(" %s", line);
 	}
 	if (!batch) pputs(prn, line);
     }
+
     if (oflag) { 
 	flagc = getflag(oflag);
-	if (!gui) printf(" -%c", flagc);
+	if (cli) printf(" -%c", flagc);
 	if (!batch) pprintf(prn, " -%c", flagc);
     }
-    if (!gui) putchar('\n');
+
+    if (cli) putchar('\n');
+
     if (!batch) {
 	pputs(prn, "\n");
 	if (prn != NULL && prn->fp) fflush(prn->fp);

@@ -1169,52 +1169,6 @@ void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo)
     pmod->smpl.t2 = t2;
 }
 
-/* #define SESSION_DEBUG */
-
-/* ........................................................... */
-
-int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
-		     DATAINFO *pdinfo)
-{
-    MODEL *pmod = *ppmod;
-    MODEL *tmp; /* will be returned in place of the saved model */
-
-#ifdef SESSION_DEBUG
-    fprintf(stderr, "psession->nmodels = %d\n", psession->nmodels);
-#endif
-
-    if ((pmod->name = malloc(64)) == NULL) return 1;
-
-    pmod->name[0] = 0;
-    strncat(pmod->name, rebuild->model_name[psession->nmodels], 63);
-
-    if (psession->nmodels == 0) {
-	psession->models = malloc(sizeof(MODEL *));
-    } else {
-	psession->models = realloc(psession->models, 
-				   (psession->nmodels + 1) * sizeof(MODEL *));
-    }
-
-    if (psession->models == NULL) return 1;
-
-    psession->models[psession->nmodels] = pmod;
-    psession->nmodels += 1;
-
-    tmp = malloc(sizeof *tmp);
-    if (tmp == NULL) return 1;
-
-    *ppmod = tmp; /* replaced */
-    _init_model(tmp, pdinfo);
-
-#ifdef SESSION_DEBUG
-    fprintf(stderr, "copied '%s' to psession->models[%d]\n" 
-	    " nmodels = %d\n", rebuild->model_name[psession->nmodels-1], 
-	    psession->nmodels-1, psession->nmodels); 
-#endif
-
-    return 0;
-}
-
 /* .......................................................... */
 
 static void clear_ar_info (MODEL *pmod)
@@ -1291,32 +1245,6 @@ void clear_model (MODEL *pmod, DATAINFO *pdinfo)
     }
 
     _init_model(pmod, pdinfo);
-}
-
-/* .......................................................... */
-
-int save_model_copy (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
-		     DATAINFO *pdinfo)
-{
-    static int save;
-    MODEL *pmod = *ppmod; /* copy _current_ pointer! */
-
-    if (rebuild == NULL || psession == NULL) return 1;
-
-    if (save) {
-	int i;
-
-	for (i=0; i<rebuild->nmodels; i++) {
-	    if (pmod->ID == rebuild->model_ID[i]) {
-		return silent_remember(ppmod, psession, rebuild, pdinfo);
-	    }
-	}
-    }
-    save = 1;
-
-    clear_model(pmod, pdinfo); /* hmm */
-
-    return 0;
 }
 
 /* .......................................................... */

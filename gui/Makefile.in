@@ -83,8 +83,8 @@ VPATH = $(topsrc)/gui:$(topsrc)/cli:..
 
 SRCS = boxplots.c calculator.c callbacks.c console.c database.c datafiles.c \
 	dialogs.c fileselect.c gpt_control.c gretl.c guiprint.c \
-	gui_utils.c helpfiles.c library.c model_table.c selector.c \
-	series_view.c session.c settings.c ssheet.c webget.c 
+	gui_utils.c helpfiles.c library.c model_table.c objectsave.c \
+	selector.c series_view.c session.c settings.c ssheet.c webget.c 
 OBJS = $(SRCS:.c=.o)
 
 %.o: %.c

@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include <unistd.h>
 
+#include "session.h"
 #include "selector.h"
 #include "series_view.h"
 #include "gpt_control.h"
@@ -40,7 +41,6 @@ extern int loop_exec_line (LOOPSET *plp, const int round,
 
 int gui_exec_line (char *line, 
 		   LOOPSET *plp, int *plstack, int *plrun, 
-		   SESSION *psession, SESSIONBUILD *rebuild,
 		   PRN *prn, int exec_code, 
 		   const char *myname); 
 
@@ -3429,12 +3429,12 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 			 GDK_CURRENT_TIME);
 	gdk_cursor_destroy(cursor);
 
-	err = execute_script(NULL, buf, NULL, NULL, prn, code);
+	err = execute_script(NULL, buf, prn, code);
 	g_free(buf);
 
 	gdk_pointer_ungrab(GDK_CURRENT_TIME);
     } else
-	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
+	err = execute_script(runfile, NULL, prn, code);
 
     gretl_print_destroy(prn);
 
@@ -3784,7 +3784,6 @@ static char *bufgets (char *s, int size, const char *buf)
 /* ........................................................... */
 
 int execute_script (const char *runfile, const char *buf,
-		    SESSION *psession, SESSIONBUILD *rebuild,
 		    PRN *prn, int exec_code)
      /* run commands from runfile or buf, output to prn */
 {
@@ -3915,8 +3914,8 @@ int execute_script (const char *runfile, const char *buf,
 		oflag = 0;
 		strcpy(tmp, line);
 		exec_err = gui_exec_line(line, &loop, &loopstack, 
-					 &looprun, psession, rebuild, 
-					 prn, exec_code, runfile);
+					 &looprun,  prn, exec_code, 
+					 runfile);
 	    }
 	    if (exec_err) {
 		pprintf(prn, _("\nError executing script: halting\n"));
@@ -3929,8 +3928,10 @@ int execute_script (const char *runfile, const char *buf,
 
     if (fb) fclose(fb);
 
-    if (psession && rebuild) /* recreating a gretl session */
-	save_model_copy(&models[0], psession, rebuild, datainfo);
+    if (exec_code == REBUILD_EXEC) {
+	/* recreating a gretl session */
+	clear_or_save_model(&models[0], datainfo, 1);
+    }
 
     return 0;
 }
@@ -3984,11 +3985,10 @@ static int script_model_test (const int id, PRN *prn, const int ols_only)
 
 int gui_exec_line (char *line, 
 		   LOOPSET *plp, int *plstack, int *plrun, 
-		   SESSION *psession, SESSIONBUILD *rebuild,
 		   PRN *prn, int exec_code, 
 		   const char *myname) 
 {
-    int i, err = 0, check = 0, rebuilding = 0, order, nulldata_n, lines[1];
+    int i, err = 0, check = 0, rebuild, order, nulldata_n, lines[1];
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
     char linecopy[1024];
@@ -3997,6 +3997,8 @@ int gui_exec_line (char *line,
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
+
+    rebuild = (exec_code == REBUILD_EXEC);
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
@@ -4008,8 +4010,6 @@ int gui_exec_line (char *line,
 	pprintf(prn, _("You must open a data file first\n"));
 	return 1;
     }
-
-    if (psession != NULL && rebuild != NULL) rebuilding = 1;
 
 #ifdef CMD_DEBUG
     fprintf(stderr, "gui_exec_line: '%s'\n", line);
@@ -4160,10 +4160,7 @@ int gui_exec_line (char *line,
 	break;
 
     case AR:
-	if (rebuilding)
-	    save_model_copy(&models[0], psession, rebuild, datainfo);
-	else
-	    clear_model(models[0], datainfo); 
+	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = ar_func(command.list, atoi(command.param), &Z, 
 			    datainfo, &model_count, prn);
 	if ((err = (models[0])->errcode)) { 
@@ -4236,10 +4233,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	if (rebuilding)
-	    save_model_copy(&models[0], psession, rebuild, datainfo);
-	else
-	    clear_model(models[0], datainfo); 
+	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -4253,10 +4247,7 @@ int gui_exec_line (char *line,
 	break;
 
     case LAD:
-	if (rebuilding)
-	    save_model_copy(&models[0], psession, rebuild, datainfo);
-	else
-	    clear_model(models[0], datainfo); 
+	clear_or_save_model(&models[0], datainfo, rebuild);
         *models[0] = lad(command.list, &Z, datainfo);
         if ((err = (models[0])->errcode)) {
             errmsg(err, prn);
@@ -4293,10 +4284,7 @@ int gui_exec_line (char *line,
 	    sys = NULL;
 	} 
 	else if (!strcmp(command.param, "nls")) {
-	    if (rebuilding)
-		save_model_copy(&models[0], psession, rebuild, datainfo);
-	    else
-		clear_model(models[0], datainfo); 
+	    clear_or_save_model(&models[0], datainfo, rebuild);
 	    *models[0] = nls(&Z, datainfo, prn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
@@ -4438,10 +4426,8 @@ int gui_exec_line (char *line,
 	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	else {
 	    if (plp == NULL) register_graph();
-	    else {
-		err = maybe_save_graph(&command, paths.plotfile,
-				       GRETL_GNUPLOT_GRAPH);
-	    }
+	    err = maybe_save_graph(&command, paths.plotfile,
+				   GRETL_GNUPLOT_GRAPH, prn);
 	}
 	break;
 
@@ -4452,10 +4438,7 @@ int gui_exec_line (char *line,
 
     case HCCM:
     case HSK:
-	if (rebuilding)
-	    save_model_copy(&models[0], psession, rebuild, datainfo);
-	else
-	    clear_model(models[0], datainfo); 
+	clear_or_save_model(&models[0], datainfo, rebuild);
 	if (command.ci == HCCM)
 	    *models[0] = hccm_func(command.list, &Z, datainfo);
 	else
@@ -4581,10 +4564,7 @@ int gui_exec_line (char *line,
 
     case LOGIT:
     case PROBIT:
-	if (rebuilding)
-	    save_model_copy(&models[0], psession, rebuild, datainfo);
-	else
-	    clear_model(models[0], datainfo); 
+	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = logit_probit(command.list, &Z, datainfo, command.ci);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -4652,10 +4632,7 @@ int gui_exec_line (char *line,
     case OLS:
     case WLS:
     case POOLED:
-	if (rebuilding)
-	    save_model_copy(&models[0], psession, rebuild, datainfo);
-	else
-	    clear_model(models[0], datainfo); 
+	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 
@@ -4666,7 +4643,6 @@ int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
-	maybe_save_model(&command, &models[0], datainfo);
 	break;
 
 #ifdef ENABLE_GMP
@@ -4719,7 +4695,7 @@ int gui_exec_line (char *line,
 	    return 1;
 	}
 	/* was SESSION_EXEC below */
-	err = execute_script(runfile, NULL, NULL, NULL, prn, 
+	err = execute_script(runfile, NULL, prn, 
 			     (exec_code == CONSOLE_EXEC)? SCRIPT_EXEC :
 			     exec_code);
 	break;
@@ -4866,10 +4842,7 @@ int gui_exec_line (char *line,
 	break;
 
     case TSLS:
-	if (rebuilding)
-	    save_model_copy(&models[0], psession, rebuild, datainfo);
-	else
-	    clear_model(models[0], datainfo); 
+	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = tsls_func(command.list, atoi(command.param), 
 			       &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
@@ -4907,6 +4880,9 @@ int gui_exec_line (char *line,
     if ((is_model_cmd(command.cmd) || !strncmp(line, "end nls", 7))
 	&& !err) {
 	err = stack_model(0);
+	if (*command.savename != 0) {
+	    maybe_save_model(&command, &models[0], datainfo, prn);
+	}
     }
 		
     if (err) return 1;

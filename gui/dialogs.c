@@ -20,10 +20,10 @@
 /* dialogs.c for gretl */
 
 #include "gretl.h"
+#include "session.h"
+#include "selector.h"
 
 extern const char *version_string;
-
-#include "selector.h"
 
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;

@@ -27,8 +27,6 @@ void *mymalloc (size_t size);
 
 void *myrealloc (void *ptr, size_t size);
 
-void clear_data (int full);
-
 void mark_dataset_as_modified (void);
 
 void register_data (const char *fname, int record);
