@@ -171,7 +171,7 @@ extern void set_panel_structure (gpointer data, guint u, GtkWidget *w);
 #ifdef USE_GNOME
 static void gnome_help (void)
 {
-    static GnomeHelpMenuEntry help_entry = { "gretl", "gretl.html" };
+    static GnomeHelpMenuEntry help_entry = { "gretl", "index.html" };
 
     gnome_help_display(NULL, &help_entry);
 }
