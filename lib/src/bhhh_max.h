@@ -17,10 +17,10 @@
  * Boston, MA 02111-1307, USA.
  */
 
-enum {
+enum bhhh_opts {
     PRESERVE_OPG_MODEL = 1 << 0,
     FULL_VCV_MATRIX    = 1 << 1
-} bhhh_opts;
+};
 
 typedef struct _model_info model_info;
 

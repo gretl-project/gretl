@@ -28,20 +28,20 @@ typedef long double bigval;
 typedef double bigval;
 #endif
 
-typedef enum {
+enum loop_types {
     COUNT_LOOP,
     WHILE_LOOP,
     FOR_LOOP
-} loop_types;
+};
 
-typedef enum {
+enum ifcodes {
     SET_FALSE,
     SET_TRUE,
     SET_ELSE,
     SET_ENDIF,
     IS_FALSE,
     RELAX
-} ifcodes;
+};
 
 typedef struct {
     int ID;

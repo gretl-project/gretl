@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 
-enum {
+enum model_selection_criteria {
     C_SGMASQ = 0,
     C_AIC,
     C_FPE,
@@ -32,7 +32,7 @@ enum {
     C_GCV,
     C_RICE,
     C_MAX
-} model_selection_criteria;
+};
 
 /**
  * dataset_is_time_series:

@@ -25,7 +25,7 @@ extern int gretl_errno;
 extern char gretl_errmsg[ERRLEN];
 extern char gretl_msg[ERRLEN];
 
-typedef enum {
+enum gretl_error_codes {
     E_DATA = 2,
     E_SINGULAR,     /* 3 */
     E_DF,           /* 4 */
@@ -81,7 +81,7 @@ typedef enum {
     E_CANCEL,      /* 54 */
     E_NAN,         /* 55 */
     E_MAX          /* 56 */
-} error_codes; 
+}; 
 
 /* functions follow */
  

@@ -88,12 +88,12 @@ typedef struct {
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 
-typedef enum {
+enum dist_codes {
     NORMAL = 1,
     GAMMA
-} dist_codes;
+};
 
-typedef enum {
+enum plot_type_codes {
     PLOT_REGULAR = 0,
     PLOT_SAMPLING_DIST,
     PLOT_FORECAST,
@@ -108,7 +108,7 @@ typedef enum {
     PLOT_RANGE_MEAN,
     PLOT_LEVERAGE,
     PLOT_TYPE_MAX
-} plot_type_codes;
+};
     
 #define GRETL_GUI(p) (p->binbase[0] && p->ratsbase[0] && p->dbhost_ip[0])
 

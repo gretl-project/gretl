@@ -22,13 +22,13 @@
 #include <stdio.h>
 #include "gretl_matrix.h"
 
-enum {
+enum leverage_save_opts {
     SAVE_LEVERAGE  = 1 << 0,
     SAVE_INFLUENCE = 1 << 1,
     SAVE_DFFITS    = 1 << 2
-} leverage_save_opts;
+};
 
-typedef enum {
+enum aux_codes {
     AUX_NONE,  /* not an auxiliary regression */
     AUX_SQ,    /* aux. regression for nonlinearity (squared terms) */
     AUX_LOG,   /* aux. regression for nonlinearity (log terms) */
@@ -44,7 +44,7 @@ typedef enum {
     AUX_RESET, /* aux. regression for Ramsey's RESET */
     AUX_SYS,   /* single equation from multivariate system */
     AUX_AUX    /* auxiliary regression not otherwise specified */
-} aux_codes;
+};
 
 typedef struct {
     int m1;        /* ID for first model */

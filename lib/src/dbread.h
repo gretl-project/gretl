@@ -20,7 +20,7 @@
 #ifndef DBREAD_H
 #define DBREAD_H
 
-enum {
+enum db_error_codes {
     DB_OK = 0,
     DB_MISSING_DATA,
     DB_NO_SUCH_SERIES,

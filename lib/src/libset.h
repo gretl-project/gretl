@@ -20,7 +20,7 @@
 #ifndef LIBSET_H
 #define LIBSET_H
 
-enum {
+enum vcv_codes {
     VCV_UNSET,
     VCV_HESSIAN,
     VCV_IM,

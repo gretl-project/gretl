@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef enum {
+enum data_options {
     GRETL_DATA_FLOAT = 1, /* single-precision binary data */
     GRETL_DATA_DOUBLE,    /* double-precision binary data */
     GRETL_DATA_OCTAVE,    /* data in Gnu Octave format */
@@ -29,9 +29,9 @@ typedef enum {
     GRETL_DATA_R_ALT,     /* data in alternate Gnu R format */
     GRETL_DATA_GZIPPED,   /* gzipped data */
     GRETL_DATA_TRAD       /* traditional (ESL-style) data */
-} data_options;
+};
 
-typedef enum {
+enum gretl_filetypes {
     GRETL_NATIVE_DATA,    /* gretl native format data file */
     GRETL_XML_DATA,       /* gretl xml format data file */
     GRETL_CSV_DATA,       /* comma-separated data file */
@@ -42,18 +42,18 @@ typedef enum {
     GRETL_NATIVE_DB,      /* gretl database */
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_UNRECOGNIZED    /* none of the above */
-} gretl_filetypes;
+};
 
-typedef enum {
+enum clear_codes {
     CLEAR_FULL,
     CLEAR_SUBSAMPLE
-} clear_codes;
+};
 
-typedef enum {
+enum data_open_codes {
     DATA_NONE,
     DATA_CLEAR,
     DATA_APPEND
-} data_open_codes;
+};
 
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \

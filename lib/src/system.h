@@ -22,12 +22,12 @@
 
 typedef struct _gretl_equation_system gretl_equation_system;
 
-enum {
+enum gretl_system_types {
     SUR = 0,
     THREESLS
-} gretl_system_types;
+};
 
-enum {
+enum system_save_flags {
     GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
     GRETL_SYSTEM_SAVE_YHAT = 1 << 1
 };

@@ -82,60 +82,60 @@
 /* numbers smaller than the given limit will print as zero */
 #define screen_zero(x)  ((fabs(x) > 1.0e-13)? x : 0.0)
 
-typedef enum {
+enum prn_codes {
     GRETL_PRINT_STDOUT,
     GRETL_PRINT_STDERR,
     GRETL_PRINT_FILE,
     GRETL_PRINT_BUFFER,
     GRETL_PRINT_NULL
-} prn_codes;
+};
 
-typedef enum {
+enum gretl_print_formats {
     GRETL_PRINT_FORMAT_PLAIN,
     GRETL_PRINT_FORMAT_TEX,
     GRETL_PRINT_FORMAT_TEX_DOC,
     GRETL_PRINT_FORMAT_RTF,
     GRETL_PRINT_FORMAT_FIXED
-} gretl_print_formats;
+};
 
-typedef enum {
+enum ts_codes {
     TIME_SERIES = 1,
     STACKED_TIME_SERIES,
     STACKED_CROSS_SECTION
-} ts_codes;
+};
 
-typedef enum {
+enum auto_genr {
     GENR_RESID,
     GENR_FITTED,
     GENR_RESID2,
     GENR_H
-} auto_genr;
+};
 
-typedef enum {
+enum progress_flags {
     SP_NONE, 
     SP_LOAD_INIT,
     SP_SAVE_INIT,
     SP_FONT_INIT,
     SP_UPDATER_INIT,
     SP_FINISH 
-} progress_flags;
+};
 
-typedef enum {
+enum progress_return_flags {
     SP_RETURN_OK,
     SP_RETURN_DONE,
     SP_RETURN_CANCELED
-} progress_return_flags;
+};
 
-typedef enum {
+enum test_stats {
     GRETL_TEST_NORMAL_CHISQ,
     GRETL_TEST_TR2,
     GRETL_TEST_F,
     GRETL_TEST_LMF,
     GRETL_TEST_HARVEY_COLLIER,
     GRETL_TEST_RESET
-} test_stats;
+};
 
-enum {
+enum gretl_opt_flags {
     OPT_A = 1 <<  0,
     OPT_B = 1 <<  1,
     OPT_C = 1 <<  2,
@@ -155,7 +155,7 @@ enum {
     OPT_W = 1 << 16,
     OPT_X = 1 << 17,
     OPT_Z = 1 << 18
-} gretl_opt_flags;
+};
 
 typedef int *LIST; 
 
