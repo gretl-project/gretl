@@ -67,11 +67,12 @@ static void substitute_dollar_i (char *str)
 static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
      /* special version of command executor for loop construct */
 {
-    int i, err, m;
+    int i, m;
     char linecpy[MAXLEN];
     unsigned char oflag = 0;
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
+    int err = 0;
 
     strcpy(linecpy, plp->lines[cmdnum]);
     catchflag(linecpy, &oflag);
@@ -101,18 +102,10 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     case GENR:
 	err = generate(&Z, datainfo, linecpy, model_count,
 		       tmpmodel, oflag);
-	if (err) {
-	    errmsg(err, prn);
-	    return 1;
-	} 
 	break;
 
     case SIM:
 	err = simulate(linecpy, &Z, datainfo);
-	if (err) {
-	    errmsg(err, prn);
-	    return 1;
-	}
 	break;	
 
     case OLS:
@@ -232,6 +225,10 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	}
 	break;
 
+    case PRINTF:
+	err = do_printf(linecpy, &Z, datainfo, models[0], prn);
+	break;
+
     case SMPL:
 	if (oflag) {
 	    if (restore_full_sample(&subZ, &fullZ, &Z,
@@ -303,7 +300,10 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	break;
 
     }
-    return 0;
+
+    if (err) errmsg(err, prn);
+
+    return err;
 }
 
 static int data_option (unsigned char flag)

@@ -28,6 +28,10 @@
 # include <windows.h>
 #endif
 
+#if defined(ENABLE_NLS) && defined(USE_GTK2)
+#include <glib.h>
+#endif
+
 /* ........................................................... */
 
 static int missvals (double *x, int n)
@@ -1033,20 +1037,6 @@ static void printf15 (double zz, PRN *prn)
 
 /* ............................................................. */
 
-#ifdef notdef
-static void printf17 (double zz, PRN *prn)
-{
-    if (na(zz)) pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17),
-			_("undefined"));
-    else {
-	pputc(prn, ' ');
-	gretl_print_value(zz, prn);
-    }
-}
-#endif
-
-/* ............................................................. */
-
 #define LINEWID 78
 
 static void center_line (char *str, PRN *prn, int dblspc)
@@ -1088,6 +1078,66 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
+static void print_summary_single (GRETLSUMMARY *summ,
+				  const DATAINFO *pdinfo,
+				  PRN *prn)
+{
+    char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
+    double vals[8];
+    double xbar, sd, cv = NADBL;
+    const char *labels[] = {
+	N_("Mean"),
+	N_("Median"),
+	N_("Minimum"),
+	N_("Maximum"),
+	N_("Standard deviation"),
+	N_("C.V."),
+	N_("Skewness"),
+	N_("Ex. kurtosis")
+    };
+    int slen = 0, i = 0;
+
+    ntodate(obs1, pdinfo->t1, pdinfo);
+    ntodate(obs2, pdinfo->t2, pdinfo);
+
+    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
+    sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
+	    pdinfo->varname[summ->list[1]], summ->n);
+    center_line(tmp, prn, 1);
+
+    xbar = summ->coeff[0];
+    sd = summ->sderr[0];
+    if (xbar != 0.0 && !na(sd)) cv = fabs(sd/xbar);
+
+    vals[0] = xbar;
+    vals[1] = summ->xmedian[0];
+    vals[2] = summ->xpx[0];
+    vals[3] = summ->xpy[0];
+    vals[4] = sd;
+    vals[5] = cv;
+    vals[6] = summ->xskew[0];
+    vals[7] = summ->xkurt[0];
+
+    for (i=0; i<8; i++) {
+	if (strlen(_(labels[i])) > slen) {
+#if defined(ENABLE_NLS) && defined(USE_GTK2)
+	    slen = g_utf8_strlen(_(labels[i]), -1);	    
+#else
+	    slen = strlen(_(labels[i]));
+#endif
+	}
+    }
+    slen++;
+
+    for (i=0; i<8; i++) {
+	pprintf(prn, "  %-*s", UTF_WIDTH(_(labels[i]), slen), _(labels[i]));
+	printf15(vals[i], prn);
+	pputc(prn, '\n');
+    }
+
+    pputs(prn, "\n\n");    
+}
+
 /**
  * print_summary:
  * @summ: gretl summary statistics struct.
@@ -1107,29 +1157,25 @@ void print_summary (GRETLSUMMARY *summ,
     int lo = summ->list[0], v, lv, lineno = 4;
     char tmp[128];
 
-    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
     if (lo == 1) {
-	sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-		pdinfo->varname[summ->list[1]], summ->n);
-	center_line(tmp, prn, 1);
-    } else {
-	strcpy(tmp, _("(missing values denoted by -999 will be skipped)"));
-	center_line(tmp, prn, 1);
-	pprintf(prn, "\n%s  ", _("Variable"));
+	print_summary_single(summ, pdinfo, prn);
+	return;
     }
+
+    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
+    strcpy(tmp, _("(missing values denoted by -999 will be skipped)"));
+    center_line(tmp, prn, 1);
+    pprintf(prn, "\n%s  ", _("Variable"));
 
     pputs(prn, _("      MEAN           MEDIAN           MIN"
             "             MAX\n\n"));
-
 
     for (v=0; v<lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
 	lv = summ->list[v+1];
+	pprintf(prn, "%-10s", pdinfo->varname[lv]);
 	xbar = summ->coeff[v];
-	if (lo > 1)
-	    pprintf(prn, "%-10s", pdinfo->varname[lv]);
-	else _bufspace(2, prn);
 	printf15(xbar, prn);
 	printf15(summ->xmedian[v], prn);
 	printf15(summ->xpx[v], prn);
@@ -1141,7 +1187,7 @@ void print_summary (GRETLSUMMARY *summ,
     lineno += 2;
     pputc(prn, '\n');
 
-    if (lo > 1) pprintf(prn, "\n%s  ", _("Variable"));
+    pprintf(prn, "\n%s  ", _("Variable"));
     pputs(prn, _("      S.D.            C.V.           "
 	 " SKEW          EXCSKURT\n\n"));
 
@@ -1149,13 +1195,13 @@ void print_summary (GRETLSUMMARY *summ,
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
 	lv = summ->list[v+1];
-	if (lo > 1)
-	    pprintf(prn, "%-10s", pdinfo->varname[lv]);
-	else _bufspace(2, prn);
+	pprintf(prn, "%-10s", pdinfo->varname[lv]);
+
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
 	else xcv = NADBL;
+
 	printf15(std, prn);
 	printf15(xcv, prn);
 	printf15(summ->xskew[v], prn);

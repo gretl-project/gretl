@@ -57,6 +57,7 @@ int ok_in_loop (int ci, const LOOPSET *ploop)
 	ci == GENR ||
 	ci == STORE ||
 	ci == PRINT ||
+	ci == PRINTF ||
 	ci == PVALUE ||
 	ci == SIM ||
 	ci == SMPL ||

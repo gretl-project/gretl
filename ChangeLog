@@ -10,6 +10,8 @@ version 1.2.0
   calculate dynamically (e.g. "genr y = .6*y(-1) + u"),
   which makes the "sim" command redundant
 - Make principal components analysis available via the GUI
+- Improve formatting of descriptive statistics output when
+  only one variable is selected
 - When adding a variable to the dataset from a model window,
   give the user a chance to edit the name and description
 - Windows: add option to emulate Windows look (via WIMP)
@@ -18,7 +20,8 @@ version 1.2.0
 - Improve creation of time-series datasets for use in R
 - Fix problems created by tabs in the command line
 - Two-stage least squares: add list of instruments to printout
-  of model results
+  of model results; fix crashing bug in printing covariance
+  matrix of coefficient estimates
 - Improve the mechanism for detecting the presence of a lagged
   dependent variable in a regression list; also show the
   Durbin-Watson stat in addition to Durbin's h when a 

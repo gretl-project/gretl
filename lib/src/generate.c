@@ -64,7 +64,7 @@ static int genr_mlog (const char *str, double *xvec, double **pZ,
 
 static void genr_msg (GENERATE *genr, int oldv);
 static void varerror (const char *s);
-static int ismatch (int lv, const int *list);
+static int listpos (int v, const int *list);
 static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr, int time);
 static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr);
 
@@ -2179,7 +2179,7 @@ get_model_data_element (const char *s, GENERATE *genr,
 		 pmod->arinfo->rho == NULL) {
 	    genr->err = E_INVARG;
 	}
-	else if (!(vi = ismatch(atoi(s), pmod->arinfo->arlist))) {
+	else if (!(vi = listpos(atoi(s), pmod->arinfo->arlist))) {
 	    genr->err = E_INVARG;
 	} else {
 	    x = pmod->arinfo->rho[vi];
@@ -2198,7 +2198,7 @@ get_model_data_element (const char *s, GENERATE *genr,
 	}
 
 	lv = _isnumber(s)? atoi(s) : varindex(genr->pdinfo, s);
-	vi = ismatch(lv, pmod->list);
+	vi = listpos(lv, pmod->list);
 
 	if (vi == 1) vi = 0;
 	if (!vi) {
@@ -3351,8 +3351,8 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 	v1l = get_nls_param_number(pmod, v1str);
 	v2l = get_nls_param_number(pmod, v2str);
     } else {
-	v1l = ismatch(v1, pmod->list);
-	v2l = ismatch(v2, pmod->list);
+	v1l = listpos(v1, pmod->list);
+	v2l = listpos(v2, pmod->list);
     }
     if (!v1l || !v2l) return NADBL;
 
@@ -3401,13 +3401,22 @@ static void genr_msg (GENERATE *genr, int oldv)
 
 /* ......................................................  */
 
-static int ismatch (int lv, const int *list)
+static int listpos (int v, const int *list)
 {
-    int i;
+    int i, lmax = list[0];
 
-    for (i=list[0]; i>=1; i--) {
-	if (lv == list[i]) return i;
+    /* handle special TSLS list */
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    lmax = i - 1;
+	    break;
+	}
     }
+	    
+    for (i=lmax; i>=1; i--) {
+	if (v == list[i]) return i;
+    }
+
     return 0;
 }
 

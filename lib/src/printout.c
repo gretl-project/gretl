@@ -522,19 +522,34 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause, 
 	      PRN *prn)
 {
-    int k, nbetas;
+    int k, nbetas = 0;
     int *tmplist = NULL;
 
-    nbetas = pmod->list[0] - 1;
-    if (copylist(&tmplist, pmod->list)) return E_ALLOC;
+    if (pmod->ci == TSLS) {
+	k = 2;
+	while (pmod->list[k++] != LISTSEP) {
+	    nbetas++;
+	}
+    } else {
+	nbetas = pmod->list[0] - 1;
+    }
 
-    for (k=1; k<=nbetas; k++) tmplist[k] = pmod->list[k+1];
+    tmplist = malloc((nbetas + 1) * sizeof *tmplist);
+    if (tmplist == NULL) return E_ALLOC;
+
     tmplist[0] = nbetas;
+    for (k=1; k<=tmplist[0]; k++) {
+	tmplist[k] = pmod->list[k+1];
+    }
 
-    if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
+    if (pmod->vcv == NULL) {
+	if (makevcv(pmod)) return E_ALLOC;
+    }
+
     text_print_matrix(pmod->vcv, tmplist, pmod, pdinfo, pause, prn);  
 
     free(tmplist);
+
     return 0;
 }
 
@@ -621,14 +636,7 @@ void text_print_matrix (const double *rr, const int *list,
     if (pmod != NULL) covhdr(prn);
 
     m = 1;
-
-    if (pmod != NULL && pmod->ci == TSLS) {
-	i = 1;
-	lo = 0;
-	while (list[i++] != 999) lo++;
-    } else {
-	lo = list[0];
-    }
+    lo = list[0];
 
     for (i=0; i<=lo/FIELDS; i++) {
 	nf = i * FIELDS;

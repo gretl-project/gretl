@@ -1044,11 +1044,11 @@ int makevcv (MODEL *pmod)
     if ((pmod->ci == CORC || pmod->ci == HILU) && pmod->ifc) {
 	d = 1.0 / (1.0 - pmod->rho_in);
 	kk = -1;
-	for (i=1; i<=nv; i++) {
-	    for (j=1; j<=nv; j++) {
+	for (i=0; i<nv; i++) {
+	    for (j=0; j<nv; j++) {
 		if (j < i) continue;
 		kk++;
-		if (j == nv) {
+		if (i == 0) { 
 		    pmod->vcv[kk] *= d;
 		    if (j == i) pmod->vcv[kk] *= d;
 		}
@@ -1501,8 +1501,9 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     list2[0] = list[0] - pos;
     for (i=1; i<=list2[0]; i++) {
-	list2[i] = list[i+pos];
+	list2[i] = list[i + pos];
     }
+    tsls_omitzero(list2, *pZ, pdinfo->t1, pdinfo->t2);
 
     ncoeff = list2[0];
     if (ncoeff < list1[0] - 1) {
@@ -1664,13 +1665,20 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     tsls.ci = TSLS;
 
-    /* put the original list back in place */
-    tsls.list = realloc(tsls.list, (list[0] + 1) * sizeof *tsls.list);
+    /* put the full list (possibly purged of zero elements) back in place */
+    tsls.list = realloc(tsls.list, 
+			(list1[0] + list2[0] + 2) * sizeof *tsls.list);
     if (tsls.list == NULL) {
 	tsls.errcode = E_ALLOC;
     } else {
-	for (i=0; i<=list[0]; i++) {
-	    tsls.list[i] = list[i];
+	tsls.list[0] = list1[0] + list2[0] + 1;
+	j = 1;
+	for (i=1; i<=list1[0]; i++) {
+	    tsls.list[j++] = list1[i];
+	}
+	tsls.list[j++] = LISTSEP;
+	for (i=1; i<=list2[0]; i++) {
+	    tsls.list[j++] = list2[i];
 	}
     }
 
@@ -2664,37 +2672,22 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 
 static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 {
-    int v, lv;
+    int i, v;
 
-    for (v=2; v<=list[0]; v++) {
-        lv = list[v];
-        if (_iszero(t1, t2, Z[lv])) 
-	    list_exclude(v, list);
+    for (i=2; i<=list[0]; i++) {
+        v = list[i];
+        if (_iszero(t1, t2, Z[v])) {
+	    list_exclude(i, list);
+	    i--;
+	}
     }
 }
 
 /* .........................................................   */
 
-void old_rearrange_list (int *list)
-/* checks a list for a constant term (ID # 0), and if present, 
-   move it to the last position
-*/
-{
-    int lo = list[0], v;
-
-    for (v=2; v<=lo; v++) {
-        if (list[v] == 0)  {
-            list_exclude(v, list);
-            list[0] = lo;
-            list[lo] = 0;
-            return;
-        }
-    }
-}
-
 void rearrange_list (int *list)
-/* checks a list for a constant term (ID # 0), and if present, 
-   moves it to the first dep var position
+/* checks a list for a constant term (ID 0), and if present, 
+   moves it to the first dep var position (pos 2)
 */
 {
     int i, v;
