@@ -186,7 +186,7 @@ void file_get_line (void)
     clear(line, MAXLINE);
     fgets(line, MAXLINE - 1, fb);
 
-    if (!strlen(line)) {
+    if (*line == '\0') {
 	strcpy(line, "quit");
     } else {
 	*linebak = 0;
@@ -196,7 +196,7 @@ void file_get_line (void)
     if (!strncmp(line, "noecho", 6)) {
 	echo_off = 1;
     }
-    if (!echo_off && cmd.ci == RUN && batch && line[0] == '(') {
+    if (!echo_off && cmd.ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;
     }
@@ -618,6 +618,18 @@ int main (int argc, char *argv[])
 
 static int data_option (gretlopt flag);
 
+static void printf_strip (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>0; i--) {
+	if (isspace(s[i]) || s[i] == '\r') s[i] = '\0';
+	else break;
+    }
+
+    printf("%s\n", s);
+}
+
 void exec_line (char *line, PRN *prn) 
 {
     int chk, nulldata_n, renumber;
@@ -652,7 +664,7 @@ void exec_line (char *line, PRN *prn)
 
     /* if in batch mode, echo comments in input */
     if (batch && cmd.ci == CMD_COMMENT && !echo_off) {
-	printf("%s", linebak);
+	printf_strip(linebak);
     }
 
     if ((err = cmd.errcode)) {

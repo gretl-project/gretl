@@ -3234,12 +3234,14 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
     /* can't do lags of a scalar */
     if (!pdinfo->vector[parent]) return -1;
 
+    /* sanity check */
+    if (lag > pdinfo->n) return -1;
+
     lx = malloc(pdinfo->n * sizeof *lx);
     if (lx == NULL) return -1;
 
     strcpy(s, pdinfo->varname[parent]);
-    if (pdinfo->pd >= 10) gretl_trunc(s, 5);
-    else gretl_trunc(s, 6);
+    gretl_trunc(s, (pdinfo->pd >= 10)? 5 : 6);
     sprintf(word, "_%d", lag);
     strcat(s, word);
     lno = varindex(pdinfo, s);

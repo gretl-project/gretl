@@ -112,8 +112,11 @@ gretl_column_vector_from_array (const double *x, int n, int mod)
 
     for (i=0; i<n; i++) {
 	xi = *x++;
-	if (mod == GRETL_MOD_SQUARE) v->val[i] = xi * xi;
-	else v->val[i] = xi;
+	if (mod == GRETL_MOD_SQUARE) {
+	    v->val[i] = xi * xi;
+	} else {
+	    v->val[i] = xi;
+	}
     }
 
     return v;
@@ -664,7 +667,7 @@ int gretl_vector_set (gretl_vector *v, int i, double x)
  * 
  */
 
-void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
+void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
 {
     int i, j;
     PRN myprn;
@@ -839,8 +842,8 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     int rrows, rcols;
     int atr = (aflag == GRETL_MOD_TRANSPOSE);
     int btr = (bflag == GRETL_MOD_TRANSPOSE);
-    int aidx, amax = a->rows * a->cols;
-    int bidx, bmax = b->rows * b->cols;
+    int aidx, bidx;
+    double *c_row, *c_col;
 
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
@@ -869,21 +872,36 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
+#if 0
+    /* this version more clearly represents the math */
     for (i=0; i<lrows; i++) {
 	for (j=0; j<rcols; j++) {
-	    c->val[mdx(c, i, j)] = 0.0;
+	    targ = 0.0;
 	    for (k=0; k<lcols; k++) {
 		aidx = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
 		bidx = (btr)? mdxtr(b,k,j) : mdx(b,k,j);
-		if (aidx >= amax || bidx >= bmax) {
-		    fputs("gretl_matrix_multiply_mod: index out of bounds\n", 
-			  stderr);
-		    return 1;
-		}
-		c->val[mdx(c,i,j)] += a->val[aidx] * b->val[bidx];
+		targ += a->val[aidx] * b->val[bidx];
 	    }
+	    c->val[mdx(c,i,j)] = targ;
 	}
     }
+#else
+    /* this is an attempt at (partial) optimization */
+    c_row = c->val;
+    for (i=0; i < c->rows; i++) {
+	c_col = c_row;
+	for (j=0; j < c->cols; j++) {
+	    *c_col = 0.0;
+	    for (k=0; k<lcols; k++) {
+		aidx = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
+		bidx = (btr)? mdxtr(b,k,j) : mdx(b,k,j);
+		*c_col += a->val[aidx] * b->val[bidx];
+	    }
+	    c_col += c->rows;
+	}
+	c_row++;
+    }
+#endif
 
     return GRETL_MATRIX_OK;
 }

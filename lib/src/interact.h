@@ -55,7 +55,7 @@ enum option_codes {
 /* functions follow */
  
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
-	     int *ignore, double ***pZ, PRN *cmds);
+	     int *ignore, double ***pZ, PRN *cmdprn);
 
 int command_number (const char *cmd);
 

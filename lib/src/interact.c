@@ -38,7 +38,8 @@ static int make_full_list (const DATAINFO *pdinfo, CMD *command);
 static void get_optional_filename (const char *line, CMD *cmd);
 
 typedef struct {
-    int lag;
+    int firstlag;
+    int lastlag;
     int varnum;
     char varname[VNAMELEN];
 } LAGVAR;
@@ -288,23 +289,157 @@ static void grab_gnuplot_literal_block (char *line, CMD *command)
     }
 }
 
-static int parse_lagvar (const char *s, LAGVAR *plagv, DATAINFO *pdinfo)
+static int parse_lagvar (const char *s, LAGVAR *plagv, 
+			 const DATAINFO *pdinfo)
 {
-    int ret = 0;
+    int ret = 1;
 
     *plagv->varname = 0;
-    plagv->lag = 0;
+    plagv->firstlag = 0;
+    plagv->lastlag = 0;
     plagv->varnum = 0;
 
-    if (sscanf(s, "%8[^(](-%d)", plagv->varname, &plagv->lag) == 2) {
+    if (sscanf(s, "%8[^(](-%d to -%d)", plagv->varname, 
+	       &plagv->firstlag, &plagv->lastlag) == 3) {
 	plagv->varnum = varindex(pdinfo, plagv->varname);
 	if (plagv->varnum < pdinfo->v) {
-	    ret = 1;
+	    ret = 0;
+	} 
+    }
+
+    else if (sscanf(s, "%8[^(](-%d)", plagv->varname, &plagv->firstlag) == 2) {
+	plagv->varnum = varindex(pdinfo, plagv->varname);
+	if (plagv->varnum < pdinfo->v) {
+	    plagv->lastlag = plagv->firstlag;
+	    ret = 0;
 	} 
     }
 
     return ret;
 }
+
+static int expand_command_list (CMD *cmd, int nadd)
+{
+    int oldn = cmd->list[0];
+    int *list;
+
+    list = realloc(cmd->list, (oldn + nadd) * sizeof *list);
+    if (list == NULL) {
+	cmd->errcode = E_ALLOC;
+	strcpy (gretl_errmsg, 
+		_("Memory allocation failed for command list"));
+	return 1;
+    }
+
+    /* one of the vars was "already assumed" */
+    list[0] += (nadd - 1);
+    
+    cmd->list = list;
+
+    return 0;
+}
+
+int auto_lag_ok (const char *s, int *lnum,
+		 double ***pZ, DATAINFO *pdinfo,
+		 CMD *cmd, PRN *prn)
+{
+    extern int newlag; /* lines in generate.c */
+    LAGVAR lagvar;
+    int nlags, i;
+    int llen = *lnum;
+    int ok = 1;
+	
+    if (parse_lagvar(s, &lagvar, pdinfo)) return 0;
+
+    nlags = lagvar.lastlag - lagvar.firstlag + 1;
+    if (nlags <= 0) {
+	cmd->errcode = E_PARSE;
+	return 0;
+    }
+
+    if (nlags > 1 && expand_command_list(cmd, nlags - 1)) {
+	return 0;
+    }
+
+    for (i=0; i<nlags && ok; i++) {
+	int laglen = lagvar.firstlag + i;
+	int vnum;
+
+	vnum = laggenr(lagvar.varnum, laglen, 1, pZ, pdinfo);
+
+	if (vnum < 0) {
+	    cmd->errcode = 1;
+	    sprintf(gretl_errmsg, _("generation of lag variable failed"));
+	    ok = 0;
+	} else {
+	    cmd->list[llen++] = vnum;
+	    if (newlag) {
+		pprintf(prn, "genr %s\n", VARLABEL(pdinfo, vnum));
+	    }
+	}
+    }
+
+    if (ok) *lnum = llen;
+
+    return ok;
+} 
+
+static int plot_var_ok (const char *s, int *lnum,
+			double ***pZ, DATAINFO *pdinfo,
+			CMD *cmd)
+{
+    int pnum, ok = 1;
+    
+    if (strcmp(s, "qtrs") &&
+	strcmp(s, "months") &&
+	strcmp(s, "time")) 
+	return 0;
+
+    pnum = plotvar(pZ, pdinfo, s);
+
+    if (pnum < 0) {
+	cmd->errcode = 1;
+	ok = 0;
+	sprintf(gretl_errmsg, 
+		_("Failed to add plotting index variable"));
+    } else {
+	cmd->list[*lnum] = pnum;
+	*lnum += 1;
+    }
+
+    return ok;
+} 
+
+#if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
+
+static int wildcard_expand_ok (const char *s, int *lnum,
+			       const DATAINFO *pdinfo, CMD *cmd)
+{
+    int ok = 0;
+
+    if (strchr(s, '*') != NULL) {
+	int *wildlist = varname_match_list(pdinfo, s);
+
+	if (wildlist != NULL) {
+	    int k, nw = wildlist[0];
+	    int llen = *lnum;
+
+	    if (expand_command_list(cmd, nw)) {
+		return 0;
+	    }
+	    for (k=1; k<=nw; k++) {
+		cmd->list[llen++] = wildlist[k];
+	    }
+	    free(wildlist);
+	    *lnum = llen;
+	    ok = 1;
+	}
+    }
+
+    return ok;
+}
+
+#endif 
 
 static void parse_rename_cmd (const char *line, CMD *cmd, 
 			      const DATAINFO *pdinfo)
@@ -401,6 +536,34 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
     }
 }
 
+static int field_from_line (char *field, const char *s)
+{
+    const char *p;
+    int ret = 0;
+
+    sscanf(s, "%s", field);
+    
+    p = strchr(field, '(');
+    if (p == NULL) return 0; /* no parens? */
+
+    p = strchr(p + 1, ')');
+    if (p != NULL) return 0; /* balanced parens? */
+
+    /* fields that need to be glued together */
+    p = s + strlen(field);
+    if (!strncmp(p, " to ", 4)) {
+	char tmp[8];
+
+	if (sscanf(p, " to %7s", tmp)) {
+	    strcat(field, " to ");
+	    strcat(field, tmp);
+	    ret = 2;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * getcmd:
  * @line: the command line (string).
@@ -409,20 +572,19 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
  * @ignore: pointer to int indicating whether (1) or not (0) we're
  * in comment mode, and @line should not be parsed.
  * @pZ: pointer to data matrix.
- * @cmds: pointer to gretl printing struct.
+ * @cmdprn: pointer to gretl printing struct.
  *
  * Parses @line and fills out @command accordingly.  In case
  * of error, @command->errcode gets a non-zero value.
  */
 
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
-	     int *ignore, double ***pZ, PRN *cmds)
+	     int *ignore, double ***pZ, PRN *cmdprn)
 {
     int i, j, nf, linelen, n, v, lnum;
     int gotdata = 0, ar = 0, poly = 0;
     int spacename = 0;
     char field[10], *remainder;
-    LAGVAR lagvar;
 
     command->ci = 0;
     command->errcode = 0;
@@ -713,6 +875,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     /* now assemble the command list */
     for (j=1,lnum=1; j<=nf; j++) {
+	int skip;
 
 	strcpy(remainder, line + n + 1);
 
@@ -723,81 +886,44 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    sscanf(remainder, "%s", command->param);
 	    break;
 	}
-	
-	sscanf(remainder, "%s", field);
-	/* fprintf(stderr, "remainder: %s\n", remainder); */
+
+	skip = field_from_line(field, remainder);
+	if (skip > 0) {
+	    nf -= skip;
+	    command->list[0] -= skip;
+	}
 
 	if (isalpha((unsigned char) *field)) {
 	    /* should be the name of a variable */
 	    if (field[strlen(field) - 1] == ';')
 		field[strlen(field) - 1] = '\0';
-	    if ((v = varindex(pdinfo, field)) <= pdinfo->v - 1) {
+	    if ((v = varindex(pdinfo, field)) < pdinfo->v) {
 		/* yes, it's an existing variable */
 		command->list[lnum++] = v;
-	    } else {
-		/* no: an auto-generated variable? */
+	    } else { /* possibly an auto-generated variable? */
+
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
-		if (parse_lagvar(field, &lagvar, pdinfo)) {
-		    extern int newlag; /* generate.c */
-		    int lagnum;
+		if (auto_lag_ok(field, &lnum, pZ, pdinfo, command, cmdprn)) {
+		    /* handled, get on with it */
+		    n += strlen(field) + 1;
+		    continue; 
+		}
 
-		    lagnum = laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo);
-		    if (lagnum < 0) {
-			command->errcode = 1;
-			sprintf(gretl_errmsg, 
-				_("generation of lag variable failed"));
-		    } else { 
-			command->list[lnum++] = lagnum;
-			if (newlag && cmds != NULL) {
-			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, lagnum));
-			}
-			/* fully handled, get on with it */
-			n += strlen(field) + 1;
-			continue; 
-		    }
-		} 
 		/* Case 2: special plotting variable */
-		else if (!command->errcode && (!strcmp(field, "qtrs") || 
-		    !strcmp(field, "months") || !strcmp(field, "time"))) {
-		    int pnum = plotvar(pZ, pdinfo, field);
-
-		    if (pnum < 0) {
-			command->errcode = 1;
-			sprintf(gretl_errmsg, 
-				_("Failed to add plotting index variable"));
-		    } else {
-			command->list[lnum++] = pnum;
-			/* fully handled, get on with it */
-			n += strlen(field) + 1;
-			continue; 
-		    }
+		else if (!command->errcode && 
+			 plot_var_ok(field, &lnum, pZ, pdinfo, command)) {
+		    /* handled, get on with it */
+		    n += strlen(field) + 1;
+		    continue; 
 		} 
+
 #if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
 		/* wildcard expansion? */
-		else if (strchr(field, '*') != NULL) {
-		    int *wildlist = varname_match_list(pdinfo, field);
-
-		    if (wildlist != NULL) {
-			int k, nw = wildlist[0];
-
-			command->list = realloc(command->list, (command->list[0] + nw) *
-						sizeof *command->list);
-			if (command->list == NULL) {
-			    command->errcode = E_ALLOC;
-			    strcpy (gretl_errmsg, 
-				    _("Memory allocation failed for command list"));
-			    free(remainder);
-			    return;
-			}
-			command->list[0] += (nw - 1);
-			for (k=1; k<=nw; k++) {
-			    command->list[lnum++] = wildlist[k];
-			}
-			free(wildlist);
-			/* fully handled, get on with it */
-			n += strlen(field) + 1;
-			continue; 			
-		    }
+		else if (!command->errcode && 
+			 wildcard_expand_ok(field, &lnum, pdinfo, command)) {
+		    /* handled, get on with it */
+		    n += strlen(field) + 1;
+		    continue; 			
 		}
 #endif
 		/* last chance: try abbreviating the varname? */
