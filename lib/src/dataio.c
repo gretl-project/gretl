@@ -852,9 +852,10 @@ int dateton (const char *date, const DATAINFO *pdinfo)
  * print to @datestr the calendar representation of observation
  * number nt.
  * 
+ * Returns: the observation string.
  */
 
-void ntodate (char *datestr, int t, const DATAINFO *pdinfo)
+char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 /* print to datestr the calendar representation of t */
 {
     double x;
@@ -878,6 +879,8 @@ void ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 	else sprintf(datestr, "%.2f", x);
 	charsub(datestr, decpoint, ':');
     }
+    
+    return datestr;
 }
 
 /* .......................................................... */

@@ -29,6 +29,12 @@ struct var_resids {
     int t1, t2;
 };
 
+enum {
+    VAR_PRINT_MODELS = 1 << 0,
+    VAR_DO_FTESTS    = 1 << 1,
+    VAR_PRINT_PAUSE  = 1 << 2
+} var_flags;
+
 /* ......................................................  */
 
 static int gettrend (double ***pZ, DATAINFO *pdinfo)
@@ -236,7 +242,7 @@ static int get_listlen (const int *varlist, int order, double **Z,
 }
 
 static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-		     int pause, PRN *prn, struct var_resids *resids)
+		     PRN *prn, struct var_resids *resids, char flags)
 {
     /* construct the respective lists by adding the appropriate
        number of lags ("order") to the variables in list 
@@ -322,7 +328,9 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t2 = t2;
 
     /* run and print out the several regressions */
-    pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
+    if (flags & VAR_PRINT_MODELS) {
+	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
+    }
     shortlist[0] = listlen - order;
 
     /* apparatus for saving the residuals */
@@ -331,6 +339,15 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	resids->uhat = malloc(2 * neqns * sizeof(double *));
 	if (resids->uhat == NULL) return E_ALLOC;
     }
+
+#if 0
+    if (resids != NULL) {
+	var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
+	resids->t1 = var_model.t1 + 1;
+	clear_model(&var_model, pdinfo);
+	pdinfo->t1 = resids->t1;
+    }
+#endif
     
     for (i=0; i<neqns; i++) {
 	varlist[1] = depvars[i];
@@ -343,21 +360,29 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    resids->t2 = var_model.t2;
 	    resids->uhat[i] = var_model.uhat;
 	    var_model.uhat = NULL;
-	} else {
+	} 
+	if (flags & VAR_PRINT_MODELS) {
 	    printmodel(&var_model, pdinfo, prn);
+	}
+	if (flags & VAR_DO_FTESTS) {
 	    /* keep some results for hypothesis testing */
 	    essu = var_model.ess;
 	    dfd = var_model.dfd;	    
 	}
 	clear_model(&var_model, pdinfo);
 	if (resids != NULL) {
-	    /* do modified equations for Johansen test too */
+	    /* estimate equations for Johansen test too */
 	    varlist[1] = resids->levels_list[i + 1]; 
 	    var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
+	    if (flags & VAR_PRINT_MODELS) {
+		var_model.aux = VAR;
+		printmodel(&var_model, pdinfo, prn);
+	    }
 	    resids->uhat[i + neqns] = var_model.uhat;
 	    var_model.uhat = NULL;
 	    clear_model(&var_model, pdinfo);
-	} else {
+	}
+	if (flags & VAR_DO_FTESTS) {
 	    /* now build truncated lists for hyp. tests */
 	    shortlist[1] = varlist[1];
 	    pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
@@ -405,7 +430,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
 	    }
 	    pputs(prn, "\n");
-	    if (pause) page_break(0, NULL, 0);
+	    if (flags & VAR_PRINT_PAUSE) page_break(0, NULL, 0);
 	}
     }
     pputs(prn, "\n");
@@ -439,7 +464,12 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	 int pause, PRN *prn)
 {
-    return real_var(order, list, pZ, pdinfo, pause, prn, NULL);
+    char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS;
+
+    if (pause) {
+	flags |= VAR_PRINT_PAUSE;
+    }
+    return real_var(order, list, pZ, pdinfo, prn, NULL, flags);
 }
 
 /**
@@ -549,7 +579,7 @@ int adf_test (int order, int varno, double ***pZ,
 				{-3.44, -3.13, -2.87, -2.57, -0.43, -0.07, 0.24, 0.61}, /* T=500 */
 				{-3.43, -3.12, -2.86, -2.57, -0.44, -0.07, 0.23, 0.60}}; /* T>500 */
 
-                            /* .100  .050  .025  .010 */
+                              /* .100  .050  .025  .010 */
     double crit_vals[6][4] = {{5.91, 7.24, 8.65, 10.61}, /* T = 25 */
 			      {5.61, 6.73, 7.81, 9.31},  /* T = 50 */
 			      {5.47, 6.49, 7.44, 8.73},  /* T = 100 */
@@ -779,46 +809,62 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 static int allocate_sigmas (double ***X, double ***Y, double ***Z, int k)
 {
     int i, j;
-    double **Svv, **Suu, **Suv;
+    double **Suu, **Svv, **Suv;
 
-    Svv = malloc(k * sizeof *Svv);
     Suu = malloc(k * sizeof *Suu);
+    Svv = malloc(k * sizeof *Svv);
     Suv = malloc(k * sizeof *Suv);
 
-    if (Svv == NULL || Suu == NULL || Suv == NULL) return 1;
+    if (Suu == NULL || Svv == NULL || Suv == NULL) return 1;
 
     for (i=0; i<k; i++) {
-	Svv[i] = malloc(k * sizeof **Svv);
 	Suu[i] = malloc(k * sizeof **Suu);
+	Svv[i] = malloc(k * sizeof **Svv);
 	Suv[i] = malloc(k * sizeof **Suv);
-	if (Svv[i] == NULL || Suu[i] == NULL || Suv[i] == NULL) {
-	    free(Svv);
+	if (Suu[i] == NULL || Svv[i] == NULL || Suv[i] == NULL) {
 	    free(Suu);
+	    free(Svv);
 	    free(Suv);
 	    return 1;
 	}
 	for (j=0; j<k; j++) {
-	    Svv[i][j] = 0.0;
 	    Suu[i][j] = 0.0;
+	    Svv[i][j] = 0.0;
 	    Suv[i][j] = 0.0;
 	}
     }
 
-    *X = Svv;
-    *Y = Suu;
+    *X = Suu;
+    *Y = Svv;
     *Z = Suv;
 
     return 0;
 }
 
-static void scatter_product (double **v, double **u, double **X, int T, int k)
+static void free_sigmas (double **X, double **Y, double **Z, int k)
+{
+    int i;
+
+    for (i=0; i<k; i++) {
+	if (X != NULL) free(X[i]);
+	if (Y != NULL) free(Y[i]);
+	if (Z != NULL) free(Z[i]);
+    }
+
+    free(X);
+    free(Y);
+    free(Z);
+}
+
+static void scatter_product (const double **u, const double **v, 
+			     double **X, int T, int k)
 {
     int i, j, t;
 
     for (t=0; t<T; t++) {
 	for (i=0; i<k; i++) {
 	    for (j=0; j<k; j++) {
-		X[i][j] += v[i][t] * u[j][t];
+		X[i][j] += u[i][t] * v[j][t];
 	    }
 	}
     }
@@ -830,13 +876,78 @@ static void scatter_product (double **v, double **u, double **X, int T, int k)
     }
 }
 
+static void 
+print_sigmas (const double **X, const double **Y, const double **Z, 
+	      int k, PRN *prn)
+{
+    int i, j, l;
+    const double **P = NULL;
+
+    pputs(prn, "\nSample variance-covariance matrices for residuals\n\n");
+
+    for (l=0; l<3; l++) {
+	if (l == 0) P = X;
+	else if (l == 1) P = Y;
+	else P = Z;
+	for (i=0; i<k; i++) {
+	    for (j=0; j<k; j++) {
+		pprintf(prn, "%#12.6g ", P[i][j]);
+	    }
+	    pputs(prn, "\n");
+	}
+	pputs(prn, "\n");
+    }
+}
+
+static int 
+grab_eigenvals (const double **X, const double **Y, const double **Z,
+		int k, double *evals)
+{
+    void *handle;
+    int (*johansen) (const double **, const double **, const double **,
+		     int, double *);
+    int err = 0;
+    
+    if (open_plugin("gretl_gsl", &handle)) {
+        err = 1;
+        strcpy(gretl_errmsg, _("Couldn't access GSL plugin"));
+        goto system_bailout;
+    }
+
+    johansen = get_plugin_function("johansen_eigenvals", handle);
+    if (johansen == NULL) {
+        err = 1;
+        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
+        goto system_bailout;
+    }
+        
+    err = (* johansen) (X, Y, Z, k, evals);
+    
+ system_bailout:
+    if (handle != NULL) {
+        close_plugin(handle);
+    }
+
+    return err;
+}
+
+static int inverse_compare_doubles (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+
+    return (*da < *db) - (*da > *db);
+}
+
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn)
 {
     PRN *varprn;
     struct var_resids resids;
+    char flags;
     int err = 0;
-    int i, j, t;
+    int i, j;
+    int orig_t1 = pdinfo->t1;
 
     /* we're assuming that the list we are fed is in levels */
     resids.levels_list = malloc(list[0] * sizeof *list);
@@ -859,49 +970,112 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	list[i] = diffvarnum(list[i], pdinfo);
     }
 
-    /* estimate VAR and other equations silently */
+    /* estimate VAR and other equations */
     varprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
-    err = real_var(order, list, pZ, pdinfo, 0, varprn, &resids);
+#if 1
+    flags = VAR_PRINT_MODELS;
+#else
+    flags = 0;
+#endif
+    pdinfo->t1 += 1;
+    err = real_var(order - 1, list, pZ, pdinfo, prn, &resids, flags); /* or use varprn */
     gretl_print_destroy(varprn);
 
     if (!err) {
-	char date[9];
 	int k = resids.m / 2;
 	int T = resids.t2 - resids.t1 + 1;
-	double **Svv, **Suu, **Suv;
-	double **u, **v;
+	double **Suu, **Svv, **Suv;
+	double **u = NULL, **v = NULL;
+	double *evals = NULL;
+	char stobs[9], endobs[9];
 
-	allocate_sigmas(&Svv, &Suu, &Suv, k);
+	if (allocate_sigmas(&Suu, &Svv, &Suv, k)) {
+	    err = E_ALLOC;
+	    goto johansen_bailout;
+	}
 
 	u = malloc(k * sizeof *u);
 	v = malloc(k * sizeof *v);
 
-	for (i=0; i<k; i++) {
-	    v[i] = &(resids.uhat[i][resids.t1]);
-	    u[i] = &(resids.uhat[i + k][resids.t1]);
+	if (u == NULL || v == NULL) {
+	    err = E_ALLOC;
+	    goto johansen_bailout;
 	}
 
-	scatter_product(v, v, Svv, T, k);
-	scatter_product(u, u, Suu, T, k);
-	scatter_product(u, v, Suv, T, k);
+	for (i=0; i<k; i++) {
+	    u[i] = &(resids.uhat[i][resids.t1]);
+	    v[i] = &(resids.uhat[i + k][resids.t1]);
+	}
 
+	scatter_product((const double **) u, (const double **) u, Suu, T, k);
+	scatter_product((const double **) v, (const double **) v, Svv, T, k);
+	scatter_product((const double **) u, (const double **) v, Suv, T, k);
+
+	pprintf(prn, "%s:\n", _("Johansen test"));
+	pprintf(prn, "%s = %d\n", _("Number of equations"), k);
+	pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
+		ntodate(stobs, resids.t1, pdinfo), 
+		ntodate(endobs, resids.t2, pdinfo), T);
+
+	print_sigmas((const double **) Suu, 
+		     (const double **) Svv, 
+		     (const double **) Suv, k, prn);
+
+#ifdef JOHANSEN_DEBUG
 	for (i=0; i<resids.m; i++) {
+	    int t;
+
 	    pprintf(prn, "Residuals from VAR model %d\n", i);
 	    for (t=resids.t1; t<=resids.t2; t++) {
 		ntodate(date, t, pdinfo);
-		pprintf(prn, "%8s %#.*g\n", date, GRETL_DIGITS, resids.uhat[i][t]);
+		pprintf(prn, "%8s %#.*g\n", ntodate(stobs, t, pdinfo), 
+			GRETL_DIGITS, resids.uhat[i][t]);
 	    }
 	}
+#endif
 
+	/* now get GSL to find the eigenvalues (put into v) */
+	evals = malloc(k * sizeof *evals);
+	err = grab_eigenvals((const double **) Suu, 
+			     (const double **) Svv, 
+			     (const double **) Suv, k, evals);
+
+	if (!err) {
+	    qsort(evals, k, sizeof *evals, inverse_compare_doubles);
+	    pprintf(prn, "%s\n\n", _("Johansen eigenvalues"));
+	    for (i=0; i<k; i++) {
+		pprintf(prn, "lambda %d = ", i + 1);
+		gretl_print_fullwidth_double(evals[i], GRETL_DIGITS, prn);
+		pputs(prn, "\n");
+	    }
+	    pputs(prn, "\n");
+	    for (i=0; i<k; i++) {
+		double xx = T * log(1.0 - evals[i]);
+
+		pprintf(prn, "T * log(1 - lambda %d) = ", i + 1);
+		gretl_print_fullwidth_double(xx, GRETL_DIGITS, prn);
+		pputs(prn, "\n");
+	    }
+	    pputs(prn, "\n");
+	}
+
+    johansen_bailout:
+	
 	for (i=0; i<resids.m; i++) {
 	    free(resids.uhat[i]);
 	}
 	free(resids.uhat);
+
+	free_sigmas(Suu, Svv, Suv, k);
+	free(u);
+	free(v);
+	free(evals);
     } 
 
     free(resids.levels_list);
 
+    pdinfo->t1 = orig_t1;
+
     return err;
 }
-
 

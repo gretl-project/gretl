@@ -22,7 +22,10 @@
 #include <string.h>
 
 #include "libgretl.h"
+
 #include <gsl/gsl_linalg.h>
+#include <gsl/gsl_eigen.h>
+
 
 static void gretl_gsl_matrix_print (gsl_matrix *X, int rows, int cols,
 				    int triangle, PRN *prn)
@@ -357,39 +360,89 @@ int sur (gretl_equation_system *sys, double ***pZ,
     return 0;
 }
 
-#if 0
-int johansen_eigenvals (double **uhat, int k, int t1, int t2)
+static gsl_matrix *
+gretl_gsl_inverse (gsl_matrix *Inv, gsl_matrix *X, int k)
 {
-    int i, t, T = t2 - t1 + 1;
-    gsl_matrix *D, *L, *R;
-    gsl_matrix *Svv, *Suu, *Suv;
-    int err = 0;
+    gsl_permutation *p;
+    int sign;
 
-    D = gsl_matrix_alloc(T, k);
-    L = gsl_matrix_alloc(T, k);
-    R = gsl_matrix_alloc(T, k);
+    p = gsl_permutation_alloc(k);  
+
+    gsl_linalg_LU_decomp(X, p, &sign);
+    gsl_linalg_LU_invert(X, p, Inv);
+
+    gsl_permutation_free(p); 
+
+    return Inv;
+}
+
+static gsl_matrix *
+make_gsl_matrix_from_array (const double **X, int k)
+{
+    gsl_matrix *M;
+    int i, j;
+
+    M = gsl_matrix_alloc(k, k);
+    if (M == NULL) return NULL;
 
     for (i=0; i<k; i++) {
-	for (t=0; t<T; t++) {
-	    gsl_matrix_set(D, i, t, uhat[i][t + t1]);
-	    gsl_matrix_set(L, i, t, uhat[i + k][t + t1]);
+	for (j=0; j<k; j++) {
+	   gsl_matrix_set(M, i, j, X[i][j]);
 	}
+    } 
+
+    return M;
+}
+
+int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
+			int k, double *evals)
+{
+    int i;
+    gsl_matrix *Suu, *Svv, *Suv;
+    gsl_matrix *Inv, *Tmp1, *Tmp2, *M;
+    gsl_eigen_symm_workspace *wspace;
+    gsl_vector *evec;
+    int err = 0;
+
+    Suu = make_gsl_matrix_from_array(X, k);
+    Svv = make_gsl_matrix_from_array(Y, k);
+    Suv = make_gsl_matrix_from_array(Z, k);
+
+    Inv = gsl_matrix_alloc(k, k);
+    Tmp1 = gsl_matrix_alloc(k, k);
+    Tmp2 = gsl_matrix_alloc(k, k);
+    M = gsl_matrix_alloc(k, k);
+
+    gretl_gsl_inverse(Inv, Svv, k);
+    gsl_linalg_matmult_mod(Inv, GSL_LINALG_MOD_NONE,
+			   Suv, GSL_LINALG_MOD_TRANSPOSE,
+			   Tmp1);
+
+    gretl_gsl_inverse(Inv, Suu, k);
+    err = gsl_linalg_matmult(Inv, Suv, Tmp2);
+
+    err = gsl_linalg_matmult(Tmp1, Tmp2, M);
+    
+    /* find and sort eigenvalues of M */
+    wspace = gsl_eigen_symm_alloc(k);
+    evec = gsl_vector_alloc(k);
+    gsl_eigen_symm(M, evec, wspace);
+    gsl_eigen_symm_free(wspace);
+
+    for (i=0; i<k; i++) {
+	evals[i] = gsl_vector_get(evec, i);
     }
-
-    /* construct VCV matrices of residuals */
-
-    /* find and sort eigenvalues of ... */
-
+    gsl_vector_free(evec);
 
     /* free stuff */
-
-    gsl_matrix_free(D);
-    gsl_matrix_free(L);
-    gsl_matrix_free(R);
     gsl_matrix_free(Svv);
     gsl_matrix_free(Suu);
     gsl_matrix_free(Suv);
-    
+
+    gsl_matrix_free(Inv);
+    gsl_matrix_free(Tmp1);
+    gsl_matrix_free(Tmp2);
+    gsl_matrix_free(M);
+
     return err;
 }
-#endif

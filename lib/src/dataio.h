@@ -68,7 +68,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
 int dateton (const char *date, const DATAINFO *pdinfo);
 
-void ntodate (char *datestr, int nt, const DATAINFO *pdinfo);
+char *ntodate (char *datestr, int nt, const DATAINFO *pdinfo);
 
 int get_info (const char *hdrfile, PRN *prn);
 
