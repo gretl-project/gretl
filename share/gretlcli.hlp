@@ -832,13 +832,12 @@ nls
 @Estimation
 
 Performs Nonlinear Least Squares estimation using a modified version of the
-Levenberg-Marquandt algorithm (as in the MINPACK function lmder).  The user
-must supply a function specification.  The parameters of this function must be
-declared and given starting values (using the genr command) prior to
-estimation.  Optionally, the user may specify the derivatives of the
-regression function with respect to each of the parameters; if analytical
-derivatives are not supplied, a numerical approximation to the Jacobian is
-computed.  
+Levenberg-Marquandt algorithm.  The user must supply a function specification.
+The parameters of this function must be declared and given starting values
+(using the genr command) prior to estimation.  Optionally, the user may
+specify the derivatives of the regression function with respect to each of the
+parameters; if analytical derivatives are not supplied, a numerical
+approximation to the Jacobian is computed.
 
 It is easiest to show what is required by example.  The following is a
 complete script to estimate the nonlinear consumption function set out in
@@ -858,7 +857,7 @@ and are not part of the commands.)
 10  end nls
 
 It is often convenient to initialize the parameters by reference to a related
-linear model, and that is accomplished here on lines 2 to 5.  The parameters
+linear model; that is accomplished here on lines 2 to 5.  The parameters
 alpha, beta and gamma could be set to any initial values (not necessarily
 based on a model estimated with OLS), although convergence of the NLS
 procedure is not guaranteed for an arbitrary starting point.

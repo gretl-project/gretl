@@ -671,14 +671,14 @@ using ordinary double-precision floating-point arithmetic.
 nls
 @Estimation
 
-Performs Nonlinear Least Squares estimation using a modified version of the
-Levenberg-Marquandt algorithm (as in the MINPACK function lmder).  You must
-supply a function specification; it is recommended that you also supply
-expressions for the derivatives of this function with respect to each of the
-parameters if possible.
+Performs Nonlinear Least Squares (NLS) estimation using a modified version of
+the Levenberg-Marquandt algorithm.  You must supply a function specification;
+it is recommended that you also supply expressions for the derivatives of this
+function with respect to each of the parameters if possible.
 
-Suppose we have a data set with variables C and Y (e.g. greene11_3.gdt) and we
-wish to estimate a nonlinear consumption function of the form
+Example: Suppose we have a data set with variables C and Y
+(e.g. greene11_3.gdt) and we wish to estimate a nonlinear consumption function
+of the form
 
                          C = alpha + beta * Y^gamma
 
@@ -687,8 +687,7 @@ given initial values.  This can be done using the genr command or via menu
 choices.  Appropriate "genr" lines may be typed into the NLS specification
 window prior to the function specification.
 
-In the Nonlinear Least Squares specification window we type the following
-lines:
+In the NLS window we type the following lines:
 
 C = alpha + beta * Y^gamma
 deriv alpha = 1
