@@ -41,24 +41,57 @@ static int gretl_system_type_from_string (const char *str)
 
 static gretl_equation_system *gretl_equation_system_new (int type)
 {
-    gretl_equation_system *system;
+    gretl_equation_system *sys;
 
     if (type < 0) return NULL;
 
-    system = malloc(sizeof *system);
-    if (system == NULL) return NULL;
+    sys = malloc(sizeof *sys);
+    if (sys == NULL) return NULL;
 
-    system->type = type;
-    system->n_equations = 0;
-    system->lists = NULL;
+    sys->type = type;
+    sys->n_equations = 0;
+    sys->lists = NULL;
 
-    return system;
+    return sys;
+}
+
+void gretl_equation_system_destroy (gretl_equation_system *sys)
+{
+    int i;
+
+    if (sys == NULL || sys->lists == NULL) return;
+
+    for (i=0; i<sys->n_equations; i++) {
+	free(sys->lists[i]);
+    }
+    free(sys->lists);
+    sys->lists = NULL;
+}
+
+static int gretl_equation_system_expand (gretl_equation_system *sys, 
+					 int *list)
+{
+    int i, neq = sys->n_equations;
+
+    sys->lists = realloc(sys->lists, (neq + 1) * sizeof *sys->lists);
+    if (sys->lists == NULL) return 1;
+
+    sys->lists[neq] = malloc((list[0] + 1) * sizeof *list);
+    if (sys->lists[neq] == NULL) return 1;
+
+    for (i=0; i<=list[0]; i++) {
+	sys->lists[neq][i] = list[i];
+    }
+
+    sys->n_equations += 1;
+
+    return 0;
 }
 
 gretl_equation_system *parse_system_start_line (const char *line)
 {
     char sysstr[9];
-    gretl_equation_system *system = NULL;
+    gretl_equation_system *sys = NULL;
     int systype = -1;
 
     if (sscanf(line, "system type=%8s\n", sysstr) == 1) {
@@ -66,8 +99,8 @@ gretl_equation_system *parse_system_start_line (const char *line)
     } 
 
     if (systype >= 0) {
-	system = gretl_equation_system_new(systype);
+	sys = gretl_equation_system_new(systype);
     }
 
-    return system;
+    return sys;
 }
