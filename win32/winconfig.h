@@ -52,6 +52,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Use gnuplot PNG output? */
 #define GNUPLOT_PNG 1
 
+/* Should gretl try to read comments from PNG files? */
+#define PNG_COMMENTS 1
+
 /* Is LaTeX available? */
 #define HAVE_LATEX 1
 
