@@ -29,6 +29,13 @@
 #define MAXLEN 512
 #define ERRLEN 256
 
+enum format_codes {
+    TEXT,
+    LATEX,
+    HTML,
+    RTF
+};
+
 /* information on data set */
 typedef struct { 
     int v;              /* number of variables */

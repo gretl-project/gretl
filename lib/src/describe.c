@@ -35,7 +35,6 @@ extern void _mxout (const double *rr, const int *list, const int ci,
 		    const DATAINFO *pdinfo, const int batch, print_t *prn);
 extern double _rhocrit95 (const int n);
 
-
 /* ........................................................... */
 
 double esl_median (const double *zx, const int n)
@@ -617,7 +616,7 @@ static void printf17 (const double zz, print_t *prn)
 /* ............................................................... */
 
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
-		   const int ci, print_t *prn)
+		   const int ci, const int format, print_t *prn)
 {
     char date1[9], date2[9];
 
@@ -625,21 +624,29 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     ntodate(date2, pdinfo->t2, pdinfo);
 
     pprintf(prn, "\n");
-    if (pdinfo->pd != 1) space((ci == SUMMARY)? 10 : 7, prn);
-    else {
-	if (pdinfo->sd0 > 1900) space((ci == SUMMARY)? 12 : 9, prn);
-	else space((ci == SUMMARY)? 15 : 12, prn);
-    }               
+    if (format == TEXT) {
+	if (pdinfo->pd != 1) space((ci == SUMMARY)? 10 : 7, prn);
+	else {
+	    if (pdinfo->sd0 > 1900) space((ci == SUMMARY)? 12 : 9, prn);
+	    else space((ci == SUMMARY)? 15 : 12, prn);
+	} 
+    }
+    else if (format == LATEX) 
+	pprintf(prn, "\\begin{center}\n");
+    else if (format == HTML)
+	pprintf(prn, "<center>\n");
+    
     pprintf(prn, "%s, using the observations %s - %s\n", str, date1, date2);
-    if (ci == CORR)
-	pprintf(prn, "               "
-		"(missing values denoted by -999 will be skipped)\n\n");
+    if (ci == CORR) {
+	if (format == TEXT) pprintf(prn, "               ");
+	pprintf(prn, "(missing values denoted by -999 will be skipped)\n\n");
+    }
 }
 
 /* ............................................................. */
 
-int summary (const int *list, double **pZ, 
-	     const DATAINFO *pdinfo, const int batch, print_t *prn)
+int summary (const int *list, double **pZ, const DATAINFO *pdinfo, 
+	     const int batch, const int format, print_t *prn)
 {
     int mm, n = 0, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
     int v, lv, lineno = 0;
@@ -680,7 +687,7 @@ int summary (const int *list, double **pZ,
 	else xmedian[v] = x[1];
     }
     lineno = 4;
-    prhdr("Summary Statistics", pdinfo, SUMMARY, prn);
+    prhdr("Summary Statistics", pdinfo, SUMMARY, format, prn);
     if (lo == 1) {
 	space(16, prn);
 	pprintf(prn, "for the variable '%s' (%d valid observations)\n\n", 
@@ -746,7 +753,7 @@ int summary (const int *list, double **pZ,
 /* ............................................................ */
 
 int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo, 
-		const int batch, print_t *prn)
+		const int batch, const int format, print_t *prn)
 {
     int lo, n, i, j, ni, nj, nij;
     int mm, len = pdinfo->t2 - pdinfo->t1 + 1;
@@ -771,7 +778,7 @@ int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo,
     if ((xpx = calloc (mm, sizeof *xpx)) == NULL) return E_ALLOC; 
 
     lo = list[0];
-    prhdr("Correlation Coefficients", pdinfo, CORR, prn);
+    prhdr("Correlation Coefficients", pdinfo, CORR, format, prn);
     pprintf(prn, "              5%% critical value (two-tailed) = "
 	    "%.3f for n = %d\n\n", _rhocrit95(len), len);
 

@@ -281,14 +281,15 @@
       You can supply the name of a data file to open as an argument to
       <application>gretl</application>, but for the moment let's not
       do that: just fire up the program.<footnote><para>For
-	  convenience I will refer to the graphical client program
-	  simply as <application>gretl</application> in this manual.
-	  Note, however, that the specific name of the program differs
-	  according to the computer platform.  On unix-like systems it
-	  is called <filename>gretl_x11</filename> while on MS Windows
-	  it is <filename>gretlw32.exe</filename>. On unix-like
-	  systems a wrapper script named <filename>gretl</filename> is
-	  also installed.</para></footnote> You should see a main
+      convenience I will refer to the graphical client program simply
+      as <application>gretl</application> in this manual.  Note,
+      however, that the specific name of the program differs according
+      to the computer platform.  On unix-like systems it is called
+      <filename>gretl_x11</filename> while on MS Windows it is
+      <filename>gretlw32.exe</filename>. On unix-like systems a
+      wrapper script named <filename>gretl</filename> is also
+      installed &mdash; see also <xref
+      linkend="optarg"/>.</para></footnote> You should see a main
       window (which will hold information on the data set but which is
       at first blank) and various menus, some of them disabled at
       first.
@@ -302,11 +303,10 @@
       <quote>Open data, sample file, Ramanathan&hellip;</quote>.  A
       second window should open, presenting a list of data files
       supplied with the package (see <xref linkend="fig-datafiles"/>).
-      The
-      numbering of the files corresponds to the chapter organization
-      of Ramanathan (2002), which contains discussion of the analysis
-      of these data. The data will be useful for practice purposes
-      even without the text.
+      The numbering of the files corresponds to the chapter
+      organization of Ramanathan (2002), which contains discussion of
+      the analysis of these data. The data will be useful for practice
+      purposes even without the text.
     </para>
 
     <figure id="fig-datafiles" float="1" pgwide="1">
@@ -339,7 +339,7 @@
       <quote>chestnut</quote>, the consumption function.  The data
       window should now display the name of the current data file, the
       overall data range and sample range, and the names of the
-      variables along with brief descriptive tags&mdash;see
+      variables along with brief descriptive tags &mdash; see
       <xref linkend="fig-mainwin"/>.
     </para>
 
@@ -425,18 +425,19 @@
     <para>If you want to import <application>gretl</application>
       output into an editor or word processor there are two main
       options.  You can simply copy and paste from an output window
-      (using its Edit menu) to the target program, or you can save the
-      output to a file then import the file into the target program.
-      When you finish a <application>gretl</application> session you
-      are given the option of saving all the output from the session
-      to a single file.</para> 
+      (using its <guimenuitem>Edit</guimenuitem> menu) to the target
+      program, or you can save the output to a file then import the
+      file into the target program.  When you finish a
+      <application>gretl</application> session you are given the
+      option of saving all the output from the session to a single
+      file.</para>
 
     <tip><para>When inserting <application>gretl</application> output
 	into a word processor, select a monospaced or typewriter-style
 	font (e.g. Courier) to preserve the output's tabular
 	formatting.  Select a small font (10-point Courier should do)
 	to prevent the output lines from being broken in the wrong
-	place.</para> </tip>
+	place.</para></tip>
 
     </sect1>
   </chapter>
@@ -753,7 +754,7 @@
 
     <itemizedlist>
       <listitem><para>Open a data file in the GUI.  Explore the
-	  data&mdash;generate graphs, run regressions, perform tests.
+	  data &mdash; generate graphs, run regressions, perform tests.
 	  Then open the Command log, edit out any redundant commands,
 	  and save it under a specific name. Run the script to
 	  generate a single file containing a concise record of your
@@ -1047,7 +1048,7 @@
 	    where the units of observation are identifiable:
 	    countries, states, cities or whatever.  It can also be
 	    useful for irregular time series data, such as daily stock
-	    price data where some days are not trading days&mdash;in
+	    price data where some days are not trading days &mdash; in
 	    this case the observations can be marked with a date
 	    string such as <command>10/01/98</command>.  (Remember the
 	    8-character maximum.)  Note that <command>BINARY</command> and
@@ -1304,7 +1305,7 @@
 	due to the propensity of Microsoft tools
 	<quote>helpfully</quote> to add the suffix
 	<filename>.txt</filename> to the filename you specify when you
-	save a plain text file&mdash;even if it already has a suffix.
+	save a plain text file &mdash; even if it already has a suffix.
 	This will render the files unusable with
 	<application>gretl</application>: you'll have to rename them
 	manually, outside of the editor.</para>
@@ -1316,8 +1317,8 @@
 	you're able to carry out various transformations of the
 	<quote>raw</quote> data with ease (adding things up, taking
 	percentages or whatever): note, however, that you can also do
-	this sort of thing easily&mdash;perhaps more
-	easily&mdash;within <application>gretl</application>, by using
+	this sort of thing easily &mdash; perhaps more
+	easily &mdash; within <application>gretl</application>, by using
 	the tools under the <quote>Data, Add variables</quote> menu
 	and/or <quote>Variable, define new variable</quote>.</para>
 
@@ -1382,7 +1383,7 @@
 	<quote>on database server</quote>.  You should be able to find
 	the file <filename>bcih.bin</filename> in the file selector
 	that opens if you choose the <quote>gretl native</quote>
-	option&mdash;this file is supplied with the
+	option &mdash; this file is supplied with the
 	distribution.</para>
 	
       <para>You won't find anything under <quote>RATS 4</quote> unless
@@ -1743,14 +1744,14 @@
       of the graph.  The <quote>Edit plot commands</quote> item opens
       an editor window containing the actual gnuplot command file for
       generating the graph: this gives you full control over graph
-      details&mdash;if you know something about gnuplot. To find out
+      details &mdash; if you know something about gnuplot. To find out
       more, see the gnuplot <ulink
 	url="http://ricardo.ecn.wfu.edu/gnuplot.html">online
 	manual</ulink> or <ulink
 	url="http://www.gnuplot.org/">gnuplot.org</ulink>.</para>
 
     <para>See also the entry for <command>gnuplot</command> in 
-      <xref linkend="cmdref"/> below&mdash;and the
+      <xref linkend="cmdref"/> below &mdash; and the
       <command>graph</command> and <command>plot</command> commands
       for <quote>quick and dirty</quote> ASCII graphs.</para>
 
@@ -1890,7 +1891,7 @@
       variables over the ensemble of iterations.  On the other hand,
       if you specify a <quote>while</quote> loop you're probably doing
       something like iterated least squares, and so you'd like to see
-      the final result&mdash;as well, perhaps, as the value of some
+      the final result &mdash; as well, perhaps, as the value of some
       variable(s) (e.g. the error sum of squares from a regression)
       from each time round the loop. The behavior of the
       <command>print</command> and <command>ols</command> commands are
@@ -2047,7 +2048,7 @@
     <para>&mdash; Start the program and open a window displaying the
       specified database.  If the database files (the
       <filename>.bin</filename> file and its accompanying
-      <filename>.idx</filename> file---see <xref linkend="dbase"/>) is not
+      <filename>.idx</filename> file &mdash; see <xref linkend="dbase"/>) is not
 	in the default system database directory, you must specify the
 	full path.
       </para>
@@ -2333,7 +2334,7 @@
 	presented with a line to type in a dialog box in the GUI (but
 	see also <application>gretl</application>'s online help),
 	except that you should <emphasis>not</emphasis> type the
-	initial command word&mdash;it is implicit from the context.
+	initial command word &mdash; it is implicit from the context.
 	One other difference is that you should not type the
 	<command>-o</command> flag for regression commands in GUI
 	dialog boxes: there is a menu item for displaying the
@@ -3174,7 +3175,7 @@
 	  </listitem>
 	<listitem><para><command>genr paneldum</command> creates a set
 	    of special dummy variables for use with a panel data
-	    set&mdash;see <xref linkend="panel"/>
+	    set &mdash; see <xref linkend="panel"/>
 	    above.</para>
 	  </listitem>
 	<listitem><para>Various internal variables defined in the
@@ -5127,7 +5128,7 @@ executed.  Loops cannot be nested.</para>
 	first argument specifies the lag order, then follows the setup
 	for the first equation, as in the <command>ols</command>
 	command.  Don't include lags among the elements of the
-	<replaceable>indepvar</replaceable> list&mdash;they will be
+	<replaceable>indepvar</replaceable> list &mdash; they will be
 	added automatically. A regression will be run for each
 	variable in the list, excluding the constant, the time trend
 	and any dummy variables. Output for each equation includes
@@ -5378,7 +5379,7 @@ executed.  Loops cannot be nested.</para>
       and on what operating system?  If you saw an error message, what
       precisely did it say?  (You needn't bother, though, to quote the
       memory address numbers given in any crash reports from MS
-      Windows&mdash;these won't mean anything to me.)</para>
+      Windows &mdash; these won't mean anything to me.)</para>
 
     <para>
       As mentioned above, <application>gretl</application> calls some
@@ -5399,7 +5400,7 @@ executed.  Loops cannot be nested.</para>
     <para>
       Also please note that for most external calls,
       <application>gretl</application> assumes that the programs in
-      question are available in your <quote>path</quote>&mdash;that
+      question are available in your <quote>path</quote> &mdash; that
       is, that they can be invoked simply via the name of the program,
       without supplying the program's full location.<footnote><para>The
       exception to this rule is the invocation of gnuplot under MS
@@ -5635,8 +5636,8 @@ executed.  Loops cannot be nested.</para>
 
     <para>In <xref linkend="tab-linreg"/> below, <quote>OK</quote>
       means that <application>gretl</application>'s output
-      agrees&mdash;to the precision given by the program, which is
-      less than the 15 significant digits given by NIST&mdash;with the
+      agrees &mdash; to the precision given by the program, which is
+      less than the 15 significant digits given by NIST &mdash; with the
       certified values for all the NIST statistics, which include
       regression coefficients and standard errors, sum of squared
       residuals or error sum of squares (ESS), standard error of

@@ -565,7 +565,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     /* execute the command */
     switch (action) {
     case CORR:
-	err = esl_corrmx(command.list, &Z, datainfo, 1, &prn);
+	err = esl_corrmx(command.list, &Z, datainfo, 1, TEXT, &prn);
 	break;
     case FREQ:
 	if (1) {
@@ -586,10 +586,10 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	err = runs_test(command.list, Z, datainfo, &prn);
 	break;
     case SUMMARY:
-	err = summary(command.list, &Z, datainfo, batch, &prn);
+	err = summary(command.list, &Z, datainfo, batch, TEXT, &prn);
 	break;
     case VAR_SUMMARY:
-	err = summary(command.list, &Z, datainfo, batch, &prn);
+	err = summary(command.list, &Z, datainfo, batch, TEXT, &prn);
 	break;
     }
     if (err) gui_errmsg(err, errtext);

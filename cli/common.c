@@ -184,7 +184,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		    "this sort of loop.\n");
 	    return 1;
 	}
-	if (summary(command.list, &Z, datainfo, 1, prn))
+	if (summary(command.list, &Z, datainfo, 1, TEXT, prn))
 	    pprintf(prn, "generation of summary stats failed\n");
 	break; 
 

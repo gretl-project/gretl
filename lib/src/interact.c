@@ -899,7 +899,7 @@ int simple_commands (CMD *cmd, const char *line,
     case CORR:
 	if (cmd->list[0] > 3) {
 	    err = esl_corrmx(cmd->list, pZ, datainfo, 
-			     batch, prn);
+			     batch, TEXT, prn);
 	    if (err) 
 		pprintf(prn, "Error in generating correlation matrix\n");
 	    break;
@@ -982,7 +982,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SUMMARY:
-	err = summary(cmd->list, pZ, datainfo, batch, prn);
+	err = summary(cmd->list, pZ, datainfo, batch, TEXT, prn);
 	if (err) 
 	    pprintf(prn, "generation of summary stats failed\n");
 	break; 

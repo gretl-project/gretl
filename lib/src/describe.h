@@ -52,11 +52,13 @@ int periodogram (const int *list,
 
 int summary (const int *list, 
 	     double **pZ, const DATAINFO *pdinfo, 
-	     const int batch, print_t *prn);
+	     const int batch, const int format, 
+	     print_t *prn);
 
 int esl_corrmx (int *list, 
 		double **pZ, const DATAINFO *pdinfo, 
-		const int batch, print_t *prn);
+		const int batch, const int format,
+		print_t *prn);
 
 int means_test (int *list, 
 		double *Z, const DATAINFO *pdinfo, 
