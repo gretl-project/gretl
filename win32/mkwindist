@@ -91,7 +91,10 @@ add_file ${TOPDIR}/gui2/gnuplot.lang \
   gretl/share/gtksourceview-1.0/language-specs/gnuplot.lang
 
 # help files, license, logo
+add_file ${TOPDIR}/share/gretl.hlp gretl/gretl_hlp.txt
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
+add_file ${TOPDIR}/share/gretl.hlp.it gretl/gretl_hlp_it.txt
+add_file ${TOPDIR}/share/gretlcli.hlp.it gretl/gretlcli_hlp_it.txt
 for lang in es ; do
    $RECODE l1..utf-8 < ${TOPDIR}/share/gretl.hlp.$lang \
        > ${TOPDIR}/share/gretl_hlp_${lang}.txt
@@ -102,7 +105,6 @@ for lang in es ; do
    add_file ${TOPDIR}/share/gretlcli_hlp_${lang}.txt \
        gretl/gretlcli_hlp_${lang}.txt
 done
-add_file ${TOPDIR}/share/gretl.hlp gretl/gretl_hlp.txt
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file ${TOPDIR}/doc/manual.chm/gretl.chm gretl/gretl.chm

@@ -14,17 +14,22 @@ ENGLISH_HELPFILES = $(sharesrc)/gretl.hlp $(sharesrc)/gretlcli.hlp
 ifeq ($(have_gtk),2.0)
    ES_GUI_HLP = $(sharesrc)/gretl.hlp.es.utf8
    ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es.utf8
-   UTF8_FILES = $(ES_GUI_HLP) $(ES_CLI_HLP)
+   IT_GUI_HLP = $(sharesrc)/gretl.hlp.it
+   IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
+   UTF8_RECODE_FILES = $(ES_GUI_HLP) $(ES_CLI_HLP)
 else
    ES_GUI_HLP = $(sharesrc)/gretl.hlp.es
    ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
+   IT_GUI_HLP = $(sharesrc)/gretl.hlp.it.l1
+   IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it.l1
+   L1_RECODE_FILES = $(IT_GUI_HLP) $(IT_CLI_HLP)
 endif
 
 VPATH = $(sharesrc)
 
 .PHONY :
 
-all: $(UTF8_FILES)
+all: $(UTF8_RECODE_FILES) $(L1_RECODE_FILES)
 
 install: installdirs install_datafiles install_scripts install_help
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(gretldir)/gretl.stamp
@@ -60,6 +65,8 @@ install_help:  $(ENGLISH_HELPFILES) $(ES_GUI_HLP) $(ES_CLI_HLP)
 	$(INSTALL_DATA) $(sharesrc)/gretlcli.hlp $(gretldir)/gretlcli.hlp
 	$(INSTALL_DATA) $(ES_GUI_HLP) $(gretldir)/gretl.hlp.es
 	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
+	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretl.hlp.it
+	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
@@ -73,14 +80,17 @@ installdirs:
 $(ENGLISH_HELPFILES): $(topsrc)/doc/commands/gretl_commands.xml
 	make -C ../doc/commands hlp
 
-$(UTF8_FILES): $(sharesrc)/gretl.hlp.es $(sharesrc)/gretlcli.hlp.es
+$(UTF8_RECODE_FILES): $(sharesrc)/gretl.hlp.es $(sharesrc)/gretlcli.hlp.es
 	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done
+
+$(L1_RECODE_FILES): $(sharesrc)/gretl.hlp.it $(sharesrc)/gretlcli.hlp.it
+	for f in $^ ; do recode utf-8..l1 < $$f > $$f.l1 ; done
 
 clean:
 	make -C bcih clean
 
 textclean: 
-	rm -f *.txt *.utf8
+	rm -f *.txt *.utf8 *.l1
 
 distclean: clean
 	rm -f Makefile

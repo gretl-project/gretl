@@ -59,8 +59,11 @@ hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
 	./xsltrans --hlp $(topsrc)/doc/commands/gretl_commands.xml && \
 	./reflow < cmdlist.txt > $(topsrc)/share/gretlcli.hlp
 	./reflow < guilist.txt > $(topsrc)/share/gretl.hlp
+	./xsltrans --hlp $(topsrc)/doc/commands/gretl_commands_it.xml && \
+	./reflow < cmdlist.txt > $(topsrc)/share/gretlcli.hlp.it
+	./reflow < guilist.txt > $(topsrc)/share/gretl.hlp.it
 
-# Validate the commands "master" XML file against libgretl
+# Validate the commands "master" XML files against libgretl
 check: validate 
 	./validate $(topsrc)/doc/commands/gretl_commands.xml
 	./validate $(topsrc)/doc/commands/gretl_commands_it.xml

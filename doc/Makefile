@@ -50,6 +50,10 @@ manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(CMDLIST)
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
+cmdbook.tex: cmdbook.xml $(CHAPTERS) $(DSL) $(MATHSS) $(CMDLIST)
+	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
+
 manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(CMDLIST)
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@

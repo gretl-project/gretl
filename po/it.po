@@ -2225,19 +2225,19 @@ msgstr "gretl: sono in uso i seguenti percorsi di ricerca:\n"
 
 #: lib/src/gretl_paths.c:582
 msgid "gretl_hlp.txt"
-msgstr "gretl_hlp.txt"
+msgstr "gretl_hlp_it.txt"
 
 #: lib/src/gretl_paths.c:584 lib/src/gretl_paths.c:588
 msgid "gretlcli_hlp.txt"
-msgstr "gretlcli_hlp.txt"
+msgstr "gretlcli_hlp_it.txt"
 
 #: lib/src/gretl_paths.c:655
 msgid "gretl.hlp"
-msgstr "gretl.hlp"
+msgstr "gretl.hlp.it"
 
 #: lib/src/gretl_paths.c:657 lib/src/gretl_paths.c:661
 msgid "gretlcli.hlp"
-msgstr "gretlcli.hlp"
+msgstr "gretlcli.hlp.it"
 
 #: lib/src/gretl_string_table.c:135
 #, c-format

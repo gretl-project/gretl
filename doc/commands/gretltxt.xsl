@@ -4,7 +4,7 @@
 
 <xsl:param name="hlp">cli</xsl:param>
 
-<xsl:output method="text" encoding="us-ascii"/>
+<xsl:output method="text" encoding="utf-8"/>
 
 <xsl:template match="commandlist">
   <xsl:if test="$hlp='gui'">
