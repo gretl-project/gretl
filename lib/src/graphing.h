@@ -73,7 +73,7 @@ typedef struct {
     unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
     int t1, t2;                /* starting and ending obs */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
-    char range[3][2][12];      /* axis range specifiers */
+    char range[3][2][16];      /* axis range specifiers */
     char keyspec[MAXTITLE];    /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */

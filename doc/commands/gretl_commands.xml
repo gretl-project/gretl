@@ -3167,17 +3167,20 @@
     <description>
       <para>
 	The Mahalanobis distance is the distance between two points in
-	an <mathvar>N</mathvar>-dimensional space, scaled by the
-	statistical variation in each component of the point. For
+	an <mathvar>k</mathvar>-dimensional space, scaled by the
+	statistical variation in each dimension of the space.  For
 	example, if <mathvar>p</mathvar> and <mathvar>q</mathvar> are
-	two points from the same distribution which has covariance
-	matrix <mathvar>C</mathvar>, then the Mahalanobis distance is
-	given by
+	two observations on a set of <mathvar>k</mathvar> variables
+	which has covariance matrix <mathvar>C</mathvar>, then the
+	Mahalanobis distance between the observations is given by
 	<equation status="display"
         tex="\[\sqrt{(p-q)^'C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
-          graphic="mahal"/> This is the same as the Euclidean distance
-	if the covariance matrix is the identity matrix.</para>
+          graphic="mahal"/>where 
+	<equation status="inline" tex="$(p-q)$" ascii="(p - q)"/> is a
+	<mathvar>k</mathvar>-vector. This reduces to Euclidean
+	distance if the covariance matrix is the identity
+	matrix.</para>
 
       <para>The space for which distances are computed is defined by
 	the selected variables.  For each observation in the current

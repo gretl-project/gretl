@@ -767,10 +767,12 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
 			      int *i, int *labelno)
 {
-    char set_thing[12], setting[MAXLEN], range[32];
-    size_t n, j;
+    char set_thing[16], setting[MAXLEN];
+    size_t n;
 
-    if (strstr(line, "encoding")) return 0;
+    if (strstr(line, "encoding") != NULL) {
+	return 0;
+    }
 
     if (sscanf(line + 4, "%11s", set_thing) != 1) {
 	errbox(_("Failed to parse gnuplot file"));
@@ -781,8 +783,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
     if (strcmp(set_thing, "y2tics") == 0) {
 	spec->flags |= GPTSPEC_Y2AXIS;
 	return 0;
-    }
-    else if (strcmp(set_thing, "border 3") == 0) {
+    } else if (strcmp(set_thing, "border 3") == 0) {
 	spec->flags |= GPTSPEC_BORDER_HIDDEN;
 	return 0;
     }    
@@ -792,37 +793,34 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
     top_n_tail(setting);
 
     if (strstr(set_thing, "range")) {
-	strcpy(range, setting + 1);
-	n = strlen(range);
-	for (j=0; j<n; j++) {
-	    if (range[j] == ':') {
-		range[j] = 0;
-		strcpy(spec->range[*i][0], range);
-		break;
-	    }
+	char r0[16], r1[16];
+
+	if (sscanf(setting, "[%15[^:]:%15[^]]", r0, r1) != 2) {
+	    errbox(_("Failed to parse gnuplot file"));
+	    fprintf(stderr, "plotfile line: '%s'\n", line);
+	    return 1;
 	}
-	strcpy(range, strchr(setting, ':') + 1);
-	delchar(']', range);
-	strcpy(spec->range[*i][1], range);
+
+	strcpy(spec->range[*i][0], r0);
+	strcpy(spec->range[*i][1], r1);
 	*i += 1;
-    }
-    else if (strcmp(set_thing, "title") == 0) 
+    } else if (strcmp(set_thing, "title") == 0) {
 	strcpy(spec->titles[0], setting);
-    else if (strcmp(set_thing, "xlabel") == 0)
+    } else if (strcmp(set_thing, "xlabel") == 0) {
 	strcpy(spec->titles[1], setting);
-    else if (strcmp(set_thing, "ylabel") == 0)
+    } else if (strcmp(set_thing, "ylabel") == 0) {
 	strcpy(spec->titles[2], setting);
-    else if (strcmp(set_thing, "y2label") == 0)
+    } else if (strcmp(set_thing, "y2label") == 0) {
 	strcpy(spec->titles[3], setting);
-    else if (strcmp(set_thing, "key") == 0)
+    } else if (strcmp(set_thing, "key") == 0) {
 	strcpy(spec->keyspec, setting);
-    else if (strcmp(set_thing, "nokey") == 0)
+    } else if (strcmp(set_thing, "nokey") == 0) {
 	strcpy(spec->keyspec, "none");
-    else if (strcmp(set_thing, "xtics") == 0) 
+    } else if (strcmp(set_thing, "xtics") == 0) { 
 	safecpy(spec->xtics, setting, 15);
-    else if (strcmp(set_thing, "mxtics") == 0) 
+    } else if (strcmp(set_thing, "mxtics") == 0) { 
 	safecpy(spec->mxtics, setting, 3);
-    else if (strcmp(set_thing, "label") == 0) {
+    } else if (strcmp(set_thing, "label") == 0) {
 	parse_label_line(spec, line, *labelno);
 	*labelno += 1;
     }

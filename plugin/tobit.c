@@ -190,10 +190,8 @@ static int add_norm_test_to_model (MODEL *pmod, double chi2)
     pmod->tests = malloc(sizeof *pmod->tests);
     if (pmod->tests == NULL) return 1;
 
-    strcpy(pmod->tests[0].type, N_("Test for normality of residual"));
-    strcpy(pmod->tests[0].h_0, N_("error is normally distributed"));
-    pmod->tests[0].param[0] = '\0';
-    pmod->tests[0].teststat = GRETL_TEST_NORMAL_CHISQ;
+    gretl_test_init(&pmod->tests[0], GRETL_TEST_NORMAL);
+    pmod->tests[0].teststat = GRETL_STAT_NORMAL_CHISQ;
     pmod->tests[0].value = chi2;
     pmod->tests[0].dfn = 2;
     pmod->tests[0].dfd = 0;

@@ -1381,8 +1381,25 @@ static void read_boxrc (PLOTGROUP *grp)
 	fclose (fp);
     }
 
-    if (na(grp->gmax)) grp->gmax = grp->plots[0].max;
-    if (na(grp->gmin)) grp->gmin = grp->plots[0].min;
+    if (na(grp->gmax)) {
+	grp->gmax = grp->plots[0].max;
+    }
+
+    if (na(grp->gmin)) {
+	grp->gmin = grp->plots[0].min;
+    }
+}
+
+static void 
+prep_confint_for_printing (BOXPLOT *plt, double *c0, double *c1)
+{
+    if (na(plt->conf[0]) || na(plt->conf[1]) || plt->conf[0] == plt->conf[1]) {
+	*c0 = 0.0;
+	*c1 = 0.0;
+    } else {
+	*c0 = plt->conf[0];
+	*c1 = plt->conf[1];
+    }
 }
 
 static int dump_boxplot (PLOTGROUP *grp)
@@ -1413,9 +1430,12 @@ static int dump_boxplot (PLOTGROUP *grp)
     fprintf(fp, "gmax gmin = %g %g\n", grp->gmax, grp->gmin);
 
     for (i=0; i<grp->nplots; i++) {
+	double c0, c1;
+
 	plt = &grp->plots[i];
+	prep_confint_for_printing(plt, &c0, &c1);
 	fprintf(fp, "%d median = %g\n", i, plt->median);
-	fprintf(fp, "%d conf = %g %g\n", i, plt->conf[0], plt->conf[1]);
+	fprintf(fp, "%d conf = %g %g\n", i, c0, c1);
 	fprintf(fp, "%d quartiles = %g %g\n", i, plt->uq, plt->lq);
 	fprintf(fp, "%d maxmin = %g %g\n", i, plt->max, plt->min);
 	fprintf(fp, "%d xbase = %g\n", i, plt->xbase);
@@ -1451,6 +1471,14 @@ static void get_bool_from_line (const char *line, BOXPLOT *plt)
     }
 }
 
+static void screen_confidence_interval (BOXPLOT *plt) 
+{
+    if (plt->conf[0] == plt->conf[1]) {
+	plt->conf[0] = NADBL;
+	plt->conf[1] = NADBL;
+    }
+}
+
 int retrieve_boxplot (const char *fname)
 {
     FILE *fp;
@@ -1479,24 +1507,27 @@ int retrieve_boxplot (const char *fname)
     grp->numbers = NULL;
 
     for (i=0; i<6 && fgets(line, 79, fp); i++) {
-	if (i == 1 && sscanf(line, "nplots = %d", &grp->nplots) != 1) 
+	if (i == 1 && sscanf(line, "nplots = %d", &grp->nplots) != 1) {
 	    goto corrupt;
-	else if (i == 2 && sscanf(line, "numbers = %7s", numstr) != 1) 
+	} else if (i == 2 && sscanf(line, "numbers = %7s", numstr) != 1) {
 	    goto corrupt;
-	else if (i == 3 && sscanf(line, "width height = %d %d", 
-				  &grp->width, &grp->height) != 2) 
+	} else if (i == 3 && sscanf(line, "width height = %d %d", 
+				    &grp->width, &grp->height) != 2) {
 	    goto corrupt;
-	else if (i == 4 && sscanf(line, "boxwidth = %lf", &grp->boxwidth) != 1) 
+	} else if (i == 4 && sscanf(line, "boxwidth = %lf", 
+				    &grp->boxwidth) != 1) {
 	    goto corrupt;
-	else if (i == 5 && sscanf(line, "gmax gmin = %lf %lf", 
-				  &grp->gmax, &grp->gmin) != 2) 
+	} else if (i == 5 && sscanf(line, "gmax gmin = %lf %lf", 
+				    &grp->gmax, &grp->gmin) != 2) {
 	    goto corrupt;
+	}
     }
 
     if (strcmp(numstr, "NULL")) {
 	grp->numbers = malloc(strlen(numstr) + 1);
-	if (grp->numbers != NULL) 
+	if (grp->numbers != NULL) {
 	    strcpy(grp->numbers, numstr);
+	}
     }
 
     grp->plots = malloc(grp->nplots * sizeof *grp->plots);
@@ -1513,34 +1544,37 @@ int retrieve_boxplot (const char *fname)
 	nout = 0;
 	for (j=0; j<7 && fgets(line, 79, fp); j++) {
 	    if (j == 0 && 
-		sscanf(line, "%*d median = %lf", &plt->median) != 1)
+		sscanf(line, "%*d median = %lf", &plt->median) != 1) {
 		goto corrupt;
-	    else if (j == 1 && 
+	    } else if (j == 1 && 
 		     sscanf(line, "%*d conf = %lf %lf", 
-			    &plt->conf[0], & plt->conf[1]) != 2)
+			    &plt->conf[0], & plt->conf[1]) != 2) {
 		goto corrupt;
-	    else if (j == 2 && 
+	    } else if (j == 2 && 
 		     sscanf(line, "%*d quartiles = %lf %lf", 
-			    &plt->uq, &plt->lq) != 2)
+			    &plt->uq, &plt->lq) != 2) {
 		goto corrupt;
-	    else if (j == 3 && 
+	    } else if (j == 3 && 
 		     sscanf(line, "%*d maxmin = %lf %lf", 
-			    &plt->max, &plt->min) != 2)
+			    &plt->max, &plt->min) != 2) {
 		goto corrupt;
-	    else if (j == 4 && 
-		     sscanf(line, "%*d xbase = %lf", &plt->xbase) != 1)
+	    } else if (j == 4 && 
+		       sscanf(line, "%*d xbase = %lf", &plt->xbase) != 1) {
 		goto corrupt;
-	    else if (j == 5) {
+	    } else if (j == 5) {
 		if (sscanf(line, "%*d varname = %8s", plt->varname) != 1) {
 		    goto corrupt;
 		} else {
 		    get_bool_from_line(line, plt);
 		}
-	    }
-	    else if (j == 6 && 
-		     sscanf(line, "%*d n_outliers = %d", &nout) != 1)
+	    } else if (j == 6 && 
+		       sscanf(line, "%*d n_outliers = %d", &nout) != 1) {
 		goto corrupt;
+	    }
 	}
+
+	screen_confidence_interval(plt);
+
 	/* any outliers? */
 	if (nout && 
 	    (plt->outliers = malloc(sizeof(OUTLIERS))) &&
@@ -1549,11 +1583,12 @@ int retrieve_boxplot (const char *fname)
 	    for (j=-1; j<nout && fgets(line, 79, fp); j++) {
 		if (j == -1 &&
 		    sscanf(line, "%*d rmax rmin = %lf %lf", 
-			   &plt->outliers->rmax, &plt->outliers->rmin) != 2)
+			   &plt->outliers->rmax, &plt->outliers->rmin) != 2) {
 		    goto corrupt;
-		else if (j >=0 && sscanf(line, "%*d vals %lf", 
-					 &plt->outliers->vals[j]) != 1)
+		} else if (j >=0 && sscanf(line, "%*d vals %lf", 
+					   &plt->outliers->vals[j]) != 1) {
 		    goto corrupt;
+		}
 	    }
 	} 
     }
@@ -1569,6 +1604,7 @@ int retrieve_boxplot (const char *fname)
 	free(grp);
 	return 1;
     }
+
     gtk_widget_show(grp->window);
 
     for (i=0; i<grp->nplots; i++)

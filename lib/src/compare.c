@@ -39,16 +39,52 @@ struct COMPARE {
     int robust;    /* = 1 when robust vcv is in use, else 0 */
 };
 
+static int 
+add_diffvars_to_test (GRETLTEST *test, const int *list, 
+		      const DATAINFO *pdinfo)
+{
+    int i, len = 0;
+    int err = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	len += strlen(pdinfo->varname[list[i]]) + 1;
+    }
+
+    test->param = malloc(len);
+
+    if (test->param == NULL) {
+	err = 1;
+    } else {
+	*test->param = '\0';
+	for (i=1; i<=list[0]; i++) {
+	    strcat(test->param, pdinfo->varname[list[i]]);
+	    if (i < list[0]) {
+		strcat(test->param, " ");
+	    }
+	}
+    }
+
+    return err;
+}
+
 static void
 gretl_print_compare (const struct COMPARE *cmp, const int *diffvars, 
-		     const DATAINFO *pdinfo, PRN *prn,
+		     MODEL *new, const DATAINFO *pdinfo, PRN *prn,
 		     gretlopt opt)
 {
+    GRETLTEST test;
+    GRETLTEST *ptest = NULL;
     double pval = NADBL;
     int i;
 
     if (cmp->ci == LAD) {
 	return;
+    }
+
+    if (opt & OPT_S) {
+	gretl_test_init(&test, (cmp->cmd == OMIT)? 
+			GRETL_TEST_OMIT : GRETL_TEST_ADD);
+	ptest = &test;
     }
 
     if (!(opt & OPT_Q)) {
@@ -71,6 +107,14 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	    pprintf(prn, _("with p-value = %g\n"), pval);
 	    record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? "omit" : "add");
 	} 
+
+	if (ptest != NULL) {
+	    ptest->teststat = GRETL_STAT_F;
+	    ptest->dfn = cmp->dfn;
+	    ptest->dfd = cmp->dfd;
+	    ptest->value = cmp->F;
+	    ptest->pvalue = pval;
+	}
     } else if (LIMDEP(cmp->ci) && cmp->dfn > 0 && diffvars[0] > 0) {
         pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		     "zero for the variables\n\n"));
@@ -82,8 +126,23 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	pval = chisq(cmp->chisq, cmp->dfn);
 	pprintf(prn, _("with p-value = %g\n\n"), pval);
 	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? "omit" : "add");
-	return;
+
+	if (ptest != NULL) {
+	    ptest->teststat = GRETL_STAT_LR;
+	    ptest->dfn = cmp->dfn;
+	    ptest->value = cmp->chisq;
+	    ptest->pvalue = pval;
+	}	
     } 
+
+    if (ptest != NULL) {
+	int err;
+
+	err = add_diffvars_to_test(ptest, diffvars, pdinfo);
+	if (!err) {
+	    add_test_to_model(new, ptest);
+	}
+    }
 
     if (!(opt & OPT_Q)) {
 	pprintf(prn, _("  Of the %d model selection statistics, %d "), 
@@ -345,12 +404,9 @@ real_nonlinearity_test (const MODEL *pmod, int *list,
 		df, trsq, pval);
 
 	if (test != NULL) {
-	    gretl_test_init(test);
-	    strcpy(test->type, (aux_code == AUX_SQ)?
-		   N_("Non-linearity test (squares)") :
-		   N_("Non-linearity test (logs)"));
-	    strcpy(test->h_0, N_("relationship is linear"));
-	    test->teststat = GRETL_TEST_TR2;
+	    gretl_test_init(test, (aux_code == AUX_SQ)?
+			    GRETL_TEST_SQUARES : GRETL_TEST_LOGS);
+	    test->teststat = GRETL_STAT_TR2;
 	    test->dfn = df;
 	    test->value = trsq;
 	    test->pvalue = chisq(trsq, df);
@@ -459,6 +515,7 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
 {
     int *tmplist = NULL;
     const int orig_nvar = pdinfo->v; 
+    int save_test = 0;
     int err = 0;
 
     if (orig == NULL || orig->list == NULL) {
@@ -484,6 +541,11 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
     /* re-impose the sample that was in force when the original model
        was estimated */
     exchange_smpl(orig, pdinfo);
+
+    if (opt & OPT_S) {
+	save_test = 1;
+	opt &= ~OPT_S;
+    }
 
     /* run augmented regression, matching the original
        estimation method */
@@ -513,7 +575,11 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
 		cmp.F = robust_omit_F(addvars, new);
 	    }
 
-	    gretl_print_compare(&cmp, addvars, pdinfo, prn, opt);
+	    if (save_test) {
+		opt |= OPT_S;
+	    }
+
+	    gretl_print_compare(&cmp, addvars, new, pdinfo, prn, opt);
 	}
     }
 
@@ -661,6 +727,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 {
     int *tmplist = NULL;
     int maxlag = 0, t1 = pdinfo->t1;
+    int save_test = 0;
     int err = 0;
 
     if (orig == NULL || orig->list == NULL) {
@@ -704,6 +771,11 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 	pdinfo->t1 -= 1;
     }
 
+    if (opt & OPT_S) {
+	save_test = 1;
+	opt &= ~OPT_S;
+    }
+
     *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, opt, prn);
 
     if (new->errcode) {
@@ -731,7 +803,11 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 		cmp.F = robust_omit_F(omitvars, orig);
 	    }
 
-	    gretl_print_compare(&cmp, omitvars, pdinfo, prn, opt); 
+	    if (save_test) {
+		opt |= OPT_S;
+	    }
+
+	    gretl_print_compare(&cmp, omitvars, new, pdinfo, prn, opt); 
 	}
 
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
@@ -871,10 +947,8 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		2, aux.dfd, RF, pval);
 
 	if (test != NULL) {
-	    gretl_test_init(test);
-	    strcpy(test->type, N_("RESET test for specification"));
-	    strcpy(test->h_0, N_("specification is adequate"));
-	    test->teststat = GRETL_TEST_RESET;
+	    gretl_test_init(test, GRETL_TEST_RESET);
+	    test->teststat = GRETL_STAT_RESET;
 	    test->dfn = 2;
 	    test->dfd = aux.dfd;
 	    test->value = RF;
@@ -1143,11 +1217,9 @@ int autocorr_test (MODEL *pmod, int order,
 	}
 
 	if (test != NULL) {
-	    gretl_test_init(test);
-	    strcpy(test->type, N_("LM test for autocorrelation up to order %s"));
-	    strcpy(test->h_0, N_("no autocorrelation"));
-	    sprintf(test->param, "%d", order);
-	    test->teststat = GRETL_TEST_LMF;
+	    gretl_test_init(test, GRETL_TEST_AUTOCORR);
+	    test->order = order;
+	    test->teststat = GRETL_STAT_LMF;
 	    test->dfn = order;
 	    test->dfd = aux.nobs - pmod->ncoeff - order;
 	    test->value = LMF;
@@ -1281,12 +1353,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		    newvars, chow_mod.dfd, F, pval);
 
 	    if (test != NULL) {
-		gretl_test_init(test);
-		strcpy(test->type, N_("Chow test for structural break at "
-			"observation %s"));
-		strcpy(test->param, chowdate);
-		strcpy(test->h_0, N_("no structural break"));
-		test->teststat = GRETL_TEST_F;
+		gretl_test_init(test, GRETL_TEST_CHOW);
+		test->param = gretl_strdup(chowdate);
+		test->teststat = GRETL_STAT_F;
 		test->dfn = newvars;
 		test->dfd = chow_mod.dfd;
 		test->value = F;
@@ -1459,10 +1528,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		T-K-1, hct, pval);
 
 	if (test != NULL) {
-	    gretl_test_init(test);
-	    strcpy(test->type, N_("CUSUM test for parameter stability"));
-	    strcpy(test->h_0, N_("no change in parameters"));
-	    test->teststat = GRETL_TEST_HARVEY_COLLIER;
+	    gretl_test_init(test, GRETL_TEST_CUSUM);
+	    test->teststat = GRETL_STAT_HARVEY_COLLIER;
 	    test->dfn = T-K-1;
 	    test->value = hct;
 	    test->pvalue = pval;

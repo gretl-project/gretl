@@ -713,7 +713,7 @@ print_x_range (struct gnuplot_info *gpinfo, const double *x, FILE *fp)
 	gpinfo->xrange = xmax - xmin;
 	xmin -= gpinfo->xrange * .025;
 	xmax += gpinfo->xrange * .025;
-	fprintf(fp, "set xrange [%.8g:%.8g]\n", xmin, xmax);
+	fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
 	gpinfo->xrange = xmax - xmin;
     }
 }
@@ -1559,7 +1559,7 @@ int plot_freq (FREQDIST *freq, int dist)
 	    plotmax = freq->midpt[K-1];
 	}
 
-	fprintf(fp, "set xrange [%.8g:%.8g]\n", plotmin, plotmax);
+	fprintf(fp, "set xrange [%.7g:%.7g]\n", plotmin, plotmax);
 	fputs("set key right top\n", fp);
     } else { 
 	/* plain frequency plot */
@@ -1568,7 +1568,7 @@ int plot_freq (FREQDIST *freq, int dist)
 	lambda = 1.0 / freq->n;
 	plotmin = freq->midpt[0] - barwidth;
 	plotmax = freq->midpt[K-1] + barwidth;
-	fprintf(fp, "set xrange [%.8g:%.8g]\n", plotmin, plotmax);
+	fprintf(fp, "set xrange [%.7g:%.7g]\n", plotmin, plotmax);
 	fputs("set nokey\n", fp);
 	fprintf(fp, "set xlabel '%s %s'\n", 
 		I_("Frequency distribution for"), freq->varname);	
@@ -1645,7 +1645,7 @@ int plot_fcast_errs (int n, const double *obs,
     xrange = xmax - xmin;
     xmin -= xrange * .025;
     xmax += xrange * .025;
-    fprintf(fp, "set xrange [%.8g:%.8g]\n", xmin, xmax);
+    fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
     fputs("set missing \"?\"\n", fp);
     if (!time_series) {
 	fputs("set xtics 1\n", fp);
@@ -1924,10 +1924,10 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	fprintf(fp, "set key %s\n", spec->keyspec);
     }
 
-    k = (spec->flags & GPTSPEC_Y2AXIS)? 3: 2;
+    k = (spec->flags & GPTSPEC_Y2AXIS)? 3 : 2;
     for (i=0; i<k; i++) {
 	fprintf(fp, "set %srange [%s:%s]\n",
-		(i==0)? "x" : (i==1)? "y" : "y2",
+		(i == 0)? "x" : (i == 1)? "y" : "y2",
 		spec->range[i][0], spec->range[i][1]);
     }
 

@@ -2486,6 +2486,7 @@ enum {
     DW_SET_TYPE,
     DW_TS_FREQUENCY,
     DW_WEEK_DAYS,
+    DW_WEEKLY_SELECT,
     DW_STARTING_OBS,
     DW_PANEL_MODE,
     DW_PANEL_SIZE,
@@ -2499,6 +2500,7 @@ static const char *wizcode_string (int code)
 	N_("Structure of dataset"),
 	N_("Time series frequency"),
 	N_("Days in week"),
+	N_("Daily date to represent week:"),
 	N_("Starting observation:"),
 	N_("Panel data organization"),
 	N_("Number of cross-sectional units:"),
@@ -2588,6 +2590,7 @@ datawiz_make_changes (DATAINFO *dwinfo)
 {
     char setline[32];
     gretlopt opt = OPT_NONE;
+    int delete_markers = 0;
     int err = 0;
 
     /* preliminaries */
@@ -2611,6 +2614,12 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	strcmp(dwinfo->stobs, datainfo->stobs) == 0) {
 	infobox(_("No changes were made"));
 	return 0;
+    }
+
+    /* if converting to time series, we probably don't want to
+       retain any original observation-marker strings */
+    if (dwinfo->structure == TIME_SERIES && datainfo->markers) {
+	delete_markers = 1;
     }
 
     /* handle panel structure */
@@ -2652,6 +2661,9 @@ datawiz_make_changes (DATAINFO *dwinfo)
     if (err) {
 	errbox(get_gretl_errmsg());
     } else {
+	if (delete_markers) {
+	    destroy_dataset_markers(datainfo);
+	}
 	mark_dataset_as_modified();
     }
 
@@ -2698,6 +2710,8 @@ static int radio_default (DATAINFO *dwinfo, int code)
 	}
     } else if (code == DW_WEEK_DAYS) {
 	return dwinfo->pd; 
+    } else if (code == DW_WEEKLY_SELECT) {
+	return dwinfo->v;
     } else if (code == DW_PANEL_MODE) { 
 	return dwinfo->structure;
     }
@@ -2732,6 +2746,15 @@ static const char *datawiz_radio_strings (int wizcode, int idx)
 	if (idx == 5) return N_("5 days in week");
 	if (idx == 6) return N_("6 days in week");
 	if (idx == 7) return N_("7 days in week");
+    } else if (wizcode == DW_WEEKLY_SELECT) {
+	if (idx == 0) return N_("Monday");
+	if (idx == 1) return N_("Tuesday");
+	if (idx == 2) return N_("Wednesday");
+	if (idx == 3) return N_("Thursday");
+	if (idx == 4) return N_("Friday");
+	if (idx == 5) return N_("Saturday");
+	if (idx == 6) return N_("Sunday");
+	if (idx == 7) return N_("None (don't use dates)");
     } else if (wizcode == DW_TS_FREQUENCY) {
 	int j;
 
@@ -2834,6 +2857,13 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
     } 
 }
 
+static void make_weekly_stobs (DATAINFO *dwinfo)
+{
+    int start_days[] = { 6, 7, 1, 2, 3, 4, 5 };
+
+    sprintf(dwinfo->stobs, "1800/01/0%d", start_days[dwinfo->v]);    
+}
+
 void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 {
 #if DWDEBUG
@@ -2863,9 +2893,15 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 	dwinfo->n = 1500;
 	dwinfo->t1 = 0;
     } else if (dwinfo->pd == 52) {
-	strcpy(dwinfo->stobs, "1800/01/06");
-	dwinfo->n = 13000;
-	dwinfo->t1 = 7826;
+	if (dwinfo->v >= 7) {
+	    dwinfo->n = 500;
+	    dwinfo->t1 = 0;
+	    strcpy(dwinfo->stobs, "1");
+	} else {
+	    make_weekly_stobs(dwinfo);
+	    dwinfo->n = 13000;
+	    dwinfo->t1 = 7826;
+	}
     } else if (dwinfo->pd == 5 ||
 	       dwinfo->pd == 6 ||
 	       dwinfo->pd == 7) {
@@ -2893,8 +2929,8 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 
 #if DWDEBUG
     ntodate_full(obsstr, dwinfo->t1, dwinfo);
-    fprintf(stderr, "dwinfo: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
-	    dwinfo->pd, dwinfo->stobs, dwinfo->sd0, dwinfo->t1, obsstr);
+    fprintf(stderr, "dwinfo: v=%d, pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
+	    dwinfo->v, dwinfo->pd, dwinfo->stobs, dwinfo->sd0, dwinfo->t1, obsstr);
 
     ntodate_full(obsstr, datainfo->t1, datainfo);
     fprintf(stderr, "datainfo: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
@@ -2997,6 +3033,9 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     } else if (step == DW_WEEK_DAYS) {
 	nopts = 3;
 	setint = &dwinfo->pd;
+    } else if (step == DW_WEEKLY_SELECT) {
+	nopts = 8;
+	setint = &dwinfo->v;
     } else if (step == DW_PANEL_MODE) {
 	nopts = 2;
 	setint = &dwinfo->structure;
@@ -3150,13 +3189,15 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_TS_FREQUENCY) {
 		if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
 		    step = DW_WEEK_DAYS;
+		} else if (dwinfo->pd == 52) {
+		    step = DW_WEEKLY_SELECT;
 		} else if (dwinfo->pd == PD_SPECIAL) {
 		    /* no 'dates' for special frequencies */
 		    step = DW_CONFIRM;
 		} else {
 		    step = DW_STARTING_OBS;
 		}
-	    } else if (step == DW_WEEK_DAYS) {
+	    } else if (step == DW_WEEK_DAYS || step == DW_WEEKLY_SELECT) {
 		step = DW_STARTING_OBS;
 	    } else if (step == DW_PANEL_MODE) {
 		step = DW_PANEL_SIZE;
@@ -3171,10 +3212,12 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_STARTING_OBS) {
 		if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
 		    step = DW_WEEK_DAYS;
+		} else if (dwinfo->pd == 52) {
+		    step = DW_WEEKLY_SELECT;
 		} else {
 		    step = DW_TS_FREQUENCY;
 		}
-	    } else if (step == DW_WEEK_DAYS) {
+	    } else if (step == DW_WEEK_DAYS || step == DW_WEEKLY_SELECT) {
 		step = DW_TS_FREQUENCY;
 	    } else if (step == DW_PANEL_SIZE) {
 		step = DW_PANEL_MODE;

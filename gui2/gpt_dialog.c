@@ -268,7 +268,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	k = (spec->flags & GPTSPEC_Y2AXIS)? 3 : 2;
 	for (i=0; i<k; i++) {
 	    if (axis_range[i].isauto != NULL) {
-		if (GTK_TOGGLE_BUTTON (axis_range[i].isauto)->active) {
+		if (GTK_TOGGLE_BUTTON(axis_range[i].isauto)->active) {
 		    strcpy(spec->range[i][0], "*");
 		    strcpy(spec->range[i][1], "*");
 		} else {

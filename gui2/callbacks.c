@@ -445,22 +445,16 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 
 void selector_callback (gpointer data, guint action, GtkWidget *widget)
 {
-    char title[36];
     windata_t *vwin = (windata_t *) data;
-    void (*okfunc)() = NULL;
 
     if (action == COINT) {
-	selection_dialog (_("gretl: cointegration test"), do_coint, action);
-	return;
-    }
+	selection_dialog(_("gretl: cointegration test"), do_coint, action);
+    } else if (action == COINT2) {
+	selection_dialog(_("gretl: cointegration test"), do_coint2, action);
+    } else if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
+	       || action == SCATTERS || action == GR_3D) {
+	void (*okfunc)() = NULL;
 
-    if (action == COINT2) {
-	selection_dialog (_("gretl: cointegration test"), do_coint2, action);
-	return;
-    }
-
-    if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
-	|| action == SCATTERS || action == GR_3D) {
 	switch (action) {
 	case GR_XY:
 	case GR_IMP:
@@ -478,29 +472,16 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	default:
 	    return;
 	}
-	selection_dialog (_("gretl: define graph"), okfunc, action);
-	return;
+	selection_dialog(_("gretl: define graph"), okfunc, action);
+    } else if (action == ADD || action == OMIT) {
+	simple_selection(_("gretl: model tests"), do_add_omit, action, vwin);
+    } else if (action == COEFFSUM) {
+	simple_selection(_("gretl: model tests"), do_coeff_sum, action, vwin);
+    } else if (action == GR_PLOT) {
+	simple_selection(_("gretl: model tests"), do_graph_from_selector, action, vwin);
+    } else {
+	errbox("selector_callback: code was not recognized");
     }
-
-    if (action == ADD || action == OMIT) {
-	strcpy(title, _("gretl: model tests"));
-	simple_selection(title, do_add_omit, action, vwin);
-	return;
-    }
-
-    if (action == COEFFSUM) {
-	strcpy(title, _("gretl: model tests"));
-	simple_selection(title, do_coeff_sum, action, vwin);
-	return;
-    }
-
-    if (action == GR_PLOT) {
-	strcpy(title, _("gretl: model tests"));
-	simple_selection(title, do_graph_from_selector, action, vwin);
-	return;
-    }
-
-    errbox("selector_callback: code was not recognized");
 }
 
 /* ........................................................... */

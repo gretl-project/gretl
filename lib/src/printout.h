@@ -24,6 +24,31 @@
 
 #define PAGELINES 21
 
+enum prn_codes {
+    GRETL_PRINT_STDOUT,
+    GRETL_PRINT_STDERR,
+    GRETL_PRINT_FILE,
+    GRETL_PRINT_BUFFER,
+    GRETL_PRINT_NULL
+};
+
+enum gretl_print_formats {
+    GRETL_PRINT_FORMAT_PLAIN,
+    GRETL_PRINT_FORMAT_TEX,
+    GRETL_PRINT_FORMAT_TEX_DOC,
+    GRETL_PRINT_FORMAT_RTF,
+    GRETL_PRINT_FORMAT_FIXED
+};
+
+#define plain_format(p) (p->format == GRETL_PRINT_FORMAT_PLAIN)
+#define rtf_format(p)   (p->format == GRETL_PRINT_FORMAT_RTF)
+#define tex_format(p)   (p->format == GRETL_PRINT_FORMAT_TEX || \
+                         p->format == GRETL_PRINT_FORMAT_TEX_DOC)
+#define doc_format(p)   (p->format == GRETL_PRINT_FORMAT_TEX_DOC)
+#define is_tex(f)       (f == GRETL_PRINT_FORMAT_TEX || \
+                         f == GRETL_PRINT_FORMAT_TEX_DOC)
+#define is_rtf(f)       (f == GRETL_PRINT_FORMAT_RTF)
+
 /* functions follow */
  
 void session_time (FILE *fp);

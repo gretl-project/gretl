@@ -481,6 +481,13 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 
 #endif /* MODEL_DEBUG */
 
+static void gretl_test_free (GRETLTEST *test)
+{
+    if (test->param != NULL) {
+	free(test->param);
+    }
+}
+
 /**
  * clear_model:
  * @pmod: pointer to #MODEL.
@@ -493,6 +500,8 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 void clear_model (MODEL *pmod)
 {
     if (pmod != NULL) {
+	int i;
+
 #ifdef MODEL_DEBUG
 	debug_print_model_info(pmod, "Doing clear_model");
 #endif
@@ -509,10 +518,13 @@ void clear_model (MODEL *pmod)
 	if (pmod->arinfo) {
 	    clear_ar_info(pmod);
 	}
-	if (pmod->ntests) free(pmod->tests);
+	if (pmod->ntests) {
+	    for (i=0; i<pmod->ntests; i++) {
+		gretl_test_free(&pmod->tests[i]);
+	    }
+	    free(pmod->tests);
+	}
 	if (pmod->params) {
-	    int i;
-
 	    for (i=0; i<pmod->nparams; i++) {
 		free(pmod->params[i]);
 	    }
@@ -532,9 +544,8 @@ void clear_model (MODEL *pmod)
 
 static void copy_test (GRETLTEST *targ, const GRETLTEST *src)
 {
-    strcpy(targ->type, src->type);
-    strcpy(targ->h_0, src->h_0);
-    strcpy(targ->param, src->param);
+    targ->type = src->type;
+    targ->param = gretl_strdup(src->param);
     targ->teststat = src->teststat;
     targ->dfn = src->dfn;
     targ->dfd = src->dfd;
@@ -558,23 +569,23 @@ static int copy_model_tests (MODEL *targ, const MODEL *src)
     return 0;
 }
 
-void gretl_test_init (GRETLTEST *test)
+void gretl_test_init (GRETLTEST *test, int which)
 {
-    test->type[0] = 0;
-    test->h_0[0] = 0;
-    test->param[0] = 0;
+    test->type = which;
+    test->order = 0;
+    test->param = NULL;
     test->teststat = 0;
     test->dfn = test->dfd = 0;
     test->value = test->pvalue = NADBL;
 }
 
-int add_test_to_model (MODEL *pmod, const GRETLTEST *test)
+int add_test_to_model (MODEL *pmod, GRETLTEST *test)
 {
     GRETLTEST *tests;
     int i, nt = pmod->ntests;
 
     for (i=0; i<nt; i++) {
-	if (!strcmp(test->type, pmod->tests[i].type)) {
+	if (test->type == pmod->tests[i].type) {
 	    /* already done */
 	    return -1;
 	}
@@ -587,9 +598,10 @@ int add_test_to_model (MODEL *pmod, const GRETLTEST *test)
 
     pmod->tests = tests;
 
-    strcpy(pmod->tests[nt].type, test->type);
-    strcpy(pmod->tests[nt].h_0, test->h_0);
-    strcpy(pmod->tests[nt].param, test->param);
+    pmod->tests[nt].type = test->type;
+
+    pmod->tests[nt].param = test->param;
+    test->param = NULL;
 
     pmod->tests[nt].teststat = test->teststat;
     pmod->tests[nt].value = test->value;
@@ -600,6 +612,260 @@ int add_test_to_model (MODEL *pmod, const GRETLTEST *test)
     pmod->ntests += 1;
 
     return 0;
+}
+
+static int gretl_test_print_string (GRETLTEST *test, PRN *prn)
+{
+    const char *test_strs[] = {
+	N_("Test for addition of variables"),
+	N_("Test for ARCH of order %s"),
+	N_("LM test for autocorrelation up to order %s"),
+	N_("Chow test for structural break at observation %s"),
+	N_("CUSUM test for parameter stability"),
+	N_("Likelihood ratio test for groupwise heteroskedasticity"),
+	N_("Non-linearity test (logs)"),
+	N_("Test for normality of residual"),
+	N_("Test for omission of variables"),
+	N_("RESET test for specification"),
+	N_("Non-linearity test (squares)"),
+	N_("White's test for heteroskedasticity")
+    };
+    char ord[16];
+    char *param = NULL;
+
+    if (test->type >= GRETL_TEST_MAX) {
+	return 1;
+    }
+
+    if (test->order > 0) {
+	sprintf(ord, "%d", test->order);
+	param = ord;
+    } else if (test->type == GRETL_TEST_CHOW) {
+	param = test->param;
+    }
+
+    if (param != NULL) {
+	if (plain_format(prn)) {
+	    pprintf(prn, _(test_strs[test->type]), param);
+	} else {
+	    pprintf(prn, I_(test_strs[test->type]), param);
+	}
+    } else {
+	if (plain_format(prn)) {
+	    pputs(prn, _(test_strs[test->type]));
+	} else {
+	    pputs(prn, I_(test_strs[test->type]));
+	}
+    }
+
+    return 0;
+}
+
+static int print_add_omit_varnames (const char *s, PRN *prn)
+{
+    const char *endings[] = {
+	"\n    ",
+	"\\\\\n \\qquad ",
+	"\\par\n    "
+    };
+    const char *ending = NULL;
+
+    if (s == NULL || *s == '\0') {
+	return 1;
+    }
+
+    if (plain_format(prn)) {
+	ending = endings[0];
+    } else if (tex_format(prn)) {
+	ending = endings[1];
+    } else if (rtf_format(prn)) {
+	ending = endings[2];
+    } else {
+	return 1;
+    }
+
+    pputs(prn, ending);
+
+    while (*s) {
+	if (*s == ' ') {
+	    pputs(prn, ending);
+	} else {
+	    pputc(prn, *s);
+	}
+	s++;
+    }
+
+    return 0;
+}
+
+static int gretl_test_print_h_0 (GRETLTEST *test, PRN *prn)
+{
+    const char *h_0_strs[] = {
+	N_("parameters are zero for the variables"),
+	N_("no ARCH effect is present"),
+	N_("no autocorrelation"),
+	N_("no structural break"),
+	N_("no change in parameters"),
+	N_("the units have a common error variance"),
+	N_("relationship is linear"),
+	N_("error is normally distributed"),
+	N_("parameters are zero for the variables"),
+	N_("specification is adequate"),
+	N_("relationship is linear"),
+	N_("heteroskedasticity not present")
+    };
+
+    if (test->type >= GRETL_TEST_MAX) {
+	return 1;
+    }  
+
+    if (plain_format(prn)) {
+	pputs(prn, _(h_0_strs[test->type]));
+    } else {
+	pputs(prn, I_(h_0_strs[test->type]));
+    }  
+
+    if (test->type == GRETL_TEST_ADD || test->type == GRETL_TEST_OMIT) {
+	print_add_omit_varnames(test->param, prn);
+    } 
+
+    return 0;
+}
+
+static void 
+get_test_stat_string (const GRETLTEST *test, char *str, int format)
+{
+    int tex = is_tex(format);
+
+    switch (test->teststat) {
+    case GRETL_STAT_TR2:
+	if (tex) {
+	    sprintf(str, "$TR^2$ = %g", test->value);
+	} else if (is_rtf(format)) {
+	    sprintf(str, "TR{\\super 2} = %g", test->value);
+	} else {
+	    sprintf(str, "TR^2 = %g", test->value);
+	}
+	break;
+    case GRETL_STAT_F:
+    case GRETL_STAT_RESET:
+	if (tex) {
+	    sprintf(str, "$F(%d, %d)$ = %g", test->dfn, test->dfd, test->value);
+	} else {
+	    sprintf(str, "F(%d, %d) = %g", test->dfn, test->dfd, test->value);
+	}
+	break;
+    case GRETL_STAT_LMF:
+	sprintf(str, "LMF = %g", test->value);
+	break;
+    case GRETL_STAT_HARVEY_COLLIER:
+	if (tex) {
+	    sprintf(str, "Harvey--Collier $t(%d)$ = %g", test->dfn, test->value);
+	} else {
+	    sprintf(str, "Harvey-Collier t(%d) = %g", test->dfn, test->value);
+	}
+	break;
+    case GRETL_STAT_NORMAL_CHISQ:
+	if (tex) {
+	    sprintf(str, "$\\chi^2_2$ = %g", test->value); 
+	} else {
+	    sprintf(str, "%s(2) = %g", _("Chi-square"), test->value);
+	}
+	break;
+    case GRETL_STAT_LR:
+	if (tex) {
+	    sprintf(str, "$\\chi^2_%d$ = %g", test->dfn, test->value); 
+	} else {
+	    sprintf(str, "%s(%d) = %g", _("Chi-square"), test->dfn, test->value);
+	}
+	break;
+    default:
+	*str = 0;
+    }
+}
+
+static void 
+get_test_pval_string (const GRETLTEST *test, char *str, int format)
+{
+    int tex = is_tex(format);
+
+    switch (test->teststat) {
+    case GRETL_STAT_TR2:
+	if (tex) sprintf(str, "$P$($\\chi^2_{%d} >$ %g) = %g", 
+			 test->dfn, test->value, test->pvalue);
+	else sprintf(str, "P(Chi-Square(%d) > %g) = %g", 
+		     test->dfn, test->value, test->pvalue);
+	break;
+    case GRETL_STAT_F:
+    case GRETL_STAT_RESET:
+	if (tex) {
+	    sprintf(str, "$P$($F(%d, %d) >$ %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	} else {
+	    sprintf(str, "P(F(%d, %d) > %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	}
+	break;
+    case GRETL_STAT_LMF:
+	if (tex) {
+	    sprintf(str, "$P$($F(%d, %d) >$ %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	} else {
+	    sprintf(str, "P(F(%d,%d) > %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	}
+	break;
+    case GRETL_STAT_HARVEY_COLLIER:
+	if (tex) {
+	    sprintf(str, "$P$($t_{%d} >$ %g)  = %g", 
+		    test->dfn, test->value, test->pvalue);
+	} else {
+	    sprintf(str, "P(t(%d) > %g) = %g", 
+		    test->dfn, test->value, test->pvalue);
+	}
+	break;
+    case GRETL_STAT_NORMAL_CHISQ:
+    case GRETL_STAT_LR:
+	sprintf(str, "%g", test->pvalue);
+	break;
+    default:
+	*str = 0;
+    }
+}
+
+void gretl_model_test_print (GRETLTEST *test, PRN *prn)
+{
+    char test_str[128], pval_str[128];
+
+    get_test_stat_string(test, test_str, prn->format);
+    get_test_pval_string(test, pval_str, prn->format);
+
+    if (plain_format(prn)) {
+	gretl_test_print_string(test, prn);
+	pprintf(prn, " -\n  %s: ", _("Null hypothesis"));
+	gretl_test_print_h_0(test, prn);
+	pprintf(prn, "\n  %s: %s\n"
+		"  %s = %s\n\n",
+		_("Test statistic"), test_str, 
+		_("with p-value"), pval_str);
+    } else if (tex_format(prn)) {
+	gretl_test_print_string(test, prn);
+	pprintf(prn, " --\\\\\n\\quad %s: ", I_("Null hypothesis"));
+	gretl_test_print_h_0(test, prn);
+	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n"
+		"\\quad %s = %s\\\\\n",
+		I_("Test statistic"), test_str, 
+		I_("with p-value"), pval_str);
+    } else if (rtf_format(prn)) {
+	pputs(prn, "\\par \\ql ");
+	gretl_test_print_string(test, prn);
+	pprintf(prn, " -\\par\n %s: ", I_("Null hypothesis"));
+	gretl_test_print_h_0(test, prn);
+	pprintf(prn, "\\par\n %s: %s\\par\n"
+		" %s = %s\\par\n\n",
+		I_("Test statistic"), test_str, 
+		I_("with p-value"), pval_str);
+    }
 }
 
 static ARINFO *copy_ar_info (const ARINFO *src)

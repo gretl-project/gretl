@@ -3003,10 +3003,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	pval = chisq(TR2, white.ncoeff - 1);
 
 	if (test != NULL) {
-	    gretl_test_init(test);
-	    strcpy(test->type, N_("White's test for heteroskedasticity"));
-	    strcpy(test->h_0, N_("heteroskedasticity not present"));
-	    test->teststat = GRETL_TEST_TR2;
+	    gretl_test_init(test, GRETL_TEST_WHITES);
+	    test->teststat = GRETL_STAT_TR2;
 	    test->dfn = white.ncoeff - 1;
 	    test->value = TR2;
 	    test->pvalue = pval;
@@ -3512,11 +3510,9 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 	xx = chisq(LM, order);
 
 	if (test != NULL) {
-	    gretl_test_init(test);
-	    strcpy(test->type, N_("Test for ARCH of order %s"));
-	    sprintf(test->param, "%d", order);
-	    strcpy(test->h_0, N_("no ARCH effect is present"));
-	    test->teststat = GRETL_TEST_TR2;
+	    gretl_test_init(test, GRETL_TEST_ARCH);
+	    test->order = order;
+	    test->teststat = GRETL_STAT_TR2;
 	    test->dfn = order;
 	    test->value = LM;
 	    test->pvalue = xx;

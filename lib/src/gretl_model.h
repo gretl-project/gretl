@@ -39,6 +39,22 @@
 
 #define LIMDEP(c) (c == LOGIT || c == PROBIT || c == TOBIT)
 
+enum gretl_test_types {
+    GRETL_TEST_ADD,
+    GRETL_TEST_ARCH,
+    GRETL_TEST_AUTOCORR,
+    GRETL_TEST_CHOW,
+    GRETL_TEST_CUSUM,
+    GRETL_TEST_GROUPWISE,
+    GRETL_TEST_LOGS,
+    GRETL_TEST_NORMAL,
+    GRETL_TEST_OMIT,
+    GRETL_TEST_RESET,
+    GRETL_TEST_SQUARES,
+    GRETL_TEST_WHITES,
+    GRETL_TEST_MAX
+};
+
 MODEL *gretl_model_new (void);
 
 void gretl_model_init (MODEL *pmod);
@@ -86,9 +102,11 @@ void model_count_minus (void);
 
 void set_model_id (MODEL *pmod);
 
-void gretl_test_init (GRETLTEST *test);
+void gretl_test_init (GRETLTEST *test, int which);
 
-int add_test_to_model (MODEL *pmod, const GRETLTEST *test);
+int add_test_to_model (MODEL *pmod, GRETLTEST *test);
+
+void gretl_model_test_print (GRETLTEST *test, PRN *prn);
 
 void model_list_to_string (int *list, char *buf);
 

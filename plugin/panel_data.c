@@ -1317,11 +1317,8 @@ ml_hetero_test (MODEL *pmod, double s2, const double *uvar,
     x2 = pmod->nobs * log(s2) - s2h;
     df--;
 
-    gretl_test_init(&test);
-    strcpy(test.type, 
-	   N_("Likelihood ratio test for groupwise heteroskedasticity"));
-    strcpy(test.h_0, N_("the units have a common error variance"));
-    test.teststat = GRETL_TEST_LR;
+    gretl_test_init(&test, GRETL_TEST_GROUPWISE);
+    test.teststat = GRETL_STAT_LR;
     test.dfn = df;
     test.value = x2;
     test.pvalue = chisq(x2, df);
@@ -1737,10 +1734,9 @@ int panel_autocorr_test (MODEL *pmod, int order,
 		_("Chi-square"), order, trsq, chisq(trsq, order));
 
 	if (test != NULL) {
-	    strcpy(test->type, N_("LM test for autocorrelation up to order %s"));
-	    strcpy(test->h_0, N_("no autocorrelation"));
-	    sprintf(test->param, "%d", order);
-	    test->teststat = GRETL_TEST_LMF;
+	    gretl_test_init(test, GRETL_TEST_AUTOCORR);
+	    test->order = order;
+	    test->teststat = GRETL_STAT_LMF;
 	    test->dfn = order;
 	    test->dfd = aux.nobs - pmod->ncoeff - order;
 	    test->value = LMF;

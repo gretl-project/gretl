@@ -90,22 +90,6 @@
 /* numbers smaller than the given limit will print as zero */
 #define screen_zero(x)  ((fabs(x) > 1.0e-13)? x : 0.0)
 
-enum prn_codes {
-    GRETL_PRINT_STDOUT,
-    GRETL_PRINT_STDERR,
-    GRETL_PRINT_FILE,
-    GRETL_PRINT_BUFFER,
-    GRETL_PRINT_NULL
-};
-
-enum gretl_print_formats {
-    GRETL_PRINT_FORMAT_PLAIN,
-    GRETL_PRINT_FORMAT_TEX,
-    GRETL_PRINT_FORMAT_TEX_DOC,
-    GRETL_PRINT_FORMAT_RTF,
-    GRETL_PRINT_FORMAT_FIXED
-};
-
 enum ts_codes {
     CROSS_SECTION,
     TIME_SERIES,
@@ -138,13 +122,13 @@ enum progress_return_flags {
 };
 
 enum test_stats {
-    GRETL_TEST_NORMAL_CHISQ,
-    GRETL_TEST_TR2,
-    GRETL_TEST_F,
-    GRETL_TEST_LMF,
-    GRETL_TEST_HARVEY_COLLIER,
-    GRETL_TEST_RESET,
-    GRETL_TEST_LR
+    GRETL_STAT_NORMAL_CHISQ,
+    GRETL_STAT_TR2,
+    GRETL_STAT_F,
+    GRETL_STAT_LMF,
+    GRETL_STAT_HARVEY_COLLIER,
+    GRETL_STAT_RESET,
+    GRETL_STAT_LR
 };
 
 enum gretl_opt_flags {
@@ -249,9 +233,9 @@ struct PATHS_ {
 };
 
 struct GRETLTEST_ {
-    char type[72];
-    char h_0[64];
-    char param[VNAMELEN];
+    int type;
+    int order;
+    char *param;
     unsigned char teststat;
     int dfn, dfd;
     double value;

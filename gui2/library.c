@@ -1229,7 +1229,9 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     orig = vwin->data;
     buf = selector_list(sr);
-    if (*buf == 0) return;
+    if (*buf == 0) {
+	return;
+    }
     
     clear(line, MAXLEN);
     if (selector_code(sr) == ADD) {
@@ -1238,7 +1240,9 @@ void do_add_omit (GtkWidget *widget, gpointer p)
         sprintf(line, "omitfrom %d %s", orig->ID, buf);
     }
 
-    if (check_cmd(line) || bufopen(&prn)) return;
+    if (check_cmd(line) || bufopen(&prn)) {
+	return;
+    }
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
@@ -1249,10 +1253,10 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     if (selector_code(sr) == ADD) { 
         err = add_test(cmd.list, orig, pmod, 
-		       &Z, datainfo, OPT_NONE, prn);
+		       &Z, datainfo, OPT_S, prn);
     } else {
         err = omit_test(cmd.list, orig, pmod,
-			&Z, datainfo, OPT_NONE, prn);
+			&Z, datainfo, OPT_S, prn);
     }
 
     if (err) {
@@ -1288,27 +1292,17 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
     if (w == NULL) {
         return;
     } else {
-        char test_str[64], pval_str[64], type_str[96];
-        gchar *tempstr;
+	PRN *prn;
 
-	get_test_type_string (test, type_str, GRETL_PRINT_FORMAT_PLAIN);
-        get_test_stat_string (test, test_str, GRETL_PRINT_FORMAT_PLAIN);
-        get_test_pval_string (test, pval_str, GRETL_PRINT_FORMAT_PLAIN);
+	if (bufopen(&prn)) return;
 
-        tempstr = g_strdup_printf("%s -\n"
-                                  "  %s: %s\n"
-                                  "  %s: %s\n"
-                                  "  %s = %s\n\n",
-                                  type_str, 
-                                  _("Null hypothesis"), _(test->h_0), 
-                                  _("Test statistic"), test_str, 
-                                  _("with p-value"), pval_str);
-
-	gtk_text_freeze(GTK_TEXT (w));
-	gtk_text_insert(GTK_TEXT (w), fixed_font, NULL, NULL, tempstr, 
-			strlen(tempstr));
-	gtk_text_thaw(GTK_TEXT (w));
-	g_free(tempstr);
+	gretl_model_test_print(test, prn);
+	
+	gtk_text_freeze(GTK_TEXT(w));
+	gtk_text_insert(GTK_TEXT(w), fixed_font, NULL, NULL, prn->buf, 
+			strlen(prn->buf));
+	gtk_text_thaw(GTK_TEXT(w));
+	gretl_print_destroy(prn);
     }
 }
 
@@ -1316,31 +1310,20 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 
 static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 {
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-
     if (w == NULL) {
 	return;
     } else {
+	GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
 	GtkTextIter iter;
-	char test_str[64], pval_str[64], type_str[96];
-	gchar *tempstr;
+	PRN *prn;
 
-	get_test_type_string (test, type_str, GRETL_PRINT_FORMAT_PLAIN);
-	get_test_stat_string (test, test_str, GRETL_PRINT_FORMAT_PLAIN);
-	get_test_pval_string (test, pval_str, GRETL_PRINT_FORMAT_PLAIN);
+	if (bufopen(&prn)) return;
 
-	tempstr = g_strdup_printf("%s -\n"
-				  "  %s: %s\n"
-				  "  %s: %s\n"
-				  "  %s = %s\n\n",
-				  type_str, 
-				  _("Null hypothesis"), _(test->h_0), 
-				  _("Test statistic"), test_str, 
-				  _("with p-value"), pval_str);
+	gretl_model_test_print(test, prn);
 
 	gtk_text_buffer_get_end_iter(buf, &iter);
-	gtk_text_buffer_insert(buf, &iter, tempstr, -1);
-	g_free(tempstr);
+	gtk_text_buffer_insert(buf, &iter, prn->buf, -1);
+	gretl_print_destroy(prn);
     }
 }
 
@@ -2729,10 +2712,8 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
 
 static void normal_test (GRETLTEST *test, FREQDIST *freq)
 {
-    strcpy(test->type, N_("Test for normality of residual"));
-    strcpy(test->h_0, N_("error is normally distributed"));
-    test->param[0] = 0;
-    test->teststat = GRETL_TEST_NORMAL_CHISQ;
+    gretl_test_init(test, GRETL_TEST_NORMAL);
+    test->teststat = GRETL_STAT_NORMAL_CHISQ;
     test->value = freq->test;
     test->dfn = 2;
     test->pvalue = chisq(freq->test, 2);
@@ -5369,8 +5350,11 @@ int gui_exec_line (char *line,
     } 
 
     /* if rebuilding a session, add tests back to models */
-    if (rebuild) ptest = &test;
-    else ptest = NULL;
+    if (rebuild) {
+	ptest = &test;
+    } else {
+	ptest = NULL;
+    }
 
     /* if rebuilding a session, put the commands onto the stack */
     if (rebuild) cmd_init(line);
