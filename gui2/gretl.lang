@@ -19,7 +19,8 @@
 		<end-regex>&quot;</end-regex>
 	</string>
 
-	<keyword-list _name = "Commands" style = "Keyword" case-sensitive="TRUE">
+	<keyword-list _name = "Commands" style = "Keyword" case-sensitive="TRUE"
+           beginning-regex="^">>
 	     <keyword>add</keyword>
 	     <keyword>addto</keyword>
 	     <keyword>adf</keyword>      
@@ -115,6 +116,45 @@
 	     <keyword>varlist</keyword>
 	     <keyword>vartest</keyword>
 	     <keyword>wls</keyword>
+	</keyword-list>
+
+	<keyword-list _name = "Genr-functions" style = "Function" case-sensitive="TRUE">
+	     <keyword>log</keyword> 
+	     <keyword>exp</keyword> 
+	     <keyword>sin</keyword> 
+	     <keyword>cos</keyword> 
+	     <keyword>tan</keyword>
+	     <keyword>atan</keyword>
+	     <keyword>diff</keyword>
+	     <keyword>ldiff</keyword> 
+	     <keyword>mean</keyword>
+	     <keyword>sd</keyword> 
+	     <keyword>min</keyword>
+	     <keyword>max</keyword>
+	     <keyword>sort</keyword> 
+	     <keyword>int</keyword> 
+	     <keyword>ln</keyword>
+	     <keyword>coeff</keyword>
+	     <keyword>abs</keyword> 
+	     <keyword>rho</keyword> 
+	     <keyword>sqrt</keyword> 
+	     <keyword>sum</keyword> 
+	     <keyword>normal</keyword>
+	     <keyword>uniform</keyword> 
+	     <keyword>stderr</keyword>
+	     <keyword>cum</keyword>
+	     <keyword>missing</keyword>
+	     <keyword>misszero</keyword>
+	     <keyword>corr</keyword>
+	     <keyword>vcv</keyword>
+	     <keyword>var</keyword>
+	     <keyword>cov</keyword>
+	     <keyword>median</keyword>
+	     <keyword>zeromiss</keyword>
+	     <keyword>pvalue</keyword>
+	     <keyword>mpow</keyword>
+	     <keyword>mlog</keyword>
+	     <keyword>sst</keyword>
 	</keyword-list>
 
         <pattern-item _name = "Internal-Variables" style = "Data Type">

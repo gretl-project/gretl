@@ -679,7 +679,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 static void maybe_delete_dialog (GtkWidget *widget, selector *sr)
 {
-    if (!sr->error) {
+    if (open_dialog != NULL && !sr->error) {
 	gtk_widget_destroy(sr->dlg);
     }
 }
@@ -1585,8 +1585,11 @@ static const char *data_save_title (int code)
 static void data_save_selection_callback (GtkWidget *w, gpointer p)
 {
     selector *sr = (selector *) p;
+    int code = sr->code;
 
-    if (sr->cmdlist == NULL || *sr->cmdlist == 0) return;
+    if (sr->cmdlist == NULL || *sr->cmdlist == 0) {
+	return;
+    }
 
     if (storelist != NULL) {
 	free(storelist);
@@ -1595,8 +1598,10 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
 
     storelist = g_strdup(sr->cmdlist);
 
-    if (sr->code != COPY_CSV) {
-	file_selector(data_save_title(sr->code), sr->code, NULL);
+    gtk_widget_destroy(sr->dlg);
+
+    if (code != COPY_CSV) {
+	file_selector(data_save_title(code), code, NULL);
     }
 }
 
@@ -1606,5 +1611,6 @@ void data_save_selection_wrapper (int file_code)
 		     _("Copy data") : _("Save data"), 
 		     data_save_selection_callback, file_code, 
 		     NULL);
-    gtk_main();
+    gtk_main(); /* the corresponding gtk_main_quit() is in
+		   the function destroy_selector() */
 }

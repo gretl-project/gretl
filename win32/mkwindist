@@ -88,9 +88,12 @@ do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
 
-# gretl lang file for gtksourceview
+# gretl lang files for gtksourceview
 add_file ${TOPDIR}/gui2/gretl.lang \
   gretl/share/gtksourceview-1.0/language-specs/gretl.lang
+add_file ${TOPDIR}/gui2/gnuplot.lang \
+  gretl/share/gtksourceview-1.0/language-specs/gnuplot.lang
+
 
 # help files, license, logo
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt

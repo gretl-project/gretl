@@ -128,6 +128,7 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
     int i, ncoeff = cf->list[0];
 
     pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, tcrit95(cf->df));
+    /* xgettext:no-c-format */
     pputs(prn, _("      VARIABLE      COEFFICIENT      95% CONFIDENCE "
 	    "INTERVAL\n\n"));      
 
@@ -1492,7 +1493,7 @@ void gretl_print_attach_buffer (PRN *prn, char *buf)
     prn->buf = buf;
     prn->fp = NULL;
     prn->fpaux = NULL;
-    prn->format = GRETL_PRINT_FORMAT_PLAIN;
+    prn->format = GRETL_PRINT_FORMAT_FIXED;
     prn->bufsize = MAXLEN;
 }
 
@@ -1589,8 +1590,6 @@ int pprintf (PRN *prn, const char *template, ...)
 
 int pputs (PRN *prn, const char *s)
 {
-    size_t blen;
-
     if (prn == NULL) return 0;
 
     if (prn->fp != NULL) {
@@ -1600,19 +1599,24 @@ int pputs (PRN *prn, const char *s)
 
     if (prn->buf == NULL) return 1;
 
-    blen = strlen(prn->buf);
+    if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
+	/* a fixed-length buffer */
+	strcpy(prn->buf, s);
+    } else {
+	size_t blen = strlen(prn->buf);
 
-    if (prn->bufsize - blen < 1024) { 
-	char *tmp;
+	if (prn->bufsize - blen < 1024) { 
+	    char *tmp;
 
-	prn->bufsize *= 2; 
-	tmp = realloc(prn->buf, prn->bufsize); 
-	if (tmp == NULL) return 1;
-	prn->buf = tmp;
-	memset(prn->buf + blen, 0, 1);
+	    prn->bufsize *= 2; 
+	    tmp = realloc(prn->buf, prn->bufsize); 
+	    if (tmp == NULL) return 1;
+	    prn->buf = tmp;
+	    memset(prn->buf + blen, 0, 1);
+	}
+
+	strcpy(prn->buf + blen, s);
     }
-
-    strcpy(prn->buf + blen, s);
 
     return 0;
 }

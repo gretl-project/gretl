@@ -145,7 +145,42 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
     return 0;
 }
 
-int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
+static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
+{
+    xmlNodePtr p = node->xmlChildrenNode;
+    int maxrow = 0, maxcol = 0;
+    char *tmp;
+
+    while (p) {
+	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
+	    int i, j;
+
+	    tmp = xmlGetProp(p, (UTF) "Row");
+	    if (tmp) {
+		i = atoi(tmp);
+		free(tmp);
+		if (i > maxrow) maxrow = i;
+	    }
+	    tmp = xmlGetProp(p, (UTF) "Col");
+	    if (tmp) {
+		j = atoi(tmp);
+		free(tmp);
+		if (j > maxcol) maxcol = j;
+	    }
+	}
+	p = p->next;
+    }
+
+    fprintf(stderr, "wsheet_get_real_size: maxrow=%d, maxcol=%d\n",
+	    maxrow, maxcol);
+
+    sheet->maxcol = maxcol;
+    sheet->maxrow = maxrow;
+
+    return 0;
+}
+
+static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 {
     xmlNodePtr p = node->xmlChildrenNode;
     char *tmp;
@@ -217,8 +252,9 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 		}
 		if (!err && (tmp = xmlNodeGetContent(p))) {
 		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
-			if (i_real == 0) 
+			if (i_real == 0) {
 			    strncat(sheet->label[t_real], tmp, 8);
+			}
 		    }
 		    if (VTYPE_IS_NUMERIC(vtype)) {
 			x = atof(tmp);
@@ -228,7 +264,9 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 		    else if (vtype == VALUE_STRING) {
 			if (t_real == 0) {
 			    strncat(sheet->varname[i_real], tmp, 8);
-			    if (check_varname(sheet->varname[i_real])) {
+			    if (i_real == 0 && !strcmp(tmp, "obs")) {
+				; /* keep going */
+			    } else if (check_varname(sheet->varname[i_real])) {
 				invalid_varname(errbuf);
 				err = 1;
 			    }
@@ -334,6 +372,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet)
 			}
 			else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "Cells")) {
+			    wsheet_get_real_size(snode, sheet);
 			    err = wsheet_parse_cells(snode, sheet);
 			}
 			snode = snode->next;
@@ -423,8 +462,7 @@ static int wbook_get_info (const char *fname, wbook *book)
     return err;
 }
 
-static 
-int wsheet_setup (wsheet *sheet, wbook *book, int n)
+static int wsheet_setup (wsheet *sheet, wbook *book, int n)
 {
     size_t len = strlen(book->sheetnames[n]) + 1;
     
@@ -482,7 +520,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     DATAINFO *newinfo;
 
     errbuf = errtext;
-    errbuf[0] = '\0';
+    *errbuf = '\0';
 
     newinfo = datainfo_new();
     if (newinfo == NULL) {
@@ -531,8 +569,9 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     wbook_free(&book);
 
     if (!err) {
-	int i, t, i_sheet, label_strings = sheet.text_cols;
+	int i, j, t, i_sheet, label_strings = sheet.text_cols;
 	int time_series = 0;
+	int blank_cols = 0;
 
 	if (sheet.text_cols == 0 && obs_column(sheet.label[0])) {
 	    int pd = consistent_date_labels(&sheet);
@@ -566,12 +605,24 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 	newinfo->extra = 0; 
 
+	j = 1;
 	for (i=1; i<newinfo->v; i++) {
 	    i_sheet = i - 1 + sheet.text_cols;
-	    strcpy(newinfo->varname[i], sheet.varname[i_sheet]);
-	    for (t=0; t<newinfo->n; t++) {
-		newZ[i][t] = sheet.Z[i_sheet][t+1];
+	    if (*sheet.varname[i_sheet] == '\0') {
+		blank_cols++;
+	    } else {
+		strcpy(newinfo->varname[j], sheet.varname[i_sheet]);
+		for (t=0; t<newinfo->n; t++) {
+		    newZ[j][t] = sheet.Z[i_sheet][t+1];
+		}
+		j++;
 	    }
+	}
+
+	if (blank_cols > 0) {
+	    fprintf(stderr, "Dropping %d apparently blank column(s)\n", 
+		    blank_cols);
+	    dataset_drop_vars(blank_cols, &newZ, newinfo);
 	}
 
 	if (label_strings && wsheet_labels_complete(&sheet)) {
@@ -603,5 +654,4 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     return err;
-
 }

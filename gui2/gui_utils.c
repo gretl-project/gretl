@@ -607,21 +607,24 @@ int get_worksheet_data (const char *fname, int datatype, int append)
 	return 0;
 
     if (err) {
-	if (strlen(errtext)) errbox(errtext);
-	else errbox(_("Failed to import spreadsheet data"));
+	if (*errtext != '\0') {
+	    errbox(errtext);
+	}
+	else {
+	    errbox(_("Failed to import spreadsheet data"));
+	}
 	return 1;
     } else {
-	if (strlen(errtext)) errbox(errtext);
+	if (*errtext != '\0') errbox(errtext);
     }
 
     if (append) {
 	infobox(_("Data appended OK"));
-	data_status |= MODIFIED_DATA;
-	register_data(fname, NULL, 0);
+	register_data(NULL, NULL, 0);
     } else {
 	data_status |= IMPORT_DATA;
 	strcpy(paths.datfile, fname);
-	if (mdata != NULL) register_data(fname, NULL, 1);
+	register_data(fname, NULL, 1);
     }
 
     return 0;
@@ -632,7 +635,8 @@ int get_worksheet_data (const char *fname, int datatype, int append)
 void do_open_data (GtkWidget *w, gpointer data, int code)
      /* cases: 
 	- called from dialog: user has said Yes to opening data file,
-	although a data file is already open
+	although a data file is already open (or user wants to append
+	data)
 	- reached without dialog, in expert mode or when no datafile
 	is open yet
      */
@@ -714,9 +718,12 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     /* trash the practice files window that launched the query? */
     if (fwin != NULL) gtk_widget_destroy(fwin->w);
 
-    strcpy(paths.datfile, trydatfile);
-
-    register_data(paths.datfile, NULL, 1);
+    if (append) {
+	register_data(NULL, NULL, 0);
+    } else {
+	strcpy(paths.datfile, trydatfile);
+	register_data(paths.datfile, NULL, 1);
+    } 
 }
 
 /* ........................................................... */
@@ -1008,6 +1015,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int edit_ok = (vwin->role == EDIT_SCRIPT ||
 		   vwin->role == EDIT_HEADER ||
 		   vwin->role == EDIT_NOTES ||
+		   vwin->role == GR_PLOT || 
+		   vwin->role == GR_BOX ||
 		   vwin->role == SCRIPT_OUT);
 
     int save_as_ok = (vwin->role != EDIT_HEADER && 
@@ -1036,6 +1045,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		stockicon = GTK_STOCK_SAVE;
 		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
 		    toolfunc = buf_edit_save;
+		} else if (vwin->role == GR_PLOT) {
+		    toolfunc = save_plot_commands_callback;
 		} else {
 		    toolfunc = file_viewer_save;
 		}
@@ -1051,7 +1062,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    break;
 	case 2:
 	    if (vwin->role == GR_PLOT) {
-		stockicon = GTK_STOCK_CONVERT;
+		stockicon = GTK_STOCK_EXECUTE;
 		toolfunc = gp_send_callback;
 	    } else
 		toolfunc = NULL;
@@ -1167,6 +1178,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_NOTES:
 	title = g_strdup(_("gretl: session notes")); break;
     case GR_PLOT:
+    case GR_BOX:
 	title = g_strdup(_("gretl: edit plot commands")); break;
     case SCRIPT_OUT:
 	title = g_strdup(_("gretl: script output")); break;
@@ -1584,7 +1596,8 @@ gtk_source_buffer_load_with_encoding (GtkSourceBuffer *sbuf,
 }
 
 static void source_buffer_insert_file (GtkSourceBuffer *sbuf, 
-				       const char *filename)
+				       const char *filename,
+				       int role)
 {
     GtkSourceLanguagesManager *manager;    
     GtkSourceLanguage *language = NULL;
@@ -1592,9 +1605,15 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf,
 		
     manager = g_object_get_data (G_OBJECT (sbuf), "languages-manager");
 
-    language = 
-	gtk_source_languages_manager_get_language_from_mime_type 
-	(manager, "application/x-gretlsession");
+    if (role == GR_PLOT) {
+	language = 
+	    gtk_source_languages_manager_get_language_from_mime_type 
+	    (manager, "application/x-gnuplot");
+    } else {
+	language = 
+	    gtk_source_languages_manager_get_language_from_mime_type 
+	    (manager, "application/x-gretlsession");
+    }
 
     if (language == NULL) {
 	g_object_set (G_OBJECT(sbuf), "highlight", FALSE, NULL);
@@ -1728,7 +1747,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
 
 #ifdef USE_GTKSOURCEVIEW
-    if (doing_script) {
+    if (doing_script || role == GR_PLOT) {
 	create_source(vwin, &sbuf, hsize, vsize, editable);
 	tbuf = GTK_TEXT_BUFFER(sbuf);
 	vwin->sbuf = sbuf;
@@ -1777,8 +1796,8 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
 
 #ifdef USE_GTKSOURCEVIEW
-    if (doing_script) {
-	source_buffer_insert_file(sbuf, filename);
+    if (doing_script || role == GR_PLOT) {
+	source_buffer_insert_file(sbuf, filename, role);
     } else {
 	text_buffer_insert_file(tbuf, filename, role);
     }

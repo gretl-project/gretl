@@ -86,7 +86,8 @@ typedef enum {
     GRETL_PRINT_FORMAT_PLAIN,
     GRETL_PRINT_FORMAT_TEX,
     GRETL_PRINT_FORMAT_TEX_DOC,
-    GRETL_PRINT_FORMAT_RTF
+    GRETL_PRINT_FORMAT_RTF,
+    GRETL_PRINT_FORMAT_FIXED
 } gretl_print_formats;
 
 typedef enum {

@@ -565,8 +565,7 @@ int get_worksheet_data (const char *fname, int datatype, int append)
 
     if (append) {
 	infobox(_("Data appended OK"));
-	data_status |= MODIFIED_DATA;
-	register_data(fname, NULL, 0);
+	register_data(NULL, NULL, 0);
     } else {
 	data_status |= IMPORT_DATA;
 	strcpy(paths.datfile, fname);
@@ -657,9 +656,12 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     /* trash the practice files window that launched the query? */
     if (fwin != NULL) gtk_widget_destroy(fwin->w); 
 
-    strcpy(paths.datfile, trydatfile);
-
-    register_data(paths.datfile, NULL, 1);
+    if (append) {
+	register_data(NULL, NULL, 0);
+    } else {
+	strcpy(paths.datfile, trydatfile);
+	register_data(paths.datfile, NULL, 1);
+    }
 }
 
 /* ........................................................... */

@@ -88,4 +88,6 @@ int print_session_notes (const char *fname);
 
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 
+void save_plot_commands_callback (GtkWidget *w, gpointer p);
+
 #endif /* SESSION_H */

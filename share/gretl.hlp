@@ -1023,7 +1023,11 @@ missing (leaving only complete cases).
 
 To select observations for which a particular variable has no missing values,
 use "Sample/Restrict based on criterion..." and supply the Boolean condition
-"!missing(varname)".
+"!missing(varname)".  
+
+If the observations are named, you can re-sample to exclude a particular
+observation using, say, obs!="France" as the Boolean criterion.  The
+observation name must be enclosed in double quotes.
 
 One point should be noted about defining a sample based on a dummy variable, a
 Boolean expression, or on the missing values criterion: Any "structural"

@@ -154,27 +154,6 @@ static char *session_items[] = {
 #endif
 };
 
-GtkItemFactoryEntry gp_edit_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
-    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL, GNULL },
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL, GNULL },
-    { N_("/File/Send to _gnuplot"), NULL, gp_to_gnuplot, 0, NULL, GNULL },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
-GtkItemFactoryEntry boxplot_edit_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
-    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL, GNULL },
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL, GNULL },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
 /* file-scope globals */
 
 SESSION session;            /* hold models, graphs */
@@ -1097,6 +1076,11 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     if (!quiet) infobox(_("plot commands saved"));
 }
 
+void save_plot_commands_callback (GtkWidget *w, gpointer p)
+{
+    auto_save_gp(p, 0, NULL);
+}
+
 /* ........................................................... */
 
 #ifdef G_OS_WIN32
@@ -1984,9 +1968,8 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 #ifdef GNUPLOT_PNG
 	    remove_png_term_from_plotfile(graph->fname, NULL);
 #endif
-	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, 
-		      (obj->sort == 'g')? gp_edit_items : 
-		      boxplot_edit_items);
+	    view_file(graph->fname, 1, 0, 78, 400, (obj->sort == 'g')? GR_PLOT :
+		      GR_BOX, NULL);
 	}
     }   
     else if (strcmp(item, _("Delete")) == 0) {
@@ -1995,8 +1978,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, _("Add to model table")) == 0) {
 	if (obj->sort == 'm') {
 	    MODEL *pmod = (MODEL *) obj->data;
-	    add_to_model_table_list((const MODEL *) pmod,
-				    MODEL_ADD_FROM_MENU);
+	    add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_FROM_MENU);
 	}
     }
     else if (strcmp(item, _("Clear table")) == 0) {

@@ -3458,7 +3458,7 @@ void do_open_csv_box (char *fname, int code, int append)
 {
     int err;
     PRN *prn;
-    char buf[30];
+    char buf[32];
 
     if (bufopen(&prn)) return;
 
@@ -3476,10 +3476,13 @@ void do_open_csv_box (char *fname, int code, int append)
     if (err) return;
 
     data_status |= IMPORT_DATA;
-    /* data_status |= MODIFIED_DATA; */
-    strcpy(paths.datfile, fname);
 
-    register_data(fname, NULL, !append);
+    if (append) {
+	register_data(NULL, NULL, 0);
+    } else {
+	strcpy(paths.datfile, fname);
+	register_data(fname, NULL, 1);
+    }
 }
 
 /* ........................................................... */

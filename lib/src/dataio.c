@@ -1880,10 +1880,15 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
     return -1;
 }
 
-#define MSG(p, s, g) do { \
-                        if (g) pputs(p, s); \
-                        else pprintf(p, "   %s\n", s); \
-                     } while (0); 
+static inline void merge_msg (PRN *prn, const char *text, int gui)
+{
+    fprintf(stderr, "%s\n", text);
+    if (gui) {
+	pputs(prn, text);
+    } else{
+	pprintf(prn, "   %s\n", text);
+    }
+}
 
 /**
  * merge_data:
@@ -1911,12 +1916,12 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     /* first check for conformability */
 
     if (pdinfo->pd != addinfo->pd) {
-	MSG(prn, _("Data frequency does not match"), gui);
+	merge_msg(prn, _("Data frequency does not match"), gui);
 	err = 1;
     }
 
     if (!err && pdinfo->n != addinfo->n && pdinfo->v != addinfo->v) {
-	MSG(prn, _("New data not conformable for appending"), gui);
+	merge_msg(prn, _("New data not conformable for appending"), gui);
 	err = 1;
     }
     else if (!err && pdinfo->n == addinfo->n && pdinfo->v != addinfo->v)
@@ -1938,11 +1943,11 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
     if (addcols) {
 	if (strcmp(pdinfo->stobs, addinfo->stobs)) {
-	    MSG(prn, _("Starting observation does not match"), gui);
+	    merge_msg(prn, _("Starting observation does not match"), gui);
 	    err = 1;
 	} 
 	else if (strcmp(pdinfo->endobs, addinfo->endobs)) {
-	    MSG(prn, _("Ending observation does not match"), gui);
+	    merge_msg(prn, _("Ending observation does not match"), gui);
 	    err = 1;
 	}
 	if (err) addcols = 0;
@@ -1951,11 +1956,11 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     else if (addrows) {
 	if (pdinfo->time_series && 
 	    dateton(addinfo->stobs, pdinfo) != pdinfo->n) {
-	    MSG(prn, _("Starting point of new data does not fit"), gui);
+	    merge_msg(prn, _("Starting point of new data does not fit"), gui);
 	    err = 1;
 	}
 	else if (pdinfo->markers != addinfo->markers) {
-	    MSG(prn, _("Inconsistency in observation markers"), gui);
+	    merge_msg(prn, _("Inconsistency in observation markers"), gui);
 	    err = 1;
 	}
 	if (err) addrows = 0;
@@ -1968,7 +1973,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
        int i, t, nvars = pdinfo->v + addinfo->v - 1;
 
        if (dataset_add_vars(addinfo->v - 1, pZ, pdinfo)) {
-	   MSG(prn, _("Out of memory adding data"), gui);
+	   merge_msg(prn, _("Out of memory adding data"), gui);
 	   err = 1;
        }
 
@@ -2011,12 +2016,12 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
        }
 
        if (err) { 
-	   MSG(prn, _("Out of memory adding data"), gui);
+	   merge_msg(prn, _("Out of memory adding data"), gui);
        } else {
 	   pdinfo->n = tnew;
 	   ntodate(pdinfo->endobs, tnew - 1, pdinfo);
 	   pdinfo->t2 = pdinfo->n - 1;
-	   MSG(prn, _("Data appended OK"), gui);
+	   merge_msg(prn, _("Data appended OK"), gui);
        }
    }
 

@@ -135,6 +135,7 @@ install-gnome: $(PROG) installdirs
 install-lang: 
 	$(tooldir)/mkinstalldirs $(langdir)
 	$(INSTALL_DATA) $(topsrc)/gui2/gretl.lang $(langdir)
+	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(langdir)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(bindir) 
