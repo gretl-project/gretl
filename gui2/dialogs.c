@@ -369,7 +369,7 @@ void about_dialog (gpointer data)
 #ifdef G_OS_WIN32
 			       BUILD_DATE
 #endif
-			       "Copyright (C) 2000-2001 Allin Cottrell "
+			       "Copyright (C) 2000-2004 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
 			       "http://gretl.sourceforge.net/\n"
 			       "%s", version_string, tr_credit);
