@@ -1,20 +1,31 @@
 DOC = nist
 SRC = $(DOC).xml
 DSL = $(DOC)-both.dsl
-XMLDCL = /opt/jade/share/xml.dcl
+ALTDSL = ../gretl-a4.dsl
+MATHSS = ../TeXMath.dsl
 HMATHSS = ../HTMLMath.dsl
 
-all: nist.html
+pdf: $(DOC).tex jadetex.cfg lucidabr.tex
+	-pdfjadetex $(DOC)
+	-pdfjadetex $(DOC)
+	-pdfjadetex $(DOC)
 
-nist.html: $(SRC) $(DSL) $(HMATHSS) figures
-	jade -t sgml -i html -V nochunks -d $(DSL)\#html $(XMLDCL) $< > $@
-	../texmath2png.pl equation-list.sgml
+altpdf: $(DOC)_a4.tex jadetex.cfg lucidabr.tex
+	-pdfjadetex $(DOC)_a4
+	-pdfjadetex $(DOC)_a4
+	-pdfjadetex $(DOC)_a4
 
-.PHONY:
+$(DOC).tex: $(SRC) $(CHAPTERS) $(DSL) $(MATHSS)
+	jade -t tex -d $(DSL)\#print /opt/jade/share/xml.dcl $(SRC)
+	../unescape_math.pl $(DOC).tex
 
-figures:
-	mkdir -p figures
-
+html: $(SRC) db2html $(DSL) $(HMATHSS) 
+	mkdir -p $(DOC)-html
+	cd $(DOC)-html && jade -t sgml -ihtml -V nochunks -d ../$(DSL)\#html \
+	/opt/jade/share/xml.dcl ../$(SRC) > index.html
+	cd $(DOC)-html && ../../texmath2png.pl equation-list.sgml
+        
 clean:
-	rm -f *.html equation-list.sgml
-	rm -rf figures
+	rm -f *.aux *.log *.out *.pdf $(DOC).tex
+	rm -rf $(DOC)-html 
+        
