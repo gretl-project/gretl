@@ -2148,8 +2148,8 @@ void make_menu_item (gchar *label, GtkWidget *menu,
 
     item = gtk_menu_item_new_with_label(label);
     gtk_menu_append(GTK_MENU(menu), item);
-    gtk_signal_connect_object(GTK_OBJECT(item), "activate",
-			      GTK_SIGNAL_FUNC(func), data);
+    gtk_signal_connect(GTK_OBJECT(item), "activate",
+		       GTK_SIGNAL_FUNC(func), data);
     gtk_widget_show(item);
 }
 

@@ -394,17 +394,17 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 
 /* ........................................................... */
 
-static void gui_display_series (windata_t *dbdat)
+static void gui_display_series (GtkWidget *w, windata_t *dbdat)
 {
     gui_get_series(dbdat, DB_DISPLAY, NULL);
 }
 
-static void gui_graph_series (windata_t *dbdat)
+static void gui_graph_series (GtkWidget *w, windata_t *dbdat)
 {
     gui_get_series(dbdat, DB_GRAPH, NULL);
 }
 
-static void gui_import_series (windata_t *dbdat)
+static void gui_import_series (GtkWidget *w, windata_t *dbdat)
 {
     gui_get_series(dbdat, DB_IMPORT, NULL);
 }
@@ -735,7 +735,8 @@ static int rats_populate_series_list (windata_t *dbdat)
 
 /* ......................................................... */
 
-static gint db_popup_handler (GtkWidget *widget, GdkEvent *event)
+static gint db_popup_handler (GtkWidget *widget, GdkEvent *event,
+			      gpointer data)
 {
     GdkModifierType mods;
 
@@ -743,7 +744,7 @@ static gint db_popup_handler (GtkWidget *widget, GdkEvent *event)
     
     if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
 	GdkEventButton *bevent = (GdkEventButton *) event; 
-	gtk_menu_popup (GTK_MENU (widget), NULL, NULL, NULL, NULL,
+	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
 	return TRUE;
     }
@@ -791,9 +792,9 @@ static GtkWidget *database_window (windata_t *ddata)
     }    
     gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
 
-    gtk_signal_connect_object (GTK_OBJECT(ddata->listbox), "button_press_event",
-			       GTK_SIGNAL_FUNC(db_popup_handler), 
-			       (gpointer) ddata->popup);
+    gtk_signal_connect (GTK_OBJECT(ddata->listbox), "button_press_event",
+			GTK_SIGNAL_FUNC(db_popup_handler), 
+			(gpointer) ddata->popup);
 
     gtk_signal_connect_after (GTK_OBJECT (ddata->listbox), "select_row", 
 			      GTK_SIGNAL_FUNC (selectrow), 
