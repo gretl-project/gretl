@@ -154,7 +154,7 @@
   ;; Identifies the default extension for admonition graphics. This allows
   ;; backends to select different images (e.g., EPS for print, PNG for
   ;; PDF, etc.)
-  "png")
+  ".png")
   
 (define %graphic-extensions% 
   ;; List of graphic filename extensions
