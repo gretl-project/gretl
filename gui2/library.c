@@ -706,7 +706,8 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	N_("with constant"),
 	N_("with constant and trend"),
 	N_("with constant, trend and trend squared"),
-	N_("show regression results")
+	N_("show regression results"),
+	N_("test down from maximum lag order")
     };
     const char *kpss_opts[] = {
 	N_("include a trend"),
@@ -719,17 +720,23 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     const char *kpss_spintext = N_("Lag order for KPSS test:");
     const char *title, *spintext, **opts;
 
-    int active[] = { 0, 1, 1, 1, 0 };
-    int actmax = (action == ADF)? 5 : 2;
-    int order = 1;
+    /* save the user's settings, per session */
+    static int active[] = { 0, 1, 1, 1, 0, 0 };
+    static int order = 1;
+
+    int actmax = (action == ADF)? 6 : 2;
     int omax, err;
+
+    if (order < 0) {
+	order = -order;
+    }
 
     if (action == ADF) {
 	title = adf_title;
 	spintext = adf_spintext;
 	opts = adf_opts;
 	if (datainfo->pd == 1) {
-	    omax = 8;
+	    omax = 10;
 	} else {
 	    omax = 3 * datainfo->pd;
 	}
@@ -751,10 +758,11 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	okT = ok_obs_in_series(mdata->active_var);	
 	omax = okT / 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
-	if (order > omax) {
-	    order = omax;
-	}
     }
+
+    if (order > omax) {
+	order = omax;
+    }    
 
     err = checks_dialog(_(title), 
 			opts, actmax,
@@ -782,6 +790,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	if (active[2]) strcat(line, " --ct");
 	if (active[3]) strcat(line, " --ctt");
 	if (active[4]) strcat(line, " --verbose");
+	if (active[5]) order = -order; /* auto-trim the lag order */
     } else {
 	if (active[0]) strcat(line, " --trend");
 	if (active[1]) strcat(line, " --verbose");
