@@ -399,6 +399,8 @@ static int block_retained (const char *s)
 {
     int nrows = 0;
 
+    printf("block_retained: s = '%s'\n", s);
+
     while (*s) {
 	if (*s == '1') nrows++;
 	if (nrows > 1) return 1;
@@ -410,7 +412,8 @@ static int block_retained (const char *s)
 
 static char *make_panel_signature (const DATAINFO *pdinfo,
 				   const char *mask,
-				   int mt1, int mt2)
+				   int mt1, int mt2,
+				   int neg)
 {
     char *sig;
     size_t sz = pdinfo->n + pdinfo->n / pdinfo->pd;
@@ -427,7 +430,11 @@ static char *make_panel_signature (const DATAINFO *pdinfo,
 	    if (t < mt1 || t > mt2) {
 		sig[i++] = '0';
 	    } else {
-		sig[i++] = (mask[t - mt1] != 0)? '1' : '0';
+		if (neg) {
+		    sig[i++] = (mask[t - mt1] != 1)? '1' : '0';
+		} else {
+		    sig[i++] = (mask[t - mt1] != 0)? '1' : '0';
+		}
 	    }
 	}
     }
@@ -439,12 +446,12 @@ static int
 real_mask_leaves_balanced_panel (const char *mask,
 				 const DATAINFO *pdinfo,
 				 int *new_blocks,
-				 int mt1, int mt2)
+				 int mt1, int mt2, int neg)
 {
     int i;
     int ok_blocks = 0, unbal = 0;
     int nblocks = pdinfo->n / pdinfo->pd;
-    char *sig = make_panel_signature(pdinfo, mask, mt1, mt2);
+    char *sig = make_panel_signature(pdinfo, mask, mt1, mt2, neg);
     char *sig_0 = NULL;
 
     /* FIXME: allow for possibility that starting obs is not 1:1 */
@@ -467,7 +474,7 @@ real_mask_leaves_balanced_panel (const char *mask,
 	    if (!unbal) {
 		ok_blocks++;
 	    }
-	}
+	} 
 	if (unbal) {
 	    break;
 	}
@@ -487,7 +494,8 @@ int model_mask_leaves_balanced_panel (const MODEL *pmod,
 {
     return real_mask_leaves_balanced_panel(pmod->missmask, 
 					   pdinfo, NULL,
-					   pmod->t1, pmod->t2);
+					   pmod->t1, pmod->t2,
+					   1);
 }
 
 /* when subsampling cases from a panel dataset, if the resulting
@@ -503,7 +511,7 @@ maybe_reconstitute_panel (const DATAINFO *pdinfo,
     int bal, ok_blocks = 0;
 
     bal = real_mask_leaves_balanced_panel(mask, pdinfo, &ok_blocks,
-					  0, pdinfo->n - 1);
+					  0, pdinfo->n - 1, 0);
 
     if (bal && ok_blocks > 1) {
 	char line[32];
