@@ -1473,7 +1473,9 @@ void exec_line (char *line, PRN *prn)
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
 	/* is this OK? */
-	if (optflag) outcovmx(models[0], datainfo, !batch, prn); 
+	if (optflag) {
+	    outcovmx(models[0], datainfo, !batch, prn); 
+	}
 	break;
 
 #ifdef notyet

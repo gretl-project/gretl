@@ -617,11 +617,19 @@ void text_print_matrix (const double *rr, const int *list,
     int nls = (pmod != NULL && pmod->ci == NLS);
     char s[16];
     enum { FIELDS = 5 };
-
+    
     if (pmod != NULL) covhdr(prn);
 
     m = 1;
-    lo = list[0];
+
+    if (pmod != NULL && pmod->ci == TSLS) {
+	i = 1;
+	lo = 0;
+	while (list[i++] != 999) lo++;
+    } else {
+	lo = list[0];
+    }
+
     for (i=0; i<=lo/FIELDS; i++) {
 	nf = i * FIELDS;
 	li2 = lo - nf;
