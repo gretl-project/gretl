@@ -1436,7 +1436,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 
 /* #define PRN_DEBUG */
 
-#define SMAX 6  /* stipulated max. signif. digits */
+#define SMAX 7  /* stipulated max. signif. digits */
 
 static int get_signif (double *x, int n)
      /* return either (a) the number of significant digits in

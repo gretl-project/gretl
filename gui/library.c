@@ -3142,7 +3142,9 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 
     if (write_data(mydatfile, command.list, Z, datainfo, 
 		   data_option(opt), &paths)) {
-	errbox(_("Write of data file failed"));
+	sprintf(errtext, _("Write of data file failed\n%s"),
+		get_gretl_errmsg());
+	errbox(errtext);
 	return 1;
     }
 

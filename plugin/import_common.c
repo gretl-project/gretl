@@ -41,9 +41,14 @@ static int label_is_date (char *str)
     size_t len = strlen(str);
     int i, d, pd = 0;
     double dd, sub;
+    static int decpoint;
 
-    for (i=0; i<len; i++)
-	if (str[i] == ':') str[i] = '.';
+    if (decpoint == 0) decpoint = get_local_decpoint();
+
+    for (i=0; i<len; i++) {
+	if (str[i] == ':') str[i] = decpoint;
+	if (decpoint == ',' && str[i] == '.') str[i] = decpoint; 
+    }
      
     if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
 	d > 0 && d < 3000) {

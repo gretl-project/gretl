@@ -1,5 +1,7 @@
-version 0.998
+version 0.998 (not released) 
 - try to support LC_NUMERIC conversion automagically
+- add option to Preferences to enable/disable localized
+  LC_NUMERIC
 - fix listings of recently opened files on menus under NLS
 - fix up formatting of fitted/residual printout
 

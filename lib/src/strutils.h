@@ -64,6 +64,8 @@ char *safecpy (char *targ, const char *src, int n);
 
 int doing_nls (void);
 
+int reset_local_decpoint (void);
+
 int get_local_decpoint (void);
 
 double obs_str_to_double (const char *obs);

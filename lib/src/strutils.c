@@ -533,16 +533,26 @@ int doing_nls (void)
  *
  */
 
-int get_local_decpoint (void)
+static int decpoint;
+
+int reset_local_decpoint (void)
 {
 #ifdef ENABLE_NLS
     struct lconv *lc;
-    static int decpoint;
 
-    if (decpoint == 0) {
-	lc = localeconv();
-	decpoint = *lc->decimal_point;
-    }
+    lc = localeconv();
+    decpoint = *lc->decimal_point;
+    return decpoint;
+#else
+    return '.';
+#endif
+}
+
+
+int get_local_decpoint (void)
+{
+#ifdef ENABLE_NLS
+    if (decpoint == 0) decpoint = reset_local_decpoint();
     return decpoint;
 #else
     return '.';

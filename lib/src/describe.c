@@ -408,9 +408,9 @@ int corrgram (const int varno, const int order, double ***pZ,
     err = get_pacf(pacf, &maxlag, varno, pZ, pdinfo);
     pacf[0] = acf[1];
     if (!err) {
-	pprintf(prn, _("\nPartial autocorrelations"));
+	pprintf(prn, "\n%s", _("Partial autocorrelations"));
 	if (maxlag < m) 
-	    pprintf(prn, _(" (to lag %d):\n\n"), maxlag);
+	    pprintf(prn, " (%s %d):\n\n", _("to lag"), maxlag);
 	else
 	    pprintf(prn, ":\n\n");
 	for (l=1; l<=maxlag; l++) {
@@ -419,26 +419,27 @@ int corrgram (const int varno, const int order, double ***pZ,
 	}
     }
     pprintf(prn, "\n");
-    if (maxlag%5 > 0) pprintf(prn, "\n");
+    if (maxlag % 5 > 0) pprintf(prn, "\n");
 
     if (gnuplot_init(ppaths, &fq)) return E_FOPEN;
 
     fprintf(fq, "# correlogram\n");
-    fprintf(fq, "set xlabel \"lag\"\n");
+    fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
     fprintf(fq, "set xzeroaxis\n");
     fprintf(fq, "set title \"Correlogram for %s\"\n", pdinfo->varname[varno]);
     if (maxlag) {
-	fprintf(fq, "plot '-' using 1:2 title 'autocorrelations' "
-		"w impulses, \\\n"
-		"'-' using 1:2 title 'partial autocorrelations");
+	fprintf(fq, "plot '-' using 1:2 title '%s' "
+		"w impulses, \\\n'-' using 1:2 title '%s",
+		_("autocorrelations"), _("partial autocorrelations"));
 	if (maxlag < m)
-	    fprintf(fq, "(to lag %d)' w impulses\n", maxlag);
+	    fprintf(fq, "(%s %d)' w impulses\n", _("to lag"), maxlag);
 	else
 	    fprintf(fq, "' w impulses\n");
     } else {
 	fprintf(fq, "set nokey\n");
 	fprintf(fq, "plot '-' using 1:2 w impulses\n");
     }
+
     /* send data inline */
 #ifdef LOCAL_NUMERIC
     setlocale(LC_NUMERIC, "C");
@@ -610,16 +611,18 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     xmax = roundup_half(nobs);
 
     if (!batch && gnuplot_init(ppaths, &fq) == 0) {
+	char titlestr[80];
+
 	fprintf(fq, "# periodogram\n");
 	fprintf(fq, "set xtics nomirror\n"); 
 	if (pdinfo->pd == 4)
-	    fprintf(fq, "set x2label 'quarters'\n");
+	    fprintf(fq, "set x2label '%s'\n", _("quarters"));
 	else if (pdinfo->pd == 12)
-	    fprintf(fq, "set x2label 'months'\n");
+	    fprintf(fq, "set x2label '%s'\n", _("months"));
 	else if (pdinfo->pd == 1 && pdinfo->time_series == TIME_SERIES)
-	    fprintf(fq, "set x2label 'years'\n");
+	    fprintf(fq, "set x2label '%s'\n", _("years"));
 	else
-	    fprintf(fq, "set x2label 'periods'\n");
+	    fprintf(fq, "set x2label '%s'\n", _("periods"));
 	fprintf(fq, "set x2range [0:%d]\n", xmax);
 	fprintf(fq, "set x2tics(");
 	k = (nobs / 2) / 6;
@@ -628,12 +631,15 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 		    (double) (nobs / 2) / (2 * t), t);
 	}
 	fprintf(fq, "\"\" %d)\n", nobs);
-	fprintf(fq, "set xlabel 'scaled frequency'\n");
+	fprintf(fq, "set xlabel '%s'\n", _("scaled frequency"));
 	fprintf(fq, "set xzeroaxis\n");
 	fprintf(fq, "set nokey\n");
-	fprintf(fq, "set title 'Spectrum of %s", pdinfo->varname[varno]);
-	if (opt) 
-	    fprintf(fq, " (Bartlett window, length %d)'\n", L);
+	sprintf(titlestr, _("Spectrum of %s"), pdinfo->varname[varno]);
+	fprintf(fq, "set title '%s", titlestr);
+	if (opt) {
+	    sprintf(titlestr, _("Bartlett window, length %d"), L);
+	    fprintf(fq, " (%s)'\n", titlestr);
+	}
 	else
 	    fprintf(fq, "'\n");
 	fprintf(fq, "set xrange [0:%d]\n", xmax);

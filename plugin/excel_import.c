@@ -791,6 +791,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		newinfo->pd = pd;
 		newinfo->sd0 = atof(rowptr[t].cells[i]);
 		strcpy(newinfo->stobs, rowptr[t].cells[i]);
+		colonize_obs(newinfo->stobs);
 		newinfo->time_series = TIME_SERIES;
 		time_series = 1;
 	    }

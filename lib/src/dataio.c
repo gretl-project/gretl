@@ -1027,11 +1027,20 @@ int write_data (const char *fname, const int *list,
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     double xx;
 
+    *gretl_errmsg = 0;
+
     l0 = list[0];
     if (l0 == 0) return 1;
 
     if (opt == 0 || opt == GRETL_DATA_GZIPPED) 
 	return write_xmldata(fname, list, Z, pdinfo, opt, ppaths);
+
+    if (opt == GRETL_DATA_CSV && pdinfo->delim == ',' && 
+	',' == get_local_decpoint()) {
+	sprintf(gretl_errmsg, _("You can't use the same character for "
+				"the column delimiter and the decimal point"));
+	return 1;
+    }
 
     strcpy(datfile, fname);
 

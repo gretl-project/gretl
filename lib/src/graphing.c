@@ -511,6 +511,39 @@ static void print_xrange (FILE *fp, double xmin, double xmax)
 #endif
 }
 
+enum {
+    GTITLE_VLS,
+    GTITLE_RESID,
+    GTITLE_AF,
+    GTITLE_AFV
+} graph_titles;
+
+static void make_gtitle (FILE *fp, int code, const char *n1, const char *n2)
+{
+    char title[64];
+
+    switch (code) {
+    case GTITLE_VLS:
+	sprintf(title, _("%s versus %s (with least squares fit)"),
+		n1, n2);
+	break;
+    case GTITLE_RESID:
+	sprintf(title, _("Regression residuals (= observed - fitted %s)"), n1);
+	break;
+    case GTITLE_AF:
+	sprintf(title, _("Actual and fitted %s"), n1);
+	break;
+    case GTITLE_AFV:
+	sprintf(title, _("Actual and fitted %s versus %s"), n1, n2);
+	break;
+    default:
+	*title = 0;
+	break;
+    }
+
+    if (*title) fprintf(fp, "set title '%s'\n", title);
+}
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
@@ -637,29 +670,25 @@ int gnuplot (LIST list, const int *lines,
     fprintf(fq, "set missing \"?\"\n");
     if (lo == 2) {
 	if (ols_ok) 
-	    fprintf(fq, "set title '%s versus %s (with least squares fit)\n",
-		    pdinfo->varname[list[1]], xlabel);
+	    make_gtitle(fq, GTITLE_VLS, pdinfo->varname[list[1]], xlabel);
 	if (opt == OPT_RESID) {
-	    fprintf(fq, "set title 'Regression residuals (= observed - "
-		    "fitted %s)'\n", pdinfo->varname[list[1]]);
-	    fprintf(fq, "set ylabel 'residual'\n");
+	    make_gtitle(fq, GTITLE_RESID, pdinfo->varname[list[1]], NULL);
+	    fprintf(fq, "set ylabel '%s'\n", _("residual"));
 	    fprintf(fq, "set nokey\n");
 	} else {
 	    fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[1]]);
 	    fprintf(fq, "set nokey\n");
 	}
     } else if (opt == OPT_RESIDZ) {
-	fprintf(fq, "set title 'Regression residuals (= observed - "
-		"fitted %s)'\n", pdinfo->varname[list[1]]);
-	fprintf(fq, "set ylabel 'residual'\n");
+	make_gtitle(fq, GTITLE_RESID, pdinfo->varname[list[1]], NULL);
+	fprintf(fq, "set ylabel '%s'\n", _("residual"));
 	fprintf(fq, "set key left top\n");
     } else if (opt == OPT_FA) {
 	if (list[3] == pdinfo->v - 1) /* x var is just time or index */
-	    fprintf(fq, "set title 'Actual and fitted %s\n",
-		    pdinfo->varname[list[2]]);
+	    make_gtitle(fq, GTITLE_AF, pdinfo->varname[list[2]], NULL);
 	else
-	    fprintf(fq, "set title 'Actual and fitted %s versus %s\n",
-		    pdinfo->varname[list[2]], pdinfo->varname[list[3]]);
+	    make_gtitle(fq, GTITLE_AFV, pdinfo->varname[list[2]], 
+			pdinfo->varname[list[3]]);
 	fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[2]]);
 	fprintf(fq, "set key left top\n");	
     } else
@@ -709,13 +738,13 @@ int gnuplot (LIST list, const int *lines,
 	fputs("plot \\\n", fq);
 	for (i=1; i<lo; i++) {
 	    if (i != oddman) 
-		fprintf(fq, "'-' using 1:($2) axes x1y1 title '%s (left)' "
+		fprintf(fq, "'-' using 1:($2) axes x1y1 title '%s (%s)' "
 			"w lines", 
-			pdinfo->varname[list[i]]);
+			pdinfo->varname[list[i]], _("left"));
 	    else 
-		fprintf(fq, "'-' using 1:($2) axes x1y2 title '%s (right)' "
+		fprintf(fq, "'-' using 1:($2) axes x1y2 title '%s (%s)' "
 			"w lines", 
-			pdinfo->varname[list[i]]);
+			pdinfo->varname[list[i]], _("right"));
 	    if (i == lo - 1) fprintf(fq, "\n");
 	    else fprintf(fq, " , \\\n");
 	}
@@ -751,8 +780,8 @@ int gnuplot (LIST list, const int *lines,
 	setlocale(LC_NUMERIC, "C");
 #endif
     if (ols_ok) 
-	fprintf(fq, _("%f + %f*x title 'least squares fit' w lines\n"),
-		a, b);
+	fprintf(fq, _("%f + %f*x title '%s' w lines\n"),
+		a, b, _("least squares fit"));
 
     /* supply the data to gnuplot inline */
     if (opt == OPT_Z || opt == OPT_RESIDZ) {
@@ -949,6 +978,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	   height adjustment factor for the impulses */
 
 	if (dist == NORMAL) {
+	    char chilbl[32];
+
 	    propn = normal((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
 		normal((freq->endpt[i] - freq->xbar)/freq->sdx);
 	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
@@ -957,11 +988,11 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    plotmin = freq->xbar - 3.3 * freq->sdx;
 	    if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
 	    plotmax = freq->xbar + 3.3 * freq->sdx;
-	    fprintf(fp, _("set label 'Test statistic for normality:'"
-		    " at graph .05, graph .9\n"));
-	    fprintf(fp, _("set label 'Chi-squared(2) = %.3f, pvalue %.5f'"
-		    " at graph .05, graph .85\n"), 
-		    freq->chisqu, chisq(freq->chisqu, 2));	
+	    fprintf(fp, "set label '%s:' at graph .05, graph .9\n",
+		    _("Test statistic for normality"));
+	    sprintf(chilbl, _("Chi-squared(2) = %.3f, pvalue %.5f"), 
+		    freq->chisqu, chisq(freq->chisqu, 2));
+	    fprintf(fp, "set label '%s' at graph .05, graph .85\n", chilbl);	
 	}
 	else if (dist == GAMMA) {
 	    double xx, height, var = freq->sdx * freq->sdx;
@@ -1044,9 +1075,9 @@ int plot_fcast_errs (const int n, const double *obs,
     fprintf(fp, "# forecasts with 95 pc conf. interval\n");
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
-	    "'-' using 1:2 title 'fitted' w lines , \\\n"
-	    "'-' using 1:2:3 title '95%% confidence interval' "
-	    "w errorbars\n", varname);
+	    "'-' using 1:2 title '%s' w lines , \\\n"
+	    "'-' using 1:2:3 title '%s' w errorbars\n", 
+	    varname, _("fitted"), _("95%% confidence interval"));
 
     /* send data inline */
 #ifdef LOCAL_NUMERIC

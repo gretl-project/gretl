@@ -110,6 +110,9 @@ GdkFont *fixed_font;
 
 static int usecwd;
 int olddat;
+#ifdef ENABLE_NLS
+static int lcnumeric = 1;
+#endif
 
 typedef struct {
     char *key;         /* config file variable name */
@@ -143,6 +146,10 @@ RCVARS rc_vars[] = {
      'B', 0, 1, NULL},
     {"updater", N_("Tell me about gretl updates"), NULL, &updater, 
      'B', 0, 1, NULL},
+#ifdef ENABLE_NLS
+    {"lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
+     'B', 0, 1, NULL},
+#endif
     {"binbase", N_("gretl database directory"), NULL, paths.binbase, 
      'U', MAXLEN, 2, NULL},
     {"ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
@@ -2787,11 +2794,30 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 /* .................................................................. */
 
+#ifdef ENABLE_NLS
+static void set_lcnumeric (void)
+{
+    if (lcnumeric) {
+	setenv("LC_NUMERIC", "", 1);
+	setlocale(LC_NUMERIC, "");
+    } else {
+	setenv("LC_NUMERIC", "C", 1);
+	setlocale(LC_NUMERIC, "C");
+    }
+    reset_local_decpoint();
+}
+#endif
+
+/* .................................................................. */
+
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
     gchar *tempstr;
     extern void show_toolbar (void);
     int i = 0;
+#ifdef ENABLE_NLS
+    int lcnum_bak = lcnumeric;
+#endif
 
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].widget != NULL) {
@@ -2816,6 +2842,11 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	gtk_widget_destroy(toolbar_box);
 	toolbar_box = NULL;
     }
+#ifdef ENABLE_NLS
+    set_lcnumeric();
+    if (lcnumeric != lcnum_bak) 
+	infobox(_("Please restart gretl to ensure consistent results"));
+#endif
     proxy_init(dbproxy);
 }
 
@@ -2915,6 +2946,9 @@ static void read_rc (void)
 	else break;
     }
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
+#ifdef ENABLE_NLS
+    set_lcnumeric();
+#endif
 }
 
 /* end of gnome versions, now win32 */
@@ -2984,6 +3018,9 @@ void read_rc (void)
 	else break;
     }
     set_paths(&paths, 0, 1);
+#ifdef ENABLE_NLS
+    set_lcnumeric();
+#endif
 }
 
 #else /* end of win32 versions, now plain GTK */
@@ -3088,6 +3125,9 @@ static void read_rc (void)
     }
     fclose(rc);
     set_paths(&paths, 0, 1);
+#ifdef ENABLE_NLS
+    set_lcnumeric();
+#endif
 }
 
 #endif /* end of "plain gtk" versions of read_rc, write_rc */

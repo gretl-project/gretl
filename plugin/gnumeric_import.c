@@ -48,6 +48,18 @@ char *errbuf;
 
 #include "import_common.c"
 
+static double atod (char *s)
+{
+    static int local_decpoint;
+
+    if (local_decpoint == 0) local_decpoint = get_local_decpoint();
+
+    if (local_decpoint != '.') {
+	charsub(s, '.', local_decpoint);
+    }
+    return atof(s);
+}
+
 static void wsheet_init (wsheet *sheet)
 {
     sheet->maxcol = sheet->maxrow = 0;
@@ -227,7 +239,7 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 			    strncat(sheet->label[t_real], tmp, 8);
 		    }
 		    if (VTYPE_IS_NUMERIC(vtype)) {
-			x = atof(tmp);
+			x = atod(tmp);
 			sheet->Z[i_real][t_real] = x;
 			toprows[t_real] = leftcols[i_real] = 0;
 		    }
@@ -543,6 +555,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		newinfo->pd = pd;
 		newinfo->sd0 = atof(sheet.label[1]);
 		strcpy(newinfo->stobs, sheet.label[1]);
+		colonize_obs(newinfo->stobs);
 		newinfo->time_series = TIME_SERIES;
 		sheet.text_cols = 1;
 		time_series = 1;
