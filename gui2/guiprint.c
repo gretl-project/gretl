@@ -273,14 +273,16 @@ void winprint (char *fullbuf, char *selbuf)
 #elif defined(USE_GNOME)
 
 #include <libgnomeprint/gnome-print.h>
-#include <libgnomeprint/gnome-print-master.h>
+#include <libgnomeprint/gnome-print-job.h>
 #include <libgnomeprintui/gnome-print-dialog.h>
-#include <libgnomeprintui/gnome-print-master-preview.h>
+#include <libgnomeprintui/gnome-print-job-preview.h>
+
 
 void winprint (char *fullbuf, char *selbuf)
 {
-    GnomePrintMaster *gpm;
+    GnomePrintConfig *print_config;
     GnomePrintContext *gpc;
+    GnomePrintJob *job;
     GtkWidget *dialog;
     gint response;
     gboolean preview = FALSE;
@@ -291,10 +293,12 @@ void winprint (char *fullbuf, char *selbuf)
     int x, y, line, page;
     size_t len;
 
-    gpm = gnome_print_master_new();
-    dialog = gnome_print_dialog_new_from_master(gpm, 
-						"print gretl output", 
-						0);
+    job = gnome_print_job_new(NULL);
+
+    dialog = gnome_print_dialog_new(job, 
+				    "print gretl output", 
+				    0);
+
     response = gtk_dialog_run(GTK_DIALOG(dialog));
 
     switch (response) {
@@ -309,9 +313,9 @@ void winprint (char *fullbuf, char *selbuf)
 	free(selbuf);
 	return;
     }
-	
-    gpc = gnome_print_master_get_context(gpm);
-    gnome_print_beginpage (gpc, _("gretl output"));
+
+    gpc = gnome_print_job_get_context(job);
+    gnome_print_beginpage(gpc, _("gretl output"));
 
     font = gnome_font_find_closest("Courier", 10);
     font_name = gnome_font_get_name (font);
@@ -330,7 +334,7 @@ void winprint (char *fullbuf, char *selbuf)
 	line = 0;
 	y = 756;
 	if (page > 1) {
-	    gnome_print_beginpage (gpc, _("gretl output"));
+	    gnome_print_beginpage(gpc, _("gretl output"));
 	    gnome_print_setfont(gpc, font); 
 	}
 	sprintf(hdr, _("%s, page %d"), hdrstart, page++);
@@ -350,17 +354,20 @@ void winprint (char *fullbuf, char *selbuf)
 	gnome_print_showpage(gpc);
     }
 
-    gnome_print_master_close(gpm);
+    /* gnome_print_job_close(job); */
 
     if (preview) {
-	gtk_widget_show(gnome_print_master_preview_new(gpm, "Print preview"));
+	gtk_widget_show(gnome_print_job_preview_new(job, "Print preview"));
     } else {
-	gnome_print_master_print(gpm);
+	gnome_print_job_print(job);
     }
+
+    gnome_print_context_close(gpc);
 
     gtk_widget_destroy (dialog);
     gnome_font_unref(font);
-    g_object_unref(G_OBJECT(gpm));
+    /* gnome_print_config_unref(print_config); */
+
     free(fullbuf);
     if (selbuf) free(selbuf);
 }
