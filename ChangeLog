@@ -1,5 +1,5 @@
 version 0.991
-- fix several "out of bounds" bugs kidly reported by Tavis Barr
+- fix several "out of bounds" bugs kindly reported by Tavis Barr
 - streamline the online help system
 - in GUI, allow deletion of any variable (popup menu)
 - go to a two-dimensional data array

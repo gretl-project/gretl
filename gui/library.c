@@ -1818,6 +1818,11 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Failed to create empty data set"));
 	return;
     }
+
+    err = plotvar(&Z, datainfo, "index");
+    if (err) 
+	errbox(_("Error generating index variable"));
+
     infobox(prn->buf);
     gretl_print_destroy(prn);
     paths.datfile[0] = '\0';

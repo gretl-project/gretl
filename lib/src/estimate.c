@@ -142,8 +142,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     XPXXPY xpxxpy;
     MODEL model;
 
-    if (list == NULL || pZ == NULL || pdinfo == NULL ||
-	list[0] == 1 || pdinfo->v == 1) {
+    if (list == NULL || pZ == NULL || pdinfo == NULL) {
 	model.errcode = E_DATA;
         return model;
     }
@@ -154,6 +153,11 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	return hccm_func(list, pZ, pdinfo);
 
     _init_model(&model, pdinfo);
+
+    if (list[0] == 1 || pdinfo->v == 1) {
+	model.errcode = E_DATA;
+        return model;
+    }
 
     /* preserve a copy of the list supplied, for future reference */
     copylist(&(model.list), list);

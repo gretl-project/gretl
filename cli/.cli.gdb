@@ -1,2 +1,2 @@
-set args -b ./foo.inp
+set args  
 run

@@ -1507,6 +1507,12 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     }
     l0 = list[0];
 
+    if (l0 == 0) {
+	pprintf(prn, "No data\n");
+	if (freelist) free(list);
+	return 0;
+    }
+
     /* screen out any scalars and print them first */
     for (j=1; j<=list[0]; j++) {
 	if (!pdinfo->vector[list[j]]) {
