@@ -314,7 +314,10 @@ PRN *bufopen_with_size (size_t sz)
 	errbox(_("Out of memory allocating output buffer"));
 	return NULL;
     }
+
     prn->fp = NULL;
+    prn->fpaux = NULL;
+
     prn->buf = malloc(sz);
     if (prn->buf == NULL) {
 	errbox(_("Out of memory allocating output buffer"));

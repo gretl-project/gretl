@@ -1,10 +1,13 @@
 version 1.1.3
+- Fix crashing bug in viewing dataset info
 - Improve formatting of "influential observations" test output
   for non-English locales
 - Correct the sign of the fractional integration parameter
   estimate in the periodogram command ("pergm")
 - Give first-time gretl users a chance to select a gretl
   "user directory" (with ~/gretl being the default)
+- Fix problem with running a script in the gretl console, when
+  the script began with comments plus blank lines
 
 09/09/03 version 1.1.2
 - Fix bug in time-series plot from popup menu in main window

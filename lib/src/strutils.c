@@ -557,6 +557,7 @@ int pprintf (PRN *prn, const char *template, ...)
     }
 
     if (prn->buf == NULL) return 1;
+
     blen = strlen(prn->buf);
     if (prn->bufsize - blen < 1024) { 
 	char *tmp;

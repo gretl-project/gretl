@@ -889,11 +889,11 @@ int main (int argc, char *argv[])
 	noalloc(_("main window"));
     if (!gui_get_data) set_sample_label(datainfo);
 
+#ifndef G_OS_WIN32
     /* Let a first-time user set the working dir */
     first_time_set_user_dir(); 
 
     /* enable special copying to clipboard */
-#ifndef G_OS_WIN32
     clip_init(mdata->w);
 #endif
 

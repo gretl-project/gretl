@@ -938,8 +938,6 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 
 #define SMAX 7  /* stipulated max. significant digits */
 
-/* #define PRN_DEBUG */
-
 static int get_signif (double *x, int n)
      /* return either (a) the number of significant digits in
 	a data series (+), or (b) the number of decimal places to
