@@ -107,7 +107,8 @@ typedef enum {
 typedef enum {
     GENR_RESID,
     GENR_FITTED,
-    GENR_RESID2
+    GENR_RESID2,
+    GENR_H
 } auto_genr;
 
 typedef enum {

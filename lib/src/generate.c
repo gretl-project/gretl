@@ -3989,6 +3989,12 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 {
     char vname[VNAMELEN], vlabel[MAXLABEL];
     int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
+    double *h = NULL;
+
+    if (code == GENR_H) {
+	h = gretl_model_get_data(pmod, "garch_h");
+	if (h == NULL) return E_DATA;
+    }
 
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
@@ -4017,6 +4023,12 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
 	for (t=t1; t<=t2; t++) 
 	    (*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
+    }
+    else if (code == GENR_H) { /* garch variance */
+	sprintf(vname, "h%d", pmod->ID);
+	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
+	for (t=t1; t<=t2; t++) 
+	    (*pZ)[i][t] = h[t];
     }
 
     strcpy(pdinfo->varname[i], vname);

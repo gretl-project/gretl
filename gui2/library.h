@@ -173,11 +173,11 @@ void add_time (gpointer data, guint index, GtkWidget *widget);
 
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget);
 
-int add_fit_resid (MODEL *pmod, const int code, const int undo);
+int add_fit_resid (MODEL *pmod, int code, int undo);
 
 int add_var_resid (GRETL_VAR *var, int eqnum);
 
-void add_model_stat (MODEL *pmod, const int which);
+void add_model_stat (MODEL *pmod, int which);
 
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget);
 

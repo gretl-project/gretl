@@ -3193,7 +3193,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 
 /* ......................................................... */
 
-int add_fit_resid (MODEL *pmod, const int code, const int undo)
+int add_fit_resid (MODEL *pmod, int code, int undo)
    /* 
       If undo = 1, don't bother with the label, don't update
       the var display in the main window, and don't add to
@@ -3234,11 +3234,13 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 	populate_varlist();
 
 	if (code == 0) {
-	    sprintf(line, "genr %s = uhat", datainfo->varname[v]);
+	    sprintf(line, "genr %s = $uhat", datainfo->varname[v]);
 	} else if (code == 1) {
-	    sprintf(line, "genr %s = yhat", datainfo->varname[v]);
+	    sprintf(line, "genr %s = $yhat", datainfo->varname[v]);
 	} else if (code == 2) {
-	    sprintf(line, "genr %s = uhat*uhat", datainfo->varname[v]);
+	    sprintf(line, "genr %s = $uhat*$uhat", datainfo->varname[v]);
+	} else if (code == 3) {
+	    sprintf(line, "genr %s = $h", datainfo->varname[v]);
 	}
 
 	check_cmd(line);
@@ -3285,7 +3287,7 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
 /* ......................................................... */
 
-void add_model_stat (MODEL *pmod, const int which)
+void add_model_stat (MODEL *pmod, int which)
 {
     char vname[VNAMELEN], vlabel[MAXLABEL], cmdstr[MAXLEN];
     char statname[8];
