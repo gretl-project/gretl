@@ -170,7 +170,23 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/_Open data/sep1", NULL, NULL, 0, "<Separator>" },    
     { "/File/_Open data/import CSV...", NULL, open_data, OPEN_CSV, NULL },
     { "/File/_Open data/import BOX...", NULL, open_data, OPEN_BOX, NULL },
+    { "/File/_Save data", NULL, dummy_call, 0, NULL },
+    { "/File/Save data _as/_standard format...", NULL, file_save, 
+      SAVE_DATA, NULL },
+    { "/File/Save data _as/_alternative formats/_gzipped ASCII...", NULL, 
+      file_save, SAVE_GZDATA, NULL },
+    { "/File/Save data _as/_alternative formats/_single precision binary...", 
+      NULL, file_save, SAVE_BIN1, NULL },
+    { "/File/Save data _as/_alternative formats/_double precision binary...", 
+      NULL, file_save, SAVE_BIN2, NULL },
+    { "/File/_Export data/_CSV...", NULL, file_save, 
+      EXPORT_CSV, NULL },
+    { "/File/_Export data/GNU _R...", NULL, file_save, 
+      EXPORT_R, NULL },
+    { "/File/_Export data/GNU _octave...", NULL, file_save, 
+      EXPORT_OCTAVE, NULL },
     { "/File/C_lear data set", NULL, clear_data, 1, NULL },
+    { "/File/sep0", NULL, NULL, 0, "<Separator>" },
     { "/File/_Browse databases/_gretl native", NULL, display_files, 
       NATIVE_DB, NULL },
     { "/File/_Browse databases/_RATS 4", NULL, display_files, 
@@ -178,20 +194,6 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/_Browse databases/sep1", NULL, NULL, 0, "<Separator>" },
     { "/File/_Browse databases/on database _server", NULL, display_files, 
       REMOTE_DB, NULL },
-    { "/File/_Save data/_standard format...", NULL, file_save, 
-      SAVE_DATA, NULL },
-    { "/File/_Save data/_alternative formats/_gzipped ASCII...", NULL, 
-      file_save, SAVE_GZDATA, NULL },
-    { "/File/_Save data/_alternative formats/_single precision binary...", 
-      NULL, file_save, SAVE_BIN1, NULL },
-    { "/File/_Save data/_alternative formats/_double precision binary...", 
-      NULL, file_save, SAVE_BIN2, NULL },
-    { "/File/_Save data/_export formats/_CSV...", NULL, file_save, 
-      EXPORT_CSV, NULL },
-    { "/File/_Save data/_export formats/GNU _R...", NULL, file_save, 
-      EXPORT_R, NULL },
-    { "/File/_Save data/_export formats/GNU _octave...", NULL, file_save, 
-      EXPORT_OCTAVE, NULL },
     { "/File/_Create data set/time-series/annual", 
       NULL, newdata_dialog, 1, NULL },    
     { "/File/_Create data set/time-series/quarterly", 
@@ -725,6 +727,8 @@ void menubar_state (gboolean s)
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/File/Clear data set", s);
 	flip(mdata->ifac, "/File/Save data", s);
+	flip(mdata->ifac, "/File/Save data as", s);
+	flip(mdata->ifac, "/File/Export data", s);
 	flip(mdata->ifac, "/File/Create data set", !s);
 	flip(mdata->ifac, "/Data", s);
 	flip(mdata->ifac, "/Sample", s);
