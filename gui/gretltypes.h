@@ -40,6 +40,10 @@ enum extra_cmds {
     GR_DUMMY,
     PANEL,    
     COMPACT,
+    CONFINT,
+    COVAR,
+    STAT_TABLE,
+    H_TEST,
     CMD_LAST
 };
 

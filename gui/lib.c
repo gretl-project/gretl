@@ -100,7 +100,10 @@ GtkItemFactoryEntry script_out_items[] = {
 GtkItemFactoryEntry view_items[] = {
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/Copy _all/as plain _text", NULL, text_copy, COPY_TEXT, NULL },
+    { "/Edit/Copy _all/as _LaTeX", NULL, text_copy, COPY_LATEX, NULL },
+    { "/Edit/Copy _all/as _RTF", NULL, text_copy, COPY_RTF, NULL }
 };
 
 const char *CANTDO = "Can't do this: no model has been estimated yet\n";
@@ -525,6 +528,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     print_t prn;
     char title[48];
     int err = 0;
+    windata_t *vwin;
     gint hsize = 78, vsize = 380;
 
     clear(line, MAXLEN);
@@ -594,8 +598,18 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     }
     if (err) gui_errmsg(err, errtext);
 
-    view_buffer(&prn, hsize, vsize, title, 
-		view_items, sizeof view_items);
+    vwin = view_buffer(&prn, hsize, vsize, title, action,
+		       view_items, sizeof view_items);
+
+    if (vwin && (action == SUMMARY || action == VAR_SUMMARY)) {
+	int i, *p, n = command.list[0];
+
+	p = malloc((n + 2) * sizeof(int));
+	if (p != NULL) {
+	   for (i=0; i<=n; i++) p[i] = command.list[i];
+	   vwin->data = p;
+	}
+    }
 }
 
 /* ........................................................... */
@@ -702,7 +716,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
     else if (ddata->code == CORRGM) 
 	graphmenu_state(TRUE);
 
-    view_buffer(&prn, hsize, vsize, title, 
+    view_buffer(&prn, hsize, vsize, title, ddata->code,
 		view_items, sizeof view_items);
 }
 
@@ -1016,7 +1030,7 @@ void count_missing (void)
     if (bufopen(&prn)) return;
     if (count_missing_values(&Z, datainfo, &prn)) {
 	view_buffer(&prn, 77, 300, "gretl: missing values info", 
-		    view_items, sizeof view_items);
+		    SMPL, view_items, sizeof view_items);
     } else {
 	infobox("No missing data values");
 	prnclose(&prn);
@@ -1065,7 +1079,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    view_buffer(&prn, 78, 350, "gretl: forecasts", NULL, 0);    
+    view_buffer(&prn, 78, 350, "gretl: forecasts", FCAST, NULL, 0);    
 }
 
 /* ........................................................... */
@@ -1246,7 +1260,8 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
 
-    view_buffer(&prn, 77, 400, title, view_items, sizeof view_items); 
+    view_buffer(&prn, 77, 400, title, LMTEST, 
+		view_items, sizeof view_items); 
 }
 
 /* ........................................................... */
@@ -1296,7 +1311,7 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     close_plugin(handle);
 
     view_buffer(&prn, 77, 400, "gretl: panel model diagnostics", 
-		view_items, sizeof view_items);
+		PANEL, view_items, sizeof view_items);
 }
 
 /* ........................................................... */
@@ -1353,7 +1368,7 @@ static void do_chow_cusum (gpointer data, int code)
 
     view_buffer(&prn, 77, 400, (code == CHOW)?
 		"gretl: Chow test output": "gretl: CUSUM test output",
-		view_items, sizeof view_items);
+		code, view_items, sizeof view_items);
 }
 
 /* ........................................................... */
@@ -1414,7 +1429,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     }
     clear_model(models[1], NULL, NULL);
 
-    view_buffer(&prn, 78, 400, "gretl: ARCH test", 
+    view_buffer(&prn, 78, 400, "gretl: ARCH test", ARCH,
 		view_items, sizeof view_items);
 }
 
@@ -1911,7 +1926,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     printfreq(&freq, &prn);
     free_freq(&freq);
 
-    view_buffer(&prn, 77, 300, "gretl: residual dist.", 
+    view_buffer(&prn, 77, 300, "gretl: residual dist.", TESTUHAT,
 		NULL, 0);
 }
 
@@ -1977,7 +1992,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
     }
     graphmenu_state(TRUE);
 
-    view_buffer(&prn, 60, 400, "gretl: periodogram", NULL, 0);
+    view_buffer(&prn, 60, 400, "gretl: periodogram", PERGM, NULL, 0);
 }
 
 /* ........................................................... */
@@ -1993,7 +2008,7 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
     print_model_confints(pmod, datainfo, &prn);
 
     view_buffer(&prn, 77, 300, "gretl: coefficient confidence intervals", 
-		view_items, sizeof view_items);
+		CONFINT, view_items, sizeof view_items);
 }
 
 /* ........................................................... */
@@ -2010,7 +2025,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
     else outcovmx(pmod, datainfo, 1, &prn); 
 
     view_buffer(&prn, 77, 300, "gretl: coefficient covariances", 
-		view_items, sizeof view_items);
+		COVAR, view_items, sizeof view_items);
 }
 
 /* ......................................................... */
@@ -2316,7 +2331,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	    prnclose(&prn);
 	    return;
 	}
-	view_buffer(&prn, 77, 350, "gretl: display data", NULL, 0);
+	view_buffer(&prn, 77, 350, "gretl: display data", PRINT, NULL, 0);
     }
 }
 
@@ -2366,7 +2381,7 @@ void display_selected (GtkWidget *widget, dialog_t *ddata)
 	    prnclose(&prn);
 	    return;
 	}
-	view_buffer(&prn, 77, 350, "gretl: display data", NULL, 0);
+	view_buffer(&prn, 77, 350, "gretl: display data", PRINT, NULL, 0);
     }
     free(prcmd.list);
     free(prcmd.param);
@@ -2388,7 +2403,7 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	errbox("Failed to generate fitted values");
 	prnclose(&prn);
     } else 
-	view_buffer(&prn, 77, 350, "gretl: display data", 
+	view_buffer(&prn, 77, 350, "gretl: display data", PRINT,
 		    NULL, 0);    
 }
 
@@ -2513,7 +2528,7 @@ void display_var (void)
     list[1] = mdata->active_var;
     if (bufopen(&prn)) return;
     printdata(list, &Z, datainfo, 1, 1, &prn);
-    view_buffer(&prn, 24, 350, "gretl: display data", NULL, 0);    
+    view_buffer(&prn, 24, 350, "gretl: display data", PRINT, NULL, 0);    
 }
 
 /* ........................................................... */
@@ -2631,7 +2646,7 @@ void do_open_csv_box (char *fname, int code)
 
     sprintf(buf, "gretl: import %s data", 
 	    (code == OPEN_BOX)? "BOX" : "CSV");
-    view_buffer(&prn, 77, 350, buf, NULL, 0); 
+    view_buffer(&prn, 77, 350, buf, IMPORT, NULL, 0); 
 
     if (err) return;
 

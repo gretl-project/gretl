@@ -170,7 +170,7 @@ static void browse_header (GtkWidget *w, gpointer data)
     fclose(fp);
 
     view_buffer(&prn, 80, 300, "gretl: data header", 
-		NULL, 0);
+		INFO, NULL, 0);
 }
 
 /* ........................................................... */

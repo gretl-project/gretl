@@ -2705,20 +2705,20 @@
       </informaltable>
 
       <para>
-	Computes parameter estimates using the
-	Cochrane&ndash;Orcutt iterative procedure (see Section 9.4 of
-	Ramanathan) with <replaceable>depvar</replaceable> as the
-	dependent variable and <replaceable>indepvars</replaceable> as
-	the list of independent variables.  Iteration is terminated
-	when successive &rho; values do not differ by more than 0.001
-	or after 20 iterations.  If the
-	<literal>-o</literal> flag is given, the covariance matrix
-	of regression coefficients is printed.  Residuals of this
+	Computes parameter estimates using the Cochrane&ndash;Orcutt
+	iterative procedure (see Section 9.4 of Ramanathan) with
+	<replaceable>depvar</replaceable> as the dependent variable
+	and <replaceable>indepvars</replaceable> as the list of
+	independent variables.  Iteration is terminated when
+	successive estimates of the autocorrelation coefficient do not
+	differ by more than 0.001 or after 20 iterations.  If the
+	<literal>-o</literal> flag is given, the covariance matrix of
+	regression coefficients is printed.  Residuals of this
 	transformed regression are stored under the name
-	<varname>uhat</varname>.  Various internal variables
-	may be retrieved using the <command>genr</command> command,
-	provided <command>genr</command> is invoked immediately after
-	this command.
+	<varname>uhat</varname>.  Various internal variables may be
+	retrieved using the <command>genr</command> command, provided
+	<command>genr</command> is invoked immediately after this
+	command.
       </para>
 
     </sect2>
@@ -3191,7 +3191,7 @@
 		</row>
 		<row>
 		  <entry><varname>$trsq</varname></entry>
-		  <entry>$TR^2$ (sample size times &rsqu;)
+		  <entry><emphasis>T</emphasis>&rsq; (sample size times &rsqu;)
 		  </entry>
 		</row>
 		<row>
@@ -3764,13 +3764,13 @@
 	command. Prints the Lagrange multiplier test statistics (and
 	associated p-values) for nonlinearity and heteroskedasticity
 	(White's test) or, if the <literal>-o</literal> flag is
-	present, for serial correlation up to the periodicity.  The
-	corresponding auxiliary regression coefficients are also
-	printed out.  See Ramanathan, Chapters 7, 8, and 9 for
-	details. Only the squared independent variables are used and
-	not their cross products.  (If the internal creation of
-	squares causes exact multicollinearity, LM test statistics
-	cannot be obtained.)
+	present, the LMF test statistic for serial correlation up to
+	the periodicity (see Kiviet, 1986).  The corresponding
+	auxiliary regression coefficients are also printed out.  See
+	Ramanathan, Chapters 7, 8, and 9 for details. Only the squared
+	independent variables are used and not their cross products.
+	(If the internal creation of squares causes exact
+	multicollinearity, LM test statistics cannot be obtained.)
       </para>
 
     </sect2>
@@ -6301,6 +6301,14 @@ linkend="looping"/> for details.
 	Greene, William H. (2000) <title>Econometric Analysis</title>,
 	4th edition, Upper Saddle River, NJ: Prentice-Hall. 
       </bibliomixed>
+
+      <bibliomixed>
+      <bibliomset relation='article'>Kiviet, J. F. (1986)
+	<title>On the rigour of some misspecification tests for
+	modelling dynamic relationships</title>,</bibliomset>
+      <bibliomset relation='journal'><title>Review of Economic
+	Studies</title>, 53, pp. 241&ndash;261.</bibliomset>
+     </bibliomixed>
 
       <bibliomixed>
 	<bibliomset relation='article'>MacKinnon, J. G. and White, H.

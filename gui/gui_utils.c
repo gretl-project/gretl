@@ -26,6 +26,7 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+extern int win_copy_rtf (char *rtf_str);
 #endif
 
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
@@ -37,7 +38,7 @@ char *storelist = NULL;
 static GtkWidget *help_view = NULL;
 int db_is_native = 0;
 
-extern GtkItemFactoryEntry view_items[3];
+extern GtkItemFactoryEntry view_items[6]; /* was 3 */
 extern GtkTooltips *gretl_tips;
 extern int session_saved;
 extern GtkWidget *console_view;
@@ -805,6 +806,8 @@ void windata_init (windata_t *mydata)
     mydata->popup = NULL;
     mydata->ifac = NULL;
     mydata->data = NULL;
+    mydata->fname[0] = '\0';
+    mydata->action = -1;
 }
 
 /* .................................................................. */
@@ -824,6 +827,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gtk_object_unref(GTK_OBJECT(mydata->ifac));  
 	if (mydata->popup) 
 	    gtk_object_unref(GTK_OBJECT(mydata->popup));
+	if (mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
+	    free(mydata->data); /* command list */
 	free(mydata);
 	mydata = NULL;
     }
@@ -831,8 +836,9 @@ void free_windata (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-int view_buffer (print_t *prn, int hsize, int vsize, char *title, 
-		 GtkItemFactoryEntry menu_items[], int msize) 
+windata_t *view_buffer (print_t *prn, int hsize, int vsize, 
+			char *title, int action,
+			GtkItemFactoryEntry menu_items[], int msize) 
 {
     GtkWidget *dialog, *close, *table;
     GdkFont *fixed_font;
@@ -840,8 +846,9 @@ int view_buffer (print_t *prn, int hsize, int vsize, char *title,
     windata_t *vwin;
 
     if ((vwin = mymalloc(sizeof *vwin)) == NULL)
-	return 1;
+	return NULL;
     windata_init(vwin);
+    vwin->action = action;
 
     fixed_font = gdk_font_load(fontspec); 
     hsize *= gdk_char_width(fixed_font, 'W');
@@ -921,7 +928,7 @@ int view_buffer (print_t *prn, int hsize, int vsize, char *title,
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
 
     gtk_widget_show(dialog);
-    return 0;
+    return vwin;
 }
 
 /* ........................................................... */
@@ -2251,9 +2258,52 @@ static int file_to_clipboard (char *fname)
 
 /* .................................................................. */
 
+void buf_to_clipboard (char *buf)
+{
+    size_t len;
+
+    if (buf == NULL) return;
+    len = strlen(buf);
+
+    if (clipboard_buf) g_free(clipboard_buf);
+    clipboard_buf = mymalloc(len + 1);
+
+    memcpy(clipboard_buf, buf, len + 1);
+    gtk_selection_owner_set(mdata->w,
+			    GDK_SELECTION_PRIMARY,
+			    GDK_CURRENT_TIME);
+}
+
+/* .................................................................. */
+
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
     windata_t *mydata = (windata_t *) data;
+
+    /* mydata->action code says what sort of thing is displayed in
+       the window in question */
+
+    if ((mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
+	&& (how == COPY_LATEX || how == COPY_RTF)) {
+	int *list = (int *) mydata->data;
+	print_t prn;
+	
+	if (bufopen(&prn)) return;
+	if (how == COPY_LATEX) {
+	    summary(list, &Z, datainfo, 1, LATEX, &prn);
+	    buf_to_clipboard(prn.buf);
+	} else {
+	    summary(list, &Z, datainfo, 1, RTF, &prn);
+	    fprintf(stderr, "done RTF summary\n");
+#ifdef G_OS_WIN32
+	    win_copy_rtf(prn.buf);
+#else
+	    buf_to_clipboard(prn.buf);
+#endif
+	}
+	prnclose(&prn);
+	return;
+    }
 
     if (how == COPY_RTF) {
 	MODEL *pmod = (MODEL *) mydata->data;

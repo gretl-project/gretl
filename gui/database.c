@@ -248,7 +248,7 @@ static void display_dbdata (double **dbZ, DATAINFO *dbdinfo)
 
     printdata(NULL, dbZ, dbdinfo, 1, 1, &prn);
 
-    view_buffer(&prn, 36, 350, "gretl: display database series", 
+    view_buffer(&prn, 36, 350, "gretl: display database series", PRINT,
 		NULL, 0); 
 }
 

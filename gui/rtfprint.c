@@ -43,7 +43,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 #ifdef G_OS_WIN32
 
 /* win32 only: copy rtf to clipboard for pasting into Word */
-static int win_copy_rtf (char *rtf_str)
+int win_copy_rtf (char *rtf_str)
 {
     HGLOBAL winclip;
     char *ptr;
@@ -72,25 +72,6 @@ static int win_copy_rtf (char *rtf_str)
     return 0;
 }
 
-#else
-
-static int copy_rtf (char *rtf_str)
-{
-    size_t len;
-
-    if (rtf_str == NULL) return 0;
-    len = strlen(rtf_str);
-
-    if (clipboard_buf) g_free(clipboard_buf);
-    clipboard_buf = mymalloc(len + 1);
-
-    memcpy(clipboard_buf, rtf_str, len + 1);
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY,
-			    GDK_CURRENT_TIME);
-    return 0;
-}
-
 #endif /* G_OS_WIN32 */
 
 void model_to_rtf (MODEL *pmod)
@@ -104,7 +85,7 @@ void model_to_rtf (MODEL *pmod)
 #ifdef G_OS_WIN32
     win_copy_rtf(prn.buf);
 #else
-    copy_rtf(prn.buf);
+    buf_to_clipboard(prn.buf);
 #endif
     prnclose(&prn);
 }
@@ -361,7 +342,7 @@ void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 	pprintf(prn, "Augmented regression for Chow test\\par\n");
 	break;
     case AUX_COINT:
-	pprintf(prn, "Cointegrating regression - <br/>\n");
+	pprintf(prn, "Cointegrating regression - \\par\n");
 	break;
     case AUX_ADF:
 	pprintf(prn, "Augmented Dickey-Fuller regression\\par\n");

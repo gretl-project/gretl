@@ -186,7 +186,7 @@ static void get_critical (GtkWidget *w, gpointer data)
 
     close_plugin(handle);
 
-    view_buffer(&prn, 77, 300, "gretl: statistical table", 
+    view_buffer(&prn, 77, 300, "gretl: statistical table", STAT_TABLE,
 		view_items, sizeof view_items);
 }
 
@@ -261,7 +261,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     }
     if (bufopen(&prn)) return;
     batch_pvalue(cmd, Z, datainfo, &prn);
-    view_buffer(&prn, 78, 200, "gretl: p-value", 
+    view_buffer(&prn, 78, 200, "gretl: p-value", PVALUE,
                 view_items, sizeof view_items);
 }
 
@@ -611,7 +611,7 @@ static void h_test (GtkWidget *w, gpointer data)
     default:
 	break;
     }
-    view_buffer(&prn, 78, 300, "gretl: hypothesis test", 
+    view_buffer(&prn, 78, 300, "gretl: hypothesis test", H_TEST,
                 view_items, sizeof view_items);
 }
 

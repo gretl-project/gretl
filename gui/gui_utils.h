@@ -19,6 +19,8 @@ void add_files_to_menu (int filetype);
 
 int copyfile (const char *src, const char *dest);
 
+void buf_to_clipboard (char *buf);
+
 int isdir (const char *path);
 
 void append_dir (char *fname, const char *dir);
@@ -59,8 +61,9 @@ void windata_init (windata_t *mydata);
 
 void free_windata (GtkWidget *w, gpointer data);
 
-int view_buffer (print_t *prn, int hsize, int vsize, char *title, 
-		 GtkItemFactoryEntry menu_items[], int menusize);
+windata_t *view_buffer (print_t *prn, int hsize, int vsize, 
+			char *title, int action,
+			GtkItemFactoryEntry menu_items[], int menusize);
 
 int view_file (char *filename, int editable, int del_file, 
 	       int hsize, int vsize, char *title, 

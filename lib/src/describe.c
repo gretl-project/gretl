@@ -34,6 +34,7 @@
 extern void _mxout (const double *rr, const int *list, const int ci,
 		    const DATAINFO *pdinfo, const int batch, print_t *prn);
 extern double _rhocrit95 (const int n);
+void printxx (const double xx, char *str, const int ci);
 
 /* ........................................................... */
 
@@ -616,7 +617,7 @@ static void printf17 (const double zz, print_t *prn)
 /* ............................................................... */
 
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
-		   const int ci, const int format, print_t *prn)
+		   const int ci, print_t *prn)
 {
     char date1[9], date2[9];
 
@@ -624,70 +625,206 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     ntodate(date2, pdinfo->t2, pdinfo);
 
     pprintf(prn, "\n");
-    if (format == TEXT) {
-	if (pdinfo->pd != 1) space((ci == SUMMARY)? 10 : 7, prn);
-	else {
-	    if (pdinfo->sd0 > 1900) space((ci == SUMMARY)? 12 : 9, prn);
-	    else space((ci == SUMMARY)? 15 : 12, prn);
-	} 
-    }
-    else if (format == LATEX) 
-	pprintf(prn, "\\begin{center}\n");
-    else if (format == HTML)
-	pprintf(prn, "<center>\n");
+    if (pdinfo->pd != 1) space((ci == SUMMARY)? 10 : 7, prn);
+    else {
+	if (pdinfo->sd0 > 1900) space((ci == SUMMARY)? 12 : 9, prn);
+	else space((ci == SUMMARY)? 15 : 12, prn);
+    } 
     
     pprintf(prn, "%s, using the observations %s - %s\n", str, date1, date2);
     if (ci == CORR) {
-	if (format == TEXT) pprintf(prn, "               ");
-	pprintf(prn, "(missing values denoted by -999 will be skipped)\n\n");
+	pprintf(prn, "               "
+		"(missing values denoted by -999 will be skipped)\n\n");
     }
 }
 
 /* ............................................................. */
 
-int summary (const int *list, double **pZ, const DATAINFO *pdinfo, 
-	     const int batch, const int format, print_t *prn)
+static void printftex (const double zz, print_t *prn, int endrow)
 {
-    int mm, n = 0, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
-    int v, lv, lineno = 0;
-    double xbar, std, low, high, xcv, skew, kurt,
-	*xskew, *xkurt, *xmedian, *coeff, *sderr, *x, *xpx, *xpy;
+    char s[32];
 
-    lo = list[0];
-    mm = lo + 1;
-    if ((xskew = malloc(mm * sizeof *xskew)) == NULL) return E_ALLOC;
-    if ((xkurt = malloc(mm * sizeof *xkurt)) == NULL) return E_ALLOC;
-    if ((xmedian = malloc(mm * sizeof *xmedian)) == NULL) return E_ALLOC;
-    if ((coeff = malloc(mm * sizeof *coeff)) == NULL) return E_ALLOC;
-    if ((sderr = malloc(mm * sizeof *sderr)) == NULL) return E_ALLOC;
-    if ((x = malloc(len * sizeof *x)) == NULL) return E_ALLOC;
-    if ((xpx = malloc(mm * sizeof *xpx)) == NULL) return E_ALLOC;
-    if ((xpy = malloc(mm * sizeof *xpy)) == NULL) return E_ALLOC;
+    if (na(zz)) pprintf(prn, "undefined");
+    else printxx(zz, s, SUMMARY);
+    if (endrow) 
+	pprintf(prn, "$%s$\\\\");
+    else
+	pprintf(prn, "$%s$ & ");	
+}
 
-    for (v=1; v<=lo; v++)  {
-	lv = list[v];
-	x[0] = -999999.0;
-	n = _ztox(lv, x, pdinfo, *pZ);
-	if (n == 0) return 1;
-	if (n == 1) {
-	    pprintf(prn, "Sample range has only one observation.");
-	    return 1;
-	}
-	minmax(0, n-1, x, &low, &high);	
-	moments(0, n-1, x, 
-		&xbar, &std, &skew, &kurt, 1);
-	xpx[v] = low;
-	xpy[v] = high;
-	coeff[v] = xbar;
-	sderr[v] = std;
-	xskew[v] = skew;
-	xkurt[v] = kurt;
-	qsort(x, n, sizeof *x, compare_doubles); 
-	if (n > 1) xmedian[v] = esl_median(x, n);
-	else xmedian[v] = x[1];
+
+
+/* ............................................................. */
+
+static void texprint_summary (const int *list, 
+			      const DATAINFO *pdinfo, int n,
+			      double *coeff, double *xmedian,
+			      double *xpx, double *xpy, 
+			      double *sderr, double *xskew, 
+			      double *xkurt,
+			      print_t *prn)
+{
+    char date1[9], date2[9];
+    double xbar, std, xcv;
+    int lo = list[0], v, lv;
+
+    ntodate(date1, pdinfo->t1, pdinfo);
+    ntodate(date2, pdinfo->t2, pdinfo);
+
+    pprintf(prn, "\\begin{center}\n"
+	    "Summary Statistics, using the observations %s -- %s\\\\\n",
+	    date1, date2);
+    
+    if (lo == 1) {
+	pprintf(prn, "for the variable %s (%d valid observations)\\\\[8pt]\n\n", 
+		pdinfo->varname[list[1]], n);
+	pprintf(prn, "\\begin{tabular}{rrrr}\n");
+    } else {
+	pprintf(prn, "(missing values denoted by $-999$ will be "
+		"skipped)\\\\[8pt]\n\n");
+	pprintf(prn, "\\begin{tabular}{lrrrr}\n");
+	pprintf(prn, "Variable &");
     }
-    lineno = 4;
-    prhdr("Summary Statistics", pdinfo, SUMMARY, format, prn);
+
+    pprintf(prn, "MEAN & MEDIAN & MIN & MAX\\\\\\hline\n");
+
+    for (v=1; v<=lo; v++) {
+	lv = list[v];
+	xbar = coeff[v];
+	if (lo > 1)
+	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	printftex(xbar, prn, 0);
+	printftex(xmedian[v], prn, 0);
+	printftex(xpx[v], prn, 0);
+	printftex(xpy[v], prn, 1);
+	if (v == lo) pprintf(prn, "[10pt]\n\n");
+	else pprintf(prn, "\n");
+    }
+
+    if (lo > 1) pprintf(prn, "Variable & ");
+    pprintf(prn, "S.D. & C.V. & SKEW & EXCSKURT\\\\\\hline\n");
+    for (v=1; v<=lo; v++) {
+	lv = list[v];
+	if (lo > 1)
+	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	xbar = coeff[v];
+	std = sderr[v];
+	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
+	else xcv = -999;
+	printftex(std, prn, 0);
+	printftex(xcv, prn, 0);
+	printftex(xskew[v], prn, 0);
+	printftex(xkurt[v], prn, 1);
+	pprintf(prn, "\n");
+    }
+
+    pprintf(prn, "\\end{tabular}\n\\end{center}\n");
+    
+}
+
+/* FIXME */
+
+#define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                   "\\cellx1600\\cellx3200\\cellx4800\\cellx6400" \
+                   "\\cellx8000\n\\intbl"
+
+#define VAR_STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                   "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n\\intbl"
+
+/* ............................................................. */
+
+static void rtfprint_summary (const int *list, 
+			      const DATAINFO *pdinfo, int n,
+			      double *coeff, double *xmedian,
+			      double *xpx, double *xpy, 
+			      double *sderr, double *xskew, 
+			      double *xkurt,
+			      print_t *prn)
+{
+    char date1[9], date2[9];
+    double xbar, std, xcv;
+    int lo = list[0], v, lv;
+
+    ntodate(date1, pdinfo->t1, pdinfo);
+    ntodate(date2, pdinfo->t2, pdinfo);
+
+    pprintf(prn, "{\\rtf1\\par\n\\qc "
+	    "Summary Statistics, using the observations %s - %s\\par\n",
+	    date1, date2);
+    
+    if (lo == 1) {
+	pprintf(prn, "for the variable %s (%d valid observations)\\par\n\n", 
+		pdinfo->varname[list[1]], n);
+	pprintf(prn, "{" VAR_STATS_ROW);
+    } else {
+	pprintf(prn, "(missing values denoted by -999 will be "
+		"skipped)\\par\n\n");
+	pprintf(prn, "{" STATS_ROW
+		" \\qc {\\i Variable}\\cell");
+    }
+
+    pprintf(prn, 
+	    " \\qr {\\i Mean}\\cell"
+	    " \\qr {\\i Median}\\cell"
+	    " \\qr {\\i Minimum}\\cell"
+	    " \\qr {\\i Maximum}\\cell"
+	    " \\intbl \\row\n"
+	    );
+
+    for (v=1; v<=lo; v++) {
+	lv = list[v];
+	xbar = coeff[v];
+	if (lo > 1)
+	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	printftex(xbar, prn, 0);
+	printftex(xmedian[v], prn, 0);
+	printftex(xpx[v], prn, 0);
+	printftex(xpy[v], prn, 1);
+	if (v == lo) pprintf(prn, "[10pt]\n\n");
+	else pprintf(prn, "\n");
+    }
+
+    if (lo > 1) pprintf(prn, " \\qc {\\i Variable}\\cell");
+    pprintf(prn, 
+	    " \\qr {\\i S.D}\\cell"
+	    " \\qr {\\i C.V.}\\cell"
+	    " \\qr {\\i Skewness}\\cell"
+	    " \\qr {\\i Excess kurtosis}\\cell"
+	    " \\intbl \\row\n"
+	    );
+
+    for (v=1; v<=lo; v++) {
+	lv = list[v];
+	if (lo > 1)
+	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
+	xbar = coeff[v];
+	std = sderr[v];
+	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
+	else xcv = -999;
+	printftex(std, prn, 0);
+	printftex(xcv, prn, 0);
+	printftex(xskew[v], prn, 0);
+	printftex(xkurt[v], prn, 1);
+	pprintf(prn, "\n");
+    }
+
+    pprintf(prn, "}\n\n\\par\n");
+}
+
+/* ............................................................. */
+
+static void textprint_summary (const int *list, 
+			       const DATAINFO *pdinfo, int n,
+			       double *coeff, double *xmedian,
+			       double *xpx, double *xpy, 
+			       double *sderr, double *xskew, 
+			       double *xkurt,
+			       print_t *prn, int batch)
+{
+    double xbar, std, xcv;
+    int lo = list[0], v, lv, lineno = 4;
+
+    prhdr("Summary Statistics", pdinfo, SUMMARY, prn);
     if (lo == 1) {
 	space(16, prn);
 	pprintf(prn, "for the variable '%s' (%d valid observations)\n\n", 
@@ -738,6 +875,68 @@ int summary (const int *list, double **pZ, const DATAINFO *pdinfo,
 	pprintf(prn, "\n");
     }
     pprintf(prn, "\n");
+}
+
+/* ............................................................. */
+
+int summary (const int *list, double **pZ, const DATAINFO *pdinfo, 
+	     const int batch, const int format, print_t *prn)
+{
+    int mm, n = 0, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
+    int v, lv;
+    double xbar, std, low, high, skew, kurt,
+	*xskew, *xkurt, *xmedian, *coeff, *sderr, *x, *xpx, *xpy;
+
+    lo = list[0];
+    mm = lo + 1;
+    if ((xskew = malloc(mm * sizeof *xskew)) == NULL) return E_ALLOC;
+    if ((xkurt = malloc(mm * sizeof *xkurt)) == NULL) return E_ALLOC;
+    if ((xmedian = malloc(mm * sizeof *xmedian)) == NULL) return E_ALLOC;
+    if ((coeff = malloc(mm * sizeof *coeff)) == NULL) return E_ALLOC;
+    if ((sderr = malloc(mm * sizeof *sderr)) == NULL) return E_ALLOC;
+    if ((x = malloc(len * sizeof *x)) == NULL) return E_ALLOC;
+    if ((xpx = malloc(mm * sizeof *xpx)) == NULL) return E_ALLOC;
+    if ((xpy = malloc(mm * sizeof *xpy)) == NULL) return E_ALLOC;
+
+    for (v=1; v<=lo; v++)  {
+	lv = list[v];
+	x[0] = -999999.0;
+	n = _ztox(lv, x, pdinfo, *pZ);
+	if (n == 0) return 1;
+	if (n == 1) {
+	    pprintf(prn, "Sample range has only one observation.");
+	    return 1;
+	}
+	minmax(0, n-1, x, &low, &high);	
+	moments(0, n-1, x, 
+		&xbar, &std, &skew, &kurt, 1);
+	xpx[v] = low;
+	xpy[v] = high;
+	coeff[v] = xbar;
+	sderr[v] = std;
+	xskew[v] = skew;
+	xkurt[v] = kurt;
+	qsort(x, n, sizeof *x, compare_doubles); 
+	if (n > 1) xmedian[v] = esl_median(x, n);
+	else xmedian[v] = x[1];
+    }
+
+    if (format == TEXT) {
+	textprint_summary(list, pdinfo, n,
+			  coeff, xmedian, xpx, xpy, sderr,
+			  xskew, xkurt, prn, batch);
+    }
+    else if (format == LATEX) {
+	texprint_summary(list, pdinfo, n, 
+			 coeff, xmedian, xpx, xpy, sderr,
+			 xskew, xkurt, prn);
+    }
+    else if (format == RTF) {
+	rtfprint_summary(list, pdinfo, n, 
+			 coeff, xmedian, xpx, xpy, sderr,
+			 xskew, xkurt, prn);
+    }
+
     free(xkurt);
     free(xmedian);
     free(xskew);
@@ -778,7 +977,7 @@ int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo,
     if ((xpx = calloc (mm, sizeof *xpx)) == NULL) return E_ALLOC; 
 
     lo = list[0];
-    prhdr("Correlation Coefficients", pdinfo, CORR, format, prn);
+    prhdr("Correlation Coefficients", pdinfo, CORR, prn);
     pprintf(prn, "              5%% critical value (two-tailed) = "
 	    "%.3f for n = %d\n\n", _rhocrit95(len), len);
 

@@ -235,7 +235,7 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 	prnclose(&prn);
 	return;
     }
-    view_buffer(&prn, 80, 300, "gretl: data info", NULL, 0);
+    view_buffer(&prn, 80, 300, "gretl: data info", INFO, NULL, 0);
 }
 
 /* ........................................................... */

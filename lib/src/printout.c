@@ -67,7 +67,7 @@ static void _depvarstats (const MODEL *pmod, print_t *prn)
 
 /* ........................................................... */
 
-static void printxx (const double xx, char *str, const int ci)
+void printxx (const double xx, char *str, const int ci)
 {
 #define BIG 1.0e+9
 #define SMALL 1.0e-6
