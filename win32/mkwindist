@@ -3,9 +3,8 @@
 # Shell script to make gretl2 win32 distribution
 
 GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp400w32.zip
-
 HOME_WIN32=/home/cottrell/stats/esl/win32/runtime
-GTK2RT=$HOME_WIN32/gtk-2.0-runtime.tar.gz
+CROSSDIR=/opt/cross-tools/mingw32
 
 RECODE=recode
 THISDIR=`pwd`
@@ -58,6 +57,13 @@ mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/it/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/ja/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/pl/LC_MESSAGES
+mkdir -p windist/gretl/lib/gtk-2.0/2.4.0/engines
+mkdir -p windist/gretl/lib/gtk-2.0/2.4.0/loaders
+mkdir -p windist/gretl/lib/pango/1.4.0/modules
+mkdir -p windist/gretl/etc/gtk-2.0
+mkdir -p windist/gretl/etc/pango
+mkdir -p windist/gretl/share/themes/Default/gtk-2.0
+mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
 
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 
@@ -75,18 +81,19 @@ for f in plugins/*.dll ; do
     add_file $f gretl/plugins/`basename $f`
 done
 
-# gtk dlls
-for f in `tar tvfz $GTK2RT | grep -v /$ | awk '{ print $NF }'` ; do
-    echo "gretl/$f" >> windist/MANIFEST
+# gtk runtime files
+for f in `cat ${HOME_WIN32}/gtk-runtime.files` ; do
+    instfile=`echo $f | sed s+^bin/++`
+    echo "gretl/$instfile" >> windist/MANIFEST
+    cp -ap ${CROSSDIR}/$f windist/gretl/$instfile
 done
-cd windist/gretl 
-tar xvfz $GTK2RT
 cd $THISDIR
 
 # auxiliary dlls
 for f in \
     libgmp-3.dll libxml2.dll readline.dll zlib1.dll libpng12.dll \
-    libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll
+    libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll \
+    iconv.dll intl.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
