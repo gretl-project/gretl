@@ -64,6 +64,8 @@ void free_series_view (gpointer p)
     if (sview == NULL || sview->points == NULL) return;
 
     free(sview->points);
+    free(sview);
+    sview = NULL;
 }
 
 static int series_view_allocate (series_view_t *sview)
