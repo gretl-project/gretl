@@ -51,7 +51,7 @@ else
   GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell glib-config --cflags)
 endif  
 
-SRCS = excel_import.c gnumeric_import.c gretl_matrix.c import_common.c \
+SRCS = excel_import.c gnumeric_import.c import_common.c \
 	johansen.c lad.c longname.c mp_ols.c panel_data.c progress_bar.c \
 	range-mean.c stats_tables.c sur.c tramo_options.c tramo-x12a.c \
 	workbook.c
@@ -114,13 +114,13 @@ excel_import.la: excel_import.lo workbook.lo $(query-ms-ole.lo)
 mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
 
-johansen.la: johansen.lo gretl_matrix.lo
+johansen.la: johansen.lo 
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-sur.la: sur.lo gretl_matrix.lo
+sur.la: sur.lo 
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-leverage.la: leverage.lo gretl_matrix.lo
+leverage.la: leverage.lo 
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 $(GRETLLIB):

@@ -880,8 +880,8 @@ int main (int argc, char *argv[])
 
     prog = argv[0];
 
-    if (argc == 2 && strcmp(argv[1], "-v") == 0) verbose = 1;
-    if (argc == 2 && strcmp(argv[1], "-vv") == 0) verbose = 2;
+    if (argc >= 2 && strcmp(argv[1], "-v") == 0) verbose = 1;
+    if (argc >= 2 && strcmp(argv[1], "-vv") == 0) verbose = 2;
 
     strcpy(datadir, ".");
     if (argc == 2 && argv[1][0] != '-') {

@@ -20,6 +20,7 @@
 /* estimate.c - gretl estimation procedures */
 
 #include "libgretl.h"
+#include "qr_estimate.h"
 #include "internal.h"
 
 /* There's a balancing act with 'TINY' here.  It's the minimum value
@@ -55,7 +56,6 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
 static double dwstat (int order, MODEL *pmod, double **Z);
-static double corrrsq (int nobs, const double *y, const double *yhat);
 static double rhohat (int order, int t1, int t2, const double *uhat);
 static double altrho (int order, int t1, int t2, const double *uhat);
 static int hatvar (MODEL *pmod, double **Z);
@@ -73,8 +73,10 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z);
 static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
 
+
+
 /* use Choleski or QR for regression? */
-static int use_qr;
+static int use_qr = 1;
 void set_use_qr (int set)
 {
     use_qr = set;
@@ -110,6 +112,29 @@ static int reorganize_uhat_yhat (MODEL *pmod)
     }
 
     free(tmp);
+    return 0;
+}
+
+/* with daily data, try eliminating the missing obs? */
+
+static int handle_missing_daily_obs (MODEL *pmod, double **Z, 
+				     DATAINFO *pdinfo)
+{
+    int misscount;
+    char *missvec = missobs_vector(Z, pdinfo, &misscount);
+    MISSOBS *mobs = NULL;
+
+    if (missvec == NULL || (mobs = malloc(sizeof *mobs)) == NULL) {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    } else {
+	repack_missing(Z, pdinfo, missvec, misscount);
+	pmod->t2 -= misscount;
+	mobs->misscount = misscount;
+	mobs->missvec = missvec;
+	pmod->data = mobs;
+    }
+
     return 0;
 }
 
@@ -170,6 +195,78 @@ static int get_model_df (MODEL *pmod, double rho)
     return 0;
 }
 
+static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
+{
+    int i, t, yno = pmod->list[1];
+    double x;
+
+    if (ar_info_init(pmod, 2)) {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }
+
+    pmod->arinfo->arlist[0] = pmod->arinfo->arlist[1] = 1;
+    pmod->arinfo->rho[1] = pmod->rho_in = rho;
+
+    if (pmod->ifc) {
+	pmod->coeff[pmod->ncoeff] /= (1.0 - rho);
+	pmod->sderr[pmod->ncoeff] /= (1.0 - rho);
+    }
+
+    pmod->uhat[pmod->t1] = NADBL;
+    pmod->yhat[pmod->t1] = NADBL;
+
+    for (t=pmod->t1+1; t<=pmod->t2; t++) {
+	x = Z[yno][t] - rho * Z[yno][t-1];
+	for (i=1; i<=pmod->ncoeff - pmod->ifc; i++) {
+	    x -= pmod->coeff[i] * 
+		(Z[pmod->list[i+1]][t] - 
+		 rho * Z[pmod->list[i+1]][t-1]);
+	}
+	if (pmod->ifc) 
+	    x -= (1 - rho) * pmod->coeff[pmod->ncoeff];
+	pmod->uhat[t] = x;
+	pmod->yhat[t] = Z[yno][t] - x;
+    }
+
+    pmod->rsq = 
+	corrrsq(pmod->t2 - pmod->t1, &Z[yno][pmod->t1+1], 
+		pmod->yhat + pmod->t1 + 1);
+    pmod->adjrsq = 
+	1 - ((1 - pmod->rsq) * (pmod->t2 - pmod->t1 - 1) / pmod->dfd);
+
+    return 0;
+}
+
+static void fix_wls_values (MODEL *pmod, double **Z)
+{
+    int t;
+
+    if (pmod->wt_dummy) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (floateq(Z[pmod->nwt][t], 0.0)) 
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	}
+    } else {
+	double x;
+
+	pmod->ess_wt = pmod->ess;
+	pmod->sigma_wt = pmod->sigma;
+	pmod->ess = 0.0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (Z[pmod->nwt][t] == 0.0) {
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+		pmod->nobs -= 1;
+	    } else {
+		pmod->yhat[t] /= Z[pmod->nwt][t];
+		x = pmod->uhat[t] /= Z[pmod->nwt][t];
+		pmod->ess += x * x;
+	    }
+	}
+	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+    }
+}
+
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
@@ -188,16 +285,15 @@ static int get_model_df (MODEL *pmod, double rho)
 MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo, 
 	   int ci, int opt, double rho)
 {
-    int l0, ifc, nwt, yno, i, n, nxpx;
-    int t, t1, t2, l, v, order, effobs = 0;
+    int l0, yno, i;
+    int effobs = 0;
     int missv = 0, misst = 0;
-    double xx;
     double *xpy;
-    MODEL model;
+    MODEL mdl;
 
     if (list == NULL || pZ == NULL || pdinfo == NULL) {
-	model.errcode = E_DATA;
-        return model;
+	mdl.errcode = E_DATA;
+        return mdl;
     }
 
     if (ci == HSK) {
@@ -207,226 +303,167 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	return hccm_func(list, pZ, pdinfo);
     }
 
-    _init_model(&model, pdinfo);
+    _init_model(&mdl, pdinfo);
 
     if (list[0] == 1 || pdinfo->v == 1) {
-	model.errcode = E_DATA;
-        return model;
+	mdl.errcode = E_DATA;
+        return mdl;
     }
 
     /* preserve a copy of the list supplied, for future reference */
-    copylist(&(model.list), list);
-    if (model.list == NULL) {
-        model.errcode = E_ALLOC;
-        return model;
+    copylist(&(mdl.list), list);
+    if (mdl.list == NULL) {
+        mdl.errcode = E_ALLOC;
+        return mdl;
     }
 
-    n = pdinfo->n;
-    model.t1 = pdinfo->t1;
-    model.t2 = pdinfo->t2;
-    model.ci = ci;
+    mdl.t1 = pdinfo->t1;
+    mdl.t2 = pdinfo->t2;
+    mdl.ci = ci;
 
     /* Doing weighted least squares? */
-    model.wt_dummy = 0;
-    model.nwt = nwt = 0;
+    mdl.wt_dummy = 0;
+    mdl.nwt = 0;
     if (ci == WLS) { 
-	model.nwt = nwt = model.list[1];
-	if (_iszero(model.t1, model.t2, (*pZ)[nwt])) {
-	    model.errcode = E_WTZERO;
-	    return model;
+	mdl.nwt = mdl.list[1];
+	if (_iszero(mdl.t1, mdl.t2, (*pZ)[mdl.nwt])) {
+	    mdl.errcode = E_WTZERO;
+	    return mdl;
 	}
-	effobs = isdummy((*pZ)[nwt], model.t1, model.t2);
-	if (effobs) model.wt_dummy = 1;
+	effobs = isdummy((*pZ)[mdl.nwt], mdl.t1, mdl.t2);
+	if (effobs) mdl.wt_dummy = 1;
     }
 
     /* check for missing obs in sample */
-    if ((missv = _adjust_t1t2(&model, model.list, &model.t1, &model.t2, 
+    if ((missv = _adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2, 
 			      *pZ, &misst))) {
 	if (!dated_daily_data(pdinfo)) {
 	    sprintf(gretl_errmsg, _("Missing value encountered for "
 		    "variable %d, obs %d"), missv, misst);
-	    model.errcode = E_DATA;
-	    return model;
-	} else {
-	    /* with daily data, try eliminating the missing obs? */
-	    int misscount;
-	    char *missvec = missobs_vector(*pZ, pdinfo, &misscount);
-	    MISSOBS *mobs = NULL;
-
-	    if (missvec == NULL || (mobs = malloc(sizeof *mobs)) == NULL) {
-		model.errcode = E_ALLOC;
-		return model;
-	    } else {
-		repack_missing(*pZ, pdinfo, missvec, misscount);
-		model.t2 -= misscount;
-		mobs->misscount = misscount;
-		mobs->missvec = missvec;
-		model.data = mobs;
-	    }
+	    mdl.errcode = E_DATA;
+	    return mdl;
+	} else if (handle_missing_daily_obs(&mdl, *pZ, pdinfo)) {
+	    return mdl;
 	}
     }    
-    t1 = model.t1; 
-    t2 = model.t2; 
 
-    if (ci == WLS) dropwt(model.list);
-    yno = model.list[1];
+    if (ci == WLS) dropwt(mdl.list);
+    yno = mdl.list[1];
     
     /* check for availability of data */
-    if (t1 < 0 || t2 > n - 1) {
-        model.errcode = E_NODATA;
-        return model;
+    if (mdl.t1 < 0 || mdl.t2 > pdinfo->n - 1) {
+        mdl.errcode = E_NODATA;
+        goto lsq_abort;
     }                   
-    for (i=1; i<=model.list[0]; i++) {
-        if (model.list[i] > pdinfo->v - 1) {
-            model.errcode = E_UNKVAR;
-            return model;
+
+    /* check for unknown vars in list */
+    for (i=1; i<=mdl.list[0]; i++) {
+        if (mdl.list[i] > pdinfo->v - 1) {
+            mdl.errcode = E_UNKVAR;
+            goto lsq_abort;
         }
     }       
 
     /* check for zero dependent var */
-    if (zerror(t1, t2, yno, nwt, pZ)) {  
-        model.errcode = E_ZERO;
-        return model; 
+    if (zerror(mdl.t1, mdl.t2, yno, mdl.nwt, pZ)) {  
+        mdl.errcode = E_ZERO;
+        goto lsq_abort; 
     } 
 
     /* drop any vars that are all zero and repack the list */
-    omitzero(&model, pdinfo, *pZ);
+    omitzero(&mdl, pdinfo, *pZ);
 
-    /* see if the regressor list contains a constant (ID 0) */
-    model.ifc = ifc = _hasconst(model.list);
-    /* if so, move it to the last place */
-    if (ifc) rearrange_list(model.list);
+    /* if regressor list contains a constant, place it last */
+    mdl.ifc = _hasconst(mdl.list);
+    if (mdl.ifc) rearrange_list(mdl.list);
 
     /* check for presence of lagged dependent variable */
-    model.ldepvar = lagdepvar(model.list, pdinfo, pZ);
+    mdl.ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
 
-    l0 = model.list[0];  /* holds 1 + number of coeffs */
-    model.ncoeff = l0 - 1; 
-    if (effobs) model.nobs = effobs;
-    else model.nobs = t2 - t1 + 1;
+    l0 = mdl.list[0];  /* holds 1 + number of coeffs */
+    mdl.ncoeff = l0 - 1; 
+    if (effobs) mdl.nobs = effobs;
+    else mdl.nobs = mdl.t2 - mdl.t1 + 1;
 
     /* check degrees of freedom */
-    if (get_model_df(&model, rho)) {
-        return model; 
+    if (get_model_df(&mdl, rho)) {
+        goto lsq_abort; 
     }
 
     if (use_qr) {
-	extern int gretl_qr_regress (MODEL *pmod, double **Z, int fulln);
-
-	gretl_qr_regress(&model, *pZ, pdinfo->n);
+	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n);
     } else {
-	/* allocation for xpx, xpy, coeff */
-	l = l0 - 1;
-	nxpx = l * (l + 1) / 2;
+	int l = l0 - 1;
+	int nxpx = l * (l + 1) / 2;
+
 	xpy = malloc((l0 + 1) * sizeof *xpy);
-	model.xpx = malloc((nxpx + 1) * sizeof(double));
-	model.coeff = malloc(l0 * sizeof(double));
-	if (xpy == NULL || model.xpx == NULL || model.coeff == NULL) {
-	    model.errcode = E_ALLOC;
-	    return model;
+	mdl.xpx = malloc((nxpx + 1) * sizeof *mdl.xpx);
+	mdl.coeff = malloc(l0 * sizeof *mdl.coeff);
+	if (xpy == NULL || mdl.xpx == NULL || mdl.coeff == NULL) {
+	    mdl.errcode = E_ALLOC;
+	    return mdl;
 	}
 
-	/* initialize xpy, xpx */
 	for (i=0; i<=l0; i++) xpy[i] = 0.0;
-	for (i=0; i<=nxpx; i++) model.xpx[i] = 0.0;
+	for (i=0; i<=nxpx; i++) mdl.xpx[i] = 0.0;
 
-	/* calculate regression results */
-	form_xpxxpy(model.list, t1, t2, *pZ, nwt, rho,
-		    model.xpx, xpy);
-	model.tss = xpy[l0];
+	/* calculate regression results, Choleski style */
+	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho,
+		    mdl.xpx, xpy);
+	/* mdl.tss = xpy[l0]; */ /* done elsewhere */
 
-	regress(&model, xpy, *pZ, n, rho);
+	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
 	free(xpy);
     }
 
-    if (model.errcode) {
-	return model;
+    if (mdl.errcode) {
+	goto lsq_abort;
     }
 
     /* get the mean and sd of depvar and make available */
-    if (model.ci == WLS && model.wt_dummy) {
-	model.ybar = wt_dummy_mean(&model, *pZ);
-	model.sdy = wt_dummy_stddev(&model, *pZ);
+    if (mdl.ci == WLS && mdl.wt_dummy) {
+	mdl.ybar = wt_dummy_mean(&mdl, *pZ);
+	mdl.sdy = wt_dummy_stddev(&mdl, *pZ);
     } else {
-	model.ybar = _esl_mean(t1, t2, (*pZ)[yno]);
-	model.sdy = _esl_stddev(t1, t2, (*pZ)[yno]);
+	mdl.ybar = _esl_mean(mdl.t1, mdl.t2, (*pZ)[yno]);
+	mdl.sdy = _esl_stddev(mdl.t1, mdl.t2, (*pZ)[yno]);
     }
 
     /* Doing an autoregressive procedure? */
     if (ci == CORC || ci == HILU) {
-	if (ar_info_init (&model, 2)) {
-	    model.errcode = E_ALLOC;
-	    return model;
-	}
-	model.arinfo->arlist[0] = model.arinfo->arlist[1] = 1;
-	model.arinfo->rho[1] = model.rho_in = rho;
-	if (model.ifc) {
-	    model.coeff[model.ncoeff] /= (1.0 - rho);
-	    model.sderr[model.ncoeff] /= (1.0 - rho);
-	}
-	model.uhat[t1] = NADBL;
-	model.yhat[t1] = NADBL;
-	for (t=t1+1; t<=t2; t++) {
-	    xx = (*pZ)[yno][t] - rho * (*pZ)[yno][t-1];
-	    for (v=1; v<=model.ncoeff-model.ifc; v++)
-		xx -= model.coeff[v] * 
-		    ((*pZ)[model.list[v+1]][t] - 
-		    rho * (*pZ)[model.list[v+1]][t-1]);
-	    if (model.ifc) xx -= (1 - rho) * model.coeff[model.ncoeff];
-	    model.uhat[t] = xx;
-	    model.yhat[t] = (*pZ)[yno][t] - xx;
-	}
-	model.rsq = 
-	    corrrsq(t2-t1, &(*pZ)[yno][t1+1], model.yhat + t1+1);
-    	model.adjrsq = 
-           1 - ((1 - model.rsq)*(t2 - t1 - 1)/model.dfd);
+	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) 
+	    goto lsq_abort;
     }
 
     /* weighted least squares: fix fitted values, ESS, sigma */
-    if (ci == WLS && !(model.wt_dummy)) {
-	model.ess_wt = model.ess;
-	model.sigma_wt = model.sigma;
-	model.ess = 0.0;
-	for (t=t1; t<=t2; t++) {
-	    if ((*pZ)[nwt][t] == 0.0) {
-		model.yhat[t] = model.uhat[t] = NADBL;
-		model.nobs -= 1;
-	    } else {
-		model.yhat[t] /= (*pZ)[nwt][t];
-		xx = model.uhat[t] /= (*pZ)[nwt][t];
-		model.ess += xx * xx;
-	    }
-	}
-	model.sigma = sqrt(model.ess/model.dfd);
-    }
-    if (ci == WLS && model.wt_dummy) {
-	for (t=t1; t<=t2; t++) {
-	    if (floateq((*pZ)[nwt][t], 0.0)) 
-		model.yhat[t] = model.uhat[t] = NADBL;
-	}
+    if (ci == WLS) {
+	fix_wls_values(&mdl, *pZ);
     }
 
     /* if opt = 1, compute residuals and rhohat */
     if (opt) {
-	order = (ci == CORC || ci == HILU)? 1 : 0;
-	model.rho = rhohat(order, t1, t2, model.uhat);
-	model.dw = dwstat(order, &model, *pZ);
+	int order = (ci == CORC || ci == HILU)? 1 : 0;
+
+	mdl.rho = rhohat(order, mdl.t1, mdl.t2, mdl.uhat);
+	mdl.dw = dwstat(order, &mdl, *pZ);
     }
 
     /* Generate model selection statistics */
-    _aicetc(&model);
+    gretl_aic_etc(&mdl);
+
+ lsq_abort:
 
     /* If we eliminated any missing observations, restore
        them now */
-    if (model.data != NULL) {
-	MISSOBS *mobs = (MISSOBS *) model.data;
+    if (mdl.data != NULL) {
+	MISSOBS *mobs = (MISSOBS *) mdl.data;
 
 	undo_repack_missing(*pZ, pdinfo, mobs->missvec,
 			    mobs->misscount);
-	reorganize_uhat_yhat(&model);
+	reorganize_uhat_yhat(&mdl);
     }
 
-    return model;
+    return mdl;
 }
 
 /* .......................................................... */
@@ -580,6 +617,56 @@ static int make_ess (MODEL *pmod, double **Z)
 
 /* .......................................................... */
 
+static void compute_r_squared (MODEL *pmod, double *y)
+{
+    pmod->rsq = 1 - (pmod->ess / pmod->tss);
+
+    if (pmod->dfd > 0) {
+	double den = pmod->tss * pmod->dfd;
+
+	pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
+	if (!pmod->ifc) {  
+	    pmod->rsq = corrrsq(pmod->nobs, y, pmod->yhat + pmod->t1);
+	    pmod->adjrsq = 
+		1 - ((1 - pmod->rsq) * (pmod->nobs - 1) / pmod->dfd);
+	}
+    }
+}
+
+/* Calculation of WLS stats in agreement with GNU R */
+
+static void wls_stats (MODEL *pmod, const double **Z)
+{
+    int t, wobs = pmod->nobs, yno = pmod->list[1];
+    double x, w2, wmean = 0.0, wsum = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) { 
+	if (Z[pmod->nwt][t] == 0) {
+	    wobs--;
+	    pmod->dfd -= 1;
+	} else {
+	    w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t];
+	    wmean += w2 * Z[yno][t];
+	    wsum += w2;
+	}
+    }
+
+    wmean /= wsum;
+    x = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (Z[pmod->nwt][t] == 0.0) continue;
+	w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
+	x += w2 * (Z[yno][t] - wmean) * (Z[yno][t] - wmean);
+    }
+
+    pmod->fstt = ((x - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
+    pmod->rsq = (1 - (pmod->ess / x));
+    pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
+}
+
+/* .......................................................... */
+
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho)
 /*
@@ -597,21 +684,24 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
         sderr = vector of standard errors of regression coefficients
 */
 {
-    int v, t, yno = pmod->list[1];
-    double ysum, ypy, zz, tss, rss = 0.0;
-    double den = 0.0, sgmasq = 0.0;
+    int v, yno = pmod->list[1];
+    double ysum, ypy, zz, rss = 0.0;
+    double sgmasq = 0.0;
     double *diag = NULL;
-    int err = 0;
+    int i, err = 0;
 
     pmod->sderr = malloc((pmod->ncoeff + 1) * sizeof *pmod->sderr);
     pmod->yhat = malloc(n * sizeof *pmod->yhat);
     pmod->uhat = malloc(n * sizeof *pmod->uhat);
 
-    if (pmod->sderr == NULL || pmod->yhat == NULL ||
-	pmod->uhat == NULL) {
+    if (pmod->sderr == NULL || pmod->yhat == NULL || pmod->uhat == NULL) {
         pmod->errcode = E_ALLOC;
         return;
-    }	
+    }
+
+    for (i=0; i<n; i++) {
+	pmod->yhat[i] = pmod->yhat[i] = 0.0;
+    }    
 
     ysum = xpy[0];
     ypy = xpy[pmod->ncoeff + 1];
@@ -623,9 +713,9 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 #endif
 
     zz = ysum * ysum / pmod->nobs;
-    tss = ypy - zz;
+    pmod->tss = ypy - zz;
 #ifdef NO_LHS_CONST
-    if (floatlt(tss, 0.0)) { 
+    if (floatlt(pmod->tss, 0.0)) { 
         pmod->errcode = E_TSS; 
         return; 
     }
@@ -638,7 +728,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
         return;
     }   
     
-    if (rho) {
+    if (rho != 0.0) {
 	pmod->ess = ypy - rss;
     } else {
 	make_ess(pmod, Z);
@@ -660,10 +750,9 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     } else {
 	sgmasq = pmod->ess / pmod->dfd;
 	pmod->sigma = sqrt(sgmasq);
-	den = tss * pmod->dfd;
     }
 
-    if (floatlt(tss, 0.0) || floateq(tss, 0.0)) {
+    if (floatlt(pmod->tss, 0.0) || floateq(pmod->tss, 0.0)) {
        pmod->rsq = pmod->adjrsq = NADBL;
 #ifdef NO_LHS_CONST
        pmod->errcode = E_TSS;
@@ -674,17 +763,9 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     hatvar(pmod, Z); 
     if (pmod->errcode) return;
 
-    if (tss > 0) {
-	pmod->rsq = 1 - (pmod->ess/tss);
-	if (pmod->dfd > 0) {
-	    pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1)/den);
-	    if (!pmod->ifc) {  
-		pmod->rsq = corrrsq(pmod->nobs, &Z[yno][pmod->t1], 
-				    pmod->yhat + pmod->t1);
-		pmod->adjrsq = 
-		    1 - ((1 - pmod->rsq)*(pmod->nobs - 1)/pmod->dfd);
-	    }
-	}
+    /* this is out of place */
+    if (pmod->tss > 0) {
+	compute_r_squared(pmod, &Z[yno][pmod->t1]);
     }
 
     if (pmod->ifc && pmod->ncoeff == 1) {
@@ -695,34 +776,12 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     if (sgmasq <= 0.0 || pmod->dfd == 0) {
 	pmod->fstt = NADBL;
     } else {
-	pmod->fstt = (rss - zz * pmod->ifc)/(sgmasq * pmod->dfn);
+	pmod->fstt = (rss - zz * pmod->ifc) / (sgmasq * pmod->dfn);
     }
 
     /* Calculation of WLS stats in agreement with GNU R */
     if (pmod->nwt && !(pmod->wt_dummy)) {
-	int wobs = pmod->nobs;
-	double w2, wmean = 0.0, wsum = 0.0;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) { 
-	    if (Z[pmod->nwt][t] == 0) {
-		wobs--;
-		pmod->dfd -= 1;
-	    } else {
-		w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t];
-		wmean += w2 * Z[yno][t];
-		wsum += w2;
-	    }
-	}
-	wmean /= wsum;
-	zz = 0.0;
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (Z[pmod->nwt][t] == 0) continue;
-	    w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
-	    zz += w2 * (Z[yno][t] - wmean) * (Z[yno][t] - wmean);
-	}
-	pmod->fstt = ((zz - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
-	pmod->rsq = (1 - (pmod->ess / zz));
-	pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
+	wls_stats(pmod, (const double **) Z);
     }
 
     diag = malloc((pmod->ncoeff + 1) * sizeof *diag); 
@@ -756,15 +815,14 @@ static int ijtok (int i, int j, int n)
 
 /* .......................................................... */
 
-int cholbeta (double *xpx, double *xpy, 
-	      double *coeff, double *rss,
+int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
 	      int nv)
 /*
   This function does an inplace Choleski decomposition of xpx
   (lower triangular matrix stacked in columns) and then
-  solves the normal equations for coeff.  xpx is the X'X
+  solves the normal equations for coeff.  xpx is X'X
   on input and Choleski decomposition on output; xpy is
-  the X'y vector on input and chol. transformed t vector
+  the X'y vector on input and Choleski-transformed t vector
   on output. coeff is the vector of estimated coefficients; 
   nv is the number of regression coefficients including the 
   constant.  */
@@ -773,7 +831,7 @@ int cholbeta (double *xpx, double *xpy,
     double e, d, d1, test, xx;
 
     if (coeff != NULL) {
-	for (j=0; j<nv+1; j++) {
+	for (j=0; j<=nv; j++) {
 	    coeff[j] = 0.0;
 	}
     }
@@ -788,7 +846,7 @@ int cholbeta (double *xpx, double *xpy,
     kk = nv + 1;
 
     for (j=2; j<=nv; j++) {
-    /* diagonal elements */
+	/* diagonal elements */
         d = d1 = 0.0;
         k = j;
         jm1 = j - 1;
@@ -809,8 +867,8 @@ int cholbeta (double *xpx, double *xpy,
         e = 1 / sqrt(test);
         xpx[kk] = e;
         xpy[j] = (xpy[j] - d1) * e;
-        /* off-diagonal elements */
         for (i=j+1; i<=nv; i++) {
+	    /* off-diagonal elements */
             kk++;
             d = 0.0;
             k = j;
@@ -822,6 +880,7 @@ int cholbeta (double *xpx, double *xpy,
         }
         kk++;
     }
+
     kk--;
     d = 0.0;
     for (j=1; j<=nv; j++) {
@@ -878,7 +937,7 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
                 d += xpy[j] * xpx[k];
                 k += nv - j;
             }
-            d = (-1.0) * d * xpx[k];
+            d = -d * xpx[k];
             xpy[i] = d;
             e += d * d;
         }
@@ -1137,7 +1196,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 
 /* ........................................................... */
 
-static double corrrsq (int nobs, const double *y, const double *yhat)
+double corrrsq (int nobs, const double *y, const double *yhat)
 /* finds alternative R^2 value when there's no intercept */
 {
     double x;
@@ -1159,11 +1218,11 @@ static int hatvar (MODEL *pmod, double **Z)
         for (i=1; i<=pmod->ncoeff; i++) {
             xno = pmod->list[i+1];
 	    x = Z[xno][t];
-	    if (pmod->nwt) x = x * Z[pmod->nwt][t];
+	    if (pmod->nwt) x *= Z[pmod->nwt][t];
             pmod->yhat[t] += pmod->coeff[i] * x;
         }
 	x = Z[yno][t];
-	if (pmod->nwt) x = x * Z[pmod->nwt][t];
+	if (pmod->nwt) x *= Z[pmod->nwt][t];
         pmod->uhat[t] = x - pmod->yhat[t];                
     }
 
@@ -1545,7 +1604,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     tsls.adjrsq = 
 	1 - ((1 - tsls.rsq)*(tsls.nobs - 1)/tsls.dfd);
     tsls.fstt = tsls.rsq*tsls.dfd/(tsls.dfn*(1-tsls.rsq));
-    _aicetc(&tsls);
+    gretl_aic_etc(&tsls);
     tsls.rho = rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
     tsls.dw = dwstat(0, &tsls, *pZ);
 
@@ -2075,7 +2134,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 
     /* run initial OLS */
     armod = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
-    if (armod.errcode) goto ar1_bailout;
+    if (armod.errcode) goto ar1_abort;
 
     ifc = armod.ifc;
     ess = armod.ess;
@@ -2160,7 +2219,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	if (++j > 20) break;
     }
 
-    if (armod.errcode) goto ar1_bailout;
+    if (armod.errcode) goto ar1_abort;
 
     for (i=0; i<=list[0]; i++) {
 	armod.list[i] = list[i];
@@ -2174,7 +2233,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 
     if (ar_info_init(&armod, 2)) {
 	armod.errcode = E_ALLOC;
-	goto ar1_bailout;
+	goto ar1_abort;
     } else {
 	armod.arinfo->arlist[0] = 1;
 	armod.arinfo->arlist[1] = 1;
@@ -2210,12 +2269,12 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 		}
 	    }
 	}
-	_aicetc(&armod);
+	gretl_aic_etc(&armod);
     }
 
     printmodel(&armod, pdinfo, prn);
 
- ar1_bailout:
+ ar1_abort:
     dataset_drop_vars(arvars, pZ, pdinfo);
     free(arlist);
     free(list);
@@ -2423,7 +2482,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     for (t=ar.t1; t<=ar.t2; t++)
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
-    _aicetc(&ar);
+    gretl_aic_etc(&ar);
     ar.dw = dwstat(p, &ar, *pZ);
     ar.rho = rhohat(p, ar.t1, ar.t2, ar.uhat);
 

@@ -78,7 +78,7 @@ double _esl_variance (int t1, int t2, const double *x);
 
 double _esl_sst (int t1, int t2, const double *x);
 
-void _aicetc (MODEL *pmod);
+void gretl_aic_etc (MODEL *pmod);
 
 void _criteria (const double ess, int nobs, int ncoeff, 
 		PRN *prn);
@@ -111,5 +111,7 @@ int vars_identical (const double *x, const double *y, int n);
 int math_word (const char *s);
 
 void gretl_varinfo_init (VARINFO *vinfo);
+
+double corrrsq (int nobs, const double *y, const double *yhat);
 
 #endif /* GRETL_INTERNAL_H */

@@ -33,19 +33,19 @@ static int _pdton (int pd);
 
 static int path_append (char *file, const char *path)
 {
-       char temp[MAXLEN];
-       int n, pathlen = strlen(file) + strlen(path) + 1;
+    char temp[MAXLEN];
+    int n, pathlen = strlen(file) + strlen(path) + 1;
 
-       if (pathlen > MAXLEN) return 1;
-       strcpy(temp, path);
-       n = strlen(temp);
-       if (temp[n - 1] != SLASH && n < MAXLEN - 1) {
-	   temp[n] = SLASH;
-	   temp[n + 1] = '\0';
-       }
-       strcat(temp, file);
-       strcpy(file, temp);
-       return 0;
+    if (pathlen > MAXLEN) return 1;
+    strcpy(temp, path);
+    n = strlen(temp);
+    if (temp[n - 1] != SLASH && n < MAXLEN - 1) {
+	temp[n] = SLASH;
+	temp[n + 1] = '\0';
+    }
+    strcat(temp, file);
+    strcpy(file, temp);
+    return 0;
 }
 
 /* .......................................................  */
@@ -64,6 +64,7 @@ double _corr (int n, const double *zx, const double *zy)
 
     if (n == 0) return NADBL;
     if (_isconst(0, n-1, zx) || _isconst(0, n-1, zy)) return NADBL;
+
     nn = n;
     sx = sy = 0.0;
     for (i=0; i<n; ++i) {
@@ -76,10 +77,13 @@ double _corr (int n, const double *zx, const double *zy)
         sx += zxi;
         sy += zyi;
     }
+
     if (nn == 0) return NADBL;
+
     zxbar = sx/nn;
     zybar = sy/nn;
     sxx = syy = sxy = 0.0;
+
     for (i=0; i<n; ++i) {
         zxi = zx[i];
         zyi = zy[i];
@@ -90,12 +94,13 @@ double _corr (int n, const double *zx, const double *zy)
         syy = syy + (sy*sy); 
         sxy = sxy + (sx*sy);
     }
+
     if (sxy != 0.0) {
         den = sxx * syy;
         if (den > 0.0) return sxy/sqrt(den);
         else return NADBL;
     }
-     else return 0.0;
+    else return 0.0;
 }
 
 /* .......................................................  */
@@ -109,6 +114,7 @@ double _covar (int n, const double *zx, const double *zy)
     if (n == 0) return NADBL;
     nn = n;
     sx = sy = 0.0;
+
     for (i=0; i<n; ++i) {
         zxi = zx[i];
         zyi = zy[i];
@@ -119,10 +125,12 @@ double _covar (int n, const double *zx, const double *zy)
         sx += zxi;
         sy += zyi;
     }
+
     if (nn == 0) return NADBL;
     zxbar = sx/nn;
     zybar = sy/nn;
     sxy = 0.0;
+
     for (i=0; i<n; i++) {
         zxi = zx[i];
         zyi = zy[i];
@@ -131,6 +139,7 @@ double _covar (int n, const double *zx, const double *zy)
         sy = zyi - zybar;
         sxy = sxy + (sx*sy);
     }
+
     return sxy/(nn - 1);
 }
 
@@ -318,18 +327,21 @@ double _esl_mean (int t1, int t2, const double *x)
 
     n = t2 - t1 + 1;
     if (n <= 0) return NADBL;
+
     for (t=t1; t<=t2; t++) {
 	if (!(na(x[t]))) 
 	    sum += x[t];
 	else 
 	    n--;
     }
+
     xbar = sum/n;
     sum = 0.0;
+
     for (t=t1; t<=t2; t++) 
 	if (!(na(x[t]))) sum += (x[t] - xbar); 
-    xbar = xbar + sum/n;
-    return xbar;
+
+    return xbar + sum / n;
 }
 
 /* ......................................................  */
@@ -470,7 +482,7 @@ void printlist (const int *list, const char *msg)
 
 /* ....................................................... */
 
-void _aicetc (MODEL *pmod)
+void gretl_aic_etc (MODEL *pmod)
 /*
     Compute model selection criteria -- needs nobs, ncoeff
     and ess from model.

@@ -1,17 +1,72 @@
+/*
+ *  Copyright (c) by Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
 #include "libgretl.h"
+#include "qr_estimate.h"
 #include "gretl_matrix.h"
+#include "internal.h"
+
+#define QR_RCOND_MIN 1e-12 /* experiment with this */
 
 /* In fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are
    contiguous.
-   
 */
 
-#define TINY 1e-9 /* was 1.0e-13, produced poor results on NIST Filip
-		       test */
+static double get_tss (const double *y, int n)
+{
+    double ymean = _esl_mean(0, n-1, y);
+    double x, tss = 0.0;
+    int i;
 
-int gretl_qr_regress (MODEL *pmod, double **Z, int fulln)
+    for (i=0; i<n; i++) {
+	x = y[i] - ymean;
+	tss += x * x;
+    }
+
+    return tss;
+}
+
+static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
+{
+    pmod->tss = get_tss(y, n);
+
+    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+
+    if (pmod->dfd > 0) {
+	double den = pmod->tss * pmod->dfd;
+
+	pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
+	if (!pmod->ifc) {  
+	    pmod->rsq = corrrsq(pmod->nobs, y, pmod->yhat + pmod->t1);
+	    pmod->adjrsq = 
+		1 - ((1 - pmod->rsq) * (pmod->nobs - 1) / pmod->dfd);
+	}
+	pmod->fstt = ((pmod->tss - pmod->ess) / pmod->dfn) /
+	    (pmod->ess / pmod->dfd);
+    } else {
+	pmod->fstt = NADBL;
+    }
+}
+
+int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
 {
     integer info, lwork;
     integer m, n, lda;
@@ -92,8 +147,9 @@ int gretl_qr_regress (MODEL *pmod, double **Z, int fulln)
 	goto qr_cleanup;
     }
 
-    fprintf(stderr, "rcond = %g\n", rcond);
-    if (rcond < TINY) {
+    if (rcond < QR_RCOND_MIN) {
+	fprintf(stderr, "dtrcon: rcond = %g, but min is %g\n", rcond,
+		QR_RCOND_MIN);
 	err = E_SINGULAR;
 	goto qr_cleanup;
     }
@@ -168,8 +224,6 @@ int gretl_qr_regress (MODEL *pmod, double **Z, int fulln)
     }
     pmod->sigma = sqrt(pmod->ess / (m - n));
 
-    printf("SSR = %g, SE = %g\n", pmod->ess, pmod->sigma);
-
     /* OLS coefficients */
     gretl_matmult(R, g, b);
     for (i=0; i<n; i++) {
@@ -189,6 +243,8 @@ int gretl_qr_regress (MODEL *pmod, double **Z, int fulln)
 	pmod->sderr[i+1] = pmod->sigma * sqrt(x);
     }
 
+    qr_compute_r_squared(pmod, y->val, m);
+
  qr_cleanup:
     gretl_matrix_free(Q);
     gretl_matrix_free(y);
@@ -200,6 +256,8 @@ int gretl_qr_regress (MODEL *pmod, double **Z, int fulln)
     gretl_matrix_free(g);
     gretl_matrix_free(b);
     gretl_matrix_free(xpxinv);
+
+    pmod->errcode = err;
 
     return err;    
 }

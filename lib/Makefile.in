@@ -14,7 +14,8 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
-FLIB = @FLIB@
+LAPACK_LIBS = @LAPACK_LIBS@
+
 have_gtk = @have_gtk@
 
 ifeq ($(INSTALL_PROGRAM),)
@@ -45,9 +46,9 @@ else
   INSTALL_CFG = install-cfg-old
 endif
 
-# The LIBS line may need FLIB (-lf2c or equivalent)  at some point
+# hard-coded -L/usr/local/lib is a bodge!!
 
-LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
+LIBS = $(LAPACK_LIBS) -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
 
 #### End of system configuration section. ####
 
@@ -68,7 +69,7 @@ CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c drand.c expx2.c \
 	   stdtr.c unity.c 
 
 MINPACK_SRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder.c lmder1.c lmdif.c lmpar.c \
-	qrfac.c qrsolv.c dlog10.c
+	qrfac.c qrsolv.c 
 
 OBJS = $(SRCS:.c=.o)
 LOBJS = $(SRCS:.c=.lo)
