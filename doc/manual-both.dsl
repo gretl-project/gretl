@@ -75,7 +75,7 @@
 (define %hyphenation%
   ;; Allow automatic hyphenation?
   #t)
-
+  
 ;;What font would you like for titles?
 (define %title-font-family% 
   "LucidaSans")
@@ -402,7 +402,7 @@
                 (with-mode footnote-mode
                   (process-node-list footnotes))))))
         ))
-
+		
 &htmlmath.dsl;
 
 ;; end of html stylesheet customization

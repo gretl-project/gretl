@@ -34,5 +34,10 @@ sample: formatter reflow inprogress.xml gretlman.xsl gretltxt.xsl
 	./formatter inprogress.xml
 	./reflow < commands.txt > commands.hlp # && rm commands.txt
 
+chapter: formatter reflow inprogress.xml gretlman.xsl gretltxt.xsl
+	./formatter inprogress.xml && \
+	cat commands.xml | fgrep -v '<?x' > ../chapters/cmdlist.xml
+
 clean:
-	rm -f formatter skeleton reflow skeleton.xml *~
+	rm -f formatter skeleton reflow skeleton.xml commands.txt \
+	commands.xml commands.hlp *~

@@ -795,7 +795,7 @@
 
     <description>
       <para>
-	Terminates a simulation loop.  See <cmdref targ="loop"/>.
+	Marks the end of a command loop.  See <cmdref targ="loop"/>.
       </para>
     </description>
 
@@ -854,9 +854,9 @@
     <description>
       <para>
 	Specifies an equation within a system of equations (see 
-	<cmdref targ="system"/>).  The sytax for specifying
+	<cmdref targ="system"/>).  The syntax for specifying
 	an equation is the same as that for, e.g., 
-	<cmdref targ="ols"/> command.
+	<cmdref targ="ols"/>.
       </para>
     </description>
 
@@ -1097,7 +1097,7 @@
 	</li>
 	<li><para><cmd>genr paneldum</cmd> creates a set
 	    of special dummy variables for use with a panel data set
-	    &mdash; see <cmdref targ="cmd-panel"/>.</para>
+	    &mdash; see <cmdref targ="panel"/>.</para>
 	</li>
 	<li><para>Various internal variables defined in the
 	    course of running a regression can be retrieved using
@@ -1137,12 +1137,14 @@
 	0 otherwise.  The variable <literal>$pd</literal> holds the
 	frequency or periodicity of the data (e.g. 4 for quarterly
 	data).</para>
-	
+
+<!--	
       <para>
 	<tabref targ="tab-genr"/> gives several examples of uses of
 	<cmd>genr</cmd> with explanatory notes; here are a
 	couple of tips on dummy variables:
       </para>
+-->
 
       <ilist>
 	<li><para>Suppose <literal>x</literal> is coded with
@@ -1465,7 +1467,7 @@
       </code>
 
      <para><repl>condition</repl> must be a Boolean expression, for
-	the syntax of which see <cmdref targ="cmd-genr"/>.  The
+	the syntax of which see <cmdref targ="genr"/>.  The
 	<cmd>else</cmd> block is optional; <literal>if</literal>
 	&hellip; <literal>endif</literal> blocks may be nested.</para>
     </description>
@@ -1633,9 +1635,10 @@
     <description>
       <para>
 	The first difference of the natural log of each variable in
-	varlist is obtained and the result stored in a new variable
-	with the prefix <literal>ld_</literal>.  Thus <cmd>ldiff x
-	  y</cmd> creates the new variables <literal>ld_x</literal> =
+	<repl>varlist</repl> is obtained and the result stored in a
+	new variable with the prefix <literal>ld_</literal>.  Thus
+	<cmd>ldiff x y</cmd> creates the new variables
+	<literal>ld_x</literal> =
 	  <equation status="inline" 
 	  tex="$\ln(x_t) - \ln(x_{t-1})$"
 	  ascii="ln[x(t)] - ln[x(t-1)]"
@@ -1879,12 +1882,13 @@
 
     <description>
      <para>
-	The natural log of each of the variables in varlist is
-	obtained and the result stored in a new variable with the
-	prefix <literal>l_</literal> which is <quote>el</quote>
-	underscore.  <cmd>logs x y</cmd> creates the new
-	variables <literal>l_x</literal> = ln(<literal>x</literal>)
-	and <literal>l_y</literal> = ln(<literal>y</literal>).
+	The natural log of each of the variables in
+	<repl>varlist</repl> is obtained and the result stored in a
+	new variable with the prefix <literal>l_</literal> which is
+	<quote>el</quote> underscore.  <cmd>logs x y</cmd> creates the
+	new variables <literal>l_x</literal> =
+	ln(<literal>x</literal>) and <literal>l_y</literal> =
+	ln(<literal>y</literal>).
       </para>
     </description>
 
@@ -1908,26 +1912,28 @@
     </usage>
 
     <description>
-     <para>Opens a special mode in which the program accepts commands
-	to be repeated either a specified number of times, or so long
-	as a specified condition holds true, or for successive integer
-	values of the (internal) index variable <literal>i</literal>.
-	Within a loop, only 7 commands can be used:
-	<cmd>genr</cmd>, <cmd>ols</cmd>,
-	<cmd>print</cmd>, <cmd>sim</cmd>,
-	<cmd>smpl</cmd>, <cmd>store</cmd> and
-	<cmd>summary</cmd> (store can't be used in a
-	<quote>while</quote> loop).  You exit the mode of entering
-	loop commands with <cmd>endloop</cmd>: at this point
-	the stacked commands are executed.  Loops cannot be nested.
+      <para>The parameter <repl>control</repl> must take one of three
+	forms, as shown in the examples: an integer number of times to
+	repeat the commands within the loop;
+	<quote><literal>while</literal></quote> plus a numerical
+	condition; or <quote><literal>for</literal></quote> plus a
+	range of values for the internal index variable
+	<literal>i</literal>.
       </para>
 
-      <para>As shown in the examples, <repl>control</repl> takes one
-	of three forms: an integer number of times to repeat the
-	commands within the loop; <literal>while</literal> plus a
-	numerical condition; or <literal>for</literal> plus a range of
-	values for the index variable <literal>i</literal>. 
-	See <manref targ="looping"/> for details.</para>
+     <para>This command opens a special mode in which the program
+	accepts commands to be executed repeatedly.  Within a loop,
+	only certain commands can be used: <cmd>genr</cmd>,
+	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>sim</cmd>,
+	<cmd>smpl</cmd>, <cmd>store</cmd> and <cmd>summary</cmd>
+	(store can't be used in a <quote>while</quote> loop).  You
+	exit the mode of entering loop commands with
+	<cmd>endloop</cmd>: at this point the stacked commands are
+	executed.  Loops cannot be nested.
+      </para>
+
+      <para>See <manref targ="looping"/> for further details and
+	examples.</para>
     </description>
 
   </command>
@@ -2066,13 +2072,16 @@
 	truncated first if need be. For instance, suppose you want to
 	create per capita versions of certain variables, and you have
 	the variable <literal>pop</literal> (population).  A suitable
-	set of commands is then: <cmd>genr invpop =
-	  1/pop</cmd> <cmd>multiply invpop pc income
-	  expend</cmd> which will create
-	<literal>incomepc</literal> as the product of
-	<literal>income</literal> and <literal>invpop</literal>, and
-	<literal>expendpc</literal> as <literal>expend</literal> times
-	<literal>invpop</literal>.
+	set of commands is then:</para>
+      
+      <code>
+	genr invpop = 1/pop
+	multiply invpop pc income</code>
+
+      <para>which will create <literal>incomepc</literal> as the
+	product of <literal>income</literal> and
+	<literal>invpop</literal>, and <literal>expendpc</literal> as
+	<literal>expend</literal> times <literal>invpop</literal>.
       </para>
     </description>
 
@@ -2118,7 +2127,7 @@
 	7   deriv alpha = 1
 	8   deriv beta = Y^gamma
 	9   deriv gamma = beta * Y^gamma * log(Y)
-       10  end nls
+	10  end nls
       </code>
 
       <para>
@@ -2170,14 +2179,14 @@
     <description>
      <para>
 	Establishes a <quote>blank</quote> data set, containing only a
-	constant and a variable named <literal>index</literal>, with
-	periodicity 1 and the specified number of observations. This
-	may be used for simulation purposes: some of the
-	<cmd>genr</cmd> commands (e.g. <cmd>genr uniform()</cmd>,
-	<cmd>genr normal()</cmd>, <cmd>genr time</cmd>) will generate
-	dummy data from scratch to fill out the data set. This command
-	may be useful in conjunction with <cmd>loop</cmd>.  See also
-	the <quote>seed</quote> option to the <cmd>set</cmd> command.
+	constant and an index variable, with periodicity 1 and the
+	specified number of observations. This may be used for
+	simulation purposes: some of the <cmd>genr</cmd> commands
+	(e.g. <cmd>genr uniform()</cmd>, <cmd>genr normal()</cmd>)
+	will generate dummy data from scratch to fill out the data
+	set. This command may be useful in conjunction with
+	<cmd>loop</cmd>.  See also the <quote>seed</quote> option to
+	the <cmd>set</cmd> command.
       </para>
     </description>
 
@@ -2249,20 +2258,34 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
       <examples>
-        <example>.</example>
+        <example>omit 5 7 9</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+     <para>
+	This command must be invoked after an estimation command. The
+	variables in <repl>varlist</repl> are omitted
+	from the previous model and the new model estimated. If more
+	than one variable is omitted, the Wald
+	<mathvar>F</mathvar>-statistic for the omitted variables
+	will be printed along with its p-value (for the OLS procedure
+	only).  A p-value below 0.05 means that the coefficients are
+	jointly significant at the 5 percent level.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /Tests/omit variables</menu-path>
     </gui-access>
 
   </command>
@@ -2271,20 +2294,25 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>modelID</argument>
+        <argument>varlist</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>omitfrom 2 5 7 9</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+     <para>Works like the <cmd>omit</cmd> command, except
+	that you specify a previous model (using its ID number, which
+	is printed at the start of the model output) to take as the
+	base for omitting variables.  The example above omits
+	variables number 5, 7 and 9 from Model 2.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /Tests/omit variables</menu-path>
     </gui-access>
 
   </command>
@@ -2293,20 +2321,29 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>datafile</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Opens a data file.  If a data file is already open, it is
+	replaced by the newly opened one.  The program will try to
+	detect the format of the data file (native, CSV or BOX1).
+      </para>
+
+      <para>
+	This command can also be used to open a database (gretl or
+	RATS 4.0) for reading, in which case it should be followed by
+	the <cmdref targ="data"/> command to extract particular
+	series from the database.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/File/Open data</menu-path>
+      <other-access>Drag a data file into gretl (MS Windows or
+	Gnome)</other-access>
     </gui-access>
 
   </command>
@@ -2315,66 +2352,82 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>filename</argument>
+        <argument>option</argument>
       </arguments>
       <options>
         <option>
         <flag>--append</flag>
-        <effect>.</effect>
+        <effect>append to file</effect>
         </option>
         <option>
         <flag>--close</flag>
-        <effect>.</effect>
+        <effect>close file</effect>
         </option>
         <option>
         <flag>--write</flag>
-        <effect>.</effect>
+        <effect>overwrite file</effect>
         </option>
        </options>
       <examples>
-        <example>.</example>
+        <example>outfile --write regress.txt</example>
+        <example>outfile --close</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
-    </description>
+    <description>
+	<para>Diverts output to <repl>filename</repl>, until further
+	notice.  Use the flag <literal>--append</literal> to append
+	output to an existing file, or <literal>--write</literal> to
+	start a new file (or overwrite an existing one).  Only one
+	file can be opened in this way at any given time.</para>
 
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
+      <para>The <literal>--close</literal> flag is used to close an
+	output file that was previously opened as above.  Output will
+	then revert to the default stream.</para>
+
+      <para>In the first example above, the file
+	<filename>regress.txt</filename> is opened for writing, and in
+	the second example it is closed.  This would make sense as a
+	sequence only if some commands were issued before the
+	<literal>--close</literal>.  For example if an <cmd>ols</cmd>
+	command intervened, its output would go to
+	<filename>regress.txt</filename> rather than the
+	screen.</para>
+    </description>
 
   </command>
 
   <command name="panel" section="Dataset">
 
     <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
       <options>
         <option>
         <flag>--cross-section</flag>
-        <effect>.</effect>
+        <effect>stacked cross sections</effect>
         </option>
         <option>
         <flag>--time-series</flag>
-        <effect>.</effect>
+        <effect>stacked time series</effect>
         </option>
        </options>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>Request that the current data set be interpreted as a
+	panel (pooled cross section and time series).  By default, or
+	with the <literal>--time-series</literal> flag, the data set
+	is taken to be in the form of stacked time series (successive
+	blocks of data contain time series for each cross-sectional
+	unit).  With the <literal>--cross-section</literal> flag, the
+	data set is read as stacked cross-sections (successive blocks
+	contain cross sections for each time period).  See also
+	<cmdref targ="setobs"/>.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Sample/interpret as panel</menu-path>
     </gui-access>
 
   </command>
@@ -2383,30 +2436,43 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
         <option>
         <flag>--save-all</flag>
-        <effect>.</effect>
+        <effect>Save all components</effect>
         </option>
         <option>
         <flag>--save</flag>
-        <effect>.</effect>
+        <effect>Save major components</effect>
         </option>
        </options>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+     <para>Rudimentary Principal Components Analysis.  Prints the
+	eigenvalues of the correlation matrix for the variables in
+	<repl>varlist</repl> along with the proportion of the joint
+	variance accounted for by each component.  Also prints the
+	corresponding eigenvectors (<quote>component
+	  loadings</quote>).</para>  
+
+      <para>If the <literal>--save</literal> flag is given, components
+	with eigenvalues greater than 1.0 are saved to the dataset as
+	variables, with names <literal>PC1</literal>,
+	<literal>PC2</literal> and so on.  These artificial variables
+	are formed as the sum of (component loading) times
+	(standardized <literal>Xi</literal>), where
+	<literal>Xi</literal> denotes the <mathvar>i</mathvar>th
+	variable in <repl>varlist</repl>.</para>
+
+      <para>If the <literal>--save-all</literal> flag is given, all of
+	the components are saved as described above.</para> 
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Main window pop-up (multiple selection)</menu-path>
     </gui-access>
 
   </command>
@@ -2415,26 +2481,36 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varname</argument>
       </arguments>
       <options>
         <option>
         <flag>--bartlett</flag>
-        <effect>.</effect>
+        <effect>use Bartlett lag window</effect>
         </option>
        </options>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Computes and displays (and if not in batch mode, graphs) the
+	spectrum of the specified variable.  Without the
+	<literal>--bartlett</literal> flag the sample periodogram is
+	given; with the flag a Bartlett lag window of length 2 root
+	<mathvar>T</mathvar> (where <mathvar>T</mathvar> is the sample
+	size) is used in estimating the spectrum (see Chapter 18 of
+	Greene's <book>Econometric Analysis</book>). When the sample
+	periodogram is printed, a <mathvar>t</mathvar>-test for
+	fractional integration of the series (<quote>long
+	  memory</quote>) is also given: the null hypothesis is that
+	the integration order is zero.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Variable/spectrum</menu-path>
+      <other-access>Main window pop-up menu (single
+	selection)</other-access>
     </gui-access>
 
   </command>
@@ -2443,27 +2519,25 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
         <option>
         <flag>--one-scale</flag>
-        <effect>.</effect>
+        <effect>force a single scale</effect>
         </option>
        </options>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Plots the values for specified variables, for the range of
+	observations currently in effect, using ASCII symbols.  Each
+	line stands for an observation and the values are plotted
+	horizontally.  By default the variables are scaled
+	appropriately.  See also <cmdref targ="gnuplot"/>.
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
@@ -2471,20 +2545,20 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>Estimates a model via OLS (see <cmdref targ="ols"/> for
+	details on syntax), and flags it as a pooled or panel model,
+	so that the <cmdref targ="hausman"/> test item becomes
+	available.</para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Model/Pooled OLS</menu-path>
     </gui-access>
 
   </command>
@@ -2493,30 +2567,44 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+	<argument>varlist</argument>
+	<argument alternate="true">string_literal</argument>
       </arguments>
       <options>
-        <option>
-        <flag>--byobs</flag>
-        <effect>.</effect>
-        </option>
-        <option>
-        <flag>--ten</flag>
-        <effect>.</effect>
-        </option>
-       </options>
+	<option>
+	  <flag>--byobs</flag>
+	  <effect>by observations</effect>
+	</option>
+	<option>
+	  <flag>--ten</flag>
+	  <effect>use 10 significant digits</effect>
+	</option>
+      </options>
       <examples>
-        <example>.</example>
+	<example>print x1 x2 --byobs</example>
+	<example>print "This is a string"</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	If <repl>varlist</repl> is given, prints the values of the
+	specified variables; if no list is given, prints the values of
+	all variables in the current data file. If the
+	<literal>--byobs</literal> flag is given the data are printed
+	by observation, otherwise they are printed by variable.  If
+	the <literal>--ten</literal> flag is given the data are
+	printed by variable to 10 significant digits.
+      </para>
+
+      <para>
+	If the argument to <cmd>print</cmd> is a literal string (which
+	must start with a double-quote, <literal>"</literal>), the
+	string is printed as is.  See also <cmdref targ="printf"/>.</para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Data/Display values</menu-path>
     </gui-access>
 
   </command>
@@ -2525,21 +2613,45 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>format</argument>
+        <argument>args</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
-    </description>
+    <description>
+      <para>
+	Prints scalar values under the control of a format string
+	(providing a small subset of the <literal>printf()</literal>
+	statement in the C programming language). Recognized formats
+	are <literal>%g</literal> and <literal>%f</literal>, in each
+	case with the various modifiers available in C.  Examples: the
+	format <literal>%.10g</literal> prints a value to 10
+	significant figures; <literal>%12.6f</literal> prints a value
+	to 6 decimal places, with a width of 12 characters.</para>  
 
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
+      <para>The format string itself must be enclosed in double
+	quotes.  The values to be printed must follow the format
+	string, separated by commas.  These values should take the
+	form of either (a) the names of variables in the dataset, or
+	(b) expressions that are valid for the <cmd>genr</cmd>
+	command.  The following example prints the values of two
+	variables plus that of a calculated expression:</para>
+
+      <code>
+	ols 1 0 2 3
+	genr b = coeff(2)
+	genr se_b = stderr(2)
+	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
+      </code>
+
+      <para>
+	The maximum length of a format string is 127 characters.  The
+	escape sequences <literal>\n</literal> (newline),
+	<literal>\t</literal> (tab), <literal>\v</literal> (vertical
+	tab) and <literal>\\</literal> (literal backslash) are
+	recognized.  To print a literal percent sign, use
+	<literal>%%</literal>.</para>
+    </description>
 
   </command>
 
@@ -2547,20 +2659,38 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+     <para>
+	Probit regression. The dependent variable should be a binary
+	variable. Maximum likelihood estimates of the coefficients on
+	<repl>indepvars</repl> are obtained via iterated
+	least squares (the EM or Expectation&ndash;Maximization
+	method).  As the model is nonlinear the slopes depend on the
+	values of the independent variables: the reported slopes are
+	evaluated at the means of those variables.  The chi-square
+	statistic tests the null hypothesis that all coefficients are
+	zero apart from the constant.
+      </para>
+
+      <para>
+	Probit for analysis of proportions is not implemented in
+	<program>gretl</program> at this point.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Model/Probit</menu-path>
     </gui-access>
 
   </command>
@@ -2569,42 +2699,50 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>dist</argument>
+        <argument optional="true">params</argument>
+	<argument>xval</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>pvalue z zscore</example>
+	<example>pvalue t 25 3.0</example>
+	<example>pvalue X 3 5.6</example>
+	<example>pvalue F 4 58 fval</example>
+	<example>pvalue G xbar varx x</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Computes the area to the right of <repl>xval</repl> in the
+	specified distribution (<literal>z</literal> for Gaussian,
+	<literal>t</literal> for Student's <mathvar>t</mathvar>,
+	<literal>X</literal> for chi-square, <literal>F</literal> for
+	<mathvar>F</mathvar> and <literal>G</literal> for gamma).  For
+	the <mathvar>t</mathvar> and chi-square distributions the
+	degrees of freedom must be given; for <mathvar>F</mathvar>
+	numerator and denominator degrees of freedom are required; and
+	for gamma the mean and variance are needed.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Utilities/p-value finder</menu-path>
     </gui-access>
 
   </command>
 
   <command name="quit" section="Utilities">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Exits from the program, giving you the option of saving the
+	output from the session on the way out.  
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/File/Exit</menu-path>
     </gui-access>
 
   </command>
@@ -2613,42 +2751,44 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varnumber</argument>
+        <argument>newname</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>Changes the name of the variable with identification
+	number <repl>varnumber</repl> to <repl>newname</repl>.  The
+	<repl>varnumber</repl> must be between 1 and the number of
+	variables in the dataset.  The new name must be of 8
+	characters maximum, must start with a letter, and must be
+	composed of only letters, digits, and the underscore
+	character.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Variable/Edit attributes</menu-path>
+      <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
   </command>
 
   <command name="reset" section="Tests">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Must immediately follow the estimation of a model via OLS.
+	Carries out Ramsey's RESET test for model specification
+	(non-linearity) by adding the square and the cube of the
+	fitted values to the regression and calculating the
+	<mathvar>F</mathvar> statistic for the null hypothesis that
+	the parameters on the two added terms are zero.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /Tests/Ramsey's RESET</menu-path>
     </gui-access>
 
   </command>
@@ -2657,21 +2797,30 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>rholist</argument>
+        <argument separated="true">varlist</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>rhodiff .65 ; 2 3 4</example>
+        <example>rhodiff r1 r2 ; x1 x2 x3</example>	
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+     <para>
+	Creates rho-differenced counterparts of the variables (given
+	by number or by name) in <repl>varlist</repl>
+	and adds them to the data set, using the suffix
+	<literal>#</literal> for the new variables. Given variable
+	<literal>v1</literal> in <repl>varlist</repl>,
+	and entries <literal>r1</literal> and <literal>r2</literal> in
+	<repl>rholist</repl>, <literal>v1# = v1(t) -
+	  r1*v1(t-1) - r2*v1(t-2)</literal> is created. The
+	<repl>rholist</repl> entries can be given as
+	numerical values or as the names of variables previously
+	defined.
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
@@ -2679,20 +2828,44 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varname</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Range&ndash;mean plot: this command creates a simple graph to
+	help in deciding whether a time series,
+	<mathvar>y</mathvar>(t), has constant variance or not.  We
+	take the full sample t=1,...,T and divide it into small
+	subsamples of arbitrary size <mathvar>k</mathvar>. The first
+	subsample is formed by
+	<mathvar>y</mathvar>(1),...,<mathvar>y</mathvar>(k), the
+	second is <mathvar>y</mathvar>(k+1), ...,
+	<mathvar>y</mathvar>(2k), and so on.  For each subsample we
+	calculate the sample mean and range (= maximum minus minimum),
+	and we construct a graph with the means on the horizontal axis
+	and the ranges on the vertical. So each subsample is
+	represented by a point in this plane.  If the variance of the
+	series is constant we would expect the subsample range to be
+	independent of the subsample mean; if we see the points
+	approximate an upward-sloping line this suggests the variance
+	of the series is increasing in its mean; and if the points
+	approximate a downward sloping line this suggests the variance
+	is decreasing in the mean.</para>
+
+      <para>Besides the graph, gretl displays the means and ranges for
+	each subsample, along with the slope coefficient for an OLS
+	regression of the range on the mean and the p-value for the
+	null hypothesis that this slope is zero.  If the slope
+	coefficient is significant at the 10 percent significance
+	level then the fitted line from the regression of range on
+	mean is shown on the graph.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Variable/Range-mean graph</menu-path>
     </gui-access>
 
   </command>
@@ -2701,20 +2874,19 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>inputfile</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Execute the commands in <repl>inputfile</repl> then return
+	control to the interactive prompt.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Run icon in script window</menu-path>
     </gui-access>
 
   </command>
@@ -2723,20 +2895,26 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varname</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Carries out the nonparametric <quote>runs</quote> test for
+	randomness of the specified variable.  If you want to test for
+	randomness of deviations from the median, for a variable named
+	<literal>x1</literal> with a non-zero median, you can do the
+	following:</para>
+
+      <code>
+	genr signx1 = x1 - median(x1)
+	runs signx1
+      </code>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Variable/Runs test</menu-path>
     </gui-access>
 
   </command>
@@ -2745,42 +2923,35 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>yvar</argument>
+        <argument separated="true">xvarlist</argument>
+	<argument alternate="true">yvarlist ; xvar</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>scatters 1 ; 2 3 4 5</example>
+        <example>scatters 1 2 3 4 5 6 ; 7</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Plots pairwise scatters of <repl>yvar</repl> against all the
+	variables in <repl>xvarlist</repl>, or of all the variables in
+	<repl>yvarlist</repl> against <repl>xvar</repl>.  The first
+	example above puts variable 1 on the <mathvar>y</mathvar>-axis
+	and draws four graphs, the first having variable 2 on the
+	<mathvar>x</mathvar>-axis, the second variable 3 on the
+	<mathvar>x</mathvar>-axis, and so on.  The second example
+	plots each of variables 1 through 6 against variable 7 on the
+	<mathvar>x</mathvar>-axis. Scanning a set of such plots can be
+	a useful step in exploratory data analysis.  The maximum
+	number of plots is six; any extra variable in the list will be
+	ignored.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
-
-  </command>
-
-  <command name="seed" section="Programming">
-
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
-    </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Data/Multiple scatterplots</menu-path>
     </gui-access>
 
   </command>

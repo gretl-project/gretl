@@ -57,7 +57,12 @@
 
   </sect1>
 
+  <sect1 id="cmd-cmd">
+    <title>gretl commands</title>
+
   &cmdlist;
+  
+  </sect1>
 
   <sect1 id="estimators"><title>Estimators and tests: summary</title>
 

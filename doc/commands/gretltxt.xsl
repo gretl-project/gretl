@@ -39,6 +39,7 @@
 
 <xsl:template match="argument">
   <xsl:if test="(@separated)">; </xsl:if>
+  <xsl:if test="(@alternate)"> or </xsl:if>
   <xsl:if test="(@optional)">[ </xsl:if> 
   <xsl:if test="@flag">
     <xsl:value-of select="@flag"/>

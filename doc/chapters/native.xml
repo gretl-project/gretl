@@ -51,7 +51,7 @@
 		time-series data one can use dates of the form
 		<command>1959.1</command> (quarterly, one digit after
 		the point) or <command>1967.03</command> (monthly, two
-		digits after the point). See <xref linkend="panel"/> below
+		digits after the point). See <xref linkend="chap-panel"/> below
 		for special use of this line in the case of panel
 		data.</para></listitem>
 	    <listitem><para>The keyword

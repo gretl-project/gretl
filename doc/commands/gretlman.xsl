@@ -8,7 +8,7 @@
 
 <xsl:template match="command">
   <xsl:text>&#xa;</xsl:text>
-  <sect2 id="cmd-{@name}">
+  <sect2 id="cmd-{@name}" xreflabel="{@name}">
     <title><xsl:value-of select="@name"/></title>
   <xsl:text>&#xa;</xsl:text>
   <xsl:apply-templates/>
@@ -47,6 +47,7 @@
 
 <xsl:template match="argument">
 <xsl:if test="(@separated)">; </xsl:if>
+<xsl:if test="(@alternate)"> or </xsl:if>
 <xsl:if test="(@optional)"><literal>[ </literal></xsl:if>
   <xsl:if test="@flag">
     <literal><xsl:value-of select="@flag"/></literal>

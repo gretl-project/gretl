@@ -426,7 +426,7 @@
 	      interpretation of the data in terms of frequency and
 	      starting point.  This may be useful with
 	      panel data; see <xref
-		linkend="panel"/>.</para>
+		linkend="chap-panel"/>.</para>
 	  </listitem> 
 	  <listitem><para><guimenuitem>Compact data</guimenuitem>: For
 	      time-series data of higher than annual frequency, gives
@@ -483,7 +483,7 @@
 	      enables you to fix the interpretation of a panel data
 	      set as either stacked time series or stacked cross
 	      sections (see <xref
-		linkend="panel"/>).</para></listitem>
+		linkend="chap-panel"/>).</para></listitem>
 	  <listitem><para><guimenuitem>Restructure 
 		panel</guimenuitem>: Allows the conversion of a panel
 		data set in stacked cross-section form into stacked

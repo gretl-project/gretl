@@ -42,6 +42,7 @@
 <!ATTLIST argument 
     separated (true | false) "false"
     optional (true | false) "false"
+    alternate (true | false) "false"
     flag CDATA #IMPLIED
 >
 
@@ -95,7 +96,7 @@
 <!ELEMENT literal  (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
-<!ELEMENT quote    (#PCDATA)>
+<!ELEMENT quote    (#PCDATA | literal)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT function (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>
