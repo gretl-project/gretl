@@ -22,7 +22,7 @@
 
 #include "bhhh_max.h"
 
-#undef BDEBUG
+#undef BHHH_DEBUG
 
 struct _model_info {
 
@@ -371,7 +371,7 @@ static int *make_opg_list (int k)
 	list[i+2] = i + 1; 
     }
 
-#ifdef BDEBUG
+#ifdef BHHH_DEBUG
     printlist(list, "OPG regression list");
 #endif
 
@@ -414,7 +414,13 @@ static int model_info_init (model_info *model, const double *init_coeff)
     }
 
     /* initialize parameters */
+#ifdef BHHH_DEBUG
+    fprintf(stderr, "model_info_init: initializing theta\n");
+#endif
     for (i=0; i<k; i++) {
+#ifdef BHHH_DEBUG
+	fprintf(stderr, "theta[%d] = %g\n", i, init_coeff[i]);
+#endif
 	model->theta[i] = init_coeff[i];
     }
 
@@ -444,21 +450,25 @@ model_info *model_info_new (void)
     return mi;
 }
 
-static void bhhh_iter_info (int iter, double *theta, int m, double ll,
-			    double steplength, PRN *prn)
+static int bhhh_iter_info (int iter, double *theta, int m, double ll,
+			   double steplength, PRN *prn)
 {
     int i;
 
     pprintf(prn, "\n*** %s %d: theta, ll ***\n", ("iteration"), iter);
     for (i=0; i<m; i++) {
 	if (i && i % 5 == 0) pputc(prn, '\n');
+	if (na(theta[i]) || isnan(theta[i])) {
+	    pprintf(prn, "Invalid value for theta[%d]\n", i);
+	    return 1;
+	}
 	pprintf(prn, "%#12.5g ", theta[i]);
     }
     pprintf(prn, "\n    %s = %g, ll = %g\n", _("step length"),
 	    steplength, ll);
-}
 
-#undef BHHH_DEBUG
+    return 0;
+}
 
 /**
  * bhhh_max:
@@ -547,7 +557,12 @@ int bhhh_max (LL_FUNC loglik,
     while (crit > model->tol && iters++ < itermax) {
 
 	/* compute loglikelihood and score matrix */
-	loglik(model->theta, X, tZ, model, 1); 
+	err = loglik(model->theta, X, tZ, model, 1); 
+	if (err) {
+	    pputs(prn, "Error calculating log-likelihood\n");
+	    err = E_NOCONV;
+	    break;
+	}
 
 	/* BHHH via OPG regression */
 	*bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
@@ -557,6 +572,9 @@ int bhhh_max (LL_FUNC loglik,
 	}
 
 #ifdef BHHH_DEBUG
+	pprintf(prn, "Dataset for OPG regression\n");
+	printdata(blist, (const double **) tZ, tinfo, OPT_O, prn);
+	pprintf(prn, "OLS model, OPG regression\n");
 	printmodel(bmod, tinfo, 0, prn);
 #endif
 

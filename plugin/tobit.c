@@ -24,7 +24,7 @@
 #include "libgretl.h"
 #include "bhhh_max.h"
 
-/* #define DEBUG */
+#undef TDEBUG 
 
 /* Below: we are buying ourselves a considerable simplification when it comes
    to the tobit_ll function.  That function needs access to the original y
@@ -93,6 +93,10 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 	e[t] = y[t] * siginv - ystar[t];
 	f[t] = siginv * normal_pdf(e[t]);
 	P[t] = normal_cdf(ystar[t]);
+#ifdef TDEBUG
+	fprintf(stderr, "tobit_ll: e[%d]=%g, f[%d]=%g, P[%d]=%g\n",
+		t, e[t], t, f[t], t, P[t]);
+#endif
     }
 
     /* compute loglikelihood for each obs, cumulate into ll */
@@ -102,6 +106,10 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 	    llt = 1.0 - P[t];
 	} else {
 	    llt = f[t];
+	}
+	if (llt == 0.0) {
+	    fprintf(stderr, "tobit_ll: L[%d] is zero\n", t);
+	    return 1;
 	}
 	ll += log(llt);
     }
@@ -303,7 +311,13 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	return E_ALLOC;
     }
     pmod->coeff = coeff;
+
+    /* initialization of variance: not sure what I'm doing here */
+#if 1
     pmod->coeff[k-1] = 1.0;
+#else
+    pmod->coeff[k-1] = 1.0 / pmod->sdy;
+#endif
 
     tobit = tobit_model_info_init(pmod->nobs, k, n_series);
     if (tobit == NULL) {
@@ -383,10 +397,16 @@ MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
     if (model.errcode) {
 	return model;
-    }    
+    } 
+
+#ifdef TDEBUG
+    pprintf(prn, "tobit_estimate: initial OLS\n");
+    printmodel(&model, pdinfo, OPT_NONE, prn);
+#endif
 
     /* do the actual Tobit analysis */
-    do_tobit((const double **) *pZ, pdinfo, &model, prn);
+    model.errcode = do_tobit((const double **) *pZ, pdinfo, 
+			     &model, prn);
 
     return model;
 }
