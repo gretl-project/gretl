@@ -108,8 +108,7 @@ $(GTKEXTRA_LITE):
 
 .PHONY:
 
-install: $(PROG) install-data $(query_install_gnome)
-	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
+install: install-exec install-data $(query_install_gnome)
 
 install-strip: $(PROG) install-data $(query_install_gnome)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)

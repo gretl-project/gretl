@@ -106,9 +106,6 @@ GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	objectsave.c
 GUIOBJ = $(GUISRC:.c=.o)
 
-HACK_SRC = gtkfontselhack.c font_filter.c
-HACK_OBJ = gtkfontselhack.o
-
 EXTRASRC = gtkpsfont.c gtkplotpc.c gtkplotps.c
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
@@ -139,7 +136,7 @@ all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB) -lmingwex
 
-$(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES) 
+$(GUIPROG): $(GUIOBJ) $(WRES)
 	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng $(ZLIB_LIB) -lmingwex
 
 $(CHECKER): $(CHECKSRC)

@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "../../cephes/libprob.h"
 
 #include <unistd.h>
 
@@ -30,8 +31,8 @@
 
 #define USE_BARS
 
-extern double _gamma_func (double x);
-extern double _gammadist (double s1, double s2, double x, int control);
+/* pvalues.c */
+extern double gamma_dist (double s1, double s2, double x, int control);
 
 static char gnuplot_path[MAXLEN];
 
@@ -1311,11 +1312,11 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    /* shape param = mean/scale */
 	    alpha = freq->xbar / beta;
 
-	    propn = _gammadist(freq->xbar, var, freq->endpt[i], 2) -
-		_gammadist(freq->xbar, var, freq->endpt[i-1], 2);
+	    propn = gamma_dist(freq->xbar, var, freq->endpt[i], 2) -
+		gamma_dist(freq->xbar, var, freq->endpt[i-1], 2);
 	    xx = (freq->endpt[i] + freq->endpt[i-1])/2.0;
 	    height = pow(xx, alpha - 1.0) * exp(-xx / beta) /
-		(_gamma_func(alpha) * pow(beta, alpha));
+		(cephes_gamma(alpha) * pow(beta, alpha));
 	    lambda = height/(freq->n * propn);
 	    fprintf(fp, "beta = %g\n", beta);
 	    fprintf(fp, "alpha = %g\n", alpha);

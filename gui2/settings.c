@@ -21,7 +21,6 @@
 
 #include "gretl.h"
 #include <unistd.h>
-#include "gtkfontselhack.h"
 
 #ifdef USE_GNOME
 # include <gconf/gconf-client.h>
@@ -29,6 +28,8 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+#else
+# include "gtkfontselhack.h"
 #endif
 
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
@@ -72,7 +73,7 @@ static void read_rc (void);
 
 /* font handling */
 #ifdef G_OS_WIN32
-static char fixedfontname[MAXLEN] = "Courier 9";
+static char fixedfontname[MAXLEN] = "Courier New 10";
 #else
 static char fixedfontname[MAXLEN] = "Monospace 10";
 #endif
@@ -1082,7 +1083,8 @@ static void read_rc (void)
 
 #endif /* end of "plain gtk" versions of read_rc, write_rc */
 
-/* .................................................................. */
+/* font selection: non-Windows version first */
+#ifndef G_OS_WIN32
 
 static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 {
@@ -1091,75 +1093,155 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 
     fontname = gtk_font_selection_hack_dialog_get_font_name(fs);
 
+# ifdef USE_GNOME /* gnome handles the app font */
+    if (mono && strlen(fontname)) {
+	strcpy(fixedfontname, fontname);
+	set_fixed_font();
+	write_rc();
+    }
+# else
     if (strlen(fontname)) {
 	if (mono) {
 	    strcpy(fixedfontname, fontname);
 	    set_fixed_font();
-#ifdef USE_GNOME
-	}
-#else
 	} else {
 	    set_app_font(fontname);
 	}
-#endif
 	write_rc();
     }
+# endif /* USE_GNOME */
+
     g_free(fontname);
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
-
-/* .................................................................. */
 
 void font_selector (gpointer data, guint fixed, GtkWidget *widget)
 {
     static GtkWidget *fontsel = NULL;
 
-    if (!fontsel) {
-	if (fixed) {
-	    fontsel = gtk_font_selection_hack_dialog_new 
-		(_("Font for gretl output windows"));
-	    gtk_font_selection_hack_dialog_set_filter
-		(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
-		 GTK_FONT_HACK_LATIN_MONO);
-	    gtk_font_selection_hack_dialog_set_font_name 
-		(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fixedfontname);
-	    g_object_set_data(G_OBJECT(fontsel), "mono", GINT_TO_POINTER(1));
-#ifdef USE_GNOME
-	}
-#else
-	} else {
-	    fontsel = gtk_font_selection_hack_dialog_new 
-		(_("Font for menus and labels"));
-	    gtk_font_selection_hack_dialog_set_filter
-		(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
-		 GTK_FONT_HACK_LATIN);
-	    gtk_font_selection_hack_dialog_set_font_name 
-		(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), appfontname);
-	    g_object_set_data(G_OBJECT(fontsel), "mono", GINT_TO_POINTER(0));
-	}
-#endif
-
-	gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
-
-	g_signal_connect (G_OBJECT(fontsel), "destroy",
-			  G_CALLBACK(gtk_widget_destroyed),
-			  &fontsel);
-
-	g_signal_connect (G_OBJECT 
-			  (GTK_FONT_SELECTION_HACK_DIALOG 
-			   (fontsel)->ok_button),
-			  "clicked", G_CALLBACK(font_selection_ok),
-			  GTK_FONT_SELECTION_HACK_DIALOG (fontsel));
-
-	g_signal_connect(G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->cancel_button),
-			 "clicked", 
-			 G_CALLBACK(delete_widget),
-			 fontsel);
+    if (fontsel != NULL) {
+	if (!GTK_WIDGET_VISIBLE(fontsel)) gtk_widget_show (fontsel);
+        gdk_window_raise(fontsel->window);
+        return;
+    }
+	
+    if (fixed) {
+	fontsel = gtk_font_selection_hack_dialog_new 
+	    (_("Font for gretl output windows"));
+	gtk_font_selection_hack_dialog_set_filter
+	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
+	     GTK_FONT_HACK_LATIN_MONO);
+	gtk_font_selection_hack_dialog_set_font_name 
+	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fixedfontname);
+	g_object_set_data(G_OBJECT(fontsel), "mono", GINT_TO_POINTER(1));
+    } else {
+# ifdef USE_GNOME
+	return; /* shouldn't be reached: gnome handles the app font */
+# else
+	fontsel = gtk_font_selection_hack_dialog_new 
+	    (_("Font for menus and labels"));
+	gtk_font_selection_hack_dialog_set_filter
+	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
+	     GTK_FONT_HACK_LATIN);
+	gtk_font_selection_hack_dialog_set_font_name 
+	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), appfontname);
+	g_object_set_data(G_OBJECT(fontsel), "mono", GINT_TO_POINTER(0));
+# endif /* USE_GNOME */
     }
 
-    if (!GTK_WIDGET_VISIBLE(fontsel)) gtk_widget_show (fontsel);
-    else gtk_widget_destroy (fontsel);
+    gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
+
+    g_signal_connect (G_OBJECT(fontsel), "destroy",
+		      G_CALLBACK(gtk_widget_destroyed),
+		      &fontsel);
+    g_signal_connect (G_OBJECT 
+		      (GTK_FONT_SELECTION_HACK_DIALOG 
+		       (fontsel)->ok_button),
+		      "clicked", G_CALLBACK(font_selection_ok),
+		      GTK_FONT_SELECTION_HACK_DIALOG (fontsel));
+    g_signal_connect(G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->cancel_button),
+		     "clicked", 
+		     G_CALLBACK(delete_widget),
+		     fontsel);
+
+    gtk_widget_show (fontsel);	
 }
+
+#else /* end non-win32 font selection, start win32 */
+
+static const char *font_weight_string (int weight)
+{
+    if (weight >= FW_THIN && weight <= FW_LIGHT) return " Light";
+    if (weight >= FW_NORMAL && weight <= FW_DEMIBOLD) return "";
+    if (weight >= FW_BOLD) return " Bold";
+    return "";
+}
+
+static void fontname_to_win32 (const char *src, int fixed,
+			       char *name, int *pts)
+{
+    int sz;
+
+    if (sscanf(src, "%31[^0123456789]%d", name, &sz) == 2) {
+	size_t i, n = strlen(name);
+
+	for (i=n-1; i>0; i--) {
+	    if (name[i] == ' ') name[i] = 0;
+	    else break;
+	}
+	*pts = sz * 10; /* measured in tenths of a point */
+    } else {
+	*name = 0;
+	strncat(name, src, 31);
+	if (fixed) *pts = 100;
+	else *pts = 80;
+    }
+}
+
+void font_selector (gpointer data, guint fixed, GtkWidget *widget)
+{
+    CHOOSEFONT cf;            /* common dialog box structure */
+    LOGFONT lf;               /* logical font structure */
+    char fontname[48];
+
+    ZeroMemory(&cf, sizeof cf);
+    cf.lStructSize = sizeof cf;
+    cf.Flags = CF_SCREENFONTS | CF_TTONLY | CF_LIMITSIZE | CF_INITTOLOGFONTSTRUCT;
+    cf.nSizeMin = 6;
+    cf.nSizeMax = 24;
+
+    ZeroMemory(&lf, sizeof lf);
+
+    cf.Flags |= CF_NOSCRIPTSEL;
+    
+    lf.lfWeight = FW_REGULAR;
+    lf.lfCharSet = DEFAULT_CHARSET;
+
+    if (fixed) {
+	cf.Flags |= CF_FIXEDPITCHONLY;
+	fontname_to_win32(fixedfontname, 1, lf.lfFaceName, &(cf.iPointSize));
+    } else {
+	fontname_to_win32(appfontname, 0, lf.lfFaceName, &(cf.iPointSize));
+    }
+
+    cf.lpLogFont = &lf;
+
+    if (ChooseFont(&cf) == TRUE && *(cf.lpLogFont->lfFaceName)) {
+	sprintf(fontname, "%s%s %d", cf.lpLogFont->lfFaceName, 
+		font_weight_string(cf.lpLogFont->lfWeight), 
+		cf.iPointSize / 10);
+	if (fixed) {
+	    strcpy(fixedfontname, fontname);
+	    set_fixed_font();
+	} else {
+	    set_app_font(fontname);
+	}
+	write_rc();
+    }
+}
+
+#endif /* end win32 font selection */
+
 /* .................................................................. */
 
 void init_fileptrs (void)

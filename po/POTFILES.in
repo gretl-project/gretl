@@ -43,7 +43,6 @@ gui/guiprint.c
 gui/gui_utils.c
 gui/helpfiles.c
 gui/library.c
-gui/model_table.c
 gui/objectsave.c
 gui/plotps.c
 gui/selector.c
@@ -86,6 +85,7 @@ plugin/leverage.c
 plugin/longname.c
 plugin/mp_ols.c
 plugin/panel_data.c
+plugin/pca.c
 plugin/progress_bar.c
 plugin/range-mean.c
 plugin/stats_tables.c

@@ -53,6 +53,13 @@ double ndtr (double a);
  */
 double ndtri (double y0);
 
+/*
+ * Returns gamma function of the argument.  The result is
+ * correctly signed.
+*/
+
+double cephes_gamma (double x); /* alias for gamma() */
+
 #endif /* LIBPROB_H */
 
 

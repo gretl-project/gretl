@@ -319,9 +319,9 @@ y = SQTPI * y * w;
 return( y );
 }
 
+double gamma (double x);
 
-
-double gamma(x)
+double cephes_gamma(x)
 double x;
 {
 double p, q, z;
@@ -682,4 +682,9 @@ if( x >= 1000.0 )
 else
 	q += polevl( p, A, 4 ) / x;
 return( q );
+}
+
+double gamma (double x)
+{
+	return cephes_gamma(x);
 }

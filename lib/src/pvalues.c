@@ -33,7 +33,7 @@ static void _pgamma (void);
 static double _getvalue (void);
 static void _enterdf (const char *str);
 
-double _gammadist (double s1, double s2, double x, int control);
+double gamma_dist (double s1, double s2, double x, int control);
 
 const char negval[] = N_("\nEnter x value (value < 0 will exit menu): "); 
 
@@ -293,7 +293,7 @@ double batch_pvalue (const char *str,
     case '5':
     case 'g':
     case 'G':
-	xx = _gammadist(mean, variance, xval, 2);
+	xx = gamma_dist(mean, variance, xval, 2);
 	if (na(xx))
 	    pputs(prn, _("\nError computing gamma distribution\n"));
 	else
@@ -465,7 +465,7 @@ static void _pgamma (void)
     printf("%s", _(negval));
     zx = _getvalue();
     if (zx < 0.0) return;
-    xx = 1.0 - _gammadist(mean, variance, zx, 2);
+    xx = 1.0 - gamma_dist(mean, variance, zx, 2);
     printf(_("\nFor Gamma (mean %g, variance %g), area to the right of %g is "),
 	   mean, variance, zx);
     _putxx(xx);
@@ -640,8 +640,6 @@ static const double tolerance = 1e-7;
 
 /* internal functions */
 
-static double gamma_stirling (double x);
-static double gamma_12 (double x);
 static double gamma_integral (double lambda, double x);
 static double gamma_integral_expansion (double lambda, double x);
 static double gamma_integral_fraction (double lambda, double x);
@@ -649,27 +647,7 @@ static double gammadist_wilson_hilferty (double shape, double scale, double x);
 
 /* exported functions */
 
-double _gamma_func (double x)
-{
-    double xx;
-
-    if (x > 171) { 
-	return NADBL; 
-    }
-    if (x >= 6)
-	xx = gamma_stirling(x);
-    else if (x > 2)
-	xx = (x-1) * _gamma_func(x-1);
-    else if (x < 1)
-	xx = _gamma_func(x+1)/x;
-    else 
-	xx = gamma_12(x);
-    return xx;
-} 
-
-/* ........................................................ */
-
-double _gammadist (double s1, double s2, double x, int control)
+double gamma_dist (double s1, double s2, double x, int control)
      /* Control 1 : s1, s2 = shape, scale
                 2 : s1, s2 = expectation, variance
         Returns NADBL (-999.0) on error 
@@ -692,51 +670,12 @@ double _gammadist (double s1, double s2, double x, int control)
     else {
 	xx = gamma_integral(shape, x/scale);
 	if (na(xx)) return xx;
-	xx /= _gamma_func(shape);
+	xx /= cephes_gamma(shape);
     }
     return xx;
 }
 
 /* end exported functions */
-
-static double gamma_stirling (double x)
-     /* Stirling's series, only to be applied for large x.
-	Abramowitz and Stegun, p. 257 
-     */
-{
-    double x2, xx;
-
-    x2 = x*x;
-    xx = 1 + (double)(1)/12/x + (double)(1)/288/x2
-	- (double)(139)/51840/x/x2 
-	- (double)(571)/2488320/(x2*x2);
-    xx *= exp(-x + (x-(double)(1)/2) *log(x))*sqrt(2*M_PI);
-    return xx;
-}
-
-static double gamma_12 (double x)
-     /* Polynomial approximation, 6.1.36, 
-	Abramowitz and Stegun, p. 257
-	error < 3e-7. 
-     */
-{
-    const double b1 = -0.577191652;
-    const double b2 = 0.988205891;
-    const double b3 = -0.897056937;
-    const double b4 = 0.918206857;
-    const double b5 = -0.756704078;
-    const double b6 = 0.482199394;
-    const double b7 = -0.193527818;
-    const double b8 = 0.035868343;
-    double xx, x1, x2, x4;
-
-    x1 = x-1;
-    x2 = x1*x1;
-    x4 = x2*x2;
-    xx = 1 + b1*x1 + b2*x2 + b3*x1*x2 + b4*x4 + b5*x4*x1;
-    xx += b6*x4*x2 + b7*x4*x2*x1 + b8*x4*x4;
-    return xx;
-}
 
 static double gamma_integral_expansion (double lambda, double x)
      /* Expansion of Gamma Integral int_0^x t^lambda-1 exp(-t)
@@ -786,7 +725,7 @@ static double gamma_integral_fraction (double lambda, double x)
 	if (fabs(q2) > 0)  r2 = p2/q2;
     } while (!((fabs(r2-r1) < tolerance ) || (fabs(r2-r1) < tolerance * r2)
 	       || (c == 100)));
-    xx = _gamma_func(lambda);
+    xx = cephes_gamma(lambda);
     xx -= exp(-x + lambda * log(x)) * r2;
     if (c == 100) return NADBL;
     return xx;
