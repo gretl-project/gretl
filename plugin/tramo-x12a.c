@@ -392,11 +392,12 @@ static int add_series_from_file (const char *fname, int code,
 	while (fgets(line, 127, fp)) {
 	    i++;
 	    if (i >= 7 && sscanf(line, " %lf", &x) == 1) {
+		if (t >= pdinfo->n) {
+		    fprintf(stderr, "t = %d >= pdinfo->n = %d\n", t, pdinfo->n);
+		    err = 1;
+		    break;
+		}		
 		Z[v][t++] = x;
-	    }
-	    if (t >= pdinfo->n) {
-		err = 1;
-		break;
 	    }
 	}
     } else {
@@ -768,10 +769,15 @@ int write_tx_data (char *fname, int varnum,
 	    get_seats_command(seats, prog);
 	    sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, seats, varname);
 	    err = system(cmd);
+	    if (err) {
+		fprintf(stderr, "This command failed:\n%s\n", cmd);
+	    }
+	} else {
+	    fprintf(stderr, "This command failed:\n%s\n", cmd);
 	}
 #endif
     }
-    
+
     if (!err) {
 	if (request.code == X12A) {
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
@@ -786,6 +792,9 @@ int write_tx_data (char *fname, int varnum,
 		err = add_series_from_file((request.code == X12A)? fname : workdir, 
 					   varlist[i], tmpZ, tmpinfo, i, 
 					   request.code, errmsg);
+		if (err) {
+		    fprintf(stderr, "add_series_from_file() failed\n");
+		}
 	    }
 	    if (request.opt[TRIGRAPH].save) {
 		int pv = make_x_axis_var(&tmpZ, tmpinfo);
@@ -793,6 +802,9 @@ int write_tx_data (char *fname, int varnum,
 		if (pv < 0) err = 1;
 		if (!err) {
 		    err = graph_series(tmpZ, tmpinfo, paths, request.code);
+		    if (err) {
+			fprintf(stderr, "graph_series() failed\n");
+		    }
 		}
 		if (!err) *graph = 1;
 	    }

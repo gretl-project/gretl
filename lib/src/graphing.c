@@ -1542,7 +1542,7 @@ static char *escape_quotes (const char *s)
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t, datlines;
-    int plotn, lo = spec->list[0];
+    int plotn, nlines = spec->nlines;
     int miss = 0;
     double xx;
 
@@ -1575,6 +1575,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     fputs("set xzeroaxis\n", fp);
     fputs("set missing \"?\"\n", fp);
+
     if (strcmp(spec->keyspec, "none") == 0) {
 	fputs("set nokey\n", fp);
     } else {
@@ -1633,30 +1634,32 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     if (spec->flags & GPTSPEC_AUTO_OLS) {
 	fputs(auto_ols_string, fp);
-	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && lo > 2) {
-	    lo--;
+	fprintf(stderr, "ols hidden: %s, nlines = %d\n",
+		(spec->flags & GPTSPEC_OLS_HIDDEN)? "yes" : "no", nlines);
+	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && nlines > 1) {
+	    nlines--;
 	}
     }
 
     fputs("plot \\\n", fp);
 
-    datlines = lo - 1;
-    for (i=1; i<lo; i++) {
-	if (strcmp(spec->lines[i-1].scale, "NA")) {
+    datlines = nlines; /* ? */ 
+
+    for (i=0; i<nlines; i++) {
+	if (strcmp(spec->lines[i].scale, "NA")) {
 	    fprintf(fp, "'-' using 1:($2*%s) ", 
-		    spec->lines[i-1].scale);
+		    spec->lines[i].scale);
 	} else {
-	    fprintf(fp, "%s ", spec->lines[i-1].formula); 
+	    fprintf(fp, "%s ", spec->lines[i].formula); 
 	    datlines--;
 	}
-	/* FIXME below */
-	if (spec->lines[i-1].yaxis != 1) {
-	    fprintf(fp, "axes x1y%d ", spec->lines[i-1].yaxis);
+	if (spec->lines[i].yaxis != 1) {
+	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
 	}
 	fprintf(fp, "title '%s' w %s", 
-		spec->lines[i-1].title,
-		spec->lines[i-1].style);
-	if (i == lo - 1) {
+		spec->lines[i].title,
+		spec->lines[i].style);
+	if (i == nlines - 1) {
 	    fputc('\n', fp);
 	} else {
 	    fputs(", \\\n", fp);

@@ -117,6 +117,10 @@ typedef enum {
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 
+#define NO_LINES_TAB(s)  (s->code == PLOT_FREQ_SIMPLE || \
+			  s->code == PLOT_FREQ_NORMAL || \
+			  s->code == PLOT_FREQ_GAMMA)
+
 #ifdef GNUPLOT_PNG
 typedef enum {
     PNG_START,
@@ -257,12 +261,12 @@ static void flip_manual_range (GtkWidget *widget, gpointer data)
 
 static void widget_to_str (GtkWidget *w, char *str, size_t n)
 {
-    char *tmp;
+    char *p;
 
     *str = 0;
-    tmp = gtk_entry_get_text(GTK_ENTRY(w));
-    if (tmp != NULL && strlen(tmp)) {
-	strncat(str, tmp, n - 1);
+    p = gtk_entry_get_text(GTK_ENTRY(w));
+    if (p != NULL && *p != 0) {
+	strncat(str, p, n - 1);
     }
 }
 
@@ -294,7 +298,8 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     }
 
     if (add) {
-	fprintf(ftmp, "%s\n", get_gretl_png_term_line(&paths));
+	fprintf(ftmp, "%s\n", 
+		get_gretl_png_term_line(&paths, spec->code));
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
     }
@@ -336,15 +341,15 @@ void mark_plot_as_saved (GPT_SPEC *spec)
     plot->status_flags |= PLOT_SAVED;
 }
 
-static int gnuplot_png_init (const char *fname, FILE **fpp)
+static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 {
-    *fpp = fopen(fname, "w");
+    *fpp = fopen(spec->fname, "w");
     if (*fpp == NULL) {
-	sprintf(errtext, _("Couldn't write to %s"), fname);
+	sprintf(errtext, _("Couldn't write to %s"), spec->fname);
 	errbox(errtext);
 	return 1;
     }
-    fprintf(*fpp, "%s\n", get_gretl_png_term_line(&paths));
+    fprintf(*fpp, "%s\n", get_gretl_png_term_line(&paths, spec->code));
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
     return 0;
 }
@@ -381,9 +386,7 @@ void display_session_graph_png (const char *fname)
 static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
 {
     gchar *yaxis;
-    int i, save = 0, k, numlines;
-
-    numlines = spec->list[0] - 1;
+    int i, save = 0, k;
 
     if (widget == filesavebutton) {
 	widget_to_str(GTK_COMBO(termcombo)->entry, spec->termtype, 
@@ -402,15 +405,18 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		  sizeof spec->keyspec);
 
     spec->flags &= ~GPTSPEC_Y2AXIS;
-    for (i=0; i<numlines; i++) {
-	spec->lines[i].yaxis = 1;
-	yaxis = 
-	    gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
-	if (yaxis != NULL && strlen(yaxis) && !strcmp(yaxis, "right")) {
-	    spec->lines[i].yaxis = 2;
-	}	
-	if (spec->lines[i].yaxis == 2) {
-	    spec->flags |= GPTSPEC_Y2AXIS;
+    
+    if (!NO_LINES_TAB(spec)) {
+	for (i=0; i<spec->nlines; i++) {
+	    spec->lines[i].yaxis = 1;
+	    yaxis = 
+		gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
+	    if (yaxis != NULL && strlen(yaxis) && !strcmp(yaxis, "right")) {
+		spec->lines[i].yaxis = 2;
+	    }	
+	    if (spec->lines[i].yaxis == 2) {
+		spec->flags |= GPTSPEC_Y2AXIS;
+	    }
 	}
     }
 
@@ -431,13 +437,15 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    for (i=0; i<numlines; i++) {
-	widget_to_str(GTK_COMBO(stylecombo[i])->entry, 
-		      spec->lines[i].style, sizeof spec->lines[0].style);
-	widget_to_str(linetitle[i], 
-		      spec->lines[i].title, sizeof spec->lines[0].title);
-	widget_to_str(linescale[i], spec->lines[i].scale, 
-		      sizeof spec->lines[0].scale);
+    if (!NO_LINES_TAB(spec)) {
+	for (i=0; i<spec->nlines; i++) {
+	    widget_to_str(GTK_COMBO(stylecombo[i])->entry, 
+			  spec->lines[i].style, sizeof spec->lines[0].style);
+	    widget_to_str(linetitle[i], 
+			  spec->lines[i].title, sizeof spec->lines[0].title);
+	    widget_to_str(linescale[i], spec->lines[i].scale, 
+			  sizeof spec->lines[0].scale);
+	}
     }
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
@@ -516,6 +524,23 @@ static void save_session_graph_plotspec (GtkWidget *w, GPT_SPEC *spec)
     }
 }
 #endif
+
+static void set_keyspec_sensitivity (GPT_SPEC *spec)
+{
+    if (!NO_LINES_TAB(spec)) {
+	int i; 
+	char *p;
+
+	for (i=0; i<spec->nlines; i++) {
+	    p = gtk_entry_get_text(GTK_ENTRY(linetitle[i]));
+	    if (p != NULL && *p != 0) {
+		gtk_widget_set_sensitive(keycombo, TRUE);
+		return;
+	    }
+	}
+    }
+    gtk_widget_set_sensitive(keycombo, FALSE);
+}
 
 /* ........................................................... */
 
@@ -703,15 +728,20 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
 
 /* ........................................................... */
 
+static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)
+{
+    set_keyspec_sensitivity(spec);
+}
+
+/* ........................................................... */
+
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *tempwid, *box, *tbl;
-    int i, tbl_len, tbl_num, tbl_col, numlines;
+    int i, tbl_len, tbl_num, tbl_col;
     char label_text[32];
     GList *plot_types = NULL;
     GList *yaxis_loc = NULL;
-
-    numlines = spec->list[0] - 1;
 
     if (spec->flags & GPTSPEC_TS) {
 	plot_types = g_list_append(plot_types, "lines");
@@ -746,7 +776,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
    
     tbl_num = tbl_col = 0;
 
-    for (i=0; i<numlines; i++) {
+    for (i=0; i<spec->nlines; i++) {
 
 	/* identifier and key or legend text */
 	tbl_len++;
@@ -767,6 +797,9 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  linetitle[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_entry_set_text (GTK_ENTRY(linetitle[i]), spec->lines[i].title);
+	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "changed", 
+			    GTK_SIGNAL_FUNC(linetitle_callback), 
+			    spec);
 	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "activate", 
 			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			    spec);
@@ -1141,8 +1174,12 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_main(notebook, spec);
     gpt_tab_XY(notebook, spec, 0);
     gpt_tab_XY(notebook, spec, 1);
-    if (spec->flags & GPTSPEC_Y2AXIS) gpt_tab_XY(notebook, spec, 2);
-    gpt_tab_lines(notebook, spec); 
+    if (spec->flags & GPTSPEC_Y2AXIS) {
+	gpt_tab_XY(notebook, spec, 2);
+    }
+    if (!NO_LINES_TAB(spec)) {
+	gpt_tab_lines(notebook, spec);
+    }
     gpt_tab_labels(notebook, spec);
     gpt_tab_output(notebook, spec);
 
@@ -1181,6 +1218,8 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
 			GTK_SIGNAL_FUNC(context_help), 
 			GINT_TO_POINTER(GR_PLOT));
     gtk_widget_show (tempwid);
+
+    set_keyspec_sensitivity (spec);
 
     gtk_widget_show (gpt_control);
 
@@ -1394,6 +1433,9 @@ void gpt_save_dialog (void)
 
 /* ........................................................... */
 
+/* chop trailing comma, if present; return 1 if comma chopped,
+   zero othewise */
+
 static int chop_comma (char *str)
 {
     size_t i, n = strlen(str);
@@ -1403,7 +1445,7 @@ static int chop_comma (char *str)
 	if (str[i] == ',') {
 	    str[i] = 0;
 	    return 1;
-	}
+	} else break;
     }		
     return 0;
 }
@@ -1561,6 +1603,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->labels = NULL;
     spec->nlabels = 0;
     spec->ptr = NULL;
+    spec->nlines = 0;
 
     spec->termtype[0] = 0;
     spec->t1 = spec->t2 = 0;
@@ -1784,13 +1827,13 @@ static int get_plot_n (FILE *fp, int *got_labels)
 /* ........................................................... */
 
 static int read_plotspec_from_file (GPT_SPEC *spec)
-     /* read in plotspec struct from gnuplot command file.
+     /* Read in plotspec struct from gnuplot command file.
 	This is _not_ a general parser for gnuplot files; it is
 	designed specifically for files auto-generated by gretl. */
 {
     int i, j, t, n, plot_n, done, labelno;
     int got_labels = 0;
-    char line[MAXLEN], *got = NULL, *tmp = NULL;
+    char line[MAXLEN], *got = NULL, *p = NULL;
     double *tmpy = NULL;
     size_t diff;
     FILE *fp;
@@ -1854,7 +1897,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    continue;
 	}
 	if (strncmp(line, "# forecast", 10) == 0) {
-	    spec->code = FCASTERR;
+	    spec->code = PLOT_FORECAST; 
 	    continue;
 	}
 	if (strstr(line, "automatic OLS")) {
@@ -1876,7 +1919,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	}
     }
 
-    if (spec->keyspec[0] == 0) {
+    if (*spec->keyspec == 0) {
 	strcpy(spec->keyspec, "none");
     }
 
@@ -1892,23 +1935,28 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     done = 0;
     while (1) {
 	top_n_tail(line);
-	if (!chop_comma(line)) done++;
+
+	if (!chop_comma(line)) {
+	    /* line did not end with comma -> no contination of
+	       the plot command */
+	    done = 1;
+	} 
 
 	/* scale, [yaxis,] style */
-	tmp = strstr(line, "using");
-	if (tmp && tmp[11] == '*') {
-            safecpy(spec->lines[i].scale, tmp + 12, 7);
+	p = strstr(line, "using");
+	if (p && p[11] == '*') {
+            safecpy(spec->lines[i].scale, p + 12, 7);
 	    charsub(spec->lines[i].scale, ')', '\0');
 	} else {
-	    if (tmp) 
+	    if (p) 
 		strcpy(spec->lines[i].scale, "1.0");
 	    else {
 		strcpy(spec->lines[i].scale, "NA");
-		tmp = strstr(line, "axes");
-		if (tmp == NULL)
-		    tmp = strstr(line, "title");
-		if (tmp != NULL) {
-		    diff = tmp - line;
+		p = strstr(line, "axes");
+		if (p == NULL)
+		    p = strstr(line, "title");
+		if (p != NULL) {
+		    diff = p - line;
 		    strncpy(spec->lines[i].formula, line, diff);
 		    spec->lines[i].formula[diff - 1] = 0;
 		}
@@ -1916,44 +1964,42 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	}
 
 	spec->lines[i].yaxis = 1;
-	tmp = strstr(line, "axes");
-	if (tmp != NULL && strlen(tmp) > 8 && tmp[8] == '2')
+	if (strstr(line, "axes x1y2")) {
 	    spec->lines[i].yaxis = 2;
-
-	tmp = strstr(line, "title"); 
-	if (tmp != NULL) {
-	    tmp += 7;
-	    spec->lines[i].title[0] = '\'';
-	    j = 0;
-	    while (tmp[j] != '\'') { 
-		spec->lines[i].title[j] = tmp[j];
-		j++;
-	    }
-	    spec->lines[i].title[j] = 0; 
 	}
 
-	tmp = strstr(line, " w ");
-	if (tmp != NULL) {
-	    strcpy(spec->lines[i].style, tmp + 3);
-	    delchar(',', spec->lines[i].style);
+	p = strstr(line, "title");
+	if (p != NULL) {
+	    sscanf(p + 7, "%79[^']'", spec->lines[i].title);
+	}
+
+	p = strstr(line, " w ");
+	if (p != NULL) {
+	    sscanf(p + 3, "%15[^, ]", spec->lines[i].style);
 	} else {
 	    strcpy(spec->lines[i].style, "points");
 	}
 
 	if (done) break;
+
 	i++;
-	if ((got = fgets(line, MAXLEN - 1, fp)) == NULL) break;
+
+	got = fgets(line, MAXLEN - 1, fp);
+	if (got == NULL) break;
     }
 
     if (got == NULL) goto plot_bailout;
 
+    spec->nlines = i + 1; /* i is a zero-based index */
+
     /* free any unused lines */
-    if (i < 5) {
-	spec->lines = myrealloc(spec->lines, (i + 1) * sizeof(GPT_LINE));
+    if (spec->nlines < 6) {
+	spec->lines = myrealloc(spec->lines, 
+				spec->nlines * sizeof *spec->lines);
     }
 
     /* finally, get the plot data, and labels if any */
-    spec->data = mymalloc(plot_n * (i + 2) * sizeof(double));
+    spec->data = mymalloc(plot_n * (i + 2) * sizeof *spec->data);
     tmpy = mymalloc(plot_n * sizeof *tmpy);
     if (spec->data == NULL || tmpy == NULL) goto plot_bailout;
 
@@ -1998,7 +2044,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 
     spec->t1 = 0;
     spec->t2 = n - 1;
-    spec->list[0] = i+2;
 
     /* see if we really have any labels */
     if (spec->labels != NULL && !got_labels) {
@@ -2489,7 +2534,7 @@ static int redisplay_edited_png (png_plot_t *plot)
     FILE *fp;
     int err = 0;
 
-    gnuplot_png_init(plot->spec->fname, &fp);
+    gnuplot_png_init(plot->spec, &fp);
     if (fp == NULL) return 1;
 
     print_plotspec_details(plot->spec, fp);
