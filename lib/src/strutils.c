@@ -102,7 +102,7 @@ void delchar (const int c, char *str)
 }
 
 /**
- * delete:
+ * _delete:
  * @str: the string to process.
  * @indx: the starting point for deleting characters.
  * @count: the number of characters to delete.
@@ -111,7 +111,7 @@ void delchar (const int c, char *str)
  *
  */
 
-void delete (char *str, const int indx, const int count)
+void _delete (char *str, const int indx, const int count)
 {
     size_t i, n = strlen(str);
 
@@ -141,14 +141,14 @@ int haschar (const char c, const char *str)
 }
 
 /**
- * isnumber:
+ * _isnumber:
  * @str: the string to examine.
  *
  * Returns: 1 if the given @str is numeric, otherwise 0.
  *
  */
 
-int isnumber (const char *str)
+int _isnumber (const char *str)
 {
     size_t i, n = strlen(str);
     int decimal = 0, efound = 0;
@@ -191,7 +191,7 @@ void lower (char *str)
 }
 
 /**
- * esl_trunc:
+ * _esl_trunc:
  * @str: the string to truncate.
  * @n: the desired length of the truncated string.
  *
@@ -199,12 +199,12 @@ void lower (char *str)
  *
  */
 
-void esl_trunc (char *str, const int n)
+void _esl_trunc (char *str, const int n)
 {
     size_t len = strlen(str);
 
     if (len > n) 
-	delete(str, n, len - n);  
+	_delete(str, n, len - n);  
 }
 
 /**
@@ -222,14 +222,14 @@ void clear (char *str, const int len)
 }
 
 /**
- * count_fields:
+ * _count_fields:
  * @str: the string to process.
  *
  * Returns: the number of space-separated fields in @str.
  *
  */
 
-int count_fields (const char *str)
+int _count_fields (const char *str)
 {
     int n = 0;
     char tmpstr[MAXLEN];
@@ -241,7 +241,7 @@ int count_fields (const char *str)
 }
 
 /**
- * shiftleft:
+ * _shiftleft:
  * @str: the string to process.
  * @move: the number of places to shift.
  *
@@ -250,7 +250,7 @@ int count_fields (const char *str)
  *
  */
 
-void shiftleft (char *str, size_t move)
+void _shiftleft (char *str, size_t move)
 {
     size_t n = strlen(str);
 
@@ -274,7 +274,7 @@ void chopstr (char *str)
 {
     int i = (int) strspn(str, " ");
 
-    shiftleft(str, i);
+    _shiftleft(str, i);
     for (i = strlen(str) - 1; i >= 0; i--)
 	if (isspace((unsigned char) str[i])) str[i] = '\0';
 	else break;
@@ -355,7 +355,7 @@ int top_n_tail (char *str)
     i = 0;
     while (isspace((unsigned char) str[i]) || str[i] == '?') 
 	i++;
-    if (i) shiftleft(str, i);
+    if (i) _shiftleft(str, i);
     /* then replace backslash, if present */
     if (str[strlen(str) - 1] == '\\') {
 	str[strlen(str) - 1] = ' ';

@@ -59,7 +59,7 @@ static int path_append (char *file, const char *path)
 
 /* .......................................................  */
 
-double corr (const int n, const double *zx, const double *zy)
+double _corr (const int n, const double *zx, const double *zy)
 /*
         returns the simple correlation coefficient between the the
         arrays zx and zy, for the n observations 0 to n-1.  returns
@@ -72,7 +72,7 @@ double corr (const int n, const double *zx, const double *zy)
     double sx, sy, sxx, syy, sxy, den, zxi, zyi, zxbar, zybar;
 
     if (n == 0) return NADBL;
-    if (isconst(0, n-1, zx) || isconst(0, n-1, zy)) return NADBL;
+    if (_isconst(0, n-1, zx) || _isconst(0, n-1, zy)) return NADBL;
     nn = n;
     sx = sy = 0.0;
     for (i=0; i<n; ++i) {
@@ -109,7 +109,7 @@ double corr (const int n, const double *zx, const double *zy)
 
 /* .......................................................  */
 
-double covar (const int n, const double *zx, const double *zy)
+double _covar (const int n, const double *zx, const double *zy)
 {
     register int i;
     int nn;
@@ -227,7 +227,7 @@ int isdummy (const int varnum, const int t1, const int t2,
 
 /* ........................................................  */
 
-int iszero (const int t1, const int t2, const double *x)
+int _iszero (const int t1, const int t2, const double *x)
 /*  checks whether all obs are zero for variable x from t1 to t2 */
 {
     int t;
@@ -254,7 +254,7 @@ void list_exclude (const int n, int *list)
 
 /* ........................................................  */
 
-int isconst (const int t1, const int t2, const double *x)
+int _isconst (const int t1, const int t2, const double *x)
 {
     int t;
     double xx = x[t1];
@@ -265,7 +265,7 @@ int isconst (const int t1, const int t2, const double *x)
 
 /* ............................................................  */
 
-double esl_mean (const int t1, const int t2, const double *x)
+double _esl_mean (const int t1, const int t2, const double *x)
 /* returns mean of array x from obs t1 through t2 */
 {
     int n;
@@ -290,8 +290,8 @@ double esl_mean (const int t1, const int t2, const double *x)
 
 /* ......................................................  */
 
-void minmax (const int t1, const int t2, const double zx[], 
-	     double *min, double *max)
+void _minmax (const int t1, const int t2, const double zx[], 
+	      double *min, double *max)
 /*  returns min and max of array zx for sample t1 through t2  */
 {
     register int t;
@@ -323,7 +323,7 @@ static int _pdton (const int pd)
 
 /* ..........................................................  */
 
-int hasconst (const int *list)
+int _hasconst (const int *list)
 /* check if a var list contains a constant (variable with ID
    number 0) */
 {
@@ -337,7 +337,7 @@ int hasconst (const int *list)
 
 /* ...................................................... */
 
-int compare_doubles (const void *a, const void *b)
+int _compare_doubles (const void *a, const void *b)
 {
     const double *da = (const double *) a;
     const double *db = (const double *) b;
@@ -347,7 +347,7 @@ int compare_doubles (const void *a, const void *b)
 
 /* .............................................................  */
 
-double esl_stddev (const int t1, const int t2, const double *x)
+double _esl_stddev (const int t1, const int t2, const double *x)
 /*  returns standard deviation of array x from t1 through t2
     return -999 if square root argument is invalid
     or there are no observations
@@ -355,14 +355,14 @@ double esl_stddev (const int t1, const int t2, const double *x)
 {
     double xx;
 
-    xx = esl_variance(t1, t2, x);
+    xx = _esl_variance(t1, t2, x);
     if (na(xx)) return xx;
     return sqrt(xx);
 }
 
 /* .............................................................  */
 
-double esl_variance (const int t1, const int t2, const double *x)
+double _esl_variance (const int t1, const int t2, const double *x)
 {
     int n;
     register int i;
@@ -370,7 +370,7 @@ double esl_variance (const int t1, const int t2, const double *x)
 
     n = t2 - t1 + 1;
     if (n == 0) return NADBL;
-    xbar = esl_mean(t1, t2, x);
+    xbar = _esl_mean(t1, t2, x);
     if (na(xbar)) return NADBL;
     sumsq = 0.0;
     for (i=t1; i<=t2; i++) {
@@ -398,7 +398,7 @@ void printlist (const int *list, const char *msg)
 
 /* ....................................................... */
 
-void aicetc (MODEL *pmod)
+void _aicetc (MODEL *pmod)
 /*
     Compute model selection criteria -- needs nobs, ncoeff
     and ess from model.
@@ -428,8 +428,8 @@ void aicetc (MODEL *pmod)
 
 /* ....................................................... */
 
-void criteria (const double ess, const int nobs, const int ncoeff, 
-	       print_t *prn)
+void _criteria (const double ess, const int nobs, const int ncoeff, 
+		print_t *prn)
 {
     double zz, zx, ersq, zn;
     double criterion[8];
@@ -468,8 +468,8 @@ void criteria (const double ess, const int nobs, const int ncoeff,
 
 /* ....................................................... */
 
-int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		 const double *Z, const int n, int *misst)
+int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
+		  const double *Z, const int n, int *misst)
      /* drop first/last observations from sample if missing obs 
 	encountered -- also check for missing vals within the
         remaining sample */
@@ -834,7 +834,7 @@ int catchflag (char *line, int *oflag)
 	    (opt = isflag(line[i+1])) &&
 	    (i+2 == n || isspace((unsigned char) line[i+2]))) {
 		*oflag = opt;
-		delete(line, i, 2);
+		_delete(line, i, 2);
 		return 1;
 	    }
     }
@@ -843,7 +843,7 @@ int catchflag (char *line, int *oflag)
 
 /* .......................................................... */
 
-int list_dups (const int *list, int ci)
+int _list_dups (const int *list, int ci)
 {
     int i, j, start = 2;
 
@@ -868,7 +868,7 @@ int list_dups (const int *list, int ci)
 
 /* .......................................................... */
 
-void init_model (MODEL *pmod)
+void _init_model (MODEL *pmod)
 {
     if (pmod == NULL) return;
     pmod->list = NULL;
@@ -897,7 +897,7 @@ MODEL *gretl_model_new (void)
 {
     MODEL *pmod = malloc(sizeof *pmod);
 
-    init_model(pmod);
+    _init_model(pmod);
     return pmod;
 }
 
@@ -929,7 +929,7 @@ int silent_remember (MODEL **ppmod, SESSION *psession, session_t *rebuild)
     tmp = malloc(sizeof *tmp);
     if (tmp == NULL) return 1;
     *ppmod = tmp;
-    init_model(tmp);
+    _init_model(tmp);
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "copied '%s' to psession->models[%d]\n" 
@@ -993,7 +993,7 @@ int clear_model (void *ptr, SESSION *psession, session_t *rebuild)
 	}
 	if (pmod->ntests) free(pmod->tests);
     }
-    init_model(pmod);
+    _init_model(pmod);
 
     return 0;
 }
@@ -1140,7 +1140,7 @@ int grow_nobs (const int newobs, double **pZ, DATAINFO *pdinfo)
     if (pdinfo->markers && pdinfo->S != NULL) {
 	char **S;
 
-	if (allocate_case_markers(&S, n + newobs)) return E_ALLOC;
+	if (_allocate_case_markers(&S, n + newobs)) return E_ALLOC;
 	else pdinfo->S = S;
     }
 
@@ -1264,7 +1264,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     *targ = *src;
 
     /* now work on pointer members */
-    init_model(targ);
+    _init_model(targ);
     if ((targ->coeff = copyvec(src->coeff, src->ncoeff + 1)) == NULL)
 	return 1;
     if ((targ->sderr = copyvec(src->sderr, src->ncoeff + 1))  == NULL)  
@@ -1309,8 +1309,8 @@ int swap_models (MODEL **targ, MODEL **src)
 
 /* ........................................................... */
 
-int forecast (int t1, const int t2, const int nv, 
-	      const MODEL *pmod, DATAINFO *pdinfo, double **pZ)
+int _forecast (int t1, const int t2, const int nv, 
+	       const MODEL *pmod, DATAINFO *pdinfo, double **pZ)
 {
     double xx, zz, zr;
     int i, k, maxlag = 0, yno = pmod->list[1], ARMODEL;
@@ -1359,7 +1359,7 @@ int forecast (int t1, const int t2, const int nv,
 
 /* ........................................................... */
 
-int full_model_list (MODEL *pmod, int **plist)
+int _full_model_list (MODEL *pmod, int **plist)
 /* reconstitute full varlist for WLS and AR models */
 {
     int i, pos = 0, len, *mylist;
@@ -1388,18 +1388,6 @@ int full_model_list (MODEL *pmod, int **plist)
     copylist(plist, mylist);
     free(mylist);
     return pos;
-}
-
-/* ........................................................... */
-
-double getvalue (const char *s, const double *Z, const DATAINFO *pdinfo)
-{
-    int v;
-
-    if (isdigit((unsigned char) s[0])) return atof(s);
-    v = varindex(pdinfo, s);
-    if (v < pdinfo->v) return Z[pdinfo->n * v + pdinfo->t1];
-    return NADBL;
 }
 
 /* ........................................................... */
@@ -1488,7 +1476,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 /*  	putc('\n', stdout); */
 /*      } */
     
-    init_model(&fmod);
+    _init_model(&fmod);
     fdatainfo.extra = 1;
     fmod = lsq(list, &fZ, &fdatainfo, OLS, 1, 0.0);
     if (fmod.errcode) {
@@ -1533,7 +1521,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     /* print results */
     for (t=0; t<nfcast; t++) 
 	depvar[t] = (*pZ)[n*v1 + ft1 + t];
-    tval = tcrit95(pmod->dfd);
+    tval = _tcrit95(pmod->dfd);
     pprintf(prn, " For 95%% confidence intervals, t(%d, .025) = %.3f\n", 
 	    pmod->dfd, tval);
     if (pdinfo->pd == 1) pprintf(prn, "\n Obs ");
@@ -1554,13 +1542,13 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	    else if (pdinfo->pd < 10) pprintf(prn, "%8.1f ", xdate);
 	    else pprintf(prn, "%8.2f ", xdate);
 	}
-	printxs(depvar[t], 15, PRINT, prn);
-	printxs(yhat[t], 15, PRINT, prn);
-	printxs(sderr[t], 15, PRINT, prn);
+	_printxs(depvar[t], 15, PRINT, prn);
+	_printxs(yhat[t], 15, PRINT, prn);
+	_printxs(sderr[t], 15, PRINT, prn);
 	maxerr = tval * sderr[t];
-	printxs(yhat[t] - maxerr, 15, PRINT, prn);
+	_printxs(yhat[t] - maxerr, 15, PRINT, prn);
 	pprintf(prn, " -");
-	printxs(yhat[t] + maxerr, 10, PRINT, prn);
+	_printxs(yhat[t] + maxerr, 10, PRINT, prn);
 	pprintf(prn, "\n");
 	sderr[t] = maxerr;
     }
@@ -1693,7 +1681,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     getcmd(model_spec, pdinfo, &command, &ignore, pZ, NULL);
 
-    init_model(tmpmod);
+    _init_model(tmpmod);
 
     switch(command.ci) {
     case AR:

@@ -119,7 +119,7 @@ MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo,
     if (ci == HCCM)
 	return hccm_func(list, pZ, pdinfo);
 
-    init_model(&model);
+    _init_model(&model);
 
     /* preserve a copy of the list supplied, for future reference */
     copylist(&(model.list), list);
@@ -138,7 +138,7 @@ MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo,
     model.nwt = nwt = 0;
     if (ci == WLS) { 
 	model.nwt = nwt = model.list[1];
-	if (iszero(model.t1, model.t2, &(*pZ)[pdinfo->n*nwt])) {
+	if (_iszero(model.t1, model.t2, &(*pZ)[pdinfo->n*nwt])) {
 	    model.errcode = E_WTZERO;
 	    return model;
 	}
@@ -147,8 +147,8 @@ MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo,
     }
 
     /* check for missing obs in sample */
-    if ((missv = adjust_t1t2(&model, model.list, &model.t1, &model.t2, 
-			     *pZ, pdinfo->n, &misst))) {
+    if ((missv = _adjust_t1t2(&model, model.list, &model.t1, &model.t2, 
+			      *pZ, pdinfo->n, &misst))) {
 	sprintf(gretl_errmsg, "Missing value encountered for "
 		"variable %d, obs %d", missv, misst);
 	model.errcode = E_DATA;
@@ -182,7 +182,7 @@ MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo,
     _omitzero(&model, pdinfo, *pZ);
 
     /* see if the regressor list contains a constant (ID 0) */
-    model.ifc = ifc = hasconst(model.list);
+    model.ifc = ifc = _hasconst(model.list);
     /* if so, move it to the last place */
     if (ifc) _rearrange(model.list);
 
@@ -215,8 +215,8 @@ MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo,
 	model.ybar = _wt_dummy_mean(&model, *pZ, pdinfo->n);
 	model.sdy = _wt_dummy_stddev(&model, *pZ, pdinfo->n);
     } else {
-	model.ybar = esl_mean(t1, t2, &(*pZ)[pdinfo->n*yno]);
-	model.sdy = esl_stddev(t1, t2, &(*pZ)[pdinfo->n*yno]);
+	model.ybar = _esl_mean(t1, t2, &(*pZ)[pdinfo->n*yno]);
+	model.sdy = _esl_stddev(t1, t2, &(*pZ)[pdinfo->n*yno]);
     }
 
     /* Doing an autoregressive procedure? */
@@ -279,7 +279,7 @@ MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    aicetc(&model);
+    _aicetc(&model);
 
     return model;
 }
@@ -841,7 +841,7 @@ static double _altrho (const int order, const int t1, const int t2,
         ut1[n] = uh1;
 	n++;
     }
-    rho = corr(n, ut, ut1);
+    rho = _corr(n, ut, ut1);
     free(ut);
     free(ut1);
     return rho;
@@ -855,7 +855,7 @@ static double _corrrsq (const int nobs, const double *y,
 {
     double xx;
 
-    xx = corr(nobs, y, yhat);
+    xx = _corr(nobs, y, yhat);
     return xx * xx;
 }
 
@@ -920,7 +920,7 @@ int hilu_corc (double *toprho, int *list, double **pZ, DATAINFO *pdinfo,
     int step, iter = 0, nn = 0, err = 0;
     MODEL corc_model;
 
-    init_model(&corc_model);
+    _init_model(&corc_model);
 
     uhat = malloc(pdinfo->n * sizeof *uhat);
     if (uhat == NULL) return E_ALLOC;
@@ -958,7 +958,7 @@ int hilu_corc (double *toprho, int *list, double **pZ, DATAINFO *pdinfo,
 	}					
 	rho0 = rho = finalrho;
 	pprintf(prn, "\n\nESS is minimum for rho = %.2f\n\n", rho);
-	graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
+	_graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
 	pprintf(prn, "\n\nFine-tune rho using the CORC procedure...\n\n"); 
     } else { /* Go straight to Cochrane-Orcutt */
 	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
@@ -1044,7 +1044,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
     /*  printlist(list); */
     /*  printf("pos = %d\n", pos); */
 
-    init_model(&tsls);
+    _init_model(&tsls);
 
     if ((newlist = malloc(pos * sizeof(int))) == NULL ||
 	(list1 = malloc(pos * sizeof(int))) == NULL ||
@@ -1094,7 +1094,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
 /*      printf("newlist:\n"); */
 /*      printlist(newlist);  */
     /* newlist[0] holds the number of new vars to create */
-    if (grow_Z(newlist[0], pZ, pdinfo)) {
+    if (_grow_Z(newlist[0], pZ, pdinfo)) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	free(newlist);
@@ -1116,7 +1116,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
 	if (tsls.errcode) {
 	    free(list1); free(list2);
 	    free(s1list); free(s2list);
-	    shrink_Z(newlist[0], pZ, pdinfo);
+	    _shrink_Z(newlist[0], pZ, pdinfo);
 	    free(newlist);
 	    return tsls;
 	}
@@ -1141,7 +1141,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
     if (tsls.errcode) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
-	shrink_Z(newlist[0], pZ, pdinfo);
+	_shrink_Z(newlist[0], pZ, pdinfo);
 	free(newlist);
 	return tsls;
     }
@@ -1152,7 +1152,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
     if (yhat == NULL) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
-	shrink_Z(newlist[0], pZ, pdinfo);
+	_shrink_Z(newlist[0], pZ, pdinfo);
 	free(newlist);
 	tsls.errcode = E_ALLOC;
 	return tsls;
@@ -1178,7 +1178,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	clear_model(&tsls, NULL, NULL);
-	shrink_Z(newlist[0], pZ, pdinfo);
+	_shrink_Z(newlist[0], pZ, pdinfo);
 	free(newlist);
 	free(yhat);
 	tsls.errcode = E_ALLOC;
@@ -1198,7 +1198,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
     tsls.adjrsq = 
 	1 - ((1 - tsls.rsq)*(tsls.nobs - 1)/tsls.dfd);
     tsls.fstt = tsls.rsq*tsls.dfd/(tsls.dfn*(1-tsls.rsq));
-    aicetc(&tsls);
+    _aicetc(&tsls);
     tsls.rho = _rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
     tsls.dw = _dwstat(0, &tsls, *pZ, pdinfo->n);
 
@@ -1211,7 +1211,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
     free(list1); free(list2);
     free(s1list); free(s2list);
     free(yhat); 
-    shrink_Z(newlist[0], pZ, pdinfo);
+    _shrink_Z(newlist[0], pZ, pdinfo);
     free(newlist);
     return tsls;
 }
@@ -1228,9 +1228,9 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
     int i, l0 = pmod->list[0], listlen, check, shrink;
     MODEL aux;
 
-    init_model(&aux);
+    _init_model(&aux);
 
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     /* add uhat1 to data set temporarily */
     for (t=pmod->t1; t<=pmod->t2; t++)
@@ -1272,7 +1272,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
 	    (*pZ)[v*n + t] = aux.yhat[t]; 
 	shrink = pdinfo->v - v - 1;
     }
-    if (shrink > 0) shrink_Z(shrink, pZ, pdinfo);
+    if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
 
     clear_model(&aux, NULL, NULL);
     free(tmplist);
@@ -1300,7 +1300,7 @@ MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
     int *hsklist;
     MODEL hsk;
 
-    init_model(&hsk);
+    _init_model(&hsk);
 
     lo = list[0];
     yno = list[1];
@@ -1354,7 +1354,7 @@ MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
     hsk.ci = HSK;
 
     shrink = pdinfo->v - orig_nvar;
-    if (shrink > 0) shrink_Z(shrink, pZ, pdinfo);
+    if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
     free(hsklist);
     free(uhat1);
     return hsk;
@@ -1379,7 +1379,7 @@ MODEL hccm_func (int *list, double **pZ, DATAINFO *pdinfo)
     double xx, *st, *uhat1, **p;
     MODEL hccm;
 
-    init_model(&hccm);
+    _init_model(&hccm);
 
     n = pdinfo->n;
     t1 = pdinfo->t1; t2 = pdinfo->t2;
@@ -1498,14 +1498,14 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     double zz;
     MODEL white;
 
-    init_model(&white);
+    _init_model(&white);
 
     lo = pmod->list[0];
     yno = pmod->list[1];
     ncoeff = pmod->list[0] - 1;
 
     /* make space in data set */
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     /* get residuals, square and add to data set */
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -1545,7 +1545,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     if (err) {
 	clear_model(&white, NULL, NULL);
 	shrink = pdinfo->v - v;
-	if (shrink > 0) shrink_Z(shrink, pZ, pdinfo);
+	if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
 	free(tmplist);
 	free(list);
 	return err;
@@ -1564,7 +1564,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 
     clear_model(&white, NULL, NULL);
     shrink = pdinfo->v - v;
-    if (shrink > 0) shrink_Z(shrink, pZ, pdinfo);
+    if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
     free(tmplist);
     free(list);
 
@@ -1596,8 +1596,8 @@ MODEL ar_func (int *list, const int pos, double **pZ,
     int *arlist, *reglist, *reglist2, *rholist;
     MODEL ar, rhomod;
 
-    init_model(&ar);
-    init_model(&rhomod);
+    _init_model(&ar);
+    _init_model(&rhomod);
 
     if ((arlist = malloc(pos * sizeof(int))) == NULL ||
 	(reglist = malloc((list[0] - pos + 2) * sizeof(int))) == NULL ||
@@ -1615,9 +1615,9 @@ MODEL ar_func (int *list, const int pos, double **pZ,
     /*  printf("arlist:\n"); printlist(arlist); */
     /*  printf("reglist:\n"); printlist(reglist); */
 
-    if (hasconst(reglist)) 
+    if (_hasconst(reglist)) 
 	_rearrange(reglist);
-    if (hasconst(reglist2)) 
+    if (_hasconst(reglist2)) 
 	_rearrange(reglist2);
 
     /* special case: ar 1 ; ... => use CORC */
@@ -1636,7 +1636,7 @@ MODEL ar_func (int *list, const int pos, double **pZ,
     }
 
     /* make room for the uhat terms and transformed data */
-    if (grow_Z(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
+    if (_grow_Z(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
 	free(reglist);
 	ar.errcode = E_ALLOC;
 	return ar;
@@ -1713,7 +1713,7 @@ MODEL ar_func (int *list, const int pos, double **pZ,
     } /* end loop */
 
     for (i=0; i<=reglist[0]; i++) ar.list[i] = reglist[i];
-    ar.ifc = hasconst(reglist);
+    ar.ifc = _hasconst(reglist);
     if (ar.ifc) ar.dfn -= 1;
     ar.ci = AR;
     *model_count += 1;
@@ -1749,18 +1749,18 @@ MODEL ar_func (int *list, const int pos, double **pZ,
 	1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
     /*  ar.fstt = ar.rsq*ar.dfd/(ar.dfn*(1 - ar.rsq)); */
     /* special computation of TSS */
-    xx = esl_mean(ar.t1, ar.t2, &(*pZ)[ryno*n]);
+    xx = _esl_mean(ar.t1, ar.t2, &(*pZ)[ryno*n]);
     for (t=ar.t1; t<=ar.t2; t++)
 	tss += ((*pZ)[ryno*n + t] - xx) * ((*pZ)[ryno*n + t] - xx);
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
-    aicetc(&ar);
+    _aicetc(&ar);
     ar.dw = _dwstat(p, &ar, *pZ, pdinfo->n);
     ar.rho = _rhohat(p, ar.t1, ar.t2, ar.uhat);
 
-    print_ar(&ar, prn);
+    _print_ar(&ar, prn);
 
-    /*  shrink_Z(rholist[0] + reglist[0], pZ, pdinfo); */
-    shrink_Z(arlist[0] + 1 + reglist[0], pZ, pdinfo);
+    /*  _shrink_Z(rholist[0] + reglist[0], pZ, pdinfo); */
+    _shrink_Z(arlist[0] + 1 + reglist[0], pZ, pdinfo);
     free(reglist);
     free(reglist2);
     free(rholist);
@@ -1793,7 +1793,7 @@ static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo,
     offset = (pmod->ci == WLS)? 3 : 2;
     for (v=offset; v<=pmod->list[0]; v++) {
         lv = pmod->list[v];
-        if (iszero(pmod->t1, pmod->t2, &Z(lv, 0))) {
+        if (_iszero(pmod->t1, pmod->t2, &Z(lv, 0))) {
 	    list_exclude(v, pmod->list);
 	    sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
 	    strcat(pmod->infomsg, vnamebit);
@@ -1831,7 +1831,7 @@ static void _tsls_omitzero (int *list, const double *Z,
 
     for (v=2; v<=list[0]; v++) {
         lv = list[v];
-        if (iszero(t1, t2, &Z(lv, 0))) 
+        if (_iszero(t1, t2, &Z(lv, 0))) 
 	    list_exclude(v, list);
     }
 }
@@ -1866,8 +1866,8 @@ static int _zerror (const int t1, const int t2, const int yno,
     double xx, yy;
     int t;
 
-    xx = esl_mean(t1, t2, &(*pZ)[n*yno]);
-    yy = esl_stddev(t1, t2, &(*pZ)[n*yno]);
+    xx = _esl_mean(t1, t2, &(*pZ)[n*yno]);
+    yy = _esl_stddev(t1, t2, &(*pZ)[n*yno]);
     if (floateq(xx, 0.0) && floateq(yy, 0.0)) return 1;
 
     if (nwt) {
@@ -2015,7 +2015,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
     int i, t, nwt;
     double LM, xx;
 
-    init_model(&archmod);
+    _init_model(&archmod);
 
     /* assess the lag order */
     if (order < 1) {
@@ -2025,7 +2025,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
     }
 
     /* allocate workspace */
-    if (grow_Z(order + 1, pZ, pdinfo) || 
+    if (_grow_Z(order + 1, pZ, pdinfo) || 
 	(arlist = malloc((order + 3) * sizeof *arlist)) == NULL) {
 	archmod.errcode = E_ALLOC;
 	return archmod;
@@ -2039,7 +2039,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
     /* run OLS and get squared residuals */
     archmod = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
     if (archmod.errcode) {
-	shrink_Z(order + 1, pZ, pdinfo);
+	_shrink_Z(order + 1, pZ, pdinfo);
 	free(arlist);
 	return archmod;
     }
@@ -2063,7 +2063,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
     clear_model(&archmod, NULL, NULL);
     archmod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
     if (archmod.errcode) {
-	shrink_Z(order + 1, pZ, pdinfo);
+	_shrink_Z(order + 1, pZ, pdinfo);
 	free(arlist);
 	return archmod;
     }    
@@ -2121,7 +2121,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
 
     if (arlist != NULL) free(arlist);
     if (wlist != NULL) free(wlist);
-    shrink_Z(order + 1, pZ, pdinfo); 
+    _shrink_Z(order + 1, pZ, pdinfo); 
     return archmod;
 }
 

@@ -398,7 +398,7 @@ static int getword (const char c, char *str, char *word, const int oflag)
     word[0] = '\0';
     if (i == -1) return -1;
     copy(str, 0, i, word);
-    delete(str, 0, i+1);
+    _delete(str, 0, i+1);
     /* special case for auto sub-sampling dummy */
     if (oflag && strcmp(word, "subdum") == 0)
 	return i+1;
@@ -549,7 +549,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
 	    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 	    return genr;
 	}
-	esl_trunc(newvar, 8);
+	_esl_trunc(newvar, 8);
 	if (!isalpha((unsigned char) newvar[0])) {
 	    genr.errcode = E_NOTALPH;
 	    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -706,7 +706,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
 		switch (type2) {
 
 		case 'v':    /* name of variable */
-		    if ( !isnumber(sexpr))  {
+		    if ( !(_isnumber(sexpr)))  {
 			genr.errcode = E_NOTINTG;
 			_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			return genr;
@@ -719,7 +719,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
 		case 't':    /* "math" label */
 		    nt = _whichtrans(word);
 		    if (nt == T_RHO) {
-			if (!(isnumber(sexpr))) {
+			if (!(_isnumber(sexpr))) {
 			    genr.errcode = E_INVARG;
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
@@ -801,7 +801,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			}
-			lv = isnumber(sexpr)? atoi(sexpr) : 
+			lv = _isnumber(sexpr)? atoi(sexpr) : 
 			    varindex(pdinfo, sexpr);
 			vi = _ismatch(lv, pmod->list);
 			if (vi == 1) vi = 0;
@@ -1017,7 +1017,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
                 xxvec[k] = NADBL;
                 continue;
 	    }
-	    else if (xx > HIGHVALU) {
+	    else if (xx > _HIGHVALU) {
 		free(x);
 		return E_HIGH;
 	    }
@@ -1073,7 +1073,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    i++; 
 	    x[i] = xx;
 	}
-	xx = esl_mean(0, i, x); 
+	xx = _esl_mean(0, i, x); 
 	for (k=t1; k<=t2; k++) xxvec[k] = xx;
 	break;
 
@@ -1085,7 +1085,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    i++;
 	    x[i] = xx;
 	}
-	qsort(x, i+1, sizeof(double), compare_doubles);
+	qsort(x, i+1, sizeof(double), _compare_doubles);
 	xx = esl_median(x, i+1);
 	for (k=t1; k<=t2; k++) xxvec[k] = xx;
 	break;
@@ -1098,7 +1098,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    i++;
 	    x[i] = xx;
 	}
-	xx = esl_stddev(0, i, x); 
+	xx = _esl_stddev(0, i, x); 
 	for (k=t1; k<=t2; k++) xxvec[k] = xx;
 	break;
 
@@ -1110,7 +1110,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    i++;
 	    x[i] = xx;
 	}
-	xx = esl_variance(0, i, x); 
+	xx = _esl_variance(0, i, x); 
 	for (k=t1; k<=t2; k++) xxvec[k] = xx;
 	break;
 
@@ -1124,13 +1124,13 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    x[i] = xx;
 	}
 	/*  sort(i+1, x); */
-	qsort(x, i+1, sizeof(double), compare_doubles);
+	qsort(x, i+1, sizeof(double), _compare_doubles);
 	for (k=t1; k<=t2; k++) xxvec[k] = x[k-t1];
 	break;
 
     case T_INT:
 	for (k=t1; k<=t2; k++) {
-	    xint = (int) (xmvec[k] + VSMALL);
+	    xint = (int) (xmvec[k] + _VSMALL);
 	    if (xint == -999) {
 		xxvec[k] = NADBL;
 		continue;
@@ -1173,7 +1173,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    i++;
 	    x[i] = xx;
 	}
-	xx = esl_mean(0, i, x); 
+	xx = _esl_mean(0, i, x); 
 	i++;
 	for (k=t1; k<=t2; k++) xxvec[k] = xx*i;
 	break;
@@ -1249,7 +1249,7 @@ static void _getvar (char *str, char *word, char *c)
 	    str[i] == ')' || is_operator(str[i])) {
 	    *c = str[i];
 	    copy(str, 0, i, word);
-	    delete(str, 0, i+1);
+	    _delete(str, 0, i+1);
 	    return;
 	}
     }
@@ -1498,7 +1498,7 @@ static char _strtype (char *ss, const DATAINFO *pdinfo)
 	    return 'q';
     }
 
-    if (isnumber(ss)) {
+    if (_isnumber(ss)) {
         i = strlen(ss) - 1;
         if (ss[i] == 'e') { /* FIXME puts() */
             puts("Scientific notation not allowed.  Use floating point");
@@ -1552,7 +1552,7 @@ int dummy (double **pZ, DATAINFO *pdinfo)
     double xx;
 
     if (ndummies == 1) return E_PDWRONG;
-    if (grow_Z(ndummies, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(ndummies, pZ, pdinfo)) return E_ALLOC;
 
     mm = (pdinfo->pd < 10)? 10 : 100;
     for (vi=1; vi<=ndummies; vi++) {
@@ -1599,7 +1599,7 @@ int paneldum (double **pZ, DATAINFO *pdinfo, int opt)
     if (nudum == 1) return E_PDWRONG;
 
     ndum = ntdum + nudum;
-    if (grow_Z(ndum, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(ndum, pZ, pdinfo)) return E_ALLOC;
 
     /* first generate the frequency-based dummies */
     mm = (pdinfo->pd < 10)? 10 : 100;
@@ -1675,7 +1675,7 @@ int plotvar (double **pZ, DATAINFO *pdinfo, const char *period)
     float rm;
 
     if ((vi = varindex(pdinfo, period)) < v) return 0;
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
     strcpy(pdinfo->varname[vi], period);
 
     y1 = (int) pdinfo->sd0;
@@ -1721,8 +1721,8 @@ int plotvar (double **pZ, DATAINFO *pdinfo, const char *period)
 
 /* ......................................................  */
 
-int laggenr (const int iv, const int lag, const int opt, double **pZ, 
-	     DATAINFO *pdinfo)
+int _laggenr (const int iv, const int lag, const int opt, double **pZ, 
+	      DATAINFO *pdinfo)
 /*
     creates Z[iv][t-lagval] and prints label if opt != 0.
     aborts if a variable of the same name already exists
@@ -1733,8 +1733,8 @@ int laggenr (const int iv, const int lag, const int opt, double **pZ,
     int t, t1, n = pdinfo->n, v = pdinfo->v;
 
     strcpy(s, pdinfo->varname[iv]);
-    if (pdinfo->pd >=10) esl_trunc(s, 5);
-    else esl_trunc(s, 6);
+    if (pdinfo->pd >=10) _esl_trunc(s, 5);
+    else _esl_trunc(s, 6);
     sprintf(word, "_%d", lag);
     strcat(s, word);
 
@@ -1742,7 +1742,7 @@ int laggenr (const int iv, const int lag, const int opt, double **pZ,
      check whether it already exists: if so, get out */
     if (varindex(pdinfo, s) < v) return 0;
 
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
     for (t=0; t<lag; t++) (*pZ)[n*v + t] = NADBL;
@@ -1849,7 +1849,7 @@ static int _createvar (double *xxvec, char *snew, char *sleft,
     sprintf(ss, "q#$%d", nv + nvtmp); 
     mv = varindex(pdinfo, ss);
 
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     strcpy(pdinfo->varname[mv], ss);
     for (t=t1; t<=t2; t++) (*pZ)[n*mv + t] = xxvec[t];
@@ -1869,7 +1869,7 @@ static void _genrfree (double **pZ, DATAINFO *pdinfo, GENERATE *genr,
 {
     int s = pdinfo->v - nv;
 
-    if (s > 0) shrink_Z(s, pZ, pdinfo);
+    if (s > 0) _shrink_Z(s, pZ, pdinfo);
     if (mystack != NULL) free(mystack);
     if (mvec != NULL) free(mvec);
     if (genr != NULL) free(genr->xvec);
@@ -1897,7 +1897,7 @@ int logs (const int *list, double **pZ, DATAINFO *pdinfo)
     double xx;
     char s[32];
 
-    if (grow_Z(l0, pZ, pdinfo)) return -1;
+    if (_grow_Z(l0, pZ, pdinfo)) return -1;
 
     j = 0;
     for (i=1; i<=list[0]; i++) {
@@ -1932,7 +1932,7 @@ int logs (const int *list, double **pZ, DATAINFO *pdinfo)
 	    if (le_zero) continue;
 	    strcpy(s, "l_");
 	    strcat(s, pdinfo->varname[v]);
-	    esl_trunc(s, 8);
+	    _esl_trunc(s, 8);
 	    strcpy(pdinfo->varname[nvar+j], s);
 	    strcat(s, " = log of ");
 	    strcat(s, pdinfo->varname[v]);
@@ -1948,7 +1948,7 @@ int logs (const int *list, double **pZ, DATAINFO *pdinfo)
     }
 
     /* shrink Z if warranted (not all vars logged) */
-    if (j < l0) shrink_Z(l0 - j, pZ, pdinfo);
+    if (j < l0) _shrink_Z(l0 - j, pZ, pdinfo);
 
     if (j == 0) j = -1;
     return j;
@@ -1975,7 +1975,7 @@ int lags (const int *list, double **pZ, DATAINFO *pdinfo)
 	lv = list[v];
 	if (lv == 0) continue;
 	for (l=1; l<=pdinfo->pd; l++) {
-	    check = laggenr(lv, l, opt, pZ, pdinfo);
+	    check = _laggenr(lv, l, opt, pZ, pdinfo);
 	    if (check) return 1;
 	}
     }
@@ -2054,7 +2054,7 @@ int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo,
 /*      fprintf(stderr, "xpxgenr: maxterms = %d\n", maxterms);   */
 /*      printlist(list);   */
 
-    if (grow_Z(maxterms, pZ, pdinfo)) return -1;
+    if (_grow_Z(maxterms, pZ, pdinfo)) return -1;
 
     terms = 0;
     for (i=1; i<=l0; i++) {
@@ -2066,14 +2066,14 @@ int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo,
 		if (na(zi)) (*pZ)[n*(v+terms) + t] = NADBL;
 		else (*pZ)[n*(v+terms) + t] = zi * zi;
 	    }
-	    if (iszero(0, n-1, &(*pZ)[n*(v+terms)])) continue; 
+	    if (_iszero(0, n-1, &(*pZ)[n*(v+terms)])) continue; 
 	    /*
 	      prefix varname by sq, truncate if too long and save under 
 	      new varname; new label is "varname = oldname squared"
 	    */
 	    strcpy(s, "sq_");
 	    strcat(s, pdinfo->varname[li]);
-	    esl_trunc(s, 8);
+	    _esl_trunc(s, 8);
 	    strcpy(pdinfo->varname[v+terms], s);
 	    /* check if an _identical variable exists? */
 	    if (nodup) {
@@ -2099,16 +2099,16 @@ int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo,
 			(*pZ)[n*(v+terms) + t] = NADBL;
 		    else (*pZ)[n*(v+terms) + t] = zi*zj;
 		}
-		if (iszero(0, n-1, &(*pZ)[n*(v+terms)])) continue;
+		if (_iszero(0, n-1, &(*pZ)[n*(v+terms)])) continue;
 		/*
 		  trunc varname i and varname j if needed and cat them.
 		  save as newvarname.  Also make label.
 		*/
 		strcpy(s, pdinfo->varname[li]);
-		esl_trunc(s, 3);
+		_esl_trunc(s, 3);
 		strcat(s, "_");
 		strcpy(s1, pdinfo->varname[lj]);
-		esl_trunc(s1, 4);
+		_esl_trunc(s1, 4);
 		strcat(s, s1);
 		strcpy(pdinfo->varname[v+terms], s);
 		sprintf(pdinfo->label[v+terms], "%s = %s times %s",
@@ -2118,7 +2118,7 @@ int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (terms < maxterms) shrink_Z(maxterms - terms, pZ, pdinfo);
+    if (terms < maxterms) _shrink_Z(maxterms - terms, pZ, pdinfo);
     /*  fprintf(stderr, "xpxgenr: returning %d\n", terms); */
     return terms;
 }
@@ -2143,7 +2143,7 @@ int rhodiff (char *param, const int *list, double **pZ, DATAINFO *pdinfo)
     double xx, *rhot;
 
     /*  printf("rhodiff: param = %s\n", param); */
-    maxlag = count_fields(param);
+    maxlag = _count_fields(param);
     rhot = malloc(maxlag * sizeof *rhot);
     if (rhot == NULL) return E_ALLOC;
     if (maxlag > pdinfo->t1) t1 = maxlag;
@@ -2174,14 +2174,14 @@ int rhodiff (char *param, const int *list, double **pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (grow_Z(list[0], pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(list[0], pZ, pdinfo)) return E_ALLOC;
 
     for (i=1; i<=list[0]; i++) {
 	j = list[i];
 	/*  printf("rhodiff: doing list[%d] = %d\n", i, list[i]); */
 	/* make name and label */
 	strcpy(s, pdinfo->varname[j]);
-	esl_trunc(s, 7);
+	_esl_trunc(s, 7);
 	strcat(s, "#");
 	strcpy(pdinfo->varname[v+i-1], s);
 	sprintf(pdinfo->label[v+i-1], "%s = rho-differenced %s", 
@@ -2234,9 +2234,9 @@ static double _genr_cov (const char *str, double **pZ,
 	return NADBL;
 
     n = pdinfo->n;
-    return covar(pdinfo->t2 - pdinfo->t1 + 1,
-		 &(*pZ)[v1*n + pdinfo->t1], 
-		 &(*pZ)[v2*n + pdinfo->t1]);
+    return _covar(pdinfo->t2 - pdinfo->t1 + 1,
+		  &(*pZ)[v1*n + pdinfo->t1], 
+		  &(*pZ)[v2*n + pdinfo->t1]);
 }
 
 /* ...................................................... */
@@ -2265,8 +2265,8 @@ static double _genr_corr (const char *str, double **pZ,
 	return NADBL;
 
     n = pdinfo->n;
-    return corr(pdinfo->t2 - pdinfo->t1 + 1,
-		&(*pZ)[v1*n + pdinfo->t1], &(*pZ)[v2*n + pdinfo->t1]);
+    return _corr(pdinfo->t2 - pdinfo->t1 + 1,
+		 &(*pZ)[v1*n + pdinfo->t1], &(*pZ)[v2*n + pdinfo->t1]);
 }
 
 /* ...................................................... */
@@ -2364,7 +2364,7 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo)
     char varname[32], tmpstr[128], parm[9], **toks;
     double xx, *a;
 
-    f = count_fields(cmd);
+    f = _count_fields(cmd);
     m = f - 4;
 
     a = malloc(m * sizeof(double));
@@ -2390,7 +2390,7 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo)
 
     /* name of var to simulate */
     strcpy(varname, toks[2]);
-    esl_trunc(varname, 8);
+    _esl_trunc(varname, 8);
     nv = varindex(pdinfo, varname);
     if (nv == 0 || nv >= pdinfo->v) {
 	sprintf(gretl_errmsg, (nv)? "For 'sim', the variable must already "
@@ -2451,8 +2451,8 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo)
 
 /* .......................................................... */
 
-int multiply (char *s, int *list, char *sfx, double **pZ,
-	      DATAINFO *pdinfo)
+int _multiply (char *s, int *list, char *sfx, double **pZ,
+	       DATAINFO *pdinfo)
 {
     int i, t, v = 0, nv, n = pdinfo->n, lv, l0 = list[0];
     int slen;
@@ -2466,7 +2466,7 @@ int multiply (char *s, int *list, char *sfx, double **pZ,
 	if (v == pdinfo->v) return E_UNKVAR; 
     }
 
-    if (grow_Z(l0, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(l0, pZ, pdinfo)) return E_ALLOC;
     slen = strlen(sfx);
 
     /* fill out values */
@@ -2487,7 +2487,7 @@ int multiply (char *s, int *list, char *sfx, double **pZ,
 	}
 	/* do names and labels */
 	strcpy(tmp, pdinfo->varname[lv]);
-	esl_trunc(tmp, 8 - slen);
+	_esl_trunc(tmp, 8 - slen);
 	strcat(tmp, sfx);
 	strcpy(pdinfo->varname[nv], tmp);
 	if (v) 
@@ -2510,7 +2510,7 @@ int genr_fit_resid (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     char vname[9], vlabel[MAXLABEL];
     int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
 
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     i = pdinfo->v - 1;
     n = pdinfo->n;

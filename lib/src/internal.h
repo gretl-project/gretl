@@ -22,93 +22,87 @@
 #ifndef GRETL_INTERNAL_H
 #define GRETL_INTERNAL_H
 
-#define grow_Z(n, p1, p2) dataset_add_vars((n), p1, p2)
-#define shrink_Z(n, p1, p2) dataset_drop_vars((n), p1, p2)
+#define _grow_Z(n, p1, p2) dataset_add_vars((n), p1, p2)
+#define _shrink_Z(n, p1, p2) dataset_drop_vars((n), p1, p2)
 
-int laggenr (const int iv, const int lag, const int opt, double **pZ, 
-	     DATAINFO *pdinfo);
-
-int multiply (char *s, int *list, char *sfx, double **pZ,
+int _laggenr (const int iv, const int lag, const int opt, double **pZ, 
 	      DATAINFO *pdinfo);
 
-void print_add (const COMPARE *add, const int *addvars, 
-		const DATAINFO *pdinfo, const int aux_code, print_t *prn);
+int _multiply (char *s, int *list, char *sfx, double **pZ,
+	       DATAINFO *pdinfo);
 
-void print_omit (const COMPARE *omit, const int *omitvars, 
-		 const DATAINFO *pdinfo, print_t *prn);
+void _print_add (const COMPARE *add, const int *addvars, 
+		 const DATAINFO *pdinfo, const int aux_code, print_t *prn);
 
-void print_aicetc (const MODEL *pmod, print_t *prn);
+void _print_omit (const COMPARE *omit, const int *omitvars, 
+		  const DATAINFO *pdinfo, print_t *prn);
 
-void graphyzx (const int *list, const double *zy1, const double *zy2, 
-	       const double *zx, int n, const char *yname, 
-	       const char *xname, const DATAINFO *pdinfo, 
-	       int oflag, print_t *prn);
+void _graphyzx (const int *list, const double *zy1, const double *zy2, 
+		const double *zx, int n, const char *yname, 
+		const char *xname, const DATAINFO *pdinfo, 
+		int oflag, print_t *prn);
 
-void printxs (double xx, int n, int ci, print_t *prn);
+void _printxs (double xx, int n, int ci, print_t *prn);
 
-void print_ar (MODEL *pmod, print_t *prn);
+void _print_ar (MODEL *pmod, print_t *prn);
 
-void delete (char *str, const int indx, const int count);
+void _delete (char *str, const int indx, const int count);
 
-int isnumber (const char *str);
+int _isnumber (const char *str);
 
-void esl_trunc (char *str, const int n);
+void _esl_trunc (char *str, const int n);
 
-int count_fields (const char *str);
+int _count_fields (const char *str);
 
-void shiftleft (char *str, size_t move);
+void _shiftleft (char *str, size_t move);
 
-double corr (const int n, const double *zx, const double *zy);
+double _corr (const int n, const double *zx, const double *zy);
 
-double covar (const int n, const double *zx, const double *zy);
+double _covar (const int n, const double *zx, const double *zy);
 
-int iszero (const int t1, const int t2, const double *x);
+int _iszero (const int t1, const int t2, const double *x);
 
-int isconst (const int t1, const int t2, const double *x);
+int _isconst (const int t1, const int t2, const double *x);
 
-double esl_mean (const int t1, const int t2, const double *x);
+double _esl_mean (const int t1, const int t2, const double *x);
 
-void minmax (const int t1, const int t2, const double zx[], 
-	     double *min, double *max);
+void _minmax (const int t1, const int t2, const double zx[], 
+	      double *min, double *max);
 
-int hasconst (const int *list);
+int _hasconst (const int *list);
 
-int compare_doubles (const void *a, const void *b);
+int _compare_doubles (const void *a, const void *b);
 
-double esl_stddev (const int t1, const int t2, const double *x);
+double _esl_stddev (const int t1, const int t2, const double *x);
 
-double esl_variance (const int t1, const int t2, const double *x);
+double _esl_variance (const int t1, const int t2, const double *x);
 
-void aicetc (MODEL *pmod);
+void _aicetc (MODEL *pmod);
 
-void criteria (const double ess, const int nobs, const int ncoeff, 
-	       print_t *prn);
+void _criteria (const double ess, const int nobs, const int ncoeff, 
+		print_t *prn);
 
-int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		 const double *Z, const int n, int *misst);
+int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
+		  const double *Z, const int n, int *misst);
 
-int list_dups (const int *list, int ci);
+int _list_dups (const int *list, int ci);
 
-double getvalue (const char *s, const double *Z, const DATAINFO *pdinfo);
+int _lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo);
 
-int lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo);
+int _forecast (int t1, const int t2, const int nv, 
+	       const MODEL *pmod, DATAINFO *pdinfo, double **pZ);
 
-int forecast (int t1, const int t2, const int nv, 
-	      const MODEL *pmod, DATAINFO *pdinfo, double **pZ);
+int _full_model_list (MODEL *pmod, int **plist);
 
-int full_model_list (MODEL *pmod, int **plist);
+void _init_model (MODEL *pmod);
 
-void init_model (MODEL *pmod);
+double _tcrit95 (const int df);
 
-double tcrit95 (const int df);
-
-int allocate_case_markers (char ***S, int n);
+int _allocate_case_markers (char ***S, int n);
 
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, const double *Z);
 
-void _pgbreak (const int n, int *lineno, const int batch);
-
-int get_precision (double *x, int n);
+int _get_precision (double *x, int n);
 
 #endif /* GRETL_INTERNAL_H */

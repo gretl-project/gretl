@@ -72,7 +72,7 @@ static void moments (const int t1, const int t2, const double *zx,
     int t, n = t2 - t1 + 1;
     double sum = 0.0, p, var;
 
-    if (isconst(t1, t2, zx)) {
+    if (_isconst(t1, t2, zx)) {
 	*xbar = zx[t1];
 	*std = 0.0;
 	*skew = *kurt = NADBL;
@@ -184,7 +184,7 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
     freq->t1 = pdinfo->t1; 
     freq->t2 = pdinfo->t2;
 
-    if (isconst(0, n-1, x)) {
+    if (_isconst(0, n-1, x)) {
 	gretl_errno = 1;
 	sprintf(gretl_errmsg, "%s is a constant", freq->varname);
 	return freq;
@@ -205,7 +205,7 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 	return freq;
     }
     
-    minmax(0, n-1, x, &xmin, &xmax);
+    _minmax(0, n-1, x, &xmin, &xmax);
     freq->n = n;
     freq->endpt[0] = xmin;
 
@@ -275,12 +275,12 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
 
     /* add appropriate number of lags to data set */
     for (i=1; i<=*maxlag; i++) {
-	laggenr(varnum, i, 0, pZ, pdinfo);
+	_laggenr(varnum, i, 0, pZ, pdinfo);
 	/* the lagvar may already exist */
-	laglist[i-1] = lagvarnum(varnum, i, pdinfo); 
+	laglist[i-1] = _lagvarnum(varnum, i, pdinfo); 
     }
 
-    init_model(&tmp);
+    _init_model(&tmp);
     pdinfo->t1 = t1;
 
     list[1] = varnum;
@@ -295,7 +295,7 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
     }
 
     clear_model(&tmp, NULL, NULL);
-    shrink_Z(pdinfo->v - v, pZ, pdinfo);
+    _shrink_Z(pdinfo->v - v, pZ, pdinfo);
     free(laglist);
     free(list);
 
@@ -332,7 +332,7 @@ int corrgram (const int varno, const int order, double **pZ,
 
     list[0] = 1;
     list[1] = varno;
-    adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno*n + t1], nobs)) {
@@ -344,7 +344,7 @@ int corrgram (const int varno, const int order, double **pZ,
 	pprintf(prn, "\nInsufficient observations for correlogram");
 	return 1;
     }
-    if (isconst(t1, t2, &(*pZ)[varno*n])) {
+    if (_isconst(t1, t2, &(*pZ)[varno*n])) {
 	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[varno]);
 	return 1;
     }
@@ -379,7 +379,7 @@ int corrgram (const int varno, const int order, double **pZ,
 	    x[k] = (*pZ)[varno*n + t];
 	    y[k] = (*pZ)[varno*n + t-l];
 	}
-	acf[l] = corr(nobs-l, x, y);
+	acf[l] = _corr(nobs-l, x, y);
     }
     pprintf(prn, "\nAutocorrelation function for %s\n\n", pdinfo->varname[varno]);
 
@@ -403,8 +403,8 @@ int corrgram (const int varno, const int order, double **pZ,
 	if (xl == NULL) return E_ALLOC;
 	for (l=0; l<m; l++) xl[l] = l + 1.0;
         pprintf(prn, "\n\nCorrelogram\n\n");
-	graphyzx(NULL, acf + 1, NULL, xl, m, pdinfo->varname[varno], 
-		 "lag", NULL, 0, prn);
+	_graphyzx(NULL, acf + 1, NULL, xl, m, pdinfo->varname[varno], 
+		  "lag", NULL, 0, prn);
 	free(x);
 	free(xl);
 	free(y);
@@ -518,7 +518,7 @@ static int fract_int (int n, double *hhat, double *omega, print_t *prn)
     list[2] = 2;
     list[3] = 0;
 
-    init_model(&tmp);
+    _init_model(&tmp);
     tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, 0, 0);
 
     if (!tmp.errcode) {
@@ -565,7 +565,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
 
     list[0] = 1;
     list[1] = varno;
-    adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno*n + t1], nobs)) {
@@ -577,7 +577,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
 	pprintf(prn, "\nInsufficient observations for periodogram");
 	return 1;
     }
-    if (isconst(t1, t2, &(*pZ)[varno*n])) {
+    if (_isconst(t1, t2, &(*pZ)[varno*n])) {
 	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[varno]);
 	return 1;
     }
@@ -597,7 +597,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
     if (autocov == NULL || omega == NULL || hhat == NULL) 
 	return E_ALLOC;
 
-    xx = esl_mean(t1, t2, &(*pZ)[varno*n]);
+    xx = _esl_mean(t1, t2, &(*pZ)[varno*n]);
     /* find autocovariances */
     for (k=1; k<=L; k++) {
 	autocov[k] = 0;
@@ -648,7 +648,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
 	pprintf(prn, "Using Bartlett lag window, length %d\n\n", L);
     pprintf(prn, " omega  scaled frequency  periods  spectral density\n\n");
 
-    varx = esl_variance(t1, t2, &(*pZ)[varno*n]);
+    varx = _esl_variance(t1, t2, &(*pZ)[varno*n]);
     varx *= (double) (nobs - 1) / nobs;
     for (t=1; t<=nobs/2; t++) {
 	yy = 2 * M_PI * t / (double) nobs;
@@ -694,7 +694,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
 static void printf17 (const double zz, print_t *prn)
 {
     if (na(zz)) pprintf(prn, "      undefined");
-    else printxs(zz, 17, SUMMARY, prn);
+    else _printxs(zz, 17, SUMMARY, prn);
 }
 
 /* ............................................................... */
@@ -871,7 +871,7 @@ GRETLSUMMARY *summary (int *list,
 		continue;
 	    }
 	}
-	minmax(0, summ->n-1, x, &low, &high);	
+	_minmax(0, summ->n-1, x, &low, &high);	
 	moments(0, summ->n-1, x, &xbar, &std, &skew, &kurt, 1);
 	summ->xpx[v] = low;
 	summ->xpy[v] = high;
@@ -879,7 +879,7 @@ GRETLSUMMARY *summary (int *list,
 	summ->sderr[v] = std;
 	summ->xskew[v] = skew;
 	summ->xkurt[v] = kurt;
-	qsort(x, summ->n, sizeof *x, compare_doubles); 
+	qsort(x, summ->n, sizeof *x, _compare_doubles); 
 	if (summ->n > 1) summ->xmedian[v] = esl_median(x, summ->n);
 	else summ->xmedian[v] = x[1];
     }
@@ -939,7 +939,7 @@ CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
 
     /* drop any constants from list */
     for (i=1; i<=p[0]; i++) {
-	if (isconst(t1, t2, &(*pZ)[n * p[i]])) {
+	if (_isconst(t1, t2, &(*pZ)[n * p[i]])) {
 	    list_exclude(i, p);
 	    i--;
 	}
@@ -961,9 +961,9 @@ CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
 		corrmat->xpx[nij] = 1.0;
 		continue;
 	    }
-	    corrmat->xpx[nij] = corr(corrmat->n, 
-				     &(*pZ)[n * corrmat->list[i] + t1],
-				     &(*pZ)[n * corrmat->list[j] + t1]);
+	    corrmat->xpx[nij] = _corr(corrmat->n, 
+				      &(*pZ)[n * corrmat->list[i] + t1],
+				      &(*pZ)[n * corrmat->list[j] + t1]);
 	}
     }
 

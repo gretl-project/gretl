@@ -32,7 +32,7 @@ static int gettrend (double **pZ, DATAINFO *pdinfo)
     index = varindex(pdinfo, "time");
     if (index < v) return index;
     
-    if (grow_Z(1, pZ, pdinfo)) return 999;
+    if (_grow_Z(1, pZ, pdinfo)) return 999;
 
     for (t=0; t<n; t++) (*pZ)[n*v + t] = (double) t+1;
     strcpy(pdinfo->varname[v], "time");
@@ -50,7 +50,7 @@ static int diffvarnum (const int index, const DATAINFO *pdinfo)
     char diffname[16], s[16];
     
     strcpy(s, pdinfo->varname[index]);
-    esl_trunc(s, 6);
+    _esl_trunc(s, 6);
     strcpy(diffname, "d_");
     strcat(diffname, s);
     return varindex(pdinfo, diffname);
@@ -66,7 +66,7 @@ static int diffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
     double x0, x1;
 
     strcpy(word, pdinfo->varname[iv]);
-    esl_trunc(word, 6);
+    _esl_trunc(word, 6);
     strcpy(s, "d_");
     strcat(s, word);
 
@@ -74,7 +74,7 @@ static int diffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
      check whether it already exists: if so, get out */
     if (varindex(pdinfo, s) < v) return 0;
 
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
@@ -104,7 +104,7 @@ static int ldiffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
     double x0, x1;
 
     strcpy(word, pdinfo->varname[iv]);
-    esl_trunc(word, 5);
+    _esl_trunc(word, 5);
     strcpy(s, "ld_");
     strcat(s, word);
 
@@ -112,7 +112,7 @@ static int ldiffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
      check whether it already exists: if so, get out */
     if (varindex(pdinfo, s) < v) return 0;
 
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
@@ -177,7 +177,7 @@ int list_ldiffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
 }
 
 /**
- * lagvarnum:
+ * _lagvarnum:
  * @iv: ID number of the variable.
  * @lag: Desired lag length.
  * @pdinfo: data information struct.
@@ -189,13 +189,13 @@ int list_ldiffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
  *
  */
 
-int lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo)
+int _lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo)
 {
     char lagname[16], s[4];
     
     strcpy(lagname, pdinfo->varname[iv]);
-    if (pdinfo->pd >=10) esl_trunc(lagname, 5);
-    else esl_trunc(lagname, 6);
+    if (pdinfo->pd >=10) _esl_trunc(lagname, 5);
+    else _esl_trunc(lagname, 6);
     sprintf(s, "_%d", lag);
     strcat(lagname, s);
     return varindex(pdinfo, lagname);
@@ -270,7 +270,7 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
     double essu, F;
     MODEL var_model;
 
-    init_model(&var_model);
+    _init_model(&var_model);
 
     if (order < 1) {
 	fprintf(stderr, "Not much point in a zero-order \"VAR\" surely?\n");
@@ -309,9 +309,9 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
 	    depvars[neqns] = list[i];
 	    neqns++;
 	    for (l=1; l<=order; l++) {
-		laggenr(list[i], l, 1, pZ, pdinfo);
+		_laggenr(list[i], l, 1, pZ, pdinfo);
 		/* note: the lagvar may already exist */
-		varlist[index] = lagvarnum(list[i], l, pdinfo); 
+		varlist[index] = _lagvarnum(list[i], l, pdinfo); 
 		index++;
 	    }
 	}
@@ -321,8 +321,8 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
     t1 = oldt1 = pdinfo->t1;
     t2 = oldt2 = pdinfo->t2;
     varlist[1] = depvars[0];
-    if ((missv = adjust_t1t2(NULL, varlist, &t1, &t2, *pZ, pdinfo->n, 
-			     &misst))) {
+    if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, *pZ, pdinfo->n, 
+			      &misst))) {
 	free(varlist);
 	free(depvars);
 	free(shortlist);
@@ -428,7 +428,7 @@ int coint (const int order, const int *list, double **pZ,
     MODEL coint_model;
     int *cointlist;
 
-    init_model(&coint_model);
+    _init_model(&coint_model);
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
@@ -437,7 +437,7 @@ int coint (const int order, const int *list, double **pZ,
     }
 
     /* step 2: carry out the cointegrating regression */
-    if (hasconst(list) == 0) {
+    if (_hasconst(list) == 0) {
 	cointlist = malloc((l0 + 2) * sizeof *cointlist);
 	if (cointlist == NULL) return E_ALLOC;
 	for (i=0; i<=l0; i++) cointlist[i] = list[i];
@@ -451,7 +451,7 @@ int coint (const int order, const int *list, double **pZ,
 
     /* add residuals from cointegrating regression to data set */
     n = pdinfo->n;
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
     nv = pdinfo->v - 1;
     for (t=0; t<coint_model.t1; t++)
 	(*pZ)[n*nv + t] = NADBL;
@@ -475,7 +475,7 @@ int coint (const int order, const int *list, double **pZ,
     /* clean up and get out */
     clear_model(&coint_model, NULL, NULL);
     free(cointlist);
-    shrink_Z(1, pZ, pdinfo);
+    _shrink_Z(1, pZ, pdinfo);
     return 0;
 }
 
@@ -520,7 +520,7 @@ int adf_test (const int order, const int varno, double **pZ,
 			      {5.34, 6.25, 7.16, 8.27}}; /* infinity */
     
 
-    init_model(&adf_model);
+    _init_model(&adf_model);
     k = 3 + order;
     adflist = malloc((5 + order) * sizeof(int));
     shortlist = malloc(k * sizeof(int));
@@ -529,14 +529,14 @@ int adf_test (const int order, const int varno, double **pZ,
     i = pdinfo->t1;
     pdinfo->t1 = 0;
     diffgenr(varno, pZ, pdinfo);
-    laggenr(varno, 1, 1, pZ, pdinfo);
+    _laggenr(varno, 1, 1, pZ, pdinfo);
     pdinfo->t1 = i;
 
     adflist[1] = diffvarnum(varno, pdinfo);
 
     /* do the more familiar Dickey-Fuller t-test first */
     adflist[0] = 3;
-    adflist[2] = lagvarnum(varno, 1, pdinfo);
+    adflist[2] = _lagvarnum(varno, 1, pdinfo);
     adflist[3] = 0;
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
     DFt = adf_model.coeff[1] / adf_model.sderr[1];
@@ -570,12 +570,12 @@ int adf_test (const int order, const int varno, double **pZ,
 
     /* then do ADF test using F-statistic */
     adflist[0] = 4 + order;
-    adflist[3] = lagvarnum(varno, 1, pdinfo);
+    adflist[3] = _lagvarnum(varno, 1, pdinfo);
 
     for (l=1; l<=order; l++) {
-	laggenr(adflist[1], l, 1, pZ, pdinfo);
+	_laggenr(adflist[1], l, 1, pZ, pdinfo);
 	/* note: the lagvar may already exist */
-	adflist[l+3] = lagvarnum(adflist[1], l, pdinfo); 
+	adflist[l+3] = _lagvarnum(adflist[1], l, pdinfo); 
     }
 
     adflist[adflist[0]] = 0;
@@ -626,7 +626,7 @@ int adf_test (const int order, const int varno, double **pZ,
 
     free(adflist);
     free(shortlist);
-    shrink_Z(pdinfo->v - orig_nvars, pZ, pdinfo);
+    _shrink_Z(pdinfo->v - orig_nvars, pZ, pdinfo);
     return 0;
 }
 
@@ -645,7 +645,7 @@ int ma_model (int *list, double **pZ, DATAINFO *pdinfo, print_t *prn)
 	return 1;
     }
     
-    if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
     strcpy(pdinfo->varname[v], "Z_t");
 
     malist[0] = 3;
@@ -653,7 +653,7 @@ int ma_model (int *list, double **pZ, DATAINFO *pdinfo, print_t *prn)
     malist[2] = v;       /* new var: moving average of indep var */
     malist[3] = 0;
 
-    init_model(&mamod);
+    _init_model(&mamod);
 
     a = aopt = 0.0;
     essmin = 0.0;
@@ -702,7 +702,7 @@ int ma_model (int *list, double **pZ, DATAINFO *pdinfo, print_t *prn)
 	   
     clear_model(&mamod, NULL, NULL);
 
-    shrink_Z(1, pZ, pdinfo);
+    _shrink_Z(1, pZ, pdinfo);
 
     return 0;
 }

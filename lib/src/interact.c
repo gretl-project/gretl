@@ -114,7 +114,7 @@ static int get_rhodiff_param (char *str, CMD *cmd)
     strncpy(cmd->param, str, k);
     cmd->param[k] = '\0';
     /*  printf("get_rhodiff_param: param = %s\n", cmd->param); */
-    shiftleft(str, k + 1);
+    _shiftleft(str, k + 1);
     return 0;
 }
 
@@ -237,7 +237,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     }
 
     /* now we're probably dealing with a command that wants a list... */    
-    nf = count_fields(line) - 1;
+    nf = _count_fields(line) - 1;
     n = strlen(command->cmd);
 
     /* ...unless it's "help", "loop", or "nulldata" 
@@ -269,7 +269,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 	strcpy(line, remainder);
 	linelen = strlen(line);
-	nf = count_fields(line);
+	nf = _count_fields(line);
 	n = 0;
     }
 
@@ -297,7 +297,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		return;
 	    }
 	    /* fprintf(stderr, "got filename '%s'\n", command->param); */
-	    shiftleft(remainder, strlen(command->param));
+	    _shiftleft(remainder, strlen(command->param));
 	    /* unquote the filename */
 	    for (i=0; i<strlen(command->param) - 2; i++)
 		command->param[i] = command->param[i+1];
@@ -325,7 +325,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    command->param = realloc(command->param, linelen - n + 1);
 	    strcpy(remainder, line + n + 1);
 	    sscanf(remainder, "%s", command->param);
-	    shiftleft(remainder, strlen(command->param));
+	    _shiftleft(remainder, strlen(command->param));
 	    strcpy(line, remainder);
 	    nf--;
 	    n = 0;
@@ -338,7 +338,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
 	sscanf(line, "%3s", suffix);
 	strcpy(command->str, suffix);
-	shiftleft(line, strlen(suffix));
+	_shiftleft(line, strlen(suffix));
 	nf--;
 	n = 0;
 	linelen = strlen(line);
@@ -382,7 +382,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		   the second lag of varname: in this case auto-
 		   generate the lag variable. */
 		if (_parse_lagvar(field, &lagvar, pdinfo)) {
-		    if (laggenr(lagvar.varnum, lagvar.lag, 0, pZ, pdinfo)) {
+		    if (_laggenr(lagvar.varnum, lagvar.lag, 0, pZ, pdinfo)) {
 			command->errcode = 1;
 			sprintf(gretl_errmsg, 
 				"generation of lag variable failed");
@@ -589,7 +589,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
 	pprintf(prn, "k: negative value is out of bounds.\n");
 	return 1;
     }    
-    criteria(ess, T, k, prn);
+    _criteria(ess, T, k, prn);
 
     return 0;
 }
@@ -624,14 +624,14 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     varname[8] = 0;
     vi = varindex(pdinfo, varname);
 
-    if (vi >= pdinfo->v && grow_Z(1, pZ, pdinfo)) return -1 * E_ALLOC;
+    if (vi >= pdinfo->v && _grow_Z(1, pZ, pdinfo)) return -1 * E_ALLOC;
 
     strcpy(pdinfo->varname[vi], varname);
     strcpy(pdinfo->label[vi], "predicted values");
 
     for (t=0; t<pdinfo->n; t++) (*pZ)[n*vi + t] = NADBL;
 
-    forecast(t1, t2, vi, pmod, pdinfo, pZ);
+    _forecast(t1, t2, vi, pmod, pdinfo, pZ);
 
     return vi;
 }
@@ -646,7 +646,7 @@ int add_new_var (DATAINFO *pdinfo, double **pZ, GENERATE *genr)
     if (genr->special) return 0;
     /* is the new variable an addition to data set? */
     if (v >= pdinfo->v) {
-	if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+	if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 	strcpy(pdinfo->varname[v], genr->varname);
 	strcpy(pdinfo->label[v], genr->label);
     } else {
@@ -828,7 +828,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    if (!gui) printf(" %s", pcmd->param);
 	    if (!nopause) pprintf(prn, " %s", pcmd->param);
 	}
-	err = list_dups(pcmd->list, pcmd->ci);
+	err = _list_dups(pcmd->list, pcmd->ci);
 	if (err) {
 	    printf("\nvar number %d duplicated in the command list.\n",
 		   err);
@@ -953,7 +953,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case MULTIPLY:
-	err = multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
+	err = _multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
 	if (err) errmsg(err, prn);
 	else varlist(datainfo, prn);
 	break;

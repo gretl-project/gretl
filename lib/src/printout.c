@@ -41,6 +41,7 @@ static void print_discrete_stats (const MODEL *pmod,
 				  print_t *prn);
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
 				  const int c, const double t, print_t *prn);
+static void print_aicetc (const MODEL *pmod, print_t *prn);
 void _putxx (const double xx);
 void mxout (const double *rr, const int *list, const int ci,
 	    const DATAINFO *pdinfo, const int pause, print_t *prn);
@@ -276,7 +277,7 @@ void print_model_confints (const MODEL *pmod, const DATAINFO *pdinfo,
 			   print_t *prn)
 {
     int i, ncoeff = pmod->list[0];
-    double t = tcrit95(pmod->dfd);
+    double t = _tcrit95(pmod->dfd);
 
     pprintf(prn, "t(%d, .025) = %.3f\n\n", pmod->dfd, t);
     pprintf(prn, "      VARIABLE      COEFFICIENT      95%% CONFIDENCE "
@@ -482,8 +483,8 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, print_t *prn)
 
 /* ........................................................... */
 
-void print_add (const COMPARE *add, const int *addvars, 
-		const DATAINFO *pdinfo, const int aux_code, print_t *prn)
+void _print_add (const COMPARE *add, const int *addvars, 
+		 const DATAINFO *pdinfo, const int aux_code, print_t *prn)
 {
     int i;
     char spc[3];
@@ -530,8 +531,8 @@ void print_add (const COMPARE *add, const int *addvars,
 
 /* ........................................................... */
 
-void print_omit (const COMPARE *omit, const int *omitvars, 
-		 const DATAINFO *pdinfo, print_t *prn)
+void _print_omit (const COMPARE *omit, const int *omitvars, 
+		  const DATAINFO *pdinfo, print_t *prn)
 {
     int i;
 
@@ -567,7 +568,7 @@ void print_omit (const COMPARE *omit, const int *omitvars,
 
 /* ....................................................... */
 
-void print_aicetc (const MODEL *pmod, print_t *prn)
+static void print_aicetc (const MODEL *pmod, print_t *prn)
 {
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
@@ -770,9 +771,9 @@ static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod,
 	if (pmod->sderr[c-1] > 0)
 	    maxerr = t * pmod->sderr[c-1];
 	else maxerr = 0;
-        printxs(pmod->coeff[c-1] - maxerr, 15, PRINT, prn);
+        _printxs(pmod->coeff[c-1] - maxerr, 15, PRINT, prn);
         pprintf(prn, " to");
-        printxs(pmod->coeff[c-1] + maxerr, 10, PRINT, prn);
+        _printxs(pmod->coeff[c-1] + maxerr, 10, PRINT, prn);
     }
     pprintf(prn, "\n");
 }
@@ -1008,10 +1009,10 @@ static void printgx (const double xx, print_t *prn)
 
 /* ........................................................ */
 
-void graphyzx (const int *list, const double *zy1, const double *zy2, 
-	       const double *zx, int n, const char *yname, 
-	       const char *xname, const DATAINFO *pdinfo, 
-	       int oflag, print_t *prn)
+void _graphyzx (const int *list, const double *zy1, const double *zy2, 
+		const double *zx, int n, const char *yname, 
+		const char *xname, const DATAINFO *pdinfo, 
+		int oflag, print_t *prn)
 /*
   if n > 0 graphs zy1 against zx, otherwise
   graphs zy1[i] and zy2[i] against zx[i] for i = 1, 2, .... n
@@ -1037,12 +1038,12 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
     if (n < 0) {
 	n = -n;
 	option = 1;
-	minmax(t1, t2, zy1, &y1min, &y1max);
-	minmax(t1, t2, zy2, &y2min, &y2max);
+	_minmax(t1, t2, zy1, &y1min, &y1max);
+	_minmax(t1, t2, zy2, &y2min, &y2max);
 	ymin = (y1min < y2min)? y1min : y2min;
 	ymax = (y1max > y2max)? y1max : y2max;
     }
-    else minmax(t1, t2, zy1, &ymin, &ymax);
+    else _minmax(t1, t2, zy1, &ymin, &ymax);
     yrange = ymax - ymin;
     xzero = yzero = 0;
     /* setting the number of columns and rows to be used */
@@ -1051,7 +1052,7 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
     else nrows = option ? 16 : 18 ;
     nr2 = nrows/2;
     nc2 = ncols/2;
-    minmax(t1, t2, zx, &xmin, &xmax);
+    _minmax(t1, t2, zx, &xmin, &xmax);
     xrange = xmax - xmin;
 
     /* Initialize picture matrix */
@@ -1188,7 +1189,7 @@ static void varheading (const int v1, const int v2,
 
 /* ........................................................... */
 
-void printxs (double xx, int n, int ci, print_t *prn)
+void _printxs (double xx, int n, int ci, print_t *prn)
 {
     int ls;
     char s[32];
@@ -1227,7 +1228,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
     double xx;
 
-    if (isconst(t1, t2, z)) _printstr(prn, z[t1], &ls);
+    if (_isconst(t1, t2, z)) _printstr(prn, z[t1], &ls);
     else for (t=t1; t<=t2; t++) {
 	xx = z[t];
 	_printstr(prn, xx, &ls);
@@ -1497,9 +1498,9 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
     if (nfit < 0) return 1;
 
     if (isdummy(depvar, t1, t2, *pZ, n) > 0)
-	pmax = get_precision(&(*pZ)[n*nfit], n);
+	pmax = _get_precision(&(*pZ)[n*nfit], n);
     else
-	pmax = get_precision(&(*pZ)[n*depvar], n);
+	pmax = _get_precision(&(*pZ)[n*depvar], n);
 
     fit_resid_head(pmod, pdinfo, prn);
     for (t=0; t<n; t++) {
@@ -1514,12 +1515,14 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
 	    else if (pd < 10) pprintf(prn, "%8.1f ", xdate);
 	    else pprintf(prn, "%8.2f ", xdate);
 	}
-/*  	for (i=1; i<4; i++) { */
-/*  	    if (i == 1) xx = (*pZ)[n*depvar + t]; */
-/*  	    if (i == 2) xx = (*pZ)[n*nfit + t]; */
-/*  	    if (i == 3) xx = (*pZ)[n*depvar + t] - (*pZ)[n*nfit + t]; */
-/*  	    printxs(xx, 15, PRINT, prn); */
-/*  	} */
+#ifdef notdef
+ 	for (i=1; i<4; i++) {
+ 	    if (i == 1) xx = (*pZ)[n*depvar + t];
+ 	    if (i == 2) xx = (*pZ)[n*nfit + t];
+ 	    if (i == 3) xx = (*pZ)[n*depvar + t] - (*pZ)[n*nfit + t];
+ 	    printxs(xx, 15, PRINT, prn);
+ 	}
+#endif
 	xx = (*pZ)[n*depvar + t] - (*pZ)[n*nfit + t];
 	if (fabs(xx) > 2.5 * pmod->sigma) ast = 1;
 	pprintf(prn, "%12.*f%12.*f%12.*f", 
@@ -1535,7 +1538,7 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
 
 /* ........................................................... */
 
-void print_ar (MODEL *pmod, print_t *prn)
+void _print_ar (MODEL *pmod, print_t *prn)
 {
     pprintf(prn, "Statistics based on the rho-differenced data\n"
            "(R-squared is computed as the square of the correlation "

@@ -807,7 +807,7 @@ static int writehdr (const char *hdrfile, const int *list,
 }
 
 /**
- * get_precision:
+ * _get_precision:
  * @x: data vector.
  * @n: length of x.
  *
@@ -818,7 +818,7 @@ static int writehdr (const char *hdrfile, const int *list,
  *
  */
 
-int get_precision (double *x, int n)
+int _get_precision (double *x, int n)
 {
     int i, j, p, dot, len, pmax = 0;
     char numstr[48];
@@ -920,7 +920,7 @@ int write_data (const char *fname, const int *list,
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) return 1;
 	for (i=1; i<=l0; i++) 
-	    pmax[i-1] = get_precision(&Z(list[i], pdinfo->t1), tsamp);
+	    pmax[i-1] = _get_precision(&Z(list[i], pdinfo->t1), tsamp);
     }
 
     if (opt == GRETL_DATA_GZIPPED) { /* compressed ASCII */
@@ -1455,7 +1455,7 @@ static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
     int n = pdinfo->n;
 
     pprintf(prn, "Attempting data merge...\n");
-    if (grow_Z(newvars - 1, pZ, pdinfo)) {
+    if (_grow_Z(newvars - 1, pZ, pdinfo)) {
 	pprintf(prn, "   Out of memory.\n");
 	return E_ALLOC;
     }
@@ -1715,7 +1715,7 @@ int import_csv (double **pZ, DATAINFO *pdinfo,
 	    if (blank_1 || obs_1) nv = k - 1;
 	    else nv = k;
 	    if ((blank_1 || obs_1) && k == 1) {
-		esl_trunc(numstr, 8);
+		_esl_trunc(numstr, 8);
 		strcpy(csvinfo.S[t], numstr);
 	    } else {
 		if (missval) 

@@ -61,7 +61,7 @@ typedef enum {
  
 int plot (const int *list, 
 	  double *Z, const DATAINFO *pdinfo, 
-	  int oflag, int batch, print_t *prn);
+	  int oflag, int pause, print_t *prn);
 
 int graph (const int *list, 
 	   double *Z, const DATAINFO *pdinfo, 

@@ -117,7 +117,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
     double *xbar, *diag, *xpx = NULL;
     MODEL dmod;
 
-    init_model(&dmod);
+    _init_model(&dmod);
 
     /* check that depvar is really a dummy */
     if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ, n) == 0) {
@@ -135,7 +135,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
     }
 
     /* make room for special expected value */
-    if (grow_Z(1, pZ, pdinfo)) {
+    if (_grow_Z(1, pZ, pdinfo)) {
 	free(xbar);
 	dmod.errcode = E_ALLOC;
 	return dmod;
@@ -145,7 +145,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
     dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
     if (dmod.ifc == 0) dmod.errcode = E_NOCONST;
     if (dmod.errcode) {
-	(void) shrink_Z(1, pZ, pdinfo);
+	(void) _shrink_Z(1, pZ, pdinfo);
 	free(xbar);
 	return dmod;
     }
@@ -183,14 +183,14 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
 	clear_model(&dmod, NULL, NULL);
 	dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
 	if (dmod.errcode) {
-	    (void) shrink_Z(1, pZ, pdinfo);
+	    (void) _shrink_Z(1, pZ, pdinfo);
 	    free(xbar);
 	    return dmod;
 	}
     }
     /* put back original dependent variable */
     dmod.list[1] = depvar;
-    shrink_Z(1, pZ, pdinfo);
+    _shrink_Z(1, pZ, pdinfo);
     dmod.lnL = _logit_probit_llhood(&(*pZ)[n*depvar], &dmod, opt);
     Lr_chisq(&dmod, *pZ, n);
     dmod.ci = opt;

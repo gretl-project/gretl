@@ -255,7 +255,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 
     if (orig->ci == TSLS) return E_NOTIMP;
 
-    init_model(&aux);
+    _init_model(&aux);
 
     /* was a specific list of vars to add passed in, or should we
        concoct one? (e.g. "lmtest") */
@@ -309,7 +309,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 	    if (err) return err;  
 	}
 	else if (orig->ci == WLS || orig->ci == AR) {
-	    pos = full_model_list(orig, &newlist);
+	    pos = _full_model_list(orig, &newlist);
 	    if (pos < 0) return E_ALLOC;
 	}
 	if (orig->ci == AR) {
@@ -346,7 +346,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 	int df = 0;
 
 	/* grow data set to accommodate new dependent var */
-	if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+	if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 	for (t=0; t<n; t++)
 	    (*pZ)[n*(pdinfo->v - 1) + t] = NADBL;
 	for (t=orig->t1; t<=orig->t2; t++)
@@ -361,7 +361,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 	    free(newlist);
 	    if (addvars == NULL) free(tmplist); 
 	    clear_model(&aux, NULL, NULL);
-	    shrink_Z(1, pZ, pdinfo);
+	    _shrink_Z(1, pZ, pdinfo);
 	    return err; 
 	}
 	aux.aux = aux_code;
@@ -381,7 +381,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 	clear_model(&aux, NULL, NULL);
 
 	/* shrink for uhat */
-	shrink_Z(1, pZ, pdinfo);
+	_shrink_Z(1, pZ, pdinfo);
 	pdinfo->extra = 0;
     }
 
@@ -394,10 +394,10 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 
     if (addvars != NULL) {
 	_difflist(new->list, orig->list, addvars);
-	print_add(&add, addvars, pdinfo, aux_code, prn);
+	_print_add(&add, addvars, pdinfo, aux_code, prn);
     } else {
 	add.dfn = newlist[0] - orig->list[0];
-	print_add(&add, tmplist, pdinfo, aux_code, prn);
+	_print_add(&add, tmplist, pdinfo, aux_code, prn);
     }
 
     *model_count += 1;
@@ -406,7 +406,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 
     /* trash any extra variables generated (squares, logs) */
     if (pdinfo->v > orig_nvar)
-	shrink_Z(pdinfo->v - orig_nvar, pZ, pdinfo);
+	_shrink_Z(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     return 0;
 }
@@ -466,7 +466,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 	}
     }
     else if (orig->ci == WLS || orig->ci == AR) {
-	pos = full_model_list(orig, &tmplist);
+	pos = _full_model_list(orig, &tmplist);
 	if (pos < 0) {
 	    free(tmplist);
 	    pdinfo->t1 = t1;
@@ -502,7 +502,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     if (orig->ci != AR && orig->ci != ARCH) 
 	printmodel(new, pdinfo, prn); 
     _difflist(orig->list, new->list, omitvars);
-    print_omit(&omit, omitvars, pdinfo, prn);     
+    _print_omit(&omit, omitvars, pdinfo, prn);     
 
     *model_count += 1;
     free(tmplist);
@@ -534,7 +534,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     int err, i, k, t, n = pdinfo->n, v = pdinfo->v; 
     double trsq, LMF;
 
-    init_model(&aux);
+    _init_model(&aux);
 
     k = pdinfo->pd + 1;
     newlist = malloc((pmod->list[0] + k) * sizeof *newlist);
@@ -542,7 +542,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     newlist[0] = pmod->list[0] + pdinfo->pd;
     for (i=2; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
 
-    if (grow_Z(1, pZ, pdinfo)) {
+    if (_grow_Z(1, pZ, pdinfo)) {
 	free(newlist);
 	return E_ALLOC;
     }
@@ -556,8 +556,8 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     strcpy(pdinfo->label[v], "residual");
     /* then lags of same */
     for (i=1; i<=pdinfo->pd; i++) {
-	if (laggenr(v, i, 1, pZ, pdinfo)) {
-	    fprintf(stderr, "lagging uhat failed\n");
+	if (_laggenr(v, i, 1, pZ, pdinfo)) {
+	    sprintf(gretl_errmsg, "lagging uhat failed");
 	    free(newlist);
 	    return E_LAGS;
 	} else newlist[pmod->list[0] + i] = v+i;
@@ -571,7 +571,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 	errmsg(aux.errcode, prn);
 	free(newlist);
 	clear_model(&aux, NULL, NULL);
-	shrink_Z(k, pZ, pdinfo);
+	_shrink_Z(k, pZ, pdinfo);
 	return err;
     } 
 
@@ -602,7 +602,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 		fdist(LMF, pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd));	
     }
 
-    shrink_Z(k, pZ, pdinfo);
+    _shrink_Z(k, pZ, pdinfo);
     free(newlist);
     clear_model(&aux, NULL, NULL);
     return 0;
@@ -635,7 +635,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 
     if (pmod->ci != OLS) return E_OLSONLY;
 
-    init_model(&chow_mod);
+    _init_model(&chow_mod);
 
     if (sscanf(line, "%*s %7s", chowdate) != 1) 
 	return E_PARSE;
@@ -646,7 +646,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
     /* take the original regression list, add a split dummy
        and interaction terms. */
     if (pmod->ifc == 0) newvars += 1;
-    if (grow_Z(newvars, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(newvars, pZ, pdinfo)) return E_ALLOC;
     chowlist = malloc((pmod->list[0] + newvars + 1) * sizeof *chowlist);
     if (chowlist == NULL) return E_ALLOC;
 
@@ -666,7 +666,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 	   (*pZ)[n*(v+i) + t] = 
 	       (*pZ)[n*v + t] * (*pZ)[n*(pmod->list[1+i]) + t];
 	strcpy(s, pdinfo->varname[pmod->list[1+i]]); 
-	esl_trunc(s, 5);
+	_esl_trunc(s, 5);
 	strcpy(pdinfo->varname[v+i], "sd_");
 	strcat(pdinfo->varname[v+i], s);
 	sprintf(pdinfo->label[v+i], "splitdum * %s", 
@@ -700,7 +700,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
     } 
 
     /* clean up extra variables */
-    shrink_Z(newvars, pZ, pdinfo);
+    _shrink_Z(newvars, pZ, pdinfo);
     free(chowlist);
 
     return 0;
@@ -776,7 +776,7 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, print_t *prn,
 	return E_ALLOC;
     }
 
-    init_model(&cum_mod);
+    _init_model(&cum_mod);
     /* set sample based on model to be tested */
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t1 + K - 1;

@@ -27,8 +27,6 @@
 # include <windows.h>
 #endif
 
-static const char missing[] = "Command has insufficient arguments";
-
 extern void _printstr (print_t *prn, const double xx, int *ls);
 
 extern double _gamma_func (double x);
@@ -143,7 +141,21 @@ static void drawline (const int nn, print_t *prn)
     pprintf(prn, "\n");
 }
 
-/* ........................................................ */
+/**
+ * plot:
+ * @list: contains ID numbers of variables to plot.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @oflag: if non-zero, forces two variables to be plotted on the same
+ * scale (otherwise they will be scaled to fit).
+ * @pause: if non-zero, pause after showing each screen of data.
+ * @prn: gretl printing struct.
+ *
+ * Plot (using ascii graphics) either one or two variables, as given
+ * in @list.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int plot (const int *list, double *Z, const DATAINFO *pdinfo, 
 	  int oflag, int pause, print_t *prn)
@@ -180,7 +192,7 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
     if (l0 == 1) {
 	/* only one variable is to be plotted */
 	n = ztox(vy, x, Z, pdinfo);
-	minmax(t1, t2, x, &xmin, &xmax);
+	_minmax(t1, t2, x, &xmin, &xmax);
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;
 	/* print headings */
@@ -225,9 +237,9 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
     strcpy(s2, pdinfo->varname[vz]);
     n = _ztoxy(vy, vz, x, y, pdinfo, Z);
     /* find maximum and minimum using all values from both arrays */
-    minmax(t1, t2, x, &xmin, &xmax);
+    _minmax(t1, t2, x, &xmin, &xmax);
     xrange = xmax - xmin;
-    minmax(t1, t2, y, &ymin, &ymax);
+    _minmax(t1, t2, y, &ymin, &ymax);
     yrange = ymax - ymin;
     xymin = (xmin <= ymin) ? xmin : ymin;
     xymax = (xmax >= ymax) ? xmax : ymax;
@@ -309,7 +321,20 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ......................................................... */
+/**
+ * graph:
+ * @list: contains ID numbers of variables to graph.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @oflag: if non-zero, use 40 rows, otherwise use 20 rows.
+ * @prn: gretl printing struct.
+ *
+ * Graph (using ascii graphics) one variable against another, as given
+ * in @list: the first variable will appear on the y-axis, the second
+ * on the x-axis.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int graph (const int *list, double *Z, const DATAINFO *pdinfo, 
 	   const int oflag, print_t *prn)
@@ -323,12 +348,9 @@ int graph (const int *list, double *Z, const DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
     double *x, *y, xx, xy, xz, *uhat;
 
-    if (list[0] < 2) {
-	puts(missing);
-	return 1; /* FIXME proper code */
-    }
+    if (list[0] < 2) return E_ARGS; 
 
-    m = list_dups(list, GRAPH);
+    m = _list_dups(list, GRAPH);
     if (m) {
 	fprintf(stderr, "var no. %d duplicated in command list.\n", m);
 	return 1;
@@ -348,8 +370,8 @@ int graph (const int *list, double *Z, const DATAINFO *pdinfo,
     if (l0 == 2) {
 	vx = list[2];
 	m = _ztoxy(vx, vy, x, y, pdinfo, Z);
-	graphyzx(list, y, uhat, x, m, pdinfo->varname[vy], 
-		 pdinfo->varname[vx], pdinfo, oflag, prn);
+	_graphyzx(list, y, uhat, x, m, pdinfo->varname[vy], 
+		  pdinfo->varname[vx], pdinfo, oflag, prn);
     }
     else {
 	vz = list[2];
@@ -366,8 +388,8 @@ int graph (const int *list, double *Z, const DATAINFO *pdinfo,
 		m++;
 	    }
 	}
-	graphyzx(list, y, uhat, x, -m, pdinfo->varname[vy], 
-		 pdinfo->varname[vx], pdinfo, oflag, prn);
+	_graphyzx(list, y, uhat, x, -m, pdinfo->varname[vy], 
+		  pdinfo->varname[vx], pdinfo, oflag, prn);
     }
     pprintf(prn, "\n");
     free(x); free(y); free(uhat);
@@ -409,7 +431,15 @@ static int factorized_vars (double **pZ,
     return 0;
 }
 
-/* ........................................................ */
+/**
+ * gnuplot_display:
+ * @gpt: path to gnuplot executable.
+ * @fname: name of gnuplot file to plot.
+ *
+ * Executes gnuplot, passing as an argument the supplied filename.
+ *
+ * Returns: the return value from the system command.
+ */
 
 int gnuplot_display (const char *gpt, const char *fname)
 {
@@ -426,16 +456,31 @@ int gnuplot_display (const char *gpt, const char *fname)
     return err;
 }
 
-/* ........................................................ */
+/**
+ * gnuplot:
+ * @list: list of variables to plot, by ID number.
+ * @lines: vector of 1s and 0s to indicate whether variables should
+ * be represented by lines or not (or NULL).
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @ppaths: path information struct.
+ * @plot_count: pointer to count of graphs drawn so far.
+ * @batch: if non-zero, the plot commands will be saved to file instead
+ * of being sent to gnuplot.
+ * @gui: should be non-zero if called from GUI client program.
+ * @opt:
+ *
+ * Writes a gnuplot plot file to display the values of the
+ * variables in @list and calls gnuplot to make the graph.
+ *
+ * Returns: 0 on successful completion, -1 if the gnuplot system
+ * command fails, or 1 if there are missing data values.
+ */
 
 int gnuplot (int *list, const int *lines, 
 	     double **pZ, DATAINFO *pdinfo,
 	     const PATHS *ppaths, int *plot_count, 
 	     const int batch, const int gui, const int opt)
-/*
-   Writes a simple gnuplot plot file to display the values of the
-   variables in "list" and calls gnuplot to make the graph.
-*/
 {
     FILE *fq;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
@@ -491,7 +536,7 @@ int gnuplot (int *list, const int *lines,
 	tmplist[1] = list[1];
 	tmplist[2] = list[2];	
 	tmplist[3] = 0;	
-	init_model(&plotmod);
+	_init_model(&plotmod);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
 	    /* is the fit significant? */
@@ -504,7 +549,7 @@ int gnuplot (int *list, const int *lines,
 	clear_model(&plotmod, NULL, NULL);
     }
 
-    adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return -999;
 
@@ -578,8 +623,8 @@ int gnuplot (int *list, const int *lines,
 
 	/* find minima, maxima of the vars */
 	for (i=1; i<lo; i++) 
-	    minmax(t1, t2, &(*pZ)[pdinfo->n*list[i]], 
-		   &(ymin[i]), &(ymax[i]));
+	    _minmax(t1, t2, &(*pZ)[pdinfo->n*list[i]], 
+		    &(ymin[i]), &(ymax[i]));
 	tscale = 0;
 	for (i=1; i<lo; i++) {
 	    oddcount = 0;
@@ -690,7 +735,19 @@ int gnuplot (int *list, const int *lines,
     return miss;
 }
 
-/* ......................................................... */ 
+/**
+ * multi_scatters:
+ * @list: list of variables to plot, by ID number.
+ * @pos: 
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @ppaths: path information struct.
+ *
+ * Writes a gnuplot plot file to display up to 6 small X-Y graphs.
+ * variables in @list and calls gnuplot to make the graph.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int multi_scatters (const int *list, const int pos, double **pZ, 
 		    const DATAINFO *pdinfo, const PATHS *ppaths)
@@ -780,11 +837,19 @@ int multi_scatters (const int *list, const int pos, double **pZ,
     return err;
 }
 
-/* ......................................................... */ 
+/**
+ * plot_freq:
+ * @freq: frequency distribution struct.
+ * @ppaths: path information struct.
+ * @dist: distribution code (see #dist_codes).
+ *
+ * Plot the actual frequency distribution for a variable versus a
+ * theoretical distribution, Gaussian or gamma (or none).
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist)
-     /* plot actual frequency distribution versus theoretical
-	distribution, gaussian or gamma (or none) */
 {
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp;

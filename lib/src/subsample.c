@@ -114,7 +114,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 
 /* .......................................................... */
 
-int allocate_case_markers (char ***S, int n)
+int _allocate_case_markers (char ***S, int n)
 {
     int t;
 
@@ -171,7 +171,7 @@ int case_sample_direct (double **oldZ, double **newZ,
     newdinfo->varname = olddinfo->varname;
     newdinfo->label = olddinfo->label;
 
-    if (olddinfo->markers && allocate_case_markers(&S, sn)) {
+    if (olddinfo->markers && _allocate_case_markers(&S, sn)) {
 	free(*newZ);
 	return E_ALLOC;
     }
@@ -288,7 +288,7 @@ int set_sample_dummy (const char *line,
     /* create or reuse "hidden" dummy to record sub-sample */
     subnum = varindex(oldinfo, "subdum");
     if (subnum == oldinfo->v) {
-	if (grow_Z(1, oldZ, oldinfo)) return E_ALLOC;
+	if (_grow_Z(1, oldZ, oldinfo)) return E_ALLOC;
 	strcpy(oldinfo->varname[subnum], "subdum");
 	strcpy(oldinfo->label[subnum], "automatic sub-sampling dummy");
     }
@@ -312,7 +312,7 @@ int set_sample_dummy (const char *line,
     newinfo->label = oldinfo->label;
 
     /* case markers */
-    if (oldinfo->markers && allocate_case_markers(&S, sn)) {
+    if (oldinfo->markers && _allocate_case_markers(&S, sn)) {
 	free(*newZ);
 	free(dum);
 	return E_ALLOC;
@@ -348,7 +348,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 
     gretl_errmsg[0] = '\0';
 
-    nf = count_fields(line);
+    nf = _count_fields(line);
 
     if (nf == 1) return 0;
 	
