@@ -172,7 +172,7 @@
       generazione di questo tipo di variabili. Ad esempio, il comando
       <command>genr x1_1 = x1(-1)</command> creerà una variabile che
       contiene il primo ritardo di <literal>x1</literal>, laddove è
-      disponibile, e il codice di valora mancante, laddove il ritardo
+      disponibile, e il codice di valore mancante, laddove il ritardo
       non è disponibile.
     </para>
 
@@ -202,20 +202,20 @@
     <para>Un'altra possibilità consiste nell'usare il comando
     <command>smpl</command> con l'opzione
     <command>--restrict</command> o <command>--dummy</command>.
-      <xref linkend="examp-pwt"/> mostra alcuni esempi, assumendo che
+      L'<xref linkend="examp-pwt"/> mostra alcuni esempi, assumendo che
       ogni blocco di dati contenga osservazioni relative a 30 periodi
       e che si intenda scartare la prima riga di ogni blocco. È così
       possibile stimare regressioni sul campione limitato senza dover
       usare il comando <command>wls</command>. Se si intende
       riutilizzare il campione limitato, è possibile salvarlo usando
-      il comando <command>store</command> (si veda <xref
+      il comando <command>store</command> (si veda il <xref
 	linkend="cmdref"/>).
     </para>
 
     <example id="examp-panel-lags">
       <title>Ritardi con dati panel</title>
     <programlisting>
-      # Create la variabile indice "index" 
+      # Crea la variabile indice "index" 
       genr index 
       # Crea la dummy "dum", pari a 0 ogni 30 osservazioni
       genr dum = ((index-1)%30) > 0 

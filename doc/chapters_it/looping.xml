@@ -15,7 +15,8 @@
     <programlisting>
       loop <replaceable>espressione di controllo</replaceable> [ --progressive | --verbose ]
          <replaceable>corpo del loop</replaceable>
-      endloop</programlisting>
+      endloop
+    </programlisting>
 
     <para>Come si spiega oltre, sono disponibili cinque tipi di
       <replaceable>espressione di controllo</replaceable>. Nel
@@ -107,9 +108,9 @@
 
       <para>La variabile indice può essere usata all'interno del corpo del
       loop, in uno dei modi seguenti: è possibile accedere al valore di
-	<varname>i</varname> (si veda <xref
+	<varname>i</varname> (si veda l'<xref
       linkend="loop-panel-script"/>), oppure è possibile usare la sua
-      rappresentazione come stringa <literal>$i</literal> (si veda <xref
+      rappresentazione come stringa <literal>$i</literal> (si veda l'<xref
 	  linkend="loop-string-script"/>).</para>
 
       <para>I valori iniziale e finale per l'indice possono essere indicati
@@ -122,7 +123,7 @@
 
     </sect2>
 
-    <sect2 id="loop-each"><title>Loop di tipo <quote>For each</quote></title>
+    <sect2 id="loop-each"><title>Loop di tipo <quote>for each</quote></title>
 
       <para>Anche il terzo tipo di controllo usa la variabile interna
        <varname>i</varname>, che in questo caso può assumere valori solo
@@ -132,9 +133,10 @@
       </para>
 
       <programlisting>
-       loop foreach i mele pere pesche
+        loop foreach i mele pere pesche
           print "$i"
-       endloop</programlisting>
+        endloop
+      </programlisting>
       <para>Questo loop verrà eseguito tre volte, mostrando
           <quote>mele</quote>, <quote>pere</quote> e
           <quote>pesche</quote> ad ogni iterazione.
@@ -252,7 +254,8 @@
 	     print a b r2
 	     # Salva i coefficienti in un file
 	     store coeffs.gdt a b
-	  endloop</programlisting>
+	  endloop
+        </programlisting>
       </example>
 
       <para>Questo loop mostrerà le statistiche di riepilogo per le stime
@@ -269,7 +272,7 @@
         indice. Successivamente è possibile aggiungervi variabili usando il
         comando <command>genr</command>.</para>  
 
-      <para>Si veda il comando <command>seed</command> nella
+      <para>Si veda il comando <command>seed</command> nel
       <xref linkend="cmdref"/> per informazioni su come generare numeri
       pseudo-casuali in modo ripetibile.</para>
 
@@ -277,7 +280,7 @@
 
     <sect2 id="loop-ils-examples"><title>Minimi quadrati iterati</title>
 
-      <para><xref linkend="greene-ils-script"/> usa un loop di tipo
+      <para>L'<xref linkend="greene-ils-script"/> usa un loop di tipo
 	<quote>while</quote> per replicare la stima di una funzione di
         consumo non lineare nella forma
 	<inlineequation>
@@ -291,8 +294,8 @@
 	  </inlinemediaobject>
 	</inlineequation> presentata in Greene (2000, Esempio 11.3).
 	Questo script è compreso nella distribuzione di
-	<application>gretl</application> distribution con il nome
-	<filename>greene11_3.inp</filename>; è possibile aprirlo usando il
+        <application>gretl</application> con il nome
+        <filename>greene11_3.inp</filename>; è possibile aprirlo usando il
         comando del menù <quote>File, Apri file comandi, File di esempio,
 	  Greene...</quote>.</para>
 
@@ -329,10 +332,11 @@
 	  noecho
 	  printf "alfa = %g\n", coeff(0)
 	  printf "beta  = %g\n", beta
-	  printf "gamma = %g\n", gamma</programlisting>
+	  printf "gamma = %g\n", gamma
+        </programlisting>
       </example>
 
-      <para><xref linkend="jack-arma"/> (gentilmente fornito da
+      <para>L'<xref linkend="jack-arma"/> (gentilmente fornito da
 	Riccardo <quote>Jack</quote> Lucchetti dell'Università di Ancona)
         mostra come sia possibile usare un loop per stimare un modello ARMA
         usando la regressione <quote>prodotto esterno del gradiente</quote>
@@ -342,65 +346,65 @@
 
       <example id="jack-arma"><title>ARMA 1, 1</title>
 	<programlisting>
-	open armaloop.gdt
+          open armaloop.gdt
 
-	genr c = 0
-	genr a = 0.1
-	genr m = 0.1
+          genr c = 0
+          genr a = 0.1
+          genr m = 0.1
 
-	genr e = const * 0.0
-	genr de_c = e
-	genr de_a = e
-	genr de_m = e
+          genr e = const * 0.0
+          genr de_c = e
+          genr de_a = e
+          genr de_m = e
 
-	genr crit = 1
-	loop while crit > 1.0e-9
+          genr crit = 1
+          loop while crit > 1.0e-9
 
-	   # Errori di previsione "one-step"
-	   genr e = y - c - a*y(-1) - m*e(-1)  
+             # Errori di previsione "one-step"
+             genr e = y - c - a*y(-1) - m*e(-1)  
 
-	   # Log-verosimiglianza 
-	   genr loglik = -0.5 * sum(e^2)
-	   print loglik
+             # Log-verosimiglianza 
+             genr loglik = -0.5 * sum(e^2)
+             print loglik
 
-	   # Derivate parziali degli errori di previsione rispetto a c, a e m
-	   genr de_c = -1 - m * de_c(-1) 
-	   genr de_a = -y(-1) -m * de_a(-1)
-	   genr de_m = -e(-1) -m * de_m(-1)
-   
-	   # Derivate parziali di l rispetto a c, a e m
-	   genr sc_c = -de_c * e
-	   genr sc_a = -de_a * e
-	   genr sc_m = -de_m * e
-   
-	   # Regressione OPG
-	   ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
+             # Derivate parziali degli errori di previsione rispetto a c, a e m
+             genr de_c = -1 - m * de_c(-1) 
+             genr de_a = -y(-1) -m * de_a(-1)
+             genr de_m = -e(-1) -m * de_m(-1)
+     
+             # Derivate parziali di l rispetto a c, a e m
+             genr sc_c = -de_c * e
+             genr sc_a = -de_a * e
+             genr sc_m = -de_m * e
+     
+             # Regressione OPG
+             ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
-	   # Aggiorna i parametri
-	   genr dc = coeff(sc_c) 
-	   genr c = c + dc
-	   genr da = coeff(sc_a) 
-	   genr a = a + da
-	   genr dm = coeff(sc_m) 
-	   genr m = m + dm
+             # Aggiorna i parametri
+             genr dc = coeff(sc_c) 
+             genr c = c + dc
+             genr da = coeff(sc_a) 
+             genr a = a + da
+             genr dm = coeff(sc_m) 
+             genr m = m + dm
 
-	   printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
-	   printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
-	   printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
+             printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
+             printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
+             printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
 
-	   genr crit = $T - $ess
-	   print crit
-	endloop
+             genr crit = $T - $ess
+             print crit
+          endloop
 
-	genr se_c = stderr(sc_c)
-	genr se_a = stderr(sc_a)
-	genr se_m = stderr(sc_m)
+          genr se_c = stderr(sc_c)
+          genr se_a = stderr(sc_a)
+          genr se_m = stderr(sc_m)
 
-	noecho
-	print "
-	printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
-	printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
-	printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
+          noecho
+          print "
+          printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
+          printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
+          printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
 	</programlisting>
       </example>    
 
@@ -408,7 +412,7 @@
 
     <sect2><title>Esempi di loop con indice</title>
 
-      <para><xref
+      <para>L'<xref
 	  linkend="loop-panel-script"/> mostra un loop con indice, in cui
           il comando <command>smpl</command> contiene la variabile indice
 	<varname>i</varname>.  Si supponga di avere un dataset di tipo
@@ -425,27 +429,29 @@
 	  loop i=1991..2000
 	    smpl (annor=i) --restrict --replace
 	    summary 1 2 3 4
-	  endloop</programlisting>
+	  endloop
+        </programlisting>
       </example>
 
       <para>
-	<xref linkend="loop-string-script"/> illustra un loop indicizzato
+	L'<xref linkend="loop-string-script"/> illustra un loop indicizzato
         per sostituire stringhe.</para>
 
       <example id="loop-string-script"><title>Sostituzione di stringhe</title>
 	<programlisting>
-	open bea.dat
-	loop i=1987..2001
-	  genr V = COMP$i
-	  genr TC = GOC$i - PBT$i
-	  genr C = TC - V
-	  ols PBT$i const TC V
-	  endloop</programlisting>
+	  open bea.dat
+	  loop i=1987..2001
+	    genr V = COMP$i
+	    genr TC = GOC$i - PBT$i
+	    genr C = TC - V
+	    ols PBT$i const TC V
+	    endloop
+        </programlisting>
       </example>
 
       <para>Alla prima iterazione, la variabile	<varname>V</varname> verrà
       impostata a <varname>COMP1987</varname> e la variabile dipendente per
-      il comando <command>ols</command> satà <varname>PBT1987</varname>.
+      il comando <command>ols</command> sarà <varname>PBT1987</varname>.
       All'iterazione successiva, <varname>V</varname> verrà ridefinita come
       <varname>COMP1988</varname> e la variabile dipendente della
       regressione sarà <varname>PBT1988</varname>, e così via.</para>

@@ -113,7 +113,7 @@
 
       <tip><para>Per dettagli e aggiornamenti sui dati disponibili, è
       possibile visitare la <ulink
-      url="http://ricardo.ecn.wfu.edu/gretl/gretl_data_it.html">pagina
+      url="http://gretl.sourceforge.net/gretl_data_it.html">pagina
       dei dati</ulink> di <application>gretl</application>.</para></tip>
 
     </sect2>
@@ -540,7 +540,8 @@
       # Gretl: various illustrative datafiles
       "arma","artificial data for ARMA script example"
       "ects_nls","Nonlinear least squares example"
-      "hamilton","Prices and exchange rate, U.S. and Italy"</programlisting>
+      "hamilton","Prices and exchange rate, U.S. and Italy"
+    </programlisting>
 
     <para>
       La prima riga, che deve iniziare con un carattere cancelletto,
@@ -570,7 +571,8 @@
       "arma.inp","ARMA modeling","artificial data"
       "ects_nls","Nonlinear least squares (Davidson)","artificial data"
       "leverage","Influential observations","artificial data"
-      "longley","Multicollinearity","US employment"</programlisting>
+      "longley","Multicollinearity","US employment"
+    </programlisting>
 
     <para>La procedura per creare la propria raccolta di dati e renderla
       disponibile agli utenti è la seguente:</para>

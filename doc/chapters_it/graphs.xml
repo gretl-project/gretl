@@ -57,12 +57,6 @@
     </itemizedlist>
     
     
-    <para>If you know something about
-      <application>gnuplot</application> and wish to get finer control
-      over the appearance of a graph than is available via the
-      graphical controller (<quote>Edit</quote> option), you have two
-      further options.</para>
-    
     <para>Se si conosce <application>gnuplot</application> e si desidera
     un controllo sull'aspetto del grafico più preciso di quello fornito
     dalla finestra di modifica del grafico (opzione
@@ -93,7 +87,7 @@
 	url="http://ricardo.ecn.wfu.edu/gnuplot.html">manuale online</ulink> o <ulink
 	url="http://www.gnuplot.info/">www.gnuplot.info</ulink>.</para>
 
-    <para>Si veda anche la voce <command>gnuplot</command> nella
+    <para>Si veda anche la voce <command>gnuplot</command> nel
       <xref linkend="cmdref"/> e i comandi
       <command>graph</command> e <command>plot</command> per generare
       dei semplici <quote>grafici ASCII</quote>.</para>
@@ -157,14 +151,14 @@
         (l'impostazione predefinita non li mostra). Ecco un esempio:</para>
 
       <programlisting>
-font = Times-Roman
-fontsize = 16
-max = 4.0
-min = 0
-width = 400
-height = 448
-numbers = %3.2f
-outliers = true
+        font = Times-Roman
+        fontsize = 16
+        max = 4.0
+        min = 0
+        width = 400
+        height = 448
+        numbers = %3.2f
+        outliers = true
       </programlisting>
 
       <para>Sulla penultima riga, il valore associato a
@@ -187,14 +181,14 @@ outliers = true
       limitare il campione da utilizzare per la variabile in questione,
       avendo cura di inserire uno spazio tra il nome (o il numero) della
       variabile e l'espressione. Si supponga di avere una variabile
-      <literal>salary</literal> con gli stipendi di uomini e donne, e una
-      variabile dummy <literal>GENDER</literal> che vale 1 per gli
+      <literal>salario</literal> con gli stipendi di uomini e donne, e una
+      variabile dummy <literal>GENERE</literal> che vale 1 per gli
       uomini e 0 per le donne. In questo caso è possibile disegnare dei
       boxplot comparativi usando il seguente comando nella finestra di
       dialogo:
       </para>
       <programlisting>
-      salary (GENDER=1) salary (GENDER=0)
+        salario (GENERE=1) salario (GENERE=0)
       </programlisting>
 
     </sect1>

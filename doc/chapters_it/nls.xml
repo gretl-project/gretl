@@ -96,7 +96,7 @@
       scrivere la specificazione della funzione (opzionalmente
       preceduta da linee <command>genr</command> per impostare i
       valori iniziali dei parametri) e le derivate, se sono
-      disponibili. Un esempio è mostrato in <xref
+      disponibili. Un esempio è mostrato nella <xref
 	linkend="fig-nls-dialog"/>.  Si noti che in questo contesto
         non occorre scrivere i comandi <command>nls</command> e <command>end
       nls</command>.</para>

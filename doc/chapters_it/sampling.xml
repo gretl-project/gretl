@@ -27,14 +27,16 @@
       un comando adeguato è
 
       <programlisting>
-        smpl 1970:1 1979:4</programlisting>
+        smpl 1970:1 1979:4
+      </programlisting>
       
       Oppure se si vuole riservare la parte finale delle osservazioni
       disponibili per eseguire una previsione "fuori dal campione", si
       può usare il comando
 
       <programlisting>
-        smpl ; 2000:4</programlisting>
+        smpl ; 2000:4
+      </programlisting>
       
       dove il punto e virgola significa <quote>mantenere
       inalterata l'osservazione iniziale</quote> (e potrebbe essere
@@ -48,7 +50,8 @@
 
       <programlisting>
 	smpl 1970:1 2003:4
-	smpl ; 2000:4</programlisting>
+	smpl ; 2000:4
+      </programlisting>
       
       l'intervallo del campione sarà da 1970:1 a 2000:4.</para>  
 
@@ -59,13 +62,15 @@
     e virgola per indicare nessuna variazione). Ad esempio
 
       <programlisting>
-	smpl +1 ;</programlisting>
+	smpl +1 ;
+      </programlisting>
       
       sposterà in avanti di un'osservazione l'inizio del campione,
       mantenendo inalterata la fine del campione, mentre
 
       <programlisting>
-	smpl +2 -1</programlisting> sposterà l'inizio del campione in avanti di
+	smpl +2 -1
+      </programlisting> sposterà l'inizio del campione in avanti di
       due osservazioni e la fine del campione indietro di una.</para>
 
     <para>Una caratteristica importante dell'operazione di
@@ -94,14 +99,16 @@
     risultato con
 
       <programlisting>
-	smpl genere=0 --restrict</programlisting>
+	smpl genere=0 --restrict
+      </programlisting>
     
     Oppure si supponga di voler limitare il campione di lavoro ai soli
     individui con un reddito superiore ai 50.000 euro. Si potrebbe
     usare</para>
 
       <programlisting>
-	smpl reddito>50000 --restrict</programlisting>
+	smpl reddito>50000 --restrict
+      </programlisting>
 
     <para>Qui sorge un problema: eseguendo in sequenza i due comandi
     visti sopra, cosa conterrà il sotto-campione? Tutti gli individui
@@ -121,7 +128,8 @@
     <literal>replace</literal> al comando <literal>smpl</literal>:</para>
 
     <programlisting>
-      smpl income>50000 --restrict --replace</programlisting>
+      smpl income>50000 --restrict --replace
+    </programlisting>
 
     <para>Questa opzione ha l'effetto di re-impostare automaticamente
     il campione completo prima di applicare la nuova restrizione.</para>
@@ -138,12 +146,14 @@
     La restrizione
 
       <programlisting>
-	smpl anno=1995 --restrict</programlisting>
+	smpl anno=1995 --restrict
+      </programlisting>
     produce un dataset che non è più di tipo panel, ma cross-section per l'anno
     1995.  In modo simile
 
       <programlisting>
-	smpl impresa=3 --restrict</programlisting> produce un dataset
+	smpl impresa=3 --restrict
+      </programlisting> produce un dataset
         di serie storiche per l'impresa numero 3.</para> 
 
     <para>Per questi motivi (possibile non-contiguità nelle
@@ -199,7 +209,8 @@
     casuale dal dataset completo. È possibile farlo ad esempio con
 
       <programlisting>
-	smpl 100 --random</programlisting> che seleziona 100 osservazioni.
+	smpl 100 --random
+      </programlisting> che seleziona 100 osservazioni.
     Se occorre che il campione sia riproducibile, occorre per prima
     cosa impostare il seme del generatore di numeri casuali, usando
     il comando <xref linkend="cmd-set"/>.</para>

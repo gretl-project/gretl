@@ -38,17 +38,15 @@
     <para>
       Si tenga anche presente che nella maggior parte dei casi
       <application>gretl</application> assume che i programmi in
-      questione siano disponibili nel <quote>path</quote> dell'utente
-      &mdash; ossia, che possano essere invocati semplicemente con il
-      nome del programma, senza indicare il percorso completo.
-      
+      questione siano disponibili nel <quote>percorso di esecuzione</quote>
+      (path) dell'utente, ossia che possano essere invocati
+      semplicemente con il nome del programma, senza indicare il percorso
+      completo   
       <footnote><para>L'eccezione a questa regola è costituita
       dall'invocazione di gnuplot in MS Windows, dove occorre indicare
       il percorso completo del programma.</para>
-      </footnote>
-      
-      Quindi se un certo programma non si avvia, conviene provare ad
-      eseguirlo da un prompt dei comandi, come descritto qui sotto.
+      </footnote>. Quindi se un certo programma non si avvia, conviene provare
+      ad eseguirlo da un prompt dei comandi, come descritto qui sotto.
       </para>
 
     <informaltable frame="none">

@@ -80,7 +80,7 @@
 
   </sect1>
 
-  <sect1 id="cli-syntax"><title>Differenze da ESL di Ramanathan</title>
+  <sect1 id="cli-syntax"><title>Differenze con ESL di Ramanathan</title>
 
     <para><application>gretlcli</application> ha ereditato la sintassi
       di base dei comandi dal programma <application>ESL</application>

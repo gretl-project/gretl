@@ -73,7 +73,8 @@
 	  Data compiled by Graham Elliott. 
 	  *) 
 	  lmoney lincome intrate ; 
-	  1 1900 1989 BYOBS</programlisting>
+	  1 1900 1989 BYOBS
+        </programlisting>
 
 	Il file di dati corrispondente contiene tre colonne di dati,
         ognuna contenente 90 osservazioni.</para>

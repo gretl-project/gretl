@@ -175,7 +175,8 @@
       \usepackage{amsmath}
       \usepackage{dcolumn}
       \begin{document}
-      \thispagestyle{empty}</programlisting>
+      \thispagestyle{empty}
+    </programlisting>
     <para>Si noti che sono richiesti i pacchetti <literal>amsmath</literal> e
       <literal>dcolumn</literal>.</para>
 
@@ -527,7 +528,8 @@
       <command>genr</command> nel <xref linkend="cmdref"/>. Un
       semplice esempio:
 	  <programlisting> 
-	    pippo = x1 * x2</programlisting> creerà la nuova variabile
+	    pippo = x1 * x2
+          </programlisting> creerà la nuova variabile
 	  <varname>pippo</varname> come prodotto delle variabili
           esistenti <varname>x1</varname> e <varname>x2</varname>.
           In queste formule, le variabili devono essere indicate per

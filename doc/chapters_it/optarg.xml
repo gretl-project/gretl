@@ -11,7 +11,7 @@
       uno script <quote>wrapper</quote> chiamato <filename>gretl</filename>.
       Questo script controlla se sia impostata la variabile di ambiente
       <literal>DISPLAY</literal> e in caso positivo lancia la versione grafica
-      del programma, altrimenti lancia la versione a riga di comndo,
+      del programma, altrimenti lancia la versione a riga di comando,
       <filename>gretlcli</filename>.</para></footnote>.
     </para>
 
@@ -26,7 +26,7 @@
     <para>
       &mdash; Avvia il programma caricando nello spazio di lavoro il file di
       dati indicato. Il file può essere nel formato interno di
-      <application>gretl</application>, in formato CSV, o BOX1 (si veda
+      <application>gretl</application>, in formato CSV, o BOX1 (si veda il
       <xref linkend="datafiles"/>). Il programma cercherà di riconoscere
       il formato del file e di trattarlo in modo appropriato. Si veda anche
       <xref linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
@@ -151,7 +151,7 @@
       <literal>.dat</literal>, che era lo standard nelle versioni precedenti
       del programma. Se si imposta l'estensione predefinita a
       <literal>.dat</literal>, i file di dati saranno salvati nel formato
-      <quote>tradizionale</quote> (si veda <xref
+      <quote>tradizionale</quote> (si veda il <xref
       linkend="datafiles"/>). Inoltre, nella sezione <quote>File di dati</quote>
       è possibile scegliere l'azione da associare alla piccola icona a forma
       di cartella presente sulla barra degli strumenti: se deve mostrare
@@ -198,7 +198,7 @@
     <para>
       &mdash; Avvia il programma caricando nello spazio di lavoro il file di
       dati indicato. Il file può essere nel formato interno di
-      <application>gretl</application>, in formato CSV, o BOX1 (si veda
+      <application>gretl</application>, in formato CSV, o BOX1 (si veda il
       <xref linkend="datafiles"/>). Il programma cercherà di riconoscere
       il formato del file e di trattarlo in modo appropriato. Si veda anche
       <xref linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
@@ -261,13 +261,14 @@
       non ha il comando <command>open</command>). Una riga del tipo:
       
       <programlisting> 
-	(* ! miofile.gdt *)</programlisting> farà aprire a
+	(* ! miofile.gdt *)
+      </programlisting> farà aprire a
       <application>gretlcli</application> il file
       <filename>miofile.gdt</filename>, ma sarà ignorata come commento
       dal programma originario <application>ESL</application>.  Si noti
       la sintassi: c'è esattamente uno spazio tra il marcatore di inizio
       commento <literal>(*</literal> e il carattere <literal>!</literal>;
-      c'è esattamente uno sapzio tra il carattere
+      c'è esattamente uno spazio tra il carattere
       <literal>!</literal> e il nome del file di dati.</para>
 
     <para>Un'altra funzionalità permette a <application>gretl</application>
@@ -305,7 +306,7 @@
           directory di lavoro attuale, o, se viene indicato un percorso completo,
           nella posizione indicata.</para>
       </listitem>
-      <listitem><para>Nella directory gretl dell'utente (si veda <xref
+      <listitem><para>Nella directory gretl dell'utente (si veda la <xref
 	    linkend="tab-path"/> per i valori predefiniti).</para>
       </listitem>
       <listitem><para>In qualsiasi directory immediatamente contenuta
@@ -313,7 +314,7 @@
       <listitem><para>Nel caso di un file di dati, la ricerca continua nella
           directory principale dei dati di <application>gretl</application>.
           Nel caso di un file di comandi, la ricerca continua nella directory
-          principale dei file di comandi. Si veda <xref
+          principale dei file di comandi. Si veda la <xref
 	    linkend="tab-path"/> per i valori predefiniti.</para>
       </listitem>
       <listitem><para>Nel caso dei file di dati, la ricerca continua in tutte le

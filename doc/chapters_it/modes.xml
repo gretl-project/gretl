@@ -123,7 +123,8 @@
     dopo l'esecuzione dello script. Ecco un esempio:
     </para>
     <programlisting>
-      Modello1 &lt;- ols Ct 0 Yt</programlisting>
+      Modello1 &lt;- ols Ct 0 Yt
+    </programlisting>
 
     <para>Ossia: viene indicato un nome con cui verrà salvato il
     modello, seguito da una <quote>freccia di assegnazione</quote>
@@ -132,7 +133,8 @@
     il nome tra virgolette doppie:
     </para>
     <programlisting>
-      "Modello 1" &lt;- ols Ct 0 Yt</programlisting>
+      "Modello 1" &lt;- ols Ct 0 Yt
+    </programlisting>
 
     <para>I modelli salvati in questo modo appariranno come icone
     nella finestra di sessione di <application>gretl</application>
@@ -141,12 +143,14 @@
     un modello venga mostrato in una finestra in modo automatico,
     usando:</para>
     <programlisting>
-      Modello1.show</programlisting>
+      Modello1.show
+    </programlisting>
 
       <para>Ancora: se il nome contiene spazi, occorre metterlo tra
       virgolette:</para>
     <programlisting>
-      "Modello 1".show</programlisting>
+      "Modello 1".show
+    </programlisting>
 
     <para>È possibile usare la stessa procedura anche per i grafici;
     ad esempio, il comando seguente crea un grafico di
@@ -155,7 +159,8 @@
     nella finestra di sessione) e lo mostra automaticamente:</para>
     <programlisting>
       Grafico &lt;- gnuplot Ct Yt
-      Grafico.show</programlisting>
+      Grafico.show
+    </programlisting>
 
     <para>È anche possibile salvare i risultati di un comando come
     oggetti testuali identificati da un nome (anche questi appariranno
@@ -165,7 +170,8 @@
     chiamato <literal>ADF1</literal> e li mostra in una finestra:</para>
     <programlisting>
       ADF1 &lt;- adf 2 x1
-      ADF1.show</programlisting>
+      ADF1.show
+    </programlisting>
 
     <para>Gli oggetti salvati in questo modo (siano essi modelli,
     grafici o parti di testo) possono essere eliminati usando il

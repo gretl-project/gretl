@@ -182,25 +182,24 @@
         gretl appena creata (ad es. <filename>gretl-1.1.5</filename>).
 	  </para></listitem>  
 	<listitem><para>La sequenza basilare di comandi da eseguire è:
-	    <programlisting>
-	      ./configure 
-	      make 
-	      make check
-	      make install
-	    </programlisting> Tuttavia, potrebbe essere utile leggere
-            per prima cosa il file <filename>INSTALL</filename> e/o
-            eseguire <command>./configure --help</command> per capire
-            quali opzioni di configurazione sono disponibili. Un'opzione
-            che può essere utile utilizzare è
-	    <command>--prefix</command>; il comportamento predefinito è
-            quello di installare il programma in
-            <filename>/usr/local</filename>, ma è possibile modificarlo.
-            Ad esempio <command>./configure --prefix=/usr</command>
-            installerà il tutto sotto la directory <filename>/usr</filename>.
-            Se la procedura di configurazione si interrompe perchè una
-            delle librerie richieste non è disponibile sul sistema, si
-            veda l'<xref linkend="app-technote"/> del manuale.
-	  </para>
+	  <programlisting>
+	    ./configure 
+	    make 
+	    make check
+	    make install
+	  </programlisting> Tuttavia, potrebbe essere utile leggere
+          per prima cosa il file <filename>INSTALL</filename> e/o
+          eseguire <command>./configure --help</command> per capire
+          quali opzioni di configurazione sono disponibili. Un'opzione
+          che può essere utile utilizzare è
+	  <command>--prefix</command>; il comportamento predefinito è
+          quello di installare il programma in
+          <filename>/usr/local</filename>, ma è possibile modificarlo.
+          Ad esempio <command>./configure --prefix=/usr</command>
+          installerà il tutto sotto la directory <filename>/usr</filename>.
+          Se la procedura di configurazione si interrompe perchè una
+          delle librerie richieste non è disponibile sul sistema, si
+          veda l'<xref linkend="app-technote"/> del manuale.</para>
 	</listitem>
       </orderedlist>
 

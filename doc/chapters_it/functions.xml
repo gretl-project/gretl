@@ -10,7 +10,7 @@
       con una sintassi in qualche modo simile a quella della shell
       <application>bash</application>.  Allo stato attuale, il meccanismo
       non è ancora <quote>scolpito nella pietra</quote> e sono benvenuti
-      commenti e suggerimenti, oltre che l'aiuto per correggere eventuali bug.
+      commenti e suggerimenti, oltre che aiuti per correggere eventuali bug.
       </para>
 
   </sect1>
@@ -24,11 +24,12 @@
     <programlisting>
       function <replaceable>nome-funzione</replaceable>
          <replaceable>corpo della funzione</replaceable>
-      end function</programlisting>
+      end function
+    </programlisting>
 
     <para>
       Il <replaceable>nome-funzione</replaceable> identifica la funzione
-      in modo univoco: deve iniziare con una lettera e può essere lungo
+      in modo univoco: deve iniziare con una lettera, può essere lungo
       al massimo 31 caratteri (eventuali caratteri in più verranno troncati)
       e non può contenere spazi. Se si tenta di definire una funzione con
       lo stesso nome di un comando di <application>gretl</application> o
@@ -78,7 +79,8 @@
     </para>
 
     <programlisting>
-      funz <replaceable>arg1</replaceable>, <replaceable>arg2</replaceable></programlisting>
+      funz <replaceable>arg1</replaceable>, <replaceable>arg2</replaceable>
+    </programlisting>
 
     <para>
       Se vengono forniti più argomenti di quanti ne siano usati nel
@@ -99,7 +101,8 @@
       ols $2 0 $3
       end function
       # Chiamata della funzione
-      stima-ols funz data4-1, 1, 2 3 4</programlisting>
+      stima-ols data4-1, 1, 2 3 4
+    </programlisting>
 
     <para>
       La funzione viene chiamata con tre argomenti, il terzo dei quali
@@ -115,7 +118,7 @@
   </sect1>
 
   <sect1 id="func-scope">
-    <title>Ampiezza delle variabili</title>
+    <title>Ambito delle variabili</title>
 
     <para>In modalità predefinita, tutte le variabili sono <quote>globali</quote>: c'è un
       registro dei nomi di variabile condiviso dallo script principale
@@ -131,14 +134,16 @@
       <literal>genr</literal>. Se all'interno di una funzione si scrive</para>
 
     <programlisting>
-      genr x = <replaceable>espressione</replaceable></programlisting>
+      genr x = <replaceable>espressione</replaceable>
+    </programlisting>
 
     <para>viene creata una variabile globale (o viene modificata la variabile
       globale <varname>x</varname> se esiste già). Ma scrivendo
     </para>
 
     <programlisting>
-      genr my x = <replaceable>espressione</replaceable></programlisting>
+      genr my x = <replaceable>espressione</replaceable>
+    </programlisting>
 
     <para>viene creata una nuova variabile <varname>x</varname> locale
       alla funzione, che scomparirà una volta che la funzione è stata
@@ -149,8 +154,8 @@
       finché l'esecuzione della funzione non sarà terminata.
     </para>
 
-    <para>Questo comportamento è illustrato dallo script di esempio in ???
-      <xref linkend="func-scope-example"/>.</para>
+    <para>Questo comportamento è illustrato dallo script di esempio
+      nel<xref linkend="func-scope-example"/>.</para>
 
     <para>Quando una funzione, ad es. <literal>fun1</literal>, chiama un'altra
       funzione, <literal>fun2</literal>, tutte le variabili locali
@@ -190,7 +195,7 @@
   </sect1>
 
   <sect1 id="func-scope-example">
-    <title>Esempio che mostra l'ampiezza delle variabili</title>
+    <title>Esempio che mostra l'ambito delle variabili</title>
 
     <para>Lo script seguente illustra la differenza tra le variabili
       globali e locali. Si noti che le funzioni possono essere definite

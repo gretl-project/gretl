@@ -80,7 +80,7 @@
               datati. Per le serie storiche, è possibile usare date nella
               forma <command>1959.1</command> (trimestrale, una cifra dopo
               il punto) o <command>1967.03</command> (mensile, due cifre
-              dopo il punto). Si veda <xref linkend="chap-panel"/> per
+              dopo il punto). Si veda il <xref linkend="chap-panel"/> per
               l'uso speciale di questa riga nel caso dei dati panel.</para></listitem>
 	  <listitem><para>La parola chiave
 	      <literal>BYOBS</literal>.</para></listitem> 
@@ -114,7 +114,7 @@
           sostituita da <literal>BYVAR</literal> ed è seguita dalla parola
           chiave <literal>BINARY</literal>, significa che il corrispondente
           file di dati è in formato binario. Questo tipo di file di dati
-          possono essere scritti da <application>gretlcli</application>
+          può essere scritto da <application>gretlcli</application>
           usando il comando <command>store</command> con l'opzione
 	  <command>-s</command> (precisione singola) o l'opzione
 	  <command>-o</command> (precisione doppia).</para></listitem>
@@ -140,7 +140,7 @@
 
       <listitem><para>Se esiste un file con lo stesso nome di base del file
           di dati e di quello delle descrizioni, ma con l'estensione
-	  <filename>.lbl</filename>, viene letto e usato per riempire le
+	  <filename>.lbl</filename>, esso viene letto e usato per riempire le
           etichette descrittive per le serie di dati. Il formato del file
           di etichette è semplice: ogni riga contiene il nome di una
           variabile (indicata nel file di descrizione) seguito da uno o
@@ -185,7 +185,7 @@
       frequenza. Quindi segue la data iniziale (con due cifre che seguono
       il punto nei dati mensili, una per i dati trimestrali, nessuna per
       quelli annuali), uno spazio, un trattino, un altro spazio, la data
-      finiale, la stringa <quote><literal>n = </literal></quote> e il
+      finale, la stringa <quote><literal>n = </literal></quote> e il
       numero delle osservazioni. Nel caso di dati giornalieri, le date
       iniziale e finale devono essere indicate nella forma
       <literal>YYYY/MM/DD</literal>. Questo formato deve essere rispettato
@@ -354,7 +354,7 @@
         l'accuratezza numerica di <application>gretl</application> su MS
 	Windows è minore che su Linux, dove io avevo svolto i miei test.
 	Ad esempio, i dati Longley (un dataset notoriamente
-	<quote>mal-condizionato</quote> spesso usato per testare i
+	<quote>mal-condizionato</quote> usato spesso per testare i
         programmi econometrici) la versione Windows di gretl produceva
         alcuni coefficienti con la settima cifra errata, mentre gli stessi
         coefficienti risultavano corretti su Linux. Questa anomalia è stata
@@ -379,7 +379,7 @@
     per precisione multipla, e allora i risultati sono mostrati con 12
     cifre). Se occorre esaminare un valore più da vicino, basta per prima
     cosa salvarlo (si veda il comando <xref linkend="cmd-genr"/>) e poi visualizzarlo
-    usando il comando <command>print --ten</command> (si veda <xref
+    usando il comando <command>print --ten</command> (si veda il <xref
     linkend="cmdref"/>): verrà mostrato con 10 cifre significative.</para>
 
 </appendix>
@@ -437,7 +437,7 @@
     Per prima cosa, i dati vengono importati in R scrivendo una versione
     temporanea di <filename>.Rprofile</filename> nella directory di lavoro
     corrente (se esiste un file di questo tipo, viene letto da R
-    all'avvio). Se la directory contiene una varsione personale di
+    all'avvio). Se la directory contiene una versione personale di
     <filename>.Rprofile</filename>, il file originale viene rinominato
     temporaneamente come <filename>.Rprofile.gretltmp</filename> e viene
     ripristinato all'uscita da <application>gretl</application> (se
@@ -527,8 +527,8 @@
 
     <varlistentry><term>Pagina dei dati di Gretl (versione italiana)</term>
       <listitem><para><ulink
-	    url="http://ricardo.ecn.wfu.edu/gretl/gretl_data_it.html">
-	    <literal>http://ricardo.ecn.wfu.edu/gretl/gretl_data_it.html</literal></ulink></para>
+	    url="http://gretl.sourceforge.net/gretl_data_it.html">
+	    <literal>http://gretl.sourceforge.net/gretl_data_it.html</literal></ulink></para>
       </listitem>
     </varlistentry>
 
