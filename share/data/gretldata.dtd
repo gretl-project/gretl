@@ -1,0 +1,45 @@
+<!--
+  The DTD for the gretl input file format.
+  Based on ideas from GGobi.
+ -->
+
+<!ENTITY % Boolean    " true | T | TRUE | false | F | FALSE ">
+
+<!ELEMENT gretldata (description?, variables, observations)>
+<!ATTLIST gretldata
+   name         NMTOKEN #IMPLIED
+   frequency    CDATA #IMPLIED
+   startobs     CDATA #IMPLIED
+   endobs       CDATA #IMPLIED
+   type         CDATA #REQUIRED
+>
+
+<!ELEMENT description ( #PCDATA )>
+<!ATTLIST description
+   source CDATA #IMPLIED
+>
+
+<!ELEMENT variables ( variable )*>
+<!ATTLIST variables
+   count        CDATA #REQUIRED
+>
+<!-- Allows the name to be the only entry -->
+<!ELEMENT variable ( #PCDATA )>
+<!ATTLIST variable
+    name          NMTOKEN #IMPLIED
+    label         CDATA   #IMPLIED
+>
+
+<!ELEMENT observations ( obs )+>
+<!ATTLIST observations
+   count        CDATA #REQUIRED
+   missingValue CDATA #IMPLIED
+   labels       CDATA #REQUIRED
+>
+<!ELEMENT obs  ( #PCDATA )>
+<!ATTLIST obs
+   label     NMTOKEN                   #IMPLIED
+   id        NMTOKEN                   #IMPLIED
+>   
+
+
