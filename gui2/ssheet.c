@@ -437,21 +437,26 @@ static gboolean update_selected (GtkTreeSelection *selection, spreadsheet *sheet
     gtk_tree_view_get_cursor(view, &path, &column);
 
     if (path && column) {
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	gchar loctxt[32];
-	gchar *rowlabel;
+	const gchar *col_label;
 
-	model = gtk_tree_view_get_model(view);
-	gtk_tree_model_get_iter(model, &iter, path);
-	gtk_tree_model_get(model, &iter, 0, &rowlabel, -1);
-	sprintf(loctxt, " %s: %s", gtk_tree_view_column_get_title(column),
-		rowlabel);
-	g_free(rowlabel);
-	gtk_statusbar_pop(GTK_STATUSBAR(sheet->locator), sheet->cid);
-	gtk_statusbar_push(GTK_STATUSBAR(sheet->locator), sheet->cid, loctxt);
+	col_label = gtk_tree_view_column_get_title(column);
 
-	gtk_tree_view_set_cursor(view, path, column, TRUE);
+	if (col_label != NULL) {
+	    GtkTreeModel *model;
+	    GtkTreeIter iter;
+	    gchar loctxt[32];
+	    gchar *row_label;
+	    
+	    model = gtk_tree_view_get_model(view);
+	    gtk_tree_model_get_iter(model, &iter, path);
+	    gtk_tree_model_get(model, &iter, 0, &row_label, -1);
+	    sprintf(loctxt, " %s: %s", col_label, row_label);
+	    g_free(row_label);
+	    gtk_statusbar_pop(GTK_STATUSBAR(sheet->locator), sheet->cid);
+	    gtk_statusbar_push(GTK_STATUSBAR(sheet->locator), sheet->cid, loctxt);
+
+	    gtk_tree_view_set_cursor(view, path, column, TRUE);
+	}
 
 	gtk_tree_path_free(path);
     }
@@ -672,7 +677,7 @@ static gint get_obs_col_width (void)
 {
     static gint width;
 
-    if (width == 0) width = get_string_width("1959:01");
+    if (width == 0) width = get_string_width("0000:000");
     return width;
 }
 
@@ -688,7 +693,7 @@ static gint get_locator_width (void)
 {
     static gint width;
 
-    if (width == 0) width = get_string_width("aaaabbbb: 0000:00");
+    if (width == 0) width = get_string_width("XXXXXXXX: 0000:00");
     return width;
 }
 
