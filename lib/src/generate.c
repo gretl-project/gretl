@@ -466,7 +466,7 @@ static void fix_decimal_commas (char *str)
 {
     char *p = str;
 
-    if (*p == 0) return;
+    if (p == NULL || *p == 0) return;
     p++;
     
     while (*p && *(p + 1)) {
@@ -480,6 +480,8 @@ static void fix_decimal_commas (char *str)
 
 static void get_genr_formula (char *formula, const char *line)
 {
+    if (line == NULL || *line == 0) return;
+
     /* skip over " genr " */
     while (isspace((unsigned char) *line)) line++;
     if (!strncmp(line, "genr", 4)) {
@@ -609,6 +611,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC; 
     } 
 
+    for (i=0; i<n; i++) genr.xvec[i] = 0;
     for (i=0; i<n; i++) mstack[i] = 0;
     for (i=0; i<n; i++) mvec[i] = 0;
 
@@ -1517,6 +1520,7 @@ static int getxvec (char *s, double *xvec,
 #endif
 
     if (check_modelstat(pmod, type1)) return 1;
+
     if (pmod && (pmod->ci == LOGIT || pmod->ci == PROBIT) &&
 	(type1 == R_RSQ || type1 == R_ESS || type1 == R_SIGMA || 
 	 type1 == R_TRSQ)) 
@@ -1613,8 +1617,9 @@ static int getxvec (char *s, double *xvec,
 	    fprintf(stderr, "get_xvec: R_VARNAME: v=%d, name=%s\n",
 		    v, pdinfo->varname[v]);
 #endif
-	    for (t=0; t<n; t++) 
+	    for (t=0; t<n; t++) {
 		xvec[t] = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
+	    }
 	    if (pdinfo->vector[v]) {
 		if (scalar != NULL) *scalar = 0;
 	    }
@@ -2122,8 +2127,11 @@ static int createvar (double *xvec, char *snew, char *sleft,
 #endif
 	    (*pZ)[mv][t] = xvec[t];
 	}
-    } else
+    } else {
+	for (t=0; t<t1; t++) (*pZ)[mv][t] = NADBL;
 	for (t=t1; t<=t2; t++) (*pZ)[mv][t] = xvec[t];
+	for (t=t2+1; t<pdinfo->n; t++) (*pZ)[mv][t] = NADBL;
+    }
     /* return a new string with the temporary variable name in
        place of the calculated expression */
     strcpy(snew, sleft);

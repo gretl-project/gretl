@@ -1017,6 +1017,8 @@ int catchflag (char *line, int *oflag)
 
     *oflag = 0;
 
+    if (n < 2) return 0;
+
     /* to enable reading of trad. esl input files */
     if (line[n-2] == ';') {
 	line[n-2] = '\0';

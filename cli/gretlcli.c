@@ -198,16 +198,18 @@ int model_test_start (const int id, PRN *prn, const int ols_only)
 void file_get_line (void)
 {
     clear(line, MAXLINE);
-    fgets(line, MAXLINE, fb);
+    fgets(line, MAXLINE - 1, fb);
     if (!strlen(line)) 
 	strcpy(line, "quit");
-    else 
-	strncpy(linebak, line, MAXLEN-1);
+    else {
+	*linebak = 0;
+	strncat(linebak, line, MAXLEN-1);
+    }
     if (!strncmp(line, "noecho", 6)) 
 	echo_off = 1;
     if (!echo_off && command.ci == RUN && batch && line[0] == '(') {
 	printf("%s", line);
-	linebak[0] = '\0';
+	*linebak = 0;
     }
 }
 
@@ -452,15 +454,11 @@ int main (int argc, char *argv[])
 	if (strncmp(line, "quit", 4)) {
 	    /* allow for backslash continuation of lines */
 	    while ((cont = top_n_tail(line))) {
-		if (cont == E_ALLOC) {
-		    printf(_("Out of memory loading command line\n"));
-		    exit(EXIT_FAILURE);
-		}
 		*tmp = '\0';
 #ifdef HAVE_READLINE
-		if (batch || runit) 
+		if (batch || runit) {
 		    fgets(tmp, MAXLEN-1, fb);
-		else {
+		} else {
 		    rl_gets(&line_read, (loopstack)? 1 : 0);
 		    strcpy(tmp, line_read);
 		}

@@ -280,7 +280,7 @@ void _shiftleft (char *str, size_t move)
     size_t n = strlen(str);
 
     if (move >= n) {
-	str[0] = '\0';
+	*str = '\0';
 	return;
     }
     memmove(str, str + move, n - move);
@@ -370,20 +370,30 @@ int get_base (char *targ, const char *src, char c)
 
 int top_n_tail (char *str)
 {
-    int i;
+    size_t i, len;
 
-    /* chop trailing space */
-    i = strlen(str) - 1;
-    while (isspace((unsigned char) str[i])) 
-	str[i--] = '\0';
-    /* drop leading spaces, also possible questionmark */
+    if (str == NULL || *str == 0 || 
+	*str == '\n' || *str == '\r') return 0;
+
+    len = strlen(str);
+
+    /* chop any trailing space */
+    for (i=len-1; i>=0; i--) {
+	if (isspace((unsigned char) str[i])) str[i] = 0;
+	else break;
+    }
+
+    if (*str == 0) return 0;
+	
+    /* drop any leading spaces, also possible questionmark */
     i = 0;
-    while (isspace((unsigned char) str[i]) || str[i] == '?') 
-	i++;
+    while (isspace((unsigned char) str[i]) || str[i] == '?') i++;
     if (i) _shiftleft(str, i);
+
     /* then replace backslash, if present */
-    if (str[strlen(str) - 1] == '\\') {
-	str[strlen(str) - 1] = ' ';
+    len = strlen(str);
+    if (str[len - 1] == '\\') {
+	str[len - 1] = ' ';
 	return 1;
     }
     return 0;
@@ -400,7 +410,11 @@ int top_n_tail (char *str)
 
 void compress_spaces (char *str)
 {
-    int i, j, n = strlen(str);
+    int i, j, n;
+
+    if (str == NULL || *str == 0) return;
+
+    n = strlen(str);
 
     for (i=0; i<n; i++) {
 	if (str[i] == ' ' && str[i+1] == ' ') {
@@ -499,8 +513,8 @@ int pprintf (PRN *prn, const char *template, ...)
 
 char *safecpy (char *targ, const char *src, int n)
 {
-    strncpy(targ, src, n);
-    targ[n] = 0;
+    *targ = 0;
+    strncat(targ, src, n);
     return targ;
 }
 

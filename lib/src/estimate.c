@@ -937,7 +937,8 @@ static double altrho (const int order, int t1, int t2, const double *uhat)
 
     for (t=t1+order; t<=t2; t++) { 
         uh = uhat[t];
-        uh1 = uhat[t-1];
+        if (t > 0) uh1 = uhat[t-1];
+	else uh1 = NADBL;
         if (na(uh) || na(uh1)) continue;
         ut[n] = uh;
         ut1[n] = uh1;
@@ -1714,19 +1715,27 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     double diff = 100.0, ess = 0, tss = 0, xx;
     int i, j, t, t1, t2, p, vc, yno, ryno = 0, iter = 0;
     int err, lag, n = pdinfo->n, v = pdinfo->v;
-    int *arlist, *reglist, *reglist2, *rholist;
+    int *arlist = NULL, *reglist = NULL, *reglist2 = NULL, *rholist = NULL;
     MODEL ar, rhomod;
 
     _init_model(&ar, pdinfo);
     _init_model(&rhomod, pdinfo);
 
-    if ((arlist = malloc(pos * sizeof(int))) == NULL ||
-	(reglist = malloc((list[0] - pos + 2) * sizeof(int))) == NULL ||
-	(reglist2 = malloc((list[0] - pos + 2) * sizeof(int))) == NULL ||
-	(rholist = malloc((pos + 2) * sizeof(int))) == NULL) {
+    arlist = malloc(pos * sizeof *arlist);
+    reglist = malloc((list[0] - pos + 2) * sizeof *reglist);
+    reglist2 = malloc((list[0] - pos + 2) * sizeof *reglist2);
+    rholist = malloc((pos + 2) * sizeof *rholist);
+
+    if (arlist == NULL || reglist == NULL || reglist2 == NULL ||
+	rholist == NULL) {
+	free(arlist);
+	free(reglist);
+	free(reglist2);
+	free(rholist);
 	ar.errcode = E_ALLOC;
 	return ar;
     }
+    
     arlist[0] = pos - 1;
     for (i=1; i<pos; i++) arlist[i] = list[i];
     reglist2[0] = reglist[0] = list[0] - pos;
@@ -1736,10 +1745,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     /*  printf("arlist:\n"); printlist(arlist); */
     /*  printf("reglist:\n"); printlist(reglist); */
 
-    if (_hasconst(reglist)) 
-	rearrange(reglist);
-    if (_hasconst(reglist2)) 
-	rearrange(reglist2);
+    if (_hasconst(reglist)) rearrange(reglist);
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
@@ -1777,6 +1783,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     pprintf(prn, _("Generalized Cochrane-Orcutt estimation\n\n"));
     _bufspace(17, prn);
     pprintf(prn, "ITER             ESS           %% CHANGE\n\n");
+
     /* now loop while ess is changing */
     while (diff > 0.005) {
 	iter++;
@@ -2158,6 +2165,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	nv = pdinfo->v - order - 1;
 	strcpy(pdinfo->varname[nv], "utsq");
+	for (t=0; t<n; t++) (*pZ)[nv][t] = NADBL;
 	for (t=archmod.t1; t<=archmod.t2; t++) {
 	    xx = archmod.uhat[t];
 	    (*pZ)[nv][t] = xx * xx;

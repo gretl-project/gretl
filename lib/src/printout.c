@@ -717,13 +717,13 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
     }
 
     pprintf(prn, _("\nMODEL SELECTION STATISTICS\n\n"));	
-    pprintf(prn, _("SGMASQ    %13g     AIC       %13g     FPE       %12g\n"
-	    "HQ        %13g     SCHWARZ   %13g     SHIBATA   %12g\n"
-	    "GCV       %13g"),
+    pprintf(prn, _("SGMASQ    %#13g     AIC       %#13g     FPE       %#12g\n"
+	    "HQ        %#13g     SCHWARZ   %#13g     SHIBATA   %#12g\n"
+	    "GCV       %#13g"),
 	    pmod->criterion[0], pmod->criterion[1], 
 	    pmod->criterion[2], pmod->criterion[3], 
 	    pmod->criterion[4], pmod->criterion[5], pmod->criterion[6]);
-    if (pmod->criterion[7] > 0.0) pprintf(prn, _("     RICE      %13g\n"), 
+    if (pmod->criterion[7] > 0.0) pprintf(prn, _("     RICE      %#13g\n"), 
 					  pmod->criterion[7]);
     else pprintf(prn, _("     RICE          undefined\n"));
     pprintf(prn, "\n");
@@ -991,20 +991,26 @@ static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod,
 
 static int make_cname (const char *orig, char **cname)
 {
-    int lag;
     char *p;
+    unsigned char c;
+
+    if (orig == NULL) return 1;
 
     p = strrchr(orig, '_');
     if (p == NULL) return 1;
 
-    lag = atoi(++p);
+    c = (unsigned char) *(p + 1);
 
-    *cname = malloc(strlen(orig) + 2);
-    if (*cname == NULL) return 1;
+    if (isdigit(c)) {
+	int lag = atoi(++p);
 
-    sprintf(*cname, "ut^2(-%d)", lag);
+	*cname = malloc(strlen(orig) + 8);
+	if (*cname == NULL) return 1;
+	sprintf(*cname, "ut^2(-%d)", lag);
+	return 0;
+    }
 
-    return 0;
+    return 1;
 }
 
 /* ......................................................... */ 
