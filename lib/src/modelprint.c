@@ -791,7 +791,9 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    if (PLAIN_FORMAT(prn->format) && gretl_msg[0] != '\0') {
+    if (PLAIN_FORMAT(prn->format) && gretl_msg[0] != '\0' &&
+	strstr(gretl_msg, _("Replaced")) == NULL &&
+	strstr(gretl_msg, _("Generated")) == NULL) {
 	pprintf(prn, "%s\n", gretl_msg);
     }
 
