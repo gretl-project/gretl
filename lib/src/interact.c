@@ -1441,6 +1441,40 @@ static int do_outfile_command (unsigned char flag, char *fname,
     return 1; /* not reached */
 }
 
+static int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
+			    DATAINFO *pdinfo, unsigned char oflag,
+			    PRN *prn)
+{
+    void *handle = NULL;
+    int (*pca_from_corrmat) (CORRMAT *, double ***, DATAINFO *,
+			     unsigned char, PRN *);
+    int err = 0;
+
+    *gretl_errmsg = 0;
+    
+    if (open_plugin("pca", &handle)) {
+        err = 1;
+        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
+        goto pca_bailout;
+    }
+
+    pca_from_corrmat = get_plugin_function("pca_from_corrmat", handle);
+    if (pca_from_corrmat == NULL) {
+        err = 1;
+        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
+        goto pca_bailout;
+    }
+        
+    err = (* pca_from_corrmat) (corrmat, pZ, pdinfo, oflag, prn);
+    
+ pca_bailout:
+    if (handle != NULL) {
+        close_plugin(handle);
+    }
+
+    return err;
+}
+
 /* ........................................................ */
 
 int simple_commands (CMD *cmd, const char *line, 
@@ -1494,7 +1528,10 @@ int simple_commands (CMD *cmd, const char *line,
 	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
-	    do_pca_from_corrmat(corrmat, pZ, datainfo, oflag, prn);
+	    err = call_pca_plugin(corrmat, pZ, datainfo, oflag, prn);
+	    if (oflag && !err) {
+		varlist(datainfo, prn);
+	    }
 	    free_corrmat(corrmat);
 	}
 	break;

@@ -1046,6 +1046,23 @@ data set is read as stacked cross-sections (successive blocks contain cross
 sections for each time period).  Also see the setobs command.
 
 #
+pca
+@Statistics
+Usage           pca varlist [flag]
+
+Rudimentary Principal Components Analysis.  Prints the eigenvalues of the
+correlation matrix for the variables in varlist along with the proportion of
+the joint variance accounted for by each component.  Also prints the
+corresponding eigenvectors ("component loadings").  
+
+If the -o flag is given, components with eigenvalues greater than 1.0 are
+saved to the dataset as variables, with names "PC1", "PC2" and so on.  These
+artificial variables are formed as the sum of (component loading) times
+(standardized Xi), where Xi denotes the ith variable in varlist.
+
+If the -a flag is given, all of the components are saved as described above.
+
+#
 pergm
 @Statistics
 Usage:          pergm varname 

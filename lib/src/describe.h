@@ -79,6 +79,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 
 double gretl_median (const double *x, int n);
 
-int do_pca_from_corrmat (CORRMAT *corrmat, 
-			 double ***pZ, DATAINFO *pdinfo,
-			 unsigned char oflag, PRN *prn);
+int moments (int t1, int t2, const double *zx, 
+	     double *xbar, double *std, 
+	     double *skew, double *kurt, int k);
+
