@@ -1,9 +1,0 @@
-application/x-gretldata:
-	open=gretl2 %f
-	view=gretl2 %f
-	icon-filename=@gnome_prefix@/share/pixmaps/gnome-application-x-gretldata.png
-
-application/x-gretlsession:
-	open=gretl2 -r %f
-	view=gretl2 -r %f
-	icon-filename=@gnome_prefix@/share/pixmaps/gnome-application-x-gretlsession.png
