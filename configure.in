@@ -56,12 +56,12 @@ trygnome=yes
 fi,
 trygnome=yes)
 
-gnome_install_prefix="NA"
+gnome_prefix="NA"
 AC_ARG_WITH(gnome_install,
 [  --with-gnome-install=DIR  where to install gnome-specific files [default=auto]],
 if test -n "${withval}"
 then
-gnome_install_prefix=${withval}
+gnome_prefix=${withval}
 fi,)
 
 AC_PROG_CC
@@ -171,15 +171,15 @@ test x"${GNOME}" = xyes && AC_DEFINE(USE_GNOME)
 if test x"${GNOME}" = xyes
 then
 have_gnome=yes
-if test "${gnome_install_prefix}" = "NA"
+if test "${gnome_prefix}" = "NA"
   then
-    gnome_install_prefix="auto"
+    gnome_prefix="`gnome-config --prefix`"
   fi
 fi
 AC_SUBST(have_gnome)
 fi
 
-AC_SUBST(gnome_install_prefix)
+AC_SUBST(gnome_prefix)
 
 AC_DEFUN(AC_CHECK_ARCH, )
 
@@ -536,7 +536,8 @@ AC_OUTPUT([
 Makefile 
 gretl_sh 
 gretl-config 
-gui/Makefile 
+gui/Makefile
+gui/gnome/gretl.keys 
 cli/Makefile 
 lib/Makefile 
 plugin/Makefile
@@ -565,7 +566,7 @@ Configuration:
   Use gnuplot for graphs:               ${have_gnuplot}
   Use LaTeX for typesetting output:     ${have_latex}
   Build with gnome support:             ${have_gnome}
-  Gnome installation prefix:            ${gnome_install_prefix}
+  Gnome installation prefix:            ${gnome_prefix}
 
 Now type '$MAKE' to build gretl.
 "

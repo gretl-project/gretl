@@ -1178,14 +1178,14 @@ else
   trygnome=yes
 fi;
 
-gnome_install_prefix="NA"
+gnome_prefix="NA"
 
 # Check whether --with-gnome_install or --without-gnome_install was given.
 if test "${with_gnome_install+set}" = set; then
   withval="$with_gnome_install"
   if test -n "${withval}"
 then
-gnome_install_prefix=${withval}
+gnome_prefix=${withval}
 fi
 fi;
 
@@ -7151,9 +7151,9 @@ EOF
 if test x"${GNOME}" = xyes
 then
 have_gnome=yes
-if test "${gnome_install_prefix}" = "NA"
+if test "${gnome_prefix}" = "NA"
   then
-    gnome_install_prefix="auto"
+    gnome_prefix="`gnome-config --prefix`"
   fi
 fi
 
@@ -7676,7 +7676,7 @@ EOF
 
 CFLAGS="$ac_save_CFLAGS"
 LIBS="$ac_save_LIBS"
-ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gui/Makefile cli/Makefile lib/Makefile plugin/Makefile share/Makefile"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gui/Makefile gui/gnome/gretl.keys cli/Makefile lib/Makefile plugin/Makefile share/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -7987,12 +7987,13 @@ do
   "gretl_sh" ) CONFIG_FILES="$CONFIG_FILES gretl_sh" ;;
   "gretl-config" ) CONFIG_FILES="$CONFIG_FILES gretl-config" ;;
   "gui/Makefile" ) CONFIG_FILES="$CONFIG_FILES gui/Makefile" ;;
+  "gui/gnome/gretl.keys" ) CONFIG_FILES="$CONFIG_FILES gui/gnome/gretl.keys" ;;
   "cli/Makefile" ) CONFIG_FILES="$CONFIG_FILES cli/Makefile" ;;
   "lib/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
   "plugin/Makefile" ) CONFIG_FILES="$CONFIG_FILES plugin/Makefile" ;;
   "share/Makefile" ) CONFIG_FILES="$CONFIG_FILES share/Makefile" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
-  *) { { echo "$as_me:7995: error: invalid argument: $ac_config_target" >&5
+  *) { { echo "$as_me:7996: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
   esac
@@ -8114,7 +8115,7 @@ s,@GNUPLOT@,$GNUPLOT,;t t
 s,@LATEX@,$LATEX,;t t
 s,@GNOME@,$GNOME,;t t
 s,@have_gnome@,$have_gnome,;t t
-s,@gnome_install_prefix@,$gnome_install_prefix,;t t
+s,@gnome_prefix@,$gnome_prefix,;t t
 s,@GTK_CONFIG@,$GTK_CONFIG,;t t
 s,@have_gtk@,$have_gtk,;t t
 s,@GUI@,$GUI,;t t
@@ -8238,7 +8239,7 @@ done; }
   esac
 
   if test x"$ac_file" != x-; then
-    { echo "$as_me:8241: creating $ac_file" >&5
+    { echo "$as_me:8242: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
     rm -f "$ac_file"
   fi
@@ -8256,7 +8257,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:8259: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:8260: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -8269,7 +8270,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:8272: error: cannot find input file: $f" >&5
+           { { echo "$as_me:8273: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -8330,7 +8331,7 @@ for ac_file in : $CONFIG_HEADERS; do test "x$ac_file" = x: && continue
   * )   ac_file_in=$ac_file.in ;;
   esac
 
-  test x"$ac_file" != x- && { echo "$as_me:8333: creating $ac_file" >&5
+  test x"$ac_file" != x- && { echo "$as_me:8334: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
 
   # First look for the input files in the build tree, otherwise in the
@@ -8341,7 +8342,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:8344: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:8345: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -8354,7 +8355,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:8357: error: cannot find input file: $f" >&5
+           { { echo "$as_me:8358: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -8471,7 +8472,7 @@ cat >>$CONFIG_STATUS <<\EOF
   rm -f $tmp/in
   if test x"$ac_file" != x-; then
     if cmp -s $ac_file $tmp/config.h 2>/dev/null; then
-      { echo "$as_me:8474: $ac_file is unchanged" >&5
+      { echo "$as_me:8475: $ac_file is unchanged" >&5
 echo "$as_me: $ac_file is unchanged" >&6;}
     else
       ac_dir=`$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
@@ -8560,7 +8561,7 @@ Configuration:
   Use gnuplot for graphs:               ${have_gnuplot}
   Use LaTeX for typesetting output:     ${have_latex}
   Build with gnome support:             ${have_gnome}
-  Gnome installation prefix:            ${gnome_install_prefix}
+  Gnome installation prefix:            ${gnome_prefix}
 
 Now type '$MAKE' to build gretl.
 "

@@ -27,7 +27,7 @@
 # include "pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h> 
-# ifdef notyet
+# ifdef USE_HHCTRL
 #  include "htmlhelp.h"
 # endif
 #endif
@@ -79,17 +79,22 @@ static int popup_connected;
 int *default_list = NULL;
 
 static GtkTargetEntry target_table[] = {
-        {"text/plain", 0, 0}
+    /* the first two types are not getting used */
+    {"application/x-gretldata", 0, 1},
+    {"application/x-gretlsession", 0, 2},
+    {"text/plain", 0, 0},
+    {"text/xml", 0, 0},
 };
 
 static void  
-target_drag_data_received  (GtkWidget          *widget,
-                            GdkDragContext     *context,
-                            gint                x,
-                            gint                y,
-                            GtkSelectionData   *data,
-                            guint               info,
-                            guint               time);
+drag_data_received  (GtkWidget          *widget,
+		     GdkDragContext     *dc,
+		     gint                x,
+		     gint                y,
+		     GtkSelectionData   *data,
+		     guint               info,
+		     guint               time,
+		     gpointer            p);
 
 #ifdef USE_GNOME
 char *optrun = NULL, *optdb = NULL;
@@ -167,16 +172,15 @@ static void win_help (void)
 {
     char hlpfile[MAXLEN];
 
-    sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
-
-    if (WinExec(hlpfile, SW_SHOWNORMAL) < 32)
-        errbox("Couldn't access help file");
-
-#ifdef notyet
+# ifdef USE_HHCTRL
     sprintf(hlpfile, "%s\\gretl.chm", paths.gretldir);
     if (!HtmlHelp(GetDesktopWindow(), hlpfile, HELP_FINDER, 0)) 
 	errbox("Couldn't access help file");
-#endif
+# else
+    sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
+    if (WinExec(hlpfile, SW_SHOWNORMAL) < 32)
+        errbox("Couldn't access help file");
+# endif
 }
 #endif
 
@@ -464,14 +468,14 @@ static void get_runfile (char *str)
 {
     int i;
 
-    strncpy(scriptfile, str, MAXLEN-1);
-    if (addpath(scriptfile, &paths, 1) == NULL) {
-	fprintf(stderr, "Couldn't find script \"%s\"\n", scriptfile);
+    strncpy(tryscript, str, MAXLEN-1);
+    if (addpath(tryscript, &paths, 1) == NULL) {
+	fprintf(stderr, "Couldn't find script \"%s\"\n", tryscript);
 	exit(EXIT_FAILURE);
     } else {
-	fprintf(stderr, "%s found\n", scriptfile);
-	i = slashpos(scriptfile);
-	if (i) strncpy(paths.currdir, scriptfile, i);
+	fprintf(stderr, "%s found\n", tryscript);
+	i = slashpos(tryscript);
+	if (i) strncpy(paths.currdir, tryscript, i);
 	strcat(paths.currdir, SLASHSTR);
     }
 }
@@ -521,6 +525,7 @@ int main (int argc, char *argv[])
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc("startup");
 
+    tryscript[0] = '\0';
     scriptfile[0] = '\0';
     paths.datfile[0] = '\0';
 
@@ -702,7 +707,7 @@ int main (int argc, char *argv[])
 	register_data(paths.datfile, 1);
 
     /* opening a script from the command line? */
-    if (scriptfile[0] != '\0') 
+    if (tryscript[0] != '\0') 
 	do_open_script(NULL, NULL);
 
     /* check for program updates? */
@@ -1063,10 +1068,10 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
-		       target_table, 1,
+		       target_table, 4,
 		       GDK_ACTION_COPY);
     gtk_signal_connect (GTK_OBJECT(mdata->listbox), "drag_data_received",
-			GTK_SIGNAL_FUNC(target_drag_data_received),
+			GTK_SIGNAL_FUNC(drag_data_received),
 			NULL);
 
     gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
@@ -1624,22 +1629,35 @@ void set_wm_icon (GtkWidget *w, gpointer data)
 
 /* Drag 'n' drop */
 static void  
-target_drag_data_received  (GtkWidget *widget,
-                            GdkDragContext *context,
-                            gint x,
-                            gint y,
-                            GtkSelectionData *data,
-                            guint info,
-                            guint time)
+drag_data_received  (GtkWidget *widget,
+		     GdkDragContext *context,
+		     gint x,
+		     gint y,
+		     GtkSelectionData *data,
+		     guint info,
+		     guint time,
+		     gpointer p)
 {
     gchar *dfname = data->data;
+    char *suff = NULL;
 
-    if ((dfname) && (strlen(dfname) > 5) &&  
-	strncmp(dfname, "file:", 5) == 0) {
+    fprintf(stderr, "received dragdata '%s'", dfname);
+
+    /* ignore the wrong sort of data */
+    if (dfname == NULL || strlen(dfname) <= 5 || 
+	strncmp(dfname, "file:", 5))
+	return;
+
+    suff = strrchr(dfname, '.');
+
+    if (suff && (!strncmp(suff, ".gretl", 6) || !strncmp(suff, ".inp", 4))) {
+	strcpy(tryscript, dfname + 5);
+	top_n_tail(tryscript);
+	verify_open_session(NULL);
+    } else { 
 	strcpy(trydatfile, dfname + 5);
 	top_n_tail(trydatfile);
-	fprintf(stderr, "drag: datafile = '%s'\n", trydatfile);
-	verify_open_data(NULL);
+	verify_open_data(NULL);	
     }
 }
 
