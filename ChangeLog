@@ -1,5 +1,9 @@
+version 1.0.6
+- fix a couple of minor gretlcli bugs
+
 02/20/03 version 1.0.5
 - fix missing translations; fix build of rpm
+- add support for Gujarati textbook data files
 
 02/19/03 version 1.0.4
 - add sst() function in genr for Total Sum of Squares of a 
