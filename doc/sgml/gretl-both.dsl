@@ -1,13 +1,26 @@
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
-<!ENTITY dbstyle SYSTEM "/usr/share/sgml/docbook-dsssl-1.72/print/docbook.dsl" 
-  CDATA DSSSL>
+<!ENTITY % html "IGNORE">
+<![%html;[
+<!ENTITY % print "IGNORE">
+<!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.72/html/docbook.dsl" CDATA dsssl>
+<!ENTITY htmlmath.dsl SYSTEM "HTMLMath.dsl">
+]]>
+<!ENTITY % print "INCLUDE">
+<![%print;[
+<!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.72/print/docbook.dsl" CDATA dsssl>
 <!ENTITY texmath.dsl SYSTEM "TeXMath.dsl">
 <!ENTITY titlepage.dsl SYSTEM "titlepage.dsl">
+]]>
 ]>
 
+<!-- gretl customizations by Allin Cottrell -->
+
 <style-sheet>
-<style-specification use="docbook">
-<style-specification-body>
+
+<style-specification id="print" use="docbook">
+<style-specification-body> 
+
+;; customize the print stylesheet
 
 (define %generate-article-toc% 
   ;; Should a Table of Contents be produced for Articles?
@@ -102,16 +115,14 @@
           font-posture: 'italic
           (process-children)))
 
- 
 ;; These elements appear in this order on the title page of a book.
 (define (book-titlepage-recto-elements)
   (list
         (normalize "title")
-	(normalize "graphic")
+        (normalize "graphic")
         (normalize "subtitle")
         (normalize "author")
         (normalize "date")))
-
 
 ;;======================================
 ;;Inlines
@@ -123,7 +134,24 @@
 &texmath.dsl;
 &titlepage.dsl;
 
+;; end of print stylesheet customization
+
 </style-specification-body>
 </style-specification>
-<external-specification id="docbook" document="dbstyle">
+
+<style-specification id="html" use="docbook">
+<style-specification-body> 
+
+;; customize the html stylesheet
+
+&htmlmath.dsl;
+
+;; end of html stylesheet customization
+
+</style-specification-body>
+</style-specification>
+
+<external-specification id="docbook" document="docbook.dsl">
+
 </style-sheet>
+
