@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretll-1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-04 15:11-0500\n"
-"PO-Revision-Date: 2005-01-05 09:03-0500\n"
+"PO-Revision-Date: 2005-01-06 07:58+0100\n"
 "Last-Translator: Markus Hahn <markus.hahn@rub.de>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -8920,7 +8920,7 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:939
 msgid "text"
-msgstr ""
+msgstr "Text"
 
 #: gui2/gpt_dialog.c:965
 msgid "position (X,Y)"
@@ -8985,11 +8985,11 @@ msgstr ""
 
 #: gui2/gretl.c:306
 msgid "/File/Preferences/_Menu font..."
-msgstr ""
+msgstr "/Datei/Preferences/Menüschriftart"
 
 #: gui2/gretl.c:529
 msgid "/Help/Manual in PDF"
-msgstr ""
+msgstr "/Hilfe/Handbuch in PDF"
 
 #: gui2/gretl.c:723
 msgid "The GNOME 2.0 econometrics package"
@@ -9001,7 +9001,7 @@ msgstr ""
 #: gui2/toolbar.c:126
 #: gui2/toolbar.c:135
 msgid "Please open a data file first"
-msgstr ""
+msgstr "Bitte öffnen Sie zuerst eine Datendatei"
 
 #: gui2/gretlwin32.c:89
 #: gui2/gui_utils.c:3365
@@ -9016,7 +9016,7 @@ msgstr ""
 #: gui2/gretlwin32.c:105
 #: gui2/gui_utils.c:3381
 msgid "Write of R data file failed"
-msgstr ""
+msgstr "Schreiben der R-Datendatei fehlgeschagen"
 
 #: gui2/gretlwin32.c:214
 #: gui2/gretlwin32.c:217
@@ -9025,7 +9025,7 @@ msgstr "gretl.chm"
 
 #: gui2/gretlwin32.c:226
 msgid "Couldn't access help file"
-msgstr ""
+msgstr "Konnte auf Hilfedatei nicht zugreifen"
 
 #: gui2/gtkfontselhack.c:85
 msgid "abcdefghijk ABCDEFGHIJK"
@@ -9033,7 +9033,7 @@ msgstr "abcdefghijk ABCDEFGHIJK"
 
 #: gui2/gtkfontselhack.c:239
 msgid "Font name"
-msgstr ""
+msgstr "Schriftartenname"
 
 #: gui2/gtkfontselhack.c:240
 msgid "The X string that represents this font."
@@ -9041,15 +9041,15 @@ msgstr ""
 
 #: gui2/gtkfontselhack.c:246
 msgid "Font"
-msgstr ""
+msgstr "Schriftart"
 
 #: gui2/gtkfontselhack.c:247
 msgid "The GdkFont that is currently selected."
-msgstr ""
+msgstr "Der GdkFont welcher aktuell ausgewählt wurde."
 
 #: gui2/gtkfontselhack.c:253
 msgid "Preview text"
-msgstr ""
+msgstr "Vorschautext"
 
 #: gui2/gtkfontselhack.c:254
 msgid "The text to display in order to demonstrate the selected font."
@@ -9057,7 +9057,7 @@ msgstr ""
 
 #: gui2/gtkfontselhack.c:260
 msgid "Filter"
-msgstr ""
+msgstr "Filter"
 
 #: gui2/gtkfontselhack.c:261
 msgid "The filter for acceptable fonts."
@@ -9210,33 +9210,33 @@ msgstr ""
 #: gui2/gui_utils.c:255
 #: gui2/gui_utils.c:273
 msgid "/File/_Save as text..."
-msgstr ""
+msgstr "/Datei/Speichern als Text"
 
 #: gui2/gui_utils.c:120
 #: gui2/gui_utils.c:188
 #: gui2/gui_utils.c:257
 #: gui2/gui_utils.c:274
 msgid "/File/Save to session as icon"
-msgstr ""
+msgstr "/Datei/Speichern in Session als Symbol"
 
 #: gui2/gui_utils.c:121
 #: gui2/gui_utils.c:189
 #: gui2/gui_utils.c:258
 #: gui2/gui_utils.c:275
 msgid "/File/Save as icon and close"
-msgstr ""
+msgstr "/Datei/Speichern als Symbol und schließen"
 
 #: gui2/gui_utils.c:123
 #: gui2/gui_utils.c:191
 #: gui2/gui_utils.c:260
 #: gui2/gui_utils.c:277
 msgid "/File/_Print..."
-msgstr ""
+msgstr "/Datei/Drucken"
 
 #: gui2/gui_utils.c:125
 #: gui2/gui_utils.c:193
 msgid "/File/Close"
-msgstr ""
+msgstr "/Datei/Schließen"
 
 #: gui2/gui_utils.c:126
 #: gui2/gui_utils.c:195
@@ -9247,17 +9247,17 @@ msgstr ""
 #: gui2/series_view.c:66
 #: gui2/series_view.c:77
 msgid "/_Edit"
-msgstr ""
+msgstr "/Bearbeiten"
 
 #: gui2/gui_utils.c:127
 #: gui2/gui_utils.c:196
 msgid "/Edit/_Copy"
-msgstr ""
+msgstr "/Bearbeiten/Kopieren"
 
 #: gui2/gui_utils.c:128
 #: gui2/gui_utils.c:197
 msgid "/_Tests"
-msgstr ""
+msgstr "/Tests"
 
 #: gui2/gui_utils.c:129
 #: gui2/gui_utils.c:198
@@ -9277,89 +9277,89 @@ msgstr ""
 #: gui2/gui_utils.c:132
 #: gui2/gui_utils.c:201
 msgid "/Tests/linear restrictions"
-msgstr ""
+msgstr "/Test/lineare Restriktionen"
 
 #: gui2/gui_utils.c:133
 #: gui2/gui_utils.c:202
 msgid "/Tests/sep1"
-msgstr ""
+msgstr "/Tests/sep1"
 
 #: gui2/gui_utils.c:134
 #: gui2/gui_utils.c:203
 msgid "/Tests/non-linearity (squares)"
-msgstr ""
+msgstr "/Test/Nichlinearität (Quadrate)"
 
 #: gui2/gui_utils.c:135
 #: gui2/gui_utils.c:204
 msgid "/Tests/non-linearity (logs)"
-msgstr ""
+msgstr "/Test/Nichlinearität (Logs)"
 
 #: gui2/gui_utils.c:136
 #: gui2/gui_utils.c:205
 msgid "/Tests/Ramsey's RESET"
-msgstr ""
+msgstr "/Tests/Ramsey's RESET"
 
 #: gui2/gui_utils.c:137
 #: gui2/gui_utils.c:206
 msgid "/Tests/sep2"
-msgstr ""
+msgstr "/Tests/sep2"
 
 #: gui2/gui_utils.c:138
 #: gui2/gui_utils.c:207
 msgid "/Tests/autocorrelation"
-msgstr ""
+msgstr "/Test/Autokorrelation"
 
 #: gui2/gui_utils.c:139
 #: gui2/gui_utils.c:208
 msgid "/Tests/heteroskedasticity"
-msgstr ""
+msgstr "/Test/Heteroskedastizität"
 
 #: gui2/gui_utils.c:140
 #: gui2/gui_utils.c:209
 msgid "/Tests/influential observations"
-msgstr ""
+msgstr "/Tests/Influential Observations"
 
 #: gui2/gui_utils.c:141
 #: gui2/gui_utils.c:210
 msgid "/Tests/collinearity"
-msgstr ""
+msgstr "/Test/Kollinearität"
 
 #: gui2/gui_utils.c:142
 #: gui2/gui_utils.c:211
 msgid "/Tests/Chow test"
-msgstr ""
+msgstr "/Tests/Chow-Test"
 
 #: gui2/gui_utils.c:143
 #: gui2/gui_utils.c:212
 msgid "/Tests/CUSUM test"
-msgstr ""
+msgstr "/Test/CUSUM-Test"
 
 #: gui2/gui_utils.c:144
 #: gui2/gui_utils.c:213
 msgid "/Tests/ARCH"
-msgstr ""
+msgstr "/Tests/ARCH"
 
 #: gui2/gui_utils.c:145
 #: gui2/gui_utils.c:214
 msgid "/Tests/normality of residual"
-msgstr ""
+msgstr "/Test/Normalverteilung der Residuen"
 
 #: gui2/gui_utils.c:146
 #: gui2/gui_utils.c:215
 msgid "/Tests/panel diagnostics"
-msgstr ""
+msgstr "/Test/Panel-Diagnose"
 
 #: gui2/gui_utils.c:147
 #: gui2/gui_utils.c:216
 #: gui2/gui_utils.c:2908
 msgid "/_Graphs"
-msgstr ""
+msgstr "/Graphen"
 
 #: gui2/gui_utils.c:148
 #: gui2/gui_utils.c:217
 #: gui2/gui_utils.c:2658
 msgid "/Graphs/residual plot"
-msgstr ""
+msgstr "/Graphen/Residuenplot"
 
 #: gui2/gui_utils.c:149
 #: gui2/gui_utils.c:218
@@ -9370,7 +9370,7 @@ msgstr ""
 #: gui2/gui_utils.c:150
 #: gui2/gui_utils.c:219
 msgid "/_Model data"
-msgstr ""
+msgstr "/Modelldaten"
 
 #: gui2/gui_utils.c:151
 #: gui2/gui_utils.c:220
@@ -9380,110 +9380,110 @@ msgstr ""
 #: gui2/gui_utils.c:153
 #: gui2/gui_utils.c:222
 msgid "/Model data/Forecasts with standard errors"
-msgstr ""
+msgstr "/Modelldata/Prognose mit Standardfehlern"
 
 #: gui2/gui_utils.c:155
 #: gui2/gui_utils.c:224
 msgid "/Model data/Confidence intervals for coefficients"
-msgstr ""
+msgstr "/Modelldaten/Konfidenzintervalle für Koeffizienten"
 
 #: gui2/gui_utils.c:157
 #: gui2/gui_utils.c:226
 msgid "/Model data/coefficient covariance matrix"
-msgstr ""
+msgstr "/Modeldaten/Koeffizient-Kovarianzmatrix"
 
 #: gui2/gui_utils.c:159
 #: gui2/gui_utils.c:228
 #: gui2/gui_utils.c:2897
 msgid "/Model data/Add to data set"
-msgstr ""
+msgstr "/Modeldaten/Zum Datensatz hinzufügen"
 
 #: gui2/gui_utils.c:160
 #: gui2/gui_utils.c:229
 msgid "/_LaTeX"
-msgstr ""
+msgstr "/LaTeX"
 
 #: gui2/gui_utils.c:161
 #: gui2/gui_utils.c:230
 msgid "/LaTeX/_View"
-msgstr ""
+msgstr "/LaTeX/Anzeigen"
 
 #: gui2/gui_utils.c:162
 #: gui2/gui_utils.c:231
 msgid "/LaTeX/View/_Tabular"
-msgstr ""
+msgstr "/LaTeX/Anzeigen/Tabellarisch"
 
 #: gui2/gui_utils.c:164
 #: gui2/gui_utils.c:232
 msgid "/LaTeX/View/_Equation"
-msgstr ""
+msgstr "/LaTeX/Anzeigen/Gleichung"
 
 #: gui2/gui_utils.c:166
 #: gui2/gui_utils.c:233
 msgid "/LaTeX/_Save"
-msgstr ""
+msgstr "/LaTeX/Speichern"
 
 #: gui2/gui_utils.c:167
 #: gui2/gui_utils.c:234
 msgid "/LaTeX/Save/_Tabular"
-msgstr ""
+msgstr "/LaTeX/Speichern/Tabellarisch"
 
 #: gui2/gui_utils.c:168
 #: gui2/gui_utils.c:235
 msgid "/LaTeX/Save/Tabular/as _document"
-msgstr ""
+msgstr "/LaTeX/Speichern/Tabellarisch/als Dokument"
 
 #: gui2/gui_utils.c:170
 #: gui2/gui_utils.c:237
 msgid "/LaTeX/Save/Tabular/as _fragment"
-msgstr ""
+msgstr "/LaTeX/Speichern/Tabellarisch/als Fragment"
 
 #: gui2/gui_utils.c:172
 #: gui2/gui_utils.c:239
 msgid "/LaTeX/Save/_Equation"
-msgstr ""
+msgstr "/LaTeX/Speichern/Gleichung"
 
 #: gui2/gui_utils.c:173
 #: gui2/gui_utils.c:240
 msgid "/LaTeX/Save/Equation/as _document"
-msgstr ""
+msgstr "/LaTeX/Speichern/Gleichung/als Dokument"
 
 #: gui2/gui_utils.c:175
 #: gui2/gui_utils.c:242
 msgid "/LaTeX/Save/Equation/as _fragment"
-msgstr ""
+msgstr "/LaTeX/Speichern/Gleichung/als Fragment"
 
 #: gui2/gui_utils.c:177
 #: gui2/gui_utils.c:244
 msgid "/LaTeX/_Copy"
-msgstr ""
+msgstr "/LaTeX/Kopieren"
 
 #: gui2/gui_utils.c:178
 #: gui2/gui_utils.c:245
 msgid "/LaTeX/Copy/_Tabular"
-msgstr ""
+msgstr "/LaTeX/Kopieren/Tabellarisch"
 
 #: gui2/gui_utils.c:179
 #: gui2/gui_utils.c:246
 msgid "/LaTeX/Copy/_Equation"
-msgstr ""
+msgstr "/LaTeX/Kopieren/Gleichung"
 
 #: gui2/gui_utils.c:263
 #: gui2/gui_utils.c:280
 #: gui2/series_view.c:50
 #: gui2/series_view.c:68
 msgid "/Edit/Copy _all"
-msgstr ""
+msgstr "/Bearbeiten/Alles kopieren"
 
 #: gui2/gui_utils.c:264
 #: gui2/gui_utils.c:281
 msgid "/Edit/Copy all/as plain _text"
-msgstr ""
+msgstr "/Bearbeiten/Alles kopieren/als einfacher Text"
 
 #: gui2/gui_utils.c:265
 #: gui2/gui_utils.c:282
 msgid "/Edit/Copy all/as _LaTeX"
-msgstr ""
+msgstr "/Bearbeiten/Alles kopieren/als LaTeX"
 
 #: gui2/gui_utils.c:865
 msgid "Unrecognized data type"
@@ -9495,7 +9495,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:1024
 msgid "gretl: open data"
-msgstr ""
+msgstr "gretl: öffne Daten"
 
 #: gui2/gui_utils.c:1025
 msgid ""
@@ -9503,10 +9503,14 @@ msgid ""
 "close the current one.  Any unsaved work\n"
 "will be lost.  Proceed to open data file?"
 msgstr ""
+"Öffnen einer neuen Datendatei schließt\n"
+"auttomatisch die aktuelle Datei. Jede un-\n"
+"gespeicherte Arbeit geht dann verloren.\n"
+"Mit dem Öffnen der Datendatei fortfahren?"
 
 #: gui2/gui_utils.c:1042
 msgid "gretl: open session"
-msgstr ""
+msgstr "gretl: öffne Session"
 
 #: gui2/gui_utils.c:1043
 msgid ""
@@ -9514,39 +9518,46 @@ msgid ""
 "close the current session.  Any unsaved work\n"
 "will be lost.  Proceed to open session file?"
 msgstr ""
+"Öffnen einer neuen Sessiondatei schließt \n"
+"automatisch die aktuelle Seission. Jede un-\n"
+"gespeicherte Arbeit ist dann verloren. Mit\n"
+"dem Öffnen der Sessiondatei fortfahnren?"
 
 #: gui2/gui_utils.c:1089
 #, c-format
 msgid "Couldn't open session file %s"
-msgstr ""
+msgstr "Konnte Sessiondatei %s nich öffnen"
 
 #: gui2/gui_utils.c:1103
+#, fuzzy
 msgid "Couldn't write session notes file"
-msgstr ""
+msgstr "Konnte Session-Anmerkungen-Datei nicht schreiben"
 
 #: gui2/gui_utils.c:1110
 msgid "Couldn't open output file for writing"
-msgstr ""
+msgstr "Konnte Ausgabedatei nicht zum Schreiben öffnen"
 
 #: gui2/gui_utils.c:1117
 #, c-format
 msgid "Output from %s\n"
-msgstr ""
+msgstr "Ausgebe von %s\n"
 
 #: gui2/gui_utils.c:1129
 #, c-format
 msgid "session saved to %s -\n"
-msgstr ""
+msgstr "Session gespeichert nach %s -\n"
 
 #: gui2/gui_utils.c:1130
 msgid "commands: "
-msgstr ""
+msgstr "Befehle:"
 
 #: gui2/gui_utils.c:1132
 msgid ""
 "\n"
 "output: "
 msgstr ""
+"\n"
+"Ausgabe"
 
 #: gui2/gui_utils.c:1175
 msgid "Buffer is empty"
@@ -9554,66 +9565,67 @@ msgstr ""
 
 #: gui2/gui_utils.c:1185
 msgid "Data info saved"
-msgstr ""
+msgstr "Dateninfo gespeichert"
 
 #: gui2/gui_utils.c:1190
+#, fuzzy
 msgid "Notes saved"
-msgstr ""
+msgstr "Anmerkungen gespeichert"
 
 #: gui2/gui_utils.c:1210
 msgid "Can't open file for writing"
-msgstr ""
+msgstr "Kann Datei nicht zum Schreiben öffnen"
 
 #: gui2/gui_utils.c:1221
 #, c-format
 msgid "Saved %s\n"
-msgstr ""
+msgstr "%s gespeichert\n"
 
 #: gui2/gui_utils.c:1391
 msgid "data added"
-msgstr ""
+msgstr "Daten hinzugefügt"
 
 #: gui2/gui_utils.c:1432
 #: gui2/gui_utils.c:1454
 #: gui2/session.c:178
 #: gui2/session.c:2301
 msgid "Save"
-msgstr ""
+msgstr "Speichern"
 
 #: gui2/gui_utils.c:1433
 #: gui2/gui_utils.c:1455
 msgid "Save as..."
-msgstr ""
+msgstr "Speichern unter..."
 
 #: gui2/gui_utils.c:1434
 #: gui2/gui_utils.c:1456
 msgid "Send to gnuplot"
-msgstr ""
+msgstr "Sende an gnuplot"
 
 #: gui2/gui_utils.c:1438
 #: gui2/gui_utils.c:1460
 msgid "Run"
-msgstr ""
+msgstr "Ausführen"
 
 #: gui2/gui_utils.c:1439
 #: gui2/gui_utils.c:1461
 msgid "Copy"
-msgstr ""
+msgstr "Kopieren"
 
 #: gui2/gui_utils.c:1440
 #: gui2/gui_utils.c:1462
 msgid "Paste"
-msgstr ""
+msgstr "Einfügen"
 
 #: gui2/gui_utils.c:1442
 #: gui2/gui_utils.c:1464
 msgid "Replace..."
-msgstr ""
+msgstr "Ersetzen..."
 
 #: gui2/gui_utils.c:1443
 #: gui2/gui_utils.c:1465
 msgid "Undo"
-msgstr ""
+msgstr "Rückgängig"
 
 #: gui2/gui_utils.c:1444
 #: gui2/gui_utils.c:1466
@@ -9623,65 +9635,65 @@ msgstr ""
 #: gui2/gui_utils.c:1445
 #: gui2/gui_utils.c:1467
 msgid "LaTeX"
-msgstr ""
+msgstr "LaTeX"
 
 #: gui2/gui_utils.c:1446
 #: gui2/gui_utils.c:1468
 msgid "Add to dataset..."
-msgstr ""
+msgstr "Zum Datensatz hinzufügen"
 
 #: gui2/gui_utils.c:1658
 msgid "gretl: help"
-msgstr ""
+msgstr "gretl: Hilfe"
 
 #: gui2/gui_utils.c:1660
 msgid "gretl: command syntax"
-msgstr ""
+msgstr "gretl: Befehlssyntax"
 
 #: gui2/gui_utils.c:1666
 msgid "gretl: command log"
-msgstr ""
+msgstr "gretl: Behfehlslog"
 
 #: gui2/gui_utils.c:1668
 msgid "gretl console"
-msgstr ""
+msgstr "gretl console"
 
 #: gui2/gui_utils.c:1673
 msgid "gretl: command script"
-msgstr ""
+msgstr "gretl: Befehlsskript"
 
 #: gui2/gui_utils.c:1685
 #: gui2/session.c:304
 msgid "gretl: session notes"
-msgstr ""
+msgstr "gretl: Session-Anmwerkungen"
 
 #: gui2/gui_utils.c:1688
 msgid "gretl: edit plot commands"
-msgstr ""
+msgstr "gretl: bearbeite Plot-Befehle"
 
 #: gui2/gui_utils.c:1690
 msgid "gretl: script output"
-msgstr ""
+msgstr "gretl: Skriptausgabe"
 
 #: gui2/gui_utils.c:1692
 #: gui2/library.c:3490
 #: gui2/library.c:3554
 #: gui2/library.c:3578
 msgid "gretl: display data"
-msgstr ""
+msgstr "gretl: Zeige Daten"
 
 #: gui2/gui_utils.c:1905
 #, c-format
 msgid "Can't open %s for reading"
-msgstr ""
+msgstr "Kann %s nicht zu Lesen öffnen"
 
 #: gui2/gui_utils.c:2083
 msgid "Save changes?"
-msgstr ""
+msgstr "Änderungen speichern?"
 
 #: gui2/gui_utils.c:2307
 msgid "script saved"
-msgstr ""
+msgstr "Skript gespeichert"
 
 #: gui2/gui_utils.c:2323
 #, c-format
@@ -9690,18 +9702,19 @@ msgstr ""
 
 #: gui2/gui_utils.c:2525
 #: gui2/gui_utils.c:2566
+#, fuzzy
 msgid "/Model data/Add to data set/fitted values"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/erklärte Werte"
 
 #: gui2/gui_utils.c:2527
 #: gui2/gui_utils.c:2568
 msgid "/Model data/Add to data set/residuals"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/Residuen"
 
 #: gui2/gui_utils.c:2529
 #: gui2/gui_utils.c:2570
 msgid "/Model data/Add to data set/squared residuals"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/quadrierte Residuen"
 
 #: gui2/gui_utils.c:2534
 #: gui2/gui_utils.c:2577
@@ -9711,22 +9724,22 @@ msgstr ""
 #: gui2/gui_utils.c:2536
 #: gui2/gui_utils.c:2579
 msgid "/Model data/Add to data set/standard error of residuals"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/Standardfehler der Residuen"
 
 #: gui2/gui_utils.c:2541
 #: gui2/gui_utils.c:2584
 msgid "/Model data/Add to data set/R-squared"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/R-Quadrat"
 
 #: gui2/gui_utils.c:2543
 #: gui2/gui_utils.c:2586
 msgid "/Model data/Add to data set/T*R-squared"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/T*R-Quadrat"
 
 #: gui2/gui_utils.c:2548
 #: gui2/gui_utils.c:2591
 msgid "/Model data/Add to data set/log likelihood"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/Log-Likelihood"
 
 #: gui2/gui_utils.c:2553
 #: gui2/gui_utils.c:2596
@@ -9736,16 +9749,16 @@ msgstr ""
 #: gui2/gui_utils.c:2558
 #: gui2/gui_utils.c:2601
 msgid "/Model data/sep1"
-msgstr ""
+msgstr "/Modelldaten/sep1"
 
 #: gui2/gui_utils.c:2559
 #: gui2/gui_utils.c:2602
 msgid "/Model data/Define new variable..."
-msgstr ""
+msgstr "/Modelldaten/Definiere neue Variable..."
 
 #: gui2/gui_utils.c:2572
 msgid "/Model data/Add to data set/degrees of freedom"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen/Freiheitsgrade"
 
 #: gui2/gui_utils.c:2671
 #, c-format
@@ -9787,11 +9800,11 @@ msgstr ""
 
 #: gui2/gui_utils.c:2834
 msgid "/Tests/heteroskedasticity (White's test)"
-msgstr ""
+msgstr "/Test/Heteroskedastizität (White's Test)"
 
 #: gui2/gui_utils.c:2840
 msgid "/Tests/heteroskedasticity (groupwise)"
-msgstr ""
+msgstr "/Tests/Heteroskedastizität (gruppenweise)"
 
 #: gui2/gui_utils.c:2858
 msgid "x12sep"
@@ -9803,11 +9816,11 @@ msgstr ""
 
 #: gui2/gui_utils.c:2896
 msgid "/Graphs"
-msgstr ""
+msgstr "/Graphen"
 
 #: gui2/gui_utils.c:2912
 msgid "/_Model data/Add to data set"
-msgstr ""
+msgstr "/Modelldaten/Zum Datensatz hinzufügen"
 
 #: gui2/gui_utils.c:2921
 msgid "residuals from equation"
@@ -9856,15 +9869,15 @@ msgstr ""
 
 #: gui2/helpfiles.c:134
 msgid "Dataset"
-msgstr ""
+msgstr "Datensatz"
 
 #: gui2/helpfiles.c:135
 msgid "Estimation"
-msgstr ""
+msgstr "Schätzung"
 
 #: gui2/helpfiles.c:136
 msgid "Graphs"
-msgstr ""
+msgstr "Graphen"
 
 #: gui2/helpfiles.c:137
 msgid "Prediction"
@@ -9872,28 +9885,28 @@ msgstr ""
 
 #: gui2/helpfiles.c:138
 msgid "Printing"
-msgstr ""
+msgstr "Drucken"
 
 #: gui2/helpfiles.c:139
 msgid "Programming"
-msgstr ""
+msgstr "Programmieren"
 
 #: gui2/helpfiles.c:140
 msgid "Statistics"
-msgstr ""
+msgstr "Statistiken"
 
 #: gui2/helpfiles.c:141
 msgid "Tests"
-msgstr ""
+msgstr "Tests"
 
 #: gui2/helpfiles.c:142
 #: plugin/tramo_options.c:566
 msgid "Transformations"
-msgstr ""
+msgstr "Transformationen"
 
 #: gui2/helpfiles.c:143
 msgid "Utilities"
-msgstr ""
+msgstr "Dienstprogramme"
 
 #: gui2/helpfiles.c:1108
 #: gui2/helpfiles.c:1141
