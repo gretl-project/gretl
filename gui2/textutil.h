@@ -17,15 +17,9 @@
  *
  */
 
-/* datafiles.h for gretl */
+#ifndef TEXTUTIL_H
+#define TEXTUTIL_H
 
-#ifndef DATAFILES_H
-#define DATAFILES_H
+void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
 
-void browser_open_data (GtkWidget *w, gpointer data);
-void browser_open_ps (GtkWidget *w, gpointer data);
-void destroy_file_collections (void);
-gint populate_filelist (windata_t *fdata, gpointer p);
-char *strip_extension (char *s);
-
-#endif /* DATAFILES_H */
+#endif /* TEXTUTIL_H */

@@ -559,18 +559,23 @@ static int grow_mstack (int i, int model_id)
 	n_mstacks = 0;
 	return 1;
     }
+
     mstack[i].ID = model_id;    
     mstack[i].cmdnum = n_cmds-1;
     mstack[i].n = 0;
+
 #ifdef CMD_DEBUG
     fprintf(stderr, "mstack[%d]: ID=%d, cmdnum=%d\n", i, model_id, n_cmds-1);
 #endif
+
     mstack[i].cmds = mymalloc(sizeof(char **));
     if (mstack[i].cmds == NULL) return 1;
     n_mstacks++;
+
 #ifdef CMD_DEBUG
     fprintf(stderr, "grow_mstack: n_mstacks now = %d\n", n_mstacks);
 #endif
+
     return 0;
 }
 
@@ -978,39 +983,25 @@ void do_coint2 (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-int blank_entry (const char *entry, dialog_t *ddata)
-{
-    if (entry == NULL || *entry == 0) {
-	gtk_widget_destroy(ddata->dialog);
-	return 1;
-    }
-
-    return 0;
-}
-
-void close_dialog (dialog_t *ddata)
-{
-    gtk_widget_destroy(ddata->dialog);
-}
-
-/* ........................................................... */
-
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
     PRN *prn;
     char title[48];
     int err = 0, order = 0, mvar = mdata->active_var;
+    int action = dialog_data_get_action(ddata);
     gint hsize = 78, vsize = 300;
 
-    buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-    if (ddata->code != CORRGM && blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) {
+	if (action != CORRGM) return;
+    }
 
     clear(line, MAXLEN);
     strcpy(title, "gretl: ");
 
     /* set up the command */
-    switch (ddata->code) {
+    switch (action) {
     case ADF:
 	sprintf(line, "adf %s %s", buf, datainfo->varname[mvar]);
 	strcat(title, _("adf test"));
@@ -1058,18 +1049,18 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
     if (verify_and_record_command(line) || bufopen(&prn)) return;
 
     /* execute the command */
-    switch (ddata->code) {
+    switch (action) {
     case ADF:
     case COINT:
 	order = atoi(cmd.param);
 	if (!order) {
-	    errbox((ddata->code == ADF)? 
+	    errbox((action == ADF)? 
 		   _("Couldn't read ADF order") :
 		   _("Couldn't read cointegration order"));
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	if (ddata->code == ADF)
+	if (action == ADF)
 	    err = adf_test(order, cmd.list[1], &Z, datainfo, prn);
 	else
 	    err = coint(order, cmd.list, &Z, datainfo, prn);
@@ -1099,11 +1090,9 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	int code = ddata->code;
-
 	close_dialog(ddata);
-	view_buffer(prn, hsize, vsize, title, code, NULL);
-	if (code == CORRGM) {
+	view_buffer(prn, hsize, vsize, title, action, NULL);
+	if (action == CORRGM) {
 	    register_graph();
 	}
     }
@@ -1228,8 +1217,8 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
     const gchar *buf = NULL;
     int err;
 
-    buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     clear(line, MAXLEN);
     sprintf(line, "smpl %s --restrict", buf); 
@@ -1249,8 +1238,8 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
     char pdstr[8], stobs[OBSLEN];
     int err;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     sscanf(buf, "%7s %8s", pdstr, stobs);
 	
@@ -1296,8 +1285,8 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
     const gchar *buf;
     char fname[MAXLEN];
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     strcpy(fname, buf);
 
@@ -1314,15 +1303,15 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 
 void do_forecast (GtkWidget *widget, dialog_t *ddata) 
 {
-    windata_t *mydata = ddata->data;
+    windata_t *mydata = dialog_data_get_data(ddata);
     MODEL *pmod = mydata->data;
     FITRESID *fr;
     const gchar *buf;
     PRN *prn;
     int err;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
     
     clear(line, MAXLEN);
     sprintf(line, "fcasterr %s", buf);
@@ -1742,7 +1731,7 @@ static void do_chow_cusum (gpointer data, int code)
 
     if (code == CHOW) {
 	ddata = (dialog_t *) data;
-	mydata = ddata->data;
+	mydata = dialog_data_get_data(ddata);
     } else {
 	mydata = (windata_t *) data;
     }
@@ -1754,8 +1743,8 @@ static void do_chow_cusum (gpointer data, int code)
     }
 
     if (code == CHOW) {
-	buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-	if (blank_entry(buf, ddata)) return;
+	buf = dialog_data_get_text(ddata);
+	if (buf == NULL) return;
 	clear(line, MAXLEN);
 	sprintf(line, "chow %s", buf);
     } else {
@@ -1845,7 +1834,7 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 
 void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 {
-    windata_t *mydata = ddata->data;
+    windata_t *mydata = dialog_data_get_data(ddata);
     MODEL *pmod = mydata->data;
     GRETLTEST test;
     const gchar *buf;
@@ -1853,8 +1842,8 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
     char title[40];
     int order, err;
 
-    buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     order = atoi(buf);
 
@@ -1903,7 +1892,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 
 void do_arch (GtkWidget *widget, dialog_t *ddata)
 {
-    windata_t *mydata = ddata->data;
+    windata_t *mydata = dialog_data_get_data(ddata);
     MODEL *pmod = mydata->data;
     GRETLTEST test;
     const gchar *buf;
@@ -1911,8 +1900,8 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     char tmpstr[26];
     int order, err, i;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     clear(line, MAXLEN);
     sprintf(line, "arch %s ", buf);
@@ -2103,17 +2092,13 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
     gchar *buf;
     PRN *prn;
     char title[64];
-    windata_t *vwin = (windata_t *) ddata->data;
+    windata_t *vwin = (windata_t *) dialog_data_get_data(ddata);
     MODEL *pmod = (MODEL *) vwin->data;
     int got_start_line = 0, got_end_line = 0;
     int err = 0;
 
-#ifdef OLD_GTK
-    buf = gtk_editable_get_chars(GTK_EDITABLE(ddata->edit), 0, -1);
-#else
-    buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
-#endif
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_special_get_text(ddata);
+    if (buf == NULL) return;
 
     bufgets(NULL, 0, buf);
     while (bufgets(line, MAXLEN-1, buf) && !err) {
@@ -2187,12 +2172,8 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     int err = 0, started = 0;
     MODEL *pmod = NULL;
 
-#ifdef OLD_GTK
-    buf = gtk_editable_get_chars(GTK_EDITABLE(ddata->edit), 0, -1);
-#else
-    buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
-#endif
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_special_get_text(ddata);
+    if (buf == NULL) return;
 
     bufgets(NULL, 0, buf);
     while (bufgets(line, MAXLEN-1, buf) && !err) {
@@ -2523,8 +2504,8 @@ void do_sim (GtkWidget *widget, dialog_t *ddata)
     char varname[VNAMELEN], info[24];
     int err;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     clear(line, MAXLEN);
     sprintf(line, "sim %s", buf);
@@ -2549,8 +2530,8 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     int err, nulldata_n;
     PRN *prn;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     clear(line, MAXLEN);
     sprintf(line, "nulldata %s", buf);
@@ -2588,8 +2569,8 @@ void do_genr (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     clear(line, MAXLEN);
     sprintf(line, "genr %s", buf);
@@ -2603,11 +2584,11 @@ void do_genr (GtkWidget *widget, dialog_t *ddata)
 void do_model_genr (GtkWidget *widget, dialog_t *ddata) 
 {
     const gchar *buf;
-    windata_t *mydata = (windata_t *) ddata->data;
+    windata_t *mydata = (windata_t *) dialog_data_get_data(ddata);
     MODEL *pmod = mydata->data;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     clear(line, MAXLEN);
     sprintf(line, "genr %s", buf);
@@ -2621,13 +2602,14 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
     char tmp[32], vname[VNAMELEN];
+    int action = dialog_data_get_action(ddata);
     double f1, f2;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     if (sscanf(buf, "%31s %lf %lf", tmp, &f1, &f2) != 3) {
-	if (ddata->code == GENR_NORMAL) 
+	if (action == GENR_NORMAL) 
 	    errbox(_("Specification is malformed\n"
 		   "Should be like \"foo 1 2.5\""));
 	else
@@ -2635,10 +2617,10 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
 		   "Should be like \"foo 0 10\""));
 	return;
     }
-    if (ddata->code == GENR_NORMAL && f2 < 0) {
+    if (action == GENR_NORMAL && f2 < 0) {
 	errbox(_("Can't have a negative standard deviation!"));
 	return;
-    } else if (ddata->code == GENR_UNIFORM && f1 >= f2) {
+    } else if (action == GENR_UNIFORM && f1 >= f2) {
 	errbox(_("Range is non-positive!"));
 	return;
     }
@@ -2649,12 +2631,12 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
 
-    if (ddata->code == GENR_NORMAL) {
+    if (action == GENR_NORMAL) {
 	if (f1 != 0. || f2 != 1.)
 	    sprintf(line, "genr %s = %g * normal() + %g", 
 		    vname, f2, f1);
 	else sprintf(line, "genr %s = normal()", vname); 
-    } else if (ddata->code == GENR_UNIFORM) {
+    } else if (action == GENR_UNIFORM) {
 	if (f1 != 0. || f2 != 1.)
 	    sprintf(line, "genr %s = %g + (uniform() * %g)", 
 		    vname, f1, (f2 - f1));
@@ -2673,8 +2655,8 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
     const gchar *buf;
     char tmp[32];
 
-    buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     sscanf(buf, "%31s", tmp);
 	
@@ -2744,11 +2726,8 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
     double missval;
     int count, err;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) {
-	close_dialog(ddata);
-	return;
-    }
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     if ((err = check_atof(buf))) {
 	gui_errmsg(err);
@@ -2775,8 +2754,8 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
     double missval;
     int count, err;
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     if (!datainfo->vector[mdata->active_var]) {
 	close_dialog(ddata);
@@ -3862,19 +3841,19 @@ void do_scatters (GtkWidget *widget, gpointer p)
 void do_box_graph (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
-    gint err, code = ddata->code; 
+    gint err, action = dialog_data_get_action(ddata);
 
-    buf = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     if (strchr(buf, '(')) {
-	err = boolean_boxplots(buf, &Z, datainfo, (code == GR_NBOX));
+	err = boolean_boxplots(buf, &Z, datainfo, (action == GR_NBOX));
     } else {
 	clear(line, MAXLEN);
-	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", buf);
+	sprintf(line, "boxplot %s%s", (action == GR_NBOX)? "-o " : "", buf);
 
 	if (verify_and_record_command(line)) return;
-	err = boxplots(cmd.list, NULL, &Z, datainfo, (code == GR_NBOX));
+	err = boxplots(cmd.list, NULL, &Z, datainfo, (action == GR_NBOX));
     }
 
     if (err) {
@@ -4339,35 +4318,49 @@ static int dat_suffix (const char *fname)
 
 /* ........................................................... */
 
-int maybe_restore_full_data (int action)
+int dataset_is_subsampled (void)
 {
+    int ret = 0;
+
     if (mdata->ifac != NULL) {
 	GtkWidget *w = gtk_item_factory_get_item(mdata->ifac, 
 						 "/Sample/Restore full range");
 
 	if (w != NULL && GTK_IS_WIDGET(w) && GTK_WIDGET_IS_SENSITIVE(w)) {
-	    int resp = GRETL_CANCEL;
-
-	    if (action == SAVE_DATA) {
-		resp = yes_no_dialog(_("gretl: save data"), 
-			      _("The data set is currently sub-sampled.\n"
-				"Would you like to restore the full range?"), 1);
-	    }
-	    else if (action == COMPACT) {
-		resp = yes_no_dialog(_("gretl: Compact data"), 
-			      _("The data set is currently sub-sampled.\n"
-				"You must restore the full range before compacting.\n"
-				"Restore the full range now?"), 1);
-	    }
-
-	    if (resp == GRETL_YES) {
-		restore_sample(OPT_NONE);
-		restore_sample_state(FALSE);
-	    } else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
-		return 1;
-	    }
-	} 
+	    ret = 1;
+	}
     }
+
+    return ret;
+}
+
+/* ........................................................... */
+
+int maybe_restore_full_data (int action)
+{
+    if (dataset_is_subsampled()) {
+	int resp = GRETL_CANCEL;
+
+	if (action == SAVE_DATA) {
+	    resp = yes_no_dialog(_("gretl: save data"), 
+				 _("The data set is currently sub-sampled.\n"
+				   "Would you like to restore the full range?"), 1);
+	}
+	else if (action == COMPACT) {
+	    resp = yes_no_dialog(_("gretl: Compact data"), 
+				 _("The data set is currently sub-sampled.\n"
+				   "You must restore the full range before compacting.\n"
+				   "Restore the full range now?"), 1);
+	}
+
+	if (resp == GRETL_YES) {
+	    restore_sample(OPT_NONE);
+	    restore_sample_state(FALSE);
+	} else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
+	    return 1;
+	}
+    } 
+
     return 0;
 }
 
@@ -6084,404 +6077,5 @@ int gui_exec_line (char *line,
 
     return (err != 0);
 }
-
-/* ........................................................... */
-
-void view_script_default (void)
-     /* for "session" use */
-{
-    if (dump_cmd_stack(cmdfile, 0)) return;
-
-    view_file(cmdfile, 0, 0, 78, 350, EDIT_SCRIPT);
-}
-
-/* .................................................................. */
-
-struct search_replace {
-    GtkWidget *w;
-    GtkWidget *f_entry;
-    GtkWidget *r_entry;
-    gchar *f_text;
-    gchar *r_text;
-};
-
-/* .................................................................. */
-
-static void replace_string_callback (GtkWidget *widget, 
-				     struct search_replace *s)
-{
-    s->f_text = 
-	gtk_editable_get_chars(GTK_EDITABLE(s->f_entry), 0, -1);
-    s->r_text = 
-	gtk_editable_get_chars(GTK_EDITABLE(s->r_entry), 0, -1);
-    gtk_widget_destroy(s->w);
-}
-
-/* .................................................................. */
-
-static void trash_replace (GtkWidget *widget, 
-			   struct search_replace *s)
-{
-    s->f_text = NULL;
-    s->r_text = NULL;
-    gtk_widget_destroy(s->w);
-}
-
-/* .................................................................. */
-
-static void replace_string_dialog (struct search_replace *s)
-{
-    GtkWidget *label, *button, *hbox;
-
-    s->w = gtk_dialog_new();
-
-    gtk_window_set_title (GTK_WINDOW (s->w), _("gretl: replace"));
-    gtk_container_set_border_width (GTK_CONTAINER (s->w), 5);
-
-    /* Find part */
-    hbox = gtk_hbox_new(TRUE, TRUE);
-    label = gtk_label_new(_("Find:"));
-    gtk_widget_show (label);
-    s->f_entry = gtk_entry_new();
-    gtk_widget_show (s->f_entry);
-    gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX(hbox), s->f_entry, TRUE, TRUE, 0);
-    gtk_widget_show (hbox);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->vbox), 
-                        hbox, TRUE, TRUE, 5);
-
-    /* Replace part */
-    hbox = gtk_hbox_new(TRUE, TRUE);
-    label = gtk_label_new(_("Replace with:"));
-    gtk_widget_show (label);
-    s->r_entry = gtk_entry_new();
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT (s->r_entry), 
-			"activate", 
-		       GTK_SIGNAL_FUNC (replace_string_callback), s);
-#else
-    g_signal_connect(G_OBJECT (s->r_entry), 
-		     "activate", 
-		     G_CALLBACK (replace_string_callback), s);
-#endif
-    gtk_widget_show (s->r_entry);
-    gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
-    gtk_widget_show (hbox);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->vbox), 
-		       hbox, TRUE, TRUE, 5);
-
-    gtk_box_set_spacing(GTK_BOX (GTK_DIALOG (s->w)->action_area), 15);
-    gtk_box_set_homogeneous(GTK_BOX 
-			    (GTK_DIALOG (s->w)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW (s->w), GTK_WIN_POS_MOUSE);
-
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(s->w), "destroy",
-		       gtk_main_quit, NULL);
-#else
-    g_signal_connect(G_OBJECT(s->w), "destroy",
-		     gtk_main_quit, NULL);
-#endif
-
-    /* replace button -- make this the default */
-    button = gtk_button_new_with_label (_("Replace all"));
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
-		       button, TRUE, TRUE, FALSE);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT (button), "clicked",
-		       GTK_SIGNAL_FUNC (replace_string_callback), s);
-#else
-    g_signal_connect(G_OBJECT (button), "clicked",
-		     G_CALLBACK (replace_string_callback), s);
-#endif
-    gtk_widget_grab_default(button);
-    gtk_widget_show(button);
-
-    /* cancel button */
-    button = gtk_button_new_with_label (_("Cancel"));
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
-		       button, TRUE, TRUE, FALSE);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(trash_replace), s);
-#else
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(trash_replace), s);
-#endif
-
-    gtk_widget_show(button);
-
-    gtk_widget_grab_focus(s->f_entry);
-    gtk_widget_show (s->w);
-#ifdef OLD_GTK /* ?? */
-    gtk_window_set_modal(GTK_WINDOW(s->w), TRUE);
-#endif
-    gtk_main();
-}
-
-/* ........................................................... */
-
-#ifdef OLD_GTK
-
-void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
-{
-    gchar *buf;
-    int count = 0;
-    gint pos = 0;
-    guint sel_start, sel_end;
-    size_t sz, fullsz, len, diff;
-    char *replace = NULL, *find = NULL;
-    char *modbuf, *p, *q;
-    gchar *old;
-    struct search_replace *s;
-    GtkEditable *gedit = GTK_EDITABLE(mydata->w);
-
-    s = mymalloc(sizeof *s);
-    if (s == NULL) return;
-
-    replace_string_dialog(s);
-
-    if (s->f_text == NULL || s->r_text == NULL) {
-	free(s);
-	return;
-    }
-
-    find = s->f_text;
-    replace = s->r_text;
-
-    if (!strlen(find)) {
-	free(find);
-	free(replace);
-	free(s);
-	return;
-    }
-
-    if (gedit->has_selection) {
-	sel_start = gedit->selection_start_pos;
-	sel_end = gedit->selection_end_pos;
-    } else {
-	sel_start = 0;
-	sel_end = 0;
-    }
-
-    buf = gtk_editable_get_chars(gedit, sel_start, (sel_end)? sel_end : -1);
-    if (buf == NULL || !(sz = strlen(buf))) 
-	return;
-
-    fullsz = gtk_text_get_length(GTK_TEXT(mydata->w));
-    len = strlen(find);
-    diff = strlen(replace) - len;
-
-    p = buf;
-    while (*p) {
-	if ((q = strstr(p, find))) {
-	    count++;
-	    p = q + 1;
-	}
-	else break;
-    }
-    if (count) {
-	fullsz += count * diff;
-    } else {
-	errbox(_("String to replace was not found"));
-	free(buf);
-	return;
-    }
-
-    modbuf = mymalloc(fullsz + 1);
-    if (modbuf == NULL) {
-	free(find);
-	free(replace);
-	free(s);
-	return;
-    }
-
-    *modbuf = '\0';
-
-    if (sel_start) {
-	gchar *tmp = gtk_editable_get_chars(gedit, 0, sel_start);
-
-	strcat(modbuf, tmp);
-	g_free(tmp);
-    }
-
-    p = buf;
-    while (*p) {
-	if ((q = strstr(p, find))) {
-	    strncat(modbuf, p, q - p);
-	    strcat(modbuf, replace);
-	    p = q + len;
-	} else {
-	    strcat(modbuf, p);
-	    break;
-	}
-    }
-
-    if (sel_end) {
-	gchar *tmp = gtk_editable_get_chars(gedit, sel_end, -1);
-
-	strcat(modbuf, tmp);
-	g_free(tmp);
-    }    
-
-    /* save original buffer for "undo" */
-    old = gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
-    if (old != NULL) {
-	g_free(old);
-	gtk_object_remove_data(GTK_OBJECT(mydata->w), "undo");
-    }
-    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", 
-			gtk_editable_get_chars(gedit, 0, -1));
-
-    /* now insert the modified buffer */
-    gtk_text_freeze(GTK_TEXT(mydata->w));
-    gtk_editable_delete_text(gedit, 0, -1);
-    gtk_editable_insert_text(gedit, modbuf, strlen(modbuf), &pos);
-    gtk_text_thaw(GTK_TEXT(mydata->w));
-
-    /* and clean up */
-    free(find);
-    free(replace);
-    free(s);
-    free(modbuf);
-    g_free(buf);
-}
-
-#else
-
-void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
-{
-    gchar *buf;
-    int count = 0;
-    size_t sz, fullsz, len, diff;
-    char *replace = NULL, *find = NULL;
-    char *modbuf, *p, *q;
-    gchar *old;
-    struct search_replace *s;
-    GtkTextBuffer *gedit;
-    GtkTextIter sel_start, sel_end, start, end;
-    gboolean selected = FALSE;
-
-    s = mymalloc(sizeof *s);
-    if (s == NULL) return;
-
-    replace_string_dialog(s);
-
-    if (s->f_text == NULL || s->r_text == NULL) {
-	free(s);
-	return;
-    }
-
-    find = s->f_text;
-    replace = s->r_text;
-
-    if (!strlen(find)) {
-	free(find);
-	free(replace);
-	free(s);
-	return;
-    }
-
-    gedit = gtk_text_view_get_buffer(GTK_TEXT_VIEW(mydata->w));
-
-    gtk_text_buffer_get_start_iter(gedit, &start);
-    gtk_text_buffer_get_end_iter(gedit, &end);
-
-    if (gtk_text_buffer_get_selection_bounds(gedit, &sel_start, &sel_end)) {
-	selected = TRUE;
-	buf = gtk_text_buffer_get_text(gedit, &sel_start, &sel_end, FALSE);
-    } else {
-	buf = gtk_text_buffer_get_text(gedit, &start, &end, FALSE);
-    }
-
-    if (buf == NULL || !(sz = strlen(buf))) return;
-
-    fullsz = gtk_text_buffer_get_char_count(gedit);
-
-    len = strlen(find);
-    diff = strlen(replace) - len;
-
-    p = buf;
-    while (*p && (size_t) (p - buf) <= fullsz) {
-	if ((q = strstr(p, find))) {
-	    count++;
-	    p = q + 1;
-	}
-	else break;
-    }
-
-    if (count) {
-	fullsz += count * diff;
-    } else {
-	errbox(_("String to replace was not found"));
-	g_free(buf);
-	return;
-    }
-
-    modbuf = mymalloc(fullsz + 1);
-    if (modbuf == NULL) {
-	free(find);
-	free(replace);
-	free(s);
-	return;
-    }
-
-    *modbuf = '\0';
-
-    if (selected) {
-	gchar *tmp = gtk_text_buffer_get_text(gedit, &start, &sel_start, FALSE);
-
-	if (tmp != NULL) {
-	    strcat(modbuf, tmp);
-	    g_free(tmp);
-	}
-    }
-
-    p = buf;
-    while (*p && (size_t) (p - buf) <= fullsz) {
-	if ((q = strstr(p, find))) {
-	    strncat(modbuf, p, q - p);
-	    strcat(modbuf, replace);
-	    p = q + len;
-	} else {
-	    strcat(modbuf, p);
-	    break;
-	}
-    }
-
-    if (selected) {
-	gchar *tmp = gtk_text_buffer_get_text(gedit, &sel_end, &end, FALSE);
-
-	if (tmp != NULL) {
-	    strcat(modbuf, tmp);
-	    g_free(tmp);
-	}
-    }    
-
-    /* save original buffer for "undo" */
-    old = g_object_steal_data(G_OBJECT(mydata->w), "undo");
-    if (old != NULL) {
-	g_free(old);
-    }
-
-    g_object_set_data(G_OBJECT(mydata->w), "undo", 
-		      gtk_text_buffer_get_text(gedit, &start, &end, FALSE));
-
-    /* now insert the modified buffer */
-    gtk_text_buffer_delete(gedit, &start, &end);
-    gtk_text_buffer_insert(gedit, &start, modbuf, strlen(modbuf));
-
-    /* and clean up */
-    free(find);
-    free(replace);
-    free(s);
-    free(modbuf);
-    g_free(buf);
-}
-
-#endif /* !OLD_GTK */
 
 #include "../cli/common.c"

@@ -108,7 +108,8 @@ LIBOBJ = $(LIBSRC:.c=.o)
 CLISRC = gretlcli.c complete.c 
 CLIOBJ = $(CLISRC:.c=.o)
 
-GUISRC = boxplots.c \
+GUISRC = about.c \
+	boxplots.c \
 	calculator.c \
 	callbacks.c \
 	console.c \
@@ -133,6 +134,7 @@ GUISRC = boxplots.c \
 	settings.c \
 	ssheet.c \
 	textbuf.c \
+	textutil.c \
 	treeutils.c \
 	webget.c
 

@@ -26,6 +26,7 @@
 #include "datafiles.h"
 #include "ssheet.h"
 #include "textbuf.h"
+#include "textutil.h"
 
 #ifdef OLD_GTK
 # include <gtkextra/gtkiconfilesel.h>
@@ -783,20 +784,17 @@ static void fix_obsstr (char *str)
     }
 }
 
-static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
+static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
 {
-#ifndef OLD_GTK
-    const gchar *edttext;
-#else
-    gchar *edttext;
-#endif
+    const gchar *buf;
     char dataspec[32];
     char *test, stobs[OBSLEN], endobs[OBSLEN], firstvar[VNAMELEN];
     double sd0, ed0;
 
-    edttext = gtk_entry_get_text(GTK_ENTRY(data->edit));
-    strncpy(dataspec, edttext, 31);
-    if (dataspec[0] == '\0') return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
+
+    strncpy(dataspec, buf, 31);
 
     /* check validity of dataspec */
     if (sscanf(dataspec, "%8s %8s %8s", stobs, endobs, firstvar) != 3) {
@@ -909,7 +907,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	}	    
     }
 
-    gtk_widget_destroy(data->dialog); 
+    close_dialog(ddata);
 
     strcpy(datainfo->stobs, stobs);
     strcpy(datainfo->endobs, endobs);

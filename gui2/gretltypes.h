@@ -24,15 +24,7 @@
 # include <gtksourceview/gtksourceview.h>
 #endif
 
-typedef struct _dialog_t dialog_t;
 typedef struct _windata_t windata_t;
-
-struct _dialog_t {
-    GtkWidget *dialog;
-    GtkWidget *edit;
-    gpointer data;
-    gint code;
-};
 
 struct _windata_t {
     GtkWidget *dialog;

@@ -49,10 +49,6 @@ void set_replay_off (void);
 
 const int *get_cmd_list (void);
 
-int blank_entry (const char *entry, dialog_t *ddata);
-
-void close_dialog (dialog_t *ddata);
-
 char *user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);
@@ -88,6 +84,8 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata);
 void count_missing (void);
 
 void do_add_markers (GtkWidget *widget, dialog_t *ddata);
+
+int dataset_is_subsampled (void);
 
 int maybe_restore_full_data (int action);
 
@@ -219,8 +217,6 @@ void do_open_script (void);
 
 void open_info (gpointer data, guint edit, GtkWidget *widget);
 
-void view_script_default (void);
-
 void do_new_script (gpointer data, guint action, GtkWidget *widget);
 
 void do_open_csv_box (char *fname, int code, int append);
@@ -235,8 +231,6 @@ void do_save_text (char *fname, MODEL *pmod);
 
 int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code);
-
-void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
 
 int verify_and_record_command (char *line);
 

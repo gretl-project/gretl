@@ -22,16 +22,9 @@
 #include "gretl.h"
 #include "session.h"
 #include "obsbutton.h"
-#include "textbuf.h"
 
-#ifdef G_OS_WIN32 
-# include "../lib/src/version.h"
-# include "build.h"
-#else 
-extern const char *version_string;
-#endif
-
-#include "selector.h"
+#include "textbuf.h" /* ? */
+#include "selector.h" /* ? */
 
 GtkWidget *active_edit_id;
 GtkWidget *active_edit_name;
@@ -42,18 +35,119 @@ extern int work_done (void); /* library.c */
 GtkWidget *open_dialog;
 int session_saved;
 
+struct dialog_t_ {
+    GtkWidget *dialog;
+    GtkWidget *edit;
+    gpointer data;
+    gint code;
+    gretlopt opt;
+};
+
 /* ........................................................... */
 
-void destroy_dialog_data (GtkWidget *w, gpointer data) 
+static void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     dialog_t *ddata = (dialog_t *) data;
 
-    /* FIXME? */
+#ifdef OLD_GTK
+    gtk_main_quit();
+#endif
+
     g_free (ddata);
     open_dialog = NULL;
     if (active_edit_id) active_edit_id = NULL;
     if (active_edit_name) active_edit_name = NULL;
     if (active_edit_text) active_edit_text = NULL;
+}
+
+static dialog_t *dialog_data_new (gpointer data, gint code)
+{
+    dialog_t *d = mymalloc(sizeof *d);
+
+    if (d == NULL) return NULL;
+
+    d->data = data;
+    d->code = code;
+    d->opt = OPT_NONE;
+    d->dialog = gtk_dialog_new();
+
+    gtk_box_set_homogeneous (GTK_BOX 
+			     (GTK_DIALOG (d->dialog)->action_area), TRUE);
+    gtk_window_set_position (GTK_WINDOW (d->dialog), GTK_WIN_POS_MOUSE);
+
+#ifndef OLD_GTK
+    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
+		      G_CALLBACK (destroy_dialog_data), 
+		      d);
+#else
+    gtk_signal_connect (GTK_OBJECT (d->dialog), "destroy", 
+			GTK_SIGNAL_FUNC (destroy_dialog_data), 
+			d);
+#endif
+
+    return d;
+}
+
+void close_dialog (dialog_t *ddata)
+{
+    gtk_widget_destroy(ddata->dialog);
+}
+
+/* ........................................................... */
+
+gchar *dialog_data_special_get_text (dialog_t *ddata)
+{
+    gchar *buf;
+
+#ifdef OLD_GTK
+    buf = gtk_editable_get_chars(GTK_EDITABLE(ddata->edit), 0, -1);
+#else
+    buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
+#endif
+
+    if (buf == NULL || *buf == '\0') {
+	g_free(buf);
+	gtk_widget_destroy(ddata->dialog);
+	return NULL;
+    }
+
+    return buf;
+}
+
+const gchar *dialog_data_get_text (dialog_t *ddata)
+{
+    const gchar *buf;
+
+    buf = gtk_entry_get_text(GTK_ENTRY(ddata->edit));
+
+    if (buf == NULL || *buf == '\0') {
+	if (ddata->code != CORRGM) {
+	    gtk_widget_destroy(ddata->dialog);
+	}
+	return NULL;
+    }
+
+    return buf;
+}
+
+int dialog_data_get_action (const dialog_t *ddata)
+{
+    return ddata->code;
+}
+
+gretlopt dialog_data_get_opt (const dialog_t *ddata)
+{
+    return ddata->opt;
+}
+
+gpointer dialog_data_get_data (dialog_t *ddata)
+{
+    return ddata->data;
+}
+
+GtkWidget *dialog_data_get_vbox (dialog_t *ddata)
+{
+    return GTK_DIALOG(ddata->dialog)->vbox;
 }
 
 /* ........................................................... */
@@ -78,6 +172,24 @@ static void dialog_table_setup (dialog_t *dlg, int hsize)
 
 /* ........................................................... */
 
+#ifdef OLD_GTK
+
+static GtkWidget *text_edit_new (int *hsize)
+{
+    GtkWidget *tbuf;
+
+    tbuf = gtk_text_new(NULL, NULL);
+
+    gtk_text_set_editable(GTK_TEXT(tbuf), TRUE);
+    gtk_text_set_word_wrap(GTK_TEXT(tbuf), FALSE);
+    *hsize *= gdk_char_width(fixed_font, 'W');
+    *hsize += 48;
+
+    return tbuf;
+}
+
+#else
+
 static GtkWidget *text_edit_new (int *hsize)
 {
     GtkTextBuffer *tbuf;
@@ -99,6 +211,92 @@ static GtkWidget *text_edit_new (int *hsize)
     return tview;
 }
 
+#endif
+
+/* ........................................................... */
+
+static void set_cumulate_restrictions (GtkWidget *w, gpointer p)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	fprintf(stderr, "Active\n");
+    } else {
+	fprintf(stderr, "Not active\n");
+    }
+}
+
+static void sample_cumulate_buttons (GtkWidget *box, gpointer data)
+{
+    GtkWidget *tmp;
+    GSList *group;
+
+    /* replace current sample restriction */
+    tmp = gtk_radio_button_new_with_label(NULL, _("replace current restriction"));
+    gtk_box_pack_start(GTK_BOX(box), tmp, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    gtk_widget_show (tmp);
+
+    /* add to current sample restriction */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
+    tmp = gtk_radio_button_new_with_label(group, _("add to current restriction"));
+    gtk_box_pack_start(GTK_BOX(box), tmp, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_cumulate_restrictions), data);
+    gtk_widget_show(tmp);
+}
+
+/* ........................................................... */
+
+static void context_help_button (GtkWidget *box, int cmdcode)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_HELP);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, TRUE, 0);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(w), "clicked", 
+		       GTK_SIGNAL_FUNC(context_help), 
+		       GINT_TO_POINTER(cmdcode));
+#else
+    g_signal_connect(G_OBJECT(w), "clicked", 
+		     G_CALLBACK(context_help), 
+		     GINT_TO_POINTER(cmdcode));
+#endif
+    gtk_widget_show (w);
+}
+
+static GtkWidget *cancel_delete_button (GtkWidget *box, GtkWidget *targ)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_CANCEL);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, TRUE, 0);
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(w), "clicked", 
+			GTK_SIGNAL_FUNC(delete_widget), 
+			targ);
+#else
+    g_signal_connect (G_OBJECT(w), "clicked", 
+		      G_CALLBACK(delete_widget), 
+		      targ);
+#endif
+    gtk_widget_show(w);
+
+    return w;
+}
+
+static GtkWidget *ok_button (GtkWidget *box)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, TRUE, 0);
+
+    return w;
+}
+
 /* ........................................................... */
 
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
@@ -107,31 +305,24 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 {
     dialog_t *d;
     GtkWidget *tempwid;
+    GtkWidget *top_vbox, *button_box;
 
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;
     }
 
-    d = mymalloc(sizeof *d);
+    d = dialog_data_new(okptr, cmdcode);
     if (d == NULL) return;
 
-    d->data = okptr;
-    d->code = cmdcode;
-
-    d->dialog = gtk_dialog_new();
     open_dialog = d->dialog;
 
-    gtk_window_set_title (GTK_WINDOW (d->dialog), diagtxt);
-    gtk_window_set_resizable (GTK_WINDOW (d->dialog), FALSE);
+    gtk_window_set_title(GTK_WINDOW(d->dialog), diagtxt);
+    gtk_window_set_resizable(GTK_WINDOW(d->dialog), FALSE);
 
-    gtk_box_set_homogeneous (GTK_BOX 
-			     (GTK_DIALOG (d->dialog)->action_area), TRUE);
-    gtk_window_set_position (GTK_WINDOW (d->dialog), GTK_WIN_POS_MOUSE);
-
-    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
-		      G_CALLBACK (destroy_dialog_data), 
-		      d);
+    /* convenience pointers */
+    top_vbox = GTK_DIALOG(d->dialog)->vbox;
+    button_box = GTK_DIALOG(d->dialog)->action_area;
 
     if (cmdcode == NLS || cmdcode == RESTRICT) {
 	int hsize = 62;
@@ -139,37 +330,38 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
 	lbl = g_strdup_printf("%s\n%s", infotxt,
 			      _("(Please refer to Help for guidance)"));
-	tempwid = gtk_label_new (lbl);
+	tempwid = gtk_label_new(lbl);
 	gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			    tempwid, TRUE, TRUE, 10);
-	gtk_widget_show (tempwid);
+	gtk_box_pack_start(GTK_BOX(top_vbox), tempwid, TRUE, TRUE, 10);
+	gtk_widget_show(tempwid);
 	g_free(lbl);
 
-	d->edit = text_edit_new (&hsize);
+	d->edit = text_edit_new(&hsize);
 	dialog_table_setup(d, hsize);
     } else {
-	tempwid = gtk_label_new (infotxt);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			    tempwid, TRUE, TRUE, 5);
+	tempwid = gtk_label_new(infotxt);
+	gtk_box_pack_start (GTK_BOX(top_vbox), tempwid, TRUE, TRUE, 5);
 	gtk_widget_show (tempwid);
 
-	d->edit = gtk_entry_new ();
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
-			   d->edit, TRUE, TRUE, 0);
+	d->edit = gtk_entry_new();
+	gtk_box_pack_start(GTK_BOX(top_vbox), d->edit, TRUE, TRUE, 5);
 
 	/* make the Enter key do the business */
 	if (okfunc) {
 	    g_signal_connect (G_OBJECT (d->edit), "activate", 
-			      G_CALLBACK (okfunc), (gpointer) d);
+			      G_CALLBACK (okfunc), d);
 	}
 	
 	if (deftext) {
-	    gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
-	    gtk_editable_select_region (GTK_EDITABLE(d->edit), 0, strlen(deftext));
+	    gtk_entry_set_text(GTK_ENTRY(d->edit), deftext);
+	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deftext));
 	}
 
-	gtk_widget_show (d->edit);
+	gtk_widget_show(d->edit);
+    }
+
+    if (cmdcode == SMPLBOOL && dataset_is_subsampled()) {
+	sample_cumulate_buttons(top_vbox, d);
     }
 
     if (varclick == VARCLICK_INSERT_ID) 
@@ -179,265 +371,35 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     else if (varclick == VARCLICK_INSERT_TEXT) 
 	active_edit_text = d->edit;
 
-    gtk_widget_grab_focus (d->edit);
+    gtk_widget_grab_focus(d->edit);
 
     /* Create the "OK" button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
-			tempwid, TRUE, TRUE, 0);
+    tempwid = ok_button(button_box);
     if (okfunc) {
-	g_signal_connect (G_OBJECT (tempwid), "clicked", 
-			  G_CALLBACK (okfunc), (gpointer) d);
+	g_signal_connect (G_OBJECT(tempwid), "clicked", 
+			  G_CALLBACK(okfunc), d);
     }
-
-    gtk_widget_grab_default (tempwid);
-    gtk_widget_show (tempwid);
+    gtk_widget_grab_default(tempwid);
+    gtk_widget_show(tempwid);
 
     /* Create a "Cancel" button */
     if (cmdcode != CREATE_USERDIR) {
-	tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
-			    tempwid, TRUE, TRUE, 0);
-	g_signal_connect (G_OBJECT (tempwid), "clicked", 
-			  G_CALLBACK (delete_widget), 
-			  d->dialog);
-	gtk_widget_show (tempwid);
+	cancel_delete_button(button_box, d->dialog);
     }
 
     /* Create a "Help" button if wanted */
     if (cmdcode && cmdcode != PRINT && cmdcode != CREATE_USERDIR) {
-	tempwid = gtk_button_new_from_stock(GTK_STOCK_HELP);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
-			    tempwid, TRUE, TRUE, 0);
-	g_signal_connect (G_OBJECT (tempwid), "clicked", 
-			  G_CALLBACK (context_help), 
-			  GINT_TO_POINTER (cmdcode));
-	gtk_widget_show (tempwid);
+	context_help_button(button_box, cmdcode);
     }
 
     gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);
+
     gtk_widget_show(d->dialog); 
-} 
 
-#ifdef USE_GNOME
-
-void about_dialog (gpointer data)
-{
-    static GtkWidget *about = NULL;
-    gchar *pixfile;
-    GdkPixbuf* pbuf = NULL;
-	
-    gchar *authors[] = {
-	"Allin Cottrell <cottrell@wfu.edu>",
-	NULL
-    };
-    gchar *documenters[] = {
-	"Allin Cottrell <cottrell@wfu.edu>",
-	NULL
-    };
-    gchar *translator_credits = _("translator_credits");
-
-    if (about != NULL) {
-	gdk_window_show (about->window);
-	gdk_window_raise (about->window);
-	return;
-    }
-
-    pixfile = gnome_program_locate_file(NULL,
-					GNOME_FILE_DOMAIN_PIXMAP,
-					"gretl-logo.xpm",
-					TRUE,
-					NULL);
-
-    if (pixfile != NULL) {
-	pbuf = gdk_pixbuf_new_from_file(pixfile, NULL);
-    } else {
-	fprintf(stderr, "Couldn't find gretl-logo.xpm\n");
-    }
-
-    about = gnome_about_new ("gretl", version_string,
-			     "(C) 2000-2004 Allin Cottrell",
-			     _("An econometrics program for the gnome desktop "
-			       "issued under the GNU General Public License.  "
-			       "http://gretl.sourceforge.net/"),
-			     (const char **)authors,
-			     (const char **)documenters,
-			     strcmp (translator_credits, "translator_credits") != 0 ?
-			     (const char *)translator_credits : NULL,
-			     pbuf);
-
-    gtk_window_set_transient_for (GTK_WINDOW (about),
-				  GTK_WINDOW (mdata->w));
-
-    gtk_window_set_destroy_with_parent (GTK_WINDOW (about), TRUE);
-
-    if (pbuf != NULL)
-	g_object_unref(pbuf);
-	
-    g_signal_connect (G_OBJECT (about), "destroy",
-		      G_CALLBACK (gtk_widget_destroyed), &about);
-	
-    gtk_widget_show (about);
-}
-
-#else /* plain GTK version of About dialog follows */
-
-static GtkWidget *open_logo (const char *pngname)
-{
-    char fullname[MAXLEN];
-    GdkPixbuf *pbuf;
-    GError *error = NULL;
-    GtkWidget *image;
-
-    build_path(paths.gretldir, pngname, fullname, NULL);
-
-    pbuf = gdk_pixbuf_new_from_file (fullname, &error);
-
-    if (pbuf == NULL) {
-	errbox(error->message);
-	g_error_free(error);
-	return NULL;
-    } else {
-	image = gtk_image_new_from_pixbuf (pbuf);
-	return image;
-    }
-}
-
-static void about_table_setup (GtkWidget *vbox, GtkWidget *view)
-{
-    GtkWidget *sw;
-
-    sw = gtk_scrolled_window_new (NULL, NULL);
-    gtk_box_pack_start(GTK_BOX(vbox), 
-                       sw, TRUE, TRUE, FALSE);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
-                                    GTK_POLICY_AUTOMATIC,
-                                    GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
-                                         GTK_SHADOW_IN);
-    gtk_container_add (GTK_CONTAINER(sw), view); 
-    gtk_widget_show(view);
-    gtk_widget_show(sw);
-}
-
-void about_dialog (gpointer data) 
-{
-    GtkWidget *notebook, *box, *label, *tempwid;
-    GtkWidget *view, *dialog;
-    GtkTextBuffer *tbuf;
-    GtkTextIter iter;
-    char *tempstr, *no_gpl, buf[MAXSTR];
-    const gchar *tr_credit = "";
-    FILE *fd;
-
-    no_gpl = 
-	g_strdup_printf (_("Cannot find the license agreement file COPYING. "
-			   "Please make sure it's in %s"), 
-			 paths.gretldir);
-    dialog = gtk_dialog_new ();
-    gtk_window_set_title(GTK_WINDOW(dialog),_("About gretl")); 
-    gtk_container_set_border_width (GTK_CONTAINER 
-				(GTK_DIALOG (dialog)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				(GTK_DIALOG (dialog)->action_area), 5);
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
-    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
-      
-    notebook = gtk_notebook_new ();
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
-			notebook, TRUE, TRUE, 0);
-
-    /* construct the first page */
-    box = gtk_vbox_new (FALSE, 5);
-    gtk_container_set_border_width (GTK_CONTAINER (box), 10);
-    gtk_widget_show (box);
-
-    if ((tempwid = open_logo("gretl-logo.xpm"))) {
-	gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 30);
-	gtk_widget_show (tempwid);
-    }
-
-#ifdef ENABLE_NLS
-    if (strcmp(_("translator_credits"), "translator_credits")) {
-	tr_credit = _("translator_credits");
-    }
-#endif    
-    
-    tempstr = g_strdup_printf ("gretl, version %s\n"
-#ifdef G_OS_WIN32
-			       BUILD_DATE
+#ifdef OLD_GTK
+    gtk_main();
 #endif
-			       "Copyright (C) 2000-2004 Allin Cottrell "
-			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://gretl.sourceforge.net/\n"
-			       "%s", version_string, tr_credit);
-    tempwid = gtk_label_new (tempstr);
-    g_free (tempstr);
-
-    gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
-    gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 0);
-    gtk_widget_show (tempwid);
-
-    gtk_widget_show(box);
-
-    label = gtk_label_new (_("About"));
-    gtk_widget_show (label);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, label);
-
-    /* now the second page */
-    box = gtk_vbox_new (FALSE, 5);
-    gtk_container_set_border_width (GTK_CONTAINER (box), 10);
-
-    view = gtk_text_view_new ();
-    gtk_text_view_set_editable (GTK_TEXT_VIEW (view), FALSE);
-    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (view), GTK_WRAP_NONE);
-    gtk_widget_modify_font(GTK_WIDGET(view), fixed_font);
-
-    about_table_setup(box, view);
-
-    gtk_widget_show (box);
-
-    label = gtk_label_new (_("License Agreement"));
-    gtk_widget_show (label);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, label);
-
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
-			tempwid, FALSE, FALSE, 0);
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (delete_widget), 
-		      dialog);
-    gtk_widget_grab_default (tempwid);
-    gtk_widget_show (tempwid);
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
-    gtk_text_buffer_get_iter_at_offset (tbuf, &iter, 0);
-
-    tempstr = g_strdup_printf("%s/COPYING", paths.gretldir);
-    if ((fd = fopen (tempstr, "r")) == NULL) {
-	gtk_text_buffer_insert (tbuf, &iter, no_gpl, -1);
-	gtk_widget_show (dialog);
-	g_free (tempstr);
-	return;
-    }
-    g_free(tempstr);
-   
-    memset (buf, 0, sizeof (buf));
-    while (fread (buf, 1, sizeof (buf) - 1, fd)) {
-	gtk_text_buffer_insert (tbuf, &iter, buf, strlen (buf));
-	memset (buf, 0, sizeof (buf));
-    }
-    fclose (fd);
-
-    gtk_widget_show(notebook);
-    gtk_widget_set_size_request(dialog, 520, 420);
-    gtk_widget_show(dialog);
-    g_free(no_gpl);
-}         
-#endif /* not GNOME */
+} 
 
 /* ........................................................... */
 
@@ -494,9 +456,12 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
     gtk_widget_destroy (dialog);
 
     switch (ret) {
-    case GTK_RESPONSE_ACCEPT: return GRETL_YES; 
-    case GTK_RESPONSE_NO: return GRETL_NO; 
-    default: return GRETL_CANCEL;
+    case GTK_RESPONSE_ACCEPT: 
+	return GRETL_YES; 
+    case GTK_RESPONSE_NO: 
+	return GRETL_NO; 
+    default: 
+	return GRETL_CANCEL;
     }
 }
 
@@ -614,6 +579,25 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     gtk_main_quit();
 }
 
+static void set_dialog_border_widths (GtkWidget *dlg)
+{
+    int w1 = 10, w2 = 5;
+
+#ifdef OLD_GTK
+    gtk_container_border_width(GTK_CONTAINER 
+			       (GTK_DIALOG(dlg)->vbox), w1);
+    gtk_container_border_width(GTK_CONTAINER 
+			       (GTK_DIALOG(dlg)->action_area), w2);
+#else
+    gtk_container_set_border_width(GTK_CONTAINER 
+				   (GTK_DIALOG(dlg)->vbox), w1);
+    gtk_container_set_border_width(GTK_CONTAINER 
+				   (GTK_DIALOG(dlg)->action_area), w2);
+#endif
+
+    gtk_box_set_spacing (GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
+}
+
 void delimiter_dialog (void)
 {
     GtkWidget *dialog, *tempwid, *button, *hbox;
@@ -623,6 +607,7 @@ void delimiter_dialog (void)
 
     csvptr = mymalloc(sizeof *csvptr);
     if (csvptr == NULL) return;
+
     csvptr->delim = datainfo->delim;
     csvptr->decpoint = '.';
     csvptr->point_button = NULL;
@@ -631,13 +616,10 @@ void delimiter_dialog (void)
 
     gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: data delimiter"));
     gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (dialog)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (dialog)->action_area), 5);
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
 
-    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+    set_dialog_border_widths(dialog);
+
+    gtk_window_set_position(GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect (G_OBJECT(dialog), "destroy", 
 		      G_CALLBACK(destroy_delim_dialog), csvptr);
@@ -741,10 +723,7 @@ void delimiter_dialog (void)
     gtk_widget_show (hbox);
 
     /* Create the "OK" button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
-			tempwid, TRUE, TRUE, 0);
+    tempwid = ok_button(GTK_DIALOG (dialog)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(really_set_csv_stuff), csvptr);
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
@@ -773,7 +752,11 @@ static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
 static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 {
     gtk_widget_hide(finfo->dialog);
+#ifdef OLD_GTK /* is there a real difference? */
+    text_copy(finfo->vwin, finfo->format, NULL);
+#else
     text_copy(finfo->vwin, finfo->format, w);
+#endif
     gtk_widget_destroy(finfo->dialog);
 }
 
@@ -816,11 +799,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 
     gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: copy formats"));
     gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (dialog)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (dialog)->action_area), 5);
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+
+    set_dialog_border_widths(dialog);
 
     gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
 
@@ -922,22 +902,14 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     gtk_widget_show (hbox);
 
     /* Create the "OK" button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
-			tempwid, TRUE, TRUE, 0);
+    tempwid = ok_button(GTK_DIALOG (dialog)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(copy_with_format_callback), finfo);
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
     /* "Cancel" button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
-			tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
-		     G_CALLBACK(delete_widget), dialog);
-    gtk_widget_show (tempwid);
+    cancel_delete_button(GTK_DIALOG (dialog)->action_area, dialog);
 
     gtk_widget_show(dialog);
 
@@ -953,6 +925,31 @@ struct varinfo_settings {
     int varnum;
     int full;
 };
+
+#ifdef OLD_GTK
+
+static void show_varinfo_changes (int v) 
+{
+    gchar *idstr;
+    int i, row = 0;
+
+    for (i=1; i<datainfo->v; i++) {
+	gtk_clist_get_text(GTK_CLIST(mdata->listbox), i, 0, &idstr);
+	if (atoi(idstr) == v) {
+	    row = i;
+	    break;
+	}
+    }
+
+    if (row == 0) return;
+
+    gtk_clist_set_text (GTK_CLIST(mdata->listbox), row,
+			1, datainfo->varname[v]);
+    gtk_clist_set_text (GTK_CLIST(mdata->listbox), row,
+			2, VARLABEL(datainfo, v));
+}
+
+#else
 
 static void show_varinfo_changes (int v) 
 {
@@ -981,6 +978,8 @@ static void show_varinfo_changes (int v)
 			-1);
     g_free(idstr);
 }
+
+#endif
 
 static char *trim_text (const char *s)
 {
@@ -1049,6 +1048,19 @@ static void really_set_variable_info (GtkWidget *w,
 	free(newstr);
     }
 
+#ifdef OLD_GTK
+    if (vset->compaction_menu != NULL) { 
+	GtkWidget *active_item;
+
+	active_item = GTK_OPTION_MENU(vset->compaction_menu)->menu_item;
+	comp_method = GPOINTER_TO_INT(gtk_object_get_data
+				      (GTK_OBJECT(active_item), "option"));
+	if (comp_method != COMPACT_METHOD(datainfo, v)) {
+	    COMPACT_METHOD(datainfo, v) = comp_method;
+	    comp_changed = 1;
+	}
+    }
+#else
     if (vset->compaction_menu != NULL) {
 	comp_method = 
 	    gtk_option_menu_get_history(GTK_OPTION_MENU(vset->compaction_menu));
@@ -1057,6 +1069,7 @@ static void really_set_variable_info (GtkWidget *w,
 	    comp_changed = 1;
 	}
     }
+#endif
 
     if (vset->full) {
 	if (changed) {
@@ -1122,11 +1135,9 @@ void varinfo_dialog (int varnum, int full)
 		      G_CALLBACK(free_vsettings), vset);
 
     gtk_window_set_title(GTK_WINDOW(vset->dlg), _("gretl: variable attributes"));
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (vset->dlg)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (vset->dlg)->action_area), 5); 
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (vset->dlg)->vbox), 5);
+
+    set_dialog_border_widths(vset->dlg);
+
     gtk_window_set_position (GTK_WINDOW (vset->dlg), GTK_WIN_POS_MOUSE);
 
     /* read/set name of variable */
@@ -1229,10 +1240,7 @@ void varinfo_dialog (int varnum, int full)
     }
 
     /* Create the "OK" button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (vset->dlg)->action_area), 
-			tempwid, TRUE, TRUE, 0);
+    tempwid = ok_button(GTK_DIALOG (vset->dlg)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(really_set_variable_info), vset);
     gtk_widget_grab_default (tempwid);
@@ -1249,14 +1257,8 @@ void varinfo_dialog (int varnum, int full)
 
     /* And a Help button? */
     if (full) {
-	tempwid = gtk_button_new_from_stock(GTK_STOCK_HELP);
-	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
-			    tempwid, TRUE, TRUE, 0);
-	g_signal_connect (G_OBJECT (tempwid), "clicked", 
-			  G_CALLBACK (context_help), 
-			  GINT_TO_POINTER(LABEL));
-	gtk_widget_show (tempwid);
+	context_help_button(GTK_DIALOG(vset->dlg)->action_area,
+			    LABEL);
     }
 
     gtk_widget_show (vset->dlg);
@@ -1277,12 +1279,6 @@ struct range_setting {
 static void free_rsetting (GtkWidget *w, struct range_setting *rset)
 {
     free(rset);
-}
-
-static gboolean destroy_rset (GtkWidget *w, GtkWidget *dlg)
-{
-    gtk_widget_destroy(dlg);
-    return TRUE;
 }
 
 static gboolean
@@ -1398,11 +1394,9 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 		      G_CALLBACK(free_rsetting), rset);
 
     gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: set sample"));
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (rset->dlg)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (rset->dlg)->action_area), 5); 
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (rset->dlg)->vbox), 5);
+
+    set_dialog_border_widths(rset->dlg);
+
     gtk_window_set_position (GTK_WINDOW (rset->dlg), GTK_WIN_POS_MOUSE);
 
     if (u == SMPLDUM) {
@@ -1499,21 +1493,13 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     }
 
     /* Create the "OK" button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (rset->dlg)->action_area), 
-			tempwid, TRUE, TRUE, 0);
+    tempwid = ok_button(GTK_DIALOG (rset->dlg)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(set_sample_from_dialog), rset);
-    gtk_widget_grab_default (tempwid);
+    gtk_widget_grab_default(tempwid);
 
     /* And a Cancel button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(rset->dlg)->action_area), 
-			tempwid, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK(destroy_rset), rset->dlg);
+    cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg);
 
     gtk_widget_show_all(rset->dlg);
 }
@@ -1546,8 +1532,13 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
     int ar, ma;
     gretlopt aopt = OPT_NONE;
 
+#ifdef OLD_GTK
+    ar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->arspin));
+    ma = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->maspin));
+#else
     ar = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->arspin));
     ma = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->maspin));
+#endif
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck))) {
 	aopt |= OPT_V;
     }
@@ -1578,11 +1569,9 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 		      G_CALLBACK(free_arma_opts), opts);
 
     gtk_window_set_title(GTK_WINDOW(opts->dlg), _("ARMA"));
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (opts->dlg)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (opts->dlg)->action_area), 5); 
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (opts->dlg)->vbox), 5);
+
+    set_dialog_border_widths(opts->dlg);
+
     gtk_window_set_position (GTK_WINDOW (opts->dlg), GTK_WIN_POS_MOUSE);
 
     /* horizontal box for spinners */
@@ -1635,10 +1624,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 #endif /* HAVE_X12A */
     
     /* Create the "OK" button */
-    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (opts->dlg)->action_area), 
-			tmp, TRUE, TRUE, 0);
+    tmp = ok_button(GTK_DIALOG (opts->dlg)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(exec_arma_opts), opts);
     gtk_widget_grab_default (tmp);
@@ -1651,15 +1637,437 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 		      G_CALLBACK(destroy_arma_opts), opts->dlg);
 
     /* plus Help */
-    tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(opts->dlg)->action_area), 
-			tmp, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT (tmp), "clicked", 
-		      G_CALLBACK(context_help), 
-		      GINT_TO_POINTER(ARMA));
+    context_help_button(GTK_DIALOG(opts->dlg)->action_area, ARMA);
 
     gtk_widget_show_all(opts->dlg);
 }
+
+/* .................................................................. */
+
+static void really_set_panel_code (GtkWidget *w, dialog_t *d)
+{
+    DATAINFO *pdinfo = (DATAINFO *) d->data;
+
+    pdinfo->time_series = d->code;
+    set_sample_label(pdinfo);
+    d->data = NULL;
+}
+
+/* .................................................................. */
+
+static void set_panel_code (GtkWidget *w, dialog_t *d)
+{
+    gint i;
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+#ifndef OLD_GTK
+	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+#else
+	i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+#endif
+	d->code = i;
+    }
+}
+
+static gint dialog_unblock (GtkWidget *w, gpointer p)
+{
+    gtk_main_quit();
+    return FALSE;
+}
+
+#ifndef OLD_GTK
+
+void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
+{
+    dialog_t *d;
+    GtkWidget *button;
+    GtkWidget *tempwid;
+    GSList *group;
+
+    d = dialog_data_new(pdinfo, (dataset_is_panel(pdinfo))?
+			pdinfo->time_series : STACKED_TIME_SERIES);
+    if (d == NULL) return;
+    
+    w = d->dialog;
+
+    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel structure"));
+    gtk_window_set_resizable (GTK_WINDOW (d->dialog), FALSE);
+
+    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
+		      G_CALLBACK (dialog_unblock), NULL);
+
+    button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, 0);
+    if (d->code == STACKED_TIME_SERIES)
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_panel_code), d);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(STACKED_TIME_SERIES));
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("Stacked cross sections"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, 0);
+    if (d->code == STACKED_CROSS_SECTION)
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_panel_code), d);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(STACKED_CROSS_SECTION));
+    gtk_widget_show (button);
+
+    /* Create the "OK" button */
+    tempwid = ok_button(GTK_DIALOG(d->dialog)->action_area);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(really_set_panel_code), d);
+    g_signal_connect(G_OBJECT (tempwid), "clicked", 
+		     G_CALLBACK (delete_widget), 
+		     d->dialog);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* Create the "Cancel" button */
+    cancel_delete_button(GTK_DIALOG (d->dialog)->action_area, d->dialog);
+
+    /* Create a "Help" button */
+    context_help_button(GTK_DIALOG (d->dialog)->action_area, PANEL);
+
+    gtk_widget_show (d->dialog);
+    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(mdata->w));
+
+    gtk_main();
+}
+
+#else /* now the old gtk version */
+
+void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
+{
+    dialog_t *d;
+    GtkWidget *button;
+    GtkWidget *tempwid;
+    GSList *group;
+
+    d = dialog_data_new(pdinfo, (dataset_is_panel(pdinfo))?
+			pdinfo->time_series : STACKED_TIME_SERIES);
+    if (d == NULL) return;
+
+    w = d->dialog;
+
+    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel structure"));
+    gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
+
+    set_dialog_border_widths(d->dialog);
+
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
+
+    gtk_signal_connect (GTK_OBJECT (d->dialog), "destroy", 
+			GTK_SIGNAL_FUNC (dialog_unblock), NULL);
+
+    button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, 0);
+    if (d->code == STACKED_TIME_SERIES)
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_panel_code), d);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(STACKED_TIME_SERIES));
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("Stacked cross sections"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, 0);
+    if (d->code == STACKED_CROSS_SECTION)
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_panel_code), d);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(STACKED_CROSS_SECTION));
+    gtk_widget_show(button);
+
+    /* Create the "OK" button */
+    ok_button(GTK_DIALOG(d->dialog)->action_area);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+                       GTK_SIGNAL_FUNC(really_set_panel_code), d);
+    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (d->dialog));
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show(tempwid);
+
+    /* Create the "Cancel" button */
+    cancel_delete_button(GTK_DIALOG(d->dialog)->action_area, d->dialog);
+
+    /* Create a "Help" button */
+    context_help_button(GTK_DIALOG(d->dialog)->action_area, PANEL);
+
+    gtk_widget_show(d->dialog);
+
+    gtk_main();
+}
+
+#endif /* old versus new gtk */
+
+/* .................................................................. */
+
+static void abort_compact (GtkWidget *w, gpointer data)
+{
+    gint *method = (gint *) data;
+
+    *method = COMPACT_NONE;
+}
+
+static void set_compact_type (GtkWidget *w, gpointer data)
+{
+    gint *method = (gint *) data;
+
+    if (GTK_TOGGLE_BUTTON (w)->active) {
+#ifndef OLD_GTK
+        *method = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+#else
+        *method = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+#endif
+    }
+}
+
+static void set_target_pd (GtkWidget *w, gpointer data)
+{
+    gint *pd = (gint *) data;
+
+    if (GTK_TOGGLE_BUTTON (w)->active) {
+#ifndef OLD_GTK
+        *pd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+#else
+        *pd = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+#endif
+    }
+}
+
+static void pd_buttons (dialog_t *d, int *target_pd)
+{    
+    GtkWidget *button, *hs;
+    GtkWidget *vbox;
+    GSList *group;
+    gint quart = 4, ann = 1;
+
+    vbox = dialog_data_get_vbox(d);
+
+    button = gtk_radio_button_new_with_label(NULL, _("Quarterly"));
+    gtk_box_pack_start (GTK_BOX(vbox), 
+			button, TRUE, TRUE, FALSE);
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_target_pd), target_pd);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(quart));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_target_pd), target_pd);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(quart));
+#endif
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label (group, _("Annual"));
+    gtk_box_pack_start (GTK_BOX(vbox), 
+			button, TRUE, TRUE, FALSE);
+
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_target_pd), target_pd);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(ann));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_target_pd), target_pd);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(ann));
+#endif
+    gtk_widget_show (button);
+
+    hs = gtk_hseparator_new();
+    gtk_box_pack_start (GTK_BOX(vbox), 
+			hs, TRUE, TRUE, FALSE);
+    gtk_widget_show (hs);
+}
+
+void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
+			  gint *compact_method)
+{
+    dialog_t *d;
+    GtkWidget *button;
+    GtkWidget *tempwid;
+    GSList *group;
+    int show_pd_buttons = 0;
+    int all_vars = 0;
+    gchar *labelstr;
+
+    d = dialog_data_new(NULL, 0);
+    if (d == NULL) return;
+    
+    if (*target_pd != 0) {
+	/* importing series from database */
+	labelstr = g_strdup_printf(_("You are adding a %s series to %s dataset"),
+				   (spd == 4)? _("quarterly") : _("monthly"),
+				   (*target_pd == 4)? _("a quarterly"): _("an annual"));
+    } else {
+	/* compacting whole data set */
+	all_vars = 1;
+	if (spd == 4) {
+	    *target_pd = 1;
+	    labelstr = g_strdup(_("Compact quarterly data to annual"));
+	} else {
+	    /* source data are monthly */
+	    labelstr = g_strdup(_("Compact monthly data to:"));
+	    show_pd_buttons = 1;
+	    *target_pd = 4;
+	}
+    }
+
+    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: compact data"));
+
+#ifndef OLD_GTK
+    gtk_window_set_resizable (GTK_WINDOW (d->dialog), FALSE);
+#else
+    gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
+#endif
+
+    set_dialog_border_widths(d->dialog);
+
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
+
+#ifndef OLD_GTK
+    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
+		      G_CALLBACK (dialog_unblock), NULL);
+#endif
+
+    tempwid = gtk_label_new(labelstr);
+    g_free(labelstr);
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			tempwid, TRUE, TRUE, FALSE);
+    gtk_widget_show (tempwid);
+
+    if (show_pd_buttons) pd_buttons(d, target_pd);
+
+    button = gtk_radio_button_new_with_label (NULL, _("Compact by averaging"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_compact_type), compact_method);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(COMPACT_AVG));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_compact_type), compact_method);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_AVG));
+#endif
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label (group, _("Compact by summing"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_compact_type), compact_method);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(COMPACT_SUM));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_compact_type), compact_method);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_SUM));
+#endif
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_compact_type), compact_method);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(COMPACT_EOP));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_compact_type), compact_method);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_EOP));
+#endif
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("Use start-of-period values"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_compact_type), compact_method);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(COMPACT_SOP));
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_compact_type), compact_method);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_SOP));
+#endif
+    gtk_widget_show (button);
+
+    /* Create the "OK" button */
+    tempwid = ok_button(GTK_DIALOG (d->dialog)->action_area);
+#ifndef OLD_GTK
+    g_signal_connect (G_OBJECT (tempwid), "clicked", 
+		      G_CALLBACK (delete_widget), 
+		      G_OBJECT (d->dialog));
+#else
+    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (d->dialog));
+#endif
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* Create the "Cancel" button */
+    tempwid = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
+			tempwid, TRUE, TRUE, FALSE);
+#ifndef OLD_GTK
+    g_signal_connect (G_OBJECT (tempwid), "clicked", 
+		      G_CALLBACK (abort_compact), compact_method);
+    g_signal_connect (G_OBJECT (tempwid), "clicked", 
+		      G_CALLBACK (delete_widget), 
+		      G_OBJECT (d->dialog));
+#else
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC (abort_compact), compact_method);
+    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (d->dialog));
+#endif
+    gtk_widget_show (tempwid);
+
+    /* Create a "Help" button */
+    context_help_button(GTK_DIALOG(d->dialog)->action_area, COMPACT);
+
+    gtk_widget_show (d->dialog);
+    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(w));
+
+    gtk_main();
+}
+
 
 /* ........................................................... */
 

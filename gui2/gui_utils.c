@@ -874,7 +874,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	    fwin = (windata_t *) data;
 	} else {
 	    d = (dialog_t *) data;
-	    fwin = (windata_t *) d->data;
+	    fwin = (windata_t *) dialog_data_get_data(d);
 	}
     }
 

@@ -662,7 +662,7 @@ void do_open_session (GtkWidget *w, gpointer data)
 	    fwin = (windata_t *) data;
 	else {
 	    d = (dialog_t *) data;
-	    fwin = (windata_t *) d->data;
+	    fwin = (windata_t *) dialog_data_get_data(d);
 	}
     }
 
@@ -1973,6 +1973,13 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 static void display_model_table_wrapper (void)
 {
     display_model_table(1);
+}
+
+static void view_script_default (void)
+{
+    if (dump_cmd_stack(cmdfile, 0)) return;
+
+    view_file(cmdfile, 0, 0, 78, 350, EDIT_SCRIPT);
 }
 
 static gboolean session_icon_click (GtkWidget *widget, 

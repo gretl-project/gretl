@@ -144,6 +144,7 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 /* functions defined in files other than gretl.c */
 
+void about_dialog (gpointer data);
 void file_selector (const char *msg, int action, gpointer data);
 void gui_get_series (gpointer data, guint bci_code, GtkWidget *widget);
 void import_db_series (windata_t *dbwin);

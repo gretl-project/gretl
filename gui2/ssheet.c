@@ -381,14 +381,13 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 
 static void name_new_var (GtkWidget *widget, dialog_t *ddata) 
 {
-    spreadsheet *sheet = (spreadsheet *) ddata->data;
+    spreadsheet *sheet = (spreadsheet *) dialog_data_get_data(ddata);
     const gchar *buf;
     char varname[VNAMELEN];
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    buf = dialog_data_get_text(ddata);
 
-    if (blank_entry(buf, ddata)) return;
-    if (validate_varname(buf)) return;
+    if (buf == NULL || validate_varname(buf)) return;
 
     *varname = 0;
     strncat(varname, buf, VNAMELEN - 1);
@@ -404,12 +403,12 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
 
 static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
 {
-    spreadsheet *sheet = (spreadsheet *) ddata->data;
+    spreadsheet *sheet = (spreadsheet *) dialog_data_get_data(ddata);
     const gchar *buf;
     char obsmarker[OBSLEN];
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
 
     *obsmarker = 0;
     strncat(obsmarker, buf, OBSLEN - 1);

@@ -11,10 +11,10 @@ fi
 cd ${TOPSRC}/gui && \
 for f in \
   gretl.h gretltypes.h gretl_enums.h \
-  boxplots.c boxplots.h \
+  about.c boxplots.c boxplots.h \
   calculator.c guiprint_common.c \
   callbacks.c callbacks.h \
-  console.c console.h \
+  console.c console.h dialogs.c \
   database.c database.h \
   datafiles.c datafiles.h \
   fileselect.c dialogs.h \
@@ -25,8 +25,11 @@ for f in \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
   series_view.c series_view.h \
-  session.c session.h selector.h \
-  settings.c settings.h ssheet.h \
+  session.c session.h \
+  selector.h \
+  settings.c settings.h \
+  ssheet.h \
+  textutil.c textutil.h \
   webget.c webget.h \
   library.c library.h ; do
     rm -f $f

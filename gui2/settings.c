@@ -2509,7 +2509,7 @@ static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *dirname;
 
-    dirname = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    dirname = dialog_data_get_text(ddata);
 
     if (validate_dir(dirname)) {
 	return;
