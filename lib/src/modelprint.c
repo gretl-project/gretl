@@ -1222,6 +1222,21 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
 /* ....................................................... */
 
+static void print_aicetc_value (double x, PRN *prn)
+{
+    char numstr[16];
+    size_t len;
+
+    sprintf(numstr, "%#11g", x);
+    len = strlen(numstr) - 1;
+    if (numstr[len] == '.' || numstr[len] == ',') {
+	numstr[len] = 0;
+	memmove(numstr + 1, numstr, len + 1);
+	*numstr = ' ';
+    }
+    pputs(prn, numstr);
+}
+
 static void print_aicetc (const MODEL *pmod, PRN *prn)
 {
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
@@ -1234,16 +1249,27 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
     }
 
     pprintf(prn, "  %s\n\n", _("MODEL SELECTION STATISTICS"));	
-    pprintf(prn, "  SGMASQ    %#11g     AIC       %#11g     FPE       %#11g\n"
-	    "  HQ        %#11g     SCHWARZ   %#11g     SHIBATA   %#11g\n"
-	    "  GCV       %#11g",
-	    pmod->criterion[0], pmod->criterion[1], 
-	    pmod->criterion[2], pmod->criterion[3], 
-	    pmod->criterion[4], pmod->criterion[5], pmod->criterion[6]);
-    if (pmod->criterion[7] > 0.0) pprintf(prn, "     RICE      %#11g\n", 
-					  pmod->criterion[7]);
-    else pprintf(prn, "     RICE        %s\n", _("undefined"));
-    pputs(prn, "\n");
+    pputs(prn, "  SGMASQ    ");
+    print_aicetc_value(pmod->criterion[0], prn);
+    pputs(prn, "     AIC       ");
+    print_aicetc_value(pmod->criterion[1], prn);
+    pputs(prn, "     FPE       ");
+    print_aicetc_value(pmod->criterion[2], prn);
+    pputs(prn, "\n  HQ        ");
+    print_aicetc_value(pmod->criterion[3], prn);
+    pputs(prn, "     SCHWARZ   ");
+    print_aicetc_value(pmod->criterion[4], prn);
+    pputs(prn, "     SHIBATA   ");
+    print_aicetc_value(pmod->criterion[5], prn);
+    pputs(prn, "\n  GCV       ");
+    print_aicetc_value(pmod->criterion[6], prn);
+    pputs(prn, "     RICE      ");
+    if (pmod->criterion[7] > 0.0) {
+	print_aicetc_value(pmod->criterion[7], prn);
+    } else {
+	pputs(prn, _("undefined"));
+    }
+    pputs(prn, "\n\n");
 }
 
 /* ......................................................... */ 
