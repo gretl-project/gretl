@@ -2002,7 +2002,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "%s ", spec->lines[i].formula); 
 	    datlines--;
 	}
-	if (spec->lines[i].yaxis != 1) {
+	if ((spec->flags & GPTSPEC_Y2AXIS) && spec->lines[i].yaxis != 1) {
 	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
 	}
 	gp_string(fp, "title '%s' ", spec->lines[i].title, png);

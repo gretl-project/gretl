@@ -53,6 +53,7 @@ static GtkWidget *keycombo;
 static GtkWidget *termcombo;
 static GtkWidget *fitline_check;
 static GtkWidget *border_check;
+static GtkWidget *y2_check;
 static GtkWidget *ttfcombo;
 static GtkWidget *ttfspin;
 
@@ -217,6 +218,7 @@ static const char *just_int_to_string (int j)
 static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
 {
     const gchar *yaxis;
+    int supress_y2 = 0;
     int i, k, save = 0;
 
     /* entry_to_gp_string translates from utf-8 to the locale, if
@@ -240,9 +242,18 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     spec->flags &= ~GPTSPEC_Y2AXIS;
 
+    if (y2_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(y2_check)->active) {
+	    supress_y2 = 1;
+	} 
+    } 
+
     if (!frequency_plot(spec)) {    
 	for (i=0; i<spec->nlines; i++) {
 	    spec->lines[i].yaxis = 1;
+	    if (supress_y2) {
+		continue;
+	    }
 	    yaxis = 
 		gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
 	    if (yaxis != NULL && *yaxis && !strcmp(yaxis, "right"))
@@ -551,6 +562,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
     /* give option of removing top & right border */
     if (!(spec->flags & GPTSPEC_Y2AXIS)) { 
+	y2_check = NULL;
 	tbl_len++;
 	border_check = gtk_check_button_new_with_label(_("Show full border"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -563,6 +575,16 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(border_check);
     } else {
 	border_check = NULL;
+	tbl_len++;
+	y2_check = gtk_check_button_new_with_label(_("Use only one y axis"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  y2_check, 0, TAB_MAIN_COLS, 
+				  tbl_len-1, tbl_len);
+	if (!(spec->flags & GPTSPEC_BORDER_HIDDEN)) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(y2_check),
+					 FALSE);
+	}	
+	gtk_widget_show(y2_check);
     }
 
     /* give option of removing an auto-fitted line */

@@ -851,7 +851,7 @@ void file_selector (const char *msg, int action, gpointer data)
     */
 
     if (action > END_OPEN && action != SET_PATH) {
-	filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(mdata->w), 
+	filesel = gtk_file_chooser_dialog_new(msg, NULL, /* GTK_WINDOW(mdata->w), */
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
 					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
