@@ -1491,6 +1491,7 @@ void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
 
     if (pmod == NULL) return;
 
+    pmod->ID = 0;
     pmod->list = NULL;
     pmod->subdum = NULL;
     if (pdinfo != NULL) {
@@ -2738,6 +2739,7 @@ int is_model_ref_cmd (int ci)
 	ci == CHOW ||
 	ci == CUSUM ||
 	ci == LMTEST ||
+	ci == LEVERAGE ||
 	ci == FCAST ||
 	ci == FCASTERR ||
 	ci == FIT) {

@@ -413,6 +413,10 @@ static int real_add_model_to_session (MODEL *pmod)
     if (session.models == NULL) return 1;
 
     session.models[n] = pmod;
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "real_add_model_to_session: raising session.nmodels to %d\n", 
+	    session.nmodels + 1);
+#endif
     session.nmodels += 1;
 
     /* add model icon to session display */
@@ -894,6 +898,8 @@ int parse_savefile (char *fname)
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (strncmp(line, "*)", 2) == 0) break;
 
+	chopstr(line);
+
 	if (sscanf(line, "%6s %d", object, &id) != 2) {
 	    errbox(_("Session file is corrupted, ignoring"));
 	    fclose(fp);
@@ -933,6 +939,10 @@ int parse_savefile (char *fname)
 		    break;
 		}
 	    }
+#ifdef SESSION_DEBUG
+	    fprintf(stderr, "rebuild.model_name[%d] = '%s'\n", i, 
+		    rebuild.model_name[i]);
+#endif
 	    i++;
 	    continue;
 	}
@@ -2138,12 +2148,15 @@ static int silent_remember (MODEL **ppmod, DATAINFO *pdinfo)
     MODEL *tmp; /* will be returned in place of the saved model */
 
 #ifdef SESSION_DEBUG
-    fprintf(stderr, "session.nmodels = %d\n", session.nmodels);
+    fprintf(stderr, "silent_remember: session.nmodels = %d\n", session.nmodels);
 #endif
 
     if ((pmod->name = malloc(32)) == NULL) return 1;
 
     *pmod->name = 0;
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "accessing rebuild.model_name[%d]\n", session.nmodels);
+#endif
     strncat(pmod->name, rebuild.model_name[session.nmodels], 31);
 
     if (session.nmodels == 0) {
@@ -2187,6 +2200,12 @@ int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo,
 
 	if (save) {
 	    int i;
+
+#ifdef SESSION_DEBUG
+	    fprintf(stderr, "clear_or_save_model: rebuild=%d, model ID=%d,"
+		    "rebuild.nmodels=%d\n", rebuilding, (*ppmod)->ID,
+		    rebuild.nmodels);
+#endif
 
 	    for (i=0; i<rebuild.nmodels; i++) {
 		if ((*ppmod)->ID == rebuild.model_ID[i]) {

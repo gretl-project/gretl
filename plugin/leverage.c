@@ -27,12 +27,8 @@ struct flag_info {
     GtkWidget *dialog;
     GtkWidget *levcheck;
     GtkWidget *infcheck;
-    gint *flag;
-};
-
-enum save_flags {
-    SAVE_LEVERAGE =  1 << 0,
-    SAVE_INFLUENCE = 1 << 1
+    GtkWidget *dffcheck;
+    unsigned char *flag;
 };
 
 static gboolean destroy_save_dialog (GtkWidget *w, struct flag_info *finfo)
@@ -44,13 +40,20 @@ static gboolean destroy_save_dialog (GtkWidget *w, struct flag_info *finfo)
 
 static gboolean update_save_flag (GtkWidget *w, struct flag_info *finfo)
 {
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	if (w == finfo->levcheck) *finfo->flag |= SAVE_LEVERAGE;
-	else *finfo->flag |= SAVE_INFLUENCE;
-    } else {
-	if (w == finfo->levcheck) *finfo->flag &= ~SAVE_LEVERAGE;
+    int checked = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+    if (w == finfo->levcheck) {
+	if (checked) *finfo->flag |= SAVE_LEVERAGE;
+	else *finfo->flag &= ~SAVE_LEVERAGE;
+    }
+    else if (w == finfo->infcheck) {
+	if (checked) *finfo->flag |= SAVE_INFLUENCE;
 	else *finfo->flag &= ~SAVE_INFLUENCE;
     }
+    else if (w == finfo->dffcheck) {
+	if (checked) *finfo->flag |= SAVE_DFFITS;
+	else *finfo->flag &= ~SAVE_DFFITS;
+    }    
 
     return FALSE;
 }
@@ -68,12 +71,12 @@ static gboolean save_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
     return FALSE;
 }
 
-int leverage_data_dialog (void)
+unsigned char leverage_data_dialog (void)
 {
     struct flag_info *finfo;
     GtkWidget *dialog, *tempwid, *button, *hbox;
     GtkWidget *internal_vbox;
-    gint flag = SAVE_LEVERAGE | SAVE_INFLUENCE;
+    unsigned char flag = SAVE_LEVERAGE | SAVE_INFLUENCE | SAVE_DFFITS;
 
     finfo = malloc(sizeof *finfo);
     if (finfo == NULL) return 0;
@@ -139,6 +142,20 @@ int leverage_data_dialog (void)
 #endif
     gtk_widget_show (button);
     finfo->infcheck = button;
+
+    /* DFFITS */
+    button = gtk_check_button_new_with_label(_("DFFITS"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(update_save_flag), finfo);
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(update_save_flag), finfo);
+#endif
+    gtk_widget_show (button);
+    finfo->dffcheck = button;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
@@ -278,6 +295,83 @@ static int leverage_plot (int n, int tstart, gretl_matrix *S,
     return 0;
 }
 
+static int studentized_residuals (const MODEL *pmod, double ***pZ, 
+				  DATAINFO *pdinfo, gretl_matrix *S)
+{
+    double *dum = NULL, *suhat = NULL;
+    int *slist = NULL;
+    MODEL smod;  
+    int orig_v = pdinfo->v;
+    int err = 0;
+    int i, t, k;
+
+    dum = malloc(pdinfo->n * sizeof *dum);
+    if (dum == NULL) {
+	return E_ALLOC;
+    }
+
+    suhat = malloc(pdinfo->n * sizeof *suhat);
+    if (suhat == NULL) {
+	free(dum);
+	return E_ALLOC;
+    }
+
+    slist = malloc((pmod->list[0] + 2) * sizeof *slist);
+    if (slist == NULL) {
+	free(dum);
+	free(suhat);
+	return E_ALLOC;
+    }
+
+    if (dataset_add_allocated_var(dum, pZ, pdinfo)) {
+	free(dum);
+	free(suhat);
+	free(slist);
+	return E_ALLOC;	
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	dum[t] = 0.0;
+    }
+
+    slist[0] = pmod->list[0] + 1;
+    for (i=1; i<=pmod->list[0]; i++) {
+	slist[i] = pmod->list[i];
+    }
+    slist[slist[0]] = pdinfo->v - 1; /* last var added */  
+    k = slist[0] - 2;
+
+    gretl_model_init(&smod, NULL);
+
+    for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
+	dum[t] = 1.0;
+	if (t > pmod->t1) dum[t-1] = 0.0;
+	smod = lsq(slist, pZ, pdinfo, OLS, OPT_A, 0.0);
+	if (smod.errcode) {
+	    err = smod.errcode;
+	} else {
+	    suhat[t] = smod.coeff[k] / smod.sderr[k];
+	}
+	clear_model(&smod, NULL);
+    }
+
+    if (!err) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    gretl_matrix_set(S, t - pmod->t1, 2, suhat[t]);
+	}
+    } else {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    gretl_matrix_set(S, t - pmod->t1, 2, NADBL);
+	}
+    }	
+
+    free(suhat);
+    free(slist);
+    dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
+
+    return err;
+}
+
 /* In fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are
@@ -294,7 +388,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     doublereal *tau, *work;
     double lp;
     int i, j, t;
-    int err = 0, gotlp = 0;
+    int err = 0, serr = 0, gotlp = 0;
 
     m = pmod->t2 - pmod->t1 + 1; /* # of rows = # of observations */
     lda = m;                     /* leading dimension of Q */
@@ -356,7 +450,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     free(work);
     work = NULL;
 
-    S = gretl_matrix_alloc(m, 2);
+    S = gretl_matrix_alloc(m, 3);
     if (S == NULL) {
 	err = 1;
 	goto qr_cleanup;
@@ -366,21 +460,33 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 16), _("residual"));
     pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 16), _("leverage"));
     pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 16), _("influence"));
+    pprintf(prn, "%*s", UTF_WIDTH(_("DFFITS"), 14), _("DFFITS"));
     pputs(prn, "\n        ");
     pputs(prn, "            u          0<=h<=1         u*h/(1-h)\n\n");
 
+    /* do the "h" calculations */
+    for (t=0; t<m; t++) {
+	double q, h = 0.0;
+
+	for (i=0; i<n; i++) {
+	    q = gretl_matrix_get(Q, t, i);
+	    h += q * q;
+	}
+	gretl_matrix_set(S, t, 0, h);
+    }
+
+    /* put studentized resids into S[2] */
+    serr = studentized_residuals(pmod, pZ, pdinfo, S);
+
     lp = 2.0 * n / m;
 
+    /* print the results */
     for (t=0; t<m; t++) {
-	double f, h = 0.0;
+	double f, h, s, d;
 	int tmod = t + pmod->t1;
 	char fstr[24];
 
-	for (i=0; i<n; i++) {
-	    double q = gretl_matrix_get(Q, t, i);
-
-	    h += q * q;
-	}
+	h = gretl_matrix_get(S, t, 0);
 	if (h > lp) gotlp = 1;
 	if (h < 1.0) {
 	    f = pmod->uhat[tmod] * h / (1.0 - h);
@@ -390,9 +496,16 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	    sprintf(fstr, "%15s", _("undefined"));
 	}
 	print_obs_marker(tmod, pdinfo, prn);
-	pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[tmod], h, 
-		(h > lp)? "*" : " ", fstr);
-	gretl_matrix_set(S, t, 0, h);
+	if (!serr) {
+	    s = gretl_matrix_get(S, t, 2);
+	    d = s * sqrt(h / (1.0 - h));
+	    pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[tmod], h, 
+		    (h > lp)? "*" : " ", fstr, d);
+
+	} else {
+	    pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[tmod], h, 
+		    (h > lp)? "*" : " ", fstr);
+	}
 	gretl_matrix_set(S, t, 1, f);
     }
 

@@ -1716,6 +1716,42 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
+void add_leverage_data (windata_t *vwin)
+{
+    void *handle;
+    unsigned char (*leverage_data_dialog) (void);
+    gretl_matrix *m = (gretl_matrix *) vwin->data;
+    unsigned char opt;
+    int err;
+
+    if (m == NULL) return;
+
+    leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog",
+						   &handle);
+    if (leverage_data_dialog == NULL) return;
+
+    opt = leverage_data_dialog();
+    close_plugin(handle);
+
+    if (opt == 0) return;
+
+    err = add_leverage_values_to_dataset(&Z, datainfo, m, opt);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+#ifdef OLD_GTK
+	int ID = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(vwin->dialog), 
+						     "model_ID"));
+#else
+	int ID = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->dialog), 
+						   "model_ID"));
+#endif
+	strcpy(line, "leverage -o");
+	check_cmd(line);
+	model_cmd_init(line, ID);
+    }
+}
+
 void do_leverage (gpointer data, guint u, GtkWidget *w)
 {
     windata_t *mydata = (windata_t *) data;
@@ -1724,7 +1760,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
 				     DATAINFO *, PRN *, PATHS *);
     PRN *prn;
-    gretl_matrix *L;
+    gretl_matrix *m;
 
     model_leverage = gui_get_plugin_function("model_leverage", 
 					     &handle);
@@ -1737,12 +1773,21 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 	return;
     }	
 	
-    L = (*model_leverage)(pmod, &Z, datainfo, prn, &paths);
+    m = (*model_leverage)(pmod, &Z, datainfo, prn, &paths);
     close_plugin(handle);
 
-    if (L != NULL) {
-	view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
-		    LEVERAGE, L); 
+    if (m != NULL) {
+	windata_t *vwin;
+
+	vwin = view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
+			   LEVERAGE, m); 
+#ifdef OLD_GTK
+	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "model_ID", 
+			    GINT_TO_POINTER(pmod->ID));
+#else
+	g_object_set_data(G_OBJECT(vwin->dialog), "model_ID", 
+			  GINT_TO_POINTER(pmod->ID));
+#endif
 	gnuplot_display(&paths);
 	register_graph();
     } else {
@@ -4566,11 +4611,6 @@ int execute_script (const char *runfile, const char *buf,
     LOOPSET loop;            /* struct for monte carlo loop */
 
 #if 0
-    fprintf(stderr, "execute_script, exec_code = %d (%s)\n",
-	    exec_code, exec_string(exec_code));
-#endif
-
-#if 0
     debug_print_model_info(models[0], "Start of execute_script, models[0]");
 #endif
 
@@ -4848,8 +4888,8 @@ int gui_exec_line (char *line,
     GRETLTEST *ptest;
 
 #ifdef CMD_DEBUG
-    fprintf(stderr, "gui_exec_line: exec_code = %d (%s)\n",
-	    exec_code, exec_string(exec_code));
+    fprintf(stderr, "gui_exec_line: exec_code = %d\n",
+	    exec_code);
 #endif
 
     /* catch requests relating to saved objects, which are not
@@ -5845,7 +5885,7 @@ int gui_exec_line (char *line,
     if (!err && (is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)
 		 || arch_model)) {
 	err = stack_model(0);
-	if (!arch_model && *cmd.savename != '\0') {
+	if (exec_code != REBUILD_EXEC && !arch_model && *cmd.savename != '\0') {
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
 	}
     }

@@ -1914,6 +1914,33 @@
 	Chapter 2).
       </para>
 
+      <para>
+	DFFITS values are also shown: these are <quote>studentized
+	  residuals</quote> (predicted residuals divided by their
+	standard errors) multiplied by 
+	  <inlineequation>
+	  <alt role="tex">$\sqrt{h/(1 - h)}$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/dffit"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	  </inlineequation>. For a discussion of studentized residuals
+	and DFFITS see G. S. Maddala, <citetitle>Introduction to
+	  Econometrics</citetitle>, chapter 12; also Belsley, Kuh and
+	Welsch (1980).  Briefly, a <quote>predicted residual</quote>
+	is the difference between the observed value of the dependent
+	variable at observation <emphasis>t</emphasis>, and the fitted
+	value for observation <emphasis>t</emphasis> obtained from a
+	regression in which that observation is omitted (or a dummy
+	variable with value 1 for observation <emphasis>t</emphasis>
+	alone has been added); the studentized residual is obtained by
+	dividing the predicted residual by its standard error.</para>
+
+      <para>If the <literal>-o</literal> flag is given with this
+	command, then the leverage, influence and DFFITS values are
+	added to the current data set.</para>
+
     </sect2>
 
     <sect2 id="lmtest"><title>lmtest</title>
@@ -3747,7 +3774,8 @@
       <para>
 	Must follow a model estimation command.  Gives the frequency
 	distribution for the residual from the model along with a
-	chi-square test for normality.
+	chi-square test for normality, based on the procedure
+	suggested by Doornik and Hansen (1984).
       </para>
 
     </sect2>

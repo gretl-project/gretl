@@ -365,7 +365,7 @@ void _shiftleft (char *str, size_t move)
 
 void chopstr (char *str)
 {
-    int i = strspn(str, " ");
+    int i = strspn(str, " \t");
 
     _shiftleft(str, i);
 

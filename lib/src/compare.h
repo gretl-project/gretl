@@ -22,6 +22,12 @@
 #include <stdio.h>
 #include "gretl_matrix.h"
 
+enum {
+    SAVE_LEVERAGE  = 1 << 0,
+    SAVE_INFLUENCE = 1 << 1,
+    SAVE_DFFITS    = 1 << 2
+} leverage_save_opts;
+
 typedef enum {
     AUX_NONE,  /* not an auxiliary regression */
     AUX_SQ,    /* aux. regression for nonlinearity (squared terms) */
@@ -92,7 +98,7 @@ int leverage_test (MODEL *pmod,
 		   unsigned long oflag);
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				    gretl_matrix *m, int opt);
+				    gretl_matrix *m, unsigned char opt);
 
 int mp_ols (const LIST list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 

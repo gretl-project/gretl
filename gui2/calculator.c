@@ -152,7 +152,7 @@ static int getint (const char *s, PRN *prn)
 static void get_critical (GtkWidget *w, gpointer data)
 {
     lookup_t **look = (lookup_t **) data;
-    void *handle;
+    void *handle = NULL;
     void *funp = NULL;
     void (*norm_table)(PRN *, int) = NULL;
     void (*dw)(int, PRN *) = NULL;

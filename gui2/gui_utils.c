@@ -90,7 +90,7 @@ static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
-extern void do_leverage (gpointer data, guint u, GtkWidget *w);
+
 
 static void close_model (gpointer data, guint close, GtkWidget *widget)
 {
@@ -959,10 +959,11 @@ void save_session (char *fname)
     FILE *fp;
     PRN *prn;
 
+    *savedir = '\0';
     spos = slashpos(fname);
-    if (spos) 
+    if (spos) {
 	safecpy(savedir, fname, spos);
-    else *savedir = 0;
+    } 
 
 #ifdef CMD_DEBUG
     dump_cmd_stack("stderr", 0);
@@ -1258,30 +1259,6 @@ static void add_pca_data (windata_t *vwin)
     }
 }
 
-static void add_leverage_data (windata_t *vwin)
-{
-    void *handle;
-    int (*leverage_data_dialog) (void);
-    gretl_matrix *m = (gretl_matrix *) vwin->data;
-    int opt, err;
-
-    if (m == NULL) return;
-
-    leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog",
-						   &handle);
-    if (leverage_data_dialog == NULL) return;
-
-    opt = leverage_data_dialog();
-    close_plugin(handle);
-
-    if (opt == 0) return;
-
-    err = add_leverage_values_to_dataset(&Z, datainfo, m, opt);
-    if (err) {
-	gui_errmsg(err);
-    }
-}
-
 /* ........................................................... */
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)
@@ -1300,6 +1277,13 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	populate_varlist();
 	mark_dataset_as_modified();
     }	
+}
+
+/* ........................................................... */
+
+static void window_help (GtkWidget *w, windata_t *vwin)
+{
+    context_help(NULL, GINT_TO_POINTER(vwin->role));
 }
 
 /* ........................................................... */
@@ -1323,7 +1307,8 @@ enum {
     RUN_ITEM,
     COPY_ITEM,
     MODELTABLE_ITEM,
-    ADD_ITEM
+    ADD_ITEM,
+    HELP_ITEM
 } viewbar_codes;
 
 #ifndef OLD_GTK
@@ -1344,6 +1329,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), "STOCK_TEX", modeltable_tex_view, MODELTABLE_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
+    { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }};
 
@@ -1365,6 +1351,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), mini_tex_xpm, modeltable_tex_view, MODELTABLE_ITEM },
     { N_("Add to dataset..."), stock_add_16_xpm, add_data_callback, ADD_ITEM },
+    { N_("Help"), stock_help_16_xpm, window_help, HELP_ITEM },
     { N_("Close"), stock_close_16_xpm, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }};
 
@@ -1394,6 +1381,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES);
+
+    int help_ok = (vwin->role == LEVERAGE);
 
 #ifndef OLD_GTK
     if (vwin->role == VIEW_MODELTABLE) tex_icon_init();
@@ -1437,6 +1426,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 	if (!run_ok && viewbar_items[i].flag == RUN_ITEM) {
+	    continue;
+	}
+
+	if (!help_ok && viewbar_items[i].flag == HELP_ITEM) {
 	    continue;
 	}
 

@@ -10,6 +10,11 @@
   </bibliomixed>
 
   <bibliomixed>
+    Belsley, D., Kuh, E. and Welsch, R. (1980) <title>Regression
+      Diagnostics</title>, New York: Wiley.
+  </bibliomixed>
+
+  <bibliomixed>
     <bibliomset relation='article'>Box, G. E. P. and Muller, M. E.
       (1958) <title>A Note on the Generation of Random Normal
 	Deviates</title>,</bibliomset> <bibliomset relation='journal'>
@@ -21,6 +26,13 @@
     Davidson, R. and MacKinnon, J. G. (1993) <title>Estimation and
       Inference in Econometrics</title>, New York: Oxford University
     Press.
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Doornik, J. A. and Hansen, H.
+      (1994) <title>An Omnibus Test for Univariate and Multivariate
+	Normality</title>, working paper, Nuffield College,
+      Oxford.</bibliomset> 
   </bibliomixed>
 
   <bibliomixed>
@@ -59,6 +71,11 @@
       relation='journal'> <title>Journal of Econometrics</title>, 29,
       pp. 305&ndash;25. </bibliomset>
   </bibliomixed>
+
+  <bibliomixed>
+    Maddala, G. S. (1992) <title>Introduction to Econometrics</title>,
+    2nd edition, Englewood Cliffs, NJ: Prentice-Hall. 
+  </bibliomixed>  
 
   <bibliomixed>
     R Core Development Team (2000) <title>An Introduction to

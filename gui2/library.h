@@ -115,6 +115,10 @@ void do_model (GtkWidget *widget, gpointer p);
 
 void do_arma (int v, int ar, int ma, unsigned long opts);
 
+void do_leverage (gpointer data, guint u, GtkWidget *w);
+
+void add_leverage_data (windata_t *vwin);
+
 #ifdef ENABLE_GMP
 void do_mp_ols (GtkWidget *widget, gpointer p);
 #endif
