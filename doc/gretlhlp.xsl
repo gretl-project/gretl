@@ -3,14 +3,17 @@
 
 <xsl:import href="/usr/share/sgml/docbook-xsl-1.48/htmlhelp/htmlhelp.xsl"/>
 
-<!-- FIXME need to make commands tt, not bold. also want to
- change the hhp filename from the default of htmlhelp.*
- also use admon graphics
--->
 
-<!--
-<xsl:param name="suppress.navigation" select="0"/>
--->
+
+<xsl:template match="command">
+  <xsl:call-template name="inline.monoseq"/>
+</xsl:template>
+
+<xsl:param name="htmlhelp.hhp" select="'gretl.hhp'"/>
+<xsl:param name="htmlhelp.chm" select="'gretl.chm'"/>
+
+<xsl:param name="admon.graphics" select="1"/>
+<xsl:param name="admon.graphics.extension" select="'.gif'"/>
 
 <xsl:param name="navig.graphics" select="1"/>
 <xsl:param name="graphic.default.extension" select="'gif'"/>
