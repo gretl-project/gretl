@@ -97,10 +97,7 @@ int write_x12a_data (char *fname, int varnum,
 		     const char *x12adir)
 {
     int i, t;
-    int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    double x;
-    char tmp[9], varname[9], cmd[MAXLEN];
-    int startyr, startper;
+    char varname[9], cmd[MAXLEN];
     FILE *fp = NULL;
 
     *gretl_errmsg = 0;
