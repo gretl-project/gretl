@@ -77,7 +77,7 @@ struct _tramo_options {
 		     1 = reduced output file per series
 		     2 = very brief summary
 		     3 = no output file
-		   */
+		  */
 
     tx_request *request; /* generic tramo/x-12-arima request struct */
 };
@@ -263,7 +263,7 @@ seats_specific_widgets_set_sensitive (tramo_options *opts,
     
     for (i=0; i<N_COMMON_OPTS; i++) {
 	if (request->opt[i].check != NULL) {
-	    gtk_widget_set_sensitive(request->opt[D11].check, s);
+	    gtk_widget_set_sensitive(request->opt[i].check, s);
 	}
     }
 }				      
@@ -388,7 +388,6 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     /* TRAMO + SEATS option */
     tmp = gtk_radio_button_new_with_label(NULL, _(radio_labels[0]));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd > 1));
-    gtk_widget_set_sensitive(tmp, (request->pd > 1));
 #if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
 #else
@@ -397,21 +396,24 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    
+
+    if (request->pd == 1) {
+	gtk_widget_set_sensitive(tmp, FALSE);
+    } else {    
 #if GTK_MAJOR_VERSION >= 2
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(set_seats), 
-		     request->opts);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(set_seats), 
+			 request->opts);
 #else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(set_seats), 
-		       request->opts);
+	gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+			   GTK_SIGNAL_FUNC(set_seats), 
+			   request->opts);
 #endif
+    }
 
     /* TRAMO-only option */
     tmp = gtk_radio_button_new_with_label(group, _(radio_labels[1]));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd == 1));
-    gtk_widget_set_sensitive(tmp, (request->pd > 1));
 #if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
 #else
@@ -420,15 +422,20 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
+
+    if (request->pd == 1) {
+	gtk_widget_set_sensitive(tmp, FALSE);
+    } else {   
 #if GTK_MAJOR_VERSION >= 2
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(set_no_seats), 
-		     request->opts);
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(set_no_seats), 
+			 request->opts);
 #else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(set_no_seats), 
-		       request->opts);
+	gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+			   GTK_SIGNAL_FUNC(set_no_seats), 
+			   request->opts);
 #endif
+    }
 }
 
 static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
@@ -437,7 +444,7 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     int tbl_len = 10, row = 0;
     GSList *group = NULL;
 
-    if (request->pd == 1) tbl_len--;
+    if (request->pd == 1) tbl_len -= 2;
 
     tbl = make_notebook_page_table(notebook, _("Output"), tbl_len, 2);
 
@@ -516,6 +523,8 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
 	row++;
 	request->opt[D11].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
+    } else {
+	request->opt[D11].check = NULL;
     }
 
     tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
@@ -536,12 +545,16 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
-    
-    tmp = gtk_check_button_new_with_label(_("Generate graph"));
-    gtk_widget_show(tmp);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
-    request->opt[TRIGRAPH].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd > 1));
+
+    if (request->pd > 1) {
+	tmp = gtk_check_button_new_with_label(_("Generate graph"));
+	gtk_widget_show(tmp);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
+	request->opt[TRIGRAPH].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    } else {
+	request->opt[TRIGRAPH].check = NULL;
+    }
 }
 
 static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)

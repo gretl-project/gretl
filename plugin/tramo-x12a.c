@@ -529,8 +529,9 @@ static void set_opts (tx_request *request)
 
     request->savevars = 0;
 
-    for (i=0; i<4; i++) {
-	if (GTK_TOGGLE_BUTTON(request->opt[i].check)->active) {
+    for (i=0; i<N_COMMON_OPTS; i++) {
+	if (request->opt[i].check != NULL && 
+	    GTK_TOGGLE_BUTTON(request->opt[i].check)->active) {
 	    request->opt[i].save = 1;
 	    if (i != TRIGRAPH) request->savevars++;
 	} else {
@@ -545,7 +546,7 @@ static void cancel_savevars (tx_request *request)
 
     request->savevars = 0;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<N_COMMON_OPTS; i++) {
 	request->opt[i].save = 0;
     } 
 }
