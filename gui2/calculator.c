@@ -484,6 +484,8 @@ static void h_test (GtkWidget *w, gpointer data)
     if (bufopen(&prn)) return;
     if (GTK_TOGGLE_BUTTON(test[i]->graph)->active) grf = 1;
 
+    x[4] = 0.0;
+
     switch (i) {
     case 0: /* mean */
 	for (j=0; j<2; j++) {
@@ -604,26 +606,36 @@ static void h_test (GtkWidget *w, gpointer data)
 	} else {
 	    sderr = sqrt(x[1]*x[1]/n1 + x[3]*x[3]/n2);
 	}
-	ts = (x[0] - x[2]) / sderr;
+	ts = (x[0] - x[2] - x[4]) / sderr;
 	if (j) {
 	    if (j == 2)
 		pprintf(prn, _("Small samples: assuming normality and common "
 			       "variance\n"));
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
 		    n1+n2-2, x[0], x[2], sderr, ts);
-	    if (ts > 0)
+	    if (ts > 0) {
 		pv = tprob(ts, n1+n2-2);
-	    else
+	    } else {
 		pv = tprob(-ts, n1+n2-2);
+	    }
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) htest_graph(1, ts, n1+n2-2, 0);
 	} else {
-	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"),
-		    x[0], x[2], sderr, ts);
-	    if (ts > 0)
+	    if (x[4] > 0.0) {
+		pprintf(prn, _("Test statistic: z = (%g - %g - %g)/%g = %g\n"),
+			x[0], x[2], x[4], sderr, ts);
+	    } else if (x[4] < 0.0) {
+		pprintf(prn, _("Test statistic: z = [(%g - %g) - (%g)]/%g = %g\n"),
+			x[0], x[2], x[4], sderr, ts);
+	    } else {
+		pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"),
+			x[0], x[2], sderr, ts);
+	    }
+	    if (ts > 0) {
 		pv = normal(ts);
-	    else
+	    } else {
 		pv = normal(-ts);
+	    }
 	    print_pv(prn, 2.0 * pv, pv);
 	    if (grf) htest_graph(0, ts, 0, 0);
 	}

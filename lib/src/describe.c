@@ -771,7 +771,11 @@ int corrgram (int varno, int order, double ***pZ,
     }
 
     /* for confidence bands */
+#if 0
     pm = 1.0 / sqrt((double) nobs);
+#else
+    pm = 1.96 / sqrt((double) nobs);
+#endif
 
     fprintf(fq, "# correlogram\n");
 
