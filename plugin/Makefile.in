@@ -44,9 +44,9 @@ GRETLLIB = ../lib/libgretl-1.0.la
 
 ifeq ($(have_gtk),2.0)
   GTK_CFLAGS += -DGTK_DISABLE_DEPRECATED
-  GRETL_LIBOLE2_CFLAGS := -I. $(shell pkg-config --cflags glib-2.0)
+  GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell pkg-config --cflags glib-2.0)
 else
-  GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
+  GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell glib-config --cflags)
 endif  
 
 SRCS = excel_import.c gnumeric_import.c gretl_matrix.c import_common.c \
@@ -77,8 +77,8 @@ endif
 
 ifeq ($(LIBOLE2_LIBS),)
   query-ms-ole.lo = ms-ole.lo
-  vpath %.c libole2
-  vpath %.h libole2
+  vpath %.c $(topsrc)/plugin/libole2
+  vpath %.h $(topsrc)/plugin/libole2
   LIBOLE2_CFLAGS = $(GRETL_LIBOLE2_CFLAGS)
 endif
 
