@@ -2947,11 +2947,6 @@ static int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
       k: order of the approximation
     */
 
-    err = series_adjust_t1t2(y, &t1, &t2);
-    if (err) {
-	return err;
-    }
-
     /* get user settings if available (or the defaults) */
     get_bkbp_periods(periods);
     k = get_bkbp_k();
@@ -2960,6 +2955,21 @@ static int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
     fprintf(stderr, "lower limit = %d, upper limit = %d, \n", 
 	    periods[0], periods[1]);
 #endif
+
+    if (periods[0] >= periods[1]) {
+	strcpy(gretl_errmsg, "Error in Baxter-King frequencies");
+	return 1;
+    }
+
+    err = series_adjust_t1t2(y, &t1, &t2);
+    if (err) {
+	return err;
+    } 
+
+    if (2 * k >= t2 - t1 + 1) {
+	strcpy(gretl_errmsg, "Insufficient observations");
+	return E_DATA;
+    }
 
     a = malloc((k + 1) * sizeof *a);
     if (a == NULL) {

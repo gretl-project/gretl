@@ -4,7 +4,7 @@
 
   <sect1 id="sample-intro"><title>Introduction</title>
 
-    <para>Some subtle issues can arise here.  This section attempts to
+    <para>Some subtle issues can arise here.  This chapter attempts to
       explain the issues.</para>
 
     <para>A sub-sample may be defined in relation to a full data set
@@ -94,9 +94,14 @@
       in sequence, what do we end up with in our sub-sample: all cases
       with income over 50000, or just women with income over 50000? By
       default, in a gretl script, the answer is the latter: women with
-      income over 50000.  The second restriction augments the first.
-      If you want a new restriction to be applied independently of any
-      existing restrictions you should first recreate the full dataset
+      income over 50000.  The second restriction augments the first,
+      or in other words the final restriction is the logical product
+      of the new restriction and any restriction that is already in
+      place.</para>
+
+    <para>
+      If you want a new restriction to replace any existing
+      restrictions you can first recreate the full dataset
       using</para>
 
     <programlisting>
@@ -140,11 +145,17 @@
       commands calling for the estimation of models, the computation
       of statistics, and so on. In the case of restriction, the
       program makes a reduced copy of the dataset and by default
-      treats this reduced copy as a simple, undated cross-section.  If
-      you wish to re-impose a time-series or panel interpretation of
-      the reduced dataset you can do so using <xref
-	linkend="cmd-setobs"/> (and <xref linkend="cmd-panel"/> if
-      appropriate).</para> 
+      treats this reduced copy as a simple, undated
+      cross-section.<footnote><para>With one exception: if you start
+	  with a balanced panel dataset and the restriction is such
+	  that it preserves a balanced panel &mdash; for example, it
+	  results in the deletion of all the observations for one
+	  cross-sectional unit &mdash; then the reduced dataset is
+	  still, by default, treated as a panel.</para>
+      </footnote> If you wish to re-impose a time-series or panel
+      interpretation of the reduced dataset you can do so using the
+      <xref linkend="cmd-setobs"/> command, or the GUI menu item
+      <quote>Sample, Dataset structure</quote>.</para> 
 
     <para>The fact that <quote>restricting</quote> the sample results
       in the creation of a reduced copy of the original dataset may

@@ -12,6 +12,7 @@
 <!ENTITY starting SYSTEM "chapters/starting.xml">
 <!ENTITY modes SYSTEM "chapters/modes.xml">
 <!ENTITY datafiles SYSTEM "chapters/datafiles.xml">
+<!ENTITY genr SYSTEM "chapters/genr.xml">
 <!ENTITY panel SYSTEM "chapters/panel.xml">
 <!ENTITY sampling SYSTEM "chapters/sampling.xml">
 <!ENTITY graphs SYSTEM "chapters/graphs.xml">
@@ -76,6 +77,7 @@
   &starting;
   &modes;
   &datafiles;
+  &genr;
   &sampling;
   &panel;
   &graphs;

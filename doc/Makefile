@@ -19,7 +19,7 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/nls.xml chapters/looping.xml chapters/starting.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
 	chapters/trouble.xml chapters/biblio.xml chapters/sampling.xml \
-	chapters/functions.xml
+	chapters/functions.xml chapters/genr.xml
 
 CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/intro.xml chapters_it/modes.xml \
 	chapters_it/panel.xml chapters_it/appendices.xml chapters_it/datafiles.xml \

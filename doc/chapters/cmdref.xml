@@ -235,11 +235,11 @@
 	  </row>
 	  <row>
 	    <entry>Nonlinearity (squares)</entry>
-	    <entry><command>lmtest</command></entry>
+	    <entry><command>lmtest --squares</command></entry>
 	  </row>
 	  <row>
 	    <entry>Nonlinearity (logs)</entry>
-	    <entry><command>lmtest</command></entry>
+	    <entry><command>lmtest --logs</command></entry>
 	  </row>
 	  <row>
 	    <entry>Nonlinearity (Ramsey's RESET)</entry>
@@ -247,7 +247,7 @@
 	  </row>
 	  <row>
 	    <entry>Heteroskedasticity (White's test)</entry>
-	    <entry><command>lmtest</command></entry>
+	    <entry><command>lmtest --white</command></entry>
 	  </row>
 	  <row>
 	    <entry>Influential observations</entry>
@@ -255,7 +255,7 @@
 	  </row>
 	  <row>
 	    <entry>Autocorrelation up to the data frequency</entry>
-	    <entry><command>lmtest -o</command></entry>
+	    <entry><command>lmtest --autocorr</command></entry>
 	  </row>
 	  <row>
 	    <entry>Chow (structural break)</entry>

@@ -144,6 +144,22 @@
 	   <quote>plum</quote> on the respective iterations.
       </para>
 
+      <para>If you wish to loop across a list of variables that are
+	contiguous in the dataset, you can give the names of the first
+	and last variables in the list, separated by
+	<quote><literal>..</literal></quote>, rather than having to
+	type all the names.  For example, say we have 50 variables
+	<literal>AK</literal>, <literal>AL</literal>, &hellip;,
+	<literal>WY</literal>, containing income levels for the states
+	of the US.  To run a regression of income on time for each of
+	the states we could do:</para>
+
+      <programlisting>
+	genr time
+	loop foreach i AL..WY
+	   ols $i const time
+	endloop</programlisting> 
+
     </sect2>
 
     <sect2 id="loop-for"><title>For loop</title>
@@ -268,7 +284,7 @@
 	examine the frequency distribution of the estimates in
 	detail.</para>
 
-      <para>The command <command>nulldata</command> is useful for
+      <para>The command <xref linkend="cmd-nulldata"/> is useful for
 	Monte Carlo work.  Instead of opening a <quote>real</quote>
 	data set, <command>nulldata 50</command> (for instance) opens
 	a dummy data set, containing just a constant and an index
@@ -276,9 +292,9 @@
 	can then be added using the <command>genr</command>
 	command.</para>  
 
-      <para>See the <command>seed</command> command in 
-      <xref linkend="cmdref"/> for information on generating
-	repeatable pseudo-random series.</para>
+      <para>See the <xref linkend="cmd-set"/> command for
+	information on generating repeatable pseudo-random
+	series.</para>
 
     </sect2>
 

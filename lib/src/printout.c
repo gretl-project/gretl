@@ -227,19 +227,28 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 
 static void print_freq_test (const FREQDIST *freq, PRN *prn)
 {
+    double pval = NADBL;
+
     if (freq->dist == NORMAL) {
+	pval = chisq(freq->test, 2);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of normal distribution"));
 	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
 		_("Chi-square"), freq->test, 
-		_("with p-value"), chisq(freq->test, 2));
+		_("with p-value"), pval);
     } else if (freq->dist == GAMMA) {
+	pval = 2.0 * normal(fabs(freq->test));
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of gamma distribution"));
-	pprintf(prn, "z = %.3f %s %.5f\n", 
-		freq->test, 
-		_("with p-value"), 2.0 * normal(fabs(freq->test)));
-    }	    
+	pprintf(prn, "z = %.3f %s %.5f\n", freq->test, 
+		_("with p-value"), pval);
+    }	
+
+    if (!na(pval)) {
+	record_test_result(freq->test, pval, 
+			   (freq->dist == NORMAL)? 
+			   "normality" : "gamma");
+    }
 }
 
 /**

@@ -1,6 +1,8 @@
 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking
   at the wrong coefficient in some cases
+- Fix bug in VAR impulse responses: could get messed up by
+  missing values 
 - Add auto-lag option to the GUI dialog box for the ADF test
 - Remember the options selected in the ADF dialog from one invocation
   to the next
@@ -11,6 +13,7 @@ version 1.3.2
   "$test" and "$pvalue" in genr)
 - "label" command: if only a varname is given, print the variable's
    current label, if any
+- Updates to documentation
 
 01/19/2005 version 1.3.1
 - Add new dataset structure "wizard" in place of the old dialogs
