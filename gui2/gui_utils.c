@@ -1022,13 +1022,14 @@ void verify_open_session (gpointer userdata)
 
 void save_session (char *fname) 
 {
-    int spos;
     char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
     char session_base[MAXLEN];
+    int spos;
     FILE *fp;
     PRN *prn;
 
     *savedir = '\0';
+
     spos = slashpos(fname);
     if (spos) {
 	safecpy(savedir, fname, spos);
@@ -1038,9 +1039,15 @@ void save_session (char *fname)
     dump_command_stack("stderr", 0);
 #endif
 
+    /* append ".gretl" to session filename? */
+    if (haschar('.', fname) < 0) {
+	strcat(fname, ".gretl");
+    }
+
     /* save commands, by dumping the command stack */
-    if (haschar('.', fname) < 0) strcat(fname, ".gretl");
-    if (dump_command_stack(fname, 1)) return;
+    if (dump_command_stack(fname, 1)) {
+	return;
+    }
 
     get_base(session_base, fname, '.');
 
@@ -1072,10 +1079,14 @@ void save_session (char *fname)
 	return;
     }
 
+    /* preamble */
     gui_logo(prn->fp);
     session_time(prn->fp);
     pprintf(prn, _("Output from %s\n"), fname);
+
+    /* actual commands output */
     execute_script(fname, NULL, prn, SAVE_SESSION_EXEC); 
+
     gretl_print_destroy(prn);
 
     /* output may need re-encoding, UTF-8 to locale? */

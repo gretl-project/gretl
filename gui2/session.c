@@ -65,12 +65,12 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 #define OBJNAMLEN   32
 #define SHOWNAMELEN 12
 
-typedef struct _SESSION SESSION;
-typedef struct _SESSIONBUILD SESSIONBUILD;
-typedef struct _GRETL_TEXT GRETL_TEXT;
-typedef struct _gui_obj gui_obj;
+typedef struct SESSION_ SESSION;
+typedef struct SESSIONBUILD_ SESSIONBUILD;
+typedef struct GRETL_TEXT_ GRETL_TEXT;
+typedef struct gui_obj_ gui_obj;
 
-struct _SESSION {
+struct SESSION_ {
     char name[MAXLEN];
     int nmodels;
     int ngraphs;
@@ -83,18 +83,18 @@ struct _SESSION {
     char *notes;
 };
 
-struct _SESSIONBUILD {
+struct SESSIONBUILD_ {
     int nmodels;
     int *model_ID;
     char **model_name;
 };
 
-struct _GRETL_TEXT {
+struct GRETL_TEXT_ {
     char name[OBJNAMLEN];
     char *buf;
 };
 
-struct _gui_obj {
+struct gui_obj_ {
     gchar *name;
     gint sort;
     gpointer data;
@@ -106,13 +106,20 @@ struct _gui_obj {
 enum {
     ICON_ADD_BATCH,
     ICON_ADD_SINGLE
-};
+} icon_add_modes;
 
 enum {
     SAVEFILE_SESSION,
     SAVEFILE_SCRIPT,
     SAVEFILE_ERROR
-};
+} savefile_returns;
+
+enum {
+    OBJ_UNKNOWN,
+    OBJ_MODEL,
+    OBJ_GRAPH,
+    OBJ_PLOT
+} saved_object_types;
 
 static GtkTargetEntry session_drag_targets[] = {
     { "model_pointer", GTK_TARGET_SAME_APP, GRETL_MODEL_POINTER },
@@ -195,14 +202,14 @@ static GList *icon_list;
 static gui_obj *active_object;
 
 /* private functions */
+static gui_obj *gui_object_new (gchar *name, int sort);
+static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_build_popups (void);
 static void global_popup_activated (GtkWidget *widget, gpointer data);
 static void session_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
 static void info_popup_activated (GtkWidget *widget, gpointer data);
-static gui_obj *gui_object_new (gchar *name, int sort);
-static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_delete_icon (gui_obj *gobj);
 static void open_gui_model (gui_obj *gobj);
 static void open_gui_var (gui_obj *gobj);
@@ -214,10 +221,34 @@ static gboolean session_icon_click (GtkWidget *widget,
 static void gretl_text_free (GRETL_TEXT *text);
 
 #ifdef SESSION_DEBUG
-static void print_session (void);
-#endif
+static void print_session (const char *msg)
+{
+    int i;
 
-/* ........................................................... */
+    if (msg != NULL) {
+	fprintf(stderr, "%s:\n", msg);
+    }
+
+    fprintf(stderr, "Session contains %d models\n", session.nmodels);
+    for (i=0; i<session.nmodels; i++) {
+	fprintf(stderr, " model %d %s\n", (session.models[i])->ID,
+		(session.models[i])->name);
+    }
+    fprintf(stderr, "Session contains %d VARs\n", session.nvars);
+    for (i=0; i<session.nvars; i++) {
+	fprintf(stderr, " var '%s'\n", gretl_var_get_name(session.vars[i]));
+    }
+    fprintf(stderr, "Session contains %d graphs\n", session.ngraphs);
+    for (i=0; i<session.ngraphs; i++) {
+	fprintf(stderr, " graph: %s (%s)\n", (session.graphs[i])->name,
+		(session.graphs[i])->fname);
+    }
+    fprintf(stderr, "Session contains %d texts\n", session.ntexts);
+    for (i=0; i<session.ntexts; i++) {
+	fprintf(stderr, " text: '%s'\n", (session.texts[i])->name);
+    }
+}
+#endif
 
 static int session_saved;
 
@@ -240,8 +271,6 @@ static void rebuild_init (void)
     rebuild.model_ID = NULL;
     rebuild.model_name = NULL;
 }
-
-/* ........................................................... */
 
 static void free_rebuild (void)
 {
@@ -297,8 +326,6 @@ static int look_up_graph_by_name (const char *grname)
     return -1;
 }
 
-/* .................................................................. */
-
 static int look_up_text_by_name (const char *tname)
 {
     int i;
@@ -316,53 +343,49 @@ static int look_up_text_by_name (const char *tname)
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code)
 {
+    int ng = look_up_graph_by_name(grname);
     int replace = 0;
-    int i = look_up_graph_by_name(grname);
 
-    if (i >= 0) {
+    if (ng >= 0) {
 	replace = 1;
-	(session.graphs[i])->sort = code;
-	strcpy((session.graphs[i])->fname, fname);	
-	(session.graphs[i])->ID = plot_count++;
+	(session.graphs[ng])->sort = code;
+	strcpy((session.graphs[ng])->fname, fname);	
+	(session.graphs[ng])->ID = plot_count++;
     } else {
-	i = session.ngraphs;
+	GRAPHT **graphs;
 
-	if (session.ngraphs) {
-	    session.graphs = myrealloc(session.graphs, 
-				       (i + 1) * sizeof *session.graphs);
-	} else {
-	    session.graphs = mymalloc(sizeof *session.graphs);
-	}
+	ng = session.ngraphs;
 
-	if (session.graphs == NULL) {
+	graphs = myrealloc(session.graphs, (ng + 1) * sizeof *graphs);
+	if (graphs == NULL) {
 	    return ADD_OBJECT_FAIL;
 	}
 
-	session.graphs[i] = mymalloc(sizeof **session.graphs);
-	if (session.graphs[i] == NULL) {
+	session.graphs = graphs;
+
+	session.graphs[ng] = mymalloc(sizeof **session.graphs);
+	if (session.graphs[ng] == NULL) {
 	    return ADD_OBJECT_FAIL;
 	}
 
-	(session.graphs[i])->sort = code;
+	(session.graphs[ng])->sort = code;
 
-	strcpy((session.graphs[i])->fname, fname);
-	strcpy((session.graphs[i])->name, grname);
-	(session.graphs[i])->ID = plot_count++;
+	strcpy((session.graphs[ng])->fname, fname);
+	strcpy((session.graphs[ng])->name, grname);
+	(session.graphs[ng])->ID = plot_count++;
 	session.ngraphs += 1;
     }
     
     session_changed(1);
 
     if (icon_list != NULL && !replace) {
-	session_add_icon(session.graphs[i], 
+	session_add_icon(session.graphs[ng], 
 			 (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b',
 			 ICON_ADD_SINGLE);
     }
 
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
 }
-
-/* .................................................................. */
 
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 {
@@ -443,27 +466,27 @@ static int var_already_saved (GRETL_VAR *var)
 
 static int real_add_model_to_session (MODEL *pmod)
 {
-    int n = session.nmodels; 
+    MODEL **models;
+    int nm = session.nmodels; 
 
-    if (session.nmodels) {
-	session.models = myrealloc(session.models, 
-				   (n + 1) * sizeof *session.models);
-    } else {
-	session.models = mymalloc(sizeof *session.models);
+    models = myrealloc(session.models, (nm + 1) * sizeof *models);
+    if (session.models == NULL) {
+	return 1;
     }
 
-    if (session.models == NULL) return 1;
+    session.models = models;
+    session.models[nm] = pmod;
 
-    session.models[n] = pmod;
 #ifdef SESSION_DEBUG
     fprintf(stderr, "real_add_model_to_session: raising session.nmodels to %d\n", 
 	    session.nmodels + 1);
 #endif
+
     session.nmodels += 1;
 
     /* add model icon to session display */
     if (icon_list != NULL) {
-	session_add_icon(session.models[n], 'm', ICON_ADD_SINGLE);
+	session_add_icon(session.models[nm], 'm', ICON_ADD_SINGLE);
     }    
 
     return 0;
@@ -471,23 +494,21 @@ static int real_add_model_to_session (MODEL *pmod)
 
 static int real_add_var_to_session (GRETL_VAR *var)
 {
-    int n = session.nvars; 
+    GRETL_VAR **vars;
+    int nv = session.nvars; 
 
-    if (session.nvars) {
-	session.vars = myrealloc(session.vars, 
-				   (n + 1) * sizeof *session.vars);
-    } else {
-	session.vars = mymalloc(sizeof *session.vars);
+    vars = myrealloc(session.vars, (nv + 1) * sizeof *vars);
+    if (session.vars == NULL) {
+	return 1;
     }
 
-    if (session.vars == NULL) return 1;
-
-    session.vars[n] = var;
+    session.vars = vars;
+    session.vars[nv] = var;
     session.nvars += 1;
 
     /* add var icon to session display */
     if (icon_list != NULL) {
-	session_add_icon(session.vars[n], 'v', ICON_ADD_SINGLE);
+	session_add_icon(session.vars[nv], 'v', ICON_ADD_SINGLE);
     }    
 
     return 0;
@@ -495,33 +516,34 @@ static int real_add_var_to_session (GRETL_VAR *var)
 
 int real_add_text_to_session (PRN *prn, const char *tname)
 {
+    int nt = look_up_text_by_name(tname);
     int replace = 0;
-    int i = look_up_text_by_name(tname);
 
-    if (i >= 0) {
+    if (nt >= 0) {
 	replace = 1;
-	free((session.texts[i])->buf);
-	(session.texts[i])->buf = prn->buf;  
+	free((session.texts[nt])->buf);
+	(session.texts[nt])->buf = prn->buf;  
 	prn->buf = NULL;
     } else {
-	i = session.ntexts;
+	GRETL_TEXT **texts;
 
-	if (session.ntexts) {
-	    session.texts = myrealloc(session.texts, 
-				       (i + 1) * sizeof *session.texts);
-	} else {
-	    session.texts = mymalloc(sizeof *session.texts);
+	nt = session.ntexts;
+
+	texts = myrealloc(session.texts, (nt + 1) * sizeof *texts);
+	if (session.texts == NULL) {
+	    return ADD_OBJECT_FAIL;
 	}
 
-	if (session.texts == NULL) return ADD_OBJECT_FAIL;
+	session.texts = texts;
+	session.texts[nt] = mymalloc(sizeof **session.texts);
+	if (session.texts[nt] == NULL) {
+	    return ADD_OBJECT_FAIL;
+	}
 
-	session.texts[i] = mymalloc(sizeof **session.texts);
-	if (session.texts[i] == NULL) return ADD_OBJECT_FAIL;
-
-	(session.texts[i])->buf = prn->buf;
+	(session.texts[nt])->buf = prn->buf;
 	prn->buf = NULL;
 
-	strcpy((session.texts[i])->name, tname);
+	strcpy((session.texts[nt])->name, tname);
 
 	session.ntexts += 1;
     }
@@ -529,7 +551,7 @@ int real_add_text_to_session (PRN *prn, const char *tname)
     session_changed(1);
 
     if (icon_list != NULL && !replace) {
-	session_add_icon(session.texts[i], 'x', ICON_ADD_SINGLE);
+	session_add_icon(session.texts[nt], 'x', ICON_ADD_SINGLE);
     }
 
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
@@ -588,10 +610,9 @@ int try_add_var_to_session (GRETL_VAR *var)
     return 0;
 }
 
-/* ........................................................... */
+/* called directly from model window */
 
 void remember_model (gpointer data, guint close, GtkWidget *widget)
-     /* called directly from model window */
 {
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
@@ -606,7 +627,9 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 
     pmod->name = g_strdup_printf("%s %d", _("Model"), pmod->ID);
 
-    if (real_add_model_to_session(pmod)) return;
+    if (real_add_model_to_session(pmod)) {
+	return;
+    }
 
     buf = g_strdup_printf(_("%s saved"), pmod->name);
     infobox(buf);
@@ -620,10 +643,9 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     } 
 }
 
-/* ........................................................... */
+/* called directly from VAR window */
 
 void remember_var (gpointer data, guint close, GtkWidget *widget)
-     /* called directly from VAR window */
 {
     windata_t *mydata = (windata_t *) data;
     GRETL_VAR *var = (GRETL_VAR *) mydata->data;
@@ -638,7 +660,9 @@ void remember_var (gpointer data, guint close, GtkWidget *widget)
 
     gretl_var_assign_name(var);
 
-    if (real_add_var_to_session(var)) return;
+    if (real_add_var_to_session(var)) {
+	return;
+    }
 
     buf = g_strdup_printf(_("%s saved"), gretl_var_get_name(var));
     infobox(buf);
@@ -661,10 +685,9 @@ int session_changed (int set)
 
     orig = has_changed;
     has_changed = set;
+
     return orig;
 }
-
-/* ........................................................... */
 
 void session_init (void)
 {
@@ -682,6 +705,39 @@ void session_init (void)
     session_changed(0);
     winstack_init();
     session_file_manager(CLEAR_DELFILES, NULL);
+}
+
+static int pick_up_session_notes (const char *fname)
+{
+    char notesfile[MAXLEN];
+    struct stat buf;
+
+    switch_ext(notesfile, fname, "Notes");
+
+    if (stat(notesfile, &buf) == 0) {
+	char noteline[MAXLEN];
+	FILE *fp = fopen(notesfile, "r");
+
+	if (fp == NULL) {
+	    return 1;
+	}
+
+	/* read into buffer */
+	session.notes = mymalloc(buf.st_size + 1);
+	if (session.notes == NULL) {
+	    fclose(fp);
+	    return 1;
+	}
+
+	session.notes[0] = '\0';
+	while (fgets(noteline, sizeof noteline, fp)) {
+	    strcat(session.notes, noteline);
+	} 
+
+	fclose(fp);
+    }
+
+    return 0;
 }
 
 static void
@@ -754,35 +810,15 @@ void do_open_session (GtkWidget *w, gpointer data)
     }
 
 #ifdef SESSION_DEBUG
-    fprintf(stderr, "after recreate_session():\n");
-    print_session();
+    print_session("after recreate_session()");
 #endif
 
     mkfilelist(FILE_LIST_SESSION, scriptfile);
 
     session_name_from_session_file(session.name, scriptfile);
 
-    /* pick up session notes, if any */
     if (status == SAVEFILE_SESSION) {
-	char notesfile[MAXLEN];
-	struct stat buf;
-
-	switch_ext(notesfile, scriptfile, "Notes");
-	if (stat(notesfile, &buf) == 0 && (fp = fopen(notesfile, "r"))) { 
-	    char notesline[MAXLEN];
-
-	    /* read into buffer */
-	    session.notes = mymalloc(buf.st_size + 1);
-	    if (session.notes == NULL) {
-		fclose(fp);
-		return;
-	    }
-	    session.notes[0] = '\0';
-	    while (fgets(notesline, MAXLEN-1, fp)) {
-		strcat(session.notes, notesline);
-	    } 
-	    fclose(fp);
-	}
+	pick_up_session_notes(scriptfile);
     }
 
     /* trash the practice files window that launched the query? */
@@ -795,8 +831,7 @@ void do_open_session (GtkWidget *w, gpointer data)
     session_menu_state(TRUE);
 
 #ifdef SESSION_DEBUG
-    fprintf(stderr, "about to view_session():\n");
-    print_session();
+    print_session("about to view_session()");
 #endif
 
     view_session();
@@ -927,103 +962,76 @@ void close_session (void)
     zero_boxplot_count();
 }
 
-/* ........................................................... */
+/* see if there are saved objects from a previous session */
 
-#ifdef SESSION_DEBUG
-static void print_session (void)
-{
-    int i;
-
-    printf("Session contains %d models:\n", session.nmodels);
-    for (i=0; i<session.nmodels; i++) {
-	printf("model %d %s\n", (session.models[i])->ID,
-	       (session.models[i])->name);
-    }
-    printf("Session contains %d vars:\n", session.nvars);
-    for (i=0; i<session.nvars; i++) {
-	printf("var '%s'\n", gretl_var_get_name(session.vars[i]));
-    }
-    printf("Session contains %d graphs:\n", session.ngraphs);
-    for (i=0; i<session.ngraphs; i++) {
-	printf("graph: %s (%s)\n", (session.graphs[i])->name,
-	       (session.graphs[i])->fname);
-    }
-    printf("Session contains %d texts:\n", session.ntexts);
-    for (i=0; i<session.ntexts; i++) {
-	printf("text: '%s'\n", (session.texts[i])->name);
-    }
-}
-#endif
-
-/* ........................................................... */
-
-int saved_objects (char *fname)
-     /* see if there are saved objects from a previous session */
+int saved_objects (const char *fname)
 {
     FILE *fp;
-    char line[MAXLEN];
+    char saveline[MAXLEN];
     int saves = 0;
 
 #ifdef SESSION_DEBUG
-    fprintf(stderr, "saved_objects: checking %s\n", fname);
+    fprintf(stderr, "saved_objects: checking '%s'\n", fname);
 #endif    
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return -1;
+    if (fp == NULL) {
+	return -1;
+    }
 
-    /* check for objects */
-    while (fgets(line, MAXLEN - 1, fp)) {
-	if (strncmp(line, "(* saved objects:", 17) == 0) {
+    while (fgets(saveline, sizeof saveline, fp)) {
+	if (strncmp(saveline, "(* saved objects:", 17) == 0) {
 	    saves = 1;
 	    break;
 	}
     }
 
     fclose(fp);
+
     return saves;
 }
 
-/* ........................................................... */
+/* check session graph for name and filename, and check that
+   the specified graph file exists and is readable 
+*/
 
 static int check_session_graph (const char *line, 
 				char **name, char **fname)
 {
-    char *p;
     size_t len, lenmin = 24;
+    const char *p;
     FILE *fp;
 
-    p = strchr(line, '"') + 1;
+    p = strchr(line, '"');
     if (p == NULL) {
-	errbox(_("Warning: session file is corrupted"));
 	return 1;
     }
-
-    len = strcspn(p, "\"");
-
+    
+    len = strcspn(++p, "\"");
     if (len + 1 < lenmin) {
 	lenmin = len + 1;
     }
 
     *name = malloc(lenmin);
-    **name = 0;
+    **name = '\0';
     strncat(*name, p, lenmin - 1);
 
-    p = strchr(p, '"') + 1; 
+    p = strchr(p, '"'); 
     if (p == NULL) {
-	errbox(_("Warning: session file is corrupted"));
 	free(*name);
 	return 1;
     }
 
-    *fname = g_strdup(p);
+    *fname = g_strdup(++p);
 
     top_n_tail(*fname);
 
     fp = fopen(*fname, "r");
-    if (fp == NULL) {
-	gchar *msg;
 
-	msg = g_strdup_printf(_("Warning: couldn't open graph file %s"), *fname);
+    if (fp == NULL) {
+	gchar *msg = 
+	    g_strdup_printf(_("Warning: couldn't open graph file %s"), *fname);
+
 	errbox(msg);
 	g_free(msg);		      
 	free(*name);
@@ -1036,10 +1044,6 @@ static int check_session_graph (const char *line,
     return 0;
 }
 
-#define OBJECT_IS_MODEL(object) (strcmp(object, "model") == 0)
-#define OBJECT_IS_GRAPH(object) (strcmp(object, "graph") == 0)
-#define OBJECT_IS_PLOT(object) (strcmp(object, "plot") == 0)
-
 /* ........................................................... */
 
 static int allocate_model_rebuilder (int nmodels)
@@ -1047,21 +1051,21 @@ static int allocate_model_rebuilder (int nmodels)
     int *IDs;
     char **names;
 
-    IDs = realloc(rebuild.model_ID, nmodels * sizeof *IDs);
+    IDs = myrealloc(rebuild.model_ID, nmodels * sizeof *IDs);
     if (IDs == NULL) {
 	return E_ALLOC;
     }
 
     rebuild.model_ID = IDs;
 
-    names = realloc(rebuild.model_name, nmodels * sizeof *names);
+    names = myrealloc(rebuild.model_name, nmodels * sizeof *names);
     if (names == NULL) {
 	return E_ALLOC;
     }
 
     rebuild.model_name = names;
 
-    names[nmodels - 1] = malloc(OBJNAMLEN);
+    names[nmodels - 1] = mymalloc(OBJNAMLEN);
     if (names[nmodels - 1] == NULL) {
 	return E_ALLOC;
     }
@@ -1073,14 +1077,14 @@ static int allocate_session_graph (int ngraphs)
 {
     GRAPHT **graphs;
 
-    graphs = realloc(session.graphs, ngraphs * sizeof *graphs);
+    graphs = myrealloc(session.graphs, ngraphs * sizeof *graphs);
     if (graphs == NULL) {
 	return E_ALLOC;
     }
 
     session.graphs = graphs;
 
-    graphs[ngraphs - 1] = malloc(sizeof **graphs);
+    graphs[ngraphs - 1] = mymalloc(sizeof **graphs);
     if (graphs[ngraphs - 1] == NULL) {
 	return E_ALLOC;
     }
@@ -1088,27 +1092,118 @@ static int allocate_session_graph (int ngraphs)
     return 0;
 }
 
-int parse_savefile (char *fname)
+static int saved_object_type (const char *str)
+{
+    if (!strcmp(str, "model")) {
+	return OBJ_MODEL;
+    } else if (!strcmp(str, "graph")) {
+	return OBJ_GRAPH;
+    } else if (!strcmp(str, "plot")) {
+	return OBJ_PLOT;
+    } else {
+	return OBJ_UNKNOWN;
+    }
+}
+
+static int 
+grab_model_from_session_file (const char *modline, int id)
+{
+    const char *p;
+    int nm = rebuild.nmodels;
+    int j, len;
+
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "got a model to rebuild (%d)\n"
+	    "rebuild.nmodels now -> %d\n", id, nm + 1);
+#endif
+
+    if (allocate_model_rebuilder(nm + 1)) {
+	return 1;
+    }
+
+    rebuild.model_ID[nm] = id;
+
+    p = strchr(modline, '"');
+    if (p == NULL) {
+	return 1;
+    }
+
+    p++;
+    *rebuild.model_name[nm] = '\0';
+    strncat(rebuild.model_name[nm], p, OBJNAMLEN - 1);
+    len = strlen(rebuild.model_name[nm]);
+
+    for (j=len; j>0; j--) {
+	if (rebuild.model_name[nm][j] == '"') {
+	    rebuild.model_name[nm][j] = '\0';
+	    break;
+	}
+    }
+
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "rebuild.model_name[%d] = '%s'\n", nm, 
+	    rebuild.model_name[nm]);
+#endif
+
+    return 0;
+}
+
+static int 
+grab_graph_from_session_file (const char *grline, int objtype)
+{
+    char *grname, *grfilename;
+    int ng = session.ngraphs;
+
+    if (check_session_graph(grline, &grname, &grfilename)) {
+	return 1;
+    }
+
+    if (allocate_session_graph(ng + 1)) {
+	return 1;
+    }
+
+    strcpy((session.graphs[ng])->name, grname);
+    strcpy((session.graphs[ng])->fname, grfilename);
+
+    free(grname);
+    free(grfilename);
+
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "got graph: '%s'\n", (session.graphs[ng])->fname);
+#endif
+
+    (session.graphs[ng])->ID = plot_count++;
+
+    if (objtype == OBJ_PLOT) {
+	(session.graphs[ng])->sort = GRETL_BOXPLOT;
+	augment_boxplot_count();
+    } else {
+	(session.graphs[ng])->sort = GRETL_GNUPLOT_GRAPH;
+    }
+
+    return 0;
+}
+
+int parse_savefile (const char *fname)
 {
     FILE *fp;
-    char line[MAXLEN], object[7], *tmp;
-    int id, i, j, k, n;
+    char fline[MAXLEN];
+    int err = 0, objs = 0;
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
 	return SAVEFILE_ERROR;
     }
 
-    /* find any saved objects */
-    k = 0;
-    while (fgets(line, MAXLEN - 1, fp)) {
-	if (strncmp(line, "(* saved objects:", 17) == 0) {
-	    k = 1;
+    /* look for saved objects */
+    while (fgets(fline, sizeof fline, fp)) {
+	if (strncmp(fline, "(* saved objects:", 17) == 0) {
+	    objs = 1;
 	    break;
 	}
     }
 
-    if (k == 0) { 
+    if (objs == 0) { 
 	/* no saved objects: just a regular script */
 	fclose(fp);
 	return SAVEFILE_SCRIPT;
@@ -1120,108 +1215,59 @@ int parse_savefile (char *fname)
     fprintf(stderr, "parse_savefile (%s): got saved objects\n", fname);
 #endif
 
-    i = 0; /* number of models */
-    k = 0; /* number of graphs */
+    while (fgets(fline, sizeof fline, fp) && !err) {
+	int id, objtype = OBJ_UNKNOWN;
+	char objstr[8];
 
-    while (fgets(line, MAXLEN - 1, fp)) {
-	if (strncmp(line, "*)", 2) == 0) {
+	if (strncmp(fline, "*)", 2) == 0) {
+	    /* done reading saved objects */
 	    break;
 	}
 
-	chopstr(line);
+	chopstr(fline);
 
-	if (sscanf(line, "%6s %d", object, &id) != 2) {
-	    errbox(_("Session file is corrupted, ignoring"));
-	    fclose(fp);
-	    return SAVEFILE_ERROR;
-	}
-
-	if (OBJECT_IS_MODEL(object)) {
-	    rebuild.nmodels += 1;
-#ifdef SESSION_DEBUG
-	    fprintf(stderr, "got a model to rebuild (%d)\n"
-		    "rebuild.nmodels now = %d\n", id, rebuild.nmodels);
-#endif
-	    if (allocate_model_rebuilder(rebuild.nmodels)) {
-		fclose(fp);
-		return SAVEFILE_ERROR;
-	    }
-	    rebuild.model_ID[i] = id;
-	    tmp = strchr(line, '"') + 1;
-	    *rebuild.model_name[i] = '\0';
-	    strncat(rebuild.model_name[i], tmp, OBJNAMLEN - 1);
-	    n = strlen(rebuild.model_name[i]);
-	    for (j=n; j>0; j--) {
-		if (rebuild.model_name[i][j] == '"') {
-		    rebuild.model_name[i][j] = '\0';
-		    break;
-		}
-	    }
-#ifdef SESSION_DEBUG
-	    fprintf(stderr, "rebuild.model_name[%d] = '%s'\n", i, 
-		    rebuild.model_name[i]);
-#endif
-	    i++;
-	    continue;
-	}
-
-	if (OBJECT_IS_GRAPH(object) || OBJECT_IS_PLOT(object)) {
-	    char *grname, *grfilename;
-
-	    if (check_session_graph(line, &grname, &grfilename)) {
-		continue;
-	    }
-
-	    session.ngraphs += 1;
-	    if (allocate_session_graph(session.ngraphs)) {
-		fclose(fp);
-		return SAVEFILE_ERROR;
-	    }
-
-	    strcpy((session.graphs[k])->name, grname);
-	    strcpy((session.graphs[k])->fname, grfilename);
-
-	    free(grname);
-	    free(grfilename);
-
-#ifdef SESSION_DEBUG
-	    fprintf(stderr, "got graph: '%s'\n", (session.graphs[k])->fname);
-#endif
-	    (session.graphs[k])->ID = plot_count++;
-
-	    if (OBJECT_IS_PLOT(object)) {
-		(session.graphs[k])->sort = GRETL_BOXPLOT;
-		augment_boxplot_count();
-	    } else {
-		(session.graphs[k])->sort = GRETL_GNUPLOT_GRAPH;
-	    }
-	    
-	    k++;
-	    continue;
+	if (sscanf(fline, "%6s %d", objstr, &id) != 2) {
+	    err = 1;
 	} else {
-	    errbox(_("Session file is corrupted, ignoring"));
-	    fclose(fp);
-	    return SAVEFILE_ERROR;
+	    objtype = saved_object_type(objstr);
+	}
+
+	if (objtype == OBJ_MODEL) {
+	    if (grab_model_from_session_file(fline, id)) {
+		err = 1;
+	    } else {
+		rebuild.nmodels += 1;
+	    }
+	} else if (objtype == OBJ_GRAPH || objtype == OBJ_PLOT) {
+	    if (grab_graph_from_session_file(fline, objtype)) {
+		err = 1;
+	    } else {
+		session.ngraphs += 1;
+	    }
+	} else {
+	    err = 1;
 	}
     }
 
-#ifdef SESSION_DEBUG
-    fprintf(stderr, "session.ngraphs = %d\n", session.ngraphs);
-#endif
     fclose(fp);
 
+    if (err) {
+	errbox(_("Session file is corrupted, ignoring"));
+	return SAVEFILE_ERROR;
+    }
+    
     return SAVEFILE_SESSION;
 }
 
 /* called on start-up when a "session" file is loaded */
 
-int recreate_session (char *fname)
+int recreate_session (const char *fname)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "recreate_session: fname = %s\n", fname);
-    print_session();
+    print_session(NULL);
 #endif
 
     if (execute_script(fname, NULL, prn, REBUILD_EXEC)) {
@@ -1229,8 +1275,7 @@ int recreate_session (char *fname)
     }
 
 #ifdef SESSION_DEBUG
-    fprintf(stderr, "recreate_session: after execute_script()\n");
-    print_session();
+    print_session("recreate_session: after execute_script()");
 #endif
 
     free_rebuild();
@@ -1256,21 +1301,14 @@ void save_session_callback (GtkWidget *w, guint code, gpointer data)
 
 /* ........................................................... */
 
-#ifdef not_yet
-void delete_session_callback (GtkWidget *w, guint i, gpointer data)
-{
-    dummy_call();
-}
-#endif
-
-/* ........................................................... */
-
 static char *model_cmd_str (MODEL *pmod)
 {
     char *str;
     
     str = malloc(MAXLEN);
-    if (str == NULL) return NULL;
+    if (str == NULL) {
+	return NULL;
+    }
 
     sprintf(str, "%s ", gretl_command_word(pmod->ci));
 
@@ -1278,6 +1316,7 @@ static char *model_cmd_str (MODEL *pmod)
         model_list_to_string(pmod->arinfo->arlist, str);
         strcat(str, "; ");
     }
+
     model_list_to_string(pmod->list, str); 
 
     return str;
@@ -1299,11 +1338,9 @@ static gchar *graph_str (GRAPHT *graph)
 	while (fgets(line, 47, fp) && gotxy < 2) {
 	    if (strstr(line, "# timeseries")) {
 		break;
-	    }
-	    else if (sscanf(line, "set xlabel %23s", xlabel) == 1) {
+	    } else if (sscanf(line, "set xlabel %23s", xlabel) == 1) {
 		gotxy++;
-	    }
-	    else if (sscanf(line, "set ylabel %23s", ylabel) == 1) {
+	    } else if (sscanf(line, "set ylabel %23s", ylabel) == 1) {
 		gotxy++;
 	    }
 	}
@@ -1311,15 +1348,16 @@ static gchar *graph_str (GRAPHT *graph)
 #ifdef OLD_GTK
 	    buf = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
 #else
-	    char *str = malloc(64);
+	    char *tmp = 
+		g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
 
-	    if (str != NULL) {
-		sprintf(str, "%s %s %s", ylabel, _("versus"), xlabel);
-		buf = my_locale_to_utf8(str);
-		free(str);
+	    if (tmp != NULL) {
+		buf = my_locale_to_utf8(tmp);
+		free(tmp);
 	    }
 #endif /* OLD_GTK */
 	}
+
 	fclose(fp);
     }
 
@@ -1334,11 +1372,14 @@ static char *boxplot_str (GRAPHT *graph)
     char *str = NULL;
 
     fp = fopen(graph->fname, "r");
+
     if (fp != NULL) {
 	char vname[VNAMELEN], line[48];
 
-	str = malloc (MAXLEN);
-	if (str == NULL) return NULL;
+	str = malloc(MAXLEN);
+	if (str == NULL) {
+	    return NULL;
+	}
 	*str = '\0';
 
 	while (fgets(line, 47, fp) && strlen(str) < MAXLEN-48) {
@@ -1350,6 +1391,7 @@ static char *boxplot_str (GRAPHT *graph)
 	}
 	fclose(fp);
     }
+
     return str;
 }
 
@@ -1360,7 +1402,9 @@ static void open_gui_model (gui_obj *gobj)
     PRN *prn;
     MODEL *pmod = (MODEL *) gobj->data;
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
     printmodel(pmod, datainfo, OPT_NONE, prn);
     view_model(prn, pmod, 78, 400, gobj->name);
@@ -1373,7 +1417,9 @@ static void open_gui_var (gui_obj *gobj)
     PRN *prn;
     GRETL_VAR *var = (GRETL_VAR *) gobj->data;
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
     gretl_var_print(var, datainfo, prn);
     view_buffer(prn, 78, 450, gobj->name, VAR, var);
@@ -1393,10 +1439,11 @@ static void open_boxplot (gui_obj *gobj)
 static void open_gui_text (gui_obj *gobj)
 { 
     GRETL_TEXT *text = (GRETL_TEXT *) gobj->data;
-    PRN *prn;
     size_t sz = strlen(text->buf);
+    PRN *prn;
 
     prn = bufopen_with_size(sz + 1);
+
     if (prn != NULL) { 
 	strcpy(prn->buf, text->buf);
 	view_buffer(prn, 80, 400, gobj->name, INFO, NULL);
@@ -1407,7 +1454,7 @@ static void open_gui_text (gui_obj *gobj)
 
 static void delete_delfiles (const gchar *fname, gpointer p)
 {
-    remove (fname);
+    remove(fname);
 }
 
 /* ........................................................... */
@@ -1989,10 +2036,7 @@ static void add_all_icons (void)
     session_add_icon(NULL, 'p', ICON_ADD_BATCH);         /* script file */
 
 #ifdef SESSION_DEBUG
-    fprintf(stderr, "view_session: session.nmodels = %d\n", session.nmodels);
-    fprintf(stderr, "view_session: session.nvars = %d\n", session.nvars);
-    fprintf(stderr, "view_session: session.ngraphs = %d\n", session.ngraphs);
-    fprintf(stderr, "view_session: session.ntexts = %d\n", session.ntexts);
+    print_session("view_session");
 #endif
 
     for (i=0; i<session.nmodels; i++) {
@@ -2050,6 +2094,7 @@ static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key,
     if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
     }
+
     return FALSE;
 }
 
@@ -2883,32 +2928,7 @@ void view_session (void)
     gtk_widget_grab_focus(icon_table);
 }
 
-/* apparatus for renaming session objects */
-
-#if 0
-
-static gboolean gtk_editable_get_editable (GtkEditable *e)
-{
-    gboolean ret;
-
-    gtk_object_get(GTK_OBJECT(e), "editable", &ret, NULL);
-    return ret;
-}
-
-static void gtk_entry_set_width_chars (GtkEntry *entry, int width)
-{
-    /* gtk_widget_set_usize(entry, width, height */
-    return;
-}
-
-static void gtk_entry_set_has_frame (GtkEntry *entry, gboolean b)
-{
-    return;
-}
-
-#endif /* bodges for old gtk */
-
-/* for now, object renaming is gtk2 only */
+/* apparatus for renaming session objects (gtk2 only) */
 
 #ifndef OLD_GTK
 
@@ -3118,15 +3138,13 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     }
 
 #ifdef OLD_GTK
-    create_gobj_icon (gobj, xpm);
+    create_gobj_icon(gobj, xpm);
 #else
-    create_gobj_icon (gobj, (const char **) xpm);
+    create_gobj_icon(gobj, (const char **) xpm);
 #endif
 
     return gobj;
 } 
-
-/* ........................................................... */
 
 #ifdef OLD_GTK
 
@@ -3148,10 +3166,12 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     g_free(savestuff); 
     fclose(fp);
 
-    if (!quiet) infobox(_("plot commands saved"));
+    if (!quiet) {
+	infobox(_("plot commands saved"));
+    }
 }
 
-#else /* end of gtk-1.2 version, on to gtk-2.0 */
+#else 
 
 static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
 {
@@ -3194,7 +3214,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     }
 }
 
-#endif /* gtk-2.0 branch */
+#endif /* OLD_GTK */
 
 #ifdef G_OS_WIN32
 
@@ -3245,13 +3265,14 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 
     buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
 
-    if (system(buf))
+    if (system(buf)) {
         errbox(_("gnuplot command failed"));
+    }
 
     g_free(buf);
 }
 
-#else /* not gtk-1.2, but gtk-2.0 */
+#else /* gtk-2.0 */
 
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
@@ -3279,7 +3300,9 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     err = gretl_spawn(buf);
 # endif
 
-    if (err) errbox(_("gnuplot command failed"));
+    if (err) {
+	errbox(_("gnuplot command failed"));
+    }
 
     g_free(buf);
 }

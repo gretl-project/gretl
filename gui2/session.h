@@ -86,11 +86,11 @@ void free_session (void);
 
 int highest_numbered_variable_in_session (void);
 
-int saved_objects (char *fname);
+int saved_objects (const char *fname);
 
-int parse_savefile (char *fname);
+int parse_savefile (const char *fname);
 
-int recreate_session (char *fname);
+int recreate_session (const char *fname);
 
 void view_session (void);
 

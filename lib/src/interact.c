@@ -870,11 +870,13 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
     } /* end if STORE && nf */
 
-    /* "store" takes a filename before the list, "var" takes a 
-       lag order, "adf" takes a lag order, "arch" takes a lag 
-       order, "multiply" takes a multiplier.  "omitfrom" and
-       "addto" take the ID of a previous model. "setmiss" takes
-       a value to be interpreted as "missing". 
+    /* "store" takes a filename before the list
+       "var" takes a lag order 
+       "adf" takes a lag order 
+       "arch" takes a lag order
+       "multiply" takes a multiplier  
+       "omitfrom" and "addto" take the ID of a previous model
+       "setmiss" takes a value to be interpreted as missing 
     */
     if ((command->ci == STORE && !spacename) ||
 	command->ci == ADF ||
@@ -905,7 +907,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	} 
     }
 
-    if (command->ci == MULTIPLY) {  /* suffix string */
+    if (command->ci == MULTIPLY) { 
 	char suffix[4];
 
 	sscanf(line, "%3s", suffix);
@@ -917,7 +919,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     }
 
     if (command->ci == AR || command->ci == ARMA ||
-	command->ci == GARCH) ar = 1;
+	command->ci == GARCH) {
+	ar = 1;
+    }
 
     command->list = realloc(command->list, (1 + nf) * sizeof *command->list);
     if (command->list == NULL) {
@@ -1321,33 +1325,36 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     return vi;
 }
 
-/* ........................................................... */
+/* create a gretl "list" containing all the vars in the data set,
+   except for the constant and any "hidden" variables or scalars 
+*/
 
 static int make_full_list (const DATAINFO *pdinfo, CMD *command)
-/* create a gretl "list" containing all the vars in the data set,
-   except for the constant and any "hidden" variables or scalars */
 {
-    int i, n = 1;
+    int i, n;
     int *list;
 
-    list = realloc(command->list, pdinfo->v * sizeof *list);
+    n = pdinfo->v;
+    for (i=1; i<pdinfo->v; i++) {
+	if (hidden_var(i, pdinfo) || pdinfo->vector[i] == 0) {
+	    n--;
+	}
+    }
+
+    list = realloc(command->list, n * sizeof *list);
     if (list == NULL) {
 	return E_ALLOC;
     }
 
     command->list = list;
-
-    for (i=1; i<pdinfo->v; i++) {
-	if (hidden_var(i, pdinfo)) {
-	    continue;
-	}
-	if (pdinfo->vector[i] == 0) {
-	    continue;
-	}
-	command->list[n++] = i;
-    }
-
     command->list[0] = n - 1;
+
+    n = 1;
+    for (i=1; i<pdinfo->v; i++) {
+	if (!hidden_var(i, pdinfo) && pdinfo->vector[i]) {
+	    command->list[n++] = i;
+	}
+    }
 
     return 0;
 }
@@ -2283,9 +2290,10 @@ int gretl_cmd_init (CMD *cmd)
 	return 1;
     }
 
-    cmd->param = malloc(1);
+    cmd->param = calloc(1, 1);
     if (cmd->param == NULL) {
 	free(cmd->list);
+	cmd->list = NULL;
 	return 1;
     }
 
