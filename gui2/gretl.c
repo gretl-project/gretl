@@ -36,6 +36,7 @@
 
 #ifndef G_OS_WIN32
 # include <unistd.h>
+# include <sys/types.h>
 # include "../pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h>
@@ -176,6 +177,22 @@ static void osx_help (void)
     g_free(syscmd);
 }
 #endif 
+
+#ifndef G_OS_WIN32
+static void root_check (void)
+{
+    if (getuid() == 0) {
+	int resp;
+
+	resp = yes_no_dialog ("gretl", _("You seem to be running gretl " 
+			      "as root.  Do you really want to do this?"), 
+			      0);
+	if (resp == GRETL_NO) {
+	    exit(EXIT_FAILURE);
+	}
+    }
+}
+#endif
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
@@ -731,6 +748,7 @@ int main (int argc, char *argv[])
 #ifdef G_OS_WIN32
     gretl_win32_init(argv[0]);
 #else 
+    root_check();
     set_rcfile(); /* also calls read_rc() */
 #endif/* G_OS_WIN32 */
 

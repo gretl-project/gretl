@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-02-22 11:26-0500\n"
-"PO-Revision-Date: 2005-03-09 19:00+0100\n"
+"PO-Revision-Date: 2005-03-11 8:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -3459,14 +3459,14 @@ msgid ""
 "      Variable     coefficients   coefficients   std. errors    std. errors\n"
 "\n"
 msgstr ""
-"                   ¶rednia dla    odch. stand.    ¶rednia dla    odch. stand.\n"
-"                  estymowanych    estymowanych    estymowanych   estymowanych\n"
-"      Zmienna    wspó³czynników  wspó³czynników   odch. stand.   odch. stand.\n"
+"                 ¶rednia dla    odch. stand.    ¶rednia dla    odch. stand.\n"
+"                estymowanych    estymowanych    estymowanych   estymowanych\n"
+"     Zmienna   wspó³czynników  wspó³czynników   odch. stand.   odch. stand.\n"
 "\n"
 
 #: lib/src/monte_carlo.c:1960
 msgid "   Variable     mean         std. dev.\n"
-msgstr "  Zmienna     ¶rednia      odch.stand.\n"
+msgstr "  Zmienna       ¶rednia     odch.stand.\n"
 
 #: lib/src/monte_carlo.c:2023
 #, c-format
@@ -6185,6 +6185,8 @@ msgstr "An econometrics program for the gnome desktop issued under the GNU Gener
 #: gui2/about.c:280 gui2/about.c:368 gui2/about.c:369
 msgid "translator_credits"
 msgstr ""
+"T³umaczenie na jêzyk polski: Tadeusz Kufel i Pawe³ Kufel (UMK Toruñ)\n"
+"e-mail: tadeusz.kufel@uni.torun.pl; http://www.kufel.torun.pl"
 
 #: gui2/about.c:158 gui2/about.c:333
 #, c-format

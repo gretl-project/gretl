@@ -557,6 +557,20 @@ void nls_init (void)
     textdomain (PACKAGE);
 }
 
+static void root_check (void)
+{
+    if (getuid() == 0) {
+	int resp;
+
+	resp = yes_no_dialog ("gretl", _("You seem to be running gretl " 
+			      "as root.  Do you really want to do this?"), 
+			      0);
+	if (resp == GRETL_NO) {
+	    exit(EXIT_FAILURE);
+	}
+    }
+}
+
 static void force_english (void)
 {
     setlocale (LC_ALL, "C");
@@ -592,6 +606,7 @@ int main (int argc, char *argv[])
 #endif
 
     set_paths(&paths, OPT_D | OPT_X); /* defaults, gui */
+    root_check();
     set_rcfile();
     init_fileptrs();
 
