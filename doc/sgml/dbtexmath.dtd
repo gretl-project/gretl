@@ -20,11 +20,7 @@
 
 <!ENTITY % equation.content "(alt?, graphic?, texmath?)">
 
-<!ENTITY % eqfname "figfile CDATA #IMPLIED">
-
 <!ELEMENT texmath (#PCDATA)>
-
-<!ATTLIST texmath %eqfname;>
 
 <!-- End of dbtexmath.dtd V1.0 ............................................ -->
 <!-- ...................................................................... -->
