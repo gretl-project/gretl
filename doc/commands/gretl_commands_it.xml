@@ -155,10 +155,46 @@
 	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
 	graphic="adf1"/></para>
 
-      <para>Se l'ordine di ritardi, <mathvar>p</mathvar>, è maggiore di 0, ai
+      <para>Se l'ordine di ritardi, <mathvar>k</mathvar>, è maggiore di 0, ai
         regressori di ognuna delle regressioni calcolate per il test saranno
-        aggiunti <mathvar>p</mathvar> ritardi della variabile dipendente.
+        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente.
       </para>
+
+      <para context="cli">
+        Se l'ordine di ritardi è preceduto da un segno meno, ad esempio
+        &minus;<mathvar>k</mathvar>, verrà considerato come ordine massimo, e
+        l'ordine da usare effettivamente sarà ricavato applicando la seguente
+        procedura di test "all'indietro":
+      </para>
+
+      <para context="gui">
+        Se l'ordine di ritardi, <mathvar>k</mathvar>, è maggiore di 0, ai
+        regressori di ognuna delle regressioni calcolate per il test saranno
+        aggiunti <mathvar>k</mathvar> ritardi della variabile dipendente, a meno
+        che venga selezionata la casella <quote>test per il ritardo
+        massimo</quote>; in questo caso, l'ordine selezionato verrà considerato
+        come ordine massimo, e l'ordine da usare effettivamente sarà ricavato
+        applicando la seguente procedura di test "all'indietro":
+      </para>
+
+      <nlist>
+	<li><para>Stima la regressione Dickey&ndash;Fuller con
+	    <mathvar>k</mathvar> ritardi della variabile dipendente.
+	  </para>
+	</li>
+	<li><para>Se questo ordine di ritardi è significativo, esegue il test
+        con l'ordine di ritardo <mathvar>k</mathvar>.  Altrimenti, prova il test
+        con <mathvar>k</mathvar> = <mathvar>k</mathvar> &minus; 1; se
+	    <mathvar>k</mathvar> = 0, esegue il test con ordine di ritardo 0,
+            altrimenti va al punto 1.
+	  </para>
+	</li>
+      </nlist>
+
+      <para>Durante il punto 2 spiegato sopra, <quote>significativo</quote>
+      significa che la statistica <mathvar>t</mathvar> per l'ultimo ritardo
+      abbia un <emphasis>p</emphasis>-value asintotico a due code per la
+      distribuzione normale pari a 0.10 o inferiore.</para> 
 
       <para>I <emphasis>p-</emphasis>value per questo test sono basati su
 	MacKinnon (1996). Il codice rilevante è incluso per gentile concessione
@@ -2446,6 +2482,10 @@
         virgolette doppie) e/o un <quote>nome per i grafici</quote>,
         usato per indicare la variabile nei grafici (usando l'opzione
 	<lit>-n</lit>, seguita da una stringa tra virgolette doppie).
+      </para>
+      <para>
+        Se non viene usata alcuna opzione, il comando mostra l'etichetta
+        descrittiva per la variabile specificata, se esiste.
       </para>
     </description>
 
