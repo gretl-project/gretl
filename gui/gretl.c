@@ -1082,8 +1082,11 @@ static int get_windows_font (char *fontspec)
 
 	ReleaseDC(0, screen);
 	DeleteDC(h_dc);
+	/*
 	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-p-*-iso8859-1", name,
 		pix_height);
+	*/
+	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-p-*-*", name, pix_height);
 	return 0;
     }
 }
