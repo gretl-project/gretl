@@ -1186,6 +1186,16 @@
 
   </command>
 
+  <command name="function" section="Programming" context="cli">
+
+    <description>
+      <para>
+	Definisce una funzione.  Questa voce deve ancora essere scritta.
+      </para>
+    </description>
+
+  </command>  
+
   <command name="garch" section="Estimation" label="Modello GARCH">
 
     <usage>
@@ -1503,6 +1513,14 @@
 	Esempi: <lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  Per i dati
         giornalieri occorre usare la forma <repl>AAAA:MM:GG</repl>, ad esempio
 	<lit>ibm[1970:01:23]</lit>.
+      </para>
+
+      <para>È possibile modificare una singola osservazione in una serie
+         usando <lit>genr</lit>. Per farlo, occorre aggiungere un numero
+         di osservazione o una data valida tra parentesi quadre al nome
+	 della variabile nel lato sinistro della formula. Ad esempio:
+	<lit>genr x[3] = 30</lit> o <lit>genr x[1950:04] =
+	  303.7</lit>.
       </para>
 
       <para>
@@ -2576,8 +2594,15 @@
       <arguments>
         <argument>controllo</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--progressive</flag>
+	  <effect>abilita modalità speciali di alcuni comandi</effect>
+	</option>
+      </options>
       <examples>
         <example>loop 1000</example>
+	<example>loop 1000 --progressive</example>
         <example>loop while essdiff > .00001</example>
         <example>loop for i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
@@ -2604,16 +2629,16 @@
       <para>Questo comando apre una modalità speciale, in cui il
         programma accetta comandi da eseguire più volte. All'interno di
         un loop possono essere usati solo alcuni tipi di comandi:
-        <cmd>genr</cmd>, <cmd>ols</cmd>, <cmd>print</cmd>,
-        <cmd>sim</cmd>, <cmd>smpl</cmd>, <cmd>store</cmd> e
-        <cmd>summary</cmd> (<cmd>store</cmd> non può essere usato in un
-        loop di tipo <quote>while</quote>). Si esce dalla modalità loop
-        con l'istruzione <cmd>endloop</cmd>: a questo punto i comandi
-        indicati vengono eseguiti.
+        <cmd>genr</cmd>, <cmd>ols</cmd>, <cmd>print</cmd>, <cmd>printf</cmd>
+        <cmd>pvalue</cmd>, <cmd>sim</cmd>, <cmd>smpl</cmd>, <cmd>store</cmd> e
+        <cmd>summary</cmd>, <cmd>if</cmd>, <cmd>else</cmd> e <cmd>endif</cmd>.
+        Si esce dalla modalità loop con l'istruzione <cmd>endloop</cmd>: a
+        questo punto i comandi indicati vengono eseguiti.
       </para>
 
-      <para>Si veda <manref targ="looping"/> per ulteriori dettagli ed
-      esempi.</para>
+      <para>Si veda <manref targ="looping"/> per ulteriori dettagli,
+      esempi e per la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
+      ad essere usata nelle simulazioni Monte Carlo).</para>
     </description>
 
   </command>
@@ -2714,7 +2739,7 @@
     <description context="gui"> 
       <para>
 	Nella ricerca econometrica è prassi stimare vari modelli con una
-        variabil dipendente comune &mdash; mentre i modelli differiscono
+        variabile dipendente comune &mdash; mentre i modelli differiscono
         tra loro per le variabili indipendenti o per lo stimatore usato.
 	In questa situazione è comodo poter rappresentare i risultati
         delle regressioni in forma di una tabella dove ogni colonna
@@ -3066,6 +3091,14 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
         </option>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>sopprime la correzione per i gradi di libertà</effect>
+        </option>
+        <option>
+	  <flag>--print-final</flag>
+	  <effect>si veda sotto</effect>
+        </option>
       </options>
       <examples>
         <example>ols 1 0 2 4 6 7</example>
@@ -3097,6 +3130,17 @@
 	indica un livello di significatività tra il 5 e il 10 per cento.
 	Vengono mostrate anche le statistiche di selezione del modello
         (descritte in Ramanathan, capitolo 4.3).</para>
+
+      <para>Usando l'opzione <lit>--no-df-corr</lit> la correzione per i
+	gradi di libertà non viene applicata nel calcolo della varianza
+        stimata dell'errore (e quindi anche dell'errore standard delle
+        stime dei parametri).</para>
+
+      <para>L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
+	di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
+        regressione in modo silenzioso per tutte le iterazioni del loop
+        tranne l'ultima. Si veda <manref targ="loop-examples"/> per i dettagli.
+      </para>
 
       <para context="cli">È possibile salvare alcune variabili
       interne generate durante la stima, usando il comando <cmdref
@@ -4007,9 +4051,9 @@
 
       <para>Occore tenere presente che ridefinendo il campione basandosi
       su una variabile dummy, un'espressione Booleana o sul criterio
-      delle osservazioni mancanti: tutte le informazioni
+      delle osservazioni mancanti, tutte le informazioni
       <quote>strutturali</quote> contenute nel file con la descrizione
-      dei dati (a proposito della struttura di serie storiche o di panel
+      dei dati (riguardanti la struttura di serie storiche o di panel
       dei dati) vengono perse. È possibile reimpostare la struttura
       originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
