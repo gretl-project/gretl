@@ -233,8 +233,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 
     if (data_status) { 
 	/* we already have data in gretl's workspace */
-	err = check_db_import(sinfo, datainfo);
-	if (err) {
+	if (check_db_import(sinfo, datainfo)) {
 	    errbox(get_gretl_errmsg());
 	    return;
 	}
