@@ -53,6 +53,11 @@ extern cst_voice *register_cmu_us_kal (void);
 # include <sapi.h>
 #endif
 
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+# define DO_SPEECH
+# include "libgretl.h"
+#endif
+
 const char *track_hdr = "MTrk";
 
 enum dataset_comments {
@@ -701,7 +706,7 @@ static void print_dataset_comments (const dataset *dset)
 	}
     }
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+#ifdef DO_SPEECH
     speak_dataset_comments(dset);
 #endif
 }
@@ -966,89 +971,6 @@ int midi_play_graph (const char *fname, const char *userdir)
     return 0;
 }
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-
-#ifdef HAVE_FLITE
-
-static int speak_buffer (const char *buf)
-{
-    cst_voice *v;
-
-    flite_init();
-    v = register_cmu_us_kal();
-
-    flite_text_to_speech(buf, v, "play");
-
-    return 0;
-}
-
-#else
-
-static int speak_buffer (const char *buf)
-{
-    ISpVoice *v = NULL;
-    HRESULT hr;
-    WCHAR *w;
-
-    hr = CoInitialize(NULL);
-    if (!SUCCEEDED(hr)) return 1;
-    hr = CoCreateInstance(&CLSID_SpVoice, 
-                          NULL, 
-                          CLSCTX_ALL, 
-                          &IID_ISpVoice, 
-                          (void **) &v);
-    if (!SUCCEEDED(hr)) {
-	CoUninitialize();
-	return 1;
-    }
-
-    w = wide_string(dset->comments[i]);
-    ISpVoice_Speak(v, w, 0, NULL);
-
-    free(w);
-    ISpVoice_Release(v);
-    CoUninitialize();
-
-    return 0;
-}
-
-#endif
-
-#ifdef GLIB2
-
-int read_window_text (GtkWidget *w)
-{
-    GtkTextBuffer *tbuf;
-    GtkTextIter start, end;
-    gchar *window_text;
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-    gtk_text_buffer_get_start_iter(tbuf, &start);
-    gtk_text_buffer_get_end_iter(tbuf, &end);
-    window_text = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-
-    speak_buffer(window_text);
-
-    g_free(window_text);
-
-    return 0;
-}
-
-#else
-
-int read_window_text (GtkWidget *w)
-{
-    gchar *window_text;
-
-    window_text = gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1);
-
-    speak_buffer(window_text);
-
-    g_free(window_text);
-
-    return 0;
-}
-
-#endif /* GTK versions */
-
-#endif /* FLITE || WIN32 */
+#ifdef DO_SPEECH
+# include "audioprint.c"
+#endif 

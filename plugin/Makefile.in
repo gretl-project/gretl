@@ -36,7 +36,7 @@ endif
 
 VPATH = $(topsrc)/plugin:$(topsrc)/tests
 
-override CFLAGS += -I.. -DHAVE_CONFIG_H
+override CFLAGS += -I.. -I$(topsrc)/gui2 -DHAVE_CONFIG_H
 
 LIBTOOL = ../libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
