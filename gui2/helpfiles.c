@@ -20,8 +20,10 @@
 /* helpfiles.c for gretl */
 
 #include "gretl.h"
+#ifndef OLD_GTK
 #include "treeutils.h"
 #include "textbuf.h"
+#endif
 
 #ifdef ENABLE_NLS
 static int translated_helpfile = -1;
@@ -50,22 +52,41 @@ static int look_for_string (const char *haystack, const char *needle,
 static void find_in_text (GtkWidget *widget, gpointer data);
 static void find_in_listbox (GtkWidget *widget, gpointer data);
 static void find_string_dialog (void (*findfunc)(), gpointer data);
+#ifdef OLD_GTK
+static void find_in_help (GtkWidget *widget, gpointer data);
+static int clist_start_row;
+#endif
 
 static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
+#ifndef OLD_GTK
 GtkItemFactoryEntry help_items[] = {
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
     { N_("/_Find"), NULL, menu_find, 0, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
+#else
+GtkItemFactoryEntry help_items[] = {
+    { N_("/_Topics"), NULL, NULL, 0, "<Branch>" },    
+    { N_("/_Find"), NULL, menu_find, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL}
+};
+#endif
 
 #ifdef ENABLE_NLS
+# ifndef OLD_GTK
 GtkItemFactoryEntry english_help_items[] = {
     { N_("/_Find"), NULL, menu_find, 0, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
+# else
+GtkItemFactoryEntry english_help_items[] = {
+    { N_("/_Find"), NULL, menu_find, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL}
+};
+# endif
 #endif
 
 /* ......................................................... */
@@ -487,9 +508,15 @@ static void real_do_help (guint pos, int cli)
     static GtkWidget *gui_help_view;
     static GtkWidget *script_help_view;
     GtkWidget *w = (cli)? script_help_view : gui_help_view;
+#ifndef OLD_GTK
     GtkTextBuffer *buf;
     GtkTextIter iter;
     GtkTextMark *vis;
+#else
+    double frac;
+    gfloat adj;
+#endif
+
 
     if (w == NULL) {
 	windata_t *hwin = helpwin(cli, 0);
@@ -498,18 +525,31 @@ static void real_do_help (guint pos, int cli)
 	    if (cli) w = script_help_view = hwin->w;
 	    else w = gui_help_view = hwin->w;
 	}
+#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(w), "destroy",
 			 G_CALLBACK(gtk_widget_destroyed),
-			 (cli)? &script_help_view : &gui_help_view);	
+			 (cli)? &script_help_view : &gui_help_view);
+#else
+	gtk_signal_connect(GTK_OBJECT(w), "destroy",
+			   GTK_SIGNAL_FUNC(gtk_widget_destroyed),
+			   (cli)? &script_help_view : &gui_help_view);	
+#endif	
     } else {
 	gdk_window_show(w->parent->window);
 	gdk_window_raise(w->parent->window);
     }
-    
+
+#ifndef OLD_GTK    
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
     gtk_text_buffer_get_iter_at_line_index(buf, &iter, pos, 0);
     vis = gtk_text_buffer_create_mark(buf, "vis", &iter, FALSE);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(w), vis, 0.0, TRUE, 0.1, 0.0);    
+    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(w), vis, 0.0, TRUE, 0.1, 0.0);
+#else
+    frac = (double) pos * (double) GTK_TEXT(w)->vadj->upper;
+    frac /= (double) (cli)? script_help_length : gui_help_length;
+    adj = 0.999 * frac;
+    gtk_adjustment_set_value(GTK_TEXT(w)->vadj, adj);
+#endif    
 }
 
 /* ........................................................... */
@@ -548,10 +588,16 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	return FALSE;
     } else {
 	gchar *text = NULL;
+	int pos = 0;
+#ifndef OLD_GTK
 	GtkTextBuffer *buf;
 	GtkTextIter iter;
-	int pos = 0;
+#else
+	int pt = GTK_EDITABLE(vwin->w)->current_pos;
+	int len = gtk_text_get_length(GTK_TEXT(vwin->w));
+#endif
 
+#ifndef OLD_GTK
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	gtk_text_buffer_get_iter_at_mark(buf, &iter,
 					 gtk_text_buffer_get_insert(buf));
@@ -571,19 +617,41 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	    text = gtk_text_buffer_get_text(buf, &w_start, &w_end, FALSE);
 	} 
 
-	if (text != NULL && strlen(text) > 0) {
+	if (text != NULL && *text != '\0') {
 	    char word[9];
-	    int cmdnum;
 
-	    *word = 0;
+	    *word = '\0';
 	    strncat(word, text, 8);
-	    cmdnum = gretl_command_number(word);
-	    pos = pos_from_cmd(cmdnum);
+	    pos = pos_from_cmd(gretl_command_number(word));
 	} 
+#else
+	text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 
+				      0, (pt + 9 > len)? -1 : pt + 8);
+
+	if (text != NULL && *text != '\0') {
+	    char *p, *q;
+	    char word[9];
+
+	    p = q = text + pt;
+	    if (pt > 0) {
+		while (p - text && !isspace(*(p-1))) p--;
+	    }
+	    if (pt < (int) strlen(text)) {
+		while (*q && !isspace(*q)) q++;
+	    }
+	    *word = '\0';
+	    strncat(word, p, (q - p > 8)? 8 : q - p);
+	    pos = pos_from_cmd(gretl_command_number(word));
+	} 
+#endif
 	
 	real_do_help(pos, 1);
 	g_free(text);
+#ifndef OLD_GTK
 	text_set_cursor(vwin->w, 0);
+#else
+	gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, NULL);
+#endif
 	vwin->help_active = 0;
     }
     return FALSE;
@@ -593,10 +661,15 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 
 void menu_find (gpointer data, guint db, GtkWidget *widget)
 {
-    if (db) 
+    if (db) {
 	find_string_dialog(find_in_listbox, data);
-    else 
+    } else {
+#ifndef OLD_GTK
 	find_string_dialog(find_in_text, data);
+#else
+	find_string_dialog(find_in_help, data);
+#endif
+    }
 }
 
 /* ........................................................... */
@@ -621,7 +694,85 @@ static gint close_find_dialog (GtkWidget *widget, gpointer data)
     return FALSE;
 }
 
-/* .................................................................. */
+#ifdef OLD_GTK
+
+static void find_in_help (GtkWidget *widget, gpointer data)
+{
+    int found = 0, i, linecount = 0;
+    int help_length = 1000;
+    char *haystack;
+    windata_t *vwin = 
+	(windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
+
+    haystack = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0,
+	gtk_text_get_length(GTK_TEXT(vwin->w)));
+
+    if (vwin->role == CLI_HELP) help_length = script_help_length;
+    else if (vwin->role == GUI_HELP) help_length = gui_help_length;
+
+# ifdef ENABLE_NLS
+    if (vwin->role == CLI_HELP_ENGLISH) {
+	help_length = english_script_help_length;
+    } else if (vwin->role == GUI_HELP_ENGLISH) {
+	help_length = english_gui_help_length;
+    }
+# endif
+
+    if (needle) g_free(needle);
+
+    needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
+    found = GTK_EDITABLE(vwin->w)->selection_end_pos;
+
+    found = look_for_string(haystack, needle, found);
+
+    if (found >= 0) {
+	gtk_text_freeze(GTK_TEXT(vwin->w));
+        gtk_text_set_point (GTK_TEXT(vwin->w), found);
+        gtk_text_insert (GTK_TEXT(vwin->w), NULL, NULL, NULL, " ", 1);
+        gtk_text_backward_delete (GTK_TEXT(vwin->w), 1);
+	gtk_text_thaw(GTK_TEXT(vwin->w));
+        gtk_editable_select_region (GTK_EDITABLE(vwin->w), 
+				    found, found + strlen(needle));
+	for (i=0; i<found; i++) 
+	    if (haystack[i] == '\n') linecount++;
+	gtk_adjustment_set_value(GTK_TEXT(vwin->w)->vadj, 
+				 (gfloat) (linecount - 2) *
+				 GTK_TEXT(vwin->w)->vadj->upper / help_length);
+    } else infobox(_("String was not found."));
+
+    g_free(haystack);
+}
+
+static void find_in_text (GtkWidget *widget, gpointer data)
+{
+    int found = 0;
+    char *haystack;
+    windata_t *vwin = 
+	(windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
+
+    haystack = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0,
+	gtk_text_get_length(GTK_TEXT(vwin->w)));
+
+    if (needle) g_free(needle);
+
+    needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
+    found = GTK_EDITABLE(vwin->w)->selection_end_pos;
+
+    found = look_for_string(haystack, needle, found);
+
+    if (found >= 0) {
+	gtk_text_set_point(GTK_TEXT(vwin->w), found);
+	gtk_editable_set_position(GTK_EDITABLE(vwin->w), found);
+        gtk_editable_select_region(GTK_EDITABLE(vwin->w), 
+				   found, found + strlen(needle));
+    } else {
+	infobox(_("String was not found."));
+    }
+
+    g_free(haystack);
+}
+
+#else /* !OLD_GTK */
 
 static gboolean real_find_in_text (GtkTextView *view, const gchar* str, 
 				   gboolean from_cursor)
@@ -679,8 +830,6 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
     return found;
 }
 
-/* .................................................................. */
-
 static void find_in_text (GtkWidget *widget, gpointer data)
 {
     gboolean found;
@@ -694,16 +843,24 @@ static void find_in_text (GtkWidget *widget, gpointer data)
     if (!found) infobox(_("String was not found."));
 }
 
+
+#endif /* new vs old gtk */
+
 /* .................................................................. */
 
 static void find_in_listbox (GtkWidget *w, gpointer data)
 {
     int found = 0, wrapped = 0, minvar = 0;
-    gchar *tmp, *pstr; 
+    gchar *tmp; 
     char haystack[MAXLEN];
     windata_t *win;
+#ifndef OLD_GTK
+    gchar *pstr;
     GtkTreeModel *model;
     GtkTreeIter iter, iterhere;
+#else
+    int end, i;
+#endif
 
     win = (windata_t *) g_object_get_data(G_OBJECT(data), "windat");
     if (win == mdata) {
@@ -711,15 +868,11 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 	minvar = 1;
     }
 
-#if 0
-    fprintf(stderr, "find_in_listbox: win at %p, active_var = %d\n", 
-	    (void *) win, win->active_var);
-#endif
-
     if (needle) g_free(needle);
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
     lower(needle);
 
+#ifndef OLD_GTK
     model = gtk_tree_view_get_model (GTK_TREE_VIEW(win->listbox));
 
     /* try searching downward from the current line plus one */
@@ -773,6 +926,48 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
     } else {
 	infobox(_("String was not found."));
     }
+
+#else /* GTK version switch */
+
+    end = GTK_CLIST(win->listbox)->rows;
+
+ search_wrap: 
+
+    for (i=clist_start_row; i<end; i++) {  
+	/* try looking in column 1 first */
+	gtk_clist_get_text(GTK_CLIST(win->listbox), i, 1, &tmp);
+	strcpy(haystack, tmp);
+	lower(haystack);
+	found = look_for_string(haystack, needle, 0);
+	if (found >= 0) break;
+	/* try column 0? */
+	gtk_clist_get_text(GTK_CLIST(win->listbox), i, 0, &tmp);
+	strcpy(haystack, tmp);
+	lower(haystack);
+	found = look_for_string(haystack, needle, 0);
+	if (found >= 0) break;
+    }
+
+    if (found < 0 && win->active_var > minvar && !wrapped) {
+	/* try wrapping to start */
+	end = win->active_var;
+	clist_start_row = minvar;
+	wrapped = 1;
+	goto search_wrap;
+    }    
+
+    if (found >= 0) {
+	if (wrapped) infobox(_("Search wrapped"));
+	gtk_clist_moveto(GTK_CLIST(win->listbox), i, 0, 0, .1);
+	gtk_clist_select_row(GTK_CLIST(win->listbox), i, 0);
+	win->active_var = i;
+	clist_start_row = i + 1;
+    } else {
+	gtk_clist_select_row(GTK_CLIST(win->listbox), 0, 0);
+	win->active_var = 0;
+	infobox(_("String was not found."));
+    }
+#endif /* OLD_GTK */
 }
 
 /* .................................................................. */
@@ -805,6 +1000,7 @@ static void cancel_find (GtkWidget *widget, gpointer data)
 
 static void parent_find (GtkWidget *finder, windata_t *caller)
 {
+#ifndef OLD_GTK
     GtkWidget *w = NULL;
 
     if (caller->dialog != NULL) {
@@ -818,6 +1014,25 @@ static void parent_find (GtkWidget *finder, windata_t *caller)
 				     GTK_WINDOW(w));
 	gtk_window_set_destroy_with_parent(GTK_WINDOW(finder), TRUE);
     }
+#else
+    if (caller != mdata) {
+	GtkWidget *w = NULL;
+
+	if (caller->dialog != NULL) {
+	    w = caller->dialog;
+	} else if (caller->w != NULL) {
+	    w = caller->w;
+	}
+
+	if (w != NULL) {
+	    gtk_window_set_transient_for(GTK_WINDOW(finder),
+					 GTK_WINDOW(w));
+	    gtk_signal_connect(GTK_OBJECT(w), "destroy",
+			       GTK_SIGNAL_FUNC(cancel_find),
+			       finder);
+	}
+    }
+#endif
 }
 
 /* .................................................................. */
@@ -829,19 +1044,37 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     GtkWidget *hbox;
     windata_t *mydat = (windata_t *) data;
 
+#ifdef OLD_GTK
+    clist_start_row = 0;
+#endif
+
     if (find_window != NULL) {
+#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(find_window), "windat", mydat);
+#else
+	gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat);
+#endif
 	parent_find(find_window, mydat);
 	return;
     }
 
     find_window = gtk_dialog_new();
+#ifndef OLD_GTK
     g_object_set_data(G_OBJECT(find_window), "windat", mydat);
+#else
+    gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat);
+#endif
     parent_find(find_window, mydat);
 
+#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (find_window), "destroy",
 		      G_CALLBACK (close_find_dialog),
 		      find_window);
+#else
+    gtk_signal_connect (GTK_OBJECT (find_window), "destroy",
+	                GTK_SIGNAL_FUNC (close_find_dialog),
+	                find_window);
+#endif
 
     gtk_window_set_title (GTK_WINDOW (find_window), _("gretl: find"));
     gtk_container_set_border_width (GTK_CONTAINER (find_window), 5);
@@ -856,10 +1089,15 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 	gtk_editable_select_region (GTK_EDITABLE (find_entry), 0, 
 				    strlen (needle));
     }
-    g_signal_connect(G_OBJECT (find_entry), 
-		     "activate", 
-		     G_CALLBACK (findfunc),
-		     find_window);
+#ifndef OLD_GTK
+    g_signal_connect(G_OBJECT (find_entry), "activate", 
+		     G_CALLBACK (findfunc), find_window);
+#else
+    gtk_signal_connect(GTK_OBJECT (find_entry), "activate", 
+			GTK_SIGNAL_FUNC(findfunc), find_window);
+
+#endif
+
     gtk_widget_show (find_entry);
 
     gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
@@ -879,18 +1117,27 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT (button), "clicked",
 		     G_CALLBACK (findfunc), find_window);
+#else
+    gtk_signal_connect(GTK_OBJECT (button), "clicked",
+		       GTK_SIGNAL_FUNC (findfunc), find_window);
+#endif
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     /* cancel button */
     button = gtk_button_new_with_label (_("Cancel"));
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT (button), "clicked",
 		     G_CALLBACK (cancel_find), find_window);
+#else
+    gtk_signal_connect(GTK_OBJECT (button), "clicked",
+		       GTK_SIGNAL_FUNC (cancel_find), find_window);
+#endif
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(find_entry);
@@ -906,12 +1153,34 @@ void text_find_callback (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+#ifdef OLD_GTK
+
+void colorize_tooltips (GtkTooltips *tip)
+{
+    GdkColor t_back;
+    GtkStyle *style;
+
+    if (gdk_color_parse("light yellow", &t_back)) {
+	gtk_tooltips_force_window(tip);
+	if (gdk_color_alloc(gtk_widget_get_colormap(tip->tip_window), &t_back)) {
+	    style = gtk_style_copy(gtk_widget_get_style(tip->tip_window));
+	    style->bg[GTK_STATE_NORMAL] = t_back;
+	    gtk_widget_set_style(tip->tip_window, style);
+	} 
+    } 
+}
+
+#endif
+
 static GtkTooltips *gretl_tips;
 
 void gretl_tooltips_init (void)
 {
     gretl_tips = gtk_tooltips_new();
     gtk_tooltips_enable(gretl_tips); /* redundant? */
+#ifdef OLD_GTK
+    colorize_tooltips(gretl_tips); 
+#endif
 }
 
 void gretl_tooltips_add (GtkWidget *w, const gchar *str)

@@ -700,7 +700,7 @@ int main (int argc, char *argv[])
     set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
 
 #ifdef G_OS_WIN32
-    gretl_win32_init()
+    gretl_win32_init();
 #else 
     set_rcfile(); /* also calls read_rc() */
 #endif/* G_OS_WIN32 */

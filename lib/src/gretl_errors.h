@@ -93,4 +93,4 @@ char *get_gretl_errmsg (void);
 
 char *get_gretl_msg (void);
 
-void gretl_errmsg_set_default (const char *str);
+void gretl_errmsg_set (const char *str);

@@ -654,6 +654,7 @@ static double *eval_compound_arg (GENERATE *genr,
 	int level = 0;
 
 	reset_atom_stack();
+
 	while ((atom = pop_child_atom(this_atom))) {
 	    double y = eval_atom(atom, genr, t, x);
 
@@ -672,6 +673,7 @@ static double *eval_compound_arg (GENERATE *genr,
 	    level = atom->level;
 	    xbak = x;
 	}
+
 	if (genr->err) break;
 	reset_calc_stack();
 	xtmp[t] = x;
@@ -784,6 +786,7 @@ static int evaluate_genr (GENERATE *genr)
 	int level = 0, npush = 0, npop = 0;
 
 	reset_atom_stack();
+
 	while ((atom = pop_atom())) {
 	    double y = eval_atom(atom, genr, t, x);
 
@@ -813,16 +816,20 @@ static int evaluate_genr (GENERATE *genr)
 	    level = atom->level;
 	    xbak = x;
 	}
+
 	if (!genr->err && npop > npush) {
 	    /* excess pushes are harmless? */
 	    fprintf(stderr, "genr error: npush = %d, npop = %d\n",
 		    npush, npop);
 	    genr->err = 1;
 	}
+
 	reset_calc_stack();
+
 	if (genr->err) break;
+
 	genr->xvec[t] = x;
-	if (m > 0) {
+	if (m > 0 && !na(x)) {
 	    /* autoregressive genr */
 	    (*genr->pZ)[genr->varnum][t] = x;
 	}

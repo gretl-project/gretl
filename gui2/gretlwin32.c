@@ -19,6 +19,7 @@
 
 /* #define CHILD_DEBUG */
 
+#include "gretl.h"
 #include "gretlwin32.h"
 
 #define HUSH_RUNTIME_WARNINGS

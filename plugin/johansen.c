@@ -102,8 +102,9 @@ gamma_par_asymp (double tracetest, double lmaxtest, int det,
       pval: on output, array of pvalues, for the two tests;
     */
     
-    double mt, vt, ml, vl, *x;
+    double mt, vt, ml, vl;
     const double *tracem, *tracev, *lmaxm, *lmaxv;
+    double x[7];
     int i;
 
     tracem = s_mTrace_m_coef[det];
@@ -113,9 +114,6 @@ gamma_par_asymp (double tracetest, double lmaxtest, int det,
 
     mt = vt = 0.0;
     ml = vl = 0.0;
-
-    x = malloc(7 * sizeof *x);
-    if (x == NULL) return 1;
 
     x[0] = N * N;
     x[1] = N;
@@ -155,8 +153,6 @@ gamma_par_asymp (double tracetest, double lmaxtest, int det,
 	mt *= exp(m2);
 	vt *= exp(v2);
     }
-
-    free(x);
 
     pval[0] = 1.0 - gamma_dist(mt, vt, tracetest, 2);
     pval[1] = 1.0 - gamma_dist(ml, vl, lmaxtest, 2);
@@ -226,6 +222,8 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
  	    trace[i] = cumeig; 
 	}
 
+	/* first col shows cointegration rank under H0, 
+	   second shows associated eigenvalue */
 	pputs(prn, _("\nRank Eigenvalue Trace test [p.val.]  Lmax test [p.val.]\n"));
 
 	for (i=0; i<k; i++) {

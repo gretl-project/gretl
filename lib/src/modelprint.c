@@ -1351,7 +1351,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     else if (TEX_FORMAT(prn->format)) tex_print_aicetc(pmod, prn);
     else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
 
-    if (pmod->ci != NLS) pval_max_line(pmod, pdinfo, prn);
+    if (pmod->ci != ARMA && pmod->ci != NLS) pval_max_line(pmod, pdinfo, prn);
     
     print_model_tests(pmod, prn);
 

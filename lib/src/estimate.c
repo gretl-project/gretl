@@ -3061,6 +3061,8 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	return armod;
     }
 
+    *gretl_errmsg = '\0';
+
     armod = (*arma_model) (list, Z, pdinfo, prn);
 
     close_plugin(handle);

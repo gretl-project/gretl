@@ -40,16 +40,23 @@ static void update_fcast_errs (double *e, const double *y,
 			       const double *coeff, 
 			       int n, int p, int q)
 {
-    int i, t;
-    int maxlag = (p > q)? p : q;
+    int i, k, t;
 
-    for (t=maxlag; t<n; t++) {
+    for (t=0; t<n; t++) {
+
+	if (na(y[t])) continue;
 	e[t] = y[t] - coeff[0];
+
 	for (i=0; i<p; i++) {
-	    e[t] -= coeff[i+1] * y[t-(i+1)];
+	    k = t - (i + 1);
+	    if (k < 0 || na(y[k])) continue;
+	    e[t] -= coeff[i+1] * y[k];
 	}
+
 	for (i=0; i<q; i++) {
-	    e[t] -= coeff[i+p+1] * e[t-(i+1)];
+	    k = t - (i + 1);
+	    if (k < 0) continue;
+	    e[t] -= coeff[i+p+1] * e[k];
 	}
     }
 }
@@ -61,37 +68,52 @@ static void update_fcast_errs (double *e, const double *y,
    genr de_m = -e(-1) -m * de_m(-1)
 */
 
+/* FIXME: the general case below is probably broken */
+
 static void update_error_partials (double *e, const double *y, 
 				   double **Z, const double *coeff,
 				   int n, int p, int q)
 {
-    int i, j, t;
-    int maxlag = (p > q)? p : q;
+    int i, j, k, t;
 
     /* the constant term */
-    for (t=maxlag; t<n; t++) {
+    for (t=0; t<n; t++) {
 	Z[2][t] = -1.0;
-	for (i=0; i<q; i++) {
-	    Z[2][t] -= coeff[i+p+1] * Z[2][t-(i+1)];
+	for (i=q-1; i>=0; i--) {
+	    k = t - (i + 1);
+	    if (k < 0) continue;
+	    Z[2][t] -= coeff[i+p+1] * Z[2][k];
 	}
     }
 
     /* AR terms */
     for (j=0; j<p; j++) {
-	for (t=maxlag; t<n; t++) {
-	    Z[3+j][t] = -y[t-(j+1)];
-	    for (i=0; i<q; i++) {
-		Z[3+j][t] -= coeff[i+p+1] * Z[3+j][t-(i+1)];
+	int a = 3 + j;
+
+	for (t=0; t<n; t++) {
+	    k = t - (j + 1);
+	    if (k < 0 || na(y[k])) continue;
+	    Z[a][t] = -y[k];
+	    for (i=q-1; i>=0; i--) {
+		k = t - (i + 1);
+		if (k < 0) continue;
+		Z[a][t] -= coeff[i+p+1] * Z[a][k];
 	    }
 	}
     }	    
 
     /* MA terms */
-    for (j=0; j<q; j++) {
-	for (t=maxlag; t<n; t++) {
-	    Z[3+p+j][t] = -e[t-(j+1)];
-	    for (i=0; i<q; i++) {
-		Z[3+p+j][t] -= coeff[i+p+1] * Z[3+p+j][t-(i+1)];
+    for (j=q-1; j>=0; j--) {
+	int m = 3 + p + j;
+
+	for (t=0; t<n; t++) {
+	    k = t - (j + 1);
+	    if (k < 0) continue;
+	    Z[m][t] = -e[k];
+	    for (i=j; i>=0; i--) {
+		k = t - (i + 1);
+		if (k < 0) continue;
+		Z[m][t] -= coeff[i+p+1] * Z[m][k];
 	    }
 	}
     }    
@@ -124,9 +146,7 @@ static double get_ll (const double *e, int n)
     double ll = 0.0;
 
     for (t=0; t<n; t++) {
-	if (!na(e[t])) {
-	    ll += e[t] * e[t];
-	}
+	ll += e[t] * e[t];
     }
 
     ll *= -0.5;
@@ -134,21 +154,46 @@ static double get_ll (const double *e, int n)
     return ll;
 }
 
+static int reallocate_hat_series (MODEL *pmod, int n)
+{
+    double *tmp;
+
+    tmp = realloc(pmod->uhat, n * sizeof *pmod->uhat);
+    if (tmp != NULL) {
+	pmod->uhat = tmp;
+    } else {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }
+
+    tmp = realloc(pmod->yhat, n * sizeof *pmod->yhat);
+    if (tmp != NULL) {
+	pmod->yhat = tmp;
+    } else {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }
+
+    return 0;
+}
+
 static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 				      const int *list, const double *y, 
-				      const double *e, int bign)
+				      const double *e, 
+				      const DATAINFO *pdinfo)
 {
     int i, t;
     int p = list[1], q = list[2];
     int maxlag = (p > q)? p : q;
-    int t1 = pmod->t1;
+    int realt1 = pmod->t1 + pdinfo->t1;
+    int realt2 = pmod->t2 + pdinfo->t1;
+    double emean;
 
     pmod->ci = ARMA;
     pmod->ifc = 1;
 
     pmod->nobs -= maxlag;
     pmod->dfd -= maxlag;
-    pmod->t1 += maxlag;
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->coeff[i] = coeff[i];
@@ -156,22 +201,37 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 
     copylist(&pmod->list, list);
 
-    pmod->ybar = _esl_mean(pmod->t1, pmod->t2, y);
-    pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, y);
+    pmod->ybar = _esl_mean(realt1 + maxlag, realt2, y);
+    pmod->sdy = _esl_stddev(realt1 + maxlag, realt2, y);
 
-    pmod->ess = 0.0;
-    for (t=0; t<bign; t++) {
-	if (t < pmod->t1 || t > pmod->t2) pmod->uhat[t] = NADBL;
-	else {
-	    pmod->uhat[t] = e[t - t1];
-	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+    /* if model was estimated on a sub-sample, we need to expand the
+       residual and fitted series (which are always full-length) */
+    if (pdinfo->t1 + (pdinfo->n - 1 - pdinfo->t2) > 0) {
+	if (reallocate_hat_series(pmod, pdinfo->n)) {
+	    return;
 	}
     }
+
+    emean = pmod->ess = 0.0;
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < (realt1 + maxlag) || t > realt2) {
+	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
+	} else {
+	    pmod->uhat[t] = e[t - realt1];
+	    pmod->yhat[t] = y[t] - pmod->uhat[t];
+	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+	    emean += pmod->uhat[t];
+	}
+    }
+
+    /* FIXME: make this available for printing along with the model */
+    emean /= pmod->nobs;
+    fprintf(stderr, "Mean of estimated errors = %g\n", emean);
 
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
     pmod->tss = 0.0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
+    for (t=realt1 + maxlag; t<=realt2; t++) {
 	pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
     }
 
@@ -188,6 +248,10 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 	}
     }
 
+    /* get the model start/end dates in sync with the main dataset */
+    pmod->t1 = realt1 + maxlag;
+    pmod->t2 += pdinfo->t1;
+
     gretl_aic_etc(pmod);
 }
 
@@ -196,11 +260,13 @@ static int check_arma_list (const int *list)
     int err = 0;
 
     if (list[0] != 4) err = 1;
+
+    /* for now we'll accept ARMA (2,2) at max */
     else if (list[1] < 0 || list[1] > 2) err = 1;
     else if (list[2] < 0 || list[2] > 2) err = 1;
 
     if (err) {
-	strcpy(gretl_errmsg, "Syntax error in arma command");
+	gretl_errmsg_set(_("Syntax error in arma command"));
     }
     
     return err;
@@ -215,15 +281,13 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     int subiters, subitermax;
     int i, t;
     double tol, crit, ll = 0.0;
-    double ll_prev = -9999999.0, steplength;
+    double steplength, ll_prev = -1.0e+8;
     double *e, *coeff, *d_coef;
     const double *y;
     double **aZ;
     DATAINFO *ainfo;
     int *alist;
     MODEL armod;
-
-    *gretl_errmsg = '\0';
 
     _init_model(&armod, pdinfo);  
 
@@ -234,7 +298,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     v = list[4]; /* the dependent variable */
     p = list[1]; /* AR order */
-    q = list[2]; /* the MA order */
+    q = list[2]; /* MA order */
 
     /* number of coefficients */
     nc = 1 + p + q;
@@ -268,6 +332,8 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	return armod;
     }
 
+    /* temporary dataset: we need two series for each coefficient,
+       plus one for the forecast errors and one for the const */
     ainfo = create_new_dataset(&aZ, nc * 2 + 2, an, 0);
     if (ainfo == NULL) {
 	free(alist);
@@ -275,9 +341,9 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	armod.errcode = E_ALLOC;
 	return armod;
     }
-    ainfo->extra = 1; /* ? */
+    ainfo->extra = 1; /* ? can't remember what this does */
 
-    /* initialize the coefficients (FIXME) */
+    /* initialize the coefficients (FIXME: make configurable?) */
     coeff[0] = 0.0;
     for (i=0; i<p; i++) coeff[i+1] = 0.1;
     for (i=0; i<q; i++) coeff[i+p+1] = 0.1;
@@ -289,15 +355,16 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	}
     }
 
-    /* key series */
+    /* forecast errors */
     e = aZ[1];
+    /* dependent variable */
     y = &Z[v][pdinfo->t1];
 
     crit = 1.0;
     tol = 1.0e-9;
     iters = 0;
     itermax = get_maxiter();
-    subitermax = 10;
+    subitermax = 20;
     steplength = 1.0;
 
     /* generate one-step forecast errors */
@@ -316,7 +383,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
 	/* partials of l wrt coeffs */
 	update_ll_partials(e, aZ, an, p, q);
-   
+
 	/* OPG regression */
 	armod = lsq(alist, &aZ, ainfo, OLS, 1, 0.0);
 	if (armod.errcode) {
@@ -333,51 +400,55 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	  coeff[i] += d_coef[i] * steplength;
 	}
 
-	/* compute loglikelihood at new point */
+	/* compute log-likelihood at new point */
 	update_fcast_errs(e, y, coeff, an, p, q);
 	ll = get_ll(e, an);
 
 	/* subiterations for best steplength */
 	subiters = 0;
-	while (steplength > 1.0E-06 && subiters++ < subitermax && ll < ll_prev) {
+	while (steplength > 1.0e-08 && subiters++ < subitermax && ll < ll_prev) {
 
 	    /* if we've gone down, halve steplength and go back */
-	    if (ll < ll_prev){
-		steplength *= 0.5;
-		for (i=0; i<armod.ncoeff; i++) {
-		    coeff[i] -= d_coef[i] * steplength;
-		}
+	    steplength *= 0.5;
+	    for (i=0; i<armod.ncoeff; i++) {
+		coeff[i] -= d_coef[i] * steplength;
 	    }
+
 	    /* compute loglikelihood again */
 	    update_fcast_errs(e, y, coeff, an, p, q);
 	    ll = get_ll(e, an);
 	}
 
 	if (subiters > subitermax) {
-	    pprintf(prn, "Maximum number of subiterations reached: quitting\n");
+	    gretl_errmsg_set(_("Maximum number of subiterations reached: quitting"));
+	    armod.errcode = E_UNSPEC;
 	    goto arma_bailout;
 	}
 
-	pprintf(prn, "  constant        = %.8g (gradient = %#.6g)\n", 
+	pprintf(prn, _("  constant        = %.8g (gradient = %#.6g)\n"), 
 		coeff[0], armod.coeff[0]);
 	for (i=0; i<p; i++) {
-	    pprintf(prn, "  ar%d coefficient = %.8g (gradient = %#.6g)\n", 
+	    pprintf(prn, _("  ar%d coefficient = %.8g (gradient = %#.6g)\n"), 
 		    i + 1, coeff[1+i], armod.coeff[1+i]);
 	}
 	for (i=0; i<q; i++) {
-	    pprintf(prn, "  ma%d coefficient = %.8g (gradient = %#.6g)\n", 
+	    pprintf(prn, _("  ma%d coefficient = %.8g (gradient = %#.6g)\n"), 
 		    i + 1, coeff[1+p+i], armod.coeff[1+p+i]);
 	}
-	pprintf(prn, "  steplength = %.6g (subiterations = %d)\n", 
+	pprintf(prn, _("  steplength = %.6g (subiterations = %d)\n"), 
 		steplength, subiters);
 
 	/* update criterion */
 	crit = armod.nobs - armod.ess;
-	pprintf(prn, "  criterion = %g\n\n", crit);
+	pprintf(prn, _("  criterion = %g\n\n"), crit);
 
 	/* try and re-double the steplength for next iteration */
 	if (subiters == 1 && steplength < 1.0){
-	  steplength *= 2.0;
+	    steplength *= 2.0;
+	} else if (subiters == 0) {
+	    /* time to quit */
+	    pputs(prn, _("Warning: convergence criterion was not met\n"));
+	    break;
 	}
 
 	ll_prev = ll;
@@ -386,7 +457,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     y = Z[v];
     armod.lnL = ll;
-    rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo->n);
+    rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
 
  arma_bailout:
 

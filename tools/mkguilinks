@@ -15,6 +15,7 @@ for f in \
   fileselect.c \
   gpt_control.c gpt_control.h \
   gui_utils.c gui_utils.h \
+  helpfiles.c helpfiles.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
   session.c session.h \

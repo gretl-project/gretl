@@ -115,6 +115,10 @@ char gpcolors[24];
 static char datapage[24];
 static char scriptpage[24];
 
+#ifdef G_OS_WIN32
+int wimp;
+#endif
+
 #ifdef ENABLE_NLS
 static int lcnumeric = 1;
 #endif
