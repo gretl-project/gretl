@@ -1362,8 +1362,9 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 
 	    fclose(fq);
 
-	    err = gnuplot_display(ppaths);
+	    err = gnuplot_make_graph(ppaths);
 	}
+
 #ifdef ENABLE_NLS
         setlocale(LC_NUMERIC, "");
 #endif

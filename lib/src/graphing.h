@@ -135,7 +135,7 @@ const char *get_timevar_name (DATAINFO *pdinfo);
 
 int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp);
 
-int gnuplot_display (const PATHS *ppaths);
+int gnuplot_make_graph (const PATHS *ppaths);
 
 int gnuplot (LIST list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 

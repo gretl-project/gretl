@@ -48,7 +48,9 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     FILE *fp = NULL;
     int t;
 
-    if (gnuplot_init(ppaths, PLOT_RANGE_MEAN, &fp)) return E_FOPEN;
+    if (gnuplot_init(ppaths, PLOT_RANGE_MEAN, &fp)) {
+	return E_FOPEN;
+    }
 
     fprintf(fp, "# range-mean plot for %s\n", varname);
     fputs("set nokey\n", fp);
@@ -64,20 +66,22 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
 	fputc('\n', fp);
     }
 
-    /* send data inline */
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
+
     for (t=0; t<n; t++) {
 	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
     }
     fputs("e\n", fp);
+
     if (yhat != NULL) {
 	for (t=0; t<n; t++) {
 	    fprintf(fp, "%g %g\n", Z[2][t], yhat[t]);
 	}
 	fputs("e\n", fp);
     }
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
@@ -87,7 +91,7 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     return 0;
 }
 
-static int adjust_t1t2 (int varnum, double **Z, int *t1, int *t2)
+static int rm_adjust_t1t2 (int varnum, double **Z, int *t1, int *t2)
      /* drop first/last observations from sample if missing obs 
         encountered */
 {
@@ -125,7 +129,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
 
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
-    adjust_t1t2(varnum, Z, &t1, &t2);
+    rm_adjust_t1t2(varnum, Z, &t1, &t2);
 
     nsamp = t2 - t1 + 1;
 

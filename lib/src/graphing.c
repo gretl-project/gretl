@@ -825,7 +825,7 @@ int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
 }
 
 /**
- * gnuplot_display:
+ * gnuplot_make_graph:
  * @ppaths: pointer to path information struct.
  *
  * Executes gnuplot, passing as an argument ppaths->plotfile.
@@ -833,7 +833,7 @@ int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
  * Returns: the return value from the system command.
  */
 
-int gnuplot_display (const PATHS *ppaths)
+int gnuplot_make_graph (const PATHS *ppaths)
 {
     int err = 0;
     char plotcmd[MAXLEN];
@@ -1338,7 +1338,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     fclose(fq);
 
     if (!(flags & GP_BATCH)) {
-	if (gnuplot_display(ppaths)) miss = -1;
+	if (gnuplot_make_graph(ppaths)) miss = -1;
     }
     return miss;
 }
@@ -1465,7 +1465,7 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     fclose(fp);
 
     if (!(flags & GP_BATCH)) {
-	err = gnuplot_display(ppaths);
+	err = gnuplot_make_graph(ppaths);
     }
 
     free(plotlist);
@@ -1752,7 +1752,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 
     if (fp) fclose(fp);
 
-    return gnuplot_display(ppaths);
+    return gnuplot_make_graph(ppaths);
 }
 
 /* ......................................................... */ 
@@ -1822,7 +1822,7 @@ int plot_fcast_errs (int n, const double *obs,
 
     fclose(fp);
 
-    return gnuplot_display(ppaths);
+    return gnuplot_make_graph(ppaths);
 }
 
 int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
@@ -1881,7 +1881,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     fclose(fp);
 
-    return gnuplot_display(ppaths);
+    return gnuplot_make_graph(ppaths);
 }
 
 /* ........................................................... */
@@ -2277,7 +2277,7 @@ int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
     close_plugin(handle);
 
     if (!err) {
-        return gnuplot_display(ppaths);
+        return gnuplot_make_graph(ppaths);
     } else {
 	return err;
     }
@@ -2338,7 +2338,7 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
 
     fclose(fp);
 
-    return gnuplot_display(ppaths);
+    return gnuplot_make_graph(ppaths);
 }
 
 /* ........................................................... */

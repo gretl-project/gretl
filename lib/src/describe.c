@@ -721,7 +721,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     fclose(fq);
 
-    err = gnuplot_display(ppaths);
+    err = gnuplot_make_graph(ppaths);
 
  acf_getout:
     free(acf);
@@ -969,7 +969,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
 	fclose(fq);
 	free(savexx);
-	err = gnuplot_display(ppaths);
+	err = gnuplot_make_graph(ppaths);
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {

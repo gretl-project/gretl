@@ -956,8 +956,11 @@ char *iso_gettext (const char *msgid)
 
    if (iso_ok < 0) {
        cset = get_gretl_charset();
-       if (cset == NULL) iso_ok = 0;
-       else iso_ok = 1;
+       if (cset == NULL) {
+	   iso_ok = 0;
+       } else {
+	   iso_ok = 1;
+       }
    }
 
    if (iso_ok) {

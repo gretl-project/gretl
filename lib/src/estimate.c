@@ -1482,18 +1482,18 @@ static int hilu_plot (double *ssr, double *rho, int n,
     fprintf(fp, "plot '-' using 1:2 w impulses\n");
 
 #ifdef ENABLE_NLS
-        setlocale(LC_NUMERIC, "C");
+    setlocale(LC_NUMERIC, "C");
 #endif
     for (i=0; i<n; i++) {
 	fprintf(fp, "%g %g\n", rho[i], ssr[i]);
     }
     fputs("e\n", fp);
 #ifdef ENABLE_NLS
-        setlocale(LC_NUMERIC, "");
+    setlocale(LC_NUMERIC, "");
 #endif
 
     fclose(fp);
-    gnuplot_display(ppaths);
+    gnuplot_make_graph(ppaths);
 
     return 0;
 }
@@ -1547,11 +1547,22 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
     double ess, ssr[199], rh[199]; 
-    int iter, nn = 0, err = 0;
+    int iter, nn = 0;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int missv = 0, misst = 0, err = 0;
     gretlopt lsqopt = OPT_NONE;
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
+
+    missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
+			(const double **) *pZ, &misst);
+    if (missv) {
+	sprintf(gretl_errmsg, _("Missing value encountered for "
+				"variable %d, obs %d"), missv, misst);
+	err = E_DATA;
+	goto bailout;
+    }
 
     gretl_model_init(&corc_model);
 
@@ -1563,7 +1574,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
 	    if ((err = corc_model.errcode)) {
 		clear_model(&corc_model);
-		return err;
+		goto bailout;
 	    }
 	    ess = corc_model.ess;
 	    if (batch) {
@@ -1581,8 +1592,11 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		    ssr[nn] = ess;
 		    rh[nn++] = rho;
 		    pprintf(prn, "%5.2f %10.4g", rho, ess);
-		    if (nn % 4 == 0) pputc(prn, '\n');
-		    else bufspace(3, prn);
+		    if (nn % 4 == 0) {
+			pputc(prn, '\n');
+		    } else {
+			bufspace(3, prn);
+		    }
 		} 
 	    } else {
 		ssr[nn] = ess;
@@ -1601,7 +1615,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
 		if ((err = corc_model.errcode)) {
 		    clear_model(&corc_model);
-		    break;
+		    goto bailout;
 		}
 		ess = corc_model.ess;
 		if (ess < essmin) {
@@ -1618,7 +1632,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
 		if ((err = corc_model.errcode)) {
 		    clear_model(&corc_model);
-		    break;
+		    goto bailout;
 		}
 		ess = corc_model.ess;
 		if (ess < essmin) {
@@ -1645,7 +1659,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	if ((err = corc_model.errcode)) {
 	    clear_model(&corc_model);
-	    return err;
+	    goto bailout;
 	}
 	rho0 = rho = corc_model.rho;
 	pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
@@ -1668,7 +1682,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 #endif
 	if ((err = corc_model.errcode)) {
 	    clear_model(&corc_model);
-	    return err;
+	    goto bailout;
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
 #ifdef AR_DEBUG
@@ -1681,11 +1695,16 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     pprintf(prn, _("                final %11.5f\n\n"), rho);
+
     clear_model(&corc_model);
 
     *toprho = rho;
 
-    return 0;
+ bailout:
+    pdinfo->t1 = t1;
+    pdinfo->t2 = t2;
+
+    return err;
 }
 
 /* .......................................................... */

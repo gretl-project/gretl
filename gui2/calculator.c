@@ -505,7 +505,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fclose(fp);
 
-    if (gnuplot_display(&paths)) {
+    if (gnuplot_make_graph(&paths)) {
 	errbox(_("gnuplot command failed"));
     } else {
 	register_graph();

@@ -152,7 +152,7 @@ sysest.la: sysest.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 leverage.la: leverage.lo 
-	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 nistcheck.la: nistcheck.lo 
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)

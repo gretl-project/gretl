@@ -1400,29 +1400,27 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 
 static void set_model_id_on_window (GtkWidget *w, int ID)
 {
-#ifdef OLD_GTK
-    gtk_object_set_data(GTK_OBJECT(w), "model_ID", 
-			GINT_TO_POINTER(ID));
-#else
     g_object_set_data(G_OBJECT(w), "model_ID", 
 		      GINT_TO_POINTER(ID));
-#endif
-
 }
 
 static int get_model_id_from_window (GtkWidget *w)
 {
-    int ID;
+    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "model_ID"));
+}
 
-#ifdef OLD_GTK
-    ID = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), 
-					     "model_ID"));
-#else
-    ID = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), 
-					   "model_ID"));
-#endif
+/* ........................................................... */
 
-    return ID;
+static int make_and_display_graph (void)
+{
+    if (gnuplot_make_graph(&paths)) {
+	errbox(_("gnuplot command failed"));
+	return 1;
+    } 
+
+    register_graph();
+
+    return 0;
 }
 
 /* ........................................................... */
@@ -1488,8 +1486,9 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 			   LEVERAGE, m); 
 	set_model_id_on_window(vwin->dialog, pmod->ID);
 
-	gnuplot_display(&paths);
-	register_graph();
+#if 1
+	make_and_display_graph();
+#endif
 
 	strcpy(line, "leverage");
 	model_command_init(line, &cmd, pmod->ID);
@@ -2809,8 +2808,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 		opt, NULL);
 
     if (graph) {
-	gnuplot_display(&paths);
-	register_graph();
+	make_and_display_graph();
     }
 
     if (datainfo->v > oldv) {
@@ -2849,8 +2847,7 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
     close_plugin(handle);
 
     if (!err) {
-	gnuplot_display(&paths);
-	register_graph();
+	make_and_display_graph();
     }
 
     view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RMPLOT, 

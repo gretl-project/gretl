@@ -208,37 +208,37 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 			  PATHS *ppaths)
 {
     FILE *fp = NULL;
-    int t;
-    int timeplot = 0;
+    int t, xvar = 0;
 
-    if (gnuplot_init(ppaths, PLOT_LEVERAGE, &fp)) return 1;
+    if (gnuplot_init(ppaths, PLOT_LEVERAGE, &fp)) {
+	return E_FOPEN;
+    }
 
     if (dataset_is_time_series(pdinfo) && 
 	(pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {
-	char per[8];
-
-	if (pdinfo->pd == 1) strcpy(per, "annual");
-	else if (pdinfo->pd == 4) strcpy(per, "qtrs");
-	else if (pdinfo->pd == 12) strcpy(per, "months");
-	timeplot = plotvar(pZ, pdinfo, per);
-	if (timeplot < 0) {
-	    if (fp != NULL) fclose(fp);
+	xvar = plotvar(pZ, pdinfo, 
+		       (pdinfo->pd == 1)? "annual" :
+		       (pdinfo->pd == 4)? "qtrs" : "months");
+	if (xvar < 0) {
+	    if (fp != NULL) {
+		fclose(fp);
+	    }
 	    return 1;
 	}
     }
 
-    fputs("# leverage/influence plot\n", fp);
-    fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
-    fputs("set xzeroaxis\n", fp);
-    if (!timeplot) { 
-	fprintf(fp, "set xrange [%g:%g]\n", 
-		pmod->t1 + 0.5, pmod->t2 + 1.5);
-    }
-    fputs("set nokey\n", fp); 
-
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
+
+    fputs("# leverage/influence plot\n", fp);
+    fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    fputs("set nokey\n", fp); 
+    if (!xvar) { 
+	fprintf(fp, "set xrange [%g:%g]\n", 
+		pmod->t1 + 0.5, pmod->t2 + 1.5);
+    }
 
     /* upper plot: leverage factor */
     fputs("set origin 0.0,0.50\n", fp);
@@ -251,14 +251,14 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	double h = gretl_matrix_get(S, t - pmod->t1, 0);
 
 	if (na(h)) {
-	    if (timeplot) {
-		fprintf(fp, "%g ?\n", (*pZ)[timeplot][t]);
+	    if (xvar) {
+		fprintf(fp, "%g ?\n", (*pZ)[xvar][t]);
 	    } else { 
 		fprintf(fp, "%d ?\n", t + 1);
 	    }
 	} else {
-	    if (timeplot) {
-		fprintf(fp, "%g %g\n", (*pZ)[timeplot][t], h);
+	    if (xvar) {
+		fprintf(fp, "%g %g\n", (*pZ)[xvar][t], h);
 	    } else { 
 		fprintf(fp, "%d %g\n", t + 1, h);
 	    }
@@ -277,14 +277,14 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	double f = gretl_matrix_get(S, t - pmod->t1, 1);
 
 	if (na(f)) {
-	    if (timeplot) {
-		fprintf(fp, "%g ?\n", (*pZ)[timeplot][t]);
+	    if (xvar) {
+		fprintf(fp, "%g ?\n", (*pZ)[xvar][t]);
 	    } else {
 		fprintf(fp, "%d ?\n", t + 1);
 	    }
 	} else {
-	    if (timeplot) {
-		fprintf(fp, "%g %g\n", (*pZ)[timeplot][t], f);
+	    if (xvar) {
+		fprintf(fp, "%g %g\n", (*pZ)[xvar][t], f);
 	    } else {
 		fprintf(fp, "%d %g\n", t + 1, f);
 	    }
@@ -404,6 +404,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     n = pmod->list[0] - 1;       /* # of cols = # of variables */
 
     Q = gretl_matrix_alloc(m, n);
+
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
     work = malloc(sizeof *work);
@@ -500,7 +501,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     /* print the results */
     for (t=0; t<modn; t++) {
 	double h, s, d, f = NADBL;
-	char fstr[24];
+	char fstr[32];
 
 	tmod = t + pmod->t1;
 
@@ -551,11 +552,19 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 
  qr_cleanup:
 
-    if (Q != NULL) gretl_matrix_free(Q);
-    if (tau != NULL) free(tau); 
-    if (work != NULL) free(work);
+    if (Q != NULL) {
+	gretl_matrix_free(Q);
+    }
+    if (tau != NULL) {
+	free(tau); 
+    }
+    if (work != NULL) {
+	free(work);
+    }
 
-    if (S != NULL) gretl_matrix_set_int(S, pmod->t1);
+    if (S != NULL) {
+	gretl_matrix_set_int(S, pmod->t1);
+    }
 
     return S;    
 }

@@ -1854,7 +1854,9 @@ static GPT_SPEC *plotspec_new (void)
     int i;
 
     spec = mymalloc(sizeof *spec);
-    if (spec == NULL) return NULL;
+    if (spec == NULL) {
+	return NULL;
+    }
 
     if ((spec->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL) {
 	free(spec);
@@ -3313,9 +3315,13 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
     }
 
     /* free allocated elements of png_plot struct */
-    if (plot->zoom != NULL) free(plot->zoom);
+    if (plot->zoom != NULL) {
+	free(plot->zoom);
+    }
 #ifndef OLD_GTK
-    if (plot->labeled != NULL) free(plot->labeled);
+    if (plot->labeled != NULL) {
+	free(plot->labeled);
+    }
 #endif
     if (plot->invert_gc != NULL) {
 	gdk_gc_destroy(plot->invert_gc);
@@ -3524,6 +3530,7 @@ static int get_plot_ranges (png_plot_t *plot)
 {
     FILE *fp;
     char line[MAXLEN];
+    int noedit = 0;
     int got_x = 0, got_y = 0, got_pd = 0;
 #ifdef PNG_COMMENTS
     png_bounds_t b;
@@ -3540,12 +3547,13 @@ static int get_plot_ranges (png_plot_t *plot)
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
+
     while (fgets(line, MAXLEN-1, fp)) {
 	if (cant_edit(line)) {
 	    plot->status_flags |= PLOT_DONT_EDIT;
 	    plot->status_flags |= PLOT_DONT_ZOOM;
-	    fclose(fp);
-	    return 0;
+	    noedit = 1;
+	    break;
 	}
 	if (strstr(line, "# forecasts with 95")) {
 	    /* auto-parse can't handle the error bars */
@@ -3578,11 +3586,16 @@ static int get_plot_ranges (png_plot_t *plot)
 	}
 	if (!strncmp(line, "plot ", 5)) break;
     }
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
     fclose(fp);
+
+    if (noedit) {
+	return 0;
+    }
 
 #ifdef PNG_COMMENTS
     /* now try getting accurate coordinate info from PNG file */
@@ -3651,7 +3664,9 @@ static png_plot_t *png_plot_new (void)
     png_plot_t *plot;
 
     plot = mymalloc(sizeof *plot);
-    if (plot == NULL) return NULL;
+    if (plot == NULL) {
+	return NULL;
+    }
 
     plot->shell = NULL;
     plot->canvas = NULL;
@@ -3688,13 +3703,18 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     GtkWidget *status_hbox = NULL;
 
     plot = png_plot_new();
-    if (plot == NULL) return 1;
+    if (plot == NULL) {
+	return 1;
+    }
 
     if (spec != NULL) {
 	plot->spec = spec;
     } else {
 	plot->spec = plotspec_new();
-	if (plot->spec == NULL) return 1;
+	if (plot->spec == NULL) {
+	    free(plot);
+	    return 1;
+	}
 	strcpy(plot->spec->fname, plotfile);
     }
 
@@ -3702,7 +3722,13 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     plot->spec->ptr = plot;
 
     plot->zoom = mymalloc(sizeof *plot->zoom);
-    if (plot->zoom == NULL) return 1;
+    if (plot->zoom == NULL) {
+	if (spec == NULL) {
+	    free_plotspec(plot->spec);
+	}
+	free(plot);
+	return 1;
+    }
 
     if (saved) {
 	plot->status_flags |= PLOT_SAVED;
