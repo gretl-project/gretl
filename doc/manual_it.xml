@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
 "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
 
-<!ENTITY version "1.0.7">
+<!ENTITY version "1.0.8">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
@@ -17,6 +17,7 @@
 <!ENTITY graphs SYSTEM "chapters_it/graphs.xml">
 <!ENTITY nls SYSTEM "chapters_it/nls.xml">
 <!ENTITY looping SYSTEM "chapters_it/looping.xml">
+<!ENTITY functions SYSTEM "chapters_it/functions.xml">
 <!ENTITY optarg SYSTEM "chapters_it/optarg.xml">
 <!ENTITY cmdref SYSTEM "chapters_it/cmdref.xml">
 <!ENTITY cmdlist SYSTEM "chapters_it/cmdlist.xml">
@@ -86,6 +87,7 @@
   &graphs;
   &nls;
   &looping;
+  &functions;
   &optarg;
   &cmdref;
   &trouble;
