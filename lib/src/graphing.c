@@ -597,7 +597,7 @@ int gnuplot_has_ttf (void)
     static int err = -1; 
 
     if (err == -1) {
-	err = gnuplot_test_command("set term png font arial 8");
+	err = gnuplot_test_command("set term png font luxisr 8");
     }
     return !err;
 }
