@@ -1272,7 +1272,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	return 1;
     }
 
-    if ((fq = fopen(helpfile, "r")) == NULL) {
+    if ((fq = gretl_fopen(helpfile, "r")) == NULL) {
 	printf(_("Unable to access the file %s.\n"), helpfile);
 	return 1;
     } 
@@ -2068,9 +2068,9 @@ static int do_outfile_command (gretlopt flag, char *fname,
 	    FILE *fp;
 
 	    if (flag == OPT_W) {
-		fp = fopen(fname, "w");
+		fp = gretl_fopen(fname, "w");
 	    } else {
-		fp = fopen(fname, "a");
+		fp = gretl_fopen(fname, "a");
 	    }
 
 	    if (fp == NULL) {

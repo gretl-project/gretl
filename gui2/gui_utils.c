@@ -307,13 +307,13 @@ int copyfile (const char *src, const char *dest)
 
     if (!strcmp(src, dest)) return 1;
    
-    if ((srcfd = fopen(src, "rb")) == NULL) {
+    if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
 	sprintf(errtext, _("Couldn't open %s"), src);
 	errbox(errtext);
 	return 1; 
     }
 
-    if ((destfd = fopen(dest, "wb")) == NULL) {
+    if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
 	sprintf(errtext, _("Couldn't write to %s"), dest);
 	errbox(errtext);
 	fclose(srcfd);
@@ -846,7 +846,7 @@ int get_worksheet_data (char *fname, int datatype, int append,
     FILE *fp;
     int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
     
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	sprintf(errtext, _("Couldn't open %s"), fname);
 	errbox(errtext);
@@ -1084,7 +1084,7 @@ void save_session (char *fname)
     get_base(session_base, fname, '.');
 
     /* get ready to save "session" */
-    fp = fopen(fname, "a");
+    fp = gretl_fopen(fname, "a");
     if (fp == NULL) {
 	sprintf(errtext, _("Couldn't open session file %s"), fname);
 	errbox(errtext);
@@ -1206,7 +1206,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	FILE *fp;
 	gchar *text;
 
-	if ((fp = fopen(vwin->fname, "w")) == NULL) {
+	if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
 	    errbox(_("Can't open file for writing"));
 	    return;
 	} else {
@@ -1900,7 +1900,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 			role == VIEW_LOG);
 
     /* first check that we can open the specified file */
-    fp = fopen(filename, "r");
+    fp = gretl_fopen(filename, "r");
     if (fp == NULL) {
 	sprintf(errtext, _("Can't open %s for reading"), filename);
 	errbox(errtext);
@@ -2288,7 +2288,7 @@ static void auto_save_script (windata_t *vwin)
 	unsaved = 1;
     }
 
-    if ((fp = fopen(vwin->fname, "w")) == NULL) {
+    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
 	sprintf(msg, _("Couldn't write to %s"), vwin->fname);
 	errbox(msg); 
 	return;
@@ -3152,7 +3152,7 @@ static int seven_bit_file (const char *fname)
     char line[256];
     int ascii = 1;
     
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return 1;
     }
@@ -3187,14 +3187,14 @@ static int maybe_recode_file (const char *fname)
 	gchar *trbuf;
 	int err = 0;
 
-	fin = fopen(fname, "r");
+	fin = gretl_fopen(fname, "r");
 	if (fin == NULL) {
 	    return 1;
 	}
 
 	sprintf(trname, "%s.tr", fname);
 
-	fout = fopen(trname, "w");
+	fout = gretl_fopen(trname, "w");
 	if (fout == NULL) {
 	    fclose(fin);
 	    return 1;

@@ -35,6 +35,12 @@
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
+#if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
+# ifdef WIN32
+#  define USE_G_FOPEN
+# endif
+#endif
+
 enum {
     CURRENT_DIR,
     DATA_SEARCH,
@@ -56,6 +62,33 @@ static int add_gdt_suffix (char *fname)
     }
 
     return added;
+}
+
+/* .......................................................... */
+
+FILE *gretl_fopen (const char *filename, const char *mode)
+{
+#ifdef USE_G_FOPEN
+    return g_fopen((const gchar *) filename, (const gchar *) mode);
+#else
+    return fopen(filename, mode);
+#endif
+}
+
+gzFile gretl_gzopen (const char *filename, const char *mode)
+{
+#ifdef USE_G_FOPEN
+    gchar *cp_filename = g_locale_from_utf8(filename, -1, NULL, NULL, NULL);
+    gzFile fz = gzopen(cp_filename, mode);
+    int save_errno = errno;
+
+    g_free(cp_filename);
+
+    errno = save_errno;
+    return fz;
+#else
+    return gzopen(filename, mode);
+#endif
 }
 
 /* .......................................................... */
@@ -97,10 +130,10 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, "\\");
     strcat(tmp, targ);
 
-    fp = fopen(tmp, "r");
+    fp = gretl_fopen(tmp, "r");
     if (fp == NULL && code == DATA_SEARCH) {
 	if (add_gdt_suffix(tmp)) {
-	    fp = fopen(tmp, "r");
+	    fp = gretl_fopen(tmp, "r");
 	}
     }
 
@@ -180,10 +213,10 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, "/");
     strcat(tmp, targ);
 
-    fp = fopen(tmp, "r");
+    fp = gretl_fopen(tmp, "r");
     if (fp == NULL && code == DATA_SEARCH) {
 	if (add_gdt_suffix(tmp)) {
-	    fp = fopen(tmp, "r");
+	    fp = gretl_fopen(tmp, "r");
 	}
     }
 
@@ -262,13 +295,13 @@ static char *search_dir (char *fname, const char *topdir, int code)
     strcpy(orig, fname);
 
     if (path_append(fname, topdir) == 0) {
-	test = fopen(fname, "r");
+	test = gretl_fopen(fname, "r");
 	if (test != NULL) {
 	    fclose(test);
 	    return fname;
 	}
 	if (code == DATA_SEARCH && add_gdt_suffix(fname)) {
-	    test = fopen(fname, "r");
+	    test = gretl_fopen(fname, "r");
 	    if (test != NULL) {
 		fclose(test);
 		return fname;
@@ -345,7 +378,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     strcpy(orig, fname);
 
     /* try opening filename as given */
-    test = fopen(fname, "r");
+    test = gretl_fopen(fname, "r");
     if (test != NULL) { 
 	fclose(test); 
 	if (!path_is_absolute(fname)) {

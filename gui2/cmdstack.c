@@ -372,7 +372,7 @@ int dump_command_stack (const char *fname, int insert_open_data)
 	fp = stderr;
 	fputs("dumping command stack:\n", stderr);
     } else {
-	fp = fopen(fname, "w"); 
+	fp = gretl_fopen(fname, "w"); 
 	if (fp == NULL) {
 	    errbox(_("Couldn't open command file for writing"));
 	    return 1;

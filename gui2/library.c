@@ -1292,6 +1292,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
     GRETLTEST test;
 
     if (bufopen(&prn)) return;
+
     strcpy(title, _("gretl: LM test "));
     clear(line, MAXLEN);
 
@@ -1669,6 +1670,7 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
     int err;
 
     if (bufopen(&prn)) return;
+
     strcpy(title, _("gretl: RESET test"));
 
     clear(line, MAXLEN);
@@ -2752,7 +2754,7 @@ static char *file_get_contents (const char *fname)
     size_t i, alloced;
     int c;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) return NULL;
 
     buf = malloc(BUFSIZ);
@@ -4493,7 +4495,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
     }
 
     if (!overwrite) {
-	fp = fopen(savename, "rb");
+	fp = gretl_fopen(savename, "rb");
 	if (fp != NULL) {
 	    fclose(fp);
 	    if (yes_no_dialog(_("gretl: save data"), 
@@ -4512,7 +4514,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
     if (err) goto store_get_out;
 
     /* back up existing datafile if need be */
-    if ((fp = fopen(savename, "rb")) && fgetc(fp) != EOF &&
+    if ((fp = gretl_fopen(savename, "rb")) && fgetc(fp) != EOF &&
 	fclose(fp) == 0) {
 	tmp = g_strdup_printf("%s~", savename);
 	if (copyfile(savename, tmp)) {
@@ -4708,7 +4710,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 
 	prn = (PRN *) data;
 	sprintf(texfile, "%smodeltable.tex", paths.userdir);
-	fp = fopen(texfile, "w");
+	fp = gretl_fopen(texfile, "w");
 	if (fp == NULL) {
 	    sprintf(errtext, _("Couldn't write to %s"), texfile);
 	    errbox(errtext);
@@ -4816,7 +4818,7 @@ static int ok_script_file (const char *runfile)
     char myline[32];
     int content = 0;
 
-    fp = fopen(runfile, "r");
+    fp = gretl_fopen(runfile, "r");
     if (fp == NULL) {
 	errbox(_("Couldn't open script"));
 	return 0;
@@ -4884,7 +4886,7 @@ int execute_script (const char *runfile, const char *buf,
 	if (!ok_script_file(runfile)) {
 	    return -1;
 	}
-	fb = fopen(runfile, "r");
+	fb = gretl_fopen(runfile, "r");
     } else { 
 	/* no runfile, commands from buffer */
 	if (buf == NULL || *buf == '\0') {

@@ -234,7 +234,7 @@ static int make_graphpage_tex (void)
 
     fname = gpage_fname(".tex", 0);
 
-    fp = fopen(fname, "w");
+    fp = gretl_fopen(fname, "w");
     if (fp == NULL) return 1;
 
     doctop(gpage.output, fp);
@@ -297,12 +297,12 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
     FILE *fp, *fq;
     int err = 0;
 
-    fp = fopen(gfname, "r");
+    fp = gretl_fopen(gfname, "r");
     if (fp == NULL) return 1;
 
     fname = gpage_fname(".plt", 0);
 
-    fq = fopen(fname, "w");
+    fq = gretl_fopen(fname, "w");
     if (fq == NULL) {
 	fclose(fp);
 	return 1;

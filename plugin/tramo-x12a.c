@@ -284,20 +284,15 @@ static void get_seats_command (char *seats, const char *tramo)
     else strcpy(seats, "seats");
 }
 
-static void truncate (char *str, int n)
-{
-    int len = strlen(str);
-
-    if (len > n) str[n] = 0;
-}
-
 static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 {
     FILE *fp = NULL;
     char title[32];
     int t;
 
-    if (gnuplot_init(PLOT_TRI_GRAPH, &fp)) return E_FOPEN;
+    if (gnuplot_init(PLOT_TRI_GRAPH, &fp)) {
+	return E_FOPEN;
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -429,7 +424,7 @@ static int add_series_from_file (const char *fname, int code,
 	if (p != NULL) strcpy(p + 1, x12a_series_strings[code]);
     }
 
-    fp = fopen(sfname, "r");
+    fp = gretl_fopen(sfname, "r");
     if (fp == NULL) {
 	int gotit = 0;
 
@@ -441,7 +436,7 @@ static int add_series_from_file (const char *fname, int code,
 	if (opt == TRAMO_SEATS && code == D13) { 
 	    sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
 		    tramo_series_strings[code + 1]);
-	    fp = fopen(sfname, "r");
+	    fp = gretl_fopen(sfname, "r");
 	    if (fp != NULL) {
 		gotit = 1;
 	    }
@@ -454,15 +449,12 @@ static int add_series_from_file (const char *fname, int code,
     }
 
     /* formulate name of new variable to add */
-    strcpy(varname, pdinfo->varname[0]);
     if (opt == TRAMO_SEATS) {
-	truncate(varname, 5);
-	strcat(varname, "_");
-	strncat(varname, tramo_series_strings[code], 2);
+	sprintf(varname, "%.5s_%.2s", pdinfo->varname[0], 
+		tramo_series_strings[code]);
     } else {
-	truncate(varname, 4);
-	strcat(varname, "_");
-	strcat(varname, x12a_series_strings[code]);
+	sprintf(varname, "%.4s_%s", pdinfo->varname[0], 
+		x12a_series_strings[code]);
     }
 
     /* copy varname and label into place */
@@ -566,7 +558,7 @@ static int write_tramo_file (const char *fname,
     int t;
     char *p, tmp[8];
 
-    fp = fopen(fname, "w");
+    fp = gretl_fopen(fname, "w");
     if (fp == NULL) return 1;
 
 #ifdef ENABLE_NLS
@@ -616,7 +608,7 @@ static int write_spc_file (const char *fname,
     int startyr, startper;
     char *p, tmp[8];
 
-    fp = fopen(fname, "w");
+    fp = gretl_fopen(fname, "w");
     if (fp == NULL) return 1;    
 
 #ifdef ENABLE_NLS
@@ -811,9 +803,9 @@ int write_tx_data (char *fname, int varnum,
     if (request.code == X12A) { 
 	/* make a default x12a.mdl file if it doesn't already exist */
 	sprintf(fname, "%s%cx12a.mdl", workdir, SLASH);
-	fp = fopen(fname, "r");
+	fp = gretl_fopen(fname, "r");
 	if (fp == NULL) {
-	    fp = fopen(fname, "w");
+	    fp = gretl_fopen(fname, "w");
 	    if (fp == NULL) return 1;
 	    fprintf(fp, "%s", default_mdl);
 	    fclose(fp);

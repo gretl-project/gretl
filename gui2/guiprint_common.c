@@ -9,10 +9,10 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
     if (mktemp(temp) == NULL) return NULL;
 
-    ftmp = fopen(temp, "w");
+    ftmp = gretl_fopen(temp, "w");
     if (ftmp == NULL) return NULL;
 
-    fsrc = fopen(fname, "r");
+    fsrc = gretl_fopen(fname, "r");
     if (fsrc == NULL) {
 	fclose(ftmp);
 	remove(temp);

@@ -1284,7 +1284,7 @@ int plot_to_xpm (const char *fname, gpointer data)
     guint32 pixel, white_pixel;
     FILE *fp;
     
-    fp = fopen(fname, "w");
+    fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
 	errbox (_("Couldn't open XPM file for writing"));
 	return 1;
@@ -1338,7 +1338,7 @@ static void read_boxrc (PLOTGROUP *grp)
 	char boxrc[MAXLEN];
 
 	sprintf(boxrc, "%s.boxplotrc", paths.userdir);
-	fp = fopen(boxrc, "r");
+	fp = gretl_fopen(boxrc, "r");
     }
 
     if (fp != NULL) {
@@ -1393,7 +1393,7 @@ static int dump_boxplot (PLOTGROUP *grp)
 
     build_path(paths.userdir, "boxdump.tmp", boxplottmp, NULL);
 
-    fp = fopen(boxplottmp, "w");
+    fp = gretl_fopen(boxplottmp, "w");
     if (fp == NULL) {
 	gchar *msg;
 
@@ -1460,7 +1460,7 @@ int retrieve_boxplot (const char *fname)
     char line[80], numstr[24];
     gchar *errmsg;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
 
     if (fp == NULL) {
 	errmsg = g_strdup_printf(_("Couldn't open %s"), fname);

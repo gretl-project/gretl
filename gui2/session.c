@@ -774,7 +774,7 @@ static int pick_up_session_notes (const char *fname)
 
     if (stat(notesfile, &buf) == 0) {
 	char noteline[MAXLEN];
-	FILE *fp = fopen(notesfile, "r");
+	FILE *fp = gretl_fopen(notesfile, "r");
 
 	if (fp == NULL) {
 	    return 1;
@@ -833,7 +833,7 @@ void do_open_session (GtkWidget *w, gpointer data)
 	}
     }
 
-    fp = fopen(tryscript, "r");
+    fp = gretl_fopen(tryscript, "r");
     if (fp != NULL) {
 	fclose(fp);
 	strcpy(scriptfile, tryscript);
@@ -1032,7 +1032,7 @@ int saved_objects (const char *fname)
     fprintf(stderr, "saved_objects: checking '%s'\n", fname);
 #endif    
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return -1;
     }
@@ -1084,7 +1084,7 @@ static int check_session_graph (const char *line,
 
     top_n_tail(*fname);
 
-    fp = fopen(*fname, "r");
+    fp = gretl_fopen(*fname, "r");
 
     if (fp == NULL) {
 	gchar *msg = 
@@ -1248,7 +1248,7 @@ int parse_savefile (const char *fname)
     char fline[MAXLEN];
     int err = 0, objs = 0;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return SAVEFILE_ERROR;
     }
@@ -1387,7 +1387,7 @@ static gchar *graph_str (GRAPHT *graph)
     FILE *fp;
     gchar *buf = NULL;
 
-    fp = fopen(graph->fname, "r");
+    fp = gretl_fopen(graph->fname, "r");
 
     if (fp != NULL) {
 	char xlabel[24], ylabel[24], line[48];
@@ -1429,7 +1429,7 @@ static char *boxplot_str (GRAPHT *graph)
     FILE *fp;
     char *str = NULL;
 
-    fp = fopen(graph->fname, "r");
+    fp = gretl_fopen(graph->fname, "r");
 
     if (fp != NULL) {
 	char vname[VNAMELEN], line[48];
@@ -2768,7 +2768,7 @@ int print_session_notes (const char *fname)
     if (session.notes != NULL && strlen(session.notes)) {
 	FILE *fp;
 
-	fp = fopen(fname, "w");
+	fp = gretl_fopen(fname, "w");
 	if (fp != NULL) {
 	    fprintf(fp, "%s", session.notes);
 	    fclose(fp);
@@ -3220,7 +3220,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     gchar *savestuff;
     windata_t *mydata = (windata_t *) data;
 
-    if ((fp = fopen(mydata->fname, "w")) == NULL) {
+    if ((fp = gretl_fopen(mydata->fname, "w")) == NULL) {
 	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
 	errbox(msg); 
 	return;
@@ -3251,7 +3251,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
 
     if (savestuff == NULL) return;
 
-    if ((fp = fopen(mydata->fname, "w")) == NULL) {
+    if ((fp = gretl_fopen(mydata->fname, "w")) == NULL) {
 	msg = g_strdup_printf(_("Couldn't write to %s"), mydata->fname);
 	errbox(msg); 
 	g_free(msg);
@@ -3290,12 +3290,12 @@ static char *add_pause_to_plotfile (const char *fname)
     char *tmpfile = NULL;
     int gotpause = 0;
 
-    fin = fopen(fname, "r");
+    fin = gretl_fopen(fname, "r");
     if (fin == NULL) return NULL;
 
     tmpfile = g_strdup_printf("%showtmp.gp", paths.userdir);
 
-    fout = fopen(tmpfile, "w");
+    fout = gretl_fopen(tmpfile, "w");
     if (fout == NULL) {
 	fclose(fin);
 	g_free(tmpfile);

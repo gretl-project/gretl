@@ -21,7 +21,6 @@
 #include "gretl_private.h"
 #include "gretl_string_table.h"
 
-#include <zlib.h>
 #include <ctype.h>
 #include <time.h>
 #include <errno.h>
@@ -823,7 +822,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
-    fp = fopen(hdrfile, "r");
+    fp = gretl_fopen(hdrfile, "r");
     if (fp == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open file %s"),  hdrfile);
 	return E_FOPEN;
@@ -856,7 +855,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     }
 
     i = 1;
-    fp = fopen(hdrfile, "r");
+    fp = gretl_fopen(hdrfile, "r");
 
     str[0] = 0;
     fscanf(fp, "%s", str);
@@ -950,7 +949,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 	char *dbuf = NULL;
 	int lines;
 
-	fp = fopen(hdrfile, "r");
+	fp = gretl_fopen(hdrfile, "r");
 	if (fp == NULL) return 0;
 	if ((lines = comment_lines(fp, &dbuf)) > 0) {
 	    delchar('\r', dbuf);
@@ -1262,7 +1261,7 @@ int get_info (const char *hdrfile, PRN *prn)
     int i = 0;
     FILE *hdr;
 
-    if ((hdr = fopen(hdrfile, "r")) == NULL) {
+    if ((hdr = gretl_fopen(hdrfile, "r")) == NULL) {
 	pprintf(prn, _("Couldn't open %s\n"), hdrfile); 
 	return 1;
     }
@@ -1274,7 +1273,7 @@ int get_info (const char *hdrfile, PRN *prn)
     } 
 
     /* no, so restart the read */
-    if ((hdr = fopen(hdrfile, "r")) == NULL) {
+    if ((hdr = gretl_fopen(hdrfile, "r")) == NULL) {
 	pprintf(prn, _("Couldn't open %s\n"), hdrfile); 
 	return 1;
     }    
@@ -1324,7 +1323,7 @@ static int writehdr (const char *hdrfile, const int *list,
     ntodate_full(startdate, pdinfo->t1, pdinfo);
     ntodate_full(enddate, pdinfo->t2, pdinfo);
 
-    fp = fopen(hdrfile, "w");
+    fp = gretl_fopen(hdrfile, "w");
     if (fp == NULL) {
 	return 1;
     }
@@ -1524,9 +1523,9 @@ int write_data (const char *fname, const int *list,
 
     /* open file for output */
     if (opt == GRETL_DATA_FLOAT || opt == GRETL_DATA_DOUBLE) {
-	fp = fopen(datfile, "wb");
+	fp = gretl_fopen(datfile, "wb");
     } else {
-	fp = fopen(datfile, "w");
+	fp = gretl_fopen(datfile, "w");
     }
 
     if (fp == NULL) return 1;
@@ -1904,7 +1903,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
     
     *gretl_errmsg = '\0';
 
-    fp = fopen(lblfile, "r");
+    fp = gretl_fopen(lblfile, "r");
     if (fp == NULL) return 0;
 
     while (1) {
@@ -1955,7 +1954,7 @@ static int writelbl (const char *lblfile, const int *list,
 
     if (lblcount == 0) return 0;
 
-    fp = fopen(lblfile, "w");
+    fp = gretl_fopen(lblfile, "w");
     if (fp == NULL) return 1;
 
     /* spit out varnames and labels (if filled out) */
@@ -1994,7 +1993,7 @@ int is_gzipped (const char *fname)
 	return 0;
     }
 
-    fp = fopen(fname, "rb");
+    fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
 	return 0;
     }
@@ -2185,16 +2184,16 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 
     /* Invoke data (Z) reading function */
     if (gzsuff) {
-	fz = gzopen(datfile, "rb");
+	fz = gretl_gzopen(datfile, "rb");
 	if (fz == NULL) {
 	    err = E_FOPEN;
 	    goto bailout;
 	}
     } else {
 	if (binary) {
-	    dat = fopen(datfile, "rb");
+	    dat = gretl_fopen(datfile, "rb");
 	} else {
-	    dat = fopen(datfile, "r");
+	    dat = gretl_fopen(datfile, "r");
 	}
 	if (dat == NULL) {
 	    err = E_FOPEN;
@@ -3273,7 +3272,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	check_for_console(prn);
     }
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
 	goto csv_bailout;
@@ -3642,7 +3641,7 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
     char **S, marker[OBSLEN], sformat[8];
     int i, t;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	return E_FOPEN;
     }
@@ -3741,7 +3740,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 
     check_for_console(prn);
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
@@ -3824,7 +3823,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 
     pputs(prn, M_("done\n"));
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	err = E_FOPEN;
 	goto box_bailout;
@@ -3965,7 +3964,7 @@ static int xmlfile (const char *fname)
     char test[6];
     int ret = 0;
 
-    fz = gzopen(fname, "rb");
+    fz = gretl_gzopen(fname, "rb");
     if (fz != Z_NULL) {
 	if (gzread(fz, test, 5)) {
 	    test[5] = '\0';
@@ -3990,7 +3989,7 @@ static int file_has_suffix (const char *fname, const char *sfx)
     FILE *fdg;
 
     sprintf(tmp, "debug%d.txt", ++i);
-    fdg = fopen(tmp, "w");
+    fdg = gretl_fopen(tmp, "w");
     fprintf(fdg, "file_has_suffix: testing '%s' for the suffix '%s'\n",
 	    fname, sfx);
     fclose(fdg);
@@ -4058,7 +4057,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_XML_DATA;  
     } 
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) { 
 	return GRETL_NATIVE_DATA; /* may be native file in different location */
     }
@@ -4186,10 +4185,10 @@ static int write_xmldata (const char *fname, const int *list,
 #endif
 
     if (gz) {
-	fz = gzopen(fname, "wb");
+	fz = gretl_gzopen(fname, "wb");
 	if (fz == Z_NULL) err = 1;
     } else {
-	fp = fopen(fname, "wb");
+	fp = gretl_fopen(fname, "wb");
 	if (fp == NULL) err = 1;
     }
 

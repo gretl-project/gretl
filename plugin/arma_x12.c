@@ -256,7 +256,7 @@ static int print_iterations (const char *path, PRN *prn)
     int print = 0;
 
     sprintf(fname, "%s.out", path);
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
 	return 1;
@@ -295,7 +295,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
     char line[80], statname[12];
     double x;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
 	return 1;
@@ -335,7 +335,7 @@ static int get_roots (const char *fname, MODEL *pmod, int nr)
     roots = malloc(nr * sizeof *roots);
     if (roots == NULL) return E_ALLOC;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
 	free(roots);
@@ -392,7 +392,7 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
     int i, j, k, nt = (nc * nc + nc) / 2;
     int err = 0;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) return 1;
 
     pmod->vcv = malloc(nt * sizeof *pmod->vcv);
@@ -450,7 +450,7 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
     int i, j, nc = p + q + 1;
     int err = 0;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
 	return 1;
@@ -520,7 +520,7 @@ static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
     double x, *uhat;
     int t, start = 0, nobs = 0;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
 	return NULL;
@@ -675,7 +675,7 @@ static int write_spc_file (const char *fname,
     int startyr, startper;
     char *s, tmp[8];
 
-    fp = fopen(fname, "w");
+    fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't write to '%s'\n", fname);
 	return 1;  

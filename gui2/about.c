@@ -238,18 +238,18 @@ void about_dialog (gpointer data)
     gtk_text_buffer_get_iter_at_offset (tbuf, &iter, 0);
 
     tempstr = g_strdup_printf("%s/COPYING", paths.gretldir);
-    if ((fd = fopen (tempstr, "r")) == NULL) {
-	gtk_text_buffer_insert (tbuf, &iter, no_gpl, -1);
-	gtk_widget_show (dialog);
-	g_free (tempstr);
+    if ((fd = gretl_fopen(tempstr, "r")) == NULL) {
+	gtk_text_buffer_insert(tbuf, &iter, no_gpl, -1);
+	gtk_widget_show(dialog);
+	g_free(tempstr);
 	return;
     }
     g_free(tempstr);
    
-    memset (buf, 0, sizeof (buf));
-    while (fread (buf, 1, sizeof (buf) - 1, fd)) {
-	gtk_text_buffer_insert (tbuf, &iter, buf, strlen (buf));
-	memset (buf, 0, sizeof (buf));
+    memset(buf, 0, sizeof (buf));
+    while(fread (buf, 1, sizeof (buf) - 1, fd)) {
+	gtk_text_buffer_insert(tbuf, &iter, buf, strlen (buf));
+	memset(buf, 0, sizeof (buf));
     }
     fclose (fd);
 
@@ -407,7 +407,7 @@ void about_dialog (gpointer data)
     gtk_widget_show (vscroll);
 
     label = gtk_label_new (_("License Agreement"));
-    gtk_widget_show (label);
+    gtk_widget_show(label);
    
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, label);
 
@@ -422,22 +422,22 @@ void about_dialog (gpointer data)
     gtk_widget_show (tempwid);
 
     tempstr = g_strdup_printf("%s/COPYING", paths.gretldir);
-    if ((fd = fopen (tempstr, "r")) == NULL) {
-	gtk_text_insert (GTK_TEXT (view), NULL, NULL, NULL, 
-			 no_gpl, strlen (no_gpl));
-	gtk_widget_show (dialog);
-	g_free (tempstr);
+    if ((fd = gretl_fopen(tempstr, "r")) == NULL) {
+	gtk_text_insert(GTK_TEXT(view), NULL, NULL, NULL, 
+			no_gpl, strlen(no_gpl));
+	gtk_widget_show(dialog);
+	g_free(tempstr);
 	return;
     }
     g_free(tempstr);
    
-    memset (buf, 0, sizeof (buf));
-    while (fread (buf, 1, sizeof (buf) - 1, fd)) {
-	gtk_text_insert (GTK_TEXT (view), 
-			 fixed_font, NULL, NULL, buf, strlen (buf));
-	memset (buf, 0, sizeof (buf));
+    memset(buf, 0, sizeof buf);
+    while (fread(buf, 1, sizeof buf - 1, fd)) {
+	gtk_text_insert(GTK_TEXT (view), 
+			fixed_font, NULL, NULL, buf, strlen(buf));
+	memset (buf, 0, sizeof buf);
     }
-    fclose (fd);
+    fclose(fd);
 
     gtk_widget_show(dialog);
 

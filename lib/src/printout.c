@@ -1419,7 +1419,7 @@ PRN *gretl_print_new (int prncode, const char *fname)
 	
     else if (prncode == GRETL_PRINT_FILE) {
 	prn->buf = NULL;
-	prn->fp = fopen(fname, "w");
+	prn->fp = gretl_fopen(fname, "w");
 	if (prn->fp == NULL) {
 	    fprintf(stderr, _("gretl_prn_new: couldn't open %s\n"), fname);
 	    free(prn);

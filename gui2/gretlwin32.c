@@ -84,7 +84,7 @@ void startR (const char *Rcommand)
     }
 
     build_path(paths.userdir, "gretl.Rprofile", Rprofile, NULL);
-    fp = fopen(Rprofile, "w");
+    fp = gretl_fopen(Rprofile, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't write R startup file"));
 	return;
@@ -117,7 +117,7 @@ void startR (const char *Rcommand)
 	FILE *fq;
 
 	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
-	fq = fopen(Rtmp, "w");
+	fq = gretl_fopen(Rtmp, "w");
 	fprintf(fq, "gretldata <- read.table(\"%s\")\n", 
 		slash_convert(Rdata, FROM_BACKSLASH));
 	fprintf(fq, "attach(gretldata)\n");
@@ -323,8 +323,8 @@ void set_up_windows_look (void)
 	int needslash = (paths.gretldir[n-1] != SLASH);
 	gchar *wimprc;
 
-	wimprc = g_strdup_printf("%s%setc\\gtk-2.0\\gtkrc.wimp", paths.gretldir,
-				 (needslash)? "\\" : "");
+	wimprc = g_strdup_printf("%s%sshare\\themes\\MS-Windows\\gtk-2.0\\gtkrc", 
+				 paths.gretldir, (needslash)? "\\" : "");
 	gtk_rc_parse(wimprc);
 	g_free(wimprc);
     } else {

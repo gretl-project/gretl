@@ -168,7 +168,7 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
     GtkTextIter iter;    
     char readbuf[MAXSTR], *chunk = NULL;
 
-    fp = fopen(fname, "rb");
+    fp = gretl_fopen(fname, "rb");
     if (fp == NULL) return 1;
 
     gtk_source_buffer_begin_not_undoable_action (sbuf);
@@ -406,7 +406,7 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     int started = 0;
     int newhelp = 0;
 
-    fp = fopen(fname, "r");
+    fp = gretl_fopen(fname, "r");
     if (fp == NULL) return;
 
     thiscolor = nextcolor = PLAIN_TEXT;

@@ -474,7 +474,7 @@ int gnuplot_init (int plottype, FILE **fpp)
 
     set_gretl_plotfile(plotfile);
 
-    *fpp = fopen(plotfile, "w");
+    *fpp = gretl_fopen(plotfile, "w");
     if (*fpp == NULL) {
 	return 1;
     }
@@ -628,7 +628,7 @@ get_gnuplot_output_file (FILE **fpp, unsigned char flags,
     *fpp = NULL;
 
     if ((flags & GP_FILE) && *plotfile != '\0') {
-	*fpp = fopen(plotfile, "w");
+	*fpp = gretl_fopen(plotfile, "w");
     } else if ((flags & GP_BATCH) && plot_count != NULL) {  
 	char fname[MAXLEN];
 
@@ -637,7 +637,7 @@ get_gnuplot_output_file (FILE **fpp, unsigned char flags,
 	    sprintf(fname, "%sgpttmp%02d.plt", gretl_user_dir(), *plot_count);
 	}
 	set_gretl_plotfile(fname);
-	*fpp = fopen(fname, "w");
+	*fpp = gretl_fopen(fname, "w");
     } else {
 	gnuplot_init(code, fpp);
     }
@@ -1277,7 +1277,7 @@ static int get_3d_output_file (FILE **fpp)
     int err = 0;
 
     sprintf(fname, "%sgpttmp.plt", gretl_user_dir());
-    *fpp = fopen(fname, "w");
+    *fpp = gretl_fopen(fname, "w");
     if (*fpp == NULL) {
 	err = E_FOPEN;
     } else {
@@ -2052,12 +2052,12 @@ int go_gnuplot (GPT_SPEC *spec, char *fname)
     if (dump) {  
 	/* dump of gnuplot commands to named file */
 	if (fname == NULL) return 1;  /* impossible */
-	fp = fopen(fname, "w");
+	fp = gretl_fopen(fname, "w");
 	if (fp == NULL) return 1;
     } else {     
 	/* output to gnuplot, for screen or other "term" */
 	if (spec->fp == NULL) {
-	    fp = fopen(gretl_plotfile(), "w");
+	    fp = gretl_fopen(gretl_plotfile(), "w");
 	}
 	if (fp == NULL) return 1;
 

@@ -25,6 +25,8 @@
 #include <ctype.h>
 #include <math.h>
 
+#include <zlib.h>
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif

@@ -326,7 +326,7 @@ static int make_texfile (int ID, int equation,
 		(equation)? "equation" : "model", ID);
     }
 
-    fp = fopen(texfile, "w");
+    fp = gretl_fopen(texfile, "w");
     if (fp == NULL) return 1;
 
     gretl_print_attach_file(prn, fp);
@@ -363,7 +363,7 @@ void set_gretl_tex_preamble (void)
 
     /* first choice: localized preamble file */
     sprintf(tex_preamble_file, "%s%s", gretl_user_dir(), localtex);
-    fp = fopen(tex_preamble_file, "r");
+    fp = gretl_fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';
     } else {
@@ -374,7 +374,7 @@ void set_gretl_tex_preamble (void)
 
     /* preamble file on disk */
     sprintf(tex_preamble_file, "%s%s", gretl_user_dir(), gretltex);
-    fp = fopen(tex_preamble_file, "r");
+    fp = gretl_fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';
     } else {
@@ -388,7 +388,7 @@ void gretl_tex_preamble (PRN *prn, int ams)
     int userfile = 0;
 
     if (tex_preamble_file[0] != '\0') {
-	fp = fopen(tex_preamble_file, "r");
+	fp = gretl_fopen(tex_preamble_file, "r");
 	if (fp != NULL) {
 	    char line[128];
 

@@ -223,7 +223,7 @@ static void set_english_help_file (int script)
 	    english_gui_helpfile = tmp;
 	}
 
-	fp = fopen(tmp, "r");
+	fp = gretl_fopen(tmp, "r");
 	if (fp != NULL) {
 	    char test[128];
 	    int len = 0;
@@ -550,7 +550,7 @@ static int real_helpfile_init (int cli)
     }
 #endif
 
-    fp = fopen(helpfile, "r");
+    fp = gretl_fopen(helpfile, "r");
     if (fp == NULL) {
 	fprintf(stderr, I_("help file %s is not accessible\n"), helpfile);
 	return -1;

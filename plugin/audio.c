@@ -490,7 +490,7 @@ static int read_datafile (const char *fname, dataset *dset)
 
     dataset_init(dset);
 
-    fdat = fopen(fname, "r");
+    fdat = gretl_fopen(fname, "r");
     if (fdat == NULL) {
 	fprintf(stderr, "Couldn't open '%s'\n", fname);
 	return 1;
@@ -1062,7 +1062,7 @@ int midi_play_graph (const char *fname, const char *userdir,
 
     sprintf(outname, "%sgretl.mid", userdir);
 
-    spec.fp = fopen(outname, "wb");
+    spec.fp = gretl_fopen(outname, "wb");
     if (spec.fp == NULL) {
 	fprintf(stderr, "Couldn't write to '%s'\n", outname);
 	return 1;

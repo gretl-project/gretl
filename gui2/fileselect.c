@@ -211,13 +211,16 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
     if (isdir(fname)) return 1;
 
     /* don't mess with the name of a previously existing file */
-    if ((fp = fopen(fname, "r")) && fgetc(fp) != EOF) {
+    fp = gretl_fopen(fname, "r");
+    if (fp != NULL && fgetc(fp) != EOF) {
 	fclose(fp);
 	return 0;
     }    
 
     /* don't mess with a filename that already has an extension */
-    if (dotpos(fname) != strlen(fname)) return 0;
+    if (dotpos(fname) != strlen(fname)) {
+	return 0;
+    }
     
     /* otherwise add an appropriate extension */
     ext = get_ext(action, data);
@@ -275,7 +278,8 @@ static void save_editable_content (int action, const char *fname,
 	return;
     }
 
-    if ((fp = fopen(fname, "w")) == NULL) {
+    fp = gretl_fopen(fname, "w");
+    if (fp == NULL) {
 	errbox(_("Couldn't open file for writing"));
 	g_free(buf);
 	return;
@@ -444,7 +448,7 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
     strncat(fname, in_fname, FILENAME_MAX - 1);
 
     if (action < END_OPEN) {
-	FILE *fp = fopen(fname, "r");
+	FILE *fp = gretl_fopen(fname, "r");
 
 	if (fp == NULL) {
 	    sprintf(errtext, _("Couldn't open %s"), fname);

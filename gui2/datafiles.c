@@ -155,7 +155,7 @@ static int get_title_from_descfile (file_collection *coll)
 
     test = full_path(coll->path, coll->descfile);
 
-    fp = fopen(test, "r");
+    fp = gretl_fopen(test, "r");
 
     if (fp == NULL) return err;
 
@@ -518,7 +518,7 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 
     index = full_path(coll->path, coll->descfile);
 
-    fp = fopen(index, "r");
+    fp = gretl_fopen(index, "r");
     if (fp == NULL) return 1;
 
 #ifndef OLD_GTK

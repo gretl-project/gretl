@@ -589,7 +589,7 @@ static void test_db_book (const char *fname, int *cb)
 
     strcpy(testname, fname);
     strcat(testname, ".cb");
-    fp = fopen(testname, "r");
+    fp = gretl_fopen(testname, "r");
     if (fp == NULL) {
 	*cb = 0;
     } else {
@@ -805,7 +805,7 @@ static int populate_series_list (windata_t *dbwin)
 
     strcpy(dbidx, dbwin->fname);
     strcat(dbidx, ".idx");
-    fp = fopen(dbidx, "r");
+    fp = gretl_fopen(dbidx, "r");
     if (fp == NULL) {
 	errbox(_("Couldn't open database index file"));
 	return 1;
@@ -996,7 +996,7 @@ static int rats_populate_series_list (windata_t *dbwin)
     FILE *fp;
     db_table *tbl;
 
-    fp = fopen(dbwin->fname, "rb");
+    fp = gretl_fopen(dbwin->fname, "rb");
     if (fp == NULL) {
 	errbox(_("Couldn't open RATS data file"));
 	return 1;
@@ -1247,11 +1247,11 @@ void open_named_db_list (char *dbname)
 
     if (has_rats_suffix(dbname)) action = RATS_SERIES;
 
-    fp = fopen(dbname, "rb");
+    fp = gretl_fopen(dbname, "rb");
 
     if (fp == NULL && action != RATS_SERIES) {
 	strcat(dbname, ".bin");
-	fp = fopen(dbname, "rb");
+	fp = gretl_fopen(dbname, "rb");
     }
 
     if (fp == NULL) {
@@ -1446,21 +1446,21 @@ static int ggz_extract (char *errbuf, char *ggzname)
         return 1;
     }
 
-    fidx = fopen(idxname, "wb");
+    fidx = gretl_fopen(idxname, "wb");
     if (fidx == NULL) {
         sprintf(errbuf, _("Couldn't open %s for writing\n"), idxname);
 	err = 1;
 	goto bailout;
     }
 
-    fbin = fopen(binname, "wb");
+    fbin = gretl_fopen(binname, "wb");
     if (fbin == NULL) {
         sprintf(errbuf, _("Couldn't open %s for writing\n"), binname);
 	err = 1;
 	goto bailout;
     }
 
-    fcbk = fopen(cbname, "wb");
+    fcbk = gretl_fopen(cbname, "wb");
     if (fcbk == NULL) {
 	sprintf(errbuf, _("Couldn't open %s for writing\n"), cbname);
 	err = 1;
@@ -1578,7 +1578,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 
     /* test write to gzipped file */
     errno = 0;
-    fp = fopen(ggzname, "w");
+    fp = gretl_fopen(ggzname, "w");
     if (fp == NULL) {
 	if (errno == EACCES) { /* write to user dir instead */
 	    build_path(paths.userdir, dbname, ggzname, ".ggz");
@@ -1653,7 +1653,7 @@ static gchar *get_descrip (char *fname, const char *dbdir)
     build_path(dbdir, fname, tmp, NULL);
     if ((p = strrchr(tmp, '.'))) strcpy(p, ".idx");
     
-    if ((fp = fopen(tmp, "r")) == NULL) {
+    if ((fp = gretl_fopen(tmp, "r")) == NULL) {
 	g_free(line);
 	return NULL;
     }

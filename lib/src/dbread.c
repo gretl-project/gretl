@@ -103,7 +103,7 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 	strcat(dbbin, ".bin");
     }
 
-    fp = fopen(dbbin, "rb");
+    fp = gretl_fopen(dbbin, "rb");
     if (fp == NULL) return 1;
     
     fseek(fp, (long) sinfo->offset, SEEK_SET);
@@ -206,7 +206,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	strcat(dbidx, ".idx");
     }
 
-    fp = fopen(dbidx, "r");
+    fp = gretl_fopen(dbidx, "r");
     if (fp == NULL) {
 	strcpy(gretl_errmsg, _("Couldn't open database index file"));
 	return DB_NOT_FOUND;
@@ -711,7 +711,7 @@ int get_rats_data_by_series_number (const char *fname,
     long first_data;
     int ret = DB_OK;
 
-    fp = fopen(fname, "rb");
+    fp = gretl_fopen(fname, "rb");
     if (fp == NULL) return DB_NOT_FOUND;
     
     offset = get_rats_series_offset_by_number(fp, series_number);
@@ -772,7 +772,7 @@ get_rats_series_info_by_name (const char *series_name,
     int offset;
     int ret = DB_OK;
 
-    fp = fopen(db_name, "rb");
+    fp = gretl_fopen(db_name, "rb");
     if (fp == NULL) return DB_NOT_FOUND;
     
     offset = get_rats_series_offset_by_name(fp, series_name, sinfo);
@@ -798,7 +798,7 @@ get_rats_data_by_offset (const char *fname,
     FILE *fp;
     int ret = DB_OK;
 
-    fp = fopen(fname, "rb");
+    fp = gretl_fopen(fname, "rb");
     if (fp == NULL) return DB_NOT_FOUND;
 
     if (get_rats_series(sinfo->offset, sinfo, fp, Z)) {
@@ -924,7 +924,7 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
     *db_name = 0;
     strncat(db_name, fname, MAXLEN - 1);
 
-    fp = fopen(db_name, "rb");
+    fp = gretl_fopen(db_name, "rb");
 
     if (fp == NULL) {
 	/* try looking a bit more */
@@ -936,7 +936,7 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
 		 strstr(db_name, ppaths->ratsbase) == NULL) {
 	    build_path(ppaths->ratsbase, fname, db_name, NULL);
 	}
-	fp = fopen(db_name, "rb");
+	fp = gretl_fopen(db_name, "rb");
     }
 	    
     if (fp == NULL) {

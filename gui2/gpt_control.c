@@ -234,7 +234,7 @@ static void line_to_file (const char *s, FILE *fp, int l2)
 
 static FILE *open_gp_file (const char *fname, const char *mode)
 {
-    FILE *fp = fopen(fname, mode);
+    FILE *fp = gretl_fopen(fname, mode);
 
     if (fp == NULL) {
 	if (*mode == 'w') {
@@ -372,7 +372,7 @@ void mark_plot_as_saved (GPT_SPEC *spec)
 
 static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 {
-    *fpp = fopen(spec->fname, "w");
+    *fpp = gretl_fopen(spec->fname, "w");
     if (*fpp == NULL) {
 	sprintf(errtext, _("Couldn't write to %s"), spec->fname);
 	errbox(errtext);
@@ -426,7 +426,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	return;
     }
 
-    fq = fopen(plot->fname, "r");
+    fq = gretl_fopen(plot->fname, "r");
     if (fq == NULL) {
 	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);
@@ -908,7 +908,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     }
 
     /* open the plot file */
-    fp = fopen(spec->fname, "r");
+    fp = gretl_fopen(spec->fname, "r");
     if (fp == NULL) {
 	errbox(_("Couldn't open graph file"));
 	return 1;
@@ -1827,11 +1827,11 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	FILE *fpin, *fpout;
 	char line[MAXLEN];
 
-	fpin = fopen(plot->spec->fname, "r");
+	fpin = gretl_fopen(plot->spec->fname, "r");
 	if (fpin == NULL) return 1;
 
 	build_path(paths.userdir, "zoomplot.gp", fullname, NULL);
-	fpout = fopen(fullname, "w");
+	fpout = gretl_fopen(fullname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
 	    return 1;
@@ -2188,14 +2188,14 @@ static int get_dumb_plot_yrange (png_plot *plot)
     int max_ywidth = 0;
     int max_y2width = 0;
 
-    fpin = fopen(plot->spec->fname, "r");
+    fpin = gretl_fopen(plot->spec->fname, "r");
     if (fpin == NULL) {
 	return 1;
     }
 
     build_path(paths.userdir, "dumbplot.gp", dumbgp, NULL);
     build_path(paths.userdir, "gptdumb.txt", dumbtxt, NULL);
-    fpout = fopen(dumbgp, "w");
+    fpout = gretl_fopen(dumbgp, "w");
     if (fpout == NULL) {
 	fclose(fpin);
 	return 1;
@@ -2242,7 +2242,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	char numstr[32];
 	int i, j, k, imin;
 
-	fpin = fopen(dumbtxt, "r");
+	fpin = gretl_fopen(dumbtxt, "r");
 	if (fpin == NULL) {
 	    return 1;
 	}
@@ -2345,7 +2345,7 @@ static int get_plot_ranges (png_plot *plot)
     plot->xint = plot->yint = 0;
     plot->pd = 0;
 
-    fp = fopen(plot->spec->fname, "r");
+    fp = gretl_fopen(plot->spec->fname, "r");
     if (fp == NULL) return 0;
 
 #ifdef ENABLE_NLS
@@ -2754,7 +2754,7 @@ static int get_png_bounds_info (png_bounds *bounds)
 
     build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
 
-    fp = fopen(pngname, "rb");
+    fp = gretl_fopen(pngname, "rb");
     if (fp == NULL) {
 	return GRETL_PNG_NO_OPEN;
     }
@@ -2908,7 +2908,7 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
 
     /* open the gnuplot source file for the graph */
-    fq = fopen(spec->fname, "r");
+    fq = gretl_fopen(spec->fname, "r");
     if (fq == NULL) {
 	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);

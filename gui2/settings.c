@@ -1450,7 +1450,7 @@ static int get_network_settings (void)
 
     inifile = get_network_cfg_filename();
 
-    if (*inifile && (fp = fopen(inifile, "r"))) {
+    if (*inifile && (fp = gretl_fopen(inifile, "r"))) {
 	int j, calldrive = tolower(inifile[0]);
 	char line[MAXLEN], key[32], linevar[MAXLEN];
 
@@ -2324,7 +2324,7 @@ void dump_rc (void)
 	return;
     }
 
-    fp = fopen(dumper, "w");
+    fp = gretl_fopen(dumper, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't open config file for writing"));
 	free(dumper);
