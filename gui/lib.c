@@ -33,9 +33,10 @@ extern DATAINFO *fullinfo;
 extern double *subZ;
 extern double *fullZ;
 
-/* functions in other gretl GUI files */
+/* ../cli/common.c */
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, print_t *prn);
+/* boxplots.c */
 extern int boxplots (int *list, 
 		     double **pZ, const DATAINFO *pdinfo, 
 		     int notches);
@@ -52,9 +53,7 @@ static void do_run_script (gpointer data, guint code, GtkWidget *w);
 static void auto_save_script (gpointer data, guint action, GtkWidget *w);
 static gint stack_model (int gui);
 
-static GtkWidget *console_view;
-
-int replay;                 /* shared to indicate whether we're just
+int replay;                 /* shared, to indicate whether we're just
 			       replaying old session commands or not */
 
 GtkItemFactoryEntry log_items[] = {
@@ -122,6 +121,7 @@ typedef struct {
 } model_stack;
 
 /* file scope state variables */
+static GtkWidget *console_view;
 static int ignore;
 static int oflag;
 static char loopstorefile[MAXLEN];
@@ -316,9 +316,9 @@ gint cmd_init (char *line)
     print_t *echo;
 
     if (n_cmds == 0) 
-	cmd_stack = mymalloc(sizeof(char *));
+	cmd_stack = mymalloc(sizeof *cmd_stack);
     else 
-	cmd_stack = realloc(cmd_stack, (n_cmds + 1) * sizeof(char *));
+	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
     if (cmd_stack == NULL) return 1;
 
     if (bufopen(&echo)) return 1;
@@ -348,7 +348,7 @@ static gint record_model_genr (char *line)
     if (n_cmds == 0) 
 	cmd_stack = mymalloc(sizeof(char *));
     else 
-	cmd_stack = realloc(cmd_stack, (n_cmds + 1) * sizeof(char *));
+	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof(char *));
     if (cmd_stack == NULL) return 1;
 
     if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL)
@@ -373,7 +373,7 @@ static int grow_mstack (int i, int model_id)
 	fprintf(stderr, "grow_mstack: reallocating to %d stacks\n",
 		n_mstacks+1);
 #endif
-	mstack = realloc(mstack, (n_mstacks+1) * sizeof *mstack);
+	mstack = myrealloc(mstack, (n_mstacks+1) * sizeof *mstack);
     }
     if (mstack == NULL) {
 	n_mstacks = 0;
@@ -435,8 +435,8 @@ static gint model_cmd_init (char *line, int ID)
 	fprintf(stderr, "model_cmd_init: realloc mstack[%d] for %d cmds\n",
 		sn, mstack[sn].n+1);
 #endif
-	mstack[sn].cmds = realloc(mstack[sn].cmds,
-					 (mstack[sn].n+1) * sizeof(char **));
+	mstack[sn].cmds = myrealloc(mstack[sn].cmds,
+				    (mstack[sn].n+1) * sizeof(char **));
 	if (mstack[sn].cmds == NULL) {
 	    /* do more stuff! */
 	    return 1;
@@ -476,8 +476,8 @@ static gint stack_model (int gui)
     if (model_origin == NULL) 
 	model_origin = malloc(sizeof *model_origin);
     else
-	model_origin = realloc(model_origin, 
-			       model_count * sizeof *model_origin);
+	model_origin = myrealloc(model_origin, 
+				 model_count * sizeof *model_origin);
     if (model_origin == NULL) return 1;
     last_model = (gui == 1)? 'g' : 's';
     model_origin[model_count - 1] = last_model;
@@ -490,7 +490,7 @@ static gint stack_model (int gui)
 	if (modelspec == NULL) 
 	    modelspec = mymalloc(2 * sizeof *modelspec);
 	else 
-	    modelspec = myrealloc(modelspec, (m+2) * (sizeof *modelspec));
+	    modelspec = myrealloc(modelspec, (m+2) * sizeof *modelspec);
 	if (modelspec == NULL) return 1;
 	else {
 	    modelspec[m].cmd = mymalloc(MAXLEN);
@@ -785,7 +785,7 @@ void console (void)
 
     if (!user_fopen("console_tmp", fname, &prn)) return;
 
-    pprintf(prn, "? ");
+    pprintf(prn, "gretl console: type 'help' for a list of commands\n? ");
     gretl_print_destroy(prn);
     vwin = view_file(fname, 1, 0, 78, 400, "gretl console", console_items);
     console_view = vwin->w;
@@ -793,11 +793,11 @@ void console (void)
 		       GTK_SIGNAL_FUNC(gtk_widget_destroyed),
 		       &console_view);
     
-    gtk_text_set_point(GTK_TEXT(console_view), 2);
+    gtk_text_set_point(GTK_TEXT(console_view), 52);
 
     GTK_TEXT(console_view)->cursor_pos_x = 
 	2 * gdk_char_width(fixed_font, 'X');
-    gtk_editable_set_position(GTK_EDITABLE(console_view), 2);
+    gtk_editable_set_position(GTK_EDITABLE(console_view), 52);
     gtk_editable_changed(GTK_EDITABLE(console_view));
     gtk_widget_grab_focus (console_view);
 
@@ -1204,7 +1204,7 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 	for (i=0; i<nt; i++) 
 	    if (strcmp(test->type, pmod->tests[i].type) == 0)
 		return -1;
-	pmod->tests = realloc(pmod->tests, (nt + 1) * sizeof(GRETLTEST));
+	pmod->tests = myrealloc(pmod->tests, (nt + 1) * sizeof(GRETLTEST));
     }
     if (pmod->tests == NULL) return 1;
 
@@ -3274,7 +3274,7 @@ static int gui_exec_line (char *line,
 	varlist(datainfo, prn); 
 	if (dataset_is_time_series(datainfo)) {
 	    plotvar(&Z, datainfo, "time");
-	    command.list = realloc(command.list, 4 * sizeof(int));
+	    command.list = myrealloc(command.list, 4 * sizeof(int));
 	    command.list[0] = 3; 
 	    command.list[1] = (models[0])->list[1];
 	    command.list[2] = varindex(datainfo, "autofit");

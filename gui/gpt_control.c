@@ -1018,7 +1018,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     }
 
     /* free any unused lines */
-    plot->lines = realloc(plot->lines, (i + 1) * sizeof(GPT_LINE));
+    plot->lines = myrealloc(plot->lines, (i + 1) * sizeof(GPT_LINE));
 
     /* finally, get the plot data */
     plot->data = mymalloc(datainfo->n * (i + 2) * sizeof(double));

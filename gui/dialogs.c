@@ -863,7 +863,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 				"output from this gretl session?", 1);
 	/* button 0 = YES */
 	if (button == 0) {
-	    save_session_callback();
+	    save_session_callback(NULL, 0, NULL);
 	    return TRUE; /* bodge */
 	}
 	/* button 2 = CANCEL; -1 = wm close */

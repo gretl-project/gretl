@@ -488,7 +488,6 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 #ifdef SESSION_DEBUG
 	    fprintf(stderr, "got a model to rebuild (%d)\n"
 		    "rebuild->nmodels now = %d\n", id, rebuild->nmodels);
-	    
 #endif
 	    if (i > 0) {
 		rebuild->model_ID = myrealloc(rebuild->model_ID,
@@ -840,18 +839,25 @@ static void session_build_popups (void)
 
 /* ........................................................... */
 
+void save_session_callback (GtkWidget *w, guint i, gpointer data)
+{
+    /* for use in main menu */
+    if (i == 0 && session_file_open && scriptfile[0]) 
+	save_session(scriptfile);
+    else
+	file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
+}
+
+/* ........................................................... */
+
 static void session_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
-    if (strcmp(item, "Save") == 0) {
-	if (session_file_open && scriptfile[0]) 
-	    save_session(scriptfile);
-	else
-	    file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
-    }
+    if (strcmp(item, "Save") == 0) 
+	save_session_callback(NULL, 0, NULL);
     else if (strcmp(item, "Save As...") == 0) 
-	file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
+	save_session_callback(NULL, 1, NULL);
     else if (strcmp(item, "Add last graph") == 0)
 	add_last_graph(NULL, 0, NULL);
 }

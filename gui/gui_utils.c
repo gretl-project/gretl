@@ -373,7 +373,7 @@ void *mymalloc (size_t size)
 {
     void *mem;
    
-    if((mem = g_malloc(size)) == NULL) 
+    if((mem = malloc(size)) == NULL) 
 	errbox("Out of memory!");
     return mem;
 }
@@ -384,15 +384,12 @@ void *myrealloc (void *ptr, size_t size)
 {
     void *mem;
    
-    if((mem = g_realloc(ptr, size)) == NULL) 
+    if ((mem = realloc(ptr, size)) == NULL) 
 	errbox("Out of memory!");
     return mem;
 }
 
 /* ........................................................... */
-
-/* FIXME: if there are saved models, we need to delete them since
-   they will be totally messed up after a change of data set */
 
 void register_data (const char *fname, int record)
 {    

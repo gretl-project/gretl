@@ -784,91 +784,103 @@ int multi_scatters (const int *list, const int pos, double **pZ,
 
 int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist)
      /* plot actual frequency distribution versus theoretical
-	distribution, gaussian or gamma */
+	distribution, gaussian or gamma (or none) */
 {
-    double propn, lambda = 0.0, plotmin = 0.0, plotmax = 0.0;
-    double alpha = 0.0, beta = 0.0;
+    double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp;
-    int err = 0, k, K = freq->numbins - 1;
+    int i, K = freq->numbins;
 
     fp = fopen(ppaths->plotfile, "w");
     if (fp == NULL) return E_FOPEN;
+
     fprintf(fp, "# frequency plot\n");
 
-    /* find the endpts that straddle the mean... */
-    for (k=0; k<=K ; k++) 
-	if (freq->endpt[k] > freq->xbar) break;
+    if (dist) {
+	double propn, plotmin = 0.0, plotmax = 0.0;
 
-    /* OK, they are k-1 and k: now find the proportion of the 
-       theoretical distribution they enclose, and calculate a
-       height adjustment factor for the impulses */
+	/* find the endpts that straddle the mean... */
+	for (i=0; i<K ; i++) 
+	    if (freq->endpt[i] > freq->xbar) break;
 
-    if (dist == NORMAL) {
-	propn = normal((freq->endpt[k-1] - freq->xbar)/freq->sdx) -
-	    normal((freq->endpt[k] - freq->xbar)/freq->sdx);
-	lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
-	fprintf(fp, "sigma = %f\n", freq->sdx);
-	fprintf(fp, "mu = %f\n", freq->xbar);
-	plotmin = freq->xbar - 3.3 * freq->sdx;
-	if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
-	plotmax = freq->xbar + 3.3 * freq->sdx;
-	fprintf(fp, "set label 'Test statistic for normality:'"
-		" at graph .05, graph .9\n");
-	fprintf(fp, "set label 'Chi-squared(2) = %.3f, pvalue %.5f'"
-		" at graph .05, graph .85\n", 
-		freq->chisqu, chisq(freq->chisqu, 2));	
-    }
-    else if (dist == GAMMA) {
-	double xx, height, var = freq->sdx * freq->sdx;
+	/* OK, they are k-1 and k: now find the proportion of the 
+	   theoretical distribution they enclose, and calculate a
+	   height adjustment factor for the impulses */
+
+	if (dist == NORMAL) {
+	    propn = normal((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
+		normal((freq->endpt[i] - freq->xbar)/freq->sdx);
+	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
+	    fprintf(fp, "sigma = %f\n", freq->sdx);
+	    fprintf(fp, "mu = %f\n", freq->xbar);
+	    plotmin = freq->xbar - 3.3 * freq->sdx;
+	    if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
+	    plotmax = freq->xbar + 3.3 * freq->sdx;
+	    fprintf(fp, "set label 'Test statistic for normality:'"
+		    " at graph .05, graph .9\n");
+	    fprintf(fp, "set label 'Chi-squared(2) = %.3f, pvalue %.5f'"
+		    " at graph .05, graph .85\n", 
+		    freq->chisqu, chisq(freq->chisqu, 2));	
+	}
+	else if (dist == GAMMA) {
+	    double xx, height, var = freq->sdx * freq->sdx;
 	
-	/* scale param = variance/mean */
-	beta = var / freq->xbar;
-	/* shape param = mean/scale */
-	alpha = freq->xbar / beta;
+	    /* scale param = variance/mean */
+	    beta = var / freq->xbar;
+	    /* shape param = mean/scale */
+	    alpha = freq->xbar / beta;
 
-	propn = _gammadist(freq->xbar, var, freq->endpt[k], 2) -
-	    _gammadist(freq->xbar, var, freq->endpt[k-1], 2);
-	xx = (freq->endpt[k] + freq->endpt[k-1])/2.0;
-	height = pow(xx, alpha - 1.0) * exp(-xx / beta) /
-	    (_gamma_func(alpha) * pow(beta, alpha));
-	lambda = height/(freq->n * propn);
-	fprintf(fp, "beta = %f\n", beta);
-	fprintf(fp, "alpha = %f\n", alpha);
-	plotmin = 0.0;
-	plotmax = freq->xbar + 4.0 * freq->sdx;
+	    propn = _gammadist(freq->xbar, var, freq->endpt[i], 2) -
+		_gammadist(freq->xbar, var, freq->endpt[i-1], 2);
+	    xx = (freq->endpt[i] + freq->endpt[i-1])/2.0;
+	    height = pow(xx, alpha - 1.0) * exp(-xx / beta) /
+		(_gamma_func(alpha) * pow(beta, alpha));
+	    lambda = height/(freq->n * propn);
+	    fprintf(fp, "beta = %f\n", beta);
+	    fprintf(fp, "alpha = %f\n", alpha);
+	    plotmin = 0.0;
+	    plotmax = freq->xbar + 4.0 * freq->sdx;
+	}
+
+	/* adjust max if needed */
+	if (freq->midpt[K-1] > plotmax) plotmax = freq->midpt[K-1];
+
+	fprintf(fp, "set xrange [%.3f:%.3f]\n", plotmin, plotmax);
+	fprintf(fp, "set key right top\n");
+	fprintf(fp, "plot \\\n");
+
+    } else { /* not dist */
+	lambda = 1.0 / freq->n;
+	fprintf(fp, "set nokey\n");
+	fprintf(fp, "set xlabel 'frequency distribution for %s'\n", 
+		freq->varname);	
     }
 
-    /* adjust max if needed */
-    if (freq->midpt[K] > plotmax) plotmax = freq->midpt[K];
-
-    fprintf(fp, "set xrange [%.3f:%.3f]\n", plotmin, plotmax);
-    fprintf(fp, "set key right top\n");
-    fprintf(fp, "plot \\\n");
-
-    if (dist == NORMAL) {
+    /* plot instructions */
+    if (!dist) {
+	fprintf(fp, "plot '-' using 1:($2) w impulses\n");
+    } else if (dist == NORMAL) {
 	fprintf(fp, "(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
 		"title 'N(%.4f,%.4f)' w lines , \\\n"
-		"'-' using 1:($2) title 'sample data' w impulses\n",
-		freq->xbar, freq->sdx);
+		"'-' using 1:($2) title '%s' w impulses\n",
+		freq->xbar, freq->sdx, freq->varname);
     }
     else if (dist == GAMMA) {
 	fprintf(fp, "x**(alpha-1.0)*exp(-x/beta)/(gamma(alpha)*(beta**alpha)) "
 		"title 'gamma(%.4f,%.4f)' w lines , \\\n"
-		"'-' using 1:($2) title 'sample data' w impulses\n",
-		alpha, beta); 
+		"'-' using 1:($2) title '%s' w impulses\n",
+		alpha, beta, freq->varname); 
     }
 
     /* send sample data inline */
-    for (k=0; k<=K; k++) 
-	fprintf(fp, "%f %f\n", freq->midpt[k], lambda * freq->f[k]);
+    for (i=0; i<K; i++) 
+	fprintf(fp, "%f %f\n", freq->midpt[i], lambda * freq->f[i]);
     fprintf(fp, "e\n");
 
 #ifdef OS_WIN32
     fprintf(fp, "pause -1\n");
 #endif
     if (fp) fclose(fp);
-    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
-    return err;
+    return gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
 }
 
 /* ......................................................... */ 
@@ -879,7 +891,7 @@ int plot_fcast_errs (const int n, const double *obs,
 		     const PATHS *ppaths)
 {
     FILE *fp;
-    int t, err = 0;
+    int t;
 
     fp = fopen(ppaths->plotfile, "w");
     if (fp == NULL) return E_FOPEN;
@@ -889,7 +901,7 @@ int plot_fcast_errs (const int n, const double *obs,
 	    "'-' using 1:2 title 'fitted' w lines , \\\n"
 	    "'-' using 1:2:3 title '95%% confidence interval' "
 	    "w errorbars\n", varname);
-    /* send data inlines */
+    /* send data inline */
     for (t=0; t<n; t++)
 	fprintf(fp, "%f %f\n", obs[t], depvar[t]);
     fprintf(fp, "e\n");
@@ -904,8 +916,7 @@ int plot_fcast_errs (const int n, const double *obs,
     fprintf(fp, "pause -1\n");
 #endif
     fclose(fp);
-    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
-    return err;
+    return gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
 }
 
 /* ........................................................... */

@@ -57,4 +57,6 @@ int recreate_session (char *fname, SESSION *psession, session_t *rebuild);
 
 void view_session (void);
 
+void save_session_callback (GtkWidget *w, guint i, gpointer data);
+
 #endif /* SESSION_H */

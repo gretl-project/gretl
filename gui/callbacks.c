@@ -531,10 +531,3 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 		" Cancel ", NULL, NULL, action, varclick);   
 }
 
-/* ........................................................... */
-
-void save_session_callback (void)
-{
-    file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
-}
-

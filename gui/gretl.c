@@ -34,6 +34,7 @@
 #include "pixmaps/mini.calc.xpm"
 #include "pixmaps/mini.edit.xpm"
 #include "pixmaps/mini.sh.xpm"
+#include "pixmaps/mini.session.xpm"
 #include "pixmaps/mini.manual.xpm"
 #include "pixmaps/mini.netscape.xpm"
 #include "pixmaps/mini.pdf.xpm"
@@ -236,8 +237,8 @@ GtkItemFactoryEntry data_items[] = {
     { "/Session/_Open/user...", NULL, open_script, 1, NULL },
     { "/Session/_Open/practice...", NULL, open_script, 2, NULL },
     { "/Session/sep", NULL, NULL, 0, "<Separator>" },
-    { "/Session/_Save", NULL, dummy_call, 0, NULL },
-    { "/Session/Save _as...", NULL, save_session_callback, 0, NULL },
+    { "/Session/_Save", NULL, save_session_callback, 0, NULL },
+    { "/Session/Save _as...", NULL, save_session_callback, 1, NULL },
     /* { "/Session/Close", NULL, close_session, 0, NULL }, */
     { "/_Data", NULL, NULL, 0, "<Branch>" },
     { "/Data/_Display values/all variables", NULL, display_data, 0, NULL },
@@ -1449,14 +1450,22 @@ static void gretl_pdf (void)
 static void xy_graph (void)
 {
     if (data_file_open)
-	graph_dialog(NULL, GR_XY, NULL) ;
+	graph_dialog(NULL, GR_XY, NULL);
+    else
+	errbox("Please open a data file first");
+}
+
+static void go_session (void)
+{
+    if (data_file_open)
+	view_session();
     else
 	errbox("Please open a data file first");
 }
 
 /* ........................................................... */
 
-#define TOOLS 8
+#define TOOLS 9
 
 static void make_toolbar (GtkWidget *w, GtkWidget *box)
 {
@@ -1468,6 +1477,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     static char *toolstrings[] = {"launch calculator", 
 				  "launch editor", 
 				  "gretl console",
+				  "session icon view",
 				  "gretl website", 
 				  "gretl manual (PDF)",
 				  "show help", 
@@ -1504,22 +1514,26 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    toolfunc = console;
 	    break;
 	case 3:
+	    toolxpm = mini_session_xpm;
+	    toolfunc = go_session;
+	    break;
+	case 4:
 	    toolxpm = mini_netscape_xpm;
 	    toolfunc = gretl_website;
 	    break;  
-	case 4:
+	case 5:
 	    toolxpm = mini_pdf_xpm;
 	    toolfunc = gretl_pdf;
 	    break;    
-	case 5:
+	case 6:
 	    toolxpm = mini_manual_xpm;
 	    toolfunc = help_show;
 	    break;
-	case 6:
+	case 7:
 	    toolxpm = mini_plot_xpm;
 	    toolfunc = xy_graph;
 	    break;
-	case 7:
+	case 8:
 	    toolxpm = mini_ofolder_xpm;
 	    toolfunc = open_ramudata;
 	    break;
