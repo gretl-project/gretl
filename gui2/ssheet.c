@@ -24,7 +24,7 @@
 #include <ctype.h>
 #include <float.h>
 
-#define SSDEBUG
+/* #define SSDEBUG */
 
 typedef struct {
     GtkWidget *view;
@@ -52,6 +52,7 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet);
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width);
 static gint get_data_col_width (void);
 static int add_data_column (spreadsheet *sheet);
+static void create_sheet_cell_renderers (spreadsheet *sheet);
 
 static GtkItemFactoryEntry sheet_items[] = {
     { N_("/_Observation"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -108,14 +109,41 @@ static void set_locator_label (spreadsheet *sheet, GtkTreePath *path,
 
 /* .................................................................. */
 
+static GtkTreeViewColumn *get_column_by_number (GtkTreeView *view, int colnum)
+{
+    GList *collist = gtk_tree_view_get_columns(view);
+    GtkTreeViewColumn *column = NULL;
+    gpointer p;
+    int gotcol = 0;
+
+    while (collist != NULL) {
+	column = collist->data;
+	p = g_object_get_data(G_OBJECT(column), "colnum");
+	if (p != NULL) {
+	    if (colnum == GPOINTER_TO_INT(p)) {
+		gotcol = 1;
+		break;
+	    }
+	}
+	collist = collist->next;
+    }
+
+    if (collist) g_list_free(collist);
+
+    return (gotcol)? column : NULL;
+}
+
+/* .................................................................. */
+
 static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    gint nextrow;
+    gint nextrow, colnum;
 
     nextrow = gtk_tree_path_get_indices(path)[0] + 1;
 
+    /* go to next row, if possible... */
     if (nextrow < sheet->datarows) {
 	GtkTreePath *newpath;
 	gchar pstr[8];
@@ -127,7 +155,21 @@ static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
 	    set_locator_label(sheet, newpath, column);
 	    gtk_tree_path_free(newpath);
 	}
+    } 
+    /* ...or try the next column */
+    else {
+	gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
+
+	if (p != NULL && (colnum = GPOINTER_TO_INT(p)) < sheet->datacols) {
+	    GtkTreeViewColumn *nextcol = get_column_by_number(view, colnum + 1);
+
+	    if (nextcol != NULL) {
+		gtk_tree_view_set_cursor(view, path, nextcol, FALSE);
+		set_locator_label(sheet, path, nextcol);
+	    }		
+	}
     }
+    /* couldn't find a "next cell" to go to */
 }
 
 /* .................................................................. */
@@ -203,51 +245,36 @@ static int real_add_new_var (spreadsheet *sheet, const char *varname)
 
     cols = gtk_tree_view_insert_column(GTK_TREE_VIEW(sheet->view), 
 				       column, sheet->datacols);
-#ifdef SSDEBUG
-    fprintf(stderr, "inserted new tree view col at pos %d, cols now = %d\n", 
-	    sheet->datacols, cols);
-#endif
 	
     clstart = collist = gtk_tree_view_get_columns(GTK_TREE_VIEW(sheet->view));
 
+    create_sheet_cell_renderers(sheet);
+
     i = 0;
     while (collist != NULL && i < sheet->totcols - 2) {
+	GtkCellRenderer *renderer;
+	gint editcol, idx;
+
 	column = GTK_TREE_VIEW_COLUMN(collist->data);
+	gtk_tree_view_column_clear(column);
 
-#ifdef SSDEBUG
-	fprintf(stderr, "setting up new tree view, column %d\n", i);
-#endif	
-
-	if (i < sheet->datacols) {
-	    gint editcol = (i > 0)? sheet->totcols - 1 : sheet->totcols - 2;
-
-	    gtk_tree_view_column_set_attributes (column, 
-						 sheet->datacell,
-						 "text", i,
-						 "editable", editcol,
-						 NULL);
-	} else {	    
-	    gtk_tree_view_column_clear(column);
-	}     
-
-	if (i == sheet->datacols) {
-	    gtk_tree_view_column_pack_start(column, sheet->datacell, TRUE);
-	    gtk_tree_view_column_set_attributes (column,
-						 sheet->datacell,
-						 "text", i, 
-						 "editable", sheet->totcols - 1, 
-						 NULL);
-	    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(i));
-	} 
-	else if (i > sheet->datacols) {
-	    gtk_tree_view_column_pack_start(column, sheet->dumbcell, TRUE);
-	    gtk_tree_view_column_set_attributes (column,
-						 sheet->dumbcell,
-						 "text", i, 
-						 "editable", sheet->totcols - 2,
-						 NULL);
-	    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(0));
+	if (i > 0 && i <= sheet->datacols) {
+	    renderer = sheet->datacell;
+	    editcol = sheet->totcols - 1;
+	    idx = i;
+	} else {
+	    renderer = sheet->dumbcell;
+	    editcol = sheet->totcols - 2;
+	    idx = 0;
 	}
+
+	gtk_tree_view_column_pack_start(column, renderer, TRUE);
+	gtk_tree_view_column_set_attributes (column, 
+					     renderer,
+					     "text", i,
+					     "editable", editcol,
+					     NULL);
+	g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(idx));
 
 	collist = collist->next;
 	i++;
@@ -442,6 +469,9 @@ static int add_data_column (spreadsheet *sheet)
 #ifdef SSDEBUG
     fprintf(stderr, "add_data_column: now sheet->totcols=%d, sheet->padcols=%d,"
 	    " sheet->datacols=%d\n", sheet->totcols, sheet->padcols, sheet->datacols);
+    if (sheet->totcols < sheet->datacols + 3) {
+	fprintf(stderr, "PROBLEM: sheet->totcols < sheet->datacols + 3\n");
+    }
 #endif 
 
     /* configure the types */
@@ -723,7 +753,9 @@ static int add_data_to_sheet (spreadsheet *sheet, int new)
     sheet->datarows = t;
 
     /* insert data values */
+
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
     for (t=0; t<n; t++) {
 	if (new) {
 	    /* insert "missing" values */
@@ -845,6 +877,11 @@ static void create_sheet_cell_renderers (spreadsheet *sheet)
 static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key, 
 				   spreadsheet *sheet)
 {
+    if (key->keyval == GDK_Tab) {
+	/* FIXME: translate this to Down or Right */
+	return TRUE;
+    }
+
     if (key->keyval == GDK_Right || key->keyval == GDK_Left) {
 	GtkTreeViewColumn *column;
 	gpointer p;
@@ -1086,6 +1123,27 @@ static gint maybe_exit_sheet (GtkWidget *w, spreadsheet *sheet)
 
 /* ........................................................... */
 
+static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
+				spreadsheet *sheet)
+{
+    int resp;
+
+    if (sheet_modified) {
+	resp = yes_no_dialog ("gretl", 
+			      _("Do you want to save changes you have\n"
+				"made to the current data set?"), 1);
+	if (resp == GRETL_YES) {
+	    get_data_from_sheet(NULL, sheet);
+	} else if (resp == GRETL_CANCEL) {
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+/* ........................................................... */
+
 void show_spreadsheet (DATAINFO *pdinfo) 
 {
     static spreadsheet *sheet;    
@@ -1114,6 +1172,9 @@ void show_spreadsheet (DATAINFO *pdinfo)
     sheet->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(sheet->win), _("gretl: edit data"));
     gtk_window_set_default_size(GTK_WINDOW(sheet->win), sheetwidth, 400);
+
+    g_signal_connect(G_OBJECT(sheet->win), "delete_event",
+		     G_CALLBACK(sheet_delete_event), sheet);
 
     main_vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 5); 

@@ -15,7 +15,6 @@ version 1.2.2
   strings
 - Fix bug: adding a variable to the built-in spreadsheet
   (GTK 2 version) when there are already 6 variables shown
-  (this fix *in progress*!!)
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation
