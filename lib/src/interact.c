@@ -318,8 +318,13 @@ static void parse_outfile_cmd (char *line, CMD *cmd)
 	    while (*p && (isspace(*p) || *p == '"')) p++;
 	    strcpy(cmd->param, p);
 	    n = strlen(cmd->param) - 1;
-	    if (n > 0 && cmd->param[n] == '"') {
-		cmd->param[n] = 0;
+	    while (n > 0) {
+		if (isspace(cmd->param[n]) || cmd->param[n] == '"') {
+		    cmd->param[n] = 0;
+		    n--;
+		} else {
+		    break;
+		}
 	    }
 	}
     }
