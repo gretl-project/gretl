@@ -153,6 +153,14 @@
   ;; backends to select different images (e.g., EPS for print, PNG for
   ;; PDF, etc.)
   ".png")
+  
+(define %graphic-extensions% 
+  ;; List of graphic filename extensions
+  '("png" "gif"))
+
+(define %graphic-default-extension% 
+  ;; Default extension for graphic FILEREFs
+  ".png")  
 
 (define %line-spacing-factor% 
   ;; The leading is calculated by multiplying the current font size by the 
@@ -309,6 +317,14 @@
 
 ;; Name for the root HTML document (default "book1")
 (define %root-filename% "index")
+
+(define %graphic-extensions% 
+  ;; List of graphic filename extensions
+  '("png" "gif"))
+
+(define %graphic-default-extension% 
+  ;; Default extension for graphic FILEREFs
+  ".png")  
 
 (element application ($mono-seq$))
 (element command ($mono-seq$))

@@ -21,6 +21,12 @@ texmath2png.pl -- A program for making png images of equations from
 EndUsage
 }
 
+sub add_png_ext {
+    if ($figfile !~ /\.png$/) {
+        $figfile = $figfile . ".png"
+    }
+}
+
 sub unescape {
     $eqn =~ s/&#38;/&/g;
     $eqn =~ s/&#62;/\>/g;
@@ -91,6 +97,7 @@ while ($line = <DOC>) {
 	    print "$figfile: already done, skipping\n";
 	    next; 
 	}
+        add_png_ext();
 	push(@figfiles, $figfile);
 	if ($eqn =~ /\<texequation\s*\>\s*((?:.|\s)*)<\/texequation/) {
 	    $eqn = $1;

@@ -24,7 +24,7 @@ EndUsage
 if (@ARGV == 0) { &usage; }
 my $doc = $ARGV[0];
 
-open (MAN, "<$doc") || die "Can't read $doc";
+open (DOC, "<$doc") || die "Can't read $doc";
 open (TMP, ">$textmp") || die "Can't write to $textmp";
 
 sub unescape {
@@ -37,7 +37,7 @@ sub unescape {
     $line =~ s/\\\$/\$/g;
 }
 
-while ($line = <MAN>) {
+while ($line = <DOC>) {
     $begin = 0;
     if ($line =~ /{}BEGINTEXLITERAL/) {
 	$line =~ s/BEGINTEXLITERAL//;
@@ -45,6 +45,7 @@ while ($line = <MAN>) {
 	$begin = 1;
     }
     if ($line =~ /ENDTEXLITERAL/) {
+        if (!$begin) { unescape(); }
         if ($inmath) {
 	    $line =~ s/ENDTEXLITERAL//;
 	    $inmath = 0;
@@ -56,7 +57,7 @@ while ($line = <MAN>) {
     print TMP "$line";
 }
 
-close (MAN);
+close (DOC);
 close (TMP);
 system("cp $textmp $doc");
 system("rm -f $textmp");

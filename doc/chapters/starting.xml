@@ -42,7 +42,7 @@
       <title>Practice data files window</title>
       <screenshot>
 	<screeninfo>Practice data files window</screeninfo>
-	<graphic fileref="figures/datafiles.png" align="center"/>
+	<graphic fileref="figures/datafiles" align="center"/>
       </screenshot>
     </figure>
 
@@ -76,7 +76,7 @@
      <title>Main window, with a practice data file open</title>
      <screenshot>
 	<screeninfo>Main window</screeninfo>
-	<graphic fileref="figures/mainwin.png" align="center"/>
+	<graphic fileref="figures/mainwin" align="center"/>
      </screenshot>
     </figure>
 
@@ -133,7 +133,7 @@
      <title>Model output window</title>
      <screenshot>
 	<screeninfo>Model window</screeninfo>
-	<graphic fileref="figures/modelwin.png" align="center"/>
+	<graphic fileref="figures/modelwin" align="center"/>
      </screenshot>
     </figure>
 

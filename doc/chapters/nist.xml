@@ -134,7 +134,7 @@
 	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
 	  +\beta_{10}x^{10}_t+\epsilon\]
 	</alt>
-	<graphic fileref="figures/poly.png"/>
+	<graphic fileref="figures/poly"/>
       </informalequation>
       <application>gretl</application> refuses to produce estimates
       due to a high degree of multicollinearity (the popular
@@ -155,7 +155,7 @@
       <alt role="tex"> 
 	\[R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}\] 
       </alt>
-	  <graphic fileref="figures/nistr2.png"/>  
+	  <graphic fileref="figures/nistr2"/>  
       </informalequation>
       There is no universal agreement among statisticians on the
       <quote>correct</quote> formula (see for instance the discussion
@@ -184,7 +184,7 @@
 	  \[r_1=\frac{\sum^T_{t=2}(y_t-\bar{y})(y_{t-1}-\bar{y})} 
                      {\sum^T_{t=1}(y_t - \bar{y})^2}\]
 	</alt>
-	<graphic fileref="figures/nistr1.png"/>
+	<graphic fileref="figures/nistr1"/>
       </informalequation>
       
       while <application>gretl</application>

@@ -1,4 +1,4 @@
-  <chapter id="graphs-plots"><title>Graphs and plots</title>
+ <chapter id="graphs-plots"><title>Graphs and plots</title>
 
   <sect1 id="gnuplot-graphs"><title>Gnuplot graphs</title>
 
@@ -51,7 +51,7 @@
       <title>gretl's gnuplot controller</title>
       <screenshot>
 	<screeninfo>gnuplot controller</screeninfo>
-	<graphic fileref="figures/plot_control.png" align="center"/>
+	<graphic fileref="figures/plot_control" align="center"/>
       </screenshot>
     </figure>
 

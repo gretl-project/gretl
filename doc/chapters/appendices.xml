@@ -28,7 +28,7 @@
 	<alt role="tex">
 	  \[y_t = \alpha + \beta x_t + \epsilon_t\]
 	</alt>
-	<graphic fileref="figures/linreg.png"/>
+	<graphic fileref="figures/linreg"/>
         </informalequation>
 	      
 	<para>This model represents the <emphasis>dependent
@@ -74,7 +74,7 @@
 	  <alt role="tex">
 	    \[\hat{y}_t = a + b x_t\]
 	  </alt>
-	  <graphic fileref="figures/yhat.png"/>
+	  <graphic fileref="figures/yhat"/>
 	</informalequation> 
 
 	We define the regression <quote>residual</quote> as 
@@ -83,7 +83,7 @@
 	  <alt role="tex">
 	    \[\hat{\epsilon}_t = y_t - \hat{y}_t\]
 	  </alt>
-	  <graphic fileref="figures/resid.png"/>
+	  <graphic fileref="figures/resid"/>
 	</informalequation> 
 
 	the difference between actual
@@ -218,7 +218,7 @@
 	  \log y_t &=& \alpha + \beta \log x_t + \epsilon_t
          \end{eqnarray*}]]>
 	</alt>
-	<graphic fileref="figures/nonlin.png"/>
+	<graphic fileref="figures/nonlin"/>
 	</informalequation>
 
 	Of course there are nonlinear relationships that cannot

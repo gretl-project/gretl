@@ -27,7 +27,7 @@ html: $(SRC) db2html $(DSL) $(HMATHSS)
 	./db2html $(SRC)
 	./texmath2png.pl manual-html/equation-list.sgml
 
-htmlhelp:
+html-help:
 	cd htmlhelp && \
 	saxon ../$(SRC) $(XSLDIR)/htmlhelp/htmlhelp.xsl tex.math.in.alt=latex
 

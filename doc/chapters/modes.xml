@@ -111,7 +111,7 @@
 	default icons</title>
       <screenshot>
 	<screeninfo>Session window</screeninfo>
-	<graphic fileref="figures/session.png" align="center"/>
+	<graphic fileref="figures/session" align="center"/>
       </screenshot>
     </figure>
 
@@ -186,7 +186,7 @@
 
     <para>At the bottom left of the main window sits the toolbar.</para>
 
-      <graphic fileref="figures/toolbar.png" align="center"/>
+      <graphic fileref="figures/toolbar" align="center"/>
 
       <para>The
       icons have the following functions, reading from left to

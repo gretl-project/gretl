@@ -140,7 +140,7 @@
 	  <alt role="tex">
 	    $C = \alpha + \beta Y^{\gamma} + \epsilon$
 	  </alt>
-	  <graphic align="center" fileref="figures/greeneC.png"/>
+	  <graphic align="center" fileref="figures/greeneC"/>
 	</inlineequation>
 	as presented in Greene (2000, Example 11.3).  This
       script is included in the <application>gretl</application>

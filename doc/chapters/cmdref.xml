@@ -163,7 +163,7 @@
 	  <emphasis>t</emphasis>-test based on the model 
 	  <informalequation>
 	    <alt role="tex">\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]</alt>
-		<graphic fileref="figures/adf1.png"/>
+		<graphic fileref="figures/adf1"/>
 	  </informalequation>
 	  The null hypothesis is that
 	  <emphasis>g</emphasis> = 0. The second (augmented) test
@@ -174,7 +174,7 @@
 	  time trend and the first lag).  The test statistic is
 	  <informalequation>
 	    <alt role="tex">\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]</alt>
-		<graphic fileref="figures/adf2.png"/>
+		<graphic fileref="figures/adf2"/>
 	  </informalequation>
 	  where <emphasis>T</emphasis> is the sample size,
 	  <emphasis>k</emphasis> the number of parameters in the
@@ -220,7 +220,7 @@
 	<informalequation>
 	  <alt role="tex">\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
 	    e_t\]</alt>
-	  <graphic fileref="figures/corc.png"/>
+	  <graphic fileref="figures/corc"/>
 	</informalequation>
 	<replaceable>depvar</replaceable> is the dependent variable
 	and <replaceable>indepvars</replaceable> is the list of
@@ -267,7 +267,7 @@
 	then the corresponding 
 	<inlineequation>
 	  <alt role="tex">$\hat{u}^2$</alt>
-	  <graphic align="center" fileref="figures/uhatsq.png"/>
+	  <graphic align="center" fileref="figures/uhatsq"/>
         </inlineequation> is used instead. Weighted
 	least square estimation is then performed on the original
 	model. The flag <literal>-o</literal> calls for the coefficient
@@ -465,7 +465,7 @@
 	or number).  See Ramanathan, Section 11.7.  It is thus
 	<inlineequation>
 	  <alt role="tex">$\rho(u_t, u_{t-s})$</alt>
-	  <graphic align="center" fileref="figures/autocorr.png"/>
+	  <graphic align="center" fileref="figures/autocorr"/>
 	</inlineequation> where 
 	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> is the
 	<emphasis>t</emphasis>th observation of the variable 
@@ -1039,7 +1039,7 @@
 	<entry>cumulation: 
 	  <inlineequation>
 	   <alt role="tex">$y_t = \sum_{\tau=1}^t x_{\tau}$</alt>
-	   <graphic align="center" fileref="figures/cumulate.png"/>
+	   <graphic align="center" fileref="figures/cumulate"/>
 	  </inlineequation>
 	</entry>
       </row>
@@ -1411,12 +1411,12 @@
 	<varname>ld_x</varname> =
 	  <inlineequation>
 	    <alt role="tex">$\ln(x_t) - \ln(x_{t-1})$</alt>
-		<graphic align="center" fileref="figures/ldx.png"/>
+		<graphic align="center" fileref="figures/ldx"/>
 	  </inlineequation> and
 	<varname>ld_y</varname> =
 	  <inlineequation>
 	    <alt role="tex">$\ln(y_t) - \ln(y_{t-1})$</alt>
-		<graphic align="center" fileref="figures/ldy.png"/>
+		<graphic align="center" fileref="figures/ldy"/>
 	  </inlineequation>.
       </para>
 
@@ -1872,7 +1872,7 @@ linkend="looping"/> for details.
 	  with the flag a Bartlett lag window of length 
 	  <inlineequation>
 	  <alt role="tex">$2\sqrt{T}$</alt>
-	  <graphic align="center" fileref="figures/bartlett.png"/>
+	  <graphic align="center" fileref="figures/bartlett"/>
 	  </inlineequation>
 	  (where <emphasis>T</emphasis> is the sample size).  is used
 	  in estimating the spectrum (see Chapter 18 of Greene's

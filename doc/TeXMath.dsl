@@ -6,20 +6,23 @@
  (make display-group
    (literal "BEGINTEXLITERAL")
    (literal (data (current-node)))
-   (literal "ENDTEXLITERAL")))
+   (literal "ENDTEXLITERAL
+")))
 
 (element (informalequation graphic) (empty-sosofo))
 (element (informalequation alt)
  (make display-group
    (literal "BEGINTEXLITERAL")
    (literal (data (current-node)))
-   (literal "ENDTEXLITERAL")))
+   (literal "ENDTEXLITERAL
+")))
    
 (element (inlineequation graphic) (empty-sosofo))
 (element (inlineequation alt)
  (make sequence
    (literal "BEGINTEXLITERAL")
    (literal (data (current-node)))
-   (literal "ENDTEXLITERAL")))
+   (literal "ENDTEXLITERAL
+")))
 
 
