@@ -59,6 +59,7 @@ endif
 
 SRCS = excel_import.c \
 	fiml.c \
+	liml.c \
 	gnumeric_import.c \
 	import_common.c \
 	johansen.c \
@@ -189,7 +190,7 @@ mp_ols.la: mp_ols.lo
 johansen.la: johansen.lo 
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
-sysest.la: sysest.lo fiml.lo
+sysest.la: sysest.lo fiml.lo liml.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 leverage.la: leverage.lo 

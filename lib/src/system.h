@@ -25,7 +25,8 @@ typedef struct _gretl_equation_system gretl_equation_system;
 enum gretl_system_types {
     SUR = 0,
     THREESLS,
-    FIML
+    FIML,
+    LIML
 };
 
 enum system_save_flags {
@@ -94,7 +95,8 @@ int system_get_df (const gretl_equation_system *sys);
 int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 			 int rhsvar);
 
-void print_fiml_sys_info (const gretl_equation_system *sys, 
-			  const DATAINFO *pdinfo, PRN *prn);
+void 
+print_equation_system_info (const gretl_equation_system *sys, 
+			    const DATAINFO *pdinfo, PRN *prn);
 
 #endif /* GRETL_EQUATION_SYSTEM_H */

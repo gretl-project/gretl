@@ -67,6 +67,7 @@ const char *gretl_system_type_strings[] = {
     "sur",
     "3sls",
     "fiml",
+    "liml",
     NULL
 };
 
@@ -74,6 +75,7 @@ const char *gretl_system_short_strings[] = {
     N_("SUR"),
     N_("3SLS"),
     N_("FIML"),
+    N_("LIML"),
     NULL
 };
 
@@ -81,6 +83,7 @@ const char *gretl_system_long_strings[] = {
     N_("Seemingly Unrelated Regressions"),
     N_("Three-Stage Least Squares"),
     N_("Full Information Maximum Likelihood"),
+    N_("Limited Information Maximum Likelihood"),
     NULL
 };
 
@@ -91,7 +94,7 @@ const char *toofew = N_("An equation system must have at least two equations");
 static void destroy_ident (identity *pident);
 static int make_instrument_list (gretl_equation_system *sys);
 
-/* FIML system stuff */
+/* ML system stuff */
 
 static void 
 print_ident (const identity *pident, const DATAINFO *pdinfo, PRN *prn)
@@ -110,8 +113,9 @@ print_ident (const identity *pident, const DATAINFO *pdinfo, PRN *prn)
     pputc(prn, '\n');
 }
 
-void print_fiml_sys_info (const gretl_equation_system *sys, 
-			  const DATAINFO *pdinfo, PRN *prn)
+void 
+print_equation_system_info (const gretl_equation_system *sys, 
+			    const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
 
@@ -137,7 +141,7 @@ void print_fiml_sys_info (const gretl_equation_system *sys,
 
 }
 
-/* end FIML checking stuff */
+/* end ML checking stuff */
 
 static int gretl_system_type_from_string (const char *str)
 {
@@ -288,7 +292,10 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	return 1;
     }
 
-    if (sys->type != SUR && sys->type != THREESLS && sys->type != FIML) {
+    if (sys->type != SUR && 
+	sys->type != THREESLS && 
+	sys->type != FIML &&
+	sys->type != LIML) {
 	err = 1;
 	strcpy(gretl_errmsg, _(badsystem));
 	goto system_bailout;
@@ -300,7 +307,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	goto system_bailout;
     }
 
-    if (sys->type == FIML) {
+    if (sys->type == FIML || sys->type == LIML) {
 	err = make_instrument_list(sys);
 	if (err) goto system_bailout;
     }

@@ -27,6 +27,11 @@ extern int fiml_driver (gretl_equation_system *sys, double ***pZ,
 			gretl_matrix *sigma, DATAINFO *pdinfo, 
 			PRN *prn);
 
+/* liml.c */
+extern int liml_driver (gretl_equation_system *sys, double ***pZ, 
+			gretl_matrix *sigma, DATAINFO *pdinfo, 
+			PRN *prn);
+
 
 static int in_list (const int *list, int k)
 {
@@ -282,7 +287,7 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
 {
     int systype = system_get_type(sys);
 
-    if (systype == SUR) {
+    if (systype == SUR || systype == LIML) {
 	*freeit = 0;
 	return system_get_list(sys, i);
     } 
@@ -385,16 +390,22 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    X = gretl_matrix_alloc(mk, mk);
     uhat = gretl_matrix_alloc(m, T);
-
-    if (X == NULL || uhat == NULL) {
+    if (uhat == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    if (systype == FIML) {
-	print_fiml_sys_info(sys, pdinfo, prn);
+    
+    if (systype != LIML) {
+	X = gretl_matrix_alloc(mk, mk);
+	if (X == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+	    
+    if (systype == FIML || systype == LIML) {
+	print_equation_system_info(sys, pdinfo, prn);
     }
 
     /* first grab the single-equation residuals */
@@ -407,7 +418,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    goto bailout;
 	}
 
-	if (systype == SUR) {
+	if (systype == SUR || systype == LIML) {
 	    *models[i] = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	} else if (systype == THREESLS || systype == FIML) {
 	    *models[i] = tsls_func(list, 0, pZ, pdinfo, OPT_S);
@@ -434,6 +445,16 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     sigma = gls_sigma_inverse_from_uhat(uhat, m, T);
     if (sigma == NULL) {
 	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (systype == LIML) {
+	system_attach_models(sys, models);
+	err = liml_driver(sys, pZ, sigma, pdinfo, prn);
+	if (err) {
+	    goto bailout;
+	}
+	/* FIXME */
 	goto bailout;
     }
 
