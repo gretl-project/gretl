@@ -593,6 +593,7 @@ static void min_max (const double *x, double *min, double *max,
 }
 
 #if defined(HAVE_FLITE)
+
 static void speak_dataset_comments (const dataset *dset)
 {
     int i;
@@ -608,7 +609,26 @@ static void speak_dataset_comments (const dataset *dset)
 	}
     }
 }
+
 #elif defined(G_OS_WIN32)
+
+static wchar_t *wide_string (const char *s)
+{
+    unsigned char *ret;
+    int i, j, n = strlen(s);
+
+    ret = malloc(2 * (n + 1));
+    if (ret == NULL) return NULL;
+
+    j = 0;
+    for (i=0; i<=n; i++) {
+	ret[j++] = s[i];
+	ret[j++] = '\0';
+    }
+
+    return ret;
+}
+
 static void speak_dataset_comments (const dataset *dset)
 {
     int i;
@@ -629,12 +649,16 @@ static void speak_dataset_comments (const dataset *dset)
     if (SUCCEEDED(hr)) {
 	for (i=0; i<N_COMMENTS; i++) {
 	    if (dset->comments[i] != NULL) {
-		ISpVoice_Speak(v, _T(dset->comments[i]), 0, NULL);
+		wchar_t *w = wide_string(dset->comments[i]);
+
+		ISpVoice_Speak(v, w, 0, NULL);
+		free(w);
 	    }
 	}
         ISpVoice_Release(v);
     } 
 }
+
 #endif
 
 static void print_dataset_comments (const dataset *dset)
@@ -680,7 +704,10 @@ static void audio_graph_error (const char *msg)
                           &IID_ISpVoice, 
                           (void **) &v);
     if (SUCCEEDED(hr)) {
-	ISpVoice_Speak(v, _T(msg), 0, NULL);
+	wchar_t *w = wide_string(msg);
+
+	ISpVoice_Speak(v, w, 0, NULL);
+	free(w);
         ISpVoice_Release(v);
     } 
 #endif
