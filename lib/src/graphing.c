@@ -924,7 +924,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		return E_ALLOC;
 	    }
 	}
-	/* strcpy(xlabel, I_("Observation")); */
 	*xlabel = 0;
     } else {
 	if (flags & GP_DUMMY) {
@@ -939,7 +938,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	strcmp(pdinfo->varname[list[lo]], "months") == 0) {
 	ts_plot = 1;
 	*xlabel = 0;
-	/* strcpy(xlabel, I_("period")); */
     }
 
     /* add a simple regression line if appropriate */
@@ -1847,6 +1845,7 @@ static char *escape_quotes (const char *s)
 	    if (*p == '"') qcount++;
 	    p++;
 	}
+
 	ret = malloc(strlen(s) + 1 + qcount);
 	if (ret == NULL) return NULL;
 

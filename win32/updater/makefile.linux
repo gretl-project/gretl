@@ -1,0 +1,24 @@
+# Makefile for compiling Linux test version of win32 gretl_updater
+
+CC = gcc -g -O2 -Wall
+CFLAGS = -DUPDATER -I../../lib/src -I../../gui2 -I../../win32/updater
+SRC = update_client.c webget.c untgz.c progress_bar.c
+OBJ = update_client.o webget.o untgz.o progress_bar.o
+
+GTKLIBS = $(shell pkg-config --libs gtk+-2.0)
+LIBS = -L/usr/local/lib -lz $(GTKLIBS)
+
+CFLAGS += $(shell pkg-config --cflags gtk+-2.0)
+
+vpath %.h ../../lib/src ../../win32/updater
+vpath %.c ../../win32/updater ../../gui2 ../../plugin
+
+gretl_updater: $(OBJ) version.h
+	 $(CC) -o $@ $(OBJ) $(LIBS)
+
+.PHONY :
+
+clean:
+	rm -f *.o gretl_updater
+
+

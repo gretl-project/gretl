@@ -89,6 +89,28 @@ float retrieve_float (netfloat nf)
 
 /* ........................................................... */
 
+void display_db_error (windata_t *dbwin, char *buf)
+{
+    if (*buf != '\0') {
+	size_t n = strlen(buf);
+
+	if (buf[n-1] == '\n') buf[n-1] = '\0';
+	if (dbwin != NULL) {
+	    update_statusline(dbwin, buf);
+	} else {
+	    errbox(buf);
+	}
+    } else {
+	if (dbwin != NULL) {
+	    update_statusline(dbwin, _("Error retrieving data from server"));
+	} else {
+	    errbox(_("Error retrieving data from server"));
+	}
+    }
+}
+
+/* ........................................................... */
+
 static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo, 
 			       double **Z)
 {
@@ -102,8 +124,10 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 #endif
 
     *errbuf = '\0';
-    
-    if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return 1;
+
+    getbuf = mymalloc(GRETL_BUFSIZE);
+    if (getbuf == NULL) return 1;
+
     memset(getbuf, 0, GRETL_BUFSIZE);
 
     update_statusline(dbwin, _("Retrieving data..."));
@@ -116,14 +140,7 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 #endif
 
     if (err) {
-        if (*errbuf != '\0') {
-	    if (errbuf[strlen(errbuf) - 1] == '\n') {
-		errbuf[strlen(errbuf) - 1] = 0;
-	    }
-	    update_statusline(dbwin, errbuf);
-	} else {
-	    update_statusline(dbwin, _("Error retrieving data from server"));
-	}
+	display_db_error(dbwin, errbuf);
 	free(getbuf);
 	return err;
     } 
@@ -1040,8 +1057,9 @@ static void update_statusline (windata_t *windat, char *str)
 
     tmp = g_strdup_printf(_("Network status: %s"), str);
     gtk_label_set_text(GTK_LABEL(windat->status), tmp);
-    while (gtk_events_pending())
+    while (gtk_events_pending()) {
 	gtk_main_iteration();
+    }
     g_free(tmp);
 }
 
@@ -1059,17 +1077,8 @@ void open_named_remote_db_list (char *dbname)
     err = retrieve_remote_db_list(dbname, &getbuf, errbuf);
 
     if (err) {
-        if (*errbuf != '\0') {
-	    if (errbuf[strlen(errbuf) - 1] == '\n') {
-		errbuf[strlen(errbuf) - 1] = 0;
-	    }
-	    errbox(errbuf);
-	} else {
-	    fprintf(stderr, "retrieve_url() returned %d\n", err);
-	    errbox(_("Error retrieving data from server"));
-	}
-    } 
-    else if (strncmp(getbuf, "Couldn't open", 13) == 0) {
+	display_db_error(NULL, errbuf);
+    } else if (strncmp(getbuf, "Couldn't open", 13) == 0) {
 	errbox(getbuf);
     } else {
 	display_db_series_list(REMOTE_SERIES, dbname, getbuf);
@@ -1091,21 +1100,16 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
 
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
 			 win->active_var, 0, &fname);
-    
-    if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return;
+
+    getbuf = mymalloc(GRETL_BUFSIZE);
+    if (getbuf == NULL) return;
+
     memset(getbuf, 0, GRETL_BUFSIZE);
     update_statusline(win, _("Retrieving data..."));
     err = retrieve_remote_db_list(fname, &getbuf, errbuf);
 
     if (err) {
-        if (*errbuf != '\0') {
-	    if (errbuf[strlen(errbuf) - 1] == '\n') {
-		errbuf[strlen(errbuf) - 1] = 0;
-	    }
-	    update_statusline(win, errbuf);
-	} else { 
-	    update_statusline(win, _("Error retrieving data from server"));
-	}
+	display_db_error(win, errbuf);
     } else {
 	update_statusline(win, "OK");
 	display_db_series_list(REMOTE_SERIES, fname, getbuf);
@@ -1309,11 +1313,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 #endif
 
     if (err) {
-        if (*errbuf != '\0') errbox(errbuf);
-	else {
-	    fprintf(stderr, "grab_remote_db: retrieve_url() returned %d\n", err);
-	    errbox(_("Error retrieving data from server"));
-	}
+	display_db_error(NULL, errbuf);
 	free(dbname);
 	free(ggzname);
 	return;
@@ -1322,7 +1322,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     err = ggz_extract(errbuf, dbname, ggzname);
 
     if (err) {
-	if (strlen(errbuf)) errbox(errbuf);
+	if (*errbuf != '\0') errbox(errbuf);
 	else errbox(_("Error unzipping compressed data"));
     } else {
 	/* installed OK: give option of opening database now */

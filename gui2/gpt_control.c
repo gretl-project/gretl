@@ -266,7 +266,7 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
     *str = 0;
     p = gtk_entry_get_text(GTK_ENTRY(w));
 
-    if (p != NULL && strlen(p)) {
+    if (p != NULL && *p != '\0') {
 #ifdef ENABLE_NLS
 	gchar *trstr;
 	gsize bytes;

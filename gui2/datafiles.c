@@ -406,22 +406,17 @@ static gint populate_remote_db_list (windata_t *win)
     gint i;
     time_t remtime;
 
-    if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL)
-	return 1;
+    getbuf = mymalloc(GRETL_BUFSIZE);
+    if (getbuf == NULL) return 1;
 
     memset(getbuf, 0, GRETL_BUFSIZE);
 
     *errbuf = 0;
+
     err = list_remote_dbs(&getbuf, errbuf);
 
     if (err) {
-        if (strlen(errbuf)) {
-	    if (errbuf[strlen(errbuf)-1] == '\n')
-		errbuf[strlen(errbuf)-1] = '\0';
-	    errbox(errbuf);
-	} else {
-	    errbox(_("Error retrieving data from server"));
-	}
+	display_db_error(NULL, errbuf);
 	free(getbuf);
 	return err;
     }
@@ -505,8 +500,9 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
     if (browser_busy(code)) return;
 
-    if ((fdata = mymalloc(sizeof *fdata)) == NULL)
-	return;
+    fdata = mymalloc(sizeof *fdata);
+    if (fdata == NULL) return;
+
     windata_init(fdata);
 
     fdata->role = code;

@@ -1,7 +1,5 @@
-/* auto updater program for gretl on win32
-   Allin Cottrell, november 2000 */
-
-/* last mods, October 2003 */
+/* auto updater program for gretl on win32:
+   gtk2 version, Allin Cottrell, October 2003 */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,13 +7,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <gtk/gtk.h>
+
 #ifdef WIN32
 # include <windows.h>
 # include <winsock.h>
-# ifdef NEWICC
-#  define _WIN32_IE 0x0300
-# endif
-# include <commctrl.h>
 #endif
 
 #include "updater.h"
@@ -27,14 +23,33 @@ int debug;
 
 #define MAXLEN 512
 
-/* #define PBAR */
-#define PARENT_UPDATE
+enum {
+    UPDATER_DEFAULT,
+    UPDATER_GET_LISTING,
+    UPDATER_GET_FILE
+} program_opts;
+
+static char infobuf[256];
+static char errbuf[256];
+static char get_fname[48];
+static void put_text_on_window (void);
+static GtkWidget *mainwin;
+static GtkWidget *mainlabel;
+static int ask_before_download = 1;
+static time_t filedate;
+static int argcount;
+static int prog_opt;
 
 static void getout (int err)
 {
     if (logit) {
 	fprintf(flg, "Exiting with err = %d\n", err);
 	fclose(flg);
+	logit = 0;
+    }
+
+    if (*get_fname && prog_opt != UPDATER_GET_FILE) {
+	remove(get_fname);
     }
 
     if (err) {
@@ -43,13 +58,6 @@ static void getout (int err)
 }
 
 #ifdef WIN32 /* Windows-specific code */
-
-# ifdef PBAR
-static char infobuf[256];
-static HWND hwnd; /* main window handle */
-static HWND hpb; /* handle for progress bar */
-static void put_text_on_window (HWND hwnd);
-# endif
 
 static int win_error (void)
 {
@@ -104,81 +112,18 @@ static int create_child_process (char *prog)
     return ret;
 }
 
-#ifdef PBAR
-
-static HWND main_window (HINSTANCE hinst)
-{
-    HWND hwnd;
-
-    hwnd = CreateWindowEx (0,
-			   "STATIC", 
-			   "gretl updater",
-			   SS_CENTER, 
-			   CW_USEDEFAULT,
-			   0,
-			   300,
-			   200,
-			   NULL,
-			   NULL,
-			   hinst,
-			   NULL);
-
-    if (hwnd != NULL) {
-	ShowWindow(hwnd, SW_SHOWNORMAL); 
-	UpdateWindow(hwnd);
-    } else {
-	win_error();
-    }
-
-    return hwnd;
-}
-
-static void put_text_on_window (HWND hwnd)
-{
-    static HFONT hfnt = NULL;
-    HDC hdc;
-    RECT rect;
-
-    if (hfnt == NULL) {
-	hfnt = GetStockObject(ANSI_VAR_FONT);
-    }
-
-    hdc = GetDC(hwnd);
-    GetClientRect(hwnd, &rect);
-    FillRect(hdc, &rect, GetStockObject(WHITE_BRUSH)); 
-    SelectObject(hdc, hfnt);
-    rect.top = 40;
-    DrawText(hdc, infobuf, lstrlen(infobuf), &rect, DT_CENTER | DT_TOP);
-
-# ifdef PARENT_UPDATE
-    UpdateWindow(hwnd);
-# endif
-}
-
-#endif /* MAINWIN */
-
-static char *get_size_string (size_t fsize)
-{
-    static char sizestr[32] = "";
-
-    if (fsize > 1024 * 1024) {
-	sprintf(sizestr, " (%.1f MB)", (double) fsize / (1024. * 1024.));
-    } else if (fsize >= 10 * 1024) {
-	sprintf(sizestr, " (%.1f KB)", (double) fsize / 1024.);
-    } else {
-	sprintf(sizestr, " (%u bytes)", fsize);
-    }
-
-    return sizestr;
-}
-
 static int yes_no_dialog (const char *msg)
 {
     int ret;
 
     ret = MessageBox(NULL, msg, "gretl updater", 
 		     MB_YESNO | MB_ICONQUESTION);
-    return ret;
+
+    if (ret == IDYES) {
+	return GTK_RESPONSE_ACCEPT;
+    } else {
+	return GTK_RESPONSE_NO;
+    }
 }
 
 static int msgbox (const char *msg, int err)
@@ -221,105 +166,79 @@ static int ws_startup (void)
     return 0;
 }
 
-#ifdef PBAR
-
-static int start_progress_bar (HWND parent, HINSTANCE hinst, size_t sz) 
-{
-    RECT rect;  
-    int hscroll; 
-    HWND hpb;
-    int ispace;
-
-# ifdef NEWICC
-    INITCOMMONCONTROLSEX icc;
-
-    icc.dwSize = sizeof icc;
-    icc.dwICC = ICC_PROGRESS_CLASS;
-    if (!InitCommonControlsEx(&icc)) {
-	win_error();
-	return 1;
-    }
-# else
-    InitCommonControls();
-# endif /* NEWICC */
-
-    GetClientRect(parent, &rect); 
-    hscroll = GetSystemMetrics(SM_CYVSCROLL); 
-
-    ispace = (int)(0.05 * (rect.right - rect.left));
-
-    hpb = CreateWindowEx(0, 
-			 PROGRESS_CLASS,
-			 NULL, 
-			 WS_CHILD | WS_VISIBLE | WS_BORDER,
-			 ispace,  /* relative x pos */
-			 80,      /* relative y pos */
-			 rect.right - rect.left - 2 * ispace, /* width */
-			 2 * hscroll, /* height */
-			 parent, 
-			 (HMENU) 0, 
-			 hinst, 
-			 NULL); 
-
-    if (hpb == NULL) {
-	win_error();
-	return 1;
-    }
-
-# ifdef PARENT_UPDATE
-    UpdateWindow(parent);
-# endif
-    /* UpdateWindow(hpb); */
-
-    SendMessage(hpb, PBM_SETRANGE32, (WPARAM) 0, (LPARAM) sz); 
-    SendMessage(hpb, PBM_SETPOS, (WPARAM) 0, 0);
-
-    return 0; 
-} 
-
-void update_windows_progress_bar (int gotbytes)
-{
-    if (gotbytes > 0) {
-	SendMessage(hpb, PBM_DELTAPOS, (WPARAM) gotbytes, 0);
-        UpdateWindow(hwnd);
-    }
-}
-
-static void destroy_progress_bar (void)
-{
-    if (hpb != NULL) {
-	DestroyWindow(hpb);
-    }
-}
-
-#endif /* PBAR */
-
 #else /* ! WIN32 */
+
+gint yes_no_dialog (char *msg)
+{
+    GtkWidget *dialog, *label, *hbox;
+    int ret;
+
+    dialog = gtk_dialog_new_with_buttons ("gretl updater",
+					  NULL,
+					  GTK_DIALOG_MODAL | 
+					  GTK_DIALOG_DESTROY_WITH_PARENT,
+					  GTK_STOCK_YES,
+					  GTK_RESPONSE_ACCEPT,
+					  GTK_STOCK_NO,
+					  GTK_RESPONSE_NO,
+					  NULL);
+    
+    label = gtk_label_new (msg);
+    gtk_widget_show(label);
+    hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 10);
+    gtk_widget_show(hbox);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
+		       hbox, FALSE, FALSE, 10);
+
+    ret = gtk_dialog_run (GTK_DIALOG(dialog));
+					  
+    gtk_widget_destroy (dialog);
+
+    switch (ret) {
+    case GTK_RESPONSE_ACCEPT: 
+	return ret;
+    default: 
+	return GTK_RESPONSE_NO;
+    }
+}
 
 static int msgbox (const char *msg, int err)
 {
-    if (err) { 
-	fprintf(stderr, "%s\n", msg);
-    } else {
-	printf("%s\n", msg);
-    }
+    GtkWidget *dialog;
 
+    dialog = gtk_message_dialog_new (NULL, 
+				     GTK_DIALOG_DESTROY_WITH_PARENT,
+				     (err)? GTK_MESSAGE_ERROR : GTK_MESSAGE_INFO,
+				     GTK_BUTTONS_CLOSE,
+				     msg);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+    
     return 0;
 }
 
-void update_windows_progress_bar (int gotbytes)
+#endif /* WIN32 vs ! WIN32 */
+
+static char *get_size_string (size_t fsize)
 {
-    fprintf(stderr, "got %d bytes\n", gotbytes);
+    static char sizestr[32] = "";
+
+    if (fsize > 1024 * 1024) {
+	sprintf(sizestr, " (%.2f MB)", (double) fsize / (1024. * 1024.));
+    } else if (fsize >= 10 * 1024) {
+	sprintf(sizestr, " (%.1f KB)", (double) fsize / 1024.);
+    } else {
+	sprintf(sizestr, " (%u bytes)", fsize);
+    }
+
+    return sizestr;
 }
 
-#endif /* WIN32 */
-
-#if defined(WIN32) && !defined(PBAR)
-void update_windows_progress_bar (int gotbytes)
+static void put_text_on_window (void)
 {
-    return;
+    gtk_label_set_text(GTK_LABEL(mainlabel), infobuf);
 }
-#endif
 
 int errbox (const char *msg) 
 {
@@ -333,27 +252,28 @@ int infobox (const char *msg)
 
 void listerr (char *buf, char *fname)
 {
-    char errbuf[256];
+    char mybuf[256];
 
-    *errbuf = '\0';
+    *mybuf = '\0';
 
     if (fname != NULL && *fname) {
-	sprintf(errbuf, "Error retrieving '%s'", fname);
+	sprintf(mybuf, "Error retrieving '%s'", fname);
 	if (logit) {
 	    fprintf(flg, "Error retrieving '%s'\n", fname);
 	}
     } else {
-	sprintf(errbuf, "Error retrieving file listing");
+	sprintf(mybuf, "Error retrieving file listing");
 	if (logit) {
 	    fputs("Error retrieving file listing\n", flg);
 	}
     }
 
     if (*buf != '\0') {
-	strcat(errbuf, buf);
+	strcat(mybuf, "\n");
+	strcat(mybuf, buf);
     }
 
-    errbox(errbuf);
+    errbox(mybuf);
 }
 
 void usage (char *prog)
@@ -423,98 +343,22 @@ time_t get_time_from_stamp_file (const char *fname)
     return mktime(&stime);
 }
 
-int main (int argc, char *argv[])
+static gint real_program (void)
 {
     int i, err = 0, tarerr = 0, remerr = 0;
-    int ask_before_download = 1;
     int unpack_ok = 0;
     char *getbuf = NULL;
-    char *line, fname[48], errbuf[256];
+    char *line;
     size_t fsize;
-    const char *testfile = "gretl.stamp";
-#ifdef WIN32
-    char gretldir[MAXLEN];
-# ifdef PBAR
-    HINSTANCE hinst;
-# endif
-#endif
-    time_t filedate;
 
-    *fname = '\0';
-
-    if (argc == 2 && !strcmp(argv[1], "-d")) {
-	argc--;
-	debug = 1;
-    }
-
-    if (argc == 2 && !strcmp(argv[1], "-g")) {
-	/* flag for updater spawned by gretl: no need to repeat
-	   the question whether the user wants to download */
-	argc--;
-	ask_before_download = 0;
-    }
-
-#ifdef WIN32
-# ifdef PBAR
-    hinst = (HINSTANCE) GetModuleHandle(NULL);
-# endif
-
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
-	errbox("Couldn't get the path to the gretl installation\n"
-	       "from the Windows registry");
-	exit(EXIT_FAILURE);
-    }
-
-    if (!SetCurrentDirectory(gretldir)) {
-	errbox("Couldn't move to the gretl folder");
-	exit(EXIT_FAILURE);
-    }
-
-# ifdef PBAR
-    hwnd = main_window(hinst);
-    if (hwnd == NULL) {
-	exit(EXIT_FAILURE);
-    }
-# endif
-
-    if (ws_startup()) exit(EXIT_FAILURE);
-#endif
-
-    flg = fopen("updater.log", "w");
-    if (flg == NULL) {
-	logit = 0;
-    } else {
-	time_t now = time(NULL);
-
-	setvbuf(flg, NULL, _IOLBF, 0);
-	fprintf(flg, "gretl updater running %s", ctime(&now));
-	logit = 1;
-    }    
-
-    filedate = get_time_from_stamp_file(testfile);
-
-    if (filedate == (time_t) 0) {
-	sprintf(errbuf, "Couldn't get time-stamp from file '%s'", testfile);
-	errbox(errbuf);
-	getout(1);
-    } 
-
-    if (argc > 1 && strcmp(argv[1], "-f") == 0 && argc != 3) {
-	usage(argv[0]);
-    }
-
-    if (argc == 1) {
+    if (argcount == 1) {
 	/* no arguments: a default update */
 
-#ifdef WIN32
-# ifdef PBAR
 	strcpy(infobuf, "Looking for gretl updates...");
-	put_text_on_window(hwnd);
-# endif
-#endif
+	put_text_on_window();
 
 	if (logit) {
-	    fputs("doing default update (argc = 1)\n", flg);
+	    fputs("doing default update (argcount = 1)\n", flg);
 	}
 
 	getbuf = mymalloc(GRETL_BUFSIZE);
@@ -528,7 +372,7 @@ int main (int argc, char *argv[])
 
 	err = files_query(&getbuf, errbuf, filedate);
 	if (err) {
-	   listerr(errbuf, fname);
+	   listerr(errbuf, NULL);
 	   getout(1);
 	}
 
@@ -536,7 +380,7 @@ int main (int argc, char *argv[])
 
 	i = 0;
 	while ((line = strtok((i)? NULL: getbuf, "\n"))) {
-	    *fname = '\0';
+	    *get_fname = '\0';
 	    fsize = (size_t) 0;
 
 	    if (logit) {
@@ -545,9 +389,9 @@ int main (int argc, char *argv[])
 	    }
 
 	    i++;
-	    sscanf(line, "%s %u", fname, &fsize);
+	    sscanf(line, "%s %u", get_fname, &fsize);
 
-	    if (!strcmp(fname, "No")) {
+	    if (!strcmp(get_fname, "No")) {
 		infobox("There are no new files on the server");
 		if (logit) {
 		    fputs("no new files on server\n", flg);
@@ -555,7 +399,6 @@ int main (int argc, char *argv[])
 		break;
 	    } 
 
-#ifdef WIN32
 	    else if (ask_before_download) {
 		int resp;
 		char query[128];
@@ -563,39 +406,36 @@ int main (int argc, char *argv[])
 		sprintf(query, "An update file is available%s.\n"
 			"Get it now?", get_size_string(fsize));
 		resp = yes_no_dialog(query);
-		if (resp != IDYES) break;
+		if (resp != GTK_RESPONSE_ACCEPT) break;
 	    }
-# ifdef PBAR
-            hwnd = main_window(hinst);
-	    sprintf(infobuf, "Downloading %s", fname);
-	    put_text_on_window(hwnd);
-	    start_progress_bar(hwnd, hinst, fsize);
-# endif /* PBAR */
-#endif /* WIN32 */
 
+	    sprintf(infobuf, "Downloading %s", get_fname);
+	    put_text_on_window();    
+	    while (gtk_events_pending()) gtk_main_iteration();
+	    
 	    if (logit) {
-		fprintf(flg, "trying to get '%s'\n", fname);
+		fprintf(flg, "trying to get '%s'\n", get_fname);
 	    }
 
-	    err = get_remote_file(fname, errbuf);
+	    err = get_remote_file(get_fname, errbuf);
 
 	    if (logit) {
 		fprintf(flg, "get_remote_file() returned %d\n", err);
 	    }	    
 	    if (err) {
-		listerr(errbuf, fname);
+		listerr(errbuf, get_fname);
 		return 1;
 	    }
 
-	    if (logit) fprintf(flg, "Doing untgz on %s...\n", fname);
+	    if (logit) fprintf(flg, "Doing untgz on %s...\n", get_fname);
 	    if (logit && debug) {
 		fputs("[debug: faking it]\n", flg);
 	    } else {
-		tarerr = untgz(fname);
+		tarerr = untgz(get_fname);
 	    }
 
-	    if (logit) fprintf(flg, "Removing %s... ", fname);
-	    remerr = remove(fname);
+	    if (logit) fprintf(flg, "Removing %s... ", get_fname);
+	    remerr = remove(get_fname);
 
 	    if (logit) fprintf(flg, "%s\n", (remerr)? "failed" : "succeeded");
 	    if (!err && !tarerr && !remerr) {
@@ -606,7 +446,7 @@ int main (int argc, char *argv[])
 	}
     }
 
-    else if (strcmp(argv[1], "-l") == 0) { /* get listing */
+    else if (prog_opt == UPDATER_GET_LISTING) { /* get listing */
 	getbuf = malloc(8192); 
 	clear(getbuf, 8192);
 	err = files_query(&getbuf, errbuf, filedate);
@@ -621,27 +461,23 @@ int main (int argc, char *argv[])
 	free(getbuf);
     }
     
-    else if (strcmp(argv[1], "-f") == 0) { /* get a specified file */
-	strncpy(fname, argv[2], 47);
-	err = get_remote_file(fname, errbuf);
+    else if (prog_opt == UPDATER_GET_FILE) { /* get a specified file */
+	err = get_remote_file(get_fname, errbuf);
 	if (err) {
-	    listerr(errbuf, fname);
+	    listerr(errbuf, get_fname);
 	    getout(1);
 	}
-	tarerr = untgz(fname);
-	remerr = remove(fname);
+	tarerr = untgz(get_fname);
+	remerr = remove(get_fname);
 	if (!err && !tarerr && !remerr) unpack_ok = 1;
     }
 
 #ifdef WIN32
-# ifdef PBAR
-    destroy_progress_bar();
-
-    DestroyWindow(hwnd); 
-# endif /* PBAR */
-
     if (unpack_ok) {
-	if (yes_no_dialog("gretl update succeeded.\r\nStart gretl now?") == IDYES) {
+	int resp;
+
+	resp = yes_no_dialog("gretl update succeeded.\r\nStart gretl now?");
+	if (resp == GTK_RESPONSE_ACCEPT) {
 	    create_child_process("gretlw32.exe");
 	}
     }
@@ -653,5 +489,134 @@ int main (int argc, char *argv[])
 
     getout(err);
 
-    return err; /* not reached */
+    gtk_main_quit();
+
+    return TRUE;
+}
+
+static gint cancel_callback (void)
+{
+    gtk_main_quit();
+    return FALSE;
+}
+
+static void create_main_window (void)
+{
+    GtkWidget *main_vbox;
+    GtkWidget *buttonbox;
+    GtkWidget *tmp;
+    int mainwin_width = 300;
+    int mainwin_height = 100;
+
+    mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(mainwin), "gretl updater");
+    gtk_window_set_default_size(GTK_WINDOW(mainwin), 
+				mainwin_width, mainwin_height);
+    
+    main_vbox = gtk_vbox_new(FALSE, 4);
+    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 8);
+    gtk_container_add(GTK_CONTAINER(mainwin), main_vbox);
+
+    mainlabel = gtk_label_new("Press OK to start");
+    gtk_box_pack_start(GTK_BOX(main_vbox), mainlabel, TRUE, TRUE, 0);
+
+    buttonbox = gtk_hbox_new(TRUE, 4);
+    gtk_container_set_border_width(GTK_CONTAINER(buttonbox), 8);
+    gtk_box_pack_start(GTK_BOX(main_vbox), buttonbox, FALSE, FALSE, 0);
+
+    /* Create an "OK" button */
+    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(buttonbox), tmp);
+    g_signal_connect (G_OBJECT(tmp), "clicked", 
+		      G_CALLBACK(real_program), NULL);
+    gtk_widget_grab_default (tmp);
+
+    /* Create a "Cancel" button */
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    gtk_container_add(GTK_CONTAINER(buttonbox), tmp);
+    g_signal_connect (G_OBJECT(tmp), "clicked", 
+		      G_CALLBACK(cancel_callback), NULL);
+    
+    gtk_widget_show_all(mainwin);
+}
+
+int main (int argc, char *argv[])
+{
+    const char *testfile = "gretl.stamp";
+#ifdef WIN32
+    char gretldir[MAXLEN];
+#endif
+
+    prog_opt = UPDATER_DEFAULT;
+    *get_fname = '\0';
+
+    argcount = argc;
+
+    if (argcount == 2 && !strcmp(argv[1], "-d")) {
+	argcount--;
+	debug = 1;
+    }
+
+    if (argcount == 2 && !strcmp(argv[1], "-g")) {
+	/* flag for updater spawned by gretl: no need to repeat
+	   the question whether the user wants to download */
+	argcount--;
+	ask_before_download = 0;
+    }
+
+    if (argcount == 2 && !strcmp(argv[1], "-l")) {
+	prog_opt = UPDATER_GET_LISTING;
+    }
+
+    if (argcount == 3 && !strcmp(argv[1], "-f")) {
+	prog_opt = UPDATER_GET_FILE;
+	strncpy(get_fname, argv[2], 47);
+    }
+
+    if (argcount > 1 && strcmp(argv[1], "-f") == 0 && argc != 3) {
+	usage(argv[0]);
+    }    
+
+#ifdef WIN32
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
+	errbox("Couldn't get the path to the gretl installation\n"
+	       "from the Windows registry");
+	exit(EXIT_FAILURE);
+    }
+
+    if (!SetCurrentDirectory(gretldir)) {
+	errbox("Couldn't move to the gretl folder");
+	exit(EXIT_FAILURE);
+    }
+
+    if (ws_startup()) exit(EXIT_FAILURE);
+#endif
+
+    flg = fopen("updater.log", "w");
+    if (flg == NULL) {
+	logit = 0;
+    } else {
+	time_t now = time(NULL);
+
+	setvbuf(flg, NULL, _IOLBF, 0);
+	fprintf(flg, "gretl updater running %s", ctime(&now));
+	logit = 1;
+    } 
+
+    filedate = get_time_from_stamp_file(testfile);
+
+    if (filedate == (time_t) 0) {
+	sprintf(errbuf, "Couldn't get time-stamp from file '%s'", testfile);
+	errbox(errbuf);
+	getout(1);
+    } 
+
+    gtk_init(&argc, &argv);
+    create_main_window();
+    gtk_main();
+
+    getout(0);
+
+    return 0;
 }

@@ -24,6 +24,8 @@
    libgretl.
 */
 
+/* #define WDEBUG */
+
 #ifdef UPDATER
 # include "version.h"
 # define I_(String) String
@@ -834,7 +836,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	if (fp == NULL) {
 	    close(sock);
 	    free(all_headers);
-	    fprintf(stderr, "Couldn't open local file\n");
+	    fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
 	    return FOPENERR;
 	}
     } 
@@ -1073,6 +1075,10 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     hs->res = get_contents(sock, fp, u->savebuf, &hs->len, 
 			   (contlen != -1 ? contlen : 0), &rbuf);
 
+#ifdef WDEBUG
+    fprintf(stderr, "get_contents returned %d\n", hs->res);
+#endif
+
     if (fp != NULL) fclose(fp);
 
     free(all_headers);
@@ -1112,8 +1118,11 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	tms = time_str(NULL);
 
 #ifdef WDEBUG
-	fprintf(stderr, "conn->err = '%s'\n", 
-		(proxy)? proxy->errbuf : u->errbuf);
+	fprintf(stderr, "http_loop: err (from gethttp) = %d, errbuf = '%s'\n", 
+		err, (proxy)? proxy->errbuf : u->errbuf);
+	if (err == RETRFINISHED) {
+	    fprintf(stderr, " (%d == RETRFINISHED\n", err);
+	}
 #endif
 
 	switch (err) {
@@ -1239,7 +1248,8 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
 
-    if (gui_open_plugin("progress_bar", &handle) == 0) {
+    if (expected > 2 * GRETL_BUFSIZE && 
+	gui_open_plugin("progress_bar", &handle) == 0) {
 	show_progress = get_plugin_function("show_progress", handle);
 	if (show_progress != NULL) {
 	    show = 1;
@@ -1328,7 +1338,7 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
     unsigned long addr = (unsigned long) inet_addr(hostname);
 
 #ifdef WDEBUG
-    fprintf(stderr, "store_hostaddress: hostname='%s', addr=%ld\n",
+    fprintf(stderr, "store_hostaddress: hostname='%s', addr=%lu\n",
 	    hostname, addr);
 #endif
     if ((int) addr != -1) {
@@ -1477,6 +1487,11 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     u->savebuf = saver;
 
     result = http_loop(u, &dt, proxy); 
+
+#ifdef WDEBUG
+    fprintf(stderr, "http_loop returned %d, u->errbuf='%s'\n",
+	    (int) result, u->errbuf);
+#endif
 
     if (result == RETROK) {
         *errbuf = '\0';
@@ -1745,7 +1760,7 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     const char *datacgi = "/gretl/cgi-bin/gretldata.cgi";
     const char *updatecgi = "/gretl/cgi-bin/gretl_update.cgi";
     const char *cgi;
-    int dt;
+    int dt, err = 0;
     size_t fnlen = 0L;
 
     if (use_proxy && gretlproxy.host != NULL) {
@@ -1795,15 +1810,22 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     }
 
     result = http_loop(u, &dt, proxy);
-    freeurl(u, 1);
+
+#ifdef WDEBUG
+    fprintf(stderr, "http_loop returned %d, u->errbuf='%s'\n",
+	    (int) result, u->errbuf);
+#endif
 
     if (result == RETROK) {
 	*errbuf = 0;
-	return 0;
     } else {
 	strcpy(errbuf, u->errbuf);
-	return 1;
+	err = 1;
     }
+
+    freeurl(u, 1);
+
+    return err;
 }
 
 #ifdef WIN32

@@ -90,15 +90,15 @@ OBJS = $(SRCS:.c=.o)
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM  $< > .deps/$*.d 
 
-$(PROG): .deps $(query_gtkextra_lib) $(OBJS) 
+$(PROG): depdir $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
-
-.deps:
-	mkdir $@
 
 -include .deps/*.d
 
 .PHONY:
+
+depdir:
+	mkdir -p .deps
 
 gtkextra-lib: 
 	rm -f ./gtkextra && $(LN_S) ./gtkextra-lite ./gtkextra

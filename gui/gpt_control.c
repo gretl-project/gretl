@@ -33,6 +33,8 @@
 # include <png.h>
 #endif
 
+/* #define PNG_DEBUG */
+
 struct gpt_titles_t {
     char *description; /* How the field will show up in the options dialog */
     short tab;         /* which tab (if any) does the item fall under? */
@@ -265,7 +267,9 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
     char *p;
 
     *str = 0;
+
     p = gtk_entry_get_text(GTK_ENTRY(w));
+
     if (p != NULL && *p != 0) {
 	strncat(str, p, n - 1);
     }
@@ -2732,7 +2736,12 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 #ifdef ENABLE_NLS
 	    setlocale(LC_NUMERIC, "C");
 #endif
-	    posstr = g_strdup_printf("%g,%g", dx, dy);
+	    if (na(dy)) {
+		fprintf(stderr, "Couldn't get y coordinate\n");
+		posstr = g_strdup_printf("%g,0.0", dx);
+	    } else {
+		posstr = g_strdup_printf("%g,%g", dx, dy);
+	    }
 #ifdef ENABLE_NLS
 	    setlocale(LC_NUMERIC, "");
 #endif
@@ -2992,8 +3001,9 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 		plot->ymin = y[i-2];
 		plot->ymax = y[1];
 		for (k=1; k<i-2; k++) {
-		    if (y_numwidth[k] > max_ywidth) 
+		    if (y_numwidth[k] > max_ywidth) {
 			max_ywidth = y_numwidth[k];
+		    }
 		}
 	    }
 	} else {	
@@ -3008,6 +3018,11 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 		}
 	    }
 	}
+
+#ifdef PNG_DEBUG
+	fprintf(stderr, "Reading from dumb plot: plot->ymin=%g, plot->ymax=%g\n",
+		plot->ymin, plot->ymax);
+#endif
 
 	if (plot_has_y2axis(plot)) {
 	    int k;
@@ -3111,11 +3126,7 @@ static int get_plot_ranges (png_plot_t *plot)
     } 
 #endif /* PNG_COMMENTS */
 
-#if 0
-    fprintf(stderr, "coords = %d\n", coords);
-#endif
-
-#if 0
+#ifdef PNG_DEBUG
     fprintf(stderr, "png: pixel_xmin=%d, xmax=%d, ymin=%d, ymax=%d\n",
 	    plot->pixel_xmin, plot->pixel_xmax, plot->pixel_ymin,
 	    plot->pixel_ymax);
