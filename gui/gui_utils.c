@@ -732,8 +732,9 @@ void save_session (char *fname)
 		strcpy((session.graphs[i])->fname, tmp);
 	    }
 	}
-	fprintf(fp, "%s %d \"%s\" %s\n", 
-		((session.graphs[i])->name[0] == 'G')? "graph" : "plot",
+	fprintf(fp, "%s %d \"%s\" %s\n",
+		((session.graphs[i])->sort == GRETL_BOXPLOT)?
+		"plot" : "graph",
 		(session.graphs[i])->ID, 
 		(session.graphs[i])->name, 
 		(session.graphs[i])->fname);
