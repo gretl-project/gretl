@@ -251,8 +251,10 @@ GtkItemFactoryEntry data_items[] = {
 
     /* File, Open data */
     { N_("/File/_Open data"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Open data/user file..."), NULL, open_data, OPEN_DATA, NULL, GNULL },
-    { N_("/File/Open data/sample file..."), NULL, display_files, TEXTBOOK_DATA, NULL, GNULL },
+    { N_("/File/Open data/user file..."), NULL, open_data, OPEN_DATA, 
+      "<StockItem>", GTK_STOCK_OPEN },
+    { N_("/File/Open data/sample file..."), "", display_files, TEXTBOOK_DATA, 
+      "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },    
     { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL, GNULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL, GNULL },
@@ -270,12 +272,12 @@ GtkItemFactoryEntry data_items[] = {
       APPEND_EXCEL, NULL, GNULL },
 
     /* File, Save data */
-    { N_("/File/_Save data"), NULL, auto_store, 0, NULL, GNULL },
+    { N_("/File/_Save data"), "<control>S", auto_store, 0, "<StockItem>", GTK_STOCK_SAVE },
     { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Save data as/_standard format..."), NULL, file_save, 
-      SAVE_DATA_AS, NULL, GNULL },
-    { N_("/File/Save data as/_gzipped..."), NULL, 
-      file_save, SAVE_GZDATA, NULL, GNULL },
+    { N_("/File/Save data as/_standard format..."), NULL, file_save, SAVE_DATA_AS, 
+      "<StockItem>", GTK_STOCK_SAVE_AS },
+    { N_("/File/Save data as/_gzipped..."), NULL, file_save, SAVE_GZDATA, 
+      "<StockItem>", GTK_STOCK_SAVE_AS },
 #ifdef notdef
     { N_("/File/Save data as/_alternative formats/_single precision binary..."), 
       NULL, file_save, SAVE_BIN1, NULL, GNULL },
@@ -288,7 +290,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL, GNULL },
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL, GNULL },
-    { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL, GNULL },
+    { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, 
+      "<StockItem>", GTK_STOCK_CLEAR },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, Browse databases */
@@ -338,25 +341,29 @@ GtkItemFactoryEntry data_items[] = {
 
     /* File, command files */
     { N_("/File/Open command file"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Open command file/user file..."), NULL, open_script, 
-      OPEN_SCRIPT, NULL, GNULL },
-    { N_("/File/Open command file/practice file..."), NULL, 
-      display_files, PS_FILES, NULL, GNULL },
+    { N_("/File/Open command file/user file..."), "", open_script, OPEN_SCRIPT, 
+      "<StockItem>", GTK_STOCK_OPEN },
+    { N_("/File/Open command file/practice file..."), "", display_files, PS_FILES, 
+      "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/New command file"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/New command file/regular script"), NULL, do_new_script, 0, NULL, GNULL },
-    { N_("/File/New command file/Monte Carlo loop"), NULL, 
-      do_new_script, 1, NULL, GNULL },
+    { N_("/File/New command file/regular script"), NULL, do_new_script, 0, 
+      "<StockItem>", GTK_STOCK_NEW },
+    { N_("/File/New command file/Monte Carlo loop"), NULL, do_new_script, 1, 
+      "<StockItem>", GTK_STOCK_NEW },
     { N_("/File/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Preferences/_General..."), NULL, options_dialog, 0, NULL, GNULL },
-    { N_("/File/Preferences/_Fixed font..."), NULL, font_selector, 1, NULL, GNULL },
+    { N_("/File/_Preferences/_General..."), NULL, options_dialog, 0, 
+      "<StockItem>", GTK_STOCK_PREFERENCES },
+    { N_("/File/Preferences/_Fixed font..."), NULL, font_selector, 1, 
+      "<StockItem>", GTK_STOCK_SELECT_FONT },
 #ifndef USE_GNOME
-    { N_("/File/Preferences/_Menu font..."), NULL, font_selector, 0, NULL, GNULL },
+    { N_("/File/Preferences/_Menu font..."), NULL, font_selector, 0, 
+      "<StockItem>", GTK_STOCK_SELECT_FONT },
 #endif
     { N_("/File/sep5"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/File/E_xit"), NULL, menu_exit_check, 0, NULL, GNULL },
+    { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },
 
     /* Utilities menu */
     { N_("/_Utilities"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -376,10 +383,12 @@ GtkItemFactoryEntry data_items[] = {
       GRETL_GNUPLOT_GRAPH, NULL, GNULL },
 #endif
     { N_("/Session/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Session/_Open..."), NULL, open_script, OPEN_SESSION, NULL, GNULL },
+    { N_("/Session/_Open..."), NULL, open_script, OPEN_SESSION, "<StockItem>", GTK_STOCK_OPEN },
     { N_("/Session/sep1"), NULL, NULL, 0, "<Separator>", NULL },
-    { N_("/Session/_Save"), NULL, save_session_callback, SAVE_AS_IS, NULL, GNULL },
-    { N_("/Session/Save _as..."), NULL, save_session_callback, SAVE_RENAME, NULL, GNULL },
+    { N_("/Session/_Save"), NULL, save_session_callback, SAVE_AS_IS, 
+      "<StockItem>", GTK_STOCK_SAVE },
+    { N_("/Session/Save _as..."), NULL, save_session_callback, SAVE_RENAME, 
+      "<StockItem>", GTK_STOCK_SAVE_AS },
 #ifdef not_yet
     { N_("/Session/_Delete"), NULL, delete_session_callback, 0, NULL, NULL },
 #endif
@@ -1448,10 +1457,14 @@ static GtkWidget *make_main_window (int gui_get_data)
 
 static void set_up_main_menu (void)
 {
+    GtkAccelGroup *accel_group;
     gint n_items = sizeof data_items / sizeof data_items[0];
 
+    accel_group = gtk_accel_group_new ();
     mdata->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
-					NULL);
+					accel_group);
+    gtk_window_add_accel_group (GTK_WINDOW (mdata->w), accel_group);
+    g_object_unref (accel_group);
 #ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(mdata->ifac, menu_translate, NULL, NULL);
 #endif    

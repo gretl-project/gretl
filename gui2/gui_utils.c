@@ -33,6 +33,13 @@
 # include <windows.h>
 #endif
 
+#ifdef USE_GTKSOURCEVIEW
+# include <gtksourceview/gtksourceview.h>
+# include <gtksourceview/gtksourcelanguage.h>
+# include <gtksourceview/gtksourcelanguagesmanager.h>
+# include <gtksourceview/gtksourceprintjob.h>
+#endif
+
 char *storelist = NULL;
 GtkWidget *active_edit_id = NULL;
 GtkWidget *active_edit_name = NULL;
@@ -69,14 +76,16 @@ extern void do_leverage (gpointer data, guint u, GtkWidget *w);
 
 GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL, GNULL },
+    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, 
+      "<StockItem>", GTK_STOCK_SAVE_AS },
     { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL, GNULL },
     { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL, GNULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
+      "<StockItem>", GTK_STOCK_COPY },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
 #ifdef G_OS_WIN32
     { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL, GNULL },
@@ -160,14 +169,16 @@ GtkItemFactoryEntry model_items[] = {
 
 GtkItemFactoryEntry edit_items[] = {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif    
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
-    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL, GNULL },
-    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL, GNULL },
-    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
+      "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY},
+    { N_("/Edit/_Paste"), NULL, text_paste, 0, "<StockItem>", GTK_STOCK_PASTE },
+    { N_("/Edit/_Replace..."), NULL, text_replace, 0, 
+      "<StockItem>", GTK_STOCK_FIND_AND_REPLACE },
+    { N_("/Edit/_Undo"), NULL, text_undo, 0, "<StockItem>", GTK_STOCK_UNDO },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -1305,6 +1316,41 @@ static windata_t *common_viewer_new (int role, const char *title,
 
 /* ........................................................... */
 
+#ifdef USE_GTKSOURCEVIEW
+
+static void create_source (windata_t *vwin, GtkSourceBuffer **buf, 
+			   int hsize, int vsize, gboolean editable)
+{
+    GtkSourceLanguagesManager *lm;
+    GtkSourceBuffer *sbuf;
+
+    lm = gtk_source_languages_manager_new ();
+    
+    sbuf = GTK_SOURCE_BUFFER (gtk_source_buffer_new (NULL));
+    g_object_ref (lm);
+    g_object_set_data_full (G_OBJECT (sbuf), "languages-manager",
+			    lm, (GDestroyNotify) g_object_unref); 
+    g_object_unref (lm); /* ?? */
+
+    vwin->w = gtk_source_view_new_with_buffer(sbuf);
+    *buf = sbuf;
+
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->w), GTK_WRAP_WORD);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vwin->w), 4);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->w), 4);
+
+    gtk_widget_modify_font(GTK_WIDGET(vwin->w), fixed_font);
+    hsize *= get_char_width(vwin->w);
+    hsize += 48;
+    gtk_window_set_default_size (GTK_WINDOW(vwin->dialog), hsize, vsize); 
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
+}
+
+#endif /* USE_GTKSOURCEVIEW */
+
+/* ........................................................... */
+
 static void create_text (windata_t *vwin, GtkTextBuffer **buf, 
 			 int hsize, int vsize, gboolean editable)
 {
@@ -1432,109 +1478,158 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     return vwin;
 }
 
-/* ........................................................... */
-
 #define help_role(r) (r == CLI_HELP || \
                       r == GUI_HELP || \
                       r == CLI_HELP_ENGLISH || \
                       r == GUI_HELP_ENGLISH)
 
-windata_t *view_file (char *filename, int editable, int del_file, 
-		      int hsize, int vsize, int role, 
-		      GtkItemFactoryEntry menu_items[]) 
+#ifdef USE_GTKSOURCEVIEW
+
+#define READ_BUFFER_SIZE   4096
+
+static gboolean 
+gtk_source_buffer_load_with_encoding (GtkSourceBuffer *sbuf,
+				      const gchar *filename,
+				      const gchar *encoding,
+				      GError **error)
 {
-    GtkTextBuffer *tbuf;
+    GIOChannel *io;
     GtkTextIter iter;
-    int thiscolor, nextcolor;
-    char tempstr[MAXSTR], *chunk = NULL, *fle = NULL;
-    FILE *fd = NULL;
-    windata_t *vwin;
-    gchar *title;
-    int show_viewbar = (role != CONSOLE &&
-			role != VIEW_DATA &&
-			!help_role(role));
-    int doing_script = (role == EDIT_SCRIPT ||
-			role == VIEW_SCRIPT ||
-			role == VIEW_LOG);
+    gchar *buffer;
+    gboolean reading;
+	
+    g_return_val_if_fail (sbuf != NULL, FALSE);
+    g_return_val_if_fail (filename != NULL, FALSE);
+    g_return_val_if_fail (GTK_IS_SOURCE_BUFFER (sbuf), FALSE);
 
-    fd = fopen(filename, "r");
-    if (fd == NULL) {
-	sprintf(errtext, _("Can't open %s for reading"), filename);
-	errbox(errtext);
-	return NULL;
+    *error = NULL;
+
+    io = g_io_channel_new_file (filename, "r", error);
+    if (!io) {
+	return FALSE;
     }
 
-    title = make_viewer_title(role, filename);
-    vwin = common_viewer_new(role, (title != NULL)? title : filename, 
-			     NULL, !doing_script && role != CONSOLE);
-
-    if (title != NULL) g_free(title);
-    if (vwin == NULL) return NULL;
-
-    strcpy(vwin->fname, filename);
-
-    viewer_box_config(vwin);
-
-    if (menu_items != NULL) {
-	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-			   vwin->mbar, FALSE, TRUE, 0);
-	gtk_widget_show(vwin->mbar);
+    if (g_io_channel_set_encoding (io, encoding, error) != G_IO_STATUS_NORMAL) {
+	fprintf(stderr, "Failed to set encoding:\n%s\n%s",
+		filename, (*error)->message);
+	return FALSE;
     }
 
-    create_text(vwin, &tbuf, hsize, vsize, editable);
+    gtk_source_buffer_begin_not_undoable_action (sbuf);
 
-    dialog_table_setup (vwin);
+    gtk_text_buffer_set_text (GTK_TEXT_BUFFER (sbuf), "", 0);
+    buffer = g_malloc (READ_BUFFER_SIZE);
 
-    /* special case: the gretl console */
-    if (role == CONSOLE) {
-	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
-			 G_CALLBACK(console_mouse_handler), NULL);
-	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
-			 G_CALLBACK(console_key_handler), NULL);
-    } 
+    reading = TRUE;
+    while (reading) {
+	gsize bytes_read;
+	GIOStatus status;
+		
+	status = g_io_channel_read_chars (io, buffer,
+					  READ_BUFFER_SIZE, &bytes_read,
+					  error);
+	switch (status) {
+	case G_IO_STATUS_EOF:
+	    reading = FALSE;
+	    /* fall through */
+				
+	case G_IO_STATUS_NORMAL:
+	    if (bytes_read == 0) {
+		continue;
+	    }
+				
+	    gtk_text_buffer_get_end_iter (GTK_TEXT_BUFFER (sbuf), 
+					  &iter);
+	    gtk_text_buffer_insert (GTK_TEXT_BUFFER (sbuf),
+				    &iter, buffer, bytes_read);
+	    break;
+				
+	case G_IO_STATUS_AGAIN:
+	    continue;
 
-    if (doing_script) {
-	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
-			 G_CALLBACK(edit_script_help), vwin);
-    } 
-
-    /* is the file to be deleted after viewing? */
-    if (del_file) {
-	if ((fle = mymalloc(strlen(filename) + 1)) == NULL) {
-	    return NULL;
+	case G_IO_STATUS_ERROR:
+	default:
+	    /* because of error in input we clear already loaded text */
+	    gtk_text_buffer_set_text (GTK_TEXT_BUFFER (sbuf), "", 0);
+				
+	    reading = FALSE;
+	    break;
 	}
-	strcpy(fle, filename);
+    }
+    g_free (buffer);
+	
+    gtk_source_buffer_end_not_undoable_action (sbuf);
+
+    g_io_channel_unref (io);
+
+    if (*error)
+	return FALSE;
+
+    gtk_text_buffer_set_modified (GTK_TEXT_BUFFER (sbuf), FALSE);
+
+    /* move cursor to the beginning */
+    gtk_text_buffer_get_start_iter (GTK_TEXT_BUFFER (sbuf), &iter);
+    gtk_text_buffer_place_cursor (GTK_TEXT_BUFFER (sbuf), &iter);
+
+    return TRUE;
+}
+
+static void source_buffer_insert_file (GtkSourceBuffer *sbuf, const char *filename)
+{
+    GtkSourceLanguagesManager *manager;    
+    GtkSourceLanguage *language = NULL;
+    GError *err = NULL;
+		
+    manager = g_object_get_data (G_OBJECT (sbuf), "languages-manager");
+
+    language = 
+	gtk_source_languages_manager_get_language_from_mime_type (manager,
+								  "application/x-gretlsession");
+
+    if (language == NULL) {
+	g_object_set (G_OBJECT(sbuf), "highlight", FALSE, NULL);
+    } else {
+	g_object_set (G_OBJECT(sbuf), "highlight", TRUE, NULL);
+	gtk_source_buffer_set_language (sbuf, language);
     }
 
-    /* should we show a toolbar? */
-    if (show_viewbar) { 
-	make_viewbar(vwin);
-    } else { /* make a simple Close button instead */
-	GtkWidget *close = gtk_button_new_with_label(_("Close"));
+    /* remove_all_markers (buffer); */
+    gtk_source_buffer_load_with_encoding (sbuf, filename, "utf-8", &err);
 
-	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-			   close, FALSE, TRUE, 0);
-	g_signal_connect(G_OBJECT(close), "clicked", 
-			 G_CALLBACK(delete_file_viewer), vwin);
-	gtk_widget_show(close);
+    if (err != NULL) {
+	g_error_free(err);
     }
+}
 
-    /* insert the file text */
+#endif
+
+static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, int role)
+{
+    FILE *fp;
+    GtkTextIter iter;    
+    int thiscolor, nextcolor;
+    char readbuf[MAXSTR], *chunk = NULL;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return;
+
     thiscolor = nextcolor = PLAIN_TEXT;
+
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
-    memset(tempstr, 0, sizeof tempstr);
-    while (fgets(tempstr, sizeof tempstr - 1, fd)) {
+
+    memset(readbuf, 0, sizeof readbuf);
+
+    while (fgets(readbuf, sizeof readbuf - 1, fp)) {
 #ifdef ENABLE_NLS
 	if (role == GR_PLOT) {
-	    if (!g_utf8_validate(tempstr, sizeof tempstr, NULL)) {
+	    if (!g_utf8_validate(readbuf, sizeof readbuf, NULL)) {
 		gsize bytes;
 
-		chunk = g_locale_to_utf8(tempstr, -1, NULL, &bytes, NULL);
-	    } else chunk = tempstr;
-	} else chunk = tempstr;
+		chunk = g_locale_to_utf8(readbuf, -1, NULL, &bytes, NULL);
+	    } else chunk = readbuf;
+	} else chunk = readbuf;
 #else
-	chunk = tempstr;
+	chunk = readbuf;
 #endif
 	if (*chunk == '@') continue;
 	if (*chunk == '?') 
@@ -1563,12 +1658,119 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	    break;
 	}
 	thiscolor = nextcolor;
-	memset(tempstr, 0, sizeof tempstr);
-	if (chunk != NULL && chunk != tempstr) {
+	memset(readbuf, 0, sizeof readbuf);
+	if (chunk != NULL && chunk != readbuf) {
 	    free(chunk);
 	}
     }
-    fclose(fd);
+    fclose(fp);
+}
+
+/* ........................................................... */
+
+windata_t *view_file (char *filename, int editable, int del_file, 
+		      int hsize, int vsize, int role, 
+		      GtkItemFactoryEntry menu_items[]) 
+{
+    GtkTextBuffer *tbuf = NULL;
+#ifdef USE_GTKSOURCEVIEW
+    GtkSourceBuffer *sbuf = NULL;
+#endif
+    char *fle = NULL;
+    FILE *fp = NULL;
+    windata_t *vwin;
+    gchar *title;
+    int show_viewbar = (role != CONSOLE &&
+			role != VIEW_DATA &&
+			!help_role(role));
+    int doing_script = (role == EDIT_SCRIPT ||
+			role == VIEW_SCRIPT ||
+			role == VIEW_LOG);
+
+    fp = fopen(filename, "r");
+    if (fp == NULL) {
+	sprintf(errtext, _("Can't open %s for reading"), filename);
+	errbox(errtext);
+	return NULL;
+    } else {
+	fclose(fp);
+    }
+
+    title = make_viewer_title(role, filename);
+    vwin = common_viewer_new(role, (title != NULL)? title : filename, 
+			     NULL, !doing_script && role != CONSOLE);
+
+    if (title != NULL) g_free(title);
+    if (vwin == NULL) return NULL;
+
+    strcpy(vwin->fname, filename);
+
+    viewer_box_config(vwin);
+
+    if (menu_items != NULL) {
+	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
+			   vwin->mbar, FALSE, TRUE, 0);
+	gtk_widget_show(vwin->mbar);
+    }
+
+#ifdef USE_GTKSOURCEVIEW
+    if (doing_script) {
+	create_source(vwin, &sbuf, hsize, vsize, editable);
+	tbuf = GTK_TEXT_BUFFER(sbuf);
+    } else {
+	create_text(vwin, &tbuf, hsize, vsize, editable);
+    }
+#else
+    create_text(vwin, &tbuf, hsize, vsize, editable);
+#endif
+
+    dialog_table_setup (vwin);
+
+    /* special case: the gretl console */
+    if (role == CONSOLE) {
+	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
+			 G_CALLBACK(console_mouse_handler), NULL);
+	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
+			 G_CALLBACK(console_key_handler), NULL);
+    } 
+
+    if (doing_script) {
+	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
+			 G_CALLBACK(edit_script_help), vwin);
+    } 
+
+    /* is the file to be deleted after viewing? */
+    if (del_file) {
+	if ((fle = mymalloc(strlen(filename) + 1)) == NULL) {
+	    return NULL;
+	}
+	strcpy(fle, filename);
+    }
+
+    /* should we show a toolbar? */
+    if (show_viewbar) { 
+	make_viewbar(vwin);
+    } else { 
+	/* make a simple Close button instead */
+	GtkWidget *close = gtk_button_new_with_label(_("Close"));
+
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
+			   close, FALSE, TRUE, 0);
+	g_signal_connect(G_OBJECT(close), "clicked", 
+			 G_CALLBACK(delete_file_viewer), vwin);
+	gtk_widget_show(close);
+    }
+
+#ifdef USE_GTKSOURCEVIEW
+    if (doing_script) {
+	source_buffer_insert_file(sbuf, filename);
+    } else {
+	text_buffer_insert_file(tbuf, filename, role);
+    }
+#else
+    text_buffer_insert_file(tbuf, filename);
+#endif
 
     /* grab the "changed" signal when editing a script */
     if (role == EDIT_SCRIPT) {

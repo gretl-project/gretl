@@ -56,6 +56,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if gtkhtml is available */
 #undef USE_GTKHTML
 
+/* Define if gtksourceview is available */
+#undef USE_GTKSOURCEVIEW
+
 /* Is gnuplot available? */
 #undef HAVE_GNUPLOT
 

@@ -63,66 +63,66 @@ int replay;                 /* are we replaying old session commands or not? */
 
 GtkItemFactoryEntry log_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/File/_Save As..."), NULL, file_save, SAVE_CMDS, NULL, GNULL },
-    { N_("/File/_Run"), NULL, do_run_script, SESSION_EXEC, NULL, GNULL },
+    { N_("/File/_Save As..."), NULL, file_save, SAVE_CMDS, "<StockItem>", GTK_STOCK_SAVE_AS },
+    { N_("/File/_Run"), NULL, do_run_script, SESSION_EXEC, "<StockItem>", GTK_STOCK_EXECUTE },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry script_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, NULL, GNULL },
-    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL, GNULL },
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, "<StockItem>", GTK_STOCK_SAVE_AS },
+    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, "<StockItem>", GTK_STOCK_EXECUTE },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
-    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL, GNULL },
-    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL, GNULL },
-    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/_Paste"), NULL, text_paste, 0, "<StockItem>", GTK_STOCK_PASTE },
+    { N_("/Edit/_Replace..."), NULL, text_replace, 0, "<StockItem>", GTK_STOCK_FIND_AND_REPLACE },
+    { N_("/Edit/_Undo"), NULL, text_undo, 0, "<StockItem>", GTK_STOCK_UNDO },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry sample_script_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, NULL, GNULL },
-    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL, GNULL },
+    { N_("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, "<StockItem>", GTK_STOCK_SAVE_AS },
+    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, "<StockItem>", GTK_STOCK_EXECUTE },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry script_out_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, NULL, GNULL },
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, "<StockItem>", GTK_STOCK_SAVE },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry view_items[] = {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },     
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 

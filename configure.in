@@ -33,6 +33,7 @@ new_readline="no"
 have_zlib="no"
 have_libole2="no"
 have_gtk="no"
+have_gtksourceview="no"
 have_gnome="no"
 have_gtkextra="no"
 have_gmp="no"
@@ -346,9 +347,14 @@ if test "$try_gtk2" = "yes" ; then
     )
 fi
 
-dnl if the above succeeds, check separately for glib 2.0 flags
+dnl if the above succeeds, check separately for glib 2.0 flags,
+dnl and gtksourceview flags
 if test "$have_gtk" = "2.0" ; then
     PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
+    have_gtksourceview="yes"
+    AC_DEFINE(USE_GTKSOURCEVIEW),
+    )
 fi
 
 dnl Or fall back on GTK 1.2
@@ -371,6 +377,9 @@ AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
+AC_SUBST(GTKSOURCEVIEW_CFLAGS)
+AC_SUBST(GTKSOURCEVIEW_LIBS)
+
 
 dnl
 dnl Should we try to use an installed version of libole2?
@@ -577,6 +586,7 @@ Configuration:
   Gnu Multiple Precision support:         ${have_gmp}
   LAPACK support:                         ${have_lapack}
   Build with GTK version:                 ${have_gtk}
+  Use gtksourceview for scripts:          ${have_gtksourceview}
   Use installed libole2:                  ${have_libole2}
   Use installed gtkextra:		  ${have_gtkextra}
   Build with gnome support:               ${have_gnome}
