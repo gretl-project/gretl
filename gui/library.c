@@ -156,6 +156,19 @@ static char last_model = 's';
 
 /* ........................................................... */
 
+void register_graph (void)
+{
+#ifdef GNUPLOT_PNG
+    extern int gnuplot_show_png(const char *fname);
+
+    gnuplot_show_png(paths.plotfile);
+#else
+    graphmenu_state(TRUE);
+#endif    
+}
+
+/* ........................................................... */
+
 int quiet_sample_check (MODEL *pmod)
 {
     double **checkZ;
@@ -798,7 +811,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	gretl_print_destroy(prn);
     } else {
 	if (ddata->code == CORRGM) 
-	    graphmenu_state(TRUE);
+	    register_graph();
 	view_buffer(prn, hsize, vsize, title, ddata->code, view_items);
     }
 }
@@ -2148,7 +2161,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	    if (plot_freq(freq, &paths, dist))
 		errbox(_("gnuplot command failed"));
 	    else
-		graphmenu_state(TRUE);
+		register_graph();
 	}
 	free_freq(freq);
     }
@@ -2180,7 +2193,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 	gretl_print_destroy(prn);
 	return;
     }
-    graphmenu_state(TRUE);
+    register_graph();
 
     view_buffer(prn, 60, 400, _("gretl: periodogram"), PERGM, NULL);
 }
@@ -2448,7 +2461,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 		  &paths, &plot_count, 0, 1, 
 		  (pdum)? OPT_RESIDZ : OPT_RESID);
     if (err < 0) errbox(_("gnuplot command failed"));
-    else graphmenu_state(TRUE);
+    else register_graph();
     
     dataset_drop_vars(datainfo->v - origv, &Z, datainfo);
 }
@@ -2489,7 +2502,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     err = gnuplot(plot_list, lines, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, OPT_FA);
     if (err < 0) errbox(_("gnuplot command failed"));
-    else graphmenu_state(TRUE);
+    else register_graph();
 
     dataset_drop_vars(datainfo->v - origv, &Z, datainfo);
 }
@@ -2614,7 +2627,7 @@ void do_graph_var (void)
 	errbox(_("No data were available to graph"));
     else if (err < 0) 
 	errbox(_("gnuplot command failed"));
-    else graphmenu_state(TRUE);
+    else register_graph();
 }
 
 /* ........................................................... */
@@ -2646,7 +2659,7 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata)
     err = multi_scatters(command.list, atoi(command.param), &Z, 
 			 datainfo, &paths);
     if (err < 0) errbox(_("gnuplot command failed"));
-    else graphmenu_state(TRUE);
+    else register_graph();
 }
 
 /* ........................................................... */
@@ -2698,7 +2711,7 @@ void do_dummy_graph (GtkWidget *widget, dialog_t *ddata)
 		  &paths, &plot_count, 0, 1, OPT_Z);
 
     if (err < 0) errbox(_("gnuplot command failed"));
-    else graphmenu_state(TRUE);
+    else register_graph();
 }
 
 /* ........................................................... */
@@ -2740,12 +2753,8 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
     if (err == -999)
 	errbox(_("No data were available to graph"));
     else if (err < 0) errbox(_("gnuplot command failed"));
-    else {
-#ifdef GNUPLOT_PNG
-	gnuplot_show_png(paths.plotfile);
-#endif
-	graphmenu_state(TRUE);
-    }
+    else register_graph();
+
     free(lines);
 }
 
@@ -3560,7 +3569,7 @@ static int gui_exec_line (char *line,
 	    err = gnuplot(command.list, lines, &Z, datainfo,
 			  &paths, &plot_count, 1, 0, 0);
 	    if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
-	    else graphmenu_state(TRUE);
+	    else register_graph();
 	}
 	break;
 		
@@ -3614,7 +3623,7 @@ static int gui_exec_line (char *line,
 			  &paths, &plot_count, 0, 0, 0);
 	}
 	if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
-	else graphmenu_state(TRUE);
+	else register_graph();
 	break;
 
     case HAUSMAN:

@@ -36,17 +36,6 @@ extern void _printstr (PRN *prn, const double xx, int *ls);
 extern double _gamma_func (double x);
 extern double _gammadist (double s1, double s2, double x, int control);
 
-
-#ifdef GNUPLOT_PNG
-# define GNUPLOT_HDR(f) do { \
-                           fprintf(f, "set term png\n"); \
-                           fprintf(f, "set output 'gretltmp.png'\n"); \
-                        } while (0);
-#else 
-# define GNUPLOT_HDR(f) ; /* do nothing */
-#endif
-
-
 /* ........................................................ */
 
 static int printv (FILE *fp, const int nt, const int v1, 
@@ -443,46 +432,53 @@ static int factorized_vars (double ***pZ,
     return 0;
 }
 
+
+
 /**
  * gnuplot_tmpname:
  * @ppaths: pointer to path information struct.
  *
- * Writes a unique temporary filename into the plotfile member of @ppaths.
+ * Writes a unique temporary filename into the plotfile member of @ppaths,
+ * if GNUPLOT_PNG is defined.
  *
  * Returns: 0 on success, 1 on failure
  */
 
 int gnuplot_tmpname (PATHS *ppaths)
 {
-    sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
-    if (mktemp(ppaths->plotfile)) 
+#ifdef GNUPLOT_PNG
+    if (GRETL_GUI(ppaths)) {
+	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
+	if (mktemp(ppaths->plotfile)) 
+	    return 0;
+	else return 1;
+    } else
 	return 0;
-    else return 1;
+#else
+    return 0;
+#endif
 }
 
 /**
  * gnuplot_display:
- * @gpt: path to gnuplot executable.
- * @fname: name of gnuplot file to plot.
+ * @ppaths: pointer to path information struct.
  *
- * Executes gnuplot, passing as an argument the supplied filename.
+ * Executes gnuplot, passing as an argument ppaths->plotfile.
  *
  * Returns: the return value from the system command.
  */
 
-int gnuplot_display (const char *gpt, const char *fname)
+int gnuplot_display (const PATHS *ppaths)
 {
     int err = 0;
     char plotcmd[MAXLEN];
 
-#if defined(OS_WIN32)
-    sprintf(plotcmd, "\"%s\" \"%s\"", gpt, fname);
+#ifdef OS_WIN32
+    sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
     if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#elif defined(GNUPLOT_PNG)
-    sprintf(plotcmd, "%s \"%s\"", gpt, fname);
-    if (system(plotcmd)) err = 1;
 #else
-    sprintf(plotcmd, "%s -persist \"%s\"", gpt, fname);
+    sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
+	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
     if (system(plotcmd)) err = 1;
 #endif
     return err;
@@ -539,7 +535,7 @@ int gnuplot (LIST list, const int *lines,
 
     if ((fq = fopen(ppaths->plotfile, "w")) == NULL) return E_FOPEN;
 
-    GNUPLOT_HDR(fq);
+    GNUPLOT_HDR(ppaths, fq);
 
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
 	if (get_timevar(pdinfo, s2) >= 0) {
@@ -761,7 +757,7 @@ int gnuplot (LIST list, const int *lines,
     fclose(fq);
 
     if (!batch) {
-	if (gnuplot_display(ppaths->gnuplot, ppaths->plotfile)) miss = -1;
+	if (gnuplot_display(ppaths)) miss = -1;
     }
     return miss;
 }
@@ -817,7 +813,7 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
     gnuplot_tmpname(ppaths);
     fp = fopen(ppaths->plotfile, "w");
     fprintf(fp, "# multiple scatterplots\n");
-    GNUPLOT_HDR(fp);
+    GNUPLOT_HDR(ppaths, fp);
     fprintf(fp, "set size 1.0,1.0\nset origin 0.0,0.0\n"
 	    "set multiplot\n");
     fputs("set nokey\n", fp);
@@ -865,7 +861,7 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
     fprintf(fp, "\npause -1\n");
 #endif
     fclose(fp);
-    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
+    err = gnuplot_display(ppaths);
     free(plotlist);
     return err;
 }
@@ -893,7 +889,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     if (fp == NULL) return E_FOPEN;
 
     fprintf(fp, "# frequency plot\n");
-    GNUPLOT_HDR(fp);
+    GNUPLOT_HDR(ppaths, fp);
 
     if (dist) {
 	double propn, plotmin = 0.0, plotmax = 0.0;
@@ -980,7 +976,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     fprintf(fp, "pause -1\n");
 #endif
     if (fp) fclose(fp);
-    return gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
+    return gnuplot_display(ppaths);
 }
 
 /* ......................................................... */ 
@@ -997,7 +993,7 @@ int plot_fcast_errs (const int n, const double *obs,
     fp = fopen(ppaths->plotfile, "w");
     if (fp == NULL) return E_FOPEN;
     fprintf(fp, "# forecasts with 95 pc conf. interval\n");
-    GNUPLOT_HDR(fp);
+    GNUPLOT_HDR(ppaths, fp);
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2 title 'fitted' w lines , \\\n"
@@ -1018,7 +1014,7 @@ int plot_fcast_errs (const int n, const double *obs,
     fprintf(fp, "pause -1\n");
 #endif
     fclose(fp);
-    return gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
+    return gnuplot_display(ppaths);
 }
 
 /* ........................................................... */

@@ -464,7 +464,7 @@ int main (int argc, char *argv[])
 	free(modelspec);
     }
 
-    /*  remove(paths.plotfile); */
+    remove(paths.plotfile);
 
     return 0;
 }

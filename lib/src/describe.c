@@ -422,8 +422,8 @@ int corrgram (const int varno, const int order, double ***pZ,
 
     gnuplot_tmpname(ppaths);
     fq = fopen(ppaths->plotfile, "w");
-    /*  fq = popen("gnuplot -persist", "w"); */
     if (fq == NULL) return E_FOPEN;
+    GNUPLOT_HDR(ppaths, fq);
     fprintf(fq, "# correlogram\n");
     fprintf(fq, "set xlabel \"lag\"\n");
     fprintf(fq, "set xzeroaxis\n");
@@ -452,7 +452,7 @@ int corrgram (const int varno, const int order, double ***pZ,
     fprintf(fq, "pause -1\n");
 #endif
     fclose(fq);
-    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
+    err = gnuplot_display(ppaths);
 
  getout:
     free(x);
@@ -600,6 +600,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     if (!batch) {
 	gnuplot_tmpname(ppaths);
 	fq = fopen(ppaths->plotfile, "w");
+	GNUPLOT_HDR(ppaths, fq);
 	fprintf(fq, "# periodogram\n");
 	fprintf(fq, "set xtics nomirror\n"); 
 	if (pdinfo->pd == 4)
@@ -663,7 +664,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 	fprintf(fq, "pause -1\n");
 #endif
 	fclose(fq);
-	err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
+	err = gnuplot_display(ppaths);
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {

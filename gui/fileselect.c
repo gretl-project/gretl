@@ -28,7 +28,7 @@ extern void do_save_graph (const char *fname, const char *savestr);
 extern int ps_print_plots (const char *fname, int flag, gpointer data);
 extern int plot_to_xpm (const char *fname, gpointer data);
 #ifdef GNUPLOT_PNG
-extern void png_save_graph (GPT_SPEC *plot, const char *fname);
+extern void save_this_graph (GPT_SPEC *plot, const char *fname);
 #endif
 
 extern int olddat; /* gui_utils.c */
@@ -140,7 +140,7 @@ static const char *get_ext (int action, gpointer data)
     if (olddat && is_data_action(action)) 
 	return ".dat";
 
-    if (action == SAVE_GNUPLOT || action == SAVE_GNUPLOT_PNG) {
+    if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 	s = get_gp_ext(plot->termtype);
     }
@@ -263,7 +263,7 @@ static const char *get_filter (int action, gpointer data)
     if (olddat && is_data_action(action)) 
 	return _("gretl data files (*.dat)\0*.dat\0all files\0*\0");
 
-    if (action == SAVE_GNUPLOT || action == SAVE_GNUPLOT_PNG) {
+    if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 	return get_gp_filter(plot->termtype);
     }
@@ -397,10 +397,10 @@ void file_selector (char *msg, int action, gpointer data)
 	else if (err == 2) infobox(_("There were missing observations"));
     }
 #ifdef GNUPLOT_PNG
-    else if (action == SAVE_GNUPLOT_PNG) {
+    else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
-	png_save_graph(plot, fname);
+	save_this_graph(plot, fname);
     }
 #endif
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
@@ -536,7 +536,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
     /* now for the save options */
     if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH || 
-	action == SAVE_GNUPLOT_PNG) 
+	action == SAVE_THIS_GRAPH) 
 	extdata = gtk_object_get_data(GTK_OBJECT(fs), "graph");
 
     maybe_add_ext(fname, action, extdata); 
@@ -562,10 +562,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	else if (err == 2) infobox(_("There were missing observations"));
     }
 #ifdef GNUPLOT_PNG
-    else if (action == SAVE_GNUPLOT_PNG) {
+    else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = gtk_object_get_data(GTK_OBJECT(fs), "graph");
 
-	png_save_graph(plot, fname);
+	save_this_graph(plot, fname);
     }
 #endif
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
@@ -680,7 +680,7 @@ void file_selector (char *msg, int action, gpointer data)
 
     /* special cases */
 
-    if (action == SAVE_GNUPLOT || action == SAVE_GNUPLOT_PNG  
+    if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH  
 	|| action == SAVE_LAST_GRAPH ||
 	action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS ||
 	action == SAVE_BOXPLOT_XPM) 

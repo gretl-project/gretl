@@ -269,7 +269,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
         if (err > 0) infobox(_("There were missing observations"));
 	else errbox(_("gnuplot command failed"));
     }
-    else graphmenu_state(TRUE);
+    else register_graph();
 }
 
 /* ........................................................... */

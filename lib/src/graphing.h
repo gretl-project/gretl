@@ -57,6 +57,19 @@ typedef enum {
     GAMMA
 } dist_codes;
 
+#define GRETL_GUI(p) (p->binbase[0] && p->ratsbase[0] && p->dbhost_ip[0])
+
+#ifndef OS_WIN32
+# define GNUPLOT_HDR(p, f) do { \
+                              if (GRETL_GUI(p)) { \
+                                 fprintf(f, "set term png color\n"); \
+                                 fprintf(f, "set output 'gretltmp.png'\n"); \
+			       } \
+                           } while (0);
+#else 
+# define GNUPLOT_HDR(p, f) ; /* do nothing */
+#endif
+
 /* functions follow */
  
 int plot (const LIST list, 
@@ -69,7 +82,7 @@ int graph (const LIST list,
 
 int gnuplot_tmpname (PATHS *ppaths);
 
-int gnuplot_display (const char *gpt, const char *fname);
+int gnuplot_display (const PATHS *ppaths);
 
 int gnuplot (LIST list, const int *lines, 
 	     double ***pZ, DATAINFO *pdinfo, 

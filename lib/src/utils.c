@@ -1215,10 +1215,16 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 	if (home != NULL)
 	    strcpy(ppaths->gretldir, home);
 	else
-	    strcpy(ppaths->gretldir, "c:\\userdata\\gretl"); 	
-	sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
-	strcpy(ppaths->ratsbase, "f:\\"); 
-	strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	    strcpy(ppaths->gretldir, "c:\\userdata\\gretl");
+	if (gui) {
+	    sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
+	    strcpy(ppaths->ratsbase, "f:\\"); 
+	    strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	} else {
+	    ppaths->binbase[0] = '\0';
+	    ppaths->ratsbase[0] = '\0';
+	    ppaths->dbhost_ip[0] = '\0';
+	}
 	ppaths->currdir[0] = '\0';
     }
 
@@ -1257,9 +1263,15 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 	    strcpy(ppaths->gretldir, home);
 	else
 	    strcpy(ppaths->gretldir, GRETL); 
-	sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
-	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
-	strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	if (gui) {
+	    sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
+	    strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
+	    strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	} else {
+	    ppaths->binbase[0] = '\0';
+	    ppaths->ratsbase[0] = '\0';
+	    ppaths->dbhost_ip[0] = '\0';
+	}
 	strcpy(ppaths->gnuplot, "gnuplot");
 	ppaths->currdir[0] = '\0';
 

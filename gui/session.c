@@ -172,6 +172,38 @@ static void edit_session_notes (void)
 		EDIT_NOTES);
 }
 
+/* .................................................................. */
+
+static int filter_plotfile (const char *src, const char *dest)
+{
+    FILE *fs, *fd;
+    char fline[MAXLEN];
+
+    fs = fopen(src, "r");
+    if (!fs) {
+	errbox("Couldn't read graph file");
+	return 1;
+    }
+
+    fd = fopen(dest, "w");
+    if (!fd) {
+	errbox("Couldn't write graph file");
+	fclose(fs);
+	return 1;
+    }
+
+    while (fgets(fline, MAXLEN-1, fs)) {
+	if (strncmp(fline, "set term", 8) && 
+	    strncmp(fline, "set output", 10))
+	    fputs(fline, fd);
+    }
+
+    fclose(fs);
+    fclose(fd);
+    
+    return 0;
+}
+
 /* ........................................................... */
 
 void add_last_graph (gpointer data, guint code, GtkWidget *w)
@@ -179,17 +211,24 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     char grname[12], pltname[MAXLEN], savedir[MAXLEN];
     int i = session.ngraphs;
     static int boxplot_count;
+#ifdef GNUPLOT_PNG
+    GPT_SPEC *plot = (GPT_SPEC *) data;
+#endif
 
     get_default_dir(savedir);
 
     if (code == 0) { /* gnuplot graph */
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
 	sprintf(grname, "Graph %d", plot_count + 1);
+#ifdef GNUPLOT_PNG
+	if (filter_plotfile(plot->fname, pltname)) return;
+#else
 	if (copyfile(paths.plotfile, pltname)) {
 	    errbox(_("No graph found"));
 	    return;
 	} 
 	remove(paths.plotfile);
+#endif
     } else { /* gretl boxplot */
 	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count + 1);
 	sprintf(grname, "Boxplot %d", boxplot_count + 1);

@@ -48,6 +48,8 @@ void do_run_script (gpointer data, guint code, GtkWidget *w);
 
 void gui_errmsg (const int errcode);
 
+void register_graph (void);
+
 /* sample-related functions */
 
 void change_sample (GtkWidget *widget, dialog_t *ddata);

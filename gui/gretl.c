@@ -44,8 +44,10 @@
 #include "pixmaps/mini.netscape.xpm"
 #include "pixmaps/mini.pdf.xpm"
 #include "pixmaps/mini.plot.xpm"
-#include "pixmaps/mini.camera.xpm"
 #include "pixmaps/mini.ofolder.xpm"
+#ifndef GNUPLOT_PNG
+# include "pixmaps/mini.camera.xpm"
+#endif
 
 /* functions from other gretl GUI files */
 extern void free_modelspec (void);    /* lib.c */
@@ -190,17 +192,6 @@ static int unmangle (const char *dosname, char *longname);
 
 #endif /* G_OS_WIN32 */
 
-void sigusr1_handler (int sig)
-{
-    add_last_graph(NULL, 0, NULL);
-}
-
-void sigusr2_handler (int sig)
-{
-    infobox("Got SIGUSR2");
-}
-
-
 GtkItemFactoryEntry data_items[] = {
     { _("/_File"), NULL, NULL, 0, "<Branch>" },
     { _("/File/_Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
@@ -273,7 +264,9 @@ GtkItemFactoryEntry data_items[] = {
     { _("/File/_Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL },
     { _("/File/sep1"), NULL, NULL, 0, "<Separator>" },
+#ifndef GNUPLOT_PNG
     { _("/File/Save last graph"), NULL, gpt_save_dialog, 0, NULL }, 
+#endif
     { _("/File/sep2"), NULL, NULL, 0, "<Separator>" },
     { _("/File/_View command log"), NULL, view_log, 0, NULL },
     { _("/File/sep2a"), NULL, NULL, 0, "<Separator>" },
@@ -303,7 +296,9 @@ GtkItemFactoryEntry data_items[] = {
     { _("/Utilities/Start GNU R"), NULL, startR, 0, NULL },
     { _("/_Session"), NULL, NULL, 0, "<Branch>" },
     { _("/Session/_Icon view"), NULL, view_session, 0, NULL },
+#ifndef GNUPLOT_PNG
     { _("/Session/_Add last graph"), NULL, add_last_graph, 0, NULL },
+#endif
     { _("/Session/sep0"), NULL, NULL, 0, "<Separator>" },
     { _("/Session/_Open..."), NULL, open_script, OPEN_SESSION, NULL },
     { _("/Session/sep1"), NULL, NULL, 0, "<Separator>" },
@@ -583,8 +578,6 @@ int main (int argc, char *argv[])
 #else 
     set_rcfile();
     make_userdir(&paths);
-    signal(SIGUSR1, sigusr1_handler);
-    signal(SIGUSR2, sigusr2_handler);
 #endif/* G_OS_WIN32 */
 
 #ifdef DND
@@ -752,7 +745,9 @@ int main (int argc, char *argv[])
     add_files_to_menu(1);
     add_files_to_menu(2);
     add_files_to_menu(3);
+#ifndef GNUPLOT_PNG
     graphmenu_state(FALSE);
+#endif
     session_state(FALSE);
     restore_sample_state(FALSE);
     menubar_state(FALSE);
@@ -1667,8 +1662,10 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    toolfunc = xy_graph;
 	    break;
 	case 8:
+#ifndef GNUPLOT_PNG
 	    toolxpm = mini_camera_xpm;
 	    toolfunc = add_last_graph;
+#endif
 	    break;
 	case 9:
 	    toolxpm = mini_ofolder_xpm;
@@ -1677,6 +1674,10 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	default:
 	    break;
 	}
+
+#ifdef GNUPLOT_PNG
+	if (i == 8) continue;
+#endif
 
 	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, colormap, &mask, NULL, 
 						     toolxpm);

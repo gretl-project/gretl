@@ -650,7 +650,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
 
 #ifdef GNUPLOT_PNG
 
-void png_save_graph (GPT_SPEC *plot, const char *fname)
+void save_this_graph (GPT_SPEC *plot, const char *fname)
 {
     FILE *fq;
     PRN *prn;
@@ -1124,8 +1124,8 @@ typedef struct png_plot_t {
 } png_plot_t;
 
 /* Size of drawing area */
-#define WIDTH 640 /* 576 */
-#define HEIGHT 480 /* 432 */
+#define WIDTH 640    /* try 576 */
+#define HEIGHT 480   /* try 432 */
 
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
@@ -1135,12 +1135,19 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 
     if (!strcmp(item, "Save as postscript (EPS)...")) {
 	strcpy(plot->spec->termtype, "postscript");
-	file_selector("Save graph as postscript file", SAVE_GNUPLOT_PNG, plot->spec);
+	file_selector("Save graph as postscript file", SAVE_THIS_GRAPH, 
+		      plot->spec);
     }
     else if (!strcmp(item, "Save as PNG...")) {
 	strcpy(plot->spec->termtype, "png");
-        file_selector("Save graph as PNG", SAVE_GNUPLOT_PNG, plot->spec);
+        file_selector("Save graph as PNG", SAVE_THIS_GRAPH, plot->spec);
     }
+    else if (!strcmp(item, "Save to session as icon")) { 
+	add_last_graph(plot->spec, 0, NULL);
+    } 
+    else if (!strcmp(item, "Print...")) { 
+        fprintf(stderr, "Chose print\n");
+    } 
     else if (!strcmp(item, "Close")) { 
         gtk_widget_destroy(plot->window);
     } 
@@ -1156,6 +1163,8 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
     static char *plot_items[] = {
         "Save as postscript (EPS)...",
 	"Save as PNG...",
+	"Save to session as icon",
+	"Print...",
         "Close",
         NULL
     };
@@ -1236,11 +1245,8 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 
 static void plot_quit (GtkWidget *w, png_plot_t *plot)
 {
-    gtk_widget_destroy(w);
-    w = NULL;
     remove(plot->spec->fname);
     free(plot->spec);
-    if (plot->popup) g_free(plot->popup);
     free(plot);
 }
 
@@ -1269,7 +1275,7 @@ int gnuplot_show_png (char *plotfile)
     gtk_widget_set_usize(GTK_WIDGET(w), WIDTH, HEIGHT);
     gtk_window_set_policy(GTK_WINDOW(w), TRUE, FALSE, FALSE);
 
-    gtk_signal_connect(GTK_OBJECT(w), "delete_event",
+    gtk_signal_connect(GTK_OBJECT(w), "destroy",
 		       GTK_SIGNAL_FUNC(plot_quit), plot);
     gtk_signal_connect(GTK_OBJECT(w), "key_press_event", 
                        GTK_SIGNAL_FUNC(plot_key_handler), plot);
@@ -1298,6 +1304,6 @@ int gnuplot_show_png (char *plotfile)
     return 0;
 }
 
-#endif
+#endif /* GNUPLOT_PNG */
 
 

@@ -908,6 +908,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	if (prn->fp == NULL &&
 	    gnuplot_tmpname(ppaths) == 0 && 
 	    (fq = fopen(ppaths->plotfile, "w"))) { 
+	    GNUPLOT_HDR(ppaths, fq);
 	    fprintf(fq, "# CUSUM test\n");
 	    fprintf(fq, "set xlabel \"observation\"\n");
 	    fprintf(fq, "set xzeroaxis\n");
@@ -926,7 +927,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    fprintf(fq, "pause -1\n");
 #endif
 	    fclose(fq);
-	    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
+	    err = gnuplot_display(ppaths);
 	}
     }
 
