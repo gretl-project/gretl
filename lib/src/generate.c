@@ -724,7 +724,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    err = E_CONST;
 	    goto genr_return;
 	}
-	if (haschar('=', s) == strlen(s) - 1) {
+	if (lastchar('=', s)) {
 	    err = E_EQN;
 	    goto genr_return;
 	}

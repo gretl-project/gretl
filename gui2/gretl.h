@@ -53,6 +53,7 @@
 #endif
 
 #define MAXSTR 255
+#define GNULL (gconstpointer) NULL
 
 /* basic global program vars */
 extern double **Z;

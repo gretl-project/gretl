@@ -23,7 +23,7 @@ GLIBLIB := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
-GRETLLIB = -L$(imports) -lgretl -lintl
+GRETLLIB = -L$(imports) -lgretl -lintl.dll
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas -lf2c
 

@@ -40,13 +40,15 @@ int string_is_blank (const char *s);
 
 double dot_atof (const char *s);
  
-int dotpos (const char *str);
+size_t dotpos (const char *str);
 
 int slashpos (const char *str);
 
 void delchar (int c, char *str);
 
 int haschar (char c, const char *str);
+
+int lastchar (char c, const char *s);
 
 char *charsub (char *str, char find, char repl);
 

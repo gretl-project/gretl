@@ -140,7 +140,7 @@ static const char *get_ext (int action, gpointer data)
 	s = get_gp_ext(data);
     } 
     else {
-	int i;
+	size_t i;
 
 	for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
 	    if (action == action_map[i].action) {
@@ -747,8 +747,7 @@ gtk_file_selection_glob_populate (GtkFileSelection *fs,
     GtkTreeIter iter;
     GtkListStore *file_model;
     gchar *pattern;
-    size_t dirlen;
-    gint i;
+    size_t i, dirlen;
 
     g_return_if_fail (GTK_IS_FILE_SELECTION (fs));
 

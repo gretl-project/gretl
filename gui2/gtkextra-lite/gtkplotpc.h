@@ -21,7 +21,7 @@
 #define __GTK_PLOT_PC_H__
 
 #include <stdio.h>
-#include "gtkpsfont.h"
+#include "gtkpsfontpango.h"
 
 #ifdef __cplusplus
 extern "C" {

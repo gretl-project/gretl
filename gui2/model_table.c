@@ -32,11 +32,26 @@ static void print_rtf_row_spec (PRN *prn, int tall);
 
 #define MAX_TABLE_MODELS 6
 
+#ifdef GNULL
 GtkItemFactoryEntry model_table_items[] = {
-#ifdef USE_GNOME
+# ifdef USE_GNOME
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },     
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
+# endif
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL, GNULL },
+    { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
+};
+#else
+GtkItemFactoryEntry model_table_items[] = {
+# ifdef USE_GNOME
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-#endif
+# endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
@@ -45,6 +60,7 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
+#endif
 
 static int real_model_table_list_length (void)
 {

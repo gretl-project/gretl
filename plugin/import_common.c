@@ -38,7 +38,7 @@ static void invalid_varname (char *errbuf)
 
 static int label_is_date (char *str)
 {
-    size_t len = strlen(str);
+    int len = strlen(str);
     int i, d, pd = 0;
     double dd, sub;
 

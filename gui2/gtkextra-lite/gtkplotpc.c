@@ -26,7 +26,7 @@
 #include <gtk/gtk.h>
 
 #include "gtkplotpc.h"
-#include "gtkpsfont.h"
+#include "gtkpsfontpango.h"
 
 static void gtk_plot_pc_class_init                 (GtkPlotPCClass *klass);
 static void gtk_plot_pc_real_init                  (GtkPlotPC *pc);

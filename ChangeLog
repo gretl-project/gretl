@@ -13,6 +13,7 @@ version 1.1.1
 - Fix bug in model table (wrong coefficient numbering)
 - Fix bug: when a file is dragged onto gretl, opening the
   file failed if it has a space in its name
+- configure: require correct version of GMP (>= 4.0.1)
 
 07/23/03 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display

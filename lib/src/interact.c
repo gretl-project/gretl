@@ -455,7 +455,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		return;
 	    }
 	    strcpy(remainder, line + n + 1);
-	    for (i=1; i<strlen(remainder); i++) {
+	    for (i=1; i< (int) strlen(remainder); i++) {
 		if (remainder[i] == q) {
 		    strncpy(command->param, remainder, i + 1);
 		    command->param[i+1] = '\0';
@@ -472,7 +472,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* fprintf(stderr, "got filename '%s'\n", command->param); */
 	    _shiftleft(remainder, strlen(command->param));
 	    /* unquote the filename */
-	    for (i=0; i<strlen(command->param) - 2; i++) {
+	    for (i=0; i< (int) strlen(command->param) - 2; i++) {
 		command->param[i] = command->param[i+1];
 	    }
 	    command->param[i] = '\0';

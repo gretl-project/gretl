@@ -49,7 +49,7 @@ void _delete (char *str, int indx, int count);
 
 int _isnumber (const char *str);
 
-void _esl_trunc (char *str, int n);
+void _esl_trunc (char *str, size_t n);
 
 int _count_fields (const char *str);
 

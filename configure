@@ -22284,7 +22284,7 @@ fi;
      gmp_config_args="$gmp_config_args --prefix=$gmp_config_prefix"
   fi
 
-  min_gmp_version=1.0.0
+  min_gmp_version=4.0.1
 
   echo "$as_me:$LINENO: checking for GMP - version >= $min_gmp_version" >&5
 echo $ECHO_N "checking for GMP - version >= $min_gmp_version... $ECHO_C" >&6

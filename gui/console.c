@@ -103,13 +103,22 @@ static int push_history_line (const char *line)
     return 0;
 }
 
+static void beep (void)
+{
+    putchar('\a');
+    fflush(stdout);
+}
+
 static char *pop_history_line (int keyval)
 {
     static int blank;
 
     if (keyval == GDK_Up) {
 	if (hl < 0) hl = (hlmax > 1 && !blank)? 1 : 0;
-	if (hl == hlmax) return NULL;
+	if (hl == hlmax) {
+	    beep();
+	    return NULL;
+	}
 	blank = 0;
 	return cmd_history[hl++];
     }
@@ -118,6 +127,7 @@ static char *pop_history_line (int keyval)
 	if (hl == hlmax) hl = hlmax - 2;
 	if (hl < 0) {
 	    blank = 1;
+	    beep();
 	    return NULL;
 	}
 	blank = 0;

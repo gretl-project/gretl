@@ -37,7 +37,7 @@
 #include <locale.h>
 
 #include "gtkplot-lite.h"
-#include "gtkpsfont.h"
+#include "gtkpsfontpango.h"
 #include "gtkplotpc.h"
 #include "gtkplotps.h"
 
@@ -749,7 +749,7 @@ psoutputstring (GtkPlotPC *pc,
   
   if (psfont->i18n_latinfamily) {
     while (*p) {
-      code = (*p >= 0 && *p <= 0x7f) ? 1 : 2;
+      code = (*p <= 0x7f) ? 1 : 2;
       if (curcode && curcode != code)
 	fprintf(out, "%c %s\n", end[curcode], addstring);
       if (curcode != code) {

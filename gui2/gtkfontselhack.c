@@ -958,7 +958,7 @@ static void
 gtk_font_selection_hack_show_available_sizes (GtkFontSelectionHack *fontsel,
 					      gboolean          first_time)
 {
-  gint i;
+  size_t i;
   GtkListStore *model;
   GtkTreeSelection *selection;
   gchar buffer[128];

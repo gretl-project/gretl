@@ -62,68 +62,68 @@ int echo_off;               /* don't echo commands */
 int replay;                 /* are we replaying old session commands or not? */
 
 GtkItemFactoryEntry log_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/File/_Save As..."), NULL, file_save, SAVE_CMDS, NULL },
-    { N_("/File/_Run"), NULL, do_run_script, SESSION_EXEC, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },    
+    { N_("/File/_Save As..."), NULL, file_save, SAVE_CMDS, NULL, GNULL },
+    { N_("/File/_Run"), NULL, do_run_script, SESSION_EXEC, NULL, GNULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
 #endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry script_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, NULL },
-    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, NULL, GNULL },
+    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL, GNULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
 #endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL },
-    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
-    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Paste"), NULL, text_paste, 0, NULL, GNULL },
+    { N_("/Edit/_Replace..."), NULL, text_replace, 0, NULL, GNULL },
+    { N_("/Edit/_Undo"), NULL, text_undo, 0, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry sample_script_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, NULL },
-    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },    
+    { N_("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, NULL, GNULL },
+    { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL, GNULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
 #endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry script_out_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },    
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, NULL, GNULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
 #endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry view_items[] = {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },     
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
 #endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
@@ -3843,7 +3843,7 @@ int execute_script (const char *runfile, const char *buf,
 	/* check that the file has something in it */
 	while (fgets(tmp, MAXLEN-1, fb)) {
 	    if (strlen(tmp)) {
-		for (i=0; i<strlen(tmp); i++) {
+		for (i=0; i<(int)strlen(tmp); i++) {
 		    if (!isspace(tmp[i])) {
 			content = 1;
 			break;
@@ -5150,7 +5150,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     diff = strlen(replace) - len;
 
     p = buf;
-    while (*p && (p - buf) <= fullsz) {
+    while (*p && (size_t) (p - buf) <= fullsz) {
 	if ((q = strstr(p, find))) {
 	    count++;
 	    p = q + 1;
@@ -5186,7 +5186,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     }
 
     p = buf;
-    while (*p && (p - buf) <= fullsz) {
+    while (*p && (size_t) (p - buf) <= fullsz) {
 	if ((q = strstr(p, find))) {
 	    strncat(modbuf, p, q - p);
 	    strcat(modbuf, replace);

@@ -51,7 +51,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
     double rsum, avg, z = 0;
     int i, j, vx, vy, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int rcount;
-    size_t nn;
+    int nn;
 
     if (list[0] != 2) {
 	pputs(prn, _("spearman command requires two variables\n"));

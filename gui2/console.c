@@ -29,12 +29,12 @@ extern int gui_exec_line (char *line,
 			  const char *myname);
 
 GtkItemFactoryEntry console_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, NULL },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, NULL, GNULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 static GtkWidget *console_view;
@@ -103,13 +103,22 @@ static int push_history_line (const char *line)
     return 0;
 }
 
+static void beep (void)
+{
+    putchar('\a');
+    fflush(stdout);
+}
+
 static char *pop_history_line (int keyval)
 {
     static int blank;
 
     if (keyval == GDK_Up) {
 	if (hl < 0) hl = (hlmax > 1 && !blank)? 1 : 0;
-	if (hl == hlmax) return NULL;
+	if (hl == hlmax) {
+	    beep();
+	    return NULL;
+	}
 	blank = 0;
 	return cmd_history[hl++];
     }
@@ -118,6 +127,7 @@ static char *pop_history_line (int keyval)
 	if (hl == hlmax) hl = hlmax - 2;
 	if (hl < 0) {
 	    blank = 1;
+	    beep();
 	    return NULL;
 	}
 	blank = 0;

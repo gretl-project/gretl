@@ -263,7 +263,7 @@ dnl
 dnl See if GMP lib is available
 dnl
 if test x"${try_gmp}" != xno ; then
-  AM_PATH_GMP(, have_gmp="yes" ; AC_DEFINE(ENABLE_GMP))
+  AM_PATH_GMP(4.0.1, have_gmp="yes" ; AC_DEFINE(ENABLE_GMP))
 fi
 
 dnl

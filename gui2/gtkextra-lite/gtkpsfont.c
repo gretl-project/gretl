@@ -29,11 +29,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <pango/pango.h>
-#include "gtkpsfont.h"
+#include "gtkpsfontpango.h"
 
 #define FONTCACHE_SIZE 17
 #define NUM_X11_FONTS 2
-
 
 static GtkPSFont font_data[] = 
 {

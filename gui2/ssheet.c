@@ -49,10 +49,10 @@ static void set_up_sheet_column (GtkTreeViewColumn *column, gint width);
 static gint get_data_col_width (void);
 
 static GtkItemFactoryEntry sheet_items[] = {
-    { N_("/_Observation"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Observation/_Append obs"), NULL, sheet_add_obs, SHEET_AT_END, NULL },
-    { N_("/Observation/_Insert obs"), NULL, sheet_add_obs, SHEET_AT_POINT, NULL },
-    { N_("/Add _Variable"), NULL, sheet_add_var, 0, NULL }
+    { N_("/_Observation"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Observation/_Append obs"), NULL, sheet_add_obs, SHEET_AT_END, NULL, GNULL },
+    { N_("/Observation/_Insert obs"), NULL, sheet_add_obs, SHEET_AT_POINT, NULL, GNULL },
+    { N_("/Add _Variable"), NULL, sheet_add_var, 0, NULL, GNULL }
 };
 
 /* ........................................................... */

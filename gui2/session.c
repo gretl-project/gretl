@@ -156,24 +156,24 @@ static char *session_items[] = {
 };
 
 GtkItemFactoryEntry gp_edit_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL },
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL },
-    { N_("/File/Send to _gnuplot"), NULL, gp_to_gnuplot, 0, NULL },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
+    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL, GNULL },
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL, GNULL },
+    { N_("/File/Send to _gnuplot"), NULL, gp_to_gnuplot, 0, NULL, GNULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 GtkItemFactoryEntry boxplot_edit_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
-    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL },
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
+    { N_("/File/_Save"), NULL, auto_save_gp, 0, NULL, GNULL },
+    { N_("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL, GNULL },
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 /* file-scope globals */
@@ -1721,7 +1721,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 static void session_build_popups (void)
 {
     GtkWidget *item;
-    int i;
+    size_t i;
 
     if (global_popup == NULL) {
 	global_popup = gtk_menu_new();
@@ -1736,7 +1736,7 @@ static void session_build_popups (void)
     }
 
     if (session_popup == NULL) {
-	gint n = sizeof(session_items) / sizeof(session_items[0]);
+	size_t n = sizeof(session_items) / sizeof(session_items[0]);
 
 	session_popup = gtk_menu_new();
 	for (i=0; i<n; i++) {

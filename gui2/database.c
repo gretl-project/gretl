@@ -53,11 +53,11 @@ enum db_data_actions {
 };
 
 GtkItemFactoryEntry db_items[] = {
-    { N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL},
-    { N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL },
-    { N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL },
-    { N_("/_Find"), NULL, menu_find, 1, NULL },
-    { NULL, NULL, NULL, 0, NULL }
+    { N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL, GNULL },
+    { N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL, GNULL },
+    { N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL, GNULL },
+    { N_("/_Find"), NULL, menu_find, 1, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 /* ........................................................... */

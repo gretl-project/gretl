@@ -82,7 +82,7 @@ double dot_atof (const char *s)
  *
  */
 
-int dotpos (const char *str)
+size_t dotpos (const char *str)
 { 
     int i, n = strlen(str);
 
@@ -195,6 +195,22 @@ int haschar (char c, const char *str)
 }
 
 /**
+ * lastchar:
+ * @c: the character to look for.
+ * @str: the string to examine.
+ *
+ * Returns: 1 if @c is the last character in @s, 0 otherwise
+ *
+ */
+
+int lastchar (char c, const char *s)
+{
+    if (s == NULL || *s == 0) return 0;
+    if (s[strlen(s) - 1] == c) return 1;
+    return 0;
+}
+
+/**
  * charsub:
  * @str: the string to operate on.
  * @find: the character to replace.
@@ -278,7 +294,7 @@ void lower (char *str)
  *
  */
 
-void _esl_trunc (char *str, int n)
+void _esl_trunc (char *str, size_t n)
 {
     if (n < strlen(str)) str[n] = 0;
 }

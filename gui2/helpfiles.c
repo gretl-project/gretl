@@ -55,15 +55,15 @@ static GtkWidget *find_entry;
 static char *needle;
 
 GtkItemFactoryEntry help_items[] = {
-    { N_("/_Topics"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/_Find"), NULL, menu_find, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL}
+    { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
+    { N_("/_Find"), NULL, menu_find, 0, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
 #ifdef ENABLE_NLS
 GtkItemFactoryEntry english_help_items[] = {
-    { N_("/_Find"), NULL, menu_find, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL}
+    { N_("/_Find"), NULL, menu_find, 0, NULL, GNULL },
+    { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 #endif
 

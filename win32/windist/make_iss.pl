@@ -36,7 +36,7 @@ print "DefaultDirName=c:\\userdata\\gretl\n";
 print "DefaultGroupName=gretl\n";
 print "UninstallDisplayIcon={app}\\gretlw32.exe\n";
 print "ChangesAssociations=yes\n";
-print "MinVersion=4,3.51\n";
+# print "MinVersion=4,3.51\n";
 # print "UsePreviousAppDir=no\n";
 
 print "\n[Dirs]\n";
@@ -60,8 +60,8 @@ print "Name: \"{app}\\lib\\gtk-2.0\"\n";
 print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\"\n";
 print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\\loaders\"\n";
 print "Name: \"{app}\\lib\\pango\"\n";
-print "Name: \"{app}\\lib\\pango\\1.2.0\"\n";
-print "Name: \"{app}\\lib\\pango\\1.2.0\\modules\"\n";
+print "Name: \"{app}\\lib\\pango\\1.0.0\"\n";
+print "Name: \"{app}\\lib\\pango\\1.0.0\\modules\"\n";
 
 # GTK message catalog
 print "Name: \"{app}\\lib\\locale\"\n";
@@ -78,22 +78,24 @@ print "Name: \"{app}\\etc\\pango\"\n";
 print "\n[Files]\n";
 
 while ($line = <STDIN>) {
-   $line =~ s+/+\\+g;
-   chomp($line);
-   @pathbits = split(/\\/, $line);
-   print "Source: \"$line\"; "; 
-   if ($line =~ /gnuplot/) {
-      print "Destdir: \"{app}\\..";         
-      for ($i = 0; $i < @pathbits - 1; $i++) {
-         print "\\$pathbits[$i]";
-      }
-   } else {
-      print "Destdir: \"{app}";
-      for ($i = 1; $i < @pathbits - 1; $i++) {
-         print "\\$pathbits[$i]";
-      }
-   }     
-   print "\"\n";
+    $line =~ s+/+\\+g;
+    chomp($line);
+    @pathbits = split(/\\/, $line);
+    print "Source: \"$line\"; "; 
+    if ($line =~ /\.ini$/) {
+	print "Destdir: \"{win}";
+    } elsif ($line =~ /gnuplot/) {
+	print "Destdir: \"{app}\\..";
+	for ($i = 0; $i < @pathbits - 1; $i++) {
+	    print "\\$pathbits[$i]";
+	}
+    } else {
+	print "Destdir: \"{app}";
+	for ($i = 1; $i < @pathbits - 1; $i++) {
+	    print "\\$pathbits[$i]";
+	}
+    }
+    print "\"\n";
 }
 
 print "\n[Icons]\n";

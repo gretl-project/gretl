@@ -311,7 +311,7 @@ L150:
 /*        of par. also test for the exceptional cases where parl */
 /*        is zero or the number of iterations has reached 10. */
 
-    if (abs(fp) <= p1 * *delta || parl == zero && fp <= temp && temp < zero ||
+    if (abs(fp) <= p1 * *delta || (parl == zero && fp <= temp && temp < zero) ||
 	     iter == 10) {
 	goto L220;
     }

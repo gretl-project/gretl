@@ -1105,7 +1105,9 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 	/* see if the series is already in the dataset */
 	v = varindex(pdinfo, series);
+#ifdef DB_DEBUG
 	fprintf(stderr, "db_get_series: pdinfo->v = %d, v = %d\n", pdinfo->v, v);
+#endif
 	if (v < pdinfo->v && comp_method == COMPACT_NONE) {
 	    this_var_method = COMPACT_METHOD(pdinfo, v);
 	}

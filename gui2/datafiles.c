@@ -949,7 +949,7 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
     char winnum[3];
     gpointer p;
 
-    p = gtk_object_get_data(GTK_OBJECT(notebook), "browse_ptr");
+    p = g_object_get_data(G_OBJECT(notebook), "browse_ptr");
     if (p == NULL) return;
     else {
 	GtkWidget *w = *(GtkWidget **) p;
