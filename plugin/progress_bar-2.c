@@ -41,7 +41,6 @@ static void destroy_progress (GtkWidget *widget, ProgressData *pdata)
     pdata->window = NULL;
     g_free(pdata);
     pdata = NULL;
-    fprintf(stderr, "Done destroy progress, pdata NULL\n");
 }
 
 /* ........................................................... */

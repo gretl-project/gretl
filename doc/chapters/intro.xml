@@ -74,6 +74,12 @@
 	    and offer the option of auto-updating.</para>
 	</listitem>
       </varlistentry>
+      <varlistentry><term>International</term>
+	<listitem><para><application>gretl</application> will produce
+	    its output in English, Spanish or French, depending on
+	    your computer's native language setting.</para>
+	</listitem>
+      </varlistentry>
     </variablelist>
 
   </sect1>
@@ -96,11 +102,20 @@
     </para>
 
     <para>
-      I am also grateful to William Greene, author of
+      I am grateful to William Greene, author of
       <citetitle>Econometric Analysis</citetitle>, for permission to
       include in the <application>gretl</application> distribution
-      some of the data files analysed in his text.
+      some of the data sets analysed in his text, and to Jeffrey
+      Wooldridge for helping me prepare a
+      <application>gretl</application> version of the data sets from
+      his <citetitle>Introductory Econometrics: A Modern
+      Approach</citetitle>.
     </para>
+
+    <para>With regard to the internationalization of
+      <application>gretl</application>, I wish to thank Ignacio
+      D&iacute;az-Emperanza and Michel Robitaille, who prepared the
+      Spanish and French translations respectively.</para>
 
     <para>I have benefitted greatly from the work of numerous
       developers of open-source software: for specifics please see
@@ -143,15 +158,16 @@
 	    <command>N</command> with the specific version number of
 	    the file you downloaded at step 1).</para></listitem>
 	<listitem><para>Change directory to the gretl source directory
-	    created at step 2 (e.g. <filename>gretl-0.98</filename>).
+	    created at step 2 (e.g. <filename>gretl-1.0</filename>).
 	  </para></listitem>  
 	<listitem><para>The basic routine is then 
 	    <programlisting>
 	      ./configure 
 	      make 
+	      make check
 	      make install
-	    </programlisting>
-	    However, you should probably do
+	    </programlisting> However, you should probably read the
+	    <filename>INSTALL</filename> file first, and/or do
 	    <command>./configure --help</command> first to see what
 	    options are available. One option you way wish to tweak is
 	    <command>--prefix</command>.  By default the installation

@@ -544,6 +544,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     GtkWidget *main_vbox;
     char *titlestr;
     windata_t *dbwin;
+    int db_width = 700, db_height = 320;
     int err = 0;
 
     dbwin = mymalloc(sizeof *dbwin);
@@ -561,6 +562,10 @@ void display_db_series_list (int action, char *fname, char *buf)
     } else {
 	titlestr = fname;
     }
+
+    db_width *= gui_scale;
+    db_height *= gui_scale;
+    gtk_window_set_default_size(GTK_WINDOW(dbwin->w), db_width, db_height);
 
     gtk_window_set_title(GTK_WINDOW(dbwin->w), titlestr);
 
@@ -808,10 +813,6 @@ static GtkWidget *database_window (windata_t *ddata)
     };
     GtkWidget *box;
     int cols = 3;
-    int full_width = 750, listbox_height = 320;
-
-    full_width *= gui_scale;
-    listbox_height *= gui_scale;
 
     box = gtk_vbox_new (FALSE, 0);
 
@@ -821,7 +822,6 @@ static GtkWidget *database_window (windata_t *ddata)
 		      G_CALLBACK(popup_menu_handler), 
 		      (gpointer) ddata->popup);
 
-    gtk_widget_set_size_request (box, full_width, listbox_height);
     gtk_widget_show (box);
 
     return box;

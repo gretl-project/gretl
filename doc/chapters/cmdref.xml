@@ -1440,6 +1440,32 @@
 
     </sect2>
 
+    <sect2 id="lad"><title>lad</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>
+	Calculates a regression that minimizes the sum of the absolute
+	deviations of the observed from the fitted values of the
+	dependent variable.  Coefficient estimates are derived using
+	the Barrodale&ndash;Roberts simplex algorithm; a warning is
+	printed if the solution is not unique.  Standard errors are
+	derived using the bootstrap procedure with 500 drawings.
+      </para>
+
+    </sect2>
+
+
     <sect2 id="lags"><title>lags</title>
 
       <informaltable role="cmd" frame="none">
@@ -2059,9 +2085,10 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Argument:</entry>
-	      <entry>[ <replaceable>varlist</replaceable> ] 
-		&opto; or [ <replaceable>string</replaceable> ]
+	      <entry>Argument:</entry> <entry>[
+	      <replaceable>varlist</replaceable> ] 
+		<literal>[ -o | -t ]</literal> or 
+		[ <replaceable>string</replaceable> ]
 	      </entry>
 	    </row>	    <row>
 	      <entry>Examples:</entry>
@@ -2085,7 +2112,7 @@
 	the values of all variables in the current data file.  If the
 	<literal>-o</literal> flag is given the data are printed by
 	observation, otherwise they are printed by variable.  If the
-	<literal>-t</literal> is given the data are printed by
+	<literal>-t</literal> flag is given the data are printed by
 	variable to 10 significant digits.
       </para>
 
@@ -2344,9 +2371,11 @@
 	randomness of deviations from the median, for a variable named
 	<varname>x1</varname> with a non-zero median, you can do the
 	following:</para> 
+
       <programlisting>
-	    genr signx1 = x1 - median(x1)
-	runs signx1</programlisting>
+	genr signx1 = x1 - median(x1)
+	runs signx1
+      </programlisting>
 
     </sect2>
 
@@ -3140,6 +3169,11 @@
 	      distribution)</entry>
 	  </row>
 	  <row>
+	    <entry>Least Absolute Deviation
+	      (<command>lad</command>)</entry>
+	    <entry>Alternative to Least Squares</entry>
+	  </row>
+	  <row>
 	    <entry>Rank Correlation
 	      (<command>spearman</command>)</entry>
 	    <entry>Correlation with ordinal data</entry>
@@ -3158,7 +3192,7 @@
       </tgroup>
     </table>
 
-    <para role="bodge">&nbsp;</para>
+    <!-- <para role="bodge">&nbsp;</para> -->
 
     <para><xref linkend="tab-tests"/> shows the tests that are available
       under the Tests menu in a model window, after estimation.</para>
@@ -3184,6 +3218,14 @@
 	  <row>
 	    <entry>Nonlinearity (squares)</entry>
 	    <entry><command>lmtest</command></entry>
+	  </row>
+	  <row>
+	    <entry>Nonlinearity (logs)</entry>
+	    <entry><command>lmtest</command></entry>
+	  </row>
+	  <row>
+	    <entry>Nonlinearity (Ramsey's RESET)</entry>
+	    <entry><command>reset</command></entry>
 	  </row>
 	  <row>
 	    <entry>Heteroskedasticity (White's test)</entry>

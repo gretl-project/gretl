@@ -200,10 +200,18 @@
 
     <para>Another option is to use the <command>smpl</command> with
       the <command>-o</command> flag and a suitable dummy variable.
-      Here are illustrative commands, assuming the unit data blocks
-      each contain 30 observations and we want to drop the first row
-      of each:</para>
+      <xref linkend="examp-pwt"/> shows illustrative commands,
+      assuming the unit data blocks each contain 30 observations and
+      we want to drop the first row of each.  You can then run
+      regressions on the restricted data set without having to use the
+      <command>wls</command> command.  If you plan to reuse the
+      restricted data set you may wish to save it using the
+      <command>store</command> command (see <xref
+	linkend="cmdref"/> below).
+    </para>
 
+    <example id="examp-panel-lags">
+      <title>Lags with panel data</title>
     <programlisting>
       (* create index variable *) 
       genr index 
@@ -214,13 +222,7 @@
       (* recreate the obs. structure, for 56 units *) 
       setobs 29 1.01 56.29
     </programlisting>
-
-    <para>You can now run regressions on the restricted data set
-      without having to use the <command>wls</command> command.  If
-      you plan to reuse the restricted data set you may wish to save
-      it using the <command>store</command> command (see <xref
-	linkend="cmdref"/> below).
-    </para>
+    </example>
 
   </sect1>
 

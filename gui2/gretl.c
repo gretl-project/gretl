@@ -1216,13 +1216,13 @@ static GtkWidget *make_main_window (int gui_get_data)
 	_("Variable name"), 
 	_("Descriptive label")
     };
-    int listbox_data_width = 500;
-    int listbox_file_height = 300;
+    int mainwin_width = 520;
+    int mainwin_height = 400;
 
     gui_scale = get_gui_scale();
 
-    listbox_data_width *= gui_scale;
-    listbox_file_height *= gui_scale;
+    mainwin_width *= gui_scale;
+    mainwin_height *= gui_scale;
 
     mdata->data = NULL;  
     mdata->listbox = NULL;
@@ -1245,6 +1245,8 @@ static GtkWidget *make_main_window (int gui_get_data)
 		      G_CALLBACK (destroy), NULL);
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
+    gtk_window_set_default_size(GTK_WINDOW (mdata->w), 
+				mainwin_width, mainwin_height);
     gtk_window_set_resizable(GTK_WINDOW (mdata->w), TRUE);
 #ifndef G_OS_WIN32
     g_signal_connect_after(G_OBJECT(mdata->w), "realize", 
@@ -1269,8 +1271,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_widget_show(dlabel);
 
     box = gtk_vbox_new (FALSE, 0);
-    gtk_widget_set_size_request(box, listbox_data_width, listbox_file_height);
-    /* gtk_container_set_border_width (GTK_CONTAINER (box), 5); */
     align = gtk_alignment_new(0, 0, 0, 0);
     gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
     gtk_widget_show(align);
