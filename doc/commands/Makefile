@@ -42,6 +42,7 @@ docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
 hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
 	./xsltrans gretl_commands.xml && \
 	./reflow < cmdlist.txt > ../../share/gretlcli.hlp
+	./reflow < guilist.txt > gretl.hlp
 
 docclean:
 	 rm -f skeleton.xml cmdlist.*

@@ -6,8 +6,9 @@
 
   <command name="add" section="Tests">
 
+    <blurb>Add variables to a model and test for their significance</blurb>
+
     <usage>
-      <blurb>Add variables to a model and test for their significance</blurb>
       <arguments>
         <argument>varlist</argument>
       </arguments>
@@ -41,7 +42,7 @@
 
   </command>
 
-  <command name="addto" section="Tests">
+  <command name="addto" section="Tests" context="cli">
 
     <usage>
       <arguments>
@@ -71,8 +72,9 @@
 
   <command name="adf" section="Tests">
 
+    <blurb>Augmented Dickey-Fuller test</blurb>
+
     <usage>
-      <blurb>Augmented Dickey-Fuller test</blurb>
       <arguments>
         <argument>order</argument>
         <argument>varname</argument>
@@ -119,8 +121,9 @@
 
   <command name="ar" section="Estimation">
 
+    <blurb>Generalized Cochrane-Orcutt (autoregressive) estimation</blurb>
+
     <usage>
-      <blurb>Generalized Cochrane-Orcutt (autoregressive) estimation</blurb>
       <arguments>
         <argument>lags</argument>
         <argument separated="true">indepvars</argument>
@@ -163,8 +166,9 @@
 
   <command name="arch" section="Tests">
 
+    <blurb>Test for ARCH (Autoregressive Conditional Heteroskedasticity)</blurb>
+
     <usage>
-      <blurb>Test for ARCH (Autoregressive Conditional Heteroskedasticity)</blurb>
       <arguments>
         <argument>order</argument>
         <argument>depvar</argument>
@@ -196,8 +200,9 @@
 
   <command name="arma" section="Estimation">
 
+    <blurb>Univariate ARMA model</blurb>
+
     <usage>
-      <blurb>Univariate ARMA model</blurb>
       <arguments>
         <argument>p</argument>
 	<argument>q</argument>
@@ -282,8 +287,9 @@
 
   <command name="boxplot" section="Graphs">
 
+    <blurb>Exploratory data analysis</blurb>
+
     <usage>
-      <blurb>Exploratory data analysis</blurb>
       <arguments>
         <argument>varname</argument>
       </arguments>
@@ -311,8 +317,9 @@
 
   <command name="chow" section="Tests">
 
+    <blurb>Chow test for structural homogeneity</blurb>
+
     <usage>
-      <blurb>Chow test for structural homogeneity</blurb>
       <arguments>
         <argument>obs</argument>
       </arguments>
@@ -323,6 +330,9 @@
     </usage>
 
     <description>
+      <para context="gui">This command needs an observation number (or
+      date, with dated data).</para>
+
       <para>
 	Must follow an OLS regression.  Creates a dummy variable which
 	equals 1 from the split point specified by <repl>obs</repl> to
@@ -345,8 +355,9 @@
 
   <command name="coeffsum" section="Tests">
 
+    <blurb>Test for the sum of specified coefficients</blurb>
+
     <usage>
-      <blurb>Test for the sum of specified coefficients</blurb>
       <arguments>
         <argument>indepvars</argument>
       </arguments>
@@ -375,8 +386,9 @@
 
   <command name="coint" section="Tests">
 
+    <blurb>Engle-Granger cointegration test</blurb>
+
     <usage>
-      <blurb>Engle-Granger cointegration test</blurb>
       <arguments>
         <argument>order</argument>
         <argument>depvar</argument>
@@ -409,8 +421,9 @@
 
   <command name="coint2" section="Tests">
 
+    <blurb>Johansen cointegration test</blurb>
+
     <usage>
-      <blurb>Johansen cointegration test</blurb>
       <arguments>
         <argument>order</argument>
         <argument>depvar</argument>
@@ -436,6 +449,24 @@
 	For details of this test see Hamilton, <book>Time Series
 	Analysis</book> (1994), Chapter 20.
       </para>
+
+      <para>
+	The following table is offered as a guide to the
+	interpretation of the results shown for the test, for the
+	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
+	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
+	number of cointegrating relations.</para>
+
+      <code>
+                 Rank     Trace test         Lmax test
+                          H0     H1          H0     H1
+                 ---------------------------------------
+                  0      c = 0  c = 3       c = 0  c = 1
+                  1      c = 1  c = 3       c = 1  c = 2
+                  2      c = 2  c = 3       c = 2  c = 3
+                 ---------------------------------------
+      </code>
+
     </description>
 
     <gui-access>
@@ -444,11 +475,65 @@
 
   </command>
 
+  <command name="compact" section="Dataset" context="gui">
+
+    <blurb>Writing data to a lower frequency</blurb>
+
+    <description>
+
+      <para>When you add to a dataset a series that is of higher
+	frequency, it is necessary to <quote>compact</quote> the new
+	series.  For instance, a monthly series will have to be
+	compacted to fit into a quarterly dataset.</para>  
+
+      <para>In addition, you may sometimes want to compact an entire
+	dataset to a lower frequency (perhaps, prior to adding a
+	lower-frequency variable to the dataset).</para>
+
+      <para>You are offered four options for compacting:</para>
+
+      <ilist>
+	<li><para>Averaging: The value written to the dataset will be
+	    the arithmetic mean of the relevant series values.  For
+	    instance the value written for the first quarter of 1990
+	    will be the average of the values for January, February
+	    and March of 1990.</para>
+	</li>
+
+	<li><para>Summing: The value written to the dataset will be
+	    the sum of the relevant higher-frequency values.  For
+	    example, the first-quarter value will be the sum of the
+	    January, February and March values.</para>
+	</li>
+
+	<li><para>End-of-period values: The value written to the
+	    dataset is the last relevant value from the
+	    higher-frequency data.  For example, the first quarter of
+	    1990 will get the March 1990 value.</para>
+	</li>
+
+	<li><para>Start-of-period values: The value written to the
+	    dataset is the first relevant value from the
+	    higher-frequency data.  For example, the first quarter of
+	    1990 will get the January 1990 value.</para>
+	</li>
+      </ilist>
+
+      <para>In the case of compacting an entire dataset, the choice
+	you make in this dialog box sets the default method.  But if
+	you have set a compaction method for an individual variable
+	(menu item <quote>Variable/Edit attributes</quote>) that
+	method is used rather than the default.</para>
+
+    </description>
+  </command>
+
   <command name="corc" section="Estimation">
+
+    <blurb>Cochrane-Orcutt estimation</blurb>
 
     <usage>
       <arguments>
-	<blurb>Cochrane-Orcutt estimation</blurb>
         <argument>depvar</argument>
         <argument>indepvars</argument>
       </arguments>
@@ -481,7 +566,7 @@
 
   </command>
 
-  <command name="corr" section="Statistics">
+  <command name="corr" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -508,6 +593,8 @@
   </command>
 
   <command name="corrgm" section="Statistics">
+
+    <blurb>Correlogram</blurb>
 
     <usage>
       <arguments>
@@ -557,7 +644,7 @@
 
   </command>
 
-  <command name="criteria" section="Utilities">
+  <command name="criteria" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -584,7 +671,7 @@
 
   </command>
 
-  <command name="critical" section="Utilities">
+  <command name="critical" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -623,6 +710,8 @@
 
   <command name="cusum" section="Tests">
 
+    <blurb>CUSUM test</blurb>
+
     <description>
       <para>
 	Must follow the estimation of a model via OLS.  Performs the
@@ -656,7 +745,7 @@
 
   </command>
 
-  <command name="data" section="Dataset">
+  <command name="data" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -707,7 +796,7 @@
 
   </command>
 
-  <command name="delete" section="Dataset">
+  <command name="delete" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -734,8 +823,9 @@
 
   <command name="diff" section="Transformations">
 
+    <blurb>First differences</blurb>
+
     <usage>
-      <blurb>First differences</blurb>
       <arguments>
         <argument>varlist</argument>
       </arguments>
@@ -757,14 +847,14 @@
 
   </command>
 
-  <command name="else" section="Programming">
+  <command name="else" section="Programming" context="cli">
 
     <description><para>See <cmdref targ="if"/>.</para>
     </description>
 
   </command>
 
-  <command name="end" section="Programming">
+  <command name="end" section="Programming" context="cli">
 
     <description>
       <para>
@@ -775,14 +865,14 @@
 
   </command>
 
-  <command name="endif" section="Programming">
+  <command name="endif" section="Programming" context="cli">
 
     <description><para>See <cmdref targ="if"/>.</para>
     </description>
 
   </command>
 
-  <command name="endloop" section="Programming">
+  <command name="endloop" section="Programming" context="cli">
 
     <description>
       <para>
@@ -792,7 +882,7 @@
 
   </command>
 
-  <command name="eqnprint" section="Printing">
+  <command name="eqnprint" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -830,7 +920,7 @@
 
   </command>
 
-  <command name="equation" section="Estimation">
+  <command name="equation" section="Estimation" context="cli">
 
     <usage>
       <arguments>
@@ -853,7 +943,32 @@
 
   </command>
 
-  <command name="fcast" section="Prediction">
+  <command name="factorized" section="Graphs" context="gui">
+
+    <blurb>Plot with a dummy variable</blurb>
+
+    <description>
+      <para>This command requires the selection of three variables,
+	the last of which must be a dummy variable (values 1 or 0).
+	The Y variable is plotted against the X variable, with the
+	data points colored differently depending on the value of the
+	third.</para>
+
+      <para>Example: You have data on wages and educational attainment
+	for a sample of people; you also have a dummy variable with
+	value 1 for men and 0 for women (as in Ramanathan's
+	<filename>data7-2</filename>).  A <quote>factorized
+	  plot</quote> of <lit>WAGE</lit> against <lit>EDUC</lit>
+	using the <lit>GENDER</lit> dummy as factor will show the data
+	points for men in one color and those for women in another
+	(with a legend to identify them).</para>
+
+    </description>
+
+  </command>
+  
+
+  <command name="fcast" section="Prediction" context="cli">
 
     <usage>
       <arguments>
@@ -889,8 +1004,9 @@
 
   <command name="fcasterr" section="Prediction">
 
+    <blurb>Forecasts with confidence intervals</blurb>
+
     <usage>
-      <blurb>Forecasts with confidence intervals</blurb>
       <arguments>
         <argument>startobs</argument>
         <argument>endobs</argument>
@@ -922,7 +1038,7 @@
 
   </command>
 
-  <command name="fit" section="Prediction">
+  <command name="fit" section="Prediction" context="cli">
 
     <description>
       <para>
@@ -937,7 +1053,7 @@
 
   </command>
 
-  <command name="freq" section="Statistics">
+  <command name="freq" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -962,8 +1078,9 @@
 
   <command name="genr" section="Dataset">
 
+    <blurb>Generate a new variable</blurb>
+
     <usage>
-      <blurb>Generate a new variable</blurb>
       <arguments>
         <argument>newvar</argument>
         <argument>= formula</argument>
@@ -1336,7 +1453,7 @@
 
   </command>
 
-  <command name="gnuplot" section="Graphs">
+  <command name="gnuplot" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -1415,7 +1532,7 @@
 
   </command>
 
-  <command name="graph" section="Graphs">
+  <command name="graph" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -1442,7 +1559,118 @@
 
   </command>
 
+  <command name="graphing" section="Graphs" context="gui">
+
+    <blurb>Generating plots of various kinds</blurb>
+
+    <description>
+
+      <para>Gretl calls a separate program, namely gnuplot, to
+	generate graphs.  Gnuplot is a very full-featured graphing
+	program with myriad options.  Gretl gives you direct access,
+	via a graphical interface, to a subset of these options and it
+	tries to choose sensible values for you; it also allows you to
+	take complete control over graph details if you wish.</para>
+
+      <para>With a graph displayed, you can click on the graph window
+	for a pop-up menu with the following options:</para>
+
+      <ilist>
+	<li><para>Save as postscript (save the graph in encapsulated
+	    postscript [EPS] format)</para>
+	</li>
+	<li><para>Save as PNG (save in Portable Network Graphics
+	    format)</para>
+	</li>
+	<li><para>Save to session as icon (the graph will appear in
+	    iconic form when you select <quote>Icon view</quote> from
+	    the Session menu)</para>
+	</li>
+	<li><para>Zoom (lets you select an area within the graph for
+	    closer inspection)</para>
+	</li>
+	<li><para>Print (on the Gnome desktop and MS Windows only:
+	    lets you print the graph directly)</para>
+	</li>
+	<li><para>Copy to clipboard (MS Windows only: lets you paste
+	    the graph into Windows applications such as MS
+	    Word)</para>
+	</li>
+	<li><para>Edit (opens a controller for the plot which lets you
+	    adjust various aspects of its appearance)</para>
+	</li>
+	<li><para>Close (closes the graph window)</para>
+	</li>
+      </ilist>
+
+      <para>
+	If you know something about gnuplot and wish to get finer
+	control over the appearance of a graph than is available via
+	the graphical controller (<quote>Edit</quote> option), you
+	have two further options:</para>
+
+      <ilist>
+	<li><para>Once the graph is saved as a session icon, you can
+	    right-click on its icon for a further pop-up menu.  One of
+	    the otions here is <quote>Edit plot commands</quote>,
+	    which opens an editing window with the actual gnuplot
+	    commands displayed. You can edit these commands and either
+	    save them for future processing or send them to gnuplot
+	    (with the <quote>File/Send to gnuplot</quote> menu item in
+	    the plot commands editing window).</para>
+	</li>
+	<li><para>Another way to save the plot commands (or to save
+	    the displayed plot in formats other than EPS or PNG) is to
+	    use <quote>Edit</quote> item on a graph's pop-up menu to
+	    invoke the graphical controller, then click on the
+	    <quote>Output to file</quote> tab in the controller.  You
+	    are then presented with a drop-down menu of formats in
+	    which to save the graph.</para>
+	</li>
+      </ilist>
+
+      <para>
+	To find out more about gnuplot, see
+	http://ricardo.ecn.wfu.edu/gnuplot.html or
+	http://www.gnuplot.info</para>
+
+    </description>
+
+  </command>
+
+  <command name="graphpag" section="Graphs" context="gui">
+
+    <blurb>Gretl graph page</blurb>
+
+    <description>
+
+      <para>The session <quote>graph page</quote> will work only if
+	you have the &latex; typsetting system installed, and are able
+	to generate and view postscript output.</para>
+
+      <para>In the session icon window, you can drag up to eight
+	graphs onto the graph page icon.  When you double-click on the
+	graph page (or right-click and select <quote>Display</quote>),
+	a page containing the selected graphs will be composed and
+	opened in your postscript viewer.   From there you should be
+	able to print the page.</para>
+
+      <para>To clear the graph page, right-click on its icon and
+	select <quote>Clear</quote>.</para> 
+
+      <para>On systems other than MS Windows, you may have to adjust
+	the setting for the program used to view postscript.  Find
+	that under the <quote>Programs</quote> tab in the gretl
+	Preferences dialog box (under the File menu in the main
+	window).</para>
+
+    </description>
+
+  </command>
+
   <command name="hausman" section="Tests">
+
+    <blurb>Hausman test (panel diagnostics)</blurb>
 
     <description>
       <para>
@@ -1490,8 +1718,9 @@
 
   <command name="hccm" section="Estimation">
 
+    <blurb>Heteroskedasticity Consistent Covariance Matrix</blurb>
+
     <usage>
-      <blurb>Heteroskedasticity Consistent Covariance Matrix</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -1520,7 +1749,7 @@
 
   </command>
 
-  <command name="help" section="Utilities">
+  <command name="help" section="Utilities" context="cli">
 
     <description>
       <para>
@@ -1539,8 +1768,9 @@
 
   <command name="hilu" section="Estimation">
 
+    <blurb>Hildreth-Lu estimation</blurb>
+
     <usage>
-      <blurb>Hildreth-Lu estimation</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -1573,9 +1803,10 @@
 
   <command name="hsk" section="Estimation">
 
+    <blurb>Heteroskedasticity-corrected estimates</blurb>
+
     <usage>
       <arguments>
-	<blurb>Heteroskedasticity-corrected estimates</blurb>
         <argument>depvar</argument>
         <argument>indepvars</argument>
       </arguments>
@@ -1603,7 +1834,7 @@
 
   </command>
 
-  <command name="if" section="Programming">
+  <command name="if" section="Programming" context="cli">
 
     <description>
       <para>Flow control for command execution.  The syntax is:</para>
@@ -1630,7 +1861,7 @@
 
   </command>
 
-  <command name="import" section="Dataset">
+  <command name="import" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -1668,7 +1899,7 @@
 
   </command>
 
-  <command name="info" section="Dataset">
+  <command name="info" section="Dataset" context="cli">
 
     <description>
       <para>
@@ -1684,7 +1915,7 @@
 
   </command>
 
-  <command name="label" section="Dataset">
+  <command name="label" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -1713,7 +1944,7 @@
 
   </command>
 
-  <command name="labels" section="Dataset">
+  <command name="labels" section="Dataset" context="cli">
 
     <description>
       <para>
@@ -1726,6 +1957,8 @@
   </command>
 
   <command name="lad" section="Estimation">
+
+    <blurb>Least Absolute Deviation estimation</blurb>
 
     <usage>
       <arguments>
@@ -1752,6 +1985,8 @@
   </command>
 
   <command name="lags" section="Transformations">
+
+    <blurb>Lags of variables</blurb>
 
     <usage>
       <arguments>
@@ -1780,6 +2015,8 @@
   </command>
 
   <command name="ldiff" section="Transformations">
+
+    <blurb>Log differences</blurb>
 
     <usage>
       <arguments>
@@ -1811,6 +2048,8 @@
   </command>
 
   <command name="leverage" section="Tests">
+
+    <blurb>Test for influential observations</blurb>
 
     <usage>
       <options>
@@ -1874,6 +2113,8 @@
 
   <command name="lmtest" section="Tests">
 
+    <blurb>LM tests</blurb>
+
     <usage>
       <options>
         <option>
@@ -1923,8 +2164,9 @@
 
   <command name="logistic" section="Estimation">
 
+    <blurb>Logistic regression</blurb>
+
     <usage>
-      <blurb>Logistic regression</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -1987,8 +2229,9 @@
 
   <command name="logit" section="Estimation">
 
+    <blurb>Logit regression</blurb>
+
     <usage>
-      <blurb>Logit regression</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -2034,6 +2277,8 @@
 
   <command name="logs" section="Transformations">
 
+    <blurb>Natural logs</blurb>
+
     <usage>
       <arguments>
         <argument>varlist</argument>
@@ -2057,7 +2302,7 @@
 
   </command>
 
-  <command name="loop" section="Programming">
+  <command name="loop" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -2098,6 +2343,8 @@
 
   <command name="meantest" section="Tests">
 
+    <blurb>Difference of means</blurb>
+
     <usage>
       <arguments>
         <argument>var1</argument>
@@ -2131,7 +2378,7 @@
 
   </command>
 
-  <command name="modeltab" section="Utilities">
+  <command name="modeltab" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -2157,6 +2404,8 @@
   </command>
 
   <command name="mpols" section="Estimation">
+
+    <blurb>Multiple-precision OLS</blurb>
 
     <usage>
       <arguments>
@@ -2197,7 +2446,7 @@
 
   </command>
 
-  <command name="multiply" section="Transformations">
+  <command name="multiply" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2237,6 +2486,8 @@
   </command>
 
   <command name="nls" section="Estimation">
+
+    <blurb>Nonlinear Least Squares</blurb>
 
     <usage>
       <arguments>
@@ -2321,7 +2572,7 @@
 
   </command>
 
-  <command name="noecho" section="Printing">
+  <command name="noecho" section="Printing" context="cli">
     <description>
       <para>Obsolete command.  See <cmdref targ="set"/>.
       </para>
@@ -2329,6 +2580,8 @@
   </command>
 
   <command name="nulldata" section="Dataset">
+
+    <blurb>Creating a blank dataset</blurb>
 
     <usage>
       <arguments>
@@ -2361,8 +2614,9 @@
 
   <command name="ols" section="Estimation">
 
+    <blurb>Ordinary Least Squares estimation</blurb>
+
     <usage>
-      <blurb>Ordinary Least Squares estimation</blurb>
       <arguments>
         <argument>depvar</argument>
         <argument>indepvars</argument>
@@ -2423,8 +2677,9 @@
 
   <command name="omit" section="Tests">
 
+    <blurb>Omit variables and test for joint significance</blurb>
+
     <usage>
-      <blurb>Omit variables from a model and test for joint significance</blurb>
       <arguments>
         <argument>varlist</argument>
       </arguments>
@@ -2457,7 +2712,7 @@
 
   </command>
 
-  <command name="omitfrom" section="Tests">
+  <command name="omitfrom" section="Tests" context="cli">
 
     <usage>
       <arguments>
@@ -2484,7 +2739,7 @@
 
   </command>
 
-  <command name="open" section="Dataset">
+  <command name="open" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -2515,7 +2770,7 @@
 
   </command>
 
-  <command name="outfile" section="Printing">
+  <command name="outfile" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -2567,8 +2822,9 @@
 
   <command name="panel" section="Dataset">
 
+    <blurb>Register panel data structure</blurb>
+
     <usage>
-      <blurb>Register panel data structure</blurb>
       <options>
         <option>
 	  <flag>--cross-section</flag>
@@ -2601,6 +2857,8 @@
   </command>
 
   <command name="pca" section="Statistics">
+
+    <blurb>Principal Components Analysis</blurb>
 
     <usage>
       <arguments>
@@ -2646,6 +2904,8 @@
 
   <command name="pergm" section="Statistics">
 
+    <blurb>Periodogram</blurb>
+
     <usage>
       <arguments>
         <argument>varname</argument>
@@ -2684,7 +2944,7 @@
 
   </command>
 
-  <command name="plot" section="Graphs">
+  <command name="plot" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -2712,6 +2972,8 @@
 
   <command name="pooled" section="Estimation">
 
+    <blurb>Pooled OLS</blurb>
+
     <usage>
       <arguments>
         <argument>depvar</argument>
@@ -2738,7 +3000,7 @@
 
   </command>
 
-  <command name="print" section="Printing">
+  <command name="print" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -2785,7 +3047,7 @@
 
   </command>
 
-  <command name="printf" section="Printing">
+  <command name="printf" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -2832,6 +3094,8 @@
 
   <command name="probit" section="Estimation">
 
+    <blurb>Probit model</blurb>
+
     <usage>
       <arguments>
         <argument>depvar</argument>
@@ -2870,7 +3134,7 @@
 
   </command>
 
-  <command name="pvalue" section="Utilities">
+  <command name="pvalue" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -2907,7 +3171,7 @@
 
   </command>
 
-  <command name="quit" section="Utilities">
+  <command name="quit" section="Utilities" context="cli">
 
     <description>
       <para>
@@ -2922,7 +3186,7 @@
 
   </command>
 
-  <command name="rename" section="Dataset">
+  <command name="rename" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -2951,6 +3215,8 @@
 
   <command name="reset" section="Tests">
 
+    <blurb>Ramsey's RESET</blurb>
+
     <description>
       <para>
 	Must follow the estimation of a model via OLS. Carries out
@@ -2968,7 +3234,7 @@
 
   </command>
 
-  <command name="rhodiff" section="Transformations">
+  <command name="rhodiff" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2998,6 +3264,8 @@
   </command>
 
   <command name="rmplot" section="Graphs">
+
+    <blurb>Range-mean plot</blurb>
 
     <usage>
       <arguments>
@@ -3043,7 +3311,7 @@
 
   </command>
 
-  <command name="run" section="Programming">
+  <command name="run" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -3065,6 +3333,8 @@
   </command>
 
   <command name="runs" section="Tests">
+
+    <blurb>Runs test</blurb>
 
     <usage>
       <arguments>
@@ -3093,6 +3363,8 @@
   </command>
 
   <command name="scatters" section="Graphs">
+
+    <blurb>Multiple scatterplots</blurb>
 
     <usage>
       <arguments>
@@ -3129,14 +3401,14 @@
 
   </command>
 
-  <command name="seed" section="Programming">
+  <command name="seed" section="Programming" context="cli">
     <description>
       <para>Obsolete command.  See <cmdref targ="set"/>.
       </para>
     </description>
   </command>
 
-  <command name="set" section="Programming">
+  <command name="set" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -3206,7 +3478,7 @@
     </description>
   </command>
 
-  <command name="setobs" section="Dataset">
+  <command name="setobs" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -3238,6 +3510,8 @@
   </command>
 
   <command name="setmiss" section="Dataset">
+
+    <blurb>Missing value code</blurb>
 
     <usage>
       <arguments>
@@ -3272,7 +3546,7 @@
 
   </command>
 
-  <command name="shell" section="Utilities">
+  <command name="shell" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -3295,6 +3569,8 @@
   </command>
 
   <command name="sim" section="Dataset">
+
+    <blurb>Simulation</blurb>
 
     <usage>
       <arguments>
@@ -3330,7 +3606,7 @@
 
   </command>
 
-  <command name="smpl" section="Dataset">
+  <command name="smpl" section="Dataset" context="cli">
 
     <!-- don't break the lines below or the text version will get messed
     up -->
@@ -3408,6 +3684,8 @@
 
   <command name="spearman" section="Statistics">
 
+    <blurb>Spearmans's rank correlation</blurb>
+
     <usage>
       <arguments>
         <argument>x</argument>
@@ -3449,6 +3727,8 @@
 
   <command name="square" section="Transformations">
 
+    <blurb>Squares and cross-products</blurb>
+
     <usage>
       <arguments>
         <argument>varlist</argument>
@@ -3481,6 +3761,8 @@
   </command>
 
   <command name="store" section="Dataset">
+
+    <blurb>Saving data</blurb>
 
     <usage>
       <arguments>
@@ -3543,7 +3825,7 @@
 
   </command>
 
-  <command name="summary" section="Statistics">
+  <command name="summary" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -3569,7 +3851,7 @@
 
   </command>
 
-  <command name="system" section="Estimation">
+  <command name="system" section="Estimation" context="cli">
 
     <usage>
       <arguments>
@@ -3598,7 +3880,7 @@
 
   </command>
 
-  <command name="tabprint" section="Printing">
+  <command name="tabprint" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -3638,6 +3920,8 @@
 
   <command name="testuhat" section="Tests">
 
+    <blurb>Normality of residual</blurb>
+
     <description>
       <para>
 	Must follow a model estimation command.  Gives the frequency
@@ -3654,6 +3938,8 @@
   </command>
 
   <command name="tobit" section="Estimation">
+
+    <blurb>Tobit model</blurb>
 
     <usage>
       <arguments>
@@ -3691,6 +3977,8 @@
   </command>
 
   <command name="tsls" section="Estimation">
+
+    <blurb>Two-Stage Least Squares</blurb>
 
     <usage>
       <arguments>
@@ -3735,6 +4023,8 @@
   </command>
 
   <command name="var" section="Estimation">
+
+    <blurb>Vector Autoregression</blurb>
 
     <usage>
       <arguments>
@@ -3796,7 +4086,7 @@
 
   </command>
 
-  <command name="varlist" section="Dataset">
+  <command name="varlist" section="Dataset" context="cli">
 
     <description>
       <para>
@@ -3808,6 +4098,8 @@
   </command>
 
   <command name="vartest" section="Tests">
+
+    <blurb>Difference of variances</blurb>
 
     <usage>
       <arguments>
@@ -3832,6 +4124,8 @@
   </command>
 
   <command name="wls" section="Estimation">
+
+    <blurb>Weighted leat Squares</blurb>
 
     <usage>
       <arguments>

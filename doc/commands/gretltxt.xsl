@@ -2,22 +2,33 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
+<xsl:param name="hlp">cli</xsl:param>
+
 <xsl:template match="commandlist"> 
 <xsl:apply-templates/> 
 </xsl:template>
 
 <xsl:template match="command">
-  <xsl:text>&#xa;#&#xa;</xsl:text>
-  <xsl:value-of select="@name"/>
-  <xsl:text>&#xa;@</xsl:text>
-  <xsl:value-of select="@section"/>
-  <xsl:apply-templates/>
-  <xsl:text>&#xa;&#xa;</xsl:text>
+  <xsl:if test="(not(@context) or @context=$hlp)">
+    <xsl:text>&#xa;#&#xa;</xsl:text>
+    <xsl:value-of select="@name"/>
+    <xsl:text>&#xa;@</xsl:text>
+    <xsl:value-of select="@section"/>
+    <xsl:apply-templates/>
+    <xsl:text>&#xa;&#xa;</xsl:text>    
+  </xsl:if>
+  <xsl:if test="(not(@context) and $hlp='gui')">
+    <xsl:text>Script command: </xsl:text>
+    <xsl:value-of select="@name"></xsl:value-of>
+    <xsl:text>&#xa;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="usage">
-  <xsl:apply-templates/>
-  <xsl:text>&#xa;&#xa;</xsl:text>
+  <xsl:if test="$hlp='cli'">
+    <xsl:apply-templates/>
+    <xsl:text>&#xa;&#xa;</xsl:text>    
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="arguments">
@@ -161,16 +172,18 @@
 </xsl:template>
 
 <xsl:template match="para">
-  <xsl:choose>
-    <xsl:when test="parent::li">
-      <xsl:text>&#xa;[LISTPARA]</xsl:text>
-      <xsl:apply-templates/>[/LISTPARA]
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:text>&#xa;[PARA]</xsl:text>
-      <xsl:apply-templates/>[/PARA]
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:if test="(not(@context) or @context=$hlp)">
+    <xsl:choose>
+      <xsl:when test="parent::li">
+        <xsl:text>&#xa;[LISTPARA]</xsl:text>
+        <xsl:apply-templates/>[/LISTPARA]
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>&#xa;[PARA]</xsl:text>
+        <xsl:apply-templates/>[/PARA]
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="code">
@@ -202,11 +215,15 @@
 </xsl:template>
 
 <xsl:template match="menu-path">
+  <xsl:if test="$hlp='cli'">
 Menu path:    <xsl:apply-templates/>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="other-access">
+  <xsl:if test="$hlp='cli'">
 Other access: <xsl:apply-templates/>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="table">
@@ -241,6 +258,11 @@ Other access: <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="blurb">
+  <xsl:if test="$hlp='gui'">
+    <xsl:text>&#xa;</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:text>&#xa;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 </xsl:stylesheet>

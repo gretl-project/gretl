@@ -47,7 +47,11 @@ int apply_xslt (xmlDocPtr doc)
 {
     xsltStylesheetPtr style;
     xmlDocPtr result;
-    const char **params = NULL;
+    const char **null_params = NULL;
+    const char *gui_params[] = {
+	"hlp", "\"gui\"",
+	NULL
+    };
     FILE *fp;
     int err = 0;
 
@@ -58,7 +62,7 @@ int apply_xslt (xmlDocPtr doc)
     if (style == NULL) {
 	err = 1;
     } else {
-	result = xsltApplyStylesheet(style, doc, params);
+	result = xsltApplyStylesheet(style, doc, null_params);
 	if (result == NULL) {
 	    err = 1;
 	} else {
@@ -79,7 +83,8 @@ int apply_xslt (xmlDocPtr doc)
     if (style == NULL) {
 	err = 1;
     } else {
-	result = xsltApplyStylesheet(style, doc, params);
+	/* cli version */
+	result = xsltApplyStylesheet(style, doc, null_params);
 	if (result == NULL) {
 	    err = 1;
 	} else {
@@ -90,9 +95,23 @@ int apply_xslt (xmlDocPtr doc)
 		xsltSaveResultToFile(fp, result, style);
 		fclose(fp);
 	    }
-	    xsltFreeStylesheet(style);
 	    xmlFreeDoc(result);
-	}	    
+	}
+	/* gui version */
+	result = xsltApplyStylesheet(style, doc, gui_params);
+	if (result == NULL) {
+	    err = 1;
+	} else {
+	    fp = fopen("guilist.txt", "w");
+	    if (fp == NULL) {
+		err = 1;
+	    } else {
+		xsltSaveResultToFile(fp, result, style);
+		fclose(fp);
+	    }
+	    xmlFreeDoc(result);
+	}
+	xsltFreeStylesheet(style);
     }
 
     return err;

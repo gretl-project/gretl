@@ -2,19 +2,23 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
+<xsl:param name="hlp">cli</xsl:param>
+
 <xsl:template match="commandlist"> 
  <xsl:apply-templates/> 
 </xsl:template>
 
 <xsl:template match="command">
-  <xsl:text>&#xa;</xsl:text>
-  <sect2 id="cmd-{@name}" xreflabel="{@name}">
-    <title><xsl:value-of select="@name"/></title>
-  <xsl:text>&#xa;</xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text>&#xa;</xsl:text>
-  </sect2>
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:if test="(not(@context) or @context=$hlp)">
+    <xsl:text>&#xa;</xsl:text>
+    <sect2 id="cmd-{@name}" xreflabel="{@name}">
+      <title><xsl:value-of select="@name"/></title>
+      <xsl:text>&#xa;</xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>&#xa;</xsl:text>
+    </sect2>
+    <xsl:text>&#xa;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="usage">

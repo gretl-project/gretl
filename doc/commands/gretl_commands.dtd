@@ -20,16 +20,17 @@
 <!-- The description is the only element that is absolutely
      required of a command -->
 
-<!ELEMENT command (usage?, description, gui-access?)>
+<!ELEMENT command (blurb?, usage?, description, gui-access?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
    section      (Dataset | Estimation | Graphs | Prediction |
                  Printing | Programming | Statistics | Tests |
                  Transformations | Utilities | Unknown) "Unknown"
+   context      (cli | gui | both) "both"
 >
 
-<!ELEMENT usage (blurb?, arguments?, altforms?, options?, examples?)>
+<!ELEMENT usage (arguments?, altforms?, options?, examples?)>
 
 <!ELEMENT blurb        (#PCDATA)>
 <!ELEMENT arguments    (argument)+>
@@ -61,6 +62,10 @@
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
                 func | manref | cmdref| tabref | footnote | cmd)*>
+
+<!ATTLIST para
+   context (cli | gui | both) "both"
+>
 
 <!ELEMENT code (#PCDATA)>
 
