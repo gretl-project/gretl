@@ -626,7 +626,7 @@ static wchar_t *wide_string (const char *s)
 	ret[j++] = '\0';
     }
 
-    return ret;
+    return (wchar_t *) ret;
 }
 
 static void speak_dataset_comments (const dataset *dset)
