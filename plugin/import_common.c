@@ -32,6 +32,25 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
 
 #endif
 
+static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
+			       int *text_cols, int *time_series, 
+			       int *label_strings)
+{
+    if (*s == '"' || *s == '\'') s++;
+    newinfo->pd = pd;
+    newinfo->time_series = TIME_SERIES;
+
+    strcpy(newinfo->stobs, s);
+    colonize_obs(newinfo->stobs);
+    fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
+
+    newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
+
+    if (text_cols != NULL) *text_cols = 1;
+    *time_series = 1;
+    *label_strings = 0;
+}
+
 static void invalid_varname (PRN *prn)
 {
     pputs(prn, get_gretl_errmsg());

@@ -931,7 +931,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     *withstring = 0;
 
     if ((flags & GP_IMPULSES) || lines == NULL) {
-	if (flags & ~GP_OLS_OMIT) {
+	if (!(flags & ~GP_OLS_OMIT)) { 
 	    strcpy(withstring, "w i");
 	}
 	pdist = 1;
@@ -962,9 +962,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 
     /* setting yscale at this point is not a commitment, we will
        do some further tests below */
-    if (lo > 2 && lo < 7 && 
-	(flags & ~GP_RESIDS) && (flags & ~GP_FA)
-	&& (flags & ~GP_DUMMY)) {
+    if (lo > 2 && lo < 7 && !(flags & GP_RESIDS) && !(flags & GP_FA)
+	&& !(flags & GP_DUMMY)) {
 	yscale = 1;
     }
 

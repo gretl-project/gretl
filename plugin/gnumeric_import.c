@@ -620,22 +620,9 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    int pd = consistent_date_labels(&sheet);
 
 	    if (pd) {
-		char *s = sheet.label[1];
-
-		if (*s == '"' || *s == '\'') s++;
-		newinfo->pd = pd;
-		newinfo->time_series = TIME_SERIES;
-
-		strcpy(newinfo->stobs, s);
-		colonize_obs(newinfo->stobs);
-		fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
-
-		newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
-
-		sheet.text_cols = 1;
-		time_series = 1;
-		label_strings = 0;
-
+		time_series_setup(sheet.label[1], newinfo, pd,
+				  &sheet.text_cols,
+				  &time_series, &label_strings);
 		rigorous_dates_check(&sheet, newinfo);
 	    }
 	}

@@ -951,16 +951,9 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    int pd = consistent_date_labels(book.row_offset);
 
 	    if (pd) {
-		char *s = rowptr[1 + book.row_offset].cells[i];
-
-		if (*s == '"' || *s == '\'') s++;
-		newinfo->pd = pd;
-		newinfo->sd0 = atof(s);
-		strcpy(newinfo->stobs, s);
-		colonize_obs(newinfo->stobs);
-		newinfo->time_series = TIME_SERIES;
-		time_series = 1;
-		label_strings = 0;
+		time_series_setup(rowptr[1 + book.row_offset].cells[i],
+				  newinfo, pd, NULL,
+				  &time_series, &label_strings);
 	    }
 	}
 
