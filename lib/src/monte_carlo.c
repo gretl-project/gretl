@@ -244,6 +244,11 @@ static int monte_carlo_init (LOOPSET *ploop)
     ploop->models = NULL;
     ploop->lmodels = NULL;
     ploop->prns = NULL;
+
+#ifdef ENABLE_GMP
+    mpf_set_default_prec(256);
+#endif
+
     return 0;
 }
 
@@ -733,28 +738,27 @@ static const char *estimator_string (int ci)
 static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn)
 {
-    int i, nc = plmod->ncoeff;
+    int i;
     char startdate[9], enddate[9];
-    int t1 = plmod->t1, t2 = plmod->t2;
 
-    ntodate(startdate, t1, pdinfo);
-    ntodate(enddate, t2, pdinfo);
+    ntodate(startdate, plmod->t1, pdinfo);
+    ntodate(enddate, plmod->t2, pdinfo);
 
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(plmod->ci)), t2 - t1 + 1, 
+	    _(estimator_string(plmod->ci)), plmod->t2 - plmod->t1 + 1, 
 	    startdate, enddate);
     pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
     pprintf(prn, _("Dependent variable: %s\n\n"), 
-	   pdinfo->varname[plmod->list[1]]);
+	    pdinfo->varname[plmod->list[1]]);
 
     pputs(prn, _("                     mean of      std. dev. of     mean of"
-	    "     std. dev. of\n"
-	    "                    estimated      estimated"
-	    "      estimated      estimated\n"
-	    "      Variable     coefficients   coefficients   std. errors"
-	    "    std. errors\n\n"));
+		 "     std. dev. of\n"
+		 "                    estimated      estimated"
+		 "      estimated      estimated\n"
+		 "      Variable     coefficients   coefficients   std. errors"
+		 "    std. errors\n\n"));
 
-    for (i=1; i<=nc; i++) {
+    for (i=1; i<=plmod->ncoeff; i++) {
 	print_loop_coeff(pdinfo, plmod, i, loopnum, prn);
     }
     pputs(prn, "\n");
@@ -767,7 +771,7 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 			      int c, int n, PRN *prn)
 {
 #ifdef ENABLE_GMP
-    bigval c1, c2, m, sd1, sd2;
+    mpf_t c1, c2, m, sd1, sd2;
 
     mpf_init(c1);
     mpf_init(c2);

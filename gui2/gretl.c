@@ -624,7 +624,7 @@ static void destroy (GtkWidget *widget, gpointer data)
     gtk_main_quit();
 }
 
-#ifdef G_OS_WIN32
+#ifdef HUSH_RUNTIME_WARNINGS
 extern int ws_startup (void);
 
 void dummy_output_handler (const gchar *log_domain,
@@ -634,7 +634,7 @@ void dummy_output_handler (const gchar *log_domain,
 {
     return;
 }
-#endif /* G_OS_WIN32 */
+#endif /* HUSH_RUNTIME_WARNINGS */
 
 #ifdef ENABLE_NLS
 void nls_init (void)
@@ -693,6 +693,7 @@ int main (int argc, char *argv[])
 
 #ifdef G_OS_WIN32
     read_rc(); /* get config info from registry */
+#ifdef HUSH_RUNTIME_WARNINGS
     g_log_set_handler ("Gtk",
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,
@@ -705,6 +706,7 @@ int main (int argc, char *argv[])
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,
 		       NULL);
+#endif /* HUSH_RUNTIME_WARNINGS */ 
     ws_startup(); 
     atexit(write_rc);
 #else 

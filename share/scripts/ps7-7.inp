@@ -3,22 +3,22 @@ ols Q const P HS SHC OC L PL
 (* Above command estimates Model A. Now generate monthly dummies *)  
 genr dummy
 (* estimate Model B with monthly dummies *)  
-ols Q const P HS SHC OC L PL dummy_2 dummy_3 dummy_4 dummy_5 dummy_6 \
- dummy_7 dummy_8 dummy_9 dummy_10 dummy_11 dummy_12  
+ols Q const P HS SHC OC L PL dfeb dmar dapr dmay djun \
+ djul daug dsep doct dnov ddec  
 (* reset sample range to the first period only *)  
 smpl 1983.01 1986.06
 (* Next estimate Model C *)  
-ols Q const P HS SHC OC dummy_2 dummy_3 dummy_4 dummy_5 dummy_6 \
- dummy_7 dummy_8 dummy_9 dummy_10 dummy_11 dummy_12  
+ols Q const P HS SHC OC dfeb dmar dapr dmay djun \
+ djul daug dsep doct dnov ddec  
 (* omit variables with highest p-values, a few at a time *)  
-omit dummy_2 dummy_3  
+omit dfeb dmar  
 omit HS  
-omit dummy_8 dummy_9  
-omit dummy_10 dummy_11  
-omit dummy_4  
-omit dummy_5 dummy_7  
+omit daug dsep  
+omit doct dnov  
+omit dapr  
+omit dmay djul  
 (* This is Model D, the final model with all significant coefficients *)  
-omit dummy_12  
+omit ddec  
 (* obtain predicted values for the loss and post loss periods *)  
 fcast 1986.07 1990.05 Qhat 
 (* reset sample range to the second and third periods *)  
