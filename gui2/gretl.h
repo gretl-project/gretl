@@ -140,6 +140,7 @@ enum extra_cmds {
     VIEW_DATA,
     VIEW_SCRIPT,
     VIEW_CODEBOOK,
+    VIEW_MODELTABLE,
     VIEW_FILE,
     DATA_REPORT,
     SCRIPT_OUT,

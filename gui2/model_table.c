@@ -26,9 +26,12 @@ static const MODEL **model_list;
 static int model_list_len;
 static int *grand_list;
 
-static void tex_print_model_table (gpointer p, guint view, GtkWidget *w);
-static void rtf_print_model_table (void);
 static void print_rtf_row_spec (PRN *prn, int tall);
+
+#ifdef GNULL
+static void 
+model_table_copy_callback (gpointer p, guint view, GtkWidget *w);
+#endif
 
 #define MAX_TABLE_MODELS 6
 
@@ -40,12 +43,10 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },   
 # endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL, GNULL },
-    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL, GNULL },
-    { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL, GNULL },
-    { N_("/_LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, GNULL },
+    { N_("/Edit/_Copy"), NULL, model_table_copy_callback, 0, "<StockItem>", 
+      GTK_STOCK_COPY },
+    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -62,11 +63,22 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
     { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL },
     { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL },
-    { N_("/_LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, },
+    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, },
     { NULL, NULL, NULL, 0, NULL }
 };
 
 #endif /* GNULL */
+
+#ifdef GNULL
+static void 
+model_table_copy_callback (gpointer p, guint view, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+
+    copy_format_dialog(vwin);
+}
+#endif
 
 static int real_model_table_list_length (void)
 {
@@ -595,13 +607,13 @@ int display_model_table (void)
 
     if (real_model_table_list_length() > 5) winwidth = 90;
 
-    view_buffer(prn, winwidth, 450, _("gretl: model table"), PRINT, 
+    view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE, 
 		model_table_items);
 
     return 0;
 }
 
-static void tex_print_model_table (gpointer p, guint view, GtkWidget *w)
+void tex_print_model_table (gpointer p, guint view, GtkWidget *w)
 {
     int j, ci;
     int binary = 0;
@@ -719,7 +731,7 @@ static void print_rtf_row_spec (PRN *prn, int tall)
     pputs(prn, "\n");
 }
 
-static void rtf_print_model_table (void)
+void rtf_print_model_table (void)
 {
     int j, ci;
     int binary = 0;

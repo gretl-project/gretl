@@ -35,4 +35,8 @@ void free_model_table_list (void);
 
 int display_model_table (void);
 
+void tex_print_model_table (gpointer p, guint view, GtkWidget *w);
+
+void rtf_print_model_table (void);
+
 #endif /* MODEL_TABLE_H */

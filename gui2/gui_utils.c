@@ -28,6 +28,7 @@
 #include "series_view.h"
 #include "console.h"
 #include "session.h"
+#include "model_table.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -54,7 +55,8 @@ extern GtkWidget *mysheet;
 #define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
 	                      || c == CORR || c == FCASTERR \
 	                      || c == FCAST || c == COEFFINT \
-	                      || c == COVAR || c == VIEW_MODEL)
+	                      || c == COVAR || c == VIEW_MODEL \
+                              || c == VIEW_MODELTABLE)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
@@ -1519,7 +1521,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
+
     cursor_to_top(vwin);
+
     return vwin;
 }
 
@@ -2625,6 +2629,16 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
+    }
+
+    /* or from the  model table? */
+    else if (vwin->role == VIEW_MODELTABLE && SPECIAL_COPY(how)) {
+	if (how == COPY_LATEX) {
+	    tex_print_model_table(NULL, 0, NULL);
+	}
+	else if (how == COPY_RTF) {
+	    rtf_print_model_table();
+	} 
     }
 
     /* copying plain text from window */

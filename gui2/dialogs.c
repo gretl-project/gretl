@@ -1139,7 +1139,7 @@ void copy_format_dialog (windata_t *vwin)
     g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
     gtk_widget_show (button);
 
-#else /* not Windows: reverse the first two options */
+#else /* not MS Windows: reverse the first two options */
 
     /* LaTeX option */
     button = gtk_radio_button_new_with_label(NULL, "LaTeX");
