@@ -20,10 +20,10 @@
 /* gretl.c : main for gretl */
 
 #include "gretl.h"
+#include "ssheet.h"
 #include "guiprint.h"
 #include "console.h"
 #include "session.h"
-#include "ssheet.h"
 #include "webget.h"
 #include "database.h"
 #include "settings.h"
@@ -50,13 +50,12 @@
 #endif
 
 /* functions from other gretl GUI files */
-extern void free_modelspec (void);    /* lib.c */
-extern void init_fileptrs (void); /* settings.c */
-extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
+extern void free_modelspec (void);
 extern void free_command_stack (void);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
 extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
+extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
@@ -135,6 +134,7 @@ float gui_scale;
 int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
+
 char dbproxy[21];
 
 char editor[MAXSTR] = "emacs";
@@ -494,15 +494,15 @@ GtkItemFactoryEntry data_items[] = {
 static void gui_usage (void)
 {
     gui_logo(stdout);
-    printf(_("You may supply the name of a data file on the command line.\n"));
-    printf(_("Or you may do \"gretl -r script_file\" to open a script.\n"));
-    printf(_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
+    printf(I_("You may supply the name of a data file on the command line.\n"));
+    printf(I_("Or you may do \"gretl -r script_file\" to open a script.\n"));
+    printf(I_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
     exit(0);
 }
 
 static void noalloc (const char *str)
 {
-    fprintf(stderr, _("Couldn't allocate memory for %s\n"), str);
+    fprintf(stderr, I_("Couldn't allocate memory for %s\n"), str);
     exit(EXIT_FAILURE);
 }
 
@@ -510,14 +510,14 @@ static void get_runfile (char *fname)
 {
     int i;
 
-    tryscript[0] = '\0';
+    *tryscript = '\0';
     strncat(tryscript, fname, MAXLEN-1);
 
     if (addpath(tryscript, &paths, 1) == NULL) {
-	fprintf(stderr, _("Couldn't find script '%s'\n"), tryscript);
+	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryscript);
 	exit(EXIT_FAILURE);
     } else {
-	fprintf(stderr, _("%s found\n"), tryscript);
+	fprintf(stderr, I_("%s found\n"), tryscript);
 	i = slashpos(tryscript);
 	if (i) {
 	    paths.currdir[0] = '\0';
@@ -536,7 +536,7 @@ static void fix_dbname (char *db)
 	strcat(db, ".bin");
     }
 
-    fp = fopen(db, "r");
+    fp = fopen(db, "rb");
 
     if (fp == NULL && strstr(db, paths.binbase) == NULL) {
 	char tmp[MAXLEN];
@@ -585,9 +585,9 @@ int main (int argc, char *argv[])
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc(_("startup"));
 
-    tryscript[0] = '\0';
-    scriptfile[0] = '\0';
-    paths.datfile[0] = '\0';
+    *tryscript = '\0';
+    *scriptfile = '\0';
+    *paths.datfile = '\0';
 
     /* Initialize gnome or GTK */
 #ifdef USE_GNOME
@@ -971,8 +971,8 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 /* ........................................................... */
 
-void check_varmenu_state (GtkCList *list, gint i, gint j,
-			  GdkEventButton *event, gpointer p)
+static void check_varmenu_state (GtkCList *list, gint i, gint j,
+				 GdkEventButton *event, gpointer p)
 {
     if (mdata->ifac != NULL) {
 	gint selcount = get_mdata_selection();

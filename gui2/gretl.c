@@ -22,7 +22,6 @@
 #include "gretl.h"
 #include "treeutils.h"
 #include "ssheet.h"
-#include "gpt_control.h"
 #include "guiprint.h"
 #include "console.h"
 #include "session.h"
@@ -56,14 +55,12 @@
 # include "../pixmaps/mini.camera.xpm"
 #endif
 
-/* win32 debugging? */
 /* #define WINDEBUG 1 */
 #ifdef WINDEBUG
 FILE *dbg;
 #endif
 
 /* functions from other gretl GUI files */
-
 extern void free_modelspec (void);    /* library.c */
 extern void free_command_stack (void);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
@@ -72,7 +69,6 @@ extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
 extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
 /* functions private to gretl.c */
-
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
 static GtkWidget *make_main_window (int gui_get_data);
@@ -154,9 +150,6 @@ int nls_on;
 int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
-#ifdef G_OS_WIN32
-int wimp = FALSE;
-#endif
 
 char dbproxy[21];
 
@@ -197,8 +190,7 @@ static void manual_update_query (gpointer p, guint u, GtkWidget *w)
     update_query();
 }
 
-#if defined(USE_GNOME)
-
+#ifdef USE_GNOME
 static void gnome_help (void)
 {
     GError *error = NULL;
@@ -210,37 +202,7 @@ static void gnome_help (void)
 	g_error_free (error);
     }
 }
-
-#elif defined(G_OS_WIN32)
-
-static void win_help (void)
-{
-    char hlpshow[MAXLEN];
-    int found = 0;
-
-    sprintf(hlpshow, "hh.exe \"%s\\%s\"", paths.gretldir, _("gretl.chm"));
-    
-    if (WinExec(hlpshow, SW_SHOWNORMAL) < 32) {
-	if (strcmp("gretl.chm", _("gretl.chm"))) {
-	    /* try falling back on untranslated helpfile */
-	    sprintf(hlpshow, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
-	    if (WinExec(hlpshow, SW_SHOWNORMAL) >= 32) found = 1;
-	}
-    } else {
-	found = 1;
-    }
-
-    if (!found) errbox(_("Couldn't access help file"));
-}
-
-static int unmangle (const char *dosname, char *longname);
-
-enum {
-    TO_BACKSLASH,
-    FROM_BACKSLASH
-};
-
-#endif /* gnome and win32 specials */
+#endif /* USE_GNOME */
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
@@ -627,7 +589,7 @@ static void get_runfile (char *fname)
 {
     int i;
 
-    *tryscript = 0;
+    *tryscript = '\0';
 #ifdef G_OS_WIN32
     if (unmangle(fname, tryscript)) return;
 #else
@@ -640,7 +602,7 @@ static void get_runfile (char *fname)
 	fprintf(stderr, I_("%s found\n"), tryscript);
 	i = slashpos(tryscript);
 	if (i) {
-	    paths.currdir[0] = 0;
+	    paths.currdir[0] = '\0';
 	    strncat(paths.currdir, tryscript, i);
 	}
 	strcat(paths.currdir, SLASHSTR);
@@ -676,16 +638,6 @@ static void destroy (GtkWidget *widget, gpointer data)
 #ifdef G_OS_WIN32
 extern int ws_startup (void);
 #endif
-
-#ifdef HUSH_RUNTIME_WARNINGS
-void dummy_output_handler (const gchar *log_domain,
-                           GLogLevelFlags log_level,
-                           const gchar *message,
-                           gpointer user_data)
-{
-    return;
-}
-#endif /* HUSH_RUNTIME_WARNINGS */
 
 #ifdef ENABLE_NLS
 void nls_init (void)
@@ -754,18 +706,7 @@ int main (int argc, char *argv[])
 #ifdef G_OS_WIN32
     read_rc(); /* get config info from registry */
 # ifdef HUSH_RUNTIME_WARNINGS
-    g_log_set_handler ("Gtk",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
-    g_log_set_handler ("Gdk",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
-    g_log_set_handler ("GLib",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
+    hush_warnings();
 # endif /* HUSH_RUNTIME_WARNINGS */ 
     ws_startup(); 
     atexit(write_rc);
@@ -1284,90 +1225,6 @@ void set_sample_label (DATAINFO *pdinfo)
 
 /* ......................................................... */
 
-#ifdef G_OS_WIN32
-
-#define NAME_BUFFER_LEN 32
-
-static void try_to_get_windows_font (void)
-{
-    HDC h_dc;
-    HGDIOBJ h_font;
-    TEXTMETRIC tm;
-    char name[NAME_BUFFER_LEN], regfont[MAXLEN];
-
-    /* don't override user's choice of font */
-    if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0)
-	return;
-
-    h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);
-    if (h_dc == NULL) return;
-
-    h_font = GetStockObject(DEFAULT_GUI_FONT); 
-    if (h_font == NULL || !SelectObject(h_dc, h_font)) {
-	DeleteDC(h_dc);
-	return;
-    }
-
-    if (GetTextFace(h_dc, NAME_BUFFER_LEN, name) <= 0) {
-	DeleteDC(h_dc);
-	return;
-    }
-
-    if (!GetTextMetrics(h_dc, &tm)) {
-	DeleteDC(h_dc);
-	return;
-    } else {
-	HDC screen = GetDC(0);
-	double scaleY = GetDeviceCaps(screen, LOGPIXELSY) / 96.0;
-	int pix_height = (int) (tm.tmHeight * scaleY);
-	int match = 0;
-	PangoFontDescription *pfd;
-	PangoFont *pfont;
-	PangoContext *pc;
-	GtkWidget *w;
-	gchar *fontname;
-
-	ReleaseDC(0, screen);
-	DeleteDC(h_dc);
-
-	fontname = g_strdup_printf("%s %d", name, pix_height);
-	pfd = pango_font_description_from_string(fontname);
-
-	w = gtk_label_new(NULL);
-	pc = gtk_widget_get_pango_context(w);
-	pfont = pango_context_load_font(pc, pfd);
-	match = (pfont != NULL);
-
-	pango_font_description_free(pfd);
-	g_object_unref(G_OBJECT(pc));
-	gtk_widget_destroy(w);
-
-	if (match) set_app_font(fontname);
-	g_free(fontname);
-    }
-}
-
-static void set_up_windows_look (void)
-{
-    if (wimp) { 
-	/* "Windows Impersonator" wanted */
-	size_t n = strlen(paths.gretldir);
-	int needslash = (paths.gretldir[n-1] != SLASH);
-	gchar *wimprc;
-
-	wimprc = g_strdup_printf("%s%setc\\gtk-2.0\\gtkrc.wimp", paths.gretldir,
-				 (needslash)? "\\" : "");
-	gtk_rc_parse(wimprc);
-	g_free(wimprc);
-    } else {
-	try_to_get_windows_font();
-    }
-}
-
-#endif /* G_OS_WIN32 */
-
-/* ......................................................... */
-
 static float get_gui_scale (void)
 {
     GtkSettings *settings;
@@ -1516,44 +1373,6 @@ static void set_up_main_menu (void)
     gtk_item_factory_create_items (mdata->ifac, n_items, data_items, NULL);
     mdata->mbar = gtk_item_factory_get_widget (mdata->ifac, "<main>");
 }
-
-#if 0
-static void mdata_edit (gpointer data, guint action, GtkWidget *w)
-{
-    gint row, colnum;
-    GtkTreeViewColumn *col;
-
-    if (action == RENAME) colnum = 1;
-    else if (action == RELABEL) colnum = 2;
-    else return;
-
-    row = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(mdata->listbox),
-					    "active_row"));
-    col = gtk_tree_view_get_column(GTK_TREE_VIEW(mdata->listbox), colnum);
-
-    if (col != NULL) {
-	GtkTreeIter iter;
-	GtkTreeModel *model;
-	GtkListStore *store;
-	GtkTreePath *path;
-	gchar rowstr[8];
-
-	model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
-	store = GTK_LIST_STORE(model);
-
-	sprintf(rowstr, "%d", row);
-	path = gtk_tree_path_new_from_string(rowstr);
-	gtk_tree_model_get_iter(model, &iter, path);
-	gtk_list_store_set(store, &iter, 3, TRUE, -1);
-
-	gtk_tree_view_row_activated(GTK_TREE_VIEW(mdata->listbox), path, col);
-	gtk_tree_view_set_cursor(GTK_TREE_VIEW(mdata->listbox),
-				 path, col, TRUE);
-	gtk_widget_grab_focus(mdata->listbox);
-	gtk_tree_path_free(path);
-    } 
-}
-#endif
 
 extern void delete_var_by_id (int id); /* callbacks.c */
 
@@ -1763,53 +1582,7 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 
 /* ........................................................... */
 
-#ifdef G_OS_WIN32
-
-/* #define CHILD_DEBUG */
-
-int create_child_process (char *prog, char *env) 
-{ 
-    PROCESS_INFORMATION proc_info; 
-    STARTUPINFO start_info; 
-    int ret;
-
-    ZeroMemory(&proc_info, sizeof proc_info);
-    ZeroMemory(&start_info, sizeof start_info);
-    start_info.cb = sizeof start_info; 
-
-    ret = CreateProcess(NULL, 
-			prog,          /* command line */
-			NULL,          /* process security attributes  */
-			NULL,          /* primary thread security attributes */ 
-			FALSE,         /* handles are inherited?  */
-			0,             /* creation flags  */
-			(LPVOID) env,  /* NULL => use parent's environment  */
-			NULL,          /* use parent's current directory  */
-			&start_info,   /* receives STARTUPINFO */ 
-			&proc_info);   /* receives PROCESS_INFORMATION  */
-
-    if (ret == 0) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
-    }
-
-#ifdef CHILD_DEBUG
-    if (1) {
-	FILE *fp = fopen("gretlbug.txt", "w");
-
-	if (fp != NULL) {
-	    fprintf(fp, "gretl: create_child_process():\n"
-		    " prog='%s'\n env='%s'\n", prog, env);
-	    fprintf(fp, " return from CreateProcess() = %d\n", ret);
-	    fclose(fp);
-	}
-    }	
-#endif
-
-    return ret;
-}
-
-#else /* not win32 */
+#ifndef G_OS_WIN32
 
 void gretl_fork (const char *prog, const char *arg)
 {
@@ -1836,24 +1609,6 @@ void gretl_fork (const char *prog, const char *arg)
 #endif	
 
 /* ........................................................... */
-
-#ifdef G_OS_WIN32
-static char *slash_convert (char *str, int which)
-{
-    char *p = str;
-
-    while (*p) {
-	if (which == FROM_BACKSLASH) {
-	    if (*p == '\\') *p = '/';
-	} else if (which == TO_BACKSLASH) {
-	    if (*p == '/') *p = '\\';
-	}
-	p++;
-    }
-
-    return str;
-}
-#endif
 
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
@@ -2382,68 +2137,6 @@ static void auto_store (void)
 }
 
 /* ........................................................... */
-
-#ifdef G_OS_WIN32
-
-static int old_windows (void) {
-    OSVERSIONINFO *winver;
-    static int old = 1;
-
-    if (!old) return 0; /* do only one look up */
-
-    winver = mymalloc(sizeof *winver);
-    if (winver == NULL) return old;
-
-    winver->dwOSVersionInfoSize = sizeof *winver;
-    GetVersionEx(winver);
-
-    switch (winver->dwPlatformId) {
-    case VER_PLATFORM_WIN32_WINDOWS:
-        if (winver->dwMinorVersion >= 10) /* win98 or higher */
-	    old = 0;
-        break;
-    case VER_PLATFORM_WIN32_NT:
-        if (winver->dwMajorVersion > 4) /* win2000 or higher */
-	    old = 0;
-        break;
-    }
-
-    free(winver);
-    return old;
-}
-
-static int unmangle (const char *dosname, char *longname)
-{
-    if (strchr(dosname, ':') == NULL) {
-	/* not a full path */
-	strcpy(longname, dosname);
-	return 0;
-    }	
-    else if (old_windows()) {
-	/* sorry but I really can't be bothered */
-	strcpy(longname, dosname);
-	return 0;
-    } else {
-	int err;
-	void *handle;
-	void (*real_unmangle)(const char *, char *, int, int *); 
-
-	real_unmangle = gui_get_plugin_function("real_unmangle", 
-						&handle);
-	if (real_unmangle == NULL) return 1;
-
-# ifdef WINDEBUG
-	fprintf(dbg, "calling real_unmangle with dosname='%s'\n", dosname);
-	fflush(dbg);
-# endif
-	(*real_unmangle)(dosname, longname, MAXLEN, &err);
-	close_plugin(handle);
-
-	return err;
-    }
-}
-
-#endif /* G_OS_WIN32 */
 
 static void count_selections (GtkTreeModel *model, GtkTreePath *path,
 			      GtkTreeIter *iter, int *selcount)
