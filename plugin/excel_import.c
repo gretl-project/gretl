@@ -40,7 +40,6 @@
 extern int excel_book_get_info (const char *fname, wbook *book);
 
 static void free_sheet (void);
-static short getshort (char *rec, int offset);
 static int process_item (int rectype, int reclen, char *rec, wbook *book, PRN *prn); 
 static int allocate_row_col (int row, int col, wbook *book);
 static char *copy_unicode_string (char **src);
@@ -48,7 +47,7 @@ static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
-#undef EDEBUG
+#define EDEBUG
 #undef FULL_EDEBUG
 
 #define EXCEL_IMPORTER
@@ -80,29 +79,40 @@ static double biff_get_double (char *rec, int offset)
     return dconv.d;
 }
 
-static int process_sheet (FILE *input, const char *filename, wbook *book,
+static short getshort (char *rec, int offset) 
+{
+    return (*((unsigned char *)(rec + offset)) |
+	    ((*((unsigned char *)(rec + offset + 1))) << 8));
+}
+
+static int getint (char *rec, int offset)
+{
+    return (*((unsigned char *)(rec + offset)) |
+	    ((*((unsigned char *)(rec + offset + 1))) << 8));
+}
+
+static int process_sheet (FILE *fp, const char *filename, wbook *book,
 			  PRN *prn) 
 {    
-    long rectype;
-    long reclen;
+    long rectype, reclen;
     unsigned char rec[MAX_MS_RECSIZE];
     int err = 0, itemsread = 1, eofcount = 0;
     long leading_bytes = 0L;
     unsigned offset = book->byte_offsets[book->selected];
 
     while (itemsread) {
-	fread(rec, 2, 1, input);
+	fread(rec, 2, 1, fp);
 	if (rec[0] != 9 || rec[1] != 8) {
-	    itemsread = fread(rec, 126, 1, input);
+	    itemsread = fread(rec, 126, 1, fp);
 	} else {
-	    fread(rec, 2, 1, input);
+	    fread(rec, 2, 1, fp);
 	    reclen = getshort(rec, 0);
 	    if (reclen == 8 || reclen == 16) {
-		leading_bytes = ftell(input) - 4L;
+		leading_bytes = ftell(fp) - 4L;
 #ifdef EDEBUG
 		fprintf(stderr, "Got BOF at %ld\n", leading_bytes);
 #endif
-		itemsread = fread(rec, reclen, 1, input);
+		itemsread = fread(rec, reclen, 1, fp);
 		break;
 	    } else {
 		pprintf(prn, _("%s: Invalid BOF record"), filename);
@@ -111,45 +121,52 @@ static int process_sheet (FILE *input, const char *filename, wbook *book,
 	}
     }    
 
-    if (feof(input)) {
+    if (feof(fp)) {
 	pprintf(prn, _("%s: No BOF record found"), filename);
 	return 1;
     }  
    
     while (!err && itemsread) {
-	char buffer[2];
+	unsigned char buffer[2];
 
 	rectype = 0;
-	itemsread = fread(buffer, 2, 1, input);
+	itemsread = fread(buffer, 2, 1, fp);
 	if (itemsread == 0) {
 #ifdef EDEBUG
 	    fprintf(stderr, "Breaking because itemsread = 0\n");
 #endif
 	    break;
 	}
-	rectype = getshort(buffer, 0);
+	rectype = getint(buffer, 0); /* was getshort */
 
 #ifdef EDEBUG
 	if (rectype == BOF) 
 	    fprintf(stderr, "Got BOF at %ld\n", leading_bytes);
 	if (rectype == MSEOF)
-	    fprintf(stderr, "Got MSEOF at %ld\n", ftell(input) - 2L);
+	    fprintf(stderr, "Got MSEOF at %ld\n", ftell(fp) - 2L);
 #endif
 
 	reclen = 0;
-	itemsread = fread(buffer, 2, 1, input);
+	itemsread = fread(buffer, 2, 1, fp);
 	if (itemsread == 0) {
 #ifdef EDEBUG
 	    fprintf(stderr, "Breaking because itemsread = 0\n");
 #endif
 	    break;
 	}
-	reclen = getshort(buffer, 0);
-	if (reclen && reclen < MAX_MS_RECSIZE && reclen > 0) {
-	    itemsread = fread(rec, 1, reclen, input);
+
+	reclen = getint(buffer, 0); /* was getshort */
+
+#ifdef EDEBUG
+	fprintf(stderr, "rectype = 0x%lx, reclen = %ld, offset at data = %ld\n", 
+		rectype, reclen, ftell(fp));
+#endif
+
+	if (reclen < MAX_MS_RECSIZE && reclen > 0) {
+	    itemsread = fread(rec, 1, reclen, fp);
 	    rec[reclen] = '\0';
 	}
-    
+
 	if (process_item(rectype, reclen, rec, book, prn)) {
 	    err = 1;
 	    break;
@@ -160,15 +177,16 @@ static int process_sheet (FILE *input, const char *filename, wbook *book,
 	    if (eofcount == 1 && offset) {
 		/* skip to the worksheet we want */
 #ifdef EDEBUG
-		fprintf(stderr, "currpos=%ld\n", ftell(input));
+		fprintf(stderr, "currpos=%ld\n", ftell(fp));
 #endif
-		fseek(input, offset + leading_bytes, SEEK_SET);
+		fseek(fp, offset + leading_bytes, SEEK_SET);
 	    }
 	    if (eofcount == 2) break;
 	} 
     }
 
-    fclose(input);
+    fclose(fp);
+
     return err;
 }
 
@@ -265,12 +283,6 @@ static double biff_get_rk (const unsigned char *ptr)
     return NADBL;
 }
 
-static int get_row_col (char *rec, int offset)
-{
-    return (*((unsigned char *)(rec + offset)) |
-	    ((*((unsigned char *)(rec + offset + 1))) << 8));
-}
-
 static int process_item (int rectype, int reclen, char *rec, wbook *book,
 			 PRN *prn) 
 {
@@ -280,7 +292,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
     if (rectype == LABEL || rectype == CONSTANT_STRING || 
 	rectype == NUMBER || rectype == RK || rectype == MULRK || 
 	rectype == FORMULA) {
-	row = get_row_col(rec, 0);
+	row = getint(rec, 0);
 	col = getshort(rec, 2);
 	if (negerr(row, col)) return 1;
     }
@@ -320,6 +332,10 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
     case CONTINUE: {
 	int i;
 	char *ptr = rec;
+
+#ifdef EDEBUG
+	fprintf(stderr, "Got CONTINUE, with sstnext = %d\n", sstnext);
+#endif
 
 	if (sstnext == 0) {
 	    break;
@@ -668,12 +684,6 @@ static int allocate_row_col (int row, int col, wbook *book)
 
     return 0;
 }
-
-static short getshort (char *rec, int offset) 
-{
-    return (*((unsigned char *)(rec + offset)) |
-	    ((*((unsigned char *)(rec + offset + 1))) << 8));
-}	      
 
 static void free_sheet (void) 
 {
