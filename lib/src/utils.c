@@ -985,6 +985,18 @@ MODEL *gretl_model_new (DATAINFO *pdinfo)
     return pmod;
 }
 
+/* ........................................................... */
+
+void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo)
+{
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+
+    pdinfo->t1 = pmod->smpl.t1;
+    pdinfo->t2 = pmod->smpl.t2;
+    pmod->smpl.t1 = t1;
+    pmod->smpl.t2 = t2;
+}
+
 /* #define SESSION_DEBUG */
 
 /* ........................................................... */

@@ -2502,7 +2502,19 @@ int _multiply (char *s, int *list, char *sfx, double **pZ,
     return 0;
 }
 
-/* .......................................................... */
+/**
+ * genr_fit_resid:
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @code: GENR_RESID or GENR_FITTED or GENR_RESID2.
+ * @undo: if non-zero, don't bother labeling the variables
+ *
+ * Adds residuals or fitted values or squared residuals from a
+ * given model to the data set.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int genr_fit_resid (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 		    int code, int undo)

@@ -1519,6 +1519,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     if (bufopen(&prn)) return;
 
     clear_model(models[1], NULL, NULL, NULL);
+    exchange_smpl(pmod, datainfo);
     *models[1] = arch(order, pmod->list, &Z, datainfo, 
 		     NULL, prn, &test);
     if ((err = (models[1])->errcode)) 
@@ -1529,6 +1530,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	if (oflag) outcovmx(models[1], datainfo, 0, prn);
     }
     clear_model(models[1], NULL, NULL, NULL);
+    exchange_smpl(pmod, datainfo);
 
     view_buffer(prn, 78, 400, "gretl: ARCH test", ARCH, view_items);
 }

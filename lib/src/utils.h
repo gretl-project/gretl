@@ -100,6 +100,8 @@ int catchflag (char *line, int *oflag);
 
 MODEL *gretl_model_new (DATAINFO *pdinfo);
 
+void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
+
 int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
 		 DATAINFO *pdinfo);
 

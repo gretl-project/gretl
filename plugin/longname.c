@@ -3,13 +3,15 @@
 
 #include <windows.h>
 
-int real_unmangle (const char *dosname, char *longname, int maxlen)
+__declspec(dllexport) 
+void real_unmangle (const char *dosname, char *longname, 
+		    int maxlen, int *err)
 {
-    int err = GetLongPathName(dosname, longname, maxlen);
+    *err = GetLongPathName(dosname, longname, maxlen);
 
-    if (err > 0 && err <= maxlen) err = 0;
-    else err = 1;
-    return err;
+    if (*err > 0 && *err <= maxlen) *err = 0;
+    else *err = 1;
 }
+
 
 

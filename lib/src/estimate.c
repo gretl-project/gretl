@@ -1492,10 +1492,12 @@ MODEL hccm_func (LIST list, double **pZ, DATAINFO *pdinfo)
 int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test)
 {
-    int err, lo, ncoeff, yno, i, t, n = pdinfo->n, check;
-    int shrink, v = pdinfo->v, *tmplist, *list, listlen;
+    int lo, ncoeff, yno, i, t, n = pdinfo->n, check;
+    int shrink, v = pdinfo->v, listlen;
+    int *tmplist = NULL, *list = NULL;
     double zz;
     MODEL white;
+    int err = 0;
 
     _init_model(&white, pdinfo);
 
@@ -1504,70 +1506,87 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     ncoeff = pmod->list[0] - 1;
 
     /* make space in data set */
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (_grow_Z(1, pZ, pdinfo)) err = E_ALLOC;
 
-    /* get residuals, square and add to data set */
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	zz = pmod->uhat[t];
-	(*pZ)[v*n + t] = zz * zz;
+    if (!err) {
+	/* get residuals, square and add to data set */
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    zz = pmod->uhat[t];
+	    (*pZ)[v*n + t] = zz * zz;
+	}
+	strcpy(pdinfo->varname[v], "uhatsq");
+
+	listlen = (pmod->ifc)? lo - 1 : lo;
+
+	tmplist = malloc(listlen * sizeof *tmplist);
+	if (tmplist == NULL) err = E_ALLOC;
+	else {
+	    tmplist[0] = listlen - 1;
+	    for (i=1; i<=tmplist[0]; i++) 
+		tmplist[i] = pmod->list[i+1];
+	}
     }
-    strcpy(pdinfo->varname[v], "uhatsq");
 
-    listlen = (pmod->ifc)? lo - 1 : lo;
-    tmplist = malloc(listlen * sizeof *tmplist);
-    tmplist[0] = listlen - 1;
-    for (i=1; i<=tmplist[0]; i++) tmplist[i] = pmod->list[i+1];
-
-    /* now add squares */
-    check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
-    if (check < 1) {
-	fprintf(stderr, "generation of squares failed\n");
-	free(tmplist);
-	return E_SQUARES;
+    if (!err) {
+	/* now add squares */
+	check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
+	if (check < 1) {
+	    fprintf(stderr, "generation of squares failed\n");
+	    free(tmplist);
+	    err = E_SQUARES;
+	}
     }
 
-    tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
-    tmplist[0] = pdinfo->v - v - 1; 
-    for (i=1; i<=tmplist[0]; i++) 
-	tmplist[i] = i + v;
-    err = _addtolist(pmod->list, tmplist, &list, pdinfo, 999);
-    if (err && err != E_VARCHANGE) {
-	fprintf(stderr, "didn't add to list\n");
-	free(tmplist);
-	return err;
+    if (!err) {
+	tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
+	if (tmplist == NULL) err = E_ALLOC;
+	else {
+	    tmplist[0] = pdinfo->v - v - 1; 
+	    for (i=1; i<=tmplist[0]; i++) 
+		tmplist[i] = i + v;
+	}
     }
-    list[1] = v;
 
-    /* run auxiliary regression and print results */
-    white = lsq(list, pZ, pdinfo, OLS, 0, 0.);
-    err = white.errcode;
-    if (err) {
-	clear_model(&white, NULL, NULL, pdinfo);
-	shrink = pdinfo->v - v;
-	if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
-	free(tmplist);
-	free(list);
-	return err;
+    if (!err) {
+	err = _addtolist(pmod->list, tmplist, &list, pdinfo, 999);
+	if (err) {
+	    if (err != E_VARCHANGE) 
+		fprintf(stderr, "didn't add to list\n");
+	    else {
+		err = 0;
+		list[1] = v;
+	    }
+	}
     }
-    white.aux = AUX_WHITE;
-    printmodel(&white, pdinfo, prn);
 
-    if (test != NULL) {
-	strcpy(test->type, "White's test for heteroskedasticity");
-	strcpy(test->h_0, "heteroskedasticity not present");
-	sprintf(test->teststat, "TR^2 = %f", white.rsq * white.nobs);
-	sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
-		white.ncoeff - 1, white.rsq * white.nobs, 
-		chisq(white.rsq * white.nobs, white.ncoeff - 1));
+    if (!err) {
+	/* run auxiliary regression and print results */
+	white = lsq(list, pZ, pdinfo, OLS, 0, 0.);
+	err = white.errcode;
+    }
+
+    if (!err) {
+	white.aux = AUX_WHITE;
+	printmodel(&white, pdinfo, prn);
+
+	if (test != NULL) {
+	    strcpy(test->type, "White's test for heteroskedasticity");
+	    strcpy(test->h_0, "heteroskedasticity not present");
+	    sprintf(test->teststat, "TR^2 = %f", white.rsq * white.nobs);
+	    sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+		    white.ncoeff - 1, white.rsq * white.nobs, 
+		    chisq(white.rsq * white.nobs, white.ncoeff - 1));
+	}
     }
 
     clear_model(&white, NULL, NULL, pdinfo);
     shrink = pdinfo->v - v;
     if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
+
     free(tmplist);
     free(list);
 
-    return 0;
+    return err;
 }
 
 /**
@@ -2010,9 +2029,10 @@ MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo,
 	    int *model_count, PRN *prn, GRETLTEST *test)
 {
     MODEL archmod;
-    int *wlist = NULL, *arlist = NULL, nv, n = pdinfo->n;
-    int i, t, nwt;
+    int *wlist = NULL, *arlist = NULL;
+    int i, t, nwt, nv, n = pdinfo->n;
     double LM, xx;
+    int err = 0;
 
     _init_model(&archmod, pdinfo);
 
@@ -2020,102 +2040,103 @@ MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo,
     if (order < 1) {
 	archmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, "Invalid lag order for arch (%d)", order);
-	return archmod;
+	err = 1;
     }
 
-    /* allocate workspace */
-    if (_grow_Z(order + 1, pZ, pdinfo) || 
-	(arlist = malloc((order + 3) * sizeof *arlist)) == NULL) {
-	archmod.errcode = E_ALLOC;
-	return archmod;
-    }
-
-    /* start list for aux regression */
-    arlist[0] = 2 + order;
-    arlist[1] = pdinfo->v - order - 1;
-    arlist[2] = 0;
-
-    /* run OLS and get squared residuals */
-    archmod = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
-    if (archmod.errcode) {
-	_shrink_Z(order + 1, pZ, pdinfo);
-	free(arlist);
-	return archmod;
-    }
-    nv = pdinfo->v - order - 1;
-    strcpy(pdinfo->varname[nv], "utsq");
-    for (t=archmod.t1; t<=archmod.t2; t++) {
-	xx = archmod.uhat[t];
-	(*pZ)[n*nv + t] = xx * xx;
-    }
-    /* also lags of squared resids */
-    for (i=1; i<=order; i++) {
-	nv =  pdinfo->v - order + i - 1;
-	arlist[i+2] = nv;
-	sprintf(pdinfo->varname[nv], "utsq_%d", i);
-	for (t=0; t<n; t++) (*pZ)[n*nv + t] = NADBL;
-	for (t=archmod.t1+i; t<=archmod.t2; t++) 
-	    (*pZ)[n*nv + t] = (*pZ)[n*arlist[1] + t-i];
-    }
-
-    /* run aux. regression */
-    clear_model(&archmod, NULL, NULL, pdinfo);
-    archmod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
-    if (archmod.errcode) {
-	_shrink_Z(order + 1, pZ, pdinfo);
-	free(arlist);
-	return archmod;
-    }    
-
-    /* print results */
-    archmod.aux = AUX_ARCH;
-    printmodel(&archmod, pdinfo, prn);
-    pprintf(prn, "No of obs. = %d, unadjusted R^2 = %f\n",
-	    archmod.nobs, archmod.rsq);
-    LM = archmod.nobs * archmod.rsq;
-    xx = chisq(LM, order);
-
-    if (test != NULL) {
-	sprintf(test->type, "Test for ARCH of order %d", order);
-	strcpy(test->h_0, "no ARCH effect is present");
-	sprintf(test->teststat, "TR^2 = %f", LM);
-	sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
-		order, LM, xx);
-    }
-
-    pprintf(prn, "LM test statistic (%f) is distributed as Chi-square "
-	    "(%d)\nArea to the right of LM = %f  ", LM, order, xx);
-    if (xx > 0.1) 
-	pprintf(prn, "\nARCH effect is insignificant at the 10 "
-		"percent level.\nWeighted estimation not done.\n");
-    else {
-	pprintf(prn, "\nARCH effect is significant at the 10 "
-		"percent level.\n");
-	/* weighted estimation */
-	wlist = malloc((list[0] + 2) * sizeof *wlist);
-	if (wlist == NULL) {
-	    archmod.errcode = E_ALLOC;
-	    return archmod;
+    if (!err) {
+	/* allocate workspace */
+	if (_grow_Z(order + 1, pZ, pdinfo) || 
+	    (arlist = malloc((order + 3) * sizeof *arlist)) == NULL) {
+	    err = archmod.errcode = E_ALLOC;
 	}
-	wlist[0] = list[0] + 1;
-	nwt = wlist[1] = pdinfo->v - 1; /* weight var */
-	for (i=2; i<=wlist[0]; i++) wlist[i] = list[i-1];
+    }
+
+    if (!err) {
+	/* start list for aux regression */
+	arlist[0] = 2 + order;
+	arlist[1] = pdinfo->v - order - 1;
+	arlist[2] = 0;
+
+	/* run OLS and get squared residuals */
+	archmod = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
+	err = archmod.errcode;
+    }
+
+    if (!err) {
 	nv = pdinfo->v - order - 1;
+	strcpy(pdinfo->varname[nv], "utsq");
 	for (t=archmod.t1; t<=archmod.t2; t++) {
-	    xx = archmod.yhat[t];
-	    if (xx <= 0.0) xx = (*pZ)[n*nv + t];
-	    (*pZ)[n*nwt + t] = 1/sqrt(xx);
+	    xx = archmod.uhat[t];
+	    (*pZ)[n*nv + t] = xx * xx;
 	}
-	strcpy(pdinfo->varname[nwt], "1/sigma");
+	/* also lags of squared resids */
+	for (i=1; i<=order; i++) {
+	    nv =  pdinfo->v - order + i - 1;
+	    arlist[i+2] = nv;
+	    sprintf(pdinfo->varname[nv], "utsq_%d", i);
+	    for (t=0; t<n; t++) (*pZ)[n*nv + t] = NADBL;
+	    for (t=archmod.t1+i; t<=archmod.t2; t++) 
+		(*pZ)[n*nv + t] = (*pZ)[n*arlist[1] + t-i];
+	}
+
+	/* run aux. regression */
 	clear_model(&archmod, NULL, NULL, pdinfo);
-	archmod = lsq(wlist, pZ, pdinfo, WLS, 1, 0.0);
-	if (model_count != NULL) {
-	    *model_count += 1;
-	    archmod.ID = *model_count;
-	} else archmod.ID = -1;
-	archmod.ci = ARCH;
-	archmod.archp = order;
+	archmod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
+	err = archmod.errcode;
+    }
+
+    if (!err) {
+	/* print results */
+	archmod.aux = AUX_ARCH;
 	printmodel(&archmod, pdinfo, prn);
+	pprintf(prn, "No of obs. = %d, unadjusted R^2 = %f\n",
+		archmod.nobs, archmod.rsq);
+	LM = archmod.nobs * archmod.rsq;
+	xx = chisq(LM, order);
+
+	if (test != NULL) {
+	    sprintf(test->type, "Test for ARCH of order %d", order);
+	    strcpy(test->h_0, "no ARCH effect is present");
+	    sprintf(test->teststat, "TR^2 = %f", LM);
+	    sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+		    order, LM, xx);
+	}
+
+	pprintf(prn, "LM test statistic (%f) is distributed as Chi-square "
+		"(%d)\nArea to the right of LM = %f  ", LM, order, xx);
+	if (xx > 0.1) 
+	    pprintf(prn, "\nARCH effect is insignificant at the 10 "
+		    "percent level.\nWeighted estimation not done.\n");
+	else {
+	    pprintf(prn, "\nARCH effect is significant at the 10 "
+		    "percent level.\n");
+	    /* weighted estimation */
+	    wlist = malloc((list[0] + 2) * sizeof *wlist);
+	    if (wlist == NULL) {
+		archmod.errcode = E_ALLOC;
+	    } else {
+		wlist[0] = list[0] + 1;
+		nwt = wlist[1] = pdinfo->v - 1; /* weight var */
+		for (i=2; i<=wlist[0]; i++) wlist[i] = list[i-1];
+		nv = pdinfo->v - order - 1;
+		for (t=archmod.t1; t<=archmod.t2; t++) {
+		    xx = archmod.yhat[t];
+		    if (xx <= 0.0) xx = (*pZ)[n*nv + t];
+		    (*pZ)[n*nwt + t] = 1/sqrt(xx);
+		}
+		strcpy(pdinfo->varname[nwt], "1/sigma");
+		clear_model(&archmod, NULL, NULL, pdinfo);
+		archmod = lsq(wlist, pZ, pdinfo, WLS, 1, 0.0);
+		if (model_count != NULL) {
+		    *model_count += 1;
+		    archmod.ID = *model_count;
+		} else 
+		    archmod.ID = -1;
+		archmod.ci = ARCH;
+		archmod.archp = order;
+		printmodel(&archmod, pdinfo, prn);
+	    }
+	}
     }
 
     if (arlist != NULL) free(arlist);

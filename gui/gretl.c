@@ -28,7 +28,7 @@
 # include <unistd.h>
 # include "pixmaps/gretl.xpm"  /* program icon for X */
 #else
-# include <windows.h> 
+# include <windows.h>
 # ifdef USE_HHCTRL
 #  include "htmlhelp.h"
 # endif
@@ -1845,14 +1845,13 @@ static int unmangle (const char *dosname, char *longname)
     } else {
 	int err;
 	void *handle;
-	int (*real_unmangle)(const char*, char *, int); 
+	void (*real_unmangle)(const char *, char *, int, int *); 
 	
 	if (open_plugin("longname", &handle)) return 1;
+
 	real_unmangle = get_plugin_function("real_unmangle", handle);
 	if (real_unmangle == NULL) return 1;
-	err = (*real_unmangle)(dosname, longname, MAXLEN);
-	if (err > 0 && err <= MAXLEN) err = 0;
-	else err = 1;
+	(*real_unmangle)(dosname, longname, MAXLEN, &err);
 	close_plugin(handle);
 	return err;
     }

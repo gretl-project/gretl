@@ -302,6 +302,7 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
 
 /* ........................................................... */
 
+#ifdef notdef
 static int model_dates_check (windata_t *mydata)
 {
     MODEL *pmod = (MODEL *) mydata->data;
@@ -314,6 +315,7 @@ static int model_dates_check (windata_t *mydata)
     }
     return 0;
 }
+#endif
 
 /* ........................................................... */
 
@@ -324,8 +326,6 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
     void (*okfunc)() = NULL;
     guint varclick = 0;
     windata_t *mydata = (windata_t *) data;
-
-    if (model_dates_check(mydata)) return;
 
     *defstr = '\0';
 
