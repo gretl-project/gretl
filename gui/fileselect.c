@@ -335,17 +335,15 @@ static char *make_winfilter (int action, gpointer data)
     char *p = mymalloc(128);
     char *start = p;
     gchar *trf = NULL;
-    int nls = 0;
     struct winfilter filter;
 
     if (p == NULL) return NULL;
 
     filter = get_filter(action, data);
 
-    if (doing_nls()) {
+    if (nls_on) {
 	gint wrote;
 
-	nls = 1;
 	trf = g_locale_from_utf8 (_(filter.descrip), -1, NULL, &wrote, NULL);
 	strcpy(p, trf);
     } else strcpy(p, _(filter.descrip));
@@ -359,7 +357,7 @@ static char *make_winfilter (int action, gpointer data)
     p += strlen(p) + 1;
     *p = '\0';
 
-    if (nls) g_free(trf);
+    if (nls_on) g_free(trf);
 
     return start;
 }
@@ -369,7 +367,7 @@ static char *make_winfilter (int action, gpointer data)
 void file_selector (char *msg, int action, gpointer data) 
 {
     OPENFILENAME of;
-    int retval, nls = 0;
+    int retval;
     char fname[MAXLEN], endname[64], startd[MAXLEN];
     char *filter;
     gchar *trmsg;
@@ -389,10 +387,9 @@ void file_selector (char *msg, int action, gpointer data)
 	get_base(startd, paths.datfile, SLASH);
     }
 
-    if (doing_nls()) {
+    if (nls_on) {
 	gint wrote;
 
-	nls = 1;
 	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
     } else trmsg = msg;
 
@@ -423,7 +420,7 @@ void file_selector (char *msg, int action, gpointer data)
 	retval = GetSaveFileName(&of);
 
     free(filter);
-    if (nls) g_free(trmsg);
+    if (nls_on) g_free(trmsg);
 
     if (!retval) {
 	if (CommDlgExtendedError())

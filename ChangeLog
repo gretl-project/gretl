@@ -1,4 +1,5 @@
-version 0.996
+05/24/2002 version 0.996
+- Raise library version to 14.0.0
 - closing a session clears the selector dialog presets
 - fix bug with scalar data and the data-editing spreadsheet
 - revert boxplots to the older selection dialog (so user can add

@@ -130,6 +130,9 @@ int plot_count, data_status, orig_vars;
 PRN *cmds;
 gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 
+/* Is NLS translation in effect? */
+int nls_on;
+
 /* defaults for some options */
 int expert = FALSE; 
 int updater = FALSE;
@@ -582,8 +585,9 @@ void nls_init (void)
     sprintf(localedir, "%s\\locale", gretldir);
     setlocale (LC_ALL, "");
     bindtextdomain ("gretl", localedir);
-    bind_textdomain_codeset ("gretl", "UTF-8");
+    /* bind_textdomain_codeset ("gretl", "UTF-8"); */
     textdomain ("gretl");  
+    nls_on = doing_nls();
 }
 # else
 void nls_init (void)
@@ -591,6 +595,7 @@ void nls_init (void)
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
+    nls_on = doing_nls();
 }
 # endif /* G_OS_WIN32 */
 #endif /* ENABLE_NLS */

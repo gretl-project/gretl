@@ -51,7 +51,6 @@ int win_copy_text (PRN *prn, int format)
     char *ptr;
     unsigned rtf_format;
     size_t len;
-    int nls = doing_nls();
     gchar *tr = NULL;
 
     if (format == COPY_RTF) 
@@ -65,7 +64,7 @@ int win_copy_text (PRN *prn, int format)
 
     EmptyClipboard();
 
-    if (nls) {
+    if (nls_on) {
 	gint wrote;
 
 	tr = g_locale_from_utf8 (prn->buf, -1, NULL, &wrote, NULL);
@@ -76,8 +75,8 @@ int win_copy_text (PRN *prn, int format)
     winclip = GlobalAlloc(GMEM_DDESHARE, len + 1);        
     ptr = (char *) GlobalLock(winclip);
 
-    memcpy(ptr, (nls)? tr : prn->buf, len + 1);
-    if (nls) g_free(tr);
+    memcpy(ptr, (nls_on)? tr : prn->buf, len + 1);
+    if (nls_on) g_free(tr);
 
     GlobalUnlock(winclip);
 
@@ -361,7 +360,7 @@ static void r_noconst (PRN *prn)
 
 static void r_depvarstats (const MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "{"
+    pprintf(prn, 
 	    STATS_ROW
 	    " \\ql Mean of dep. var.\\cell"
 	    " \\qr %.3f\\cell"
@@ -494,7 +493,7 @@ static void r_dwline (const MODEL *pmod, PRN *prn)
 		" \\ql 1st-order autocorr. coeff\\cell"
 		" \\qr %.3f\\cell",
 		pmod->dw, pmod->rho);
-    pprintf(prn, " \\intbl \\row}\n");
+    pprintf(prn, " \\intbl \\row\n");
 }
 
 /* ......................................................... */ 
@@ -524,7 +523,6 @@ static void r_dhline (const MODEL *pmod, PRN *prn)
 		"\\ql (Using variable %d for h stat, with T' = %d)" 
 		"\\cell \\intbl \\row\n",
 		pmod->list[i], T);
-    pprintf(prn, "}\n");
 }
 
 /* ......................................................... */
@@ -654,6 +652,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
 	|| pmod->ci == HCCM || pmod->ci == POOLED ||
 	(pmod->ci == WLS && pmod->wt_dummy)) {
+	pprintf(prn, "{");
 	r_depvarstats(pmod, prn);
 	if (r_essline(pmod, prn, 0)) return;
 	r_rsqline(pmod, prn);
@@ -666,7 +665,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 	/* FIXME -- check output below */
 	if (pmod->ci == HCCM || pmod->ci == TSLS) 
 	    r_dwline(pmod, prn);
-	pprintf(prn, "\n");
+	pprintf(prn, "}\n");
 	if (pmod->ci == TSLS) pprintf(prn, "\n"
 	       "R{\\super 2} is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
@@ -676,6 +675,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     }
     else if ((pmod->ci == WLS && !(pmod->wt_dummy)) || 
 	     pmod->ci == HSK || pmod->ci == ARCH) {
+#ifdef RAMANATHAN
 	pprintf(prn, "Statistics based on the weighted data:\n\n"
 	       "R{\\super 2} is suppressed as it is not meaningful.  The "
 	       "F-statistic tests\nthe hypothesis that all parameters "
@@ -683,13 +683,29 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (r_essline(pmod, prn, 1)) return;
 	r_Fline(pmod, prn);
 	r_dwline(pmod, prn);
+	pprintf(prn, "}\n");
 	pprintf(prn, "Statistics based on the original data:\n\n"
 	       "R{\\super 2} is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.\\par\n");
+	pprintf(prn, "{");
 	r_depvarstats(pmod, prn);
 	if (r_essline(pmod, prn, 0)) return;
 	r_rsqline(pmod, prn); 
+#else
+	pprintf(prn, _("Statistics based on the weighted data:\\par\n"));
+	pprintf(prn, "{");
+	if (r_essline(pmod, prn, 1)) return;
+	r_rsqline(pmod, prn);
+	r_Fline(pmod, prn);
+	r_dwline(pmod, prn);
+	pprintf(prn, "}\n");
+	pprintf(prn, _("\nStatistics based on the original data:\\par\n"));
+	pprintf(prn, "{");
+	r_depvarstats(pmod, prn);
+	if (r_essline(pmod, prn, 0)) return;
+	pprintf(prn, "}\n");
+#endif
 	pprintf(prn, "\n\\par\n");
 	r_print_aicetc(pmod, prn);
 	r_pmax_line(pmod, pdinfo, prn);
@@ -703,7 +719,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 	r_rsqline(pmod, prn);
 	r_Fline(pmod, prn);
 	r_dwline(pmod, prn);
-	pprintf(prn, "\n\\par\n");
+	pprintf(prn, "}\n\\par\n");
 	r_print_aicetc(pmod, prn);
 	r_pmax_line(pmod, pdinfo, prn);
     }

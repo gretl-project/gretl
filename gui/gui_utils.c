@@ -2485,20 +2485,21 @@ static void msgbox (const char *msg, int err)
 static void msgbox (const char *msg, int err)
 {
     gchar *trmsg = NULL;
-    int nls = doing_nls();
 
-    if (nls) {
+    if (nls_on) {
 	gint wrote;
 
 	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
     } 
 
     if (err) 
-	MessageBox(NULL, (nls)? trmsg : msg, "gretl", MB_OK | MB_ICONERROR);
+	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
+		   MB_OK | MB_ICONERROR);
     else
-	MessageBox(NULL, (nls)? trmsg : msg, "gretl", MB_OK | MB_ICONINFORMATION);
+	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
+		   MB_OK | MB_ICONINFORMATION);
 
-    if (nls) g_free(trmsg);
+    if (nls_on) g_free(trmsg);
 }
 
 #else /* plain GTK */
@@ -3806,9 +3807,9 @@ void add_files_to_menu (int filetype)
     GtkItemFactoryEntry fileitem;
     GtkWidget *w;
     const gchar *msep[] = {
-	"/File/Open data/sep",
-	"/Session/sep",
-	"/File/Open command file/sep"
+	N_("/File/Open data/sep"),
+	N_("/Session/sep"),
+	N_("/File/Open command file/sep")
     };
     const gchar *mpath[] = {
 	N_("/File/_Open data"),

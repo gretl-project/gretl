@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-05-23 15:54-0400\n"
+"POT-Creation-Date: 2002-05-24 08:22-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2268,12 +2268,12 @@ msgid ""
 "Test for "
 msgstr ""
 
-#: lib/src/printout.c:505 gui/guiprint.c:567
+#: lib/src/printout.c:505 gui/guiprint.c:575
 #, c-format
 msgid "autocorrelation up to order %d\n"
 msgstr ""
 
-#: lib/src/printout.c:507 gui/guiprint.c:569
+#: lib/src/printout.c:507 gui/guiprint.c:577
 msgid "first-order autocorrelation\n"
 msgstr ""
 
@@ -3816,7 +3816,7 @@ msgstr ""
 
 #: gui/calculator.c:1022 gui/database.c:545 gui/datafiles.c:443
 #: gui/gpt_control.c:618 gui/gui_utils.c:1487 gui/gui_utils.c:1675
-#: gui/gui_utils.c:1903 gui/gui_utils.c:2428 gui/gui_utils.c:2529
+#: gui/gui_utils.c:1903 gui/gui_utils.c:2428 gui/gui_utils.c:2528
 #: gui/ssheet.c:633 gui/boxplots.c:173 gui/boxplots.c:201
 msgid "Close"
 msgstr ""
@@ -4012,7 +4012,7 @@ msgid "gretl: time-series plot"
 msgstr ""
 
 #: gui/callbacks.c:404 gui/dialogs.c:104 gui/dialogs.c:110 gui/dialogs.c:300
-#: gui/dialogs.c:318 gui/dialogs.c:327 gui/gui_utils.c:2644 gui/ssheet.c:142
+#: gui/dialogs.c:318 gui/dialogs.c:327 gui/gui_utils.c:2643 gui/ssheet.c:142
 #: gui/ssheet.c:154
 msgid "Apply"
 msgstr ""
@@ -4363,8 +4363,8 @@ msgstr ""
 msgid "Use start-of-period values"
 msgstr ""
 
-#: gui/database.c:1598 gui/datafiles.c:666 gui/dialogs.c:830
-#: gui/gpt_control.c:813 gui/gui_utils.c:3360 gui/ssheet.c:143
+#: gui/database.c:1598 gui/datafiles.c:666 gui/dialogs.c:829
+#: gui/gpt_control.c:813 gui/gui_utils.c:3359 gui/ssheet.c:143
 #: gui/ssheet.c:155 gui/library.c:4482 gui/selector.c:764
 #: plugin/progress_bar.c:97
 msgid "Cancel"
@@ -4529,7 +4529,7 @@ msgid ""
 "minimum and maximum values:"
 msgstr ""
 
-#: gui/dialogs.c:105 gui/dialogs.c:111 gui/gui_utils.c:2634
+#: gui/dialogs.c:105 gui/dialogs.c:111 gui/gui_utils.c:2633
 msgid "  Cancel  "
 msgstr ""
 
@@ -4647,47 +4647,47 @@ msgstr ""
 msgid "  Close  "
 msgstr ""
 
-#: gui/dialogs.c:811
+#: gui/dialogs.c:810
 msgid "Yes"
 msgstr ""
 
-#: gui/dialogs.c:821
+#: gui/dialogs.c:820
 msgid "No"
 msgstr ""
 
-#: gui/dialogs.c:864
+#: gui/dialogs.c:863
 msgid ""
 "Do you want to save the commands and\n"
 "output from this gretl session?"
 msgstr ""
 
-#: gui/dialogs.c:877
+#: gui/dialogs.c:876
 msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
 msgstr ""
 
-#: gui/dialogs.c:925
+#: gui/dialogs.c:924
 msgid "gretl: data delimiter"
 msgstr ""
 
-#: gui/dialogs.c:940
+#: gui/dialogs.c:939
 msgid "separator for data columns:"
 msgstr ""
 
-#: gui/dialogs.c:946
+#: gui/dialogs.c:945
 msgid "comma (,)"
 msgstr ""
 
-#: gui/dialogs.c:959
+#: gui/dialogs.c:958
 msgid "space"
 msgstr ""
 
-#: gui/dialogs.c:972
+#: gui/dialogs.c:971
 msgid "tab"
 msgstr ""
 
-#: gui/dialogs.c:984 gui/gui_utils.c:2531
+#: gui/dialogs.c:983 gui/gui_utils.c:2530
 msgid "OK"
 msgstr ""
 
@@ -4954,7 +4954,7 @@ msgstr ""
 msgid "Couldn't access help file"
 msgstr ""
 
-#: gui/gretl.c:199 gui/gui_utils.c:3815
+#: gui/gretl.c:199 gui/gui_utils.c:3814
 msgid "/File/_Open data"
 msgstr ""
 
@@ -5154,7 +5154,7 @@ msgstr ""
 msgid "/File/sep2a"
 msgstr ""
 
-#: gui/gretl.c:287 gui/gui_utils.c:3588 gui/gui_utils.c:3817
+#: gui/gretl.c:287 gui/gui_utils.c:3587 gui/gui_utils.c:3816
 msgid "/File/Open command file"
 msgstr ""
 
@@ -6051,12 +6051,12 @@ msgid "/Edit/_Copy selection"
 msgstr ""
 
 #: gui/gui_utils.c:180 gui/gui_utils.c:258 gui/session.c:95
-#: gui/guiprint.c:1221 gui/library.c:72 gui/library.c:81 gui/library.c:94
+#: gui/guiprint.c:1229 gui/library.c:72 gui/library.c:81 gui/library.c:94
 #: gui/library.c:110 gui/library.c:122 gui/library.c:133
 msgid "/Edit/Copy _all"
 msgstr ""
 
-#: gui/gui_utils.c:181 gui/guiprint.c:1233
+#: gui/gui_utils.c:181 gui/guiprint.c:1241
 msgid "/Edit/Copy all/as plain _text"
 msgstr ""
 
@@ -6064,11 +6064,11 @@ msgstr ""
 msgid "/Edit/Copy all/as _HTML"
 msgstr ""
 
-#: gui/gui_utils.c:183 gui/guiprint.c:1239
+#: gui/gui_utils.c:183 gui/guiprint.c:1247
 msgid "/Edit/Copy all/as _LaTeX"
 msgstr ""
 
-#: gui/gui_utils.c:184 gui/guiprint.c:1245
+#: gui/gui_utils.c:184 gui/guiprint.c:1253
 msgid "/Edit/Copy all/as _RTF"
 msgstr ""
 
@@ -6520,119 +6520,131 @@ msgstr ""
 msgid "/Graphs/Separation/by %s"
 msgstr ""
 
-#: gui/gui_utils.c:2513
+#: gui/gui_utils.c:2512
 #, c-format
 msgid ""
 "Error:\n"
 "%s\n"
 msgstr ""
 
-#: gui/gui_utils.c:2515
+#: gui/gui_utils.c:2514
 #, c-format
 msgid ""
 "Info:\n"
 "%s\n"
 msgstr ""
 
-#: gui/gui_utils.c:2519
+#: gui/gui_utils.c:2518
 msgid "gretl error"
 msgstr ""
 
-#: gui/gui_utils.c:2520
+#: gui/gui_utils.c:2519
 msgid "gretl info"
 msgstr ""
 
-#: gui/gui_utils.c:2567
+#: gui/gui_utils.c:2566
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
 "(the max is 8 characters)"
 msgstr ""
 
-#: gui/gui_utils.c:2573
+#: gui/gui_utils.c:2572
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
 
-#: gui/gui_utils.c:2582
+#: gui/gui_utils.c:2581
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
 "Use only letters, digits and underscore"
 msgstr ""
 
-#: gui/gui_utils.c:2598
+#: gui/gui_utils.c:2597
 msgid "gretl: options"
 msgstr ""
 
-#: gui/gui_utils.c:2679
+#: gui/gui_utils.c:2678
 msgid "General"
 msgstr ""
 
-#: gui/gui_utils.c:2681
+#: gui/gui_utils.c:2680
 msgid "Databases"
 msgstr ""
 
-#: gui/gui_utils.c:2683
+#: gui/gui_utils.c:2682
 msgid "Toolbar"
 msgstr ""
 
-#: gui/gui_utils.c:2685
+#: gui/gui_utils.c:2684
 msgid "Open/Save path"
 msgstr ""
 
-#: gui/gui_utils.c:2687
+#: gui/gui_utils.c:2686
 msgid "Data files"
 msgstr ""
 
-#: gui/gui_utils.c:2999
+#: gui/gui_utils.c:2998
 msgid "Couldn't open config file for writing"
 msgstr ""
 
-#: gui/gui_utils.c:3120
+#: gui/gui_utils.c:3119
 msgid "Font for gretl output windows"
 msgstr ""
 
-#: gui/gui_utils.c:3183 gui/gui_utils.c:3225 gui/gui_utils.c:3270
+#: gui/gui_utils.c:3182 gui/gui_utils.c:3224 gui/gui_utils.c:3269
 msgid "String was not found."
 msgstr ""
 
-#: gui/gui_utils.c:3318
+#: gui/gui_utils.c:3317
 msgid "gretl: find"
 msgstr ""
 
-#: gui/gui_utils.c:3322
+#: gui/gui_utils.c:3321
 msgid " Find what:"
 msgstr ""
 
-#: gui/gui_utils.c:3350
+#: gui/gui_utils.c:3349
 msgid "Find next"
 msgstr ""
 
-#: gui/gui_utils.c:3515
+#: gui/gui_utils.c:3514
 msgid "No undo information available"
 msgstr ""
 
-#: gui/gui_utils.c:3586
+#: gui/gui_utils.c:3585
 msgid "/File/Open data"
 msgstr ""
 
-#: gui/gui_utils.c:3587
+#: gui/gui_utils.c:3586
 msgid "/Session/Open"
 msgstr ""
 
-#: gui/gui_utils.c:3816
+#: gui/gui_utils.c:3809
+msgid "/File/Open data/sep"
+msgstr ""
+
+#: gui/gui_utils.c:3810
+msgid "/Session/sep"
+msgstr ""
+
+#: gui/gui_utils.c:3811
+msgid "/File/Open command file/sep"
+msgstr ""
+
+#: gui/gui_utils.c:3815
 msgid "/Session"
 msgstr ""
 
-#: gui/gui_utils.c:3889
+#: gui/gui_utils.c:3888
 #, c-format
 msgid "Couldn't load plugin %s"
 msgstr ""
 
-#: gui/gui_utils.c:3897
+#: gui/gui_utils.c:3896
 #, c-format
 msgid "Failed to load plugin: %s"
 msgstr ""
@@ -7070,40 +7082,40 @@ msgid ""
 "%s"
 msgstr ""
 
-#: gui/guiprint.c:91
+#: gui/guiprint.c:99
 #, c-format
 msgid "gretl output %s"
 msgstr ""
 
-#: gui/guiprint.c:167 gui/guiprint.c:240
+#: gui/guiprint.c:175 gui/guiprint.c:248
 #, c-format
 msgid "%s, page %d"
 msgstr ""
 
-#: gui/guiprint.c:221 gui/guiprint.c:239 gui/guiprint.c:294
+#: gui/guiprint.c:229 gui/guiprint.c:247 gui/guiprint.c:302
 msgid "gretl output"
 msgstr ""
 
-#: gui/guiprint.c:565
+#: gui/guiprint.c:573
 msgid "Test for "
-msgstr ""
-
-#: gui/guiprint.c:572
-#, c-format
-msgid "Test for ARCH of order %d\n"
 msgstr ""
 
 #: gui/guiprint.c:580
 #, c-format
+msgid "Test for ARCH of order %d\n"
+msgstr ""
+
+#: gui/guiprint.c:588
+#, c-format
 msgid "MODEL %d: "
 msgstr ""
 
-#: gui/guiprint.c:584
+#: gui/guiprint.c:592
 #, c-format
 msgid "%s estimates using the %d observations %s-%s\\par\n"
 msgstr ""
 
-#: gui/guiprint.c:1216 gui/guiprint.c:1217
+#: gui/guiprint.c:1224 gui/guiprint.c:1225
 msgid "/Edit/Copy all"
 msgstr ""
 

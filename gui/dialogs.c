@@ -725,10 +725,10 @@ int yes_no_dialog (char *title, char *message, int cancel)
 
 int yes_no_dialog (char *title, char *message, int cancel)
 {
-    int button, nls = doing_nls();
+    int button;
     gchar *trtitle = NULL, *trmsg = NULL;
 
-    if (nls) {
+    if (nls_on) {
 	gint wrote;
 
 	trtitle = g_locale_from_utf8 (title, -1, NULL, &wrote, NULL);
@@ -745,7 +745,7 @@ int yes_no_dialog (char *title, char *message, int cancel)
 	button = MessageBox (NULL, trmsg, trtitle, 
 			     MB_YESNO | MB_ICONQUESTION);
 
-    if (nls) {
+    if (nls_on) {
 	g_free(trtitle);
 	g_free(trmsg);
     }
