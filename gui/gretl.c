@@ -140,9 +140,11 @@ char dbproxy[21];
     char Rcommand[MAXSTR] = "RGui.exe";
     char editor[MAXSTR] = "winword.exe";
     char calculator[MAXSTR] = "calc.exe";
+    char viewdvi[MAXSTR] = "windvi.exe";
 #else
     char editor[MAXSTR] = "emacs";
     char calculator[MAXSTR] = "xcalc";
+    char viewdvi[MAXSTR] = "xdvi";
 # ifdef USE_GNOME
     char Rcommand[MAXSTR] = "R --gui=gnome";
     extern const char *version_string;

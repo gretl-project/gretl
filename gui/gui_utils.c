@@ -46,6 +46,7 @@ extern int want_toolbar;
 extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
+extern char viewdvi[MAXSTR];
 extern char dbproxy[21];
 int use_proxy;
 
@@ -129,6 +130,8 @@ RCVARS rc_vars[] = {
     {"gnuplot", _("Command to launch gnuplot"), NULL, paths.gnuplot, 
      'R', MAXLEN, 1, NULL},
     {"Rcommand", _("Command to launch GNU R"), NULL, Rcommand, 
+     'R', MAXSTR, 1, NULL},
+    {"viewdvi", _("Command to view DVI files"), NULL, viewdvi, 
      'R', MAXSTR, 1, NULL},
     {"expert", _("Expert mode (no warnings)"), NULL, &expert, 
      'B', 0, 1, NULL},
