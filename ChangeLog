@@ -23,6 +23,10 @@ version 1.2.3
   objectname.show, objectname.free
 - Make the model table available via script and gui console 
   (new command "modeltab")
+- Add "graph page" in session view: allows the user to
+  create a page (which may then be viewed and printed) 
+  containing up to eight graphs (requires latex, dvips and 
+  a postscript viewer)
 - Add an OLS option, "-r" or "--robust", which calls for
   the use of White's robust standard errors (HC0) in the
   case of cross-sectional data, or HAC in the case of time
