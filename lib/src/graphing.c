@@ -1819,8 +1819,9 @@ int get_termstr (const GPT_SPEC *spec, char *termstr)
 
 static char *escape_quotes (const char *s)
 {
-    if (strchr(s, '"') == NULL) return NULL;
-    else {
+    if (strchr(s, '"') == NULL) {
+	return NULL;
+    } else {
 	int qcount = 0;
 	char *ret, *r;
 	const char *p = s;
@@ -1843,8 +1844,8 @@ static char *escape_quotes (const char *s)
 	    }
 	    s++;
 	}
-
 	*r = 0;
+
 	return ret;
     }
 }
@@ -1873,6 +1874,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     int i, k, t, datlines;
     int plotn, nlines = spec->nlines;
     int png = get_png_output(spec);
+    int any_y2 = 0;
     int miss = 0;
     double xx;
 
@@ -1998,6 +2000,13 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     datlines = nlines; /* ? */ 
 
     for (i=0; i<nlines; i++) {
+	if ((spec->flags & GPTSPEC_Y2AXIS) && spec->lines[i].yaxis != 1) {
+	    any_y2 = 1;
+	    break;
+	}
+    }
+
+    for (i=0; i<nlines; i++) {
 	if (strcmp(spec->lines[i].scale, "NA")) {
 	    fprintf(fp, "'-' using 1:($2*%s) ", 
 		    spec->lines[i].scale);
@@ -2005,11 +2014,14 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "%s ", spec->lines[i].formula); 
 	    datlines--;
 	}
+
 	if ((spec->flags & GPTSPEC_Y2AXIS) && spec->lines[i].yaxis != 1) {
 	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
 	}
+
 	gp_string(fp, "title '%s", spec->lines[i].title, png);
-	if (spec->flags & GPTSPEC_Y2AXIS) {
+
+	if (any_y2) {
 	    if (spec->lines[i].yaxis == 1) {
 		fprintf(fp, " (%s)' ", I_("left"));
 	    } else {
@@ -2018,7 +2030,9 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	} else {
 	    fputs("' ", fp);
 	}
+
 	fprintf(fp, "w %s", spec->lines[i].style);
+
 	if (i == nlines - 1) {
 	    fputc('\n', fp);
 	} else {

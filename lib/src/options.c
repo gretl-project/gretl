@@ -132,7 +132,8 @@ struct gretl_option gretl_opts[] = {
     { TSLS,     OPT_S, "save" },
     { VAR,      OPT_V, "impulse-responses" },
     { VAR,      OPT_Q, "quiet" },  
-    { VAR,      OPT_R, "robust" },  
+    { VAR,      OPT_R, "robust" }, 
+    { WLS,      OPT_Q, "quiet" },
     { 0,        0L,    NULL }
 };
 
