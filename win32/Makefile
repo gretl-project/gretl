@@ -204,6 +204,10 @@ clean:
 	make -C updater clean
 	make -C mo clean
 
+cleandist:
+	rm -f windist/MANIFEST windist/gretl.iss
+	rm -rf windist/gretl windist/gnuplot windist/Output
+
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll
 prob-dll: dlls/libprob.dll

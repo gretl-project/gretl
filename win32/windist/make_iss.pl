@@ -21,7 +21,6 @@ usage: make_iss gretl_version_number
 EndUsage
 }
 
-
 if (@ARGV == 0) { &usage; }
 $verstr = $ARGV[0];
 
@@ -38,63 +37,6 @@ print "UninstallDisplayIcon={app}\\gretlw32.exe\n";
 print "ChangesAssociations=yes\n";
 # print "MinVersion=4,3.51\n";
 # print "UsePreviousAppDir=no\n";
-
-print "\n[Dirs]\n";
-print "Name: \"{app}\\user\"\n";
-print "Name: \"{app}\\data\"\n";
-print "Name: \"{app}\\data\\greene\"\n";
-print "Name: \"{app}\\data\\misc\"\n";
-print "Name: \"{app}\\data\\nist\"\n";
-print "Name: \"{app}\\scripts\"\n";
-print "Name: \"{app}\\scripts\\misc\"\n";
-print "Name: \"{app}\\db\"\n";
-print "Name: \"{app}\\plugins\"\n";
-print "Name: \"{app}\\locale\"\n";
-print "Name: \"{app}\\locale\\es\"\n";
-print "Name: \"{app}\\locale\\es\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\locale\\fr\"\n";
-print "Name: \"{app}\\locale\\fr\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\locale\\it\"\n";
-print "Name: \"{app}\\locale\\it\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\locale\\ja\"\n";
-print "Name: \"{app}\\locale\\ja\\LC_MESSAGES\"\n";
-
-print "Name: \"{app}\\gnuplot\"\n";
-print "Name: \"{app}\\demo\"\n";
-
-# extra GTK module dirs for gtk-2.0
-print "Name: \"{app}\\lib\"\n";
-print "Name: \"{app}\\lib\\gtk-2.0\"\n";
-print "Name: \"{app}\\lib\\gtk-2.0\"\n";
-print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\"\n";
-print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\\loaders\"\n";
-print "Name: \"{app}\\lib\\pango\"\n";
-print "Name: \"{app}\\lib\\pango\\1.0.0\"\n";
-print "Name: \"{app}\\lib\\pango\\1.0.0\\modules\"\n";
-
-# GTK message catalog
-print "Name: \"{app}\\lib\\locale\"\n";
-print "Name: \"{app}\\lib\\locale\\es\"\n";
-print "Name: \"{app}\\lib\\locale\\es\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\lib\\locale\\fr\"\n";
-print "Name: \"{app}\\lib\\locale\\fr\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\lib\\locale\\it\"\n";
-print "Name: \"{app}\\lib\\locale\\it\\LC_MESSAGES\"\n";
-
-# module catalogs
-print "Name: \"{app}\\etc\"\n";
-print "Name: \"{app}\\etc\\gtk-2.0\"\n";
-print "Name: \"{app}\\etc\\pango\"\n";
-
-# gtksourceview shared files; intl message catalogs
-print "Name: \"{app}\\share\\gtksourceview-1.0\\language-specs\"\n";
-print "Name: \"{app}\\share\\locale\"\n";
-print "Name: \"{app}\\share\\locale\\es\"\n";
-print "Name: \"{app}\\share\\locale\\es\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\share\\locale\\fr\"\n";
-print "Name: \"{app}\\share\\locale\\fr\\LC_MESSAGES\"\n";
-print "Name: \"{app}\\share\\locale\\it\"\n";
-print "Name: \"{app}\\share\\locale\\it\\LC_MESSAGES\"\n";
 
 print "\n[Files]\n";
 

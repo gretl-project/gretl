@@ -47,16 +47,11 @@ mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/locale/it/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/it/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/it/LC_MESSAGES
-
 mkdir -p windist/gretl/locale/ja/LC_MESSAGES
-
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 
 # put binaries in place
@@ -87,16 +82,6 @@ for f in \
     libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
-done
-
-# additional message catalogs
-for f in gettext-runtime.mo libiconv.mo ; do
-  add_file $HOME_WIN32/locale/es/LC_MESSAGES/$f \
-    gretl/share/locale/es/LC_MESSAGES/$f
-  add_file $HOME_WIN32/locale/fr/LC_MESSAGES/$f \
-    gretl/share/locale/fr/LC_MESSAGES/$f
-  add_file $HOME_WIN32/locale/it/LC_MESSAGES/$f \
-    gretl/share/locale/it/LC_MESSAGES/$f
 done
 
 # gretl lang files for gtksourceview
