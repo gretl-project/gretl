@@ -402,6 +402,7 @@ static void relink_full_dataset (double ***pZ, DATAINFO **ppdinfo)
 
     fullZ = NULL;
     fullinfo = NULL;
+    peerinfo = NULL;
 }
 
 int complex_subsampled (void)

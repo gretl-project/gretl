@@ -71,11 +71,15 @@ void register_graph (void);
 
 void clear_data (void);
 
+void exit_free_modelspec (void);
+
 /* sample-related functions */
 
 int bool_subsample (gretlopt opt);
 
 void do_setobs (GtkWidget *widget, dialog_t *ddata);
+
+void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
 void count_missing (void);
 
@@ -88,6 +92,8 @@ int dataset_is_restricted (void);
 int maybe_restore_full_data (int action);
 
 int dataset_added_to_model (MODEL *pmod);
+
+void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 
 /* model-related functions */
 

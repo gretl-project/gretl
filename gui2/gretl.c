@@ -58,13 +58,6 @@
 FILE *dbg;
 #endif
 
-/* functions from other gretl GUI files */
-extern void exit_free_modelspec (void);    /* library.c */
-extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
-extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
-extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
-extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
-
 /* functions private to gretl.c */
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 static void make_toolbar (GtkWidget *w, GtkWidget *box);

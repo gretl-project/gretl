@@ -824,9 +824,9 @@ int bool_subsample (gretlopt opt)
 	OPT_C  replace current restriction
      */
 {
-    int err = 0;
+    int err = restore_sample(opt);
 
-    restore_sample(opt);
+    if (err) return 1;
 
     if (opt & OPT_M) {
 	err = restrict_sample(NULL, &Z, &datainfo, NULL, opt);
@@ -857,7 +857,13 @@ int bool_subsample (gretlopt opt)
 
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
 {
-    bool_subsample(OPT_M);
+    int err = bool_subsample(OPT_M);
+
+    if (!err) {
+	clear(line, MAXLEN);
+	strcpy(line, "smpl --no-missing");
+	verify_and_record_command(line);
+    }
 }
 
 /* ........................................................... */
@@ -1432,7 +1438,7 @@ void do_vif (gpointer data, guint u, GtkWidget *w)
     if (!err) {
 	windata_t *vwin;
 
-	vwin = view_buffer(prn, 78, 400, _("gretl: variance inflation factors"), 
+	vwin = view_buffer(prn, 78, 400, _("gretl: collinearity"), 
 			   PRINT, NULL); 
 
 	strcpy(line, "vif");

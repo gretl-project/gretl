@@ -28,4 +28,7 @@ void destroy_file_collections (void);
 gint populate_filelist (windata_t *fdata, gpointer p);
 char *strip_extension (char *s);
 
+void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
+void time_series_dialog (gpointer data, guint u, GtkWidget *w);
+
 #endif /* DATAFILES_H */

@@ -26,6 +26,7 @@
 #include "session.h"
 #include "webget.h"
 #include "database.h"
+#include "datafiles.h"
 #include "settings.h"
 #include "cmdstack.h"
 
@@ -48,13 +49,6 @@
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.ofolder.xpm"
-
-/* functions from other gretl GUI files */
-extern void exit_free_modelspec (void);
-extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
-extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
-extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
-extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);

@@ -133,5 +133,9 @@ int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
     pputc(prn, '\n');
 
+    pputs(prn, _("VIF(j) = 1/(1 - R(j)^2), where R(j) is the "
+		 "multiple correlation coefficient\nbetween "
+		 "variable j and the other independent variables"));
+
     return 0;
 }

@@ -136,7 +136,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL, GNULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
-    { N_("/Tests/variance inflation factors"), NULL, do_vif, VIF, NULL, GNULL },
+    { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL, GNULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL, GNULL },
     { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL, GNULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL, GNULL },
@@ -205,7 +205,7 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL },
-    { N_("/Tests/variance inflation factors"), NULL, do_vif, VIF, NULL },
+    { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
     { N_("/Tests/CUSUM test"), NULL, do_cusum, CUSUM, NULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
@@ -2335,6 +2335,17 @@ static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
+static void vif_menu_check (GtkItemFactory *ifac, const MODEL *pmod)
+{
+    int nvif = pmod->ncoeff - pmod->ifc;
+
+    if (nvif <= 1) {
+	flip(ifac, "/Tests/collinearity", FALSE);
+    }
+}
+
+/* ........................................................... */
+
 static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
     int i, cmd_ci, ok;
@@ -2352,6 +2363,8 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	    flip(ifac, model_items[i].path, ok);
 	}
     }
+
+    vif_menu_check(ifac, pmod);
 }
 
 /* ........................................................... */
