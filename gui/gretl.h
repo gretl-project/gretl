@@ -23,7 +23,7 @@
 #define GRETL_H
 
 #ifdef OS_WIN32
-# include "../winconfig.h"
+# include "winconfig.h"
 #else
 # include "../config.h"
 # include <gtkextra/gtkiconfilesel.h>
