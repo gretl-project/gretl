@@ -520,7 +520,7 @@ static void r_print_model_tests (const MODEL *pmod, PRN *prn)
     int i;
 
     for (i=0; i<pmod->ntests; i++) {
-	pprintf(prn, "%s -\\par\n"
+	pprintf(prn, "\\par %s -\\par\n"
 		" Null hypothesis: %s\\par\n"
 		" Test statistic: %s\\par\n"
 		" with p-value = %s\\par\n\n",
@@ -549,58 +549,39 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
     pprintf(prn, "{\\rtf1\\par\n\\qc ");
 
-    switch(pmod->aux) {
+    switch (pmod->aux) {
+    case AUX_SQ:
+    case AUX_LOG:
+    case AUX_WHITE:
+    case AUX_CHOW:
+    case AUX_COINT:
+    case AUX_ADF:
+	pprintf(prn, "%s\\par\n", aux_string(pmod->aux));
+	break;
     case AUX_AR:
-	pprintf(prn, "Test for autocorrelation up to the periodicity\\par\n");
+	pprintf(prn, _("Test for "));
+	if (pmod->order > 1)
+	    pprintf(prn, _("autocorrelation up to order %d\n"), pmod->order);
+	else
+	    pprintf(prn, _("first-order autocorrelation\n"));
 	break;	
     case AUX_ARCH:
-	pprintf(prn, "Test for ARCH of order %d\\par\n", 
-		pmod->list[0] - 2);
+	pprintf(prn, _("Test for ARCH of order %d\n"), pmod->order);
 	break;	
-    case AUX_SQ:
-	pprintf(prn, "Auxiliary regression for non-linearity test "
-		"(squared terms)\\par\n");
-	break;
-    case AUX_LOG:
-	pprintf(prn, "Auxiliary regression for non-linearity test "
-		"(log terms)\\par\n");
-	break;	
-    case AUX_WHITE:
-	pprintf(prn, "White's test for heteroskedasticity\\par\n");
-	break;	
-    case AUX_CHOW:
-	pprintf(prn, "Augmented regression for Chow test\\par\n");
-	break;
-    case AUX_COINT:
-	pprintf(prn, "Cointegrating regression - \\par\n");
-	break;
-    case AUX_ADF:
-	pprintf(prn, "Augmented Dickey-Fuller regression\\par\n");
-	break;
     case VAR:
 	break;
     case AUX_ADD:
     default:
 	if (pmod->ID < 0) pprintf(prn, "\n");
 	if (pmod->name) pprintf(prn, "\n%s:\n", pmod->name);
-	else pprintf(prn, "MODEL %d: ", pmod->ID);
+	else pprintf(prn, _("MODEL %d: "), pmod->ID);
 	break;
     }
 
-    if (pmod->ci == OLS || pmod->ci == VAR) pprintf(prn, "OLS ");
-    else if (pmod->ci == WLS) pprintf(prn, "WLS "); 
-    else if (pmod->ci == ARCH) pprintf(prn, "WLS (ARCH) ");
-    else if (pmod->ci == CORC) pprintf(prn, "Cochrane-Orcutt ");
-    else if (pmod->ci == HILU) pprintf(prn, "Hildreth-Lu ");
-    else if (pmod->ci == TSLS) pprintf(prn, "TSLS ");
-    else if (pmod->ci == HSK) pprintf(prn, "Heteroskedasticity ");
-    else if (pmod->ci == AR) pprintf(prn, "AR ");
-    else if (pmod->ci == HCCM) pprintf(prn, "HCCM ");
-    else if (pmod->ci == PROBIT) pprintf(prn, "Probit ");
-    else if (pmod->ci == LOGIT) pprintf(prn, "Logit ");
-    else if (pmod->ci == POOLED) pprintf(prn, "Pooled OLS ");
-    pprintf(prn, "estimates using the %d observations %s-%s\\par\n",
-	   pmod->nobs, startdate, enddate);
+    pprintf(prn, _("%s estimates using the %d observations %s-%s\\par\n"),
+	    estimator_string(pmod->ci), pmod->nobs, 
+	    startdate, enddate);
+
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
 	pprintf(prn, "Dependent variable: uhat\\par\n");
     else pprintf(prn, "Dependent variable: %s\\par\n", 

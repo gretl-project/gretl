@@ -196,6 +196,10 @@ enum data_status {
 };
 
 /* functions follow */
+
+#ifndef G_OS_WIN32
+void gretl_fork (const char *prog, const char *arg);
+#endif
  
 void menubar_state (gboolean s);
 

@@ -335,6 +335,46 @@ void print_model_confints (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ......................................................... */
 
+const char *aux_string (int aux)
+{
+    if (aux == AUX_SQ)
+	return _("Auxiliary regression for non-linearity test "
+		 "(squared terms)");
+    else if (aux == AUX_LOG)
+	return _("Auxiliary regression for non-linearity test "
+		 "(log terms)");
+    else if (aux == AUX_WHITE)
+	return _("White's test for heteroskedasticity");
+    else if (aux == AUX_CHOW)
+	return _("Augmented regression for Chow test");
+    else if (aux == AUX_COINT)
+	return _("Cointegrating regression - ");
+    else if (aux == AUX_ADF)
+	return _("Augmented Dickey-Fuller regression");
+    else return "";
+}
+
+/* ......................................................... */
+
+const char *estimator_string (int ci)
+{
+    if (ci == OLS || ci == VAR) return _("OLS ");
+    else if (ci == WLS) return _("WLS "); 
+    else if (ci == ARCH) return _("WLS (ARCH) ");
+    else if (ci == CORC) return _("Cochrane-Orcutt ");
+    else if (ci == HILU) return _("Hildreth-Lu ");
+    else if (ci == TSLS) return _("TSLS ");
+    else if (ci == HSK) return _("Heteroskedasticity ");
+    else if (ci == AR) return _("AR ");
+    else if (ci == HCCM) return _("HCCM ");
+    else if (ci == PROBIT) return _("Probit ");
+    else if (ci == LOGIT) return _("Logit ");
+    else if (ci == POOLED) return _("Pooled OLS ");
+    else return "";
+}
+
+/* ......................................................... */
+
 static void print_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i;
@@ -377,6 +417,14 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     ntodate(enddate, t2, pdinfo);
 
     switch (pmod->aux) {
+    case AUX_SQ:
+    case AUX_LOG:
+    case AUX_WHITE:
+    case AUX_CHOW:
+    case AUX_COINT:
+    case AUX_ADF:
+	pprintf(prn, "\n%s\n", aux_string(pmod->aux));
+	break;
     case AUX_AR:
 	pprintf(prn, _("\nTest for "));
 	if (pmod->order > 1)
@@ -387,26 +435,6 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     case AUX_ARCH:
 	pprintf(prn, _("\nTest for ARCH of order %d\n"), pmod->order);
 	break;	
-    case AUX_SQ:
-	pprintf(prn, _("\nAuxiliary regression for non-linearity test "
-		"(squared terms)\n"));
-	break;
-    case AUX_LOG:
-	pprintf(prn, _("\nAuxiliary regression for non-linearity test "
-		"(log terms)\n"));
-	break;	
-    case AUX_WHITE:
-	pprintf(prn, _("\nWhite's test for heteroskedasticity\n"));
-	break;	
-    case AUX_CHOW:
-	pprintf(prn, _("\nAugmented regression for Chow test\n"));
-	break;
-    case AUX_COINT:
-	pprintf(prn, _("\nCointegrating regression - \n"));
-	break;
-    case AUX_ADF:
-	pprintf(prn, _("\nAugmented Dickey-Fuller regression\n"));
-	break;
     case VAR:
 	break;
     case AUX_ADD:
@@ -417,20 +445,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	break;
     }
 
-    if (pmod->ci == OLS || pmod->ci == VAR) pprintf(prn, _("OLS "));
-    else if (pmod->ci == WLS) pprintf(prn, _("WLS ")); 
-    else if (pmod->ci == ARCH) pprintf(prn, _("WLS (ARCH) "));
-    else if (pmod->ci == CORC) pprintf(prn, _("Cochrane-Orcutt "));
-    else if (pmod->ci == HILU) pprintf(prn, _("Hildreth-Lu "));
-    else if (pmod->ci == TSLS) pprintf(prn, _("TSLS "));
-    else if (pmod->ci == HSK) pprintf(prn, _("Heteroskedasticity "));
-    else if (pmod->ci == AR) pprintf(prn, _("AR "));
-    else if (pmod->ci == HCCM) pprintf(prn, _("HCCM "));
-    else if (pmod->ci == PROBIT) pprintf(prn, _("Probit "));
-    else if (pmod->ci == LOGIT) pprintf(prn, _("Logit "));
-    else if (pmod->ci == POOLED) pprintf(prn, _("Pooled OLS "));
-    pprintf(prn, _("estimates using the %d observations %s-%s\n"),
-	    pmod->nobs, startdate, enddate);
+    pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
+	    estimator_string(pmod->ci), pmod->nobs, startdate, enddate);
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
 	pprintf(prn, _("Dependent variable: uhat"));
     else pprintf(prn, _("Dependent variable: %s\n"), 
@@ -463,6 +479,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF)
 	return gotnan;
+
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
 	_rsqline(pmod, prn);
 	return gotnan;

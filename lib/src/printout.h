@@ -27,6 +27,10 @@ void logo (void);
 
 void gui_logo (FILE *fp);
 
+const char *aux_string (int aux);
+
+const char *estimator_string (int ci);
+
 int printmodel (const MODEL *pmod, 
 		const DATAINFO *pdinfo, 
 		PRN *prn);

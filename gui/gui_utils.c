@@ -2039,11 +2039,12 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	model_copy_menu_state(vwin->ifac, pmod->ci == OLS);
 	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
 
-	if (pmod->ci != OLS && pmod->ci != POOLED) { 
-	    lmmenu_state(vwin->ifac, FALSE);
-	    latex_menu_state(vwin->ifac, FALSE);
-	} else
-	    latex_menu_state(vwin->ifac, !pmod->errcode);
+	latex_menu_state(vwin->ifac, !pmod->errcode && (pmod->ci == OLS || 
+					    pmod->ci == POOLED ||
+					    pmod->ci == CORC || 
+					    pmod->ci == HILU));
+
+	lmmenu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	    model_menu_state(vwin->ifac, FALSE);
 	    model_ml_menu_state(vwin->ifac, TRUE);

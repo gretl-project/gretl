@@ -23,6 +23,8 @@
 #ifdef G_OS_WIN32 
 # include "../lib/src/cmdlist.h"
 # include <io.h>
+#else
+# include <unistd.h>
 #endif
 
 #include "htmlprint.h"
@@ -3042,19 +3044,24 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	}
     }
 #else
-    sprintf(tmp, "cd %s && latex %s && %s %s", paths.userdir,
-	    texbase, viewdvi, texbase);
+    sprintf(tmp, "cd %s && latex %s", paths.userdir, texbase);
     err = system(tmp);
-    if (err) errbox("Failed to run latex");
+    if (err) 
+	errbox("Failed to run latex");
+    else 
+	gretl_fork(viewdvi, texbase);
+#endif
 
     remove(texfile);
+#ifndef G_OS_WIN32
+    sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);
     remove(tmp);
+#endif
     sprintf(tmp, "%s.log", texbase);
     remove(tmp);
     sprintf(tmp, "%s.aux", texbase);
     remove(tmp);
-#endif
 }
 
 /* ........................................................... */

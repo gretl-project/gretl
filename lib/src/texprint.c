@@ -212,6 +212,88 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
+static void tex_depvarstats (const MODEL *pmod, PRN *prn)
+{
+    pprintf(prn, "Mean of dep.\\ var. & $%f$ &"
+	    "S.D. of dep. variable & %f\\\\\n", 
+	    pmod->ybar, pmod->sdy);
+}
+
+static void tex_essline (const MODEL *pmod, PRN *prn)
+{
+    pprintf(prn, "ESS & %f &"
+	    "Std Err of Resid. ($\\hat{\\sigma}$) & %f\\\\\n",
+	    pmod->ess, pmod->sigma);
+}
+
+static void tex_rsqline (const MODEL *pmod, PRN *prn)
+{
+    pprintf(prn, "$R^2$  & %f &"
+	    "$\\bar{R}^2$        & $%f$ \\\\\n",
+	    pmod->rsq, pmod->adjrsq);
+}
+
+static void tex_Fline (const MODEL *pmod, PRN *prn)
+{
+    pprintf(prn, "F-statistic (%d, %d) & %f &"
+	    "p-value for F()          & %f\\\\\n",
+	    pmod->dfn, pmod->dfd, pmod->fstt,
+	    fdist(pmod->fstt, pmod->dfn, pmod->dfd));
+}
+
+static void tex_dwline (const MODEL *pmod, PRN *prn)
+{
+    pprintf(prn, "Durbin--Watson stat. & $%f$ &"
+	    "$\\hat{\\rho}$ & $%f$ \n",
+	    pmod->dw, pmod->rho);
+}
+
+static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
+{
+    pprintf(prn, 
+	    "\\vspace{1em}\n\n"
+	    "Model selection statistics\n\n"
+	    "\\vspace{1em}\n\n"
+	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n");
+    pprintf(prn, 
+	    "\\textsc{sgmasq}  &  %g   &"  
+	    "\\textsc{aic}     &  %g  &"  
+	    "\\textsc{fpe}     &  %g  \\\\\n"
+	    "\\textsc{hq}      &  %g  &"
+	    "\\textsc{schwarz} &  %g  &"  
+	    "\\textsc{shibata} &  %g  \\\\\n"
+	    "\\textsc{gcv}     &  %g  &"  
+	    "\\textsc{rice}    &  %g\n",
+	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
+	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
+	    pmod->criterion[6], pmod->criterion[7]);
+    pprintf(prn, "\\end{tabular*}\n\n");
+}
+
+/* ......................................................... */
+
+static const char *tex_estimator_string (int ci)
+{
+    if (ci == OLS || ci == VAR) return _("OLS ");
+    else if (ci == WLS) return _("WLS "); 
+    else if (ci == ARCH) return _("WLS (ARCH) ");
+    else if (ci == CORC) return _("Cochrane--Orcutt ");
+    else if (ci == HILU) return _("Hildreth--Lu ");
+    else if (ci == TSLS) return _("TSLS ");
+    else if (ci == HSK) return _("Heteroskedasticity ");
+    else if (ci == AR) return _("AR ");
+    else if (ci == HCCM) return _("HCCM ");
+    else if (ci == PROBIT) return _("Probit ");
+    else if (ci == LOGIT) return _("Logit ");
+    else if (ci == POOLED) return _("Pooled OLS ");
+    else return "";
+}
+
+static void tex_end_table (PRN *prn)
+{
+    pprintf(prn, "\\end{tabular*}\n\n");
+}
+
 /**
  * tex_print_model:
  * @pmod:  pointer to gretl MODEL struct.
@@ -234,7 +316,9 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     char tmp[16];
     char startdate[9], enddate[9];
 
-    if (pmod->data) 
+    if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;    
+
+    if (pmod->data != NULL) 
 	t2 += get_misscount(pmod);
 
     ncoeff = pmod->list[0];
@@ -247,12 +331,21 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     pprintf(prn, "\\begin{center}\n");
-    tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
-    pprintf(prn, "\\textsc{Model %d: OLS estimates using the %d "
-	    "observations %s--%s}\\\\\n"
-	    "Dependent variable: %s\n\n", 
-	    pmod->ID, pmod->nobs, startdate, enddate, tmp);
 
+    tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
+    pprintf(prn, "\\textbf{Model %d: %s estimates using the %d "
+	    "observations %s--%s}\\\\\n"
+	    "Dependent variable: %s", 
+	    pmod->ID, tex_estimator_string(pmod->ci), pmod->nobs, 
+	    startdate, enddate, tmp);
+
+    if (pmod->ci == WLS || pmod->ci == ARCH) { 
+	tex_escape(tmp, pdinfo->varname[pmod->nwt]);
+	pprintf(prn, "\\\\\nVariable used as weight: %s\n\n", tmp);
+    } else
+	pprintf(prn, "\n\n");
+
+    /* start table of coefficients */
     pprintf(prn, "\\vspace{1em}\n\n"
 	  "\\begin{tabular*}{\\textwidth}"
 	  "{@{\\extracolsep{\\fill}}\n"
@@ -272,46 +365,39 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     }
     for (i=2; i<=ncoeff; i++) tex_print_coeff(pdinfo, pmod, i, prn);
 
-    pprintf(prn, "\\end{tabular*}\n\n"
-	  "\\vspace{1em}\n\n"
-	  "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlr}\n");
+    tex_end_table(prn); /* end table of coefficients */
 
-    pprintf(prn, "Mean of dep.\\ var. & $%f$ &"
-	    "S.D. of dep. variable & %f\\\\\n", 
-	    pmod->ybar, pmod->sdy);
-    pprintf(prn, "ESS & %f &"
-	    "Std Err of Resid. ($\\hat{\\sigma}$) & %f\\\\\n",
-	    pmod->ess, pmod->sigma);
-    pprintf(prn, "$R^2$  & %f &"
-	    "$\\bar{R}^2$        & $%f$ \\\\\n",
-	    pmod->rsq, pmod->adjrsq);
-    pprintf(prn, "F-statistic (%d, %d) & %f &"
-	    "p-value for F()          & %f\\\\\n",
-	    pmod->dfn, pmod->dfd, pmod->fstt,
-	    fdist(pmod->fstt, pmod->dfn, pmod->dfd));
-    pprintf(prn, "Durbin--Watson stat. & $%f$ &"
-	    "$\\hat{\\rho}$ & $%f$ \n",
-	    pmod->dw, pmod->rho);
+    if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF)
+	goto stop_tex;
 
-    pprintf(prn, "\\end{tabular*}\n\n"
+    if (pmod->ci == CORC || pmod->ci == HILU)
+	pprintf(prn, "\\vspace{1em}\n"
+		"Statistics based on quasi-differenced "
+		"data ($\\rho=%g$)\n\n", pmod->rhot[1]);
+
+    pprintf(prn, 
 	    "\\vspace{1em}\n\n"
-	    "\\textsc{model selection statistics}\n\n"
-	    "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n");
-    pprintf(prn, "\\textsc{sgmasq}  &  %g   &"  
-	    "\\textsc{aic}     &  %g  &"  
-	    "\\textsc{fpe}     &  %g  \\\\\n"
-	    "\\textsc{hq}      &  %g  &"
-	    "\\textsc{schwarz} &  %g  &"  
-	    "\\textsc{shibata} &  %g  \\\\\n"
-	    "\\textsc{gcv}     &  %g  &"  
-	    "\\textsc{rice}    &  %g\n",
-	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
-	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
-	    pmod->criterion[6], pmod->criterion[7]);
-    pprintf(prn, "\\end{tabular*}\n\n"
-	    "\n\\end{center}\n");
+	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlr}\n");
+
+    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
+	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR) {
+	tex_rsqline(pmod, prn);
+    } else {
+	if (pmod->ci != CORC && pmod->ci != HILU)
+	    tex_depvarstats(pmod, prn);
+	tex_essline(pmod, prn);
+	tex_rsqline(pmod, prn);
+	tex_Fline(pmod, prn);
+	tex_dwline(pmod, prn);
+    }
+
+    tex_end_table(prn);
     
+    tex_print_aicetc(pmod, prn);
+
+ stop_tex:
+    pprintf(prn, "\n\\end{center}\n");
+
     if (standalone) 
 	pprintf(prn, "\n\\end{document}\n");
 

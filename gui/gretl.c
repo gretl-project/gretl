@@ -1364,7 +1364,7 @@ void gretl_fork (const char *prog, const char *arg)
 	perror("fork");
 	return;
     } else if (pid == 0) {
-	if (arg != NULL)
+	if (arg != NULL) 
 	    execlp(prog, prog, arg, NULL);
 	else
 	    execlp(prog, prog, NULL);
