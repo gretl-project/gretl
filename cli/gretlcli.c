@@ -81,7 +81,7 @@ char *line_read;
 gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
-static void exec_line (char *line, LOOPSET *loop, PRN *prn); 
+static void exec_line (char *line, LOOPSET **ploop, PRN *prn); 
 
 void usage(void)
 {
@@ -464,7 +464,7 @@ int main (int argc, char *argv[])
 
     if (batch || runit) {
 	sprintf(line, "run %s\n", runfile);
-	exec_line(line, loop, prn);
+	exec_line(line, &loop, prn);
     }
 
     /* should we stop immediately on error, in batch mode? */
@@ -484,6 +484,7 @@ int main (int argc, char *argv[])
 			  echo_off, prn)) {
 		return 1;
 	    }
+	    line[0] = '\0'; /* FIXME */
 	    looprun = errfatal = 0;
 	} else { 
 #ifdef HAVE_READLINE
@@ -532,7 +533,7 @@ int main (int argc, char *argv[])
 	    break;
 	} else {
 	    strcpy(linecopy, line);
-	    exec_line(line, loop, prn);
+	    exec_line(line, &loop, prn);
 	}
     } /* end of get commands loop */
 
@@ -574,8 +575,9 @@ static void printf_strip (char *s)
     printf("%s\n", s);
 }
 
-static void exec_line (char *line, LOOPSET *loop, PRN *prn) 
+static void exec_line (char *line, LOOPSET **ploop, PRN *prn) 
 {
+    LOOPSET *loop = *ploop;
     int chk, nulldata_n, renumber;
     int dbdata = 0, do_arch = 0, do_nls = 0;
     char s1[12], s2[12];
@@ -1232,6 +1234,7 @@ static void exec_line (char *line, LOOPSET *loop, PRN *prn)
 	    print_gretl_errmsg(prn);
 	    break;
 	}
+	*ploop = loop;
 	if (!batch && !runit) {
 	    pputs(prn, _("Enter commands for loop.  "
 			 "Type 'endloop' to get out\n"));

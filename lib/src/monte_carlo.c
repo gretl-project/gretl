@@ -724,8 +724,6 @@ static int add_loop_model (LOOPSET *loop, int cmdnum)
     int err = 0;
     int nm = loop->nmod + 1;
 
-    loop->nmod += 1;
-
     if (loop->type != COUNT_LOOP) { 
 	/* a conditional loop */
 	loop->models = realloc(loop->models, nm * sizeof(MODEL *));
@@ -1306,9 +1304,14 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
     int i;
 
     for (i=0; i<loop->nmod; i++) {
-	if (loop->lvar && (loop->models[i])->ID == cmdnum) return i;
-	if (loop->lvar == 0 && loop->lmodels[i].ID == cmdnum) return i;
+	if (loop->lvar != 0 && (loop->models[i])->ID == cmdnum) {
+	    return i;
+	}
+	if (loop->lvar == 0 && loop->lmodels[i].ID == cmdnum) {
+	    return i;
+	}
     }
+
     return -1;
 }
 
@@ -1517,6 +1520,7 @@ int loop_exec (LOOPSET *loop,
 			err = 1;
 			break;
 		    }
+		    pdinfo = *ppdinfo;
 		} else {
 		    /* FIXME */
 		    gretl_errmsg_set(_("loop: only the '-o' and '-r' forms of the smpl "
@@ -1578,6 +1582,9 @@ int loop_exec (LOOPSET *loop,
 
 	    } /* end switch on command number */
 	} /* end list of commands within loop */
+
+	lround++;
+
     } /* end iterations of loop */
 
     if (err) {
