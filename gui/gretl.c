@@ -75,7 +75,6 @@ GdkColor red, blue;
 static int popup_connected;
 int *default_list = NULL;
 
-#if defined (USE_GNOME) || defined(G_OS_WIN32)
 static GtkTargetEntry target_table[] = {
         {"text/plain", 0, 0}
 };
@@ -88,7 +87,6 @@ target_drag_data_received  (GtkWidget          *widget,
                             GtkSelectionData   *data,
                             guint               info,
                             guint               time);
-#endif
 
 #ifdef USE_GNOME
 char *optrun = NULL, *optdb = NULL;
@@ -1028,7 +1026,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     setup_column(mdata->listbox, 1, listbox_varname_width);
     setup_column(mdata->listbox, 2, listbox_label_width);
 
-#if defined(USE_GNOME) || defined(G_OS_WIN32)
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
 		       target_table, 1,
@@ -1036,7 +1033,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_signal_connect (GTK_OBJECT(mdata->listbox), "drag_data_received",
 			GTK_SIGNAL_FUNC(target_drag_data_received),
 			NULL);
-#endif
 
     gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
     gtk_signal_connect_after (GTK_OBJECT (mdata->listbox), "select_row", 
@@ -1591,8 +1587,7 @@ void set_wm_icon (GtkWidget *w, gpointer data)
 }
 #endif
 
-/* Drag 'n' drop under gnome, win32 */
-#if defined(USE_GNOME) || defined (G_OS_WIN32)
+/* Drag 'n' drop */
 static void  
 target_drag_data_received  (GtkWidget *widget,
                             GdkDragContext *context,
@@ -1612,7 +1607,6 @@ target_drag_data_received  (GtkWidget *widget,
 	verify_open_data(NULL);
     }
 }
-#endif
 
 /* ........................................................... */
 
