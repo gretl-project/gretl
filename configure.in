@@ -367,6 +367,8 @@ if test "$try_gtk2" = "yes" ; then
       have_gsl="yes",
       have_gsl="no"      
     )
+else
+    AM_PATH_GSL(1.0,have_gsl="yes",have_gsl="no")
 fi
 
 dnl Or fall back on GTK 1.2

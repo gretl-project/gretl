@@ -467,7 +467,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB X12A HAVE_X12A TRAMO HAVE_TRAMO MAKE LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline CLI_LIBS RL_OBJ new_readline INETLIB have_zlib GMP_CFLAGS GMP_LIBS GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GSL_CFLAGS GSL_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB X12A HAVE_X12A TRAMO HAVE_TRAMO MAKE LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline CLI_LIBS RL_OBJ new_readline INETLIB have_zlib GMP_CFLAGS GMP_LIBS GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GSL_CFLAGS GSL_LIBS GSL_CONFIG GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GCONF_SCHEMAS_INSTALL_TRUE GCONF_SCHEMAS_INSTALL_FALSE GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1012,10 +1012,12 @@ Optional Features:
   --enable-shared=PKGS  build shared libraries default=yes
   --enable-fast-install=PKGS  optimize for fast installation default=yes
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --disable-gsltest       Do not try to compile and run a test GSL program
   --disable-gtktest       Do not try to compile and run a test GTK program
   --disable-gtkextratest       Do not try to compile and run a test GTK_EXTRA program
   --disable-libole2test       Do not try to compile and run a test libole2 program
   --disable-gdk_pixbuftest       Do not try to compile and run a test GDK_PIXBUF program
+  --disable-schemas-install	Disable the schemas installation
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1036,6 +1038,8 @@ Optional Packages:
   --with-gmp   Use Gnu Multiple Precision library default=auto
   --with-pic              try to use only PIC/non-PIC objects default=use both
   --with-gmp-prefix=PFX   Prefix where GMP is installed (optional)
+  --with-gsl-prefix=PFX   Prefix where GSL is installed (optional)
+  --with-gsl-exec-prefix=PFX Exec prefix where GSL is installed (optional)
   --with-gtk-prefix=PFX   Prefix where GTK is installed (optional)
   --with-gtk-exec-prefix=PFX Exec prefix where GTK is installed (optional)
   --with-gtkextra-prefix=PFX   Prefix where GTK_EXTRA is installed (optional)
@@ -6704,7 +6708,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6707 "configure"' > conftest.$ac_ext
+  echo '#line 6711 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7233,7 +7237,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:7236: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:7240: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -9065,7 +9069,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9068 "configure"
+#line 9072 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9163,7 +9167,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9166 "configure"
+#line 9170 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12250,6 +12254,293 @@ echo "${ECHO_T}$GSL_LIBS" >&6
 
   fi
 
+else
+
+
+# Check whether --with-gsl-prefix or --without-gsl-prefix was given.
+if test "${with_gsl_prefix+set}" = set; then
+  withval="$with_gsl_prefix"
+  gsl_prefix="$withval"
+else
+  gsl_prefix=""
+fi;
+
+# Check whether --with-gsl-exec-prefix or --without-gsl-exec-prefix was given.
+if test "${with_gsl_exec_prefix+set}" = set; then
+  withval="$with_gsl_exec_prefix"
+  gsl_exec_prefix="$withval"
+else
+  gsl_exec_prefix=""
+fi;
+# Check whether --enable-gsltest or --disable-gsltest was given.
+if test "${enable_gsltest+set}" = set; then
+  enableval="$enable_gsltest"
+
+else
+  enable_gsltest=yes
+fi;
+
+  if test "x${GSL_CONFIG+set}" != xset ; then
+     if test "x$gsl_prefix" != x ; then
+         GSL_CONFIG="$gsl_prefix/bin/gsl-config"
+     fi
+     if test "x$gsl_exec_prefix" != x ; then
+        GSL_CONFIG="$gsl_exec_prefix/bin/gsl-config"
+     fi
+  fi
+
+  # Extract the first word of "gsl-config", so it can be a program name with args.
+set dummy gsl-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_GSL_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GSL_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GSL_CONFIG="$GSL_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GSL_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_GSL_CONFIG" && ac_cv_path_GSL_CONFIG="no"
+  ;;
+esac
+fi
+GSL_CONFIG=$ac_cv_path_GSL_CONFIG
+
+if test -n "$GSL_CONFIG"; then
+  echo "$as_me:$LINENO: result: $GSL_CONFIG" >&5
+echo "${ECHO_T}$GSL_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  min_gsl_version=1.0
+  echo "$as_me:$LINENO: checking for GSL - version >= $min_gsl_version" >&5
+echo $ECHO_N "checking for GSL - version >= $min_gsl_version... $ECHO_C" >&6
+  no_gsl=""
+  if test "$GSL_CONFIG" = "no" ; then
+    no_gsl=yes
+  else
+    GSL_CFLAGS=`$GSL_CONFIG --cflags`
+    GSL_LIBS=`$GSL_CONFIG --libs`
+
+    gsl_major_version=`$GSL_CONFIG --version | \
+           sed 's/^\([0-9]*\).*/\1/'`
+    if test "x${gsl_major_version}" = "x" ; then
+       gsl_major_version=0
+    fi
+
+    gsl_minor_version=`$GSL_CONFIG --version | \
+           sed 's/^\([0-9]*\)\.\{0,1\}\([0-9]*\).*/\2/'`
+    if test "x${gsl_minor_version}" = "x" ; then
+       gsl_minor_version=0
+    fi
+
+    gsl_micro_version=`$GSL_CONFIG --version | \
+           sed 's/^\([0-9]*\)\.\{0,1\}\([0-9]*\)\.\{0,1\}\([0-9]*\).*/\3/'`
+    if test "x${gsl_micro_version}" = "x" ; then
+       gsl_micro_version=0
+    fi
+
+    if test "x$enable_gsltest" = "xyes" ; then
+      ac_save_CFLAGS="$CFLAGS"
+      ac_save_LIBS="$LIBS"
+      CFLAGS="$CFLAGS $GSL_CFLAGS"
+      LIBS="$LIBS $GSL_LIBS"
+
+      rm -f conf.gsltest
+      if test "$cross_compiling" = yes; then
+  echo $ac_n "cross compiling; assumed OK... $ac_c"
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+char* my_strdup (const char *str);
+
+char*
+my_strdup (const char *str)
+{
+  char *new_str;
+
+  if (str)
+    {
+      new_str = (char *)malloc ((strlen (str) + 1) * sizeof(char));
+      strcpy (new_str, str);
+    }
+  else
+    new_str = NULL;
+
+  return new_str;
+}
+
+int main (void)
+{
+  int major = 0, minor = 0, micro = 0;
+  int n;
+  char *tmp_version;
+
+  system ("touch conf.gsltest");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = my_strdup("$min_gsl_version");
+
+  n = sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) ;
+
+  if (n != 2 && n != 3) {
+     printf("%s, bad version string\n", "$min_gsl_version");
+     exit(1);
+   }
+
+   if (($gsl_major_version > major) ||
+      (($gsl_major_version == major) && ($gsl_minor_version > minor)) ||
+      (($gsl_major_version == major) && ($gsl_minor_version == minor) && ($gsl_micro_version >= micro)))
+    {
+      exit(0);
+    }
+  else
+    {
+      printf("\n*** 'gsl-config --version' returned %d.%d.%d, but the minimum version\n", $gsl_major_version, $gsl_minor_version, $gsl_micro_version);
+      printf("*** of GSL required is %d.%d.%d. If gsl-config is correct, then it is\n", major, minor, micro);
+      printf("*** best to upgrade to the required version.\n");
+      printf("*** If gsl-config was wrong, set the environment variable GSL_CONFIG\n");
+      printf("*** to point to the correct copy of gsl-config, and remove the file\n");
+      printf("*** config.cache before re-running configure\n");
+      exit(1);
+    }
+}
+
+
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  :
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+no_gsl=yes
+fi
+rm -f core core.* *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+       CFLAGS="$ac_save_CFLAGS"
+       LIBS="$ac_save_LIBS"
+     fi
+  fi
+  if test "x$no_gsl" = x ; then
+     echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+     have_gsl="yes"
+  else
+     echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+     if test "$GSL_CONFIG" = "no" ; then
+       echo "*** The gsl-config script installed by GSL could not be found"
+       echo "*** If GSL was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** your path, or set the GSL_CONFIG environment variable to the"
+       echo "*** full path to gsl-config."
+     else
+       if test -f conf.gsltest ; then
+        :
+       else
+          echo "*** Could not run GSL test program, checking why..."
+          CFLAGS="$CFLAGS $GSL_CFLAGS"
+          LIBS="$LIBS $GSL_LIBS"
+          cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <stdio.h>
+
+int
+main ()
+{
+ return 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+   echo "*** The test program compiled, but did not run. This usually means"
+          echo "*** that the run-time linker is not finding GSL or finding the wrong"
+          echo "*** version of GSL. If it is not finding GSL, you'll need to set your"
+          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+          echo "*** is required on your system"
+	  echo "***"
+          echo "*** If you have an old version installed, it is best to remove it, although"
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ echo "*** The test program failed to compile or link. See the file config.log for the"
+          echo "*** exact error that occured. This usually means GSL was incorrectly installed"
+          echo "*** or that you have moved GSL since it was installed. In the latter case, you"
+          echo "*** may want to edit the gsl-config script: $GSL_CONFIG"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+          CFLAGS="$ac_save_CFLAGS"
+          LIBS="$ac_save_LIBS"
+       fi
+     fi
+#     GSL_CFLAGS=""
+#     GSL_LIBS=""
+     have_gsl="no"
+  fi
+
+
+  rm -f conf.gsltest
+
 fi
 
 if test "$have_gtk" = "no" ; then
@@ -14144,6 +14435,30 @@ fi;
   echo "$as_me:$LINENO: result: Using $GCONF_SCHEMA_FILE_DIR as install directory for schema files" >&5
 echo "${ECHO_T}Using $GCONF_SCHEMA_FILE_DIR as install directory for schema files" >&6
 
+  # Check whether --enable-schemas-install or --disable-schemas-install was given.
+if test "${enable_schemas_install+set}" = set; then
+  enableval="$enable_schemas_install"
+  case "${enableval}" in
+       yes) schemas_install=true ;;
+       no)  schemas_install=false ;;
+       *) { { echo "$as_me:$LINENO: error: bad value ${enableval} for --disable-schemas-install" >&5
+echo "$as_me: error: bad value ${enableval} for --disable-schemas-install" >&2;}
+   { (exit 1); exit 1; }; } ;;
+     esac
+else
+  schemas_install=true
+fi;
+
+
+if test x$schemas_install = xtrue; then
+  GCONF_SCHEMAS_INSTALL_TRUE=
+  GCONF_SCHEMAS_INSTALL_FALSE='#'
+else
+  GCONF_SCHEMAS_INSTALL_TRUE='#'
+  GCONF_SCHEMAS_INSTALL_FALSE=
+fi
+
+
             fi
         fi
     else
@@ -14408,6 +14723,13 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
+if test -z "${GCONF_SCHEMAS_INSTALL_TRUE}" && test -z "${GCONF_SCHEMAS_INSTALL_FALSE}"; then
+  { { echo "$as_me:$LINENO: error: conditional \"GCONF_SCHEMAS_INSTALL\" was never defined.
+Usually this means the macro was only invoked conditionally." >&5
+echo "$as_me: error: conditional \"GCONF_SCHEMAS_INSTALL\" was never defined.
+Usually this means the macro was only invoked conditionally." >&2;}
+   { (exit 1); exit 1; }; }
+fi
 
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
@@ -15027,6 +15349,7 @@ s,@GLIB_CFLAGS@,$GLIB_CFLAGS,;t t
 s,@GLIB_LIBS@,$GLIB_LIBS,;t t
 s,@GSL_CFLAGS@,$GSL_CFLAGS,;t t
 s,@GSL_LIBS@,$GSL_LIBS,;t t
+s,@GSL_CONFIG@,$GSL_CONFIG,;t t
 s,@GTK_CONFIG@,$GTK_CONFIG,;t t
 s,@GTK_EXTRA_CONFIG@,$GTK_EXTRA_CONFIG,;t t
 s,@GTK_EXTRA_CFLAGS@,$GTK_EXTRA_CFLAGS,;t t
@@ -15047,6 +15370,8 @@ s,@XML_LIBS@,$XML_LIBS,;t t
 s,@GCONFTOOL@,$GCONFTOOL,;t t
 s,@GCONF_SCHEMA_CONFIG_SOURCE@,$GCONF_SCHEMA_CONFIG_SOURCE,;t t
 s,@GCONF_SCHEMA_FILE_DIR@,$GCONF_SCHEMA_FILE_DIR,;t t
+s,@GCONF_SCHEMAS_INSTALL_TRUE@,$GCONF_SCHEMAS_INSTALL_TRUE,;t t
+s,@GCONF_SCHEMAS_INSTALL_FALSE@,$GCONF_SCHEMAS_INSTALL_FALSE,;t t
 s,@GNOME@,$GNOME,;t t
 s,@have_gnome@,$have_gnome,;t t
 s,@gnome_prefix@,$gnome_prefix,;t t
