@@ -3894,26 +3894,127 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
+static int *str_to_list (const char *liststr)
+{
+    const char *s = liststr;
+    char numstr[8];
+    int *list;
+    int li, n = 0;
+
+    while (*s) {
+	while (*s == ' ') s++;
+	if (sscanf(s, "%7s", numstr)) {
+	    n++;
+	    s += strlen(numstr);
+	}
+    }
+
+    if (n == 0) {
+	return NULL;
+    }
+
+    list = malloc((n + 1) * sizeof *list);
+    if (list == NULL) {
+	return NULL;
+    }
+
+    list[0] = n;
+
+    s = liststr;
+    n = 1;
+    while (*s) {
+	while (*s == ' ') s++;
+	if (sscanf(s, "%7s", numstr)) {
+	    list[n++] = atoi(numstr);
+	    s += strlen(numstr);
+
+	}
+    }    
+
+    return list;
+}
+
+static int list_position (int v, const int *list)
+{
+    int i;
+
+    for (i=list[0]; i>=1; i--) {
+	if (v == list[i]) return i;
+    }
+
+    return 0;
+}
+
+static int maybe_reorder_list (char *liststr)
+{
+    const char *query = _("X-axis variable");
+    int *list = str_to_list(liststr);
+
+    if (list == NULL) {
+	return 1;
+    } else {
+	int xvar = select_var_from_list(list, query);
+
+	if (xvar < 0) {
+	    /* the user cancelled */
+	    return 1;
+	}
+
+	if (xvar != list[list[0]]) {
+	    int tmp = list[list[0]];
+	    int pos = list_position(xvar, list);
+	    int i;
+
+	    list[list[0]] = xvar;
+	    list[pos] = tmp;
+	    *liststr = '\0';
+	    for (i=1; i<=list[0]; i++) {
+		char numstr[8];
+
+		sprintf(numstr, " %d", list[i]);
+		strcat(liststr, numstr);
+	    }
+	}
+	free(list);
+    }
+
+    return 0;
+}
+
 void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 {
     char *liststr;
     gint i, err, *lines = NULL;
 
     liststr = mdata_selection_to_string(0);
-    if (liststr == NULL || *liststr == 0) return;
+    if (liststr == NULL || *liststr == 0) {
+	return;
+    }
+
+    if (action == GR_XY) {
+	err = maybe_reorder_list(liststr);
+	if (err) return;
+    }
 
     clear(line, MAXLEN);
-    sprintf(line, "gnuplot%s time", liststr);
+    sprintf(line, "gnuplot%s%s", liststr, (action == GR_PLOT)? " time" : "");
     free(liststr);
 
-    if (verify_and_record_command(line)) return;
-    if (cmd.list[0] < 2) return;
+    if (verify_and_record_command(line)) {
+	return;
+    }
+
+    if (cmd.list[0] < 2) {
+	return;
+    }
 
     lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
-    if (lines == NULL) return;
+    if (lines == NULL) {
+	return;
+    }
 
     for (i=0; i<cmd.list[0]-1; i++) {
-	lines[i] = 1;
+	lines[i] = (action == GR_PLOT);
     }
 
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,

@@ -52,6 +52,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy);
 
 void varinfo_dialog (int varnum, int full);
 
+int select_var_from_list (const int *list, const char *query);
+
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w);

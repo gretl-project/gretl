@@ -67,8 +67,11 @@ static void update_dialogs_from_varclick (int active_var)
 	gchar addvar[9];
 
 	edttext = gtk_entry_get_text (GTK_ENTRY(active_edit_id));
-	if (strlen(edttext)) sprintf(addvar, " %d", active_var);
-	else sprintf(addvar, "%d", active_var);
+	if (*edttext != '\0') {
+	    sprintf(addvar, " %d", active_var);
+	} else {
+	    sprintf(addvar, "%d", active_var);
+	}
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_id), addvar);
     }
     else if (active_edit_name != NULL) {

@@ -1735,7 +1735,10 @@ char *mdata_selection_to_string (int n_required)
     struct list_maker lmkr;
 
     lmkr.liststr = mymalloc(MAXLEN);
-    if (lmkr.liststr == NULL) return NULL;
+    if (lmkr.liststr == NULL) {
+	return NULL;
+    }
+
     lmkr.liststr[0] = 0;
     lmkr.n_items = lmkr.overflow = 0;
     lmkr.len = 0;

@@ -323,11 +323,11 @@ static int print_atom (genatom *atom)
 static int get_lagvar (const char *s, int *lag, GENERATE *genr)
 {
     static char format[16] = {0};
-    char vname[VNAMELEN];
+    char vname[USER_VLEN];
     int m = 0, v = 0;
 
     if (*format == 0) {
-	sprintf(format, "%%%d[^(](%%d)", VNAMELEN - 1);
+	sprintf(format, "%%%d[^(](%%d)", USER_VLEN - 1);
     }
 
     if (sscanf(s, format, vname, &m) == 2) {
@@ -348,7 +348,7 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
     if (lag == NULL) {
 	/* just testing for atomicity */
 	if (v > 0) {
-	    char test[VNAMELEN + 8];
+	    char test[USER_VLEN + 8];
 
 	    sprintf(test, "%s(%d)", vname, m);
 	    if (strcmp(test, s)) {
@@ -1686,7 +1686,7 @@ static const char *get_func_word (int fnum)
 
 int get_genr_function (const char *s)
 {
-    char word[VNAMELEN];
+    char word[USER_VLEN];
     const char *p;
     int i;
 
@@ -1836,7 +1836,7 @@ static int split_genr_formula (char *lhs, char *s, int obs)
 	    }
 
 	    /* should we warn if lhs name is truncated? */
-	    strncat(lhs, s, VNAMELEN - 1);
+	    strncat(lhs, s, USER_VLEN - 1);
 
 	    if (gretl_is_reserved(lhs)) {
 		err = 1;
@@ -1913,7 +1913,7 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATE *genr)
 {
-    char vname[VNAMELEN], obs[VNAMELEN];
+    char vname[USER_VLEN], obs[USER_VLEN];
 
     if (line == NULL || *line == '\0') return;
 
@@ -2053,7 +2053,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 {
     int i;
     char s[MAXLEN], genrs[MAXLEN];
-    char newvar[VNAMELEN];
+    char newvar[USER_VLEN];
     int oldv = pdinfo->v;
     GENERATE genr;
 #ifdef GENR_DEBUG
@@ -3292,7 +3292,7 @@ static void fix_daily_date (char *s)
 static double get_obs_value (const char *s, double **Z, 
 			     const DATAINFO *pdinfo)
 {
-    char vname[VNAMELEN], obs[OBSLEN];
+    char vname[USER_VLEN], obs[OBSLEN];
 
     if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) != 2) {
 	return NADBL;
@@ -3441,26 +3441,28 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 
 static int dataset_var_index (const char *s)
 {
-    char test[VNAMELEN];
+    char test[USER_VLEN];
 
     *test = '\0';
-    strncat(test, s, VNAMELEN - 1);
+    strncat(test, s, USER_VLEN - 1);
     lower(test);
 
-    if (!strcmp(test, "$nobs")) 
+    if (!strcmp(test, "$nobs")) {
 	return R_NOBS;
-    if (!strcmp(test, "$pd")) 
+    }
+    if (!strcmp(test, "$pd")) {
 	return R_PD;
+    }
 
     return 0;
 }
 
 static int model_scalar_stat_index (const char *s)
 {
-    char test[VNAMELEN];
+    char test[USER_VLEN];
 
     *test = '\0';
-    strncat(test, s, VNAMELEN - 1);
+    strncat(test, s, USER_VLEN - 1);
     lower(test);
 
     if (!strcmp(test, "$ess"))  
@@ -3486,10 +3488,10 @@ static int model_scalar_stat_index (const char *s)
 
 static int model_vector_index (const char *s)
 {
-    char test[VNAMELEN];
+    char test[USER_VLEN];
 
     *test = '\0';
-    strncat(test, s, VNAMELEN - 1);
+    strncat(test, s, USER_VLEN - 1);
     lower(test);
 
     if (!strcmp(test, "$uhat"))  
@@ -3557,7 +3559,7 @@ make_x_panel_dummy (double *x, const DATAINFO *pdinfo, int i)
 
 int dummy (double ***pZ, DATAINFO *pdinfo)
 {
-    char vname[VNAMELEN];
+    char vname[USER_VLEN];
     int vi, t, yy, pp, mm;
     int ndums, nvar = pdinfo->v;
     double xx;
@@ -4092,7 +4094,7 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
 {
     int err, v;
     unsigned pwr;
-    char vname[VNAMELEN];
+    char vname[USER_VLEN];
     void *handle = NULL;
     int (*mp_raise) (const double *, double *, int, unsigned);
     
@@ -4123,7 +4125,7 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
 		      DATAINFO *pdinfo)
 {
     int err, v;
-    char vname[VNAMELEN];
+    char vname[USER_VLEN];
     void *handle = NULL;
     int (*mp_log) (const double *, double *, int);
     
@@ -4156,7 +4158,7 @@ static double genr_cov (const char *str, double ***pZ,
 			const DATAINFO *pdinfo)
 {
     int i, n, p, v1, v2;
-    char v1str[VNAMELEN], v2str[VNAMELEN];
+    char v1str[USER_VLEN], v2str[USER_VLEN];
 
     n = strlen(str);
     if (n > 17) return NADBL;
@@ -4190,7 +4192,7 @@ static double genr_corr (const char *str, double ***pZ,
 			 const DATAINFO *pdinfo)
 {
     int i, n, p, v1, v2;
-    char v1str[VNAMELEN], v2str[VNAMELEN];
+    char v1str[USER_VLEN], v2str[USER_VLEN];
 
     n = strlen(str);
     if (n > 17) return NADBL;
@@ -4241,7 +4243,7 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 {
     int v1 = 0, v2 = 0;
     int i, j, k, n, p, v1l, v2l;
-    char v1str[VNAMELEN], v2str[VNAMELEN];
+    char v1str[USER_VLEN], v2str[USER_VLEN];
 
     if (pmod == NULL || pmod->list == NULL) return NADBL;
 
@@ -4394,7 +4396,7 @@ static int listpos (int v, const int *list)
 int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo)
 {
-    char vname[VNAMELEN], vlabel[MAXLABEL];
+    char vname[USER_VLEN], vlabel[MAXLABEL];
     int i, t;
     double *h = NULL;
 

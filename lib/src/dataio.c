@@ -782,8 +782,9 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
     fscanf(fp, "%s", str);
     if (skipcomments(fp, str)) {
         safecpy(pdinfo->varname[i], str, VNAMELEN - 1);
-	if (check_varname(pdinfo->varname[i++])) 
+	if (check_varname(pdinfo->varname[i++])) {
 	    goto varname_error;
+	}
     } else {
 	descrip = 1; /* comments were found */
     }

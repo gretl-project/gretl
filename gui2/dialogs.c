@@ -1910,6 +1910,95 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_show_all(rset->dlg);
 }
 
+static GList *compose_var_selection_list (const int *list)
+{
+    GList *varlist = NULL;
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	varlist = g_list_append(varlist, datainfo->varname[i]);
+    }
+
+    return varlist;
+}
+
+static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
+{
+    GtkWidget *combo = g_object_get_data(G_OBJECT(dlg), "combo");
+    int *selvar = g_object_get_data(G_OBJECT(dlg), "selvar");
+    const char *vname;
+
+    vname = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry));
+
+    *selvar = varindex(datainfo, vname);
+}
+
+static void exit_var_select (GtkWidget *w, gpointer data) 
+{
+    gtk_main_quit();
+}
+
+int select_var_from_list (const int *list, const char *query)
+{
+    GtkWidget *tempwid, *hbox;
+    GtkWidget *dlg, *combo;
+    GList *varlist;
+    int selvar = -1;
+
+    dlg = gtk_dialog_new();
+
+    g_signal_connect(G_OBJECT(dlg), "destroy", 
+		     G_CALLBACK(exit_var_select), NULL);
+    
+    gtk_window_set_title(GTK_WINDOW(dlg), _("gretl: define graph"));
+    set_dialog_border_widths(dlg);
+    gtk_window_set_position(GTK_WINDOW(dlg), GTK_WIN_POS_MOUSE);
+
+    tempwid = gtk_label_new(query);
+    hbox = gtk_hbox_new(TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    varlist = compose_var_selection_list(list);
+	
+    combo = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(combo), varlist); 
+
+#ifndef OLD_GTK
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), 8);
+#endif
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), 
+		       datainfo->varname[list[list[0]]]);
+
+    hbox = gtk_hbox_new(TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    g_object_set_data(G_OBJECT(dlg), "combo", combo);
+    g_object_set_data(G_OBJECT(dlg), "selvar", &selvar);
+
+    /* Create the "OK" button */
+    tempwid = ok_button(GTK_DIALOG(dlg)->action_area);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(set_var_from_combo), dlg);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tempwid);
+
+    /* And a Cancel button */
+    cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg);
+
+    gtk_widget_show_all(dlg);
+
+    gtk_window_set_modal(GTK_WINDOW(dlg), TRUE);
+    gtk_main();
+
+    return selvar;
+}
+
 /* ARMA options stuff */
 
 struct arma_options {

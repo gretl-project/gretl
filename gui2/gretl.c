@@ -1692,6 +1692,8 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
 	do_menu_op(NULL, PCA, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
+    else if (!strcmp(item, _("XY scatterplot"))) 
+	plot_from_selection(NULL, GR_XY, NULL);
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Delete"))) 
@@ -1708,6 +1710,7 @@ static void build_selection_popup (void)
 	N_("Correlation matrix"),
 	N_("Principal components"),
 	N_("Time series plot"),
+	N_("XY scatterplot"),
 	N_("Copy to clipboard"),
 	N_("Delete"),
     };
@@ -2430,7 +2433,9 @@ static gboolean main_popup_handler (GtkWidget *widget, GdkEvent *event,
     if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
         GdkEventButton *bevent = (GdkEventButton *) event; 
 
-	if (selcount > 1) menu = GTK_MENU(selection_popup);
+	if (selcount > 1) {
+	    menu = GTK_MENU(selection_popup);
+	}
 	gtk_menu_popup (menu, NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
 	return (selcount > 1);

@@ -2972,13 +2972,13 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 int validate_varname (const char *varname)
 {
     int i, n = strlen(varname);
-    char namebit[VNAMELEN];
+    char namebit[USER_VLEN];
     unsigned char c;
 
     *namebit = 0;
     
-    if (n > VNAMELEN - 1) {
-	strncat(namebit, varname, VNAMELEN - 1);
+    if (n > USER_VLEN - 1) {
+	strncat(namebit, varname, USER_VLEN - 1);
 	sprintf(errtext, _("Variable name %s... is too long\n"
 	       "(the max is 8 characters)"), namebit);
 	errbox(errtext);
