@@ -436,8 +436,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     if (resample) {
 	pdinfo->varname = NULL;
 	pdinfo->varinfo = NULL;
-    } 
-    else if (dataset_allocate_varnames(pdinfo)) {
+    } else if (dataset_allocate_varnames(pdinfo)) {
 	return 1;
     }
 

@@ -458,6 +458,8 @@ static void bhhh_iter_info (int iter, double *theta, int m, double ll,
 	    steplength, ll);
 }
 
+#undef BHHH_DEBUG
+
 /**
  * bhhh_max:
  * @loglik: pointer to function for calculating log-likelihood and
@@ -554,6 +556,10 @@ int bhhh_max (LL_FUNC loglik,
 	    break;
 	}
 
+#ifdef BHHH_DEBUG
+	printmodel(bmod, tinfo, 0, prn);
+#endif
+
 	for (i=0; i<k; i++) {
 	    delta[i] = bmod->coeff[i] * stepsize;
 	    ctemp[i] = model->theta[i] + delta[i];
@@ -595,6 +601,8 @@ int bhhh_max (LL_FUNC loglik,
     }
 
     if (crit > model->tol || err != 0) {
+	fprintf(stderr, "bhhh_max: crit = %g, tol = %g, err = %d\n",
+		crit, model->tol, err);
 	err = E_NOCONV;
     }
 

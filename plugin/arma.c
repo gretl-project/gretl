@@ -85,7 +85,15 @@ static int ma_out_of_bounds (int q, const double *ma_coeff)
     double *temp = NULL, *tmp2 = NULL;
     double re, im, rt;
     cmplx *roots = NULL;
-    int i, err = 0;
+    int i, err = 0, allzero = 1;
+
+    for (i=1; i<=q; i++){
+	if (ma_coeff[i] != 0.0) {
+	    allzero = 0;
+	}    
+    }    
+    
+    if (allzero) return 0;
 
     /* we'll use a budget version of the "arma_roots" function here */
 
@@ -150,7 +158,7 @@ static int arma_ll (double *coeff,
     reg_coeff = coeff + p + q;
 
     if (ma_out_of_bounds(q, ma_coeff)) {
-	fputs("MA estimate(s) out of bounds\n", stderr);
+	fputs("arma: MA estimate(s) out of bounds\n", stderr);
 	return 1;
     }
 
@@ -651,6 +659,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     err = bhhh_max(arma_ll, X, coeff, arma, prn);
 
     if (err) {
+	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
 	armod.errcode = E_NOCONV;
     } else {
 	MODEL *pmod = model_info_capture_OPG_model(arma);
