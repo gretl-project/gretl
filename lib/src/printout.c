@@ -557,7 +557,6 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
     }
 
     if (pmod->vcv == NULL) {
-	fprintf(stderr, "pmod->vcv is NULL; making VCV now\n");
 	if (makevcv(pmod)) return E_ALLOC;
     }
 

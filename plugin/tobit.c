@@ -298,7 +298,13 @@ static int write_tobit_stats (MODEL *pmod, tobit_info *tobit, const double *y,
 
     pmod->ess = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->yhat[t] = tobit->ystar[t - offset];
+	double yhat = tobit->ystar[t - offset];
+
+	if (yhat > 0.0) {
+	    pmod->yhat[t] = yhat;
+	} else {
+	    pmod->yhat[t] = 0.0;
+	}
 	pmod->uhat[t] = y[t - offset] - pmod->yhat[t];
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
@@ -386,8 +392,6 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
 	err = 1;
 	goto bailout;
     }
-
-    printlist(tlist, "OPG regression list");
 
     while (convcrit > small) {
 

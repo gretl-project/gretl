@@ -1298,7 +1298,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
 	|| pmod->ci == HCCM || pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
-	|| pmod->ci == ARMA || pmod->ci == LOGISTIC
+	|| pmod->ci == ARMA || pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 	print_middle_table_start(prn);
 	if (pmod->ci != VAR) depvarstats(pmod, prn);
