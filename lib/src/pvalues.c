@@ -97,7 +97,8 @@ double tprob (double x, int df)
 
 double fdist (double x, int dfn, int dfd)
 {
-    return fdtrc(dfn, dfd, x);
+    if (x < 0) return 1.0;
+    else return fdtrc(dfn, dfd, x);
 }
 
 /**
@@ -111,7 +112,8 @@ double fdist (double x, int dfn, int dfd)
 
 double chisq (double x, int df)
 {
-    return 1.0 - chdtr(df, x);
+    if (x < 0) return 1.0;
+    else return 1.0 - chdtr(df, x);
 }
 
 /**
