@@ -345,11 +345,11 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
 	datainfo->n = sinfo->nobs;
 	datainfo->v = 2;	
 	start_new_Z(&Z, datainfo, 0);
-	if (dbdat->action == NATIVE_SERIES) 
+	if (dbdat->role == NATIVE_SERIES) 
 	    err = get_db_data(dbdat->fname, sinfo, &Z);
-	else if (dbdat->action == REMOTE_SERIES)
+	else if (dbdat->role == REMOTE_SERIES)
 	    err = get_remote_db_data(dbdat, sinfo, &Z);
-	else if (dbdat->action == RATS_SERIES)
+	else if (dbdat->role == RATS_SERIES)
 	    err = get_rats_data(dbdat->fname, dbdat->active_var + 1,
 				sinfo, &Z);
 	if (err) {
@@ -388,7 +388,7 @@ static void gui_import_series (windata_t *dbdat)
 void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 {
     windata_t *dbdat = (windata_t *) data;
-    int err = 0, dbcode = dbdat->action;
+    int err = 0, dbcode = dbdat->role;
     DATAINFO *dbdinfo;
     SERIESINFO *sinfo;
     double *dbZ = NULL;
@@ -518,7 +518,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     gtk_box_pack_start (GTK_BOX (main_vbox), dbdat->mbar, FALSE, TRUE, 0);
     gtk_widget_show(dbdat->mbar);
 
-    dbdat->action = action;
+    dbdat->role = action;
 
     frame = database_window(dbdat);
     gtk_box_pack_start (GTK_BOX (main_vbox), frame, TRUE, TRUE, 0);
@@ -1431,7 +1431,7 @@ gint populate_dbfilelist (windata_t *ddata)
     DIR *dir;
     struct dirent *dirent;
 
-    if (ddata->action == RATS_DB) {
+    if (ddata->role == RATS_DB) {
 	strcpy(filter, ".rat");
 	strcpy(dbdir, paths.ratsbase);
     } else {
@@ -1449,7 +1449,7 @@ gint populate_dbfilelist (windata_t *ddata)
 	errbox(errtext);
 	return 1;
     }
-    if (ddata->action == RATS_DB) 
+    if (ddata->role == RATS_DB) 
 	gtk_clist_column_titles_hide(GTK_CLIST (ddata->listbox));
 
     i = 0;
@@ -1459,7 +1459,7 @@ gint populate_dbfilelist (windata_t *ddata)
 	if (strcmp(fname + n - 4, filter) == 0) {
 	    row[0] = fname;
 	    row[1] = NULL;
-	    if (ddata->action == NATIVE_DB) 
+	    if (ddata->role == NATIVE_DB) 
 		row[1] = get_descrip(fname, &paths);
 	    gtk_clist_append(GTK_CLIST (ddata->listbox), row);
 	    if (row[1]) g_free(row[1]);

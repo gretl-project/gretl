@@ -47,9 +47,15 @@ enum extra_cmds {
     STAT_TABLE,
     H_TEST,
     VIEW_MODEL,
+    VIEW_LOG,
+    VIEW_DATA,
+    VIEW_SCRIPT,
+    SCRIPT_OUT,
+    CONSOLE,
     EDIT_BUFFER,
     EDIT_SCRIPT,
     EDIT_NOTES,
+    CLI_HELP,
     CMD_LAST
 };
 
@@ -70,7 +76,7 @@ typedef struct {
     GtkItemFactory *ifac; 
     gpointer data;
     int active_var; 
-    int action;
+    int role;
     int id;
     char fname[MAXLEN];
 } windata_t;  

@@ -49,11 +49,11 @@ static int read_ps_descriptions (windata_t *fdata)
     char line[MAXLEN], fname[MAXLEN];
     gchar *row[3];
 
-    if (fdata->action == PWT_PS) 
+    if (fdata->role == PWT_PS) 
 	sprintf(fname, "%sps_descriptions", pwtpath);
     else
 	sprintf(fname, "%s%s", paths.scriptdir,
-		(fdata->action == GREENE_PS)? "wg_ps_descriptions" :
+		(fdata->role == GREENE_PS)? "wg_ps_descriptions" :
 		"ps_descriptions");
 
     fp = fopen(fname, "r");
@@ -88,11 +88,11 @@ static int read_data_descriptions (windata_t *fdata)
     char descrip[80];
     gchar *row[2];
 
-    if (fdata->action == RAMU_DATA) 
+    if (fdata->role == RAMU_DATA) 
 	sprintf(fname, "%s%s", paths.datadir, "descriptions");
-    else if (fdata->action == PWT_DATA)
+    else if (fdata->role == PWT_DATA)
 	sprintf(fname, "%s%s", pwtpath, "descriptions");
-    else if (fdata->action == GREENE_DATA) {
+    else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
 	strcat(fname, "wg_descriptions"); 
@@ -136,11 +136,11 @@ static void browse_header (GtkWidget *w, gpointer data)
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
 		       0, &fname);
     
-    if (mydata->action == PWT_DATA) 
+    if (mydata->role == PWT_DATA) 
 	sprintf(hdrname, "%s%s.gdt", pwtpath, fname);
-    else if (mydata->action == RAMU_DATA)
+    else if (mydata->role == RAMU_DATA)
 	sprintf(hdrname, "%s%s.gdt", paths.datadir, fname);
-    else if (mydata->action == GREENE_DATA) {
+    else if (mydata->role == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
 	strcat(hdrname, fname);
@@ -169,11 +169,11 @@ void browser_open_data (GtkWidget *w, gpointer data)
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
 		       0, &fname);
 
-    if (mydata->action == PWT_DATA) 
+    if (mydata->role == PWT_DATA) 
 	sprintf(trydatfile, "%s%s.gdt", pwtpath, fname);
-    else if (mydata->action == RAMU_DATA)  
+    else if (mydata->role == RAMU_DATA)  
 	sprintf(trydatfile, "%s%s.gdt", paths.datadir, fname);
-    else if (mydata->action == GREENE_DATA) {
+    else if (mydata->role == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
 	strcat(trydatfile, fname);
@@ -189,22 +189,20 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 {
     windata_t *mydata = (windata_t *) data;
     gchar *fname;
-    char title[32];
 
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
 		       0, &fname);
 
-    if (mydata->action == PWT_PS)
+    if (mydata->role == PWT_PS)
 	sprintf(scriptfile, "%s%s.inp", pwtpath, fname);
     else
 	sprintf(scriptfile, "%s%s.inp", paths.scriptdir, fname);
 
-    sprintf(title, "gretl: %s.inp", fname);
     gtk_widget_destroy(GTK_WIDGET(mydata->w));
 
     mkfilelist(3, scriptfile);
 
-    view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
+    view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT, sample_script_items);
 } 
 
 /* ........................................................... */
@@ -391,7 +389,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (fdata->w), main_vbox);
 
-    fdata->action = code;
+    fdata->role = code;
     frame = files_window(fdata);
 
     gtk_box_pack_start(GTK_BOX (main_vbox), frame, TRUE, TRUE, 0);
@@ -455,7 +453,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
 static gint populate_filelist (windata_t *fdata)
 {
-    gint a = fdata->action;
+    gint a = fdata->role;
 
     if (a == NATIVE_DB || a == RATS_DB)
 	return populate_dbfilelist(fdata);
@@ -487,7 +485,7 @@ static GtkWidget *files_window (windata_t *fdata)
     GtkWidget *box, *scroll_list, *parent;
     int i, cols = 2;
 
-    switch (fdata->action) {
+    switch (fdata->role) {
     case NATIVE_DB:
 	titles = db_titles;
 	col_width = db_col_width;

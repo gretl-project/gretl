@@ -60,7 +60,7 @@ void selectrow (GtkCList *clist, gint row, gint column,
     /* response to double-click */
     if (event != NULL && event->type == GDK_2BUTTON_PRESS 
 	&& event->button == 1) {
-	switch (mydata->action) {
+	switch (mydata->role) {
 	case MAINWIN:
 	    display_var();
 	    break;
@@ -193,12 +193,8 @@ void edit_header (gpointer data, guint unused, GtkWidget *widget)
 {
     if (data_status & BOOK_DATA)
 	errbox("You don't have permission to do this");
-    else {
-	if (datainfo->descrip != NULL)
-	    edit_buffer(&datainfo->descrip, 80, 400, "gretl: edit data info");
-	else 
-	    edit_buffer(NULL, 80, 400, "gretl: edit data info");
-    }
+    else 
+	edit_buffer(&datainfo->descrip, 80, 400, "gretl: edit data info");
 }
 
 /* ........................................................... */
@@ -552,7 +548,7 @@ void file_save_callback (GtkWidget *w, gpointer data)
     guint u = 0;
     windata_t *mydata = (windata_t *) data;
 
-    switch (mydata->action) {
+    switch (mydata->role) {
     case EDIT_SCRIPT:
 	u = SAVE_SCRIPT;
 	break;

@@ -177,8 +177,7 @@ static void edit_session_notes (void)
     fp = fopen(notesfile, "a");
     if (fp != NULL) {
 	fclose(fp);
-	view_file(notesfile, 1, 0, 78, 370, 
-		  "gretl: session notes", edit_items);
+	view_file(notesfile, 1, 0, 78, 370, EDIT_NOTES, edit_items);
     } else 
 	errbox("Couldn't open session notes");
 }
@@ -1020,8 +1019,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
 
-	    view_file(graph->fname, 1, 0, 78, 400, "gretl: plot commands",
-		      gp_edit_items);
+	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, gp_edit_items);
 	}
     }   
     else if (strcmp(item, "Delete") == 0) {

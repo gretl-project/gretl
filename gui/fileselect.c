@@ -260,7 +260,6 @@ void file_selector (char *msg, int action, gpointer data)
     OPENFILENAME of;
     int retval, gotdir = 0;
     char fname[MAXLEN], endname[64], startd[MAXLEN];
-    char title[48];
 
     fname[0] = '\0';
     endname[0] = '\0';
@@ -308,9 +307,6 @@ void file_selector (char *msg, int action, gpointer data)
 	return;
     }
 	
-    strcpy(title, "gretl: ");
-    strncat(title, of.lpstrFileTitle, 40);
-
     strncpy(remember_dir, fname, slashpos(fname));
 
     if (action == OPEN_DATA || action == OPEN_CSV || action == OPEN_BOX) {
@@ -322,7 +318,8 @@ void file_selector (char *msg, int action, gpointer data)
 
 	strcpy(tryscript, fname);
 
-	if (view_file(tryscript, 1, 0, 78, 370, title, script_items) != NULL) {
+	if (view_file(tryscript, 1, 0, 78, 370, EDIT_SCRIPT, 
+		      script_items) != NULL) {
 	    strcpy(scriptfile, tryscript);
 	    mkfilelist(3, scriptfile);
 	    spos = slashpos(scriptfile);
@@ -338,8 +335,9 @@ void file_selector (char *msg, int action, gpointer data)
 	    verify_open_session(NULL);
 	    return;
 	} 
-	if (view_file(tryscript, 1, 0, 78, 370, title, pub ? 
-		      sample_script_items : script_items))
+	if (view_file(tryscript, 1, 0, 78, 370, 
+		      pub ? VIEW_SCRIPT : EDIT_SCRIPT, 
+		      pub ? sample_script_items : script_items))
 		strcpy(scriptfile, tryscript);
     }
 
@@ -415,7 +413,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     gint action = GPOINTER_TO_INT(gtk_object_get_data
 				  (GTK_OBJECT(data), "action"));
     char fname[MAXLEN];
-    char *test, *path, title[48];
+    char *test, *path;
     FILE *fp = NULL;
     gpointer extdata = NULL;
 
@@ -433,8 +431,6 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	} else fclose(fp);
     } 
 
-    strcpy(title, "gretl: ");
-    strncat(title, test, 40);
     strcpy(remember_dir, path);
 
     if (action == OPEN_DATA || action == OPEN_CSV || action == OPEN_BOX) {
@@ -446,7 +442,8 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 	strcpy(tryscript, fname);
 
-	if (view_file(tryscript, 1, 0, 78, 370, title, script_items) != NULL) {
+	if (view_file(tryscript, 1, 0, 78, 370, 
+		      EDIT_SCRIPT, script_items) != NULL) {
 	    strcpy(scriptfile, tryscript);
 	    mkfilelist(3, scriptfile);
 	    spos = slashpos(scriptfile);
@@ -464,8 +461,9 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	    gtk_widget_destroy(GTK_WIDGET(fs));    
 	    return;
 	} 
-	if (view_file(tryscript, 1, 0, 78, 370, title, pub ? 
-		      sample_script_items : script_items))
+	if (view_file(tryscript, 1, 0, 78, 370, 
+		      pub ? VIEW_SCRIPT : EDIT_SCRIPT, 
+		      pub ? sample_script_items : script_items))
 		strcpy(scriptfile, tryscript);
     }
 

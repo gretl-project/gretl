@@ -3,6 +3,7 @@ version 0.981
 - fix bugs in drag and drop under Windows
 - fix crashing bug when trying to save a data file with over
   (about) 120 variables
+- fix bug in editing new data header info
 - add mechanism to record sample when estimating a model, so
   that subsequent tests on that model can be referred to the same 
   sample
@@ -11,6 +12,10 @@ version 0.981
 - enhance boxplots command, allowing for boolean expressions
   to limit the sample for individual plots in a comparative
   group of plots
+- add editing toolbar to editable windows with search/replace
+  and undo
+- add context help (click on a command and press the "?" button)
+  for the edit command script window
 
 02/11/2002 version 0.98
 - fig bug affecting frequency distributions and the test for

@@ -64,7 +64,7 @@ PROG  = gretl_x11
 
 vpath %.c $(topsrc)/cli
 
-OBJS = gretl.o lib.o gui_utils.o callbacks.o dialogs.o ssheet.o \
+OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
 	webget.o calculator.o htmlprint.o guiprint.o boxplots.o
 

@@ -416,9 +416,12 @@ void catch_key (GtkWidget *w, GdkEventKey *key)
 {
     if (key->keyval == GDK_q) 
         gtk_widget_destroy(w);
-    else if (key->keyval == GDK_s) /* FIXME */
-	remember_model 
-	    (gtk_object_get_data(GTK_OBJECT(w), "ddata"), 1, NULL);
+    else if (key->keyval == GDK_s) {
+	windata_t *mydata = gtk_object_get_data(GTK_OBJECT(w), "ddata");
+
+	if (mydata != NULL && mydata->role == VIEW_MODEL)
+	    remember_model(mydata, 1, NULL);
+    }
 }
 
 /* ........................................................... */
@@ -764,11 +767,11 @@ static windata_t *helpwin (int script)
     if (script) {
 	help_length = script_help_length;
 	vwin = view_file(paths.cmd_helpfile, 0, 0, 77, 400, 
-			 "gretl: command syntax help", script_help_items);
+			 CLI_HELP, script_help_items);
     } else {
 	help_length = gui_help_length;
-	vwin = view_file(paths.helpfile, 0, 0, 77, 400, "gretl: help", 
-			 help_items);
+	vwin = view_file(paths.helpfile, 0, 0, 77, 400, 
+			 HELP, help_items);
     }
     return vwin;
 }
@@ -1000,7 +1003,7 @@ void windata_init (windata_t *mydata)
     mydata->ifac = NULL;
     mydata->data = NULL;
     mydata->fname[0] = '\0';
-    mydata->action = -1;
+    mydata->role = -1;
     mydata->active_var = 0;
 }
 
@@ -1027,9 +1030,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gtk_object_unref(GTK_OBJECT(mydata->ifac));  
 	if (mydata->popup) 
 	    gtk_object_unref(GTK_OBJECT(mydata->popup));
-	if (mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
+	if (mydata->role == SUMMARY || mydata->role == VAR_SUMMARY)
 	    free_summary(mydata->data); 
-	if (mydata->action == CORR)
+	if (mydata->role == CORR)
 	    free_corrmat(mydata->data); 
 	free(mydata);
 	mydata = NULL;
@@ -1079,20 +1082,20 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 	switch (i) {
 	case 0:
 	    toolxpm = save_xpm;	    
-	    if (vwin->action == EDIT_BUFFER) 
+	    if (vwin->role == EDIT_BUFFER) 
 		toolfunc = buf_edit_save;
 	    else
 		toolfunc = file_viewer_save;
 	    break;
 	case 1:
-	    if (vwin->action != EDIT_NOTES && vwin->action != EDIT_BUFFER) {
+	    if (vwin->role != EDIT_NOTES && vwin->role != EDIT_BUFFER) {
 		toolxpm = save_as_xpm;
 		toolfunc = file_save_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 2:
-	    if (vwin->action == EDIT_SCRIPT) {
+	    if (vwin->role == EDIT_SCRIPT) {
 		toolxpm = exec_xpm;
 		toolfunc = run_script_callback;
 	    } else
@@ -1115,7 +1118,7 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 	    toolfunc = text_undo_callback;
 	    break;
 	case 7:
-	    if (vwin->action == EDIT_SCRIPT) {
+	    if (vwin->role == EDIT_SCRIPT) {
 		toolxpm = question_xpm;
 		toolfunc = edit_script_help;
 	    } else
@@ -1146,7 +1149,7 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 /* ........................................................... */
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
-			char *title, int action,
+			char *title, int role,
 			GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *dialog, *close, *table;
@@ -1155,7 +1158,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     if ((vwin = mymalloc(sizeof *vwin)) == NULL) return NULL;
     windata_init(vwin);
-    vwin->action = action;
+    vwin->role = role;
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
@@ -1232,38 +1235,58 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 /* ........................................................... */
 
-static int file_suffix (const char *fname, const char *suff)
+static gchar *make_viewer_title (int role, const char *fname)
 {
-    char *p;
+    gchar *title = NULL;
 
-    if (fname == NULL || suff == NULL) return 0;
-    if ((p = rindex(fname, *suff)) && 
-	!strcmp(p, suff))
-	return 1;
-    else
-	return 0;
+    switch (role) {
+    case HELP: 
+	title = g_strdup("gretl: help"); break;
+    case CLI_HELP:
+	title = g_strdup("gretl: command syntax"); break;
+    case VIEW_LOG:
+	title = g_strdup("gretl: command log"); break;
+    case CONSOLE:
+	title = g_strdup("gretl console"); break;
+    case EDIT_SCRIPT:
+    case VIEW_SCRIPT:	
+	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp"))
+	    title = g_strdup("gretl: command script");
+	else {
+	    gchar *p = strrchr(fname, SLASH);
+	    title = g_strdup_printf("gretl: %s", p? p + 1 : fname);
+	} 
+	break;
+    case EDIT_NOTES:
+	title = g_strdup("gretl: session notes"); break;
+    case GR_PLOT:
+	title = g_strdup("gretl: edit plot commands"); break;
+    default:
+	break;
+    }
+    return title;
 }
 
 /* ........................................................... */
 
 windata_t *view_file (char *filename, int editable, int del_file, 
-		      int hsize, int vsize, char *title, 
+		      int hsize, int vsize, int role, 
 		      GtkItemFactoryEntry menu_items[]) 
 {
-    GtkWidget *dialog, *table;
-    GtkWidget *vscrollbar; 
+    GtkWidget *dialog, *table, *vscrollbar; 
     extern GdkColor red, blue;
     void *colptr = NULL, *nextcolor = NULL;
     char tempstr[MAXSTR], *fle = NULL;
     FILE *fd = NULL;
     windata_t *vwin;
-    int console = 0, show_editbar = 0, doing_help = 0;
+    gchar *title;
+    int show_editbar = 0;
     static GtkStyle *style;
 
     fd = fopen(filename, "r");
     if (fd == NULL) {
-	sprintf(tempstr, "Can't open %s for reading", filename);
-	errbox(tempstr);
+	sprintf(errtext, "Can't open %s for reading", filename);
+	errbox(errtext);
 	return NULL;
     }
 
@@ -1271,17 +1294,18 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	return NULL;
     windata_init(vwin);
     strcpy(vwin->fname, filename);
-
-    if (!strcmp(filename, paths.cmd_helpfile) ||
-	!strcmp(filename, paths.helpfile))
-	doing_help = 1;
+    vwin->role = role;
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
 
     dialog = gtk_dialog_new();
     gtk_widget_set_usize (dialog, hsize, vsize);
+
+    title = make_viewer_title(role, filename);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
+    g_free(title);
+
     gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
     gtk_container_border_width 
         (GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
@@ -1320,13 +1344,11 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
 
     /* special case: the gretl console */
-    if (strcmp(title, "gretl console") == 0) console = 1;
-    if (console) {
+    if (role == CONSOLE) {
 	gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
 			   (GtkSignalFunc) console_handler, NULL);
     } else {
-	/* editable windows other than the console get an
-	   edit toolbar */
+	/* editable windows other than the console get edit toolbar */
 	if (editable)
 	    show_editbar = 1;
     }
@@ -1336,7 +1358,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
 		     GTK_SHRINK, 0, 0);
     gtk_widget_show(vwin->w);
-
 
     vscrollbar = gtk_vscrollbar_new (GTK_TEXT (vwin->w)->vadj);
     gtk_table_attach (GTK_TABLE (table), 
@@ -1354,15 +1375,11 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
 
     /* should we show an editing toolbar? */
-    if (strstr(title, "command script") || file_suffix(filename, ".inp")) 
-	vwin->action = EDIT_SCRIPT; 
-    else if (strstr(title, "session notes")) 
-	vwin->action = EDIT_NOTES; 
     if (show_editbar) 
 	make_editbar(vwin, dialog);
 
     /* close button for non-editable windows and console */
-    if (console || !editable) {
+    if (role == CONSOLE || !editable) {
 	GtkWidget *close = 
 	    gtk_button_new_with_label("Close");
 
@@ -1378,9 +1395,9 @@ windata_t *view_file (char *filename, int editable, int del_file,
     memset(tempstr, 0, sizeof tempstr);
     while (fgets(tempstr, sizeof tempstr - 1, fd)) {
 	if (tempstr[0] == '?') 
-	    colptr = (console)? &red : &blue;
+	    colptr = (role == CONSOLE)? &red : &blue;
 	if (tempstr[0] == '#') {
-	    if (doing_help) {
+	    if (role == HELP || role == CLI_HELP) {
 		tempstr[0] = ' ';
 		nextcolor = &red;
 	    } else
@@ -1428,7 +1445,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
 	return NULL;
     windata_init(vwin);
     vwin->data = pbuf;
-    vwin->action = EDIT_BUFFER;
+    vwin->role = EDIT_BUFFER;
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
@@ -1480,7 +1497,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
     make_editbar(vwin, dialog);    
 
     /* insert the buffer text */
-    if (pbuf)
+    if (*pbuf)
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 			NULL, NULL, *pbuf, strlen(*pbuf));
 
@@ -1580,13 +1597,13 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
     gtk_accel_group_attach(accel, GTK_OBJECT (window));
 
-    if (vwin->action == SUMMARY || vwin->action == VAR_SUMMARY
-	|| vwin->action == CORR) {
+    if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
+	|| vwin->role == CORR) {
 	augment_copy_menu(vwin);
 	return;
     }
 
-    if (vwin->action == VIEW_MODEL && vwin->data != NULL) { 
+    if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (pmod->ci == POOLED) 
@@ -1762,7 +1779,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     hsize += 48;
 
     vwin->data = pmod;
-    vwin->action = VIEW_MODEL;
+    vwin->role = VIEW_MODEL;
     dialog = gtk_dialog_new();
     gtk_widget_set_usize (dialog, hsize, vsize);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
@@ -2733,7 +2750,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     PRN *prn;
 
     /* descriptive statistics */
-    if ((mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
+    if ((mydata->role == SUMMARY || mydata->role == VAR_SUMMARY)
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
 	GRETLSUMMARY *summ = (GRETLSUMMARY *) mydata->data;
 	
@@ -2754,7 +2771,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     }
 
     /* correlation matrix */
-    if (mydata->action == CORR 
+    if (mydata->role == CORR 
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
 	CORRMAT *corr = (CORRMAT *) mydata->data;
 

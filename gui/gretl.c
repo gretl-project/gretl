@@ -1052,7 +1052,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->data = NULL;  
     mdata->listbox = NULL;
     mdata->popup = NULL;
-    mdata->action = MAINWIN;
+    mdata->role = MAINWIN;
 
 #ifdef USE_GNOME
     mdata->w = gnome_app_new("gretl", "Econometrics program");

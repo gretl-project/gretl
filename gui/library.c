@@ -831,7 +831,7 @@ void view_log (void)
 
     if (dump_cmd_stack(fname)) return;
 
-    view_file(fname, 1, 0, 78, 370, "gretl: command log", log_items);
+    view_file(fname, 0, 0, 78, 370, VIEW_LOG, log_items);
 }
 
 /* ........................................................... */
@@ -852,7 +852,7 @@ void console (void)
 
     pprintf(prn, "gretl console: type 'help' for a list of commands\n? ");
     gretl_print_destroy(prn);
-    vwin = view_file(fname, 1, 0, 78, 400, "gretl console", console_items);
+    vwin = view_file(fname, 1, 0, 78, 400, CONSOLE, console_items);
     console_view = vwin->w;
     gtk_signal_connect(GTK_OBJECT(console_view), "destroy",
 		       GTK_SIGNAL_FUNC(gtk_widget_destroyed),
@@ -2447,7 +2447,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	err = printdata(NULL, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL);
+	view_file(fname, 0, 1, 77, 350, VIEW_DATA, NULL);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
@@ -2494,7 +2494,7 @@ void display_selected (GtkWidget *widget, dialog_t *ddata)
 
 	printdata(prcmd.list, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL);
+	view_file(fname, 0, 1, 77, 350, VIEW_DATA, NULL);
     } else { /* use buffer */
 	int err;
 
@@ -2729,7 +2729,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     gretl_print_destroy(prn);
     refresh_data();
 
-    view_file(fname, 0, 1, 77, 450, "gretl: script output", script_out_items);
+    view_file(fname, 0, 1, 77, 450, SCRIPT_OUT, script_out_items);
 }
 
 /* ........................................................... */
@@ -2737,13 +2737,12 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 {
     int n = strlen(paths.scriptdir);
-    char tmp[64], title[48];
 
     if (fs) {
 	if (isdir(gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs))))
 	    return;
 	strncpy(scriptfile, 
-		gtk_file_selection_get_filename(GTK_FILE_SELECTION (fs)), 
+		gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs)), 
 		MAXLEN-1);
 	gtk_widget_destroy(GTK_WIDGET (fs)); 
     } else {
@@ -2759,13 +2758,11 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 
     /* or just an "ordinary" script */
     mkfilelist(3, scriptfile);
-    strcpy(title, "gretl: ");
-    strncat(title, endbit(tmp, scriptfile, 0), 40);
 
     if (strncmp(scriptfile, paths.scriptdir, n)) 
-	view_file(scriptfile, 1, 0, 78, 370, title, script_items);
+	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT, script_items);
     else 
-	view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
+	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT, sample_script_items);
 }
 
 /* ........................................................... */
@@ -2780,8 +2777,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     gretl_print_destroy(prn);
     strcpy(scriptfile, fname);
     
-    view_file(scriptfile, 1, 0, 77, 350, "gretl: command script", 
-	      script_items);
+    view_file(scriptfile, 1, 0, 77, 350, EDIT_SCRIPT, script_items);
 }
 
 /* ........................................................... */
@@ -3904,7 +3900,7 @@ void view_script_default (void)
 {
     if (dump_cmd_stack(cmdfile)) return;
 
-    view_file(cmdfile, 0, 0, 77, 350, "gretl: command script", NULL);
+    view_file(cmdfile, 0, 0, 77, 350, EDIT_SCRIPT, NULL);
 }
 
 /* .................................................................. */
@@ -4017,11 +4013,13 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     gchar *buf;
     int count = 0;
     gint pos = 0;
-    size_t sz, len, diff;
-    char *dest = NULL, *src = NULL;
-    char *destbuf, *p, *q;
+    guint sel_start, sel_end;
+    size_t sz, fullsz, len, diff;
+    char *replace = NULL, *find = NULL;
+    char *modbuf, *p, *q;
     gchar *old;
     struct search_replace *s;
+    GtkEditable *gedit = GTK_EDITABLE(mydata->w);
 
     s = mymalloc(sizeof *s);
     if (s == NULL) return;
@@ -4032,56 +4030,84 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 	free(s);
 	return;
     }
-    src = s->f_text;
-    dest = s->r_text;
 
-    if (!strlen(src)) {
-	free(src);
-	free(dest);
+    find = s->f_text;
+    replace = s->r_text;
+
+    if (!strlen(find)) {
+	free(find);
+	free(replace);
 	free(s);
 	return;
     }
 
-    buf = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    if (gedit->has_selection) {
+	sel_start = gedit->selection_start_pos;
+	sel_end = gedit->selection_end_pos;
+    } else {
+	sel_start = 0;
+	sel_end = 0;
+    }
+
+    buf = gtk_editable_get_chars(gedit, sel_start, (sel_end)? sel_end : -1);
     if (buf == NULL || !(sz = strlen(buf))) 
 	return;
-    len = strlen(src);
-    diff = strlen(dest) - len;
+
+    fullsz = gtk_text_get_length(GTK_TEXT(mydata->w));
+    len = strlen(find);
+    diff = strlen(replace) - len;
+
     p = buf;
     while (*p) {
-	if ((q = strstr(p, src))) {
+	if ((q = strstr(p, find))) {
 	    count++;
 	    p = q + 1;
 	}
 	else break;
     }
     if (count) {
-	sz += count * diff;
+	fullsz += count * diff;
     } else {
 	errbox("String to replace was not found");
 	free(buf);
 	return;
     }
 
-    destbuf = mymalloc(sz + 1);
-    if (destbuf == NULL) {
-	free(src);
-	free(dest);
+    modbuf = mymalloc(fullsz + 1);
+    if (modbuf == NULL) {
+	free(find);
+	free(replace);
 	free(s);
 	return;
     }
-    *destbuf = '\0';
+
+    *modbuf = '\0';
+
+    if (sel_start) {
+	gchar *tmp = gtk_editable_get_chars(gedit, 0, sel_start);
+
+	strcat(modbuf, tmp);
+	g_free(tmp);
+    }
+
     p = buf;
     while (*p) {
-	if ((q = strstr(p, src))) {
-	    strncat(destbuf, p, q - p);
-	    strcat(destbuf, dest);
+	if ((q = strstr(p, find))) {
+	    strncat(modbuf, p, q - p);
+	    strcat(modbuf, replace);
 	    p = q + len;
 	} else {
-	    strcat(destbuf, p);
+	    strcat(modbuf, p);
 	    break;
 	}
-    } 
+    }
+
+    if (sel_end) {
+	gchar *tmp = gtk_editable_get_chars(gedit, sel_end, -1);
+
+	strcat(modbuf, tmp);
+	g_free(tmp);
+    }    
 
     /* save original buffer for "undo" */
     old = gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
@@ -4089,20 +4115,20 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 	g_free(old);
 	gtk_object_remove_data(GTK_OBJECT(mydata->w), "undo");
     }
-    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", buf);
+    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", 
+			gtk_editable_get_chars(gedit, 0, -1));
 
     /* now insert the modified buffer */
     gtk_text_freeze(GTK_TEXT(mydata->w));
-    gtk_editable_delete_text(GTK_EDITABLE(mydata->w), 0, -1);
-    gtk_editable_insert_text(GTK_EDITABLE(mydata->w), destbuf,
-			     strlen(destbuf), &pos);
+    gtk_editable_delete_text(gedit, 0, -1);
+    gtk_editable_insert_text(gedit, modbuf, strlen(modbuf), &pos);
     gtk_text_thaw(GTK_TEXT(mydata->w));
 
     /* and clean up */
-    free(src);
-    free(dest);
+    free(find);
+    free(replace);
     free(s);
-    free(destbuf);
+    free(modbuf);
 }
 
 #include "../cli/common.c"
