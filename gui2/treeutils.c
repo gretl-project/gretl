@@ -103,6 +103,9 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 	    update_dialogs_from_varclick(win->active_var);
 	}
 	gtk_tree_path_free(path);
+    } else {
+	/* clicked below the lines representing variables */
+	return FALSE;
     }
 
     return (row == 0);
