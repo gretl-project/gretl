@@ -127,7 +127,7 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
     int i, ncoeff = cf->list[0];
 
     pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, tcrit95(cf->df));
-    pputs(prn, _("      VARIABLE      COEFFICIENT      95%% CONFIDENCE "
+    pputs(prn, _("      VARIABLE      COEFFICIENT      95% CONFIDENCE "
 	    "INTERVAL\n\n"));      
 
     for (i=2; i<=ncoeff; i++) {

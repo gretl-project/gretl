@@ -163,11 +163,23 @@ void register_graph (void)
 
 /* ........................................................... */
 
+static void sync_datainfos (void)
+{
+    if (fullinfo == NULL || datainfo == NULL) return;
+
+    fullinfo->varname = datainfo->varname;
+    fullinfo->varinfo = datainfo->varinfo;
+    fullinfo->descrip = datainfo->descrip;
+    fullinfo->vector = datainfo->vector;
+}
+/* ........................................................... */
+
 int quiet_sample_check (MODEL *pmod)
 {
     double **checkZ;
     DATAINFO *pdinfo;
 
+    /* are we sub-sampled or not? */
     if (fullZ == NULL) {
 	checkZ = Z;
 	pdinfo = datainfo;
@@ -175,6 +187,8 @@ int quiet_sample_check (MODEL *pmod)
 	checkZ = fullZ;
 	pdinfo = fullinfo;
     }
+
+    if (pdinfo == fullinfo) sync_datainfos();
 
     if (checkZ == NULL || pdinfo == NULL) return 1;
 

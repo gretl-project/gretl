@@ -2407,9 +2407,11 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     if (!strcmp(varname, "const") || !strcmp(varname, "CONST"))
         return 0;
 
-    for (i=0; i<pdinfo->v; i++) 
-        if (!strcmp(pdinfo->varname[i], varname))  
+    for (i=0; i<pdinfo->v; i++) { 
+        if (!strcmp(pdinfo->varname[i], varname)) { 
 	    return i;
+	}
+    }
 
     return pdinfo->v;
 }

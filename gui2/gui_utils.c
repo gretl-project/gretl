@@ -2026,7 +2026,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 {
     windata_t *mwin = (windata_t *) data;
     MODEL *pmod = mwin->data;
-    extern int quiet_sample_check (MODEL *pmod);
+    extern int quiet_sample_check (MODEL *pmod); /* library.c */
     int s, ok = 1;
 
     if (Z == NULL) {

@@ -203,7 +203,8 @@ int set_sample_dummy (const char *line,
 	subnum = varindex(oldinfo, "subdum");
 	dumnum = subnum;
 	sn = isdummy((*oldZ)[subnum], oldinfo->t1, oldinfo->t2);
-    } else {
+    } 
+    else {
 	/* impossible */
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
 	return 1;
