@@ -1805,8 +1805,9 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     MODEL *pmod = NULL;
 
     buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
-    if (*buf == '\0') return;
+    if (*buf == 0) return;
 
+    bufgets(NULL, 0, buf);
     while (bufgets(line, MAXLEN-1, buf)) {
 	err = nls_parse_line(line, (const double **) Z, datainfo);
 	if (err) gui_errmsg(err);
@@ -2737,7 +2738,7 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 	if (code == 0)
 	    sprintf(line, "genr %s = uhat", datainfo->varname[v]);
 	else if (code == 1)
-	    sprintf(line, "fcast %s", datainfo->varname[v]);
+	    sprintf(line, "genr %s = yhat", datainfo->varname[v]);
 	else if (code == 2)
 	    sprintf(line, "genr %s = uhat*uhat", datainfo->varname[v]);
 	check_cmd(line);

@@ -325,6 +325,7 @@ static MODEL GNR (double *fvec)
 	add_coeffs_to_model(&gnr, nlspec.coeff);
 	add_param_names_to_model(&gnr);
 	add_fit_resid_to_model(&gnr, fvec);
+	gnr.list[1] = nlspec.depvar;
     }
 
     nlspec.t1 = t1;

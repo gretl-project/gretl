@@ -3,6 +3,8 @@ version 1.0.9
   Marquandt algorithm from minpack)
 - Fix focus bug when editing the description for a variable in
   the gretl main window
+- Add a new means of grabbing fitted values from a regression:
+  "genr newname = yhat" (parallels "uhat")
 
 05/02/03 version 1.0.8
 - Require lapack

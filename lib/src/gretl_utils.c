@@ -1929,10 +1929,12 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 	t2 += get_misscount(pmod);
     }
 
-    sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
-	    pdinfo->endobs);
-    nfit = fcast(fcastline, pmod, pdinfo, pZ); 
-    if (nfit < 0) return NULL; 
+    if (pmod->ci != NLS) {
+	sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
+		pdinfo->endobs);
+	nfit = fcast(fcastline, pmod, pdinfo, pZ); 
+	if (nfit < 0) return NULL; 
+    }
 
     fr = fit_resid_new(n, 0);
     if (fr == NULL) return NULL;
@@ -1940,7 +1942,8 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     fr->sigma = pmod->sigma;
     for (t=0; t<n; t++) {
 	fr->actual[t] = (*pZ)[depvar][t];
-	fr->fitted[t] = (*pZ)[nfit][t];
+	if (pmod->ci == NLS) fr->fitted[t] = pmod->yhat[t];
+	else fr->fitted[t] = (*pZ)[nfit][t];
     }
 
     if (isdummy(fr->actual, 0, n) > 0) {

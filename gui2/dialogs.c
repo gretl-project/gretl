@@ -312,7 +312,7 @@ static void dialog_table_setup (dialog_t *dlg, int hsize)
     GtkWidget *sw;
 
     sw = gtk_scrolled_window_new (NULL, NULL);
-    gtk_widget_set_size_request(sw, hsize, 300);
+    gtk_widget_set_size_request(sw, hsize, 260);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
 		       sw, TRUE, TRUE, FALSE);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
@@ -389,7 +389,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     gtk_widget_show (tempwid);
 
     if (cmdcode == NLS) {
-	int hsize = 64;
+	int hsize = 62;
 
 	d->edit = text_edit_new (&hsize);
 	dialog_table_setup(d, hsize);
@@ -416,6 +416,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     if (varclick == 1) active_edit_id = d->edit; 
     if (varclick == 2) active_edit_name = d->edit;
+
     gtk_widget_grab_focus (d->edit);
 
     /* Create the "OK" button */

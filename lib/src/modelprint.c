@@ -166,7 +166,7 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
 	tex_dcolumn_double(pmod->rsq, r2);
 	pprintf(prn, "%s & %s \\\\\n", I_("Unadjusted $R^2$"), r2);
-	if (!NO_RBAR_SQ(pmod->aux)) {
+	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
 	}
