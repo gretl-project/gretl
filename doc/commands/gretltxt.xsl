@@ -21,45 +21,58 @@
 <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="options">
-<xsl:text>&#xa;</xsl:text>
-<xsl:apply-templates/>
-</xsl:template>
-
-<xsl:template match="option">
-<xsl:choose>
-  <xsl:when test="position() = 1"><xsl:text>&#xa;</xsl:text>
-Options:    </xsl:when>
-  <xsl:otherwise><xsl:text>            </xsl:text> 
-  </xsl:otherwise>
-</xsl:choose>
-<xsl:apply-templates/>
-<xsl:text>&#xa;</xsl:text>
-</xsl:template>
-
 <xsl:template match="arguments">
 <xsl:text>&#xa;</xsl:text>
-Arguments:  <xsl:apply-templates/>
+<xsl:choose>
+ <xsl:when test="count(argument) > 1">
+  <xsl:text>Arguments:  </xsl:text>
+ </xsl:when>
+ <xsl:otherwise>
+  <xsl:text>Argument:   </xsl:text> 
+ </xsl:otherwise> 
+</xsl:choose>
+<xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="argument">
-<xsl:if test="(@separated)">; </xsl:if> 
+<xsl:if test="(@separated)">; </xsl:if>
+<xsl:if test="(@optional)">[ </xsl:if> 
 <xsl:apply-templates/><xsl:text> </xsl:text>
+<xsl:if test="(@optional)">] </xsl:if> 
+</xsl:template>
+
+<xsl:template match="options">
+<xsl:text>&#xa;</xsl:text>
+<xsl:choose>
+ <xsl:when test="count(option) > 1">
+  <xsl:text>Options:    </xsl:text>
+ </xsl:when>
+ <xsl:otherwise>
+  <xsl:text>Option:     </xsl:text> 
+ </xsl:otherwise> 
+</xsl:choose>
+<xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="option|example">
+<xsl:if test="position() > 1">
+ <xsl:text>            </xsl:text>
+</xsl:if>
+<xsl:apply-templates/>
+<xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="examples">
 <xsl:text>&#xa;</xsl:text>
-<xsl:apply-templates/>
-</xsl:template>
-
-<xsl:template match="example">
 <xsl:choose>
-  <xsl:when test="position() = 1">
-Examples:   </xsl:when>
-  <xsl:otherwise><xsl:text>            </xsl:text></xsl:otherwise>
+ <xsl:when test="count(example) > 1">
+  <xsl:text>Examples:   </xsl:text>
+ </xsl:when>
+ <xsl:otherwise>
+  <xsl:text>Example:    </xsl:text> 
+ </xsl:otherwise> 
 </xsl:choose>
 <xsl:apply-templates/>
-<xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="flag">

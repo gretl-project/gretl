@@ -47,7 +47,14 @@
 
 <xsl:template match="arguments">
   <row>
-    <entry>Arguments:</entry>
+<xsl:choose>
+ <xsl:when test="count(argument) > 1">
+  <entry>Arguments:</entry>
+ </xsl:when>
+ <xsl:otherwise>
+  <entry>Argument:</entry>
+ </xsl:otherwise> 
+</xsl:choose>
     <entry><replaceable><xsl:apply-templates/></replaceable></entry>
   </row>
   <xsl:text>&#xa;</xsl:text>
@@ -55,7 +62,9 @@
 
 <xsl:template match="argument">
 <xsl:if test="(@separated)">; </xsl:if>
+<xsl:if test="(@optional)"><literal>[ </literal></xsl:if>
   <xsl:apply-templates/><xsl:text> </xsl:text>
+<xsl:if test="(@optional)"><literal>] </literal></xsl:if>
 </xsl:template>
 
 <xsl:template match="example">
@@ -152,7 +161,7 @@
 </xsl:template>
 
 <xsl:template match="cmdref">
-<xref linkend="@targ"/>
+<xref linkend="cmd-{@targ}"/>
 </xsl:template>
 
 <xsl:template match="manref">
