@@ -863,7 +863,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    goto genr_return;  
                 }
 		/* create new temporary variable and var string here */
-                strcpy(sright, indx2);
+		memmove(sright, indx2, strlen(indx2) + 1);
 		ig = createvar(genr.xvec, snew, sleft, sright, 
 			       nv + nvtmp, pZ, pdinfo, genr.scalar);
 		if (ig != 0) {
@@ -1064,7 +1064,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
                 lword = strlen(word);
                 strcpy(sleft + nleft1 - lword, "\0");
-                strcpy(sright, indx2);
+		memmove(sright, indx2, strlen(indx2) + 1);
 		/* create temp var */
 		ig = createvar(genr.xvec, snew, sleft, sright, 
 			       nv + nvtmp, pZ, pdinfo, genr.scalar);

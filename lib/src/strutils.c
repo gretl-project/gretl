@@ -280,10 +280,7 @@ void lower (char *str)
 
 void _esl_trunc (char *str, int n)
 {
-    int len = strlen(str);
-
-    if (len > n) 
-	_delete(str, n, len - n);  
+    if (n < strlen(str)) str[n] = 0;
 }
 
 /**
@@ -354,9 +351,10 @@ void chopstr (char *str)
     int i = (int) strspn(str, " ");
 
     _shiftleft(str, i);
-    for (i = strlen(str) - 1; i >= 0; i--)
+    for (i = strlen(str) - 1; i >= 0; i--) {
 	if (isspace((unsigned char) str[i])) str[i] = '\0';
 	else break;
+    }
 }
 
 /**

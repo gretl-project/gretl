@@ -212,13 +212,16 @@ int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 
 int _lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
 {
-    char lagname[16], s[4];
-    
+    char lagname[16], ext[6];
+
     strcpy(lagname, pdinfo->varname[iv]);
+
     if (pdinfo->pd >=10) _esl_trunc(lagname, 5);
     else _esl_trunc(lagname, 6);
-    sprintf(s, "_%d", lag);
-    strcat(lagname, s);
+
+    sprintf(ext, "_%d", lag);
+    strcat(lagname, ext);
+
     return varindex(pdinfo, lagname);
 }
 
