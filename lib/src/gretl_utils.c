@@ -815,7 +815,7 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
     pdinfo->pd = pd;
 
     if (ed0 == 0L) {
-	pdinfo->sd0 = atof(stobs);
+	pdinfo->sd0 = dot_atof(stobs);
     } else {
 	pdinfo->time_series = TIME_SERIES;
     }
