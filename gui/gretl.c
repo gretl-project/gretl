@@ -26,6 +26,7 @@
 
 #ifndef G_OS_WIN32
 # include <unistd.h>
+# include <signal.h>
 # include "pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h>
@@ -187,27 +188,16 @@ static int unmangle (const char *dosname, char *longname);
 
 #endif /* G_OS_WIN32 */
 
-static void gnuplot_gtk_test (void)
+void sigusr1_handler (int sig)
 {
-    FILE *fp;
-    pid_t pid;
-
-    fp = fopen("gnuplot_test", "w");
-    fprintf(fp, "gtkfunc \"Just testing\" %p\n", dummy_call);
-    fprintf(fp, "plot sin(x)\n");
-    fclose(fp);
-
-    pid = fork();
-    if (pid == -1) {
-        errbox(_("Couldn't fork"));
-        perror("fork");
-        return;
-    } else if (pid == 0) {  
-        execlp("gnuplot_gtk", "gnuplot_gtk", "gnuplot_test", NULL);
-        perror("execlp");
-        _exit(EXIT_FAILURE);
-    }
+    add_last_graph(NULL, 0, NULL);
 }
+
+void sigusr2_handler (int sig)
+{
+    infobox("Got SIGUSR2");
+}
+
 
 GtkItemFactoryEntry data_items[] = {
     { _("/_File"), NULL, NULL, 0, "<Branch>" },
@@ -328,8 +318,6 @@ GtkItemFactoryEntry data_items[] = {
       NULL, graph_dialog, GR_BOX, NULL },
     { _("/Data/_Graph specified vars/Notched boxplots..."), 
       NULL, graph_dialog, GR_NBOX, NULL },
-    { _("/Data/gnuplot gtk test"), 
-      NULL, gnuplot_gtk_test, 0, NULL },
     { _("/Data/sep2"), NULL, NULL, 0, "<Separator>" },
     { _("/Data/_Read info"), NULL, open_info, 0, NULL },
     { _("/Data/Edit _info"), NULL, edit_header, 0, NULL },
@@ -584,6 +572,8 @@ int main (int argc, char *argv[])
 #else 
     set_rcfile();
     make_userdir(&paths);
+    signal(SIGUSR1, sigusr1_handler);
+    signal(SIGUSR2, sigusr2_handler);
 #endif/* G_OS_WIN32 */
 
 #ifdef DND
@@ -1424,6 +1414,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	return;
     }
 
+    signal(SIGCLD, SIG_IGN); 
     pid = fork();
 
     if (pid == -1) {
@@ -1474,8 +1465,11 @@ static void show_calc (void)
 #ifdef G_OS_WIN32
     CreateChildProcess(calculator);
 #else
-    pid_t pid = fork();
+    pid_t pid;
 
+    signal(SIGCLD, SIG_IGN);
+
+    pid = fork();
     if (pid == -1) {
 	errbox(_("Couldn't fork"));
 	perror("fork");
@@ -1495,8 +1489,11 @@ static void show_edit (void)
 #ifdef G_OS_WIN32
     CreateChildProcess(editor);
 #else
-    pid_t pid = fork();
+    pid_t pid;
 
+    signal(SIGCLD, SIG_IGN);
+
+    pid = fork();
     if (pid == -1) {
 	errbox(_("Couldn't fork"));
 	perror("fork");
@@ -1556,8 +1553,10 @@ static void netscape_open (const char *url)
     sprintf(ns_cmd, "netscape -remote \"openURLNewWindow(%s)\"", url);
     err = system(ns_cmd);
     if (err) {
-	pid_t pid = fork();
+	pid_t pid;
 
+	signal(SIGCLD, SIG_IGN);
+	pid = fork();
 	if (pid == -1) {
 	    errbox(_("Couldn't fork"));
 	    perror("fork");

@@ -879,6 +879,8 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     /* first get the "set" lines */
     i = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
+	if (strncmp(line, "gtkfunc", 7) == 0)
+	    continue;
 	if (strncmp(line, "# mult", 6) == 0) {
 	    errbox(_("Sorry, can't edit multiple scatterplots"));
 	    free(plot->lines);

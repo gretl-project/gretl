@@ -441,14 +441,39 @@ static int factorized_vars (double ***pZ,
  * Returns: the return value from the system command.
  */
 
+#define GPGTK 1
+
+#ifdef GPGTK
+# include <signal.h>
+# include <sys/types.h>
+#endif
+
 int gnuplot_display (const char *gpt, const char *fname)
 {
     int err = 0;
+#ifndef GPGTK
     char plotcmd[MAXLEN];
+#endif
 
-#ifdef OS_WIN32
+#if defined(OS_WIN32)
     sprintf(plotcmd, "\"%s\" \"%s\"", gpt, fname);
     if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
+#elif defined(GPGTK)
+    {
+	pid_t pid;
+
+	signal(SIGCLD, SIG_IGN);
+	pid = fork();
+	if (pid == -1) {
+	    fprintf(stderr, _("Couldn't fork"));
+	    perror("fork");
+	    return 1;
+	} else if (pid == 0) {  
+	    execlp(gpt, gpt, fname, NULL);
+	    perror("execlp");
+	    _exit(EXIT_FAILURE);
+	}
+    }     
 #else
     sprintf(plotcmd, "%s -persist \"%s\"", gpt, fname);
     if (system(plotcmd)) err = 1;
@@ -507,6 +532,11 @@ int gnuplot (LIST list, const int *lines,
 	strcpy(plotfile, ppaths->plotfile);
 
     if ((fq = fopen(plotfile, "w")) == NULL) return E_FOPEN;
+
+
+    if (!batch && strstr(ppaths->gnuplot, "plot_gtk")) {
+	fprintf(fq, "gtkfunc \"Save as icon\" %d\n", SIGUSR1);
+    }
 
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
 	if (get_timevar(pdinfo, s2) >= 0) {
@@ -1010,7 +1040,7 @@ int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
 #ifdef OS_WIN32
     fp = fopen(ppaths->plotfile, "w");
 #else
-    sprintf(gnuplot_pipe, "gnuplot");
+    sprintf(gnuplot_pipe, "gnuplot"); /* should be user-specified name? */
     fp = popen(gnuplot_pipe, "w");
 #endif
     plot->edit = 1;
