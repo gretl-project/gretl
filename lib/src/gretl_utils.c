@@ -1186,7 +1186,9 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
     int oldv = pdinfo->v, vmax = pdinfo->v;
     int i, v, ndel = 0; 
 
-    *renumber = 0;
+    if (renumber != NULL) {
+	*renumber = 0;
+    }
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
@@ -1210,7 +1212,9 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 		else break;
 	    }
 	    if (i < vmax) {
-		*renumber = 1;
+		if (renumber != NULL) {
+		    *renumber = 1;
+		}
 		vmax -= gap;
 		for (i=v; i<vmax; i++) {
 		    pdinfo->varname[i] = pdinfo->varname[i + gap];

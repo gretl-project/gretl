@@ -24,25 +24,23 @@
 
 #undef SUBDEBUG
 
-/* private to libgretl */
-
 /*
-  The purpose of these static pointers: When the user subsamples
-  the current dataset in a non-trivial way -- i.e., by selecting
-  cases rather than just moving the starting or ending points of
-  the data range -- we create a new sub-dataset, and we need to
-  keep the full dataset around so that it can be restored later.
-  The pointers fullZ and fullinfo are used to record the addresses
-  of the full data matrix and DATAINFO struct respectively.
+  The purpose of the static pointers below: When the user subsamples
+  the current dataset in a non-trivial way -- i.e., by selecting cases
+  rather than just moving the starting or ending points of the data
+  range -- we create a new sub-dataset, and we need to keep the full
+  dataset around so that it can be restored later.  The pointers fullZ
+  and fullinfo are used to record the addresses of the full data
+  matrix and DATAINFO struct respectively.
 
-  Another issue arises: if the user replaces or clears a dataset
-  while it is subsampled, we want to free the associated full
-  dataset also.  The peerinfo pointer is used to facilitate
-  this.  On subsampling, when fullZ and fullinfo are assigned
-  to, peerinfo is pointed at the associated subsampled
-  DATAINFO struct.  Then, on freeing the subsampled dataset,
-  we check whether its DATAINFO address matches peerinfo: if
-  so, we free up fullZ and fullinfo.
+  Another issue arises: if the user replaces or clears a dataset while
+  it is subsampled, we want to free the associated full dataset also.
+  The "peerinfo" pointer is used to facilitate this.  On subsampling,
+  when fullZ and fullinfo are assigned to, peerinfo is pointed at the
+  associated subsampled DATAINFO struct.  Then, on freeing the
+  subsampled dataset, we check whether its DATAINFO address matches
+  peerinfo: if so, we free up fullZ and fullinfo.
+
 */
 
 static double **fullZ;
@@ -86,25 +84,23 @@ void maybe_free_full_dataset (const DATAINFO *pdinfo)
 /* .......................................................... */
 
 static int 
-attach_subsample_to_dataset (DATAINFO *subinfo, double ***pZ, 
-			     const DATAINFO *pdinfo)
+attach_subsample_to_datainfo (DATAINFO *subinfo, const double **Z, 
+			      const DATAINFO *pdinfo)
 {
-    int i, t, n = pdinfo->n;
-
-    /* no subsample currently in force */
-    if (pZ == NULL) return 0;
+    int sv, t, n = pdinfo->n;
 
     subinfo->subdum = malloc(n * sizeof *subinfo->subdum);
     if (subinfo->subdum == NULL) return E_ALLOC;
 
-    i = varindex(pdinfo, "subdum");
-    if (i == pdinfo->v) { /* safety measure: should be impossible */
+    sv = varindex(pdinfo, "subdum");
+    if (sv == pdinfo->v) { 
+	/* safety measure: should be impossible */
 	fprintf(stderr, "mystery failure in attach_subsample_to_dataset\n");
 	return 1;   
     } 
 
     for (t=0; t<n; t++) {
-	subinfo->subdum[t] = (*pZ)[i][t];
+	subinfo->subdum[t] = Z[sv][t];
     }
 
     return 0;
@@ -126,7 +122,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     int err = 0;
 
     if (fullZ != NULL) {
-	/* sync in case of any changes */
+	/* sync, in case anything has moved */
 	fullinfo->varname = pdinfo->varname;
 	fullinfo->varinfo = pdinfo->varinfo;
 
@@ -161,7 +157,9 @@ char **allocate_case_markers (int n)
 	if (S[t] == NULL) {
 	    int j;
 
-	    for (j=0; j<t; j++) free(S[j]);
+	    for (j=0; j<t; j++) {
+		free(S[j]);
+	    }
 	    free(S);
 	    return NULL;
 	}
@@ -169,22 +167,6 @@ char **allocate_case_markers (int n)
     }
 
     return S;
-}
-
-/* .......................................................... */
-
-static void prep_subdinfo (DATAINFO *dinfo, int markers, int n)
-{
-    dinfo->sd0 = 1.;
-    dinfo->pd = 1;
-    dinfo->time_series = 0;
-    strcpy(dinfo->stobs, "1");
-    sprintf(dinfo->endobs, "%d", n);
-    if (markers) {
-	dinfo->markers = 1;
-    } else {
-	dinfo->markers = 0;
-    }
 }
 
 /* .......................................................... */
@@ -219,56 +201,25 @@ static int dummy_with_missing (const double *x, int t1, int t2)
     return 0;
 } 
 
-static int overlay_masks (double *targ, const double *src, int n)
+static int overlay_masks (char *targ, const double *src, int n)
 {
     int i, sn = 0;
     
     for (i=0; i<n; i++) {
-	if (targ[i] == 1.0 && src[i] == 1.0) {
-	    targ[i] = 1.0;
+	if (targ[i] == 1 && src[i] == 1.0) {
+	    targ[i] = 1;
 	    sn++;
 	} else {
-	    targ[i] = 0.0;
+	    targ[i] = 0;
 	}
     }
 	
     return sn;
 }
 
-static int make_boolean_mask (double ***pZ, DATAINFO *pdinfo, 
-			      const char *line,
-			      double *oldmask, int *dnum)
-{
-    char formula[MAXLEN];
-    int t, subv = 0;
-
-    if (oldmask != NULL) {
-	/* copy across the old mask */
-	subv = varindex(pdinfo, "subdum");
-	for (t=0; t<pdinfo->n; t++) {
-	    oldmask[t] = (*pZ)[subv][t];
-	}
-    }
-
-    /* + 4 to skip the command word "smpl" */
-    sprintf(formula, "__subdum=%s", line + 4);
-
-    if (generate(pZ, pdinfo, formula, NULL)) {
-	return -1;
-    }
-
-    if (subv == 0) {
-	subv = varindex(pdinfo, "subdum");
-    }
-
-    *dnum = subv;
-
-    return isdummy((*pZ)[subv], pdinfo->t1, pdinfo->t2);
-}
-
 static int 
 make_missing_mask (const double **Z, const DATAINFO *pdinfo,
-		   const int *list, double *mask)
+		   const int *list, char *mask)
 {
     int i, t, v, sn = 0;
     int lmax;
@@ -282,7 +233,7 @@ make_missing_mask (const double **Z, const DATAINFO *pdinfo,
     }
 
     for (t=0; t<pdinfo->n; t++) {
-	mask[t] = 1.0;
+	mask[t] = 1;
 	for (i=1; i<=lmax; i++) {
 	    if (list != NULL) {
 		v = list[i];
@@ -290,35 +241,88 @@ make_missing_mask (const double **Z, const DATAINFO *pdinfo,
 		v = i;
 	    }
 	    if (pdinfo->vector[v] && na(Z[v][t])) {
-		mask[t] = 0.;
+		mask[t] = 0;
 		break;
 	    }
 	}
-	if (mask[t] == 1.0) sn++;
+	if (mask[t] == 1) sn++;
     }
 
     return sn;
 } 
 
-static int sn_from_dummy (const double **Z, const DATAINFO *pdinfo,
-			  const char *dname, int *dnum)
+static void copy_to_mask (char *mask, const double *x, int n)
 {
-    *dnum = varindex(pdinfo, dname);
+    int t;
 
-    if (*dnum == pdinfo->v) {
+    for (t=0; t<n; t++) {
+	mask[t] = (x[t] != 0.0);
+    }
+}
+
+static void check_dummy_missvals (const double *x, int t1, int t2)
+{
+    if (dummy_with_missing(x, t1, t2)) {
+	strcpy(gretl_errmsg, _("Missing values found when applying criterion"));
+    }
+}
+
+static int sn_from_tmp_dummy (double ***pZ, DATAINFO *pdinfo, 
+			      const char *line, char *mask)
+{
+    char formula[MAXLEN];
+    int dnum, isdum, dlist[2];
+
+    /* + 4 to skip the command word "smpl" */
+    sprintf(formula, "__tmpmsk=%s", line + 4);
+
+    if (generate(pZ, pdinfo, formula, NULL)) {
+	return -1;
+    }
+
+    dnum = varindex(pdinfo, "tmpmsk");
+
+    isdum = isdummy((*pZ)[dnum], pdinfo->t1, pdinfo->t2);
+    if (isdum == 0) {
+	check_dummy_missvals((*pZ)[dnum], pdinfo->t1, pdinfo->t2);
+    } 
+
+    copy_to_mask(mask, (*pZ)[dnum], pdinfo->n);
+
+    dlist[0] = 1;
+    dlist[1] = dnum;
+    dataset_drop_listed_vars(dlist, pZ, pdinfo, NULL);
+
+    return isdum;
+}
+
+static int sn_from_dummy (const double **Z, const DATAINFO *pdinfo,
+			  const char *dname, char *mask)
+{
+    int dnum = varindex(pdinfo, dname);
+    int isdum;
+
+    if (dnum == pdinfo->v) {
 	sprintf(gretl_errmsg, _("Variable '%s' not defined"), dname);
 	return -1;
     } 
 
-    return isdummy(Z[*dnum], pdinfo->t1, pdinfo->t2);
+    isdum = isdummy(Z[dnum], pdinfo->t1, pdinfo->t2);
+    if (isdum == 0) {
+	check_dummy_missvals(Z[dnum], pdinfo->t1, pdinfo->t2);
+    } 
+
+    copy_to_mask(mask, Z[dnum], pdinfo->n);
+
+    return isdum;
 } 
 
-static int count_selected_cases (double *x, int n)
+static int count_selected_cases (const char *x, int n)
 {
     int i, count = 0;
 
     for (i=0; i<n; i++) {
-	if (x[i] > 0.0) {
+	if (x[i] != 0) {
 	    count++;
 	}
     }
@@ -326,8 +330,8 @@ static int count_selected_cases (double *x, int n)
     return count;
 }
 
-static int make_random_mask (double *mask, double *oldmask, 
-			     int fulln, int subn)
+static int make_random_mask (double *oldmask, int fulln, int subn, 
+			     char *mask)
 {
     int i, cases = 0, err = 0;
     unsigned u;
@@ -335,7 +339,11 @@ static int make_random_mask (double *mask, double *oldmask,
     if (subn <= 0 || subn >= fulln) {
 	err = 1;
     } else if (oldmask != NULL) {
-	int oldn = count_selected_cases(oldmask, fulln);
+	int oldn = 0;
+
+	for (i=0; i<fulln; i++) {
+	    if (oldmask[i] != 0.0) oldn++;
+	}
 
 	if (subn >= oldn) err = 1;
     }	
@@ -346,13 +354,13 @@ static int make_random_mask (double *mask, double *oldmask,
     }	
 
     for (i=0; i<fulln; i++) {
-	mask[i] = 0.0;
+	mask[i] = 0;
     }
 
     for (i=0; (cases != subn); i++) {
 	u = gretl_rand_int_max(fulln);
 	if (oldmask == NULL || oldmask[u] == 1.0) {
-	    mask[u] = 1.0;
+	    mask[u] = 1;
 	}
 	if (i >= subn - 1) {
 	    cases = count_selected_cases(mask, fulln);
@@ -435,7 +443,7 @@ static int block_retained (const char *s)
 }
 
 static char *make_panel_sig (const DATAINFO *pdinfo,
-			     const double *mask)
+			     const char *mask)
 {
     char *sig;
     size_t sz = pdinfo->n + pdinfo->n / pdinfo->pd;
@@ -449,7 +457,7 @@ static char *make_panel_sig (const DATAINFO *pdinfo,
 	    if (t > 0 && t % pdinfo->pd == 0) {
 		i++;
 	    } 
-	    sig[i++] = (mask[t] != 0.0)? '1' : '0';
+	    sig[i++] = (mask[t] != 0)? '1' : '0';
 	}
     }
 
@@ -458,7 +466,7 @@ static char *make_panel_sig (const DATAINFO *pdinfo,
 
 static void
 maybe_reconstitute_panel (const DATAINFO *pdinfo,
-			  const double *mask,
+			  const char *mask,
 			  DATAINFO *subinfo)
 {
     int i;
@@ -508,6 +516,38 @@ maybe_reconstitute_panel (const DATAINFO *pdinfo,
     } 
 }
 
+static void 
+copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
+			const double **Z, const DATAINFO *pdinfo,
+			const char *mask)
+{
+    int i, t, st;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!pdinfo->vector[i]) {
+	    /* copy any scalars */
+	    subZ[i][0] = Z[i][0];
+	}
+    }
+
+    st = 0;
+    for (t=0; t<pdinfo->n; t++) {
+	if (mask == NULL || mask[t] == 1) {
+	    for (i=1; i<pdinfo->v; i++) {
+		if (pdinfo->vector[i]) {
+		    subZ[i][st] = Z[i][t];
+		}
+	    } if (pdinfo->markers) {
+		strcpy(subinfo->S[st], pdinfo->S[t]);
+	    }
+	    st++;
+	}
+    }
+
+    strcpy(subinfo->stobs, "1");
+    sprintf(subinfo->endobs, "%d", subinfo->n);
+}
+
 /* restrict_sample: 
  * @line: command line (or %NULL).  
  * @pZ: pointer to original data array.  
@@ -530,14 +570,15 @@ int restrict_sample (const char *line,
 		     double ***pZ, DATAINFO **ppdinfo, 
 		     const int *list, gretlopt oflag)
 {
-    double xx, *tmpdum = NULL;
     char **S = NULL, dname[VNAMELEN] = {0};
     int subnum = 0;
-    int i, t, st, sn = 0, n = (*ppdinfo)->n;
+    int t, sn = 0;
     int opt = SUBSAMPLE_UNKNOWN;
-    double *mask = NULL, *oldmask = NULL;
+    double *oldmask = NULL;
     double **subZ = NULL;
     DATAINFO *subinfo = NULL;
+    char *mask = NULL;
+    int err = 0;
 
     *gretl_errmsg = '\0';
 
@@ -558,66 +599,55 @@ int restrict_sample (const char *line,
 	return 1;
     }
 
-    /* if no existing sub-sample mask, oldmask will be NULL */
-    oldmask = get_old_mask(*pZ, *ppdinfo);
-
-    if (opt == SUBSAMPLE_DROP_MISSING || opt == SUBSAMPLE_RANDOM ||
-	(opt == SUBSAMPLE_BOOLEAN && oldmask != NULL)) {
-	tmpdum = malloc(n * sizeof *tmpdum);
-	if (tmpdum == NULL) return E_ALLOC;
-	mask = tmpdum;
+    /* allocate temporary (char) mask series */
+    mask = calloc((*ppdinfo)->n, 1);
+    if (mask == NULL) {
+	return E_ALLOC;
     }
 
+    /* if there's no currently existing sub-sample mask, 
+       oldmask will be NULL (which is OK) */
+    oldmask = get_old_mask(*pZ, *ppdinfo);
+
+    /* construct subsample mask in one of several possible ways */
+
     if (opt == SUBSAMPLE_DROP_MISSING) {   
-	sn = make_missing_mask((const double **) *pZ, *ppdinfo, list, tmpdum);
+	sn = make_missing_mask((const double **) *pZ, *ppdinfo, list, mask);
     }  
 
     else if (opt == SUBSAMPLE_RANDOM) {
-	sn = make_random_mask(tmpdum, oldmask, n, atoi(line + 4));
+	sn = make_random_mask(oldmask, (*ppdinfo)->n, atoi(line + 4), mask);
 	if (sn == 0) {
-	    free(tmpdum);
-	    return 1;
+	    err = 1;
 	}
     }
 
     else if (opt == SUBSAMPLE_USE_DUMMY || opt == SUBSAMPLE_BOOLEAN) {
-	int dnum;
-
 	if (opt == SUBSAMPLE_USE_DUMMY) {
-	    sn = sn_from_dummy((const double **) *pZ, *ppdinfo, dname, &dnum);
-	    if (sn < 0) {
-		return 1;
-	    }
-	    mask = (*pZ)[dnum];
+	    sn = sn_from_dummy((const double **) *pZ, *ppdinfo, dname, mask);
 	} else {
-	    sn = make_boolean_mask(pZ, *ppdinfo, line, tmpdum, &dnum);
-	    if (sn < 0) {
-		if (tmpdum != NULL) {
-		    free(tmpdum);
-		}
-		return 1;
-	    }
-	    mask = (*pZ)[dnum];
-	    oldmask = tmpdum;
+	    sn = sn_from_tmp_dummy(pZ, *ppdinfo, line, mask);
+	}
+	if (sn < 0) {
+	    err = 1;
 	}
     } 
 
     else {
 	/* impossible */
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
+	err = 1;
+    }
+
+    /* exit now on unrecoverable error */
+    if (err) {
+	free(mask);
 	return 1;
     }
 
-    /* cumulate restrictions, if appropriate */
+    /* cumulate sample restrictions, if appropriate */
     if (oldmask != NULL && opt != SUBSAMPLE_RANDOM) {
-	sn = overlay_masks(mask, oldmask, n);
-    }
-
-    if (sn == 0) { /* "not a dummy variable"? */
-	if (dummy_with_missing(mask, (*ppdinfo)->t1, (*ppdinfo)->t2)) {
-	    strcpy(gretl_errmsg, _("Missing values found when applying criterion"));
-	    return 1;
-	}
+	sn = overlay_masks(mask, oldmask, (*ppdinfo)->n);
     }
 
     /* does this policy lead to an empty sample, or no change
@@ -634,29 +664,37 @@ int restrict_sample (const char *line,
 		strcpy(gretl_errmsg, _("No observations were dropped!"));
 	    }
 	}
+	err = 1;
+    } else if (sn == (*ppdinfo)->n) {
+	strcpy(gretl_errmsg, _("No observations were dropped!"));
+	err = 1;
+    }
+
+    /* exit now on nonsense subsample */
+    if (err) {
+	free(mask);
 	return 1;
     }
 
-    if (sn == n) {
-	strcpy(gretl_errmsg, _("No observations were dropped!"));
-	return 1;
-    }
+    /* now we start making the new dataset */
 
     /* allocate new datainfo */
-    subinfo = malloc(sizeof *subinfo);
+    subinfo = datainfo_new();
     if (subinfo == NULL) {
+	free(mask);
 	return E_ALLOC;
     }
 
-    /* create "hidden" dummy to record sub-sample, if need be */
+    /* create "hidden" dummy in full dataset to record sub-sample, 
+       if need be */
     if (maybe_add_subdum(pZ, *ppdinfo, &subnum)) {
-	free(tmpdum);
 	free(subinfo);
+	free(mask);
 	return E_ALLOC;
     } 
 
     /* write the new mask into the "subdum" variable */
-    for (t=0; t<n; t++) {
+    for (t=0; t<(*ppdinfo)->n; t++) {
 	(*pZ)[subnum][t] = mask[t];
     }
 
@@ -664,67 +702,44 @@ int restrict_sample (const char *line,
     subinfo->n = sn;
     subinfo->v = (*ppdinfo)->v;
     if (start_new_Z(&subZ, subinfo, 1)) {
-	free(tmpdum);
 	free(subinfo);
+	free(mask);
 	return E_ALLOC;
     }
 
-    /* link varnames and descriptions (not dependent on series length) */
+    /* link (don't copy) varnames and descriptions 
+       (these are not dependent on the series length) */
     subinfo->varname = (*ppdinfo)->varname;
     subinfo->varinfo = (*ppdinfo)->varinfo;
     subinfo->descrip = (*ppdinfo)->descrip;
     subinfo->vector = (*ppdinfo)->vector;
 
-    /* case markers */
+    /* set up case markers? */
     if ((*ppdinfo)->markers) {
 	S = allocate_case_markers(sn);
 	if (S == NULL) {
 	    free_Z(subZ, subinfo);
-	    free(tmpdum);
 	    free(subinfo);
+	    free(mask);
 	    return E_ALLOC;
 	}
-    }
-
-    /* copy across data and case markers, if any */
-
-    for (i=1; i<(*ppdinfo)->v; i++) {
-	if (!(*ppdinfo)->vector[i]) {
-	    /* copy any scalars */
-	    subZ[i][0] = (*pZ)[i][0];
-	}
-    }
-
-    st = 0;
-    for (t=0; t<n; t++) {
-	xx = mask[t];
-	if (xx == 1.) {
-	    for (i=1; i<(*ppdinfo)->v; i++) {
-		if ((*ppdinfo)->vector[i]) {
-		    subZ[i][st] = (*pZ)[i][t];
-		}
-	    } if ((*ppdinfo)->markers) {
-		strcpy(S[st], (*ppdinfo)->S[t]);
-	    }
-	    st++;
-	}
-    }
-
-    prep_subdinfo(subinfo, (*ppdinfo)->markers, sn);
-    if ((*ppdinfo)->markers) {
 	subinfo->S = S;
+	subinfo->markers = (*ppdinfo)->markers;
     }
 
-    attach_subsample_to_dataset(subinfo, pZ, *ppdinfo);
+    /* copy across data (and case markers, if any) */
+    copy_data_to_subsample(subZ, subinfo, 
+			   (const double **) *pZ, *ppdinfo,
+			   mask);
+
+    attach_subsample_to_datainfo(subinfo, 
+				 (const double **) *pZ, 
+				 *ppdinfo);
 
     if (dataset_is_panel((*ppdinfo)) &&
 	(opt == SUBSAMPLE_USE_DUMMY || opt == SUBSAMPLE_BOOLEAN)) {
 	maybe_reconstitute_panel(*ppdinfo, mask, subinfo);
     } 
-
-    if (tmpdum != NULL) {
-	free(tmpdum);
-    }
 
     /* save state */
     backup_full_dataset(pZ, ppdinfo, subinfo);
@@ -732,6 +747,8 @@ int restrict_sample (const char *line,
     /* and switch pointers */
     *pZ = subZ;
     *ppdinfo = subinfo;
+
+    free(mask);
 
     return 0;
 }
@@ -906,16 +923,17 @@ static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
     int old_vmax = pdinfo->v;
     int v, t;
 
+    /* add "subdum" variable if it's not already present */
     if (maybe_add_subdum(pZ, pdinfo, &v))
 	return 1;
 
     if (v == old_vmax) {
-	/* no pre-existing mask */
+	/* no pre-existing mask: write it from scratch */
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[v][t] = (t < pdinfo->t1 || t > pdinfo->t2)? 0.0 : 1.0;
 	}
     } else {
-	/* there was a pre-existing mask */
+	/* there was a pre-existing mask: adjust it */
 	for (t=0; t<pdinfo->n; t++) {
 	    if (t < pdinfo->t1 || t > pdinfo->t2) {
 		(*pZ)[v][t] = 0.0;
@@ -926,13 +944,20 @@ static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-/* ........................................................... */
+/* restore_full_sample is called under various circumstances.
+   Complexities arise if it is being called as a prelude to
+   the imposition of a (new) sample restriction: then we have
+   to know whether the new restriction will replace any old
+   one, or whether the restrictions should be cumulated.
 
-/* OPT_C -> replaCe sample restrictions */
+   If the call is a prelude to _replacing_ an existing
+   sample restriction, the "opt" parameter should equal
+   OPT_C (think "replaCe").
+*/
 
 int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
 {
-    int i, t, n, err = 0;
+    int i, t, err = 0;
 
     *gretl_errmsg = '\0';
 
@@ -944,23 +969,29 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
 #endif
 
     if (*pZ != NULL && !(opt & OPT_C)) {  
-	/* FIXME */
-	/* cumulating, not replacing restrictions */
+	/* cumulating, not replacing restrictions: we need to
+	   ensure that an appropriate mask is in place */
 	err = make_smpl_mask(pZ, *ppdinfo);
+	if (err) {
+	    return err;
+	}
     }
 
-    if (err) return err;
-
+    /* simple case: merely resetting the sample starting
+       and ending points to full range */
     if (!complex_subsampled()) {
 	(*ppdinfo)->t1 = 0;
 	(*ppdinfo)->t2 = (*ppdinfo)->n - 1;
 	return 0;
     }
 
-    /* set n to full series length */
-    n = fullinfo->n;
+    /* beyond this point we are doing a non-trivial restoration
+       of a stored full dataset, which has previously been
+       subsampled, e.g., by some boolean criterion 
+    */
 
-    /* in case any new vars added, try to merge them in */
+    /* in case any new vars were added when subsampled, 
+       try to merge them into the full dataset */
     err = datamerge(pZ, *ppdinfo);
     if (err == E_ALLOC) {
         sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
@@ -969,27 +1000,28 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
 		_("Missing sub-sample information; can't merge data\n"));
     }
 
-    /* reattach malloc'd elements, which may have moved */
+    /* reattach malloc'd elements of subsampled dataset,
+       which may have moved */
     fullinfo->varname = (*ppdinfo)->varname;
     fullinfo->varinfo = (*ppdinfo)->varinfo;
     fullinfo->vector = (*ppdinfo)->vector;
     fullinfo->descrip = (*ppdinfo)->descrip;  
 
-    /* zero out the "subdum" dummy variable, if replacing
-       sample restrictions */
-    if (opt & OPT_C) {
-	i = varindex(fullinfo, "subdum");
-	if (i < fullinfo->v) {
-	    for (t=0; t<n; t++) {
-		fullZ[i][t] = 0.0;
-	    }
-	}
-    }
-
     /* copy any scalars, which may have been modified */
     for (i=1; i<(*ppdinfo)->v; i++) {
 	if (!(*ppdinfo)->vector[i]) {
 	    fullZ[i][0] = (*pZ)[i][0];
+	}
+    }
+
+    /* if we plan to replace existing sample restrictions,
+       zero out the "subdum" dummy variable */
+    if (opt & OPT_C) {
+	i = varindex(fullinfo, "subdum");
+	if (i < fullinfo->v) {
+	    for (t=0; t<fullinfo->n; t++) {
+		fullZ[i][t] = 0.0;
+	    }
 	}
     }
 
@@ -1087,21 +1119,24 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
     }
 }
 
-/* Below: For a model that was estimated using a subsample which
+/* Below: For a model that was estimated using a data sample which
    differs from the current sample, reconstitute the dataset
-   appropriate to the model.  Use the special dummy variable
-   saved with the model to select observations from the
-   full dataset.  Attach this dataset to the model, so that
-   it can be used for, e.g., residual or fitted versus actual
-   plots.  The attached data set will be destroyed when the
-   model itself is destroyed.
+   appropriate to the model.  If the model used a subsample, we use
+   the special dummy variable saved with the model to select
+   observations from the full dataset.  Another possibility is that
+   the model used the full dataset, which has by now been subsampled.
+
+   We attach this dataset to the model, so that it can be used for,
+   e.g., residual or fitted versus actual plots.  The attached data
+   set will be destroyed when the model itself is destroyed.
 */
 
 int add_subsampled_dataset_to_model (MODEL *pmod)
 {
-    int i, t, st, sn = 0;
+    int t, sn = 0;
     double **modZ = NULL;
-    char **S = NULL;
+    DATAINFO *modinfo;
+    char *mask = NULL;
 
     if (fullZ == NULL || fullinfo == NULL) {
 #ifdef SUBDEBUG
@@ -1120,30 +1155,38 @@ int add_subsampled_dataset_to_model (MODEL *pmod)
     }
 
     if (pmod->subdum == NULL) {
-	/* no subsample info: model was estimated on full dataset */
+	/* no subsample info: model was estimated on full dataset,
+	   so we reconstruct the full dataset */
 	sn = fullinfo->n;
     } else {
-	for (t=0; t<fullinfo->n; t++) {
-	    if (pmod->subdum[t] > 0) sn++;
+	/* model estimated on subsample, which has to be reconstructed */
+	mask = calloc(fullinfo->n, 1);
+	if (mask == NULL) {
+	    return E_ALLOC;
 	}
-	if (sn == 0) return 1;
+	for (t=0; t<fullinfo->n; t++) {
+	    if (pmod->subdum[t] > 0) {
+		mask[t] = 1;
+		sn++;
+	    }
+	}
+	if (sn == 0) {
+	    free(mask);
+	    return 1;
+	}
     }
 
     pmod->dataset = malloc(sizeof *pmod->dataset);
-    if (pmod->dataset == NULL) return E_ALLOC;
-
-    pmod->dataset->dinfo = malloc(sizeof *pmod->dataset->dinfo);
-    if (pmod->dataset->dinfo == NULL) {
-	free(pmod->dataset);
-	pmod->dataset = NULL;
-	return E_ALLOC;	
+    if (pmod->dataset == NULL) {
+	free(mask);
+	return E_ALLOC;
     }
 
-    /* set up the sub-sampled datainfo */
-    pmod->dataset->dinfo->n = sn;
-    pmod->dataset->dinfo->v = fullinfo->v;
-    if (start_new_Z(&modZ, pmod->dataset->dinfo, 0)) {
-	free(pmod->dataset->dinfo);
+    /* initial allocation of sub-sampled dataset */
+    modinfo = create_new_dataset(&modZ, fullinfo->v, sn,
+				 fullinfo->markers);
+    if (modinfo == NULL) {
+	free(mask);
 	free(pmod->dataset);
 	pmod->dataset = NULL;
 	return E_ALLOC;
@@ -1152,47 +1195,24 @@ int add_subsampled_dataset_to_model (MODEL *pmod)
     /* copy across info on series */
     copy_series_info(pmod->dataset->dinfo, fullinfo);
 
-    /* case markers */
-    if (fullinfo->markers) {
-	S = allocate_case_markers(sn);
-	if (S == NULL) {
-	    free_Z(modZ, pmod->dataset->dinfo);
-	    free(pmod->dataset->dinfo);
-	    free(pmod->dataset);
-	    pmod->dataset = NULL;
-	    return E_ALLOC;
-	}
-    }
+    /* copy across data (and case markers, if any) */
+    copy_data_to_subsample(modZ, modinfo,
+			   (const double **) fullZ, fullinfo,
+			   mask);
 
-    /* copy across data and case markers, if any */
-
-    for (i=1; i<fullinfo->v; i++) {
-	if (!fullinfo->vector[i]) {
-	    /* copy any scalars */
-	    modZ[i][0] = fullZ[i][0];
-	}
-    }
-
-    st = 0;
-    for (t=0; t<fullinfo->n; t++) {
-	if (sn == fullinfo->n || pmod->subdum[t] == 1.) {
-	    for (i=1; i<fullinfo->v; i++) {
-		if (fullinfo->vector[i]) {
-		    modZ[i][st] = fullZ[i][t];
-		}
-	    } if (fullinfo->markers) {
-		strcpy(S[st], fullinfo->S[t]);
-	    }
-	    st++;
-	}
+    /* dataset characteristics such as pd...  If we're rebuilding
+       the full dataset (only) copy these across */
+    if (pmod->subdum == NULL) {
+	modinfo->pd = fullinfo->pd;
+	modinfo->sd0 = fullinfo->sd0;
+	strcpy(modinfo->stobs, fullinfo->stobs);
+	strcpy(modinfo->endobs, fullinfo->endobs);
     }
 
     pmod->dataset->Z = modZ;
+    pmod->dataset->dinfo = modinfo;
 
-    prep_subdinfo(pmod->dataset->dinfo, fullinfo->markers, sn);
-    if (fullinfo->markers) {
-	pmod->dataset->dinfo->S = S;
-    }
+    free(mask);
 
 #ifdef SUBDEBUG
     fputs("add_subsampled_dataset_to_model: success\n", stderr);

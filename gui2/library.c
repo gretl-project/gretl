@@ -62,7 +62,6 @@ static int ignore;
 static int echo_off;
 static int replay;
 static MODELSPEC *modelspec;
-static char last_model = 's';
 static gretl_equation_system *sys;
 static gretl_restriction_set *rset;
 
@@ -107,6 +106,39 @@ void set_replay_on (void)
 void set_replay_off (void)
 {
     replay = 0;
+}
+
+/* ........................................................... */
+
+static char get_or_set_last_model (char c, int set)
+{
+    static char last_model = 's';
+
+    if (set) {
+	last_model = c;
+    }
+
+    return last_model;
+}
+
+static void set_last_model (int script)
+{
+    if (script) {
+	get_or_set_last_model('s', 1);
+    } else {
+	get_or_set_last_model('g', 1);
+    }
+}
+
+static MODEL *reference_model (void)
+{
+    char c = get_or_set_last_model(0, 0);
+    
+    if (c == 's') {
+	return models[0];
+    } else {
+	return models[2];
+    }
 }
 
 /* ........................................................... */
@@ -457,11 +489,10 @@ int verify_and_record_command (char *line)
 
 static gint stack_model (MODEL *pmod)
 {
-    int script, err = 0;
+    int script = gretl_model_get_int(pmod, "script");
+    int err = 0;
 
-    script = gretl_model_get_int(pmod, "script");
-
-    last_model = (script)? 's' : 'g';
+    set_last_model(script);
 
     if (script) { /* Model estimated via console or script: unlike a gui
 		     model, which is kept in memory so long as its window
@@ -470,7 +501,6 @@ static gint stack_model (MODEL *pmod)
 		     need to record their specification */
 
 	attach_subsample_to_model(models[0], datainfo);
-
 	err = modelspec_save(models[0], &modelspec);
     }
 
@@ -1121,18 +1151,24 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
     int i, nt = pmod->ntests;
 
     if (nt == 0) {
-	pmod->tests = malloc(sizeof(GRETLTEST));
+	pmod->tests = malloc(sizeof *pmod->tests);
     } else {
-	for (i=0; i<nt; i++) 
-	    if (strcmp(test->type, pmod->tests[i].type) == 0)
+	for (i=0; i<nt; i++) {
+	    if (!strcmp(test->type, pmod->tests[i].type)) {
+		/* already done */
 		return -1;
-	pmod->tests = myrealloc(pmod->tests, (nt + 1) * sizeof(GRETLTEST));
+	    }
+	}
+	pmod->tests = myrealloc(pmod->tests, 
+				(nt + 1) * sizeof *pmod->tests);
     }
+
     if (pmod->tests == NULL) return 1;
 
     strcpy(pmod->tests[nt].type, test->type);
     strcpy(pmod->tests[nt].h_0, test->h_0);
     strcpy(pmod->tests[nt].param, test->param);
+
     pmod->tests[nt].teststat = test->teststat;
     pmod->tests[nt].value = test->value;
     pmod->tests[nt].dfn = test->dfn;
@@ -2411,9 +2447,7 @@ static int finish_genr (MODEL *pmod, dialog_t *ddata)
     if (pmod != NULL) {
 	err = generate(&Z, datainfo, line, pmod); 
     } else {
-	err = generate(&Z, datainfo, line, 
-		       (last_model == 's')? 
-		       models[0] : models[2]); 
+	err = generate(&Z, datainfo, line, reference_model());
     }
 
     if (err) {
@@ -5215,8 +5249,7 @@ int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	err = generate(&Z, datainfo, line, 
-		       (last_model == 's')? models[0] : models[2]); 
+	err = generate(&Z, datainfo, line, reference_model());
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -5489,8 +5522,7 @@ int gui_exec_line (char *line,
 	break;
 
     case PRINTF:
-	err = do_printf(line, &Z, datainfo, 
-			(last_model == 's')? models[0] : models[2], 
+	err = do_printf(line, &Z, datainfo, reference_model(),
 			prn);
 	break;
 

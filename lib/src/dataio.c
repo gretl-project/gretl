@@ -347,8 +347,8 @@ DATAINFO *datainfo_new (void)
     dinfo->sd0 = 1.0;
     dinfo->t1 = 0;
     dinfo->t2 = 0;
-    *dinfo->stobs = '\0';
-    *dinfo->endobs = '\0';
+    dinfo->stobs[0] = '\0';
+    dinfo->endobs[0] = '\0';
     dinfo->varname = NULL;
     dinfo->varinfo = NULL;    
     dinfo->markers = NO_MARKERS;  

@@ -201,7 +201,7 @@ static int subdum_match (char *s1, char *s2, int n)
 
 int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 			const DATAINFO *pdinfo)
-     /* check a model (or modelspec) against the data info to see if 
+     /* check a model (or modelspec) against the datainfo to see if 
 	it may have been estimated on a different (subsampled) data 
 	set from the current one */
 {
@@ -216,7 +216,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 	subdum = spec[i].subdum;
     }
 
-    /* case: model has no sub-sampling info recorded */
+    /* case: model (or modelspec) has no sub-sampling info recorded */
     if (subdum == NULL) {
 	/* if data set is not sub-sampled either, we're OK */
 	if (pdinfo->subdum == NULL) {
@@ -228,7 +228,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 	}
     }
 
-    /* case: model has sub-sampling info recorded */
+    /* case: model (or modelspec) has sub-sampling info recorded */
     if (pdinfo->subdum == NULL) {
 	fputs(_("model is subsampled, dataset is not\n"), stderr);
 	strcpy(gretl_errmsg, _("model is subsampled, dataset is not\n"));
