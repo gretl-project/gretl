@@ -5,6 +5,7 @@
 <SECTION>
 <FILE>commands</FILE>
 cmd_codes
+NEEDS_TWO_VARS
 </SECTION>
 
 <SECTION>
@@ -38,6 +39,7 @@ write_data
 is_gzipped
 has_gz_suffix
 gz_switch_ext
+merge_data
 get_data
 open_nulldata
 import_csv
@@ -129,8 +131,10 @@ MAXTITLE
 GPT_LINE
 GPT_SPEC
 dist_codes
+GRETL_GUI
 plot
 graph
+gnuplot_init
 gnuplot_display
 gnuplot
 multi_scatters
@@ -187,6 +191,8 @@ PRN
 
 <SECTION>
 <FILE>monte_carlo</FILE>
+loop_types
+ifcodes
 LOOP_PRINT
 LOOP_MODEL
 LOOPSET
@@ -203,6 +209,8 @@ print_loop_results
 add_to_loop
 get_cmd_ci
 get_modnum_by_cmdnum
+if_eval
+ifstate
 </SECTION>
 
 <SECTION>
@@ -216,6 +224,9 @@ runs_test
 session_time
 logo
 gui_logo
+aux_string
+estimator_string
+modelprint_setup_obs
 printmodel
 print_model_confints
 printfreq
@@ -240,6 +251,8 @@ normal
 rhocrit95
 batch_pvalue
 interact_pvalue
+f_crit_a
+print_critical
 </SECTION>
 
 <SECTION>
@@ -269,6 +282,7 @@ set_sample_dummy
 set_sample
 restore_full_sample
 count_missing_values
+allocate_case_markers
 </SECTION>
 
 <SECTION>

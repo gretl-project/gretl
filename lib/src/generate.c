@@ -95,6 +95,7 @@ enum transformations {
 enum retrieve {
     R_ESS = 1,
     R_NOBS,
+    R_T,
     R_RSQ,
     R_SIGMA,
     R_DF,
@@ -546,6 +547,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 #endif
  
     if (strcmp(s, "dummy") == 0) {
+	genr.scalar = 0;
 	if ((genr.errcode = dummy(pZ, pdinfo)) == 0) 
 	    strcpy(genr.msg, _("Periodic dummy variables generated.\n"));
 	genr.special = 1;
@@ -553,6 +555,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 	return genr;
     }
     if (strcmp(s, "paneldum") == 0) {
+	genr.scalar = 0;
 	if ((genr.errcode = paneldum(pZ, pdinfo, oflag)) == 0)
 	    strcpy(genr.msg, _("Panel dummy variables generated.\n"));
 	genr.special = 1;
@@ -560,12 +563,14 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 	return genr;
     }
     if (strcmp(s, "index") == 0) {
+	genr.scalar = 0;
 	genrtime(pdinfo, &genr, 0);
 	genr_msg(&genr, nv);
 	genrfree(pZ, pdinfo, NULL, mstack, mvec, nv);
 	return genr;
     }
     if (strcmp(s, "time") == 0) {
+	genr.scalar = 0;
 	genrtime(pdinfo, &genr, 1);
 	genr_msg(&genr, nv);
 	genrfree(pZ, pdinfo, NULL, mstack, mvec, nv);
@@ -821,6 +826,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			break;
 		    }
 		    if (nt == T_NORMAL) {
+			genr.scalar = 0;
 			er = _normal_dist(genr.xvec, t1, t2);
 			if (er) {
 			    genr.errcode = er;
@@ -830,6 +836,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			break;
 		    }   
 		    if (nt == T_UNIFORM) {
+			genr.scalar = 0;
 			_uniform(genr.xvec, t1, t2);
 			break;
 		    }
@@ -1369,47 +1376,46 @@ static int check_modelstat (const MODEL *pmod, int type1)
 {
     if (pmod == NULL || pmod->list == NULL) {
 	switch (type1) {
+	case R_T:
+	    strcpy(gretl_errmsg, 
+		   _("No $T (number of obs for model) value is available"));
+	    return 1;
 	case R_ESS:
 	    strcpy(gretl_errmsg, 
 		   _("No $ess (error sum of squares) value is available"));
 	    return 1;
-	    break;
 	case R_RSQ:
 	    strcpy(gretl_errmsg, 
 		   _("No $rsq (R-squared) value is available"));
 	    return 1;
-	    break;
 	case R_TRSQ:
 	    strcpy(gretl_errmsg, 
 		   _("No $trsq (T*R-squared) value is available"));
 	    return 1;
-	    break;
 	case R_DF:
 	    strcpy(gretl_errmsg, 
 		   _("No $df (degrees of freedom) value is available"));
 	    return 1;
-	    break;
 	case R_SIGMA:
 	    strcpy(gretl_errmsg, 
 		   _("No $sigma (std. err. of model) value is available"));
 	    return 1;
-	    break;
 	case R_LNL:
 	    strcpy(gretl_errmsg, 
 		   _("No $lnl (log-likelihood) value is available"));
 	    return 1;
-	    break;
 	default:
 	    return 0;
-	    break;
 	}
     }
+
     if (pmod != NULL && pmod->ci != LOGIT && pmod->ci != PROBIT &&
 	type1 == R_LNL) {
 	strcpy(gretl_errmsg, 
 	       _("$lnl (log-likelihood) is not available for the last model"));
 	return 1;
     }
+
     return 0;
 }
 
@@ -1442,11 +1448,13 @@ static int getxvec (char *s, double *xvec,
 	break;
 
     case R_NOBS:
-	for (t=0; t<n; t++) {
-	    if (pmod->list) xvec[t] = (double) pmod->nobs;
-	    else xvec[t] = (double) (pdinfo->t2 - pdinfo->t1 + 1);
-	}
+	for (t=0; t<n; t++) 
+	    xvec[t] = (double) (pdinfo->t2 - pdinfo->t1 + 1);
 	break;
+
+    case R_T:
+	for (t=0; t<n; t++) xvec[t] = (double) pmod->nobs;
+	break;	
 
     case R_RSQ:
 	for (t=0; t<n; t++) xvec[t] = pmod->rsq;
@@ -1621,6 +1629,8 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
 	    return R_ESS;
         if (strcmp(ss, "$nobs") == 0) 
 	    return R_NOBS;
+        if (strcmp(ss, "$t") == 0) 
+	    return R_T;
         if (strcmp(ss, "$rsq") == 0)  
 	    return R_RSQ;
 	if (strcmp(ss, "$sigma") == 0)  

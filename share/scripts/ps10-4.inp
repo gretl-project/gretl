@@ -11,7 +11,7 @@ corc Cons 0 DI
 estimation.  Note that CORC misses the global minimum here also. *)
 hilu Cons 0 DI
 (* Retrieve sigma tilde square for Likelihood Ratio test *)
-genr sgmasqr = $ess/$nobs
+genr sgmasqr = $ess/$T
 (* Suppress the first observation *)
 smpl 1949 1989
 (* Model B - General dynamic model with no restrictions *)
@@ -22,11 +22,11 @@ genr ut1=ut(-1)
 (* Retrieve error sum of squares for Wald test *)
 genr essu = $ess
 (* Retrieve sigma hat square for Likelihood Ratio test *)
-genr sgmasqu = $ess/$nobs
+genr sgmasqu = $ess/$T
 (* Retrieve d.f. for unrestricted Model B *)
 genr dfu = $df
 (* compute -2log likelihood for LR test *)
-genr LR=-$nobs*ln(sgmasqu/sgmasqr)
+genr LR=-$T*ln(sgmasqu/sgmasqr)
 pvalue X 1 LR
 (* Reset sample range for LM test for AR(1) *)
 smpl 1950 1989

@@ -1,6 +1,6 @@
 (* PS7.1, using DATA7-1, for example in Section 7.1 *)
 ols WAGE 0 D
-genr n=$nobs
+genr n=$T
 genr nm=sum(D)
 genr wall=sum(WAGE)
 genr wbar=wall/n

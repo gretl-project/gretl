@@ -353,7 +353,7 @@ uses of genr:
 
   $ess         error sum of squares
   $rsq         unadjusted R-squared
-  $nobs        number of observations
+  $T           number of observations used in the model
   $df          degrees of freedom
   $trsq        TR^2 (sample size times R-squared)
   $sigma       standard error of residuals
@@ -362,6 +362,9 @@ uses of genr:
   stderr(var)  estimated std. error for var
   rho(i)       ith order autoregressive coefficient for residuals
   vcv(xi,xj)   covariance between coefficients for vars xi and xj
+
+The internal variable $nobs holds the number of observations in the current
+sample range, which may or may not equal the value of $T for the last model.
 
 The internal variable t references the observations, starting at 1.  Thus one
 can do "genr dum15 = (t=15)" to generate a dummy variable with value 1 for

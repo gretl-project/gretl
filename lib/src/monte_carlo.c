@@ -421,7 +421,6 @@ int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
  * @ploop: pointer to loop struct.
  * @cmdnum: sequential index number of the command within @ploop.
  * @pmod: contains estimates from the current iteration.
- * @pdinfo: data information struct.
  *
  * Update a #LOOP_MODEL belonging to @ploop, based on the results
  * in @pmod.

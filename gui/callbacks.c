@@ -145,7 +145,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	file_selector(_("Save console output"), SAVE_CONSOLE, mydata->w);
 	break;
     case SAVE_CMDS: 
-	file_selector(_("Save command log"), SAVE_CMDS, mydata->w);
+	file_selector(_("Save command log"), SAVE_CMDS, mydata);
 	break;
     case SAVE_SCRIPT:
 	file_selector(_("Save command script"), SAVE_SCRIPT, mydata);

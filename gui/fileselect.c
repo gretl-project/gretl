@@ -544,6 +544,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     }
 
     /* now for the save options */
+
     if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH || 
 	action == SAVE_THIS_GRAPH) 
 	extdata = gtk_object_get_data(GTK_OBJECT(fs), "graph");

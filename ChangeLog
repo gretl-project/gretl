@@ -1,7 +1,11 @@
-version 0.994
+04/17/2002 version 0.994
 - fix bug in genr (generating a scalar when data set is sub-
   sampled)
 - fix bug: editing periodogram graph using GUI
+- partially update docs
+- distinguish between $T (number of obs used in last model) and
+  $nobs (number of obs in current sample range) in genr
+  expressions
 
 04/15/2002 version 0.993
 - add option to specify lag order in autocorrelation test;

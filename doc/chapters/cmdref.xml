@@ -743,8 +743,10 @@
 	(again, in order of precedence): <literal>!</literal>
 	(negation), <literal>&amp;</literal> (logical AND),
 	<literal>|</literal> (logical OR), <literal>&gt;</literal>,
-	<literal>&lt;</literal>, <literal>=</literal> and
-	<literal>!=</literal> (not equal to).  The Boolean operators
+	<literal>&lt;</literal>, <literal>=</literal>,
+	<literal>&gt;=</literal> (greater than or equal),
+	<literal>&lt;=</literal> (less than or equal) and
+	<literal>!=</literal> (not equal).  The Boolean operators
 	can be used in constructing dummy variables: for instance
 	<literal>(x > 10)</literal> returns 1 if <literal>x</literal>
 	&gt; 10, 0 otherwise. Supported <emphasis>functions</emphasis>
@@ -852,7 +854,7 @@
 		  </entry>
 		</row>
 		<row>
-		  <entry><varname>$nobs</varname></entry>
+		  <entry><varname>$T</varname></entry>
 		  <entry>number of observations
 		  </entry>
 		</row>
@@ -925,6 +927,17 @@
 	model currently displayed in a window (whether or not it's the
 	most recent model).  You do this under the <quote>Model
 	  data</quote> menu in the model's window.</para>
+
+      <para>
+	Two other <quote>internal</quote> variables are available:
+	<varname>$nobs</varname> holds the number of observations in
+	the current sample range (note that this may or may not equal
+	the value of <varname>$T</varname>, the number of observations
+	used in estimating the last model).  And the variable
+	<varname>t</varname> serves as an index of the observations.
+	Thus for instance <literal>genr dum = (t=15)</literal> will
+	generate a dummy variable that has value 1 for observation 15,
+	0 otherwise.</para>
 	
       <para>
 	<xref linkend="tab-genr"/> gives several examples of uses of
@@ -1331,6 +1344,42 @@
 
     </sect2>
 
+    <sect2 id="if"><title>if</title>
+
+      <para>Flow control for command execution.  The syntax is</para>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry><command>if</command>
+		<replaceable>condition</replaceable></entry>
+	    </row>
+	    <row>
+	      <entry>&nbsp;<replaceable>commands</replaceable></entry>
+	    </row>
+	    <row>
+	      <entry><command>else</command></entry>
+	    </row>
+	    <row>
+	      <entry>&nbsp;<replaceable>commands</replaceable></entry>
+	    </row>
+	    <row>
+	      <entry><command>endif</command></entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>       
+
+      <para><replaceable>condition</replaceable> must be a Boolean
+	expression, for the syntax of which see <xref
+	  linkend="genr"/>.  The <command>else</command> block is
+	optional; <literal>if</literal> &hellip;
+	<literal>endif</literal> blocks may be nested.</para>
+
+    </sect2>
+
+
     <sect2 id="import"><title>import</title>
 
       <informaltable role="cmd" frame="none">
@@ -1512,6 +1561,8 @@
 	Ramanathan, ch. 12.
       </para>
 
+      <para role="bodgea4">&nbsp;</para>
+
     </sect2>
 
     <sect2 id="logs"><title>logs</title>
@@ -1674,6 +1725,18 @@
 
     </sect2>
 
+    <sect2 id="noecho"><title>noecho</title>
+
+      <para>
+	Suppresses the echoing of commands and comments (other than
+	those inserted using the <command>print</command> command) when
+	executing a command script.
+      </para>
+
+      <para role="bodgea4">&nbsp;</para>
+
+    </sect2>
+
     <sect2 id="nulldata"><title>nulldata</title>
 
       <informaltable role="cmd" frame="none">
@@ -1819,8 +1882,6 @@
 	variables number 5, 7 and 9 from Model 2.
       </para>
 
-      <para role="bodgea4">&nbsp;</para>
-
     </sect2>
 
     <sect2 id="open"><title>open</title>
@@ -1873,6 +1934,8 @@
 	series (<quote>long memory</quote>) is also given: the null
 	hypothesis is that the integration order is zero.
       </para>
+
+      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -1943,8 +2006,8 @@
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry>[ <replaceable>varlist</replaceable> ]
-		&opto;
+	      <entry>[ <replaceable>varlist</replaceable> ] 
+		&opto; or [ <replaceable>string</replaceable> ]
 	      </entry>
 	    </row>	    <row>
 	      <entry>Examples:</entry>
@@ -1964,11 +2027,16 @@
 
       <para>
 	If <replaceable>varlist</replaceable> is given, prints the
-	values of the specified variables, otherwise prints the values
-	of all variables in the current data file.  If the
+	values of the specified variables; if no list is given, prints
+	the values of all variables in the current data file.  If the
 	<literal>-o</literal> flag is given the data are printed by
 	observation, otherwise they are printed by variable.
       </para>
+
+      <para>
+	If the argument to <command>print</command> is a literal
+	string (which must start with a double-quote,
+	<literal>"</literal>), the string is printed as is.</para>
 
     </sect2>
 
@@ -2714,6 +2782,8 @@
 	chi-square test for normality.
       </para>
 
+      <para role="bodge">&nbsp;</para>
+
     </sect2>
 
     <sect2 id="tsls"><title>tsls</title>
@@ -2760,7 +2830,6 @@
 	command.
       </para>
 
-      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -3027,13 +3096,6 @@
 	</tbody>
       </tgroup>
     </table>
-
-    <para>
-      Some additional tests are available under the Variable menu in
-      the main window: the augmented Dickey&ndash;Fuller test
-      (command: <command>adf</command>) and the runs test of
-      randomness (command: <command>runs</command>).
-    </para>
 
   </sect1>	
 

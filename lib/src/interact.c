@@ -777,8 +777,6 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     if (genr->scalar) {
 	strcat(pdinfo->label[v], _(" (scalar)"));
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
-	fprintf(stderr, "genr scalar: setting Z[%d][0]=xvec[%d]=%g\n", 
-		v, pdinfo->t1, xx);
 	(*pZ)[v][0] = xx;
     } else {
 	if (old_scalar) {
