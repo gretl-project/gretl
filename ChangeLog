@@ -20,6 +20,8 @@ version 1.2.1
 - Fixes for reading of recent RATS databases (thanks to John
   Frain for a useful bug report)
 - Some updates to the manual and help files
+- Enhanced LaTeX equation output (thanks to Alan Isaac for the
+  suggestion)
 - Fixes for several nameless bugs
 
 12/14/2003 version 1.2.0

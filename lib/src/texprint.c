@@ -23,25 +23,32 @@
 
 /* ......................................................... */
 
-static void tex_print_float (double x, int tab, PRN *prn)
+static void tex_modify_exponent (char *numstr)
+{
+    char *p = strchr(numstr, 'e');
+
+    if (p != NULL) {
+	int expon = atoi(p + 1);
+
+	sprintf(p, "\\times 10^{%d}", expon);
+    }
+}
+
+/* ......................................................... */
+
+static void tex_print_float (double x, PRN *prn)
      /* prints a floating point number as a TeX math string.
 	if tab != 0, print the sign in front, separated by a
 	tab symbol (for equation-style regression printout).
      */
 {
-    char number[16];
+    char number[48];
 
     x = screen_zero(x);
 
     sprintf(number, "%#.*g", GRETL_DIGITS, x);
-
-    if (!tab) {
-	if (x < 0.) pprintf(prn, "$-$%s", number + 1);
-	else pputs(prn, number);
-    } else {
-	if (x < 0.) pprintf(prn, "& $-$ & %s", number + 1);
-	else pprintf(prn, "& $+$ & %s", number);
-    }
+    tex_modify_exponent(number);
+    pprintf(prn, "%s", (x < 0.0)? (number + 1) : number);
 }
 
 /**
@@ -277,10 +284,9 @@ static int make_texfile (const PATHS *ppaths, int model_count,
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			int standalone, PRN *prn)
 {
-
-    int i, start, ncoeff = pmod->ncoeff;
-    double tstat, const_tstat = 0, const_coeff = 0;
-    char tmp[16];
+    double tstat;
+    char tmp[48];
+    int i;
 
     if (standalone) {
 	pputs(prn, "\\documentclass[11pt]{article}\n");
@@ -288,26 +294,14 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 #ifdef ENABLE_NLS
 	pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
 #endif
+	pputs(prn, "\\usepackage{amsmath}\n\n");
 
 	pputs(prn, "\\begin{document}\n\n"
 		"\\thispagestyle{empty}\n\n");
     }
 
-    pputs(prn, "\\begin{center}\n");
-
-    if (pmod->ifc) {
-	const_coeff = pmod->coeff[0];
-	const_tstat = pmod->coeff[0] / pmod->sderr[0];
-    }
-
-    /* tabular header */
-    pprintf(prn, "{\\setlength{\\tabcolsep}{.5ex}\n"
-	    "\\renewcommand{\\arraystretch}{1}\n"
-	    "\\begin{tabular}{rc"
-	    "%s", (pmod->ifc)? "c" : "c@{\\,}l");
-    start = (pmod->ifc)? 1 : 0;
-    for (i=start; i<ncoeff; i++) pputs(prn, "cc@{\\,}l");
-    pputs(prn, "}\n");
+    /* initial setup */
+    pputs(prn, "\\begin{gather}\n");
 
     /* dependent variable */
     *tmp = '\0';
@@ -316,61 +310,59 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
     }
-    pprintf(prn, "$\\widehat{\\rm %s}$ & = &\n", tmp);
+    pprintf(prn, "\\widehat{\\rm %s} = \n", tmp);
 
     /* coefficients times indep vars */
-    if (pmod->ifc) tex_print_float(const_coeff, 0, prn);
-    start = (pmod->ifc)? 1 : 0;
-    for (i=start; i<ncoeff; i++) {
-	tex_print_float(pmod->coeff[i], (i > 0), prn);
-	if (pmod->ci == ARMA) {
-	    tex_arma_coeff_name(tmp, pmod->params[i+1]);
-	} else {
-	    tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
+    for (i=0; i<pmod->ncoeff; i++) {
+	tstat = pmod->coeff[i] / pmod->sderr[i];
+	pprintf(prn, "%s\\underset{(%.3f)}{", 
+		(pmod->coeff[i] < 0.0)? "-" :
+		(i > 0)? "+" : "", tstat);
+	tex_print_float(pmod->coeff[i], prn);
+	pputc(prn, '}');
+	if (i > 0 || pmod->ifc == 0) {
+	    pputs(prn, "\\,{\\rm ");
+	    if (pmod->ci == ARMA) {
+		tex_arma_coeff_name(tmp, pmod->params[i+1]);
+	    } else {
+		tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
+	    }
+	    pprintf(prn, "%s}\n", tmp);
 	}
-	pprintf(prn, " & %s ", tmp);
     }
-    pputs(prn, "\\\\\n");
-
-    /* t-stats in row beneath */
-    if (pmod->ifc) {
-	pprintf(prn, " & & {\\small $(%.3f)$} ", const_tstat);
-    } 
-    start = (pmod->ifc)? 1 : 0;
-    for (i=start; i<ncoeff; i++) {
-        tstat = pmod->coeff[i] / pmod->sderr[i];
-	if (i == start) pprintf(prn, "& & \\small{$(%.3f)$} ", tstat);
-	else pprintf(prn, "& & & \\small{$(%.3f)$} ", tstat);
-    }
-    pputs(prn, "\n\\end{tabular}}\n\n");
+    pputs(prn, " \\notag \\\\\n");
 
     /* additional info (R^2 etc) */
-    pputs(prn, "\\vspace{.8ex}\n");
-
     if (pmod->ci == LAD) { 
-	pprintf(prn, "$T = %d,\\, \\sum |\\hat{u}_t| = %g$\n",
-		pmod->nobs, pmod->rho);
+	sprintf(tmp, "%g", pmod->rho);
+	tex_modify_exponent(tmp);
+	pprintf(prn, "T = %d \\quad \\sum |\\hat{u}_t| = %s",
+		pmod->nobs, tmp);
     } else {
-	pprintf(prn, "$T$ = %d, $\\, \\bar{R}^2$ = %.3f, ",
+	pprintf(prn, "T = %d \\quad \\bar{R}^2 = %.4f ",
 		pmod->nobs, pmod->adjrsq);
 	if (!na(pmod->fstt)) {
-	    pprintf(prn, "$\\, F(%d,%d)$ = %.5g, ", 
-		    pmod->dfn, pmod->dfd, pmod->fstt);
+	    sprintf(tmp, "%.5g", pmod->fstt);
+	    tex_modify_exponent(tmp);
+	    pprintf(prn, "\\quad F(%d,%d) = %s ", 
+		    pmod->dfn, pmod->dfd, tmp);
 	}
-	pprintf(prn, "$\\, \\hat{\\sigma}$ = %.4g", pmod->sigma);
+	sprintf(tmp, "%.5g", pmod->sigma);
+	tex_modify_exponent(tmp);
+	pprintf(prn, "\\quad \\hat{\\sigma} = %s", tmp);
 	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
 	    double r = gretl_model_get_double(pmod, "rho_in");
-	    char rstr[16];
 
-	    if (r < 0.0) sprintf(rstr, "$-$%.4g", fabs(r));
-	    else sprintf(rstr, "%.4g", r);
-	    pprintf(prn, ", $\\, \\rho$ = %s", rstr);
+	    sprintf(tmp, "%.5g", r);
+	    tex_modify_exponent(tmp);
+	    pprintf(prn, " \\quad \\rho = %s", tmp);
 	}
-	pputs(prn, "\n");
     }
 
-    pprintf(prn, "\n(%s)\n\\end{center}\n", 
-	    I_("$t$-statistics in parentheses"));
+    pputs(prn, "\\notag \\\\\n");
+    pprintf(prn, "\\centerline{(%s)} \\notag\n",
+	  I_("$t$-statistics in parentheses"));
+    pputs(prn, "\\end{gather}\n");
 
     if (standalone) {
 	pputs(prn, "\n\\end{document}\n");
