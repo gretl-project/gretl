@@ -1611,17 +1611,18 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     GdkBitmap *mask;
     GdkColormap *colormap;
     int i;
-    static char *toolstrings[] = {N_("launch calculator"), 
-				  N_("launch editor"), 
-				  N_("open gretl console"),
-				  N_("session icon view"),
-				  N_("gretl website"), 
-				  N_("gretl manual (PDF)"),
-				  N_("show help"), 
-				  N_("X-Y graph"), 
-				  N_("Capture last graph for editing"),
-				  N_("open dataset"),
-				  NULL
+    const gchar *toolstrings[] = {
+	N_("launch calculator"), 
+	N_("launch editor"), 
+	N_("open gretl console"),
+	N_("session icon view"),
+	N_("gretl website"), 
+	N_("gretl manual (PDF)"),
+	N_("show help"), 
+	N_("X-Y graph"), 
+	N_("Capture last graph for editing"),
+	N_("open dataset"),
+	NULL
     };
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
@@ -1695,9 +1696,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 						     toolxpm);
 	iconw = gtk_pixmap_new(icon, mask);
 	button = gtk_toolbar_append_item(GTK_TOOLBAR(gretl_toolbar),
-					 NULL, toolstrings[i], NULL,
-					 iconw,
-					 toolfunc, NULL);
+					 NULL, _(toolstrings[i]), NULL,
+					 iconw, toolfunc, NULL);
     }
     gtk_widget_show(gretl_toolbar);
     gtk_widget_show(toolbar_box);
