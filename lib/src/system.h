@@ -50,6 +50,8 @@ int system_save_yhat (const gretl_equation_system *sys);
 
 int system_n_equations (const gretl_equation_system *sys);
 
+int system_max_indep_vars (const gretl_equation_system *sys);
+
 int system_n_indep_vars (const gretl_equation_system *sys);
 
 int system_adjust_t1t2 (const gretl_equation_system *sys,

@@ -452,6 +452,8 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
 	      "distinct from both input matrices\n", stderr);
+	fprintf(stderr, "a = %p, b = %p, c = %p\n", 
+		(void *) a, (void *) b, (void *) c);
 	return GRETL_MATRIX_ERR;
     }
 

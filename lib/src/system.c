@@ -51,9 +51,6 @@ const char *gretl_system_long_strings[] = {
 const char *nosystem = N_("No system of equations has been defined");
 const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
-const char *sursquare = N_("All equations in the SUR system must have "
-			   "the same number of regressors");
-
 
 static int gretl_system_type_from_string (const char *str)
 {
@@ -170,7 +167,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn)
 {
-    int i, err = 0;
+    int err = 0;
     void *handle = NULL;
     int (*system_est) (gretl_equation_system *, 
 		       double ***, DATAINFO *, PRN *);
@@ -194,19 +191,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	goto system_bailout;
     }
 
-    system_est = NULL;
-
-    if (sys->type == SUR) {
-	for (i=1; i<sys->n_equations; i++) {
-	    if (sys->lists[i][0] != sys->lists[0][0]) {
-		err = 1;
-		strcpy(gretl_errmsg, _(sursquare));
-	    }
-	    if (err) goto system_bailout;
-	}
-    }
-
-    system_est = get_plugin_function("sur", &handle);
+    system_est = get_plugin_function("system_estimate", &handle);
 
     if (system_est == NULL) {
 	err = 1;
@@ -244,7 +229,7 @@ static int get_real_list_length (const int *list)
     return len;
 }
 
-int system_n_indep_vars (const gretl_equation_system *sys)
+int system_max_indep_vars (const gretl_equation_system *sys)
 {
     int i, nvi, nv = 0;
 
@@ -255,6 +240,19 @@ int system_n_indep_vars (const gretl_equation_system *sys)
 
     return nv;
 }
+
+int system_n_indep_vars (const gretl_equation_system *sys)
+{
+    int i, nvi, nv = 0;
+
+    for (i=0; i<sys->n_equations; i++) {
+	nvi = get_real_list_length(sys->lists[i]) - 1;
+	nv += nvi;
+    }
+
+    return nv;
+}
+
 
 const char *gretl_system_short_string (const MODEL *pmod)
 {

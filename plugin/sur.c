@@ -50,29 +50,34 @@ print_system_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 static void kronecker_place (gretl_matrix *X, 
 			     const gretl_matrix *M,
 			     int startrow, int startcol,
-			     int k, double scale)
+			     double scale)
 {
     int i, j;
+    int imax = gretl_matrix_rows(M);
+    int jmax = gretl_matrix_cols(M);
     int row, col;
     double x;
     
-    for (i=0; i<k; i++) {
-	row = startrow * k + i;
-	for (j=0; j<k; j++) {
-	    col = startcol * k + j;
+    for (i=0; i<imax; i++) {
+	row = startrow + i;
+	for (j=0; j<jmax; j++) {
+	    col = startcol + j;
 	    x = gretl_matrix_get(M, i, j);
 	    gretl_matrix_set(X, row, col, x * scale);
 	}
     }
 }
 
-static int make_sys_X_block (gretl_matrix *X, 
-			     const MODEL *pmod,
-			     const double **Z, 
-			     int t1, int T, int systype)
+static gretl_matrix *make_sys_X_block (const MODEL *pmod,
+				       const double **Z, 
+				       int t1, int T, int systype)
 {
+    gretl_matrix *X;
     int i, t;
     const double *Xi;
+
+    X = gretl_matrix_alloc(T, pmod->ncoeff);
+    if (X == NULL) return NULL;
 
     for (i=0; i<pmod->ncoeff; i++) {
 	if (systype == THREESLS) {
@@ -80,13 +85,16 @@ static int make_sys_X_block (gretl_matrix *X,
 	} else {
 	    Xi = Z[pmod->list[i+2]];
 	}
-	if (Xi == NULL) return 1;
+	if (Xi == NULL) {
+	    gretl_matrix_free(X);
+	    return NULL;
+	}
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(X, t, i, Xi[t+t1]);
 	}
     }
 
-    return 0;
+    return X;
 }
 
 static int
@@ -124,12 +132,7 @@ gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
     return sigma;
 }
 
-/* m = number of equations 
-   k = number of indep vars per equation (FIXME: allow this to vary)
-*/
-
-static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat,
-			int systype)
+static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat)
 {
     int i, t;
     double fit;
@@ -153,18 +156,16 @@ static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat,
 static int 
 calculate_sys_coefficients (MODEL **models, const double **Z,
 			    gretl_matrix *X, gretl_matrix *uhat,
-			    double *tmp_y, int m, int k, 
-			    int systype)
+			    double *tmp_y, int m, int mk)
 {
     gretl_vector *coeff;
     gretl_matrix *vcv;
-    int i, j;
-    int ncoeff = m * k;
+    int i, j, start;
 
-    coeff = gretl_vector_alloc(ncoeff);
+    coeff = gretl_vector_alloc(mk);
     if (coeff == NULL) return 1;
 
-    for (i=0; i<ncoeff; i++) {
+    for (i=0; i<mk; i++) {
 	gretl_vector_set(coeff, i, tmp_y[i]);
     }
 
@@ -177,15 +178,17 @@ calculate_sys_coefficients (MODEL **models, const double **Z,
     gretl_LU_solve(X, coeff);
     gretl_invert_general_matrix(vcv); 
 
+    start = 0;
     for (i=0; i<m; i++) {
 	int nci = (models[i])->ncoeff;
 
 	for (j=0; j<nci; j++) {
-	    (models[i])->coeff[j] = gretl_vector_get(coeff, i * k + j);
+	    (models[i])->coeff[j] = gretl_vector_get(coeff, start + j);
 	    (models[i])->sderr[j] = 
-		sqrt(gretl_matrix_get(vcv, i * k + j, i * k + j));
+		sqrt(gretl_matrix_get(vcv, start + j, start + j));
 	}
-	sys_resids(models[i], Z, uhat, systype);
+	sys_resids(models[i], Z, uhat);
+	start += nci;
     }
 
     gretl_vector_free(coeff);
@@ -237,13 +240,13 @@ static void restore_sample (DATAINFO *pdinfo, int t1, int t2)
     pdinfo->t2 = t2;
 }
 
-int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
-	 PRN *prn)
+int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
+		     PRN *prn)
 {
-    int i, j, k, m, T, t, l;
+    int i, j, m, T, t, l, mk, krow;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int orig_t1 = t1, orig_t2 = t2;
-    gretl_matrix *X = NULL, *Xi = NULL, *Xj = NULL, *M = NULL;
+    gretl_matrix *X = NULL;
     gretl_matrix *uhat = NULL, *sigma = NULL;
     double *tmp_y = NULL;
     int v, bigrows;
@@ -262,13 +265,13 @@ int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     /* number of equations */
     m = system_n_equations(sys);
 
-    /* (max) number of indep vars per equation */
-    k = system_n_indep_vars(sys);
+    /* total indep vars, all equations */
+    mk = system_n_indep_vars(sys);
 
     /* number of observations per series */
     T = t2 - t1 + 1;
 
-    bigrows = m * k;
+    bigrows = mk;
 
     models = malloc(m * sizeof *models);
     if (models == NULL) {
@@ -288,13 +291,9 @@ int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     X = gretl_matrix_alloc(bigrows, bigrows);
-    Xi = gretl_matrix_alloc(T, k);
-    Xj = gretl_matrix_alloc(T, k);
-    M = gretl_matrix_alloc(k, k);
     uhat = gretl_matrix_alloc(m, T);
 
-    if (X == NULL || Xi == NULL || Xj == NULL || M == NULL ||
-	uhat == NULL) {
+    if (X == NULL || uhat == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -331,27 +330,52 @@ int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Xi = data matrix for equation i, specified in lists[i] */
-    for (i=0; i<m; i++) {
-	const gretl_matrix *Y;
+    krow = 0;
+    for (i=0; i<m && !err; i++) {
+	gretl_matrix *M = NULL;
+	gretl_matrix *Xi = NULL, *Xj = NULL;
+	int kcol = 0;
 	
-	make_sys_X_block(Xi, models[i], (const double **) *pZ, 
-			 pdinfo->t1, T, systype);
+	Xi = make_sys_X_block(models[i], (const double **) *pZ, 
+			      pdinfo->t1, T, systype);
+	if (Xi == NULL) {
+	    err = E_ALLOC;
+	    break;
+	}
+	kcol = 0;
 	for (j=0; j<m; j++) { 
 	    if (i != j) {
-		make_sys_X_block(Xj, models[j], (const double **) *pZ, 
-				 pdinfo->t1, T, systype);
+		Xj = make_sys_X_block(models[j], (const double **) *pZ, 
+				      pdinfo->t1, T, systype);
+	    } else {
+		Xj = Xi;
 	    }
-	    Y = (i == j)? Xi : Xj;
+	    M = gretl_matrix_alloc(gretl_matrix_cols(Xi), gretl_matrix_cols(Xj));
+	    if (Xj == NULL || M == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
 	    gretl_matrix_multiply_mod ((const gretl_matrix *) Xi, 
 				       GRETL_MOD_TRANSPOSE,
-				       Y, GRETL_MOD_NONE, M);
+				       (const gretl_matrix *) Xj, 
+				       GRETL_MOD_NONE, 
+				       M);
 	    kronecker_place (X, (const gretl_matrix *) M,
-			     i, j, k, 
+			     krow, kcol, 
 			     gretl_matrix_get(sigma, i, j)); 
+	    gretl_matrix_free(M);
+	    if (j != i) {
+		gretl_matrix_free(Xj);
+	    }
+	    kcol += (models[j])->ncoeff;
 	}
+	krow += (models[i])->ncoeff;
+	gretl_matrix_free(Xi);
     }
 
-    tmp_y = malloc((m * k) * sizeof *tmp_y);
+    if (err) goto bailout;
+
+    tmp_y = malloc(mk * sizeof *tmp_y);
     if (tmp_y == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -363,17 +387,16 @@ int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 			     blocks in the final column vector */
 	double xx;
 	const double *y;
+	gretl_matrix *Xi;
 
-	make_sys_X_block(Xi, models[i], (const double **) *pZ, 
-			 pdinfo->t1, T, systype);
-	for (j=0; j<k; j++) { /* loop over the k rows within each of 
-				 the m blocks */
+	Xi = make_sys_X_block(models[i], (const double **) *pZ, 
+			      pdinfo->t1, T, systype);
+	for (j=0; j<(models[i])->ncoeff; j++) { /* loop over the rows within each of 
+						   the m blocks */
 	    tmp_y[v] = 0.0;
 	    for (l=0; l<m; l++) { /* loop over the m components that
 				     must be added to form each element */
-		int depvar = system_get_depvar(sys, l);
-
-		y = (*pZ)[depvar];
+		y = (*pZ)[system_get_depvar(sys, l)];
 		/* multiply X'[l] into y */
 		xx = 0.0;
 		for (t=0; t<T; t++) {
@@ -384,10 +407,11 @@ int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    }
 	    v++;
 	}
+	gretl_matrix_free(Xi);
     }
 
     calculate_sys_coefficients(models, (const double **) *pZ, X, uhat, 
-			       tmp_y, m, k, systype);
+			       tmp_y, m, mk);
     gls_sigma_from_uhat(sigma, uhat, m, T);
 
     j = 0;
@@ -418,9 +442,6 @@ int sur (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
  bailout:
 
     gretl_matrix_free(X);
-    gretl_matrix_free(Xi);
-    gretl_matrix_free(Xj);
-    gretl_matrix_free(M);
     gretl_matrix_free(sigma);
     gretl_matrix_free(uhat);
 

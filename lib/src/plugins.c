@@ -128,8 +128,8 @@ struct plugin_function plugin_functions[] = {
     { "chisq_lookup", P_STATS_TABLES },
     { "dw_lookup",    P_STATS_TABLES },
 
-    /* seemingly unrelated regressions */
-    { "sur", P_SUR },
+    /* SUR and 3SLS */
+    { "system_estimate", P_SUR },
 
     /* TRAMO/SEATS and X12A */
     { "write_tx_data", P_TRAMO_X12A },
