@@ -2345,7 +2345,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case GARCH:
 	*pmod = garch(cmd.list, &Z, datainfo, 
-		     (cmd.opt & OPT_V)? prn : NULL); 
+		     ((cmd.opt & OPT_V)? prn : NULL), cmd.opt); 
 	err = model_output(pmod, prn);
 	break;
 
@@ -5172,7 +5172,8 @@ int gui_exec_line (char *line,
 
     case GARCH:
 	clear_model(models[0], NULL);
-	*models[0] = garch(cmd.list, &Z, datainfo, (cmd.opt & OPT_V)? prn : NULL);
+	*models[0] = garch(cmd.list, &Z, datainfo, 
+			   ((cmd.opt & OPT_V)? prn : NULL), cmd.opt);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;

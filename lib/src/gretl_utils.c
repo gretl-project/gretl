@@ -898,6 +898,7 @@ struct gretl_opt gretl_opts[] = {
     { EQNPRINT, OPT_O, "complete" },
     { TABPRINT, OPT_O, "complete" },
     { FCASTERR, OPT_O, "plot" },
+    { GARCH,    OPT_R, "robust" },
     { GARCH,    OPT_V, "verbose" },
     { GNUPLOT,  OPT_O, "with-lines" },
     { GNUPLOT,  OPT_M, "with-impulses" },

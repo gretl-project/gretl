@@ -214,7 +214,7 @@ static int make_garch_dataset (const int *list, double **Z,
 
 int do_fcp (const int *list, double **Z, 
 	    const DATAINFO *pdinfo, MODEL *pmod,
-	    PRN *prn)
+	    PRN *prn, unsigned long opt)
 {
     int t1 = pmod->t1, t2 = pmod->t2;
     int ncoeff = pmod->ncoeff;
@@ -226,10 +226,12 @@ int do_fcp (const int *list, double **Z,
     double *res = NULL, *res2 = NULL;
     double *coeff = NULL, *b = NULL;
     double *vcv = NULL;
-    int err = 0, iters = 0;
+    int err = 0, iters = 0, robust = 0;
     int nobs, maxlag, bign, pad = 0;
     int nx, nparam;
     int i;
+
+    if (opt & OPT_R) robust = 1;
 
     nx = ncoeff - 1;
     maxlag = (p > q)? p : q; 
@@ -297,7 +299,7 @@ int do_fcp (const int *list, double **Z,
 			 (const double **) X, nx, 
 			 yhat, coeff, ncoeff, 
 			 vcv, res2, res, y, 
-			 amax, b, &iters, prn);
+			 amax, b, &iters, prn, robust);
 
     if (err != 0) {
 	fprintf(stderr, "garch_estimate returned %d\n", err);
@@ -375,7 +377,7 @@ static int *make_ols_list (const int *list)
 /* the driver function for the plugin */
 
 MODEL garch_model (int *list, double ***pZ, DATAINFO *pdinfo,
-		   PRN *prn) 
+		   PRN *prn, unsigned long opt) 
 {
     MODEL model;
     int *ols_list;
@@ -396,7 +398,7 @@ MODEL garch_model (int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     free(ols_list);
-    do_fcp(list, *pZ, pdinfo, &model, prn); 
+    do_fcp(list, *pZ, pdinfo, &model, prn, opt); 
 
     return model;
 }

@@ -3149,20 +3149,23 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 /**
  * garch:
  * @list: dependent variable plus arch and garch orders
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @PRN: for printing details of iterations (or NULL) 
+ * @pZ: pointer to data matrix
+ * @pdinfo: information on the data set
+ * @PRN: for printing details of iterations (or NULL)
+ * @opt: can specify robust standard errors and VCV
  *
  * Calculate GARCH estimates.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn, 
+	     unsigned long opt)
 {
     MODEL gmod;
     void *handle;
-    MODEL (*garch_model) (int *, double ***, DATAINFO *, PRN *);
+    MODEL (*garch_model) (int *, double ***, DATAINFO *, PRN *,
+			  unsigned long);
 
     *gretl_errmsg = '\0';
 
@@ -3174,7 +3177,7 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return gmod;
     }
 
-    gmod = (*garch_model) (list, pZ, pdinfo, prn);
+    gmod = (*garch_model) (list, pZ, pdinfo, prn, opt);
 
     close_plugin(handle);
 

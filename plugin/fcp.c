@@ -20,7 +20,12 @@
 
 #define LOG_SQRT_2_PI 0.9189385332056725
 #define SMALL_HT      1.0e-7 
-#define IVOLTA_DONE   999  
+
+enum {
+    OP_MATRIX,
+    INFO_MATRIX,
+    HESSIAN
+} vcv_codes;
 
 int global_np;
 
@@ -38,6 +43,15 @@ double garch_ll (double *c, int nc, double *res2,
 		 double *b, double *alfa0, 
 		 double *alfa, double *beta, int nalfa, 
 		 int nbeta, double *h);
+
+static int vcv_setup (int t1, int t2, double *c, int nc, 
+		      double *res2, double *res, int *ivolta, 
+		      const double **g, double *aux3, 
+		      double *param, int nparam, 
+		      double *alfa0, double *alfa, double *beta, 
+		      int nalfa, int nbeta, double *h, 
+		      double **dhdp, double *zt, 
+		      double ***H, double *vco, int code);
 
 static int 
 garch_info_matrix (int t1, int t2, 
@@ -330,12 +344,60 @@ int ols_ (int t1, int t2, const double **X, int nx,
     return 0;
 } 
 
+/* Calculate robust VCV.  If the first input (vci) is the inverse of
+   the Hessian, the output is the QML (White) estimator; if vci is the
+   inverse of the information matrix, the output is the
+   Bollerslev-Wooldridge estimator. The second input matrix (vco) is
+   the (uninverted) outer product (OP) matrix.
+*/
+
+static double *robust_vcv (const double *vci, const double *vco,
+			   int nparam) 
+{
+    int i, j, k;
+    int np2 = nparam * nparam;
+    double *vv = NULL, *vcr = NULL;
+
+    vv = malloc(np2 * sizeof *vv); /* temporary workspace */
+    vcr = malloc(np2 * sizeof *vcr);
+
+    if (vv == NULL || vcr == NULL) {
+	free(vv);
+	free(vcr);
+	return NULL;     
+    }
+
+    /* multiply H^{-1} (or I^{-1}) into OP */
+    for (i=0; i<nparam; i++) { 
+	for (j=0; j<nparam; j++) {
+	    vv[vix(i,j)] = 0.0;
+	    for (k=0; k<nparam; k++) {
+		vv[vix(i,j)] += vci[vix(i,k)] * vco[vix(k,j)];
+	    }
+	}
+    }
+
+    /* post-multiply by H^{-1} (or I^{-1}) */
+    for (i=0; i<nparam; i++) { 
+	for (j=0; j<nparam; j++) {
+	    vcr[vix(i,j)] = 0.0;
+	    for (k=0; k<nparam; k++) {
+		vcr[vix(i,j)] += vv[vix(i,k)] * vci[vix(k,j)];
+	    }
+	}
+    }
+
+    free(vv);
+
+    return vcr;
+}
+
 int garch_estimate (int t1, int t2, int nobs, 
 		    const double **X, int nx, double *yhat, 
 		    double *coeff, int nc, double *vcv, 
 		    double *res2, double *res,
 		    double *ystoc, double *amax, double *b, 
-		    int *iters, PRN *prn)
+		    int *iters, PRN *prn, int robust)
 {
     int i, j;
 
@@ -580,39 +642,56 @@ int garch_estimate (int t1, int t2, int nobs,
     goto L999;
 
 L6766:
-    /* si mette provvisorio, nel programma serio ci vuole la covart */
     if (!err) {
 	double sderr;
 
+	if (robust) {
+	    /* for now we'll use QML: B-W could be an option too */
+	    double *vco = malloc(nparam * nparam * sizeof *vco);
+	    double *vcr = NULL;
+
+	    /* calculate OP matrix, for robust vcv */
+	    vcv_setup(t1, t2, c, nc, res2, res, 
+		      NULL, (const double **) g, aux3, 
+		      param, nparam, 
+		      &alfa0, alfa, beta, nalfa, nbeta, h,
+		      dhdp, zt, NULL, vco, 
+		      OP_MATRIX);
+
+	    /* QML variant */
+	    vcr = robust_vcv(vc5, vco, nparam);
+	    fprintf(stderr, "QML standard errors:\n");
+	    for (i=0; i<nparam; i++) {
+		fprintf(stderr, "sderr[%d] = %g\n", i, 
+			sqrt(vcr[vix(i,i)]));
+	    }
+
+	    for (i = 0; i < nparam; ++i) {
+		for (j = 0; j < nparam; ++j) {
+		    vcv[vix(i,i)] = vcr[vix(i,i)];
+		}
+	    }
+
+	    free(vcr);
+	    free(vco);
+	} else {
+	    /* not "robust": regular standard errors, from Hessian */
+	    for (i = 0; i < nparam; ++i) {
+		for (j = 0; j < nparam; ++j) {
+		    vcv[vix(i,i)] = vc5[vix(i,i)];
+		}
+	    }
+	}
+
 	for (i = 0; i < nparam; ++i) {
-	    if (vc5[vix(i,i)] > 0.0) {
-		sderr = sqrt(vc5[vix(i,i)]);
+	    if (vcv[vix(i,i)] > 0.0) {
+		sderr = sqrt(vcv[vix(i,i)]);
 	    } else {
 		sderr = 0.0;
 	    }
 	    amax[i+1] = param[i];
 	    amax[i+1+nparam] = sderr;
-	    for (j = 0; j < nparam; ++j) {
-		vcv[vix(i,i)] = vc5[vix(i,i)];
-	    }
-	}
-    }
-
-    if (1) {
-	double *vci = malloc(nparam * nparam * sizeof *vci);
-
-	garch_info_matrix(t1, t2, X, nx, yhat, c, 
-			  nc, res2, res, ystoc,
-			  toler1, &ivolta, vci, (const double **) g, 
-			  aux3, param, nparam, b, 
-			  &alfa0, alfa, beta, nalfa,
-			  nbeta, h, dhdp, zt);
-	fprintf(stderr, "IM standard errors:\n");
-	for (i=0; i<nparam; i++) {
-	    fprintf(stderr, "sderr[%d] = %g\n", i, 
-		    sqrt(vci[vix(i,i)]));
-	}
-	free(vci);
+	}	
     }
 
  L999:
@@ -752,21 +831,27 @@ static void check_ht (double *param, int nparam)
     }
 } 
 
-/* common portion of setup for information matrix and Hessian */
+/* setup for OP matrix, Information Matrix and Hessian */
 
-static void common_matrix_setup (int t1, int t2, double *c, int nc, 
-				 double *res2, double *res, int *ivolta, 
-				 const double **g, double *aux3, 
-				 double *param, int nparam, 
-				 double *alfa0, double *alfa, double *beta, 
-				 int nalfa, int nbeta, double *h, 
-				 double **dhdp, double *zt, double *asum2, 
-				 double ***H)
+static int vcv_setup (int t1, int t2, double *c, int nc, 
+		      double *res2, double *res, int *ivolta, 
+		      const double **g, double *aux3, 
+		      double *param, int nparam, 
+		      double *alfa0, double *alfa, double *beta, 
+		      int nalfa, int nbeta, double *h, 
+		      double **dhdp, double *zt, 
+		      double ***H, double *vcv, int code)
 {
     int i, j, k, t, n, lag, isp;
     int nvparm = nalfa + nbeta + 1;
+    double *asum2;
 
-    if (*ivolta != IVOLTA_DONE) {
+    asum2 = malloc(nc * sizeof *asum2);
+    if (asum2 == NULL) {
+	return 1;
+    }
+
+    if (ivolta != NULL) {
 	++(*ivolta);
     }
 
@@ -884,12 +969,6 @@ static void common_matrix_setup (int t1, int t2, double *c, int nc,
 		    for (j = 0; j < nc; ++j) {
 			H[i][j][t+1] += 2.0 *  /* t or t+1? */
 			    g[i][isp] * g[j][isp] / n;
-#ifdef FFDEBUG  
-			if (isp == t1 || isp == t2) {
-			    fprintf(stderr, "set H[%d][%d][%d] = %.9g\n",
-				    i,j,t+1, H[i][j][t+1]); /* t or t+1? */
-			}
-#endif
 		    }
 		}
 	    }
@@ -926,31 +1005,243 @@ static void common_matrix_setup (int t1, int t2, double *c, int nc,
 
     for (i = 0; i < nparam; ++i) {
 	aux3[i] = 0.0;
+	for (j=0; j<nparam; j++) {
+	    vcv[vix(i,j)] = 0.0;
+	}
     }
 
     for (t = t1; t <= t2; ++t) {
-	double rsuh, r2suh;
+	double rsuh = res[t] / h[t];
+	double r2suh = rsuh * res[t];
+	double aa, bb;
 
 	/*  prima parte relativa ai coefficienti (eq. 22, p. 316) err. di 
 	    stampa nel secondo termine c'e' un *ht invece di /ht 
 	*/
-	rsuh = res[t] / h[t];
-	r2suh = rsuh * res[t];
 
 	for (i = 0; i < nc; ++i) {
-	    aux3[i] += rsuh * g[i][t] 
-		+ .5 / h[t] * dhdp[i][t] * (r2suh - 1.0);
+	    aa = rsuh * g[i][t] + .5 / h[t] * dhdp[i][t] * (r2suh - 1.0);
+	    aux3[i] += aa;
+	    if (code == OP_MATRIX) {
+		for (j=0; j<=i; j++) {
+		    bb = rsuh * g[j][t] + .5 / h[t] * dhdp[j][t] * (r2suh - 1.0);
+		    vcv[vix(i,j)] += aa * bb;
+		    vcv[vix(j,i)] = vcv[vix(i,j)];
+		}
+		for (j=0; j<nvparm; j++) {
+		    int ncj = nc + j;
+
+		    vcv[vix(i,ncj)] += aa * 0.5 / h[t] * dhdp[ncj][t] * (r2suh - 1.0);
+		    vcv[vix(ncj,i)] = vcv[vix(i,ncj)];
+		}
+	    }
 	}
 
 	/* seconda parte relativa ad alfa e beta (eq. 19,  p. 315) */
 	for (i = 0; i < nvparm; ++i) {
-	    aux3[nc + i] += 
-		.5 / h[t] * dhdp[nc+i][t] * (r2suh - 1.0);
+	    int nci = nc + i;
+
+	    aa = .5 / h[t] * dhdp[nci][t] * (r2suh - 1.0);
+	    aux3[nci] += aa;
+	    if (code == OP_MATRIX) {
+		for (j=0; j<=i; j++) {
+		    int ncj = nc + j;
+
+		    vcv[vix(nci,ncj)] += aa * 0.5 / h[t] * dhdp[ncj][t] * (r2suh - 1.0);
+		    vcv[vix(ncj,nci)] = vcv[vix(nci,ncj)];
+		}
+	    }
 	}
     }
 
-    /* done common setup */
-}
+    if (code == INFO_MATRIX) {
+	for (t = t1; t <= t2; ++t) {
+	    /* parte relativa ai coefficienti (eq. 23 pag. 316) 
+	       si ricorda che si prende il valore atteso e restano solo i primi
+	       due termini 
+	    */
+	    for (i = 0; i < nc; ++i) {
+		for (j = 0; j < nc; ++j) {
+		    vcv[vix(i,j)] = vcv[vix(i,j)] 
+			- g[i][t] * g[j][t] / h[t] 
+			- dhdp[i][t] * .5 * dhdp[j][t] / (h[t] * h[t]);
+		}
+	    }
+
+	    /* parte relativa ad alfa e beta  (eq. 20 pag. 315) 
+	       si ricorda che si prende il valore atteso e resta solo il secondo 
+	       termine 
+	    */
+	    for (i = nc; i < nparam; ++i) {
+		for (j = nc; j < nparam; ++j) {
+		    vcv[vix(i,j)] -= .5 * dhdp[i][t] * 
+			dhdp[j][t] / (h[t] * h[t]);
+		}
+	    }
+	}
+    }
+
+    if (code != HESSIAN) {
+	free(asum2);
+	return 0;
+    }
+
+    /* Now we fill out the Hessian */
+
+    for (t = t1; t <= t2; ++t) {
+	double rsuh = res[t] / h[t];
+	double r2suh = rsuh * res[t];
+	double r2suh3 = r2suh / (h[t] * h[t]);
+	double usuh2 = 1.0 / (h[t] * h[t]);
+
+	for (i = 0; i < nparam; ++i) {
+	    for (j = 0; j < nparam; ++j) {
+		H[i][j][0] = 0.0; 
+	    }
+	}
+
+	if (lag <= 0) {
+	    goto L90;
+	}
+
+	for (k = 1; k <= nalfa; ++k) {
+	    for (i = 0; i < nc; ++i) {
+		for (j = 0; j < nc; ++j) {
+		    if (t - nalfa < t1) {
+			H[i][j][0] += H[i][j][nalfa] * alfa[k-1];
+		    } else {
+			H[i][j][0] += 2.0 *
+			    g[i][t-k] * g[j][t-k] * alfa[k-1];
+		    }
+		}
+	    }
+	}
+
+	for (k = 1; k <= nbeta; ++k) {
+	    for (i = 0; i < nc; ++i) {
+		for (j = 0; j < nc; ++j) {
+		    H[i][j][0] += H[i][j][k] * beta[k-1];
+		}
+	    }
+	}
+
+	for (i = 0; i < nc; ++i) {
+	    for (k = 1; k <= nalfa; ++k) {
+		if (t - nalfa < t1) {
+		    H[i][nc+k][0] += asum2[i];
+		} else {
+		    H[i][nc+k][0] -= 2.0 * g[i][t-k] * res[t-k];
+		}
+	    }
+	    for (k = 1; k <= nbeta; ++k) {
+		H[i][nc+nalfa+k][0] += dhdp[i][t-k];
+	    }
+	}
+
+	for (k = 1; k <= nbeta; ++k) { 
+	    for (i = 0; i < nc; ++i) {
+		for (j = 0; j < nvparm; ++j) {
+		    /* possible uninitialized data? */
+		    H[i][nc+j][0] += H[i][nc+j][k] * beta[k-1];
+		}
+	    }
+	}
+    L90:
+
+	/*  parte relativa ai coefficienti (eq. 23 pag. 316) 
+	    si ricorda che si prende il valore atteso e restano solo i primi 
+	    due termini 
+	*/
+	for (i = 0; i < nc; ++i) {
+	    for (j = 0; j < nc; ++j) {
+		vcv[vix(i,j)] = vcv[vix(i,j)] 
+		    - g[i][t] * g[j][t] / h[t] 
+		    - .5* r2suh3 * dhdp[i][t] * dhdp[j][t] 
+		    - (rsuh * g[j][t] * dhdp[i][t]) / h[t] 
+		    - (rsuh * g[i][t] * dhdp[j][t]) / h[t] 
+		    + 0.5 * (r2suh - 1.0) * 
+		    (H[i][j][0] / h[t] - dhdp[i][t] 
+		     * dhdp[j][t] / (h[t] * h[t]));
+	    }
+	}
+
+	/*  parte relativa ad alfa e beta  (eq. 20 pag. 315) 
+	    si ricorda che si prende il valore atteso e resta solo il secondo 
+	    termine 
+	*/
+
+	/*  calcolo di dhdpdp al tempo t che va' nel posto 1 del terzo indice */
+
+	if (nbeta > 0) {
+	    for (i = 0; i < nvparm; ++i) {
+		for (j = 1; j <= nbeta; ++j) {
+		    H[nc+i][nc+nalfa+j][0] += dhdp[nc+i][t-j];
+		}
+	    }
+	    for (i = 1; i <= nbeta; ++i) {
+		for (j = 0; j < nvparm; ++j) {
+		    H[nc+nalfa+i][nc+j][0] += dhdp[nc+j][t-i];
+		}
+	    }
+	    for (k = 1; k <= nbeta; ++k) {
+		for (i = 0; i < nvparm; ++i) {
+		    for (j = 0; j < nvparm; ++j) { 
+			/* FIXME uninitialized data */
+			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
+#ifdef FDEBUG
+			if ((t==t1 || t==t2)) {
+			    fprintf(stderr, "Set H[%d][%d][0] = %.9g\n",
+				    nc+i, nc+j, H[nc+i][nc+j][0]);
+			    fprintf(stderr, "incr = %.9g * %.9g\n",
+				    H[nc+i][nc+j][k], beta[k-1]);
+			}
+#endif
+		    }
+		}
+	    }
+	}
+
+	for (i = nc; i < nparam; ++i) {
+	    for (j = nc; j < nparam; ++j) {
+		vcv[vix(i,j)] = vcv[vix(i,j)]
+		    + .5 * usuh2 * dhdp[i][t] * dhdp[j][t] 
+		    - r2suh3 * dhdp[i][t] * dhdp[j][t] 
+		    + .5 * (r2suh - 1.0) / h[t] * H[i][j][0];
+#ifdef FDEBUG
+		    if ((t==t1 || t==t2)) {
+			fprintf(stderr, "Set vcv[%d] = %.9g (using Hval %.9g)\n",
+				vix(i,j), vcv[vix(i,j)], H[i][j][0]);
+		    }
+#endif
+	    }
+	}
+
+	/*  parte mista in alto destra */
+	for (i = 0; i < nc; ++i) {
+	    for (j = 0; j < nvparm; ++j) {
+		vcv[vix(i,nc+j)] = vcv[vix(i,nc+j)]
+		    - g[i][t] * rsuh * dhdp[nc+j][t] / h[t] 
+		    - .5 * (r2suh - 1.0) * dhdp[nc+j][t] * 
+		    dhdp[i][t] / (h[t] * h[t]) 
+		    + .5 * (r2suh - 1.0) * H[i][nc+j][0] / h[t] 
+		    - .5 * r2suh * usuh2 * dhdp[i][t] * dhdp[nc+j][t];
+	    }
+	}
+
+	/* prima di uscire dal tempo t, si risistema la dhdpdp */
+	for (k = 0; k < lag; ++k) { /* index, "lag", FIXME? */
+	    for (i = 0; i < nparam; ++i) {
+		for (j = 0; j < nparam; ++j) {
+		    H[i][j][lag-k] = H[i][j][lag-k-1];
+		}
+	    }
+	}
+    }
+
+    free(asum2);
+
+    return 0;
+} /* vcv_setup */
 
 
 /* matrice di informazione diagonale a blocchi */
@@ -969,7 +1260,7 @@ garch_info_matrix (int t1, int t2,
 		   double *alfa0, double *alfa, double *beta, int nalfa,
 		   int nbeta, double *h, double **dhdp, double *zt)
 {
-    int i, j, t;
+    int i, j;
     double d, d0, d1, d2, ll2, d3;
     double ll3, d12, d31, d23, dd;
     double di, ff, dm;
@@ -988,7 +1279,7 @@ garch_info_matrix (int t1, int t2,
     double oldstp = 9.0e+39;
     static double ll1 = 0.0, fs = 0.0;
 
-    double *gg, *step, *asum2;
+    double *gg, *step;
 
     gg = malloc(nparam * sizeof *gg);
     if (gg == NULL) {
@@ -1001,74 +1292,24 @@ garch_info_matrix (int t1, int t2,
 	return 1;
     } 
 
-    asum2 = malloc(nc * sizeof *asum2);
-    if (asum2 == NULL) {
-	free(gg);
-	free(step);
-	return 1;
-    }
-
     iv = 0;
     it1 = it2 = it3 = it4 = it5 = 0;
     nvparm = nalfa + nbeta + 1;
 
-    common_matrix_setup(t1, t2, c, nc, res2, res, 
-			ivolta, g, aux3, param, nparam, 
-			alfa0, alfa, beta, nalfa, nbeta, h,
-			dhdp, zt, asum2, NULL);
+    /* calculate information matrix */
+    vcv_setup(t1, t2, c, nc, res2, res, 
+	      ivolta, g, aux3, param, nparam, 
+	      alfa0, alfa, beta, nalfa, nbeta, h,
+	      dhdp, zt, NULL, vcv, 
+	      INFO_MATRIX);
 
-    /* ora si riempie la matinf */
-
-    for (i = 0; i < nparam; ++i) {
-	for (j = 0; j < nparam; ++j) {
-	    vcv[vix(i,j)] = 0.0;
-	}
-    }
-
-    for (t = t1; t <= t2; ++t) {
-	double rsuh, r2suh, r2suh3;
-
-	rsuh = res[t] / h[t];
-	r2suh = rsuh * res[t];
-	r2suh3 = r2suh / (h[t] * h[t]);
-
-	/* parte relativa ai coefficienti (eq. 23 pag. 316) 
-	   si ricorda che si prende il valore atteso e restano solo i primi
-	   due termini 
-	*/
-	for (i = 0; i < nc; ++i) {
-	    for (j = 0; j < nc; ++j) {
-		vcv[vix(i,j)] = vcv[vix(i,j)] 
-		    - g[i][t] * g[j][t] / h[t] 
-		    - dhdp[i][t] * .5 * dhdp[j][t] / (h[t] * h[t]);
-	    }
-	}
-
-	/* parte relativa ad alfa e beta  (eq. 20 pag. 315) 
-	   si ricorda che si prende il valore atteso e resta solo il secondo 
-	   termine 
-	*/
-	for (i = nc; i < nparam; ++i) {
-	    for (j = nc; j < nparam; ++j) {
-		vcv[vix(i,j)] -= .5 * dhdp[i][t] * 
-		    dhdp[j][t] / (h[t] * h[t]);
-	    }
-	}
-    }
-
-#if FFDEBUG
-    for (i=0; i<nparam * nparam; i++) {
-	fprintf(stderr, "vcv[%d] = %.9g\n", i, vcv[i]);
-    }
-#endif
-
-    /* Invert the information matrix */
+    /* invert the information matrix */
     ier5 = invert(vcv, nparam);
     if (ier5 != 0) {
 	fprintf(stderr, "matrix inversion failed\n");
     }
 
-    if (*ivolta == IVOLTA_DONE) {
+    if (ivolta == NULL) {
 	/* just calculating vcv at convergence */
 	goto vcv_exit;
     }
@@ -1399,7 +1640,6 @@ garch_info_matrix (int t1, int t2,
 
     free(gg);
     free(step);
-    free(asum2);
 
     return 0;
 } /* garch_info_matrix */
@@ -1442,13 +1682,13 @@ static int
 garch_full_hessian (int t1, int t2, 
 		    const double **X, int nx, double *yhat, double *c, 
 		    int nc, double *res2, double *res, double *ystoc,
-		    double toler, int *ivolta, double *vc5, 
+		    double toler, int *ivolta, double *vcv, 
 		    const double **g, double *aux3, 
 		    double *param, int nparam, double *b, 
 		    double *alfa0, double *alfa, double *beta, int nalfa,
 		    int nbeta, double *h, double **dhdp, double *zt)
 {
-    int i, j, k, t;
+    int i, j;
     double d;
     double d0, d1, d2, ll2, d3; 
     double ll3, d12, d31, d23, dd, di, ff; 
@@ -1465,7 +1705,7 @@ garch_full_hessian (int t1, int t2,
     static double ll1 = 0.0, fs = 0.0;
     double oldstp = 9.0e+39;
 
-    double *gg, *step, *asum2;
+    double *gg, *step;
     double ***H;
 
     gg = malloc(nparam * sizeof *gg);
@@ -1479,18 +1719,10 @@ garch_full_hessian (int t1, int t2,
 	return 1;
     } 
 
-    asum2 = malloc(nc * sizeof *asum2);
-    if (asum2 == NULL) {
-	free(gg);
-	free(step);
-	return 1;
-    } 
-
     H = allocate_dhdpdp(nparam, nalfa + nbeta);
     if (H == NULL) {
 	free(gg);
 	free(step);
-	free(asum2);
 	return 1;
     }
 
@@ -1499,209 +1731,12 @@ garch_full_hessian (int t1, int t2,
     nvparm = nalfa + nbeta + 1;
     lag = (nbeta > nalfa)? nbeta : nalfa;
 
-    common_matrix_setup(t1, t2, c, nc, res2, res, 
-			ivolta, g, aux3, param, nparam, 
-			alfa0, alfa, beta, nalfa, nbeta, h,
-			dhdp, zt, asum2, H);
-
-
-    /* Now we fill out the Hessian */
-
-    for (i = 0; i < nparam; ++i) {
-	for (j = 0; j < nparam; ++j) {
-	    vc5[vix(i,j)] = 0.0;
-	}
-    }
-
-    for (t = t1; t <= t2; ++t) {
-	double rsuh, r2suh, r2suh3, usuh2;
-
-	rsuh = res[t] / h[t];
-	r2suh = rsuh * res[t];
-	r2suh3 = r2suh / (h[t] * h[t]);
-	usuh2 = 1.0 / (h[t] * h[t]);
-
-	for (i = 0; i < nparam; ++i) {
-	    for (j = 0; j < nparam; ++j) {
-		H[i][j][0] = 0.0; 
-	    }
-	}
-
-	if (lag <= 0) {
-	    goto L90;
-	}
-
-	for (k = 1; k <= nalfa; ++k) {
-	    for (i = 0; i < nc; ++i) {
-		for (j = 0; j < nc; ++j) {
-		    if (t - nalfa < t1) {
-			H[i][j][0] += H[i][j][nalfa] * alfa[k-1];
-		    } else {
-			H[i][j][0] += 2.0 *
-			    g[i][t-k] * g[j][t-k] * alfa[k-1];
-		    }
-#ifdef FFDEBUG
-		    if (t==t1 || t==t2) {
-			fprintf(stderr, "step1 H[%d][%d][0]=%.9g\n", 
-				i, j, H[i][j][0]);
-		    }
-#endif
-		}
-	    }
-	}
-
-	for (k = 1; k <= nbeta; ++k) {
-	    for (i = 0; i < nc; ++i) {
-		for (j = 0; j < nc; ++j) {
-		    H[i][j][0] += H[i][j][k] * beta[k-1];
-		}
-#ifdef FFDEBUG
-		if (t==t1 || t==t2) {
-		    fprintf(stderr, "step2 H[%d][%d][0]=%.9g\n", 
-			    i, j, H[i][j][0]);
-		}
-#endif
-	    }
-	}
-
-	for (i = 0; i < nc; ++i) {
-	    for (k = 1; k <= nalfa; ++k) {
-		if (t - nalfa < t1) {
-		    H[i][nc+k][0] += asum2[i];
-		} else {
-		    H[i][nc+k][0] -= 2.0 * g[i][t-k] * res[t-k];
-		}
-#ifdef FFDEBUG
-		if (t==t1 || t==t2) {
-		    fprintf(stderr, "step3 H[%d][%d][0]=%.9g\n", 
-			    i, nc+k, H[i][nc+k][0]);
-		}
-#endif
-	    }
-	    for (k = 1; k <= nbeta; ++k) {
-		H[i][nc+nalfa+k][0] += dhdp[i][t-k];
-	    }
-#ifdef FFDEBUG
-	    if (t==t1 || t==t2) {
-		fprintf(stderr, "step4 H[%d][%d][0]=%.9g\n", 
-			i, nc+nalfa+k, H[i][nc+nalfa+k][0]);
-	    }
-#endif
-	}
-
-	for (k = 1; k <= nbeta; ++k) { 
-	    for (i = 0; i < nc; ++i) {
-		for (j = 0; j < nvparm; ++j) {
-		    /* possible uninitialized data */
-		    H[i][nc+j][0] += H[i][nc+j][k] * beta[k-1];
-#ifdef FFDEBUG
-		    if (t==t1 || t==t2) {
-			fprintf(stderr, "step5 H[%d][%d][0] += "
-				"H[%d][%d][%d] * beta[%d]: %.9g*%.9g -> %.9g\n", 
-				i, nc+j,i,nc+j,k,k-1,H[i][nc+j][k], beta[k-1],
-				H[i][nc+j][0]);
-		    }
-#endif
-		}
-	    }
-	}
-    L90:
-
-	/*  parte relativa ai coefficienti (eq. 23 pag. 316) 
-	    si ricorda che si prende il valore atteso e restano solo i primi 
-	    due termini 
-	*/
-	for (i = 0; i < nc; ++i) {
-	    for (j = 0; j < nc; ++j) {
-		vc5[vix(i,j)] = vc5[vix(i,j)] 
-		    - g[i][t] * g[j][t] / h[t] 
-		    - .5* r2suh3 * dhdp[i][t] * dhdp[j][t] 
-		    - (rsuh * g[j][t] * dhdp[i][t]) / h[t] 
-		    - (rsuh * g[i][t] * dhdp[j][t]) / h[t] 
-		    + 0.5 * (r2suh - 1.0) * 
-		    (H[i][j][0] / h[t] - dhdp[i][t] 
-		     * dhdp[j][t] / (h[t] * h[t]));
-	    }
-	}
-
-	/*  parte relativa ad alfa e beta  (eq. 20 pag. 315) 
-	    si ricorda che si prende il valore atteso e resta solo il secondo 
-	    termine 
-	*/
-
-	/*  calcolo di dhdpdp al tempo t che va' nel posto 1 del terzo indice */
-
-	if (nbeta > 0) {
-	    for (i = 0; i < nvparm; ++i) {
-		for (j = 1; j <= nbeta; ++j) {
-		    H[nc+i][nc+nalfa+j][0] += dhdp[nc+i][t-j];
-		}
-	    }
-	    for (i = 1; i <= nbeta; ++i) {
-		for (j = 0; j < nvparm; ++j) {
-		    H[nc+nalfa+i][nc+j][0] += dhdp[nc+j][t-i];
-		}
-	    }
-	    for (k = 1; k <= nbeta; ++k) {
-		for (i = 0; i < nvparm; ++i) {
-		    for (j = 0; j < nvparm; ++j) { 
-			/* FIXME uninitialized data */
-			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
-#ifdef FDEBUG
-			if ((t==t1 || t==t2)) {
-			    fprintf(stderr, "Set H[%d][%d][0] = %.9g\n",
-				    nc+i, nc+j, H[nc+i][nc+j][0]);
-			    fprintf(stderr, "incr = %.9g * %.9g\n",
-				    H[nc+i][nc+j][k], beta[k-1]);
-			}
-#endif
-		    }
-		}
-	    }
-	}
-
-	for (i = nc; i < nparam; ++i) {
-	    for (j = nc; j < nparam; ++j) {
-		vc5[vix(i,j)] = vc5[vix(i,j)]
-		    + .5 * usuh2 * dhdp[i][t] * dhdp[j][t] 
-		    - r2suh3 * dhdp[i][t] * dhdp[j][t] 
-		    + .5 * (r2suh - 1.0) / h[t] * H[i][j][0];
-#ifdef FDEBUG
-		    if ((t==t1 || t==t2)) {
-			fprintf(stderr, "Set vc5[%d] = %.9g (using Hval %.9g)\n",
-				vix(i,j), vc5[vix(i,j)], H[i][j][0]);
-		    }
-#endif
-	    }
-	}
-
-	/*  parte mista in alto destra */
-	for (i = 0; i < nc; ++i) {
-	    for (j = 0; j < nvparm; ++j) {
-		vc5[vix(i,nc+j)] = vc5[vix(i,nc+j)]
-		    - g[i][t] * rsuh * dhdp[nc+j][t] / h[t] 
-		    - .5 * (r2suh - 1.0) * dhdp[nc+j][t] * 
-		    dhdp[i][t] / (h[t] * h[t]) 
-		    + .5 * (r2suh - 1.0) * H[i][nc+j][0] / h[t] 
-		    - .5 * r2suh * usuh2 * dhdp[i][t] * dhdp[nc+j][t];
-	    }
-	}
-
-	/* prima di uscire dal tempo t, si risistema la dhdpdp */
-	for (k = 0; k < lag; ++k) { /* index, "lag", FIXME? */
-	    for (i = 0; i < nparam; ++i) {
-		for (j = 0; j < nparam; ++j) {
-		    H[i][j][lag-k] = H[i][j][lag-k-1];
-#ifdef FFDEBUG
-		    if (t==t1 || t==t2) {
-			fprintf(stderr, "Set H[%d][%d][%d] = H[%d][%d][%d] = %.9g\n",
-				i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
-		    }
-#endif		    
-		}
-	    }
-	}
-    }
+    /* calculate the full Hessian */
+    vcv_setup(t1, t2, c, nc, res2, res, 
+	      ivolta, g, aux3, param, nparam, 
+	      alfa0, alfa, beta, nalfa, nbeta, h,
+	      dhdp, zt, H, vcv, 
+	      HESSIAN);
 
     /*  il do 25 sul tempo e' finito e allora si riempie la parte 
 	mista in basso a sinistra 
@@ -1709,12 +1744,12 @@ garch_full_hessian (int t1, int t2,
 
     for (i = 0; i < nc; ++i) {
 	for (j = 0; j < nvparm; ++j) {
-	    vc5[vix(nc+j, i)] = vc5[vix(i, nc+j)];
+	    vcv[vix(nc+j, i)] = vcv[vix(i, nc+j)];
 	}
     }
 
-    /* Invert the Hessian */
-    ier5 = invert(vc5, nparam);
+    /* invert the Hessian */
+    ier5 = invert(vcv, nparam);
     if (ier5 != 0) {
 	fprintf(stderr, "matrix inversion failed\n");
     }
@@ -1727,7 +1762,7 @@ garch_full_hessian (int t1, int t2,
 	gg[i] = param[i];
 	step[i] = 0.0;
 	for (j = 0; j < nparam; ++j) {
-	    step[i] -= vc5[vix(i,j)] * aux3[j];
+	    step[i] -= vcv[vix(i,j)] * aux3[j];
 	}
 	s_2 += step[i] * step[i];
     }
@@ -2008,16 +2043,15 @@ L490:
     fs = -fs;
     it5 += iv;
 
-    /* si cambia il segno alla matrice */
+    /* change the sign of the inverse */
     for (i = 0; i < nparam; ++i) {
 	for (j = 0; j < nparam; ++j) {
-	    vc5[vix(i,j)] *= -1.0;
+	    vcv[vix(i,j)] *= -1.0;
 	}
     }
 
     free(gg);
     free(step);
-    free(asum2);
     free_dhdpdp(H, nparam);
 
     return 0;

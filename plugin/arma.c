@@ -296,8 +296,7 @@ static cmplx *arma_roots (int p, int q, const double *coeff)
 
 static void rewrite_arma_model_stats (MODEL *pmod, model_info *arma,
 				      const int *list, const double *y, 
-				      const double *theta, int nc,
-				      const DATAINFO *pdinfo)
+				      const double *theta, int nc)
 {
     int i, t;
     int p = list[1], q = list[2], r = list[0] - 4;
@@ -657,8 +656,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	double *theta = model_info_get_theta(arma);
 	cmplx *roots;
 
-	rewrite_arma_model_stats(pmod, arma, list, Z[v], theta, nc,
-				 pdinfo);
+	rewrite_arma_model_stats(pmod, arma, list, Z[v], theta, nc);
 
 	/* compute and save polynomial roots */
 	roots = arma_roots(p, q, theta);
