@@ -105,13 +105,13 @@
 </xsl:template>
 
 <xsl:template match="argument">
+  <xsl:if test="(@optional)">[ </xsl:if> 
   <xsl:if test="(@separated)">; </xsl:if>
   <xsl:if test="(@alternate)">
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'or'"/>
     </xsl:call-template>
   </xsl:if>
-  <xsl:if test="(@optional)">[ </xsl:if> 
   <xsl:if test="@flag">
     <xsl:value-of select="@flag"/>
   </xsl:if> 

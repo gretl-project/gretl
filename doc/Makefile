@@ -40,6 +40,7 @@ MANXSL = commands/gretlman.xsl
 	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
 	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
 	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
+	-grep 'Rerun LaTeX' $(<:.tex=.log) >/dev/null && pdfjadetex $<
 
 all: manual.pdf manual-a4.pdf html chm # thumbs altthumbs
 

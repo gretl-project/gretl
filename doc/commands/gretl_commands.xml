@@ -3082,6 +3082,65 @@
 
   </command>
 
+  <command name="mahal" section="Statistics" 
+    label="Mahalanobis distances">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--save</flag>
+	  <effect>add distances to the dataset</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	The Mahalanobis distance is the distance between two points in
+	an <mathvar>N</mathvar>-dimensional space, scaled by the
+	statistical variation in each component of the point. For
+	example, if <mathvar>p</mathvar> and <mathvar>q</mathvar> are
+	two points from the same distribution which has covariance
+	matrix <mathvar>C</mathvar>, then the Mahalanobis distance is
+	given by
+	<equation status="display"
+        tex="\[\sqrt{(p-q)^'C^{-1}(p-q)}\]"
+        ascii="sqrt((p - q)' * C-inverse * (p - q))"
+          graphic="mahal"/> This is the same as the Euclidean distance
+	if the covariance matrix is the identity matrix.</para>
+
+      <para>The space for which distances are computed is defined by
+	the selected variables.  For each observation in the current
+	sample range, the distance is computed between the observation
+	and the centroid of the selected variables.  The distance is
+	in the nature of a <mathvar>z</mathvar>-score, and can be used
+	to judge whether a given observation <quote>belongs</quote>
+	with a group of other observations.
+      </para>
+
+      <para context="cli">If the <lit>--vcv</lit> option is given, the
+	covariance matrix and its inverse are printed.  If the
+	<lit>--save</lit> option is given, the distances are saved to
+	the dataset under the name <lit>mdist</lit> (or
+	<lit>mdist1</lit>, <lit>mdist2</lit> and so on if there is
+	already a variable of that name).
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Mahalanobis distances</menu-path>
+    </gui-access>
+
+  </command>  
+
   <command name="markers" section="Dataset" context="gui"
     label="Add case markers">
 
@@ -3930,6 +3989,75 @@
     <gui-access>
       <menu-path>/Variable/spectrum</menu-path>
       <other-access>Main window pop-up menu (single selection)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="poisson" section="Estimation" label="Poisson">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+        <argument separated="true" optional="true">offset</argument>
+      </arguments>
+      <options>
+        <option>
+          <flag>--vcv</flag>
+          <effect>print covariance matrix</effect>
+        </option>
+        <option>
+          <flag>--verbose</flag>
+          <effect>print details of iterations</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>poisson y 0 x1 x2</example>
+	<example>poisson y 0 x1 x2 ; S</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>Estimates a poisson regression.  The dependent variable is
+	taken to represent the occurrence of events of some sort, and
+	must take on only non-negative integer values.
+      </para>
+
+      <para>If a discrete random variable <mathvar>Y</mathvar> follows
+      the Poisson distribution, then
+        <equation status="display" 
+          tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
+          ascii="Pr(Y = y) = exp(-v) * v^y / y!"
+          graphic="poisson-dist"/>for <mathvar>y</mathvar> = 0, 1,
+      2,&hellip;.  The mean and variance of the distribution are both
+      equal to <mathvar>v</mathvar>.  In the Poisson regression model,
+      the parameter <mathvar>v</mathvar> is represented as a function
+      of one or more independent variables.  The most common version
+      (and the only one supported by gretl) has
+        <equation status="display" 
+          tex="\[v = \mathrm{exp}(\beta_0 + \beta_1 x_1 + \beta_2 x_2 +
+      \cdots)\]"
+          ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
+          graphic="poisson-model"/>or in other words the log of
+      <mathvar>v</mathvar> is a linear function of the independent
+      variables.</para>
+
+      <para>Optionally, you may add an <quote>offset</quote> variable
+	to the specification.  This is a scale variable, the log of
+	which is added to the linear regression function (implicitly,
+	with a coefficient of 1.0).  This makes sense if you expect
+	the number of occurrences of the event in question to be
+	proportional, other things equal, to some known factor.  For
+	example, the number of traffic accidents might be supposed to
+	be proportional to traffic volume, other things equal, and in
+	that case traffic volume could be specified as an offset in
+	a Poisson model of the accident rate.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Poisson</menu-path>
     </gui-access>
 
   </command>
