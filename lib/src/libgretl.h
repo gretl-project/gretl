@@ -110,6 +110,7 @@ typedef enum {
     SP_LOAD_INIT,
     SP_SAVE_INIT,
     SP_FONT_INIT,
+    SP_UPDATER_INIT,
     SP_FINISH 
 } progress_flags;
 

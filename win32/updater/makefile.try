@@ -1,13 +1,13 @@
-CC = gcc -g -O2 -W -Wall -DUPDATER 
-SRC = updater_gtk.c webget.c untgz.c
-OBJ = updater_gtk.o webget.o untgz.o
+CC = gcc -O2 -W -Wall -DUPDATER 
+SRC = updater_gtk.c webget.c untgz.c progress_bar.c
+OBJ = updater_gtk.o webget.o untgz.o progress_bar.o
 CFLAGS = -I../../lib/src -I../../gui2 -I../../win32/updater
 LIBS = -L/usr/local/lib -lz `pkg-config --libs gtk+-2.0`
 
 CFLAGS += `pkg-config --cflags gtk+-2.0`
 
 vpath %.h ../../lib/src ../../win32/updater
-vpath %.c ../../win32/updater ../../gui2
+vpath %.c ../../win32/updater ../../gui2 ../../plugin
 
 gretl_updater: $(OBJ) version.h
 	 $(CC) -o $@ $(OBJ) $(LIBS)

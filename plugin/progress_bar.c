@@ -20,7 +20,14 @@
 /* progress.c for gretl */
 
 #include <gtk/gtk.h>
-#include "libgretl.h"
+
+#ifdef UPDATER
+# include <stdio.h>
+# include <stdlib.h>
+# include "updater.h"
+#else
+# include "libgretl.h"
+#endif
 
 typedef struct _ProgressData {
     GtkWidget *window;
@@ -42,9 +49,11 @@ static void destroy_progress (GtkWidget *widget, ProgressData **ppdata)
 static int progress_window (ProgressData **ppdata, int flag)
 {
     GtkWidget *align;
+    GtkWidget *vbox;
+#ifdef UPDATER
     GtkWidget *separator;
     GtkWidget *button;
-    GtkWidget *vbox;
+#endif
 
     *ppdata = malloc(sizeof **ppdata);
     if (*ppdata == NULL) return 1;
@@ -66,7 +75,7 @@ static int progress_window (ProgressData **ppdata, int flag)
 
     if (flag == SP_LOAD_INIT) {
 	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: loading data"));
-    } 
+    }
     else if (flag == SP_SAVE_INIT) {
 	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: storing data"));
     } 
@@ -100,26 +109,22 @@ static int progress_window (ProgressData **ppdata, int flag)
 #endif
     gtk_widget_show((*ppdata)->pbar);
 
+    /* Add separator and cancel button? */
+#ifdef UPDATER
     separator = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(vbox), separator, FALSE, FALSE, 0);
     gtk_widget_show(separator);
 
-    /* Add button to close progress bar window */
     button = gtk_button_new_with_label(_("Cancel"));
-#if GTK_MAJOR_VERSION >= 2
     g_signal_connect_swapped(G_OBJECT(button), "clicked",
 			     G_CALLBACK(gtk_widget_destroy),
 			     (*ppdata)->window);
-#else
-    gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-			      (GtkSignalFunc) gtk_widget_destroy,
-			      GTK_OBJECT((*ppdata)->window));
-#endif
     gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
+#endif
 
     gtk_widget_show((*ppdata)->window);
 
@@ -189,6 +194,9 @@ int show_progress (long res, long expected, int flag)
 #endif
 	while (gtk_events_pending()) gtk_main_iteration();
     } else {
+	if (pdata != NULL && pdata->window != NULL) {
+	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
+	}
 	return SP_RETURN_DONE;
     }
 	

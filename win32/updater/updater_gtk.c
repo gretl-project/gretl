@@ -1,4 +1,8 @@
-/* auto updater program for gretl on win32
+#else
+	gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
+				  (GtkSignalFunc) gtk_widget_destroy,
+				  GTK_OBJECT((*ppdata)->window));
+#endif/* auto updater program for gretl on win32
    Allin Cottrell, november 2000 */
 
 /* last mods, October 2003 */
@@ -191,139 +195,6 @@ static int msgbox (const char *msg, int err)
 }
 
 #endif /* WIN32 */
-
-/* progress bar stuff */
-
-typedef struct _ProgressData {
-    GtkWidget *window;
-    GtkWidget *label;
-    GtkWidget *pbar;
-} ProgressData;
-
-/* ........................................................... */
-
-static void destroy_progress (GtkWidget *widget, ProgressData **ppdata)
-{
-    (*ppdata)->window = NULL;
-    g_free(*ppdata);
-    *ppdata = NULL;
-}
-
-/* ........................................................... */
-
-static int progress_window (ProgressData **ppdata, int flag)
-{
-    GtkWidget *align;
-    GtkWidget *separator;
-    GtkWidget *button;
-    GtkWidget *vbox;
-
-    *ppdata = malloc(sizeof **ppdata);
-    if (*ppdata == NULL) return 1;
-
-    (*ppdata)->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_resizable(GTK_WINDOW((*ppdata)->window), FALSE);
-
-    g_signal_connect(G_OBJECT((*ppdata)->window), "destroy",
-		     G_CALLBACK(destroy_progress),
-		     ppdata);
-
-    gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("downloading data"));
-
-    gtk_container_set_border_width(GTK_CONTAINER((*ppdata)->window), 0);
-
-    vbox = gtk_vbox_new(FALSE, 5);
-    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
-    gtk_container_add(GTK_CONTAINER((*ppdata)->window), vbox);
-    gtk_widget_show(vbox);
-
-    /* Add a label */
-    (*ppdata)->label = gtk_label_new("");
-    gtk_widget_show((*ppdata)->label);
-    gtk_box_pack_start(GTK_BOX(vbox), (*ppdata)->label, FALSE, FALSE, 0);
-        
-    /* Create a centering alignment object */
-    align = gtk_alignment_new(0.5, 0.5, 0, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), align, FALSE, FALSE, 5);
-    gtk_widget_show(align);
-
-    /* Create the GtkProgressBar */
-    (*ppdata)->pbar = gtk_progress_bar_new();
-    gtk_container_add(GTK_CONTAINER(align), (*ppdata)->pbar);
-    gtk_widget_show((*ppdata)->pbar);
-
-    separator = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(vbox), separator, FALSE, FALSE, 0);
-    gtk_widget_show(separator);
-
-    /* Add button to close progress bar window */
-    button = gtk_button_new_with_label(_("Cancel"));
-    g_signal_connect_swapped(G_OBJECT(button), "clicked",
-			     G_CALLBACK(gtk_widget_destroy),
-			     (*ppdata)->window);
-    gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
-
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_widget_grab_default(button);
-    gtk_widget_show(button);
-
-    gtk_widget_show((*ppdata)->window);
-
-    return 0;
-}
-
-/* ........................................................... */
-
-int show_progress (long res, long expected, int flag)
-{
-    static long offs;
-    static ProgressData *pdata;
-
-    if (expected == 0) return 0;
-
-    if (res < 0 || flag == SP_FINISH) {
-	if (pdata != NULL) {
-	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
-	}
-	return SP_RETURN_DONE;
-    }
-
-    if (flag == SP_LOAD_INIT) {
-	gchar *bytestr = NULL;
-
-	offs = 0L;
-	if (progress_window(&pdata, flag)) return 0;
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), (gdouble) 0);
-	bytestr = g_strdup_printf("%s %ld Kbytes", _("Retrieving"),
-				  expected / 1024);
-	gtk_label_set_text(GTK_LABEL(pdata->label), bytestr);
-	g_free(bytestr);
-	while (gtk_events_pending()) gtk_main_iteration();
-    }
-
-    if (flag == SP_NONE && (pdata == NULL || pdata->window == NULL)) {
-	return SP_RETURN_CANCELED;
-    }    
-
-    offs += res;
-
-    if (offs > expected && pdata != NULL) {
-	gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
-	return SP_RETURN_DONE;
-    }
-
-    if (offs <= expected && pdata != NULL) {
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
-				      (gdouble) ((double) offs / expected));
-	while (gtk_events_pending()) gtk_main_iteration();
-    } else {
-	return SP_RETURN_DONE;
-    }
-	
-    return SP_RETURN_OK;
-}
-
-/* end progress bar stuff */
 
 static void put_text_on_window (void)
 {

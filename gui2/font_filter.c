@@ -121,7 +121,13 @@ static gboolean validate_font_family (const gchar *familyname,
 	    (*show_progress)(1L, n_families, SP_NONE);
 	}
 	n_done++;
+# ifdef FONT_FILTER_DEBUG
+	fprintf(stderr, "n_families=%d, n_done=%d\n", n_families, n_done);
+# endif
 	if (show && (n_done == n_families - 1)) {
+# ifdef FONT_FILTER_DEBUG
+	    fprintf(stderr, "doing SP_FINISH\n");
+# endif
 	    (*show_progress)(0L, n_families, SP_FINISH);
 	    show = 0;
 	    close_plugin(handle);
@@ -137,21 +143,22 @@ static gboolean validate_font_family (const gchar *familyname,
 	if (desc != NULL) {
 	    int memerr = 0;
 
-#ifdef FONT_FILTER_DEBUG
+# ifdef FONT_FILTER_DEBUG
 	    fprintf(dbg, "Got pango_font_description for '%s'\n", fontname);
 	    fprintf(dbg, "Doing font_is_latin_text_font() test\n");
 	    fflush(dbg);
-#endif
+# endif
 	    if (font_is_latin_text_font(desc)) {
-#ifdef FONT_FILTER_DEBUG
+# ifdef FONT_FILTER_DEBUG
 		fprintf(dbg, "%s passed font_is_latin_text_font() test\n", fontname);
 		fflush(dbg);
-#endif
+# endif
 		/* extend the cache */
 		if (latin_families == NULL) {
 		    latin_families = malloc(sizeof *latin_families);
 		} else {
-		    latin_families = realloc(latin_families, (n_latin + 1) * sizeof *latin_families);
+		    latin_families = realloc(latin_families, (n_latin + 1) * 
+					     sizeof *latin_families);
 		}
 		if (latin_families == NULL) memerr = 1;
 
