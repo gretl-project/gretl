@@ -347,19 +347,19 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
-    gtk_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
-			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			      GTK_OBJECT (w));
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
+			GTK_SIGNAL_FUNC (delete_widget), 
+			GTK_OBJECT (w));
 
     tmp = gtk_button_new_with_label (_("Cancel"));
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
     gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
-		      GTK_SIGNAL_FUNC (series_view_format_cancel), sview);
-    gtk_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
-			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			      GTK_OBJECT (w));
+			GTK_SIGNAL_FUNC (series_view_format_cancel), sview);
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
+			GTK_SIGNAL_FUNC (delete_widget), 
+			GTK_OBJECT (w));
 
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     gtk_container_add(GTK_CONTAINER(w), vbox);
