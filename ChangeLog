@@ -7,6 +7,9 @@ version 1.0pre4
 - fix gnuplot PNG output for gnuplot version 3.8
 - fix encoding for gnuplot postscript output under NLS
 - fix pango encoding issue for gnuplot axis label strings
+- fix gnuplot "keyspec" bug 
+- add auto-scaling of gui windows if the user has selected a
+  large font
 
 10/10/02 version 1.0pre3
 - improve accuracy of calculation of standard errors, and

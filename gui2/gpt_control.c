@@ -95,7 +95,7 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 {
     const gchar *tmp;
     
-    *str = '\0';
+    *str = 0;
     tmp = gtk_entry_get_text(GTK_ENTRY(w));
 
     if (tmp != NULL && strlen(tmp)) {
@@ -1015,7 +1015,7 @@ static int parse_set_line (GPT_SPEC *plot, const char *line,
     else if (strcmp(set_thing, "key") == 0)
 	strcpy(plot->keyspec, setting);
     else if (strcmp(set_thing, "nokey") == 0)
-	strcpy(plot->keyspec, setting);
+	strcpy(plot->keyspec, "none");
     else if (strcmp(set_thing, "xtics") == 0) 
 	safecpy(plot->xtics, setting, 15);
     else if (strcmp(set_thing, "mxtics") == 0) 
