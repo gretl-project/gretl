@@ -277,40 +277,77 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
-    char tmp[MAXLEN], fline[MAXLEN];
+    char temp[MAXLEN], fline[MAXLEN];
+    char restore_line[MAXLEN];
+    int png_line_saved = 0;
 
-    sprintf(tmp, "%sgpttmp.XXXXXX", paths.userdir);
-    if (mktemp(tmp) == NULL) return 1;
+    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
+    if (mktemp(temp) == NULL) return 1;
+
+    ftmp = fopen(temp, "w");
+    if (ftmp == NULL) {
+        sprintf(errtext, _("Couldn't write to %s"), temp);
+        errbox(errtext);
+        return 1;
+    }
 
     fsrc = fopen(fname, "r");
-    if (!fsrc) {
+    if (fsrc == NULL) {
 	sprintf(errtext, _("Couldn't open %s"), fname);
 	errbox(errtext);
+	fclose(ftmp);
 	return 1;
     }
 
-    ftmp = fopen(tmp, "w");
-    if (!ftmp) {
-	sprintf(errtext, _("Couldn't write to %s"), tmp);
-	errbox(errtext);
-	fclose(fsrc);
-	return 1;
+    if (add && spec == NULL) {
+	/* see if there's a commented out term setting to restore */
+	*restore_line = 0;
+	while (fgets(fline, MAXLEN-1, fsrc)) {
+	    if (!strncmp(fline, "# set term png", 14)) {
+		strcpy(restore_line, fline + 2);
+		break;
+	    }
+	}
+	rewind(fsrc);
     }
 
     if (add) {
-	fprintf(ftmp, "%s\n", 
-		get_gretl_png_term_line(&paths, spec->code));
+	if (spec != NULL) {
+	    fprintf(ftmp, "%s\n", 
+		    get_gretl_png_term_line(&paths, spec->code));
+	} else {
+	    /* spec is NULL: we're reconstituting a session
+	       graph from a saved gnuplot command file */
+	    if (*restore_line) {
+		/* found a saved png term specification */
+		fputs(restore_line, ftmp);
+	    } else {
+		/* fallback */
+		fprintf(ftmp, "%s\n",
+			get_gretl_png_term_line(&paths, PLOT_REGULAR));
+	    }
+	}
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
     }
 
+    /* now for the body of the plot file */
     while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (add) {
 	    fputs(fline, ftmp);
 	} else {
+	    /* we're removing the png term line */
 	    int printit = 1;
 
-	    if (!strncmp(fline, "set term", 8)) printit = 0;
+	    if (!strncmp(fline, "set term png", 12)) {
+		if (!png_line_saved) {
+		    /* comment it out, for future reference */
+		    fprintf(ftmp, "# %s", fline);
+		    png_line_saved = 1;
+		} 
+		printit = 0;
+	    }
+	    else if (!strncmp(fline, "# set term png", 14)) printit = 0;
 	    else if (!strncmp(fline, "set output", 10)) printit = 0;
 	    else if (spec != NULL && (spec->flags & GPTSPEC_OLS_HIDDEN)
 		     && is_auto_ols_string(fline)) printit = 0;
@@ -321,7 +358,8 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     fclose(fsrc);
     fclose(ftmp);
 
-    return rename(tmp, fname);
+    remove(fname);
+    return rename(temp, fname);
 }
 
 static int add_png_term_to_plotfile (const char *fname)

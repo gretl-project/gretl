@@ -543,6 +543,10 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
     sprintf(png_term_line, "set term png%s%s",
 	    font_string, color_string);
 
+#ifdef GNUPLOT_DEBUG
+    fprintf(stderr, "png term line:\n'%s'\n", png_term_line);
+#endif
+
     return png_term_line;
 }
 
@@ -1634,8 +1638,6 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     if (spec->flags & GPTSPEC_AUTO_OLS) {
 	fputs(auto_ols_string, fp);
-	fprintf(stderr, "ols hidden: %s, nlines = %d\n",
-		(spec->flags & GPTSPEC_OLS_HIDDEN)? "yes" : "no", nlines);
 	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && nlines > 1) {
 	    nlines--;
 	}
@@ -1828,6 +1830,10 @@ static char gnuplot_pallette[3][8] = {
 
 static const char *get_gnuplot_pallette (int i, int ptype)
 {
+#ifdef GNUPLOT_DEBUG
+    fprintf(stderr, "get_gnuplot_pallette: i=%d, ptype=%d\n",
+	    i, ptype);
+#endif
     if (i == 0 && (ptype == PLOT_FREQ_SIMPLE ||
 		   ptype == PLOT_FREQ_NORMAL || 
 		   ptype == PLOT_FREQ_GAMMA)) {

@@ -102,7 +102,8 @@ typedef enum {
     PLOT_MULTI_SCATTER,
     PLOT_TRI_GRAPH,
     PLOT_RANGE_MEAN,
-    PLOT_LEVERAGE
+    PLOT_LEVERAGE,
+    PLOT_TYPE_MAX
 } plot_type_codes;
     
 #define GRETL_GUI(p) (p->binbase[0] && p->ratsbase[0] && p->dbhost_ip[0])

@@ -1264,7 +1264,7 @@ static int hilu_plot (double *ssr, double *rho, int n,
 
     if (ppaths == NULL) return 1;
 
-    if (gnuplot_init(ppaths, &fp)) return E_FOPEN; 
+    if (gnuplot_init(ppaths, PLOT_REGULAR, &fp)) return E_FOPEN; 
 
     fputs("# hildreth-lu\n", fp);
     fputs("set xlabel 'rho'\n", fp);

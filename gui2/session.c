@@ -1135,32 +1135,36 @@ static void open_gui_model (gui_obj *gobj)
     view_model(prn, pmod, 78, 400, gobj->name);
 }
 
-/* ........................................................... */
+#ifdef GNUPLOT_PNG
 
 static void open_gui_graph (gui_obj *gobj)
 {
     GRAPHT *graph = (GRAPHT *) gobj->data;
-#ifndef GNUPLOT_PNG
-    gchar *buf = NULL;
-#endif
 
-#ifdef GNUPLOT_PNG
     display_session_graph_png(graph->fname);
-#else
-# ifdef G_OS_WIN32
-    buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, graph->fname);
-    if (WinExec(buf, SW_SHOWNORMAL) < 32) {
-	errbox(_("gnuplot command failed"));
-    }
-# else
-    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
-    if (system(buf)) {
-	errbox(_("gnuplot command failed"));
-    }
-# endif
-    g_free(buf);
-#endif /* GNUPLOT_PNG */
 }
+
+#else /* non-PNG version */
+
+static void open_gui_graph (gui_obj *gobj)
+{
+    GRAPHT *graph = (GRAPHT *) gobj->data;
+    gchar *buf = NULL;
+    int err = 0;
+
+#ifdef G_OS_WIN32
+    buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, graph->fname);
+    err = (WinExec(buf, SW_SHOWNORMAL) < 32);
+#else
+    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
+    err = system(buf);
+#endif
+    g_free(buf);
+
+    if (err) errbox(_("gnuplot command failed"));
+}
+
+#endif /* GNUPLOT_PNG */
 
 /* ........................................................... */
 
