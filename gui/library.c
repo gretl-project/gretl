@@ -3382,15 +3382,16 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	}
 
 	cursor = gdk_cursor_new(GDK_WATCH);
-	gdk_window_set_cursor(mydata->dialog->window, cursor);
-	gdk_window_set_cursor(GTK_TEXT(mydata->w)->text_area, cursor);
-	gdk_cursor_destroy(cursor);	
+	gdk_pointer_grab(mydata->dialog->window, TRUE,
+			 GDK_POINTER_MOTION_MASK,
+			 mydata->dialog->window, cursor,
+			 GDK_CURRENT_TIME);
+	gdk_cursor_destroy(cursor);
 
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
 
-	gdk_window_set_cursor(mydata->dialog->window, NULL);
-	gdk_window_set_cursor(GTK_TEXT(mydata->w)->text_area, NULL);
+	gdk_pointer_ungrab(GDK_CURRENT_TIME);
     } else
 	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
 

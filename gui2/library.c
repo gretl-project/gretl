@@ -3151,6 +3151,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     if (data != NULL) { /* get commands from file view buffer */
 	windata_t *mydata = (windata_t *) data;
 	gchar *buf = textview_get_text(GTK_TEXT_VIEW(mydata->w));
+	GdkCursor *cursor;
 
 	if (buf == NULL || !strlen(buf)) {
 	    errbox("No commands to execute");
@@ -3159,12 +3160,26 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	    return;
 	}
 
+#if 1
+	cursor = gdk_cursor_new(GDK_WATCH);
+	gdk_pointer_grab(mydata->dialog->window, TRUE,
+			 GDK_POINTER_MOTION_MASK,
+			 mydata->dialog->window, cursor,
+			 GDK_CURRENT_TIME);
+	gdk_cursor_destroy(cursor);
+
+	err = execute_script(NULL, buf, NULL, NULL, prn, code);
+	g_free(buf);
+
+	gdk_pointer_ungrab(GDK_CURRENT_TIME);
+#else
 	text_set_cursor(mydata->w, GDK_WATCH);
 
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
 
 	text_set_cursor(mydata->w, 0);
+#endif
     } else {
 	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
     }
