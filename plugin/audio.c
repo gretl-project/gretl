@@ -5,8 +5,17 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "libgretl.h"
+
 #include "miditypes.h"
 #include "midi_utils.h"
+
+#include <glib.h>
+
+#if GLIB_CHECK_VERSION(2,0,0)
+# define GLIB2
+# include <signal.h>
+#endif /* GLIB_CHECK_VERSION */
 
 #undef DEBUG
 #define HAVE_FLITE 1
@@ -335,9 +344,7 @@ static int read_datafile (const char *fname, dataset *dset)
 	fprintf(stderr, "No data in '%s'\n", fname);
 	err = 1;
 	goto bailout;
-    } else {
-	fprintf(stderr, "got %d datapoints\n", dset->n);
-    }
+    } 
 
     dset->x = malloc(dset->n * sizeof *dset->x);
     dset->y = malloc(dset->n * sizeof *dset->y);
@@ -407,7 +414,7 @@ static void speak_dataset_comments (const dataset *dset)
 
     flite_init();
 
-    v = register_cmu_us_kal();
+    v = register_cmu_us_kal16();
 
     for (i=0; i<dset->n_comments; i++) {
 	flite_text_to_speech(dset->comments[i], v, "play");
@@ -509,14 +516,44 @@ static int play_dataset (midi_track *track, midi_spec *spec,
     return 0;
 }
 
-int midi_play_graph (const char *fname)
+#ifdef GLIB2
+
+static int audio_fork (const char *prog, const char *fname)
 {
-    const char *outname = "test.mid";
-    char syscmd[256];
+    gchar *argv[5];
+    gboolean run;
+    int i;
+    
+    argv[0] = g_strdup(prog);
+    argv[1] = g_strdup("-A");
+    argv[2] = g_strdup("600");
+    argv[3] = g_strdup(fname);
+    argv[4] = NULL;
+    
+    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
+                        NULL, NULL, NULL, NULL);
+
+    for (i=0; i<5; i++) {
+	g_free(argv[i]);
+    }
+
+    return !run;
+}
+
+#endif /* GLIB2 */
+
+int midi_play_graph (const char *fname, const char *userdir)
+{
+    char outname[FILENAME_MAX];
+#ifndef GLIB2
+    char syscmd[1024];
+#endif
     midi_spec spec;
     midi_track track;
     dataset dset;
     FILE *fp;
+
+    sprintf(outname, "%sgretl.mid", userdir);
 
     spec.fp = fopen(outname, "wb");
     if (spec.fp == NULL) {
@@ -542,9 +579,11 @@ int midi_play_graph (const char *fname)
 
     fclose(spec.fp);
 
-#ifndef DEBUG
+#ifdef GLIB2
+    audio_fork("timidity", outname);
+#else
     sprintf(syscmd, "timidity -A 600 %s", outname);
-    system(syscmd);
+    gretl_spawn(syscmd);
 #endif
 
     return 0;

@@ -2818,7 +2818,7 @@ static void start_editing_png_plot (png_plot_t *plot)
 static void audio_render_plot (png_plot_t *plot)
 {
     void *handle;
-    int (*midi_play_graph) (const char *);
+    int (*midi_play_graph) (const char *, const char *);
 
     midi_play_graph = gui_get_plugin_function("midi_play_graph", 
 					      &handle);
@@ -2826,7 +2826,7 @@ static void audio_render_plot (png_plot_t *plot)
         return;
     }
 
-    (*midi_play_graph) (plot->spec->fname);
+    (*midi_play_graph) (plot->spec->fname, paths.userdir);
 
     close_plugin(handle);
 }
