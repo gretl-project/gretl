@@ -1197,6 +1197,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->errcode = 0;
     pmod->ci = 0;
     pmod->ifc = 0;
+    pmod->wt_dummy = 0;
     pmod->rho_in = 0.0;
     pmod->aux = AUX_NONE;
     pmod->correct = 0;

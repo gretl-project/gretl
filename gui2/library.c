@@ -3913,7 +3913,7 @@ void display_var (void)
     int list[2];
     PRN *prn;
     windata_t *vwin;
-    int height = 350;
+    int height = 400;
     int vec = 1;
     int n = datainfo->t2 - datainfo->t1 + 1;
 
@@ -3922,7 +3922,7 @@ void display_var (void)
 
     if (!datainfo->vector[list[1]]) {
 	vec = 0;
-	height = 80;
+	height = 140;
     }
 
     if (n > MAXDISPLAY) { /* use disk file */

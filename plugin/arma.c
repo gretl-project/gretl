@@ -332,9 +332,9 @@ static int check_arma_list (const int *list)
 
     if (list[0] != 4) err = 1;
 
-    /* for now we'll accept ARMA (3,3) at max */
-    else if (list[1] < 0 || list[1] > 3) err = 1;
-    else if (list[2] < 0 || list[2] > 3) err = 1;
+    /* for now we'll accept ARMA (4,4) at max */
+    else if (list[1] < 0 || list[1] > 4) err = 1;
+    else if (list[2] < 0 || list[2] > 4) err = 1;
     else if (list[1] + list[2] == 0) err = 1;
 
     if (err) {

@@ -179,7 +179,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
     pmod->ifc = 1;
     pmod->t1 = pdinfo->t1;
     pmod->t2 = pdinfo->t2;
-    pmod->nobs = pmod->t2 - pmod->t1 + 1;
+    pmod->nobs = pmod->t2 - pmod->t1 + 1; /* FIXME initial offset */
     pmod->dfn = p + q;
     pmod->dfd = pmod->nobs - pmod->dfn;
     pmod->ncoeff = p + q + 1;
@@ -280,6 +280,51 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 
     return 0;
 }
+
+#if 0
+static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
+{
+    FILE *fp;
+    char line[1024], valstr[24];
+    double x;
+    int i, j, k, nt = (nc * nc + nc) / 2;
+    int err = 0;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return 1;
+
+    pmod->vcv = malloc(nt * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) {
+	fclose(fp);
+	return 1;
+    }
+
+    j = k = 0;
+    while (fgets(line, sizeof line, fp)) {
+	if (!strncmp(line, "Nonseas", 7)) {
+	    char *p = line + strcspn(line, "+-");
+
+	    for (i=0; i<nc; i++) {
+		sscanf(p, "%22s", valstr);
+		p += 22;
+		if (i >= j) {
+		    x = atof(valstr);
+		    pmod->vcv[k++] = x;
+		}
+	    }
+	    j++;
+	}
+    }
+
+    for (i=0; i<nt; i++) {
+	fprintf(stderr, "vcv[%d] = %g\n", i, pmod->vcv[i]);
+    }
+
+    fclose(fp);
+
+    return err;
+}
+#endif
 
 static int get_estimates (const char *fname, double *coeff, double *sderr,
 			  int p, int q)
@@ -410,8 +455,17 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
     sprintf(fname, "%s.est", path);
     err = get_estimates(fname, coeff, sderr, list[1], list[2]);
 
-    sprintf(fname, "%s.lks", path);
-    err = get_ll_stats(fname, pmod);
+    if (!err) {
+	sprintf(fname, "%s.lks", path);
+	err = get_ll_stats(fname, pmod);
+    }
+
+#if 0
+    if (!err) {
+	sprintf(fname, "%s.acm", path);
+	err = get_x12a_vcv(fname, pmod, nc - 1);
+    }
+#endif
 
     if (err) {
 	fprintf(stderr, "problem getting model info\n");
@@ -437,7 +491,7 @@ static void output_series_to_spc (const double *x, const DATAINFO *pdinfo,
     for (t=pdinfo->t1 + offset; t<=pdinfo->t2; t++) {
 	if (t - lag < 0) continue;
 	else if (na(x[t-lag])) {
-	    fputs("0.0 ", fp); /* FIXME */
+	    fputs("0.0 ", fp); /* FIXME: how do you say "NA" to x12arima? */
 	} else {
 	    fprintf(fp, "%g ", x[t-lag]);
 	}
@@ -502,7 +556,7 @@ static int write_spc_file (const char *fname,
     } else {
 	fputs("estimate {\n print = (acm lkf lks mdl est rts rcm)\n", fp);
     }
-    fputs(" save = (rsd est lks acm itr)\n}\n", fp);
+    fputs(" save = (rsd est lks acm rcm)\n}\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");

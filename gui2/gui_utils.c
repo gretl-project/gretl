@@ -2085,7 +2085,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
     add_vars_to_plot_menu(vwin);
-    add_dummies_to_plot_menu(vwin);
+    if (pmod->ci != ARMA && pmod->ci != NLS) {
+	add_dummies_to_plot_menu(vwin);
+    }
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
 		     G_CALLBACK(check_model_menu), vwin);
@@ -2335,7 +2337,6 @@ static void arma_menu_mod (GtkItemFactory *ifac)
     flip(ifac, "/Tests/Ramsey's RESET", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
     flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
-    model_ml_menu_state(ifac, TRUE);   
 }
 
 /* ........................................................... */
@@ -2403,7 +2404,15 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
 	if (pmod->ci == LAD) lad_menu_mod(vwin->ifac);
 	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
-	else if (pmod->ci == ARMA) arma_menu_mod(vwin->ifac);
+	else if (pmod->ci == ARMA) {
+	    arma_menu_mod(vwin->ifac);
+	    if (!na(pmod->lnL)) {
+		/* arma by x12arima */
+		model_ml_menu_state(vwin->ifac, TRUE);
+		flip(vwin->ifac, "/Model data/coefficient covariance matrix", 
+		     FALSE);
+	    }
+	}
 
 	if (dataset_is_panel(datainfo)) {
 	    model_arch_menu_state(vwin->ifac, FALSE);
