@@ -36,6 +36,7 @@ typedef enum {
     GRETL_XML_DATA,       /* gretl xml format data file */
     GRETL_CSV_DATA,       /* comma-separated data file */
     GRETL_BOX_DATA,       /* BOX1 format data file */
+    GRETL_GNUMERIC,       /* gnumeric workbook */
     GRETL_SCRIPT,         /* file containing gretl commands */
     GRETL_UNRECOGNIZED    /* none of the above */
 } gretl_filetypes;

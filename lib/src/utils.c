@@ -1336,7 +1336,7 @@ int grow_nobs (const int newobs, double ***pZ, DATAINFO *pdinfo)
     if (pdinfo->markers && pdinfo->S != NULL) {
 	char **S;
 
-	if (_allocate_case_markers(&S, n + newobs)) return E_ALLOC;
+	if (allocate_case_markers(&S, n + newobs)) return E_ALLOC;
 	else pdinfo->S = S;
     }
 

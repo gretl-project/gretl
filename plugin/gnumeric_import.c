@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Ramu Ramanathan and Allin Cottrell
+ *  Copyright (c) by Allin Cottrell 2002
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "libgretl.h"
 
 #include <gtk/gtk.h>
 
@@ -43,12 +41,15 @@ typedef enum {
 typedef struct {
     int nsheets;
     int selected;
+    int startcol, startrow;
     char **sheetnames;
+    GtkWidget *colspin, *rowspin;
 } gbook;
 
 typedef struct {
     int maxcol, maxrow;
     int text_cols, text_rows;
+    int startcol, startrow;
     int ID;
     char *name;
     double **Z;
@@ -99,32 +100,32 @@ static void gsheet_print_info (gsheet *sheet)
     fprintf(stderr, "maxrow = %d\n", sheet->maxrow);
     fprintf(stderr, "text_cols = %d\n", sheet->text_cols);
     fprintf(stderr, "text rows = %d\n", sheet->text_rows);
+    fprintf(stderr, "startcol = %d\n", sheet->startcol);
+    fprintf(stderr, "startrow = %d\n", sheet->startrow);
 
     for (i=sheet->text_cols; i<=sheet->maxcol; i++) 
 	fprintf(stderr, "%s%s", sheet->varname[i],
-		    (i==sheet->maxcol)? "\n" : " ");	
+		    (i == sheet->maxcol)? "\n" : " ");	
 
+#ifdef notdef
     for (t=sheet->text_rows; t<=sheet->maxrow; t++) {
 	if (sheet->text_cols)
 	    fprintf(stderr, "%s ", sheet->label[t]);
 	for (i=sheet->text_cols; i<=sheet->maxcol; i++) {
 	    fprintf(stderr, "%g%s", sheet->Z[i][t],
-		    (i==sheet->maxcol)? "\n" : " ");
+		    (i == sheet->maxcol)? "\n" : " ");
 	}
     }
+#endif
 }
 
 #define VTYPE_IS_NUMERIC(v) (v) == VALUE_BOOLEAN || \
                             (v) == VALUE_INTEGER || \
                             (v) == VALUE_FLOAT
 
-#define VTYPE_IS_STRING(v)  (v) == VALUE_STRING
 
-
-static int gsheet_allocate (gsheet *sheet)
+static int gsheet_allocate (gsheet *sheet, int cols, int rows)
 {
-    int cols = sheet->maxcol + 1;
-    int rows = sheet->maxrow + 1;
     int i, t;
 
     sheet->Z = malloc(cols * sizeof *(sheet->Z));
@@ -158,21 +159,31 @@ int gsheet_parse_cells (xmlNodePtr node, gsheet *sheet)
     xmlNodePtr p = node->xmlChildrenNode;
     char *tmp;
     double x;
-    int i, t, vtype;
+    int i, t, vtype = 0;
     char *toprows, *leftcols;
+    int cols, rows;
+    int colmin, rowmin;
+    int err = 0;
 
-    if (gsheet_allocate(sheet)) return 1;
+    cols = sheet->maxcol + 2 - sheet->startcol;
+    rows = sheet->maxrow + 2 - sheet->startrow;
 
-    toprows = calloc(sheet->maxrow + 1, 1);
-    leftcols = calloc(sheet->maxcol + 1, 1);
+    if (gsheet_allocate(sheet, cols, rows)) return 1;
+
+    leftcols = calloc(cols, 1);
+    toprows = calloc(rows, 1);
 
     if (toprows == NULL || leftcols == NULL) {
 	gsheet_free(sheet);
 	return 1;
     }
 
-    while (p) {
+    colmin = sheet->startcol - 1;
+    rowmin = sheet->startrow - 1;
+
+    while (p && !err) {
 	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
+	    int i_real = 0, t_real = 0;
 
 	    x = -999.0;
 	    i = 0; t = 0;
@@ -180,47 +191,72 @@ int gsheet_parse_cells (xmlNodePtr node, gsheet *sheet)
 	    tmp = xmlGetProp(p, (UTF) "Col");
 	    if (tmp) {
 		i = atoi(tmp);
+		i_real = i - colmin;
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(p, (UTF) "Row");
 	    if (tmp) {
-		t =  atoi(tmp);
-		free(tmp);
-	    }	    
-	    tmp = xmlGetProp(p, (UTF) "ValueType");
-	    if (tmp) {
-		vtype = atoi(tmp);
+		t = atoi(tmp);
+		t_real = t - rowmin;
 		free(tmp);
 	    }
-	    tmp = xmlNodeGetContent(p);
-	    if (tmp) {
-		if (VTYPE_IS_NUMERIC(vtype)) {
-		    x = atof(tmp);
-		    sheet->Z[i][t] = x;
-		    toprows[t] = leftcols[i] = 0;
+	    if (i_real >= 0 && t_real >= 0) {
+		tmp = xmlGetProp(p, (UTF) "ValueType");
+		if (tmp) {
+		    vtype = atoi(tmp);
+		    free(tmp);
 		}
-		else if (VTYPE_IS_STRING(vtype)) {
-		    if (i == 0) 
-			strncat(sheet->label[t], tmp, 8);
-		    if (t == 0)
-			strncat(sheet->varname[i], tmp, 8);
-		    toprows[t] = leftcols[i] = 1;
+		/* check the top-left cell */
+		if (i_real == 0 && t_real == 0) {
+		    if (VTYPE_IS_NUMERIC(vtype)) {
+			fprintf(stderr, "Expected to find a variable name");
+			err = 1;
+		    }
 		}
-		free(tmp);
+		else if (i_real >= 1 && t_real == 0 && 
+			 !(vtype == VALUE_STRING)) {
+		    /* ought to be a varname here */
+		    fprintf(stderr, "Expected to find a variable name");
+		    err = 1;
+		}
+		if (!err && (tmp = xmlNodeGetContent(p))) {
+		    if (VTYPE_IS_NUMERIC(vtype)) {
+			x = atof(tmp);
+			sheet->Z[i_real][t_real-1] = x;
+			toprows[t_real] = leftcols[i_real] = 0;
+		    }
+		    else if (vtype == VALUE_STRING) {
+			if (i_real == 0) 
+			    strncat(sheet->label[t_real-1], tmp, 8);
+			if (t_real == 0)
+			    strncat(sheet->varname[i_real], tmp, 8);
+			toprows[t_real] = leftcols[i_real] = 1;
+		    }
+		    free(tmp);
+		}
 	    }
 	}
 	p = p->next;
     }
 
-    for (i=0; i<=sheet->maxcol; i++)
+    for (i=0; i<cols; i++)
 	if (leftcols[i]) sheet->text_cols += 1;
-    for (t=0; t<=sheet->maxrow; t++)
+    for (t=0; t<rows; t++)
 	if (toprows[t]) sheet->text_rows += 1;
+
+    if (sheet->text_rows > 1) {
+	fprintf(stderr, "Found an extraneous row of text\n");
+	err = 1;
+    }
+    if (sheet->text_cols > 1) {
+	fprintf(stderr, "Found an extraneous column of text\n");
+	err = 1;
+    }
 
     free(toprows);
     free(leftcols);
 
-    return 0;
+    return err;
 }
 
 static int gsheet_get_data (const char *fname, gsheet *sheet) 
@@ -329,6 +365,7 @@ static int gbook_record_name (char *name, gbook *book)
 static void gbook_init (gbook *book)
 {
     book->nsheets = 0;
+    book->startcol = book->startrow = 1;
     book->sheetnames = NULL;
 }
 
@@ -362,6 +399,8 @@ static int gbook_get_info (const char *fname, gbook *book)
     LIBXML_TEST_VERSION 
 	xmlKeepBlanksDefault(0);
 
+    gbook_init(book);
+
     doc = xmlParseFile(fname);
     if (doc == NULL) {
 	fprintf(stderr, "xmlParseFile failed on %s\n", fname);
@@ -380,8 +419,6 @@ static int gbook_get_info (const char *fname, gbook *book)
 	xmlFreeDoc(doc);
 	return 1;
     }
-
-    gbook_init(book);
 
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
@@ -421,19 +458,22 @@ int gsheet_setup (gsheet *sheet, gbook *book, int n)
 
     sheet->ID = n;
     strcpy(sheet->name, book->sheetnames[n]);
+
+    sheet->startcol = book->startcol;
+    sheet->startrow = book->startrow;    
     
     return 0;
 }
 
 static
-void gsheet_chooser_select_row (GtkCList *clist, gint row, gint column, 
-				GdkEventButton *event, gbook *book) 
+void gsheet_menu_select_row (GtkCList *clist, gint row, gint column, 
+			     GdkEventButton *event, gbook *book) 
 {
     book->selected = row;
 }
 
 static 
-void gsheet_chooser_make_list (GtkWidget *widget, gbook *book)
+void gsheet_menu_make_list (GtkWidget *widget, gbook *book)
 {
     gchar *row[1];
     int i;
@@ -448,46 +488,81 @@ void gsheet_chooser_make_list (GtkWidget *widget, gbook *book)
 }
 
 static 
-void gsheet_chooser_cancel (GtkWidget *w, gbook *book)
+void gsheet_menu_cancel (GtkWidget *w, gbook *book)
 {
     book->selected = -1;
 }
 
 static 
-void gsheet_chooser_quit (GtkWidget *w, gbook *book)
+void gsheet_menu_quit (GtkWidget *w, gbook *book)
 {
     gtk_main_quit();
 }
 
-static void gsheet_chooser (gbook *book)
+void gbook_get_startcol (GtkWidget *w, gbook *book)
 {
-    GtkWidget *w, *tmp;
+    book->startcol = gtk_spin_button_get_value_as_int
+	(GTK_SPIN_BUTTON(book->colspin));
+}
+
+void gbook_get_startrow (GtkWidget *w, gbook *book)
+{
+    book->startrow = gtk_spin_button_get_value_as_int
+	(GTK_SPIN_BUTTON(book->rowspin));
+}
+
+static void gsheet_menu (gbook *book, int multisheet)
+{
+    GtkWidget *w, *tmp, *frame;
     GtkWidget *vbox, *hbox, *list;
+    GtkObject *adj;
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(w), "Choose gnumeric sheet");
-    gtk_widget_set_usize(w, 200, 120);
+    gtk_window_set_title(GTK_WINDOW(w), "gretl: gnumeric import");
     gtk_signal_connect(GTK_OBJECT(w), "destroy",  
-		       GTK_SIGNAL_FUNC(gsheet_chooser_quit), NULL);
+		       GTK_SIGNAL_FUNC(gsheet_menu_quit), NULL);
 
     vbox = gtk_vbox_new (FALSE, 5);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
+
+    /* choose starting column and row */
+    frame = gtk_frame_new("Start import at");
+    gtk_box_pack_start (GTK_BOX (vbox), frame, TRUE, TRUE, 5);
+
+    hbox = gtk_hbox_new (FALSE, 5);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
+    gtk_container_add(GTK_CONTAINER (frame), hbox);
+
+    tmp = gtk_label_new("column:");
+    adj = gtk_adjustment_new(1, 1, 5, 1, 1, 1);
+    book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_signal_connect (adj, "value_changed",
+			GTK_SIGNAL_FUNC (gbook_get_startcol), book);
+    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
+
+    tmp = gtk_label_new("row:");
+    adj = gtk_adjustment_new(1, 1, 5, 1, 1, 1);
+    book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_signal_connect (adj, "value_changed",
+			GTK_SIGNAL_FUNC (gbook_get_startrow), book);
+    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
+
+    /* choose the worksheet (if applicable) */
+    if (multisheet) {
+	frame = gtk_frame_new("Sheet to import");
+	gtk_box_pack_start (GTK_BOX (vbox), frame, TRUE, TRUE, 5);
+	list = gtk_clist_new(1);
+	gtk_signal_connect (GTK_OBJECT (list), "select_row", 
+			    GTK_SIGNAL_FUNC (gsheet_menu_select_row), 
+			    book);
+	gsheet_menu_make_list(list, book);
+	gtk_container_set_border_width (GTK_CONTAINER (list), 10);
+	gtk_container_add(GTK_CONTAINER(frame), list);
+    }
+
     hbox = gtk_hbox_new (TRUE, 5);
-    list = gtk_clist_new (1);
-    gtk_signal_connect (GTK_OBJECT (list), "select_row", 
-			GTK_SIGNAL_FUNC (gsheet_chooser_select_row), 
-			book);
-
-    tmp = gtk_label_new("Choose a sheet to import");
-    gtk_box_pack_start (GTK_BOX (vbox), tmp, FALSE, FALSE, 5);
-    gtk_widget_show(tmp);
-
-    tmp = gtk_hbox_new (TRUE, 5);
-    gsheet_chooser_make_list(list, book);
-    gtk_widget_show(list);
-    gtk_box_pack_start (GTK_BOX (tmp), list, TRUE, TRUE, 5);
-    gtk_widget_show(tmp);
-    gtk_box_pack_start (GTK_BOX (vbox), tmp, FALSE, FALSE, 0);
-    
     tmp = gtk_button_new_with_label("OK");
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
@@ -496,30 +571,27 @@ static void gsheet_chooser (gbook *book)
                                GTK_SIGNAL_FUNC (gtk_widget_destroy), 
                                GTK_OBJECT (w));
     gtk_widget_grab_default (tmp);
-    gtk_widget_show (tmp);
 
     tmp = gtk_button_new_with_label("Cancel");
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, FALSE);
     gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
-			GTK_SIGNAL_FUNC (gsheet_chooser_cancel), book);
+			GTK_SIGNAL_FUNC (gsheet_menu_cancel), book);
     gtk_signal_connect_object (GTK_OBJECT (tmp), "clicked", 
                                GTK_SIGNAL_FUNC (gtk_widget_destroy), 
                                GTK_OBJECT (w));
-    gtk_widget_show (tmp);
 
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show (hbox);
-    gtk_widget_show (vbox);
 
     gtk_container_add(GTK_CONTAINER(w), vbox);
     
-    gtk_widget_show(w);
+    gtk_widget_show_all(w);
     gtk_main();
 }
 
-int gbook_get_data (const char *fname)
+int gbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		    int data_status)
 {
     gbook book;
     gsheet sheet;
@@ -535,11 +607,13 @@ int gbook_get_data (const char *fname)
 	fprintf(stderr, "No sheets found\n");
     }
     else if (book.nsheets > 1) {
-	gsheet_chooser(&book);
+	gsheet_menu(&book, 1);
 	sheetnum = book.selected;
     }
-    else 
+    else {
+	gsheet_menu(&book, 0);
 	sheetnum = 0;
+    }
 
     if (sheetnum >= 0) {
 	fprintf(stderr, "Getting data\n");
@@ -550,21 +624,54 @@ int gbook_get_data (const char *fname)
 	    err = gsheet_get_data(fname, &sheet);
 	    if (!err) 
 		gsheet_print_info(&sheet);
-	    gsheet_free(&sheet);
 	}
     }
 
     gbook_free(&book);
 
+    if (!err) {
+	int i, t, i_sheet;
+
+	if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
+
+	pdinfo->v = sheet.maxcol + 3 - sheet.startcol - sheet.text_cols;
+	pdinfo->n = sheet.maxrow + 1 - sheet.startrow;
+	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d\n",
+		pdinfo->v, pdinfo->n);
+
+	start_new_Z(pZ, pdinfo, 0);
+
+	strcpy(pdinfo->stobs, "1");
+	sprintf(pdinfo->endobs, "%d", pdinfo->n);
+	pdinfo->sd0 = 1.0;
+	pdinfo->pd = 1;
+	pdinfo->time_series = 0;
+	pdinfo->extra = 0; 
+
+	for (i=1; i<pdinfo->v; i++) {
+	    i_sheet = i - 1 + sheet.text_cols;
+	    strcpy(pdinfo->varname[i], sheet.varname[i_sheet]);
+	    for (t=0; t<pdinfo->n; t++) {
+		(*pZ)[i][t] = sheet.Z[i_sheet][t];
+	    }
+	}
+
+	if (sheet.text_cols == 1) {
+	    char **S = NULL;
+
+	    pdinfo->markers = 1;
+	    if (allocate_case_markers(&S, pdinfo->n) == 0) {
+		pdinfo->markers = 1;
+		for (t=0; t<pdinfo->n; t++)
+		    strcpy(S[t], sheet.label[t]);
+		pdinfo->S = S;
+	    }
+	}
+
+    }
+
+    gsheet_free(&sheet);
+
     return err;
 
-}
-
-int main (void)
-{
-    gtk_init(NULL, NULL);
-
-    gbook_get_data("tester.gnumeric");
-
-    return 0;
 }

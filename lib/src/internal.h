@@ -97,8 +97,6 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 double _tcrit95 (const int df);
 
-int _allocate_case_markers (char ***S, int n);
-
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, double **Z);
 

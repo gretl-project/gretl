@@ -114,7 +114,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 
 /* .......................................................... */
 
-int _allocate_case_markers (char ***S, int n)
+int allocate_case_markers (char ***S, int n)
 {
     int t;
 
@@ -266,7 +266,7 @@ int set_sample_dummy (const char *line,
     newinfo->vector = oldinfo->vector;
 
     /* case markers */
-    if (oldinfo->markers && _allocate_case_markers(&S, sn)) {
+    if (oldinfo->markers && allocate_case_markers(&S, sn)) {
 	free_Z(*newZ, newinfo);
 	free(dum);
 	return E_ALLOC;

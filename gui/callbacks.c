@@ -106,6 +106,10 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case OPEN_BOX:
 	file_selector(_("Open BOX file"), code, NULL);
 	break;
+    case OPEN_GNUMERIC:
+	file_selector(_("Open gnumeric file"), code, NULL);
+	break;
+
     }
 }
 

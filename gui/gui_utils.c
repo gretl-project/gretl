@@ -570,6 +570,33 @@ void register_data (const char *fname, int record)
 
 /* ........................................................... */
 
+static void do_open_gnumeric (const char *fname)
+{
+    int err;
+    void *handle;
+    int (*gbook_get_data)(const char*, double ***, DATAINFO *);
+
+    if (gui_open_plugin("gnumeric_import", &handle)) return;
+    gbook_get_data = get_plugin_function("gbook_get_data", handle);
+    if (gbook_get_data == NULL) {
+        errbox(_("Couldn't load plugin function"));
+        close_plugin(handle);
+        return;
+    }
+
+    err = (*gbook_get_data)(fname, &Z, datainfo);
+    close_plugin(handle);
+
+    if (err) return;
+
+    data_status |= IMPORT_DATA;
+    strcpy(paths.datfile, fname);
+
+    register_data(fname, 1);
+}
+
+/* ........................................................... */
+
 void do_open_data (GtkWidget *w, gpointer data)
      /* cases: 
 	- called from dialog: user has said Yes to opening data file,
@@ -600,7 +627,11 @@ void do_open_data (GtkWidget *w, gpointer data)
     /* will this work right? */
     close_session();
 
-    if (datatype == GRETL_CSV_DATA) {
+    if (datatype == GRETL_GNUMERIC) {
+	do_open_gnumeric(trydatfile);
+	return;
+    }
+    else if (datatype == GRETL_CSV_DATA) {
 	do_open_csv_box(trydatfile, OPEN_CSV);
 	return;
     }
@@ -3505,18 +3536,16 @@ int gui_open_plugin (const char *plugin, void **handle)
     sprintf(pluginpath, "%s\\%s.dll", paths.gretldir, plugin);
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) {
-	char buf[MAXLEN];
-
-	sprintf(buf, _("Couldn't load plugin %s"), pluginpath);
-	errbox(buf);
+	sprintf(errtext, _("Couldn't load plugin %s"), pluginpath);
+	errbox(errtext);
 	return 1;
     }
 #else
     sprintf(pluginpath, "%splugins/%s.so", paths.gretldir, plugin);
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {
-	errbox(dlerror());
-	fprintf(stderr, _("Failed to load plugin: %s\n"), pluginpath);
+	sprintf(errtext, _("Failed to load plugin: %s\n"), pluginpath);
+	errbox(errtext);
 	return 1;
     } 
 #endif 

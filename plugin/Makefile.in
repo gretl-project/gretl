@@ -8,6 +8,9 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
 
+XML_CFLAGS = @XML_CFLAGS@
+XML_LIBS = @XML_LIBS@
+
 ifeq ($(CC),)
   CC = gcc
 endif
@@ -20,9 +23,10 @@ share = $(prefix)/share/gretl
 
 libsrc = $(topsrc)/lib/src
 
-PLUGINS = stats_tables.so panel_data.so progress_bar.so
+PLUGINS = stats_tables.so panel_data.so progress_bar.so gnumeric_import.so
 
-CFLAGS += `gtk-config --cflags` -I$(libsrc) -fPIC -DPIC
+CFLAGS += `gtk-config --cflags` $(XML_CFLAGS) -I$(libsrc) -fPIC -DPIC
+LIBS = ../lib/libgretl.la `gtk-config --libs` $(XML_LIBS)
 LIBTOOL = $(topsrc)/libtool
 
 all: ../lib/libgretl.la $(PLUGINS)
@@ -31,8 +35,7 @@ all: ../lib/libgretl.la $(PLUGINS)
 	$(MAKE) -C ../lib
 
 %.so : %.o
-	$(LIBTOOL) --mode=link $(CC) -shared -o $@ \
-	$< ../lib/libgretl.la `gtk-config --libs`
+	$(LIBTOOL) --mode=link $(CC) -shared -o $@ $< $(LIBS)
 
 .PHONY: 
 

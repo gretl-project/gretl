@@ -2321,7 +2321,9 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 		  !strcmp(fname + n - 4, ".GRE"))) 
 	return GRETL_SCRIPT;
     if (n > 6 && !strcmp(fname + n - 6, ".gretl")) 
-	return GRETL_SCRIPT;    
+	return GRETL_SCRIPT; 
+    if (n > 9 && !strcmp(fname + n - 9, ".gnumeric")) 
+	return GRETL_GNUMERIC;
 
     addpath(fname, ppaths, 0); 
 
