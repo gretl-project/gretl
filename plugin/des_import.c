@@ -27,9 +27,10 @@
 
 #include "libgretl.h"
 
+#define VERBOSE 1
+
 #define MAXIGNORE 4
 #define DESLINE 1024
-#define MAXLEN 512
 
 typedef struct {
     int ts;
@@ -41,18 +42,6 @@ typedef struct {
 /* Reader for the datasets that accompany Wooldridge's "Introductory
    Econometrics: A Modern Approach" (South-Western)
 */
-
-static int names_differ (const char *s1, const char *s2)
-{
-    char *p = strrchr(s1, '/');
-
-    if (p != NULL && *(p + 1)) s1 = p + 1;
-
-    while (*s1 && *s2) 
-	if (*s1++ != tolower(*s2++)) return 1;
-    if (*s1 || *s2) return 1;
-    return 0;
-}
 
 static int blankline (const char *line)
 {
@@ -89,15 +78,132 @@ static char *go_to_field (char *s, int field)
     return s;
 }
 
-static int read_des (const char *fname, double ***pZ,
-		     DATAINFO **ppinfo)
+static int des_ignore (int varnum, DESINFO *des)
+{
+    int i;
+
+    for (i=1; i<=des->ignore[0]; i++) {
+	if (varnum == des->ignore[i]) return 1;
+    }
+    return 0;
+}
+
+static void desinfo_init (DESINFO *des)
+{
+    des->ts = 0;
+    des->pd = 0;
+    des->sd0 = 0.0;
+    des->ignore[0] = 0;
+}
+
+static void parse_ignore (DESINFO *des, const char *ignore)
+{
+    int ig, ic = 0;
+    char numstr[4];
+    const char *p = ignore;
+    size_t sz, len = strlen(ignore);
+
+    if (strstr(p, "ignore=") == NULL) return;
+    p += strlen("ignore=");
+    while (ic < MAXIGNORE && p - ignore < len) {
+	sz = strcspn(p, ",");
+	if (sz == 0) break;
+	*numstr = 0;
+	strncat(numstr, p, sz);
+	ig = atoi(numstr);
+	ic++;
+	des->ignore[ic] = ig;
+	p += sz + 1;
+    }
+    
+    des->ignore[0] = ic;
+#ifdef VERBOSE
+    printlist(des->ignore, "ignore list");
+#endif
+}
+
+static void get_jwfile (const char *fname, char *jwfile)
+{
+    char *p;
+
+    strcpy(jwfile, fname);
+    p = strrchr(jwfile, '/');
+    if (p == NULL) p = strrchr(jwfile, '\\');
+    if (p != NULL) strcpy(p + 1, "jw_structure");
+}
+
+static void get_dname (const char *fname, char *dname)
+{
+    char *p;
+
+    *dname = 0;
+    p = strrchr(fname, '/');
+    if (p != NULL) strcpy(dname, p + 1);
+    else {
+	p = strrchr(fname, '\\');
+	if (p != NULL) strcpy(dname, p + 1);
+    }
+    p = strrchr(dname, '.');
+    if (p) *p = 0;
+}
+
+static int read_jw_structure (const char *fname, DESINFO *des, char *errbuf)
+{
+    FILE *fp;
+    char line[80];
+    char gotname[12], ts[32], ignore[32];
+    char jwfile[MAXLEN], dname[32];
+    int pd;
+    double sd0;
+
+    get_jwfile(fname, jwfile);
+
+    fp = fopen(jwfile, "r");
+    if (fp == NULL) {
+	sprintf(errbuf, _("Couldn't open %s"), jwfile);
+	return 1;
+    }
+
+    desinfo_init(des);
+
+    get_dname(fname, dname);
+    if (*dname == 0) return 0;
+
+    while (fgets(line, 79, fp)) {
+	if (*line == '#') continue;
+	if (strstr(line, "difficult")) break;
+	if (strstr(line, dname)) {
+	    int f;
+	    char *p;
+
+	    if ((p = strchr(line, '\n'))) *p = 0;
+	    if ((p = strchr(line, '\r'))) *p = 0;
+#ifdef VERBOSE
+	    fprintf(stderr, "%s\ngot line: '%s'\n", jwfile, line);
+#endif
+	    f = sscanf(line, "%s %s %d %lf %s", gotname, ts, &pd, &sd0, ignore);
+	    if (f != 5) break;
+	    if (!strcmp(ts, "TIME_SERIES")) des->ts = 1;
+	    des->pd = pd;
+	    des->sd0 = sd0; 
+	    parse_ignore(des, ignore);
+	}
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+static int read_des (const char *fname, DESINFO *des, double ***pZ,
+		     DATAINFO **ppinfo, char *errbuf)
 {
     FILE *fp;
     char *p, line[DESLINE];
     int n = 0, v = 0;
     int blocknum = 0, err = 0, v2 = 0;
     int blankbak = 0, donealloc = 0;
-    DATAINFO *dinfo;
+    DATAINFO *dinfo = NULL;
 
     fp = fopen(fname, "r");
     if (fp == NULL) return 1;
@@ -119,7 +225,8 @@ static int read_des (const char *fname, double ***pZ,
 	    blankbak = 0;
 	if ((p = strchr(line, '\n'))) *p = 0;
 	if ((p = strchr(line, '\r'))) *p = 0;
-	if (blocknum == 1) {
+        if (blocknum == 0) continue;
+	else if (blocknum == 1) {
 	    count_varnames(line, &v);
 	}
 	else if (blocknum == 2) {
@@ -131,6 +238,9 @@ static int read_des (const char *fname, double ***pZ,
 	else if (blocknum == 3) {
 	    int i;
 	    char varname[9];
+
+	    v -= des->ignore[0];
+	    v++; /* allow for constant */
 
 	    if (!donealloc) {
 		dinfo = create_new_dataset(pZ, v, n, 0);
@@ -149,32 +259,36 @@ static int read_des (const char *fname, double ***pZ,
 	    } else {
 		char *p = go_to_field(line, 3);
 
-		printf("variable #%d: name='%s'", i, varname);
+#ifdef VERBOSE
+		printf("got variable #%d: name='%s'", i, varname);
 		if (*p) printf("comment='%s'\n", p);
 		else printf("\n");
-		v2++;
+#endif
+		if (!des_ignore(i, des)) {
+		    v2++;
+		    strcpy(dinfo->varname[v2], varname);
+		    strcpy(dinfo->label[v2], p);
+		} else 
+		    printf("ignoring variable '%s'\n", varname);
 	    }
 	}
 	else break;
     }
 
-    if (v2 != v) {
-	sprintf(errbuf, "Numbers of vars in block 1 and block 3 differ");
-	err = 1;
-    }
-
     if (!err)
-	sprintf(errbuf, "%s: got %d vars, %d observations", 
-		fname, dinfo->v, dinfo->n);
+	fprintf(stderr, "%s: got %d real vars, %d observations\n", 
+	       fname, dinfo->v, dinfo->n);
 
     fclose(fp);
     return err;
 }
 
-static int read_raw (const char *fname, DATAINFO *pdinfo)
+static int read_raw (const char *fname, DESINFO *des,
+		     DATAINFO *pdinfo, double **Z,
+		     char *errbuf)
 {
     FILE *fp;
-    int i, t;
+    int i, t, des_i;
     char value[16];
     int err = 0;
     int literal = 0, litcol = 0;
@@ -183,20 +297,42 @@ static int read_raw (const char *fname, DATAINFO *pdinfo)
     if (fp == NULL) return 1;
 
     for (t=0; t<pdinfo->n; t++) {
-	for (i=0; i<pdinfo->v; i++) {
+	des_i = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    while (1) {
+		if (des_ignore(des_i, des)) {
+		    fscanf(fp, "%s", value);
+#ifdef VVERBOSE
+		    fprintf(stderr, "ignoring data(%d,%d) '%s'\n", 
+			    des_i, t, value);
+#endif	
+		    des_i++;
+		} else break;
+	    }
 	    if (fscanf(fp, "%15s", value) != 1) {
 		sprintf(errbuf, "scan fail on data[%d][%d]", i, t);
 		err = 1;
 	    } else {
-		printf("got data[%d][%d] = '%s'\n", i, t, value);
+#ifdef VVERBOSE
+		fprintf(stderr, "got data[%d][%d] = '%s'\n", i, t, value);
+#endif
 		if (*value == '"') {
 		    literal = 1;
 		    if (i > litcol) litcol = i;
 		}
-		else if (strcmp(value, ".") == 0)
-		    printf("got a missing value\n"); 
+		else {
+		    if (strcmp(value, ".") == 0) {
+#ifdef VVERBOSE
+			fprintf(stderr, "got a missing value\n"); 
+#endif
+			Z[i][t] = NADBL;
+		    } else {
+			Z[i][t] = atof(value);
+		    }
+		}
 	    }
 	    if (err) break;
+	    des_i++;
 	}
 	if (err) break;
     }
@@ -212,118 +348,40 @@ static int read_raw (const char *fname, DATAINFO *pdinfo)
     return err;
 }
 
-static void desinfo_init (DESINFO *des)
-{
-    des->ts = 0;
-    des->pd = 0;
-    des->sd0 = 0.0;
-    des->ignore[0] = 0;
-}
-
-static void parse_ignore (DESINFO *des, const char *ignore)
-{
-    int ig, ic = 0;
-    char numstr[4];
-    size_t sz;
-
-    if (strstr(ignore, "ignore=") == NULL) return;
-    ignore += strlen("ignore=");
-    while (ic < MAXIGNORE) {
-	sz = strcspn(ignore, ",");
-	if (sz == 0) break;
-	*numstr = 0;
-	strncat(numstr, ignore, sz);
-	ig = atoi(numstr);
-	ic++;
-	des->ignore[ic] = ig;
-	ignore += sz + 1;
-    }
-    
-    des->ignore[0] = ic;
-}
-
-
-static int get_jw_structure (const char *fname, DESINFO *des, char *errbuf)
-{
-    FILE *fp;
-    char line[80];
-    char gotname[12], ts[32], ignore[32];
-    char *p, *dname;
-    int pd;
-    double sd0;
-
-    fp = fopen("jw_structure", "r");
-    if (fp == NULL) {
-	sprintf(errbuf, _("bad"));
-	return 1;
-    }
-
-    desinfo_init(des);
-
-    p = strrchr(fname, '/');
-    if (p != NULL) dname = p + 1;
-    else {
-	p = strrchr(fname, '\\');
-	if (p != NULL) dname = p + 1;
-	else dname = fname;
-    }
-
-    while (fgets(line, 79, fp)) {
-	if (*line == '#') continue;
-	if (strstr(line, "difficult")) break;
-	if (strstr(line, dname)) {
-	    int f;
-
-	    f = sscanf(line, "%s %s %d %lf %s", gotname, ts, &pd, &sd0, ignore);
-	    if (f != 5) break;
-	    if (!strcmp(ts, "TIME_SERIES")) des->ts = 1;
-	    des->pd = pd;
-	    des->sd0 = sd0; 
-	    parse_ignore(des, ignore);
-	}
-    }
-
-    return 0;
-}
 
 int des_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		  char *errbuf)
 {
     int err = 0;
-    double **newZ;
-    DATAINFO *newinfo;
+    double **newZ = NULL;
+    DATAINFO *newinfo = NULL;
     DESINFO des;
+    char rawfile[MAXLEN];
 
     *errbuf = '\0';
 
-    newinfo = datainfo_new();
-    if (newinfo == NULL) {
-	sprintf(errtext, _("Out of memory\n"));
-	return 1;
-    }
+    /* get any time-series info, cols to be ignored */
+    err = read_jw_structure (fname, &des, errbuf);
+    if (err) return err;
 
-    err = get_jw_structure (fname, &des, errbuf);
+    /* read des file for number of obs, varnames and descriptions */
+    err = read_des (fname, &des, &newZ, &newinfo, errbuf);
 
+    /* modify datainfo based on time-series info gathered */
     if (des.pd) {
 	newinfo->pd = des.pd;
 	newinfo->sd0 = des.sd0;
-	/* newinfo->stobs?? */
+	ntodate(newinfo->stobs, newinfo->t1, newinfo);
+	ntodate(newinfo->endobs, newinfo->t2, newinfo);
 	newinfo->time_series = des.ts;
-    } 
-
-    start_new_Z(&newZ, newinfo, 0);
-
-    if (!des.ts) {
-	strcpy(newinfo->stobs, "1");
-	sprintf(newinfo->endobs, "%d", newinfo->n);
-	newinfo->sd0 = 1.0;
-	newinfo->pd = 1;
-	newinfo->time_series = 0;
-    } else {
-	ntodate(newinfo->endobs, newinfo->n - 1, newinfo);
     }
-    newinfo->extra = 0; 
 
+    switch_ext(rawfile, fname, "raw");
+    err = read_raw(rawfile, &des, newinfo, newZ, errbuf);
+    if (err) {
+	sprintf(errbuf, "Problem reading %s", rawfile);
+	return 1;
+    }    
 
     if (*pZ == NULL) { /* FIXME */
 	*pZ = newZ;
@@ -334,37 +392,5 @@ int des_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 }
 
-int main (int argc, char *argv[])
-{
-    char desfile[MAXLEN], rawfile[MAXLEN];
-    int err = 0;
-    double **Z = NULL;
-    DATAINFO *pdinfo = NULL;
-
-    pdinfo = datainfo_new();
-    if (pdinfo == NULL) {
-	sprintf(errbuf, "Out of memory\n");
-	exit(EXIT_FAILURE);
-    }
-
-    strcpy(desfile, argv[1]);
-    strcat(desfile, ".des");
-    strcpy(rawfile, argv[1]);
-    strcat(rawfile, ".raw");
-
-    err = read_des(desfile, &Z, &pdinfo, markers);
-    if (err) {
-	sprintf(errbuf, "Problem reading %s\n", desfile);
-	return 1;
-    }
-
-    err = read_raw(rawfile, pdinfo);
-    if (err) {
-	sprintf(errbuf, "Problem reading %s\n", rawfile);
-	return 1;
-    }
-
-    return 0;
-}
 
 

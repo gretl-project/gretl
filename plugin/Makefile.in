@@ -86,6 +86,9 @@ gnumeric_import.lo: gnumeric_import.c import_common.c $(GRETLLIB)
 excel_import.lo: excel_import.c import_common.c xltypes.h $(GRETLLIB)
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
 
+des_import.lo: des_import.c $(GRETLLIB)
+	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
+
 workbook.lo: workbook.c biff.h
 	$(COMPILE) $(GRETLINC) $(LIBOLE2_CFLAGS) $<
 

@@ -2613,6 +2613,8 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_GNUMERIC;
     if (n > 4 && !strcmp(fname + n - 4, ".xls")) 
 	return GRETL_EXCEL;
+    if (n > 4 && !strcmp(fname + n - 4, ".des")) 
+	return GRETL_DES_DATA;
 
     addpath(fname, ppaths, 0); 
 
