@@ -204,31 +204,18 @@ static int aliased (char *cmd)
 static int flow_control (const char *line, double ***pZ, 
 			 DATAINFO *pdinfo, CMD *cmd)
 {
-    int stop = ifstate(IS_FALSE);
-
     /* clear to proceed */
-    if (!stop && cmd->ci != IF && cmd->ci != ELSE && cmd->ci != ENDIF)
+    if (!ifstate(IS_FALSE) && 
+	cmd->ci != IF && cmd->ci != ELSE && cmd->ci != ENDIF)
 	return 0;
-
-    /* nested if */
-    if (ifstate(CHECK_NEST) && cmd->ci == IF) {
-	sprintf(gretl_errmsg, "Sorry, \"if\"s can't be nested (yet)");
-	cmd->errcode = E_SYNTAX;
-	return 1;
-    }	
-
-    /* impeded by current FALSE condition, can't be changed */
-    if (stop && cmd->ci != ELSE && cmd->ci != ENDIF) 
-	return 1;
 
     if (cmd->ci == IF) {
 	int ret = if_eval(line, pZ, pdinfo);
 
-	if (ret == -1) 
+	if (ret == -1 || ifstate((ret)? SET_TRUE : SET_FALSE)) 
 	    cmd->errcode = E_SYNTAX;
-	else 
-	    ifstate((ret)? SET_TRUE : SET_FALSE);
     }
+
     else if (cmd->ci == ELSE && ifstate(SET_ELSE)) 
 	cmd->errcode = E_SYNTAX;
 

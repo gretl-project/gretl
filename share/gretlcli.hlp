@@ -503,6 +503,22 @@ is invoked immediately after this command.  Type help genr for more details
 on this.
 
 #
+if
+@Programming
+Usage:          if boolean_condition
+                  command1
+                  command2 ...
+                endif
+The gretl commands within the "if ... endif" block are executed if and only if
+the boolean condition evaluates as true (non-zero).  For the syntax of boolean
+conditions in gretl, see the genr command.  Optionally, "endif" may be
+preceded by "else" (on a line by itself, like the "if" condition and the
+"endif" terminator), followed by a block of commands to execute if the
+original boolean condition evaluates as false (zero).  The blocks between
+"if", "else" and "endif" can contain as many commands as you like, and these
+conditions can be nested.  Each "if" must be paired with an "endif".
+
+#
 import
 @Dataset
 Usage:          import csv_file
@@ -798,7 +814,7 @@ command.
 print
 @Printing
 Prints the values of the specified variables for the current stobs-endobs 
-range, or prints a literal string.
+range, or prints a literal string.  
 
 print              prints the entire data set in tabular form
 print 3 6          prints values of variable numbers 3 and 6

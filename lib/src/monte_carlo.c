@@ -793,40 +793,43 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
 int ifstate (int code)
 {
-    static int iflevel;
-    static int iffalse;
+    static unsigned char T[9];
+    static unsigned char got_if[9];
+    static unsigned char got_else[9];
+    static unsigned char indent;
 
-    switch (code) {
-    case RELAX:
-	iflevel = iffalse = 0;
-	break;
-    case SET_FALSE:
-	iflevel = iffalse = 1;
-	break;
-    case SET_TRUE:
-	iflevel = 1;
-	iffalse = 0;
-	break;
-    case SET_ELSE:
-	if (!iflevel) {
+    if (code == RELAX) {
+	indent = 0;
+    }
+    else if (code == SET_FALSE || code == SET_TRUE) {
+	indent++;
+	if (indent > 8) return 1; /* too deeply nested */
+	T[indent] = (code == SET_TRUE);
+	got_if[indent] = 1;
+	got_else[indent] = 0;
+    }
+    else if (code == SET_ELSE) {
+	if (got_else[indent] || !got_if[indent]) {
 	    sprintf(gretl_errmsg, "Unmatched \"else\"");
 	    return 1; 
 	}
-	iffalse = !iffalse;
-	break;
-    case SET_ENDIF:
-	if (!iflevel) {
+	T[indent] = !T[indent];
+	got_else[indent] = 1;
+    }
+    else if (code == SET_ENDIF) {
+	if (!got_if[indent] || indent == 0) {
 	    sprintf(gretl_errmsg, "Unmatched \"endif\"");
 	    return 1; 
 	}
-	iflevel = iffalse = 0;
-	break;
-    case IS_FALSE:
-	return iffalse;
-    case CHECK_NEST:
-	return iflevel;
+	got_if[indent] = 0;
+	got_else[indent] = 0;
+	indent--;
     }
+    else if (code == IS_FALSE) {
+	int i;
 
+	for (i=1; i<=indent; i++) if (T[i] == 0) return 1;
+    }
     return 0;
 }
 

@@ -31,7 +31,6 @@ typedef enum {
     SET_ELSE,
     SET_ENDIF,
     IS_FALSE,
-    CHECK_NEST,
     RELAX
 } ifcodes;
 
