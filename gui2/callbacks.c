@@ -701,26 +701,31 @@ void add_random_callback (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void fix_obsstr (char *str)
+static void name_first_var (GtkWidget *widget, dialog_t *ddata) 
 {
-    char pt = get_local_decpoint();
-    char *p;
+    DATAINFO *pdinfo = (DATAINFO *) dialog_data_get_data(ddata);
+    const gchar *buf;
 
-    p = strchr(str, ':');
-    if (p != NULL) {
-	*p = pt;
-    }
+    buf = dialog_data_get_text(ddata);
 
-    if (pt == ',' && (p = strchr(str, '.'))) {
-	*p = pt;
-    }
+    if (buf == NULL || validate_varname(buf)) return;
 
-    if (pt == '.' && (p = strchr(str, ','))) {
-	*p = pt;
-    }
+    pdinfo->varname[1][0] = 0;
+    strncat(pdinfo->varname[1], buf, VNAMELEN - 1);
+
+    close_dialog(ddata);
+
+    show_spreadsheet(datainfo);
 }
 
-/* ........................................................... */
+static void first_var_dialog (DATAINFO *pdinfo) 
+{
+    edit_dialog (_("gretl: name variable"), 
+		 _("Enter name for new variable\n"
+		   "(max. 8 characters)"),
+		 NULL, name_first_var, pdinfo, 
+		 0, 0);
+}
 
 static int prep_spreadsheet (const char *dataspec)
 {
@@ -748,9 +753,7 @@ static int prep_spreadsheet (const char *dataspec)
     start_new_Z(&Z, datainfo, 0);
     datainfo->markers = 0;
 
-    strcpy(datainfo->varname[1], "@tmp"); 
-
-    show_spreadsheet(datainfo);
+    first_var_dialog(datainfo);
 
     return 0;
 }

@@ -41,7 +41,7 @@ struct dialog_t_ {
 
 /* was NOT on for gtk2: needs checking */
 
-#define EDIT_DIALOG_BLOCKS 1 
+#define EDIT_DIALOG_BLOCKS 0 
 
 /* ........................................................... */
 
@@ -3367,7 +3367,11 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
     fprintf(stderr, "dw_compute_ts_info() called\n");
 #endif
 
-    if (dwinfo->pd == 1) {
+    if (dwinfo->structure == CROSS_SECTION) {
+	dwinfo->n = 500;
+	dwinfo->t1 = 0;
+	strcpy(dwinfo->stobs, "1");
+    } else if (dwinfo->pd == 1) {
 	strcpy(dwinfo->stobs, "1700");
 	dwinfo->n = 400;
 	dwinfo->t1 = 250;
