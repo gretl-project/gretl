@@ -27,6 +27,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     int i, m, oflag = 0;
     char linecpy[MAXLEN];
     static MODEL *tmpmodel;
+    GRETLSUMMARY *summ;
 
     strcpy(linecpy, plp->lines[cmdnum]);
     catchflag(linecpy, &oflag);
@@ -184,8 +185,13 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		    "this sort of loop.\n");
 	    return 1;
 	}
-	if (summary(command.list, &Z, datainfo, 1, TEXT, prn))
+	summ = summary(command.list, &Z, datainfo, prn);
+	if (summ == NULL)
 	    pprintf(prn, "generation of summary stats failed\n");
+	else {
+	    print_summary(summ, datainfo, prn, batch);
+	    free_summary(summ);
+	}	    
 	break; 
 
     default: /* not reachable */

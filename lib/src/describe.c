@@ -640,186 +640,18 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
 
 /* ............................................................. */
 
-static void printftex (const double zz, print_t *prn, int endrow)
-{
-    char s[32];
-
-    if (na(zz)) pprintf(prn, "undefined");
-    else printxx(zz, s, SUMMARY);
-    if (endrow) 
-	pprintf(prn, "$%s$\\\\");
-    else
-	pprintf(prn, "$%s$ & ");	
-}
-
-
-
-/* ............................................................. */
-
-static void texprint_summary (const int *list, 
-			      const DATAINFO *pdinfo, int n,
-			      GRETLSUMMARY *summ,
-			      print_t *prn)
-{
-    char date1[9], date2[9];
-    double xbar, std, xcv;
-    int lo = list[0], v, lv;
-
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
-
-    pprintf(prn, "\\begin{center}\n"
-	    "Summary Statistics, using the observations %s -- %s\\\\\n",
-	    date1, date2);
-    
-    if (lo == 1) {
-	pprintf(prn, "for the variable %s (%d valid observations)\\\\[8pt]\n\n", 
-		pdinfo->varname[list[1]], n);
-	pprintf(prn, "\\begin{tabular}{rrrr}\n");
-    } else {
-	pprintf(prn, "(missing values denoted by $-999$ will be "
-		"skipped)\\\\[8pt]\n\n");
-	pprintf(prn, "\\begin{tabular}{lrrrr}\n");
-	pprintf(prn, "Variable &");
-    }
-
-    pprintf(prn, "MEAN & MEDIAN & MIN & MAX\\\\\\hline\n");
-
-    for (v=1; v<=lo; v++) {
-	lv = list[v];
-	xbar =summ->coeff[v];
-	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
-	printftex(xbar, prn, 0);
-	printftex(summ->xmedian[v], prn, 0);
-	printftex(summ->xpx[v], prn, 0);
-	printftex(summ->xpy[v], prn, 1);
-	if (v == lo) pprintf(prn, "[10pt]\n\n");
-	else pprintf(prn, "\n");
-    }
-
-    if (lo > 1) pprintf(prn, "Variable & ");
-    pprintf(prn, "S.D. & C.V. & SKEW & EXCSKURT\\\\\\hline\n");
-    for (v=1; v<=lo; v++) {
-	lv = list[v];
-	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
-	xbar = summ->coeff[v];
-	std = summ->sderr[v];
-	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
-	else xcv = -999;
-	printftex(std, prn, 0);
-	printftex(xcv, prn, 0);
-	printftex(summ->xskew[v], prn, 0);
-	printftex(summ->xkurt[v], prn, 1);
-	pprintf(prn, "\n");
-    }
-
-    pprintf(prn, "\\end{tabular}\n\\end{center}\n");
-    
-}
-
-/* FIXME */
-
-#define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                   "\\cellx1600\\cellx3200\\cellx4800\\cellx6400" \
-                   "\\cellx8000\n\\intbl"
-
-#define VAR_STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                   "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n\\intbl"
-
-/* ............................................................. */
-
-static void rtfprint_summary (const int *list, 
-			      const DATAINFO *pdinfo, int n,
-			      GRETLSUMMARY *summ,
-			      print_t *prn)
-{
-    char date1[9], date2[9];
-    double xbar, std, xcv;
-    int lo = list[0], v, lv;
-
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
-
-    pprintf(prn, "{\\rtf1\\par\n\\qc "
-	    "Summary Statistics, using the observations %s - %s\\par\n",
-	    date1, date2);
-    
-    if (lo == 1) {
-	pprintf(prn, "for the variable %s (%d valid observations)\\par\n\n", 
-		pdinfo->varname[list[1]], n);
-	pprintf(prn, "{" VAR_STATS_ROW);
-    } else {
-	pprintf(prn, "(missing values denoted by -999 will be "
-		"skipped)\\par\n\n");
-	pprintf(prn, "{" STATS_ROW
-		" \\qc {\\i Variable}\\cell");
-    }
-
-    pprintf(prn, 
-	    " \\qr {\\i Mean}\\cell"
-	    " \\qr {\\i Median}\\cell"
-	    " \\qr {\\i Minimum}\\cell"
-	    " \\qr {\\i Maximum}\\cell"
-	    " \\intbl \\row\n"
-	    );
-
-    for (v=1; v<=lo; v++) {
-	lv = list[v];
-	xbar = summ->coeff[v];
-	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
-	printftex(xbar, prn, 0);
-	printftex(summ->xmedian[v], prn, 0);
-	printftex(summ->xpx[v], prn, 0);
-	printftex(summ->xpy[v], prn, 1);
-	if (v == lo) pprintf(prn, "[10pt]\n\n");
-	else pprintf(prn, "\n");
-    }
-
-    if (lo > 1) pprintf(prn, " \\qc {\\i Variable}\\cell");
-    pprintf(prn, 
-	    " \\qr {\\i S.D}\\cell"
-	    " \\qr {\\i C.V.}\\cell"
-	    " \\qr {\\i Skewness}\\cell"
-	    " \\qr {\\i Excess kurtosis}\\cell"
-	    " \\intbl \\row\n"
-	    );
-
-    for (v=1; v<=lo; v++) {
-	lv = list[v];
-	if (lo > 1)
-	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
-	xbar = summ->coeff[v];
-	std = summ->sderr[v];
-	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
-	else xcv = -999;
-	printftex(std, prn, 0);
-	printftex(xcv, prn, 0);
-	printftex(summ->xskew[v], prn, 0);
-	printftex(summ->xkurt[v], prn, 1);
-	pprintf(prn, "\n");
-    }
-
-    pprintf(prn, "}\n\n\\par\n");
-}
-
-/* ............................................................. */
-
-static void textprint_summary (const int *list, 
-			       const DATAINFO *pdinfo, int n,
-			       GRETLSUMMARY *summ,
-			       print_t *prn, int batch)
+void print_summary (GRETLSUMMARY *summ,
+		    const DATAINFO *pdinfo,
+		    print_t *prn, int batch)
 {
     double xbar, std, xcv;
-    int lo = list[0], v, lv, lineno = 4;
+    int lo = summ->list[0], v, lv, lineno = 4;
 
     prhdr("Summary Statistics", pdinfo, SUMMARY, prn);
     if (lo == 1) {
 	space(16, prn);
 	pprintf(prn, "for the variable '%s' (%d valid observations)\n\n", 
-		pdinfo->varname[list[1]], n);
+		pdinfo->varname[summ->list[1]], summ->n);
     } else {
 	pprintf(prn, "               "
 		"(missing values denoted by -999 will be skipped)\n\n");
@@ -831,7 +663,7 @@ static void textprint_summary (const int *list,
     for (v=1; v<=lo; v++) {
 	_pgbreak(1, &lineno, batch);
 	lineno++;
-	lv = list[v];
+	lv = summ->list[v];
 	xbar = summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
@@ -851,7 +683,7 @@ static void textprint_summary (const int *list,
     for (v=1; v<=lo; v++) {
 	_pgbreak(1, &lineno, batch);
 	lineno++;
-	lv = list[v];
+	lv = summ->list[v];
 	if (lo > 1)
 	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
 	else space(2, prn);
@@ -884,65 +716,57 @@ void free_summary (GRETLSUMMARY *summ)
 
 /* ............................................................. */
 
-int summary (const int *list, double **pZ, const DATAINFO *pdinfo, 
-	     const int batch, const int format, print_t *prn)
+GRETLSUMMARY *summary (const int *list, 
+		       double **pZ, const DATAINFO *pdinfo,
+		       print_t *prn) 
 {
-    int mm, n = 0, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
+    int mm, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
     int v, lv, *tmp;
-    GRETLSUMMARY summ;
+    GRETLSUMMARY *summ;
     double xbar, std, low, high, skew, kurt, *x;
+
+    summ = malloc(sizeof *summ);
+    if (summ == NULL) return NULL;
 
     lo = list[0];
     mm = lo + 1;
-    if ((summ.xskew = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
-    if ((summ.xkurt = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
-    if ((summ.xmedian = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
-    if ((summ.coeff = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
-    if ((summ.sderr = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
-    if ((summ.xpx = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
-    if ((summ.xpy = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
-    if ((x = malloc(len * sizeof *x)) == NULL) return E_ALLOC;
+    if ((summ->xskew = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((summ->xkurt = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((summ->xmedian = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((summ->coeff = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((summ->sderr = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((summ->xpx = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((summ->xpy = malloc(mm * sizeof(double))) == NULL) return NULL;
+    if ((x = malloc(len * sizeof *x)) == NULL) return NULL;
 
     for (v=1; v<=lo; v++)  {
 	lv = list[v];
 	x[0] = -999999.0;
-	n = _ztox(lv, x, pdinfo, *pZ);
-	if (n == 0) return 1;
-	if (n == 1) {
+	summ->n = _ztox(lv, x, pdinfo, *pZ);
+	if (summ->n == 0) return NULL;
+	if (summ->n == 1) {
 	    pprintf(prn, "Sample range has only one observation.");
-	    return 1;
+	    return NULL;
 	}
-	minmax(0, n-1, x, &low, &high);	
-	moments(0, n-1, x, 
+	minmax(0, summ->n-1, x, &low, &high);	
+	moments(0, summ->n-1, x, 
 		&xbar, &std, &skew, &kurt, 1);
-	summ.xpx[v] = low;
-	summ.xpy[v] = high;
-	summ.coeff[v] = xbar;
-	summ.sderr[v] = std;
-	summ.xskew[v] = skew;
-	summ.xkurt[v] = kurt;
-	qsort(x, n, sizeof *x, compare_doubles); 
-	if (n > 1) summ.xmedian[v] = esl_median(x, n);
-	else summ.xmedian[v] = x[1];
+	summ->xpx[v] = low;
+	summ->xpy[v] = high;
+	summ->coeff[v] = xbar;
+	summ->sderr[v] = std;
+	summ->xskew[v] = skew;
+	summ->xkurt[v] = kurt;
+	qsort(x, summ->n, sizeof *x, compare_doubles); 
+	if (summ->n > 1) summ->xmedian[v] = esl_median(x, summ->n);
+	else summ->xmedian[v] = x[1];
     }
 
     copylist(&tmp, list);
-    summ.list = tmp;
+    summ->list = tmp;
     free(x);
 
-    if (format == TEXT) {
-	textprint_summary(list, pdinfo, n, &summ, prn, batch);
-    }
-    else if (format == LATEX) {
-	texprint_summary(list, pdinfo, n, &summ, prn); 
-    }
-    else if (format == RTF) {
-	rtfprint_summary(list, pdinfo, n, &summ, prn);
-    }
-
-    free_summary(&summ);
-
-    return 0;
+    return summ;
 }
 
 /* ............................................................ */

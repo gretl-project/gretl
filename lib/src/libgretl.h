@@ -83,6 +83,7 @@ typedef struct {
 } GRETLTEST;
 
 typedef struct {
+    int n;
     int *list;
     double *xskew, *xkurt, *xmedian, *coeff, *sderr, *xpx, *xpy;
 } GRETLSUMMARY;

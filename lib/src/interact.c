@@ -878,6 +878,7 @@ int simple_commands (CMD *cmd, const char *line,
 {
     int err = 0, order = 0;
     CORRMAT corrmat;
+    GRETLSUMMARY *summ;
 
     switch (cmd->ci) {
 
@@ -982,9 +983,13 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SUMMARY:
-	err = summary(cmd->list, pZ, datainfo, batch, TEXT, prn);
-	if (err) 
+	summ = summary(cmd->list, pZ, datainfo, prn);
+	if (summ == NULL) 
 	    pprintf(prn, "generation of summary stats failed\n");
+	else {
+	    print_summary(summ, datainfo, prn, batch);
+	    free_summary(summ);
+	}
 	break; 
 
     case MEANTEST:

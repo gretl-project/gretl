@@ -50,10 +50,15 @@ int periodogram (const int *list,
 		 const PATHS *ppaths, const int batch, 
 		 const int opt, print_t *prn);
 
-int summary (const int *list, 
-	     double **pZ, const DATAINFO *pdinfo, 
-	     const int batch, const int format, 
-	     print_t *prn);
+GRETLSUMMARY *summary (const int *list, 
+		       double **pZ, const DATAINFO *pdinfo,
+		       print_t *prn);
+
+void print_summary (GRETLSUMMARY *summ,
+		    const DATAINFO *pdinfo,
+		    print_t *prn, int batch); 
+
+void free_summary (GRETLSUMMARY *summ);
 
 int esl_corrmx (int *list, 
 		double **pZ, const DATAINFO *pdinfo, 
