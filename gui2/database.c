@@ -935,6 +935,11 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
 	line1[149] = 0;
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
+
+#ifndef OLD_GTK
+	my_utf_validate(line1);
+#endif
+
 	if (sscanf(line1, "%8s", sername) != 1) break;
 
 	sername[8] = 0;

@@ -29,7 +29,7 @@ void do_gui_help (gpointer data, guint pos, GtkWidget *widget);
 void do_script_help (gpointer data, guint pos, GtkWidget *widget);
 
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
-			      windata_t *vwin);
+		       windata_t *vwin);
 
 void datafile_find (GtkWidget *widget, gpointer data);
 

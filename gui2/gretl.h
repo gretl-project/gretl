@@ -31,10 +31,7 @@
 # endif
 #endif
 
-#undef GTK_DISABLE_DEPRECATED
-
 #include <gtk/gtk.h>
-#include <gtk/gtkitemfactory.h>
 #include <gdk/gdkkeysyms.h>
 #include "libgretl.h"
 #include <stdio.h>
