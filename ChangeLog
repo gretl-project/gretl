@@ -3,6 +3,10 @@ version 1.3.2
   at the wrong coefficient in some cases
 - Fix bug in VAR impulse responses: could get messed up by
   missing values 
+- Fix bug: crash on generating LaTeX tabular output for a model
+  estimated using robust standard errors (format string issue)
+- Fix bug: the session "graph page" was not appearing even when
+  a valid latex executable was available
 - Add auto-lag option to the GUI dialog box for the ADF test
 - Remember the options selected in the ADF dialog from one invocation
   to the next

@@ -532,14 +532,14 @@ int check_for_prog (const char *prog)
     if (prog == NULL || *prog == 0) return 0;
 
     if (!strcmp(prog, "latex")) {
-	strcpy(tmp, "latex x.tex > /dev/null");
+	strcpy(tmp, "latex q.tex > /dev/null");
     } else {
 	sprintf(tmp, "%s > /dev/null 2>&1", prog);
     }
 
     ret = gretl_spawn_quiet(tmp) == 0;
 
-    if (!strcmp(prog, "latex")) remove("x.log");
+    if (!strcmp(prog, "latex")) remove("q.log");
 
     return ret;
 }

@@ -887,7 +887,7 @@ static void hc_vcv_line (const MODEL *pmod, PRN *prn)
 		(jack)? "" : " ",
 		hcv, (jack)? " (jackknife)" : "");
     } else {
-	pprintf(prn, "%s, %sHC%d%s\n", 
+	pprintf(prn, "%s, %s%sHC%d%s\n", 
 		I_("Heteroskedasticity-robust standard errors"),
 		(jack)? "" : I_("variant"),
 		(jack)? "" : " ",

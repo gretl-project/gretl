@@ -2552,13 +2552,25 @@ static int real_gretl_spawn (const char *cmdline, int verbose)
 	    ret = 1;
 	}
     } else if (status != 0) {
-	sprintf(gretl_errmsg, "%s\n%s", 
-		_("Command failed"),
-		sout);
-	if (verbose) {
-	    fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	if (sout != NULL && strstr(sout, "File ignored")) {
+	    /* latex q.tex: works, but returns non-zero */
+	    ;
+	} else {
+	    if (sout != NULL) {
+		sprintf(gretl_errmsg, "%s\n%s", 
+			_("Command failed"),
+			sout);
+		if (verbose) {
+		    fprintf(stderr, "status=%d: '%s'\n", status, sout);
+		}
+	    } else {
+		strcpy(gretl_errmsg, _("Command failed"));
+		if (verbose) {
+		    fprintf(stderr, "status=%d\n", status);
+		}
+	    }
+	    ret = 1;
 	}
-	ret = 1;
     }
 
     if (errout != NULL) g_free(errout);
