@@ -1,4 +1,6 @@
-04/17/2002 version 0.994
+04/19/2002 version 0.994
+- fix bugs in win32 copy to clipboard
+- fix RTF printing of correlation matrix
 - fix bug in genr (generating a scalar when data set is sub-
   sampled)
 - fix bug: editing periodogram graph using GUI

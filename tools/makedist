@@ -19,7 +19,7 @@ date > gretl/share/gretl.stamp
 cp -ap gretl/* gretl-$version
 
 # go in and clean in dist dir
-cd gretl-$version$ && make distclean
+cd gretl-$version && make distclean
 
 # come back up a level
 cd ${topdir}/..
@@ -37,6 +37,7 @@ cp -ap gretl/doc/manual.pdf gretl-$version/doc
 cp -ap gretl/doc/manual-a4.pdf gretl-$version/doc
 cp -ap gretl/doc/manual-html gretl-$version/doc
 cp -ap gretl/doc/figures gretl-$version/doc
+find gretl-$version/doc -name "*CVS" | xargs rm -rf
 
 # make the archive and remove the dist dir
 tar cvfz $tarfile gretl-$version
