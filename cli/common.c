@@ -165,11 +165,13 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	break;
 
     case STORE:
+#ifdef notdef
 	if (plp->lvar) {
 	    pprintf(prn, "The store command is not available in "
 		    "this sort of loop.\n");
 	    return 1;
 	}
+#endif
 	if (round == 0) {
 	    plp->nstore = command.list[0];
 	    strcpy(loopstorefile, command.param);
@@ -180,6 +182,10 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    plp->storeval[i*plp->ntimes + round] = 
 		Z[datainfo->n*command.list[i+1] + datainfo->t1 + 1];
 	}	
+	break;
+
+    case PVALUE:
+	batch_pvalue(plp->lines[cmdnum], Z, datainfo, prn);
 	break;
 
     case SUMMARY:

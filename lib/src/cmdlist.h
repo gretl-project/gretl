@@ -36,6 +36,7 @@ char *commands[] = {
     "corr",     
     "corrgm",   
     "criteria",
+    "critical",
     "cusum",
     "delete",
     "diff",

@@ -42,6 +42,9 @@ extern int boxplots (int *list, char **bools,
 extern int boolean_boxplots (const char *str, double **pZ, 
 			     DATAINFO *pdinfo, int notches);
 
+/* calculator.c */
+extern void get_critical (GtkWidget *w, gpointer data);
+
 /* private functions */
 static int gui_exec_line (char *line, 
 			  LOOPSET *plp, int *plstack, int *plrun, 
@@ -2709,6 +2712,7 @@ static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
     g_free(savestuff); 
     fclose(fp);
     if (!quiet) infobox("script saved");
+    mydata->active_var = 0; /* zero out the "changed" flag */
 }
 
 /* ........................................................... */
@@ -2717,14 +2721,26 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
     char *runfile = NULL, fname[MAXLEN];
-    int err;
+    int err, button, changed = 0;
 
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
     if (code == SCRIPT_EXEC) runfile = scriptfile;
     else if (code == SESSION_EXEC) runfile = cmdfile;
 
-    auto_save_script(data, 1, NULL);
+    if (data != NULL) {
+	windata_t *mydata = (windata_t *) data;
+
+	changed = mydata->active_var;
+    }
+
+    if (changed && code == SCRIPT_EXEC) {
+	button = yes_no_dialog("gretl: run script", "Save changes first?", 1);
+	if (button == CANCEL_BUTTON)
+	    return;
+	if (button == YES_BUTTON)
+	    auto_save_script(data, 1, NULL);
+    }
 
     err = execute_script(runfile, NULL, NULL, prn, code);
     gretl_print_destroy(prn);
@@ -3378,6 +3394,16 @@ static int gui_exec_line (char *line,
 	err = corrgram(command.list[1], order, &Z, datainfo, &paths,
 		       1, prn);
 	if (err) pprintf(prn, "Failed to generate correlogram\n");
+	break;
+
+    case CRITICAL:
+	if (1) {
+	    lineprint_t lpt;
+
+	    lpt.line = line;
+	    lpt.prn = prn;
+	    get_critical(NULL, &lpt);
+	}
 	break;
 
     case DELEET:

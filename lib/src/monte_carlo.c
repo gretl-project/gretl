@@ -58,6 +58,7 @@ int ok_in_loop (int ci)
 	ci == GENR ||
 	ci == STORE ||
 	ci == PRINT ||
+	ci == PVALUE ||
 	ci == SMPL ||
 	ci == SUMMARY ||
 	ci == ENDLOOP) 

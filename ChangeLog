@@ -17,6 +17,12 @@ version 0.99
 - add context help (click on a command and press the "?" button)
   for the edit command script window
 - correct typos in supplied data files data3-2 and data8-3
+- add "critical" command (gretl console and GUI script mode only),
+  to print critical values for a selected distribution
+- add pvalue() function to the set of options available under
+  the genr command
+- improve handling of scripts opened in the GUI (including a
+  prompt to save before running if changes have been made)
 
 02/11/2002 version 0.98
 - fig bug affecting frequency distributions and the test for

@@ -59,7 +59,7 @@ const char *gretl_error_messages[] = {
     "Command has insufficient arguments.",                    /* E_ARGS */
     "This command is implemented only for OLS models.",       /* E_OLSONLY */
     "Couldn't open data file.",                               /* E_DATA_DAT */
-    "Invalid argument for coeff, corr, stderr, or rho.",      /* E_INVARG */
+    "Invalid argument for coeff, corr, stderr, rho or pvalue.",  /* E_INVARG */
     "Invalid lag order for adf command.",                     /* E_ADF */
     "Invalid sample split for Chow test.",                    /* E_SPLIT */
     "Syntax error in command line.",                          /* E_PARSE */

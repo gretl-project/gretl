@@ -68,6 +68,7 @@ typedef struct {
 } dialog_t;
 
 typedef struct {
+    GtkWidget *dialog;
     GtkWidget *listbox; 
     GtkWidget *mbar;
     GtkWidget *w;
@@ -79,6 +80,11 @@ typedef struct {
     int role;
     int id;
     char fname[MAXLEN];
-} windata_t;  
+} windata_t; 
+
+typedef struct {
+    char *line;
+    PRN *prn;
+} lineprint_t;
 
 #endif /* GRETLTYPES_H */

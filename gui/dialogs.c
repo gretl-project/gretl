@@ -27,12 +27,6 @@
 extern const char *version_string;
 #endif
 
-enum {
-    YES_BUTTON,
-    NO_BUTTON,
-    CANCEL_BUTTON
-} buttons;
-
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern void show_spreadsheet (DATAINFO *pdinfo);

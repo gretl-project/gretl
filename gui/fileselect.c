@@ -175,6 +175,18 @@ static void maybe_add_ext (char *fname, int action, gpointer data)
 
 /* ........................................................... */
 
+static void script_set_title (windata_t *vwin, char *fname)
+{
+    gchar *title, *p = strrchr(fname, SLASH);
+
+    title = g_strdup_printf("gretl: %s", p? p + 1 : fname);
+    gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
+    strcpy(vwin->fname, fname);
+    g_free(title);
+}
+
+/* ........................................................... */
+
           /* MS Windows version of file selection code */
 
 /* ........................................................... */
@@ -383,6 +395,23 @@ void file_selector (char *msg, int action, gpointer data)
 	MODEL *pmod = (MODEL *) data;
 	do_save_tex(fname, action, pmod); 
     }
+    else if (action == SAVE_SCRIPT) {
+	windata_t *vwin = (windata_t *) data;
+	FILE *fp;
+
+	if ((fp = fopen(fname, "w")) == NULL) {
+	    errbox("Couldn't open file for writing");
+	    return;
+	}
+	fprintf(fp, "%s", 
+		gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1));
+	fclose(fp);
+	infobox("File saved OK");
+	strcpy(scriptfile, fname);
+	mkfilelist(3, scriptfile);
+	vwin->active_var = 0; /* zero out "changed" flag */
+	script_set_title(vwin, fname);
+    }
     else { /* save contents of an editable text window */
 	GtkWidget *editwin;
 	FILE *fp;
@@ -396,10 +425,6 @@ void file_selector (char *msg, int action, gpointer data)
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
 	infobox("File saved OK");
-	if (action == SAVE_SCRIPT) {
-	    strcpy(scriptfile, fname);
-	    mkfilelist(3, scriptfile);
-	}
     }
 }
 
@@ -526,6 +551,25 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
 	do_save_tex(fname, action, pmod); 
     }
+    else if (action == SAVE_SCRIPT) {
+	windata_t *vwin;
+	FILE *fp;
+
+	vwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
+	if ((fp = fopen(fname, "w")) == NULL) {
+	    errbox("Couldn't open file for writing");
+	    gtk_widget_destroy(GTK_WIDGET(fs));
+	    return;
+	}
+	fprintf(fp, "%s", 
+		gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1));
+	fclose(fp);
+	infobox("File saved OK");
+	strcpy(scriptfile, fname);
+	mkfilelist(3, scriptfile);
+	vwin->active_var = 0; /* zero out "changed" flag */
+	script_set_title(vwin, fname);
+    }
     else { /* save contents of an editable text window */
 	GtkWidget *editwin;
 	FILE *fp;
@@ -540,10 +584,6 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
 	infobox("File saved OK");
-	if (action == SAVE_SCRIPT) {
-	    strcpy(scriptfile, fname);
-	    mkfilelist(3, scriptfile);
-	}
     }
     gtk_widget_destroy(GTK_WIDGET(fs));    
 }

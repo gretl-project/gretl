@@ -151,6 +151,15 @@ number of coefficients (k).  T, k, and ess may be numerical values or names
 of previously defined variables.
 
 #
+critical
+Usage:          critical t df           e.g. critical t 20
+                critical X df           e.g. critical X 5
+                critical F dfn dfd      e.g. critical F 3 37
+Available only in the gretl console, or when running a script in the gretl
+GUI.  Prints out the critical values of the given statistic (t, chi-square or
+F), for the specified degrees of freedom, at the common significance levels.
+
+#
 cusum
 Usage:          cusum
 Must follow the estimation of a model via OLS.  Performs the CUSUM test for
@@ -271,17 +280,21 @@ Statistical functions: mean (arithmetic mean), median, var (variance), sd
 Time-series functions: lag, lead, diff (first difference), ldiff
 (log-difference, or first difference of natural logs).  Miscellaneous: cum
 (cumulate), sort, uniform, normal, misszero (replace the missing
-observation code with zero), zeromiss (inverse operation of misszero).
+observation code with zero), zeromiss (inverse operation of misszero), and
+pvalue (probability value for a given statistic against a specified
+distribution).  
 
-All of the above functions with the exception of cov, corr, uniform and normal
-take as their single argument either the name of a variable (note that you
-can't refer to variable by their ID numbers in a genr command) or a composite
-expression that evaluates to a variable (e.g.  ln((x1+x2)/2)).  cov and corr
-both require two arguments, and return respectively the covariance and the
-correlation coefficient between two named variables.  uniform() and normal(),
-which do not take arguments, return pseudo-random series drawn from the
-uniform (0-100) and standard normal distributions respectively (see also the
-seed command).
+All of the above functions with the exception of cov, corr, uniform, normal
+and pvalue take as their single argument either the name of a variable (note
+that you can't refer to variable by their ID numbers in a genr command) or a
+composite expression that evaluates to a variable (e.g.  ln((x1+x2)/2)).  cov
+and corr both require two arguments, and return respectively the covariance
+and the correlation coefficient between two named variables.  uniform() and
+normal(), which do not take arguments, return pseudo-random series drawn from
+the uniform (0-100) and standard normal distributions respectively (see also
+the seed command).  The pvalue() function takes the same arguments as the
+pvalue command (see below), but in this context commas should be placed
+between the arguments.
 
 Besides the operators and functions just noted there are some special
 uses of genr:
@@ -337,6 +350,8 @@ Examples of genr commands:
   genr cv=vcv(x1, x2)    [covariance of x1 and x2 coeffs. in last model]
   genr x=uniform()/100   [uniform pseudo-random variable, range 0 to 1]
   genr x=3*normal()      [normal pseudo-random var, mean 0, std. dev. 3]
+  genr x=pvalue(t,20,1.4) [p-value for 1.4, under the t distribution with
+                           20 degrees of freedom]
 
 Tips on dummy variables: 
 * Suppose x is coded with values 1, 2, or 3 and you want three dummy

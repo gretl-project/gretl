@@ -932,7 +932,6 @@ static void edit_script_help (GtkWidget *widget, gpointer data)
 	    while (*q && !isspace(*q)) q++;
 	*word = '\0';
 	strncat(word, p, (q - p > 8)? 8 : q - p);
-	fprintf(stderr, "word: '%s'\n", word);
 	pos = help_index(word, 1);
 	if (pos > 0) 
 	    help_show(NULL, pos, NULL);
@@ -979,12 +978,13 @@ static void file_viewer_save (GtkWidget *widget, windata_t *mydata)
 	    errbox("Can't open file for writing");
 	    return;
 	} else {
-	    text = gtk_editable_get_chars (GTK_EDITABLE(mydata->w), 0, -1);
+	    text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
 	    fprintf(fp, "%s", text);
 	    fclose(fp);
 	    g_free(text);
 	    sprintf(buf, "Saved %s\n", mydata->fname);
 	    infobox(buf);
+	    if (mydata->role == EDIT_SCRIPT) mydata->active_var = 0;
 	}
     }
 } 
@@ -993,6 +993,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *mydata)
 
 void windata_init (windata_t *mydata)
 {
+    mydata->dialog = NULL;
     mydata->listbox = NULL;
     mydata->mbar = NULL;
     mydata->w = NULL;
@@ -1267,6 +1268,13 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 /* ........................................................... */
 
+static void script_changed (GtkWidget *w, windata_t *vwin)
+{
+    vwin->active_var = 1;
+}
+
+/* ........................................................... */
+
 windata_t *view_file (char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role, 
 		      GtkItemFactoryEntry menu_items[]) 
@@ -1298,6 +1306,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     hsize += 48;
 
     dialog = gtk_dialog_new();
+    vwin->dialog = dialog;
     gtk_widget_set_usize (dialog, hsize, vsize);
 
     title = make_viewer_title(role, filename);
@@ -1410,11 +1419,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
     fclose(fd);
 
-    /* clean up when dialog is destroyed */
-    if (del_file) {
-	gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-			   GTK_SIGNAL_FUNC(delete_file), (gpointer) fle);
+    /* grab the "changed" signal when editing a script */
+    if (role == EDIT_SCRIPT) {
+	gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
+			   GTK_SIGNAL_FUNC(script_changed), vwin);
     }
+
+    /* catch some keystrokes */
     if (!editable) {
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 			   GTK_SIGNAL_FUNC(catch_key), dialog);
@@ -1422,6 +1433,12 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_object_set_data(GTK_OBJECT(dialog), "vwin", vwin);
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 			   GTK_SIGNAL_FUNC(catch_ctrl_key), dialog);	
+    }    
+
+    /* clean up when dialog is destroyed */
+    if (del_file) {
+	gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
+			   GTK_SIGNAL_FUNC(delete_file), (gpointer) fle);
     }
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);

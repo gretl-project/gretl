@@ -284,18 +284,30 @@ double batch_pvalue (const char *str,
                      PRN *prn)
 {
     int i, df1 = 0, df2 = 0;
-    char stat;
+    char stat = 0;
     double xx = NADBL, mean = 0, variance = 0, xval = 0;
     char cmd[7], df1str[9], df2str[9], fstr[9]; 
 
     for (;;) {
-    if (sscanf(str, "%s %c %s %s %s", cmd, &stat, df1str, df2str, fstr) == 5)
+	if (sscanf(str, "%c,%[^,],%[^,],%s", &stat, df1str, df2str, fstr) == 4)
+	    break;
+	else *df1str = *df2str = *fstr = '\0';
+	if (sscanf(str, "%c,%[^,],%s", &stat, df1str, fstr) == 3)
+	    break;
+	else *df1str = *df2str = *fstr = '\0';
+	if (sscanf(str, "%c,%s", &stat, fstr) == 2)
+	    break;
+	else *df1str = *df2str = *fstr = '\0';
+	if (sscanf(str, "%s %c %s %s %s", cmd, &stat, df1str, df2str, fstr) == 5)
+	    break;
+	else *df1str = *df2str = *fstr = '\0';
+	if (sscanf(str, "%s %c %s %s", cmd, &stat, df1str, fstr) == 4)
+	    break;
+	else *df1str = *df2str = *fstr = '\0';
+	if (sscanf(str, "%s %c %s", cmd, &stat, fstr) == 3)
+	    break;
+	else *df1str = *df2str = *fstr = '\0';
 	break;
-    if (sscanf(str, "%s %c %s %s", cmd, &stat, df1str, fstr) == 4)
-	break;
-    if (sscanf(str, "%s %c %s", cmd, &stat, fstr) == 3)
-	break;
-    else break;
     }
 
     if (isalpha((unsigned char) df1str[0])) {
@@ -356,6 +368,10 @@ double batch_pvalue (const char *str,
 
     case '2':
     case 't':
+	if (!*fstr || !*df1str) {
+	    pprintf(prn, "\npvalue for t: missing parameter\n");
+	    return -1;
+	}
 	xx = tprob(xval, df1);
 	if (xx < 0) {
 	    pprintf(prn, "\np-value calculation failed\n");
@@ -371,6 +387,10 @@ double batch_pvalue (const char *str,
     case 'c':
     case 'x':
     case 'X':
+	if (!*fstr || !*df1str) {
+	    pprintf(prn, "\npvalue for chi-square: missing parameter\n");
+	    return -1;
+	}
 	xx = chisq(xval, df1);
 	if (xx < 0) {
 	    pprintf(prn, "\np-value calculation failed\n");
@@ -384,6 +404,10 @@ double batch_pvalue (const char *str,
     case '4':
     case 'f':
     case 'F':
+	if (!*fstr || !*df1str || !*df2str) {
+	    pprintf(prn, "\npvalue for F: missing parameter\n");
+	    return -1;
+	}
 	xx = fdist(xval, df1, df2);
 	if (xx < 0) {
 	    pprintf(prn, "\np-value calculation failed\n");

@@ -86,7 +86,8 @@ enum transformations {
 	T_VAR,
 	T_COV,
 	T_MEDIAN,
-	T_ZEROMISS
+	T_ZEROMISS,
+	T_PVALUE
 };	
 
 static char *math[] = {
@@ -118,6 +119,7 @@ static char *math[] = {
     "cov",
     "median",
     "zeromiss",
+    "pvalue",
     NULL
 };
 
@@ -326,7 +328,7 @@ static int reserved (const char *str)
 			      "t", "annual", "qtrs", "months", "hours", "i",
 			      "log", "exp", "sin", "cos", "diff", "ldiff", 
 			      "sort", "int", "ln", "abs", "sqrt", "cum",
-			      ""};
+			      "pvalue", ""};
     register int i = 0;
 
     while (strlen(resword[i])) {
@@ -786,6 +788,17 @@ GENERATE generate (double **pZ, DATAINFO *pdinfo,
 		    if (nt == T_VCV) {
 			xx = _genr_vcv(sexpr, pZ, pdinfo, pmod);
 			if (na(xx)) {
+			    genr.errcode = E_INVARG;
+			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
+			    return genr;
+			} else 
+			    for (i=t1; i<=t2; i++)
+				genr.xvec[i] = xx;
+			break;
+		    }
+		    if (nt == T_PVALUE) {
+			xx = batch_pvalue(sexpr, *pZ, pdinfo, NULL);
+			if (na(xx) || xx == -1.0) {
 			    genr.errcode = E_INVARG;
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;

@@ -3,6 +3,12 @@
 #ifndef DIALOGS_H
 #define DIALOGS_H
 
+enum {
+    YES_BUTTON,
+    NO_BUTTON,
+    CANCEL_BUTTON
+} buttons;
+
 /* functions follow */
 
 int make_default_storelist (void);

@@ -292,8 +292,8 @@ dfstat_t chi_vals[NCHI] = {{1,{2.706,3.841,5.024,6.635,10.828}},
 
 static void other_tables (PRN *prn)
 {
-    pprintf(prn, "\n\nFor more comprehensive statistical tables, please consult "
-	    "a statistics or econometrics text, e.g. Ramanathan's "
+    pprintf(prn, "\nFor more comprehensive statistical tables, please consult "
+	    "a statistics or\neconometrics text, e.g. Ramanathan's "
 	    "Introductory Econometrics.\n");
 }
 
@@ -336,7 +336,7 @@ void dw_lookup (int n, PRN *prn)
 
 /* .................................................................. */
 
-void norm_lookup (PRN *prn)
+void norm_lookup (PRN *prn, int gui)
 {
     pprintf(prn, "Critical values for standard normal distribution\n\n");
     pprintf(prn, "Column headings show alpha (significance level) for "
@@ -348,12 +348,12 @@ void norm_lookup (PRN *prn)
     pprintf(prn, "      0.10     0.05    0.025     0.01    0.001\n\n"); 
     pprintf(prn, "  %8.3f %8.3f %8.3f %8.3f %8.3f",
 	    1.282, 1.645, 1.960, 2.326, 3.090);
-    other_tables(prn);
+    if (gui) other_tables(prn);
 }
 
 /* .................................................................. */
 
-void t_lookup (int df, PRN *prn)
+void t_lookup (int df, PRN *prn, int gui)
 {
     int i, j, dflo, dfhi;
 
@@ -387,12 +387,12 @@ void t_lookup (int df, PRN *prn)
 	    pprintf(prn, "\n");
 	}
     }
-    other_tables(prn);
+    if (gui) other_tables(prn);
 }
 
 /* .................................................................. */
 
-void chisq_lookup (int df, PRN *prn)
+void chisq_lookup (int df, PRN *prn, int gui)
 {
     int i, j;
 
@@ -410,7 +410,7 @@ void chisq_lookup (int df, PRN *prn)
 	    pprintf(prn, "\n");
 	}
     }
-    other_tables(prn);
+    if (gui) other_tables(prn);
 }
 
 
