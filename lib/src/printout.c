@@ -1978,6 +1978,19 @@ static char *get_arg (char *line)
     return ret;
 }
 
+static int get_marker_offset (const char *s)
+{
+    int off = 0;
+
+    if (sscanf(s, "marker+%d", &off)) {
+	if (off < 0) {
+	    off = 0;
+	}
+    }
+
+    return off;
+}
+
 static int real_do_printf (const char *line, double ***pZ, 
 			   DATAINFO *pdinfo, MODEL *pmod,
 			   PRN *prn, int t)
@@ -1988,6 +2001,7 @@ static int real_do_printf (const char *line, double ***pZ,
     double *vals = NULL;
     int argc = 0, cnvc = 0, inparen = 0;
     int markerpos = -1;
+    int markeroffset = 0;
     int i, err = 0;
 
     if (t < 0) {
@@ -2063,12 +2077,13 @@ static int real_do_printf (const char *line, double ***pZ,
 
 	if (numeric_string(argv)) {
 	    vals[i] = atof(argv);
-	} else if (!strcmp(argv, "marker")) {
+	} else if (!strncmp(argv, "marker", 6)) {
 	    if (markerpos >= 0 || pdinfo->S == NULL) {
 		err = 1;
 	    } else {
 		markerpos = i;
 		vals[i] = 0.0;
+		markeroffset = get_marker_offset(argv);
 	    }
 	} else {
 	    int v = varindex(pdinfo, argv);
@@ -2108,6 +2123,10 @@ static int real_do_printf (const char *line, double ***pZ,
 	    } else {
 		if (i == markerpos) {
 		    marker = pdinfo->S[t];
+		    if (markeroffset > 0 && 
+			markeroffset < strlen(pdinfo->S[t])) {
+			marker += markeroffset;
+		    }
 		} 
 		err = print_arg(&p, vals[i++], marker, prn);
 	    }

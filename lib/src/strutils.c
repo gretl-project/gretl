@@ -770,6 +770,9 @@ char *colonize_obs (char *obs)
 
 static int gretl_cset_maj;
 static int gretl_cset_min;
+# ifdef WIN32
+static int gretl_cpage;
+# endif
 
 void set_gretl_charset (const char *s)
 {
@@ -777,11 +780,11 @@ void set_gretl_charset (const char *s)
     const char *charset = NULL;
     int using_utf8 = 0;
 
-#ifdef USE_GTK2
+# ifdef USE_GTK2
     using_utf8 = g_get_charset(&charset);
-#else
+# else
     charset = s;
-#endif
+# endif
 
     *gretl_charset = '\0';
 
@@ -809,7 +812,12 @@ void set_gretl_charset (const char *s)
 	    } else if (gretl_cset_min < 0 || gretl_cset_min > 30) {
 		gretl_cset_maj = gretl_cset_min = 0;
 	    }
+	} 
+# ifdef WIN32
+	if (p == NULL) {
+	    sscanf(gretl_charset, "cp%d", &gretl_cpage);
 	}
+# endif
     }
 }
 
@@ -821,6 +829,13 @@ const char *get_gretl_charset (void)
 	sprintf(cset, "ISO-%d-%d\n", gretl_cset_maj, gretl_cset_min);
 	return cset;
     } 
+
+# ifdef WIN32
+    if (gretl_cpage > 0) {
+	sprintf(cset, "CP%d\n", gretl_cpage);
+	return cset;
+    }
+# endif
 
     return NULL;
 }
@@ -840,9 +855,17 @@ const char *get_gnuplot_charset (void)
     return NULL;
 }
 
-int doing_iso_latin_2 (void)
+int use_latin_2 (void)
 {
-    return (gretl_cset_maj == 8859 && gretl_cset_min == 2);
+    int l2 = gretl_cset_maj == 8859 && gretl_cset_min == 2;
+
+# ifdef WIN32
+    if (!l2) {
+	l2 = gretl_cpage == 1250;
+    }
+# endif
+
+    return l2;
 }
 
 char *iso_gettext (const char *msgid)
@@ -1108,63 +1131,152 @@ static char *real_iso_to_ascii (char *s, int latin)
 
 	    if (c == '\t' || (c >= 32 && c <= 126)) {
 		*p++ = c;
-	    } else if (c == 161 || (c >= 193 && c <= 196)) {
+	    }
+
+#ifndef WIN32
+	    if (c==161 || c==193 || c==194 || c==195 || c==196) {
 		*p++ = 'A';
-	    } else if (c == 198 || c == 199 || c == 200) {
+	    }
+#else
+	    if (c==165 || c==193 || c==194 || c==195 || c==196) {
+		*p++ = 'A';
+	    }
+#endif
+	    else if (c==198 || c==199 || c==200) {
 		*p++ = 'C';
-	    } else if (c == 207 || c == 208) {
+	    }
+	    else if (c==207 || c==208) {
 		*p++ = 'D';
-	    } else if (c >= 201 && c <= 204) {
+	    }
+	    else if (c==201 || c==202 || c==203 || c==204) {
 		*p++ = 'E';
-	    } else if (c == 205 || c == 206) {
+	    }
+	    else if (c==205 || c==206) {
 		*p++ = 'I';
-	    } else if (c == 163 || c == 165 || c == 197) {
+	    }
+#ifndef WIN32
+	    else if (c==163 || c==165 || c==197) {
 		*p++ = 'L';
-	    } else if (c == 209 || c == 210) {
+	    }
+#else
+	    else if (c==163 || c==188 || c==197) {
+		*p++ = 'L';
+	    }
+#endif
+	    else if (c==209 || c==210) {
 		*p++ = 'N';
-	    } else if (c >= 211 && c <= 214) {
+	    }
+	    else if (c==211 || c==212 || c==213 || c==214) {
 		*p++ = 'O';
-	    } else if (c == 192 || c == 216) {
+	    }
+	    else if (c==192 || c==216) {
 		*p++ = 'R';
-	    } else if (c == 166 || c == 169 || c == 170 || c == 223) {
+	    }
+#ifndef WIN32
+	    else if (c==166 || c==169 || c==170) {
 		*p++ = 'S';
-	    } else if (c == 171 || c == 222) {
+	    }
+#else
+	    else if (c==138 || c==140 || c==170) {
+		*p++ = 'S';
+	    }
+#endif
+#ifndef WIN32
+	    else if (c==171 || c==222) {
 		*p++ = 'T';
-	    } else if (c >= 217 && c <= 220) {
+	    }
+#else
+	    else if (c==141 || c==222) {
+		*p++ = 'T';
+	    }
+#endif
+	    else if (c==217 || c==218 || c==219 || c==220) {
 		*p++ = 'U';
-	    } else if (c == 221) {
+	    }
+	    else if (c==221) {
 		*p++ = 'Y';
-	    } else if (c == 172 || c == 174 || c == 175) {
+	    }
+#ifndef WIN32
+	    else if (c==172 || c==174 || c==175) {
 		*p++ = 'Z';
-	    } else if (c == 177 || (c >= 225 && c <= 228)) {
+	    }
+#else
+	    else if (c==142 || c==143 || c==175) {
+		*p++ = 'Z';
+	    }
+#endif
+#ifndef WIN32
+	    else if (c==177 || c==225 || c==226 || c==227 || c==228) {
 		*p++ = 'a';
-	    } else if (c == 230 || c == 231 || c == 232) {
+	    }
+#else
+	    else if (c==185 || c==225 || c==226 || c==227 || c==228) {
+		*p++ = 'a';
+	    }
+#endif
+	    else if (c==230 || c==231 || c==232) {
 		*p++ = 'c';
-	    } else if (c == 239 || c == 240) {
+	    }
+	    else if (c==239 || c==240) {
 		*p++ = 'd';
-	    } else if (c >= 233 && c <= 236) {
+	    }
+	    else if (c==233 || c==234 || c==235 || c==236) {
 		*p++ = 'e';
-	    } else if (c == 237 || c == 238) {
+	    }
+	    else if (c==237 || c==238) {
 		*p++ = 'i';
-	    } else if (c == 179 || c == 181 || c == 229) {
+	    }
+#ifndef WIN32
+	    else if (c==179 || c==181 || c==229) {
 		*p++ = 'l';
-	    } else if (c == 241 || c == 242) {
+	    }
+#else
+	    else if (c==179 || c==190 || c==229) {
+		*p++ = 'l';
+	    }
+#endif
+	    else if (c==241 || c==242) {
 		*p++ = 'n';
-	    } else if (c >= 243 && c <= 246) {
+	    }
+	    else if (c==243 || c==244 || c==245 || c==246) {
 		*p++ = 'o';
-	    } else if (c == 224 || c == 248) {
+	    }
+	    else if (c==224 || c==248) {
 		*p++ = 'r';
-	    } else if (c == 182 || c == 185 || c == 186) {
+	    }
+#ifndef WIN32
+	    else if (c==182 || c==185 || c==186 || c==223) {
 		*p++ = 's';
-	    } else if (c == 187 || c == 254) {
+	    }
+#else
+	    else if (c==154 || c==156 || c==186 || c==223) {
+		*p++ = 's';
+	    }
+#endif
+#ifndef WIN32
+	    else if (c==187 || c==254) {
 		*p++ = 't';
-	    } else if (c >= 249 && c <= 252) {
+	    }
+#else
+	    else if (c==157 || c==254) {
+		*p++ = 't';
+	    }
+#endif
+	    else if (c==249 || c==250 || c==251 || c==252) {
 		*p++ = 'u';
-	    } else if (c == 253) {
+	    }
+	    else if (c==253) {
 		*p++ = 'y';
-	    } else if (c == 188 || c == 190 || c == 191) {
+	    }
+#ifndef WIN32
+	    else if (c==188 || c==190 || c==191) {
 		*p++ = 'z';
 	    }
+#else
+	    else if (c==158 || c==159 || c==191) {
+		*p++ = 'z';
+	    }
+#endif
 	    q++;
 	}
     }
@@ -1207,9 +1319,13 @@ char *get_month_name (char *mname, int m)
 #ifdef ENABLE_NLS
 
 struct l2sym {
-    int l2val;   /* iso-8859-2 character code */
+    int l2val;   /* iso-8859-2 (or CP1250) character code */
     int ucs2val; /* corresponding UCS-2 code */
 };
+
+#ifndef WIN32
+
+/* iso-8859-2 */
 
 static struct l2sym l2table[] = { 
     { 161, 260 }, /*  A; */
@@ -1271,6 +1387,89 @@ static struct l2sym l2table[] = {
     { 255, 729 }  /*  '. */
 };
 
+#else
+
+/* Windows codepage 1250 */
+
+static struct l2sym l2table[] = { 
+    { 128, 8364 }, /*  Eu */
+    { 130, 8218 }, /*  .9 */
+    { 132, 8222 }, /*  :9 */
+    { 133, 8230 }, /*  .3 */
+    { 134, 8224 }, /*  /- */
+    { 135, 8225 }, /*  /= */
+    { 137, 8240 }, /*  %0 */
+    { 138,  352 }, /*  S< */
+    { 139, 8249 }, /*  <1 */
+    { 140,  346 }, /*  S' */
+    { 141,  356 }, /*  T< */
+    { 142,  381 }, /*  Z< */
+    { 143,  377 }, /*  Z' */
+    { 145, 8216 }, /*  '6 */
+    { 146, 8217 }, /*  '9 */
+    { 147, 8220 }, /*  "6 */
+    { 148, 8221 }, /*  "9 */
+    { 149, 8226 }, /*  sb */
+    { 150, 8211 }, /*  -N */
+    { 151, 8212 }, /*  -M */
+    { 153, 8482 }, /*  TM */
+    { 154,  353 }, /*  s< */
+    { 155, 8250 }, /*  >1 */
+    { 156,  347 }, /*  s' */
+    { 157,  357 }, /*  t< */
+    { 158,  382 }, /*  z< */
+    { 159,  378 }, /*  z' */
+    { 161,  711 }, /*  '< */
+    { 162,  728 }, /*  '( */
+    { 163,  321 }, /*  L/ */
+    { 165,  260 }, /*  A; */
+    { 170,  350 }, /*  S, */
+    { 175,  379 }, /*  Z. */
+    { 178,  731 }, /*  '; */
+    { 179,  322 }, /*  l/ */
+    { 185,  261 }, /*  a; */
+    { 186,  351 }, /*  s, */
+    { 188,  317 }, /*  L< */
+    { 189,  733 }, /*  '" */
+    { 190,  318 }, /*  l< */
+    { 191,  380 }, /*  z. */
+    { 192,  340 }, /*  R' */
+    { 195,  258 }, /*  A( */
+    { 197,  313 }, /*  L' */
+    { 198,  262 }, /*  C' */
+    { 200,  268 }, /*  C< */
+    { 202,  280 }, /*  E; */
+    { 204,  282 }, /*  E< */
+    { 207,  270 }, /*  D< */
+    { 208,  272 }, /*  D/ */
+    { 209,  323 }, /*  N' */
+    { 210,  327 }, /*  N< */
+    { 213,  336 }, /*  O" */
+    { 216,  344 }, /*  R< */
+    { 217,  366 }, /*  U0 */
+    { 219,  368 }, /*  U" */
+    { 222,  354 }, /*  T, */
+    { 224,  341 }, /*  r' */
+    { 227,  259 }, /*  a( */
+    { 229,  314 }, /*  l' */
+    { 230,  263 }, /*  c' */
+    { 232,  269 }, /*  c< */
+    { 234,  281 }, /*  e; */
+    { 236,  283 }, /*  e< */
+    { 239,  271 }, /*  d< */
+    { 240,  273 }, /*  d/ */
+    { 241,  324 }, /*  n' */
+    { 242,  328 }, /*  n< */
+    { 245,  337 }, /*  o" */
+    { 248,  345 }, /*  r< */
+    { 249,  367 }, /*  u0 */
+    { 251,  369 }, /*  u" */
+    { 254,  355 }, /*  t, */
+    { 255,  729 }  /*  '. */
+};
+
+#endif
+
 static int l2_lookup (int c)
 {
     int i, n = sizeof l2table / sizeof l2table[0];
@@ -1305,15 +1504,24 @@ char *sprint_l2_to_html (char *targ, const char *s, size_t len)
     *p = '\0';
 
     while ((c = *s)) {
+#ifndef WIN32
 	if (c > 160) {
 	    sprintf(p, "&#%d;", l2_lookup(c));
-	    p += 6;
+	    p = strchr(p, ';') + 1;
 	} else if (c > 127) {
 	    sprintf(p, "&#%d;", c);
-	    p += 6;
+	    p = strchr(p, ';') + 1;
 	} else {
 	    *p++ = c;
 	}
+#else
+	if (c > 127) {
+	    sprintf(p, "&#%d;", l2_lookup(c));
+	    p = strchr(p, ';') + 1;
+	} else {
+	    *p++ = c;
+	}
+#endif
 	s++;
 	if (p - targ > len - 8) {
 	    break;

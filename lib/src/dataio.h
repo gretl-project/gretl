@@ -56,6 +56,12 @@ typedef enum {
     DATA_APPEND   /* dataset is open: attempt to append new data */
 } data_open_code;
 
+typedef enum {
+    VARNAME_RESERVED = 1, /* vername is a gretl reserved name */
+    VARNAME_FIRSTCHAR,    /* first character is not alphabetical */
+    VARNAME_BADCHAR       /* illegal character in second or subsequent place */
+} gretl_varname_errors;
+
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
                             } while (0);

@@ -1972,7 +1972,7 @@ static void
 gp_string (FILE *fp, const char *fmt, const char *s, int png)
 {
 #ifdef ENABLE_NLS  
-    if (png && doing_iso_latin_2()) {
+    if (png && use_latin_2()) {
 	char htmlstr[128];
 
 	sprint_l2_to_html(htmlstr, s, sizeof htmlstr);

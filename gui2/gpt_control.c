@@ -294,7 +294,7 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 {
 #ifndef OLD_GTK
 # ifdef ENABLE_NLS
-    int l2 = doing_iso_latin_2();
+    int l2 = use_latin_2();
 # else
     int l2 = 0;
 # endif /* ENABLE_NLS */
@@ -416,7 +416,7 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     char restore_line[MAXLEN] = {0};
     int png_line_saved = 0;
 #ifdef ENABLE_NLS
-    int l2 = doing_iso_latin_2();
+    int l2 = use_latin_2();
 #else
     int l2 = 0;
 #endif
@@ -2749,7 +2749,12 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	}
 
 	if (!na(data_y)) {
-	    sprintf(label_y, (plot->yint)? " %-7.0f" : " %-7.4g", data_y);
+	    if (plot_has_png_coords(plot)) {
+		sprintf(label_y, (plot->yint)? " %-7.0f" : " %-7.4g", data_y);
+	    } else {
+		/* pretty much guessing at y coordinate here */
+		sprintf(label_y, (plot->yint)? " %-7.0f" : " %-6.3g", data_y);
+	    }
 	    strcat(label, label_y);
 	}
 
@@ -3542,6 +3547,10 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 		continue; 
 	    }
 	    if (sscanf(s, "%lf", &y[i]) == 1) {
+#ifdef POINTS_DEBUG
+		fprintf(stderr, "from text plot: read y[%d]=%g\n",
+			i, y[i]);
+#endif
 		sscanf(s, "%31s", numstr);
 		y_numwidth[i++] = strlen(numstr);
 	    }
@@ -3566,10 +3575,10 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 
 	imin = (x2axis)? 1 : 0;
 
-	if (i > (imin + 2) && y[imin] > y[i-2]) {
-	    plot->ymin = y[i-2];
+	if (i > (imin + 2) && y[imin] > y[i-1]) {
+	    plot->ymin = y[i-1];
 	    plot->ymax = y[imin];
-	    for (k=imin; k<i-2; k++) {
+	    for (k=imin; k<i-1; k++) {
 		if (y_numwidth[k] > max_ywidth) {
 		    max_ywidth = y_numwidth[k];
 		}

@@ -102,7 +102,7 @@ const char *get_gretl_charset (void);
 
 const char *get_gnuplot_charset (void);
 
-int doing_iso_latin_2 (void);
+int use_latin_2 (void);
 
 char *sprint_l2_to_html (char *targ, const char *s, size_t len);
 

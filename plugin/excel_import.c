@@ -842,6 +842,25 @@ static int first_col_strings (wbook *book)
     return 1;
 }
 
+#define obs_string(s) (!strcmp(s, "obs") || !strcmp(s, "id"))
+
+static int fix_varname (char *vname)
+{
+    int i, n = strlen(vname);
+    int bad = 0;
+
+    for (i=1; i<n; i++) {
+        if (!(isalpha((unsigned char) vname[i]))  
+            && !(isdigit((unsigned char) vname[i]))
+            && vname[i] != '_') {
+	    vname[i] = '_';
+	    bad++;
+	}
+    }
+
+    return (bad == n);
+}   
+
 static int check_all_varnames (wbook *book, int ncols, int skip)
 {
     int i, t = book->row_offset;
@@ -863,13 +882,22 @@ static int check_all_varnames (wbook *book, int ncols, int skip)
 	    return VARNAMES_NOTSTR;
 	}
 	test = rowptr[t].cells[i] + 1;
-	/* "obs" in first col is OK, though not thereafter */
-	if (i == skip+book->col_offset && !strcmp(test, "obs")) {
+	/* "obs" or "id" in first col is OK, though not thereafter */
+	if (i == skip + book->col_offset && obs_string(test)) {
 	    ; /* pass along */
-	} else if (check_varname(test)) {
-	    return VARNAMES_INVALID;
+	} else {
+	    int verr = check_varname(test);
+
+	    if (verr == VARNAME_BADCHAR) {
+		verr = fix_varname(test);
+	    }
+	    
+	    if (verr) {
+		return VARNAMES_INVALID;
+	    }
 	}
     }
+
     return VARNAMES_OK;
 }
 
@@ -886,8 +914,11 @@ static int missval_string (const char *s)
 	    *p = tolower(*p);
 	    p++;
 	}
-	if (!strcmp(test, "na") || !strcmp(test, "n.a."))
+	if (!strcmp(test, "na") || 
+	    !strcmp(test, "n.a.") ||
+	    !strcmp(test, "..")) {
 	    return 1;
+	}
     }
     return 0;
 }

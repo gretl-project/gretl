@@ -670,28 +670,24 @@ int check_varname (const char *varname)
 
     *gretl_errmsg = '\0';
 
-    if (gretl_is_reserved(varname)) return 1;
+    if (gretl_is_reserved(varname)) {
+	return VARNAME_RESERVED;
+    }
     
     if (!(isalpha((unsigned char) *varname))) {
         sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
-               "(first must be alphabetical)"), *varname);
-        return 1;
+				"(first must be alphabetical)"), *varname);
+        return VARNAME_FIRSTCHAR;
     }
 
     for (i=1; i<n; i++) {
         if (!(isalpha((unsigned char) varname[i]))  
             && !(isdigit((unsigned char) varname[i]))
             && varname[i] != '_') {
-	    if (0 && isprint((unsigned char) varname[i])) {
-		sprintf(gretl_errmsg, _("Varname contains illegal character '%c'\n"
-			"Use only letters, digits and underscore"), 
-			varname[i]);
-	    } else {
-		sprintf(gretl_errmsg, _("Varname contains illegal character 0x%x\n"
-			"Use only letters, digits and underscore"), 
-			(unsigned) varname[i]);
-	    }
-            return 1;
+	    sprintf(gretl_errmsg, _("Varname contains illegal character 0x%x\n"
+				    "Use only letters, digits and underscore"), 
+		    (unsigned) varname[i]);
+            return VARNAME_BADCHAR;
         }
     }
 
@@ -2688,6 +2684,7 @@ static void check_first_field (const char *line, char delim,
                  strcmp(s, "n.a.") == 0 || \
                  strcmp(s, "na") == 0 || \
                  strcmp(s, ".") == 0 || \
+                 strcmp(s, "..") == 0 || \
                  strncmp(s, "-999", 4) == 0)
 
 static int csv_missval (const char *str, int i, int t, PRN *prn)
