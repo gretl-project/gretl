@@ -128,7 +128,7 @@ static int compare_points (const void *a, const void *b)
     const data_point_t *pa = (const data_point_t *) a;
     const data_point_t *pb = (const data_point_t *) b;
      
-    return (pa->val > pb->val);
+    return (pa->val > pb->val) - (pa->val < pb->val);
 }
 
 static void series_view_print (windata_t *vwin)

@@ -153,14 +153,6 @@ static int series_view_allocate (series_view_t *sview)
     return 0;
 }
 
-static int compare_points (const void *a, const void *b)
-{
-    const data_point_t *pa = (const data_point_t *) a;
-    const data_point_t *pb = (const data_point_t *) b;
-     
-    return (pa->val > pb->val);
-}
-
 static void series_view_print (windata_t *vwin)
 {
     PRN *prn;
@@ -201,6 +193,14 @@ static void series_view_print (windata_t *vwin)
     gretl_print_destroy(prn);
 }
 
+static int compare_points (const void *a, const void *b)
+{
+    const data_point_t *pa = (const data_point_t *) a;
+    const data_point_t *pb = (const data_point_t *) b;
+     
+    return (pa->val > pb->val) - (pa->val < pb->val);
+}
+
 static void series_view_sort (windata_t *vwin, guint action, GtkWidget *w)
 {
     int err;
@@ -210,8 +210,8 @@ static void series_view_sort (windata_t *vwin, guint action, GtkWidget *w)
 
     if (!err) {
 	/* sort the data */
-	qsort(sview->points, sview->npoints, 
-	      sizeof *sview->points, compare_points);
+	qsort((void *) sview->points, (size_t) sview->npoints, 
+	      sizeof sview->points[0], compare_points);
 
 	/* print sorted data to buffer */
 	series_view_print(vwin);
