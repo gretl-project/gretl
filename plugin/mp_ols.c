@@ -20,6 +20,7 @@
 /* mp_ols.c - gretl least squares with multiple precision (GMP) */
 
 #include "libgretl.h"
+#include <float.h>
 #include <gmp.h>
 
 #ifdef HAVE_MPFR
@@ -369,11 +370,13 @@ static void other_stats (const MPMODEL *pmod, PRN *prn)
     if (doing_nls()) len = 36;
     
     xx = mpf_get_d (pmod->sigma);
+    if (xx < DBL_EPSILON) xx = 0.0;
     pprintf(prn, "%-*s", len, _("Standard error"));
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     pputs(prn, "\n");
 
     xx = mpf_get_d (pmod->ess);
+    if (xx < DBL_EPSILON) xx = 0.0;
     pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     pputs(prn, "\n");
@@ -391,7 +394,11 @@ static void other_stats (const MPMODEL *pmod, PRN *prn)
     xx = mpf_get_d (pmod->fstt);
     sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
     pprintf(prn, "%-*s", len, fstr);
-    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
+    if (na(xx)) {
+	pprintf(prn, "            %s", _("undefined"));
+    } else {
+	gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
+    }
     pputs(prn, "\n");
 }
 
@@ -812,6 +819,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     int i, v, nobs, nv, yno;
     mpf_t *diag, ysum, ypy, zz, rss, tss;
     mpf_t den, sgmasq, tmp;
+    double ess;
     MPCHOLBETA cb;
 
     nv = xpxxpy.nv;
@@ -836,17 +844,20 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     nobs = pmod->nobs;
     pmod->ncoeff = nv;
     pmod->dfd = nobs - nv;
+
     if (pmod->dfd < 0) { 
        pmod->errcode = E_DF; 
        return; 
     }
+
     pmod->dfn = nv - pmod->ifc;
     mpf_set (ysum, xpxxpy.xpy[0]);
-    mpf_set (ypy, xpxxpy.xpy[nv+1]);
+    mpf_set (ypy, xpxxpy.xpy[nv + 1]);
     if (mpf_sgn(ypy) == 0) { 
         pmod->errcode = E_YPY;
         return; 
     }
+
     mpf_mul (zz, ysum, ysum);
     mpf_set_d (tmp, (double) nobs);
     mpf_div (zz, zz, tmp);
@@ -864,7 +875,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     if (cb.errcode) {
         pmod->errcode = E_ALLOC;
         return;
-    }   
+    } 
 
     mpf_set (rss, cb.rss);
     mpf_clear (cb.rss);
@@ -874,8 +885,12 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     }
 
     mpf_sub (pmod->ess, ypy, rss);
+    ess = mpf_get_d(pmod->ess);
+    if (fabs(ess) < DBL_EPSILON) {
+	mpf_set (pmod->ess, MPF_ZERO);
+    }
     if (mpf_sgn(pmod->ess) < 0) { 
-	sprintf(errbuf, _("Error sum of squares is not > 0"));
+	sprintf(errbuf, _("Error sum of squares is not >= 0"));
         return; 
     }
 
@@ -896,7 +911,10 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 	return;
     }       
 
-    if (pmod->errcode) return;
+    if (pmod->errcode) {
+	fprintf(stderr, "mp_ols: pmod->errcode = %d\n", pmod->errcode);
+	return;
+    }
 
     mpf_div (tmp, pmod->ess, tss);
     mpf_sub (pmod->rsq, MPF_ONE, tmp);
@@ -925,9 +943,10 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
         mpf_set (zz, MPF_ZERO);
         pmod->dfn = 1;
     }
-    if (mpf_sgn(sgmasq) != 1 || pmod->dfd == 0) 
+
+    if (mpf_sgn(sgmasq) != 1 || pmod->dfd == 0) {
 	mpf_set_d (pmod->fstt, NADBL);
-    else { 
+    } else { 
 	mpf_set_d (tmp, (double) pmod->ifc);
 	mpf_mul (tmp, zz, tmp);
 	mpf_sub (pmod->fstt, rss, tmp);
@@ -998,8 +1017,9 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
     mpf_div (e, MPF_ONE, tmp);
     mpf_set (xpxxpy.xpx[1], e);
     mpf_mul(xpxxpy.xpy[1], xpxxpy.xpy[1], e);
-    for (i=2; i<=nv; i++) 
+    for (i=2; i<=nv; i++) { 
 	mpf_mul (xpxxpy.xpx[i], xpxxpy.xpx[i], e);
+    }
     kk = nv + 1;
 
     for (j=2; j<=nv; j++) {
