@@ -237,7 +237,7 @@
     <application>gcc</application> 3.3, collegata a
     <application>glibc</application> 2.3.2 ed eseguita in Linux su un
     PC i686 (IBM ThinkPad A21m).</para>
-      </footnote></para>.
+      </footnote></para>
 
     <para>Sulle 54 stime, <application>gretl</application> non riesce
     a produrre una soluzione in 4 casi, se vengono usate le derivate
@@ -281,7 +281,7 @@
     dei coefficienti. In questo caso <application>gretl</application>
     riesce a riprodurre gli errori standard solo per 3 cifre (con
     derivate analitiche) e per 2 cifre (con derivate numeriche).</para>
-      </footnote></para>.
+      </footnote></para>
       
     <para>
       La seconda misura di accuratezza mostrata è la percentuale di

@@ -285,7 +285,7 @@
       tabella modelli può anche essere costruita in modo non
       interattivo in uno script. Per i dettagli si veda il comando
       <xref linkend="cmd-modeltab"/>.</para></footnote>
-      </para>.
+      </para>
 
       <orderedlist>
 	<listitem><para> Stimare un modello che si vuole includere nella
@@ -357,7 +357,7 @@
       <application>kghostview</application>. Il visualizzatore
       predefinito per sistemi diversi da MS Windows è
       <application>gv</application>.</para></footnote>
-      </para>.
+      </para>
 
       <para>Nella finestra della sessione, è possibile trascinare fino
 	a otto grafici sull'icona della pagina dei grafici. Facendo doppio
@@ -380,7 +380,6 @@
         associazione dei file in modo che sia usato il visualizzatore
         adeguato per l'azione <guimenuitem>Apri</guimenuitem> sui file
         con estensione <literal>.ps</literal>.</para>
-        </para>
 
     </sect2>
       

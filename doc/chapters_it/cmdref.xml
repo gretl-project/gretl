@@ -1,6 +1,6 @@
 <?PSGML NOFILL programlisting example informalequation?>
-  
-  <chapter id="cmdref"><title>Command Reference</title>
+
+<chapter id="cmdref"><title>Command Reference</title>
 
   <sect1 id="cmd-intro"><title>Introduzione</title>
     <para>
@@ -78,7 +78,7 @@
       <application>gretl</application>. I corrispondenti comandi (se
       esistono) sono mostrati tra parentesi. Per i dettagli, consultare
       la voce corrispondente ad ogni comando nella 
-      <xref linkend="cmdref"/>.</para>
+      <xref linkend="cmd-cmd"/>.</para>
 
     <table id="tab-estim" frame="none">
       <title>Stimatori</title>
@@ -119,24 +119,10 @@
 	    <entry>Autocorrelazione del prim'ordine</entry>
 	  </row>
 	  <row>
-	    <entry>Prais&ndash;Winsten (<command>pwe</command>)</entry>
-	    <entry>Autocorrelazione del prim'ordine</entry>
-	  </row>
-	  <row>
 	    <entry>Stima autoregressiva
 	      (<command>ar</command>)</entry>
 	    <entry>Autocorrelazione di ordine superiore
 	      (Cochrane&ndash;Orcutt generalizzato)</entry>
-	  </row>
-	  <row>
-	    <entry>ARMAX
-	      (<command>arma</command>)</entry>
-	    <entry>Modello serie storiche con errore ARMA</entry>
-	  </row>
-	  <row>
-	    <entry>GARCH
-	      (<command>garch</command>)</entry>
-	    <entry>Eteroschedasticità condizionale autoregressiva generalizzata</entry>
 	  </row>
 	  <row>
 	    <entry>Autoregressione vettoriale
@@ -169,16 +155,6 @@
 	      (<command>probit</command>)</entry>
 	    <entry>Variabile dipendente binaria (distribuzione
 	      normale)</entry>
-	  </row>
-	  <row>
-	    <entry>Tobit
-	      (<command>tobit</command>)</entry>
-	    <entry>Variabile dipendente troncata</entry>
-	  </row>
-	  <row>
-	    <entry>Logistic
-	      (<command>logistic</command>)</entry>
-	    <entry>OLS con trasformazione logistica della variabile dipendente</entry>
 	  </row>
 	  <row>
 	    <entry>Minime deviazioni assolute
@@ -226,10 +202,6 @@
 	  <row>
 	    <entry>Variabili aggiunte (test <emphasis>F</emphasis> con OLS)</entry>
 	    <entry><command>add</command></entry>
-	  </row>
-	  <row>
-	    <entry>Somma dei coefficienti (test <emphasis>t</emphasis> con OLS)</entry>
-	    <entry><command>coeffsum</command></entry>
 	  </row>
 	  <row>
 	    <entry>Nonlinearità (quadrati)</entry>
@@ -567,9 +539,9 @@
       </tgroup>
     </table>
 
-  </sect1>	
+  </sect1>
 
-  </chapter>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

@@ -120,7 +120,7 @@
         col pulsante destro del mouse). È possibile selezionare più variabili
         contigue trascinando il mouse; se le variabili da selezionare non sono
         contigue, occorre fare clic tenendo prenuto il tasto
-        <lit>Ctrl</lit>.
+        <literal>Ctrl</literal>.
       </para>
 
     <para>Per eseguire una regressione con il consumo come variabile
