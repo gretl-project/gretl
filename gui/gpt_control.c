@@ -1122,6 +1122,8 @@ typedef struct png_plot_t {
     double xmin, xmax;
     double ymin, ymax;
     int xint, yint;
+    int pd;
+    int title;
 } png_plot_t;
 
 /* Size of drawing area */
@@ -1137,6 +1139,7 @@ extern void gnome_print_graph (const char *fname);
 #define PLOTXMAX 620.0
 #define PLOTYMIN 32.0
 #define PLOTYMAX 446.0
+#define NOTITLE_YMIN 13.0
 
 static void get_data_xy (png_plot_t *plot, int x, int y, 
 			 double *data_x, double *data_y)
@@ -1146,9 +1149,19 @@ static void get_data_xy (png_plot_t *plot, int x, int y,
     if (plot->ymin == 0.0 && plot->ymax == 0.0) { /* unknown y range */
 	*data_y = NADBL;
     } else {
-	*data_y = plot->ymax - ((double) y - PLOTYMIN) / (PLOTYMAX - PLOTYMIN) *
+	int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+
+	*data_y = plot->ymax - ((double) y - ymin) / (PLOTYMAX - ymin) *
 	    (plot->ymax - plot->ymin);
     }
+}
+
+static double x_to_date (double x)
+{
+    int yr = (int) x;
+    int qtr = (int) ((x - yr + .25) * 4);
+
+    return yr + qtr / 10.0;
 }
 
 static gint
@@ -1158,6 +1171,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     int x, y;
     GdkModifierType state;
     gchar label[32], label_y[16];
+    int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
 
     if (event->is_hint)
         gdk_window_get_pointer (event->window, &x, &y, &state);
@@ -1172,11 +1186,14 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
         draw_brush (widget, x, y, pixmap);
 #endif
 
-    if (x > PLOTXMIN && x < PLOTXMAX && y > PLOTYMIN && y < PLOTYMAX) {
+    if (x > PLOTXMIN && x < PLOTXMAX && y > ymin && y < PLOTYMAX) {
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
-	sprintf(label, (plot->xint)? "%.0f" : "%.4g", data_x);
+	if (plot->pd == 4) 
+	    sprintf(label, "%.1f", x_to_date(data_x));
+	else
+	    sprintf(label, (plot->xint)? "%.0f" : "%.4g", data_x);
 	if (!na(data_y)) {
 	    sprintf(label_y, (plot->yint)? ", %.0f" : ", %.4g", data_y);
 	    strcat(label, label_y);
@@ -1288,7 +1305,7 @@ static void render_pngfile (const char *fname, GdkPixmap *dbuf_pixmap)
 					GDK_PIXBUF_ALPHA_BILEVEL, 128,
 					GDK_RGB_DITHER_NORMAL, 0, 0);
     gdk_pixbuf_unref(pbuf);
-    remove(fname);
+    /* remove(fname); */
 }
 
 static 
@@ -1374,28 +1391,35 @@ static int get_plot_ranges (png_plot_t *plot)
 {
     FILE *fp;
     char line[MAXLEN];
-    int got_x = 0;
+    int got_x = 0, got_pd = 0;
 
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;   
     plot->xint = plot->yint = 0;
+    plot->pd = 0;
+    plot->title = 0;
 
     fp = fopen(plot->spec->fname, "r");
     if (fp == NULL) return 0;
     while (fgets(line, MAXLEN-1, fp)) {
 	if (sscanf(line, "set xrange [%lf:%lf]", 
-		   &plot->xmin, &plot->xmax) == 2) {
+		   &plot->xmin, &plot->xmax) == 2) 
 	    got_x = 1;
-	    break;
-	}
+	else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) 
+	    got_pd = 1;
+	else if (!strncmp(line, "set title", 9)) 
+	    plot->title = 1;	
+	if (!strncmp(line, "plot ", 5)) break;
     }
     fclose(fp);
 
     if (got_x) {
+	int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+
 	get_plot_yrange(plot);
 	if ((plot->xmax - plot->xmin) / (PLOTXMAX - PLOTXMIN) >= 1.0)
 	    plot->xint = 1;
-	if ((plot->ymax - plot->ymin) / (PLOTYMAX - PLOTYMIN) >= 1.0)
+	if ((plot->ymax - plot->ymin) / (PLOTYMAX - ymin) >= 1.0)
 	    plot->yint = 1;
     }
 

@@ -595,6 +595,7 @@ int gnuplot (LIST list, const int *lines,
     }    
 
     if (ts_plot) {
+	fprintf(fq, "# timeseries %d\n", pdinfo->pd);
 	if (pdinfo->pd == 4) {
 	    if ((t2 - t1) / 4 < 8) {
 		fputs("set xtics nomirror 0,1\n", fq); 
