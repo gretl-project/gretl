@@ -392,6 +392,7 @@ static genatom *parse_token (const char *s, char op,
 		    }
 		} else {
 		    /* not a variable or function: dead end? */
+		    DPRINTF(("dead end in parse_token, s='%s'\n", s));
 		    genr->err = E_SYNTAX; 
 		}
 	    } 
@@ -399,6 +400,7 @@ static genatom *parse_token (const char *s, char op,
 	else if (strchr(s, '[')) {
 	    val = get_obs_value(s, *genr->pZ, genr->pdinfo);
 	    if (val == NADBL) {
+		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		genr->err = E_SYNTAX; 
 	    } else {
 		scalar = 1;
@@ -440,7 +442,17 @@ static genatom *parse_token (const char *s, char op,
 	val = dot_atof(s);
 	scalar = 1;
     } else {
-	genr->err = E_SYNTAX;
+	char numstr[16];
+
+	/* number wrapped in parens?  odd but legit */
+	if (sscanf(s, "(%15[^)])", numstr) == 1 &&
+	    _isnumber(numstr)) {
+	    val = dot_atof(numstr);
+	    scalar = 1;
+	} else {
+	    DPRINTF(("dead end after _isnumber, s='%s'\n", s));
+	    genr->err = E_SYNTAX;
+	}
     }
 
     if (genr->err) return NULL;
@@ -913,7 +925,7 @@ static int token_is_function (char *s, GENERATE *genr, int level)
 static int stack_op_and_token (const char *s, GENERATE *genr, int level)
 {
     char tok[TOKLEN];
-    int wrapped = 0, plevel = level;
+    int wrapped = 0;
     char op = 0, last = 0;
     size_t n = strlen(s);
 
@@ -956,9 +968,6 @@ static int stack_op_and_token (const char *s, GENERATE *genr, int level)
     }
 
     if (!genr->err) {
-	n = strlen(tok);
-	/* if (n > 0 && wrapped) tok[n-1] = '\0'; */
-	
 	if (!token_is_atomic(tok, genr) &&
 	    !token_is_function(tok, genr, level)) {
 	    DPRINTF(("token is not atomic...\n"));
@@ -977,16 +986,6 @@ static int stack_op_and_token (const char *s, GENERATE *genr, int level)
 	    }
 	}
     }
-
-#if 0
-    /* create dummy atom to handle parenthetical expressions */ 
-    if (wrapped) { /* was "&& op" */
-	genatom *atom;
-
-	atom = parse_token("#", op, genr, plevel);
-	if (atom != NULL) genr->err = push_atom(atom);
-    }
-#endif
 
     return genr->err;
 }
@@ -1499,6 +1498,27 @@ static void make_genr_label (int replmsg, char *genrs,
     }
 }
 
+static void wrap_leading_unary_operator (char *s)
+{
+    char t[MAXLEN];
+    size_t i, j, n = strlen(s);
+    int match = 0;
+
+    t[0] = '(';
+    t[1] = s[0];
+
+    j = 2;
+    for (i=1; i<=n; i++) {
+	if (!match && op_level(s[i])) {
+	    t[j++] = ')';
+	    match = 1;
+	}
+	t[j++] = s[i];
+    }
+    if (!match) strcat(t, ")");
+    strcpy(s, t);
+}
+
 /**
  * generate:
  * @pZ: pointer to data matrix.
@@ -1625,14 +1645,9 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	genr.xvec[i] = 0.0;
     }
 
-#if 0
-    /* deal with leading (unary) plus/minus */
+#if 1
     if (*s == '-' || *s == '+') {
-	char s1[MAXLEN];
-
-	strcpy(s1, "0");
-	strcat(s1, s);
-	strcpy(s, s1);
+	wrap_leading_unary_operator(s);
     }
 #endif
 
