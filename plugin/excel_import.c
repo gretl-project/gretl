@@ -47,8 +47,8 @@ extern int excel_book_get_info (const char *fname, wbook *book);
 
 static void free_sheet (void);
 static int getshort (char *rec, int offset);
-static int process_item (int rectype, int reclen, char *rec); 
-static int allocate (int row, int col);
+static int process_item (int rectype, int reclen, char *rec, wbook *book); 
+static int allocate (int row, int col, wbook *book);
 static char *copy_unicode_string (char **src);
 static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
@@ -57,6 +57,7 @@ static char *mark_string (char *instr);
 char *errbuf;
 
 /* #define EDEBUG 1 */
+/* #define FULL_EDEBUG 1 */
 
 #define EXCEL_IMPORTER
 #include "import_common.c"
@@ -87,14 +88,14 @@ static char *format_double (char *rec, int offset)
     return buffer;
 }
 
-static int process_sheet (FILE *input, const char *filename, 
-			  unsigned offset) 
+static int process_sheet (FILE *input, const char *filename, wbook *book) 
 {    
     long rectype;
     long reclen;
     unsigned char rec[MAX_MS_RECSIZE];
     int err = 0, itemsread = 1, eofcount = 0;
     long leading_bytes = 0L;
+    unsigned offset = book->byte_offsets[book->selected];
 
     while (itemsread) {
 	fread(rec, 2, 1, input);
@@ -156,7 +157,7 @@ static int process_sheet (FILE *input, const char *filename,
 	    rec[reclen] = '\0';
 	}
     
-	if (process_item(rectype, reclen, rec)) {
+	if (process_item(rectype, reclen, rec, book)) {
 	    err = 1;
 	    break;
 	}
@@ -262,7 +263,7 @@ static double biff_get_rk (const unsigned char *ptr)
     return -999.0;
 }
 
-static int process_item (int rectype, int reclen, char *rec) 
+static int process_item (int rectype, int reclen, char *rec, wbook *book) 
 {
     switch (rectype) {
     case SST: {
@@ -307,7 +308,7 @@ static int process_item (int rectype, int reclen, char *rec)
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col)) return 1;
+	if (allocate(row, col, book)) return 1;
 	prow = rowptr + row;
 	prow->cells[col] = mark_string(convert8to7(rec+8, len));
 	break;
@@ -322,7 +323,7 @@ static int process_item (int rectype, int reclen, char *rec)
 	fprintf(stderr, "Got CONSTANT_STRING, row=%d, col=%d\n", row, col);
 #endif
 	saved_reference = NULL;
-	if (allocate(row, col)) return 1;
+	if (allocate(row, col, book)) return 1;
 	prow = rowptr + row;
 	if (string_no >= sstsize) {
 	    sprintf(errbuf, _("String index too large"));
@@ -353,7 +354,7 @@ static int process_item (int rectype, int reclen, char *rec)
 #ifdef EDEBUG
 	fprintf(stderr, "Got NUMBER, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col)) return 1;
+	if (allocate(row, col, book)) return 1;
 	prow = rowptr + row;
 	prow->cells[col] = g_strdup(format_double(rec, 6));
 	break;
@@ -370,7 +371,7 @@ static int process_item (int rectype, int reclen, char *rec)
 #ifdef EDEBUG
 	fprintf(stderr, "Got RK, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col)) return 1;
+	if (allocate(row, col, book)) return 1;
 	prow = rowptr + row;
 	v = biff_get_rk(rec + 6);
 	sprintf(tmp, "%.10g", v);
@@ -395,7 +396,7 @@ static int process_item (int rectype, int reclen, char *rec)
 	    char tmp[32];
 
 	    v = biff_get_rk(rec + 6 + 6*i);
-	    if (allocate(row, col)) return 1;
+	    if (allocate(row, col, book)) return 1;
 	    prow = rowptr + row;
 	    sprintf(tmp, "%.10g", v);
 	    prow->cells[col] = g_strdup(tmp);
@@ -413,7 +414,7 @@ static int process_item (int rectype, int reclen, char *rec)
 #ifdef EDEBUG
 	fprintf(stderr, "Got FORMULA, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col)) return 1;
+	if (allocate(row, col, book)) return 1;
 	prow = rowptr + row;
 	if (((unsigned char) rec[12] == 0xFF) && 
 	    (unsigned char) rec[13] == 0xFF) {
@@ -539,9 +540,16 @@ static char *convert16to7 (char *src, int count)
     return dest;
 }
 
-static int allocate (int row, int col) 
+static int allocate (int row, int col, wbook *book) 
 {
     int newrow, newcol;
+    static int started;
+
+    if (!started && row > book->row_offset) {
+	book->row_offset = row;
+	fprintf(stderr, "Missing rows: trying an offset of %d\n", row);
+    }
+    started = 1;
 
 #ifdef FULL_EDEBUG
     fprintf(stderr, "allocate: row=%d, col=%d, lastrow=%d\n",
@@ -635,11 +643,11 @@ static int first_col_strings (wbook *book)
     
     for (t=1+book->row_offset; t<=lastrow; t++) {
 #ifdef EDEBUG
+	fprintf(stderr, "book->row_offset=%d, t=%d\n", book->row_offset, t);
 	fprintf(stderr, "first_col_strings: rowptr[%d].cells[%d]: '%s'\n", t, i,
 		rowptr[t].cells[i]);
 #endif
-	if (rowptr == NULL ||
-	    rowptr[t].cells[i] == NULL ||
+	if (rowptr == NULL || rowptr[t].cells[i] == NULL ||
 	    !IS_STRING(rowptr[t].cells[i]))
 	    return 0;
     }
@@ -732,7 +740,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     /* processing for specific worksheet */
     fp = fopen(fname, "rb");
     if (fp == NULL) return 1;
-    err = process_sheet(fp, fname, book.byte_offsets[book.selected]);
+    err = process_sheet(fp, fname, &book);
 
     if (err) {
 	if (*errbuf == 0)
@@ -880,5 +888,3 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 #endif
     return err;
 }  
-
-
