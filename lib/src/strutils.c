@@ -25,8 +25,10 @@
 #include <errno.h>
 #include <time.h>
 
-#if defined(ENABLE_NLS) && defined(USE_GTK2)
-#include <glib.h>
+#if defined(USE_GTK2)
+# include <glib.h>
+#else
+# include <fnmatch.h>
 #endif
 
 char gretl_tmp_str[MAXLEN];
@@ -968,6 +970,77 @@ int build_path (const char *dir, const char *fname, char *path,
 
     return 0;
 }
+
+#if defined(USE_GTK2)
+
+int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
+{
+    GPatternSpec *pspec;
+    int *list = NULL;
+    int i, n = 0;
+
+    pspec = g_pattern_spec_new(pattern);
+    for (i=1; i<pdinfo->v; i++) { 
+	if (pdinfo->vector[i] &&
+	    g_pattern_match_string(pspec, pdinfo->varname[i])) {
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	list = malloc((n + 1) * sizeof *list);
+	if (list != NULL) {
+	    int j = 1;
+
+	    list[0] = n;
+	    for (i=1; i<pdinfo->v; i++) { 
+		if (pdinfo->vector[i] &&
+		    g_pattern_match_string(pspec, pdinfo->varname[i])) {
+		    list[j++] = i;
+		}
+	    }
+	}
+    }
+
+    g_pattern_spec_free(pspec);
+
+    return list;
+}
+
+#elif defined(HAVE_FNMATCH_H) 
+
+int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
+{
+    int *list = NULL;
+    int i, n = 0;
+
+    for (i=1; i<pdinfo->v; i++) { 
+	if (pdinfo->vector[i] &&
+	    fnmatch(pattern, pdinfo->varname[i], 0) == 0) {
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	list = malloc((n + 1) * sizeof *list);
+	if (list != NULL) {
+	    int j = 1;
+
+	    list[0] = n;
+	    for (i=1; i<pdinfo->v; i++) { 
+		if (pdinfo->vector[i] &&
+		    fnmatch(pattern, pdinfo->varname[i], 0) == 0) {
+		    list[j++] = i;
+		}
+	    }
+	}
+    }
+
+    return list;
+}
+
+#endif
+    
 
 
 

@@ -406,7 +406,8 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
 	     int *ignore, double ***pZ, PRN *cmds)
 {
-    int i, j, nf, linelen, n, v, gotdata = 0, ar = 0, poly = 0;
+    int i, j, nf, linelen, n, v, lnum;
+    int gotdata = 0, ar = 0, poly = 0;
     int spacename = 0;
     char field[10], *remainder;
     LAGVAR lagvar;
@@ -699,7 +700,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     command->list[0] = nf;
 
     /* now assemble the command list */
-    for (j=1; j<=nf; j++) {
+    for (j=1,lnum=1; j<=nf; j++) {
 
 	strcpy(remainder, line + n + 1);
 
@@ -720,23 +721,23 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		field[strlen(field) - 1] = '\0';
 	    if ((v = varindex(pdinfo, field)) <= pdinfo->v - 1) {
 		/* yes, it's an existing variable */
-		command->list[j] = v;
+		command->list[lnum++] = v;
 	    } else {
 		/* no: an auto-generated variable? */
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
 		if (parse_lagvar(field, &lagvar, pdinfo)) {
 		    extern int newlag; /* generate.c */
-		    int lnum;
+		    int lagnum;
 
-		    lnum = laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo);
-		    if (lnum < 0) {
+		    lagnum = laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo);
+		    if (lagnum < 0) {
 			command->errcode = 1;
 			sprintf(gretl_errmsg, 
 				_("generation of lag variable failed"));
 		    } else { 
-			command->list[j] = lnum;
+			command->list[lnum++] = lagnum;
 			if (newlag && cmds != NULL) {
-			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, lnum));
+			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, lagnum));
 			}
 			/* fully handled, get on with it */
 			n += strlen(field) + 1;
@@ -753,12 +754,40 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 			sprintf(gretl_errmsg, 
 				_("Failed to add plotting index variable"));
 		    } else {
-			command->list[j] = pnum;
+			command->list[lnum++] = pnum;
 			/* fully handled, get on with it */
 			n += strlen(field) + 1;
 			continue; 
 		    }
 		} 
+#if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
+		/* wildcard expansion? */
+		else if (strchr(field, '*') != NULL) {
+		    int *wildlist = varname_match_list(pdinfo, field);
+
+		    if (wildlist != NULL) {
+			int k, nw = wildlist[0];
+
+			command->list = realloc(command->list, (command->list[0] + nw) *
+						sizeof *command->list);
+			if (command->list == NULL) {
+			    command->errcode = E_ALLOC;
+			    strcpy (gretl_errmsg, 
+				    _("Memory allocation failed for command list"));
+			    free(remainder);
+			    return;
+			}
+			command->list[0] += (nw - 1);
+			for (k=1; k<=nw; k++) {
+			    command->list[lnum++] = wildlist[k];
+			}
+			free(wildlist);
+			/* fully handled, get on with it */
+			n += strlen(field) + 1;
+			continue; 			
+		    }
+		}
+#endif
 		/* last chance: try abbreviating the varname? */
 		else if (!command->errcode) {
 		    command->errcode = 1; /* presume guilt at this stage */
@@ -768,7 +797,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 			*test = 0;
 			strncat(test, field, 8);
 			if ((v = varindex(pdinfo, test)) <= pdinfo->v - 1) {
-			    command->list[j] = v;
+			    command->list[lnum++] = v;
 			    command->errcode = 0;
 			} 
 		    } 
@@ -795,7 +824,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		free(remainder);
 		return;
 	    }	
-	    command->list[j] = v;
+	    command->list[lnum++] = v;
 	}
 
 	else if (*field == ';') {
@@ -805,16 +834,16 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		command->ci == ARMA || command->ci == GARCH ||
 		command->ci == EQUATION) {
 		command->param = realloc(command->param, 4);
-		sprintf(command->param, "%d", j);
+		sprintf(command->param, "%d", lnum);
 		n += strlen(field) + 1;
-		command->list[j] = LISTSEP;
+		command->list[lnum++] = LISTSEP;
 		ar = 0; /* turn off acceptance of AR lags */
 		if (command->ci == MPOLS) poly = 1;
 		continue;
 	    }
 	    else if (command->ci == VAR) {
 		n += strlen(field) + 1;
-		command->list[j] = LISTSEP;
+		command->list[lnum++] = LISTSEP;
 		continue;
 	    }
 	    else {
@@ -835,7 +864,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
 	/* check command->list for scalars */
 	if (!ar && !poly && command->ci != PRINT && command->ci != STORE) {
-	    if (!pdinfo->vector[command->list[j]]) {
+	    if (!pdinfo->vector[command->list[lnum-1]]) {
 		command->errcode = 1;
 		sprintf(gretl_errmsg, 
 			_("variable %s is a scalar"), field);

@@ -80,6 +80,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have dirent.h */
 #undef HAVE_DIRENT_H
 
+/* Do we have fnmatch.h */
+#undef HAVE_FNMATCH_H
+
 /* Do we have sys/wait.h */
 #undef HAVE_SYS_WAIT_H
 
