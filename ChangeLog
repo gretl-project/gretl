@@ -1,3 +1,7 @@
+version 1.2.6
+- add Hodrick-Prescott filter, as hpfilt function in the
+  genr command
+
 5/04/2004 version 1.2.5
 - fix problem with acf and pacf calculations
 - add Prais-Winsten estimator for AR1 models ("pwe" command)

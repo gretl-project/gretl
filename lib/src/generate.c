@@ -2366,7 +2366,7 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 
     else if (fn == T_CUM) {
 	x[t1] = (na(mvec[t1])) ? 0.0 : mvec[t1];
-	for (t=t1; t<=t2; t++) {
+	for (t=t1+1; t<=t2; t++) {
 	    if (na(mvec[t])) x[t] = x[t-1];
 	    else x[t] = x[t-1] + mvec[t];
 	}
