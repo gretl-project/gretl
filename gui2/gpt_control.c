@@ -951,6 +951,7 @@ static int plotspec_init (GPT_SPEC *plot)
     }
     for (i=0; i<4; i++) {
 	plot->titles[i][0] = 0;
+	plot->literal[i] = NULL;
     }
     plot->xtics[0] = 0;
     plot->mxtics[0] = 0;
@@ -959,7 +960,6 @@ static int plotspec_init (GPT_SPEC *plot)
     for (i=0; i<3; i++) {
 	strcpy(plot->range[i][0], "*");
 	strcpy(plot->range[i][1], "*");
-	plot->literal[i] = NULL;
     }
     plot->y2axis = 0;
     plot->code = GNUPLOT;
@@ -1069,6 +1069,7 @@ int read_plotfile (GPT_SPEC *plot, const char *fname)
 		if (!fgets(plot->literal[j], MAXLEN - 1, fp)) {
 		    errbox(_("Plot file is corrupted"));
 		    free(plot->literal[j]);
+		    plot->literal[j] = NULL;
 		    goto plot_bailout;
 		}
 		top_n_tail(plot->literal[j]);
@@ -1210,9 +1211,11 @@ int read_plotfile (GPT_SPEC *plot, const char *fname)
 
  plot_bailout:
     free(plot->lines);
-    for (i=1; i<4; i++) 
-	if (plot->literal[i] != NULL) 
+    for (i=1; i<4; i++) {
+	if (plot->literal[i] != NULL) {
 	    free(plot->literal[i]);
+	}
+    }
     fclose(fp);
     return 1;
 }
