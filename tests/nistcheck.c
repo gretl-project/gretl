@@ -138,7 +138,7 @@ int grab_mp_results (FILE *fp, mp_results *certvals,
 	if (sscanf(line, " B%d %lf %lf", &check, &certvals->coeff[i],
 		   &certvals->sderr[i]) == 3) {
 	    if (verbose > 1) {
-		printf(" B%d: coeff = %.15g, std. error = %.15g\n", 
+		printf(" B%d: coeff = %.10g, std. error = %.10g\n", 
 		       check, certvals->coeff[i], certvals->sderr[i]);
 	    }  
 	    i++;
@@ -147,28 +147,28 @@ int grab_mp_results (FILE *fp, mp_results *certvals,
 	if (na(certvals->sigma) && 
 	    sscanf(line, " Standard Deviation %lf", &certvals->sigma) == 1) {
 	    if (verbose > 1) {
-		printf(" sigma = %.15g\n", certvals->sigma);
+		printf(" sigma = %.10g\n", certvals->sigma);
 	    }
 	}	
 
 	if (na(certvals->rsq) &&
 	    sscanf(line, " R-Squared %lf", &certvals->rsq) == 1) {
 	    if (verbose > 1) {
-		printf(" R^2 = %.15g\n", certvals->rsq);
+		printf(" R^2 = %.10g\n", certvals->rsq);
 	    }
 	}
 
 	if (na(certvals->fstt) &&
 	    sscanf(line, "Regression %*d %*f %*f %lf", &certvals->fstt) == 1) {
 	    if (verbose > 1) {
-		printf(" F = %.15g\n", certvals->fstt);
+		printf(" F = %.10g\n", certvals->fstt);
 	    }
 	}
 	
 	if (na(certvals->ess) &&
 	    sscanf(line, "Residual %*d %lf %*f", &certvals->ess) == 1) {
 	    if (verbose > 1) {
-		printf(" ESS = %.15g\n", certvals->ess);
+		printf(" ESS = %.10g\n", certvals->ess);
 	    }
 	}
 
@@ -581,8 +581,7 @@ int mp_vals_differ (double x, double y, double *diff)
     return ret;
 }
 
-int run_gretl_mp_comparison (const char *datname,
-			     double ***pZ, DATAINFO *dinfo, 
+int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo, 
 			     mp_results *certvals, int npoly,
 			     int *mpfails, PRN *prn)
 {
@@ -784,11 +783,11 @@ int run_gretl_comparison (const char *datname,
 	printmodel(model, dinfo, prn);
 
 	if (model->ifc) {
-	    printf(" gretl coefficient[0] = %#.9g\n", 
+	    printf(" gretl coefficient[0] = %#.10g\n", 
 		   model->coeff[model->ncoeff]);
 	}
 	for (i=1; i<=model->ncoeff - model->ifc; i++) {
-	    printf(" gretl coefficient[%d] = %#.9g\n", i, 
+	    printf(" gretl coefficient[%d] = %#.10g\n", i, 
 		   model->coeff[i]);
 	}
     }
@@ -877,7 +876,7 @@ int main (int argc, char *argv[])
 				  &modelerrs, &poorvals, prn);
 
 #ifdef USE_GMP
-	    run_gretl_mp_comparison (nist_files[j], &Z, datainfo, certvals,
+	    run_gretl_mp_comparison (&Z, datainfo, certvals,
 				     polyterms, &mpfails, prn);
 #endif
 

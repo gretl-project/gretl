@@ -770,7 +770,7 @@ int cholbeta (double *xpx, double *xpy,
 
     if (rss != NULL) *rss = d;
 
-    if (coeff != NULL ) {
+    if (coeff != NULL) {
 	coeff[nv] = xpy[nv] * xpx[kk];
 	for (j=nm1; j>=1; j--) {
 	    d = xpy[j];
