@@ -23,6 +23,10 @@
 #include "console.h"
 #include "session.h"
 
+#ifdef G_OS_WIN32
+# include "webget.h"
+#endif
+
 /* pixmaps for gretl toolbar */
 #include "../pixmaps/mini.calc.xpm"
 #include "../pixmaps/mini.edit.xpm"

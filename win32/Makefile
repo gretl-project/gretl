@@ -67,6 +67,7 @@ PLUGINSRC = \
 	range-mean.c \
 	stats_tables.c \
 	sysest.c \
+	fiml.c \
 	tramo_options.c \
 	tramo-x12a.c \
 	nistcheck.c \
@@ -90,7 +91,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/mp_ols.dll \
 	plugins/sysest.dll \
 	plugins/johansen.dll \
-	plugind/kernel.dll \
+	plugins/kernel.dll \
 	plugins/arma.dll \
 	plugins/arma_x12.dll \
 	plugins/range-mean.dll \
@@ -340,7 +341,7 @@ plugins/mp_ols.dll: mp_ols.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
 
-plugins/sysest.dll: sysest.o dllinit.o
+plugins/sysest.dll: sysest.o fiml.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
