@@ -358,7 +358,8 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 		_("Lmax test"), _("p-value"));
 
 	for (i=0; i<k; i++) {
-	    gamma_par_asymp(trace[i], lambdamax[i], 2 , k-i, T, pval);
+	    /* 0 was T below, but Doornik does not use sample size */
+	    gamma_par_asymp(trace[i], lambdamax[i], 2 , k-i, 0, pval);
 	    pprintf(prn, "%4d%11.4f%11.4f [%6.4f]%11.4f [%6.4f]\n", \
 		    i, evals[i].v, trace[i], pval[0], lambdamax[i], pval[1]);
 	}

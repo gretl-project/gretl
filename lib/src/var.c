@@ -280,6 +280,24 @@ static void tex_print_double (double x, PRN *prn)
     else pputs(prn, number);
 }
 
+static int periods_from_pd (int pd)
+{
+    int periods = 10;
+
+    if (pd == 4) {
+	/* quarterly: try 5 years */
+	periods = 20;
+    } else if (pd == 12) {
+	/* monthly: two years */
+	periods = 24;
+    } else if (pd == 7 || pd == 6 || pd == 5) {
+	/* daily: three weeks */
+	periods = 3 * pd;
+    } 
+
+    return periods;
+}
+
 int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
@@ -300,9 +318,7 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     }  
 
     if (periods == 0) {
-	if (pdinfo->pd == 4) periods = 20;
-	else if (pdinfo->pd == 12) periods = 24;
-	else periods = 10;
+	periods = periods_from_pd(pdinfo->pd);
     }
 
     rtmp = gretl_matrix_alloc(rows, var->neqns);
@@ -592,13 +608,11 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
     if (targ >= var->neqns) {
 	fprintf(stderr, "Target variable out of bounds\n");
 	return 1;
-    }  
+    } 
 
     if (periods == 0) {
-	if (pdinfo->pd == 4) periods = 20;
-	else if (pdinfo->pd == 12) periods = 24;
-	else periods = 10;
-    }
+	periods = periods_from_pd(pdinfo->pd);
+    } 
 
     vd = gretl_var_get_fcast_decomp(var, targ, periods);
     if (vd == NULL) return E_ALLOC;
