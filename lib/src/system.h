@@ -24,7 +24,8 @@ typedef struct _gretl_equation_system gretl_equation_system;
 
 enum gretl_system_types {
     SUR = 0,
-    THREESLS
+    THREESLS,
+    FIML
 };
 
 enum system_save_flags {
@@ -64,5 +65,9 @@ int system_get_depvar (const gretl_equation_system *sys, int i);
 const char *gretl_system_short_string (const MODEL *pmod);
 
 int system_get_type (const gretl_equation_system *sys);
+
+int *system_get_endog_vars (const gretl_equation_system *sys);
+
+int *system_get_exog_vars (const gretl_equation_system *sys);
 
 #endif /* GRETL_EQUATION_SYSTEM_H */
