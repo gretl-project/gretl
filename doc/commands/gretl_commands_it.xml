@@ -913,8 +913,7 @@
         di seguito</para>
 
       <code>
-	data (compact=average) 
-	LHUR PUNEW</code>
+	data (compact=average) LHUR PUNEW</code>
 
       <para>I quattro metodi di compattamento disponibili sono
 	<quote>average</quote> (usa la media delle osservazioni ad alta

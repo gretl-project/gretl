@@ -445,7 +445,7 @@
 	    genr TC = GOC$i - PBT$i
 	    genr C = TC - V
 	    ols PBT$i const TC V
-	    endloop
+	  endloop
         </programlisting>
       </example>
 
