@@ -668,13 +668,24 @@ static int datamerge (double ***fullZ, DATAINFO *fullinfo,
 
 static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
 {
+    int old_vmax = pdinfo->v;
     int v, t;
 
     if (maybe_add_subdum(pZ, pdinfo, &v))
 	return 1;
 
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[v][t] = (t < pdinfo->t1 || t > pdinfo->t2)? 0.0 : 1.0;
+    if (v == old_vmax) {
+	/* no pre-existing mask */
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[v][t] = (t < pdinfo->t1 || t > pdinfo->t2)? 0.0 : 1.0;
+	}
+    } else {
+	/* there was a pre-existing mask */
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < pdinfo->t1 || t > pdinfo->t2) {
+		(*pZ)[v][t] = 0.0;
+	    }
+	}	
     }
 
     return 0;
@@ -690,16 +701,17 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     *gretl_errmsg = '\0';
 
-    if (*subZ == NULL) {
-	if (!(opt & OPT_C)) { 
-	    /* cumulating, not replacing restrictions */
-	    err = make_smpl_mask(Z, *datainfo);
-	}
+    if (!(opt & OPT_C)) {   
+	/* cumulating, not replacing restrictions */
+	err = make_smpl_mask(Z, *datainfo);
+    }
 
+    if (err) return err;
+
+    if (*subZ == NULL) {
 	(*datainfo)->t1 = 0;
 	(*datainfo)->t2 = (*datainfo)->n - 1;
-
-        return err;
+	return 0;
     }
 
     if (fullinfo == NULL || *fullinfo == NULL) return 1;
