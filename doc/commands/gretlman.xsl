@@ -9,7 +9,7 @@
 <xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
 
 <xsl:variable name="phrases"
-  select="document('manual_strings.xml')/phrases"/>
+  select="document('hlpstrings.xml')/phrases"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>

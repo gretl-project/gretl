@@ -89,7 +89,7 @@ hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS)
 	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp.it
 
 $(XMLSTRS): $(TXTSTRS) hlpstrings
-	./hlpstrings $(TXTSTRS)
+	./hlpstrings $(TXTSTRS) > $(XMLSTRS)
 
 # Validate the commands "master" XML files against libgretl
 check: validate 

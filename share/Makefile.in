@@ -12,10 +12,13 @@ INSTALL_DATA = cp -fp
 AUTO_HELPFILES = \
 	$(sharesrc)/gretl.hlp \
 	$(sharesrc)/gretlcli.hlp \
+	$(sharesrc)/gretl.hlp.es \
+	$(sharesrc)/gretlcli.hlp.es 
 	$(sharesrc)/gretl.hlp.it \
-	$(sharesrc)/gretlcli.hlp.it
+	$(sharesrc)/gretlcli.hlp.it 
 
 AUTO_HELP_SRCS = $(topsrc)/doc/commands/gretl_commands.xml \
+	$(topsrc)/doc/commands/gretl_commands_es.xml \
 	$(topsrc)/doc/commands/gretl_commands_it.xml 
 
 AUTO_HELP_STY = $(topsrc)/doc/commands/gretltxt.xsl

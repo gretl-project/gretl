@@ -5,25 +5,23 @@
 #include <string.h>
 
 const char *strings_file = "hlpstrings.txt";
-const char *hlp_out = "hlp_strings.xml";
-const char *man_out = "manual_strings.xml";
 
 #define NLANGS 3
 
 const char *langs[] = { "en", "es", "it" };
 
-void output_start (FILE *fp)
+void output_start (void)
 {
-    fputs("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n\n"
-	  "<phrases>\n", fp);
+    puts("<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n\n"
+	 "<phrases>");
 }
 
-void output_end (FILE *fp)
+void output_end (void)
 {
-    fputs("</phrases>\n", fp);
+    puts("</phrases>");
 }
 
-int parse_line (char *line, FILE *fhlp, FILE *fman)
+int parse_line (char *line)
 {
     char key[16];
     char phrase[48];
@@ -63,8 +61,8 @@ int parse_line (char *line, FILE *fhlp, FILE *fman)
 	*phrase = '\0';
 	strncat(phrase, p + 1, q - p - 1);
 
-	fprintf(fhlp, " <phrase key=\"%s\" lang=\"%s\">%s</phrase>\n",
-		key, langs[i], phrase);
+	printf(" <phrase key=\"%s\" lang=\"%s\">%s</phrase>\n",
+	       key, langs[i], phrase);
 
 	if (i < NLANGS - 1) {
 	    p = strchr(q + 1, '"');
@@ -82,49 +80,30 @@ int parse_line (char *line, FILE *fhlp, FILE *fman)
 
 int main (int argc, char **argv) 
 {
-    FILE *fin, *fhlp, *fman;
+    FILE *fp;
     char line[256];
     int err = 0;
 
     if (argc == 2) {
-	fin = fopen(argv[1], "r");
+	fp = fopen(argv[1], "r");
     } else {
-	fin = fopen(strings_file, "r");
+	fp = fopen(strings_file, "r");
     }
 
-    if (fin == NULL) {
+    if (fp == NULL) {
 	fputs("Couldn't open text strings file\n", stderr);
 	exit(EXIT_FAILURE);
     }
 
-    fhlp = fopen(hlp_out, "w");
-    if (fhlp == NULL) {
-	fprintf(stderr, "Couldn't write to %s\n", hlp_out);
-	fclose(fin);
-	exit(EXIT_FAILURE);
+    output_start();
+
+    while (fgets(line, sizeof line, fp) && !err) {
+	err = parse_line(line);
     }
 
-    fman = fopen(man_out, "w");
-    if (fman == NULL) {
-	fprintf(stderr, "Couldn't write to %s\n", man_out);
-	fclose(fin);
-	fclose(fhlp);
-	exit(EXIT_FAILURE);
-    }    
+    output_end();
 
-    output_start(fhlp);
-    output_start(fman);
-
-    while (fgets(line, sizeof line, fin) && !err) {
-	err = parse_line(line, fhlp, fman);
-    }
-
-    output_end(fhlp);
-    output_end(fman);
-
-    fclose(fin);
-    fclose(fhlp);
-    fclose(fman);
+    fclose(fp);
 
     return err;
 }

@@ -1,5 +1,5 @@
 version 1.2.7
-- add Italian helpfiles
+- add Italian helpfiles (thanks to Cristian Rigamonti)
 - add start-up option "-e" or "--english" to force use of
   English strings when LANG would indicate translation
   (also recognize environment variable GRETL_LANG: if this
@@ -13,9 +13,11 @@ version 1.2.7
 - make start-up tests for tramo and x12a less verbose
 - fix bug in deletion of scalar variables from the dataset
 - fix bug in built-in spreadsheet: clicking in a blank
-  column could crash gretl (thanks to Cristian Rigamonti for
-  the report)
+  column could crash gretl 
+- fix broken behavior of built-in spreadsheet for gtk
+  2.0.X versions
 - fix various bug and typos in documentation
+- build tweaks for OS X
 
 5/25/2004 version 1.2.6
 - add Hodrick-Prescott filter, as "hpfilt" function in the

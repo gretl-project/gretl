@@ -8,7 +8,7 @@
 <xsl:output method="text" encoding="iso-8859-1"/>
 
 <xsl:variable name="phrases"
-  select="document('hlp_strings.xml')/phrases"/>
+  select="document('hlpstrings.xml')/phrases"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
