@@ -29,22 +29,14 @@
 #include <time.h>
 #include <gtk/gtk.h>
 
-#ifdef STANDALONE
-# include <gretl/libgretl.h>
-#else
-# include "libgretl.h"
-#endif
+#include "libgretl.h"
 
 #include "xltypes.h"
 #include "importer.h"
 
 /* from workbook.c */
-extern int wbook_get_info (const char *fname, wbook *book);
+extern int excel_book_get_info (const char *fname, wbook *book);
 
-#ifdef STANDALONE
-static void print_sheet (void);
-static void print_value (const char *value);
-#endif
 static void free_sheet (void);
 static int getshort (char *rec, int offset);
 static int process_item (int rectype, int reclen, char *rec); 
@@ -54,9 +46,6 @@ static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
-#ifdef STANDALONE
-static char cell_separator = ',';
-#endif
 char *errbuf;
 
 /* #define EDEBUG 1 */
@@ -572,7 +561,9 @@ static void free_sheet (void)
 {
     int i, j;
 
+#ifdef EDEBUG
     printf("free_sheet(), lastrow=%d\n", lastrow);
+#endif
 
     /* free shared string table */
     if (sst != NULL) {
@@ -597,35 +588,6 @@ static void free_sheet (void)
 
     lastrow = 0;
 }
-
-#ifdef STANDALONE
-static void print_sheet (void) 
-{
-    int i, j;
-
-    for (i=0; i<=lastrow; i++) {
-	if (rowptr[i].cells != NULL) {
-	    printf("row %d: ", i + 1);
-	    for (j=0; j<=rowptr[i].last; j++) {
-		if (j) fputc(cell_separator, stdout);
-		if (rowptr[i].cells[j] != NULL) 
-		    print_value(rowptr[i].cells[j]);
-	    }
-	} 
-	fputc('\n', stdout);
-    }
-} 
-
-static void print_value (const char *value) 
-{
-    int is_string = (*value == '"');
-
-    if (is_string) 
-	fputs(value + 1, stdout);
-    else 
-	fputs(value, stdout);
-} 
-#endif
 
 #define IS_STRING(v) (v[0] == '"')
 
@@ -661,7 +623,9 @@ static int first_col_strings (wbook *book)
 	fprintf(stderr, "first_col_strings: rowptr[%d].cells[%d]: '%s'\n", t, i,
 		rowptr[t].cells[i]);
 #endif
-	if (!IS_STRING(rowptr[t].cells[i]))
+	if (rowptr == NULL ||
+	    rowptr[t].cells[i] == NULL ||
+	    !IS_STRING(rowptr[t].cells[i]))
 	    return 0;
     }
     return 1;
@@ -716,7 +680,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     wbook_init(&book);
 
-    if (wbook_get_info(fname, &book)) {
+    if (excel_book_get_info(fname, &book)) {
 	sprintf(errbuf, "Failed to get workbook info");
 	err = 1;
     }
@@ -774,7 +738,6 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    goto getout; 
 	}
 
-#ifndef STANDALONE
 	label_strings = first_col_strings(&book);
 
 	if (got_varnames(&book, ncols, label_strings) != 1) {
@@ -831,8 +794,13 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	for (i=1; i<newinfo->v; i++) {
 	    i_sheet = i - 1 + skip;
+	    if (rowptr[book.row_offset].cells[i_sheet] == NULL) {
+		err = 1;
+		break;
+	    }
 	    newinfo->varname[i][0] = 0;
-	    strncat(newinfo->varname[i], rowptr[0].cells[i_sheet] + 1, 8);
+	    strncat(newinfo->varname[i], 
+		    rowptr[book.row_offset].cells[i_sheet] + 1, 8);
 	    for (t=0; t<newinfo->n; t++) {
 		t_sheet = t + 1 + book.row_offset;
 		if (rowptr[t_sheet].cells == NULL ||
@@ -847,7 +815,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	if (label_strings) {
+	if (!err && label_strings) {
 	    char **S = NULL;
 
 	    newinfo->markers = 1;
@@ -872,14 +840,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    prn.buf = errtext;
 	    err = merge_data(pZ, pdinfo, newZ, newinfo, &prn, 1);
 	}
-#endif /* STANDALONE */
     }
-
-#ifdef STANDALONE
-    if (!err) {
-	print_sheet();
-    } 
-#endif
 
  getout:
     wbook_free(&book);
@@ -887,20 +848,4 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     return err;
 }  
 
-#ifdef STANDALONE
-int main (int argc, char *argv[])
-{
-    char *filename;
-    int i, err;
-    char errtext[128];
 
-    gtk_init(NULL, NULL);
- 
-    for (i=1; i<argc; i++) {
-        filename = argv[i];
-        err = excel_get_data(filename, NULL, NULL, errtext);
-    }
-
-    return 0;
-}
-#endif

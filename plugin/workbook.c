@@ -570,7 +570,7 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 
 /* public interface */
 
-int wbook_get_info (const char *fname, wbook *book)
+int excel_book_get_info (const char *fname, wbook *book)
 {
     MsOleErr ole_error;
     MsOle *f;
@@ -584,7 +584,7 @@ int wbook_get_info (const char *fname, wbook *book)
 			   ole_error == MS_OLE_ERR_FORMAT) ?
 	    _("This file is not an 'OLE' file -- it may be too "
 	      "old for gretl to read\n")
-	    : _("Unexpected error reading the file");
+	    : _("Unexpected error reading the file\n");
 	ms_ole_destroy (&f);
 	fprintf(stderr, msg);
 	return 1;
