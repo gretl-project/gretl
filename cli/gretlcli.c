@@ -1489,7 +1489,8 @@ void exec_line (char *line, PRN *prn)
 		datainfo = subinfo;
 		Z = subZ;
 	    }
-	} else if (strcmp(line, "smpl full") == 0) {
+	} else if (!strcmp(line, "smpl full") ||
+		   !strcmp(line, "smpl --full")) {
 	    err = restore_full_sample(&subZ, &fullZ, &Z,
 				      &subinfo, &fullinfo, 
 				      &datainfo, OPT_C);

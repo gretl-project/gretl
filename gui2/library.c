@@ -5620,7 +5620,8 @@ int gui_exec_line (char *line,
 	    if (!err) {
 		save_full_dataset();
 	    }
-	} else if (strcmp(line, "smpl full") == 0) {
+	} else if (!strcmp(line, "smpl full") ||
+		   !strcmp(line, "smpl --full")) {
 	    restore_sample(OPT_C);
 	    chk = 1;
 	} else {

@@ -100,7 +100,7 @@
       using</para>
 
     <programlisting>
-      smpl --full</programlisting>
+      smpl full</programlisting>
 
     <para>Alternatively, you can add the <literal>replace</literal>
     option to the <literal>smpl</literal> command:</para>
