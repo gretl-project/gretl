@@ -263,7 +263,7 @@ static void filesel_open_script (const char *fname)
 
     strcpy(tryscript, fname);
 
-    if (view_file(tryscript, 1, 0, 78, 370, EDIT_SCRIPT, NULL) != NULL) {
+    if (view_file(tryscript, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
 	strcpy(scriptfile, tryscript);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	spos = slashpos(scriptfile);
@@ -285,7 +285,7 @@ static void filesel_open_session (const char *fname)
     if (saved_objects(tryscript)) {
 	verify_open_session(NULL);
     } else if (view_file(tryscript, 1, 0, 78, 370, 
-			 pub ? VIEW_SCRIPT : EDIT_SCRIPT, NULL)) {
+			 pub ? VIEW_SCRIPT : EDIT_SCRIPT)) {
 	strcpy(scriptfile, tryscript);
     }
 }

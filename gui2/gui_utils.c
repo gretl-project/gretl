@@ -927,8 +927,8 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 {
-    /* special case: a newly created script */
     if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
+	/* special case: a newly created script */
 	file_save(vwin, SAVE_SCRIPT, NULL);
 	strcpy(vwin->fname, scriptfile);
     } else {
@@ -1755,8 +1755,7 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 /* ........................................................... */
 
 windata_t *view_file (char *filename, int editable, int del_file, 
-		      int hsize, int vsize, int role, 
-		      GtkItemFactoryEntry menu_items[]) 
+		      int hsize, int vsize, int role)
 {
     GtkTextBuffer *tbuf = NULL;
 #ifdef USE_GTKSOURCEVIEW
@@ -1766,9 +1765,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     FILE *fp = NULL;
     windata_t *vwin;
     gchar *title;
-    int show_viewbar = (role != CONSOLE &&
-			role != VIEW_DATA &&
-			role != VIEW_FILE &&
+    int show_viewbar = (role != VIEW_FILE &&
 			!help_role(role));
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
@@ -1794,13 +1791,16 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     viewer_box_config(vwin);
 
-    if (menu_items != NULL) {
+    if (help_role(role)) {
+	GtkItemFactoryEntry *menu_items;
+
+	menu_items = get_help_menu_items(role);
 	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
     } else if (show_viewbar) { 
-	make_viewbar(vwin, 0);
+	make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
 	show_viewbar = 0;
     }
 
@@ -1836,7 +1836,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	fname = g_strdup(filename);
     }
 
-    /* should we show a toolbar at the foot of the window? */
+    /* should we show a toolbar? */
     if (show_viewbar) { 
 	make_viewbar(vwin, 0);
     } else { 

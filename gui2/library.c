@@ -66,17 +66,6 @@ static int get_terminal (char *s);
 int echo_off;               /* don't echo commands */
 int replay;                 /* are we replaying old session commands or not? */
 
-GtkItemFactoryEntry view_items[] = {
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },     
-    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
-#endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, "<StockItem>", GTK_STOCK_COPY },
-    { N_("/Edit/Copy _all"), "", text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
 const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 
 #define OPT_O 'o'
@@ -1102,7 +1091,7 @@ void view_log (void)
 
     if (dump_cmd_stack(fname, 0)) return;
 
-    view_file(fname, 0, 0, 78, 370, VIEW_LOG, NULL);
+    view_file(fname, 0, 0, 78, 370, VIEW_LOG);
 }
 
 
@@ -3271,7 +3260,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	err = printdata(NULL, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA, view_items);
+	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
@@ -3281,8 +3270,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, 
-		    NULL);
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL); 
     }
 }
 
@@ -3337,7 +3325,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	printdata(prcmd.list, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, width, 350, VIEW_DATA, view_items);
+	view_file(fname, 0, 1, width, 350, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
@@ -3348,8 +3336,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, 
-		    NULL);
+	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, NULL);
     }
     free(prcmd.list);
     free(prcmd.param);
@@ -3704,7 +3691,7 @@ void display_var (void)
 
 	printdata(list, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 28, height, VIEW_DATA, view_items);
+	view_file(fname, 0, 1, 28, height, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
@@ -3789,7 +3776,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     refresh_data();
 
-    view_file(fname, 1, 1, 78, 450, SCRIPT_OUT, NULL);
+    view_file(fname, 1, 1, 78, 450, SCRIPT_OUT);
 }
 
 /* ........................................................... */
@@ -3818,9 +3805,9 @@ void do_open_script (void)
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
     if (strncmp(scriptfile, paths.scriptdir, n)) 
-	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT, NULL);
+	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
     else 
-	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT, NULL);
+	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 }
 
 /* ........................................................... */
@@ -3835,7 +3822,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     gretl_print_destroy(prn);
     strcpy(scriptfile, fname);
     
-    view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT, NULL);
+    view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
 }
 
 /* ........................................................... */
@@ -4184,7 +4171,7 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 #endif
     sprintf(tmp, "%s.log", texbase);
     if (err == LATEX_ERROR) {
-	view_file(tmp, 0, 1, 78, 350, VIEW_FILE, NULL);
+	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
 	remove(tmp);
     }
@@ -5465,7 +5452,7 @@ void view_script_default (void)
 {
     if (dump_cmd_stack(cmdfile, 0)) return;
 
-    view_file(cmdfile, 0, 0, 78, 350, EDIT_SCRIPT, NULL);
+    view_file(cmdfile, 0, 0, 78, 350, EDIT_SCRIPT);
 }
 
 /* .................................................................. */

@@ -461,7 +461,7 @@ static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
     strcpy(cbname, dbwin->fname);
     strcat(cbname, ".cb");
     
-    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK, NULL);
+    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
 }
 
 /* ........................................................... */

@@ -649,9 +649,9 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 	    k = VDROWMAX * block + i - 1;
 	    if (k < 0) {
 		if (TEX_PRN(prn)) {
-		    pprintf(prn, " %s & ", I_("std error"));
+		    pprintf(prn, " %s & ", I_("std. error"));
 		} else {
-		    pprintf(prn, "  %s ", _("std error"));
+		    pprintf(prn, " %12s ", _("std. error"));
 		}
 		continue;
 	    }
@@ -680,7 +680,7 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		    if (TEX_PRN(prn)) {
 			pprintf(prn, "%g & ", r);
 		    } else {
-			pprintf(prn, "%12g ", r);
+			pprintf(prn, " %14g ", r);
 		    }
 		    continue;
 		}

@@ -28,18 +28,6 @@ extern int gui_exec_line (char *line,
 			  PRN *prn, int exec_code, 
 			  const char *myname);
 
-GtkItemFactoryEntry console_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL }, 
-    { N_("/File/Save _As..."), NULL, file_save, SAVE_CONSOLE, 
-      "<StockItem>", GTK_STOCK_SAVE_AS },
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
-      "<StockItem>", GTK_STOCK_COPY },
-    { N_("/Edit/Copy _all"), "", text_copy, COPY_TEXT, 
-      "<StockItem>", GTK_STOCK_COPY },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
 static GtkWidget *console_view;
 static PRN *console_prn;
 
@@ -239,7 +227,7 @@ void show_gretl_console (void)
 
     pprintf(prn, _("gretl console: type 'help' for a list of commands\n? "));
     gretl_print_destroy(prn);
-    vwin = view_file(fname, 1, 0, 78, 400, CONSOLE, console_items);
+    vwin = view_file(fname, 1, 0, 78, 400, CONSOLE);
     console_view = vwin->w;
 
     g_signal_connect(G_OBJECT(console_view), "destroy",
@@ -378,4 +366,5 @@ gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 
     return FALSE;
 }
+
 
