@@ -220,7 +220,8 @@ static int aliased (char *cmd)
                        c == LEVERAGE || \
                        c == NLS || \
                        c == DATA || \
-	               c == GENR)
+	               c == GENR || \
+                       c == OUTFILE)
 
 /* ........................................................... */
 
@@ -298,6 +299,30 @@ static int parse_lagvar (const char *s, LAGVAR *plagv, DATAINFO *pdinfo)
     }
 
     return ret;
+}
+
+static void parse_outfile_cmd (char *line, CMD *cmd)
+{
+    /* 7 = number of chars in the command word, "outfile" */
+    int n = strlen(line) - 7;
+
+    if (n > 1) {
+	free(cmd->param);
+	cmd->param = malloc(n);
+	if (cmd->param == NULL) {
+	    cmd->errcode = E_ALLOC;
+	    cmd->param = NULL;
+	} else {
+	    char *p = line + 7 + 1;
+
+	    while (*p && (isspace(*p) || *p == '"')) p++;
+	    strcpy(cmd->param, p);
+	    n = strlen(cmd->param) - 1;
+	    if (n > 0 && cmd->param[n] == '"') {
+		cmd->param[n] = 0;
+	    }
+	}
+    }
 }
 
 /**
@@ -387,6 +412,11 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     if (command->ci == EQNPRINT || command->ci == TABPRINT) {
 	get_optional_filename(line, command);
     } 
+
+    /* the "outfile" command may have a filename */
+    if (command->ci == OUTFILE) {
+	parse_outfile_cmd(line, command);
+    }
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(command->ci)) {
@@ -716,6 +746,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == DIFF ||
 	command->ci == LDIFF ||
 	command->ci == SUMMARY ||
+	command->ci == PCA ||
 	command->ci == LAGS) {
 	if (command->list[0] == 0) {
 	    _full_list(pdinfo, command);
@@ -1195,7 +1226,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 /* .......................................................... */
 
 /* Look for a flag of the form "-x".  Make sure it's outside of
-   any quotes.  Return pointer to  */
+   any quotes.  Return pointer to flag. */
 
 static const char *flag_present (const char *s, char f, int *quoted)
 {
@@ -1336,6 +1367,76 @@ static void do_print_string (char *str, PRN *prn)
     pprintf(prn, "%s\n", str);
 }
 
+static int do_outfile_command (unsigned char flag, char *fname,
+			       PRN *prn)
+{
+    static int output_diverted;
+    static char outname[MAXLEN];
+    static FILE *fp_orig;
+
+    if (flag != 'w' && flag != 'a' && flag != 'c') {
+	return E_ARGS;
+    }
+
+    /* command to close outfile */
+    if (flag == 'c') {
+	if (!output_diverted) {
+	    pputs(prn, _("Output is not currently diverted to file\n"));
+	    return 1;
+	} else {
+	    fclose(prn->fp);
+	    if (fp_orig != NULL) {
+		prn->fp = fp_orig;
+	    } else {
+		prn->fp = NULL;
+	    }
+	    pprintf(prn, "Closed output file '%s'\n", outname);
+	    output_diverted = 0;
+	    return 0;
+	}
+    }
+
+    /* command to divert output to file */
+    if (output_diverted) {
+	fprintf(stderr, _("Output is already diverted to '%s'\n"),
+		outname);
+	return 1;
+    } else {
+	if (*fname == 0) {
+	    return E_ARGS;
+	} else {
+	    FILE *fp;
+
+	    if (flag == 'w') {
+		fp = fopen(fname, "w");
+	    } else {
+		fp = fopen(fname, "a");
+	    }
+
+	    if (fp == NULL) {
+		pprintf(prn, _("Couldn't open %s for writing\n"), fname);
+		return 1;
+	    } else {
+		if (flag == 'w') {
+		    pprintf(prn, _("Now writing output to '%s'\n"), fname);
+		} else {
+		    pprintf(prn, _("Now appending output to '%s'\n"), fname);
+		}
+	    }
+
+	    /* save the prn stream */
+	    fp_orig = prn->fp;
+	    /* hook output to specified file */
+	    prn->fp = fp;
+	    strcpy(outname, fname);
+	    output_diverted = 1;
+	    return 0;
+	}
+    }
+
+    return 1; /* not reached */
+}
+
 /* ........................................................ */
 
 int simple_commands (CMD *cmd, const char *line, 
@@ -1382,6 +1483,16 @@ int simple_commands (CMD *cmd, const char *line,
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	else printcorr(corrmat, datainfo, prn);
 	free_corrmat(corrmat);
+	break;
+
+    case PCA:
+	corrmat = corrlist(cmd->list, pZ, datainfo);
+	if (corrmat == NULL) {
+	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
+	} else {
+	    do_pca_from_corrmat(corrmat, pZ, datainfo, oflag, prn);
+	    free_corrmat(corrmat);
+	}
 	break;
 
     case CRITERIA:
@@ -1503,6 +1614,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     case SPEARMAN:
 	err = spearman(cmd->list, *pZ, datainfo, oflag, prn);
+	break;
+
+    case OUTFILE:
+	err = do_outfile_command(oflag, cmd->param, prn);
 	break;
 
     default:

@@ -146,7 +146,8 @@ static char *pop_history_line (int keyval)
 
 static void console_exec (void)
 {
-    PRN *prn;
+    static PRN *prn;
+    static int redirected;
     int loopstack = 0, looprun = 0;
     gchar *c_line; 
     char execline[MAXLEN];
@@ -167,7 +168,7 @@ static void console_exec (void)
 	return;
     }
 
-    if (bufopen(&prn)) {
+    if (prn == NULL && bufopen(&prn)) {
 	g_free(c_line);
 	return;
     }
@@ -176,21 +177,33 @@ static void console_exec (void)
     strncat(execline, c_line, MAXLEN - 1);
     g_free(c_line);
     push_history_line(execline);    
-    gui_exec_line(execline, NULL, &loopstack, &looprun,  prn, 
+    gui_exec_line(execline, NULL, &loopstack, &looprun, prn, 
 		  CONSOLE_EXEC, NULL);
 
-    /* put results into console window */
+    if (prn->fp == NULL) redirected = 0;
+
     gtk_text_buffer_get_end_iter(buf, &start);
     gtk_text_buffer_insert(buf, &start, "\n", 1);
-    gtk_text_buffer_insert(buf, &start, prn->buf, strlen(prn->buf));
 
-    gretl_print_destroy(prn);
+    if (!redirected) {
+	/* put results into console window */
+	gtk_text_buffer_insert(buf, &start, prn->buf, strlen(prn->buf));
+    }
+
+    if (prn->fp == NULL) {
+	gretl_print_destroy(prn);
+	prn = NULL;
+    } else {
+	/* user has redirected console output to file */
+	redirected = 1;
+	*prn->buf = 0;
+    }
 
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
 					     "\n? ", 3,
 					     "redtext", NULL);
 
-    /* go to end */
+    /* scroll to end of buffer */
     gtk_text_buffer_place_cursor(buf, &start);
     mark = gtk_text_buffer_create_mark(buf, NULL, &start, FALSE);
     gtk_text_view_scroll_mark_onscreen (GTK_TEXT_VIEW(console_view),

@@ -639,7 +639,7 @@ void exec_line (char *line, PRN *prn)
     case PRINT:
     case SUMMARY:
     case MEANTEST: case VARTEST:
-    case RUNS: case SPEARMAN:
+    case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
 			      !batch, optflag, prn);
 	if (err) errmsg(err, prn);

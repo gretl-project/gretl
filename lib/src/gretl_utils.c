@@ -1039,7 +1039,7 @@ static unsigned char isflag (unsigned char c)
 {
     if (c == 'o' || c == 'c' || c == 'i' || c == 'm' ||
 	c == 'r' || c == 's' || c == 't' || c == 'l' ||
-	c == 'a' || c == 'z') {
+	c == 'a' || c == 'z' || c == 'w') {
 	return c;
     }
     return 0;

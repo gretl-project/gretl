@@ -41,6 +41,7 @@ typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
 
 struct _gretl_matrix {
+    int packed;
     int rows;
     int cols;
     double *val;
@@ -57,6 +58,8 @@ struct _gretl_matrix {
 
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
+
+gretl_matrix *gretl_packed_matrix_alloc (int rows);
 
 gretl_matrix *gretl_matrix_copy (gretl_matrix *m);
 
@@ -83,5 +86,8 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 int gretl_invert_general_matrix (gretl_matrix *m);
 
 double *gretl_general_matrix_eigenvals (gretl_matrix *m);
+
+double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
+					  int eigenvecs);
 
 #endif /* GRETL_MATRIX_H */

@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "gretl_matrix.h"
 #include <unistd.h>
 
 #ifdef OS_WIN32
@@ -1379,5 +1380,98 @@ int vars_test (LIST list, double **Z, const DATAINFO *pdinfo,
     free(y);
 
     return 0;
+}
 
+int do_pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
+			 const DATAINFO *pdinfo, unsigned char oflag,
+			 PRN *prn)
+{
+    gretl_matrix *m;
+    double x, y;
+    int i, j, n = corrmat->list[0];
+    int idx;
+    double *evals;
+
+    m = gretl_matrix_alloc(n, n);
+    if (m == NULL) return E_ALLOC;
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    idx = ijton(i+1, j+1, n);
+	    x = corrmat->xpx[idx];
+	    gretl_matrix_set(m, i, j, x);
+	}
+    }
+
+    evals = gretl_symmetric_matrix_eigenvals(m, 1);
+    if (evals == NULL) {
+	gretl_matrix_free(m);
+	return 1;
+    }
+
+    pputs(prn, "Principal Components Analysis\n\n");
+    pputs(prn, "Eigenanalysis of the Correlation Matrix\n\n");
+    pputs(prn, "Eigenvalue   ");
+    x = 0.0;
+    for (i=n-1; i>=0; i--) {
+	pprintf(prn, "%10.4f", evals[i]);
+	x += evals[i];
+    }
+    pputs(prn, "\n");
+    pputs(prn, "Proportion   ");
+    for (i=n-1; i>=0; i--) {
+	pprintf(prn, "%10.3f", evals[i] / x);
+    }
+    pputs(prn, "\n");
+    pputs(prn, "Cumulative   ");
+    y = 0.0;
+    for (i=n-1; i>=0; i--) {
+	y += evals[i] / x;
+	pprintf(prn, "%10.3f", y);
+    }
+    pputs(prn, "\n\n");
+
+#if 0
+    fprintf(stderr, "check: sum of evals = %g\n", x);
+#endif
+
+    pputs(prn, "Eigenvectors (component loadings)\n\n");
+
+    pputs(prn, "Variable  ");
+    for (i=1; i<=n; i++) {
+	pprintf(prn, "%9s%d", "PC", i);
+    }
+    pputs(prn, "\n");
+    for (i=0; i<n; i++) {
+	pprintf(prn, "%-10s", pdinfo->varname[corrmat->list[i+1]]);
+	for (j=n-1; j>=0; j--) {
+	    pprintf(prn, "%10.3f", gretl_matrix_get(m, i, j));
+	}
+	pputs(prn, "\n");
+    }
+
+#ifdef NOTYET
+    /* this needs more thought */
+    if (oflag) {
+	int v = pdinfo->v;
+	int err = dataset_add_vars(n, pZ, pdinfo);
+
+	if (!err) {
+	    for (i=0; i<n; i++) {
+		sprintf(pdinfo->varname[v + i], "PC%d", i+1);
+		for (j=0; j<n && j<pdinfo->n; j++) {
+		    (*pZ)[v+i][j] = gretl_matrix_get(m, i, n-1-j);
+		}
+		for (j=n; j<pdinfo->n; j++) {
+		    (*pZ)[v+i][j] = NADBL;
+		}
+	    }
+	}
+    }
+#endif
+
+    free(evals);
+    gretl_matrix_free(m);
+
+    return 0;
 }

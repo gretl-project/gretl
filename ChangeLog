@@ -5,8 +5,11 @@ version 1.1.1
   this option (requires libgd and freetype)
 - Add compaction method (e.g. average, sum) as an attribute of 
   variables -- settable under Variable/Edit attributes
+- Add "outfile" command to send output of selected commands to
+  a specified file
 - In importing data from a database, recognize if a variable
   of the same name is already in the working dataset
+- Start adding Principal Components Analysis
 - Fix "pmax" bug in printing of actual, fitted and residuals
 - When using "<-" save mechanism for models, preserve the model
   info so it's accessible for genr, etc.

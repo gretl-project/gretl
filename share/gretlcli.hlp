@@ -1013,6 +1013,25 @@ reading, in which case it should be followed by the "data" command to extract
 particular series from the database.
 
 #
+outfile
+@Printing
+Usage:          outfile [flag] filename
+Example:        outfile -w regress.txt
+                ols y 0 x1 x2
+                outfile -c
+
+Divert output to the named text file, until further notice.  Use the flag "-a"
+to append output to an existing file, or "-w" to start a new file (or
+overwrite an existing one).  Only one file can be opened in this way at any
+given time.
+
+The "-c" flag is used to close an output file that was previously opened with
+the "-w" or "-a" flag.  Output will then revert to the default stream.
+
+In the example above, the results of one regression are written to the file
+regress.txt, which is then closed.
+
+#
 panel
 @Dataset
 Usage:          panel

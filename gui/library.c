@@ -4170,7 +4170,7 @@ int gui_exec_line (char *line,
     case PRINT:
     case SUMMARY:
     case MEANTEST: case VARTEST:
-    case RUNS: case SPEARMAN:
+    case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
 			      0, oflag, prn);
 	if (err) errmsg(err, prn);
@@ -4820,7 +4820,11 @@ int gui_exec_line (char *line,
         break;
 
     case SHELL:
-	pprintf(prn, _("shell command not implemented in script mode\n"));
+	if (exec_code == CONSOLE_EXEC) {
+	    shell(line + 1);
+	} else {
+	    pprintf(prn, _("shell command not implemented in script mode\n"));
+	}	
 	break;
 
     case SIM:

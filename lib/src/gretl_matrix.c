@@ -24,14 +24,21 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
 /* ....................................................... */
 
-gretl_matrix *gretl_matrix_alloc (int rows, int cols)
+static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
+					      int packed)
 {
     gretl_matrix *m;
 
     m = malloc(sizeof *m);
     if (m == NULL) return m;
 
-    m->val = malloc(rows * cols * sizeof *m->val);
+    if (packed) { /* symmetric, only triangle stored */
+	int n = (rows * rows + rows) / 2;
+
+	m->val = malloc(n * sizeof *m->val);
+    } else {
+	m->val = malloc(rows * cols * sizeof *m->val);
+    }
 
     if (m->val == NULL) {
 	free(m);
@@ -40,8 +47,23 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 
     m->rows = rows;
     m->cols = cols;
+    m->packed = packed;
 
     return m;
+}
+
+/* ....................................................... */
+
+gretl_matrix *gretl_matrix_alloc (int rows, int cols)
+{
+    return real_gretl_matrix_alloc(rows, cols, 0);
+}
+
+/* ....................................................... */
+
+gretl_matrix *gretl_packed_matrix_alloc (int rows)
+{
+    return real_gretl_matrix_alloc(rows, rows, 1);
 }
 
 /* ....................................................... */
@@ -49,7 +71,13 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
 {
     gretl_matrix *c;
-    int i, n = m->rows * m->cols;
+    int i, n;
+
+    if (m->packed) {
+	n = (m->rows * m->rows + m->rows) / 2;
+    } else {
+	n = m->rows * m->cols;
+    }
 
     c = malloc(sizeof *c);
     if (c == NULL) return c;
@@ -63,6 +91,8 @@ gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
 
     c->rows = m->rows;
     c->cols = m->cols;
+
+    c->packed = m->packed;
 
     for (i=0; i<n; i++) {
 	c->val[i] = m->val[i];
@@ -96,13 +126,38 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
 
 /* ....................................................... */
 
+static int packed_idx (int nrows, int i, int j)
+{
+    int idx;
+
+    if (i > j) {
+	int tmp = i;
+
+	i = j;
+	j = tmp;
+    }
+
+    idx = nrows * i + j - i - ((i - 1) * i/2);
+    return idx;
+}
+
+/* ....................................................... */
+
 double gretl_matrix_get (const gretl_matrix *m, int i, int j)
 {
+    double x;
+
     if (m == NULL || m->val == NULL) return -999.0;
 
     if (i >= m->rows || j >= m->cols) return -999.0;
 
-    return m->val[mdx(m, i, j)];
+    if (m->packed) {
+	x = m->val[packed_idx(m->rows, i, j)];
+    } else {
+	x = m->val[mdx(m, i, j)];
+    }
+
+    return x;
 }
 
 /* ....................................................... */
@@ -113,7 +168,11 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
 
     if (i >= m->rows || j >= m->cols) return 1;
 
-    m->val[mdx(m, i, j)] = x;
+    if (m->packed) {
+	m->val[packed_idx(m->rows, i, j)] = x;
+    } else {
+	m->val[mdx(m, i, j)] = x;
+    }
 
     return 0;
 }
@@ -374,3 +433,60 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m)
     return wr;
 }
 
+double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
+					  int eigenvecs) 
+{
+    integer n = m->rows;
+    integer info;
+    integer lwork;
+
+    double *work;
+    double *w;
+
+    char jobz, uplo = 'U'; 
+
+    if (eigenvecs) jobz = 'V';
+    else jobz = 'N';
+
+    work = malloc(sizeof *work);
+    if (work == NULL) {
+	return NULL;
+    }
+
+    w = malloc(n * sizeof *w);
+    if (w == NULL) {
+	free(work);
+	return NULL;
+    }
+
+    lwork = -1; /* find optimal workspace size */
+    dsyev_(&jobz, &uplo, &n, m->val, &n, 
+	   w, work, &lwork, &info);
+
+    if (info != 0 || work[0] <= 0.0) {
+	fputs(wspace_fail, stderr);
+	free(work);
+	free(w);
+	return NULL;
+    }	
+
+    lwork = (integer) work[0];
+
+    work = realloc(work, lwork * sizeof *work);
+    if (work == NULL) {
+	free(w);
+	return NULL;
+    }    
+
+    dsyev_(&jobz, &uplo, &n, m->val, &n, 
+	   w, work, &lwork, &info);
+
+    if (info != 0) {
+	free(w);
+	w = NULL;
+    }
+
+    free(work);
+
+    return w;
+}

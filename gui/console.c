@@ -153,7 +153,8 @@ static int last_console_line_len (int len)
 
 static void console_exec (void)
 {
-    PRN *prn;
+    static PRN *prn;
+    static int redirected;
     int len, loopstack = 0, looprun = 0;
     gchar *c_line; 
     char execline[MAXLEN];
@@ -170,7 +171,7 @@ static void console_exec (void)
 	return;
     }
 
-    if (bufopen(&prn)) {
+    if (prn == NULL && bufopen(&prn)) {
 	g_free(c_line);
 	return;
     }
@@ -181,19 +182,32 @@ static void console_exec (void)
     gui_exec_line(execline, NULL, &loopstack, &looprun, 
 		  prn, CONSOLE_EXEC, NULL);
 
-    /* put results into console window */
+    if (prn->fp == NULL) redirected = 0;
+
     gtk_text_freeze(GTK_TEXT(console_view));
     gtk_editable_insert_text(GTK_EDITABLE(console_view), 
 			     "\n", 1, &len);
-    gtk_text_insert(GTK_TEXT(console_view), fixed_font, 
-		    NULL, NULL, prn->buf, strlen(prn->buf));
-    gretl_print_destroy(prn);
+
+    if (!redirected) {
+	/* put results into console window */
+	gtk_text_insert(GTK_TEXT(console_view), fixed_font, 
+			NULL, NULL, prn->buf, strlen(prn->buf));
+    }  
+
+    if (prn->fp == NULL) {
+	gretl_print_destroy(prn);
+	prn = NULL;
+    } else {
+	/* user has redirected console output to file */
+	redirected = 1;
+	*prn->buf = 0;
+    }  
 
     gtk_text_insert(GTK_TEXT(console_view), fixed_font,
 		    &red, NULL, "\n? ", 3);
     gtk_text_thaw(GTK_TEXT(console_view));
 
-    /* go to end */
+    /* scroll to end of buffer */
     len = gtk_text_get_length(GTK_TEXT(console_view));
     gtk_editable_set_position(GTK_EDITABLE(console_view), len);
 }
