@@ -2097,6 +2097,60 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 		MPOLS, mpvals);
 }
 
+/* ........................................................... */
+
+void do_restrict (GtkWidget *widget, dialog_t *ddata)
+{
+    gchar *buf;
+    PRN *prn;
+    char title[64];
+    windata_t *vwin = (windata_t *) ddata->data;
+    MODEL *pmod = (MODEL *) vwin->data;
+    int err = 0;
+
+#ifdef OLD_GTK
+    buf = gtk_editable_get_chars(GTK_EDITABLE(ddata->edit), 0, -1);
+#else
+    buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
+#endif
+    if (blank_entry(buf, ddata)) return;
+
+    bufgets(NULL, 0, buf);
+    while (bufgets(line, MAXLEN-1, buf) && !err) {
+	if (string_is_blank(line)) continue;
+	if (rset == NULL) {
+	    rset = restriction_set_start(line, pmod, datainfo);
+	    if (rset == NULL) {
+ 		err = 1;
+		gui_errmsg(err);
+	    }
+	} else {
+	    err = restriction_set_parse_line(rset, line);
+	    if (err) {
+		gui_errmsg(err);
+	    }
+	}	
+    }
+
+    g_free(buf);
+    if (err) return;
+
+    close_dialog(ddata);
+
+    if (bufopen(&prn)) return; 
+
+    err = gretl_restriction_set_finalize(rset, prn);
+    if (err) errmsg(err, prn);
+    rset = NULL;
+
+    strcpy(title, "gretl: ");
+    strcat(title, _("linear restrictions"));
+
+    view_buffer(prn, 78, 300, title, PRINT, NULL);
+}
+
+/* ........................................................... */
+
 #endif /* ENABLE_GMP */
 
 static int do_nls_genr (void)
@@ -2185,7 +2239,6 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
     }
     
-    /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
     view_model(prn, pmod, 78, 400, title); 

@@ -162,6 +162,10 @@ static int parse_chunk (const char *s, double *x)
 	}
     }
 
+    if (bnum < 0) {
+	sprintf(gretl_errmsg, _("parse error in '%s'\n"), s);
+    }
+
     return bnum;
 }
 
@@ -383,7 +387,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 
 	bnum = parse_chunk(chunk, &mult);
 	if (bnum < 0) {
-	    err = 1;
+	    err = E_PARSE;
 	    break;
 	}
 
@@ -422,9 +426,13 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
     gretl_restriction_set *rset;
 
     rset = real_restriction_set_start(pmod, pdinfo);
-    if (rset == NULL) return NULL;
+    if (rset == NULL) {
+	strcpy(gretl_errmsg, _("Out of memory!"));
+	return NULL;
+    }
 
     if (real_restriction_set_parse_line(rset, line, 1)) {
+	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
 	return NULL;
     }
 

@@ -612,6 +612,11 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	okfunc = do_nls_model;
 	varclick = VARCLICK_INSERT_TEXT;
 	break;	
+    case RESTRICT:
+	strcpy(title, _("gretl: linear restrictions"));
+	strcpy(query, _("Specify restrictions:"));
+	okfunc = do_restrict;
+	break;	
     default:
 	errbox("Bug: unrecognized action code in gretl_callback");
 	return;

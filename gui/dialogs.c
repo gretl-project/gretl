@@ -123,7 +123,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			GTK_SIGNAL_FUNC (destroy_dialog_data), 
 			d);
 
-    if (cmdcode == NLS) {
+    if (cmdcode == NLS || cmdcode == RESTRICT) {
 	int hsize = 64;
 	gchar *lbl;
 

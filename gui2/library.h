@@ -117,6 +117,8 @@ void do_reset (gpointer data, guint u, GtkWidget *widget);
 
 void do_arch (GtkWidget *widget, dialog_t *ddata);
 
+void do_restrict (GtkWidget *widget, dialog_t *ddata);
+
 void do_nls_model (GtkWidget *widget, dialog_t *ddata);
 
 void do_model (GtkWidget *widget, gpointer p);

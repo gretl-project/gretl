@@ -3808,7 +3808,8 @@
 
   </command>
 
-  <command name="restrict" section="Tests" context="cli">
+  <command name="restrict" section="Tests"
+    label="Linear restrictions">
 
     <usage>
       <examples>
@@ -3821,7 +3822,14 @@
     </usage>
 
     <description>
-      <para>
+      <para context="gui">
+	Evaluates a set of linear restrictions on the parameters of
+	the model last estimated.  In script mode, the set of
+	restrictions must be enclosed by <quote>restrict</quote> and
+	<quote>end restrict</quote>, but in the restrictions dialog
+	box these lines may be omitted.</para>
+
+      <para context="cli">
 	Evaluates a set of linear restrictions on the parameters of the
 	model last estimated.  The set of restrictions must be
 	terminated with <quote>end restrict</quote>.
@@ -3839,6 +3847,14 @@
       <para>The <lit>bN</lit> terms may be prefixed with a numeric
       multiplier, using <lit>*</lit> to represent multiplication, for
       example <lit>3.5*b4</lit>.</para>
+
+      <para context="gui">Example restrictions:</para>
+
+      <code context="gui">
+	b1 = 0
+	b2 - b3 = 0
+	b4 + 2*b5 = 1
+      </code>
 
       <para>The set of restrictions is evaluated via an F-test,
 	using the coefficient covariance matrix of the model

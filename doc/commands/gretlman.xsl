@@ -288,10 +288,12 @@
 
 <xsl:template match="para[@context and @context!=$hlp]"/>
 
-<xsl:template match="code">
+<xsl:template match="code[not(@context) or @context=$hlp]">
 <programlisting>
 <xsl:apply-templates/></programlisting>
 </xsl:template>
+
+<xsl:template match="code[@context and @context!=$hlp]"/>
 
 <xsl:template match="cmdref">
   <xref linkend="cmd-{@targ}"/>

@@ -265,11 +265,13 @@
 
 <xsl:template match="para[@context and @context!=$hlp]"/>
 
-<xsl:template match="code">
+<xsl:template match="code[not(@context) or @context=$hlp]">
   <xsl:call-template name="dnl"/>
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>
 </xsl:template>
+
+<xsl:template match="code[@context and @context!=$hlp]"/>
 
 <xsl:template match="ilist[not(@context) or @context=$hlp]">
   <xsl:apply-templates/>
