@@ -66,19 +66,14 @@ static void
 audioprint_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
-    int t1 = pmod->t1, t2 = pmod->t2;
 
     if (pmod->ci != OLS) {
 	pputs(prn, "Sorry, this model is not O.L.S.  I can't read it.\n");
 	return;
     }
 
-    if (pmod->data != NULL) {
-	t2 += get_misscount(pmod);
-    }
-
-    ntodate(startdate, t1, pdinfo);
-    ntodate(enddate, t2, pdinfo);
+    ntodate(startdate, pmod->t1, pdinfo);
+    ntodate(enddate, pmod->t2, pdinfo);
 
     pprintf(prn, "O.L.S estimates using the %d observations %s to %s.\n",
 	    pmod->nobs, startdate, enddate);

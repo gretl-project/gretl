@@ -699,15 +699,6 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */
 
-static void modelprint_setup_obs (const MODEL *pmod, int *t2)
-{
-    if (pmod->data != NULL) {
-	*t2 += get_misscount(pmod);
-    }
-}
-
-/* ......................................................... */
-
 static int print_tsls_instruments (LIST list, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, pos = 0;
@@ -855,8 +846,6 @@ static void print_model_heading (const MODEL *pmod,
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = TEX_FORMAT(prn->format);
     int utf = PLAIN_FORMAT(prn->format);
-
-    modelprint_setup_obs(pmod, &t2);
 
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);

@@ -22,6 +22,7 @@ lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/interact.c
 lib/src/libset.c
+lib/src/missing.c
 lib/src/modelprint.c
 lib/src/modelspec.c
 lib/src/monte_carlo.c
@@ -57,6 +58,7 @@ gui2/console.c
 gui2/database.c
 gui2/datafiles.c
 gui2/dialogs.c
+gui2/filelists.c
 gui2/fileselect.c
 gui2/font_filter.c
 gui2/gpt_control.c

@@ -90,6 +90,12 @@ void gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		 const double **Z, int *misst);
 
+int undo_daily_repack (MODEL *pmod, double **Z, 
+		       const DATAINFO *pdinfo);
+
+int repack_missing_daily_obs (MODEL *pmod, double **Z, 
+			      const DATAINFO *pdinfo);
+
 int list_dups (const int *list, int ci);
 
 int gretl_forecast (int t1, int t2, int nv, 

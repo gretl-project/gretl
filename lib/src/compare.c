@@ -1079,7 +1079,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	return E_OLSONLY;
     }
 
-    if (pmod->missmask) {
+    if (has_missing_obs(pmod)) {
 	return E_DATA;
     }
 
@@ -1247,7 +1247,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	return E_OLSONLY;
     }
 
-    if (pmod->missmask != NULL) {
+    if (has_missing_obs(pmod)) {
 	return E_DATA;
     }
 

@@ -578,220 +578,6 @@ void gretl_criteria (const double ess, int nobs, int ncoeff,
     pputc(prn, '\n');
 }
 
-static char *model_missmask (const int *list, int t1, int t2,
-			     const double **Z, int dwt)
-{
-    char *mask;
-    double xx;
-    int i, t;
-
-    mask = calloc(t2 - t1 + 1, sizeof *mask);
-    if (mask == NULL) {
-	return NULL;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	for (i=1; i<=list[0]; i++) {
-	    if (list[i] == LISTSEP) continue;
-	    xx = Z[list[i]][t];
-	    if (dwt) {
-		xx *= Z[dwt][t];
-	    }
-	    if (na(xx)) {
-		/* FIXME dwt case and nobs?? */
-		mask[t - t1] = 1;
-		break;
-	    }
-	}
-    }
-
-    return mask;
-}
-
-/* Drop first/last observations from sample if missing obs encountered.
-   Also check for missing vals within the remaining sample: in case
-   missing values are encountered there, either (a) construct a mask
-   for them (if misst == NULL), or (b) flag an error.
-*/
-
-int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		 const double **Z, int *misst)
-{
-    int i, t, dwt = 0, t1min = *t1, t2max = *t2;
-    int missobs, ret = 0;
-    double xx;
-
-    if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) {
-	/* we have a weight variable which is a 0/1 dummy */
-	dwt = pmod->nwt;
-    }
-
-    /* advance start of sample range to skip missing obs? */
-    for (t=t1min; t<t2max; t++) {
-	missobs = 0;
-	for (i=1; i<=list[0]; i++) {
-	    if (list[i] == LISTSEP) continue;
-	    xx = Z[list[i]][t];
-	    if (dwt) {
-		xx *= Z[dwt][t];
-	    }
-	    if (na(xx)) {
-		missobs = 1;
-		break;
-	    }
-	}
-	if (missobs) {
-	    t1min++;
-	} else {
-	    break;
-	}
-    }
-
-    /* retard end of sample range to skip missing obs? */
-    for (t=t2max; t>t1min; t--) {
-	missobs = 0;
-	for (i=1; i<=list[0]; i++) {
-	    if (list[i] == LISTSEP) continue;
-	    xx = Z[list[i]][t];
-	    if (dwt) {
-		xx *= Z[dwt][t];
-	    }
-	    if (na(xx)) {
-		missobs = 1;
-		break;
-	    }
-	}
-	if (missobs) {
-	    t2max--;
-	} else {
-	    break;
-	}	
-    }
-
-    /* check for missing values within remaining range */
-    if (misst != NULL) {
-	for (t=t1min; t<=t2max; t++) {
-	    for (i=1; i<=list[0]; i++) {
-		if (list[i] == LISTSEP) continue;
-		xx = Z[list[i]][t];
-		if (dwt) {
-		    xx *= Z[dwt][t];
-		}
-		if (na(xx)) {
-		    *misst = t + 1;
-		    ret = list[i];
-		    break;
-		}
-	    }
-	    if (ret) {
-		break;
-	    }
-	}     
-    }
-
-#if 1
-    /* construct a mask for missing values within remaining range? */
-    else if (pmod != NULL) {
-	missobs = 0;
-	for (t=t1min; t<=t2max; t++) {
-	    for (i=1; i<=list[0]; i++) {
-		if (list[i] == LISTSEP) continue;
-		xx = Z[list[i]][t];
-		if (dwt) {
-		    xx *= Z[dwt][t];
-		}
-		if (na(xx)) {
-		    missobs++;
-		    break;
-		}
-	    }
-	}
-	if (missobs > 0) {
-	    /* FIXME: special treatment if no valid obs left? */
-	    pmod->missmask = model_missmask(list, t1min, t2max, Z, dwt);
-	}
-    }    
-#endif
-
-    *t1 = t1min; 
-    *t2 = t2max;
-
-    return ret;
-}
-
-/* ........................................................... */
-
-static int real_setmiss (double missval, int varno, 
-			 double **Z, DATAINFO *pdinfo) 
-{
-    int i, t, count = 0;
-    int start = 1, end = pdinfo->v;
-
-    if (varno) {
-	start = varno;
-	end = varno + 1;
-    }
-
-    for (i=start; i<end; i++) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (Z[i][t] == missval) {
-		Z[i][t] = NADBL;
-		count++;
-	    }
-	}	
-    }
-
-    return count;
-}
-
-/**
- * set_miss:
- * @LIST: list of variables to process.
- * @param: string with specification of value to treat as missing.
- * @Z: data matrix.
- * @pdinfo: pointer to data information struct.
- * @PRN: pointer to printing struct.
- * 
- * Set to "missing" each observation of each series in list that
- * has the specified value, as in @param.
- *
- */
-
-void set_miss (LIST list, const char *param, double **Z,
-	       DATAINFO *pdinfo, PRN *prn)
-{
-    double missval;
-    int i, count;
-
-    missval = atof(param);
-
-    if (list[0] == 0) {
-	count = real_setmiss(missval, 0, Z, pdinfo);
-	if (count) { 
-	    pprintf(prn, _("Set %d values to \"missing\"\n"), count);
-	} else {
-	    pputs(prn, _("Didn't find any matching observations\n"));
-	}
-	return;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	if (!pdinfo->vector[list[i]]) {
-	    pprintf(prn, _("The variable %s is a scalar\n"), 
-		    pdinfo->varname[list[i]]);
-	    continue;
-	}
-	count = real_setmiss(missval, list[i], Z, pdinfo);
-	if (count) { 
-	    pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
-		    pdinfo->varname[list[i]], count);
-	} else { 
-	    pprintf(prn, _("%s: Didn't find any matching observations\n"),
-		    pdinfo->varname[list[i]]);
-	}
-    }
-}
-
 char *real_format_obs (char *obs, int maj, int min, int pd, char sep)
 {
     if (pd > 10) {
@@ -1854,7 +1640,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 			 DATAINFO *pdinfo)
 {
     int depvar, t;
-    int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
+    int t1 = pmod->t1, t2 = pmod->t2;
     FITRESID *fr;
 
     if (pmod->ci == ARMA) {
@@ -1863,31 +1649,27 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 	depvar = pmod->list[1];
     }
 
-    if (pmod->data != NULL) {
-	t2 += get_misscount(pmod);
-    }
-
-    fr = fit_resid_new(n, 0);
+    fr = fit_resid_new(pdinfo->n, 0);
     if (fr == NULL) return NULL;
 
     fr->sigma = pmod->sigma;
 
-    for (t=0; t<n; t++) {
+    for (t=0; t<pdinfo->n; t++) {
 	fr->actual[t] = (*pZ)[depvar][t];
 	fr->fitted[t] = pmod->yhat[t];
     }
 
-    if (isdummy(fr->actual, 0, n) > 0) {
-	fr->pmax = get_precision(fr->fitted, n, 8);
+    if (isdummy(fr->actual, 0, pdinfo->n) > 0) {
+	fr->pmax = get_precision(fr->fitted, pdinfo->n, 8);
     } else {
-	fr->pmax = get_precision(fr->actual, n, 8);
+	fr->pmax = get_precision(fr->actual, pdinfo->n, 8);
     }
     
     strcpy(fr->depvar, pdinfo->varname[depvar]);
     
     fr->t1 = t1;
     fr->t2 = t2;
-    fr->nobs = pmod->nobs;
+    fr->nobs = t2 - t1 + 1;
 
     return fr;
 }
@@ -1960,7 +1742,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     }
 
     /* bodge (reject in case of subsampled data) */
-    if (pmod->data != NULL) {
+    if (gretl_model_get_int(pmod, "daily_repack")) {
 	fr->err = E_DATA;
 	return fr;
     }

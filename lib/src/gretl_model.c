@@ -462,11 +462,6 @@ void clear_model (MODEL *pmod)
 	    }
 	    free(pmod->params);
 	}
-	if (pmod->data) {
-	    MISSOBS *mobs = (MISSOBS *) pmod->data;
-	    free(mobs->missvec);
-	    free(pmod->data);
-	}
 	if (pmod->dataset) {
 	    free_model_dataset(pmod);
 	}
@@ -846,18 +841,5 @@ void model_list_to_string (int *list, char *buf)
     }
 }
 
-int model_missval_count (const MODEL *pmod)
-{
-    int mc = 0;
 
-    if (pmod->missmask != NULL) {
-	int t;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (pmod->missmask[t - pmod->t1]) mc++;
-	}
-    }
-
-    return mc;
-}
 

@@ -79,6 +79,4 @@ void set_model_id (MODEL *pmod);
 
 void model_list_to_string (int *list, char *buf);
 
-int model_missval_count (const MODEL *pmod);
-
 #endif /* GRETL_MODEL_H */

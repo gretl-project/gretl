@@ -111,8 +111,6 @@ enum model_selection_criteria {
 #define floatneq(x, y) (fabs((x) - (y)) > DBL_EPSILON)
 #define floatgt(x, y) ((x) - (y) > DBL_EPSILON)
 #define floatlt(x, y) ((y) - (x) > DBL_EPSILON)
-#define NADBL DBL_MAX
-#define na(x) (x == NADBL)
 
 /* functions follow */
 
@@ -133,9 +131,6 @@ void list_exclude (int n, int *list);
 char *format_obs (char *obs, int maj, int min, int pd);
 
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
-
-void set_miss (LIST list, const char *param, double **Z,
-	       DATAINFO *pdinfo, PRN *prn);
 
 int *copylist (const int *src);
 

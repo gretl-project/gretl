@@ -1189,21 +1189,27 @@ static int writehdr (const char *hdrfile, const int *list,
 
 int get_precision (double *x, int n, int placemax)
 {
-    int i, p, pmax = 0;
+    int t, p, pmax = 0;
     char *s, numstr[48];
 
-    for (i=0; i<n; i++) {
-	if (na(x[i])) continue;
+    for (t=0; t<n; t++) {
+	if (na(x[t])) {
+	    continue;
+	}
 	/* escape clause: numbers are too big or too small for
 	   this treatment */
-	if (x[i] < 1.0e-6 || x[i] > 1.0e+8) {
+	if (x[t] < 1.0e-6 || x[t] > 1.0e+8) {
 	    return PMAX_NOT_AVAILABLE;
 	}
 	p = placemax;
-	sprintf(numstr, "%.*f", p, x[i]);
+	sprintf(numstr, "%.*f", p, x[t]);
 	s = numstr + strlen(numstr) - 1;
-	while (*s-- == '0') p--;
-	if (p > pmax) pmax = p;
+	while (*s-- == '0') {
+	    p--;
+	}
+	if (p > pmax) {
+	    pmax = p;
+	}
     }
 
     return pmax;

@@ -131,62 +131,6 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
     pmod->sdy = (sum >= 0)? sqrt(sum) : NADBL;
 }
 
-static int reorganize_uhat_yhat (MODEL *pmod) 
-{
-    int t, g;
-    MISSOBS *mobs = (MISSOBS *) pmod->data;
-    double *tmp;
-
-    tmp = malloc(pmod->nobs * sizeof *tmp);
-    if (tmp == NULL) return 1;
-
-    /* first do uhat */
-    for (t=0; t<pmod->nobs; t++)
-	tmp[t] = pmod->uhat[t];
-
-    g = 0;
-    for (t=pmod->t1; t<=pmod->t2 + mobs->misscount; t++) {
-	if (mobs->missvec[t - pmod->t1]) pmod->uhat[t] = NADBL;
-	else pmod->uhat[t] = tmp[g++];
-    }
-
-    /* then yhat */
-    for (t=0; t<pmod->nobs; t++)
-	tmp[t] = pmod->yhat[t];
-
-    g = 0;
-    for (t=pmod->t1; t<=pmod->t2 + mobs->misscount; t++) {
-	if (mobs->missvec[t - pmod->t1]) pmod->yhat[t] = NADBL;
-	else pmod->yhat[t] = tmp[g++];
-    }
-
-    free(tmp);
-    return 0;
-}
-
-/* with daily data, try eliminating the missing obs? */
-
-static int handle_missing_daily_obs (MODEL *pmod, double **Z, 
-				     DATAINFO *pdinfo)
-{
-    int misscount;
-    char *missvec = missobs_vector(Z, pdinfo, &misscount);
-    MISSOBS *mobs = NULL;
-
-    if (missvec == NULL || (mobs = malloc(sizeof *mobs)) == NULL) {
-	pmod->errcode = E_ALLOC;
-	return 1;
-    } else {
-	repack_missing(Z, pdinfo, missvec, misscount);
-	pmod->t2 -= misscount;
-	mobs->misscount = misscount;
-	mobs->missvec = missvec;
-	pmod->data = mobs;
-    }
-
-    return 0;
-}
-
 static int ar_info_init (MODEL *pmod, int nterms)
 {
     int i;
@@ -303,7 +247,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 static void get_wls_stats (MODEL *pmod, const double **Z)
 {
     int t, wobs = pmod->nobs, yno = pmod->list[1];
-    double x, w2, wmean = 0.0, wsum = 0.0;
+    double x, dy, w2, wmean = 0.0, wsum = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) { 
 	if (Z[pmod->nwt][t] == 0) {
@@ -320,9 +264,12 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
     x = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (Z[pmod->nwt][t] == 0.0) continue;
+	if (Z[pmod->nwt][t] == 0.0) {
+	    continue;
+	}
 	w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
-	x += w2 * (Z[yno][t] - wmean) * (Z[yno][t] - wmean);
+	dy = Z[yno][t] - wmean;
+	x += w2 * dy * dy;
     }
 
     pmod->fstt = ((x - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
@@ -468,19 +415,22 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2,
 			    (const double **) *pZ, &misst);
     } else {
-	/* we'll compensate for missing obs */
+	/* cross-section: we'll compensate for missing obs */
 	missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2,
 			    (const double **) *pZ, NULL);
-    }	
+    }
+	
     if (missv) {
-	if (!dated_daily_data(pdinfo)) {
+	if (dated_daily_data(pdinfo)) {
+	    if (repack_missing_daily_obs(&mdl, *pZ, pdinfo)) {
+		return mdl;
+	    }
+	} else {
 	    sprintf(gretl_errmsg, _("Missing value encountered for "
 		    "variable %d, obs %d"), missv, misst);
 	    mdl.errcode = E_DATA;
 	    return mdl;
-	} else if (handle_missing_daily_obs(&mdl, *pZ, pdinfo)) {
-	    return mdl;
-	}
+	} 
     }
 
     if (ci == WLS) {
@@ -538,7 +488,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	mdl.nobs = effobs; /* FIXME? */
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
-	if (mdl.missmask != NULL) {
+	if (has_missing_obs(&mdl)) {
 	    mdl.nobs -= model_missval_count(&mdl);
 	}
     }
@@ -634,14 +584,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
  lsq_abort:
 
-    /* If we eliminated any missing observations, restore
-       them now */
-    if (mdl.data != NULL) {
-	MISSOBS *mobs = (MISSOBS *) mdl.data;
-
-	undo_repack_missing(*pZ, pdinfo, mobs->missvec,
-			    mobs->misscount);
-	reorganize_uhat_yhat(&mdl);
+    /* If we resuffled any missing observations, put them
+       back in their right places now */
+    if (gretl_model_get_int(&mdl, "daily_repack")) {
+	undo_daily_repack(&mdl, *pZ, pdinfo);
     }
 
     if (!(opts & OPT_A)) {

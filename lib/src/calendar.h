@@ -17,13 +17,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef _CALENDAR_H
-#define _CALENDAR_H
-
-typedef struct {
-    int misscount;
-    char *missvec;
-} MISSOBS;
+#ifndef CALENDAR_H
+#define CALENDAR_H
 
 #define FOUR_DIGIT_YEAR(y) ((y < 50)? y + 2000 : y + 1900)
 
@@ -51,14 +46,4 @@ int n_hidden_missing_obs (const DATAINFO *pdinfo);
 
 int guess_daily_pd (const DATAINFO *pdinfo);
 
-char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount);
-
-int undo_repack_missing (double **Z, const DATAINFO *pdinfo, 
-			 const char *missvec, int misscount);
-
-int repack_missing (double **Z, const DATAINFO *pdinfo, 
-		    const char *missvec, int misscount);
-
-int get_misscount (const MODEL *pmod);
-
-#endif /* _CALENDAR_H */ 
+#endif /* CALENDAR_H */ 

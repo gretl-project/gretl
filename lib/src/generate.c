@@ -3256,13 +3256,14 @@ static double get_obs_value (const char *s, double **Z,
 static double *get_model_series (const DATAINFO *pdinfo,
 				 const MODEL *pmod, int v)
 {
-    int t, t2, n = pdinfo->n;
     double *x, *garch_h = NULL;
+    int t;
 
-    if (pmod == NULL || !MODEL_VAR_INDEX(v))
+    if (pmod == NULL || !MODEL_VAR_INDEX(v)) {
 	return NULL;
+    }
 
-    if (pmod->t2 - pmod->t1 + 1 > n || 
+    if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
 	model_sample_issue(pmod, NULL, 0, pdinfo)) {
 	strcpy(gretl_errmsg, 
 	       (v == UHATNUM)? 
@@ -3287,21 +3288,21 @@ static double *get_model_series (const DATAINFO *pdinfo,
     }
 
     x = malloc(pdinfo->n * sizeof *x);
-    if (x == NULL) return NULL;
-
-    if (pmod->data != NULL) {
-	t2 = pmod->t2 + get_misscount(pmod);
-    } else {
-	t2 = pmod->t2;
+    if (x == NULL) {
+	return NULL;
     }
 
-    for (t=0; t<n; t++) {
+    for (t=0; t<pdinfo->n; t++) {
 	if (t < pmod->t1 || t > pmod->t2) {
 	    x[t] = NADBL;
 	} else {
-	    if (v == UHATNUM) x[t] = pmod->uhat[t];
-	    else if (v == YHATNUM) x[t] = pmod->yhat[t];
-	    else if (v == HNUM) x[t] = garch_h[t];
+	    if (v == UHATNUM) {
+		x[t] = pmod->uhat[t];
+	    } else if (v == YHATNUM) {
+		x[t] = pmod->yhat[t];
+	    } else if (v == HNUM) {
+		x[t] = garch_h[t];
+	    }
 	}
     }
 	    
@@ -5011,34 +5012,43 @@ int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
     for (i=1; i<=l0; i++) {
 	nv = pdinfo->v - l0 - 1 + i;
 	lv = list[i];
-	for (t=0; t<n; t++) (*pZ)[nv][t] = NADBL;
+
+	for (t=0; t<n; t++) {
+	    (*pZ)[nv][t] = NADBL;
+	}
+
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (na((*pZ)[lv][t])) {
 		(*pZ)[nv][t] = NADBL;
 		continue;
 	    }
 	    if (v) {
-		double yy = 
-		    (pdinfo->vector[v])? 
+		double yy = (pdinfo->vector[v])? 
 		    (*pZ)[v][t] : (*pZ)[v][0];
 
-		if (na(yy)) (*pZ)[nv][t] = NADBL;
-		else (*pZ)[nv][t] = yy * (*pZ)[lv][t];
-	    } else 
+		if (na(yy)) {
+		    (*pZ)[nv][t] = NADBL;
+		} else {
+		    (*pZ)[nv][t] = yy * (*pZ)[lv][t];
+		}
+	    } else {
 		(*pZ)[nv][t] = m * (*pZ)[lv][t];
+	    }
 	}
+
 	/* do names and labels */
 	strcpy(tmp, pdinfo->varname[lv]);
 	gretl_trunc(tmp, 8 - slen);
 	strcat(tmp, sfx);
 	strcpy(pdinfo->varname[nv], tmp);
-	if (v) 
+	if (v) {
 	    sprintf(VARLABEL(pdinfo, nv), "%s = %s * %s",
 		    pdinfo->varname[nv], pdinfo->varname[v], 
 		    pdinfo->varname[lv]); 
-	else 
+	} else {
 	    sprintf(VARLABEL(pdinfo, nv), "%s = %g * %s",
 		    pdinfo->varname[nv], m, pdinfo->varname[lv]); 
+	}
     }
 
     return 0;
@@ -5062,7 +5072,7 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo)
 {
     char vname[VNAMELEN], vlabel[MAXLABEL];
-    int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
+    int i, t;
     double *h = NULL;
 
     if (code == GENR_H) {
@@ -5073,36 +5083,38 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     i = pdinfo->v - 1;
-    n = pdinfo->n;
 
-    if (pmod->data != NULL) t2 += get_misscount(pmod);
-
-    for (t=0; t<t1; t++) (*pZ)[i][t] = NADBL;
-    for (t=t2+1; t<n; t++) (*pZ)[i][t] = NADBL;
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[i][t] = NADBL;
+    }
 
     if (code == GENR_RESID) { /* residuals */
 	sprintf(vname, "uhat%d", pmod->ID);
 	sprintf(vlabel, _("residual from model %d"), pmod->ID);
-	for (t=t1; t<=t2; t++) 
+	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    (*pZ)[i][t] = pmod->uhat[t];
+	}
     }
     else if (code == GENR_FITTED) { /* fitted values */
 	sprintf(vname, "yhat%d", pmod->ID);
 	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
-	for (t=t1; t<=t2; t++) 
+	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    (*pZ)[i][t] = pmod->yhat[t];
+	}
     }
     else if (code == GENR_RESID2) { /* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
-	for (t=t1; t<=t2; t++) 
+	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    (*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
+	}
     }
     else if (code == GENR_H) { /* garch variance */
 	sprintf(vname, "h%d", pmod->ID);
 	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
-	for (t=t1; t<=t2; t++) 
+	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    (*pZ)[i][t] = h[t];
+	}
     }
 
     strcpy(pdinfo->varname[i], vname);

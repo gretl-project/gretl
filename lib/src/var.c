@@ -2247,29 +2247,24 @@ const char *gretl_var_get_name (const GRETL_VAR *var)
 int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo)
 {
-    char vname[VNAMELEN], vlabel[MAXLABEL];
     MODEL *pmod = var->models[eqnum];
-    int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
+    int i, t;
 
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     i = pdinfo->v - 1;
-    n = pdinfo->n;
 
-    if (pmod->data != NULL) t2 += get_misscount(pmod);
-
-    for (t=0; t<t1; t++) (*pZ)[i][t] = NADBL;
-    for (t=t2+1; t<n; t++) (*pZ)[i][t] = NADBL;
-
-    sprintf(vname, "uhat%d", eqnum + 1);
-    sprintf(vlabel, _("residual from VAR system, equation %d"), eqnum + 1);
-
-    for (t=t1; t<=t2; t++) {
-	(*pZ)[i][t] = pmod->uhat[t];
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < pmod->t1 || t > pmod->t2) {
+	    (*pZ)[i][t] = NADBL;
+	} else {
+	    (*pZ)[i][t] = pmod->uhat[t];
+	}
     }
 
-    strcpy(pdinfo->varname[i], vname);
-    strcpy(VARLABEL(pdinfo, i), vlabel);
+    sprintf(pdinfo->varname[i], "uhat%d", eqnum + 1);
+    sprintf(VARLABEL(pdinfo, i), _("residual from VAR system, equation %d"), 
+	    eqnum + 1);
 
     return 0;
 }
