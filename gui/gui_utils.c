@@ -867,14 +867,6 @@ void free_windata (GtkWidget *w, gpointer data)
 	    
 	    if (undo) g_free(undo);
 	}
-#if 0
-	if (vwin->listbox) 
-	    gtk_widget_destroy(GTK_WIDGET(vwin->listbox));
-	if (vwin->mbar) 
-	    gtk_widget_destroy(GTK_WIDGET(vwin->mbar));
-	if (vwin->status) 
-	    gtk_widget_destroy(GTK_WIDGET(vwin->status));
-#endif
 	if (vwin->ifac) 
 	    gtk_object_unref(GTK_OBJECT(vwin->ifac));
 	if (vwin->popup) 

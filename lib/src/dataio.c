@@ -2636,7 +2636,11 @@ void *get_plugin_function (const char *funcname, void *handle)
 #else
     funp = dlsym(handle, funcname);
     if (funp == NULL) {
-	fputs (dlerror(), stderr);
+	char munged[64];
+
+	sprintf(munged, "_%s", funcname);
+	funp = dlsym(handle, munged);
+	if (funp == NULL) fputs (dlerror(), stderr);
     }
 #endif   
     return funp;

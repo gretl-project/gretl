@@ -33,7 +33,7 @@ endif
 plugindir = $(prefix)/lib/gretl
 
 ifeq ($(darwin_build),yes)
-  PIC_FLAGS = -fno-common
+  PIC_FLAGS = -fno-common -DPIC
   SHARED_FLAG = -bundle
 else
   PIC_FLAGS = -fPIC -DPIC
