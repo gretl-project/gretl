@@ -1777,6 +1777,8 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
     err = (*mplsq)(command.list, &Z, datainfo, prn, errtext);
 
+    close_plugin(handle);
+
     if (err) {
 	if (errtext[0] != 0) errbox(errtext);
 	else errbox(get_errmsg(err, NULL, NULL));
@@ -1786,23 +1788,6 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
     view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
                 MPOLS, view_items);
-}
-
-static int mp_ols_cmdline (const int *list, PRN *prn)
-{
-    void *handle;
-    int (*mplsq)(const int *, double ***, DATAINFO *, PRN *, char *);
-
-    if (gui_open_plugin("mp_ols", &handle)) return 1;
-    mplsq = get_plugin_function("mplsq", handle);
-
-    if (mplsq == NULL) {
-	pprintf(prn, _("Couldn't load plugin function"));
-	close_plugin(handle);
-	return 1;
-    }
-
-    return (*mplsq)(list, &Z, datainfo, prn, errtext);
 }
 
 #endif /* ENABLE_GMP */
@@ -4164,9 +4149,11 @@ static int gui_exec_line (char *line,
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
 	break;
 
+#ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols_cmdline(command.list, prn);
+	err = mp_ols(command.list, &Z, datainfo, &paths, prn);
 	break;
+#endif
 
     case PANEL:
 	err = set_panel_structure(oflag, datainfo, prn);

@@ -552,7 +552,19 @@ Gretl has its own internal coding for missing values, but sometimes imported
 data may employ a different code.  For example, if a particular series is
 coded such that a value of -1 indicates "not applicable", you can select "Set
 missing value code" under the Variable menu and type in the value "-1"
-(without the quotes).  Gretl will then read the -1s as missing observations.
+(without the quotes).  Gretl will then read the -1s as missing
+observations.
+
+#
+mpols
+@Estimation
+  
+Computes ordinary least squares estimates using multiple-precision arithmetic.
+This command is available only if gretl is configured with support for GMP,
+the GNU Multiple Precision library.  Note that the accuracy of the regression
+results may be limited by (a) the precision of the data read from file, and
+(b) any transformations carried out using the genr command, which operates
+using ordinary double-precision floating-point arithmetic.
 
 #
 nulldata

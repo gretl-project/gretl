@@ -292,12 +292,12 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
 
-    pprintf(prn, _("High-precision OLS estimates using the %d observations %s-%s\n"),
+    pprintf(prn, _("Multiple-precision OLS estimates using the %d observations %s-%s\n"),
 	    pmod->nobs, startdate, enddate);
     pprintf(prn, _("Dependent variable: %s\n\n"), 
 		 pdinfo->varname[pmod->varlist[1]]);
 
-    pprintf(prn, _("      VARIABLE      COEFFICIENT      STD. ERROR       \n"));
+    pprintf(prn, _("      VARIABLE         COEFFICIENT          STD. ERROR\n"));
 
     if (pmod->ifc) {
 	print_mp_coeff_1(pmod, pdinfo, ncoeff, prn);

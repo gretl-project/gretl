@@ -1000,6 +1000,12 @@ void exec_line (char *line, PRN *prn)
 	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
+#ifdef ENABLE_GMP
+    case MPOLS:
+	err = mp_ols(command.list, &Z, datainfo, &paths, prn);
+	break;
+#endif
+
     case PANEL:	
 	err = set_panel_structure(oflag, datainfo, prn);
 	break;

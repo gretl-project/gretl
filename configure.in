@@ -26,6 +26,7 @@ have_libole2="no"
 have_gtk="no"
 have_gtkextra="no"
 have_gnome="no"
+have_gmp="no"
 need_libbind="no"
 png_graphics="yes"
 MAKE="make"
@@ -90,6 +91,24 @@ else
 tryole=yes
 fi,
 tryole=yes)
+
+AC_ARG_WITH(gmp,
+[  --with-gmp   Use Gnu Multiple Precision library [default=auto]],
+if test "x${withval}" = "xno"
+then
+trygmp=no
+else
+trygmp=yes
+fi,
+trygmp=yes)
+
+gmp_prefix=""
+AC_ARG_WITH(gmp-prefix,
+[  --with-gmp-prefix=DIR   path to find GMP lib and header [default=/usr]],
+if test -n "${withval}"
+then
+gmp_prefix=${withval}
+fi,)
 
 AC_PROG_CC
 dnl AC_CANONICAL_HOST
@@ -190,6 +209,26 @@ if test x"${tryole}" != xno ; then
 fi
 AC_SUBST(OLE_CFLAGS)
 AC_SUBST(OLE_LIBS)
+
+SAVE_LIBS=$LIBS
+dnl See if GMP lib is available
+if test x"${gmp_prefix}" != "x" ; then
+  SAVE_LIBS=$LIBS
+  GMP_LIBS="-L${gmp_prefix}/lib -lgmp"
+  GMP_CFLAGS="-I${gmp_prefix}/include"
+  LIBS=$GMP_LIBS
+else
+  GMP_LIBS="-lgmp"
+  GMP_CFLAGS=""
+fi
+if test x"${trygmp}" != xno ; then
+  AC_CHECK_LIB(gmp, __gmpf_init,have_gmp="yes" ; \
+    AC_DEFINE(ENABLE_GMP),GMP_LIBS=,)
+  AC_SUBST(ENABLE_GMP)
+  AC_SUBST(GMP_CFLAGS)
+  AC_SUBST(GMP_LIBS)
+fi
+LIBS=$SAVE_LIBS
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -657,6 +696,7 @@ Configuration:
   Use gnuplot for graphs:               ${have_gnuplot}
   Use PNG for gnuplot graphs:           ${gnuplot_png}
   Use LaTeX for typesetting output:     ${have_latex}
+  Gnu Multiple precision support:       ${have_gmp}
   Build with gnome support:             ${have_gnome}
   Gnome installation prefix:            ${gnome_prefix}
 

@@ -1045,3 +1045,42 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
     return 0;
 }
+
+/**
+ * mp_ols:
+ * @list: specification of variables to use
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * 
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int mp_ols (const LIST list, double ***pZ, DATAINFO *pdinfo, 
+	    const PATHS *ppaths, PRN *prn) 
+{
+    void *handle;
+    int (*mplsq)(const int *, double ***, DATAINFO *, PRN *, char *);
+    int err;
+
+    if (open_plugin(ppaths, "mp_ols", &handle)) {
+	pprintf(prn, _("Couldn't access GMP plugin\n"));
+	return 1;
+    }
+
+    mplsq = get_plugin_function("mplsq", handle);
+    if (mplsq == NULL) {
+	pprintf(prn, _("Couldn't load plugin function\n"));
+	close_plugin(handle);
+	return 1;
+    }
+
+    err = (*mplsq)(list, pZ, pdinfo, prn, gretl_errmsg);
+
+    close_plugin(handle);
+
+    return err;
+}
+
+

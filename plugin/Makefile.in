@@ -14,6 +14,8 @@ XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 OLE_CFLAGS = @OLE_CFLAGS@
 OLE_LIBS = @OLE_LIBS@
+GMP_CFLAGS = @GMP_CFLAGS@
+GMP_LIBS = @GMP_LIBS@
 
 ifeq ($(CC),)
   CC = gcc
@@ -34,6 +36,10 @@ GRETLLIB = ../lib/libgretl.la
 
 PLUGINS = stats_tables.so panel_data.so progress_bar.so \
 	gnumeric_import.so excel_import.so
+
+ifdef GMP_LIBS
+  PLUGINS += mp_ols.so
+endif
 
 ifeq ($(OLE_LIBS),)
   query-ms-ole.lo=ms-ole.lo
@@ -58,6 +64,9 @@ gnumeric_import.so: gnumeric_import.lo
 excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(OLE_LIBS)
 
+mp_ols.so: mp_ols.lo
+	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
+
 stats_tables.lo: stats_tables.c $(GRETLLIB) 
 	$(COMPILE) $(GRETLINC) $< 
 
@@ -78,6 +87,9 @@ workbook.lo: workbook.c biff.h
 
 ms-ole.lo: ms-ole.c ms-ole.h
 	$(COMPILE) $(OLE_CFLAGS) $<
+
+mp_ols.lo: mp_ols.c
+	$(COMPILE) $(GRETLINC) $(GMP_CFLAGS) $<
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

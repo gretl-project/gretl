@@ -78,3 +78,6 @@ int cusum_test (MODEL *pmod,
 int hausman_test (MODEL *pmod, 
 		  double ***pZ, DATAINFO *pdinfo, 
 		  const PATHS *ppaths, PRN *prn);
+
+int mp_ols (const LIST list, double ***pZ, DATAINFO *pdinfo, 
+	    const PATHS *ppaths, PRN *prn); 

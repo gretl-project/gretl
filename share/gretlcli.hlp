@@ -699,6 +699,20 @@ flag, the statistic is computed on the assumption that the variances are equal
 for the two variables; with the -o flag the variances are assumed to be
 unequal.  (The flag will make a difference only if there are different numbers
 of non-missing observations for the two variables.)
+
+#
+mpols
+@Estimation
+Usage:          mpols depvar indepvar
+Examples:       ols 1 0 2 4 6 7
+                ols y 0 x1 x2 x3
+  
+Computes ordinary least squares estimates with depvar as the dependent
+variable and indepvar as the list of independent variables, using
+multiple-precision arithmetic.  The variables can be specified either by names
+or by their number; use the number zero for a constant term.  This command is
+available only if gretl is configured with support for GMP, the GNU Multiple
+Precision library.
    
 #
 multiply
