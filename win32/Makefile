@@ -44,9 +44,9 @@ vpath %.h $(topsrc)/cephes
 CLIPROG = gretlcli.exe
 GUIPROG = gretlw32.exe
 UPDATER = gretl_updater.exe
-PLUGINS = dlls/stats_tables.dll dlls/panel_data.dll dlls/longname.dll \
-	dlls/progress_bar.dll dlls/gnumeric_import.dll \
-	dlls/excel_import.dll dlls/des_import.dll dlls/mp_ols.dll
+PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
+	plugins/progress_bar.dll plugins/gnumeric_import.dll \
+	plugins/excel_import.dll plugins/des_import.dll plugins/mp_ols.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -164,36 +164,36 @@ dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	--output-def libgtkextra-lite.def --implib $(imports)/libgtkextra-lite.a \
 	-o $@ $^ $(GTKLIBS)
 
-dlls/stats_tables.dll: stats_tables.o dllinit.o 
+plugins/stats_tables.dll: stats_tables.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
-dlls/panel_data.dll: panel_data.o dllinit.o
+plugins/panel_data.dll: panel_data.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS)
 
-dlls/progress_bar.dll: progress_bar.o dllinit.o
+plugins/progress_bar.dll: progress_bar.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L$(imports) -lintl.dll
 
-dlls/gnumeric_import.dll: gnumeric_import.o dllinit.o
+plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml \
 	$(GRETLLIB) $(GTKLIBS)
 
-dlls/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
+plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lmoldname
 
-dlls/des_import.dll: des_import.o dllinit.o
+plugins/des_import.dll: des_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lz.dll
 
-dlls/longname.dll: longname.o 
+plugins/longname.dll: longname.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -lkernel32
 
-dlls/mp_ols.dll: mp_ols.o dllinit.o 
+plugins/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp
 

@@ -45,6 +45,7 @@ print "Name: \"{app}\\data\"\n";
 print "Name: \"{app}\\data\\greene\"\n";
 print "Name: \"{app}\\scripts\"\n";
 print "Name: \"{app}\\db\"\n";
+print "Name: \"{app}\\plugins\"\n";
 print "Name: \"{app}\\locale\"\n";
 print "Name: \"{app}\\locale\\es\"\n";
 print "Name: \"{app}\\locale\\es\\LC_MESSAGES\"\n";

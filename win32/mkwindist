@@ -43,6 +43,7 @@ mkdir -p windist/gretl/data
 mkdir -p windist/gretl/data/greene
 mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/db
+mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/user
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
 
@@ -51,8 +52,11 @@ add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretlw32.exe gretl/gretlw32.exe
 
 # dynamic libs
-for f in dlls/* ; do
+for f in dlls/*.dll ; do
     add_file $f gretl/`basename $f`
+done
+for f in plugins/*.dll ; do
+    add_file $f gretl/plugins/`basename $f`
 done
 
 # help files, license, logo

@@ -2178,21 +2178,25 @@ int gui_open_plugin (const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 
+    strcpy(pluginpath, paths.gretldir);
+    append_dir(pluginpath, "plugins");
+    strcat(pluginpath, plugin);
+
 #ifdef G_OS_WIN32
-    sprintf(pluginpath, "%s\\%s.dll", paths.gretldir, plugin);
+    strcat(pluginpath, ".dll");
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) {
-	sprintf(errtext, _("Couldn't load plugin %s"), pluginpath);
-	errbox(errtext);
-	return 1;
+        sprintf(errtext, _("Couldn't load plugin %s"), pluginpath);
+        errbox(errtext);
+        return 1;
     }
 #else
-    sprintf(pluginpath, "%splugins/%s.so", paths.gretldir, plugin);
+    strcat(pluginpath, ".so");
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {
-	sprintf(errtext, _("Failed to load plugin: %s"), pluginpath);
-	errbox(errtext);
-	return 1;
+        sprintf(errtext, _("Failed to load plugin: %s"), pluginpath);
+        errbox(errtext);
+        return 1;
     } 
 #endif 
     return 0;
