@@ -39,6 +39,7 @@
 #include "pixmaps/mini.netscape.xpm"
 #include "pixmaps/mini.pdf.xpm"
 #include "pixmaps/mini.plot.xpm"
+#include "pixmaps/mini.camera.xpm"
 #include "pixmaps/mini.ofolder.xpm"
 
 /* functions from other gretl GUI files */
@@ -1475,7 +1476,7 @@ static void go_session (void)
 
 /* ........................................................... */
 
-#define TOOLS 9
+#define TOOLS 10
 
 static void make_toolbar (GtkWidget *w, GtkWidget *box)
 {
@@ -1486,12 +1487,13 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     int i;
     static char *toolstrings[] = {"launch calculator", 
 				  "launch editor", 
-				  "gretl console",
+				  "open gretl console",
 				  "session icon view",
 				  "gretl website", 
 				  "gretl manual (PDF)",
 				  "show help", 
 				  "X-Y graph", 
+				  "Capture last graph for editing",
 				  "open dataset"};
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
@@ -1544,6 +1546,10 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    toolfunc = xy_graph;
 	    break;
 	case 8:
+	    toolxpm = mini_camera_xpm;
+	    toolfunc = add_last_graph;
+	    break;
+	case 9:
 	    toolxpm = mini_ofolder_xpm;
 	    toolfunc = open_ramudata;
 	    break;

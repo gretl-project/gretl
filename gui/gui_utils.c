@@ -597,6 +597,21 @@ void save_session (char *fname)
     session_saved = 1;
     mkfilelist(2, fname);
 
+    /* save session notes, if any */
+    sprintf(tmp, "%ssession.Notes", paths.userdir);
+    fp = fopen(tmp, "r"); 
+    if (fp != NULL) {
+	char test[5];
+
+	if (fgets(test, 4, fp)) { /* don't save empty notes */
+	    fclose(fp);
+	    switch_ext(fname2, fname, "Notes");
+	    copyfile(tmp, fname2);
+	} else 
+	    fclose(fp);
+	remove(tmp);
+    }
+
     /* save output */
     switch_ext(fname2, fname, "txt");
     prn = gretl_print_new(GRETL_PRINT_FILE, fname2);
@@ -604,17 +619,16 @@ void save_session (char *fname)
 	errbox("Couldn't open output file for writing");
 	return;
     }
-    execute_script(cmdfile, NULL, NULL, prn, SESSION_EXEC); 
+    execute_script(fname, NULL, NULL, prn, SESSION_EXEC); 
     gretl_print_destroy(prn);
 
     if (savedir)
-	sprintf(msg, "session saved to %s -\n", savedir);
+	sprintf(msg, "session saved to directory %s -\n", savedir);
     else 
 	strcpy(msg, "session saved -\n");
     strcat(msg, "commands: ");
     strcat(msg, (spos)? fname + spos + 1 : fname);
-    strcat(msg, "\n  output: ");
-    switch_ext(fname2, fname, "txt");
+    strcat(msg, "\noutput: ");
     spos = slashpos(fname2);
     strcat(msg, (spos)? fname2 + spos + 1 : fname2);
     infobox(msg);

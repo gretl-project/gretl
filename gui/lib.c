@@ -2813,14 +2813,11 @@ int execute_script (const char *runfile,
     char tmp[MAXLEN];
     LOOPSET loop;            /* struct for monte carlo loop */
 
-    if ((fb = fopen(runfile, "r")) == NULL) {
+    fb = fopen(runfile, "r");
+    if (fb == NULL) {
 	errbox("Couldn't open script");
 	return 1;
     }
-
-#ifdef CMD_DEBUG
-    fprintf(stderr, "execute_script: working on %s\n", runfile);
-#endif
 
     /* reset model count to 0 if starting/saving session */
     if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC) 
@@ -2873,7 +2870,7 @@ int execute_script (const char *runfile,
 	    if (j == 1000) return 1;
 	} else { /* end if Monte Carlo stuff */
 	    line[0] = '\0';
-	    if (fgets(line, MAXLEN, fb) == NULL)
+	    if (fgets(line, MAXLEN, fb) == NULL) 
 		goto endwhile;
 	    while ((cont = top_n_tail(line))) {
 		if (cont == E_ALLOC) {

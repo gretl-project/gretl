@@ -34,6 +34,7 @@
 #include "pixmaps/xfm_sc.xpm"
 #include "pixmaps/xfm_info.xpm"
 #include "pixmaps/xfm_text.xpm"
+#include "pixmaps/xfm_make.xpm"
 #include "pixmaps/rhohat.xpm"
 #include "pixmaps/summary.xpm"
 
@@ -41,6 +42,7 @@
 
 static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
+static void save_notes (gpointer data, guint i, GtkWidget *w);
 
 /* "session" struct and "errtext" are globals */
 
@@ -78,6 +80,15 @@ GtkItemFactoryEntry gp_edit_items[] = {
     { "/File/_Save", NULL, auto_save_gp, 0, NULL },
     { "/File/Save _As...", NULL, file_save, SAVE_GP_CMDS, NULL },
     { "/File/Send to _gnuplot", NULL, gp_to_gnuplot, 0, NULL },
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
+
+GtkItemFactoryEntry notes_items[] = {
+    { "/_File", NULL, NULL, 0, "<Branch>" }, 
+    { "/File/_Save", NULL, save_notes, 0, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
@@ -166,6 +177,56 @@ char *space_to_score (char *str)
     return str;
 }
 
+/* .................................................................. */
+
+static void edit_session_notes (void)
+{
+    FILE *fp;
+    char notesfile[MAXLEN];
+
+    if (session_file_open && scriptfile[0]) 
+	switch_ext(notesfile, scriptfile, "Notes");
+    else 
+	sprintf(notesfile, "%ssession.Notes", paths.userdir);
+
+    fp = fopen(notesfile, "a");
+    if (fp != NULL) {
+	fclose(fp);
+	view_file(notesfile, 1, 0, 78, 370, 
+		  "gretl: session notes", notes_items);
+    } else 
+	errbox("Couldn't open session notes");
+}
+
+/* ........................................................... */
+
+static void save_notes (gpointer data, guint i, GtkWidget *w)
+{
+    FILE *fp;
+    char notesfile[MAXLEN];
+
+    if (session_file_open && scriptfile[0]) 
+	switch_ext(notesfile, scriptfile, "Notes");
+    else 
+	sprintf(notesfile, "%ssession.Notes", paths.userdir);
+
+    fp = fopen(notesfile, "w");
+
+    if (fp == NULL) {
+	errbox("Couldn't open notes file for writing");
+	return;
+    } else {
+	windata_t *mydata = (windata_t *) data;
+	gchar *savestuff;
+
+	savestuff = 
+	    gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+	fprintf(fp, "%s", savestuff);
+	g_free(savestuff); 
+	fclose(fp);
+    }
+}
+
 /* ........................................................... */
 
 void add_last_graph (gpointer data, guint code, GtkWidget *w)
@@ -178,9 +239,10 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	sprintf(pltname, "%ssession.Graph_%d", paths.userdir, plot_count + 1);
 	sprintf(grname, "Graph %d", plot_count + 1);
 	if (copyfile(paths.plotfile, pltname)) {
-	    errbox("Failed to copy graph commands file");
+	    errbox("No graph found");
 	    return;
-	}
+	} 
+	remove(paths.plotfile);
     } else { /* gretl boxplot */
 	sprintf(pltname, "%ssession.Plot_%d", paths.userdir, boxplot_count + 1);
 	sprintf(grname, "Boxplot %d", boxplot_count + 1);
@@ -670,6 +732,7 @@ void view_session (void)
     if (data_file_open) {
 	session_add_object(NULL, 'i');     /* data info */
 	session_add_object(NULL, 'd');     /* data file */
+	session_add_object(NULL, 'n');     /* session notes */
 	session_add_object(NULL, 'x');     /* summary stats */
 	session_add_object(NULL, 'r');     /* correlation matrix */
     }
@@ -773,6 +836,8 @@ void session_open_object (GtkWidget *widget,
 	    open_info(NULL, 0, NULL); break;
 	case 's':
 	    view_script_default(); break;
+	case 'n':
+	    edit_session_notes(); break;
 	case 'r':
 	    do_menu_op(NULL, CORR, NULL); break;
 	case 'x':
@@ -1077,6 +1142,9 @@ static gui_obj *session_add_object (gpointer data, int sort)
     case 's':
 	name = g_strdup("Session");
 	break;
+    case 'n':
+	name = g_strdup("Notes");
+	break;
     case 'r':
 	name = g_strdup("Corrmat");
 	break;
@@ -1121,6 +1189,7 @@ static gui_obj *session_add_object (gpointer data, int sort)
     else if (sort == 'd') gobj->data = paths.datfile;
     else if (sort == 'i') gobj->data = paths.hdrfile;
     else if (sort == 's') gobj->data = cmdfile;
+    else if (sort == 'n') gobj->data = NULL;
     else if (sort == 'x') gobj->data = NULL;
     g_free(name);
 
@@ -1188,7 +1257,8 @@ static gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort)
     case 'g': image = gnuplot_xpm; break;
     case 'd': image = dot_sc_xpm; break;
     case 'i': image = xfm_info_xpm; break;
-    case 's': image = text_xpm; break;
+    case 's': image = xfm_make_xpm; break;
+    case 'n': image = text_xpm; break;
     case 'r': image = rhohat_xpm; break;
     case 'x': image = summary_xpm; break;
     default: break;
