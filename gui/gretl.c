@@ -66,6 +66,7 @@ static void set_up_main_menu (void);
 static void startR (gpointer p, guint opt, GtkWidget *w);
 static void Rcleanup (void);
 static void auto_store (void);
+static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 
 GtkWidget *toolbar_box = NULL; /* shared with settings.c */
 
@@ -328,6 +329,10 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Display values/_selected variables..."), 
       NULL, display_selected, 0, NULL },
     { N_("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL },
+    { "/Data/sepsort", NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Sort variables"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Data/Sort variables/by ID number"), NULL, sort_varlist, 0, NULL },
+    { N_("/Data/Sort variables/by name"), NULL, sort_varlist, 1, NULL },
     { N_("/Data/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/_Graph specified vars"), NULL, NULL, 0, "<Branch>" },
     { N_("/Data/Graph specified vars/Time series plot..."), 
@@ -1872,5 +1877,11 @@ static void auto_store (void)
 	file_selector(_("Save data file"), SAVE_DATA, NULL);	
 }
 
+/* ........................................................... */
 
-
+static void sort_varlist (gpointer p, guint col, GtkWidget *w)
+{
+    gtk_clist_set_compare_func(GTK_CLIST(mdata->listbox), NULL);
+    gtk_clist_set_sort_column(GTK_CLIST(mdata->listbox), col);
+    gtk_clist_sort(GTK_CLIST(mdata->listbox));
+}
