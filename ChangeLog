@@ -25,6 +25,8 @@ version 1.2.3
   series data
 - Fix bug: latent problems when adding an observation to
   the working dataset
+- Fix bug: set the frequency and starting observation could
+  fail when the local decimal point is not '.'
 
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")
