@@ -1,6 +1,8 @@
 /* longname plugin for gretl -- allow win98 and higher to
    access the win32 function GetLongPathName() */
 
+#undef _WIN32_WINDOWS
+#define _WIN32_WINDOWS 0x0410
 #include <windows.h>
 
 __declspec(dllexport) 

@@ -287,7 +287,6 @@ static void release_sapi_voice (ISpVoice *v)
 static int speak_buffer (const char *buf, int (*should_stop)())
 {
     ISpVoice *v = NULL;
-    HRESULT hr;
     WCHAR *w;
     char line[128];
 
@@ -318,7 +317,7 @@ static int speak_line (const char *line)
 	if (v != NULL) {
 	    release_sapi_voice(v);
 	}
-	return;
+	return 0;
     }
 
     if (v == NULL) {

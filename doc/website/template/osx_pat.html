@@ -159,6 +159,34 @@ is how it goes:</p>
 
 <li><p class-"in-list">Type <kbd>sudo make install</kbd> to install gretl.</p></li>
 </ol>
+
+<p>In case it's useful, here's the whole lot in the form of a 
+shell script:</p>
+
+<pre>
+#!/bin/sh
+# initialize fink
+. /sw/bin/init.sh
+# set up the compilation environment
+export CFLAGS="-O2 -I/sw/include"
+export LDFLAGS=-L/sw/lib
+export CXXFLAGS=$CFLAGS
+export CPPFLAGS=$CXXFLAGS
+export ACLOCAL_FLAGS="-I/sw/share/aclocal"
+export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
+# download the gretl source
+curl -O ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl-VERSION.tar.bz2
+# unpack the source archive
+tar xvfj gretl-VERSION.tar.bz2
+# move into the gretl source directory
+cd gretl-VERSION
+# configure the build
+./configure --prefix=/sw --disable-png-comments
+# make the program
+make
+# install gretl (root password needed)
+sudo make install
+</pre>
   
 
 <p>You should now be able to run gretl by typing "gretl" at the command
