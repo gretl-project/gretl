@@ -557,7 +557,7 @@ static GtkWidget *make_path_browse_button (RCVARS *rc)
 
 static gboolean takes_effect_on_restart (void)
 {
-    infobox(_("This change will take efect when you restart gretl"));
+    infobox(_("This change will take effect when you restart gretl"));
     return FALSE;
 }
 

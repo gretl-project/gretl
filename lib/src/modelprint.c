@@ -48,8 +48,10 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
 
-static void noconst (PRN *prn)
+static void noconst (const MODEL *pmod, PRN *prn)
 {
+    if (na(pmod->rsq)) return;
+
     pputs(prn, _("The model has no constant term.\n"  
 	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
 	    "Econometrics.\n"
@@ -144,9 +146,11 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 
 static void rsqline (const MODEL *pmod, PRN *prn)
 {
-    if (PLAIN_FORMAT(prn->format)) {  
-	pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
-		GRETL_DIGITS, pmod->rsq);
+    if (PLAIN_FORMAT(prn->format)) { 
+	if (!na(pmod->rsq)) {
+	    pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
+		    GRETL_DIGITS, pmod->rsq);
+	}
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
 		    GRETL_DIGITS, pmod->adjrsq);
@@ -154,7 +158,9 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     }
 
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
+	if (!na(pmod->rsq)) {
+	    pprintf(prn, RTFTAB "%s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
+	}
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("Adjusted R{\\super 2}"),  
 		    pmod->adjrsq);
@@ -164,8 +170,10 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     else if (TEX_FORMAT(prn->format)) {  
 	char r2[32];
 
-	tex_dcolumn_double(pmod->rsq, r2);
-	pprintf(prn, "%s & %s \\\\\n", I_("Unadjusted $R^2$"), r2);
+	if (!na(pmod->rsq)) {
+	    tex_dcolumn_double(pmod->rsq, r2);
+	    pprintf(prn, "%s & %s \\\\\n", I_("Unadjusted $R^2$"), r2);
+	}
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
@@ -1223,7 +1231,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (!pmod->ifc && pmod->ci != NLS && PLAIN_FORMAT(prn->format)) 
-	noconst(prn);
+	noconst(pmod, prn);
     
     if (pmod->aux == AUX_WHITE) { 
 	rsqline(pmod, prn);

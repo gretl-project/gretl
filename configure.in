@@ -44,6 +44,7 @@ png_comments="yes"
 prefer_xml1="no"
 have_tramo="yes"
 have_x12a="yes"
+have_gnu_regex="no"
 MAKE="make"
 XML_LIBS=
 
@@ -149,7 +150,7 @@ fi,
 try_ole=yes)
 
 AC_ARG_WITH(gtksourceview,
-[  --with-gtksourceview   Use gtksourceview (gtk 2.0 only) [default=auto]],
+[  --with-gtksourceview   Use installed gtksourceview (gtk 2.0 only) [default=auto]],
 if test "x${withval}" = "xno"
 then
   try_sourceview=no
@@ -366,9 +367,20 @@ dnl ...and try for gtksourceview flags, unless prohibited
 if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
      PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
      have_gtksourceview="yes"
+     have_gnu_regex="yes"
      AC_DEFINE(USE_GTKSOURCEVIEW),
      have_gtksourceview="no"
     )
+fi
+
+dnl Fallback: try using supplied gtksourceview?
+if test "$have_gtk" = "2.0" && \
+   test "$try_sourceview" = "yes" && \
+   test "$have_gtksourceview" = "no" ; then
+    AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
+    AC_DEFINE(USE_GTKSOURCEVIEW)
+    have_gnu_regex="yes",
+    have_gtksourceview="no")
 fi
 
 dnl Or fall back on GTK 1.2
@@ -390,6 +402,7 @@ dnl record the results of the above tests
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_gtksourceview)
+AC_SUBST(have_gnu_regex)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GTKSOURCEVIEW_CFLAGS)
@@ -550,6 +563,7 @@ gui/gtkextra-lite/Makefile
 gui2/Makefile
 gui2/debug
 gui2/gtkextra-lite/Makefile
+gui2/gtksourceview/Makefile
 gui2/omf-install/Makefile
 gnome/Makefile
 gnome/gretl.keys 
@@ -595,7 +609,7 @@ Configuration:
   Gnu Multiple Precision support:         ${have_gmp}
   LAPACK support:                         ${have_lapack}
   Build with GTK version:                 ${have_gtk}
-  Use gtksourceview for scripts:          ${have_gtksourceview}
+  Use gtksourceview for scripts:          ${have_gnu_regex}
   Use installed libole2:                  ${have_libole2}
   Use installed gtkextra:		  ${have_gtkextra}
   Build with gnome support:               ${have_gnome}

@@ -315,8 +315,9 @@ void dw_lookup (int n, PRN *prn)
 	    break;
 	}
     }
-
-    pputs(prn, _("5%% critical values for Durbin-Watson statistic\n\n"));
+    
+    /* xgettext:no-c-format */
+    pputs(prn, _("5% critical values for Durbin-Watson statistic\n\n"));
     pputs(prn, _("              Number of explanatory variables (excluding the "
 		 "constant):\n\n"));
     pputs(prn, "               1             2             3             4"
@@ -343,7 +344,8 @@ void norm_lookup (PRN *prn, int gui)
 		 "a one-tailed test.\n"));
     pputs(prn, _("For a two-tailed test, select the column heading "
 		 "showing half the desired\nalpha level.  "));
-    pputs(prn, _("(For example, for a two-tailed test using the 10%% "
+    /* xgettext:no-c-format */ 
+    pputs(prn, _("(For example, for a two-tailed test using the 10% "
 		 "significance\nlevel, use the 0.05 column.)\n\n"));
     pputs(prn, "      0.10     0.05    0.025     0.01    0.001\n\n"); 
     pprintf(prn, "  %8.3f %8.3f %8.3f %8.3f %8.3f\n",
@@ -372,7 +374,8 @@ void t_lookup (int df, PRN *prn, int gui)
 		 "a one-tailed test.\n"));
     pputs(prn, _("For a two-tailed test, select the column heading "
 		 "showing half the desired\nalpha level.  "));
-    pputs(prn, _("(For example, for a two-tailed test using the 10%% "
+    /* xgettext:no-c-format */
+    pputs(prn, _("(For example, for a two-tailed test using the 10% "
 		 "significance\nlevel, use the 0.05 column.)\n\n"));
     pputs(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
     for (i=0; i<NTSTAT; i++) {

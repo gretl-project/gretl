@@ -1,0 +1,44 @@
+topsrc = @top_srcdir@
+prefix = @prefix@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+XML_CFLAGS = @XML_CFLAGS@
+GTK_CFLAGS = @GTK_CFLAGS@
+DATADIR = $(prefix)/share/gretl
+
+VPATH = $(topsrc)/gui2/gtksourceview
+
+override CFLAGS += -I$(topsrc)/gui2 $(GTK_CFLAGS) $(XML_CFLAGS) \
+	-DDATADIR=\"$(DATADIR)\" -DNATIVE_GNU_REGEX
+
+SRCS = gtksourcebuffer.c \
+	gtksourceiter.c \
+	gtksourcelanguage.c \
+	gtksourcelanguagesmanager.c \
+	gtksourcemarker.c \
+	gtksourceregex.c \
+	gtksourcestylescheme.c \
+	gtksourcetag.c \
+	gtksourcetagtable.c \
+	gtksourceundomanager.c \
+	gtksourceview.c \
+	gtksourceview-i18n.c \
+	gtksourceview-marshal.c \
+	gtksourceview-typebuiltins.c \
+	gtktextregion.c
+
+OBJS = $(SRCS:.c=.o)
+
+LIB = libgtksourceview-lite.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	ar -rs $@ $^
+
+clean:
+	rm -f *.o $(LIB)
+
+

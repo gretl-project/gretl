@@ -81,6 +81,12 @@ extern void save_plot (char *fname, GPT_SPEC *plot);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 extern void do_leverage (gpointer data, guint u, GtkWidget *w);
 
+static void close_model (gpointer data, guint close, GtkWidget *widget)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    gtk_widget_destroy(vwin->dialog);
+}
 
 static
 GtkItemFactoryEntry model_items[] = {
@@ -92,6 +98,7 @@ GtkItemFactoryEntry model_items[] = {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
+    { N_("/File/Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
@@ -525,6 +532,15 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
     else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
 	remember_model(vwin, 1, NULL);
+    }
+    else if (key->keyval == GDK_w) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    gtk_widget_destroy(w);
+	    return TRUE;
+	}	
     }
 #ifdef G_OS_WIN32
     else if (key->keyval == GDK_c) {
