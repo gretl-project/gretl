@@ -688,7 +688,11 @@ int main (int argc, char *argv[])
 
 #ifdef ENABLE_NLS
     nls_init();
-#endif       
+#endif  
+
+#ifdef G_OS_WIN32
+    putenv("PANGO_WIN32_NO_UNISCRIBE=a");
+#endif     
 
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc(_("startup"));
