@@ -1232,9 +1232,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 		       GTK_SIGNAL_FUNC(catch_view_key), dialog);
 
+    /* popup menu? */
     if (role == VIEW_SERIES) {
 	series_view_build_popup(vwin);
-	gtk_signal_connect (GTK_OBJECT(vwin->w), "button_press_event",
+	gtk_signal_connect (GTK_OBJECT(vwin->dialog), "button_press_event",
 			    GTK_SIGNAL_FUNC(popup_menu_handler), 
 			    (gpointer) vwin->popup);
     } 
