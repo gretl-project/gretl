@@ -1615,7 +1615,8 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 
 #ifndef G_OS_WIN32
 
-void gretl_fork (const char *prog, const char *arg)
+#if 0
+void old_gretl_fork (const char *prog, const char *arg)
 {
     pid_t pid;
 
@@ -1635,6 +1636,34 @@ void gretl_fork (const char *prog, const char *arg)
 	perror("execlp");
 	_exit(EXIT_FAILURE);
     }
+}
+#endif
+
+int gretl_fork (const char *prog, const char *arg)
+{
+    gchar *argv[3];
+    gboolean run;
+    
+    argv[0] = g_strdup(prog);
+    if (arg != NULL) {
+	argv[1] = g_strdup(arg);
+	argv[2] = NULL;
+    } else {
+	argv[1] = NULL;
+    }
+    
+    run = g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, 
+			NULL, NULL, NULL, NULL);
+
+    if (!run) {
+	sprintf(errtext, "%s: %s", _("Command failed"), prog);
+	errbox(errtext);
+    }
+
+    g_free(argv[0]);
+    g_free(argv[1]);
+
+    return !run;
 }
 
 #endif	

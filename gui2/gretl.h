@@ -307,7 +307,7 @@ enum latex_views {
 /* functions follow */
 
 #ifndef WIN32
-void gretl_fork (const char *prog, const char *arg);
+int gretl_fork (const char *prog, const char *arg);
 #endif
  
 void main_menubar_state (gboolean s);

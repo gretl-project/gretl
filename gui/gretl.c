@@ -31,6 +31,8 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <signal.h>
+#include <wait.h>
+#include <errno.h>
 
 #include "../pixmaps/gretl.xpm"  /* program icon for X */
 
@@ -1470,27 +1472,53 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
     }
 }
 
-void gretl_fork (const char *prog, const char *arg)
+static volatile int fork_err;
+
+static void fork_err_set (int signum)
+{
+    fprintf(stderr, "Got error from child\n");
+    fork_err = 1;
+}
+
+int real_gretl_fork (const char *prog, const char *arg)
 {
     pid_t pid;
 
-    signal(SIGCHLD, SIG_IGN);
+    fork_err = 0;
+
+    /* signal(SIGCHLD, SIG_IGN); */
+    signal(SIGUSR1, fork_err_set);
 
     pid = fork();
     if (pid == -1) {
 	errbox(_("Couldn't fork"));
 	perror("fork");
-	return;
+	return 1;
     } else if (pid == 0) {
-	if (arg != NULL) 
+	if (arg != NULL) { 
 	    execlp(prog, prog, arg, NULL);
-	else
+	} else {
 	    execlp(prog, prog, NULL);
+	}
 	perror("execlp");
+	kill(getppid(), SIGUSR1);
 	_exit(EXIT_FAILURE);
-    }
+    } 
 
-    signal(SIGCHLD, SIG_DFL);
+    /* signal(SIGCHLD, SIG_DFL); */
+
+    return 0;
+}
+
+int gretl_fork (const char *prog, const char *arg)
+{
+    fork_err = 0;
+
+    real_gretl_fork(prog, arg);
+
+    fprintf(stderr, "fork_err = %d\n", fork_err);
+
+    return fork_err;
 }
 
 static void startR (gpointer p, guint opt, GtkWidget *w)

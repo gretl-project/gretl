@@ -462,7 +462,7 @@ static int real_display_gpage (void)
 	err = 1;
     }
 #else
-    gretl_fork(viewer, fname);
+    err = gretl_fork(viewer, fname);
 #endif
 
     return err;
@@ -516,7 +516,7 @@ int display_graph_page (void)
 
     if (!err) {
 	/* compile LaTeX and display output */
-	real_display_gpage();
+	err = real_display_gpage();
     }
 
     gpage_cleanup();

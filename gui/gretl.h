@@ -285,7 +285,7 @@ enum latex_views {
 
 /* functions follow */
 
-void gretl_fork (const char *prog, const char *arg);
+int gretl_fork (const char *prog, const char *arg);
  
 void main_menubar_state (gboolean s);
 
