@@ -180,7 +180,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
 	strcat(trydatfile, ".gdt");
     }
 
-    verify_open_data(mydata);
+    verify_open_data(mydata, OPEN_DATA);
 } 
 
 /* ........................................................... */

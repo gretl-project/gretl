@@ -62,9 +62,12 @@ static struct extmap action_map[] = {
     {OPEN_SCRIPT, ".inp"},
     {OPEN_SESSION, ".gretl"},
     {OPEN_CSV,  ".csv"},
+    {APPEND_CSV,  ".csv"},
     {OPEN_BOX, ".box"},
     {OPEN_GNUMERIC, ".gnumeric"},
+    {APPEND_GNUMERIC, ".gnumeric"},
     {OPEN_EXCEL, ".xls"},
+    {APPEND_EXCEL, ".xls"},
     {OP_MAX, NULL}
 };
 
@@ -246,9 +249,12 @@ static const char *get_filter (int action, gpointer data)
 	{OPEN_SCRIPT, _("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
 	{OPEN_SESSION, _("session files (*.gretl)\0*.gretl\0all files\0*\0")},
 	{OPEN_CSV,  _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
+	{APPEND_CSV,  _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
 	{OPEN_BOX, _("BOX data files (*.box)\0*.box\0all files\0*\0")},
 	{OPEN_GNUMERIC, _("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
-	{OPEN_EXCEL, _("Excel files (*.xls)\0*.xls\0all files\0*\0")}
+	{APPEND_GNUMERIC, _("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
+	{OPEN_EXCEL, _("Excel files (*.xls)\0*.xls\0all files\0*\0")},
+	{APPEND_EXCEL, _("Excel files (*.xls)\0*.xls\0all files\0*\0")},
     };
 
     if (olddat && is_data_action(action)) 
@@ -329,7 +335,12 @@ void file_selector (char *msg, int action, gpointer data)
     if (action == OPEN_DATA || action == OPEN_CSV || 
 	action == OPEN_BOX || action == OPEN_GNUMERIC || action == OPEN_EXCEL) {
 	strcpy(trydatfile, fname);
-	verify_open_data(NULL);
+	verify_open_data(NULL, action);
+    }
+    else if (action == APPEND_CSV || action == APPEND_GNUMERIC || 
+	     action == APPEND_EXCEL) {
+	strcpy(trydatfile, fname);
+	do_open_data(NULL, NULL, action);
     }
     else if (action == OPEN_SCRIPT) {
 	int spos;
@@ -468,8 +479,14 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	action == OPEN_BOX || action == OPEN_GNUMERIC || action == OPEN_EXCEL) {
 	strcpy(trydatfile, fname);
 	gtk_widget_destroy(GTK_WIDGET(fs));  
-	verify_open_data(NULL);
+	verify_open_data(NULL, action);
 	return;
+    }
+    else if (action == APPEND_CSV || action == APPEND_GNUMERIC || 
+	     action == APPEND_EXCEL) {
+	strcpy(trydatfile, fname);
+	gtk_widget_destroy(GTK_WIDGET(fs)); 
+	do_open_data(NULL, NULL, action);
     }
     else if (action == OPEN_SCRIPT) {
 	int spos;

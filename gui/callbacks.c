@@ -101,15 +101,18 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 	file_selector(_("Open data file"), code, NULL);
 	break;
     case OPEN_CSV:
+    case APPEND_CSV:
 	file_selector(_("Open CSV file"), code, NULL);
 	break;
     case OPEN_BOX:
 	file_selector(_("Open BOX file"), code, NULL);
 	break;
     case OPEN_GNUMERIC:
+    case APPEND_GNUMERIC:
 	file_selector(_("Open Gnumeric file"), code, NULL);
 	break;
     case OPEN_EXCEL:
+    case APPEND_EXCEL:
 	file_selector(_("Open Excel file"), code, NULL);
 	break;
     default:

@@ -612,7 +612,7 @@ static void get_worksheet_data (const char *fname, int datatype)
 
 /* ........................................................... */
 
-void do_open_data (GtkWidget *w, gpointer data)
+void do_open_data (GtkWidget *w, gpointer data, int code)
      /* cases: 
 	- called from dialog: user has said Yes to opening data file,
 	although a data file is already open
@@ -621,7 +621,6 @@ void do_open_data (GtkWidget *w, gpointer data)
      */
 {
     gint datatype, err;
-    PRN *prn;
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
 
@@ -634,13 +633,25 @@ void do_open_data (GtkWidget *w, gpointer data)
 	}
     }
 
-    /* check file type first */
-    if (bufopen(&prn)) return;
-    datatype = detect_filetype(trydatfile, &paths, prn);
-    gretl_print_destroy(prn);
+    if (code == OPEN_CSV || code == APPEND_CSV)
+	datatype = GRETL_CSV_DATA;
+    if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC)
+	datatype = GRETL_GNUMERIC;
+    else if (code == OPEN_EXCEL || code == APPEND_EXCEL)
+	datatype = GRETL_EXCEL;
+    else if (code == OPEN_BOX)
+	datatype = GRETL_BOX_DATA;
+    else {
+	PRN *prn;	
 
-    /* will this work right? */
-    close_session();
+	if (bufopen(&prn)) return;
+	datatype = detect_filetype(trydatfile, &paths, prn);
+	gretl_print_destroy(prn);
+    }
+
+    /* destroy the current data set, etc., unless we're explicitly appending */
+    if (code != APPEND_CSV && code != APPEND_GNUMERIC && code != APPEND_EXCEL)
+	close_session();
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL) {
 	get_worksheet_data(trydatfile, datatype);
@@ -680,7 +691,7 @@ void do_open_data (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-void verify_open_data (gpointer userdata)
+void verify_open_data (gpointer userdata, int code)
      /* give user choice of not opening selected datafile,
 	if there's already a datafile open and we're not
 	in "expert" mode */
@@ -692,7 +703,7 @@ void verify_open_data (gpointer userdata)
 		       "will be lost.  Proceed to open data file?"), 0))
 	return;
     else 
-	do_open_data(NULL, userdata);
+	do_open_data(NULL, userdata, code);
 }
 
 /* ........................................................... */
@@ -718,7 +729,7 @@ static void set_data_from_filelist (gpointer data, guint i,
 				    GtkWidget *widget)
 {
     strcpy(trydatfile, datap[i]); 
-    verify_open_data(NULL);
+    verify_open_data(NULL, 0);
 }
 
 /* ........................................................... */

@@ -51,7 +51,9 @@ void clear_data (int full);
 
 void register_data (const char *fname, int record);
 
-void verify_open_data (gpointer userdata);
+void do_open_data (GtkWidget *w, gpointer data, int code);
+
+void verify_open_data (gpointer userdata, int code);
 
 void datafile_find (GtkWidget *widget, gpointer data);
 

@@ -92,9 +92,12 @@ enum file_ops {
     OPEN_RATSDB,
     OPEN_SCRIPT,
     OPEN_CSV,
+    APPEND_CSV,
     OPEN_BOX,
     OPEN_GNUMERIC,
+    APPEND_GNUMERIC,
     OPEN_EXCEL,
+    APPEND_EXCEL,
     OPEN_SESSION,
     END_OPEN,      /* marker for end of file open section */
     SAVE_DATA,

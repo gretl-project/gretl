@@ -215,6 +215,11 @@ GtkItemFactoryEntry data_items[] = {
       OPEN_GNUMERIC, NULL },
     { _("/File/_Open data/import Excel..."), NULL, open_data, 
       OPEN_EXCEL, NULL },
+    { _("/File/_Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
+    { _("/File/_Append data/from Gnumeric..."), NULL, open_data, 
+      APPEND_GNUMERIC, NULL },
+    { _("/File/_Append data/from Excel..."), NULL, open_data, 
+      APPEND_EXCEL, NULL },
     { _("/File/_Save data"), NULL, auto_store, 0, NULL },
     { _("/File/Save data _as/_standard format..."), NULL, file_save, 
       SAVE_DATA, NULL },
@@ -1747,7 +1752,7 @@ drag_data_received  (GtkWidget *widget,
 	verify_open_session(NULL);
     } else {
 	strcpy(trydatfile, tmp);
-	verify_open_data(NULL);
+	verify_open_data(NULL, 0);
     }	
 }
 

@@ -1598,53 +1598,147 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
     return -1;
 }
 
-/* ......................................................... */
 
-static int check_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo, 
-			    PRN *prn)
+enum {
+    DATA_ADD_COLS,
+    DATA_ADD_ROWS
+} merge_codes;
+
+
+static int merge_data (double ***pZ, DATAINFO *pdinfo,
+		       double **addZ, DATAINFO *addinfo,
+		       int code, PRN *prn)
 {
-    pprintf(prn, _("Checking for conformability with present data set...\n"));
-    if (pdinfo->n != pcinfo->n) {
-	pprintf(prn, _("   Number of observations does not match.\n"));
-	return 1;
-    }
-    if (pdinfo->pd != pcinfo->pd) {
-	pprintf(prn, _("   Frequency does not match.\n"));
-	return 1;
-    }
-    if (strcmp(pdinfo->stobs, pcinfo->stobs)) {
-	pprintf(prn, _("   Starting observation does not match.\n"));
-	return 1;
-    } 
-    if (strcmp(pdinfo->endobs, pcinfo->endobs)) {
-	pprintf(prn, _("   Ending observation does not match.\n"));
-	return 1;
-    }
-    pprintf(prn, "   OK.\n");
-    return 0;
-}
+    int err = 0;
 
-/* ......................................................... */
+    /* first check for conformability */
 
-static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
-			 double ***pZ, double ***csvZ, PRN *prn)
-{
-    int i, t, newvars = pcinfo->v, oldvars = pdinfo->v;
-
-    pprintf(prn, _("Attempting data merge...\n"));
-    if (dataset_add_vars(newvars - 1, pZ, pdinfo)) {
-	pprintf(prn, _("   Out of memory.\n"));
-	return E_ALLOC;
+    if (pdinfo->pd != addinfo->pd) {
+	pprintf(prn, _("   Data frequency does not match\n"));
+	return 1;
     }
-    for (i=1; i<newvars; i++) {
-	for (t=0; t<pdinfo->n; t++) 
-	    (*pZ)[oldvars+i-1][t] = (*csvZ)[i][t];
-	strcpy(pdinfo->varname[oldvars+i-1], pcinfo->varname[i]);
-    }  
-    free_Z(*csvZ, pcinfo);
-    clear_datainfo(pcinfo, CLEAR_FULL);
-    pprintf(prn, _("   OK, I think.\n"));
-    return 0;
+
+    if (code == DATA_ADD_COLS) {
+	if (pdinfo->n != addinfo->n) {
+	    pprintf(prn, _("   Number of observations does not match\n"));
+	    return 1;
+	}
+	if (strcmp(pdinfo->stobs, addinfo->stobs)) {
+	    pprintf(prn, _("   Starting observation does not match\n"));
+	    return 1;
+	} 
+	if (strcmp(pdinfo->endobs, addinfo->endobs)) {
+	    pprintf(prn, _("   Ending observation does not match\n"));
+	    return 1;
+	}
+    }
+
+    else if (code == DATA_ADD_ROWS) {
+	if (pdinfo->v != addinfo->v) {
+	    pprintf(prn, _("   Number of variables does not match\n"));
+	    return 1;
+	}
+	if (dateton(addinfo->stobs, pdinfo) != pdinfo->n + 1) {
+	    pprintf(prn, _("   Starting point of new data does not fit\n"));
+	    return 1;
+	}
+	if (pdinfo->markers != addinfo->markers) {
+	    pprintf(prn, _("   Inconsistency in observation markers\n"));
+	    return 1;
+	}
+    }
+
+    /* if checks are passed, try merging the data */
+
+   if (code == DATA_ADD_COLS) { 
+       int i, t, nvars = pdinfo->v + addinfo->v - 1;
+       double **newZ = realloc(*pZ, nvars * sizeof *newZ);
+       unsigned char *vector = realloc(pdinfo->vector, nvars);
+       char **varname = realloc(pdinfo->varname, nvars * sizeof *varname);
+
+       if (vector == NULL || newZ == NULL || varname == NULL)
+	   err = 1;
+       
+       if (!err) {
+	   for (i=pdinfo->v; i<nvars; i++) {
+	       newZ[i] = malloc(pdinfo->n * sizeof **newZ);
+	       if (newZ[i] == NULL) {
+		   err = 1;
+		   break;
+	       } else {
+		   vector[i] = 1;
+		   for (t=0; t<pdinfo->n; t++)
+		       newZ[i][t] = addZ[i - pdinfo->v + 1][t];
+	       }
+	   }
+       } else err = 1;
+
+       for (i=pdinfo->v; i<nvars && !err; i++) {
+	   varname[i] = malloc(9);
+	   if (varname[i] == NULL) {
+	       err = 1;
+	       break;
+	   } else 
+	       strcpy(varname[i], addinfo->varname[i - pdinfo->v + 1]);
+       }
+
+       if (err) {
+	   pprintf(prn, _("   Out of memory adding data\n"));
+	   return 1;
+       }
+
+       *pZ = newZ;
+       pdinfo->vector = vector;
+       pdinfo->varname = varname;
+       pdinfo->v = nvars;
+
+       return 0;
+   }
+
+   else if (code == DATA_ADD_ROWS) { 
+       int i, t, tnew = pdinfo->n + addinfo->n;
+       double *xx;
+
+       if (pdinfo->markers) {
+	   char **S = realloc(pdinfo->S, tnew * sizeof *S);
+	   
+	   if (S == NULL) {
+	       err = 1;
+	   } else {
+	       for (t=pdinfo->n; t<tnew && !err; t++) {
+		   S[t] = malloc(9);
+		   if (S[t] == NULL) err = 1;
+		   else strcpy(S[t], addinfo->S[t - pdinfo->n]);
+	       }
+	   }
+	   pdinfo->S = S;
+       }
+
+       for (i=0; i<pdinfo->v && !err; i++) {
+	   xx = realloc((*pZ)[i], tnew * sizeof *xx);
+	   if (xx == NULL) {
+	       err = 1;
+	       break;
+	   } else {
+	       for (t=pdinfo->n; t<tnew; t++)
+		   xx[t] = addZ[i][t - pdinfo->n];
+	       (*pZ)[i] = xx;
+	   }
+       }
+
+       
+       if (err) {
+	   pprintf(prn, _("   Out of memory adding data\n"));
+	   return 1;
+       }
+
+       pdinfo->n = tnew;
+       ntodate(pdinfo->endobs, tnew - 1, pdinfo);
+
+       return 0;       
+   }
+
+   return 1;
 }
 
 /* ......................................................... */
@@ -1937,8 +2031,8 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	*pZ = csvZ;
 	*pdinfo = *csvinfo;
     } else {
-	if (check_csv_merge(pdinfo, csvinfo, prn)) return 1;
-	if (do_csv_merge(pdinfo, csvinfo, pZ, &csvZ, prn)) return 1;
+	if (merge_data(pZ, pdinfo, csvZ, csvinfo, DATA_ADD_COLS, prn))
+	    return 1;
     }
 
     return 0;
