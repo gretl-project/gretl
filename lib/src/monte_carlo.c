@@ -46,6 +46,7 @@ enum inequalities {
 enum loop_types {
     COUNT_LOOP,
     WHILE_LOOP,
+    INDEX_LOOP,
     FOR_LOOP
 };
 
@@ -77,7 +78,10 @@ struct LOOPSET_ {
     int level;
     int err;
     int ntimes;
-    int lvar, rvar;
+    int index;
+    int index_start;
+    int lvar;
+    int rvar;
     double rval;
     int ineq;
     int ncmds;
@@ -218,6 +222,122 @@ static LOOPSET *gretl_loop_new (LOOPSET *parent, int loopstack)
     return loop;
 }
 
+static int parse_as_while_loop (LOOPSET *loop,
+				const DATAINFO *pdinfo,
+				char *lvar, char *rvar, 
+				char *op)
+{
+    int v;
+    int err = 0;
+
+    if (strstr(op, ">")) {
+	loop->ineq = GT;
+    } else {
+	loop->ineq = LT;
+    }
+
+    v = varindex(pdinfo, lvar);
+    if (v > 0 && v < pdinfo->v) {
+	loop->lvar = v;
+    } else {
+	sprintf(gretl_errmsg, 
+		_("Undefined variable '%s' in loop condition."), lvar);
+	err = 1;
+    }
+
+    if (!err && (isdigit((unsigned char) *rvar) || *rvar == '.')) { 
+	/* numeric rvalue?  FIXME: too restrictive?  */
+	if (check_atof(rvar)) {
+	    err = 1;
+	} else {
+	    loop->rval = atof(rvar);
+	}
+    } else if (!err) { /* otherwise try a varname */
+	v = varindex(pdinfo, rvar);
+	if (v > 0 && v < pdinfo->v) {
+	    loop->rvar = v;
+	} else {
+	    sprintf(gretl_errmsg, 
+		    _("Undefined variable '%s' in loop condition."), rvar);
+	    loop->lvar = 0;
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	loop->type = WHILE_LOOP;
+    }
+
+    return err;
+}
+
+static int parse_as_indexed_loop (LOOPSET *loop,
+				  char *lvar, int start,
+				  int end)
+{
+    int err = 0;
+
+    if (strcmp(lvar, "i")) {
+	sprintf(gretl_errmsg, 
+		_("The index variable in a 'for' loop must be the "
+		  "special variable 'i'"));
+	err = 1;
+    }
+    if (!err && end <= start) {
+	sprintf(gretl_errmsg, _("Ending value for loop index must be greater "
+				"than starting value."));
+	err = 1;
+    }
+    if (!err) {
+	/* initialize loop index to starting value */
+	loop->index_start = start;
+	loop->lvar = 0;
+	loop->rvar = 0;
+	loop->ntimes = end;
+	loop->type = INDEX_LOOP;
+    }
+
+    return err;
+}
+
+static int parse_as_simple_count_loop (LOOPSET *loop, int n)
+{
+    int err = 0;
+
+    if (n <= 0) {
+	strcpy(gretl_errmsg, _("Loop count must be positive."));
+	err = 1;
+    } else {
+	loop->ntimes = n;
+	loop->type = COUNT_LOOP;
+    }
+
+    return err;
+}
+
+static int parse_as_named_count_loop (LOOPSET *loop, 
+				      const DATAINFO *pdinfo,
+				      const double **Z,
+				      const char *lvar)
+{
+    int v = varindex(pdinfo, lvar);
+    int err = 0;
+
+    if (v > 0 && v < pdinfo->v && pdinfo->vector[v] == 0) {
+	int n = Z[v][0];
+
+	if (n <= 0) {
+	    strcpy(gretl_errmsg, _("Loop count must be positive."));
+	    err = 1;
+	} else {
+	    loop->ntimes = n;
+	    loop->type = COUNT_LOOP;
+	}
+    }
+
+    return err;
+}
+
 /**
  * parse_loopline:
  * @line: command line.
@@ -238,8 +358,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
     LOOPSET *loop;
     char lvar[VNAMELEN], rvar[VNAMELEN], op[8];
     int start, end;
-    int n, v;
-    int err = 0;
+    int n, err = 0;
 
 #ifdef LOOP_DEBUG
     printf("parse_loopline: ploop = %p, loopstack = %d\n",
@@ -277,92 +396,20 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	goto bailout;
     }
 
-    /* try parsing as a while loop */
     if (sscanf(line, "loop while %[^ <>]%[ <>] %s", lvar, op, rvar) == 3) {
-	if (strstr(op, ">")) {
-	    loop->ineq = GT;
-	} else {
-	    loop->ineq = LT;
-	}
-	v = varindex(pdinfo, lvar);
-	if (v > 0 && v < pdinfo->v) {
-	    loop->lvar = v;
-	} else {
-	    sprintf(gretl_errmsg, 
-		    _("Undefined variable '%s' in loop condition."), lvar);
-	    err = 1;
-	}
-	if (!err && (isdigit((unsigned char) *rvar) || *rvar == '.')) { 
-	    /* numeric rvalue?  FIXME: too restrictive?  */
-	    if (check_atof(rvar)) {
-		err = 1;
-	    } else {
-		loop->rval = atof(rvar);
-	    }
-	} else if (!err) { /* otherwise try a varname */
-	    v = varindex(pdinfo, rvar);
-	    if (v > 0 && v < pdinfo->v) {
-		loop->rvar = v;
-	    } else {
-		sprintf(gretl_errmsg, 
-			_("Undefined variable '%s' in loop condition."), rvar);
-		loop->lvar = 0;
-		err = 1;
-	    }
-	}
-
-	if (!err) {
-	    loop->type = WHILE_LOOP;
-	}
+	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
     }
 
-    /* or try parsing as a for loop */
     else if (sscanf(line, "loop for %[^= ] = %d..%d", lvar, &start, &end) == 3) {
-	if (strcmp(lvar, "i")) {
-	    sprintf(gretl_errmsg, 
-		    _("The index variable in a 'for' loop must be the "
-		    "special variable 'i'"));
-	    err = 1;
-	}
-	if (!err && end <= start) {
-	    sprintf(gretl_errmsg, _("Ending value for loop index must be greater "
-		    "than starting value."));
-	    err = 1;
-	}
-	if (!err) {
-	    /* initialize special genr index to starting value */
-	    genr_scalar_index(1, start - 1);
-	    loop->lvar = INDEXNUM;
-	    loop->rvar = 0;
-	    loop->ntimes = end;
-	    loop->type = FOR_LOOP;
-	}
+	err = parse_as_indexed_loop(loop, lvar, start, end);
     }
 
-    /* or as a simple count loop */
     else if (sscanf(line, "loop %d", &n) == 1) {
-	if (n <= 0) {
-	    strcpy(gretl_errmsg, _("Loop count must be positive."));
-	    err = 1;
-	} else {
-	    loop->ntimes = n;
-	    loop->type = COUNT_LOOP;
-	}
+	err = parse_as_simple_count_loop(loop, n);
     }
 
-    /* or as a count loop with named scalar max */
     else if (sscanf(line, "loop %8s", lvar) == 1) {
-	v = varindex(pdinfo, lvar);
-	if (v > 0 && v < pdinfo->v && pdinfo->vector[v] == 0) {
-	    n = Z[v][0];
-	    if (n <= 0) {
-		strcpy(gretl_errmsg, _("Loop count must be positive."));
-		err = 1;
-	    } else {
-		loop->ntimes = n;
-		loop->type = COUNT_LOOP;
-	    }
-	}
+	err = parse_as_named_count_loop(loop, pdinfo, Z, lvar);
     }
 
     /* out of options, complain */
@@ -420,10 +467,12 @@ static int
 loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 {
     static int maxloop = 0;
-    int t, cont = 0;
+    int cont = 0;
     int oldtimes = loop->ntimes;
 
-    if (maxloop == 0) maxloop = get_maxloop();
+    if (maxloop == 0) {
+	maxloop = get_maxloop();
+    }
 
     /* an inequality between variables */
     if (loop->rvar > 0) {
@@ -441,11 +490,10 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	}
     } 
 
-    /* a 'for' loop */
-    else if (loop->lvar == INDEXNUM) {  
-	t = genr_scalar_index(0, 0); /* fetch index */
-	if (t < loop->ntimes) {
-	    genr_scalar_index(2, 1); /* increment index */
+    /* a 'for' indexed loop */
+    else if (loop->type == INDEX_LOOP) {  
+	if (loop->index <= loop->ntimes) {
+	    loop->index += 1;
 	    cont = 1;
 	}
     }
@@ -491,6 +539,8 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->level = 0;
 
     loop->ntimes = 0;
+    loop->index = 0;
+    loop->index_start = 0;
     loop->err = 0;
     loop->lvar = 0;
     loop->rvar = 0;
@@ -949,7 +999,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
     gretlopt opt;
     MODEL *pmod = NULL;
 
-    if (loop->lvar && loop->lvar != INDEXNUM) {
+    if (loop->lvar && loop->type == INDEX_LOOP) {
 	pprintf(prn, _("\nNumber of iterations: %d\n\n"), loop->ntimes);
     }
 
@@ -1471,7 +1521,7 @@ void get_cmd_ci (const char *line, CMD *command)
     }    
 } 
 
-static void substitute_dollar_i (char *str)
+static void substitute_dollar_i (char *str, int index)
 {
     char *p;
 
@@ -1481,7 +1531,7 @@ static void substitute_dollar_i (char *str)
 
 	q = malloc(strlen(p));
 	strcpy(q, p + 2);
-	sprintf(ins, "%d", genr_scalar_index(0, 0));
+	sprintf(ins, "%d", index - 1);
 	strcpy(p, ins);
 	strcpy(p + strlen(ins), q);
 	free(q);	
@@ -1520,6 +1570,8 @@ int loop_exec (LOOPSET *loop, char *line,
     printf("loop_exec: loop = %p\n", (void *) loop);
 #endif
 
+    loop->index = loop->index_start;
+
     while (!err && loop_condition(lround, loop, *pZ, pdinfo)) {
 	int childnum = 0;
 	int j;
@@ -1528,8 +1580,8 @@ int loop_exec (LOOPSET *loop, char *line,
 	printf("top of loop: lround = %d\n", lround);
 #endif
 
-	if (loop->type == FOR_LOOP && !(*echo_off)) {
-	    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
+	if (loop->type == INDEX_LOOP && !(*echo_off)) {
+	    pprintf(prn, "loop: i = %d\n\n", loop->index - 1);
 	}
 
 	for (j=0; !err && j<loop->ncmds; j++) {
@@ -1546,7 +1598,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    substitute_dollar_i(linecpy);
+	    substitute_dollar_i(linecpy, loop->index);
 
 	    getcmd(linecpy, pdinfo, &cmd, &ignore, pZ, NULL);
 
@@ -1557,7 +1609,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    if (!(*echo_off) && loop->type == FOR_LOOP) {
+	    if (!(*echo_off) && loop->type == INDEX_LOOP) {
 		echo_cmd(&cmd, pdinfo, linecpy, 0, 1, prn);
 	    }
 
@@ -1588,7 +1640,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case HCCM:
 		/* if this is the first time round the loop, allocate space
 		   for each loop model */
-		if (lround == 0 && loop->type != FOR_LOOP) {
+		if (lround == 0 && loop->type != INDEX_LOOP) {
 		    err = add_loop_model(loop, j);
 		    if (err) {
 			break;
@@ -1612,7 +1664,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    break;
 		}
 
-		if (loop->type == FOR_LOOP) {
+		if (loop->type == INDEX_LOOP) {
 		    (models[0])->ID = lround + 1;
 		    printmodel(models[0], pdinfo, cmd.opt, prn); 
 		    tmpmodel = models[0];
@@ -1750,7 +1802,7 @@ int loop_exec (LOOPSET *loop, char *line,
     }
 
     if (!err && lround > 0) {
-	if (loop->type != FOR_LOOP) {
+	if (loop->type != INDEX_LOOP) {
 	    print_loop_results(loop, pdinfo, prn, paths); 
 	}
     }
@@ -1782,6 +1834,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 	    dataset_drop_vars(1, pZ, pdinfo);
 	}
     }
+
     return ret;
 }
 
@@ -1797,7 +1850,9 @@ int ifstate (int code)
     }
     else if (code == SET_FALSE || code == SET_TRUE) {
 	indent++;
-	if (indent > 8) return 1; /* too deeply nested */
+	if (indent > 8) {
+	    return 1; /* too deeply nested */
+	}
 	T[indent] = (code == SET_TRUE);
 	got_if[indent] = 1;
 	got_else[indent] = 0;
@@ -1822,8 +1877,11 @@ int ifstate (int code)
     else if (code == IS_FALSE) {
 	int i;
 
-	for (i=1; i<=indent; i++) if (T[i] == 0) return 1;
+	for (i=1; i<=indent; i++) {
+	    if (T[i] == 0) return 1;
+	}
     }
+
     return 0;
 }
 
