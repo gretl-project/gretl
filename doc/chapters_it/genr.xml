@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<?PSGML NOFILL programlisting example inlineequation informalequation?>
+
+
+  <chapter id="chap-genr">
+  <title>Funzioni speciali in genr</title>
+
+  <sect1 id="genr-intro"><title>Introduzione</title>
+
+    <para>Il comando <literal>genr</literal> offre un modo flessibile per definire
+      nuove variabili. Il comando è documentato nel capitolo della guida comandi
+      di questo manuale (si veda <xref linkend="cmd-genr"/>), mentre questo capitolo
+      offre una discussione più approfondita di alcune delle funzioni speciali
+      disponibili con <literal>genr</literal> e di alcune particolarità del comando.
+    </para>
+
+  </sect1>
+
+  <sect1 id="genr-filter"><title>Filtri per serie storiche</title>
+
+    <para>Un tipo di funzione specializzata di <literal>genr</literal> è il
+      filtro per le serie storiche. Ne esistono di due tipi al momento: il
+      filtro di Hodrick&ndash;Prescott e quello passa banda di Baxter&ndash;King.
+      Sono utilizzabili rispettivamente con le funzioni <literal>hpfilt()</literal>
+      e <literal>bkfilt()</literal>, che richiedono come argomento il nome della
+      variabile da processare.
+    </para>
+
+    <sect2 id="hodrick-prescott"><title>Il filtro di Hodrick&ndash;Prescott</title>
+
+      <para>Da scrivere.</para>
+
+    </sect2>
+
+    <sect2 id="baxter-king"><title>Il filtro di Baxter e King</title>
+
+      <para>Si consideri la rappresentazione spettrale di una serie storica
+	<emphasis>y<subscript>t</subscript></emphasis>:
+	<informalequation><alt role="tex">
+	    \[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
+	  </alt><graphic fileref="figures/bk1"/>
+	</informalequation> se volessimo estrarre solo la componente di
+	<emphasis>y<subscript>t</subscript></emphasis> che si trova tra le
+	frequenze 
+        <inlineequation>
+	  <alt role="tex">$\underline{\omega}$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/bk1a"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	</inlineequation> e
+        <inlineequation>
+	  <alt role="tex">$\overline{\omega}$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/bk1b"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	</inlineequation> potremmo applicare un filtro passa banda:
+	<informalequation><alt role="tex">
+	    \[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
+	    Z(\omega) \]
+	  </alt><graphic fileref="figures/bk2"/>
+	</informalequation> dove 
+        <inlineequation>
+	  <alt role="tex">$F^*(\omega) = 1$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/bk2a"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	</inlineequation> per
+        <inlineequation>
+	  <alt role="tex">$\underline{\omega} < |\omega| < \overline{\omega}$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/bk2b"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	</inlineequation> e 0 altrove. Ciò implicherebbe, nel dominio temporale,
+	applicare alla serie un filtro con un numero infinito di coefficienti,
+	cosa non desiderabile. Il filtro passa banda di Baxter e King applica a
+	<emphasis>y<subscript>t</subscript></emphasis> un polinomio finito nell'operatore
+        di ritardo <emphasis>A</emphasis>(<emphasis>L</emphasis>):
+	<informalequation><alt role="tex">
+	    \[ c_t = A(L) y_t \]
+	  </alt><graphic fileref="figures/bk3"/>
+	</informalequation> dove <emphasis>A</emphasis>(<emphasis>L</emphasis>) è
+        definito come
+	<informalequation><alt role="tex">
+	    \[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
+	  </alt><graphic fileref="figures/bk4"/>
+	</informalequation> I coefficienti
+	<emphasis>a<subscript>i</subscript></emphasis> sono scelti in modo che
+        <inlineequation>
+	  <alt role="tex">$F(\omega) = A(e^{i\omega})A(e^{-i\omega})$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/bk4a"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	</inlineequation> sia la migliore approssimazione di
+        <inlineequation>
+	  <alt role="tex">$F^*(\omega)$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/bk4"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	</inlineequation> per un dato <emphasis>k</emphasis>. Chiaramente, maggiore è
+	<emphasis>k</emphasis>, migliore è l'approssimazione, ma poiché occorre scartare
+	2<emphasis>k</emphasis> osservazioni, di solito si cerca un compromesso.
+        Inoltre, il filtro ha altre proprietà teoriche interessanti, tra cui quella
+        che <emphasis>A</emphasis>(1) = 0, quindi una serie con una sola radice unitaria
+        è resa stazionaria con l'applicazione del filtro.</para>
+
+      <para>In pratica, il filtro è usato di solito con dati mensili o trimestrali per
+        estrarne la componente di <quote>ciclo economico</quote>, ossia la componente
+        tra 6 e 36 trimestri. I valori usuali per <emphasis>k</emphasis> sono 8 o 12
+        (o forse di più per serie mensili).
+      </para>
+
+      <para>I valori predefiniti per i limiti di frequenza sono 8 e 32, mentre il valore
+        predefinito per l'ordine di approssimazione, <emphasis>k</emphasis>, è 8.
+        È possibile impostare questi valori usando il comando <xref linkend="cmd-set"/>.
+        La parola chiave per impostare i limiti di frequenza è <literal>bkbp_limits</literal>,
+        mentre quella per <emphasis>k</emphasis> è <literal>bkbp_k</literal>.
+	Quindi ad esempio, se si stanno usando dati mensili e si vuole impostare i
+        limiti di frequenza tra 18 e 96, e <emphasis>k</emphasis> a 24, si può eseguire</para>
+
+      <programlisting>
+	set bkbp_limits 18 96
+	set bkbp_k 24</programlisting>
+
+      <para>Questi valori resteranno in vigore per le chiamate alla funzione
+	<literal>bkfilt</literal> finché non saranno modificati da un altro uso di
+	<literal>set</literal>. 
+      </para>
+
+    </sect2>
+
+  </sect1>
+
+  <sect1 id="genr-resample"><title>Ricampionamento e bootstrapping</title>
+
+    <para>Un'altra funzione particolare è il ricampionamento, con reimmissione, di
+      una serie. Da scrivere.
+    </para>
+
+  </sect1>
+
+  <sect1 id="genr-missing"><title>Gestione dei valori mancanti</title>
+
+    <para>Sono disponibili quattro funzioni speciali per gestire i valori mancanti.
+      La funzione booleana <literal>missing()</literal> richiede come unico argomento
+      il nome di una variabile e produce una serie con valore 1 per ogni osservazione
+      in cui la variabile indicata ha un valore mancante, 0 altrove (ossia dove
+      la variabile indicata ha un valore valido). La funzione <literal>ok()</literal>
+      è il complemento di <literal>missing</literal>, ossia una scorciatoia per
+      <literal>!missing</literal> (dove <literal>!</literal> è l'operatore booleano
+      NOT).
+    </para>
+
+    <para>Ad esempio, è possibile contare i valori mancanti della variabile
+      <literal>x</literal> usando</para>
+
+      <programlisting>
+      genr nmanc_x = sum(missing(x))</programlisting>
+
+    <para>La funzione <literal>zeromiss()</literal>, che richiede anch'essa come unico
+      argomento il nome di una serie, produce una serie in cui tutti i valori zero
+      sono trasformati in valori mancanti. Occorre usarla con attenzione (di solito
+      non bisogna confondere valori mancanti col valore zero), ma può essere utile
+      in alcuni casi: ad esempio, è possibile determinare la prima osservazione valida
+      di una variabile <literal>x</literal> usando</para>
+
+      <programlisting>
+      genr time
+      genr x0 = min(zeromiss(time * ok(x)))</programlisting>
+
+    <para>
+      La funzione <literal>misszero()</literal> compie l'operazione opposta di
+      <literal>zeromiss</literal>, ossia converte tutti i valori mancanti in zero.
+    </para>
+
+    <para>Può essere utile chiarire la propagazione dei valori mancanti all'interno
+      delle formule di <literal>genr</literal>. La regola generale è che nelle operazioni
+      aritmetiche che coinvolgono due variabili, se una delle variabili ha un valore
+      mancante in corrispondenza dell'osservazione <emphasis>t</emphasis>, anche la serie
+      risultante avrà un valore mancante in <emphasis>t</emphasis>. L'unica eccezione a
+      questa regola è la moltiplicazione per zero: zero moltiplicato per un valore
+      mancante produce sempre zero (visto che matematicamente il risultato è zero
+      a prescindere dal valore dell'altro fattore).
+    </para>
+
+  </sect1>
+
+  <sect1 id="genr-internal"><title>Recupero di variabili interne</title>
+    
+    <para>Il comando <literal>genr</literal> fornisce un modo per recuperare vari
+      valori calcolati dal programma nel corso della stima dei modelli o della
+      verifica di ipotesi. Le variabili che possono essere richiamate in questo modo
+      sono elencate nella voce <xref linkend="cmd-genr"/> della guida comandi; qui
+      ci occupiamo in particolare delle variabili speciali <literal>$test</literal>
+      e <literal>$pvalue</literal>.</para>
+
+    <para>Queste variabili contengono, rispettivamente, il valore dell'ultima
+      statistica test calcolata durante l'ultimo uso esplicito di un comando di
+      test e il p-value per quella statistica test. Se non è stato eseguito
+      alcun comando di test, le variabili contengono il codice di valore
+      mancante. I <quote>comandi espliciti di test</quote> che funzionano in
+      questo modo sono i seguenti:
+      <xref linkend="cmd-add"/> (test congiunto per la significatività di
+      variabili aggiunte a un modello);
+      <xref linkend="cmd-adf"/> (test di Dickey&ndash;Fuller aumentato, si veda
+      oltre);
+      <xref linkend="cmd-arch"/> (test per ARCH);
+      <xref linkend="cmd-chow"/> (test Chow per break strutturale);
+      <xref linkend="cmd-coeffsum"/> (test per la somma dei coefficienti
+      specificati);
+      <xref linkend="cmd-cusum"/> (la statistica <emphasis>t</emphasis> di
+      Harvey&ndash;Collier);
+      <xref linkend="cmd-kpss"/> (il test di stazionarietà KPSS, p-value non
+      disponibile);
+      <xref linkend="cmd-lmtest"/> (si veda oltre);
+      <xref linkend="cmd-meantest"/> (test per la differenza delle medie);
+      <xref linkend="cmd-omit"/> (test congiunto per la significatività delle
+      variabili omesse da un modello);
+      <xref linkend="cmd-reset"/> (test RESET di Ramsey);
+      <xref linkend="cmd-restrict"/> (vincolo lineare generale);
+      <xref linkend="cmd-runs"/> (test delle successioni per la casualità); 
+      <xref linkend="cmd-testuhat"/> (test per la normalità dei residui) e
+      <xref linkend="cmd-vartest"/> (test per la differenza delle varianze).
+      Nella maggior parte dei casi, vengono salvati valori sia in
+      <literal>$test</literal> che in <literal>$pvalue</literal>; l'eccezione è
+      il test KPSS, per cui non è disponibile il p-value.
+    </para>
+
+    <para>
+      Un punto da tenere in considerazione a questo proposito è che le variabili
+      interne <literal>$test</literal> e <literal>$pvalue</literal> vengono
+      sovrascritte ogni volta che viene eseguito uno dei test elencati sopra. Se
+      si intende referenziare questi valori durante una sequenza di comandi 
+      <application>gretl</application>, occorre farlo nel momento giusto.
+    </para>
+
+    <para>
+      Una questione correlata è che alcuni dei comandi di test generano di
+      solito più di una statistica test e più di un p-value: in questi casi
+      vengono salvati solo gli ultimi valori. Per controllare in modo preciso
+      quali valori vengono recuperati da <literal>$test</literal> e
+      <literal>$pvalue</literal> occorre formulare il comando di test in modo
+      che il risultato non sia ambiguo. Questa nota vale in particolare per i
+      comandi <literal>adf</literal> e <literal>lmtest</literal>.</para>
+
+    <itemizedlist>
+      <listitem>
+	<para>Di solito, il comando <xref linkend="cmd-adf"/> genera tre varianti
+          del test Dickey&ndash;Fuller: una basata su una regressione che
+          include una costante, una che include costante e trend lineare, e una
+          che include costante e trend quadratico. Se si intende estrarre valori
+          da <literal>$test</literal> o <literal>$pvalue</literal> dopo aver
+          usato questo comando, è possibile selezionare la variante per cui
+          verranno salvati i valori, usando una delle opzioni
+          <literal>--nc</literal>, <literal>--c</literal>,
+          <literal>--ct</literal> o <literal>--ctt</literal> con il comando
+	  <literal>adf</literal>.
+	</para>
+      </listitem>
+      <listitem>
+	<para>Di solito, il comando <xref linkend="cmd-lmtest"/> (che deve
+          seguire una regressione OLS) esegue vari test diagnostici sulla
+          regressione in questione. Per controllare cosa viene salvato in
+	  <literal>$test</literal> e <literal>$pvalue</literal> occorre limitare
+          il test usando una delle opzioni <literal>--logs</literal>,
+	  <literal>--autocorr</literal>, <literal>--squares</literal> o
+	  <literal>--white</literal>.
+	</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Un aiuto all'uso dei valori immagazzinati in <literal>$test</literal>
+      e <literal>$pvalue</literal> è dato dal fatto che il tipo di test a cui si
+      riferiscono questi valori viene scritto nell'etichetta descrittiva della
+      variabile generata. Per controllare di aver recuperato il valore corretto,
+      è possibile leggere l'etichetta con il comando <xref linkend="cmd-label"/>
+      (il cui unico argomento è il nome della variabile). La seguente sessione
+      interattiva illustra la procedura.
+    </para>
+
+    <programlisting>
+      ? adf 4 x1 --c
+
+      Test Dickey-Fuller aumentati, ordine 4, per x1
+      ampiezza campionaria 59
+      ipotesi nulla di radice unitaria: a = 1
+
+        test con costante
+        modello: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+        valore stimato di (a - 1): -0.216889
+        statistica test: t = -1.83491
+        p-value asintotico 0.3638
+
+      P-value basati su MacKinnon (JAE, 1996)
+      ? genr pv = $pvalue
+      Generato lo scalare pv (ID 13) = 0.363844
+      ? label pv    
+      pv=Dickey-Fuller pvalue (scalar)</programlisting>
+    
+
+  </sect1>
+
+  </chapter>
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+
