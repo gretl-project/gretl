@@ -285,7 +285,7 @@ double batch_pvalue (const char *str,
 {
     int i, df1 = 0, df2 = 0;
     char stat = 0;
-    double xx = NADBL, mean = 0, variance = 0, xval = 0;
+    double xx = NADBL, mean = 0, variance = 0, xval = 0, tmp;
     char cmd[7], df1str[9], df2str[9], fstr[9]; 
 
     for (;;) {
@@ -354,7 +354,9 @@ double batch_pvalue (const char *str,
     case '1':
     case 'z':
     case 'n':
-	xx = normal(xval);
+	tmp = xval;
+	if (xval < 0.0) tmp = -1.0 * xval;
+	xx = normal(tmp);
 	if (xx < 0) {
 	    pprintf(prn, _("\np-value calculation failed\n"));
 	    return -1;
@@ -383,6 +385,7 @@ double batch_pvalue (const char *str,
 	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
 		xx, 1.0 - xx);
 	return xx;
+
     case '3':
     case 'c':
     case 'x':
