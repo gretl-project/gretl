@@ -1496,28 +1496,23 @@ static int populate_notebook_filelists (windata_t *fdata,
 					int code)
 {
     int i, role = fdata->role;
-    int err, any_ok = 0;
 
     if (code == TEXTBOOK_DATA) {
 	for (i=RAMU_DATA; i<MAX_DATA; i++) {
-	    if (page_missing(i)) {
-		continue;
+	    if (!page_missing(i)) {
+		fdata->role = i;
+		fdata->listbox = pages[i];
+		populate_filelist(fdata);
 	    }
-	    fdata->role = i;
-	    fdata->listbox = pages[i];
-	    err = populate_filelist(fdata);
-	    if (!err) any_ok = 1;
 	}
     }
     else if (code == PS_FILES) {
 	for (i=RAMU_PS; i<MAX_PS; i++) {
-	    if (page_missing(i)) {
-		continue;
+	    if (!page_missing(i)) {
+		fdata->role = i;
+		fdata->listbox = pages[i - RAMU_PS];
+		populate_filelist(fdata);
 	    }
-	    fdata->role = i;
-	    fdata->listbox = pages[i - RAMU_PS];
-	    err = populate_filelist(fdata);
-	    if (!err) any_ok = 1;
 	}
     }
 
