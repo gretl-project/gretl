@@ -235,7 +235,7 @@ struct _PATHS {
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
 #endif
-    char dbhost_ip[16];
+    char dbhost[32];
     char pngfont[16];
     unsigned char status;
 };

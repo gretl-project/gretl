@@ -574,9 +574,9 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	strcpy(ppaths->x12adir, "c:\\userdata\\x12arima");
 
 	if (gui) {
-	    strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
 	} else {
-	    ppaths->dbhost_ip[0] = '\0';
+	    ppaths->dbhost[0] = '\0';
 	}
 	ppaths->currdir[0] = '\0';
 
@@ -633,9 +633,9 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
 
 	if (gui) {
-	    strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	    strcpy(ppaths->dbhost, "ricardo.ecn.wfu.edu");
 	} else {
-	    ppaths->dbhost_ip[0] = '\0';
+	    ppaths->dbhost[0] = '\0';
 	}
 
 	strcpy(ppaths->gnuplot, "gnuplot");

@@ -84,7 +84,7 @@ print "\"binbase\"; ValueData: \"{app}\\db\\\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"ratsbase\"; ValueData: \"f:\\\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"dbhost_ip\"; ValueData: \"152.17.150.2\"\n"; 
+print "\"dbhost\"; ValueData: \"ricardo.ecn.wfu.edu\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"dbproxy\"; ValueData: \"\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";

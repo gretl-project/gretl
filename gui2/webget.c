@@ -24,7 +24,7 @@
    libgretl.
 */
 
-/* #define WDEBUG */
+#undef WDEBUG
 
 #ifdef UPDATER
 # include "version.h"
@@ -70,7 +70,7 @@ extern int h_errno;
 #ifndef UPDATER
 extern int use_proxy; /* gui_utils.c */
 #else
-const char *dbhost_ip = "152.17.150.2";
+const char *dbhost = "ricardo.ecn.wfu.edu";
 static char dbproxy[21];
 static int use_proxy;
 #endif /* UPDATER */
@@ -354,6 +354,26 @@ int ws_startup (void)
 }
 
 #endif /* WIN32 */
+
+static int get_db_host_ip (char *h_ip, const char *h_name)
+{
+    struct hostent *h_ent;
+
+    h_ent = gethostbyname(h_name);
+    if (h_ent == NULL) {
+	*h_ip = '\0';
+	herror(NULL);
+	return 1;
+    }
+
+    sprintf(h_ip, "%d.%d.%d.%d", 
+	   (unsigned char) h_ent->h_addr[0], 
+	   (unsigned char) h_ent->h_addr[1], 
+	   (unsigned char) h_ent->h_addr[2],
+	   (unsigned char) h_ent->h_addr[3]);
+
+    return 0;
+}
 
 /* ........................................................... */
 
@@ -842,13 +862,8 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     } 
 
     if (proxy) {
-#ifdef UPDATER
-	path = mymalloc(strlen(dbhost_ip) + strlen(u->path) + 8);
-	sprintf(path, "http://%s%s", dbhost_ip, u->path);
-#else
-	path = mymalloc(strlen(paths.dbhost_ip) + strlen(u->path) + 8);
-	sprintf(path, "http://%s%s", paths.dbhost_ip, u->path);
-#endif
+	path = mymalloc(strlen(u->host) + strlen(u->path) + 8);
+	sprintf(path, "http://%s%s", u->host, u->path);
     } else {
 	path = u->path; 
     }
@@ -1463,12 +1478,14 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     u = newurl();
     u->proto = URLHTTP;
     u->port = DEFAULT_HTTP_PORT;
-    u->host = mymalloc(16);
+    u->host = mymalloc(20);
+
 #ifdef UPDATER
-    strcpy(u->host, dbhost_ip);
+    get_db_host_ip(u->host, dbhost);
 #else
-    strcpy(u->host, paths.dbhost_ip);
+    get_db_host_ip(u->host, paths.dbhost);
 #endif
+
     u->path = mymalloc(strlen(cgi) + 64);
 
     if (queryopt == QUERY_VERBOSE) {
@@ -1717,7 +1734,7 @@ int proxy_init (const char *dbproxy)
     }
 
     gretlproxy.port = atoi(p + 1);
-    gretlproxy.host = mymalloc(16);
+    gretlproxy.host = mymalloc(20);
 
     if (gretlproxy.host == NULL) return 1;
 
@@ -1775,13 +1792,15 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     u = newurl();
     u->proto = URLHTTP;
     u->port = DEFAULT_HTTP_PORT;
-    u->host = mymalloc(16);
+    u->host = mymalloc(20);
     u->path = mymalloc(strlen(cgi) + fnlen + 64);
+
 #ifdef UPDATER
-    strcpy(u->host, dbhost_ip);
+    get_db_host_ip(u->host, dbhost);
 #else
-    strcpy(u->host, paths.dbhost_ip);
+    get_db_host_ip(u->host, paths.dbhost);
 #endif
+
     sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
     u->saveopt = saveopt;
 

@@ -214,7 +214,7 @@ RCVARS rc_vars[] = {
      USERSET, MAXLEN, 2, NULL},
     {"ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
      USERSET, MAXLEN, 2, NULL},
-    {"dbhost_ip", N_("Database server IP"), NULL, paths.dbhost_ip, 
+    {"dbhost", N_("Database server name"), NULL, paths.dbhost, 
      USERSET, 16, 2, NULL},
     {"dbproxy", N_("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
      USERSET, 21, 2, NULL},
