@@ -35,8 +35,6 @@ struct search_replace {
     gchar *r_text;
 };
 
-/* .................................................................. */
-
 static void replace_string_callback (GtkWidget *widget, 
 				     struct search_replace *s)
 {
@@ -47,8 +45,6 @@ static void replace_string_callback (GtkWidget *widget,
     gtk_widget_destroy(s->w);
 }
 
-/* .................................................................. */
-
 static void trash_replace (GtkWidget *widget, 
 			   struct search_replace *s)
 {
@@ -56,8 +52,6 @@ static void trash_replace (GtkWidget *widget,
     s->r_text = NULL;
     gtk_widget_destroy(s->w);
 }
-
-/* .................................................................. */
 
 static void replace_string_dialog (struct search_replace *s)
 {
@@ -85,15 +79,10 @@ static void replace_string_dialog (struct search_replace *s)
     label = gtk_label_new(_("Replace with:"));
     gtk_widget_show (label);
     s->r_entry = gtk_entry_new();
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT (s->r_entry), 
-			"activate", 
-		       GTK_SIGNAL_FUNC (replace_string_callback), s);
-#else
     g_signal_connect(G_OBJECT (s->r_entry), 
 		     "activate", 
 		     G_CALLBACK (replace_string_callback), s);
-#endif
+
     gtk_widget_show (s->r_entry);
     gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
@@ -106,26 +95,16 @@ static void replace_string_dialog (struct search_replace *s)
 			    (GTK_DIALOG (s->w)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW (s->w), GTK_WIN_POS_MOUSE);
 
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(s->w), "destroy",
-		       gtk_main_quit, NULL);
-#else
     g_signal_connect(G_OBJECT(s->w), "destroy",
 		     gtk_main_quit, NULL);
-#endif
 
     /* replace button -- make this the default */
     button = gtk_button_new_with_label (_("Replace all"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT (button), "clicked",
-		       GTK_SIGNAL_FUNC (replace_string_callback), s);
-#else
     g_signal_connect(G_OBJECT (button), "clicked",
 		     G_CALLBACK (replace_string_callback), s);
-#endif
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
@@ -134,13 +113,8 @@ static void replace_string_dialog (struct search_replace *s)
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(trash_replace), s);
-#else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(trash_replace), s);
-#endif
 
     gtk_widget_show(button);
 
@@ -151,8 +125,6 @@ static void replace_string_dialog (struct search_replace *s)
 #endif
     gtk_main();
 }
-
-/* ........................................................... */
 
 #ifdef OLD_GTK
 
@@ -280,7 +252,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     g_free(buf);
 }
 
-#else
+#else /* not gtk-1.2 */
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 {
@@ -412,7 +384,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     g_free(buf);
 }
 
-#endif /* !OLD_GTK */
+#endif /* old versus new gtk */
 
 /* copying text from gretl windows */
 
@@ -658,7 +630,7 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
     }
 }
 
-/* printing from gretl windows */
+/* native printing from gretl windows */
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)
 
@@ -716,6 +688,9 @@ void system_print_buf (const gchar *buf, FILE *fp)
     }
 }
 
+/* convert a buffer to DOS/Windows text format, optionally
+   adding minimal RTF formatting */
+
 char *dosify_buffer (const char *buf, int format)
 {
     int extra = 0, nlines = 0;
@@ -726,7 +701,9 @@ char *dosify_buffer (const char *buf, int format)
 	"\\f0\\fs18\n";
     int rtf_add_bytes = strlen(rtf_preamble) + 4;
 
-    if (buf == NULL) return NULL;
+    if (buf == NULL || *buf == '\0') {
+	return NULL;
+    }
 
     p = buf;
     while (*p) {
@@ -740,7 +717,9 @@ char *dosify_buffer (const char *buf, int format)
     }
 
     targ = malloc(strlen(buf) + extra);
-    if (targ == NULL) return NULL;
+    if (targ == NULL) {
+	return NULL;
+    }
 
     if (format == COPY_TEXT_AS_RTF) {
 	strcpy(targ, rtf_preamble);

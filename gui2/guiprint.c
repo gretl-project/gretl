@@ -29,6 +29,10 @@
 #endif
 
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
+#define NATIVE_PRINTING
+#endif
+
+#ifdef NATIVE_PRINTING
 
 gchar *user_string (void)
 {
@@ -75,7 +79,7 @@ static char *header_string (void)
     return hdr;
 }
 
-#endif
+#endif /* NATIVE_PRINTING */
 
 /* Windows only: print using Windows spooler */
 
@@ -219,7 +223,7 @@ void winprint (char *fullbuf, char *selbuf)
     }
 }
 
-/* #define WGRDEBUG */
+#undef WGRDEBUG
 
 int winprint_graph (char *emfname)
 {

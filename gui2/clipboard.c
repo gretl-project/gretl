@@ -41,7 +41,7 @@ static int n_full = sizeof full_targets / sizeof full_targets[0];
 
 static void gretl_clipboard_set (int copycode);
 
-#define CLIPDEBUG
+#undef CLIPDEBUG
 
 static void gretl_clipboard_free (void)
 {
@@ -226,18 +226,7 @@ gretl_clipboard_get (GtkWidget *widget,
 
 static void gretl_clip_init (int copycode, GdkAtom clipatom)
 {
-    GtkTargetEntry *targs;
-    gint n_targs;
-
-    if (1 || copycode == COPY_RTF || copycode == COPY_TEXT_AS_RTF) {
-	targs = full_targets;
-	n_targs = n_full;
-    } else {
-	targs = basic_targets;
-	n_targs = n_basic;
-    }
-
-    gtk_selection_add_targets(mdata->w, clipatom, targs, n_targs);
+    gtk_selection_add_targets(mdata->w, clipatom, full_targets, n_full);
     gtk_signal_connect(GTK_OBJECT(mdata->w), "selection_get",
 		       GTK_SIGNAL_FUNC(gretl_clipboard_get), NULL); 
 }
@@ -260,6 +249,8 @@ static void gretl_clipboard_set (int copycode)
 
 int prn_to_clipboard (PRN *prn, int copycode)
 {
+    int err = 0;
+
     if (prn->buf == NULL || *prn->buf == '\0') {
 	return 0;
     }
@@ -269,36 +260,32 @@ int prn_to_clipboard (PRN *prn, int copycode)
     if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
 	/* need to convert from utf8 */
 	gchar *trbuf = my_locale_from_utf8(prn->buf);
-	
-	if (trbuf != NULL) {
-	    size_t len = strlen(trbuf);
 
-	    if (copycode == COPY_TEXT_AS_RTF) {
-		clipboard_buf = dosify_buffer(trbuf, copycode);
-	    } else {
-		clipboard_buf = mymalloc(len + 1);
-	    }
+	if (trbuf == NULL) {
+	    err = 1;
+	} else if (copycode == COPY_TEXT) {
+	    err = copy_to_clipboard_buf(trbuf);
+	    g_free(trbuf);
+	} else if (copycode == COPY_TEXT_AS_RTF) {
+	    clipboard_buf = dosify_buffer(trbuf, copycode);
 	    if (clipboard_buf == NULL) {
-		g_free(trbuf);
-		return 1;
-	    }
-	    if (copycode != COPY_TEXT_AS_RTF) {
-		memcpy(clipboard_buf, trbuf, len + 1);
+		err = 1;
 	    }
 	    g_free(trbuf);
 	}
-    } else { /* copying TeX, RTF or CSV */
-	if (copy_to_clipboard_buf(prn->buf)) {
-	    return 1;
-	}
+    } else { 
+	/* copying TeX, RTF or CSV */
+	err = copy_to_clipboard_buf(prn->buf);
     }
 
-    gretl_clipboard_set(copycode);
+    if (!err) {
+	gretl_clipboard_set(copycode);
+    }
 
-    return 0;
+    return err;
 }
 
-#else /* plain GTK, no NLS */
+#else /* plain GTK, no utf-8 */
 
 int prn_to_clipboard (PRN *prn, int copycode)
 {
