@@ -118,6 +118,16 @@ AC_ARG_WITH(gmake,
 )
 AC_SUBST(MAKE)
 
+AC_ARG_WITH(readline,
+[  --with-readline        Build with libreadline support [default=auto]],
+if test "x${withval}" = "xno"
+then
+  try_readline=no
+else
+  try_readline=yes
+fi,
+try_readline=yes)
+
 AC_ARG_WITH(gtk2,
 [  --with-gtk2            Build with gtk 2.0 support [default=auto]],
 if test "x${withval}" = "xno"
@@ -222,19 +232,21 @@ AC_TYPE_SIGNAL
 AC_C_BIGENDIAN 
 
 dnl
-dnl Check for libreadline for use withgretlcli
+dnl Check for libreadline for use with gretlcli
 dnl
-AC_CHECK_LIB(readline, readline,have_readline="yes" ; \
-  CLI_LIBS="-lreadline -lncurses" ; AC_DEFINE(HAVE_READLINE),,-lncurses)
-AC_SUBST(have_readline)
-AC_SUBST(CLI_LIBS)
-if test "$have_readline" = yes; then
-  RL_OBJ="complete.o"
+if test "$try_readline" = "yes" ; then
+   AC_CHECK_LIB(readline, readline,have_readline="yes" ; \
+     CLI_LIBS="-lreadline -lncurses" ; AC_DEFINE(HAVE_READLINE),,-lncurses)
+   AC_SUBST(have_readline)
+   AC_SUBST(CLI_LIBS)
+   if test "$have_readline" = yes; then
+     RL_OBJ="complete.o"
+   fi
+   AC_SUBST(RL_OBJ)
+   AC_CHECK_LIB(readline, rl_completion_matches,new_readline="yes" ; \
+     CLI_LIBS="-lreadline -lncurses" ; AC_DEFINE(NEW_READLINE),,-lncurses)
+   AC_SUBST(new_readline)
 fi
-AC_SUBST(RL_OBJ)
-AC_CHECK_LIB(readline, rl_completion_matches,new_readline="yes" ; \
-  CLI_LIBS="-lreadline -lncurses" ; AC_DEFINE(NEW_READLINE),,-lncurses)
-AC_SUBST(new_readline)
 
 dnl
 dnl See if we need to do anything special about "inet_addr"

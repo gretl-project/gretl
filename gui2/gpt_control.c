@@ -1498,19 +1498,20 @@ void start_editing_session_graph (const char *fname)
 #ifdef GNUPLOT_PNG
 
 /* Size of drawing area */
-#define WIDTH  640   /* try 576? */
-#define HEIGHT 480   /* try 432? */
+#define WIDTH  640   /* try 576? 608? */
+#define HEIGHT 480   /* try 432? 456? */
 
 #ifdef USE_GNOME
 extern void gnome_print_graph (const char *fname);
 #endif
 
-/* screen coordinates of actual plot area of gnuplot PNG graph */
-#define PLOTXMIN 52.0
-#define PLOTXMAX 620.0
-#define PLOTYMIN 32.0
-#define PLOTYMAX 446.0
-#define NOTITLE_YMIN 13.0
+/* rough screen coordinates of actual plot area of gnuplot PNG graph */
+#define PLOTXMIN 54.0     /* was 52 */
+#define PLOTXMAX 618.0    /* was 620 */
+#define PLOTYMIN 36.0     /* was 32 */
+#define PLOTYMAX 444.0    /* was 446 */
+#define NOTITLE_YMAX 464.0 /* new */
+#define NOTITLE_YMIN 24.0 /* was 13 */
 
 static void get_data_xy (png_plot_t *plot, int x, int y, 
 			 double *data_x, double *data_y)
@@ -1535,10 +1536,17 @@ static void get_data_xy (png_plot_t *plot, int x, int y,
     if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
 	*data_y = NADBL;
     } else {
+#if 1
 	int plotymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
 
 	*data_y = ymax - ((double) y - plotymin) / (PLOTYMAX - plotymin) *
 	    (ymax - ymin);
+#else
+	int plotymax = (plot->title)? PLOTYMAX : NOTITLE_YMAX;
+
+	*data_y = ymax - ((double) y - PLOTYMIN) / (plotymax - PLOTYMIN) *
+	    (ymax - ymin);
+#endif
     }
 }
 
@@ -2526,7 +2534,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
 	pprintf(prn, "set term emf mono dash\n");
     }
     pprintf(prn, "set output '%s'\n", emfname);
-    pprintf(prn, "set size 0.74,0.74\n");
+    pprintf(prn, "set size 0.85,0.85\n");
     while (fgets(plotline, MAXLEN-1, fq)) {
 	if (strncmp(plotline, "set term", 8) && 
 	    strncmp(plotline, "set output", 10))

@@ -459,7 +459,7 @@ void gnome_print_graph (const char *fname)
 
 static void printfrtf (double zz, PRN *prn, int endrow)
 {
-    /* was using "qr" for right alignment */
+    /* was using "qr", for right alignment */
 
     if (na(zz)) {
 	if (endrow) {
@@ -483,7 +483,7 @@ static void printfrtf (double zz, PRN *prn, int endrow)
                    "\\cellx8000\n"
 
 #define VAR_SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                   "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n"
+                      "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n"
 
 /* ............................................................. */
 
@@ -993,7 +993,7 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     pprintf(prn, " %s - %s (n = %d)\\par\n", date1, date2, fr->nobs);
 
     sprintf(tmp, I_("Standard error of residuals = %g"), 
-		    fr->sigma);
+	    fr->sigma);
     pprintf(prn, "\\qc %s\\par\n\\par\n", tmp);
 }
 
@@ -1042,10 +1042,10 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     }
 
     pputs(prn, "\\end{tabular}\n"
-	    "\\end{center}\n\n");
+	  "\\end{center}\n\n");
 
     if (anyast) pputs(prn, I_("\\textit{Note}: * denotes a residual "
-				"in excess of 2.5 standard errors\n\n"));
+			      "in excess of 2.5 standard errors\n\n"));
 }
 
 /* .................................................................. */
@@ -1081,7 +1081,7 @@ void rtfprint_fit_resid (const FITRESID *fr,
 	
 	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
-		    " \\intbl \\row\n"); 
+		  " \\intbl \\row\n"); 
 	} else {
 	    int ast;
 
@@ -1158,7 +1158,7 @@ void texprint_fcast_with_errs (const FITRESID *fr,
     }
 
     pputs(prn, "\\end{tabular}\n"
-	    "\\end{center}\n\n");
+	  "\\end{center}\n\n");
 }
 
 /* .................................................................. */

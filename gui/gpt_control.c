@@ -1649,8 +1649,8 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 {
     GtkWidget *menu, *color_menu, *item;    
     const char *regular_items[] = {
-        N_("Save as postscript (EPS)..."),
 	N_("Save as PNG..."),
+        N_("Save as postscript (EPS)..."),
 	N_("Save to session as icon"),
 	N_("Zoom..."), 
 #ifdef USE_GNOME

@@ -477,7 +477,7 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
 
     if (GRETL_GUI(ppaths)) {
 #ifdef OS_WIN32
-	fprintf(*fpp, "set term png color\n");
+	fputs("set term png color\n", *fpp);
 #else /* see if the png terminal wants the "color" parameter */
 	fprintf(*fpp, "set term png%s\n", (gp_png_wants_color())? " color" : "");
 #endif

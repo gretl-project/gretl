@@ -928,7 +928,8 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 /* ........................................................... */
 
-void check_varmenu_state (GtkList *list, gpointer p)
+void check_varmenu_state (GtkCList *list, gint i, gint j,
+			  GdkEventButton *event, gpointer p)
 {
     if (mdata->ifac != NULL) {
 	gint selcount = get_mdata_selection();
@@ -956,7 +957,7 @@ gint populate_main_varlist (void)
 	row[2] = datainfo->label[i];
 	gtk_clist_append(GTK_CLIST(mdata->listbox), row);
 	if (i % 2) {
-	    gtk_clist_set_background(GTK_LIST(mdata->listbox), i, &gray);
+	    gtk_clist_set_background(GTK_CLIST(mdata->listbox), i, &gray);
 	}
     }
 
@@ -972,9 +973,9 @@ gint populate_main_varlist (void)
 	(GTK_CLIST(mdata->listbox), mdata->active_var, 1);  
 
     if (!check_connected) {
-	gtk_signal_connect(GTK_CLIST(mdata->listbox),
-			   "selection-changed",
-			   main_popup, NULL);
+	gtk_signal_connect(GTK_OBJECT(GTK_CLIST(mdata->listbox)),
+			   "select-row",
+			   check_varmenu_state, NULL);
 	check_connected = 1;
     }
 
