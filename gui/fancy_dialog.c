@@ -434,6 +434,7 @@ void new_edit_dialog (const char *title, const char *oktxt,
         gtk_clist_append(GTK_CLIST(nd->indepvars), row);
     }
     gtk_clist_set_column_width (GTK_CLIST(nd->indepvars), 1, 80);
+    gtk_widget_set_usize (nd->indepvars, 80, 120);
     /* gtk_clist_set_column_visibility (GTK_CLIST(nd->indepvars), 0, FALSE); */
     gtk_widget_show(nd->indepvars); 
     gtk_container_add(GTK_CONTAINER(scroller), nd->indepvars);
