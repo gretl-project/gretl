@@ -43,10 +43,10 @@ mv ./src/x12a.mdl ./src/test.spc $DEST
 
 # patch the Makefile for Linux
 cat > $THISDIR/x12a_make.diff << EOF
---- src/Makefile.orig	Thu Nov 21 11:45:26 2002
-+++ src/Makefile	Thu Nov 21 11:45:03 2002
-@@ -1,12 +1,12 @@
- #
+--- src/Makefile.orig	Mon May  6 11:22:42 2002
++++ src/Makefile	Thu Dec  5 09:47:12 2002
+@@ -1,12 +1,11 @@
+-#
 -FC        = f77
 -LINKER    = f77
 -PROGRAM         = x12a
@@ -63,7 +63,7 @@ cat > $THISDIR/x12a_make.diff << EOF
  LDMAP     = 
  LIBS      =
  MAKEFILE  = Makefile
-@@ -208,11 +208,11 @@
+@@ -208,11 +207,11 @@
  \$(PROGRAM):     \$(OBJS) \$(LIBS)
  	\$(LINKER) -o \$@ \$(OBJS) \$(LDMAP) \$(LIBS) \$(LDFLAGS)
  
