@@ -107,7 +107,7 @@ void text_table_setup (windata_t *vwin)
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 {
     void *colptr = NULL, *nextcolor = NULL;
-    char *p, buf[MAXSTR];
+    char buf[MAXSTR];
     FILE *fp;
     int started = 0;
     int newhelp = 0;
@@ -117,42 +117,44 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 
     memset(buf, 0, sizeof buf);
 
-    if (role == GUI_HELP) {
+    if (role == GUI_HELP || role == GUI_HELP_ENGLISH) {
 	newhelp = new_style_gui_help(fp);
     }
 
     while (fgets(buf, sizeof buf, fp)) {
 
-	if (*buf == '@') continue;
+	if (help_role(role) && *buf == '@') continue;
 
-	p = buf;
 	nextcolor = NULL;
 
-	if (role == GUI_HELP && newhelp && *p == '#') {
+	if (newhelp && *buf == '#') {
+	    char *p;
+
 	    if (started) {
 		gtk_text_insert(GTK_TEXT(w), fixed_font, 
 				NULL, NULL, "\n", 1);
 	    } else {
 		started = 1;
 	    }
-	    p = strrchr(buf, '"');
-	    if (p) *p = ' ';
-	    p = strchr(buf, '"');
-	    if (p) p++;
-	    else p = buf;
-	    colptr = &red;
+	    p = quoted_help_string(buf);
+	    gtk_text_insert(GTK_TEXT(w), fixed_font, 
+			    &red, NULL, p, strlen(p));
+	    gtk_text_insert(GTK_TEXT(w), fixed_font, 
+			    NULL, NULL, "\n", 1);
+	    free(p);
+	    continue;
 	}
 
 	if (role == SCRIPT_OUT && ends_with_backslash(buf)) {
 	    nextcolor = &blue;
 	}	
 
-	if (*p == '?') {
+	if (*buf == '?') {
 	    colptr = (role == CONSOLE)? &red : &blue;
 	}
-	else if (*p == '#') {
+	else if (*buf == '#') {
 	    if (help_role(role)) {
-		*p = ' ';
+		*buf = ' ';
 		nextcolor = &red;
 	    } else {
 		colptr = &blue;
@@ -160,8 +162,8 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 	} 
 
 	gtk_text_insert(GTK_TEXT(w), fixed_font, 
-			colptr, NULL, p, 
-			strlen(p));
+			colptr, NULL, buf, 
+			strlen(buf));
 
 	colptr = nextcolor;
 	memset(buf, 0, sizeof buf);

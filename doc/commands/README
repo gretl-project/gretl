@@ -1,4 +1,7 @@
-What's here?
+This directory contains the mechanism for auto-generating the 
+gretl "online" helpfiles and the command reference section of the
+gretl manual, from an XML "database" of gretl commands,
+gretl_commands.xml.
 
 ----------
 
@@ -17,9 +20,7 @@ command reference.
 The DTD itself is basically done.  It could do maybe do with some
 fine-tuning in places.
 
-------------
-
-formatter.c makes a program called "formatter", which parses an XML
+xsltrans.c makes a program called "xsltrans", which parses an XML
 command listing such as skeleton.xml and uses XSL to transform the
 information.  The program is very short and uses libxml and  libxsl to
 do most of the work. This program outputs:
@@ -28,6 +29,8 @@ do most of the work. This program outputs:
   which is designed for inclusion in the full manual; and
 
 * gretlcli.hlp, the "online" scripts commands help file.
+
+* gretl.hlp, the "online" GUI help file.
 
 The progam uses the two XSL stylesheets, gretlman.xsl and
 gretltxt.xsl.  The text stylesheet leaves a certain amount of work

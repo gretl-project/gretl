@@ -40,10 +40,16 @@
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
 
+enum {
+    OUTPUT_BOTH,
+    OUTPUT_DOCBOOK,
+    OUTPUT_HLP
+};
+
 #define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
-int apply_xslt (xmlDocPtr doc)
+int apply_xslt (xmlDocPtr doc, int output)
 {
     xsltStylesheetPtr style;
     xmlDocPtr result;
@@ -57,67 +63,71 @@ int apply_xslt (xmlDocPtr doc)
 
     xmlIndentTreeOutput = 1;
 
-    /* make XML output */
-    style = xsltParseStylesheetFile("gretlman.xsl");
-    if (style == NULL) {
-	err = 1;
-    } else {
-	result = xsltApplyStylesheet(style, doc, null_params);
-	if (result == NULL) {
+    /* make DocBook XML output */
+    if (output == OUTPUT_BOTH || output == OUTPUT_DOCBOOK) {
+	style = xsltParseStylesheetFile("gretlman.xsl");
+	if (style == NULL) {
 	    err = 1;
 	} else {
-	    fp = fopen("cmdlist.xml", "w");
-	    if (fp == NULL) {
+	    result = xsltApplyStylesheet(style, doc, null_params);
+	    if (result == NULL) {
 		err = 1;
 	    } else {
-		xsltSaveResultToFile(fp, result, style);
-		fclose(fp);
-	    }
-	    xsltFreeStylesheet(style);
-	    xmlFreeDoc(result);
-	}	    
+		fp = fopen("cmdlist.xml", "w");
+		if (fp == NULL) {
+		    err = 1;
+		} else {
+		    xsltSaveResultToFile(fp, result, style);
+		    fclose(fp);
+		}
+		xsltFreeStylesheet(style);
+		xmlFreeDoc(result);
+	    }	    
+	}
     }
 
-    /* make plain text output */
-    style = xsltParseStylesheetFile("gretltxt.xsl");
-    if (style == NULL) {
-	err = 1;
-    } else {
-	/* cli version */
-	result = xsltApplyStylesheet(style, doc, null_params);
-	if (result == NULL) {
+    /* make plain text "hlp" output */
+    if (output == OUTPUT_BOTH || output == OUTPUT_HLP) {
+	style = xsltParseStylesheetFile("gretltxt.xsl");
+	if (style == NULL) {
 	    err = 1;
 	} else {
-	    fp = fopen("cmdlist.txt", "w");
-	    if (fp == NULL) {
+	    /* cli version */
+	    result = xsltApplyStylesheet(style, doc, null_params);
+	    if (result == NULL) {
 		err = 1;
 	    } else {
-		xsltSaveResultToFile(fp, result, style);
-		fclose(fp);
+		fp = fopen("cmdlist.txt", "w");
+		if (fp == NULL) {
+		    err = 1;
+		} else {
+		    xsltSaveResultToFile(fp, result, style);
+		    fclose(fp);
+		}
+		xmlFreeDoc(result);
 	    }
-	    xmlFreeDoc(result);
-	}
-	/* gui version */
-	result = xsltApplyStylesheet(style, doc, gui_params);
-	if (result == NULL) {
-	    err = 1;
-	} else {
-	    fp = fopen("guilist.txt", "w");
-	    if (fp == NULL) {
+	    /* gui version */
+	    result = xsltApplyStylesheet(style, doc, gui_params);
+	    if (result == NULL) {
 		err = 1;
 	    } else {
-		xsltSaveResultToFile(fp, result, style);
-		fclose(fp);
+		fp = fopen("guilist.txt", "w");
+		if (fp == NULL) {
+		    err = 1;
+		} else {
+		    xsltSaveResultToFile(fp, result, style);
+		    fclose(fp);
+		}
+		xmlFreeDoc(result);
 	    }
-	    xmlFreeDoc(result);
+	    xsltFreeStylesheet(style);
 	}
-	xsltFreeStylesheet(style);
     }
 
     return err;
 }
 
-int parse_commands_data (const char *fname) 
+int parse_commands_data (const char *fname, int output) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
@@ -147,7 +157,7 @@ int parse_commands_data (const char *fname)
 	goto bailout;
     }
 
-    apply_xslt(doc);
+    apply_xslt(doc, output);
 
  bailout:
 
@@ -160,17 +170,27 @@ int parse_commands_data (const char *fname)
 int main (int argc, char **argv)
 {
     const char *fname;
+    int output = OUTPUT_BOTH;
     int err;
 
-    if (argc != 2) {
-	fputs("Please give one parameter: the name of an XML file "
-	      "to parse\n", stderr);
+    if (argc < 2) {
+	fputs("Please give the name of an XML file to parse\n", stderr);
 	exit(EXIT_FAILURE);
     }
 
-    fname = argv[1];
+    if (argc == 3) {
+	fname = argv[2];
+	if (!strcmp(argv[1], "--docbook")) {
+	    output = OUTPUT_DOCBOOK;
+	}
+	else if (!strcmp(argv[1], "--hlp")) {
+	    output = OUTPUT_HLP;
+	}
+    } else {
+	fname = argv[1];
+    }
 
-    err = parse_commands_data(fname);
+    err = parse_commands_data(fname, output);
 
     return err;
 }

@@ -35,17 +35,17 @@ test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 # Generate docbook XML for the command-reference section of the 
 # full manual, cmdlist.xml
 docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
-	./xsltrans gretl_commands.xml && \
+	./xsltrans --docbook gretl_commands.xml && \
 	cp cmdlist.xml ../chapters/cmdlist.xml
 
 # Generate "online" help file, gretlcli.hlp and gretl.hlp
 hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
-	./xsltrans gretl_commands.xml && \
+	./xsltrans --hlp gretl_commands.xml && \
 	./reflow < cmdlist.txt > ../../share/gretlcli.hlp
 	./reflow < guilist.txt > ../../share/gretl.hlp
 
 docclean:
-	 rm -f skeleton.xml cmdlist.*
+	 rm -f skeleton.xml cmdlist.* guilist.txt
 
 clean: docclean
 	rm -f xsltrans skeleton reflow validate

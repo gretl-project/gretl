@@ -344,6 +344,7 @@ static int allocate_heads_info (struct help_head_t **heads, int nh,
 	(heads[i])->ntopics = 0;
     }
 
+    /* sentinel */
     heads[i] = NULL;
 
     return err;
@@ -355,22 +356,41 @@ static int add_topic_to_heading (struct help_head_t **heads, int i,
     int n, m = (heads[i])->ntopics;
 
     n = gretl_command_number(word);
-    if (n > 0) (heads[i])->topics[m] = n;
-    else (heads[i])->topics[m] = extra_command_number(word);
+
+    if (n > 0) {
+	(heads[i])->topics[m] = n;
+    } else {
+	(heads[i])->topics[m] = extra_command_number(word);
+    }
+
     (heads[i])->pos[m] = pos - 1;
     (heads[i])->ntopics += 1;
 
     return 0;
 }
 
+char *quoted_help_string (char *str)
+{
+    char *p, *q;
+
+    p = strchr(str, '"');
+    q = strrchr(str, '"');
+
+    if (p != NULL && q != NULL && q != p) {
+	*q = 0;
+	return g_strdup(p + 1);
+    }
+
+    return g_strdup("Missing string");
+}
+
 static int new_add_topic_to_heading (struct help_head_t **heads, 
 				     int nh, char *str, int pos)
 {
-    char word[12], section[16];
-    char *p;
+    char word[12], section[32];
     int n, m, nt;
 
-    if (sscanf(str + 1, "%11s %15s", word, section) != 2) {
+    if (sscanf(str + 1, "%11s %31s", word, section) != 2) {
 	return 1;
     }
 
@@ -384,14 +404,7 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
 	(heads[m])->topics[nt] = extra_command_number(word);
     }
 
-    p = strrchr(str, '"');
-    if (p) *p = 0;
-    p = strchr(str, '"');
-    if (p) {
-	(heads[m])->topicnames[nt] = g_strdup(p + 1);
-    } else {
-	(heads[m])->topicnames[nt] = g_strdup(word);
-    }
+    (heads[m])->topicnames[nt] = quoted_help_string(str);
 
     (heads[m])->pos[nt] = pos;
     (heads[m])->ntopics += 1;
@@ -517,7 +530,10 @@ static int real_helpfile_init (int cli)
 
     /* first pass: find length and number of topics */
     err = get_help_length(&heads, &nh, &length, newhelp, fp);
+
+#if 0
     fprintf(stderr, "got help length = %d, nh = %d\n", length, nh);
+#endif
 
     if (!err) {
 	err = allocate_heads_info(heads, nh, newhelp);

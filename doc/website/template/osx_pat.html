@@ -21,24 +21,30 @@ to use an X11 ("X Window system") version of GTK.</p>
 
 <h2>Basic prerequisites</h2>
 
-<p>The essential components for an installation of gretl on OS X with
-X11 are:</p>
+<p>My own experience with building gretl for OS X is based on the following
+setup:</p>
 
 <ol>
 
-<li><p class="in-list">The latest version of OS X (10.2.4 as of this writing).
+<li><p class="in-list">OS X "Jaguar" version 10.2.4.
    See <a href="http://www.apple.com/macosx/">http://www.apple.com/macosx/</a>.</p></li>
-<li><p class="in-list">The latest version of the Apple/XFree86 X11 implementation for the
-   Mac (currently "beta3"), available from 
+<li><p class="in-list">The Apple/XFree86 X11 implementation for the
+   Mac ("beta3"), which is or was available from 
    <a
-  href="http://www.apple.com/macosx/x11/download/">http://www.apple.com/macosx/x11/download/</a>.
-   Note that you will need the SDK files as well as the runtime ones.</p></li>
-<li><p class="in-list">The latest Fink distribution.  Fink provides basic unix and package
+  href="http://www.apple.com/macosx/x11/download/">http://www.apple.com/macosx/x11/download/</a>
+   (SDK files as well as the runtime ones).</p></li>
+<li><p class="in-list">Fink, which provides basic unix and package
    management functionality that is not provided by OS X or the Apple
    X11 distribution.  It is available from
    <a
   href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p></li>
 </ol>
+
+<p>With the release of OS X 10.3 "Panther", my information has become a little
+dated.  I don't have Panther to experiment on, so if you successfully build gretl on
+Panther please let me know if there are significant differences.  If anyone is
+willing to give me a temporary login, via ssh, to a machine running Panther, I'll
+to happy to do a test build and update these notes accordingly.</p>
 
 <h2>Required fink packages</h2>
   
