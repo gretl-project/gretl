@@ -152,7 +152,7 @@ print "\"toolbar\"; ValueData: \"true\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"Fixed_font\"; ValueData: \"Courier New 10\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"App_font\"; ValueData: \"tahoma 8\"\n";   
+print "\"App_font\"; ValueData: \"\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"Png_font\"; ValueData: \"verdana 8\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";

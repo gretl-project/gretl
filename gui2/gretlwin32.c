@@ -220,8 +220,9 @@ static void try_to_get_windows_font (void)
     gchar *fontspec;
 
     /* don't override user's choice of font */
-    if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0) 
-	return;
+    if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0) {
+	if (*regfont != '\0') return;
+    }
 
     fontspec = default_windows_menu_fontspec();
 

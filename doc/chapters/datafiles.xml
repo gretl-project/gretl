@@ -219,7 +219,6 @@
 
     </sect2>
 
-
     <sect2><title>Appending imported data</title>
 
       <para>You may wish to establish a
@@ -407,6 +406,197 @@
 
   </sect1>
 
+  <sect1 id="collections"><title>Data file collections</title>
+
+    <para>
+      If you're using <application>gretl</application> in a teaching
+      context you may be interested in adding a collection of data
+      files and/or scripts that relate specifically to your course, in
+      such a way that students can browse and access them
+      easily.</para>
+
+    <para>This is quite easy as of <application>gretl</application>
+      version 1.2.1.  There are three ways to access such collections of
+      files:</para>
+
+    <itemizedlist>
+      <listitem><para>For data files: select the menu item
+	  <quote>File, Open data, sample file</quote>, or click on the
+	  folder icon on the <application>gretl</application>
+	  toolbar.</para>
+      </listitem>
+      <listitem><para>For script files: select the menu item
+	  <quote>File, Open command file, practice
+	    file</quote>.</para>
+      </listitem>  
+    </itemizedlist>
+
+    <para>When a user selects one of the items:</para>
+
+    <itemizedlist>
+      <listitem><para>The data or script files included in the gretl
+	  distribution are automatically shown (this includes files
+	  relating to Ramanathan's <citetitle>Introductory
+	    Econometrics</citetitle> and Greene's
+	  <citetitle>Econometric Analysis</citetitle>).</para>
+      </listitem>
+      <listitem><para>The program looks for certain known collections
+	  of data files available as optional extras, namely the
+	  datafiles from the textbooks by Wooldridge and Gujarati, and
+	  the Penn World Table (PWT 5.6).  (See <ulink
+	    url="http://gretl.sourceforge.net/gretl_data.html">the
+	    data page</ulink> at the gretl website for information on
+	  these collections.)  If the additional files are found, they
+	  are added to the selection windows.</para>
+      </listitem>
+      <listitem><para>The program then searches for valid file
+	  collections (not necessarily known in advance) in these
+	  places: the <quote>system</quote> data directory, the system
+	  script directory, the user directory, and all first-level
+	  subdirectories of these.  (For reference, typical values for
+	  these directories are shown in <xref
+	  linkend="tab-colls"/>.)</para>
+      </listitem>
+    </itemizedlist>
+
+    <table id="tab-colls" frame="none">
+      <title>Typical locations for file collections</title>
+      <tgroup cols="3">
+        <thead>
+          <row>
+            <entry>&nbsp;</entry>
+            <entry>Linux</entry>
+            <entry>MS Windows</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>system data dir</entry>
+            <entry><filename>/usr/share/gretl/data</filename></entry>
+            <entry><filename>c:\userdata\gretl\data</filename></entry>
+          </row>
+          <row>
+            <entry>system script dir</entry>
+            <entry><filename>/usr/share/gretl/scripts</filename></entry>
+            <entry><filename>c:\userdata\gretl\scripts</filename></entry>
+          </row>
+          <row>
+            <entry>user dir</entry>
+            <entry><filename>/home/me/gretl</filename></entry>
+            <entry><filename>c:\userdata\gretl\user</filename></entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+
+    <para>Any valid collections will be added to the selection
+      windows. So what constitutes a valid file collection?  This
+      comprises either a set of data files in
+      <application>gretl</application> XML format (with the
+      <literal>.gdt</literal> suffix) or a set of script files
+      containing gretl commands (with <literal>.inp</literal> suffix),
+      in each case accompanied by a <quote>master file</quote> or
+      catalog.  The <application>gretl</application> distribution
+      contains several example catalog files, for instance the file
+      <filename>descriptions</filename> in the
+      <filename>misc</filename> sub-directory of the
+      <application>gretl</application> data directory and
+      <filename>ps_descriptions</filename> in the
+      <filename>misc</filename> sub-directory of the scripts
+      directory.
+    </para> 
+
+    <para>If you are adding your own collection, data catalogs should
+      be named <filename>descriptions</filename> and script catalogs
+      should be be named <filename>ps_descriptions</filename>.  In
+      each case the catalog should be placed (along with the
+      associated data or script files) in its own specific
+      sub-directory (e.g.
+      <filename>/usr/share/gretl/data/mydata</filename> or
+      <filename>c:\userdata\gretl\data\mydata</filename>).</para>
+
+    <para>The syntax of the (plain text) description files is
+      straightforward.  Here, for example, are the first few lines of
+      gretl's <quote>misc</quote> data catalog:</para>
+
+    <programlisting>
+      # Gretl: various illustrative datafiles
+      "arma","artificial data for ARMA script example"
+      "ects_nls","Nonlinear least squares example"
+      "hamilton","Prices and exchange rate, U.S. and Italy"</programlisting>
+
+    <para>
+      The first line, which must start with a hash mark, contains a
+      short name, here <quote>Gretl</quote>, which will appear as
+      the label for this collection's tab in the data browser window,
+      followed by a colon, followed by an optional short description
+      of the collection.</para>
+
+    <para>Subsequent lines contain two elements, separated by a comma
+      and wrapped in double quotation marks.  The first is a datafile
+      name (leave off the <literal>.gdt</literal> suffix here) and the
+      second is a short description of the content of that datafile.
+      There should be one such line for each datafile in the
+      collection.</para>
+
+    <para>A script catalog file looks very similar, except that there
+      are three fields in the file lines: a filename (without its
+      <literal>.inp</literal> suffix), a brief description of the
+      econometric point illustrated in the script, and a brief
+      indication of the nature of the data used.  Again, here are the
+      first few lines of the supplied <quote>misc</quote> script
+      catalog:</para>
+
+    <programlisting>
+      # Gretl: various sample scripts
+      "arma.inp","ARMA modeling","artificial data"
+      "ects_nls","Nonlinear least squares (Davidson)","artificial data"
+      "leverage","Influential observations","artificial data"
+      "longley","Multicollinearity","US employment"</programlisting>
+
+    <para>If you want to make your own data collection available to
+      users, these are the steps:</para>
+
+    <orderedlist>
+
+      <listitem><para>Assemble the data, in whatever format is
+	  convenient.</para>
+      </listitem>
+
+      <listitem><para>Convert the data to
+	  <application>gretl</application> format and save as
+	  <literal>gdt</literal> files.  It is probably easiest to
+	  convert the data by importing them into the program from
+	  plain text, CSV, or a spreadsheet format (MS Excel or
+	  Gnumeric) then saving them. You may wish to add descriptions
+	  of the individual variables (the <quote>Variable, Edit
+	    attributes</quote> menu item), and add information on the
+	  source of the data (the <quote>Data, Edit info</quote> menu
+	  item).</para>
+      </listitem>
+
+      <listitem><para>Write a descriptions file for the collection
+	  using a text editor.</para>
+      </listitem>
+
+      <listitem><para>Put the datafiles plus the descriptions file in
+	  a subdirectory of the <application>gretl</application> data
+	  directory (or user directory).</para>
+      </listitem>
+
+      <listitem><para>If the collection is to be distributed to other
+	  people, package the data files and catalog in some suitable
+	  manner, e.g. as a zipfile.</para>
+      </listitem>
+
+    </orderedlist>
+
+    <para>If you assemble such a collection, and the data are not
+      proprietary, I would encourage you to submit the collection for
+      packaging as a <application>gretl</application> optional
+      extra.</para> 
+
+  </sect1>
 
   </chapter>
 

@@ -108,102 +108,92 @@ static int get_maxiter (void)
 }
 
 static double update_fcast_errs (double *e, const double *y, 
-				 int y_offset,
 				 const double *coeff, 
-				 int n, int p, int q)
+				 const DATAINFO *ainfo,
+				 int p, int q)
 {
-    int i, k, t;
+    int i, t;
     double s2 = 0.0;
-    int SampleSize = 0;
-    int maxlag = (p>q) ? p : q;
+    const double *ar_coeff = coeff;
+    const double *ma_coeff = coeff + p;
 
-    for (t=0; t<n; t++) {
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
 
-	e[t] = y[t+y_offset] - coeff[0];
+	e[t] = y[t] - coeff[0];
 
 #ifdef ARMA_DEBUG
-	if (t < 3) {
-	    fprintf(stderr, "initializing e[%d] = %g - %g = %g\n", t, 
-		    y[t], coeff[0], e[t]);
+	if (t < ainfo->t1 + 3) {
+	    fprintf(stderr, "update_fcast_errs: initializing e[%d] = %g - %g = %g\n", 
+		    t, y[t], coeff[0], e[t]);
 	}
 #endif
 
-	/* problem: there's something funny happening with the
-	   initial values of e, if y has a mean substantially
-	   different from zero... */
+	for (i=1; i<=p; i++) {
+	    e[t] -= ar_coeff[i] * y[t-i];
+	}
 
-	for (i=0; i<p; i++) {
-	    k = t - (i + 1);
-	    if (k < 0) {
-		e[t] = 0.0; /* ... but this seems to help! */
-		continue;
+	for (i=1; i<=q; i++) {
+	    if (t - i >= ainfo->t1) {
+		e[t] -= ma_coeff[i] * e[t-i];
 	    }
-	    e[t] -= coeff[i+1] * y[k+y_offset];
 	}
 
-	for (i=0; i<q; i++) {
-	    k = t - (i + 1);
-	    if (k < 0) continue;
-	    e[t] -= coeff[i+p+1] * e[k];
+#ifdef ARMA_DEBUG
+	if (t < ainfo->t1 + 3) {
+	    fprintf(stderr, "update_fcast_errs: after processing: e[%d] = %g\n", 
+		    t, e[t]);
 	}
+#endif
 
-	if (t >= maxlag) {
-	    s2 += e[t] * e[t];
-	    SampleSize++;
-	}
+	s2 += e[t] * e[t];
     }
 
-    s2 /= (double) SampleSize;
+    s2 /= (double) (ainfo->t2 - ainfo->t1 + 1);
 
 #ifdef ARMA_DEBUG
     fprintf(stderr, "update_fcast_errs: SampleSize = %d, s2 = %g\n", 
-	    SampleSize, s2);
+	    ainfo->t2 - ainfo->t1 + 1, s2);
 #endif
 
     return s2;
 }
 
 static void update_error_partials (double *e, const double *y, 
-				   double **Z, const double *coeff,
-				   int n, int p, int q)
+				   double **Z, const double *ma_coeff,
+				   const DATAINFO *ainfo,
+				   int p, int q)
 {
     int t, col, i, t2;
 
-    for (t=0; t<n; t++) {
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
 
-	/* the constant term */
+	/* the constant term (de_c) */
 	col = 2;
 	Z[col][t] = -1.0;
-	for (i=0; i<q; i++) {
-	    if (t > i) {
-		Z[col][t] -= coeff[i+p+1] * Z[col][t-i-1];
-	    }
+	for (i=1; i<=q; i++) {
+	    Z[col][t] -= ma_coeff[i] * Z[col][t-i];
 	}
 
-	/* AR terms */
+	/* AR terms (de_a) */
 	if (p > 0) {
 	    for (col=3; col <= p+3; col++) {
 		if (t >= col-2) {
 		    Z[col][t] = -y[t-col+2];
-		    for (i=0; i<q; i++) {
-			if (t > i) {
-			    Z[col][t] -= coeff[i+p+1] * Z[col][t-i-1];
-			}
+		    for (i=1; i<=q; i++) {
+			Z[col][t] -= ma_coeff[i] * Z[col][t-i];
 		    }
 		}
 	    }
 	}
 
-	/* MA terms */
+	/* MA terms (de_m) */
 	if (q > 0) {
 	    for (col=p+3; col <= p+q+3; col++) {
 		t2 = col - p - 2;
 		if (t >= t2) {
 		    Z[col][t] = -e[t-t2];
-		    for (i=0; i<q; i++) {
-			if (t > i) {
-			    Z[col][t] -= coeff[i+p+1] * Z[col][t-i-1];
-			}
+		    for (i=1; i<=q; i++) {
+			Z[col][t] -= ma_coeff[i] * Z[col][t-i];
 		    }
 		}
 	    }
@@ -212,35 +202,30 @@ static void update_error_partials (double *e, const double *y,
 }
 
 static void update_ll_partials (double *e, double **Z, double s2,
-				int n, int p, int q)
+				const DATAINFO *ainfo, int p, int q)
 {
-    int i, j, t;
-    int maxlag = (p>q) ? p : q;
+    int i, t, col;
     int nc = p + q + 1;
 
-    for (i=0; i<nc; i++) {
-	j = 3 + p + q + i;
-	for (t=0; t<maxlag; t++) {
-	    Z[j][t] = NADBL; /* is there any way around this? */
-	}
-	for (t=maxlag; t<n; t++) {
-	    if (na(e[t])) continue;
-	    Z[j][t] = -Z[j-nc][t] * e[t] / s2;
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	double x = e[t] / s2;
+
+	for (i=0; i<nc; i++) {
+	    col = 3 + p + q + i;
+	    Z[col][t] = -Z[col-nc][t] * x;
 	}
     }
 }
 
-static double get_ll (const double *e, int n, int maxlag)
+static double get_ll (const double *e, const DATAINFO *ainfo)
 {
     int t;
     double ll = 0.0, s2;
-    int SampleSize = n - maxlag;
+    int SampleSize = ainfo->t2 - ainfo->t1 + 1;
     const double K = 1.41893853320467274178; /* ln(sqrt(2*pi)) + 0.5 */
 
-    for (t=maxlag; t<n; t++) {
-	if (!na(e[t])) {
-	    ll += e[t] * e[t];
-	}
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	ll += e[t] * e[t];
     }
 
     s2 = ll / SampleSize;
@@ -267,62 +252,41 @@ static cmplx *arma_roots (int p, int q, const double *coeff)
      */
 {
     int maxlag = (p>q) ? p : q;
-
-    double *temp, *temp2;
-    cmplx  *roots;
+    const double *ar_coeff = coeff;
+    const double *ma_coeff = coeff + p;
+    double *temp = NULL, *temp2 = NULL;
+    cmplx *roots = NULL;
     int j;
 
-    temp =  malloc((maxlag+1) * sizeof *temp);
+    temp  = malloc((maxlag+1) * sizeof *temp);
     temp2 = malloc((maxlag+1) * sizeof *temp2);
     roots = malloc((p + q) * sizeof *roots);
 
     if (temp == NULL || temp2 == NULL || roots == NULL) {
+	free(temp);
+	free(temp2);
+	free(roots);
 	return NULL;
     }
 
     temp[0] = 1.0;
 
     /* A(L) */
-    for (j=1; j<p+1; j++){
-	temp[j] = -coeff[j];
+    for (j=1; j<=p; j++){
+	temp[j] = -ar_coeff[j];
     }
-
     polrt(temp, temp2, p, roots);
 
     /* C(L) */
-    for (j=1; j<q+1; j++){
-	temp[j] = coeff[j+p];
+    for (j=1; j<=q; j++){
+	temp[j] = ma_coeff[j];
     }
-
     polrt(temp, temp2, q, roots + p);
 
     free(temp);
     free(temp2);
 
     return roots;
-}
-
-static int reallocate_hat_series (MODEL *pmod, int n)
-{
-    double *tmp;
-
-    tmp = realloc(pmod->uhat, n * sizeof *pmod->uhat);
-    if (tmp != NULL) {
-	pmod->uhat = tmp;
-    } else {
-	pmod->errcode = E_ALLOC;
-	return 1;
-    }
-
-    tmp = realloc(pmod->yhat, n * sizeof *pmod->yhat);
-    if (tmp != NULL) {
-	pmod->yhat = tmp;
-    } else {
-	pmod->errcode = E_ALLOC;
-	return 1;
-    }
-
-    return 0;
 }
 
 static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
@@ -332,8 +296,6 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 {
     int i, t;
     int p = list[1], q = list[2];
-    int realt1 = pmod->t1 + pdinfo->t1;
-    int realt2 = pmod->t2 + pdinfo->t1;
     double mean_error;
 
     pmod->ci = ARMA;
@@ -348,27 +310,15 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 
     copylist(&pmod->list, list);
 
-    pmod->ybar = _esl_mean(realt1, realt2, y);
-    pmod->sdy = _esl_stddev(realt1, realt2, y);
-
-    /* if model was estimated on a sub-sample, we need to expand the
-       residual and fitted series (which are always full-length) */
-    if (pdinfo->t1 + (pdinfo->n - 1 - pdinfo->t2) > 0) {
-	if (reallocate_hat_series(pmod, pdinfo->n)) {
-	    return;
-	}
-    }
+    pmod->ybar = _esl_mean(pmod->t1, pmod->t2, y);
+    pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, y);
 
     mean_error = pmod->ess = 0.0;
-    for (t=0; t<pdinfo->n; t++) {
-	if (t < realt1 || t > realt2) {
-	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
-	} else {
-	    pmod->uhat[t] = e[t - realt1];
-	    pmod->yhat[t] = y[t] - pmod->uhat[t];
-	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-	    mean_error += pmod->uhat[t];
-	}
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->uhat[t] = e[t];
+	pmod->yhat[t] = y[t] - pmod->uhat[t];
+	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+	mean_error += pmod->uhat[t];
     }
 
     mean_error /= pmod->nobs;
@@ -377,10 +327,8 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
     pmod->tss = 0.0;
-    for (t=realt1; t<=realt2; t++) {
-	if (!na(y[t])) {
-	    pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
-	}
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
     }
 
     if (pmod->tss > pmod->ess) {
@@ -400,10 +348,6 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
 	}
     }
-
-    /* get the model start/end dates in sync with the main dataset */
-    pmod->t1 = realt1;
-    pmod->t2 += pdinfo->t1;
 
     /* AIC, as per X-12-ARIMA */
     pmod->criterion[0] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
@@ -433,9 +377,10 @@ static int check_arma_list (const int *list)
    AR coefficients */
 
 static int ar_init_by_ols (int v, int p, double *coeff,
-			   const double **Z, const DATAINFO *pdinfo)
+			   const double **Z, const DATAINFO *pdinfo,
+			   int arma_t1)
 {
-    int an = pdinfo->t2 - pdinfo->t1 + 1;
+    int an = pdinfo->t2 - arma_t1 + 1;
     double **aZ = NULL;
     DATAINFO *ainfo = NULL;
     int *alist = NULL;
@@ -463,10 +408,9 @@ static int ar_init_by_ols (int v, int p, double *coeff,
     
     for (t=0; t<an; t++) {
 	for (i=0; i<=p; i++) {
-	    int k = t + pdinfo->t1 - i;
+	    int s = t + arma_t1 - i;
 
-	    if (k < 0) aZ[i+1][t] = NADBL;
-	    else aZ[i+1][t] = Z[v][k];
+	    aZ[i+1][t] = Z[v][s];
 	}
     }
 
@@ -504,10 +448,12 @@ static void make_tmp_varnames (DATAINFO *ainfo, int p, int q)
     strcpy(ainfo->varname[1], "e");
     strcpy(ainfo->varname[2], "de_c");
     strcpy(ainfo->varname[2+p+q+1], "dl_c");
+
     for (i=0; i<p; i++) {
 	sprintf(ainfo->varname[3+i], "de_a%d", i + 1);
 	sprintf(ainfo->varname[3+p+q+1+i], "dl_a%d", i + 1);
     }
+
     for (i=0; i<q; i++) {
 	sprintf(ainfo->varname[3+p+i], "de_m%d", i + 1);
 	sprintf(ainfo->varname[3+2*p+q+1+i], "dl_m%d", i + 1);
@@ -516,51 +462,53 @@ static void make_tmp_varnames (DATAINFO *ainfo, int p, int q)
 #endif
 
 static int adjust_sample (DATAINFO *pdinfo, const double *y,
-			  int p, int q, int v)
+                          int p, int q, int v,
+			  int *arma_t1, int *arma_t2)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int maxlag = (p>q)? p : q;
-    int t, n, t1min = 0;
+    int an, t, t1min = 0;
 
     for (t=0; t<=pdinfo->t2; t++) {
-	if (na(y[t])) t1min++;
-	else break;
+        if (na(y[t])) t1min++;
+        else break;
     }
 
     t1min += maxlag;
-
     if (t1 < t1min) t1 = t1min;
 
     for (t=pdinfo->t2; t>=t1; t--) {
-	if (na(y[t])) t2--;
-	else break;
+        if (na(y[t])) t2--;
+        else break;
     }
 
-    for (t=t1+1; t<t2; t++) {
-	if (na(y[t])) {
-	    char msg[64];
+    for (t=t1-p; t<t2; t++) {
+        if (na(y[t])) {
+            char msg[64];
 
-	    sprintf(msg, _("Missing value encountered for "
-			   "variable %d, obs %d"), v, t);
-	    return 0;
-	}
+            sprintf(msg, _("Missing value encountered for "
+                           "variable %d, obs %d"), v, t + 1);
+	    gretl_errmsg_set(msg);
+            return 1;
+        }
     }
 
-    pdinfo->t1 = t1;
-    pdinfo->t2 = t2;
+    an = t2 - t1 + 1;
+    if (an <= p + q + 1) return 1; 
 
-    n = pdinfo->t2 - pdinfo->t1 + 1;
+    *arma_t1 = t1;
+    *arma_t2 = t2;
 
-    return n;
+    return 0;
 }
 
 MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
 		  PRN *prn)
 {
-    int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
-    int an, nc, v, p, q, maxlag;
+    int nc, v, p, q, maxlag;
     int subiters, iters, itermax;
-    int i, t, arma_t1;
+    int arma_t1, arma_t2;
+    int i, t;
     double s2, tol, crit, ll = 0.0;
     double steplength, ll_prev = -1.0e+8;
     double *e, *coeff, *d_coef;
@@ -588,14 +536,10 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     maxlag = (p>q) ? p : q; /* maximum lag in the model */
 
     /* adjust sample? */
-    an = adjust_sample(pdinfo, y, p, q, v);
-    if (an <= p + q + 1) {
-	pdinfo->t1 = orig_t1;
-	pdinfo->t2 = orig_t2;
-	armod.errcode = E_DATA;
-	return armod;
+    if (adjust_sample(pdinfo, y, p, q, v, &arma_t1, &arma_t2)) {
+        armod.errcode = E_DATA;
+        return armod;
     }
-    arma_t1 = pdinfo->t1;
 
     /* number of coefficients */
     nc = 1 + p + q;
@@ -631,7 +575,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     /* temporary dataset: we need two series for each coefficient,
        plus one for the forecast errors and one for the const */
-    ainfo = create_new_dataset(&aZ, nc * 2 + 2, an, 0);
+    ainfo = create_new_dataset(&aZ, nc * 2 + 2, pdinfo->n, 0);
     if (ainfo == NULL) {
 	free(alist);
 	free(coeff);
@@ -639,14 +583,16 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	armod.errcode = E_ALLOC;
 	return armod;
     }
+    ainfo->t1 = arma_t1;
+    ainfo->t2 = arma_t2;
     ainfo->extra = 1; /* ? can't remember what this does */
 
     /* initialize the coefficients: AR part by OLS, MA at 0 */
-    ar_init_by_ols(v, p, coeff, Z, pdinfo);
+    ar_init_by_ols(v, p, coeff, Z, pdinfo, ainfo->t1);
     for (i=0; i<q; i++) coeff[i+p+1] = 0.0;
 
     /* initialize forecast errors and derivatives */
-    for (t=0; t<an; t++) {
+    for (t=0; t<ainfo->n; t++) {
 	for (i=1; i<ainfo->v; i++) {
 	    aZ[i][t] = 0.0;
 	}
@@ -666,10 +612,10 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     steplength = 0.125;
 
     /* generate one-step forecast errors */
-    s2 = update_fcast_errs(e, y, arma_t1, coeff, an, p, q);
+    s2 = update_fcast_errs(e, y, coeff, ainfo, p, q);
 
     /* calculate log-likelihood */
-    ll = get_ll(e, an, maxlag);
+    ll = get_ll(e, ainfo);
 
     while (crit > tol && iters++ < itermax && !isnan(ll)) {
 
@@ -682,10 +628,10 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 #endif
 
         /* partials of e wrt coeffs */
-	update_error_partials(e, y + arma_t1, aZ, coeff, an, p, q);
+	update_error_partials(e, y, aZ, coeff + p, ainfo, p, q);
 
 	/* partials of l wrt coeffs */
-	update_ll_partials(e, aZ, s2, an, p, q);
+	update_ll_partials(e, aZ, s2, ainfo, p, q);
 
 	/* OPG regression */
 	clear_model(&armod, NULL);
@@ -710,8 +656,8 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	}
 
 	/* compute log-likelihood at new point */
-	s2 = update_fcast_errs(e, y, arma_t1, coeff, an, p, q);
-	ll = get_ll(e, an, maxlag);
+	s2 = update_fcast_errs(e, y, coeff, ainfo, p, q);
+	ll = get_ll(e, ainfo);
 
 	/* subiterations for best steplength */
 	subiters = 0;
@@ -730,8 +676,8 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	    }
 
 	    /* compute loglikelihood again */
-	    s2 = update_fcast_errs(e, y, arma_t1, coeff, an, p, q);
-	    ll = get_ll(e, an, maxlag);
+	    s2 = update_fcast_errs(e, y, coeff, ainfo, p, q);
+	    ll = get_ll(e, ainfo);
 
 #ifdef ARMA_DEBUG
 	    fprintf(stderr, "arma sub-loop 2: "
@@ -807,9 +753,6 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     free_Z(aZ, ainfo);
     clear_datainfo(ainfo, CLEAR_FULL);
     free(ainfo);
-
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
 
     return armod;
 }

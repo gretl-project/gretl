@@ -637,7 +637,8 @@ static int check_arma_list (const int *list)
 
 MODEL arma_x12_model (int *list, const double **Z, 
 		      const DATAINFO *pdinfo, PRN *prn, 
-		      const char *prog, const char *workdir)
+		      const char *prog, const char *workdir,
+		      int gui)
 {
     int err = 0;
     int verbose = (prn != NULL);
@@ -706,7 +707,7 @@ MODEL arma_x12_model (int *list, const double **Z,
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, prn);
 	}
-	if (!armod.errcode) {
+	if (!armod.errcode && gui) {
 	    add_unique_output_file(&armod, path);
 	    gretl_model_set_int(&armod, "arma_by_x12a", 1);
 	}	

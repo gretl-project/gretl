@@ -3092,7 +3092,8 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
     MODEL armod;
     void *handle;
     MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, PRN *, 
-			     const char *, const char *);
+			     const char *, const char *, int);
+    int gui = GRETL_GUI(ppaths);
 
     *gretl_errmsg = '\0';
 
@@ -3104,7 +3105,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
     }
 
     armod = (*arma_x12_model) (list, Z, pdinfo, prn, ppaths->x12a, 
-			       ppaths->x12adir);
+			       ppaths->x12adir, gui);
 
     close_plugin(handle);
 
