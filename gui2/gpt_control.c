@@ -2821,6 +2821,10 @@ static void audio_render_plot (png_plot_t *plot)
     void *handle;
     int (*midi_play_graph) (const char *, const char *);
 
+    if (plot_not_editable(plot)) {
+	return;
+    }
+
     midi_play_graph = gui_get_plugin_function("midi_play_graph", 
 					      &handle);
     if (midi_play_graph == NULL) {
