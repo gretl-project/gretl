@@ -2047,7 +2047,7 @@ int validate_varname (const char *varname)
 
 static int prn_to_clipboard (PRN *prn, int copycode)
 {
-    return win_copy_text(prn, copycode);
+    return win_copy_buf(prn->buf, copycode);
 }
 
 #elif defined(ENABLE_NLS)

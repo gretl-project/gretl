@@ -1986,13 +1986,19 @@ int gnuplot_show_png (const char *plotfile)
 
 #ifdef G_OS_WIN32
 
+/* win32: copy plot to clipboard by generating an EMF file
+   (enhanced metafile), reading it into a buffer, and putting
+   it on the clipboard.
+*/
+
 static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
 {
     FILE *fq;
     PRN *prn;
     char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
     const char *emftmp = "gpttmp.emf";
-    int cmds;
+    gchar *emfbuf;
+    GError *error = NULL;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
 
@@ -2016,16 +2022,25 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
     if (system(plotcmd)) {
 	errbox(_("Gnuplot error creating graph"));
+	remove(plottmp);
+	return;
     }
 
-    /* emf file is written: now we have to grab it into memory and
-       place it on the clipboard */
-
+    /* delete the gnuplot command file that generated the EMF */
     remove(plottmp);
+
+    /* EMF file is written: now we grab it into memory */
+    g_file_get_contents (emftmp, &emfbuf, NULL, &error);
+
+    /* place the buffer on the clipboard */
+
+
+    /* clean up: delete the EMF on disk, and free the buffer that has
+       been copied to the clipboard */
+    remove(emftmp);
+    g_free(emfbuf);
 }
 
 #endif /* G_OS_WIN32 */
 
 #endif /* GNUPLOT_PNG */
-
-

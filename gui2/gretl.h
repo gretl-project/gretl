@@ -245,7 +245,8 @@ enum copy_variants {
     COPY_TEXT,
     COPY_LATEX,
     COPY_LATEX_EQUATION,
-    COPY_RTF
+    COPY_RTF,
+    COPY_EMF
 };
 
 enum data_status {

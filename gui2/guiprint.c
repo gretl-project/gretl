@@ -60,8 +60,8 @@ static char *dosify_buffer (const char *buf)
     return targ;
 }
 
-/* win32 only: copy text to clipboard for pasting into Word */
-int win_copy_text (PRN *prn, int format)
+/* win32 only: copy buffer to clipboard */
+int win_copy_buf (char *buf, int format)
 {
     HGLOBAL winclip;
     LPTSTR ptr;
@@ -70,7 +70,7 @@ int win_copy_text (PRN *prn, int format)
     size_t len;
     gchar *tr = NULL;
 
-    if (prn->buf == NULL) {
+    if (buf == NULL) {
 	errbox(_("Copy buffer was empty"));
 	return 0;
     }
@@ -82,13 +82,16 @@ int win_copy_text (PRN *prn, int format)
 
     EmptyClipboard();
 
-    if (nls_on && format == COPY_TEXT) {
+    if (format == COPY_EMF) {
+	winbuf = buf;
+    }	
+    else if (nls_on && format == COPY_TEXT) {
 	gsize bytes;
 
-	tr = g_locale_from_utf8 (prn->buf, -1, NULL, &bytes, NULL);
+	tr = g_locale_from_utf8 (buf, -1, NULL, &bytes, NULL);
 	winbuf = dosify_buffer(tr);
     } else {
-	winbuf = dosify_buffer(prn->buf);
+	winbuf = dosify_buffer(buf);
     }
 
     if (winbuf == NULL) {
@@ -96,7 +99,7 @@ int win_copy_text (PRN *prn, int format)
 	return 1;
     }
 
-    len = strlen(winbuf);
+    len = strlen(winbuf); /* FIXME EMF */
         
     winclip = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));        
 
@@ -106,6 +109,8 @@ int win_copy_text (PRN *prn, int format)
 
     if (format == COPY_RTF) { 
 	clip_format = RegisterClipboardFormat("Rich Text Format");
+    } else if (format == COPY_EMF) {
+	clip_format = CF_ENHMETAFILE;	
     } else {
 	clip_format = CF_TEXT;
     }
@@ -115,7 +120,9 @@ int win_copy_text (PRN *prn, int format)
     CloseClipboard();
 
     if (tr != NULL) free(tr);
-    free(winbuf);
+    if (winbuf != buf) {
+	free(winbuf);
+    }
 
     return 0;
 }
