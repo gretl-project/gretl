@@ -218,6 +218,11 @@ void nls_init (void)
     textdomain (PACKAGE); 
     /* arrange that translations will not come out in utf8 */
     iso_gettext("@CLI_INIT");
+#if 1
+    putenv("LC_NUMERIC=");
+    setlocale(LC_NUMERIC, "");
+    reset_local_decpoint();
+#endif
 }
 #endif /* ENABLE_NLS */
 

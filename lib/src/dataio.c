@@ -50,18 +50,6 @@ static char ENDCOMMENT[3] = "*)";
 
 #define PROGRESS_BAR "progress_bar"
 
-static double atod (char *s, const DATAINFO *pdinfo)
-{
-    static int local_decpoint;
-
-    if (local_decpoint == 0) local_decpoint = get_local_decpoint();
-
-    if (local_decpoint != pdinfo->decpoint) {
-	charsub(s, pdinfo->decpoint, local_decpoint);
-    }
-    return atof(s);
-}
-
 /**
  * free_Z:
  * @Z: data matrix.
@@ -858,12 +846,11 @@ int dateton (const char *date, const DATAINFO *pdinfo)
  */
 
 char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
-/* print to datestr the calendar representation of t */
 {
     double x;
     static int decpoint;
 
-    if (decpoint == 0) decpoint = get_local_decpoint();
+    decpoint = get_local_decpoint();
 
     if (dated_daily_data(pdinfo)) {
 	daily_date_string(datestr, t, pdinfo);
@@ -3465,7 +3452,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    double x;
 
 	    if (sscanf(obstr, "%lf", &x) != 1) err = 1;
-	    else pdinfo->sd0 = atod(obstr, pdinfo);
+	    else pdinfo->sd0 = dot_atof(obstr);
 	}
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse startobs"));

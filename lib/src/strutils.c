@@ -50,6 +50,29 @@ int string_is_blank (const char *s)
 }
 
 /**
+ * dot_atof:
+ * @s: the string to convert.
+ *
+ * Returns: the double-precision numeric interpretation of s,
+ * where the decimal point character is forced to be '.', 
+ * regardless of the current locale.
+ */
+
+double dot_atof (const char *s)
+{
+    double x;
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+    x = atof(s);
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif    
+    return x;
+}
+
+/**
  * dotpos:
  * @str: the string to examine.
  *
@@ -205,15 +228,24 @@ int _isnumber (const char *str)
 {
     char *test;
     extern int errno;
+    int ret = 1;
 
     errno = 0;
-    strtod(str, &test);
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    strtod(str, &test);
     if (*test != '\0' || !strcmp(str, test) || errno == ERANGE) {
-	return 0;
+	ret = 0;
     }
 
-    return 1;
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    return ret;
 }
 
 /**

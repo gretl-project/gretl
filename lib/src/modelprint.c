@@ -64,9 +64,9 @@ static void noconst (PRN *prn)
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
-	pprintf(prn, "  %s = %#.*g\n", _("Mean of dependent variable"), 
+	pprintf(prn, "  %s = %.*g\n", _("Mean of dependent variable"), 
 		GRETL_DIGITS, pmod->ybar);
-	pprintf(prn, "  %s = %#.*g\n", _("Standard deviation of dep. var."), 
+	pprintf(prn, "  %s = %.*g\n", _("Standard deviation of dep. var."), 
 		GRETL_DIGITS, pmod->sdy);
     }
     
@@ -102,9 +102,9 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	    return 1;
 	}
 
-	pprintf(prn, "  %s = %#.*g\n", _("Sum of squared residuals"), 
+	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
 		GRETL_DIGITS, wt? pmod->ess_wt : pmod->ess);
-	pprintf(prn, "  %s = %#.*g\n", _("Standard error of residuals"), 
+	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
 		GRETL_DIGITS, wt? pmod->sigma_wt : pmod->sigma);
 	return 0;
     }
@@ -145,10 +145,10 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 static void rsqline (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {  
-	pprintf(prn, "  %s = %#.*g\n", _("Unadjusted R-squared"), 
+	pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
 		GRETL_DIGITS, pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
-	    pprintf(prn, "  %s = %#.*g\n", _("Adjusted R-squared"),  
+	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
 		    GRETL_DIGITS, pmod->adjrsq);
 	}
     }
@@ -191,11 +191,11 @@ static void ladstats (const MODEL *pmod, PRN *prn)
     }
     
     else {
-	pprintf(prn, "  %s = %#.*g\n", 
+	pprintf(prn, "  %s = %.*g\n", 
 		(utf)? _("Sum of absolute residuals") :
 		I_("Sum of absolute residuals"),
 		GRETL_DIGITS, pmod->rho);
-	pprintf(prn, "  %s = %#.*g\n", 
+	pprintf(prn, "  %s = %.*g\n", 
 		(utf)? _("Sum of squared residuals") :
 		I_("Sum of squared residuals"),
 		GRETL_DIGITS, pmod->ess);
@@ -258,7 +258,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	if (na(pmod->fstt)) {
 	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
 	} else {
-	    pprintf(prn, "  %s = %#.*g", tmp, GRETL_DIGITS, pmod->fstt);
+	    pprintf(prn, "  %s = %.*g", tmp, GRETL_DIGITS, pmod->fstt);
 	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     }
@@ -295,9 +295,9 @@ static void dwline (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	if (!na(pmod->dw)) {
-	    pprintf(prn, "  %s = %#.*g\n", _("Durbin-Watson statistic"), 
+	    pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
 		    GRETL_DIGITS, pmod->dw);
-	    pprintf(prn, "  %s = %#.*g\n", _("First-order autocorrelation coeff."), 
+	    pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
 		    GRETL_DIGITS, pmod->rho);
 	} 
     }
@@ -1451,7 +1451,7 @@ static void rtf_print_double (double xx, PRN *prn)
     char numstr[32];
 
     xx = screen_zero(xx);
-    sprintf(numstr, "%#.*g", GRETL_DIGITS, xx);
+    sprintf(numstr, "%.*g", GRETL_DIGITS, xx);
     gretl_fix_exponent(numstr);
     pprintf(prn, " \\qc %s\\cell", numstr);
 }
@@ -1618,9 +1618,9 @@ static void tex_float_str (double x, char *str)
 {
     if (x < 0.) {
 	strcpy(str, "$-$");
-	sprintf(str + 3, "%#.*g", GRETL_DIGITS, -x);
+	sprintf(str + 3, "%.*g", GRETL_DIGITS, -x);
     } else {
-	sprintf(str, "%#.*g", GRETL_DIGITS, x);
+	sprintf(str, "%.*g", GRETL_DIGITS, x);
     }
 }
 

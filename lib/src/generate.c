@@ -573,16 +573,20 @@ int genr_scalar_index (int opt, int put)
 
 static int gentoler (const char *s)
 {
-    if (_isnumber(s)) {
-	double x = atof(s);
+    int ret = 0;
+    double x;
 
+    if (_isnumber(s)) {
+	x = dot_atof(s);
 	set_nls_toler(x);
 	sprintf(gretl_msg, _("Set tolerance to %g"), x);
-	return 0;
+
     } else {
 	strcpy(gretl_errmsg, _("The setting for \"toler\" must be numeric"));
-	return 1;
+	ret = 1;
     }
+
+    return ret;
 }
 
 /**
@@ -606,16 +610,16 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	      MODEL *pmod, int oflag)
 {
     int nleft1, nleft2, nright1, nright2, vi, lv, ig, iw, nt; 
-    int v, ls, nv = pdinfo->v, lword, nv1, nvtmp = 0;
+    int v, ls, lword, nv1, type2, nvtmp = 0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
     char *indx1, *indx2, s[MAXLEN], sright[MAXLEN], sleft[MAXLEN];
     char sexpr[MAXLEN], snew[MAXLEN], word[16], s1[MAXLEN];
     char newvar[16], genrs[MAXLEN];
-    int type2;
     int err = 0;
     char op0, op1;
     register int i;
     double xx, *mstack = NULL, *mvec = NULL;
+    int nv = pdinfo->v;
     GENERATE genr;
 
     /* mstack cumulates value of expression
@@ -647,39 +651,41 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	err = dummy(pZ, pdinfo);
 	if (!err)
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
-	return err;
+	goto genr_return;
     }
-    if (strcmp(s, "paneldum") == 0) {
+    else if (strcmp(s, "paneldum") == 0) {
 	err = paneldum(pZ, pdinfo, oflag);
 	if (!err)
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
-	return err;
+	goto genr_return;
     }
-    if (strcmp(s, "index") == 0) { 
+    else if (strcmp(s, "index") == 0) { 
 	err = genrtime(pZ, pdinfo, &genr, 0);
 	if (!err) genr_msg(&genr, nv);
-	return err;
+	goto genr_return;
     }
-    if (strcmp(s, "time") == 0) {
+    else if (strcmp(s, "time") == 0) {
 	err = genrtime(pZ, pdinfo, &genr, 1);
 	if (!err) genr_msg(&genr, nv);
-	return err;
+	goto genr_return;
     }
-    if (strncmp(s, "toler=", 6) == 0) {
+    else if (strncmp(s, "toler=", 6) == 0) {
 	err = gentoler(s + 6);
-	return err;
+	goto genr_return;
     }
 
-    if ((genr.xvec = malloc(n * sizeof(double))) == NULL) 
-	return E_ALLOC;
+    if ((genr.xvec = malloc(n * sizeof(double))) == NULL) {
+	err = E_ALLOC;
+	goto genr_return;
+    }
 
     if ((mstack = malloc(n * sizeof(double))) == NULL) {
-	genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	return E_ALLOC; 
+	err = E_ALLOC;
+	goto genr_return;
     } 
     if ((mvec = malloc(n * sizeof(double))) == NULL) {
-	genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	return E_ALLOC; 
+	err = E_ALLOC;
+	goto genr_return;
     } 
 
     for (i=0; i<n; i++) {
@@ -695,27 +701,27 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     i = getword('=', s, newvar, oflag);
     if (i > 0) {
 	if (!strlen(newvar)) {
-	    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	    return E_NOVAR;
+	    err = E_NOVAR;
+	    goto genr_return;
 	}
 	_esl_trunc(newvar, 8);
 	if (!isalpha((unsigned char) newvar[0]) &&
 	    strncmp(newvar, "$nls", 4)) {
-	    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	    return E_NOTALPH;
+	    err = E_NOTALPH;
+	    goto genr_return;
 	}
 	v = varindex(pdinfo, newvar);
 	if (v == 0) { 
-	    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	    return E_CONST;
+	    err = E_CONST;
+	    goto genr_return;
 	}
 	if (haschar('=', s) == strlen(s) - 1) {
-	    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	    return E_EQN;
+	    err = E_EQN;
+	    goto genr_return;
 	}
     } else {
-	genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	return E_NOEQ;
+	err = E_NOEQ;
+	goto genr_return;
     }
 
     /* deal with leading (unary) minus */
@@ -728,8 +734,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     /* impose operator hierarchy -- needs more testing? */
     if (parenthesize(s)) { 
 	fprintf(stderr, "genr: parenthesize failed\n");
-	genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto genr_return;
     }
 #ifdef GENR_DEBUG
     fprintf(stderr, "after parenthesize: s='%s'\n", s);
@@ -749,8 +755,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	if (indx1 == NULL) { /* no left parenthesis */
 	    indx2 = strchr(s, ')');
 	    if (indx2 != NULL) {
-		genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		return E_UNBAL;
+		err = E_UNBAL;
+		goto genr_return;
 	    }
             getvar(s, s1, &op1);
 
@@ -764,30 +770,30 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 #endif 
 
 	    if (is_operator(op1) && strlen(s) == 0) {
-		genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		return E_SYNTAX;
+		err = E_SYNTAX;
+		goto genr_return;
 	    } 
 	    else if (op1 == '\0' || is_operator(op1)) {
 		err = getxvec(s1, genr.xvec, *pZ, pdinfo, pmod, &genr.scalar);
 		if (err == E_BADSTAT) {
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		    return E_BADSTAT;
+		    err = E_BADSTAT;
+		    goto genr_return;
 		}
 		if (err != 0) {
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		    return E_UNKVAR;
+		    err = E_UNKVAR;
+		    goto genr_return;
 		}
 	    } else {
-		genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		return E_BADOP;
+		err = E_BADOP;
+		goto genr_return;
             }
 #ifdef GENR_DEBUG
 	    fprintf(stderr, "scalar=%d, genr.xvec[1] = %f\n", 
 		    genr.scalar, genr.xvec[1]);
 #endif
             if (cstack(mstack, genr.xvec, op0, pdinfo, genr.scalar)) {
-		genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		return E_UNSPEC;
+		err = E_UNSPEC;
+		goto genr_return;
 	    }
             op0 = op1;
             if (strlen(s) == 0) {
@@ -805,7 +811,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
                 strcpy(genr.varname, newvar);
 		genr.varnum = v;
 		genr_msg(&genr, nv);
-		goto finish_genr;
+		goto genr_return;
             }
         } else { /* indx1 != NULL: left paren was found */
             nright1 = strlen(indx1);    /* no. of characters to right of ( */
@@ -816,8 +822,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
             strcpy(sright, indx1);         /* string to right of ( */
             indx2 = strchr(sright, ')');  /* point to first ) */
             if (indx2 == NULL) {
-		genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-                return E_UNBAL;
+                err = E_UNBAL;
+		goto genr_return;
             }
             nright2 = strlen(indx2);        /* no chars at end of string */
             nleft2 = nright1 - nright2 -1 ; /* no of character inside the (),
@@ -837,31 +843,31 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		/* there is an operator in front of (  */
                 nvtmp++;
                 if (nvtmp > MAXTERMS) {
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-                    return E_NEST;
+                    err = E_NEST;
+		    goto genr_return;   
                 }
                 nv1 = nv + nvtmp;
                 ig = evalexp(sexpr, 0, mvec, genr.xvec, 
 			     *pZ, pdinfo, pmod, &genr);
                 if (ig != 0) {
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		    return E_IGNONZERO;
+		    err = E_IGNONZERO;
+		    goto genr_return;  
                 }
 		/* create new temporary variable and var string here */
                 strcpy(sright, indx2);
 		ig = createvar(genr.xvec, snew, sleft, sright, 
 			       nv + nvtmp, pZ, pdinfo, genr.scalar);
 		if (ig != 0) {
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		    return E_UNSPEC; 
+		    err = E_UNSPEC; 
+		    goto genr_return; 
 		}
                 strcpy(s, snew);
             } else  {
 		/* there is a math function or lag/lead in form of ( */
                 nvtmp++;
                 if (nvtmp > MAXTERMS) {
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-                    return E_NEST;
+                    err = E_NEST;
+		    goto genr_return; 
                 }
                 nv1 = nv + nvtmp;
 
@@ -871,16 +877,16 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
 		case R_VARNAME:    
 		    if ( !(_isnumber(sexpr)))  {
-			genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			return E_NOTINTG;
+			err = E_NOTINTG;
+			goto genr_return; 
 		    }
 		    vi = varindex(pdinfo, word);
 		    if (!pdinfo->vector[vi]) {
 			sprintf(gretl_errmsg, _("Variable %s is a scalar; "
 						"can't do lags/leads"), 
 				pdinfo->varname[vi]);
-			genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			return 1;
+			err = 1;
+			goto genr_return; 
 		    } 
 		    genr.scalar = 0;
 		    get_lag(vi, -atoi(sexpr), mvec, *pZ, pdinfo);
@@ -894,28 +900,28 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 #endif  
 		    if (nt == T_RHO) {
 			if (!(_isnumber(sexpr))) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return; 
 			}
-			if (atof(sexpr) == 1 && (pmod->ci == CORC ||
+			if (dot_atof(sexpr) == 1 && (pmod->ci == CORC ||
 						 pmod->ci == HILU)) {
 			    for (i=t1; i<=t2; i++)
 				genr.xvec[i] = pmod->rho_in;
 			    break;
 			}
-			if (pmod->ci != AR && atof(sexpr) == 1) {
+			if (pmod->ci != AR && dot_atof(sexpr) == 1) {
 			    for (i=t1; i<=t2; i++)
 				genr.xvec[i] = pmod->rho;
 			    break;
 			}
 			if (pmod->arinfo == NULL || 
 			    pmod->arinfo->arlist == NULL || pmod->arinfo->rho == NULL) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			}
 			if (!(vi = ismatch(atoi(sexpr), pmod->arinfo->arlist))) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			}
 			for (i=0; i<n; i++) 
 			    genr.xvec[i] = pmod->arinfo->rho[vi];
@@ -934,8 +940,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    if (nt == T_COV) {
 			xx = genr_cov(sexpr, pZ, pdinfo);
 			if (na(xx)) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
@@ -944,8 +950,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    if (nt == T_CORR) {
 			xx = genr_corr(sexpr, pZ, pdinfo);
 			if (na(xx)) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
@@ -954,8 +960,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    if (nt == T_VCV) {
 			xx = genr_vcv(sexpr, pdinfo, pmod);
 			if (na(xx)) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
@@ -964,8 +970,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    if (nt == T_PVALUE) {
 			xx = batch_pvalue(sexpr, *pZ, pdinfo, NULL);
 			if (na(xx) || xx == -1.0) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
@@ -975,8 +981,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			genr.scalar = 0;
 			err = genr_mpow(sexpr, genr.xvec, *pZ, pdinfo);
 			if (err) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			}
 			break;
 		    }
@@ -985,24 +991,24 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			genr.scalar = 0;
 			err = genr_mlog(sexpr, genr.xvec, *pZ, pdinfo);
 			if (err) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			}
 			break;
 		    }
 #endif
 		    if (nt == T_COEFF || nt == T_STDERR) {
 			if (pmod == NULL || pmod->list == NULL) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			}
 			lv = _isnumber(sexpr)? atoi(sexpr) : 
 			    varindex(pdinfo, sexpr);
 			vi = ismatch(lv, pmod->list);
 			if (vi == 1) vi = 0;
 			if (!vi) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			}
 			if (nt == T_COEFF && pmod->coeff != NULL) { 
 			    for (i=0; i<n; i++) 
@@ -1014,36 +1020,35 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			    for (i=0; i<n; i++) 
 				genr.xvec[i] = pmod->sderr[vi-1];
 			} else {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_INVARG;
+			    err = E_INVARG;
+			    goto genr_return;
 			}
 			break;
 		    } else {
 			ig = evalexp(sexpr, nt, mvec, genr.xvec, 
 				     *pZ, pdinfo, pmod, &genr);
 			if (ig != 0) {  
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return E_IGNONZERO;
+			    err = E_IGNONZERO;
+			    goto genr_return;
 			}
 			for (i=t1; i<=t2; i++) mvec[i] = genr.xvec[i];
 			err = domath(genr.xvec, mvec, nt, pdinfo, &genr.scalar);
 			if (err != 0) {
-			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-			    return err;
+			    goto genr_return;
 			} 
 			break;
 		    }
 
 		case R_UNKNOWN: 
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		    return E_CASEU;
+		    err = E_CASEU;
+		    goto genr_return;
 
 		default:
 		    if (strlen(word) != 0) 
 			sprintf(gretl_errmsg, 
 				_("%s is not a variable or function"), word);
-		    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
-		    return E_UNSPEC;
+		    err = E_UNSPEC;
+		    goto genr_return;
 
                 }  /* end of switch on type2 */
 
@@ -1058,10 +1063,14 @@ int generate (double ***pZ, DATAINFO *pdinfo,
         }  /* end of if (indx1 == '\0') loop */
     }  /* end of while loop */
 
- finish_genr:
-    genrfree(pZ, pdinfo, NULL, mstack, mvec, nv);
-    err = add_new_var(pdinfo, pZ, &genr);
-    
+ genr_return:
+    if (err) {
+	genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
+    } else {
+	genrfree(pZ, pdinfo, NULL, mstack, mvec, nv);
+	err = add_new_var(pdinfo, pZ, &genr);
+    }
+
     return err;
 }
 
@@ -1748,7 +1757,7 @@ static int getxvec (char *s, double *xvec,
 	if (strcmp(s, "pi") == 0) {
 	    value = M_PI;
 	} else {
-	    value = atof(s);
+	    value = dot_atof(s);
 	}
 	for (t=0; t<n; t++) xvec[t] = value; 
 	break;
@@ -1810,7 +1819,7 @@ static int getxvec (char *s, double *xvec,
 		
 		for (t=0; t<n; t++) {
 		    ntodate(obsstr, t, pdinfo);
-		    xvec[t] = atof(obsstr);
+		    xvec[t] = dot_atof(obsstr);
 		}
 	    } else
 		for (t=0; t<n; t++) xvec[t] = (double) (t + 1);
@@ -2701,7 +2710,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 		}
 		rhot[p] = get_xvalue(nv, *pZ, pdinfo);
 	    } else {
-		rhot[p] = atof(parmbit);
+		rhot[p] = dot_atof(parmbit);
 	    }
 	    p++;
 	}
@@ -3064,7 +3073,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 		a[i] = (isconst[i])? (*pZ)[pv][0] : (double) pv;
 	    }
 	} else {
-	    a[i] = atof(parm);
+	    a[i] = dot_atof(parm);
 	    /*  fprintf(fp, "param[%d] is a constant = %f\n", i, a[i]); */ 
 	}
     }
@@ -3108,7 +3117,7 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
     char tmp[9];
 
     /* parse s */
-    if (isdigit((unsigned char) s[0])) m = atof(s);
+    if (isdigit((unsigned char) *s)) m = dot_atof(s);
     else {
 	v = varindex(pdinfo, s);
 	if (v == pdinfo->v) return E_UNKVAR; 
@@ -3147,7 +3156,7 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
 		    pdinfo->varname[nv], pdinfo->varname[v], 
 		    pdinfo->varname[lv]); 
 	else 
-	    sprintf(pdinfo->label[nv], "%s = %f * %s",
+	    sprintf(pdinfo->label[nv], "%s = %g * %s",
 		    pdinfo->varname[nv], m, pdinfo->varname[lv]); 
     }
 
