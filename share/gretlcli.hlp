@@ -1352,20 +1352,23 @@ within gretl.
 #
 sim
 @Dataset
-Usage:          sim stobs endobs y a0 a1 a2 ...
+Usage:          sim [ stobs endobs ] y a0 a1 a2 ...
 
-Simulates values for y for the periods stobs through endobs.  The variable y
-must have been defined earlier with appropriate initial values.  Also stobs
-and endobs must be consistent with the periodicity.  The formula used is
+Simulates values for y for the periods stobs through endobs, or for the
+current sample range if stobs and endobs are omitted.  The variable y must
+have been defined earlier with appropriate initial values.  The formula used
+is
 
      y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ...
 
-ai(t) may either be constants or variable names previously defined. 
+The ai(t) may be either numerical constants or variable names previously
+defined.  These terms may be prefixed with a minus sign.
 
 Examples:
 
-  sim 1979.2 1983.1 y 0 0.9  [generates y(t) = 0.9*y(t-1)]
-  sim 15 25 y 10 0.8 x       [generates y(t) = 10 + 0.8*y(t-1) + x(t)*y(t-2)]
+  sim 1979.2 1983.1 y 0 0.9  [ y(t) = 0.9*y(t-1) ]
+  sim 15 25 y 10 0.8 x       [ y(t) = 10 + 0.8*y(t-1) + x(t)*y(t-2) ]
+  sim y 0 0.8 -x             [ y(t) = 0.8*y(t-1) - x(t)*y(t-2) ]
 
 #
 smpl

@@ -1014,17 +1014,20 @@ sim
 @Dataset
 Put simulated values into a variable
 
-This command requires a starting observation, an ending observation, the name
-of a variable (already present in the data set) into which to put the values,
-and a list of autoregressive coefficients, which may be either numerical
-constants or names of variables.  For example, if you put into the simulation
+This command requires the name of a variable (already present in the data set)
+into which to put the values, and a list of autoregressive coefficients, which
+may be either numerical constants or names of variables.  Optionally, a
+starting and ending observation may be given before the variable name --
+otherwise the simulation is over the current sample range.
+
+For example, if you put into the simulation
 dialog
 
     1979.2 1983.1 y 0 0.9
 
 this will populate y, from 1979.2 to 1983.1, with values:
 
-    y(t) = 0 + 0.9 y(t-1)
+    y(t) = 0 + 0.9 * y(t-1)
 
 Similarly
 
@@ -1032,7 +1035,10 @@ Similarly
 
 will generate, from obs 15 to 25:
 
-    y(t) = 10 + 0.8 y(t-1) + x(t) y(t-2)
+    y(t) = 10 + 0.8 * y(t-1) + x(t) * y(t-2)
+
+The autoregressive coefficients may be prefixed with a minus sign, as in
+"y 10 0.8 -x", which generates y(t) = 10 + 0.8 * y(t-1) - x(t) * y(t-2).
 
 #
 sampling
