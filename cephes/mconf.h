@@ -66,6 +66,8 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 
 
 
+#include <math.h>
+
 #ifdef _WIN32
 # include "winconfig.h"
 #else
@@ -94,36 +96,20 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 #define ERANGE		34
 
 /* Complex numeral.  */
-typedef struct
-	{
-	double r;
-	double i;
-	} cmplx;
+typedef struct {
+    double r;
+    double i;
+} cmplx;
 
 #ifdef HAVE_LONG_DOUBLE
 /* Long double complex numeral.  */
-typedef struct
-	{
-	long double r;
-	long double i;
-	} cmplxl;
+typedef struct {
+    long double r;
+    long double i;
+} cmplxl;
 #endif
 
-
 /* Type of computer arithmetic */
-
-/* PDP-11, Pro350, VAX:
- */
-/* #define DEC 1 */
-
-/* Intel IEEE, low order words come first:
- */
-/* #define IBMPC 1 */
-
-/* Motorola IEEE, high order words come first
- * (Sun 680x0 workstation):
- */
-/* #define MIEEE 1 */
 
 /* UNKnown arithmetic, invokes coefficients given in
  * normal decimal format.  Beware of range boundary
@@ -133,22 +119,6 @@ typedef struct
  */
 #define UNK 1
 
-/* If you define UNK, then be sure to set BIGENDIAN properly. */
-#ifdef WORDS_BIGENDIAN
-#define BIGENDIAN 1
-/* #else */
-/* #define BIGENDIAN 0 */
-#endif
-
-/* Define this `volatile' if your compiler thinks
- * that floating point arithmetic obeys the associative
- * and distributive laws.  It will defeat some optimizations
- * (but probably not enough of them).
- *
- * #define VOLATILE volatile
- */
-#define VOLATILE
-
 /* Define to support tiny denormal numbers, else undefine. */
 #undef DENORMAL
 
@@ -157,27 +127,17 @@ typedef struct
 
 /* Define to ask for support of numbers that are Not-a-Number,
    else undefine.  This may automatically define INFINITIES in some files. */
-#ifndef _WIN32
-/* # define NANS 1 */
-#endif
+#undef NANS 
 
 /* Define to distinguish between -0.0 and +0.0.  */
-#define MINUSZERO 1
+#undef MINUSZERO 
 
-/* Define 1 for ANSI C atan2() function
-   See atan.c and clog.c. */
-#define ANSIC 1
-
-/* Get ANSI function prototypes, if you want them. */
-#if 1
-/* #ifdef __STDC__ */
-#define ANSIPROT 1
-int mtherr ( char *, int );
-#else
-int mtherr();
-#endif
-
-/* Variable for error reporting.  See mtherr.c.  */
+/* Mechanism for error reporting.  See mtherr.c.  */
+int mtherr (char *, int);
 extern int merror;
+
+/* private functions */
+
+#include "cephes.h"
 
 #endif /* CEPHES_MCONF_H */

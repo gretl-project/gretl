@@ -115,72 +115,60 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 */
 
 #include "mconf.h"
-#ifdef ANSIPROT
-extern double incbet ( double, double, double );
-extern double incbi ( double, double, double );
-#else
-double incbet(), incbi();
-#endif
 
-double nbdtrc( k, n, p )
-int k, n;
-double p;
+double nbdtrc (int k, int n, double p)
 {
-double dk, dn;
+    double dk, dn;
 
-if( (p < 0.0) || (p > 1.0) )
+    if ((p < 0.0) || (p > 1.0)) {
 	goto domerr;
-if( k < 0 )
-	{
-domerr:
-	mtherr( "nbdtr", DOMAIN );
-	return( 0.0 );
-	}
+    }
 
-dk = k+1;
-dn = n;
-return( incbet( dk, dn, 1.0 - p ) );
+    if (k < 0) {
+    domerr:
+	mtherr("nbdtr", DOMAIN);
+	return 0.0;
+    }
+
+    dk = k+1;
+    dn = n;
+    return incbet(dk, dn, 1.0 - p);
 }
 
-
-
-double nbdtr( k, n, p )
-int k, n;
-double p;
+double nbdtr( int k, int n, double p )
 {
-double dk, dn;
+    double dk, dn;
 
-if( (p < 0.0) || (p > 1.0) )
+    if ((p < 0.0) || (p > 1.0))
 	goto domerr;
-if( k < 0 )
-	{
-domerr:
-	mtherr( "nbdtr", DOMAIN );
-	return( 0.0 );
-	}
-dk = k+1;
-dn = n;
-return( incbet( dn, dk, p ) );
+
+    if (k < 0) {
+    domerr:
+	mtherr("nbdtr", DOMAIN);
+	return 0.0;
+    }
+
+    dk = k+1;
+    dn = n;
+    return incbet(dn, dk, p);
 }
 
-
-
-double nbdtri( k, n, p )
-int k, n;
-double p;
+double nbdtri( int k, int n, double p )
 {
-double dk, dn, w;
+    double dk, dn, w;
 
-if( (p < 0.0) || (p > 1.0) )
+    if ((p < 0.0) || (p > 1.0))
 	goto domerr;
-if( k < 0 )
-	{
-domerr:
+
+    if (k < 0) {
+    domerr:
 	mtherr( "nbdtri", DOMAIN );
-	return( 0.0 );
-	}
-dk = k+1;
-dn = n;
-w = incbi( dn, dk, p );
-return( w );
+	return 0.0;
+    }
+
+    dk = k+1;
+    dn = n;
+    w = incbi(dn, dk, p);
+
+    return w;
 }

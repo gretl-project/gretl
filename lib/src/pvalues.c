@@ -122,11 +122,17 @@ double tprob (double x, int df)
 {
     if (df <= 0) {
 	return -1.0;
-    } else if (df >= 300) {
-	return 2.0 * (1.0 - ndtr(fabs(x)));
-    }
+    } else {
+#if 0
+	return fdist(x * x, 1, df);
+#else
+	double s = stdtr(df, fabs(x));
+	double ret = 2.0 * (1.0 - s);
 
-    return fdist(x * x, 1, df);
+	if (ret < 0.0) ret = 0.0;
+	return ret;
+#endif
+    }
 }
 
 /**
@@ -144,10 +150,15 @@ double fdist (double x, int dfn, int dfd)
 {
     double ret = 1.0;
 
-    if (dfn < 0 || dfd < 0) {
-	ret = -1.0;
+    if (dfn < 1 || dfd < 1) {
+        ret = -1.0;
     } else if (x > 0.0) {
-	ret = fdtrc(dfn, dfd, x);
+	if (0 && dfd > 300) {
+	    /* FIXME igamc underflow ?? */
+	    ret = chisq(x * dfn, dfn);
+	} else {
+	    ret = fdtrc(dfn, dfd, x);
+	}
     }
 
     return ret;
@@ -169,7 +180,7 @@ double chisq (double x, int df)
     if (df < 0) {
 	ret = -1.0;
     } else if (x > 0.0) {
-	ret = 1.0 - chdtr(df, x);
+	ret = chdtrc(df, x);
     }
 
     return ret;
@@ -632,40 +643,20 @@ static void getdf (const char *str)
 
 double f_crit_a (double a, int df1, int df2)
 {
-    double add = 0.5, x = 1.0;
-
-    if (fdist(x, df1, df2) < a) return NADBL;
-
-    while (add > 1.0e-7) {
-	while (fdist(x, df1, df2) > a) x += add; 
-	if (x > add) x -= add;
-	if (add == 0.5) {
-	    add /= 5.0;
-	} else {
-	    add /= 10.0;
-	}
+    if (df1 < 1 || df2 < 1 || a < 0.0) {
+	return NADBL;
+    } else {
+	return fdtri(df1, df2, a);
     }
-
-    return x;
 }
 
 static double chi_crit_a (double a, int df)
 {
-    double add = 0.5, x = 1.0;
-
-    if (chisq(x, df) < a) return NADBL;
-
-    while (add > 1.0e-7) {
-	while (chisq(x, df) > a) x += add; 
-	if (x > add) x -= add;
-	if (add == 0.5) {
-	    add /= 5.0;
-	} else {
-	    add /= 10.0;
-	}
+    if (df < 1 || a < 0.0) {
+	return NADBL;
+    } else {
+	return chdtri(df, a);
     }
-
-    return x;
 }
 
 /* ........................................................ */

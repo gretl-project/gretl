@@ -37,16 +37,6 @@ Copyright 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-#ifdef ANSIPROT
-extern double fabs (double);
-extern double floor (double);
-extern double exp (double);
-#else
-double fabs();
-double floor();
-double exp();
-#endif
-
 #ifdef DEC
 #define M 32.0
 #define MINV .03125
@@ -58,9 +48,7 @@ double exp();
 extern double MAXLOG;
 extern double INFINITY;
 
-double expx2 (x, sign)
-     double x;
-     int sign;
+double expx2 (double x, int sign)
 {
   double u, u1, m, f;
 

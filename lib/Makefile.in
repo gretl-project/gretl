@@ -105,7 +105,7 @@ SRCS = bhhh_max.c \
 	transforms.c \
 	var.c
 
-CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c drand.c expx2.c \
+CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c expx2.c \
 	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
 	   mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c polevl.c \
 	   stdtr.c unity.c 

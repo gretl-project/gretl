@@ -11,20 +11,6 @@
 
 #include "mconf.h"
 
-#ifdef ANSIPROT
-extern int isnan (double);
-extern int isfinite (double);
-extern double log ( double );
-extern double polevl ( double, void *, int );
-extern double p1evl ( double, void *, int );
-extern double exp ( double );
-extern double cos ( double );
-#else
-double log(), polevl(), p1evl(), exp(), cos();
-int isnan(), isfinite();
-#endif
-extern double INFINITY;
-
 /* log1p(x) = log(1 + x)  */
 
 /* Coefficients for log(1+x) = x - x**2/2 + x**3 P(x)/Q(x)
@@ -53,20 +39,18 @@ static double LQ[] = {
 #define SQRTH 0.70710678118654752440
 #define SQRT2 1.41421356237309504880
 
-double log1p(x)
-double x;
+double log1p (double x)
 {
-double z;
+    double z;
 
-z = 1.0 + x;
-if( (z < SQRTH) || (z > SQRT2) )
-	return( log(z) );
-z = x*x;
-z = -0.5 * z + x * ( z * polevl( x, LP, 6 ) / p1evl( x, LQ, 6 ) );
-return (x + z);
+    z = 1.0 + x;
+    if ((z < SQRTH) || (z > SQRT2)) {
+	return log(z);
+    }
+    z = x*x;
+    z = -0.5 * z + x * (z * polevl(x, LP, 6) / p1evl(x, LQ, 6));
+    return x + z;
 }
-
-
 
 /* expm1(x) = exp(x) - 1  */
 
@@ -86,30 +70,29 @@ static double EQ[4] = {
  2.0000000000000000000897E0,
 };
 
-double expm1(x)
-double x;
+double expm1 (double x)
 {
-double r, xx;
+    double r, xx;
 
 #ifdef NANS
-if( isnan(x) )
+    if (isnan(x))
 	return(x);
 #endif
 #ifdef INFINITIES
-if( x == INFINITY )
+    if (x == INFINITY)
 	return(INFINITY);
-if( x == -INFINITY )
+    if (x == -INFINITY)
 	return(-1.0);
 #endif
-if( (x < -0.5) || (x > 0.5) )
-	return( exp(x) - 1.0 );
-xx = x * x;
-r = x * polevl( xx, EP, 2 );
-r = r/( polevl( xx, EQ, 3 ) - r );
-return (r + r);
+    if ((x < -0.5) || (x > 0.5))
+	return exp(x) - 1.0;
+
+    xx = x * x;
+    r = x * polevl(xx, EP, 2);
+    r = r/(polevl(xx, EQ, 3) - r);
+
+    return r + r;
 }
-
-
 
 /* cosm1(x) = cos(x) - 1  */
 
@@ -123,16 +106,15 @@ static double coscof[7] = {
  4.1666666666666666609054E-2,
 };
 
-extern double PIO4;
-
-double cosm1(x)
-double x;
+double cosm1 (double x)
 {
-double xx;
+    double xx;
 
-if( (x < -PIO4) || (x > PIO4) )
-	return( cos(x) - 1.0 );
-xx = x * x;
-xx = -0.5*xx + xx * xx * polevl( xx, coscof, 6 );
-return xx;
+    if ((x < -PIO4) || (x > PIO4))
+	return cos(x) - 1.0;
+
+    xx = x * x;
+    xx = -0.5*xx + xx * xx * polevl(xx, coscof, 6);
+
+    return xx;
 }

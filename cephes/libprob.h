@@ -7,6 +7,12 @@
  */
 double chdtr (double v, double x);
 
+/* area under the right hand tail (from x to infinity)
+ * of the Chi square probability density function with
+ * v degrees of freedom.
+ */
+double chdtrc (double v, double x);
+
 /*
  * Finds the Chi-square argument x such that the integral
  * from x to infinity of the Chi-square density is equal

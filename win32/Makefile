@@ -202,7 +202,7 @@ GUIOBJ = $(GUISRC:.c=.o)
 EXTRASRC = gtkpsfont.c gtkplotpc.c gtkplotps.c
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
-PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
+PROBSRC = bdtr.c btdtr.c chdtr.c expx2.c fdtr.c gamma.c gdtr.c \
 	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
 	stdtr.c unity.c polevl.c const.c
 PROBOBJ = $(PROBSRC:.c=.o)

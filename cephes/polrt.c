@@ -46,23 +46,8 @@
 /* number of coefficients is m + 1 ( i.e., m is degree of polynomial) */
 
 #include "mconf.h"
-/*
-typedef struct
-	{
-	double r;
-	double i;
-	}cmplx;
-*/
-#ifdef ANSIPROT
-extern double fabs ( double );
-#else
-double fabs();
-#endif
 
-int polrt( xcof, cof, m, root )
-double xcof[], cof[];
-int m;
-cmplx root[];
+int polrt( double *xcof, double *cof, int m, cmplx *root )
 {
 register double *p, *q;
 int i, j, nsav, n, n1, n2, nroot, iter, retry;

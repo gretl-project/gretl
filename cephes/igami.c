@@ -50,21 +50,7 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-extern double MACHEP, MAXNUM, MAXLOG, MINLOG;
-#ifdef ANSIPROT
-extern double igamc ( double, double );
-extern double ndtri ( double );
-extern double exp ( double );
-extern double fabs ( double );
-extern double log ( double );
-extern double sqrt ( double );
-extern double lgam ( double );
-#else
-double igamc(), ndtri(), exp(), fabs(), log(), sqrt(), lgam();
-#endif
-
-double igami( a, y0 )
-double a, y0;
+double igami( double a, double y0 )
 {
 double x0, x1, x, yl, yh, y, d, lgm, dithresh;
 int i, dir;

@@ -147,19 +147,8 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 */
 
 #include "mconf.h"
-#ifdef ANSIPROT
-extern double incbet ( double, double, double );
-extern double incbi ( double, double, double );
-extern double pow ( double, double );
-extern double log1p ( double );
-extern double expm1 ( double );
-#else
-double incbet(), incbi(), pow(), log1p(), expm1();
-#endif
 
-double bdtrc( k, n, p )
-int k, n;
-double p;
+double bdtrc( int k, int n, double p )
 {
 double dk, dn;
 
@@ -193,11 +182,7 @@ else
 return( dk );
 }
 
-
-
-double bdtr( k, n, p )
-int k, n;
-double p;
+double bdtr( int k, int n, double p )
 {
 double dk, dn;
 
@@ -227,9 +212,7 @@ return( dk );
 }
 
 
-double bdtri( k, n, y )
-int k, n;
-double y;
+double bdtri( int k, int n, double y )
 {
 double dk, dn, p;
 

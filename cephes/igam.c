@@ -83,23 +83,11 @@ Copyright 1985, 1987, 2000 by Stephen L. Moshier
 */
 
 #include "mconf.h"
-#ifdef ANSIPROT
-extern double lgam ( double );
-extern double exp ( double );
-extern double log ( double );
-extern double fabs ( double );
-extern double igam ( double, double );
-extern double igamc ( double, double );
-#else
-double lgam(), exp(), log(), fabs(), igam(), igamc();
-#endif
 
-extern double MACHEP, MAXLOG;
 static double big = 4.503599627370496e15;
 static double biginv =  2.22044604925031308085e-16;
 
-double igamc( a, x )
-double a, x;
+double igamc(double  a, double x )
 {
 double ans, ax, c, yc, r, t, y, z;
 double pk, pkm1, pkm2, qk, qkm1, qkm2;
@@ -113,7 +101,9 @@ if( (x < 1.0) || (x < a) )
 ax = a * log(x) - x - lgam(a);
 if( ax < -MAXLOG )
 	{
+#if 0
 	mtherr( "igamc", UNDERFLOW );
+#endif
 	return( 0.0 );
 	}
 ax = exp(ax);
@@ -173,8 +163,7 @@ return( ans * ax );
  *
  */
 
-double igam( a, x )
-double a, x;
+double igam( double a, double x )
 {
 double ans, ax, c, r;
 

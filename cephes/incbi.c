@@ -46,21 +46,7 @@ Copyright 1984, 1996, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-extern double MACHEP, MAXNUM, MAXLOG, MINLOG;
-#ifdef ANSIPROT
-extern double ndtri ( double );
-extern double exp ( double );
-extern double fabs ( double );
-extern double log ( double );
-extern double sqrt ( double );
-extern double lgam ( double );
-extern double incbet ( double, double, double );
-#else
-double ndtri(), exp(), fabs(), log(), sqrt(), lgam(), incbet();
-#endif
-
-double incbi( aa, bb, yy0 )
-double aa, bb, yy0;
+double incbi( double aa, double bb, double yy0 )
 {
 double a, b, y0, d, y, x, x0, x1, lgm, yp, di, dithresh, yl, yh, xt;
 int i, rflg, dir, nflg;
