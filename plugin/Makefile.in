@@ -24,8 +24,8 @@ FLIB = @FLIB@
 HAVE_X12A = @HAVE_X12A@
 HAVE_TRAMO = @HAVE_TRAMO@
 HAVE_AUDIO = @HAVE_AUDIO@
-
-flite_prefix = @flite_prefix@
+FLITE_CFLAGS = @FLITE_CFLAGS@
+FLITE_LIBS = @FLITE_LIBS@
 
 ifeq ($(CC),)
   CC = gcc
@@ -77,9 +77,9 @@ endif
 
 ifeq ($(HAVE_AUDIO),1)
   PLUGINS += audio.la
-  AUDIO_CFLAGS = -I$(flite_prefix)/include
-  AUDIO_LIBS = -L$(flite_prefix)/lib -lflite_cmu_us_kal16 \
-     -lflite_usenglish -lflite_cmulex -lflite -lasound -lm
+  AUDIO_CFLAGS = $(FLITE_CFLAGS)
+  AUDIO_LIBS = $(FLITE_LIBS) -lflite_cmu_us_kal16 \
+     -lflite_usenglish -lflite_cmulex -lflite -lm
 endif  
 
 ifeq ($(LIBOLE2_LIBS),)

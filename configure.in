@@ -44,7 +44,6 @@ prefer_xml1="no"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
-flite_prefix=""
 have_gnu_regex="no"
 have_libxml2="no"
 use_gtksourceview="no"
@@ -220,11 +219,6 @@ then
 fi,
 have_audio=no)
 
-AC_ARG_WITH(flite-prefix,
-[  --with-flite-prefix   where to find the flite library and headers],
-flite_prefix=$withval
-AC_SUBST(flite_prefix))
-
 AC_PROG_CC
 
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -308,6 +302,11 @@ case $host_os in
   ;; 
 esac
 AM_PATH_LAPACK(, have_lapack="yes")
+
+dnl
+dnl Check for FLITE 
+dnl
+AM_PATH_FLITE(, have_flite="yes")
 
 dnl
 dnl Check for gnuplot, and its PNG capacity
