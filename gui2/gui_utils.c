@@ -1850,6 +1850,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	/* put the indep vars on the menu list */
 	for (j=varstart; j<=pmod->list[0]; j++) {
 	    if (pmod->list[j] == 0) continue;
+	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) 
+		continue;
 	    if (varitem.path == NULL)
 		varitem.path = mymalloc(64);
 	    varitem.accelerator = NULL;

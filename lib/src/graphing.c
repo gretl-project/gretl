@@ -824,6 +824,7 @@ int gnuplot (LIST list, const int *lines,
     if (tscale) { 
 	/* two or more vars plotted against time */
 	double ymin[6], ymax[6];
+	double ratio;
 	int oddcount;
 
 	/* find minima, maxima of the vars */
@@ -835,7 +836,8 @@ int gnuplot (LIST list, const int *lines,
 	    oddcount = 0;
 	    for (j=1; j<lo; j++) {
 		if (j == i) continue;
-		if (ymax[i] > 5*ymax[j] || ymax[j] > 5*ymax[i]) {
+		ratio = ymax[i] / ymax[j];
+		if (ratio > 5.0 || ratio < 0.2) {
 		    tscale = 1;
 		    oddcount++;
 		}

@@ -1,3 +1,8 @@
+version 1.0.8
+- Avoid duplication of "against time" in model graph menus, when 
+  time is included as a regressor
+
+
 04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey
   rather than Breusch-Pagan)

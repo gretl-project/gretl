@@ -624,6 +624,7 @@ static void parent_find (GtkWidget *finder, windata_t *caller)
 	gtk_window_set_transient_for(GTK_WINDOW(finder),
 				     GTK_WINDOW(caller->w));
     }
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(finder), TRUE);
 }
 
 /* .................................................................. */

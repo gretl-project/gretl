@@ -496,7 +496,6 @@ static void find_in_help (GtkWidget *widget, gpointer data)
 
 static void close_find_dialog (GtkWidget *widget, gpointer data)
 {
-    gtk_widget_destroy (widget);
     find_window = NULL;
 }
 
@@ -599,6 +598,29 @@ static void cancel_find (GtkWidget *widget, gpointer data)
 
 /* .................................................................. */
 
+static void parent_find (GtkWidget *finder, windata_t *caller)
+{
+    if (caller != mdata) {
+	GtkWidget *w = NULL;
+
+	if (caller->dialog != NULL) {
+	    w = caller->dialog;
+	} else if (caller->w != NULL) {
+	    w = caller->w;
+	}
+
+	if (w == NULL) return;
+
+	gtk_window_set_transient_for(GTK_WINDOW(finder),
+				     GTK_WINDOW(w));
+	gtk_signal_connect(GTK_OBJECT(w), "destroy",
+			   GTK_SIGNAL_FUNC(cancel_find),
+			   finder);
+    }
+}
+
+/* .................................................................. */
+
 static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
 				gpointer data)
 {
@@ -609,15 +631,18 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
 
     if (find_window) {
 	gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat); 
+	parent_find(find_window, mydat);
 	return;
     }
 
     find_window = gtk_dialog_new();
     gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat);
+    parent_find(find_window, mydat);
 
     gtk_signal_connect (GTK_OBJECT (find_window), "destroy",
 	                GTK_SIGNAL_FUNC (close_find_dialog),
 	                find_window);
+
     gtk_window_set_title (GTK_WINDOW (find_window), _("gretl: find"));
     gtk_container_border_width (GTK_CONTAINER (find_window), 5);
 
