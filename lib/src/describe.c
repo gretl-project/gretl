@@ -1383,7 +1383,7 @@ int vars_test (LIST list, double **Z, const DATAINFO *pdinfo,
 }
 
 int do_pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
-			 const DATAINFO *pdinfo, unsigned char oflag,
+			 DATAINFO *pdinfo, unsigned char oflag,
 			 PRN *prn)
 {
     gretl_matrix *m;
@@ -1411,6 +1411,7 @@ int do_pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 
     pputs(prn, "Principal Components Analysis\n\n");
     pputs(prn, "Eigenanalysis of the Correlation Matrix\n\n");
+
     pputs(prn, "Eigenvalue   ");
     x = 0.0;
     for (i=n-1; i>=0; i--) {
@@ -1418,11 +1419,13 @@ int do_pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 	x += evals[i];
     }
     pputs(prn, "\n");
+
     pputs(prn, "Proportion   ");
     for (i=n-1; i>=0; i--) {
 	pprintf(prn, "%10.3f", evals[i] / x);
     }
     pputs(prn, "\n");
+
     pputs(prn, "Cumulative   ");
     y = 0.0;
     for (i=n-1; i>=0; i--) {
@@ -1431,7 +1434,7 @@ int do_pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
     }
     pputs(prn, "\n\n");
 
-#if 0
+#ifdef PCA_DEBUG
     fprintf(stderr, "check: sum of evals = %g\n", x);
 #endif
 
@@ -1450,25 +1453,66 @@ int do_pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 	pputs(prn, "\n");
     }
 
-#ifdef NOTYET
-    /* this needs more thought */
     if (oflag) {
+	/* add components with eigenvalues > 1 to the dataset */
 	int v = pdinfo->v;
-	int err = dataset_add_vars(n, pZ, pdinfo);
+	int nc = 0, err = 0;
+	int *list;
+
+	for (i=0; i<n; i++) {
+	    if (evals[i] > 1.0) nc++;
+	}
+	list = malloc((nc + 1) * sizeof *list);
+	if (list == NULL) err = E_ALLOC;
 
 	if (!err) {
+	    list[0] = nc;
+	    j = 1;
 	    for (i=0; i<n; i++) {
-		sprintf(pdinfo->varname[v + i], "PC%d", i+1);
-		for (j=0; j<n && j<pdinfo->n; j++) {
-		    (*pZ)[v+i][j] = gretl_matrix_get(m, i, n-1-j);
-		}
-		for (j=n; j<pdinfo->n; j++) {
-		    (*pZ)[v+i][j] = NADBL;
-		}
+		if (evals[i] > 1.0) list[j++] = i;
 	    }
-	}
-    }
+#ifdef PCA_DEBUG
+	    printlist(list, "pclist");
 #endif
+	    err = dataset_add_vars(nc, pZ, pdinfo);
+	}
+
+	if (!err) {
+	    for (i=1; i<=list[0]; i++) {
+		int newv = v + i - 1;
+		int pcnum = list[i];
+		int t;
+
+		sprintf(pdinfo->varname[newv], "PC%d", i);
+		for (t=0; t<pdinfo->n; t++) {
+#ifdef PCA_DEBUG
+		    fprintf(stderr, "Obs %d\n", t);
+#endif
+		    (*pZ)[newv][t] = 0.0;
+		    for (j=0; j<n; j++) {
+			int oldv = corrmat->list[j+1];
+			double load = gretl_matrix_get(m, j, pcnum);
+			double val = (*pZ)[oldv][t];
+
+#ifdef PCA_DEBUG
+			fprintf(stderr, "j=%d,pcnum=%d,oldv=%d,load=%g,val=%g\n",
+				j,pcnum,oldv,load,val);
+#endif
+
+			if (na(val)) {
+			    (*pZ)[newv][t] = NADBL;
+			    break;
+			} else {
+			    (*pZ)[newv][t] += load * val;
+			}
+		    }
+		} /* end loop over observations */
+	    } /* end loop over components */
+	} /* end !err conditional */
+
+	free(list);
+
+    } /* end oflag conditional */
 
     free(evals);
     gretl_matrix_free(m);

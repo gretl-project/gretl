@@ -80,5 +80,5 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 double gretl_median (const double *x, int n);
 
 int do_pca_from_corrmat (CORRMAT *corrmat, 
-			 double ***pZ, const DATAINFO *pdinfo,
+			 double ***pZ, DATAINFO *pdinfo,
 			 unsigned char oflag, PRN *prn);

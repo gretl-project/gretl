@@ -278,7 +278,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 		PRN *prn)
 {
     int i = 1, j, k = 0, m, ncoeffs;
-    char corrstring[25];
+    char corrstring[32];
 
     m = corrmat->list[0];
     ncoeffs = (m * (m + 1)) / 2;
@@ -296,10 +296,10 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 			    corrstring, _("undefined"));
 		
 		else if (corrmat->xpx[k] < 0.) 
-		    pprintf(prn, "  %-24s = %.3f\n", corrstring, 
+		    pprintf(prn, "  %-24s = %.4f\n", corrstring, 
 			    corrmat->xpx[k]);
 		else 
-		    pprintf(prn, "  %-24s =  %.3f\n", corrstring, 
+		    pprintf(prn, "  %-24s =  %.4f\n", corrstring, 
 			    corrmat->xpx[k]);
 		k++;
 	    }
