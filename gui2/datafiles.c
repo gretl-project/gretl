@@ -24,6 +24,7 @@
 #include "gretl.h"
 #include "datafiles.h"
 #include "database.h"
+#include "filelists.h"
 #include "webget.h"
 
 #if !GLIB_CHECK_VERSION(2,0,0)

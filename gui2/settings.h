@@ -13,14 +13,6 @@ void write_rc (void);
 
 void dump_rc (void);
 
-void mkfilelist (int filetype, char *newfile);
-
-void init_fileptrs (void);
-
-void delete_from_filelist (int filetype, const char *fname);
-
-void add_files_to_menu (int filetype);
-
 void options_dialog (gpointer data);
 
 void font_selector (gpointer data, guint which, GtkWidget *widget);
@@ -38,8 +30,6 @@ const char *get_app_fontname (void);
 void gnuplot_color_selector (GtkWidget *w, gpointer p);
 
 GtkWidget *color_patch_button (int colnum);
-
-char *endbit (char *dest, char *src, int addscore);
 
 void get_default_dir (char *s);
 

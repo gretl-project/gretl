@@ -20,6 +20,7 @@
 /* settings.c for gretl */
 
 #include "gretl.h"
+#include "filelists.h"
 #include "webget.h"
 
 #include <unistd.h>
@@ -66,15 +67,6 @@ extern char tramodir[MAXSTR];
 #endif
 
 int use_proxy;
-
-/* filelist stuff */
-#define MAXRECENT 4
-
-static void printfilelist (int filetype, FILE *fp);
-
-static char datalist[MAXRECENT][MAXSTR], *datap[MAXRECENT];
-static char sessionlist[MAXRECENT][MAXSTR], *sessionp[MAXRECENT];
-static char scriptlist[MAXRECENT][MAXSTR], *scriptp[MAXRECENT];
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
@@ -163,82 +155,92 @@ typedef struct {
    controls the sensitivity of the "dbproxy" entry widget. */
 
 RCVARS rc_vars[] = {
-    {"gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
-     ROOTSET, MAXLEN, 1, NULL},
-    {"userdir", N_("User's gretl directory"), NULL, paths.userdir, 
-     USERSET, MAXLEN, 1, NULL},
-    {"expert", N_("Expert mode (no warnings)"), NULL, &expert, 
-     BOOLSET, 0, 1, NULL},
-    {"updater", N_("Tell me about gretl updates"), NULL, &updater, 
-     BOOLSET, 0, 1, NULL},
-    {"toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
-     BOOLSET, 0, 1, NULL},
+    { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
+      ROOTSET, MAXLEN, 1, NULL },
+    { "userdir", N_("User's gretl directory"), NULL, paths.userdir, 
+      USERSET, MAXLEN, 1, NULL },
+    { "expert", N_("Expert mode (no warnings)"), NULL, &expert, 
+      BOOLSET, 0, 1, NULL },
+    { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
+      BOOLSET, 0, 1, NULL },
+    { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
+      BOOLSET, 0, 1, NULL },
 #ifdef ENABLE_NLS
-    {"lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
-     BOOLSET, 0, 1, NULL},
+    { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
+      BOOLSET, 0, 1, NULL },
 #endif
 #ifdef G_OS_WIN32
-    {"wimp", N_("Emulate Windows look"), NULL, &wimp, BOOLSET, 0, 1, NULL},    
+    { "wimp", N_("Emulate Windows look"), NULL, &wimp, 
+      BOOLSET, 0, 1, NULL },    
 #endif
-    {"gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
-     ROOTSET, MAXLEN, 3, NULL},
-    {"Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
-     ROOTSET, MAXSTR, 3, NULL},
-    {"viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
-     ROOTSET, MAXSTR, 3, NULL},
+    { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
+      ROOTSET, MAXLEN, 3, NULL },
+    { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
+      ROOTSET, MAXSTR, 3, NULL },
+    { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
+      ROOTSET, MAXSTR, 3, NULL },
 #ifndef G_OS_WIN32
-    {"viewps", N_("Command to view postscript files"), NULL, viewps, 
-     ROOTSET, MAXSTR, 3, NULL},
+    { "viewps", N_("Command to view postscript files"), NULL, viewps, 
+      ROOTSET, MAXSTR, 3, NULL },
 #endif
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
-    {"midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
-     USERSET, MAXSTR, 3, NULL},
+    { "midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
+      USERSET, MAXSTR, 3, NULL },
 #endif
-    {"calculator", N_("Calculator"), NULL, calculator, USERSET, MAXSTR, 3, NULL},
+    { "calculator", N_("Calculator"), NULL, calculator, 
+      USERSET, MAXSTR, 3, NULL },
 #ifdef SELECT_EDITOR
-    {"editor", N_("Editor"), NULL, editor, USERSET, MAXSTR, 3, NULL},
+    { "editor", N_("Editor"), NULL, editor, 
+      USERSET, MAXSTR, 3, NULL },
 #endif
 #ifdef HAVE_X12A
-    {"x12a", N_("path to x12arima"), NULL, paths.x12a, ROOTSET, MAXSTR, 3, NULL},
+    { "x12a", N_("path to x12arima"), NULL, paths.x12a, 
+      ROOTSET, MAXSTR, 3, NULL },
 #endif
 #ifdef HAVE_TRAMO
-    {"tramo", N_("path to tramo"), NULL, tramo, ROOTSET, MAXSTR, 3, NULL},
+    { "tramo", N_("path to tramo"), NULL, tramo, ROOTSET, MAXSTR, 3, NULL},
 #endif
 #ifdef G_OS_WIN32
-    {"x12adir", N_("X-12-ARIMA working directory"), NULL, paths.x12adir, 
-     ROOTSET, MAXSTR, 3, NULL},
+    { "x12adir", N_("X-12-ARIMA working directory"), NULL, paths.x12adir, 
+      ROOTSET, MAXSTR, 3, NULL},
 #endif
 #ifdef G_OS_WIN32
-    {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
-     ROOTSET, MAXSTR, 3, NULL},
+    { "tramodir", N_("TRAMO working directory"), NULL, tramodir, 
+      ROOTSET, MAXSTR, 3, NULL},
 #endif
-    {"binbase", N_("gretl database directory"), NULL, paths.binbase, 
-     USERSET, MAXLEN, 2, NULL},
-    {"ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
-     USERSET, MAXLEN, 2, NULL},
-    {"dbhost", N_("Database server name"), NULL, paths.dbhost, 
-     USERSET, 32, 2, NULL},
-    {"dbproxy", N_("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
-     USERSET, 21, 2, NULL},
-    {"useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, BOOLSET, 1, 2, NULL},
-    {"usecwd", N_("Use current working directory as default"), 
-     N_("Use gretl user directory as default"), &usecwd, BOOLSET, 0, 4, NULL},
-    {"olddat", N_("Use \".dat\" as default datafile suffix"), 
-     N_("Use \".gdt\" as default suffix"), &olddat, BOOLSET, 0, 5, NULL},
-    {"useqr", N_("Use QR decomposition"), 
-     N_("Use Cholesky decomposition"), &useqr, BOOLSET, 0, 1, NULL},
-    {"Fixed_font", N_("Fixed font"), NULL, fixedfontname, USERSET, MAXLEN, 0, NULL},
+    { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
+      USERSET, MAXLEN, 2, NULL },
+    { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
+      USERSET, MAXLEN, 2, NULL },
+    { "dbhost", N_("Database server name"), NULL, paths.dbhost, 
+      USERSET, 32, 2, NULL },
+    { "dbproxy", N_("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
+      USERSET, 21, 2, NULL },
+    { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
+      BOOLSET, 1, 2, NULL },
+    { "usecwd", N_("Use current working directory as default"), 
+      N_("Use gretl user directory as default"), &usecwd, 
+      BOOLSET, 0, 4, NULL },
+    { "olddat", N_("Use \".dat\" as default datafile suffix"), 
+      N_("Use \".gdt\" as default suffix"), &olddat, 
+      BOOLSET, 0, 5, NULL },
+    { "useqr", N_("Use QR decomposition"), N_("Use Cholesky decomposition"), &useqr, 
+      BOOLSET, 0, 1, NULL },
+    { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
+      USERSET, MAXLEN, 0, NULL },
 #if !defined(USE_GNOME) && !defined(OLD_GTK)
-    {"App_font", N_("Menu font"), NULL, appfontname, USERSET, MAXLEN, 0, NULL},
+    { "App_font", N_("Menu font"), NULL, appfontname, 
+      USERSET, MAXLEN, 0, NULL },
 #endif
-    {"DataPage", "Default data page", NULL, datapage, INVISET, 
-     sizeof datapage, 0, NULL},
-    {"ScriptPage", "Default script page", NULL, scriptpage, INVISET, 
-     sizeof scriptpage, 0, NULL},    
-    {"Png_font", N_("PNG graph font"), NULL, paths.pngfont, INVISET, 16, 0, NULL},
-    {"Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, INVISET, 
-     sizeof gpcolors, 0, NULL},
-    {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}
+    { "DataPage", "Default data page", NULL, datapage, 
+      INVISET, sizeof datapage, 0, NULL },
+    { "ScriptPage", "Default script page", NULL, scriptpage, 
+      INVISET, sizeof scriptpage, 0, NULL },    
+    { "Png_font", N_("PNG graph font"), NULL, paths.pngfont, 
+      INVISET, 16, 0, NULL },
+    { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
+      INVISET, sizeof gpcolors, 0, NULL },
+    { NULL, NULL, NULL, NULL, 0, 0, 0, NULL }
 };
 
 /* ........................................................... */
@@ -647,15 +649,9 @@ static GtkWidget *make_path_browse_button (RCVARS *rc)
     GtkWidget *b;
 
     b = gtk_button_new_with_label(_("Browse..."));
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(browse_button_callback), 
 		     rc);
-#else
-    gtk_signal_connect(GTK_OBJECT(b), "clicked",
-                       GTK_SIGNAL_FUNC(browse_button_callback), 
-		       rc);
-#endif
     return b;
 }
 
@@ -976,40 +972,19 @@ static void str_to_boolvar (char *s, void *b)
 
 static void boolvar_to_str (void *b, char *s)
 {
-    if (*(int *)b) strcpy(s, "true");
-    else strcpy(s, "false");
-}
-
-/* .................................................................. */
-
-static void initialize_file_lists (void)
-{
-    int i;
-
-    /* initialize lists of recently opened files */
-    for (i=0; i<MAXRECENT; i++) { 
-	datalist[i][0] = 0;
-	sessionlist[i][0] = 0;
-	scriptlist[i][0] = 0;
-    }
-}
-
-static char **get_file_list (int filetype)
-{
-    if (filetype == FILE_LIST_DATA) {
-	return datap;
-    } else if (filetype == FILE_LIST_SESSION) {
-	return sessionp;
-    } else if (filetype == FILE_LIST_SCRIPT) {
-	return scriptp;
+    if (*(int *)b) {
+	strcpy(s, "true");
     } else {
-	return NULL;
+	strcpy(s, "false");
     }
 }
 
-/* .................................................................. */
+/* next section: variant versions of write_rc and read_rc, depending
+   on both GTK version and platform
+*/
 
-#ifdef GNOME2
+/* first the gnome 2 versions */
+#ifdef GNOME2 
 
 void write_rc (void) 
 {
@@ -1024,17 +999,15 @@ void write_rc (void)
 	if (rc_vars[i].type == BOOLSET) {
 	    gboolean val = *(gboolean *) rc_vars[i].var;
 
-	    gconf_client_set_bool (client, key, val, NULL);
+	    gconf_client_set_bool(client, key, val, NULL);
 	} else {
-	    gconf_client_set_string (client, key, rc_vars[i].var, NULL);
+	    gconf_client_set_string(client, key, rc_vars[i].var, NULL);
 	}
     }
 
     g_object_unref(G_OBJECT(client));
 
-    printfilelist(FILE_LIST_DATA, NULL);
-    printfilelist(FILE_LIST_SESSION, NULL); 
-    printfilelist(FILE_LIST_SCRIPT, NULL);
+    save_file_lists(NULL);
 
     set_paths(&paths, 0, 1);
 }
@@ -1046,12 +1019,12 @@ static void read_rc (void)
     GSList *flist = NULL;
     gchar *value;
     char key[MAXSTR];
-    int i;
-    static char *sections[] = {
+    const char *file_sections[] = {
 	"recent_data_files",
 	"recent_session_files",
 	"recent_script_files"
     };	
+    int i;
 
     client = gconf_client_get_default();
 
@@ -1088,18 +1061,12 @@ static void read_rc (void)
     for (i=0; i<3; i++) {
 	int j;
 
-	sprintf(key, "/apps/gretl/%s", sections[i]);
+	sprintf(key, "/apps/gretl/%s", file_sections[i]);
 	flist = gconf_client_get_list (client, key,
 				       GCONF_VALUE_STRING, NULL);
 	if (flist != NULL) {
 	    for (j=0; j<MAXRECENT; j++) {
-		if (i == 0) {
-		    strcpy(datalist[j], flist->data);
-		} else if (i == 1) {
-		    strcpy(sessionlist[j], flist->data);
-		} else if (i == 2) {
-		    strcpy(scriptlist[j], flist->data);
-		}
+		write_filename_to_list(i + 1, j, flist->data);
 		flist = flist->next;
 	    }
 	    g_slist_free(flist);
@@ -1123,7 +1090,8 @@ static void read_rc (void)
 # endif
 }
 
-#elif defined(USE_GNOME)
+/* then the gnome 1 versions */
+#elif defined(USE_GNOME)  
 
 void write_rc (void) 
 {
@@ -1141,9 +1109,7 @@ void write_rc (void)
 	}
     }
 
-    printfilelist(FILE_LIST_DATA, NULL);
-    printfilelist(FILE_LIST_SESSION, NULL);
-    printfilelist(FILE_LIST_SCRIPT, NULL);
+    save_file_lists(NULL);
 
     gnome_config_sync();
 
@@ -1154,7 +1120,12 @@ static void read_rc (void)
 {
     gchar *value = NULL;
     char gpath[MAXSTR];
-    int i;
+    const char *file_sections[] = {
+	"recent data files",
+	"recent session files",
+	"recent script files"
+    };	
+    int i, j;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(gpath, "/gretl/%s/%s", rc_vars[i].description, 
@@ -1173,30 +1144,17 @@ static void read_rc (void)
     initialize_file_lists();
 
     /* get recent file lists */
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl/recent data files/%d", i);
-	if ((value = gnome_config_get_string(gpath)) != NULL) { 
-	    strcpy(datalist[i], value);
-	    g_free(value);
+    for (j=0; j<3; j++) {
+	for (i=0; i<MAXRECENT; i++) {
+	    sprintf(gpath, "/gretl/%s/%d", file_sections[j], i);
+	    if ((value = gnome_config_get_string(gpath)) != NULL) { 
+		write_filename_to_list(j + 1, i, value);
+		g_free(value);
+	    } else {
+		break;
+	    }
 	}
-	else break;
     }    
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl/recent session files/%d", i);
-	if ((value = gnome_config_get_string(gpath)) != NULL) { 
-	    strcpy(sessionlist[i], value);
-	    g_free(value);
-	}
-	else break;
-    } 
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl/recent script files/%d", i);
-	if ((value = gnome_config_get_string(gpath)) != NULL) { 
-	    strcpy(scriptlist[i], value);
-	    g_free(value);
-	}
-	else break;
-    }
 
     set_use_qr(useqr);
     set_gp_colors();
@@ -1245,9 +1203,7 @@ void write_rc (void)
 	}
     }
 
-    printfilelist(FILE_LIST_DATA, NULL); 
-    printfilelist(FILE_LIST_SESSION, NULL);
-    printfilelist(FILE_LIST_SCRIPT, NULL);
+    save_file_lists(NULL);
 
     set_paths(&paths, 0, 1);
 }
@@ -1307,8 +1263,13 @@ static int get_network_settings (void)
 
 void read_rc (void) 
 {
-    int i = 0;
     char rpath[MAXSTR], value[MAXSTR];
+    const char *file_sections[] = {
+	"recent data files",
+	"recent session files",
+	"recent script files"
+    };
+    int i, j;
 
     if (get_network_settings() && *paths.userdir != '\0') {
 	win32_make_user_dirs();
@@ -1352,24 +1313,16 @@ void read_rc (void)
     initialize_file_lists();
 
     /* get recent file lists */
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "recent data files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) 
-	    strcpy(datalist[i], value);
-	else break;
+    for (j=0; j<3; j++) {
+	for (i=0; i<MAXRECENT; i++) {
+	    sprintf(rpath, "%s\\%d", file_sections[j], i);
+	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
+		write_filename_to_list(j + 1, i, value);
+	    } else {
+		break;
+	    }
+	}
     }    
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "recent session files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) 
-	    strcpy(sessionlist[i], value);
-	else break;
-    } 
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "recent script files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) 
-	    strcpy(scriptlist[i], value);
-	else break;
-    }
 
     set_use_qr(useqr);
     set_gp_colors();
@@ -1414,20 +1367,24 @@ void write_rc (void)
 	}
     }
 
-    printfilelist(FILE_LIST_DATA, rc);
-    printfilelist(FILE_LIST_SESSION, rc);
-    printfilelist(FILE_LIST_SCRIPT, rc);
+    save_file_lists(rc);
 
     fclose(rc);
+
     set_paths(&paths, 0, 1);
 }
 
 static void read_rc (void) 
 {
     FILE *fp;
-    int i, j;
     char line[MAXLEN], key[32], linevar[MAXLEN];
+    const char *file_sections[] = {
+	"recent data files:",
+	"recent session files:",
+	"recent script files:"
+    };
     int gotrecent = 0;
+    int i, j;
 
     fp = fopen(rcfile, "r");
     if (fp == NULL) return;
@@ -1460,31 +1417,39 @@ static void read_rc (void)
     initialize_file_lists();
 
     if (gotrecent || (fgets(line, MAXLEN, fp) != NULL && 
-		      strncmp(line, "recent data files:", 18) == 0)) {
+		      strncmp(line, file_sections[0], 18) == 0)) {
 	i = 0;
 	while (fgets(line, MAXLEN, fp) && i<MAXRECENT) {
-	    if (strncmp(line, "recent session files:", 21) == 0)
+	    if (strncmp(line, file_sections[1], 21) == 0) {
 		break;
+	    }
 	    chopstr(line);
-	    if (*line) strcpy(datalist[i++], line);
+	    if (*line != '\0') {
+		write_filename_to_list(FILE_LIST_DATA, i++, line);
+	    }
 	}
     }
 
-    if (strncmp(line, "recent session files:", 21) == 0) {
+    if (strncmp(line, file_sections[1], 21) == 0) {
 	i = 0;
 	while (fgets(line, MAXLEN, fp) && i<MAXRECENT) {
-	    if (strncmp(line, "recent script files:", 20) == 0)
+	    if (strncmp(line, file_sections[2], 20) == 0) {
 		break;
+	    }
 	    chopstr(line);
-	    if (*line) strcpy(sessionlist[i++], line);
+	    if (*line != '\0') {
+		write_filename_to_list(FILE_LIST_SESSION, i++, line);
+	    }
 	}
     }
 
-    if (strncmp(line, "recent script files:", 20) == 0) {
+    if (strncmp(line, file_sections[2], 20) == 0) {
 	i = 0;
 	while (fgets(line, MAXLEN, fp) && i<MAXRECENT) {
 	    chopstr(line);
-	    if (*line) strcpy(scriptlist[i++], line);
+	    if (*line != '\0') {
+		write_filename_to_list(FILE_LIST_SCRIPT, i++, line);
+	    }
 	}
     }
 
@@ -1774,432 +1739,6 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 }
 
 #endif /* end win32 font selection */
-
-/* .................................................................. */
-
-void init_fileptrs (void)
-{
-    int i;
-    
-    for (i=0; i<MAXRECENT; i++) {
-	datap[i] = datalist[i];
-	sessionp[i] = sessionlist[i];
-	scriptp[i] = scriptlist[i];
-    }
-}
-
-/* .................................................................. */
-
-static void clear_files_list (int filetype, char **filep)
-{
-    GtkWidget *w;
-    char tmpname[MAXSTR];
-    gchar itempath[80];
-    int i, pindex = -1;
-    const gchar *fpath[] = {
-	N_("/File/Open data"), 
-	N_("/Session"),
-	N_("/File/Open command file")
-    };
-
-    if (filetype == FILE_LIST_DATA) {
-	pindex = 0;
-    } else if (filetype == FILE_LIST_SESSION) {
-	pindex = 1;
-    } else if (filetype == FILE_LIST_SCRIPT) {
-	pindex = 2;
-    } else {
-	return;
-    }
-
-    for (i=0; i<MAXRECENT; i++) {
-#ifndef OLD_GTK
-	sprintf(itempath, "%s/%d. %s", fpath[pindex],
-		i+1, endbit(tmpname, filep[i], 0)); 
-#else
-	sprintf(itempath, "%s/%d. %s", fpath[pindex],
-		i+1, endbit(tmpname, filep[i], -1)); 
-#endif
-	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
-	if (w != NULL) {
-	    gtk_item_factory_delete_item(mdata->ifac, itempath);
-	}
-    }
-}
-
-/* .................................................................. */
-
-static char *cut_multiple_slashes (char *fname)
-{
-    int i, n = strlen(fname);
-#ifdef G_OS_WIN32
-    /* may be ok for a filename to start with a double backslash */
-    int start = 1;
-#else
-    int start = 0;
-#endif
-
-    for (i=start; i<n-1; i++) {
-	if (fname[i] == SLASH && fname[i+1] == SLASH) {
-	    memmove(fname + i, fname + i + 1, strlen(fname + i + 1) + 1);
-	    i--;
-	    n--;
-	}
-    }
-
-    return fname;
-}
-
-void mkfilelist (int filetype, char *fname)
-{
-    char *tmp[MAXRECENT-1];
-    char **filep;
-    int i, match = -1;
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
-    char trfname[MAXLEN];
-#endif
-
-    cut_multiple_slashes(fname);
-
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
-    strcpy(trfname, fname);
-    my_filename_to_utf8(trfname);
-    fname = trfname;
-#endif
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    /* see if this file is already on the list */
-    for (i=0; i<MAXRECENT; i++) {
-        if (strcmp(filep[i], fname) == 0) {
-            match = i;
-            break;
-        }
-    }
-    if (match == 0) return; /* file is on top: no change in list */
-
-    /* clear menu files list before rebuilding */
-    clear_files_list(filetype, filep);
-    
-    /* save pointers to current order */
-    for (i=0; i<MAXRECENT-1; i++) {
-	tmp[i] = filep[i];
-    }
-
-    /* copy fname into array, if not already present */
-    if (match == -1) {
-        for (i=1; i<MAXRECENT; i++) {
-            if (filep[i][0] == '\0') {
-                strcpy(filep[i], fname);
-                match = i;
-                break;
-	    }
-	    if (match == -1) {
-		match = MAXRECENT - 1;
-		strcpy(filep[match], fname);
-	    }
-	}
-    } 
-
-    /* set first pointer to new file */
-    filep[0] = filep[match];
-
-    /* rearrange other pointers */
-    for (i=1; i<=match; i++) {
-	filep[i] = tmp[i-1];
-    }
-
-    add_files_to_menu(filetype);
-}
-
-/* .................................................................. */
-
-void delete_from_filelist (int filetype, const char *fname)
-{
-    char *tmp[MAXRECENT];
-    char **filep;
-    int i, match = -1;
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    /* save pointers to current order */
-    for (i=0; i<MAXRECENT; i++) {
-	tmp[i] = filep[i];
-	if (!strcmp(filep[i], fname)) match = i;
-    }
-
-    if (match == -1) return;
-
-    /* clear menu files list before rebuilding */
-    clear_files_list(filetype, filep);
-
-    for (i=match; i<MAXRECENT-1; i++) {
-	filep[i] = tmp[i+1];
-    }
-
-    filep[MAXRECENT-1] = tmp[match];
-    filep[MAXRECENT-1][0] = '\0';
-
-    add_files_to_menu(filetype);
-    /* need to save to file at this point? */
-}
-
-/* .................................................................. */
-
-char *endbit (char *dest, char *src, int addscore)
-{
-    /* take last part of src filename */
-    if (strrchr(src, SLASH)) {
-	strcpy(dest, strrchr(src, SLASH) + 1);
-    } else {
-	strcpy(dest, src);
-    }
-
-    if (addscore != 0) {
-	/* then either double (1) or delete (-1) any underscores */
-	char mod[MAXSTR];
-	size_t i, j, n;
-
-	n = strlen(dest);
-	j = 0;
-	for (i=0; i<=n; i++) {
-	    if (dest[i] != '_')
-		mod[j++] = dest[i];
-	    else {
-		if (addscore == 1) {
-		    mod[j++] = '_';
-		    mod[j++] = dest[i];
-		} 
-	    }
-	}
-	strcpy(dest, mod);
-    }
-
-    return dest;
-}
-
-/* .................................................................. */
-
-static char *file_sections[] = {
-    "recent_data_files",
-    "recent_session_files",
-    "recent_script_files"
-};
-
-#ifdef GNOME2
-
-static void printfilelist (int filetype, FILE *fp)
-     /* param fp is ignored */
-{
-    GConfClient *client;
-    GSList *flist = NULL;
-    gchar *key;
-    int i;
-    char **filep;
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    client = gconf_client_get_default();
-
-    for (i=0; i<MAXRECENT; i++) {
-	flist = g_slist_append (flist, g_strdup(filep[i]));
-    }
-
-    key = g_strdup_printf("/apps/gretl/%s", file_sections[filetype - 1]);
-
-    gconf_client_set_list (client, key, GCONF_VALUE_STRING, 
-			   flist, NULL);
-
-    g_free(key);
-    g_slist_free(flist);
-    g_object_unref(G_OBJECT(client));
-}
-
-#elif defined(USE_GNOME)
-
-static void printfilelist (int filetype, /* ignored */ FILE *fp)
-{
-    int i;
-    char **filep;
-    char gpath[MAXLEN];
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl/%s/%d", file_sections[filetype - 1], i);
-	gnome_config_set_string(gpath, filep[i]);
-    }
-}
-
-#elif defined(G_OS_WIN32)
-
-static void printfilelist (int filetype, /* ignored */ FILE *fp)
-{
-    int i;
-    char **filep;
-    char rpath[MAXLEN];
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    for (i=0; i<MAXRECENT; i++) {
-	if (filep[i] != NULL) {
-	    sprintf(rpath, "%s\\%d", file_sections[filetype - 1], i);
-	    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
-	}
-    }
-}
-
-#else /* "plain" version follows */
-
-static void printfilelist (int filetype, FILE *fp)
-{
-    int i;
-    char **filep;
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    fprintf(fp, "%s:\n", file_sections[filetype - 1]);
-
-    for (i=0; i<MAXRECENT; i++) {
-	if (filep[i][0]) {
-	    fprintf(fp, "%s\n", filep[i]);
-	} else {
-	    break;
-	}
-    }
-}
-
-#endif 
-
-static void copy_sys_filename (char *targ, const char *src)
-{
-    strcpy(targ, src);
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
-    my_filename_from_utf8(targ);
-#endif
-}    
-
-/* ........................................................... */
-
-static void set_data_from_filelist (gpointer data, guint i, 
-				    GtkWidget *widget)
-{
-    copy_sys_filename(trydatfile, datap[i]);
-    if (strstr(trydatfile, ".csv")) {
-	delimiter_dialog();
-    }
-    verify_open_data(NULL, 0);
-}
-
-/* ........................................................... */
-
-static void set_session_from_filelist (gpointer data, guint i, 
-				       GtkWidget *widget)
-{
-    copy_sys_filename(tryscript, sessionp[i]);
-    verify_open_session(NULL);
-}
-
-/* ........................................................... */
-
-static void set_script_from_filelist (gpointer data, guint i, 
-				      GtkWidget *widget)
-{
-    copy_sys_filename(tryscript, scriptp[i]);
-    do_open_script();
-}
-
-/* .................................................................. */
-
-void add_files_to_menu (int filetype)
-{
-    int i;
-    char **filep, tmp[MAXSTR];
-    void (*callfunc)() = NULL;
-    GtkItemFactoryEntry fileitem;
-    GtkWidget *w;
-    const gchar *msep[] = {
-	N_("/File/Open data/sep"),
-	N_("/Session/sep"),
-	N_("/File/Open command file/sep")
-    };
-    const gchar *mpath[] = {
-	N_("/File/Open data"),
-	N_("/Session"),
-	N_("/File/Open command file")
-    };
-
-    fileitem.path = NULL;
-
-    filep = get_file_list(filetype);
-    if (filep == NULL) {
-	return;
-    }
-
-    if (filetype == FILE_LIST_DATA) {
-	callfunc = set_data_from_filelist;
-    } else if (filetype == FILE_LIST_SESSION) {
-	callfunc = set_session_from_filelist;
-    } else if (filetype == FILE_LIST_SCRIPT) {
-	callfunc = set_script_from_filelist;
-    } 
-
-    /* See if there are any files to add */
-    if (filep[0][0] == '\0') {
-	return;
-    } else {
-	gchar *itemtype = "<Separator>";
-	GtkWidget *w;
-
-	/* is a separator already in place? */
-	w = gtk_item_factory_get_widget(mdata->ifac, msep[filetype - 1]);
-	if (w == NULL) {
-	    fileitem.path = g_strdup(msep[filetype - 1]);
-	    fileitem.accelerator = NULL;
-	    fileitem.callback = NULL;
-	    fileitem.callback_action = 0;
-	    fileitem.item_type = itemtype;
-	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
-	    g_free(fileitem.path);
-	}
-    }
-
-    /* put the files under the menu separator */
-    for (i=0; i<MAXRECENT; i++) {
-	if (filep[i][0]) {
-	    fileitem.accelerator = NULL;
-	    fileitem.callback_action = i; 
-	    fileitem.item_type = NULL;
-	    fileitem.path = g_strdup_printf("%s/%d. %s", mpath[filetype - 1],
-					    i+1, endbit(tmp, filep[i], 1));
-	    fileitem.callback = callfunc; 
-	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
-	    g_free(fileitem.path);
-	    w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
-	    if (w != NULL) {
-		gretl_tooltips_add(w, filep[i]);
-	    } 
-	} else break;
-    }
-}
 
 /* graph color selection apparatus */
 

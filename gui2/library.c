@@ -42,6 +42,7 @@
 #include "datafiles.h"
 #include "model_table.h"
 #include "cmdstack.h"
+#include "filelists.h"
 
 #ifdef HAVE_TRAMO
 extern char tramo[];

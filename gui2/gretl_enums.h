@@ -177,7 +177,7 @@ enum drag_types {
 };
 
 enum file_lists {
-    FILE_LIST_DATA = 1,
+    FILE_LIST_DATA,
     FILE_LIST_SESSION,
     FILE_LIST_SCRIPT,
 };

@@ -30,6 +30,7 @@
 #include "graph_page.h"
 #include "textbuf.h"
 #include "cmdstack.h"
+#include "filelists.h"
 
 #include "var.h"
 

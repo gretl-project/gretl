@@ -32,6 +32,7 @@
 #include "textbuf.h"
 #include "textutil.h"
 #include "cmdstack.h"
+#include "filelists.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
