@@ -58,7 +58,11 @@ static void open_textbook_data (void)
 static void netscape_open (const char *url)
 {
 # ifdef USE_GNOME
-    gnome_url_show(url, NULL);   
+#  ifndef OLD_GTK
+    gnome_url_show(url, NULL); 
+#  else
+    gnome_url_show(url); 
+#  endif  
 # else
     int err;
     char ns_cmd[128];
