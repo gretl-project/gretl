@@ -891,12 +891,12 @@ print_sigmas (const double **X, const double **Y, const double **Z,
 }
 
 static int 
-grab_eigenvals (const double **X, const double **Y, const double **Z,
-		int k, double *evals)
+johansen_complete (const double **X, const double **Y, const double **Z,
+		   int k, int T, PRN *prn)
 {
     void *handle;
     int (*johansen) (const double **, const double **, const double **,
-		     int, double *);
+		     int, int, PRN *);
     int err = 0;
     
     if (open_plugin("johansen", &handle)) {
@@ -912,7 +912,7 @@ grab_eigenvals (const double **X, const double **Y, const double **Z,
         goto system_bailout;
     }
         
-    err = (* johansen) (X, Y, Z, k, evals);
+    err = (* johansen) (X, Y, Z, k, T, prn);
     
  system_bailout:
     if (handle != NULL) {
@@ -988,7 +988,6 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	int T = resids.t2 - resids.t1 + 1;
 	double **Suu, **Svv, **Suv;
 	double **u = NULL, **v = NULL;
-	double *evals = NULL;
 	char stobs[9], endobs[9];
 
 	if (allocate_sigmas(&Suu, &Svv, &Suv, k)) {
@@ -1038,29 +1037,10 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 #endif
 
-	/* now get LAPACK to find the sorted eigenvalues */
-	evals = malloc(k * sizeof *evals);
-	err = grab_eigenvals((const double **) Suu, 
-			     (const double **) Svv, 
-			     (const double **) Suv, k, evals);
-
-	if (!err) {
-	    pprintf(prn, "\n%s\n\n", _("Ordered eigenvalues for trace test:"));
-	    for (i=0; i<k; i++) {
-		pprintf(prn, "lambda %d = ", i + 1);
-		gretl_print_fullwidth_double(evals[i], GRETL_DIGITS, prn);
-		pputs(prn, "\n");
-	    }
-	    pputs(prn, "\n");
-	    for (i=0; i<k; i++) {
-		double xx = T * log(1.0 - evals[i]);
-
-		pprintf(prn, "T * log(1 - lambda %d) = ", i + 1);
-		gretl_print_fullwidth_double(xx, GRETL_DIGITS, prn);
-		pputs(prn, "\n");
-	    }
-	    pputs(prn, "\n");
-	}
+	/* now get johansen plugin to find the sorted eigenvalues */
+	err = johansen_complete((const double **) Suu, 
+				(const double **) Svv, 
+				(const double **) Suv, k, T, prn);
 
     johansen_bailout:
 	
@@ -1072,7 +1052,6 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	free_sigmas(Suu, Svv, Suv, k);
 	free(u);
 	free(v);
-	free(evals);
     } 
 
     free(resids.levels_list);

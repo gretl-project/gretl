@@ -2732,56 +2732,6 @@ static char *simple_fname (char *dest, const char *src)
     return dest;
 }
 
-static char *xml_encode (char *buf)
-{
-    char *xmlbuf, *p;
-    size_t sz = strlen(buf) + 1;
-
-#ifdef XML_DEBUG
-    fprintf(stderr, "xml_encode: original buffer size=%d\n", sz);
-#endif
-
-    p = buf;
-    while (*buf++) {
-	if (*buf == '&') sz += 4;
-	else if (*buf == '<') sz += 3;
-	else if (*buf == '>') sz += 3;
-    }
-    buf = p;
-
-    xmlbuf = malloc(sz);
-    if (xmlbuf == NULL) {
-	sprintf(gretl_errmsg, _("out of memory in XML encoding"));
-	return NULL;
-    }
-#ifdef XML_DEBUG
-    fprintf(stderr, "xml_encode: malloc'd xmlbuf at size %d\n", sz);
-#endif
-    p = xmlbuf;
-    while (*buf) {
-	if (*buf == '&') {
-	    strcpy(p, "&amp;");
-	    p += 5;
-	} else if (*buf == '<') {
-	    strcpy(p, "&lt;");
-	    p += 4;
-	} else if (*buf == '>') {
-	    strcpy(p, "&gt;");
-	    p += 4;
-	} else {
-	    *p++ = *buf;
-	}
-	buf++;
-    }
-    xmlbuf[sz-1] = '\0';
-
-#ifdef XML_DEBUG
-    fprintf(stderr, "done xml_encode: xmlbuf='%s'\n", xmlbuf);
-#endif
-
-    return xmlbuf;
-}
-
 /**
  * write_xmldata:
  * @fname: name of file to write.
@@ -2902,7 +2852,7 @@ static int write_xmldata (const char *fname, const int *list,
 
     /* first deal with description, if any */
     if (pdinfo->descrip != NULL) {
-	xmlbuf = xml_encode(pdinfo->descrip);
+	xmlbuf = gretl_xml_encode(pdinfo->descrip);
 	if (xmlbuf == NULL) return 1;
 	else {
 	    if (opt) {
@@ -2928,7 +2878,7 @@ static int write_xmldata (const char *fname, const int *list,
     else fprintf(fp, "<variables count=\"%d\">\n", list[0]);
 
     for (i=1; i<=list[0]; i++) {
-	xmlbuf = xml_encode(pdinfo->varname[list[i]]);
+	xmlbuf = gretl_xml_encode(pdinfo->varname[list[i]]);
 	if (xmlbuf == NULL) return 1;
 	else {
 	    if (opt) gzprintf(fz, "<variable name=\"%s\"", xmlbuf);
@@ -2945,7 +2895,7 @@ static int write_xmldata (const char *fname, const int *list,
 	    }
 	}
 	if (pdinfo->label[list[i]][0]) {
-	    xmlbuf = xml_encode(pdinfo->label[list[i]]);
+	    xmlbuf = gretl_xml_encode(pdinfo->label[list[i]]);
 	    if (xmlbuf == NULL) return 1;
 	    else {
 		if (opt) gzprintf(fz, "\n label=\"%s\"/>\n", xmlbuf);

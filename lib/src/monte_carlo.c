@@ -879,60 +879,89 @@ static void print_loop_prn (LOOP_PRINT *pprn, int n,
 static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 			     char *loopstorefile)
 {
-    int i, t, dot;
-    FILE *fd;
-    char prefix[MAXLEN], datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
+    int i, t;
+    FILE *fp;
+    char gdtfile[MAXLEN], infobuf[1024];
+    char *xmlbuf = NULL;
     time_t writetime;
 
-    /* organize filenames */
-    sprintf(datfile, "%s%s", ppaths->userdir, loopstorefile);
-    dot = dotpos(datfile);
+    /* organize filename */
+    if (slashpos(loopstorefile) == 0) { /* no path given */
+	sprintf(gdtfile, "%s%s", ppaths->userdir, loopstorefile);
+    } else {
+	strcpy(gdtfile, loopstorefile);
+    }
 
-    *prefix = 0;
-    strncat(prefix, datfile, dot);
-    sprintf(hdrfile, "%s.hdr", prefix);
-    sprintf(lblfile, "%s.lbl", prefix);
+    if (strchr(gdtfile, '.') == NULL) {
+	strcat(gdtfile, ".gdt");
+    }
 
-    /* print to header file */
+    fp = fopen(gdtfile, "w");
+    if (fp == NULL) return 1;
+
     writetime = time(NULL);
-    fd = fopen(hdrfile, "w");
-    if (fd == NULL) return 1;
-
-    pprintf(prn, _("printing data header info to %s\n"), hdrfile);
-    fprintf(fd, "(*\n %s %s\n*)\n", _("simulation data written"), 
-	    print_time(&writetime));
-
-    for (i=0; i<ploop->nstore; i++) {
-	fprintf(fd, "%s ", ploop->storename[i]);
-    }
-
-    fprintf(fd, ";\n1 1 %d\nBYOBS\n", ploop->ntimes);
-    fclose(fd);
-
-    /* print to label file */
-    fd = fopen(lblfile, "w");
-    if (fd == NULL) return 1;
-
-    for (i=0; i<ploop->nstore; i++) {
-	fprintf(fd, "%s %s\n", ploop->storename[i], ploop->storelbl[i]);
-    }
-    fclose(fd);
-
-    /* print to data file */
-    fd = fopen(datfile, "w");    
-    if (fd == NULL) return 1;
 
     pprintf(prn, _("printing %d values of variables to %s\n"), 
-	    ploop->ntimes, datfile);
+	    ploop->ntimes, gdtfile);
 
-    for (t=0; t<ploop->ntimes; t++) {
-	for (i=0; i<ploop->nstore; i++) {
-	    fprintf(fd, "%g ", ploop->storeval[ploop->ntimes*i + t]);
-	}
-	fputc('\n', fd);
+    fprintf(fp, "<?xml version=\"1.0\"?>\n"
+	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
+	    "<gretldata name=\"%s\" frequency=\"1\" "
+	    "startobs=\"1\" endobs=\"%d\" ", 
+	    gdtfile, ploop->ntimes);
+
+    fprintf(fp, "type=\"cross-section\">\n");
+
+    sprintf(infobuf, "%s %s", _("simulation data written"),
+	    print_time(&writetime)); 
+    xmlbuf = gretl_xml_encode(infobuf);
+    fprintf(fp, "<description>\n%s\n</description>\n", xmlbuf);
+    free(xmlbuf);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    /* print info on variables */
+    fprintf(fp, "<variables count=\"%d\">\n", ploop->nstore);
+
+    for (i=0; i<ploop->nstore; i++) {
+	xmlbuf = gretl_xml_encode(ploop->storename[i]);
+	fprintf(fp, "<variable name=\"%s\"", xmlbuf);
+	free(xmlbuf);
+	xmlbuf = gretl_xml_encode(ploop->storelbl[i]);
+	fprintf(fp, "\n label=\"%s\"/>\n", xmlbuf);
+	free(xmlbuf);
     }
 
-    fclose(fd);
+    fputs("</variables>\n", fp);
+
+    /* print actual data */
+    fprintf(fp, "<observations count=\"%d\" labels=\"false\">\n",
+	    ploop->ntimes);
+
+    for (t=0; t<ploop->ntimes; t++) {
+	double x;
+
+	fputs("<obs>", fp);
+	for (i=0; i<ploop->nstore; i++) {
+	    x = ploop->storeval[ploop->ntimes*i + t];
+	    if (na(x)) {
+		fputs("NA ", fp);
+	    } else {
+		fprintf(fp, "%g ", x);
+	    }
+	}
+	fputs("</obs>\n", fp);
+    }
+
+    fprintf(fp, "</observations>\n</gretldata>\n");
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fp);
     return 0;
 }
 

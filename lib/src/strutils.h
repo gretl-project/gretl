@@ -87,4 +87,6 @@ int get_utf_width (const char *str, int width);
 
 const char *print_time (const time_t *timep);
 
+char *gretl_xml_encode (char *buf);
+
 #endif /* STRUTILS_H */

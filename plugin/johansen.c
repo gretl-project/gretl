@@ -20,6 +20,11 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 
+enum {
+    HA_NO_RESTRICTIONS,
+    HA_H_PLUS_ONE
+} alt_hypotheses;
+
 /* Critical values for Johansen's likelihood ratio test of the
    null hypothesis of h cointegrating relations against the
    alternative of no restrictions.
@@ -74,6 +79,44 @@ const double johansen_pvals_b[15][3] = {
     {30.774, 33.178, 38.341}  /* g = 5 */
 };
 
+static void p_value_string (double lr, int jcase, int g, int ha,
+			    PRN *prn)
+{
+    int row;
+    const double *pvals;
+
+    row = (jcase - 1) * 5 + (g - 1);
+
+    if (ha == HA_NO_RESTRICTIONS) {
+	pvals = johansen_pvals_a[row];
+    }
+    else {
+	pvals = johansen_pvals_b[row];
+    }
+
+    pprintf(prn, "%s:\n"
+	    " 10 %s %.2f\n"
+	    "  5 %s %.2f\n"
+	    "  1 %s %.2f\n\n", 
+	    _("Approximate critical values"), 
+	    _("percent"), pvals[0],
+	    _("percent"), pvals[1],
+	    _("percent"), pvals[2]);
+
+    if (lr < pvals[0]) {
+	pprintf(prn, "%s > %.2f\n", _("p-value"), .10);
+    }
+    else if (lr >= pvals[0] && lr <= pvals[1]) {
+	pprintf(prn, "%.2f > %s > %.2f\n", .10, _("p-value"), .05);
+    }
+    else if (lr >= pvals[1] && lr <= pvals[2]) {
+	pprintf(prn, "%.2f > %s > %.2f\n", .05, _("p-value"), .01);
+    }
+    else if (lr > pvals[2]) {
+	pprintf(prn, "%s < %.2f\n", _("p-value"), .01);
+    }
+}
+
 static int inverse_compare_doubles (const void *a, const void *b)
 {
     const double *da = (const double *) a;
@@ -83,7 +126,7 @@ static int inverse_compare_doubles (const void *a, const void *b)
 }
 
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
-			int k, double *evals)
+			int k, int T, PRN *prn)
 {
     gretl_matrix *Suu, *Svv, *Suv;
     gretl_matrix *Inv, *TmpL, *TmpR, *M;
@@ -115,14 +158,46 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 
     if (eigvals != NULL) {
 	int i;
+	double lr = 0.0;
+
+	qsort(eigvals, k, sizeof *eigvals, inverse_compare_doubles);
+
+	pprintf(prn, "\n%s\n\n", _("Ordered eigenvalues for trace test:"));
+	for (i=0; i<k; i++) {
+	    pprintf(prn, "lambda %d = ", i + 1);
+	    gretl_print_fullwidth_double(eigvals[i], GRETL_DIGITS, prn);
+	    pputs(prn, "\n");
+	}
+	pputs(prn, "\n");
 
 	for (i=0; i<k; i++) {
-	    evals[i] = eigvals[i];
-	}
-	free(eigvals);
-    }
+	    double xx = T * log(1.0 - eigvals[i]);
 
-    qsort(evals, k, sizeof *evals, inverse_compare_doubles);
+	    pprintf(prn, "T * log(1 - lambda %d) = ", i + 1);
+	    gretl_print_fullwidth_double(xx, GRETL_DIGITS, prn);
+	    pputs(prn, "\n");
+	    lr -= xx;
+	}
+	pputs(prn, "\n");
+
+	pprintf(prn, _("Null hypothesis: No cointegrating relations\n"));
+
+	pprintf(prn, _("\nAlternative hypothesis: %d cointegrating "
+		"relations\n\n"), k);
+	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
+	p_value_string(lr, 3, k, HA_NO_RESTRICTIONS, prn);
+
+	pputs(prn, "\nAlternative hypothesis: one cointegrating "
+	      "relation\n\n");
+	lr = - T * log(1.0 - eigvals[0]);
+	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
+	p_value_string(lr, 3, k, HA_H_PLUS_ONE, prn);
+
+	free(eigvals);
+
+    } else {
+	pputs(prn, _("Failed to find eigenvalues\n"));
+    }
 
     /* free stuff */
     gretl_matrix_free(Svv);

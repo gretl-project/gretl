@@ -29,9 +29,10 @@ install: installdirs install_datafiles install_scripts install_help
 install-strip: install
 
 install_datafiles:
-	for f in data/d* ; do \
+	for f in data/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data ; done
-	$(INSTALL_DATA) data/longley.gdt $(gretldir)/data 
+	$(INSTALL_DATA) data/descriptions $(gretldir)/data 
+	$(INSTALL_DATA) data/gretldata.dtd $(gretldir)/data 
 	for f in data/greene/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
 

@@ -3384,7 +3384,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	cursor = gdk_cursor_new(GDK_WATCH);
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK,
-			 mydata->dialog->window, cursor,
+			 NULL, cursor,
 			 GDK_CURRENT_TIME);
 	gdk_cursor_destroy(cursor);
 
