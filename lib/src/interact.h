@@ -28,9 +28,10 @@ typedef struct _CMD CMD;
 
 struct _CMD {
     char cmd[9];                /* command word */
+    int ci;                     /* command index number */
+    unsigned char opt;          /* option flag */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
     char str[4];                /* used, e.g., in "multiply" command */
-    int ci;                     /* command index number */
     int nolist;                 /* = 1 if the command does not take a list */
     int *list;                  /* list of variables by ID number */
     char *param;                /* general-purpose parameter to command */
@@ -64,12 +65,11 @@ int parseopt (const char *s);
 int shell (const char *arg);
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, unsigned char oflag, PRN *prn);
+	       int batch, int gui, PRN *prn);
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     int batch, unsigned char oflag, 
-		     PRN *prn);
+		     int batch, PRN *prn);
 
 int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, unsigned char *pflag,

@@ -51,8 +51,6 @@ extern void winstack_init (void);
 extern void winstack_destroy (void);
 extern int winstack_match_data (gpointer p);
 
-extern int replay; /* lib.c */
-
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
 #include "../pixmaps/model.xpm"
@@ -1020,7 +1018,9 @@ int recreate_session (char *fname)
     free_rebuild();
     gretl_print_destroy(prn);
 
-    replay = 1; /* no fresh commands have been entered yet */
+    /* no fresh commands have been entered yet */
+    set_replay_on();
+
     return 0;
 }
 
@@ -1355,7 +1355,7 @@ static int delete_session_object (gui_obj *obj)
 	real_delete_graph_from_session(junk);
     }
 
-    replay = 0;
+    set_replay_off();
 
     session_delete_icon(obj);
 
@@ -1431,7 +1431,7 @@ static void rename_session_object (gui_obj *obj, const char *newname)
     free(obj->name);
     obj->name = g_strdup(newname);
 
-    replay = 0;
+    set_replay_off();
 }
 
 #endif /* !OLD_GTK */

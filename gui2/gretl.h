@@ -66,7 +66,6 @@
 extern double **Z;
 extern DATAINFO *datainfo;
 extern PATHS paths; 
-extern CMD command;
 extern MODEL **models;
 
 /* global counters */

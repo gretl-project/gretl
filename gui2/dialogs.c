@@ -794,7 +794,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
 {
     int resp;
-    extern int replay; /* lib.c */
     const char regular_save_msg[] = {
 	N_("Do you want to save the commands and\n"
 	   "output from this gretl session?")
@@ -815,7 +814,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     /* FIXME: should make both save_session_callback() and
        save_data_callback() blocking functions */
 
-    if (!expert && !replay && 
+    if (!expert && !replaying() && 
 	(session_changed(0) || (work_done() && !session_saved))) {
 
 	resp = yes_no_dialog ("gretl", 

@@ -267,13 +267,13 @@ high frequency observations), "last" (uses the last observation), "first" and
 #
 delete
 @Dataset
-Usage:          delete varnumber
+Usage:          delete varlist
 
-Removes the variable with the given number from the dataset.  Use with
-caution: no confirmation is asked, and any variables with higher ID numbers
-will be re-numbered.
+Removes the listed variables (given by name or number) from the dataset.  Use
+with caution: no confirmation is asked, and any variables with higher ID
+numbers will be re-numbered.
 
-If no varnumber is given with this command, it deletes the last (highest
+If no varlist is given with this command, it deletes the last (highest
 numbered) variable from the dataset.
 
 #
@@ -455,7 +455,7 @@ uses of genr:
   $sigma       standard error of residuals
   $lnl         log-likelihood (logit and probit models)
   coeff(var)   estimated coefficient for var
-  stderr(var)  estimated std. error for var
+  stderr(var)  estimated standard error for var
   rho(i)       ith order autoregressive coefficient for residuals
   vcv(xi,xj)   covariance between coefficients for vars xi and xj
 
@@ -1369,6 +1369,19 @@ Examples:
   sim 1979.2 1983.1 y 0 0.9  [ y(t) = 0.9*y(t-1) ]
   sim 15 25 y 10 0.8 x       [ y(t) = 10 + 0.8*y(t-1) + x(t)*y(t-2) ]
   sim y 0 0.8 -x             [ y(t) = 0.8*y(t-1) - x(t)*y(t-2) ]
+
+Note that as of gretl 1.2.0, the "genr" command (see above) works dynamically,
+and you will probably find it easier to use genr to create an autoregressive
+series.  For example
+
+  genr y = 0 * const
+  genr y = .8*y(-1) -.2*y(-2) + normal()
+
+now achieves the same object as (and is probably easier to read than)
+
+  genr y = 0 * const
+  genr u = normal()
+  sim y u .8 -.2
 
 #
 smpl

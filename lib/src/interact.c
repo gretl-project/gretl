@@ -1142,7 +1142,7 @@ int shell (const char *arg)
                        c == MPOLS || c == SCATTERS || c == GNUPLOT)
 
 void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, unsigned char oflag, PRN *prn)
+	       int batch, int gui, PRN *prn)
      /* echo a given command: depending on the circumstances, either
 	to stdout or to a buffer, or both */
 
@@ -1153,8 +1153,8 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (line == NULL) return;
 
 #if 0
-    fprintf(stderr, "echo_cmd: line='%s', gui=%d, oflag='%c', batch=%d "
-	    "param='%s', nolist=%d\n", line, gui, oflag, batch, cmd->param,
+    fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt='%c', batch=%d "
+	    "param='%s', nolist=%d\n", line, gui, cmd->opt, batch, cmd->param,
 	    cmd->nolist);
 #endif
 
@@ -1165,8 +1165,8 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     */
     if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop */
 	pprintf(prn, "# store '%s'", cmd->param);
-	if (oflag) { 
-	    pprintf(prn, " -%c", oflag);
+	if (cmd->opt) { 
+	    pprintf(prn, " -%c", cmd->opt);
 	}
 	pputs(prn, "\n");
 	return;
@@ -1261,9 +1261,9 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	if (!batch) pputs(prn, line);
     }
 
-    if (oflag) { 
-	if (cli) printf(" -%c", oflag);
-	if (!batch) pprintf(prn, " -%c", oflag);
+    if (cmd->opt) { 
+	if (cli) printf(" -%c", cmd->opt);
+	if (!batch) pprintf(prn, " -%c", cmd->opt);
     }
 
     if (cli) putchar('\n');
@@ -1515,7 +1515,7 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     int pause, unsigned char oflag, PRN *prn)
+		     int pause, PRN *prn)
      /* common code for command-line and GUI client programs, where
 	the command doesn't require special handling on the client
 	side */
@@ -1527,7 +1527,7 @@ int simple_commands (CMD *cmd, const char *line,
     switch (cmd->ci) {
 
     case ADF:
-	if (!isdigit(cmd->param[0])) {
+	if (!isdigit(*cmd->param)) {
 	    pputs(prn, _("adf: lag order must be given first\n"));
 	    break;
 	}
@@ -1543,7 +1543,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case COINT2:
 	order = atoi(cmd->param);
-	err = johansen_test(order, cmd->list, pZ, datainfo, oflag, prn);
+	err = johansen_test(order, cmd->list, pZ, datainfo, cmd->opt, prn);
 	break;
 
     case CORR:
@@ -1565,8 +1565,8 @@ int simple_commands (CMD *cmd, const char *line,
 	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
-	    err = call_pca_plugin(corrmat, pZ, datainfo, &oflag, prn);
-	    if (oflag && !err) {
+	    err = call_pca_plugin(corrmat, pZ, datainfo, &cmd->opt, prn);
+	    if (cmd->opt && !err) {
 		varlist(datainfo, prn);
 	    }
 	    free_corrmat(corrmat);
@@ -1625,11 +1625,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case GRAPH:
-	graph(cmd->list, *pZ, datainfo, oflag, prn);
+	graph(cmd->list, *pZ, datainfo, cmd->opt, prn);
 	break;
 
     case PLOT:
-	plot(cmd->list, *pZ, datainfo, oflag, pause, prn);
+	plot(cmd->list, *pZ, datainfo, cmd->opt, pause, prn);
 	break;
 
     case RMPLOT:
@@ -1664,7 +1664,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (strlen(cmd->param)) {
 	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, pZ, datainfo, pause, oflag, prn);
+	    printdata(cmd->list, pZ, datainfo, pause, cmd->opt, prn);
 	}
 	break;
 
@@ -1679,7 +1679,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break; 
 
     case MEANTEST:
-	err = means_test(cmd->list, *pZ, datainfo, oflag, prn);
+	err = means_test(cmd->list, *pZ, datainfo, cmd->opt, prn);
 	break;	
 
     case VARTEST:
@@ -1691,11 +1691,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SPEARMAN:
-	err = spearman(cmd->list, *pZ, datainfo, oflag, prn);
+	err = spearman(cmd->list, *pZ, datainfo, cmd->opt, prn);
 	break;
 
     case OUTFILE:
-	err = do_outfile_command(oflag, cmd->param, prn);
+	err = do_outfile_command(cmd->opt, cmd->param, prn);
 	break;
 
     default:

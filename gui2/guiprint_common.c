@@ -1057,7 +1057,7 @@ int csv_to_clipboard (void)
 	    err = bufopen(&prn);
 	}
 	if (!err) {
-	    err = data_to_buf_as_csv(command.list, prn);
+	    err = data_to_buf_as_csv(get_cmd_list(), prn);
 	}
 	if (!err) {
 	    err = prn_to_clipboard(prn, COPY_CSV);
@@ -1091,7 +1091,7 @@ int csv_selected_to_clipboard (void)
 	err = bufopen(&prn);
     }
     if (!err) {
-	err = data_to_buf_as_csv(command.list, prn);
+	err = data_to_buf_as_csv(get_cmd_list(), prn);
     }
     if (!err) {
 	err = prn_to_clipboard(prn, COPY_CSV);

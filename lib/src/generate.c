@@ -3365,8 +3365,12 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 
 static void genr_msg (GENERATE *genr, int oldv)
 {
+    double x;
+
     if (!genr->save) {
-	sprintf(gretl_msg, " %g", genr->xvec[genr->pdinfo->t1]);
+	x = genr->xvec[genr->pdinfo->t1];
+	if (na(x)) strcpy(gretl_msg, " NA");
+	else sprintf(gretl_msg, " %g", x);
 	return;
     }
 
@@ -3377,7 +3381,9 @@ static void genr_msg (GENERATE *genr, int oldv)
     if (genr->scalar) {
 	char numstr[24];
 
-	sprintf(numstr, " = %g", genr->xvec[genr->pdinfo->t1]);
+	x = genr->xvec[genr->pdinfo->t1];
+	if (na(x)) strcpy(numstr, " = NA");
+	else sprintf(numstr, " = %g", x);
 	strcat(gretl_msg, numstr);
     }
 }

@@ -371,7 +371,7 @@ struct _VCV {
 
 #define VARLABEL(p,i)  ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)  ((p->varinfo[i])->display_name)
-#define COMPACT_METHOD(p, i) ((p->varinfo[i])->compact_method)
+#define COMPACT_METHOD(p,i) ((p->varinfo[i])->compact_method)
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"

@@ -69,27 +69,26 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 {
     int i, m;
     char linecpy[MAXLEN];
-    unsigned char oflag = 0;
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
     int err = 0;
 
     strcpy(linecpy, plp->lines[cmdnum]);
-    catchflag(linecpy, &oflag);
+    catchflag(linecpy, &cmd.opt);
 
     substitute_dollar_i(linecpy);
 
-    getcmd(linecpy, datainfo, &command, &ignore, &Z, NULL);
+    getcmd(linecpy, datainfo, &cmd, &ignore, &Z, NULL);
 
-    if (command.ci < 0) return 0;
+    if (cmd.ci < 0) return 0;
 
-    if (command.errcode) {
-	errmsg(command.errcode, prn);
+    if (cmd.errcode) {
+	errmsg(cmd.errcode, prn);
 	return 1;
     }
 
     if (!echo_off && plp->type == FOR_LOOP) {
-	echo_cmd(&command, datainfo, linecpy, 0, 1, oflag, prn);
+	echo_cmd(&cmd, datainfo, linecpy, 0, 1, prn);
     }
 
 #if 0
@@ -97,11 +96,11 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     debug_print_model_info(models[0], "models[0]");
 #endif
 
-    switch (command.ci) {
+    switch (cmd.ci) {
 
     case GENR:
 	err = generate(&Z, datainfo, linecpy, model_count,
-		       tmpmodel, oflag);
+		       tmpmodel, cmd.opt);
 	break;
 
     case SIM:
@@ -144,17 +143,17 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	/* estimate the model called for */
 	clear_model(models[0], NULL);
 
-	if (command.ci == OLS) {
-	    *models[0] = lsq(command.list, &Z, datainfo, OLS, 1, 0.0);
+	if (cmd.ci == OLS) {
+	    *models[0] = lsq(cmd.list, &Z, datainfo, OLS, 1, 0.0);
 	}
-	else if (command.ci == LAD) {
-	    *models[0] = lad(command.list, &Z, datainfo);
+	else if (cmd.ci == LAD) {
+	    *models[0] = lad(cmd.list, &Z, datainfo);
 	}
-	else if (command.ci == HSK) {
-	    *models[0] = hsk_func(command.list, &Z, datainfo);
+	else if (cmd.ci == HSK) {
+	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
 	}
-	else if (command.ci == HCCM) {
-	    *models[0] = hccm_func(command.list, &Z, datainfo);
+	else if (cmd.ci == HCCM) {
+	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
 	}
 
 	if ((models[0])->errcode) {
@@ -170,18 +169,13 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	if (plp->type == FOR_LOOP) {
 	    (models[0])->ID = lround + 1;
 	    printmodel(models[0], datainfo, prn); 
-	    if (oflag) outcovmx(models[0], datainfo, 0, prn);
+	    if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
 	}
 	else if (plp->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
 	    m = get_modnum_by_cmdnum(plp, cmdnum);
 	    swap_models(&models[0], &plp->models[m]);
 	    (plp->models[m])->ID = cmdnum;
-	    /* Bodge: "correct" is being borrowed here, to mark the '-o' */
-	    if (oflag) {
-		/* covariance matrix wanted */
-		(plp->models[m])->correct = 1;
-	    }
 	    tmpmodel = plp->models[m];
 	} else { 
 	    /* looping a fixed number of times */
@@ -198,13 +192,13 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	break;
 
     case PRINT:
-	if (strlen(command.param)) {
-	    simple_commands(&command, linecpy, &Z, datainfo, &paths,
-			    0, oflag, prn);
+	if (strlen(cmd.param)) {
+	    simple_commands(&cmd, linecpy, &Z, datainfo, &paths,
+			    0, prn);
 	    break;
 	}
 	if (plp->type != COUNT_LOOP) {
-	    printdata(command.list, &Z, datainfo, 0, oflag, prn);
+	    printdata(cmd.list, &Z, datainfo, 0, cmd.opt, prn);
 	    break;
 	}
 	if (lround == 0) {
@@ -214,12 +208,12 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    else 
 		plp->prns = realloc(plp->prns, (plp->nprn) * sizeof *plp->prns);
 	    if (loop_print_init(&plp->prns[plp->nprn-1], 
-				command.list, cmdnum)) { 
+				cmd.list, cmdnum)) { 
 		pputs(prn, _("Failed to initalize print struct for loop\n"));
 		return 1;
 	    }
 	}
-	if (update_loop_print(plp, cmdnum, command.list, &Z, datainfo)) {
+	if (update_loop_print(plp, cmdnum, cmd.list, &Z, datainfo)) {
 	    pputs(prn, _("Failed to add values to print loop\n"));
 	    return 1;
 	}
@@ -230,7 +224,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	break;
 
     case SMPL:
-	if (oflag) {
+	if (cmd.opt) {
 	    if (restore_full_sample(&subZ, &fullZ, &Z,
 				    &subinfo, &fullinfo, &datainfo)) {
 		pprintf(prn, "%s\n", get_gretl_errmsg());
@@ -241,7 +235,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 		return 1;
 	    }
 	    if (restrict_sample(linecpy, &Z, &subZ, datainfo, 
-				subinfo, oflag)) {
+				subinfo, cmd.opt)) {
 		pprintf(prn, "%s\n", get_gretl_errmsg());
 		return 1;
 	    }
@@ -258,18 +252,18 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 
     case STORE:
 	if (lround == 0) {
-	    plp->nstore = command.list[0];
-	    strcpy(loopstorefile, command.param);
-	    if (loop_store_init(plp, command.list, datainfo))
+	    plp->nstore = cmd.list[0];
+	    strcpy(loopstorefile, cmd.param);
+	    if (loop_store_init(plp, cmd.list, datainfo))
 		return 1;
 	}
-	for (i=0; i<command.list[0]; i++) {
-	    if (datainfo->vector[command.list[i+1]]) { 
+	for (i=0; i<cmd.list[0]; i++) {
+	    if (datainfo->vector[cmd.list[i+1]]) { 
 		plp->storeval[i * plp->ntimes + lround] = 
-		    Z[command.list[i+1]][datainfo->t1 + 1];
+		    Z[cmd.list[i+1]][datainfo->t1 + 1];
 	    } else {
 		plp->storeval[i * plp->ntimes + lround] = 
-		    Z[command.list[i+1]][0];
+		    Z[cmd.list[i+1]][0];
 	    }
 	}	
 	break;
@@ -284,7 +278,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 		    "this sort of loop.\n"));
 	    return 1;
 	}
-	summ = summary(command.list, &Z, datainfo, prn);
+	summ = summary(cmd.list, &Z, datainfo, prn);
 	if (summ == NULL) {
 	    pputs(prn, _("generation of summary stats failed\n"));
 	} else {

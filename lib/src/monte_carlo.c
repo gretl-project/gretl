@@ -626,6 +626,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 			 char *loopstorefile)
 {
     int i, j;
+    unsigned char opt;
     MODEL *pmod = NULL;
 
     if (ploop->lvar && ploop->lvar != INDEXNUM) {
@@ -636,6 +637,8 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 #ifdef LOOP_DEBUG
 	fprintf(stderr, "loop command %d (i=%d): %s\n\n", i+1, i, ploop->lines[i]);
 #endif
+	catchflag(ploop->lines[i], &opt);
+
 	if (ploop->lvar && ploop->ci[i] == OLS) {
 	    double dfadj, sqrta;
 
@@ -652,10 +655,12 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 	    for (j=0; j<pmod->ncoeff; j++) {
 		pmod->sderr[j] *= sqrta;
 	    }
-	    printmodel(pmod, pdinfo, prn);
 
-	    if (pmod->correct) {
-		/* bodge: coding for -o flag, for covariance matrix */
+	    if (opt != 'q') {
+		printmodel(pmod, pdinfo, prn);
+	    }
+
+	    if (opt == 'o') {
 		if (pmod->vcv) {
 		    int nc = pmod->ncoeff;
 		    int nt = nc * (nc + 1) / 2;

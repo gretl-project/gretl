@@ -816,7 +816,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data) 
 {
     int button;
-    extern int replay; /* lib.c */
 
 #ifdef ALWAYS_SAVE_SESSION
     char fname[MAXLEN];
@@ -829,7 +828,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     /* FIXME: should make both save_session_callback() and
        save_data_callback() blocking functions */
 
-    if (!expert && !replay && 
+    if (!expert && !replaying() && 
 	(session_changed(0) || (work_done() && !session_saved))) {
 	button = yes_no_dialog ("gretl", 		      
 				_("Do you want to save the commands and\n"

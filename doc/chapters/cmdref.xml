@@ -708,19 +708,19 @@
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry><replaceable>varnumber</replaceable>
+	      <entry><replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
 	</tgroup>
       </informaltable>
 
-      <para>Removes the variable with the given number from the
-	dataset. <emphasis>Use with caution</emphasis>: no
+      <para>Removes the listed variables (given by name or number)
+	from the dataset. <emphasis>Use with caution</emphasis>: no
 	confirmation is asked, and any variables with higher ID
 	numbers will be re-numbered.</para>
 
-      <para>If no <replaceable>varnumber</replaceable> is given with
+      <para>If no <replaceable>varlist</replaceable> is given with
 	this command, it deletes the last (highest numbered) variable
 	from the dataset.</para>
 
@@ -3118,8 +3118,7 @@
       <para>
 	A <command>!</command> at the beginning of a command line is
 	interpreted as an escape to the user's shell.  Thus arbitrary
-	shell commands can be executed from within the program (not
-	available under MS Windows).
+	shell commands can be executed from within the program.
       </para>
 
     </sect2>
@@ -3131,7 +3130,7 @@
 	  <tbody>
 	    <row>
 	      <entry>Arguments:</entry>
-	      <entry>[ <replaceable>startobs endobs</replaceable> ] 
+	      <entry>[ <replaceable>startobs endobs</replaceable> ]
 		<replaceable>y a0 a1 a2</replaceable> &hellip;
 	      </entry>
 	    </row>
@@ -3179,6 +3178,24 @@
 	variable names previously defined; these terms may be prefixed
 	with minus sign.
       </para>
+
+      <para>Note that as of gretl 1.2.0, <command>genr</command> (see
+	<xref linkend="genr"/> above) works dynamically, and you will
+	probably find it easier than <command>sim</command> for
+	creating an autoregressive series.  For example</para>
+
+      <programlisting>
+	genr y = 0 * const
+	genr y = .8*y(-1) -.2*y(-2) + normal()</programlisting>
+
+      <para>now achieves the same object as (and with greater clarity
+	than):</para>
+
+      <programlisting>
+	genr y = 0 * const
+	genr u = normal()
+	sim y u .8 -.2
+      </programlisting>
 
     </sect2>
 

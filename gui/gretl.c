@@ -123,7 +123,6 @@ char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
 char line[1024];
 PATHS paths;                /* useful paths */
-CMD command;                /* gretl command struct */
 double **Z;                 /* data set */
 double **subZ;              /* sub-sampled data set */
 double **fullZ;             /* convenience pointer */
@@ -641,9 +640,7 @@ int main (int argc, char *argv[])
     if (models[0] == NULL || models[1] == NULL || models[2] == NULL) 
 	noalloc(_("models")); 
 
-    command.list = malloc(sizeof(int));
-    command.param = malloc(1);
-    if (command.list == NULL || command.param == NULL)  
+    if (library_command_init())
 	noalloc(_("command list")); 
 
     gretl_rand_init();
@@ -778,14 +775,17 @@ int main (int argc, char *argv[])
     /* clean up before exiting */
     /* if (mdata) free_windata(NULL, mdata); */
     free_session();
+
     if (Z) free_Z(Z, datainfo);
     if (fullZ) free_Z(fullZ, fullinfo);
+
     free_model(models[0]);
     free_model(models[1]);
     free_model(models[2]);
     free(models);
-    if (command.list != NULL) free(command.list);
-    if (command.param != NULL) free(command.param);
+
+    library_command_free();
+
     if (data_status) free_datainfo(datainfo);
     if (fullinfo) {
 	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
@@ -1579,7 +1579,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
     if (verify_and_record_command(line) ||
-	write_data(Rdata, command.list, Z, datainfo, GRETL_DATA_R, NULL)) {
+	write_data(Rdata, get_cmd_list(), Z, datainfo, GRETL_DATA_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 

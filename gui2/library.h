@@ -31,6 +31,18 @@ int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 #endif
 
+int library_command_init (void);
+
+void library_command_free (void);
+
+int replaying (void);
+
+void set_replay_on (void);
+
+void set_replay_off (void);
+
+const int *get_cmd_list (void);
+
 int blank_entry (const char *entry, dialog_t *ddata);
 
 void close_dialog (dialog_t *ddata);
