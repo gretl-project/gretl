@@ -41,7 +41,8 @@ vpath %.c $(topsrc)/plugin
 vpath %.c $(topsrc)/plugin/libole2
 vpath %.c $(topsrc)/tests
 vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui2:$(extradir):$(topsrc)/plugin:.
-vpath %.h $(topsrc)/cephes
+vpath %.h $(topsrc)/cephes:..
+vpath %.rc $(topsrc)/win32
 
 #### End of system configuration section. ####
 
@@ -49,6 +50,25 @@ CLIPROG = gretlcli.exe
 GUIPROG = gretlw32.exe
 UPDATER = gretl_updater.exe
 CHECKER = nisttest.exe
+
+PLUGINSRC = \
+	excel_import.c \
+	gnumeric_import.c \
+	gretl_matrix.c \
+	johansen.c \
+	lad.c \
+	longname.c \
+	mp_ols.c \
+	panel_data.c \
+	progress_bar.c \
+	range-mean.c \
+	stats_tables.c \
+	sur.c \
+	tramo_options.c \
+	tramo-x12a.c \
+	workbook.c
+
+PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
@@ -100,12 +120,20 @@ PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
 PROBHDR = mconf.h
 PROBOBJ = $(PROBSRC:.c=.o)
 
+OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
+
 MO = mo/es.mo mo/fr.mo
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+	$(CC) -MM -MG $(CFLAGS) $< > $*.d 2>/dev/null
 
 # targets begin
 
 all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
 	$(CHECKER) $(MO)
+
+-include $(OBJS:.o=.d)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB) -lmingwex
@@ -130,7 +158,7 @@ $(LIBOBJ): $(LIBSRC) $(LIBHDR)
 $(PROBOBJ): $(PROBSRC) $(PROBHDR) 
 
 $(WRES): gretlw32.rc 
-	$(RC) $(RCFLAGS) gretlw32.rc $(RCOUT)
+	$(RC) $(RCFLAGS) $< $(RCOUT)
 	$(RES2COFF)
 
 $(UPDATER):
@@ -240,383 +268,3 @@ ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GLIBINC) $<
 
-# DO NOT DELETE
-
-boxplots.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-boxplots.o: ../lib/src/commands.h ../lib/src/errors.h
-boxplots.o: ../lib/src/estimate.h ../lib/src/generate.h
-boxplots.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-boxplots.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-boxplots.o: ../lib/src/strutils.h ../lib/src/describe.h
-boxplots.o: ../lib/src/printout.h ../lib/src/modelprint.h
-boxplots.o: ../lib/src/texprint.h ../lib/src/var.h
-boxplots.o: ../lib/src/interact.h ../lib/src/graphing.h
-boxplots.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-boxplots.o: ../lib/src/discrete.h ../lib/src/subsample.h
-boxplots.o: ../lib/src/calendar.h ../lib/src/system.h
-boxplots.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-boxplots.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-boxplots.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-boxplots.o: ../gui2/helpfiles.h ../gui2/boxplots.h
-calculator.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-calculator.o: ../lib/src/commands.h ../lib/src/errors.h
-calculator.o: ../lib/src/estimate.h ../lib/src/generate.h
-calculator.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-calculator.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-calculator.o: ../lib/src/strutils.h ../lib/src/describe.h
-calculator.o: ../lib/src/printout.h ../lib/src/modelprint.h
-calculator.o: ../lib/src/texprint.h ../lib/src/var.h
-calculator.o: ../lib/src/interact.h ../lib/src/graphing.h
-calculator.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-calculator.o: ../lib/src/discrete.h ../lib/src/subsample.h
-calculator.o: ../lib/src/calendar.h ../lib/src/system.h
-calculator.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-calculator.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-calculator.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-calculator.o: ../gui2/settings.h ../gui2/helpfiles.h
-callbacks.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-callbacks.o: ../lib/src/commands.h ../lib/src/errors.h
-callbacks.o: ../lib/src/estimate.h ../lib/src/generate.h
-callbacks.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-callbacks.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-callbacks.o: ../lib/src/strutils.h ../lib/src/describe.h
-callbacks.o: ../lib/src/printout.h ../lib/src/modelprint.h
-callbacks.o: ../lib/src/texprint.h ../lib/src/var.h
-callbacks.o: ../lib/src/interact.h ../lib/src/graphing.h
-callbacks.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-callbacks.o: ../lib/src/discrete.h ../lib/src/subsample.h
-callbacks.o: ../lib/src/calendar.h ../lib/src/system.h
-callbacks.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-callbacks.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-callbacks.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-callbacks.o: ../gui2/settings.h ../gui2/helpfiles.h
-callbacks.o: ../gui2/treeutils.h ../gui2/selector.h
-console.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-console.o: ../lib/src/commands.h ../lib/src/errors.h
-console.o: ../lib/src/estimate.h ../lib/src/generate.h
-console.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-console.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-console.o: ../lib/src/strutils.h ../lib/src/describe.h
-console.o: ../lib/src/printout.h ../lib/src/modelprint.h
-console.o: ../lib/src/texprint.h ../lib/src/var.h
-console.o: ../lib/src/interact.h ../lib/src/graphing.h
-console.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-console.o: ../lib/src/discrete.h ../lib/src/subsample.h
-console.o: ../lib/src/calendar.h ../lib/src/system.h
-console.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-console.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-console.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-console.o: ../gui2/helpfiles.h
-database.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-database.o: ../lib/src/commands.h ../lib/src/errors.h
-database.o: ../lib/src/estimate.h ../lib/src/generate.h
-database.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-database.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-database.o: ../lib/src/strutils.h ../lib/src/describe.h
-database.o: ../lib/src/printout.h ../lib/src/modelprint.h
-database.o: ../lib/src/texprint.h ../lib/src/var.h
-database.o: ../lib/src/interact.h ../lib/src/graphing.h
-database.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-database.o: ../lib/src/discrete.h ../lib/src/subsample.h
-database.o: ../lib/src/calendar.h ../lib/src/system.h
-database.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-database.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-database.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-database.o: ../gui2/helpfiles.h ../gui2/treeutils.h
-database.o: ../gui2/boxplots.h
-datafiles.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-datafiles.o: ../lib/src/commands.h ../lib/src/errors.h
-datafiles.o: ../lib/src/estimate.h ../lib/src/generate.h
-datafiles.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-datafiles.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-datafiles.o: ../lib/src/strutils.h ../lib/src/describe.h
-datafiles.o: ../lib/src/printout.h ../lib/src/modelprint.h
-datafiles.o: ../lib/src/texprint.h ../lib/src/var.h
-datafiles.o: ../lib/src/interact.h ../lib/src/graphing.h
-datafiles.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-datafiles.o: ../lib/src/discrete.h ../lib/src/subsample.h
-datafiles.o: ../lib/src/calendar.h ../lib/src/system.h
-datafiles.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-datafiles.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-datafiles.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-datafiles.o: ../gui2/settings.h ../gui2/helpfiles.h
-datafiles.o: ../gui2/treeutils.h
-dialogs.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-dialogs.o: ../lib/src/commands.h ../lib/src/errors.h
-dialogs.o: ../lib/src/estimate.h ../lib/src/generate.h
-dialogs.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-dialogs.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-dialogs.o: ../lib/src/strutils.h ../lib/src/describe.h
-dialogs.o: ../lib/src/printout.h ../lib/src/modelprint.h
-dialogs.o: ../lib/src/texprint.h ../lib/src/var.h
-dialogs.o: ../lib/src/interact.h ../lib/src/graphing.h
-dialogs.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-dialogs.o: ../lib/src/discrete.h ../lib/src/subsample.h
-dialogs.o: ../lib/src/calendar.h ../lib/src/system.h
-dialogs.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-dialogs.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-dialogs.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-dialogs.o: ../gui2/helpfiles.h ../gui2/ssheet.h ../lib/src/version.h
-dialogs.o: build.h ../gui2/selector.h
-fileselect.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-fileselect.o: ../lib/src/commands.h ../lib/src/errors.h
-fileselect.o: ../lib/src/estimate.h ../lib/src/generate.h
-fileselect.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-fileselect.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-fileselect.o: ../lib/src/strutils.h ../lib/src/describe.h
-fileselect.o: ../lib/src/printout.h ../lib/src/modelprint.h
-fileselect.o: ../lib/src/texprint.h ../lib/src/var.h
-fileselect.o: ../lib/src/interact.h ../lib/src/graphing.h
-fileselect.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-fileselect.o: ../lib/src/discrete.h ../lib/src/subsample.h
-fileselect.o: ../lib/src/calendar.h ../lib/src/system.h
-fileselect.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-fileselect.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-fileselect.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-fileselect.o: ../gui2/settings.h ../gui2/helpfiles.h
-fileselect.o: ../gui2/fileselect.h ../gui2/boxplots.h
-fileselect.o: ../gui2/gpt_control.h
-gpt_control.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-gpt_control.o: ../lib/src/commands.h ../lib/src/errors.h
-gpt_control.o: ../lib/src/estimate.h ../lib/src/generate.h
-gpt_control.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-gpt_control.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-gpt_control.o: ../lib/src/strutils.h ../lib/src/describe.h
-gpt_control.o: ../lib/src/printout.h ../lib/src/modelprint.h
-gpt_control.o: ../lib/src/texprint.h ../lib/src/var.h
-gpt_control.o: ../lib/src/interact.h ../lib/src/graphing.h
-gpt_control.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-gpt_control.o: ../lib/src/discrete.h ../lib/src/subsample.h
-gpt_control.o: ../lib/src/calendar.h ../lib/src/system.h
-gpt_control.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-gpt_control.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-gpt_control.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-gpt_control.o: ../gui2/settings.h ../gui2/helpfiles.h
-gpt_control.o: ../gui2/gpt_control.h
-gretl.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-gretl.o: ../lib/src/commands.h ../lib/src/errors.h
-gretl.o: ../lib/src/estimate.h ../lib/src/generate.h
-gretl.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-gretl.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-gretl.o: ../lib/src/strutils.h ../lib/src/describe.h
-gretl.o: ../lib/src/printout.h ../lib/src/modelprint.h
-gretl.o: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
-gretl.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-gretl.o: ../lib/src/nonparam.h ../lib/src/discrete.h
-gretl.o: ../lib/src/subsample.h ../lib/src/calendar.h
-gretl.o: ../lib/src/system.h ../lib/src/gretl_win32.h
-gretl.o: ../gui2/gretltypes.h ../gui2/gui_utils.h ../gui2/callbacks.h
-gretl.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-gretl.o: ../gui2/settings.h ../gui2/helpfiles.h ../gui2/treeutils.h
-gretl.o: ../gui2/ssheet.h ../gui2/gpt_control.h ../gui2/guiprint.h
-gretl.o: ../pixmaps/mini.calc.xpm ../pixmaps/mini.edit.xpm
-gretl.o: ../pixmaps/mini.sh.xpm ../pixmaps/mini.session.xpm
-gretl.o: ../pixmaps/mini.manual.xpm ../pixmaps/mini.netscape.xpm
-gretl.o: ../pixmaps/mini.pdf.xpm ../pixmaps/mini.plot.xpm
-gretl.o: ../pixmaps/mini.ofolder.xpm
-gtkfontselhack.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-gtkfontselhack.o: ../lib/src/commands.h ../lib/src/errors.h
-gtkfontselhack.o: ../lib/src/estimate.h ../lib/src/generate.h
-gtkfontselhack.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-gtkfontselhack.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-gtkfontselhack.o: ../lib/src/strutils.h ../lib/src/describe.h
-gtkfontselhack.o: ../lib/src/printout.h ../lib/src/modelprint.h
-gtkfontselhack.o: ../lib/src/texprint.h ../lib/src/var.h
-gtkfontselhack.o: ../lib/src/interact.h ../lib/src/graphing.h
-gtkfontselhack.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-gtkfontselhack.o: ../lib/src/discrete.h ../lib/src/subsample.h
-gtkfontselhack.o: ../lib/src/calendar.h ../lib/src/system.h
-gtkfontselhack.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-gtkfontselhack.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-gtkfontselhack.o: ../gui2/dialogs.h ../gui2/library.h
-gtkfontselhack.o: ../gui2/session.h ../gui2/settings.h
-gtkfontselhack.o: ../gui2/helpfiles.h ../gui2/gtkfontselhack.h
-gtkfontselhack.o: ../gui2/font_filter.c
-guiprint.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-guiprint.o: ../lib/src/commands.h ../lib/src/errors.h
-guiprint.o: ../lib/src/estimate.h ../lib/src/generate.h
-guiprint.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-guiprint.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-guiprint.o: ../lib/src/strutils.h ../lib/src/describe.h
-guiprint.o: ../lib/src/printout.h ../lib/src/modelprint.h
-guiprint.o: ../lib/src/texprint.h ../lib/src/var.h
-guiprint.o: ../lib/src/interact.h ../lib/src/graphing.h
-guiprint.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-guiprint.o: ../lib/src/discrete.h ../lib/src/subsample.h
-guiprint.o: ../lib/src/calendar.h ../lib/src/system.h
-guiprint.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-guiprint.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-guiprint.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-guiprint.o: ../gui2/helpfiles.h ../gui2/selector.h
-gui_utils.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-gui_utils.o: ../lib/src/commands.h ../lib/src/errors.h
-gui_utils.o: ../lib/src/estimate.h ../lib/src/generate.h
-gui_utils.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-gui_utils.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-gui_utils.o: ../lib/src/strutils.h ../lib/src/describe.h
-gui_utils.o: ../lib/src/printout.h ../lib/src/modelprint.h
-gui_utils.o: ../lib/src/texprint.h ../lib/src/var.h
-gui_utils.o: ../lib/src/interact.h ../lib/src/graphing.h
-gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h
-gui_utils.o: ../lib/src/calendar.h ../lib/src/system.h
-gui_utils.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-gui_utils.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-gui_utils.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-gui_utils.o: ../gui2/settings.h ../gui2/helpfiles.h
-gui_utils.o: ../gui2/guiprint.h ../gui2/series_view.h
-helpfiles.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-helpfiles.o: ../lib/src/commands.h ../lib/src/errors.h
-helpfiles.o: ../lib/src/estimate.h ../lib/src/generate.h
-helpfiles.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-helpfiles.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-helpfiles.o: ../lib/src/strutils.h ../lib/src/describe.h
-helpfiles.o: ../lib/src/printout.h ../lib/src/modelprint.h
-helpfiles.o: ../lib/src/texprint.h ../lib/src/var.h
-helpfiles.o: ../lib/src/interact.h ../lib/src/graphing.h
-helpfiles.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-helpfiles.o: ../lib/src/discrete.h ../lib/src/subsample.h
-helpfiles.o: ../lib/src/calendar.h ../lib/src/system.h
-helpfiles.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-helpfiles.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-helpfiles.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-helpfiles.o: ../gui2/settings.h ../gui2/helpfiles.h
-helpfiles.o: ../gui2/treeutils.h
-library.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-library.o: ../lib/src/commands.h ../lib/src/errors.h
-library.o: ../lib/src/estimate.h ../lib/src/generate.h
-library.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-library.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-library.o: ../lib/src/strutils.h ../lib/src/describe.h
-library.o: ../lib/src/printout.h ../lib/src/modelprint.h
-library.o: ../lib/src/texprint.h ../lib/src/var.h
-library.o: ../lib/src/interact.h ../lib/src/graphing.h
-library.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-library.o: ../lib/src/discrete.h ../lib/src/subsample.h
-library.o: ../lib/src/calendar.h ../lib/src/system.h
-library.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-library.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-library.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-library.o: ../gui2/helpfiles.h ../gui2/gpt_control.h
-library.o: ../lib/src/cmdlist.h ../gui2/selector.h ../gui2/boxplots.h
-library.o: ../gui2/series_view.h ../cli/common.c
-selector.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-selector.o: ../lib/src/commands.h ../lib/src/errors.h
-selector.o: ../lib/src/estimate.h ../lib/src/generate.h
-selector.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-selector.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-selector.o: ../lib/src/strutils.h ../lib/src/describe.h
-selector.o: ../lib/src/printout.h ../lib/src/modelprint.h
-selector.o: ../lib/src/texprint.h ../lib/src/var.h
-selector.o: ../lib/src/interact.h ../lib/src/graphing.h
-selector.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-selector.o: ../lib/src/discrete.h ../lib/src/subsample.h
-selector.o: ../lib/src/calendar.h ../lib/src/system.h
-selector.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-selector.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-selector.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-selector.o: ../gui2/helpfiles.h ../gui2/selector.h
-selector.o: ../gui2/treeutils.h
-series_view.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-series_view.o: ../lib/src/commands.h ../lib/src/errors.h
-series_view.o: ../lib/src/estimate.h ../lib/src/generate.h
-series_view.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-series_view.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-series_view.o: ../lib/src/strutils.h ../lib/src/describe.h
-series_view.o: ../lib/src/printout.h ../lib/src/modelprint.h
-series_view.o: ../lib/src/texprint.h ../lib/src/var.h
-series_view.o: ../lib/src/interact.h ../lib/src/graphing.h
-series_view.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-series_view.o: ../lib/src/discrete.h ../lib/src/subsample.h
-series_view.o: ../lib/src/calendar.h ../lib/src/system.h
-series_view.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-series_view.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-series_view.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-series_view.o: ../gui2/settings.h ../gui2/helpfiles.h
-session.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-session.o: ../lib/src/commands.h ../lib/src/errors.h
-session.o: ../lib/src/estimate.h ../lib/src/generate.h
-session.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-session.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-session.o: ../lib/src/strutils.h ../lib/src/describe.h
-session.o: ../lib/src/printout.h ../lib/src/modelprint.h
-session.o: ../lib/src/texprint.h ../lib/src/var.h
-session.o: ../lib/src/interact.h ../lib/src/graphing.h
-session.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-session.o: ../lib/src/discrete.h ../lib/src/subsample.h
-session.o: ../lib/src/calendar.h ../lib/src/system.h
-session.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-session.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-session.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-session.o: ../gui2/helpfiles.h ../gui2/selector.h ../gui2/boxplots.h
-session.o: ../gui2/ssheet.h ../gui2/gpt_control.h ../gui2/guiprint.h
-session.o: ../pixmaps/model.xpm ../pixmaps/boxplot.xpm
-session.o: ../pixmaps/gnuplot.xpm ../pixmaps/xfm_sc.xpm
-session.o: ../pixmaps/xfm_info.xpm ../pixmaps/xfm_text.xpm
-session.o: ../pixmaps/xfm_make.xpm ../pixmaps/rhohat.xpm
-session.o: ../pixmaps/summary.xpm
-settings.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-settings.o: ../lib/src/commands.h ../lib/src/errors.h
-settings.o: ../lib/src/estimate.h ../lib/src/generate.h
-settings.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-settings.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-settings.o: ../lib/src/strutils.h ../lib/src/describe.h
-settings.o: ../lib/src/printout.h ../lib/src/modelprint.h
-settings.o: ../lib/src/texprint.h ../lib/src/var.h
-settings.o: ../lib/src/interact.h ../lib/src/graphing.h
-settings.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-settings.o: ../lib/src/discrete.h ../lib/src/subsample.h
-settings.o: ../lib/src/calendar.h ../lib/src/system.h
-settings.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-settings.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-settings.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-settings.o: ../gui2/helpfiles.h ../gui2/gtkfontselhack.h
-ssheet.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-ssheet.o: ../lib/src/commands.h ../lib/src/errors.h
-ssheet.o: ../lib/src/estimate.h ../lib/src/generate.h
-ssheet.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-ssheet.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-ssheet.o: ../lib/src/strutils.h ../lib/src/describe.h
-ssheet.o: ../lib/src/printout.h ../lib/src/modelprint.h
-ssheet.o: ../lib/src/texprint.h ../lib/src/var.h
-ssheet.o: ../lib/src/interact.h ../lib/src/graphing.h
-ssheet.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-ssheet.o: ../lib/src/discrete.h ../lib/src/subsample.h
-ssheet.o: ../lib/src/calendar.h ../lib/src/system.h
-ssheet.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-ssheet.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-ssheet.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-ssheet.o: ../gui2/helpfiles.h ../gui2/treeutils.h ../gui2/ssheet.h
-treeutils.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-treeutils.o: ../lib/src/commands.h ../lib/src/errors.h
-treeutils.o: ../lib/src/estimate.h ../lib/src/generate.h
-treeutils.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-treeutils.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-treeutils.o: ../lib/src/strutils.h ../lib/src/describe.h
-treeutils.o: ../lib/src/printout.h ../lib/src/modelprint.h
-treeutils.o: ../lib/src/texprint.h ../lib/src/var.h
-treeutils.o: ../lib/src/interact.h ../lib/src/graphing.h
-treeutils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-treeutils.o: ../lib/src/discrete.h ../lib/src/subsample.h
-treeutils.o: ../lib/src/calendar.h ../lib/src/system.h
-treeutils.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-treeutils.o: ../gui2/gui_utils.h ../gui2/callbacks.h
-treeutils.o: ../gui2/dialogs.h ../gui2/library.h ../gui2/session.h
-treeutils.o: ../gui2/settings.h ../gui2/helpfiles.h
-treeutils.o: ../gui2/treeutils.h
-webget.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
-webget.o: ../lib/src/commands.h ../lib/src/errors.h
-webget.o: ../lib/src/estimate.h ../lib/src/generate.h
-webget.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-webget.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-webget.o: ../lib/src/strutils.h ../lib/src/describe.h
-webget.o: ../lib/src/printout.h ../lib/src/modelprint.h
-webget.o: ../lib/src/texprint.h ../lib/src/var.h
-webget.o: ../lib/src/interact.h ../lib/src/graphing.h
-webget.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-webget.o: ../lib/src/discrete.h ../lib/src/subsample.h
-webget.o: ../lib/src/calendar.h ../lib/src/system.h
-webget.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
-webget.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
-webget.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
-webget.o: ../gui2/helpfiles.h ../gui2/webget.h

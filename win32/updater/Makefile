@@ -9,6 +9,7 @@ WINLIBS = -L../import-libs -lz.dll -lwsock32
 PROG = gretl_updater.exe
 
 vpath %.h ../../lib/src
+vpath %.c ../../win32/updater
 
 $(PROG): $(OBJ) version.h
 	 $(CC) -mwindows -s -o $@ $(OBJ) $(WINLIBS)
