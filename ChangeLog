@@ -2,11 +2,13 @@ version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking
   at the wrong coefficient in some cases
 - Fix bug in VAR impulse responses: could get messed up by
-  missing values 
+  missing values that differ across series
 - Fix bug: crash on generating LaTeX tabular output for a model
   estimated using robust standard errors (format string issue)
 - Fix bug: the session "graph page" was not appearing even when
   a valid latex executable was available
+- Improve efficiency of test for existence of helper programs on
+  Linux/unix
 - Add auto-lag option to the GUI dialog box for the ADF test
 - Remember the options selected in the ADF dialog from one invocation
   to the next
@@ -17,7 +19,7 @@ version 1.3.2
   "$test" and "$pvalue" in genr)
 - "label" command: if only a varname is given, print the variable's
    current label, if any
-- Updates to documentation
+- Updates to documentation (manual and helpfiles)
 
 01/19/2005 version 1.3.1
 - Add new dataset structure "wizard" in place of the old dialogs
@@ -41,7 +43,7 @@ version 1.3.2
 - Improve feel of data editing spreadsheet, gtk2 version
 - Model dialog box: allow shifting of regressors with middle-
   click of mouse
-- Add groupwise heteroskasticity test for panel data
+- Add groupwise heteroskedasticity test for panel data
 - Extend handling of missing observations in panel context,
   including case of unbalanced panels (to some degree)
 - Fix for appending observations (built-in spreadsheet): plotting

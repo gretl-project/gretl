@@ -2519,7 +2519,7 @@ static int font_not_found (const char *s)
     }
 }
 
-static int real_gretl_spawn (const char *cmdline, int verbose)
+int gretl_spawn (const char *cmdline)
 {
     GError *error = NULL;
     gchar *errout = NULL, *sout = NULL;
@@ -2538,45 +2538,32 @@ static int real_gretl_spawn (const char *cmdline, int verbose)
 
     if (!ok) {
 	strcpy(gretl_errmsg, error->message);
-	if (verbose) {
-	    fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
-	}
+	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
 	g_error_free(error);
 	ret = 1;
     } else if (errout && *errout) {
 	strcpy(gretl_errmsg, errout);
-	if (verbose) {
-	    fprintf(stderr, "stderr: '%s'\n", errout);
-	}
+	fprintf(stderr, "stderr: '%s'\n", errout);
 	if (!font_not_found(errout)) {
 	    ret = 1;
 	}
     } else if (status != 0) {
-	if (sout != NULL && strstr(sout, "File ignored")) {
-	    /* latex q.tex: works, but returns non-zero */
-	    ;
+	if (sout != NULL) {
+	    sprintf(gretl_errmsg, "%s\n%s", 
+		    _("Command failed"),
+		    sout);
+	    fprintf(stderr, "status=%d: '%s'\n", status, sout);
 	} else {
-	    if (sout != NULL) {
-		sprintf(gretl_errmsg, "%s\n%s", 
-			_("Command failed"),
-			sout);
-		if (verbose) {
-		    fprintf(stderr, "status=%d: '%s'\n", status, sout);
-		}
-	    } else {
-		strcpy(gretl_errmsg, _("Command failed"));
-		if (verbose) {
-		    fprintf(stderr, "status=%d\n", status);
-		}
-	    }
-	    ret = 1;
+	    strcpy(gretl_errmsg, _("Command failed"));
+	    fprintf(stderr, "status=%d\n", status);
 	}
+	ret = 1;
     }
 
     if (errout != NULL) g_free(errout);
     if (sout != NULL) g_free(sout);
 
-    if (ret && verbose) {
+    if (ret) {
 	fprintf(stderr, "Failed command: '%s'\n", cmdline);
     } 
 
@@ -2587,7 +2574,7 @@ static int real_gretl_spawn (const char *cmdline, int verbose)
 
 #if !defined(WIN32) && !defined(GRETL_GLIB)
 
-static int real_gretl_spawn (const char *cmdline, int verbose)
+int gretl_spawn (const char *cmdline)
 {
     int err;
 
@@ -2596,26 +2583,12 @@ static int real_gretl_spawn (const char *cmdline, int verbose)
     signal(SIGCHLD, SIG_DFL);
 
     err = system(cmdline);
-    if (err && verbose) {
+    if (err) {
 	fprintf(stderr, "Failed command: '%s'\n", cmdline);
 	perror(NULL);
     }
 
     return err;
-}
-
-#endif
-
-#ifndef WIN32
-
-int gretl_spawn (const char *cmdline)
-{
-    return real_gretl_spawn(cmdline, 1);
-}
-
-int gretl_spawn_quiet (const char *cmdline)
-{
-    return real_gretl_spawn(cmdline, 0);
 }
 
 #endif
