@@ -1392,6 +1392,8 @@ static int real_var (int order, const int *inlist,
 
     if (save) {
 	*pvar = var;
+    } else if (var != NULL) {
+	gretl_var_free(var);
     }
 
     return err;
