@@ -997,11 +997,14 @@ int autocorr_test (MODEL *pmod, int order,
 	strcpy(VARLABEL(pdinfo, v), _("residual"));
 	/* then lags of same */
 	for (i=1; i<=order; i++) {
-	    if (_laggenr(v, i, 1, pZ, pdinfo)) {
+	    int lnum;
+
+	    lnum = laggenr(v, i, 1, pZ, pdinfo);
+	    if (lnum < 0) {
 		sprintf(gretl_errmsg, _("lagging uhat failed"));
 		err = E_LAGS;
 	    } else {
-		newlist[pmod->list[0] + i] = v+i;
+		newlist[pmod->list[0] + i] = lnum;
 	    }
 	}
     }

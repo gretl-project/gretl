@@ -2298,19 +2298,21 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 
 /* ......................................................  */
 
-int _laggenr (int iv, int lag, int opt, double ***pZ, 
-	      DATAINFO *pdinfo)
-     /*
-       creates Z[iv][t-lag] and prints label if opt != 0
-       (aborts if a variable of the same name already exists)
-     */
+/* laggenr: create Z[iv][t-lag] if this variable does not
+   already exist.  
+
+   Return the ID number of the lag var, or -1 on error.
+*/
+
+int laggenr (int iv, int lag, int opt, double ***pZ, 
+	     DATAINFO *pdinfo)
 {
     char word[32];
     char s[32];
-    int v = pdinfo->v;
+    int lnum;
 
     /* can't do lags of a scalar */
-    if (!pdinfo->vector[iv]) return 1;
+    if (!pdinfo->vector[iv]) return -1;
 
     strcpy(s, pdinfo->varname[iv]);
     if (pdinfo->pd >=10) _esl_trunc(s, 5);
@@ -2320,20 +2322,21 @@ int _laggenr (int iv, int lag, int opt, double ***pZ,
 
     /* "s" should now contain the new variable name --
        check whether it already exists: if so, get out */
-    if (varindex(pdinfo, s) < v) return 0;
+    lnum = varindex(pdinfo, s);
+    if (lnum < pdinfo->v) return lnum;
 
-    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return -1;
 
-    get_lag(iv, lag, (*pZ)[v], *pZ, pdinfo);
+    get_lag(iv, lag, (*pZ)[lnum], *pZ, pdinfo);
 
-    strcpy(pdinfo->varname[v], s);
+    strcpy(pdinfo->varname[lnum], s);
 
     if (opt) { 
-	sprintf(VARLABEL(pdinfo, v), "%s = %s(-%d)", s, 
+	sprintf(VARLABEL(pdinfo, lnum), "%s = %s(-%d)", s, 
 		pdinfo->varname[iv], lag);
     }
 
-    return 0;
+    return lnum;
 }
 
 /**
@@ -2542,8 +2545,8 @@ int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	lv = list[v];
 	if (lv == 0 || !pdinfo->vector[lv]) continue;
 	for (l=1; l<=maxlag; l++) {
-	    check = _laggenr(lv, l, 1, pZ, pdinfo);
-	    if (check) return 1;
+	    check = laggenr(lv, l, 1, pZ, pdinfo);
+	    if (check < 0) return 1;
 	}
     }
     return 0;

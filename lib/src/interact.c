@@ -563,28 +563,29 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    if ((v = varindex(pdinfo, field)) <= pdinfo->v - 1) {
 		command->list[j] = v;
 	    } else {
-		/* Automated lags:
-		   could be the string is like "varname(-2)", meaning
-		   the second lag of varname: in this case auto-
-		   generate the lag variable. */
+		/* an auto-generated variable? */
+		/* Case 1: automated lags:  e.g. 'var(-1)' */
 		if (_parse_lagvar(field, &lagvar, pdinfo)) {
-		    if (_laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo)) {
+		    int lnum;
+		    int v = pdinfo->v;
+
+		    lnum = laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo);
+		    if (lnum < 0) {
 			command->errcode = 1;
 			sprintf(gretl_errmsg, 
 				_("generation of lag variable failed"));
 			free(remainder);
 			return;
 		    } else { 
-			command->list[j] = pdinfo->v - 1;
-			if (cmds != NULL) {
-			    pprintf(cmds, "genr %s\n", 
-				    VARLABEL(pdinfo, pdinfo->v - 1));
+			command->list[j] = lnum;
+			if (lnum == v && cmds != NULL) {
+			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, lnum));
 			}
 			n += strlen(field) + 1;
 			continue; 
 		    }
 		} 
-		/* auto-generation of plotting variables */
+		/* Case 2: special plotting variable */
 		if (!strcmp(field, "qtrs") || 
 		    !strcmp(field, "months") || !strcmp(field, "time")) {
 		    plotvar(pZ, pdinfo, field);

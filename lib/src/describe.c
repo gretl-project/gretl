@@ -337,9 +337,14 @@ static int get_pacf (double *pacf, int m, int varnum,
 
     /* add appropriate number of lags to data set */
     for (i=1; i<=m; i++) {
-	_laggenr(varnum, i, 0, pZ, pdinfo);
-	/* the lagvar may already exist */
-	laglist[i-1] = _lagvarnum(varnum, i, pdinfo); 
+	int lnum = laggenr(varnum, i, 0, pZ, pdinfo);
+
+	if (lnum < 0) {
+	    free(list);
+	    free(laglist);
+	    return 1;
+	}
+	laglist[i-1] = lnum; 
     }
 
     _init_model(&tmp, pdinfo);

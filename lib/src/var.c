@@ -198,7 +198,7 @@ int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 }
 
 /**
- * _lagvarnum:
+ * lagvarnum:
  * @iv: ID number of the variable.
  * @lag: Desired lag length.
  * @pdinfo: data information struct.
@@ -210,7 +210,7 @@ int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
  *
  */
 
-int _lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
+static int lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
 {
     char lagname[16], ext[6];
 
@@ -317,10 +317,13 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    depvars[neqns] = list[i];
 	    neqns++;
 	    for (l=1; l<=order; l++) {
-		_laggenr(list[i], l, 1, pZ, pdinfo);
-		/* note: the lagvar may already exist */
-		varlist[index] = _lagvarnum(list[i], l, pdinfo); 
-		index++;
+		int lnum = laggenr(list[i], l, 1, pZ, pdinfo);
+
+		/* FIXME: handle laggenr error */
+		if (lnum > 0) {
+		    varlist[index] = lnum; 
+		    index++;
+		}
 	    }
 	}
     }
@@ -606,7 +609,11 @@ int adf_test (int order, int varno, double ***pZ,
     i = pdinfo->t1;
     pdinfo->t1 = 0;
     diffgenr(varno, pZ, pdinfo);
-    _laggenr(varno, 1, 1, pZ, pdinfo);
+    if (laggenr(varno, 1, 1, pZ, pdinfo) < 0) {
+	free(adflist);
+	free(shortlist);
+	return E_DATA;
+    }
     pdinfo->t1 = i;
 
     adflist[1] = diffvarnum(varno, pdinfo);
@@ -614,7 +621,7 @@ int adf_test (int order, int varno, double ***pZ,
     /* do the more familiar Dickey-Fuller t-test first */
     adflist[0] = 3;
     adflist[2] = 0;
-    adflist[3] = _lagvarnum(varno, 1, pdinfo);
+    adflist[3] = lagvarnum(varno, 1, pdinfo);
 
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
     if (adf_model.errcode) {
@@ -658,12 +665,15 @@ int adf_test (int order, int varno, double ***pZ,
 
     /* then do ADF test using F-statistic */
     adflist[0] = 4 + order;
-    adflist[3] = _lagvarnum(varno, 1, pdinfo);
+    adflist[3] = lagvarnum(varno, 1, pdinfo);
 
     for (l=1; l<=order; l++) {
-	_laggenr(adflist[1], l, 1, pZ, pdinfo);
-	/* note: the lagvar may already exist */
-	adflist[l+3] = _lagvarnum(adflist[1], l, pdinfo); 
+	int lnum = laggenr(adflist[1], l, 1, pZ, pdinfo);
+
+	/* FIXME: handle laggenr error */
+	if (lnum > 0) {
+	    adflist[l+3] = lnum;
+	} 
     }
 
     adflist[adflist[0]] = 0;
@@ -828,7 +838,7 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
 	    trends = -1;
 	    break;
 	}
-	vl = _lagvarnum(v, 1, pdinfo);
+	vl = lagvarnum(v, 1, pdinfo);
 	tlist[1] = v;
 	tlist[3] = vl;
 	tmod = lsq(tlist, pZ, pdinfo, OLS, 0, 0.0);
@@ -1011,13 +1021,18 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     j = 1;
     for (i=1; i<=list[0]; i++) {
+	int lnum;
+
 	if (list[i] == 0) {
 	    resids.levels_list[0] -= 1;
 	    hasconst = 1;
 	    continue;
 	}
-	_laggenr(list[i], 1, 1, pZ, pdinfo);
-	resids.levels_list[j++] = _lagvarnum(list[i], 1, pdinfo);
+	lnum = laggenr(list[i], 1, 1, pZ, pdinfo);
+	/* FIXME: handle laggenr error */
+	if (lnum > 0) {
+	    resids.levels_list[j++] = lnum;
+	}
     }
 
     /* now get differences and put them into list */

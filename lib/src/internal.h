@@ -22,8 +22,8 @@
 #ifndef GRETL_INTERNAL_H
 #define GRETL_INTERNAL_H
 
-int _laggenr (int iv, int lag, int opt, double ***pZ, 
-	      DATAINFO *pdinfo);
+int laggenr (int iv, int lag, int opt, double ***pZ, 
+	     DATAINFO *pdinfo);
 
 int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	       DATAINFO *pdinfo);
