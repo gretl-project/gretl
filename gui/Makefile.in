@@ -252,7 +252,7 @@ gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h
 gui_utils.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 gui_utils.o: dialogs.h library.h session.h settings.h helpfiles.h guiprint.h
-gui_utils.o: ../pixmaps/save.xpm ../pixmaps/saveas.xpm
+gui_utils.o: ../pixmaps/save.xpm ../pixmaps/saveas.xpm ../pixmaps/print.xpm
 gui_utils.o: ../pixmaps/exec_small.xpm ../pixmaps/copy.xpm
 gui_utils.o: ../pixmaps/paste.xpm ../pixmaps/search.xpm
 gui_utils.o: ../pixmaps/replace.xpm ../pixmaps/undo.xpm

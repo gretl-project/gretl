@@ -1145,7 +1145,7 @@ static size_t get_size (char *buf)
 
 /* ........................................................... */
 
-int update_query (void)
+int update_query (int verbose)
 {
     int err = 0;
     char *getbuf = NULL;

@@ -1015,6 +1015,8 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
     int listbox_varname_width = 90;
     int listbox_label_width = 400;
 
+    if (strcmp(titles[1], "Variable name")) listbox_varname_width = 110;
+
     view = gtk_clist_new_with_titles (3, titles);
     gtk_clist_column_titles_passive(GTK_CLIST(view));
     gtk_clist_set_selection_mode (GTK_CLIST (view), 

@@ -1258,7 +1258,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_default_size(GTK_WINDOW (mdata->w), 
 				mainwin_width, mainwin_height);
-    gtk_window_set_resizable(GTK_WINDOW (mdata->w), TRUE);
 #ifndef G_OS_WIN32
     g_signal_connect_after(G_OBJECT(mdata->w), "realize", 
 			   G_CALLBACK(set_wm_icon), 
