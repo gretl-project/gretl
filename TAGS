@@ -665,18 +665,18 @@ void open_script 114,3287
 void file_save 124,3594
 void dummy_call 185,5247
 void edit_header 192,5395
-void fit_resid_callback 206,5801
-void model_stat_callback 216,6056
-void model_callback 226,6312
-static int model_dates_check 288,7916
-void model_test_callback 304,8291
-void gretl_callback 365,9948
-void text_copy_callback 515,14274
-void text_paste_callback 522,14440
-void text_replace_callback 529,14595
-void text_undo_callback 536,14754
-void run_script_callback 543,14907
-void file_save_callback 550,15075
+void fit_resid_callback 202,5693
+void model_stat_callback 212,5948
+void model_callback 222,6204
+static int model_dates_check 284,7808
+void model_test_callback 300,8183
+void gretl_callback 361,9840
+void text_copy_callback 511,14166
+void text_paste_callback 518,14332
+void text_replace_callback 525,14487
+void text_undo_callback 532,14646
+void run_script_callback 539,14799
+void file_save_callback 546,14967
 
 gui/database.c,2457
 #define RECNUM 33,970
@@ -815,9 +815,6 @@ void file_selector 258,7724
 static void filesel_callback 410,11841
 static void extra_get_filter 553,15895
 void file_selector 566,16172
-
-gui/foo.c,16
-char title[2,2
 
 gui/gpt_control.c,1072
 struct gpt_titles_t gpt_titles_t28,894
@@ -993,91 +990,91 @@ static void delete_file_viewer 390,14376
 void delete_model 397,14559
 void delete_widget 408,14788
 void catch_key 415,14944
-void catch_ctrl_key 426,15251
-void *mymalloc 446,15782
-void *myrealloc 457,15984
-void register_data 468,16205
-void do_open_data 503,17094
-void verify_open_data 565,18605
-void verify_open_session 582,19139
-static void set_data_from_filelist 599,19686
-static void set_session_from_filelist 608,19909
-static void set_script_from_filelist 617,20142
-void save_session 626,20373
-void helpfile_init 736,23201
-static windata_t *helpwin 760,23823
-static int help_index 778,24246
-void menu_find 810,24868
-void datafile_find 820,25132
-void context_help 827,25316
-void help_show 836,25529
-void do_help 861,26224
-static void edit_script_help 916,27759
-static void buf_edit_save 948,28538
-static void file_viewer_save 966,29020
-void windata_init 993,29748
-void free_windata 1009,30123
-static void make_editbar 1051,31264
-windata_t *view_buffer 1148,33542
-static gchar *make_viewer_title 1235,36359
-windata_t *view_file 1264,37133
-windata_t *edit_buffer 1430,42011
-void flip 1507,44389
-static void model_panel_menu_state 1521,44728
-static void model_menu_state 1528,44917
-static void lmmenu_state 1549,45844
-static void latex_menu_state 1562,46285
-static void model_save_state 1569,46450
-static void set_up_viewer_menu 1577,46689
-static void add_vars_to_plot_menu 1618,47920
-static void plot_dummy_call 1665,49298
-static void add_dummies_to_plot_menu 1675,49599
-static void check_model_menu 1726,51331
-int view_model 1761,52810
-void setup_column 1863,56218
-static void msgbox 1877,56637
-static void msgbox 1886,56823
-static void msgbox 1896,57032
-void errbox 1936,58181
-void infobox 1943,58304
-int validate_varname 1950,58428
-void options_dialog 1983,59273
-static void flip_sensitive 2049,61745
-static void make_prefs_tab 2058,61994
-static void apply_changes 2180,65905
-static void str_to_boolvar 2214,66837
-static void boolvar_to_str 2224,67066
-void write_rc 2234,67282
-static void read_rc 2256,67862
-void write_rc 2313,69296
-void read_rc 2334,69838
-void write_rc 2381,71092
-static void read_rc 2410,71827
-static void font_selection_ok 2487,73690
-void font_selector 2503,74113
-static void close_find_dialog 2542,75436
-static void find_in_help 2550,75637
-static void find_in_clist 2586,76866
-static int look_for_string 2623,77907
-static void cancel_find 2638,78316
-static void find_string_dialog 2646,78520
-void prn_to_clipboard 2721,81138
-void text_copy 2739,81556
-void window_print 2829,83775
-void text_undo 2847,84262
-void text_paste 2874,85055
-void make_menu_item 2890,85500
-void allocate_fileptrs 2904,85912
-void mkfilelist 2917,86162
-char *endbit 2982,87892
-static void gnome_printfilelist 3016,88548
-static void win_printfilelist 3042,89143
-static void printfilelist 3068,89749
-void add_files_to_menu 3096,90309
-int open_plugin 3171,92360
-void *get_plugin_function 3199,93040
-void close_plugin 3222,93513
-void get_default_dir 3233,93702
+void catch_ctrl_key 429,15325
+void *mymalloc 449,15856
+void *myrealloc 460,16058
+void register_data 471,16279
+void do_open_data 506,17168
+void verify_open_data 568,18679
+void verify_open_session 585,19213
+static void set_data_from_filelist 602,19760
+static void set_session_from_filelist 611,19983
+static void set_script_from_filelist 620,20216
+void save_session 629,20447
+void helpfile_init 739,23275
+static windata_t *helpwin 763,23897
+static int help_index 781,24320
+void menu_find 813,24942
+void datafile_find 823,25206
+void context_help 830,25390
+void help_show 839,25603
+void do_help 864,26298
+static void edit_script_help 919,27833
+static void buf_edit_save 951,28612
+static void file_viewer_save 969,29094
+void windata_init 996,29822
+void free_windata 1012,30197
+static void make_editbar 1054,31338
+windata_t *view_buffer 1151,33616
+static gchar *make_viewer_title 1238,36433
+windata_t *view_file 1272,37336
+windata_t *edit_buffer 1438,42214
+void flip 1515,44593
+static void model_panel_menu_state 1529,44932
+static void model_menu_state 1536,45121
+static void lmmenu_state 1557,46048
+static void latex_menu_state 1570,46489
+static void model_save_state 1577,46654
+static void set_up_viewer_menu 1585,46893
+static void add_vars_to_plot_menu 1626,48124
+static void plot_dummy_call 1673,49502
+static void add_dummies_to_plot_menu 1683,49803
+static void check_model_menu 1734,51535
+int view_model 1769,53014
+void setup_column 1871,56422
+static void msgbox 1885,56841
+static void msgbox 1894,57027
+static void msgbox 1904,57236
+void errbox 1944,58385
+void infobox 1951,58508
+int validate_varname 1958,58632
+void options_dialog 1991,59477
+static void flip_sensitive 2057,61949
+static void make_prefs_tab 2066,62198
+static void apply_changes 2188,66109
+static void str_to_boolvar 2222,67041
+static void boolvar_to_str 2232,67270
+void write_rc 2242,67486
+static void read_rc 2264,68066
+void write_rc 2321,69500
+void read_rc 2342,70042
+void write_rc 2389,71296
+static void read_rc 2418,72031
+static void font_selection_ok 2495,73894
+void font_selector 2511,74317
+static void close_find_dialog 2550,75640
+static void find_in_help 2558,75841
+static void find_in_clist 2594,77070
+static int look_for_string 2631,78111
+static void cancel_find 2646,78520
+static void find_string_dialog 2654,78724
+void prn_to_clipboard 2729,81342
+void text_copy 2747,81760
+void window_print 2837,83979
+void text_undo 2855,84466
+void text_paste 2882,85259
+void make_menu_item 2898,85704
+void allocate_fileptrs 2912,86116
+void mkfilelist 2925,86366
+char *endbit 2990,88096
+static void gnome_printfilelist 3024,88752
+static void win_printfilelist 3050,89347
+static void printfilelist 3076,89953
+void add_files_to_menu 3104,90513
+int open_plugin 3179,92564
+void *get_plugin_function 3207,93244
+void close_plugin 3230,93717
+void get_default_dir 3241,93906
 
 gui/guiprint.c,1148
 int win_copy_rtf 48,1744

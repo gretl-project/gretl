@@ -17,10 +17,10 @@
  *
  */
 
-/* lib.h for gretl */
+/* library.h for gretl */
 
-#ifndef LIB_H
-#define LIB_H
+#ifndef LIBRARY_H
+#define LIBRARY_H
 
 /* general purpose functions */
 
@@ -168,5 +168,5 @@ int execute_script (const char *runfile,
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
 
-#endif /* LIB_H */
+#endif /* LIBRARY_H */
 

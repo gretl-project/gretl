@@ -4129,6 +4129,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     free(replace);
     free(s);
     free(modbuf);
+    g_free(buf);
 }
 
 #include "../cli/common.c"

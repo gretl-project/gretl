@@ -59,6 +59,9 @@ clean:
 depend:
 	makedepend -Y../lib/src *.c 
 
+distdepend: depend
+	($tooldir)/dist_depend.pl
+
 # DO NOT DELETE
 
 complete.o: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h

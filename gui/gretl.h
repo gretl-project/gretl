@@ -42,7 +42,7 @@
 #include "gui_utils.h"
 #include "callbacks.h"
 #include "dialogs.h"
-#include "lib.h"
+#include "library.h"
 #include "session.h"
 
 #define MAXSTR 255

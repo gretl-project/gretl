@@ -58,9 +58,12 @@ tags:
 	etags lib/src/*.c cli/*.c gui/*.c plugin/*.c
 
 depend:
-	for d in $(SUBDIRS) ; do $(MAKE) -C $$d depend; done	
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d depend; done
 
-dist:	
+distdepend:
+	for d in $(SUBDIRS) ; do $(MAKE) -C $$d distdepend; done	
+
+dist: distdepend	
 	./tools/makedist
 
 distclean: clean

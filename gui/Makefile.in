@@ -121,6 +121,9 @@ clean:
 depend:
 	makedepend -Y$(libsrc) *.c 
 
+distdepend: depend
+	$(tooldir)/dist_depend.pl
+
 # DO NOT DELETE
 
 boxplots.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
@@ -131,7 +134,7 @@ boxplots.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 boxplots.o: ../lib/src/interact.h ../lib/src/graphing.h
 boxplots.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 boxplots.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-boxplots.o: gui_utils.h callbacks.h dialogs.h lib.h session.h plotps.c
+boxplots.o: gui_utils.h callbacks.h dialogs.h library.h session.h plotps.c
 calculator.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 calculator.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 calculator.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -140,7 +143,7 @@ calculator.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 calculator.o: ../lib/src/interact.h ../lib/src/graphing.h
 calculator.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 calculator.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-calculator.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+calculator.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 callbacks.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 callbacks.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 callbacks.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -149,7 +152,7 @@ callbacks.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 callbacks.o: ../lib/src/interact.h ../lib/src/graphing.h
 callbacks.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 callbacks.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-callbacks.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+callbacks.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 database.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 database.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 database.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -158,7 +161,7 @@ database.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 database.o: ../lib/src/interact.h ../lib/src/graphing.h
 database.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 database.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-database.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+database.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 datafiles.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 datafiles.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 datafiles.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -167,7 +170,7 @@ datafiles.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 datafiles.o: ../lib/src/interact.h ../lib/src/graphing.h
 datafiles.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 datafiles.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-datafiles.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+datafiles.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 dialogs.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 dialogs.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 dialogs.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -176,7 +179,7 @@ dialogs.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 dialogs.o: ../lib/src/interact.h ../lib/src/graphing.h
 dialogs.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 dialogs.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-dialogs.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+dialogs.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 fileselect.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 fileselect.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 fileselect.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -185,7 +188,7 @@ fileselect.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 fileselect.o: ../lib/src/interact.h ../lib/src/graphing.h
 fileselect.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 fileselect.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-fileselect.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+fileselect.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 gpt_control.o: gretl.h ../config.h ../lib/src/libgretl.h
 gpt_control.o: ../lib/src/commands.h ../lib/src/errors.h
 gpt_control.o: ../lib/src/estimate.h ../lib/src/generate.h ../lib/src/utils.h
@@ -195,7 +198,7 @@ gpt_control.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 gpt_control.o: ../lib/src/interact.h ../lib/src/graphing.h
 gpt_control.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gpt_control.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-gpt_control.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+gpt_control.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 gretl.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 gretl.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 gretl.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -203,7 +206,7 @@ gretl.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
 gretl.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 gretl.o: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
 gretl.o: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
-gretl.o: gretltypes.h gui_utils.h callbacks.h dialogs.h lib.h session.h
+gretl.o: gretltypes.h gui_utils.h callbacks.h dialogs.h library.h session.h
 gretl.o: pixmaps/gretl.xpm pixmaps/mini.calc.xpm pixmaps/mini.edit.xpm
 gretl.o: pixmaps/mini.sh.xpm pixmaps/mini.session.xpm pixmaps/mini.manual.xpm
 gretl.o: pixmaps/mini.netscape.xpm pixmaps/mini.pdf.xpm pixmaps/mini.plot.xpm
@@ -216,8 +219,11 @@ gui_utils.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 gui_utils.o: ../lib/src/interact.h ../lib/src/graphing.h
 gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-gui_utils.o: gui_utils.h callbacks.h dialogs.h lib.h session.h htmlprint.h
-gui_utils.o: guiprint.h
+gui_utils.o: gui_utils.h callbacks.h dialogs.h library.h session.h
+gui_utils.o: htmlprint.h guiprint.h pixmaps/save.xpm pixmaps/saveas.xpm
+gui_utils.o: pixmaps/exec_small.xpm pixmaps/copy.xpm pixmaps/paste.xpm
+gui_utils.o: pixmaps/replace.xpm pixmaps/undo.xpm pixmaps/question.xpm
+gui_utils.o: pixmaps/close.xpm
 guiprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 guiprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 guiprint.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -226,7 +232,7 @@ guiprint.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 guiprint.o: ../lib/src/interact.h ../lib/src/graphing.h
 guiprint.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 guiprint.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-guiprint.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+guiprint.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 htmlprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 htmlprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 htmlprint.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -235,16 +241,18 @@ htmlprint.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 htmlprint.o: ../lib/src/interact.h ../lib/src/graphing.h
 htmlprint.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 htmlprint.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-htmlprint.o: gui_utils.h callbacks.h dialogs.h lib.h session.h htmlprint.h
-lib.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
-lib.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
-lib.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
-lib.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
-lib.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
-lib.o: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
-lib.o: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
-lib.o: gretltypes.h gui_utils.h callbacks.h dialogs.h lib.h session.h
-lib.o: htmlprint.h ../cli/common.c
+htmlprint.o: gui_utils.h callbacks.h dialogs.h library.h session.h
+htmlprint.o: htmlprint.h
+library.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
+library.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
+library.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
+library.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
+library.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
+library.o: ../lib/src/interact.h ../lib/src/graphing.h
+library.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+library.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
+library.o: gui_utils.h callbacks.h dialogs.h library.h session.h htmlprint.h
+library.o: ../cli/common.c
 session.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 session.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 session.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -253,7 +261,7 @@ session.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 session.o: ../lib/src/interact.h ../lib/src/graphing.h
 session.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 session.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-session.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+session.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 session.o: pixmaps/model.xpm pixmaps/boxplot.xpm pixmaps/gnuplot.xpm
 session.o: pixmaps/xfm_sc.xpm pixmaps/xfm_info.xpm pixmaps/xfm_text.xpm
 session.o: pixmaps/xfm_make.xpm pixmaps/rhohat.xpm pixmaps/summary.xpm
@@ -265,7 +273,7 @@ ssheet.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 ssheet.o: ../lib/src/interact.h ../lib/src/graphing.h
 ssheet.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ssheet.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-ssheet.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+ssheet.o: gui_utils.h callbacks.h dialogs.h library.h session.h
 webget.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 webget.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 webget.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -274,4 +282,4 @@ webget.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 webget.o: ../lib/src/interact.h ../lib/src/graphing.h
 webget.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 webget.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-webget.o: gui_utils.h callbacks.h dialogs.h lib.h session.h webget.h
+webget.o: gui_utils.h callbacks.h dialogs.h library.h session.h webget.h

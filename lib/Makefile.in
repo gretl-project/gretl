@@ -85,6 +85,9 @@ depend:
 	cat Makefile | sed s+^src/++ > Makefile.tmp && \
 	mv Makefile.tmp Makefile
 
+distdepend: depend
+	$(topsrc)/tools/dist_depend.pl
+
 # DO NOT DELETE
 
 compare.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
