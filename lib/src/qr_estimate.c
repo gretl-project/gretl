@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Allin Cottrell
+ *   Copyright (c) 2003-2004 by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -53,7 +53,12 @@ static double get_tss (const double *y, int n, int ifc)
 
 static void qr_compute_f_stat (MODEL *pmod, gretlopt opts)
 {
-    if (pmod->dfd > 0 && pmod->dfn > 1) {
+    if (pmod->ncoeff == 1 && pmod->ifc) {
+	pmod->fstt = NADBL;
+	return;
+    }
+
+    if (pmod->dfd > 0 && pmod->dfn > 0) {
 	if (opts & OPT_R) {
 	    pmod->fstt = robust_omit_F(NULL, pmod);
 	} else {
@@ -564,12 +569,15 @@ static void save_coefficients (MODEL *pmod, gretl_matrix *b,
 	int i;
 	double tmp = pmod->coeff[n-1];
 
-	for (i=n-1; i>0; i--) pmod->coeff[i] = pmod->coeff[i-1];
+	for (i=n-1; i>0; i--) {
+	    pmod->coeff[i] = pmod->coeff[i-1];
+	}
 	pmod->coeff[0] = tmp;
     }
 }
 
-static int allocate_model_arrays (MODEL *pmod, int n, int m)
+static int 
+allocate_model_arrays (MODEL *pmod, int n, int m)
 {
     pmod->sderr = malloc(n * sizeof *pmod->sderr);
     pmod->yhat = malloc(m * sizeof *pmod->yhat);
@@ -587,11 +595,12 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 {
     integer info, lwork;
     integer m, n, lda;
-    integer *iwork;
-    gretl_matrix *Q, *y;
+    integer *iwork = NULL;
+    gretl_matrix *Q = NULL, *y = NULL;
     gretl_matrix *R = NULL, *g = NULL, *b = NULL;
     gretl_matrix *xpxinv = NULL;
-    doublereal *tau, *work, *work2;
+    doublereal *tau = NULL, *work = NULL;
+    doublereal *work2;
     doublereal rcond, ypy;
     char uplo = 'U';
     char diag = 'N';
@@ -780,22 +789,52 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 
 #if 0
 
-/* might be worth trying, but not ready yet */
+/* might be worth trying (?), but not ready yet */
+
+static void
+svd_xpxinv (const gretl_matrix *A, const gretl_matrix *B,
+	    const double *s, gretl_matrix *xpxinv)
+{
+    double aik, ajk, vij;
+    int m = A->cols;
+    int i, j, k;
+
+    /* Get X'X{-1}, based on the work done by the SV decomp:
+       reciprocals of the squares of the (positive) singular values,
+       premultiplied by V and postmultiplied by V-transpose
+    */
+
+    for (i=0; i<m; i++) {
+	for (j=i; j<m; j++) {
+	    vij = 0.0;
+	    for (k=0; k<m; k++) {
+		if (s[k] > 0.0) {
+		    aik = A->val[mdx(A, k, i)];
+		    ajk = A->val[mdx(A, k, j)];
+		    vij += aik * ajk / (s[k] * s[k]);
+		}
+	    }
+	    xpxinv->val[mdx(xpxinv, i, j)] = vij;
+	    if (j != i) {
+		xpxinv->val[mdx(xpxinv, j, i)] = vij;
+	    }
+	}
+    }	    
+}
 
 int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 		       gretlopt opts)
 {
     integer info, lwork, rank;
     integer m, n, lda, ldb;
-    gretl_matrix *A, *B;
-    gretl_matrix *R = NULL, *g = NULL, *b = NULL;
+    integer nrhs = 1;
+    gretl_matrix *A = NULL, *B = NULL;
+    gretl_matrix *b = NULL;
     gretl_matrix *xpxinv = NULL;
-    doublereal *work, *work2;
+    doublereal *work = NULL, *s = NULL;
+    doublereal *work2;
     doublereal ypy, rcond = -1.0;
-    char uplo = 'U';
-    char diag = 'N';
-    char norm = '1';
-    int i, j;
+    int i;
     int err = 0;
 
     m = pmod->nobs;               /* # of rows = # of observations */
@@ -807,8 +846,9 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
     B = gretl_matrix_alloc(m, 1);
 
     work = malloc(sizeof *work);
+    s = malloc(n * sizeof *s);
 
-    if (A == NULL || B == NULL || work == NULL) {
+    if (A == NULL || B == NULL || work == NULL || s == NULL) {
 	err = E_ALLOC;
 	goto svd_cleanup;
     }
@@ -833,7 +873,6 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	err = E_ALLOC;
 	goto svd_cleanup;
     }
-
     work = work2;
 
     /* get actual SVD solution */
@@ -845,54 +884,40 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	goto svd_cleanup;
     }
 
-    /* allocate temporary auxiliary matrices */
-    R = gretl_matrix_alloc(n, n);
-    g = gretl_matrix_alloc(n, 1);
+    /* allocate temporary auxiliary vector */
     b = gretl_matrix_alloc(n, 1);
-    if (R == NULL || g == NULL || b == NULL) {
+    if (b == NULL) {
 	err = E_ALLOC;
 	goto svd_cleanup;
     }
 
+    /* allocate space in model struct */
     if (allocate_model_arrays(pmod, n, fulln)) {
 	err = E_ALLOC;
 	goto svd_cleanup;
     }
 
-    /* invert R */
-    dtrtri_(&uplo, &diag, &n, Q->val, &lda, &info);
-    if (info != 0) {
-	fprintf(stderr, "dtrtri: info = %d\n", (int) info);
-	err = 1;
-	goto svd_cleanup;
-    }
-
-    /* copy the upper triangular R-inverse out of Q */
-    for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    if (i <= j) {
-		gretl_matrix_set(R, i, j, 
-				 gretl_matrix_get(Q, i, j));
-	    } else {
-		gretl_matrix_set(R, i, j, 0.0);
-	    }
-	}
-    }
-
-
-    /* make "g" into gamma-hat */    
-    gretl_matrix_multiply_mod(Q, GRETL_MOD_TRANSPOSE,
-			      y, GRETL_MOD_NONE, g);
-
     /* OLS coefficients */
-    gretl_matrix_multiply(R, g, b);
+    for (i=0; i<n; i++) {
+	b->val[i] = B->val[i];
+    }
     save_coefficients(pmod, b, n);
 
-    /* write vector of fitted values into y */
-    gretl_matrix_multiply(Q, g, y);    
+    /* SSR or ESS */
+    pmod->ess = 0.0;
+    for (i=n; i<m; i++) {
+	pmod->ess += B->val[i] * B->val[i];
+    }
 
-    /* get vector of residuals and SSR */
-    get_resids_and_SSR(pmod, Z, y, ypy, fulln);
+    /* FIXME from this point on, for SVD */
+
+#if 0
+    /* write vector of fitted values into B */
+    gretl_matrix_multiply(Q, g, B);    
+
+    /* get vector of residuals */
+    get_resids_and_SSR(pmod, Z, B, ypy, fulln);
+#endif
 
     /* standard error of regression */
     if (m - n > 0) {
@@ -905,16 +930,13 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
 	pmod->sigma = 0.0;
     }
 
-    /* create (X'X)^{-1} */
+    /* allocate and compute (X'X)^{-1} */
     xpxinv = gretl_matrix_alloc(n, n);
     if (xpxinv == NULL) {
 	err = E_ALLOC;
 	goto svd_cleanup;
     }
-
-    gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
-			      R, GRETL_MOD_TRANSPOSE,
-			      xpxinv);
+    svd_xpxinv(A, B, s, xpxinv);
 
     /* VCV and standard errors */
     if (opts & OPT_R) { 
@@ -936,13 +958,13 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
     qr_compute_f_stat(pmod, opts);
 
  svd_cleanup:
+
     gretl_matrix_free(A);
     gretl_matrix_free(B);
 
     free(work);
+    free(s);
 
-    gretl_matrix_free(R);
-    gretl_matrix_free(g);
     gretl_matrix_free(b);
     gretl_matrix_free(xpxinv);
 
@@ -951,7 +973,7 @@ int gretl_svd_regress (MODEL *pmod, const double **Z, int fulln,
     return err;    
 }
 
-#endif
+#endif /* SVD stuff */
 
 int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
 {
