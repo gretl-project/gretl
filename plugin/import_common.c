@@ -74,8 +74,13 @@ static void wbook_print_info (wbook *book)
     fprintf(stderr, "Found %d sheet%s\n", book->nsheets,
 	    (book->nsheets > 1)? "s" : "");
     
-    for (i=0; i<book->nsheets; i++)
-	fprintf(stderr, "%d: '%s'\n", i, book->sheetnames[i]);
+    for (i=0; i<book->nsheets; i++) {
+	if (book->byte_offsets != NULL) 
+	    fprintf(stderr, "%d: '%s' at offset %u\n", i, 
+		    book->sheetnames[i], book->byte_offsets[i]);
+	else
+	    fprintf(stderr, "%d: '%s'\n", i, book->sheetnames[i]);
+    }
 }
 
 static void wbook_free (wbook *book)

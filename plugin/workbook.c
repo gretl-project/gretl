@@ -27,24 +27,6 @@ ms_biff_query_new (MsOleStream *ptr)
     return bq;
 }
 
-static gboolean
-ms_biff_query_peek_next (BiffQuery *bq, guint16 *opcode)
-{
-    guint8 data[4];
-    g_return_val_if_fail (opcode != NULL, 0);
-
-    if (!bq || (bq->pos->position + 4 > bq->pos->size))
-	return FALSE;
-
-    if (!bq->pos->read_copy (bq->pos, data, 4))
-	return FALSE;
-
-    bq->pos->lseek (bq->pos, -4, MsOleSeekCur); /* back back off */
-
-    *opcode = MS_OLE_GET_GUINT16 (data);
-    return TRUE;
-}
-
 /**
  * Returns 0 if has hit end
  **/
@@ -103,7 +85,6 @@ ms_biff_query_destroy (BiffQuery *bq)
 	g_free (bq);
     }
 }
-
 
 static void
 get_xtn_lens (guint32 *pre_len, guint32 *end_len, const guint8 *ptr, 
@@ -263,15 +244,6 @@ biff_boundsheet_data_new (BiffQuery *q, MsBiffVersion ver)
 				   MS_OLE_GET_GUINT8 (q->data + 6), NULL);
     }
     return ans; 
-}
-
-static gboolean
-biff_boundsheet_data_destroy (gpointer key, BiffBoundsheetData *d, 
-			      gpointer userdata)
-{
-    g_free (d->name);
-    g_free (d);
-    return 1;
 }
 
 static MsBiffBofData *ms_biff_bof_data_new (BiffQuery *q)

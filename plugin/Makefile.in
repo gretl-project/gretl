@@ -21,22 +21,60 @@ endif
 # Installation directory
 share = $(prefix)/share/gretl
 
-libsrc = $(topsrc)/lib/src
+LIBTOOL = $(topsrc)/libtool
+COMPILE = $(LIBTOOL) --mode=compile $(CC) -c -fPIC -DPIC $(CFLAGS) 
+LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) -shared
+
+GRETLINC = -I$(topsrc)/lib/src
+GRETLLIB = ../lib/libgretl.la
+GTKINC = `gtk-config --cflags`
+GTKLIB = `gtk-config --libs`
+OLEINC = `gnome-config --cflags libole2`
+OLELIB = `gnome-config --libs libole2`
 
 PLUGINS = stats_tables.so panel_data.so progress_bar.so \
 	gnumeric_import.so excel_import.so
 
-CFLAGS += `gtk-config --cflags` $(XML_CFLAGS) -I$(libsrc) -fPIC -DPIC
-LIBS = ../lib/libgretl.la `gtk-config --libs` $(XML_LIBS)
-LIBTOOL = $(topsrc)/libtool
 
-all: ../lib/libgretl.la $(PLUGINS)
+all: $(PLUGINS)
 
-../lib/libgretl.la:
+stats_tables.so: stats_tables.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+panel_data.so: panel_data.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+progress_bar.so: progress_bar.lo
+	$(LINK) -o $@ $< $(GTKLIB)
+
+gnumeric_import.so: gnumeric_import.lo
+	$(LINK) -o $@ $< $(GTKLIB) $(GRETLLIB) $(XML_LIBS)
+
+excel_import.so: excel_import.lo workbook.lo
+	$(LINK) -o $@ $< $(GTKLIB) $(GRETLLIB) $(OLELIB)
+
+%.lo : %.o
+
+stats_tables.o: stats_tables.c $(GRETLLIB) 
+	$(COMPILE) $(GRETLINC) $< 
+
+panel_data.o: panel_data.c $(GRETLLIB)
+	$(COMPILE) $(GRETLINC) $< 
+
+progress_bar.o: progress_bar.c
+	$(COMPILE) $(GRETLINC) $(GTKINC) $< 
+
+gnumeric_import.o: gnumeric_import.c import_common.c $(GRETLLIB)
+	$(COMPILE) $(GRETLINC) $(GTKINC) $(XML_CFLAGS) $< 
+
+excel_import.o: excel_import.c import_common.c xltypes.h $(GRETLLIB)
+	$(COMPILE) $(GRETLINC) $(GTKINC) $<
+
+workbook.o: workbook.c biff.h
+	$(COMPILE) $(GRETLINC) $(OLEINC) $<
+
+$(GRETLLIB):
 	$(MAKE) -C ../lib
-
-%.so : %.o
-	$(LIBTOOL) --mode=link $(CC) -shared -o $@ $< $(LIBS)
 
 .PHONY: 
 
@@ -52,7 +90,7 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(share)/plugins
 
 clean:
-	rm -f *.o $(PLUGINS) core 
+	rm -f *.o *.lo $(PLUGINS) core 
 	rm -rf .libs
 
 depend:

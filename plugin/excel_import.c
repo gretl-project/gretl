@@ -54,10 +54,12 @@ static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
-char cell_separator = ',';
+#ifdef STANDALONE
+static char cell_separator = ',';
+#endif
 char *errbuf;
 
-#define EDEBUG 1
+/* #define EDEBUG 1 */
 
 #include "import_common.c"
 
@@ -85,12 +87,9 @@ static int process_sheet (FILE *input, const char *filename,
 {    
     long rectype;
     long reclen;
-    int eof_flag = 0;
     unsigned char rec[MAX_MS_RECSIZE];
-    int err = 0, itemsread = 1, gotdata = 0;
-
-    if (offset)
-	fseek(input, (long) offset, SEEK_SET);
+    int err = 0, itemsread = 1, eofcount = 0;
+    long leading_bytes = 0L;
 
     while (itemsread) {
 	fread(rec, 2, 1, input);
@@ -100,6 +99,10 @@ static int process_sheet (FILE *input, const char *filename,
 	    fread(rec, 2, 1, input);
 	    reclen = getshort(rec, 0);
 	    if (reclen == 8 || reclen == 16) {
+		leading_bytes = ftell(input) - 4L;
+#ifdef EDEBUG
+		fprintf(stderr, "Got BOF at %ld\n", leading_bytes);
+#endif
 		itemsread = fread(rec, reclen, 1, input);
 		break;
 	    } else {
@@ -119,40 +122,51 @@ static int process_sheet (FILE *input, const char *filename,
 
 	rectype = 0;
 	itemsread = fread(buffer, 2, 1, input);
-	rectype = getshort(buffer, 0);
-	if (itemsread == 0)
-	    break;
-	reclen = 0;
-
+	if (itemsread == 0) {
 #ifdef EDEBUG
-	fprintf(stderr, "rectype=0x%x, gotdata=%d\n", rectype, gotdata);
+	    fprintf(stderr, "Breaking because itemsread = 0\n");
 #endif
-
-#ifdef notdef
-	/* bodge: needs fixing */
-	if (rectype == NUMBER || rectype == RK || rectype == MULRK) 
-	    gotdata = 1;
-	if (gotdata && rectype == MSEOF) {
 	    break;
 	}
-#endif	  	
+	rectype = getshort(buffer, 0);
 
+#ifdef EDEBUG
+	if (rectype == BOF) 
+	    fprintf(stderr, "Got BOF at %ld\n", leading_bytes);
+	if (rectype == MSEOF)
+	    fprintf(stderr, "Got MSEOF at %ld\n", ftell(input) - 2L);
+#endif
+
+	reclen = 0;
 	itemsread = fread(buffer, 2, 1, input);
+	if (itemsread == 0) {
+#ifdef EDEBUG
+	    fprintf(stderr, "Breaking because itemsread = 0\n");
+#endif
+	    break;
+	}
 	reclen = getshort(buffer, 0);
 	if (reclen && reclen < MAX_MS_RECSIZE && reclen > 0) {
 	    itemsread = fread(rec, 1, reclen, input);
 	    rec[reclen] = '\0';
 	}
-	if (eof_flag && rectype != BOF) 
-	    break;
+    
 	if (process_item(rectype, reclen, rec)) {
 	    err = 1;
 	    break;
 	}
-	if (rectype == MSEOF)
-	    eof_flag = 1;
-	else 
-	    eof_flag = 0;
+
+	if (rectype == MSEOF) {
+	    eofcount++;
+	    if (eofcount == 1 && offset) {
+		/* skip to the worksheet we want */
+#ifdef EDEBUG
+		fprintf(stderr, "currpos=%ld\n", ftell(input));
+#endif
+		fseek(input, offset + leading_bytes, SEEK_SET);
+	    }
+	    if (eofcount == 2) break;
+	} 
     }
 
     fclose(input);
@@ -348,6 +362,9 @@ static int process_item (int rectype, int reclen, char *rec)
 	saved_reference = NULL;
 	row = getshort(rec, 0) - startrow; 
 	col = getshort(rec, 2);
+#ifdef EDEBUG
+	fprintf(stderr, "Got RK, row=%d, col=%d\n", row, col);
+#endif
 	if (allocate(row, col)) return 1;
 	prow = rowptr + row;
 	v = biff_get_rk(rec + 6);
@@ -426,9 +443,8 @@ static int process_item (int rectype, int reclen, char *rec)
 	break;
     }	    
     case BOF: 
-	if (rowptr) {
+	if (rowptr) 
 	    fprintf(stderr, "BOF when current sheet is not flushed\n");
-	}
 	break;
     case MSEOF: 
 	break;
@@ -498,10 +514,6 @@ static char *convert8to7 (char *src, int count)
     }
     dest[i] = 0;
 
-#ifdef EDEBUG
-    fprintf(stderr, "convert8to7: returning '%s' at %p\n", dest,
-	    (void *) dest);
-#endif    
     return dest;
 }
 
@@ -526,6 +538,10 @@ static int allocate (int row, int col)
 {
     int newrow, newcol;
 
+#ifdef FULL_EDEBUG
+    fprintf(stderr, "allocate: row=%d, col=%d, lastrow=%d\n",
+	    row, col, lastrow);
+#endif
     if (row >= lastrow) {
 	newrow = (row/16 + 1) * 16;
 	rowptr = realloc(rowptr, newrow * sizeof(struct rowdescr));
@@ -565,17 +581,19 @@ static void free_sheet (void)
     }
 
     /* free cells (was i<lastrow below) */
-    for (i=0; i<=lastrow; i++) {
-	if (rowptr[i].cells == NULL) continue;
-	for (j=0; j<rowptr[i].end; j++) {
-	    if (rowptr[i].cells[j] != NULL) 
-		free(rowptr[i].cells[j]);
+    if (rowptr != NULL) {
+	for (i=0; i<=lastrow; i++) {
+	    if (rowptr[i].cells == NULL) continue;
+	    for (j=0; j<rowptr[i].end; j++) {
+		if (rowptr[i].cells[j] != NULL) 
+		    free(rowptr[i].cells[j]);
+	    }
+	    free(rowptr[i].cells);
 	}
-	free(rowptr[i].cells);
+	free(rowptr);
+	rowptr = NULL;
     }
 
-    free(rowptr);
-    rowptr = NULL;
     lastrow = 0;
 }
 
@@ -638,20 +656,28 @@ static int first_col_strings (wbook *book)
     int t, i = book->col_offset;
     
     for (t=1+book->row_offset; t<=lastrow; t++) {
+#ifdef EDEBUG
 	fprintf(stderr, "first_col_strings: rowptr[%d].cells[%d]: '%s'\n", t, i,
 		rowptr[t].cells[i]);
+#endif
 	if (!IS_STRING(rowptr[t].cells[i]))
 	    return 0;
     }
     return 1;
 }
 
-static int got_varnames (wbook *book, int ncols)
+static int got_varnames (wbook *book, int ncols, int skip)
 {
     int i, t = book->row_offset;
 
-    for (i=book->col_offset; i<ncols; i++) { 
-	if (rowptr[t].cells[i] == NULL) return -1;
+    for (i=skip+book->col_offset; i<ncols; i++) { 
+	if (rowptr[t].cells[i] == NULL) {
+#ifdef EDEBUG
+	    fprintf(stderr, "got_varnames: rowptr[%d].cells[%d] is NULL\n",
+		    t, i);
+#endif
+	    return -1;
+	}
 	if (!IS_STRING(rowptr[t].cells[i]))
 	    return 0;
     }
@@ -689,29 +715,25 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	sprintf(errbuf, "No worksheets found");
 	err = 1;
     }
-    else {
-	int i;
-
-	for (i=0; i<book.nsheets; i++) {
-	    fprintf(stderr, "%d: '%s' at offset %u\n", i, 
-		    book.sheetnames[i], book.byte_offsets[i]);
-	}
-    }
+    else 
+	wbook_print_info(&book);
 
     if (!err) {
 	if (book.nsheets > 1) wsheet_menu(&book, 1);
 	else wsheet_menu(&book, 0);
     }
 
+#ifdef EDEBUG
+    fprintf(stderr, "sheet selected=%d; import offsets: col=%d, row=%d\n",
+	    book.selected, book.col_offset, book.row_offset);
+#endif
+
     if (err || book.selected == -1) goto getout; 
 
     /* processing for specific worksheet */
     fp = fopen(fname, "rb");
     if (fp == NULL) return 1;
-    if (book.selected > 0)
-	err = process_sheet(fp, fname, book.byte_offsets[book.selected]);
-    else
-	err = process_sheet(fp, fname, 0);
+    err = process_sheet(fp, fname, book.byte_offsets[book.selected]);
 
     if (err) {
 	if (*errbuf == 0)
@@ -737,22 +759,25 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
 
 	if (ncols <= 0 || lastrow < 1) {
-	    sprintf(errbuf, "No data found");
+	    sprintf(errbuf, "No data found.\n"
+		    "Perhaps you need to adjust the starting column or row?");
 	    err = 1;
 	    goto getout; 
 	}
 
 #ifndef STANDALONE
-	if (got_varnames(&book, ncols) != 1) {
-	    sprintf(errbuf, "One or more variable names are missing");
+	label_strings = first_col_strings(&book);
+
+	if (got_varnames(&book, ncols, label_strings) != 1) {
+	    sprintf(errbuf, "One or more variable names are missing.\n"
+		    "Perhaps you need to adjust the starting column or row?");
 	    err = 1;
 	    goto getout; 
 	}
 
-	label_strings = first_col_strings(&book);
-
 	if (!data_block(&book, ncols, label_strings)) {
-	    sprintf(errbuf, "Expected numeric data, found string");
+	    sprintf(errbuf, "Expected numeric data, found string.\n"
+		    "Perhaps you need to adjust the starting column or row?");
 	    err = 1;
 	    goto getout; 
 	}
@@ -803,7 +828,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		t_sheet = t + 1 + book.row_offset;
 		if (rowptr[t_sheet].cells == NULL ||
 		    rowptr[t_sheet].cells[i_sheet] == NULL) continue;
-#ifdef EDEBUG
+#ifdef FULL_EDEBUG
 		fprintf(stderr, "setting Z[%d][%d] = rowptr[%d].cells[%d] "
 			"= '%s'\n", i, t, i_sheet, t_sheet, 
 			rowptr[t_sheet].cells[i_sheet]);
@@ -839,6 +864,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
  getout:
     wbook_free(&book);
+    free_sheet();
     return err;
 }  
 
