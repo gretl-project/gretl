@@ -3240,10 +3240,24 @@ static long get_filesize (const char *fname)
 {
     struct stat buf;
 
-    if (stat(fname, &buf) == 0)
+    if (stat(fname, &buf) == 0) {
         return buf.st_size;
-    else
+    } else {
         return -1;
+    }
+}
+
+static void colon_to_point (char *str)
+{
+    char *p = str;
+
+    while (*p) {
+	if (*p == ':') {
+	    *p = '.';
+	    break;
+	}
+	p++;
+    }
 }
 
 /**
@@ -3345,9 +3359,18 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	free(tmp);
     }
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     strcpy(pdinfo->stobs, "1");
     tmp = xmlGetProp(cur, (UTF) "startobs");
     if (tmp) {
+	char obstr[16];
+
+	strcpy(obstr, tmp);
+	colon_to_point(obstr);
+	
 	if (dataset_is_daily(pdinfo)) {
 	    long ed = get_epoch_day(tmp);
 
@@ -3356,8 +3379,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	} else {
 	    double x;
 
-	    if (sscanf(tmp, "%lf", &x) != 1) err = 1;
-	    else pdinfo->sd0 = atod(tmp, pdinfo);
+	    if (sscanf(obstr, "%lf", &x) != 1) err = 1;
+	    else pdinfo->sd0 = atod(obstr, pdinfo);
 	}
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
@@ -3391,10 +3414,6 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	free(tmp);
     }
 
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
-
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
@@ -3402,20 +3421,22 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    pdinfo->descrip = 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (UTF) "variables")) {
-	    if (process_varlist(cur, pdinfo, pZ)) 
+	    if (process_varlist(cur, pdinfo, pZ)) {
 		err = 1;
-	    else
+	    } else {
 		gotvars = 1;
+	    }
 	}
         else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
 	    if (!gotvars) {
 		sprintf(gretl_errmsg, _("Variables information is missing"));
 		err = 1;
 	    }
-	    if (process_observations(doc, cur, pZ, pdinfo, progress)) 
+	    if (process_observations(doc, cur, pZ, pdinfo, progress)) {
 		err = 1;
-	    else
+	    } else {
 		gotobs = 1;
+	    }
 	}
 	if (!err) cur = cur->next;
     }
