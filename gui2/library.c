@@ -4997,7 +4997,8 @@ int gui_exec_line (char *line,
         return 1;
     }
 
-    if (sys != NULL && cmd.ci != END && cmd.ci != EQUATION) {
+    if (sys != NULL && cmd.ci != END && cmd.ci != EQUATION &&
+	cmd.ci != SYSTEM) {
 	pprintf(prn, _("Command '%s' ignored; not valid within "
 		       "equation system\n"), line);
 	gretl_equation_system_destroy(sys);
@@ -5906,10 +5907,14 @@ int gui_exec_line (char *line,
 
     case SYSTEM:
 	/* system of equations */
-	sys = parse_system_start_line(line);
 	if (sys == NULL) {
-	    err = 1;
-	    errmsg(err, prn);
+	    sys = system_start(line);
+	    if (sys == NULL) {
+		err = 1;
+		errmsg(err, prn);
+	    }
+	} else {
+	    err = system_parse_line(sys, line, datainfo);
 	}
 	break;
 

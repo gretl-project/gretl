@@ -33,11 +33,14 @@ enum system_save_flags {
     GRETL_SYSTEM_SAVE_YHAT = 1 << 1
 };
 
-gretl_equation_system *parse_system_start_line (const char *line);
+gretl_equation_system *system_start (const char *line);
 
 int gretl_equation_system_append (gretl_equation_system *sys, 
 				  int *list);
 
+int system_parse_line (gretl_equation_system *sys,
+		       const char *line, 
+		       const DATAINFO *pdinfo);
 
 int gretl_equation_system_finalize (gretl_equation_system *sys, 
 				    double ***pZ, DATAINFO *pdinfo,
@@ -65,9 +68,5 @@ int system_get_depvar (const gretl_equation_system *sys, int i);
 const char *gretl_system_short_string (const MODEL *pmod);
 
 int system_get_type (const gretl_equation_system *sys);
-
-int *system_get_endog_vars (const gretl_equation_system *sys);
-
-int *system_get_exog_vars (const gretl_equation_system *sys);
 
 #endif /* GRETL_EQUATION_SYSTEM_H */
