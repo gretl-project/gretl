@@ -252,7 +252,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 5);
 
     tmp = gtk_label_new(_("column:"));
-    adj = gtk_adjustment_new(1, 1, 5, 1, 1, 1);
+    adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
     book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
     g_signal_connect (adj, "value_changed",
 		      G_CALLBACK (wbook_get_col_offset), book);
@@ -260,7 +260,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
 
     tmp = gtk_label_new(_("row:"));
-    adj = gtk_adjustment_new(1, 1, 5, 1, 1, 1);
+    adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
     book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
     g_signal_connect (adj, "value_changed",
 		      G_CALLBACK (wbook_get_row_offset), book);
