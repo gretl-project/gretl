@@ -27,28 +27,6 @@
     </schema>
 
     <schema>
-      <key>/schemas/apps/gretl/tramodir</key>
-      <applyto>/apps/gretl/tramodir</applyto>
-      <owner>gretl</owner>
-      <type>string</type>
-      <locale name="C">
-        <short>TRAMO directory</short>
-        <long>Working directory for the TRAMO program</long>
-      </locale>
-    </schema>
-
-    <schema>
-      <key>/schemas/apps/gretl/x12adir</key>
-      <applyto>/apps/gretl/x12adir</applyto>
-      <owner>gretl</owner>
-      <type>string</type>
-      <locale name="C">
-        <short>X-12-ARIMA directory</short>
-        <long>Working directory for the X-12-ARIMA program</long>
-      </locale>
-    </schema>
-
-    <schema>
       <key>/schemas/apps/gretl/binbase</key>
       <applyto>/apps/gretl/binbase</applyto>
       <owner>gretl</owner>

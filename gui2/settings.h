@@ -41,4 +41,8 @@ void set_tramo_ok (int set);
 void set_x12a_ok (int set);
 #endif
 
+#ifndef G_OS_WIN32
+void first_time_set_user_dir (void);
+#endif
+
 #endif /* SETTINGS_H */

@@ -29,6 +29,7 @@
 #ifdef G_OS_WIN32
 # include <windows.h>
 #else
+# include <dirent.h>
 # include "gtkfontselhack.h"
 #endif
 
@@ -148,11 +149,11 @@ RCVARS rc_vars[] = {
     {"tramo", N_("path to tramo"), NULL, tramo, 
      'R', MAXSTR, 3, NULL},
 #endif
-#ifdef HAVE_X12A
+#ifdef OLD_HAVE_X12A
     {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
      'R', MAXSTR, 3, NULL},
 #endif
-#ifdef HAVE_TRAMO
+#ifdef OLD_HAVE_TRAMO
     {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
      'R', MAXSTR, 3, NULL},
 #endif
@@ -322,6 +323,7 @@ static void set_tramo_x12a_dirs (void)
 {
 #ifndef G_OS_WIN32
     char cmd[MAXLEN];
+    DIR *test;
 #endif
 
 #ifdef HAVE_TRAMO 
@@ -337,8 +339,14 @@ static void set_tramo_x12a_dirs (void)
     }
 #endif
 
-    /* make directory structure (?) */
 #ifndef G_OS_WIN32
+    /* don't make dir structure (yet) if userdir doesn't exist */
+    test = opendir(paths.userdir);
+    if (test == NULL) {
+	return;
+    } else {
+	closedir(test);
+    }
 # ifdef HAVE_X12A
     sprintf(cmd, "mkdir -p %s", x12adir);
     system(cmd);
@@ -844,7 +852,7 @@ static void read_rc (void)
 		else if (i == 2) strcpy(scriptlist[j], flist->data);
 		flist = flist->next;
 	    }
-	    /* g_slist_free(flist); */
+	    g_slist_free(flist);
 	    flist = NULL;
 	}
     }
@@ -974,7 +982,7 @@ void write_rc (void)
 	return;
     }
 
-    fprintf(rc, "# old-style gretl config file (not used by gnome version)\n");
+    fprintf(rc, "# gretl config file (note: not used by gnome version)\n");
 
     i = 0;
     while (rc_vars[i].var != NULL) {
@@ -1664,3 +1672,77 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     
     gtk_dialog_run(GTK_DIALOG(cdlg));
 }
+
+#ifndef G_OS_WIN32
+
+static int validate_dir (const char *dirname)
+{
+    DIR *test;
+    int err = 0;
+
+    test = opendir(dirname);
+
+    if (test != NULL) {
+	fprintf(stderr, "Working dir already exists, OK\n");
+	closedir(test);
+    } else {
+	gchar *sysbuf = g_strdup_printf("mkdir -p %s", dirname);
+
+	/* FIXME: use mkdir() function? */
+	
+	err = system(sysbuf);
+	if (err) {
+	    sprintf(errtext, _("Couldn't create directory '%s'"), dirname);
+	    errbox(errtext);
+	} else {
+	    infobox(_("Working directory created OK"));
+	}
+	g_free(sysbuf);
+    }
+
+    return err;
+}
+
+static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
+{
+    const gchar *dirname;
+
+    dirname = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+
+    if (validate_dir(dirname)) {
+	return;
+    } else {
+	size_t n = strlen(dirname);
+
+	strcpy(paths.userdir, dirname);
+	if (dirname[n - 1] != '/') {
+	    strcat(paths.userdir, "/");
+	}
+	set_tramo_x12a_dirs();
+	close_dialog(ddata);
+    }
+}
+
+void first_time_set_user_dir (void)
+{
+    DIR *test;
+
+    /* see if the already-specified userdir exists */
+    if (*paths.userdir != '\0') {
+	test = opendir(paths.userdir);
+	if (test != NULL) {
+	    closedir(test);
+	    return;
+	}
+    }
+	
+    /* user dir is not specified, or doesn't exist */
+    edit_dialog (_("gretl: working directory"), 
+                 _("You seem to be using gretl for the first time.\n"
+		   "Please enter a directory for gretl user files."),
+                 paths.userdir, 
+                 real_set_userdir, NULL, 
+                 CREATE_USERDIR, 0);
+}
+
+#endif /* G_OS_WIN32 */

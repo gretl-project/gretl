@@ -1360,7 +1360,6 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 {
     if (defaults) {
 	char *home;
-	DIR *try = NULL;
 
 	home = getenv("GRETL_HOME");
 	if (home != NULL) {
@@ -1384,23 +1383,14 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 
 	ppaths->currdir[0] = '\0';	
 
-	/* figure out user's home gretl directory */
+	/* try to set a default userdir */
 	home = getenv("HOME");
 	if (home != NULL) {
 	    strcpy(ppaths->userdir, home);
 	    strcat(ppaths->userdir, "/gretl/");
-	    if ((try = opendir(ppaths->userdir)) == NULL) {
-		/* see if there's an old-style user dir */
-		strcpy(ppaths->userdir, home);
-		strcat(ppaths->userdir, "/esl/");
-		if ((try = opendir(ppaths->userdir)) == NULL) {
-		    strcpy(ppaths->userdir, home);
-		    strcat(ppaths->userdir, "/gretl/");
-		} 
-	    } 
-	} else 
+	} else {
 	    strcpy(ppaths->userdir, "");
-	if (try != NULL) closedir(try);
+	}
     } 
 
     sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);

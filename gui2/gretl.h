@@ -144,6 +144,7 @@ enum extra_cmds {
     CLI_HELP_ENGLISH,
     GUI_HELP_ENGLISH,
     MODELTABLE,
+    CREATE_USERDIR,
     GUI_CMD_MAX
 };
 

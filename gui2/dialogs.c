@@ -446,18 +446,20 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
-    /* Create the "Cancel" button */
-    tempwid = standard_button (GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
-			tempwid, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (delete_widget), 
-		      d->dialog);
-    gtk_widget_show (tempwid);
+    /* Create a "Cancel" button */
+    if (cmdcode != CREATE_USERDIR) {
+	tempwid = standard_button (GTK_STOCK_CANCEL);
+	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
+			    tempwid, TRUE, TRUE, 0);
+	g_signal_connect (G_OBJECT (tempwid), "clicked", 
+			  G_CALLBACK (delete_widget), 
+			  d->dialog);
+	gtk_widget_show (tempwid);
+    }
 
     /* Create a "Help" button if wanted */
-    if (cmdcode && cmdcode != PRINT) {
+    if (cmdcode && cmdcode != PRINT && cmdcode != CREATE_USERDIR) {
 	tempwid = standard_button (GTK_STOCK_HELP);
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			    tempwid, TRUE, TRUE, 0);

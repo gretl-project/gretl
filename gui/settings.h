@@ -31,4 +31,6 @@ void set_tramo_ok (int set);
 void set_x12a_ok (int set);
 #endif
 
+void first_time_set_user_dir (void);
+
 #endif /* SETTINGS_H */

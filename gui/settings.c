@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include <unistd.h>
+#include <dirent.h>
 
 #ifndef USE_GNOME
 char rcfile[MAXLEN];
@@ -126,11 +127,11 @@ RCVARS rc_vars[] = {
     {"tramo", N_("path to tramo"), NULL, tramo, 
      'R', MAXSTR, 3, NULL},
 #endif
-#ifdef HAVE_X12A
+#ifdef OLD_HAVE_X12A
     {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
      'R', MAXSTR, 3, NULL},
 #endif
-#ifdef HAVE_TRAMO
+#ifdef OLD_HAVE_TRAMO
     {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
      'R', MAXSTR, 3, NULL},
 #endif
@@ -226,6 +227,7 @@ static int check_for_prog (const char *prog)
 static void set_tramo_x12a_dirs (void)
 {
     char cmd[MAXLEN];
+    DIR *test;
 
 # ifdef HAVE_TRAMO 
     set_tramo_ok(check_for_prog(tramo));
@@ -240,7 +242,14 @@ static void set_tramo_x12a_dirs (void)
     }
 # endif
 
-    /* make directory structure */
+    /* don't make dir structure (yet) if userdir doesn't exist */
+    test = opendir(paths.userdir);
+    if (test == NULL) {
+	return;
+    } else {
+	closedir(test);
+    }
+
 # ifdef HAVE_X12A
     sprintf(cmd, "mkdir -p %s", x12adir);
     system(cmd);
@@ -1207,4 +1216,74 @@ void add_files_to_menu (int filetype)
 	} else break;
     }
     free(fileitem.path);
+}
+
+static int validate_dir (const char *dirname)
+{
+    DIR *test;
+    int err = 0;
+
+    test = opendir(dirname);
+
+    if (test != NULL) {
+	fprintf(stderr, "Working dir already exists, OK\n");
+	closedir(test);
+    } else {
+	gchar *sysbuf = g_strdup_printf("mkdir -p %s", dirname);
+
+	/* FIXME: use mkdir() function? */
+	
+	err = system(sysbuf);
+	if (err) {
+	    sprintf(errtext, _("Couldn't create directory '%s'"), dirname);
+	    errbox(errtext);
+	} else {
+	    infobox(_("Working directory created OK"));
+	}
+	g_free(sysbuf);
+    }
+
+    return err;
+}
+
+static void real_set_userdir (GtkWidget *widget, dialog_t *ddata)
+{
+    gchar *dirname;
+
+    dirname = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+
+    if (validate_dir(dirname)) {
+	return;
+    } else {
+	size_t n = strlen(dirname);
+
+	strcpy(paths.userdir, dirname);
+	if (dirname[n - 1] != '/') {
+	    strcat(paths.userdir, "/");
+	}
+	set_tramo_x12a_dirs();
+	close_dialog(ddata);
+    }
+}
+
+void first_time_set_user_dir (void)
+{
+    DIR *test;
+
+    /* see if the already-specified userdir exists */
+    if (*paths.userdir != '\0') {
+	test = opendir(paths.userdir);
+	if (test != NULL) {
+	    closedir(test);
+	    return;
+	}
+    }
+	
+    /* user dir is not specified, or doesn't exist */
+    edit_dialog (_("gretl: working directory"), 
+                 _("You seem to be using gretl for the first time.\n"
+		   "Please enter a directory for gretl user files."),
+                 paths.userdir, 
+                 real_set_userdir, NULL, 
+                 CREATE_USERDIR, 0);
 }

@@ -672,15 +672,17 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, 0, 0);
 
     if (!tmp.errcode) {
-	tstat = tmp.coeff[1] / tmp.sderr[1];
+	tstat = -tmp.coeff[1] / tmp.sderr[1];
 	pprintf(prn, "\n%s\n"
 		"  %s = %g\n"
 		"  %s: t(%d) = %g, %s %.4f\n",
 		_("Test for fractional integration"),
-		_("Estimated degree of integration"), tmp.coeff[1], 
+		_("Estimated degree of integration"), -tmp.coeff[1], 
 		_("test statistic"), tmp.dfd, tstat, 
 		_("with p-value"), tprob(tstat, tmp.dfd));
-    } else err = tmp.errcode;
+    } else {
+	err = tmp.errcode;
+    }
 
     clear_model(&tmp, &tmpdinfo);
     free_Z(tmpZ, &tmpdinfo);
@@ -840,7 +842,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	    xx += 2.0 * w * autocov[k] * cos(yy * k);
 	}
 	xx /= 2 * M_PI;
-	pprintf(prn, " %.4f%9d%16.2f%14.4f\n", yy, t, 
+	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
 		(double) (nobs / 2) / (2 * t), xx);
 	if (savexx != NULL) savexx[t] = xx;
 	if (t <= nT) {

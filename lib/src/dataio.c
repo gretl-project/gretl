@@ -2855,8 +2855,9 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_XML_DATA;   
 
     fp = fopen(fname, "r");
-    if (fp == NULL)  
+    if (fp == NULL) { 
 	return GRETL_NATIVE_DATA; /* may be native file in different location */
+    }
 
     /* look at extension */
     if (file_has_suffix(fname, "csv")) 
@@ -2870,7 +2871,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     for (i=0; i<80; i++) {
 	c = getc(fp);
 	if (c == EOF || c == '\n') break;
-	if (!isprint(c) && c != '\r') {
+	if (!isprint(c) && c != '\r' && c != '\t') {
 	    ftype = GRETL_NATIVE_DATA; /* native binary data? */
 	    break;
 	}

@@ -484,22 +484,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL }
 };
 
-static void make_userdir (PATHS *ppaths) 
-{
-    DIR *test;
-    char buf[MAXLEN];
-    
-    if ((test = opendir(ppaths->userdir)) == NULL) {
-	sprintf(buf, "mkdir -p %s", ppaths->userdir);
-	system(buf);
-	fprintf(stderr, _("Created user directory %s\n"
-		"If you prefer to use a different directory for "
-		"gretl user files, please make changes under\n"
-		"File, Preferences, General...\n"), ppaths->userdir);
-    } else 
-	closedir(test);
-}
-
 static void gui_usage (void)
 {
     gui_logo(stdout);
@@ -597,7 +581,6 @@ int main (int argc, char *argv[])
 
     set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
     set_rcfile();
-    make_userdir(&paths);
 
     if (argc > 1) {
 	int opt = parseopt(argv[1]);
@@ -734,11 +717,14 @@ int main (int argc, char *argv[])
 	noalloc(_("colors"));
 
     /* create main window */
-    if ((mdata = mymalloc(sizeof(windata_t))) == NULL)
+    if ((mdata = mymalloc(sizeof *mdata)) == NULL)
 	noalloc(_("GUI"));
     if ((datalabel = make_main_window(gui_get_data)) == NULL) 
 	noalloc(_("main window"));
     if (!gui_get_data) set_sample_label(datainfo);
+
+    /* Let a first-time user set the working dir */
+    first_time_set_user_dir(); 
 
     /* enable special copying to clipboard */
     clip_init(mdata->w);

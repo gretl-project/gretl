@@ -576,24 +576,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL, GNULL }
 };
 
-#ifndef G_OS_WIN32
-static void make_userdir (PATHS *ppaths) 
-{
-    DIR *test;
-    char buf[MAXLEN];
-    
-    if ((test = opendir(ppaths->userdir)) == NULL) {
-	sprintf(buf, "mkdir -p %s", ppaths->userdir);
-	system(buf);
-	fprintf(stderr, _("Created user directory %s\n"
-			  "If you prefer to use a different directory for "
-			  "gretl user files, please make changes under\n"
-			  "File, Preferences, General...\n"), ppaths->userdir);
-    } else 
-	closedir(test);
-}
-#endif
-
 static void gui_usage (void)
 {
     gui_logo(stdout);
@@ -757,7 +739,6 @@ int main (int argc, char *argv[])
     atexit(write_rc);
 #else 
     set_rcfile(); /* also calls read_rc() */
-    make_userdir(&paths);
 #endif/* G_OS_WIN32 */
 
     if (argc > 1) {
@@ -817,8 +798,8 @@ int main (int argc, char *argv[])
     if (models[0] == NULL || models[1] == NULL || models[2] == NULL) 
 	noalloc(_("models")); 
 
-    command.list = malloc(sizeof(int));
-    command.param = malloc(1);
+    command.list = malloc(sizeof *command.list);
+    command.param = malloc(sizeof *command.param);
     if (command.list == NULL || command.param == NULL)  
 	noalloc(_("command list")); 
 
@@ -908,6 +889,9 @@ int main (int argc, char *argv[])
 	noalloc(_("main window"));
     if (!gui_get_data) set_sample_label(datainfo);
 
+    /* Let a first-time user set the working dir */
+    first_time_set_user_dir(); 
+
     /* enable special copying to clipboard */
 #ifndef G_OS_WIN32
     clip_init(mdata->w);
@@ -923,7 +907,7 @@ int main (int argc, char *argv[])
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);
-			  
+
     check_for_extra_data();
 #ifdef HAVE_TRAMO
     set_tramo_ok(-1);
