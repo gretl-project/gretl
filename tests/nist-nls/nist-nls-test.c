@@ -792,7 +792,7 @@ static int real_run_check (int round, PRN *prn)
     char line[256];
     MODEL *pmod = NULL;
 
-    pmod = gretl_model_new(datainfo);
+    pmod = gretl_model_new();
     if (pmod == NULL) {
 	fputs("Out of memory\n", stderr);
 	return 1;
@@ -835,7 +835,7 @@ static int real_run_check (int round, PRN *prn)
 	} else {
 	    if (verbose) {
 		pmod->ID = 0;
-		printmodel(pmod, datainfo, prn);
+		printmodel(pmod, datainfo, OPT_NONE, prn);
 	    }
 	    
 	    print_tol = gretl_model_get_double(pmod, "tol");

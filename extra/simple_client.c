@@ -100,7 +100,7 @@ int main (void)
 
     /* Now we call the lsq function from libgretl to get least squares 
        estimates and associated statistics. */
-    model = gretl_model_new(datainfo);
+    model = gretl_model_new();
     if (model == NULL) noalloc();
     *model = lsq(list, &Z, datainfo, OLS, OPT_D, 0.0);
 
@@ -116,7 +116,7 @@ int main (void)
     model->ID = model_count;
 
     /* ...and print info from the regression. */
-    printmodel(model, datainfo, prn);
+    printmodel(model, datainfo, OPT_NONE, prn);
 
     /* memory management check -- try explicitly freeing all allocated
        memory */
