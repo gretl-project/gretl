@@ -189,8 +189,10 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
 	return TRUE;
     }
 
+#ifdef notdef
     gtk_widget_destroy(grp->popup);
     grp->popup = NULL;
+#endif
     return TRUE;
 }
 
