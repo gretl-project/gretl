@@ -6,6 +6,7 @@
  *
  * (C) 1998, 1999, 2000 Michael Meeks
  **/
+
 #ifndef GNUMERIC_BIFF_H
 #define GNUMERIC_BIFF_H
 
@@ -17,6 +18,7 @@ typedef struct _BiffQuery BiffQuery;
  * Returns query data, it is imperative that copies of
  * 'data *' should _not_ be kept.
  **/
+
 struct _BiffQuery {
 	guint8  ms_op;
 	guint8  ls_op;
@@ -125,8 +127,11 @@ typedef enum {
 	MsBiffMaxRowsV8 = 65536
 } MsBiffMaxRows;
 
-extern MsBiffBofData *new_ms_biff_bof_data  (BiffQuery *pos) ;
-extern void           free_ms_biff_bof_data (MsBiffBofData *data) ;
+extern MsBiffBofData *new_ms_biff_bof_data  (BiffQuery *pos);
+extern void free_ms_biff_bof_data (MsBiffBofData *data);
+BiffQuery *ms_biff_query_new (MsOleStream *ptr);
+int ms_biff_query_next (BiffQuery *bq);
+void ms_biff_query_destroy (BiffQuery *bq);
 
 /**
  * biff-types.h: A long and dull list of BIFF types.
