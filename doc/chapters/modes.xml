@@ -21,12 +21,36 @@
       <quote><filename>.inp</filename></quote>.</para>
 
     <para>To open a script you have written independently, use the
-      <quote>File, Open command file</quote> menu item.</para>
+      <quote>File, Open command file</quote> menu item; to create a
+      script from scratch use the <quote>File, New command
+      file</quote> item.  In either case a script window will open
+      (see <xref linkend="fig-scriptwin"/>).</para>
 
-    <para>With a script window open, use its <quote>File, Save and
-	Run</quote> menu item to run the commands.  All output is
-      directed to a single window, where it can be edited, saved or
-      copied to the clipboard.</para>
+    <figure id="fig-scriptwin" float="1" pgwide="1">
+     <title>Script window, editing a command file</title>
+     <screenshot>
+        <screeninfo>Script window</screeninfo>
+        <graphic fileref="figures/scriptwin" align="center"/>
+     </screenshot>
+    </figure>
+
+    <para>The toolbar at the botton left of the script window offers
+      the following functions (left to right): (1) Save the file; (2)
+      Save the file under a specified name; (3) Execute the commands
+      in the file; (4) Copy selected text; (5) Paste the selected
+      text; (6) Find and replace text; (7) Undo the last Paste or
+      Replace action; (8) Help (if you place the cursor in a command
+      word and press the question mark you will get help on that
+      command); (9) Close the window.</para>
+
+    <para>These functions (and in addition a Print option) may also be
+    found under the <quote>File</quote> and <quote>Edit</quote> menus
+    at the top of the script window.</para>
+
+    <para>When you click the Execute icon or choose the <quote>File,
+	Run</quote> menu item all output is directed to a single
+      window, where it can be edited, saved or copied to the
+      clipboard.</para>
 
     <para>To learn more about the possibilities of scripting, take a
       look at the <application>gretl</application> Help item
