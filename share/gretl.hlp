@@ -706,6 +706,8 @@ genr alpha = 1
 genr beta = 1
 genr gamma = 1
 
+For further details on NLS estimation please see the gretl manual.
+
 #
 nulldata
 @Dataset

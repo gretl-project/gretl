@@ -6,6 +6,7 @@ version 1.0.9
   the gretl main window
 - Add a new means of grabbing fitted values from a regression:
   "genr newname = yhat" (parallels "uhat")
+- Updates to manual
 
 05/02/03 version 1.0.8
 - Require lapack

@@ -49,7 +49,9 @@
       the regression function), <command>deriv</command> (which
       introduces the specification of a derivative), and <command>end
       nls</command>, which terminates the specification and calls for
-      estimation.</para>
+      estimation. If the <command>-o</command> flag is appended to the
+      last line the covariance matrix of the parameter estimates is
+      printed.</para>
 
   </sect1>
 
@@ -82,6 +84,32 @@
     </programlisting> 
 
   </sect1>
+
+  <sect1 id="nls-gui"><title>NLS dialog window</title>
+
+    <para>
+      It is probably most convenient to compose the commands for NLS
+      estimation in the form of a <application>gretl</application>
+      script but you can also do so interactively, by selecting the
+      item <quote>Nonlinear Least Squares</quote> under the Model
+      menu.  This opens a dialog box where you can type the function
+      specification (possibly prefaced by <command>genr</command>
+      lines to set the initial parameter values) and the derivatives,
+      if available.  An example of this is shown in <xref
+	linkend="fig-nls-dialog"/>.  Note that in this context you do
+      not have to supply the <command>nls</command> and <command>end
+      nls</command> tags.</para>
+
+    <figure id="fig-nls-dialog" float="1" pgwide="1">
+      <title>NLS dialog box</title>
+      <screenshot>
+        <screeninfo>Nonlinear least squares dialog</screeninfo>
+        <graphic fileref="figures/nls_window" align="center"/>
+      </screenshot>
+    </figure>
+
+  </sect1>
+
 
    <sect1 id="nls-deriv"><title>Analytical and numerical derivatives</title>
 

@@ -97,7 +97,10 @@ static int add_term_from_nlfunc (const char *vname)
     int i, v, nt = nlspec.nparam + 1; 
 
     v = varindex(pdinfo, vname);
-    if (v >= pdinfo->v) return E_UNKVAR;
+    if (v >= pdinfo->v) {
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
+	return E_UNKVAR;
+    }
 
     /* if term is not a scalar, skip it */
     if (pdinfo->vector[v]) return 0;
@@ -439,12 +442,13 @@ static void clear_nls_spec (void)
 {
     int i;
 
-    for (i=0; i<nlspec.nparam; i++) {
-	free(nlspec.terms[i].deriv);
+    if (nlspec.terms != NULL) {
+	for (i=0; i<nlspec.nparam; i++) {
+	    free(nlspec.terms[i].deriv);
+	}
+	free(nlspec.terms);
+	nlspec.terms = NULL;
     }
-
-    free(nlspec.terms);
-    nlspec.terms = NULL;
 
     free(nlspec.nlfunc);
     nlspec.nlfunc = NULL;
@@ -481,7 +485,10 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
     }
 
     v = varindex(dinfo, depvarname);
-    if (v == dinfo->v) return E_UNKVAR;
+    if (v == dinfo->v) {
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), depvarname);
+	return E_UNKVAR;
+    }
 
     nlspec.nlfunc = malloc(strlen(p) + 4);
     if (nlspec.nlfunc == NULL) return E_ALLOC;
@@ -529,6 +536,7 @@ static int parse_deriv_line (const char *line, int i, nls_term *term,
     } else {
 	free(term->deriv);
 	term->deriv = NULL;
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), term->name);
 	err = E_UNKVAR;
     }	
 
@@ -550,18 +558,18 @@ static int nls_spec_add_term (const char *line, const double **Z,
   
     terms = realloc(nlspec.terms, nt * sizeof *nlspec.terms);
     if (terms == NULL) return E_ALLOC;
+    nlspec.terms = terms;
 
     coeff = realloc(nlspec.coeff, nt * sizeof *nlspec.coeff);
     if (coeff == NULL) {
-	free(terms);
+	free(nlspec.terms);
+	nlspec.terms = NULL;
 	return E_ALLOC;
     }
-
     nlspec.coeff = coeff;
 
     err = parse_deriv_line(line, nt-1, &terms[nt-1], Z, datainfo);
     if (!err) {
-	nlspec.terms = terms;
 	nlspec.nparam += 1;
 	nlspec.mode = ANALYTIC_DERIVS;
     }
@@ -761,7 +769,7 @@ static int lm_approximate (double *fvec, double *fjac)
     case 2:
     case 3:
     case 4:
-	pprintf(prn, _("NLS: convergence achieved after %d iterations\n"),
+	pprintf(prn, _("Convergence achieved after %d iterations\n"),
 		nlspec.iters);
 	break;
     case 5:

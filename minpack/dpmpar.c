@@ -3,7 +3,7 @@
 	-lf2c -lm   (in that order)
 */
 
-#include "f2c.h"
+#include "../plugin/f2c.h"
 
 doublereal dpmpar_(integer *i__)
 {

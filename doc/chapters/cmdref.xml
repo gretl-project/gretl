@@ -1982,16 +1982,16 @@
 	commands.)</para>
 
       <programlisting>
- 1  open greene11_3.gdt
- 2  ols C 0 Y
- 3  genr alpha = coeff(0)
- 4  genr beta = coeff(Y)
- 5  genr gamma = 1.0
- 6  nls C = alpha + beta * Y^gamma
- 7  deriv alpha = 1
- 8  deriv beta = Y^gamma
- 9  deriv gamma = beta * Y^gamma * log(Y)
-10  end nls
+	1   open greene11_3.gdt
+	2   ols C 0 Y
+	3   genr alpha = coeff(0)
+	4   genr beta = coeff(Y)
+	5   genr gamma = 1.0
+	6   nls C = alpha + beta * Y^gamma
+	7   deriv alpha = 1
+	8   deriv beta = Y^gamma
+	9   deriv gamma = beta * Y^gamma * log(Y)
+	10  end nls
       </programlisting>
 
       <para>
@@ -2016,11 +2016,11 @@
 	calculated (again, the syntax here is the same as for
 	<command>genr</command>). These <command>deriv</command> lines
 	are optional, but it is recommended that you supply them if
-	possible.</para>
+	possible. Line 10, <command>end nls</command>, completes the
+	command and calls for estimation.</para>
 
-      <para>
-	Line 10, <command>end nls</command>, completes the command and
-	calls for estimation.</para>
+      <para>For further details on NLS estimation please see
+	<xref linkend="nlschap"/>.</para>
 
       </sect2>
 

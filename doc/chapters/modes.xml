@@ -5,8 +5,8 @@
     <para>
       As you execute commands in <application>gretl</application>,
       using the GUI and filling in dialog entries, those commands are
-      recorded in the form of a <quote>script</quote>.  Such scripts
-      can be edited and re-run, using either
+      recorded in the form of a <quote>script</quote> or batch file.
+      Such scripts can be edited and re-run, using either
       <application>gretl</application> or the command-line client,
       <application>gretlcli</application>.</para>
 
@@ -116,86 +116,168 @@
   <sect1 id="session"><title>The <quote>session</quote>
       concept</title>
 
-    <para>
-      <application>gretl</application> offers the idea of a
-      <quote>session</quote> as a way of keeping track of your work
-      and revisiting it later.  This is experimental (and at present
-      more likely to be buggy than the rest of the program); I would
-      be interested in hearing people's reactions.</para>
+    <sect2 id="session-intro"><title>Introduction</title>
 
-    <para>
-      The basic idea is to provide a little iconic space containing
-      various objects pertaining to your current working session (see
-      <xref linkend="fig-session"/>).  You can add objects (represented by
-      icons) to this space as you go along.  If you save the session,
-      these added objects should be available again if you re-open the
-      session later.</para>
+      <para>
+	<application>gretl</application> offers the idea of a
+	<quote>session</quote> as a way of keeping track of your work
+	and revisiting it later.  This is somewhat experimental; I
+	would be interested in hearing people's reactions.</para>
 
-    <figure id="fig-session" float="1" pgwide="1">
-      <title>Icon view: one model and one graph have been added to the
-	default icons</title>
-      <screenshot>
-	<screeninfo>Session window</screeninfo>
-	<graphic fileref="figures/session" align="center"/>
-      </screenshot>
-    </figure>
+      <para>
+      The basic idea is to provide an iconic space containing various
+	objects pertaining to your current working session (see
+      <xref linkend="fig-session"/>).  You can add objects
+	(represented by icons) to this space as you go along.  If you
+	save the session, these added objects should be available
+	again if you re-open the session later.</para>
 
-    <para>
-      If you start <application>gretl</application> and open a data
-      set, then select <quote>Icon view</quote> from the Session menu,
-      you should see the basic default set of icons: these give you
-      quick access to the command script (<quote>Session</quote>),
-      information on the data set (if any), correlation matrix
-      (<quote>Corrmat</quote>) and descriptive summary statistics
-      (<quote>Summary</quote>). All of these are activated by
-      double-clicking the relevant icon. The <quote>Data set</quote>
-      icon is a little more complex: double-clicking opens up the data
-      in the built-in spreadsheet, but you can also right-click on the
-      icon for a menu of other actions.  </para>
+      <para>
+	If you start <application>gretl</application> and open a data
+	set, then select <quote>Icon view</quote> from the Session
+	menu, you should see the basic default set of icons: these
+	give you quick access to the command script
+	(<quote>Session</quote>), information on the data set (if
+	any), correlation matrix (<quote>Corrmat</quote>) and
+	descriptive summary statistics (<quote>Summary</quote>). All
+	of these are activated by double-clicking the relevant icon.
+	The <quote>Data set</quote> icon is a little more complex:
+	double-clicking opens up the data in the built-in spreadsheet,
+	but you can also right-click on the icon for a menu of other
+	actions.</para>
 
-    <tip><para>In many <application>gretl</application> windows, the
-	right mouse button brings up a menu with common
-	tasks.</para></tip>
+      <tip><para>In many <application>gretl</application> windows, the
+	  right mouse button brings up a menu with common
+	  tasks.</para></tip>
 
-    <para>Two sorts of objects can be added to the Icon View window:
-      models and graphs.</para>  
+      <para>Two sorts of objects can be added to the Icon View window:
+	models and graphs.</para>  
 
-    <para>To add a model, first estimate it using the Model menu. Then
-      pull down the File menu in the model window and select
-      <quote>Save to session as icon&hellip;</quote> or <quote>Save as
-	icon and close</quote>.  Simply hitting the
-      <literal>S</literal> key over the model window is a shortcut to
-      the latter action.</para>
+      <figure id="fig-session" float="1" pgwide="1">
+	<title>Icon view: one model and one graph have been added to
+	  the default icons</title>
+	<screenshot>
+	  <screeninfo>Session window</screeninfo>
+	  <graphic fileref="figures/session" align="center"/>
+	</screenshot>
+      </figure>
 
-    <para>To add a graph, first create it (under the Data menu,
-      <quote>Graph specified vars</quote>, or via one of
-      <application>gretl</application>'s other graph-generating
-      commands), then choose <quote>Add last graph</quote> from the
-      Session menu or click the little camera button on the 
-    toolbar (see <xref linkend="toolbar"/>).</para>
+      <para>To add a model, first estimate it using the Model menu.
+	Then pull down the File menu in the model window and select
+	<quote>Save to session as icon&hellip;</quote> or <quote>Save
+	  as icon and close</quote>.  Simply hitting the
+	<literal>S</literal> key over the model window is a shortcut
+	to the latter action.</para>
 
-    <para>Once a model or graph is added its icon should appear in the
-      Icon View window.  Double-clicking on the icon redisplays the
-      object, while right-clicking brings up a menu which lets you
-      display or delete the object.  This popup menu also gives you
-      the option of editing graphs.</para>
+      <para>To add a graph, first create it (under the Data menu,
+	<quote>Graph specified vars</quote>, or via one of
+	<application>gretl</application>'s other graph-generating
+	commands), then choose <quote>Add last graph</quote> from the
+	Session menu or click the little camera button on the toolbar
+	(see <xref linkend="toolbar"/>).</para>
 
-    <para>If you create models or graphs that you think you may wish
-      to re-examine later, then before quitting
-      <application>gretl</application> select <quote>Save
-	as&hellip;</quote> from the Session menu and give a name under
-      which to save the session.  To re-open the session later,
-      either</para>
+      <para>Once a model or graph is added its icon should appear in
+	the Icon View window.  Double-clicking on the icon redisplays
+	the object, while right-clicking brings up a menu which lets
+	you display or delete the object.  This popup menu also gives
+	you the option of editing graphs.</para>
 
-    <itemizedlist>
-      <listitem><para>Start <application>gretl</application> then
-	  re-open the session file by going to the <quote>Open</quote>
-	  item under the Session menu, or</para></listitem>
-      <listitem><para>From the command line, type <command>gretl -r</command>
-	  <replaceable>sessionfile</replaceable>, where 
-	  <replaceable>sessionfile</replaceable> is the name
-	  under which the session was saved.</para></listitem>
-    </itemizedlist>
+    </sect2>
+
+    <sect2 id="model-table"><title>The model table</title>   
+
+      <para>
+	In econometric research it is common to estimate several
+	models with a common dependent variable &mdash; the models
+	differing in respect of which independent variables are
+	included, or perhaps in respect of the estimator used.  In
+	this situation it is convenient to present the regression
+	results in the form of a table, where each column contains the
+	results (coefficient estimates and standard errors) for a
+	given model, and each row contains the estimates for a given
+	variable across the models.</para>
+
+      <para>
+	In the Icon View window <application>gretl</application>
+	provides a means of constructing such a table (and copying it
+	in plain text, &latex; or Rich Text Format).  Here is how to do
+	it:</para>
+
+	<orderedlist>
+	  <listitem><para>Estimate a model which you wish to include
+	      in the table, and in the model display window, under the
+	      File menu, select <quote>Save to session as icon</quote>
+	      or <quote>Save as icon and close</quote>.</para>
+	  </listitem>
+	  <listitem><para>Repeat step 1 for the other models to be
+	      included in the table (up to a total of six
+	      models).</para>
+	  </listitem>
+	  <listitem><para>When you are done estimating the models,
+	      open the icon view of your gretl session, by selecting
+	      <quote>Icon view</quote> under the Session menu in the
+	      main gretl window, or by clicking the <quote>session
+		icon view</quote> icon on the gretl toolbar.</para>
+	  </listitem>
+	  <listitem><para>In session icon view, there is an icon
+	      labeled <quote>Model table</quote>. Decide which model
+	      you wish to appear in the left-most column of the model
+	      table and add it to the table, either by dragging its
+	      icon onto the Model table icon, or by right-clicking on
+	      the model icon and selecting <quote>Add to model
+		table</quote> from the pop-up menu.</para>
+	  </listitem>
+	  <listitem><para>Repeat step 4 for the other models you wish
+	      to include in the table.  The second model selected will
+	      appear in the second column from the left, and so
+	      on.</para>
+	  </listitem>
+	  <listitem><para>When you are finished composing the model
+	      table, display it by double-clicking on its icon.  Under
+	      the Edit menu in the window which appears, you have the
+	      option of copying the table to the clipboard in various
+	      formats.</para>
+	  </listitem>
+	  <listitem><para>If the ordering of the models in the table
+	      is not what you wanted, right-click on the model table
+	      icon and select <quote>Clear table</quote>.  Then go
+	      back to step 4 above and try again.</para>
+	  </listitem>
+	</orderedlist>
+
+      <para>A simple instance of <application>gretl</application>'s
+	model table is shown in <xref
+	  linkend="fig-model-table"/>.</para>
+
+      <figure id="fig-model-table" float="1" pgwide="1">
+	<title>Example of model table</title>
+	<graphic fileref="figures/model_table" align="center"/>
+      </figure>      
+
+    </sect2>
+
+    <sect2 id="session-save"><title>Saving and re-opening
+	sessions</title>    
+
+      <para>If you create models or graphs that you think you may wish
+	to re-examine later, then before quitting
+	<application>gretl</application> select <quote>Save
+	  as&hellip;</quote> from the Session menu and give a name
+	under which to save the session.  To re-open the session
+	later, either</para>
+
+      <itemizedlist>
+	<listitem><para>Start <application>gretl</application> then
+	    re-open the session file by going to the
+	    <quote>Open</quote> item under the Session menu,
+	    or</para></listitem>
+	<listitem><para>From the command line, type <command>gretl
+	      -r</command> <replaceable>sessionfile</replaceable>,
+	    where <replaceable>sessionfile</replaceable> is the name
+	    under which the session was saved.</para></listitem>
+      </itemizedlist>
+
+    </sect2>
 
     </sect1>
 

@@ -494,13 +494,13 @@
 	  In these formulae, variables must be referenced by name, not
 	  number.</para></listitem> 
 
-      <listitem><para><guimenu>Model menu</guimenu> This is introduced
-	  in
-      <xref linkend="getting-started"/>. For details on the various
-	  estimators offered under this menu please consult
+      <listitem><para><guimenu>Model menu</guimenu> For details on the
+	  various estimators offered under this menu please consult
 	  <xref linkend="estimators"/> and <xref
 	linkend="cmdref"/> below, and/or the online help under
-	  <quote>Help, Estimation</quote>.</para></listitem>
+	  <quote>Help, Estimation</quote>.  Also see <xref
+	    linkend="nlschap"/> regarding the estimation of nonlinear
+	  models.</para></listitem>
 
       <listitem><para><guimenu>Help menu</guimenu>  Please use this as
 	  needed! It gives details on the syntax required in various
@@ -520,7 +520,6 @@
     <para>The icons have the following functions, reading from left to
       right:</para>
     
-
     <orderedlist>
       <listitem><para>Launch a calculator program.  A convenience
 	  function in case you want quick access to a calculator when
