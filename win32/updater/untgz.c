@@ -23,6 +23,7 @@ extern char *strdup(const char *s);
 #endif
 
 #include "zlib.h"
+#include "updater.h"
 
 #ifdef WIN32
 #  ifndef F_OK
@@ -139,8 +140,6 @@ int ExprMatch (char *string, char *expr)
     }
 }
 
-extern void errbox (const char *msg);
-
 int makedir (char *newdir)
 {
     char *buffer = strdup(newdir);
@@ -189,7 +188,7 @@ int untar (gzFile in)
     int    remaining = 0;
     FILE   *outfile = NULL;
     char   fname[BLOCKSIZE];
-    time_t tartime;
+    time_t tartime = (time_t) 0;
   
     while (1) {
 	len = gzread(in, &buffer, BLOCKSIZE);

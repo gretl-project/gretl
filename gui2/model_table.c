@@ -607,8 +607,14 @@ int display_model_table (void)
 
     if (real_model_table_list_length() > 5) winwidth = 90;
 
+#ifdef GNULL
+    /* gtk2: use a "viewbar" instead of a regular menu */
     view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE, 
+		NULL);
+#else
+    view_buffer(prn, winwidth, 450, _("gretl: model table"), PRINT, 
 		model_table_items);
+#endif
 
     return 0;
 }

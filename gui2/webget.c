@@ -403,9 +403,6 @@ static int rbuf_peek (struct rbuf *rbuf, char *store)
 
 #ifdef UPDATER
 
-extern void errbox (const char *msg);
-extern void infobox (const char *msg);
-
 void clear (char *str, int len)
 {
     memset(str, 0, len);
@@ -1242,22 +1239,20 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     int nchunks;
 #ifndef UPDATER
     void *handle;
-#endif
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
 
-#ifndef UPDATER
     if (gui_open_plugin("progress_bar", &handle) == 0) {
 	show_progress = get_plugin_function("show_progress", handle);
 	if (show_progress != NULL) {
 	    show = 1;
 	}
     }
-#endif
-
-    *len = 0L;
 
     if (show) (*show_progress)(res, expected, SP_LOAD_INIT);
+#endif /* UPDATER */
+
+    *len = 0L;
 
     if (rbuf && RBUF_FD(rbuf) == fd) {
 	while ((res = rbuf_flush(rbuf, cbuf, sizeof cbuf)) != 0) {
@@ -1269,9 +1264,13 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 		}
 	    }
 	    *len += res;
+#ifndef UPDATER
 	    if (show) {
 		(*show_progress)(res, expected, SP_NONE);
 	    }
+#else
+	    update_windows_progress_bar(res);
+#endif
 	}
     }
 
@@ -1297,15 +1296,18 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 		}
 	    }
 	    *len += res;
-	    
+
+#ifndef UPDATER	    
 	    if (show && (*show_progress)(res, expected, SP_NONE) < 0) {
 		break;
 	    }
+#else
+	    update_windows_progress_bar(res);
+#endif
 	}
     } while (res > 0);
 
-    if (res < -1)
-	res = -1;
+    if (res < -1) res = -1;
 
 #ifndef UPDATER
     if (show) {
@@ -1592,7 +1594,9 @@ static int real_update_query (int queryopt)
 
     getbuf = malloc(2048); 
     if (getbuf == NULL) return E_ALLOC;
+
     clear(getbuf, 2048);
+
     err = get_update_info(&getbuf, errbuf, filedate, queryopt);
 
     if (err || getbuf == NULL) return 1;
@@ -1714,10 +1718,10 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     uerr_t result;
     struct urlinfo *u;
     struct urlinfo *proxy = NULL; 
-    int dt;
     const char *datacgi = "/gretl/cgi-bin/gretldata.cgi";
     const char *updatecgi = "/gretl/cgi-bin/gretl_update.cgi";
     const char *cgi;
+    int dt;
     size_t fnlen = 0L;
 
     if (use_proxy && gretlproxy.host != NULL) {

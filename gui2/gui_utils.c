@@ -30,6 +30,8 @@
 #include "session.h"
 #include "model_table.h"
 
+#include "../pixmaps/mini.tex.xpm"
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 #endif
@@ -996,6 +998,29 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
+static void modeltable_tex_view (void)
+{
+    tex_print_model_table (NULL, 1, NULL);
+}
+
+static int tex_icon_init (void)
+{
+    static GtkIconFactory *ifac;
+
+    if (ifac == NULL) {
+	GtkIconSet *iset;
+	GdkPixbuf *pbuf;
+
+	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_tex_xpm);
+	iset = gtk_icon_set_new_from_pixbuf(pbuf);
+	ifac = gtk_icon_factory_new();
+	gtk_icon_factory_add(ifac, "STOCK_TEX", iset);
+	gtk_icon_factory_add_default(ifac);
+    }
+
+    return 0;
+}
+
 #if defined(G_OS_WIN32) || defined(USE_GNOME) 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
@@ -1026,6 +1051,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	N_("Replace..."),
 	N_("Undo"),
 	N_("Help on command"),
+	N_("LaTeX"),
 	N_("Close"),
 	NULL
     };
@@ -1052,6 +1078,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 #else
     int print_ok = 0;
 #endif
+
+    if (vwin->role == VIEW_MODELTABLE) tex_icon_init();
 
     if (text_out || vwin->role == SCRIPT_OUT) {
 	g_object_set_data(G_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
@@ -1124,8 +1152,11 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		toolfunc = NULL;
 	    break;
 	case 7:
-	    stockicon = GTK_STOCK_FIND;
-	    toolfunc = text_find_callback;
+	    if (vwin->role != VIEW_MODELTABLE) {
+		stockicon = GTK_STOCK_FIND;
+		toolfunc = text_find_callback;
+	    } else
+		toolfunc = NULL;
 	    break;
 	case 8:
 	    if (edit_ok) {
@@ -1149,6 +1180,13 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		toolfunc = NULL;
 	    break;
 	case 11:
+	    if (vwin->role == VIEW_MODELTABLE) {
+		stockicon = "STOCK_TEX";
+		toolfunc = modeltable_tex_view;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 12:
 	    stockicon = GTK_STOCK_CLOSE;
 	    toolfunc = delete_file_viewer;
 	    break;
