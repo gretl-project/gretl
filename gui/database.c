@@ -83,12 +83,14 @@ float retrieve_float (netfloat nf)
 }
 #endif
 
+#define DB_BUF 8192
+
 /* ........................................................... */
 
 static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo, 
 			       double **Z)
 {
-    char *getbuf, errbuf[80], numstr[16];
+    char *getbuf, errbuf[80];
     char *dbbase = dbwin->fname;
     int t, err, n = sinfo->nobs;
     dbnumber val;
@@ -97,9 +99,9 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
     netfloat nf;
 #endif
     
-    if ((getbuf = mymalloc(8192)) == NULL)
+    if ((getbuf = mymalloc(DB_BUF)) == NULL)
         return DB_NOT_FOUND;
-    memset(getbuf, 0, 8192);
+    memset(getbuf, 0, DB_BUF);
 
     update_statusline(dbwin, _("Retrieving data..."));
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -125,18 +127,17 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
     for (t=0; t<n; t++) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	/* go via network byte order */
-	memcpy(&(nf.frac), getbuf + offset, sizeof(long));
-	offset += sizeof(long);
-	memcpy(&(nf.exp), getbuf + offset, sizeof(short));
-	offset += sizeof(short);
+	memcpy(&(nf.frac), getbuf + offset, sizeof nf.frac);
+	offset += sizeof nf.frac;
+	memcpy(&(nf.exp), getbuf + offset, sizeof nf.exp);
+	offset += sizeof nf.exp;
 	val = retrieve_float(nf);
 #else
 	/* just read floats */
-	memcpy(&val, getbuf + offset, sizeof(dbnumber));
-	offset += sizeof(dbnumber);
+	memcpy(&val, getbuf + offset, sizeof val);
+	offset += sizeof val;
 #endif
-        sprintf(numstr, "%g", val); 
-        Z[1][t] = atof(numstr);
+        Z[1][t] = val;
     }
 
     update_statusline(dbwin, "OK");
@@ -1004,8 +1005,8 @@ void open_named_remote_clist (char *dbname)
     char *getbuf, errbuf[80];
     int err;
 
-    if ((getbuf = mymalloc(8192)) == NULL) return;
-    memset(getbuf, 0, 8192);
+    if ((getbuf = mymalloc(DB_BUF)) == NULL) return;
+    memset(getbuf, 0, DB_BUF);
     err = retrieve_url(GRAB_IDX, dbname, NULL, 0, &getbuf, errbuf);
 
     if (err) {
@@ -1037,8 +1038,8 @@ void open_remote_clist (GtkWidget *w, gpointer data)
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), 
 		       mydata->active_var, 0, &fname);
 
-    if ((getbuf = mymalloc(8192)) == NULL) return;
-    memset(getbuf, 0, 8192);
+    if ((getbuf = mymalloc(DB_BUF)) == NULL) return;
+    memset(getbuf, 0, DB_BUF);
     update_statusline(mydata, _("Retrieving data..."));
     errbuf[0] = '\0';
     err = retrieve_url(GRAB_IDX, fname, NULL, 0, &getbuf, errbuf);
@@ -1060,7 +1061,6 @@ void open_remote_clist (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-#define BUFSIZE 8192
 #define INFOLEN 100
 
 static int parse_db_header (const char *buf, size_t *idxlen, 
@@ -1095,7 +1095,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     FILE *fidx, *fbin, *fcb;
     size_t idxlen, datalen, cblen, bytesleft, bgot;
     char idxname[MAXLEN], binname[MAXLEN], cbname[MAXLEN];
-    char gzbuf[BUFSIZE];
+    char gzbuf[DB_BUF];
     gzFile fgz;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     size_t offset;
@@ -1137,7 +1137,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 	return 1;
     } 
 
-    memset(gzbuf, BUFSIZE, 0);
+    memset(gzbuf, DB_BUF, 0);
     gzread(fgz, gzbuf, INFOLEN);
 
     if (parse_db_header(gzbuf, &idxlen, &datalen, &cblen)) {
@@ -1153,8 +1153,8 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     bytesleft = idxlen;
 
     while (bytesleft > 0) {
-	memset(gzbuf, 0, BUFSIZE);
-	bgot = gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
+	memset(gzbuf, 0, DB_BUF);
+	bgot = gzread(fgz, gzbuf, (bytesleft > DB_BUF)? DB_BUF : bytesleft);
 	if (bgot <= 0) break;
 	bytesleft -= bgot;
 	fwrite(gzbuf, 1, bgot, fidx);
@@ -1176,8 +1176,8 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 	    bytesleft -= sizeof(dbnumber);
 	} else break;
 #else
-	memset(gzbuf, 0, BUFSIZE);
-	bgot = gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
+	memset(gzbuf, 0, DB_BUF);
+	bgot = gzread(fgz, gzbuf, (bytesleft > DB_BUF)? DB_BUF : bytesleft);
 	if (bgot <= 0) break;
 	bytesleft -= bgot;
 	fwrite(gzbuf, 1, bgot, fbin);
@@ -1187,8 +1187,8 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     bytesleft = cblen;
 
     while (bytesleft > 0) {
-	memset(gzbuf, 0, BUFSIZE);
-	bgot = gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
+	memset(gzbuf, 0, DB_BUF);
+	bgot = gzread(fgz, gzbuf, (bytesleft > DB_BUF)? DB_BUF : bytesleft);
 	if (bgot <= 0) break;
 	bytesleft -= bgot;
 	fwrite(gzbuf, 1, bgot, fcb);

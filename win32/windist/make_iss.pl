@@ -60,8 +60,8 @@ print "Name: \"{app}\\lib\\gtk-2.0\"\n";
 print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\"\n";
 print "Name: \"{app}\\lib\\gtk-2.0\\2.2.0\\loaders\"\n";
 print "Name: \"{app}\\lib\\pango\"\n";
-print "Name: \"{app}\\lib\\pango\\1.0.0\"\n";
-print "Name: \"{app}\\lib\\pango\\1.0.0\\modules\"\n";
+print "Name: \"{app}\\lib\\pango\\1.2.0\"\n";
+print "Name: \"{app}\\lib\\pango\\1.2.0\\modules\"\n";
 
 # GTK message catalog
 print "Name: \"{app}\\lib\\locale\"\n";
