@@ -116,7 +116,7 @@ int graph (const LIST list,
 	   double **Z, const DATAINFO *pdinfo, 
 	   unsigned char oflag, PRN *prn);
 
-const char *get_gretl_png_term_line (void);
+const char *get_gretl_png_term_line (const PATHS *ppaths);
 
 int gnuplot_init (PATHS *ppaths, FILE **fpp);
 
@@ -138,7 +138,8 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths);
 
 void free_plotspec (GPT_SPEC *spec);
 
-int termtype_to_termstr (const char *termtype, char *termstr);
+int termtype_to_termstr (const char *termtype, char *termstr,
+			 const PATHS *ppaths);
 
 int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
 	    PATHS *ppaths);

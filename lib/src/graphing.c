@@ -478,14 +478,15 @@ static int old_gnuplot (void)
  * Returns: the term string, "set term png ..."
  */
 
-const char *get_gretl_png_term_line (void)
+const char *get_gretl_png_term_line (const PATHS *ppaths)
 {
     static char png_term_line[128];
     static int done = 0;
 
-    if (!done) {
+    if (1 || !done) {
 	const char *grfont = NULL;
-	const char *grfsize = NULL;
+	char *p;
+	int grfsize = 0;
 #ifdef OS_WIN32
 	char pngfont[MAXLEN];
 	char pngfontsize[MAXLEN];
@@ -493,29 +494,31 @@ const char *get_gretl_png_term_line (void)
 
 	strcpy(png_term_line, "set term png");
 
-#ifdef OS_WIN32
+#if defined(OS_WIN32)
 	*pngfont = 0;
 	*pngfontsize = 0;
 	read_reg_val(HKEY_CURRENT_USER, "gretl", "png-font", pngfont);
-	if (*pngfont) 
-	    grfont = pngfont;
-	else 
-	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
+	if (*pngfont) grfont = pngfont;
 	read_reg_val(HKEY_CURRENT_USER, "gretl", "png-font-size", pngfontsize);
-	if (*pngfontsize) 
-	    grfsize = pngfontsize;
-	else 
-	    grfsize = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
-#else
+	if (*pngfontsize) grfsize = atoi(pngfontsize);
+#elif defined(USE_ENV)
 	grfont = getenv("GRETL_PNG_GRAPH_FONT");
-	grfsize = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
+	p = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
+	if (p != NULL) grfsize = atoi(p);
+#else
+	if (*ppaths->pngfont != 0) grfont = ppaths->pngfont;
+	if (ppaths->ttfsize > 0) grfsize = ppaths->ttfsize;
 #endif
 
-	if (grfont != NULL && grfsize != NULL) {
-	    char fontspec[64];
+	if (grfont != NULL) {
+	    strcat(png_term_line, " font ");
+	    strcat(png_term_line, grfont);
+	}
+	if (grfsize > 0 && grfsize < 50) {
+	    char tmp[4];
 
-	    sprintf(fontspec, " font '%s' %s", grfont, grfsize);
-	    strcat(png_term_line, fontspec);
+	    sprintf(tmp, " %d", grfsize);
+	    strcat(png_term_line, tmp);
 	}
 
 #ifdef OS_WIN32
@@ -532,7 +535,7 @@ const char *get_gretl_png_term_line (void)
 	
 	done = 1;
     }
-    
+
     return png_term_line;
 }
 
@@ -567,7 +570,7 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
     if (*fpp == NULL) return 1;
 
     if (GRETL_GUI(ppaths)) {
-	fprintf(*fpp, "%s\n", get_gretl_png_term_line());
+	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ppaths));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
     }
 #else /* not GNUPLOT_PNG */
@@ -1383,7 +1386,8 @@ void free_plotspec (GPT_SPEC *spec)
 
 /* ........................................................... */
 
-int termtype_to_termstr (const char *termtype, char *termstr)
+int termtype_to_termstr (const char *termtype, char *termstr,
+			 const PATHS *ppaths)
 {
     int cmds = 0;
 
@@ -1396,7 +1400,7 @@ int termtype_to_termstr (const char *termtype, char *termstr)
     else if (!strcmp(termtype, "latex")) 
 	strcpy(termstr, "latex");
     else if (!strcmp(termtype, "png")) { 
-	const char *png_str = get_gretl_png_term_line();
+	const char *png_str = get_gretl_png_term_line(ppaths);
 
 	strcpy(termstr, png_str + 9);
     }
@@ -1608,7 +1612,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
     int err = 0, miss;
     char termstr[72];
 
-    dump = termtype_to_termstr(spec->termtype, termstr);
+    dump = termtype_to_termstr(spec->termtype, termstr, ppaths);
 
     if (dump) {  
 	/* dump of gnuplot commands to named file */

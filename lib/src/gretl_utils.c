@@ -1323,6 +1323,9 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	    ppaths->dbhost_ip[0] = '\0';
 	}
 	ppaths->currdir[0] = '\0';
+
+	strcpy(ppaths->pngfont, "verdana");
+	ppaths->ttfsize = 8;
     }
 
     sprintf(ppaths->datadir, "%s\\data\\", ppaths->gretldir);
@@ -1378,7 +1381,10 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	}
 
 	strcpy(ppaths->gnuplot, "gnuplot");
-	ppaths->currdir[0] = '\0';
+	*ppaths->pngfont = 0;
+	ppaths->ttfsize = 0;
+
+	ppaths->currdir[0] = '\0';	
 
 	/* figure out user's home gretl directory */
 	home = getenv("HOME");
