@@ -73,7 +73,6 @@ static int match_object_command (const char *s, char sort)
 
 static void print_model_stat (MODEL *pmod, const char *param, PRN *prn)
 {
-    /* FIXME NatLangS */
     if (!strcmp(param, "ess")) {
 	pprintf(prn, _("%s: ess = %.8g\n"), pmod->name, pmod->ess);
     }
@@ -238,8 +237,9 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 	    copy_model(mnew, *ppmod, pdinfo);
 	    *ppmod = mnew;
 	    pprintf(prn, _("%s saved\n"), cmd->savename);
+	} else {
+	    err = E_ALLOC;
 	}
-	else err = E_ALLOC;
     }
 
     return err;

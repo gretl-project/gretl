@@ -314,6 +314,30 @@ static void edit_session_notes (void)
 
 /* .................................................................. */
 
+static int look_up_model_by_name (const char *mname)
+{
+    int i;
+
+    for (i=0; i<session.nmodels; i++) {
+	if (!strcmp(mname, (session.models[i])->name)) {
+	    return i;
+	}
+    }
+    return -1;
+}
+
+static int look_up_var_by_name (const char *vname)
+{
+    int i;
+
+    for (i=0; i<session.nvars; i++) {
+	if (!strcmp(vname, gretl_var_get_name(session.vars[i]))) {
+	    return i;
+	}
+    }
+    return -1;
+}
+
 static int look_up_graph_by_name (const char *grname)
 {
     int i;
@@ -599,8 +623,18 @@ void *get_session_object_by_name (const char *name, char *which)
 
 int try_add_model_to_session (MODEL *pmod)
 {
+    int nm;
+
     if (model_already_saved(pmod)) {
 	return 1;
+    }
+
+    nm = look_up_model_by_name(pmod->name);
+    if (nm >= 0) {
+	/* replace existing model of the same name */
+	free_model(session.models[nm]);
+	session.models[nm] = pmod;
+	return 0;
     }
 
     if (real_add_model_to_session(pmod)) {
@@ -612,9 +646,20 @@ int try_add_model_to_session (MODEL *pmod)
 
 int try_add_var_to_session (GRETL_VAR *var)
 {
+    int nv;
+
     if (var_already_saved(var)) {
 	return 1;
     }
+
+    nv = look_up_var_by_name(gretl_var_get_name(var));
+    if (nv >= 0) {
+	/* replace existing VAR of the same name */
+	gretl_var_free(session.vars[nv]);
+	session.vars[nv] = var;
+	return 0;
+    }
+
     if (real_add_var_to_session(var)) {
 	return 1;
     }
