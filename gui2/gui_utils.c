@@ -336,8 +336,9 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
 
 	resp = query_save_script(NULL, NULL, vwin);
 	if (!resp) gtk_widget_destroy(vwin->dialog);
-    } else 
+    } else {
 	gtk_widget_destroy(vwin->dialog);
+    }
 }
 
 /* ........................................................... */
@@ -881,7 +882,7 @@ void free_windata (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin) {
-	if (vwin->w) {
+	if (vwin->w) { /* gtktextview */
 	    gchar *undo = g_object_get_data(G_OBJECT(vwin->w), "undo");
 	    
 	    if (undo) g_free(undo);

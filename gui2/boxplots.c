@@ -224,7 +224,6 @@ static GtkWidget *build_menu (gpointer data)
 			 G_CALLBACK(box_popup_activated),
 			 _(items[i]));
 	g_object_set_data(G_OBJECT(item), "group", data);
-        GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	i++;
