@@ -4310,11 +4310,13 @@ msgstr ""
 "Vous pouvez fournir le nom du fichier de données sur la ligne de commandes.\n"
 "Options:\n"
 " -b ou --batch     traiter le script de commande et quitter.\n"
-" -r ou --run       exécuter le script et passer le contrôle à la ligne de commande.\n"
+" -r ou --run       exécuter le script et passer le contrôle à la ligne de "
+"commande.\n"
 " -p ou --pvalue    déterminer les valeurs de P intéractivement.\n"
 " -h ou --help      afficher l'aide et quitter.\n"
 " -v ou --version   afficher la version du logiciel et quitter.\n"
-" -e ou --english   pour forcer l'affichage en Anglais plutôt que dans la langue\n"
+" -e ou --english   pour forcer l'affichage en Anglais plutôt que dans la "
+"langue\n"
 "                   de la traduction.\n"
 "Exemple de l'usage du mode en lot:\n"
 " gretlcli -b mon_fichier.inp > mon_fichier.out\n"
@@ -5728,7 +5730,8 @@ msgstr ""
 
 #: gui/gretl.c:485 gui2/gretl.c:551
 msgid "You may do \"gretl -e\" to force use of English.\n"
-msgstr "Vous pouvez exécuter \"gretl -e\" pour forcer l'affichage en Anglais.\n"
+msgstr ""
+"Vous pouvez exécuter \"gretl -e\" pour forcer l'affichage en Anglais.\n"
 
 #: gui/gretl.c:503 gui2/gretl.c:572
 #, c-format
@@ -10767,7 +10770,9 @@ msgstr ""
 msgid ""
 "Critical values for standard normal distribution\n"
 "\n"
-msgstr "Valeurs critiques pour la distribution normale standard\n\n"
+msgstr ""
+"Valeurs critiques pour la distribution normale standard\n"
+"\n"
 
 #: plugin/stats_tables.c:343 plugin/stats_tables.c:373
 msgid ""

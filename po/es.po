@@ -1,3 +1,4 @@
+# translation of gretl-1.2.7.po to Spanish
 # translation of gretl-1.2.5.po to Spanish
 # translation of gretl-1.2.4.po to Spanish
 # Copyright (C) 2004 Free Software Foundation, Inc.
@@ -6,9 +7,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.2.5\n"
+"Project-Id-Version: gretl-1.2.7\n"
 "POT-Creation-Date: 2004-06-07 11:36-0400\n"
-"PO-Revision-Date: 2004-05-24 12:49-0400\n"
+"PO-Revision-Date: 2004-06-09 09:19-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -136,7 +137,7 @@ msgid ""
 "sigmahat                 = %g\n"
 "\n"
 msgstr ""
-"sigmahat                 = %g\n"
+"sigmahat                 =  %g\n"
 "\n"
 
 #: lib/src/compare.c:1458
@@ -2546,10 +2547,11 @@ msgid ""
 "\n"
 msgstr ""
 "El modelo no tiene término constante.\n"
-"El estadístico F se calcula como en la sección 4.4 del libro 'Introductory\n"
+"El estadístico F se calcula como en la sección 4.4 del libro 'Introductory "
 "Econometrics' de Ramanathan.\n"
-"El R-cuadrado es el cuadrado de la correlación entre los valores observado \n"
-"y ajustado de la variable dependiente.\n"
+"El R-cuadrado es el cuadrado de la correlación entre los valores observado y "
+"ajustado\n"
+"de la variable dependiente.\n"
 "\n"
 
 #: lib/src/modelprint.c:81 lib/src/modelprint.c:93 lib/src/modelprint.c:98
@@ -4286,7 +4288,6 @@ msgstr ""
 "No está disponible en un bucle.\n"
 
 #: cli/gretlcli.c:97
-#, fuzzy
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -4306,12 +4307,14 @@ msgstr ""
 "Se puede indicar el nombre de un fichero de datos en la línea de "
 "instrucciones.\n"
 "Opciones:\n"
-" -b o --batch     Procesa un guión de instrucciones y sale.\n"
-" -r o --run       Ejecuta un guión y después pasa a control manual en línea "
-"de instrucciones.\n"
+" -b o --batch     Procesa un lote de instrucciones y sale.\n"
+" -r o --run       Ejecuta un lote de instrucciones y después pasa a control\n"
+" manual en línea de instrucciones.\n"
 " -p o --pvalue    Determinar valores-p interactivamente.\n"
 " -h o --help      Muestra esta información y sale.\n"
 " -v o --version   Muestra la información de versión y sale.\n"
+" -e o --english   Fuerza el uso del idioma Inglés en lugar de la "
+"traducción.\n"
 "Ejemplo de uso en modo 'batch':\n"
 " gretlcli -b mificher.inp >mificher.out\n"
 "Ejemplo de uso en modo 'run':\n"
@@ -4897,7 +4900,7 @@ msgstr "abrir una base de datos remota (web) al inicio"
 
 #: gui/gretl.c:112 gui2/gretl.c:123
 msgid "force use of English"
-msgstr ""
+msgstr "Forzar el uso del Inglés"
 
 #: gui/gretl.c:187 gui2/gretl.c:211 gui2/gui_utils.c:114 gui2/gui_utils.c:181
 #: gui2/gui_utils.c:247 gui2/gui_utils.c:265
@@ -5719,11 +5722,8 @@ msgstr ""
 "gretl.\n"
 
 #: gui/gretl.c:485 gui2/gretl.c:551
-#, fuzzy
 msgid "You may do \"gretl -e\" to force use of English.\n"
-msgstr ""
-"O Vd puede ejecutar \"gretl -d base_de_datos\" para abrir una base de datos "
-"gretl.\n"
+msgstr "Usted puede ejecutar \"gretl -e\" para forzar el uso del Inglés.\n"
 
 #: gui/gretl.c:503 gui2/gretl.c:572
 #, c-format
@@ -6790,13 +6790,12 @@ msgid " DW "
 msgstr " DW "
 
 #: gui2/calculator.c:835
-#, fuzzy
 msgid ""
 "Critical values for\n"
 "standard normal distribution"
 msgstr ""
-"Valores críticos de la distribución normal estándar\n"
-"\n"
+"Valores críticos de la\n"
+"distribución normal estándar"
 
 #: gui2/calculator.c:843 gui2/calculator.c:847 gui2/calculator.c:904
 #: gui2/calculator.c:913 plugin/stats_tables.c:383 plugin/stats_tables.c:410
@@ -9998,7 +9997,7 @@ msgstr "Instrucción para ver los ficheros postscript"
 
 #: gui2/settings.c:184
 msgid "Program to play MIDI files"
-msgstr ""
+msgstr "Programa para tocar ficheros MIDI"
 
 #: gui2/settings.c:187
 msgid "Calculator"
@@ -10319,13 +10318,13 @@ msgid "One or more variable names are missing.\n"
 msgstr "Falta uno o más nombres de variables\n"
 
 #: plugin/excel_import.c:1040
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Expected numeric data, found string:\n"
 "%s\" at row %d, column %d\n"
 msgstr ""
 "Se esperaba un dato numérico, pero se encontró una cadena:\n"
-"%s en fila %d, columna %d\n"
+"%s\" en fila %d, columna %d\n"
 
 #: plugin/excel_import.c:1047
 msgid "Warning: there were missing values\n"
@@ -10736,10 +10735,9 @@ msgid ""
 "econometrics text, e.g. Ramanathan's Introductory Econometrics.\n"
 msgstr ""
 "\n"
-"Si desea tablas estadísticas más fáciles de entender, por favor consulte un\n"
-"manual de econometría o estadística, por ejemplo, 'Introductory "
-"Econometrics'\n"
-"de Ramanathan.\n"
+"Si desea tablas estadísticas más fáciles de entender, por favor consulte un "
+"manual de econometría\n"
+"o estadística, por ejemplo, 'Introductory Econometrics' de Ramanathan.\n"
 
 #: plugin/stats_tables.c:320
 #, no-c-format
@@ -10770,17 +10768,17 @@ msgstr ""
 msgid ""
 "Column headings show alpha (significance level) for a one-tailed test.\n"
 msgstr ""
-"Las cabeceras de columna muestran el alfa (nivel de significación) para un \n"
+"Las cabeceras de columna muestran el alfa (nivel de significación) para un "
 "contraste a una cola.\n"
-"\n"
 
 #: plugin/stats_tables.c:345 plugin/stats_tables.c:375
 msgid ""
 "For a two-tailed test, select the column heading showing half the desired\n"
 "alpha level.  "
 msgstr ""
-"Para un contraste a dos colas, elija el valor de encabezado que muestre la\n"
-"mitad del nivel alfa deseado.  "
+"Para un contraste a dos colas, elija el valor de encabezado que muestre la "
+"mitad del nivel\n"
+"alfa deseado.  "
 
 #: plugin/stats_tables.c:348 plugin/stats_tables.c:378
 #, no-c-format
@@ -10789,8 +10787,9 @@ msgid ""
 "level, use the 0.05 column.)\n"
 "\n"
 msgstr ""
-"(Por ejemplo, para un contraste a dos colas\n"
-"al nivel de significación del 10%, use la columna 0,05)\n"
+"(Por ejemplo, para un contraste a dos colas al nivel de significación del "
+"10%, \n"
+" use la columna 0,05)\n"
 "\n"
 
 #: plugin/stats_tables.c:372
@@ -10818,8 +10817,8 @@ msgid ""
 "Column headings show alpha (significance level) for a one-tailed test.\n"
 "\n"
 msgstr ""
-"Las cabeceras de columna muestran el alfa (nivel de significación) para \n"
-"un contraste a una cola.\n"
+"Las cabeceras de columna muestran el alfa (nivel de significación) para un "
+"contraste a una cola.\n"
 "\n"
 
 #: plugin/sur.c:212
@@ -11027,25 +11026,3 @@ msgstr ""
 #: plugin/workbook.c:583
 msgid "Unexpected error reading the file\n"
 msgstr "Error inesperado al leer el fichero\n"
-
-#~ msgid "/File/Save data as/_alternative formats/_single precision binary..."
-#~ msgstr ""
-#~ "/Archivo/Guardar datos como/formatos _alternativos/binarios de precisión "
-#~ "_simple..."
-
-#~ msgid "/File/Save data as/_alternative formats/_double precision binary..."
-#~ msgstr ""
-#~ "/Archivo/Guardar datos como/formatos _alternativos/binarios de _doble "
-#~ "precisión..."
-
-#~ msgid "/File/Create data set/panel"
-#~ msgstr "/Archivo/Crear conjunto de datos/panel"
-
-#~ msgid "/Session/_Delete"
-#~ msgstr "/Sesión/_Borrar"
-
-#~ msgid "%s: Invalid BOF record"
-#~ msgstr "%s: Grabación de BOF no válida"
-
-#~ msgid "Unexpected error reading the file"
-#~ msgstr "Error inesperado al leer el fichero"

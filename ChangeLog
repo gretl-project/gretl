@@ -1,4 +1,5 @@
 version 1.2.7
+- add Italian helpfiles
 - add start-up option "-e" or "--english" to force use of
   English strings when LANG would indicate translation
   (also recognize environment variable GRETL_LANG: if this
