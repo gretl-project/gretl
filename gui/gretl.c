@@ -1476,17 +1476,15 @@ static volatile int fork_err;
 
 static void fork_err_set (int signum)
 {
-    fprintf(stderr, "Got error from child\n");
     fork_err = 1;
 }
 
-int real_gretl_fork (const char *prog, const char *arg)
+int gretl_fork (const char *prog, const char *arg)
 {
     pid_t pid;
 
     fork_err = 0;
 
-    /* signal(SIGCHLD, SIG_IGN); */
     signal(SIGUSR1, fork_err_set);
 
     pid = fork();
@@ -1503,20 +1501,14 @@ int real_gretl_fork (const char *prog, const char *arg)
 	perror("execlp");
 	kill(getppid(), SIGUSR1);
 	_exit(EXIT_FAILURE);
-    } 
+    }
+    
+    sleep(1);
 
-    /* signal(SIGCHLD, SIG_DFL); */
-
-    return 0;
-}
-
-int gretl_fork (const char *prog, const char *arg)
-{
-    fork_err = 0;
-
-    real_gretl_fork(prog, arg);
-
-    fprintf(stderr, "fork_err = %d\n", fork_err);
+    if (fork_err) {
+	sprintf(errtext, "%s: %s", _("Command failed"), prog);
+	errbox(errtext);
+    }
 
     return fork_err;
 }
