@@ -207,6 +207,8 @@ static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
     return X;
 }
 
+/* Calculate W(t)-transpose * W(t-lag) */
+
 static void wtw (gretl_matrix *wt, gretl_matrix *X, 
 		 int n, int t, int lag)
 {
@@ -222,6 +224,11 @@ static void wtw (gretl_matrix *wt, gretl_matrix *X,
     }
 }
 
+/* Calculate the Newey-West HAC covariance matrix.  Algorithm and
+   (basically) notation taken from Davidson and MacKinnon (DM), 
+   Econometric Theory and Methods, chapter 9.
+*/
+
 static int qr_make_hac (MODEL *pmod, const double **Z, 
 			gretl_matrix *xpxinv)
 {
@@ -230,14 +237,16 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
     int m = pmod->nobs;
     int n = pmod->ncoeff;
     int p, i, j, t;
-    double mult, uu;
+    double weight, uu;
+    double *uhat = pmod->uhat + pmod->t1;
     int err = 0;
 
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
 
+    /* get the user's preferred maximum lag setting */
     p = get_hac_lag(m);
-    fprintf(stderr, "nobs = %d, HAC lag = %d\n", m, p);
+    gretl_model_set_int(pmod, "hac_lag", p);
 
     vcv = gretl_matrix_alloc(n, n);
     wtj = gretl_matrix_alloc(n, n);
@@ -250,32 +259,35 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
     gretl_matrix_zero(vcv);
 
     for (j=0; j<=p; j++) {
-	/* cumulate running sum of gamma-hat terms */
+	/* cumulate running sum of Gamma-hat terms */
 	gretl_matrix_zero(gammaj);
 	for (t=j; t<m; t++) {
+	    /* W(t)-transpose * W(t-j) */
 	    wtw(wtj, X, n, t, j);
-	    uu = pmod->uhat[t] * pmod->uhat[t-j];
+	    uu = uhat[t] * uhat[t-j];
 	    gretl_matrix_multiply_by_scalar(wtj, uu);
+	    /* DM equation (9.36), p. 363 */
 	    gretl_matrix_add_to(gammaj, wtj);
 	}
-	gretl_matrix_divide_by_scalar(gammaj, (double) m);
 
 	if (j > 0) {
+	    /* Gamma(j) = Gamma(j) + Gamma(j)-transpose */
 	    gretl_matrix_add_self_transpose(gammaj);
-	    mult = 1.0 -  j / (double) (p + 1.0);
-	    gretl_matrix_multiply_by_scalar(gammaj, mult);
+	    weight = 1.0 - (double) j / (p + 1.0);
+	    /* multiply by Newey-West weight */
+	    gretl_matrix_multiply_by_scalar(gammaj, weight);
 	}
 
+	/* DM equation (9.38), p. 364 */
 	gretl_matrix_add_to(vcv, gammaj);
     }
 
-    gretl_matrix_multiply_by_scalar(vcv, (double) m);
     gretl_matrix_multiply_mod(xpxinv, GRETL_MOD_TRANSPOSE,
 			      vcv, GRETL_MOD_NONE,
 			      wtj);
     gretl_matrix_multiply(wtj, xpxinv, vcv);
 
-    /* vcv should now hold HAC */
+    /* vcv now holds HAC */
     for (i=0; i<n; i++) {
 	double x = gretl_matrix_get(vcv, i, i);
 
@@ -283,6 +295,7 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
 	pmod->sderr[j] = sqrt(x);
     }
 
+    /* Transcribe vcv into triangular representation */
     err = qr_make_vcv(pmod, vcv, 1);
 
  bailout:

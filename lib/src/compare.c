@@ -840,7 +840,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 static double get_vhat (double *ahat, int g, int t1, int t2)
 {
     int t, h;
-    double mult, a_cross_sum;
+    double weight, a_cross_sum;
     double vhat;
 
     vhat = 0.0;
@@ -850,12 +850,12 @@ static double get_vhat (double *ahat, int g, int t1, int t2)
     }
 
     for (h=1; h<=g; h++) {
-	mult = 1.0 - (double) h / (g + 1);
+	weight = 1.0 - (double) h / (g + 1);
 	a_cross_sum = 0.0;
 	for (t=h+t1; t<=t2; t++) {
 	    a_cross_sum += ahat[t] * ahat[t-h];
 	}
-	vhat += 2.0 * mult * a_cross_sum;
+	vhat += 2.0 * weight * a_cross_sum;
     }
 
     return vhat;

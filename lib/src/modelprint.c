@@ -877,9 +877,16 @@ static void print_model_heading (const MODEL *pmod,
 		(pmod->ci == TSLS && RTF_FORMAT(prn->format))? "\\par\n" : "\n");
     }
 
-    if (pmod->aux == AUX_SCR) {
-	pprintf(prn, _("Serial correlation-robust standard errors, "
-		"lag order %d\n"), pmod->order);
+    if (pmod->aux == AUX_SCR || gretl_model_get_int(pmod, "hac_lag")) {
+	if (pmod->aux == AUX_SCR) {
+	    pprintf(prn, _("Serial correlation-robust standard errors, "
+			   "lag order %d\n"), pmod->order);
+	} else {
+	    int lag = gretl_model_get_int(pmod, "hac_lag");
+
+	    pprintf(prn, _("Serial correlation-robust standard errors, "
+			   "lag order %d\n"), lag);
+	}
     }
     else if (pmod->ci == WLS || pmod->ci == ARCH) {
 	if (tex) {
