@@ -824,6 +824,50 @@ then:
 which will create incomepc = income * invpop, expendpc = expend * invpop.
 
 #
+nls
+@Estimation
+
+Performs Nonlinear Least Squares estimation using a modified version of the
+Levenberg-Marquandt algorithm (as in the MINPACK function lmder).  The user
+must supply a function specification and expressions for the derivatives with
+respect to each of the parameters.  These parameters must be declared and
+given starting values (using the genr command) prior to estimation.  
+
+It is easiest to show what is required by example.  The following is a
+complete script to estimate the nonlinear consumption function set out in
+William Greene's Econometric Analysis, in chapter 11 of the 4th edition, or
+chapter 9 of the 5th.  (The numbers to the left of the lines are for reference
+and are not part of the commands.)
+
+ 1  open greene11_3.gdt
+ 2  ols C 0 Y
+ 3  genr alpha = coeff(0)
+ 4  genr beta = coeff(Y)
+ 5  genr gamma = 1.0
+ 6  nls C = alpha + beta * Y^gamma
+ 7  deriv alpha = 1
+ 8  deriv beta = Y^gamma
+ 9  deriv gamma = beta * Y^gamma * log(Y)
+10  end nls
+
+It is often convenient to initialize the parameters by reference to a related
+linear model, and that is accomplished here on lines 2 to 5.  The parameters
+alpha, beta and gamma could be set to any initial values (not necessarily
+based on a model estimated with OLS), although convergence of the NLS
+procedure is not guaranteed for an arbitrary starting point.
+
+The actual NLS commands occupy lines 6 to 10. On line 6 the "nls" command is
+given: a dependent variable is specified, followed by an equals sign, followed
+by a function specification.  The syntax for the expression on the right is
+the same as that for the genr command.  The next three lines specify the
+derivatives of the regression function with respect to each of the parameters
+in turn.  Each line begins with the keyword "deriv", gives the name of a
+parameter, an equals sign, and an expression whereby the derivative can be
+calculated (again, the syntax here is the same as for "genr").
+
+Line 10, "end nls", completes the command and calls for estimation.
+
+#
 noecho
 @Programming
 Usage:          noecho
