@@ -363,6 +363,25 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     return err;
 }
 
+#define FOO
+
+static void do_X_prime_diag (const gretl_matrix *X,
+			     const gretl_vector *d,
+			     gretl_matrix *Y)
+{
+    double x;
+    int n = X->cols;
+    int m = X->rows;
+    int i, j;
+
+    for (i=0; i<m; i++) {
+	for (j=0; j<n; j++) {
+	    x = X->val[mdx(X, i, j)];
+	    Y->val[mdx(Y, j, i)] = d->val[j] * x;
+	}
+    }
+}
+
 /* Heteroskedasticity-Consistent Covariance Matrices: See Davidson
    and MacKinnon, Econometric Theory and Methods, chapter 5, esp.
    page 200.  Implements HC0, HC1, HC2 and HC3.
@@ -383,11 +402,18 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
 
+#ifdef FOO
+    diag = gretl_column_vector_alloc(m);
+    for (t=0; t<m; t++) {
+	diag->val[t] = pmod->uhat[t] * pmod->uhat[t];
+    }
+#else
     diag = gretl_diagonal_matrix(pmod->uhat, m, GRETL_MOD_SQUARE);
+#endif
     if (diag == NULL) {
 	err = 1;
 	goto bailout;
-    }   
+    }  
 
     tmp1 = gretl_matrix_alloc(n, m);
     tmp2 = gretl_matrix_alloc(n, n);
@@ -403,6 +429,30 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
 	gretl_model_set_int(pmod, "hc_version", hc_version);
     }
 
+#ifdef FOO
+    if (hc_version == 1) {
+	for (t=0; t<m; t++) {
+	    diag->val[t] *= (double) m / (m - n);
+	}
+    } else if (hc_version > 1) {
+	/* do the h_t calculations */
+	for (t=0; t<m; t++) {
+	    double q, ht = 0.0;
+
+	    for (i=0; i<n; i++) {
+		q = Q->val[mdx(Q, t, i)];
+		ht += q * q;
+	    }
+	    if (hc_version == 2) {
+		diag->val[t] /= (1.0 - ht);
+	    } else { /* HC3 */
+		diag->val[t] /= (1.0 - ht) * (1.0 - ht);
+	    }
+	}
+    }
+
+    do_X_prime_diag(X, diag, tmp1);
+#else
     if (hc_version == 1) {
 	for (t=0; t<m; t++) {
 	    diag->val[mdx(diag, t, t)] *= (double) m / (m - n);
@@ -427,6 +477,8 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
 			      diag, GRETL_MOD_NONE,
 			      tmp1);
+#endif
+
     gretl_matrix_multiply(tmp1, X, tmp2);
     gretl_matrix_multiply(xpxinv, tmp2, tmp3); 
     gretl_matrix_multiply(tmp3, xpxinv, tmp2);
