@@ -36,7 +36,7 @@
      <title>Finestra comandi, modifica di un file di comandi</title>
      <screenshot>
         <screeninfo>Finestra comandi</screeninfo>
-        <graphic fileref="figures/scriptwin" align="center"/>
+        <graphic fileref="&figures;/scriptwin" align="center"/>
      </screenshot>
     </figure>
 
@@ -225,7 +225,7 @@
         aggiunti alle icone predefinite</title>
 	<screenshot>
 	  <screeninfo>Finestra di sessione</screeninfo>
-	  <graphic fileref="figures/session" align="center"/>
+	  <graphic fileref="&figures;/session" align="center"/>
 	</screenshot>
       </figure>
 
@@ -345,7 +345,7 @@
 
       <figure id="fig-model-table" float="1" pgwide="1">
 	<title>Esempio della tabella modelli</title>
-	<graphic fileref="figures/model_table" align="center"/>
+	<graphic fileref="&figures;/model_table" align="center"/>
       </figure> 
 
     </sect2>

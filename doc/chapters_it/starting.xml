@@ -45,7 +45,7 @@
       <title>Finestra dei file di esempio</title>
       <screenshot>
 	<screeninfo>Finestra dei file di esempio</screeninfo>
-	<graphic fileref="figures/datafiles" align="center"/>
+	<graphic fileref="&figures;/datafiles" align="center"/>
       </screenshot>
     </figure>
 
@@ -80,7 +80,7 @@
       <title>Finestra principale, con un file di esempio aperto</title>
       <screenshot>
 	<screeninfo>Finestra principale</screeninfo>
-	<graphic fileref="figures/mainwin" align="center"/>
+	<graphic fileref="&figures;/mainwin" align="center"/>
       </screenshot>
     </figure>
 
@@ -104,7 +104,7 @@
       <title>Specificazione del modello</title>
       <screenshot>
 	<screeninfo>Specificazione del modello</screeninfo>
-	<graphic fileref="figures/selector" align="center"/>
+	<graphic fileref="&figures;/selector" align="center"/>
       </screenshot>
     </figure>
 
@@ -144,7 +144,7 @@
       <title>Finestra dei risultati del modello</title>
       <screenshot>
 	<screeninfo>Finestra del modello</screeninfo>
-	<graphic fileref="figures/modelwin" align="center"/>
+	<graphic fileref="&figures;/modelwin" align="center"/>
       </screenshot>
     </figure>
 
@@ -228,7 +228,7 @@
       Dati, Campione, Variabile, Modello e Aiuto.
     </para>
 
-    <graphic fileref="figures/menubar" align="center"/>
+    <graphic fileref="&figures;/menubar" align="center"/>
 
     <itemizedlist>
 
@@ -556,7 +556,7 @@
     <para>In basso a sinistra nella finestra principale si trova la barra
       degli strumenti.</para>
 
-    <graphic fileref="figures/toolbar" align="center"/>
+    <graphic fileref="&figures;/toolbar" align="center"/>
 
     <para>Le icone sulla barra hanno il seguente significato, nell'ordine:</para>
     

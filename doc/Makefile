@@ -112,7 +112,7 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml $(CMDLIST)
 
 chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml $(CMDLIST_IT)
 	mkdir -p manual_it.chm/figures
-	cp $(topdoc)/figures/*.png manual_it.chm/figures
+	cp $(topdoc)/figures_it/*.png manual_it.chm/figures
 	for f in manual_it.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
 	cd manual_it.chm && \
 	$(SAXON) ../$(topdoc)/manual_it.xml ../$(topdoc)/gretlhlp.xsl \

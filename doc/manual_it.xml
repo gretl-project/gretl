@@ -7,6 +7,7 @@
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
+<!ENTITY figures "figures_it">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
 <!ENTITY introduction SYSTEM "chapters_it/intro.xml">
 <!ENTITY starting SYSTEM "chapters_it/starting.xml">

@@ -105,7 +105,7 @@
       <title>Finestra di dialogo NLS</title>
       <screenshot>
         <screeninfo>Finestra di dialogo di Minimi quadrati non lineari</screeninfo>
-        <graphic fileref="figures/nls_window" align="center"/>
+        <graphic fileref="&figures;/nls_window" align="center"/>
       </screenshot>
     </figure>
 
