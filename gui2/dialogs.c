@@ -2185,119 +2185,13 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_show_all(opts->dlg);
 }
 
-/* .................................................................. */
-
-static void really_set_panel_code (GtkWidget *w, dialog_t *d)
-{
-    DATAINFO *pdinfo = (DATAINFO *) d->data;
-
-    pdinfo->structure = d->code;
-    set_sample_label(pdinfo);
-    d->data = NULL;
-}
-
-/* .................................................................. */
-
-static void set_panel_code (GtkWidget *w, dialog_t *d)
-{
-    gint i;
-
-    if (GTK_TOGGLE_BUTTON(w)->active) {
-	i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
-	d->code = i;
-    }
-}
-
 static gint dialog_unblock (GtkWidget *w, gpointer p)
 {
     gtk_main_quit();
     return FALSE;
 }
 
-void panel_structure_dialog (DATAINFO *pdinfo)
-{
-    dialog_t *d;
-    GtkWidget *button;
-    GtkWidget *tempwid;
-    GSList *group;
-
-    d = dialog_data_new(pdinfo, (dataset_is_panel(pdinfo))?
-			pdinfo->structure : STACKED_TIME_SERIES,
-			_("gretl: panel structure"));
-    if (d == NULL) {
-	return;
-    }
-
-    set_open_dialog(d->dialog);
-
-    no_resize(d->dialog);
-
-#ifdef OLD_GTK
-    set_dialog_border_widths(d->dialog);
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
-#endif
-
-    g_signal_connect(G_OBJECT(d->dialog), "destroy", 
-		     G_CALLBACK(dialog_unblock), NULL);
-
-    /* stacked time series */
-    button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			button, TRUE, TRUE, 0);
-    if (d->code == STACKED_TIME_SERIES) {
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-    }
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_panel_code), d);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(STACKED_TIME_SERIES));
-    gtk_widget_show(button);
-
-    /* stacked cross sections */
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, _("Stacked cross sections"));
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			button, TRUE, TRUE, 0);
-    if (d->code == STACKED_CROSS_SECTION) {
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-    }
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_panel_code), d);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(STACKED_CROSS_SECTION));
-    gtk_widget_show(button);
-
-    /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(d->dialog)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
-		     G_CALLBACK(really_set_panel_code), d);
-#ifndef OLD_GTK
-    g_signal_connect(G_OBJECT (tempwid), "clicked", 
-		     G_CALLBACK (delete_widget), 
-		     d->dialog);
-#else
-    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			       GTK_OBJECT (d->dialog));
-#endif
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
-
-    /* Create the "Cancel" button */
-    cancel_delete_button(GTK_DIALOG (d->dialog)->action_area, d->dialog);
-
-    /* Create a "Help" button */
-    context_help_button(GTK_DIALOG (d->dialog)->action_area, PANEL);
-
-    gtk_widget_show (d->dialog);
-#ifndef OLD_GTK
-    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(mdata->w));
-#endif
-
-    gtk_main();
-}
-
-/* next section: material relating to the data compaction dialog */
+/* material relating to the data compaction dialog */
 
 struct compaction_info {
     int *target_pd;
@@ -2590,7 +2484,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
 #ifndef OLD_GTK
     g_signal_connect (G_OBJECT (d->dialog), "destroy", 
-		      G_CALLBACK (dialog_unblock), NULL);
+		      G_CALLBACK(dialog_unblock), NULL);
 #endif
 
     tempwid = gtk_label_new(labelstr);
@@ -2627,13 +2521,13 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     /* Create the "OK" button */
     tempwid = ok_button(GTK_DIALOG (d->dialog)->action_area);
 #ifndef OLD_GTK
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (delete_widget), 
-		      G_OBJECT (d->dialog));
+    g_signal_connect (G_OBJECT(tempwid), "clicked", 
+		      G_CALLBACK(delete_widget), 
+		      G_OBJECT(d->dialog));
 #else
-    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			       GTK_OBJECT (d->dialog));
+    gtk_signal_connect_object(GTK_OBJECT(tempwid), "clicked", 
+			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
+			      GTK_OBJECT(d->dialog));
 #endif
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
@@ -3079,8 +2973,6 @@ void errbox (const char *msg)
     msgbox(msg, 1);
 }
 
-/* ........................................................... */
-
 void infobox (const char *msg) 
 {
     msgbox(msg, 0);
@@ -3357,12 +3249,18 @@ static GtkWidget *dwiz_stobs_spinner (GtkWidget *dialog, DATAINFO *dwinfo)
     GtkWidget *label;
     GtkWidget *startspin;
 
+    /* somewhere in here: need to adjust dwinfo in light of
+       selections made to date, so that the spinner shows
+       appropriate possible values for a starting observation
+    */
+
     hbox = gtk_hbox_new(TRUE, 5);
 
     label = gtk_label_new(_("Starting observation:"));
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
+    /* FIXME below */
     adj = gtk_adjustment_new(datainfo->t1, 
 			     0, datainfo->n - 1,
 			     1, 1, 1);
@@ -3471,6 +3369,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
     /* panel size selection? */
     if (step == DW_PANEL_SIZE) {
+	/* FIXME write real code for this situation!! */
 	tempwid = gtk_label_new("panel size selection goes here");
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tempwid, TRUE, TRUE, 0);
@@ -3546,7 +3445,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 
     dwinfo = datainfo_new();
     if (dwinfo == NULL) {
-	/* error message needed */
+	errbox(_("Out of memory"));
 	return;
     }
 

@@ -1372,20 +1372,6 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w)
-{
-    GtkWidget *open_dialog = get_open_dialog();
-
-    if (open_dialog != NULL) {
-	gdk_window_raise(open_dialog->window);
-	return;
-    }
-
-    panel_structure_dialog(datainfo);
-}
-
-/* ........................................................... */
-
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 {
     windata_t *mydata = (windata_t *) data;

@@ -384,7 +384,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/Remove case _markers"), NULL, do_remove_markers, 0, NULL },
     { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>" },
     { N_("/Sample/Dataset structure..."), NULL, data_structure_wizard, 0, NULL },
-    { N_("/Sample/Interpret as _panel..."), NULL, gui_set_panel_structure, 0, NULL },
     { N_("/Sample/Restructure panel..."), NULL, panel_restructure_dialog, 0, NULL },
 
     /* Variable menu */
