@@ -2050,7 +2050,15 @@ static void gretl_pdf (void)
 static void xy_graph (void)
 {
     if (data_status) {
-	selector_callback(NULL, GR_XY, NULL);
+	int selcount = 
+	    selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)), 
+			    NULL);
+
+	if (selcount == 2) {
+	    plot_from_selection(NULL, GR_XY, NULL);
+	} else {
+	    selector_callback(NULL, GR_XY, NULL);
+	}
     } else {
 	errbox(_("Please open a data file first"));
     }

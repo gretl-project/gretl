@@ -1916,7 +1916,7 @@ static GList *compose_var_selection_list (const int *list)
     int i;
 
     for (i=1; i<=list[0]; i++) {
-	varlist = g_list_append(varlist, datainfo->varname[i]);
+	varlist = g_list_append(varlist, datainfo->varname[list[i]]);
     }
 
     return varlist;
