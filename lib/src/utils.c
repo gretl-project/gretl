@@ -1532,7 +1532,7 @@ int _forecast (int t1, const int t2, const int nv,
 {
     double xx, zz, zr;
     int i, k, maxlag = 0, yno = pmod->list[1], ARMODEL;
-    int v, t;
+    int v, t, miss;
 
     ARMODEL = (pmod->ci == AR || pmod->ci == CORC || 
 	       pmod->ci == HILU)? 1 : 0;
@@ -1543,8 +1543,10 @@ int _forecast (int t1, const int t2, const int nv,
     }
 
     for (t=t1; t<=t2; t++) {
+	miss = 0;
 	zz = 0.0;
-	if (ARMODEL) for (k=1; k<=pmod->arlist[0]; k++) {
+	if (ARMODEL) 
+	    for (k=1; k<=pmod->arlist[0]; k++) {
 	    xx = (*pZ)[yno][t-pmod->arlist[k]];
 	    zr = pmod->rhot[k];
 	    if (na(xx)) {
@@ -1552,27 +1554,27 @@ int _forecast (int t1, const int t2, const int nv,
 		xx = (*pZ)[nv][t-pmod->arlist[k]];
 		if (na(xx)) {
 		    (*pZ)[nv][t] = NADBL;
-		    goto endit;
+		    miss = 1;
 		}
 	    }
 	    zz = zz + xx * zr;
 	} /* end if ARMODEL */
-	for (v=1; v<=pmod->ncoeff; v++) {
+	for (v=1; !miss && v<=pmod->ncoeff; v++) {
 	    k = pmod->list[v+1];
 	    xx = (*pZ)[k][t];
 	    if (na(xx)) {
 		zz = NADBL;
-		break;
+		miss = 1;
 	    }
-	    if (ARMODEL) {
+	    if (!miss && ARMODEL) {
 		xx = (*pZ)[k][t];
 		for (i=1; i<=pmod->arlist[0]; i++) 
 		    xx -= pmod->rhot[i] * (*pZ)[k][t-pmod->arlist[i]];
 	    }
-	    zz = zz + xx * pmod->coeff[v];
+	    if (!miss) 
+		zz = zz + xx * pmod->coeff[v];
 	}
 	(*pZ)[nv][t] = zz;
-    endit:  ;
     }
     return 0;
 }
