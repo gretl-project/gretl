@@ -1054,20 +1054,22 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 
 /* ........................................................... */
 
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
-
-static gint catch_audio_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     if (key->keyval == GDK_a) {
 	audio_render_window(vwin, AUDIO_LISTBOX);
     } else if (key->keyval == GDK_x) {
 	audio_render_window(NULL, AUDIO_LISTBOX);
     }
+#endif
+
+    if (key->keyval == GDK_e) {
+	varinfo_dialog(mdata->active_var, 1);
+    } 
 
     return FALSE;
 }
-
-#endif
 
 /* ........................................................... */
 
@@ -1117,12 +1119,10 @@ void populate_varlist (void)
 	g_signal_connect (G_OBJECT(mdata->listbox), "button_press_event",
 			  G_CALLBACK(main_varclick),
 			  mdata);
-#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
 	g_signal_connect (G_OBJECT(mdata->listbox), "key_press_event",
-			  G_CALLBACK(catch_audio_key),
+			  G_CALLBACK(catch_mdata_key),
 			  mdata);
 	gtk_widget_grab_focus(mdata->listbox);
-#endif
 	click_connected = 1;
     }
 
