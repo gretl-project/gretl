@@ -2,6 +2,11 @@
 
 TOPSRC=$1
 BUILDDIR=`pwd`
+if [ "$TOPSRC" = "." ] ; then
+  GUI2DIR="../gui2"
+else
+  GUI2DIR=${TOPSRC}/gui2
+fi
 
 cd ${TOPSRC}/gui && \
 for f in \
@@ -24,7 +29,7 @@ for f in \
   webget.c webget.h \
   library.c library.h ; do
     rm -f $f
-    ln -s ${TOPSRC}/gui2/$f $f
+    ln -s ${GUI2DIR}/$f $f
 done
 cd $BUILDDIR
 
