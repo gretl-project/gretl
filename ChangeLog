@@ -23,6 +23,10 @@ version 1.0.8
 - Fix brokenness in saving boxplots to session file
 - Refinements to CSV import function -- handle space-separated
   data with multiple/variable spaces between columns
+- Fix bug in range-mean graph when there are missing values at
+  the start of the data range
+- Add experimental "model table" in session icon view (not submitted
+  for translation yet)
 
 04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey

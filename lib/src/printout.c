@@ -393,28 +393,25 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
     else pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);  
 }
 
-/* ......................................................... */
+/**
+ * gretl_fix_exponent:
+ * @s: string representation of floating-point number.
+ * 
+ * Some C libraries (e.g. MS) print an "extra" zero in the exponent
+ * when using scientific notation, e.g. "1.45E-002".  This function
+ * checks for this and cuts it out if need be.
+ */
 
-/* Some C libraries (e.g. MS) print an "extra" zero in the exponent
-   when using scientific notation, e.g. "1.45E-002".  The following 
-   function checks for this and cuts it out if need be. */ 
-
-static void fix_exponent (char *s)
+void gretl_fix_exponent (char *s)
 {
     char *p;
 
-#if 0
-    if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
-	memmove(p+1, p+2, strlen(p+1));
-    }
-#else
     if ((p = strstr(s, "E+0")) || (p = strstr(s, "E-0"))
 	|| (p = strstr(s, "e+0")) || (p = strstr(s, "e-0"))) {
 	if (strlen(p) == 5) {
 	    memmove(p+2, p+3, strlen(p+2));
 	}
     }
-#endif
 }
 
 /* For some reason sprintf using "%#G" seems to stick an extra
@@ -457,7 +454,7 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
 
     sprintf(numstr, "%#.*G", digits, x);
 
-    fix_exponent(numstr);
+    gretl_fix_exponent(numstr);
 
     p = strchr(numstr, decpoint);
     if (p != NULL) {

@@ -1419,8 +1419,12 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 static void rtf_print_double (double xx, PRN *prn)
 {
+    char numstr[32];
+
     xx = screen_zero(xx);
-    pprintf(prn, " \\qc %#.*g\\cell", GRETL_DIGITS, xx);
+    sprintf(numstr, "%#.*g", GRETL_DIGITS, xx);
+    gretl_fix_exponent(numstr);
+    pprintf(prn, " \\qc %s\\cell", numstr);
 }
 
 /* ......................................................... */ 
@@ -1679,38 +1683,46 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 
 static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
 {
+    char crit_strs[8][32];
+    int i;
+
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
 	pmod->aux == AUX_AR) return;
 
     if (pmod->dfd == 0) return;
 
+    for (i=0; i<8; i++) {
+	sprintf(crit_strs[i], "%#g", pmod->criterion[i]);
+	gretl_fix_exponent(crit_strs[i]);
+    }
+
     pprintf(prn, "\\par \\qc %s\\par\n\n", I_("Model Selection Statistics"));
     pprintf(prn, "{" RTF_SELST_ROW
 	    " \\ql SGMASQ\\cell"
-	    " \\qc %#g\\cell"
+	    " \\qc %s\\cell"
 	    " \\ql AIC\\cell"
-	    " \\qc %#g\\cell"
+	    " \\qc %s\\cell"
 	    " \\ql FPE\\cell"
-	    " \\qc %#g\\cell"
+	    " \\qc %s\\cell"
 	    " \\intbl \\row\n"
 	    RTF_SELST_ROW
 	    " \\ql HQ\\cell"
-	    " \\qc %#g\\cell"
+	    " \\qc %s\\cell"
 	    " \\ql SCHWARZ\\cell"
-	    " \\qc %#g\\cell"
+	    " \\qc %s\\cell"
 	    " \\ql SHIBATA\\cell"
-	    " \\qc %#g\\cell"
+	    " \\qc %s\\cell"
 	    " \\intbl \\row\n"
 	    RTF_SELST_ROW
 	    " \\ql GCV\\cell"
-	    " \\qc %#g\\cell"
+	    " \\qc %s\\cell"
 	    " \\ql RICE\\cell",
-	    pmod->criterion[0], pmod->criterion[1], 
-	    pmod->criterion[2], pmod->criterion[3], 
-	    pmod->criterion[4], pmod->criterion[5], pmod->criterion[6]);
+	    crit_strs[0], crit_strs[1], 
+	    crit_strs[2], crit_strs[3], 
+	    crit_strs[4], crit_strs[5], crit_strs[6]);
     if (pmod->criterion[7] > 0.0) 
-	pprintf(prn, " \\qc %#g\\cell", pmod->criterion[7]);
+	pprintf(prn, " \\qc %s\\cell", crit_strs[7]);
     else
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
     pputs(prn, " \\qr \\cell \\qr \\cell");

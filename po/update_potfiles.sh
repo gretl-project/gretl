@@ -11,7 +11,9 @@ for f in ../cli/*.c ; do
 done   
 
 for f in ../gui/*.c ; do
-   echo $f | sed s+\.\./++ >> POTFILES.in
+   if test -f $f ; then
+      echo $f | sed s+\.\./++ >> POTFILES.in
+   fi
 done 
 
 for f in ../gui2/*.c ; do

@@ -89,6 +89,29 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     return 0;
 }
 
+static int adjust_t1t2 (int varnum, double **Z, int *t1, int *t2)
+     /* drop first/last observations from sample if missing obs 
+        encountered */
+{
+    int t, t1min = *t1, t2max = *t2;
+    double xx;
+
+    for (t=t1min; t<t2max; t++) {
+	xx = Z[varnum][t];
+	if (na(xx)) t1min += 1;
+	else break;
+    }
+
+    for (t=t2max; t>t1min; t--) {
+	xx = Z[varnum][t];
+	if (na(xx)) t2max -= 1;
+	else break;
+    }
+
+    *t1 = t1min; *t2 = t2max;
+    return 0;
+}
+
 int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, 
 		      PRN *prn, PATHS *ppaths)
 {
@@ -100,8 +123,13 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     int start, end, extra, len;
     double mean, range, tpval, *yhat = NULL;
     char startdate[9], enddate[9];
+    int t1, t2;
 
-    nsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    t1 = pdinfo->t1;
+    t2 = pdinfo->t2;
+    adjust_t1t2(varnum, Z, &t1, &t2);
+
+    nsamp = t2 - t1 + 1;
 
     if (nsamp < 16) {
 	pputs(prn, _("Sample is too small for range-mean graph\n"));
@@ -127,18 +155,18 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     pprintf(prn, _("using %d sub-samples of size %d\n\n"),
 	    m, k);
 
-    ntodate(startdate, pdinfo->t1, pdinfo);
+    ntodate(startdate, t1, pdinfo);
     len = strlen(startdate) * 2 + 3 + 11;
 
     pprintf(prn, "%*s%16s\n", len, _("range"), _("mean"));
 
     /* find group means and ranges */
     for (t=0; t<m; t++) {
-	start = pdinfo->t1 + t * k;
+	start = t1 + t * k;
 	end = start + k - 1;
-	if (end > pdinfo->t2) {
-	    end = pdinfo->t2;
-	} else if (pdinfo->t2 - end <= extra && extra < 3) {
+	if (end > t2) {
+	    end = t2;
+	} else if (t2 - end <= extra && extra < 3) {
 	    end += extra;
 	}
 

@@ -28,6 +28,7 @@ static int *grand_list;
 
 static void tex_print_model_table (void);
 static void rtf_print_model_table (void);
+static void print_rtf_row_spec (PRN *prn, int tall);
 
 #define MAX_TABLE_MODELS 6
 
@@ -315,6 +316,7 @@ static void print_model_table_coeffs (PRN *prn)
     int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
     int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
 
+    /* loop across all variables that appear in any model */
     for (i=2; i<=grand_list[0]; i++) {
 	int v = grand_list[i];
 	int f = 1;
@@ -324,10 +326,13 @@ static void print_model_table_coeffs (PRN *prn)
 	    pprintf(prn, "%s ", tmp);
 	}
 	else if (rtf) {
+	    print_rtf_row_spec(prn, 0);
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", datainfo->varname[v]);
 	} else {
 	    pprintf(prn, "%8s ", datainfo->varname[v]);
 	}
+
+	/* print the coefficient estimates across a row */
 	for (j=0; j<model_list_len; j++) {
 	    pmod = model_list[j];
 	    if (pmod == NULL) continue;
@@ -335,12 +340,18 @@ static void print_model_table_coeffs (PRN *prn)
 		double x = screen_zero(pmod->coeff[k-1]);
 		double s = screen_zero(pmod->sderr[k-1]);
 		double pval;
+		char numstr[32];
 
 		if (floateq(s, 0.0)) {
 		    if (floateq(x, 0.0)) pval = 1.0;
 		    else pval = 0.0001;
 		} else {
 		    pval = tprob(x / s, pmod->dfd);
+		}
+
+		if (!tex) {
+		    sprintf(numstr, "%#.4g", x);
+		    gretl_fix_exponent(numstr);
 		}
 
 		if (tex) {
@@ -350,10 +361,10 @@ static void print_model_table_coeffs (PRN *prn)
 			pprintf(prn, "& %#.4g%s ", x, get_asts(pval));
 		    }
 		} else if (rtf) {
-		    pprintf(prn, "\\qc %#.4g%s\\cell ", x, get_asts(pval));
+		    pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
 		} else {
-		    pprintf(prn, "%#*.4g%s", (f == 1)? 12 : 10,
-			    x, get_asts(pval));
+		    pprintf(prn, "%*s%s", (f == 1)? 12 : 10,
+			    numstr, get_asts(pval));
 		}
 		f = 0;
 	    } else {
@@ -362,13 +373,19 @@ static void print_model_table_coeffs (PRN *prn)
 		else pputs(prn, "            ");
 	    }
 	}
+
+	/* terminate the coefficient row and start the next one */
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	} else if (rtf) {
-	    pputs(prn, "\\intbl \\row\n\\intbl ");
+	    pputs(prn, "\\intbl \\row\n");
+	    print_rtf_row_spec(prn, 1);
+	    pputs(prn, "\\intbl ");
 	} else {
 	    pputs(prn, "\n          ");
 	}
+
+	/* print the estimated standard errors across a row */
 	f = 1;
 	for (j=0; j<model_list_len; j++) {
 	    pmod = model_list[j];
@@ -376,13 +393,19 @@ static void print_model_table_coeffs (PRN *prn)
 	    if ((k = var_is_in_model(v, pmod))) {
 		if (tex) {
 		    pprintf(prn, "& (%#.4g) ", pmod->sderr[k-1]);
-		} else if (rtf) {
-		    if (f == 1) pputs(prn, "\\qc \\cell ");
-		    pprintf(prn, "\\qc (%#.4g)\\cell ", pmod->sderr[k-1]);
-		    f = 0;
 		} else {
-		    sprintf(tmp, "(%#.4g)", pmod->sderr[k-1]);
-		    pprintf(prn, "%12s", tmp);
+		    char numstr[32];
+
+		    sprintf(numstr, "%#.4g", pmod->sderr[k-1]);
+		    gretl_fix_exponent(numstr);
+		    if (rtf) {
+			if (f == 1) pputs(prn, "\\qc \\cell ");
+			pprintf(prn, "\\qc (%s)\\cell ", numstr);
+			f = 0;
+		    } else {
+			sprintf(tmp, "(%s)", numstr);
+			pprintf(prn, "%12s", tmp);
+		    }
 		}
 	    } else {
 		if (tex) pputs(prn, "& ");
@@ -403,6 +426,8 @@ static void print_n_r_squared (PRN *prn, int *binary)
     const MODEL *pmod;
     int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
     int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
+
+    if (rtf) print_rtf_row_spec(prn, 0);
 
     if (tex) pprintf(prn, "$%s$ ", _("n"));
     else if (rtf) pprintf(prn, "\\intbl \\qc %s\\cell ", _("n"));
@@ -455,7 +480,7 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	    }
 	}
     }
-    if (rtf) pputs(prn, "\\intbl \\row\n\n");
+    if (rtf) pputs(prn, "\\intbl \\row\n");
     else pputs(prn, "\n\n");
 }
 
@@ -622,12 +647,13 @@ static void tex_print_model_table (void)
     prn_to_clipboard(prn, COPY_LATEX);
 }
 
-static void print_rtf_row_spec (PRN *prn)
+static void print_rtf_row_spec (PRN *prn, int tall)
 {
     int i, cols = 1 + real_model_list_length();
     int col1 = 1000;
+    int ht = (tall)? 362 : 262;
 
-    pputs(prn, "{\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262");
+    pprintf(prn, "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh%d", ht);
     for (i=0; i<cols; i++) {
 	pprintf(prn, "\\cellx%d", col1 +  i * 1400);
     }
@@ -662,11 +688,12 @@ static void rtf_print_model_table (void)
 	pputs(prn, "\n");
     }
 
-    pprintf(prn, "\\par \\qc %s: %s\n", I_("Dependent variable"),
+    pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{", 
+	    I_("Dependent variable"),
 	    datainfo->varname[grand_list[1]]);
 
     /* RTF row stuff */
-    print_rtf_row_spec(prn);
+    print_rtf_row_spec(prn, 1);
 
     pputs(prn, "\\intbl \\qc \\cell ");
     for (j=0; j<model_list_len; j++) {

@@ -3,18 +3,20 @@ lib/src/compare.c
 lib/src/dataio.c
 lib/src/describe.c
 lib/src/discrete.c
-lib/src/errors.c
 lib/src/estimate.c
 lib/src/generate.c
 lib/src/graphing.c
+lib/src/gretl_errors.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/interact.c
 lib/src/modelprint.c
 lib/src/monte_carlo.c
+lib/src/mt19937ar.c
 lib/src/nonparam.c
 lib/src/printout.c
 lib/src/pvalues.c
+lib/src/random.c
 lib/src/strutils.c
 lib/src/subsample.c
 lib/src/system.c
@@ -59,6 +61,7 @@ gui2/guiprint.c
 gui2/gui_utils.c
 gui2/helpfiles.c
 gui2/library.c
+gui2/model_table.c
 gui2/selector.c
 gui2/series_view.c
 gui2/session.c
@@ -72,6 +75,7 @@ plugin/gretl_matrix.c
 plugin/import_common.c
 plugin/johansen.c
 plugin/lad.c
+plugin/leverage.c
 plugin/longname.c
 plugin/mp_ols.c
 plugin/panel_data.c
