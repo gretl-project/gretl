@@ -1049,7 +1049,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     print_coeff_table_end (prn);
 
-    if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF) {
+    if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
+	pmod->aux == AUX_RESET) {
 	goto close_format;
     }
 
@@ -1074,7 +1075,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }    
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || 
-	pmod->aux == AUX_AR || pmod->aux == AUX_RESET) {
+	pmod->aux == AUX_AR) {
 	print_middle_table_start(prn);
 	rsqline(pmod, prn);
 	print_middle_table_end(prn);
