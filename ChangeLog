@@ -1,4 +1,4 @@
-04/19/2002 version 0.994
+04/21/2002 version 0.994
 - fix bugs in win32 copy to clipboard
 - fix RTF printing of correlation matrix
 - fix bug in genr (generating a scalar when data set is sub-
@@ -13,6 +13,7 @@
   old-style behaviour of gnuplot in case of problems
 - remove upwanted dependency on libgcc_s in Red Hat binary rpm
 - update versions of gtk and glib for win32
+- fix build problems revealed by the Debian package build
 
 04/15/2002 version 0.993
 - add option to specify lag order in autocorrelation test;

@@ -32,7 +32,7 @@ libsrc = $(topsrc)/lib/src
 
 #### End of system configuration section. ####
 
-CFLAGS += -I. -I$(libsrc)
+override CFLAGS += -I. -I$(libsrc)
 
 CLI = gretlcli
 LIBTOOL = $(topsrc)/libtool

@@ -2962,7 +2962,7 @@ void write_rc (void)
 	    boolvar_to_str(rc_vars[i].var, val);
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
 	} else
-	    fprintf(rc, "%s = %s\n", rc_vars[i].key, rc_vars[i].var);
+	    fprintf(rc, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
 	i++;
     }
     printfilelist(1, rc); /* data files */

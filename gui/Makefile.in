@@ -50,8 +50,8 @@ else
   GUI_CFLAGS = `gtk-config --cflags` `gtkextra-config --cflags`
 endif
 
-CFLAGS += $(PIXBUF_CFLAGS)
-LIBS += $(PIXBUF_LIBS)
+override CFLAGS += $(PIXBUF_CFLAGS)
+override LIBS += $(PIXBUF_LIBS)
 
 # Directories
 bindir	= $(prefix)/bin
