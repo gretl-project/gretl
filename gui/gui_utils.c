@@ -1514,7 +1514,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     dialog = gtk_dialog_new();
     vwin->dialog = dialog;
-    winstack_add(dialog);
+    if (role != EDIT_SCRIPT) winstack_add(dialog);
     gtk_widget_set_usize (dialog, hsize, vsize);
 
     title = make_viewer_title(role, filename);
