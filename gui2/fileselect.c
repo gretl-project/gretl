@@ -846,6 +846,10 @@ void file_selector (const char *msg, int action, gpointer data)
 
     set_startdir(startdir);
 
+    /* FIXME: parent window below should not always be mdata->w,
+       in particular when action == SAVE_THIS_GRAPH
+    */
+
     if (action > END_OPEN && action != SET_PATH) {
 	filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(mdata->w), 
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
