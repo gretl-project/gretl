@@ -157,6 +157,8 @@ struct genr_func funcs[] = {
     { T_PVALUE,  "pvalue" },
     { T_OBSNUM,  "obsnum" },
     { T_MPOW,    "mpow" },
+    { T_DNORM,   "dnorm" },
+    { T_CNORM,   "cnorm" },
 #ifdef HAVE_MPFR
     { T_MLOG,    "mlog" },
 #endif
@@ -169,7 +171,7 @@ struct genr_func funcs[] = {
 #define STANDARD_MATH(f) (f == T_LOG || f == T_LN || f == T_EXP || \
                           f == T_SIN || f == T_COS || f == T_TAN || \
                           f == T_ATAN || f == T_INT || f == T_ABS || \
-                          f == T_SQRT)
+                          f == T_DNORM || f == T_CNORM || f == T_SQRT)
 
 #define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
@@ -1869,9 +1871,14 @@ static double evaluate_math_function (double arg, int fn, int *err)
 	    x = sqrt(arg);
 	}
 	break;
+    case T_CNORM:
+	x = 1.0 - normal(arg);
+	break;
+    case T_DNORM:
+	x = (1.0/sqrt(2.0 * M_PI)) * exp(-0.5 * arg * arg);
+	break;
     default:
 	break;
-
     }
 
     return x;

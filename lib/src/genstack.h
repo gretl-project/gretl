@@ -84,6 +84,8 @@ enum transformations {
     T_PVALUE,
     T_OBSNUM,
     T_MPOW,
+    T_DNORM,
+    T_CNORM,
 #ifdef HAVE_MPFR
     T_MLOG,
 #endif
