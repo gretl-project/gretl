@@ -951,10 +951,13 @@
 	      <function>pvalue</function></para>
 	  </listitem>
 	  <listitem><para>Time-series functions:
-	      <function>lag</function>, <function>lead</function>,
 	      <function>diff</function> (first difference),
 	      <function>ldiff</function> (log-difference, or first
-	      difference of natural logs).</para>
+	      difference of natural logs).  To generate lags of a
+	      variable <varname>x</varname>, use the syntax
+	      <command>x(-N)</command>, where <varname>N</varname>
+	      represents the desired lag length; to generate leads,
+	      use <command>x(+N)</command>;</para>
 	  </listitem>
 	  <listitem><para>Miscellaneous: <function>cum</function>
 	      (cumulate), <function>sort</function>,

@@ -31,12 +31,6 @@ typedef enum {
     INDEXNUM
 } genr_numbers;
 
-typedef struct {
-    int lag;
-    int varnum;
-    char varname[9];
-} LAGVAR;
-
 /* functions follow */
  
 int generate (double ***pZ, DATAINFO *pdinfo, 

@@ -2309,6 +2309,8 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
    Return the ID number of the lag var, or -1 on error.
 */
 
+int newlag; /* library global */
+
 int laggenr (int parent, int lag, int opt, double ***pZ, 
 	     DATAINFO *pdinfo)
 {
@@ -2333,11 +2335,14 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
     /* put the lag values into array lx */
     get_lag(parent, lag, lx, *pZ, pdinfo);
 
+    newlag = 1;
+
     if (lno < pdinfo->v) {
 	/* a variable of this name already exists */
 	if (vars_identical(lx, (*pZ)[lno], pdinfo->n)) {
 	    /* and it is just what we want */
 	    free(lx);
+	    newlag = 0;
 	} else {
 	    /* but the values are wrong: swap them */
 	    free((*pZ)[lno]);
@@ -2564,48 +2569,6 @@ int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	for (l=1; l<=maxlag; l++) {
 	    check = laggenr(lv, l, 1, pZ, pdinfo);
 	    if (check < 0) return 1;
-	}
-    }
-    return 0;
-}
-
-/* ...................................................... */
-
-int _parse_lagvar (const char *varname, LAGVAR *plagv, DATAINFO *pdinfo)
-{
-    int i, j;
-    int l = 0, n = strlen(varname);
-    int op;
-    char testint[3];
-
-    /*  fprintf(stderr, "_parse_lagvar: varname = %s\n", varname); */
-
-    for (i=0; i<3; i++) testint[i] = '\0';
-
-    for (i=0; i<n-3; i++) {
-	if (varname[i] == '(') {
-	    l = i;
-	    if ((op = varname[i+1]) != '-') return 0;
-	    for (i=l+2; i<n; i++) {
-		if (varname[i] == ')') {
-		    for (j=l+2; j<i; j++) {
-			if (!isdigit((unsigned char) varname[j])) 
-			    return 0;
-			testint[j-(l+2)] = varname[j];
-		    }
-		    testint[2] = '\0';
-		    if ((plagv->lag = atoi(testint))) {
-			strncpy(plagv->varname, varname, l);
-			plagv->varname[l] = '\0';
-			/*  snprintf(plagv->varname, l+1, "%s", varname); */ 
-			if ((n = varindex(pdinfo, plagv->varname)) 
-			    < pdinfo->v) {
-			    plagv->varnum = n;
-			    return l;
-			} else return 0;
-		    } else return 0;
-		}
-	    }
 	}
     }
     return 0;

@@ -298,11 +298,15 @@ Statistical functions: mean (arithmetic mean), median, var (variance), sd
 min (minimum), max (maximum) and sst (sum of squared deviations from the
 mean).
 
-Time-series functions: lag, lead, diff (first difference), ldiff
-(log-difference, or first difference of natural logs).  Miscellaneous: cum
-(cumulate), sort, uniform, normal, missing (return 1 if the observation of the
-given variable is missing, otherwise 0), misszero (replace the missing
-observation code with zero), zeromiss (inverse operation of misszero).
+Time-series functions: diff (first difference), ldiff (log-difference, or
+first difference of natural logs).  To generate lags of a variable x use the
+syntax "x(-N)" where 'N' is replaced by the desired lag length.  To generate
+leads, use "x(+N)".
+
+Miscellaneous: cum (cumulate), sort, uniform, normal, missing (return 1 if the
+observation of the given variable is missing, otherwise 0), misszero (replace
+the missing observation code with zero), zeromiss (inverse operation of
+misszero).
 
 All of the above functions with the exception of cov, corr, uniform and normal
 take as their single argument either the name of a variable (note that you

@@ -37,11 +37,15 @@
 
 extern int _omitfromlist (int *list, const int *omitvars, int newlist[],
 			  const DATAINFO *pdinfo, const int model_count);
-extern int _parse_lagvar (const char *varname, LAGVAR *plagv, 
-			  DATAINFO *pdinfo);
 
 static int _full_list (const DATAINFO *pdinfo, CMD *command);
 static void get_optional_filename (const char *line, CMD *cmd);
+
+typedef struct {
+    int lag;
+    int varnum;
+    char varname[9];
+} LAGVAR;
 
 /* ........................................................... */
 
@@ -276,6 +280,24 @@ static void grab_gnuplot_literal_block (char *line, CMD *command)
 	    *p = 0;
 	}
     }
+}
+
+static int parse_lagvar (const char *s, LAGVAR *plagv, DATAINFO *pdinfo)
+{
+    int ret = 0;
+
+    *plagv->varname = 0;
+    plagv->lag = 0;
+    plagv->varnum = 0;
+
+    if (sscanf(s, "%8[^(](-%d)", plagv->varname, &plagv->lag) == 2) {
+	plagv->varnum = varindex(pdinfo, plagv->varname);
+	if (plagv->varnum < pdinfo->v) {
+	    ret = 1;
+	} 
+    }
+
+    return ret;
 }
 
 /**
@@ -567,7 +589,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    } else {
 		/* no: an auto-generated variable? */
 		/* Case 1: automated lags:  e.g. 'var(-1)' */
-		if (_parse_lagvar(field, &lagvar, pdinfo)) {
+		if (parse_lagvar(field, &lagvar, pdinfo)) {
+		    extern int newlag; /* generate.c */
 		    int lnum;
 
 		    lnum = laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo);
@@ -577,7 +600,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 				_("generation of lag variable failed"));
 		    } else { 
 			command->list[j] = lnum;
-			if (cmds != NULL) {
+			if (newlag && cmds != NULL) {
 			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, lnum));
 			}
 			/* fully handled, get on with it */
