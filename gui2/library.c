@@ -3074,8 +3074,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	    return;
 	}
 
-	sprintf(tmp, "\"%s\" \\\\batchmode \\\\input %s", latex_path, 
-		texshort);
+	sprintf(tmp, "\"%s\" %s", latex_path, texshort);
 	if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED)) {
 	    return;
 	} else {

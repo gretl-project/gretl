@@ -824,11 +824,11 @@ static void fix_exponent (char *s)
    zeros.  The following function checks for this and lops it
    off if need be. */
 
-static void cut_extra_zero (char *numstr, int digits)
+static void cut_extra_zero (char *numstr, char decpoint, int digits)
 {
     char *p, tmp[16];
 
-    *tmp = '.';
+    *tmp = decpoint;
     memset(tmp + 1, '0', digits);
     tmp[digits + 1] = '\0';
 
@@ -867,7 +867,7 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
 
     tmp = strlen(numstr) - 1;
     if (numstr[tmp] == decpoint) numstr[tmp] = 0;
-    cut_extra_zero(numstr, digits);
+    cut_extra_zero(numstr, decpoint, digits);
 
     strcat(final, numstr);
 

@@ -270,9 +270,10 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
 
-    pprintf(prn, _("Multiple-precision OLS estimates using the %d observations %s-%s\n"),
+    pprintf(prn, _("Multiple-precision OLS estimates using "
+		   "the %d observations %s-%s\n"),
 	    pmod->nobs, startdate, enddate);
-    pprintf(prn, _("Dependent variable: %s\n\n"), 
+    pprintf(prn, "%s: %s\n\n", _("Dependent variable")
 		 pdinfo->varname[pmod->varlist[1]]);
 
     pprintf(prn, _("      VARIABLE         COEFFICIENT          "
@@ -288,12 +289,6 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, "\n");
 
     other_stats (pmod, prn);
-
-#ifdef notdef
-    depvarstats(pmod, prn);
-    if (essline(pmod, prn, 0)) return gotnan;
-    if (Fline(pmod, prn)) gotnan = 1;
-#endif
 
     return 0;
 }

@@ -1084,7 +1084,7 @@ int plot_fcast_errs (const int n, const double *obs,
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2:3 title '%s' w errorbars\n", 
-	    varname, I_("fitted"), I_("95%% confidence interval"));
+	    varname, I_("fitted"), I_("95 percent confidence interval"));
 
     /* send data inline */
 #ifdef ENABLE_NLS

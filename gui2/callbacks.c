@@ -431,6 +431,12 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
+    if (action == GR_PLOT) {
+	strcpy(title, _("gretl: model tests"));
+	simple_selection (title, do_graph_from_selector, action, vwin);
+	return;
+    }
+
     errbox("selector_callback: code was not recognized");
 }
 

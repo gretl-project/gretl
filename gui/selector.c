@@ -1127,7 +1127,7 @@ void simple_selection (const char *title, const char *oktxt,
     /* middle: vertical holder for push/pull buttons */
     mid_vbox = gtk_vbox_new(FALSE, 5);
 
-    tmp = gtk_button_new_with_label (_("Add ->"));
+    tmp = gtk_button_new_with_label (_("Select ->"));
     gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
                         GTK_SIGNAL_FUNC(add_to_right_callback), sr);
