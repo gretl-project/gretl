@@ -2017,8 +2017,11 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     if (system(plotcmd)) {
 	errbox(_("Gnuplot error creating graph"));
     }
+
+    /* emf file is written: now we have to grab it into memory and
+       place it on the clipboard */
+
     remove(plottmp);
-    infobox(_("Graph saved"));
 }
 
 #endif /* G_OS_WIN32 */
