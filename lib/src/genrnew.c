@@ -176,6 +176,7 @@ enum {
     STACK_POP,
     STACK_GET,
     STACK_RESET,
+    STACK_GET_CHILDREN,
     STACK_DESTROY
 };
 
@@ -523,7 +524,7 @@ static void reset_calc_stack (void)
     calc_stack(0., STACK_RESET);
 }
 
-static genatom *atom_stack (genatom *atom, int op, int i)
+static genatom *atom_stack (genatom *atom, int op)
 {
     static genatom **atoms;
     static int n_atoms;
@@ -549,6 +550,17 @@ static genatom *atom_stack (genatom *atom, int op, int i)
 	atoms = NULL;
 	n_atoms = 0;
 	n_popped = 0;
+    } else if (op == STACK_GET_CHILDREN) {
+	int pos = -1;
+
+	for (j=0; j<n_atoms && pos < 0; j++) {
+	    if (atoms[j] == atom) pos = j;
+	}
+	for (j=pos-1; j>=0; j--) {
+	    if ((atoms[j])->level > atom->level) {
+		fprintf(stderr, "atoms[%d] is a child of this one\n", j);
+	    } else break;
+	}
     }
 
     return ret;
@@ -598,22 +610,27 @@ static void destroy_paren_term_stack (void)
 
 static int push_atom (genatom *atom)
 {
-    return (atom_stack(atom, STACK_PUSH, 0) == NULL);
+    return (atom_stack(atom, STACK_PUSH) == NULL);
 }
 
 static genatom *pop_atom (void)
 {
-    return atom_stack(NULL, STACK_POP, 0);
+    return atom_stack(NULL, STACK_POP);
 }
 
 static void reset_atom_stack (void)
 {
-    atom_stack(NULL, STACK_RESET, 0);
+    atom_stack(NULL, STACK_RESET);
+}
+
+static void show_child_atoms (genatom *atom)
+{
+    atom_stack(atom, STACK_GET_CHILDREN);
 }
 
 static void destroy_atom_stack (void)
 {
-    atom_stack(NULL, STACK_DESTROY, 0);
+    atom_stack(NULL, STACK_DESTROY);
 }
 
 static double eval_atom (genatom *atom, GENERATE *genr, int t, 
@@ -780,6 +797,9 @@ static int evaluate_genr (GENERATE *genr)
 	}
 	else if (MP_MATH(atom->func)) {
 	    err = add_mp_series_to_genr(genr, atom);
+	}
+	else if (atom->func == T_MEAN) {
+	    show_child_atoms(atom);
 	}
     }
 
