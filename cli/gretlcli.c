@@ -890,48 +890,28 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}	
 	break;
 
-    case GARCH:
-	clear_model(models[0]);
-	*models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, prn);
-	if ((err = (models[0])->errcode)) { 
-	    errmsg(err, prn); 
-	} else {	
-	    printmodel(models[0], datainfo, cmd.opt, prn);
-	}	
-	break;
-
-    case CHOW:
-        if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = chow_test(line, models[0], &Z, datainfo, prn, NULL);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
     case COEFFSUM:
-        if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
     case CUSUM:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = cusum_test(models[0], &Z, datainfo, prn, NULL);
+    case RESET:
+    case CHOW:
+    case VIF:
+        if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	if (cmd.ci == COEFFSUM) {
+	    err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
+	} else if (cmd.ci == CUSUM) {
+	    err = cusum_test(models[0], &Z, datainfo, prn, NULL);
+	} else if (cmd.ci == RESET) {
+	    err = reset_test(models[0], &Z, datainfo, prn, NULL);
+	} else if (cmd.ci == CHOW) {
+	    err = chow_test(line, models[0], &Z, datainfo, prn, NULL);
+	} else {
+	    err = vif_test(models[0], &Z, datainfo, prn);
+	}
 	if (err) {
 	    errmsg(err, prn);
 	}
 	break;
 
-    case RESET:
-        if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = reset_test(models[0], &Z, datainfo, prn, NULL);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-	
     case CORC:
     case HILU:
     case PWE:
@@ -947,17 +927,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    errmsg(err, prn);
 	} else {
 	    printmodel(models[0], datainfo, cmd.opt, prn); 
-	}
-	break;
-
-    case LAD:
-	clear_model(models[0]);
-	*models[0] = lad(cmd.list, &Z, datainfo);
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn);
-	    clear_model(models[0]);
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
 	break;
 
@@ -1000,17 +969,19 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case END:
 	if (!strcmp(cmd.param, "system")) {
 	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
-	    if (err) errmsg(err, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    }
 	    sys = NULL;
 	} else if (!strcmp(cmd.param, "nls")) {
 	    clear_model(models[0]);
 	    *models[0] = nls(&Z, datainfo, prn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
-		break;
+	    } else {
+		do_nls = 1;
+		printmodel(models[0], datainfo, cmd.opt, prn);
 	    }
-	    do_nls = 1;
-	    printmodel(models[0], datainfo, cmd.opt, prn);
 	} else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, prn);
 	    if (err) {
@@ -1171,16 +1142,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
-    case HSK:
-	clear_model(models[0]);
-	*models[0] = hsk_func(cmd.list, &Z, datainfo);
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn);
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, prn);
-	}
-	break;
-
     case HELP:
 	help(cmd.param, paths.helpfile, prn);
 	break;
@@ -1275,14 +1236,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
-    case VIF:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = vif_test(models[0], &Z, datainfo, prn);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
     case LMTEST:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */
@@ -1321,26 +1274,38 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
+    case HSK:
     case LOGISTIC:
     case LOGIT:
     case PROBIT:
     case TOBIT:
     case POISSON:
+    case TSLS:
+    case LAD:
+    case GARCH:
 	clear_model(models[0]);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
+	} else if (cmd.ci == HSK) {
+	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
 	} else if (cmd.ci == LOGISTIC) {
 	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
 	} else if (cmd.ci == TOBIT) {
 	    *models[0] = tobit_model(cmd.list, &Z, datainfo,
 				     (cmd.opt & OPT_V)? prn : NULL);
-	} else {
+	} else if (cmd.ci == POISSON) {
 	    *models[0] = poisson_model(cmd.list, &Z, datainfo,
 				       (cmd.opt & OPT_V)? prn : NULL);
+	} else if (cmd.ci == TSLS) {
+	    *models[0] = tsls_func(cmd.list, atoi(cmd.param), 
+				   &Z, datainfo, cmd.opt);
+	} else if (cmd.ci == LAD) {
+	    *models[0] = lad(cmd.list, &Z, datainfo);
+	} else {
+	    *models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, prn);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    clear_model(models[0]);
 	} else {
 	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
@@ -1391,7 +1356,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
-	    clear_model(models[0]);
 	} else {
 	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
@@ -1597,17 +1561,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	err = model_error_dist(models[0], &Z, datainfo,
 			       prn);
-	break;
-
-    case TSLS:
-	clear_model(models[0]);
-	*models[0] = tsls_func(cmd.list, atoi(cmd.param), 
-			       &Z, datainfo, cmd.opt);
-	if ((err = (models[0])->errcode)) {
-	    errmsg((models[0])->errcode, prn);
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, prn);
-	}
 	break;
 
     case VAR:

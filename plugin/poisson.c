@@ -82,7 +82,7 @@ static double poisson_ll (const double *y, const double *mu,
     return loglik;
 }
 
-/* make covariance matrix based on the artificial regression, and
+/* make covariance matrix based on the 'artificial' regression, and
    transcribe the relevant elements into the target model */
 
 static int make_poisson_vcv (MODEL *targ, MODEL *src)
@@ -97,7 +97,7 @@ static int make_poisson_vcv (MODEL *targ, MODEL *src)
 	err = 1;
     }
 
-    if (!err) {
+    if (!err && targ->vcv == NULL) {
 	targ->vcv = malloc(nt * sizeof *targ->vcv);
 	if (targ->vcv == NULL) {
 	    err = 1;
@@ -245,6 +245,8 @@ do_poisson (MODEL *pmod, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	X[nvars + 2][t] = wt;
     }
 
+    pputc(prn, '\n');
+
     while (iter < POISSON_MAX_ITER && crit > POISSON_TOL) {
 
 	iter++;
@@ -284,6 +286,8 @@ do_poisson (MODEL *pmod, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	    clear_model(&tmpmod);
 	}
     }
+
+    pputc(prn, '\n');
 
     if (crit > POISSON_TOL) {
 	pmod->errcode = E_NOCONV;

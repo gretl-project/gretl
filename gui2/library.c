@@ -5484,16 +5484,6 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case GARCH:
-	clear_model(models[0]);
-	*models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, outprn);
-	if ((err = (models[0])->errcode)) { 
-	    errmsg(err, prn); 
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
-	break;
-
     case BXPLOT:
 	if (exec_code == REBUILD_EXEC || exec_code == SAVE_SESSION_EXEC) 
 	    break;
@@ -5505,8 +5495,16 @@ int gui_exec_line (char *line,
 	break;
 
     case CHOW:
+    case CUSUM:
+    case RESET:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = chow_test(line, models[0], &Z, datainfo, outprn, ptest);
+	if (cmd.ci == CHOW) {
+	    err = chow_test(line, models[0], &Z, datainfo, outprn, ptest);
+	} else if (cmd.ci == CUSUM) {
+	    err = cusum_test(models[0], &Z, datainfo, outprn, ptest);
+	} else {
+	    err = reset_test(models[0], &Z, datainfo, outprn, ptest);
+	}
 	if (err) {
 	    errmsg(err, prn);
 	} else if (rebuild) {
@@ -5515,30 +5513,15 @@ int gui_exec_line (char *line,
 	break;
 
     case COEFFSUM:
+    case VIF:
         if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
-	if (err) {
-	    errmsg(err, prn);
+	if (cmd.ci == COEFFSUM) {
+	    err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
+	} else {
+	    err = vif_test(models[0], &Z, datainfo, outprn);
 	}
-	break;
-
-    case CUSUM:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = cusum_test(models[0], &Z, datainfo, outprn, ptest);
 	if (err) {
 	    errmsg(err, prn);
-	} else if (rebuild) { 
-	    add_test_to_model(models[0], ptest);
-	}
-	break;
-
-    case RESET:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = reset_test(models[0], &Z, datainfo, outprn, ptest);
-	if (err) {
-	    errmsg(err, prn);
-	} else if (rebuild) {
-	    add_test_to_model(models[0], ptest);
 	}
 	break;
 
@@ -5559,16 +5542,6 @@ int gui_exec_line (char *line,
 	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
 	break;
-
-    case LAD:
-	clear_or_save_model(&models[0], datainfo, rebuild);
-        *models[0] = lad(cmd.list, &Z, datainfo);
-        if ((err = (models[0])->errcode)) {
-            errmsg(err, prn);
-        } else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
-        break;
 
     case CORRGM:
 	order = atoi(cmd.param);
@@ -5624,10 +5597,10 @@ int gui_exec_line (char *line,
 	    *models[0] = nls(&Z, datainfo, outprn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
-		break;
+	    } else {
+		do_nls = 1;
+		printmodel(models[0], datainfo, cmd.opt, outprn);
 	    }
-	    do_nls = 1;
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	} else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, prn);
 	    if (err) {
@@ -5682,7 +5655,7 @@ int gui_exec_line (char *line,
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	err = fcast(line, models[0], datainfo, &Z);
 	if (err < 0) {
-	    err *= -1;
+	    err = -err;
 	    printf(_("Error retrieving fitted values\n"));
 	    errmsg(err, prn);
 	} else {
@@ -5802,16 +5775,6 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case HSK:
-	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = hsk_func(cmd.list, &Z, datainfo);
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn);
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
-	break;
-
     case HELP:
 	help(cmd.param, paths.cmd_helpfile, prn);
 	break;
@@ -5905,14 +5868,6 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case VIF:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = vif_test(models[0], &Z, datainfo, outprn);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
     case LMTEST:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */
@@ -5954,6 +5909,10 @@ int gui_exec_line (char *line,
     case PROBIT:
     case TOBIT:
     case POISSON:
+    case TSLS:
+    case HSK:
+    case LAD:
+    case GARCH:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
@@ -5962,9 +5921,18 @@ int gui_exec_line (char *line,
 	} else if (cmd.ci == TOBIT) {
 	    *models[0] = tobit_model(cmd.list, &Z, datainfo,
 				     (cmd.opt & OPT_V)? outprn : NULL);
-	} else {
+	} else if (cmd.ci == POISSON) {
 	    *models[0] = poisson_model(cmd.list, &Z, datainfo,
 				       (cmd.opt & OPT_V)? outprn : NULL);
+	} else if (cmd.ci == TSLS) {
+	    *models[0] = tsls_func(cmd.list, atoi(cmd.param), 
+				   &Z, datainfo, cmd.opt);
+	} else if (cmd.ci == HSK) {
+	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
+	} else if (cmd.ci == LAD) {
+	    *models[0] = lad(cmd.list, &Z, datainfo);
+	} else {
+	    *models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, outprn);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -6208,17 +6176,6 @@ int gui_exec_line (char *line,
 	    }
 	}
 	break;
-
-    case TSLS:
-	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = tsls_func(cmd.list, atoi(cmd.param), 
-			       &Z, datainfo, cmd.opt);
-	if ((err = (models[0])->errcode)) {
-	    errmsg((models[0])->errcode, prn);
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
-	break;		
 
     case VAR:
 	order = atoi(cmd.param);
