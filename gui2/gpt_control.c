@@ -3132,7 +3132,6 @@ static int get_plot_ranges (png_plot_t *plot)
 	    } else if (!strncmp(line, "set y2ti", 8)) {
 		plot->format |= PLOT_Y2AXIS;
 	    } else if (cant_zoom(line)) {
-		fprintf(stderr, "get_plot_ranges(): cant_zoom\n");
 		plot->status_flags |= PLOT_DONT_ZOOM;
 	    } 
 	}

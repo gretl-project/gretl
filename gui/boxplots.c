@@ -836,10 +836,20 @@ five_numbers (gpointer data)
 		"min", "Q1", _("median"), "Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
-	    pprintf(prn, "%-10s%10g%10g%10g%10g%10g\n",
-		    grp->plots[i].varname, grp->plots[i].min, 
-		    grp->plots[i].lq, grp->plots[i].median,
-		    grp->plots[i].uq, grp->plots[i].max);
+	    if (grp->plots[i].bool != NULL) {
+		fprintf(stderr, "plots[%d].bool = '%s'\n", i, 
+			grp->plots[i].bool);
+		pprintf(prn, "%s\n%10s%10g%10g%10g%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].bool,
+			grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			grp->plots[i].uq, grp->plots[i].max);
+	    } else {
+		pprintf(prn, "%-10s%10g%10g%10g%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			grp->plots[i].uq, grp->plots[i].max);
+	    }
 	}
     } else { /* confidence intervals */
 	char intstr[32];
@@ -855,11 +865,21 @@ five_numbers (gpointer data)
 	for (i=0; i<grp->nplots; i++) {
 	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 
 		    grp->plots[i].conf[1]);
-	    pprintf(prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
-		    grp->plots[i].varname, grp->plots[i].min, 
-		    grp->plots[i].lq, grp->plots[i].median,
-		    intstr,
-		    grp->plots[i].uq, grp->plots[i].max);
+
+	    if (grp->plots[i].bool != NULL) {
+		pprintf(prn, "%s\n%-10s%8g%10g%10g%17s%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].bool,
+			grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			intstr,
+			grp->plots[i].uq, grp->plots[i].max);
+	    } else {
+		pprintf(prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			intstr,
+			grp->plots[i].uq, grp->plots[i].max);
+	    }
 	}
     }
 
@@ -934,10 +954,11 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	} else 
 	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = -999.0;
 	strcpy(plotgrp->plots[i].varname, pdinfo->varname[list[i+1]]);
-	if (bools) 
+	if (bools) {
 	    plotgrp->plots[i].bool = bools[j];
-	else
+	} else {
 	    plotgrp->plots[i].bool = NULL;
+	}
     }
 
     plotgrp->height = height;
@@ -1415,7 +1436,6 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	err = boxplots(list, bools, pZ, pdinfo, notches);
     
     free(list);
-    for (i=0; i<nvars; i++) if (bools[i]) free(bools[i]);
     free(bools);
 
     if (nbool) 

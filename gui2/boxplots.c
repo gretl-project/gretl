@@ -844,10 +844,18 @@ five_numbers (gpointer data)
 		"min", "Q1", _("median"), "Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
-	    pprintf(prn, "%-10s%10g%10g%10g%10g%10g\n",
-		    grp->plots[i].varname, grp->plots[i].min, 
-		    grp->plots[i].lq, grp->plots[i].median,
-		    grp->plots[i].uq, grp->plots[i].max);
+	    if (grp->plots[i].bool != NULL) {
+		pprintf(prn, "%s\n%-10s%10g%10g%10g%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].bool,
+			grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			grp->plots[i].uq, grp->plots[i].max);
+	    } else {
+		pprintf(prn, "%-10s%10g%10g%10g%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			grp->plots[i].uq, grp->plots[i].max);
+	    }
 	}
     } else { /* confidence intervals */
 	char intstr[32];
@@ -863,11 +871,21 @@ five_numbers (gpointer data)
 	for (i=0; i<grp->nplots; i++) {
 	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 
 		    grp->plots[i].conf[1]);
-	    pprintf(prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
-		    grp->plots[i].varname, grp->plots[i].min, 
-		    grp->plots[i].lq, grp->plots[i].median,
-		    intstr,
-		    grp->plots[i].uq, grp->plots[i].max);
+	    
+	    if (grp->plots[i].bool != NULL) {
+		pprintf(prn, "%s\n%-10s%8g%10g%10g%17s%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].bool,
+			grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			intstr,
+			grp->plots[i].uq, grp->plots[i].max);
+	    } else {
+		pprintf(prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
+			grp->plots[i].varname, grp->plots[i].min, 
+			grp->plots[i].lq, grp->plots[i].median,
+			intstr,
+			grp->plots[i].uq, grp->plots[i].max);
+	    }
 	}
     }
 

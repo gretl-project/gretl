@@ -3263,7 +3263,12 @@ void do_box_graph_trad (GtkWidget *widget, dialog_t *ddata)
 	if (verify_and_record_command(line)) return;
 	err = boxplots(command.list, NULL, &Z, datainfo, (code == GR_NBOX));
     }
-    if (err) errbox(_("boxplot command failed"));
+
+    if (err) {
+	errbox(_("boxplot command failed"));
+    } else {
+	close_dialog(ddata);
+    }
 }
 
 /* ........................................................... */
