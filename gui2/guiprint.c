@@ -1410,4 +1410,77 @@ void augment_copy_menu (windata_t *vwin)
     free(item.path);
 } 
 
+int csv_to_buf (const int *list, PRN *prn)
+{
+    int i = 0, t, l0, n = datainfo->n;
+    int *pmax = NULL;
+    int tsamp = datainfo->t2 - datainfo->t1 + 1;
+    double xx;
+    char delim;
+    char tmp[9];
 
+    *gretl_errmsg = 0;
+
+    l0 = list[0];
+    if (l0 == 0) return 1;
+
+    if (datainfo->delim == ',' && ',' == datainfo->decpoint) {
+	errbox(_("You can't use the same character for "
+		 "the column delimiter and the decimal point"));
+	return 1;
+    }
+
+    pmax = malloc(l0 * sizeof *pmax);
+    if (pmax == NULL) return 1;
+
+    for (i=1; i<=l0; i++) {
+	if (datainfo->vector[list[i]]) {
+	    pmax[i-1] = get_precision(&Z[list[i]][datainfo->t1], 
+				      tsamp);
+	} else {
+	    pmax[i-1] = SCALAR_DIGITS;
+	}
+    }	
+
+#ifdef ENABLE_NLS
+    if (datainfo->decpoint != ',') {
+	setlocale(LC_NUMERIC, "C");
+    }
+#endif
+
+    delim = datainfo->delim;
+
+    /* variable names */
+    pprintf(prn, "obs%c", delim);
+    for (i=1; i<l0; i++) {
+	pprintf(prn, "%s%c", datainfo->varname[list[i]], delim);
+    }
+    pprintf(prn, "%s\n", datainfo->varname[list[l0]]);
+	
+    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	if (datainfo->S != NULL) {
+	    pprintf(prn, "%s%c", datainfo->S[t], delim);
+	} else {
+	    ntodate(tmp, t, datainfo);
+	    pprintf(prn, "\"%s\"%c", tmp, delim);
+	}
+	for (i=1; i<=l0; i++) { 
+	    xx = (datainfo->vector[list[i]])? 
+		Z[list[i]][t] : Z[list[i]][0];
+	    if (na(xx)) {
+		pprintf(prn, "NA");
+	    } else {
+		pprintf(prn, "%.*f", pmax[i-1], xx);
+	    }
+	    pprintf(prn, "%c", (i<l0)? delim : '\n');
+	}
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    if (pmax) free(pmax);
+
+    return 0;
+}
