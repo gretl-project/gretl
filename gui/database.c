@@ -98,6 +98,14 @@ typedef struct {
     int err;
 } SERIESINFO;
 
+extern int retrieve_url (int opt, const char *dbase, const char *series, 
+			 int filesave, char **saver, char *errbuf);
+extern void destroy_dialog_data (GtkWidget *w, gpointer data);
+
+void gui_get_series (gpointer data, guint bci_code, 
+		     GtkWidget *widget);
+
+/* private functions */
 static GtkWidget *database_window (windata_t *ddata);
 static int populate_series_list (windata_t *dbdat, PATHS *ppaths);
 static int populate_remote_series_list (windata_t *dbdat, char *buf);
@@ -106,8 +114,6 @@ static SERIESINFO *get_series_info (windata_t *ddata, int action);
 static int read_RATSBase (GtkWidget *widget, FILE *fp);
 static int get_rats_data (const char *fname, const int series_number,
 			  SERIESINFO *sinfo, double **pZ);
-void gui_get_series (gpointer data, guint bci_code, 
-		     GtkWidget *widget);
 static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
 static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 			 int method);
@@ -119,9 +125,6 @@ static int get_precision (double x);
 static void update_statusline (windata_t *windat, char *str);
 static void data_compact_dialog (int spd, int dpd, guint *compact_method);
 
-extern int retrieve_url (int opt, const char *dbase, const char *series, 
-			 int filesave, char **saver, char *errbuf);
-extern void destroy_dialog_data (GtkWidget *w, gpointer data);
 
 enum db_data_actions {
     DB_DISPLAY,
@@ -1434,7 +1437,6 @@ static gchar *get_descrip (char *fname, const PATHS *ppaths)
 gint populate_dbfilelist (windata_t *ddata)
 {
     gchar *fname, *row[2], filter[5], dbdir[MAXLEN];
-    gchar errtext[MAXLEN];
     gint i, n;
     DIR *dir;
     struct dirent *dirent;

@@ -33,7 +33,7 @@ extern void gui_get_series (gpointer data, guint bci_code,
 			    GtkWidget *widget);
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 extern void file_selector (char *msg, char *startdir, int action, 
-			   gpointer data);
+			  gpointer data);
 
 GtkWidget *active_edit_id = NULL;
 GtkWidget *active_edit_name = NULL;
@@ -355,9 +355,8 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     int v;
     guint varclick = 0;
     windata_t *mydata = (windata_t *) data;
-    MODEL *pmod;
 
-    *defstr = '\0';
+    defstr[0] = '\0';
 
     switch (action) {
     case SMPL:

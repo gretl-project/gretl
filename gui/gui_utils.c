@@ -98,6 +98,12 @@ extern gboolean console_handler (GtkWidget *w, GdkEventKey *key,
 				 gpointer user_data);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 
+/* font handling */
+static char fontspec[MAXLEN] = 
+"-b&h-lucidatypewriter-medium-r-normal-sans-12-*-*-*-*-*-*-*";
+/* "-misc-fixed-medium-r-*-*-*-120-*-*-*-*-*-*" */
+GdkFont *fixed_font;
+
 typedef struct {
     char *key,         /* config file variable name */
          *description; /* How the field will show up in the options dialog */
@@ -227,6 +233,14 @@ GtkItemFactoryEntry script_help_items[] = {
     { "/_Find", NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
+
+/* ........................................................... */
+
+void load_fixed_font (void)
+{
+    /* get a monospaced font for various windows */
+    fixed_font = gdk_font_load(fontspec);
+}
 
 /* ........................................................... */
 
@@ -377,19 +391,6 @@ void *myrealloc (void *ptr, size_t size)
     if((mem = g_realloc(ptr, size)) == NULL) 
 	errbox("Out of memory!");
     return mem;
-}
-
-/* ........................................................... */
-
-void clear_clist (GtkWidget *widget)
-{
-    gtk_clist_clear(GTK_CLIST(widget));
-    if (popup_connected) {
-	gtk_signal_disconnect_by_func(GTK_OBJECT(mdata->listbox),
-				      (GtkSignalFunc) main_popup, 
-				      NULL);
-	popup_connected = 0;
-    }
 }
 
 /* ........................................................... */
@@ -556,7 +557,7 @@ void save_session (char *fname)
     /* get ready to save "session" */
     fp = fopen(fname, "a");
     if (fp == NULL) {
-	sprintf(errtext, "Couldn't open session file %s", savefile);
+	sprintf(errtext, "Couldn't open session file %s", fname);
 	errbox(errtext);
 	return;
     }
@@ -1544,7 +1545,7 @@ void infobox (const char *msg)
 int validate_varname (const char *varname)
 {
     int i, n = strlen(varname);
-    char errtext[MAXLEN], namebit[9];
+    char namebit[9];
     
     if (n > 8) {
 	safecpy(namebit, varname, 8);

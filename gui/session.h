@@ -30,12 +30,8 @@
 
 typedef struct {
     gchar *name;
-    gboolean is_mapped;
     gint sort;
     gpointer data;
-    GtkWidget *window;
-    GtkWidget *label;
-    GtkIconList *iconlist;
     GtkIconListItem *icon;
 } gui_obj;
 

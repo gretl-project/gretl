@@ -40,35 +40,49 @@
 #include "pixmaps/mini.plot.xpm"
 #include "pixmaps/mini.ofolder.xpm"
 
+/* exported functions */
+void restore_sample_state (gboolean s); /* shared with lib.c */
+void refresh_data (void);
+void restore_sample (gpointer data, int verbose, GtkWidget *w);
+
+/* functions from other gretl GUI files */
 extern void helpfile_init (void);
 extern void display_files (gpointer data, guint code, GtkWidget *widget);
-extern void gpt_save_dialog (void);
-extern void display_var (void);
-extern void free_modelspec (void);
-extern void allocate_fileptrs (void);
+extern void gpt_save_dialog (void);   /* gpt_control.c */
+extern void display_var (void);       /* lib.c */
+extern void free_modelspec (void);    /* lib.c */
+extern void allocate_fileptrs (void); /* gui_utils.c */
 extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
-extern int update_query (void);
+extern int update_query (void);       /* webget.c */
 extern void bool_subsample (gpointer data, guint dropmiss, GtkWidget *w);
 extern void free_command_stack (void);
 extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
+extern void menu_exit_check (GtkWidget *widget, gpointer data);
+extern gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
+extern void set_panel_structure (gpointer data, guint u, GtkWidget *w);
 
-void restore_sample_state (gboolean s);
+/* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
 static void colorize_tooltips (GtkTooltips *tip);
 static void clip_init (GtkWidget *w);
+static GtkWidget *make_main_window (int gui_get_data);
+static GtkWidget *build_var_menu (void);
+static gint popup_activated (GtkWidget *widget, gpointer data);
+static void check_for_pwt (void);
+static void set_up_main_menu (void);
+static void startR (gpointer p, guint opt, GtkWidget *w);
+static void Rcleanup (void);
 
-extern GtkWidget *iconview;
+GtkWidget *toolbar_box = NULL; /* shared with gui_utils.c */
 
-GtkWidget *dataframe;
-GtkWidget *main_vbox;
-GtkWidget *toolbar_box = NULL;
-GtkWidget *gretl_toolbar = NULL;
-GtkAccelGroup *main_accel;
+static GtkWidget *dataframe;
+static GtkWidget *main_vbox;
+static GtkWidget *gretl_toolbar = NULL;
 GtkTooltips *gretl_tips;
 GdkColor red, blue;
 
-int popup_connected;
+static int popup_connected;
 int *default_list = NULL;
 
 #ifdef USE_GNOME
@@ -98,26 +112,13 @@ static const struct poptOption options[] = {
 };
 #endif /* USE_GNOME */
 
-static GtkWidget *make_main_window (int gui_get_data);
-static GtkWidget *build_var_menu (void);
-static gint popup_activated (GtkWidget *widget, gpointer data);
-static void check_for_pwt (void);
-static void set_up_main_menu (void);
-extern void menu_exit_check (GtkWidget *widget, gpointer data);
-extern gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
-static void startR (gpointer p, guint opt, GtkWidget *w);
-static void Rcleanup (void);
-void refresh_data (void);
-void restore_sample (gpointer data, int verbose, GtkWidget *w);
-
 windata_t *mdata;
 DATAINFO *datainfo;
 DATAINFO *subinfo;
 DATAINFO *fullinfo;
 char *errtext;
-char cmdfile[MAXLEN], savefile[MAXLEN];
+char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char line[MAXLEN];
-char scriptfile[MAXLEN];
 PATHS paths;                /* useful paths */
 CMD command;                /* gretl command struct */
 double *Z;                  /* data set */
@@ -126,10 +127,8 @@ double *fullZ;              /* convenience pointer */
 MODEL **models;             /* gretl models structs */
 SESSION session;            /* hold models, graphs */
 session_t rebuild;          /* rebuild session later */
-GENERATE genr;              /* generate new variable struct */
 
-int oflag, plot_count, data_file_open, batch = 1;
-int model_action, orig_vars;
+int plot_count, data_file_open, orig_vars;
 print_t *cmds;
 gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 
@@ -137,10 +136,6 @@ gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 char expert[6] = "false"; 
 char updater[6] = "false";
 char want_toolbar[6] = "true";
-char fontspec[MAXLEN] = 
-"-b&h-lucidatypewriter-medium-r-normal-sans-12-*-*-*-*-*-*-*";
-/* "-misc-fixed-medium-r-*-*-*-120-*-*-*-*-*-*" */
-GdkFont *fixed_font;
 
 #ifdef G_OS_WIN32
     char Rcommand[MAXSTR] = "RGui.exe";
@@ -163,8 +158,6 @@ static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w)
   
     show_spreadsheet(NULL);
 }
-
-extern void set_panel_structure (gpointer data, guint u, GtkWidget *w);
 
 #ifdef USE_GNOME
 static void gnome_help (void)
@@ -848,6 +841,19 @@ gint populate_clist (GtkWidget *widget, DATAINFO *datainfo)
     return 0;
 }
 
+/* ........................................................... */
+
+void clear_clist (GtkWidget *widget)
+{
+    gtk_clist_clear(GTK_CLIST(widget));
+    if (popup_connected) {
+	gtk_signal_disconnect_by_func(GTK_OBJECT(mdata->listbox),
+				      (GtkSignalFunc) main_popup, 
+				      NULL);
+	popup_connected = 0;
+    }
+}
+
 /* ......................................................... */
 
 void clear_sample_label (void)
@@ -1057,7 +1063,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 	make_toolbar(mdata->w, main_vbox);
 
     /* get a monospaced font for various windows */
-    fixed_font = gdk_font_load(fontspec);
+    load_fixed_font();
 
     gtk_widget_show_all(mdata->w); 
 
@@ -1068,6 +1074,8 @@ static GtkWidget *make_main_window (int gui_get_data)
 
 static void set_up_main_menu (void)
 {
+    GtkAccelGroup *main_accel;
+   
     gint n_items = sizeof data_items / sizeof data_items[0];
 
     main_accel = gtk_accel_group_new();

@@ -31,11 +31,11 @@
 #define DEFAULT_PRECISION 6
 #define DEFAULT_SPACE 8
 
-GtkWidget *gretlsheet;
-GtkWidget *sheetwin;
-GtkWidget *locator;
-GtkWidget *topentry;
-GtkWidget *sheet_popup;
+static GtkWidget *gretlsheet;
+static GtkWidget *sheetwin;
+static GtkWidget *locator;
+static GtkWidget *topentry;
+static GtkWidget *sheet_popup;
 
 static char newvarname[9], newobsmarker[9];
 static int numcolumns, numrows;

@@ -41,15 +41,19 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     switch (command.ci) {
 
     case GENR:
-	genr = genr_func(&Z, datainfo, linecpy, model_count,
-			 tmpmodel, oflag);
-	if (genr.errcode) {
-	    errmsg(genr.errcode, NULL, prn);
-	    return 1;
-	} 
-	else if (add_new_var(datainfo, &Z, &genr)) {
-	    pprintf(prn, "Failed to add new variable.\n");
-	    return 1;
+	{
+	    GENERATE genr;
+
+	    genr = genr_func(&Z, datainfo, linecpy, model_count,
+			     tmpmodel, oflag);
+	    if (genr.errcode) {
+		errmsg(genr.errcode, NULL, prn);
+		return 1;
+	    } 
+	    else if (add_new_var(datainfo, &Z, &genr)) {
+		pprintf(prn, "Failed to add new variable.\n");
+		return 1;
+	    }
 	}
 	break;
 
@@ -189,7 +193,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	if (summ == NULL)
 	    pprintf(prn, "generation of summary stats failed\n");
 	else {
-	    print_summary(summ, datainfo, prn, batch);
+	    print_summary(summ, datainfo, prn, 1);
 	    free_summary(summ);
 	}	    
 	break; 

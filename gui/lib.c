@@ -33,6 +33,7 @@ extern DATAINFO *fullinfo;
 extern double *subZ;
 extern double *fullZ;
 
+/* functions in other gretl GUI files */
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, print_t *prn);
 extern void restore_sample (gpointer data, int verbose, GtkWidget *w);
@@ -42,8 +43,7 @@ extern int boxplots (int *list,
 		     double **pZ, const DATAINFO *pdinfo, 
 		     int notches);
 
-int ignore = 0;
-char loopstorefile[MAXLEN];
+/* private functions */
 static int gui_exec_line (char *line, 
 			  LOOPSET *plp, int *plstack, int *plrun, 
 			  SESSION *psession, session_t *rebuild,
@@ -53,9 +53,10 @@ static void console_exec (void);
 static void finish_genr (MODEL *pmod);
 static void do_run_script (gpointer data, guint code, GtkWidget *w);
 static void auto_save_script (gpointer data, guint action, GtkWidget *w);
+static gint stack_model (int gui);
 
-GtkWidget *console_view;
-GtkWidget *console_dialog;
+GtkWidget *console_view;    /* shared with gui_utils.c */
+GtkWidget *console_dialog;  /* ditto */
 
 GtkItemFactoryEntry log_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },    
@@ -121,18 +122,19 @@ typedef struct {
     char **cmds;
 } model_stack;
 
+/* file scope state variables */
+static int ignore;
+static int oflag;
+static char loopstorefile[MAXLEN];
+static char errline[MAXLEN] = ""; /* for use with the console */
 static model_stack *mstack;
 static int n_mstacks;
-
 static int model_count;
+static char **cmd_stack;
 static int n_cmds;
 static MODELSPEC *modelspec;
 static char *model_origin;
-static gint stack_model (int gui);
-/* apparatus for storing commands issued via GUI */
-static char **cmd_stack;
-char errline[MAXLEN] = "";
-char last_model = 's';
+static char last_model = 's';
 
 /* ........................................................... */
 
@@ -1460,7 +1462,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     else {
 	if (add_test_to_model(&test, pmod) == 0)
 	    print_test_to_window(&test, mydata->w);
-	if (oflag) outcovmx(models[1], datainfo, batch, prn);
+	if (oflag) outcovmx(models[1], datainfo, 1, prn);
     }
     clear_model(models[1], NULL, NULL);
 
@@ -1576,13 +1578,13 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
     case POOLED:
 	*pmod = lsq(command.list, Z, datainfo, action, 1, 0.0);
 	if ((err = model_output(pmod, prn))) break;
-	if (oflag) outcovmx(pmod, datainfo, batch, prn);
+	if (oflag) outcovmx(pmod, datainfo, 1, prn);
 	break;
 
     case HSK:
 	*pmod = hsk_func(command.list, &Z, datainfo);
 	if ((err = model_output(pmod, prn))) break;
-	if (oflag) outcovmx(pmod, datainfo, batch, prn);
+	if (oflag) outcovmx(pmod, datainfo, 1, prn);
 	break;
 
     case HCCM:
@@ -1595,14 +1597,14 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
 	*pmod = tsls_func(command.list, atoi(command.param), 
 				&Z, datainfo);
 	if ((err = model_output(pmod, prn))) break;
-	if (oflag) outcovmx(pmod, datainfo, batch, prn);
+	if (oflag) outcovmx(pmod, datainfo, 1, prn);
 	break;
 
     case AR:
 	*pmod = ar_func(command.list, atoi(command.param), 
 			      &Z, datainfo, &model_count, prn);
 	if ((err = model_error(pmod))) break;
-	if (oflag) outcovmx(pmod, datainfo, batch, prn);
+	if (oflag) outcovmx(pmod, datainfo, 1, prn);
 	break;
 
     case VAR:
@@ -1827,6 +1829,8 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
 
 static void finish_genr (MODEL *pmod)
 {
+    GENERATE genr;
+
     if (pmod != NULL)
 	genr = genr_func(&Z, datainfo, line, model_count, 
 			 pmod, 0); 
@@ -3069,7 +3073,7 @@ static int gui_exec_line (char *line,
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
-			      batch, oflag, prn);
+			      1, oflag, prn);
 	break;
 
     case ADD:
@@ -3091,7 +3095,7 @@ static int gui_exec_line (char *line,
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL, NULL);
-	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	    if (oflag) outcovmx(models[0], datainfo, 1, prn);
 	}
 	break;	
 
@@ -3120,7 +3124,7 @@ static int gui_exec_line (char *line,
 	} else {
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL, NULL);
-	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	    if (oflag) outcovmx(models[0], datainfo, 1, prn);
 	}
 	clear_model(&tmpmod, NULL, NULL);
 	break;
@@ -3135,7 +3139,7 @@ static int gui_exec_line (char *line,
 	    errmsg(err, (models[0])->errmsg, prn); 
 	    break;
 	}
-	if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	if (oflag) outcovmx(models[0], datainfo, 1, prn);
 	break;
 
     case ARCH:
@@ -3147,7 +3151,7 @@ static int gui_exec_line (char *line,
 	    errmsg(err, (models[1])->errmsg, prn);
 	if ((models[1])->ci == ARCH) {
 	    swap_models(&models[0], &models[1]);
-	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	    if (oflag) outcovmx(models[0], datainfo, 1, prn);
 	} else if (rebuild)
 	    add_test_to_model(ptest, models[0]);
 	clear_model(models[1], NULL, NULL);
@@ -3193,13 +3197,13 @@ static int gui_exec_line (char *line,
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn); 
-	if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	if (oflag) outcovmx(models[0], datainfo, 1, prn);
 	break;
 
     case CORRGM:
 	order = atoi(command.param);
 	err = corrgram(command.list, order, &Z, datainfo, &paths,
-		       batch, prn);
+		       1, prn);
 	if (err) pprintf(prn, "Failed to generate correlogram\n");
 	break;
 
@@ -3279,7 +3283,7 @@ static int gui_exec_line (char *line,
 	    command.list[3] = varindex(datainfo, "time");
 	    lines[0] = oflag;
 	    err = gnuplot(command.list, lines, &Z, datainfo,
-			  &paths, &plot_count, batch, 0, 0);
+			  &paths, &plot_count, 1, 0, 0);
 	    if (err < 0) pprintf(prn, "gnuplot command failed.\n");
 	    else graphmenu_state(TRUE);
 	}
@@ -3300,18 +3304,22 @@ static int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	genr = genr_func(&Z, datainfo, line, model_count,
-			 (last_model == 's')? models[0] : models[2], 
-			 oflag);
-	if ((err = genr.errcode)) 
-	    errmsg(genr.errcode, genr.errmsg, prn);
-	else {
-	    if (add_new_var(datainfo, &Z, &genr)) {
-		pprintf(prn, "Failed to add new variable.\n");
-	    } else {
-		pprintf(prn, "%s", genr.msg); 
-		if (exec_code == CONSOLE_EXEC)
-		    populate_clist(mdata->listbox, datainfo);
+	{
+	    GENERATE genr;
+
+	    genr = genr_func(&Z, datainfo, line, model_count,
+			     (last_model == 's')? models[0] : models[2], 
+			     oflag);
+	    if ((err = genr.errcode)) 
+		errmsg(genr.errcode, genr.errmsg, prn);
+	    else {
+		if (add_new_var(datainfo, &Z, &genr)) {
+		    pprintf(prn, "Failed to add new variable.\n");
+		} else {
+		    pprintf(prn, "%s", genr.msg); 
+		    if (exec_code == CONSOLE_EXEC)
+			populate_clist(mdata->listbox, datainfo);
+		}
 	    }
 	}
 	break;
@@ -3323,7 +3331,7 @@ static int gui_exec_line (char *line,
 	}
 	if (oflag == OPT_M) { /* plot with impulses */
 	    err = gnuplot(command.list, NULL, &Z, datainfo,
-			  &paths, &plot_count, batch, 0, OPT_M);
+			  &paths, &plot_count, 1, 0, OPT_M);
 	} else {	
 	    lines[0] = oflag;
 	    err = gnuplot(command.list, lines, &Z, datainfo,
@@ -3353,7 +3361,7 @@ static int gui_exec_line (char *line,
 	if (command.ci == HCCM) 
 	    print_white_vcv(models[0], prn);
 	else
-	    outcovmx(models[0], datainfo, batch, prn);
+	    outcovmx(models[0], datainfo, 1, prn);
 	break;
 
     case HELP:
@@ -3452,7 +3460,7 @@ static int gui_exec_line (char *line,
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	if (oflag) outcovmx(models[0], datainfo, 1, prn); 
 	break;
 
     case LOOP:
@@ -3511,12 +3519,12 @@ static int gui_exec_line (char *line,
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	if (oflag) outcovmx(models[0], datainfo, 1, prn); 
 	break;
 
     case PERGM:
 	err = periodogram(command.list, &Z, datainfo, &paths,
-			  batch, oflag, prn);
+			  1, oflag, prn);
 	if (err) pprintf(prn, "Failed to generate periodogram\n");
 	break;
 
@@ -3558,7 +3566,7 @@ static int gui_exec_line (char *line,
 	break;
 
     case SCATTERS:
-        if (batch && plp != NULL) 
+        if (plp != NULL) /* fixme? */
             pprintf(prn, "scatters command not available in batch mode.\n");
         else {
             err = multi_scatters(command.list, atoi(command.param), &Z, 
@@ -3690,12 +3698,12 @@ static int gui_exec_line (char *line,
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
 	/* is this OK? */
-	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	if (oflag) outcovmx(models[0], datainfo, 1, prn); 
 	break;		
 
     case VAR:
 	order = atoi(command.param);
-	err = var(order, command.list, &Z, datainfo, batch, prn);
+	err = var(order, command.list, &Z, datainfo, 1, prn);
 	break;
 
     case 999:

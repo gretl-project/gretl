@@ -40,9 +40,11 @@
 #define SESSION_DEBUG
 
 extern char *endbit (char *dest, char *src, int addscore);
+extern void file_selector (char *msg, char *startdir, int action, 
+			   gpointer data);
+
+static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
-void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
-gint yes_no_dialog (char *title, char *msg, int cancel);
 
 /* "session" struct and "errtext" are globals */
 
@@ -81,14 +83,14 @@ GtkItemFactoryEntry gp_edit_items[] = {
     { NULL, NULL, NULL, 0, NULL }
 };
 
-int session_file_open = 0;
+static int session_file_open;
 
 static GtkWidget *iconview;
 static GtkWidget *session_popup;
 static GtkWidget *model_popup;
 static GtkWidget *graph_popup;
 static GtkWidget *data_popup;
-static GtkWidget *iconlist1;
+static GtkWidget *slist;
 static GList *gobjects;
 static GtkIconListItem *active_icon;
 static GtkWidget *addgraph;
@@ -97,21 +99,22 @@ extern void view_script_default (void);
 extern int read_plotfile (GPT_SPEC *plot, char *fname);
 extern void show_spreadsheet (char *dataspec);
 
+#ifdef notdef
 /* gtkextra functions */
 extern void
 gtk_icon_list_set_editable (GtkIconList *iconlist, gboolean editable);
 extern void
 gtk_icon_list_set_text_space (GtkIconList *iconlist, guint spacing);
 /* end gtkextra functions */
+#endif
 
+/* private functions */
 static void session_build_popups (void);
 static void session_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
-
-gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort);
-gui_obj *session_new_model (void);
-gui_obj *session_add_object (gpointer data, int sort);
+static gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort);
+static gui_obj *session_add_object (gpointer data, int sort);
 static void open_gui_model (gui_obj *gobj);
 static void open_gui_graph (gui_obj *gobj);
 static void open_boxplot (gui_obj *gobj);
@@ -419,7 +422,7 @@ int delete_session_model (GtkWidget *w, gpointer data)
 	session.models = ppmod;
     }
     session.nmodels -= 1;
-    gtk_icon_list_remove(GTK_ICON_LIST(iconlist1), active_icon);
+    gtk_icon_list_remove(GTK_ICON_LIST(slist), active_icon);
     return 0;
 }
 
@@ -653,18 +656,18 @@ void view_session (void)
 
     gtk_box_pack_start(GTK_BOX(hbox1), scrollw1, TRUE, TRUE, 0); 
 
-    iconlist1 = gtk_icon_list_new(48, 2);
+    slist = gtk_icon_list_new(48, 2);
     gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrollw1),
-					  iconlist1);
+					  slist);
 
-    gtk_signal_connect(GTK_OBJECT(iconlist1), "select_icon",
+    gtk_signal_connect(GTK_OBJECT(slist), "select_icon",
 		       (GtkSignalFunc) session_open_object, NULL);
 
-    gtk_icon_list_set_editable(GTK_ICON_LIST(iconlist1), FALSE); 
-    gtk_icon_list_set_selection_mode(GTK_ICON_LIST(iconlist1), 
+    gtk_icon_list_set_editable(GTK_ICON_LIST(slist), FALSE); 
+    gtk_icon_list_set_selection_mode(GTK_ICON_LIST(slist), 
 				     GTK_SELECTION_BROWSE);
-    gtk_icon_list_set_text_space(GTK_ICON_LIST(iconlist1), 80);
-    GTK_ICON_LIST(iconlist1)->compare_func = (GCompareFunc) null_sort;
+    gtk_icon_list_set_text_space(GTK_ICON_LIST(slist), 80);
+    GTK_ICON_LIST(slist)->compare_func = (GCompareFunc) null_sort;
 
     active_icon = NULL;
     gobjects = NULL;
@@ -695,7 +698,7 @@ void view_session (void)
 			   ((session.graphs[i])->name[0] == 'G')? 'g' : 'b');
     }
 
-    gtk_widget_show(iconlist1);
+    gtk_widget_show(slist);
     gtk_widget_show(iconview);
 }
 
@@ -887,7 +890,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     gui_obj *myobject;
 
     item = (gchar *) data;
-    iconlist = GTK_ICON_LIST(iconlist1);
+    iconlist = GTK_ICON_LIST(slist);
 
     myobject = (gui_obj *) gtk_icon_list_get_link(active_icon);
 
@@ -939,7 +942,6 @@ static void store_list (int *list, char *buf)
 
 static char *model_cmd_str (MODEL *pmod)
 {
-    int i;
     char *str;
     
     str = malloc(MAXLEN);
@@ -1010,7 +1012,7 @@ static char *boxplot_str (GRAPHT *graph)
 
 /* ........................................................... */
 
-gui_obj *session_add_object (gpointer data, int sort)
+static gui_obj *session_add_object (gpointer data, int sort)
 {
     gui_obj *gobj;
     gchar *name = NULL;
@@ -1047,7 +1049,7 @@ gui_obj *session_add_object (gpointer data, int sort)
 	break;
     }
 
-    gobj = gui_object_new(GTK_ICON_LIST(iconlist1), name, sort);
+    gobj = gui_object_new(GTK_ICON_LIST(slist), name, sort);
     if (sort == 'm') {
 	char *str = model_cmd_str(pmod);
 
@@ -1131,16 +1133,13 @@ static void open_boxplot (gui_obj *gobj)
 
 /* ........................................................... */
 
-gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort)
+static gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort)
 {
     gui_obj *gobj;
     char **image = NULL;
 
     gobj = g_new(gui_obj, 1);
-    gobj->iconlist = iconlist;
     gobj->name = g_strdup(name); 
-    gobj->window = NULL;
-    gobj->is_mapped = FALSE;
     gobj->sort = sort;
 
     gobjects = g_list_append(gobjects, gobj);
@@ -1186,7 +1185,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
 
 /* ........................................................... */
 
-void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     char buf[MAXLEN];
     windata_t *mydata = (windata_t *) data;

@@ -23,4 +23,6 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
 
 void about_dialog (gpointer data);
 
+gint yes_no_dialog (char *title, char *msg, int cancel);
+
 #endif /* DIALOGS_H */

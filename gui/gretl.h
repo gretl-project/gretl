@@ -47,36 +47,42 @@
 
 #define MAXSTR 255
 
-extern windata_t *mdata;
-extern DATAINFO *datainfo;
-extern char *errtext;
-extern char cmdfile[MAXLEN];
-extern char savefile[MAXLEN];
-extern char line[MAXLEN];
-extern char scriptfile[MAXLEN];
-extern char fontspec[MAXLEN];
-extern char expert[6];
-extern char updater[6];
-extern gchar datalabel[64];
-extern PATHS paths; 
+/* basic global program vars */
 extern double *Z;
+extern DATAINFO *datainfo;
+extern PATHS paths; 
 extern CMD command;
 extern print_t *cmds;
-extern int plot_count;
-extern int popup_connected;
-
-extern GtkWidget *sample_label;
-extern GdkFont *fixed_font;
-
-extern int oflag, batch, data_file_open;
-extern int orig_vars;
-extern GENERATE genr; 
 extern MODEL **models;
 extern SESSION session;
 extern session_t rebuild;
+
+/* global counters */
+extern int plot_count;
+extern int orig_vars;
+
+/* global state variables */
+extern int data_file_open;
+extern char line[MAXLEN];
 extern int *default_list;
 extern char *storelist;
+extern gchar datalabel[64];
 extern gchar *clipboard_buf;
+
+/* global filenames */
+extern char cmdfile[MAXLEN];
+extern char scriptfile[MAXLEN];
+
+/* global error string */
+extern char *errtext;
+
+/* global option-related vars */
+extern char expert[6];
+extern char updater[6];
+
+/* global GUI equipment */
+extern windata_t *mdata;
+extern GdkFont *fixed_font;
 
 enum file_ops {
     OPEN_DATA = 1,

@@ -7,6 +7,8 @@
 void read_rc (void);
 #endif
 
+void load_fixed_font (void);
+
 void write_rc (void);
 
 int getbufline (char *buf, char *line, int init);
