@@ -1,2 +1,2 @@
-set args /home/cottrell/students/tyler/program/tyler.dat 
+set args data9-7 
 run

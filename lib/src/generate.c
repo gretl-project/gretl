@@ -411,15 +411,14 @@ static int getword (const char c, char *str, char *word, const int oflag)
 
 static void get_genr_formula (char *formula, const char *line)
 {
-    int i, k = 0, n = strlen(line);
-
-    if (n > MAXLEN - 10) n = MAXLEN - 10;
     /* skip over " genr " */
-    while (isspace((unsigned char) line[k])) k++;
-    while (isalpha((unsigned char) line[k])) k++;
-    while (isspace((unsigned char) line[k])) k++;
-    for (i=k; i<n; i++) formula[i-k] = line[i];
-    formula[n-k] = '\0';
+    while (isspace((unsigned char) *line)) line++;
+    if (!strncmp(line, "genr", 4)) {
+	line += 4;
+	while (isspace((unsigned char) *line)) line++;
+    }
+    *formula = '\0';
+    strncat(formula, line, MAXLEN - 10);
 }
 
 /**

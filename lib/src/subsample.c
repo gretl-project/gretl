@@ -247,7 +247,7 @@ int set_sample_dummy (const char *line,
 	char formula[MAXLEN];
 
 	/* + 4 below to omit the word "smpl" */
-	sprintf(formula, "genr subdum=%s", line + 4);
+	sprintf(formula, "subdum=%s", line + 4);
 	genr = generate(oldZ, oldinfo, formula, 0, NULL, 1);
 	if (genr.errcode) {
 	    return 1;

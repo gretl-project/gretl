@@ -42,6 +42,7 @@ typedef struct {
     double max, min;
     double xbase;
     char varname[9];
+    char *bool;
     OUTLIERS *outliers;
 } BOXPLOT;
 
@@ -411,6 +412,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     double scale = (1.0 - headroom) * height / (gmax - gmin);
     double median, uq, lq, maxval, minval;
     double conflo = 0., confhi = 0.;
+    double nameoff = headroom / 4.0;
     GdkRectangle rect;
     GdkGC *gc = NULL;
     /* GdkGC *whitegc = NULL; */
@@ -578,8 +580,12 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     }
 
     /* write name of variable beneath */
+    if (plot->bool) nameoff = headroom / 3.5;
     setup_text (area, pixmap, gc, pc, plot->varname, xcenter, 
-		height * (1.0 - headroom/4.0), GTK_JUSTIFY_CENTER);
+		height * (1.0 - nameoff), GTK_JUSTIFY_CENTER);
+    if (plot->bool)
+	setup_text (area, pixmap, gc, pc, plot->bool, xcenter, 
+		    height * (1.0 - headroom/6.0), GTK_JUSTIFY_CENTER);
 }
 
 /* ............................................................. */
@@ -886,9 +892,10 @@ static void read_boxrc (PLOTGROUP *grp);
 
 /* ............................................................. */
 
-int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
+int boxplots (int *list, char **bools, double **pZ, const DATAINFO *pdinfo, 
+	      int notches)
 {
-    int i, n = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, j, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
     PLOTGROUP *plotgrp;
     int width = 576, height = 448;
@@ -910,7 +917,7 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 	return 1;
     }
 
-    for (i=0; i<plotgrp->nplots; i++) {
+    for (i=0, j=0; i<plotgrp->nplots; i++, j++) {
 	n = ztox(list[i+1], x, *pZ, pdinfo);
 	if (n < 2) {
 	    char s[63];
@@ -930,6 +937,7 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 		continue;
 	    }
 	}
+	plotgrp->plots[i].outliers = NULL;
 	qsort(x, n, sizeof *x, compare_doubles);
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
@@ -945,6 +953,10 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 	} else 
 	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = -999.0;
 	strcpy(plotgrp->plots[i].varname, pdinfo->varname[list[i+1]]);
+	if (bools) 
+	    plotgrp->plots[i].bool = bools[j];
+	else
+	    plotgrp->plots[i].bool = NULL;
     }
 
     plotgrp->height = height;
@@ -1391,3 +1403,132 @@ int retrieve_boxplot (const char *fname)
     fclose(fp);
     return 1;
 }
+
+static int special_varcount (const char *s)
+{
+    int n = 0;
+    char test[36];
+
+    while (sscanf(s, "%35s", test) == 1) {
+	if (*test != '(') n++;
+	s += strspn(s, " ");
+	s += strlen(test);
+    }
+    return n;
+}
+
+int boolean_boxplots (const char *str, double **pZ, DATAINFO *pdinfo, 
+		      int notches)
+{
+    int i, k, nvars, nbool, err = 0;
+    int n = pdinfo->n, origv = pdinfo->v;
+    char *tok, *s = NULL, **bools = NULL;
+    int *list = NULL;
+
+    s = malloc(strlen(str) + 1);
+    if (s == NULL) return 1;
+    strcpy(s, str);    
+
+    nvars = special_varcount(s);
+    if (nvars == 0) {
+	free(s);
+	return 1;
+    }
+
+    list = malloc((nvars + 1) * sizeof *list);
+    bools = malloc(nvars * sizeof *bools);
+    if (list == NULL || bools == NULL) 
+	err = 1;
+
+    for (i=0; i<nvars; i++)
+	bools[i] = NULL;
+
+    list[0] = nvars;
+    i = 0;
+    nbool = 0;
+    while (!err && (tok = strtok((i)? NULL : s, " "))) {
+	if (tok[0] == '(') {
+	    if (i) {
+		bools[i-1] = malloc(strlen(tok) + 1);
+		strcpy(bools[i-1], tok);
+		fprintf(stderr, "allocated and copied to bools[%d]\n", i-1);
+		nbool++;
+	    } else
+		err = 1;
+	} else {
+	    if (isdigit(tok[0])) { 
+		list[++i] = atoi(tok);
+	    }
+	    else if (isalpha(tok[0])) {
+		int v = varindex(pdinfo, tok);
+
+		if (v < origv) list[++i] = v;
+		else {
+		    fprintf(stderr, "got invalid varname '%s'\n", tok);
+		    err = 1;
+		}
+	    } else {
+		fprintf(stderr, "got invalid field '%s'\n", tok);
+		err = 1; 
+	    }
+	}
+    }
+    free(s);
+
+    fprintf(stderr, "adding %d new variables\n", nbool);
+    if (dataset_add_vars(nbool, pZ, pdinfo)) {
+	err = 1;
+	nbool = 0;
+    }
+
+    /* now we add nbool new variables, with ID numbers origv,
+       origv + 1, and so on.  These are the original variables
+       that have boolean conditions attached, masked by those
+       conditions */
+
+    k = origv;
+    for (i=1; i<=list[0] && !err; i++) {
+	if (bools[i-1] != NULL) {
+	    int t;
+	    GENERATE genr;
+	    char formula[80];
+	    
+	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
+	    genr = generate(pZ, pdinfo, formula, 0, NULL, 0);
+	    if (genr.errcode) {
+		fprintf(stderr, "%s\n", get_gretl_errmsg());
+		err = 1;
+	    } else {
+		for (t=0; t<n; t++) {
+		    if (genr.xvec[t] == 1.0) 
+			(*pZ)[k*n + t] = (*pZ)[list[i]*n + t];
+		    else 
+			(*pZ)[k*n + t] = NADBL;
+		}
+		strcpy(pdinfo->varname[k], pdinfo->varname[list[i]]);
+		list[i] = k++;
+	    }
+	    free(genr.xvec);
+	}
+    }
+
+    if (!err) printlist(list, "final boxplot list");
+    
+    if (!err) {
+	fprintf(stderr, "doing boxplots\n");
+	err = boxplots(list, bools, pZ, pdinfo, notches);
+    }
+    
+    free(list);
+    for (i=0; i<nvars; i++) 
+	if (bools[i]) free(bools[i]);
+    free(bools);
+
+    if (nbool) {
+	fprintf(stderr, "shrinking dataset by %d variables\n", nbool);
+	dataset_drop_vars(nbool, pZ, pdinfo);
+    }
+    
+    return err;
+}
+

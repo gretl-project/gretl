@@ -36,9 +36,11 @@ static int data_option (int flag);
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, PRN *prn);
 /* boxplots.c */
-extern int boxplots (int *list, 
+extern int boxplots (int *list, char **bools, 
 		     double **pZ, const DATAINFO *pdinfo, 
 		     int notches);
+extern int boolean_boxplots (const char *str, double **pZ, 
+			     DATAINFO *pdinfo, int notches);
 
 /* private functions */
 static int gui_exec_line (char *line, 
@@ -2535,7 +2537,7 @@ void do_boxplot_var (void)
     sprintf(line, "boxplot %s", datainfo->varname[mdata->active_var]);
     if (check_cmd(line) || cmd_init(line)) return;
 
-    if (boxplots(command.list, &Z, datainfo, 0)) 
+    if (boxplots(command.list, NULL, &Z, datainfo, 0)) 
 	errbox ("boxplot command failed");
 }
 
@@ -2568,11 +2570,15 @@ void do_box_graph (GtkWidget *widget, dialog_t *ddata)
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (*edttext == '\0') return;
 
-    clear(line, MAXLEN);
-    sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", edttext);
+    if (strchr(edttext, '('))
+	err = boolean_boxplots(edttext, &Z, datainfo, (code == GR_NBOX));
+    else {
+	clear(line, MAXLEN);
+	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", edttext);
 
-    if (check_cmd(line) || cmd_init(line)) return;
-    err = boxplots(command.list, &Z, datainfo, (code == GR_NBOX));
+	if (check_cmd(line) || cmd_init(line)) return;
+	err = boxplots(command.list, NULL, &Z, datainfo, (code == GR_NBOX));
+    }
     if (err) errbox("boxplot command failed");
 }
 
@@ -3273,7 +3279,7 @@ static int gui_exec_line (char *line,
     case BXPLOT:
 	if (exec_code == REBUILD_EXEC || exec_code == SAVE_SESSION_EXEC) 
 	    break;
-	err = boxplots (command.list, &Z, datainfo, (oflag != 0));
+	err = boxplots (command.list, NULL, &Z, datainfo, (oflag != 0));
 	break;
 
     case CHOW:
