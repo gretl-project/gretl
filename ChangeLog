@@ -1,3 +1,7 @@
+version 1.0pre4
+- fix smpl -r bug in gretlcli
+
+
 10/10/02 version 1.0pre3
 - improve accuracy of calculation of standard errors, and
   numerical accuracy on MS Windows in general
