@@ -381,9 +381,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
 		if (test) {
 		    df = newlist[0] - orig->list[0];
-		    sprintf(test->type, _("Non-linearity test (%s)"),
-			    (aux_code == AUX_SQ)? _("squares") : _("logs"));
-		    strcpy(test->h_0, _("relationship is linear"));
+		    strcpy(test->type, (aux_code == AUX_SQ)?
+			    N_("Non-linearity test (squares)") :
+			    N_("Non-linearity test (logs)"));
+		    strcpy(test->h_0, N_("relationship is linear"));
 		    test->teststat = GRETL_TEST_TR2;
 		    test->dfn = df;
 		    test->value = trsq;
@@ -655,8 +656,8 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		2, aux.dfd, RF, fdist(RF, 2, aux.dfd));
 
 	if (test != NULL) {
-	    strcpy(test->type, _("RESET test for specification"));
-	    strcpy(test->h_0, _("specification is adequate"));
+	    strcpy(test->type, N_("RESET test for specification"));
+	    strcpy(test->h_0, N_("specification is adequate"));
 	    test->teststat = GRETL_TEST_RESET;
 	    test->dfn = 2;
 	    test->dfd = aux.dfd;
@@ -778,8 +779,8 @@ int autocorr_test (MODEL *pmod, int order,
 	}
 
 	if (test != NULL) {
-	    strcpy(test->type, _("LM test for autocorrelation"));
-	    sprintf(test->h_0, _("no autocorrelation up to order %d"), order);
+	    strcpy(test->type, N_("LM test for autocorrelation"));
+	    sprintf(test->h_0, N_("no autocorrelation up to order %d"), order);
 	    test->teststat = GRETL_TEST_LMF;
 	    test->dfn = order;
 	    test->dfd = aux.nobs - pmod->ncoeff - order;
@@ -893,9 +894,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		    fdist(F, newvars, chow_mod.dfd)); 
 
 	    if (test != NULL) {
-		sprintf(test->type, _("Chow test for structural break at "
+		sprintf(test->type, N_("Chow test for structural break at "
 			"observation %s"), chowdate);
-		strcpy(test->h_0, _("no structural break"));
+		strcpy(test->h_0, N_("no structural break"));
 		test->teststat = GRETL_TEST_F;
 		test->dfn = newvars;
 		test->dfd = chow_mod.dfd;
@@ -1052,8 +1053,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		T-K-1, hct, tprob(hct, T-K-1));
 
 	if (test != NULL) {
-	    strcpy(test->type, _("CUSUM test for parameter stability"));
-	    strcpy(test->h_0, _("no change in parameters"));
+	    strcpy(test->type, N_("CUSUM test for parameter stability"));
+	    strcpy(test->h_0, N_("no change in parameters"));
 	    test->teststat = GRETL_TEST_HARVEY_COLLIER;
 	    test->dfn = T-K-1;
 	    test->value = hct;

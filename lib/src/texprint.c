@@ -197,14 +197,16 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if (standalone) {
 	pprintf(prn, "\\documentclass[11pt]{article}\n");
-    }
 
 #ifdef ENABLE_NLS
-    pprintf(prn, "\\usepackage[latin1]{inputenc}\n\n");
+	pprintf(prn, "\\usepackage[latin1]{inputenc}\n\n");
 #endif
 
-    pprintf(prn, "\\begin{document}\n\n"
-	    "\\thispagestyle{empty}\n\n\\begin{center}\n");
+	pprintf(prn, "\\begin{document}\n\n"
+		"\\thispagestyle{empty}\n\n");
+    }
+
+    pprintf(prn, "\\begin{center}\n");
 
     if (pmod->ifc) {
 	const_coeff = pmod->coeff[pmod->list[0]-1];
@@ -275,8 +277,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     pprintf(prn, "\n(%s)\n\\end{center}\n", 
 	    I_("$t$-statistics in parentheses"));
 
-    if (standalone) 
+    if (standalone) {
 	pprintf(prn, "\n\\end{document}\n");
+    }
 
     return 0;
 }

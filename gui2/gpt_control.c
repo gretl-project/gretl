@@ -737,7 +737,8 @@ void do_save_graph (const char *fname, char *savestr)
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
-	    if (strncmp(plotline, "pause", 5)) pprintf(prn, "%s", plotline);
+	    if (strncmp(plotline, "pause", 5)) 
+		pprintf(prn, "%s", plotline);
 	}
     }
     gretl_print_destroy(prn);
@@ -804,8 +805,9 @@ void gpt_save_dialog (void)
 	return;
     }
 
-    for (i=0; i<5; i++)
+    for (i=0; i<5; i++) {
 	termtype = g_list_append(termtype, ttypes[i]);
+    }
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save graph"));

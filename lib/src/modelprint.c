@@ -179,7 +179,7 @@ static void ladstats (const MODEL *pmod, PRN *prn)
     if (TEX_FORMAT(prn->format)) {  
 	char x1str[32], x2str[32];
 
-	tex_dcolumn_double(pmod->rho, x1str); /* "rho" is abused */
+	tex_dcolumn_double(pmod->rho, x1str); /* "rho" is abused here! */
 	tex_dcolumn_double(pmod->ess, x2str);
 	pprintf(prn, "%s & %s \\\\\n",
 		I_("Sum of absolute residuals"), x1str); 
@@ -285,7 +285,7 @@ static void dwline (const MODEL *pmod, PRN *prn)
 	char x1str[32], x2str[32];
 	tex_dcolumn_double(pmod->dw, x1str);
 	tex_dcolumn_double(pmod->rho, x2str);
-	pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\rho}$) & %s \n",
+	pprintf(prn, "%s & %s \\\\\n %s & %s \n",
 		I_("Durbin--Watson statistic"), x1str, 
 		I_("First-order autocorrelation coeff."), x2str);
     }
@@ -555,8 +555,8 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 		    "  %s: %s\n"
 		    "  %s: %s\n"
 		    "  %s = %s\n\n",
-		    (pmod->tests[i]).type, 
-		    _("Null hypothesis"), (pmod->tests[i]).h_0, 
+		    _((pmod->tests[i]).type), 
+		    _("Null hypothesis"), _((pmod->tests[i]).h_0), 
 		    _("Test statistic"), test_str, 
 		    _("with p-value"), pval_str);
 	}
@@ -575,8 +575,8 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 			"\\quad %s: %s\\\\\n"
 			"\\quad %s: %s\\\\\n"
 			"\\quad %s = %s\\\\\n",
-			(pmod->tests[i]).type, 
-			I_("Null hypothesis"), (pmod->tests[i]).h_0, 
+			I_((pmod->tests[i]).type), 
+			I_("Null hypothesis"), I_((pmod->tests[i]).h_0), 
 			I_("Test statistic"), test_str, 
 			I_("with p-value"), pval_str);
 	    }
@@ -592,8 +592,8 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 		    " %s: %s\\par\n"
 		    " %s: %s\\par\n"
 		    " %s = %s\\par\n\n",
-		    (pmod->tests[i]).type, 
-		    I_("Null hypothesis"), (pmod->tests[i]).h_0,
+		    I_((pmod->tests[i]).type), 
+		    I_("Null hypothesis"), I_((pmod->tests[i]).h_0),
 		    I_("Test statistic"), test_str, 
 		    I_("with p-value"), pval_str);
 	}
@@ -813,11 +813,12 @@ static void print_coeff_table_start (PRN *prn, int discrete)
 		"  \\multicolumn{1}{c}{%s} &\n"
 		"    \\multicolumn{1}{c}{%s} &\n"
 		"      \\multicolumn{1}{c}{%s} &\n"
-		"        \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
+		"        \\multicolumn{1}{c}{%s%s} \\\\[1ex]\n",
 		pt, pt, pt, pt, pt, pt, pt, pt, I_("Variable"),
 		I_("Coefficient"), I_("Std.\\ Error"), 
 		I_("$t$-statistic"), 
-		(discrete)? I_("Slope at mean"): I_("p-value"));
+		(discrete)? I_("Slope"): I_("p-value"),
+		(discrete)? "$^*$" : "");
     }   
 
     else if (RTF_FORMAT(prn->format)) {
@@ -828,10 +829,10 @@ static void print_coeff_table_start (PRN *prn, int discrete)
 		    " \\qc {\\i %s}\\cell"
 		    " \\qc {\\i %s}\\cell"
 		    " \\qc {\\i %s}\\cell"
-		    " \\qc {\\i %s}\\cell"
+		    " \\qc {\\i %s{\\super *}}\\cell"
 		    " \\intbl \\row\n",
 		    I_("Variable"), I_("Coefficient"), I_("Std. Error"), 
-		    I_("t-statistic"), I_("Slope at mean"));
+		    I_("t-statistic"), I_("Slope"));
 	} else {
 	    pprintf(prn, "{" RTF_COEFF_ROW
 		    " \\qr \\cell"
@@ -1492,6 +1493,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 
     else if (RTF_FORMAT(prn->format)) {
 	pprintf(prn, "\n");
+	pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
 	pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	pprintf(prn, "\\par %s = %d (%.1f%%)\n", I_("Number of cases 'correctly predicted'"), 
@@ -1510,6 +1512,9 @@ static void print_discrete_statistics (const MODEL *pmod,
 
     else if (TEX_FORMAT(prn->format)) {
 	char lnlstr[16];
+
+	pprintf(prn, "\\begin{center}\n$^*$%s\n\\end{center}\n", 
+		I_("Evaluated at the mean"));
 
 	pprintf(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
 	pprintf(prn, "%s %s = %.3f\\\\\n", I_("Mean of"), 

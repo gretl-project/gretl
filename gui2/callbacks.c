@@ -252,21 +252,23 @@ void dummy_call (void)
 /* contortions are needed here to get around the fact that the
    output of strftime (used in print_time()) will not be UTF-8 */
 
+/* actually, I now think the above is mistaken -- Oct 02 */
+
 void print_report (gpointer data, guint unused, GtkWidget *widget)
 {
     PRN *prn;
-#ifdef ENABLE_NLS    
+#ifdef BROKEN_NLS /* was ENABLE_NLS */ 
     gchar *utfbuf;
     gsize wrote;
 #endif  
 
     if (bufopen(&prn)) return;
 
-#ifdef ENABLE_NLS
+#ifdef BROKEN_NLS
     bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
 #endif
     data_report (datainfo, &paths, prn);
-#ifdef ENABLE_NLS
+#ifdef BROKEN_NLS
     bind_textdomain_codeset(PACKAGE, "UTF-8");
     utfbuf = g_locale_to_utf8(prn->buf, -1, NULL, &wrote, NULL);
     if (utfbuf != NULL) {

@@ -94,12 +94,15 @@ static double getval (const char *s, PRN *prn, int pos)
 	gretl_print_destroy(prn);
 	return NADBL;
     }
+
     x = atof(s);
+
     if (pos && x <= 0.0) {
 	errbox(_("Invalid entry for hypothesis test"));
 	return NADBL;
-    } else
+    } else {
 	return x;
+    }
 }
 
 /* ........................................................... */
@@ -113,12 +116,15 @@ static int getint (const char *s, PRN *prn)
 	gretl_print_destroy(prn);
 	return -1;
     }
+
     n = atoi(s);
+
     if (n <= 0) {
 	errbox(_("Invalid entry for hypothesis test"));
 	return -1;
-    } else
+    } else {
 	return n;
+    }
 }
 
 /* ........................................................... */
@@ -302,6 +308,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     default:
 	break;
     }
+
     if (bufopen(&prn)) return;
     batch_pvalue(cmd, Z, datainfo, prn);
     view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, view_items);
@@ -1117,12 +1124,15 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(dialog->action_area), 
 			tempwid, TRUE, TRUE, 0);
-    if (code == 0 || code == 1)
+
+    if (code == 0 || code == 1) {
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (trash_look), look);
-    else if (code == 2)
+    }
+    else if (code == 2) {
 	g_signal_connect (G_OBJECT (tempwid), "clicked", 
 			  G_CALLBACK (trash_test), test);
+    }
 
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (delete_widget), 

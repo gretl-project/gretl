@@ -1327,8 +1327,9 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 
     pprintf(prn, "%s:\n\n", _("Listing of variables"));
 
-    for (i=1; i<pdinfo->v; i++) 
+    for (i=1; i<pdinfo->v; i++) {
 	pprintf(prn, "%9s  %s\n", pdinfo->varname[i], pdinfo->label[i]);
+    }
 
     return 0;
 }

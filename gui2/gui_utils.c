@@ -670,7 +670,7 @@ void save_session (char *fname)
 {
     int i, spos;
     char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
-    char session_base[MAXLEN], tmp[MAXLEN], grftmp[64];
+    char session_base[MAXLEN], tmp[MAXLEN];
     FILE *fp;
     PRN *prn;
 
@@ -709,8 +709,7 @@ void save_session (char *fname)
     /* save session graphs */
     for (i=0; i<session.ngraphs; i++) {
 	/* formulate save name for graph */
-	strcpy(grftmp, (session.graphs[i])->name);
-	sprintf(tmp, "%s%s", session_base, space_to_score(grftmp));
+	sprintf(tmp, "%sGraph_%d", session_base, i + 1);
 	/* does the constructed filename differ from the
 	   current one? */
 	if (strcmp((session.graphs[i])->fname, tmp)) {
@@ -2164,9 +2163,24 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	prn_to_clipboard(&textprn, COPY_TEXT);
 	g_free(textprn.buf);
     } else { /* COPY_SELECTION */
+#ifdef G_OS_WIN32
+	GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+	GtkTextIter selstart, selend;
+	gchar *selbuf;
+	PRN selprn;
+
+	if (gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend)) {
+	    selbuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
+	    selprn.buf = selbuf;
+	    selprn.fp = NULL;
+	    prn_to_clipboard(&selprn, COPY_TEXT);
+	    g_free(selbuf);
+	}
+#else
 	gtk_text_buffer_copy_clipboard (gtk_text_view_get_buffer
 					(GTK_TEXT_VIEW(vwin->w)),
 					 gtk_clipboard_get(GDK_NONE));
+#endif
     }
 }
 

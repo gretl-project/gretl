@@ -445,8 +445,9 @@ static int gp_png_wants_color (void)
 {
     static int c = -1; 
 
-    if (c == -1)
+    if (c == -1) {
 	c = system("echo \"set term png color\" | `which gnuplot` 2>/dev/null");
+    }
     return !c;
 }
 #endif
@@ -1187,8 +1188,14 @@ int termtype_to_termstr (char *termtype, char *termstr)
 	strcpy(termstr, "fig");
     else if (!strcmp(termtype, "latex")) 
 	strcpy(termstr, "latex");
-    else if (!strcmp(termtype, "png")) 
-	strcpy(termstr, "png small color");
+    else if (!strcmp(termtype, "png")) { 
+	strcpy(termstr, "png small");
+#ifndef OS_WIN32
+	if (gp_png_wants_color()) {
+	    strcat(termstr, " color");
+	}
+#endif
+    }
     else if (!strcmp(termtype, "plot commands")) 
 	cmds = 1;
     else strcpy(termstr, termtype);

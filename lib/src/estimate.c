@@ -1773,8 +1773,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	printmodel(&white, pdinfo, prn);
 
 	if (test != NULL) {
-	    strcpy(test->type, _("White's test for heteroskedasticity"));
-	    strcpy(test->h_0, _("heteroskedasticity not present"));
+	    strcpy(test->type, N_("White's test for heteroskedasticity"));
+	    strcpy(test->h_0, N_("heteroskedasticity not present"));
 	    test->teststat = GRETL_TEST_TR2;
 	    test->dfn = white.ncoeff - 1;
 	    test->value = white.rsq * white.nobs;
@@ -2293,8 +2293,8 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	xx = chisq(LM, order);
 
 	if (test != NULL) {
-	    sprintf(test->type, _("Test for ARCH of order %d"), order);
-	    strcpy(test->h_0, _("no ARCH effect is present"));
+	    sprintf(test->type, "%s %d", N_("Test for ARCH of order"), order);
+	    strcpy(test->h_0, N_("no ARCH effect is present"));
 	    test->teststat = GRETL_TEST_TR2;
 	    test->dfn = order;
 	    test->value = LM;

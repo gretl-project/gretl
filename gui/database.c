@@ -463,7 +463,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void db_menu_find (windata_t *dbdat)
+static void db_menu_find (GtkWidget *w, windata_t *dbdat)
 {
     menu_find(dbdat, 1, NULL);
 }
