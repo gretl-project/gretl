@@ -23,10 +23,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "htmlprint.h"
+#include "guiprint.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
-extern int win_copy_rtf (char *rtf_str);
 #endif
 
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
@@ -98,7 +98,6 @@ extern void save_plot (char *fname, GPT_SPEC *plot);
 extern gboolean console_handler (GtkWidget *w, GdkEventKey *key, 
 				 gpointer user_data);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
-extern void model_to_rtf (MODEL *pmod);
 
 typedef struct {
     char *key,         /* config file variable name */
@@ -828,7 +827,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	if (mydata->popup) 
 	    gtk_object_unref(GTK_OBJECT(mydata->popup));
 	if (mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
-	    free(mydata->data); /* command list */
+	    free_summary(mydata->data); 
 	free(mydata);
 	mydata = NULL;
     }
@@ -2285,16 +2284,15 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
     if ((mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
-	int *list = (int *) mydata->data;
+	GRETLSUMMARY *summ = (GRETLSUMMARY *) mydata->data;
 	print_t prn;
 	
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
-	    summary(list, &Z, datainfo, 1, LATEX, &prn);
+	    texprint_summary(summ, datainfo, &prn);
 	    buf_to_clipboard(prn.buf);
 	} else {
-	    summary(list, &Z, datainfo, 1, RTF, &prn);
-	    fprintf(stderr, "done RTF summary\n");
+	    rtfprint_summary(summ, datainfo, &prn);
 #ifdef G_OS_WIN32
 	    win_copy_rtf(prn.buf);
 #else

@@ -303,8 +303,8 @@ static void r_print_model_tests (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-		   print_t *prn)
+static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
+			  print_t *prn)
 {
     int i, ncoeff;
     char startdate[8];
@@ -616,6 +616,20 @@ static void r_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo,
                 "for variable %d (%s)\\par\n", k, pdinfo->varname[k]);
 }
 
+/* ............................................................. */
+
+static void printftex (const double zz, print_t *prn, int endrow)
+{
+    char s[32];
+
+    if (na(zz)) pprintf(prn, "undefined");
+    else printxx(zz, s, SUMMARY);
+    if (endrow) 
+	pprintf(prn, "$%s$\\\\");
+    else
+	pprintf(prn, "$%s$ & ");	
+}
+
 /* FIXME */
 
 #define SUMM_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
@@ -703,23 +717,9 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 
 /* ............................................................. */
 
-static void printftex (const double zz, print_t *prn, int endrow)
-{
-    char s[32];
-
-    if (na(zz)) pprintf(prn, "undefined");
-    else printxx(zz, s, SUMMARY);
-    if (endrow) 
-	pprintf(prn, "$%s$\\\\");
-    else
-	pprintf(prn, "$%s$ & ");	
-}
-
-/* ............................................................. */
-
-static void texprint_summary (GRETLSUMMARY *summ,
-			      const DATAINFO *pdinfo,
-			      print_t *prn)
+void texprint_summary (GRETLSUMMARY *summ,
+		       const DATAINFO *pdinfo,
+		       print_t *prn)
 {
     char date1[9], date2[9];
     double xbar, std, xcv;

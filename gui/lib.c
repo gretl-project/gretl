@@ -529,6 +529,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     char title[48];
     int err = 0;
     windata_t *vwin;
+    GRETLSUMMARY *summ;
     gint hsize = 78, vsize = 380;
 
     clear(line, MAXLEN);
@@ -590,10 +591,9 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	err = runs_test(command.list, Z, datainfo, &prn);
 	break;
     case SUMMARY:
-	err = summary(command.list, &Z, datainfo, batch, TEXT, &prn);
-	break;
-    case VAR_SUMMARY:
-	err = summary(command.list, &Z, datainfo, batch, TEXT, &prn);
+    case VAR_SUMMARY:	
+	summ = summary(command.list, &Z, datainfo, &prn);
+	if (summ != NULL) print_summary(summ, datainfo, &prn, 1);
 	break;
     }
     if (err) gui_errmsg(err, errtext);
@@ -602,13 +602,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 		       view_items, sizeof view_items);
 
     if (vwin && (action == SUMMARY || action == VAR_SUMMARY)) {
-	int i, *p, n = command.list[0];
-
-	p = malloc((n + 2) * sizeof(int));
-	if (p != NULL) {
-	   for (i=0; i<=n; i++) p[i] = command.list[i];
-	   vwin->data = p;
-	}
+	vwin->data = summ;
     }
 }
 

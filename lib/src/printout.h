@@ -61,3 +61,6 @@ int print_fit_resid (const MODEL *pmod,
 		     double **pZ, DATAINFO *pdinfo, 
 		     print_t *prn);
 
+void printxx (const double xx, char *str, const int ci);
+
+

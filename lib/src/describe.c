@@ -34,7 +34,6 @@
 extern void _mxout (const double *rr, const int *list, const int ci,
 		    const DATAINFO *pdinfo, const int batch, print_t *prn);
 extern double _rhocrit95 (const int n);
-void printxx (const double xx, char *str, const int ci);
 
 /* ........................................................... */
 
