@@ -5375,8 +5375,11 @@ int gui_exec_line (char *line,
 		
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, 
-		       datainfo, (exec_code != CONSOLE_EXEC),
+		       datainfo, (exec_code == CONSOLE_EXEC),
 		       prn, cmd.opt);
+	if (!err && exec_code == CONSOLE_EXEC) {
+	    register_graph();
+	}
 	break;
 
     case FUNC:
