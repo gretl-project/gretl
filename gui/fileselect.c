@@ -43,6 +43,7 @@ struct extmap {
 
 static struct extmap action_map[] = {
     {SAVE_DATA, ".gdt"},
+    {SAVE_DATA_AS, ".gdt"},
     {SAVE_GZDATA, ".gdt"},
     {SAVE_BIN1, ".gdt"},
     {SAVE_BIN2, ".gdt"},
@@ -111,7 +112,7 @@ static const char *get_gp_ext (const char *termtype)
 static int is_data_action (int i)
 {
     if (i == SAVE_DATA || i == SAVE_GZDATA || i == SAVE_BIN1 || 
-	i == SAVE_BIN2 || i == OPEN_DATA)
+	i == SAVE_BIN2 || i == OPEN_DATA || i == SAVE_DATA_AS)
 	return 1;
     else
 	return 0;
@@ -141,16 +142,17 @@ static const char *get_ext (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (olddat && is_data_action(action)) 
+    if (olddat && is_data_action(action)) {
 	return ".dat";
+    }
 
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 	s = get_gp_ext(plot->termtype);
     }
-    else if (action == SAVE_LAST_GRAPH) 
+    else if (action == SAVE_LAST_GRAPH) { 
 	s = get_gp_ext(data);
-    else {
+    } else {
 	int i;
 
 	for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
@@ -181,8 +183,9 @@ static void maybe_add_ext (char *fname, int action, gpointer data)
     
     /* otherwise add an appropriate extension */
     ext = get_ext(action, data);
-    if (ext != NULL && strlen(ext) > 1) 
+    if (ext != NULL && strlen(ext) > 1) {
 	strcat(fname, ext);
+    }
 }
 
 /* ........................................................... */

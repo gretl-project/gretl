@@ -262,10 +262,14 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	pprintf(prn, "$T = %d,\\, \\sum |\\hat{u}_t| = %g$\n",
 		pmod->nobs, pmod->rho);
     } else {
-	pprintf(prn, "$T = %d,\\, \\bar{R}^2 = %.3f,\\, F(%d,%d) = %g,\\, "
-		"\\hat{\\sigma} = %g$\n",
+	pprintf(prn, "$T$ = %d, $\\, \\bar{R}^2$ = %.3f, "
+		"$\\, F(%d,%d)$ = %.5g, $\\, \\hat{\\sigma}$ = %.4g",
 		pmod->nobs, pmod->adjrsq, pmod->dfn, 
 		pmod->dfd, pmod->fstt, pmod->sigma);
+	if (!floateq(pmod->rho_in, 0.0)) {
+	    pprintf(prn, ", $\\, \\rho$ = %.4g", pmod->rho_in);
+	}
+	pprintf(prn, "\n");
     }
 
     pprintf(prn, "\n(%s)\n\\end{center}\n", 

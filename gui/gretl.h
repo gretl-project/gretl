@@ -150,6 +150,7 @@ enum file_ops {
     OPEN_SESSION,
     END_OPEN,      /* marker for end of file open section */
     SAVE_DATA,
+    SAVE_DATA_AS,
     SAVE_GZDATA,
     SAVE_BIN1,
     SAVE_BIN2,

@@ -1,6 +1,7 @@
 /* macros for file selector */
 
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
+                          i == SAVE_DATA_AS || \
                           i == SAVE_GZDATA || \
                           i == SAVE_BIN1 || \
                           i == SAVE_BIN2 || \

@@ -3069,7 +3069,24 @@ void do_open_csv_box (char *fname, int code, int append)
 
 /* ........................................................... */
 
-int do_store (char *mydatfile, const int opt, int overwrite)
+static int dat_suffix (const char *fname)
+{
+    int len;
+
+    if (fname == NULL || (len = strlen(fname)) < 5) {
+	return 0;
+    }
+
+    if (strncmp(fname + len - 4, ".dat", 4) == 0) {
+	return 1;
+    }
+    
+    return 0;
+}
+
+/* ........................................................... */
+
+int do_store (char *mydatfile, int opt, int overwrite)
 {
     char f = getflag(opt);
     gchar *msg;
@@ -3083,6 +3100,10 @@ int do_store (char *mydatfile, const int opt, int overwrite)
     if (f) { /* not a standard native save */
 	sprintf(line, "store '%s' %s -%c", mydatfile, 
 		(showlist)? storelist : "", f);
+    } else if (dat_suffix(mydatfile)) { /* saving as ".dat" */
+	sprintf(line, "store '%s' %s -t", mydatfile, 
+		(showlist)? storelist : "");
+	opt = OPT_T;
     } else {
 	if (!overwrite) {
 	    fp = fopen(mydatfile, "r");
@@ -3122,8 +3143,9 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 	return 1;
     }
 
-    if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT)
+    if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT) {
 	mkfilelist(1, mydatfile);
+    }
 
     msg = g_strdup_printf(_("%s written OK"), mydatfile);
     infobox(msg);
@@ -3275,7 +3297,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 
 /* ........................................................... */
 
-void do_save_tex (char *fname, const int code, MODEL *pmod)
+void do_save_tex (char *fname, int code, MODEL *pmod)
 {
     PRN *texprn;
 

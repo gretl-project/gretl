@@ -40,6 +40,7 @@ struct extmap {
 
 static struct extmap action_map[] = {
     {SAVE_DATA, ".gdt"},
+    {SAVE_DATA_AS, ".gdt"},
     {SAVE_GZDATA, ".gdt"},
     {SAVE_BIN1, ".gdt"},
     {SAVE_BIN2, ".gdt"},
@@ -127,16 +128,17 @@ static const char *get_ext (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (olddat && IS_DAT_ACTION(action)) 
+    if (olddat && IS_DAT_ACTION(action)) { 
 	return ".dat";
+    }
 
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 	s = get_gp_ext(plot->termtype);
     }
-    else if (action == SAVE_LAST_GRAPH) 
+    else if (action == SAVE_LAST_GRAPH) {
 	s = get_gp_ext(data);
-    else {
+    } else {
 	int i;
 
 	for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
@@ -343,6 +345,7 @@ static struct winfilter get_filter (int action, gpointer data)
     struct winfilter filter;
     static struct win32_filtermap map[] = {
 	{SAVE_DATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_DATA_AS, { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{SAVE_GZDATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{SAVE_BIN1, { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{SAVE_BIN2, { N_("gretl data files (*.gdt)"), "*.gdt" }},
@@ -379,8 +382,9 @@ static struct winfilter get_filter (int action, gpointer data)
 	N_("gretl data files (*.dat)"), "*.dat"
     };
 
-    if (olddat && IS_DAT_ACTION(action)) 
+    if (olddat && IS_DAT_ACTION(action)) {
 	return olddat_filter;
+    }
 
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
@@ -699,10 +703,11 @@ static void extra_get_filter (int action, gpointer data, char *suffix)
     
     const char *ext = get_ext(action, data);
 
-    if (ext == NULL) 
+    if (ext == NULL) { 
 	strcpy(suffix, "*");
-    else
+    } else {
 	sprintf(suffix, "*%s", ext);
+    }
 }
 
 /* ........................................................... */

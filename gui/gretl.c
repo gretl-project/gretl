@@ -200,7 +200,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/_Save data"), NULL, auto_store, 0, NULL },
     { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Save data as/_standard format..."), NULL, file_save, 
-      SAVE_DATA, NULL },
+      SAVE_DATA_AS, NULL },
     { N_("/File/Save data as/_gzipped..."), NULL, 
       file_save, SAVE_GZDATA, NULL },
 #ifdef notdef

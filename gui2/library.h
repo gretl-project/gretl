@@ -180,13 +180,11 @@ void do_new_script (gpointer data, guint action, GtkWidget *widget);
 
 void do_open_csv_box (char *fname, int code, int append);
 
-int do_store (char *mydatfile, const int fmt, int overwrite);
+int do_store (char *mydatfile, int fmt, int overwrite);
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget);
 
-void do_save_tex (char *fname, const int code, MODEL *pmod);
-
-void do_save_html (char *fname, const int code, MODEL *pmod);
+void do_save_tex (char *fname, int code, MODEL *pmod);
 
 void do_save_text (char *fname, MODEL *pmod);
 

@@ -241,7 +241,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/_Save data"), NULL, auto_store, 0, NULL },
     { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Save data as/_standard format..."), NULL, file_save, 
-      SAVE_DATA, NULL },
+      SAVE_DATA_AS, NULL },
     { N_("/File/Save data as/_gzipped..."), NULL, 
       file_save, SAVE_GZDATA, NULL },
 #ifdef notdef
@@ -2039,13 +2039,15 @@ static void auto_store (void)
 
     /* if there's already a datafile, and it's gzipped, then
        arrange for the new store to be gzipped too */
-    if (strlen(paths.datfile) && is_gzipped(paths.datfile))
+    if (strlen(paths.datfile) && is_gzipped(paths.datfile)) {
 	opt = OPT_Z;
+    }
 
-    if (data_status & USER_DATA)
+    if (data_status & USER_DATA) {
 	do_store(paths.datfile, opt, 1);
-    else
-	file_selector(_("Save data file"), SAVE_DATA, NULL);	
+    } else {
+	file_selector(_("Save data file"), SAVE_DATA, NULL);
+    }	
 }
 
 /* ........................................................... */
