@@ -1969,6 +1969,16 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
 /* ......................................................... */
 
+static void compress_csv_line (char *line, char delim)
+{
+    if (delim != ' ') {
+	delchar(' ', line);
+    } else {
+	compress_spaces(line);
+    }
+    delchar('"', line);
+}
+
 static void trim_csv_line (char *line)
 {
     size_t n;
@@ -2043,7 +2053,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	fclose(fp);
 	return 1;
     }
-    if (cbak == delim) {
+    if (cbak == delim && cbak != ' ') {
 	blank_1 = 1;
 	pputs(prn, _("   first field is blank (dates?)\n"));
 	ncols++;
@@ -2055,25 +2065,32 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    pputs(prn, _("   file has trailing commas (lame)\n"));
 	}
 	if (c == '\n') break;
-	cbak = c;
 	maxlen++;
-	if (c == delim) ncols++;
+	if (c == delim) {
+	    if (c == ' ' && cbak == ' ') ;
+	    else ncols++;
+	}
+	cbak = c;
     }
     if (!bad_commas) ncols++;
 
     pprintf(prn, _("   number of columns = %d\n"), ncols);
 
     /* now count remaining non-blank rows, checking for fields */
+    cbak = ' ';
     chkcols = (bad_commas)? -1: 0;
     while (fread(&c, 1, 1, fp)) {
 	if (!(isspace((unsigned char) c))) ok = 1;
-	if (c == delim) chkcols += 1;
+	if (c == delim) {
+	    if (c == ' ' && (cbak == ' ' || cbak == '\n')) ;
+	    else chkcols++;
+	}
 	if (c != '\n') len++;
 	else {
 	    if (len > maxlen) maxlen = len;
 	    len = 0;
 	    if (ok) {
-		chkcols += 1; 
+		chkcols++;
 		csvinfo->n += 1;
 		if (chkcols != ncols) {
 		    pprintf(prn, _("   ...but row %d has %d fields: aborting\n"),
@@ -2094,11 +2111,14 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "last char was not newline: could be a problem\n");
     }
 
+    fprintf(stderr, "blank_1 = %d\n", blank_1);
+
     if (!blank_1) {
 	rewind(fp);
 	c = 0; i = 0;
 	while (c != delim && c != '\n' && c != '\r' && i < 32) {
 	    fread(&c, 1, 1, fp);
+	    fprintf(stderr, "read %c\n", c);
 	    field_1[i++] = c;
 	}
 	field_1[i-1] = '\0';
@@ -2148,8 +2168,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     pputs(prn, _("scanning for variable names...\n"));
     fgets(line, maxlen + 1, fp);
     trim_csv_line(line);
-    if (delim != ' ') delchar(' ', line);
-    delchar('"', line);
+    compress_csv_line(line, delim);
     pprintf(prn, _("   line: %s\n"), line);
     n = strlen(line);
     k = 0;
@@ -2178,7 +2197,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	} 
 	if (k == csvinfo->v - 1) break;
 	if ((k) && j == 8 && line[i] != delim) 
-	    while (line[i+1] != delim) i++;
+	    while (line[i+1] != delim && i < n) i++;
     }
 
 #ifdef ENABLE_NLS
@@ -2190,8 +2209,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	ok = 0;
 	fgets(line, maxlen + 1, fp);
 	trim_csv_line(line);
-	if (delim != ' ') delchar(' ', line);
-	delchar('"', line);
+	compress_csv_line(line, delim);
 	n = strlen(line);
 	for (i=0; i<n; i++) {
 	    if (!(isspace((unsigned char) line[i]))) { 
@@ -2256,12 +2274,13 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     csvinfo->t1 = 0;
     csvinfo->t2 = csvinfo->n - 1;
     if (blank_1 || obs_1) markertest = test_label(csvinfo, prn);
-    if ((blank_1 || obs_1) && (markertest > 0))
+    if ((blank_1 || obs_1) && (markertest > 0)) {
 	pputs(prn, _("taking date information from row labels\n\n"));
-    else {
+    } else {
 	pputs(prn, _("treating these as undated data\n\n"));
 	dataset_dates_defaults(csvinfo);
     }	
+
     if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) 
         csvinfo->time_series = TIME_SERIES;
 
