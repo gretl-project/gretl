@@ -1,0 +1,34 @@
+CC = @CC@
+CFLAGS = @CFLAGS@
+
+ifeq ($(CC),)
+  CC = gcc
+endif
+
+LIBGRETL = ../lib/libgretl.la
+
+override CFLAGS += -I../lib/src
+
+STANDALONE_CFLAGS = `gretl-config --cflags`
+STANDALONE_LIBS = `gretl-config --libs`
+
+SRC = nistcheck.c
+OBJ = nistcheck.o
+PROG = nistcheck
+
+all: $(PROG)
+
+$(PROG): $(OBJ)
+	../libtool --mode=link $(CC) -o $@ $< \
+	$(LIBGRETL)
+
+.PHONY :
+
+check: $(PROG)
+	./$(PROG)
+
+standalone: $(SRC)
+	$(CC) $(STANDALONE_CFLAGS) $< -o $@ $(STANDALONE_LIBS)
+
+clean:
+	rm -f $(PROG) $(OBJ)

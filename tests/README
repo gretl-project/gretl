@@ -1,0 +1,24 @@
+Here's a checker program that runs libgretl against the NIST reference
+datasets for linear regression, for details on which see
+
+http://www.nist.gov/itl/div898/strd/general/main.html
+
+If all is well there should be exactly one failure, namely libgretl
+will not be able to obtain estimates on the Filip model (a 10th degree
+polynomial which exhibits very high collinearity).  Any other failures
+should be cause for concern.
+
+The checker program reads the "certified values" and data out of each
+NIST file, runs a regression using libgretl, and compares the libgretl
+estimates with the certified values, starting at a precision of 9
+significant figures.  If there is any disagreement, the comparison is
+repeated using 8 significant figures, and so on.  If the figures do
+not agree at a precision of at least 6 figures, the test is deemed to
+have failed and an error message is printed.
+
+You can get more details on gretl's performance on the tests by
+running the 'nistcheck' program in verbose mode (-v flag) or very
+verbose mode (-vv).  
+
+Allin Cottrell
+August 2002
