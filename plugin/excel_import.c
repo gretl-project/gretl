@@ -57,7 +57,7 @@ static char *mark_string (char *instr);
 char cell_separator = ',';
 char *errbuf;
 
-/* #define EDEBUG 1 */
+#define EDEBUG 1
 
 #include "import_common.c"
 
@@ -124,11 +124,18 @@ static int process_sheet (FILE *input, const char *filename,
 	    break;
 	reclen = 0;
 
+#ifdef EDEBUG
+	fprintf(stderr, "rectype=0x%x, gotdata=%d\n", rectype, gotdata);
+#endif
+
+#ifdef notdef
 	/* bodge: needs fixing */
-	if (rectype == LABEL || rectype == NUMBER) gotdata = 1;
-	if (gotdata && rectype == BOF) {
+	if (rectype == NUMBER || rectype == RK || rectype == MULRK) 
+	    gotdata = 1;
+	if (gotdata && rectype == MSEOF) {
 	    break;
-	}	  	
+	}
+#endif	  	
 
 	itemsread = fread(buffer, 2, 1, input);
 	reclen = getshort(buffer, 0);
@@ -631,7 +638,7 @@ static int first_col_strings (wbook *book)
     int t, i = book->col_offset;
     
     for (t=1+book->row_offset; t<=lastrow; t++) {
-	fprintf(stderr, "rowptr[%d].cells[%d]: '%s'\n", t, i,
+	fprintf(stderr, "first_col_strings: rowptr[%d].cells[%d]: '%s'\n", t, i,
 		rowptr[t].cells[i]);
 	if (!IS_STRING(rowptr[t].cells[i]))
 	    return 0;
@@ -643,9 +650,11 @@ static int got_varnames (wbook *book, int ncols)
 {
     int i, t = book->row_offset;
 
-    for (i=book->col_offset; i<ncols; i++) 
+    for (i=book->col_offset; i<ncols; i++) { 
+	if (rowptr[t].cells[i] == NULL) return -1;
 	if (!IS_STRING(rowptr[t].cells[i]))
 	    return 0;
+    }
     return 1;
 }
 
@@ -734,7 +743,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 #ifndef STANDALONE
-	if (!got_varnames(&book, ncols)) {
+	if (got_varnames(&book, ncols) != 1) {
 	    sprintf(errbuf, "One or more variable names are missing");
 	    err = 1;
 	    goto getout; 
