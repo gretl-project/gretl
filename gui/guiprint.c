@@ -196,26 +196,5 @@ void gnome_print_graph (const char *fname)
 
 #endif /* USE_GNOME */
 
-static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 PRN *prn)
-{
-    prn->format = GRETL_PRINT_FORMAT_RTF;
-    
-    return printmodel (pmod, pdinfo, prn);
-}
-
-void model_to_rtf (MODEL *pmod)
-{
-    PRN *prn;
-
-    if (bufopen(&prn)) return;
-    
-    r_printmodel(pmod, datainfo, prn);
-
-    prn_to_clipboard(prn, 0);
-
-    gretl_print_destroy(prn);
-}
-
 #include "guiprint_common.c"
 

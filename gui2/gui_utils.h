@@ -66,8 +66,13 @@ void text_copy (gpointer data, guint how, GtkWidget *widget);
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data);
 
+#if GTK_MAJOR_VERSION >= 2
 void add_popup_item (const gchar *label, GtkWidget *menu,
 		     GCallback callback, gpointer data);
+#else
+void add_popup_item (const gchar *label, GtkWidget *menu,
+		     GtkSignalFunc callback, gpointer data);
+#endif
 
 void get_stats_table (void);
 
@@ -78,8 +83,6 @@ int build_path (const char *dir, const char *fname, char *path,
 		const char *ext);
 
 int prn_to_clipboard (PRN *prn, int copycode);
-
-#define standard_button(f) gtk_button_new_from_stock(f)
 
 int get_worksheet_data (const char *fname, int datatype, int append);
 

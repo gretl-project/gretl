@@ -43,9 +43,6 @@
 char *storelist = NULL;
 
 extern int session_saved;
-#ifdef OLD_GTK
-extern GdkColor red, blue;
-#endif
 
 #ifdef OLD_GTK
 #include "../pixmaps/stock_save_16.xpm"
@@ -1760,9 +1757,11 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 		      int hsize, int vsize, int role)
 {
     GtkWidget *close;
+#ifndef OLD_GTK
     GtkTextBuffer *tbuf = NULL;
-#ifdef USE_GTKSOURCEVIEW
+# ifdef USE_GTKSOURCEVIEW
     GtkSourceBuffer *sbuf = NULL;
+# endif
 #endif
     FILE *fp;
     windata_t *vwin;
@@ -2090,8 +2089,13 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
     add_vars_to_plot_menu(vwin);
     add_dummies_to_plot_menu(vwin);
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
 		     G_CALLBACK(check_model_menu), vwin);
+#else
+    gtk_signal_connect(GTK_OBJECT(vwin->mbar), "button_press_event", 
+		       GTK_SIGNAL_FUNC(check_model_menu), vwin);
+#endif
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
@@ -3051,7 +3055,6 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    errbox("Couldn't format model");
 	    return;
 	}
-#ifndef OLD_GTK
 	if (bufopen(&prn)) return;
 
 	if (how == COPY_RTF) {
@@ -3065,20 +3068,6 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	else if (how == COPY_LATEX_EQUATION) {
 	    tex_print_equation(pmod, datainfo, 0, prn);
 	}
-#else /* FIXME */
-	if (how == COPY_RTF) {
-	    model_to_rtf(pmod);
-	    return;
-	}
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    tex_print_model(pmod, datainfo, 0, prn);
-	} else if (how == COPY_LATEX_EQUATION) {
-	    tex_print_equation(pmod, datainfo, 0, prn);
-	}
-#endif
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
     }
@@ -3197,7 +3186,12 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 /* .................................................................. */
 
 void add_popup_item (const gchar *label, GtkWidget *menu,
-		     GCallback callback, gpointer data)
+#ifndef OLD_GTK
+		     GCallback callback, 
+#else
+		     GtkSignalFunc callback, 
+#endif
+		     gpointer data)
 {
     GtkWidget *item;
 
@@ -3209,7 +3203,7 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 #else
     gtk_menu_append(GTK_MENU(menu), item);
     gtk_signal_connect(GTK_OBJECT(item), "activate",
-		       GTK_SIGNAL_FUNC(func), data);
+		       GTK_SIGNAL_FUNC(callback), data);
 #endif
     gtk_widget_show(item);
 }

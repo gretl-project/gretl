@@ -20,6 +20,11 @@
 #ifndef TEXTBUF_H
 #define TEXTBUF_H
 
+#define help_role(r) (r == CLI_HELP || \
+                      r == GUI_HELP || \
+                      r == CLI_HELP_ENGLISH || \
+                      r == GUI_HELP_ENGLISH)
+
 void text_paste (windata_t *mydata, guint u, GtkWidget *widget);
 
 void text_undo (windata_t *mydata, guint u, GtkWidget *widget);

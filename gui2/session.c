@@ -2847,12 +2847,12 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     g_free(buf);
 }
 
+#endif /* gtk versions fork */
+
 void save_plot_commands_callback (GtkWidget *w, gpointer p)
 {
     auto_save_gp(p, 0, NULL);
 }
-
-#endif /* gtk versions fork */
 
 #ifdef GNUPLOT_PNG
 

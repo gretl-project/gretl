@@ -20,10 +20,7 @@
 #include "gretl.h"
 #include "textbuf.h"
 
-#define help_role(r) (r == CLI_HELP || \
-                      r == GUI_HELP || \
-                      r == CLI_HELP_ENGLISH || \
-                      r == GUI_HELP_ENGLISH)
+extern GdkColor red, blue;
 
 void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
 {
@@ -118,7 +115,7 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 
     memset(tempstr, 0, sizeof tempstr);
 
-    while (fgets(tempstr, sizeof tempstr, fd)) {
+    while (fgets(tempstr, sizeof tempstr, fp)) {
 	if (tempstr[0] == '@') continue;
 	if (tempstr[0] == '?') 
 	    colptr = (role == CONSOLE)? &red : &blue;

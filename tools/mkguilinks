@@ -10,7 +10,7 @@ for f in \
   database.c database.h \
   datafiles.c datafiles.h \
   gpt_control.c gpt_control.h \
-  gui_utils.c \
+  gui_utils.c gui_utils.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
   session.c session.h \
