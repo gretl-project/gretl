@@ -5,6 +5,12 @@
 <description>
 Grunfeld panel data on investment by 5 firms, 1935-1954
 
+GM = General Motors
+CH = Chrysler
+GE = General Electric
+WE = Westinghouse
+US = U.S. Steel
+
 Taken from William Greene, Econometric Analysis, 5th edition,
 Prentice-Hall, 2003.
 
@@ -12,36 +18,36 @@ Original data were from Moody's Industrial Manual and the
 Survey of Current Business. 
 </description>
 <variables count="15">
-<variable name="I_1"
- label="Gross investment, firm 1"/>
-<variable name="F_1"
- label="Market value of firm 1, end of previous year"/>
-<variable name="C_1"
- label="Value of plant &amp; equipment, firm 1, end previous year"/>
-<variable name="I_2"
- label="Gross investment, firm 2"/>
-<variable name="F_2"
- label="Market value of firm 2, end of previous year"/>
-<variable name="C_2"
- label="Value of plant &amp; equipment, firm 2, end previous year"/>
-<variable name="I_3"
- label="Gross investment, firm 3"/>
-<variable name="F_3"
- label="Market value of firm 3, end of previous year"/>
-<variable name="C_3"
- label="Value of plant &amp; equipment, firm 3, end previous year"/>
-<variable name="I_4"
- label="Gross investment, firm 4"/>
-<variable name="F_4"
- label="Market value of firm 4, end of previous year"/>
-<variable name="C_4"
- label="Value of plant &amp; equipment, firm 4, end previous year"/>
-<variable name="I_5"
- label="Gross investment, firm 5"/>
-<variable name="F_5"
- label="Market value of firm 5, end of previous year"/>
-<variable name="C_5"
- label="Value of plant &amp; equipment, firm 5, end previous year"/>
+<variable name="I_GM"
+ label="Gross investment, GM"/>
+<variable name="F_GM"
+ label="Market value of GM, end of previous year"/>
+<variable name="C_GM"
+ label="Value of plant &amp; equipment, GM, end previous year"/>
+<variable name="I_CH"
+ label="Gross investment, Chrsyler"/>
+<variable name="F_CH"
+ label="Market value of Chrsyler, end of previous year"/>
+<variable name="C_CH"
+ label="Value of plant &amp; equipment, Chrsyler, end previous year"/>
+<variable name="I_GE"
+ label="Gross investment, GE"/>
+<variable name="F_GE"
+ label="Market value of GE, end of previous year"/>
+<variable name="C_GE"
+ label="Value of plant &amp; equipment, GE, end previous year"/>
+<variable name="I_WE"
+ label="Gross investment, Westinghouse"/>
+<variable name="F_WE"
+ label="Market value of Westinghouse, end of previous year"/>
+<variable name="C_WE"
+ label="Value of plant &amp; equipment, Westinghouse, end previous year"/>
+<variable name="I_US"
+ label="Gross investment, U.S. Steel"/>
+<variable name="F_US"
+ label="Market value of U.S. Steel, end of previous year"/>
+<variable name="C_US"
+ label="Value of plant &amp; equipment, U.S. Steel, end previous year"/>
 </variables>
 <observations count="20" labels="false">
 <obs>317.6 3078.5 2.8 40.29 417.5 10.5 33.1 1170.6 97.8 12.93 191.5 1.8 209.9 1362.4 53.8 </obs>

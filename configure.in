@@ -36,6 +36,7 @@ have_gtk="no"
 have_gnome="no"
 have_gtkextra="no"
 have_gmp="no"
+have_gsl="no"
 seek_inet_addr="no"
 png_graphics="yes"
 png_comments="yes"
@@ -360,6 +361,14 @@ if test "$have_gtk" = "2.0" ; then
     PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
 fi
 
+dnl and while we're at it, try for GSL
+if test "$try_gtk2" = "yes" ; then
+    PKG_CHECK_MODULES(GSL, gsl,
+      have_gsl="yes",
+      have_gsl="no"      
+    )
+fi
+
 dnl Or fall back on GTK 1.2
 if test "$have_gtk" = "no" ; then
    AM_PATH_GTK(1.2.3,have_gtk="1.2",have_gtk="no")
@@ -570,6 +579,7 @@ Configuration:
   Use PNG for gnuplot graphs:             ${gnuplot_png}
   Use LaTeX for typesetting output:       ${have_latex}
   Gnu Multiple Precision support:         ${have_gmp}
+  Gnu Scientific Library support:         ${have_gsl}
   Build with GTK version:                 ${have_gtk}
   Use installed libole2:                  ${have_libole2}
   Use installed gtkextra:		  ${have_gtkextra}

@@ -55,4 +55,4 @@ nistcheck.o: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
 nistcheck.o: ../lib/src/interact.h ../lib/src/graphing.h
 nistcheck.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 nistcheck.o: ../lib/src/discrete.h ../lib/src/subsample.h
-nistcheck.o: ../lib/src/calendar.h
+nistcheck.o: ../lib/src/calendar.h ../lib/src/equation_system.h

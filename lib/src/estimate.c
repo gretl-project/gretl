@@ -63,7 +63,6 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 			 DATAINFO *pdinfo);
 static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z);
 static void tsls_omitzero (int *list, double **Z, int t1, int t2);
-static void rearrange (int *list);
 static int zerror (int t1, int t2, int yno, int nwt, double ***pZ);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		       double ***pZ);
@@ -270,7 +269,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* see if the regressor list contains a constant (ID 0) */
     model.ifc = ifc = _hasconst(model.list);
     /* if so, move it to the last place */
-    if (ifc) rearrange(model.list);
+    if (ifc) rearrange_list(model.list);
 
     /* check for presence of lagged dependent variable */
     model.ldepvar = lagdepvar(model.list, pdinfo, pZ);
@@ -1310,7 +1309,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     list1[0] = pos - 1;
     for (i=1; i<pos; i++) list1[i] = list[i];
     tsls_omitzero(list1, *pZ, pdinfo->t1, pdinfo->t2);
-    rearrange(list1);
+    rearrange_list(list1);
     for (i=0; i<pos; i++) s2list[i] = list1[i];
     list2[0] = list[0] - pos;
     for (i=1; i<=list2[0]; i++) list2[i] = list[i+pos];
@@ -1563,7 +1562,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     lo = list[0];         /* number of vars in original list */
     yno = list[1];        /* ID number of original dependent variable */
     ncoeff = list[0] - 1;
-    rearrange(list);
+    rearrange_list(list);
 
     hsk = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
     if (hsk.errcode) return hsk;
@@ -1670,7 +1669,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     ncoeff = list[0] - 1;
-    rearrange(list);
+    rearrange_list(list);
 
     /* run a regular OLS */
     hccm = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
@@ -1911,7 +1910,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     /*  printf("arlist:\n"); printlist(arlist); */
     /*  printf("reglist:\n"); printlist(reglist); */
 
-    if (_hasconst(reglist)) rearrange(reglist);
+    if (_hasconst(reglist)) rearrange_list(reglist);
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
@@ -1939,7 +1938,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	return ar;
     }
 
-    /*  rearrange(reglist); */ 
+    /*  rearrange_list(reglist); */ 
     yno = reglist[1];
 
     /* first pass: estimate model via OLS */
@@ -2129,7 +2128,7 @@ static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 
 /* .........................................................   */
 
-static void rearrange (int *list)
+void rearrange_list (int *list)
 /* checks a list for a constant term (ID # 0), and if present, 
    move it to the last position
 */

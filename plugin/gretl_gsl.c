@@ -21,11 +21,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <gretl/libgretl.h>
+#include "libgretl.h"
 #include <gsl/gsl_linalg.h>
 
 static void gretl_gsl_matrix_print (gsl_matrix *X, int rows, int cols,
-				    int triangle)
+				    int triangle, PRN *prn)
 {
     int i, j, jmax;
     double x;
@@ -35,16 +35,16 @@ static void gretl_gsl_matrix_print (gsl_matrix *X, int rows, int cols,
 
     for (i=0; i<rows; i++) {
 	for (j=0; j<jmax; j++) {
-	    printf("%#10.5g ", gsl_matrix_get(X, i, j));
+	    pprintf(prn, "%#10.5g ", gsl_matrix_get(X, i, j));
 	}
 	for (j=jmax; j<cols; j++) {
 	    x = gsl_matrix_get(X, i, i) * gsl_matrix_get(X, j, j);
 	    x = sqrt(x);
 	    x = gsl_matrix_get(X, i, j) / x;
 	    sprintf(numstr,"(%.3f)", x); 
-	    printf("%11s", numstr);
+	    pprintf(prn, "%11s", numstr);
 	}
-	printf("\n");
+	pputs(prn, "\n");
 	if (triangle && jmax < cols) jmax++;
     }
 }
@@ -214,22 +214,33 @@ static int calculate_coefficients (MODEL **models, double **Z,
     return 0;
 }
 
-int sur (int m, int k, int T, int **lists, double ***pZ,
-	 DATAINFO *pdinfo)
+int sur (gretl_equation_system *sys, double ***pZ,
+	 DATAINFO *pdinfo, PRN *prn)
 {
-    int i, j, t, l;
+    int i, j, k, m, T, t, l;
     gsl_matrix *X, *Xi, *Xj, *M;
     gsl_matrix *uhat, *sigma;
     double *tmp_y, *y;
-    int v, bigrows = m * k;
+    int v, bigrows;
     MODEL **models;
-    PRN *prn;
 
-    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
+    /* number of equations */
+    m = sys->n_equations;
+
+    /* number of indep vars per equation */
+    k = sys->lists[0][0] - 1;
+
+    /* number of observations per series */
+    T = pdinfo->t2 - pdinfo->t1 + 1;
+
+    bigrows = m * k;
 
     models = malloc(m * sizeof *models);
+    if (models == NULL) return E_ALLOC;
+
     for (i=0; i<m; i++) {
 	models[i] = gretl_model_new(pdinfo);
+	if (models[i] == NULL) return E_ALLOC;
     }
 
     X = gsl_matrix_alloc (bigrows, bigrows);
@@ -240,7 +251,7 @@ int sur (int m, int k, int T, int **lists, double ***pZ,
 
     /* first grab the OLS residuals */
     for (i=0; i<m; i++) {
-	*models[i] = lsq(lists[i], pZ, pdinfo, OLS, 1, 0.0);
+	*models[i] = lsq(sys->lists[i], pZ, pdinfo, OLS, 1, 0.0);
 	if ((models[i])->errcode) {
 	    fprintf(stderr, "model failed on lists[%d], code=%d\n",
 		    i, (models[i])->errcode);
@@ -257,11 +268,13 @@ int sur (int m, int k, int T, int **lists, double ***pZ,
 
     /* Xi = data matrix for equation i, specified in lists[i] */
     for (i=0; i<m; i++) {
+#ifdef SUR_DEBUG
 	fprintf(stderr, "doing make_Xi_from_Z(), i=%d\n", i);
-	make_Xi_from_Z(Xi, *pZ, lists[i], T);
+#endif
+	make_Xi_from_Z(Xi, *pZ, sys->lists[i], T);
 	for (j=0; j<m; j++) { 
 	    if (i != j) {
-		make_Xi_from_Z(Xj, *pZ, lists[j], T);
+		make_Xi_from_Z(Xj, *pZ, sys->lists[j], T);
 	    }
 	    ApB ((const gsl_matrix *) Xi, 
 		 (i == j)? (const gsl_matrix *) Xi : 
@@ -280,20 +293,26 @@ int sur (int m, int k, int T, int **lists, double ***pZ,
 			     blocks in the final column vector */
 	double xx;
 
+#ifdef SUR_DEBUG
 	fprintf(stderr, "working on block %d\n", i);
-	make_Xi_from_Z(Xi, *pZ, lists[i], T);
+#endif
+	make_Xi_from_Z(Xi, *pZ, sys->lists[i], T);
 	for (j=0; j<k; j++) { /* loop over the k rows within each of 
 				 the m blocks */
+#ifdef SUR_DEBUG
 	    fprintf(stderr, " working on row %d\n", i * k + j);
+#endif
 	    tmp_y[v] = 0.0;
 	    for (l=0; l<m; l++) { /* loop over the m components that
 				     must be added to form each element */
+#ifdef SUR_DEBUG
 		fprintf(stderr, "  component %d of row %d\n", 
 		       l+1, i * k + j + 1);
 		fprintf(stderr, "    sigma(%d, %d) * ", i, l);
 		fprintf(stderr, "X'_%d[%d] * ", i, j);
 		fprintf(stderr, "y_%d\n", l);
-		y = (*pZ)[lists[l][1]];
+#endif
+		y = (*pZ)[sys->lists[l][1]];
 		/* multiply X'[l] into y */
 		xx = 0.0;
 		for (t=0; t<T; t++) {
@@ -302,10 +321,14 @@ int sur (int m, int k, int T, int **lists, double ***pZ,
 		xx *= gsl_matrix_get(sigma, i, l);
 		tmp_y[v] += xx;
 	    }
+#ifdef SUR_DEBUG
 	    fprintf(stderr, " finished row %d\n", i * k + j);
+#endif
 	    v++;
 	}
-	fprintf(stderr, "finished block %d\n", i);	
+#ifdef SUR_DEBUG
+	fprintf(stderr, "finished block %d\n", i);
+#endif	
     }
 
     calculate_coefficients (models, *pZ, X, uhat, tmp_y, m, k);
@@ -316,9 +339,10 @@ int sur (int m, int k, int T, int **lists, double ***pZ,
 	free_model(models[i]);
     }
 
-    printf("cross-equation VCV for residuals\n"
-	   "(correlations above the diagonal)\n\n");
-    gretl_gsl_matrix_print(sigma, m, m, 1);
+    pputs(prn, "Cross-equation VCV for residuals\n"
+	  "(correlations above the diagonal)\n\n");
+
+    gretl_gsl_matrix_print(sigma, m, m, 1, prn);
 
     gsl_matrix_free(X);
     gsl_matrix_free(Xi);
@@ -333,90 +357,4 @@ int sur (int m, int k, int T, int **lists, double ***pZ,
     return 0;
 }
 
-static int read_grunfeld (double **Z, DATAINFO *pdinfo)
-{
-    FILE *fp;
-    char line[128];
-    int i, t, year, firm, lastfirm = 0;
-    double I, F, C;
 
-    fp = fopen("grunfeld.data", "r");
-    if (fp == NULL) return 1;
-
-    while (fgets(line, 127, fp)) {
-	if (strstr(line, "Year")) continue;
-	if (sscanf(line, "%d %d %lf %lf %lf", 
-		   &year, &firm, &I, &F, &C) != 5) {
-	    break;
-	}
-	if (firm != lastfirm) {
-	    t = 0;
-	}
-	Z[1 + ((firm - 1) * 3) + 0][t] = I;
-	Z[1 + ((firm - 1) * 3) + 1][t] = F;
-	Z[1 + ((firm - 1) * 3) + 2][t] = C;
-	lastfirm = firm;
-	t++;
-    }
-
-    for (i=0; i<5; i++) {
-	sprintf(pdinfo->varname[1 + 3 * i], "I_%d", i+1);
-	sprintf(pdinfo->varname[2 + 3 * i], "F_%d", i+1);
-	sprintf(pdinfo->varname[3 + 3 * i], "C_%d", i+1);
-    }
-
-    return 0;
-}
-
-static void print_grunfeld (double **Z) 
-{
-    int i, t;
-
-    for (i=0; i<16; i++) {
-	for (t=0; t<20; t++) {
-	    printf("Z[%d][%d] = %7.2f ", i, t, Z[i][t]);
-	}
-	printf("\n");
-    }
-}
-
-int main (void) 
-{
-    double **Z = NULL;
-    int **lists = NULL;
-    int m = 5;         /* number of equations */
-    int k = 3;         /* indep vars per equation */
-    int T = 20;        /* observations per series */
-    int n = m * k + 1; /* add one for constant */
-    int i, j;
-    DATAINFO *pdinfo;
-
-    pdinfo = create_new_dataset(&Z, n, T, 0);
-
-    read_grunfeld(Z, pdinfo);
-    if (0) {
-	print_grunfeld(Z);
-    }
-
-    lists = malloc(m * sizeof *lists);
-    for (i=0; i<m; i++) {
-	lists[i] = malloc((k + 2) * sizeof **lists);
-    }
-
-    for (i=0; i<m; i++) {
-	lists[i][0] = k + 1;
-	for (j=1; j<=k; j++) {
-	    lists[i][j] = i * 3 + j;
-	}
-	lists[i][k+1] = 0;
-    }
-
-    sur(m, k, T, lists, &Z, pdinfo);
-
-    for (i=0; i<n; i++) {
-	free(Z[i]);
-    }
-    free(Z);
-
-    return 0;
-}

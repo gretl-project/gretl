@@ -51,7 +51,7 @@ CHECKER = nisttest.exe
 
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
-	plugins/excel_import.dll plugins/mp_ols.dll \
+	plugins/excel_import.dll plugins/mp_ols.dll plugins/gretl_gsl.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll
 
 WRES    = gretlw32_res.o
@@ -64,11 +64,11 @@ RES2COFF = echo gretlw32_res.o
 LIBSRC = estimate.c compare.c gretl_utils.c errors.c pvalues.c dataio.c \
        generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
        interact.c graphing.c gretl_win32.c monte_carlo.c nonparam.c discrete.c \
-       subsample.c calendar.c
+       subsample.c calendar.c equation_system.c
 LIBHDR = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
        compare.h dataio.h generate.h strutils.h describe.h printout.h modelprint.h \
        version.h texprint.h var.h interact.h graphing.h monte_carlo.h \
-       nonparam.h discrete.h subsample.h calendar.h gretl_win32.h
+       nonparam.h discrete.h subsample.h calendar.h equation_system.h gretl_win32.h
 LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
@@ -224,6 +224,10 @@ plugins/longname.dll: longname.o
 plugins/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp
+
+plugins/gretl_gsl.dll: gretl_gsl.o dllinit.o 
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgsl -lcblas 
 
 OLEFLAGS = -I$(topsrc)/plugin
 

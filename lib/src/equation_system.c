@@ -21,6 +21,7 @@
 #include <stdlib.h>
 
 #include "libgretl.h"
+#include "internal.h"
 
 enum {
     SUR = 0
@@ -31,7 +32,13 @@ const char *gretl_system_type_strings[] = {
     NULL
 };
 
+const char *gretl_system_long_strings[] = {
+    "Seemingly Unrelated Regressions",
+    NULL
+};
+
 const char *nosystem = N_("No system of equations has been defined");
+const char *badsystem = N_("Unrecognized equation system type");
 
 static int gretl_system_type_from_string (const char *str)
 {
@@ -75,7 +82,7 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     sys->lists = NULL;
 }
 
-int gretl_equation_system_expand (gretl_equation_system *sys, 
+int gretl_equation_system_append (gretl_equation_system *sys, 
 				  int *list)
 {
     int i, neq;
@@ -104,6 +111,8 @@ int gretl_equation_system_expand (gretl_equation_system *sys,
 	sys->lists[neq][i] = list[i];
     }
 
+    rearrange_list(sys->lists[neq]);
+
     sys->n_equations += 1;
 
     return 0;
@@ -123,36 +132,59 @@ gretl_equation_system *parse_system_start_line (const char *line)
     if (systype >= 0) {
 	sys = gretl_equation_system_new(systype);
     } else {
-	strcpy(gretl_errmsg, _("Unrecognized equation system type"));
+	strcpy(gretl_errmsg, _(badsystem));
     }
 
     return sys;
 }
 
-int gretl_equation_system_print (gretl_equation_system *sys, PRN *prn)
+int gretl_equation_system_finalize (gretl_equation_system *sys, 
+				    double ***pZ, DATAINFO *pdinfo,
+				    PRN *prn)
 {
-    int i;
+    int err = 0;
+    void *handle;
+    int (*system_est) (gretl_equation_system *, 
+		       double ***, DATAINFO *, PRN *);
+
 
     if (sys == NULL) {
 	strcpy(gretl_errmsg, _(nosystem));
 	return 1;
     }
+
+    if (sys->type != SUR) {
+	err = 1;
+	strcpy(gretl_errmsg, _(badsystem));
+	goto system_bailout;
+    }
+
+    if (open_plugin("gretl_gsl", &handle)) {
+	err = 1;
+	strcpy(gretl_errmsg, _("Couldn't access GSL plugin"));
+	goto system_bailout;
+    }
+
+    system_est = get_plugin_function("sur", handle);
+    if (system_est == NULL) {
+	err = 1;
+        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
+        goto system_bailout;
+    }
+	
+    pprintf(prn, _("Equation system, %s\n\n"),
+	    gretl_system_long_strings[sys->type]);
+
+    err = (* system_est) (sys, pZ, pdinfo, prn);
     
-    pprintf(prn, _("Equation system, type = %s\n\n"),
-	    gretl_system_type_strings[sys->type]);
-
-    for (i=0; i<sys->n_equations; i++) {
-	int j;
-
-	pprintf(prn, "Model %d: ", i);
-	for (j=1; j<=sys->lists[i][0]; j++) {
-	    pprintf(prn, "%d ", sys->lists[i][j]);
-	}
-	pputs(prn, "\n");
+ system_bailout:
+    if (handle != NULL) {
+	close_plugin(handle);
     }
 
     /* for now, we'll free the system after printing */
     gretl_equation_system_destroy(sys);
 
-    return 0;
+    return err;
 }
+

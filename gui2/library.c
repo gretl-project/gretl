@@ -4055,7 +4055,7 @@ int gui_exec_line (char *line,
 
     case END:
 	if (!strcmp(command.param, "system")) {
-	    err = gretl_equation_system_print(sys, prn);
+	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
 	    if (err) errmsg(err, prn);
 	    sys = NULL;
 	} else {
@@ -4075,7 +4075,7 @@ int gui_exec_line (char *line,
 
     case EQUATION:
 	/* one equation within a system */
-	err = gretl_equation_system_expand(sys, command.list);
+	err = gretl_equation_system_append(sys, command.list);
 	if (err) {
 	    gretl_equation_system_destroy(sys);
 	    sys = NULL;

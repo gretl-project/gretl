@@ -104,4 +104,6 @@ int _reserved (const char *str);
 
 void gretl_test_init (GRETLTEST *test);
 
+void rearrange_list (int *list);
+
 #endif /* GRETL_INTERNAL_H */
