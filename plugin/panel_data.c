@@ -996,8 +996,6 @@ ml_hetero_test (MODEL *pmod, double s2, const double *uvar,
     return add_test_to_model(pmod, &test);
 }
 
-#define LN_2_PI 1.837877066409345
-
 static double pooled_ll (const MODEL *pmod)
 {
     double n = pmod->nobs;

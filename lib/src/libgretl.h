@@ -78,6 +78,9 @@
 # define M_PI 3.14159265358979323846
 #endif
 
+#define LN_2_PI       1.837877066409345
+#define LN_SQRT_2_PI  0.9189385332056725
+
 #define LISTSEP            999
 #define PMAX_NOT_AVAILABLE 666
 #define OPT_NONE           0L
@@ -410,7 +413,6 @@ struct VCV_ {
 #include "discrete.h"
 #include "subsample.h"
 #include "calendar.h"
-#include "system.h"
 #include "plugins.h"
 #include "nls.h"
 #include "missing.h"

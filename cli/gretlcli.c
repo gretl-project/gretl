@@ -31,6 +31,7 @@
 #include "gretl_func.h"
 #include "modelspec.h"
 #include "libset.h"
+#include "system.h"
 
 #ifdef WIN32
 # include <windows.h>

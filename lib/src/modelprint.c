@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 #include "libset.h"
+#include "system.h"
 
 #ifndef cmplx
 typedef struct _cmplx cmplx;

@@ -699,6 +699,52 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
     pputc(prn, '\n');
 }
 
+/**
+ * gretl_vcv_log_determinant:
+ * @a: gretl_matrix.
+ *
+ * Compute the log determinant of the symmetric positive-definite
+ * matrix @a using Cholesky decomposition.  Matrix @a is not 
+ * preserved: it is overwritten by the decomposition.
+ * 
+ * Returns: the log determinant, or #NABDL on failure.
+ * 
+ */
+
+double gretl_vcv_log_determinant (gretl_matrix *a)
+{
+    char uplo = 'U';
+    integer info;
+    integer n = a->rows;
+    double det;
+    int i;
+
+    if (a->rows != a->cols) {
+	fputs("gretl_vcv_log_determinant: matrix must be square\n", stderr);
+	return NADBL;
+    }
+
+    dpotrf_(&uplo, &n, a->val, &n, &info);
+
+    if (info != 0) {
+	if (info > 0) {
+	    fputs("gretl_vcv_log_determinant: matrix not positive definite", 
+		  stderr);
+	} else {
+	    fputs("gretl_vcv_log_determinant: illegal argument to dpotrf\n", 
+		  stderr);
+	}
+	return NADBL;
+    }
+
+    det = 1.0;
+    for (i=0; i<n; i++) {
+	det *= a->val[mdx(a, i, i)] * a->val[mdx(a, i, i)];
+    }
+
+    return log(det);
+}
+
 /* calculate determinant using LU factorization.
    if logdet != 0, return the log of the determinant.
    if logdet != 0 and absval != 0, return the log of the
@@ -708,8 +754,7 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg, PRN *prn)
 static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
 {
     integer info;
-    integer m = a->rows;
-    integer n = a->cols;
+    integer n = a->rows;
     integer *ipiv;
     double det;
     int i;
@@ -722,7 +767,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
     ipiv = malloc(n * sizeof *ipiv);
     if (ipiv == NULL) return NADBL;
 
-    dgetrf_(&m, &n, a->val, &n, ipiv, &info);
+    dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
     if (info != 0) {
 	fprintf(stderr, "gretl_LU_determinant: dgetrf gave info = %d\n", 
@@ -1528,27 +1573,27 @@ get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
     }
     sigma2 /= T - m;
 
-    /* Get X'X, based on the work done by the SV decomp:
-       squares of singular values, premultiplied by V and
-       postmultiplied by V-transpose 
+    /* Get X'X{-1}, based on the work done by the SV decomp:
+       reciprocals of the squares of the (positive) singular values,
+       premultiplied by V and postmultiplied by V-transpose
     */
 
     for (i=0; i<m; i++) {
 	for (j=i; j<m; j++) {
 	    vij = 0.0;
 	    for (k=0; k<m; k++) {
-		aik = A->val[mdx(A, k, i)];
-		ajk = A->val[mdx(A, k, j)];
-		vij += aik * s[k] * s[k] * ajk;
+		if (s[k] > 0.0) {
+		    aik = A->val[mdx(A, k, i)];
+		    ajk = A->val[mdx(A, k, j)];
+		    vij += aik * ajk / (s[k] * s[k]);
+		}
 	    }
 	    vcv->val[mdx(vcv, i, j)] = vij;
 	    if (j != i) {
 		vcv->val[mdx(vcv, j, i)] = vij;
 	    }
 	}
-    }
-
-    if (gretl_invert_symmetric_matrix(vcv)) return 1;
+    }	    
 
     gretl_matrix_multiply_by_scalar(vcv, sigma2);  
 
@@ -1607,6 +1652,9 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
 	uhat->val[i] = uh;
     }
 }
+
+/* OLS for data represented as gretl matrices, using Singular
+   Value decomposition */
 
 int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 			  gretl_vector *b, gretl_matrix *vcv,

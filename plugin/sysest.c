@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
+#include "system.h"
 
 /* fiml.c */
 extern int fiml_driver (gretl_equation_system *sys, double ***pZ, 

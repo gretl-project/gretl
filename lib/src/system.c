@@ -17,11 +17,11 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+/* mechanisms for defining and handling systems of equations */
 
 #include "libgretl.h"
 #include "gretl_private.h"
+#include "system.h"
 
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
@@ -91,7 +91,7 @@ const char *toofew = N_("An equation system must have at least two equations");
 static void destroy_ident (identity *pident);
 static int make_instrument_list (gretl_equation_system *sys);
 
-/* FIML checking stuff */
+/* FIML system stuff */
 
 static void 
 print_ident (const identity *pident, const DATAINFO *pdinfo, PRN *prn)
@@ -762,11 +762,9 @@ system_parse_line (gretl_equation_system *sys, const char *line,
 
     if (strncmp(line, "identity", 8) == 0) {
 	err = add_identity_to_sys(sys, line + 8, pdinfo);
-    } 
-    else if (strncmp(line, "endog", 5) == 0) {
+    } else if (strncmp(line, "endog", 5) == 0) {
 	err = add_aux_list_to_sys(sys, line + 5, pdinfo, ENDOG_LIST);
-    }
-    else if (strncmp(line, "instr", 5) == 0) {
+    } else if (strncmp(line, "instr", 5) == 0) {
 	err = add_aux_list_to_sys(sys, line + 5, pdinfo, INSTR_LIST);
     }
 
@@ -779,7 +777,7 @@ system_parse_line (gretl_equation_system *sys, const char *line,
 
 /* More FIML-related functionality */
 
-static int in_list (const int *list, int k)
+static int sys_in_list (const int *list, int k)
 {
     int i;
 
@@ -807,7 +805,9 @@ static int make_instrument_list (gretl_equation_system *sys)
 	const int *slist = sys->lists[i];
 
 	for (j=2; j<=slist[0]; j++) {
-	    if (!in_list(elist, slist[j])) maxnexo++;
+	    if (!sys_in_list(elist, slist[j])) {
+		maxnexo++;
+	    }
 	}
     }
 
@@ -815,7 +815,9 @@ static int make_instrument_list (gretl_equation_system *sys)
 	const identity *ident = sys->idents[i];
 
 	for (j=0; j<ident->n_atoms; j++) {
-	    if (!in_list(elist, ident->atoms[j].varnum)) maxnexo++;
+	    if (!sys_in_list(elist, ident->atoms[j].varnum)) {
+		maxnexo++;
+	    }
 	}
     }
 
@@ -840,8 +842,8 @@ static int make_instrument_list (gretl_equation_system *sys)
 
 	for (j=2; j<=slist[0]; j++) {
 	    k = slist[j];
-	    if (!in_list(elist, k) && 
-		!in_list(ilist, k)) {
+	    if (!sys_in_list(elist, k) && 
+		!sys_in_list(ilist, k)) {
 		ilist[++nexo] = k;
 	    }
 	}
@@ -852,8 +854,8 @@ static int make_instrument_list (gretl_equation_system *sys)
 
 	for (j=0; j<ident->n_atoms; j++) {
 	    k = ident->atoms[j].varnum;
-	    if (!in_list(elist, k) &&
-		!in_list(ilist, k)) {
+	    if (!sys_in_list(elist, k) &&
+		!sys_in_list(ilist, k)) {
 		ilist[++nexo] = k;
 	    }
 	}

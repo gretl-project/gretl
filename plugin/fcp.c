@@ -35,7 +35,6 @@
 #define NLL    50   /* number of iterative results to store */
 #define ABNUM   3   /* max number of GARCH lags */
 
-#define LN_SQRT_2_PI  0.9189385332056725
 #define SMALL_HT      1.0e-7 
 
 int global_np;

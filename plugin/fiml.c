@@ -20,10 +20,9 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
+#include "system.h"
 
 #define FDEBUG 0
-
-#define LN_2_PI 1.837877066409345
 
 typedef struct fiml_system_ fiml_system;
 
@@ -666,7 +665,7 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
     */
     err = fiml_form_sigma_and_psi(fsys, Z, t1);
     if (err) {
-	fprintf(stderr, "fiml_form_sigma_and_psi: failed\n");
+	fputs("fiml_form_sigma_and_psi: failed\n", stderr);
 	return err;
     }
 
@@ -680,7 +679,7 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
     }
 
     gretl_matrix_copy_values(fsys->Stmp, fsys->sigma);
-    ldetS = gretl_matrix_log_determinant(fsys->Stmp);
+    ldetS = gretl_vcv_log_determinant(fsys->Stmp);
     if (na(ldetS)) {
 	return 1;
     }
@@ -730,17 +729,14 @@ static int fiml_endog_rhs (fiml_system *fsys, const double **Z, int t1)
     gretl_matrix_copy_values(fsys->Gtmp, fsys->G);
     err = gretl_invert_general_matrix(fsys->Gtmp);
 
-#if FDEBUG
-    if (!err) {
-	gretl_matrix_print(fsys->Gtmp, "G-inverse", NULL);
+    if (err) {
+	fputs("inversion of G failed\n", stderr);
     } else {
-	fprintf(stderr, "inversion of G failed\n");
-    }
+#if FDEBUG
+	gretl_matrix_print(fsys->Gtmp, "G-inverse", NULL);
 #endif
-
-    if (!err) {
 	gretl_matrix_multiply(fsys->WB1, fsys->Gtmp, fsys->WB2);
-    }
+    } 
 
     return err;
 }
@@ -871,6 +867,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
     double llbak;
     double crit = 1.0;
     double tol = 1.0e-12; /* over-ambitious? */
+    double bigtol = 1.0e-9;
     int iters = 0;
     int err = 0;
 
@@ -901,7 +898,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
     /* initial loglikelihood */
     err = fiml_ll(fsys, (const double **) *pZ, t1);
     if (err) {
-	fprintf(stderr, "fiml_ll: failed\n");
+	fputs("fiml_ll: failed\n", stderr);
 	goto bailout;
     } else {
 	llbak = fsys->ll;
@@ -917,7 +914,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	/* instrument the RHS endog vars */
 	err = fiml_endog_rhs(fsys, (const double **) *pZ, t1);
 	if (err) {
-	    fprintf(stderr, "fiml_endog_rhs: failed\n");
+	    fputs("fiml_endog_rhs: failed\n", stderr);
 	    break;
 	}	
 
@@ -928,7 +925,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	err = gretl_matrix_ols(fsys->arty, fsys->artx, fsys->artb, 
 			       NULL, NULL, NULL);
 	if (err) {
-	    fprintf(stderr, "gretl_matrix_ols: failed\n");
+	    fputs("gretl_matrix_ols: failed\n", stderr);
 	    break;
 	}
 
@@ -947,12 +944,17 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	iters++;
     }
 
-    if (crit > tol) {
-	pprintf(prn, "\nTolerance of %g was not met\n", tol);
-	err = 1;
-    } else {
+    if (crit < tol) {
 	pprintf(prn, "\nTolerance %g, criterion %g\n", tol, crit);
+    } else if (crit < bigtol) {
+	pprintf(prn, "\nTolerance %g, criterion %g\n", bigtol, crit);
+    } else {
+	pputc(prn, '\n');
+	pprintf(prn, "Tolerance of %g was not met\n", bigtol);
+	err = 1;
     }
+
+    /* print the gradients here? */
 
     if (!err) {
 	err = fiml_get_std_errs(fsys);
