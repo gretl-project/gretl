@@ -711,10 +711,13 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 
 /* ............................................................. */
 
-static void printf17 (const double zz, PRN *prn)
+static void printf17 (double zz, PRN *prn)
 {
-    if (na(zz)) pprintf(prn, _("      undefined"));
-    else _printxs(zz, 17, SUMMARY, prn);
+    if (na(zz)) pprintf(prn, "%17s", _("undefined"));
+    else {
+	pprintf(prn, " ");
+	gretl_print_value(zz, prn);
+    }
 }
 
 /* ............................................................. */
@@ -787,18 +790,20 @@ void print_summary (GRETLSUMMARY *summ,
     } else {
 	strcpy(tmp, _("(missing values denoted by -999 will be skipped)"));
 	center_line(tmp, prn, 1);
-	pprintf(prn, _("\nVariable    "));
+	pprintf(prn, "\n%s  ", _("Variable"));
     }
 
     pprintf(prn, _("             MEAN         MEDIAN            MIN"
             "            MAX\n"));
+
+
     for (v=1; v<=lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
 	lv = summ->list[v];
 	xbar = summ->coeff[v];
 	if (lo > 1)
-	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
+	    pprintf(prn, "%-10s", pdinfo->varname[lv]);
 	else _bufspace(2, prn);
 	printf17(xbar, prn);
 	printf17(summ->xmedian[v], prn);
@@ -806,18 +811,21 @@ void print_summary (GRETLSUMMARY *summ,
 	printf17(summ->xpy[v], prn);
 	pprintf(prn, "\n");
     }
+
     if (pause) page_break(lo + 2, &lineno, 0);
     lineno += 2;
     pprintf(prn, "\n");
-    if (lo > 1) pprintf(prn, _("\nVariable    "));
+
+    if (lo > 1) pprintf(prn, "\n%s  ", _("Variable"));
     pprintf(prn, _("             S.D.           C.V.           "
 	 "SKEW       EXCSKURT\n"));
+
     for (v=1; v<=lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
 	lv = summ->list[v];
 	if (lo > 1)
-	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
+	    pprintf(prn, "%-10s", pdinfo->varname[lv]);
 	else _bufspace(2, prn);
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
@@ -881,6 +889,7 @@ GRETLSUMMARY *summary (LIST list,
 
     lo = list[0];
     mm = lo + 1;
+
     if ((summ->xskew = malloc(mm * sizeof(double))) == NULL) return NULL;
     if ((summ->xkurt = malloc(mm * sizeof(double))) == NULL) return NULL;
     if ((summ->xmedian = malloc(mm * sizeof(double))) == NULL) return NULL;

@@ -34,7 +34,7 @@
    not getting any garbage results.
 */
 
-#define TINY 0.5e-8 /* was 1.0e-13, produced poor results on NIST Filip
+#define TINY 5.0e-9 /* was 1.0e-13, produced poor results on NIST Filip
 		       test */
 #define SMALL 1.0e-8
 
@@ -1791,7 +1791,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     t1 = ar.t1; t2 = ar.t2;
     rholist[1] = v;
 
-    pprintf(prn, _("Generalized Cochrane-Orcutt estimation\n\n"));
+    pprintf(prn, "%s\n\n", _("Generalized Cochrane-Orcutt estimation"));
     _bufspace(17, prn);
     pprintf(prn, "ITER             ESS           %% CHANGE\n\n");
 
@@ -1859,13 +1859,13 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     ar.ID = *model_count;
     printmodel(&ar, pdinfo, prn);
 
-    pprintf(prn, _("Estimates of the AR coefficients:\n\n"));
+    pprintf(prn, "%s:\n\n", _("Estimates of the AR coefficients"));
     xx = 0.0;
     for (i=1; i<=arlist[0]; i++) {
 	_print_rho(arlist, &rhomod, i, prn);
 	xx += rhomod.coeff[i];
     }
-    pprintf(prn, _("\nSum of AR coefficients = %f\n\n"), xx);
+    pprintf(prn, "\n%s = %#g\n\n", _("Sum of AR coefficients"), xx);
     ar.rho_in = xx;
 
     /* special computation of fitted values */
@@ -1887,6 +1887,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     ar.adjrsq = 
 	1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
     /*  ar.fstt = ar.rsq*ar.dfd/(ar.dfn*(1 - ar.rsq)); */
+
     /* special computation of TSS */
     xx = _esl_mean(ar.t1, ar.t2, (*pZ)[ryno]);
     for (t=ar.t1; t<=ar.t2; t++)
@@ -2081,6 +2082,7 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z)
     double sum = 0.0;
 
     if (m <= 0) return NADBL;
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (floateq(Z[pmod->nwt][t], 0.0)) continue;
 	else {
@@ -2090,6 +2092,7 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z)
 	    } else sum += Z[yno][t]; 
 	}
     }
+
     return sum/m;
 }
 
@@ -2108,11 +2111,13 @@ static double wt_dummy_stddev (const MODEL *pmod, double **Z)
     xbar = wt_dummy_mean(pmod, Z);
     if (na(xbar)) return NADBL;
     sumsq = 0.0;
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
         xx = Z[yno][t] - xbar;
         if (floatneq(Z[pmod->nwt][t], 0.0) && !na(Z[yno][t]))
 	    sumsq += xx*xx;
     }
+
     sumsq = (m > 1)? sumsq/(m-1) : 0.0;
     if (sumsq >= 0) return sqrt(sumsq);
     else return NADBL;
@@ -2218,11 +2223,12 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, _("LM test statistic (%f) is distributed as Chi-square "
 		"(%d)\nArea to the right of LM = %f  "), LM, order, xx);
 	if (xx > 0.1) 
-	    pprintf(prn, _("\nARCH effect is insignificant at the 10 "
-		    "percent level.\nWeighted estimation not done.\n"));
+	    pprintf(prn, "\n%s.\n%s.\n",
+		    _("ARCH effect is insignificant at the 10 percent level"),
+		    _("Weighted estimation not done"));
 	else {
-	    pprintf(prn, _("\nARCH effect is significant at the 10 "
-		    "percent level.\n"));
+	    pprintf(prn, "\n%s.\n",
+		    _("ARCH effect is significant at the 10 percent level"));
 	    /* weighted estimation */
 	    wlist = malloc((list[0] + 2) * sizeof *wlist);
 	    if (wlist == NULL) {
