@@ -84,7 +84,7 @@ postscript file.  Under the X window system you can also save the window as an
 XPM file; under MS Windows you can copy it to the clipboard as a bitmap.  The
 menu also gives you the option of opening a summary window which displays
 five-number summaries (minimum, first quartile, median, third quartile,
-maxmimum), plus a confidence interval for the median if the "notched" option
+maximum), plus a confidence interval for the median if the "notched" option
 was chosen.
 
 Some details of gretl's boxplots can be controlled via a (plain text) file
@@ -135,7 +135,7 @@ chow
 @Tests
 Chow test for structural homogeneity
 
-This command needs an obervation number (or date, with dated data).
+This command needs an observation number (or date, with dated data).
 
 Must follow an OLS regression.  Creates a dummy variable which equals 1 from
 the specified split point to the end of the sample, 0 otherwise, and also
@@ -262,10 +262,15 @@ Boolean operators (again in order of precedence) are ! (logical NOT), &
 operators can be used in constructing dummy variables: for instance (x > 10)
 returns 1 if x(t) > 10, 0 otherwise.
 
-Supported functions fall into these groups: Standard math functions: abs, cos,
-exp, int (integer part), ln (natural log: log is a synonym), sin, sqrt.
+Supported functions fall into these groups: 
+
+Standard math functions: abs, cos, exp, int (integer part), ln (natural log:
+log is a synonym), sin, sqrt.
+
 Statistical functions: mean (arithmetic mean), median, var (variance), sd
-(standard deviation), sum, cov (covariance), corr (correlation coefficient).
+(standard deviation), sum, cov (covariance), corr (correlation coefficient),
+min (minimum), max (maximum).
+
 Time-series functions: lag, lead, diff (first difference), ldiff
 (log-difference, or first difference of natural logs).  Miscellaneous: cum
 (cumulate), sort, uniform, normal, missing (return 1 if the observation of the
@@ -299,6 +304,9 @@ be used in transformations, as follows:
 
 The internal variable $nobs holds the number of observations in the current
 sample range, which may or may not equal the value of $T for the last model.
+
+The internal variable $pd holds the periodicity or frequency of the data
+(e.g. 4 for quarterly data).
 
 The internal variable t references the observations, starting at 1.  Thus one
 can do "genr dum15 = (t=15)" to generate a dummy variable with value 1 for
@@ -425,7 +433,7 @@ Logit regression
 @Estimation
 
 The dependent variable should be a binary variable.  Maximum likelihood
-estimates of the coefficients on indepvars are obtained via interated least
+estimates of the coefficients on indepvars are obtained via iterated least
 squares (the EM or Expectation-Maximization method).  As the model is
 non-linear the slopes depend on the values of the independent variables: the
 reported slopes are evaluated at the means of those variables.  The Chi-square
@@ -464,9 +472,9 @@ are executed.  Loops cannot be nested.
 The ols command gives special output, depending on the sort of loop.  If a
 number of times is specified the results from each individual regression are
 not printed, but rather you get a printout of (a) the mean value of each
-estimated coefficient across all the repetitions, (b) the standard devation of
-those coefficent estimates, (c) the mean value of the estimated standard error
-for each coefficent, and (d) the standard devation of the estimated standard
+estimated coefficient across all the repetitions, (b) the standard deviation of
+those coefficient estimates, (c) the mean value of the estimated standard error
+for each coefficient, and (d) the standard deviation of the estimated standard
 errors.  This makes sense only if there is some random input at each step.
 The command is designed for Monte Carlo analysis.  If a "while" condition is
 given, you get a printout of the specified model from the last time round the
@@ -713,12 +721,37 @@ probit
 Probit regression
 
 The dependent variable should be a binary variable.  Maximum likelihood
-estimates of the coefficients on indepvars are obtained via interated least
+estimates of the coefficients on indepvars are obtained via iterated least
 squares (the EM or Expectation-Maximization method).  As the model is
 non-linear the slopes depend on the values of the independent variables: the
 reported slopes are evaluated at the means of those variables.  The Chi-square
 statistic tests the null hypothesis that all coefficients are zero apart from
 the constant.
+
+#
+range-mean
+@Graphs
+Range-mean graph
+
+This is a simple graph to help in deciding whether a time series, y(t), has
+constant variance or not.  We take the full sample t=1,...,T and divide it
+into small subsamples of arbitrary size k.  The first subsample is formed by
+y(1),...,y(k), the second is y(k+1),...,y(2k), and so on.  For each subsample
+we calculate the sample mean and range (= maximum-minimum), and we construct a
+graph with the means on the horizontal axis and the ranges on the vertical.
+So each subsample is represented by a point in this plane.  If the variance of
+the series is constant we would expect the subsample range to be independent
+of the subsample mean; if we see the points approximate an upward-sloping line
+this suggests the variance of the series is increasing in its mean; and if the
+points approximate a downward sloping line this suggests the variance is
+decreasing in the mean.
+
+Besides the graph, gretl displays an output window showing the means
+and ranges for each subsample, along with the slope coefficient for an OLS
+regression of the range on the mean and the p-value for the null hypothesis
+that this slope is zero.  If the slope coefficient is significant at the 10
+percent significance level then the fitted line from the regression of range
+on mean is shown in the graph window.
 
 #
 rhodiff
@@ -756,7 +789,7 @@ setobs
 @Dataset
 Set data frequency and starting observation
 
-Use this commmand to force the program to interpret the current data set as
+Use this command to force the program to interpret the current data set as
 time series or panel, when the data have been read in as simple undated
 series.  Two parameters are needed: an integer frequency and a starting
 observation string (usually a date).

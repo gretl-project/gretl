@@ -174,7 +174,7 @@ Usage:          critical t df           e.g. critical t 20
                 critical d n            e.g. critical d 24
 
 If the first parameter is t, X or F, prints out the critical values for the
-students's t, chi-square or F distribution respectively, for the common
+student's t, chi-square or F distribution respectively, for the common
 significance levels and using the specified degrees of freedom.  If the first
 parameter is d, prints the upper and lower values of the Durbin-Watson
 statistic at 5 percent significance, for the given n (number of observations),
@@ -490,7 +490,7 @@ hccm
 Usage:          hccm depvar indepvar      
             or  hccm -o depvar indepvar
  
-Presents OLS estimates with the heteroscedasticity consistent covariance
+Presents OLS estimates with the heteroskedasticity consistent covariance
 matrix estimates for the standard errors of regression coefficients using the
 MacKinnon-White "jackknife" procedure.
 
@@ -523,7 +523,7 @@ hsk
 Usage:          hsk depvar indepvar 	   
             or  hsk -o depvar indepvar
  
-Prints heteroscedasticity corrected estimates and associated statistics.  The
+Prints heteroskedasticity corrected estimates and associated statistics.  The
 auxiliary regression predicts the log of the square of residuals (using
 squares of independent variables but not their cross products) from which
 weighted least squares estimates are obtained.  If the -o flag is present, the
@@ -609,7 +609,7 @@ Usage:          lmtest
                 lmtest -o 
 
 Must immediately follow an ols command.  Prints the Lagrange multiplier test
-statistics (and associated p-values) for nonlinearity and heteroscedasticity
+statistics (and associated p-values) for nonlinearity and heteroskedasticity
 (White's test) or, if the -o flag is present, for serial correlation up to the
 periodicity.  The corresponding auxiliary regression coefficients are also
 printed out.  See Chapters 7, 8, and 9 of Ramanathan for details.
@@ -625,7 +625,7 @@ Usage:          logit depvar indepvars
 
 Logit regression: the dependent variable should be a binary variable.  Maximum
 likelihood estimates of the coefficients on indepvars are obtained via
-interated least squares (the EM or Expectation-Maximization method).  As the
+iterated least squares (the EM or Expectation-Maximization method).  As the
 model is non-linear the slopes depend on the values of the independent
 variables: the reported slopes are evaluated at the means of those variables.
 The Chi-square statistic tests the null hypothesis that all coefficients are
@@ -662,9 +662,9 @@ are executed.  Loops cannot be nested.
 The ols command gives special output, depending on the sort of loop.  If a
 number of times is specified the results from each individual regression are
 not printed, but rather you get a printout of (a) the mean value of each
-estimated coefficient across all the repetitions, (b) the standard devation of
-those coefficent estimates, (c) the mean value of the estimated standard error
-for each coefficent, and (d) the standard devation of the estimated standard
+estimated coefficient across all the repetitions, (b) the standard deviation of
+those coefficient estimates, (c) the mean value of the estimated standard error
+for each coefficient, and (d) the standard deviation of the estimated standard
 errors.  This makes sense only if there is some random input at each step.
 The command is designed for Monte Carlo analysis.  If a "while" condition is
 given, you get a printout of the specified model from the last time round the
@@ -902,7 +902,7 @@ Usage:          probit depvar indepvars
 
 Probit regression: the dependent variable should be a binary variable.
 Maximum likelihood estimates of the coefficients on indepvars are obtained via
-interated least squares (the EM or Expectation-Maximization method).  As the
+iterated least squares (the EM or Expectation-Maximization method).  As the
 model is non-linear the slopes depend on the values of the independent
 variables: the reported slopes are evaluated at the means of those variables.
 The Chi-square statistic tests the null hypothesis that all coefficients are
@@ -1002,7 +1002,7 @@ Examples:       setobs 4 1990.1
                 setobs 12 1978.03
                 setobs 20 1.01
 
-Use this commmand to force the program to interpret the current data set as
+Use this command to force the program to interpret the current data set as
 time series or panel, when the data have been read in as simple undated
 series.  "periodicity" must be an integer; "startobs" is a string representing
 the date or panel ID of the first observation.  Use one digit after the point
