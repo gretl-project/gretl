@@ -1505,14 +1505,18 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     nbool = 0;
     for (i=1; i<=list[0] && !err; i++) {
 	if (bools[i-1] != NULL) {
-	    int t, err;
+	    int t;
 	    char formula[80];
 	    
 	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
 	    err = generate(pZ, pdinfo, formula, 0, NULL, 0);
 	    if (err) {
-		errbox(_("boxplots: generation of dummy variable failed"));
-		fprintf(stderr, "%s\n", get_gretl_errmsg());
+		char errtxt[128];
+
+		sprintf(errtxt, 
+			_("boxplots: generation of dummy variable failed\n%s"),
+			get_gretl_errmsg());
+		errbox(errtxt);
 		err = 1;
 	    } else {
 		for (t=0; t<n; t++) {
