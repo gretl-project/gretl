@@ -796,7 +796,6 @@ static struct gui_help_item gui_help_items[] = {
     { EXPORT,     "export" },
     { SMPLBOOL,   "sampling" },
     { SMPLDUM,    "sampling" },
-    { PANEL,      "panel" },
     { COMPACT,    "compact" },
     { VSETMISS,   "missing" },
     { GSETMISS,   "missing" },
@@ -3461,7 +3460,7 @@ void add_files_to_menu (int filetype)
 # include <dlfcn.h>
 #endif
 
-int open_plugin (const char *plugin, void **handle)
+int gui_open_plugin (const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 

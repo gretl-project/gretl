@@ -792,6 +792,11 @@ void exec_line (char *line, PRN *prn)
 	if (err < 0) pprintf(prn, "gnuplot command failed\n");
 	break;
 
+    case HAUSMAN:
+	if ((err = model_test_start(0, prn, 0))) break;
+	err = hausman_test(models[0], &Z, datainfo, &paths, prn);
+	break;
+
     case HCCM:
     case HSK:
 	clear_model(models[0], NULL, NULL, NULL);
@@ -964,6 +969,7 @@ void exec_line (char *line, PRN *prn)
 
     case OLS:
     case WLS:
+    case POOLED:
 	clear_model(models[0], NULL, NULL, NULL);
 	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, 0.0);
 	if ((err = (models[0])->errcode)) {
@@ -975,6 +981,10 @@ void exec_line (char *line, PRN *prn)
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
 	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
+	break;
+
+    case PANEL:	
+	err = set_panel_structure(oflag, datainfo, prn);
 	break;
 
     case PERGM:

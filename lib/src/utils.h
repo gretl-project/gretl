@@ -145,6 +145,10 @@ double *copyvec (const double *src, const int n);
 int ijton (const int i, const int j, const int lo);
 
 int ztox (const int i, double *px, 
-	  double **Z, const DATAINFO *pdinfo); 
+	  double **Z, const DATAINFO *pdinfo);
+
+int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn); 
+
+int balanced_panel (const DATAINFO *pdinfo);
 
 #endif /* UTILS_H */

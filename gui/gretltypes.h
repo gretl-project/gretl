@@ -42,7 +42,6 @@ enum extra_cmds {
     GR_DUMMY,
     GR_BOX,
     GR_NBOX,
-    PANEL,    
     COMPACT,
     CONFINT,
     COVAR,

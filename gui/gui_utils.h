@@ -111,7 +111,7 @@ void make_menu_item (gchar *label, GtkWidget *menu,
 
 void get_stats_table (void);
 
-int open_plugin (const char *plugin, void **handle);
+int gui_open_plugin (const char *plugin, void **handle);
 
 void get_default_dir (char *s);
 

@@ -54,7 +54,7 @@ extern void bool_subsample (gpointer data, guint dropmiss, GtkWidget *w);
 extern void free_command_stack (void);
 extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
-extern void set_panel_structure (gpointer data, guint u, GtkWidget *w);
+extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
@@ -345,7 +345,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/Sample/Set missing _value code...", NULL, gretl_callback, 
       GSETMISS, NULL },
     { "/Sample/_Add case markers...", NULL, gretl_callback, MARKERS, NULL },
-    { "/Sample/_Panel structure...", NULL, set_panel_structure, 0, NULL },
+    { "/Sample/_Panel structure...", NULL, gui_set_panel_structure, 0, NULL },
     { "/_Variable", NULL, NULL, 0, "<Branch>" },
     { "/Variable/_Display values", NULL, display_var, 0, NULL },
     { "/Variable/_Summary statistics", NULL, do_menu_op, 
@@ -1830,7 +1830,7 @@ static int unmangle (const char *dosname, char *longname)
 	void *handle;
 	void (*real_unmangle)(const char *, char *, int, int *); 
 	
-	if (open_plugin("longname", &handle)) return 1;
+	if (gui_open_plugin("longname", &handle)) return 1;
 
 	real_unmangle = get_plugin_function("real_unmangle", handle);
 	if (real_unmangle == NULL) return 1;

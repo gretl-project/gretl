@@ -2263,8 +2263,7 @@ static int xmlfile (const char *fname)
 # include <dlfcn.h>
 #endif
 
-static 
-int lib_open_plugin (PATHS *ppaths, const char *plugin, void **handle)
+int open_plugin (const PATHS *ppaths, const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 
@@ -2509,7 +2508,7 @@ static int write_xmldata (const char *fname, const int *list,
     } else sz = 0L;
 
     if (sz) {
-	if (lib_open_plugin(ppaths, "progress_bar", &handle) == 0) {
+	if (open_plugin(ppaths, "progress_bar", &handle) == 0) {
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
@@ -2787,7 +2786,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     int (*show_progress) (long, long, int) = NULL;
 
     if (progress) {
-	if (lib_open_plugin(ppaths, "progress_bar", &handle) == 0) {
+	if (open_plugin(ppaths, "progress_bar", &handle) == 0) {
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {

@@ -20,8 +20,6 @@
 /* panel data plugin for gretl */
 
 #include "libgretl.h"
-#include <gtk/gtk.h>
-#include "../gui/gretltypes.h"
 
 typedef struct {
     int ns;
@@ -642,115 +640,6 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-/* .................................................................. */
-
-static void set_panel_structure (GtkWidget *w, gpointer data)
-{
-    gint i;
-
-    if (GTK_TOGGLE_BUTTON (w)->active) {
-	DATAINFO *pdinfo = (DATAINFO *) data;
-	i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
-	if (dataset_is_panel(pdinfo))
-	    pdinfo->time_series = (short) i;
-    }
-}
-
-/* .................................................................. */
-
-void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
-			     void (*cleanfun)(), void (*helpfun)())
-{
-    dialog_t *d, *cancel_d;
-    GtkWidget *button;
-    GtkWidget *tempwid;
-    GSList *group;
-
-    d = malloc(sizeof *d);
-    if (d == NULL) return;
-    cancel_d = malloc(sizeof *cancel_d);
-    if (cancel_d == NULL) {
-	free(d);
-	return;
-    }
-    
-    d->data = cancel_d->data = NULL;
-    cancel_d->all_buttons = d->all_buttons = NULL;
-
-    d->dialog = gtk_dialog_new();
-    w = d->dialog;
-
-    gtk_window_set_title (GTK_WINDOW (d->dialog), "gretl: panel data structure");
-    gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
-    gtk_container_border_width (GTK_CONTAINER 
-				(GTK_DIALOG (d->dialog)->vbox), 10);
-    gtk_container_border_width (GTK_CONTAINER 
-				(GTK_DIALOG (d->dialog)->action_area), 5);
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 5);
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
-    gtk_box_set_homogeneous (GTK_BOX 
-			     (GTK_DIALOG (d->dialog)->action_area), TRUE);
-    gtk_window_set_position (GTK_WINDOW (d->dialog), GTK_WIN_POS_MOUSE);
-
-    gtk_signal_connect (GTK_OBJECT (d->dialog), "destroy", 
-			GTK_SIGNAL_FUNC (cleanfun), 
-			cancel_d);
-
-    button = gtk_radio_button_new_with_label (NULL, "Stacked time series");
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			button, TRUE, TRUE, FALSE);
-    if (pdinfo->time_series == STACKED_TIME_SERIES)
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(set_panel_structure), pdinfo);
-    gtk_object_set_data(GTK_OBJECT(button), "action", GINT_TO_POINTER(2));
-    gtk_widget_show (button);
-
-    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, "Stacked cross sections");
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			button, TRUE, TRUE, FALSE);
-    if (pdinfo->time_series == STACKED_CROSS_SECTION)
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(set_panel_structure), pdinfo);
-    gtk_object_set_data(GTK_OBJECT(button), "action", GINT_TO_POINTER(3));
-    gtk_widget_show (button);
-
-    /* Create the "OK" button */
-    tempwid = gtk_button_new_with_label ("OK");
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
-			tempwid, TRUE, TRUE, FALSE);
-    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			       GTK_OBJECT (d->dialog));
-    gtk_widget_grab_default (tempwid);
-    gtk_widget_show (tempwid);
-
-    /* Create the "Cancel" button */
-    tempwid = gtk_button_new_with_label ("Cancel");
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
-			tempwid, TRUE, TRUE, FALSE);
-    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			       GTK_OBJECT (d->dialog));
-    gtk_widget_show (tempwid);
-
-    /* Create a "Help" button */
-    tempwid = gtk_button_new_with_label ("Help");
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
-			tempwid, TRUE, TRUE, FALSE);
-    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			GTK_SIGNAL_FUNC (helpfun), 
-			GINT_TO_POINTER (PANEL));
-    gtk_widget_show (tempwid);
-
-    gtk_widget_show (d->dialog);
-    gtk_main();
-}
 
 
 

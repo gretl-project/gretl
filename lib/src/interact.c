@@ -244,6 +244,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == CHOW ||
 	command->ci == CUSUM ||
 	command->ci == CRITICAL ||
+	command->ci == HAUSMAN ||
+	command->ci == PANEL ||
 	command->ci == OPEN ||
 	command->ci == IMPORT ||
 	command->ci == ENDLOOP ||

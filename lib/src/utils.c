@@ -1806,6 +1806,7 @@ int is_model_cmd (const char *line)
 	!strncmp(line, "corc", 4) ||
 	!strncmp(line, "hilu", 4) ||
 	!strncmp(line, "wls", 3)  ||
+	!strncmp(line, "pooled", 6)  ||
 	!strncmp(line, "hccm", 4) ||
 	!strncmp(line, "hsk", 3)  ||
 	!strncmp(line, "add", 3)  ||
@@ -1957,6 +1958,46 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 	}
     }
     return panel;
+}
+
+/* ........................................................... */
+
+int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
+{
+    if (pdinfo->pd == 1) {
+	pprintf(prn, "The current data frequency, 1, is not "
+		"compatible with panel data.\nPlease see the 'setobs' "
+		"command.\n");
+	return 1;
+    }
+
+    if (flag) {
+	pprintf(prn, "Panel structure set to stacked cross sections\n");
+	pdinfo->time_series = STACKED_CROSS_SECTION;
+    } else {
+	pprintf(prn, "Panel structure set to stacked time series\n");
+	pdinfo->time_series = STACKED_TIME_SERIES;
+    }
+
+    return 0;
+}
+
+/* ........................................................... */
+
+int balanced_panel (const DATAINFO *pdinfo)
+{
+    char unit[9], period[9];
+
+    if ((pdinfo->t2 - pdinfo->t1 + 1) % pdinfo->pd)
+        return 0;
+
+    if (sscanf(pdinfo->endobs, "%[^.].%s", unit, period) == 2) {
+        if (atoi(period) != pdinfo->pd)
+            return 0;
+    } else 
+        return 0;
+
+    return 1;
 }
 
 

@@ -939,3 +939,47 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     return err;
 }
 
+/**
+ * hausman_test:
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ *
+ * Tests the given pooled model for fixed and random effects.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+		  const PATHS *ppaths, PRN *prn) 
+{
+    if (pmod->ci != POOLED) {
+	pprintf(prn, "This test is only relevant for pooled models\n");
+	return 1;
+    }
+
+    if (!balanced_panel(pdinfo)) {
+	pprintf(prn, "Sorry, can't do this test on an unbalanced panel.\n"
+		"You need to have the same number of observations\n"
+		"for each cross-sectional unit");
+	return 1;
+    } else {
+	void *handle;
+	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
+
+	if (open_plugin(ppaths, "panel_data", &handle)) {
+	    pprintf(prn, "Couldn't access panel plugin\n");
+	    return 1;
+	}
+	panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
+	if (panel_diagnostics == NULL) {
+	    pprintf(prn, "Couldn't load plugin function");
+	    close_plugin(handle);
+	    return 1;
+	}
+	(*panel_diagnostics) (pmod, pZ, pdinfo, prn);
+	close_plugin(handle);
+    }
+    return 0;
+}

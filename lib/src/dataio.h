@@ -99,6 +99,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 
 char *get_xml_description (const char *fname);
 
+int open_plugin (const PATHS *ppaths, const char *plugin, void **handle);
+
 void *get_plugin_function (const char *funcname, void *handle);
 
 void close_plugin (void *handle);

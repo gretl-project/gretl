@@ -139,7 +139,7 @@ void get_critical (GtkWidget *w, gpointer data)
     PRN *prn;
     extern GtkItemFactoryEntry view_items[];
 
-    if (open_plugin("stats_tables", &handle)) return;
+    if (gui_open_plugin("stats_tables", &handle)) return;
 
     if (w == NULL) { /* command line, not GUI menu */
 	lineprint_t *lpt = (lineprint_t *) data;

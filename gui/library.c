@@ -1390,46 +1390,19 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 
 /* ........................................................... */
 
-void set_panel_structure (gpointer data, guint u, GtkWidget *w)
+void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w)
 {
     extern GtkWidget *open_dialog;
-    void *handle;
-    void (*panel_structure_dialog)(DATAINFO *, GtkWidget *, 
-				   void (*)(), void (*)());
+    extern void panel_structure_dialog (DATAINFO *, GtkWidget *,
+					void (*)(), void (*)());    
 
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;
     }
 
-    if (open_plugin("panel_data", &handle)) return;
-    panel_structure_dialog = 
-	get_plugin_function("panel_structure_dialog", handle);
-    if (panel_structure_dialog == NULL) {
-	errbox("Couldn't load plugin function");
-	return;
-    }
-    
-    (*panel_structure_dialog)(datainfo, open_dialog, 
-			      destroy_dialog_data, context_help);
-}
-
-/* ........................................................... */
-
-static int balanced_panel (void)
-{
-    char unit[9], period[9];
-
-    if ((datainfo->t2 - datainfo->t1 + 1) % datainfo->pd)
-	return 0;
-
-    if (sscanf(datainfo->endobs, "%[^.].%s", unit, period) == 2) {
-	if (atoi(period) != datainfo->pd)
-	    return 0;
-    } else 
-	return 0;
-
-    return 1;
+    panel_structure_dialog(datainfo, open_dialog, 
+			   destroy_dialog_data, context_help);
 }
 
 /* ........................................................... */
@@ -1442,14 +1415,14 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
     PRN *prn;
 
-    if (!balanced_panel()) {
+    if (!balanced_panel(datainfo)) {
 	errbox("Sorry, can't do this test on an unbalanced panel.\n"
 	       "You need to have the same number of observations\n"
 	       "for each cross-sectional unit");
 	return;
     }
 
-    if (open_plugin("panel_data", &handle)) return;
+    if (gui_open_plugin("panel_data", &handle)) return;
     panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
 
     if (panel_diagnostics == NULL) {
@@ -2780,6 +2753,11 @@ static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
     gchar *savestuff;
     windata_t *mydata = (windata_t *) data;
 
+    if (strstr(mydata->fname, "script_tmp") || !strlen(mydata->fname)) {
+	file_save(mydata, SAVE_SCRIPT, NULL);
+	strcpy(mydata->fname, scriptfile);
+    }
+
     if ((fp = fopen(mydata->fname, "w")) == NULL) {
 	sprintf(msg, "couldn't write to %s", mydata->fname);
 	errbox(msg); 
@@ -3212,6 +3190,7 @@ static int script_model_test (const int id, PRN *prn, const int ols_only)
 	pprintf(prn, "Can't do this: there is no model %d\n", id);
 	return 1;
     }
+
     /* ID == 0 -> no model specified -> look for last script model */
     if (modelspec != NULL && id == 0) {
 	m = model_count - 1;
@@ -3625,6 +3604,11 @@ static int gui_exec_line (char *line,
 	else graphmenu_state(TRUE);
 	break;
 
+    case HAUSMAN:
+	if ((err = script_model_test(0, prn, 0))) break;
+	err = hausman_test(models[0], &Z, datainfo, &paths, prn);
+	break;
+
     case HCCM:
     case HSK:
 	ptr = (psession && rebuild)? 
@@ -3805,6 +3789,7 @@ static int gui_exec_line (char *line,
 
     case OLS:
     case WLS:
+    case POOLED:
 	ptr = (psession && rebuild)? 
 	    (void *) &models[0] : (void *) models[0];
 	clear_model(ptr, psession, rebuild, datainfo);
@@ -3817,6 +3802,10 @@ static int gui_exec_line (char *line,
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
+	break;
+
+    case PANEL:
+	err = set_panel_structure(oflag, datainfo, prn);
 	break;
 
     case PERGM:

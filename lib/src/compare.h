@@ -74,3 +74,7 @@ int cusum_test (MODEL *pmod,
 		PRN *prn, 
 		const PATHS *ppaths, 
 		GRETLTEST *test);
+
+int hausman_test (MODEL *pmod, 
+		  double ***pZ, DATAINFO *pdinfo, 
+		  const PATHS *ppaths, PRN *prn);
