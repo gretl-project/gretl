@@ -1,4 +1,4 @@
-CC = mingw32-gcc -W -Wall -fnative-struct -DOS_WIN32
+CC = mingw32-gcc -W -Wall -DOS_WIN32 -mms-bitfields
 SRC = update_client.c webget.c untgz.c
 OBJ = update_client.o webget.o untgz.o
 CFLAGS = -I../include

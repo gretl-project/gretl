@@ -110,6 +110,36 @@ void random_dialog (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
+static void fix_obsstr (char *str)
+{
+    char pt = get_local_decpoint();
+    char *p;
+
+    p = strchr(str, ':');
+    if (p != NULL) {
+	*p = pt;
+    }
+
+    if (pt == ',' && (p = strchr(str, '.'))) {
+	*p = pt;
+    }
+
+    if (pt == '.' && (p = strchr(str, ','))) {
+	*p = pt;
+    }
+}
+
+static void dot_obs (char *str)
+{
+    char *p;
+
+    if ((p = strchr(str, ',')) != NULL) {
+	*p = '.';
+    }
+}
+
+/* ........................................................... */
+
 static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 {
     gchar *edttext;
@@ -146,6 +176,9 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	    return;
 	}
     } else { /* not daily data */
+	fix_obsstr(stobs);
+	fix_obsstr(endobs);
+
 	sd0 = strtod(stobs, &test);
 	if (strcmp(stobs, test) == 0 || test[0] != '\0' || sd0 < 0) {
 	    sprintf(errtext, _("Invalid starting observation '%s'"), stobs);
@@ -165,6 +198,9 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	errbox(errtext);
 	return;
     }
+
+    dot_obs(stobs);
+    dot_obs(endobs);
 
     if (datainfo->pd == 999) { /* panel */
 	char unit[8], period[8];
@@ -271,7 +307,7 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
 	obsstr = g_strdup_printf("1950 2001 %s", _("newvar"));
 	break;
     case 4:
-	obsstr = g_strdup_printf("1950.1 2001.4 %s", _("newvar"));
+	obsstr = g_strdup_printf("1950:1 2001:4 %s", _("newvar"));
 	break;
     case 5:
 	obsstr = g_strdup_printf("99/01/18 01/03/31 %s", _("newvar"));
@@ -280,13 +316,13 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
 	obsstr = g_strdup_printf("99/01/18 01/03/31 %s", _("newvar"));
 	break;
     case 12:
-	obsstr = g_strdup_printf("1950.01 2001.12 %s", _("newvar"));
+	obsstr = g_strdup_printf("1950:01 2001:12 %s", _("newvar"));
 	break;
     case 24:
-	obsstr = g_strdup_printf("0.01 0.24 %s", _("newvar"));
+	obsstr = g_strdup_printf("0:01 0:24 %s", _("newvar"));
 	break;
     case 52:
-	obsstr = g_strdup_printf("1950.01 2001.52 %s", _("newvar"));
+	obsstr = g_strdup_printf("1950:01 2001:52 %s", _("newvar"));
 	break;
     }
     edit_dialog (_("gretl: create data set"), 

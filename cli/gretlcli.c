@@ -1096,7 +1096,7 @@ void exec_line (char *line, PRN *prn)
 	*outfile = '\0';
 	fgets(outfile, MAXLEN-1, stdin); 
 	top_n_tail(outfile);
-	if (strcmp(outfile, "q")) {
+	if (*outfile != '\n' && *outfile != '\r' && strcmp(outfile, "q")) {
 	    printf(_("writing session output to %s%s\n"), 
 		   paths.userdir, outfile);
 #ifdef OS_WIN32

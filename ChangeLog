@@ -1,4 +1,6 @@
 version 1.0pre3
+- improve accuracy of calculation of standard errors
+- fix bug at exit of gretlcli with "quit" and no filename
 - fixes for Excel reader -- handle missing obs and Far East info
 - fix for gretlcli under NLS: ensure that the translations come
   out in the local encoding, not utf-8

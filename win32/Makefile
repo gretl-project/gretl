@@ -10,7 +10,7 @@ extradir = ../gui2/gtkextra-lite
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall -O2
+CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
 DLLTOOL = $(MGW_PREFIX)-dlltool
@@ -55,8 +55,7 @@ PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
-RCFLAGS = --include-dir $(MGW_INC) \
-	--define __WIN32__ --define __WIN95__ --define MSRC \
+RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__
 RCOUT   = gretlw32_res.o
 RES2COFF = echo gretlw32_res.o
@@ -106,10 +105,10 @@ all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
 	$(CHECKER) $(MO)
 
 $(CLIPROG): $(CLIOBJ) 
-	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
+	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB) -lmingwex
 
 $(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES) 
-	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) $(ZLIB_LIB)
+	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) $(ZLIB_LIB) -lmingwex
 
 $(CHECKER): $(CHECKSRC)
 	$(CC) -s -I. -I../lib/src -DOS_WIN32 -DUSE_GMP -o $@ $^ $(LIBS) $(ZLIB_LIB)
@@ -150,7 +149,7 @@ topclean:
 	rm -f *.o *.exe
 
 clean:
-	rm -f *.o *.def $(CLIPROG) $(GUIPROG) dlls/libgretl.dll
+	rm -f *.o *.def $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/libgretl.dll
 	rm -f plugins/* $(PLUGINS)
 	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h
@@ -169,7 +168,7 @@ DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob
+	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lmingwex
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \

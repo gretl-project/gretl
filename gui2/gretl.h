@@ -293,8 +293,6 @@ int proxy_init (const char *dbproxy);
 
 #ifndef G_OS_WIN32
 void set_wm_icon (GtkWidget *w, gpointer data);
-#else
-# define isnan(x) ((x) != (x))
 #endif
 
 #endif /* GRETL_H */

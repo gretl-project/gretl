@@ -3021,14 +3021,17 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     if (*edttext == '\0') return;
 
     clear(line, MAXLEN);
-    sprintf(line, "gnuplot %s%s", (imp)? "-m " : "", edttext);
+    sprintf(line, "gnuplot %s%s", edttext, (imp)? " -m" : "");
+
     if (sr->code == GR_PLOT) { 
 	strcat(line, " time");
     }
 
     if (check_cmd(line) || cmd_init(line)) return;
+
     lines = mymalloc(command.list[0] - 1);
     if (lines == NULL) return;
+
     for (i=0; i<command.list[0]-1 ; i++) {
 	if (sr->code == GR_PLOT) lines[i] = 1;
 	else lines[i] = 0;
@@ -3041,10 +3044,14 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 	err = gnuplot(command.list, lines, &Z, datainfo,
 		      &paths, &plot_count, 0, 1, 0);
     }
-    if (err == -999)
+
+    if (err == -999) {
 	errbox(_("No data were available to graph"));
-    else if (err < 0) errbox(_("gnuplot command failed"));
-    else register_graph();
+    } else if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
 
     free(lines);
 }

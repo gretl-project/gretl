@@ -22,10 +22,6 @@
 #include "libgretl.h"
 #include "internal.h"
 
-#ifdef OS_WIN32
-#define isnan(x) ((x) != (x))
-#endif
-
 #define PLAIN_FORMAT(c) (c == GRETL_PRINT_FORMAT_PLAIN)
 #define RTF_FORMAT(c) (c == GRETL_PRINT_FORMAT_RTF)
 #define TEX_FORMAT(c) (c == GRETL_PRINT_FORMAT_TEX || c == GRETL_PRINT_FORMAT_TEX_DOC)
@@ -435,7 +431,7 @@ static const char *estimator_string (int ci, int format)
     else if (ci == WLS) return N_("WLS"); 
     else if (ci == ARCH) return N_("WLS (ARCH)");
     else if (ci == TSLS) return N_("TSLS");
-    else if (ci == HSK) return N_("Heteroskedasticity");
+    else if (ci == HSK) return N_("Heteroskedasticity-corrected");
     else if (ci == AR) return N_("AR");
     else if (ci == LAD) return N_("LAD");
     else if (ci == HCCM) return N_("HCCM");

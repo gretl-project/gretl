@@ -1757,31 +1757,41 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     int i, dums = 0;
     GtkItemFactoryEntry dumitem;
     MODEL *pmod = vwin->data;
+    const gchar *mpath[] = {
+	N_("/Graphs/dumsep"), 
+	N_("/Graphs/Separation")
+    };
+    gchar *radiopath = NULL;
 
     dumitem.path = NULL;
 
     /* put the dummy independent vars on the menu list */
     for (i=2; i<pmod->list[0]; i++) {
+
 	if (pmod->list[i] == 0) continue;
-	if (!isdummy(pmod->list[i], datainfo->t1, datainfo->t2, Z))
+
+	if (!isdummy(pmod->list[i], datainfo->t1, datainfo->t2, Z)) {
 	    continue;
+	}
+
 	if (!dums) { /* add separator, branch and "none" */
 	    dumitem.path = mymalloc(64);
-	    sprintf(dumitem.path, _("/Graphs/dumsep"));
+	    sprintf(dumitem.path, _("%s"), mpath[0]);
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
 	    dumitem.accelerator = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    /* menu branch */
-	    sprintf(dumitem.path, _("/Graphs/Separation"));
+	    sprintf(dumitem.path, _("%s"), mpath[1]);
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Branch>";
 	    dumitem.accelerator = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    /* "none" option */
-	    sprintf(dumitem.path, _("/Graphs/Separation/none"));
+	    sprintf(dumitem.path, _("%s/none"), mpath[1]);
+	    radiopath = g_strdup(dumitem.path);
 	    dumitem.callback = plot_dummy_call;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<RadioItem>";
@@ -1789,15 +1799,19 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    dums = 1;
 	} 
+
 	dumitem.callback_action = pmod->list[i]; 
-	sprintf(dumitem.path, _("/Graphs/Separation/by %s"),  
+	sprintf(dumitem.path, _("%s/by %s"), mpath[1],  
 		datainfo->varname[pmod->list[i]]);
 	dumitem.callback = plot_dummy_call;	    
 	dumitem.accelerator = NULL;
-	dumitem.item_type = _("/Graphs/Separation/none");
+	dumitem.item_type = radiopath;
 	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+
     }
+
     free(dumitem.path);
+    free(radiopath);
 }
 
 /* ........................................................... */

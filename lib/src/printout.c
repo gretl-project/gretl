@@ -24,10 +24,6 @@
 #include "version.h"
 #include <time.h>
 
-#ifdef OS_WIN32
-#define isnan(x) ((x) != (x))
-#endif
-
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
 				  int c, double t, PRN *prn);
 void _mxout (const double *rr, const int *list, int ci,
@@ -98,9 +94,9 @@ void session_time (FILE *fp)
 
 void logo (void)
 {
-    printf(_("gretl client, for library version %s,\n"), version_string);
-    puts(_("copyright Ramu Ramanathan and Allin Cottrell."));
-    puts(_("This is free software with ABSOLUTELY NO WARRANTY."));
+    printf(_("gretl version %s\n"), version_string);
+    puts(_("Copyright Ramu Ramanathan and Allin Cottrell"));
+    puts(_("This is free software with ABSOLUTELY NO WARRANTY"));
 }
 
 /**

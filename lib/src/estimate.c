@@ -537,6 +537,36 @@ static int xpxxpy_func (const int *list, int t1, int t2,
 
 /* .......................................................... */
 
+#ifndef OLD_ESS
+
+static int make_ess (MODEL *pmod, double **Z)
+{
+    int i, t, yno = pmod->list[1], l0 = pmod->list[0];
+    int nwt = pmod->nwt;
+    double yhat, resid;
+
+    pmod->ess = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (nwt && Z[nwt][t] == 0.0) {
+	    continue;
+	}
+	yhat = 0.0;
+	for (i=2; i<=l0; i++) {
+	    yhat += pmod->coeff[i-1] * Z[pmod->list[i]][t];
+	}
+	resid = Z[yno][t] - yhat;
+	if (nwt) {
+	    resid *= Z[nwt][t];
+	}
+	pmod->ess = pmod->ess + resid * resid;
+    }
+    return 0;
+}
+
+#endif /* OLD_ESS */
+
+/* .......................................................... */
+
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, int nv, double rho)
 /*
@@ -601,26 +631,26 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     /*  Choleski-decompose X'X and find the coefficients */
 #ifdef USE_LAPACK
     err = lapack_cholbeta(pmod, xpy, Z, nv);
-#else
-    err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, nv);
-#endif
-
     if (err) {
         pmod->errcode = err;
         return;
-    } 
-  
-#ifdef USE_LAPACK
+    }     
     ess = pmod->ess;
     rss = ypy - ess;
 #else
-    if (rss == -1.0) { 
-        pmod->errcode = E_SINGULAR;
-        return; 
+    err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, nv);
+    if (err) {
+        pmod->errcode = err;
+        return;
+    }       
+    if (rho) {
+	pmod->ess = ess = ypy - rss;
+    } else {
+	make_ess(pmod, Z);
+	ess = pmod->ess;
+	rss = ypy - ess;
     }
-
-    pmod->ess = ess = ypy - rss;
-#endif
+#endif /* USE_LAPACK */
 
     if (ess < SMALL && ess > (-SMALL)) {
 	pmod->ess = ess = 0.0;
@@ -723,8 +753,8 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
 #ifdef USE_LAPACK
 
-#include "lapack/f2c.h"
-#include "lapack/clapack.h"
+#include <gretl_lapack/f2c.h>
+#include <gretl_lapack/clapack.h>
 
 static int ijtok (int i, int j, int n)
 {
@@ -732,23 +762,6 @@ static int ijtok (int i, int j, int n)
 
     for (s=1; s<=j; s++) subt += s;
     return i + j * n - subt;
-}
-
-static int make_ess (MODEL *pmod, double **Z)
-{
-    int i, t, yno = pmod->list[1], l0 = pmod->list[0];
-    double yhat, resid;
-
-    pmod->ess = 0.0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	yhat = 0.0;
-	for (i=2; i<=l0; i++) {
-	    yhat += pmod->coeff[i-1] * Z[pmod->list[i]][t];
-	}
-	resid = Z[yno][t] - yhat;
-	pmod->ess = pmod->ess + resid * resid;
-    }
-    return 0;
 }
 
 static int lapack_cholbeta (MODEL *pmod, double *xpy, 
@@ -808,6 +821,33 @@ static int lapack_cholbeta (MODEL *pmod, double *xpy,
     make_ess(pmod, Z);
     
     return INFO;
+}
+
+
+static int lapack_cholbeta_orig (MODEL *pmod, double *xpy, 
+				 double **Z, int nv)
+{
+    char UPLO = 'L';
+    integer INFO, NRHS = 1, K = nv;
+    double *AP, *B;
+    int i;
+
+    AP = pmod->xpx + 1;
+    B = xpy + 1;
+
+    /* FIXME: need to bail out if too close to singularity */
+
+    dppsv_(&UPLO, &K, &NRHS, AP, B, &K, &INFO);
+
+    if (INFO != 0) return (int) INFO;
+
+    for (i=1; i<=nv; i++) {
+	pmod->coeff[i] = xpy[i];
+    }
+
+    make_ess(pmod, Z);
+
+    return 0;
 }
 
 static void lapack_std_errs (double *xpx, double *sderr, 
@@ -914,7 +954,7 @@ int cholbeta (double *xpx, double *xpy,
 	    kk--;
 	    coeff[j] = d * xpx[kk];
 	}  
-    }  
+    } 
 
     return 0; 
 }

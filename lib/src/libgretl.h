@@ -33,6 +33,12 @@
 # include "winconfig.h"
 #endif
 
+#ifdef OS_WIN32
+# ifndef isnan
+#  define isnan(x) ((x) != (x))
+# endif
+#endif
+
 #ifdef ENABLE_NLS
 # ifdef USE_GTK2
 #  define I_(String) iso_gettext (String) 

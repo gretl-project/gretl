@@ -27,7 +27,12 @@
 
 #include "libgretl.h"
 
-#define MAX_DIGITS 9
+#ifdef LONGLEY_ONLY
+# define MAX_DIGITS 10
+#else
+# define MAX_DIGITS 9
+#endif
+
 #define MIN_DIGITS 4
 #define MP_CHECK_DIGITS 12
 
@@ -841,6 +846,11 @@ int main (int argc, char *argv[])
     int polyterms = 0, mpfails = 0;
     const char *prog;
 
+#ifdef LONGLEY_ONLY
+    const char *nist_files[] = { 
+	"Longley.dat"
+    };
+#else
     const char *nist_files[] = { 
 	"Norris.dat",
 	"Pontius.dat",
@@ -854,6 +864,7 @@ int main (int argc, char *argv[])
 	"Wampler4.dat",
 	"Wampler5.dat"
     };
+#endif
 
     ntests = sizeof nist_files / sizeof *nist_files;
 
