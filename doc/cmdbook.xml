@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
 "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
 
 <!ENTITY version "1.0.4">
@@ -14,13 +14,11 @@
 
 <!-- =============Document Header ============================= -->
 
-<book id="index" lang="it">
-
-  <!-- FIXME: this all needs to be translated -->
+<article id="index" lang="en">
 
   <title>Gretl Command Reference</title>
 
-  <bookinfo>
+  <articleinfo>
 
     <subtitle>Gnu Regression, Econometrics and Time-series
       Library</subtitle>
@@ -54,14 +52,14 @@
     </legalnotice>
 
     <releaseinfo>
-      This is version 1.0.0 of the Italian Gretl command reference.
+      This is version 1.0.0 of the Gretl command reference.
     </releaseinfo>
 
-  </bookinfo>
+  </articleinfo>
 
   &cmdref;
 
-</book>
+</article>
 
 
 
