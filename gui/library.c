@@ -2336,6 +2336,90 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 /* ........................................................... */
 
+#ifndef G_OS_WIN32
+
+extern char tramodir[];
+
+void do_tramo (gpointer data, guint opt, GtkWidget *widget)
+{
+    gint err;
+    void *handle;
+    int (*write_tramo_data) (char *, int, double **, const DATAINFO *, 
+			     const char *);
+    char fname[MAXLEN];
+
+    if (!datainfo->vector[mdata->active_var]) {
+	errbox(_("Can't do this analysis on a scalar"));
+	return;
+    }
+
+    if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
+	errbox(_("This analysis is applicable only to seasonal time series"));
+	return;
+    }
+
+    if (gui_open_plugin("tramo-seats", &handle)) return;
+    write_tramo_data = get_plugin_function("write_tramo_data", handle);
+
+    if (write_tramo_data == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(handle);
+	return;
+    }
+
+    err = write_tramo_data (fname, mdata->active_var, Z, datainfo, tramodir);
+
+    close_plugin(handle);
+
+    if (err) {
+	errbox(_("TRAMO command failed"));
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    view_file(fname, 0, 0, 120, 500, _("gretl: TRAMO analysis"), TRAMO, NULL);
+}
+#endif
+
+/* ........................................................... */
+
+void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
+{
+    gint err;
+    void *handle;
+    int (*range_mean_graph) (int, double **, const DATAINFO *, 
+			     PRN *, PATHS *);
+    PRN *prn;
+
+    if (gui_open_plugin("range-mean", &handle)) return;
+    range_mean_graph = get_plugin_function("range_mean_graph", handle);
+
+    if (range_mean_graph == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(handle);
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return; 
+    }
+
+    err = range_mean_graph (mdata->active_var, Z, datainfo, 
+			    prn, &paths);
+
+    close_plugin(handle);
+
+    if (!err) {
+	gnuplot_display(&paths);
+	register_graph();
+    }
+
+    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RANGE_MEAN, NULL);
+}
+
+/* ........................................................... */
+
 void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;

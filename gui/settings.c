@@ -38,6 +38,9 @@ extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
+#ifndef G_OS_WIN32
+extern char tramodir[MAXSTR];
+#endif
 int use_proxy;
 
 /* filelist stuff */
@@ -94,6 +97,10 @@ RCVARS rc_vars[] = {
      'R', MAXSTR, 1, NULL},
     {"viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
      'R', MAXSTR, 1, NULL},
+#ifndef G_OS_WIN32
+    {"tramodir", N_("TRAMO/SEATS directory"), NULL, tramodir, 
+     'R', MAXSTR, 1, NULL},
+#endif
     {"expert", N_("Expert mode (no warnings)"), NULL, &expert, 
      'B', 0, 1, NULL},
     {"updater", N_("Tell me about gretl updates"), NULL, &updater, 

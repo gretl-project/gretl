@@ -140,19 +140,20 @@ int want_toolbar = TRUE;
 char dbproxy[21];
 
 #ifdef G_OS_WIN32
-    char Rcommand[MAXSTR] = "RGui.exe";
-    char editor[MAXSTR] = "winword.exe";
-    char calculator[MAXSTR] = "calc.exe";
-    char viewdvi[MAXSTR] = "windvi.exe";
+char Rcommand[MAXSTR] = "RGui.exe";
+char editor[MAXSTR] = "winword.exe";
+char calculator[MAXSTR] = "calc.exe";
+char viewdvi[MAXSTR] = "windvi.exe";
 #else
-    char editor[MAXSTR] = "emacs";
-    char calculator[MAXSTR] = "xcalc";
-    char viewdvi[MAXSTR] = "xdvi";
+char editor[MAXSTR] = "emacs";
+char calculator[MAXSTR] = "xcalc";
+char viewdvi[MAXSTR] = "xdvi";
+char tramodir[MAXSTR] = "";
 # ifdef USE_GNOME
-    char Rcommand[MAXSTR] = "R --gui=gnome";
-    extern const char *version_string;
+char Rcommand[MAXSTR] = "R --gui=gnome";
+extern const char *version_string;
 # else
-    char Rcommand[MAXSTR] = "xterm -e R";
+char Rcommand[MAXSTR] = "xterm -e R";
 # endif
 #endif
 
@@ -441,6 +442,10 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL },
+#ifndef G_OS_WIN32
+    { N_("/Variable/TRAMO analysis"), NULL, do_tramo, 0, NULL }, 
+#endif
+    { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
     { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/_Rename"), NULL, gretl_callback, RENAME, NULL },
