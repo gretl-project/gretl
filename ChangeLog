@@ -2,7 +2,8 @@ version 1.0.1
 - fix to configure script in re. glib-2.0
 - fix missing name of dependent var in gui mpols printout
 - remove RTF and LaTeX items from mpols copy options (not yet
-  implemented)
+  implemented) in gui2
+- updates to updater function in gui program (both gui and gui2)
 
 11/15/02 version 1.0
 - change *nix library name to libgretl-1.0
