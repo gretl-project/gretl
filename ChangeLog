@@ -8,6 +8,8 @@ version 1.2.5
 - make Excel importer a little more robust
 - bug fix for saving data files with very large number
   of variables (tested with 548)
+- bug fix for "diff" and "ldiff" commands with panel data in the
+  form of stacked cross-sections
 
 3/30/2004 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables

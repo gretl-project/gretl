@@ -775,12 +775,14 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
 	if (pdinfo->time_series == STACKED_TIME_SERIES &&
 	    panel_unit_first_obs(t, pdinfo)) {
 	    continue;
-	}	
+	}
 	x0 = (*pZ)[iv][t];
-	x1 = (*pZ)[iv][t-1];
-	if (na(x0) || na(x1)) {
-	    (*pZ)[v][t] = NADBL;
-	} else {				      
+	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	    x1 = (t - pdinfo->pd >= 0)? (*pZ)[iv][t-pdinfo->pd] : NADBL;
+	} else {
+	    x1 = (*pZ)[iv][t-1];
+	}
+	if (!na(x0) && !na(x1)) {
 	    (*pZ)[v][t] = x0 - x1;
 	}
     }
@@ -820,10 +822,12 @@ static int ldiffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}
 	x0 = (*pZ)[iv][t];
-	x1 = (*pZ)[iv][t-1];
-	if (na(x0) || na(x1) || x0 / x1 <= 0.) {
-	    (*pZ)[v][t] = NADBL;
-	} else {			      
+	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	    x1 = (t - pdinfo->pd >= 0)? (*pZ)[iv][t-pdinfo->pd] : NADBL;
+	} else {
+	    x1 = (*pZ)[iv][t-1];
+	}
+	if (!na(x0) && !na(x1) && x0 / x1 > 0.0) {
 	    (*pZ)[v][t] = log(x0 / x1);
 	}
     }

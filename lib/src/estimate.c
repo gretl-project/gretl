@@ -800,7 +800,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	rss = ypy - pmod->ess;
     }
 
-    if (pmod->ess < SMALL && pmod->ess > (-SMALL)) {
+    if (pmod->ess < STATZERO && pmod->ess > (-STATZERO)) {
 	pmod->ess = 0.0;
     } else if (pmod->ess < 0.0) { 
         /*  pmod->errcode = E_ESS; */ 
