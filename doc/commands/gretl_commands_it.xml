@@ -598,6 +598,8 @@
         scelto diventa quello predefinito, ma se si è scelto un metodo di
         compattamento per una certa variabile (nel menù <quote>Variabile/Modifica
         attributi</quote>) viene usato quel metodo al posto di quello predefinito.
+        Se il metodo di compattamento è già scelto per tutte le variabili, non
+        viene presentata la scelta per il metodo di compattamento predefinito.
 	</para>
 
     </description>
@@ -2578,17 +2580,25 @@
         <example>loop 1000</example>
         <example>loop while essdiff > .00001</example>
         <example>loop for i=1991..2000</example>
+        <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
       </examples>
     </usage>
 
     <description>
       <para>Il parametro <repl quote="true">controllo</repl> deve
-        assumere uno dei tre valori mostrati negli esempi: un numero di
+        assumere uno dei quattro valori mostrati negli esempi: un numero di
         volte per cui ripetere i comandi all'interno del loop, oppure
 	<quote><lit>while</lit></quote> seguito da una condizione
-        numerica, o ancora <quote><lit>for</lit></quote> seguito da un
+        numerica, oppure <quote><lit>for</lit></quote> seguito da un
         intervallo di valori per la variabile interna <lit>i</lit> che
-        funge da indice.
+        funge da indice, o ancora <quote><lit>for</lit></quote> seguito
+        da tre espressioni tra parentesim separate da punti e virgola.
+        Nell'ultima forma, l'espressione a sinistra inizializza una
+        variabile, quella centrale imposta una condizione perché l'iterazione
+        continui, e l'ultima espressione imposta un incremento o un decremento
+        da applicare all'inizio della seconda iterazione e di quelle successive
+ 	(si tratta di una forma ristretta dell'istruzione <lit>for</lit> nel
+        linguaggio di programmazione C).
       </para>
 
       <para>Questo comando apre una modalità speciale, in cui il
@@ -2599,8 +2609,7 @@
         <cmd>summary</cmd> (<cmd>store</cmd> non può essere usato in un
         loop di tipo <quote>while</quote>). Si esce dalla modalità loop
         con l'istruzione <cmd>endloop</cmd>: a questo punto i comandi
-        indicati vengono eseguiti. I loop non possono essere nidificati
-        tra loro.
+        indicati vengono eseguiti.
       </para>
 
       <para>Si veda <manref targ="looping"/> per ulteriori dettagli ed
@@ -4004,6 +4013,8 @@
       dei dati) vengono perse. È possibile reimpostare la struttura
       originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
+      <para>Si veda <manref targ="sampling"/> per maggiori dettagli.</para>
+
     </description>
   </command>
 
@@ -4376,7 +4387,7 @@
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
 	<example>smpl x > 3000 --restrict</example>
-	<example>smpl y > 3000 --restrict --cumulate</example>
+	<example>smpl y > 3000 --restrict --replace</example>
 	<example>smpl 100 --random</example>
       </examples>
     </usage>
@@ -4419,20 +4430,27 @@
       l'intervallo completo del campione.
       </para>
  
-      <para>Si noti che i vincoli sul campione di solito non sono cumulativi:
-      ad eccezione della forma <quote>+i -j</quote>, il valore di riferimento
-      di ogni comando <lit>smpl</lit> è l'intero dataset. Se si vuole che il
-      comando funzioni in modo cumulativo, così che ogni vincolo si aggiunga
-      a quelli già impostati, occorre usare l'opzione <lit>--cumulate</lit>
-      alla fine del comando.</para>
+      <para>Si noti che i vincoli sul campione di solito sono cumulativi:
+      il valore di riferimento di ogni comando <lit>smpl</lit> è il campione
+      attuale. Se si vuole che il comando funzioni sostituendo i vincoli esistenti,
+      così che ogni vincolo si aggiunga a quelli già impostati, occorre usare
+      l'opzione <lit>--replace</lit> alla fine del comando.</para>
 
       <para>La variabile interna <lit>obs</lit> può essere usata con la
       forma <lit>--restrict</lit> di <lit>smpl</lit> per escludere
-      particolari osservazioni dal campione. Ad esempio,
-	<lit>smpl obs!=4 --restrict</lit> scarterà la quarta
-        osservazione. Se le osservazioni sono identificate da etichette, 
-	<lit>smpl obs!="USA" --restrict</lit> scarterà l'osservazione a
-        cui è associata l'etichetta <quote>USA</quote>.</para>
+      particolari osservazioni dal campione. Ad esempio,</para>
+
+        <code>
+	smpl obs!=4 --restrict</code>
+        
+        <para>scarterà la quarta osservazione. Se le osservazioni sono
+        identificate da etichette,</para>
+        
+	<code>
+        smpl obs!="USA" --restrict</code>
+        
+        <para>scarterà l'osservazione a cui è associata l'etichetta <quote>USA</quote>.
+        </para>
 
       <para>Per le forme <lit>--dummy</lit>, <lit>--restrict</lit> e
       <lit>--no-missing</lit> di <lit>smpl</lit>, occore tenere presente
@@ -4441,6 +4459,9 @@
       panel dei dati) vengono perse. È possibile reimpostare la
       struttura originale con il comando <cmdref targ="setobs"/>.
       </para>
+
+      <para>Si veda <manref targ="sampling"/> per ulteriori dettagli.</para>
+    
     </description>
 
     <gui-access>
@@ -4949,6 +4970,35 @@
 
     <gui-access>
       <menu-path>/Dati/Differenza delle varianze</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="vif" section="Tests" context="cli"
+    label="Fattori di inflazione della varianza">
+
+    <description>
+      <para>
+	Deve seguire la stima di un modello che includa almeno due variabili
+	indipendenti. Calcola e mostra i fattori di inflazione della varianza
+	(Variance Inflation Factors - VIF) per i regressori.  Il VIF
+	per il regressore <mathvar>j</mathvar> è definito come
+	<equation status="display" 
+	  tex="\[\frac{1}{1-R_j^2}\]"
+	  ascii="1/(1 - Rj^2"
+	  graphic="vif"/> dove <mathvar>R<sub>j</sub></mathvar> è il
+	coefficiente di correlazione multipla tra il regressore
+	<mathvar>j</mathvar> e gli altri regressori. Il fattore ha un valore
+        minimo di 1.0 quando la variabile in questione è ortogonale alle altre
+        variabili indipendenti.  Neter, Wasserman e Kutner (1990) suggeriscono
+        di usare il VIF maggiore come test diagnostico per la collinearità; un
+        valore superiore a 10 è in genere considerato indice di un grado di
+        collinearità problematico.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Finestra del modello, /Test/collinearità</menu-path>
     </gui-access>
 
   </command>
