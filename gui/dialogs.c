@@ -94,21 +94,21 @@ int storevars_dialog (int code)
 
 /* ........................................................... */
 
-void random_dialog (gpointer data, guint uni, GtkWidget *widget) 
+void random_dialog (gpointer data, guint code, GtkWidget *widget) 
 {
-    if (uni) {
+    if (code == GENR_UNIFORM) {
 	edit_dialog (_("gretl: uniform variable"), 
 		     _("Enter name for variable, and\n"
 		     "minimum and maximum values:"), 
 		     "unif 0 100", 1, 
 		     _("Apply"), do_random, NULL, 
-		     _("  Cancel  "), NULL, NULL, 0, 0);
-    } else {
+		     _("  Cancel  "), NULL, NULL, GENR_UNIFORM, GENR);
+    } else if (code == GENR_NORMAL) {
 	edit_dialog (_("gretl: normal variable"), 
 		     _("Enter name, mean and standard deviation:"), 
 		     "norm 0 1", 1,
 		     _("Apply"), do_random, NULL, 
-		     _("  Cancel  "), NULL, NULL, 0, 0);
+		     _("  Cancel  "), NULL, NULL, GENR_NORMAL, GENR);
     }
 }
 
