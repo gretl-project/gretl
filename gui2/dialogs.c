@@ -558,7 +558,7 @@ void about_dialog (gpointer data)
 #endif
 			       "Copyright (C) 2000-2001 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://gretl.sourceforge.net/ "
+			       "http://gretl.sourceforge.net/\n"
 			       "%s", version_string, tr_credit);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
