@@ -1,1 +1,0 @@
-jade -t tex -d ../gretl.dsl /opt/jade/share/xml.dcl testmath.xml $*
