@@ -1695,12 +1695,13 @@ expand_operator_abbrev (char *s, const char *lhs, char op)
 static int split_genr_formula (char *lhs, char *s)
 {
     char *p = strchr(s, '=');
-    char op = 0;
-    int len, err = 0;
+    int err = 0;
 
     *lhs = '\0';
 
     if (p != NULL) {
+	char op = 0;
+
 	*p = '\0';
 
 	if (*(p + 1) == '\0') {
@@ -1708,10 +1709,13 @@ static int split_genr_formula (char *lhs, char *s)
 	    err = E_SYNTAX;
 	} else {
 	    /* should we warn if lhs name is truncated? */
-	    len = strlen(s);
-	    
-	    if (len > VNAMELEN - 1) {
-		op = s[len - 1];
+	    int len = strlen(s);
+
+	    op = s[len - 1];
+	    if (op_level(op) == 2 || op_level(op) == 3) {
+		s[len - 1] = '\0';
+	    } else {
+		op = 0;
 	    }
 
 	    strncat(lhs, s, VNAMELEN - 1);
@@ -1724,22 +1728,8 @@ static int split_genr_formula (char *lhs, char *s)
 	    }
 	}
 
-	if (!err) {
-	    int blankit = 0;
-
-	    if (op == 0) {
-		len = strlen(lhs);
-		if (len > 1) {
-		    op = lhs[len - 1];
-		    blankit = 1;
-		}
-	    }
-	    if (op_level(op) == 2 || op_level(op) == 3) {
-		if (blankit) {
-		    lhs[len - 1] = '\0';
-		}
-		err = expand_operator_abbrev(s, lhs, op);
-	    }
+	if (!err && op != 0) {
+	    err = expand_operator_abbrev(s, lhs, op);
 	}
     }
 
