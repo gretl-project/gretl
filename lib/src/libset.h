@@ -53,5 +53,11 @@ int gretl_get_text_pause (void);
 
 void get_bkbp_periods (int *periods);
 
+void set_loop_on (void);
+
+void set_loop_off (void);
+
+int looping (void);
+
 #endif /* LIBSET_H */
 

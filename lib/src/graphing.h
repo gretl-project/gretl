@@ -154,7 +154,11 @@ void free_plotspec (GPT_SPEC *spec);
 
 int get_termstr (const GPT_SPEC *spec, char *termstr);
 
-int rmplot (const int *list, double **Z, DATAINFO *pdinfo, PRN *prn);
+int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, 
+	    PRN *prn);
+
+int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, 
+	       PRN *prn);
 
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 

@@ -46,10 +46,10 @@ static int
 do_range_mean_plot (int n, const double **Z, double *yhat, const char *vname)
 {
     FILE *fp = NULL;
-    int t;
+    int t, err;
 
-    if (gnuplot_init(PLOT_RANGE_MEAN, &fp)) {
-	return E_FOPEN;
+    if ((err = gnuplot_init(PLOT_RANGE_MEAN, &fp))) {
+	return err;
     }
 
     fprintf(fp, "# range-mean plot for %s\n", vname);

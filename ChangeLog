@@ -9,6 +9,11 @@ version 1.3.2
   a valid latex executable was available
 - Fix bug: gretl console would not respond in case of an error when
   executing a command loop
+- Fix various issues in relaton to nested loops (for example, where 
+  the control variable for a given loop is not yet defined at compile
+  time, but will be defined in an embedding loop)  
+- Fix sort-of bug: possible runaway generation of graphs in response
+  to some loop commands
 - Improve efficiency of test for existence of helper programs on
   Linux/unix
 - Add auto-lag option to the GUI dialog box for the ADF test
@@ -19,10 +24,14 @@ version 1.3.2
 - Provide a mechanism for retrieving the value and/or p-value from
   the last statistical test performed (via the special variables
   "$test" and "$pvalue" in genr)
+- Perfect collinearity: try to detect this, and remove one or more
+  redundant variables from the regression list if need be
 - "label" command: if only a varname is given, print the variable's
    current label, if any
 - "genr unit": generates an index variable for the cross-sectional 
   units in a panel dataset (panel data only)
+- Add "hurst" command (and GUI menu item) to compute the Hurst exponent
+  (a fractal measure, used by Mandelbrot) for a given series   
 - Remove unused GUI popup menu item "Simulate..."
 - Updates to documentation (manual and helpfiles)
 

@@ -81,7 +81,8 @@ enum gretl_error_codes {
     E_CANCEL,      /* 54 */
     E_MISSDATA,    /* 55 */
     E_NAN,         /* 56 */
-    E_MAX          /* 57 */
+    E_OK,          /* 57 : not really an error */
+    E_MAX          /* 58 */
 }; 
 
 /* functions follow */

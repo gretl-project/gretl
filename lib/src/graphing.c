@@ -458,6 +458,10 @@ int gnuplot_init (int plottype, FILE **fpp)
     int gui = gretl_using_gui();
     char plotfile[MAXLEN];
 
+    if (looping()) {
+	return E_OK;
+    }
+
     /* 'gnuplot_path' is file-scope static var */
     if (*gnuplot_path == 0) {
 	strcpy(gnuplot_path, gretl_gnuplot_path());
@@ -466,7 +470,7 @@ int gnuplot_init (int plottype, FILE **fpp)
     if (gui) {
 	sprintf(plotfile, "%sgpttmp.XXXXXX", gretl_user_dir());
 	if (mktemp(plotfile) == NULL) {
-	    return 1;
+	    return E_FOPEN;
 	}
     } else {
 	sprintf(plotfile, "%sgpttmp.plt", gretl_user_dir());
@@ -476,7 +480,7 @@ int gnuplot_init (int plottype, FILE **fpp)
 
     *fpp = gretl_fopen(plotfile, "w");
     if (*fpp == NULL) {
-	return 1;
+	return E_FOPEN;
     }
 
     if (gui) {
@@ -507,6 +511,11 @@ int gnuplot_make_graph (void)
     sprintf(plotcmd, "%s%s \"%s\"", gretl_gnuplot_path(), 
 	    (gretl_using_gui())? "" : " -persist", gretl_plotfile());
     err = gretl_spawn(plotcmd);  
+#endif
+
+#if 0
+    fprintf(stderr, "gnuplot_make_graph:\n"
+	    " plotcmd='%s', err = %d\n", plotcmd, err);
 #endif
 
     return err;
@@ -629,6 +638,9 @@ get_gnuplot_output_file (FILE **fpp, unsigned char flags,
 
     if ((flags & GP_FILE) && *plotfile != '\0') {
 	*fpp = gretl_fopen(plotfile, "w");
+	if (*fpp == NULL) {
+	    err = E_FOPEN;
+	}
     } else if ((flags & GP_BATCH) && plot_count != NULL) {  
 	char fname[MAXLEN];
 
@@ -638,12 +650,11 @@ get_gnuplot_output_file (FILE **fpp, unsigned char flags,
 	}
 	set_gretl_plotfile(fname);
 	*fpp = gretl_fopen(fname, "w");
+	if (*fpp == NULL) {
+	    err = E_FOPEN;
+	}
     } else {
-	gnuplot_init(code, fpp);
-    }
-
-    if (*fpp == NULL) {
-	err = E_FOPEN;
+	err = gnuplot_init(code, fpp);
     }
 
     return err;
@@ -1437,10 +1448,15 @@ int plot_freq (FREQDIST *freq, int dist)
     double barwidth, barskip;
     int plottype = PLOT_FREQ_SIMPLE;
     int use_boxes = 1;
+    int err;
 
     if (K == 0) {
 	return 1;
     }
+
+    if ((err = gnuplot_init(plottype, &fp))) {
+	return err;
+    }    
 
     barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
@@ -1453,10 +1469,6 @@ int plot_freq (FREQDIST *freq, int dist)
 	plottype = PLOT_FREQ_NORMAL;
     } else if (dist == GAMMA) {
 	plottype = PLOT_FREQ_GAMMA;
-    }
-
-    if (gnuplot_init(plottype, &fp)) {
-	return E_FOPEN;
     }
 
 #ifdef ENABLE_NLS
@@ -1621,10 +1633,10 @@ int plot_fcast_errs (int n, const double *obs,
 {
     FILE *fp = NULL;
     double xmin, xmax, xrange;
-    int t;
+    int t, err;
 
-    if (gnuplot_init(PLOT_FORECAST, &fp)) {
-	return E_FOPEN;
+    if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
+	return err;
     }
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
@@ -1690,14 +1702,15 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     double *h, *obs;
     double sd2;
     int t, pv;
+    int err;
 
     h = gretl_model_get_data(pmod, "garch_h");
     if (h == NULL) {
 	return E_DATA;
     }
 
-    if (gnuplot_init(PLOT_FORECAST, &fp)) {
-	return E_FOPEN;
+    if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
+	return err;
     }
 
     pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
@@ -2116,26 +2129,50 @@ int go_gnuplot (GPT_SPEC *spec, char *fname)
 
 /* ........................................................... */
 
-int rmplot (const int *list, double **Z, DATAINFO *pdinfo, PRN *prn)
+int 
+rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     int err;
     void *handle;
-    int (*range_mean_graph) (int, double **, const DATAINFO *, PRN *);
+    int (*range_mean_graph) (int, const double **, const DATAINFO *, PRN *);
 
     range_mean_graph = get_plugin_function("range_mean_graph", &handle);
     if (range_mean_graph == NULL) {
         return 1;
     }
 
-    err = range_mean_graph (list[1], Z, pdinfo, prn);
+    err = range_mean_graph(list[1], Z, pdinfo, prn);
 
     close_plugin(handle);
 
     if (!err) {
-        return gnuplot_make_graph();
-    } else {
-	return err;
+        err = gnuplot_make_graph();
     }
+
+    return err;
+}
+
+int 
+hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
+{
+    int err;
+    void *handle;
+    int (*hurst_exponent) (int, const double **, const DATAINFO *, PRN *);
+
+    hurst_exponent = get_plugin_function("hurst_exponent", &handle);
+    if (hurst_exponent == NULL) {
+        return 1;
+    }
+
+    err = hurst_exponent(list[1], Z, pdinfo, prn);
+
+    close_plugin(handle);
+
+    if (!err) {
+        err = gnuplot_make_graph();
+    } 
+
+    return err;
 }
 
 /* ........................................................... */
@@ -2149,7 +2186,7 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
     int vtarg, vshock;
     double *resp;
     char title[128];
-    int t;
+    int t, err;
 
     if (periods == 0) {
 	if (pdinfo->pd == 4) {
@@ -2161,13 +2198,13 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
 	}
     }
 
+    if ((err = gnuplot_init(PLOT_REGULAR, &fp))) {
+	return err;
+    }
+
     resp = gretl_var_get_impulse_responses(var, targ, shock, periods);
     if (resp == NULL) {
 	return E_ALLOC;
-    }
-
-    if (gnuplot_init(PLOT_REGULAR, &fp)) {
-	return E_FOPEN;
     }
 
     vtarg = gretl_var_get_variable_number(var, targ);

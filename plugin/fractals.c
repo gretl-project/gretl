@@ -28,10 +28,10 @@ static int
 do_hurst_plot (int n, double **Z, double *yhat, const char *vname)
 {
     FILE *fp = NULL;
-    int t;
+    int t, err;
 
-    if (gnuplot_init(PLOT_RANGE_MEAN, &fp)) {
-	return E_FOPEN;
+    if ((err = gnuplot_init(PLOT_RANGE_MEAN, &fp))) {
+	return err;
     }
 
     fprintf(fp, "# rescaled range plot for %s\n", vname);
@@ -213,16 +213,10 @@ static int h_adjust_t1t2 (int v, const double **Z, int *t1, int *t2)
 static int get_depth (int T)
 {
     int m = T;
-    int den = 1;
     int depth = 0;
 
     while (m >= MINSAMP) {
-#if HDEBUG
-	printf("level %d, den = %d, size = %d, discard = %d\n", 
-	       depth, den, m, (depth > 0)? T % m : 0);
-#endif
 	m /= 2;
-	den *= 2;
 	depth++;
     }
 
@@ -279,13 +273,15 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 	pputs(prn, _("Error estimating Hurst exponent model\n"));
 	errmsg(err, prn);
     } else {
-	pputc(prn, '\n');
+	pprintf(prn, "\n%s (n = %d)\n\n", _("Regression results"), k);
 	pprintf(prn, "          %12s %11s %s\n", "coeff", "std. error", 
 		"t-stat");
 	pprintf(prn, "Intercept %12.6g (%9g) %.3f\n", hmod.coeff[0], 
 		hmod.sderr[0], hmod.coeff[0] / hmod.sderr[0]);
 	pprintf(prn, "Slope     %12.6g (%9g) %.3f\n", hmod.coeff[1], 
 		hmod.sderr[1], hmod.coeff[1] / hmod.sderr[1]);
+	pputc(prn, '\n');
+	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
     }
 
     err = do_hurst_plot(k, hZ, hmod.yhat, pdinfo->varname[vnum]);

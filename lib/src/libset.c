@@ -378,6 +378,32 @@ int get_halt_on_error (void)
     return halt_on_error;
 }
 
+static int set_or_get_loop_on (int l)
+{
+    static int loop_on;
+
+    if (l >= 0) {
+	loop_on = l;
+    }
+
+    return loop_on;
+}
+
+void set_loop_on (void)
+{
+    set_or_get_loop_on(1);
+}
+
+void set_loop_off (void)
+{
+    set_or_get_loop_on(0);
+}
+
+int looping (void)
+{
+    return set_or_get_loop_on(-1);
+}
+
 /* pause between screens of output? (cli operation, not in
    batch mode) */
 

@@ -781,7 +781,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT: 
-    case SIM: case SUMMARY:
+    case SIM: case SUMMARY: case RMPLOT: case HURST:
     case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&cmd, line, &Z, datainfo, prn);

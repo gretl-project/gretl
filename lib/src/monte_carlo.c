@@ -256,7 +256,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	return 1;
     }
 
-    if (ci == ADF || ci == KPSS) {
+    if (ci == ADF || ci == KPSS || ci == HURST) {
 	return 1;
     }
 
@@ -2353,6 +2353,7 @@ int loop_exec (LOOPSET *loop, char *line,
     }
 
     gretl_set_text_pause(0);
+    set_loop_on();
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
@@ -2414,6 +2415,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case SIM:
 	    case ADF:
 	    case KPSS:
+	    case HURST:
 		err = simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		break;
 
@@ -2642,6 +2644,7 @@ int loop_exec (LOOPSET *loop, char *line,
     } 
 
     set_active_loop(loop->parent);
+    set_loop_off();
 
     if (get_halt_on_error()) {
 	return err;

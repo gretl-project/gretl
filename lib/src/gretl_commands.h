@@ -65,6 +65,7 @@ enum gretl_cmd_codes {
     HELP,    
     HILU,    
     HSK,
+    HURST,
     IF,
     IMPORT,
     INFO,

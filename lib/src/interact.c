@@ -2275,11 +2275,18 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case RMPLOT:
+    case HURST:
 	if (cmd->list[0] != 1) {
 	    pputs(prn, _("This command requires one variable.\n"));
 	    err = 1;
 	} else {
-	    err = rmplot(cmd->list, *pZ, datainfo, prn);
+	    if (cmd->ci == RMPLOT) {
+		err = rmplot(cmd->list, (const double **) *pZ, 
+			     datainfo, prn);
+	    } else {
+		err = hurstplot(cmd->list, (const double **) *pZ, 
+				datainfo, prn);
+	    }
 	}
 	break;
 
@@ -2390,6 +2397,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     default:
 	break;
+    }
+
+    if (err == E_OK) {
+	err = 0;
     }
 
     return err;
