@@ -1097,7 +1097,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
     dlgheight *= gui_scale;
-    gtk_widget_set_size_request(sr->dlg, -1, dlgheight); 
+    gtk_window_set_default_size(GTK_WINDOW(sr->dlg), -1, dlgheight); 
 
     g_signal_connect (G_OBJECT(sr->dlg), "destroy", 
 		      G_CALLBACK(destroy_selector), 

@@ -208,6 +208,15 @@
 	save the session, these added objects should be available
 	again if you re-open the session later.</para>
 
+      <figure id="fig-session" float="1" pgwide="1">
+	<title>Icon view: one model and one graph have been added to
+	  the default icons</title>
+	<screenshot>
+	  <screeninfo>Session window</screeninfo>
+	  <graphic fileref="figures/session" align="center"/>
+	</screenshot>
+      </figure>
+
       <para>
 	If you start <application>gretl</application> and open a data
 	set, then select <quote>Icon view</quote> from the Session
@@ -222,28 +231,13 @@
 	but you can also right-click on the icon for a menu of other
 	actions.</para>
 
-      <tip><para>In many gretl windows, the right mouse button brings
-	  up a menu with common tasks.</para>
-      </tip>
-
-      <para>Two sorts of objects can be added to the Icon View window:
-	models and graphs.</para>  
-
-      <figure id="fig-session" float="1" pgwide="1">
-	<title>Icon view: one model and one graph have been added to
-	  the default icons</title>
-	<screenshot>
-	  <screeninfo>Session window</screeninfo>
-	  <graphic fileref="figures/session" align="center"/>
-	</screenshot>
-      </figure>
-
-      <para>To add a model, first estimate it using the Model menu.
-	Then pull down the File menu in the model window and select
-	<quote>Save to session as icon&hellip;</quote> or <quote>Save
-	  as icon and close</quote>.  Simply hitting the
-	<literal>S</literal> key over the model window is a shortcut
-	to the latter action.</para>
+      <para>To add a model to the session view, first estimate it
+	using the Model menu. Then pull down the File menu in the
+	model window and select <quote>Save to session as
+	  icon&hellip;</quote> or <quote>Save as icon and
+	  close</quote>.  Simply hitting the <literal>S</literal> key
+	over the model window is a shortcut to the latter
+	action.</para>
 
       <para>To add a graph, first create it (under the Data menu,
 	<quote>Graph specified vars</quote>, or via one of

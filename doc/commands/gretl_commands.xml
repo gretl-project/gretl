@@ -1306,8 +1306,8 @@
 	</row>
 	<row>
 	  <cell><lit>genr samp = !missing(x)</lit></cell>
-	  <cell>= 1 for observations where the variable
-	    x is not missing.</cell>
+	  <cell>= 1 for observations where <lit>x</lit> is not
+	    missing.</cell>
 	</row>
       </table>
 
