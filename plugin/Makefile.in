@@ -119,7 +119,7 @@ vif.la: vif.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 urcdist.la: urcdist.lo
-	$(LINK) -o $@ $< $(FLIB)
+	$(LINK) -o $@ $<
 
 pca.la: pca.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)

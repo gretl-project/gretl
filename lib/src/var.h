@@ -22,6 +22,13 @@
 
 #include "gretl_matrix.h"
 
+enum ur_codes {
+    UR_NO_CONST = 1,
+    UR_CONST,
+    UR_TREND,
+    UR_TREND_SQUARED
+};
+
 int list_diffgenr (const LIST list, 
 		   double ***pZ, DATAINFO *pdinfo);
 

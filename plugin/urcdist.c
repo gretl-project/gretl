@@ -19,7 +19,7 @@
 */
 
 #include "libgretl.h"
-#include "f2c.h"
+#include "var.h"
 
 enum urc_errs {
     URC_OK,
@@ -81,12 +81,10 @@ int urcval (int niv, int itv, int nobs, double arg,
     FILE *fp;
     char line[80];
 
-    /* return value */
     int urc_ret = URC_OK;
 
-    int i, j;
+    int i, j, iskip;
     int nvar;
-    int iskip;
     char datfile[FILENAME_MAX];
 
     struct {
@@ -108,15 +106,17 @@ int urcval (int niv, int itv, int nobs, double arg,
 
     /* 
        niv = # of integrated variables
-       itv = 1, 2, 3, 4 for nc, c, ct, ctt
+       itv = appropriate ur_code for nc, c, ct, ctt models
        nobs = sample size (0 for asymptotic)
        arg = test statistic
-       val = P value (returned by routine)
+       val = P-value (returned by routine)
     */
 
     /* Check that parameters are valid. */
-    if (niv < 1 || niv > MAXVARS ||
-	itv < 1 || itv > 4) {
+    if (niv < 1 || niv > MAXVARS) {
+	return URC_BAD_PARAM;
+    }
+    if (itv < UR_NO_CONST || itv > UR_TREND_SQUARED) {
 	return URC_BAD_PARAM;
     }
 
@@ -127,8 +127,13 @@ int urcval (int niv, int itv, int nobs, double arg,
 	return URC_NOT_FOUND;
     }
 
-    /* skip to appropriate location in file */
+    /* skip to appropriate location in data file */
     fseek(fp, (long) urc_offsets[niv - 1], SEEK_SET);
+
+    iskip = (itv - 1) * (URCLEN + 1);
+    for (i = 0; i < iskip; i++) {
+	fgets(line, sizeof line, fp);
+    }
 
     fgets(line, sizeof line, fp);
     sscanf(line, "%*s %d %d %d %d", &urc.nz, &urc.nreg,
@@ -180,18 +185,14 @@ static double fpval (double *beta, double *cnorm, double *wght,
     double d1, d2;
 
     /* Local variables */
-    static int i, j, ic, jc;
-    static double sd4;
-    static int np1;
-    static double bot;
-    static int nph;
-    static double top, ssr, diff;
-    static int imin;
+    int imin, i, j, ic, jc;
+    double sd4;
+    int np1, nph, nptop;
+    double bot, top, ssr, diff;
     static double fits[20], xmat[80], xomx[16],	
 	ssrt, gamma[4], diffm, omega[400],
 	resid[20], crfit;
     static double crits[URCLEN], yvect[20];
-    static int nptop;
     static double ttest;
 
     double pval = 0.0;
@@ -741,10 +742,8 @@ static double ddnor (double ystar)
     return erfc * .5;
 }
 
-double mackinnon_pvalue (double tval, int n, char *path)
+double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
 {
-    int niv = 1; /* number of variables */
-    int itv = 2; /* model "c", with constant */
     double val;
     int check;
 

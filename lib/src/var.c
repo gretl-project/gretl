@@ -53,6 +53,12 @@ enum {
     VAR_SAVE =              1 << 4
 } var_flags;
 
+#define TREND_FAILED 9999
+
+static int real_adf_test (int varno, int order, int niv,
+			  double ***pZ, DATAINFO *pdinfo, 
+			  PRN *prn);
+
 /* ...................................................................  */
 
 static void pad_var_coeff_matrix (GRETL_VAR *var)
@@ -731,19 +737,38 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 
 /* ......................................................  */
 
-static int gettrend (double ***pZ, DATAINFO *pdinfo)
+static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
 {
     int index;
     int t, n = pdinfo->n, v = pdinfo->v;
+    double x;
 
-    index = varindex(pdinfo, "time");
-    if (index < v) return index;
+    if (square) {
+	index = varindex(pdinfo, "timesq");
+    } else {
+	index = varindex(pdinfo, "time");
+    }
+
+    if (index < v) {
+	return index;
+    }
     
-    if (dataset_add_vars(1, pZ, pdinfo)) return 999;
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return TREND_FAILED;
+    }
 
-    for (t=0; t<n; t++) (*pZ)[v][t] = (double) t+1;
-    strcpy(pdinfo->varname[v], "time");
-    strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
+    for (t=0; t<n; t++) {
+	x = (double) t + 1;
+	(*pZ)[v][t] = (square)? x * x : x;
+    }
+
+    if (square) {
+	strcpy(pdinfo->varname[v], "timesq");
+	strcpy(VARLABEL(pdinfo, v), _("squared time trend variable"));
+    } else {
+	strcpy(pdinfo->varname[v], "time");
+	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
+    }
 	    
     return index;
 }
@@ -765,25 +790,39 @@ static int diffvarnum (int index, const DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
+static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo,
+		     int logdiff)
 {
     char word[32];
     char s[32];
     int t, t1, n = pdinfo->n, v = pdinfo->v;
     double x0, x1;
 
+    /* compose the varname */
     strcpy(word, pdinfo->varname[iv]);
-    gretl_trunc(word, 6);
-    strcpy(s, "d_");
+    if (logdiff) {
+	gretl_trunc(word, 5);
+	strcpy(s, "ld_");
+    } else {
+	gretl_trunc(word, 6);
+	strcpy(s, "d_");
+    }
     strcat(s, word);
 
     /* "s" should now contain the new variable name --
      check whether it already exists: if so, get out */
-    if (varindex(pdinfo, s) < v) return 0;
+    if (varindex(pdinfo, s) < v) {
+	return 0;
+    }
 
-    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
 
-    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
+    for (t=0; t<n; t++) {
+	(*pZ)[v][t] = NADBL;
+    }
+
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
     for (t=t1; t<=pdinfo->t2; t++) {
 	if (pdinfo->time_series == STACKED_TIME_SERIES &&
@@ -796,58 +835,21 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    x1 = (*pZ)[iv][t-1];
 	}
-	if (!na(x0) && !na(x1)) {
-	    (*pZ)[v][t] = x0 - x1;
-	}
-    }
-
-    strcpy(pdinfo->varname[v], s);
-    sprintf(VARLABEL(pdinfo, v), _("%s = first difference of %s"),
-	    pdinfo->varname[v], pdinfo->varname[iv]);
-	    
-    return 0;
-}
-
-/* ......................................................  */
-
-static int ldiffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
-{
-    char word[32];
-    char s[32];
-    int t, t1, n = pdinfo->n, v = pdinfo->v;
-    double x0, x1;
-
-    strcpy(word, pdinfo->varname[iv]);
-    gretl_trunc(word, 5);
-    strcpy(s, "ld_");
-    strcat(s, word);
-
-    /* "s" should now contain the new variable name --
-     check whether it already exists: if so, get out */
-    if (varindex(pdinfo, s) < v) return 0;
-
-    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
-
-    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
-    t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
-    for (t=t1; t<=pdinfo->t2; t++) {
-	if (pdinfo->time_series == STACKED_TIME_SERIES &&
-	    panel_unit_first_obs(t, pdinfo)) {
-	    continue;
-	}
-	x0 = (*pZ)[iv][t];
-	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-	    x1 = (t - pdinfo->pd >= 0)? (*pZ)[iv][t-pdinfo->pd] : NADBL;
+	if (logdiff) {
+	    if (!na(x0) && !na(x1) && x0 / x1 > 0.0) {
+		(*pZ)[v][t] = log(x0 / x1);
+	    }
 	} else {
-	    x1 = (*pZ)[iv][t-1];
-	}
-	if (!na(x0) && !na(x1) && x0 / x1 > 0.0) {
-	    (*pZ)[v][t] = log(x0 / x1);
+	    if (!na(x0) && !na(x1)) {
+		(*pZ)[v][t] = x0 - x1;
+	    }
 	}
     }
 
     strcpy(pdinfo->varname[v], s);
-    sprintf(VARLABEL(pdinfo, v), _("%s = log difference of %s"),
+    sprintf(VARLABEL(pdinfo, v), 
+	    ((logdiff)? _("%s = log difference of %s") : 
+	    _("%s = first difference of %s")),
 	    pdinfo->varname[v], pdinfo->varname[iv]);
 	    
     return 0;
@@ -871,7 +873,7 @@ int list_diffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
     int i;
     
     for (i=1; i<=list[0]; i++) {
-	if (diffgenr(list[i], pZ, pdinfo)) return 1;
+	if (diffgenr(list[i], pZ, pdinfo, 0)) return 1;
     }
     return 0;
 }
@@ -894,7 +896,7 @@ int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
     int i;
     
     for (i=1; i<=list[0]; i++) {
-	if (ldiffgenr(list[i], pZ, pdinfo)) return 1;
+	if (diffgenr(list[i], pZ, pdinfo, 1)) return 1;
     }
     return 0;
 }
@@ -1422,11 +1424,11 @@ GRETL_VAR *full_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 }
 
-static double df_pvalue_from_plugin (double tau, int n)
+static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
 {
     char datapath[FILENAME_MAX];
     void *handle;
-    double (*mackinnon_pvalue)(double, int, char *);
+    double (*mackinnon_pvalue)(double, int, int, int, char *);
     double pval = NADBL;
     static int nodata;
     
@@ -1447,7 +1449,7 @@ static double df_pvalue_from_plugin (double tau, int n)
     append_dir(datapath, "plugins");
 #endif
 
-    pval = (*mackinnon_pvalue)(tau, n, datapath);
+    pval = (*mackinnon_pvalue)(tau, n, niv, itv, datapath);
 
     close_plugin(handle);
 
@@ -1487,13 +1489,15 @@ int coint (int order, const LIST list, double ***pZ,
 	if (i > 1) pputc(prn, '\n');
 	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		i, pdinfo->varname[list[i]]);
-	adf_test(order, list[i], pZ, pdinfo, prn);
+	real_adf_test(order, list[i], 1, pZ, pdinfo, prn);
     }
 
     /* step 2: carry out the cointegrating regression */
     if (gretl_hasconst(list) == 0) {
 	cointlist = malloc((l0 + 2) * sizeof *cointlist);
-	if (cointlist == NULL) return E_ALLOC;
+	if (cointlist == NULL) {
+	    return E_ALLOC;
+	}
 	for (i=0; i<=l0; i++) {
 	    cointlist[i] = list[i];
 	}
@@ -1501,7 +1505,9 @@ int coint (int order, const LIST list, double ***pZ,
 	cointlist[0] += 1;
     } else {
 	cointlist = copylist(list);
-	if (cointlist == NULL) return E_ALLOC;
+	if (cointlist == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     pputc(prn, '\n');
@@ -1530,7 +1536,7 @@ int coint (int order, const LIST list, double ***pZ,
 
     /* Run ADF test on these residuals */
     pputc(prn, '\n');
-    adf_test(order, pdinfo->v - 1, pZ, pdinfo, prn);
+    real_adf_test(order, pdinfo->v - 1, l0, pZ, pdinfo, prn);
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 	    "(a) The unit-root hypothesis is not rejected for the individual"
@@ -1543,6 +1549,170 @@ int coint (int order, const LIST list, double ***pZ,
     clear_model(&coint_model);
     free(cointlist);
     dataset_drop_vars(1, pZ, pdinfo);
+
+    return 0;
+}
+
+static int *adf_prepare_vars (int order, int varno,
+			      double ***pZ, DATAINFO *pdinfo)
+{
+    int i, orig_t1 = pdinfo->t1;
+    int *list;
+    int err = 0;
+
+    if (varno == 0) {
+	return NULL;
+    }
+
+    list = malloc((6 + order) * sizeof *list);
+    if (list == NULL) {
+	return NULL;
+    }
+
+    /* temporararily reset sample */
+    pdinfo->t1 = 0;
+
+    /* generate first difference of the given variable */
+    if (diffgenr(varno, pZ, pdinfo, 0)) {
+	pdinfo->t1 = orig_t1;
+	free(list);
+	return NULL;
+    }	
+
+    /* generate lag of given var */
+    if (laggenr(varno, 1, 1, pZ, pdinfo) < 0) {
+	pdinfo->t1 = orig_t1;
+	free(list);
+	return NULL;
+    }
+
+    /* undo reset sample */
+    pdinfo->t1 = orig_t1;
+
+    /* dependent var is the first diff */
+    list[1] = diffvarnum(varno, pdinfo);
+    list[2] = 0;
+    list[3] = lagvarnum(varno, 1, pdinfo);
+
+    /* generate lags of difference for augmented test */
+    for (i=1; i<=order && !err; i++) {
+	int lnum = laggenr(list[1], i, 1, pZ, pdinfo);
+
+	if (lnum < 0) {
+	    fprintf(stderr, "Error generating lag variable\n");
+	    err = 1;
+	} else {
+	    list[i+3] = lnum;
+	} 
+    } 
+
+    return list;
+}
+
+static int real_adf_test (int varno, int order, int niv,
+			  double ***pZ, DATAINFO *pdinfo, 
+			  PRN *prn)
+{
+    const char *models[] = {
+	"(1 - L)y = b0 + (a-1)*y(-1) + e",
+	"(1 - L)y = b0 + b1*t + (a-1)*y(-1) + e",
+	"(1 - L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + e"
+    };
+    const char *aug_models[] = {
+	"(1 - L)y = b0 + (a-1)*y(-1) + ... + e",
+	"(1 - L)y = b0 + b1*t + (a-1)*y(-1) + ... + e",
+	"(1 - L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + ... + e"
+    };
+    const char *teststrs[] = {
+	N_("test with constant"),
+	N_("with constant and trend"),
+	N_("with constant and quadratic trend")
+    };
+    int orig_nvars = pdinfo->v;
+    MODEL dfmod;
+    int *list;
+    char pvstr[48];
+    double DFt, pv;
+    int i;
+
+    list = adf_prepare_vars(order, varno, pZ, pdinfo);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_model_init(&dfmod);
+
+    for (i=0; i<3; i++) {
+
+	list[0] = 3 + order + i;
+
+	if (i == 1) {
+	    list[4 + order] = gettrend(pZ, pdinfo, 0);
+	    if (list[4 + order] == TREND_FAILED) {
+		return 1;
+	    }
+	}
+	if (i > 1) {
+	    list[5 + order] = gettrend(pZ, pdinfo, 1);
+	    if (list[5 + order] == TREND_FAILED) {
+		return 1;
+	    }
+	}	    
+
+	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	if (dfmod.errcode) {
+	    return dfmod.errcode;
+	}
+
+	DFt = dfmod.coeff[1] / dfmod.sderr[1];
+
+	pv = df_pvalue_from_plugin(DFt, 
+				   /* use asymptotic p-value for augmented case */
+				   (order > 0)? 0 : dfmod.nobs, 
+				   niv, 
+				   (i == 0)? UR_CONST : 
+				   (i == 1)? UR_TREND :
+				   UR_TREND_SQUARED);
+
+	if (na(pv)) {
+	    sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
+	} else {
+	    sprintf(pvstr, "%s %.4g", 
+		    (order > 0)? _("asymptotic p-value") : _("p-value"), 
+		    pv);
+	} 
+
+	if (i == 0) {
+	    if (order > 0) {
+		pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
+			order, pdinfo->varname[varno]);
+	    } else {
+		pprintf(prn, _("\nDickey-Fuller tests for %s\n"),
+			pdinfo->varname[varno]);
+	    }
+	    pprintf(prn, _("sample size %d\n"), dfmod.nobs);
+	    pputs(prn, _("unit-root null hypothesis: a = 1"));
+	    pputs(prn, "\n\n");
+	}
+
+	pprintf(prn, "   %s\n"
+		"   %s: %s\n"
+		"   %s: %g\n"
+		"   %s: t = %g\n"
+		"   %s\n\n",
+		_(teststrs[i]), 
+		_("model"), (order > 0)? aug_models[i] : models[i],
+		_("estimated value of (a - 1)"), dfmod.coeff[1],
+		_("test statistic"), DFt,
+		pvstr);
+
+	clear_model(&dfmod);
+    }
+
+    pputs(prn, _("reported p-values based on MacKinnon (JAE, 1996)\n"));
+
+    free(list);
+    dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
 
     return 0;
 }
@@ -1565,181 +1735,7 @@ int coint (int order, const LIST list, double ***pZ,
 int adf_test (int order, int varno, double ***pZ,
 	      DATAINFO *pdinfo, PRN *prn)
 {
-    int i, l, T, k, row, orig_nvars = pdinfo->v;
-    int *adflist = NULL;
-    int *shortlist = NULL;
-    MODEL adf_model;
-    double essu, F, DFt, pv;
-    char pval[40];
-
-                                 /* 1%    2.5%    5%    10% */
-    double t_crit_vals[6][4] = {{ -3.75, -3.33, -3.00, -2.62 },  /* T=25 */
-				{ -3.58, -3.22, -2.93, -2.60 },  /* T=50 */
-				{ -3.51, -3.17, -2.89, -2.58 },  /* T=100 */
-				{ -3.46, -3.14, -2.88, -2.57 },  /* T=250 */
-				{ -3.44, -3.13, -2.87, -2.57 },  /* T=500 */
-				{ -3.43, -3.12, -2.86, -2.57 }}; /* inf */
-
-                                /* 1%   2.5%   5%    10% */
-    double f_crit_vals[6][4] = {{ 5.91, 7.24, 8.65, 10.61 },  /* T = 25 */
- 			        { 5.61, 6.73, 7.81,  9.31 },  /* T = 50 */
-			        { 5.47, 6.49, 7.44,  8.73 },  /* T = 100 */
-			        { 5.39, 6.34, 7.25,  8.43 },  /* T = 250 */
-			        { 5.36, 6.30, 7.20,  8.34 },  /* T = 500 */
-			        { 5.34, 6.25, 7.16,  8.27 }}; /* inf */
-    
-
-    if (varno == 0) return E_DATA;
-
-    gretl_model_init(&adf_model);
-    k = 3 + order;
-
-    adflist = malloc((5 + order) * sizeof *adflist);
-    shortlist = malloc(k * sizeof *shortlist);
-
-    if (adflist == NULL || shortlist == NULL) {
-	free(adflist);
-	free(shortlist);
-	return E_ALLOC;
-    }
-
-    i = pdinfo->t1;
-    pdinfo->t1 = 0;
-    diffgenr(varno, pZ, pdinfo);
-    if (laggenr(varno, 1, 1, pZ, pdinfo) < 0) {
-	free(adflist);
-	free(shortlist);
-	return E_DATA;
-    }
-    pdinfo->t1 = i;
-
-    adflist[1] = diffvarnum(varno, pdinfo);
-
-    /* do the more familiar Dickey-Fuller t-test first */
-    adflist[0] = 3;
-    adflist[2] = 0;
-    adflist[3] = lagvarnum(varno, 1, pdinfo);
-
-    adf_model = lsq(adflist, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (adf_model.errcode) {
-	return adf_model.errcode;
-    }
-
-    DFt = adf_model.coeff[1] / adf_model.sderr[1];
-    T = adf_model.nobs;
-
-    pv = df_pvalue_from_plugin(DFt, T);
-
-    if (!na(pv)) {
-	sprintf(pval, "%s %.4g", _("p-value"), pv);
-    } else {
-	row = (T > 500)? 5 : 
-	    (T > 450)? 4 : 
-	    (T > 240)? 3 : 
-	    (T > 90)? 2 : 
-	    (T > 40)? 1 : 
-	    (T > 24)? 0 : -1;
-
-	if (row < 0) {
-	    sprintf(pval, _("significance level unknown"));
-	} else {
-	    if (DFt < t_crit_vals[row][0])
-		sprintf(pval, _("significant at the 1 percent level"));
-	    else if (DFt < t_crit_vals[row][1])
-		sprintf(pval, _("significant at the 2.5 percent level"));
-	    else if (DFt < t_crit_vals[row][2])
-		sprintf(pval, _("significant at the 5 percent level"));
-	    else if (DFt < t_crit_vals[row][3])
-		sprintf(pval, _("significant at the 10 percent level"));
-	    else
-		sprintf(pval, _("not significant at the 10 percent level"));
-	}
-    }
-    
-    pprintf(prn, _("\nDickey-Fuller test with constant\n\n"
-	    "   model: (1 - L)%s = m + g * %s(-1) + e\n"
-	    "   unit-root null hypothesis: g = 0\n"
-	    "   estimated value of g: %f\n"
-	    "   test statistic: t = %f, with sample size %d\n"
-	    "   %s\n"),
-	    pdinfo->varname[varno], pdinfo->varname[varno],
-	    adf_model.coeff[1], DFt, adf_model.nobs, pval);
-
-    clear_model(&adf_model);
-
-    /* then do ADF test using F-statistic */
-    adflist[0] = 4 + order;
-    adflist[3] = lagvarnum(varno, 1, pdinfo);
-
-    for (l=1; l<=order; l++) {
-	int lnum = laggenr(adflist[1], l, 1, pZ, pdinfo);
-
-	/* FIXME: handle laggenr error */
-	if (lnum > 0) {
-	    adflist[l+3] = lnum;
-	} 
-    }
-
-    adflist[adflist[0]] = 0;
-    if ((adflist[2] = gettrend(pZ, pdinfo)) == 999) {
-	free(adflist);
-	free(shortlist);
-	return E_ALLOC;
-    }
-
-    adf_model = lsq(adflist, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (adf_model.errcode)
-	return adf_model.errcode;
-    adf_model.aux = AUX_ADF;
-    printmodel(&adf_model, pdinfo, OPT_NONE, prn);
-    essu = adf_model.ess;
-    T = adf_model.nobs;
-    clear_model(&adf_model);
-
-    shortlist[0] = adflist[0] - 2;
-    shortlist[1] = adflist[1];
-    for (i=0; i<=order; i++) {
-	shortlist[2+i] = adflist[4+i];
-    }
-
-    adf_model = lsq(shortlist, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (adf_model.errcode) {
-	/* FIXME: clean up */
-	return adf_model.errcode;
-    }	
-
-    F = (adf_model.ess - essu) * (T - k)/(2 * essu);
-    clear_model(&adf_model);
-
-    row = -1;
-    if (T > 500) row = 5;
-    else if (T > 250) row = 4;
-    else if (T > 100) row = 3;
-    else if (T > 50) row = 2;
-    else if (T > 25) row = 1;
-    else if (T > 23) row = 0;
-
-    if (row == -1) {
-	strcpy(pval, _("unknown pvalue"));
-    } else {
-	if (F > f_crit_vals[row][3]) strcpy(pval, _("pvalue < .01"));
-	else if (F > f_crit_vals[row][2]) strcpy(pval, _(".025 > pvalue > .01"));
-	else if (F > f_crit_vals[row][1]) strcpy(pval, _(".05 > pvalue > .025"));
-	else if (F > f_crit_vals[row][0]) strcpy(pval, _(".10 > pvalue > .05"));
-	else strcpy(pval, _("pvalue > .10"));
-    }
-
-    pprintf(prn, _("Augmented Dickey-Fuller test on %s:\n   F(2, %d) = %f, "
-	   "with %s\n"), pdinfo->varname[varno], T - k, F, pval);
-    pprintf(prn, _("The null hypothesis is that %s has a unit root, i.e. "
-	    "the parameters on\nthe time trend and %s are both zero.\n"),
-	    pdinfo->varname[varno], pdinfo->varname[adflist[3]]);
-
-    free(adflist);
-    free(shortlist);
-    dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
-
-    return 0;
+    return real_adf_test(varno, order, 1, pZ, pdinfo, prn);
 }
 
 static int 
@@ -1762,7 +1758,7 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
 
 	v = varlist[i];
 	if (v == 0) continue;
-	if (diffgenr(v, pZ, pdinfo)) {
+	if (diffgenr(v, pZ, pdinfo, 0)) {
 	    trends = -1;
 	    break;
 	}
@@ -1958,7 +1954,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* now get differences and put them into list */
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) continue;
-	diffgenr(list[i], pZ, pdinfo);
+	diffgenr(list[i], pZ, pdinfo, 0);
 	varlist[i] = diffvarnum(list[i], pdinfo);
     }
 

@@ -3909,13 +3909,19 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
     double *lx;
 
     /* can't do lags of a scalar */
-    if (!pdinfo->vector[parent]) return -1;
+    if (!pdinfo->vector[parent]) {
+	return -1;
+    }
 
     /* sanity check */
-    if (lag > pdinfo->n) return -1;
+    if (lag > pdinfo->n) {
+	return -1;
+    }
 
     lx = malloc(pdinfo->n * sizeof *lx);
-    if (lx == NULL) return -1;
+    if (lx == NULL) {
+	return -1;
+    }
 
     strcpy(s, pdinfo->varname[parent]);
     gretl_trunc(s, (pdinfo->pd >= 10)? 5 : 6);
