@@ -880,6 +880,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     struct gnuplot_info gpinfo;
 
+    *gretl_errmsg = '\0';
+
 #ifdef WIN32
     /* only gnuplot 3.8 or higher will accept "height" here */
     strcpy(keystr, "set key left top height 1 width 1 box\n");

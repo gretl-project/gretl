@@ -2925,7 +2925,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     if (model_sample_issue(pmod, NULL, 0, datainfo)) {
 	ok = 0;
 	graphs_ok = 0;
-#ifdef ALLOW_MODEL_DATASETS /* for generating model graphs */
+#ifdef ALLOW_MODEL_DATASETS /* for generating model graphs (only) */
 	if (add_subsampled_dataset_to_model(pmod) == 0) {
 	    graphs_ok = 1;
 	}

@@ -3254,8 +3254,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	return;
     }
 
-    origv = (pmod->dataset != NULL)? 
-	pmod->dataset->dinfo->v : datainfo->v;
+    origv = (pmod->dataset != NULL)? pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
     if (add_fit_resid(pmod, 0, 1)) return;

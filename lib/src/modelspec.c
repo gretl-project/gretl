@@ -242,7 +242,6 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 	if (subdum_match(pdinfo->subdum, subdum, n)) {
 	    return 0;
 	} else {
-	    fputs(I_("model and dataset subsamples not the same\n"), stderr);
 	    strcpy(gretl_errmsg, _("model and dataset subsamples not the same\n"));
 	    return 1;
 	}
