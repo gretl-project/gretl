@@ -170,7 +170,7 @@ dn = n - k;
 if( k == 0 )
 	{
 	if( p < .01 )
-		dk = -expm1( dn * log1p(-p) );
+		dk = -cephes_exp( dn * cephes_log(-p) );
 	else
 		dk = 1.0 - pow( 1.0-p, dn );
 	}
@@ -229,7 +229,7 @@ dn = n - k;
 if( k == 0 )
 	{
 	if( y > 0.8 )
-		p = -expm1( log1p(y-1.0) / dn );
+		p = -cephes_exp( cephes_log(y-1.0) / dn );
 	else
 		p = 1.0 - pow( y, 1.0/dn );
 	}

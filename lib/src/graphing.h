@@ -19,6 +19,9 @@
 
 /* graphing.h for gretl */
 
+#ifndef GRAPHING_H
+#define GRAPHING_H
+
 #include <stdio.h>
 
 #define GRAPH_NO_DATA -999
@@ -58,11 +61,11 @@ typedef struct {
 
 #define PLOT_LABEL_TEXT_LEN 31
 
-enum {
+enum gp_just_codes {
     GP_JUST_LEFT,
     GP_JUST_CENTER,
     GP_JUST_RIGHT
-} gp_just_codes;
+};
 
 typedef struct {
     char text[PLOT_LABEL_TEXT_LEN + 1]; 
@@ -189,10 +192,9 @@ const char *get_gnuplot_pallette (int i, int plottype);
 int gnuplot_test_command (const char *cmd);
 
 #ifdef ENABLE_NLS
-
 void pprint_gnuplot_encoding (const char *termstr, PRN *prn);
-
 void fprint_gnuplot_encoding (const char *termstr, FILE *fp);
-
 #endif
+
+#endif /* GRAPHING_H */
 
