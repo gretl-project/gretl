@@ -698,8 +698,10 @@ static void dump_model_cmds (FILE *fp, int m)
     int i;
 
     fprintf(fp, "(* commands pertaining to model %d *)\n", mstack[m].ID);
-    for (i=0; i<mstack[m].n; i++) 
+
+    for (i=0; i<mstack[m].n; i++) {
 	fprintf(fp, "%s", mstack[m].cmds[i]);
+    }
 }
 
 /* ........................................................... */
@@ -752,8 +754,10 @@ gint dump_cmd_stack (const char *fname, int insert_open_data)
 		fprintf(fp, "open %s\n", paths.datfile);
 	    } else {
 		/* the user canceled the saving of the data */
-		fclose(fp);
-		remove(fname);
+		if (strcmp(fname, "stderr")) {
+		    fclose(fp);
+		    remove(fname);
+		}
 		return 1;
 	    }
 	}
@@ -3987,7 +3991,7 @@ void do_open_csv_box (char *fname, int code, int append)
 
 static int dat_suffix (const char *fname)
 {
-    int len;
+    size_t len;
 
     if (fname == NULL || (len = strlen(fname)) < 5) {
 	return 0;
@@ -4008,7 +4012,7 @@ int maybe_restore_full_data (int action)
 	GtkWidget *w = gtk_item_factory_get_item(mdata->ifac, 
 						 "/Sample/Restore full range");
 
-	if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
+	if (w != NULL && GTK_IS_WIDGET(w) && GTK_WIDGET_IS_SENSITIVE(w)) {
 	    int resp = GRETL_CANCEL;
 
 	    if (action == SAVE_DATA) {
@@ -4036,7 +4040,7 @@ int maybe_restore_full_data (int action)
 
 /* ........................................................... */
 
-int do_store (char *mydatfile, unsigned char oflag, int overwrite)
+int do_store (char *savename, unsigned char oflag, int overwrite)
 {
     gchar *msg, *tmp = NULL;
     FILE *fp;
@@ -4051,15 +4055,15 @@ int do_store (char *mydatfile, unsigned char oflag, int overwrite)
     if (storelist == NULL) showlist = 0;
 
     if (oflag) { /* not a standard native save */
-	tmp = g_strdup_printf("store '%s' %s -%c", mydatfile, 
+	tmp = g_strdup_printf("store '%s' %s -%c", savename, 
 			      (showlist)? storelist : "", oflag);
-    } else if (dat_suffix(mydatfile)) { /* saving as ".dat" */
-	tmp = g_strdup_printf("store '%s' %s -t", mydatfile, 
+    } else if (dat_suffix(savename)) { /* saving as ".dat" */
+	tmp = g_strdup_printf("store '%s' %s -t", savename, 
 			      (showlist)? storelist : "");
 	oflag = 't';
     } else {
 	if (!overwrite) {
-	    fp = fopen(mydatfile, "r");
+	    fp = fopen(savename, "rb");
 	    if (fp != NULL) {
 		fclose(fp);
 		if (yes_no_dialog(_("gretl: save data"), 
@@ -4070,9 +4074,11 @@ int do_store (char *mydatfile, unsigned char oflag, int overwrite)
 		}
 	    }
 	}
-	tmp = g_strdup_printf("store '%s' %s", mydatfile, 
-			      (showlist)? storelist : "");   
-	strcpy(paths.datfile, mydatfile);
+	tmp = g_strdup_printf("store '%s' %s", savename, 
+			      (showlist)? storelist : ""); 
+	if (paths.datfile != savename) {
+	    strcpy(paths.datfile, savename);
+	}
     }
 
     err = check_cmd(tmp);
@@ -4082,18 +4088,16 @@ int do_store (char *mydatfile, unsigned char oflag, int overwrite)
     if (err) goto store_get_out;
 
     /* back up existing datafile if need be */
-    if ((fp = fopen(mydatfile, "r")) && fgetc(fp) != EOF &&
+    if ((fp = fopen(savename, "rb")) && fgetc(fp) != EOF &&
 	fclose(fp) == 0) {
-	char backup[MAXLEN];
-
-	sprintf(backup, "%s~", mydatfile);
-	if (copyfile(mydatfile, backup)) {
+	tmp = g_strdup_printf("%s~", savename);
+	if (copyfile(savename, tmp)) {
 	    err = 1;
 	    goto store_get_out;
 	}
     }
 
-    if (write_data(mydatfile, command.list, Z, datainfo, 
+    if (write_data(savename, command.list, Z, datainfo, 
 		   data_option(oflag), &paths)) {
 	sprintf(errtext, _("Write of data file failed\n%s"),
 		get_gretl_errmsg());
@@ -4103,16 +4107,16 @@ int do_store (char *mydatfile, unsigned char oflag, int overwrite)
     }
 
     if (oflag != 'm' && oflag != 'r' && oflag != 'a') {
-	mkfilelist(FILE_LIST_DATA, mydatfile);
+	mkfilelist(FILE_LIST_DATA, savename);
     }
 
-    msg = g_strdup_printf(_("%s written OK"), mydatfile);
+    msg = g_strdup_printf(_("%s written OK"), savename);
     infobox(msg);
     g_free(msg);
 
     /* record that data have been saved */
     if (!oflag) {
-	data_status = (HAVE_DATA|USER_DATA);
+	data_status = (HAVE_DATA | USER_DATA);
 	set_sample_label(datainfo);
     }
 
@@ -4309,20 +4313,22 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 #endif /* G_OS_WIN32 */
 
     remove(texfile);
+
 #ifdef KILL_DVI_FILE
     sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);
     remove(tmp);
 #endif
+
     sprintf(tmp, "%s.log", texbase);
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
 	remove(tmp);
     }
+
     sprintf(tmp, "%s.aux", texbase);
     remove(tmp);
-    
 }
 
 /* ........................................................... */

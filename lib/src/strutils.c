@@ -105,11 +105,12 @@ int slashpos (const char *str)
 { 
     size_t i, n;
 
-    if (str == NULL) return 0;
+    if (str == NULL || *str == '\0') return 0;
 
     n = strlen(str);
     for (i=n-1; i>0; i--) 
 	if (str[i] == SLASH) return i;
+
     return 0;    
 }
 
@@ -411,12 +412,15 @@ char *switch_ext (char *targ, const char *src, char *ext)
 
 int get_base (char *targ, const char *src, char c)
 {
-    int i, n = strlen(src);
-	
+    int i, n;
+
+    if (src == NULL || *src == '\0') return 0;
+
+    n = strlen(src);
     for (i=n-1; i>=0; i--) {
 	if (src[i] == c) {
-	    strncpy(targ, src, i+1);
-	    targ[i+1] = '\0';
+	    *targ = '\0';
+	    strncat(targ, src, i+1);
 	    return 1;
 	}
     }

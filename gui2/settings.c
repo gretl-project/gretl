@@ -246,21 +246,30 @@ void set_app_font (const char *fontname)
 
 /* .................................................................. */
 
+static void slash_terminate (char *path)
+{
+    if (path == NULL || *path == '\0') return;
+
+    if (path[strlen(path) - 1] != SLASH) {
+	strcat(path, SLASHSTR);
+    }
+}
+
 void get_default_dir (char *s)
 {
-    *s = 0;
+    *s = '\0';
 
     if (usecwd) {
 	char *test = getcwd(s, MAXLEN);
 
 	if (test == NULL) {
 	    strcpy(s, paths.userdir);
-	} else {
-	    strcat(s, SLASHSTR);
-	}
+	} 
     } else {
 	strcpy(s, paths.userdir);   
     } 
+    
+    slash_terminate(s);
 }
 
 /* ........................................................... */

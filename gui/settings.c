@@ -1321,9 +1321,6 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
     gtk_color_selection_get_color(GTK_COLOR_SELECTION(csel), color);
 
-    fprintf(stderr, "color[0]=%g, color[1]=%g, color[2]=%g\n",
-	    color[0], color[1], color[2]);
-
     sprintf(color_string, "x%02x%02x%02x",
 	    (guint) (scale_round (color[0])),
 	    (guint) (scale_round (color[1])),

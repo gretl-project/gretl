@@ -2229,6 +2229,8 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 
 int is_model_cmd (const char *line)
 {
+    if (line == NULL || *line == '\0') return 0;
+
     if (!strncmp(line, "ols", 3)  ||
 	!strncmp(line, "corc", 4) ||
 	!strncmp(line, "hilu", 4) ||
@@ -2243,8 +2245,10 @@ int is_model_cmd (const char *line)
 	!strncmp(line, "logit", 5)  ||
 	!strncmp(line, "probit", 6) ||
 	!strncmp(line, "end nls", 7) ||
-	!strncmp(line, "ar", 2))
+	!strncmp(line, "ar", 2)) {
 	return 1;
+    }
+
     return 0;
 }
 
@@ -2260,8 +2264,10 @@ int is_model_ref_cmd (int ci)
 	ci == LMTEST ||
 	ci == FCAST ||
 	ci == FCASTERR ||
-	ci == FIT)
+	ci == FIT) {
 	return 1;
+    }
+
     return 0;
 }
 
@@ -2378,11 +2384,12 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
     int v, panel;
 
     v = varindex(pdinfo, "year");
-    if (v == pdinfo->v)
+    if (v == pdinfo->v) {
 	v = varindex(pdinfo, "Year");
-    if (v == pdinfo->v)
+    }
+    if (v == pdinfo->v) {
 	panel = 0; /* can't guess */
-    else {
+    } else {
 	if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
 	    pdinfo->time_series = STACKED_CROSS_SECTION; 
 	    panel = STACKED_CROSS_SECTION;
@@ -2391,6 +2398,7 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 	    panel = STACKED_TIME_SERIES;
 	}
     }
+
     return panel;
 }
 

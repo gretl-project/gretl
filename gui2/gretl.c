@@ -2421,7 +2421,7 @@ static void auto_store (void)
 
     /* if there's already a datafile, and it's gzipped, then
        arrange for the new store to be gzipped too */
-    if (strlen(paths.datfile) && is_gzipped(paths.datfile)) {
+    if (*paths.datfile && is_gzipped(paths.datfile)) {
 	oflag = 'z';
     }
 

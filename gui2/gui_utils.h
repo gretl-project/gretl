@@ -50,7 +50,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 			const char *title, int role,
 			gpointer data);
 
-windata_t *view_file (char *filename, int editable, int del_file, 
+windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role);
 
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 

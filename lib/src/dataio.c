@@ -29,8 +29,9 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
-#define QUOTE '\''
-#define SCALAR_DIGITS 12
+#define QUOTE                  '\''
+#define SCALAR_DIGITS          12
+#define PMAX_NOT_AVAILABLE     666
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
 
@@ -1086,7 +1087,7 @@ int get_precision (double *x, int n)
 	/* escape clause: numbers are too big or too small for
 	   this treatment */
 	if (x[i] < 1.0e-6 || x[i] > 1.0e+8) {
-	    return 999;
+	    return PMAX_NOT_AVAILABLE;
 	}
 	p = 8;
 	sprintf(numstr, "%.8f", x[i]);
@@ -1094,6 +1095,7 @@ int get_precision (double *x, int n)
 	while (*s-- == '0') p--;
 	if (p > pmax) pmax = p;
     }
+
     return pmax;
 }
 
@@ -1126,11 +1128,14 @@ int write_data (const char *fname, const int *list,
 
     *gretl_errmsg = 0;
 
+    if (list == NULL) return 1;
+
     l0 = list[0];
     if (l0 == 0) return 1;
 
-    if (opt == 0 || opt == GRETL_DATA_GZIPPED) 
+    if (opt == 0 || opt == GRETL_DATA_GZIPPED) {
 	return write_xmldata(fname, list, Z, pdinfo, opt, ppaths);
+    }
 
     if (opt == GRETL_DATA_CSV && pdinfo->delim == ',' && 
 	',' == pdinfo->decpoint) {
@@ -1141,8 +1146,9 @@ int write_data (const char *fname, const int *list,
 
     strcpy(datfile, fname);
 
-    if (opt == GRETL_DATA_R && pdinfo->time_series == TIME_SERIES) 
+    if (opt == GRETL_DATA_R && pdinfo->time_series == TIME_SERIES) {
 	opt = GRETL_DATA_R_ALT;
+    }
 
     /* write header and label files if not exporting to other formats */
     if (opt != GRETL_DATA_R && opt != GRETL_DATA_R_ALT && 
@@ -1165,10 +1171,11 @@ int write_data (const char *fname, const int *list,
     }
 
     /* open files, other than for gzipped output */
-    if (opt == GRETL_DATA_FLOAT || opt == GRETL_DATA_DOUBLE) 
+    if (opt == GRETL_DATA_FLOAT || opt == GRETL_DATA_DOUBLE) {
 	fp = fopen(datfile, "wb");
-    else 
+    } else {
 	fp = fopen(datfile, "w");
+    }
     if (fp == NULL) return 1;
 
     if (opt == GRETL_DATA_FLOAT) { /* single-precision binary */
@@ -1214,12 +1221,13 @@ int write_data (const char *fname, const int *list,
 
     if (opt == GRETL_DATA_TRAD) { /* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (pdinfo->markers && pdinfo->S != NULL) 
+	    if (pdinfo->markers && pdinfo->S != NULL) {
 		fprintf(fp, "%s ", pdinfo->S[t]);
+	    }
 	    for (i=1; i<=l0; i++) {
 		if (na(Z[list[i]][t])) {
 		    fprintf(fp, "-999 ");
-		} else if (pmax[i-1] == 999) {
+		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.10g ", 
 			    (pdinfo->vector[list[i]])? 
 			    Z[list[i]][t] : Z[list[i]][0]);
@@ -1242,25 +1250,25 @@ int write_data (const char *fname, const int *list,
 
 	/* variable names */
 	if (opt == GRETL_DATA_CSV) fprintf(fp, "obs%c", delim);
-	for (i=1; i<l0; i++) 
+	for (i=1; i<l0; i++) {
 	    fprintf(fp, "%s%c", pdinfo->varname[list[i]], delim);
+	}
 	fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (pdinfo->S != NULL) 
+	    if (pdinfo->S != NULL) {
 		fprintf(fp, "%s%c", pdinfo->S[t], delim);
-	    else {
+	    } else {
 		char tmp[9];
 
 		ntodate(tmp, t, pdinfo);
 		fprintf(fp, "\"%s\"%c", tmp, delim);
 	    }
 	    for (i=1; i<=l0; i++) { 
-		xx = (pdinfo->vector[list[i]])? 
-		    Z[list[i]][t] : Z[list[i]][0];
+		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
 		if (na(xx)) {
 		    fprintf(fp, "NA");
-		} else if (pmax[i-1] == 999) {
+		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.10g", xx);;
 		} else {
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
@@ -1309,14 +1317,13 @@ int write_data (const char *fname, const int *list,
 	    fprintf(fp, "\"%s\" <-\n", pdinfo->varname[list[i]]);
 	    fprintf(fp, "structure(c(");
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = (pdinfo->vector[list[i]])?
-		    Z[list[i]][t] : Z[list[i]][0];
+		xx = (pdinfo->vector[list[i]])? Z[list[i]][t] : Z[list[i]][0];
 		if (na(xx)) fprintf(fp, "NA");
 		else fprintf(fp, "%g", xx);
 		if (t < pdinfo->t2) fprintf(fp, ", "); 
-		if (t > pdinfo->t1 && (t - pdinfo->t1) % 8 == 0 &&
-		    t < pdinfo->t2)
+		if (t > pdinfo->t1 && (t - pdinfo->t1) % 8 == 0 && t < pdinfo->t2) {
 		    fputc('\n', fp);
+		}
 	    }
 	    fputc(')', fp);
 	    if (pdinfo->time_series == TIME_SERIES) 
@@ -1332,7 +1339,7 @@ int write_data (const char *fname, const int *list,
 		pdinfo->varname[list[1]], n);
 	/* write out column of values of dep. var. */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	    if (pmax[0] == 999) {
+	    if (pmax[0] == PMAX_NOT_AVAILABLE) {
 		fprintf(fp, "%.10g\n", Z[list[1]][t]);
 	    } else {
 		fprintf(fp, "%.*f\n", pmax[0], 
@@ -1346,7 +1353,7 @@ int write_data (const char *fname, const int *list,
 	/* write out indep. var. matrix */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=2; i<=list[0]; i++) {
-		if (pmax[i-1] == 999) {
+		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.10g ", Z[list[i]][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], 
@@ -1365,17 +1372,19 @@ int write_data (const char *fname, const int *list,
 
     if (pmax) free(pmax);
     if (fp != NULL) fclose(fp);
+
     return 0;
 }
 
 static void type_string (char *str, const DATAINFO *pdinfo)
 {
-    if (dataset_is_time_series(pdinfo)) 
+    if (dataset_is_time_series(pdinfo)) {
 	strcpy(str, _("time series"));
-    else if (dataset_is_panel(pdinfo)) 
+    } else if (dataset_is_panel(pdinfo)) {
         strcpy(str, _("panel"));
-    else 
+    } else {
         strcpy(str, _("undated"));
+    }
 }
 
 static void pd_string (char *str, const DATAINFO *pdinfo)
@@ -1565,7 +1574,9 @@ int is_gzipped (const char *fname)
     FILE *fp;
     int gz = 0;
 
-    fp = fopen(fname, "r");
+    if (fname == NULL || *fname == '\0') return 0;
+
+    fp = fopen(fname, "rb");
     if (fp == NULL) return 0;
 
     if (fgetc(fp) == 037 && fgetc(fp) == 0213) 
@@ -3088,18 +3099,22 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 static char *simple_fname (char *dest, const char *src)
 {
     char *p;
+    const char *s;
+
+    s = strrchr(src, SLASH);
 
     /* take last part of src filename */
-    if (strrchr(src, SLASH)) {
-        strcpy(dest, strrchr(src, SLASH) + 1);
+    if (s != NULL) {
+        strcpy(dest, s + 1);
     } else {
         strcpy(dest, src);
     }
 
     /* trash any extension */
     p = strrchr(dest, '.');
-    if (p != NULL && strlen(dest) > 3)
+    if (p != NULL && strlen(dest) > 3) {
 	*p = '\0';
+    }
 
     return dest;
 }
@@ -3131,7 +3146,7 @@ static int write_xmldata (const char *fname, const int *list,
     char startdate[9], enddate[9], datname[MAXLEN], type[32];
     char *xmlbuf = NULL;
     long sz = 0L;
-    void *handle;
+    void *handle = NULL;
     int (*show_progress) (long, long, int) = NULL;
 #ifdef USE_GTK2
     const char *enc = "UTF-8";
@@ -3145,7 +3160,7 @@ static int write_xmldata (const char *fname, const int *list,
 	fz = gzopen(fname, "wb");
 	if (fz == Z_NULL) err = 1;
     } else {
-	fp = fopen(fname, "w");
+	fp = fopen(fname, "wb");
 	if (fp == NULL) err = 1;
     }
     if (err) {
@@ -3173,10 +3188,10 @@ static int write_xmldata (const char *fname, const int *list,
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
 		close_plugin(handle);
-		sz = 0;
+		sz = 0L;
 	    }
 	} else {
-	    sz = 0;
+	    sz = 0L;
 	}
     }
 
@@ -3194,6 +3209,8 @@ static int write_xmldata (const char *fname, const int *list,
     ntodate(enddate, pdinfo->t2, pdinfo);
 
     simple_fname(datname, fname);
+    xmlbuf = gretl_xml_encode(datname);
+    if (xmlbuf == NULL) return 1;
 
     if (opt) {
 	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
@@ -3208,6 +3225,8 @@ static int write_xmldata (const char *fname, const int *list,
 		"startobs=\"%s\" endobs=\"%s\" ", 
 		enc, datname, pdinfo->pd, startdate, enddate);
     }
+
+    free(xmlbuf);
 
     switch (pdinfo->time_series) {
     case 0:
@@ -3238,8 +3257,9 @@ static int write_xmldata (const char *fname, const int *list,
 		gzputs(fz, xmlbuf);
 		gzputs(fz, "</description>\n");
 	    }
-	    else
+	    else {
 		fprintf(fp, "<description>\n%s</description>\n", xmlbuf);
+	    }
 	    free(xmlbuf);
 #ifdef XML_DEBUG
 	    fprintf(stderr, "xmlbuf encoded buffer freed\n");
@@ -3252,8 +3272,11 @@ static int write_xmldata (const char *fname, const int *list,
 #endif
 
     /* then listing of variable names and labels */
-    if (opt) gzprintf(fz, "<variables count=\"%d\">\n", list[0]);
-    else fprintf(fp, "<variables count=\"%d\">\n", list[0]);
+    if (opt) {
+	gzprintf(fz, "<variables count=\"%d\">\n", list[0]);
+    } else {
+	fprintf(fp, "<variables count=\"%d\">\n", list[0]);
+    }
 
     for (i=1; i<=list[0]; i++) {
 	xmlbuf = gretl_xml_encode(pdinfo->varname[list[i]]);
@@ -3265,7 +3288,7 @@ static int write_xmldata (const char *fname, const int *list,
 	}
 	if (!pdinfo->vector[list[i]]) {
 	    if (opt) { 
-		if (pmax[i-1] == 999) {
+		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    gzprintf(fz, "\n role=\"scalar\" value=\"%.10g\"",
 			     Z[list[i]][0]);
 		} else {
@@ -3273,7 +3296,7 @@ static int write_xmldata (const char *fname, const int *list,
 			     pmax[i-1], Z[list[i]][0]);
 		}
 	    } else {
-		if (pmax[i-1] == 999) {
+		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "\n role=\"scalar\" value=\"%.10g\"",
 			    Z[list[i]][0]);
 		} else {
@@ -3322,14 +3345,17 @@ static int write_xmldata (const char *fname, const int *list,
     }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (opt) gzputs(fz, "<obs");
-	else fputs("<obs", fp);
+	if (opt) {
+	    gzputs(fz, "<obs");
+	} else {
+	    fputs("<obs", fp);
+	}
 	if (pdinfo->markers && pdinfo->S != NULL) {
 	    if (opt) gzprintf(fz, " label=\"%s\">", pdinfo->S[t]);
 	    else fprintf(fp, " label=\"%s\">", pdinfo->S[t]);
 	} else {
 	    if (opt) gzputs(fz, ">");
-	    else fputs(">", fp);
+	    else fputc('>', fp);
 	}
 	for (i=1; i<=list[0]; i++) {
 	    if (!pdinfo->vector[list[i]]) continue;
@@ -3338,14 +3364,14 @@ static int write_xmldata (const char *fname, const int *list,
 		else fputs("NA ", fp);
 	    } else {
 		if (opt) {
-		    if (pmax[i-1] == 999) {
+		    if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 			gzprintf(fz, "%.10g ", Z[list[i]][t]);
 		    } else {
 			gzprintf(fz, "%.*f ", pmax[i-1], Z[list[i]][t]);
 		    }
 		}
 		else {
-		    if (pmax[i-1] == 999) {
+		    if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 			fprintf(fp, "%.10g ", Z[list[i]][t]);
 		    } else {
 			fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
@@ -3360,8 +3386,11 @@ static int write_xmldata (const char *fname, const int *list,
 	}
     }
 
-    if (opt) gzprintf(fz, "</observations>\n</gretldata>\n");
-    else fprintf(fp, "</observations>\n</gretldata>\n");
+    if (opt) {
+	gzprintf(fz, "</observations>\n</gretldata>\n");
+    } else {
+	fprintf(fp, "</observations>\n</gretldata>\n");
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");

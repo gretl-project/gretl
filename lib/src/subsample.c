@@ -527,6 +527,8 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
         return 0;
     }
 
+    if (fullinfo == NULL || *fullinfo == NULL) return 1;
+
     /* reset n to full series length */
     n = (*fullinfo)->n;
 
@@ -546,8 +548,11 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     /* zero out the "subdum" dummy variable */
     i = varindex(*fullinfo, "subdum");
-    if (i < (*fullinfo)->v)
-        for (t=0; t<n; t++) (*fullZ)[i][t] = 0.;
+    if (i < (*fullinfo)->v) {
+        for (t=0; t<n; t++) {
+	    (*fullZ)[i][t] = 0.0;
+	}
+    }
 
     /* reorganize pointers for data set */
     *subZ = *Z;

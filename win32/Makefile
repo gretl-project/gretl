@@ -11,7 +11,7 @@ plugindir = ../plugin
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields
+CC = $(MGW_PREFIX)-gcc -Wall -O2 -g -mms-bitfields
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
 

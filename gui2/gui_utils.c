@@ -1128,7 +1128,6 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES);
 
-
     if (vwin->role == VIEW_MODELTABLE) tex_icon_init();
 
     if (text_out || vwin->role == SCRIPT_OUT) {
@@ -1243,11 +1242,13 @@ static gchar *make_viewer_title (int role, const char *fname)
     case EDIT_SCRIPT:
     case VIEW_SCRIPT:	
     case VIEW_FILE:
-	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp"))
+	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp")) {
 	    title = g_strdup(_("gretl: command script"));
-	else {
-	    gchar *p = strrchr(fname, SLASH);
-	    title = g_strdup_printf("gretl: %s", p? p + 1 : fname);
+	} else {
+	    const char *p = strrchr(fname, SLASH);
+
+	    title = g_strdup_printf("gretl: %s", 
+				    (p != NULL)? p + 1 : fname);
 	} 
 	break;
     case EDIT_NOTES:
@@ -1262,6 +1263,7 @@ static gchar *make_viewer_title (int role, const char *fname)
     default:
 	break;
     }
+
     return title;
 }
 
@@ -1378,7 +1380,8 @@ static windata_t *common_viewer_new (int role, const char *title,
 {
     windata_t *vwin;
 
-    if ((vwin = mymalloc(sizeof *vwin)) == NULL) return NULL;
+    vwin = mymalloc(sizeof *vwin);
+    if (vwin == NULL) return NULL;
 
     windata_init(vwin);
     vwin->role = role;
@@ -1434,8 +1437,10 @@ static void create_source (windata_t *vwin, GtkSourceBuffer **buf,
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->w), 4);
 
     gtk_widget_modify_font(GTK_WIDGET(vwin->w), fixed_font);
+
     hsize *= get_char_width(vwin->w);
     hsize += 48;
+
     gtk_window_set_default_size (GTK_WINDOW(vwin->dialog), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
@@ -1462,8 +1467,10 @@ static void create_text (windata_t *vwin, GtkTextBuffer **buf,
     gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->w), 4);
 
     gtk_widget_modify_font(GTK_WIDGET(vwin->w), fixed_font);
+
     hsize *= get_char_width(vwin->w);
     hsize += 48;
+
     gtk_window_set_default_size (GTK_WINDOW(vwin->dialog), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
@@ -1740,7 +1747,7 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
 /* ........................................................... */
 
-windata_t *view_file (char *filename, int editable, int del_file, 
+windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
 {
     GtkWidget *close;
@@ -1748,8 +1755,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 #ifdef USE_GTKSOURCEVIEW
     GtkSourceBuffer *sbuf = NULL;
 #endif
-    char *fname = NULL;
-    FILE *fp = NULL;
+    FILE *fp;
     windata_t *vwin;
     gchar *title = NULL;
     int doing_script = (role == EDIT_SCRIPT ||
@@ -1770,7 +1776,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
     title = make_viewer_title(role, filename);
     vwin = common_viewer_new(role, (title != NULL)? title : filename, 
 			     NULL, !doing_script && role != CONSOLE);
-
     g_free(title);
     if (vwin == NULL) return NULL;
 
@@ -1817,11 +1822,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
 			 G_CALLBACK(edit_script_help), vwin);
     } 
 
-    /* is the file to be deleted after viewing? */
-    if (del_file) {
-	fname = g_strdup(filename);
-    }
-
     /* make a Close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
@@ -1860,12 +1860,15 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		     G_CALLBACK(catch_button_3), vwin->w);
 
     /* offer chance to save script on exit */
-    if (role == EDIT_SCRIPT)
+    if (role == EDIT_SCRIPT) {
 	g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
 			 G_CALLBACK(query_save_script), vwin);
+    }
 
     /* clean up when dialog is destroyed */
     if (del_file) {
+	gchar *fname = g_strdup(filename);
+
 	g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 			 G_CALLBACK(delete_file), (gpointer) fname);
     }

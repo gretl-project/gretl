@@ -432,6 +432,20 @@ static char *make_winfilter (int action, gpointer data)
     return start;
 }
 
+static int has_native_data_suffix (const char *fname)
+{
+    size_t n;
+
+    if (fname == NULL || *fname == '\0') return 0;
+
+    n = strlen(fname);
+    if (n > 4) {
+	if (!strcmp(fname + n - 4, (olddat)? ".dat" : ".gdt")) return 1;
+    }
+
+    return 0;
+}
+
 /* ........................................................... */
 
 void file_selector (const char *msg, int action, gpointer data) 
@@ -439,18 +453,17 @@ void file_selector (const char *msg, int action, gpointer data)
     OPENFILENAME of;
     int retval;
     char fname[MAXLEN], endname[64], startdir[MAXLEN];
-    char *filter;
-    gchar *trmsg;
+    char *filter = NULL;
+    gchar *trmsg = NULL;
 
-    fname[0] = '\0';
-    endname[0] = '\0';
+    *fname = '\0';
+    *endname = '\0';
 
     set_startdir(startdir);
 
     /* special case: default save of data */
-    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]
-	&& !strcmp(paths.datfile + strlen(paths.datfile) - 4, 
-		(olddat)? ".dat" : ".gdt")) {
+    if ((action == SAVE_DATA || action == SAVE_GZDATA) && 
+	has_native_data_suffix(paths.datfile)) {
 	strcpy(fname, paths.datfile + slashpos(paths.datfile) + 1);
 	get_base(startdir, paths.datfile, SLASH);
     }
@@ -459,7 +472,7 @@ void file_selector (const char *msg, int action, gpointer data)
     if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
-	if (strvar != NULL && *strvar != 0) {
+	if (strvar != NULL && *strvar != '\0') {
 	    if (get_base(startdir, strvar, SLASH)) {
 		strcpy(fname, strvar + slashpos(strvar) + 1);
 	    } 
@@ -495,17 +508,20 @@ void file_selector (const char *msg, int action, gpointer data)
     of.lpstrDefExt = NULL;
     of.Flags = OFN_HIDEREADONLY;
 
-    if (action < END_OPEN)
+    if (action < END_OPEN) {
 	retval = GetOpenFileName(&of);
-    else  /* a file save action */
+    } else {
+	/* a file save action */
 	retval = GetSaveFileName(&of);
+    }
 
     free(filter);
     g_free(trmsg);
 
     if (!retval) {
-	if (CommDlgExtendedError())
+	if (CommDlgExtendedError()) {
 	    errbox(_("File dialog box error"));
+	}
 	return;
     }
 
@@ -534,8 +550,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     if (action > SAVE_BIN2 && dat_ext(fname, 1)) return;
 
-    if (check_maybe_add_ext(fname, action, data))
-	return;
+    if (check_maybe_add_ext(fname, action, data)) return;
 
     if (SAVE_DATA_ACTION(action)) {
 	int overwrite = 0;
