@@ -38,6 +38,25 @@ struct hausman_t_ {
 
 /* .................................................................. */
 
+struct {
+    int ts;
+    int n;
+    int T;
+} panel_idx;
+
+static void 
+panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
+{
+    panel_idx.ts = (pdinfo->time_series == STACKED_TIME_SERIES);
+    panel_idx.n = nunits;
+    panel_idx.T = T;
+}
+
+#define panel_index(i,t) ((panel_idx.ts)? (i * panel_idx.T + t) : \
+                                          (t * panel_idx.n + i))
+
+/* .................................................................. */
+
 static void haus_init (hausman_t *haus)
 {
     haus->ns = 0;
@@ -55,6 +74,8 @@ static void haus_free (hausman_t *haus)
 
 static int haus_alloc (hausman_t *haus, int ns)
 {
+    int nterms = (ns * ns + ns) / 2;
+
     haus->ns = ns;
 
     haus->bdiff = malloc(ns * sizeof *haus->bdiff);
@@ -62,7 +83,7 @@ static int haus_alloc (hausman_t *haus, int ns)
 	return E_ALLOC;
     }
 
-    haus->sigma = malloc(((ns * ns + ns) / 2) * sizeof *haus->sigma);
+    haus->sigma = malloc(nterms * sizeof *haus->sigma);
     if (haus->sigma == NULL) {
 	free(haus->bdiff);
 	haus->bdiff = NULL;
@@ -92,14 +113,13 @@ static void print_panel_coeff (const MODEL *pmod,
 
 /* .................................................................. */
 
-static double group_means_variance (MODEL *pmod, 
-				    double **Z, DATAINFO *pdinfo,
-				    double ***groupZ, DATAINFO **ginfo,
-				    int nunits, int effn, int *unit_obs,
-				    int T, int effT) 
+static double 
+group_means_variance (MODEL *pmod, double **Z, DATAINFO *pdinfo,
+		      double ***groupZ, DATAINFO **ginfo,
+		      int nunits, int effn, int *unit_obs, int T)
 {
-    int i, j, k, t, s, start, *list;
-    double xx;
+    int i, j, k, t, bigt, s, *list;
+    double gvar = NADBL;
     MODEL meanmod;
 
 #ifdef PDEBUG
@@ -132,36 +152,25 @@ static double group_means_variance (MODEL *pmod,
 	    list[j] = 0;
 	    continue;
 	}
+
 	list[j] = k;
-	start = 0;
+
 	s = 0;
 	for (i=0; i<nunits; i++) { 
 	    /* the observations */
-	    if (unit_obs[i] == 0) {
-		if (pdinfo->time_series == STACKED_TIME_SERIES) {
-		    start += T;
-		} else {
-		    start++;
-		}
+	    int Ti = unit_obs[i];
+	    double xx = 0.0;
+
+	    if (Ti == 0) {
 		continue;
 	    }
-	    xx = 0.0;
-	    if (pdinfo->time_series == STACKED_TIME_SERIES) {
-		for (t=start; t<start+T; t++) {
-		    if (!na(pmod->uhat[t])) {
-			xx += Z[pmod->list[j]][t];
-		    }
+	    for (t=0; t<T; t++) {
+		bigt = panel_index(i, t);
+		if (!na(pmod->uhat[bigt])) {
+		    xx += Z[pmod->list[j]][bigt];
 		}
-		start += T;
-	    } else {
-		for (t=start; t<pdinfo->n; t += nunits) {
-		    if (!na(pmod->uhat[t])) {
-			xx += Z[pmod->list[j]][t];
-		    }
-		}
-		start++;
 	    }
-	    (*groupZ)[k][s] = xx / (double) unit_obs[i];
+	    (*groupZ)[k][s] = xx / (double) Ti;
 #ifdef PDEBUG
 	    fprintf(stderr, "Set groupZ[%d][%d] = %g\n", k, i, (*groupZ)[k][i]);
 #endif
@@ -182,10 +191,8 @@ static double group_means_variance (MODEL *pmod,
     fprintf(stderr, "meanmod.sigma = %g\n", meanmod.sigma);
 #endif
 
-    if (meanmod.errcode) {
-	xx = NADBL;
-    } else {
-	xx = meanmod.sigma * meanmod.sigma;
+    if (meanmod.errcode == 0) {
+	gvar = meanmod.sigma * meanmod.sigma;
     }
 
     clear_model(&meanmod);
@@ -195,7 +202,7 @@ static double group_means_variance (MODEL *pmod,
     fprintf(stderr, "gmv: done freeing stuff\n");
 #endif
 
-    return xx;
+    return gvar;
 }
 
 /* .................................................................. */
@@ -203,12 +210,12 @@ static double group_means_variance (MODEL *pmod,
 static void 
 vcv_slopes (hausman_t *haus, MODEL *pmod, int nunits, int subt)
 {
-    int i, j, k, idx;
+    int i, j, k = 0;
 
-    k = 0;
     for (i=0; i<haus->ns; i++) {
 	for (j=i; j<haus->ns; j++) {
-	    idx = ijton(i+1, j+1, pmod->ncoeff);
+	    int idx = ijton(i + 1, j + 1, pmod->ncoeff);
+
 #ifdef PDEBUG
 	    fprintf(stderr, "setting sigma[%d] using vcv[%d] (%d, %d) = %g\n",
 		    k, idx, i+2, j+2, pmod->vcv[idx]);
@@ -279,7 +286,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int nunits, int *unit_obs, int T,
 		    hausman_t *haus, PRN *prn) 
 {
-    int i, j, t, start, oldv = pdinfo->v;
+    int i, j, t, oldv = pdinfo->v;
     int dvlen, ndum = 0;
     int *dvlist;
     double var, F;
@@ -311,36 +318,25 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return NADBL;
     }
 
-    start = 0;
     j = 0;
     for (i=0; i<nunits; i++) {
 	int dv = oldv + j;
 
 	if (unit_obs[i] < MINOBS) {
-	    if (pdinfo->time_series == STACKED_TIME_SERIES) {
-		start += T;
-	    } else {
-		start++;
-	    }
 	    continue;
 	}
+
 	sprintf(pdinfo->varname[dv], "unit_%d", i + 1);
+
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[dv][t] = 0.0;
 	}
-	if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	    for (t=start; t<start+T; t++) {
-		(*pZ)[dv][t] = 1.0;
-	    }
-	    start += T;
-	} else {
-	    for (t=start; t<pdinfo->n; t += nunits) {
-		(*pZ)[dv][t] = 1.0;
-	    }
-	    start++;
+
+	for (t=0; t<T; t++) {
+	    (*pZ)[dv][panel_index(i, t)] = 1.0;
 	}
-	j++;
-	if (j == ndum) {
+
+	if (++j == ndum) {
 	    break;
 	}
     }
@@ -350,6 +346,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     for (i=1; i<=pmod->list[0]; i++) {
 	dvlist[i] = pmod->list[i];
     }
+
     for (i=0; i<ndum; i++) {
 	dvlist[pmod->list[0] + i + 1] = oldv + i;
     }
@@ -442,7 +439,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     MODEL remod;
     int *relist;
     int re_n = T * effn;
-    int i, j, k, t, bigt;
+    int i, j, k, t;
     int err = 0;
 
     /* regression list */
@@ -469,66 +466,36 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     */
 
     k = 1;
-    for (i=1; i<=relist[0]; i++) {
-	const double *xi = Z[pmod->list[i]];
+    for (j=1; j<=relist[0]; j++) {
+	const double *xj = Z[pmod->list[j]];
 	double *gm = groupZ[k];
-	int u = 0;
+	int bigt, rt, u = 0;
 
-	if (pmod->list[i] == 0) {
-	    relist[i] = 0;
+	if (pmod->list[j] == 0) {
+	    relist[j] = 0;
 	    continue;
 	}
 
-	relist[i] = k;
+	relist[j] = k;
 
-	if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	    for (j=0; j<nunits; j++) {
-		if (unit_obs[j] == 0) {
-		    continue;
-		}
-		for (t=0; t<T; t++) {
-		    int rt = u * T + t;
-
-		    bigt = j * T + t;
-		    if (na(pmod->uhat[bigt])) {
-			reZ[k][rt] = NADBL;
-		    } else {
-			reZ[k][rt] = xi[bigt] - theta * gm[u];
-		    }
-#ifdef PDEBUG
-		    fprintf(stderr, "set reZ[%d][%d]=Z[%d][%d]-theta*"
-			    "groupZ[%d][%d]=%g\n", k, rt, 
-			    pmod->list[i], bigt,
-			    k, u, reZ[k][rt]);
-#endif
-		}
-		u++;
+	for (i=0; i<nunits; i++) {
+	    if (unit_obs[i] == 0) {
+		continue;
 	    }
-	} else {
-	    int rt = 0;
-
 	    for (t=0; t<T; t++) {
-		u = 0;
-		for (j=0; j<nunits; j++) {
-		    bigt = t * nunits + j;
-		    if (unit_obs[j] == 0) {
-			continue;
-		    }
-		    if (na(pmod->uhat[bigt])) {
-			reZ[k][rt] = NADBL;
-		    } else {
-			reZ[k][rt] = xi[bigt] - theta * gm[u];
-		    }
-#ifdef PDEBUG
-		    fprintf(stderr, "set reZ[%d][%d]=Z[%d][%d]-theta*"
-			    "groupZ[%d][%d]=%g\n", k, rt, 
-			    pmod->list[i], bigt,
-			    k, u, reZ[k][rt]);
-#endif
-		    u++;
-		    rt++;
+		bigt = panel_index(i, t);
+		if (pdinfo->time_series == STACKED_TIME_SERIES) {
+		    rt = u * T + t;
+		} else {
+		    rt = t * effn + u;
+		}
+		if (na(pmod->uhat[bigt])) {
+		    reZ[k][rt] = NADBL;
+		} else {
+		    reZ[k][rt] = xj[bigt] - theta * gm[u];
 		}
 	    }
+	    u++;
 	}
 	k++;
     }
@@ -542,6 +509,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 #endif
 
     remod = lsq(relist, &reZ, reinfo, OLS, OPT_A, 0.0);
+
     if ((err = remod.errcode)) {
 	pputs(prn, _("Error estimating random effects model\n"));
 	errmsg(err, prn);
@@ -578,28 +546,20 @@ static void
 unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
 		      int nunits, int T, const int *unit_obs)
 {
-    int i, t, start = 0;
+    int i, t;
+    double x;
 
     for (i=0; i<nunits; i++) {
 	uvar[i] = 0.0;
-	if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	    for (t=start; t<start+T; t++) {
-		if (!na(pmod->uhat[t])) {
-		    uvar[i] += pmod->uhat[t] * pmod->uhat[t];
-		}
+	for (t=0; t<T; t++) {
+	    x = pmod->uhat[panel_index(i, t)];
+	    if (!na(x)) {
+		uvar[i] += x * x;
 	    }
-	    start += T;
-	} else {
-	    for (t=start; t<pdinfo->n; t += nunits) {
-		if (!na(pmod->uhat[t])) {
-		    uvar[i] += pmod->uhat[t] * pmod->uhat[t];
-		}
-	    }
-	    start++;
 	}
 	if (unit_obs[i] > 1) {
 	    uvar[i] /= (double) unit_obs[i]; 
-	}
+	}	
     }
 }
 
@@ -610,7 +570,8 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
 			     int T, int effT, PRN *prn)
 {
     double *ubar, LM, eprime = 0.0;
-    int i, t, start = 0;
+    double x;
+    int i, t;
 
     ubar = malloc(nunits * sizeof *ubar);
     if (ubar == NULL) {
@@ -619,20 +580,11 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
 
     for (i=0; i<nunits; i++) {
 	ubar[i] = 0.0;
-	if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	    for (t=start; t<start+T; t++) {
-		if (!na(pmod->uhat[t])) {
-		    ubar[i] += pmod->uhat[t];
-		}
+	for (t=0; t<T; t++) {
+	    x = pmod->uhat[panel_index(i, t)];
+	    if (!na(x)) {
+		ubar[i] += x;
 	    }
-	    start += T;
-	} else {
-	    for (t=start; t<pdinfo->n; t += nunits) {
-		if (!na(pmod->uhat[t])) {
-		    ubar[i] += pmod->uhat[t];
-		}
-	    }
-	    start++;
 	}
 	ubar[i] /= (double) unit_obs[i]; 
 	eprime += ubar[i] * ubar[i];
@@ -653,6 +605,8 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     free(ubar);
+
+    /* FIXME for unbalanced panels */
 
     LM = (double) pmod->nobs / (2.0 * (effT - 1.0)) * 
 	pow((effT * effT * eprime / pmod->ess) - 1.0, 2);
@@ -729,48 +683,33 @@ int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
 		      int *unit_obs)
 {
     int nmaj, nmin;
-    int k, ninc = 0;
+    int nunits, T;
+    int i, t;
+    int ninc = 0;
 
     if (get_maj_min(pdinfo, &nmaj, &nmin)) {
 	return -1;
     }
 
     if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	int nunits = nmaj;
-	int nperiods = nmin;
-	int i, j;
-
-	for (i=0; i<nunits; i++) {
-	    unit_obs[i] = 0;
-	    for (j=0; j<nperiods; j++) {
-		k = i * nperiods + j;
-		if (!na(pmod->uhat[k])) {
-		    unit_obs[i] += 1;
-		}
-	    }
-	    if (unit_obs[i] > 0) {
-		ninc++;
-	    }
-	}
+	nunits = nmaj;
+	T = nmin;
     } else {
-	/* stacked cross sections */
-	int nunits = nmin;
-	int nperiods = nmaj;
-	int i, j;
-
-	for (i=0; i<nunits; i++) {
-	    unit_obs[i] = 0;
-	    for (j=0; j<nperiods; j++) {
-		k = j * nunits + i;
-		if (!na(pmod->uhat[k])) {
-		    unit_obs[i] += 1;
-		}
-	    }
-	    if (unit_obs[i] > 0) {
-		ninc++;
-	    }	    
-	}
+	nunits = nmin;
+	T = nmaj;
     }
+
+    for (i=0; i<nunits; i++) {
+	unit_obs[i] = 0;
+	for (t=0; t<T; t++) {
+	    if (!na(pmod->uhat[panel_index(i, t)])) {
+		unit_obs[i] += 1;
+	    }
+	}
+	if (unit_obs[i] > 0) {
+	    ninc++;
+	}
+    }	    
 
     return ninc;
 }
@@ -812,6 +751,8 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (get_panel_structure(pdinfo, &nunits, &T)) {
 	return E_DATA;
     }
+
+    panel_index_init(pdinfo, nunits, T);
 
     haus_init(&haus);
 
@@ -871,7 +812,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	double theta;
 	
 	var1 = group_means_variance(pmod, *pZ, pdinfo, &groupZ, &ginfo, 
-				    nunits, effn, unit_obs, T, effT);
+				    nunits, effn, unit_obs, T);
 
 	if (na(var1)) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
@@ -903,29 +844,15 @@ static int
 write_uvar_to_dataset (double *uvar, int nunits, int T,
 		       double **Z, DATAINFO *pdinfo)
 {
-    int i, t, bigt;
+    int i, t;
     int uv = pdinfo->v - 1;
 
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	for (i=0; i<nunits; i++) {
-	    for (t=0; t<T; t++) {
-		bigt = i * T + t;
-		if (uvar[i] <= 0.0) {
-		    Z[uv][bigt] = 0.0;
-		} else {
-		    Z[uv][bigt] = 1.0 / sqrt(uvar[i]);
-		}
-	    }
-	}
-    } else {
+    for (i=0; i<nunits; i++) {
 	for (t=0; t<T; t++) {
-	    for (i=0; i<nunits; i++) {
-		bigt = t * nunits + i;
-		if (uvar[i] <= 0.0) {
-		    Z[uv][bigt] = 0.0;
-		} else {
-		    Z[uv][bigt] = 1.0 / sqrt(uvar[i]);
-		}
+	    if (uvar[i] <= 0.0) {
+		Z[uv][panel_index(i, t)] = 0.0;
+	    } else {
+		Z[uv][panel_index(i, t)] = 1.0 / sqrt(uvar[i]);
 	    }
 	}
     }
@@ -960,19 +887,65 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
     return maxdiff;
 }
 
+static void
+print_wald_test (double W, int nunits, const int *unit_obs, PRN *prn)
+{
+    int i, df = 0;
+
+    for (i=0; i<nunits; i++) {
+	if (unit_obs[i] > 1) df++;
+    }
+
+    pprintf(prn, "\n%s\n%s:\n",
+	    _("Distribution free Wald test for heteroskedasticity"),
+	    _("based on the FGLS residuals"));
+    pprintf(prn, "%s(%d) = %g, ",  _("Chi-square"), df, W);
+    pprintf(prn, _("with p-value = %g\n\n"), chisq(W, df));
+}
+
+static double 
+wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo, 
+		  double s2, const double *uvar,
+		  int T, int nunits, const int *unit_obs)
+{
+    double x, W = 0.0;
+    int i, t, Ti;
+
+    for (i=0; i<nunits; i++) {
+	double fii = 0.0;
+
+	Ti = unit_obs[i];
+	if (Ti == 1) {
+	    W = NADBL;
+	    break;
+	}
+	for (t=0; t<T; t++) {
+	    x = pmod->uhat[panel_index(i, t)];
+	    if (!na(x)) {
+		x = x * x - uvar[i];
+		fii += x * x;
+	    }
+	}
+	fii *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
+	x = uvar[i] - s2;
+	W += x * x / fii;
+    }
+
+    return W;
+}
+
 static int
 ml_hetero_test (MODEL *pmod, double s2, const double *uvar, 
 		int nunits, const int *unit_obs)
 {
     GRETLTEST test;
     double x2, s2h = 0.0;
-    int i, df = 0;
+    int i, Ti, df = 0;
 
     for (i=0; i<nunits; i++) {
-	int uT = unit_obs[i];
-
-	if (uT > 0) {
-	    s2h += uT * log(uvar[i]);
+	Ti = unit_obs[i];
+	if (Ti > 0) {
+	    s2h += Ti * log(uvar[i]);
 	    df++;
 	}
     }
@@ -1005,11 +978,12 @@ static double real_ll (const MODEL *pmod, const double *uvar,
 		       int nunits, const int *unit_obs)
 {
     double ll = -(pmod->nobs / 2.0) * LN_2_PI;
-    int i;
+    int i, Ti;
 
     for (i=0; i<nunits; i++) {
-	if (unit_obs[i] > 0) {
-	    ll -= (unit_obs[i] / 2.0) * (1.0 + log(uvar[i]));
+	Ti = unit_obs[i];
+	if (Ti > 0) {
+	    ll -= (Ti / 2.0) * (1.0 + log(uvar[i]));
 	}
     }
 
@@ -1017,7 +991,7 @@ static double real_ll (const MODEL *pmod, const double *uvar,
 }
 
 /* we can't estimate a group-specific variance based on just one
-   observation */
+   observation? */
 
 static int singleton_check (const int *unit_obs, int nunits)
 {
@@ -1043,6 +1017,7 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
     double *uvar = NULL;
     double *bvec = NULL;
     double s2, diff = 1.0;
+    double W = NADBL;
     int *unit_obs = NULL;
     int *wlist = NULL;
     int nunits, effn, T, effT;
@@ -1066,6 +1041,8 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	mdl.errcode = E_DATA;
 	return mdl;
     }
+
+    panel_index_init(pdinfo, nunits, T);
 
     unit_obs = malloc(nunits * sizeof *unit_obs);
     if (unit_obs == NULL) {
@@ -1154,6 +1131,11 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
+	if ((opt & OPT_T) && iter == 2) {
+	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, T, 
+				 nunits, unit_obs);
+	}
+
 	write_uvar_to_dataset(uvar, nunits, T, *pZ, pdinfo);
 
 	if (opt & OPT_T) {
@@ -1191,6 +1173,7 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	gretl_model_set_int(&mdl, "n_included_units", effn);
 	gretl_model_set_int(&mdl, "unit_weights", 1);
 	mdl.nwt = 0;
+
 	if (opt & OPT_T) {
 	    gretl_model_set_int(&mdl, "iters", iter);
 	    ml_hetero_test(&mdl, s2, uvar, nunits, unit_obs);
@@ -1199,6 +1182,14 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
 	    }
+	} else {
+	    unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
+	    W = wald_hetero_test(&mdl, pdinfo, s2, uvar, T, 
+				 nunits, unit_obs);
+	}
+
+	if (!na(W)) {
+	    print_wald_test(W, nunits, unit_obs, prn);
 	}
     }    
 
