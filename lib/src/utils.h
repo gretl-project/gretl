@@ -88,7 +88,7 @@ int clear_model (void *ptr, SESSION *psession, session_t *rebuild);
 
 void show_paths (PATHS *ppaths);
 
-int set_paths (PATHS *ppaths, const int reset, const int gui);
+int set_paths (PATHS *ppaths, const int defaults, const int gui);
 
 int copylist (int **target, const int *src);
 

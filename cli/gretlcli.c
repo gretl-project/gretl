@@ -258,10 +258,11 @@ int main (int argc, char *argv[])
     line = malloc(MAXLINE);
     if (line == NULL) noalloc("command line"); 
 
+    set_paths(&paths, 1, 0); /* 1 = defaults, 0 = not gui */
 #ifdef OS_WIN32
-    set_win_paths(tmp, &paths, 0); /* 0 = not gui */
+    cli_read_registry(tmp, &paths);
+    set_paths(&paths, 0, 0); /* not defaults; use registry info */
 #else
-    set_paths(&paths, 0, 0);
     make_userdir(&paths);
 #endif
 

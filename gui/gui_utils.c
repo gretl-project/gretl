@@ -24,6 +24,10 @@
 #include <unistd.h>
 #include "htmlprint.h"
 
+#ifdef G_OS_WIN32
+# include <windows.h>
+#endif
+
 char rcfile[MAXLEN];
 char *storelist = NULL;
 
@@ -51,6 +55,9 @@ char *endbit (char *dest, char *src, int addscore);
 #ifdef USE_GNOME
 static void gnome_printfilelist (int filetype);
 #else
+# ifdef G_OS_WIN32
+static void win_printfilelist (int filetype);
+# endif
 static void printfilelist (int filetype, FILE *fp);
 #endif
 
@@ -77,7 +84,7 @@ static char *needle;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
-static void read_rc_file (void);
+static void read_rc (void);
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
@@ -96,8 +103,8 @@ typedef struct {
 } RCVARS;
 
 RCVARS rc_vars[] = {
-    {"userdir", "User's gretl directory", paths.userdir, 'C', 1, NULL},
     {"gretldir", "Main gretl directory", paths.gretldir, 'C', 1, NULL},
+    {"userdir", "User's gretl directory", paths.userdir, 'C', 1, NULL},
     {"Rcommand", "Command to launch GNU R", Rcommand, 'C', 1, NULL},
     {"expert", "Expert mode (no warnings)", expert, 'I', 1, NULL},
     {"updater", "Tell me about gretl updates", updater, 'I', 1, NULL},
@@ -286,16 +293,7 @@ void set_rcfile (void)
     tmp = getenv("HOME");
     strcpy(rcfile, tmp);
     strcat(rcfile, "/.gretlrc");
-    read_rc_file(); 
-}
-
-/* ........................................................... */
-
-void set_win_rcfile (PATHS *ppaths) 
-{
-    strcpy(rcfile, ppaths->userdir);
-    strcat(rcfile, "gretl.rc");
-    read_rc_file(); 
+    read_rc(); 
 }
 
 /* ........................................................... */
@@ -1527,6 +1525,17 @@ static void msgbox (const char *msg, int err)
 }
 
 #else
+#ifdef G_OS_WIN32
+
+static void msgbox (const char *msg, int err)
+{
+    if (err) 
+	MessageBox(NULL, (LPCTSTR)msg, "Error", MB_OK | MB_ICONERROR);
+    else
+	MessageBox(NULL, (LPCTSTR)msg, "Info", MB_OK | MB_ICONINFORMATION);
+}
+
+#endif /* win32 */
 
 static void msgbox (const char *msg, int err) 
 {
@@ -1778,7 +1787,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	}
 	i++;
     }
-    write_rc_file();
+    write_rc();
     if (toolbar_box == NULL && want_toolbar[0] == 't')
 	show_toolbar();
     else if (toolbar_box != NULL && want_toolbar[0] == 'f') {
@@ -1791,7 +1800,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 #ifdef USE_GNOME
 
-void write_rc_file (void) 
+void write_rc (void) 
 {
     int i;
     char sectkey[96];
@@ -1806,9 +1815,10 @@ void write_rc_file (void)
     gnome_printfilelist(2); /* session files */
     gnome_printfilelist(3); /* script files */    
     gnome_config_sync();
+    set_paths(&paths, 0, 1);
 }
 
-static void read_rc_file (void) 
+static void read_rc (void) 
 {
     int i = 0;
     char *gpath, *value = NULL;
@@ -1851,12 +1861,75 @@ static void read_rc_file (void)
 	g_free(gpath);
 	if (value == NULL) break;
     }
-    set_paths(&paths, 1, 1);
+    set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
 }
 
-#else /* non-gnome versions */
+#else /* end of gnome versions */
+#ifdef G_OS_WIN32
 
-void write_rc_file (void) 
+void write_rc (void) 
+{
+    int i = 0;
+
+    while (rc_vars[i].var != NULL) {
+	write_reg_val((i == 0)? 
+		      HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
+		      rc_vars[i].key, rc_vars[i].var);
+	i++;
+    }
+    win_printfilelist(1); /* data files */
+    win_printfilelist(2); /* session files */
+    win_printfilelist(3); /* script files */
+    set_paths(&paths, 0, 1);
+}
+
+void read_rc (void) 
+{
+    int i = 0;
+    char *rpath, value[MAXLEN];
+
+    while (rc_vars[i].var != NULL) {
+	if (read_reg_val((i == 0)? 
+			 HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
+			 rc_vars[i].key, value) == 0)
+	    strcpy(rc_vars[i].var, value);
+	i++;
+    }
+
+    /* initialize lists of recently opened files */
+    for (i=0; i<MAXRECENT; i++) { 
+	datalist[i][0] = 0;
+	sessionlist[i][0] = 0;
+	scriptlist[i][0] = 0;
+    }
+    /* get recent file lists */
+    for (i=0; i<MAXRECENT; i++) {
+	rpath =  g_strdup_printf("recent data files\\%d", i);
+	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
+	    strcpy(datalist[i], value);
+	g_free(rpath);
+	if (value[0] == '\0') break;
+    }    
+    for (i=0; i<MAXRECENT; i++) {
+	rpath = g_strdup_printf("recent session files\\%d", i);
+	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
+	    strcpy(sessionlist[i], value);
+	g_free(rpath);
+	if (value[0] == '\0') break;
+    } 
+    for (i=0; i<MAXRECENT; i++) {
+	rpath = g_strdup_printf("recent script files\\%d", i);
+	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
+	    strcpy(scriptlist[i], value);
+	g_free(rpath);
+	if (value[0] == '\0') break;
+    }
+    set_paths(&paths, 0, 1);
+}
+
+#endif /* end of win32 versions */
+
+void write_rc (void) 
 {
     FILE *rc;
     int i;
@@ -1877,9 +1950,10 @@ void write_rc_file (void)
     printfilelist(2, rc); /* session files */
     printfilelist(3, rc); /* script files */
     fclose(rc);
+    set_paths(&paths, 0, 1);
 }
 
-static void read_rc_file (void) 
+static void read_rc (void) 
 {
     FILE *rc;
     int i, j, numvars = sizeof rc_vars / sizeof *rc_vars;
@@ -1949,13 +2023,11 @@ static void read_rc_file (void)
 		strcpy(scriptlist[i++], line);
 	}
     }
-#ifndef G_OS_WIN32
-    set_paths(&paths, 1, 1);
-#endif
     fclose(rc);
+    set_paths(&paths, 0, 1);
 }
 
-#endif /* non-gnome versions of read_rc, write_rc */
+#endif /* end of "plain gtk" versions of read_rc, write_rc */
 
 /* .................................................................. */
 
@@ -1965,7 +2037,7 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
 
     if (strlen(fstring))
 	strcpy(fontspec, fstring);
-    write_rc_file();
+    write_rc();
     g_free(fstring);
     gtk_widget_destroy(GTK_WIDGET (fs));
 }
@@ -2413,7 +2485,37 @@ static void gnome_printfilelist (int filetype)
     }
 }
 
-#else /* non-gnome version follows */
+#else
+#ifdef G_OS_WIN32
+
+static void win_printfilelist (int filetype)
+{
+    int i;
+    char **filep;
+    char *rpath, section[24];
+
+    if (filetype == 1) {
+	strcpy(section, "recent data files");
+	filep = datap;
+    } else if (filetype == 2) {
+	strcpy(section, "recent session files");
+	filep = sessionp;
+    } else if (filetype == 3) {
+	strcpy(section, "recent script files");
+	filep = scriptp;
+    } else 
+	return;
+
+    for (i=0; i<MAXRECENT; i++) {
+	if (filep[i][0]) { 
+	    rpath = g_strdup_printf("%s\\%d", section, i);
+	    write_reg_val(HKEY_CURRENT_USER, rpath, filep[i]);
+	    g_free(rpath);
+	} else break;
+    }
+}
+
+#else /* "plain" version follows */
 
 static void printfilelist (int filetype, FILE *fp)
 {
@@ -2439,7 +2541,7 @@ static void printfilelist (int filetype, FILE *fp)
     }
 }
 
-#endif /* gnome versus non-gnome fork */
+#endif 
 
 /* .................................................................. */
 
@@ -2514,9 +2616,7 @@ void add_files_to_menu (int filetype)
 
 /* .................................................................. */
 
-#ifdef G_OS_WIN32
-# include <windows.h>
-#else
+#ifndef G_OS_WIN32
 # include <dlfcn.h>
 #endif
 

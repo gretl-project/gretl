@@ -3,7 +3,11 @@
 
 /* functions follow */
 
-void write_rc_file (void);
+#ifdef G_OS_WIN32
+void read_rc (void);
+#endif
+
+void write_rc (void);
 
 int getbufline (char *buf, char *line, int init);
 
@@ -20,8 +24,6 @@ int isdir (const char *path);
 void append_dir (char *fname, const char *dir);
  
 void set_rcfile (void);
-
-void set_win_rcfile (PATHS *ppaths);
 
 void delete_model (GtkWidget *widget, gpointer data);
 

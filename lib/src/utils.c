@@ -1007,17 +1007,66 @@ void show_paths (PATHS *ppaths)
 
 /* .......................................................... */
 
-#ifndef OS_WIN32
+#ifdef OS_WIN32
 
-int set_paths (PATHS *ppaths, const int reset, const int gui)
+int set_paths (PATHS *ppaths, const int defaults, const int gui)
 {
-    char *home;
-    DIR *try = NULL;
+    if (defaults) {
+	char *home;
 
-    if (reset) {
-	strcpy(ppaths->datadir, ppaths->gretldir);
-	strcpy(ppaths->scriptdir, ppaths->gretldir);
-    } else {
+	home = getenv("GRETL_HOME");
+	if (home != NULL)
+	    strcpy(ppaths->gretldir, home);
+	else
+	    strcpy(ppaths->gretldir, "c:\\userdata\\gretl"); 	
+	sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
+	strcpy(ppaths->ratsbase, "f:\\"); 
+	strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	ppaths->hdrfile[0] = '\0';
+	ppaths->currdir[0] = '\0';
+    }
+
+    sprintf(ppaths->datadir, "%s\\data\\", ppaths->gretldir);
+    sprintf(ppaths->scriptdir, "%s\\scripts\\", ppaths->gretldir);
+    
+    if (gui) {
+	sprintf(ppaths->helpfile, "%s\\gretl.hlp", ppaths->gretldir);
+	sprintf(ppaths->cmd_helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
+    } else 
+	sprintf(ppaths->helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
+
+    if (ppaths->userdir[strlen(ppaths->userdir) - 2] != SLASH)
+	strcat(ppaths->userdir, SLASHSTR);
+
+    sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
+
+    get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
+    strcat(ppaths->pgnuplot, "pgnuplot.exe");
+
+    return 0;
+}
+
+#else
+
+int set_paths (PATHS *ppaths, const int defaults, const int gui)
+{
+    if (defaults) {
+	char *home;
+	DIR *try = NULL;
+
+	home = getenv("GRETL_HOME");
+	if (home != NULL)
+	    strcpy(ppaths->gretldir, home);
+	else
+	    strcpy(ppaths->gretldir, GRETL); 
+	sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
+	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
+	strcpy(ppaths->dbhost_ip, "152.17.150.2");
+	strcpy(ppaths->gnuplot, "gnuplot");
+	ppaths->hdrfile[0] = '\0';
+	ppaths->currdir[0] = '\0';
+
+	/* figure out user's home gretl directory */
 	home = getenv("HOME");
 	if (home != NULL) {
 	    strcpy(ppaths->userdir, home);
@@ -1031,33 +1080,21 @@ int set_paths (PATHS *ppaths, const int reset, const int gui)
 		    strcat(ppaths->userdir, "/.gretl/");
 		} 
 	    } 
-	} else strcpy(ppaths->userdir, "");
-
+	} else 
+	    strcpy(ppaths->userdir, "");
 	if (try != NULL) closedir(try);
+    } 
 
-	strcpy(ppaths->gretldir, GRETL);
-	strcpy(ppaths->datadir, GRETL);
-	strcpy(ppaths->scriptdir, GRETL);
-	strcpy(ppaths->binbase, GRETL);
-	strcat(ppaths->binbase, "db/");
-	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
-	strcpy(ppaths->dbhost_ip, "152.17.150.2");
-	ppaths->hdrfile[0] = '\0';
-    }
-
-    strcat(ppaths->datadir, "data/");
-    strcat(ppaths->scriptdir, "scripts/"); 
-
-    strcpy(ppaths->helpfile, ppaths->gretldir);
+    sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);
+    sprintf(ppaths->scriptdir, "%sscripts/", ppaths->gretldir);
+    
     if (gui) {
-	strcat(ppaths->helpfile, "gretl.hlp");
-	strcpy(ppaths->cmd_helpfile, ppaths->gretldir);
-	strcat(ppaths->cmd_helpfile, "gretlcli.hlp");
-    } else 
-	strcat(ppaths->helpfile, "gretlcli.hlp");
-    strcpy(ppaths->plotfile, ppaths->userdir);
-    strcat(ppaths->plotfile, "gpttmp.plt");
-    strcpy(ppaths->gnuplot, "gnuplot");
+	sprintf(ppaths->helpfile, "%sgretl.hlp", ppaths->gretldir);
+	sprintf(ppaths->cmd_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
+    } else
+	sprintf(ppaths->helpfile, "%sgretlcli.hlp", ppaths->gretldir);
+
+    sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
 
     return 0;
 }

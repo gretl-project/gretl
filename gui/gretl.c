@@ -480,8 +480,9 @@ int main (int argc, char *argv[])
     gtk_init(&argc, &argv);
 #endif
 
+    set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
 #ifdef G_OS_WIN32
-    set_win_paths(callname, &paths, 1); /* 1 = gui */
+    read_rc(); /* get config info from registry */
     g_log_set_handler ("Gtk",
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,
@@ -491,9 +492,8 @@ int main (int argc, char *argv[])
 		       (GLogFunc) dummy_output_handler,
 		       NULL);
     ws_startup(); 
-    atexit(write_rc_file);
+    atexit(write_rc);
 #else
-    set_paths(&paths, 0, 1);
     set_rcfile();
     make_userdir(&paths);
 #endif
@@ -623,9 +623,6 @@ int main (int argc, char *argv[])
     /* enable special copying to clipboard */
     clip_init(mdata->w);
 
-#ifdef G_OS_WIN32
-    set_win_rcfile(&paths);
-#endif
     allocate_fileptrs();
     add_files_to_menu(1);
     add_files_to_menu(2);
@@ -1220,7 +1217,7 @@ static void menu_exit (GtkWidget *widget, gpointer data)
 
     if (expert[0] == 't' || work_done() == 0 || 
 	session_saved || !dont_quit()) {
-	write_rc_file();
+	write_rc();
 	gtk_main_quit();
     }
 }
@@ -1237,7 +1234,7 @@ static gint wm_exit (GtkWidget *widget, gpointer data)
     
     if (expert[0] == 't' || work_done() == 0 || 
 	session_saved || !dont_quit()) {
-	write_rc_file();
+	write_rc();
 	gtk_main_quit();
     }
     return TRUE;

@@ -178,5 +178,8 @@ typedef struct {
 #include "nonparam.h"
 #include "discrete.h"
 #include "subsample.h"
+#ifdef OS_WIN32
+# include "win32.h"
+#endif
 
 #endif /* LIBGRETL_H */

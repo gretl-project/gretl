@@ -24,14 +24,14 @@
 
 /* ............................................................ */
 
-static int read_reg_val (char *keyname, char *keyval)
+int read_reg_val (unsigned long tree, char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
-    int winerr, error = 0;
+    int error = 0;
     HKEY regkey;
 
     if (RegOpenKeyEx(
-                     HKEY_CLASSES_ROOT,           /* handle to open key */
+                     tree,                        /* handle to open key */
                      "gretl",                     /* subkey name */
                      0,                           /* reserved */
                      KEY_READ,                    /* access mask */
@@ -41,18 +41,52 @@ static int read_reg_val (char *keyname, char *keyval)
         return 1;
     }
 
-    winerr = RegQueryValueEx(
-                             regkey,
-                             keyname,
-                             NULL,
-                             NULL,
-                             keyval,
-                             &datalen
-                             );
+    if (RegQueryValueEx(
+			regkey,
+			keyname,
+			NULL,
+			NULL,
+			keyval,
+			&datalen
+			) != ERROR_SUCCESS) {
+	error = 1;
+    }
 
-    if (winerr != ERROR_SUCCESS) {
+    RegCloseKey(regkey);
+
+    return error;
+}
+
+/* ............................................................ */
+
+int write_reg_val (unsigned long tree, char *keyname, char *keyval)
+{
+    int error = 0;
+    HKEY regkey;
+
+    if (RegCreateKeyEx(
+                       tree,
+                       "gretl",
+                       0,
+                       NULL, 
+                       REG_OPTION_NON_VOLATILE,
+                       KEY_ALL_ACCESS,
+                       NULL,
+                       &regkey,
+                       NULL                         
+                       ) != ERROR_SUCCESS) {
+        return 1;
+    }
+
+    if (RegSetValueEx(
+                  regkey,
+                  keyname,
+                  0,
+                  REG_SZ,
+                  keyval,
+                  strlen(keyval) + 1) != ERROR_SUCCESS) {
         error = 1;
-    } 
+    }
                   
     RegCloseKey(regkey);
 
@@ -61,50 +95,27 @@ static int read_reg_val (char *keyname, char *keyval)
 
 /* ............................................................ */
 
-void set_win_paths (char *callname, PATHS *ppaths, const int gui)
+void cli_read_registry (char *callname, PATHS *ppaths)
 {
-    FILE *fp;
     int drive = callname[0];
 
-    ppaths->currdir[0] = 0;
-
     ppaths->gretldir[0] = '\0';
-    read_reg_val("gretldir", ppaths->gretldir);
+    read_reg_val(HKEY_CLASSES_ROOT, "gretldir", ppaths->gretldir);
     if (ppaths->gretldir[0] == '\0')
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
 
-    ppaths->userdir[0] = '\0';
-    read_reg_val("userdir", ppaths->userdir);
-    if (ppaths->userdir[0] == '\0')
-	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
-
     ppaths->gnuplot[0] = '\0';
-    read_reg_val("gnuplot", ppaths->gnuplot);
+    read_reg_val(HKEY_CLASSES_ROOT, "gnuplot", ppaths->gnuplot);
     if (ppaths->gnuplot[0] == '\0')
 	sprintf(ppaths->gnuplot, 
 		"%c:\\userdata\\gp371w32\\pgnuplot.exe", drive);
-    
-    sprintf(ppaths->datadir, "%s\\data\\", ppaths->gretldir);
-    sprintf(ppaths->scriptdir, "%s\\scripts\\", ppaths->gretldir);
-    
-    if (gui) {
-	sprintf(ppaths->helpfile, "%s\\gretl.hlp", ppaths->gretldir);
-	sprintf(ppaths->cmd_helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
-    } else 
-	sprintf(ppaths->helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
 
-    if (ppaths->userdir[strlen(ppaths->userdir) - 2] != SLASH)
-	strcat(ppaths->userdir, SLASHSTR);
-
-    strcpy(ppaths->plotfile, ppaths->userdir);
-    strcat(ppaths->plotfile, "gpttmp.plt");
-    get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
-
-    get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
-    strcat(ppaths->pgnuplot, "pgnuplot.exe");
-
-    strcpy(ppaths->dbhost_ip, "152.17.150.2");
+    ppaths->userdir[0] = '\0';
+    read_reg_val(HKEY_CURRENT_USER, "userdir", ppaths->userdir);
+    if (ppaths->userdir[0] == '\0')
+	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
 }
+
 
 
 
