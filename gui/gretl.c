@@ -547,6 +547,17 @@ static void fix_dbname (char *db)
     if (fp != NULL) fclose(fp);
 }
 
+static void setup_column (GtkWidget *listbox, int column, int width) 
+{
+    if (width == 0) {
+	gtk_clist_set_column_auto_resize (GTK_CLIST (listbox), column, TRUE);
+    } else if (width == -1) {
+	gtk_clist_set_column_visibility (GTK_CLIST (listbox), column, FALSE);
+    } else {
+	gtk_clist_set_column_width (GTK_CLIST (listbox), column, width);
+    }
+}
+
 static void destroy (GtkWidget *widget, gpointer data)
 {
     gtk_main_quit();

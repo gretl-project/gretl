@@ -67,19 +67,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
 void file_view_set_editable (windata_t *vwin);
 
-void setup_column (GtkWidget *listbox, int column, int width);
-
-void errbox (const char *msg);
-
-void infobox (const char *msg);
-
 int validate_varname (const char *varname);
 
 void text_copy (gpointer data, guint how, GtkWidget *widget);
-
-void text_paste (windata_t *mydata, guint u, GtkWidget *widget);
-
-void text_undo (windata_t *mydata, guint u, GtkWidget *widget);
 
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event, gpointer data);
 

@@ -25,10 +25,7 @@
 #include "database.h"
 #include "datafiles.h"
 #include "ssheet.h"
-
-#if !GLIB_CHECK_VERSION(2,0,0)
-# define OLD_GTK
-#endif
+#include "textbuf.h"
 
 #ifdef OLD_GTK
 # include <gtkextra/gtkiconfilesel.h>
@@ -38,11 +35,10 @@
 
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 
-#ifdef OLD_GTK
-GtkWidget *active_edit_id = NULL;
-GtkWidget *active_edit_name = NULL;
-GtkWidget *active_edit_text = NULL;
-#endif
+/* these live in dialogs.c */
+extern GtkWidget *active_edit_id;
+extern GtkWidget *active_edit_name;
+extern GtkWidget *active_edit_text;
 
 /* ......................................................... */
 

@@ -32,6 +32,10 @@
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 
+#if GTK_MAJOR_VERSION < 2
+#define OLD_GTK
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

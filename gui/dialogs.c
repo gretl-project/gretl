@@ -26,9 +26,9 @@
 
 extern const char *version_string;
 
-extern GtkWidget *active_edit_id;
-extern GtkWidget *active_edit_name;
-extern GtkWidget *active_edit_text;
+GtkWidget *active_edit_id;
+GtkWidget *active_edit_name;
+GtkWidget *active_edit_text;
 
 extern int work_done (void); /* library.c */
 
@@ -1417,72 +1417,11 @@ void set_sample_dialog (gpointer p, guint u, GtkWidget *w)
 
 struct arma_options {
     int v;
-    int ar;
-    int ma;
     GtkWidget *dlg;
+    GtkWidget *arspin;
+    GtkWidget *maspin;
+    GtkWidget *verbcheck;
 };
-
-static void arma_opt_callback (GtkWidget *w, gint *var)
-{
-    GtkWidget *entry = gtk_object_get_data(GTK_OBJECT(w), "entry");
-
-    *var = atoi(gtk_entry_get_text(GTK_ENTRY(entry)));
-}
-
-static GtkWidget *make_labeled_combo (const gchar *label, 
-				      GtkWidget *tbl, gint row,
-				      GList *list, gint *var)
-{
-    GtkWidget *w;
-    char numstr[2];
-
-    w = gtk_label_new(label);
-    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_RIGHT);
-    gtk_table_attach(GTK_TABLE(tbl), w, 0, 1, row, row + 1,
-		     0, 0, 0, 0);
-    gtk_widget_show(w);
-
-    w = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(w), list); 
-    sprintf(numstr, "%d", *var);
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), numstr);
-
-    gtk_widget_set_usize(w, 48, -1);
-    gtk_table_attach(GTK_TABLE(tbl), w, 1, 2, row, row + 1,
-		     0, 0, 0, 0);
-
-    gtk_object_set_data(GTK_OBJECT(GTK_COMBO(w)->list), "entry", 
-			GTK_COMBO(w)->entry);
-    gtk_signal_connect(GTK_OBJECT(GTK_COMBO(w)->list), "selection-changed",
-		       GTK_SIGNAL_FUNC(arma_opt_callback), 
-		       var);
-
-    return w;
-}
-
-static GtkWidget *arma_opt_table (struct arma_options *opts)
-{
-    GtkWidget *tbl, *tmp;
-    int i, row = 0;
-    GList *twolist = NULL;
-    gchar *intvals[] = {
-	"0", "1", "2"
-    };
-
-    for (i=0; i<3; i++) {
-	twolist = g_list_append(twolist, intvals[i]);
-    }
-
-    tbl = gtk_table_new(2, 2, FALSE);
-
-    tmp = make_labeled_combo(_("AR terms:"), tbl, row++,
-			     twolist, &opts->ar);
-
-    tmp = make_labeled_combo(_("MA terms:"), tbl, row,
-			     twolist, &opts->ma);
-
-    return tbl;
-}
 
 static void free_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
@@ -1496,20 +1435,27 @@ static void destroy_arma_opts (GtkWidget *w, gpointer p)
 
 static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
-    do_arma(opts->v, opts->ar, opts->ma, 1);
+    int ar, ma, verb;
+
+    ar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->arspin));
+    ma = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->maspin));
+    verb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck));
+
+    do_arma(opts->v, ar, ma, verb);
+
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 {
-    GtkWidget *tmp, *tbl;
+    GtkWidget *tmp, *hbox;
     struct arma_options *opts;
+    GtkAdjustment *adj;
 
     opts = mymalloc(sizeof *opts);
     if (opts == NULL) return;
     
     opts->dlg = gtk_dialog_new();
-    opts->ar = opts->ma = 1;
     opts->v = mdata->active_var;
 
     gtk_signal_connect (GTK_OBJECT(opts->dlg), "destroy", 
@@ -1523,9 +1469,33 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (opts->dlg)->vbox), 5);
     gtk_window_set_position (GTK_WINDOW (opts->dlg), GTK_WIN_POS_MOUSE);
 
-    tbl = arma_opt_table(opts);
+    /* horizontal box for spinners */
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    /* AR spinner */
+    tmp = gtk_label_new (_("AR order:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 2, 1, 1, 0);
+    opts->arspin = gtk_spin_button_new(adj, 0, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), opts->arspin, FALSE, FALSE, 0);
+
+    /* MA spinner */
+    tmp = gtk_label_new (_("MA order:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 2, 1, 1, 0);
+    opts->maspin = gtk_spin_button_new(adj, 0, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), opts->maspin, FALSE, FALSE, 0);
+
+    /* pack the spinners */
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
-		       tbl, FALSE, FALSE, 5);
+		       hbox, FALSE, FALSE, 5);
+
+    /* verbosity button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    opts->verbcheck = gtk_check_button_new_with_label(_("Show details of iterations"));
+    gtk_box_pack_start(GTK_BOX(hbox), opts->verbcheck, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
 
     /* Create the "OK" button */
     tmp = gtk_button_new_with_label(_("OK"));
@@ -1546,3 +1516,90 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_show_all(opts->dlg);
 }
 
+/* ........................................................... */
+
+#include "../pixmaps/stock_dialog_error_48.xpm"
+#include "../pixmaps/stock_dialog_info_48.xpm"
+
+static GtkWidget *get_msgbox_icon (int err)
+{
+    static GdkColormap *cmap;
+    GtkWidget *iconw;
+    GdkPixmap *icon;
+    GdkBitmap *mask;
+    gchar **msgxpm;
+
+    if (err) {
+	msgxpm = stock_dialog_error_48_xpm;
+    } else {
+	msgxpm = stock_dialog_info_48_xpm;
+    }
+
+    if (cmap == NULL) {
+	cmap = gdk_colormap_get_system();
+    }
+    icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
+						 msgxpm);
+    iconw = gtk_pixmap_new(icon, mask);
+
+    return iconw;
+}
+
+static void msgbox (const char *msg, int err) 
+{
+    GtkWidget *w, *label, *button, *vbox, *hbox, *hsep, *iconw;
+
+    w = gtk_window_new(GTK_WINDOW_DIALOG);
+    gtk_container_border_width(GTK_CONTAINER(w), 5);
+    gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
+    gtk_window_set_title (GTK_WINDOW (w), (err)? _("gretl error") : 
+			  _("gretl info")); 
+
+    vbox = gtk_vbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(w), vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
+    /* icon */
+    iconw = get_msgbox_icon(err);
+    gtk_box_pack_start(GTK_BOX(hbox), iconw, FALSE, FALSE, 5);
+
+    /* text of message */
+    label = gtk_label_new(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    hsep = gtk_hseparator_new();
+    gtk_container_add(GTK_CONTAINER(vbox), hsep);
+
+    /* button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    
+    if (err) {
+	button = gtk_button_new_with_label(_("Close"));
+    } else {
+	button = gtk_button_new_with_label(_("OK"));
+    }
+
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(delete_widget), w);
+
+    gtk_widget_show_all(w);
+}
+
+/* ........................................................... */
+
+void errbox (const char *msg) 
+{
+    msgbox(msg, 1);
+}
+
+/* ........................................................... */
+
+void infobox (const char *msg) 
+{
+    msgbox(msg, 0);
+}

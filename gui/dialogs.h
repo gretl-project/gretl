@@ -11,6 +11,10 @@ enum {
 
 /* functions follow */
 
+void errbox (const char *msg);
+
+void infobox (const char *msg);
+
 int make_default_storelist (void);
 
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget);

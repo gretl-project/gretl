@@ -27,6 +27,7 @@
 #include "gpt_control.h"
 #include "guiprint.h"
 #include "model_table.h"
+#include "textbuf.h"
 
 #include "var.h"
 
@@ -36,10 +37,6 @@
 
 #ifdef _WIN32
 # include <windows.h>
-#else
-# if !GLIB_CHECK_VERSION(2,0,0)
-#  define OLD_GTK
-# endif
 #endif
 
 #ifdef OLD_GTK

@@ -42,6 +42,10 @@
 #include <stdlib.h>
 #include <time.h>
 
+#if GTK_MAJOR_VERSION < 2
+# define OLD_GTK
+#endif
+
 #ifdef USE_GTKSOURCEVIEW
 # include <gtksourceview/gtksourceview.h>
 #endif

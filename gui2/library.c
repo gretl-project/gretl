@@ -21,13 +21,10 @@
 
 #include "gretl.h"
 #include "var.h"
+#include "textbuf.h"
 
 #ifdef GNUPLOT_PNG
 # include "gpt_control.h"
-#endif
-
-#if !GLIB_CHECK_VERSION(2,0,0)
-# define OLD_GTK
 #endif
 
 #ifdef G_OS_WIN32 

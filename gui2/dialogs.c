@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "session.h"
 #include "obsbutton.h"
+#include "textbuf.h"
 
 #ifdef G_OS_WIN32 
 # include "../lib/src/version.h"
@@ -32,9 +33,9 @@ extern const char *version_string;
 
 #include "selector.h"
 
-extern GtkWidget *active_edit_id;
-extern GtkWidget *active_edit_name;
-extern GtkWidget *active_edit_text;
+GtkWidget *active_edit_id;
+GtkWidget *active_edit_name;
+GtkWidget *active_edit_text;
 
 extern int work_done (void); /* library.c */
 
@@ -1434,72 +1435,11 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 
 struct arma_options {
     int v;
-    int ar;
-    int ma;
     GtkWidget *dlg;
+    GtkWidget *arspin;
+    GtkWidget *maspin;
+    GtkWidget *verbcheck;
 };
-
-static void arma_opt_callback (GtkWidget *w, gint *var)
-{
-    GtkWidget *entry = g_object_get_data(G_OBJECT(w), "entry");
-
-    *var = atoi(gtk_entry_get_text(GTK_ENTRY(entry)));
-}
-
-static GtkWidget *make_labeled_combo (const gchar *label, 
-				      GtkWidget *tbl, gint row,
-				      GList *list, gint *var)
-{
-    GtkWidget *w;
-    char numstr[2];
-
-    w = gtk_label_new(label);
-    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_RIGHT);
-    gtk_table_attach(GTK_TABLE(tbl), w, 0, 1, row, row + 1,
-		     0, 0, 0, 0);
-    gtk_widget_show(w);
-
-    w = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(w), list); 
-    sprintf(numstr, "%d", *var);
-    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), numstr);
-
-    gtk_widget_set_size_request(w, 48, -1);
-    gtk_table_attach(GTK_TABLE(tbl), w, 1, 2, row, row + 1,
-		     0, 0, 0, 0);
-
-    g_object_set_data(G_OBJECT(GTK_COMBO(w)->list), "entry", 
-		      GTK_COMBO(w)->entry);
-    g_signal_connect(G_OBJECT(GTK_COMBO(w)->list), "selection-changed",
-		     G_CALLBACK(arma_opt_callback), 
-		     var);
-
-    return w;
-}
-
-static GtkWidget *arma_opt_table (struct arma_options *opts)
-{
-    GtkWidget *tbl, *tmp;
-    int i, row = 0;
-    GList *twolist = NULL;
-    gchar *intvals[] = {
-	"0", "1", "2"
-    };
-
-    for (i=0; i<3; i++) {
-	twolist = g_list_append(twolist, intvals[i]);
-    }
-
-    tbl = gtk_table_new(2, 2, FALSE);
-
-    tmp = make_labeled_combo(_("AR terms:"), tbl, row++,
-			     twolist, &opts->ar);
-
-    tmp = make_labeled_combo(_("MA terms:"), tbl, row,
-			     twolist, &opts->ma);
-
-    return tbl;
-}
 
 static void free_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
@@ -1513,20 +1453,26 @@ static void destroy_arma_opts (GtkWidget *w, gpointer p)
 
 static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
-    do_arma(opts->v, opts->ar, opts->ma, 1);
+    int ar, ma, verb;
+
+    ar = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->arspin));
+    ma = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->maspin));
+    verb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck));
+
+    do_arma(opts->v, ar, ma, verb);
+
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 {
-    GtkWidget *tmp, *tbl;
+    GtkWidget *tmp, *hbox;
     struct arma_options *opts;
 
     opts = mymalloc(sizeof *opts);
     if (opts == NULL) return;
     
     opts->dlg = gtk_dialog_new();
-    opts->ar = opts->ma = 1;
     opts->v = mdata->active_var;
 
     g_signal_connect (G_OBJECT(opts->dlg), "destroy", 
@@ -1540,10 +1486,34 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (opts->dlg)->vbox), 5);
     gtk_window_set_position (GTK_WINDOW (opts->dlg), GTK_WIN_POS_MOUSE);
 
-    tbl = arma_opt_table(opts);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
-		       tbl, FALSE, FALSE, 5);
+    /* horizontal box for spinners */
+    hbox = gtk_hbox_new(FALSE, 5);
 
+    /* AR spinner */
+    tmp = gtk_label_new (_("AR order:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    opts->arspin = gtk_spin_button_new_with_range(0, 2, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->arspin), 1);
+    gtk_box_pack_start(GTK_BOX(hbox), opts->arspin, FALSE, FALSE, 0);
+
+    /* MA spinner */
+    tmp = gtk_label_new (_("MA order:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    opts->maspin = gtk_spin_button_new_with_range(0, 2, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->maspin), 1);
+    gtk_box_pack_start(GTK_BOX(hbox), opts->maspin, FALSE, FALSE, 0);
+
+    /* pack the spinners */
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    /* verbosity button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    opts->verbcheck = gtk_check_button_new_with_label(_("Show details of iterations"));
+    gtk_box_pack_start(GTK_BOX(hbox), opts->verbcheck, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+    
     /* Create the "OK" button */
     tmp = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
@@ -1561,4 +1531,59 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 		      G_CALLBACK(destroy_arma_opts), opts->dlg);
 
     gtk_widget_show_all(opts->dlg);
+}
+
+/* ........................................................... */
+
+#if defined(G_OS_WIN32)
+
+static void msgbox (const char *msg, int err)
+{
+    gchar *trmsg = NULL;
+
+    if (nls_on) {
+	gint wrote;
+
+	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
+    } 
+
+    if (err) 
+	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
+		   MB_OK | MB_ICONERROR);
+    else
+	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
+		   MB_OK | MB_ICONINFORMATION);
+
+    if (nls_on) g_free(trmsg);
+}
+
+#else /* GTK native */
+
+static void msgbox (const char *msg, int err)
+{
+    GtkWidget *dialog;
+
+    dialog = gtk_message_dialog_new (NULL, /* GTK_WINDOW(mdata->w), */
+				     GTK_DIALOG_DESTROY_WITH_PARENT,
+				     (err)? GTK_MESSAGE_ERROR : GTK_MESSAGE_INFO,
+				     GTK_BUTTONS_CLOSE,
+				     msg);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+}
+
+#endif
+
+/* ........................................................... */
+
+void errbox (const char *msg) 
+{
+    msgbox(msg, 1);
+}
+
+/* ........................................................... */
+
+void infobox (const char *msg) 
+{
+    msgbox(msg, 0);
 }

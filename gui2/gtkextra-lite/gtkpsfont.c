@@ -41,245 +41,245 @@ static GtkPSFont font_data[] =
     "Times-Roman",
     "times, Medium",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   }, 
   { "Times-Italic",
     "Times-Italic",
     "Times-Roman",
     "times, Medium Italic",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   }, 
   { "Times-Bold",
     "Times-Bold",
     "Times-Roman",
     "times, Bold",
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   }, 
   { "Times-BoldItalic",
     "Times-BoldItalic",
     "Times-Roman",
     "times, Bold Italic",
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   }, 
   { "AvantGarde-Book",
     "AvantGarde-Book",
     "AvantGarde",
     "avantgarde",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "AvantGarde-BookOblique",
     "AvantGarde-BookOblique",
     "AvantGarde",
     "avantgarde, Oblique",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   },
   { "AvantGarde-Demi",
     "AvantGarde-Demi",
     "AvantGarde",
     "avantgarde, Semi-Bold",
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   },
   { "AvantGarde-DemiOblique",
     "AvantGarde-DemiOblique",
     "AvantGarde",
     "avantgarde, Semi-Bold Oblique",
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   },
   { "Bookman-Light",
     "Bookman-Light",
     "Bookman",
     "bookman",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "Bookman-LightItalic",
     "Bookman-LightItalic",
     "Bookman",
     "bookman, Light Italic",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   },
   { "Bookman-Demi",
     "Bookman-Demi",
     "Bookman",
     "bookman, Semi-Bold", 
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   },
   { "Bookman-DemiItalic",
     "Bookman-DemiItalic",
     "Bookman",
     "bookman, Semi-Bold Italic", 
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   },
   { "Courier",
     "Courier",
     "Courier",
     "courier",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "Courier-Oblique",
     "Courier-Oblique",
     "Courier",
     "courier, Italic",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   },
   { "Courier-Bold",
     "Courier-Bold",
     "Courier",
     "courier, Bold",
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   },
   { "Courier-BoldOblique",
     "Courier-BoldOblique",
     "Courier",
     "courier, Bold Oblique",
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   },
   { "Helvetica",
     "Helvetica",
     "Helvetica",
     "helvetica, Medium",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "Helvetica-Oblique",
     "Helvetica-Oblique",
     "Helvetica",
     "helvetica, Medium Oblique",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   },
   { "Helvetica-Bold",
     "Helvetica-Bold",
     "Helvetica",
     "helvetica, Bold",
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   },
   { "Helvetica-BoldOblique",
     "Helvetica-BoldOblique",
     "Helvetica",
     "helvetica, Bold Oblique",
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   },
   { "Helvetica-Narrow",
     "Helvetica-Narrow",
     "Helvetica-Narrow",
     "helvetica, Medium Condensed",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "Helvetica-Narrow-Oblique",
     "Helvetica-Narrow-Oblique",
     "Helvetica-Narrow",
     "helvetica, Medium Oblique Condensed",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   },
   { "Helvetica-Narrow-Bold",
     "Helvetica-Narrow-Bold",
     "Helvetica-Narrow",
     "helvetica, Bold Condensed",
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   },
   { "Helvetica-Narrow-BoldOblique",
     "Helvetica-Narrow-BoldOblique",
     "Helvetica-Narrow",
     "helvetica, Bold Oblique Condensed",
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   },
   { "NewCenturySchoolbook-Roman",
     "NewCenturySchlbk-Roman",
     "NewCenturySchlbk",
     "new century schoolbook, Medium",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "NewCenturySchoolbook-Italic",
     "NewCenturySchlbk-Italic",
     "NewCenturySchlbk",
     "new century schoolbook, Medium Italic",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   },
   { "NewCenturySchoolbook-Bold",
     "NewCenturySchlbk-Bold",
     "NewCenturySchlbk",
     "new century schoolbook, Bold",
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   },
   { "NewCenturySchoolbook-BoldItalic",
     "NewCenturySchlbk-BoldItalic",
     "NewCenturySchlbk",
     "new century schoolbook, Bold Italic",
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   },
   { "Palatino-Roman",
     "Palatino-Roman",
     "Palatino",
     "palatino, Medium",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "Palatino-Italic",
     "Palatino-Italic",
     "Palatino",
     "palatino, Medium Italic",
     NULL,
-    TRUE, FALSE
+    TRUE, FALSE, FALSE
   },
   { "Palatino-Bold",
     "Palatino-Bold",
     "Palatino",
     "palatino, Bold",
     NULL,
-    FALSE, TRUE
+    FALSE, TRUE, FALSE
   },
   { "Palatino-BoldItalic",
     "Palatino-BoldItalic",
     "Palatino",
     "palatino, Bold Italic",
     NULL,
-    TRUE, TRUE
+    TRUE, TRUE, FALSE
   },
   { "Symbol",
     "Symbol",
     "Symbol",
     "symbol",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "ZapfChancery-MediumItalic",
     "ZapfChancery-MediumItalic",
     "ZapfChancery",
     "zapf chancery, Medium Italic",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
   { "ZapfDingbats",
     "ZapfDingbats",
     "ZapfDingbats",
     "zapf dingbats, Medium",
     NULL,
-    FALSE, FALSE
+    FALSE, FALSE, FALSE
   },
 };
 
@@ -648,14 +648,14 @@ gtk_psfont_get_char_size(GtkPSFont *psfont,
   GdkFont *dfont;
   gint w, a, d, w0;
   
-  if (psfont->i18n_latinfamily && psfont->vertical && (0 > wc || wc > 0x7f)) {
+  if (psfont->i18n_latinfamily && psfont->vertical && wc > 0x7f) {
     /* vertical-writing CJK postscript fonts. */
     w = (font->ascent + font->descent);
     w0 = gdk_char_width_wc(font, wc);
     d = w0 * font->descent / w;
     a = w0 - d;
   } else {
-    if (psfont->i18n_latinfamily && 0 <= wc && wc <= 0x7f)
+    if (psfont->i18n_latinfamily && wc <= 0x7f)
       dfont = latin_font;
     else
       dfont = font;

@@ -25,6 +25,7 @@
 #include "boxplots.h"
 #include "gpt_control.h"
 #include "session.h"
+#include "textbuf.h"
 
 extern int olddat; /* settings.c */
 

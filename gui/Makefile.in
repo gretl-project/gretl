@@ -85,7 +85,7 @@ SRCS = boxplots.c calculator.c callbacks.c console.c database.c datafiles.c \
 	dialogs.c fileselect.c gpt_control.c gretl.c guiprint.c \
 	gui_utils.c helpfiles.c library.c model_table.c obsbutton.c \
 	objectsave.c selector.c series_view.c session.c settings.c ssheet.c \
-	webget.c 
+	textbuf.c webget.c 
 
 COMMONSRC = calculator.c gpt_control.c gpt_control.h guiprint_common.c \
 	library.c library.h objectsave.c objectsave.h model_table.c model_table.h \

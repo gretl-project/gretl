@@ -22,7 +22,8 @@
 #include "gretl.h"
 #include "treeutils.h"
 
-extern GtkWidget *active_edit_id; /* gui_utils.h */
+/* these live in dialogs.c */
+extern GtkWidget *active_edit_id; 
 extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
