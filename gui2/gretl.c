@@ -1701,7 +1701,6 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     if (fp != NULL) {
 	fclose(fp);
 	if (copyfile(".Rprofile", ".Rprofile.gretltmp")) {
-	    errbox(_("Couldn't move existing .Rprofile out of the way"));
 	    return;
 	}
     }
@@ -1793,11 +1792,9 @@ static void Rcleanup (void)
     fp = fopen(".Rprofile.gretltmp", "r");
     if (fp != NULL) {
 	fclose(fp);
-	if (copyfile(".Rprofile.gretltmp", ".Rprofile")) 
-	    errbox(_("Error restoring .Rprofile from\n"
-		     "the temporary copy, .Rprofile.gretltmp"));
-	else 
+	if (copyfile(".Rprofile.gretltmp", ".Rprofile") == 0) {
 	    remove(".Rprofile.gretltmp");
+	}
     }
 }
 

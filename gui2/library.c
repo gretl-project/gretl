@@ -3302,7 +3302,6 @@ int do_store (char *mydatfile, int opt, int overwrite)
 
 	sprintf(backup, "%s~", mydatfile);
 	if (copyfile(mydatfile, backup)) {
-	    errbox(_("Couldn't make backup of data file"));
 	    err = 1;
 	    goto store_get_out;
 	}

@@ -62,9 +62,6 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
 static char *global_items[] = {
     N_("Arrange icons"),
-#ifndef GNUPLOT_PNG
-    N_("Add last graph"),
-#endif
     N_("Close window")
 };
 
@@ -75,9 +72,6 @@ static char *model_items[] = {
 
 static char *graph_items[] = {
     N_("Display"),
-#ifndef GNUPLOT_PNG
-    N_("Edit using GUI"),
-#endif
     N_("Edit plot commands"),
     N_("Delete")
 };
@@ -96,12 +90,7 @@ static char *info_items[] = {
 
 static char *session_items[] = {
     N_("Save"),
-#ifdef GNUPLOT_PNG
     N_("Save As...")
-#else
-    N_("Save As..."),
-    N_("Add last graph")
-#endif
 };
 
 GtkItemFactoryEntry gp_edit_items[] = {
@@ -221,35 +210,23 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     get_default_dir(savedir);
 
     if (code == GRETL_GNUPLOT_GRAPH) { /* gnuplot graph */
-#ifdef GNUPLOT_PNG
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
-#endif
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
 	grname = g_strdup_printf("%s %d", _("Graph"), plot_count + 1);
-#ifdef GNUPLOT_PNG
 	if (copyfile(plot->fname, pltname) || 
 	    remove_png_term_from_plotfile(pltname)) {
-	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
 	remove(plot->fname);
 	strcpy(plot->fname, pltname);
 	mark_plot_as_saved(plot);
-#else
-	if (copyfile(paths.plotfile, pltname)) {
-	    errbox(_("No graph found"));
-	    return;
-	} 
-	remove(paths.plotfile);
-#endif
     } 
     else if (code == GRETL_BOXPLOT) {
 	boxplot_count = augment_boxplot_count();
 	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count);
 	grname = g_strdup_printf("%s %d", _("Boxplot"), boxplot_count);
 	if (copyfile(boxplottmp, pltname)) {
-	    errbox(_("Failed to copy boxplot file"));
 	    return;
 	} 
 	remove(boxplottmp);
@@ -975,26 +952,8 @@ static void open_gui_model (gui_obj *gobj)
 static void open_gui_graph (gui_obj *gobj)
 {
     GRAPHT *graph = (GRAPHT *) gobj->data;
-#ifndef GNUPLOT_PNG
-    gchar *buf = NULL;
-#endif
 
-#ifdef GNUPLOT_PNG
     display_session_graph_png(graph->fname);
-#else
-# ifdef G_OS_WIN32
-    buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, graph->fname);
-    if (WinExec(buf, SW_SHOWNORMAL) < 32) {
-	errbox(_("gnuplot command failed"));
-    }
-# else
-    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
-    if (system(buf)) {
-	errbox(_("gnuplot command failed"));
-    }
-# endif
-    g_free(buf);
-#endif /* GNUPLOT_PNG */
 }
 
 /* ........................................................... */
@@ -1585,10 +1544,6 @@ static void global_popup_activated (GtkWidget *widget, gpointer data)
 	rearrange_icons();
     else if (strcmp(item, _("Close window")) == 0) 
 	gtk_widget_destroy(iconview);
-#ifndef GNUPLOT_PNG
-    else if (strcmp(item, _("Add last graph")) == 0)
-	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
-#endif
 }
 
 /* ........................................................... */
@@ -1601,10 +1556,6 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
 	save_session_callback(NULL, SAVE_AS_IS, NULL);
     else if (strcmp(item, _("Save As...")) == 0) 
 	save_session_callback(NULL, SAVE_RENAME, NULL);
-#ifndef GNUPLOT_PNG
-    else if (strcmp(item, _("Add last graph")) == 0)
-	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
-#endif
 }
 
 /* ........................................................... */
@@ -1649,22 +1600,11 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	else if (obj->sort == 'g') open_gui_graph(obj);
 	else if (obj->sort == 'b') open_boxplot(obj);
     } 
-#ifndef GNUPLOT_PNG
-    else if (strcmp(item, _("Edit using GUI")) == 0) {
-	if (obj->sort == 'g') {
-	    GRAPHT *graph = (GRAPHT *) obj->data;
-
-	    start_editing_session_graph(graph->fname);
-	}
-    } 
-#endif
     else if (strcmp(item, _("Edit plot commands")) == 0) {
 	if (obj->sort == 'g' || obj->sort == 'b') {
 	    GRAPHT *graph = (GRAPHT *) obj->data;
 
-#ifdef GNUPLOT_PNG
 	    remove_png_term_from_plotfile(graph->fname);
-#endif
 	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, 
 		      (obj->sort == 'g')? gp_edit_items : 
 		      boxplot_edit_items);

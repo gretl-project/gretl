@@ -51,18 +51,21 @@ vpath %.c $(srcdir) ../cephes
 libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 
-SRCS = estimate.c compare.c gretl_utils.c errors.c pvalues.c dataio.c \
-	generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
-	interact.c graphing.c monte_carlo.c nonparam.c discrete.c \
-	subsample.c calendar.c
+SRCS = calendar.c compare.c dataio.c describe.c discrete.c \
+     errors.c estimate.c generate.c graphing.c gretl_utils.c \
+     interact.c modelprint.c monte_carlo.c nonparam.c printout.c \
+     pvalues.c strutils.c subsample.c texprint.c var.c 
+
 HDRS = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
 	compare.h dataio.h generate.h strutils.h describe.h printout.h \
 	modelprint.h version.h texprint.h var.h interact.h graphing.h \
-	monte_carlo.h nonparam.h discrete.h subsample.h calendar.h internal.h \
-	../cephes/libprob.h
-CEPHES_SRC = bdtr.c chdtr.c expx2.c gdtr.c incbet.c nbdtr.c pdtr.c unity.c \
-	btdtr.c const.c fdtr.c igam.c incbi.c ndtr.c polevl.c \
-	chbevl.c drand.c gamma.c igami.c mtherr.c ndtri.c stdtr.c
+	monte_carlo.h nonparam.h discrete.h subsample.h calendar.h \
+	internal.h ../cephes/libprob.h
+
+CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c drand.c expx2.c \
+	   fdtr.c gamma.c gdtr.c igam.c igami.c incbet.c incbi.c \
+	   mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c polevl.c \
+	   stdtr.c unity.c 
 
 OBJS = $(SRCS:.c=.o)
 LOBJS = $(SRCS:.c=.lo)

@@ -76,13 +76,13 @@ PROG  = gretl_x11
 
 vpath %.c $(topsrc)/cli
 
-OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
-	datafiles.o database.o fileselect.o gpt_control.o session.o \
-	webget.o calculator.o guiprint.o boxplots.o \
-	console.o selector.o settings.o helpfiles.o treeutils.o \
-	series_view.o
+OBJS = boxplots.o calculator.o callbacks.o console.o database.o \
+	datafiles.o dialogs.o fileselect.o gpt_control.o gretl.o \
+	guiprint.o gui_utils.o helpfiles.o library.o selector.o \
+	series_view.o session.o settings.o ssheet.o treeutils.o \
+	webget.o 
 
-HACK_SRC = gtkfontselhack.c font_filter.c
+HACK_SRC = font_filter.c gtkfontselhack.c
 HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 

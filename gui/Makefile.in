@@ -86,10 +86,10 @@ PROG  = gretl_x11
 
 vpath %.c $(topsrc)/cli
 
-OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
-	datafiles.o database.o fileselect.o gpt_control.o session.o \
-	webget.o calculator.o guiprint.o boxplots.o \
-	selector.o settings.o helpfiles.o series_view.o
+OBJS = boxplots.o calculator.o callbacks.o database.o datafiles.o \
+	dialogs.o fileselect.o gpt_control.o gretl.o guiprint.o \
+	gui_utils.o helpfiles.o library.o selector.o series_view.o \
+	session.o settings.o ssheet.o webget.o 
 
 $(PROG): $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)

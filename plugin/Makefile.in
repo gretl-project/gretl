@@ -52,7 +52,7 @@ else
   GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
 endif  
 
-PLUGINS = stats_tables.so panel_data.so range-mean.so lad.so \
+PLUGINS = lad.so stats_tables.so panel_data.so range-mean.so \
 	$(PROGRESS_PLUGIN) $(GNUMERIC_PLUGIN) $(EXCEL_PLUGIN) $(TXPLUGIN)
 
 ifdef GMP_LIBS

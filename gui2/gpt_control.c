@@ -22,16 +22,17 @@
 #include "gretl.h"
 #include "gpt_control.h"
 
+/* #define POINTS_DEBUG 1 */
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 # include <io.h>
 #endif
 
-#ifdef GNUPLOT_PNG
-# include <gdk-pixbuf/gdk-pixbuf.h>
-# include <gdk/gdkkeysyms.h>
-# define PNG_COMMENTS 1
-#endif
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gdk/gdkkeysyms.h>
+
+#define PNG_COMMENTS 1
 
 #ifdef PNG_COMMENTS
 # include <png.h>
@@ -94,7 +95,7 @@ typedef enum {
 #define plot_is_zoomed(p)       (p->flags & PLOT_ZOOMED)
 #define plot_is_zooming(p)      (p->flags & PLOT_ZOOMING)
 #define plot_has_no_labels(p)   (p->flags & PLOT_NO_LABELS)
-#define plot_png_coords(p)      (p->flags & PLOT_PNG_COORDS)
+#define plot_has_png_coords(p)  (p->flags & PLOT_PNG_COORDS)
 
 #define plot_has_title(p)       (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)      (p->format & PLOT_XLABEL)
@@ -102,7 +103,6 @@ typedef enum {
 #define plot_has_y2axis(p)      (p->format & PLOT_Y2AXIS)
 #define plot_has_y2label(p)     (p->format & PLOT_Y2LABEL)
 
-#ifdef GNUPLOT_PNG
 typedef enum {
     PNG_START,
     PNG_ZOOM,
@@ -145,7 +145,6 @@ static int zoom_unzoom_png (png_plot_t *plot, int view);
 static int redisplay_edited_png (png_plot_t *plot);
 static void create_selection_gc (png_plot_t *plot);
 static int get_plot_ranges (png_plot_t *plot);
-#endif /* GNUPLOT_PNG */
 
 #ifdef PNG_COMMENTS
 enum {
@@ -177,22 +176,15 @@ static int get_png_bounds_info (png_bounds_t *bounds);
 static void close_plot_controller (GtkWidget *widget, gpointer data) 
 {
     GPT_SPEC *spec = (GPT_SPEC *) data;
-#ifdef GNUPLOT_PNG
     png_plot_t *plot = (png_plot_t *) spec->ptr;
-#endif
 
     gpt_control = NULL;
 
-#ifdef GNUPLOT_PIPE
-    pclose(spec->fp);
-    free_plotspec(spec); 
-#else
     if (plot != NULL) { /* PNG plot window open */
 	plot->flags ^= PLOT_HAS_CONTROLLER;
     } else {
 	free_plotspec(spec); 
     }
-#endif
 }     
 
 /* ........................................................... */
@@ -234,8 +226,6 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 }
 
 /* ........................................................... */
-
-#ifdef GNUPLOT_PNG
 
 static int add_or_remove_png_term (const char *fname, int add)
 {
@@ -336,8 +326,6 @@ void display_session_graph_png (const char *fname)
     }
 }
 
-#endif /* GNUPLOT_PNG */
-
 /* ........................................................... */
 
 static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
@@ -396,50 +384,16 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		      sizeof spec->lines[0].scale);
     }
 
-#ifdef GNUPLOT_PIPE
-    if (spec->edit == 2 || spec->edit == 3) {  /* silent update */
-	spec->edit -= 2;
-	return;
-    }
-#endif
-
     if (save) { /* do something other than a screen graph? */
 	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, spec);
     } else { 
-#if defined(GNUPLOT_PNG) && !defined(GNUPLOT_PIPE)
 	png_plot_t *plot = (png_plot_t *) spec->ptr;
 
 	redisplay_edited_png(plot);
-#else
-	go_gnuplot(spec, NULL, &paths);
-#endif /* GNUPLOT_PNG */
     }
 
     session_changed(1);
 }
-
-/* ........................................................... */
-
-#ifdef GNUPLOT_PIPE
-static void save_session_graph_plotspec (GtkWidget *w, GPT_SPEC *spec)
-{
-    int err = 0;
-
-    spec->edit += 2;
-    apply_gpt_changes(NULL, spec);
-
-    strcpy(spec->termtype, "plot commands");
-
-    plot->edit += 2;
-    err = go_gnuplot(spec, spec->fname, &paths);
-
-    if (err == 1) {
-	errbox(_("Error saving graph"));
-    } else {
-	infobox(_("Graph saved"));
-    }
-}
-#endif
 
 /* ........................................................... */
 
@@ -896,16 +850,6 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
-#ifdef GNUPLOT_PIPE
-    tempwid = standard_button(GTK_STOCK_SAVE);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT(tempwid), "clicked", 
-		      G_CALLBACK(save_session_graph_plotspec), spec);
-    gtk_widget_show (tempwid);
-#endif
-
     tempwid = standard_button(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
@@ -927,8 +871,6 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
 
     return 0;
 }
-
-#ifdef GNUPLOT_PNG
 
 #ifdef G_OS_WIN32
 static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color);
@@ -954,9 +896,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     cmds = termtype_to_termstr(plot->termtype, termstr);
   
     if (cmds) {
-	if (copyfile(plot->fname, fname)) { 
-	    errbox(_("Failed to copy graph file"));
-	}
+	copyfile(plot->fname, fname);
 	return;
     } else {
 	pprintf(prn, "set term %s\n", termstr);
@@ -994,172 +934,6 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	infobox(_("Graph saved"));
     }
 }
-
-#else /* not GNUPLOT_PNG */
-
-/* Below: functions for saving last auto-generated graph */
-
-void do_save_graph (const char *fname, char *savestr)
-{
-    FILE *fq;
-    PRN *prn;
-    char plottmp[MAXLEN], plotline[MAXLEN], termstr[MAXLEN];
-    gchar *plotcmd = NULL;
-    int cmds, err = 0;
-
-    if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
-
-    fq = fopen(paths.plotfile, "r");
-    if (fq == NULL) {
-	errbox(_("Couldn't access graph info"));
-	gretl_print_destroy(prn);
-	return;
-    } 
-
-    cmds = termtype_to_termstr(savestr, termstr);  
-    if (cmds) {
-	if (copyfile(paths.plotfile, fname)) { 
-	    errbox(_("Failed to copy graph file"));
-	}
-	return;
-    } else {
-	pprintf(prn, "set term %s\n", termstr);
-#ifdef ENABLE_NLS
-	if (strstr(termstr, "postscript")) {
-	    pprintf(prn, "set encoding iso_8859_1\n");
-	}
-#endif /* ENABLE_NLS */
-	pprintf(prn, "set output '%s'\n", fname);
-	while (fgets(plotline, MAXLEN-1, fq)) {
-	    if (strncmp(plotline, "pause", 5)) 
-		pprintf(prn, "%s", plotline);
-	}
-    }
-
-    gretl_print_destroy(prn);
-    fclose(fq);
-
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-			      plottmp);
-
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
-    err = system(plotcmd);
-#endif /* G_OS_WIN32 */
-
-    g_free(plotcmd);
-    remove(plottmp);
-
-    if (err) {
-	errbox(_("Gnuplot error creating graph"));
-    } else {
-	infobox(_("Graph saved"));
-    }
-}
-
-/* ........................................................... */
-
-static void plot_save_filesel (GtkWidget *w, gpointer data)
-{
-    static char savestr[MAXLEN];
-    GtkWidget *combo = (GtkWidget *) data;
-
-    strcpy(savestr, 
-	   gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry)));
-    gtk_widget_destroy(GTK_WIDGET(combo->parent->parent->parent));
-    file_selector(_("Save gnuplot graph"), SAVE_LAST_GRAPH, savestr);
-}
-
-/* ........................................................... */
-
-static void kill_gpt_save_dialog (GtkWidget *w, gpointer data)
-{
-    GtkWidget **dialog = (GtkWidget **) data;
-
-    gtk_widget_destroy(*dialog);
-    *dialog = NULL;
-}
-
-/* ........................................................... */
-
-void gpt_save_dialog (void)
-{
-    GtkWidget *tempwid, *tbl, *combo;
-    static GtkWidget *dialog;
-    gint tbl_len;
-    GList *termtype = NULL;
-    int i;
-    gchar *ttypes[] = {
-	"postscript", 
-	"fig", 
-	"latex", 
-	"png",
-	"plot commands"
-    };
-
-    if (dialog != NULL) {
-	gdk_window_raise(dialog->window);
-	return;
-    }
-
-    for (i=0; i<5; i++) {
-	termtype = g_list_append(termtype, ttypes[i]);
-    }
-
-    dialog = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save graph"));
-    gtk_container_set_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 10);
-    gtk_container_set_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 2);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->action_area), 15);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
-    g_signal_connect(G_OBJECT(dialog), "destroy",
-		     G_CALLBACK(kill_gpt_save_dialog), &dialog);
-
-    tbl_len = 1;
-    tbl = gtk_table_new(tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX (GTK_DIALOG(dialog)->vbox), 
-		       tbl, FALSE, FALSE, 0);
-    gtk_widget_show(tbl);
-
-    tempwid = gtk_label_new(_("output type"));
-    gtk_table_attach_defaults(GTK_TABLE (tbl), 
-			      tempwid, 0, 1, tbl_len-1, tbl_len);
-    gtk_widget_show(tempwid);
-
-    combo = gtk_combo_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      combo, 1, 2, tbl_len-1, tbl_len);
-    gtk_combo_set_popdown_strings(GTK_COMBO(combo), termtype);   
-    gtk_widget_show(combo);
-
-    tempwid = gtk_button_new_with_label(_("Save"));
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     G_CALLBACK(plot_save_filesel), combo);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
-   
-    tempwid = gtk_button_new_with_label(_("Cancel"));
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     G_CALLBACK(delete_widget), dialog);
-    gtk_widget_show(tempwid);
-
-    gtk_widget_show(dialog);
-}
-
-#endif /* GNUPLOT_PNG */
 
 /* ........................................................... */
 
@@ -1337,23 +1111,6 @@ static int parse_set_line (GPT_SPEC *spec, const char *line,
 
     return 0;
 }
-
-/* ........................................................... */
-
-#ifdef GNUPLOT_PIPE
-static int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
-     /* add file or pipe to plot struct */
-{
-#ifdef OS_WIN32
-    plot->fp = NULL; /* will be opened later as needed */
-#else
-    plot->fp = popen(ppaths->gnuplot, "w");
-    if (plot->fp == NULL) return 1;
-#endif
-    plot->edit = 1;
-    return 0;
-}
-#endif
 
 /* ........................................................... */
 
@@ -1591,32 +1348,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     return 1;
 }
 
-#ifdef GNUPLOT_PIPE
-void start_editing_session_graph (const char *fname)
-{
-    GPT_SPEC *spec;
-
-    spec = plotspec_new();
-    if (spec == NULL) return;
-
-    strcpy(spec->fname, fname);
-    if (read_plotspec_from_file(spec)) {
-	free_plotspec(spec);
-	return;
-    }
-
-    if (open_gnuplot_pipe(&paths, spec)) {
-	errbox(_("gnuplot command failed"));
-	free_plotspec(spec);
-	return;
-    } 
-
-    show_gnuplot_dialog(spec);
-}
-#endif
-
-#ifdef GNUPLOT_PNG
-
 /* Size of drawing area */
 #define PLOT_PIXEL_WIDTH  640   /* try 576? 608? */
 #define PLOT_PIXEL_HEIGHT 480   /* try 432? 456? */
@@ -1801,10 +1532,12 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
 	}
     }
 
+#ifndef G_OS_WIN32
     /* unset the labeled flag for other points */
     for (t=0; t<plot_n; t++) {
 	if (t != best_match) plot->labeled[t] = 0;
     }
+#endif
 
     /* if the point is already labeled, skip */
     if (plot->labeled[best_match]) return;
@@ -1849,8 +1582,10 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 
 	if (plot->pd == 4 || plot->pd == 12) {
 	    x_to_date(data_x, plot->pd, label);
-	} else
+	} else {
 	    sprintf(label, (plot->xint)? "%7.0f" : "%7.4g", data_x);
+	}
+
 	if (!na(data_y)) {
 	    sprintf(label_y, (plot->yint)? " %-7.0f" : " %-7.4g", data_y);
 	    strcat(label, label_y);
@@ -2122,12 +1857,6 @@ static int redisplay_edited_png (png_plot_t *plot)
     /* grab (possibly modified) data ranges */
     get_plot_ranges(plot);
 
-    /* destroy the old set of labeled flags for data-points */
-    if (plot->labeled != NULL) {
-	free(plot->labeled);
-	plot->labeled = NULL;
-    }
-
     /* put the newly created PNG onto the plot canvas */
     render_pngfile(plot, PNG_REDISPLAY);
 
@@ -2312,6 +2041,12 @@ static void render_pngfile (png_plot_t *plot, int view)
 	return;
     }
 
+    /* scrap any old record of which points are labeled */
+    if (plot->labeled != NULL) {
+	free(plot->labeled);
+	plot->labeled = NULL;
+    }
+
     gdk_pixbuf_render_to_drawable(pbuf, plot->pixmap, 
 				  plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
 				  0, 0, 0, 0, width, height,
@@ -2368,15 +2103,15 @@ static void set_approx_pixel_bounds (png_plot_t *plot,
     }
 
     if (plot_has_xlabel(plot)) {
-	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 36;
+	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 36;
     } else {
-	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 24;
+	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 24;
     }
 
     if (plot_has_title(plot)) {
-	plot->pixel_ymax = 36;
+	plot->pixel_ymin = 36;
     } else {
-	plot->pixel_ymax = 14;
+	plot->pixel_ymin = 14;
     }
 
     plot->pixel_xmin = 27 + 7 * max_num_width;
@@ -2391,6 +2126,16 @@ static void set_approx_pixel_bounds (png_plot_t *plot,
     if (plot_has_y2label(plot)) {
 	plot->pixel_xmax -= 11;
     }
+
+#ifdef POINTS_DEBUG
+    fprintf(stderr, "set_approx_pixel_bounds():\n"
+	    " xmin=%d xmax=%d ymin=%d ymax=%d\n", 
+	    plot->pixel_xmin, plot->pixel_xmax,
+	    plot->pixel_ymin, plot->pixel_ymax);
+    fprintf(stderr, "set_approx_pixel_bounds():\n"
+	    " max_num_width=%d max_num2_width=%d\n", 
+	    max_num_width, max_num2_width);
+#endif
 }
 
 static int get_dumb_plot_yrange (png_plot_t *plot)
@@ -2445,18 +2190,24 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	char numstr[32];
 	int y_numwidth[16];
 	int y2_numwidth[16];
-	int i = 0, j = 0;
+	int i, j;
 
 	fpin = fopen(dumbtxt, "r");
 	if (fpin == NULL) return 1;
+
+	for (i=0; i<16; i++) {
+	    y_numwidth[i] = y2_numwidth[i] = 0;
+	}
 
 	/* read the y-axis min and max from the ascii graph */
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
-	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
+	i = j = 0;
+	while (i < 16 && fgets(line, MAXLEN-1, fpin)) {
 	    if (sscanf(line, "%lf", &(y[i])) == 1) {
 		sscanf(line, "%31s", numstr);
+		numstr[31] = 0;
 		y_numwidth[i++] = strlen(numstr);
 	    }
 	    if (plot_has_y2axis(plot) && j < 16) {
@@ -2466,6 +2217,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 		p = strrchr(line, ' ');
 		if (p != NULL && sscanf(p, "%lf", &y2) == 1) {
 		    sscanf(p, "%31s", numstr);
+		    numstr[31] = 0;
 		    y2_numwidth[j++] = strlen(numstr);
 		}
 	    }
@@ -2479,24 +2231,24 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 
 	if (x2axis) {
 	    if (i > 3 && y[1] > y[i-2]) {
-		int j;
+		int k;
 
 		plot->ymin = y[i-2];
 		plot->ymax = y[1];
-		for (j=1; j<i-2; j++) {
-		    if (y_numwidth[j] > max_ywidth) 
-			max_ywidth = y_numwidth[j];
+		for (k=1; k<i-2; k++) {
+		    if (y_numwidth[k] > max_ywidth) 
+			max_ywidth = y_numwidth[k];
 		}
 	    }
 	} else {	
 	    if (i > 2 && y[0] > y[i-2]) {
-		int j;
+		int k;
 
 		plot->ymin = y[i-2];
 		plot->ymax = y[0];
-		for (j=0; j<i-2; j++) {
-		    if (y_numwidth[j] > max_ywidth) 
-			max_ywidth = y_numwidth[j];
+		for (k=0; k<i-2; k++) {
+		    if (y_numwidth[k] > max_ywidth) 
+			max_ywidth = y_numwidth[k];
 		}
 	    }
 	}
@@ -2586,13 +2338,27 @@ static int get_plot_ranges (png_plot_t *plot)
 	plot->xmax = b.xmax;
 	plot->ymin = b.ymin;
 	plot->ymax = b.ymax;
-    } 
+    }
+# ifdef POINTS_DEBUG
+    if (coords == 0) {
+	fprintf(stderr, "get_png_bounds_info():\n"
+		" xmin=%d xmax=%d ymin=%d ymax=%d\n", 
+		plot->pixel_xmin, plot->pixel_xmax,
+		plot->pixel_ymin, plot->pixel_ymax);
+    } else {
+	fprintf(stderr, "get_png_bounds_info(): failed\n");
+    }
+# endif
 #endif /* PNG_COMMENTS */
 
     if (got_x) {
-	if (!plot_png_coords(plot)) {
+#ifdef POINTS_DEBUG
+	get_dumb_plot_yrange(plot);	
+#else
+	if (!plot_has_png_coords(plot)) { /* change for real build */
 	    get_dumb_plot_yrange(plot);
 	}
+#endif
 
 	if ((plot->xmax - plot->xmin) / 
 	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
@@ -3012,4 +2778,4 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
 
 #endif /* G_OS_WIN32 */
 
-#endif /* GNUPLOT_PNG */
+

@@ -176,9 +176,13 @@ int copyfile (const char *src, const char *dest)
     size_t n;
    
     if ((srcfd = fopen(src, "rb")) == NULL) {
+	sprintf(errtext, _("Couldn't open %s"), src);
+	errbox(errtext);
 	return 1; 
     }
     if ((destfd = fopen(dest, "wb")) == NULL) {
+	sprintf(errtext, _("Couldn't write to %s"), dest);
+	errbox(errtext);
 	fclose(srcfd);
 	return 1;
     }
@@ -764,7 +768,6 @@ void save_session (char *fname)
 	   current one? */
 	if (strcmp((session.graphs[i])->fname, tmp)) {
 	    if (copyfile((session.graphs[i])->fname, tmp)) {
-		errbox(_("Couldn't copy graph file"));
 		continue;
 	    } else {
 		remove((session.graphs[i])->fname);

@@ -1756,12 +1756,14 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 
 	if (plot->pd == 4 || plot->pd == 12) {
 	    x_to_date(data_x, plot->pd, label);
-	} else
+	} else {
 	    sprintf(label, (plot->xint)? "%7.0f" : "%7.4g", data_x);
+	}
 	if (!na(data_y)) {
 	    sprintf(label_y, (plot->yint)? " %-7.0f" : " %-7.4g", data_y);
 	    strcat(label, label_y);
 	}
+
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
 	}
@@ -2231,46 +2233,40 @@ static void set_approx_pixel_bounds (png_plot_t *plot,
 				     int max_num2_width)
 {
     if (PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
-	fprintf(stderr, "setting format flags from memory\n");
 	set_plot_format_flags(plot);
     }
 
     if (plot_has_xlabel(plot)) {
-	fprintf(stderr, "got xlabel\n");
 	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 36;
     } else {
 	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 24;
     }
 
     if (plot_has_title(plot)) {
-	fprintf(stderr, "got title\n");
 	plot->pixel_ymin = 36;
     } else {
 	plot->pixel_ymin = 14;
     }
 
     plot->pixel_xmin = 27 + 7 * max_num_width;
-    fprintf(stderr, "y axis char width = %d\n",max_num_width);
     if (plot_has_ylabel(plot)) {
-	fprintf(stderr, "got ylabel\n");
 	plot->pixel_xmin += 12;
     }
 
     plot->pixel_xmax = PLOT_PIXEL_WIDTH - 20; 
     if (plot_has_y2axis(plot)) {
-	fprintf(stderr, "got y2axis, char width = %d\n",
-		max_num2_width);
 	plot->pixel_xmax -= 7 * (max_num2_width + 1);
     }
     if (plot_has_y2label(plot)) {
-	fprintf(stderr, "got y2label\n");
 	plot->pixel_xmax -= 11;
     }
 
+#if 0
     fprintf(stderr, "set_approx_pixel_bounds:\n"
 	    "pixel_xmin=%d, xmax=%d; ymin=%d, ymax=%d\n",
 	    plot->pixel_xmin, plot->pixel_xmax,
 	    plot->pixel_ymin, plot->pixel_ymax);
+#endif
 }
 
 static int get_dumb_plot_yrange (png_plot_t *plot)
@@ -2319,18 +2315,24 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	char numstr[32];
 	int y_numwidth[16];
 	int y2_numwidth[16];
-	int i = 0, j = 0;
+	int i, j;
 
 	fpin = fopen(dumbtxt, "r");
 	if (fpin == NULL) return 1;
+
+	for (i=0; i<16; i++) {
+	    y_numwidth[i] = y2_numwidth[i] = 0;
+	}
 
 	/* read the y-axis min and max from the ascii graph */
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
-	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
+	i = j = 0;
+	while (i < 16 && fgets(line, MAXLEN-1, fpin)) {
 	    if (sscanf(line, "%lf", &(y[i])) == 1) {
 		sscanf(line, "%31s", numstr);
+		numstr[31] = 0;
 		y_numwidth[i++] = strlen(numstr);
 	    }
 	    if (plot_has_y2axis(plot) && j < 16) {
@@ -2340,6 +2342,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 		p = strrchr(line, ' ');
 		if (p != NULL && sscanf(p, "%lf", &y2) == 1) {
 		    sscanf(p, "%31s", numstr);
+		    numstr[31] = 0;
 		    y2_numwidth[j++] = strlen(numstr);
 		}
 	    }
@@ -2353,24 +2356,24 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 
 	if (x2axis) {
 	    if (i > 3 && y[1] > y[i-2]) {
-		int j;
+		int k;
 
 		plot->ymin = y[i-2];
 		plot->ymax = y[1];
-		for (j=1; j<i-2; j++) {
-		    if (y_numwidth[j] > max_ywidth) 
-			max_ywidth = y_numwidth[j];
+		for (k=1; k<i-2; k++) {
+		    if (y_numwidth[k] > max_ywidth) 
+			max_ywidth = y_numwidth[k];
 		}
 	    }
 	} else {	
 	    if (i > 2 && y[0] > y[i-2]) {
-		int j;
+		int k;
 
 		plot->ymin = y[i-2];
 		plot->ymax = y[0];
-		for (j=0; j<i-2; j++) {
-		    if (y_numwidth[j] > max_ywidth) 
-			max_ywidth = y_numwidth[j];
+		for (k=0; k<i-2; k++) {
+		    if (y_numwidth[k] > max_ywidth) 
+			max_ywidth = y_numwidth[k];
 		}
 	    }
 	}
@@ -2465,12 +2468,14 @@ static int get_plot_ranges (png_plot_t *plot)
     } 
 #endif /* PNG_COMMENTS */
 
+#if 0
     fprintf(stderr, "png: pixel_xmin=%d, xmax=%d, ymin=%d, ymax=%d\n",
 	    plot->pixel_xmin, plot->pixel_xmax, plot->pixel_ymin,
 	    plot->pixel_ymax);
+#endif
 
     if (got_x) {
-	if (1 || !plot_png_coords(plot)) { /* hello!!! */
+	if (!plot_png_coords(plot)) {
 	    get_dumb_plot_yrange(plot);
 	}
 
