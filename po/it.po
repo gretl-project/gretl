@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.2.6\n"
 "POT-Creation-Date: 2004-06-04 11:18-0400\n"
-"PO-Revision-Date: 2004-06-03 19:36+0200\n"
+"PO-Revision-Date: 2004-06-05 01:16+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4292,7 +4292,6 @@ msgstr ""
 "Non è disponibile in un loop.\n"
 
 #: cli/gretlcli.c:97
-#, fuzzy
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -4316,6 +4315,7 @@ msgstr ""
 "  -p o --pvalue    Determina i p-value interattivamente.\n"
 "  -h o --help      Mostra queste informazioni ed esce.\n"
 "  -v o --version   Mostra informazioni sulla versione ed esce.\n"
+"  -e o --english   Usa la versione inglese invece di quella italiana.\n"
 "Esempio di uso della modalità \"batch\":\n"
 " gretlcli -b miofile.inp >miofile.out\n"
 "Esempio di uso della modalità \"run\":\n"
@@ -4890,7 +4890,7 @@ msgstr "Apre un database remoto (web) all'avvio"
 
 #: gui/gretl.c:112 gui2/gretl.c:123
 msgid "force use of English"
-msgstr ""
+msgstr "forza l'uso della lingua inglese"
 
 #: gui/gretl.c:190 gui2/gretl.c:217
 msgid "/File/_Open data"
@@ -5704,10 +5704,8 @@ msgstr ""
 "Oppure si può usare \"gretl -d database\" per aprire un database gretl.\n"
 
 #: gui/gretl.c:485
-#, fuzzy
 msgid "You may do \"gretl -e\" to force use of English.\n"
-msgstr ""
-"Oppure si può usare \"gretl -d database\" per aprire un database gretl.\n"
+msgstr "È possibile usare \"gretl -e\" per forzare l'uso della lingua inglese.\n"
 
 #: gui/gretl.c:503 gui2/gretl.c:573
 #, c-format
@@ -9973,7 +9971,7 @@ msgstr "Comando per visualizzare i file postscript"
 
 #: gui2/settings.c:184
 msgid "Program to play MIDI files"
-msgstr ""
+msgstr "Programma per suonare i file MIDI"
 
 #: gui2/settings.c:187
 msgid "Calculator"
@@ -10997,6 +10995,3 @@ msgstr ""
 #: plugin/workbook.c:583
 msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
-
-#~ msgid "Audio"
-#~ msgstr "Audio"
