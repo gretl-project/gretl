@@ -102,6 +102,63 @@ href="http://www.gimp.org/~tml/gimp/win32/downloads.html">gtk per
 win32</a> di Tor Lillqvist. Il programma di installazione è di
 <a href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
 
+<h2>Supporto multilingua</h2>
+
+<p>Oltre alla lingua inglese, gretl supporta il francese, l'italiano, lo
+spagnolo, il tedesco e il polacco. Di solito non occorre fare nulla di speciale
+per poter usare gretl nella lingua locale: il programma dovrebbe usare
+automaticamente le traduzioni disponibili basandosi sull'impostazione della
+lingua attiva sul computer. In alcune circostanze, però, potrebbe essere
+necessario modificare l'impostazione della lingua sul computer, usando il
+pannello di controllo di Windows. Se si incontrano problemi in questa
+operazione, ecco un controllo da fare:</p>
+
+<ul>
+
+<li>
+<p>Aprire un terminale di Windows (o quello che a volte viene chiamato "Prompt
+di MS/DOS").</p>
+</li>
+
+<li><p>Spostarsi (<kbd>cd</kbd>) nella directory dove gretl è stato installato.
+Ad esempio, scrivere</p>
+
+<pre>
+cd c:\programmi\gretl
+</pre>
+
+<p>e premere Invio.<p>
+</li>
+
+<li>
+<p>Scrivere "<kbd>set LANG=</kbd>" seguito dal codice a due lettere della
+propria lingua. Ad esempio, per la lingua italiana:</p>
+
+<pre>
+set LANG=it
+</pre>
+
+<p>e premere Invio. Per il francese occorrerà usare <kbd>fr</kbd>, per lo
+spagnolo <kbd>es</kbd>, per il polacco <kbd>pl</kbd> e per il tedesco <kbd>de</kbd>.
+</p>
+</li>  
+
+<li><p>Quindi, avviare gretl dal terminale, scrivendo</p>
+
+<pre>
+gretlw32.exe
+</pre>
+<p>e premendo Invio.</p>
+</li>
+
+</ul>
+
+<p>Gretl dovrebbe apparire nella lingua selezionata, se essa è supportata.
+Se si riesce a far funzionare gretl nella propria lingua seguendo questa
+procedura, dovrebbe essere possibile ottenere lo stesso risultato anche
+attraverso le impostazioni della lingua nel pannello di controllo di Windows.
+</p>
+
 <h2>Aggiornare gretl</h2>
 
 <p>Prima di aggiornare gretl è consigliabile eseguire il programma
