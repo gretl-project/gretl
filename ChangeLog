@@ -1,3 +1,7 @@
+version 1.2.1
+- Add support for the data files from Davidson & MacKinnon,
+  Econometric Theory and Methods (ETM)
+
 12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)
 - add "printf" command for generating formatted output
