@@ -800,6 +800,17 @@ static void read_rc (void)
 /* end of gnome versions, now win32 */
 #elif defined(G_OS_WIN32)
 
+static const char *get_reg_base (const char *key)
+{
+    if (strncmp(key, "x12a", 4) == 0) {
+	return "x12arima";
+    }
+    if (strncmp(key, "tramo", 5) == 0) {
+	return "tramo";
+    }
+    return "gretl";
+}
+
 void write_rc (void) 
 {
     int i = 0;
@@ -808,10 +819,11 @@ void write_rc (void)
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].type == 'B') {
 	    boolvar_to_str(rc_vars[i].var, val);
-	    write_reg_val(HKEY_CURRENT_USER, rc_vars[i].key, val);
+	    write_reg_val(HKEY_CURRENT_USER, "gretl", rc_vars[i].key, val);
 	} else
 	    write_reg_val((rc_vars[i].type == 'R')? 
 			  HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
+			  get_reg_base(rc_vars[i].key),
 			  rc_vars[i].key, rc_vars[i].var);
 	i++;
     }
@@ -829,6 +841,7 @@ void read_rc (void)
     while (rc_vars[i].key != NULL) {
 	if (read_reg_val((rc_vars[i].type == 'R')? 
 			 HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
+			 get_reg_base(rc_vars[i].key),
 			 rc_vars[i].key, value) == 0) {
 	    if (rc_vars[i].type == 'B') {
 		str_to_boolvar(value, rc_vars[i].var);
@@ -848,19 +861,19 @@ void read_rc (void)
     /* get recent file lists */
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(rpath, "recent data files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
+	if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) 
 	    strcpy(datalist[i], value);
 	else break;
     }    
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(rpath, "recent session files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
+	if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) 
 	    strcpy(sessionlist[i], value);
 	else break;
     } 
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(rpath, "recent script files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
+	if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) 
 	    strcpy(scriptlist[i], value);
 	else break;
     }
@@ -1290,7 +1303,7 @@ static void printfilelist (int filetype, FILE *fp)
 
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(rpath, "%s\\%d", sections[filetype - 1], i);
-	write_reg_val(HKEY_CURRENT_USER, rpath, filep[i]);
+	write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
     }
 }
 

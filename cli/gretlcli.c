@@ -221,7 +221,7 @@ void nls_init (void)
 # ifdef OS_WIN32
     char gretldir[MAXLEN], localedir[MAXLEN];
 
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
         return;
     }
     sprintf(localedir, "%s\\locale", gretldir);

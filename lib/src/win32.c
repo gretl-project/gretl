@@ -24,15 +24,19 @@
 
 /* ............................................................ */
 
-int read_reg_val (HKEY tree, char *keyname, char *keyval)
+int read_reg_val (HKEY tree, const char *base, 
+		  char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
+    char regpath[32];
     int error = 0;
     HKEY regkey;
 
+    sprintf(regpath, "Software\\%s", base);
+
     if (RegOpenKeyEx(
                      tree,                        /* handle to open key */
-                     "Software\\gretl",           /* subkey name */
+                     regpath,                     /* subkey name */
                      0,                           /* reserved */
                      KEY_READ,                    /* access mask */
                      &regkey                      /* key handle */
@@ -59,14 +63,18 @@ int read_reg_val (HKEY tree, char *keyname, char *keyval)
 
 /* ............................................................ */
 
-int write_reg_val (HKEY tree, char *keyname, char *keyval)
+int write_reg_val (HKEY tree, const char *base, 
+		   const char *keyname, const char *keyval)
 {
+    char regpath[32];
     int error = 0;
     HKEY regkey;
 
+    sprintf(regpath, "Software\\%s", base);
+
     if (RegCreateKeyEx(
                        tree,
-                       "Software\\gretl",
+                       regpath,
                        0,
                        NULL, 
                        REG_OPTION_NON_VOLATILE,
@@ -100,20 +108,23 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     int drive = callname[0];
 
     ppaths->gretldir[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "gretldir", ppaths->gretldir);
-    if (ppaths->gretldir[0] == '\0')
+    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", ppaths->gretldir);
+    if (ppaths->gretldir[0] == '\0') {
 	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
+    }
 
     ppaths->gnuplot[0] = '\0';
-    read_reg_val(HKEY_CLASSES_ROOT, "gnuplot", ppaths->gnuplot);
-    if (ppaths->gnuplot[0] == '\0')
+    read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gnuplot", ppaths->gnuplot);
+    if (ppaths->gnuplot[0] == '\0') {
 	sprintf(ppaths->gnuplot, 
 		"%c:\\userdata\\gnuplot\\pgnuplot.exe", drive);
+    }
 
     ppaths->userdir[0] = '\0';
-    read_reg_val(HKEY_CURRENT_USER, "userdir", ppaths->userdir);
-    if (ppaths->userdir[0] == '\0')
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", ppaths->userdir);
+    if (ppaths->userdir[0] == '\0') {
 	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
+    }
 }
 
 

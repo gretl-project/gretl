@@ -654,7 +654,7 @@ void nls_init (void)
 # ifdef G_OS_WIN32
     char gretldir[MAXSTR], LOCALEDIR[MAXSTR];
 
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
 	return;
     }
     build_path(gretldir, "locale", LOCALEDIR, NULL);
@@ -1156,7 +1156,7 @@ static void try_to_get_windows_font (void)
     char name[NAME_BUFFER_LEN], regfont[MAXLEN];
 
     /* don't override user's choice of font */
-    if (read_reg_val(HKEY_CURRENT_USER, "App_font", regfont) == 0)
+    if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0)
 	return;
 
     h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);

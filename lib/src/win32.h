@@ -24,9 +24,11 @@
 
 #include <windows.h>
 
-int read_reg_val (HKEY tree, char *keyname, char *keyval);
+int read_reg_val (HKEY tree, const char *base,
+		  char *keyname, char *keyval);
 
-int write_reg_val (HKEY tree, char *keyname, char *keyval);
+int write_reg_val (HKEY tree, const char *base,
+		   const char *keyname, const char *keyval);
 
 void cli_read_registry (char *callname, PATHS *ppaths);
 
