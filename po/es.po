@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.0pre2\n"
 "POT-Creation-Date: 2002-10-16 10:49-0400\n"
-"PO-Revision-Date: 2002-10-16 10:51-0400\n"
+"PO-Revision-Date: 2002-10-16 15:08-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2110,7 +2110,7 @@ msgstr "predicción"
 
 #: lib/src/gretl_utils.c:2010
 msgid " std. error"
-msgstr " desv. típica"
+msgstr " desv. típ."
 
 #: lib/src/gretl_utils.c:2011
 #, c-format

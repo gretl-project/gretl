@@ -1999,14 +1999,16 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     } 
 
     /* print results */
-    for (t=0; t<nfcast; t++) 
+    for (t=0; t<nfcast; t++) {
 	depvar[t] = (*pZ)[v1][ft1 + t];
+    }
+
     tval = _tcrit95(pmod->dfd);
     pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
 	    pmod->dfd, tval);
     pprintf(prn, "\n     Obs ");
-    pprintf(prn, "%13s", pdinfo->varname[v1]);
-    pprintf(prn, "%13s", _("prediction"));
+    pprintf(prn, "%12s", pdinfo->varname[v1]);
+    pprintf(prn, "%14s", _("prediction"));
     pprintf(prn, "%14s", _(" std. error"));
     pprintf(prn, _("   95%% confidence interval\n"));
     pprintf(prn, "\n");
