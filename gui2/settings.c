@@ -1195,7 +1195,7 @@ static int get_network_settings (void)
     inifile = get_network_cfg_filename();
 
     if (*inifile && (fp = fopen(inifile, "r"))) {
-	int j, calldrive = inifile[0];
+	int j, calldrive = tolower(inifile[0]);
 	char line[MAXLEN], key[32], linevar[MAXLEN];
 
 	while (fgets(line, MAXLEN, fp)) {
@@ -1215,7 +1215,7 @@ static int get_network_settings (void)
 			    str_to_boolvar(linevar, rc_vars[j].var);
 			} else {
 			    if (!strcmp(key, "gretldir") && 
-				*linevar != calldrive) {
+				tolower(linevar[0]) != calldrive) {
 				gotini = 0;
 				goto network_quit;
 			    } else {
