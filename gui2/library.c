@@ -248,27 +248,6 @@ static void launch_gnuplot_interactive (void)
 
 /* ........................................................... */
 
-static void sync_datainfos (void)
-{
-    if (fullinfo == NULL || datainfo == NULL) return;
-
-    /* What's happening here?  When the dataset is currently
-       sub-sampled, fullinfo is a pointer to the full, unsampled
-       dataset.  However, fullinfo and the current datainfo share
-       the pointers below, which are independent of the series
-       length.  Certain operations on datainfo will result in, e.g., 
-       the varname pointer being moved: in that case the pointers
-       must be re-synced before they are dereferenced via
-       fullinfo. */
-
-    fullinfo->varname = datainfo->varname;
-    fullinfo->varinfo = datainfo->varinfo;
-    fullinfo->descrip = datainfo->descrip;
-    fullinfo->vector = datainfo->vector;
-}
-
-/* ........................................................... */
-
 int quiet_sample_check (MODEL *pmod)
 {
     return model_sample_issue(pmod, NULL, datainfo);
