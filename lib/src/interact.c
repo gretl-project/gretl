@@ -240,21 +240,25 @@ static int flow_control (const char *line, double ***pZ,
 {
     /* clear to proceed */
     if (!ifstate(IS_FALSE) && 
-	cmd->ci != IF && cmd->ci != ELSE && cmd->ci != ENDIF)
+	cmd->ci != IF && cmd->ci != ELSE && cmd->ci != ENDIF) {
 	return 0;
+    }
 
     if (cmd->ci == IF) {
 	int ret = if_eval(line, pZ, pdinfo);
 
-	if (ret == -1 || ifstate((ret)? SET_TRUE : SET_FALSE)) 
+	if (ret == -1 || ifstate((ret)? SET_TRUE : SET_FALSE)) { 
 	    cmd->errcode = E_SYNTAX;
+	}
     }
 
-    else if (cmd->ci == ELSE && ifstate(SET_ELSE)) 
+    else if (cmd->ci == ELSE && ifstate(SET_ELSE)) {
 	cmd->errcode = E_SYNTAX;
+    }
 
-    else if (cmd->ci == ENDIF && ifstate(SET_ENDIF)) 
+    else if (cmd->ci == ENDIF && ifstate(SET_ENDIF)) {
 	cmd->errcode = E_SYNTAX;
+    }
 
     return 1;
 }

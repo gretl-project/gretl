@@ -2206,6 +2206,11 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    } /* end switch on specific command number */
+
+	    if (err) {
+		fprintf(stderr, "error in '%s'\n", linecpy);
+	    }
+
 	} /* end execution of commands within loop */
 
 	lround++;
@@ -2246,6 +2251,10 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     char formula[MAXLEN];
     int err, ret = -1;
 
+#ifdef LOOP_DEBUG
+    printf("if_eval: line = '%s'\n", line);
+#endif
+
     /* + 2 below to omit "if" */
     sprintf(formula, "__iftest=%s", line + 2);
     err = generate(pZ, pdinfo, formula, NULL);
@@ -2276,6 +2285,7 @@ int ifstate (int code)
     else if (code == SET_FALSE || code == SET_TRUE) {
 	indent++;
 	if (indent >= IF_DEPTH) {
+	    fprintf(stderr, "if depth (%d) exceeded\n", IF_DEPTH);
 	    return 1; /* too deeply nested */
 	}
 	T[indent] = (code == SET_TRUE);
