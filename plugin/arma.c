@@ -320,13 +320,13 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 				      const DATAINFO *pdinfo)
 {
     int i, t;
-    int p = list[1], q = list[2];
+    int p = list[1], q = list[2], r = list[0] - 4;
     double mean_error;
 
     pmod->ci = ARMA;
     pmod->ifc = 1;
 
-    pmod->dfn = p + q;
+    pmod->dfn = p + q + r;
     pmod->dfd = pmod->nobs - pmod->dfn;
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -481,6 +481,7 @@ static int ar_init_by_ols (const int *list, double *coeff,
 	    coeff[j++] = armod.coeff[i];
 	}
 	for (i=0; i<q; i++) {
+	    /* squeeze in some zeros */
 	    coeff[i+p+1] = 0.0;
 	} 
     }
@@ -531,11 +532,11 @@ static void make_tmp_varnames (DATAINFO *ainfo, int p, int q, int r)
 #endif
 
 static int adjust_sample (DATAINFO *pdinfo, const double *y,
-                          int p, int q, int v,
+                          int p, int q, int r, int v,
 			  int *arma_t1, int *arma_t2)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int maxlag = (p>q)? p : q;
+    int maxlag = (p > q)? p : q;
     int an, t, t1min = 0;
 
     for (t=0; t<=pdinfo->t2; t++) {
@@ -563,7 +564,7 @@ static int adjust_sample (DATAINFO *pdinfo, const double *y,
     }
 
     an = t2 - t1 + 1;
-    if (an <= p + q + 1) return 1; 
+    if (an <= p + q + r + 1) return 1; 
 
     *arma_t1 = t1;
     *arma_t2 = t2;
@@ -609,7 +610,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     r = list[0] - 4;
 
     /* adjust sample? */
-    if (adjust_sample(pdinfo, y, p, q, v, &arma_t1, &arma_t2)) {
+    if (adjust_sample(pdinfo, y, p, q, r, v, &arma_t1, &arma_t2)) {
         armod.errcode = E_DATA;
         return armod;
     }
@@ -656,6 +657,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	armod.errcode = E_ALLOC;
 	return armod;
     }
+
     ainfo->t1 = arma_t1;
     ainfo->t2 = arma_t2;
 
