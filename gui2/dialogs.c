@@ -538,7 +538,7 @@ void about_dialog (gpointer data)
     gtk_widget_show (box);
 
     if ((tempwid = open_logo("gretl-logo.xpm"))) {
-	gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 50);
+	gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 30);
 	gtk_widget_show (tempwid);
     }
     
@@ -552,6 +552,8 @@ void about_dialog (gpointer data)
 			       version_string);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
+
+    gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
     gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 0);
     gtk_widget_show (tempwid);
 
@@ -567,7 +569,8 @@ void about_dialog (gpointer data)
 
     view = gtk_text_view_new ();
     gtk_text_view_set_editable (GTK_TEXT_VIEW (view), FALSE);
-    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (view), GTK_WRAP_WORD);    
+    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (view), GTK_WRAP_NONE);
+    gtk_widget_modify_font(GTK_WIDGET(view), fixed_font);
 
     about_table_setup(box, view);
 
@@ -727,7 +730,6 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	  "to this session?")
     };
 	
-
     strcpy(fname, paths.userdir);
     strcat(fname, "session.inp");
     dump_cmd_stack(fname);

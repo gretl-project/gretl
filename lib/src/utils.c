@@ -1048,7 +1048,7 @@ int _list_dups (const int *list, int ci)
 
     if (ci == ARCH) start = 3;
 
-    if (ci == TSLS || ci == AR || ci == SCATTERS) {
+    if (ci == TSLS || ci == AR || ci == SCATTERS || ci == MPOLS) {
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == 999) {
 		start = i+1;

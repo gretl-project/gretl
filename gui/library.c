@@ -1750,7 +1750,8 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 {
     char *edttext, estimator[9];
     void *handle;
-    int (*mplsq)(const int *, double ***, DATAINFO *, PRN *, char *);
+    int (*mplsq)(const int *, const int *,
+		 double ***, DATAINFO *, PRN *, char *);
     int err, action;
     selector *sr = (selector *) p;
     PRN *prn;
@@ -1775,7 +1776,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    err = (*mplsq)(command.list, &Z, datainfo, prn, errtext);
+    err = (*mplsq)(command.list, NULL, &Z, datainfo, prn, errtext);
 
     close_plugin(handle);
 
@@ -4163,7 +4164,7 @@ static int gui_exec_line (char *line,
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(command.list, &Z, datainfo, prn);
+	err = mp_ols(command.list, command.param, &Z, datainfo, prn);
 	break;
 #endif
 

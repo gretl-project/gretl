@@ -1023,7 +1023,7 @@ void exec_line (char *line, PRN *prn)
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(command.list, &Z, datainfo, prn);
+	err = mp_ols(command.list, command.param, &Z, datainfo, prn);
 	break;
 #endif
 

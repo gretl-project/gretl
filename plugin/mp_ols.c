@@ -37,6 +37,7 @@ typedef struct {
                                     freedom in numerator and denominator */
     int *list;                   /* list of variables by (translated) ID number */
     int *varlist;                /* counterpart of list, using "real" ID #s */
+    const int *polylist;         /* list of polynomial powers */
     int ifc;                     /* = 1 if the equation includes a constant,
 				    else = 0 */
     mpf_t *coeff;                /* array of coefficient estimates */
@@ -47,6 +48,8 @@ typedef struct {
     mpf_t rsq, adjrsq;           /* Unadjusted and adjusted R^2 */     
     mpf_t fstt;                  /* F-statistic */
     int errcode;                 /* Error code in case of failure */
+    int polyvar;                 /* number of the variable to be raised to
+				    specified powers, if any */
 } MPMODEL;
 
 typedef struct {
@@ -93,6 +96,8 @@ static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
     int i, t, allzero;
 
     for (i=1; i<=list[0]; i++) {
+	/* no need to check the constant */
+	if (list[i] == 0) continue; 
 	allzero = 1;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	    if (na(Z[list[i]][t])) {
@@ -115,11 +120,14 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     int i, j, t, n = pmod->t2 - pmod->t1 + 1;
     int l0 = pmod->list[0];
+    int npoly = (pmod->polylist == NULL)? 0 : pmod->polylist[0];
+    int dropc = 0, nvars = 0, listpt;
     mpf_t **mpZ = NULL;
+    mpf_t tmp;
 
     if (n <= 0) return NULL;
 
-    pmod->varlist = malloc ((l0 + 1) * sizeof *pmod->varlist);
+    pmod->varlist = malloc ((l0 + 1) * sizeof(int));
     if (pmod->varlist == NULL) return NULL;
     pmod->varlist[0] = l0;
 
@@ -130,25 +138,56 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
 	mpZ[0] = malloc(n * sizeof **mpZ);
 	j = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) mpf_init_set_d (mpZ[0][j++], 1.0);
+	nvars++;
     }
 
-    for (i=0; i<l0; i++) {
-	int k = i + pmod->ifc;
+    /* constant will have been moved to the end of the list by now */
+    if (npoly && pmod->ifc) dropc = 1;
 
+    /* ordinary data */
+    for (i=0; i<l0-npoly-dropc; i++) {
 	if (pmod->list[i+1] == 0) {
 	    pmod->varlist[i+1] = 0;
 	} else {
-	    mpZ[k] = malloc(n * sizeof **mpZ);
-	    if (mpZ[k] != NULL) {
+	    mpZ[nvars] = malloc(n * sizeof **mpZ);
+	    if (mpZ[nvars] != NULL) {
 		j = 0;
 		for (t=pmod->t1; t<=pmod->t2; t++) {
-		    mpf_init_set_d (mpZ[k][j++], Z[pmod->list[i+1]][t]);
+		    mpf_init_set_d (mpZ[nvars][j++], 
+				    Z[pmod->list[i+1]][t]);
 		}
 		pmod->varlist[i+1] = pmod->list[i+1];
-		pmod->list[i+1] = k;
+		pmod->list[i+1] = nvars++;
 	    } else return NULL;
 	}
     }
+
+    listpt = i + 1;
+
+    printf("got the ordinary data: nvars now = %d\n", nvars);
+
+    mpf_init (tmp);
+
+    /* generated data (if any) */
+    for (i=0; i<npoly; i++) {  
+	mpZ[nvars] = malloc(n * sizeof **mpZ);
+	if (mpZ[nvars] != NULL) {
+	    j = 0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		mpf_set_d (tmp, Z[pmod->list[2]][t]);
+		mpf_init(mpZ[nvars][j]);
+		mpf_pow_ui(mpZ[nvars][j++],          /* target */
+			   tmp,                      /* source */ 
+			   (unsigned long) 
+			   pmod->polylist[i+1]);     /* power */
+	    }
+	    pmod->varlist[i+listpt] = pmod->list[i+listpt];
+	    pmod->list[i+listpt] = nvars++;
+	} else return NULL;	
+    }
+
+    mpf_clear(tmp);
+
     return mpZ;
 }
 
@@ -197,6 +236,7 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->t2 = pdinfo->t2;
     pmod->list = NULL;
     pmod->varlist = NULL;
+    pmod->polylist = NULL; /* don't free, the caller does that */
     pmod->ifc = 1;
     pmod->coeff = NULL;
     pmod->sderr = NULL;
@@ -208,16 +248,30 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     mpf_init (pmod->adjrsq);
     mpf_init (pmod->fstt); 
     pmod->errcode = 0;
+    pmod->polyvar = 0;
 }
 
 static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
 			    int c, PRN *prn)
 {
+    char vname[12];
     double xx = mpf_get_d (pmod->coeff[c-1]);
     double yy = mpf_get_d (pmod->sderr[c-1]);
 
-    pprintf(prn, " %3d) %8s ", pmod->varlist[c], 
-	    pdinfo->varname[pmod->varlist[c]]);
+    /* FIXME: handle case of no intercept */
+
+    if (pmod->polyvar != 0 && 
+	c >= pmod->list[0] - pmod->polylist[0] &&
+	!(c == pmod->list[0] && pmod->ifc)) {
+	int pwr = c - (pmod->list[0] - pmod->polylist[0]) + 1;
+
+	sprintf(vname, "%s^%d", pdinfo->varname[pmod->polyvar],
+		pmod->polylist[pwr]);
+    } else {
+	strcpy(vname, pdinfo->varname[pmod->varlist[c]]);
+    } 
+
+    pprintf(prn, " %3d) %8s ", pmod->varlist[c], vname);
 
     gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     gretl_print_fullwidth_double(yy, GRETL_MP_DIGITS, prn); 
@@ -273,7 +327,7 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, _("Multiple-precision OLS estimates using "
 		   "the %d observations %s-%s\n"),
 	    pmod->nobs, startdate, enddate);
-    pprintf(prn, "%s: %s\n\n", _("Dependent variable")
+    pprintf(prn, "%s: %s\n\n", _("Dependent variable"),
 		 pdinfo->varname[pmod->varlist[1]]);
 
     pprintf(prn, _("      VARIABLE         COEFFICIENT          "
@@ -329,9 +383,49 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
     return 0;
 }
 
+static int poly_nonsense (MPMODEL *pmod, const int *list)
+{
+    int i;
+
+    /* take the rightmost var in the list (other than the constant)
+       as the one to be raised to various powers */
+
+    for (i=list[0]; i>1; i--) {
+	if (list[i] != 0) {
+	    pmod->polyvar = list[i];
+	    break;
+	}
+    }
+
+    if (pmod->polyvar == 0) return 1;
+    return 0;
+}
+
+static int poly_copy_list (int **targ, const int *list, const int *poly)
+{
+    int i;
+
+    *targ = malloc((list[0] + poly[0] + 1) * sizeof **targ);
+    
+    if (*targ == NULL) return 1;
+
+    (*targ)[0] = list[0] + poly[0];
+
+    for (i=1; i<=list[0]; i++) {
+	(*targ)[i] = list[i];
+    }
+
+    for (i=1; i<=poly[0]; i++) {
+	(*targ)[list[0] + i] = list[0] + i - 1; 
+    }  
+
+    return 0;
+}
+
 /**
  * mplsq:
  * @list: dependent variable plus list of regressors.
+ * @polylist: list of polynomial terms (or NULL).
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn:
@@ -342,7 +436,8 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
  * Returns: 0 on success, error code on failure.
  */
 
-int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
+int mplsq (const int *list, const int *polylist,
+	   double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	   char *errbuf) 
 {
     int l0, i;
@@ -355,14 +450,26 @@ int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     if (list == NULL || pZ == NULL || *pZ == NULL || pdinfo == NULL ||
 	list[0] == 1 || pdinfo->v == 1) return E_DATA;
 
+    mpf_set_default_prec(1024);
+    printf("gmp precision = %lu\n", mpf_get_default_prec());
+
     mp_model_init (&model, pdinfo);
 
     /* preserve a copy of the list supplied, for future reference */
-    copylist(&(model.list), list);
+    if (polylist == NULL) {
+	copylist(&(model.list), list);
+    } else {
+	poly_copy_list(&(model.list), list, polylist);
+    }
+
     if (model.list == NULL) return E_ALLOC;
 
+    model.polylist = polylist; /* attached for convenience */
+
+    if (poly_nonsense(&model, list)) return E_DATA;
+
     /* check for missing obs in sample */
-    if (data_problems(model.list, *pZ, pdinfo, errbuf)) return E_DATA;
+    if (data_problems(list, *pZ, pdinfo, errbuf)) return E_DATA;
 
     /* see if the regressor list contains a constant */
     model.ifc = mp_rearrange(model.list);

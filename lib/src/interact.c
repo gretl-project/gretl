@@ -242,7 +242,7 @@ static int flow_control (const char *line, double ***pZ,
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
 	     int *ignore, double ***pZ, PRN *cmds)
 {
-    int i, j, nf, linelen, n, v, gotdata = 0, ar = 0;
+    int i, j, nf, linelen, n, v, gotdata = 0, ar = 0, poly = 0;
     int spacename = 0;
     char field[10], *remainder;
     LAGVAR lagvar;
@@ -516,7 +516,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
 	if (isdigit(field[0])) {
 	    v = atoi(field);
-	    if (!ar && v > pdinfo->v - 1) {
+	    if (!ar && !poly && v > pdinfo->v - 1) {
 		command->errcode = 1;
 		sprintf(gretl_errmsg, 
                        _("%d is not a valid variable number"), v);
@@ -528,12 +528,13 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
 	else if (field[0] == ';') {
 	    if (command->ci == TSLS || command->ci == AR ||
-		command->ci == SCATTERS) {
+		command->ci == MPOLS || command->ci == SCATTERS) {
 		command->param = realloc(command->param, 4);
 		sprintf(command->param, "%d", j);
 		n += strlen(field) + 1;
 		command->list[j] = 999;
-		ar = 0;
+		ar = 0; /* turn off acceptance of AR lags */
+		if (command->ci == MPOLS) poly = 1;
 		continue;
 	    }
 	    else {
@@ -553,7 +554,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 
 	/* check command->list for scalars */
-	if (!ar && command->ci != PRINT && command->ci != STORE) {
+	if (!ar && !poly && command->ci != PRINT && command->ci != STORE) {
 	    if (!pdinfo->vector[command->list[j]]) {
 		command->errcode = 1;
 		sprintf(gretl_errmsg, 
@@ -923,7 +924,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    if (pcmd->ci == RHODIFF) printf(" %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
 		     && pcmd->ci != AR && pcmd->ci != CORRGM
-		     && pcmd->ci != SCATTERS) 
+		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS) 
 		printf(" %s", pcmd->param);
 	}
 	if (!batch) {
@@ -931,7 +932,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    if (pcmd->ci == RHODIFF) pprintf(prn, " %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
 		     && pcmd->ci != AR && pcmd->ci != CORRGM
-		     && pcmd->ci != SCATTERS) 
+		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS) 
 		pprintf(prn, " %s", pcmd->param);
 	}
 	/* if list is very long, break it up over lines */
@@ -943,7 +944,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    if (pcmd->list[i] == 999) {
 		if (!gui) printf(" ;");
 		if (!batch) pprintf(prn, " ;");
-		got999 = 1;
+		got999 = (pcmd->ci != MPOLS)? 1 : 0;
 		continue;
 	    }
 	    if (!gui) {

@@ -1047,9 +1047,37 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+int make_mp_lists (const LIST list, const char *str,
+		   int **reglist, int **polylist)
+{
+    int i, pos;
+
+    pos = atoi(str);
+
+    *reglist = malloc(pos * sizeof **polylist);
+    *polylist = malloc((list[0] - pos + 2) * sizeof **reglist);
+
+    if (*reglist == NULL || *polylist == NULL) {
+	free(*reglist);
+	free(*polylist);
+	return 1;
+    }
+    
+    (*reglist)[0] = pos - 1;
+    for (i=1; i<pos; i++) (*reglist)[i] = list[i];
+
+    (*polylist)[0] = list[0] - pos;
+    for (i=1; i<=(*polylist)[0]; i++) (*polylist)[i] = list[i+pos];
+
+    return 0;
+}
+
 /**
  * mp_ols:
  * @list: specification of variables to use
+ * @pos: string rep. of integer position in list at which
+ * the regular list of variables ends and a list of polynomial
+ * terms begins (or empty string in case of no polynomial terms)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
@@ -1058,12 +1086,16 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int mp_ols (const LIST list, double ***pZ, DATAINFO *pdinfo, 
+int mp_ols (const LIST list, const char *pos,
+	    double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn) 
 {
     void *handle;
-    int (*mplsq)(const int *, double ***, DATAINFO *, PRN *, char *);
-    int err;
+    int (*mplsq)(const int *, const int *, double ***, 
+		 DATAINFO *, PRN *, char *);
+    const int *reglist = NULL;
+    int *polylist = NULL, *tmplist = NULL;
+    int err = 0;
 
     if (open_plugin("mp_ols", &handle)) {
 	pprintf(prn, _("Couldn't access GMP plugin\n"));
@@ -1073,13 +1105,29 @@ int mp_ols (const LIST list, double ***pZ, DATAINFO *pdinfo,
     mplsq = get_plugin_function("mplsq", handle);
     if (mplsq == NULL) {
 	pprintf(prn, _("Couldn't load plugin function\n"));
-	close_plugin(handle);
-	return 1;
+	err = 1;
     }
 
-    err = (*mplsq)(list, pZ, pdinfo, prn, gretl_errmsg);
+    if (!err && *pos) { /* got a list of polynomial terms? */
+	err = make_mp_lists(list, pos, &tmplist, &polylist);
+	if (err) {
+	    pprintf(prn, _("Failed to parse mp_ols command\n"));
+	}
+	reglist = tmplist;
+    } 
+
+    if (!err && !*pos) {
+	reglist = list;
+    }
+
+    if (!err) {
+	err = (*mplsq)(reglist, polylist, pZ, pdinfo, prn, gretl_errmsg);
+    }
 
     close_plugin(handle);
+
+    free(polylist);
+    free(tmplist);
 
     return err;
 }

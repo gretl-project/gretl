@@ -1,2 +1,2 @@
-set args data4-1 
+set args -b /home/allin/stats/test-esl/nist/linear_regression/Filip2.esl
 run

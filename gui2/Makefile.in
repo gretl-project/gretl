@@ -107,7 +107,7 @@ install-strip: $(PROG) install-data $(query_install_gnome)
 
 install-data: installdirs
 	$(INSTALL_PROGRAM) $(topsrc)/gretl2_sh $(bindir)/gretl2
-	$(INSTALL_DATA) gretl-logo.xpm $(gretldir)
+	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gretldir)
 	$(INSTALL_DATA) $(topsrc)/COPYING $(gretldir)
 
 install-exec: $(PROG) installdirs 
