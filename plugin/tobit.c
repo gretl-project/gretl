@@ -412,7 +412,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
     gretl_matrix *tmp = NULL; 
 
     /* convergence-related stuff */
-    double small = 1.0e-09;
+    double tol = 1.0e-09;
     double smallstep = 1.0e-06;
     double convcrit = 1.0e20;
     double stepsize = 0.25;
@@ -437,7 +437,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
 	goto bailout;
     }
 
-    while (convcrit > small) {
+    while (convcrit > tol) {
 
 	/* compute loglikelihood and score matrix */
 	tobit_ll(tobit.theta, X, tZ, &tobit, 1); 

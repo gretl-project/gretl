@@ -808,17 +808,6 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
     return 0;
 }
 
-#ifdef WIN32
-static char *unslash (const char *src)
-{
-    size_t n = strlen(src);
-    char *dest = malloc(n);
-
-    if (dest != NULL) strncpy(dest, src, n-1);
-    return dest;
-}
-#endif
-
 /* ........................................................... */
 
 int is_model_cmd (const char *s)

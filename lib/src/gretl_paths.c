@@ -54,6 +54,17 @@ static int path_append (char *file, const char *path)
     return 0;
 }
 
+#ifdef WIN32
+static char *unslash (const char *src)
+{
+    size_t n = strlen(src);
+    char *dest = malloc(n);
+
+    if (dest != NULL) strncpy(dest, src, n-1);
+    return dest;
+}
+#endif
+
 /* .......................................................... */
 
 static int get_subdir (const char *topdir, int first, char *fname)
