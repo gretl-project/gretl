@@ -1108,8 +1108,8 @@ char *iso_to_ascii (char *s)
 #ifdef ENABLE_NLS
 
 struct l2sym {
-    int l2val;
-    int ucs2val;
+    int l2val;   /* iso-8859-2 character code */
+    int ucs2val; /* corresponding UCS-2 code */
 };
 
 static struct l2sym l2table[] = { 
