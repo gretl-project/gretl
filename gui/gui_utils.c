@@ -3422,22 +3422,28 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
+#define SELECT_FIRST
+
     /* otherwise copying plain text from window */
     if (how == COPY_TEXT) {
+#ifdef SELECT_FIRST
+	gtk_editable_select_region(GTK_EDITABLE(vwin->w), 0, -1);
+	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
+#else
 	PRN textprn;
 
 	textprn.fp = NULL;
 	textprn.buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
 	win_copy_text(&textprn, COPY_TEXT);	
-#else
+# else
 	prn_to_clipboard(&textprn);
-#endif
+# endif /* G_OS_WIN32 */
 	g_free(textprn.buf);
+#endif /* SELECT_FIRST */
     } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
     }
-
 }
 
 /* .................................................................. */

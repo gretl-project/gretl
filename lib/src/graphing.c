@@ -1047,20 +1047,13 @@ void free_plot (GPT_SPEC *plot)
 int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
      /* add file or pipe to plot struct */
 {
-    FILE *fp;
-#ifndef OS_WIN32 
-    char gnuplot_pipe[MAXLEN]; 
-#endif
-
 #ifdef OS_WIN32
-    fp = fopen(ppaths->plotfile, "w");
+    plot->fp = fopen(ppaths->plotfile, "w");
 #else
-    sprintf(gnuplot_pipe, "gnuplot"); /* should be user-specified name? */
-    fp = popen(gnuplot_pipe, "w");
+    plot->fp = popen(ppaths->gnuplot, "w");
 #endif
     plot->edit = 1;
-    if (fp == NULL) return 1;
-    plot->fp = fp;
+    if (plot->fp == NULL) return 1;
     return 0;
 }
 

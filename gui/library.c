@@ -364,6 +364,27 @@ gint check_cmd (char *line)
 
 /* ........................................................... */
 
+static void maybe_quote_filename (char *line, char *cmd)
+{
+    size_t len = strlen(cmd);
+
+    if (strlen(line) > len + 1) {
+	char *p = line + len + 1;
+
+	if (*p == '"' || *p == '\'') return;
+	
+	if (strchr(p, ' ')) {
+	    char tmp[MAXLEN];
+
+	    *tmp = 0;
+	    strcpy(tmp, p);
+	    sprintf(line, "%s \"%s\"", cmd, tmp);
+	}
+    }
+}
+
+/* ........................................................... */
+
 gint cmd_init (char *line)
 {
     size_t len;
@@ -380,6 +401,9 @@ gint cmd_init (char *line)
     else 
 	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
     if (cmd_stack == NULL) return 1;
+
+    if (command.ci == OPEN || command.ci == RUN) 
+	maybe_quote_filename(line, command.cmd);
 
     if (bufopen(&echo)) return 1;
 

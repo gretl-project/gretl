@@ -900,6 +900,36 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     return NULL;
 }
 
+static int get_quoted_filename (const char *line, char *fname)
+{
+    char *p;
+    int quote = '"';
+
+    p = strchr(line, quote);
+    if (p == NULL) {
+	quote = '\'';
+	p = strchr(line, quote);
+	if (p == NULL) return 0;
+    }
+
+    if (p != NULL) {
+	char *q = strrchr(line, quote);
+
+	if (q == NULL) return 0;
+	else {
+	    size_t len = q - p;
+
+	    if (len > 0) {
+		*fname = 0;
+		strncat(fname, p+1, len-1);
+	    } else
+		return 0;
+	}
+    }
+    return 1;
+}
+
+
 /**
  * getopenfile:
  * @line: command line (e.g. "open foo").
@@ -921,6 +951,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     int spos, n;
 
     /* get the initial filename off the command line */
+    if (get_quoted_filename(line, fname)) return 0; 
     if (sscanf(line, "%*s %s", fname) != 1) return 1;
     /* try a basic path search on this filename */
     addpath(fname, ppaths, script);
