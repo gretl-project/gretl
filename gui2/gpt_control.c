@@ -184,9 +184,17 @@ static void create_selection_gc (png_plot_t *plot);
 static int get_plot_ranges (png_plot_t *plot);
 static const char *get_font_filename (const char *showname);
 
+#ifdef G_OS_WIN32
+enum {
+    WIN32_TO_CLIPBOARD,
+    WIN32_TO_PRINTER
+};
+#endif /* G_OS_WIN32 */
+
 #ifdef PNG_COMMENTS
 enum {
-    GRETL_PNG_NO_OPEN = 1,
+    GRETL_PNG_OK,
+    GRETL_PNG_NO_OPEN,
     GRETL_PNG_NOT_PNG,
     GRETL_PNG_NO_COMMENTS,
     GRETL_PNG_BAD_COMMENTS,
@@ -203,13 +211,6 @@ typedef struct {
     double ymin;
     double ymax;
 } png_bounds_t;
-
-#ifdef G_OS_WIN32
-enum {
-    WIN32_TO_CLIPBOARD,
-    WIN32_TO_PRINTER
-};
-#endif
 
 static int get_png_bounds_info (png_bounds_t *bounds);
 #endif /* PNG_COMMENTS */
@@ -3505,6 +3506,11 @@ static void set_approx_pixel_bounds (png_plot_t *plot,
 #endif
 }
 
+/* Attempt to read y-range info from the ascii representation
+   of a gnuplot graph (the "dumb" terminal): return 0 on
+   success, non-zero on failure.
+*/
+
 static int get_dumb_plot_yrange (png_plot_t *plot)
 {
     FILE *fpin, *fpout;
@@ -3515,7 +3521,9 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
     int max_y2width = 0;
 
     fpin = fopen(plot->spec->fname, "r");
-    if (fpin == NULL) return 1;
+    if (fpin == NULL) {
+	return 1;
+    }
 
     build_path(paths.userdir, "dumbplot.gp", dumbgp, NULL);
     build_path(paths.userdir, "gptdumb.txt", dumbtxt, NULL);
@@ -3643,20 +3651,25 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	}
     }
 
-    /* FIXME: need to react to failure above */
+    if (plot->ymax <= plot->ymin) {
+	err = 1;
+    }
 
-    set_approx_pixel_bounds(plot, max_ywidth, max_y2width);
+    if (!err) {
+	set_approx_pixel_bounds(plot, max_ywidth, max_y2width);
+    }
     
-    return 0;
+    return err;
 }
+
+/* note: return 0 on failure */
 
 static int get_plot_ranges (png_plot_t *plot)
 {
     FILE *fp;
     char line[MAXLEN];
-    int got_x = 0, got_pd = 0;
+    int got_x = 0, got_y = 0, got_pd = 0;
 #ifdef PNG_COMMENTS
-    int coords;    
     png_bounds_t b;
 #endif
 
@@ -3717,11 +3730,9 @@ static int get_plot_ranges (png_plot_t *plot)
 
 #ifdef PNG_COMMENTS
     /* now try getting accurate coordinate info from PNG file */
-    coords = get_png_bounds_info(&b);
-    if (coords == 0) {
-	/* OK: retrieved accurate coordinates */
+    if (get_png_bounds_info(&b) == GRETL_PNG_OK) {
 	plot->status_flags |= PLOT_PNG_COORDS;
-	got_x = 1;
+	got_x = got_y = 1;
 	plot->pixel_xmin = b.xleft;
 	plot->pixel_xmax = b.xright;
 	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - b.ytop;
@@ -3730,48 +3741,53 @@ static int get_plot_ranges (png_plot_t *plot)
 	plot->xmax = b.xmax;
 	plot->ymin = b.ymin;
 	plot->ymax = b.ymax;
-    }
 # ifdef POINTS_DEBUG
-    if (coords == 0) {
 	fprintf(stderr, "get_png_bounds_info():\n"
 		" xmin=%d xmax=%d ymin=%d ymax=%d\n", 
 		plot->pixel_xmin, plot->pixel_xmax,
 		plot->pixel_ymin, plot->pixel_ymax);
+# endif
     } else {
 	fprintf(stderr, "get_png_bounds_info(): failed\n");
     }
-# endif
 #endif /* PNG_COMMENTS */
 
-    if (got_x) {
-#ifdef POINTS_DEBUG 
-	/* get the "dumb" coodinates for comparison */
-	get_dumb_plot_yrange(plot);	
-#else
-	if (!plot_has_png_coords(plot)) { 
-	    /* get "dumb" coords only if better ones not available */
-	    get_dumb_plot_yrange(plot);
-	}
-#endif
+    /* If got_x = 0 at this point, we didn't an x-range out of
+       the gnuplot source file OR the PNG file, so we might as
+       well give up.
+    */
 
-	if ((plot->xmax - plot->xmin) / 
-	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
-	    plot->xint = 1;
+    if (got_x) {
+	int err = 0;
+
+	/* get the "dumb" coordinates only if we haven't got
+	   more accurate ones from the PNG file */
+	if (!plot_has_png_coords(plot)) { 
+	    err = get_dumb_plot_yrange(plot);
 	}
-	if ((plot->ymax - plot->ymin) / 
-	    (plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
-	    plot->yint = 1;
+
+	if (!err) {
+	    got_y = 1;
+	    if ((plot->xmax - plot->xmin) / 
+		(plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
+		plot->xint = 1;
+	    }
+	    if ((plot->ymax - plot->ymin) / 
+		(plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
+		plot->yint = 1;
+	    }
 	}
     }
 
-    if (!got_x) {
+    if (!got_x || !got_y) {
 	plot->status_flags |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
 #ifdef POINTS_DEBUG 
-	fputs("get_plot_ranges(): got_x = 0\n", stderr);
+	fputs("get_plot_ranges: setting PLOT_DONT_ZOOM, PLOT_DONT_MOUSE\n", 
+	      stderr);
 #endif
     }
 
-    return got_x;
+    return (got_x && got_y);
 }
 
 static png_plot_t *png_plot_new (void)
@@ -4019,22 +4035,24 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
 static int get_png_plot_bounds (const char *str, png_bounds_t *bounds)
 {
+    int ret = GRETL_PNG_OK;
+
     if (sscanf(str, "xleft=%d xright=%d ybot=%d ytop=%d", 
 	       &bounds->xleft, &bounds->xright,
 	       &bounds->ybot, &bounds->ytop) != 4) {
-	return GRETL_PNG_BAD_COMMENTS;
+	ret = GRETL_PNG_BAD_COMMENTS;
     } else if (bounds->xleft == 0 && bounds->xright == 0 &&
 	       bounds->ybot == 0 && bounds->ytop == 0) {
-	return GRETL_PNG_NO_COORDS;
-    } else {
-	return 0;
-    }
+	ret = GRETL_PNG_NO_COORDS;
+    } 
+
+    return ret;
 }
 
 static int get_png_data_bounds (char *str, png_bounds_t *bounds)
 {
     char *p = str;
-    int ret = 0;
+    int ret = GRETL_PNG_OK;
 
     while (*p) {
 	if (*p == ',') *p = '.';
@@ -4070,12 +4088,14 @@ static int get_png_bounds_info (png_bounds_t *bounds)
     png_infop info_ptr;
     png_text *text_ptr = NULL;
     int i, num_text;
-    volatile int ret = 0;
+    volatile int ret = GRETL_PNG_OK;
 
     build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
 
     fp = fopen(pngname, "rb");
-    if (fp == NULL) return GRETL_PNG_NO_OPEN;
+    if (fp == NULL) {
+	return GRETL_PNG_NO_OPEN;
+    }
 
     fread(header, 1, PNG_CHECK_BYTES, fp);
 
@@ -4121,7 +4141,6 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 	for (i=1; i<num_text; i++) {
 	    if (!strcmp(text_ptr[i].key, "plot bounds")) {
 		plot_ret = get_png_plot_bounds(text_ptr[i].text, bounds);
-
 	    }
 	    if (!strcmp(text_ptr[i].key, "data bounds")) {
 		data_ret = get_png_data_bounds(text_ptr[i].text, bounds);
@@ -4131,7 +4150,7 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 	    /* comments were present and correct, but all zero */
 	    ret = GRETL_PNG_NO_COORDS;
 	}
-	else if (plot_ret != 0 || data_ret != 0) {
+	else if (plot_ret != GRETL_PNG_OK || data_ret != GRETL_PNG_OK) {
 	    /* one or both set of coordinates bad or missing */
 	    if (plot_ret >= 0 || data_ret >= 0) {
 		ret = GRETL_PNG_BAD_COMMENTS;
