@@ -1,6 +1,7 @@
 lib/src/bhhh_max.c
 lib/src/calendar.c
 lib/src/compare.c
+lib/src/compat.c
 lib/src/dataio.c
 lib/src/dbread.c
 lib/src/describe.c
@@ -39,6 +40,7 @@ lib/src/strutils.c
 lib/src/subsample.c
 lib/src/system.c
 lib/src/texprint.c
+lib/src/transforms.c
 lib/src/var.c
 cli/complete.c
 cli/gretlcli.c
@@ -58,6 +60,7 @@ gui2/console.c
 gui2/database.c
 gui2/datafiles.c
 gui2/dialogs.c
+gui2/dlgutils.c
 gui2/filelists.c
 gui2/fileselect.c
 gui2/font_filter.c
@@ -71,6 +74,7 @@ gui2/guiprint_common.c
 gui2/gui_utils.c
 gui2/helpfiles.c
 gui2/library.c
+gui2/menustate.c
 gui2/model_table.c
 gui2/objectsave.c
 gui2/obsbutton.c
@@ -81,6 +85,7 @@ gui2/settings.c
 gui2/ssheet.c
 gui2/textbuf.c
 gui2/textutil.c
+gui2/toolbar.c
 gui2/treeutils.c
 gui2/webget.c
 plugin/arma.c
@@ -94,8 +99,10 @@ plugin/garch.c
 plugin/gnumeric_import.c
 plugin/import_common.c
 plugin/johansen.c
+plugin/kernel.c
 plugin/lad.c
 plugin/leverage.c
+plugin/liml.c
 plugin/logistic.c
 plugin/midi_utils.c
 plugin/mp_ols.c
