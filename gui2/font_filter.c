@@ -93,8 +93,8 @@ static gboolean validate_font_family (const gchar *familyname,
     gboolean is_latin = FALSE, is_mono = FALSE;
 #ifdef SHOW_PROGRESS
     static void *handle = NULL;
-    static int (*show_progress) (long, long, int) = NULL;
     static int show = 1, n_done = 0;
+    static int (*show_progress) (long, long, int) = NULL;
 #endif
 
     if (!cache_built) { /* we haven't set up the cache yet */

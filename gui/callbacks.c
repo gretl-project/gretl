@@ -27,8 +27,8 @@
 
 extern void browser_open_data (GtkWidget *w, gpointer data);
 extern void browser_open_ps (GtkWidget *w, gpointer data);
-extern void open_db_clist (GtkWidget *w, gpointer data);
-extern void open_remote_clist (GtkWidget *w, gpointer data);
+extern void open_db_list (GtkWidget *w, gpointer data);
+extern void open_remote_db_list (GtkWidget *w, gpointer data);
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 
 GtkWidget *active_edit_id = NULL;
@@ -85,10 +85,10 @@ void selectrow (GtkCList *clist, gint row, gint column,
 	    break;
 	case NATIVE_DB:
 	case RATS_DB:	    
-	    open_db_clist(NULL, mydata); 
+	    open_db_list(NULL, mydata); 
 	    break;
 	case REMOTE_DB:
-	    open_remote_clist(NULL, mydata);
+	    open_remote_db_list(NULL, mydata);
 	    break;
 	case NATIVE_SERIES:
 	case RATS_SERIES:

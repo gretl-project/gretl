@@ -86,6 +86,28 @@ float retrieve_float (netfloat nf)
 
 /* ........................................................... */
 
+void display_db_error (windata_t *dbwin, char *buf)
+{
+    if (*buf != '\0') {
+	size_t n = strlen(buf);
+
+	if (buf[n-1] == '\n') buf[n-1] = '\0';
+	if (dbwin != NULL) {
+	    update_statusline(dbwin, buf);
+	} else {
+	    errbox(buf);
+	}
+    } else {
+	if (dbwin != NULL) {
+	    update_statusline(dbwin, _("Error retrieving data from server"));
+	} else {
+	    errbox(_("Error retrieving data from server"));
+	}
+    }
+}
+
+/* ........................................................... */
+
 static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo, 
 			       double **Z)
 {
@@ -115,14 +137,7 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 #endif
 
     if (err) {
-        if (*errbuf != '\0') {
-	    if (errbuf[strlen(errbuf)-1] == '\n') {
-		errbuf[strlen(errbuf)-1] = 0;
-	    }
-	    update_statusline(dbwin, errbuf);
-	} else {
-	    update_statusline(dbwin, _("Error retrieving data from server"));
-	}
+	display_db_error(dbwin, errbuf);
 	free(getbuf);
 	return DB_NOT_FOUND;
     } 
@@ -1001,7 +1016,7 @@ void open_named_db_clist (char *dbname)
 
 /* ........................................................... */
 
-void open_db_clist (GtkWidget *w, gpointer data)
+void open_db_list (GtkWidget *w, gpointer data)
 {
     gchar *fname, *dbdir;
     char dbfile[MAXLEN];
@@ -1075,7 +1090,7 @@ void open_named_remote_clist (char *dbname)
 
 /* ........................................................... */
 
-void open_remote_clist (GtkWidget *w, gpointer data)
+void open_remote_db_list (GtkWidget *w, gpointer data)
 {
     gchar *fname;
     windata_t *mydata = (windata_t *) data;
