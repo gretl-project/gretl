@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.2.6\n"
 "POT-Creation-Date: 2004-05-22 13:29-0400\n"
-"PO-Revision-Date: 2004-05-29 16:35+0200\n"
+"PO-Revision-Date: 2004-06-03 19:36+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -8008,7 +8008,7 @@ msgid ""
 "at any given time"
 msgstr ""
 "È possibile aprire una sola finestra\n"
-"di modifica grafici alla volta"
+"di modifica del grafico alla volta"
 
 #: gui2/gpt_control.c:1621
 msgid "gretl plot controls"
@@ -8932,7 +8932,7 @@ msgstr "Programmazione"
 
 #: gui2/helpfiles.c:132
 msgid "Statistics"
-msgstr "Statistica"
+msgstr "Statistiche"
 
 #: gui2/helpfiles.c:133
 msgid "Tests"
@@ -9802,7 +9802,7 @@ msgstr "Aggiungi alla tabella modelli"
 
 #: gui2/session.c:149 gui2/session.c:2124
 msgid "Edit plot commands"
-msgstr "Comandi per modifcare grafici"
+msgstr "Comandi per modificare il grafico"
 
 #: gui2/session.c:155 gui2/session.c:2084
 msgid "Save..."
