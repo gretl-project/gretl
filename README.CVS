@@ -1,0 +1,11 @@
+If you are building gretl from CVS source, and are linking to
+GTK 1.2 for the gretl GUI, you need to carry out this preliminary
+step first:
+
+#!bin/sh
+for f in calculator.c guiprint_common.c gpt_control.c gpt_control.h \
+  model_table.c model_table.h objectsave.c objectsave.h \
+  session.c session.h webget.c webget.h library.c library.h ; do
+    rm -f gui/$f
+    cp -ap gui2/$f gui
+done

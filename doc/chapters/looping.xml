@@ -10,32 +10,32 @@
       <xref linkend="scripts"/> above), or use the command-line
       client. The command <command>loop</command> opens a special mode
       in which the program accepts commands to be repeated a specified
-      number of times. Within such a loop, only 7 commands can be
+      number of times. Within such a loop, only 8 commands can be
       used: <command>genr</command>, <command>ols</command>,
-      <command>print</command>, <command>sim</command>,
-      <command>smpl</command>, <command>store</command> and
-      <command>summary</command>. With <command>genr</command> and
-      <command>ols</command> it is possible to do quite a lot. You
-      exit the mode of entering loop commands with
-      <command>endloop</command>: at this point the stacked commands
-      are executed.  Loops cannot be nested.</para>
+      <command>print</command>, <command>printf</command>,
+      <command>sim</command>, <command>smpl</command>,
+      <command>store</command> and <command>summary</command>. With
+      <command>genr</command> and <command>ols</command> it is
+      possible to do quite a lot. You exit the mode of entering loop
+      commands with <command>endloop</command>: at this point the
+      stacked commands are executed.  Loops cannot be nested.</para>
 
-    <para>The <command>ols</command> command gives special output in a loop
-      context: the results from each individual regression are not
-      printed, but rather you get a printout of (a) the mean value of
-      each estimated coefficient across all the repetitions, (b) the
-      standard deviation of those coefficient estimates, (c) the mean
-      value of the estimated standard error for each coefficient, and
-      (d) the standard deviation of the estimated standard errors.
+    <para>The <command>ols</command> command gives special output in a
+      loop context: the results from each individual regression are
+      not printed, but rather you get a printout of (a) the mean value
+      of each estimated coefficient across all the repetitions, (b)
+      the standard deviation of those coefficient estimates, (c) the
+      mean value of the estimated standard error for each coefficient,
+      and (d) the standard deviation of the estimated standard errors.
       This makes sense only if there is some random input at each
       step.</para>  
 
-    <para>The <command>print</command> command also behaves differently in the
-      context of a loop.  It prints the mean and standard deviation of
-      the variable, across the repetitions of the loop.  It is
-      intended for use with variables that have a single value at each
-      iteration, for example the error sum of squares from a
-      regression.</para>
+    <para>The <command>print</command> command also behaves
+      differently in the context of a loop.  It prints the mean and
+      standard deviation of the variable, across the repetitions of
+      the loop.  It is intended for use with variables that have a
+      single value at each iteration, for example the error sum of
+      squares from a regression.</para>
 
     <para>
 	The <command>store</command> command (use only one of these
@@ -72,21 +72,21 @@
     </example>
 
     <para>This loop will print out summary statistics for the `a' and
-      `b' estimates across the 100 repetitions, and also for the &rsqu;
-      values for the 100 regressions.  After running the loop,
-      <filename>foo.gdt</filename>, which contains the individual coefficient
-      estimates from all the runs, can be opened in
+      `b' estimates across the 100 repetitions, and also for the
+      &rsqu; values for the 100 regressions.  After running the loop,
+      <filename>foo.gdt</filename>, which contains the individual
+      coefficient estimates from all the runs, can be opened in
       <application>gretl</application> to examine the frequency
       distribution of the estimates in detail. Please note that while
       comment lines are permitted in a loop (as shown in the example),
       they cannot run over more than one line.</para>
 
     <para>The command <command>nulldata</command> is useful for Monte
-	Carlo work.  Instead of opening a <quote>real</quote> data
-	set, <command>nulldata 50</command> (for instance) opens an
-	empty data set, with only a constant, with a series length of
-	50.  Constructed variables can then be added using the
-	<command>genr</command> command.</para>  
+      Carlo work.  Instead of opening a <quote>real</quote> data set,
+      <command>nulldata 50</command> (for instance) opens an empty
+      data set, with only a constant, with a series length of 50.
+      Constructed variables can then be added using the
+      <command>genr</command> command.</para>  
 
     <para>See the <command>seed</command> command in 
       <xref linkend="cmdref"/> for information on generating
@@ -96,19 +96,18 @@
 
   <sect1 id="ils"><title>Iterated least squares</title>
 
-    <para>A second form of loop structure is designed
-      primarily for carrying out iterated least squares.  Greene
-      (2000, ch. 11) shows how this method can be used to estimate
-      nonlinear models.</para>
+    <para>A second form of loop structure is designed primarily for
+      carrying out iterated least squares.  Greene (2000, ch. 11)
+      shows how this method can be used to estimate nonlinear
+      models.</para>
 
     <para>To open this sort of loop you need to specify a
-	<emphasis>condition</emphasis> rather than an unconditional
-	number of times to iterate.  This should take the form of the
-	keyword <command>while</command> followed by an inequality:
-	the left-hand term should be the name of a variable that is
-	already defined; the right-hand side may be either a numerical
-	constant or the name of another predefined variable.  For
-	example,</para> 
+      <emphasis>condition</emphasis> rather than an unconditional
+      number of times to iterate.  This should take the form of the
+      keyword <command>while</command> followed by an inequality: the
+      left-hand term should be the name of a variable that is already
+      defined; the right-hand side may be either a numerical constant
+      or the name of another predefined variable.  For example,</para>
 
     <para>
       <command> loop while essdiff > .00001 
@@ -134,7 +133,8 @@
       <command>print</command> behaves as usual; thus you get a
       printout of the specified variable(s) from each iteration.  The
       <command>ols</command> command prints out the results from the
-      final estimation.</para>  
+      final estimation.
+    </para>  
 
     <para><xref linkend="greene-consump"/> uses a <quote>while</quote>
       loop to replicate the estimation of a nonlinear consumption
@@ -158,34 +158,106 @@
 
     <example id="greene-consump"><title>Nonlinear consumption function</title>
     <programlisting>
-	  open greene11_3.gdt 
-	  (* run initial OLS *) 
-	  ols C 0 Y 
-	  genr essbak = $ess 
-	  genr essdiff = 1
-	  genr b0 = coeff(Y) 
-	  genr gamma0 = 1 
-	  (* form the linearized variables *) 
-	  genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
-	  genr x1 = Y^gamma0 
-	  genr x2 = b0 * Y^gamma0 * log(Y) 
-	  (* iterate OLS till the error sum of squares converges *) 
-	  loop while essdiff > .00001 
-	    ols C0 0 x1 x2 -o 
-	    genr b0 = coeff(x1) 
-	    genr gamma0 = coeff(x2) 
-	    genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
-	    genr x1 = Y^gamma0 genr x2 = b0 * Y^gamma0 * log(Y) 
-	    genr ess = $ess genr
-	    essdiff = abs(ess - essbak)/essbak 
-	    genr essbak = ess 
-	  endloop 
-	  (* print parameter estimates using their "proper names" *) 
-	  genr alpha = coeff(0) 
-	  genr beta = coeff(x1) 
-	  genr gamma = coeff(x2)
-	  print alpha beta gamma</programlisting>
+	open greene11_3.gdt 
+	# run initial OLS
+	ols C 0 Y 
+	genr essbak = $ess 
+	genr essdiff = 1
+	genr b0 = coeff(Y) 
+	genr gamma0 = 1 
+	# form the linearized variables 
+	genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
+	genr x1 = Y^gamma0 
+	genr x2 = b0 * Y^gamma0 * log(Y) 
+	# iterate OLS till the error sum of squares converges 
+	loop while essdiff > .00001 
+	   ols C0 0 x1 x2 -o 
+	   genr b0 = coeff(x1) 
+	   genr gamma0 = coeff(x2) 
+	   genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
+	   genr x1 = Y^gamma0 genr x2 = b0 * Y^gamma0 * log(Y) 
+	   genr ess = $ess genr
+	   essdiff = abs(ess - essbak)/essbak 
+	   genr essbak = ess 
+	endloop 
+	# print parameter estimates using their "proper names"
+	noecho
+	printf "alpha = %g\n", coeff(0)
+	printf "beta  = %g\n", coeff(x1)
+	printf "gamma = %g\n", coeff(x2)</programlisting>
       </example>
+
+    <para><xref linkend="jack-arma"/> (kindly contributed by Riccardo
+      <quote>Jack</quote> Lucchetti of Ancona University) shows how a
+      loop can be used to estimate an ARMA model, exploiting the
+      <quote>outer product of the gradient</quote> (OPG) regression
+      discussed by Davidson and MacKinnon in their
+      <citetitle>Estimation and Inference in
+	Econometrics</citetitle>.</para>
+
+    <example id="jack-arma"><title>ARMA 1, 1</title>
+    <programlisting>
+	open arma.gdt
+
+	genr c = 0
+	genr a = 0.1
+	genr m = 0.1
+
+	genr e = const * 0.0
+	genr de_c = e
+	genr de_a = e
+	genr de_m = e
+
+	genr crit = 1
+	loop while crit > 1.0e-9
+
+	   # one-step forecast errors
+	   genr e = y - c - a*y(-1) - m*e(-1)  
+
+	   # log-likelihood 
+	   genr loglik = -0.5 * sum(e^2)
+	   print loglik
+
+	   # partials of forecast errors wrt c, a, and m
+	   genr de_c = -1 - m * de_c(-1) 
+	   genr de_a = -y(-1) -m * de_a(-1)
+	   genr de_m = -e(-1) -m * de_m(-1)
+   
+	   # partials of l wrt c, a and m
+	   genr sc_c = -de_c * e
+	   genr sc_a = -de_a * e
+	   genr sc_m = -de_m * e
+   
+	   # OPG regression
+	   ols const sc_c sc_a sc_m
+
+	   # Update the parameters
+	   genr dc = coeff(sc_c) 
+	   genr c = c + dc
+	   genr da = coeff(sc_a) 
+	   genr a = a + da
+	   genr dm = coeff(sc_m) 
+	   genr m = m + dm
+
+	   printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
+	   printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
+	   printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
+
+	   genr crit = $T - $ess
+	   print crit
+	endloop
+
+	genr se_c = stderr(sc_c)
+	genr se_a = stderr(sc_a)
+	genr se_m = stderr(sc_m)
+
+	noecho
+	print "
+	printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
+	printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
+	printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
+      </programlisting>
+    </example>    
 
   </sect1>
 
