@@ -21,6 +21,8 @@
 
 #include "gretl.h"
 
+#define GPT_TRIAL 1
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 #endif
@@ -1111,13 +1113,31 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
-typedef struct png_plot_t {
-    GtkWidget *window, *area, *popup, *status;
-    GPT_SPEC *spec;
 #ifdef GPT_TRIAL
+
+typedef struct png_plot_t {
+    GtkWidget *shell;
+    GtkWidget *canvas;
+    GtkWidget *popup;
+    GtkWidget *statusarea;    
+    GtkWidget *statusbar;
+    GtkWidget *cursor_label;
+    GPT_SPEC *spec;
     double xmin, xmax;
-#endif
+    double ymin, ymax;
+    int xint, yint;
 } png_plot_t;
+
+#else
+
+typedef struct png_plot_t {
+    GtkWidget *shell;
+    GtkWidget *canvas;
+    GtkWidget *popup;
+    GPT_SPEC *spec;
+} png_plot_t;
+
+#endif /* GPT_TRIAL */
 
 /* Size of drawing area */
 #define WIDTH 640    /* try 576 */
@@ -1161,10 +1181,22 @@ button_press_event (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
-double data_x (png_plot_t *plot, int x)
+#define PLOTXMIN 52.0
+#define PLOTXMAX 620.0
+#define PLOTYMIN 32.0
+#define PLOTYMAX 446.0
+
+static void get_data_xy (png_plot_t *plot, int x, int y, 
+			 double *data_x, double *data_y)
 {
-    return plot->xmin + ((double) x - 58.0) / (620.0 - 58.0) *
+    *data_x = plot->xmin + ((double) x - PLOTXMIN) / (PLOTXMAX - PLOTXMIN) *
 	(plot->xmax - plot->xmin);
+    if (plot->ymin == 0.0 && plot->ymax == 0.0) { /* unknown y range */
+	*data_y = NADBL;
+    } else {
+	*data_y = plot->ymax - ((double) y - PLOTYMIN) / (PLOTYMAX - PLOTYMIN) *
+	    (plot->ymax - plot->ymin);
+    }
 }
 
 static gint
@@ -1173,6 +1205,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 {
     int x, y;
     GdkModifierType state;
+    gchar label[32], label_y[16];
 
     if (event->is_hint)
         gdk_window_get_pointer (event->window, &x, &y, &state);
@@ -1187,7 +1220,18 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
         draw_brush (widget, x, y, pixmap);
 #endif
 
-    fprintf(stderr, "x=%g, y=%d\n", data_x(plot, x), y);
+    if (x > PLOTXMIN && x < PLOTXMAX && y > PLOTYMIN && y < PLOTYMAX) {
+	double data_x, data_y;
+
+	get_data_xy(plot, x, y, &data_x, &data_y);
+	sprintf(label, (plot->xint)? "%.0f" : "%.4g", data_x);
+	if (!na(data_y)) {
+	    sprintf(label_y, (plot->yint)? ", %.0f" : ", %.4g", data_y);
+	    strcat(label, label_y);
+	}
+    } else
+	*label = 0;
+    gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
   
     return TRUE;
 }
@@ -1218,7 +1262,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     }
 #endif 
     else if (!strcmp(item, "Close")) { 
-        gtk_widget_destroy(plot->window);
+        gtk_widget_destroy(plot->shell);
     } 
 
     gtk_widget_destroy(plot->popup);
@@ -1323,35 +1367,100 @@ static void plot_quit (GtkWidget *w, png_plot_t *plot)
 
 #ifdef GPT_TRIAL
 
-static int get_xrange (png_plot_t *plot)
+static int get_plot_yrange (png_plot_t *plot)
+{
+    FILE *fpin, *fpout;
+    char line[MAXLEN];
+    int err = 0;
+
+    fpin = fopen(plot->spec->fname, "r");
+    if (fpin == NULL) return 1;
+    
+    fpout = fopen("dumbplot.gp", "w");
+    if (fpout == NULL) {
+	fclose(fpin);
+	return 1;
+    }
+
+    while (fgets(line, MAXLEN-1, fpin)) {
+	if (strstr(line, "set term")) 
+	    fputs("set term dumb\n", fpout);
+	else if (strstr(line, "set output")) 
+	    fputs("set output 'gptdumb.txt'\n", fpout);
+	else fputs(line, fpout);
+    }
+
+    fclose(fpin);
+    fclose(fpout);
+
+    err = system("gnuplot dumbplot.gp");
+    remove("dumbplot.gp");
+    if (err) 
+	return 1;
+    else {
+	double y[16];
+	int i = 0;
+
+	fpin = fopen("gptdumb.txt", "r");
+	if (fpin == NULL) return 1;
+
+	while (i<16 && fgets(line, MAXLEN-1, fpin)) 
+	    if (sscanf(line, "%lf", &(y[i])) == 1) i++;
+
+	fclose(fpin);
+	remove("gptdumb.txt");
+
+	if (i > 2 && y[0] > y[i-2]) {
+	    plot->ymin = y[i-2];
+	    plot->ymax = y[0];
+	}
+    }
+    
+    return 0;
+}
+
+static int get_plot_ranges (png_plot_t *plot)
 {
     FILE *fp;
     char line[MAXLEN];
+    int got_x = 0;
+
+    plot->xmin = plot->xmax = 0.0;
+    plot->ymin = plot->ymax = 0.0;   
+    plot->xint = plot->yint = 0;
 
     fp = fopen(plot->spec->fname, "r");
     if (fp == NULL) return 0;
     while (fgets(line, MAXLEN-1, fp)) {
-	if (sscanf(line, "set xrange [%lf:%lf]", &plot->xmin, &plot->xmax) == 2) {
-	    fclose(fp);
-	    return 1;
+	if (sscanf(line, "set xrange [%lf:%lf]", 
+		   &plot->xmin, &plot->xmax) == 2) {
+	    got_x = 1;
+	    break;
 	}
     }
     fclose(fp);
-    return 0;
-}
 
-#endif
+    if (got_x) {
+	get_plot_yrange(plot);
+	if ((plot->xmax - plot->xmin) / (PLOTXMAX - PLOTXMIN) >= 1.0)
+	    plot->xint = 1;
+	if ((plot->ymax - plot->ymin) / (PLOTYMAX - PLOTYMIN) >= 1.0)
+	    plot->yint = 1;
+    }
+
+    return got_x;
+}
 
 int gnuplot_show_png (char *plotfile)
 {
-    GtkWidget *w;
     GdkPixmap *dbuf_pixmap = NULL; 
-    GtkWidget *drawing_area;
     png_plot_t *plot;
-#ifdef GPT_TRIAL
     int plot_has_xrange;
+
     GtkWidget *vbox;
-#endif
+    GtkWidget *canvas_hbox;
+    GtkWidget *label_frame = NULL;
+    GtkWidget *status_hbox = NULL;
 
     plot = mymalloc(sizeof *plot);
     if (plot == NULL) return 1;
@@ -1363,65 +1472,113 @@ int gnuplot_show_png (char *plotfile)
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);
 
-#ifdef GPT_TRIAL
     /* parse this file for x range */
-    plot_has_xrange = get_xrange(plot);
-#endif
+    plot_has_xrange = get_plot_ranges(plot);
 
-    w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(w), "gretl: gnuplot graph"); 
-    plot->window = w;
+    plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_widget_ref(plot->shell);
+    gtk_window_set_title(GTK_WINDOW(plot->shell), "gretl: gnuplot graph"); 
 
-#ifdef GPT_TRIAL
-    vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(w), vbox);
-#else
-    gtk_widget_set_usize(GTK_WIDGET(w), WIDTH, HEIGHT);
-    gtk_window_set_policy(GTK_WINDOW(w), TRUE, FALSE, FALSE);
-#endif
+    vbox = gtk_vbox_new(FALSE, 2);
+    gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
 
-    gtk_signal_connect(GTK_OBJECT(w), "destroy",
+    gtk_signal_connect(GTK_OBJECT(plot->shell), "destroy",
 		       GTK_SIGNAL_FUNC(plot_quit), plot);
-    gtk_signal_connect(GTK_OBJECT(w), "key_press_event", 
+    gtk_signal_connect(GTK_OBJECT(plot->shell), "key_press_event", 
                        GTK_SIGNAL_FUNC(plot_key_handler), plot);
 
+    /* box to hold canvas */
+    canvas_hbox = gtk_hbox_new(FALSE, 1);
+    gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
+    gtk_widget_show(canvas_hbox);
+
+    /*  eventbox and hbox for status area  */
+    if (plot_has_xrange) {
+	plot->statusarea = gtk_event_box_new();
+	gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
+
+	status_hbox = gtk_hbox_new (FALSE, 2);
+	gtk_container_add(GTK_CONTAINER(plot->statusarea), status_hbox);
+	gtk_widget_show (status_hbox);
+	gtk_container_set_resize_mode (GTK_CONTAINER (status_hbox),
+				       GTK_RESIZE_QUEUE);
+    }
+
     /* Create drawing-area widget */
-    drawing_area = gtk_drawing_area_new();
-    plot->area = drawing_area;
-    gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK
+    plot->canvas = gtk_drawing_area_new();
+    gtk_drawing_area_size(GTK_DRAWING_AREA(plot->canvas), WIDTH, HEIGHT);
+    gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
                            | GDK_BUTTON_PRESS_MASK
                            | GDK_POINTER_MOTION_MASK
                            | GDK_POINTER_MOTION_HINT_MASK);
-    gtk_widget_set_sensitive(drawing_area, TRUE);
 
-    gtk_signal_connect(GTK_OBJECT(drawing_area), "button_press_event", 
+    GTK_WIDGET_SET_FLAGS (plot->canvas, GTK_CAN_FOCUS);
+    /*
+    gtk_object_set_user_data (GTK_OBJECT (plot->canvas), (gpointer) plot);
+    */
+    gtk_signal_connect(GTK_OBJECT(plot->canvas), "button_press_event", 
                        GTK_SIGNAL_FUNC(plot_popup), plot);
 
-#ifdef GPT_TRIAL
-    plot->status = NULL;
+    /* create the contents of the status area */
+    plot->statusbar = NULL;
     if (plot_has_xrange) {
-	plot->status = gtk_statusbar_new();
-	gtk_signal_connect (GTK_OBJECT (drawing_area), "motion_notify_event",
+	gint contextid;
+
+	/*  the cursor label (position indicator) */
+	label_frame = gtk_frame_new(NULL);
+	gtk_frame_set_shadow_type(GTK_FRAME(label_frame), GTK_SHADOW_IN);
+
+	plot->cursor_label = gtk_label_new(" ");
+	gtk_container_add(GTK_CONTAINER(label_frame), plot->cursor_label);
+	gtk_widget_show(plot->cursor_label);
+
+	/*  the statusbar  */
+	plot->statusbar = gtk_statusbar_new();
+	gtk_widget_set_usize(plot->statusbar, 1, -1);
+	gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
+				      GTK_RESIZE_QUEUE);
+	contextid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
+						  "popup_message");
+	gtk_statusbar_push (GTK_STATUSBAR (plot->statusbar),
+			    contextid, " Click on graph for pop-up menu");
+	gtk_signal_connect (GTK_OBJECT (plot->canvas), "motion_notify_event",
 			    (GtkSignalFunc) motion_notify_event, plot);
     }
-#endif
 
-    gtk_container_add(GTK_CONTAINER(w), drawing_area);
-#ifdef GPT_TRIAL
-    if (plot->status != NULL)
-	gtk_container_add(GTK_CONTAINER(w), plot->status);
+    /* pack the widgets */
 
-    gtk_box_pack_start(GTK_BOX(vbox), drawing_area, FALSE, FALSE, 0);
-    if (plot->status != NULL)
-	gtk_box_pack_start(GTK_BOX(vbox), plot->status, FALSE, FALSE, 0);
-#endif
+    gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
 
-    gtk_widget_show_all(w);
+    /*  fill the status area  */
+    if (plot_has_xrange) {
+	gtk_box_pack_start(GTK_BOX(status_hbox), label_frame, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
+    }
 
-    dbuf_pixmap = gdk_pixmap_new(w->window, WIDTH, HEIGHT, -1);
+    /* show stuff */
 
-    gtk_signal_connect(GTK_OBJECT(drawing_area), "expose_event",
+    gtk_widget_show(plot->canvas);
+
+    gtk_widget_show(label_frame);
+    gtk_widget_show(plot->statusbar);
+    gtk_widget_show(plot->statusarea);
+
+    gtk_widget_realize (plot->canvas);
+    gdk_window_set_back_pixmap (plot->canvas->window, NULL, FALSE);
+
+    gtk_widget_realize (plot->cursor_label);
+    gtk_widget_set_usize (plot->cursor_label, 140, -1);
+
+    gtk_widget_show(vbox);
+    gtk_widget_show(plot->shell);       
+
+    /*  set the focus to the canvas area  */
+    gtk_widget_grab_focus (plot->canvas);    
+
+    dbuf_pixmap = gdk_pixmap_new(plot->shell->window, WIDTH, HEIGHT, -1);
+
+    gtk_signal_connect(GTK_OBJECT(plot->canvas), "expose_event",
 		       GTK_SIGNAL_FUNC(plot_expose), dbuf_pixmap);
 
     render_pngfile("gretltmp.png", dbuf_pixmap);
@@ -1429,6 +1586,60 @@ int gnuplot_show_png (char *plotfile)
     return 0;
 }
 
+#else
+
+int gnuplot_show_png (char *plotfile)
+{
+    GdkPixmap *dbuf_pixmap = NULL; 
+    png_plot_t *plot;
+
+    plot = mymalloc(sizeof *plot);
+    if (plot == NULL) return 1;
+    plot->spec = mymalloc(sizeof(GPT_SPEC));
+    if (plot->spec == NULL) return 1;
+
+    plot->popup = NULL;
+
+    /* record name of tmp file containing plot commands */
+    strcpy(plot->spec->fname, plotfile);
+
+    plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(plot->shell), "gretl: gnuplot graph"); 
+
+    gtk_widget_set_usize(GTK_WIDGET(plot->shell), WIDTH, HEIGHT);
+    gtk_window_set_policy(GTK_WINDOW(plot->shell), TRUE, FALSE, FALSE);
+
+    gtk_signal_connect(GTK_OBJECT(plot->shell), "destroy",
+		       GTK_SIGNAL_FUNC(plot_quit), plot);
+    gtk_signal_connect(GTK_OBJECT(plot->shell), "key_press_event", 
+                       GTK_SIGNAL_FUNC(plot_key_handler), plot);
+
+    /* Create drawing area */
+    plot->canvas = gtk_drawing_area_new();
+    gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
+                           | GDK_LEAVE_NOTIFY_MASK
+                           | GDK_BUTTON_PRESS_MASK
+                           | GDK_POINTER_MOTION_MASK
+                           | GDK_POINTER_MOTION_HINT_MASK);
+    gtk_widget_set_sensitive(plot->canvas, TRUE);
+
+    gtk_signal_connect(GTK_OBJECT(plot->canvas), "button_press_event", 
+                       GTK_SIGNAL_FUNC(plot_popup), plot);
+
+    gtk_container_add(GTK_CONTAINER(plot->shell), plot->canvas);
+
+    gtk_widget_show_all(plot->shell);
+
+    dbuf_pixmap = gdk_pixmap_new(plot->shell->window, WIDTH, HEIGHT, -1);
+    gtk_signal_connect(GTK_OBJECT(plot->canvas), "expose_event",
+		       GTK_SIGNAL_FUNC(plot_expose), dbuf_pixmap);
+
+    render_pngfile("gretltmp.png", dbuf_pixmap);
+
+    return 0;
+}
+
+#endif /* GPT_TRIAL */
 #endif /* GNUPLOT_PNG */
 
 
