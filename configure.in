@@ -5,7 +5,7 @@ dnl
 AC_INIT(./lib/src/version.h)
 AC_PREREQ(2.12)
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_AUX_DIR(`pwd`/tools)
+AC_CONFIG_AUX_DIR(./tools)
 
 PACKAGE=gretl
 VERSION=`grep const ./lib/src/version.h | sed -e 's/^.*"\(.*\)";$/\1/'`
@@ -37,19 +37,19 @@ AC_ARG_ENABLE(gui,
 [  --enable-gui		  Enable gui [default=yes]],
 [if test "$enableval" = "yes"
 then
-build_gui=yes
+  build_gui=yes
 else
-build_gui=no
+  build_gui=no
 fi])
 
 AC_ARG_ENABLE(png-graphs,
 [  --enable-png-graphs     Enable PNG graph support [default=auto]],
 [if test "$enableval" = "yes"
 then
-png_graphics=yes
+  png_graphics=yes
 else
-png_graphics=no
-gnuplot_png=no
+  png_graphics=no
+  gnuplot_png=no
 fi])
 
 AC_ARG_WITH(gmake,
@@ -68,9 +68,9 @@ AC_ARG_WITH(gnome,
 [  --with-gnome            Build with gnome support [default=auto]],
 if test "x${withval}" = "xno"
 then
-trygnome=no
+  trygnome=no
 else
-trygnome=yes
+  trygnome=yes
 fi,
 trygnome=yes)
 
@@ -79,16 +79,16 @@ AC_ARG_WITH(gnome_install,
 [  --with-gnome-install=DIR  where to install gnome-specific files [default=auto]],
 if test -n "${withval}"
 then
-gnome_prefix=${withval}
+  gnome_prefix=${withval}
 fi,)
 
 AC_ARG_WITH(libole2,
 [  --with-libole2   Use installed libole2 [default=auto]],
 if test "x${withval}" = "xno"
 then
-tryole=no
+  tryole=no
 else
-tryole=yes
+  tryole=yes
 fi,
 tryole=yes)
 
@@ -96,9 +96,9 @@ AC_ARG_WITH(gmp,
 [  --with-gmp   Use Gnu Multiple Precision library [default=auto]],
 if test "x${withval}" = "xno"
 then
-trygmp=no
+  trygmp=no
 else
-trygmp=yes
+  trygmp=yes
 fi,
 trygmp=yes)
 
@@ -107,7 +107,7 @@ AC_ARG_WITH(gmp-prefix,
 [  --with-gmp-prefix=DIR   path to find GMP lib and header [default=/usr]],
 if test -n "${withval}"
 then
-gmp_prefix=${withval}
+  gmp_prefix=${withval}
 fi,)
 
 AC_PROG_CC
@@ -119,7 +119,7 @@ AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 
 dnl We want these before the checks, so the checks can modify their values.
-test -z "$CFLAGS"  && CFLAGS= auto_cflags=1
+test -z "$CFLAGS" && CFLAGS= auto_cflags=1
 test -z "$CC" && cc_specified=yes
 
 dnl
@@ -133,8 +133,10 @@ if test -n "$auto_cflags"; then
 fi
 
 AC_PROG_LN_S
+
 AC_CHECK_LIB(m, sin)
 AC_CHECK_LIB(c, fopen)
+
 AC_CHECK_LIB(readline, readline,have_readline="yes" ; \
   CLI_LIBS="-lreadline -ltermcap" ; AC_DEFINE(HAVE_READLINE),,-ltermcap)
 AC_SUBST(have_readline)
@@ -192,43 +194,29 @@ else
 fi
 fi
 
-dnl See if gnome libole2 is available
-OLE_LIBS=`glib-config --libs`
-OLE_CFLAGS="-I. -I.. -DHAVE_UNISTD_H `glib-config --cflags`"
-if test x"${tryole}" != xno ; then
-  AC_MSG_CHECKING(for libole2)
-  OLE_CFLAGS=`gnome-config --cflags libole2 2>/dev/null`
-  OLE_LIBS=`gnome-config --libs libole2 2>/dev/null`
-  if test x"${OLE_CFLAGS}" = "x" ; then
-     AC_MSG_RESULT(no)
-     OLE_LIBS=`glib-config --libs`
-     OLE_CFLAGS="-I. -I.. -DHAVE_UNISTD_H `glib-config --cflags`"
-  else
-     AC_MSG_RESULT(yes)
-  fi
+if test x"${tryole}" != "xno"
+then
+  AM_PATH_LIBOLE2(0.2.4)
 fi
-AC_SUBST(OLE_CFLAGS)
-AC_SUBST(OLE_LIBS)
 
-SAVE_LIBS=$LIBS
-dnl See if GMP lib is available
-if test x"${gmp_prefix}" != "x" ; then
-  SAVE_LIBS=$LIBS
-  GMP_LIBS="-L${gmp_prefix}/lib -lgmp"
-  GMP_CFLAGS="-I${gmp_prefix}/include"
-  LIBS=$GMP_LIBS
-else
-  GMP_LIBS="-lgmp"
-  GMP_CFLAGS=""
-fi
+dnl See if GMP lib is available?
 if test x"${trygmp}" != xno ; then
+  SAVE_LIBS=$LIBS
+  if test x"${gmp_prefix}" != "x" ; then
+    GMP_LIBS="-L${gmp_prefix}/lib -lgmp"
+    GMP_CFLAGS="-I${gmp_prefix}/include"
+    LIBS=$GMP_LIBS
+  else
+    GMP_LIBS="-lgmp"
+    GMP_CFLAGS=""
+  fi
   AC_CHECK_LIB(gmp, __gmpf_init,have_gmp="yes" ; \
     AC_DEFINE(ENABLE_GMP),GMP_LIBS=,)
   AC_SUBST(ENABLE_GMP)
   AC_SUBST(GMP_CFLAGS)
   AC_SUBST(GMP_LIBS)
+  LIBS=$SAVE_LIBS
 fi
-LIBS=$SAVE_LIBS
 
 dnl Checks for header files.
 AC_HEADER_STDC
@@ -236,45 +224,29 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(paths.h unistd.h)
 AC_C_CONST
 
-dnl Checks for getdomainname in unistd.h
-AC_MSG_CHECKING(for getdomainname)
-AC_EGREP_HEADER(getdomainname, unistd.h, have_domname=yes)
-if test "$have_domname" = yes ; then
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(GETDOMAINNAME)
-else
-  AC_MSG_RESULT(no)
-fi
-
 AC_DEFUN(AC_PROG_GNUPLOT,
 [AC_CHECK_PROG(GNUPLOT,gnuplot,yes)])
 
 AC_PROG_GNUPLOT
 test x"${GNUPLOT}" = xyes && AC_DEFINE(HAVE_GNUPLOT) 
-if test x"${GNUPLOT}" = xyes
-then
-	have_gnuplot=yes
+if test x"${GNUPLOT}" = xyes ; then
+  have_gnuplot=yes
 fi
 
-if test x"${png_graphics}" = xyes
-then
-AC_DEFUN(AC_CHECK_PNG, )
-
-AC_CHECK_PNG
-gnuplot_png=no
-AC_MSG_CHECKING(for PNG support in gnuplot)
-echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
-if test x"${gnuplot_png}" = xyes
-then
-   AC_MSG_RESULT(yes)
-   AC_DEFINE(GNUPLOT_PNG)
-else
-   AC_MSG_RESULT(no)
-   echo
-   echo "* gretl needs PNG support in gnuplot."
-   echo "* The current version of gnuplot is available from www.gnuplot.info"
-   exit
-fi
+if test x"${png_graphics}" = xyes ; then
+  gnuplot_png=no
+  AC_MSG_CHECKING(for PNG support in gnuplot)
+  echo "set term png" | `which gnuplot` 2>/dev/null && gnuplot_png=yes
+  if test x"${gnuplot_png}" = xyes ; then
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(GNUPLOT_PNG)
+  else
+    AC_MSG_RESULT(no)
+    echo
+    echo "* gretl needs PNG support in gnuplot."
+    echo "* The current version of gnuplot is available from www.gnuplot.info"
+    exit
+  fi
 fi
 
 AC_DEFUN(AC_PROG_LATEX,
@@ -282,383 +254,51 @@ AC_DEFUN(AC_PROG_LATEX,
 
 AC_PROG_LATEX
 test x"${LATEX}" = xyes && AC_DEFINE(HAVE_LATEX)
-if test x"${LATEX}" = xyes
-then
-	have_latex=yes
+if test x"${LATEX}" = xyes ; then
+  have_latex=yes
 fi
 
-if test "$trygnome" = "yes"
-then
-AC_DEFUN(AC_PROG_GNOME,
-[AC_CHECK_PROG(GNOME,gnome-config,yes)])
+if test "$trygnome" = "yes" ; then
+  AC_DEFUN(AC_PROG_GNOME,
+  [AC_CHECK_PROG(GNOME,gnome-config,yes)])
 
-AC_PROG_GNOME
-GNOME_CFLAGS=''
-GNOME_LIBS=''
-test x"${GNOME}" = xyes && AC_DEFINE(USE_GNOME)
-if test x"${GNOME}" = xyes
-then
-have_gnome=yes
-if test "${gnome_prefix}" = "NA"
-  then
-    gnome_prefix="`gnome-config --prefix`"
-    GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
-    GNOME_LIBS=`gnome-config --libs gnomeui print`
+  AC_PROG_GNOME
+  GNOME_CFLAGS=''
+  GNOME_LIBS=''
+  test x"${GNOME}" = xyes && AC_DEFINE(USE_GNOME)
+  if test x"${GNOME}" = xyes ; then
+    have_gnome=yes
+    if test "${gnome_prefix}" = "NA" ; then
+      gnome_prefix="`gnome-config --prefix`"
+      GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
+      GNOME_LIBS=`gnome-config --libs gnomeui print`
+    fi
   fi
-fi
-AC_SUBST(have_gnome)
-AC_SUBST(GNOME_CFLAGS)
-AC_SUBST(GNOME_LIBS)
+  AC_SUBST(have_gnome)
+  AC_SUBST(GNOME_CFLAGS)
+  AC_SUBST(GNOME_LIBS)
 fi
 
 AC_SUBST(gnome_prefix)
 
-if test "$build_gui" = "yes"
-then
-dnl AM_PATH_GTK([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
-dnl Test for GTK, and define GTK_CFLAGS and GTK_LIBS
-dnl
-AC_DEFUN(AM_PATH_GTK,
-[dnl 
-dnl Get the cflags and libraries from the gtk-config script
-dnl
-AC_ARG_WITH(gtk-prefix,[  --with-gtk-prefix=PFX   Prefix where GTK is installed (optional)],
-            gtk_config_prefix="$withval", gtk_config_prefix="")
-AC_ARG_WITH(gtk-exec-prefix,[  --with-gtk-exec-prefix=PFX Exec prefix where GTK is installed (optional)],
-            gtk_config_exec_prefix="$withval", gtk_config_exec_prefix="")
-AC_ARG_ENABLE(gtktest, [  --disable-gtktest       Do not try to compile and run a test GTK program],
-		    , enable_gtktest=yes)
-
-  for module in . $4
-  do
-      case "$module" in
-         gthread) 
-             gtk_config_args="$gtk_config_args gthread"
-         ;;
-      esac
-  done
-
-  if test x$gtk_config_exec_prefix != x ; then
-     gtk_config_args="$gtk_config_args --exec-prefix=$gtk_config_exec_prefix"
-     if test x${GTK_CONFIG+set} != xset ; then
-        GTK_CONFIG=$gtk_config_exec_prefix/bin/gtk-config
-     fi
-  fi
-  if test x$gtk_config_prefix != x ; then
-     gtk_config_args="$gtk_config_args --prefix=$gtk_config_prefix"
-     if test x${GTK_CONFIG+set} != xset ; then
-        GTK_CONFIG=$gtk_config_prefix/bin/gtk-config
-     fi
-  fi
-
-  AC_PATH_PROG(GTK_CONFIG, gtk-config, no)
-  min_gtk_version=ifelse([$1], ,1.2.4,$1)
-  AC_MSG_CHECKING(for GTK - version >= $min_gtk_version)
-  no_gtk=""
-  if test "$GTK_CONFIG" = "no" ; then
-    no_gtk=yes
-  else
-    GTK_CFLAGS=`$GTK_CONFIG $gtk_config_args --cflags`
-    GTK_LIBS=`$GTK_CONFIG $gtk_config_args --libs`
-    gtk_config_major_version=`$GTK_CONFIG $gtk_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-    gtk_config_minor_version=`$GTK_CONFIG $gtk_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-    gtk_config_micro_version=`$GTK_CONFIG $gtk_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
-    if test "x$enable_gtktest" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $GTK_CFLAGS"
-      LIBS="$GTK_LIBS $LIBS"
-dnl
-dnl Now check if the installed GTK is sufficiently new. (Also sanity
-dnl checks the results of gtk-config to some extent
-dnl
-      rm -f conf.gtktest
-      AC_TRY_RUN([
-#include <gtk/gtk.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int 
-main ()
-{
-  int major, minor, micro;
-  char *tmp_version;
-
-  system ("touch conf.gtktest");
-
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = g_strdup("$min_gtk_version");
-  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
-     printf("%s, bad version string\n", "$min_gtk_version");
-     exit(1);
-   }
-
-  if ((gtk_major_version != $gtk_config_major_version) ||
-      (gtk_minor_version != $gtk_config_minor_version) ||
-      (gtk_micro_version != $gtk_config_micro_version))
-    {
-      printf("\n*** 'gtk-config --version' returned %d.%d.%d, but GTK+ (%d.%d.%d)\n", 
-             $gtk_config_major_version, $gtk_config_minor_version, $gtk_config_micro_version,
-             gtk_major_version, gtk_minor_version, gtk_micro_version);
-      printf ("*** was found! If gtk-config was correct, then it is best\n");
-      printf ("*** to remove the old version of GTK+. You may also be able to fix the error\n");
-      printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
-      printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
-      printf("*** required on your system.\n");
-      printf("*** If gtk-config was wrong, set the environment variable GTK_CONFIG\n");
-      printf("*** to point to the correct copy of gtk-config, and remove the file config.cache\n");
-      printf("*** before re-running configure\n");
-    } 
-#if defined (GTK_MAJOR_VERSION) && defined (GTK_MINOR_VERSION) && defined (GTK_MICRO_VERSION)
-  else if ((gtk_major_version != GTK_MAJOR_VERSION) ||
-	   (gtk_minor_version != GTK_MINOR_VERSION) ||
-           (gtk_micro_version != GTK_MICRO_VERSION))
-    {
-      printf("*** GTK+ header files (version %d.%d.%d) do not match\n",
-	     GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION);
-      printf("*** library (version %d.%d.%d)\n",
-	     gtk_major_version, gtk_minor_version, gtk_micro_version);
-    }
-#endif /* defined (GTK_MAJOR_VERSION) ... */
-  else
-    {
-      if ((gtk_major_version > major) ||
-        ((gtk_major_version == major) && (gtk_minor_version > minor)) ||
-        ((gtk_major_version == major) && (gtk_minor_version == minor) && (gtk_micro_version >= micro)))
-      {
-        return 0;
-       }
-     else
-      {
-        printf("\n*** An old version of GTK+ (%d.%d.%d) was found.\n",
-               gtk_major_version, gtk_minor_version, gtk_micro_version);
-        printf("*** You need a version of GTK+ newer than %d.%d.%d. The latest version of\n",
-	       major, minor, micro);
-        printf("*** GTK+ is always available from ftp://ftp.gtk.org.\n");
-        printf("***\n");
-        printf("*** If you have already installed a sufficiently new version, this error\n");
-        printf("*** probably means that the wrong copy of the gtk-config shell script is\n");
-        printf("*** being found. The easiest way to fix this is to remove the old version\n");
-        printf("*** of GTK+, but you can also set the GTK_CONFIG environment to point to the\n");
-        printf("*** correct copy of gtk-config. (In this case, you will have to\n");
-        printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
-        printf("*** so that the correct libraries are found at run-time))\n");
-      }
-    }
-  return 1;
-}
-],, no_gtk=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-       CFLAGS="$ac_save_CFLAGS"
-       LIBS="$ac_save_LIBS"
-     fi
-  fi
-  if test "x$no_gtk" = x ; then
-     AC_MSG_RESULT(yes)
-     have_gtk=yes
-     AC_SUBST(have_gtk)
-     GUI="gretl"
-     AC_SUBST(GUI)
-     AC_SUBST(GTK_CFLAGS)
-     AC_SUBST(GTK_LIBS)
-     ifelse([$2], , :, [$2])     
-  else
-     AC_MSG_RESULT(no)
-     AC_SUBST(have_gtk)
-     if test "$GTK_CONFIG" = "no" ; then
-       echo "*** The gtk-config script installed by GTK could not be found"
-       echo "*** If GTK was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the GTK_CONFIG environment variable to the"
-       echo "*** full path to gtk-config."
-     else
-       if test -f conf.gtktest ; then
-        :
-       else
-          echo "*** Could not run GTK test program, checking why..."
-          CFLAGS="$CFLAGS $GTK_CFLAGS"
-          LIBS="$LIBS $GTK_LIBS"
-          AC_TRY_LINK([
-#include <gtk/gtk.h>
-#include <stdio.h>
-],      [ return ((gtk_major_version) || (gtk_minor_version) || (gtk_micro_version)); ],
-        [ echo "*** The test program compiled, but did not run. This usually means"
-          echo "*** that the run-time linker is not finding GTK or finding the wrong"
-          echo "*** version of GTK. If it is not finding GTK, you'll need to set your"
-          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
-          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
-          echo "*** is required on your system"
-	  echo "***"
-          echo "*** If you have an old version installed, it is best to remove it, although"
-          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"
-          echo "***"
-          echo "*** If you have a RedHat 5.0 system, you should remove the GTK package that"
-          echo "*** came with the system with the command"
-          echo "***"
-          echo "***    rpm --erase --nodeps gtk gtk-devel" ],
-        [ echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means GTK was incorrectly installed"
-          echo "*** or that you have moved GTK since it was installed. In the latter case, you"
-          echo "*** may want to edit the gtk-config script: $GTK_CONFIG" ])
-          CFLAGS="$ac_save_CFLAGS"
-          LIBS="$ac_save_LIBS"
-       fi
-     fi
-     GTK_CFLAGS=""
-     GTK_LIBS=""
-     ifelse([$3], , :, [$3])
-  fi
-  AC_SUBST(GTK_CFLAGS)
-  AC_SUBST(GTK_LIBS)
-  rm -f conf.gtktest
-])
-
-AM_PATH_GTK(1.2.3)
-
+AM_PATH_GTK(1.2.3,have_gtk="yes",have_gtk="no")
+if test "${have_gtk}" = "no" ; then
+   exit
 fi
-
-if test "$build_gui" = "yes"
-then
-dnl AM_PATH_GTKEXTRA([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND [, MODULES]]]])
-dnl Test for GTKEXTRA, and define GTK_EXTRA_FLAGS and GTK_EXTRA_LIBS
-dnl
-AC_DEFUN(AM_PATH_GTKEXTRA,
-[dnl 
-dnl Get the cflags and libraries from the gtkextra-config script
-dnl
-AC_ARG_WITH(gtkextra-prefix,[  --with-gtkextra-prefix=PFX   Prefix where GTKEXTRA is installed (optional)],
-            gtkextra_config_prefix="$withval", gtkextra_config_prefix="")
-AC_ARG_WITH(gtkextra-exec-prefix,[  --with-gtkextra-exec-prefix=PFX Exec prefix where GTKEXTRA is installed (optional)],
-            gtkextra_config_exec_prefix="$withval", gtkextra_config_exec_prefix="")
-AC_ARG_ENABLE(gtkextratest, [  --disable-gtkextratest       Do not try to compile and run a test GTKEXTRA program],
-		    , enable_gtkextratest=yes)
-
-  if test x$gtkextra_config_exec_prefix != x ; then
-     gtkextra_config_args="$gtkextra_config_args --exec-prefix=$gtkextra_config_exec_prefix"
-     if test x${GTK_EXTRA_CONFIG+set} != xset ; then
-        GTK_EXTRA_CONFIG=$gtkextra_config_exec_prefix/bin/gtkextra-config
-     fi
-  fi
-  if test x$gtkextra_config_prefix != x ; then
-     gtkextra_config_args="$gtkextra_config_args --prefix=$gtkextra_config_prefix"
-     if test x${GTK_EXTRA_CONFIG+set} != xset ; then
-        GTK_EXTRA_CONFIG=$gtkextra_config_prefix/bin/gtkextra-config
-     fi
-  fi
-
- AC_PATH_PROG(GTK_EXTRA_CONFIG, gtkextra-config, no)
-  min_gtkextra_version=ifelse([$1], ,0.99.12,$1)
-  AC_MSG_CHECKING(for GTKEXTRA - version >= $min_gtkextra_version)
-  no_gtkextra=""
-  if test "$GTK_EXTRA_CONFIG" = "no" ; then
-    no_gtkextra=yes
-    AC_MSG_RESULT(no)
-    if test -d gui/gtkextra ; then
-       echo "* Will try using the gretl gtkextra addon package instead"
-    else
-       echo
-       echo "* You need the gtkextra library to compile gretl."
-       echo "* You can get this from gtkextra.sourceforge.net"
-       exit
-    fi
-  else
-    have_gtkextra=yes
-    # AC_MSG_RESULT(yes)
-    GTK_EXTRA_CFLAGS=`$GTK_EXTRA_CONFIG $gtkextra_config_args --cflags`
-    GTK_EXTRA_LIBS=`$GTK_EXTRA_CONFIG $gtkextra_config_args --libs`
-    gtkextra_config_major_version=`$GTK_EXTRA_CONFIG $gtkextra_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-    gtkextra_config_minor_version=`$GTK_EXTRA_CONFIG $gtkextra_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-    gtkextra_config_micro_version=`$GTK_EXTRA_CONFIG $gtkextra_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
-    if test "x$enable_gtkextratest" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $GTK_CFLAGS $GTK_EXTRA_CFLAGS"
-      LIBS="$GTK_LIBS $LIBS $GTK_EXTRA_LIBS"
-# added stuff
-      rm -f conf.gtkextratest
-      AC_TRY_RUN([
-#include <gtkextra/gtkextra.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int 
-main ()
-{
-  int confmajor, confminor, confmicro;
-  int major, minor, micro;
-  char *tmp_version, line[16];
-  FILE *fp;
-
-  system("gtkextra-config --version > conf.gtkextratest 2>&1");
-  fp = fopen("conf.gtkextratest", "r");
-  if (fp == NULL) {
-     printf("*** Couldn't read output from gtkextra-config.\n");
-     exit(1);
-  } else {
-     fgets(line, 8, fp);
-     fclose(fp);
-     system("rm -f conf.gtkextratest");
-     line[8] = 0;
-     if (sscanf(line, "%d.%d.%d", &confmajor, &confminor, &confmicro) != 3) {
-        printf("%s, bad version string\n", line);
-        exit(1);
-     }
-  }
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = g_strdup("$min_gtkextra_version"); 
-  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
-     printf("%s, bad version string\n", "$min_gtkextra_version");
-     exit(1);
-   }
-  else
-    {
-      if ((confmajor > major) ||
-        ((confmajor == major) && (confminor > minor)) ||
-        ((confmajor == major) && (confminor == minor) &&
-        (confmicro >= micro)))
-      {
-        return 0;
-       }
-     else
-      {
-        printf("\n*** An old version of gtkextra (%d.%d.%d) was found.\n", confmajor, confminor, confmicro);
-        printf("*** To link gretl against libgtkextra you need at least\n");
-        printf("*** version %d.%d.%d. (The latest version should be available\n", major, minor, micro);
-        printf("*** from gtkextra.sourceforge.net.)\n");
-      }
-    }
-  return 1;
-}
-],AC_MSG_RESULT(yes), have_gtkextra=no,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-# end added stuff
-    fi
-  fi
-])
-
-AM_PATH_GTKEXTRA(0.99.15)
-AC_SUBST(have_gtkextra)
-AC_SUBST(GTK_EXTRA_CFLAGS)
-AC_SUBST(GTK_EXTRA_LIBS)
-
-# end of "build_gui" conditionality
-fi
-
+CFLAGS="$CFLAGS $GTK_CFLAGS"
+LIBS="$LIBS $GTK_LIBS"
+AM_PATH_GTK_EXTRA(0.99.15,have_gtkextra="yes",have_gtkextra="no")
 if test "${have_gtkextra}" = "no" ; then
    exit
 fi
 
+dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
    prefix="/usr/local"
 fi
 AC_DEFINE_UNQUOTED(GRETL, "${prefix}/share/gretl/")
 
-dnl
 dnl Create output
-dnl
 CFLAGS="$ac_save_CFLAGS"
 LIBS="$ac_save_LIBS"
 AC_OUTPUT([ 
@@ -691,7 +331,6 @@ echo "
 Configuration:
   
   Installation path:                    ${prefix}
-  Build GTK gui:                        ${have_gtk}
   Use readline library:                 ${have_readline}
   Use gnuplot for graphs:               ${have_gnuplot}
   Use PNG for gnuplot graphs:           ${gnuplot_png}

@@ -12,8 +12,8 @@ GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
-OLE_CFLAGS = @OLE_CFLAGS@
-OLE_LIBS = @OLE_LIBS@
+LIBOLE2_CFLAGS = @LIBOLE2_CFLAGS@
+LIBOLE2_LIBS = @LIBOLE2_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
 
@@ -41,7 +41,7 @@ ifdef GMP_LIBS
   PLUGINS += mp_ols.so
 endif
 
-ifeq ($(OLE_LIBS),)
+ifeq ($(LIBOLE2_LIBS),)
   query-ms-ole.lo=ms-ole.lo
   vpath %.c libole2
   vpath %.h libole2
@@ -62,7 +62,7 @@ gnumeric_import.so: gnumeric_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
 excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(OLE_LIBS)
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
 
 mp_ols.so: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
@@ -83,10 +83,10 @@ excel_import.lo: excel_import.c import_common.c xltypes.h $(GRETLLIB)
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
 
 workbook.lo: workbook.c biff.h
-	$(COMPILE) $(GRETLINC) $(OLE_CFLAGS) $<
+	$(COMPILE) $(GRETLINC) $(LIBOLE2_CFLAGS) $<
 
 ms-ole.lo: ms-ole.c ms-ole.h
-	$(COMPILE) $(OLE_CFLAGS) $<
+	$(COMPILE) $(LIBOLE2_CFLAGS) $<
 
 mp_ols.lo: mp_ols.c
 	$(COMPILE) $(GRETLINC) $(GMP_CFLAGS) $<
