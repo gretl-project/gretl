@@ -55,10 +55,13 @@ mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
+mkdir -p windist/gretl/share/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
-mkdir -p windist/gretl/share/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/share/locale/fr/LC_MESSAGES
+mkdir -p windist/gretl/locale/it/LC_MESSAGES
+mkdir -p windist/gretl/locale/ja/LC_MESSAGES
+
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 
 # put binaries in place

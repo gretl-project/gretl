@@ -15,6 +15,7 @@ version 1.2.1
   application under Windows
 - Small fixes for data importation 
 - Don't overwrite CSV datafiles with gretl format data
+- Add a logistic model command and menu item
 
 12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)

@@ -52,6 +52,13 @@ print "Name: \"{app}\\plugins\"\n";
 print "Name: \"{app}\\locale\"\n";
 print "Name: \"{app}\\locale\\es\"\n";
 print "Name: \"{app}\\locale\\es\\LC_MESSAGES\"\n";
+print "Name: \"{app}\\locale\\fr\"\n";
+print "Name: \"{app}\\locale\\fr\\LC_MESSAGES\"\n";
+print "Name: \"{app}\\locale\\it\"\n";
+print "Name: \"{app}\\locale\\it\\LC_MESSAGES\"\n";
+print "Name: \"{app}\\locale\\ja\"\n";
+print "Name: \"{app}\\locale\\ja\\LC_MESSAGES\"\n";
+
 print "Name: \"{app}\\gnuplot\"\n";
 print "Name: \"{app}\\demo\"\n";
 
