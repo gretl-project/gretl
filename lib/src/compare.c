@@ -435,12 +435,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    /* select sort of model to estimate */
 	    if (orig->ci == AR) {
 		*new = ar_func(newlist, pos, pZ, pdinfo, model_count, prn);
-		*model_count -= 1;
 	    }
 	    else if (orig->ci == ARCH) {
 		*new = arch(orig->order, newlist, pZ, pdinfo, model_count, 
 			    prn, NULL);
-		*model_count -= 1;
 	    } 
 	    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 		*new = logit_probit(newlist, pZ, pdinfo, orig->ci);
@@ -717,12 +715,10 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     if (!err) {
 	if (orig->ci == AR) {
 	    *new = ar_func(tmplist, pos, pZ, pdinfo, model_count, prn);
-	    *model_count -= 1;
 	}
 	else if (orig->ci == ARCH) {
 	    *new = arch(orig->order, tmplist, pZ, pdinfo, model_count, 
 			prn, NULL);
-	    *model_count -= 1;
 	} 
 	else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    *new = logit_probit(tmplist, pZ, pdinfo, orig->ci);
@@ -762,21 +758,26 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    chisq = robust_lm_test(orig, new, omitvars, pZ, pdinfo);
 	    gretl_model_set_double(new, "chisq", chisq);
 	}
+
 	omit = omit_compare(orig, new);
+
 	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, prn); 
 	    *model_count += 1;
 	}
+
 	_difflist(orig->list, new->list, omitvars);
 	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
 
 	if (gretl_model_get_int(orig, "hc")) {
 	    robust_omit_test(omitvars, orig, prn);
 	}    
-	
+
 	free(tmplist);
-	if (orig->ci == LOGIT || orig->ci == PROBIT)
+
+	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_NONE;
+	}
     }
 
     pdinfo->t1 = t1;

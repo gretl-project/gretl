@@ -1637,7 +1637,6 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	    return;
 	} else {
 	    clear_model(models[0], NULL); 
-	    model_count--;
 	    strcat(title, _("(non-linearity)"));
 	    if (add_test_to_model(&test, pmod) == 0)
 		print_test_to_window(&test, mydata->w);
@@ -5640,7 +5639,6 @@ int gui_exec_line (char *line,
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, outprn, ptest, 0);
 	    clear_model(models[1], NULL);
-	    model_count--;
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
@@ -5648,7 +5646,6 @@ int gui_exec_line (char *line,
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, outprn, ptest, 0);
 	    clear_model(models[1], NULL);
-	    model_count--;
 	    if (err) errmsg(err, prn);
 	}
 	/* autocorrelation or heteroskedasticity */

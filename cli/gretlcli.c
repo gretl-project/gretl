@@ -1176,7 +1176,6 @@ void exec_line (char *line, PRN *prn)
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, NULL, 0);
 	    clear_model(models[1], NULL);
-	    model_count--;
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_S) break;
 	    if (!err && !batch && page_break(0, NULL, 1)) break; 
@@ -1186,7 +1185,6 @@ void exec_line (char *line, PRN *prn)
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, NULL, 0);
 	    clear_model(models[1], NULL); 
-	    model_count--;
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_L) break;
 	    if (!err && !batch && page_break(0, NULL, 1)) break;

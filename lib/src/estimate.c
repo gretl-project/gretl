@@ -1463,6 +1463,8 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
 
 /* .......................................................... */
 
+#if 0
+
 static int pack_tsls_vcv (MODEL *pmod, gretl_matrix *v, int robust)
 {
     const int nv = pmod->ncoeff;
@@ -1529,6 +1531,8 @@ static int make_tsls_vcv (MODEL *pmod, const double **Z)
 
     return err;
 }
+
+#endif
 
 /**
  * tsls_func:
@@ -1711,7 +1715,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     }
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess/tsls.dfd) : 0.0;
 
-#if 1
+#if 0
     make_tsls_vcv(&tsls, (const double **) *pZ);
 #else
     nv = s2list[0] - 1;
