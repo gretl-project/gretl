@@ -1629,53 +1629,6 @@ static char *unspace (char *s)
     return s;
 }
 
-/* ................................................. */
-
-static int parse_varline (char *line, 
-			  unsigned *varstart, unsigned *varsize, 
-			  int v, int *realv,
-			  DATAINFO *binfo, print_t *prn)
-{
-    char tmp[21];
-
-    strncpy(binfo->varname[*realv], line+11, 8);
-    binfo->varname[*realv][8] = '\0';
-    unspace(binfo->varname[*realv]);
-    lower(binfo->varname[*realv]);
-    pprintf(prn, " variable %d: '%s'\n", v+1, binfo->varname[*realv]);
-    if (line[51] != '2') {
-	pprintf(prn, "   Non-numeric data: will be skipped\n");
-	varstart[v] = 0;
-	varsize[v] = 0;
-	return 0;
-    }
-    strncpy(tmp, line+52, 6);
-    tmp[6] = '\0';
-    varstart[v] = atoi(tmp) - 1;
-    pprintf(prn, "   starting col. %d, ", varstart[v]);
-    strncpy(tmp, line+58, 4);
-    tmp[4] = '\0';
-    varsize[v] = atoi(tmp);
-    pprintf(prn, "field width %d, ", varsize[v]);
-    strncpy(tmp, line+62, 2);
-    tmp[2] = '\0';
-    pprintf(prn, "decimal places %d\n", atoi(tmp));
-    tmp[0] = '\0';
-    strncpy(tmp, line+64, 20);
-    tmp[20] = '\0';
-    unspace(tmp);
-    if (strlen(tmp))
-	pprintf(prn, "   Warning: coded variable (format '%s' in BOX file)\n", 
-		tmp);
-    strncpy(binfo->label[*realv], line+87, 99);
-    binfo->label[*realv][99] = '\0';
-    unspace(binfo->label[*realv]);
-    pprintf(prn, "   definition: '%s'\n", binfo->label[*realv]);
-    *realv += 1;
-
-    return 0;
-}
-
 /* #define BOX_DEBUG 1 */
 
 /* ................................................. */
@@ -1767,7 +1720,41 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 	case 2: /* raw data records types (ignored for now) */
 	    break;
 	case 3: /* variable info */
-	    parse_varline(line, varstart, varsize, v, &realv, &boxinfo, prn);
+	    strncpy(boxinfo.varname[realv], line+11, 8);
+	    boxinfo.varname[realv][8] = '\0';
+	    unspace(boxinfo.varname[realv]);
+	    lower(boxinfo.varname[realv]);
+	    pprintf(prn, " variable %d: '%s'\n", v+1, boxinfo.varname[realv]);
+	    if (line[51] != '2') {
+		pprintf(prn, "   Non-numeric data: will be skipped\n");
+		varstart[v] = 0;
+		varsize[v] = 0;
+		v++;
+		break;
+	    }
+	    strncpy(tmp, line+52, 6);
+	    tmp[6] = '\0';
+	    varstart[v] = atoi(tmp) - 1;
+	    pprintf(prn, "   starting col. %d, ", varstart[v]);
+	    strncpy(tmp, line+58, 4);
+	    tmp[4] = '\0';
+	    varsize[v] = atoi(tmp);
+	    pprintf(prn, "field width %d, ", varsize[v]);
+	    strncpy(tmp, line+62, 2);
+	    tmp[2] = '\0';
+	    pprintf(prn, "decimal places %d\n", atoi(tmp));
+	    tmp[0] = '\0';
+	    strncpy(tmp, line+64, 20);
+	    tmp[20] = '\0';
+	    unspace(tmp);
+	    if (strlen(tmp))
+		pprintf(prn, "   Warning: coded variable (format '%s' "
+			"in BOX file)\n", tmp);
+	    strncpy(boxinfo.label[realv], line+87, 99);
+	    boxinfo.label[realv][99] = '\0';
+	    unspace(boxinfo.label[realv]);
+	    pprintf(prn, "   definition: '%s'\n", boxinfo.label[realv]);
+	    realv++;
 	    v++;
 	    break;
 	case 4: /* category info (ignored for now) */
