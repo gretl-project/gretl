@@ -181,6 +181,10 @@ static int aliased (char *cmd)
 	strcpy(cmd, "smpl");
 	return 1;
     }
+    else if (!strcmp(cmd, "eval")) {
+	strcpy(cmd, "genr");
+	return 1;
+    }
     else if (cmd[0] == '!') {
 	strcpy(cmd, "shell");
 	return 1;
@@ -1741,7 +1745,8 @@ int ready_for_command (const char *line)
 	"run", 
 	"nulldata", 
 	"import", 
-	"pvalue", 
+	"pvalue",
+	"eval",
 	"!",
 	"(*", 
 	"man ", 

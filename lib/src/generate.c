@@ -209,6 +209,7 @@ static char operators[] = {
                          t == T_SST || t == T_MAX || t == T_NOBS)
 
 #define MAXTERMS 64
+#define _VSMALL 1.0e-14
 
 /* ...................................................... */
 

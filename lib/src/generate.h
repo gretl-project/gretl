@@ -22,8 +22,6 @@
 
 #include <time.h>
 
-#define _VSMALL 1.0e-14  /* adjustment for (int) conversion */
-
 typedef enum {
     UHATNUM = 998,
     YHATNUM = 999,
