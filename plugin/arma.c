@@ -378,7 +378,12 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 	}
     }
 
-    pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
+    if (pmod->tss > pmod->ess) {
+	pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / 
+	    (pmod->dfn * pmod->ess);
+    } else {
+	pmod->fstt = NADBL;
+    }
 
     pmod->rsq = pmod->adjrsq = NADBL;
 
@@ -520,7 +525,7 @@ static void adjust_t2 (DATAINFO *pdinfo, const double *y)
 MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
 		  PRN *prn)
 {
-    int orig_t2 = pdinfo->t2;
+    int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
     int an, nc, v, p, q, maxlag;
     int subiters, iters, itermax;
     int i, t;
@@ -543,15 +548,23 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	return armod;
     }
 
-    /* the dependent variable */
-    v = list[4]; 
-    y = &Z[v][pdinfo->t1];
-    adjust_t2(pdinfo, y);
-    an = pdinfo->t2 - pdinfo->t1 + 1;
-
     p = list[1]; /* AR order */
     q = list[2]; /* MA order */
     maxlag = (p>q) ? p : q; /* maximum lag in the model */
+
+    /* adjust starting point? */
+    if (q > pdinfo->t1) pdinfo->t1 = q;
+
+    /* the dependent variable */
+    v = list[4]; 
+    y = &Z[v][pdinfo->t1];
+
+    /* adjust end point? */
+    adjust_t2(pdinfo, y);
+
+    an = pdinfo->t2 - pdinfo->t1 + 1;
+
+    fprintf(stderr, "t1=%d\n", pdinfo->t1);
 
     /* number of coefficients */
     nc = 1 + p + q;
@@ -766,6 +779,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     clear_datainfo(ainfo, CLEAR_FULL);
     free(ainfo);
 
+    pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
     return armod;
