@@ -2600,7 +2600,7 @@ void dump_rc (void)
     dir_exists(paths.userdir, fp);
     dir_exists(paths.gretldir, fp);
 
-    fprintf(stderr, "Config info written to %s\n", dumper);
+    printf("Config info written to %s\n", dumper);
 
     fclose(fp);
     free(dumper);
