@@ -82,7 +82,8 @@ int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
 	       int method);
 
-int set_db_name (const char *fname, int filetype, PRN *prn);
+int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
+		 PRN *prn);
 
 int db_set_sample (const char *line, DATAINFO *pdinfo);
 

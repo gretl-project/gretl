@@ -545,7 +545,8 @@ void mark_dataset_as_modified (void)
 
 /* ........................................................... */
 
-void register_data (const char *fname, int record)
+void register_data (const char *fname, const char *user_fname,
+		    int record)
 {    
     char datacmd[MAXLEN];
 
@@ -574,7 +575,7 @@ void register_data (const char *fname, int record)
     /* record opening of data file in command log */
     if (record && fname != NULL) {
 	mkfilelist(FILE_LIST_DATA, fname);
-	sprintf(datacmd, "open %s", fname);
+	sprintf(datacmd, "open %s", user_fname ? user_fname : fname);
 	check_cmd(datacmd);
 	cmd_init(datacmd); 
     } 
@@ -628,11 +629,11 @@ int get_worksheet_data (const char *fname, int datatype, int append)
     if (append) {
 	infobox(_("Data appended OK"));
 	data_status |= MODIFIED_DATA;
-	register_data(fname, 0);
+	register_data(fname, NULL, 0);
     } else {
 	data_status |= IMPORT_DATA;
 	strcpy(paths.datfile, fname);
-	if (mdata != NULL) register_data(fname, 1);
+	if (mdata != NULL) register_data(fname, NULL, 1);
     }
 
     return 0;
@@ -727,7 +728,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     strcpy(paths.datfile, trydatfile);
 
-    register_data(paths.datfile, 1);
+    register_data(paths.datfile, NULL, 1);
 }
 
 /* ........................................................... */

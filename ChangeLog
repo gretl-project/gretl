@@ -12,6 +12,7 @@ version 1.1.0
 - Fix bug: periodogram command failed in batch mode
 - Make uniform() PRNG generate in the standard range 0-1
   (rather than 1-100, as it was previously)
+- Small modifications to path-searching
 - Updates to the Spanish help files
 - Allow access to RATS databases via command line and scripts
 - Clean-up: remove all wasted array elements

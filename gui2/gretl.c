@@ -619,17 +619,22 @@ static void get_runfile (char *fname)
 
 static void fix_dbname (char *db)
 {
-    FILE *fp;
+    FILE *fp = NULL;
 
-    if (strstr(db, ".bin") == NULL) strcat(db, ".bin");
+    if (strstr(db, ".bin") == NULL &&
+	strstr(db, ".rat") == NULL) {
+	strcat(db, ".bin");
+    }
 
-    fp = fopen(db, "r");
+    fp = fopen(db, "rb");
+
     if (fp == NULL && strstr(db, paths.binbase) == NULL) {
 	char tmp[MAXLEN];
 
 	strcpy(tmp, db);
 	build_path(paths.binbase, tmp, db, NULL);
     }
+
     if (fp != NULL) fclose(fp);
 }
 
@@ -797,20 +802,23 @@ int main (int argc, char *argv[])
     session_init();
 
     /* get the data file, if specified on the command line */
-    if (!(gui_get_data)) {
+    if (!gui_get_data) {
 	int ftype;
 	PRN *prn; 
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	if (prn == NULL) exit(EXIT_FAILURE);
 
-	paths.datfile[0] = '\0';
+	*paths.datfile = '\0';
 #ifdef G_OS_WIN32
 	if (unmangle(argv[1], paths.datfile)) 
 	    exit(EXIT_FAILURE);
 #else
 	strncat(paths.datfile, argv[1], MAXLEN-1);
 #endif
+	/* record the name the user supplied */
+	strcpy(trydatfile, paths.datfile);
+
 	ftype = detect_filetype(paths.datfile, &paths, prn);
 
 	switch (ftype) {
@@ -835,9 +843,11 @@ int main (int argc, char *argv[])
 	case GRETL_SCRIPT:
 	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
-	    paths.datfile[0] = '\0';
+	    *paths.datfile = '\0';
 	    break;
 	case GRETL_UNRECOGNIZED:
+	case GRETL_NATIVE_DB:
+	case GRETL_RATS_DB:
 	    exit(EXIT_FAILURE);
 	    break;
 	default:
@@ -886,8 +896,10 @@ int main (int argc, char *argv[])
     set_x12a_ok(-1);
 #endif
 
-    if (!gui_get_data)
-	register_data(paths.datfile, 1);
+    if (!gui_get_data) {
+	register_data(paths.datfile, trydatfile, 1);
+	*trydatfile = 0;
+    }
 
     /* opening a script from the command line? */
     if (tryscript[0] != '\0') { 
@@ -899,10 +911,12 @@ int main (int argc, char *argv[])
     if (updater) update_query(0); 
 
     /* try opening specified database */
-    if (gui_get_data == OPT_DBOPEN)
+    if (gui_get_data == OPT_DBOPEN) {
 	open_named_db_list(dbname);
-    else if (gui_get_data == OPT_WEBDB)
+    }
+    else if (gui_get_data == OPT_WEBDB) {
 	open_named_remote_db_list(dbname);
+    }
 
     /* Enter the event loop */
     gtk_main();

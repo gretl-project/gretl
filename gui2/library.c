@@ -3494,7 +3494,7 @@ void do_open_csv_box (char *fname, int code, int append)
     /* data_status |= MODIFIED_DATA; */
     strcpy(paths.datfile, fname);
 
-    register_data(fname, !append);
+    register_data(fname, NULL, !append);
 }
 
 /* ........................................................... */
@@ -4534,7 +4534,7 @@ int gui_exec_line (char *line,
             err = import_csv(&Z, datainfo, datfile, prn);
         if (!err) { 
 	    data_status |= IMPORT_DATA;
-	    register_data(datfile, (exec_code != REBUILD_EXEC));
+	    register_data(datfile, NULL, (exec_code != REBUILD_EXEC));
             print_smpl(datainfo, 0, prn);
             varlist(datainfo, prn);
             pprintf(prn, _("You should now use the \"print\" command "
@@ -4568,7 +4568,7 @@ int gui_exec_line (char *line,
 	} else if (chk == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn, 0);
 	} else if (dbdata) {
-	    err = set_db_name(datfile, chk, prn);
+	    err = set_db_name(datfile, chk, &paths, prn);
 	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, data_status, prn);
 	}
@@ -4581,7 +4581,7 @@ int gui_exec_line (char *line,
 	    data_status |= IMPORT_DATA;
 	if (datainfo->v > 0 && !dbdata) {
 	    /* below: was (exec_code != REBUILD_EXEC), not 0 */
-	    register_data(paths.datfile, 0);
+	    register_data(paths.datfile, NULL, 0);
 	    varlist(datainfo, prn);
 	}
 	*paths.currdir = '\0'; 

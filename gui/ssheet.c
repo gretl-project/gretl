@@ -472,7 +472,7 @@ static void get_data_from_sheet (void)
 	    strcpy(datainfo->S[t], sheet->row[t].button.label); 
     }
     data_status |= (GUI_DATA|MODIFIED_DATA);
-    register_data(NULL, 0);
+    register_data(NULL, NULL, 0);
     if (missobs)
 	infobox(_("Warning: there were missing observations"));
     else

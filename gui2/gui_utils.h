@@ -29,7 +29,8 @@ void *myrealloc (void *ptr, size_t size);
 
 void mark_dataset_as_modified (void);
 
-void register_data (const char *fname, int record);
+void register_data (const char *fname, const char *user_fname,
+		    int record);
 
 void do_open_data (GtkWidget *w, gpointer data, int code);
 

@@ -541,17 +541,22 @@ static void get_runfile (char *fname)
 
 static void fix_dbname (char *db)
 {
-    FILE *fp;
+    FILE *fp = NULL;
 
-    if (strstr(db, ".bin") == NULL) strcat(db, ".bin");
+    if (strstr(db, ".bin") == NULL &&
+	strstr(db, ".rat") == NULL) {
+	strcat(db, ".bin");
+    }
 
     fp = fopen(db, "r");
+
     if (fp == NULL && strstr(db, paths.binbase) == NULL) {
 	char tmp[MAXLEN];
 
 	strcpy(tmp, db);
 	build_path(paths.binbase, tmp, db, NULL);
     }
+
     if (fp != NULL) fclose(fp);
 }
 
@@ -670,8 +675,13 @@ int main (int argc, char *argv[])
 	prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	if (prn == NULL) 
 	    exit(EXIT_FAILURE);
-	paths.datfile[0] = '\0';
+
+	*paths.datfile = '\0';
 	strncat(paths.datfile, argv[1], MAXLEN-1);
+
+	/* record the filename the user gave */
+	strcpy(trydatfile, paths.datfile);
+
 	ftype = detect_filetype(paths.datfile, &paths, prn);
 
 	switch (ftype) {
@@ -699,6 +709,8 @@ int main (int argc, char *argv[])
 	    paths.datfile[0] = '\0';
 	    break;
 	case GRETL_UNRECOGNIZED:
+	case GRETL_NATIVE_DB:
+	case GRETL_RATS_DB:    
 	    exit(EXIT_FAILURE);
 	    break;
 	default:
@@ -754,8 +766,10 @@ int main (int argc, char *argv[])
     set_x12a_ok(-1);
 #endif
 
-    if (!gui_get_data)
-	register_data(paths.datfile, 1);
+    if (!gui_get_data) {
+	register_data(paths.datfile, trydatfile, 1);
+	*trydatfile = 0;
+    }
 
     /* opening a script from the command line? */
     if (tryscript[0] != '\0') { 

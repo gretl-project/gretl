@@ -307,7 +307,7 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 	}
     }
 
-    register_data(NULL, 0);
+    register_data(NULL, NULL, 0);
     infobox(_("Series imported OK")); 
 }
 

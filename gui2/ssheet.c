@@ -525,7 +525,7 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
     }
 
     data_status |= (GUI_DATA|MODIFIED_DATA);
-    register_data(NULL, 0);
+    register_data(NULL, NULL, 0);
 
     if (missobs)
 	infobox(_("Warning: there were missing observations"));

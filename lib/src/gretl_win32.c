@@ -120,11 +120,14 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 		"%c:\\userdata\\gnuplot\\wgnuplot.exe", drive);
     }
 
-    ppaths->userdir[0] = '\0';
-    read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", ppaths->userdir);
-    if (ppaths->userdir[0] == '\0') {
-	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
+    ppaths->binbase[0] = '\0';
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "binbase", ppaths->binbase);
+    if (ppaths->binbase[0] == '\0') {
+	sprintf(ppaths->binbase, "%c:\\userdata\\gretl\\db", drive);
     }
+
+    ppaths->ratsbase[0] = '\0';
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "ratsbase", ppaths->ratsbase);
 }
 
 /* ............................................................ */

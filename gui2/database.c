@@ -317,7 +317,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	}	
     }
 
-    register_data(NULL, 0);
+    register_data(NULL, NULL, 0);
     infobox(_("Series imported OK")); 
 }
 
@@ -953,16 +953,20 @@ void open_named_db_list (char *dbname)
     FILE *fp;
 
     n = strlen(dbname);
+
     if (strcmp(dbname + n - 4, ".rat") == 0) 
 	action = RATS_SERIES;
-    fp = fopen(dbname, "r");
+
+    fp = fopen(dbname, "rb");
+
     if (fp == NULL && action != RATS_SERIES) {
 	strcat(dbname, ".bin");
-	fp = fopen(dbname, "r");
+	fp = fopen(dbname, "rb");
     }
-    if (fp == NULL)
+
+    if (fp == NULL) {
 	errbox(_("Couldn't open database"));
-    else {
+    } else {
 	fclose(fp);
 	display_db_series_list(action, dbname, NULL);
     } 

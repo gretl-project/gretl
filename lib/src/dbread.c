@@ -925,21 +925,40 @@ int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
     return 0;
 }
 
-int set_db_name (const char *fname, int filetype, PRN *prn)
+int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
+		 PRN *prn)
 {
     FILE *fp;
     int err = 0;
 
     *db_name = 0;
+    strncat(db_name, fname, MAXLEN - 1);
 
-    fp = fopen(fname, "r");
+    fp = fopen(db_name, "rb");
+
     if (fp == NULL) {
+	/* try looking a bit more */
+	if (filetype == GRETL_NATIVE_DB && 
+	    strstr(db_name, ppaths->binbase) == NULL) {
+	    strcpy(db_name, ppaths->binbase);
+	    strcat(db_name, fname);
+	}
+	else if (filetype == GRETL_RATS_DB && 
+		 strstr(db_name, ppaths->ratsbase) == NULL) {
+	    strcpy(db_name, ppaths->ratsbase);
+	    strcat(db_name, fname);
+	}
+	fp = fopen(db_name, "rb");
+    }
+	    
+    if (fp == NULL) {
+	*db_name = 0;
 	pprintf(prn, _("Couldn't open %s\n"), fname);
 	err = 1;
     } else {
 	fclose(fp);
-	strncat(db_name, fname, MAXLEN - 1);
 	db_type = filetype;
+	pprintf(prn, "%s\n", db_name);
     }
 
     return err;

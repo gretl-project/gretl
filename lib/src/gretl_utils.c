@@ -848,7 +848,9 @@ static char *search_dir (char *filename, const char *topdir,
     strcpy(origfile, filename);
 
     if (path_append(filename, topdir) == 0) {
+#ifdef PATH_DEBUG
 	fprintf(stderr, _("Trying %s\n"), filename);
+#endif
 	test = fopen(filename, "r");
 	if (test != NULL) {
 	    fclose(test);
@@ -859,7 +861,9 @@ static char *search_dir (char *filename, const char *topdir,
 	    while ((got = get_subdir(topdir, 0, trypath)) >= 0) {
 		strcpy(filename, origfile);
 		if (got && path_append(filename, trypath) == 0) {
+#ifdef PATH_DEBUG
 		    fprintf(stderr, _("Trying %s\n"), filename);
+#endif
 		    test = fopen(filename, "r");
 		    if (test != NULL) {
 			fclose(test);
@@ -895,7 +899,7 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 
     /* try opening filename as given */
     test = fopen(fname, "r");
-    if (test != NULL) { /* found it */
+    if (test != NULL) { 
 	fclose(test); 
 	/* if a relative path was given, convert it to absolute */
 #ifdef OS_WIN32
@@ -919,7 +923,8 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	    free(thisdir);
 	} /* end conversion to absolute path */
 	return fname;
-    } else {  /* not able to open file as given */
+    } else {  
+	/* not able to open file as given */
 	if (fname[0] == '.' || fname[0] == SLASH)
 	    return NULL;
     }
@@ -930,16 +935,10 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	    return fname;
     }
 
-    /* try looking in user's dir */
-    fname = tmp;
-    strcpy(fname, orig);
-    if ((fname = search_dir(fname, ppaths->userdir, 1))) 
-	return fname;
-
-    /* if it's a data file we want, try system data dir */
     fname = tmp;
     strcpy(fname, orig);
     if (!script) {
+	/* if it's a data file we want, try system data dir */
 	if ((fname = search_dir(fname, ppaths->datadir, 1))) 
 	    return fname;
     } else {
@@ -947,8 +946,16 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	if ((fname = search_dir(fname, ppaths->scriptdir, 1))) 
 	    return fname;
     }
+
+    /* try looking in user's dir */
     fname = tmp;
     strcpy(fname, orig);
+    if ((fname = search_dir(fname, ppaths->userdir, 1))) 
+	return fname;
+
+    fname = tmp;
+    strcpy(fname, orig);
+
     return NULL;
 }
 
@@ -1328,13 +1335,13 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	    strcpy(ppaths->gretldir, home);
 	else
 	    strcpy(ppaths->gretldir, "c:\\userdata\\gretl");
+
+	sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
+	strcpy(ppaths->ratsbase, "f:\\"); 
+
 	if (gui) {
-	    sprintf(ppaths->binbase, "%s\\db\\", ppaths->gretldir);
-	    strcpy(ppaths->ratsbase, "f:\\"); 
 	    strcpy(ppaths->dbhost_ip, "152.17.150.2");
 	} else {
-	    ppaths->binbase[0] = '\0';
-	    ppaths->ratsbase[0] = '\0';
 	    ppaths->dbhost_ip[0] = '\0';
 	}
 	ppaths->currdir[0] = '\0';
@@ -1378,15 +1385,16 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	    strcpy(ppaths->gretldir, GRETL_PREFIX);
 	    strcat(ppaths->gretldir, "/share/gretl/");
 	} 
+
+	sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
+	strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
+
 	if (gui) {
-	    sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
-	    strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");
 	    strcpy(ppaths->dbhost_ip, "152.17.150.2");
 	} else {
-	    ppaths->binbase[0] = '\0';
-	    ppaths->ratsbase[0] = '\0';
 	    ppaths->dbhost_ip[0] = '\0';
 	}
+
 	strcpy(ppaths->gnuplot, "gnuplot");
 	ppaths->currdir[0] = '\0';
 

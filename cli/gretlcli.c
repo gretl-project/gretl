@@ -307,11 +307,18 @@ int main (int argc, char *argv[])
     }
 
     if (!cli_get_data) {
-	clear(paths.datfile, MAXLEN);
-	strncpy(paths.datfile, argv[1], MAXLEN-1);
+	char given_file[MAXLEN];
+
+	*given_file = 0;
+	*paths.datfile = 0;
+
+	strncat(given_file, argv[1], MAXLEN - 1);
+	strncat(paths.datfile, argv[1], MAXLEN - 1);
+
 	err = detect_filetype(paths.datfile, &paths, prn);
 
-	if (err == GRETL_UNRECOGNIZED) { 
+	if (err == GRETL_UNRECOGNIZED || err == GRETL_NATIVE_DB ||
+	    err == GRETL_RATS_DB) { 
 	    exit(EXIT_FAILURE);
 	}
 
@@ -343,8 +350,9 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE;
 	    }
 	    data_status = 1;
-	    if (!batch) 
-		pprintf(cmdprn, "open %s\n", paths.datfile);
+	    if (!batch) { 
+		pprintf(cmdprn, "open %s\n", given_file);
+	    }
 	}
     }
 
@@ -1006,7 +1014,7 @@ void exec_line (char *line, PRN *prn)
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, 
 			      data_status, prn, 0);
 	} else if (dbdata) {
-	    err = set_db_name(datfile, chk, prn);
+	    err = set_db_name(datfile, chk, &paths, prn);
 	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, 
 			   data_status, prn);
