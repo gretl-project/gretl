@@ -323,16 +323,17 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\npvalue for t: missing parameter\n"));
 	    return -1;
 	}
-	xx = tprob(xval, df1);
+	xx = tprob(xval, df1); /* this is two-tailed */
 	if (xx < 0) {
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
+	xx *= 0.5;
 	pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
 		df1, (xval > 0)? _("right"): _("left"),
-		xval, 0.5 * xx);
+		xval, xx);
 	pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
-		xx, 1.0 - xx);
+		2.0 * xx, 1.0 - 2.0 * xx);
 	return xx;
 
     case '3':

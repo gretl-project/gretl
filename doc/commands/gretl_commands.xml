@@ -1390,6 +1390,13 @@
 	between the arguments. The <func>pvalue</func> function takes
 	the same arguments as the <cmdref targ="pvalue"/> command, but
 	in this context commas should be placed between the arguments.
+	This function returns a one-tailed p-value, and in the case of
+	the normal and <emphasis>t</emphasis> distributions, it is for
+	the <quote>short tail</quote>.  With the normal, for example,
+	both 1.96 and -1.96 will give a result of around 0.025.
+	</para>
+
+      <para>
 	<func>uniform()</func> and <func>normal()</func>, which do not
 	take arguments, return pseudo-random series drawn from the
 	uniform (0&ndash;1) and standard normal distributions
