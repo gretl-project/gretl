@@ -1831,9 +1831,10 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     }
     infobox(prn->buf);
     gretl_print_destroy(prn);
+    paths.datfile[0] = '\0';
     populate_clist(mdata->listbox, datainfo);
+    data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
     set_sample_label(datainfo);
-    data_status = HAVE_DATA | GUI_DATA;
     orig_vars = datainfo->v;
     menubar_state(TRUE);
 }
@@ -3242,14 +3243,15 @@ static int gui_exec_line (char *line,
     /* if rebuilding a session, put the commands onto the stack */
     if (rebuild) cmd_init(line);
 
-    /* FIXME ?? */
-/*      if (is_model_ref_cmd(command.ci)) { */
-/*  	if (model_sample_issue(models[0], &Z, datainfo)) { */
-/*  	    pprintf(prn, "Can't do: the current data set is different from " */
-/*  		   "the one on which\nthe reference model was estimated.\n"); */
-/*  	    return 1; */
-/*  	} */
-/*      } */
+#ifdef notdef /* ??? */
+     if (is_model_ref_cmd(command.ci)) {
+ 	if (model_sample_issue(models[0], &Z, datainfo)) {
+ 	    pprintf(prn, "Can't do: the current data set is different from "
+ 		   "the one on which\nthe reference model was estimated.\n");
+ 	    return 1;
+ 	}
+     }
+#endif
 
     switch (command.ci) {
 

@@ -1045,6 +1045,7 @@ static void edit_script_help (GtkWidget *widget, gpointer data)
     gchar *text;
     guint pt = GTK_EDITABLE(mydata->w)->current_pos;
     int len = gtk_text_get_length(GTK_TEXT(mydata->w));
+    int pos = 0;
 
     text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 
 				  0, (pt + 9 > len)? -1 : pt + 8);
@@ -1052,7 +1053,6 @@ static void edit_script_help (GtkWidget *widget, gpointer data)
     if (text != NULL && strlen(text) > 0) {
 	char *p, *q;
 	char word[9];
-	int pos;
 
 	p = q = text + pt;
 	if (pt > 0)
@@ -1062,9 +1062,9 @@ static void edit_script_help (GtkWidget *widget, gpointer data)
 	*word = '\0';
 	strncat(word, p, (q - p > 8)? 8 : q - p);
 	pos = pos_from_cmd(command_number(word));
-	real_do_help(pos, 1);
-    } else
-	real_do_help(0, 1);
+    } 
+	
+    real_do_help(pos, 1);
 
     g_free(text);
 }
