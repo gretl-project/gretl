@@ -744,15 +744,22 @@ static int play_dataset (midi_spec *spec, midi_track *track,
     return 0;
 }
 
-#ifdef GLIB2
+#if defined(G_OS_WIN32)
 
-static int audio_fork (const char *prog, const char *fname)
+static int audio_fork (const char *fname)
+{
+    ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW);
+}
+
+#elif defined(GLIB2)
+
+static int audio_fork (const char *fname)
 {
     gchar *argv[5];
     gboolean run;
     int i;
     
-    argv[0] = g_strdup(prog);
+    argv[0] = g_strdup("timidity");
     argv[1] = g_strdup("-A");
     argv[2] = g_strdup("600");
     argv[3] = g_strdup(fname);
@@ -777,8 +784,9 @@ static void fork_err_set (int signum)
     fork_err = 1;
 }
 
-static int audio_fork (const char *prog, const char *fname)
+static int audio_fork (const char *fname)
 {
+    const char *prog = "timidity";
     pid_t pid;
 
     fork_err = 0;
@@ -839,7 +847,7 @@ int midi_play_graph (const char *fname, const char *userdir)
 
     fclose(spec.fp);
 
-    audio_fork("timidity", outname);
+    audio_fork(outname);
 
 #ifdef DEBUG
     fprintf(stderr, "midi_play_graph, returning\n");

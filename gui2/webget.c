@@ -1912,7 +1912,7 @@ int goto_url (const char *url)
     int err = 0;
 
     if ((long) ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
-	/* if the above failes, get the .htm regkey and 
+	/* if the above fails, get the .htm regkey and 
 	   look up the program */
 	if (GetRegKey(HKEY_CLASSES_ROOT, ".htm", key) == ERROR_SUCCESS) {
 	    lstrcat(key,"\\shell\\open\\command");

@@ -3285,7 +3285,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot_t *plot)
 	break;
 #ifdef G_OS_WIN32
     case GDK_c:
-	win32_process_graph(plot->spec, color, WIN32_TO_CLIPBOARD);
+	win32_process_graph(plot->spec, 1, WIN32_TO_CLIPBOARD);
 	break;
 #endif
 #ifdef HAVE_AUDIO

@@ -74,7 +74,8 @@ PLUGINSRC = \
 	logistic.c \
 	tobit.c \
 	fcp.c \
-	garch.c
+	garch.c \
+        audio.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -84,7 +85,8 @@ PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/johansen.dll plugins/arma.dll plugins/arma_x12.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll \
-	plugins/logistic.dll plugins/tobit.dll plugins/garch.dll
+	plugins/logistic.dll plugins/tobit.dll plugins/garch.dll \
+        plugins/audio.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -305,9 +307,16 @@ plugins/garch.dll: garch.o fcp.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
+plugins/audio.dll: audio.o midi_utils.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) 
+
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
 
 workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
+	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
+
+midi_utils.o: midi_utils.c $(topsrc)/plugin/midi_utils.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
 
