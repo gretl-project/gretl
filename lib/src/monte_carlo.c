@@ -177,11 +177,11 @@ static double loop_controller_get_value (controller *clr, const double **Z)
 {
     double ret = NADBL;
 
-    if (!na(clr->val)) {
-	ret = clr->val;
-    } else if (clr->vnum > 0) {
+    if (clr->vnum > 0) {
 	ret = Z[clr->vnum][0];
-    }
+    } else if (!na(clr->val)) {
+	ret = clr->val;
+    } 
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_controller_get_value: returning %g\n", ret);
@@ -2266,13 +2266,15 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 
     err = connect_loop_control_vars(loop, (const double **) Z, pdinfo);
 
+#if LOOP_DEBUG
+    fprintf(stderr, "top_of_loop: loop->itermax = %d\n", loop->itermax);
+#endif
+
     if (!err) {
 	if (loop->type == FOR_LOOP) {
 	    Z[loop->left.vnum][0] = loop->init.val;
 	} else if (indexed_loop(loop)) {
-	    int init_int = (int) loop->init.val;
-
-	    loop_scalar_index(loop->ichar, 1, init_int);
+	    loop_scalar_index(loop->ichar, 1, (int) loop->init.val);
 	}
 
 	set_active_loop(loop);
