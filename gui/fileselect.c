@@ -28,14 +28,14 @@ extern void do_save_graph (const char *fname, const char *savestr);
 extern int ps_print_plots (const char *fname, int flag, gpointer data);
 extern int plot_to_xpm (const char *fname, gpointer data);
 
+extern int olddat; /* gui_utils.c */
+
 static char remember_dir[MAXLEN];
 
 struct extmap {
     int action;
     char *ext;
 };
-
-const char datext[5] = ".gdt";
 
 static struct extmap action_map[] = {
     {SAVE_DATA, ".gdt"},
@@ -94,18 +94,33 @@ static char *get_gp_ext (const char *termtype)
     else return "*";
 }
 
-extern int olddat; /* gui_utils.c */
+/* ........................................................... */
+
+static int is_data_action (int i)
+{
+    if (i == SAVE_DATA || i == SAVE_BIN1 || i == SAVE_BIN2 ||
+	i == OPEN_DATA)
+	return 1;
+    else
+	return 0;
+}
 
 /* ........................................................... */
 
-static void dat_compat (char *s)
+static int dat_ext (char *str, int err)
 {
-    if (olddat && s != NULL) {
-        size_t n = strlen(s);
+    char *suff;
 
-        if (n > 4 && strncmp(s+n-4, ".gdt", 4) == 0)
-            strcpy(s+n-4, ".dat")
+    if (str == NULL) return 0;
+    suff = strrchr(str, '.');
+    if (suff != NULL && 
+	(!strcmp(suff, ".dat") || !strcmp(suff, ".gdt"))) {
+	if (err) 
+	    errbox("The suffix you selected should be used\n"
+		   "only for gretl datafiles");
+	return 1;
     }
+    return 0;
 }
 
 /* ........................................................... */
@@ -113,6 +128,9 @@ static void dat_compat (char *s)
 static char *get_ext (int action, gpointer data)
 {
     char *s = NULL;
+
+    if (olddat && is_data_action(action)) 
+	return ".dat";
 
     if (action == SAVE_GNUPLOT) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
@@ -151,10 +169,8 @@ static void maybe_add_ext (char *fname, int action, gpointer data)
     
     /* otherwise add an appropriate extension */
     ext = get_ext(action, data);
-    if (ext != NULL && strlen(ext) > 1) {
+    if (ext != NULL && strlen(ext) > 1) 
 	strcat(fname, ext);
-	dat_compat(fname);
-    }
 }
 
 /* ........................................................... */
@@ -192,10 +208,10 @@ static char *get_filter (int action, gpointer data)
     int i;
     char *filter;
     static struct win32_filtermap map[] = {
-	{SAVE_DATA, "gretl data files (*.dat)\0*.dat\0all files\0*\0"},
+	{SAVE_DATA, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
 	{SAVE_GZDATA, "compressed data files (*.gz)\0*.gz\0all files\0*\0"},
-	{SAVE_BIN1, "gretl data files (*.dat)\0*.dat\0all files\0*\0"},
-	{SAVE_BIN2, "gretl data files (*.dat)\0*.dat\0all files\0*\0"},
+	{SAVE_BIN1, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
+	{SAVE_BIN2, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
 	{SAVE_CMDS, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},
 	{SAVE_SCRIPT, "gretl script files (*.inp)\0*.inp\0all files\0*\0"},
 	{SAVE_CONSOLE, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},
@@ -212,11 +228,14 @@ static char *get_filter (int action, gpointer data)
 	{SAVE_OUTPUT, "text files (*.txt)\0*.txt\0all files\0*\0"},
 	{SAVE_TEX_TAB, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
 	{SAVE_TEX_EQ, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
-	{OPEN_DATA, "gretl data files (*.dat)\0*.dat*\0all files\0*\0"},
+	{OPEN_DATA, "gretl data files (*.gdt)\0*.gdt*\0all files\0*\0"},
 	{OPEN_SCRIPT, "gretl script files (*.inp)\0*.inp\0all files\0*\0"},
 	{OPEN_SESSION, "session files (*.gretl)\0*.gretl\0all files\0*\0"},
 	{OPEN_CSV,  "CSV files (*.csv)\0*.csv\0all files\0*\0"},
 	{OPEN_BOX, "BOX data files (*.box)\0*.box\0all files\0*\0"}};
+
+    if (olddat && is_data_action(action)) 
+	return "gretl data files (*.dat)\0*.dat\0all files\0*\0";
 
     if (action == SAVE_GNUPLOT) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
@@ -241,7 +260,7 @@ void file_selector (char *msg, int action, gpointer data)
     OPENFILENAME of;
     int retval, gotdir = 0;
     char fname[MAXLEN], endname[64], startd[MAXLEN];
-    char *suff, title[48];
+    char title[48];
 
     fname[0] = '\0';
     endname[0] = '\0';
@@ -252,7 +271,8 @@ void file_selector (char *msg, int action, gpointer data)
 
     /* special case: default save of data */
     if (action == SAVE_DATA && paths.datfile[0] &&
-	!strcmp(paths.datfile + strlen(paths.datfile) - 4, datext)) {
+	!strcmp(paths.datfile + strlen(paths.datfile) - 4, 
+		(olddat)? ".dat" : ".gdt")) {
 	strcpy(fname, paths.datfile + slashpos(paths.datfile) + 1);
 	get_base(startd, paths.datfile, SLASH);
     }
@@ -325,12 +345,7 @@ void file_selector (char *msg, int action, gpointer data)
 
     /* now for the save options */
 
-    suff = strrchr(fname, '.');
-    if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, datext)) {
-	errbox("The .gdt suffix should be used only\n"
-	       "for gretl datafiles");
-	return;
-    }
+    if (action > SAVE_BIN2 && dat_ext(fname, 1)) return;
 
     maybe_add_ext(fname, action, data);
 
@@ -391,7 +406,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     gint action = GPOINTER_TO_INT(gtk_object_get_data
 				  (GTK_OBJECT(data), "action"));
     char fname[MAXLEN];
-    char *test, *path, *suff, title[48];
+    char *test, *path, title[48];
     FILE *fp = NULL;
     gpointer extdata = NULL;
 
@@ -452,11 +467,8 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	extdata = gtk_object_get_data(GTK_OBJECT(fs), "graph");
 
     maybe_add_ext(fname, action, extdata); 
-    suff = strrchr(fname, '.');
 
-    if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, datext)) {
-	errbox("The .gdt suffix should be used only\n"
-	       "for gretl datafiles");
+    if (action > SAVE_BIN2 && dat_ext(fname, 1)) {
 	gtk_widget_destroy(GTK_WIDGET(fs));
 	return;
     }
@@ -521,7 +533,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static void extra_get_filter (int action, gpointer data, char suffix)
+static void extra_get_filter (int action, gpointer data, char *suffix)
 {
     
     char *ext = get_ext(action, data);
@@ -529,7 +541,7 @@ static void extra_get_filter (int action, gpointer data, char suffix)
     if (ext == NULL) 
 	strcpy(suffix, "*");
     else
-	sprint(suffix, "*%s", ext);
+	sprintf(suffix, "*%s", ext);
 }
 
 /* ........................................................... */
@@ -555,7 +567,6 @@ void file_selector (char *msg, int action, gpointer data)
     gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
 
     extra_get_filter(action, data, suffix);
-    dat_compat(suffix);
     gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), suffix);
 
     gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->ok_button),
@@ -576,7 +587,7 @@ void file_selector (char *msg, int action, gpointer data)
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
 
     else if (action == SAVE_DATA && paths.datfile[0] &&
-	!strcmp(paths.datfile + strlen(paths.datfile) - 4, datext)) {
+	     dat_ext(paths.datfile, 0)) {
 	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
 	char startd[MAXLEN];
 

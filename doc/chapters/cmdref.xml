@@ -1131,16 +1131,15 @@
 
       <para>
 	In interactive mode the result is piped to gnuplot for
-	display.  In batch mode a pair of files are written,
-	<filename>gpttmp01.dat</filename> and
-	<filename>gpttmp01.plt</filename>.  (With subsequent uses of
-	<command>gnuplot</command> similar pairs of files are created,
-	with the number in the file name incremented.) The plots can
-	be generated later using the command <command>gnuplot
-	  gpttmp.plt</command>.  (Under MS Windows, start wgnuplot and
-	open the file <filename>gpttmp01.plt</filename>.)  To gain
-	control over the details of the plot, edit the
-	<filename>.plt</filename> file.
+	display.  In batch mode a plot file named
+	<filename>gpttmp01.plt</filename> is written.  (With
+	subsequent uses of <command>gnuplot</command> similar files
+	are created, with the number in the file name incremented.)
+	The plots can be generated later using the command
+	<command>gnuplot gpttmp.plt</command>.  (Under MS Windows,
+	start wgnuplot and open the file
+	<filename>gpttmp01.plt</filename>.)  To gain control over the
+	details of the plot, edit the <filename>.plt</filename> file.
       </para>
 
     </sect2>

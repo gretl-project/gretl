@@ -1,5 +1,5 @@
 (* William Greene, Econometric Analysis, Example 12.1 *)
-open greene12_1.dat
+open greene12_1.gdt
 genr inc2 = income*income
 (* exclude obs where expenditure is zero *)
 smpl -r expend > 0

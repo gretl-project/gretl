@@ -1175,6 +1175,23 @@ void gz_switch_ext (char *targ, char *src, char *ext)
     strcat(targ, ext);
 }
 
+/* ................................................ */
+
+static int try_gdt (char *fname)
+{
+    char *suff;
+    int ret = 0;
+
+    if (fname != NULL) {
+	suff = strrchr(fname, '.');
+	if (suff != NULL && !strcmp(suff, ".dat")) {
+	    strcpy(suff, ".gdt");
+	    ret = 1;
+	}
+    }
+    return ret;
+}
+
 /**
  * get_data:
  * @pZ: pointer to data set.
@@ -1198,23 +1215,39 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 
     FILE *dat = NULL;
     gzFile fgz = NULL;
-    int err, zipped = 0;
+    int err, gzsuff = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
 
     gretl_errmsg[0] = '\0';
 
     /* get filenames organized */
     hdrfile[0] = '\0';
-    zipped = has_gz_suffix(datfile);
-    if (addpath(datfile, ppaths, 0) == NULL && !zipped) {
-	strcat(datfile, ".gz");
-	if (addpath(datfile, ppaths, 0) == NULL)
-	    return E_FOPEN;
-	else
-	    zipped = 1;
+    gzsuff = has_gz_suffix(datfile);
+
+    if (addpath(datfile, ppaths, 0) == NULL) { /* not found yet */
+	char tryfile[MAXLEN];
+	int found = 0;
+
+	if (!gzsuff) { /* maybe the file is gzipped but we 
+			  didn't get the .gz extension? */
+	    sprintf(tryfile, "%s.gz", datfile);
+	    if (addpath(tryfile, ppaths, 0) != NULL) {
+		gzsuff = 1;
+		found = 1;
+	    }
+	}
+	
+	if (!found) { /* no -- then try using the .gdt suffix? */
+	    strcpy(tryfile, datfile);
+	    if (try_gdt(tryfile)) 
+		found = (addpath(tryfile, ppaths, 0) != NULL);
+	} 
+	    
+	if (!found) return E_FOPEN;
+	else strcpy(datfile, tryfile);
     }
 	
-    if (!zipped) {
+    if (!gzsuff) {
 	switch_ext(hdrfile, datfile, "hdr");
 	switch_ext(lblfile, datfile, "lbl");
     } else {
@@ -1241,7 +1274,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     if (prepZ(pZ, pdinfo)) return E_ALLOC;
 
     /* Invoke data (Z) reading function */
-    if (zipped) {
+    if (gzsuff) {
 	fgz = gzopen(datfile, "rb");
 	if (fgz == NULL) return E_FOPEN;
     } else {
@@ -1264,7 +1297,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     if (strlen(datfile) > 40) putc('\n', fp);
     fprintf(fp, " %s\n\n", datfile);
 
-    if (zipped) {
+    if (gzsuff) {
 	err = gz_readdata(fgz, pdinfo, *pZ); 
 	gzclose(fgz);
     } else {

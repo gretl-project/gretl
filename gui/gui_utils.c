@@ -1737,7 +1737,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    gtk_table_resize (GTK_TABLE (inttbl), tbl_num + 1, 2);
 		}
 	    } 
-	    else if (rc_vars[i].type == 'B') { /* radio dichotomy */
+	    else if (rc_vars[i].type == 'B') { /* radio-button dichotomy */
 		int val = *(int *)(rc_vars[i].var);
 		GSList *group;
 
@@ -1753,6 +1753,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
 		gtk_widget_show (tempwid);
+		rc_vars[i].widget = tempwid;
 		group = gtk_radio_button_group(GTK_RADIO_BUTTON(tempwid));
 		tempwid = gtk_radio_button_new_with_label(group, rc_vars[i].radio);
 		gtk_table_attach_defaults 

@@ -64,14 +64,14 @@
 	    genr a = coeff(const) 
 	    genr b = coeff(x)
 	    (* and print them to file *) 
-	    store foo.dat a b 
+	    store foo.gdt a b 
 	  endloop</programlisting>
     </example>
 
     <para>This loop will print out summary statistics for the `a' and
       `b' estimates across the 100 repetitions, and also for the &rsqu;
       values for the 100 regressions.  After running the loop,
-      <filename>foo.dat</filename>, which contains the individual coefficient
+      <filename>foo.gdt</filename>, which contains the individual coefficient
       estimates from all the runs, can be opened in
       <application>gretl</application> to examine the frequency
       distribution of the estimates in detail. Please note that while
@@ -151,7 +151,7 @@
 
     <example id="greene-consump"><title>Nonlinear consumption function</title>
     <programlisting>
-	  open greene11_3.dat 
+	  open greene11_3.gdt 
 	  (* run initial OLS *) 
 	  ols C 0 Y 
 	  genr essbak = $ess 
@@ -198,7 +198,7 @@
 
     <example id="panel-loop"><title>Indexed loop example</title>
     <programlisting>
-	  open hospitals.dat
+	  open hospitals.gdt
 	  loop for i=1991..2000
 	    smpl -r (year=i)
 	    summary 1 2 3 4

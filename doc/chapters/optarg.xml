@@ -82,7 +82,7 @@
       should be given without the <filename>.bin</filename> suffix.
       </para>
 
-    <para>Some things in <application>gretl</application> are
+    <para>Various things in <application>gretl</application> are
       configurable under the <quote>File, Preferences</quote>
       menu.</para>  
 
@@ -119,6 +119,17 @@
       attempt to query the update server at start-up. Unchecking
       <quote>Show gretl toolbar</quote> turns the icon toolbar
       off.</para>
+
+    <para>Finally, there are some binary choices: Under the
+    <quote>Open/Save path</quote> tab you can set where
+    <application>gretl</application> looks by default when you go to
+    open or save a file &mdash; either the
+    <application>gretl</application> user directory or the current
+    working directory.  Under the <quote>Data files</quote> tab you
+    can set the default filename suffix for data files.  The standard
+    suffix is <literal>.gdt</literal> but if you wish you can set this
+    to <literal>.dat</literal>, which was standard in earlier versions
+    of the program.</para>
 
     <para>Settings chosen in this way are handled differently
     depending on the context.  Under MS Windows they are stored in the
@@ -194,10 +205,10 @@
       <command>open</command> command).  A line of the form:
       
       <programlisting> 
-	(* ! myfile.dat *)</programlisting> 
+	(* ! myfile.gdt *)</programlisting> 
 
       will (a) cause <application>gretlcli</application> to load
-      <filename>myfile.dat</filename>, but will (b) be ignored as a
+      <filename>myfile.gdt</filename>, but will (b) be ignored as a
       comment by the original <application>ESL</application>.  Note
       the specification carefully: There is exactly one space between
       the begin comment marker, <literal>(*</literal>, and the

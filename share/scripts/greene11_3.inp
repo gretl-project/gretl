@@ -1,5 +1,5 @@
 (* script to replicate Example 11.3 in Greene *)
-open greene11_3.dat
+open greene11_3.gdt
 (* run initial OLS *)
 ols C 0 Y
 genr essbak = $ess

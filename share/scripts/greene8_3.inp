@@ -1,4 +1,4 @@
-open greene8_3.dat
+open greene8_3.gdt
 genr q_A = q/A
 genr kinv = -1.0/k
 logs q_A k

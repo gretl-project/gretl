@@ -1,4 +1,4 @@
-open greene7_8.dat
+open greene7_8.gdt
 genr Gpop = G/Pop
 logs Gpop Y Pg Pnc Puc
 genr time

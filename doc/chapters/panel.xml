@@ -227,7 +227,7 @@
 	package).</para>  
 
       <para><xref linkend="examp-pwt"/> below opens
-	<filename>pwt56_60_89.dat</filename>, a subset of the pwt
+	<filename>pwt56_60_89.gdt</filename>, a subset of the pwt
 	containing data on 120 countries, 1960&ndash;89, for 20 variables,
 	with no missing observations (the full data set, which is also
 	supplied in the pwt package for
@@ -241,7 +241,7 @@
       <example id="examp-pwt">
 	<title>Use of the Penn World Table</title>
 	<programlisting>
-	  open pwt56_60_89.dat 
+	  open pwt56_60_89.gdt 
 	  (* for 1989 (last obs), lag 29 gives 1960, the first obs *) 
 	  genr gdp60 = RGDPL(-29) 
 	  (* find total growth of real GDP over 30 years *) 

@@ -1,4 +1,4 @@
 (* logit and probit example from Greene's Econometric Analysis *)
-open greene19_1.dat
+open greene19_1.gdt
 logit GRADE 0 GPA TUCE PSI -o
 probit GRADE 0 GPA TUCE PSI -o

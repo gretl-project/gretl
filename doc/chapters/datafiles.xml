@@ -14,13 +14,12 @@
 	    column represents a variable, each row an observation on
 	    each of the variables (spreadsheet style). Data columns
 	    can be separated by spaces or tabs. The filename should
-	    have either no suffix or the suffix
-	    <filename>.dat</filename>.  By default the data file is
-	    ASCII (plain text).  Optionally it can be gzip-compressed
-	    to save disk space. You can insert comments into a data
-	    file: if a line begins with the hash mark
-	    (<literal>#</literal>) the entire line is ignored. This is
-	    consistent with gnuplot and octave data
+	    have the suffix <filename>.gdt</filename>.  By default the
+	    data file is ASCII (plain text).  Optionally it can be
+	    gzip-compressed to save disk space. You can insert
+	    comments into a data file: if a line begins with the hash
+	    mark (<literal>#</literal>) the entire line is
+	    ignored. This is consistent with gnuplot and octave data
 	    files.</para></listitem>
 
 	<listitem><para><emphasis>Header</emphasis>: The data file

@@ -1,5 +1,5 @@
 (* Replicate Example 18.6 in Greene, 4ed *)
-open greene18_2.dat
+open greene18_2.gdt
 genr yt = log(Y/P)
 genr d_yt = diff(yt)
 (* Dickey-Fuller tests *)
