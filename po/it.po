@@ -5,10 +5,10 @@
 # Thanks to Daniele "Madrid" Medri for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.3.1\n"
+"Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-03-07 09:55+0000\n"
-"PO-Revision-Date: 2005-02-22 22:56+0100\n"
+"PO-Revision-Date: 2005-03-07 19:53+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2024,18 +2024,18 @@ msgid "Test statistic for normality"
 msgstr "Statistica test per la normalità"
 
 #: lib/src/graphing.c:1555
-#, fuzzy, c-format
+#, c-format
 msgid "Chi-squared(2) = %.3f pvalue = %.5f"
-msgstr "Chi-quadro(2) = %.3f, p-value %.5f"
+msgstr "Chi-quadro(2) = %.3f p-value = %.5f"
 
 #: lib/src/graphing.c:1583
 msgid "Test statistic for gamma"
 msgstr "Statistica test per la gamma"
 
 #: lib/src/graphing.c:1585
-#, fuzzy, c-format
+#, c-format
 msgid "z = %.3f pvalue = %.5f"
-msgstr "z = %.3f, pvalue %.5f"
+msgstr "z = %.3f pvalue = %.5f"
 
 #: lib/src/graphing.c:1612
 msgid "Frequency distribution for"
@@ -2295,9 +2295,8 @@ msgid "Variable %d was not in the original list"
 msgstr "La variabile %d non è nella lista originale"
 
 #: lib/src/gretl_model.c:620
-#, fuzzy
 msgid "Test for addition of variables"
-msgstr "Errore nell'aggiunta delle variabili"
+msgstr "Test per l'aggiunta di variabili"
 
 #: lib/src/gretl_model.c:621
 #, c-format
@@ -2332,9 +2331,8 @@ msgid "Test for normality of residual"
 msgstr "Test per la normalità dei residui"
 
 #: lib/src/gretl_model.c:628
-#, fuzzy
 msgid "Test for omission of variables"
-msgstr "Lista delle variabili"
+msgstr "Test per le variabili omesse"
 
 #: lib/src/gretl_model.c:629
 msgid "RESET test for specification"
@@ -2349,13 +2347,8 @@ msgid "White's test for heteroskedasticity"
 msgstr "Test di White per l'eteroschedasticità"
 
 #: lib/src/gretl_model.c:704 lib/src/gretl_model.c:712
-#, fuzzy
 msgid "parameters are zero for the variables"
-msgstr ""
-"\n"
-"  Ipotesi nulla: i parametri della regressione valgono zero per le "
-"variabili\n"
-"\n"
+msgstr "i parametri valgono zero per le variabili"
 
 #: lib/src/gretl_model.c:705
 msgid "no ARCH effect is present"
@@ -7762,7 +7755,7 @@ msgstr "Giorni nella settimana"
 
 #: gui2/dialogs.c:2503
 msgid "Daily date to represent week:"
-msgstr ""
+msgstr "Giorno per rappresentare la settimana:"
 
 #: gui2/dialogs.c:2504
 msgid "Starting observation:"
@@ -7830,39 +7823,36 @@ msgid "7 days in week"
 msgstr "7 giorni per settimana"
 
 #: gui2/dialogs.c:2750
-#, fuzzy
 msgid "Monday"
-msgstr "Mensile"
+msgstr "Lunedì"
 
 #: gui2/dialogs.c:2751
 msgid "Tuesday"
-msgstr ""
+msgstr "Martedì"
 
 #: gui2/dialogs.c:2752
 msgid "Wednesday"
-msgstr ""
+msgstr "Mercoledì"
 
 #: gui2/dialogs.c:2753
 msgid "Thursday"
-msgstr ""
+msgstr "Giovedì"
 
 #: gui2/dialogs.c:2754
-#, fuzzy
 msgid "Friday"
-msgstr "Trova"
+msgstr "Venerdì"
 
 #: gui2/dialogs.c:2755
 msgid "Saturday"
-msgstr ""
+msgstr "Sabato"
 
 #: gui2/dialogs.c:2756
-#, fuzzy
 msgid "Sunday"
-msgstr "non datato"
+msgstr "Domenica"
 
 #: gui2/dialogs.c:2757
 msgid "None (don't use dates)"
-msgstr ""
+msgstr "Nessuno (non usa date)"
 
 #: gui2/dialogs.c:2803
 msgid "annual data"
@@ -8246,9 +8236,8 @@ msgid "Title for axis"
 msgstr "Titolo per l'asse"
 
 #: gui2/gpt_dialog.c:231
-#, fuzzy
 msgid "Invalid label position, must be X Y"
-msgstr "Posizione dell'etichetta invalida: deve essere X,Y"
+msgstr "Posizione dell'etichetta invalida, deve essere X Y"
 
 #: gui2/gpt_dialog.c:583
 msgid "Main"
@@ -8339,9 +8328,8 @@ msgid "text"
 msgstr "Testo"
 
 #: gui2/gpt_dialog.c:1105
-#, fuzzy
 msgid "position (X Y)"
-msgstr "Posizione (X,Y)"
+msgstr "Posizione (X Y)"
 
 #: gui2/gpt_dialog.c:1157
 msgid "justification"
@@ -11692,18 +11680,3 @@ msgstr ""
 #: plugin/workbook.c:585
 msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
-
-#~ msgid "(missing values denoted by -999 will be skipped)"
-#~ msgstr "(i valori mancanti denotati con -999 sono esclusi)"
-
-#~ msgid "Starting point of new data does not fit\n"
-#~ msgstr "Il punto di inizio dei nuovi dati non è adatto\n"
-
-#~ msgid "weighted %s "
-#~ msgstr "%s pesato"
-
-#~ msgid "Couldn't open the specified file"
-#~ msgstr "Impossibile aprire il file specificato"
-
-#~ msgid "Simulate..."
-#~ msgstr "Simula..."
