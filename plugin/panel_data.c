@@ -176,17 +176,13 @@ static int bXb (hausman_t *haus)
 	x[i] = haus->bdiff[i];
     }
 
-    /* factorize (LU) first */
-    dsptrf_(&uplo, &n, haus->sigma, ipiv, &info);
+    /* solve for X-inverse * b */
+    dspsv_(&uplo, &n, &nrhs, haus->sigma, ipiv, x, &ldb, &info);
     if (info > 0) {
 	fprintf(stderr, "Hausman sigma matrix is singular\n");
     } else if (info < 0) {
 	fprintf(stderr, "Illegal entry in Hausman sigma matrix\n");
-    }
-
-    /* then solve */
-    if (info == 0) {
-	dsptrs_(&uplo, &n, &nrhs, haus->sigma, ipiv, x, &ldb, &info);
+    } else {
 	haus->H = 0.0;
 	for (i=0; i<haus->ns; i++) {
 	    haus->H += x[i] * haus->bdiff[i];
