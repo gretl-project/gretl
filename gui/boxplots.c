@@ -673,7 +673,7 @@ median_interval (double *x, int n, double *low, double *high)
 
 /* At this point we need to borrow a few functions from gtkplotps.c,
    which is part of gtkextra.  These functions are declared as
-   static in that context, but we want direct access to them */
+   static in that context, but we want direct access to them. */
 
 #include "plotps.c"
 
@@ -704,10 +704,6 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     if (eps) {
 	ps->page_width = pscale * grp->width;
 	ps->page_height = pscale * grp->height;
-#ifdef notdef
-	ps->page_width = ps->pc.width = pscale * grp->width;
-	ps->page_height = ps->pc.height = pscale * grp->height;
-#endif
     }
 
     if (!psinit (ps)) return 1;
