@@ -38,7 +38,7 @@ double tcrit95 (int df);
 double rhocrit95 (int n);
 
 double batch_pvalue (const char *str, 
-		     double **Z, const DATAINFO *pdinfo, 
+		     const double **Z, const DATAINFO *pdinfo, 
                      PRN *prn);
 
 void interact_pvalue (void);
@@ -46,5 +46,8 @@ void interact_pvalue (void);
 double f_crit_a (double a, int df1, int df2);
 
 int print_critical (const char *line, PRN *prn);
+
+double genr_get_critical (const char *line, const double **Z, 
+			  const DATAINFO *pdinfo);
 
 

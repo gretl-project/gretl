@@ -647,8 +647,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 			 0, cmdprn);
 	    }
 	    loop = add_to_loop(line, cmd.ci, cmd.opt,
-			       datainfo, (const double **) Z,
-			       loop, &loopstack, &looprun);
+			       datainfo, &Z, loop, 
+			       &loopstack, &looprun);
 	    if (loop == NULL) {
 		print_gretl_errmsg(prn);
 		err = 1;
@@ -1295,7 +1295,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case PVALUE:
 	if (batch || runit || (sscanf(line, "%s %s", s1, s2) == 2))
-	    batch_pvalue(line, Z, datainfo, prn);
+	    batch_pvalue(line, (const double **) Z, datainfo, prn);
 	else interact_pvalue();
 	break;
 

@@ -85,6 +85,7 @@ enum transformations {
     T_MEDIAN,
     T_ZEROMISS,
     T_PVALUE,
+    T_CRIT,
     T_OBSNUM,
     T_MPOW,
     T_DNORM,

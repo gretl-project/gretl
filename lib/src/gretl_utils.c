@@ -2172,7 +2172,7 @@ int balanced_panel (const DATAINFO *pdinfo)
 
 /* ........................................................... */
 
-double get_xvalue (int i, double **Z, const DATAINFO *pdinfo)
+double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 {
     if (pdinfo->vector[i]) {
 	return Z[i][pdinfo->t1];

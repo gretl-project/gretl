@@ -22,6 +22,7 @@
 */  
 
 #include "libgretl.h" 
+#include "gretl_private.h"
 #include "../../cephes/libprob.h"
  
 static void putxx (double xx);
@@ -97,8 +98,15 @@ double tprob (double x, int df)
 
 double fdist (double x, int dfn, int dfd)
 {
-    if (x < 0) return 1.0;
-    else return fdtrc(dfn, dfd, x);
+    double ret = 1.0;
+
+    if (dfn < 0 || dfd < 0) {
+	ret = -1.0;
+    } else if (x > 0.0) {
+	ret = fdtrc(dfn, dfd, x);
+    }
+
+    return ret;
 }
 
 /**
@@ -112,8 +120,15 @@ double fdist (double x, int dfn, int dfd)
 
 double chisq (double x, int df)
 {
-    if (x < 0) return 1.0;
-    else return 1.0 - chdtr(df, x);
+    double ret = 1.0;
+
+    if (df < 0) {
+	ret = -1.0;
+    } else if (x > 0.0) {
+	ret = 1.0 - chdtr(df, x);
+    }
+
+    return ret;
 }
 
 /**
@@ -159,7 +174,7 @@ double normal_pdf (double x)
  */
 
 double batch_pvalue (const char *str, 
-		     double **Z, const DATAINFO *pdinfo, 
+		     const double **Z, const DATAINFO *pdinfo, 
                      PRN *prn)
 {
     int i, df1 = 0, df2 = 0;
@@ -547,13 +562,39 @@ static void getdf (const char *str)
 
 double f_crit_a (double a, int df1, int df2)
 {
-    double x = 1.0;
+    double add = 0.5, x = 1.0;
 
-    while (fdist(x, df1, df2) > a) x += .5;
-    if (x > .5) x -= .5;
-    while (fdist(x, df1, df2) > a) x += .1; 
-    if (x > .5) x -= .1;
-    while (fdist(x, df1, df2) > a) x += .01;
+    if (fdist(x, df1, df2) < a) return NADBL;
+
+    while (add > 1.0e-7) {
+	while (fdist(x, df1, df2) > a) x += add; 
+	if (x > add) x -= add;
+	if (add == 0.5) {
+	    add /= 5.0;
+	} else {
+	    add /= 10.0;
+	}
+    }
+
+    return x;
+}
+
+static double chi_crit_a (double a, int df)
+{
+    double add = 0.5, x = 1.0;
+
+    if (chisq(x, df) < a) return NADBL;
+
+    while (add > 1.0e-7) {
+	while (chisq(x, df) > a) x += add; 
+	if (x > add) x -= add;
+	if (add == 0.5) {
+	    add /= 5.0;
+	} else {
+	    add /= 10.0;
+	}
+    }
+
     return x;
 }
 
@@ -569,9 +610,8 @@ static int parse_critical_input (const char *str, int *i,
     else if (sscanf(str, "critical t %d", df) == 1) *i = 1;
     else if (sscanf(str, "critical d %d", n) == 1) *i = 4;
     else if (!strncmp(str, "critical N", 10)) *i = 0;
-    
-    if (*i >= 0) return 0;
-    else return 1;
+
+    return (*i == -1);
 }
 
 /**
@@ -668,6 +708,107 @@ int print_critical (const char *line, PRN *prn)
     }
 
     return 0;
+}
+
+static double get_number_or_val (const char *s, 
+				 const double **Z,
+				 const DATAINFO *pdinfo)
+{
+    if (numeric_string(s)) {
+	return dot_atof(s);
+    } else {
+	int v = varindex(pdinfo, s);
+
+	if (v > 0 && v < pdinfo->v && !pdinfo->vector[v]) {
+	    return Z[v][0];
+	}
+    } 
+
+    return NADBL;
+}
+
+static int parse_genr_critical_input (const char *str, 
+				      const double **Z, 
+				      const DATAINFO *pdinfo,
+				      int *i, int *dfn, int *dfd, 
+				      double *x)
+{
+    char dfnstr[VNAMELEN], dfdstr[VNAMELEN];
+    char xstr[VNAMELEN];
+    double val;
+    *i = -1;
+
+    dfnstr[0] = dfdstr[0] = xstr[0] = '\0';
+
+    if (sscanf(str, "F,%8[^,],%8[^,],%8s", dfnstr, dfdstr, xstr) == 3) {
+	*i = 3;
+    } else if (sscanf(str, "X,%8[^,],%8s", dfnstr, xstr) == 2) {
+	*i = 2;
+    } else if (sscanf(str, "t,%8[^,],%8s", dfnstr, xstr) == 2) {
+	*i = 1;
+    } else if (sscanf(str, "N,%8s", xstr) == 1) {
+	*i = 0;
+    }
+
+    if (*i == -1) return 1;
+
+    if (dfnstr[0] != '\0') {
+	val = get_number_or_val(dfnstr, Z, pdinfo);
+	if (na(val)) {
+	    *i = -1;
+	} else {
+	    *dfn = val;
+	}
+    }
+    if (dfdstr[0] != '\0') {
+	val = get_number_or_val(dfdstr, Z, pdinfo);
+	if (na(val)) {
+	    *i = -1;
+	} else {
+	    *dfd = val;
+	}
+    }
+    if (xstr[0] != '\0') {
+	*x = get_number_or_val(xstr, Z, pdinfo);
+	if (na(*x) || *x < 0.0) {
+	    *i = -1;
+	}
+    }
+
+    return (*i == -1);
+}
+
+double genr_get_critical (const char *line, const double **Z, 
+			  const DATAINFO *pdinfo)
+{
+    double x, ret = NADBL;
+    int st, dfn = -1, dfd = -1;
+
+    if (parse_genr_critical_input(line, Z, pdinfo,
+				  &st, &dfn, &dfd, &x)) {
+	return NADBL;
+    }
+
+    if ((0 < st && st < 4 && dfn <= 0) || (st == 3 && dfd <= 0)) {
+	strcpy(gretl_errmsg, _("Invalid degrees of freedom\n"));
+	return NADBL;
+    }
+
+    if (st == 3) {
+	ret = f_crit_a(x, dfn, dfd);
+    } else if (st == 2) {
+	ret = chi_crit_a(x, dfn);
+    } else if (st == 1) {
+	ret = sqrt(f_crit_a(2.0 * x, 1, dfn));
+    } else {
+	ret = sqrt(f_crit_a(2.0 * x, 1, 500));
+    }
+
+    if (ret < 0) {
+	return NADBL;
+    }
+
+    return ret;
 }
 
 /* ........................................................ */

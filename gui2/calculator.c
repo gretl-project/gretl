@@ -375,7 +375,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 
     if (bufopen(&prn)) return;
 
-    batch_pvalue(cmd, Z, datainfo, prn);
+    batch_pvalue(cmd, (const double **) Z, datainfo, prn);
     view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
 
     return;

@@ -38,10 +38,8 @@ typedef struct LOOPSET_ LOOPSET;
 int ok_in_loop (int ci, const LOOPSET *loop);
 
 LOOPSET *add_to_loop (char *line, int ci, gretlopt oflags,
-		      DATAINFO *pdinfo, const double **Z,
+		      DATAINFO *pdinfo, double ***pZ,
 		      LOOPSET *loop, int *loopstack, int *looprun);
-
-LOOPSET *loop_get_parent (LOOPSET *loop);
 
 void gretl_loop_destroy (LOOPSET *loop);
 

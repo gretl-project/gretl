@@ -1155,7 +1155,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
 
     if (isalpha((unsigned char) *essstr) && 
 	(i = varindex(pdinfo, essstr)) < pdinfo->v) 
-	    ess = get_xvalue(i, *pZ, pdinfo);
+	    ess = get_xvalue(i, (const double **) *pZ, pdinfo);
     else if (isdigit(*essstr)) ess = atof(essstr);
     else return 1;
     if (ess < 0) {
@@ -1165,7 +1165,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
 
     if (isalpha((unsigned char) *Tstr) &&
 	(i = varindex(pdinfo, Tstr)) < pdinfo->v) 
-	    T = (int) get_xvalue(i, *pZ, pdinfo);
+	    T = (int) get_xvalue(i, (const double **) *pZ, pdinfo);
     else if (isdigit(*Tstr)) T = atoi(Tstr);
     else return 1;
     if (T < 0) {
@@ -1175,7 +1175,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
 
     if (isalpha((unsigned char) *kstr) &&
 	(i = varindex(pdinfo, kstr)) < pdinfo->v) 
-	    k = (int) get_xvalue(i, *pZ, pdinfo);
+	    k = (int) get_xvalue(i, (const double **) *pZ, pdinfo);
     else if (isdigit(*kstr)) k = atoi(kstr);
     else return 1;
     if (k < 0) {

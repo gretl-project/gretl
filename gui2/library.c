@@ -4761,8 +4761,8 @@ int gui_exec_line (char *line,
             return 1;
         }
 	loop = add_to_loop(line, cmd.ci, cmd.opt,
-			   datainfo, (const double **) Z,
-			   loop, plstack, plrun);
+			   datainfo, &Z, loop, 
+			   plstack, plrun);
 	if (loop == NULL) {
 	    print_gretl_errmsg(prn);
 	    return 1;
@@ -5440,10 +5440,12 @@ int gui_exec_line (char *line,
 	break;
 
     case PVALUE:
-	if (strcmp(line, "pvalue") == 0)
+	if (strcmp(line, "pvalue") == 0) {
 	    help("pvalue", paths.cmd_helpfile, prn);	    
-	else
-	    err = (batch_pvalue(line, Z, datainfo, outprn) == NADBL);
+	} else {
+	    err = (batch_pvalue(line, (const double **) Z, datainfo, 
+				outprn) == NADBL);
+	}
 	break;
 
     case QUIT:

@@ -105,8 +105,11 @@ static double evaluate_missval_func (double arg, int fn);
 static double evaluate_bivariate_statistic (const char *s, 
 					    GENERATE *genr, 
 					    int fn);
-static double evaluate_pvalue (const char *s, double **Z,
+static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err);
+static double evaluate_critval (const char *s, const double **Z,
+				const DATAINFO *pdinfo, int *err);
+
 
 enum retrieve {
     R_ESS = 1,
@@ -169,6 +172,7 @@ struct genr_func funcs[] = {
     { T_MEDIAN,   "median" },
     { T_ZEROMISS, "zeromiss" },
     { T_PVALUE,   "pvalue" },
+    { T_CRIT,     "critical" },
     { T_OBSNUM,   "obsnum" },
     { T_MPOW,     "mpow" },
     { T_DNORM,    "dnorm" },
@@ -422,15 +426,23 @@ static genatom *parse_token (const char *s, char op,
 	    if (func) {
 		DPRINTF(("recognized function #%d (%s)\n", func, 
 			 get_func_word(func)));
-		if (MP_MATH(func) || func == T_PVALUE ||
+		if (MP_MATH(func) || func == T_PVALUE || func == T_CRIT ||
 		    BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
 		    genr->err = get_arg_string(str, s);
 		} 
 		if (func == T_PVALUE) {
 		    if (!genr->err) {
-			val = evaluate_pvalue(str, *genr->pZ,
+			val = evaluate_pvalue(str, (const double **) *genr->pZ,
 					      genr->pdinfo,
 					      &genr->err);
+			scalar = 1;
+		    }
+		}
+		if (func == T_CRIT) {
+		    if (!genr->err) {
+			val = evaluate_critval(str, (const double **) *genr->pZ,
+					       genr->pdinfo,
+					       &genr->err);
 			scalar = 1;
 		    }
 		}
@@ -530,12 +542,18 @@ static genatom *parse_token (const char *s, char op,
     return make_atom(scalar, v, lag, val, func, op, str, level);
 }
 
-static double get_lag_at_obs (int v, int lag, const GENERATE *genr, 
-			      int t)
+static double get_lag_at_obs (int v, int tmp, int lag, 
+			      const GENERATE *genr, int t)
 {
     int lt;
-    double **Z = *genr->pZ;
+    double **Z;
     double x = NADBL;
+
+    if (tmp) {
+	Z = genr->tmpZ;
+    } else {
+	Z = *genr->pZ;
+    }
 
     /* stacked X-section needs rather special handling */
     if (genr->pdinfo->time_series == STACKED_CROSS_SECTION) {
@@ -583,8 +601,14 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 
     /* temporary variable */
     else if (atom->tmpvar >= 0) {
-	x = genr->tmpZ[atom->tmpvar][t];
-	DPRINTF(("eval_atom: got temp obs = %g\n", x));
+	if (!atom->lag) {
+	    x = genr->tmpZ[atom->tmpvar][t];
+	    DPRINTF(("eval_atom: got temp obs = %g\n", x));
+	} else {
+	    x = get_lag_at_obs(atom->tmpvar, 1, atom->lag, genr, t);
+	    DPRINTF(("eval_atom: got lagged temp obs (tmpvar %d, "
+		    "lag %d) = %g\n", atom->tmpvar, atom->lag, x));
+	}
     }
 
     /* trend/index variable */
@@ -599,7 +623,7 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 	    DPRINTF(("eval_atom: got data obs (var %d) = %g\n", 
 		    atom->varnum, x));
 	} else {
-	    x = get_lag_at_obs(atom->varnum, atom->lag, genr, t);
+	    x = get_lag_at_obs(atom->varnum, 0, atom->lag, genr, t);
 	    DPRINTF(("eval_atom: got lagged data obs (var %d, "
 		    "lag %d) = %g\n", atom->varnum, atom->lag, x));
 	}
@@ -1103,6 +1127,7 @@ static int string_arg_function (const char *s)
 	!strncmp(s, "corr", 4) ||
 	!strncmp(s, "cov", 3) ||
 	!strncmp(s, "pvalue", 6) ||
+	!strncmp(s, "critical", 8) ||
 	!strncmp(s, "mpow", 4) ||
 	!strncmp(s, "mlog", 4)) {
 	return 1;
@@ -1644,12 +1669,34 @@ int gretl_is_reserved (const char *str)
     return 0;
 }
 
-/* ........................................................... */
+/* allow stuff like "genr foo += 3.0", as abbreviation for
+   "genr foo = foo + 3.0"
+*/
+
+static int 
+expand_operator_abbrev (char *s, const char *lhs, char op)
+{
+    int llen = strlen(lhs);
+    int i;
+
+    /* do we have space to make the insertion? */
+    if (strlen(s) + llen + 2 >= MAXLEN) return 1;
+
+    memmove(s + llen + 1, s, strlen(s) + 1);
+
+    for (i=0; i<llen; i++) {
+	s[i] = lhs[i];
+    }
+    s[i] = op;
+
+    return 0;
+}
 
 static int split_genr_formula (char *lhs, char *s)
 {
     char *p = strchr(s, '=');
-    int err = 0;
+    char op = 0;
+    int len, err = 0;
 
     *lhs = '\0';
 
@@ -1661,6 +1708,12 @@ static int split_genr_formula (char *lhs, char *s)
 	    err = E_SYNTAX;
 	} else {
 	    /* should we warn if lhs name is truncated? */
+	    len = strlen(s);
+	    
+	    if (len > VNAMELEN - 1) {
+		op = s[len - 1];
+	    }
+
 	    strncat(lhs, s, VNAMELEN - 1);
 
 	    if (gretl_is_reserved(lhs)) {
@@ -1668,6 +1721,24 @@ static int split_genr_formula (char *lhs, char *s)
 	    } else {
 		p++;
 		memmove(s, p, strlen(p) + 1);
+	    }
+	}
+
+	if (!err) {
+	    int blankit = 0;
+
+	    if (op == 0) {
+		len = strlen(lhs);
+		if (len > 1) {
+		    op = lhs[len - 1];
+		    blankit = 1;
+		}
+	    }
+	    if (op_level(op) == 2 || op_level(op) == 3) {
+		if (blankit) {
+		    lhs[len - 1] = '\0';
+		}
+		err = expand_operator_abbrev(s, lhs, op);
 	    }
 	}
     }
@@ -2539,12 +2610,22 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
     return x;
 }
 
-static double evaluate_pvalue (const char *s, double **Z,
+static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err)
 {
     double x;
 
     x = batch_pvalue(s, Z, pdinfo, NULL);
+    if (na(x) || x == -1.0) *err = E_INVARG;
+    return x;
+}
+
+static double evaluate_critval (const char *s, const double **Z,
+				const DATAINFO *pdinfo, int *err)
+{
+    double x;
+
+    x = genr_get_critical(s, Z, pdinfo);
     if (na(x) || x == -1.0) *err = E_INVARG;
     return x;
 }
@@ -2677,21 +2758,36 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
     }
 
     else if (fn == T_RESAMPLE) {
-	int i, n = t2 - t1 + 1;
-	double *tmp = malloc(n * sizeof *tmp);
+	int i, n, rt1 = t1, rt2 = t2;
+	double *tmp = NULL;
+
+	series_adjust_t1t2(mvec, &rt1, &rt2);
+
+	n = rt2 - rt1 + 1;
+	if (n <= 1) {
+	    return NULL;
+	}
+
+	tmp = malloc(n * sizeof *tmp);
 
 	if (tmp == NULL) {
 	    free(x);
 	    return NULL;
 	}
 
+	for (t=t1; t<=t2; t++) {
+	    if (t < rt1 || t > rt2) {
+		x[t] = NADBL;
+	    }
+	}
+
 	/* generate uniform random series */
 	gretl_uniform_dist(tmp, 0, n - 1);
 
 	/* sample from source series based on indices */
-	for (t=t1; t<=t2; t++) {
-	    i = t1 + n * tmp[t-t1];
-	    if (i > t2) i = t2;
+	for (t=rt1; t<=rt2; t++) {
+	    i = rt1 + n * tmp[t-rt1];
+	    if (i > rt2) i = rt2;
 	    x[t] = mvec[i];
 	}
 
@@ -4048,7 +4144,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 		    free(rhot);
 		    return E_UNKVAR;
 		}
-		rhot[p] = get_xvalue(nv, *pZ, pdinfo);
+		rhot[p] = get_xvalue(nv, (const double **) *pZ, pdinfo);
 	    } else {
 		rhot[p] = dot_atof(parmbit);
 	    }
