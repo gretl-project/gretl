@@ -34,7 +34,31 @@ static int on_exo_list (const int *exlist, int v)
     return 0;
 }
 
-/* compose E0 or E1 as in Greene, 4e, p. 686 */
+/* Note: it sort-of seems that to produce proper restricted LIML
+   estimates one would somehow have to impose appropriate restrictions
+   at the stage of the computations below, i.e. where the matrices of
+   residuals E0 and E1 are generated.  These are residuals from the
+   regression of the dependent and endogenous RHS variables on the
+   exogenous vars (first just the included exogenous vars, then all of
+   the instruments).  But since we're calculating E0 and E1
+   equation-by-equation, we can't impose any cross-equation
+   restrictions (and it's not clear to me what they would look like,
+   anyway).  This means that the E0 and E1 estimates will be
+   invariant, for a given equation, regardless of whether or not we're
+   imposing restrictions at the level of the subsequent solution for
+   the k-class estimator.  So the minimum eigenvalue and
+   log-likelihood, for each equation, will also be invariant with
+   respect to any restrictions.  This seems inconsistent.
+
+   But maybe I'm wrong.  Clearly, the invariance mentioned above would
+   produce nonsense if we were trying to conduct an LR test of the
+   restrictions, but in fact we do an F-test, based on the covariance
+   matrix of the unrestricted LIML estimates.  So perhaps it's OK...
+*/
+
+/* compose E0 or E1 as in Greene, 4e, p. 686, looping across the
+   endogenous vars in the model list 
+*/
 
 static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 			const int *exlist, const int *list, int T,
@@ -44,28 +68,33 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
     int t1 = pdinfo->t1;
     int err = 0;
 
-    /* loop across the k endog vars in list */
     j = 0;
     for (i=1; i<=list[0]; i++) {
-	if (!on_exo_list(exlist, list[i])) {
-	    reglist[1] = list[i];
-#if LDEBUG
-	    fprintf(stderr, "resids_to_E, aux reg: dependent var %s\n",
-		    pdinfo->varname[reglist[1]]);
-#endif
-	    *lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_NONE, 0.0);
-	    if ((err = lmod->errcode)) {
-		clear_model(lmod);
-		break;
-	    }
 
-	    /* put resids into appropriate column of E */
-	    for (t=0; t<T; t++) {
-		gretl_matrix_set(E, t, j, lmod->uhat[t + t1]);
-	    }
-	    j++;
-	    clear_model(lmod);
+	/* skip predetermined vars */
+	if (on_exo_list(exlist, list[i])) {
+	    continue;
 	}
+
+	reglist[1] = list[i];
+
+	/* regress the given endogenous var on the specified
+	   set of exogenous vars */
+	*lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_NONE, 0.0);
+	if ((err = lmod->errcode)) {
+	    clear_model(lmod);
+	    break;
+	}
+
+	/* put residuals into appropriate column of E */
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(E, t, j, lmod->uhat[t + t1]);
+	}
+
+	clear_model(lmod);
+
+	/* increment the column of E */
+	j++;
     }
 
     return err;
@@ -89,6 +118,9 @@ static double lambda_min (const double *lambda, int k)
     return lmin;
 }
 
+/* construct the regression list for the auxiliary regressions
+   needed as a basis for LIML */
+
 static int *
 liml_make_reglist (const gretl_equation_system *sys, const int *list, 
 		   int *k)
@@ -108,7 +140,7 @@ liml_make_reglist (const gretl_equation_system *sys, const int *list,
 	    nexo, nexo + 2);
 #endif
 
-    /* at first, put all included exog vars in reglist */
+    /* at first, put all _included_ exog vars in reglist */
     *k = 1;
     reglist[0] = 1;
     reglist[1] = 0;
@@ -128,14 +160,14 @@ liml_make_reglist (const gretl_equation_system *sys, const int *list,
 
 /* set the special LIML k-class data on the model: these data will be
    retrieved when calculating the LIML coefficients and their
-   covariance matrix
+   covariance matrix (in sysest.c)
 */
 
 static int 
 liml_set_model_data (MODEL *pmod, const gretl_matrix *E, 
 		     const int *exlist, const int *list, 
 		     int T, int t1, int n, double lmin,
-		     const double **Z)
+		     double **Z)
 {
     double *Xi = NULL;
     double *ymod = NULL;
@@ -175,10 +207,12 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 	if (err) break;
     }
 
+    if (!err) {
+	err = gretl_model_set_data(pmod, "liml_y", ymod, ysize);
+    }
+
     if (err) {
 	free(ymod);
-    } else {
-	gretl_model_set_data(pmod, "liml_y", ymod, ysize);
     }
 
     return err;
@@ -214,13 +248,20 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     printlist(list, "original equation list");
 #endif
 
-    /* degrees of freedom for over-identification test:
-       total exog vars minus number of params in equation.
-    */
-    idf = exlist[0] - (list[0] - 1);
-    
-    /* pointer to corresponding TSLS model */
+    /* get pointer to model (initialized via TSLS) */
     pmod = system_get_model(sys, eq);
+
+    /* degrees of freedom for over-identification test: total exog
+       vars minus number of params in equation (unless we're
+       estimating subject to specified restrictions, in which
+       case we'll skip the usual over-id test)
+    */
+    if (system_n_restrictions(sys) == 0) {
+	idf = exlist[0] - (list[0] - 1);
+    } else {
+	idf = -1;
+	gretl_model_set_int(pmod, "restricted", 1);
+    }
 
     /* make regression list using only included exogenous vars */
     reglist = liml_make_reglist(sys, list, &k);
@@ -257,7 +298,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     gretl_matrix_print(W0, "W0", NULL);
 #endif
 
-    /* re-set the regression list using all exogenous vars */
+    /* now re-make the regression list using all exogenous vars */
     reglist[0] = 1 + exlist[0];
     for (i=2; i<=reglist[0]; i++) {
 	reglist[i] = exlist[i-1];
@@ -295,15 +336,11 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     gretl_model_set_double(pmod, "lmin", lmin);
     gretl_model_set_int(pmod, "idf", idf);
 
-#if LDEBUG
-    printf("smallest eigenvalue: %g\n\n", lmin);
-#endif
-
-    err = liml_set_model_data(pmod, E, exlist, list, T,
-			      pdinfo->t1, pdinfo->n, lmin,
-			      (const double **) *pZ);
+    err = liml_set_model_data(pmod, E, exlist, list, T, pdinfo->t1, 
+			      pdinfo->n, lmin, *pZ);
     if (err) {
-	fprintf(stderr, "error in liml_set_model_data\n");
+	fprintf(stderr, "error in liml_set_model_data()\n");
+	goto bailout;
     }
 
     /* compute and set log-likelihood, etc */
@@ -312,10 +349,6 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     ll += gretl_matrix_log_determinant(W1);
     ll *= -(T / 2.0);
     pmod->lnL = ll;
-
-#if LDEBUG
-    printf("log-likelihood = %g\n", ll);
-#endif
 
     mle_aic_bic(pmod, 0); /* check the "0" (additional params) here */
 
@@ -333,22 +366,26 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     return err;
 }
 
-/* Driver function for LIML */
+/* Driver function for LIML: calculate the minimum eigenvalue per
+   equation, and set the suitably transformed data on the respective
+   models
+*/
 
 int liml_driver (gretl_equation_system *sys, double ***pZ, 
-		 gretl_matrix *sigma, DATAINFO *pdinfo, 
-		 PRN *prn)
+		 DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     int g = system_n_equations(sys);
     int i, err = 0;
 
-    pputs(prn, "\n*** LIML: experimental, work in progress ***\n\n");
+    if (!(opt & OPT_Q)) {
+	pputs(prn, "\n*** LIML: experimental, work in progress ***\n");
+    }
 
-    for (i=0; i<g; i++) {
+    for (i=0; i<g && !err; i++) {
 #if LDEBUG > 1
 	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
 #endif
-	liml_do_equation(sys, i, pZ, pdinfo, prn);
+	err = liml_do_equation(sys, i, pZ, pdinfo, prn);
     }
 
     return err;

@@ -848,10 +848,10 @@ static void real_do_help (guint pos, int cli)
 	    } else {
 		w = gui_help_view = hwin->w;
 	    }
+	    g_signal_connect(G_OBJECT(w), "destroy",
+			     G_CALLBACK(gtk_widget_destroyed),
+			     (cli)? &script_help_view : &gui_help_view);
 	}
-	g_signal_connect(G_OBJECT(w), "destroy",
-			 G_CALLBACK(gtk_widget_destroyed),
-			 (cli)? &script_help_view : &gui_help_view);
     } else {
 	gdk_window_show(w->parent->window);
 	gdk_window_raise(w->parent->window);

@@ -810,32 +810,37 @@ char *get_full_obs_string (char *obs, int t, const DATAINFO *pdinfo)
 double obs_str_to_double (const char *obs)
 {
     char tmp[OBSLEN];
-    static int decpoint;
-
-    if (decpoint == 0) decpoint = get_local_decpoint();
+    char *p;
 
     strcpy(tmp, obs);
-    charsub(tmp, ':', decpoint);
-    return atof(tmp);
+    p = tmp;
+
+    while (*p) {
+	if (*p == ':' || *p == ',') *p = '.';
+	p++;
+    }
+
+    return dot_atof(tmp);
 }
 
 /**
  * colonize_obs:
  * @obs: string representation of observation number.
  *
- * Converts a decimal point in @obs to a colon.  Locale sensitive.
+ * Converts a decimal point in @obs to a colon.
  *
  * Returns: the (possibly) modified obs string.
  */
 
 char *colonize_obs (char *obs)
 {
-    static int decpoint;
+    char *p = obs;
 
-    if (decpoint == 0) decpoint = get_local_decpoint();
+    while (*p) {
+	if (*p == '.' || *p == ',') *p = ':';
+	p++;
+    }
 
-    charsub(obs, decpoint, ':');
-    if (decpoint != '.') charsub(obs, '.', ':');
     return obs;
 }
 

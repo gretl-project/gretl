@@ -320,7 +320,7 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
 
 static void 
 fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
-			 gretl_matrix *sigma, int iters)
+			 int iters)
 {
     MODEL *pmod;
     const double *y;
@@ -344,7 +344,8 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     }
 
     /* not using df correction for pmod->sigma or sigma matrix */
-    gretl_matrix_copy_values(sigma, fsys->sigma);
+    system_attach_sigma(fsys->sys, fsys->sigma);
+    fsys->sigma = NULL;
 
     /* record restricted and unrestricted log-likelihood */
     system_set_ll(fsys->sys, fsys->ll);
@@ -887,8 +888,7 @@ static void fiml_print_gradients (const gretl_matrix *b, PRN *prn)
 #define FIML_ITER_MAX 250
 
 int fiml_driver (gretl_equation_system *sys, double ***pZ, 
-		 gretl_matrix *sigma, DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn)
+		 DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R = system_get_R_matrix(sys);
     fiml_system *fsys;
@@ -1004,7 +1004,7 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
     }
 
     /* write the results into the parent system */
-    fiml_transcribe_results(fsys, (const double **) *pZ, t1, sigma, iters);
+    fiml_transcribe_results(fsys, (const double **) *pZ, t1, iters);
 
  bailout:
     

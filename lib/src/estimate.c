@@ -1872,11 +1872,11 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     return err;
 }
 
-double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i)
+double *tsls_get_Xi (const MODEL *pmod, double **Z, int i)
 {
     const char *endog;
     double **X;
-    const double *ret;
+    double *ret;
 
     endog = gretl_model_get_data(pmod, "endog");
     X = gretl_model_get_data(pmod, "tslsX");

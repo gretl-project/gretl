@@ -684,15 +684,12 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	    sprintf(ppaths->helpfile, "%sgretl_hlp.txt", ppaths->gretldir);
 	    sprintf(ppaths->cmd_helpfile, "%sgretlcli_hlp.txt", ppaths->gretldir);
 	} else {
-	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
-		    _("gretl_hlp.txt"));
-	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
-		_("gretlcli_hlp.txt"));
+	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretl_hlp.txt"));
+	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
 	}
 	gretl_paths.status |= GRETL_USING_GUI;
     } else { 
-	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
-		_("gretlcli_hlp.txt"));
+	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
 	gretl_paths.status = 0;
     }
 
@@ -767,15 +764,12 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	    sprintf(ppaths->helpfile, "%sgretl.hlp", ppaths->gretldir);
 	    sprintf(ppaths->cmd_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
 	} else {
-	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
-		    _("gretl.hlp"));
-	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
-		    _("gretlcli.hlp"));
+	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretl.hlp"));
+	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
 	}
 	gretl_paths.status |= GRETL_USING_GUI;
     } else {
-	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
-		_("gretlcli.hlp"));
+	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
 	gretl_paths.status = 0;
     }
 

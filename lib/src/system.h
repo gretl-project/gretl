@@ -105,6 +105,9 @@ void system_unattach_uhat (gretl_equation_system *sys);
 
 const gretl_matrix *system_get_uhat (const gretl_equation_system *sys);
 
+void system_attach_sigma (gretl_equation_system *sys, gretl_matrix *sigma);
+gretl_matrix *system_get_sigma (const gretl_equation_system *sys);
+
 void system_attach_coeffs (gretl_equation_system *sys, gretl_matrix *b);
 void system_attach_vcv (gretl_equation_system *sys, gretl_matrix *vcv);
 
@@ -116,13 +119,15 @@ MODEL *system_get_model (const gretl_equation_system *sys, int i);
 double system_get_ll (const gretl_equation_system *sys);
 double system_get_llu (const gretl_equation_system *sys);
 double system_get_X2 (const gretl_equation_system *sys);
-double system_get_BPLM (const gretl_equation_system *sys);
+double system_get_diag_stat (const gretl_equation_system *sys);
+double system_get_bdiff (const gretl_equation_system *sys);
 
 void system_set_ll (gretl_equation_system *sys, double ll);
 void system_set_llu (gretl_equation_system *sys, double llu);
 void system_set_X2 (gretl_equation_system *sys, double X2);
 void system_set_ess (gretl_equation_system *sys, double ess);
-void system_set_BPLM (gretl_equation_system *sys, double lm);
+void system_set_diag_stat (gretl_equation_system *sys, double s);
+void system_set_bdiff (gretl_equation_system *sys, double d);
 
 int system_get_overid_df (const gretl_equation_system *sys);
 

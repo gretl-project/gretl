@@ -337,7 +337,7 @@ void set_app_font (const char *fontname)
 	PangoContext *pc;
 	PangoFont *pfont;
 
-	w = gtk_label_new(NULL);
+	w = gtk_label_new("");
 	pfd = pango_font_description_from_string(fontname);
 	pc = gtk_widget_get_pango_context(w);
 	pfont = pango_context_load_font(pc, pfd);

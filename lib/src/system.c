@@ -75,13 +75,15 @@ struct _gretl_equation_system {
     double llu;                 /* unrestricted log-likelihood */
     double X2;                  /* chi-square test value */
     double ess;                 /* total error sum of squares */
-    double BPLM;                /* test stat for diagonal covariance matrix */
+    double diag;                /* test stat for diagonal covariance matrix */
+    double bdiff;               /* summary stat for change in coefficients */
     int **lists;                /* regression lists for stochastic equations */
     int *endog_vars;            /* list of endogenous variables */
     int *instr_vars;            /* list of instruments (exogenous vars) */
     identity **idents;          /* set of identities */
     gretl_matrix *b;            /* coefficient estimates */
     gretl_matrix *vcv;          /* covariance matrix of coefficients */
+    gretl_matrix *sigma;        /* cross-equation covariance matrix */
     gretl_matrix *R;            /* LHS of any linear restrictions */
     gretl_matrix *q;            /* RHS of any linear restrictions */  
     const gretl_matrix *uhat;   /* residuals, all equations: convenience pointer,
@@ -300,10 +302,12 @@ gretl_equation_system_new (int method, const char *name)
     sys->ll = sys->llu = 0.0;
     sys->X2 = 0.0;
     sys->ess = 0.0;
-    sys->BPLM = 0.0;
+    sys->diag = 0.0;
+    sys->bdiff = 0.0;
 
     sys->b = NULL;
     sys->vcv = NULL;
+    sys->sigma = NULL;
 
     sys->lists = NULL;
     sys->endog_vars = NULL;
@@ -338,7 +342,8 @@ static void system_clear_results (gretl_equation_system *sys)
     sys->llu = 0.0;
     sys->X2 = 0.0;
     sys->ess = 0.0;
-    sys->BPLM = 0.0;
+    sys->diag = 0.0;
+    sys->bdiff = 0.0;
 
     if (sys->b != NULL) {
 	gretl_matrix_free(sys->b);
@@ -348,6 +353,11 @@ static void system_clear_results (gretl_equation_system *sys)
     if (sys->vcv != NULL) {
 	gretl_matrix_free(sys->vcv);
 	sys->vcv = NULL;
+    }
+
+    if (sys->sigma != NULL) {
+	gretl_matrix_free(sys->sigma);
+	sys->sigma = NULL;
     }
 }
 
@@ -402,6 +412,10 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
 
     if (sys->b != NULL) {
 	gretl_matrix_free(sys->b);
+    }
+
+    if (sys->sigma != NULL) {
+	gretl_matrix_free(sys->sigma);
     }
 
     free(sys);
@@ -727,8 +741,8 @@ static int sys_test_type (gretl_equation_system *sys, gretlopt opt)
 		   sys->method == SYS_3SLS) {
 	    ret = SYS_F_TEST;
 	} else if (sys->method == SYS_LIML) {
-	    /* not implemented yet */
-	    ret = SYS_TEST_NOTIMP;
+	    /* experimental */
+	    ret = SYS_F_TEST;
 	} else if (sys->method == SYS_FIML) {
 	    ret = SYS_LR_TEST;
 	} 
@@ -944,7 +958,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (method == SYS_OLS || method == SYS_TSLS) {
+    if (method == SYS_OLS || method == SYS_TSLS || method == SYS_LIML) {
 	if (!(opt & OPT_N)) {
 	    sys->flags |= GRETL_SYSTEM_DFCORR;
 	}
@@ -1192,7 +1206,7 @@ const gretl_matrix *system_get_uhat (const gretl_equation_system *sys)
 void system_attach_coeffs (gretl_equation_system *sys, gretl_matrix *b)
 {
     if (sys->b != NULL) {
-	free(sys->b);
+	gretl_matrix_free(sys->b);
     }
 
     sys->b = b;
@@ -1201,10 +1215,24 @@ void system_attach_coeffs (gretl_equation_system *sys, gretl_matrix *b)
 void system_attach_vcv (gretl_equation_system *sys, gretl_matrix *vcv)
 {
     if (sys->vcv != NULL) {
-	free(sys->vcv);
+	gretl_matrix_free(sys->vcv);
     }
 
     sys->vcv = vcv;
+}
+
+void system_attach_sigma (gretl_equation_system *sys, gretl_matrix *sigma)
+{
+    if (sys->sigma != NULL) {
+	gretl_matrix_free(sys->sigma);
+    }
+
+    sys->sigma = sigma;
+}
+
+gretl_matrix *system_get_sigma (const gretl_equation_system *sys)
+{
+    return sys->sigma;
 }
 
 void system_attach_models (gretl_equation_system *sys, MODEL **models)
@@ -1241,9 +1269,14 @@ double system_get_X2 (const gretl_equation_system *sys)
     return sys->X2;
 }
 
-double system_get_BPLM (const gretl_equation_system *sys)
+double system_get_diag_stat (const gretl_equation_system *sys)
 {
-    return sys->BPLM;
+    return sys->diag;
+}
+
+double system_get_bdiff (const gretl_equation_system *sys)
+{
+    return sys->bdiff;
 }
 
 void system_set_ll (gretl_equation_system *sys, double ll)
@@ -1266,9 +1299,14 @@ void system_set_ess (gretl_equation_system *sys, double ess)
     sys->ess = ess;
 }
 
-void system_set_BPLM (gretl_equation_system *sys, double lm)
+void system_set_diag_stat (gretl_equation_system *sys, double s)
 {
-    sys->BPLM = lm;
+    sys->diag = s;
+}
+
+void system_set_bdiff (gretl_equation_system *sys, double d)
+{
+    sys->bdiff = d;
 }
 
 /* for case of applying df correction to cross-equation 

@@ -255,19 +255,26 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
     double lmin = gretl_model_get_double(pmod, "lmin");
     int idf = gretl_model_get_int(pmod, "idf");
 
-    print_ll(pmod, prn);
+    if (!gretl_model_get_int(pmod, "restricted")) {
+	print_ll(pmod, prn);
+    }
+
 #if 0
     info_stats_lines(pmod, prn);
 #endif
 
-    if (idf > 0 && !na(lmin)) {
-	double X2 = pmod->nobs * log(lmin);
-
-	X2 = pmod->nobs * log(lmin);
+    if (!na(lmin)) {
 	pprintf(prn, "  Smallest eigenvalue = %g\n", lmin);
-	pprintf(prn, "  %s:\n", _("LR over-identification test"));
-	pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
-		idf, X2, _("with p-value"), chisq(X2, idf));
+
+	if (idf > 0) {
+	    double X2 = pmod->nobs * log(lmin);
+
+	    pprintf(prn, "  %s:\n", _("LR over-identification test"));
+	    pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
+		    idf, X2, _("with p-value"), chisq(X2, idf));
+	} else if (idf == 0) {
+	    pprintf(prn, "  %s\n", _("Equation is just identified"));
+	}
     }
 }
 
