@@ -300,6 +300,24 @@ static void reverse_list (char *list)
     free(tmp);
 }
 
+static int add_to_cmdlist (selector *sr, const char *add)
+{
+    int n = strlen(sr->cmdlist);
+    char *cmdlist = NULL;
+
+    if (n % MAXLEN > MAXLEN - 32) {
+	int blocks = 2 + n / MAXLEN;
+
+	cmdlist = realloc(sr->cmdlist, blocks * MAXLEN);
+	if (cmdlist == NULL) return 1;
+	else sr->cmdlist = cmdlist;
+    }
+
+    strcat(sr->cmdlist, add);
+
+    return 0;
+}
+
 static void construct_cmdlist (GtkWidget *w, selector *sr)
 {
     gint i = 0, rows = 0;
@@ -324,7 +342,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
 	    sprintf(numstr, "%d ", i);
-	    strcat(sr->cmdlist, numstr);
+	    add_to_cmdlist(sr, numstr);
 	}
     }
     else if (sr->code == AR) {
@@ -335,8 +353,8 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    errbox(_("You must specify a list of lags"));
 	    sr->error = 1;
 	} else {
-	    strcat(sr->cmdlist, lags);
-	    strcat(sr->cmdlist, " ; ");
+	    add_to_cmdlist(sr, lags);
+	    add_to_cmdlist(sr, " ; ");
 	}
     }
     else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
@@ -345,7 +363,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
-	strcat(sr->cmdlist, numstr);
+	add_to_cmdlist(sr, numstr);
     }
     else if (sr->code == ARMA || sr->code == GARCH) {
 	GtkAdjustment *adj;
@@ -353,14 +371,14 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
-	strcat(sr->cmdlist, numstr);
+	add_to_cmdlist(sr, numstr);
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra2));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
-	strcat(sr->cmdlist, numstr);
+	add_to_cmdlist(sr, numstr);
 
-	strcat(sr->cmdlist, " ; ");
+	add_to_cmdlist(sr, " ; ");
     }
     else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
@@ -371,7 +389,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
 	    sprintf(numstr, "%d ", i);
-	    strcat(sr->cmdlist, numstr);
+	    add_to_cmdlist(sr, numstr);
 	}
     }
 
@@ -388,7 +406,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 		sprintf(grvar, " %d", i);
 	    } else {
 		sprintf(numstr, "%d", i);
-		strcat(sr->cmdlist, numstr);
+		add_to_cmdlist(sr, numstr);
 	    }
 	}
     }
@@ -403,7 +421,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	GTK_TOGGLE_BUTTON(sr->default_check)->active) 
 	default_var = i;
 
-    if (sr->code == SCATTERS) strcat(sr->cmdlist, ";");
+    if (sr->code == SCATTERS) add_to_cmdlist(sr, ";");
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) { /* special cases */
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rightvars));
@@ -418,7 +436,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->rightvars)));
 	    sprintf(numstr, " %d", i);
-	    strcat(sr->cmdlist, numstr);
+	    add_to_cmdlist(sr, numstr);
 	}
 	if (sr->error) gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 	return;
@@ -434,8 +452,8 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	gchar *rvar;
 
 	gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rvar);
-	strcat(sr->cmdlist, " ");
-	strcat(sr->cmdlist, rvar);
+	add_to_cmdlist(sr, " ");
+	add_to_cmdlist(sr, rvar);
 	if (MODEL_CODE(sr->code) && xlist != NULL) 
 	    xlist[i+1] = atoi(rvar);
     }
@@ -445,13 +463,13 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	if (rows > 0) {
 	    auxlist = realloc(auxlist, (rows + 1) * sizeof(int));
 	    if (auxlist != NULL) auxlist[0] = rows;
-	    strcat(sr->cmdlist, " ;");
+	    add_to_cmdlist(sr, " ;");
 	    for (i=0; i<rows; i++) {
 		gchar *inst;
 
 		gtk_clist_get_text(GTK_CLIST(sr->auxvars), i, 0, &inst);
-		strcat(sr->cmdlist, " ");
-		strcat(sr->cmdlist, inst);
+		add_to_cmdlist(sr, " ");
+		add_to_cmdlist(sr, inst);
 		if (auxlist != NULL) auxlist[i+1] = atoi(inst);
 	    }
 	} else if (sr->code == TSLS) {
@@ -461,7 +479,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     if (sr->code == GR_XY || sr->code == GR_IMP)
-	strcat(sr->cmdlist, grvar);
+	add_to_cmdlist(sr, grvar);
 
     if (sr->code == SCATTERS) {
 	GtkWidget *active_item = GTK_OPTION_MENU(scatters_menu)->menu_item;

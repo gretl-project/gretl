@@ -74,6 +74,8 @@ static int filter_comments (char *line, int *ignore)
 {
     int i, j = 0, n = strlen(line);
     char tmpstr[MAXLEN], datfile[MAXLEN];
+
+    if (n >= MAXLEN) return 0;
     
     for (i=0; i<n; i++) {
 	if (line[i] == '(' && line [i+1] == '*') {

@@ -350,15 +350,34 @@ void clear (char *str, int len)
  *
  */
 
-int count_fields (const char *str)
+int count_fields (const char *s)
 {
-    int n = 0;
-    char tmpstr[MAXLEN];
+    int nf = 0;
+    const char *p;
 
-    strcpy(tmpstr, str);
-    if (strtok(tmpstr, " ")) n++;
-    while (strtok(NULL, " ")) n++;
-    return n;
+    if (s == NULL || *s == '\0') return 0;
+
+    /* step past any leading space */
+    while (*s == ' ') {
+	s++;
+    }
+
+    if (*s != '\0' && *s != ' ') {
+	s++;
+	nf++;
+    }
+
+    while (*s) {
+	p = strpbrk(s, " ");
+	if (p != NULL) {
+	    s = p + strspn(p, " ");
+	    if (*s) nf++;
+	} else {
+	    break;
+	}
+    }
+	    
+    return nf;
 }
 
 /**

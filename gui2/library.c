@@ -433,7 +433,7 @@ gint check_cmd (char *line)
     if (err) {
 	gui_errmsg(err);
 	return 1;
-    } 	
+    } 
 
     getcmd(line, datainfo, &cmd, &ignore, &Z, NULL); 
     if (cmd.errcode) {

@@ -505,6 +505,24 @@ static void reverse_list (char *list)
     free(tmp);
 }
 
+static int add_to_cmdlist (selector *sr, const char *add)
+{
+    int n = strlen(sr->cmdlist);
+    char *cmdlist = NULL;
+
+    if (n % MAXLEN > MAXLEN - 32) {
+	int blocks = 2 + n / MAXLEN;
+
+	cmdlist = realloc(sr->cmdlist, blocks * MAXLEN);
+	if (cmdlist == NULL) return 1;
+	else sr->cmdlist = cmdlist;
+    }
+
+    strcat(sr->cmdlist, add);
+
+    return 0;
+}
+
 static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 {
     gint i = 0, rows = 0;
@@ -514,7 +532,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
     sr->error = 0;
 
-    sr->cmdlist = mymalloc(MAXLEN);
+    sr->cmdlist = mymalloc(MAXLEN); 
     if (sr->cmdlist == NULL) return FALSE;
 
     sr->cmdlist[0] = 0;
@@ -533,7 +551,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra), "data"));
 	    sprintf(numstr, "%d ", i);
-	    strcat(sr->cmdlist, numstr);
+	    add_to_cmdlist(sr, numstr);
 	}
     }
     else if (sr->code == AR) {
@@ -544,8 +562,8 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	    errbox(_("You must specify a list of lags"));
 	    sr->error = 1;
 	} else {
-	    strcat(sr->cmdlist, lags);
-	    strcat(sr->cmdlist, " ; ");
+	    add_to_cmdlist(sr, lags);
+	    add_to_cmdlist(sr, " ; ");
 	}
     }
     else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
@@ -554,7 +572,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
-	strcat(sr->cmdlist, numstr);
+	add_to_cmdlist(sr, numstr);
     }
     else if (sr->code == ARMA || sr->code == GARCH) {
 	GtkAdjustment *adj;
@@ -562,14 +580,13 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
-	strcat(sr->cmdlist, numstr);
+	add_to_cmdlist(sr, numstr);
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra2));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
-	strcat(sr->cmdlist, numstr);
-
-	strcat(sr->cmdlist, " ; ");
+	add_to_cmdlist(sr, numstr);
+	add_to_cmdlist(sr, " ; ");
     }
     else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
@@ -580,7 +597,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra), "data"));
 	    sprintf(numstr, "%d ", i);
-	    strcat(sr->cmdlist, numstr);
+	    add_to_cmdlist(sr, numstr);
 	}
     }
 
@@ -597,7 +614,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 		sprintf(grvar, " %d", i);
 	    } else {
 		sprintf(numstr, "%d", i);
-		strcat(sr->cmdlist, numstr);
+		add_to_cmdlist(sr, numstr);
 	    }
 	}
     }
@@ -611,7 +628,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     if (sr->code == SCATTERS) {
-	strcat(sr->cmdlist, ";");
+	add_to_cmdlist(sr, ";");
     }
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) { /* special case */
@@ -628,7 +645,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->rightvars), 
 						  "data"));
 	    sprintf(numstr, " %d", i);
-	    strcat(sr->cmdlist, numstr);
+	    add_to_cmdlist(sr, numstr);
 	}
 	return TRUE;
     }
@@ -649,7 +666,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 	gtk_tree_model_get (model, &iter, 0, &rvar, -1);
 	tmp = g_strdup_printf(" %d", rvar);
-	strcat(sr->cmdlist, tmp);
+	add_to_cmdlist(sr, tmp);
 	g_free(tmp);
 	if (MODEL_CODE(sr->code) && xlist != NULL) {
 	    xlist[i+1] = rvar;
@@ -664,14 +681,14 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	if (rows > 0) {
 	    auxlist = realloc(auxlist, (rows + 1) * sizeof *auxlist);
 	    if (auxlist != NULL) auxlist[0] = rows;
-	    strcat(sr->cmdlist, " ;");
+	    add_to_cmdlist(sr, " ;");
 	    for (i=0; i<rows; i++) {
 		gint inst;
 		gchar *tmp;
 
 		gtk_tree_model_get (model, &iter, 0, &inst, -1);
 		tmp = g_strdup_printf(" %d", inst);
-		strcat(sr->cmdlist, tmp);
+		add_to_cmdlist(sr, tmp);
 		g_free(tmp);
 		if (auxlist != NULL) {
 		    auxlist[i+1] = inst;
@@ -685,7 +702,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     if (sr->code == GR_XY || sr->code == GR_IMP) {
-	strcat(sr->cmdlist, grvar);
+	add_to_cmdlist(sr, grvar);
     }
 
     if (sr->code == SCATTERS && 
