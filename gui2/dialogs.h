@@ -73,6 +73,8 @@ int checks_dialog (const char *title, const char **opts,
 		   const char *spintext, int spinmax,
 		   int helpcode);
 
+void data_structure_wizard (gpointer p, guint u, GtkWidget *w);
+
 #ifdef OLD_GTK
 GtkWidget *standard_button (int code);
 #endif

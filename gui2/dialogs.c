@@ -361,6 +361,18 @@ static GtkWidget *ok_button (GtkWidget *box)
     return w;
 }
 
+static GtkWidget *next_button (GtkWidget *box)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_GO_FORWARD);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(box), w, TRUE, TRUE, 0);
+
+    return w;
+}
+
+
 /* ........................................................... */
 
 static void no_resize (GtkWidget *w)
@@ -2654,9 +2666,9 @@ int radio_dialog (const char *title, const char **opts,
 		  int nopts, int deflt, int helpcode)
 {
     GtkWidget *dialog;
-    GtkWidget *button;
     GtkWidget *tempwid;
-    GSList *group;
+    GtkWidget *button = NULL;
+    GSList *group = NULL;
     int i, ret = -1;
 
     dialog = simple_dialog_new(title);
@@ -2666,33 +2678,28 @@ int radio_dialog (const char *title, const char **opts,
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(dialog_unblock), NULL);
 
-    button = gtk_radio_button_new_with_label(NULL, _(opts[0]));
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG(dialog)->vbox), 
-			button, TRUE, TRUE, 0);
-    if (deflt == 0) {
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-	ret = 0;
-    }
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_radio_opt), &ret);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(0));
-    gtk_widget_show (button);
+    for (i=0; i<nopts; i++) {
 
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+	if (button != NULL) {
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	} else {
+	    group = NULL;
+	}
 
-    for (i=1; i<nopts; i++) {
 	button = gtk_radio_button_new_with_label(group, _(opts[i]));
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
 			    button, TRUE, TRUE, 0);
+
 	if (deflt == i) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
 	    ret = i;
 	}
+
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_radio_opt), &ret);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
+
 	gtk_widget_show (button);
     }
 
@@ -3080,10 +3087,270 @@ GtkWidget *standard_button (int code)
 	N_("Cancel"),
 	N_("Close"),
 	N_("Apply"),
-	N_("Help")
+	N_("Help"),
+	N_("Next")
     };
 
     return gtk_button_new_with_label(_(button_strings[code]));
 }
 
 #endif
+
+#undef DATAWIZ
+
+#ifdef DATAWIZ /* not ready yet */
+
+struct datatmp {
+    int pd;
+    double sd0;
+    char stobs[OBSLEN];
+    char endobs[OBSLEN];
+    char markers;
+    int time_series;
+} dtmp;
+
+enum {
+    DATAWIZ_SET_TYPE,
+    DATAWIZ_TIME_SERIES_INFO,
+    DATAWIZ_PANEL_INFO,
+    DATAWIZ_CONFIRM
+};
+
+static void datatmp_init (void)
+{
+    dtmp.pd = datainfo->pd;
+    dtmp.sd0 = datainfo->sd0;
+
+    strcpy(dtmp.stobs, datainfo->stobs);
+    strcpy(dtmp.endobs, datainfo->endobs);
+
+    dtmp.markers = datainfo->markers;
+    dtmp.time_series = datainfo->time_series;
+}
+
+static void 
+datatmp_transcribe (DATAINFO *pdinfo)
+{
+    pdinfo->pd = dtmp.pd;
+    pdinfo->sd0 = dtmp.sd0;
+
+    strcpy(pdinfo->stobs, dtmp.stobs);
+    strcpy(pdinfo->endobs, dtmp.endobs);
+
+    pdinfo->markers = dtmp.markers; /* FIXME */
+    pdinfo->time_series = dtmp.time_series;
+}
+
+static const char *title_from_wizcode (int code)
+{
+    const char *titles[] = {
+	N_("Dataset structure"),
+	N_("Time-series information"),
+	N_("Panel data information"),
+	N_("Confirm changes")
+    };
+
+    if (code <= DATAWIZ_CONFIRM) {
+	return titles[code];
+    } else {
+	return "";
+    }
+}
+
+struct pd_info {
+    int pd;
+    const char *label;
+};
+
+struct pd_info ts_info[] = {
+    {  1, N_("Annual") },
+    {  4, N_("Quarterly") },
+    { 12, N_("Monthly") },
+    { 52, N_("Weekly") },
+    {  5, N_("Daily") },
+    {  6, N_("Daily") },
+    {  7, N_("Daily") },
+    { 24, N_("Hourly") },
+    {  0, N_("Special") },
+};
+
+static int radio_default (int code)
+{
+    if (code == DATAWIZ_SET_TYPE) {
+	return dtmp.time_series;
+    } else if (code == DATAWIZ_TIME_SERIES_INFO) {
+	return dtmp.pd;
+    } else if (code == DATAWIZ_PANEL_INFO) { 
+	if (dtmp.time_series == STACKED_TIME_SERIES) return 0;
+	if (dtmp.time_series == STACKED_CROSS_SECTION) return 1;
+    }
+
+    return 0;
+}
+
+static const char *datawiz_pd_to_str (int pd)
+{
+    int i;
+
+    for (i=0; i<9; i++) {
+	if (pd == ts_info[i].pd) {
+	    return ts_info[i].label;
+	}
+    }
+    return "";
+}
+
+static int datawiz_i_to_pd (int i)
+{
+    if (i < 9) {
+	return ts_info[i].pd;
+    } else {
+	return 0;
+    }
+}  
+
+static const char *datawiz_radio_strings (int wizcode, int i)
+{
+    if (wizcode == DATAWIZ_SET_TYPE) {
+	if (i == 0) return N_("Cross-sectional");
+	if (i == 1) return N_("Time series");
+	if (i == 2) return N_("Panel");
+    } else if (wizcode == DATAWIZ_TIME_SERIES_INFO) {
+	return datawiz_pd_to_str(i);
+    } else if (wizcode == DATAWIZ_PANEL_INFO) {   
+	if (i == 0) return N_("Stacked time series");
+	if (i == 1) return N_("Stacked cross sections");
+    }
+
+    return "";
+}  
+
+static void datawiz_set_radio_opt (GtkWidget *w, int *setvar)
+{
+    int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    
+    *setvar = val;
+}
+
+static int datawiz_dialog (int code)
+{
+    GtkWidget *dialog;
+    GtkWidget *tempwid;
+    GtkWidget *button = NULL;
+    GSList *group = NULL;
+    int nopts = 0;
+    int deflt = radio_default(code);
+    int setval = 0;
+    int *setvar = NULL;
+    int i, ret = 0;
+
+    if (code == DATAWIZ_CONFIRM) {
+	return -1;
+    }
+
+    dialog = simple_dialog_new(_(title_from_wizcode(code)));
+
+    no_resize(dialog);
+
+    g_signal_connect(G_OBJECT(dialog), "destroy", 
+		     G_CALLBACK(dialog_unblock), NULL);
+
+    if (code == DATAWIZ_SET_TYPE) {
+	nopts = 3;
+	setvar = &dtmp.time_series;
+    } else if (code == DATAWIZ_TIME_SERIES_INFO) {
+	nopts = 9;
+	setvar = &dtmp.pd;
+    }
+
+    /* radio options? */
+    for (i=0; i<nopts; i++) {
+
+	if (code == DATAWIZ_TIME_SERIES_INFO) {
+	    setval = datawiz_i_to_pd(i);
+	} else {
+	    setval = i;
+	}
+
+	if (button != NULL) {
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	} else {
+	    group = NULL;
+	}
+
+	button = gtk_radio_button_new_with_label(group, 
+						 _(datawiz_radio_strings(code, setval)));
+	gtk_box_pack_start(GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			   button, TRUE, TRUE, 0);
+
+	if (deflt == setval) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	} 
+
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(datawiz_set_radio_opt), setvar);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(setval));
+
+	gtk_widget_show(button);
+    }
+
+    /* Create the "Next" or "OK" button */
+    if (code == DATAWIZ_CONFIRM) {
+	tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
+    } else {
+	tempwid = next_button(GTK_DIALOG(dialog)->action_area);
+    }
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+    gtk_widget_grab_default(tempwid);
+    gtk_widget_show(tempwid);
+
+    /* Create the "Cancel" button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    gtk_widget_show(dialog);
+
+    gtk_main();
+
+    return ret;
+}
+
+/* take the user through a series of dialogs, to define the
+   structure of the data set
+*/
+
+void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
+{
+    int ret;
+
+    /* copy current relevant info */
+    datatmp_init();
+
+    /* step 1: show choice of structures */
+    ret = datawiz_dialog(DATAWIZ_SET_TYPE);
+    if (ret == -1) {
+	return;
+    }
+
+    /* step 2: fix details (not needed for cross-section) */
+    if (dtmp.time_series == TIME_SERIES) {
+	ret = datawiz_dialog(DATAWIZ_TIME_SERIES_INFO);
+    } else if (dtmp.time_series == STRUCTURE_UNKNOWN) {
+	ret = datawiz_dialog(DATAWIZ_PANEL_INFO);
+    }
+    if (ret == -1) {
+	return;
+    }
+
+    /* step 3: confirm changes */
+    ret = datawiz_dialog(DATAWIZ_CONFIRM);
+    if (ret == -1) {
+	return;
+    }
+
+    /* FIXME: actually make the changes */
+}
+
+#endif /* DATAWIZ (not ready yet) */
