@@ -304,6 +304,11 @@ check_add_transform (int vnum, const double *x,
 	/* a variable of this name already exists */
 	if (vars_identical(x, (*pZ)[vnum], pdinfo->n)) {
 	    /* and it is just what we want */
+
+	    /* fixme: what if _labels_ do not match? Then
+	       we may be unable to find this variable again
+	     */
+
 	    ret = VAR_EXISTS_OK;
 	} else {
 	    if (!strcmp(label, VARLABEL(pdinfo, vnum))) {
@@ -567,10 +572,11 @@ int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
 
 int 
 real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
-		   int maxlag)
+		   int maxlag, int **lagnums)
 {
     int lagnum, l, i, v;
     int startlen;
+    int *record = NULL;
 
     startlen = get_starting_length(list, pdinfo, (maxlag > 9)? 3 : 2);
     
@@ -578,6 +584,9 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 	v = list[i];
 	if (v == 0 || !pdinfo->vector[v]) {
 	    continue;
+	}
+	if (lagnums != NULL) {
+	    record = lagnums[i-1];
 	}
 	for (l=1; l<=maxlag; l++) {
 	    lagnum = get_transform(LAGS, v, l, pZ, pdinfo, startlen);
@@ -592,6 +601,9 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    fprintf(stderr, "lag var name '%s', label '%s'\n",
 		    pdinfo->varname[lagnum], VARLABEL(pdinfo, lagnum));
 #endif
+	    if (record != NULL) {
+		record[l] = lagnum;
+	    }
 	}
     }
 
@@ -619,7 +631,7 @@ int list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
 	maxlag = 1;
     }
 
-    return real_list_laggenr(list, pZ, pdinfo, maxlag);  
+    return real_list_laggenr(list, pZ, pdinfo, maxlag, NULL);  
 }
 
 /**

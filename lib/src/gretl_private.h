@@ -89,7 +89,8 @@ int gretl_is_reserved (const char *str);
 int vars_identical (const double *x, const double *y, int n);
 
 int real_list_laggenr (const int *list, double ***pZ, 
-		       DATAINFO *pdinfo, int maxlag);
+		       DATAINFO *pdinfo, int maxlag, 
+		       int **lagnums);
 
 int lagvarnum (int v, int l, const DATAINFO *pdinfo);
 

@@ -45,6 +45,13 @@ struct var_resids {
     int t1, t2;
 };
 
+struct var_lists {
+    int *detvars;
+    int *stochvars;
+    int *reglist;
+    int **lagvlist;
+};
+
 enum {
     VAR_PRINT_MODELS =      1 << 0,
     VAR_DO_FTESTS    =      1 << 1,
@@ -773,17 +780,95 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
     return index;
 }
 
+static void var_lists_free (struct var_lists *vl)
+{
+    if (vl->lagvlist != NULL && vl->stochvars != NULL) {
+	int i, ns = vl->stochvars[0];
+
+	for (i=0; i<ns; i++) {
+	    free(vl->lagvlist[i]);
+	}
+	free(vl->lagvlist);
+    }
+
+    free(vl->detvars);
+    free(vl->stochvars);
+    free(vl->reglist);
+}
+
+static int **lagvlist_construct (int nstoch, int order)
+{
+    int **lvlist;
+    int i, j;
+
+    lvlist = malloc(nstoch * sizeof *lvlist);
+    if (lvlist == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<nstoch; i++) {
+	lvlist[i] = malloc((order + 1) * sizeof **lvlist);
+	if (lvlist[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(lvlist[j]);
+	    }
+	    free(lvlist);
+	    lvlist = NULL;
+	}
+	lvlist[i][0] = order;
+    }
+
+    return lvlist;
+}
+
+static int var_lists_init (struct var_lists *vl,
+			   int ndet, int nstoch, 
+			   int order)
+{
+    int nreg = 1 + ndet + nstoch * order;
+
+    vl->detvars = NULL;
+    vl->stochvars = NULL;
+    vl->reglist = NULL;
+    vl->lagvlist = NULL;
+
+    vl->detvars = malloc((ndet + 1) * sizeof *vl->detvars);
+    vl->stochvars = malloc((nstoch + 1) * sizeof *vl->stochvars);
+    vl->reglist = malloc((nreg + 1) * sizeof *vl->reglist);
+
+    if (vl->detvars == NULL || vl->stochvars == NULL ||
+	vl->reglist == NULL) {
+	goto bailout;
+    }
+
+    vl->detvars[0] = ndet;
+    vl->stochvars[0] = nstoch;
+    vl->reglist[0] = nreg;
+
+    vl->lagvlist = lagvlist_construct(nstoch, order);
+    if (vl->lagvlist == NULL) {
+	goto bailout;
+    }
+
+    return 0;
+    
+ bailout:
+
+    var_lists_free(vl);
+
+    return E_ALLOC;
+}
+
 /* Given an incoming regression list, separate it into deterministic
    components (constant, trend, dummy variables) and stochastic
    components, and construct a list for each sort of variable.  Also
-   allocate a VAR list that is long enough to hold the deterministic
-   vars plus order lags of each stochastic var.
+   allocate a VAR regression list that is long enough to hold the
+   deterministic vars plus order lags of each stochastic var.
 */
 
 static int organize_var_lists (const int *list, const double **Z,
 			       const DATAINFO *pdinfo, int order,
-			       int **detvars, int **stochvars,
-			       int **varlist)
+			       struct var_lists *vlists)
 {
     int ndet = 0, nstoch = 0;
     int gotsep = 0;
@@ -794,7 +879,6 @@ static int organize_var_lists (const int *list, const double **Z,
     if (d == NULL) return 1;
 
     /* figure out the lengths of the lists */
-
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
 	    gotsep = 1;
@@ -812,41 +896,19 @@ static int organize_var_lists (const int *list, const double **Z,
     }
 
     /* allocate the lists */
-
-    *detvars = malloc((ndet + 1) * sizeof **detvars);
-    if (*detvars == NULL) {
+    if (var_lists_init(vlists, ndet, nstoch, order)) {
 	free(d);
 	return 1;
     }
-
-    *stochvars = malloc((nstoch + 1) * sizeof **stochvars);
-    if (*stochvars == NULL) {
-	free(d);
-	free(*detvars);
-	return 1;
-    }
-
-    *varlist = malloc((2 + ndet + nstoch * order) * sizeof **varlist);
-    if (*varlist == NULL) {
-	free(d);
-	free(*detvars);
-	free(*stochvars);
-	return 1;
-    } 
 
     /* fill out the detvars and stochvars lists */
-
-    (*detvars)[0] = ndet;
-    (*stochvars)[0] = nstoch;
-    (*varlist)[0] = 1 + ndet + nstoch * order;
-
     j = k = 1;
     for (i=1; i<=list[0]; i++) {
 	if (list[i] != LISTSEP) {
 	    if (d[i]) {
-		(*detvars)[j++] = list[i];
+		vlists->detvars[j++] = list[i];
 	    } else {
-		(*stochvars)[k++] = list[i];
+		vlists->stochvars[k++] = list[i];
 	    }
 	}
     }
@@ -854,35 +916,11 @@ static int organize_var_lists (const int *list, const double **Z,
     free(d);
 
 #if VAR_DEBUG
-    printlist(*detvars, "deterministic vars");
-    printlist(*stochvars, "stochastic vars");
+    printlist(vlists->detvars, "deterministic vars");
+    printlist(vlists->stochvars, "stochastic vars");
 #endif
 
     return 0;
-}
-
-/* given the ID number of a variable, fill out list, starting at the
-   specified pos, with order lags of that variable, looking up the ID
-   numbers of the lag vars (which are presumed to be already
-   generated -- flag an error if they're not).
-*/
-
-static int stoch_laglist (int *list, int pos, int svar, int order,
-			  const DATAINFO *pdinfo)
-{
-    int lag, lv;
-    int err = 0;
-
-    for (lag=1; lag<=order; lag++) {
-	lv = lagvarnum(svar, lag, pdinfo);
-	if (lv < 0) {
-	    lv = 0;
-	    err = 1;
-	}
-	list[pos + lag - 1] = lv;
-    }
-
-    return err;
 }
 
 /* compose a VAR regression list: it may be complete, or one variable
@@ -891,35 +929,37 @@ static int stoch_laglist (int *list, int pos, int svar, int order,
 */
 
 static int
-compose_varlist (int *list, int depvar, const int *stochvars, 
-		 const int *detvars, int order, int omit, 
+compose_varlist (struct var_lists *vl, int depvar, int order, int omit, 
 		 const DATAINFO *pdinfo)
 {
-    int l0 = 1 + detvars[0] + order * stochvars[0];
-    int i, pos;
+    int l0 = 1 + vl->detvars[0] + order * vl->stochvars[0];
+    int i, j, pos;
     int err = 0;
 
     if (omit) {
 	l0 -= order;
     } 
 
-    list[0] = l0;
-    list[1] = depvar;
+    vl->reglist[0] = l0;
+    vl->reglist[1] = depvar;
 
     pos = 2;
-    for (i=1; i<=stochvars[0]; i++) {
+    for (i=1; i<=vl->stochvars[0]; i++) {
 	if (i != omit) {
-	    err = stoch_laglist(list, pos, stochvars[i], order, pdinfo);
-	    pos += order;
+	    /* insert order lags of the given var */
+	    for (j=1; j<=order; j++) {
+		vl->reglist[pos++] = vl->lagvlist[i-1][j];
+	    }
 	}
     }
 
-    for (i=1; i<=detvars[0]; i++) {
-	list[pos++] = detvars[i];
+    /* append the deterministic vars */
+    for (i=1; i<=vl->detvars[0]; i++) {
+	vl->reglist[pos++] = vl->detvars[i];
     }
 
 #if VAR_DEBUG
-    printlist(list, "composed VAR list");
+    printlist(vl->reglist, "composed VAR list");
 #endif
 
     return err;
@@ -963,7 +1003,7 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
 }
 
 static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
-			const int *stochvars, const int *detvars,
+			struct var_lists *vl,
 			double ***pZ, DATAINFO *pdinfo,
 			int order, int neqns, int i, int *k, 
 			int pause, PRN *prn)
@@ -971,7 +1011,8 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
     MODEL testmod;
     double F = NADBL;
     int robust = gretl_model_get_int(varmod, "robust");
-    int *shortlist = NULL, *outlist = NULL;
+    int depvar = vl->stochvars[i + 1];
+    int *outlist = NULL;
     int j, err = 0;
 
     if (robust) {
@@ -979,26 +1020,18 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	if (outlist == NULL) return E_ALLOC;
     }
 
-    shortlist = malloc((varmod->list[0] + 1) * sizeof *shortlist);
-    if (shortlist == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-    
     pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
 
     /* restrictions for all lags of specific variables */
     for (j=0; j<neqns; j++) {
-	compose_varlist(shortlist, stochvars[i + 1], 
-			stochvars, detvars,
-			order, j + 1, pdinfo);	
+	compose_varlist(vl, depvar, order, j + 1, pdinfo);	
 
 	if (robust) {
-	    gretl_list_diff(outlist, varmod->list, shortlist);
+	    gretl_list_diff(outlist, varmod->list, vl->reglist);
 	    F = robust_omit_F(outlist, varmod);
 	    if (na(F)) err = 1;
 	} else {
-	    testmod = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    err = testmod.errcode;
 	    if (!err) {
 		F = ((testmod.ess - varmod->ess) / order) / 
@@ -1009,7 +1042,8 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 
 	if (err) break;
 
-	pprintf(prn, _("All lags of %-8s "), pdinfo->varname[stochvars[j + 1]]);
+	pprintf(prn, _("All lags of %-8s "), 
+		pdinfo->varname[vl->stochvars[j + 1]]);
 	pprintf(prn, "F(%d, %d) = %10g  ", order, varmod->dfd, F);
 	pprintf(prn, "%s %g\n", _("p-value"), fdist(F, order, varmod->dfd));
 	if (var != NULL) {
@@ -1019,17 +1053,15 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
     }
     
     /* restrictions for last lag, all variables */
-    if (order > 1 && !err) {
-	compose_varlist(shortlist, stochvars[i + 1],
-			stochvars, detvars,
-			order - 1, 0, pdinfo);	
+    if (!err) {
+	compose_varlist(vl, depvar, order - 1, 0, pdinfo);	
 
 	if (robust) {
-	    gretl_list_diff(outlist, varmod->list, shortlist);
+	    gretl_list_diff(outlist, varmod->list, vl->reglist);
 	    F = robust_omit_F(outlist, varmod);
 	    if (na(F)) err = 1;
 	} else {
-	    testmod = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 #ifdef VAR_DEBUG
 	    printmodel(&testmod, pdinfo, OPT_NONE, prn);
 #endif
@@ -1058,9 +1090,6 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	takenotes(0);
     }
 
- bailout:
-
-    free(shortlist);
     if (outlist != NULL) {
 	free(outlist);
     }   
@@ -1091,11 +1120,9 @@ static int real_var (int order, const int *inlist,
 		     PRN *prn, gretlopt opts, char flags)
 {
     int i, k, neqns;
-    int *stochvars = NULL;
-    int *detvars = NULL;
-    int *varlist = NULL;
     int t1, t2, oldt1, oldt2;
     int missv = 0, misst = 0;
+    struct var_lists vlists;
     MODEL var_model;
     GRETL_VAR *var = NULL;
     int save = (flags & VAR_SAVE);
@@ -1111,21 +1138,22 @@ static int real_var (int order, const int *inlist,
     }
 
     err = organize_var_lists(inlist, (const double **) *pZ, pdinfo, 
-			     order, &detvars, &stochvars, &varlist);
+			     order, &vlists);
     if (err) {
 	return E_ALLOC;
     }
 
     /* generate the required lags */
-    if (real_list_laggenr(stochvars, pZ, pdinfo, order)) {
+    if (real_list_laggenr(vlists.stochvars, pZ, pdinfo, 
+			  order, vlists.lagvlist)) {
 	err = E_ALLOC;
 	goto var_bailout;
     }
 
-    neqns = stochvars[0];    
+    neqns = vlists.stochvars[0];    
 
     /* compose base VAR list (entry 1 will vary across equations) */
-    err = compose_varlist(varlist, stochvars[1], stochvars, detvars, 
+    err = compose_varlist(&vlists, vlists.stochvars[1], 
 			  order, 0, pdinfo);
     if (err) {
 	err = E_DATA;
@@ -1135,9 +1163,8 @@ static int real_var (int order, const int *inlist,
     /* sort out sample range */
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
-    varlist[1] = stochvars[1];
 
-    if ((missv = adjust_t1t2(NULL, varlist, &t1, &t2, 
+    if ((missv = adjust_t1t2(NULL, vlists.reglist, &t1, &t2, 
 			     (const double **) *pZ, &misst))) {
 	err = 1;
 	goto var_bailout;
@@ -1157,7 +1184,7 @@ static int real_var (int order, const int *inlist,
 	}
     } 
 
-    /* even in case of VAR_IMPULSE_RESPONSES this may be used */
+    /* play safe by initializing this model */
     gretl_model_init(&var_model);
 
     if (flags & VAR_PRINT_MODELS) {
@@ -1185,10 +1212,10 @@ static int real_var (int order, const int *inlist,
 	    pmod = &var_model;
 	}
 
-	varlist[1] = stochvars[i + 1];
-
 	/* run an OLS regression for the current dependent var */
-	*pmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
+	compose_varlist(&vlists, vlists.stochvars[i + 1], 
+			order, 0, pdinfo);
+	*pmod = lsq(vlists.reglist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 	pmod->aux = VAR;
 	pmod->ID = i + 1;
 
@@ -1214,8 +1241,8 @@ static int real_var (int order, const int *inlist,
 	    /* estimate equations for Johansen test */
 	    MODEL jmod;
 
-	    varlist[1] = resids->levels_list[i + 1]; 
-	    jmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
+	    vlists.reglist[1] = resids->levels_list[i + 1]; 
+	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 	    if (flags & VAR_PRINT_MODELS) {
 		jmod.aux = VAR;
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
@@ -1226,24 +1253,20 @@ static int real_var (int order, const int *inlist,
 	}
 
 	if (flags & VAR_DO_FTESTS) {
-	    var_F_tests(pmod, (save)? var : NULL,
-			stochvars, detvars,
+	    var_F_tests(pmod, (save)? var : NULL, &vlists,
 			pZ, pdinfo, order, neqns, 
 			i, &k, pause, prn);
 	}
 
-	if (1) { /* FIXME? */
+	if (pmod == &var_model) {
 	    clear_model(&var_model);
 	}
-
     }
     pputc(prn, '\n');
 
  var_bailout:
 
-    free(varlist);
-    free(stochvars);
-    free(detvars);
+    var_lists_free(&vlists);
 
     /* reset sample range to what it was before */
     pdinfo->t1 = oldt1;

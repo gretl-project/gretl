@@ -1664,7 +1664,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (PLAIN_FORMAT(prn->format) && 
-	pmod->ci != ARMA && pmod->ci != NLS) {
+	pmod->ci != ARMA && pmod->ci != NLS && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 
