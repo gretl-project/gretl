@@ -28,7 +28,8 @@
 
 #undef VPARM_DEBUG
 
-#define VPARM_MAX 6    /* max number of variance parameters */
+#define VPARM_MAX 6            /* max number of variance parameters */
+#define GARCH_PARAM_MAX 0.999
 
 double vparm_init[VPARM_MAX];
 
@@ -495,11 +496,11 @@ garchpar_from_armapar (const double *armapar, int q, int p)
     fprintf(stderr, "sum_ab = %#12.6g\n", sum_ab);
 #endif
 
-    if (sum_ab > 0.999999) {
+    if (sum_ab > GARCH_PARAM_MAX) {
 	for (i=1; i<=p+q; i++) {
-	    vparm_init[i] *= 0.999999 / sum_ab;
+	    vparm_init[i] *= GARCH_PARAM_MAX / sum_ab;
 	}
-	sum_ab = 0.999999;
+	sum_ab = GARCH_PARAM_MAX;
     }
 
     vparm_init[0] = armapar[0];
@@ -638,7 +639,7 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     MODEL model;
     int *list = NULL, *ols_list = NULL;
     double scale = 1.0;
-    int t, err, yno = 0;
+    int t, err, init_err, yno = 0;
 
     gretl_model_init(&model);
 
@@ -697,13 +698,13 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     /* default variance parameter initialization */
     vparm_init[0] = model.sigma * model.sigma;
     for (t=1; t<VPARM_MAX; t++) {
-	vparm_init[0] = 0.1;
+	vparm_init[t] = 0.1;
     }
 
     if (opt & OPT_A) {
 	/* "--arma-init": try initializing params via ARMA */
-	err = garch_init_by_arma(&model, list, scale, 
-				 pZ, pdinfo);
+	init_err = garch_init_by_arma(&model, list, scale, 
+				      pZ, pdinfo);
     }
 
     if (!err) {
