@@ -2,12 +2,11 @@
 # Copyright © 2002 Free Software Foundation, Inc.
 # Michel Robitaille <robitail@IRO.UMontreal.CA>, traducteur depuis/since 1996.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
-"POT-Creation-Date: 2003-10-03 18:50-0400\n"
-"PO-Revision-Date: 2003-10-03 19:00-0400\n"
+"POT-Creation-Date: 2003-10-03 20:15-0400\n"
+"PO-Revision-Date: 2003-10-03 20:33-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -335,8 +334,8 @@ msgstr "Nombre d'observations hors limite"
 msgid "space for comments"
 msgstr "espace pour commentaires"
 
-#: lib/src/dataio.c:969 lib/src/dataio.c:981 lib/src/dataio.c:2283
-#: lib/src/dataio.c:2624 lib/src/dbread.c:956 gui/session.c:532
+#: lib/src/dataio.c:969 lib/src/dataio.c:981 lib/src/dataio.c:2276
+#: lib/src/dataio.c:2617 lib/src/dbread.c:956 gui/session.c:532
 #: gui2/session.c:513
 #, c-format
 msgid "Couldn't open %s\n"
@@ -550,60 +549,46 @@ msgstr "   définitivement pas une année à 4 chiffres\n"
 msgid "Data frequency does not match\n"
 msgstr "La fréquence des données ne concorde pas\n"
 
-#: lib/src/dataio.c:1981
-#, c-format
-msgid "Observation ranges overlap with offset %d\n"
-msgstr ""
-
-#: lib/src/dataio.c:1983
-msgid "Observation ranges do not overlap\n"
-msgstr ""
-
-#: lib/src/dataio.c:1987
-#, fuzzy, c-format
-msgid "Number of common variables = %d\n"
-msgstr "   nombre de variables: %d\n"
-
-#: lib/src/dataio.c:1991
+#: lib/src/dataio.c:1984
 msgid "New data not conformable for appending\n"
 msgstr "Nouvelles données non compatibles pour un ajout\n"
 
-#: lib/src/dataio.c:2008
+#: lib/src/dataio.c:2001
 msgid "Starting point of new data does not fit\n"
 msgstr "Le point de départ des nouvelles données ne correspond pas\n"
 
-#: lib/src/dataio.c:2012
+#: lib/src/dataio.c:2005
 msgid "Inconsistency in observation markers\n"
 msgstr "Inconsistence dans les marqueurs d'observation\n"
 
-#: lib/src/dataio.c:2025 lib/src/dataio.c:2085
+#: lib/src/dataio.c:2018 lib/src/dataio.c:2078
 msgid "Out of memory adding data\n"
 msgstr "Mémoire épuisée pour l'ajout de données\n"
 
-#: lib/src/dataio.c:2094
+#: lib/src/dataio.c:2087
 msgid "Data appended OK\n"
 msgstr "Ajout de données complété\n"
 
-#: lib/src/dataio.c:2128
+#: lib/src/dataio.c:2121
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
 msgstr ""
 "Données binaires (%d) rencontrées: cela n'est pas un fichier texte vallide\n"
 
-#: lib/src/dataio.c:2142
+#: lib/src/dataio.c:2135
 msgid "Data file is empty\n"
 msgstr "Le fichier de données est vide\n"
 
-#: lib/src/dataio.c:2205
+#: lib/src/dataio.c:2198
 #, c-format
 msgid "   first field: '%s'\n"
 msgstr "   premier champ: « %s »\n"
 
-#: lib/src/dataio.c:2209
+#: lib/src/dataio.c:2202
 msgid "   seems to be observation label\n"
 msgstr "   semble être une étiquette d'observation\n"
 
-#: lib/src/dataio.c:2227
+#: lib/src/dataio.c:2220
 #, c-format
 msgid ""
 "   the cell for variable %d, obs %d is empty: treating as missing value\n"
@@ -611,13 +596,13 @@ msgstr ""
 "   la cellule de la variable %d, observation %d est vide: sera traité comme "
 "valeur manquante\n"
 
-#: lib/src/dataio.c:2234
+#: lib/src/dataio.c:2227
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr ""
 "   AVERTISSEMENT: valeur manquante pour la variable %d, observation %d\n"
 
-#: lib/src/dataio.c:2267
+#: lib/src/dataio.c:2260
 msgid ""
 "\n"
 "Please note:\n"
@@ -637,74 +622,74 @@ msgstr ""
 "- Le reste du fichier doit être un tableau ou une matrice rectangulaire de "
 "données.\n"
 
-#: lib/src/dataio.c:2290 lib/src/dataio.c:2313 lib/src/dataio.c:2366
-#: lib/src/dataio.c:2373 lib/src/dataio.c:2630 cli/common.c:243
+#: lib/src/dataio.c:2283 lib/src/dataio.c:2306 lib/src/dataio.c:2359
+#: lib/src/dataio.c:2366 lib/src/dataio.c:2623 cli/common.c:243
 #: plugin/excel_import.c:828 plugin/gnumeric_import.c:522
 msgid "Out of memory\n"
 msgstr "Mémoire épuisée\n"
 
-#: lib/src/dataio.c:2295 lib/src/dataio.c:2634
+#: lib/src/dataio.c:2288 lib/src/dataio.c:2627
 msgid "parsing"
 msgstr "analyse"
 
-#: lib/src/dataio.c:2307
+#: lib/src/dataio.c:2300
 #, c-format
 msgid "using delimiter '%c'\n"
 msgstr "utilisant le délimiteur « %c »\n"
 
-#: lib/src/dataio.c:2308
+#: lib/src/dataio.c:2301
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr "   ligne la plus longue: %d caractères\n"
 
-#: lib/src/dataio.c:2336
+#: lib/src/dataio.c:2329
 #, c-format
 msgid "   number of columns = %d\n"
 msgstr "   nombre de colonnes = %d\n"
 
-#: lib/src/dataio.c:2339
+#: lib/src/dataio.c:2332
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
 msgstr "   ...mais la rangée %d a %d champs: abandon\n"
 
-#: lib/src/dataio.c:2351
+#: lib/src/dataio.c:2344
 #, c-format
 msgid "   number of variables: %d\n"
 msgstr "   nombre de variables: %d\n"
 
-#: lib/src/dataio.c:2352
+#: lib/src/dataio.c:2345
 #, c-format
 msgid "   number of non-blank lines: %d\n"
 msgstr "   nombre de lignes non vides: %d\n"
 
-#: lib/src/dataio.c:2360
+#: lib/src/dataio.c:2353
 msgid "Invalid data file\n"
 msgstr "Fichier de données invalide\n"
 
-#: lib/src/dataio.c:2385
+#: lib/src/dataio.c:2378
 msgid "scanning for variable names...\n"
 msgstr "recherche des noms de variables...\n"
 
-#: lib/src/dataio.c:2396
+#: lib/src/dataio.c:2389
 #, c-format
 msgid "   line: %s\n"
 msgstr "   ligne: %s\n"
 
-#: lib/src/dataio.c:2414
+#: lib/src/dataio.c:2407
 #, c-format
 msgid "   variable name %d is missing: aborting\n"
 msgstr "   le nom de variable %d est manquant: abandon\n"
 
-#: lib/src/dataio.c:2433
+#: lib/src/dataio.c:2426
 msgid "scanning for row labels and data...\n"
 msgstr "recherche des étiquettes de rangée et des données...\n"
 
-#: lib/src/dataio.c:2450
+#: lib/src/dataio.c:2443
 #, c-format
 msgid "warning: truncating data at row %d, column %d\n"
 msgstr "AVERTISSEMENT: troncation de données à la rangée %d, colonne %d\n"
 
-#: lib/src/dataio.c:2481
+#: lib/src/dataio.c:2474
 msgid ""
 "taking date information from row labels\n"
 "\n"
@@ -712,7 +697,7 @@ msgstr ""
 "prise des informations de date à partir des étiquettes de rangées\n"
 "\n"
 
-#: lib/src/dataio.c:2483
+#: lib/src/dataio.c:2476
 msgid ""
 "treating these as undated data\n"
 "\n"
@@ -720,235 +705,235 @@ msgstr ""
 "traitement de ceux-ci comme des données sans date\n"
 "\n"
 
-#: lib/src/dataio.c:2643
+#: lib/src/dataio.c:2636
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid BOX1 file\n"
 msgstr ""
 "Données binaires (%d) rencontrées: cela n'est pas vallide dans un fichier "
 "BOX1\n"
 
-#: lib/src/dataio.c:2665
+#: lib/src/dataio.c:2658
 #, c-format
 msgid "   found %d variables\n"
 msgstr "   %d variables repérées\n"
 
-#: lib/src/dataio.c:2666
+#: lib/src/dataio.c:2659
 #, c-format
 msgid "   found %d observations\n"
 msgstr "   %d observations repérées\n"
 
-#: lib/src/dataio.c:2667
+#: lib/src/dataio.c:2660
 #, c-format
 msgid "   longest line = %d characters\n"
 msgstr "   ligne la plus longue = %d caractères\n"
 
-#: lib/src/dataio.c:2671
+#: lib/src/dataio.c:2664
 msgid "allocating memory for data... "
 msgstr "allocation de mémoire pour les données... "
 
-#: lib/src/dataio.c:2679
+#: lib/src/dataio.c:2672
 msgid "done\n"
 msgstr "complété\n"
 
-#: lib/src/dataio.c:2683
+#: lib/src/dataio.c:2676
 msgid "reading variable information...\n"
 msgstr "lecture de l'information de la variable...\n"
 
-#: lib/src/dataio.c:2707
+#: lib/src/dataio.c:2700
 #, c-format
 msgid " variable %d: '%s'\n"
 msgstr " variable %d: « %s »\n"
 
-#: lib/src/dataio.c:2711
+#: lib/src/dataio.c:2704
 msgid "   Non-numeric data: will be skipped\n"
 msgstr "   Données non numériques: seront escamotées\n"
 
-#: lib/src/dataio.c:2721
+#: lib/src/dataio.c:2714
 #, c-format
 msgid "   starting col. %d, "
 msgstr "   débute à la colonne %d, "
 
-#: lib/src/dataio.c:2725
+#: lib/src/dataio.c:2718
 #, c-format
 msgid "field width %d, "
 msgstr "largeur de champ %d, "
 
-#: lib/src/dataio.c:2728
+#: lib/src/dataio.c:2721
 #, c-format
 msgid "decimal places %d\n"
 msgstr "nombre de décimales %d\n"
 
-#: lib/src/dataio.c:2734
+#: lib/src/dataio.c:2727
 #, c-format
 msgid "   Warning: coded variable (format '%s' in BOX file)\n"
 msgstr "   AVERTISSEMENT: variable codée (format « %s » dans le fichier BOX)\n"
 
-#: lib/src/dataio.c:2739
+#: lib/src/dataio.c:2732
 #, c-format
 msgid "   definition: '%s'\n"
 msgstr "   définition: « %s »\n"
 
-#: lib/src/dataio.c:2761
+#: lib/src/dataio.c:2754
 #, c-format
 msgid "'%s' -- no numeric conversion performed!\n"
 msgstr "« %s » -- aucune conversion numérique exécutée!\n"
 
-#: lib/src/dataio.c:2767
+#: lib/src/dataio.c:2760
 #, c-format
 msgid "Extraneous character '%c' in data\n"
 msgstr "Caractère superflu « %c » dans la donnée\n"
 
-#: lib/src/dataio.c:2770
+#: lib/src/dataio.c:2763
 #, c-format
 msgid "Extraneous character (0x%x) in data\n"
 msgstr "Caractère superflu (0x%x) dans la donnée\n"
 
-#: lib/src/dataio.c:2775
+#: lib/src/dataio.c:2768
 #, c-format
 msgid "'%s' -- number out of range!\n"
 msgstr "« %s » -- nombre hors limite!\n"
 
-#: lib/src/dataio.c:2796
+#: lib/src/dataio.c:2789
 msgid "done reading data\n"
 msgstr "lecture des données complétée\n"
 
-#: lib/src/dataio.c:2807
+#: lib/src/dataio.c:2800
 #, c-format
 msgid "Warning: discarded %d non-numeric variable(s)\n"
 msgstr "AVERTISSEMENT: %d variable(s) non numérique(s) écartée(s)\n"
 
-#: lib/src/dataio.c:2974
+#: lib/src/dataio.c:2967
 msgid "box file seems to be malformed\n"
 msgstr "Le fichier BOX semble être mal structuré\n"
 
-#: lib/src/dataio.c:3042 gui/boxplots.c:1128 gui/database.c:1272
+#: lib/src/dataio.c:3035 gui/boxplots.c:1128 gui/database.c:1272
 #: gui2/boxplots.c:1282 gui2/database.c:1282
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Ne peut ouvrir %s en écriture"
 
-#: lib/src/dataio.c:3048 gui/database.c:383 gui/library.c:1290
+#: lib/src/dataio.c:3041 gui/database.c:383 gui/library.c:1290
 #: gui/library.c:1924 gui/library.c:1994 gui2/database.c:387
 #: gui2/library.c:1246 gui2/library.c:1881 gui2/library.c:1951
 msgid "Out of memory"
 msgstr "Mémoire épuisée"
 
-#: lib/src/dataio.c:3054
+#: lib/src/dataio.c:3047
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
 msgstr "Écriture de %ld Koctets de données\n"
 
-#: lib/src/dataio.c:3284
+#: lib/src/dataio.c:3277
 msgid "Failed to parse count of variables"
 msgstr "Échec d'analyse du nombre de variables"
 
-#: lib/src/dataio.c:3288 lib/src/dataio.c:3294
+#: lib/src/dataio.c:3281 lib/src/dataio.c:3287
 msgid "Out of memory reading data file"
 msgstr "Lecture du fichier de données hors mémoire"
 
-#: lib/src/dataio.c:3302 lib/src/dataio.c:3312
+#: lib/src/dataio.c:3295 lib/src/dataio.c:3305
 msgid "Got no variables"
 msgstr "Aucune variable obtenue"
 
-#: lib/src/dataio.c:3325
+#: lib/src/dataio.c:3318
 #, c-format
 msgid "Variable %d has no name"
 msgstr "La variable %d n'a pas de nom"
 
-#: lib/src/dataio.c:3367
+#: lib/src/dataio.c:3360
 msgid "Number of variables does not match declaration"
 msgstr "Le nombre de variable ne concorde pas avec la déclaration"
 
-#: lib/src/dataio.c:3383
+#: lib/src/dataio.c:3376
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr "Échec d'analyse des valeurs de données de l'observation %d"
 
-#: lib/src/dataio.c:3420
+#: lib/src/dataio.c:3413
 msgid "Failed to parse number of observations"
 msgstr "Échec d'analyse du nombre d'observations"
 
-#: lib/src/dataio.c:3436
+#: lib/src/dataio.c:3429
 msgid "labels attribute for observations must be 'true' or 'false'"
 msgstr ""
 "un attribut d'étiquettes pour les observations doit être 'true' ou 'false'"
 
-#: lib/src/dataio.c:3463
+#: lib/src/dataio.c:3456
 msgid "Got no observations\n"
 msgstr "Aucune observation obtenue\n"
 
-#: lib/src/dataio.c:3479
+#: lib/src/dataio.c:3472
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr "Marqueur du cas manquant pour l'observation %d"
 
-#: lib/src/dataio.c:3490
+#: lib/src/dataio.c:3483
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "Valeurs manquantes à l'observation %d"
 
-#: lib/src/dataio.c:3505
+#: lib/src/dataio.c:3498
 msgid "Number of observations does not match declaration"
 msgstr "Le nombre d'observations ne concorde pas avec la déclaration"
 
-#: lib/src/dataio.c:3571
+#: lib/src/dataio.c:3564
 msgid "Uncompressing"
 msgstr "Décompression"
 
-#: lib/src/dataio.c:3571
+#: lib/src/dataio.c:3564
 msgid "Reading"
 msgstr "Lecture"
 
-#: lib/src/dataio.c:3572
+#: lib/src/dataio.c:3565
 msgid "of data"
 msgstr "de données"
 
-#: lib/src/dataio.c:3578 lib/src/dataio.c:3767 plugin/gnumeric_import.c:315
+#: lib/src/dataio.c:3571 lib/src/dataio.c:3760 plugin/gnumeric_import.c:315
 #: plugin/gnumeric_import.c:418
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "échec de xmlParseFile sur %s"
 
-#: lib/src/dataio.c:3587 lib/src/dataio.c:3773 plugin/gnumeric_import.c:321
+#: lib/src/dataio.c:3580 lib/src/dataio.c:3766 plugin/gnumeric_import.c:321
 #: plugin/gnumeric_import.c:424
 #, c-format
 msgid "%s: empty document"
 msgstr "%s: document vide"
 
-#: lib/src/dataio.c:3593 lib/src/dataio.c:3779
+#: lib/src/dataio.c:3586 lib/src/dataio.c:3772
 msgid "File of the wrong type, root node not gretldata"
 msgstr ""
 "Type de fichier erroné, le noeud de la racine n'est pas de type gretldata"
 
-#: lib/src/dataio.c:3602
+#: lib/src/dataio.c:3595
 msgid "Required attribute 'type' is missing from data file"
 msgstr "L'attribut requis 'type' est manquant dans le fichier de données"
 
-#: lib/src/dataio.c:3614
+#: lib/src/dataio.c:3607
 msgid "Unrecognized type attribute for data file"
 msgstr "Type d'attribut non reconnu pour le fichier de données"
 
-#: lib/src/dataio.c:3628
+#: lib/src/dataio.c:3621
 msgid "Failed to parse data frequency"
 msgstr "Échec d'analyse des fréquences de données"
 
-#: lib/src/dataio.c:3658
+#: lib/src/dataio.c:3651
 msgid "Failed to parse startobs"
 msgstr "Échec d'analyse de startobs"
 
-#: lib/src/dataio.c:3680
+#: lib/src/dataio.c:3673
 msgid "Failed to parse endobs"
 msgstr "Échec d'analyse de endobs"
 
-#: lib/src/dataio.c:3704 lib/src/dataio.c:3726
+#: lib/src/dataio.c:3697 lib/src/dataio.c:3719
 msgid "Variables information is missing"
 msgstr "L'information sur les variables est manquante"
 
-#: lib/src/dataio.c:3730
+#: lib/src/dataio.c:3723
 msgid "No observations were found"
 msgstr "Aucun observation n'a été trouvée"
 
-#: lib/src/dataio.c:3736
+#: lib/src/dataio.c:3729
 #, c-format
 msgid ""
 "\n"
@@ -957,7 +942,7 @@ msgstr ""
 "\n"
 "Lecture du fichier de données %s\n"
 
-#: lib/src/dataio.c:3737
+#: lib/src/dataio.c:3730
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d, observations range: %s-%s\n"
@@ -2431,7 +2416,7 @@ msgstr "Ecriture de la sortie a '%s'\n"
 #: lib/src/interact.c:1428
 #, c-format
 msgid "Now appending output to '%s'\n"
-msgstr ""
+msgstr "Ecriture de la sortie a '%s'\n"
 
 #: lib/src/interact.c:1495
 msgid "adf: lag order must be given first\n"
@@ -5360,7 +5345,7 @@ msgstr "/Editer/Copy _tout"
 
 #: gui/console.c:87 gui2/console.c:90
 msgid "Closing redirected output file"
-msgstr ""
+msgstr "Fichier fermé"
 
 #: gui/console.c:228 gui2/console.c:240
 msgid ""
@@ -5993,7 +5978,7 @@ msgstr "OK"
 #: gui/dialogs.c:1175 gui/dialogs.c:1180 gui2/dialogs.c:1274
 #: gui2/dialogs.c:1279
 msgid "not set"
-msgstr "non itiliasé"
+msgstr "non initialisé"
 
 #: gui/dialogs.c:1176 gui2/dialogs.c:1275
 msgid "average of observations"
@@ -7273,7 +7258,7 @@ msgstr "ID #"
 
 #: gui/gretl.c:1181 gui2/gretl.c:1368
 msgid "Variable name"
-msgstr "Nom de variables"
+msgstr "Nom de variable"
 
 #: gui/gretl.c:1182 gui2/gretl.c:1369
 msgid "Descriptive label"
@@ -9627,6 +9612,8 @@ msgid ""
 "You seem to be using gretl for the first time.\n"
 "Please enter a directory for gretl user files."
 msgstr ""
+"Vous semblez employer gretl pour la première fois.\n"
+"Veuillez choisir un répertoire de l'usager."
 
 #: gui/ssheet.c:45 gui2/ssheet.c:54
 msgid "/_Observation"
@@ -10892,6 +10879,12 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #: plugin/workbook.c:663
 msgid "Unexpected error reading the file"
 msgstr "Erreur inattendue durant la lecture du fichier"
+
+#~ msgid "Observation ranges do not overlap\n"
+#~ msgstr "Les échantillons ne recouvrent pas\n"
+
+#~ msgid "Number of common variables = %d\n"
+#~ msgstr "Nombre de variables en commun = %d\n"
 
 #~ msgid "Starting observation does not match"
 #~ msgstr "Le début des observations ne concorde pas"

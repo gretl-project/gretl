@@ -1977,14 +1977,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	match_obs = new_data_offset_ok(pdinfo, addinfo, &offset);
-	if (match_obs) {
-	    pprintf(prn, _("Observation ranges overlap with offset %d\n"), offset);
-	} else {
-	    pputs(prn, _("Observation ranges do not overlap\n"));
-	}
-
 	match_vars = var_overlap(pdinfo, addinfo);
-	pprintf(prn, _("Number of common variables = %d\n"), match_vars);
     }
 
     if (!err && !match_obs && !match_vars) {
