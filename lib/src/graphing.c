@@ -1427,6 +1427,44 @@ int gnuplot_3d (int *list, const char *literal,
     return 0;
 }
 
+static void print_freq_test_label (char *s, const char *format, 
+				   double v, double pv)
+{
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+    sprintf(s, format, v, pv);
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+}
+
+static void print_freq_dist_label (char *s, int dist, double x, double y)
+{
+    int dcomma = 0;
+#ifdef ENABLE_NLS
+    char test[8];
+
+    setlocale(LC_NUMERIC, "");
+    sprintf(test, "%g", 0.5);
+    if (strchr(test, ',')) {
+	dcomma = 1;
+    }
+#endif
+
+    if (dist == NORMAL) {
+	sprintf(s, "N(%.5g%c%.5g)", x, 
+		((dcomma)? ' ' : ','), y);
+    } else if (dist == GAMMA) {
+	sprintf(s, "gamma(%.5g%c%.5g)", x, 
+		((dcomma)? ' ' : ','), y);
+    }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+}
+
 /**
  * plot_freq:
  * @freq: frequency distribution struct.
@@ -1444,6 +1482,7 @@ int plot_freq (FREQDIST *freq, int dist)
     FILE *fp = NULL;
     int i, K = freq->numbins;
     char withstr[16] = {0};
+    char label[80] = {0};
     double plotmin = 0.0, plotmax = 0.0;
     double barwidth, barskip;
     int plottype = PLOT_FREQ_SIMPLE;
@@ -1478,7 +1517,6 @@ int plot_freq (FREQDIST *freq, int dist)
     fputs("# frequency plot ", fp);
 
     if (dist) {
-	char testlbl[80];
 	double propn;
 
 	/* find the endpts that straddle the mean... */
@@ -1514,10 +1552,10 @@ int plot_freq (FREQDIST *freq, int dist)
 		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
 			I_("Test statistic for normality"),
 			label_front());
-		sprintf(testlbl, I_("Chi-squared(2) = %.3f, pvalue %.5f"), 
-			freq->test, chisq(freq->test, 2));
+		print_freq_test_label(label, I_("Chi-squared(2) = %.3f pvalue = %.5f"), 
+				      freq->test, chisq(freq->test, 2));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
-			testlbl, label_front());
+			label, label_front());
 	    }	
 	} else if (dist == GAMMA) {
 	    double xx, height, var = freq->sdx * freq->sdx;
@@ -1544,10 +1582,10 @@ int plot_freq (FREQDIST *freq, int dist)
 		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
 			I_("Test statistic for gamma"),
 			label_front());
-		sprintf(testlbl, I_("z = %.3f, pvalue %.5f"), 
-			freq->test, 2.0 * normal(fabs(freq->test)));
+		print_freq_test_label(label, I_("z = %.3f pvalue = %.5f"), 
+				      freq->test, 2.0 * normal(fabs(freq->test)));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
-			testlbl, label_front());
+			label, label_front());
 	    }	
 	}
 
@@ -1594,17 +1632,19 @@ int plot_freq (FREQDIST *freq, int dist)
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:($2) %s\n", withstr);
     } else if (dist == NORMAL) {
+	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s , \\\n"
 		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
-		"title 'N(%.5g,%.5g)' w lines\n",
-		freq->varname, withstr, freq->xbar, freq->sdx);
+		"title '%s' w lines\n",
+		freq->varname, withstr, label);
     } else if (dist == GAMMA) {
+	print_freq_dist_label(label, dist, alpha, beta);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
-		"title 'gamma(%.5g,%.5g)' w lines\n",
-		freq->varname, withstr, alpha, beta); 
+		"title '%s' w lines\n",
+		freq->varname, withstr, label); 
     }
 
     for (i=0; i<K; i++) { 
@@ -1869,6 +1909,40 @@ gp_string (FILE *fp, const char *fmt, const char *s, int png)
 #endif
 }
 
+const char *gp_justification_string (int j)
+{
+    if (j == GP_JUST_LEFT) return "left";
+    else if (j == GP_JUST_CENTER) return "center";
+    else if (j == GP_JUST_RIGHT) return "right";
+    else return "left";
+}
+
+static void 
+print_plot_labelspec (const GPT_LABEL *lbl, int png, FILE *fp)
+{
+    char *label = escape_quotes(lbl->text);
+
+    gp_string(fp, "set label \"%s\" ", (label != NULL)? 
+	      label : lbl->text, png);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    fprintf(fp, "at %g,%g %s%s\n", 
+	    lbl->pos[0], lbl->pos[1],
+	    gp_justification_string(lbl->just),
+	    label_front());
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    if (label != NULL) {
+	free(label);
+    }
+}
+
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t, datlines;
@@ -1901,17 +1975,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	if (!string_is_blank(spec->text_labels[i].text)) {
-	    char *label = escape_quotes(spec->text_labels[i].text);
-
-	    gp_string(fp, "set label \"%s\" ", (label != NULL)? 
-		      label : spec->text_labels[i].text, png);
-	    fprintf(fp, "at %s %s%s\n", 
-		    spec->text_labels[i].pos,
-		    spec->text_labels[i].just,
-		    label_front());
-	    if (label != NULL) {
-		free(label);
-	    }
+	    print_plot_labelspec(&(spec->text_labels[i]), png, fp);
 	}
     }
 
@@ -1925,11 +1989,25 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }
 
     k = (spec->flags & GPTSPEC_Y2AXIS)? 3 : 2;
+
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     for (i=0; i<k; i++) {
-	fprintf(fp, "set %srange [%s:%s]\n",
+	if (na(spec->range[i][0]) || na(spec->range[i][1]) ||
+	    spec->range[i][0] == spec->range[i][1]) {
+	    continue;
+	}
+	fprintf(fp, "set %srange [%.7g:%.7g]\n",
 		(i == 0)? "x" : (i == 1)? "y" : "y2",
 		spec->range[i][0], spec->range[i][1]);
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     /* customized xtics? */
     if (!string_is_blank(spec->xtics)) {
@@ -2044,6 +2122,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
+
     miss = 0;
     plotn = spec->t2 - spec->t1 + 1;
     for (i=1; i<=datlines; i++) {  
@@ -2069,6 +2148,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	}
 	fputs("e\n", fp);
     }
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif

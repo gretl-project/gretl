@@ -199,9 +199,8 @@ void set_plot_has_y2_axis (png_plot *plot, gboolean s)
 
 void plot_label_position_click (GtkWidget *w, GPT_SPEC *spec)
 {
-    png_plot *plot;
+    png_plot *plot = (png_plot *) spec->ptr;
 
-    plot = (png_plot *) spec->ptr;
     if (plot != NULL) {
 	GtkWidget *entry;
 	GdkCursor* cursor;
@@ -653,8 +652,9 @@ static GPT_SPEC *plotspec_new (void)
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	strcpy(spec->text_labels[i].text, "");
-	strcpy(spec->text_labels[i].just, "left");
-	strcpy(spec->text_labels[i].pos, "0,0");
+	spec->text_labels[i].just = GP_JUST_LEFT;
+	spec->text_labels[i].pos[0] = NADBL;
+	spec->text_labels[i].pos[1] = NADBL;
     }
 
     spec->xtics[0] = 0;
@@ -663,8 +663,8 @@ static GPT_SPEC *plotspec_new (void)
     strcpy(spec->keyspec, "left top");
 
     for (i=0; i<3; i++) {
-	strcpy(spec->range[i][0], "*");
-	strcpy(spec->range[i][1], "*");
+	spec->range[i][0] = NADBL;
+	spec->range[i][1] = NADBL;
     }
 
     spec->code = PLOT_REGULAR;
@@ -685,22 +685,34 @@ static GPT_SPEC *plotspec_new (void)
 
 /* ........................................................... */
 
+static void plot_label_init (GPT_LABEL *lbl)
+{
+    lbl->text[0] = '\0';
+    lbl->just = GP_JUST_LEFT;
+    lbl->pos[0] = NADBL;
+    lbl->pos[1] = NADBL;
+}
+
 static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 {
     const char *p, *s;
-    int n, x, y;
+    double x, y;
     char coord[8];
+    int n;
 
     /* e.g. set label 'foobar' at [ screen | graph ] 1500,350 left */
 
-    if (i >= MAX_PLOT_LABELS) return 1;
+    if (i >= MAX_PLOT_LABELS) {
+	return 1;
+    }
 
-    strcpy(spec->text_labels[i].text, "");
-    strcpy(spec->text_labels[i].pos, "");
-    strcpy(spec->text_labels[i].just, "");
+    plot_label_init(&(spec->text_labels[i]));
 
     p = strstr(line, "'");
-    if (p == NULL) return 1;
+    if (p == NULL) {
+	return 1;
+    }
+
     p++;
     s = p;
 
@@ -721,9 +733,10 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
     /* get the position */
     p = strstr(s, "at");
     if (p == NULL) {
-	strcpy(spec->text_labels[i].text, "");
+	spec->text_labels[i].text[0] = '\0';
 	return 1;
     }
+
     p += 2;
 
     /* coordinate system? */
@@ -741,22 +754,33 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
     }
 
     /* actual coordinates */
-    n = sscanf(p, "%d,%d", &x, &y);
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+    n = sscanf(p, "%lf,%lf", &x, &y);
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
     if (n != 2) {
-	strcpy(spec->text_labels[i].text, "");
+	spec->text_labels[i].text[0] = '\0';
 	return 1;
     }
-    sprintf(spec->text_labels[i].pos, "%s%d,%d", coord, x, y);
+
+    spec->text_labels[i].pos[0] = x;
+    spec->text_labels[i].pos[1] = y;
+
+    /* FIXME: handle coord? */
 
     /* justification */
     if (strstr(p, "left")) {
-	strcpy(spec->text_labels[i].just, "left");
+	spec->text_labels[i].just = GP_JUST_LEFT;
     } else if (strstr(p, "right")) {
-	strcpy(spec->text_labels[i].just, "right");
+	spec->text_labels[i].just = GP_JUST_RIGHT;
     } else if (strstr(p, "center")) {
-	strcpy(spec->text_labels[i].just, "center");
+	spec->text_labels[i].just = GP_JUST_CENTER;
     } else {
-	strcpy(spec->text_labels[i].just, "left");
+	spec->text_labels[i].just = GP_JUST_LEFT;
     }	
 
     return 0;
@@ -765,7 +789,7 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 /* ........................................................... */
 
 static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
-			      int *i, int *labelno)
+			      int *labelno)
 {
     char set_thing[16], setting[MAXLEN];
     size_t n;
@@ -793,17 +817,37 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
     top_n_tail(setting);
 
     if (strstr(set_thing, "range")) {
-	char r0[16], r1[16];
+	double r0, r1;
+	int i = 0, err = 0;
 
-	if (sscanf(setting, "[%15[^:]:%15[^]]", r0, r1) != 2) {
+	if (!strcmp(set_thing, "xrange")) {
+	    i = 0;
+	} else if (!strcmp(set_thing, "yrange")) {
+	    i = 1;
+	} else if (!strcmp(set_thing, "y2range")) {
+	    i = 2;
+	} else {
+	    err = 1;
+	}
+
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "C");
+#endif
+	if (!err && sscanf(setting, "[%lf:%lf]", &r0, &r1) != 2) {
+	    err = 1;
+	}
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
+
+	if (err) {
 	    errbox(_("Failed to parse gnuplot file"));
 	    fprintf(stderr, "plotfile line: '%s'\n", line);
 	    return 1;
-	}
+	} 
 
-	strcpy(spec->range[*i][0], r0);
-	strcpy(spec->range[*i][1], r1);
-	*i += 1;
+	spec->range[i][0] = r0;
+	spec->range[i][1] = r1;
     } else if (strcmp(set_thing, "title") == 0) {
 	strcpy(spec->titles[0], setting);
     } else if (strcmp(set_thing, "xlabel") == 0) {
@@ -893,7 +937,7 @@ static int get_plot_n (FILE *fp, int *got_labels)
 
 static int read_plotspec_from_file (GPT_SPEC *spec)
 {
-    int i, j, t, n, plot_n, done, labelno;
+    int i, t, n, plot_n, done, labelno;
     int got_labels = 0;
     char line[MAXLEN], *got = NULL, *p = NULL;
     double *tmpy = NULL;
@@ -918,10 +962,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	fclose(fp);
 	return 1;
     }
+
     rewind(fp);
 
     /* get the preamble and "set" lines */
-    i = 0;
     labelno = 0;
     while ((got = fgets(line, MAXLEN - 1, fp))) {
 	if (cant_edit(line)) {
@@ -947,18 +991,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    }
 	    if (spec->code != PLOT_FREQ_SIMPLE) {
 		/* grab special plot lines */
-		for (j=0; j<4; j++) {
-		    spec->literal[j] = mymalloc(MAXLEN);
-		    if (spec->literal[j] == NULL) {
+		for (i=0; i<4; i++) {
+		    spec->literal[i] = mymalloc(MAXLEN);
+		    if (spec->literal[i] == NULL) {
 			return 1;
 		    }
-		    if (!fgets(spec->literal[j], MAXLEN - 1, fp)) {
+		    if (!fgets(spec->literal[i], MAXLEN - 1, fp)) {
 			errbox(_("Plot file is corrupted"));
-			free(spec->literal[j]);
-			spec->literal[j] = NULL;
+			free(spec->literal[i]);
+			spec->literal[i] = NULL;
 			goto plot_bailout;
 		    }
-		    top_n_tail(spec->literal[j]);
+		    top_n_tail(spec->literal[i]);
 		}
 	    }
 	    continue;
@@ -972,15 +1016,17 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    continue;
 	}
 
-	/* ignore an unknown comment line */
 	if (strncmp(line, "# ", 2) == 0) {
+	    /* ignore an unknown comment line */
 	    continue;
 	}
 
 	if (strncmp(line, "set ", 4)) {
+	    /* done reading "set" lines */
 	    break;
 	}
-	if (parse_gp_set_line(spec, line, &i, &labelno)) {
+
+	if (parse_gp_set_line(spec, line, &labelno)) {
 	    goto plot_bailout;
 	}
     }
@@ -1098,20 +1144,20 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 
     /* Below: read the data from the plot.  There may be more
        than one y series. */
-    j = 1;
+    i = 1;
     t = 0;
     n = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (line[0] == 'e') {
 	    n = t;
 	    t = 0;
-	    j++;
+	    i++;
 	    continue;
 	}
 	if (strncmp(line, "pause", 5) == 0) {
 	    break;
 	}
-	if (j == 1) { 
+	if (i == 1) { 
 	    /* first set: read both x and y (and label?) */ 
 	    get_gpt_data(line, &(spec->data[t]), &(tmpy[t]));
 	    if (got_labels) {
@@ -1119,12 +1165,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    }
 	} else {      
 	    /* any subsequent sets: read y only */ 
-	    get_gpt_data(line, NULL, &(spec->data[j*n + t]));
+	    get_gpt_data(line, NULL, &(spec->data[i * n + t]));
 	}
 	t++;
     }
 
-    spec->n_y_series = j - 1;
+    spec->n_y_series = i - 1;
 
     /* put "tmpy" in as last data column */
     for (t=0; t<n; t++) {
@@ -1941,13 +1987,7 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 	    if (get_data_xy(plot, event->x, event->y, &dx, &dy)) {
 		gchar *posstr;
 
-#ifdef ENABLE_NLS
-		setlocale(LC_NUMERIC, "C");
-#endif
-		posstr = g_strdup_printf("%g,%g", dx, dy);
-#ifdef ENABLE_NLS
-		setlocale(LC_NUMERIC, "");
-#endif
+		posstr = g_strdup_printf("%g %g", dx, dy);
 		gtk_entry_set_text(GTK_ENTRY(plot->labelpos_entry), posstr);
 		g_free(posstr);
 	    }

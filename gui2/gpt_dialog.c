@@ -64,6 +64,7 @@ GtkWidget *filesavebutton;
 struct gpt_range_t axis_range[MAX_AXES];
 
 #define NTITLES 4
+#define PLOT_LABEL_POS_LEN 32
 
 struct gpt_titles_t gpt_titles[] = {
     { N_("Title of plot"),  0, NULL },
@@ -71,12 +72,6 @@ struct gpt_titles_t gpt_titles[] = {
     { N_("Title for axis"), 2, NULL },
     { N_("Title for axis"), 3, NULL },
 };
-
-enum {
-    JUST_LEFT,
-    JUST_CENTER,
-    JUST_RIGHT
-} just_codes;
 
 #define frequency_plot(s)       (s->code == PLOT_FREQ_SIMPLE || \
 			         s->code == PLOT_FREQ_NORMAL || \
@@ -139,6 +134,52 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     }
 }
 
+static void double_to_gp_entry (double x, GtkWidget *w)
+{
+    if (w != NULL && GTK_IS_ENTRY(w)) {
+	gchar *numstr;
+
+	if (na(x)) {
+	    numstr = g_strdup("*");
+	} else {
+	    numstr = g_strdup_printf("%g", x);
+	}
+	gtk_entry_set_text(GTK_ENTRY(w), numstr);
+	g_free(numstr);
+    }
+}
+
+static double entry_to_gp_double (GtkWidget *w)
+{
+    double ret = NADBL;
+
+    if (w != NULL && GTK_IS_ENTRY(w)) {
+	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+
+	if (s != NULL && *s != '\0') {
+#ifdef ENABLE_NLS
+	    gchar *tmp = g_strdup(s);
+
+	    charsub(tmp, ',', '.');
+	    setlocale(LC_NUMERIC, "C");
+#else
+	    const gchar *tmp = s;
+#endif
+	    if (check_atof(tmp)) {
+		errbox(get_gretl_errmsg());
+	    } else {
+		ret = atof(tmp);
+	    }
+#ifdef ENABLE_NLS
+	    setlocale(LC_NUMERIC, "");
+	    g_free(tmp);
+#endif
+	}
+    }
+
+    return ret;
+}
+
 /* Take text from a gnuplot spec string and put it into a gtkentry.
    Under gtk2, we have to ensure that the text is put into utf-8.
 */
@@ -171,48 +212,42 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 #endif /* OLD_GTK */
 }
 
-static void 
-get_label_pos_from_entry (GtkWidget *w, char *str, size_t n)
+static int
+get_label_pos_from_entry (GtkWidget *w, double *pos)
 {
-    const gchar *p;
-    double x, y;
-    int chk;
+    int err = 0;
 
-    *str = 0;
-    g_return_if_fail(GTK_IS_ENTRY(w));
-    p = gtk_entry_get_text(GTK_ENTRY(w));
+    if (GTK_IS_ENTRY(w)) {
+	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+	int chk;
     
-    strncat(str, p, n-1);
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
-    chk = sscanf(str, "%lf,%lf", &x, &y);
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "");
-#endif
-
-    if (chk != 2) {
-	errbox(_("Invalid label position, must be X,Y"));
-	gtk_editable_select_region(GTK_EDITABLE(w), 0, strlen(p));
-	strcpy(str, "0.0,0.0");
+	chk = sscanf(s, "%lf %lf", &pos[0], &pos[1]);
+	if (chk != 2) {
+	    errbox(_("Invalid label position, must be X Y"));
+	    gtk_editable_select_region(GTK_EDITABLE(w), 0, strlen(s));
+	    pos[0] = pos[1] = NADBL;
+	    err = 1;
+	} 
+    } else {
+	err = 1;
     }
+
+    return err;
 }
 
-static int just_string_to_int (const char *str)
+static int validate_range (double *r)
 {
-    if (!strcmp(str, "left")) return JUST_LEFT;
-    else if (!strcmp(str, "center")) return JUST_CENTER;
-    else if (!strcmp(str, "right")) return JUST_RIGHT;
-    else return JUST_LEFT;
-}
+    int err = 0;
 
-static const char *just_int_to_string (int j)
-{
-    if (j == JUST_LEFT) return "left";
-    else if (j == JUST_CENTER) return "center";
-    else if (j == JUST_RIGHT) return "right";
-    else return "left";
+    if (na(r[0]) || na(r[1])) {
+	r[0] = r[1] = NADBL;
+	err = 1;
+    } else if (r[1] <= r[0]) {
+	r[0] = r[1] = NADBL;
+	err = 1;
+    }
+
+    return err;
 }
 
 static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
@@ -220,6 +255,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     const gchar *yaxis;
     int supress_y2 = 0;
     int i, k, save = 0;
+    int err = 0;
 
     /* entry_to_gp_string translates from utf-8 to the locale, if
        using NLS */
@@ -269,19 +305,18 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	for (i=0; i<k; i++) {
 	    if (axis_range[i].isauto != NULL) {
 		if (GTK_TOGGLE_BUTTON(axis_range[i].isauto)->active) {
-		    strcpy(spec->range[i][0], "*");
-		    strcpy(spec->range[i][1], "*");
+		    spec->range[i][0] = NADBL;
+		    spec->range[i][1] = NADBL;
 		} else {
-		    entry_to_gp_string(axis_range[i].min, spec->range[i][0], 
-				       sizeof spec->range[0][0]);
-		    entry_to_gp_string(axis_range[i].max, spec->range[i][1], 
-				       sizeof spec->range[0][1]);
+		    spec->range[i][0] = entry_to_gp_double(axis_range[i].min);
+		    spec->range[i][1] = entry_to_gp_double(axis_range[i].max);
+		    err = validate_range(spec->range[i]);
 		}
 	    }
 	}
     }
 
-    if (!frequency_plot(spec)) {   
+    if (!err && !frequency_plot(spec)) {   
 	for (i=0; i<spec->nlines; i++) {
 	    entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
 			       spec->lines[i].style, 
@@ -295,31 +330,33 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    for (i=0; i<MAX_PLOT_LABELS; i++) {
+    for (i=0; i<MAX_PLOT_LABELS && !err; i++) {
 #ifdef OLD_GTK
 	GtkWidget *active_item;
 	int opt;
 #endif
 
-	entry_to_gp_string(labeltext[i], 
-			   spec->text_labels[i].text, 
+	entry_to_gp_string(labeltext[i], spec->text_labels[i].text, 
 			   sizeof spec->text_labels[0].text);
-	get_label_pos_from_entry(labelpos[i], 
-				 spec->text_labels[i].pos,
-				 sizeof spec->text_labels[0].pos);
+	if (string_is_blank(spec->text_labels[i].text)) {
+	    continue;
+	}
+	err = get_label_pos_from_entry(labelpos[i], spec->text_labels[i].pos);
+	if (err) {
+	    break;
+	}
 #ifdef OLD_GTK
 	active_item = GTK_OPTION_MENU(labeljust[i])->menu_item;
 	opt = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(active_item), 
 						  "option"));
-	strcpy(spec->text_labels[i].just, just_int_to_string(opt));
+	spec->text_labels[i].just = opt;
 #else
-	strcpy(spec->text_labels[i].just, 
-	       just_int_to_string(gtk_option_menu_get_history
-				  (GTK_OPTION_MENU(labeljust[i]))));
+	spec->text_labels[i].just = 
+	    gtk_option_menu_get_history(GTK_OPTION_MENU(labeljust[i]));
 #endif
     } 
 
-    if (border_check != NULL) {
+    if (!err && border_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(border_check)->active) {
 	    spec->flags &= ~GPTSPEC_BORDER_HIDDEN;
 	} else {
@@ -327,7 +364,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     } 
 
-    if (fitline_check != NULL) {
+    if (!err && fitline_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(fitline_check)->active) {
 	    spec->flags |= GPTSPEC_OLS_HIDDEN;
 	} else {
@@ -335,7 +372,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    if (ttfcombo != NULL && ttfspin != NULL) {
+    if (!err && ttfcombo != NULL && ttfspin != NULL) {
 	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry));
 #ifdef OLD_GTK
 	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ttfspin));
@@ -356,16 +393,17 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    if (save) { /* do something other than a screen graph? */
-	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, spec);
-    } else { 
-	png_plot *plot = (png_plot *) spec->ptr;
+    if (!err) {
+	if (save) { /* do something other than a screen graph? */
+	    file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, spec);
+	} else { 
+	    png_plot *plot = (png_plot *) spec->ptr;
 
-	set_plot_has_y2_axis(plot, spec->flags & GPTSPEC_Y2AXIS);
-	redisplay_edited_png(plot);
+	    set_plot_has_y2_axis(plot, spec->flags & GPTSPEC_Y2AXIS);
+	    redisplay_edited_png(plot);
+	}
+	session_changed(1);
     }
-
-    session_changed(1);
 }
 
 /* ........................................................... */
@@ -977,6 +1015,18 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
 /* ........................................................... */
 
+static void label_pos_to_entry (double *pos, GtkWidget *w)
+{
+    if (!na(pos[0]) && !na(pos[1])) {
+	gchar *s = g_strdup_printf("%g %g", pos[0], pos[1]);
+
+	gtk_entry_set_text(GTK_ENTRY(w), s);
+	g_free(s);
+    } else {
+	gtk_entry_set_text(GTK_ENTRY(w), "");
+    }
+}
+
 static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *label, *vbox, *tbl, *menu;
@@ -1047,7 +1097,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	tbl_len++;
 
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	label = gtk_label_new(_("position (X,Y)"));
+	label = gtk_label_new(_("position (X Y)"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
@@ -1058,7 +1108,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	/* entry for coordinates */
 	labelpos[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
-	gtk_entry_set_text(GTK_ENTRY(labelpos[i]), spec->text_labels[i].pos);
+	label_pos_to_entry(spec->text_labels[i].pos, labelpos[i]);
 #ifdef OLD_GTK
 	gtk_signal_connect(GTK_OBJECT(labelpos[i]), "activate", 
 			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
@@ -1075,8 +1125,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	if (plot_is_mouseable(plot)) {
 	    /* button to invoke mouse-assisted placement */
 	    button = gtk_button_new();
-	    g_object_set_data(G_OBJECT(button), "labelpos_entry",
-			      labelpos[i]);
+	    g_object_set_data(G_OBJECT(button), "labelpos_entry", labelpos[i]);
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(plot_label_position_click), spec);
 #ifdef OLD_GTK
@@ -1110,16 +1159,15 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	for (j=0; j<3; j++) {
 	    GtkWidget *item;
 
-	    item = gtk_menu_item_new_with_label(just_int_to_string(j));
+	    item = gtk_menu_item_new_with_label(gp_justification_string(j));
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 #ifdef OLD_GTK
-	    gtk_object_set_data(GTK_OBJECT(item), "option", 
-				GINT_TO_POINTER(j));
+	    gtk_object_set_data(GTK_OBJECT(item), "option", GINT_TO_POINTER(j));
 #endif
 	}
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(labeljust[i]), menu);	
 	gtk_option_menu_set_history(GTK_OPTION_MENU(labeljust[i]),
-				    just_string_to_int(spec->text_labels[i].just));
+				    spec->text_labels[i].just);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(labeljust[i]);	
@@ -1259,18 +1307,16 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 		     spec);
 
     gtk_widget_show(axis_range[axis].max);
-   
-    if (strcmp(spec->range[axis][0], "*") == 0) {
+
+    if (na(spec->range[axis][0])) {
 	flip_manual_range(NULL, GINT_TO_POINTER(axis_range[axis].ID));
     } else {
-	gtk_entry_set_text(GTK_ENTRY(axis_range[axis].min),
-			   spec->range[axis][0]);
-	gtk_entry_set_text(GTK_ENTRY(axis_range[axis].max),
-			   spec->range[axis][1]);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON
-				     (axis_range[axis].isauto), FALSE);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON
-				     (manual), TRUE);
+	double_to_gp_entry(spec->range[axis][0], axis_range[axis].min);
+	double_to_gp_entry(spec->range[axis][1], axis_range[axis].max);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(axis_range[axis].isauto), 
+				     FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(manual), 
+				     TRUE);
     }
 }
 

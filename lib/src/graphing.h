@@ -57,13 +57,17 @@ typedef struct {
 } GPT_LINE;
 
 #define PLOT_LABEL_TEXT_LEN 31
-#define PLOT_LABEL_JUST_LEN  7
-#define PLOT_LABEL_POS_LEN  31
+
+enum {
+    GP_JUST_LEFT,
+    GP_JUST_CENTER,
+    GP_JUST_RIGHT
+} gp_just_codes;
 
 typedef struct {
     char text[PLOT_LABEL_TEXT_LEN + 1]; 
-    char just[PLOT_LABEL_JUST_LEN + 1];
-    char pos[PLOT_LABEL_POS_LEN + 1];
+    double pos[2];
+    int just;
 } GPT_LABEL;
 
 typedef struct {
@@ -73,7 +77,7 @@ typedef struct {
     unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
     int t1, t2;                /* starting and ending obs */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
-    char range[3][2][16];      /* axis range specifiers */
+    double range[2][3];        /* axis range specifiers */
     char keyspec[MAXTITLE];    /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
@@ -125,6 +129,8 @@ const char *get_gretl_png_term_line (int plottype);
 const char *get_gretl_emf_term_line (int plottype, int color);
 
 const char *get_timevar_name (DATAINFO *pdinfo);
+
+const char *gp_justification_string (int j);
 
 int gnuplot_init (int plottype, FILE **fpp);
 
