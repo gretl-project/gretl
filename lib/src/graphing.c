@@ -1282,7 +1282,7 @@ int gnuplot_3d (LIST list, const char *literal,
     *surface = 0;
 
     if (1) {
-	MODEL plotmod;
+	MODEL pmod;
 	double umin, umax, vmin, vmax;
 
 	tmplist[0] = 4;
@@ -1294,9 +1294,10 @@ int gnuplot_3d (LIST list, const char *literal,
 	_minmax(t1, t2, (*pZ)[list[2]], &umin, &umax);
 	_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
 
-	_init_model(&plotmod, pdinfo);
-	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
-	if (!plotmod.errcode) {
+	_init_model(&pmod, pdinfo);
+	pmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
+	if (!pmod.errcode && !na(pmod.fstt) &&
+	    fdist(pmod.fstt, pmod.dfn, pmod.dfd) < .10) {
 	    double uadj = (umax - umin) * 0.02;
 	    double vadj = (vmax - vmin) * 0.02;
 
@@ -1304,10 +1305,10 @@ int gnuplot_3d (LIST list, const char *literal,
 		    "%g+(%g)*u+(%g)*v title '', ", 
 		    umin - uadj, umax + uadj, 
 		    vmin - vadj, vmax + vadj,
-		    plotmod.coeff[0], plotmod.coeff[1],
-		    plotmod.coeff[2]);
+		    pmod.coeff[0], pmod.coeff[1],
+		    pmod.coeff[2]);
 	} 
-	clear_model(&plotmod, pdinfo);
+	clear_model(&pmod, pdinfo);
     }
 
     fprintf(fq, "set xlabel '%s'\n", get_series_name(pdinfo, list[2]));
@@ -1323,7 +1324,11 @@ int gnuplot_3d (LIST list, const char *literal,
 	print_gnuplot_literal_lines(literal, fq);
     }
 
+#ifdef OS_WIN32
+    fprintf(fq, "splot %s'-' title '' w p lt 3\n", surface);
+#else
     fprintf(fq, "splot %s'-' title ''\n", surface);
+#endif
 
     /* supply the data to gnuplot inline */
     tmplist[0] = 3;
