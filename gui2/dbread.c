@@ -148,7 +148,7 @@ static RECNUM read_RATS_directory (FILE *fp, db_table_row *row)
 {
     RATSDirect rdir;
     DATEINFO dinfo;
-    char pd = 0, pdstr[3], endobs[9], datestuff[48];    
+    char pd = 0, pdstr[3], endobs[9];
     int startfrac = 0;
 
     fread(&rdir.back_point, sizeof(RECNUM), 1, fp);
@@ -205,9 +205,9 @@ static RECNUM read_RATS_directory (FILE *fp, db_table_row *row)
     /* add info to trawl */
     row->varname = g_strdup(rdir.series_name);
     row->comment = g_strdup(rdir.comments[0]);
-    sprintf(datestuff, "%c  %d%s - %s  n = %d", pd, (int) dinfo.year, 
-	   pdstr, endobs, (int) rdir.datapoints);
-    row->obsinfo = g_strdup(datestuff);
+    row->obsinfo = g_strdup_printf("%c  %d%s - %s  n = %d", pd, 
+				   (int) dinfo.year, pdstr, endobs, 
+				   (int) rdir.datapoints);
 
     return rdir.forward_point;
 }
@@ -236,8 +236,12 @@ static db_table *db_table_new (void)
 static int db_table_expand (db_table *tbl)
 {
     db_table_row *rows;
+    int newsz;
 
-    rows = realloc(tbl->rows, 3 * sizeof *rows);
+    newsz = (tbl->nrows / DB_INIT_ROWS) + 1;
+    newsz *= DB_INIT_ROWS;
+
+    rows = realloc(tbl->rows, newsz * sizeof *rows);
     if (rows == NULL) {
 	free(tbl->rows);
 	tbl->rows = NULL;
