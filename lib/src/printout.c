@@ -548,33 +548,6 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
     return 0;
 }
 
-/**
- * print_white_vcv:
- * @pmod: pointer to model.
- * @prn: gretl printing struct.
- * 
- * Print to @prn White's heteroskedasticity-adjusted variance-covariance 
- * matrix for the parameter estimates in @pmod.
- *
- */
-
-void print_white_vcv (const MODEL *pmod, PRN *prn)
-{
-    int i, j, index, ncoeff;
-
-    ncoeff = pmod->list[0] - 1;
-    covhdr(prn);
-    index = 1;
-    for (i=1; i<=ncoeff; i++) { 
-	for (j=i; j<=ncoeff; j++) {
-	    pprintf(prn, "\tCov(%3d, %3d) = %15g\n",
-                   pmod->list[i+1], pmod->list[j+1], pmod->vcv[index]);
-	    index++;
-	}
-    }
-    pputs(prn, "\n");
-}
-
 /* ......................................................... */ 
 
 static void outxx (const double xx, int ci, PRN *prn)

@@ -75,11 +75,11 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 static int qr_make_vcv (MODEL *pmod, gretl_matrix *v)
 {
     const int nv = pmod->ncoeff;
-    const int nterms = (nv * nv + nv)/2;
+    const int nterms = (nv * nv + nv) / 2;
     double x;
     int i, j, k;
 
-    pmod->vcv = malloc((nterms + 1) * sizeof *pmod->vcv);
+    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) return 1;  
 
     for (i=0; i<nv; i++) {
@@ -90,8 +90,6 @@ static int qr_make_vcv (MODEL *pmod, gretl_matrix *v)
 	    pmod->vcv[k] = x;
 	}
     }
-
-    pmod->vcv[nterms] = NADBL;
 
     return 0;
 }
@@ -117,7 +115,21 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		pmod->ess += x * x;
 		i++;
 	    }
-	}	    
+	}
+    } else if (pmod->nwt) {
+	for (t=0; t<fulln; t++) {
+	    if (t < pmod->t1 || t > pmod->t2) {
+		pmod->yhat[t] = pmod->uhat[t] = NADBL;
+	    } else {
+		double x = Z[pmod->list[1]][t];
+
+		x *= Z[pmod->nwt][t];
+		pmod->yhat[t] = y->val[i];
+		pmod->uhat[t] = x - y->val[i];
+		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		i++;
+	    }
+	}
     } else {
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {

@@ -48,8 +48,6 @@ int outcovmx (MODEL *pmod,
 	      const DATAINFO *pdinfo, 
 	      int pause, PRN *prn);
 
-void print_white_vcv (const MODEL *pmod, PRN *prn);
-
 int page_break (int n, int *lineno, int quit_option);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);

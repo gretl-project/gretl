@@ -1979,7 +1979,7 @@ void do_model (GtkWidget *widget, gpointer p)
     case HCCM:
 	*pmod = hccm_func(command.list, &Z, datainfo);
 	if ((err = model_output(pmod, prn))) break;
-	if (oflag) print_white_vcv(pmod, prn);
+	if (oflag) outcovmx(pmod, datainfo, 0, prn);
 	break;
 
     case TSLS:
@@ -4476,11 +4476,7 @@ int gui_exec_line (char *line,
 	(models[0])->ID = model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
-	if (!oflag) break;
-	if (command.ci == HCCM) 
-	    print_white_vcv(models[0], prn);
-	else
-	    outcovmx(models[0], datainfo, 0, prn);
+	if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	break;
 
     case HELP:

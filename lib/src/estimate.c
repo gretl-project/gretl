@@ -37,6 +37,7 @@
 
 #define TINY 4.75e-9 
 #define SMALL 1.0e-8 /* threshold for printing a warning for collinearity */
+#define STATZERO 0.5e-14
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			int c, PRN *prn);
@@ -233,6 +234,38 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     return 0;
 }
 
+/* Calculation of WLS stats in agreement with GNU R */
+
+static void get_wls_stats (MODEL *pmod, const double **Z)
+{
+    int t, wobs = pmod->nobs, yno = pmod->list[1];
+    double x, w2, wmean = 0.0, wsum = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) { 
+	if (Z[pmod->nwt][t] == 0) {
+	    wobs--;
+	    pmod->dfd -= 1;
+	} else {
+	    w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t];
+	    wmean += w2 * Z[yno][t];
+	    wsum += w2;
+	}
+    }
+
+    wmean /= wsum;
+    x = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (Z[pmod->nwt][t] == 0.0) continue;
+	w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
+	x += w2 * (Z[yno][t] - wmean) * (Z[yno][t] - wmean);
+    }
+
+    pmod->fstt = ((x - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
+    pmod->rsq = (1 - (pmod->ess / x));
+    pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
+}
+
 static void fix_wls_values (MODEL *pmod, double **Z)
 {
     int t;
@@ -385,7 +418,9 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
         goto lsq_abort; 
     }
 
-    if (use_qr || getenv("GRETL_USE_QR")) {
+    if (getenv("GRETL_USE_QR")) set_use_qr(1);
+
+    if (use_qr) {
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n);
     } else {
@@ -423,6 +458,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     } else {
 	mdl.ybar = _esl_mean(mdl.t1, mdl.t2, (*pZ)[yno]);
 	mdl.sdy = _esl_stddev(mdl.t1, mdl.t2, (*pZ)[yno]);
+	if (fabs(mdl.ybar) < STATZERO) mdl.ybar = 0.0;
     }
 
     /* Doing an autoregressive procedure? */
@@ -433,6 +469,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* weighted least squares: fix fitted values, ESS, sigma */
     if (ci == WLS) {
+	get_wls_stats(&mdl, (const double **) *pZ);
 	fix_wls_values(&mdl, *pZ);
     }
 
@@ -636,38 +673,6 @@ static void compute_r_squared (MODEL *pmod, double *y)
     }
 }
 
-/* Calculation of WLS stats in agreement with GNU R */
-
-static void wls_stats (MODEL *pmod, const double **Z)
-{
-    int t, wobs = pmod->nobs, yno = pmod->list[1];
-    double x, w2, wmean = 0.0, wsum = 0.0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) { 
-	if (Z[pmod->nwt][t] == 0) {
-	    wobs--;
-	    pmod->dfd -= 1;
-	} else {
-	    w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t];
-	    wmean += w2 * Z[yno][t];
-	    wsum += w2;
-	}
-    }
-
-    wmean /= wsum;
-    x = 0.0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (Z[pmod->nwt][t] == 0.0) continue;
-	w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
-	x += w2 * (Z[yno][t] - wmean) * (Z[yno][t] - wmean);
-    }
-
-    pmod->fstt = ((x - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
-    pmod->rsq = (1 - (pmod->ess / x));
-    pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
-}
-
 /* .......................................................... */
 
 static void regress (MODEL *pmod, double *xpy, double **Z, 
@@ -780,11 +785,6 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	pmod->fstt = NADBL;
     } else {
 	pmod->fstt = (rss - zz * pmod->ifc) / (sgmasq * pmod->dfn);
-    }
-
-    /* Calculation of WLS stats in agreement with GNU R */
-    if (pmod->nwt && !(pmod->wt_dummy)) {
-	wls_stats(pmod, (const double **) Z);
     }
 
     diag = malloc((pmod->ncoeff + 1) * sizeof *diag); 
@@ -943,42 +943,41 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
  * makevcv:
  * @pmod: gretl MODEL.
  *
- * Inverts the Choleski-decomposed stacked vector xpx and
- * computes the coefficient variance-covariance matrix.
+ * Inverts the Choleski-decomposed X'X and computes the 
+ * coefficient covariance matrix.
  * 
- * Returns: 0 on successful completion, error code on error
+ * Returns: 0 on successful completion, error code on error.
  */
 
 int makevcv (MODEL *pmod)
 {
-    int nv, dec, nm1, mst, kk, i, j, kj, icnt, m, k, l = 0;
-    int idxpx;
-    double sigma, d;
+    int dec, mst, kk, i, j, kj, icnt, m, k, l = 0;
+    const int nv = pmod->ncoeff;
+    const int nxpx = (nv * nv + nv) / 2; 
+    double d;
 
     if (pmod->vcv != NULL) return 0;
 
-    nv = pmod->ncoeff;
-    nm1 = nv - 1;
-    mst = kk = idxpx = (nv * nv + nv)/2;
+    mst = kk = nxpx;
 
-    pmod->vcv = malloc((mst + 1) * sizeof *pmod->vcv);
+    pmod->vcv = malloc(nxpx * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) return E_ALLOC;
 
-    for (i=0; i<=nm1; i++) {
+    for (i=0; i<nv; i++) {
 	mst -= i;
 	/* find diagonal element */
 	d = pmod->xpx[kk];
 	if (i > 0) {
 	    for (j=kk+1; j<=kk+i; j++) {
-		d -= pmod->xpx[j] * pmod->vcv[j];
+		d -= pmod->xpx[j] * pmod->vcv[j-1];
 	    }
 	}
-	pmod->vcv[kk] = d * pmod->xpx[kk];
+	pmod->vcv[kk-1] = d * pmod->xpx[kk];
 	/* find off-diagonal elements indexed by kj */
 	kj = kk;
 	kk = kk - i - 2;
-	if (i > nv-2) continue;
-	for (j=i+1; j<=nm1; j++) {
+	if (i > nv - 2) continue;
+	for (j=i+1; j<nv; j++) {
 	    icnt = i+1;
 	    kj -= j;
 	    d = 0.0;
@@ -991,36 +990,30 @@ int makevcv (MODEL *pmod)
 		else dec = k;
 		m -= dec;
 		l = kj + i - k;
-		d += pmod->vcv[m] * pmod->xpx[l];
+		d += pmod->vcv[m-1] * pmod->xpx[l];
 	    }
-	    pmod->vcv[kj] = (-1.0) * d * pmod->xpx[l-1];
+	    pmod->vcv[kj-1] = (-1.0) * d * pmod->xpx[l-1];
 	}
     }
 
     if (pmod->ci == CUSUM) return 0;
 
-    if ((pmod->ci == WLS && !(pmod->wt_dummy)) || 
-	pmod->ci == ARCH || pmod->ci == HSK) {
-	sigma = pmod->sigma_wt;
-    } else {
-	sigma = pmod->sigma; 
-    }
-
     /* some estimators need special treatment */
-    if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) {
-	for (k=0; k<idxpx; k++) {
-	    pmod->vcv[k] = pmod->vcv[k+1] * sigma * sigma;
-	}
-    }
 
-    if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	for (k=0; k<idxpx; k++) {
-	    pmod->vcv[k] = pmod->vcv[k+1];
+    if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) {
+	double sigma = pmod->sigma;
+
+	if ((pmod->ci == WLS && !(pmod->wt_dummy)) || 
+	    pmod->ci == ARCH || pmod->ci == HSK) {
+	    sigma = pmod->sigma_wt;
+	} 
+	for (k=0; k<nxpx; k++) {
+	    pmod->vcv[k] *= sigma * sigma;
 	}
     }
 
     if ((pmod->ci == CORC || pmod->ci == HILU) && pmod->ifc) {
-	d = 1.0/(1.0 - pmod->rho_in);
+	d = 1.0 / (1.0 - pmod->rho_in);
 	kk = -1;
 	for (i=1; i<=nv; i++) {
 	    for (j=1; j<=nv; j++) {
@@ -1077,7 +1070,7 @@ VCV *get_vcv (MODEL *pmod)
 
     /* calculate number of elements in vcv */
     nv = pmod->ncoeff;
-    nv = (nv * nv + nv)/2;
+    nv = (nv * nv + nv) / 2;
 
     /* copy vcv */
     vcv->vec = copyvec(pmod->vcv, nv + 1);
@@ -1891,6 +1884,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	free(p);
 	return hccm;
     }
+
     hccm.ci = HCCM;
     nobs = hccm.nobs;
 
@@ -1898,7 +1892,15 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     whites_standard_errors(&hccm, pZ, pdinfo);
 #endif
 
-    if (makevcv(&hccm)) {
+    if (use_qr) {
+	/* vcv is already computed */
+	int nt = (ncoeff * ncoeff + ncoeff) / 2; 
+	double sgmasq = hccm.sigma * hccm.sigma;
+
+	for (i=0; i<nt; i++) {
+	    hccm.vcv[i] /= sgmasq;
+	}
+    } else if (makevcv(&hccm)) {
 	hccm.errcode = E_ALLOC;
 	free(uhat1);
 	free(st);
@@ -1911,8 +1913,8 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	for (t=t1; t<=t2; t++) {
 	    xx = 0.0;
 	    for (j=1; j<=ncoeff; j++) {
-		if (i <= j) index = 1 + ijton(i, j, ncoeff);
-		else index = 1 + ijton(j, i, ncoeff);
+		if (i <= j) index = ijton(i, j, ncoeff);
+		else index = ijton(j, i, ncoeff);
 		xx += hccm.vcv[index] * (*pZ)[list[j+1]][t];
 	    }
 	    p[i][t] = xx;
@@ -1936,13 +1938,13 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	for (i=1; i<=ncoeff; i++) p[i][t] *= uhat1[t];
     }
 
-    index = 1;
+    index = 0;
     for (i=1; i<=ncoeff; i++) {
 	for (j=i; j<=ncoeff; j++) {
 	    xx = 0.0;
 	    for (t=t1; t<=t2; t++) xx += p[i][t] * p[j][t];
-	    xx = xx * (nobs-1)/nobs -
-		(nobs-1) * st[i] * st[j]/(nobs*nobs);
+	    xx = xx * (nobs - 1) / nobs -
+		(nobs - 1) * st[i] * st[j] / (nobs * nobs);
 #ifndef WHITES_STD_ERRS
 	    if (i == j) hccm.sderr[i] = sqrt(xx);
 #endif
