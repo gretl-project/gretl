@@ -24,7 +24,6 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
-# include "guiprint.h"
 #endif
 
 struct gpt_titles_t {
@@ -2050,14 +2049,9 @@ int gnuplot_show_png (const char *plotfile, int saved)
    it on the clipboard.
 */
 
-static int win_copy_emf (gchar *emfbuf, size_t emflen)
+static int win_copy_emf (char *emfname)
 {
     HENHMETAFILE hemf, hemf2;
-
-    if (emfbuf == NULL) {
-        errbox(_("Copy buffer was empty"));
-        return 1;
-    }
 
     if (!OpenClipboard(NULL)) {
 	errbox(_("Cannot open the clipboard"));
@@ -2066,7 +2060,7 @@ static int win_copy_emf (gchar *emfbuf, size_t emflen)
 
     EmptyClipboard();
 
-    hemf = SetEnhMetaFileBits(emflen, emfbuf);
+    hemf = GetEnhMetaFile(emfname);
     hemf2 = CopyEnhMetaFile(hemf, NULL);
     SetClipboardData(CF_ENHMETAFILE, hemf2);
 
@@ -2084,9 +2078,6 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     char plottmp[MAXLEN], plotline[MAXLEN];
     gchar *plotcmd = NULL;
     gchar *emfname = NULL;
-    gchar *emfbuf = NULL;
-    HENHMETAFILE hemf = NULL;
-    size_t emflen;
     int err;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
@@ -2123,34 +2114,11 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
 	goto emf_bailout;
     }
 
-    hemf = GetEnhMetaFile(emfname);
-    if (hemf == NULL) {
-        errbox(_("Gnuplot error creating graph"));
-	goto emf_bailout;
-    }
+    win_copy_emf(emfname);
 
-    emflen = GetEnhMetaFileBits(hemf, 0, NULL);
-    if (emflen == 0) {
-        errbox(_("Gnuplot error creating graph"));
-	goto emf_bailout;
-    }
-
-    emfbuf = mymalloc(emflen);
-    if (emfbuf == NULL) {
-	goto emf_bailout;
-    }
-
-    emflen = GetEnhMetaFileBits(hemf, emflen, emfbuf);
-    DeleteEnhMetaFile(hemf); /* close the handle */
-
-    /* place the Metafile buffer on the clipboard */    
-    win_copy_emf(emfbuf, emflen);
-
-    /* clean up: delete the EMF on disk and free the data buffer */
  emf_bailout:
     remove(emfname);
     g_free(emfname);
-    free(emfbuf);
 }
 
 #endif /* G_OS_WIN32 */
