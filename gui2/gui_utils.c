@@ -1051,7 +1051,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int print_ok = 0;
 #endif
 
-    if (text_out) {
+    if (text_out || vwin->role == SCRIPT_OUT) {
 	g_object_set_data(G_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
     }
 
