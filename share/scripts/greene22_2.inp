@@ -1,0 +1,9 @@
+# Fair's extra-marital affairs data
+open greene22_2.gdt
+# initial OLS
+ols Y 0 Z2 Z3 Z5 Z7 Z8
+# Tobit version
+tobit Y 0 Z2 Z3 Z5 Z7 Z8
+# Probit version with dummified dependent variable
+genr Ydum = Y > 0
+probit Ydum 0 Z2 Z3 Z5 Z7 Z8

@@ -289,6 +289,14 @@ static void fix_wls_values (MODEL *pmod, double **Z)
     }
 }
 
+static void model_stats_init (MODEL *pmod)
+{
+    pmod->ess = pmod->ess_wt = NADBL;
+    pmod->sigma = pmod->sigma_wt = NADBL;
+    pmod->fstt = pmod->lnL = NADBL;
+    pmod->rsq = pmod->adjrsq = NADBL;
+}
+
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
@@ -335,6 +343,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     gretl_model_init(&mdl, pdinfo);
+    model_stats_init(&mdl);
 
     if (list[0] == 1 || pdinfo->v == 1) {
 	fprintf(stderr, "E_DATA: lsq: list[0] = %d, pdinfo->v = %d\n",

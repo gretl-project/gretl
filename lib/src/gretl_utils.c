@@ -1998,6 +1998,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     for (i=0; i<=m; i++) targ->list[i] = src->list[i];    
 
     targ->ID = src->ID;
+    targ->ci = src->ci;
 
     return 0;
 }
@@ -2131,7 +2132,10 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 {
     int depvar, t, nfit = 0;
     int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
+    int genfit = 0;
+#if 0
     char fcastline[32];
+#endif
     FITRESID *fr;
 
     if (pmod->ci == ARMA) {
@@ -2144,12 +2148,15 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 	t2 += get_misscount(pmod);
     }
 
-    if (pmod->ci != NLS && pmod->ci != ARMA) {
+#if 0
+    if (pmod->ci != NLS && pmod->ci != ARMA) genfit = 1;
+    if (genfit) {
 	sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
 		pdinfo->endobs);
 	nfit = fcast(fcastline, pmod, pdinfo, pZ); 
 	if (nfit < 0) return NULL; 
     }
+#endif
 
     fr = fit_resid_new(n, 0);
     if (fr == NULL) return NULL;
@@ -2158,10 +2165,10 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 
     for (t=0; t<n; t++) {
 	fr->actual[t] = (*pZ)[depvar][t];
-	if (pmod->ci == NLS || pmod->ci == ARMA) {
-	    fr->fitted[t] = pmod->yhat[t];
-	} else {
+	if (genfit) {
 	    fr->fitted[t] = (*pZ)[nfit][t];
+	} else {
+	    fr->fitted[t] = pmod->yhat[t];
 	}
     }
 

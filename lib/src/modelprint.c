@@ -55,6 +55,7 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn);
 static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
+static void print_tobit_stats (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
 
@@ -1250,6 +1251,15 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }
 
+    if (pmod->ci == TOBIT) {
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	print_tobit_stats(pmod, prn);
+	print_middle_table_end(prn);
+	print_model_tests(pmod, prn);
+	goto close_format;
+    }	
+
     if (pmod->ci == LAD) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
@@ -1890,6 +1900,33 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_tobit_stats (const MODEL *pmod, PRN *prn)
+{
+    int cenc = gretl_model_get_int(pmod, "censobs");
+    double cenpc = 100.0 * cenc / pmod->nobs;
+
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "  %s: %d (%.1f%%)\n", _("Censored observations"), cenc, cenpc);
+	pprintf(prn, "  %s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
+	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+    }
+    else if (RTF_FORMAT(prn->format)) {
+	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenc, cenpc);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+    }
+    else if (TEX_FORMAT(prn->format)) {
+	char xstr[32];
+
+	pprintf(prn, "%s & \\multicolumn{1}{r}{%.1f\\%%} \\\\\n", 
+		I_("Censored observations"), cenpc);
+	tex_dcolumn_double(pmod->sigma, xstr);
+	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
+	tex_dcolumn_double(pmod->lnL, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
+    }
+}
+
 static void print_arma_stats (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
@@ -1924,25 +1961,25 @@ static void print_discrete_statistics (const MODEL *pmod,
     double model_chisq = gretl_model_get_double(pmod, "chisq");
 
     if (PLAIN_FORMAT(prn->format)) {
-	pputs(prn, "\n");
-	pprintf(prn, "%s %s = %.3f\n", _("Mean of"), 
+	/* pputc(prn, '\n'); */
+	pprintf(prn, "  %s %s = %.3f\n", _("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
-	pprintf(prn, "%s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
+	pprintf(prn, "  %s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
 		correct, pc_correct);
-	pprintf(prn, "f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
+	pprintf(prn, "  f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		pmod->sdy);
-	pprintf(prn, "%s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "%s: %s(%d) = %.3f (%s %f)\n",
+	    pprintf(prn, "  %s: %s(%d) = %.3f (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
 		    i, model_chisq, _("p-value"), chisq(model_chisq, i));
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     else if (RTF_FORMAT(prn->format)) {
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 	pprintf(prn, "\\par {\\super *}%s\n", I_("Evaluated at the mean"));
 	pprintf(prn, "\\par %s %s = %.3f\n", I_("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
@@ -1957,7 +1994,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
 		    i, model_chisq, I_("p-value"), chisq(model_chisq, i));
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     else if (TEX_FORMAT(prn->format)) {

@@ -195,7 +195,7 @@ static double b2_to_z2 (double b1, double b2, double n)
     return z2;
 }
 
-static double doornik_chisq (double skew, double kurt, int n)
+double doornik_chisq (double skew, double kurt, int n)
      /* Bowman-Shenton as modified by Doornik & Hansen */
 	
 {

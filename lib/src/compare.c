@@ -192,7 +192,7 @@ static COMPARE add_compare (const MODEL *pmodA, const MODEL *pmodB)
 	add.F = ((pmodA->ess - pmodB->ess)/pmodB->ess)
 	    * add.dfd / add.dfn;
     }
-    else if (add.ci == LOGIT || add.ci == PROBIT) {
+    else if (LIMDEP(add.ci)) {
 	add.chisq = 2.0 * (pmodB->lnL - pmodA->lnL);
 	return add;
     }
@@ -224,7 +224,7 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
 
     omit.dfn = pmodA->dfn - pmodB->dfn;
 
-    if (omit.ci == OLS || omit.ci == LOGIT || omit.ci == PROBIT) {
+    if (omit.ci == OLS || LIMDEP(omit.ci)) {
 	omit.dfd = pmodA->dfd;
 	if (pmodA->ifc && !pmodB->ifc) omit.dfn += 1;
 	if (omit.ci == OLS) {
@@ -444,6 +444,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 		*new = logit_probit(newlist, pZ, pdinfo, orig->ci);
 	    }
+	    else if (orig->ci == TOBIT) {
+		*new = tobit_model(newlist, pZ, pdinfo);
+	    }
 	    else if (orig->ci == LAD) {
 		*new = lad(newlist, pZ, pdinfo);
 	    }
@@ -640,6 +643,9 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    *new = logit_probit(tmplist, pZ, pdinfo, orig->ci);
 	    new->aux = AUX_OMIT;
+	}
+	else if (orig->ci == TOBIT) {
+	    *new = tobit_model(tmplist, pZ, pdinfo);
 	}
 	else if (orig->ci == LAD) {
 	    *new = lad(tmplist, pZ, pdinfo);

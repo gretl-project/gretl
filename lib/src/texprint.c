@@ -359,9 +359,14 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	pprintf(prn, "T = %d \\quad \\sum |\\hat{u}_t| = %s",
 		pmod->nobs, tmp);
     } else {
-	pprintf(prn, "T = %d \\quad \\bar{R}^2 = %.4f ",
-		pmod->nobs, pmod->adjrsq);
-	if (!na(pmod->fstt)) {
+	if (!na(pmod->adjrsq)) {
+	    pprintf(prn, "T = %d \\quad \\bar{R}^2 = %.4f ",
+		    pmod->nobs, pmod->adjrsq);
+	} else if (!na(pmod->lnL)) {
+	    pprintf(prn, "T = %d \\quad \\mbox{ln}L = %.4f ",
+		    pmod->nobs, pmod->lnL);
+	}
+	if (pmod->ci != LOGIT && pmod->ci != PROBIT && !na(pmod->fstt)) {
 	    sprintf(tmp, "%.5g", pmod->fstt);
 	    tex_modify_exponent(tmp);
 	    pprintf(prn, "\\quad F(%d,%d) = %s ", 
@@ -451,7 +456,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
  * @ppaths: struct containing information on paths.
  * @texfile: name of file to save.
  * @model_count: count of models estimated so far.
- * @oflag: option: complete doc or fragment
+ * @oflag: if oflag & OPT_O, complete doc, else fragment
  *
  * Prints to file a gretl model in the form of a LaTeX equation, either as
  * a stand-alone document or as a fragment of LaTeX source for

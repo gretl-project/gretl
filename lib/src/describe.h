@@ -83,3 +83,5 @@ int moments (int t1, int t2, const double *zx,
 	     double *xbar, double *std, 
 	     double *skew, double *kurt, int k);
 
+double doornik_chisq (double skew, double kurt, int n);
+

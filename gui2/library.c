@@ -2731,8 +2731,8 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
 
 static void normal_test (GRETLTEST *test, FREQDIST *freq)
 {
-    strcpy(test->type, _("Test for normality of residual"));
-    strcpy(test->h_0, _("error is normally distributed"));
+    strcpy(test->type, N_("Test for normality of residual"));
+    strcpy(test->h_0, N_("error is normally distributed"));
     test->param[0] = 0;
     test->teststat = GRETL_TEST_NORMAL_CHISQ;
     test->value = freq->chisqu;
@@ -3645,8 +3645,7 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	gretl_print_destroy(prn);
     } else {
 	text_print_fit_resid(fr, datainfo, prn);
-	view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
-		    fr);  
+	view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, fr);  
     }  
 }
 
@@ -4458,10 +4457,10 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     *texfile = 0;
 
     if (code == LATEX_VIEW_EQUATION) {
-	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, 1);
+	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, OPT_O);
     } 
     else if (code == LATEX_VIEW_TABULAR) {
-	err = tabprint(pmod, datainfo, &paths, texfile, model_count, 1);
+	err = tabprint(pmod, datainfo, &paths, texfile, model_count, OPT_O);
     }
     else if (code == LATEX_VIEW_MODELTABLE) {
 	PRN *prn;
@@ -5869,6 +5868,12 @@ int gui_exec_line (char *line,
 	break;
 
     case TESTUHAT:
+	if ((models[0])->ci == TOBIT) {
+	    pprintf(prn, _("Sorry, command not available for this estimator"));
+	    pputc(prn, '\n');
+	    err = 1;
+	    break;
+	}
 	if ((err = script_model_test(0, prn, 0))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
 	    pprintf(prn, _("Out of memory attempting to add variable\n"));

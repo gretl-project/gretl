@@ -1503,6 +1503,12 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case TESTUHAT:
+	if ((models[0])->ci == TOBIT) {
+	    pprintf(prn, _("Sorry, command not available for this estimator"));
+	    pputc(prn, '\n');
+	    err = 1;
+	    break;
+	}
 	if ((err = model_test_start(0, prn, 0))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
 	    pputs(prn, _("Out of memory attempting to add variable\n"));

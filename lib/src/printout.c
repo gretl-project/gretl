@@ -178,8 +178,7 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		chisq(add->chisq, add->dfn));
 	return;
     }
-    else if (aux_code == AUX_ADD && addvars[0] > 1 && 
-	     (add->ci == LOGIT || add->ci == PROBIT)) {
+    else if (aux_code == AUX_ADD && addvars[0] > 1 && LIMDEP(add->ci)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
@@ -196,6 +195,7 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		add->dfn, add->trsq, chisq(add->trsq, add->dfn));
 	return;
     }
+
     pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
 	    spc, add->score);
     if (add->score == 1) pputs(prn, _("has improved.\n"));
@@ -216,7 +216,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
     if (omit->ci == OLS && omit->dfn > 0 && omitvars[0] > 1) {
 	pprintf(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
-	for (i = 1; i<=omitvars[0]; i++) {
+	for (i=1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
 	pprintf(prn, "\n  %s: F(%d, %d) = %f, ", _("Test statistic"), 
@@ -224,11 +224,10 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	pprintf(prn, _("with p-value = %f\n"), 
 		fdist(omit->F, omit->dfn, omit->dfd));
     }
-    else if ((omit->ci == LOGIT || omit->ci == PROBIT) && 
-	     omit->dfn > 0 && omitvars[0] > 1) {
+    else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 1) {
 	pputs(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
-	for (i = 1; i<=omitvars[0]; i++) {
+	for (i=1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
 	pprintf(prn, "\n  %s: %s(%d) = %f, ",  _("Test statistic"),
@@ -240,7 +239,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
     else if (omit->ci == HCCM) {
 	pputs(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
-	for (i = 1; i<=omitvars[0]; i++) {
+	for (i=1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
 	pprintf(prn, "\n  %s: %s(%d) = %f, ",  _("Test statistic"),

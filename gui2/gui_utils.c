@@ -2342,6 +2342,17 @@ static void ols_menu_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
+static void tobit_menu_mod (GtkItemFactory *ifac)
+{
+    flip(ifac, "/Tests/sum of coefficients", FALSE);
+    flip(ifac, "/Tests/normality of residual", FALSE);
+    flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
+    flip(ifac, "/Model data/Add to data set/R-squared", FALSE);
+    flip(ifac, "/Model data/Add to data set/T*R-squared", FALSE);
+}
+
+/* ........................................................... */
+
 static void lad_menu_mod (GtkItemFactory *ifac)
 {
     flip(ifac, "/Tests/sum of coefficients", FALSE);
@@ -2432,9 +2443,13 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
 	ols_menu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
 
-	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	    model_menu_state(vwin->ifac, FALSE);
+	if (LIMDEP(pmod->ci)) {
 	    model_ml_menu_state(vwin->ifac, TRUE);
+	    if (pmod->ci == TOBIT) {
+		tobit_menu_mod(vwin->ifac);
+	    } else {
+		model_menu_state(vwin->ifac, FALSE);
+	    }
 	} else {
 	    model_ml_menu_state(vwin->ifac, FALSE);
 	}

@@ -19,6 +19,8 @@
 
 /* datafiles.c : for gretl */
 
+/* #define COLL_DEBUG */
+
 #include "gretl.h"
 #include "datafiles.h"
 #include "database.h"
@@ -343,6 +345,12 @@ static char *full_path (char *s1, const char *s2)
     } else {
 	sprintf(fpath, "%s%c%s", s1, SLASH, s2);
     }
+
+#ifdef COLL_DEBUG
+    fprintf(stderr, "full_path: got '%s' from '%s' + '%s'\n",
+	    fpath, s1, s2);
+#endif
+
     return fpath;
 }
 
@@ -355,6 +363,9 @@ static int test_dir_for_file_collections (const char *dname, DIR *dir)
 
     while (!err && (dirent = readdir(dir))) { 
 	if (strstr(dirent->d_name, "descriptions")) {
+#ifdef COLL_DEBUG
+	    fprintf(stderr, "   %s: looking at '%s'\n", dname, dirent->d_name);
+#endif
 	    n = strlen(dirent->d_name);
 	    if (!strcmp(dirent->d_name + n - 12, "descriptions")) {
 		coll = file_collection_new(dname, dirent->d_name, &err);
@@ -368,6 +379,15 @@ static int test_dir_for_file_collections (const char *dname, DIR *dir)
     return err;
 }
 
+static int dont_go_there (const char *s)
+{
+    if (!strcmp(s, "..") || strstr(s, ".inp") || strstr(s, ".gdt") || 
+	strstr(s, ".gretl") || strstr(s, ".hdr"))
+	return 1;
+
+    return 0;
+}
+
 static int seek_file_collections (const char *topdir)
 {
     DIR *dir, *try;  
@@ -379,12 +399,26 @@ static int seek_file_collections (const char *topdir)
     dir = opendir(tmp);
     if (dir == NULL) return 1;
 
+#ifdef COLL_DEBUG
+    fprintf(stderr, "seeking file collections in '%s'\n", topdir);
+#endif
+
     while (!err && (dirent = readdir(dir))) {
-	if (strcmp(dirent->d_name, "..")) {
-	    subdir = full_path(tmp, dirent->d_name);
+	if (!dont_go_there(dirent->d_name)) {
+	    if (strcmp(dirent->d_name, ".")) {
+		subdir = full_path(tmp, dirent->d_name);
+	    } else {
+		subdir = tmp;
+	    }
 	    try = opendir(subdir);
 	    if (try != NULL) {
+#ifdef COLL_DEBUG
+		fprintf(stderr, " trying in subdir '%s'\n", subdir);
+#endif
 		err = test_dir_for_file_collections(subdir, try);
+#ifdef COLL_DEBUG
+		fprintf(stderr, " result: err = %d\n", err);
+#endif
 		closedir(try);
 	    }
 	}
@@ -397,7 +431,7 @@ static int seek_file_collections (const char *topdir)
     return err;
 }
 
-#if 0
+#ifdef COLL_DEBUG
 static void print_collection (const file_collection *coll)
 {
     printf("path = '%s'\n", coll->path);
@@ -442,7 +476,7 @@ static int build_file_collections (void)
 	built = 1;
     }
 
-#if 0
+#ifdef COLL_DEBUG
     print_data_collections();
     print_script_collections();
 #endif

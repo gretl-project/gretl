@@ -352,7 +352,7 @@ static const char *short_estimator_string (int ci, int format)
     else if (ci == HILU) return N_("HILU");
     else if (ci == ARCH) return N_("ARCH");
     else if (ci == POOLED) return N_("OLS");
-    else return estimator_string (ci, format);
+    else return estimator_string(ci, format);
 }
 
 static const char *get_asts (double pval)
@@ -483,10 +483,34 @@ static void print_model_table_coeffs (PRN *prn)
     }
 }
 
+static int any_log_lik (void)
+{
+    int i;
+
+    for (i=0; i<model_list_len; i++) {
+	if (model_list[i] == NULL) continue;
+	if (!na((model_list[i])->lnL)) return 1;
+    }
+
+    return 0;
+}
+
+static int any_r_squared (void)
+{
+    int i;
+
+    for (i=0; i<model_list_len; i++) {
+	if (model_list[i] == NULL) continue;
+	if (!na((model_list[i])->rsq)) return 1;
+    }
+
+    return 0;
+}
+
 static void print_n_r_squared (PRN *prn, int *binary)
 {
     int j;
-    int same_df;
+    int same_df, any_R2, any_ll;
     const MODEL *pmod;
     int tex = (prn->format == GRETL_PRINT_FORMAT_TEX);
     int rtf = (prn->format == GRETL_PRINT_FORMAT_RTF);
@@ -507,45 +531,104 @@ static void print_n_r_squared (PRN *prn, int *binary)
 
     if (tex) pputs(prn, "\\\\\n");
     else if (rtf) pputs(prn, "\\intbl \\row\n\\intbl ");
-    else pputs(prn, "\n");
+    else pputc(prn, '\n');
 
     same_df = common_df();
-    if (tex) {
-	pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
-    } else if (rtf) {
-	pprintf(prn, "\\qc %s\\cell ", 
-		(same_df)? "R{\\super 2}" : _("Adj. R{\\super 2}"));
-    } else {
-	pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
-    }
+    any_R2 = any_r_squared();
+    any_ll = any_log_lik();
 
-    for (j=0; j<model_list_len; j++) {
-	pmod = model_list[j];
-	if (pmod == NULL) continue;
-	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	    *binary = 1;
-	    /* McFadden */
-	    if (tex) {
-		pprintf(prn, "& %.4f ", pmod->rsq);
-	    } else if (rtf) {
-		pprintf(prn, "\\qc %.4f\\cell ", pmod->rsq);
-	    } else {
-		pprintf(prn, "%#12.4g", pmod->rsq);
-	    }
+    if (any_R2) {
+	/* print R^2 values */
+
+	if (tex) {
+	    pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
+	} else if (rtf) {
+	    pprintf(prn, "\\qc %s\\cell ", 
+		    (same_df)? "R{\\super 2}" : _("Adj. R{\\super 2}"));
 	} else {
-	    double rsq = (same_df)? pmod->rsq : pmod->adjrsq;
+	    pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
+	}
 
-	    if (tex) {
-		pprintf(prn, "& %.4f ", rsq);
-	    } else if (rtf) {
-		pprintf(prn, "\\qc %.4f\\cell ", rsq);
+	for (j=0; j<model_list_len; j++) {
+	    pmod = model_list[j];
+	    if (pmod == NULL) continue;
+	    if (na(pmod->rsq)) {
+		if (tex) {
+		    pputs(prn, "& ");
+		} else if (rtf) {
+		    pputs(prn, "\\qc \\cell ");
+		} else {
+		    pputs(prn, "            ");
+		}		
+	    }
+	    else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+		*binary = 1;
+		/* McFadden */
+		if (tex) {
+		    pprintf(prn, "& %.4f ", pmod->rsq);
+		} else if (rtf) {
+		    pprintf(prn, "\\qc %.4f\\cell ", pmod->rsq);
+		} else {
+		    pprintf(prn, "%#12.4g", pmod->rsq);
+		}
 	    } else {
-		pprintf(prn, "%#12.4g", rsq);
+		double rsq = (same_df)? pmod->rsq : pmod->adjrsq;
+
+		if (tex) {
+		    pprintf(prn, "& %.4f ", rsq);
+		} else if (rtf) {
+		    pprintf(prn, "\\qc %.4f\\cell ", rsq);
+		} else {
+		    pprintf(prn, "%#12.4g", rsq);
+		}
 	    }
 	}
+
+	if (tex) pputs(prn, "\\\\\n");
+	else if (rtf) pputs(prn, "\\intbl \\row\n");
+	else {
+	    pputc(prn, '\n');
+	    if (!any_ll) pputc(prn, '\n');
+	}
     }
-    if (rtf) pputs(prn, "\\intbl \\row\n");
-    else pputs(prn, "\n\n");
+
+    if (any_ll) {
+	/* print log-likelihoods */
+
+	if (tex) {
+	    pputs(prn, "ln$L$");
+	} else if (rtf) {
+	    pputs(prn, "\\qc lnL\\cell ");
+	} else {
+	    pprintf(prn, "%9s", "lnL");
+	}
+
+	for (j=0; j<model_list_len; j++) {
+	    pmod = model_list[j];
+	    if (pmod == NULL) continue;
+	    if (na(pmod->lnL)) {
+		if (tex) {
+		    pputs(prn, "& ");
+		} else if (rtf) {
+		    pputs(prn, "\\qc \\cell ");
+		} else {
+		    pputs(prn, "            ");
+		}		
+	    } else {
+		if (tex) {
+		    pprintf(prn, "& $-$%.2f ", -pmod->lnL);
+		} else if (rtf) {
+		    pprintf(prn, "\\qc %.3f\\cell ", pmod->lnL);
+		} else {
+		    pprintf(prn, "%#12.6g", pmod->lnL);
+		}
+	    }
+	}
+
+	if (tex) pputs(prn, "\\\\\n");
+	else if (rtf) pputs(prn, "\\intbl \\row\n");
+	else pputs(prn, "\n\n");
+    }
 }
 
 int display_model_table (int gui)
@@ -573,13 +656,14 @@ int display_model_table (int gui)
 	/* all models use same estimation procedure */
 	pprintf(prn, _("%s estimates"), 
 		_(estimator_string(ci, prn->format)));
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     pprintf(prn, _("Dependent variable: %s\n"),
 	    datainfo->varname[grand_list[1]]);
 
     pputs(prn, "\n            ");
+
     for (j=0; j<model_list_len; j++) {
 	char modhd[16];
 
@@ -587,7 +671,7 @@ int display_model_table (int gui)
 	sprintf(modhd, _("Model %d"), (model_list[j])->ID);
 	center_in_field(modhd, 12, prn);
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     
     if (ci == 0) {
 	char est[12];	
@@ -600,10 +684,10 @@ int display_model_table (int gui)
 					    prn->format)));
 	    center_in_field(est, 12, prn);
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
-    pputs(prn, "\n"); 
+    pputc(prn, '\n'); 
 
     print_model_table_coeffs(prn);
     print_n_r_squared(prn, &binary);
@@ -687,7 +771,7 @@ int tex_print_model_table (int view)
     if (ci == 0) {
 	char est[12];
 
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 
 	for (j=0; j<model_list_len; j++) {
 	    if (model_list[j] == NULL) continue;
@@ -743,7 +827,7 @@ static void print_rtf_row_spec (PRN *prn, int tall)
     for (i=0; i<cols; i++) {
 	pprintf(prn, "\\cellx%d", col1 +  i * 1400);
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 int rtf_print_model_table (void)
@@ -772,7 +856,7 @@ int rtf_print_model_table (void)
 	pputs(prn, "\\par \\qc ");
 	pprintf(prn, I_("%s estimates"), 
 		I_(estimator_string(ci, prn->format)));
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{", 
