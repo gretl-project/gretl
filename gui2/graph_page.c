@@ -318,7 +318,13 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
 		480.0 * scale, 360.0 * scale);
 	fname = gpage_fname(".png", i);
     } else {
-	fputs("set encoding iso_8859_1\n", fq);
+#ifdef ENABLE_NLS
+	const char *enc = get_gnuplot_charset();
+
+	if (enc != NULL) {
+	    fprintf(fq, "set encoding %s\n", enc);
+	}
+#endif
 	fprintf(fq, "set term postscript eps%s\n", (color)? " color" : "");
 	fname = gpage_fname(".ps", i);
 	if (scale != 1.0) {

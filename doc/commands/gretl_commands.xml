@@ -2593,16 +2593,25 @@
         <example>loop 1000</example>
         <example>loop while essdiff > .00001</example>
         <example>loop for i=1991..2000</example>
+        <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
       </examples>
     </usage>
 
     <description>
       <para>The parameter <repl quote="true">control</repl> must take
-	one of three forms, as shown in the examples: an integer
-	number of times to repeat the commands within the loop;
-	<quote><lit>while</lit></quote> plus a numerical condition; or
+	one of four forms, as shown in the examples: an integer number
+	of times to repeat the commands within the loop;
+	<quote><lit>while</lit></quote> plus a numerical condition;
 	<quote><lit>for</lit></quote> plus a range of values for the
-	internal index variable <lit>i</lit>.
+	internal index variable <lit>i</lit>; or
+	<quote><lit>for</lit></quote> plus three expressions in
+	parentheses, separated by semicolons.  In the last form the
+	left-hand expression initializes a variable, the middle
+	expression sets a condition for iteration to continue, and the
+	right-hand expression sets an increment or decrement to be
+	applied at the start of the second and subsequent iterations.
+	(This is a restricted form of the <lit>for</lit> statement in
+	the C programming language.)
       </para>
 
       <para>This command opens a special mode in which the program
@@ -2613,7 +2622,7 @@
 	(store can't be used in a <quote>while</quote> loop).  You
 	exit the mode of entering loop commands with
 	<cmd>endloop</cmd>: at this point the stacked commands are
-	executed.  Loops cannot be nested.
+	executed.
       </para>
 
       <para>See <manref targ="looping"/> for further details and
@@ -4986,6 +4995,36 @@
 
     <gui-access>
       <menu-path>/Data/Difference of variances</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="vif" section="Tests" context="cli"
+    label="Variance Inflation Factors">
+
+    <description>
+      <para>
+	Must follow the estimation of a model which includes at least
+	two independent variables. Calculates and displays the
+	Variance Inflation Factors (VIFs) for the regressors.  The VIF
+	for regressor <mathvar>j</mathvar> is defined as
+	<equation status="display" 
+	  tex="\[\frac{1}{1-R_j^2}\]"
+	  ascii="1/(1 - Rj^2"
+	  graphic="vif"/> where <mathvar>R<sub>j</sub></mathvar> is
+	the coefficient of multiple correlation between regressor
+	<mathvar>j</mathvar> and the other regressors. The factor has
+	a minimum value of 1.0 when the variable in question is
+	orthogonal to the other independent variables.  Neter,
+	Wasserman, and Kutner (1990) suggest inspecting the largest
+	VIF as a diagnostic for collinearity; a value greater than 10
+	is sometimes taken as indicating a problematic degree of
+	collinearity.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/collinearity</menu-path>
     </gui-access>
 
   </command>

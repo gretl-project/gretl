@@ -2833,12 +2833,13 @@ static void msgbox (const char *msg, int err)
 	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
     } 
 
-    if (err) 
+    if (err) {
 	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
 		   MB_OK | MB_ICONERROR);
-    else
+    } else {
 	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
 		   MB_OK | MB_ICONINFORMATION);
+    }
 
     if (nls_on) g_free(trmsg);
 }

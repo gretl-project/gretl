@@ -1775,17 +1775,19 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 	}
 	return;
     } else {
-	pprintf(prn, "set term %s\n", termstr);
 #ifdef ENABLE_NLS
-	if (strstr(termstr, "postscript")) {
-	    pprintf(prn, "set encoding iso_8859_1\n");
-	} 
-#endif /* ENABLE_NLS */	
+	const char *enc = get_gretl_charset();
+
+	if (enc != NULL) {
+	    pprintf(prn, "set encoding %s\n", enc);
+	}
+#endif /* ENABLE_NLS */
+	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
 	    if (strncmp(plotline, "set term", 8) && 
 		strncmp(plotline, "set output", 10))
-		pprintf(prn, "%s", plotline);
+		pputs(prn, plotline);
 	}
     }
 

@@ -629,13 +629,15 @@ static void destroy (GtkWidget *widget, gpointer data)
 static void real_nls_init (void)
 {
     char gretldir[MAXSTR], localedir[MAXSTR];
+    char *loc;
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
 	return;
     }
 
     build_path(gretldir, "locale", localedir, NULL);
-    setlocale (LC_ALL, "");
+    loc = setlocale (LC_ALL, "");
+    set_gretl_charset(loc);
     bindtextdomain (PACKAGE, localedir);
     textdomain (PACKAGE);
     bind_textdomain_codeset (PACKAGE, "UTF-8");
@@ -647,11 +649,13 @@ static void real_nls_init (void)
 {
     char *prefix = getenv("GTK_EXE_PREFIX");
     char *localedir;
+    char *loc;
 
     if (prefix == NULL) return;
     
     localedir = g_strdup_printf("%s/share/locale", prefix);
-    setlocale (LC_ALL, "");
+    loc = setlocale (LC_ALL, "");
+    set_gretl_charset(loc);
     bindtextdomain (PACKAGE, localedir);
     textdomain (PACKAGE);
     bind_textdomain_codeset (PACKAGE, "UTF-8");
@@ -662,7 +666,10 @@ static void real_nls_init (void)
 
 static void real_nls_init (void)
 {
-    setlocale (LC_ALL, "");
+    char *loc;
+
+    loc = setlocale (LC_ALL, "");
+    set_gretl_charset(loc);
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
     bind_textdomain_codeset (PACKAGE, "UTF-8");
@@ -1223,6 +1230,7 @@ void populate_varlist (void)
 	GtkTreePath *path = gtk_tree_path_new_from_string("1");
 
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(mdata->listbox), path, NULL, FALSE);
+	gtk_tree_path_free(path);
     }
 
     if (!check_connected) {
@@ -1342,7 +1350,7 @@ void set_sample_label (DATAINFO *pdinfo)
 	case 52:
 	    strcpy(pdstr, _("Weekly")); break;
 	case 5:
-	    strcpy(pdstr, _("Daily")); break;
+	case 6:
 	case 7:
 	    strcpy(pdstr, _("Daily")); break;
 	default:

@@ -900,16 +900,18 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 void do_setobs (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
+    char format[10];
     char pdstr[8], stobs[OBSLEN];
     int err;
 
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
-    sscanf(buf, "%7s %8s", pdstr, stobs);
+    sprintf(format, "%%7s %%%ds", OBSLEN - 1);
+    sscanf(buf, format, pdstr, stobs);
 	
     clear(line, MAXLEN);
-    sprintf(line, "setobs %s %s ", pdstr, stobs);
+    sprintf(line, "setobs %s %s", pdstr, stobs);
     if (verify_and_record_command(line)) return;
 
     err = set_obs(line, datainfo, cmd.opt);

@@ -629,7 +629,9 @@ int doing_nls (void)
     static int called, nls;
 
     if (!called) {
-	nls = (strcmp("/File/_Open data", _("/File/_Open data")) != 0);
+	nls = (strcmp("/File/_Open data", _("/File/_Open data")) ||
+	       strcmp("Test statistic", _("Test statistic")) ||
+	       strcmp("annual", _("annual")));
 	called = 1;
     }
     return nls;
@@ -762,14 +764,88 @@ char *colonize_obs (char *obs)
 /* fudges for strings that should not be in utf-8 under some 
    conditions: under gtk2, translations usually come out in
    utf-8 in the GUI, but when we're sending stuff to stderr,
-   it should be in ISO-8859-1. */
+   it should probably be in ISO-8859-N. */
 
 #ifdef ENABLE_NLS
+
+static int gretl_cset_maj;
+static int gretl_cset_min;
+
+void set_gretl_charset (const char *s)
+{
+    char gretl_charset[32];
+    const char *charset = NULL;
+    int using_utf8 = 0;
+
+#ifdef USE_GTK2
+    using_utf8 = g_get_charset(&charset);
+#else
+    charset = s;
+#endif
+
+    *gretl_charset = '\0';
+
+    if (!using_utf8 && charset != NULL && *charset != '\0') {
+	char *p;
+
+	strncat(gretl_charset, charset, 31);
+	lower(gretl_charset);
+	p = strstr(gretl_charset, "iso");
+	if (p != NULL) {
+	    char numstr[6];
+
+	    while (*p && !isdigit((unsigned char) *p)) p++;
+	    *numstr = '\0';
+	    strncat(numstr, p, 4);
+	    gretl_cset_maj = atoi(numstr);
+	    if (strlen(p) > 4) {
+		p += 4;
+		while (*p && !isdigit((unsigned char) *p)) p++;
+		gretl_cset_min = atoi(p);
+	    }
+	    
+	    if (gretl_cset_maj < 0 || gretl_cset_maj > 9000) {
+		gretl_cset_maj = gretl_cset_min = 0;
+	    } else if (gretl_cset_min < 0 || gretl_cset_min > 30) {
+		gretl_cset_maj = gretl_cset_min = 0;
+	    }
+	}
+    }
+}
+
+const char *get_gretl_charset (void)
+{
+    static char cset[12];
+
+    if (gretl_cset_maj > 0 && gretl_cset_min > 0) {
+	sprintf(cset, "ISO-%d-%d\n", gretl_cset_maj, gretl_cset_min);
+	return cset;
+    } 
+
+    return NULL;
+}
+
+const char *get_gnuplot_charset (void)
+{
+    static char gp_enc[12];
+
+    if (gretl_cset_maj == 8859 && 
+	(gretl_cset_min == 1 || 
+	 gretl_cset_min == 2 ||
+	 gretl_cset_min == 15)) {
+	sprintf(gp_enc, "iso_%d_%d\n", gretl_cset_maj, gretl_cset_min);
+	return gp_enc;
+    } 
+
+    return NULL;
+}
 
 char *iso_gettext (const char *msgid)
 {
    char *ret;
    static int cli;
+   static int iso_ok = -1;
+   static char *cset;
 
    /* the command-line program is "special": it doesn't emit
       utf-8 at all, so we omit the redundant switching of
@@ -783,9 +859,19 @@ char *iso_gettext (const char *msgid)
        return gettext(msgid);
    }
 
-   bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
-   ret = gettext(msgid);
-   bind_textdomain_codeset(PACKAGE, "UTF-8");
+   if (iso_ok < 0) {
+       cset = get_gretl_charset();
+       if (cset == NULL) iso_ok = 0;
+       else iso_ok = 1;
+   }
+
+   if (iso_ok) {
+       bind_textdomain_codeset(PACKAGE, cset);
+       ret = gettext(msgid);
+       bind_textdomain_codeset(PACKAGE, "UTF-8");
+   } else {
+       ret = gettext(msgid);
+   }
 
    return ret;
 } 

@@ -701,7 +701,7 @@ static void set_browser_status (windata_t *fdata, int status)
 
 /* ........................................................... */
 
-static void browser_ok (GtkWidget *w, gpointer data)
+static void free_browser (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
@@ -938,11 +938,11 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     fdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #ifndef OLD_GTK
     g_signal_connect (G_OBJECT (fdata->w), "destroy",
-		      G_CALLBACK (browser_ok),
+		      G_CALLBACK (free_browser),
 		      fdata);
 #else
     gtk_signal_connect (GTK_OBJECT (fdata->w), "destroy",
-			GTK_SIGNAL_FUNC (browser_ok),
+			GTK_SIGNAL_FUNC (free_browser),
 			fdata);
 #endif
     set_browser_status(fdata, BROWSER_BUSY);

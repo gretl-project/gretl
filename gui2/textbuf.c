@@ -306,8 +306,11 @@ static gchar *my_utf_string (char *t)
 	from_codeset = g_strdup(smb);
     } else {
     	g_get_charset(&fc);
-    	if (fc) from_codeset = g_strdup(fc);
-    	else from_codeset = g_strdup("ISO-8859-1");
+    	if (fc) {
+	    from_codeset = g_strdup(fc);
+    	} else {
+	    from_codeset = g_strdup("ISO-8859-1");
+	}
     }
     
     if (!strcmp(from_codeset, "ISO-")) {

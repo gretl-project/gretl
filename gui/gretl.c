@@ -548,13 +548,15 @@ static void destroy (GtkWidget *widget, gpointer data)
 void nls_init (void)
 {
     char *mylang = getenv("GRETL_LANG");
+    char *loc;
 
     if (mylang != NULL) {
 	if (!g_strcasecmp(mylang, "english") ||
 	    !g_strcasecmp(mylang, "C")) return;
     }
 
-    setlocale (LC_ALL, "");
+    loc = setlocale (LC_ALL, "");
+    set_gretl_charset(loc);
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
 }
@@ -1156,7 +1158,7 @@ void set_sample_label (DATAINFO *pdinfo)
 	case 52:
 	    strcpy(pdstr, _("Weekly")); break;
 	case 5:
-	    strcpy(pdstr, _("Daily")); break;
+	case 6:
 	case 7:
 	    strcpy(pdstr, _("Daily")); break;
 	default:

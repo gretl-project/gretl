@@ -2081,16 +2081,19 @@ static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
     int nmiss = 0, err = 0;
     char *missvec = NULL;
     
-    pdinfo->pd = 5; /* let's try it */
-    pdinfo->time_series = TIME_SERIES;
-
     ed1 = get_epoch_day(pdinfo->S[0]);
     if (ed1 < 0) err = 1;
 
+    pdinfo->pd =  guess_daily_pd(pdinfo);
+    pdinfo->time_series = TIME_SERIES;
+
     if (!err) {
 	ed2 = get_epoch_day(pdinfo->S[pdinfo->n - 1]);
-	if (ed2 <= ed1) err = 1;
-	else pdinfo->sd0 = ed1;
+	if (ed2 <= ed1) {
+	    err = 1;
+	} else {
+	    pdinfo->sd0 = ed1;
+	}
     }
 
     if (!err) {
@@ -2099,8 +2102,7 @@ static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
 
 	fulln = n2 - n1 + 1;
 	if (pdinfo->n > fulln) {
-	    pdinfo->pd = 7;
-	    /* FIXME need to do more here */
+	    err = 1;
 	} else {
 	    nmiss = fulln - pdinfo->n;
 	    fprintf(stderr, "Observations: %d; days in sample: %d\n", 
@@ -2142,7 +2144,9 @@ static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
 	pdinfo->pd = pd;
 	pdinfo->sd0 = sd0;
 	pdinfo->time_series = 0;
-	if (missvec) free(missvec);
+	if (missvec) {
+	    free(missvec);
+	}
     } else if (pmiss != NULL && missvec != NULL) {
 	*pmiss = missvec;
 	for (t=0; t<pdinfo->n; t++) {
@@ -2156,11 +2160,16 @@ static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
 	strcpy(pdinfo->stobs, pdinfo->S[0]);
 	strcpy(pdinfo->endobs, pdinfo->S[pdinfo->n - 1]);
 	pdinfo->t2 = pdinfo->n - 1;
-	if (nmiss > 0) pdinfo->markers = DAILY_DATE_STRINGS;
+	if (nmiss > 0) {
+	    pdinfo->markers = DAILY_DATE_STRINGS;
+	}
     }
 
-    if (!err) return pdinfo->pd;
-    else return -1;
+    if (!err) {
+	return pdinfo->pd;
+    } else {
+	return -1;
+    }
 }
 
 /* ......................................................... */
@@ -3636,7 +3645,8 @@ static int write_xmldata (const char *fname, const int *list,
 #ifdef USE_GTK2
     const char *enc = "UTF-8";
 #else
-    const char *enc = "ISO-8859-1";
+    const char *enc = get_gretl_charset();
+    if (enc == NULL) enc = "ISO-8859-1";
 #endif
 
     err = 0;

@@ -106,11 +106,17 @@
       relation='journal'><title>ACM Transactions on Modeling and
 	Computer Simulation</title>, 8: 1.
     </bibliomset>
+  </bibliomixed> 
+
+  <bibliomixed>
+    Neter, J. Wasserman, W. and Kutner, M. H. (1990)
+    <title>Applied Linear Statistical Models</title>, 3rd edition,
+    Boston, MA: Irwin. 
   </bibliomixed>  
 
   <bibliomixed>
     R Core Development Team (2000) <title>An Introduction to
-      R</title>, version 1.1.1, <!-- <ulink
+      R</title>, version 1.1.1. <!-- <ulink
     url="http://cran.r-project.org/doc/manuals/R-intro.pdf"></ulink>.
     -->
   </bibliomixed>

@@ -49,6 +49,8 @@ double get_dec_date (const char *date);
 
 int n_hidden_missing_obs (const DATAINFO *pdinfo);
 
+int guess_daily_pd (const DATAINFO *pdinfo);
+
 char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount);
 
 int undo_repack_missing (double **Z, const DATAINFO *pdinfo, 

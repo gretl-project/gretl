@@ -120,34 +120,41 @@ long get_epoch_day (const char *date)
 int daily_obs_number (const char *date, const DATAINFO *pdinfo)
 {
     long ed0 = (long) pdinfo->sd0;
-    long tmp = get_epoch_day(date);
+    long t = get_epoch_day(date);
 
-    if (tmp == -1) return -1;
+    if (t == -1) return -1;
+    
+    /* subtract starting day for dataset */
+    t -= ed0;
 
-    tmp -= ed0;
-
-    if (pdinfo->pd == 5 || pdinfo->pd == 6) { /* 5-day or 6-day week */
+    /* handle 5- or 6-day weeks: subtract number of irrelevant days */
+    if (pdinfo->pd == 5 || pdinfo->pd == 6) { 
 	int startday = (((ed0 - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
-	int wkends = (tmp + startday - 1) / 7;
+	int wkends = (t + startday - 1) / 7;
 
-	/* FIXME 6-day?? */
+#ifdef CAL_DEBUG
+	printf("daily_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n", 
+	       (int) ed0, date, (int) t, startday, wkends);
+#endif
 
 	if (pdinfo->pd == 5) {
-	    tmp -= (2 * wkends);
+	    t -= (2 * wkends);
 	} else {
-	    tmp -= wkends;
+	    t -= wkends;
 	}
     }
 
-    return (int) tmp;
+    return (int) t;
 }
 
-static int t_to_epoch_day (int t, long start)
+static int t_to_epoch_day (int t, long start, int wkdays)
 {
     int startday = (((start - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
-    int wkends = (t + startday - 1) / 5;
+    int wkends = (t + startday - 1) / wkdays;
 
-    return start + t + (2 * wkends);
+    if (wkdays == 5) wkends *= 2;
+
+    return start + t + wkends;
 }
 
 /**
@@ -170,8 +177,7 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
     if (pdinfo->pd == 7) {
 	dfind = (long) pdinfo->sd0 + t;
     } else {
-	/* FIXME 6-day data */
-	dfind = t_to_epoch_day(t, (long) pdinfo->sd0);
+	dfind = t_to_epoch_day(t, (long) pdinfo->sd0, pdinfo->pd);
     }
 
     yr = 1 + (double) dfind / 365.248; 
@@ -449,6 +455,33 @@ int n_hidden_missing_obs (const DATAINFO *pdinfo)
     cal_n = t2 - t1 + 1;
 
     return cal_n - pdinfo->n;
+}
+
+/* based on supplied data strings, try to guess whether
+   daily data is 7-day, 6-day or 5-day */
+
+int guess_daily_pd (const DATAINFO *pdinfo)
+{
+    int t, wd, pd = 5;
+    int gotsat = 0;
+
+    for (t=0; t<pdinfo->n && t<28; t++) {
+	wd = get_day_of_week(pdinfo->S[t]);
+	if (wd == 0) {
+	    /* got a Sunday, has to be seven-day data */
+	    pd = 7;
+	    break;
+	}
+	if (wd == 6) {
+	    gotsat = 1;
+	}
+    }
+
+    if (pd == 5 && gotsat) {
+	pd = 6;
+    }
+
+    return pd;
 }
 
 /* The following functions have nothing to do with the "cal" program,

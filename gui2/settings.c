@@ -908,6 +908,12 @@ static void set_lcnumeric (void)
 		set = setlocale(LC_NUMERIC, "it");
 	    }
 	}
+	else if (lang != NULL && !strcmp(lang, "pl")) {
+	    set = setlocale(LC_NUMERIC, "Polish");
+	    if (set == NULL) {
+		set = setlocale(LC_NUMERIC, "pl");
+	    }
+	}
 
 	if (set == NULL) {
 	    setlocale(LC_NUMERIC, "");

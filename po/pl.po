@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-09-17 14:00+0100\n"
+"PO-Revision-Date: 2004-09-18 17:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -548,7 +548,7 @@ msgstr "   zdecydowanie nie cztero-znakowy zapis roku\n"
 
 #: lib/src/dataio.c:2378
 msgid "Data frequency does not match\n"
-msgstr "Czêstotliwo¶æ danych nie pasuje\n"
+msgstr "Okresowo¶æ danych nie pasuje\n"
 
 #: lib/src/dataio.c:2388
 msgid "New data not conformable for appending\n"
@@ -906,7 +906,7 @@ msgstr "Nierozpoznany atrybut typu dla pliku danych"
 
 #: lib/src/dataio.c:4280
 msgid "Failed to parse data frequency"
-msgstr "Nieudana analiza czêstotliwo¶ci danych"
+msgstr "Nieudana analiza okresowo¶ci danych"
 
 #: lib/src/dataio.c:4316
 msgid "Failed to parse startobs"
@@ -3504,12 +3504,16 @@ msgid ""
 "\n"
 "Enter x value (value < 0 will exit menu): "
 msgstr ""
+"\n"
+"Wprowadz x-warto¶æ (warto¶æ < 0 wyj¶cie z menu): "
 
 #: lib/src/pvalues.c:246
 msgid ""
 "\n"
 "statistic has missing value code\n"
 msgstr ""
+"\n"
+"Brakuje warto¶ci dla statystyki\n"
 
 #: lib/src/pvalues.c:275 lib/src/pvalues.c:293 lib/src/pvalues.c:313
 #: lib/src/pvalues.c:330
@@ -3517,6 +3521,8 @@ msgid ""
 "\n"
 "p-value calculation failed\n"
 msgstr ""
+"\n"
+"b³±d w obliczaniu p-value\n"
 
 #: lib/src/pvalues.c:278
 #, c-format
@@ -3524,17 +3530,21 @@ msgid ""
 "\n"
 "Standard normal: area to the %s of %g = %g\n"
 msgstr ""
+"\n"
+"Standaryzowany rozk³ad normalny: ogon %s dla %g = %g\n"
 
 #: lib/src/pvalues.c:281 lib/src/pvalues.c:299
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
-msgstr ""
+msgstr "(obszar dwóch ogonów = %g; dope³nienie = %g)\n"
 
 #: lib/src/pvalues.c:288
 msgid ""
 "\n"
 "pvalue for t: missing parameter\n"
 msgstr ""
+"\n"
+"pvalue dla t: brak parameteru\n"
 
 #: lib/src/pvalues.c:296
 #, c-format
@@ -3542,12 +3552,16 @@ msgid ""
 "\n"
 "t(%d): area to the %s of %g = %g\n"
 msgstr ""
+"\n"
+"t(%d): ogon %s dla %g = %g\n"
 
 #: lib/src/pvalues.c:308
 msgid ""
 "\n"
 "pvalue for chi-square: missing parameter\n"
 msgstr ""
+"\n"
+"pvalue dla chi-kwadrat: brak parameteru\n"
 
 #: lib/src/pvalues.c:316
 #, c-format
@@ -3555,17 +3569,21 @@ msgid ""
 "\n"
 "Chi-square(%d): area to the right of %g = %g\n"
 msgstr ""
+"\n"
+"Chi-kwadrat(%d): ogon prawy dla %g = %g\n"
 
 #: lib/src/pvalues.c:318 lib/src/pvalues.c:335
 #, c-format
 msgid "(to the left: %g)\n"
-msgstr ""
+msgstr "(lewy obszar: %g)\n"
 
 #: lib/src/pvalues.c:325
 msgid ""
 "\n"
 "pvalue for F: missing parameter\n"
 msgstr ""
+"\n"
+"pvalue dla F: brak parameteru\n"
 
 #: lib/src/pvalues.c:333
 #, c-format
@@ -3573,12 +3591,16 @@ msgid ""
 "\n"
 "F(%d, %d): area to the right of %g = %g\n"
 msgstr ""
+"\n"
+"F(%d, %d): ogon prawy dla %g = %g\n"
 
 #: lib/src/pvalues.c:343
 msgid ""
 "\n"
 "Error computing gamma distribution\n"
 msgstr ""
+"\n"
+"B³±d w obliczeniach dystrybuanty gamma\n"
 
 #: lib/src/pvalues.c:345
 #, c-format
@@ -3587,12 +3609,17 @@ msgid ""
 "Gamma (mean %g, variance %g, shape %g, scale %g):\n"
 " area to the right of %g = %g\n"
 msgstr ""
+"\n"
+"Gamma (¶rednia %g, wariancja %g, shape %g, scale %g):\n"
+" ogon prawy dla %g = %g\n"
 
 #: lib/src/pvalues.c:352
 msgid ""
 "\n"
 "unrecognized pvalue code\n"
 msgstr ""
+"\n"
+"Nierozpoznany b³±d pvalue\n"
 
 #: lib/src/pvalues.c:376
 #, c-format
@@ -3608,12 +3635,24 @@ msgid ""
 "Enter your choice (a number < 0 to exit gretl, 0 to quit menu, or\n"
 "1, 2, 3, 4, or 5): "
 msgstr ""
+"\n"
+"\n"
+"Wybierz jeden z nastêpuj±cych rozk³adów: \n"
+"\n"
+"\t1) Standard normal\t\t2) Student's t\n"
+"\t3) Chi-square\t\t\t4) F\n"
+"\t5) Gamma\n"
+"\n"
+"Wprowadz wybór (warto¶æ < 0 wyj¶cie z gretla, 0 wyj¶cie z menu, lub\n"
+"1, 2, 3, 4, or 5): "
 
 #: lib/src/pvalues.c:410
 msgid ""
 "\n"
 "invalid choice"
 msgstr ""
+"\n"
+"b³êdny wybór"
 
 #: lib/src/pvalues.c:414
 #, c-format
@@ -3621,6 +3660,8 @@ msgid ""
 "\n"
 "Do you want to continue with more pvalues (y or n)? "
 msgstr ""
+"\n"
+"Czy chcesz kontynuowaæ wyznaczanie pvalue (y or n)? "
 
 #: lib/src/pvalues.c:431
 #, c-format
@@ -3628,6 +3669,8 @@ msgid ""
 "\n"
 "For the standard normal, area (one-tail) to the right of %g is "
 msgstr ""
+"\n"
+"Dla standaryzowanego rozk³adu normalnego, obszar (ogon) z prawej dla %g wynosi "
 
 #: lib/src/pvalues.c:451
 #, c-format
@@ -3635,6 +3678,8 @@ msgid ""
 "\n"
 "For Student's t(%d), area (one-tail) to the right of %g is "
 msgstr ""
+"\n"
+"Dla rozk³adu t-Studenta t(%d), obszar (ogon) z prawej dla %g wynosi "
 
 #: lib/src/pvalues.c:470
 #, c-format
@@ -3642,14 +3687,16 @@ msgid ""
 "\n"
 "For Chi-square(%d), area to the right of %g is "
 msgstr ""
+"\n"
+"Dla rozk³adu Chi-kwadrat(%d), obszar (ogon) z prawej dla %g wynosi "
 
 #: lib/src/pvalues.c:482
 msgid " for the numerator "
-msgstr ""
+msgstr "dla licznika "
 
 #: lib/src/pvalues.c:485
 msgid " for the denominator "
-msgstr ""
+msgstr "dla mianownika "
 
 #: lib/src/pvalues.c:492
 #, c-format
@@ -3657,6 +3704,8 @@ msgid ""
 "\n"
 "For F(%d, %d), area to the right of %g is "
 msgstr ""
+"\n"
+"Dla rozk³adu F(%d, %d), obszar (ogon) z prawej dla %g wynosi "
 
 #: lib/src/pvalues.c:504
 #, c-format
@@ -3664,6 +3713,8 @@ msgid ""
 "\n"
 "Enter the mean: "
 msgstr ""
+"\n"
+"Wprowadz ¶redni±: "
 
 #: lib/src/pvalues.c:507
 #, c-format
@@ -3671,6 +3722,8 @@ msgid ""
 "\n"
 "Enter the variance: "
 msgstr ""
+"\n"
+"Wprowadz wariancjê: "
 
 #: lib/src/pvalues.c:514
 #, c-format
@@ -3678,6 +3731,8 @@ msgid ""
 "\n"
 "For Gamma (mean %g, variance %g), area to the right of %g is "
 msgstr ""
+"\n"
+"Dla rozk³adu Gamma (¶rednia %g, wariancja %g), obszar (ogon) z prawej dla %g wynosi "
 
 #: lib/src/pvalues.c:535
 #, c-format
@@ -3685,6 +3740,8 @@ msgid ""
 "\n"
 "Enter d.f.%s(value <= 0 will exit menu): "
 msgstr ""
+"\n"
+"Wprowadz stopnie swobody %s (warto¶æ <= 0 oznacza wyj¶cie z menu): "
 
 #: lib/src/pvalues.c:608
 msgid "Invalid degrees of freedom\n"
@@ -3692,14 +3749,16 @@ msgstr "B³êdna liczba stopni swobody\n"
 
 #: lib/src/pvalues.c:612
 msgid "Invalid sample size\n"
-msgstr ""
+msgstr "B³êdny zakres próby\n"
 
 #: lib/src/pvalues.c:653 gui2/calculator.c:249
 #, c-format
 msgid ""
 "Approximate critical values of F(%d, %d)\n"
 "\n"
-msgstr "Warto¶ci krytyczne dla rozk³adu F(%d, %d)\n"
+msgstr ""
+"Warto¶ci krytyczne dla rozk³adu F(%d, %d)\n"
+"\n"
 
 #: lib/src/pvalues.c:655 gui2/calculator.c:251
 #, c-format
@@ -5468,7 +5527,7 @@ msgstr ""
 
 #: gui/gretl.c:1568 gui2/gretl.c:1773
 msgid "Full sample range restored"
-msgstr ""
+msgstr "Przywrócony pe³ny zakres próby"
 
 #: gui/gretl.c:1593 gui/gretl.c:1690 gui2/gretl.c:1916 gui2/library.c:185
 msgid "Couldn't fork"
@@ -5938,6 +5997,8 @@ msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
 msgstr ""
+"Czy chcesz zapisaæ wykonane zmiany\n"
+"w zbiorze danych?"
 
 #: gui/ssheet.c:582 gui2/ssheet.c:1276
 msgid "Please add a variable to the dataset first"
@@ -6710,6 +6771,8 @@ msgid ""
 "Enter integer frequency and\n"
 "starting observation string:"
 msgstr ""
+"Wprowadz parametr okresowo¶ci (liczba ca³kowita)\n"
+"i obserwacjê startow± dla bazy danych:"
 
 #: gui2/callbacks.c:522
 msgid "gretl: random variables"
@@ -7272,23 +7335,27 @@ msgstr ""
 
 #: gui2/dialogs.c:615
 msgid "Yes"
-msgstr ""
+msgstr "Tak"
 
 #: gui2/dialogs.c:625
 msgid "No"
-msgstr ""
+msgstr "Nie"
 
 #: gui2/dialogs.c:659
 msgid ""
 "Do you want to save the commands and\n"
 "output from this gretl session?"
 msgstr ""
+"Czy chcesz zapisaæ polecenia\n"
+"i wyniki z tej sesji gretla?"
 
 #: gui2/dialogs.c:663
 msgid ""
 "Do you want to save the changes you made\n"
 "to this session?"
 msgstr ""
+"Czy chcesz zapisaæ wykonane zmiany\n"
+"w tej sesji?"
 
 #: gui2/dialogs.c:783
 msgid "gretl: data delimiter"
@@ -7320,64 +7387,64 @@ msgstr ""
 
 #: gui2/dialogs.c:1001 gui2/dialogs.c:1114
 msgid "gretl: copy formats"
-msgstr ""
+msgstr "gretl: format kopiowania"
 
 #: gui2/dialogs.c:1017 gui2/dialogs.c:1125
 msgid "Copy as:"
-msgstr ""
+msgstr "Kopiuj jako:"
 
 #: gui2/dialogs.c:1044 gui2/dialogs.c:1195 gui2/textutil.c:734
 msgid "plain text"
-msgstr ""
+msgstr "prosty tekst ASCII"
 
 #: gui2/dialogs.c:1426 gui2/dialogs.c:1431
 msgid "not set"
-msgstr ""
+msgstr "nie wybrana"
 
 #: gui2/dialogs.c:1427
 msgid "average of observations"
-msgstr ""
+msgstr "¶rednia z obserwacji"
 
 #: gui2/dialogs.c:1428
 msgid "sum of observations"
-msgstr ""
+msgstr "suma z obserwacji "
 
 #: gui2/dialogs.c:1429
 msgid "first observation"
-msgstr ""
+msgstr "pierwsza obserwacja"
 
 #: gui2/dialogs.c:1430
 msgid "last observation"
-msgstr ""
+msgstr "ostatnia obserwacja"
 
 #: gui2/dialogs.c:1456
 msgid "gretl: variable attributes"
-msgstr ""
+msgstr "gretl: atrybuty zmiennej"
 
 #: gui2/dialogs.c:1462
 msgid "name of variable:"
-msgstr ""
+msgstr "Nazwa zmiennej:"
 
 #: gui2/dialogs.c:1491
 msgid "description:"
-msgstr ""
+msgstr "Pe³ny opis zmiennej:"
 
 #: gui2/dialogs.c:1523
 msgid "display name (shown in graphs):"
-msgstr ""
+msgstr "Krótki opis (wystêpuje na wykresach):"
 
 #: gui2/dialogs.c:1562
 msgid "compaction method (for reducing frequency):"
-msgstr ""
+msgstr "Metoda agregacji szeregu (redukcji okresowo¶ci):"
 
 #: gui2/dialogs.c:1767 gui2/dialogs.c:1938
 #, c-format
 msgid "Observations: %d"
-msgstr ""
+msgstr "Liczba obserwacji: %d"
 
 #: gui2/dialogs.c:1825
 msgid "gretl: set sample"
-msgstr ""
+msgstr "gretl: zakres próby"
 
 #: gui2/dialogs.c:1837
 msgid "There are no dummy variables in the current sample"
@@ -7398,55 +7465,55 @@ msgstr ""
 
 #: gui2/dialogs.c:1901
 msgid "Set sample range"
-msgstr ""
+msgstr "Zakres próby"
 
 #: gui2/dialogs.c:1907
 msgid "Start:"
-msgstr ""
+msgstr "Startowa obs.:"
 
 #: gui2/dialogs.c:1918
 msgid "End:"
-msgstr ""
+msgstr "Koñcowa obs.:"
 
 #: gui2/dialogs.c:2095
 msgid "Native code"
-msgstr ""
+msgstr "wybrane parametry"
 
 #: gui2/dialogs.c:2102
 msgid "Use X-12-ARIMA"
-msgstr ""
+msgstr "wykorzystaj X-12-ARIMA"
 
 #: gui2/dialogs.c:2442
 msgid "Week starts on Monday"
-msgstr ""
+msgstr "Tydzieñ zaczyna siê od poniedzia³ku"
 
 #: gui2/dialogs.c:2462
 msgid "Week starts on Sunday"
-msgstr ""
+msgstr "Tydzieñ zaczyna siê od niedzieli"
 
 #: gui2/dialogs.c:2496
 msgid "Default method:"
-msgstr ""
+msgstr "Domy¶lna metoda agregacji"
 
 #: gui2/dialogs.c:2502
 msgid "Compact by averaging"
-msgstr ""
+msgstr "Agregowanie obserwacji do ¶redniej"
 
 #: gui2/dialogs.c:2520
 msgid "Compact by summing"
-msgstr ""
+msgstr "Agregowanie obserwacji do sumy"
 
 #: gui2/dialogs.c:2537
 msgid "Use end-of-period values"
-msgstr ""
+msgstr "Warto¶æ ostatniej obserwacji w okresie"
 
 #: gui2/dialogs.c:2554
 msgid "Use start-of-period values"
-msgstr ""
+msgstr "Warto¶æ pierwszej obserwacji w okresie"
 
 #: gui2/dialogs.c:2612
 msgid "gretl: compact data"
-msgstr ""
+msgstr "gretl: agregowanie danych"
 
 #: gui2/dialogs.c:2625
 #, c-format
@@ -7463,19 +7530,19 @@ msgstr ""
 
 #: gui2/dialogs.c:2632
 msgid "Compact quarterly data to annual"
-msgstr ""
+msgstr "Agregowanie danych kwartalnych do rocznych"
 
 #: gui2/dialogs.c:2635
 msgid "Compact monthly data to:"
-msgstr ""
+msgstr "Agregowanie danych miesiêcznych do:"
 
 #: gui2/dialogs.c:2641
 msgid "Compact daily data to:"
-msgstr ""
+msgstr "Agregowanie danych dziennych do:"
 
 #: gui2/dialogs.c:2644
 msgid "Compact daily data to weekly"
-msgstr ""
+msgstr "Agregowanie danych dziennych do tygodniowych"
 
 #: gui2/dialogs.c:2783
 msgid "gretl error"
@@ -7487,7 +7554,7 @@ msgstr ""
 
 #: gui2/dialogs.c:2887
 msgid "Apply"
-msgstr ""
+msgstr "Zastosuj"
 
 #: gui2/fileselect.c:164
 msgid ""
@@ -8824,7 +8891,7 @@ msgstr ""
 #: gui2/library.c:967
 #, c-format
 msgid "Set data frequency to %d, starting obs to %s"
-msgstr ""
+msgstr "Parametr okresowo¶ci: %d, startowa obserwacja: %s"
 
 #: gui2/library.c:982
 msgid "gretl: missing values info"

@@ -2172,11 +2172,16 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	if (fp == NULL) return 1;
 #endif /* GNUPLOT_PIPE */
 	if (fname != NULL) { 
+	    
 	    /* file, not screen display */
 	    fprintf(fp, "set term %s\n", termstr);
 #ifdef ENABLE_NLS
 	    if (strstr(termstr, "postscript")) {
-		fputs("set encoding iso_8859_1\n", fp);
+		const char *enc = get_gretl_charset();
+
+		if (enc != NULL) {
+		    fprintf(fp, "set encoding %s\n", enc);
+		}
 	    }
 #endif /* ENABLE_NLS */
 	    fprintf(fp, "set output '%s'\n", fname);
