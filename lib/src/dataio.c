@@ -1676,6 +1676,8 @@ static int parse_varline (char *line,
     return 0;
 }
 
+/* #define BOX_DEBUG 1 */
+
 /* ................................................. */
 
 int import_box (double **pZ, DATAINFO *pdinfo, 
@@ -1756,6 +1758,7 @@ int import_box (double **pZ, DATAINFO *pdinfo,
     dumpvars = 0; gotdata = 0;
     while (fgets(line, maxline, fp)) {
 	strncpy(tmp, line, 2);
+	tmp[2] = '\0';
 	switch (atoi(tmp)) {
 	case 0: /* comment */
 	    break;
@@ -1778,26 +1781,28 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 		}
 		strncpy(tmp, line + varstart[i], varsize[i]);
 		tmp[varsize[i]] = '\0';
+		top_n_tail(tmp);
 		x = strtod(tmp, &test);
 #ifdef BOX_DEBUG
 		fprintf(stderr, "read %d chars from pos %d: '%s' -> %g\n",
 			varsize[i], varstart[i], tmp, x); 
 #endif
 		if (!strcmp(tmp, test)) {
-		    pprintf(prn, "'%s' -- no numeric conversion performed!", tmp);
+		    pprintf(prn, "'%s' -- no numeric conversion performed!\n", 
+			    tmp);
 		    x = -999.0;
 		}
 		if (test[0] != '\0') {
 		    if (isprint(test[0]))
-			pprintf(prn, "Extraneous character '%c' in data", 
+			pprintf(prn, "Extraneous character '%c' in data\n", 
 				test[0]);
 		    else
-			pprintf(prn, "Extraneous character (0x%x) in data", 
+			pprintf(prn, "Extraneous character (0x%x) in data\n", 
 				test[0]);
 		    x = -999.0;
 		}
 		if (errno == ERANGE) {
-		    pprintf(prn, "'%s' -- number out of range!", tmp);
+		    pprintf(prn, "'%s' -- number out of range!\n", tmp);
 		    x = -999.0;
 		}
 		boxZ[boxinfo.n * realv + t] = x;
