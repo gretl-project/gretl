@@ -3,7 +3,7 @@
 XSLDIR = /usr/share/sgml/docbook-xsl
 XMLDCL = /opt/jade/share/xml.dcl
 JADE = jade
-SAXON = saxon
+XSLTPROC = xsltproc
 CONVERT = convert # from ImageMagick suite
 HHC = wine "c:/Program Files/HTML Help Workshop/hhc.exe"
 WEBDIR = /home/cottrell/stats/esl/website
@@ -110,8 +110,8 @@ chmfigs: $(topdoc)/figures/*.png
 
 chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml $(CMDLIST) chmfigs
 	cd manual.chm && \
-	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl \
-	"tex.math.in.alt=latex" && \
+	$(XSLTPROC) --param tex.math.in.alt latex \
+	../$(topdoc)/gretlhlp.xsl ../$(topdoc)/manual.xml && \
 	../fixtoc.sh && $(HHC) gretl.hhp
 
 chmfigs_it: $(topdoc)/figures/*.png $(topdoc)/figures_it/*.png

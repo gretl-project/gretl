@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 14:41-0500\n"
-"PO-Revision-Date: 2005-01-08 23:00+0100\n"
+"PO-Revision-Date: 2005-01-10 13:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1607,13 +1607,13 @@ msgstr ""
 "\n"
 
 #: lib/src/estimate.c:2041
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Order condition for identification is not satisfied.\n"
 "varlist 2 needs at least %d more variable(s) not in varlist1."
 msgstr ""
-"Warunek na identyfikacjê parametrów rówania nie jest spe³niony. Duga lista zmiennych\n"
-"powinna byæ co najmniej o %d zmienn± mniejsza ni¿ pierwsza lista (instrumenty)."
+"Warunek na identyfikacjê parametrów nie jest spe³niony. Duga lista zmiennych\n"
+"powinna byæ mniejsza ni¿ pierwsza lista (instrumenty) o %d zmienne."
 
 #: lib/src/estimate.c:2686 lib/src/modelprint.c:523
 msgid "White's test for heteroskedasticity"
@@ -1671,7 +1671,7 @@ msgid ""
 "Area to the right of LM = %f  "
 msgstr ""
 "Statystyka testu LM (%f) ma rozk³ad Chi-kwadrat (%d)\n"
-"Prawostrony obszar dla testu LM = %f  "
+"Prawostrony obszar testu = %f  "
 
 #: lib/src/estimate.c:3204
 msgid "ARCH effect is insignificant at the 10 percent level"
@@ -2674,9 +2674,9 @@ msgid "Pseudo-random number generator seeded with %d\n"
 msgstr ""
 
 #: lib/src/missing.c:495
-#, fuzzy, c-format
+#, c-format
 msgid "Set %d values to \"missing\"\n"
-msgstr "W zbiorze wystêpuje %d brakuj±c± dana\n"
+msgstr "W zbiorze wystêpuje %d brakuj±ce dane\n"
 
 #: lib/src/missing.c:497
 msgid "Didn't find any matching observations\n"
@@ -2688,9 +2688,9 @@ msgid "The variable %s is a scalar\n"
 msgstr "Zmienna %s jest skalarem\n"
 
 #: lib/src/missing.c:510
-#, fuzzy, c-format
+#, c-format
 msgid "%s: set %d observations to \"missing\"\n"
-msgstr "%s: w %d obserwacji brakuje danych\n"
+msgstr "%s: w %d obserwacjach brakuje danych\n"
 
 #: lib/src/missing.c:513
 #, c-format
@@ -3607,7 +3607,7 @@ msgstr "GRETL: klient GUI dla wersji %s,\n"
 
 #: lib/src/printout.c:104
 msgid "copyright Allin Cottrell.\n"
-msgstr "Copyright Allin Cottrell, t³umaczenie: Tadeusz Kufel i Pawe³ Kufel.\n"
+msgstr "Copyright Allin Cottrell, t³umaczenie: Tadeusz Kufel i Pawe³ Kufel (UMK Toruñ).\n"
 
 #: lib/src/printout.c:105
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
@@ -4364,9 +4364,8 @@ msgstr ""
 "\n"
 
 #: lib/src/var.c:1930
-#, fuzzy
 msgid "(including trend)"
-msgstr "(bez trendu)"
+msgstr "(z trendem)"
 
 #: lib/src/var.c:1930
 msgid "(without trend)"
@@ -4687,7 +4686,7 @@ msgstr "parametr okresowo¶æ danych = %d\n"
 #: cli/gretlcli.c:1599
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in gretlcli\n"
-msgstr ""
+msgstr "Sorry, polecenie %s nie jest jeszcze zaimplementowane w gretlcli\n"
 
 #: gui/gretl.c:77 gui2/gretl.c:87
 msgid "open a script file on startup"
@@ -7431,19 +7430,19 @@ msgstr "Agregowanie danych dziennych do tygodniowych"
 
 #: gui2/dialogs.c:2159
 msgid "density estimation options"
-msgstr "opcje estymacji gêsto¶ci"
+msgstr "opcje wykresu gêsto¶ci"
 
 #: gui2/dialogs.c:2168 plugin/kernel.c:133
 msgid "Gaussian kernel"
-msgstr "j±dro Gaussian"
+msgstr "j±dro Gaussa"
 
 #: gui2/dialogs.c:2180 plugin/kernel.c:134
 msgid "Epanechnikov kernel"
-msgstr "j±dro Epanechnikov"
+msgstr "j±dro Epanechnikova"
 
 #: gui2/dialogs.c:2199
 msgid "bandwidth adjustment factor:"
-msgstr ""
+msgstr "szeroko¶æ funkcji bazowej:"
 
 #: gui2/dialogs.c:2389
 msgid "gretl error"
