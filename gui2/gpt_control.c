@@ -2164,7 +2164,7 @@ static void build_plot_menu (png_plot_t *plot)
 
     i = 0;
     while (plot_items[i]) {
-	if ((plot->statusbar == NULL || plot_not_zoomable(plot)) &&
+	if (plot_not_zoomable(plot) &&
 	    !strcmp(plot_items[i], "Zoom...")) {
 	    i++;
 	    continue;
@@ -2686,6 +2686,12 @@ static int get_plot_ranges (png_plot_t *plot)
     setlocale(LC_NUMERIC, "C");
 #endif
     while (fgets(line, MAXLEN-1, fp)) {
+	if (cant_edit(line)) {
+	    plot->flags |= PLOT_DONT_EDIT;
+	    plot->flags |= PLOT_DONT_ZOOM;
+	    fclose(fp);
+	    return 0;
+	}
 	if (strstr(line, "# range-mean")) {
 	    plot->spec->code = PLOT_RANGE_MEAN;
 	}
@@ -2710,9 +2716,6 @@ static int get_plot_ranges (png_plot_t *plot)
 	    } else if (cant_zoom(line)) {
 		plot->flags |= PLOT_DONT_ZOOM;
 	    } 
-	    if (cant_edit(line)) {
-		plot->flags |= PLOT_DONT_EDIT;
-	    }
 	}
 	if (!strncmp(line, "plot ", 5)) break;
     }
@@ -2885,7 +2888,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     /* create the contents of the status area */
     if (plot_has_xrange) {
-	/* the cursor label (position indicator) */
+	/* cursor label (graph position indicator) */
 	label_frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(label_frame), GTK_SHADOW_IN);
 

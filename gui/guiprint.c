@@ -31,6 +31,8 @@ static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 #include <libgnomeprint/gnome-print.h>
 #include <libgnomeprint/gnome-printer-dialog.h>
 
+#define GRETL_PBM_TMP           "gretltmp.pbm"
+
 static void time_string (char *s)
 {
     time_t prntime = time(NULL);
@@ -104,37 +106,79 @@ void winprint (char *fullbuf, char *selbuf)
 	free(selbuf);
 }
 
+static GdkPixbuf *png_mono_pixbuf (const char *fname)
+{
+    FILE *fsrc, *ftmp;
+    char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
+    GdkPixbuf *pbuf = NULL;
+
+    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
+    if (mktemp(temp) == NULL) return NULL;
+
+    ftmp = fopen(temp, "w");
+    if (ftmp == NULL) return NULL;
+
+    fsrc = fopen(fname, "r");
+    if (fsrc == NULL) {
+	fclose(ftmp);
+	remove(temp);
+	return NULL;
+    }
+
+    fprintf(ftmp, "set term pbm mono\n"
+	    "set output '%s%s'\n", 
+	    paths.userdir, GRETL_PBM_TMP);
+
+    while (fgets(fline, MAXLEN-1, fsrc)) {
+	if (strncmp(fline, "set term", 8) && 
+	    strncmp(fline, "set output", 10)) {
+	    fputs(fline, ftmp);
+	}
+    }
+
+    fclose(fsrc);
+    fclose(ftmp);
+
+    /* run gnuplot on the temp plotfile */
+    sprintf(cmd, "\"%s\" \"%s\"", paths.gnuplot, temp);
+    if (system(cmd)) {
+	remove(temp);
+	return NULL;
+    }
+
+    remove(temp);
+
+    build_path(paths.userdir, GRETL_PBM_TMP, temp, NULL);
+    pbuf = gdk_pixbuf_new_from_file(temp);
+    remove(temp);
+
+    return pbuf;
+}
+
 void gnome_print_graph (const char *fname)
 {
     GnomePrinter *printer;
     GnomePrintContext *pc; 
     GdkPixbuf *pbuf;
-    char tmp[MAXLEN];
     int image_left_x = 530, image_bottom_y = 50;
     int width, height;
 
     printer = gnome_printer_dialog_new_modal();
-
     if (!printer) return;
 
-    /* run gnuplot on the plotfile to generate pngtmp */
-    sprintf(tmp, "\"%s\" \"%s\"", paths.gnuplot, fname);
-    if (system(tmp)) {
-	errbox("Failed to generate graph");
+    pbuf = png_mono_pixbuf(fname); 
+    if (pbuf == NULL) {
+	errbox(_("Failed to generate graph"));
 	gtk_object_unref(GTK_OBJECT(printer));
 	return;
-    }
+    }   
 
-    build_path(paths.userdir, "gretltmp.png", tmp, NULL);
-    pbuf = gdk_pixbuf_new_from_file(tmp);
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
-    remove(tmp);
 
     pc = gnome_print_context_new_with_paper_size(printer, "US-Letter");
 
     gnome_print_beginpage(pc, _("gretl output"));
-
     gnome_print_gsave(pc);
     gnome_print_translate(pc, image_left_x, image_bottom_y);
     gnome_print_rotate(pc, 90);

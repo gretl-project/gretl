@@ -523,7 +523,6 @@ void gnome_print_graph (const char *fname)
     GtkWidget *dialog;
     gboolean preview = FALSE;
     gint response;
-    char tmp[MAXLEN];
     int image_left_x = 530, image_bottom_y = 50;
     int width, height;
 
@@ -569,7 +568,6 @@ void gnome_print_graph (const char *fname)
 
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
-    remove(tmp);
 
     gnome_print_beginpage(gpc, _("gretl output"));
     gnome_print_gsave(gpc);
