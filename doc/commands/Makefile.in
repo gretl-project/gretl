@@ -12,7 +12,7 @@ XSLT_LIBS = @XSLT_LIBS@
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../../lib/libgretl-1.0.la
 
-VPATH = $(topsrc)/doc/commands
+vpath %.c = $(topsrc)/doc/commands
 
 LIBTOOL = ../../libtool
 
