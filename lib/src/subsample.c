@@ -81,6 +81,18 @@ void maybe_free_full_dataset (const DATAINFO *pdinfo)
     }
 }
 
+/* sync malloced elements of the fullinfo struct that might
+   have been moved via realloc
+*/
+
+static void sync_dataset_elements (const DATAINFO *pdinfo)
+{
+    fullinfo->varname = pdinfo->varname;
+    fullinfo->varinfo = pdinfo->varinfo;
+    fullinfo->vector = pdinfo->vector;
+    fullinfo->descrip = pdinfo->descrip;      
+}
+
 /* .......................................................... */
 
 static int 
@@ -123,8 +135,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 
     if (fullZ != NULL) {
 	/* sync, in case anything has moved */
-	fullinfo->varname = pdinfo->varname;
-	fullinfo->varinfo = pdinfo->varinfo;
+	sync_dataset_elements(pdinfo);
 
 	pmod->subdum = copy_subdum(pdinfo->subdum, fullinfo->n);
 	if (pmod->subdum == NULL) {
@@ -573,26 +584,29 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 {
     int i, t, st;
 
+    /* copy data values */
     for (i=1; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) {
-	    /* copy any scalars */
+	if (pdinfo->vector[i]) {
+	    st = 0;
+	    for (t=0; t<pdinfo->n; t++) {
+		if (mask == NULL || mask[t] == 1) {
+		    subZ[i][st++] = Z[i][t];
+		}
+	    }
+	} else {
 	    subZ[i][0] = Z[i][0];
 	}
     }
 
-    st = 0;
-    for (t=0; t<pdinfo->n; t++) {
-	if (mask == NULL || mask[t] == 1) {
-	    for (i=1; i<pdinfo->v; i++) {
-		if (pdinfo->vector[i]) {
-		    subZ[i][st] = Z[i][t];
-		}
-	    } if (pdinfo->markers) {
-		strcpy(subinfo->S[st], pdinfo->S[t]);
-	    }
-	    st++;
-	}
-    }
+    /* copy observation markers, if any */
+   if (pdinfo->markers && subinfo->markers) {
+       st = 0;
+       for (t=0; t<pdinfo->n; t++) {
+	   if (mask == NULL || mask[t] == 1) {
+	       strcpy(subinfo->S[st++], pdinfo->S[t]);
+	   }
+       }
+   }
 
     strcpy(subinfo->stobs, "1");
     sprintf(subinfo->endobs, "%d", subinfo->n);
@@ -1057,10 +1071,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
 
     /* reattach malloc'd elements of subsampled dataset,
        which may have moved */
-    fullinfo->varname = (*ppdinfo)->varname;
-    fullinfo->varinfo = (*ppdinfo)->varinfo;
-    fullinfo->vector = (*ppdinfo)->vector;
-    fullinfo->descrip = (*ppdinfo)->descrip;  
+    sync_dataset_elements(*ppdinfo);
 
     /* copy any scalars, which may have been modified */
     for (i=1; i<(*ppdinfo)->v; i++) {
@@ -1179,7 +1190,7 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
 /* Below: For a model that was estimated using a data sample which
    differs from the current sample, reconstitute the dataset
    appropriate to the model.  If the model used a subsample, we use
-   the special dummy variable saved with the model to select
+   the special dummy variable (subdum) saved with the model to select
    observations from the full dataset.  Another possibility is that
    the model used the full dataset, which has by now been subsampled.
 
@@ -1188,11 +1199,11 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
    set will be destroyed when the model itself is destroyed.
 */
 
-int add_subsampled_dataset_to_model (MODEL *pmod)
+int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int t, sn = 0;
+    int sn = 0;
     double **modZ = NULL;
-    DATAINFO *modinfo;
+    DATAINFO *modinfo = NULL;
     char *mask = NULL;
 
     if (fullZ == NULL || fullinfo == NULL) {
@@ -1211,16 +1222,28 @@ int add_subsampled_dataset_to_model (MODEL *pmod)
 	return 0;
     }
 
+    /* sync malloced elements that may have moved */
+    sync_dataset_elements(pdinfo);
+
     if (pmod->subdum == NULL) {
 	/* no subsample info: model was estimated on full dataset,
 	   so we reconstruct the full dataset */
 	sn = fullinfo->n;
+#ifdef SUBDEBUG
+	fprintf(stderr, "pmod->subdum = NULL, set sn = %d\n", sn);
+#endif
     } else {
 	/* model estimated on subsample, which has to be reconstructed */
+	int t;
+
 	mask = calloc(fullinfo->n, 1);
 	if (mask == NULL) {
 	    return E_ALLOC;
 	}
+#ifdef SUBDEBUG
+	fprintf(stderr, "setting mask from pmod->subdum: fullinfo->n = %d\n", 
+		fullinfo->n);
+#endif
 	for (t=0; t<fullinfo->n; t++) {
 	    if (pmod->subdum[t] > 0) {
 		mask[t] = 1;
@@ -1239,6 +1262,11 @@ int add_subsampled_dataset_to_model (MODEL *pmod)
 	return E_ALLOC;
     }
 
+#ifdef SUBDEBUG
+    fprintf(stderr, "pmod->dataset allocated at %p\n", 
+	    (void *) pmod->dataset);
+#endif
+
     /* initial allocation of sub-sampled dataset */
     modinfo = create_new_dataset(&modZ, fullinfo->v, sn,
 				 fullinfo->markers);
@@ -1249,6 +1277,10 @@ int add_subsampled_dataset_to_model (MODEL *pmod)
 	return E_ALLOC;
     }
 
+#ifdef SUBDEBUG
+    fprintf(stderr, "dataset created, copying series info\n");
+#endif
+
     /* copy across info on series */
     copy_series_info(modinfo, fullinfo);
 
@@ -1257,13 +1289,21 @@ int add_subsampled_dataset_to_model (MODEL *pmod)
 			   (const double **) fullZ, fullinfo,
 			   mask);
 
-    /* dataset characteristics such as pd...  If we're rebuilding
-       the full dataset (only) copy these across */
+#ifdef SUBDEBUG
+    fputs("data copied to subsampled dataset\n", stderr);
+#endif
+
+    /* dataset characteristics such as pd: if we're rebuilding the
+       _full_ dataset copy these across; but if we're reconstructing a
+       subsampled dataset these features from the full dataset will be
+       wrong, and we stay with the simple defaults
+    */
     if (pmod->subdum == NULL) {
 	modinfo->pd = fullinfo->pd;
 	modinfo->sd0 = fullinfo->sd0;
 	strcpy(modinfo->stobs, fullinfo->stobs);
 	strcpy(modinfo->endobs, fullinfo->endobs);
+	modinfo->time_series = fullinfo->time_series;
     }
 
     pmod->dataset->Z = modZ;

@@ -40,7 +40,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt);
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
-int add_subsampled_dataset_to_model (MODEL *pmod);
+int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 void free_model_dataset (MODEL *pmod);
 

@@ -3546,6 +3546,29 @@ make_x_panel_dummy (double *x, const DATAINFO *pdinfo, int i)
     }
 }
 
+static int n_new_dummies (const DATAINFO *pdinfo,
+			  int nunits, int nperiods)
+{
+    char dname[VNAMELEN];
+    int i, nnew = nunits + nperiods;
+
+    for (i=0; i<nunits; i++) {
+	sprintf(dname, "du_%d", i + 1);
+	if (varindex(pdinfo, dname) < pdinfo->v) {
+	    nnew--;
+	}
+    }
+
+    for (i=0; i<nperiods; i++) {
+	sprintf(dname, "dt_%d", i + 1);
+	if (varindex(pdinfo, dname) < pdinfo->v) {
+	    nnew--;
+	}
+    }
+
+    return nnew;
+}
+
 /**
  * dummy:
  * @pZ: pointer to data matrix.
@@ -3560,13 +3583,16 @@ make_x_panel_dummy (double *x, const DATAINFO *pdinfo, int i)
 int dummy (double ***pZ, DATAINFO *pdinfo)
 {
     char vname[USER_VLEN];
+    char vlabel[MAXLABEL];
     int vi, t, yy, pp, mm;
-    int ndums, nvar = pdinfo->v;
+    int newvnum, ndums, orig_v = pdinfo->v;
     double xx;
 
     if (pdinfo->time_series == STACKED_CROSS_SECTION) {
 	ndums = pdinfo->n / pdinfo->pd;
-	if (pdinfo->n % pdinfo->pd) ndums++;
+	if (pdinfo->n % pdinfo->pd) {
+	    ndums++;
+	}
     } else {
 	ndums = pdinfo->pd;
     }
@@ -3585,21 +3611,21 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	mm *= 10;
     }
 
+    newvnum = orig_v;
+
     for (vi=1; vi<=ndums; vi++) {
-	int di = nvar + vi - 1;
+	int di = orig_v + vi - 1;
 
 	if (pdinfo->pd == 4 && pdinfo->time_series == TIME_SERIES) {
 	    sprintf(vname, "dq%d", vi);
-	    sprintf(VARLABEL(pdinfo, di), 
+	    sprintf(vlabel, 
 		    _("= 1 if quarter = %d, 0 otherwise"), vi);
-	} 
-	else if (pdinfo->pd == 12 && pdinfo->time_series == TIME_SERIES) {
+	} else if (pdinfo->pd == 12 && pdinfo->time_series == TIME_SERIES) {
 	    char mname[8];
 
 	    get_month_name(mname, vi);
 	    sprintf(vname, "d%s", mname);
-	    sprintf(VARLABEL(pdinfo, di), 
-		    _("= 1 if month is %s, 0 otherwise"), mname);
+	    sprintf(vlabel, _("= 1 if month is %s, 0 otherwise"), mname);
 	} else {
 	    char dumstr[8] = "dummy_";
 	    char numstr[8];
@@ -3609,11 +3635,16 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	    len = strlen(numstr);
 	    dumstr[8 - len] = '\0';
 	    sprintf(vname, "%s%d", dumstr, vi);
-	    sprintf(VARLABEL(pdinfo, di), 
-		    _("%s = 1 if period is %d, 0 otherwise"), vname, vi);
+	    sprintf(vlabel, _("%s = 1 if period is %d, 0 otherwise"), vname, vi);
+	}
+
+	di = varindex(pdinfo, vname);
+	if (di >= orig_v) {
+	    di = newvnum++;
 	}
 
 	strcpy(pdinfo->varname[di], vname);
+	strcpy(VARLABEL(pdinfo, di), vlabel);
 
 	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
 	    make_x_panel_dummy((*pZ)[di], pdinfo, vi);
@@ -3630,6 +3661,8 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
+    dataset_drop_vars(ndums - (newvnum - orig_v), pZ, pdinfo);
+
     return 0;
 }
 
@@ -3642,9 +3675,9 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 {
     char vname[16];
     int vi, t, yy, pp, mm;
-    int xsect, nvar = pdinfo->v;
-    int ndum, n_blockdum = 0, n_freqdum = 0;
-    int offset, bad = 0;
+    int xsect, orig_v = pdinfo->v;
+    int ndum, nnew, n_blockdum = 0, n_freqdum = 0;
+    int newvnum, offset, bad = 0;
     double xx;
 
     xsect = (pdinfo->time_series == STACKED_CROSS_SECTION);
@@ -3673,7 +3706,12 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
     }
 
     ndum = n_freqdum + n_blockdum;
-    if (dataset_add_vars(ndum, pZ, pdinfo)) {
+
+    nnew = n_new_dummies(pdinfo, 
+			 (xsect)? n_freqdum : n_blockdum,
+			 (xsect)? n_blockdum : n_freqdum);
+
+    if (dataset_add_vars(nnew, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
@@ -3683,14 +3721,21 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 	mm *= 10;
     }
 
+    newvnum = orig_v;
+
     /* first generate the frequency-based dummies */
     for (vi=1; vi<=n_freqdum; vi++) {
-	int dnum = nvar + vi - 1;
-	
+	int dnum;
+
 	if (xsect) {
 	    sprintf(vname, "du_%d", vi);
 	} else {
 	    sprintf(vname, "dt_%d", vi);
+	}
+
+	dnum = varindex(pdinfo, vname);
+	if (dnum >= orig_v) {
+	    dnum = newvnum++;
 	}
 
 	strcpy(pdinfo->varname[dnum], vname);
@@ -3710,9 +3755,9 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 
     /* and then the block-based ones */
     for (vi=1; vi<=n_blockdum; vi++) {
-	int dnum = nvar + n_freqdum + vi - 1;
 	int dmin = (vi-1) * pdinfo->pd;
 	int dmax = vi * pdinfo->pd - offset;
+	int dnum;
 
 	if (vi > 1) dmin -= offset;
 
@@ -3721,6 +3766,11 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    sprintf(vname, "du_%d", vi);
 	}
+
+	dnum = varindex(pdinfo, vname);
+	if (dnum >= orig_v) {
+	    dnum = newvnum++;
+	}	
 
 	strcpy(pdinfo->varname[dnum], vname);
 	sprintf(VARLABEL(pdinfo, dnum), 

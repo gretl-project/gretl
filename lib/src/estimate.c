@@ -337,6 +337,37 @@ static void model_stats_init (MODEL *pmod)
     pmod->rsq = pmod->adjrsq = NADBL;
 }
 
+/* for handling the "omit" command, applied to a model
+   that has missing values within the sample range
+*/
+
+static const char *refmask;
+
+void set_reference_mask (const MODEL *pmod)
+{
+    if (pmod != NULL) {
+	refmask = pmod->missmask;
+    } else {
+	refmask = NULL;
+    }
+}
+
+static int apply_reference_mask (MODEL *pmod)
+{
+    int t, n = pmod->t2 - pmod->t1 + 1;
+
+    pmod->missmask = malloc(n);
+    if (pmod->missmask == NULL) {
+	return 1;
+    }
+
+    for (t=0; t<n; t++) {
+	pmod->missmask[t] = refmask[t];
+    }
+
+    return 0;
+}
+
 static int 
 lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 			   DATAINFO *pdinfo, const double **Z, 
@@ -344,6 +375,12 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 {
     int missv = 0;
     int reject_missing = 0;
+
+    if (refmask != NULL) {
+	int err = apply_reference_mask(pmod);
+
+	if (!err) return 0;
+    }
 
     /* can't do HAC VCV with missing obs in middle */
     if ((opts & OPT_R) && dataset_is_time_series(pdinfo) &&
@@ -3421,8 +3458,6 @@ static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo)
     wmod = (*panel_wls_by_unit) (list, pZ, pdinfo);
 
     close_plugin(handle);
-
-    set_model_id(&wmod);
 
     return wmod;
 }

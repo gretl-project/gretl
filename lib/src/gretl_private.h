@@ -73,6 +73,8 @@ int undo_daily_repack (MODEL *pmod, double **Z,
 int repack_missing_daily_obs (MODEL *pmod, double **Z, 
 			      const DATAINFO *pdinfo);
 
+void set_reference_mask (const MODEL *pmod);
+
 int model_mask_leaves_balanced_panel (const MODEL *pmod,
 				      const DATAINFO *pdinfo);
 

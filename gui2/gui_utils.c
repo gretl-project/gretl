@@ -2899,8 +2899,6 @@ static void add_var_menu_items (windata_t *vwin)
 
 /* ........................................................... */
 
-#define ALLOW_MODEL_DATASETS
-
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data)
 {
@@ -2924,12 +2922,10 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     if (model_sample_issue(pmod, NULL, 0, datainfo)) {
 	ok = 0;
-	graphs_ok = 0;
-#ifdef ALLOW_MODEL_DATASETS /* for generating model graphs (only) */
-	if (add_subsampled_dataset_to_model(pmod) == 0) {
+	graphs_ok = (pmod->dataset != NULL);
+	if (!graphs_ok && add_dataset_to_model(pmod, datainfo) == 0) {
 	    graphs_ok = 1;
 	}
-#endif
     }
 
     s = GTK_WIDGET_IS_SENSITIVE(gtk_item_factory_get_item(mwin->ifac, "/Tests"));
@@ -3185,37 +3181,6 @@ gchar *my_filename_from_utf8 (char *fname)
     return fname;
 }
 
-#if 1
-
-static gchar *
-real_locale_from_utf8 (const gchar *src, int unused)
-{
-    gchar *trstr;
-    gsize bytes;
-    GError *err = NULL;
-
-    trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
-
-    if (err != NULL) {
-	const gchar *cset = NULL;
-
-	g_get_charset(&cset);
-	if (cset != NULL) {
-	    sprintf(errtext, "g_locale_from_utf8 failed for charset '%s'",
-		    cset);
-	} else {
-	    strcpy(errtext, "g_locale_from_utf8 failed; "
-		   "so did g_get_charset");
-	}
-	errbox(errtext);
-	g_error_free(err);
-    }
-
-    return trstr;
-}
-
-#else
-
 static gchar *
 real_locale_from_utf8 (const gchar *src, int force)
 {
@@ -3244,8 +3209,6 @@ real_locale_from_utf8 (const gchar *src, int force)
 
     return trstr;
 }
-
-#endif
 
 gchar *my_locale_from_utf8 (const gchar *src)
 {

@@ -650,6 +650,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     /* temporarily impose the sample that was in force when the
        original model was estimated */
     exchange_smpl(orig, pdinfo);
+    set_reference_mask(orig);
 
     if (orig->ci == AR) { 
 	maxlag = orig->arinfo->arlist[orig->arinfo->arlist[0]];
@@ -701,6 +702,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 
     /* put back into pdinfo what was there on input */
     exchange_smpl(orig, pdinfo);
+    set_reference_mask(NULL);
 
     free(tmplist);
 
