@@ -43,7 +43,7 @@ install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
 	$(INSTALL_DATA) gretl.1 $(prefix)/share/man/man1
 
-install_help: $(UFT8_FILES)
+install_help:  $(ES_GUI_HLP) $(ES_CLI_HLP)
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(INSTALL_DATA) gretl.hlp $(gretldir)/gretl.hlp
 	$(INSTALL_DATA) gretlcli.hlp $(gretldir)/gretlcli.hlp

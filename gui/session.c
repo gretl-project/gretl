@@ -792,7 +792,7 @@ void view_session (void)
     gtk_signal_connect(GTK_OBJECT(iconview), "destroy",
 		       GTK_SIGNAL_FUNC(iconview_off), NULL);
     gtk_signal_connect(GTK_OBJECT(iconview), "key_press_event",
-		       GTK_SIGNAL_FUNC(catch_key), 
+		       GTK_SIGNAL_FUNC(catch_view_key), 
 		       (gpointer) iconview);
 
     session_build_popups();

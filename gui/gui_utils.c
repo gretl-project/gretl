@@ -44,6 +44,7 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
 			      gpointer data);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
+static void buf_edit_save (GtkWidget *widget, gpointer data);
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
@@ -353,7 +354,7 @@ void delete_widget (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-void catch_key (GtkWidget *w, GdkEventKey *key)
+void catch_view_key (GtkWidget *w, GdkEventKey *key)
 {
     
     if (key->keyval == GDK_q) { 
@@ -381,9 +382,13 @@ void catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 
     else if (mods & GDK_CONTROL_MASK) {
-	if (gdk_keyval_to_upper(key->keyval) == GDK_S) 
-	    file_viewer_save(NULL, vwin);
-	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
+	if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
+	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
+		buf_edit_save(NULL, vwin);
+	    } else {
+		file_viewer_save(NULL, vwin);
+	    }
+	} else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
 	    if (vwin->role == EDIT_SCRIPT && SCRIPT_IS_CHANGED(vwin)) {
 		gint resp;
 
@@ -1217,7 +1222,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gretl_print_destroy(prn);
     
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_key), dialog);
+		       GTK_SIGNAL_FUNC(catch_view_key), dialog);
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
@@ -1346,7 +1351,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     /* catch some keystrokes */
     if (!editable) {
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-			   GTK_SIGNAL_FUNC(catch_key), dialog);
+			   GTK_SIGNAL_FUNC(catch_view_key), dialog);
     } else {
 	gtk_object_set_data(GTK_OBJECT(dialog), "vwin", vwin);
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
@@ -1410,6 +1415,9 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 	gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
     }
 
+    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+		     G_CALLBACK(catch_edit_key), vwin);	
+
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
@@ -1469,7 +1477,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     /* attach shortcuts */
     gtk_object_set_data(GTK_OBJECT(dialog), "ddata", vwin);
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_key), 
+		       GTK_SIGNAL_FUNC(catch_view_key), 
 		       dialog);
 
     /* clean up when dialog is destroyed */
