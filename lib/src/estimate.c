@@ -700,7 +700,10 @@ static CHOLBETA cholbeta (XPXXPY xpxxpy)
         if (test <= TINY) {
            cb.rss = -1.0; 
            return cb;
-        }   
+        }
+	if (test < SMALL) {
+	    strcpy(gretl_msg, _("Warning: data matrix close to singularity!"));
+	}
         e = 1/sqrt(test);
         xpxxpy.xpx[kk] = e;
         xpxxpy.xpy[j] = (xpxxpy.xpy[j] - d1) * e;
@@ -1909,7 +1912,7 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
         if (_iszero(pmod->t1, pmod->t2, Z[lv])) {
 	    list_exclude(v, pmod->list);
 	    sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
-	    strcat(pmod->infomsg, vnamebit);
+	    strcat(gretl_msg, vnamebit);
 	    drop = 1;
 	}
     }
@@ -1927,12 +1930,12 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 	    if (wtzero) {
 		list_exclude(v, pmod->list);
 		sprintf(vnamebit, _("weighted %s "), pdinfo->varname[lv]);
-		strcat(pmod->infomsg, vnamebit);
+		strcat(gretl_msg, vnamebit);
 		drop = 1;
 	    }
 	}
     }
-    if (drop) strcat(pmod->infomsg, _("omitted because all obs are zero."));
+    if (drop) strcat(gretl_msg, _("omitted because all obs are zero."));
 }
 
 /* .........................................................   */

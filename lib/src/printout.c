@@ -528,7 +528,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     if (pmod->ci == WLS || pmod->ci == ARCH) 
 	pprintf(prn, _("Variable used as weight: %s\n"), 
 		pdinfo->varname[pmod->nwt]);
-    if (pmod->infomsg[0] != '\0') pprintf(prn, "%s\n", pmod->infomsg);
+    if (gretl_msg[0] != '\0') pprintf(prn, "%s\n", gretl_msg);
     if (pmod->wt_dummy) 
 	pprintf(prn, _("Weight var is a dummy variable, effective obs = %d\n\n"),
 		pmod->nobs);

@@ -1,6 +1,9 @@
 version 0.996
 - closing a session clears the selector dialog presets
-
+- fix bug with scalar data and the data-editing spreadsheet
+- revert boxplots to the older selection dialog (so can add
+  boolean conditions)
+- print warning when data matrix is close to singularity
 
 05/15/2002 version 0.995
 - Raise library version to 13.0.0

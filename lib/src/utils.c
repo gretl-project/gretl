@@ -1087,7 +1087,6 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->arlist = NULL;
     pmod->rhot = NULL;
     pmod->slope = NULL;
-    pmod->infomsg[0] = '\0';
     pmod->name = NULL;
     pmod->ntests = 0;
     pmod->tests = NULL;
@@ -1095,6 +1094,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->errcode = 0;
     pmod->aux = 0;
     gretl_errmsg[0] = '\0';
+    gretl_msg[0] = '\0';
 }
 
 /**

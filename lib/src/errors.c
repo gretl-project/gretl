@@ -142,5 +142,6 @@ char *get_gretl_errmsg (void)
 
 char *get_gretl_msg (void)
 {
+    if (gretl_msg[0] == 0) return NULL;
     return gretl_msg;
 }

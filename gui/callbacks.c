@@ -534,6 +534,13 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(defstr, "0");
 	okfunc = do_dialog_cmd;
 	break;
+    case GR_BOX:
+    case GR_NBOX:
+	strcpy(title, _("gretl: boxplots"));
+	strcpy(query, _("Specify variables to plot:"));
+	okfunc = do_box_graph_trad;
+	varclick = 2;
+	break;	
     default:
 	errbox("Bug: unrecognized action code in gretl_callback");
 	return;

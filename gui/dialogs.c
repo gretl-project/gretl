@@ -376,8 +376,10 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
     open_dialog = d->dialog;
     d->code = cmdcode;
 
+#ifdef notdef
     gtk_window_set_transient_for(GTK_WINDOW(d->dialog),
 				 GTK_WINDOW(mdata->w)); 
+#endif
 
     gtk_window_set_title (GTK_WINDOW (d->dialog), diagtxt);
     gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);

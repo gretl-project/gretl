@@ -190,7 +190,6 @@ typedef struct {
     double *rhot;                /* array of autoreg. coeffs. */
     double *slope;               /* for nonlinear models */
     int errcode;                 /* Error code in case of failure */
-    char infomsg[ERRLEN];
     char *name;
     int ntests;
     GRETLTEST *tests;

@@ -328,7 +328,7 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     if (pmod->ci == WLS || pmod->ci == ARCH) 
 	pprintf(htm, "<p>Variable used as weight: %s</p>\n", 
 		pdinfo->varname[pmod->nwt]);
-    if (pmod->infomsg[0] != '\0') pprintf(htm, "<p>%s</p>\n", pmod->infomsg);
+    if (get_gretl_msg()) pprintf(htm, "<p>%s</p>\n", get_gretl_msg());
     if (pmod->wt_dummy) 
 	pprintf(htm, "<p>Weight var is a dummy variable, effective "
 		"obs = %d</p>\n\n",
