@@ -3599,9 +3599,10 @@ int execute_script (const char *runfile, const char *buf,
 		}
 		i++;
 	    }
-	    if (j != MAXLOOP) 
+	    if (j != MAXLOOP) {
 		print_loop_results(&loop, datainfo, prn, &paths, 
 				   &model_count, loopstorefile);
+	    }
 	    looprun = 0;
 	    monte_carlo_free(&loop);
 	    if (j == MAXLOOP) return 1;
@@ -3614,29 +3615,39 @@ int execute_script (const char *runfile, const char *buf,
 		goto endwhile;
 	    while ((bslash = top_n_tail(line))) {
 		*tmp = '\0';
-		if (fb)
+		if (fb) {
 		    fgets(tmp, MAXLEN-1, fb);
-		else
+		} else {
 		    bufgets(tmp, MAXLEN-1, buf); 
-		strcat(line, tmp);
-		compress_spaces(line);
+		}
+		if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
+		    pprintf(prn, _("Maximum length of command line "
+			  "(%d bytes) exceeded\n"), MAXLEN);
+		    exec_err = 1;
+		    break;
+		} else {
+		    strcat(line, tmp);
+		    compress_spaces(line);
+		}		
 	    }
-	    if (!strncmp(line, "noecho", 6)) echo_off = 1;
-	    if (strncmp(line, "(* saved objects:", 17) == 0) 
-		strcpy(line, "quit"); 
-	    else if (!echo_off) {
-		if ((line[0] == '(' && line[1] == '*') ||
-		    (line[strlen(line)-1] == ')' && 
-		     line[strlen(line)-2] == '*')) 
-		    pprintf(prn, "\n%s\n", line);
-		else 
-		    pprintf(prn, "\n? %s\n", line);	
+	    if (!exec_err) {
+		if (!strncmp(line, "noecho", 6)) echo_off = 1;
+		if (strncmp(line, "(* saved objects:", 17) == 0) 
+		    strcpy(line, "quit"); 
+		else if (!echo_off) {
+		    if ((line[0] == '(' && line[1] == '*') ||
+			(line[strlen(line)-1] == ')' && 
+			 line[strlen(line)-2] == '*')) 
+			pprintf(prn, "\n%s\n", line);
+		    else 
+			pprintf(prn, "\n? %s\n", line);	
+		}
+		oflag = 0;
+		strcpy(tmp, line);
+		exec_err = gui_exec_line(line, &loop, &loopstack, 
+					 &looprun, psession, rebuild, 
+					 prn, exec_code, runfile);
 	    }
-	    oflag = 0;
-	    strcpy(tmp, line);
-	    exec_err = gui_exec_line(line, &loop, &loopstack, 
-				     &looprun, psession, rebuild, 
-				     prn, exec_code, runfile);
 	    if (exec_err) {
 		pprintf(prn, _("\nError executing script: halting\n"));
 		pprintf(prn, "> %s\n", tmp);
@@ -3646,8 +3657,10 @@ int execute_script (const char *runfile, const char *buf,
     } /* end while() */
  endwhile:
     if (fb) fclose(fb);
-    if (psession && rebuild) /* recreating a gretl session */
+    if (psession && rebuild) {
+	/* recreating a gretl session */
 	save_model_copy(&models[0], psession, rebuild, datainfo);
+    }
     return 0;
 }
 

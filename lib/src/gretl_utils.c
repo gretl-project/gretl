@@ -1661,7 +1661,7 @@ int hidden_var (int i, const DATAINFO *pdinfo)
 	strcmp(pdinfo->varname[i], "annual") == 0 ||
 	strcmp(pdinfo->varname[i], "qtrs") == 0 ||
 	strcmp(pdinfo->varname[i], "months") == 0 ||
-	strcmp(pdinfo->varname[i], "hours") == 0)
+	strcmp(pdinfo->varname[i], "hrs") == 0)
 	return 1;
     return 0;
 }

@@ -388,7 +388,7 @@ int _reserved (const char *str)
 			     "coeff", "stderr", "rho",
 			     "mean", "median", "var", "cov", "vcv", "sd",
 			     "full", "subdum", 
-			     "t", "annual", "qtrs", "months", "hours", "i",
+			     "t", "annual", "qtrs", "months", "hrs", "i",
 			     "log", "exp", "sin", "cos", "diff", "ldiff", 
 			     "sort", "int", "ln", "abs", "sqrt", "cum",
 			     "pvalue", NULL};

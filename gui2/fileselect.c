@@ -602,7 +602,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     gpointer extdata = NULL;
 
     path = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs));
-    if (path == NULL || *path == '\0') return;
+    if (path == NULL || *path == '\0' || isdir(path)) return;
     strcpy(fname, path);
 
     /* do some elementary checking */

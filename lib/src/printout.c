@@ -1320,7 +1320,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 		plotvar(pZ, pdinfo, "months");
 		break;
 	    case 24:
-		plotvar(pZ, pdinfo, "hours");
+		plotvar(pZ, pdinfo, "hrs");
 		break;
 	    default:
 		plotvar(pZ, pdinfo, "time");

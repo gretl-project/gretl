@@ -243,6 +243,7 @@ void nls_init (void)
 int main (int argc, char *argv[])
 {
     int cont = 0, cli_get_data = 0;
+    int cmd_overflow = 0;
     char tmp[MAXLINE];
     PRN *prn;
 
@@ -479,12 +480,23 @@ int main (int argc, char *argv[])
 #else
 		fgets(tmp, MAXLEN-1, fb);
 #endif /* HAVE_READLINE */
-		strcat(line, tmp);
-		compress_spaces(line);
+		if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
+		    cmd_overflow = 1;
+		    break;
+		} else {
+		    strcat(line, tmp);
+		    compress_spaces(line);
+		}
 	    }
 	}
 	oflag = 0;
-	exec_line(line, prn);
+	if (cmd_overflow) {
+	    fprintf(stderr, _("Maximum length of command line "
+			      "(%d bytes) exceeded\n"), MAXLEN);
+	    break;
+	} else {
+	    exec_line(line, prn);
+	}
     } /* end of get commands loop */
 
     /* leak check -- try explicitly freeing all memory allocated */
@@ -539,9 +551,11 @@ void exec_line (char *line, PRN *prn)
     catchflag(line, &oflag);
     compress_spaces(line);
     /* but if we're stacking commands for a loop, parse lightly */
-    if (loopstack) get_cmd_ci(line, &command);
-    else 
+    if (loopstack) {
+	get_cmd_ci(line, &command);
+    } else {
 	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
+    }
     /* if in batch mode, echo comments in input */
     if (batch && command.ci == -2 && !echo_off) {
 	printf("%s", linebak);

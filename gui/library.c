@@ -3813,29 +3813,39 @@ int execute_script (const char *runfile, const char *buf,
 		    return 1;
 		}
 		*tmp = '\0';
-		if (fb)
+		if (fb) {
 		    fgets(tmp, MAXLEN-1, fb);
-		else
+		} else {
 		    bufgets(tmp, MAXLEN-1, buf); 
-		strcat(line, tmp);
-		compress_spaces(line);
+		}
+		if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
+		    pprintf(prn, _("Maximum length of command line "
+			  "(%d bytes) exceeded\n"), MAXLEN);
+		    exec_err = 1;
+		    break;
+		} else {
+		    strcat(line, tmp);
+		    compress_spaces(line);
+		}
 	    }
-	    if (!strncmp(line, "noecho", 6)) echo_off = 1;
-	    if (strncmp(line, "(* saved objects:", 17) == 0) 
-		strcpy(line, "quit"); 
-	    else if (!echo_off) {
-		if ((line[0] == '(' && line[1] == '*') ||
-		    (line[strlen(line)-1] == ')' && 
-		     line[strlen(line)-2] == '*')) 
-		    pprintf(prn, "\n%s\n", line);
-		else 
-		    pprintf(prn, "\n? %s\n", line);	
+	    if (!exec_err) {
+		if (!strncmp(line, "noecho", 6)) echo_off = 1;
+		if (strncmp(line, "(* saved objects:", 17) == 0) 
+		    strcpy(line, "quit"); 
+		else if (!echo_off) {
+		    if ((line[0] == '(' && line[1] == '*') ||
+			(line[strlen(line)-1] == ')' && 
+			 line[strlen(line)-2] == '*')) 
+			pprintf(prn, "\n%s\n", line);
+		    else 
+			pprintf(prn, "\n? %s\n", line);	
+		}
+		oflag = 0;
+		strcpy(tmp, line);
+		exec_err = gui_exec_line(line, &loop, &loopstack, 
+					 &looprun, psession, rebuild, 
+					 prn, exec_code, runfile);
 	    }
-	    oflag = 0;
-	    strcpy(tmp, line);
-	    exec_err = gui_exec_line(line, &loop, &loopstack, 
-				     &looprun, psession, rebuild, 
-				     prn, exec_code, runfile);
 	    if (exec_err) {
 		pprintf(prn, _("\nError executing script: halting\n"));
 		pprintf(prn, "> %s\n", tmp);

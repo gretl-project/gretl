@@ -92,7 +92,7 @@ static int get_timevar (DATAINFO *pdinfo, char *timevar)
     case 12: 
 	strcpy(timevar, "months"); break;
     case 24: 
-	strcpy(timevar, "hours"); break;
+	strcpy(timevar, "hrs"); break;
     default:
 	return -1;
     }
