@@ -557,7 +557,7 @@ int main (int argc, char *argv[])
     }
 
     /* should we stop immediately on error, in batch mode? */
-    if (getenv("GRETL_KEEP_GOING") == NULL) {
+    if (get_halt_on_error()) {
 	errfatal = batch;  /* exit on error in batch mode */
     }
 

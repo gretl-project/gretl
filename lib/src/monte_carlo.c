@@ -172,7 +172,8 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	return 1;
     }
 
-    if (ci == LAD || ci == HSK || ci == HCCM || ci == WLS) {
+    if (ci == LAD || ci == HSK || ci == HCCM || ci == WLS ||
+	ci == GARCH || ci == ARMA) {
 	return 1;
     }
 
@@ -2072,6 +2073,8 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case LAD:
 	    case HSK:
 	    case HCCM:
+	    case GARCH:
+	    case ARMA:
 		/* if this is the first time round, allocate space
 		   for each loop model */
 		if (lround == 0) {
@@ -2096,6 +2099,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		    *models[0] = hsk_func(cmd.list, pZ, pdinfo);
 		} else if (cmd.ci == HCCM) {
 		    *models[0] = hccm_func(cmd.list, pZ, pdinfo);
+		} else if (cmd.ci == GARCH) {
+		    *models[0] = garch(cmd.list, pZ, pdinfo, cmd.opt, prn);
 		}
 
 		if ((err = (models[0])->errcode)) {
@@ -2207,6 +2212,11 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	} /* end execution of commands within loop */
 
+	if (get_halt_on_error() == 0) {
+	    errmsg(err, prn);
+	    err = 0;
+	}
+
 	lround++;
 
     } /* end iterations of loop */
@@ -2234,9 +2244,13 @@ int loop_exec (LOOPSET *loop, char *line,
 
     if (line != NULL) {
 	*line = '\0';
-    }  
+    } 
 
-    return err;
+    if (get_halt_on_error()) {
+	return err;
+    } else {
+	return 0;
+    }
 }
 
 /* if-then stuff - conditional execution */

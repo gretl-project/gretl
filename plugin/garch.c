@@ -26,15 +26,9 @@
 
 #include "fcp.h"
 
-#undef GARCH_INIT_BY_ARMA
+#define VPARM_MAX 6    /* max number of variance parameters */
 
-#ifdef GARCH_INIT_BY_ARMA
-struct {
-    double omega;
-    double alpha;
-    double beta;
-} arma_coeffs;
-#endif
+double vparm_init[VPARM_MAX];
 
 static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				const int *list)
@@ -354,31 +348,15 @@ int do_fcp (const int *list, double **Z, double scale,
 	b[i] = 0.0;
     }
 
+    /* for compatibility with FCP... */
     amax[1] = q;
     amax[2] = p; 
 
-    /* initialize variance coefficients */
-
-#ifdef GARCH_INIT_BY_ARMA
-    if (p == 1 && q == 1) {
-	fprintf(stderr, "Initializing coefficients from ARMA:\n"
-		" omega = %g, alpha = %g, beta = %g\n",
-		arma_coeffs.omega, arma_coeffs.alpha, arma_coeffs.beta);
-	amax[0] = arma_coeffs.omega;
-	amax[3] = arma_coeffs.alpha;
-	amax[4] = arma_coeffs.beta;
-    } else {
-	amax[0] = pmod->sigma * pmod->sigma;
-	for (i=0; i<p+q; i++) {
-	    amax[3+i] = 0.1;
-	}
-    }
-#else
-    amax[0] = pmod->sigma * pmod->sigma;
+    /* initialize variance parameters */
+    amax[0] = vparm_init[0];
     for (i=0; i<p+q; i++) {
-	amax[3+i] = 0.1;
+	amax[3+i] = vparm_init[i+1];
     }
-#endif
 
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			 (const double **) X, nx, yhat, coeff, ncoeff, 
@@ -441,8 +419,6 @@ int do_fcp (const int *list, double **Z, double scale,
     return err;
 }
 
-#ifdef GARCH_INIT_BY_ARMA
-
 static int 
 add_uhat_squared (const MODEL *pmod, double scale,
 		  double ***pZ, DATAINFO *pdinfo)
@@ -469,23 +445,77 @@ add_uhat_squared (const MODEL *pmod, double scale,
     return 0;
 }
 
+/*
+  p and q are the GARCH orders
+  ao = max(q,p) is the ar order
+  mo = q is the ma order
+
+  it is assumed that armapar contains the arma parameters 
+  in the following order:
+  armapar[0] : intercept
+  armapar[1..ao] : ar terms
+  armapar[ao+1..ao+mo] : ma terms
+*/
+
+static void
+garchpar_from_armapar (const double *armapar, int q, int p)
+{
+    double x, sum_ab = 0.0;
+    int ao = (p > q)? p : q;
+    int mo = q;
+    int i;
+
+    for (i=0; i<1+ao+mo; i++) {
+	fprintf(stderr, "armapar[%d] = %#12.6g\n", i, armapar[i]);
+    }
+
+    for (i=1; i<=p; i++) {
+	x = 0.0;
+	if (i <= ao) {
+	    x += armapar[i];
+	} 
+	if (i<=mo) {
+	    x += armapar[p+i];
+	} 
+	vparm_init[i] = (x < 0.0) ? 0.01 : x;
+	sum_ab += vparm_init[i];
+    }
+
+    for (i=1; i<=q; i++) {
+	x = armapar[p+i];
+	vparm_init[p+i] = (x > 0.0) ? 0 : -x;
+	sum_ab += vparm_init[p+i];
+    }
+
+    fprintf(stderr, "sum_ab = %#12.6g\n", sum_ab);
+
+    if (sum_ab > 0.999999) {
+	for (i=1; i<=p+q; i++) {
+	    vparm_init[i] *= 0.999999 / sum_ab;
+	}
+	sum_ab = 0.999999;
+    }
+
+#if 0
+    vparm_init[0] = armapar[0] / (1.0 - sum_ab);
+#else
+    vparm_init[0] = armapar[0];
+#endif
+}
+
 static int 
 garch_init_by_arma (const MODEL *pmod, const int *garchlist, 
 		    double scale, double ***pZ, DATAINFO *pdinfo)
 {
     MODEL amod;
+    int q = garchlist[1], p = garchlist[2];
     int v = pdinfo->v;
     int *list = NULL;
     int err = 0;
 
-    /* set to common defaults */
-    arma_coeffs.omega = pmod->sigma * pmod->sigma;
-    arma_coeffs.alpha = 0.1;
-    arma_coeffs.beta = 0.1;
-
-    /* for now we'll try this only for GARCH(1,1) */
-    if (garchlist[1] != 1 || garchlist[2] != 1) {
-	return 0;
+    /* for now we'll try this only for GARCH up to (2,2) */
+    if (q > 2 || p > 2) {
+ 	return 0;
     }
 
     /* add OLS uhat squared to dataset */
@@ -499,6 +529,8 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 	goto bailout;
     }
 
+    list[1] = (q > p)? q : p;
+    list[2] = q;
     /* dep var is squared OLS residual */
     list[4] = v;
 
@@ -507,10 +539,16 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 	err = amod.errcode;
 	goto bailout;
     } else {
+	int i;
+
 	model_count_minus();
-	arma_coeffs.omega = amod.coeff[0];
-	arma_coeffs.alpha = amod.coeff[1] + amod.coeff[2];
-	arma_coeffs.beta = -amod.coeff[2];
+
+	garchpar_from_armapar(amod.coeff, q, p);
+
+	for (i=0; i<q+p+1; i++) {
+	    fprintf(stderr, "from ARMA: vparm_init[%d] = %#12.6g\n", i, 
+		    vparm_init[i]);
+	}
     }
 
  bailout:
@@ -520,8 +558,6 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 
     return err;
 }
-
-#endif /* GARCH_INIT_BY_ARMA */
 
 /* sanity/dimension check */
 
@@ -657,12 +693,17 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     } 
 #endif /* alternative scalings */
 
-#ifdef GARCH_INIT_BY_ARMA
-    if (!err) {
+    /* default variance parameter initialization */
+    vparm_init[0] = model.sigma * model.sigma;
+    for (t=1; t<VPARM_MAX; t++) {
+	vparm_init[0] = 0.1;
+    }
+
+    if (opt & OPT_A) {
+	/* try initializing params via ARMA */
 	err = garch_init_by_arma(&model, list, scale, 
 				 pZ, pdinfo);
     }
-#endif
 
     if (!err) {
 	do_fcp(list, *pZ, scale, pdinfo, &model, prn, opt); 

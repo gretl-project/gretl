@@ -33,6 +33,8 @@ int get_garch_vcv_version (void);
 
 int get_force_hc (void);
 
+int get_halt_on_error (void);
+
 double get_hp_lambda (void);
 
 void gretl_set_text_pause (int p);

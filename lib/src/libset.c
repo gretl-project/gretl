@@ -24,6 +24,7 @@
 #include "libset.h"
 
 static int use_qr = -1;
+static int halt_on_error = -1;
 static double hp_lambda;
 
 enum {
@@ -137,8 +138,7 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		*echo_off = 0;
 		err = 0;
 	    } 
-	}
-	else if (!strcmp(setobj, "hac_lag")) {
+	} else if (!strcmp(setobj, "hac_lag")) {
 	    /* set max lag for HAC estimation */
 	    if (!strcmp(setarg, "nw1")) {
 		robust_opts.auto_lag = AUTO_LAG_STOCK_WATSON;
@@ -154,16 +154,14 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		robust_opts.user_lag = atoi(setarg);
 		err = 0;
 	    }
-	}
-	else if (!strcmp(setobj, "hc_version")) {
+	} else if (!strcmp(setobj, "hc_version")) {
 	    /* set HCCM variant */
 	    if (!strcmp(setarg, "0") || !strcmp(setarg, "1") ||
 		!strcmp(setarg, "2") || !strcmp(setarg, "3")) {
 		robust_opts.hc_version = atoi(setarg);
 		err = 0;
 	    }
-	}
-	else if (!strcmp(setobj, "force_hc")) {
+	} else if (!strcmp(setobj, "force_hc")) {
 	    /* use HCCM, not HAC, even for time series */
 	    if (!strcmp(setarg, "on")) { 
 		set_force_hc(1);
@@ -173,8 +171,7 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		set_force_hc(0);
 		err = 0;
 	    }
-	}
-	else if (!strcmp(setobj, "garch_vcv")) {
+	} else if (!strcmp(setobj, "garch_vcv")) {
 	    /* set GARCH VCV variant */
 	    if (!strcmp(setarg, "hessian") || !strcmp(setarg, "im") ||
 		!strcmp(setarg, "op") || !strcmp(setarg, "qml") ||
@@ -182,8 +179,7 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		set_garch_vcv_variant(setarg);
 		err = 0;
 	    }
-	}
-	else if (!strcmp(setobj, "qr")) {
+	} else if (!strcmp(setobj, "qr")) {
 	    /* switch QR vs Cholesky decomposition */
 	    if (!strcmp(setarg, "on")) {
 		use_qr = 1;
@@ -193,8 +189,16 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		use_qr = 0;
 		err = 0;
 	    }
-	}
-	else if (!strcmp(setobj, "seed")) {
+	} else if (!strcmp(setobj, "halt_on_error")) {
+	    if (!strcmp(setarg, "on")) {
+		halt_on_error = 1;
+		err = 0;
+	    }
+	    else if (!strcmp(setarg, "off")) {
+		halt_on_error = 0;
+		err = 0;
+	    }
+	} else if (!strcmp(setobj, "seed")) {
 	    /* seed for PRNG */
 	    if (isdigit(*setarg)) {
 		int k = atoi(setarg);
@@ -205,8 +209,7 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		err = 0;
 
 	    }
-	}
-	else if (!strcmp(setobj, "hp_lambda")) {
+	} else if (!strcmp(setobj, "hp_lambda")) {
 	    /* Hodrick-Prescott filter parameter */
 	    if (!strcmp(setarg, "auto")) {
 		hp_lambda = 0.0;
@@ -242,6 +245,22 @@ int get_use_qr (void)
     } 
 
     return use_qr;
+}
+
+int get_halt_on_error (void)
+{
+    /* if halt_on_error has not been set explicitly, try env */
+    if (halt_on_error == -1) {
+	char *s = getenv("GRETL_KEEP_GOING");
+
+	if (s != NULL && *s != '\0' && *s != '0') {
+	    halt_on_error = 0;
+	} else {
+	    halt_on_error = 1;
+	}
+    } 
+
+    return halt_on_error;
 }
 
 /* pause between screens of output? (cli operation, not in
