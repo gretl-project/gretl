@@ -4555,6 +4555,12 @@ static int gui_exec_line (char *line,
 	paths.currdir[0] = '\0'; 
 	break;
 
+    case LEVERAGE:
+	if ((err = script_model_test(0, prn, 1))) break;
+	err = leverage_test(models[0], (const double **) Z, 
+			    datainfo, prn, NULL);
+	break;
+
     case LMTEST:
 	if ((err = script_model_test(0, prn, 1))) break;
 	/* non-linearity (squares) */

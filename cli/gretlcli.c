@@ -995,6 +995,12 @@ void exec_line (char *line, PRN *prn)
 	paths.currdir[0] = '\0';
 	break;
 
+    case LEVERAGE:
+	if ((err = model_test_start(0, prn, 1))) break;	
+	err = leverage_test(models[0], (const double **) Z, 
+			    datainfo, prn, NULL);
+	break;
+
     case LMTEST:
 	if ((err = model_test_start(0, prn, 1))) break;
 	/* non-linearity (squares) */

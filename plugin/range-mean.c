@@ -51,17 +51,17 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
 
     fprintf(fp, "# range-mean plot for %s\n", varname);
-    fprintf(fp, "set nokey\n");
+    fputs("set nokey\n", fp);
     fprintf(fp, "set title '%s %s %s'\n", 
 	    I_("range-mean plot for"), varname, 
 	    (yhat == NULL)? "" : I_("with least squares fit"));
     fprintf(fp, "set xlabel '%s'\nset ylabel '%s'\n",
 	    I_("mean"), I_("range"));
-    fprintf(fp, "plot \\\n'-' using 1:2 w points");
+    fputs("plot \\\n'-' using 1:2 w points", fp);
     if (yhat != NULL) {
-	fprintf(fp, " ,\\\n'-' using 1:2 w lines\n");
+	fputs(" ,\\\n'-' using 1:2 w lines\n", fp);
     } else {
-	fprintf(fp, "\n");
+	fputc('\n', fp);
     }
 
     /* send data inline */
@@ -71,19 +71,19 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     for (t=0; t<n; t++) {
 	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
     }
-    fprintf(fp, "e\n");
+    fputs("e\n", fp);
     if (yhat != NULL) {
 	for (t=0; t<n; t++) {
 	    fprintf(fp, "%g %g\n", Z[2][t], yhat[t]);
 	}
-	fprintf(fp, "e\n");
+	fputs("e\n", fp);
     }
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fp, "pause -1\n");
+    fputs("pause -1\n", fp);
 #endif
     fclose(fp);
     return 0;

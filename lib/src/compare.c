@@ -1273,6 +1273,43 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+/**
+ * leverage_test:
+ * @pmod: pointer to model to be tested.
+ * @Z: pointer to matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @ppaths: path information struct (should be NULL if a graph
+ * is not wanted).
+ *
+ * Tests the data used in the given model for points with
+ * high leverage and influence on the estimates
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int leverage_test (MODEL *pmod, const double **Z, const DATAINFO *pdinfo, 
+		   PRN *prn, PATHS *ppaths)
+{
+    void *handle;
+    int (*model_leverage) (const MODEL *, const double **, 
+			   const DATAINFO *, PRN *, PATHS *);
+    int err;
+
+    if (open_plugin("leverage", &handle)) return 1;
+
+    model_leverage = get_plugin_function("model_leverage", handle);
+    if (model_leverage == NULL) {
+	close_plugin(handle);
+	return 1;
+    }
+
+    err = (*model_leverage)(pmod, Z, pdinfo, prn, ppaths);
+    close_plugin(handle);
+
+    return err;
+}
+
 int make_mp_lists (const LIST list, const char *str,
 		   int **reglist, int **polylist)
 {

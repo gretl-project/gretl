@@ -6,6 +6,10 @@ version 1.0.8
   scaled for time series graphing (case of negative values)
 - Fix bug in boxplots with boolean conditions attached
 - Ensure all plot windows are not resizable
+- Add "leverage" command (uses lapack) to detect leverage points
+  and influential observations for a given model
+- Fix "diff" and "ldiff" commands for panel data sets (i.e.
+  show missing values as missing)
 
 04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey

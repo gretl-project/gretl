@@ -21,17 +21,17 @@
 #include "gretl_matrix.h"
 
 /* To do: 
-   - restrict this test to OLS
    - fix x-axis of graph (obs number when sub-sampled; time-series)
    - do something about menu item when lapack not available?
    - fix printout of h and influence
 */
   
-static int leverage_plot (int n, const double *uhat, const double *h, 
-			  const DATAINFO *pdinfo, PATHS *ppaths)
+static int leverage_plot (int n, int tstart, const double *uhat, 
+			  const double *h, const DATAINFO *pdinfo, 
+			  PATHS *ppaths)
 {
     FILE *fp = NULL;
-    int t;
+    int t, tmod;
 
     if (gnuplot_init(ppaths, &fp)) return 1;
 
@@ -51,7 +51,7 @@ static int leverage_plot (int n, const double *uhat, const double *h,
     fprintf(fp, "set title '%s'\n", I_("leverage"));
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%d %g\n", t+1, h[t]);
+	fprintf(fp, "%d %g\n", t+tstart+1, h[t]);
     }
     fputs("e\n", fp);
 
@@ -61,7 +61,8 @@ static int leverage_plot (int n, const double *uhat, const double *h,
     fprintf(fp, "set title '%s'\n", I_("influence")); 
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%d %g\n", t+1, uhat[t] * h[t] / (1.0 - h[t]));
+	tmod = t + tstart;
+	fprintf(fp, "%d %g\n", tmod+1, uhat[tmod] * h[t] / (1.0 - h[t]));
     }
     fputs("e\n", fp);
     fputs("set nomultiplot\n", fp);
@@ -91,9 +92,10 @@ int model_leverage (const MODEL *pmod, const double **Z,
     integer m, n, lda;
     gretl_matrix *Q;
     doublereal *tau, *work;
-    double *h = NULL;
+    double *hvec = NULL;
+    double lp;
     int i, j, t;
-    int err = 0;
+    int err = 0, gotlp = 0;
 
     m = pmod->t2 - pmod->t1 + 1; /* # of rows = # of observations */
     lda = m;                     /* leading dimension of Q */
@@ -150,29 +152,49 @@ int model_leverage (const MODEL *pmod, const double **Z,
 	goto qr_cleanup;
     }
 
-    h = malloc(m * sizeof *h);
-    if (h == NULL) {
-	err = 1;
-	goto qr_cleanup;
+    if (ppaths != NULL) {
+	hvec = malloc(m * sizeof *hvec);
+	if (hvec == NULL) {
+	    err = 1;
+	    goto qr_cleanup;
+	}
     }
 
+    pputs(prn, "        ");
+    pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 13), _("residual"));
+    pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 13), _("leverage"));
+    pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 13), _("influence"));
+    pputs(prn, "\n\n");
+
+    lp = 2.0 * n / m;
+
     for (t=0; t<m; t++) {
-	double infl;
+	double f, h = 0.0;
 	int tmod = t + pmod->t1;
 
-	h[t] = 0.0;
 	for (i=0; i<n; i++) {
 	    double q = gretl_matrix_get(Q, t, i);
 
-	    h[t] += q * q;
+	    h += q * q;
 	}
-	infl = pmod->uhat[tmod] * h[t] / (1.0 - h[t]);
-	pprintf(prn, "%d: uhat = %6.3f h = %.3f, ratio = %6.3f\n", 
-		t, pmod->uhat[tmod], h[t], infl);
+	if (h > lp) gotlp = 1;
+	f = pmod->uhat[tmod] * h / (1.0 - h);
+	print_obs_marker(tmod, pdinfo, prn);
+	pprintf(prn, "%12.5g %11.3f%s %12.5g\n", pmod->uhat[tmod], h, 
+		(h > lp)? "*" : " ", f);
+	if (hvec != NULL) hvec[t] = h;
     }
 
-    leverage_plot(m, &pmod->uhat[pmod->t1], h, pdinfo, ppaths);
-    free(h);
+    if (gotlp) {
+	pprintf(prn, "\n%s\n", _("('*' indicates a leverage point)"));
+    } else {
+	pprintf(prn, "\n%s\n", _("No leverage points were found"));
+    }
+
+    if (ppaths != NULL) {
+	leverage_plot(m, pmod->t1, &pmod->uhat[pmod->t1], hvec, pdinfo, ppaths);
+	free(hvec);
+    }
 
  qr_cleanup:
     gretl_matrix_free(Q);

@@ -65,6 +65,7 @@ typedef enum {
     LAD,
     LAGS,    
     LDIFF,
+    LEVERAGE,
     LMTEST, 
     LOGIT,
     LOGS,

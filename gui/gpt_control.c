@@ -1210,6 +1210,9 @@ static int cant_edit (const char *line)
     if (strncmp(line, "# sampl", 7) == 0) {
 	return 1;
     }
+    if (strncmp(line, "# lever", 7) == 0) {
+	return 1;
+    }    
     if (strstr(line, "no auto-parse")) {
 	return 1;
     }

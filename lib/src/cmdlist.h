@@ -67,6 +67,7 @@ char *commands[] = {
     "lad",
     "lags",    
     "ldiff",
+    "leverage",
     "lmtest", 
     "logit",
     "logs",

@@ -199,6 +199,7 @@ static int aliased (char *cmd)
 	               c == TESTUHAT || \
                        c == RESET || \
                        c == SYSTEM || \
+                       c == LEVERAGE || \
 	               c == GENR)
 
 /* ........................................................... */

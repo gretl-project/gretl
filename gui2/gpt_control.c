@@ -1288,6 +1288,10 @@ static int cant_edit (const char *line)
 	/* sampling distribution graph (stats calculator) */
 	return 1;
     }
+    if (strncmp(line, "# lever", 7) == 0) {
+	/* leverage plot */
+	return 1;
+    }
     if (strstr(line, "no auto-parse")) {
 	/* general prohibition on gui plot editing */
 	return 1;
