@@ -48,7 +48,7 @@ static struct extmap action_map[] = {
     {SAVE_CONSOLE, ".inp"},
     {SAVE_MODEL, ".txt"},
     {SAVE_SESSION, ".gretl"},
-    {SAVE_GP_CMDS, ".gp"},
+    {SAVE_GP_CMDS, ".plt"},
     {SAVE_BOXPLOT_EPS, ".eps"},
     {SAVE_BOXPLOT_PS, ".ps"},
     {SAVE_BOXPLOT_XPM, ".xpm"},
@@ -99,7 +99,7 @@ static const char *get_gp_ext (const char *termtype)
     else if (!strcmp(termtype, "fig")) return ".fig";
     else if (!strcmp(termtype, "latex")) return ".tex";
     else if (!strcmp(termtype, "png")) return ".png";
-    else if (!strcmp(termtype, "plot commands")) return ".gp";
+    else if (!strcmp(termtype, "plot commands")) return ".plt";
     else return "*";
 }
 
@@ -317,7 +317,7 @@ static struct winfilter get_gp_filter (const char *termtype)
 	{ N_("xfig files (*.fig)"), "*.fig" },
 	{ N_("LaTeX files (*.tex)"), "*.tex" },
 	{ N_("PNG files (*.png)"), "*.png" },
-	{ N_("gnuplot files (*.gp)"), "*.gp" },
+	{ N_("gnuplot files (*.plt)"), "*.plt" },
 	{ N_("all files (*.*)"), "*.*" }
     };
 
@@ -352,7 +352,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
 	{SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
 	{SAVE_BOXPLOT_PS, { N_("postscript files (*.ps)"), "*.ps" }},
-	{SAVE_GP_CMDS, { N_("gnuplot files (*.gp)"), "*.gp" }},
+	{SAVE_GP_CMDS, { N_("gnuplot files (*.plt)"), "*.plt" }},
 	{EXPORT_CSV, { N_("CSV files (*.csv)"), "*.csv" }},
 	{EXPORT_R, { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_R_ALT, { N_("GNU R files (*.R)"), "*.R" }},

@@ -3275,7 +3275,7 @@ static int get_latex_path (char *latex_path)
     return (ret == 0);
 }
 
-int winfork (char *cmdline, const char *dir, int wshow)
+static int winfork (char *cmdline, const char *dir, int wshow)
 {
     int child;
     STARTUPINFO si;

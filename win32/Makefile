@@ -28,7 +28,7 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
 LDFLAGS = -s 
-CFLAGS := -DHAVE_READLINE -DOS_WIN32 -I. -I$(libdir) -I$(extradir) \
+CFLAGS := -DOS_WIN32 -I. -I$(libdir) -I$(extradir) \
 $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths
@@ -137,6 +137,9 @@ $(WRES): gretlw32.rc
 $(UPDATER):
 	make -C updater
 
+conspawn.exe:
+	$(CC) -o $@ conspawn.c
+
 $(MO):
 	make -C mo
 
@@ -222,9 +225,6 @@ plugins/longname.dll: longname.o
 plugins/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp
-
-panel_data.o: panel_data.c 
-	$(CC) -c $(CFLAGS) $(GLIBINC) $<
 
 OLEFLAGS = -I$(topsrc)/plugin
 

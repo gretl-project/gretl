@@ -2405,8 +2405,8 @@ static int file_get_contents (const char *fname, char **bufp)
 {
     char *buf, *p;
     FILE *fp;
-    size_t count = 0;
-    int c, i = 0, nchunks = 2;
+    size_t i, alloced;
+    int c;
 
     fp = fopen(fname, "r");
     if (fp == NULL) return 1;
@@ -2416,18 +2416,19 @@ static int file_get_contents (const char *fname, char **bufp)
 	fclose(fp);
 	return 1;
     }
+    alloced = CHUNK;
 
+    i = 0;
     while ((c = getc(fp)) != EOF) {
-	count++;
-	if (count % CHUNK == 0) {
-	    p = realloc(buf, nchunks * CHUNK);
+	if (i + 2 == alloced) { /* allow for terminating 0 */
+	    p = realloc(buf, alloced + CHUNK);
 	    if (p == NULL) {
 		free(buf);
 		fclose(fp);
 		return 1;
 	    }
 	    buf = p;
-	    nchunks++;
+	    alloced += CHUNK;
 	}
 	buf[i++] = c;
     }

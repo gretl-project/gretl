@@ -102,12 +102,12 @@ static int win_fork_prog (char *cmdline, const char *dir)
     STARTUPINFO si;
     PROCESS_INFORMATION pi; 
 
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
+    ZeroMemory(&si, sizeof si);
+    si.cb = sizeof si;
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_SHOWMINIMIZED;
 
-    ZeroMemory(&pi, sizeof(pi));    
+    ZeroMemory(&pi, sizeof pi);    
 
     /* zero return means failure */
     child = CreateProcess(NULL, cmdline, 
@@ -119,8 +119,6 @@ static int win_fork_prog (char *cmdline, const char *dir)
         win_show_error();
         return 1;
     }
-
-    /* EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION */
 
     WaitForSingleObject(pi.hProcess, INFINITE);    
     CloseHandle(pi.hProcess);
@@ -279,14 +277,14 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 	fputs("# X-12-ARIMA tri-graph (no auto-parse)\n", fp);
     }
 
-    fputs("set multiplot\nset size 1.0,0.32\n", fp);
+    fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.32\n", fp);
 
     /* irregular component */    
     if (opt == TRAMO) {
-	fprintf(fp, "plot '-' using 1 w impulses title '%s'\n", I_("irregular"));
+	fprintf(fp, "plot '-' using 1 title '%s' w impulses\n", I_("irregular"));
     } else {
 	fprintf(fp, "set bars 0\nset origin 0.0,0.0\n"
-		"plot '-' using :(1.0):($1-1.0) w yerrorbars title '%s', \\\n"
+		"plot '-' using :(1.0):($1-1.0) title '%s' w yerrorbars, \\\n"
 		"1.0 notitle\n", I_("irregular"));
     }
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -296,8 +294,8 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 
     /* actual vs trend/cycle */
     fprintf(fp, "set origin 0.0,0.33\n"
-	    "plot '-' using 1 w l title '%s', \\\n"
-	    " '-' using 1 w l title '%s'\n",
+	    "plot '-' using 1 title '%s' w l, \\\n"
+	    " '-' using 1 title '%s' w l\n",
 	    pdinfo->varname[0], I_("trend/cycle"));
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
 	fprintf(fp, "%g\n", Z[0][t]);
@@ -308,18 +306,19 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 
     /* actual vs seasonally adjusted */
     fprintf(fp, "set origin 0.0,0.66\n"
-	    "plot '-' using 1 w l title '%s', \\\n"
-	    " '-' using 1 w l title '%s'\n",
+	    "plot '-' using 1 title '%s' w l, \\\n"
+	    " '-' using 1 title '%s' w l\n",
 	    pdinfo->varname[0], I_("adjusted"));
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
 	fprintf(fp, "%g\n", Z[0][t]);
     fprintf(fp, "e\n");
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
 	fprintf(fp, "%g\n", Z[D11 + 1][t]);
+    fprintf(fp, "e\n");
 
     fprintf(fp, "set nomultiplot\n");
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fp, "\npause -1\n");
+    fprintf(fp, "pause -1\n");
 #endif
 
 #ifdef ENABLE_NLS
