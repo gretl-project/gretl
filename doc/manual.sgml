@@ -214,6 +214,14 @@
 	</listitem>
       </orderedlist>
 
+      <para>As of version 0.97 <application>gretl</application> offers
+      support for the <application>gnome</application> desktop.  To
+      take advantage of this you should compile the program yourself
+      (as described above).  If you want to suppress the  
+      <application>gnome</application>-specific features you can pass
+      the option <literal>--without-gnome</literal> to
+      <command>configure</command>.</para>
+
     </sect2>
 
     <sect2 id="windows-install"><title>MS Windows</title>
@@ -234,13 +242,13 @@
 
       <para>
 	If your computer is connected to the Internet, then on
-	start-up <application>gretl</application> will query its home
+	start-up <application>gretl</application> can query its home
 	website at Wake Forest University to see if any program
-	updates are available. If so, a window will open up informing
-	you of that fact.  (If you want to supress this feature,
-	uncheck the box marked <quote>Tell me about gretl
+	updates are available; if so, a window will open up informing
+	you of that fact.  If you want to activate this feature,
+	check the box marked <quote>Tell me about gretl
 	  updates</quote> under <application>gretl</application>'s
-	<quote>File, Preferences, General</quote> menu.)
+	<quote>File, Preferences, General</quote> menu.
       </para>
 
       <para>
@@ -296,7 +304,7 @@
       supplied with the package (see <xref linkend="fig-datafiles"/>).
       The
       numbering of the files corresponds to the chapter organization
-      of Ramanathan (1998), which contains discussion of the analysis
+      of Ramanathan (2002), which contains discussion of the analysis
       of these data. The data will be useful for practice purposes
       even without the text.
     </para>
@@ -368,13 +376,13 @@
 	by clicking on that variable's row in the main
 	window.</para></tip>
 
-    <para> Thus, continuing the example of
+    <para>Thus, continuing the example of
       <filename>data3-6</filename>, the entry <command>1 0 2</command>
       (or equivalently <command>Ct 0 Yt</command>) specifies a
       regression of consumption (dependent) on income and a constant.
     </para>
 
-    <para> You can specify a lagged value of an existing variable
+    <para>You can specify a lagged value of an existing variable
       without explicitly adding this to the data set first.  Thus a
       variant on the above estimation command which includes the first
       lag of income on the right-hand side would be <command>1 0 2
@@ -478,7 +486,7 @@
 	      &khgr;<superscript>2</superscript>,
 	      <emphasis>F</emphasis> or gamma distributions. See also
 	      the <command>pvalue</command> command in
-	      <xref linkend="cmdref"/> below.</para></listitem>
+	      <xref linkend="cmdref"/>.</para></listitem>
 	  <listitem><para><guimenuitem>statistical
 		tables</guimenuitem>: Look up critical values for
 	      commonly used distributions (Gaussian,
@@ -609,8 +617,8 @@
 		startobs</guimenuitem>: Impose a particular
 	      interpretation of the data in terms of frequency and
 	      starting point.  This is primarily intended for use with
-	      panel data; see <xref linkend="panel"/>
-	      below.</para></listitem>  
+	      panel data; see <xref linkend="panel"/>.</para>
+	  </listitem>  
 	  <listitem><para><guimenuitem>Define, based on
 		dummy</guimenuitem>: Given a dummy (indicator) variable
 	      with values 0 or 1, this drops from the current sample
@@ -628,8 +636,8 @@
 	  <listitem><para><guimenuitem>Drop all obs with missing
 		values</guimenuitem>: Drop from the current sample all
 	      observations for which at least one variable has a
-	      missing value (see <xref linkend="missing-data"/>
-	      below).</para></listitem>
+	      missing value (see <xref linkend="missing-data"/>.
+	     </para></listitem>
 	  <listitem><para><guimenuitem>Count missing
 		values</guimenuitem>: Give a report on observations
 	      where data values are missing. May be useful in
@@ -639,8 +647,8 @@
 	      Prompts for the name of a text file containing
 	      <quote>case markers</quote> (short strings identifying
 	      the individual observations) and adds this information
-	      to the data set.  See <xref linkend="datafiles"/>
-	      below.</para></listitem>
+	      to the data set.  See <xref linkend="datafiles"/>.
+	     </para></listitem>
 	</itemizedlist>
       </listitem>
       <listitem><para><guimenu>Variable menu</guimenu> Most items
@@ -654,7 +662,7 @@
 	  For the syntax of such formulae, look at the online help for
 	  <quote>Generate variable syntax</quote> or see the
 	  <command>genr</command> command in 
-	  <xref linkend="cmdref"/> below.  
+	  <xref linkend="cmdref"/>.  
 	  One simple example:
 	  <programlisting> 
 	    foo = x1 * x2 
@@ -695,7 +703,7 @@
     <para>
       To view the current state of the script at any point in a
       <application>gretl</application> session, choose <quote>Command
-	log</quote> under the File menu. This log is called
+	log</quote> under the File menu. This log file is called
       <filename>session.inp</filename> and it is overwritten whenever
       you start a new session.  To preserve it, save the script under
       a different name.  Script files will be found most easily, using
@@ -717,7 +725,7 @@
       consult its help, or consult <xref linkend="cmdref"/> in this
       manual. In addition, the <application>gretl</application>
       package includes over 70 <quote>practice</quote> scripts.  Most
-      of these relate to Ramanathan (1998), but they may also be used
+      of these relate to Ramanathan (2002), but they may also be used
       as a free-standing introduction to scripting in
       <application>gretl</application> and to various points of
       econometric theory.  You can explore the practice files under
@@ -777,7 +785,7 @@
       <application>gretl</application> offers the idea of a
       <quote>session</quote> as a way of keeping track of your work
       and revisiting it later.  This is experimental (and at present
-      more likely to be buggy than the rest of the program): I would
+      more likely to be buggy than the rest of the program); I would
       be interested in hearing people's reactions.</para>
 
     <para>
@@ -798,16 +806,17 @@
     </figure>
 
     <para>
-      If you start <application>gretl</application> and open a data
-      set, then select <quote>Icon view</quote> from the Session menu,
-      you should see the basic default set of icons: these give you
-      quick access to the command script, information on the data set
-      (if any), correlation matrix and descriptive summary statistics.
-      All of these are activated by double-clicking the relevant icon.
-      The <quote>Data set</quote> icon is a little more complex:
-      double-clicking opens up the data in the built-in spreadsheet,
-      but you can also right-click on the icon for a menu of other
-      actions.  </para>
+	If you start <application>gretl</application> and open a data
+	set, then select <quote>Icon view</quote> from the Session
+	menu, you should see the basic default set of icons: these
+	give you quick access to the command script, information on
+	the data set (if any), correlation matrix
+	(<quote>Corrmat</quote>) and descriptive summary statistics
+	(<quote>Summary</quote>). All of these are activated by
+	double-clicking the relevant icon. The <quote>Data set</quote>
+	icon is a little more complex: double-clicking opens up the
+	data in the built-in spreadsheet, but you can also right-click
+	on the icon for a menu of other actions.  </para>
 
     <tip><para>In many <application>gretl</application> windows, the
 	right mouse button brings up a menu with common
@@ -898,9 +907,9 @@
       <listitem><para>A shortcut to the help item for script commands
 	  syntax (i.e. a listing with details of all available
 	  commands).</para></listitem>
-      <listitem><para>Shortcut to dialog box for defining a
+      <listitem><para>A shortcut to the dialog box for defining a
 	  graph.</para></listitem>
-      <listitem><para>Shortcut to the listing of datasets associated
+      <listitem><para>A shortcut to the listing of datasets associated
 	  with Ramanathan's <citetitle>Introductory
 	  Econometrics</citetitle>.</para></listitem>
     </orderedlist>
@@ -1074,7 +1083,7 @@
 	    The program expects a file that has (a) valid variable
 	    names on the first row and (b) a rectangular block of data
 	    beneath. Optionally the first column may contain strings
-	    such as dates (8 characters max.): such a column should be
+	    such as dates (8 characters max.).  Such a column should be
 	    headed <quote><command>obs</command></quote> or
 	    <quote><command>date</command></quote>, or its first row
 	    cell may be left blank. There should be <emphasis>exactly
@@ -1148,11 +1157,11 @@
       date (N.B. with two digits following the point for monthly data,
       one for quarterly data, none for annual), a space, a hyphen,
       another space, the ending date, the string <quote><literal>n
-	  =</literal></quote> and the integer number of observations.
+	  = </literal></quote> and the integer number of observations.
       This format must be respected exactly.</para>
 
     <para>Optionally, the first line of the index file may contain a
-      short comment (64 characters) on the source and nature of the
+      short comment (up to 64 characters) on the source and nature of the
       data, following a hash mark.  For example:</para>
 
     <programlisting>
@@ -1638,8 +1647,8 @@
 
     <sect1 id="PWT"><title>Illustration: the Penn World Table</title>
 
-      <para>The Penn World Table (homepage <ulink
-	  url="http://pwt.econ.upenn.edu/">here</ulink>) is a rich
+      <para>The Penn World Table (homepage at <ulink
+	  url="http://pwt.econ.upenn.edu/">pwt.econ.upenn.edu</ulink>) is a rich
 	macroeconomic panel dataset, spanning 152 countries over the
 	years 1950&ndash;1992.  The data are available in
 	<application>gretl</application> format; please see the
@@ -1682,32 +1691,6 @@
 	</programlisting>
       </example>
     </sect1>
-
-  </chapter>
-
-  <chapter id="getting-more-data"><title>Getting more data</title>
-
-    <para>Besides the data files included in the
-      <application>gretl</application> distribution and the Penn World
-      Table mentioned above, a large collection of data of various
-      sorts is available from the <application>gretl</application>
-      <ulink url="http://www.ecn.wfu.edu/gretl/gretl_data.html">data
-	site</ulink>. Data sources include the Board of Governors of
-      the Federal Reserve System (U.S. interest rates), the Federal
-      Reserve Bank of St. Louis (numerous U.S. macroeconomic time
-      series, up to the present), The National Bureau of Economic
-      Research (their <quote>macro history</quote> data collection,
-      plus some international and industry-level data sets), and the
-      Bank of Japan.</para>
-
-    <para>In addition <application>gretl</application> comes with some
-      scripts that can be used to create databases using data
-      available via the Internet. These can be found in the
-      <filename>utils</filename> subdirectory of the source package
-      (see
-      <xref linkend="intro"/> above). To run the scripts you need to
-      have <application>perl</application> installed on your computer,
-      and you need to be connected to the Internet.</para>
 
   </chapter>
 
@@ -1774,7 +1757,7 @@
 
     <para><application>gretl</application> offers (limited) support
       for Monte Carlo simulations. To do such work you should either
-      use the GUI client program in <quote>script mode</quote> (<xref
+      use the GUI client program in <quote>script mode</quote> (see <xref
 	linkend="scripts"/> above), or use the command-line
       client. The command <command>loop</command> opens a special mode
       in which the program accepts commands to be repeated a specified
@@ -1813,7 +1796,7 @@
     <para>A simple example of loop code is shown in
       <xref linkend="script-loop"/>.</para>
 
-    <example id="script-loop"><title>Simple loop code</title>
+    <example id="script-loop"><title>Simple Monte Carlo loop</title>
     <programlisting>
 	(* create a blank data set with series length 50 *) 
 	nulldata 50 
@@ -2273,15 +2256,18 @@
 	  <application>gretl</application> and
 	  <application>gretlcli</application> is stored in the Windows
 	  registry. A suitable set of registry entries is created when
-	  <application>gretl</application> is first installed.  
-	  In case anyone needs to make manual adjustments
-	  to this information, the entries can be found (using the
-	  standard Windows program
-	  <application>regedit.exe</application>)
-	  user <literal>HKEY_CLASSES_ROOT\gretl</literal> (the main
+	  <application>gretl</application> is first installed, and the
+	  settings can be changed under
+	  <application>gretl</application>'s <quote>File,
+	    Preferences</quote> menu. In case anyone needs to make
+	  manual adjustments to this information, the entries can be
+	  found (using the standard Windows program
+	  <application>regedit.exe</application>) under
+	  <literal>gretl</literal> in 
+	  <literal>HKEY_CLASSES_ROOT</literal> (the main
 	  <application>gretl</application> directory and the command
-	  to invoke <application>gnuplot</application>) and 
-	  <literal>HKEY_CURRENT_USER\gretl</literal> (all other
+	  to invoke <application>gnuplot</application>) and
+	  <literal>HKEY_CURRENT_USER</literal> (all other
 	  configurable variables).</para>
 
       </sect2>
@@ -2347,7 +2333,7 @@
 
     <para>
       Section and Chapter references below are to Ramu Ramanathan
-      (1998).
+      (2002).
     </para>
 
     </sect1>
@@ -5822,7 +5808,7 @@
       </informalequation>
       There is no universal agreement among statisticians on the
       <quote>correct</quote> formula (see for instance the discussion
-      in Ramanathan, 1998, pp. 163&ndash;4). <citetitle>Eviews
+      in Ramanathan, 2002, pp. 163&ndash;4). <citetitle>Eviews
 	3.1</citetitle> produces a different figure again (which has a
       negative value for the <filename>NoInt</filename> test files).
       The figure chosen by NIST was obtained for these regressions
@@ -6075,7 +6061,7 @@
 	alternative estimators are under the Model menu in the main
 	window, while details on their use are in the online help
 	file. I can't hope to teach much about these topics here.
-	Please consult, for instance, Ramanathan (1998) or, for a
+	Please consult, for instance, Ramanathan (2002) or, for a
 	comprehensive treatment, Greene (2000).  Ruud (2000) is also a
 	rather comprehensive resource.</para>
 
@@ -6317,8 +6303,8 @@
       </bibliomixed>
 
       <bibliomixed>
-	Ramanathan, Ramu (1998) <title>Introductory Econometrics with
-	  Applications</title>, 4th edition, Fort Worth: Dryden.
+	Ramanathan, Ramu (2002) <title>Introductory Econometrics with
+	  Applications</title>, 5th edition, Fort Worth: Harcourt.
       </bibliomixed>
 
       <bibliomixed>Ruud, Paul A. (2000) <title>An Introduction to

@@ -92,6 +92,9 @@
  1.1)
 ;;1.2
 
+(define %ss-size-factor% 0.7)
+(define %ss-shift-factor% 0.3)
+
 (define (BULLSIZE m lvl)
   (let ((md (case-fold-down m)))
     (case md
@@ -143,7 +146,7 @@
 (define %admon-graphics-path%
   ;; Sets the path, probably relative to the directory where the HTML
   ;; files are created, to the admonition graphics.
-  "../figures/")
+  "figures/")
 
 (define admon-graphic-default-extension
   ;; Identifies the default extension for admonition graphics. This allows
@@ -177,7 +180,7 @@
 (define formal-object-float
   ;; If '#t', formal objects will float if floating is supported by the
   ;; backend. At present, only the TeX backend supports floats.
-  #t)
+  #f)
 
 ;;======================================
 ;;Inlines
