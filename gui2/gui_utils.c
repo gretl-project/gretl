@@ -2118,6 +2118,7 @@ int prn_to_clipboard (PRN *prn, int copycode)
 	size_t len;
 
 	len = strlen(prn->buf);
+	fprintf(stderr, "Copying to clipboard, %d bytes\n", (int) len);
 	clipboard_buf = mymalloc(len + 1);
 	if (clipboard_buf == NULL) return 1;
 	memcpy(clipboard_buf, prn->buf, len + 1);

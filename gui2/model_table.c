@@ -26,6 +26,25 @@ static const MODEL **model_list;
 static int model_list_len;
 static int *grand_list;
 
+static void tex_print_model_table (void);
+
+GtkItemFactoryEntry model_table_items[] = {
+#ifdef USE_GNOME
+    { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
+    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
+#endif
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL },
+#if 0
+    { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
+#endif
+    { NULL, NULL, NULL, 0, NULL }
+};
+
+
 static int model_already_listed (const MODEL *pmod)
 {
     int i;
@@ -263,7 +282,6 @@ int display_model_table (void)
     const MODEL *pmod;
     PRN *prn;
     char se[16];
-    extern GtkItemFactoryEntry view_items[];
 
     if (model_list_empty()) {
 	errbox(_("The model table is empty"));
@@ -371,7 +389,137 @@ int display_model_table (void)
     }
     pputs(prn, "\n");
 
-    view_buffer(prn, 78, 450, _("gretl: model table"), PRINT, view_items);
+    view_buffer(prn, 78, 450, _("gretl: model table"), PRINT, 
+		model_table_items);
 
     return 0;
+}
+
+static void tex_print_model_table (void)
+{
+    int i, j, gl0, ci;
+    int same_df;
+    const MODEL *pmod;
+    PRN *prn;
+
+    if (model_list_empty()) {
+	errbox(_("The model table is empty"));
+	return;
+    }
+
+    if (make_grand_varlist()) return;
+
+    if (bufopen(&prn)) return;
+
+    ci = common_estimator();
+
+    gl0 = grand_list[0];
+
+    pputs(prn, "\\begin{center}\n");
+
+    if (ci > 0) {
+	/* all models use same estimation procedure */
+	pprintf(prn, I_("%s estimates"), 
+		I_(estimator_string(ci, prn->format)));
+	pputs(prn, "\\\\\n");
+    }
+
+    pprintf(prn, "%s: %s \\\\\n", I_("Dependent variable"),
+	    datainfo->varname[grand_list[1]]);
+
+    pputs(prn, I_("Standard errors in parentheses\n\n"));
+
+    pputs(prn, "\\vspace{1em}\n\n");
+    pputs(prn, "\\begin{tabular}{l");
+    for (j=0; j<model_list_len; j++) {
+	pputs(prn, "c");
+    }
+    pputs(prn, "}\n");
+
+    for (j=0; j<model_list_len; j++) {
+	char modhd[16];
+
+	if (model_list[j] == NULL) continue;
+	sprintf(modhd, I_("Model %d"), (model_list[j])->ID);
+	pprintf(prn, " & %s ", modhd);
+    }
+    pputs(prn, "\\\\ ");
+    
+    if (ci == 0) {
+	char est[12];
+
+	pputs(prn, "\n");
+
+	for (j=0; j<model_list_len; j++) {
+	    if (model_list[j] == NULL) continue;
+	    strcpy(est, 
+		   I_(short_estimator_string((model_list[j])->ci,
+					    prn->format)));
+	    pprintf(prn, " & %s ", est);
+	}
+	pputs(prn, "\\\\ ");
+    }
+
+    pputs(prn, " [6pt] \n");    
+
+    /* print coefficients, standard errors */
+    for (i=2; i<=gl0; i++) {
+	int k, v = grand_list[i];
+
+	pprintf(prn, "%s ", datainfo->varname[v]);
+	for (j=0; j<model_list_len; j++) {
+	    pmod = model_list[j];
+	    if (pmod == NULL) continue;
+	    if ((k = var_is_in_model(v, pmod))) {
+		double x = pmod->coeff[k-1];
+
+		if (x < 0) {
+		    pprintf(prn, "& $-$%#.5g ", fabs(x));
+		} else {
+		    pprintf(prn, "& %#.5g ", x);
+		}
+	    } else {
+		pputs(prn, "& ");
+	    }
+	}
+	pputs(prn, "\\\\\n");
+	for (j=0; j<model_list_len; j++) {
+	    pmod = model_list[j];
+	    if (pmod == NULL) continue;
+	    if ((k = var_is_in_model(v, pmod))) {
+		pprintf(prn, "& (%#.5g) ", pmod->sderr[k-1]);
+	    } else {
+		pputs(prn, "& ");
+	    }
+	}
+	pputs(prn, "\\\\ [4pt] \n");
+    }
+
+    /* print sample sizes, R-squared */
+    pprintf(prn, "$%s$ ", _("n"));
+    for (j=0; j<model_list_len; j++) {
+	pmod = model_list[j];
+	if (pmod == NULL) continue;
+	pprintf(prn, "& %d ", pmod->nobs);
+    }
+    pputs(prn, "\\\\\n");
+
+    same_df = common_df();
+    pputs(prn, (same_df)? "$R^2$" : "$\\bar R^2$ ");
+
+    for (j=0; j<model_list_len; j++) {
+	pmod = model_list[j];
+	if (pmod == NULL) continue;
+	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	    /* McFadden */
+	    pprintf(prn, "& %.4f ", pmod->rsq);
+	} else {
+	    pprintf(prn, "& %.4f ", (same_df)? pmod->rsq : pmod->adjrsq);
+	}
+    }
+    pputs(prn, "\n");
+
+    pputs(prn, "\\end{tabular}\n\\end{center}");
+
+    prn_to_clipboard(prn, COPY_LATEX);
 }

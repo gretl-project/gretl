@@ -202,7 +202,7 @@ void model_to_rtf (MODEL *pmod)
     
     r_printmodel(pmod, datainfo, prn);
 
-    prn_to_clipboard(prn);
+    prn_to_clipboard(prn, 0);
 
     gretl_print_destroy(prn);
 }
@@ -1273,7 +1273,7 @@ int csv_to_clipboard (void)
             err = data_to_buf_as_csv(command.list, prn);
         }
         if (!err) {
-            prn_to_clipboard(prn);
+            prn_to_clipboard(prn, 0);
         }
 
         gretl_print_destroy(prn);
@@ -1307,7 +1307,7 @@ int csv_selected_to_clipboard (void)
 	err = data_to_buf_as_csv(command.list, prn);
     }
     if (!err) {
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
     }
 
     if (prn != NULL) {

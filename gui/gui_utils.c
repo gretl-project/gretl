@@ -2020,7 +2020,7 @@ int validate_varname (const char *varname)
 
 /* .................................................................. */
 
-void prn_to_clipboard (PRN *prn)
+void prn_to_clipboard (PRN *prn, int copycode)
 {
     size_t len;
 
@@ -2057,7 +2057,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    rtfprint_summary(summ, datainfo, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2074,7 +2074,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    rtfprint_corrmat(corr, datainfo, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2092,7 +2092,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    rtfprint_fit_resid(fr, datainfo, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
 	return;
     }   
@@ -2110,7 +2110,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    rtfprint_fcast_with_errs(fr, datainfo, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
 	return;
     } 
@@ -2128,7 +2128,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    rtfprint_confints(cf, datainfo, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
 	return;
     } 
@@ -2146,7 +2146,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    rtfprint_vcv(vcv, datainfo, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
 	return;
     }     
@@ -2175,7 +2175,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    tex_print_equation(pmod, datainfo, 0, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, 0);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2186,7 +2186,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	textprn.fp = NULL;
 	textprn.buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-	prn_to_clipboard(&textprn);
+	prn_to_clipboard(&textprn, 0);
 	g_free(textprn.buf);
     } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
