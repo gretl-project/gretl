@@ -1601,11 +1601,13 @@
             deviazioni dalla media), <func>sum</func>, <func>cov</func>
 	    (covarianza), <func>corr</func> (coefficiente di correlazione),
 	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
-	    (somma cumulata), <func>resample</func> (ricampiona una serie
+	    (somma cumulata), <func>cnorm</func> (funzione di ripartizione
+            normale standard), <func>dnorm</func> (funzione di densità normale
+            standard), <func>resample</func> (ricampiona una serie
             con rimpiazzo, utile per il bootstrap), <func>hpfilt</func> (filtro
             di Hodrick&ndash;Prescott: produce la componente di
-            <quote>ciclo</quote> della serie), <func>bkfilt</func> (filtro passa-banda
-            di Baxter&ndash;King).</para>
+            <quote>ciclo</quote> della serie), <func>bkfilt</func> (filtro
+            passa-banda di Baxter&ndash;King).</para>
 	</li>
 	<li><para>Funzioni per serie storiche: <func>diff</func>
             (differenza prima), <func>ldiff</func> (log-differenza,
@@ -1765,12 +1767,14 @@
         regressione.</para>
 
       <para>
-	Sono disponibili due variabili dataset <quote>interne</quote>:
+	Sono disponibili tre variabili dataset <quote>interne</quote>:
 	<lit>$nobs</lit>, che contiene il numero di osservazioni nell'intervallo
         del campione attuale (che non è necessariamente uguale al valore di
 	<lit>$T</lit>, il numero delle osservazioni usate per stimare l'ultimo
-        modello) e <lit>$pd</lit>, che contiene la frequenza o la periodicità
-        dei dati (ad esempio 4 per dati trimestrali).</para>
+        modello), <lit>$nvars</lit>, che contiene il numero di variabili nel
+        dataset (inclusa la costante), e <lit>$pd</lit>, che contiene la
+        frequenza o la periodicità dei dati (ad esempio 4 per dati
+        trimestrali).</para>
 
       <para>Due scalari speciali interni, <lit>$test</lit> e
        <lit>$pvalue</lit>, contengono rispettivamente il valore e il
