@@ -873,10 +873,11 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *depvar_hbox;
 
-    if (sr->code == VAR)
+    if (sr->code == VAR) {
         tmp = gtk_label_new (_("First dependent variable"));
-    else
+    } else {
         tmp = gtk_label_new (_("Dependent variable"));
+    }
 
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
@@ -1005,7 +1006,7 @@ static void tsls_box (selector *sr, GtkWidget *right_vbox)
 		      G_CALLBACK(remove_from_right_callback), 
 		      sr->extra);
 
-    gtk_box_pack_start(GTK_BOX(right_vbox), midhbox, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(right_vbox), midhbox, TRUE, TRUE, 0);
     gtk_widget_show(midhbox); 
 }
 
@@ -1037,7 +1038,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     }
 
     tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, (sr->code == TSLS), FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
 }
 
