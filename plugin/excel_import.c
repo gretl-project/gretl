@@ -1268,6 +1268,12 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		}
 	    }
 	}
+	
+	if (!err) {
+	    if (fix_varname_duplicates(newinfo)) {
+		pputs(prn, _("warning: some variable names were duplicated\n"));
+	    }
+	}
 
 	if (!err && label_strings) {
 	    char **S;

@@ -280,10 +280,12 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     }
 
     if (!err) {
-	for (i=0; i<cols; i++)
+	for (i=0; i<cols; i++) {
 	    if (leftcols[i]) sheet->text_cols += 1;
-	for (t=0; t<rows; t++)
+	}
+	for (t=0; t<rows; t++) {
 	    if (toprows[t]) sheet->text_rows += 1;
+	}
 
 	if (sheet->text_rows > 1) {
 	    pputs(prn, _("Found an extraneous row of text"));
@@ -659,6 +661,10 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		}
 		j++;
 	    }
+	}
+
+	if (fix_varname_duplicates(newinfo)) {
+	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
 	if (blank_cols > 0) {
