@@ -2880,13 +2880,13 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-void do_graph_var (void)
+void do_graph_var (int varnum)
 {
     int err, lines[1];
 
-    if (mdata->active_var < 0) return;
+    if (varnum < 0) return;
     clear(line, MAXLEN);
-    sprintf(line, "gnuplot %s time", datainfo->varname[mdata->active_var]);
+    sprintf(line, "gnuplot %s time", datainfo->varname[varnum]);
     if (check_cmd(line) || cmd_init(line)) return;
 
     lines[0] = 1;
@@ -2901,11 +2901,11 @@ void do_graph_var (void)
 
 /* ........................................................... */
 
-void do_boxplot_var (void)
+void do_boxplot_var (int varnum)
 {
-    if (mdata->active_var < 0) return;
+    if (varnum < 0) return;
     clear(line, MAXLEN);
-    sprintf(line, "boxplot %s", datainfo->varname[mdata->active_var]);
+    sprintf(line, "boxplot %s", datainfo->varname[varnum]);
     if (check_cmd(line) || cmd_init(line)) return;
 
     if (boxplots(command.list, NULL, &Z, datainfo, 0)) 
@@ -3070,6 +3070,8 @@ void display_var (void)
     int list[2];
     PRN *prn;
     windata_t *vwin;
+    int height = 350;
+    int vec = 1;
 
     list[0] = 1;
     list[1] = mdata->active_var;
@@ -3078,13 +3080,16 @@ void display_var (void)
 
     printdata(list, &Z, datainfo, 0, 1, prn);
 
-    vwin = view_buffer(prn, 28, 350, datainfo->varname[list[1]], VIEW_SERIES, 
-		       view_items); 
-
-    if (datainfo->time_series == 0 && datainfo->vector[list[1]]) { 
-	/* cross-sectional data series */
-	series_view_connect(vwin, list[1]);
+    if (!datainfo->vector[list[1]]) {
+	vec = 0;
+	height = 80;
     }
+
+    vwin = view_buffer(prn, 28, height, 
+		       datainfo->varname[list[1]], VIEW_SERIES, 
+		       (vec)? view_items : NULL); 
+
+    series_view_connect(vwin, list[1]);
 }
 
 /* ........................................................... */

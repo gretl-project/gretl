@@ -1320,7 +1320,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     /* make popup? */
     if (role == VIEW_SERIES) {
-	build_series_view_popup(vwin);
+	series_view_build_popup(vwin);
 	g_signal_connect (G_OBJECT(vwin->w), "button_press_event",
 			  G_CALLBACK(popup_menu_handler), 
 			  (gpointer) vwin->popup);

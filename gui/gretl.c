@@ -1183,15 +1183,18 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
     gchar *item;
 
     item = (gchar *) data;
-    if (!strcmp(item, _("Display values"))) display_var();
+    if (!strcmp(item, _("Display values"))) 
+	display_var();
     if (!strcmp(item, _("Descriptive statistics"))) 
 	do_menu_op(NULL, VAR_SUMMARY, NULL);
-    else if (!strcmp(item, _("Time series plot"))) do_graph_var();
+    else if (!strcmp(item, _("Time series plot"))) 
+	do_graph_var(mdata->active_var);
     else if (!strcmp(item, _("Frequency distribution"))) 
 	do_menu_op(NULL, FREQ, NULL);
-    else if (!strcmp(item, _("Frequency plot"))) do_freqplot(NULL, 0, NULL);
+    else if (!strcmp(item, _("Frequency plot"))) 
+	do_freqplot(NULL, 0, NULL);
     else if (!strcmp(item, _("Boxplot")))
-	do_boxplot_var();
+	do_boxplot_var(mdata->active_var);
     else if (!strcmp(item, _("Correlogram"))) 
 	gretl_callback(NULL, CORRGM, NULL);
     else if (!strcmp(item, _("Spectrum"))) 

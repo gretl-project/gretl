@@ -38,34 +38,6 @@ typedef struct {
 static void series_view_format_dialog (GtkWidget *w, 
 				       windata_t *vwin);
 
-#ifdef G_OS_WIN32
-int win_buf_to_clipboard (const char *buf)
-{
-    HGLOBAL winclip;
-    LPTSTR ptr;
-    size_t len;
-
-    if (!OpenClipboard(NULL)) {
-	errbox(_("Cannot open the clipboard"));
-	return 1;
-    }
-
-    EmptyClipboard();
-
-    len = strlen(buf);
-    winclip = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));        
-
-    ptr = GlobalLock(winclip);
-    memcpy(ptr, buf, len + 1);
-    GlobalUnlock(winclip); 
-
-    SetClipboardData(CF_TEXT, winclip);
-
-    CloseClipboard();
-
-    return 0;
-}
-#else
 static int buf_to_clipboard (const char *buf)
 {
     size_t len;
@@ -84,7 +56,6 @@ static int buf_to_clipboard (const char *buf)
 			    GDK_CURRENT_TIME);
     return 0;
 }
-#endif
 
 void free_series_view (gpointer p)
 {
@@ -141,14 +112,11 @@ static int compare_points (const void *a, const void *b)
 static void series_view_print (windata_t *vwin)
 {
     PRN *prn;
-    GtkTextBuffer *tbuf;
     series_view_t *sview = (series_view_t *) vwin->data;
     int t;
 
     if (bufopen(&prn)) return;
     
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-
     /* print formatted data to buffer */
     if (datainfo->vector[sview->varnum]) {
 	pprintf(prn, "\n     Obs ");
@@ -173,7 +141,12 @@ static void series_view_print (windata_t *vwin)
     }
 
     /* clear existing text buffer and insert data */
-    gtk_text_buffer_set_text(tbuf, prn->buf, -1);
+    gtk_text_freeze(GTK_TEXT(vwin->w));
+    gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
+    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+		    NULL, NULL, prn->buf, 
+		    strlen(prn->buf));
+    gtk_text_thaw(GTK_TEXT(vwin->w));
 
     gretl_print_destroy(prn);
 }
@@ -227,11 +200,7 @@ scalar_to_clipboard (GtkWidget *w, windata_t *vwin)
 	buf = g_strdup_printf("%.*fg", sview->digits, val);
     }
 
-#ifdef G_OS_WIN32
-    win_buf_to_clipboard(buf);
-#else
     buf_to_clipboard(buf);
-#endif
 
     g_free(buf);
 }
@@ -246,26 +215,26 @@ void series_view_build_popup (windata_t *vwin)
 
     if (vec) {
 	add_popup_item(_("Sort"), vwin->popup, 
-		       G_CALLBACK(series_view_sort), 
+		       GTK_SIGNAL_FUNC(series_view_sort), 
 		       vwin);
     }
     add_popup_item(_("Format..."), vwin->popup, 
-		   G_CALLBACK(series_view_format_dialog), 
+		   GTK_SIGNAL_FUNC(series_view_format_dialog), 
 		   vwin);
     if (vec) {
 	if (dataset_is_time_series(datainfo)) {
 	    add_popup_item(_("Time series plot"), vwin->popup, 
-			   G_CALLBACK(series_view_plot_callback), 
+			   GTK_SIGNAL_FUNC(series_view_plot_callback), 
 			   vwin);
 	} else {
 	    add_popup_item(_("Boxplot"), vwin->popup, 
-			   G_CALLBACK(series_view_boxplot_callback), 
+			   GTK_SIGNAL_FUNC(series_view_boxplot_callback), 
 			   vwin);
 	}
     }
     if (!vec) {
 	add_popup_item(_("Copy value"), vwin->popup, 
-		       G_CALLBACK(scalar_to_clipboard), 
+		       GTK_SIGNAL_FUNC(scalar_to_clipboard), 
 		       vwin);
     }
 }
@@ -310,7 +279,7 @@ set_series_float_format (GtkWidget *w, gpointer p)
     series_view_t *sview = (series_view_t *) p;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
-        i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+        i = GPOINTER_TO_INT(g_object_get_data(GTK_OBJECT(w), "action"));
         sview->format = i;
     }
 }
@@ -328,8 +297,8 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(w), _("gretl: data format"));
-    g_signal_connect(G_OBJECT(w), "destroy",  
-		     G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(GTK_OBJECT(w), "destroy",  
+		     GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
 
     vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
@@ -345,7 +314,7 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     adj = gtk_adjustment_new(sview->digits, 1, 10, 1, 1, 1);
     sview->digit_spin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
     g_signal_connect (adj, "value_changed",
-		      G_CALLBACK (series_view_get_figures), sview);
+		      GTK_SIGNAL_FUNC (series_view_get_figures), sview);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), sview->digit_spin, FALSE, FALSE, 5);
 
@@ -354,9 +323,9 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     if (sview->format == 'G')
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(set_series_float_format), sview);
-    g_object_set_data(G_OBJECT(tmp), "action", 
+    g_signal_connect(GTK_OBJECT(tmp), "clicked",
+                     GTK_SIGNAL_FUNC(set_series_float_format), sview);
+    g_object_set_data(GTK_OBJECT(tmp), "action", 
                       GINT_TO_POINTER('G'));
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (tmp));
@@ -364,30 +333,30 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     if (sview->format == 'f')
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-                     G_CALLBACK(set_series_float_format), sview);
-    g_object_set_data(G_OBJECT(tmp), "action", 
+    g_signal_connect(GTK_OBJECT(tmp), "clicked",
+                     GTK_SIGNAL_FUNC(set_series_float_format), sview);
+    g_object_set_data(GTK_OBJECT(tmp), "action", 
                       GINT_TO_POINTER('f'));    
 
     /* control buttons */
     hbox = gtk_hbox_new (TRUE, 5);
-    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
+    tmp = gtk_button_new_with_label(_("OK"));
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
-    g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
-			      G_CALLBACK (gtk_widget_destroy), 
-			      G_OBJECT (w));
+    g_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
+			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			      GTK_OBJECT (w));
 
-    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    tmp = gtk_button_new_with_label (_("Cancel"));
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT (tmp), "clicked", 
-		      G_CALLBACK (series_view_format_cancel), sview);
-    g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
-			      G_CALLBACK (gtk_widget_destroy), 
-			      G_OBJECT (w));
+    g_signal_connect (GTK_OBJECT (tmp), "clicked", 
+		      GTK_SIGNAL_FUNC (series_view_format_cancel), sview);
+    g_signal_connect_swapped (GTK_OBJECT (tmp), "clicked", 
+			      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			      GTK_OBJECT (w));
 
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     gtk_container_add(GTK_CONTAINER(w), vbox);

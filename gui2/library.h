@@ -150,9 +150,9 @@ void display_data (gpointer data, guint select, GtkWidget *widget);
 
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget);
 
-void do_graph_var (void);
+void do_graph_var (int varnum);
 
-void do_boxplot_var (void);
+void do_boxplot_var (int varnum);
 
 void do_scatters (GtkWidget *widget, gpointer p);
 
