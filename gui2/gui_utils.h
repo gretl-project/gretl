@@ -83,6 +83,12 @@ void windata_init (windata_t *mydata);
 
 void free_windata (GtkWidget *w, gpointer data);
 
+void winstack_init (void);
+
+void winstack_destroy (void);
+
+int winstack_match_data (gpointer p);
+
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role,
 			gpointer data);

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "POT-Creation-Date: 2004-10-26 13:22-0400\n"
-"PO-Revision-Date: 2004-10-12 10:39-0400\n"
+"PO-Revision-Date: 2004-11-04 10:59-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -1229,9 +1229,8 @@ msgid "%s, using the observations %s - %s"
 msgstr "%s, utilisant les observations %s - %s"
 
 #: lib/src/describe.c:1033 lib/src/describe.c:1124
-#, fuzzy
 msgid "(missing values will be skipped)"
-msgstr "(valeurs manquantes dénotées par -999 seront escamotées)"
+msgstr "(valeurs manquantes seront escamotées)"
 
 #: lib/src/describe.c:1046 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:236
@@ -2253,9 +2252,9 @@ msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Longueur maximum de la ligne de commande (%d octets) en excès\n"
 
 #: lib/src/gretl_list.c:189
-#, fuzzy, c-format
+#, c-format
 msgid "Variable %d was not in the original list"
-msgstr "La variable %d n'a pas de nom"
+msgstr "La variable %d n'était pas dans la liste originale"
 
 #: lib/src/gretl_paths.c:628
 #, c-format
@@ -2445,7 +2444,7 @@ msgstr "commande « end %s » non reconnue"
 
 #: lib/src/interact.c:594
 msgid "end: nothing to end"
-msgstr ""
+msgstr "end: déclaration n'a rien à terminer"
 
 #: lib/src/interact.c:690 gui2/objectsave.c:206
 #, c-format
@@ -3290,7 +3289,7 @@ msgstr "Décompte de 'loop' manquant ou invalide\n"
 #: lib/src/monte_carlo.c:754
 #, c-format
 msgid "Reached maximum interations, %d"
-msgstr ""
+msgstr "Nombre maximum d'itérations a été atteint %d"
 
 #: lib/src/monte_carlo.c:764
 #, c-format
@@ -3529,7 +3528,7 @@ msgstr "cote Z = %f, avec une valeur de P bilatérale %f\n"
 #: lib/src/options.c:444
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
-msgstr ""
+msgstr "AVERTISSEMENT: option%s est ignorée en dehors de la boucle"
 
 #: lib/src/plugins.c:198
 #, c-format
@@ -8628,9 +8627,8 @@ msgid "/Tests/influential observations"
 msgstr "/Tests/observations d'influence"
 
 #: gui2/gui_utils.c:140 gui2/gui_utils.c:209
-#, fuzzy
 msgid "/Tests/collinearity"
-msgstr "/Tests/non-linéarité (logarithmes)"
+msgstr "/Tests/colinéarité"
 
 #: gui2/gui_utils.c:141 gui2/gui_utils.c:210
 msgid "/Tests/Chow test"
@@ -9216,18 +9214,16 @@ msgid "Couldn't read cointegration order"
 msgstr "Ne peut lire l'ordre de cointégration"
 
 #: gui2/library.c:701
-#, fuzzy
 msgid "with constant"
 msgstr "avec constante"
 
 #: gui2/library.c:703
 msgid "with constant, trend and trend squared"
-msgstr ""
+msgstr "avec constante, tendance et tendance quadratique"
 
 #: gui2/library.c:704
-#, fuzzy
 msgid "show regression results"
-msgstr "Afficher les détails des régressions"
+msgstr "afficher les résultats des régressions"
 
 #: gui2/library.c:706
 msgid "gretl: ADF test"
@@ -9352,9 +9348,8 @@ msgid "gretl: leverage and influence"
 msgstr "gretl: rachat et influence"
 
 #: gui2/library.c:1529
-#, fuzzy
 msgid "gretl: collinearity"
-msgstr "gretl: test de cointégration"
+msgstr "gretl: colinéarité"
 
 #: gui2/library.c:1560
 msgid "This test only implemented for OLS models"
@@ -9597,9 +9592,9 @@ msgid "Out of memory in display buffer"
 msgstr "Mémoire épuisée dans le tampon d'affichage"
 
 #: gui2/library.c:3593
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete %s; variable is in use"
-msgstr "Ne peut détruire une variable en mode sous-échantillonnage\n"
+msgstr "Ne peut détruire %s; la variable est utilisée"
 
 #: gui2/library.c:3598 gui2/library.c:3606 gui2/session.c:1534
 #, c-format
@@ -9611,14 +9606,12 @@ msgid "gretl: delete"
 msgstr "gretl: suprimer"
 
 #: gui2/library.c:3634
-#, fuzzy
 msgid "Cannot delete the specified variables"
-msgstr "Ne peut ouvrir le fichier spécifié"
+msgstr "Ne peut détruire les variables spécifiées"
 
 #: gui2/library.c:3637
-#, fuzzy
 msgid "Cannot delete all of the specified variables"
-msgstr "Ne peut ouvrir le fichier spécifié"
+msgstr "Ne peut détruire toutes les variables spécifiées"
 
 #: gui2/library.c:3643
 msgid "Out of memory reorganizing data set"
@@ -9857,7 +9850,6 @@ msgid "Model %d"
 msgstr "Modèle %d"
 
 #: gui2/model_table.c:706 gui2/model_table.c:968
-#, fuzzy
 msgid "t-statistics in parentheses"
 msgstr "statistique-$t$ entre paranthèses"
 
@@ -9895,14 +9887,12 @@ msgid "No model is available"
 msgstr "Aucun modèle n'est disponible"
 
 #: gui2/model_table.c:967
-#, fuzzy
 msgid "standard errors in parentheses"
 msgstr "Erreur standard entre parenthèses"
 
 #: gui2/model_table.c:973
-#, fuzzy
 msgid "model table options"
-msgstr "Table des modèles est pleine"
+msgstr "options de la table des modèles"
 
 #: gui2/objectsave.c:78
 #, c-format
@@ -10024,9 +10014,8 @@ msgid "Add to model table"
 msgstr "Ajouter à la table des modèles"
 
 #: gui2/session.c:141 gui2/session.c:2204
-#, fuzzy
 msgid "Options"
-msgstr "Observations"
+msgstr "Options"
 
 #: gui2/session.c:158 gui2/session.c:2169
 msgid "Edit plot commands"
@@ -10632,12 +10621,12 @@ msgstr "test Lmax"
 #: plugin/johansen.c:383
 #, c-format
 msgid "Cointegrating vectors (trace test, 5%% significance level):"
-msgstr ""
+msgstr "Vecteurs de co-intégration (test de trace, niveau signification 5%%):"
 
 #: plugin/johansen.c:388
 #, c-format
 msgid "No cointegrating vectors (trace test, 5%% significance level)"
-msgstr ""
+msgstr "Pas de vecteurs de co-intégration (test de trace, niveau signification 5%%)"
 
 #: plugin/johansen.c:399
 msgid "Failed to find eigenvalues\n"
@@ -11237,21 +11226,23 @@ msgstr ""
 
 #: plugin/vif.c:130
 msgid "Variance Inflation Factors"
-msgstr ""
+msgstr "Facteurs d'inflation de variance"
 
 #: plugin/vif.c:132
 msgid "Minimum possible value = 1.0"
-msgstr ""
+msgstr "Valeur minimale possible = 1.0"
 
 #: plugin/vif.c:133
 msgid "Values > 10.0 may indicate a collinearity problem"
-msgstr ""
+msgstr "Valeurs > 10.0 peut indiquer un problème de colinéarité"
 
 #: plugin/vif.c:145
 msgid ""
 "VIF(j) = 1/(1 - R(j)^2), where R(j) is the multiple correlation coefficient\n"
 "between variable j and the other independent variables"
 msgstr ""
+"VIF(j) = 1/(1 - R(j)^2), où R(j) est un coefficient de corrélation multiple\n"
+"entre la variable j et les autres variables indépendantes"
 
 #: plugin/workbook.c:505
 msgid "Password protected workbooks are not supported yet."

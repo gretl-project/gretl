@@ -46,11 +46,6 @@
 # include <gdk-pixbuf/gdk-pixbuf.h>
 #endif
 
-/* from gui_utils.c */
-extern void winstack_init (void);
-extern void winstack_destroy (void);
-extern int winstack_match_data (gpointer p);
-
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
 #include "../pixmaps/model.xpm"
@@ -217,6 +212,20 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static void gretl_text_free (GRETL_TEXT *text);
+
+/* ........................................................... */
+
+static int session_saved;
+
+int session_is_saved (void)
+{
+    return session_saved;
+}
+
+void set_session_saved (int val)
+{
+    session_saved = val;
+}
 
 /* ........................................................... */
 
@@ -859,10 +868,14 @@ void close_session (void)
 
     session_menu_state(FALSE);
     session_file_open = 0;
+
     if (iconview != NULL) {
 	gtk_widget_destroy(iconview);
     }
+
     session_changed(0);
+    set_session_saved(0);
+
     winstack_destroy();
     clear_selector();
 

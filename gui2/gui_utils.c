@@ -45,8 +45,6 @@
 
 char *storelist = NULL;
 
-extern int session_saved;
-
 #ifdef OLD_GTK
 #include "../pixmaps/stock_save_16.xpm"
 #include "../pixmaps/stock_save_as_16.xpm"
@@ -91,11 +89,6 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
-
-extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
-extern void save_plot (char *fname, GPT_SPEC *plot);
-extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
-
 
 static void close_model (gpointer data, guint close, GtkWidget *widget)
 {
@@ -1093,7 +1086,7 @@ void save_session (char *fname)
     infobox(msg);
 
     mkfilelist(FILE_LIST_SESSION, fname);
-    session_saved = 1;
+    set_session_saved(1);
     session_changed(0);
 
     return;

@@ -23,11 +23,13 @@
 #include "gtkplotpc.h"
 #include "gtkplotps.h"
 
-typedef enum
-{
-  GTK_PLOT_BORDER_NONE		,
-  GTK_PLOT_BORDER_LINE		,
-  GTK_PLOT_BORDER_SHADOW	,
+gboolean psinit (GtkPlotPC *pc);
+void psleave (GtkPlotPC *pc);
+
+typedef enum {
+    GTK_PLOT_BORDER_NONE,
+    GTK_PLOT_BORDER_LINE,
+    GTK_PLOT_BORDER_SHADOW
 } GtkPlotBorderStyle;
 
 #endif /* __GTK_PLOT_H__ */

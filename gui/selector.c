@@ -504,7 +504,7 @@ static void destroy_selector (GtkWidget *w, selector *sr)
 {
     free(sr->cmdlist);
     free(sr);
-    open_dialog = NULL;
+    set_open_dialog(NULL);
 }
 
 static char *est_str (int cmdnum)
@@ -915,7 +915,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     sr->opts = 0L;
 
     sr->dlg = gtk_dialog_new();
-    open_dialog = sr->dlg;
+    set_open_dialog(sr->dlg);
 
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
@@ -1082,6 +1082,7 @@ void delete_selection_dialog (selector *sr)
 
 void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode) 
 {
+    GtkWidget *open_dialog;
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox, *indepvar_hbox;
     GtkWidget *button_vbox, *scroller;
@@ -1089,6 +1090,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     char topstr[48];
     int i;
 
+    open_dialog = get_open_dialog();
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;
@@ -1366,11 +1368,13 @@ static GtkWidget *selection_top_label (int code)
 void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p) 
 {
+    GtkWidget *open_dialog;
     GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *scroller;
     selector *sr;
     int i;
 
+    open_dialog = get_open_dialog();
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;

@@ -20,6 +20,7 @@
 /* dialogs.c for gretl */
 
 #include "gretl.h"
+#include "cmdstack.h"
 #include "session.h"
 #include "obsbutton.h"
 #include "textbuf.h"
@@ -30,11 +31,6 @@ GtkWidget *active_edit_id;
 GtkWidget *active_edit_name;
 GtkWidget *active_edit_text;
 
-extern int work_done (void); /* library.c */
-
-GtkWidget *open_dialog;
-int session_saved;
-
 struct dialog_t_ {
     GtkWidget *dialog;
     GtkWidget *edit;
@@ -42,6 +38,20 @@ struct dialog_t_ {
     gint code;
     gretlopt opt;
 };
+
+/* ........................................................... */
+
+static GtkWidget *open_dialog;
+
+GtkWidget *get_open_dialog (void)
+{
+    return open_dialog;
+}
+
+void set_open_dialog (GtkWidget *w)
+{
+    open_dialog = w;
+}
 
 /* ........................................................... */
 
@@ -158,7 +168,7 @@ gpointer dialog_data_get_data (dialog_t *ddata)
     return ddata->data;
 }
 
-GtkWidget *dialog_data_get_vbox (dialog_t *ddata)
+static GtkWidget *dialog_data_get_vbox (dialog_t *ddata)
 {
     return GTK_DIALOG(ddata->dialog)->vbox;
 }
@@ -684,7 +694,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
        save_data_callback() blocking functions */
 
     if (!expert && !replaying() && 
-	(session_changed(0) || (work_done() && !session_saved))) {
+	(session_changed(0) || (work_done() && !session_is_saved()))) {
 
 	resp = yes_no_dialog ("gretl", 
 			      (session_file_is_open()) ?
@@ -1380,7 +1390,9 @@ static void varinfo_cancel (GtkWidget *w, struct varinfo_settings *vset)
 static void free_vsettings (GtkWidget *w, 
 			    struct varinfo_settings *vset)
 {
-    if (!vset->full) gtk_main_quit();
+    if (!vset->full) {
+	gtk_main_quit();
+    }
     free(vset);
 }
 
@@ -2180,7 +2192,7 @@ static gint dialog_unblock (GtkWidget *w, gpointer p)
     return FALSE;
 }
 
-void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
+void panel_structure_dialog (DATAINFO *pdinfo)
 {
     dialog_t *d;
     GtkWidget *button;
@@ -2190,9 +2202,11 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     d = dialog_data_new(pdinfo, (dataset_is_panel(pdinfo))?
 			pdinfo->time_series : STACKED_TIME_SERIES,
 			_("gretl: panel structure"));
-    if (d == NULL) return;
-    
-    w = d->dialog;
+    if (d == NULL) {
+	return;
+    }
+
+    set_open_dialog(d->dialog);
 
     no_resize(d->dialog);
 

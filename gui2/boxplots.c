@@ -72,12 +72,6 @@ static double scalepos = 75.0; /* was 60 */
 static char boxfont[64] = "Helvetica";
 static int boxfontsize = 12;
 
-#ifndef OLD_GTK
-/* from gtkextra's gtkplotps.c (modified) */
-extern void psleave (GtkPlotPC *pc);
-extern gboolean psinit (GtkPlotPC *pc);
-#endif
-
 static int five_numbers (gpointer data);
 static int dump_boxplot (PLOTGROUP *grp);
 

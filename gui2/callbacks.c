@@ -35,8 +35,6 @@
 # include "treeutils.h"
 #endif
 
-extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
-
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;

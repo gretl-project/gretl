@@ -726,6 +726,8 @@ void delete_selection_dialog (selector *sr)
 
 static void maybe_delete_dialog (GtkWidget *widget, selector *sr)
 {
+    GtkWidget *open_dialog = get_open_dialog();
+
     if (open_dialog != NULL && !sr->error) {
 	gtk_widget_destroy(sr->dlg);
     }
@@ -733,6 +735,8 @@ static void maybe_delete_dialog (GtkWidget *widget, selector *sr)
 
 static void cancel_selector (GtkWidget *widget, selector *sr)
 {
+    GtkWidget *open_dialog = get_open_dialog();
+
     if (open_dialog != NULL) {
 	gtk_widget_destroy(sr->dlg);
     }
@@ -743,9 +747,11 @@ static void destroy_selector (GtkWidget *w, selector *sr)
     if (SAVE_DATA_ACTION(sr->code)) {
 	gtk_main_quit();
     }
+
     free(sr->cmdlist);
     free(sr);
-    open_dialog = NULL;
+
+    set_open_dialog(NULL);
 }
 
 static char *est_str (int cmdnum)
@@ -1136,7 +1142,7 @@ static void selector_init (selector *sr, guint code, const char *title)
 
     sr->code = code;
     sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    open_dialog = sr->dlg;
+    set_open_dialog(sr->dlg);
 
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
@@ -1310,6 +1316,7 @@ build_selector_buttons (selector *sr, void (*okfunc)())
 
 void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode) 
 {
+    GtkWidget *open_dialog;
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox;
     GtkWidget *button_vbox;
@@ -1319,6 +1326,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gchar *topstr;
     int i;
 
+    open_dialog = get_open_dialog();
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;
@@ -1581,6 +1589,7 @@ static GtkWidget *selection_top_label (int code)
 void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p) 
 {
+    GtkWidget *open_dialog;
     GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *remove_button;
     GtkListStore *store;
@@ -1588,6 +1597,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     selector *sr;
     int i;
 
+    open_dialog = get_open_dialog();
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
 	return;

@@ -12,9 +12,11 @@ enum {
     HELP_BUTTON
 } buttons;
 
-extern GtkWidget *open_dialog;
-
 /* functions follow */
+
+GtkWidget *get_open_dialog (void);
+
+void set_open_dialog (GtkWidget *w);
 
 void errbox (const char *msg);
 
@@ -38,8 +40,6 @@ gretlopt dialog_data_get_opt (const dialog_t *ddata);
 
 gpointer dialog_data_get_data (dialog_t *ddata);
 
-GtkWidget *dialog_data_get_vbox (dialog_t *ddata);
-
 void close_dialog (dialog_t *ddata);
 
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
@@ -58,7 +58,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w);
 
-void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w);
+void panel_structure_dialog (DATAINFO *pdinfo);
 
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
 			  int *mon_start, gint *compact_method);

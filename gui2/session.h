@@ -39,6 +39,10 @@ enum {
     ADD_OBJECT_FAIL
 };
 
+int session_is_saved (void);
+
+void set_session_saved (int val);
+
 void session_menu_state (gboolean s);
 
 int real_add_graph_to_session (const char *fname, const char *grname,

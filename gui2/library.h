@@ -77,6 +77,8 @@ void exit_free_modelspec (void);
 
 int bool_subsample (gretlopt opt);
 
+void do_samplebool (GtkWidget *widget, dialog_t *ddata);
+
 void do_setobs (GtkWidget *widget, dialog_t *ddata);
 
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
@@ -134,6 +136,10 @@ void do_vif (gpointer data, guint u, GtkWidget *w);
 void do_leverage (gpointer data, guint u, GtkWidget *w);
 
 void add_leverage_data (windata_t *vwin);
+
+void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
+
+void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 
 #ifdef ENABLE_GMP
 void do_mp_ols (GtkWidget *widget, gpointer p);
