@@ -1,4 +1,0 @@
-#!/bin/sh
-import -frame -density 162 $1.epdf
-convert -density 162 $1.epdf $1.png
-rm $1.epdf
