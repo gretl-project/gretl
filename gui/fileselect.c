@@ -98,8 +98,8 @@ static const char *get_gp_ext (const char *termtype)
 
 static int is_data_action (int i)
 {
-    if (i == SAVE_DATA || i == SAVE_BIN1 || i == SAVE_BIN2 ||
-	i == OPEN_DATA)
+    if (i == SAVE_DATA || i == SAVE_GZDATA || i == SAVE_BIN1 || 
+	i == SAVE_BIN2 || i == OPEN_DATA)
 	return 1;
     else
 	return 0;
@@ -270,8 +270,8 @@ void file_selector (char *msg, int action, gpointer data)
 	get_default_dir(startd);
 
     /* special case: default save of data */
-    if (action == SAVE_DATA && paths.datfile[0] &&
-	!strcmp(paths.datfile + strlen(paths.datfile) - 4, 
+    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]
+	&& !strcmp(paths.datfile + strlen(paths.datfile) - 4, 
 		(olddat)? ".dat" : ".gdt")) {
 	strcpy(fname, paths.datfile + slashpos(paths.datfile) + 1);
 	get_base(startd, paths.datfile, SLASH);
@@ -597,8 +597,8 @@ void file_selector (char *msg, int action, gpointer data)
     else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
 
-    else if (action == SAVE_DATA && paths.datfile[0] &&
-	     dat_ext(paths.datfile, 0)) {
+    else if ((action == SAVE_DATA || action == SAVE_GZDATA) 
+	     && paths.datfile[0] && dat_ext(paths.datfile, 0)) {
 	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
 	char startd[MAXLEN];
 

@@ -2762,7 +2762,7 @@ int do_store (char *mydatfile, const int opt, int overwrite)
     line[0] = '\0';
 
     if (f) { /* not a standard native save */
-	sprintf(line, "store -%c '%s' %s", f, mydatfile, storelist);
+	sprintf(line, "store '%s' %s -%c", mydatfile, storelist, f);
     } else {
 	if (!overwrite) {
 	    fp = fopen(mydatfile, "r");

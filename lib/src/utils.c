@@ -1549,12 +1549,14 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	}
     }
 
+#ifdef notdef
     /* check: print matrix */
-/*      for (t=0; t<fn; t++) { */
-/*  	for (i=0; i<fv; i++) */
-/*  	    printf("%.2f ", fZ[fn*i + t]); */
-/*  	putc('\n', stdout); */
-/*      } */
+    for (t=0; t<fn; t++) {
+ 	for (i=0; i<fv; i++)
+ 	    printf("%.2f ", fZ[fn*i + t]);
+ 	putc('\n', stdout);
+    }
+#endif
     
     _init_model(&fmod);
     fdatainfo.extra = 1;
@@ -1580,10 +1582,12 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     /* and the variances */
     if (makevcv(&fmod)) return E_ALLOC;
 
-/*      nv = fv - 1; */
-/*      k = (nv * nv + nv)/2; */
-/*      for (i=0; i<k; i++) */
-/*  	printf("vcv[%d] = %f\n", i, fmod.vcv[i]); */
+#ifdef notdef
+    nv = fv - 1;
+    k = (nv * nv + nv)/2;
+    for (i=0; i<k; i++)
+ 	printf("vcv[%d] = %f\n", i, fmod.vcv[i]);
+#endif
 
     k = -1;
     t = 0;

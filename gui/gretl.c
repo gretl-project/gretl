@@ -27,7 +27,9 @@
 # include "pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h> 
-# include "htmlhelp.h"
+# ifdef notyet
+#  include "htmlhelp.h"
+# endif
 #endif
 
 /* pixmaps for gretl toolbar */
@@ -165,10 +167,16 @@ static void win_help (void)
 {
     char hlpfile[MAXLEN];
 
-    sprintf(hlpfile, "%s\\gretl.chm", paths.gretldir);
+    sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
 
-    if (!HtmlHelp(NULL, hlpfile, HELP_FINDER, 0)) 
+    if (WinExec(hlpfile, SW_SHOWNORMAL) < 32)
+        errbox("Couldn't access help file");
+
+#ifdef notyet
+    sprintf(hlpfile, "%s\\gretl.chm", paths.gretldir);
+    if (!HtmlHelp(GetDesktopWindow(), hlpfile, HELP_FINDER, 0)) 
 	errbox("Couldn't access help file");
+#endif
 }
 #endif
 
