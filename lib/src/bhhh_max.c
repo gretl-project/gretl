@@ -41,9 +41,9 @@ struct _model_info {
     /* members set within bhhh_max: */
 
     int n;            /* length of series */
+    int iters;        /* number of iterations taken */
     double ll;        /* log-likelihood */
     double ll2;       /* test log-likelihood value */
-    double s2;        /* error variance */
     int *list;        /* OPG regression list */
     double *theta;    /* vector of parameters */
     double **series;  /* additional series */
@@ -134,6 +134,11 @@ int model_info_get_n (const model_info *model)
     return model->n;
 }    
 
+int model_info_get_iters (const model_info *model)
+{
+    return model->iters;
+}
+ 
 void model_info_get_pqr (const model_info *model, 
 			 int *p, int *q, int *r)
 {
@@ -147,7 +152,6 @@ double **model_info_get_series (const model_info *model)
     return model->series;
 }
 
-
 double model_info_get_ll (const model_info *model)
 {
     return model->ll;
@@ -160,11 +164,6 @@ void model_info_set_ll (model_info *model, double ll, int do_score)
     } else {
 	model->ll2 = ll;
     }
-}
-
-void model_info_set_s2 (model_info *model, double s2)
-{
-    model->s2 = s2;
 }
 
 void model_info_set_opts (model_info *model, unsigned char opts)
@@ -240,12 +239,6 @@ static int model_info_init (model_info *model, const double *init_coeff)
 
     k = model->k;  
 
-    model->theta = NULL;
-    model->series = NULL;
-    model->list = NULL;
-    model->pmod = NULL;
-    model->VCV = NULL;
-
     model->list = make_opg_list(k);
     model->theta = malloc(k * sizeof *model->theta);
 
@@ -279,8 +272,6 @@ static int model_info_init (model_info *model, const double *init_coeff)
 	model->theta[i] = init_coeff[i];
     }
 
-    model->s2 = 1.0;
-
     return err;
 }
 
@@ -289,6 +280,16 @@ model_info *model_info_new (void)
     model_info *mi;
 
     mi = malloc(sizeof *mi);
+
+    if (mi != NULL) {
+	mi->theta = NULL;
+	mi->series = NULL;
+	mi->list = NULL;
+	mi->pmod = NULL;
+	mi->VCV = NULL;
+	mi->n_series = 0;
+    }
+
     return mi;
 }
 
@@ -335,9 +336,9 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
     DATAINFO *tinfo = NULL;
 
     int iters, itermax;
-    double minstep = 1.0e-08; /* in Tobit, was 1.0e-06 */
+    double minstep = 1.0e-06; /* in arma, was 1.0e-08 */
     double crit = 1.0;
-    double stepsize = 0.125;  /* in Tobit, was 0.25 */
+    double stepsize = 0.25;   /* in arma, was 0.125 */
 
     double *delta = NULL, *ctemp = NULL;
 
@@ -379,13 +380,17 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
     iters = 0;
     itermax = get_maxiter();
 
-    while (crit > model->tol && iters++ < itermax && !err) {
+    while (crit > model->tol && iters++ < itermax) {
 
 	/* compute loglikelihood and score matrix */
 	loglik(model->theta, X, tZ, model, 1); 
 
 	/* BHHH via OPG regression */
 	*bmod = lsq(model->list, &tZ, tinfo, OLS, OPT_A, 0.0);
+	if (bmod->errcode) {
+	    err = E_NOCONV;
+	    break;
+	}
 
 	for (i=0; i<k; i++) {
 	    delta[i] = bmod->coeff[i] * stepsize;
@@ -398,7 +403,7 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 	err = loglik(ctemp, X, tZ, model, 0); 
 
 	while (model->ll2 < model->ll || err) { 
-	    /* ... if not, halve steplength, as with ARMA models */
+	    /* ... if not, halve the steplength */
 	    stepsize *= 0.5;
 	    if (stepsize < minstep) {
 		err = E_NOCONV;
@@ -413,21 +418,16 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 
 	if (err) break;
 
+	/* actually update parameter estimates */
+	for (i=0; i<k; i++) {
+	    model->theta[i] = ctemp[i];
+	}	
+
 	/* double the steplength? */
 	if (stepsize < 4.0) stepsize *= 2.0;
 
-	/* actually update parameter estimates */
-	for (i=0; i<k; i++) {
-	    model->theta[i] += delta[i];
-	}
-
+	/* print interation info, if wanted */
 	bhhh_iter_info(iters, model->theta, k, model->ll, stepsize, prn);
-
-	if (model->s2 < 0.0) {
-	    /* if the variance is negative here, we're stuck */
-	    err = E_NOCONV;
-	    break;
-	}
 
 	crit = model->ll2 - model->ll;  
     }
@@ -459,6 +459,7 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 	    model->pmod = bmod;
 	    gretl_model_set_int(bmod, "iters", iters);
 	} 
+	model->iters = iters;
     }
 
     /* free all temp stuff */

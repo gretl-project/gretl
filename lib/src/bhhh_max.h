@@ -40,6 +40,8 @@ int model_info_get_t2 (const model_info *model);
 
 int model_info_get_n (const model_info *model);
 
+int model_info_get_iters (const model_info *model);
+
 void model_info_get_pqr (const model_info *model, 
 			 int *p, int *q, int *r);
 
@@ -62,8 +64,6 @@ void model_info_set_opts (model_info *model, unsigned char opts);
 void model_info_set_tol (model_info *model, double tol);
 
 void model_info_set_ll (model_info *model, double ll, int do_score);
-
-void model_info_set_s2 (model_info *model, double s2);
 
 int bhhh_max (int (*loglik) (double *, const double **, double **,
 			     model_info *, int), 

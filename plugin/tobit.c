@@ -83,11 +83,8 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 
     if (siginv < 0.0) {
 	fprintf(stderr, "tobit_ll: got a negative variance\n");
-	model_info_set_s2(tobit, -1.0);
 	return 1;
-    } else {
-	model_info_set_s2(tobit, 1.0 / siginv);
-    }
+    } 
 
     /* calculate ystar, e, f, and P vectors */
     for (t=0; t<n; t++) {
@@ -200,7 +197,7 @@ static int add_norm_test_to_model (MODEL *pmod, double chi2)
 
 static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 			      double sigma, double ll, const double **X,
-			      gretl_matrix *VCV)
+			      gretl_matrix *VCV, int iters)
 {
     int i, t, cenc = 0;
     int offset = pmod->t1;
@@ -251,6 +248,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     pmod->ci = TOBIT;
 
     gretl_model_set_int(pmod, "censobs", cenc);
+    gretl_model_set_int(pmod, "iters", iters);
 
     return 0;
 }
@@ -308,6 +306,10 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     pmod->coeff[k-1] = 1.0;
 
     tobit = tobit_model_info_init(pmod->nobs, k, n_series);
+    if (tobit == NULL) {
+	free(X);
+	return E_ALLOC;
+    }
 
     /* call BHHH routine to maximize ll */
     err = bhhh_max(tobit_ll, X, pmod->coeff, tobit, prn);
@@ -359,7 +361,8 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     gretl_matrix_free(J);
 
     ll = model_info_get_ll(tobit);
-    write_tobit_stats(pmod, theta, k-1, sigma, ll, X, VCV);
+    write_tobit_stats(pmod, theta, k-1, sigma, ll, X, VCV, 
+		      model_info_get_iters(tobit));
 
  bailout:
 

@@ -99,7 +99,7 @@ static int ma_out_of_bounds (int q, const double *ma_coeff)
     }
 
     temp[0] = 1.0;
-    /* ma_coeff starts at 1 */
+    /* ma_coeff is 1-based */
     for (i=1; i<=q; i++){
 	temp[i] = ma_coeff[i];
     }
@@ -178,13 +178,13 @@ static int arma_ll (double *coeff,
     /* get error variance and log-likelihood */
 
     s2 /= (double) n;
-    model_info_set_s2(arma, s2);
 
     ll = -n * (0.5 * log(s2) + K);
     model_info_set_ll(arma, ll, do_score);
 
     if (do_score) {
 	int col, nc = p + q + r + 1;
+	double x;
 
 	for (t=t1; t<=t2; t++) {
 
@@ -226,12 +226,10 @@ static int arma_ll (double *coeff,
 		for (i=1; i<=q; i++) {
 		    de[col][t] -= ma_coeff[i] * de[col][t-i];
 		}
-	    }	    
-	}
+	    }
 
-	for (t=t1; t<=t2; t++) {
-	    double x = e[t] / s2;
-
+	    /* update OPG data set */
+	    x = e[t] / s2; /* sqrt(s2)? */
 	    for (i=0; i<nc; i++) {
 		Z[i+1][t] = -de[i][t] * x;
 	    }
@@ -624,10 +622,21 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     }
 
     arma = set_up_arma_info(arma_t1, arma_t2, p, q, r);
+    if (arma == NULL) {
+	free(coeff);
+	armod.errcode = E_ALLOC;
+	return armod;
+    }
 
     /* initialize the coefficients: AR and regression part by OLS, 
        MA at 0 */
-    ar_init_by_ols(list, coeff, Z, pdinfo, arma_t1);
+    err = ar_init_by_ols(list, coeff, Z, pdinfo, arma_t1);
+    if (err) {
+	free(coeff);
+	model_info_free(arma);
+	armod.errcode = E_ALLOC;
+	return armod;
+    }	
 
     /* construct virtual dataset for dep var, real regressors */
     X = make_armax_X(list, Z);
