@@ -297,7 +297,7 @@ int read_nist_file (const char *fname,
 
 	    for (t=0; t<nobs; t++) {
 		for (i=1; i<=nvar; i++) {
-		    printf("%#10g", Z[i][t]);
+		    printf("%#.20g", Z[i][t]);
 		    printf((i == nvar)? "\n" : " ");
 		}
 	    }
@@ -753,6 +753,10 @@ int main (int argc, char *argv[])
 	"Wampler4.dat",
 	"Wampler5.dat"
     };
+
+    const char *one_nist_files[] = { 
+	"Wampler2.dat"
+    };	
 
     ntests = sizeof nist_files / sizeof *nist_files;
 

@@ -22,6 +22,10 @@
 #include "libgretl.h"
 #include <gmp.h>
 
+#ifdef TRY_NUMBERS_FROM_STRING
+# include <float.h>
+#endif
+
 #define GRETL_MP_DIGITS 12          /* significant digits to use in output */
 #define DEFAULT_GRETL_MP_BITS 256   /* min. bits of precision for GMP */
 
@@ -155,8 +159,15 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
 	    if (mpZ[nvars] != NULL) {
 		j = 0;
 		for (t=pmod->t1; t<=pmod->t2; t++) {
+#ifdef TRY_NUMBERS_FROM_STRING
+		    char numstr[16];
+
+		    sprintf(numstr, "%.*g", DBL_DIG, Z[pmod->list[i+1]][t]);
+		    mpf_init_set_str(mpZ[nvars][j++], numstr, 10);
+#else
 		    mpf_init_set_d (mpZ[nvars][j++], 
 				    Z[pmod->list[i+1]][t]);
+#endif
 		}
 		pmod->varlist[i+1] = pmod->list[i+1];
 		pmod->list[i+1] = nvars++;
@@ -623,7 +634,7 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
         li = list[i];
         for (j=i; j<=l0; j++) {
             lj = list[j];
-            mpf_set_d (xx, 0.0);
+            mpf_set (xx, MPF_ZERO);
             for (t=0; t<n; t++) {
 		mpf_mul (tmp, mpZ[li][t], mpZ[lj][t]);
 		mpf_add (xx, xx, tmp);
@@ -634,7 +645,7 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
             }
             mpf_set (xpxxpy.xpx[++m], xx);
         }
-        mpf_set_d (xx, 0.0);
+        mpf_set (xx, MPF_ZERO);
         for (t=0; t<n; t++) {
 	    mpf_mul (tmp, mpZ[yno][t], mpZ[li][t]);
 	    mpf_add (xx, xx, tmp);
@@ -728,7 +739,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     }
 
     if (pmod->dfd == 0) {
-	mpf_set_d (pmod->sigma, 0.0);
+	mpf_set (pmod->sigma, MPF_ZERO);
 	mpf_set_d (pmod->adjrsq, NADBL);
     } else {
 	mpf_set_d (tmp, (double) pmod->dfd);
@@ -770,7 +781,7 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     }
 
     if (pmod->ifc && nv == 1) {
-        mpf_set_d (zz, 0.0);
+        mpf_set (zz, MPF_ZERO);
         pmod->dfn = 1;
     }
     if (mpf_sgn(sgmasq) != 1 || pmod->dfd == 0) 
@@ -795,12 +806,8 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     mp_diaginv(xpxxpy, diag);
 
     for (v=1; v<=nv; v++) { 
-	mpf_mul (zz, sgmasq, diag[v]);
-	mpf_sqrt (pmod->sderr[v], zz);
-#ifdef notdef
 	mpf_sqrt (zz, diag[v]);
 	mpf_mul (pmod->sderr[v], pmod->sigma, zz);
-#endif
     }
 
     for (i=0; i<nv+1; i++) mpf_clear (diag[i]);
@@ -856,8 +863,8 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 
     for (j=2; j<=nv; j++) {
 	/* diagonal elements */
-	mpf_set_d (d, 0.0);
-	mpf_set_d (d1, 0.0);
+	mpf_set (d, MPF_ZERO);
+	mpf_set (d1,MPF_ZERO);
         k = j;
         jm1 = j - 1;
         for (l=1; l<=jm1; l++) {
@@ -870,7 +877,7 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         }
 	mpf_sub (test, xpxxpy.xpx[kk], d);
         if (mpf_sgn(test) != 1) {
-           mpf_set_d (cb.rss, -1.0); 
+           mpf_set (cb.rss, MPF_MINUS_ONE); 
            return cb;
         }   
 	mpf_sqrt (tmp, test);
@@ -882,7 +889,7 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         /* off-diagonal elements */
         for (i=j+1; i<=nv; i++) {
             kk++;
-            mpf_set_d (d, 0.0);
+            mpf_set (d, MPF_ZERO);
             k = j;
             for (l=1; l<=jm1; l++) {
 		mpf_mul (tmp, xpxxpy.xpx[k], xpxxpy.xpx[k-j+i]);
@@ -895,7 +902,7 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         kk++;
     }
     kk--;
-    mpf_set_d (d, 0.0);
+    mpf_set (d, MPF_ZERO);
     for(j=1; j<=nv; j++) {
 	mpf_mul (tmp, xpxxpy.xpy[j], xpxxpy.xpy[j]);
 	mpf_add (d, d, tmp);
@@ -944,7 +951,7 @@ static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
         if (l > 1) 
 	    for (j=1; j<=l-1; j++) m += nv - j;
         for (i=l+1; i<=nv; i++) {
-	    mpf_set_d (d, 0.0); 
+	    mpf_set (d, MPF_ZERO); 
             k = i + m;
             for (j=l; j<=i-1; j++) {
 		mpf_mul (tmp, xpxxpy.xpy[j], xpxxpy.xpx[k]);

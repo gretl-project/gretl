@@ -261,7 +261,7 @@ typedef struct {
 #include "errors.h"
 #include "estimate.h"
 #include "generate.h"
-#include "utils.h"
+#include "gretl_utils.h"
 #include "compare.h"
 #include "pvalues.h"
 #include "dataio.h"

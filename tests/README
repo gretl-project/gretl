@@ -14,11 +14,28 @@ estimates with the certified values, starting at a precision of 9
 significant figures.  If there is any disagreement, the comparison is
 repeated using 8 significant figures, and so on.  If the figures do
 not agree at a precision of at least 6 figures, the test is deemed to
-have failed and an error message is printed.
+have been failed and an error message is printed.
 
 You can get more details on gretl's performance on the tests by
 running the 'nistcheck' program in verbose mode (-v flag) or very
 verbose mode (-vv).  
+
+If the Gnu Multiple Precision library (GMP) was detected when gretl
+was configured, and gretl's GMP plugin was built, then the NIST tests
+will be repeated using the multiple precision plugin.  In this case
+the Filip model should be estimated without difficulty.  All tests
+should produce results that agree with the NIST certified values to at
+least 12 significant figures, apart from the "Wampler2" data set.  
+
+In Wampler2 the dependent variable is expressible as an exact 5th
+degree polynomial in the independent variable.  Gretl with the GMP
+plugin does not reproduce the exact fit (the coefficients should be
+right to at least 12 figures, but the error sum of squares is not
+exactly zero).  The problem here lies not in the calculations but in
+the precision with which the data are read in the first place.  To get
+the exact results one would need a statistical program entirely
+implemented in multiple precision, as opposed to gretl's GMP plugin
+which just does the regression calculations in multiple precision.
 
 Allin Cottrell
 August 2002
