@@ -1682,30 +1682,33 @@ static int compact_series (double **Z, int i, int n, int oldn,
 {
     int t, j;
     int idx = startskip;
-    int leader = startskip - min_startskip;
+    int lead = startskip - min_startskip;
     double *x;
 
     x = malloc(n * sizeof *x);
     if (x == NULL) return 1;
 
-    for (t=0; t<n; t++) x[t] = NADBL;
-
-    for (t=leader; t<n; t++) {
-	if (idx > oldn - 1) break;
-	if (method == COMPACT_SOP || method == COMPACT_EOP) {
-	    x[t] = Z[i][idx];
-	}
-	else {
-	    if (idx + cfac - 1 > oldn - 1) break;
-	    x[t] = 0.0;
-	    for (j=0; j<cfac; j++) {
-		x[t] += Z[i][idx + j];
+    if (i == 0) {
+	for (t=0; t<n; t++) x[t] = 1.0;
+    } else {
+	for (t=0; t<n; t++) x[t] = NADBL;
+	for (t=lead; t<n; t++) {
+	    if (idx > oldn - 1) break;
+	    if (method == COMPACT_SOP || method == COMPACT_EOP) {
+		x[t] = Z[i][idx];
 	    }
-	    if (method == COMPACT_AVG) {
-		x[t] /= (double) cfac;	
+	    else {
+		if (idx + cfac - 1 > oldn - 1) break;
+		x[t] = 0.0;
+		for (j=0; j<cfac; j++) {
+		    x[t] += Z[i][idx + j];
+		}
+		if (method == COMPACT_AVG) {
+		    x[t] /= (double) cfac;	
+		}
 	    }
+	    idx += cfac;
 	}
-	idx += cfac;
     }
 
     free(Z[i]);
@@ -1748,7 +1751,7 @@ static void
 get_global_compact_params (int cfac, int startper, int endper,
 			   int oldn, int default_method, 
 			   int *min_startskip, int *max_n,
-			   int *any_eop)
+			   int *any_eop, int *all_same)
 {
     int i, startskip, n, cm;
     int n_not_eop = 0;
@@ -1763,6 +1766,7 @@ get_global_compact_params (int cfac, int startper, int endper,
 	    if (cm != default_method && cm != COMPACT_NONE) {
 		get_startskip_etc(cfac, startper, endper, oldn, 
 				  cm, &startskip, &n);
+		*all_same = 0;
 		if (cm == COMPACT_EOP) *any_eop = 1;
 		else n_not_eop++;
 	    }
@@ -1782,7 +1786,7 @@ void compact_data_set (void)
     int cfac;
     int startper, endper;
     int startyr;
-    int any_eop;
+    int any_eop, all_same;
     int min_startskip = 0;
     int i, err = 0;
     int default_method = COMPACT_AVG;
@@ -1816,8 +1820,9 @@ void compact_data_set (void)
     min_startskip = oldpd;
     newn = 0;
     any_eop = 0;
+    all_same = 1;
     get_global_compact_params(cfac, startper, endper, oldn, default_method,
-			      &min_startskip, &newn, &any_eop);
+			      &min_startskip, &newn, &any_eop, &all_same);
     if (newn == 0) {
 	errbox(_("Compacted dataset would be empty"));
 	return;
@@ -1847,22 +1852,25 @@ void compact_data_set (void)
     datainfo->t2 = datainfo->n - 1;
     ntodate(datainfo->endobs, datainfo->t2, datainfo);
 
+    /* compact the individual data series */
     for (i=0; i<datainfo->v && err == 0; i++) {
 	if (datainfo->vector[i]) {
 	    int this_method = default_method;
-	    int startskip;
+	    int startskip = min_startskip;
 
-	    if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
-		this_method = COMPACT_METHOD(datainfo, i);
-	    }
+	    if (!all_same) {
+		if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
+		    this_method = COMPACT_METHOD(datainfo, i);
+		}
 
-	    startskip = cfac - (startper % cfac) + 1;
-	    startskip = startskip % cfac;
-	    if (this_method == COMPACT_EOP) {
-		if (startskip > 0) {
-		    startskip--;
-		} else {
-		    startskip = cfac - 1;
+		startskip = cfac - (startper % cfac) + 1;
+		startskip = startskip % cfac;
+		if (this_method == COMPACT_EOP) {
+		    if (startskip > 0) {
+			startskip--;
+		    } else {
+			startskip = cfac - 1;
+		    }
 		}
 	    }
 
