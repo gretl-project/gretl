@@ -13,6 +13,10 @@ version 1.0.7
   in a given model
 - Modify the White's test function, so that it doesn't fall over 
   when a variable and its square are among the original regressors
+- Fix drag and drop of data files and script files from desktop
+  or file manager onto the main gretl window
+- Add drag and drop of data series from a database window into
+  the main gretl window (i.e. into the current data set)
 
 03/16/03 version 1.0.6
 - minor adjustment to model print output formatting
