@@ -103,27 +103,27 @@ GdkFont *fixed_font;
 typedef struct {
     char *key,         /* config file variable name */
          *description; /* How the field will show up in the options dialog */
-    char *var;         /* string variable */
-    char type;         /* 'C' or 'S' for string, 'I' for integer */
+    void *var;         /* pointer to variable */
+    char type;         /* 'U' (user) or 'R' (root) for string, 'B' for boolean */
     int len;           /* storage size for string variable */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
 } RCVARS;
 
 RCVARS rc_vars[] = {
-    {"gretldir", "Main gretl directory", paths.gretldir, 'S', MAXLEN, 1, NULL},
-    {"userdir", "User's gretl directory", paths.userdir, 'C', MAXLEN, 1, NULL},
-    {"gnuplot", "Command to launch gnuplot", paths.gnuplot, 'S', MAXLEN, 1, NULL},
-    {"Rcommand", "Command to launch GNU R", Rcommand, 'S', MAXSTR, 1, NULL},
-    {"expert", "Expert mode (no warnings)", expert, 'I', 6, 1, NULL},
-    {"updater", "Tell me about gretl updates", updater, 'I', 6, 1, NULL},
-    {"binbase", "gretl database directory", paths.binbase, 'C', MAXLEN, 2, NULL},
-    {"ratsbase", "RATS data directory", paths.ratsbase, 'C', MAXLEN, 2, NULL},
-    {"dbhost_ip", "Database server IP", paths.dbhost_ip, 'C', 16, 2, NULL},
-    {"calculator", "Calculator", calculator, 'C', MAXSTR, 3, NULL},
-    {"editor", "Editor", editor, 'C', MAXSTR, 3, NULL},
-    {"toolbar", "Show gretl toolbar", want_toolbar, 'I', 6, 3, NULL},
-    {"fontspec", "Fixed font", fontspec, 'C', MAXLEN, 0, NULL},
+    {"gretldir", "Main gretl directory", paths.gretldir, 'R', MAXLEN, 1, NULL},
+    {"userdir", "User's gretl directory", paths.userdir, 'U', MAXLEN, 1, NULL},
+    {"gnuplot", "Command to launch gnuplot", paths.gnuplot, 'R', MAXLEN, 1, NULL},
+    {"Rcommand", "Command to launch GNU R", Rcommand, 'R', MAXSTR, 1, NULL},
+    {"expert", "Expert mode (no warnings)", expert, 'B', 6, 1, NULL},
+    {"updater", "Tell me about gretl updates", updater, 'B', 6, 1, NULL},
+    {"binbase", "gretl database directory", paths.binbase, 'U', MAXLEN, 2, NULL},
+    {"ratsbase", "RATS data directory", paths.ratsbase, 'U', MAXLEN, 2, NULL},
+    {"dbhost_ip", "Database server IP", paths.dbhost_ip, 'U', 16, 2, NULL},
+    {"calculator", "Calculator", calculator, 'U', MAXSTR, 3, NULL},
+    {"editor", "Editor", editor, 'U', MAXSTR, 3, NULL},
+    {"toolbar", "Show gretl toolbar", want_toolbar, 'B', 6, 3, NULL},
+    {"fontspec", "Fixed font", fontspec, 'U', MAXLEN, 0, NULL},
     {NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
 
@@ -1692,7 +1692,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     i = 0;
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].tab == tab) {
-	    if (rc_vars[i].type == 'I') {
+	    if (rc_vars[i].type == 'B') {
 		tempwid = gtk_check_button_new_with_label 
 		    (rc_vars[i].description);
 		gtk_table_attach_defaults 
@@ -1743,12 +1743,12 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].widget != NULL) {
-	    if (rc_vars[i].type == 'I') {
+	    if (rc_vars[i].type == 'B') {
 		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active)
 		    strcpy(rc_vars[i].var, "true");
 		else strcpy(rc_vars[i].var, "false");
 	    } 
-	    if (rc_vars[i].type == 'C' || rc_vars[i].type == 'S') {
+	    if (rc_vars[i].type == 'U' || rc_vars[i].type == 'R') {
 		tempstr = gtk_entry_get_text
 		    (GTK_ENTRY(rc_vars[i].widget));
 		if (tempstr != NULL && strlen(tempstr)) 
@@ -1846,7 +1846,7 @@ void write_rc (void)
     int i = 0;
 
     while (rc_vars[i].key != NULL) {
-	write_reg_val((rc_vars[i].type == 'S')? 
+	write_reg_val((rc_vars[i].type == 'R')? 
 		      HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 		      rc_vars[i].key, rc_vars[i].var);
 	i++;
@@ -1863,7 +1863,7 @@ void read_rc (void)
     char rpath[MAXSTR], value[MAXSTR];
 
     while (rc_vars[i].key != NULL) {
-	if (read_reg_val((rc_vars[i].type == 'S')? 
+	if (read_reg_val((rc_vars[i].type == 'R')? 
 			 HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 			 rc_vars[i].key, value) == 0)
 	    strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);

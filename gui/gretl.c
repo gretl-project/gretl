@@ -400,17 +400,16 @@ GtkItemFactoryEntry data_items[] = {
 
 static void make_userdir (PATHS *ppaths) 
 {
-    char buf[MAXLEN];
     DIR *test;
+    char buf[MAXLEN];
     
     if ((test = opendir(ppaths->userdir)) == NULL) {
 	sprintf(buf, "mkdir -p %s", ppaths->userdir);
 	system(buf);
-	sprintf(buf, "Created user directory %s\n"
-		"If you prefer to use a different directory for\n"
+	fprintf(stderr, "Created user directory %s\n"
+		"If you prefer to use a different directory for "
 		"gretl user files, please make changes under\n"
-		"File, Preferences, General...", ppaths->userdir);
-	infobox(buf);
+		"File, Preferences, General...\n", ppaths->userdir);
     } else 
 	closedir(test);
 }

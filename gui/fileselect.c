@@ -510,6 +510,8 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
 
     if (strstr(startdir, "/."))
 	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), TRUE);
+    else 
+	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), FALSE);
 
     gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
 
