@@ -50,7 +50,7 @@ CHECKER = nisttest.exe
 
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar-2.dll plugins/gnumeric_import-2.dll \
-	plugins/excel_import-2.dll plugins/des_import.dll plugins/mp_ols.dll \
+	plugins/excel_import-2.dll plugins/mp_ols.dll \
 	plugins/range-mean.dll plugins/lad.dll
 
 WRES    = gretlw32_res.o
@@ -208,10 +208,6 @@ plugins/gnumeric_import-2.dll: gnumeric_import.o dllinit.o
 plugins/excel_import-2.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lmoldname
-
-plugins/des_import.dll: des_import.o dllinit.o
-	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lz.dll
 
 plugins/longname.dll: longname.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

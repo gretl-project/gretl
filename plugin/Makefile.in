@@ -50,7 +50,7 @@ else
   GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
 endif  
 
-PLUGINS = stats_tables.so panel_data.so des_import.so range-mean.so lad.so \
+PLUGINS = stats_tables.so panel_data.so range-mean.so lad.so \
 	tramo-seats.so $(PROGRESS_PLUGIN) $(GNUMERIC_PLUGIN) $(EXCEL_PLUGIN)
 
 ifdef GMP_LIBS
@@ -99,9 +99,6 @@ excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
 excel_import-2.so: excel_import-2.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
 
-des_import.so: des_import.lo 
-	$(LINK) -o $@ $^ $(GRETLLIB) -lz
-
 mp_ols.so: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
 
@@ -137,9 +134,6 @@ excel_import.lo: excel_import.c import_common.c xltypes.h
 
 excel_import-2.lo: excel_import.c import_common-2.c xltypes.h
 	$(COMPILE) -o $@ $(GRETLINC) $(GTK_CFLAGS) $<
-
-des_import.lo: des_import.c
-	$(COMPILE) $(GRETLINC) $<
 
 workbook.lo: workbook.c biff.h
 	$(COMPILE) $(GRETLINC) $(LIBOLE2_CFLAGS) $<
@@ -178,16 +172,6 @@ distdepend: depend
 
 # DO NOT DELETE
 
-des_import.lo: ../lib/src/libgretl.h ../lib/src/commands.h
-des_import.lo: ../lib/src/errors.h ../lib/src/estimate.h
-des_import.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
-des_import.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
-des_import.lo: ../lib/src/strutils.h ../lib/src/describe.h
-des_import.lo: ../lib/src/printout.h ../lib/src/modelprint.h
-des_import.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
-des_import.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-des_import.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
-des_import.lo: ../lib/src/subsample.h ../lib/src/calendar.h
 excel_import.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 excel_import.lo: ../lib/src/errors.h ../lib/src/estimate.h
 excel_import.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h

@@ -17,6 +17,8 @@ version 1.0pre4
   significant digits
 - improve saving of scalar variables, and documentation of same
 - updates to full manual
+- make names and labels for monthly and quarterly dummies more
+  descriptive
 
 10/10/02 version 1.0pre3
 - improve accuracy of calculation of standard errors, and

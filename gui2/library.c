@@ -2419,16 +2419,18 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
 		   "Please use \"Sample/Set frequency, startobs\"."));
 	    return;
 	}
-    } else 
+    } else {
 	sprintf(line, "genr dummy");
+    }
 
     if (check_cmd(line) || cmd_init(line)) return;
 
-    if (panel) 
+    if (panel) {
 	err = paneldum(&Z, datainfo, 
 		       (datainfo->time_series == STACKED_TIME_SERIES)? 0 : 1);
-    else 
+    } else {
 	err = dummy(&Z, datainfo);
+    }
 
     if (err) gui_errmsg(err);
     else populate_varlist();

@@ -1389,8 +1389,9 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
         }
 	v = varindex(pdinfo, varname);
 	if (v < pdinfo->v) strcpy(pdinfo->label[v], label);
-	else
+	else {
 	    fprintf(stderr, _("extraneous label for var '%s'\n"), varname);
+	}
     }
     if (fp != NULL) 
 	fclose(fp);

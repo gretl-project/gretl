@@ -68,6 +68,7 @@ void selectrow (GtkCList *clist, gint row, gint column,
 	    break;
 	case RAMU_DATA:
 	case GREENE_DATA:
+	case JW_DATA:
 	case PWT_DATA:
 	    browser_open_data(NULL, mydata);
 	    break;

@@ -1820,6 +1820,23 @@ static int whichtrans (const char *ss)
     return 0;
 }
 
+/* ........................................................  */
+
+static void get_month_name (char *mname, int m)
+{
+    struct tm mt;
+
+    mt.tm_sec = 0;
+    mt.tm_min = 0;
+    mt.tm_hour = 0;
+    mt.tm_mday = 1;
+    mt.tm_mon = m - 1;
+    mt.tm_year = 100;
+
+    strftime(mname, 7, "%b", &mt);
+    *mname = tolower(*mname);
+}
+
 /**
  * dummy:
  * @pZ: pointer to data matrix.
@@ -1844,10 +1861,25 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 
     mm = (pdinfo->pd < 10)? 10 : 100;
     for (vi=1; vi<=ndummies; vi++) {
-        sprintf(word, "dummy_%d", vi);
+	if (pdinfo->pd == 4 && pdinfo->time_series == TIME_SERIES) {
+	    sprintf(word, "dq%d", vi);
+	    sprintf(pdinfo->label[nvar+vi-1], _("= 1 if quarter = %d, "
+						"0 otherwise"), vi);
+	} 
+	else if (pdinfo->pd == 12 && pdinfo->time_series == TIME_SERIES) {
+	    char mname[8];
+
+	    get_month_name(mname, vi);
+	    sprintf(word, "d%s", mname);
+	    sprintf(pdinfo->label[nvar+vi-1], _("= 1 if month is %s, "
+						"0 otherwise"), mname);
+	} else {
+	    sprintf(word, "dummy_%d", vi);
+	    sprintf(pdinfo->label[nvar+vi-1], _("%s = 1 if period is %d, "
+						"0 otherwise"), word, vi);
+	}
 	strcpy(pdinfo->varname[nvar+vi-1], word);
-	sprintf(pdinfo->label[nvar+vi-1], _("%s = 1 if period is %d, "
-					    "0 otherwise"), word, vi);
+
         for (t=0; t<pdinfo->n; t++) {
             xx = date(t, pdinfo->pd, pdinfo->sd0);
             yy = (int) xx;

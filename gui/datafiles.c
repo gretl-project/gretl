@@ -98,6 +98,11 @@ static int read_data_descriptions (windata_t *fdata)
 	append_dir(fname, "greene");
 	strcat(fname, "wg_descriptions"); 
     } 
+    else if (fdata->role == JW_DATA) {
+        strcpy(fname, paths.datadir);
+        append_dir(fname, "wooldridge");
+        strcat(fname, "jw_descriptions"); 
+    } 
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -148,6 +153,12 @@ static void browse_header (GtkWidget *w, gpointer data)
 	strcat(hdrname, fname);
 	strcat(hdrname, ".gdt");
     }
+    else if (win->role == JW_DATA) {
+        strcpy(hdrname, paths.datadir);
+        append_dir(hdrname, "wooldridge");
+        strcat(hdrname, fname);
+        strcat(hdrname, ".gdt");
+    }
 
     prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 
@@ -181,6 +192,12 @@ void browser_open_data (GtkWidget *w, gpointer data)
 	strcat(trydatfile, datname);
 	strcat(trydatfile, ".gdt");
     }
+    else if (win->role == JW_DATA) {
+        strcpy(trydatfile, paths.datadir);
+        append_dir(trydatfile, "wooldridge");
+        strcat(trydatfile, datname);
+        strcat(trydatfile, ".gdt");
+    }
 
     verify_open_data(mydata, OPEN_DATA);
 } 
@@ -195,10 +212,11 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
 		       0, &fname);
 
-    if (mydata->role == PWT_PS)
+    if (mydata->role == PWT_PS) {
 	build_path(pwtpath, fname, scriptfile, ".inp");
-    else
+    } else {
 	build_path(paths.scriptdir, fname, scriptfile, ".inp");
+    }
 
     gtk_widget_destroy(GTK_WIDGET(mydata->w));
 
@@ -336,10 +354,11 @@ static gint populate_remote_dblist (windata_t *ddata)
     gtk_clist_thaw(GTK_CLIST(ddata->listbox));
 
     free(getbuf);
-    if (i > 0) 
+    if (i > 0) {
 	gtk_clist_select_row(GTK_CLIST(ddata->listbox), 0, 0);
-    else 
+    } else {
 	errbox(_("No database files found"));
+    }
     return 0;
 }
 
@@ -373,6 +392,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 	break;
     case RAMU_DATA:
     case GREENE_DATA:
+    case JW_DATA:
     case PWT_DATA:
 	gtk_window_set_title(GTK_WINDOW (fdata->w), 
 			     _("gretl: data files"));
@@ -425,7 +445,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 	GTK_SIGNAL_FUNC(delete_widget), fdata->w); 
 
     if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
-	|| code == REMOTE_DB) {
+	|| code == JW_DATA || code == REMOTE_DB) {
 	midbutton = gtk_button_new_with_label 
 	    ((code == REMOTE_DB)? _("Install") : _("Info"));
 	gtk_box_pack_start (GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
@@ -435,7 +455,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 			   GTK_SIGNAL_FUNC(browse_header), fdata);
     }
 
-    if (code == RAMU_DATA) {
+    if (code == RAMU_DATA || code == JW_DATA) {
 	midbutton = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
 	gtk_signal_connect(GTK_OBJECT(midbutton), "clicked",
@@ -520,6 +540,7 @@ static GtkWidget *files_window (windata_t *fdata)
 	break;
     case GREENE_DATA:
     case PWT_DATA:
+    case JW_DATA:
 	break;
     case RAMU_DATA:
 	col_width[0] = 64;
