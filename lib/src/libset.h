@@ -29,7 +29,15 @@ enum vcv_codes {
     VCV_BW
 };
 
+void set_xsect_hccme (const char *s);
+
+void set_tseries_hccme (const char *s);
+
+void set_garch_robust_vcv (const char *s);
+
 int get_garch_vcv_version (void);
+
+int get_garch_robust_vcv_version (void);
 
 int get_force_hc (void);
 

@@ -2187,14 +2187,13 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case VAR:
 	/* Note: requires special treatment: doesn't return model */
-	/* FIXME: allow "robust" option via GUI? */
 	sscanf(buf, "%d", &order);
 	if (order > var_max_order(cmd.list, datainfo)) {
 	    errbox(_("Insufficient degrees of freedom for regression"));
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	var = full_var(order, cmd.list, &Z, datainfo, OPT_NONE, prn);
+	var = full_var(order, cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (var == NULL) {
 	    const char *msg = get_gretl_errmsg();
 

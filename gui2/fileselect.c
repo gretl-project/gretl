@@ -72,8 +72,6 @@
                           i == EXPORT_CSV || \
                           i == EXPORT_DAT)
 
-extern int olddat; /* settings.c */
-
 static char remember_dir[MAXLEN];
 
 struct extmap {
@@ -176,7 +174,7 @@ static const char *get_ext (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (olddat && IS_DAT_ACTION(action)) { 
+    if (using_olddat() && IS_DAT_ACTION(action)) { 
 	return ".dat";
     }
 
@@ -374,7 +372,7 @@ static char *suggested_savename (const char *fname)
     sfx = strrchr(s, '.');
 
     if (sfx != NULL && (strlen(sfx) == 4 || !strcmp(sfx, ".gnumeric"))) {
-	const char *test = (olddat)? ".dat" : ".gdt";
+	const char *test = (using_olddat())? ".dat" : ".gdt";
 
 	if (strcmp(test, sfx)) {
 	    strcpy(sfx, test);
@@ -625,7 +623,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	N_("gretl data files (*.dat)"), "*.dat"
     };
 
-    if (olddat && IS_DAT_ACTION(action)) {
+    if (using_olddat() && IS_DAT_ACTION(action)) {
 	return olddat_filter;
     }
 

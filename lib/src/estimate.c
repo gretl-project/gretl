@@ -452,6 +452,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     int effobs = 0;
     int missv = 0, misst = 0;
     int ldepvar = 0;
+    int jackknife = 0;
     int use_qr = get_use_qr();
     int pwe = (ci == PWE || (opts & OPT_P));
     double *xpy;
@@ -606,7 +607,11 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	opts |= OPT_T;
     }
 
-    if ((opts & OPT_R) || (use_qr && !(opts & OPT_C))) { 
+    if (mdl.ci == HCCM || ((opts & OPT_R) && get_hc_version() == 4)) {
+	jackknife = 1;
+    }
+
+    if (((opts & OPT_R) && !jackknife) || (use_qr && !(opts & OPT_C))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n, opts);
     } else {
@@ -684,8 +689,8 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 		       (mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
 		       mdl.nobs, mdl.ncoeff);
 
-    /* hccm command */
-    if (mdl.ci == HCCM) {
+    /* hccm command or HC3a */
+    if (jackknife) {
 	mdl.errcode = jackknife_vcv(&mdl, (const double **) *pZ);
     }
 
@@ -2457,7 +2462,6 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
     nobs = pmod->nobs;
     nc = pmod->ncoeff;
 
-    /* now try allocating memory */
     st = malloc(nc * sizeof *st);
     ustar = malloc(nobs * sizeof *ustar);
     p = allocate_hccm_p(nc, nobs);
@@ -2465,17 +2469,16 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
     if (st == NULL || p == NULL || ustar == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }    
+    }  
 
-    if (get_use_qr()) {
-	/* vcv is already computed in this case */
-	int nt = (nc * nc + nc) / 2; 
-	double s2 = pmod->sigma * pmod->sigma;
+    if (pmod->vcv != NULL) {
+	free(pmod->vcv);
+	pmod->vcv = NULL;
+    }
 
-	for (i=0; i<nt; i++) {
-	    pmod->vcv[i] /= s2;
-	}
-    } else if (makevcv(pmod)) {
+    pmod->ci = HCCM;
+
+    if (makevcv(pmod)) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -2540,13 +2543,11 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 		xx += p[i][t] * p[j][t];
 	    }
 	    xx -= st[i] * st[j] / nobs;
-#if 1
 	    /* MacKinnon and White: "It is tempting to omit the factor
 	       (n - 1)/n from HC3" (1985, p. 309).  Here we leave it in
 	       place, as in their simulations.
 	    */
 	    xx *= (nobs - 1.0) / nobs;
-#endif
 	    if (i == j) {
 		pmod->sderr[i] = sqrt(xx);
 	    }
@@ -2559,11 +2560,12 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 	pmod->fstt = robust_omit_F(NULL, pmod);
     }
 
-    pmod->ci = OLS;
     gretl_model_set_int(pmod, "hc", 1);
     gretl_model_set_int(pmod, "hc_version", 4);
 
  bailout:
+
+    pmod->ci = OLS;
 
     free(st);
     free(ustar);
@@ -3234,6 +3236,7 @@ MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo)
     /* run an initial OLS to "set the model up" and check for errors.
        the lad_driver function will overwrite the coefficients etc.
     */
+
     lad_model = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 
     if (lad_model.errcode) {

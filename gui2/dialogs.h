@@ -77,8 +77,6 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
 
 void data_structure_wizard (gpointer p, guint u, GtkWidget *w);
 
-void hc_dialog (GtkWidget *w, gpointer p);
-
 #ifdef OLD_GTK
 GtkWidget *standard_button (int code);
 #endif

@@ -64,22 +64,37 @@ static int get_or_set_garch_vcv (int v)
     return variant;
 }
 
-static void set_garch_vcv_variant (const char *s)
+static int get_or_set_garch_robust_vcv (int v)
+{
+    static int variant;
+
+    if (v >= 0) variant = v;
+    return variant;
+}
+
+static int set_garch_vcv_variant (const char *s)
 {
     int vopt = VCV_UNSET;
 
-    if (!strcmp(s, "hessian"))    vopt = VCV_HESSIAN;
-    else if (!strcmp(s, "im"))    vopt = VCV_IM;
-    else if (!strcmp(s, "op"))    vopt = VCV_OP;
-    else if (!strcmp(s, "qml"))   vopt = VCV_QML;
-    else if (!strcmp(s, "bw"))    vopt = VCV_BW;
+    if (!strcmp(s, "hessian"))  vopt = VCV_HESSIAN;
+    else if (!strcmp(s, "im"))  vopt = VCV_IM;
+    else if (!strcmp(s, "op"))  vopt = VCV_OP;
+    else if (!strcmp(s, "qml")) vopt = VCV_QML;
+    else if (!strcmp(s, "bw"))  vopt = VCV_BW;
 
     get_or_set_garch_vcv(vopt);
+    
+    return (vopt == VCV_UNSET);
 }
 
 int get_garch_vcv_version (void)
 {
     return get_or_set_garch_vcv(-1);
+}
+
+int get_garch_robust_vcv_version (void)
+{
+    return get_or_set_garch_robust_vcv(-1);
 }
 
 static void set_force_hc (int f)
@@ -111,6 +126,82 @@ int get_hac_lag (int m)
     return 0.75 * pow(m, 1.0 / 3.0);
 }
 
+static int parse_hc_variant (const char *s)
+{
+    int err = 1;
+
+    fprintf(stderr, "parse_hc_variant: got '%s'\n", s);
+
+    if (!strcmp(s, "0") || !strcmp(s, "1") ||
+	!strcmp(s, "2") || !strcmp(s, "3")) {
+	robust_opts.hc_version = atoi(s);
+	err = 0;
+    } else if (!strcmp(s, "3a")) {
+	robust_opts.hc_version = 4;
+	err = 0;
+    }
+
+    if (err) {
+	int hcv;
+
+	if (!strcmp(s, "hc3a")) {
+	    robust_opts.hc_version = 4;
+	    err = 0;
+	} else if (sscanf(s, "hc%d", &hcv)) {
+	    if (hcv >= 0 && hcv <= 4) {
+		robust_opts.hc_version = hcv;
+		err = 0;
+	    }
+	}
+    }
+
+    fprintf(stderr, "parse_hc_variant: variant=%d, err=%d\n",
+	    robust_opts.hc_version, err);
+
+    return err;
+}
+
+void set_xsect_hccme (const char *s)
+{
+    char *scpy = gretl_strdup(s);
+
+    if (scpy == NULL) return;
+
+    lower(scpy);
+    parse_hc_variant(scpy);
+    free(scpy);
+}
+
+void set_tseries_hccme (const char *s)
+{
+    char *scpy = gretl_strdup(s);
+
+    if (scpy == NULL) return;
+
+    lower(scpy);
+    if (parse_hc_variant(scpy) == 0) {
+	set_force_hc(1);
+    } else {
+	set_force_hc(0);
+    }
+    free(scpy);
+}
+
+void set_garch_robust_vcv (const char *s)
+{
+    char *scpy = gretl_strdup(s);
+
+    if (scpy == NULL) return;
+
+    lower(scpy);
+    if (!strcmp(s, "qml")) {
+	get_or_set_garch_robust_vcv(VCV_QML);
+    } else if (!strcmp(s, "bw")) {
+	get_or_set_garch_robust_vcv(VCV_BW);
+    }
+    free(scpy);
+}
+
 int parse_set_line (const char *line, int *echo_off, PRN *prn)
 {
     char setobj[16], setarg[16];
@@ -125,18 +216,19 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 	    *echo_off = 0;
 	    err = 0;
 	}
-    }
-	    
-    else if (nw == 2) {
+    } else if (nw == 2) {
+	lower(setarg);
+
 	/* set echo on/off */
 	if (!strcmp(setobj, "echo")) {
-	    if (!strcmp(setarg, "off")) {
-		*echo_off = 1;
-		err = 0;
-	    } 
-	    else if (!strcmp(setarg, "on")) {
-		*echo_off = 0;
-		err = 0;
+	    if (echo_off != NULL) {
+		if (!strcmp(setarg, "off")) {
+		    *echo_off = 1;
+		    err = 0;
+		} else if (!strcmp(setarg, "on")) {
+		    *echo_off = 0;
+		    err = 0;
+		}
 	    } 
 	} else if (!strcmp(setobj, "hac_lag")) {
 	    /* set max lag for HAC estimation */
@@ -144,41 +236,29 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		robust_opts.auto_lag = AUTO_LAG_STOCK_WATSON;
 		robust_opts.user_lag = 0;
 		err = 0;
-	    }
-	    else if (!strcmp(setarg, "nw2")) {
+	    } else if (!strcmp(setarg, "nw2")) {
 		robust_opts.auto_lag = AUTO_LAG_WOOLDRIDGE;
 		robust_opts.user_lag = 0;
 		err = 0;
-	    }
-	    else if (isdigit(*setarg)) {
+	    } else if (isdigit(*setarg)) {
 		robust_opts.user_lag = atoi(setarg);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "hc_version")) {
 	    /* set HCCM variant */
-	    if (!strcmp(setarg, "0") || !strcmp(setarg, "1") ||
-		!strcmp(setarg, "2") || !strcmp(setarg, "3")) {
-		robust_opts.hc_version = atoi(setarg);
-		err = 0;
-	    }
+	    err = parse_hc_variant(setarg);
 	} else if (!strcmp(setobj, "force_hc")) {
 	    /* use HCCM, not HAC, even for time series */
 	    if (!strcmp(setarg, "on")) { 
 		set_force_hc(1);
 		err = 0;
-	    }
-	    else if (!strcmp(setarg, "off")) { 
+	    } else if (!strcmp(setarg, "off")) { 
 		set_force_hc(0);
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "garch_vcv")) {
 	    /* set GARCH VCV variant */
-	    if (!strcmp(setarg, "hessian") || !strcmp(setarg, "im") ||
-		!strcmp(setarg, "op") || !strcmp(setarg, "qml") ||
-		!strcmp(setarg, "bw") || !strcmp(setarg, "unset")) {
-		set_garch_vcv_variant(setarg);
-		err = 0;
-	    }
+	    err = set_garch_vcv_variant(setarg);
 	} else if (!strcmp(setobj, "qr")) {
 	    /* switch QR vs Cholesky decomposition */
 	    if (!strcmp(setarg, "on")) {

@@ -2136,15 +2136,23 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
     int t;
 
     if (periods == 0) {
-	if (pdinfo->pd == 4) periods = 24;
-	else if (pdinfo->pd == 12) periods = 36;
-	else periods = 12;
+	if (pdinfo->pd == 4) {
+	    periods = 24;
+	} else if (pdinfo->pd == 12) {
+	    periods = 36;
+	} else {
+	    periods = 12;
+	}
     }
 
     resp = gretl_var_get_impulse_responses(var, targ, shock, periods);
-    if (resp == NULL) return E_ALLOC;
+    if (resp == NULL) {
+	return E_ALLOC;
+    }
 
-    if (gnuplot_init(PLOT_REGULAR, &fp)) return E_FOPEN;
+    if (gnuplot_init(PLOT_REGULAR, &fp)) {
+	return E_FOPEN;
+    }
 
     vtarg = gretl_var_get_variable_number(var, targ);
     vshock = gretl_var_get_variable_number(var, shock);

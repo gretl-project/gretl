@@ -50,7 +50,8 @@ struct _selector {
 };
 
 #define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA || \
-                         c == GARCH || c == COINT2 || c == TSLS)
+                         c == GARCH || c == COINT2 || c == TSLS || \
+                         c == VAR)
 
 static int default_var;
 static int *xlist;
@@ -1148,6 +1149,8 @@ static void selector_init (selector *sr, guint code, const char *title)
     else if (code == TSLS) dlgheight = 400;
     else if (code == VAR) dlgheight = 420;
 
+    /* FIXME dialog height with multiple toggles */
+
     if (WANT_TOGGLES(code)) {
 	dlgheight += 40;
     }
@@ -1258,12 +1261,18 @@ static void build_pq_spinners (selector *sr)
     gtk_widget_show(hbox);
 }
 
+static void hc_config (GtkWidget *w, gpointer p)
+{
+    options_dialog(p, 4, NULL);
+}
+
 static void 
 build_selector_switches (selector *sr) 
 {
     GtkWidget *hbox, *tmp;
 
-    if (sr->code == OLS || sr->code == GARCH || sr->code == TSLS) {
+    if (sr->code == OLS || sr->code == GARCH || 
+	sr->code == TSLS || sr->code == VAR) {
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(sr->vbox),
 			   tmp, FALSE, FALSE, 0);
@@ -1272,6 +1281,9 @@ build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(robust_callback), sr);
+	if (using_hc_by_default()) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	}
 
 	hbox = gtk_hbox_new(FALSE, 5);
 
@@ -1280,7 +1292,7 @@ build_selector_switches (selector *sr)
 
 	tmp = gtk_button_new_with_label(_("configure"));
 	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(hc_dialog), sr);
+			 G_CALLBACK(hc_config), sr);
 
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
@@ -1290,8 +1302,11 @@ build_selector_switches (selector *sr)
     }
 
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH ||
-	sr->code == COINT2) {
-	if (sr->code == COINT2) {
+	sr->code == COINT2 || sr->code == VAR) {
+	if (sr->code == VAR) {
+	    tmp = gtk_check_button_new_with_label
+		(_("Show impulse responses"));
+	} else if (sr->code == COINT2) {
 	    tmp = gtk_check_button_new_with_label
 		(_("Show details of regressions"));
 	} else {
@@ -1300,6 +1315,7 @@ build_selector_switches (selector *sr)
 	}
 	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(verbose_callback), sr);
+
 	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
 	gtk_widget_show(tmp);

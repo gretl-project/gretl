@@ -491,7 +491,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Ordinary Least Squares..."), NULL, model_callback, OLS, NULL, GNULL },
     { N_("/Model/_Weighted Least Squares..."), NULL, model_callback, WLS, NULL, GNULL },
     { N_("/Model/sep1"),  NULL, NULL, 0, "<Separator>", GNULL },
+#if 0
     { N_("/Model/HCC_M..."), NULL, model_callback, HCCM, NULL, GNULL },
+#endif
     { N_("/Model/H_eteroskedasticity corrected..."), NULL, model_callback, 
       HSK, NULL, GNULL },
     { N_("/Model/sep2"),  NULL, NULL, 0, "<Separator>", NULL },
@@ -1532,11 +1534,14 @@ static void clip_init (GtkWidget *w)
 static int native_datafile (void)
 {
     int n = strlen(paths.datfile);
-    extern int olddat; /* settings.c */
     
     if (n > 4) {
-	if (!strcmp(paths.datfile + n - 4, ".gdt")) return 1;
-	if (olddat && !strcmp(paths.datfile + n - 4, ".dat")) return 1;
+	if (!strcmp(paths.datfile + n - 4, ".gdt")) {
+	    return 1;
+	}
+	if (using_olddat() && !strcmp(paths.datfile + n - 4, ".dat")) {
+	    return 1;
+	}
     }
 
     return 0;

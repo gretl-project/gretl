@@ -40,6 +40,7 @@ enum {
 # define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
 # define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
 # define gtk_radio_button_get_group(b)  gtk_radio_button_group(b)
+# define gtk_notebook_set_current_page(n, p) gtk_notebook_set_page(n, p)
 
 void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting);
 

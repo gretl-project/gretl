@@ -7,6 +7,10 @@
 void read_rc (void);
 #endif
 
+int using_olddat (void);
+
+int using_hc_by_default (void);
+
 void set_rcfile (void);
 
 void write_rc (void);
@@ -15,7 +19,7 @@ void dump_rc (void);
 
 void force_english_help (void);
 
-void options_dialog (gpointer data);
+void options_dialog (gpointer p, guint page, GtkWidget *w);
 
 void font_selector (gpointer data, guint which, GtkWidget *widget);
 

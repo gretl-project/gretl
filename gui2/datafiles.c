@@ -1282,8 +1282,9 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 
     p = g_object_get_data(G_OBJECT(notebook), "browse_ptr");
 
-    if (p == NULL) return;
-    else {
+    if (p == NULL) {
+	return;
+    } else {
 	GtkWidget *w = *(GtkWidget **) p;
 
 	if (w == NULL) return;
@@ -1387,7 +1388,9 @@ static int populate_notebook_filelists (windata_t *win,
 		if (!strcmp(coll->title, title)) break;
 		j++;
 	    }
-	} else coll = pop_data_collection();
+	} else {
+	    coll = pop_data_collection();
+	}
     } else {
 	title = get_scriptpage();
 	if (*title != '\0') {
@@ -1395,7 +1398,9 @@ static int populate_notebook_filelists (windata_t *win,
 		if (!strcmp(coll->title, title)) break;
 		j++;
 	    }
-	} else coll = pop_ps_collection();
+	} else {
+	    coll = pop_ps_collection();
+	}
     }
 
     win->listbox = coll->page;
@@ -1403,11 +1408,7 @@ static int populate_notebook_filelists (windata_t *win,
     if (code == TEXTBOOK_DATA) reset_data_stack();
     else reset_ps_stack();
 
-#ifndef OLD_GTK
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), j);
-#else
-    gtk_notebook_set_page(GTK_NOTEBOOK(notebook), j);
-#endif
 
     return 0;
 } 

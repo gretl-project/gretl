@@ -259,12 +259,17 @@ static int make_garch_dataset (const int *list, double **Z,
 static int get_vopt (int robust)
 {
     int vopt = get_garch_vcv_version();
+    int ropt = get_garch_robust_vcv_version();
 
     /* The defaults: QML if "robust" option is in force,
        otherwise negative Hessian */
     if (vopt == VCV_UNSET) {
 	if (robust) {
-	    vopt = VCV_QML;
+	    if (ropt == VCV_UNSET) {
+		vopt = VCV_QML;
+	    } else {
+		vopt = ropt;
+	    }
 	} else {
 	    vopt = VCV_HESSIAN;
 	}

@@ -24,6 +24,8 @@
 #include "webget.h"
 #include "toolbar.h"
 
+#include "libset.h"
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <dirent.h>
@@ -104,15 +106,16 @@ GdkFont *fixed_font;
 #endif
 
 static int usecwd;
-int olddat;
-int useqr;
+static int olddat;
+static int useqr;
 char gpcolors[32];
 static char datapage[24];
 static char scriptpage[24];
 
 static int hc_by_default;
-static int hc_xsect = 1;
-static int hc_ts = 5;
+static char hc_xsect[5] = "HC1";
+static char hc_tseri[5] = "HAC";
+static char hc_garch[5] = "QML";
 
 #ifdef G_OS_WIN32
 int wimp;
@@ -143,13 +146,13 @@ typedef struct {
     char type;         /* ROOTSET user string
 			  USERSET root string
 			  BOOLSET boolean (user)
-			  LISTSET integer index (from fixed menu)
+			  LISTSET user string, from fixed menu
 			  INVISET "invisible" (user) string 
 		       */
     int len;           /* storage size for string variable (also see Note) */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
-} RCVARS;
+} RCVAR;
 
 /* Note: actually "len" above is overloaded: if an rc_var is of type
    BOOLSET and not part of a radio group, then a non-zero value for
@@ -157,7 +160,7 @@ typedef struct {
    preceding rc_var's entry field.  For example, the "use_proxy" button
    controls the sensitivity of the "dbproxy" entry widget. */
 
-RCVARS rc_vars[] = {
+RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
       ROOTSET, MAXLEN, 1, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.userdir, 
@@ -221,8 +224,8 @@ RCVARS rc_vars[] = {
       N_("Use gretl user directory as default"), &usecwd, 
       BOOLSET, 0, 4, NULL },
     { "olddat", N_("Use \".dat\" as default datafile suffix"), 
-      N_("Use \".gdt\" as default suffix"), &olddat, 
-      BOOLSET, 0, 5, NULL },
+      N_("Use \".gdt\" as default datafile suffix"), &olddat, 
+      BOOLSET, 0, 4, NULL },
     { "useqr", N_("Use QR decomposition"), N_("Use Cholesky decomposition"), &useqr, 
       BOOLSET, 0, 1, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
@@ -240,13 +243,27 @@ RCVARS rc_vars[] = {
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, 0, NULL },
     { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
-      &hc_by_default, BOOLSET, 0, 6, NULL },
-    { "HC_xsect", N_("For cross-sectional data"), NULL,
-      &hc_xsect, LISTSET, 4, 6, NULL },
-    { "HC_ts", N_("For time-series data"), NULL,
-      &hc_ts, LISTSET, 4, 6, NULL },
+      &hc_by_default, BOOLSET, 0, 5, NULL },
+    { "HC_xsect", N_("For cross-sectional data"), NULL, hc_xsect, 
+      LISTSET, 5, 5, NULL },
+    { "HC_tseri", N_("For time-series data"), NULL, hc_tseri, 
+      LISTSET, 5, 5, NULL },
+    { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
+      LISTSET, 5, 5, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, 0, NULL }
 };
+
+/* accessor functions */
+
+int using_olddat (void)
+{
+    return olddat;
+}
+
+int using_hc_by_default (void)
+{
+    return hc_by_default;
+}
 
 /* ........................................................... */
 
@@ -557,9 +574,11 @@ void set_rcfile (void)
 
 /* .................................................................. */
 
-void options_dialog (gpointer data) 
+void options_dialog (gpointer p, guint page, GtkWidget *w) 
 {
-    GtkWidget *tempwid, *dialog, *notebook;
+    GtkWidget *dialog;
+    GtkWidget *notebook;
+    GtkWidget *button;
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: options"));
@@ -585,42 +604,42 @@ void options_dialog (gpointer data)
     make_prefs_tab(notebook, 3);
     make_prefs_tab(notebook, 4);
     make_prefs_tab(notebook, 5);
-    make_prefs_tab(notebook, 6);
-   
-    tempwid = standard_button(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
 
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+    /* OK button */
+    button = standard_button(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_changes), NULL);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
+    gtk_widget_show(button);
 
-    gtk_widget_show(tempwid);
-
-    tempwid = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    /* Cancel button */
+    button = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
+    gtk_widget_show(button);
 
-    gtk_widget_show(tempwid);
-
-    tempwid = standard_button(GTK_STOCK_APPLY);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    /* Apply button (the default) */
+    button = standard_button(GTK_STOCK_APPLY);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_changes), NULL);
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);
 
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    if (page > 0) {
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page);
+    }
 
     gtk_widget_show(dialog);
 }
@@ -633,8 +652,6 @@ static void flip_sensitive (GtkWidget *w, gpointer data)
     
     gtk_widget_set_sensitive(entry, GTK_TOGGLE_BUTTON(w)->active);
 }
-
-/* .................................................................. */
 
 void filesel_set_path_callback (const char *setting, char *strvar)
 {
@@ -651,16 +668,12 @@ void filesel_set_path_callback (const char *setting, char *strvar)
     }
 }
 
-/* .................................................................. */
-
-static void browse_button_callback (GtkWidget *w, RCVARS *rc)
+static void browse_button_callback (GtkWidget *w, RCVAR *rc)
 {
     file_selector(_(rc->description), SET_PATH, rc->var);
 }
 
-/* .................................................................. */
-
-static GtkWidget *make_path_browse_button (RCVARS *rc)
+static GtkWidget *make_path_browse_button (RCVAR *rc)
 {
     GtkWidget *b;
 
@@ -671,8 +684,6 @@ static GtkWidget *make_path_browse_button (RCVARS *rc)
     return b;
 }
 
-/* .................................................................. */
-
 static gboolean takes_effect_on_restart (void)
 {
     infobox(_("This change will take effect when you restart gretl"));
@@ -681,269 +692,270 @@ static gboolean takes_effect_on_restart (void)
 
 /* .................................................................. */
 
-static char *hc_strs[] = {
-	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
-};
-
 static GList *get_settings_list (void *var)
 {
+    char *hc_strs[] = {
+	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
+    };
+    char *garch_strs[] = {
+	"QML", "BW"
+    };
     GList *list = NULL;
-    int *intp = (int *) var;
+    char *strvar = (char *) var;
     int i, n;
 
-    if (intp == &hc_xsect || intp == &hc_ts) {
+    if (strvar == hc_xsect || strvar == hc_tseri) {
 	n = sizeof hc_strs / sizeof hc_strs[0];
-	if (intp == &hc_xsect) n--;
+	if (strvar == hc_xsect) n--;
 	for (i=0; i<n; i++) {
 	    list = g_list_append(list, hc_strs[i]);
 	}
-    } 
+    } else if (strvar == hc_garch) {
+	n = sizeof garch_strs / sizeof garch_strs[0];
+	for (i=0; i<n; i++) {
+	    list = g_list_append(list, garch_strs[i]);
+	}
+    }	
 
     return list;
 }
 
-static const char *get_listset_default (void *var)
+/* .................................................................. */
+
+static void get_table_sizes (int page, int *b_count, int *s_count)
 {
-    int *intp = (int *) var;
+    int i;
 
-    if (intp == &hc_xsect || intp == &hc_ts) {
-	return hc_strs[*intp];
-    } else {
-	return "";
-    }
-}
+    *b_count = 0;
+    *s_count = 0;
 
-static void get_listset_selection (const char *str, void *var)
-{
-    int *intp = (int *) var;
-    int i, n;
-
-    if (intp == &hc_xsect || intp == &hc_ts) {
-	n = sizeof hc_strs / sizeof hc_strs[0];
-	for (i=0; i<n; i++) {
-	    if (!strcmp(str, hc_strs[i])) {
-		*intp = i;
-	    }
+    for (i=0; rc_vars[i].key != NULL; i++) {
+	if (rc_vars[i].tab != page) {
+	    continue;
+	}
+	if (rc_vars[i].type & BOOLSET) {
+	    *b_count += 1;
+	} else if (!(rc_vars[i].type & INVISET)) {
+	    *s_count += 1;
 	}
     }
-
-    if (intp == &hc_xsect) {
-	*intp = 1;
-    } else if (intp == &hc_ts) {
-	*intp = 5;
-    }
 }
-
-/* .................................................................. */
 
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
-    GtkWidget *box, *b_table, *s_table, *tempwid = NULL;
-    int i, s_len, b_len, b_col;
-    int s_count = 0, b_count = 0;
-    RCVARS *rc = NULL;
+    GtkWidget *b_table = NULL, *s_table = NULL;
+    GtkWidget *box, *w = NULL;
+    int s_len = 1, b_len = 0, b_col = 0;
+    int s_count, b_count;
+    RCVAR *rc;
+    int i;
    
     box = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
     if (tab == 1) {
-	tempwid = gtk_label_new(_("General"));
+	w = gtk_label_new(_("General"));
     } else if (tab == 2) {
-	tempwid = gtk_label_new(_("Databases"));
+	w = gtk_label_new(_("Databases"));
     } else if (tab == 3) {
-	tempwid = gtk_label_new(_("Programs"));
+	w = gtk_label_new(_("Programs"));
     } else if (tab == 4) {
-	tempwid = gtk_label_new(_("Open/Save path"));
+	w = gtk_label_new(_("File Open/Save"));
     } else if (tab == 5) {
-	tempwid = gtk_label_new(_("Data files"));
-    } else if (tab == 6) {
-	tempwid = gtk_label_new(_("HCCME"));
+	w = gtk_label_new(_("HCCME"));
     }
     
-    gtk_widget_show(tempwid);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
+    gtk_widget_show(w);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, w);   
 
-    s_len = 1;
-    s_table = gtk_table_new(s_len, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(s_table), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(s_table), 5);
-    gtk_box_pack_start(GTK_BOX(box), s_table, FALSE, FALSE, 0);
-    gtk_widget_show(s_table);
+    get_table_sizes(tab, &b_count, &s_count);
 
-    b_len = b_col = 0;
-    b_table = gtk_table_new(1, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
-    gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
-    gtk_box_pack_start(GTK_BOX(box), b_table, FALSE, FALSE, 10);
-    gtk_widget_show(b_table);
+    if (s_count > 0) {
+	s_table = gtk_table_new(s_len, 2, FALSE);
+	gtk_table_set_row_spacings(GTK_TABLE(s_table), 5);
+	gtk_table_set_col_spacings(GTK_TABLE(s_table), 5);
+	gtk_box_pack_start(GTK_BOX(box), s_table, FALSE, FALSE, 0);
+	gtk_widget_show(s_table);
+    }
+    
+    if (b_count > 0) {
+	b_table = gtk_table_new(1, 2, FALSE);
+	gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
+	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
+	gtk_box_pack_start(GTK_BOX(box), b_table, FALSE, FALSE, 10);
+	gtk_widget_show(b_table);
+    }
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	rc = &rc_vars[i];
-	if (rc->tab == tab) {
-	    if ((rc->type & BOOLSET) && rc->link == NULL) { 
-		/* simple boolean variable */
-		b_count++;
 
-		rc->widget = gtk_check_button_new_with_label(_(rc->description));
-		gtk_table_attach_defaults(GTK_TABLE (b_table), rc->widget, 
-					  b_col, b_col + 1, b_len, b_len + 1);
+	if (rc->tab != tab) {
+	    /* the item is not on this page */
+	    continue;
+	}
 
-		if (*(int *)(rc->var)) {
-		    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), TRUE);
-		} else {
-		    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), FALSE);
-		}
+	if ((rc->type & BOOLSET) && rc->link == NULL) { 
+	    /* simple boolean variable (check box) */
+	    int rcval = *(int *)(rc->var);
 
-		/* special case: warning */
-		if (!strcmp(rc->key, "wimp") || !strcmp(rc->key, "lcnumeric")) {
-		    g_signal_connect(G_OBJECT(rc->widget), "toggled",
-				     G_CALLBACK(takes_effect_on_restart), 
-				     NULL);
-		}
+	    rc->widget = gtk_check_button_new_with_label(_(rc->description));
+	    gtk_table_attach_defaults(GTK_TABLE (b_table), rc->widget, 
+				      b_col, b_col + 1, b_len, b_len + 1);
 
-		/* special case: link between toggle and preceding entry */
-		if (rc->len && !(rc->type & FIXSET)) {
-		    gtk_widget_set_sensitive(rc_vars[i-1].widget,
-					     GTK_TOGGLE_BUTTON(rc->widget)->active);
-		    g_signal_connect(G_OBJECT(rc->widget), "clicked",
-				     G_CALLBACK(flip_sensitive),
-				     rc_vars[i-1].widget);
-		} 
+	    if (rcval) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), TRUE);
+	    } else {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), FALSE);
+	    }
 
-		gtk_widget_show(rc->widget);
-		b_col++;
+	    /* special case: warning */
+	    if (!strcmp(rc->key, "wimp") || !strcmp(rc->key, "lcnumeric")) {
+		g_signal_connect(G_OBJECT(rc->widget), "toggled",
+				 G_CALLBACK(takes_effect_on_restart), 
+				 NULL);
+	    }
 
-		if (b_col == 2) {
-		    b_col = 0;
-		    b_len++;
-		    gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
-		}
-
-		if (rc->type & FIXSET) {
-		    gtk_widget_set_sensitive(rc->widget, FALSE);
-		    if (rc->len) {
-			gtk_widget_set_sensitive(rc_vars[i-1].widget, FALSE);
-		    }
-		}
-
-	    } else if (rc->type & BOOLSET) { 
-		/* radio-button dichotomy */
-		int val = *(int *)(rc->var);
-		GtkWidget *button;
-		GSList *group;
-
-		/* do we have some padding to do? */
-		if (b_col == 1) {
-		    tempwid = gtk_label_new("   ");
-		    gtk_table_attach_defaults(GTK_TABLE(b_table), tempwid, 
-					      b_col, b_col + 1, b_len, b_len + 1);
-		    b_col = 0;
-		    b_len++;
-		    gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
-		}
-
-		b_count++;
-		b_len += 3;
-		gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
-
-		/* first a separator for the group */
-		tempwid = gtk_hseparator_new();
-		gtk_table_attach_defaults(GTK_TABLE(b_table), tempwid, 
-					  b_col, b_col + 1, b_len - 3, b_len - 2);  
-		gtk_widget_show(tempwid);
-
-		/* then a first button */
-		button = gtk_radio_button_new_with_label(NULL, _(rc->link));
-		gtk_table_attach_defaults 
-		    (GTK_TABLE (b_table), button, b_col, b_col + 1, 
-		     b_len - 2, b_len - 1);    
-		if (!val) {
-		    gtk_toggle_button_set_active 
-			(GTK_TOGGLE_BUTTON(button), TRUE);
-		}
-		gtk_widget_show(button);
-		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-
-		/* and a second button */
-		rc->widget = gtk_radio_button_new_with_label(group, 
-							  _(rc->description));
-		gtk_table_attach_defaults(GTK_TABLE(b_table), rc->widget, 
-					  b_col, b_col + 1, b_len - 1, b_len);  
-		if (val) {
-		    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), TRUE);
-		}
-		gtk_widget_show(rc->widget);
-
-		if (rc->type & FIXSET) {
-		    gtk_widget_set_sensitive(button, FALSE);
-		    gtk_widget_set_sensitive(rc->widget, FALSE);
-		}
-	    } else if (rc->type & LISTSET) {
-		GList *list;
-
-		s_count++;
-		s_len++;
-		gtk_table_resize(GTK_TABLE (s_table), s_len, 
-				 (tab == 3)? 3 : 2);
-		tempwid = gtk_label_new(_(rc->description));
-		gtk_misc_set_alignment(GTK_MISC (tempwid), 1, 0.5);
-		gtk_table_attach_defaults(GTK_TABLE (s_table), 
-					  tempwid, 0, 1, s_len - 1, s_len);
-		gtk_widget_show(tempwid);
-
-		rc->widget = gtk_combo_new();
-		gtk_table_attach_defaults(GTK_TABLE (s_table), 
-					  rc->widget, 1, 2, s_len-1, s_len);
-		list = get_settings_list(rc->var);
-		gtk_combo_set_popdown_strings(GTK_COMBO(rc->widget), list);
-		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rc->widget)->entry),
-				   get_listset_default(rc->var));
-#ifndef OLD_GTK
-		gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 
-					  rc->len);
-#endif
-		gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
-					  FALSE);
-		gtk_widget_show(rc->widget);
-	    } else if (!(rc->type & INVISET)) { /* string variable */
-		s_count++;
-		s_len++;
-		gtk_table_resize(GTK_TABLE (s_table), s_len, 
-				 (tab == 3)? 3 : 2);
-		tempwid = gtk_label_new(_(rc->description));
-		gtk_misc_set_alignment(GTK_MISC (tempwid), 1, 0.5);
-		gtk_table_attach_defaults(GTK_TABLE (s_table), 
-					  tempwid, 0, 1, s_len - 1, s_len);
-		gtk_widget_show(tempwid);
-
-		rc->widget = gtk_entry_new();
-		gtk_table_attach_defaults(GTK_TABLE (s_table), 
-					  rc->widget, 1, 2, s_len-1, s_len);
-		gtk_entry_set_text(GTK_ENTRY(rc->widget), rc->var);
-		gtk_widget_show(rc->widget);
-
-		/* program browse button */
-		if (tab == 3 && strstr(rc->description, "directory") == NULL) {
-		    tempwid = make_path_browse_button(rc);
-		    gtk_table_attach_defaults(GTK_TABLE(s_table), 
-					      tempwid, 2, 3, s_len-1, s_len);
-		    gtk_widget_show(tempwid);
-		}
-		if (rc->type & FIXSET) {
-		    gtk_widget_set_sensitive(rc->widget, FALSE);
-		    gtk_widget_set_sensitive(tempwid, FALSE);
-		}
+	    /* special case: link between toggle and preceding entry */
+	    if (rc->len && !(rc->type & FIXSET)) {
+		gtk_widget_set_sensitive(rc_vars[i-1].widget,
+					 GTK_TOGGLE_BUTTON(rc->widget)->active);
+		g_signal_connect(G_OBJECT(rc->widget), "clicked",
+				 G_CALLBACK(flip_sensitive),
+				 rc_vars[i-1].widget);
 	    } 
-	} /* end if (rc->tab == tab) */
-    } /* end of loop over rc_vars[i].key */
 
-    if (b_count == 0) {
-	gtk_widget_destroy(b_table);
-    }
-    if (s_count == 0) {
-	gtk_widget_destroy(s_table);
-    }
+	    gtk_widget_show(rc->widget);
+	    b_col++;
+
+	    if (b_col == 2) {
+		b_col = 0;
+		b_len++;
+		gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
+	    }
+
+	    if (rc->type & FIXSET) {
+		gtk_widget_set_sensitive(rc->widget, FALSE);
+		if (rc->len) {
+		    gtk_widget_set_sensitive(rc_vars[i-1].widget, FALSE);
+		}
+	    }
+
+	} else if (rc->type & BOOLSET) { 
+	    /* radio-button dichotomy */
+	    int rcval = *(int *)(rc->var);
+	    GtkWidget *button;
+	    GSList *group = NULL;
+
+	    /* do we have some padding to do? */
+	    if (b_col == 1) {
+		w = gtk_label_new("   ");
+		gtk_table_attach_defaults(GTK_TABLE(b_table), w, 
+					  b_col, b_col + 1, 
+					  b_len, b_len + 1);
+		b_col = 0;
+		b_len++;
+		gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
+	    }
+
+	    b_len += 3;
+	    gtk_table_resize(GTK_TABLE(b_table), b_len + 1, 2);
+
+	    /* separator for the group? */
+	    w = gtk_hseparator_new();
+	    gtk_table_attach_defaults(GTK_TABLE(b_table), w, 
+				      b_col, b_col + 1, 
+				      b_len - 3, b_len - 2);  
+	    gtk_widget_show(w);
+
+	    /* then a first button */
+	    button = gtk_radio_button_new_with_label(group, _(rc->link));
+	    gtk_table_attach_defaults(GTK_TABLE(b_table), button, 
+				      b_col, b_col + 1, 
+				      b_len - 2, b_len - 1);    
+	    if (!rcval) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	    }
+	    gtk_widget_show(button);
+
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+
+	    /* and a second button */
+	    rc->widget = gtk_radio_button_new_with_label(group, 
+							 _(rc->description));
+	    gtk_table_attach_defaults(GTK_TABLE(b_table), rc->widget, 
+				      b_col, b_col + 1, 
+				      b_len - 1, b_len);  
+	    if (rcval) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rc->widget), TRUE);
+	    }
+	    gtk_widget_show(rc->widget);
+
+	    if (rc->type & FIXSET) {
+		gtk_widget_set_sensitive(button, FALSE);
+		gtk_widget_set_sensitive(rc->widget, FALSE);
+	    }
+	} else if (rc->type & LISTSET) {
+	    char *strvar = (char *) rc->var;
+	    GList *list;
+
+	    s_len++;
+
+	    gtk_table_resize(GTK_TABLE(s_table), s_len, (tab == 3)? 3 : 2);
+	    w = gtk_label_new(_(rc->description));
+	    gtk_misc_set_alignment(GTK_MISC(w), 0.75, 0.5);
+	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
+				      w, 0, 1, s_len - 1, s_len);
+	    gtk_widget_show(w);
+
+	    rc->widget = gtk_combo_new();
+	    gtk_table_attach(GTK_TABLE(s_table), rc->widget, 
+			     1, 2, s_len-1, s_len,
+			     0, 0, 0, 0);
+
+	    list = get_settings_list(rc->var);
+	    gtk_combo_set_popdown_strings(GTK_COMBO(rc->widget), list);
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), strvar);
+#ifndef OLD_GTK
+	    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 
+				      rc->len - 1);
+#endif
+	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
+				      FALSE);
+	    gtk_widget_show(rc->widget);
+	} else if (!(rc->type & INVISET)) { 
+	    /* visible string variable */
+	    char *strvar = (char *) rc->var;
+
+	    s_len++;
+
+	    gtk_table_resize(GTK_TABLE(s_table), s_len, (tab == 3)? 3 : 2);
+	    w = gtk_label_new(_(rc->description));
+	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
+	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
+				      w, 0, 1, s_len - 1, s_len);
+	    gtk_widget_show(w);
+
+	    rc->widget = gtk_entry_new();
+	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
+				      rc->widget, 1, 2, s_len-1, s_len);
+	    gtk_entry_set_text(GTK_ENTRY(rc->widget), strvar);
+	    gtk_widget_show(rc->widget);
+
+	    /* program browse button */
+	    if (tab == 3 && strstr(rc->description, "directory") == NULL) {
+		w = make_path_browse_button(rc);
+		gtk_table_attach_defaults(GTK_TABLE(s_table), 
+					  w, 2, 3, s_len-1, s_len);
+		gtk_widget_show(w);
+	    }
+
+	    if (rc->type & FIXSET) {
+		gtk_widget_set_sensitive(rc->widget, FALSE);
+		gtk_widget_set_sensitive(w, FALSE);
+	    }
+	} 
+    } 
 }
 
 /* .................................................................. */
@@ -1018,6 +1030,7 @@ static void set_gp_colors (void)
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
     const gchar *str;
+    char *strvar;
     int i = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1031,14 +1044,18 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	    } else if (rc_vars[i].type == USERSET || rc_vars[i].type == ROOTSET) {
 		str = gtk_entry_get_text(GTK_ENTRY(rc_vars[i].widget));
 		if (str != NULL && *str != '\0') { 
-		    strncpy(rc_vars[i].var, str, rc_vars[i].len - 1);
+		    strvar = (char *) rc_vars[i].var;
+		    *strvar = '\0';
+		    strncat(strvar, str, rc_vars[i].len - 1);
 		}
 	    } else if (rc_vars[i].type == LISTSET) {
 		GtkWidget *entry = GTK_COMBO(rc_vars[i].widget)->entry;
 
 		str = gtk_entry_get_text(GTK_ENTRY(entry));
 		if (str != NULL && *str != '\0') { 
-		    get_listset_selection(str, rc_vars[i].var);
+		    strvar = (char *) rc_vars[i].var;
+		    *strvar = '\0';
+		    strncat(strvar, str, rc_vars[i].len - 1);
 		}
 	    }
 	}
@@ -1049,6 +1066,10 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     show_or_hide_toolbar(want_toolbar);
 
     set_use_qr(useqr);
+
+    set_xsect_hccme(hc_xsect);
+    set_tseries_hccme(hc_tseri);
+    set_garch_robust_vcv(hc_garch);
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
@@ -1081,6 +1102,26 @@ static void boolvar_to_str (void *b, char *s)
     }
 }
 
+static void common_read_rc_setup (void)
+{
+    set_use_qr(useqr);
+    set_gp_colors();
+    
+    set_xsect_hccme(hc_xsect);
+    set_tseries_hccme(hc_tseri);
+    set_garch_robust_vcv(hc_garch);
+
+    set_paths(&paths, set_paths_opt);
+
+# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+    set_tramo_x12a_dirs();
+# endif
+
+# ifdef ENABLE_NLS
+    set_lcnumeric();
+# endif
+}
+
 /* next section: variant versions of write_rc and read_rc, depending
    on both GTK version and platform
 */
@@ -1092,6 +1133,8 @@ void write_rc (void)
 {
     GConfClient *client;   
     char key[MAXSTR];
+    gboolean bval;
+    char *strvar;
     int i;
 
     client = gconf_client_get_default();
@@ -1099,15 +1142,11 @@ void write_rc (void)
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
 	if (rc_vars[i].type == BOOLSET) {
-	    gboolean val = *(gboolean *) rc_vars[i].var;
-
-	    gconf_client_set_bool(client, key, val, NULL);
-	} else if (rc_vars[i].type == LISTSET) {
-	    gint val = *(gint *) rc_vars[i].var;
-
-	    gconf_client_set_int(client, key, val, NULL);
+	    bval = *(gboolean *) rc_vars[i].var;
+	    gconf_client_set_bool(client, key, bval, NULL);
 	} else {
-	    gconf_client_set_string(client, key, rc_vars[i].var, NULL);
+	    strvar = (char *) rc_vars[i].var;
+	    gconf_client_set_string(client, key, strvar, NULL);
 	}
     }
 
@@ -1153,10 +1192,10 @@ static void read_rc (void)
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
 	    } else if (value != NULL) {
-		char *s = (char *) rc_vars[i].var;
+		char *strvar = (char *) rc_vars[i].var;
 
-		*s = 0;
-		strncat(s, value, rc_vars[i].len - 1);
+		*strvar = '\0';
+		strncat(strvar, value, rc_vars[i].len - 1);
 		g_free(value);
 	    }
 	}
@@ -1182,18 +1221,7 @@ static void read_rc (void)
 
     g_object_unref(G_OBJECT(client));
 
-    set_use_qr(useqr);
-    set_gp_colors();
-
-    set_paths(&paths, set_paths_opt);
-
-# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_dirs();
-# endif
-
-# ifdef ENABLE_NLS
-    set_lcnumeric();
-# endif
+    common_read_rc_setup();
 }
 
 /* then the gnome 1 versions */
@@ -1203,7 +1231,7 @@ void write_rc (void)
 {
     char key[MAXSTR];
     char cval[6];
-    int ival;
+    char *strvar;
     int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1211,11 +1239,9 @@ void write_rc (void)
 	if (rc_vars[i].type == BOOLSET) {
 	    boolvar_to_str(rc_vars[i].var, cval);
 	    gnome_config_set_string(key, cval);
-	} else if (rc_vars[i].type == LISTSET) {
-	    ival = *(int *) rc_vars[i].var;
-	    gnome_config_set_int(key, ival);
 	} else {
-	    gnome_config_set_string(key, rc_vars[i].var);
+	    strvar = (char *) rc_vars[i].var;
+	    gnome_config_set_string(key, strvar);
 	}
     }
 
@@ -1230,6 +1256,7 @@ static void read_rc (void)
 {
     gchar *value = NULL;
     char gpath[MAXSTR];
+    char *strvar;
     const char *file_sections[] = {
 	"recent data files",
 	"recent session files",
@@ -1245,7 +1272,9 @@ static void read_rc (void)
 	    if (rc_vars[i].type == BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
 	    } else {
-		strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
+		strvar = (char *) rc_vars[i].var;
+		*strvar = '\0';
+		strncat(strvar, value, rc_vars[i].len - 1);
 	    }
 	    g_free(value);
 	}
@@ -1264,52 +1293,43 @@ static void read_rc (void)
 		break;
 	    }
 	}
-    }    
+    }  
 
-    set_use_qr(useqr);
-    set_gp_colors();
-
-    set_paths(&paths, set_paths_opt);
-
-# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_dirs();
-# endif
-
-# ifdef ENABLE_NLS
-    set_lcnumeric();
-# endif
+    common_read_rc_setup();
 }
 
 /* end of gnome versions, now win32 */
+
 #elif defined(G_OS_WIN32)
 
 void write_rc (void) 
 {
+    char bval[6];
+    char *strvar;
     int i = 0;
-    char val[6];
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 
 	if (rc_vars[i].type & FIXSET) continue;
 
 	if (rc_vars[i].type == BOOLSET) {
-	    boolvar_to_str(rc_vars[i].var, val);
+	    boolvar_to_str(rc_vars[i].var, bval);
 	    write_reg_val(HKEY_CURRENT_USER, 
 			  "gretl", 
 			  rc_vars[i].key, 
-			  val);
+			  bval);
+	} else if (rc_vars[i].type == ROOTSET) {
+	    strvar = (char *) rc_vars[i].var;
+	    write_reg_val(HKEY_CLASSES_ROOT, 
+			  get_reg_base(rc_vars[i].key),
+			  rc_vars[i].key, 
+			  strvar);
 	} else {
-	    if (rc_vars[i].type == ROOTSET) {
-		write_reg_val(HKEY_CLASSES_ROOT, 
-			      get_reg_base(rc_vars[i].key),
-			      rc_vars[i].key, 
-			      rc_vars[i].var);
-	    } else {
-		write_reg_val(HKEY_CURRENT_USER, 
-			      get_reg_base(rc_vars[i].key),
-			      rc_vars[i].key, 
-			      rc_vars[i].var);
-	    }
+	    strvar = (char *) rc_vars[i].var;
+	    write_reg_val(HKEY_CURRENT_USER, 
+			  get_reg_base(rc_vars[i].key),
+			  rc_vars[i].key, 
+			  strvar);
 	}
     }
 
@@ -1322,6 +1342,7 @@ static int get_network_settings (void)
 {
     const char *inifile;
     FILE *fp;
+    char *strvar;
     int gotini = 0;
 
     inifile = get_network_cfg_filename();
@@ -1351,10 +1372,9 @@ static int get_network_settings (void)
 				gotini = 0;
 				goto network_quit;
 			    } else {
-				char *var = (char *) rc_vars[j].var;
-
-				*var = '\0';
-				strncat(var, linevar, rc_vars[j].len - 1);
+				strvar = (char *) rc_vars[j].var;
+				*strvar = '\0';
+				strncat(strvar, linevar, rc_vars[j].len - 1);
 			    }
 			}
 			rc_vars[j].type |= FIXSET;
@@ -1374,6 +1394,7 @@ static int get_network_settings (void)
 void read_rc (void) 
 {
     char rpath[MAXSTR], value[MAXSTR];
+    char *strvar;
     const char *file_sections[] = {
 	"recent data files",
 	"recent session files",
@@ -1414,8 +1435,9 @@ void read_rc (void)
 	    if (rc_vars[i].type == BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
 	    } else {
-		strncpy((char *) rc_vars[i].var, value, 
-			rc_vars[i].len - 1);
+		strvar = (char *) rc_vars[i].var;
+		*strvar = '\0';
+		strncat(strvar, value, rc_vars[i].len - 1);
 	    }
 	}
     }
@@ -1432,23 +1454,12 @@ void read_rc (void)
 		break;
 	    }
 	}
-    }    
+    } 
 
-    set_use_qr(useqr);
-    set_gp_colors();
-
-    set_paths(&paths, set_paths_opt);
-
-# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_dirs();
-# endif
+    common_read_rc_setup();
 
     set_fixed_font();
     set_app_font(NULL);
-
-# ifdef ENABLE_NLS
-    set_lcnumeric();
-# endif
 }
 
 #else /* end of gnome and win32 versions, now plain GTK */
@@ -1457,6 +1468,7 @@ void write_rc (void)
 {
     FILE *rc;
     char val[6];
+    char *strvar;
     int i;
 
     rc = fopen(rcfile, "w");
@@ -1473,7 +1485,8 @@ void write_rc (void)
 	    boolvar_to_str(rc_vars[i].var, val);
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
 	} else {
-	    fprintf(rc, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
+	    strvar = (char *) rc_vars[i].var;
+	    fprintf(rc, "%s = %s\n", rc_vars[i].key, strvar);
 	}
     }
 
@@ -1488,6 +1501,7 @@ static void read_rc (void)
 {
     FILE *fp;
     char line[MAXLEN], key[32], linevar[MAXLEN];
+    char *strvar;
     const char *file_sections[] = {
 	"recent data files:",
 	"recent session files:",
@@ -1501,8 +1515,12 @@ static void read_rc (void)
 
     i = 0;
     while (rc_vars[i].var != NULL) {
-	if (fgets(line, MAXLEN, fp) == NULL) break;
-	if (line[0] == '#') continue;
+	if (fgets(line, MAXLEN, fp) == NULL) {
+	    break;
+	}
+	if (line[0] == '#') {
+	    continue;
+	}
 	if (!strncmp(line, "recent ", 7)) {
 	    gotrecent = 1;
 	    break;
@@ -1515,7 +1533,9 @@ static void read_rc (void)
 		    if (rc_vars[j].type == BOOLSET) {
 			str_to_boolvar(linevar, rc_vars[j].var);
 		    } else {
-			strcpy(rc_vars[j].var, linevar);
+			strvar = (char *) rc_vars[j].var;
+			*strvar = '\0';
+			strncat(strvar, linevar, rc_vars[j].len - 1);
 		    }
 		    break;
 		}
@@ -1565,18 +1585,7 @@ static void read_rc (void)
 
     fclose(fp);
 
-    set_use_qr(useqr);
-    set_gp_colors();
-
-    set_paths(&paths, set_paths_opt);
-
-# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_dirs();
-# endif
-
-# ifdef ENABLE_NLS
-    set_lcnumeric();
-# endif
+    common_read_rc_setup();
 }
 
 #endif /* end of "plain gtk" versions of read_rc, write_rc */
