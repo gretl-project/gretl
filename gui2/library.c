@@ -4835,7 +4835,7 @@ int gui_exec_line (char *line,
 		   const char *myname) 
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
-    int dbdata = 0, renumber;
+    int dbdata = 0, arch_model = 0, renumber;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
@@ -5038,6 +5038,7 @@ int gui_exec_line (char *line,
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
+	    arch_model = 1;
 	    swap_models(&models[0], &models[1]);
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, 0, prn);
@@ -5841,9 +5842,10 @@ int gui_exec_line (char *line,
 	cmd_init(line);
     }
 
-    if ((is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)) && !err) {
+    if (!err && (is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)
+		 || arch_model)) {
 	err = stack_model(0);
-	if (*cmd.savename != '\0') {
+	if (!arch_model && *cmd.savename != '\0') {
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
 	}
     }
