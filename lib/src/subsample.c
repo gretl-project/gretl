@@ -43,8 +43,9 @@ int attach_subsample_to_model (MODEL *pmod, double ***fullZ,
 	return 1;   
     } 
 
-    for (t=0; t<n; t++)
+    for (t=0; t<n; t++) {
 	pmod->subdum[t] = (*fullZ)[i][t];
+    }
     
     return 0;
 }
@@ -58,8 +59,9 @@ static int subsampled (double **Z, const DATAINFO *pdinfo,
 {
     int t, n = pdinfo->n;
 
-    for (t=0; t<n; t++)
+    for (t=0; t<n; t++) {
 	if (floatneq(Z[subnum][t], 0.0)) return 1;
+    }
     return 0;
 }
 
@@ -85,9 +87,9 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
     /* case: model has no sub-sampling info recorded */
     if (subdum == NULL) {
 	/* if data set is not currently sub-sampled, we're OK */
-	if (!subsampled(Z, pdinfo, i)) return 0;
-	/* data set is subsampled, model is not: problem */
-	else {
+	if (!subsampled(Z, pdinfo, i)) {
+	    return 0;
+	} else {
 	    fprintf(stderr, I_("dataset is subsampled, model is not\n"));
 	    return 1;
 	}
@@ -95,19 +97,19 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 
     /* case: model has sub-sampling info recorded */
     if (!subsampled(Z, pdinfo, i)) {
-	/* data set not sub-sampled: problem */
 	fprintf(stderr, I_("model is subsampled, dataset is not\n"));
 	return 1;
-    } else { /* do the subsamples (model and current data set) agree? */
-	if (vars_identical(Z[i], subdum, n))
+    } else { 
+	/* do the subsamples (model and current data set) agree? */
+	if (vars_identical(Z[i], subdum, n)) {
 	    return 0;
-	else {
+	} else {
 	    fprintf(stderr, I_("model and dataset subsamples not the same\n"));
 	    return 1;
 	}
     }
 
-    /* can't be reached */
+    /* not reached */
     return 1;
 }
 
@@ -181,9 +183,9 @@ int set_sample_dummy (const char *line,
     int missobs = 0, subnum = 0, dumnum = 0;
     int i, t, st, sn, n = oldinfo->n;
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
-    dumv[0] = '\0';
+    *dumv = '\0';
     if (oflag == 'o' && 
 	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0)) {
 	missobs = 1; 

@@ -1137,6 +1137,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->ntests = 0;
     pmod->tests = NULL;
     pmod->data = NULL;
+    pmod->dataset = NULL;
     pmod->errcode = 0;
     pmod->ci = 0;
     pmod->ifc = 0;
@@ -1250,6 +1251,12 @@ void clear_model (MODEL *pmod, DATAINFO *pdinfo)
 	    MISSOBS *mobs = (MISSOBS *) pmod->data;
 	    free(mobs->missvec);
 	    free(pmod->data);
+	}
+	if (pmod->dataset) {
+	    free_Z(pmod->dataset->Z, pmod->dataset->dinfo);
+	    clear_datainfo(pmod->dataset->dinfo, CLEAR_SUBSAMPLE);
+	    free(pmod->dataset->dinfo);
+	    free(pmod->dataset);
 	}
     }
 

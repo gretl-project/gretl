@@ -58,6 +58,7 @@ int gui_exec_line (char *line,
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (int gui);
 static char *bufgets (char *s, int size, const char *buf);
+static int get_terminal (char *s);
 
 int echo_off;               /* don't echo commands */
 int replay;                 /* are we replaying old session commands or not? */
@@ -106,6 +107,46 @@ void register_graph (void)
 #else
     graphmenu_state(TRUE);
 #endif    
+}
+
+static void launch_gnuplot_interactive (void)
+{
+#ifdef G_OS_WIN32
+    gchar *cmdline;
+
+    cmdline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
+			      paths.plotfile);
+    create_child_process(cmdline, NULL);
+    g_free(cmdline);
+#else
+    char term[8];
+
+    if (get_terminal(term)) return;
+    else {
+	GError *error = NULL;
+	gchar *argv[] = { 
+	    term, "+sb", "+ls", 
+	    "-geometry", "40x4",
+	    "-title", "gnuplot: type q to quit",
+	    "-e", paths.gnuplot, paths.plotfile, "-",
+	    NULL 
+	};
+	int ok;
+
+	ok = g_spawn_async(NULL, /* working dir */
+			   argv,
+			   NULL, /* env */
+			   G_SPAWN_SEARCH_PATH,
+			   NULL, /* child_setup */
+			   NULL, /* user_data */
+			   NULL, /* child_pid ptr */
+			   &error);
+	if (!ok) {
+	    errbox(error->message);
+	    g_error_free(error);
+	}
+    }
+#endif
 }
 
 /* ........................................................... */
@@ -3001,6 +3042,34 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 
 /* ........................................................... */
 
+void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
+{
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    int list[4];
+    int err;
+
+    /* Y, X, Z */
+
+    list[0] = 3;
+    list[1] = pmod->list[4];
+    list[2] = pmod->list[3];
+    list[3] = pmod->list[1];
+
+    err = gnuplot_3d(list, NULL, &Z, datainfo,
+		     &paths, &plot_count, GP_GUI | GP_FA);
+
+    if (err == -999) {
+	errbox(_("No data were available to graph"));
+    } else if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	launch_gnuplot_interactive();
+    }
+}
+
+/* ........................................................... */
+
 #define MAXDISPLAY 4096
 /* max number of observations for which we expect to be able to 
    use the buffer approach for displaying data, as opposed to
@@ -3392,42 +3461,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     } else if (err < 0) {
 	errbox(_("gnuplot command failed"));
     } else {
-#ifdef G_OS_WIN32
-	gchar *cmdline;
-
-	cmdline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
-				  paths.plotfile);
-	create_child_process(cmdline, NULL);
-	g_free(cmdline);
-#else
-	char term[8];
-
-	if (get_terminal(term)) return;
-	else {
-	    GError *error = NULL;
-	    gchar *argv[] = { 
-		term, "+sb", "+ls", 
-		"-geometry", "40x4",
-		"-title", "gnuplot: type q to quit",
-		"-e", paths.gnuplot, paths.plotfile, "-",
-		NULL 
-	    };
-	    int ok;
-
-	    ok = g_spawn_async(NULL, /* working dir */
-			       argv,
-			       NULL, /* env */
-			       G_SPAWN_SEARCH_PATH,
-			       NULL, /* child_setup */
-			       NULL, /* user_data */
-			       NULL, /* child_pid ptr */
-			       &error);
-	    if (!ok) {
-		errbox(error->message);
-		g_error_free(error);
-	    }
-	}
-#endif
+	launch_gnuplot_interactive();
     }
 }
 

@@ -139,6 +139,7 @@ typedef struct _PRN PRN;
 typedef struct _FITRESID FITRESID;
 typedef struct _CONFINT CONFINT;
 typedef struct _VCV VCV;
+typedef struct _DATASET DATASET;
 
 typedef struct _mp_results mp_results;
 
@@ -173,6 +174,12 @@ struct _DATAINFO {
     char *descrip;      /* to hold info on data sources etc. */
     unsigned char *vector; /* hold info on vars: vector versus scalar */
     void *data;         /* all-purpose pointer */
+};
+
+/* wrapper for the two main elements of a gretl data set */
+struct _DATASET {
+    DATAINFO *dinfo;
+    double **Z;
 };
 
 struct _PATHS {
@@ -284,6 +291,8 @@ struct _MODEL {
     int ntests;
     GRETLTEST *tests;
     void *data;                  /* pointer for use in re. missing data */
+    DATASET *dataset;            /* for handling models estimated on a
+				    sub-sampled portion of the dataset */
 };
 
 struct _MODELSPEC {

@@ -1,6 +1,10 @@
 version 1.1.5
 - Gtk2 version: Make selection dialog tall enough for wls,
   tsls and ar model selections
+- Model window, graph menu: if there are two independent vars,
+  offer the option of a 3D fitted/actual plot
+- Start on adding facility to do graphs, tests on models that
+  were estimated on different sub-samples
 
 10/06/2003 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter

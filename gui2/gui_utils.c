@@ -2099,40 +2099,55 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     };
     MODEL *pmod = vwin->data;
 
-    varitem.path = NULL;
-
     for (i=0; i<2; i++) {
-	varitem.path = mymalloc(64);
 	varitem.accelerator = NULL;
 	varitem.callback_action = 0; 
 	varitem.item_type = NULL;
 	if (dataset_is_time_series(datainfo)) {
-	    sprintf(varitem.path, _("%s/against time"), mpath[i]);
+	    varitem.path = 
+		g_strdup_printf(_("%s/against time"), mpath[i]);
 	} else {
-	    sprintf(varitem.path, _("%s/by observation number"), mpath[i]);
+	    varitem.path = 
+		g_strdup_printf(_("%s/by observation number"), mpath[i]);	
 	}
 	varitem.callback = (i==0)? resid_plot : fit_actual_plot;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
 
-	varstart = (i==0)? 1 : 2;
+	varstart = (i == 0)? 1 : 2;
 
 	/* put the indep vars on the menu list */
 	for (j=varstart; pmod->ci != NLS && j<=pmod->list[0]; j++) {
 	    if (pmod->list[j] == 0) continue;
 	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) 
 		continue;
-	    if (varitem.path == NULL)
-		varitem.path = mymalloc(64);
 	    varitem.accelerator = NULL;
 	    varitem.callback_action = pmod->list[j]; 
 	    varitem.item_type = NULL;
-	    sprintf(varitem.path, _("%s/against %s"), mpath[i], 
-		    datainfo->varname[pmod->list[j]]);
+	    varitem.path = 
+		g_strdup_printf(_("%s/against %s"), mpath[i],
+				datainfo->varname[pmod->list[j]]);
 	    varitem.callback = (i==0)? resid_plot : fit_actual_plot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
 	}
+
+	/* if the model has two indepdent vars, offer a 3-D fitted
+	   versus actual plot */
+	if (i == 1 && pmod->ifc && pmod->ncoeff == 3) {
+	    varitem.accelerator = NULL;
+	    varitem.callback_action = 0;
+	    varitem.item_type = NULL;
+	    varitem.path =
+		g_strdup_printf(_("%s/against %s and %s"),
+				mpath[i], 
+				datainfo->varname[pmod->list[3]],
+				datainfo->varname[pmod->list[4]]);
+	    varitem.callback = fit_actual_splot;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
+	}	
     }
-    free(varitem.path);
 }
 
 /* .................................................................. */

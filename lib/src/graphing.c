@@ -1320,6 +1320,8 @@ int gnuplot_3d (LIST list, const char *literal,
     setlocale(LC_NUMERIC, "C");
 #endif
 
+    if (flags & GP_FA)
+
     if (1) {
 	MODEL pmod;
 	double umin, umax, vmin, vmax;
@@ -1336,7 +1338,8 @@ int gnuplot_3d (LIST list, const char *literal,
 	_init_model(&pmod, pdinfo);
 	pmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!pmod.errcode && !na(pmod.fstt) &&
-	    fdist(pmod.fstt, pmod.dfn, pmod.dfd) < .10) {
+	    (fdist(pmod.fstt, pmod.dfn, pmod.dfd) < .10 ||
+	    flags & GP_FA)) {
 	    double uadj = (umax - umin) * 0.02;
 	    double vadj = (vmax - vmin) * 0.02;
 

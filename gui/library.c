@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <signal.h>
 
 #include "session.h"
 #include "selector.h"
@@ -50,6 +51,7 @@ int gui_exec_line (char *line,
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (int gui);
 static char *bufgets (char *s, int size, const char *buf);
+static int get_terminal (char *s);
 
 int replay;                 /* shared, to indicate whether we're just
 			       replaying old session commands or not */
@@ -157,6 +159,37 @@ void register_graph (void)
 
 /* ........................................................... */
 
+static void launch_gnuplot_interactive (void)
+{
+    pid_t pid;
+    char term[8];
+
+    if (get_terminal(term)) return;
+
+    signal(SIGCHLD, SIG_IGN);
+    pid = fork();
+    if (pid == -1) {
+	errbox(_("Couldn't fork"));
+	perror("fork");
+	return;
+    } else if (pid == 0) {
+	extern int errno;
+
+	errno = 0;
+
+	execlp(term, term, 
+	       "+sb", "+ls",
+	       "-geometry", "40x4", 
+	       "-title", "gnuplot: type q to quit",
+	       "-e", paths.gnuplot, paths.plotfile, "-", 
+	       NULL);
+	fprintf(stderr, "execlp: %s: %s\n", term, strerror(errno));
+	_exit(EXIT_FAILURE);
+    }
+}
+
+/* ........................................................... */
+
 static void sync_datainfos (void)
 {
     if (fullinfo == NULL || datainfo == NULL) return;
@@ -188,7 +221,8 @@ int quiet_sample_check (MODEL *pmod)
     if (checkZ == NULL || pdinfo == NULL) return 1;
 
     if (model_sample_issue(pmod, NULL, checkZ, pdinfo)) return 1;
-    else return 0;
+
+    return 0;
 }
 
 /* ......................................................... */
@@ -3092,6 +3126,34 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 
 /* ........................................................... */
 
+void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
+{
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    int list[4];
+    int err;
+
+    /* Y, X, Z */
+
+    list[0] = 3;
+    list[1] = pmod->list[4];
+    list[2] = pmod->list[3];
+    list[3] = pmod->list[1];
+
+    err = gnuplot_3d(list, NULL, &Z, datainfo,
+		     &paths, &plot_count, GP_GUI | GP_FA);
+
+    if (err == -999) {
+	errbox(_("No data were available to graph"));
+    } else if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	launch_gnuplot_interactive();
+    }
+}
+
+/* ........................................................... */
+
 #define MAXDISPLAY 4096
 /* max number of observations for which we expect to be able to 
    use the buffer approach for displaying data, as opposed to
@@ -3474,8 +3536,6 @@ static int get_terminal (char *s)
     return 1;
 }
 
-#include <signal.h>
-
 void do_splot_from_selector (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
@@ -3498,31 +3558,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     } else if (err < 0) {
 	errbox(_("gnuplot command failed"));
     } else {
-	pid_t pid;
-	char term[8];
-
-	if (get_terminal(term)) return;
-
-	signal(SIGCHLD, SIG_IGN);
-	pid = fork();
-	if (pid == -1) {
-	    errbox(_("Couldn't fork"));
-	    perror("fork");
-	    return;
-	} else if (pid == 0) {
-	    extern int errno;
-
-	    errno = 0;
-
-	    execlp(term, term, 
-		   "+sb", "+ls",
-		   "-geometry", "40x4", 
-		   "-title", "gnuplot: type q to quit",
-		   "-e", paths.gnuplot, paths.plotfile, "-", 
-		   NULL);
-	    fprintf(stderr, "execlp: %s: %s\n", term, strerror(errno));
-	    _exit(EXIT_FAILURE);
-	}
+	launch_gnuplot_interactive();
     }
 }
 

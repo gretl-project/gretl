@@ -369,6 +369,7 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
 void delete_model (GtkWidget *widget, gpointer data) 
 {
     MODEL *pmod = (MODEL *) data;
+
     if (pmod->name == NULL) {
 	free_model(pmod);
 	pmod = NULL;
@@ -466,7 +467,7 @@ void *mymalloc (size_t size)
 {
     void *mem;
    
-    if((mem = malloc(size)) == NULL) 
+    if ((mem = malloc(size)) == NULL) 
 	errbox(_("Out of memory!"));
     return mem;
 }
@@ -1534,6 +1535,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show_all(dialog);
+
     return 0;
 }
 
@@ -1789,17 +1791,16 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     };
     MODEL *pmod = vwin->data;
 
-    varitem.path = NULL;
-
     for (i=0; i<2; i++) {
-	varitem.path = mymalloc(64);
 	varitem.accelerator = NULL;
 	varitem.callback_action = 0; 
 	varitem.item_type = NULL;
 	if (dataset_is_time_series(datainfo)) {
-	    sprintf(varitem.path, _("%s/against time"), mpath[i]);
+	    varitem.path = 
+		g_strdup_printf(_("%s/against time"), mpath[i]);
 	} else {
-	    sprintf(varitem.path, _("%s/by observation number"), mpath[i]);
+	    varitem.path = 
+		g_strdup_printf(_("%s/by observation number"), mpath[i]);
 	}
 	if (i == 0) {
 	    varitem.callback = resid_plot; 
@@ -1808,6 +1809,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	}
 
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
 
 	varstart = (i == 0)? 1 : 2;
 
@@ -1816,22 +1818,37 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    if (pmod->list[j] == 0) continue;
 	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) 
 		continue;
-	    if (varitem.path == NULL)
-		varitem.path = mymalloc(64);
 	    varitem.accelerator = NULL;
 	    varitem.callback_action = pmod->list[j]; 
 	    varitem.item_type = NULL;
-	    sprintf(varitem.path, _("%s/against %s"), mpath[i], 
-		    datainfo->varname[pmod->list[j]]);
+	    varitem.path =
+		g_strdup_printf(_("%s/against %s"), mpath[i],
+				datainfo->varname[pmod->list[j]]);
 	    if (i == 0) {
 		varitem.callback = resid_plot; 
 	    } else {
 		varitem.callback = fit_actual_plot;
 	    }
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
+	}
+
+	/* if the model has two indepdent vars, offer a 3-D fitted
+	   versus actual plot */
+	if (i == 1 && pmod->ifc && pmod->ncoeff == 3) {
+	    varitem.accelerator = NULL;
+	    varitem.callback_action = 0;
+	    varitem.item_type = NULL;
+	    varitem.path =
+		g_strdup_printf(_("%s/against %s and %s"), 
+				mpath[i], 
+				datainfo->varname[pmod->list[3]],
+				datainfo->varname[pmod->list[4]]);
+	    varitem.callback = fit_actual_splot;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
 	}
     }
-    free(varitem.path);
 }
 
 /* .................................................................. */
@@ -1918,7 +1935,8 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     extern int quiet_sample_check (MODEL *pmod); /* library.c */
     int s, ok = 1;
 
-    if (Z == NULL) {
+    if (Z == NULL) { 
+	/* should be impossible, but... */
 	flip(mwin->ifac, "/File/Save to session as icon", FALSE);
 	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
 	flip(mwin->ifac, "/Edit/Copy all", FALSE);
