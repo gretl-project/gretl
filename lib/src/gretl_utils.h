@@ -111,8 +111,8 @@ enum model_selection_criteria {
 #define floatneq(x, y) (fabs((x) - (y)) > DBL_EPSILON)
 #define floatgt(x, y) ((x) - (y) > DBL_EPSILON)
 #define floatlt(x, y) ((y) - (x) > DBL_EPSILON)
-#define na(x) (fabs((x) + 999.0) < DBL_EPSILON)
-#define NADBL -999.0
+#define NADBL DBL_MAX
+#define na(x) (x == NADBL)
 
 /* functions follow */
 

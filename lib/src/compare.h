@@ -41,6 +41,7 @@ enum aux_codes {
     AUX_WHITE, /* aux. regression for heteroskedasticity (White's test) */
     AUX_COINT, /* aux. regression for cointegreation test */
     AUX_ARCH,  /* aux. regression for ARCH test */
+    AUX_DF,    /* aux. regression for Dickey-Fuller test */
     AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
     AUX_OMIT,  /* aux. regression for omitting variables */
     AUX_RESET, /* aux. regression for Ramsey's RESET */

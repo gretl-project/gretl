@@ -1624,7 +1624,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("ARMA model"))) 
 	arma_options_dialog(NULL, 0, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
-	gretl_callback(NULL, ADF, NULL);
+	do_adf(NULL, ADF, NULL);
     else if (!strcmp(item, _("Runs test"))) 
 	do_menu_op(NULL, RUNS, NULL);
     else if (!strcmp(item, _("Edit attributes")))  

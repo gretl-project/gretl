@@ -695,11 +695,12 @@ void do_adf (gpointer data, guint u, GtkWidget *widget)
 	N_("test without constant"),
 	N_("with constant"),
 	N_("with constant and trend"),
-	N_("with constant, trend and trend squared")
+	N_("with constant, trend and trend squared"),
+	N_("show regression results")
     };
     const char *title = N_("gretl: ADF test");
     const char *spintext = N_("Lag order for ADF test:");
-    int active[] = { 0, 1, 1, 1 };
+    int active[] = { 0, 1, 1, 1, 0 };
     int order = 1;
     int omax, err;
 
@@ -717,7 +718,7 @@ void do_adf (gpointer data, guint u, GtkWidget *widget)
     }
     
     err = checks_dialog(_(title), 
-			adf_opts, 4,
+			adf_opts, 5,
 			active,
 			&order, spintext,
 			omax, ADF);
@@ -736,6 +737,7 @@ void do_adf (gpointer data, guint u, GtkWidget *widget)
     if (active[1]) strcat(line, " --c");
     if (active[2]) strcat(line, " --ct");
     if (active[3]) strcat(line, " --ctt");
+    if (active[4]) strcat(line, " --verbose");
 
     if (verify_and_record_command(line) || bufopen(&prn)) {
 	return;

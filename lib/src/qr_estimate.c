@@ -42,7 +42,9 @@ static double get_tss (const double *y, int n, int ifc)
     double x, tss = 0.0;
     int i;
 
-    if (ifc) ymean = gretl_mean(0, n-1, y);
+    if (ifc) {
+	ymean = gretl_mean(0, n-1, y);
+    }
 
     for (i=0; i<n; i++) {
 	x = y[i] - ymean;

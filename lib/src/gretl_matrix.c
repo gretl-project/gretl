@@ -99,6 +99,7 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows)
  *
  * Returns: pointer to a newly allocated gretl_vector containing
  * the elements of x (or their squares), or %NULL on failure.  
+ * Missing elements of x are skipped.
  * 
  */
 
@@ -107,17 +108,20 @@ gretl_column_vector_from_array (const double *x, int n, int mod)
 {
     gretl_matrix *v;
     double xi;
-    int i;
+    int i = 0;
     
     v = gretl_column_vector_alloc(n);
     if (v == NULL) return NULL;
 
-    for (i=0; i<n; i++) {
+    while (i < n) {
 	xi = *x++;
-	if (mod == GRETL_MOD_SQUARE) {
-	    v->val[i] = xi * xi;
-	} else {
-	    v->val[i] = xi;
+	if (!na(xi)) {
+	    if (mod == GRETL_MOD_SQUARE) {
+		v->val[i] = xi * xi;
+	    } else {
+		v->val[i] = xi;
+	    }
+	    i++;
 	}
     }
 

@@ -468,7 +468,11 @@ static const char *aux_string (int aux, int format)
     }
     else if (aux == AUX_ADF) {
 	if (TEX_FORMAT(format)) return N_("Augmented Dickey--Fuller regression");
-	return N_("Augmented Dickey-Fuller regression");
+	else return N_("Augmented Dickey-Fuller regression");
+    }
+    else if (aux == AUX_DF) {
+	if (TEX_FORMAT(format)) return N_("Dickey--Fuller regression");
+	else return N_("Dickey-Fuller regression");
     }
     else if (aux == AUX_RESET) {
 	return N_("Auxiliary regression for RESET specification test");
@@ -864,6 +868,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_CHOW:
     case AUX_COINT:
     case AUX_ADF:
+    case AUX_DF:
     case AUX_RESET:
 	if (utf) {
 	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn->format)));
@@ -1369,7 +1374,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     print_coeff_table_end (prn);
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
-	pmod->aux == AUX_RESET || pmod->aux == AUX_SCR) {
+	pmod->aux == AUX_RESET || pmod->aux == AUX_SCR ||
+	pmod->aux == AUX_DF) {
 	goto close_format;
     }
 
@@ -1712,7 +1718,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	} else {
 	    pprintf(prn, " %7.3f", t);
 	}
-	if (pmod->aux == AUX_ADF) {
+	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
 	    if (c == gretl_model_get_int(pmod, "dfnum")) {
 		char pvalstr[16];
 
@@ -1810,7 +1816,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     if (pmod->sderr[c-2] > 0.) {
 	t = pmod->coeff[c-2] / pmod->sderr[c-2];
 	pprintf(prn, " \\qc %.4f\\cell", t);
-	if (pmod->aux == AUX_ADF) {
+	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
 	    do_pval = 0;
 	    pprintf(prn, " \\qc %s\\cell", I_("unknown"));
 	}

@@ -670,9 +670,6 @@ void file_selector (const char *msg, int action, gpointer data)
     char fname[MAXLEN], endname[64], startdir[MAXLEN];
     char *filter = NULL;
     gchar *trmsg = NULL;
-#ifdef ENABLE_NLS
-    gchar *trfname;
-#endif
 
     *fname = '\0';
     *endname = '\0';
