@@ -20,6 +20,13 @@
 #include "gretl.h"
 #include "graph_page.h"
 
+#ifdef G_OS_WIN32 
+# include <io.h>
+#else
+# include <unistd.h>
+# include <sys/stat.h>
+#endif
+
 enum {
     PS_OUTPUT,
     PDF_OUTPUT
@@ -34,11 +41,35 @@ struct _graphpage {
     char **fnames;
 };
 
-const char *gpage_base = "gretl_graphpage";
-const char *gpage_tex = "gretl_graphpage.tex";
-const char *gpage_plt = "gretl_graphpage.plt";
-
 static graphpage gpage;
+static char *gpage_base = "gretl_graphpage";
+
+static char *gpage_fname (const char *ext, int i)
+{
+    static char fname[MAXLEN];
+    size_t n;
+
+    strcpy(fname, paths.userdir);
+    n = strlen(fname);
+    if (fname[n - 1] != SLASH) {
+	strcat(fname, SLASHSTR);
+    }
+
+    strcat(fname, gpage_base);
+
+    if (i > 0) {
+	char num[6];
+
+	sprintf(num, "_%d", i);
+	strcat(fname, num);
+    }
+
+    if (ext != NULL) {
+	strcat(fname, ext);
+    }
+
+    return fname;
+}
 
 static void gpage_errmsg (char *msg, int gui)
 {
@@ -108,7 +139,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 
     if (ng == 1) {
 	fputs("\n\\vspace{2in}\n\n", fp);
-	strcpy(fname, "gretl_gpage_1");
+	strcpy(fname, "gretl_graphpage_1");
 	fprintf(fp, "\\includegraphics{%s}\n", fname);
     }
 
@@ -116,7 +147,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 	sprintf(fname, "gretl_gpage_%d", 1);
 	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
 	fprintf(fp, "\\vspace{%gin}\n\n", vspace);
-	sprintf(fname, "gretl_gpage_%d", 2);
+	sprintf(fname, "gretl_graphpage_%d", 2);
 	fprintf(fp, "\\includegraphics{%s}\n\n", fname);
     }
 
@@ -136,7 +167,7 @@ static int tex_graph_setup (int ng, FILE *fp)
 	vspace = 0.25;
 	fputs("\\begin{tabular}{cc}\n", fp);
 	for (i=0; i<ng; i++) {
-	    sprintf(fname, "gretl_gpage_%d", i + 1);
+	    sprintf(fname, "gretl_graphpage_%d", i + 1);
 	    fprintf(fp, "\\includegraphics[scale=%g]{%s}",
 		    scale, fname);
 	    if (i % 2 == 0) {
@@ -159,10 +190,13 @@ static void common_end (FILE *fp)
 
 static int make_graphpage_tex (void)
 {
+    char *fname;
     FILE *fp;
     int err = 0;
 
-    fp = fopen(gpage_tex, "w");
+    fname = gpage_fname(".tex", 0);
+
+    fp = fopen(fname, "w");
     if (fp == NULL) return 1;
 
     doctop(gpage.output, fp);
@@ -198,23 +232,34 @@ int graph_page_add_file (const char *fname)
 
 static int gnuplot_compile (const char *fname)
 {
-    char cmd[128];
+    char plotcmd[MAXLEN];
+    int err = 0;
 
-    sprintf(cmd, "gnuplot %s", fname);
-    return system(cmd);
+# ifdef WIN32
+    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, fname);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+# else
+    sprintf(plotcmd, "%s \"%s\"", paths.gnuplot, fname);
+    err = gretl_spawn(plotcmd);  
+# endif /* WIN32 */
+
+    return err;
 }
 
-static int gp_make_outfile (const char *fname, int i, double scale,
+static int gp_make_outfile (const char *gfname, int i, double scale,
 			    int output, int color)
 {
-    char outfile[128], line[128];
+    char line[128];
+    char *fname;
     FILE *fp, *fq;
     int err = 0;
 
-    fp = fopen(fname, "r");
+    fp = fopen(gfname, "r");
     if (fp == NULL) return 1;
 
-    fq = fopen(gpage_plt, "w");
+    fname = gpage_fname(".plt", 0);
+
+    fq = fopen(fname, "w");
     if (fq == NULL) {
 	fclose(fp);
 	return 1;
@@ -224,16 +269,16 @@ static int gp_make_outfile (const char *fname, int i, double scale,
 	fprintf(fq, "set term png%s font verdana 6 size %g,%g\n", 
 		((color)? "" : " mono"),
 		480.0 * scale, 360.0 * scale);
-	sprintf(outfile, "gretl_gpage_%d.png", i);
+	fname = gpage_fname(".png", i);
     } else {
 	fprintf(fq, "set term postscript eps%s\n", (color)? " color" : "");
-	sprintf(outfile, "gretl_gpage_%d.ps", i);
+	fname = gpage_fname(".ps", i);
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
 	}
     }
 
-    fprintf(fq, "set output '%s'\n", outfile);
+    fprintf(fq, "set output '%s'\n", fname);
 
     while (fgets(line, sizeof line, fp)) {
 	if (!strncmp(line, "set out", 7)) continue;
@@ -245,33 +290,147 @@ static int gp_make_outfile (const char *fname, int i, double scale,
     fclose(fp);
     fclose(fq);
 
-    err = gnuplot_compile(gpage_plt);
+    fname = gpage_fname(".plt", 0);
+    err = gnuplot_compile(fname);
+
+    return err;
+}
+
+#if defined(G_OS_WIN32)
+
+static int get_dvips_path (char *path)
+{
+    int ret;
+    char *p;
+
+    ret = SearchPath(NULL, "dvips.exe", NULL, MAXLEN, path, &p);
+
+    return (ret == 0);
+}
+
+#elif defined (OLD_GTK)
+
+static int spawn_dvips (char *texsrc)
+{
+    char tmp[MAXLEN];
+    struct stat sbuf;
+    int ret = 0;
+
+    sprintf(tmp, "cd %s && dvips %s", paths.userdir, texsrc);
+    system(tmp);
+    sprintf(tmp, "%s%s.ps", paths.userdir, texsrc);
+    if (stat(tmp, &sbuf)) {
+	errbox(_("Failed to process TeX file"));
+	ret = 1;
+    } 
+
+    return ret;
+}
+
+#else
+
+#include <signal.h>
+
+static int spawn_dvips (char *texsrc)
+{
+    GError *error = NULL;
+    gchar *errout = NULL, *sout = NULL;
+    gchar *argv[] = {
+	"dvips",
+	texsrc,
+	NULL
+    };
+    int ok, status;
+    int ret = LATEX_OK;
+
+    signal(SIGCHLD, SIG_DFL);
+
+    ok = g_spawn_sync (paths.userdir, /* working dir */
+		       argv,
+		       NULL,    /* envp */
+		       G_SPAWN_SEARCH_PATH,
+		       NULL,    /* child_setup */
+		       NULL,    /* user_data */
+		       &sout,   /* standard output */
+		       &errout, /* standard error */
+		       &status, /* exit status */
+		       &error);
+
+    if (!ok) {
+	errbox(error->message);
+	g_error_free(error);
+	ret = LATEX_EXEC_FAILED;
+    } else if (errout && *errout) {
+	errbox(errout);
+	ret = LATEX_ERROR;
+    } else if (status != 0) {
+	gchar *errmsg;
+
+	errmsg = g_strdup_printf("%s\n%s", 
+				 _("Failed to process TeX file"),
+				 sout);
+	errbox(errmsg);
+	g_free(errmsg);
+	ret = LATEX_ERROR;
+    }
+
+    if (errout != NULL) g_free(errout);
+    if (sout != NULL) g_free(sout);
+
+    return ret;
+}
+
+#endif /* !G_OS_WIN32 */
+
+int dvips_compile (char *texshort)
+{
+#ifdef G_OS_WIN32
+    static char dvips_path[MAXLEN];
+#endif
+    int err = 0;
+
+#ifdef G_OS_WIN32
+    if (*dvips_path == 0 && get_dvips_path(dvips_path)) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
+	return 1;
+    }
+
+    sprintf(tmp, "\"%s\" %s", dvips_path, texshort);
+    if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+	return 1;
+    }
+#else
+    err = spawn_dvips(texshort);
+#endif /* G_OS_WIN32 */
 
     return err;
 }
 
 static int latex_compile_graph_page (void)
 {
-    char cmd[128];
     int err;
 
-    if (gpage.output == PDF_OUTPUT) {
-	sprintf(cmd, "pdflatex %s", gpage_base);
-	err = system(cmd);
-    } else {
-	sprintf(cmd, "latex %s", gpage_base);
-	err = system(cmd);
-	if (!err) {
-	    sprintf(cmd, "dvips %s", gpage_base);
-	    err = system(cmd);
-	}
+    /* FIXME pdf output */
+
+    err = latex_compile(gpage_base);
+
+    if (err = LATEX_ERROR) {
+	char *fname = gpage_fname(".log", 0);
+
+	view_file(fname, 0, 1, 78, 350, VIEW_FILE);
     }
+
+    if (!err) {
+	err = dvips_compile(gpage_base);
+    }    
 
     return err;
 }
 
 static int make_gp_output (void)
 {
+    char *fname;
     double scale = 1.0;
     int i;
     int err = 0;
@@ -287,19 +446,22 @@ static int make_gp_output (void)
 			      gpage.output, gpage.color);
     }
 
-    remove(gpage_plt); 
+    fname = gpage_fname(".plt", 0);
+    remove(fname); 
 
     return err;
 }
 
 static int real_display_gpage (void)
 {
-    char cmd[128];
+    char *fname, cmd[MAXLEN];
 
     if (gpage.output == PDF_OUTPUT) {
-	sprintf(cmd, "acroread %s.pdf", gpage_base);
+	fname = gpage_fname(".pdf", 0);
+	sprintf(cmd, "acroread \"%s\"", fname);
     } else {
-	sprintf(cmd, "gv %s.ps", gpage_base);
+	fname = gpage_fname(".ps", 0);
+	sprintf(cmd, "gv \"%s\"", fname);
     }
 
     return system(cmd);
@@ -307,21 +469,25 @@ static int real_display_gpage (void)
 
 static void gpage_cleanup (void)
 {
-    char fname[128];
+    char *fname;
     int i;
 
     for (i=0; i<gpage.ngraphs; i++) {
-	sprintf(fname, "gretl_gpage_%d.ps", i + 1);
+	if (gpage.output == PDF_OUTPUT) {
+	    fname = gpage_fname(".png", i + 1);
+	} else {
+	    fname = gpage_fname(".ps", i + 1);
+	}
 	remove(fname);
     }
 
-    sprintf(fname, "%s.tex", gpage_base);
+    fname = gpage_fname(".tex", 0);
     remove(fname);
-    sprintf(fname, "%s.dvi", gpage_base);
+    fname = gpage_fname(".dvi", 0);
     remove(fname);
-    sprintf(fname, "%s.log", gpage_base);
+    fname = gpage_fname(".log", 0);
     remove(fname);
-    sprintf(fname, "%s.aux", gpage_base);
+    fname = gpage_fname(".aux", 0);
     remove(fname);
 }
 
@@ -352,7 +518,7 @@ int display_graph_page (void)
 	real_display_gpage();
     }
 
-    gpage_cleanup();
+    /* gpage_cleanup(); */
 
     return err;
 }

@@ -22,6 +22,12 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
+enum {
+    LATEX_OK,
+    LATEX_EXEC_FAILED,
+    LATEX_ERROR
+} tex_return_codes;
+
 /* general purpose functions */
 
 #ifdef G_OS_WIN32
@@ -231,6 +237,10 @@ int execute_script (const char *runfile, const char *buf,
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
 
 int verify_and_record_command (char *line);
+
+/* other */
+
+int latex_compile (const char *texshort);
 
 #endif /* LIBRARY_H */
 

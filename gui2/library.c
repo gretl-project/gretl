@@ -4342,12 +4342,6 @@ int do_store (char *savename, unsigned long oflag, int overwrite)
     return err;
 }
 
-enum {
-    LATEX_OK,
-    LATEX_EXEC_FAILED,
-    LATEX_ERROR
-} tex_return_codes;
-
 #if defined(G_OS_WIN32)
 
 static int get_latex_path (char *latex_path)
@@ -4362,7 +4356,7 @@ static int get_latex_path (char *latex_path)
 
 #elif defined (OLD_GTK)
 
-static int spawn_latex (char *texsrc)
+static int spawn_latex (const char *texsrc)
 {
     char tmp[MAXLEN];
     struct stat sbuf;
@@ -4382,7 +4376,7 @@ static int spawn_latex (char *texsrc)
 
 #else
 
-static int spawn_latex (char *texsrc)
+static int spawn_latex (const char *texsrc)
 {
     GError *error = NULL;
     gchar *errout = NULL, *sout = NULL;
@@ -4435,6 +4429,31 @@ static int spawn_latex (char *texsrc)
 
 #endif /* !G_OS_WIN32 */
 
+int latex_compile (const char *texshort)
+{
+#ifdef G_OS_WIN32
+    static char latex_path[MAXLEN];
+#endif
+    int err = LATEX_OK;
+
+#ifdef G_OS_WIN32
+    if (*latex_path == 0 && get_latex_path(latex_path)) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
+	return LATEX_EXEC_FAILED;
+    }
+
+    sprintf(tmp, "\"%s\" %s", latex_path, texshort);
+    if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+	return LATEX_EXEC_FAILED;
+    }
+#else
+    err = spawn_latex(texshort);
+#endif /* G_OS_WIN32 */
+
+    return err;
+}
+
 /* ........................................................... */
 
 void view_latex (gpointer data, guint code, GtkWidget *widget)
@@ -4444,9 +4463,6 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     windata_t *mydata = NULL;
     MODEL *pmod = NULL;
     char *texshort = NULL;
-#ifdef G_OS_WIN32
-    static char latex_path[MAXLEN];
-#endif
 
     if (code != LATEX_VIEW_MODELTABLE) {
 	mydata = (windata_t *) data;
@@ -4496,31 +4512,20 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     if (texshort == NULL) {
 	errbox(_("Failed to process TeX file"));
 	return;
-    }  
+    } 
 
+    err = latex_compile(texshort);
+    if (err == LATEX_OK) {
 #ifdef G_OS_WIN32
-    if (*latex_path == 0 && get_latex_path(latex_path)) {
-	DWORD dw = GetLastError();
-	win_show_error(dw);
-	return;
-    }
-
-    sprintf(tmp, "\"%s\" %s", latex_path, texshort);
-    if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
-	return;
-    } else {
 	sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
 	if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
 	    DWORD dw = GetLastError();
 	    win_show_error(dw);
-	}	
-    }
+	}
 #else
-    err = spawn_latex(texshort);
-    if (err == LATEX_OK) {
 	gretl_fork(viewdvi, texbase);
+#endif
     }
-#endif /* G_OS_WIN32 */
 
     remove(texfile);
 
