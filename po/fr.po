@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "POT-Creation-Date: 2003-10-03 16:00-0400\n"
-"PO-Revision-Date: 2003-10-03 16:39-0400\n"
+"PO-Revision-Date: 2003-10-03 18:33-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -7629,7 +7629,7 @@ msgstr "/Fichier/_Sauvegarder comme texte..."
 
 #: gui/gui_utils.c:60 gui2/gui_utils.c:84
 msgid "/File/Save to session as icon"
-msgstr "/Fichier/Sauvegarder la session comme icône"
+msgstr "/Fichier/Sauvegarder comme icône"
 
 #: gui/gui_utils.c:61 gui2/gui_utils.c:85
 msgid "/File/Save as icon and close"
