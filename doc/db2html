@@ -1,70 +1,17 @@
-#!/bin/sh
+# !/bin/sh
 
-DSSSLDIR=/usr/share/sgml/docbook-dsssl
-HTML_STYLESHEET=$DSSSLDIR/frames/docbook.css
-ADMON_GRAPHICS=$DSSSLDIR/images/*.gif
 XMLDCL=/opt/jade/share/xml.dcl
+WORKDIR=./manual-html
+DB_STYLESHEET=manual-both.dsl
 
-TMPDIR=DBTOHTML_OUTPUT_DIR$$
-
-echo TMPDIR is $TMPDIR
-
-if [ $# -gt 2 ]
+if [ ! -r $1 ]
 then
-  echo "Usage: `basename $0` [filename.sgml]" >&2
+  echo Cannot read \"$1\".  Exiting. >&2
   exit 1
 fi
 
-if [ $# -eq 1 ]
-then
-  if [ ! -r $1 ]
-  then
-    echo Cannot read \"$1\".  Exiting. >&2
-    exit 1
-  fi
-  if echo $1 | egrep -i '\.xml' >/dev/null 2>&1
-  then
-    # now make sure that the output directory is always a subdirectory
-    # of the current directory
-    echo
-    input_file=`basename $1`
-    base="`echo $input_file | sed 's,\.xml$,,;s,\.sgml$,,'`"
-    output=${base}-html
-    DB_STYLESHEET=${base}-both.dsl
-    echo "input file was called $input_file -- output will be in $output"
-    echo "using stylesheet $DB_STYLESHEET"
-    echo
-  fi
-fi
-
-mkdir $TMPDIR
 SAVE_PWD=`pwd`
-if [ $1 = `basename $1` ]; then
-  echo "working on ../$1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ../${DB_STYLESHEET}\#html $XMLDCL ../$1; cd $SAVE_PWD)
-else
-  echo "working on $1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET}\#html $XMLDCL $1; cd $SAVE_PWD)
-fi
-
-if [ $# -eq 1 ]
-then
-  if [ -d ${output} ]
-  then
-    rm -rf $output
-  fi
-  echo "about to copy cascading stylesheet to temp dir"
-  cp ${HTML_STYLESHEET} ${TMPDIR}/
-  # mkdir ${TMPDIR}/stylesheet-images
-  # cp ${ADMON_GRAPHICS} ${TMPDIR}/stylesheet-images
-  # mkdir ${TMPDIR}/figures
-  # cp figures/*.png ${TMPDIR}/figures
-  echo "about to rename temporary directory to $output"
-  mv ${TMPDIR} $output
-else
-  cat $TMPDIR/*
-fi
-
-rm -rf $TMPDIR
+echo "working on ../$1"
+(cd $WORKDIR; jade -t sgml -ihtml -d ../${DB_STYLESHEET}\#html $XMLDCL ../$1; cd $SAVE_PWD)
 
 exit 0

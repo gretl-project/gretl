@@ -464,6 +464,12 @@ static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
     view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
 }
 
+static void 
+codebook_callback_wrapper (gpointer p, guint v, GtkWidget *w)
+{
+    db_view_codebook(w, p);
+}
+
 /* ........................................................... */
 
 static void db_menu_find (GtkWidget *w, windata_t *dbwin)
@@ -522,7 +528,20 @@ static void build_db_popup (windata_t *win, int cb)
 
 /* ........................................................... */
 
-static void set_up_db_menu (windata_t *win)
+static void add_codebook_to_menu (windata_t *vwin)
+{
+    GtkItemFactoryEntry item;
+    const gchar *mpath = N_("/_Codebook");
+
+    item.callback = codebook_callback_wrapper;
+    item.callback_action = 0;
+    item.item_type = NULL;
+    item.path = g_strdup(_(mpath));
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+    g_free(item.path);
+}
+
+static void set_up_db_menu (windata_t *win, int cb)
 {
 #ifndef OLD_GTK
     GtkItemFactoryEntry db_items[] = {
@@ -547,6 +566,10 @@ static void set_up_db_menu (windata_t *win)
 #endif
     gtk_item_factory_create_items(win->ifac, n_items, db_items, win);
     win->mbar = gtk_item_factory_get_widget(win->ifac, "<main>");
+
+    if (cb) {
+	add_codebook_to_menu(win);
+    }
 }
 
 /* ........................................................... */
@@ -574,10 +597,16 @@ static int db_has_codebook (const char *fname)
 
     strcpy(cbname, fname);
     strcat(cbname, ".cb");
-
+    
+    fprintf(stderr, "checking for codebook '%s'\n", cbname);
     fp = fopen(cbname, "r");
     
-    if (fp == NULL) return 0;
+    if (fp == NULL) {
+	fprintf(stderr, "couldn't open codebook\n");
+	return 0;
+    } else {
+	fprintf(stderr, "codebook found OK\n");
+    }
     
     fclose(fp);
     return 1;
@@ -613,7 +642,7 @@ static int display_db_series_list (int action, char *fname, char *buf)
     char *titlestr;
     windata_t *dbwin;
     int db_width = 700, db_height = 420;
-    int err = 0;
+    int cb, err = 0;
 
     dbwin = mymalloc(sizeof *dbwin);
     if (dbwin == NULL) return 1;
@@ -652,8 +681,9 @@ static int display_db_series_list (int action, char *fname, char *buf)
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (dbwin->w), main_vbox);
 
-    set_up_db_menu(dbwin);
-    build_db_popup(dbwin, db_has_codebook(fname));
+    cb = db_has_codebook(fname);
+    set_up_db_menu(dbwin, cb);
+    build_db_popup(dbwin, cb);
 
     gtk_box_pack_start (GTK_BOX (main_vbox), dbwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show (dbwin->mbar);
