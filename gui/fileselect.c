@@ -28,6 +28,42 @@ extern GtkItemFactoryEntry sample_script_items[6];
 extern char remember_dir[MAXLEN];
 extern void do_save_graph (const char *fname, const char *savestr);
 
+struct extmap {
+    int action;
+    char *ext;
+};
+
+static struct extmap action_map[] = {
+    {SAVE_DATA, "*.dat"},
+    {SAVE_GZDATA, "*.gz"},
+    {SAVE_BIN1, "*.dat"},
+    {SAVE_BIN2, "*.dat"},
+    {SAVE_CMDS, "*.inp"},
+    {SAVE_SCRIPT, "*.inp"},
+    {SAVE_CONSOLE, "*.inp"},
+    {SAVE_MODEL, "*.txt"},
+    {SAVE_SESSION, "*.gretl"},
+    {SAVE_GP_CMDS, "*.gp"},
+    {EXPORT_CSV, "*.csv"},
+    {EXPORT_R, "*.R"},
+    {EXPORT_R_ALT, "*.R"},
+    {EXPORT_OCTAVE, "*.m"},
+    {SAVE_OUTPUT, "*.txt"},
+    {SAVE_TEX_TAB, "*.tex"},
+    {SAVE_TEX_EQ, "*.tex"},
+#ifdef G_OS_WIN32
+    {SAVE_HTML, "*.htm"},
+#else
+    {SAVE_HTML, "*.html"},
+#endif
+    {OPEN_DATA, "*.dat*"},
+    {OPEN_SCRIPT, "*.inp"},
+    {OPEN_SESSION, "*.gretl"},
+    {OPEN_CSV,  "*.csv"},
+    {OPEN_BOX, "*.box"},
+    {OP_MAX, NULL}
+};
+
 /* ........................................................... */
 
 static int action_to_flag (const int action)
@@ -42,6 +78,62 @@ static int action_to_flag (const int action)
     case EXPORT_CSV: return OPT_C;
     default: return 0;
     }
+}
+
+/* ........................................................... */
+
+static char *get_gp_ext (const char *termtype)
+{
+    if (!strcmp(termtype, "postscript")) return "*.eps";
+    else if (!strcmp(termtype, "fig")) return "*.fig";
+    else if (!strcmp(termtype, "latex")) return "*.tex";
+    else if (!strcmp(termtype, "png")) return "*.png";
+    else if (!strcmp(termtype, "plot commands")) return "*.gp";
+    else return "*";
+}
+
+/* ........................................................... */
+
+static char *get_ext (int action, gpointer data)
+{
+    int i;
+    char *s = "*";
+
+    if (action == SAVE_GNUPLOT) {
+	GPT_SPEC *plot = (GPT_SPEC *) data;
+	return get_gp_ext(plot->termtype);
+    }
+    if (action == SAVE_LAST_GRAPH) 
+	return get_gp_ext(data);
+    for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
+	if (action == action_map[i].action) {
+	    s = action_map[i].ext;
+	    break;
+	}
+    }
+    return s;
+}
+
+/* ........................................................... */
+
+static void maybe_add_ext (char *fname, int action, gpointer data)
+{
+    FILE *fp;
+    char *ext = NULL;
+
+    /* don't mess with the name of a previously existing file */
+    if ((fp = fopen(fname, "r")) && fgetc(fp) != EOF) {
+	fclose(fp);
+	return;
+    }    
+
+    /* don't mess with a filename that already has an extension */
+    if (dotpos(fname) != strlen(fname)) return;
+    
+    /* otherwise add an appropriate extension */
+    ext = get_ext(action, data);
+    if (ext != NULL && strlen(ext) > 1)
+	strcat(fname, ext + 1);
 }
 
 /* ........................................................... */
@@ -74,7 +166,7 @@ struct win32_filtermap {
     char *filter;
 };
 
-static char *get_filters (int action, gpointer data)
+static char *get_filter (int action, gpointer data)
 {
     int i;
     char *filter;
@@ -149,7 +241,7 @@ void file_selector (char *msg, char *startdir, int action,
     of.lStructSize = sizeof of;
 #endif
     of.hwndOwner = NULL;
-    of.lpstrFilter = get_filters(action, data);
+    of.lpstrFilter = get_filter(action, data);
     of.lpstrCustomFilter = NULL;
     of.nFilterIndex = 1;
     of.lpstrFile = fname;
@@ -221,6 +313,8 @@ void file_selector (char *msg, char *startdir, int action,
 	return;
     }
 
+    maybe_add_ext(fname, action, data);
+
     if (action >= SAVE_DATA && action < END_SAVE_DATA) {
 	do_store(fname, action_to_flag(action));
     }
@@ -271,65 +365,6 @@ void file_selector (char *msg, char *startdir, int action,
 
 #ifndef G_OS_WIN32
 
-static char *get_gp_suffix (const char *termtype)
-{
-    if (!strcmp(termtype, "postscript")) return "*.eps";
-    else if (!strcmp(termtype, "fig")) return "*.fig";
-    else if (!strcmp(termtype, "latex")) return "*.tex";
-    else if (!strcmp(termtype, "png")) return "*.png";
-    else if (!strcmp(termtype, "plot commands")) return "*.gp";
-    else return "*";
-}
-
-struct extmap {
-    int action;
-    char *ext;
-};
-
-static char *get_filters (int action, gpointer data)
-{
-    int i;
-    char *s = "*";
-    static struct extmap map[] = {
-	{SAVE_DATA, "*.dat"},
-	{SAVE_GZDATA, "*.gz"},
-	{SAVE_BIN1, "*.dat"},
-	{SAVE_BIN2, "*.dat"},
-	{SAVE_CMDS, "*.inp"},
-	{SAVE_SCRIPT, "*.inp"},
-	{SAVE_CONSOLE, "*.inp"},
-	{SAVE_MODEL, "*.txt"},
-	{SAVE_SESSION, "*.gretl"},
-	{SAVE_GP_CMDS, "*.gp"},
-	{EXPORT_CSV, "*.csv"},
-	{EXPORT_R, "*.R"},
-	{EXPORT_R_ALT, "*.R"},
-	{EXPORT_OCTAVE, "*.m"},
-	{SAVE_OUTPUT, "*.txt"},
-	{SAVE_TEX_TAB, "*.tex"},
-	{SAVE_TEX_EQ, "*.tex"},
-	{SAVE_HTML, "*.html"},
-	{OPEN_DATA, "*.dat*"},
-	{OPEN_SCRIPT, "*.inp"},
-	{OPEN_SESSION, "*.gretl"},
-	{OPEN_CSV,  "*.csv"},
-	{OPEN_BOX, "*.box"}};
-
-    if (action == SAVE_GNUPLOT) {
-	GPT_SPEC *plot = (GPT_SPEC *) data;
-	return get_gp_suffix(plot->termtype);
-    }
-    if (action == SAVE_LAST_GRAPH) 
-	return get_gp_suffix(data);
-    for (i=0; i < sizeof map / sizeof *map; i++) {
-	if (action == map[i].action) {
-	    s = map[i].ext;
-	    break;
-	}
-    }
-    return s;
-}
-
 /* ........................................................... */
 
 static void filesel_callback (GtkWidget *w, gpointer data) 
@@ -340,6 +375,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     char fname[MAXLEN];
     char *test, *path, *suff, title[48];
     FILE *fp = NULL;
+    gpointer extdata = NULL;
 
     test = gtk_entry_get_text(GTK_ENTRY(fs->file_entry));
     if (test == NULL || *test == '\0') 
@@ -354,14 +390,6 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	    return;
 	} else fclose(fp);
     } 
-#ifdef notdef
-    else { /* funky! */
-	if ((fp = fopen(fname, "a")) == NULL) {
-	    errbox("Couldn't open specified file");
-	    return;
-	} else fclose(fp);
-    }
-#endif
 
     strcpy(title, "gretl: ");
     strncat(title, test, 40);
@@ -407,6 +435,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     }
 
     /* now for the save options */
+    if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH) 
+	extdata = gtk_object_get_data(GTK_OBJECT(fs), "graph");
+    maybe_add_ext(fname, action, extdata); 
+
     suff = strrchr(fname, '.');
     if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, ".dat")) {
 	errbox("The .dat suffix should be used only\n"
@@ -478,7 +510,7 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
     gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
 
     gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), 
-				       get_filters(action, data));
+				       get_ext(action, data));
 
     gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->ok_button),
 		       "clicked", 
@@ -519,3 +551,4 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
 }
 
 #endif /* end of non-MS Windows code */
+

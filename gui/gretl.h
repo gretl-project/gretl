@@ -107,7 +107,8 @@ enum file_ops {
     SAVE_LAST_GRAPH,
     SAVE_GP_CMDS,
     SAVE_CONSOLE,
-    SAVE_HTML
+    SAVE_HTML,
+    OP_MAX
 };
 
 enum editables {
