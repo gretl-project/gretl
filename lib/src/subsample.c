@@ -1159,7 +1159,7 @@ int add_subsampled_dataset_to_model (MODEL *pmod)
     }
 
     /* copy across info on series */
-    copy_series_info(pmod->dataset->dinfo, fullinfo);
+    copy_series_info(modinfo, fullinfo);
 
     /* copy across data (and case markers, if any) */
     copy_data_to_subsample(modZ, modinfo,
