@@ -229,6 +229,7 @@ static int aliased (char *str)
                          c == SCATTERS || \
                          c == ARMA || \
                          c == GARCH || \
+                         c == POISSON || \
 		         c == EQUATION) 
 
 #define TAKES_LAG_ORDER(c) (c == ADF || \
@@ -1684,7 +1685,8 @@ pprint_maybe_quoted_str (PRN *prn, const char *s)
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
                        c == MPOLS || c == SCATTERS || c == GNUPLOT || \
-                       c == LOGISTIC || c == GARCH || c == EQUATION)
+                       c == LOGISTIC || c == GARCH || c == EQUATION || \
+		       c == POISSON)
 
 /* The following may appear to be absurdly complicated.  Nonetheless,
    I _think_ it is only as complex as it has to be, given the several 

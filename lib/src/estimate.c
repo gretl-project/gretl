@@ -3772,6 +3772,19 @@ MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return tmod;
 }
 
+static int get_offset_var (int *list)
+{
+    int l0 = list[0];
+    int ret = 0;
+
+    if (list[l0 - 1] == LISTSEP) {
+	ret = list[l0];
+	list[0] -= 2;
+    }
+
+    return ret;
+}
+
 /**
  * poisson_model:
  * @list: dependent variable plus list of regressors.
@@ -3789,9 +3802,12 @@ MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     MODEL pmodel;
     void *handle;
-    int (* poisson_estimate) (MODEL *, const double **, DATAINFO *, PRN *);
+    int offvar;
+    int (* poisson_estimate) (MODEL *, int, double ***, DATAINFO *, PRN *);
 
     *gretl_errmsg = '\0';
+
+    offvar = get_offset_var(list);
 
     /* run an initial OLS to "set the model up" and check for errors.
        the poisson_estimate_driver function will overwrite the
@@ -3811,7 +3827,7 @@ MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return pmodel;
     }
 
-    (*poisson_estimate) (&pmodel, (const double **) *pZ, pdinfo, prn);
+    (*poisson_estimate) (&pmodel, offvar, pZ, pdinfo, prn);
 
     close_plugin(handle);
 
