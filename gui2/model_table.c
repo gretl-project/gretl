@@ -456,7 +456,7 @@ static void print_model_table_coeffs (PRN *prn)
 	    if (pmod == NULL) continue;
 	    if ((k = var_is_in_model(v, pmod))) {
 		if (tex) {
-		    pprintf(prn, "& \\small{(%#.4g)} ", pmod->sderr[k-2]);
+		    pprintf(prn, "& \\footnotesize{(%#.4g)} ", pmod->sderr[k-2]);
 		} else {
 		    char numstr[32];
 
