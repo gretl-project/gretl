@@ -10,8 +10,7 @@
 <!-- The description is the only element that is absolutely
      required of a command -->
 
-<!ELEMENT command (arglist?, optargs?, options?, examples?,
-                   description, option-notes?, addendum?, 
+<!ELEMENT command (toptable?, description, option-notes?, addendum?, 
                    gui-access?, numinfo?)>
 
 <!ATTLIST command
@@ -30,7 +29,9 @@
    examples   CDATA #REQUIRED
 >
 
-<!ELEMENT arglist      (argument)+>
+<!ELEMENT toptable (arguments?, optargs?, options?, examples?)>
+
+<!ELEMENT arguments    (argument)+>
 <!ELEMENT optargs      (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>

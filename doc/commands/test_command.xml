@@ -8,30 +8,34 @@
 
   <command name="ols" xref="ols" section="Estimation">
 
-    <arglist>
-      <argument>depvar</argument>
-      <argument>indepvars</argument>
-    </arglist>
+    <toptable>
 
-    <options>
-      <option>
-	<flag>--vcv</flag>
-	<effect>Print covariance matrix</effect>
-      </option>
-      <option>
-	<flag>--robust</flag>
-	<effect>Display robust standard errors</effect>
-      </option>
-      <option>
-	<flag>--quiet</flag>
-	<effect>Suppress printing of results</effect>
-      </option>
-    </options>
+      <arguments>
+	<argument>depvar</argument>
+	<argument>indepvars</argument>
+      </arguments>
 
-    <examples>
-      <example>ols 1 0 2 3 4</example>
-      <example>ols y 0 x1 x3 --vcv</example>
-    </examples>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>Print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>Display robust standard errors</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>Suppress printing of results</effect>
+	</option>
+      </options>
+
+      <examples>
+	<example>ols 1 0 2 3 4</example>
+	<example>ols y 0 x1 x3 --vcv</example>
+      </examples>
+
+    </toptable>
 
     <description>
       <para>

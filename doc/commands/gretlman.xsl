@@ -7,81 +7,105 @@
 </xsl:template>
 
 <xsl:template match="command">
-<sect2 id="cmd-{@name}">
- <title><xsl:value-of select="@name"/></title>
-   <xsl:apply-templates/>
-<xsl:text>&#xa;</xsl:text>
-</sect2>
-<xsl:text>&#xa;</xsl:text>
+  <xsl:text>&#xa;</xsl:text>
+  <sect2 id="cmd-{@name}">
+    <title><xsl:value-of select="@name"/></title>
+  <xsl:text>&#xa;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&#xa;</xsl:text>
+  </sect2>
+  <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="numinfo">
-<xsl:text>Numeric info on command elements: </xsl:text>
- <xsl:apply-templates/>
-<xsl:text>&#xa;</xsl:text>
+<xsl:template match="toptable">
+ <xsl:text>&#xa;</xsl:text>
+ <informaltable role="cmd" frame="none">
+ <tgroup cols="2"><colspec colnum="1" colwidth="82pt"/>
+ <tbody>
+  <xsl:text>&#xa;</xsl:text>
+    <xsl:apply-templates/>
+    </tbody>
+   </tgroup>
+  </informaltable> 
+ <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="option">
-<row>
- <entry><xsl:apply-templates/></entry>
-</row>
-<xsl:text>&#xa;</xsl:text>
+ <row>
+   <xsl:choose>
+     <xsl:when test="position() = 1">
+        <entry>Options:</entry>
+     </xsl:when>
+     <xsl:otherwise>
+        <entry/>
+     </xsl:otherwise>
+    </xsl:choose>
+    <entry><xsl:apply-templates/></entry>
+  </row>
+  <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="arguments">
+  <row>
+    <entry>Arguments:</entry>
+    <entry><replaceable><xsl:apply-templates/></replaceable></entry>
+  </row>
+  <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="argument">
-<row>
- <entry><replaceable><xsl:apply-templates/></replaceable></entry>
-</row>
-<xsl:text>&#xa;</xsl:text>
-</xsl:template>
-
-<xsl:template match="argument">
-<row>
-  <entry><xsl:apply-templates/></entry>
-</row>
-<xsl:text>&#xa;</xsl:text>
+  <xsl:apply-templates/><xsl:text> </xsl:text>
 </xsl:template>
 
 <xsl:template match="example">
-<row>
-  <entry><literal><xsl:apply-templates/></literal></entry>
-</row>
-<xsl:text>&#xa;</xsl:text>
+ <row>
+ <xsl:choose>
+   <xsl:when test="position() = 1">
+     <entry>Examples:</entry>
+    </xsl:when>
+    <xsl:otherwise>
+      <entry></entry>
+    </xsl:otherwise>
+ </xsl:choose>
+ <entry><literal><xsl:apply-templates/></literal></entry>
+ </row>
+ <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="flag">
-<literal><xsl:apply-templates/></literal>
+  <literal><xsl:apply-templates/></literal>
 </xsl:template>
 
 <xsl:template match="effect">
-<xsl:text>(</xsl:text><xsl:apply-templates/><xsl:text>)</xsl:text>
+  <xsl:text> (</xsl:text><xsl:apply-templates/><xsl:text>)</xsl:text>
 </xsl:template>
 
 <xsl:template match="repl">
-<replaceable><xsl:apply-templates/></replaceable>
+  <replaceable><xsl:apply-templates/></replaceable>
 </xsl:template>
 
 <xsl:template match="cmd">
-<command><xsl:apply-templates/></command>
+  <command><xsl:apply-templates/></command>
 </xsl:template>
 
 <xsl:template match="program">
-<application><xsl:apply-templates/></application>
+  <application><xsl:apply-templates/></application>
 </xsl:template>
 
 <xsl:template match="literal">
-<literal><xsl:apply-templates/></literal>
+  <literal><xsl:apply-templates/></literal>
 </xsl:template>
 
 <xsl:template match="mathvar">
-<emphasis><xsl:apply-templates/></emphasis>
+  <emphasis><xsl:apply-templates/></emphasis>
 </xsl:template>
 
 <xsl:template match="para">
-<para>
-<xsl:apply-templates/>
-</para>
-<xsl:text>&#xa;</xsl:text>
+  <xsl:text>&#xa;</xsl:text>
+  <para>
+    <xsl:apply-templates/>
+  </para>
+  <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 </xsl:stylesheet>

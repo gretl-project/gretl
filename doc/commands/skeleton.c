@@ -31,36 +31,38 @@ void print_skel_for_command (int ci)
 	strcpy(section, "Unknown");
     }
 
-    printf("  <command name=\"%s\" xref=\".\" section=\"%s\">\n",
-	   cmdword, section);
+    printf("  <command name=\"%s\" xref=\"cmd-%s\" section=\"%s\">\n",
+	   cmdword, cmdword, section);
 
-    puts("    <arglist>");
-    puts("      <argument>.</argument>");
-    puts("      <argument>.</argument>");
-    puts("    </arglist>");
+    puts("\n    <toptable>");
+    puts("      <arguments>");
+    puts("        <argument>.</argument>");
+    puts("        <argument>.</argument>");
+    puts("      </arguments>");
 
     if (opts != NULL) {
-	fputs("    <options>\n", stdout);
+	fputs("      <options>\n", stdout);
 	while ((opt = *opts++)) {
-	    puts("      <option>");
-	    printf("      <flag>--%s</flag>\n", opt);
-	    printf("      <effect>.</effect>\n");
-	    puts("      </option>");
+	    puts("        <option>");
+	    printf("        <flag>--%s</flag>\n", opt);
+	    printf("        <effect>.</effect>\n");
+	    puts("        </option>");
 	}
-	puts("     </options>");
+	puts("       </options>");
 	free(opts);
     }
 
-    puts("    <examples>");
-    puts("      <example>.</example>");
-    puts("    </examples>");
-    puts("    <description><para>Description goes here.</para>");
+    puts("      <examples>");
+    puts("        <example>.</example>");
+    puts("      </examples>");
+    puts("    </toptable>");
+    puts("\n    <description><para>Description goes here.</para>");
     puts("    </description>");
-    puts("    <gui-access>");
+    puts("\n    <gui-access>");
     puts("      <menu-path>.</menu-path>");
     puts("      <other-access>.</other-access>");
     puts("    </gui-access>");
-    puts("  </command>\n");	
+    puts("\n  </command>\n");	
 }
 
 int main (void)
