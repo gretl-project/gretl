@@ -83,6 +83,8 @@ void model_info_free (model_info *model)
 {
     int i;
 
+    if (model == NULL) return;
+
     free(model->theta);
 
     if (model->series != NULL) {
@@ -414,13 +416,7 @@ static int model_info_init (model_info *model, const double *init_coeff)
     }
 
     /* initialize parameters */
-#ifdef BHHH_DEBUG
-    fprintf(stderr, "model_info_init: initializing theta\n");
-#endif
     for (i=0; i<k; i++) {
-#ifdef BHHH_DEBUG
-	fprintf(stderr, "theta[%d] = %g\n", i, init_coeff[i]);
-#endif
 	model->theta[i] = init_coeff[i];
     }
 

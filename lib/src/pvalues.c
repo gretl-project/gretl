@@ -155,6 +155,11 @@ double normal_pdf (double x)
     return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * x * x);
 }
 
+double log_normal_pdf (double x)
+{
+    return (x * x) / 2.0 - 0.91893853320467274178;
+}
+
 static double get_number_or_val (const char *s, 
 				 const double **Z,
 				 const DATAINFO *pdinfo)

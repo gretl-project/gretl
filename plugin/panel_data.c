@@ -1053,6 +1053,10 @@ int panel_autocorr_test (MODEL *pmod, int order,
         return E_DATA;
     }
 
+    if (pmod->missmask != NULL) {
+	return E_MISSDATA;
+    }
+
     /* get number of cross-sectional units */
     nunits = sn / pdinfo->pd;
 

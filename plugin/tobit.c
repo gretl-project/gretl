@@ -157,7 +157,7 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 
 /* Transcribe the VCV matrix into packed triangular form */
 
-static int make_vcv (MODEL *pmod, gretl_matrix *v)
+static int make_vcv (MODEL *pmod, gretl_matrix *v, double scale)
 {
     const int nv = pmod->ncoeff;
     const int nterms = nv * (nv + 1) / 2;
@@ -174,6 +174,9 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v)
 	    k = ijton(i, j, nv);
 	    x = gretl_matrix_get(v, i, j);
 	    pmod->vcv[k] = x;
+	    if (scale != 1.0) {
+		pmod->vcv[k] /= scale * scale;
+	    }
 	}
     }
 
@@ -199,13 +202,30 @@ static int add_norm_test_to_model (MODEL *pmod, double chi2)
     return 0;
 }
 
+static double recompute_tobit_ll (const MODEL *pmod, const double *y)
+{
+    double lt, ll = 0.0;
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (y[t - pmod->t1] == 0.0) {
+	    lt = normal_cdf(-pmod->yhat[t] / pmod->sigma);
+	} else {
+	    lt = (1.0 / pmod->sigma) * normal_pdf(pmod->uhat[t] / pmod->sigma);
+	}
+	ll += log(lt);
+    }
+
+    return ll;
+}
+
 /* Taking the original OLS model as a basis, re-write the statistics
    to reflect the Tobit results.
 */
 
 static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 			      double sigma, double ll, const double **X,
-			      gretl_matrix *VCV, int iters)
+			      gretl_matrix *VCV, double scale, int iters)
 {
     int i, t, cenc = 0;
     int offset = pmod->t1;
@@ -215,25 +235,44 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     for (i=0; i<ncoeff; i++) {
 	pmod->coeff[i] = theta[i];
 	pmod->sderr[i] = sqrt(gretl_matrix_get(VCV, i, i));
+	if (scale != 1.0) {
+	    pmod->coeff[i] /= scale;
+	    pmod->sderr[i] /= scale;
+	}
     }
 
     pmod->sigma = sigma;
-    pmod->lnL = ll;
+
+    if (scale != 1.0) {
+	pmod->sigma /= scale;	
+	pmod->ybar /= scale;
+	pmod->sdy /= scale;
+    }
 
     pmod->ess = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	double yhat = pmod->coeff[0];
+	double yt = y[t - offset];
 
+	pmod->yhat[t] = pmod->coeff[0];
 	for (i=1; i<ncoeff; i++) {
-	    yhat += pmod->coeff[i] * X[i + 1][t - offset];
+	    pmod->yhat[t] += pmod->coeff[i] * X[i + 1][t - offset];
 	}
 
-	pmod->yhat[t] = yhat;
-	pmod->uhat[t] = y[t - offset] - yhat;
+	if (scale != 1.0) {
+	    yt /= scale;
+	}
 
-	pmod->ess += pmod->uhat[t] * pmod->uhat[t]; /* Is this at all valid? */
+	pmod->uhat[t] = yt - pmod->yhat[t];
 
-	if (y[t - offset] == 0.0) cenc++;
+	pmod->ess += pmod->uhat[t] * pmod->uhat[t]; /* Is this meaningful? */
+
+	if (yt == 0.0) cenc++;
+    }
+
+    if (scale != 1.0) {
+	pmod->lnL = recompute_tobit_ll(pmod, y);
+    } else {
+	pmod->lnL = ll;
     }
 
     /* run normality test on the untruncated uhat */
@@ -246,12 +285,15 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	if (pmod->yhat[t] < 0.0) {
 	    pmod->yhat[t] = 0.0;
 	    pmod->uhat[t] = y[t - offset];
+	    if (scale != 1.0) {
+		pmod->uhat[t] /= scale;
+	    }
 	}
     }
 
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
 
-    make_vcv(pmod, VCV);
+    make_vcv(pmod, VCV, scale);
 
     pmod->ci = TOBIT;
 
@@ -280,7 +322,7 @@ tobit_model_info_init (int nobs, int k, int n_series)
 /* Main Tobit function */
 
 static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
-		     PRN *prn)
+		     double scale, PRN *prn)
 {
     const double **X;
     double *coeff, *theta = NULL;
@@ -289,7 +331,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     int n_series = 4;
     int err = 0;
 
-    model_info *tobit;
+    model_info *tobit = NULL;
 
     /* for VCV manipulation */
     gretl_matrix *VCV = NULL;
@@ -302,27 +344,24 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     /* set of pointers into original data */
     X = make_tobit_X(pmod, Z);
     if (X == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     coeff = realloc(pmod->coeff, k * sizeof *pmod->coeff);
     if (coeff == NULL) {
-	free(X);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
     pmod->coeff = coeff;
 
-    /* initialization of variance: not sure what I'm doing here */
-#if 1
+    /* initialization of variance */
     pmod->coeff[k-1] = 1.0;
-#else
-    pmod->coeff[k-1] = 1.0 / pmod->sdy;
-#endif
 
     tobit = tobit_model_info_init(pmod->nobs, k, n_series);
     if (tobit == NULL) {
-	free(X);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     /* call BHHH routine to maximize ll */
@@ -349,6 +388,10 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     /* Jacobian mat. for transforming VCV from Olsen to slopes + variance */
     J = gretl_matrix_alloc(k, k);
+    if (J == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
     gretl_matrix_zero(J);
     for (i=0; i<k; i++) {
 	for (j=0; j<k; j++) {
@@ -367,23 +410,58 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     /* VCV matrix transformation */
     tmp = gretl_matrix_alloc(k, k);
+    if (tmp == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
     gretl_matrix_multiply(J, VCV, tmp);
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 			      J, GRETL_MOD_TRANSPOSE,
 			      VCV);
-    gretl_matrix_free(tmp);
-    gretl_matrix_free(J);
 
     ll = model_info_get_ll(tobit);
     write_tobit_stats(pmod, theta, k-1, sigma, ll, X, VCV, 
-		      model_info_get_iters(tobit));
+		      scale, model_info_get_iters(tobit));
 
  bailout:
 
     free(X);
-    model_info_free(tobit);
+
+    if (J != NULL) {
+	gretl_matrix_free(J);
+    }
+
+    if (tmp != NULL) {
+	gretl_matrix_free(tmp);
+    }
+
+    if (tobit != NULL) {
+	model_info_free(tobit);
+    }
 
     return err;
+}
+
+static double tobit_depvar_scale (const MODEL *pmod)
+{
+    double ut, umax = 0.0;
+    double scale = 1.0;
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	ut = fabs(pmod->uhat[t]);
+	if (ut > umax) {
+	    umax = ut;
+	}
+    }
+
+    if (umax > 5.0) {
+	/* normal pdf will lose accuracy beyond, say, z = 5 */
+	scale = 5.0 / umax;
+    }
+
+    return scale;
 }
 
 /* the driver function for the plugin */
@@ -392,12 +470,24 @@ MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn) 
 {
     MODEL model;
+    double scale = 1.0;
+    int t;
 
     /* run initial OLS: OPT_M bans missing obs */
     model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
     if (model.errcode) {
 	return model;
-    } 
+    }
+
+    /* handle scale issues */
+    scale = tobit_depvar_scale(&model);
+    if (scale != 1.0) {
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[model.list[1]][t] *= scale;
+	}
+	clear_model(&model);
+	model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+    }
 
 #ifdef TDEBUG
     pprintf(prn, "tobit_estimate: initial OLS\n");
@@ -405,8 +495,16 @@ MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     /* do the actual Tobit analysis */
-    model.errcode = do_tobit((const double **) *pZ, pdinfo, 
-			     &model, prn);
+    if (model.errcode == 0) {
+	model.errcode = do_tobit((const double **) *pZ, pdinfo, 
+				 &model, scale, prn);
+    }
+
+    if (scale != 1.0) {
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[model.list[1]][t] /= scale;
+	}
+    }
 
     return model;
 }

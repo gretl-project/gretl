@@ -79,8 +79,9 @@ enum gretl_error_codes {
     E_NOMERGE,     /* 52 */
     E_NOCONV,      /* 53 */
     E_CANCEL,      /* 54 */
-    E_NAN,         /* 55 */
-    E_MAX          /* 56 */
+    E_MISSDATA,    /* 55 */
+    E_NAN,         /* 56 */
+    E_MAX          /* 57 */
 }; 
 
 /* functions follow */
