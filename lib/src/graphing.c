@@ -1060,17 +1060,19 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     FILE *fp = NULL;
     double xx;
 
-    if (pos > 2) { /* plot several yvars against one xvar */
+    if (pos > 2) { 
+	/* plot several yvars against one xvar */
 	yvar = 0;
 	plotlist = malloc(pos * sizeof *plotlist);
 	xvar = list[list[0]];
-    } else {       /* plot one yvar against several xvars */
+    } else {       
+	/* plot one yvar against several xvars */
 	yvar = list[1];
 	plotlist = malloc((list[0] + 1 - pos) * sizeof *plotlist);
 	xvar = 0;
     }
-    if (plotlist == NULL)
-	return E_ALLOC;
+
+    if (plotlist == NULL) return E_ALLOC;
 
     if (yvar) {
 	plotlist[0] = list[0] - pos;
@@ -1142,8 +1144,11 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     fputs("\npause -1\n", fp);
 #endif
     fclose(fp);
+
     err = gnuplot_display(ppaths);
+
     free(plotlist);
+
     return err;
 }
 

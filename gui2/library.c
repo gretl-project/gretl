@@ -4766,12 +4766,18 @@ int gui_exec_line (char *line,
 	break;
 
     case SCATTERS:
-        if (plp != NULL) /* fixme? */
+        if (plp != NULL) {
+	    /* fixme? */
             pprintf(prn, _("scatters command not available in batch mode\n"));
-        else {
+        } else {
             err = multi_scatters(command.list, atoi(command.param), &Z, 
                                  datainfo, &paths);
             if (err) pprintf(prn, _("scatters command failed\n"));
+	    else {
+		if (plp == NULL) register_graph();
+		err = maybe_save_graph(&command, paths.plotfile,
+				       GRETL_GNUPLOT_GRAPH, prn);
+	    }
         }               
         break;
 
