@@ -20,9 +20,13 @@
 /* gretl_paths.c for gretl  */
 
 #include "libgretl.h"
-
-#include <dirent.h>
 #include <unistd.h>
+
+#ifdef WIN32
+# include <windows.h>
+#else
+# include <dirent.h>
+#endif
 
 #ifndef WIN32
 # include <glib.h>
@@ -76,128 +80,175 @@ static int path_append (char *file, const char *path)
 }
 
 #ifdef WIN32
-static char *unslash (const char *src)
-{
-    size_t n = strlen(src);
-    char *dest = malloc(n);
 
-    if (dest != NULL) strncpy(dest, src, n-1);
-    return dest;
-}
-
-static int win32_find_in_subdir (const char *topdir, char *fname, int code)
+static int try_open_file (char *targ, const char *finddir, 
+			  WIN32_FIND_DATA *fdata, int code)
 {
-    HANDLE handle;
-    WIN32_FIND_DATA fdata;
-    FILE *fp;
-    char tmp[MAXLEN], orig[MAXLEN], lastdir[MAXLEN];
-    const char *gotname;
+    FILE *fp = NULL;
+    char tmp[MAXLEN];
+    int n = strlen(finddir);
     int found = 0;
+    
+    strcpy(tmp, finddir);
+    tmp[n-1] = '\0';
+    strcat(tmp, fdata->cFileName);
+    strcat(tmp, "\\");
+    strcat(tmp, targ);
 
-    /* record current dir in "lastdir" */
-
-    if (!SetCurrentDirectory(topdir)) {
-	return 0;
-    }
-
-    handle = FindFirstFile("*", &fdata); /* FIXME check first one too */
-    if (handle != INVALID_HANDLE_VALUE) {
-	while (!found && FindNextFile(handle, &fdata) != XXX) {
-	    gotname = fdata.cFileName;
-	    if (!strcmp(gotname, ".") || 
-		!strcmp(gotname, "..")) {
-		continue;
-	    }
-	    if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-		continue;
-	    }
-	    strcpy(tmp, topdir);
-	    strcat(tmp, gotname);
-	    path_append(fname, tmp);
-	    fp = fopen(fname, "r");
-	    if (fp != NULL) {
-		fclose(fp);
-		found = 1;
-	    } else if (code == DATA_SEARCH && add_gdt_suffix(fname)) {
-		fp = fopen(fname, "r");
-		if (fp != NULL) {
-		    fclose(fp);
-		    found = 1;
-		}
-	    }
-	    if (!found) {
-		/* failed: drop back to original filename */
-		strcpy(fname, orig);
-	    }
+    fp = fopen(tmp, "r");
+    if (fp == NULL && code == DATA_SEARCH) {
+	if (add_gdt_suffix(tmp)) {
+	    fp = fopen(tmp, "r");
 	}
-	FindClose(handle);
     }
 
-    SetCurrentDirectory(lastdir);
+    if (fp != NULL) {
+	fclose(fp);
+	strcpy(targ, tmp);
+	found = 1;
+    }	
 
     return found;
 }
 
-#endif /* WIN32 */
+static void make_finddir (char *targ, const char *src)
+{
+    int n = strlen(src);
 
-/* .......................................................... */
+    strcpy(targ, src);
+
+    if (targ[n-1] != '\\') {
+	strcat(targ, "\\*");
+    } else {
+	strcat(targ, "*");
+    }
+}
+
+static int got_subdir (WIN32_FIND_DATA *fdata)
+{
+    int ret = 0;
+
+    if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+	if (strcmp(fdata->cFileName, ".") &&
+	    strcmp(fdata->cFileName, "..")) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
 
 static int find_in_subdir (const char *topdir, char *fname, int code)
 {
-    DIR *sub, *dir = NULL;
-    struct dirent *dirent;
-    FILE *fp;
-    char tmp[MAXLEN], orig[MAXLEN];
+    HANDLE handle;
+    WIN32_FIND_DATA fdata;
+    char finddir[MAXLEN];
     int found = 0;
-#ifndef WIN32
-    const char *top = topdir;
-#else
-    char *top = unslash(topdir);
 
-    if (top == NULL) return 0;
-#endif
+    /* make find target */
+    make_finddir(finddir, topdir);
 
-    strcpy(orig, fname);
+    handle = FindFirstFile(finddir, &fdata); 
+    if (handle != INVALID_HANDLE_VALUE) {
+	if (got_subdir(&fdata)) {
+	    found = try_open_file(fname, finddir, &fdata, code);
+	} 
+	while (!found && FindNextFile(handle, &fdata)) {
+	    if (got_subdir(&fdata)) {
+		found = try_open_file(fname, finddir, &fdata, code);
+	    }
+	} 
+	FindClose(handle);
+    }
 
-    dir = opendir(top);
+    return found;
+}
+
+#else /* end of win32 file-finding, on to posix */
+
+static int try_open_file (char *targ, const char *finddir, 
+			  struct dirent *dirent, int code)
+{
+    FILE *fp = NULL;
+    char tmp[MAXLEN];
+    int found = 0;
+    
+    strcpy(tmp, finddir);
+    strcat(tmp, dirent->d_name);
+    strcat(tmp, "/");
+    strcat(tmp, targ);
+
+    fp = fopen(tmp, "r");
+    if (fp == NULL && code == DATA_SEARCH) {
+	if (add_gdt_suffix(tmp)) {
+	    fp = fopen(tmp, "r");
+	}
+    }
+
+    if (fp != NULL) {
+	fclose(fp);
+	strcpy(targ, tmp);
+	found = 1;
+    }	
+
+    return found;
+}
+
+static void make_finddir (char *targ, const char *src)
+{
+    int n = strlen(src);
+
+    strcpy(targ, src);
+
+    if (targ[n-1] != '/') {
+	strcat(targ, "/");
+    } 
+}
+
+static int got_subdir (const char *topdir, struct dirent *dirent)
+{
+    int ret = 0;
+
+    if (strcmp(dirent->d_name, ".") && strcmp(dirent->d_name, "..")) {
+	char tmp[MAXLEN];
+	DIR *sub;
+
+	strcpy(tmp, topdir);
+	strcat(tmp, dirent->d_name);
+	sub = opendir(tmp);
+	if (sub != NULL) {
+	    closedir(sub);
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+static int find_in_subdir (const char *topdir, char *fname, int code)
+{
+    DIR *dir;
+    struct dirent *dirent;
+    char finddir[MAXLEN];
+    int found = 0;
+
+    /* make find target */
+    make_finddir(finddir, topdir);
+
+    dir = opendir(finddir);
     if (dir != NULL) {
 	while (!found && (dirent = readdir(dir))) {
-	    if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, "..")) {
-		continue;
-	    }
-	    strcpy(tmp, topdir);
-	    strcat(tmp, dirent->d_name);
-	    sub = opendir(tmp);
-	    if (sub != NULL) { 
-		/* we got a subdir */
-		closedir(sub);
-		path_append(fname, tmp);
-		fp = fopen(fname, "r");
-		if (fp != NULL) {
-		    fclose(fp);
-		    found = 1;
-		} else if (code == DATA_SEARCH && add_gdt_suffix(fname)) {
-		    fp = fopen(fname, "r");
-		    if (fp != NULL) {
-			fclose(fp);
-			found = 1;
-		    }
-		}
-		if (!found) {
-		    /* failed: drop back to original filename */
-		    strcpy(fname, orig);
-		}
+	    if (got_subdir(finddir, dirent)) {
+		found = try_open_file(fname, finddir, dirent, code);
 	    }
 	}
 	closedir(dir);
     }
 
-#ifdef WIN32
-    free(top);
-#endif
-
     return found;
 }
+
+#endif /* win32 vs posix */
 
 /* .......................................................... */
 
