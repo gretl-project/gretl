@@ -1,4 +1,4 @@
 <inlineequation>
- <inlinegraphic fileref="figures/chisqu.png"/>
- <texmath>$\chi^2$</texmath>
+ <alt>$\chi^2$</alt>
+ <graphic align="center" fileref="figures/chisqu.png"/>
 </inlineequation>

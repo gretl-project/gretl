@@ -66,7 +66,7 @@ while ($line = <DOC>) {
 	    next; 
 	}
 	push(@figfiles, $figfile);
-	if ($eqn =~ /\<texmath\>((?:.|\s)*)\<\/texmath\>/) {
+	if ($eqn =~ /\<alt\>((?:.|\s)*)\<\/alt\>/) {
 	    print "got texmath $1\n";
 	    $eqn = $1;
 	}

@@ -1,5 +1,4 @@
-<!DOCTYPE book PUBLIC "-//UNREGISTERED//DTD DocBook TeXMath Module V0.1//EN"
-                      "dbtexmath.dtd"[
+<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
 <!ENTITY version "0.97">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
@@ -1905,10 +1904,10 @@
       loop to replicate the estimation of a nonlinear consumption
       function of the form 
 	<inlineequation>
-	  <inlinegraphic fileref="figures/greeneC.png"/>
-	  <texmath>
+	  <alt>
 	    $C = \alpha + \beta Y^{\gamma} + \epsilon$
-	  </texmath>
+	  </alt>
+	  <graphic align="center" fileref="figures/greeneC.png"/>
 	</inlineequation>
 	as presented in Greene (2000, Example 11.3).  This
       script is included in the <application>gretl</application>
@@ -2484,10 +2483,10 @@
 	  exhibits a unit root. The first is a
 	  <emphasis>t</emphasis>-test based on the model 
 	  <informalequation>
-	    <graphic fileref="figures/adf1.png"/>
-	    <texmath>
+	    <alt>
 	      \[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]
-	    </texmath>
+	    </alt>
+		<graphic fileref="figures/adf1.png"/>
 	  </informalequation>
 	  The null hypothesis is that
 	  <emphasis>g</emphasis> = 0. The second (augmented) test
@@ -2497,10 +2496,10 @@
 	  first difference) and a restricted version (dropping the
 	  time trend and the first lag).  The test statistic is
 	  <informalequation>
-	    <graphic fileref="figures/adf2.png"/>
-	    <texmath>
+	    <alt>
 	      \[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]
-	    </texmath>
+	    </alt>
+		<graphic fileref="figures/adf2.png"/>
 	  </informalequation>
 	  where <emphasis>T</emphasis> is the sample size,
 	  <emphasis>k</emphasis> the number of parameters in the
@@ -2544,11 +2543,11 @@
 	a list of lags in the residuals, terminated by a semicolon. In
 	the above example, the error term is specified as 
 	<informalequation>
-	  <graphic fileref="figures/corc.png"/>
-	  <texmath>
+	  <alt>
 	    \[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
 	    e_t\]
-	  </texmath>
+	  </alt>
+	  <graphic fileref="figures/corc.png"/>
 	</informalequation>
 	<replaceable>depvar</replaceable> is the dependent variable
 	and <replaceable>indepvars</replaceable> is the list of
@@ -2594,10 +2593,10 @@
 	any observation in the auxiliary regression is not positive,
 	then the corresponding 
 	<inlineequation>
-	  <inlinegraphic fileref="figures/uhatsq.png"/>
-	  <texmath>
+	  <alt>
 	    $\hat{u}^2$
-	  </texmath>
+	  </alt>
+	  <graphic align="center" fileref="figures/uhatsq.png"/>
         </inlineequation> is used instead. Weighted
 	least square estimation is then performed on the original
 	model. The flag <literal>-o</literal> calls for the coefficient
@@ -2795,10 +2794,8 @@
 	<replaceable>variable</replaceable> specified (either by name
 	or number).  See Ramanathan, Section 11.7.  It is thus
 	<inlineequation>
-	  <inlinegraphic fileref="figures/autocorr.png"/>
-	  <texmath>
-	      $\rho(u_t, u_{t-s})$
-	    </texmath>
+	  <alt>$\rho(u_t, u_{t-s})$</alt>
+	  <graphic align="center" fileref="figures/autocorr.png"/>
 	</inlineequation> where 
 	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> is the
 	<emphasis>t</emphasis>th observation of the variable 
@@ -3369,10 +3366,8 @@
 	<entry><command>genr y = cum(x)</command></entry>
 	<entry>cumulation: 
 	  <inlineequation>
-	    <inlinegraphic fileref="figures/cumulate.png"/>
-	  <texmath>
-	      $y_t = \sum_{\tau=1}^t x_{\tau}$
-	    </texmath>
+	   <alt>$y_t = \sum_{\tau=1}^t x_{\tau}$</alt>
+	   <graphic align="center" fileref="figures/cumulate.png"/>
 	  </inlineequation>
 	</entry>
       </row>
@@ -3743,17 +3738,13 @@
 	  y</command> creates the new variables
 	<varname>ld_x</varname> =
 	  <inlineequation>
-	    <inlinegraphic fileref="figures/ldx.png"/>
-	    <texmath>
-	    $\ln(x_t) - \ln(x_{t-1})$ 
-	    </texmath>
+	    <alt>$\ln(x_t) - \ln(x_{t-1})$</alt>
+		<graphic align="center" fileref="figures/ldx.png"/>
 	  </inlineequation> and
 	<varname>ld_y</varname> =
 	  <inlineequation>
-	    <inlinegraphic fileref="figures/ldy.png"/>
-	    <texmath>
-	    $\ln(y_t) - \ln(y_{t-1})$ 
-	    </texmath>
+	    <alt>$\ln(y_t) - \ln(y_{t-1})$</alt>
+		<graphic align="center" fileref="figures/ldy.png"/>
 	  </inlineequation>.
       </para>
 
@@ -4218,10 +4209,8 @@ executed.  Loops cannot be nested.</para>
 	  <literal>-o</literal> flag the sample periodogram is given;
 	  with the flag a Bartlett lag window of length 
 	  <inlineequation>
-	  <inlinegraphic fileref="figures/bartlett.png"/>
-	  <texmath>
-	    $2\sqrt{T}$
-	  </texmath>
+	  <alt>$2\sqrt{T}$</alt>
+	  <graphic align="center" fileref="figures/bartlett.png"/>
 	  </inlineequation>
 	  (where <emphasis>T</emphasis> is the sample size).  is used
 	  in estimating the spectrum (see Chapter 18 of Greene's
@@ -5711,11 +5700,11 @@ executed.  Loops cannot be nested.</para>
       seconds on a 333MHz i686 machine running GNU/Linux.)  With the
       <filename>Filip</filename> data set, where the model is 
       <informalequation>
-	<graphic fileref="figures/poly.png"/>
-	<texmath>
+	<alt>
 	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
 	  +\beta_{10}x^{10}_t+\epsilon\]
-	</texmath>
+	</alt>
+	<graphic fileref="figures/poly.png"/>
       </informalequation>
       <application>gretl</application> refuses to produce estimates
       due to a high degree of multicollinearity (the popular
@@ -5733,10 +5722,10 @@ executed.  Loops cannot be nested.</para>
       values of the dependent variable in this case, while the NIST
       figure is 
       <informalequation>
-	<graphic fileref="figures/nistr2.png"/> 
-      <texmath> 
+      <alt> 
 	\[R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}\] 
-      </texmath> 
+      </alt>
+	  <graphic fileref="figures/nistr2.png"/>  
       </informalequation>
       There is no universal agreement among statisticians on the
       <quote>correct</quote> formula (see for instance the discussion
@@ -5761,11 +5750,11 @@ executed.  Loops cannot be nested.</para>
 	definitions</quote>. The certified value is computed as 
 
       <informalequation>
-	<graphic fileref="figures/nistr1.png"/>
-	<texmath>
+	<alt>
 	  \[r_1=\frac{\sum^T_2(y_t-\bar{y})(y_{t-1}-\bar{y})} {\sum^T_1
 	  (y_t - \bar{y})^2}\]
-	</texmath>
+	</alt>
+	<graphic fileref="figures/nistr1.png"/>
       </informalequation>
       
       while <application>gretl</application>
@@ -5829,10 +5818,10 @@ executed.  Loops cannot be nested.</para>
 	which is the simple linear regression model</para> 
 
 	<informalequation>
-        <graphic fileref="figures/linreg.png"/>
-	<texmath>
+	<alt>
 	  \[y_t = \alpha + \beta x_t + \epsilon_t\]
-	</texmath>
+	</alt>
+	<graphic fileref="figures/linreg.png"/>
         </informalequation>
 	      
 	<para>This model represents the <emphasis>dependent
@@ -5875,19 +5864,19 @@ executed.  Loops cannot be nested.</para>
 	squares as 
 
 	<informalequation>
-	  <graphic fileref="figures/yhat.png"/>
-	  <texmath>
+	  <alt>
 	    \[\hat{y}_t = a + b x_t\]
-	  </texmath>
+	  </alt>
+	  <graphic fileref="figures/yhat.png"/>
 	</informalequation> 
 
 	We define the regression <quote>residual</quote> as 
 
 	<informalequation>
-	  <graphic fileref="figures/resid.png"/>
-	  <texmath>
+	  <alt>
 	    \[\hat{\epsilon}_t = y_t - \hat{y}_t\]
-	  </texmath>
+	  </alt>
+	  <graphic fileref="figures/resid.png"/>
 	</informalequation> 
 
 	the difference between actual
@@ -6014,15 +6003,15 @@ executed.  Loops cannot be nested.</para>
 	or similar:
 
 	<informalequation>
-	<graphic fileref="figures/nonlin.png"/>
-	<texmath>
+	<alt>
          \begin{eqnarray*}
 	  y_t &=& \alpha + \beta(1/x_t) + \epsilon_t\\
 	  y_t &=& \alpha + \beta x_t + \gamma x^2_t + \epsilon_t\\
 	  y_t &=& \alpha + \beta \log x_t + \epsilon_t\\
 	  \log y_t &=& \alpha + \beta \log x_t + \epsilon_t
          \end{eqnarray*}
-	</texmath>
+	</alt>
+	<graphic fileref="figures/nonlin.png"/>
 	</informalequation>
 
 	Of course there are nonlinear relationships that cannot
