@@ -3544,21 +3544,30 @@ static int dat_suffix (const char *fname)
 
 /* ........................................................... */
 
-static int maybe_restore_full_data (void)
+int maybe_restore_full_data (int action)
 {
     if (mdata->ifac != NULL) {
 	GtkWidget *w = gtk_item_factory_get_item(mdata->ifac, 
 						 "/Sample/Restore full range");
 
 	if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
-	    int resp = 
-		yes_no_dialog(_("gretl: save data"), 
+	    int resp;
+
+	    if (action == SAVE_DATA) {
+		resp = yes_no_dialog(_("gretl: save data"), 
 			      _("The data set is currently sub-sampled.\n"
 				"Would you like to restore the full range?"), 1);
+	    }
+	    else if (action == COMPACT) {
+		resp = yes_no_dialog(_("gretl: Compact data"), 
+			      _("The data set is currently sub-sampled.\n"
+				"You must restore the full range before compacting.\n"
+				"Restore the full range now?"), 1);
+	    }
 
 	    if (resp == GRETL_YES) {
 		restore_sample(NULL, 0, NULL);
-	    } else if (resp == GRETL_CANCEL || resp < 0) { 
+	    } else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
 		return 1;
 	    }
 	} 
@@ -3578,7 +3587,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
-    if (maybe_restore_full_data()) goto store_get_out;
+    if (maybe_restore_full_data(SAVE_DATA)) goto store_get_out;
 
     /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;

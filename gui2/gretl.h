@@ -268,14 +268,6 @@ enum file_lists {
     FILE_LIST_SCRIPT,
 };
 
-enum compaction_methods {
-    COMPACT_NONE,
-    COMPACT_SUM,
-    COMPACT_AVG,
-    COMPACT_SOP,
-    COMPACT_EOP
-};    
-
 /* functions follow */
 
 #ifndef G_OS_WIN32

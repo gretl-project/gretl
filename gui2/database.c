@@ -103,6 +103,14 @@ typedef struct {
     int undated;
 } SERIESINFO;
 
+enum compaction_methods {
+    COMPACT_NONE,
+    COMPACT_SUM,
+    COMPACT_AVG,
+    COMPACT_SOP,
+    COMPACT_EOP
+}; 
+
 /* private functions */
 static GtkWidget *database_window (windata_t *ddata);
 static int populate_series_list (windata_t *dbwin, PATHS *ppaths);

@@ -104,6 +104,14 @@ typedef struct {
     int undated;
 } SERIESINFO;
 
+enum compaction_methods {
+    COMPACT_NONE,
+    COMPACT_SUM,
+    COMPACT_AVG,
+    COMPACT_SOP,
+    COMPACT_EOP
+};  
+
 /* private functions */
 static GtkWidget *database_window (windata_t *ddata);
 static int populate_series_list (windata_t *dbwin, PATHS *ppaths);
@@ -122,8 +130,8 @@ static void get_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
 			 int *pad1, int *pad2);
 static int get_places (double x);
 static void update_statusline (windata_t *windat, char *str);
-static void data_compact_dialog (int spd, int dpd, guint *compact_method);
-
+static void data_compact_dialog (int spd, int *target_pd, 
+				 gint *compact_method);
 
 enum db_data_actions {
     DB_DISPLAY,
@@ -323,7 +331,7 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
     gint err = 0;
     double *xvec;
     int n, v, t, start, stop, pad1 = 0, pad2 = 0;
-    guint compact_method = 1;
+    guint compact_method = COMPACT_AVG;
 
     if (data_status) { /* data already in gretl's workspace */
 	err = check_import(sinfo, datainfo);
@@ -342,8 +350,8 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
-	    data_compact_dialog(sinfo->pd, datainfo->pd, &compact_method);
-	    if (!compact_method) {
+	    data_compact_dialog(sinfo->pd, &datainfo->pd, &compact_method);
+	    if (compact_method == COMPACT_NONE) {
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
@@ -971,11 +979,13 @@ static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 
     for (t=0; t<goodobs; t++) {
 	p = (t + 1) * 3;
-	if (method == 1) { /* averaging */
+	if (method == COMPACT_AVG) {
 	    val = (mvec[p-3+skip] + mvec[p-2+skip] + mvec[p-1+skip]) / 3.0;
-	} else if (method == 2) { /* end of period */
+	} else if (method == COMPACT_SUM) {
+	    val = mvec[p-3+skip] + mvec[p-2+skip] + mvec[p-1+skip];
+	} else if (method == COMPACT_EOP) { 
 	    val = mvec[p-1+skip];
-	} else if (method == 2) { /* start of period */
+	} else if (method == COMPACT_SOP) {
 	    val = mvec[p-3+skip];
 	}
 	sprintf(numstr, "%.*f", pmax, val);
@@ -1025,13 +1035,15 @@ static int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
     for (t=0; t<goodobs; t++) {
 	p = (t + 1) * pd;
 	val = 0.;
-	if (method == 1) { /* averaging */
+	if (method == COMPACT_AVG || method == COMPACT_SUM) { 
 	    for (i=1; i<=pd; i++) val += mvec[p-i+skip];
-	    val /= (double) pd;
+	    if (method == COMPACT_AVG) {
+		val /= (double) pd;
+	    }
 	}
-	else if (method == 2)  /* end of period */
+	else if (method == COMPACT_EOP) 
 	    val = mvec[p-1+skip];
-	else if (method == 3)  /* start of period */
+	else if (method == COMPACT_SOP)
 	    val = mvec[p-pd+skip];
 	sprintf(numstr, "%.*f", pmax, val);
 	(*pq)[t] = atof(numstr);
@@ -1805,7 +1817,7 @@ gint populate_dbfilelist (windata_t *ddata)
 
 static void set_compact_type (GtkWidget *w, gpointer data)
 {
-    guint *method = (guint *) data;
+    gint *method = (gint *) data;
 
     if (GTK_TOGGLE_BUTTON (w)->active) 
         *method = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
@@ -1815,19 +1827,66 @@ static void set_compact_type (GtkWidget *w, gpointer data)
 
 static void abort_compact (GtkWidget *w, gpointer data)
 {
-    guint *method = (guint *) data;
+    gint *method = (gint *) data;
 
     *method = 0;
 }
 
 /* .................................................................. */
 
-static void data_compact_dialog (int spd, int dpd, guint *compact_method)
+static void set_target_pd (GtkWidget *w, gpointer data)
+{
+    gint *pd = (gint *) data;
+
+    if (GTK_TOGGLE_BUTTON (w)->active) 
+        *pd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+}
+
+static void pd_buttons (dialog_t *d, int *target_pd)
+{    
+    GtkWidget *button, *hs;
+    GSList *group;
+    gint quart = 4, ann = 1;
+
+    button = gtk_radio_button_new_with_label(NULL, _("Quarterly"));
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_target_pd), target_pd);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(quart));
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label (group, _("Annual"));
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_target_pd), target_pd);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(ann));
+    gtk_widget_show (button);
+
+    hs = gtk_hseparator_new();
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
+			hs, TRUE, TRUE, FALSE);
+    gtk_widget_show(hs);
+}
+
+/* .................................................................. */
+
+static void data_compact_dialog (int spd, int *target_pd, 
+				 gint *compact_method)
 {
     dialog_t *d, *cancel_d;
     GtkWidget *button;
     GtkWidget *tempwid;
     GSList *group;
+    int show_pd_buttons = 0;
     char labelstr[64];
 
     d = malloc(sizeof *d);
@@ -1843,9 +1902,23 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
 
     d->dialog = gtk_dialog_new();
 
-    sprintf(labelstr, _("You are adding a %s series to %s dataset"),
-	    (spd == 4)? _("quarterly") : _("monthly"),
-	    (dpd == 4)? _("a quarterly"): _("an annual"));
+    if (*target_pd != 0) {
+	/* importing series from database */
+	sprintf(labelstr, _("You are adding a %s series to %s dataset"),
+		(spd == 4)? _("quarterly") : _("monthly"),
+		(*target_pd == 4)? _("a quarterly"): _("an annual"));
+    } else {
+	/* compacting whole data set */
+	if (spd == 4) {
+	    *target_pd = 1;
+	    strcpy(labelstr, _("Compact quarterly data to annual"));
+	} else {
+	    /* source data are monthly */
+	    strcpy(labelstr, _("Compact monthly data to:"));
+	    show_pd_buttons = 1;
+	    *target_pd = 4;
+	}
+    }
 
     gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: compact data"));
     gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
@@ -1868,13 +1941,26 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
 			tempwid, TRUE, TRUE, FALSE);
     gtk_widget_show(tempwid);
 
+    if (show_pd_buttons) pd_buttons(d, target_pd);
+
     button = gtk_radio_button_new_with_label (NULL, _("Compact by averaging"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(set_compact_type), compact_method);
-    gtk_object_set_data(GTK_OBJECT(button), "action", GINT_TO_POINTER(1));
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_AVG));
+    gtk_widget_show (button);
+
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label (group, _("Compact by summing"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_compact_type), compact_method);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_SUM));
     gtk_widget_show (button);
 
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
@@ -1883,7 +1969,8 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
 			button, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(set_compact_type), compact_method);
-    gtk_object_set_data(GTK_OBJECT(button), "action", GINT_TO_POINTER(2));
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_EOP));
     gtk_widget_show (button);
 
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
@@ -1892,7 +1979,8 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
 			button, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(set_compact_type), compact_method);
-    gtk_object_set_data(GTK_OBJECT(button), "action", GINT_TO_POINTER(3));
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(COMPACT_SOP));
     gtk_widget_show (button);
 
     /* Create the "OK" button */
@@ -1931,3 +2019,124 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
     gtk_widget_show (d->dialog);
     gtk_main();
 }
+
+static int compact_series (double **Z, int i, int n, int startskip, int cfac,
+			   int method)
+{
+    int t, j;
+    int idx = startskip;
+    double *x;
+
+    x = malloc(n * sizeof *x);
+    if (x == NULL) return 1;
+
+    for (t=0; t<n; t++) {
+	if (method == COMPACT_SOP) {
+	    x[t] = Z[i][idx];
+	}
+	else if (method == COMPACT_EOP) {
+	    x[t] = Z[i][idx + cfac - 1];
+	}
+	else {
+	    x[t] = 0.0;
+	    for (j=0; j<cfac; j++) {
+		x[t] += Z[i][idx + j];
+	    }
+	    if (method == COMPACT_AVG) {
+		x[t] /= (double) cfac;	
+	    }
+	}
+	idx += cfac;
+    }
+
+    free(Z[i]);
+    Z[i] = x;
+
+    return 0;
+}
+
+void compact_data_set (void)
+{
+    int newpd, oldpd = datainfo->pd;
+    int oldn = datainfo->n;
+    int cfac;
+    int startper, endper;
+    int startyr;
+    int startskip = 0, endskip = 0;
+    int i, err = 0;
+    gint method = COMPACT_AVG;
+    char *p;
+
+    if (maybe_restore_full_data(COMPACT)) return;
+
+    newpd = 0;
+    data_compact_dialog(oldpd, &newpd, &method);
+    if (method == COMPACT_NONE) return;
+
+    cfac = oldpd / newpd;
+
+    startyr = atoi(datainfo->stobs);
+    
+    p = strchr(datainfo->stobs, ':');
+    if (p == NULL) p = strchr(datainfo->stobs, '.');
+    if (p == NULL) return;
+
+    p++;
+    if (*p == '0') p++;
+    startper = atoi(p);
+
+    if (startper > 1) {
+	startskip = (startper - 1) % cfac;
+    }
+
+    endper = oldn % oldpd - startskip;
+    if (endper == 0) endper = oldpd;
+
+    if (method == COMPACT_EOP && startskip > 0) {
+	startskip--;
+    }
+
+    if (endper < oldpd) endskip = endper;
+
+    if (method == COMPACT_SOP && endskip > 1) {
+	endskip--;
+    }
+
+    if (newpd == 1) {
+	if (startskip > 0) startyr++;
+	sprintf(datainfo->stobs, "%d", startyr);
+    } else if (newpd == 4) {
+	int qtr = 1 + (startper + 1) / cfac;
+
+	if (qtr > newpd) {
+	    startyr++;
+	    qtr -= newpd;
+	}
+	sprintf(datainfo->stobs, "%d:%d", startyr, qtr);
+    }
+
+    /* revise datainfo members */
+    datainfo->pd = newpd;
+    datainfo->n = (oldn - startskip - endskip) / cfac;
+    datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
+    datainfo->t1 = 0;
+    datainfo->t2 = datainfo->n - 1;
+    ntodate(datainfo->endobs, datainfo->t2, datainfo);
+
+    for (i=0; i<datainfo->v && err == 0; i++) {
+	if (datainfo->vector[i]) {
+	    if (compact_series(Z, i, datainfo->n, startskip, cfac, method)) {
+		errbox(_("Out of memory!"));
+		err = 1;
+	    }
+	}
+    }
+
+    data_status |= MODIFIED_DATA;
+    set_sample_label(datainfo);
+
+    if (datainfo->pd == 1) {
+	flip(mdata->ifac, "/Sample/Compact data...", FALSE);
+    }
+}
+

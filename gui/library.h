@@ -60,6 +60,8 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata);
 
 void count_missing (void);
 
+int maybe_restore_full_data (int action);
+
 void do_add_markers (GtkWidget *widget, dialog_t *ddata);
 
 /* model-related functions */
