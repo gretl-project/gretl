@@ -1907,6 +1907,14 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     if (spec->flags & GPTSPEC_Y2AXIS) {
 	fputs("set ytics nomirror\n", fp);
 	fputs("set y2tics\n", fp);
+    } 
+    /* suppressing border? */
+    else if (spec->flags & GPTSPEC_BORDER_HIDDEN) {
+	fputs("set border 3\n", fp);
+	if (string_is_blank(spec->xtics)) {
+	    fputs("set xtics nomirror\n", fp);
+	}
+	fputs("set ytics nomirror\n", fp);
     }
 
     /* in case of plots that are editable (see gui client), it is

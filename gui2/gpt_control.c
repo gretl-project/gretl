@@ -70,6 +70,7 @@ static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *termcombo;
 static GtkWidget *no_ols_check;
+static GtkWidget *no_border_check;
 static GtkWidget *ttfcombo;
 static GtkWidget *ttfspin;
 
@@ -612,7 +613,15 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	       just_int_to_string(gtk_option_menu_get_history
 				  (GTK_OPTION_MENU(labeljust[i]))));
 #endif
-    }  
+    } 
+
+    if (no_border_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(no_border_check)->active) {
+	    spec->flags |= GPTSPEC_BORDER_HIDDEN;
+	} else {
+	    spec->flags &= ~GPTSPEC_BORDER_HIDDEN;
+	}
+    } 
 
     if (no_ols_check != NULL) {
 	if (GTK_TOGGLE_BUTTON(no_ols_check)->active) {
@@ -886,6 +895,22 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
     gtk_widget_show (keycombo);	
+
+    /* give option of removing top & right border */
+    if (!(spec->flags & GPTSPEC_Y2AXIS)) { 
+	tbl_len++;
+	no_border_check = gtk_check_button_new_with_label(_("Hide top, right border"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  no_border_check, 0, TAB_MAIN_COLS, 
+				  tbl_len-1, tbl_len);
+	if (spec->flags & GPTSPEC_BORDER_HIDDEN) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(no_border_check),
+					 TRUE);
+	}	
+	gtk_widget_show(no_border_check);
+    } else {
+	no_border_check = NULL;
+    }
 
     /* give option of removing an auto-fitted line */
     if (spec->flags & GPTSPEC_AUTO_OLS) { 
@@ -2245,10 +2270,15 @@ static int parse_set_line (GPT_SPEC *spec, const char *line,
 	fprintf(stderr, "plotfile line: '%s'\n", line);
 	return 1;
     }
+
     if (strcmp(set_thing, "y2tics") == 0) {
 	spec->flags |= GPTSPEC_Y2AXIS;
 	return 0;
     }
+    else if (strcmp(set_thing, "border 3") == 0) {
+	spec->flags |= GPTSPEC_BORDER_HIDDEN;
+	return 0;
+    }    
 
     n = strlen(set_thing);
     strcpy(setting, line + 4 + n);

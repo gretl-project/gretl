@@ -33,10 +33,11 @@ enum gnuplot_flags {
 };
 
 enum gptspec_flags {
-    GPTSPEC_TS         = 1 << 0,
-    GPTSPEC_Y2AXIS     = 1 << 1,
-    GPTSPEC_AUTO_OLS   = 1 << 2,
-    GPTSPEC_OLS_HIDDEN = 1 << 3
+    GPTSPEC_TS            = 1 << 0,
+    GPTSPEC_Y2AXIS        = 1 << 1,
+    GPTSPEC_AUTO_OLS      = 1 << 2,
+    GPTSPEC_OLS_HIDDEN    = 1 << 3,
+    GPTSPEC_BORDER_HIDDEN = 1 << 4
 }; 
 
 #define MAXTITLE 128

@@ -3,6 +3,12 @@ version 1.2.0
 - add "printf" command for generating formatted output
 - "delete" command: add the ability to delete a specific
   variable, identified by its number
+- add "eval" command: syntax as in a "genr" formula; the
+  result of calculation (or retrieval) is printed then
+  discarded, not added to the data set as with genr
+- Replace the internal workings of "genr" so that it can
+  calculate dynamically (e.g. "genr y = .6*y(-1) + u"),
+  which makes the "sim" command redundant
 - Make principal components analysis available via the GUI
 - When adding a variable to the dataset from a model window,
   give the user a chance to edit the name and description
@@ -35,6 +41,8 @@ version 1.2.0
 - Add color selection to the graph editing dialog and improve
   the mechanism for selecting a graph font (only applies if 
   gnuplot has the "new" PNG driver, i.e. gnuplot 3.8)
+- Graphs: add option of removing the top and right border lines,
+  if the graph does not have a "y2" axis
 - minor fixes to the build process
 - updates to gtk-1.2 GUI (make more consistent with the gtk-2.0 
   version)

@@ -444,37 +444,38 @@ static genatom *parse_token (const char *s, char op,
     return make_atom(scalar, v, lag, val, func, op, str, level);
 }
 
-static double get_lag_at_obs (int v, int lag, double **Z, 
-			      const DATAINFO *pdinfo, int t)
+static double get_lag_at_obs (int v, int lag, const GENERATE *genr, 
+			      int t)
 {
     int lt;
+    double **Z = *genr->pZ;
     double x = NADBL;
 
     /* stacked X-section needs rather special handling */
-    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-	lt = t - lag * pdinfo->pd;
-	if (lt >= 0 && lt < pdinfo->n) {
+    if (genr->pdinfo->time_series == STACKED_CROSS_SECTION) {
+	lt = t - lag * genr->pdinfo->pd;
+	if (lt >= 0 && lt < genr->pdinfo->n) {
 	    x = Z[v][lt];
 	}
     }
-    else if (dated_daily_data(pdinfo)) {
+    else if (dated_daily_data(genr->pdinfo)) {
 	lt = t - lag;
 	while (lt >= 0 && na(Z[v][lt])) lt--;
 	x = Z[v][lt];
     } 
     else { /* the "standard" time-series case */
 	lt = t - lag;
-	if (lt >= 0 && lt < pdinfo->n) {
+	if (lt >= 0 && lt < genr->pdinfo->n) {
 	    x = Z[v][lt];
 	}
     }
 
     /* post-process missing panel values */
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+    if (genr->pdinfo->time_series == STACKED_TIME_SERIES) {
 	char *p, obs[OBSLEN];
 	int j;
 
-	ntodate(obs, t, pdinfo);
+	ntodate(obs, t, genr->pdinfo);
 	p = strchr(obs, ':');
 	j = atoi(p + 1);
 	if (j <= lag) x = NADBL;
@@ -512,8 +513,7 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 	    DPRINTF(("eval_atom: got data obs (var %d) = %g\n", 
 		    atom->varnum, x));
 	} else {
-	    x = get_lag_at_obs(atom->varnum, atom->lag, (*genr->pZ),
-			       genr->pdinfo, t);
+	    x = get_lag_at_obs(atom->varnum, atom->lag, genr, t);
 	    DPRINTF(("eval_atom: got lagged data obs (var %d, "
 		    "lag %d) = %g\n", atom->varnum, atom->lag, x));
 	}
@@ -706,10 +706,15 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
 static int evaluate_genr (GENERATE *genr)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
+    int m = 0, tstart = t1;
     genatom *atom;
 
+    /* pre-processing of certain sorts of terms */
     reset_atom_stack();
     while (!genr->err && (atom = pop_atom())) {
+	if (atom->varnum == genr->varnum && atom->lag > m) {
+	    m = atom->lag;
+	}
 	if (atom->varnum == UHATNUM || atom->varnum == YHATNUM) {
 	    genr->err = add_model_series_to_genr(genr, atom);
 	}
@@ -737,9 +742,18 @@ static int evaluate_genr (GENERATE *genr)
     genr->scalar = atom_stack_check_for_scalar();
     DPRINTF(("evaluate_genr: check for scalar, result = %d\n", genr->scalar));
 
-    if (genr->scalar) t2 = t1;
+    if (genr->scalar) {
+	t2 = tstart;
+    } else if (tstart < m) {
+	/* autoregressive genr */
+	tstart = m;
+	for (t=t1; t<tstart; t++) {
+	    /* not quite sure here: this replicates "sim" behavior */
+	    genr->xvec[t] = (*genr->pZ)[genr->varnum][t];
+	}
+    }
 
-    for (t=t1; t<=t2; t++) {
+    for (t=tstart; t<=t2; t++) {
 	double xbak = 0.0, x = 0.0;
 	int level = 0, npush = 0, npop = 0;
 
@@ -751,7 +765,6 @@ static int evaluate_genr (GENERATE *genr)
 	    if (y == NADBL) {
 		x = NADBL;
 	    } else {
-		/* was: if (atom->level < level) */
 		if (atom->level < level) { 
 		    x = calc_pop();
 		    npop++;
@@ -785,6 +798,10 @@ static int evaluate_genr (GENERATE *genr)
 	reset_calc_stack();
 	if (genr->err) break;
 	genr->xvec[t] = x;
+	if (m > 0) {
+	    /* autoregressive genr */
+	    (*genr->pZ)[genr->varnum][t] = x;
+	}
     }
 
     return genr->err;
@@ -964,8 +981,10 @@ static int stack_op_and_token (char *s, GENERATE *genr, int level)
 	} else {
 	    genatom *atom;
 
+#ifdef GENR_DEBUG
 	    if (*tok == '\0') fprintf(stderr, "genr: got a blank token\n");
-	    DPRINTF(("token = '%s'\n", tok));
+	    else fprintf(stderr, "token = '%s'\n", tok);
+#endif
 	    atom = parse_token(tok, op, genr, level);
 	    if (atom != NULL) {
 		genr->err = push_atom(atom);
@@ -1476,7 +1495,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	      const char *line, int model_count, 
 	      MODEL *pmod, unsigned char oflag)
 {
-    int i, v = 0;
+    int i;
     char s[MAXLEN], genrs[MAXLEN];
     char newvar[32];
     int oldv = pdinfo->v;
@@ -1490,6 +1509,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     genr.err = 0;
     genr.scalar = 1;
     genr.save = 1;
+    genr.varnum = 0;
     *genr.label = '\0';
     genr.pdinfo = pdinfo;
     genr.pZ = pZ;
@@ -1548,14 +1568,18 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    genr.err = E_NOVAR;
 	    goto genr_return;
 	}
+
 	_esl_trunc(newvar, VNAMELEN - 1);
+
 	if (!isalpha((unsigned char) *newvar) &&
 	    strncmp(newvar, "$nls", 4)) {
 	    genr.err = E_NOTALPH;
 	    goto genr_return;
 	}
-	v = varindex(pdinfo, newvar);
-	if (v == 0) { 
+
+	genr.varnum = varindex(pdinfo, newvar);
+
+	if (genr.varnum == 0) { 
 	    genr.err = E_CONST;
 	    goto genr_return;
 	}
@@ -1613,10 +1637,9 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	genrfree(&genr);
     } else {
 	strcpy(genr.varname, newvar);
-	genr.varnum = v;
 	genr_msg(&genr, oldv);
 	if (genr.save) {
-	    make_genr_label(v < oldv && !oflag && model_count > 0,
+	    make_genr_label(genr.varnum < oldv && !oflag && model_count > 0,
 			    genrs, model_count, &genr);
 	    genr.err = add_new_var(pZ, pdinfo, &genr);
 	} else {
@@ -1681,6 +1704,8 @@ static double calc_xy (double x, double y, char op, int t)
     if (isprint(op)) fprintf(stderr, "op='%c'\n", op);
     else fprintf(stderr, "op=%d\n", op);
 #endif
+
+    if (op && (na(x) || na(y))) return NADBL;
 
     switch (op) {
     case '\0':
@@ -3602,12 +3627,6 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
 	(*pZ)[nv][t] = xx;
     }
-
-#if 0 /* this buggers up Jack's OPG loop regressions */
-    for (t=t1; t<tstart; t++) {
-	(*pZ)[nv][t] = NADBL;
-    }
-#endif
 
  sim_bailout:
 
