@@ -392,8 +392,8 @@ int display_model_table (void)
     pputs(prn, "\n");
 
     if (binary) {
-	pputs(prn, "\n%s\n", _("For logit and probit, R-squared is "
-			       "McFadden's pseudo-R-squared"));
+	pprintf(prn, "\n%s\n", _("For logit and probit, R-squared is "
+				 "McFadden's pseudo-R-squared"));
     }
 
     view_buffer(prn, 78, 450, _("gretl: model table"), PRINT, 
