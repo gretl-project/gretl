@@ -1088,12 +1088,9 @@ void populate_varlist (void)
 	gtk_signal_connect(GTK_OBJECT(mdata->listbox),
 			   "button_press_event",
 			   GTK_SIGNAL_FUNC(main_varclick), NULL);
-#ifdef HAVE_FLITE
 	gtk_signal_connect (GTK_OBJECT(mdata->listbox), "key_press_event",
 			    GTK_SIGNAL_FUNC(catch_mdata_key),
 			    mdata);
-	gtk_widget_grab_focus(mdata->listbox);
-#endif
 	click_connected = 1;
     }
 }

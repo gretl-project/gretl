@@ -747,6 +747,9 @@ void register_data (char *fname, const char *user_fname,
 	check_cmd(datacmd);
 	cmd_init(datacmd); 
     } 
+
+    /* focus the data window */
+    gtk_widget_grab_focus(mdata->listbox);
 }
 
 #define APPENDING(action) (action == APPEND_DATA || \

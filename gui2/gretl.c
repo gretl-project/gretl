@@ -1229,7 +1229,6 @@ void populate_varlist (void)
 	g_signal_connect (G_OBJECT(mdata->listbox), "key_press_event",
 			  G_CALLBACK(catch_mdata_key),
 			  mdata);
-	gtk_widget_grab_focus(mdata->listbox);
 	click_connected = 1;
     }
 
