@@ -384,12 +384,12 @@
 	      </entry>
 	    </row>
 	    <row><entry>Examples:</entry>
-	      <entry><command>coint 2 y x</command>
+	      <entry><command>coint2 2 y x</command>
 	      </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
-	      <entry><command>coint 4 y x1 x2 -o</command>
+	      <entry><command>coint2 4 y x1 x2 -o</command>
 	      </entry>
 	    </row>
 	  </tbody>

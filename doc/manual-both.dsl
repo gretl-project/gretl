@@ -28,6 +28,12 @@
   ;; Should a Table of Contents be produced for Articles?
   #t)
 
+;; Funky -- how does this relate to what jadetex does?
+(define (toc-depth nd)
+  (if (string=? (gi nd) (normalize "article"))
+      2
+      2))
+
 (define %generate-article-titlepage-on-separate-page%
   ;; Should the article title page be on a separate page?
   #t)

@@ -4395,8 +4395,7 @@ int gui_exec_line (char *line,
 
     case LEVERAGE:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = leverage_test(models[0], (const double **) Z, 
-			    datainfo, prn, NULL);
+	err = leverage_test(models[0], &Z, datainfo, prn, NULL);
 	break;
 
     case LMTEST:
