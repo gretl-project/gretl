@@ -129,15 +129,20 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 	fprintf(stderr, "stderr: '%s'\n", serr);
 	ret = 1;
     } else if (status != 0) {
-	fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	fprintf(stderr, "status=%d: stdout: '%s'\n", status, sout);
 	ret = 1;
     }
 
     if (serr != NULL) g_free(serr);
     if (sout != NULL) g_free(sout);
 
-    for (i=0; i<nargs; i++) free(argv[i]);
+    if (ret != 0) fputc(' ', stderr);
+    for (i=0; i<nargs; i++) {
+	if (ret != 0) fprintf(stderr, "%s ", argv[i]);
+	free(argv[i]);
+    }
     free(argv);
+    if (ret != 0) fputc('\n', stderr);
     
     return ret;
 }
@@ -549,7 +554,7 @@ static int write_tramo_file (const char *fname,
     double x;
     FILE *fp;
     int startyr, startper, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    int i, t;
+    int t;
     char *p, tmp[8];
 
     fp = fopen(fname, "w");
@@ -569,20 +574,15 @@ static int write_tramo_file (const char *fname,
     fprintf(fp, "%s\n", pdinfo->varname[varnum]);
     fprintf(fp, "%d %d %d %d\n", tsamp, startyr, startper, pdinfo->pd);
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; ) {
-	for (i=0; i<pdinfo->pd; i++) {
-	    if (t == pdinfo->t1) {
-		i += startper - 1;
-	    }
-	    if (na(Z[varnum][t])) {
-		fputs("-99999 ", fp);
-	    } else {
-		fprintf(fp, "%g ", Z[varnum][t]);
-	    }
-	    t++;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (t && t % pdinfo->pd == 0) fputc('\n', fp);
+	if (na(Z[varnum][t])) {
+	    fputs("-99999 ", fp);
+	} else {
+	    fprintf(fp, "%g ", Z[varnum][t]);
 	}
-	fputc('\n', fp);
     }
+    fputc('\n', fp);
 
     if (print_tramo_options(request, fp) == 0) {
 	request->code = TRAMO_ONLY; /* not running SEATS */
@@ -633,7 +633,7 @@ static int write_spc_file (const char *fname,
 	} else {
 	    fprintf(fp, "%g ", Z[varnum][t]);
 	}
-	if ((i + 1) % 7 == 0) fputs("\n", fp);
+	if ((i + 1) % 7 == 0) fputc('\n', fp);
 	i++;
     }
     fputs(" )\n}\n", fp);
@@ -752,8 +752,9 @@ int write_tx_data (char *fname, int varnum,
     char cmd[MAXLEN];
 #endif
 
-    /* sanity check */
     *errmsg = 0;
+
+    /* sanity check */
     if (!pdinfo->vector[varnum]) {
 	sprintf(errmsg, "%s %s", pdinfo->varname[varnum], 
 		_("is a scalar"));
@@ -765,6 +766,13 @@ int write_tx_data (char *fname, int varnum,
 	request.code = TRAMO_SEATS;
     } else {
 	request.code = X12A;
+    }
+
+    /* if TRAMO, can't handle > 600 observations (!) */
+    if (request.code == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
+	strcpy(errmsg, "TRAMO can't handle more than 600 observations.\n"
+	       "Please select a smaller sample.");
+	return 1;
     }
 
     request.pd = pdinfo->pd;
