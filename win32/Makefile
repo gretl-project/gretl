@@ -30,12 +30,14 @@ CFLAGS = -DHAVE_READLINE -DOS_WIN32 -I. -I$(libdir) -I$(GLIB_INC) -I$(extradir)
 
 # source paths
 vpath %.c $(libdir)
+vpath %.c $(topsrc)/cephes
 vpath %.c $(topsrc)/cli
 vpath %.c $(topsrc)/gui
 vpath %.c $(extradir)
 vpath %.c $(topsrc)/plugin
 vpath %.c $(topsrc)/plugin/libole2
 vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui:$(extradir):$(topsrc)/plugin:.
+vpath %.h $(topsrc)/cephes
 
 #### End of system configuration section. ####
 
@@ -80,10 +82,16 @@ EXTRASRC = gtkitementry.c gtksheet.c gtkiconlist.c \
 EXTRAHDR = $(EXTRASRC:.c=.h)
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
+PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
+	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
+	stdtr.c unity.c polevl.c const.c
+PROBHDR = mconf.h
+PROBOBJ = $(PROBSRC:.c=.o)
+
 MO = mo/es.mo
 
 # targets begin
-all: dirs dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
+all: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
@@ -100,7 +108,9 @@ build.h:
 
 $(EXTRAOBJ): $(EXTRAHDR) $(EXTRASRC) 
 
-$(LIBOBJ): $(LIBSRC) $(LIBHDR) 
+$(LIBOBJ): $(LIBSRC) $(LIBHDR)
+
+$(PROBOBJ): $(PROBSRC) $(PROBHDR) 
 
 $(WRES): gretlw32.rc 
 	$(RC) $(RCFLAGS) gretlw32.rc $(RCOUT)
@@ -134,6 +144,7 @@ clean:
 
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll
+prob-dll: dlls/libprob.dll
 plugin: $(PLUGINS)
 
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
@@ -142,7 +153,13 @@ dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl/libgretl.def \
 	--implib libgretl/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll
+	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob
+
+dlls/libprob.dll: $(PROBOBJ) dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) \
+	--output-def $(<:.o=.def) \
+	--implib $(imports)/libprob.a \
+	-o $@ $^ 
 
 dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \

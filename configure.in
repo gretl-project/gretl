@@ -185,11 +185,15 @@ if test x"${trygmp}" != xno ; then
   AM_PATH_GMP(, have_gmp="yes" ; AC_DEFINE(ENABLE_GMP))
 fi
 
-dnl Checks for header files.
+dnl Checks for header files, etc.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(paths.h unistd.h)
 AC_C_CONST
+AC_C_LONG_DOUBLE 
+AC_CHECK_SIZEOF(int)
+AC_TYPE_SIGNAL 
+AC_C_BIGENDIAN 
 
 AC_DEFUN(AC_PROG_GNUPLOT,
 [AC_CHECK_PROG(GNUPLOT,gnuplot,yes)])
@@ -294,6 +298,8 @@ gui/Makefile
 gui/gnome/gretl.keys 
 cli/Makefile 
 lib/Makefile 
+cephes/Makefile
+cephes/mconf.h
 plugin/Makefile
 po/Makefile.in 
 share/Makefile

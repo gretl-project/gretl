@@ -22,6 +22,7 @@
 */  
 
 #include "libgretl.h" 
+#include "../../cephes/libprob.h"
  
 extern void _putxx (double xx);
 
@@ -82,11 +83,7 @@ double rhocrit95 (int n)
 
 double tprob (double x, int df)
 {
-    double xx;
-
-    if (df <= 0) return -1.0;
-    xx = x*x;
-    return fdist(xx, 1, df);
+    return 1.0 - stdtr(df, x);
 }
 
 /**
@@ -102,61 +99,7 @@ double tprob (double x, int df)
 
 double fdist (double x, int dfn, int dfd)
 {
-    int ia, ib, i, j;
-    double xi, fia, fi1, fi2, w, zz, p, zy, d, zk;
-
-    if (dfn <= 0 || dfd <= 0) return -1;
-    if (x <= 0) return 1.0;
-    ia = 2*(dfn/2)-dfn+2;
-    ib = 2*(dfd/2)-dfd+2;
-    w = x*dfn/dfd;
-    zz = 1./(1.+w);
-    if (ia == 1) {
-	if(ib == 1) {
-	    p = sqrt(w);
-	    zy = .3183098862;
-	    d = zy*zz/p;
-	    p = 2.0*zy*atan(p);
-	} else {
-	    p = sqrt(w*zz);
-	    d = .5*p*zz/w;
-	}
-    } else {
-	if(ib == 1) {
-	    p = sqrt(zz);
-	    d = .5*zz*p;
-	    p = 1.0-p;
-	} else {
-	    d = zz*zz;
-	    p = w*zz;
-	}
-    }
-    zy = 2.*w/zz;
-    if (ia == 1) {
-	fia = (double) ia;
-	for (i=ib+2; i<=dfd; i=i+2) {
-	    fi1 = (double) (i-1);
-	    fi2 = (double) (i-2);
-	    d = (1.0+fia/fi2)*d*zz;
-	    p = p+d*zy/fi1;
-	}
-    } else {
-	xi = (double) ((dfd - 1)/2);
-	zk = pow(zz,xi);
-	d = d*zk*dfd/ib;
-	p = p*zk+w*zz*(zk-1.0)/(zz-1.0);
-    }
-    zy = w*zz;
-    zz = 2.0/zz;
-    ib = dfd-2;
-    for (i=ia+2; i<=dfn; i=i+2) {
-	j = i+ib;
-	d = zy*d*j/(i - 2);
-	p = p - zz*d/j;
-    }
-    if (p <= 0.0) p = 0.0;
-    if (p >= 1.0) p = 1.0;
-    return (1.0 - p);
+    return fdtrc(dfn, dfd, x);
 }
 
 /**
@@ -170,62 +113,7 @@ double fdist (double x, int dfn, int dfd)
 
 double chisq (double x, int df)
 {
-    double aa, bb, absx, p, zy, zz, h, d, sum, xs, xh, xi, xx, x2;
-    int i, m, iy;
-
-    if (x <= 0.0 || df <= 0) return 1.0;
-    if (df == 1) {
-	zy = sqrt(x);
-	p = 2.0 * normal(zy);
-	return p;
-    }
-    h = (double) df;
-    if (df <= 30) {
-	x2 = -x/2.0;
-	zy = h/2.0;
-	iy = (int) zy;
-	zy = zy - iy;
-	if (zy > 0.01) {
-	    aa = (h - .999)/2.0;
-	    m = (int) aa;
-	    d = 1.0;
-	    zy = sqrt(x);
-	    sum = 0.0;
-	    for (i=1; i<=m; i++) {
-		xi = (double) i;
-		d = d*(2.0*xi-1.0);
-		sum += (pow(x, xi) / (zy*d));
-	    }
-	    xs = normal(zy);
-	    p = 2.*xs + 0.7978845612587234 * sum * exp(x2);
-	} else {
-	    aa = (h - 1.999)/2.0;
-	    m = (int) aa; 
-	    d = 1.0;
-	    sum = 0.0;
-	    for (i=1; i<=m; i++) {
-		xi = (double) i;
-		d *= 2.0*i;
-		sum += pow(x, xi) / d;
-	    }
-	    if (x <= 175.0) p = (1.0 + sum) * exp(x2);
-	    else p = 0.0;
-	}
-	return p;
-    }
-    xs = h - 1.0;
-    d = x - h + 2.0/3.0 - .08/h;
-    xx = 2.0 * xs;
-    if (floateq(x, xs)) zz = - (1.0/3.0 + .08/h) / sqrt(xx);
-    else {
-	xh = x - xs;
-	absx = (xh>0.0)? xh : -xh;
-	aa = xs / x;
-	bb = xs * log(aa) + x - xs;
-	zz = d * sqrt(bb)/absx;
-    }
-    p = normal(zz);
-    return p;
+    return 1.0 - chdtr(df, x);
 }
 
 /**
@@ -239,26 +127,7 @@ double chisq (double x, int df)
 
 double normal (double x)
 {
-    const double a1 = .0705230784;
-    const double a2 = .0422820123;
-    const double a3 = .0092705272;
-    const double a4 = .0001520143;
-    const double a5 = .0002765672;
-    const double a6 = .0000430638;
-    double absx, xx, zz, p;
-
-    absx = (x > 0.0)? x : -x;
-    if (absx <= 14.14) zz = .7071067812*absx;
-    else zz = 10.0;
-    xx = a6*zz + a5;
-    xx = xx*zz + a4;
-    xx = xx*zz + a3;
-    xx = xx*zz + a2;
-    xx = xx*zz + a1;
-    xx = xx*zz + 1.0;
-    p = 0.5 * pow(xx, -16.0);
-    if (x > 0.0) p = 1.0 - p;
-    return (1.0 - p);
+    return 1.0 - ndtr(x);
 }
 
 /**
@@ -374,16 +243,18 @@ double batch_pvalue (const char *str,
 	    pprintf(prn, _("\npvalue for t: missing parameter\n"));
 	    return -1;
 	}
-	xx = tprob(xval, df1);
+	tmp = xval;
+	if (xval < 0.0) tmp = -1.0 * xval;
+	xx = tprob(tmp, df1);
 	if (xx < 0) {
 	    pprintf(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
 	pprintf(prn, _("\nt(%d): area to the %s of %f = %.4g\n"), 
 		df1, (xval > 0)? _("right"): _("left"),
-		xval, 0.5 * xx);
+		xval, xx);
 	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
-		xx, 1.0 - xx);
+		2.0 * xx, 1.0 - 2.0 * xx);
 	return xx;
 
     case '3':

@@ -62,4 +62,23 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have paths.h? */
 #undef HAVE_PATHS_H
 
+/* Define if the `long double' type works.  */
+#undef HAVE_LONG_DOUBLE
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if your processor stores words with the most significant
+   byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#undef WORDS_BIGENDIAN
+
+/* The number of bytes in a int.  */
+#undef SIZEOF_INT
+
+/* Define if you have the <string.h> header file.  */
+#undef HAVE_STRING_H
+
 #endif /* CONFIG_H */

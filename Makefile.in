@@ -25,7 +25,7 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = lib cli gui plugin po
+SUBDIRS = cephes lib cli gui plugin po
 
 .PHONY :
 

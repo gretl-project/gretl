@@ -1,0 +1,58 @@
+# Makefile for probability integrals.
+# Be sure to set the type of computer and endianness in mconf.h.
+
+topsrc = ..
+
+prefix = @prefix@
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_PROGRAM),)
+  INSTALL_PROGRAM = $(INSTALL) -m 755
+endif
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+# Installation directories
+libdir = $(prefix)/lib
+includedir = $(prefix)/include/gretl
+
+INCS = mconf.h
+
+SRCS = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
+	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
+	stdtr.c unity.c polevl.c const.c
+
+OBJS = $(SRCS:.c=.o)
+LOBJS = $(SRCS:.c=.lo)
+
+LIBTOOL = $(topsrc)/libtool
+LIBPROB = libprob.la
+
+COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
+
+.c.o:        
+	$(COMPILE) $<
+
+$(LIBPROB): $(OBJS) $(LOBJS)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) \
+	-rpath $(prefix)/lib -version-info 0:0:0
+
+install: $(LIBPROB) install-data 
+	$(LIBTOOL) $(INSTALL_PROGRAM) $< $(libdir)/$<
+
+install-strip: $(LIBPROB) install-data
+	$(LIBTOOL) $(INSTALL_PROGRAM) -s $< $(libdir)/$<
+
+install-data: installdirs
+	$(INSTALL_DATA) libprob.h $(includedir)
+
+installdirs:
+	$(topsrc)/tools/mkinstalldirs $(libdir) $(includedir)
+
+clean:
+	rm -f *.o *.lo $(LIBPROB)
+	rm -rf .libs
