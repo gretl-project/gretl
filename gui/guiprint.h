@@ -26,6 +26,10 @@
 int win_copy_rtf (PRN *prn);
 #endif
 
+#if defined(G_OS_WIN32) || defined (USE_GNOME)
+void winprint (char *fullbuf, char *selbuf);
+#endif
+
 void model_to_rtf (MODEL *pmod);
 
 void texprint_summary (GRETLSUMMARY *summ,

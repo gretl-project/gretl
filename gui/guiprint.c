@@ -17,7 +17,8 @@
  *
  */
 
-/*  guiprint.c - RTF and LaTeX generation for gretl */ 
+/*  guiprint.c - RTF and LaTeX generation for gretl, plus native
+    printing */ 
 
 #include "gretl.h"
 
@@ -73,18 +74,34 @@ int win_copy_rtf (PRN *prn)
     return 0;
 }
 
-/* also Windows only: print using Windows spooler */
+#endif
 
-void winprint(char *buf)
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+
+static void time_string (char *s)
+{
+    time_t prntime = time(NULL);
+    
+    sprintf(s, "gretl output %s", ctime(&prntime));
+    s[strlen(s)-1] = '\0';
+}
+
+#endif
+
+/* Windows only: print using Windows spooler */
+#if defined(G_OS_WIN32)
+
+void winprint (char *fullbuf, char *selbuf)
 {
     HDC dc;
     PRINTDLG pdlg;
-    int printok, lines;
-    LOGFONT LogFont;
-    HFONT aFont, *oldFont;
+    int printok, line, page;
+    LOGFONT lfont;
+    HFONT fixed_font, *old_font;
     DOCINFO di;
-    int x, y, page_lines = 70;
-    char *p, line[100];
+    TEXTMETRIC lptm;
+    int px, x, y, incr, page_lines = 47;
+    char *p, hdrstart[48], hdr[70];
     size_t len;
 
     memset(&pdlg, 0, sizeof(pdlg));
@@ -95,25 +112,33 @@ void winprint(char *buf)
     
     /* use Textmappingmode, that's easiest to map the fontsize */
     SetMapMode(dc, MM_TEXT);
+
+    /* logical pixels per inch */
+    px = GetDeviceCaps(dc, LOGPIXELSY);
     
     /* setup font specifics */
-    LogFont.lfHeight = -MulDiv(10, GetDeviceCaps(dc, LOGPIXELSY), 72);
-    LogFont.lfWidth = 0;
-    LogFont.lfEscapement = 0;
-    LogFont.lfOrientation = 0;
-    LogFont.lfWeight = 0;
-    LogFont.lfItalic = 0;
-    LogFont.lfUnderline = 0;
-    LogFont.lfStrikeOut = 0;
-    LogFont.lfCharSet = ANSI_CHARSET;
-    LogFont.lfOutPrecision = OUT_TT_PRECIS;
-    LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    LogFont.lfQuality = DEFAULT_QUALITY;
-    LogFont.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS; /* FIXME */
-    lstrcpy (LogFont.lfFaceName, "Courier");
-    aFont = CreateFontIndirect(&LogFont);
-    /* ok, we've build the font, now use it */
-    oldFont = SelectObject(dc, &aFont);        
+    /* first param to MulDiv is supposed to be point size */
+    lfont.lfHeight = -MulDiv(10, px, 72); /* this is broken! */
+    lfont.lfWidth = 0;
+    lfont.lfEscapement = 0;
+    lfont.lfOrientation = 0;
+    lfont.lfWeight = FW_NORMAL;
+    lfont.lfItalic = 0;
+    lfont.lfUnderline = 0;
+    lfont.lfStrikeOut = 0;
+    lfont.lfCharSet = ANSI_CHARSET;
+    lfont.lfOutPrecision = OUT_DEVICE_PRECIS;
+    lfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lfont.lfQuality = DEFAULT_QUALITY;
+    lfont.lfPitchAndFamily = VARIABLE_PITCH | FF_MODERN; 
+    lstrcpy(lfont.lfFaceName, "Courier New");
+    fixed_font = CreateFontIndirect(&lfont);
+    old_font = SelectObject(dc, &fixed_font); 
+
+    incr = 120;
+    if (GetTextMetrics(dc, &lptm)) {
+	incr = lptm.tmHeight * 1.2;
+    }
         
     /* Initialize print document details */
     memset(&di, 0, sizeof(DOCINFO));
@@ -122,40 +147,122 @@ void winprint(char *buf)
     
     printok = StartDoc(dc, &di);
 
-    p = buf;
-    x = 72;
+    if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) 
+	p = selbuf;
+    else p = fullbuf;
+
+    page = 1;
+    x = px / 2; /* attempt at left margin */
+    time_string(hdrstart);
     while (*p && printok) { /* pages loop */
 	StartPage(dc);
-	lines = 0;
-	y = 72;
-	while (lines < page_lines) { /* lines loop */
+	SelectObject(dc, &fixed_font);
+	SetMapMode(dc, MM_TEXT);
+	/* make simple header */
+	sprintf(hdr, "%s, page %d", hdrstart, page++);
+	TextOut(dc, x, px/8, hdr, strlen(hdr));
+	line = 0;
+	y = px/2;
+	while (*p && line < page_lines) { /* lines loop */
 	    len = strcspn(p, "\n");
-	    if (!len) break; /* FIXME */
-	    memcpy(line, p, len);
-	    line[len] = '\0';
-	    strcat(line, "\r\n");
-	    TextOut(dc, x, y, line, len + 2);
+	    TextOut(dc, x, y, p, len);
 	    p += len + 1;
-	    y += 12; /* line spacing? */
-	    lines++;
+	    y += incr; /* line spacing */
+	    line++;
 	}
 	printok = (EndPage(dc) > 0);
     }
     
-    /* end print job */
     if (printok)
         EndDoc(dc);
     else
         AbortDoc(dc);
-    
-    /* restore font */
-    SelectObject(dc, oldFont);
 
-    DeleteObject(aFont);
+    SelectObject(dc, old_font);
+    DeleteObject(fixed_font);
     DeleteDC(dc);
+    GlobalFree(pdlg.hDevMode);
+    GlobalFree(pdlg.hDevNames);
+
+    free(fullbuf); /* was allocated by gtk_editable_get_chars() */
+    if (selbuf)
+	free(selbuf);
 }
 
-#endif /* G_OS_WIN32 */
+#elif defined(USE_GNOME)
+
+#include <gnome.h>
+#include <libgnomeprint/gnome-printer.h>
+#include <libgnomeprint/gnome-print.h>
+#include <libgnomeprint/gnome-print-meta.h>
+#include <libgnomeprint/gnome-font.h>
+#include <libgnomeprint/gnome-printer-dialog.h>
+
+void winprint (char *fullbuf, char *selbuf)
+{
+    GnomePrinter *printer;
+    GnomePrintContext *pc;    
+    GnomeFont *font;
+    char *p, linebuf[90], hdrstart[48], hdr[70];
+    int page_lines = 47;
+    int x, y, line, page;
+    size_t len;
+
+    printer = gnome_printer_dialog_new_modal();
+
+    if (!printer) {
+	free(fullbuf);
+	free(selbuf);
+	return;
+    }
+
+    pc = gnome_print_context_new_with_paper_size(printer, "US-Letter");
+
+    gnome_print_beginpage (pc, "gretl output");
+
+    /* could use GNOME_FONT_MEDIUM below */
+    font = gnome_font_new_closest("Courier", GNOME_FONT_BOOK, 0, 10);
+    gnome_print_setfont(pc, font);
+    gnome_print_setrgbcolor(pc, 0, 0, 0);
+
+    time_string(hdrstart);
+    if (selbuf != NULL) p = selbuf;
+    else p = fullbuf;
+    page = 1;
+    x = 72;
+    time_string(hdrstart);
+    while (*p) { /* pages loop */
+	line = 0;
+	y = 756;
+	if (page > 1) 
+	    gnome_print_beginpage (pc, "gretl output");
+	sprintf(hdr, "%s, page %d", hdrstart, page++);
+	gnome_print_moveto(pc, x, y);
+	gnome_print_show(pc, hdr);
+	y = 720;
+	while (*p && line < page_lines) { /* lines loop */
+	    len = strcspn(p, "\n");
+	    *linebuf = '\0';
+	    strncat(linebuf, p, len);
+	    gnome_print_moveto(pc, x, y);
+	    gnome_print_show(pc, linebuf);
+	    p += len + 1;
+	    y -= 14; /* line spacing */
+	    line++;
+	}
+	gnome_print_showpage(pc);
+    }
+
+    /* clean up */
+    gnome_print_context_close(pc);
+    gtk_object_unref(GTK_OBJECT(font));
+    gtk_object_unref(GTK_OBJECT(printer));
+    free(fullbuf);
+    if (selbuf) 
+	free(selbuf);
+}
+
+#endif /* G_OS_WIN32, USE_GNOME */
 
 void model_to_rtf (MODEL *pmod)
 {

@@ -162,6 +162,9 @@ GtkItemFactoryEntry model_items[] = {
     { "/File/_Save as text...", NULL, file_save, SAVE_MODEL, NULL },
     { "/File/Save to session as icon", NULL, remember_model, 0, NULL },
     { "/File/Save as icon and close", NULL, remember_model, 1, NULL },
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { "/File/_Print...", NULL, window_print, 0, NULL },
+#endif
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, NULL, 0, "<Branch>" },
@@ -268,6 +271,9 @@ GtkItemFactoryEntry script_help_items[] = {
 };
 
 GtkItemFactoryEntry edit_items[] = {
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { "/File/_Print...", NULL, window_print, 0, NULL },
+#endif    
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
@@ -2610,6 +2616,26 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	gtk_editable_copy_clipboard(GTK_EDITABLE(mydata->w));
     }
 }
+
+/* .................................................................. */
+
+#if defined(G_OS_WIN32) || defined (USE_GNOME)
+
+void window_print (gpointer data, guint u, GtkWidget *widget) 
+{
+    windata_t *mydata = (windata_t *) data;
+    char *buf, *selbuf = NULL;
+    GtkEditable *gedit = GTK_EDITABLE(mydata->w);
+
+    buf = gtk_editable_get_chars(gedit, 0, -1);
+    if (gedit->has_selection)
+	selbuf = gtk_editable_get_chars(gedit, 
+					gedit->selection_start_pos,
+					gedit->selection_end_pos);
+    winprint(buf, selbuf);
+}
+
+#endif
 
 /* .................................................................. */
 

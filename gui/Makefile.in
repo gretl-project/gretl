@@ -36,8 +36,10 @@ ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`
 endif
 ifeq ($(have_gnome),yes)
-  LIBS = `gnome-config --libs gnomeui` `gtkextra-config --libs` ../lib/libgretl.la 
+  LIBS = `gnome-config --libs gnomeui` `gtkextra-config --libs` ../lib/libgretl.la
+  LIBS += `gnome-config --libs print` 
   GUI_CFLAGS = `gnome-config --cflags gnomeui` `gtkextra-config --cflags`
+  GUI_CFLAGS += `gnome-config --cflags print`
   desktopdir = $(gnome_prefix)/share/gnome/apps/Applications
   mimedir = $(gnome_prefix)/share/mime-info
   gpixmaps = $(gnome_prefix)/share/pixmaps

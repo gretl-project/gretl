@@ -59,6 +59,9 @@ GtkItemFactoryEntry log_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },    
     { "/File/_Save As...", NULL, file_save, SAVE_CMDS, NULL },
     { "/File/_Run", NULL, do_run_script, SESSION_EXEC, NULL },
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { "/File/_Print...", NULL, window_print, 0, NULL },
+#endif
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
@@ -78,6 +81,9 @@ GtkItemFactoryEntry script_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" }, 
     { "/File/Save _As...", NULL, file_save, SAVE_SCRIPT, NULL },
     { "/File/_Run", NULL, do_run_script, SCRIPT_EXEC, NULL },
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { "/File/_Print...", NULL, window_print, 0, NULL },
+#endif
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
@@ -90,6 +96,9 @@ GtkItemFactoryEntry sample_script_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },    
     { "/File/_Save As...", NULL, file_save, SAVE_SCRIPT, NULL },
     { "/File/_Run", NULL, do_run_script, SCRIPT_EXEC, NULL },
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { "/File/_Print...", NULL, window_print, 0, NULL },
+#endif
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
@@ -99,6 +108,9 @@ GtkItemFactoryEntry sample_script_items[] = {
 GtkItemFactoryEntry script_out_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },    
     { "/File/Save _As...", NULL, file_save, SAVE_OUTPUT, NULL },
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { "/File/_Print...", NULL, window_print, 0, NULL },
+#endif
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
@@ -106,6 +118,9 @@ GtkItemFactoryEntry script_out_items[] = {
 };
 
 GtkItemFactoryEntry view_items[] = {
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { "/File/_Print...", NULL, window_print, 0, NULL },
+#endif
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },

@@ -780,15 +780,20 @@ static void print_float_10 (const double x, PRN *prn)
     char numstr[10];
     double xx = x;
 
-    if (fabs(x) < 1.0e-14) xx = 0;  /* is this wise? */
+    if (fabs(x) < DBL_EPSILON) xx = 0;  
 
     if (xx == 0.) {
 	pprintf(prn, "%10.3f", xx);
 	return;
     }
     if (fabs(xx) >= 1000000) {
+#ifdef OS_WIN32 /* win32 seems to print a 3-digit exponent */
+	if (xx < 0.0) sprintf(numstr, "%.3g", xx);
+	else sprintf(numstr, "%.4g", xx);
+#else
 	if (xx < 0.0) sprintf(numstr, "%.4g", xx);
 	else sprintf(numstr, "%.5g", xx);
+#endif
 	pad = (10 - strlen(numstr));
 	if (pad > 0) _bufspace(pad, prn);
 	pprintf(prn, "%s", numstr);
@@ -803,8 +808,13 @@ static void print_float_10 (const double x, PRN *prn)
 	return;
     }
     if (fabs(xx) < .00001) {
+#ifdef OS_WIN32
+	if (xx < 0.0) sprintf(numstr, "%.3g", xx);
+	else sprintf(numstr, "%.4g", xx);
+#else
 	if (xx < 0.0) sprintf(numstr, "%.4g", xx);
 	else sprintf(numstr, "%.5g", xx);
+#endif
 	pad = (10 - strlen(numstr));
 	if (pad > 0) _bufspace(pad, prn);
 	pprintf(prn, "%s", numstr);

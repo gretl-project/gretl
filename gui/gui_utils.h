@@ -7,6 +7,10 @@
 void read_rc (void);
 #endif
 
+#if defined(G_OS_WIN32) || defined (USE_GNOME)
+void window_print (gpointer data, guint u, GtkWidget *widget);
+#endif
+
 void load_fixed_font (void);
 
 void write_rc (void);
