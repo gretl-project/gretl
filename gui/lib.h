@@ -134,9 +134,13 @@ void do_dummy_graph (GtkWidget *widget, dialog_t *ddata);
 
 void display_selected (GtkWidget *widget, dialog_t *ddata);
 
+void display_var (void);
+
 /* script- and file-related functions */
 
 void do_open_script (GtkWidget *w, GtkFileSelection *fs);
+
+void view_script_default (void);
 
 void do_new_script (gpointer data, guint action, GtkWidget *widget);
 

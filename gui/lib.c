@@ -36,9 +36,6 @@ extern double *fullZ;
 /* functions in other gretl GUI files */
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, print_t *prn);
-extern void restore_sample (gpointer data, int verbose, GtkWidget *w);
-extern void restore_sample_state (gboolean s);
-extern char *endbit (char *dest, char *src, int addscore);
 extern int boxplots (int *list, 
 		     double **pZ, const DATAINFO *pdinfo, 
 		     int notches);
@@ -1306,7 +1303,6 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 void set_panel_structure (gpointer data, guint u, GtkWidget *w)
 {
     extern GtkWidget *open_dialog;
-    extern void destroy_dialog_data (GtkWidget *w, gpointer data);
     void *handle;
     void (*panel_structure_dialog)(DATAINFO *, GtkWidget *, 
 				   void (*)(), void (*)());
@@ -2601,7 +2597,6 @@ static void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     print_t *prn;
     char *runfile = NULL, fname[MAXLEN];
-    extern void refresh_data (void);
 
     if (!user_fopen("output_tmp", fname, &prn)) {
 	errbox("Couldn't open output file");

@@ -646,8 +646,6 @@ void about_dialog (gpointer data)
 
 /* ........................................................... */
 
-gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
-
 void menu_exit_check (GtkWidget *w, gpointer data)
 {
     int ret = exit_check(w, NULL, data);

@@ -26,11 +26,8 @@
 
 extern void browser_open_data (GtkWidget *w, gpointer data);
 extern void browser_open_ps (GtkWidget *w, gpointer data);
-extern void display_var (void);
 extern void open_db_clist (GtkWidget *w, gpointer data);
 extern void open_remote_clist (GtkWidget *w, gpointer data);
-extern void gui_get_series (gpointer data, guint bci_code, 
-			    GtkWidget *widget);
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 extern void file_selector (char *msg, char *startdir, int action, 
 			  gpointer data);

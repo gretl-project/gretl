@@ -25,4 +25,10 @@ void about_dialog (gpointer data);
 
 gint yes_no_dialog (char *title, char *msg, int cancel);
 
+void destroy_dialog_data (GtkWidget *w, gpointer data);
+
+gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
+
+void menu_exit_check (GtkWidget *w, gpointer data);
+
 #endif /* DIALOGS_H */

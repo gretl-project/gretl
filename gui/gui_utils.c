@@ -45,7 +45,6 @@ extern GtkWidget *console_dialog;
 extern GtkWidget *mysheet;
 extern GtkWidget *toolbar_box;
 extern char *space_to_score (char *str);
-extern void destroy_dialog_data (GtkWidget *w, gpointer data);
 
 extern char want_toolbar[6];
 extern char calculator[MAXSTR];
@@ -55,7 +54,6 @@ extern char Rcommand[MAXSTR];
 /* filelist stuff */
 #define MAXRECENT 4
 
-char *endbit (char *dest, char *src, int addscore);
 #ifdef USE_GNOME
 static void gnome_printfilelist (int filetype);
 #else

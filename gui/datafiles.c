@@ -29,9 +29,7 @@ extern void open_db_clist (GtkWidget *w, gpointer data);
 extern void open_remote_clist (GtkWidget *w, gpointer data);
 extern void grab_remote_db (GtkWidget *w, gpointer data);
 extern gint populate_dbfilelist (windata_t *ddata);
-extern int retrieve_url (int opt, const char *dbase, const char *series,
-			 int filesave, char **saver, char *errbuf);
-extern GtkWidget *log_menubar;
+
 extern GtkItemFactoryEntry sample_script_items[];
 
 char pwtpath[MAXLEN];
@@ -443,8 +441,6 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     }
 
     if (code == RAMU_DATA) {
-	extern void datafile_find (GtkWidget *widget, gpointer data);
-
 	midbutton = gtk_button_new_with_label("Find");
 	gtk_box_pack_start(GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
 	gtk_signal_connect(GTK_OBJECT(midbutton), "clicked",

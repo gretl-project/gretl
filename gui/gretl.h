@@ -195,8 +195,26 @@ void clear_sample_label (void);
 
 void set_sample_label (DATAINFO *pdinfo);
 
+void restore_sample_state (gboolean s); 
+
+void restore_sample (gpointer data, int verbose, GtkWidget *w);
+
+void refresh_data (void);
+
 gint main_popup (GtkWidget *widget, GdkEventButton *event, 
 		 gpointer data);
+
+/* functions defined in files other than gretl.c */
+
+int retrieve_url (int opt, const char *dbase, const char *series, 
+		  int filesave, char **saver, char *errbuf);
+
+void gui_get_series (gpointer data, guint bci_code, 
+		     GtkWidget *widget);
+
+int update_query (void); 
+
+void display_files (gpointer data, guint code, GtkWidget *widget);
 
 #ifndef G_OS_WIN32
 void set_wm_icon (GtkWidget *w, gpointer data);

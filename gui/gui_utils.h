@@ -26,6 +26,8 @@ void prn_to_clipboard (print_t *prn);
 int isdir (const char *path);
 
 void append_dir (char *fname, const char *dir);
+
+char *endbit (char *dest, char *src, int addscore);
  
 void set_rcfile (void);
 
@@ -44,6 +46,8 @@ void clear_data (void);
 void register_data (const char *fname, int record);
 
 void verify_open_data (gpointer userdata);
+
+void datafile_find (GtkWidget *widget, gpointer data);
 
 void verify_open_session (gpointer userdata);
 

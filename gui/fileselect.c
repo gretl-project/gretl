@@ -22,7 +22,6 @@
 
 #include "gretl.h"
 
-extern GtkWidget *log_menubar;
 extern GtkItemFactoryEntry script_items[];
 extern GtkItemFactoryEntry sample_script_items[];
 extern char remember_dir[MAXLEN];

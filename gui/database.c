@@ -98,13 +98,6 @@ typedef struct {
     int err;
 } SERIESINFO;
 
-extern int retrieve_url (int opt, const char *dbase, const char *series, 
-			 int filesave, char **saver, char *errbuf);
-extern void destroy_dialog_data (GtkWidget *w, gpointer data);
-
-void gui_get_series (gpointer data, guint bci_code, 
-		     GtkWidget *widget);
-
 /* private functions */
 static GtkWidget *database_window (windata_t *ddata);
 static int populate_series_list (windata_t *dbdat, PATHS *ppaths);

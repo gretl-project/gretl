@@ -39,7 +39,6 @@
 
 #define SESSION_DEBUG
 
-extern char *endbit (char *dest, char *src, int addscore);
 extern void file_selector (char *msg, char *startdir, int action, 
 			   gpointer data);
 
@@ -95,7 +94,6 @@ static GList *gobjects;
 static GtkIconListItem *active_icon;
 static GtkWidget *addgraph;
 
-extern void view_script_default (void);
 extern int read_plotfile (GPT_SPEC *plot, char *fname);
 extern void show_spreadsheet (char *dataspec);
 

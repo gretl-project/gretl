@@ -40,26 +40,16 @@
 #include "pixmaps/mini.plot.xpm"
 #include "pixmaps/mini.ofolder.xpm"
 
-/* exported functions */
-void restore_sample_state (gboolean s); /* shared with lib.c */
-void refresh_data (void);
-void restore_sample (gpointer data, int verbose, GtkWidget *w);
-
 /* functions from other gretl GUI files */
 extern void helpfile_init (void);
-extern void display_files (gpointer data, guint code, GtkWidget *widget);
 extern void gpt_save_dialog (void);   /* gpt_control.c */
-extern void display_var (void);       /* lib.c */
 extern void free_modelspec (void);    /* lib.c */
 extern void allocate_fileptrs (void); /* gui_utils.c */
 extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
-extern int update_query (void);       /* webget.c */
 extern void bool_subsample (gpointer data, guint dropmiss, GtkWidget *w);
 extern void free_command_stack (void);
 extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
-extern void menu_exit_check (GtkWidget *widget, gpointer data);
-extern gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
 extern void set_panel_structure (gpointer data, guint u, GtkWidget *w);
 
 /* functions private to gretl.c */
