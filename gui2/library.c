@@ -1143,7 +1143,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 
     register_graph();
 
-    view_buffer(prn, 78, 350, _("gretl: forecasts"), FCAST, NULL);    
+    view_buffer(prn, 78, 350, _("gretl: forecasts"), FCAST, view_items);    
 }
 
 /* ........................................................... */
@@ -2137,7 +2137,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     free_freq(freq);
 
     view_buffer(prn, 78, 300, _("gretl: residual dist."), TESTUHAT,
-		NULL);
+		view_items);
 }
 
 /* ........................................................... */
@@ -2235,7 +2235,8 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
     free(prn->buf);
     prn->buf = databuf;
 
-    view_buffer(prn, 120, 500, _("gretl: TRAMO analysis"), TRAMO, NULL);
+    view_buffer(prn, 120, 500, _("gretl: TRAMO analysis"), TRAMO, 
+		view_items);
 }
 #endif
 
@@ -2273,7 +2274,8 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 	register_graph();
     }
 
-    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RANGE_MEAN, NULL);
+    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RANGE_MEAN, 
+		view_items);
 }
 
 /* ........................................................... */
@@ -2304,7 +2306,8 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
     }
     register_graph();
 
-    view_buffer(prn, 60, 400, _("gretl: periodogram"), PERGM, NULL);
+    view_buffer(prn, 60, 400, _("gretl: periodogram"), PERGM, 
+		view_items);
 }
 
 /* ........................................................... */
@@ -2643,7 +2646,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	err = printdata(NULL, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA, NULL);
+	view_file(fname, 0, 1, 78, 350, VIEW_DATA, view_items);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
@@ -2653,7 +2656,8 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, 
+		    view_items);
     }
 }
 
@@ -2692,7 +2696,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	printdata(prcmd.list, &Z, datainfo, 0, 1, prn);
 	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA, NULL);
+	view_file(fname, 0, 1, 78, 350, VIEW_DATA, view_items);
     } else { /* use buffer */
 	int err;
 
@@ -2703,7 +2707,8 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, 
+		    view_items);
     }
     free(prcmd.list);
     free(prcmd.param);
@@ -2725,7 +2730,8 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);
     } else 
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL);    
+	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, 
+		    view_items);    
 }
 
 /* ........................................................... */
@@ -2924,7 +2930,8 @@ void display_var (void)
     list[1] = mdata->active_var;
     if (bufopen(&prn)) return;
     printdata(list, &Z, datainfo, 0, 1, prn);
-    view_buffer(prn, 24, 350, _("gretl: display data"), PRINT, NULL);    
+    view_buffer(prn, 24, 350, _("gretl: display data"), PRINT, 
+		view_items);    
 }
 
 /* ........................................................... */
