@@ -19,12 +19,6 @@
 
 #include <gtk/gtk.h>
 
-#ifdef G_OS_WIN32
-# include "winconfig.h"
-#else
-# include "../config.h"
-#endif
-
 #include "libgretl.h"
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>

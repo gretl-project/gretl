@@ -65,6 +65,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Do we have paths.h? */
 #undef HAVE_PATHS_H
 
+/* Do we have unistd.h */
+#undef HAVE_UNISTD_H
+
 /* Define if the `long double' type works.  */
 #undef HAVE_LONG_DOUBLE
 

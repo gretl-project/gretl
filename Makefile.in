@@ -73,6 +73,10 @@ distclean: clean
 	share/Makefile plugin/Makefile cephes/Makefile
 	rm -rf win32/dlls win32/import-libs win32/gtkextra-lib win32/plugins
 
+check:
+	make -C tests check
+
+
 
 
 

@@ -53,11 +53,11 @@ void print_smpl (const DATAINFO *pdinfo,
 
 int outcovmx (MODEL *pmod, 
 	      const DATAINFO *pdinfo, 
-	      const int pause, PRN *prn);
+	      int pause, PRN *prn);
 
 void print_white_vcv (const MODEL *pmod, PRN *prn);
 
-int page_break (const int n, int *lineno, const int quit_option);
+int page_break (int n, int *lineno, int quit_option);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
@@ -69,9 +69,11 @@ int print_fit_resid (const MODEL *pmod,
 		     double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn);
 
-void printxx (const double xx, char *str, const int ci);
+void printxx (double xx, char *str, int ci);
 
-void gretl_print_value (const double x, PRN *prn);
+void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
+
+void gretl_print_value (double x, PRN *prn);
 
 void gretl_print_destroy (PRN *prn);
 

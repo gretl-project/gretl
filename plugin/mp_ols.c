@@ -19,14 +19,10 @@
 
 /* mp_ols.c - gretl least squares with multiple precision (GMP) */
 
-#ifdef OS_WIN32
-# include "winconfig.h"
-#else
-# include "../config.h"
-#endif
-
 #include "libgretl.h"
 #include <gmp.h>
+
+#define GRETL_MP_DIGITS 12
 
 static mpf_t MPF_ONE;
 static mpf_t MPF_ZERO;
@@ -214,49 +210,6 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->errcode = 0;
 }
 
-static void fix_exponent (char *s)
-{
-    char *p;
-    int k;
-
-    if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
-        if (sscanf(p + 1, "%d", &k) == 1)
-            sprintf(p + 1, "0%d", k);
-    }
-}
-
-static void print_float_28 (double x, PRN *prn)
-{
-    char numstr[48], final[48];
-    char *p;
-    int i, tmp, forept = 0;
-    char decpoint = '.';
-
-#ifdef ENABLE_NLS
-    decpoint = get_local_decpoint();
-#endif
-
-    sprintf(numstr, "%#.*G", 12, x);
-    fix_exponent(numstr);
-
-    p = strchr(numstr, decpoint);
-    if (p != NULL) forept = p - numstr;
-    tmp = 12 - forept;
-    *final = 0;
-    for (i=0; i<tmp; i++) strcat(final, " ");
-
-    tmp = strlen(numstr) - 1;
-    if (numstr[tmp] == decpoint) numstr[tmp] = 0;
-
-    strcat(final, numstr);
-
-    tmp = 28 - strlen(final);
-    for (i=0; i<tmp; i++) strcat(final, " ");
-
-    pprintf(prn, "%s", final);
-}
-
-
 static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
 			    int c, PRN *prn)
 {
@@ -265,8 +218,10 @@ static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
 
     pprintf(prn, " %3d) %8s ", pmod->varlist[c], 
 	    pdinfo->varname[pmod->varlist[c]]);
-    print_float_28(xx, prn);
-    print_float_28(yy, prn);
+
+    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
+    gretl_print_fullwidth_double(yy, GRETL_MP_DIGITS, prn); 
+
     pprintf(prn, "\n");
 }
 
@@ -280,28 +235,28 @@ static void other_stats (const MPMODEL *pmod, PRN *prn)
     
     xx = mpf_get_d (pmod->sigma);
     pprintf(prn, "%-*s", len, _("Standard error"));
-    print_float_28(xx, prn);
+    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     pprintf(prn, "\n");
 
     xx = mpf_get_d (pmod->ess);
     pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
-    print_float_28(xx, prn);
+    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     pprintf(prn, "\n");
 
     xx = mpf_get_d (pmod->rsq);
     pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
-    print_float_28(xx, prn);
+    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     pprintf(prn, "\n");
 
     xx = mpf_get_d (pmod->adjrsq);
     pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
-    print_float_28(xx, prn);
+    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     pprintf(prn, "\n");
 
     xx = mpf_get_d (pmod->fstt);
     sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
     pprintf(prn, "%-*s", len, fstr);
-    print_float_28(xx, prn);
+    gretl_print_fullwidth_double(xx, GRETL_MP_DIGITS, prn);
     pprintf(prn, "\n");
 }
 

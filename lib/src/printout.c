@@ -31,7 +31,7 @@
 #endif
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			const int c, PRN *prn);
+			int c, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
 static int essline (const MODEL *pmod, PRN *prn, int wt);
 static void rsqline (const MODEL *pmod, PRN *prn);
@@ -41,11 +41,11 @@ static int print_discrete_stats (const MODEL *pmod,
 				 const DATAINFO *pdinfo, 
 				 PRN *prn);
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
-				  const int c, const double t, PRN *prn);
+				  int c, const double t, PRN *prn);
 static void print_aicetc (const MODEL *pmod, PRN *prn);
 void _putxx (const double xx);
-void _mxout (const double *rr, const int *list, const int ci,
-	     const DATAINFO *pdinfo, const int pause, PRN *prn);
+void _mxout (const double *rr, const int *list, int ci,
+	     const DATAINFO *pdinfo, int pause, PRN *prn);
 
 
 /* ......................................................... */ 
@@ -86,7 +86,7 @@ void _bufspace (int n, PRN *prn)
  * to the buffer @str, in a format that depends on @ci.
  */
 
-void printxx (const double xx, char *str, const int ci)
+void printxx (const double xx, char *str, int ci)
 {
     int d = 6;
 
@@ -552,7 +552,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 /* ........................................................... */
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
-		      const DATAINFO *pdinfo, const int aux_code, PRN *prn)
+		      const DATAINFO *pdinfo, int aux_code, PRN *prn)
 {
     int i;
     char spc[3];
@@ -845,7 +845,7 @@ static void cut_extra_zero (char *numstr, int digits)
    2*P + 4 characters, where P denotes the precision ("digits"). 
 */
 
-static void print_fullwidth_double (double x, int digits, PRN *prn)
+void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
 {
     char numstr[32], final[32];
     char *p;
@@ -881,13 +881,13 @@ static void print_fullwidth_double (double x, int digits, PRN *prn)
 
 void gretl_print_value (double x, PRN *prn)
 {
-    print_fullwidth_double(x, GRETL_DIGITS, prn);  
+    gretl_print_fullwidth_double(x, GRETL_DIGITS, prn);  
 }
 
 /* ......................................................... */ 
 
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
-				  const int c, const double t, PRN *prn)
+				  int c, const double t, PRN *prn)
 {
     double maxerr;
 
@@ -944,7 +944,7 @@ static int make_cname (const char *orig, char **cname)
 /* ......................................................... */ 
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			const int c, PRN *prn)
+			int c, PRN *prn)
 {
     double t, pvalue;
     int gotnan = 0, freeit = 0;
@@ -1007,7 +1007,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 /* ......................................................... */ 
 
 void _print_rho (int *arlist, const MODEL *pmod, 
-		 const int c, PRN *prn)
+		 int c, PRN *prn)
 {
     char ustr[5];
     
@@ -1040,7 +1040,7 @@ void _print_rho (int *arlist, const MODEL *pmod,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, const int pause, 
+int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause, 
 	      PRN *prn)
 {
     int k, nbetas;
@@ -1087,7 +1087,7 @@ void print_white_vcv (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
-static void outxx (const double xx, const int ci, PRN *prn)
+static void outxx (const double xx, int ci, PRN *prn)
 {
     if (ci == CORR) {
 	if (na(xx)) pprintf(prn, " %13s", _("undefined"));
@@ -1125,7 +1125,7 @@ static int takenotes (int quit_option)
  * otherwise 0.
  */
 
-int page_break (const int n, int *lineno, const int quit_option)
+int page_break (int n, int *lineno, int quit_option)
 {
     if (lineno != NULL && *lineno + n <= 20) return 0;
     if (takenotes(quit_option)) return 1;
@@ -1135,8 +1135,8 @@ int page_break (const int n, int *lineno, const int quit_option)
 
 /* ........................................................ */
 
-void _mxout (const double *rr, const int *list, const int ci,
-	     const DATAINFO *pdinfo, const int pause, PRN *prn)
+void _mxout (const double *rr, const int *list, int ci,
+	     const DATAINFO *pdinfo, int pause, PRN *prn)
      /*  Given a single dimensional array, which represents a
 	 symmetric matrix, prints out an upper triangular matrix
 	 of any size. 
@@ -1381,7 +1381,7 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ........................................................... */
 
-static void varheading (const int v1, const int v2, 
+static void varheading (int v1, int v2, 
 			const DATAINFO *pdinfo, const int *list,
 			PRN *prn)
 /*  skips to new page and prints names of variables
@@ -1882,7 +1882,7 @@ void _print_ar (MODEL *pmod, PRN *prn)
 
 static int print_discrete_coeff (const DATAINFO *pdinfo, 
 				 const MODEL *pmod, 
-				 const int c, PRN *prn)
+				 int c, PRN *prn)
 {
     double tstat;
     int gotnan = 0;

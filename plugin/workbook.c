@@ -25,26 +25,9 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#ifdef G_OS_WIN32
-# include "winconfig.h"
-#else
-# include "../config.h"
-#endif
-
+#include "libgretl.h"
 #include "biff.h"
 #include "importer.h"
-
-#ifndef __GNOME_I18N_H__
-# ifdef ENABLE_NLS
-#  include "libintl.h"
-#  define gettext_noop(String) String
-#  define _(String) gettext (String)
-#  define N_(String) gettext_noop (String)
-# else
-#  define _(String) String
-#  define N_(String) String
-# endif /* ENABLE_NLS */
-#endif /* __GNOME_I18N_H__ */
 
 typedef struct _BiffBoundsheetData
 {

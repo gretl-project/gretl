@@ -22,6 +22,8 @@
 #include "libgretl.h"
 #include <stdarg.h>
 
+char gretl_tmp_str[MAXLEN];
+
 /**
  * dotpos:
  * @str: the string to examine.
@@ -561,7 +563,6 @@ int reset_local_decpoint (void)
     return '.';
 #endif
 }
-
 
 int get_local_decpoint (void)
 {

@@ -302,6 +302,7 @@ cephes/Makefile
 plugin/Makefile
 po/Makefile.in 
 share/Makefile
+tests/Makefile
 ])
 
 if test "${have_zlib}" = "no" ; then

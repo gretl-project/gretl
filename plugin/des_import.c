@@ -21,12 +21,6 @@
    Econometrics: A Modern Approach" (South-Western)
 */
 
-#ifdef OS_WIN32
-# include "winconfig.h"
-#else
-# include "../config.h"
-#endif
-
 #include "libgretl.h"
 #include <errno.h>
 #include <zlib.h>

@@ -10,11 +10,12 @@
 
 #include <stdio.h>
 
-#define HAVE_CONFIG_H
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
-/* BSDs require unistd.h before including stat.h */
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+# include <unistd.h>
 #endif
 
 #include <sys/stat.h>	/* for struct stat */
@@ -25,34 +26,28 @@
 #include <glib.h>
 #include <string.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "ms-ole.h"
 
 #ifdef HAVE_MMAP
-#include <sys/mman.h>
+# include <sys/mman.h>
 #endif
 
-#ifdef HAVE_UNISTD_H
-#	include <unistd.h>
-#else
-#	define S_IRUSR 0000400
-#	define S_IWUSR 0000200
-#	define S_IRGRP 0000040
-#	define S_IWGRP 0000020
-#	define _S_ISREG(m) (((m)&0170000) == 0100000)
-#	define S_ISREG(m) _S_ISREG(m)
-#	define O_NONBLOCK 0x4000
+#ifndef HAVE_UNISTD_H
+# define S_IRUSR 0000400
+# define S_IWUSR 0000200
+# define S_IRGRP 0000040
+# define S_IWGRP 0000020
+# define _S_ISREG(m) (((m)&0170000) == 0100000)
+# define S_ISREG(m) _S_ISREG(m)
+# define O_NONBLOCK 0x4000
 #endif
 
 #ifndef PROT_READ
-#define PROT_READ 0x1
+# define PROT_READ 0x1
 #endif
 
 #ifndef PROT_WRITE
-#define PROT_WRITE 0x2
+# define PROT_WRITE 0x2
 #endif
 
 #ifndef MAP_FAILED

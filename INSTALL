@@ -2,6 +2,7 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
 
   ./configure
   make
+  make check
   make install
 
 * You may want to do "./configure --help" first to see what options are

@@ -27,8 +27,8 @@
 # include <windows.h>
 #endif
 
-extern void _mxout (const double *rr, const int *list, const int ci,
-		    const DATAINFO *pdinfo, const int pause, PRN *prn);
+extern void _mxout (const double *rr, const int *list, int ci,
+		    const DATAINFO *pdinfo, int pause, PRN *prn);
 
 /* ........................................................... */
 
@@ -51,7 +51,7 @@ static int missvals (double *x, int n)
  *
  */
 
-double esl_median (const double *zx, const int n)
+double esl_median (const double *zx, int n)
 {
     double xx;
     int n2, n2p;
@@ -63,9 +63,9 @@ double esl_median (const double *zx, const int n)
 
 /* ........................................................... */
 
-static void moments (const int t1, const int t2, const double *zx, 
+static void moments (int t1, int t2, const double *zx, 
 		     double *xbar, double *std, 
-		     double *skew, double *kurt, const int k)
+		     double *skew, double *kurt, int k)
      /* k is the "degrees of freedom loss": it will generally be one,
 	other than when dealing with a regression residual */
 {
@@ -238,7 +238,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
 /* ...................................................... */
 
-static int get_pacf (double *pacf, int *maxlag, const int varnum, 
+static int get_pacf (double *pacf, int *maxlag, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, err = 0, *laglist, *list;
@@ -305,9 +305,9 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
  *
  */
 
-int corrgram (const int varno, const int order, double ***pZ, 
+int corrgram (int varno, int order, double ***pZ, 
 	      DATAINFO *pdinfo, PATHS *ppaths, 
-	      const int batch, PRN *prn)
+	      int batch, PRN *prn)
 {
     double *x, *y, *acf, *xl, box;
     double *pacf = NULL;
@@ -322,7 +322,8 @@ int corrgram (const int varno, const int order, double ***pZ,
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
-	pprintf(prn, _("\nMissing values within sample -- can't do correlogram"));
+	pprintf(prn, "\n%s",
+		_("Missing values within sample -- can't do correlogram"));
 	return 1;
     }
 
@@ -331,7 +332,9 @@ int corrgram (const int varno, const int order, double ***pZ,
 	return 1;
     }
     if (_isconst(t1, t2, &(*pZ)[varno][0])) {
-	pprintf(prn, _("\n'%s' is a constant\n"), pdinfo->varname[varno]);
+	sprintf(gretl_tmp_str, _("%s is a constant"), 
+		pdinfo->varname[varno]);
+	pprintf(prn, "\n%s\n", gretl_tmp_str);
 	return 1;
     }
 
@@ -367,8 +370,10 @@ int corrgram (const int varno, const int order, double ***pZ,
 	}
 	acf[l] = _corr(nobs-l, x, y);
     }
-    pprintf(prn, _("\nAutocorrelation function for %s\n\n"), 
+
+    sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
 	    pdinfo->varname[varno]);
+    pprintf(prn, _("\n%s\n\n"), gretl_tmp_str);
 
     /* add Box-Pierce statistic */
     box = 0;
@@ -389,7 +394,7 @@ int corrgram (const int varno, const int order, double ***pZ,
 	xl = malloc(m * sizeof *xl);
 	if (xl == NULL) return E_ALLOC;
 	for (l=0; l<m; l++) xl[l] = l + 1.0;
-        pprintf(prn, _("\n\nCorrelogram\n\n"));
+        pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
 	_graphyzx(NULL, acf + 1, NULL, xl, m, pdinfo->varname[varno], 
 		  _("lag"), NULL, 0, prn);
 	free(x);
@@ -524,10 +529,13 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 
     if (!tmp.errcode) {
 	tstat = tmp.coeff[1] / tmp.sderr[1];
-	pprintf(prn, _("\nTest for fractional integration\n"
-		"  Estimated degree of integration = %f\n"
-		"  test statistic: t(%d) = %f, with p-value %.4f\n"),
-		tmp.coeff[1], tmp.dfd, tstat, tprob(tstat, tmp.dfd));
+	pprintf(prn, _("\n%s\n"
+		"  %s = %f\n"
+		"  %s: t(%d) = %f, %s %.4f\n"),
+		_("Test for fractional integration"),
+		_("Estimated degree of integration"), tmp.coeff[1], 
+		_("test statistic"), tmp.dfd, tstat, 
+		_("with p-value"), tprob(tstat, tmp.dfd));
     } else err = tmp.errcode;
 
     clear_model(&tmp, &tmpdinfo);
@@ -553,9 +561,9 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
  *
  */
 
-int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo, 
-		 PATHS *ppaths, const int batch, 
-		 const int opt, PRN *prn)
+int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
+		 PATHS *ppaths, int batch, 
+		 int opt, PRN *prn)
 {
     double *autocov, *omega, *hhat, *savexx = NULL;
     double xx, yy, varx, w;
@@ -570,16 +578,19 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
-	pprintf(prn, _("\nMissing values within sample -- can't do periodogram"));
+	pprintf(prn, "\n%s",
+		_("Missing values within sample -- can't do periodogram"));
 	return 1;
     }    
 
     if (nobs < 9) {
-	pprintf(prn, _("\nInsufficient observations for periodogram"));
+	pprintf(prn, "\n%s",
+		_("Insufficient observations for periodogram"));
 	return 1;
     }
     if (_isconst(t1, t2, &(*pZ)[varno][0])) {
-	pprintf(prn, _("\n'%s' is a constant\n"), pdinfo->varname[varno]);
+	sprintf(gretl_tmp_str, _("'%s' is a constant"), pdinfo->varname[varno]);
+	pprintf(prn, "\n%s\n", gretl_tmp_str);
 	return 1;
     }
 
@@ -698,7 +709,8 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {
-	pprintf(prn, _("\nFractional integration test failed\n"));
+	pprintf(prn, "\n%s\n",
+		_("Fractional integration test failed"));
 	err = 1;
     }
 
@@ -745,7 +757,7 @@ static void center_line (char *str, PRN *prn, int dblspc)
 /* ............................................................... */
 
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
-		   const int ci, PRN *prn)
+		   int ci, PRN *prn)
 {
     char date1[9], date2[9], tmp[96];
 
@@ -776,7 +788,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
 
 void print_summary (GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
-		    const int pause, PRN *prn)
+		    int pause, PRN *prn)
 {
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv, lineno = 4;
@@ -1034,7 +1046,7 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
  */
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
-			const int pause, PRN *prn)
+			int pause, PRN *prn)
 {
     char tmp[96];
 
@@ -1060,7 +1072,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
  */
 
 int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo, 
-		const int pause, PRN *prn)
+		int pause, PRN *prn)
 {
     CORRMAT *corr;
 
@@ -1086,7 +1098,7 @@ int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo,
  */
 
 int means_test (LIST list, double **Z, const DATAINFO *pdinfo, 
-		const int vareq, PRN *prn)
+		int vareq, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
     double *x = NULL, *y = NULL;

@@ -32,6 +32,8 @@
 #define SLASHSTR "/"
 #endif
 
+extern char gretl_tmp_str[MAXLEN];
+
 /* functions follow */
  
 int dotpos (const char *str);
