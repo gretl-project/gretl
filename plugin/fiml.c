@@ -343,7 +343,7 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     }
 
-    /* no df correction for pmod->sigma or sigma matrix */
+    /* not using df correction for pmod->sigma or sigma matrix */
     
     gretl_matrix_copy_values(sigma, fsys->sigma);
 
@@ -826,8 +826,8 @@ static int fiml_get_std_errs (fiml_system *fsys)
 	return E_ALLOC;
     }
 
-    /* These are "Rhat" standard errors: check Calzolari
-       and Panattoni on this */
+    /* These are "R-hat" standard errors: see Calzolari
+       and Panattoni */
 
     err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
 			       vcv, NULL, &s2);

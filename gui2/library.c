@@ -309,6 +309,8 @@ void clear_data (void)
     free_modelspec(modelspec);
     modelspec = NULL;
 
+    gretl_equation_systems_cleanup();
+
     reset_model_count();
 }
 

@@ -39,7 +39,7 @@ static int on_exo_list (const int *exlist, int v)
 
 static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 			const int *exlist, const int *list, int T,
-			double ***pZ, DATAINFO *pdinfo, PRN *prn)
+			double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, t;
     int t1 = pdinfo->t1;
@@ -60,9 +60,6 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 		break;
 	    }
 
-#if LDEBUG > 1
-	    printmodel(lmod, pdinfo, OPT_NONE, prn);
-#endif
 	    /* put resids into appropriate column of E */
 	    for (t=0; t<T; t++) {
 		gretl_matrix_set(E, t, j, lmod->uhat[t + t1]);
@@ -418,7 +415,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     }
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, 
-		      T, pZ, pdinfo, prn);
+		      T, pZ, pdinfo);
     if (err) goto bailout;
 
     err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
@@ -437,7 +434,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     }
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, 
-		      T, pZ, pdinfo, prn);
+		      T, pZ, pdinfo);
     if (err) goto bailout;
     
     err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,

@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "gretl_private.h"
+#include "system.h"
 
 #include <errno.h>
 
@@ -862,20 +863,18 @@ int list_dups (const int *list, int ci)
 int *copylist (const int *src)
 {
     int *targ;
-    int i, n;
+    int i;
 
     if (src == NULL) {
 	return NULL;
     }
 
-    n = src[0];
-
-    targ = malloc((n + 1) * sizeof *targ);
+    targ = malloc((src[0] + 1) * sizeof *targ);
     if (targ == NULL) {
 	return NULL;
     }
 
-    for (i=0; i<=n; i++) {
+    for (i=0; i<=src[0]; i++) {
 	targ[i] = src[i];
     }
 
@@ -1607,17 +1606,23 @@ int hidden_var (int i, const DATAINFO *pdinfo)
 
 double *copyvec (const double *src, int n)
 {
+    double *targ;
     int i;
-    double *xx;
 
-    if (n == 0 || src == NULL) return NULL;
+    if (n == 0 || src == NULL) {
+	return NULL;
+    }
 
-    xx = malloc(n * sizeof *xx);
-    if (xx == NULL) return NULL;
+    targ = malloc(n * sizeof *targ);
+    if (targ == NULL) {
+	return NULL;
+    }
 
-    for (i=0; i<n; i++) xx[i] = src[i];
+    for (i=0; i<n; i++) {
+	targ[i] = src[i];
+    }
 
-    return xx;
+    return targ;
 }
 
 /* ........................................................... */
@@ -1961,16 +1966,14 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     int err;
 
     fr = get_fcast_with_errs(str, pmod, pZ, pdinfo, prn);
+
     if (fr == NULL) {
 	return E_ALLOC;
-    } 
-    else if (fr->err) {
-	err = fr->err;
-	free_fit_resid(fr);
-	return err;
     }
 
-    err = text_print_fcast_with_errs(fr, pZ, pdinfo, prn, plot);
+    if ((err = fr->err) == 0) {
+	err = text_print_fcast_with_errs(fr, pZ, pdinfo, prn, plot);
+    }
 
     free_fit_resid(fr);
     
@@ -1992,8 +1995,10 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     cmd.list = malloc(sizeof *cmd.list);
     cmd.param = malloc(1);
-    if (cmd.list == NULL || cmd.param == NULL) 
+
+    if (cmd.list == NULL || cmd.param == NULL) {
 	return 1;
+    }
 
     getcmd(model_spec, pdinfo, &cmd, &ignore, pZ, NULL);
 
@@ -2042,8 +2047,8 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	clear_model(tmpmod);
     }
 
-    if (cmd.list) free(cmd.list);
-    if (cmd.param) free(cmd.param);
+    free(cmd.list);
+    free(cmd.param);
 
     return err;
 }
@@ -2055,9 +2060,11 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
     int v, panel;
 
     v = varindex(pdinfo, "year");
+
     if (v == pdinfo->v) {
 	v = varindex(pdinfo, "Year");
     }
+
     if (v == pdinfo->v) {
 	panel = 0; /* can't guess */
     } else {
@@ -2178,19 +2185,26 @@ static void free_mp_varnames (mp_results *mpvals)
 
 int allocate_mp_varnames (mp_results *mpvals)
 {
-    int i, n = mpvals->ncoeff + 1;
+    int i, j, n = mpvals->ncoeff + 1;
 
     mpvals->varnames = malloc(n * sizeof *mpvals->varnames);
-    if (mpvals->varnames == NULL) return 1;
+
+    if (mpvals->varnames == NULL) {
+	return 1;
+    }
 
     for (i=0; i<n; i++) {
 	mpvals->varnames[i] = malloc(12);
 	if (mpvals->varnames[i] == NULL) {
-	    free_mp_varnames(mpvals);
+	    for (j=0; j<i; j++) {
+		free(mpvals->varnames[j]);
+	    }
+	    free(mpvals->varnames);
 	    return 1;
 	}
 	mpvals->varnames[i][0] = 0;
     }
+
     return 0;
 }
 
@@ -2331,11 +2345,16 @@ static int copy_main_list (int **targ, const int *src)
     for (i=1; i<=src[0] && src[i]!=LISTSEP; i++) n++;
 
     if (*targ != NULL) free(*targ);
+
     *targ = malloc((n + 2) * sizeof *targ);
-    if (*targ == NULL) return 1;
+    if (*targ == NULL) {
+	return 1;
+    }
     
     (*targ)[0] = n;
-    for (i=1; i<=n; i++) (*targ)[i] = src[i];
+    for (i=1; i<=n; i++) {
+	(*targ)[i] = src[i];
+    }
 
     return 0;
 }

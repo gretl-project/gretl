@@ -280,10 +280,11 @@ static int clear_data (void)
 
     if (Z != NULL) {
 	free_Z(Z, datainfo); 
+	Z = NULL;
     }
+
     clear_datainfo(datainfo, CLEAR_FULL);
 
-    Z = NULL;
     data_status = 0;
 
     clear_model(models[0]);
@@ -291,6 +292,8 @@ static int clear_data (void)
 
     free_modelspec(modelspec);
     modelspec = NULL;
+
+    gretl_equation_systems_cleanup();
 
     reset_model_count();
 

@@ -37,6 +37,8 @@ enum system_save_flags {
 
 gretl_equation_system *system_start (const char *line);
 
+void gretl_equation_systems_cleanup (void);
+
 int gretl_equation_system_append (gretl_equation_system *sys, 
 				  int *list);
 
@@ -93,8 +95,10 @@ MODEL *system_get_model (const gretl_equation_system *sys, int i);
 
 double system_get_ll (const gretl_equation_system *sys);
 double system_get_llu (const gretl_equation_system *sys);
+double system_get_X2 (const gretl_equation_system *sys);
 void system_set_ll (gretl_equation_system *sys, double ll);
 void system_set_llu (gretl_equation_system *sys, double llu);
+void system_set_X2 (gretl_equation_system *sys, double X2);
 
 int system_get_df (const gretl_equation_system *sys);
 

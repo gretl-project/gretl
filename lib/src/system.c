@@ -56,6 +56,7 @@ struct _gretl_equation_system {
     char flags;                 /* to record options (e.g. save residuals) */
     double ll;                  /* log-likelihood (restricted) */
     double llu;                 /* unrestricted log-likelihood */
+    double X2;                  /* chi-square test value */
     int **lists;                /* regression lists for stochastic equations */
     int *endog_vars;            /* list of endogenous variables */
     int *instr_vars;            /* list of instruments (exogenous vars) */
@@ -263,6 +264,7 @@ gretl_equation_system_new (int type, const char *name)
     sys->flags = 0;
 
     sys->ll = sys->llu = 0.0;
+    sys->X2 = 0.0;
 
     sys->lists = NULL;
     sys->endog_vars = NULL;
@@ -509,10 +511,10 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 
     *gretl_errmsg = 0;
 
-    if (sys->type == FIML || sys->type == LIML) {
-	err = make_instrument_list(sys);
-	if (err) goto system_bailout;
-    } else if (sys->type == SUR) {
+    err = make_instrument_list(sys);
+    if (err) goto system_bailout;
+    
+    if (sys->type == SUR) {
 	sur_rearrange_lists(sys);
     }
 
@@ -828,6 +830,11 @@ double system_get_llu (const gretl_equation_system *sys)
     return sys->llu;
 }
 
+double system_get_X2 (const gretl_equation_system *sys)
+{
+    return sys->X2;
+}
+
 void system_set_ll (gretl_equation_system *sys, double ll)
 {
     sys->ll = ll;
@@ -838,7 +845,12 @@ void system_set_llu (gretl_equation_system *sys, double llu)
     sys->llu = llu;
 }
 
-/* for FIML system over-identification test */
+void system_set_X2 (gretl_equation_system *sys, double X2)
+{
+    sys->X2 = X2;
+}
+
+/* for system over-identification test */
 
 int system_get_df (const gretl_equation_system *sys)
 {
@@ -1090,11 +1102,13 @@ system_parse_line (gretl_equation_system *sys, const char *line,
     return err;
 }
 
-/* More FIML-related functionality */
-
 static int sys_in_list (const int *list, int k)
 {
     int i;
+
+    if (list == NULL) {
+	return 0;
+    }
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] < 0) break;
@@ -1114,8 +1128,8 @@ static int make_instrument_list (gretl_equation_system *sys)
 	return 0;
     }
 
-    if (elist == NULL) {
-	/* can't proceed */
+    if (sys->type != SUR && elist == NULL) {
+	/* no list of endog vars: can't proceed */
 	return 1;
     }
 
