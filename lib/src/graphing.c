@@ -1285,8 +1285,15 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		    fprintf(fq, "%.8g ?\n", xx);
 		} else {
 		    fprintf(fq, "%.8g %.8g", xx, yy);
-		    if (!ts_plot && pdinfo->markers) {
-			fprintf(fq, " # %s", pdinfo->S[t]);
+		    if (!ts_plot) {
+			if (pdinfo->markers) {
+			    fprintf(fq, " # %s", pdinfo->S[t]);
+			} else if (dataset_is_time_series(pdinfo)) {
+			    char obs[OBSLEN];
+
+			    ntodate(obs, t, pdinfo);
+			    fprintf(fq, " # %s", obs);
+			}
 		    }
 		    fputc('\n', fq);
 		}
@@ -1304,10 +1311,16 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    tmplist[2] = list[i];
 	    for (t=t1; t<=t2; t++) {
 		int t_miss;
+		char obs[OBSLEN];
 		const char *label = NULL;
 
-		if (!ts_plot && pdinfo->markers && i == 1) {
-		    label = pdinfo->S[t];
+		if (!ts_plot && i == 1) {
+		    if (pdinfo->markers) {
+			label = pdinfo->S[t];
+		    } else if (dataset_is_time_series(pdinfo)) {
+			ntodate(obs, t, pdinfo);
+			label = obs;
+		    }
 		}
 		t_miss = printvars(fq, t, tmplist, *pZ, label, xoff);
 		if ((flags & GP_GUI) && miss == 0) {

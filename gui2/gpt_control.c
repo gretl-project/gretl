@@ -2161,6 +2161,7 @@ static int allocate_plotspec_labels (GPT_SPEC *spec, int plot_n)
 	spec->labels[i][0] = 0;
     }
     spec->nlabels = plot_n;
+
     return 0;
 }
 
@@ -2420,11 +2421,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 
     /* see if we really have any labels */
     if (spec->labels != NULL && !got_labels) {
-	for (i=0; i<plot_n; i++) free(spec->labels[i]);
+	for (i=0; i<plot_n; i++) {
+	    free(spec->labels[i]);
+	}
 	free(spec->labels);
 	spec->labels = NULL;
 	spec->nlabels = 0;
     }
+
+#if 0
+    fprintf(stderr, "spec->labels = %p, spec->nlabels = %d\n",
+	    (void *) spec->labels, spec->nlabels);
+#endif
 
     fclose(fp);
 
@@ -2711,6 +2719,8 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
     }
 }
 
+#define MAX_LABELS_SHOWN 250
+
 static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 		     png_plot_t *plot)
@@ -2736,8 +2746,9 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	get_data_xy(plot, x, y, &data_x, &data_y);
 	if (na(data_x)) return TRUE;
 
-	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250 &&
-	    !(plot_has_no_labels(plot)) && !plot_is_zooming(plot) &&
+	if (!(plot_has_no_labels(plot)) && 
+	    datainfo->t2 - datainfo->t1 < MAX_LABELS_SHOWN &&
+	    !plot_is_zooming(plot) &&
 	    !na(data_y)) {
 	    identify_point(plot, x, y, data_x, data_y);
 	}

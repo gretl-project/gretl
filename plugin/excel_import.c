@@ -903,23 +903,22 @@ static int check_all_varnames (wbook *book, int ncols, int skip)
 
 static int missval_string (const char *s)
 {
-    if (s + 1 == 0) return 1;
-    else {
-	char *p, test[6];
+    if (s + 1 == 0) {
+	return 1;
+    } else {
+	char test[6] = {0};
 
-	*test = 0;
 	strncat(test, s + 1, 4);
-	p = test;
-	while (*p) {
-	    *p = tolower(*p);
-	    p++;
-	}
+	tailstrip(test);
+	lower(test);
 	if (!strcmp(test, "na") || 
 	    !strcmp(test, "n.a.") ||
-	    !strcmp(test, "..")) {
+	    !strcmp(test, "..") ||
+	    !strcmp(test, "?")) {
 	    return 1;
 	}
     }
+
     return 0;
 }
 

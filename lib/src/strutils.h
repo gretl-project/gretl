@@ -73,6 +73,8 @@ int get_base (char *targ, const char *src, char c);
 
 int top_n_tail (char *str);
 
+char *tailstrip (char *str);
+
 void compress_spaces (char *str);
 
 char *space_to_score (char *s);

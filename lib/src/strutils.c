@@ -578,6 +578,38 @@ int top_n_tail (char *str)
 }  
 
 /**
+ * tailstrip:
+ * @str: the string to process.
+ *
+ * Drop trailing space (and newline if any) from string.
+ *
+ * Returns: the modified string.
+ *
+ */
+
+char *tailstrip (char *str)
+{
+    int i, len;
+
+    if (str == NULL || *str == 0) {
+	return;
+    }
+
+    len = strlen(str);
+
+    for (i=len-1; i>=0; i--) {
+	if (isspace((unsigned char) str[i]) ||
+	    str[i] == '\n') {
+	    str[i] = 0;
+	} else {
+	    break;
+	}
+    }
+
+    return str;
+}  
+
+/**
  * compress_spaces:
  * @str: the string to process.
  *

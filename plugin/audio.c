@@ -469,18 +469,6 @@ static int get_fit_params (char *line, dataset *dset)
 
 #endif
 
-static void tail_strip_line (char *line)
-{
-    int i, n = strlen(line);
-
-    for (i=n-1; i>0; i--) {
-	if (line[i] == '\n' || line[i] == ' ') {
-	    line[i] = '\0';
-	}
-	else break;
-    }
-}
-
 static int get_data_x_y (const char *line, double *x, double *y)
 {
     if (sscanf(line, "%lf %lf", x, y) == 2) return 0;
@@ -511,7 +499,7 @@ static int read_datafile (const char *fname, dataset *dset)
     }
 
     while (fgets(line, sizeof line, fdat)) {
-	tail_strip_line(line);
+	tailstrip(line);
 	if (get_comment(line, dset)) {
 	    continue;
 	} else if (!strcmp(line, "e")) {
@@ -567,7 +555,7 @@ static int read_datafile (const char *fname, dataset *dset)
 
     i = got_e = 0;
     while (!err && fgets(line, 256, fdat)) {
-	tail_strip_line(line);
+	tailstrip(line);
 	if (!strcmp(line, "e")) {
 	    got_e++;
 	    if (got_e == 2) {
