@@ -1710,7 +1710,7 @@
       <ilist>
 	<li><para>Once the graph is saved as a session icon, you can
 	    right-click on its icon for a further pop-up menu.  One of
-	    the otions here is <quote>Edit plot commands</quote>,
+	    the options here is <quote>Edit plot commands</quote>,
 	    which opens an editing window with the actual gnuplot
 	    commands displayed. You can edit these commands and either
 	    save them for future processing or send them to gnuplot
@@ -1743,7 +1743,7 @@
     <description>
 
       <para>The session <quote>graph page</quote> will work only if
-	you have the &latex; typsetting system installed, and are able
+	you have the &latex; typesetting system installed, and are able
 	to generate and view postscript output.</para>
 
       <para>In the session icon window, you can drag up to eight
@@ -2229,7 +2229,7 @@
 	which the value of <mathvar>h</mathvar> exceeds
 	2<mathvar>k</mathvar>/<mathvar>n</mathvar> (where
 	<mathvar>k</mathvar> is the number of parameters being
-	estmated and <mathvar>n</mathvar> is the sample size) are
+	estimated and <mathvar>n</mathvar> is the sample size) are
 	flagged with an asterisk.  For details on the concepts of
 	leverage and influence see Davidson and MacKinnon (1993,
 	Chapter 2).
@@ -2555,7 +2555,7 @@
 	its p-value. By default the test statistic is calculated on
 	the assumption that the variances are equal for the two
 	variables; with the <lit>--unequal-vars</lit>option the
-	variances are asumed to be different.  This will make a
+	variances are assumed to be different.  This will make a
 	difference to the test statistic only if there are different
 	numbers of non-missing observations for the two variables.
       </para>
@@ -4427,7 +4427,7 @@
 
   <command name="wls" section="Estimation">
 
-    <blurb>Weighted leat Squares</blurb>
+    <blurb>Weighted Least Squares</blurb>
 
     <usage>
       <arguments>
