@@ -99,39 +99,70 @@
         <argument>ordine</argument>
         <argument>nome-variabile</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>test senza costante</effect>
+	</option>
+	<option>
+	  <flag>--c</flag>
+	  <effect>solo con la costante</effect>
+	</option>
+	<option>
+	  <flag>--ct</flag>
+	  <effect>con costante e trend</effect>
+	</option>
+	<option>
+	  <flag>--ctt</flag>
+	  <effect>con costante, trend e trend al quadrato</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i risultati della regressione</effect>
+	</option>
+      </options>
       <examples>
-        <example>adf 2 x1</example>
+	<example>adf 0 y</example>
+        <example>adf 2 y --nc --c --ct</example>
       </examples>
     </usage>
 
     <description>
-      <para context="gui">Questo comando richiede un ordine di ritardo intero.</para>
+      <para context="gui">Questo comando richiede un ordine di ritardo intero;
+       se si indica un ordine zero, viene eseguito un test Dickey&ndash;Fuller
+       standard (non aumentato).</para>
+       
       <para>
-	  Calcola le statistiche per due test Dickey&ndash;Fuller.  In
-	ognuno dei casi l'ipotesi nulla è che la variabile selezionata
-	esibisca una radice unitaria. Il primo test è un test <mathvar>t</mathvar>
-	basato sul modello 
-	  <equation status="display"
-	  tex="\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]"
-	  ascii="(1 - L)x(t) = m + gx(t-1) + e(t)"
-	  graphic="adf1"/> L'ipotesi nulla è che valga
-	<mathvar>g</mathvar> = 0. Il secondo test (aumentato) procede
-	stimando una regressione non vincolata (i regressori sono una
-	constante, un trend temporale, il primo ritardo della variabile
-	e i ritardi degli <repl quote="true">ordini</repl> indicati della
-	differenza prima) e una regressione vincolata (vengono esclusi il
-	trend temporale e il primo ritardo). La statistica test è
-	  <equation status="display"
-	  tex="\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]"
-	  ascii="F(2, T-k) = [(ESSr - ESSu)/2] / [ESSu/(T - k)]"
-	  graphic="adf2"/> dove <mathvar>T</mathvar> è l'ampiezza del
-	campione, <mathvar>k</mathvar> il numero di parametri nel modello
-	non vincolato e i pedici <mathvar>u</mathvar> e <mathvar>r</mathvar>
-	denotano il modello non vincolato (unrestricted) e quello vincolato
-	(restricted). Si noti che i valori critici per queste statistiche non
-	sono quelli usuali; inoltre, quando è possibile calcolarlo, viene 
-        mostrato un intevallo per il p-value.
+	Calcola le statistiche per un gruppo di test Dickey&ndash;Fuller sulla
+        variabile specificata, assumendo come ipotesi nulla che la variabile
+	abbia una radice unitaria.</para>
+
+      <para>Per impostazione predefinita, vengono mostrate tre varianti del
+        test: una basata su una regressione che contiene solo una costante,
+        una che include la costante e un trend lineare, una che usa la
+        costante e un trend quadratico. È possibile controllare le tre
+        varianti specificando una o più opzioni.
       </para>
+      
+      <para>In tutti i casi, la variabile dipendente è la differenza prima
+        della variabile specificata, <mathvar>y</mathvar>, e la variabile
+        dipendente più importante è il ritardo (di ordine uno) di
+        <mathvar>y</mathvar>. Il modello è costruito in modo che il coefficiente
+        della variabile ritardata <mathvar>y</mathvar> è pari a 1 meno
+        la radice. Ad esempio, il modello con una costante può essere
+        scritto come <equation status="display"
+	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
+	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
+	graphic="adf1"/></para>
+
+      <para>Se l'ordine di ritardi, <mathvar>p</mathvar>, è maggiore di 0,
+        saranno inclusi <mathvar>p</mathvar> ritardi della variabile dipendente
+        nei regressori di ognuna delle regressioni calcolate per il test.
+      </para>
+
+      <para>I <emphasis>p-</emphasis>value per questo test sono basati su
+	MacKinnon (1996). Il codice rilevante è incluso per gentile concessione
+        dell'autore.</para>
     </description>
 
     <gui-access>
@@ -159,7 +190,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/File/Append data</menu-path>
+      <menu-path>/File/Aggiungi dati</menu-path>
     </gui-access>
 
   </command>
@@ -1397,7 +1428,13 @@
 	il coefficiente di covarianza e di correlazione tra i due argomenti.
 	La funzione <func>pvalue</func> richiede gli stessi argomenti del
 	comando <cmdref targ="pvalue"/>, ma in questo caso occorre separare
-	gli argomenti con delle virgole.
+	gli argomenti con delle virgole. Questa funzione produce un p-value
+        a una coda, che nel caso delle distribuzioni normale e
+        <emphasis>t</emphasis> è la <quote>coda corta</quote>. Con la normale,
+        ad esempio, sia 1.96 sia -1.96 daranno un risultato di circa 0.025.
+      </para>
+      
+      <para>
 	<func>uniform()</func> e <func>normal()</func>, che non richiedono
         argomenti, producono delle serie pseudo-casuali estratte da distribuzioni
 	uniformi (0&ndash;1) e normale standard (si veda anche il comando
@@ -4402,7 +4439,7 @@
   </command>
 
   <command name="sim" section="Dataset"
-    label="Simulazione">
+    label="Simulazione" context="cli">
 
     <usage>
       <arguments>
