@@ -245,6 +245,28 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 
 /* ........................................................... */
 
+#ifdef DIALOG_TEST
+
+extern void 
+new_edit_dialog (const char *title, const char *oktxt, 
+		 void (*okfunc)(), guint cmdcode);
+
+void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
+{
+    int l0, *oldlist = NULL;
+
+    if (default_list != NULL) {
+	copylist(&oldlist, default_list);
+	l0 = oldlist[0];
+    }
+
+    new_edit_dialog (_("gretl:specify model"), _("Estimate"), 
+		     do_model, model_code);
+    if (oldlist != NULL) free(oldlist);
+}
+
+#else
+
 void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
 {
     char tempstr[MAXLEN], modelstr[MAXLEN], listnum[6];
@@ -303,6 +325,8 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
 		 _(" Cancel "), NULL, NULL, model_code, 1);
     if (oldlist != NULL) free(oldlist);
 }
+
+#endif /* DIALOG_TEST */
 
 /* ........................................................... */
 

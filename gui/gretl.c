@@ -59,7 +59,6 @@ extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
-extern void new_model_dialog (gpointer p, guint u, GtkWidget *w);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
@@ -411,7 +410,6 @@ GtkItemFactoryEntry data_items[] = {
     { _("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
     { _("/Variable/Delete last variable"), NULL, delete_var, 0, NULL },
     { _("/_Model"), NULL, NULL, 0, "<Branch>" },
-    { _("/Model/new dialog..."), NULL, new_model_dialog, OLS, NULL },
     { _("/Model/_Ordinary Least Squares..."), NULL, model_callback, OLS, NULL },
     { _("/Model/_Weighted Least Squares..."), NULL, model_callback, WLS, NULL },
     { _("/Model/sep1"),  NULL, NULL, 0, "<Separator>" },
