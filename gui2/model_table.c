@@ -744,14 +744,7 @@ int tex_print_model_table (int view)
     ci = common_estimator();
 
     if (view) {
-	pputs(prn, "\\documentclass[11pt]{article}\n");
-
-#ifdef ENABLE_NLS
-	pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
-#endif
-
-	pputs(prn, "\\begin{document}\n\n"
-		"\\thispagestyle{empty}\n\n");
+	gretl_tex_preamble(prn, 0);
     }
 
     pputs(prn, "\\begin{center}\n");
@@ -805,7 +798,12 @@ int tex_print_model_table (int view)
     pputs(prn, "\\end{tabular}\n\n");
     pputs(prn, "\\vspace{1em}\n");
 
-    pprintf(prn, "%s\\\\\n", I_("Standard errors in parentheses"));
+    if (use_tstats) {
+	pprintf(prn, "%s\\\\\n", I_("$t$-statistics in parentheses"));
+    } else {
+	pprintf(prn, "%s\\\\\n", I_("Standard errors in parentheses"));
+    }
+
     pprintf(prn, "{}%s\\\\\n", 
 	    I_("* indicates significance at the 10 percent level"));
     pprintf(prn, "{}%s\\\\\n", 

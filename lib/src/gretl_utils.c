@@ -2633,13 +2633,17 @@ int gretl_spawn_quiet (const char *cmdline)
 
 /* library init and cleanup functions */
 
-void libgretl_init (CMD *cmd)
+void libgretl_init (CMD *cmd, const PATHS *paths)
 {
     if (cmd != NULL && gretl_cmd_init(cmd)) {
 	exit(EXIT_FAILURE);
     }
 
     gretl_rand_init();
+
+    if (paths != NULL) {
+	set_gretl_tex_preamble(paths);
+    }
 }
 
 void libgretl_cleanup (CMD *cmd)

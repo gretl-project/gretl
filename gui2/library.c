@@ -79,7 +79,7 @@ void exit_free_modelspec (void)
 
 void library_command_init (void)
 {
-    libgretl_init(&cmd);
+    libgretl_init(&cmd, &paths);
 }
 
 void library_command_free (void)

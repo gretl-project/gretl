@@ -1029,13 +1029,7 @@ static void model_format_start (PRN *prn)
 {
     if (TEX_FORMAT(prn->format)) {
 	if (STANDALONE(prn->format)) {
-	    pputs(prn, "\\documentclass{article}\n"
-		    "\\usepackage{dcolumn}\n");
-#ifdef ENABLE_NLS
-	    pputs(prn, "\\usepackage[latin1]{inputenc}\n");
-#endif
-	    pputs(prn, "\\begin{document}\n\n"
-		    "\\thispagestyle{empty}\n");
+	    gretl_tex_preamble(prn, 0);
 	}
 	pputs(prn, "\\begin{center}\n");
     }

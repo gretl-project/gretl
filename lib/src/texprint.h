@@ -42,5 +42,9 @@ char *tex_escape (char *targ, const char *src);
 
 void tex_dcolumn_double (double xx, char *numstr);
 
+void set_gretl_tex_preamble (const PATHS *ppaths);
+
+void gretl_tex_preamble (PRN *prn, int ams);
+
 
 

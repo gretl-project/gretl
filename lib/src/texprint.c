@@ -167,9 +167,6 @@ static void tex_garch_coeff_name (char *targ, const char *src,
     char vname[VNAMELEN], vnesc[16];
     int lag;
 
-    /* FIXME: in equation form, varnames are coming out in
-       math mode, not mboxed */
-
     if (sscanf(src, "%[^(](%d)", vname, &lag) == 2) {
 	/* e.g. "alpha(0)" */
 	if (!inmath) {
@@ -312,6 +309,90 @@ static int make_texfile (const PATHS *ppaths, int ID, int equation,
     return 0;
 }
 
+/* mechanism for customizing gretl's tex preamble */
+
+static char tex_preamble_file[MAXLEN];
+
+#ifdef ENABLE_NLS
+static const char *get_gretltex_local (void)
+{
+    static char localtex[16] = {0};
+    char *lang = getenv("LANG");
+
+    if (lang != NULL) {
+	char lstr[3] = {0};
+
+	strncat(lstr, lang, 2);
+	sprintf(localtex, "gretlpre_%s.tex", lstr);
+    }
+
+    return localtex;
+}
+#endif
+
+void set_gretl_tex_preamble (const PATHS *ppaths)
+{
+    FILE *fp;
+    const char *gretltex = "gretlpre.tex";
+#ifdef ENABLE_NLS
+    const char *localtex = get_gretltex_local();
+
+    /* first choice: localized preamble file */
+    sprintf(tex_preamble_file, "%s%s", ppaths->userdir, localtex);
+    fp = fopen(tex_preamble_file, "r");
+    if (fp == NULL) {
+	tex_preamble_file[0] = '\0';
+    } else {
+	fclose(fp);
+	return;
+    }    
+#endif
+
+    /* preamble file on disk */
+    sprintf(tex_preamble_file, "%s%s", ppaths->userdir, gretltex);
+    fp = fopen(tex_preamble_file, "r");
+    if (fp == NULL) {
+	tex_preamble_file[0] = '\0';
+    } else {
+	fclose(fp);
+    }
+}
+
+void gretl_tex_preamble (PRN *prn, int ams)
+{
+    FILE *fp = NULL;
+    int userfile = 0;
+
+    if (tex_preamble_file[0] != '\0') {
+	fp = fopen(tex_preamble_file, "r");
+	if (fp != NULL) {
+	    char line[128];
+
+	    while (fgets(line, sizeof line, fp)) {
+		pputs(prn, line);
+	    }
+	    userfile = 1;
+	    fclose(fp);
+	}
+    }
+
+    if (!userfile) {
+	pputs(prn, "\\documentclass[11pt]{article}\n");
+
+#ifdef ENABLE_NLS
+	pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
+#endif
+	if (ams) {
+	    pputs(prn, "\\usepackage{amsmath}\n\n");
+	} else {
+	    pputs(prn, "\\usepackage{dcolumn}\n\n");
+	}
+
+	pputs(prn, "\\begin{document}\n\n"
+	      "\\thispagestyle{empty}\n\n");
+    }
+}
+
 #define MAXCOEFF 4
 
 /**
@@ -338,15 +419,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     int cchars = 0, ccount = 0;
 
     if (standalone) {
-	pputs(prn, "\\documentclass[11pt]{article}\n");
-
-#ifdef ENABLE_NLS
-	pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
-#endif
-	pputs(prn, "\\usepackage{amsmath}\n\n");
-
-	pputs(prn, "\\begin{document}\n\n"
-		"\\thispagestyle{empty}\n\n");
+	gretl_tex_preamble(prn, 1);
     } else{
 	pputs(prn, "%%% the following needs the amsmath LaTeX package\n\n");
     }
@@ -498,8 +571,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
 		     int standalone, PRN *prn)
 {
-    if (standalone) prn->format = GRETL_PRINT_FORMAT_TEX_DOC;
-    else prn->format = GRETL_PRINT_FORMAT_TEX;
+    if (standalone) {
+	prn->format = GRETL_PRINT_FORMAT_TEX_DOC;
+    } else {
+	prn->format = GRETL_PRINT_FORMAT_TEX;
+    }
     
     return printmodel (pmod, pdinfo, OPT_NONE, prn);
 }
@@ -525,11 +601,16 @@ int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
 {
     PRN prn;
 
-    if (make_texfile(ppaths, pmod->ID, 0, texfile, &prn))
+    if (make_texfile(ppaths, pmod->ID, 0, texfile, &prn)) {
 	return 1;
+    }
 
     tex_print_model(pmod, pdinfo, (oflag & OPT_O), &prn);
-    if (prn.fp != NULL) fclose(prn.fp);
+
+    if (prn.fp != NULL) {
+	fclose(prn.fp);
+    }
+
     return 0;
 }
 
@@ -554,10 +635,15 @@ int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
 {
     PRN prn;
 
-    if (make_texfile(ppaths, pmod->ID, 1, texfile, &prn))
+    if (make_texfile(ppaths, pmod->ID, 1, texfile, &prn)) {
 	return 1;
+    }
 
     tex_print_equation(pmod, pdinfo, (oflag & OPT_O), &prn);
-    if (prn.fp != NULL) fclose(prn.fp);
+
+    if (prn.fp != NULL) {
+	fclose(prn.fp);
+    }
+
     return 0;
 }

@@ -523,7 +523,7 @@ int main (int argc, char *argv[])
 	noalloc("models"); 
     }
 
-    libgretl_init(&cmd);
+    libgretl_init(&cmd, &paths);
 
     /* print list of variables */
     if (data_status) {
