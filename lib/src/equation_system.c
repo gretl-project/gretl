@@ -31,6 +31,8 @@ const char *gretl_system_type_strings[] = {
     NULL
 };
 
+const char *nosystem = N_("No system of equations has been defined");
+
 static int gretl_system_type_from_string (const char *str)
 {
     int i = 0;
@@ -79,7 +81,7 @@ int gretl_equation_system_expand (gretl_equation_system *sys,
     int i, neq;
 
     if (sys == NULL) {
-	strcpy(gretl_errmsg, _("No system of equations has been defined"));
+	strcpy(gretl_errmsg, _(nosystem));
 	return 1;
     }
 
@@ -89,7 +91,14 @@ int gretl_equation_system_expand (gretl_equation_system *sys,
     if (sys->lists == NULL) return E_ALLOC;
 
     sys->lists[neq] = malloc((list[0] + 1) * sizeof *list);
-    if (sys->lists[neq] == NULL) return E_ALLOC;
+    if (sys->lists[neq] == NULL) {
+	for (i=0; i<neq; i++) {
+	    free(sys->lists[i]);
+	}
+	free(sys->lists);
+	sys->lists = NULL;
+	return E_ALLOC;
+    }
 
     for (i=0; i<=list[0]; i++) {
 	sys->lists[neq][i] = list[i];
@@ -125,7 +134,7 @@ int gretl_equation_system_print (gretl_equation_system *sys, PRN *prn)
     int i;
 
     if (sys == NULL) {
-	strcpy(gretl_errmsg, _("No system of equations has been defined"));
+	strcpy(gretl_errmsg, _(nosystem));
 	return 1;
     }
     
