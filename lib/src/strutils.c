@@ -907,14 +907,14 @@ utf8_to_iso_latin_1 (unsigned char* out, int outlen, unsigned char* in, int inle
     unsigned char c;
 
     while (in < inend) {
-        c= *in++;
+        c = *in++;
         if (c < 0x80) {
             if (out >= outend) return -1;
-            *out++= c;
+            *out++ = c;
         }
-        else if (((c & 0xFE) == 0xC2) && in<inend) {
+        else if (((c & 0xFE) == 0xC2) && in < inend) {
             if (out >= outend) return -1;
-            *out++= ((c & 0x03) << 6) | (*in++ & 0x3F);
+            *out++ = ((c & 0x03) << 6) | (*in++ & 0x3F);
         }
         else return -2;
     }

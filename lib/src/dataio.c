@@ -3806,15 +3806,15 @@ static int transcribe_string (char *targ, const char *src, int maxlen,
     if (convert) {
 	char tmp[128];
 
-	if (maxlen > 127) maxlen = 127;
+	if (maxlen > 128) maxlen = 128;
 	*tmp = 0;
-	strncat(tmp, src, maxlen);
+	strncat(tmp, src, maxlen - 1);
 	utf8_to_iso_latin_1(targ, maxlen, tmp, maxlen);
     } else {
-	strncat(targ, src, maxlen);
+	strncat(targ, src, maxlen - 1);
     }
 #else
-    strncat(targ, src, maxlen);
+    strncat(targ, src, maxlen - 1);
 #endif
 
     return 0;
@@ -3870,7 +3870,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
         if (!xmlStrcmp(cur->name, (UTF) "variable")) {
 	    tmp = xmlGetProp(cur, (UTF) "name");
 	    if (tmp) {
-		transcribe_string(pdinfo->varname[i],tmp, VNAMELEN - 1,
+		transcribe_string(pdinfo->varname[i], tmp, VNAMELEN,
 				  to_iso_latin); 
 		free(tmp);
 	    } else {
@@ -3879,13 +3879,13 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "label");
 	    if (tmp) {
-		transcribe_string(VARLABEL(pdinfo, i), tmp, MAXLABEL-1,
+		transcribe_string(VARLABEL(pdinfo, i), tmp, MAXLABEL,
 				  to_iso_latin);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "displayname");
 	    if (tmp) {
-		transcribe_string(DISPLAYNAME(pdinfo, i), tmp, MAXDISP-1,
+		transcribe_string(DISPLAYNAME(pdinfo, i), tmp, MAXDISP,
 				  to_iso_latin);
 		free(tmp);
 	    }
@@ -4040,7 +4040,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    if (pdinfo->markers) {
 		tmp = xmlGetProp(cur, (UTF) "label");
 		if (tmp) {
-		    transcribe_string(pdinfo->S[t], tmp, OBSLEN - 1,
+		    transcribe_string(pdinfo->S[t], tmp, OBSLEN,
 				      to_iso_latin); 
 		    free(tmp);
 		} else {

@@ -26,6 +26,12 @@
 #include "session.h"
 #include "textbuf.h"
 
+#if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION >= 4)
+# ifndef G_OS_WIN32
+#  define USE_GTK_CHOOSER
+# endif
+#endif
+
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
                           i == SAVE_GZDATA || \
@@ -58,6 +64,10 @@
                               i == SAVE_BOXPLOT_PS || \
                               i == SAVE_BOXPLOT_XPM)
 
+#define EXPORT_ACTION(i) (i == EXPORT_OCTAVE || \
+                          i == EXPORT_R || \
+                          i == EXPORT_R_ALT || \
+                          i == EXPORT_CSV)
 
 extern int olddat; /* settings.c */
 
@@ -138,9 +148,9 @@ static const char *get_gp_ext (const char *termtype)
 
 /* ........................................................... */
 
-static int dat_ext (char *str, int err)
+static int dat_ext (const char *str, int err)
 {
-    char *suff;
+    const char *suff;
 
     if (str == NULL) return 0;
     suff = strrchr(str, '.');
@@ -365,6 +375,137 @@ static char *suggested_savename (const char *fname)
     return s;
 }
 
+static char *suggested_exportname (const char *fname, int action)
+{
+    const char *ss = strrchr(fname, SLASH);
+    char *s, *sfx;
+
+    if (ss == NULL) {
+	s = g_strdup(fname);
+    } else {
+	s = g_strdup(ss + 1);
+    }
+
+    sfx = strrchr(s, '.');
+
+    if (sfx != NULL && (strlen(sfx) == 4 || !strcmp(sfx, ".gnumeric"))) {
+	const char *test;
+
+	switch(action) {
+	case EXPORT_OCTAVE:
+	    test = ".m";
+	    break;
+	case EXPORT_R:
+	case EXPORT_R_ALT:
+	    test = ".R";
+	    break;
+	case EXPORT_CSV:
+	    test = ".csv";
+	    break;
+	default:
+	    test = NULL;
+	    break;
+	}
+
+	if (test != NULL && strcmp(test, sfx)) {
+	    strcpy(sfx, test);
+	}
+    }
+
+    return s;
+}
+
+static void
+file_selector_process_result (const char *in_fname, int action, gpointer data)
+{
+    char fname[FILENAME_MAX];
+    FILE *fp;
+
+    *fname = 0;
+    strncat(fname, in_fname, FILENAME_MAX - 1);
+
+    /* do some elementary checking */
+    if (action < END_OPEN) {
+	if ((fp = fopen(fname, "r")) == NULL) {
+	    errbox(_("Couldn't open the specified file"));
+	    return;
+	} else fclose(fp);
+    } 
+
+    if (action != SET_PATH) {
+	strncpy(remember_dir, fname, slashpos(fname));
+    }
+
+    if (OPEN_DATA_ACTION(action)) {
+	strcpy(trydatfile, fname);
+	verify_open_data(NULL, action);
+    }
+    else if (APPEND_DATA_ACTION(action)) {
+	strcpy(trydatfile, fname);
+	do_open_data(NULL, NULL, action);
+    }
+    else if (action == OPEN_SCRIPT) {
+	filesel_open_script(fname);
+    }
+    else if (action == OPEN_SESSION) {
+	filesel_open_session(fname);
+    }
+
+    if (action < END_OPEN) return;
+
+    /* now for the save options */
+
+    if (action > SAVE_BIN2 && dat_ext(fname, 1)) return;
+
+    if (check_maybe_add_ext(fname, action, data)) return;
+
+    if (SAVE_DATA_ACTION(action)) {
+	int overwrite = 0;
+
+	if (!strcmp(fname, paths.datfile)) overwrite = 1;
+	do_store(fname, action_to_opt(action), overwrite);
+    }
+    else if (action == SAVE_GNUPLOT) {
+	int err = 0;
+	GPT_SPEC *plot = (GPT_SPEC *) data;
+
+	err = go_gnuplot(plot, fname, &paths);
+	if (err == 0) infobox(_("graph saved"));
+	else if (err == 1) errbox(_("gnuplot command failed"));
+	else if (err == 2) infobox(_("There were missing observations"));
+    }
+    else if (action == SAVE_THIS_GRAPH) {
+	GPT_SPEC *plot = (GPT_SPEC *) data;
+
+	save_this_graph(plot, fname);
+    }
+    else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
+	int err;
+
+	err = ps_print_plots(fname, action, data);
+	if (!err) infobox(_("boxplots saved"));
+	else errbox(_("boxplot save failed"));
+    }
+    else if (action == SAVE_SESSION) {
+	save_session(fname);
+    }
+    else if (SAVE_TEX_ACTION(action)) {
+	MODEL *pmod = (MODEL *) data;
+
+	do_save_tex(fname, action, pmod); 
+    }
+    else if (action == SET_PATH) {
+	char *strvar = (char *) data;
+
+	filesel_set_path_callback(fname, strvar);
+    }
+    else {
+	windata_t *vwin = (windata_t *) data;
+
+	save_editable_content(action, fname, vwin);
+    }
+}
+
 /* ........................................................... */
 
           /* MS Windows version of file selection code */
@@ -516,7 +657,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     set_startdir(startdir);
 
-    /* special case: saving data in native format */
+    /* special cases */
     if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
 	char *savename = suggested_savename(paths.datfile);
 
@@ -527,8 +668,15 @@ void file_selector (const char *msg, int action, gpointer data)
 	}
     }
 
-    /* special case: setting program path */
-    if (action == SET_PATH) {
+    else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+	char *savename = suggested_exportname(paths.datfile, action);
+
+	strcpy(fname, savename);
+	g_free(savename);
+	get_base(startdir, paths.datfile, SLASH);
+    }	
+
+    else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
 	if (strvar != NULL && *strvar != '\0') {
@@ -584,229 +732,49 @@ void file_selector (const char *msg, int action, gpointer data)
 	return;
     }
 
-    if (action != SET_PATH) {
-	strncpy(remember_dir, fname, slashpos(fname));
-    }
-
-    if (OPEN_DATA_ACTION(action)) {
-	strcpy(trydatfile, fname);
-	verify_open_data(NULL, action);
-    }
-    else if (APPEND_DATA_ACTION(action)) {
-	strcpy(trydatfile, fname);
-	do_open_data(NULL, NULL, action);
-    }
-    else if (action == OPEN_SCRIPT) {
-	filesel_open_script(fname);
-    }
-    else if (action == OPEN_SESSION) {
-	filesel_open_session(fname);
-    }
-
-    if (action < END_OPEN) return;
-
-    /* now for the save options */
-
-    if (action > SAVE_BIN2 && dat_ext(fname, 1)) return;
-
-    if (check_maybe_add_ext(fname, action, data)) return;
-
-    if (SAVE_DATA_ACTION(action)) {
-	int overwrite = 0;
-
-	if (!strcmp(fname, paths.datfile)) overwrite = 1;
-	do_store(fname, action_to_opt(action), overwrite);
-    }
-    else if (action == SAVE_GNUPLOT) {
-	int err = 0;
-	GPT_SPEC *plot = (GPT_SPEC *) data;
-
-	err = go_gnuplot(plot, fname, &paths);
-	if (err == 0) infobox(_("graph saved"));
-	else if (err == 1) errbox(_("gnuplot command failed"));
-	else if (err == 2) infobox(_("There were missing observations"));
-    }
-    else if (action == SAVE_THIS_GRAPH) {
-	GPT_SPEC *plot = (GPT_SPEC *) data;
-
-	save_this_graph(plot, fname);
-    }
-    else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
-	int err;
-
-	err = ps_print_plots(fname, action, data);
-	if (!err) infobox(_("boxplots saved"));
-	else errbox(_("boxplot save failed"));
-    }
-    else if (action == SAVE_SESSION) {
-	save_session(fname);
-    }
-    else if (SAVE_TEX_ACTION(action)) {
-	MODEL *pmod = (MODEL *) data;
-
-	do_save_tex(fname, action, pmod); 
-    }
-    else if (action == SET_PATH) {
-	char *strvar = (char *) data;
-
-	filesel_set_path_callback(fname, strvar);
-    }
-    else {
-	windata_t *vwin = (windata_t *) data;
-
-	save_editable_content(action, fname, vwin);
-    }
+    file_selector_process_result(fname, action, data);
 }
 
 #else /* End of MS Windows file selection code, start GTK */
 
 /* ........................................................... */
 
-static void filesel_callback (GtkWidget *w, gpointer data) 
+# ifndef USE_GTK_CHOOSER
+
+struct fsinfo_t {
+    GtkWidget *w;
+    char fname[FILENAME_MAX];
+};
+
+static void filesel_callback (GtkWidget *w, struct fsinfo_t *fsinfo) 
 {
-# ifndef OLD_GTK
-    GtkWidget *fs = GTK_WIDGET(data);
-    gint action = GPOINTER_TO_INT(g_object_get_data
-				  (G_OBJECT(data), "action"));
-# else
-    GtkIconFileSel *fs = GTK_ICON_FILESEL(data);
-    gint action = GPOINTER_TO_INT(gtk_object_get_data
-				  (GTK_OBJECT(data), "action"));
+# ifdef OLD_GTK
+    GtkIconFileSel *fsel = GTK_ICON_FILESEL(fsinfo->w);
     char *test;
 # endif
-    char fname[MAXLEN];
     const gchar *path;
-    FILE *fp = NULL;
-    gpointer extdata = NULL;
+
+    *fsinfo->fname = '\0';
 
 # ifndef OLD_GTK
-    path = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs));
+    path = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fsinfo->w));
     if (path == NULL || *path == '\0' || isdir(path)) return;
-    strcpy(fname, path);
+    strcpy(fsinfo->fname, path);
 # else
-    test = gtk_entry_get_text(GTK_ENTRY(fs->file_entry));
+    test = gtk_entry_get_text(GTK_ENTRY(fsel->file_entry));
     if (test == NULL || *test == '\0') return;    
-    path = gtk_file_list_get_path(GTK_FILE_LIST(fs->file_list));
-    sprintf(fname, "%s%s", path, test);
+    path = gtk_file_list_get_path(GTK_FILE_LIST(fsel->file_list));
+    sprintf(fsinfo->fname, "%s%s", path, test);
 # endif
 
-    /* do some elementary checking */
-    if (action < END_OPEN) {
-	if ((fp = fopen(fname, "r")) == NULL) {
-	    errbox(_("Couldn't open the specified file"));
-	    return;
-	} else fclose(fp);
-    } 
-    
-    if (action != SET_PATH) {
-	strncpy(remember_dir, fname, slashpos(fname));
-    }
-
-    if (OPEN_DATA_ACTION(action)) {
-	strcpy(trydatfile, fname);
-	gtk_widget_destroy(GTK_WIDGET(fs));  
-	verify_open_data(NULL, action);
-	return;
-    }
-    else if (APPEND_DATA_ACTION(action)) {
-	strcpy(trydatfile, fname);
-	gtk_widget_destroy(GTK_WIDGET(fs)); 
-	do_open_data(NULL, NULL, action);
-	return;
-    }
-    else if (action == OPEN_SCRIPT) {
-	filesel_open_script(fname);
-    }
-    else if (action == OPEN_SESSION) {
-	filesel_open_session(fname);
-    }
-
-    if (action < END_OPEN) {
-	gtk_widget_destroy(GTK_WIDGET(fs));    
-	return;
-    }
-
-    /* now for the save options */
-
-    if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH || 
-	action == SAVE_THIS_GRAPH) 
-	extdata = g_object_get_data(G_OBJECT(fs), "graph");
-
-    if (check_maybe_add_ext(fname, action, extdata))
-	return;
-
-    if (action > SAVE_BIN2 && dat_ext(fname, 1)) {
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	return;
-    }
-
-    if (SAVE_DATA_ACTION(action)) {
-	int overwrite = 0;
-
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	if (!strcmp(fname, paths.datfile)) overwrite = 1;
-	do_store(fname, action_to_opt(action), overwrite);
-    }
-    else if (action == SAVE_GNUPLOT) {
-	int err = 0;
-	GPT_SPEC *plot = g_object_get_data(G_OBJECT(fs), "graph");
-
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	err = go_gnuplot(plot, fname, &paths);
-	if (err == 0) infobox(_("graph saved"));
-	else if (err == 1) errbox(_("gnuplot command failed"));
-	else if (err == 2) infobox(_("There were missing observations"));
-    }
-    else if (action == SAVE_THIS_GRAPH) {
-	GPT_SPEC *plot = g_object_get_data(G_OBJECT(fs), "graph");
-
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	save_this_graph(plot, fname);
-    }
-    else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
-	int err;
-
-	err = ps_print_plots(fname, action,
-			     g_object_get_data(G_OBJECT(fs), "graph"));
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	if (!err) infobox(_("boxplots saved"));
-	else errbox(_("boxplot save failed"));
-    }
-    else if (action == SAVE_BOXPLOT_XPM) {
-	int err;
-
-	err = plot_to_xpm(fname, g_object_get_data(G_OBJECT(fs), "graph"));
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	if (!err) infobox(_("boxplots saved"));
-	else errbox(_("boxplot save failed"));
-    }
-    else if (action == SAVE_SESSION) {
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	save_session(fname);
-    }
-    else if (SAVE_TEX_ACTION(action)) {
-	MODEL *pmod = (MODEL *) g_object_get_data(G_OBJECT(fs), "model");
-
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	do_save_tex(fname, action, pmod); 
-    }
-    else if (action == SET_PATH) {
-	char *strvar = g_object_get_data(G_OBJECT(fs), "text");
-
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	filesel_set_path_callback(fname, strvar);
-    }
-    else {
-	windata_t *vwin = g_object_get_data(G_OBJECT(fs), "text");
-
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	save_editable_content(action, fname, vwin);
-    }
+    gtk_widget_destroy(GTK_WIDGET(fsinfo->w));
 }
+
+# endif /* !USE_GTK_CHOOSER */
 
 /* ........................................................... */
 
-static void extra_get_filter (int action, gpointer data, char *suffix)
+static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {
     
     const char *ext = get_ext(action, data);
@@ -816,9 +784,99 @@ static void extra_get_filter (int action, gpointer data, char *suffix)
     } else {
 	sprintf(suffix, "*%s", ext);
     }
+
+    return suffix;
 }
 
 # ifndef OLD_GTK
+
+# ifdef USE_GTK_CHOOSER
+
+static GtkFileFilter *get_file_filter (int action, gpointer data)
+{
+    GtkFileFilter *filter;
+    char suffix[16];
+    
+    filter = gtk_file_filter_new();
+    get_filter_suffix(action, data, suffix);
+    gtk_file_filter_add_pattern(filter, suffix);
+
+    return filter;
+}
+
+void file_selector (const char *msg, int action, gpointer data) 
+{
+    GtkWidget *filesel;
+    char startdir[MAXLEN];
+    GtkFileFilter *filter;
+
+    set_startdir(startdir);
+
+    if (action > END_OPEN && action != SET_PATH) {
+	filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(mdata->w), 
+					      GTK_FILE_CHOOSER_ACTION_SAVE,
+					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					      NULL);
+    } else {
+	filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(mdata->w), 
+					      GTK_FILE_CHOOSER_ACTION_OPEN,
+					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					      NULL);
+    }	
+
+    filter = get_file_filter(action, data);
+    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
+
+    /* special cases */
+
+    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
+	char *savename = suggested_savename(paths.datfile);
+
+	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
+					  savename);
+	g_free(savename);
+    }
+
+    else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+	char *savename = suggested_exportname(paths.datfile, action);
+
+	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
+					  savename);
+	g_free(savename);
+    }	
+
+    else if ((action == SAVE_SESSION) && *scriptfile != '\0') {
+	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
+				      scriptfile);
+    }
+
+    else if (action == SET_PATH) {
+	char *strvar = (char *) data;
+
+	if (strvar != NULL && slashpos(strvar) > 0) {
+	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
+					  strvar);
+	} else {
+	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
+					  "/usr/bin");
+	}	    
+    }	
+
+    if (gtk_dialog_run(GTK_DIALOG(filesel)) == GTK_RESPONSE_ACCEPT) {
+	char *fname;
+
+	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(filesel));
+	gtk_widget_destroy(filesel);
+	file_selector_process_result(fname, action, data);
+	g_free(fname);
+    } else {
+	gtk_widget_destroy(filesel);
+    }
+}
+
+# else
 
 #include <glob.h> /* POSIX */
 
@@ -855,59 +913,28 @@ gtk_file_selection_glob_populate (GtkFileSelection *fs,
     g_free(pattern);
 }
 
-#if 0
-
 void file_selector (const char *msg, int action, gpointer data) 
 {
-    GtkWidget *filesel;
-    char suffix[16], startdir[MAXLEN];
-
-    set_startdir(startdir);
-
-    filesel = gtk_file_chooser_dialog_new(msg, mdata->w, 
-					  GTK_FILE_CHOOSER_ACTION_OPEN,
-					  GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					  NULL);
-
-    gtk_dialog_run(GTK_DIALOG(filesel));
-}
-
-#else
-
-void file_selector (const char *msg, int action, gpointer data) 
-{
+    struct fsinfo_t fsinfo;
     GtkWidget *filesel;
     char suffix[16], startdir[MAXLEN];
     int do_glob = 1;
 
+    *fsinfo.fname = '\0';
+
     set_startdir(startdir);
 
     filesel = gtk_file_selection_new(msg);
-
-    g_object_set_data(G_OBJECT(filesel), "action", GINT_TO_POINTER(action));
-
+    fsinfo.w = filesel;
     g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(filesel)->ok_button),
 		     "clicked", 
-		     G_CALLBACK(filesel_callback), filesel);
-
-    if (action > END_OPEN) { /* a file save action */
-	g_object_set_data(G_OBJECT(filesel), "text", data);
-    }
+		     G_CALLBACK(filesel_callback), &fsinfo);
 
     gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), startdir);
 
     /* special cases */
 
-    if (SAVE_GRAPH_ACTION(action)) {
-	g_object_set_data(G_OBJECT(filesel), "graph", data);
-    }
-
-    else if (SAVE_TEX_ACTION(action)) {
-	g_object_set_data(G_OBJECT(filesel), "model", data);
-    }
-
-    else if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
+    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
 	char *savename = suggested_savename(paths.datfile);
 
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
@@ -916,8 +943,16 @@ void file_selector (const char *msg, int action, gpointer data)
 	g_free(savename);
     }
 
-    else if ((action == SAVE_SESSION) 
-	     && scriptfile[0]) {
+    else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+	char *savename = suggested_exportname(paths.datfile, action);
+
+	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
+					savename);
+	if (!strstr(savename, startdir)) do_glob = 0;
+	g_free(savename);
+    }	
+
+    else if ((action == SAVE_SESSION) && *scriptfile != '\0') {
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
 					scriptfile);
 	if (!strstr(scriptfile, startdir)) do_glob = 0;
@@ -946,24 +981,31 @@ void file_selector (const char *msg, int action, gpointer data)
     gtk_widget_show(filesel);
 
     if (do_glob) {
-	extra_get_filter(action, data, suffix);
+	get_filter_suffix(action, data, suffix);
 	gtk_file_selection_glob_populate (GTK_FILE_SELECTION(filesel), 
 					  startdir, suffix);
     }
 
-    gtk_window_set_modal (GTK_WINDOW(filesel), TRUE);
+    gtk_window_set_modal(GTK_WINDOW(filesel), TRUE);
     gtk_main(); 
+
+    if (*fsinfo.fname != '\0') {
+	file_selector_process_result(fsinfo.fname, action, data);
+    }
 }
 
-#endif
+# endif
 
-# else /* gtk version diffs */
+# else /* gtk version diffs continue */
 
 void file_selector (const char *msg, int action, gpointer data) 
 {
+    struct fsinfo_t fsinfo;
     GtkWidget *filesel;
     int gotdir = 0;
     char suffix[8], startdir[MAXLEN];
+
+    *fsinfo.fname = '\0';
 
     set_startdir(startdir);
 
@@ -975,33 +1017,17 @@ void file_selector (const char *msg, int action, gpointer data)
 	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), FALSE);
     }
 
-    gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
-
-    extra_get_filter(action, data, suffix);
+    get_filter_suffix(action, data, suffix);
     gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), suffix);
 
+    fsinfo.w = filesel;
     gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->ok_button),
 		       "clicked", 
-		       GTK_SIGNAL_FUNC(filesel_callback), filesel);
-
-    if (action > END_OPEN) {
-	/* a file save action */
-	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
-    }
+		       GTK_SIGNAL_FUNC(filesel_callback), &fsinfo);
 
     /* special cases */
 
-    if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH  
-	|| action == SAVE_LAST_GRAPH ||
-	action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS ||
-	action == SAVE_BOXPLOT_XPM) 
-	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
-
-    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ ||
-	     action == SAVE_TEX_TAB_FRAG || action == SAVE_TEX_EQ_FRAG) 
-	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
-
-    else if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
+    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
 	char *savename = suggested_savename(paths.datfile);
 	char startd[MAXLEN];
 
@@ -1013,6 +1039,19 @@ void file_selector (const char *msg, int action, gpointer data)
 	}
 	g_free(savename);
     }
+
+    else if (EXPORT_ACTION(action) && paths.datfile[0]) {
+	char *savename = suggested_exportname(paths.datfile, action);
+	char startd[MAXLEN];
+
+	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
+			   savename);
+	if (get_base(startd, paths.datfile, SLASH)) {
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
+	    gotdir = 1;
+	}
+	g_free(savename);
+    }	
 
     else if (action == SET_PATH) {
 	char *strvar = (char *) data;
@@ -1035,14 +1074,17 @@ void file_selector (const char *msg, int action, gpointer data)
 
     gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)), "destroy",
                        gtk_main_quit, NULL);
-    gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL
-					 (filesel)->cancel_button),
+    gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->cancel_button),
 			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
-			      GTK_OBJECT (filesel));
+			      GTK_OBJECT(filesel));
 
     gtk_widget_show(filesel);
     gtk_window_set_modal(GTK_WINDOW(filesel), TRUE);
     gtk_main(); 
+
+    if (*fsinfo.fname != '\0') {
+	file_selector_process_result(fsinfo.fname, action, data);
+    }
 }
 
 # endif /* old gtk */

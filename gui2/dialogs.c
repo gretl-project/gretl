@@ -975,7 +975,6 @@ static void show_varinfo_changes (int v)
 			0, idstr, 
 			1, datainfo->varname[v],
 			2, VARLABEL(datainfo, v),
-			3, FALSE, 
 			-1);
     g_free(idstr);
 }

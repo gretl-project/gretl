@@ -125,71 +125,6 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
 /* .................................................................. */
 
-#if 0 /* not doing listbox edit of variable info any more */
-
-static int listbox_rename_var (const gchar *newname, gint varnum) 
-{
-    if (*newname == '\0' || validate_varname(newname)) return 1;
-
-    sprintf(line, "rename %d %s", varnum, newname);
-    if (verify_and_record_command(line)) return 1; /* FIXME: error reporting */
-
-    strcpy(datainfo->varname[varnum], newname);
-    data_status |= MODIFIED_DATA; 
-    set_sample_label(datainfo);
-
-    return 0;
-}
-
-static void listbox_edit_label (const gchar *newlabel, gint varnum) 
-{
-    *VARLABEL(datainfo, varnum) = 0;
-    strncat(VARLABEL(datainfo, varnum), newlabel, MAXLABEL-1);
-    data_status |= MODIFIED_DATA; 
-    set_sample_label(datainfo);
-}
-
-static void cell_edited (GtkCellRendererText *cell,
-                         const gchar *path_string,
-                         const gchar *new_text,
-                         gpointer data)
-{
-    GtkTreeModel *model = (GtkTreeModel *) data;
-    GtkTreePath *path = gtk_tree_path_new_from_string (path_string);
-    GtkTreeIter iter;
-    gchar *old_text, *numstr;
-    gint err = 0, *column;
-
-    column = g_object_get_data(G_OBJECT(cell), "column");
-    gtk_tree_model_get_iter(model, &iter, path);
-    gtk_tree_model_get(model, &iter, 0, &numstr, -1);
-    gtk_tree_model_get(model, &iter, column, &old_text, -1);
-
-    if (strcmp(old_text, new_text)) {
-	switch (GPOINTER_TO_INT(column)) {
-	case 1: /* varname */
-	    err = listbox_rename_var(new_text, atoi(numstr));
-	    break;
-	case 2: /* var label */
-	    listbox_edit_label(new_text, atoi(numstr));
-	    break;
-	}
-    }
-
-    if (!err) {
-	gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-			   GPOINTER_TO_INT(column), new_text, -1);
-    }
-
-    g_free(old_text);
-    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 3, FALSE, -1);
-    gtk_tree_path_free(path);
-}
-
-#endif /* old listbox edit stuff */
-
-/* .................................................................. */
-
 static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     if (key->keyval == GDK_q) { 
@@ -221,15 +156,13 @@ GtkWidget *list_box_create (windata_t *win, GtkBox *box,
     GType *types;
     gint i, totcols = ncols;
 
-    if (win == mdata || hidden_col) totcols++;
+    if (hidden_col) totcols++;
 
     types = mymalloc(totcols * sizeof *types);
     if (types == NULL) return NULL;
 
     for (i=0; i<ncols; i++) types[i] = G_TYPE_STRING;
-    if (win == mdata) {
-	types[ncols] = G_TYPE_BOOLEAN;
-    } else if (hidden_col) {
+    if (hidden_col) {
 	types[ncols] = G_TYPE_STRING;
     }
 
@@ -241,40 +174,26 @@ GtkWidget *list_box_create (windata_t *win, GtkBox *box,
 
     gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(view), TRUE);
 
-    if (win == mdata) { /* allow for editing of varnames, labels */
-	for (i=0; i<ncols; i++) {
-	    renderer = gtk_cell_renderer_text_new ();
-	    g_object_set (renderer, "ypad", 0, NULL);
-#if 0
-	    g_signal_connect (G_OBJECT (renderer), "edited",
-			      G_CALLBACK (cell_edited), GTK_TREE_MODEL(store));
-#endif
-	    g_object_set_data(G_OBJECT(renderer), "column", (gint *) i);
-	    column = gtk_tree_view_column_new_with_attributes (titles[i],
-							       renderer,
-							       "text", i, 
-							       "editable", ncols,
-							       NULL);
-	    gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
-	}
-    } else {
-	renderer = gtk_cell_renderer_text_new ();
-	g_object_set (renderer, "ypad", 0, NULL);
-	for (i=0; i<ncols; i++) {
-	    column = gtk_tree_view_column_new_with_attributes (titles[i],
-							       renderer,
-							       "text", i, 
-							       NULL);
-	    gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
-	}
-	if (hidden_col) {
-	    column = gtk_tree_view_column_new_with_attributes (NULL,
-							       renderer,
-							       "text", i, 
-							       NULL);
-	    gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
-	    gtk_tree_view_column_set_visible(column, FALSE);
-	}
+    renderer = gtk_cell_renderer_text_new ();
+    g_object_set (renderer, "ypad", 0, NULL);
+
+    for (i=0; i<ncols; i++) {
+	column = gtk_tree_view_column_new_with_attributes (titles[i],
+							   renderer,
+							   "text", i, 
+							   NULL);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
+	if (win != mdata) {
+	    g_object_set (G_OBJECT (column), "resizable", TRUE, NULL);
+	}	
+    }
+    if (hidden_col) {
+	column = gtk_tree_view_column_new_with_attributes (NULL,
+							   renderer,
+							   "text", i, 
+							   NULL);
+	gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
+	gtk_tree_view_column_set_visible(column, FALSE);
     }
 
     /* set the selection properties on the tree view */
