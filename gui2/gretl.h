@@ -77,7 +77,6 @@ extern int orig_vars;
 
 /* global state variables */
 extern int data_status;
-extern int nls_on;
 extern char line[1024];
 extern int *default_list;
 extern char *storelist;

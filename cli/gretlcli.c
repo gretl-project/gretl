@@ -95,16 +95,17 @@ void usage(void)
 {
     logo();
     printf(_("\nYou may supply the name of a data file on the command line.\n"
-	   "Options:\n"
-	   " -b or --batch     Process a command script and exit.\n"
-	   " -r or --run       Run a script then hand control to command line.\n"
-	   " -p or --pvalue    Determine p-values interactively.\n"
-	   " -h or --help      Print this info and exit.\n"
-	   " -v or --version   Print version info and exit.\n"
-	   "Example of batch mode usage:\n"
-	   " gretlcli -b myfile.inp >myfile.out\n"
-	   "Example of run mode usage:\n"
-	   " gretlcli -r myfile.inp\n"));
+	     "Options:\n"
+	     " -b or --batch     Process a command script and exit.\n"
+	     " -r or --run       Run a script then hand control to command line.\n"
+	     " -p or --pvalue    Determine p-values interactively.\n"
+	     " -h or --help      Print this info and exit.\n"
+	     " -v or --version   Print version info and exit.\n"
+	     " -e or --english   Force use of English rather than translation.\n"
+	     "Example of batch mode usage:\n"
+	     " gretlcli -b myfile.inp >myfile.out\n"
+	     "Example of run mode usage:\n"
+	     " gretlcli -r myfile.inp\n"));
     exit(EXIT_SUCCESS);
 }
 
@@ -211,6 +212,7 @@ unsigned char gp_flags (int batch, unsigned long opt)
 }
 
 #ifdef ENABLE_NLS
+
 void nls_init (void)
 {
 # ifdef WIN32
@@ -231,6 +233,17 @@ void nls_init (void)
     setlocale(LC_NUMERIC, "");
     reset_local_decpoint();
 }
+
+static void force_english (void)
+{
+    setlocale (LC_ALL, "C");
+
+# ifdef WIN32
+    SetEnvironmentVariable("LC_ALL", "C");
+    putenv("LC_ALL=C");
+# endif
+}
+
 #endif /* ENABLE_NLS */
 
 void free_modelspec (void)
@@ -278,6 +291,7 @@ int main (int argc, char *argv[])
 {
     int cont = 0, cli_get_data = 0;
     int cmd_overflow = 0, aborted = 0;
+    char filearg[MAXLEN];
     char tmp[MAXLINE];
     PRN *prn;
 
@@ -294,12 +308,14 @@ int main (int argc, char *argv[])
 	noalloc(_("data information"));
     
     if (argc > 1) {
-	opt = parseopt(argv[1]);
+	int english = 0;
+	int opt = parseopt((const char **) argv, argc, filearg, &english);
+
 	switch (opt) {
 	case OPT_BATCH:
 	    batch = 1;
-	    if (argc < 3) usage();
-	    strncpy(runfile, argv[2], MAXLEN-1);
+	    if (*filearg == '\0') usage();
+	    strcpy(runfile, filearg);
 	    cli_get_data = 1;
 	    break;
 	case OPT_HELP:
@@ -317,13 +333,22 @@ int main (int argc, char *argv[])
 	    break;
 	case OPT_RUNIT:
 	    runit = 1;
-	    if (argc < 3) usage();
-	    strncpy(runfile, argv[2], MAXLEN-1); 
+	    if (*filearg == '\0') usage();
+	    strcpy(runfile, filearg); 
 	    cli_get_data = 1;
 	    break;
 	default:
 	    break;
 	}
+
+#ifdef ENABLE_NLS
+	if (english) {
+	    force_english();
+	    if (argc == 2) {
+		cli_get_data = 1;
+	    }
+	}
+#endif
     } else cli_get_data = 1;
 
 #ifdef WIN32
@@ -362,11 +387,8 @@ int main (int argc, char *argv[])
     if (!cli_get_data) {
 	char given_file[MAXLEN];
 
-	*given_file = 0;
-	*paths.datfile = 0;
-
-	strncat(given_file, argv[1], MAXLEN - 1);
-	strncat(paths.datfile, argv[1], MAXLEN - 1);
+	strcpy(given_file, filearg);
+	strcpy(paths.datfile, filearg);
 
 	err = detect_filetype(paths.datfile, &paths, prn);
 

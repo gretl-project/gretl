@@ -1665,6 +1665,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 static void msgbox (const char *msg, int err)
 {
     gchar *trmsg = NULL;
+    int nls_on = doing_nls();
 
     if (nls_on) {
 	gint wrote;

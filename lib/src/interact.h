@@ -46,12 +46,7 @@ enum option_codes {
     OPT_VERSION,
     OPT_RUNIT,
     OPT_DBOPEN,
-#ifdef ENABLE_NLS
-    OPT_WEBDB,
-    OPT_ENGLISH
-#else
     OPT_WEBDB
-#endif
 };
     
 /* functions follow */
@@ -66,7 +61,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn);
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
 	   double ***pZ);
 
-int parseopt (const char *s);
+int parseopt (const char **argv, int argc, char *fname, int *english);
 
 int shell (const char *arg);
 

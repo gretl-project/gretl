@@ -48,7 +48,16 @@
     </para>
 
     <para>
-      &mdash; Print version identification for the program and exit
+      &mdash; Print version identification for the program and exit.
+    </para>
+
+    <para>
+      <command>gretl --english</command> (or <command>gretl
+	-e</command>)
+    </para>
+
+    <para>
+      &mdash; Force use of English instead of translation.
     </para>
 
     <para>
@@ -211,6 +220,11 @@
     <para>&mdash; Starts the program in a mode in which you can
       interactively determine p-values for various common
       statistics.</para>
+
+    <para><command>gretlcli --english</command> (or <command>gretlcli
+	-e</command>)</para>
+
+    <para>&mdash; Force use of English instead of translation.</para>
 
     <para><command>gretlcli --run</command>
       <replaceable>scriptfile</replaceable> (or <command>gretlcli

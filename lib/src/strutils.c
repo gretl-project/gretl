@@ -611,7 +611,7 @@ int doing_nls (void)
     static int called, nls;
 
     if (!called) {
-	nls = (strcmp("/_File", _("/_File")) != 0);
+	nls = (strcmp("/File/_Open data", _("/File/_Open data")) != 0);
 	called = 1;
     }
     return nls;

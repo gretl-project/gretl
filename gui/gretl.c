@@ -98,16 +98,19 @@ drag_data_received  (GtkWidget          *widget,
 		     gpointer            p);
 
 #ifdef USE_GNOME
-char *optrun = NULL, *optdb = NULL;
+static char *optrun, *optdb;
+static int opteng;
 
 static const struct poptOption options[] = {
-    {"run", 'r', POPT_ARG_STRING, &optrun, 0, 
-     N_("open a script file on startup"), "SCRIPT"},
-    {"db", 'd', POPT_ARG_STRING, &optdb, 0, 
-     N_("open a database on startup"), "DATABASE"},
-    {"webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
-     N_("open a remote (web) database on startup"), "REMOTE_DB"},
-    {NULL, '\0', 0, NULL, 0, NULL, NULL}
+    { "run", 'r', POPT_ARG_STRING, &optrun, 0, 
+      N_("open a script file on startup"), "SCRIPT" },
+    { "db", 'd', POPT_ARG_STRING, &optdb, 0, 
+      N_("open a database on startup"), "DATABASE" },
+    { "webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
+      N_("open a remote (web) database on startup"), "REMOTE_DB" },
+    { "english", 'e', POPT_ARG_NONE, &opteng, 0, 
+      N_("force use of English"), NULL },
+    { NULL, '\0', 0, NULL, 0, NULL, NULL }
 };
 #endif /* USE_GNOME */
 
@@ -479,6 +482,7 @@ static void gui_usage (void)
     printf(I_("You may supply the name of a data file on the command line.\n"));
     printf(I_("Or you may do \"gretl -r script_file\" to open a script.\n"));
     printf(I_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
+    printf(I_("You may do \"gretl -e\" to force use of English.\n"));
     exit(0);
 }
 
@@ -565,6 +569,7 @@ void nls_init (void)
 int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
+    char filearg[MAXLEN];
     char dbname[MAXLEN];
 
 #ifdef ENABLE_NLS
@@ -591,7 +596,8 @@ int main (int argc, char *argv[])
     init_fileptrs();
 
     if (argc > 1) {
-	int opt = parseopt(argv[1]);
+	int english = 0;
+	int opt = parseopt((const char **) argv, argc, filearg, &english);
 
 	switch (opt) {
 	case OPT_HELP:
@@ -605,8 +611,8 @@ int main (int argc, char *argv[])
 #ifdef USE_GNOME
 	    get_runfile(optrun);
 #else
-	    if (argc != 3) gui_usage();
-	    get_runfile(argv[2]);
+	    if (*filearg == '\0') gui_usage();
+	    get_runfile(filearg);
 #endif
 	    gui_get_data = 1;
 	    break;
@@ -615,8 +621,8 @@ int main (int argc, char *argv[])
 #ifdef USE_GNOME
 	    strncpy(dbname, optdb, MAXLEN-1);
 #else
-	    if (argc != 3) gui_usage();
-	    strncpy(dbname, argv[2], MAXLEN-1);
+	    if (*filearg == '\0') gui_usage();
+	    strcpy(dbname, filearg);
 #endif
 	    if (opt == OPT_DBOPEN) fix_dbname(dbname);
 	    gui_get_data = opt;
@@ -625,6 +631,15 @@ int main (int argc, char *argv[])
 	    /* let's suppose the argument is a data file */
 	    break;
 	}
+
+#ifdef ENABLE_NLS
+	if (english) {
+	    setlocale (LC_ALL, "C");
+	    if (argc == 2) {
+		gui_get_data = 1;
+	    }
+	}
+#endif
     } else 
 	gui_get_data = 1;
 
@@ -661,8 +676,7 @@ int main (int argc, char *argv[])
 	if (prn == NULL) 
 	    exit(EXIT_FAILURE);
 
-	*paths.datfile = '\0';
-	strncat(paths.datfile, argv[1], MAXLEN-1);
+	strcpy(paths.datfile, filearg);
 
 	/* record the filename the user gave */
 	strcpy(trydatfile, paths.datfile);

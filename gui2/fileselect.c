@@ -686,7 +686,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	}
     }	
 
-    if (nls_on) {
+    if (doing_nls()) {
 	gint wrote;
 
 	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);

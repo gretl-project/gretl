@@ -89,7 +89,6 @@ plugin/johansen.c
 plugin/lad.c
 plugin/leverage.c
 plugin/logistic.c
-plugin/longname.c
 plugin/midi_utils.c
 plugin/mp_ols.c
 plugin/panel_data.c

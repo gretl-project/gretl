@@ -1127,33 +1127,59 @@ static int make_full_list (const DATAINFO *pdinfo, CMD *command)
 
 /**
  * parseopt:
- * @s: option string, as supplied on the command line.
+ * @argv: command-line argument array
+ * @argc: argument count
+ * @fname: optional filename argument
+ * @english: pointer to "force english" option
  *
- * Returns: the gretl option code correspoding to @s, or 0 if the option
- * string is not recognized.
+ * Returns: the gretl option code corresponding to the first "real"
+ * option flag, or 0 if the option flag is not recognized.
  */
 
-int parseopt (const char *s)
+int parseopt (const char **argv, int argc, char *fname,
+	      int *english)
 {
-    if (strcmp(s, "-b") == 0 || strncmp(s, "--batch", 7) == 0) 
-	return OPT_BATCH;
-    if (strcmp(s, "-h") == 0 || strcmp(s, "--help") == 0) 
-	return OPT_HELP;
-    if (strcmp(s, "-p") == 0 || strcmp(s, "--pvalue") == 0) 
-	return OPT_PVALS;
-    if (strcmp(s, "-v") == 0 || strcmp(s, "--version") == 0) 
-	return OPT_VERSION;
-    if (strcmp(s, "-r") == 0 || strncmp(s, "--run", 5) == 0) 
-	return OPT_RUNIT;
-    if (strcmp(s, "-d") == 0 || strncmp(s, "--db", 4) == 0) 
-	return OPT_DBOPEN;
-    if (strcmp(s, "-w") == 0 || strncmp(s, "--webdb", 7) == 0) 
-	return OPT_WEBDB;
+    int opt = 0;
+    const char *s = argv[1];
+
+    *fname = '\0';
+
 #ifdef ENABLE_NLS
-    if (strcmp(s, "-e") == 0 || strncmp(s, "--english", 9) == 0) 
-	return OPT_ENGLISH;
+    if (strcmp(s, "-e") == 0 || strncmp(s, "--english", 9) == 0) { 
+	*english = 1;
+	if (--argc < 2) {
+	    return 0;
+	}
+	argv++;
+	s = argv[1];
+    }
 #endif
-    return 0;
+
+    if (strcmp(s, "-b") == 0 || strncmp(s, "--batch", 7) == 0) 
+	opt = OPT_BATCH;
+    else if (strcmp(s, "-h") == 0 || strcmp(s, "--help") == 0) 
+	opt = OPT_HELP;
+    else if (strcmp(s, "-p") == 0 || strcmp(s, "--pvalue") == 0) 
+	opt = OPT_PVALS;
+    else if (strcmp(s, "-v") == 0 || strcmp(s, "--version") == 0) 
+	opt = OPT_VERSION;
+    else if (strcmp(s, "-r") == 0 || strncmp(s, "--run", 5) == 0) 
+	opt = OPT_RUNIT;
+    else if (strcmp(s, "-d") == 0 || strncmp(s, "--db", 4) == 0) 
+	opt = OPT_DBOPEN;
+    else if (strcmp(s, "-w") == 0 || strncmp(s, "--webdb", 7) == 0) 
+	opt = OPT_WEBDB;
+
+    if (opt != 0) {
+	argv++;
+	argc--;
+    }
+
+    if (argc >= 2) {
+	strncat(fname, argv[1], MAXLEN - 1);
+    }
+
+    return opt;
 }
 
 #ifndef WIN32

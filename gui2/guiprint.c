@@ -109,7 +109,7 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
     EmptyClipboard();
 
-    if (nls_on && format == COPY_TEXT) { 
+    if (doing_nls() && format == COPY_TEXT) { 
 	gsize bytes;
 
 	tr = g_locale_from_utf8 (buf, -1, NULL, &bytes, NULL);
