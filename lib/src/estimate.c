@@ -858,6 +858,8 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
             k += nv-l;
         }
         test = xpx[kk] - d;
+	fprintf(stderr, "test: xpx[%d] = %g, d = %g, test = %g\n",
+		kk, xpx[kk], d, test);
         if (test <= TINY) {
 	    fprintf(stderr, "cholbeta: test = %g\n", test);
 	    if (rss != NULL) *rss = -1.0;

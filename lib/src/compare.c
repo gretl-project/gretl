@@ -1513,7 +1513,7 @@ int mp_ols (const LIST list, const char *pos,
     const int *reglist = NULL;
     int *polylist = NULL, *tmplist = NULL;
     mp_results *mpvals = NULL;
-    int err = 0;
+    int nc, err = 0;
 
     if (open_plugin("mp_ols", &handle)) {
 	pputs(prn, _("Couldn't access GMP plugin\n"));
@@ -1538,7 +1538,10 @@ int mp_ols (const LIST list, const char *pos,
 	reglist = list;
     }
 
-    mpvals = gretl_mp_results_new(list[0]);
+    nc = list[0] - 1;
+    if (polylist != NULL) nc--;
+
+    mpvals = gretl_mp_results_new(nc);
     if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
 	pprintf(prn, "%s\n", _("Out of memory!"));
 	err = 1;

@@ -2392,7 +2392,7 @@ void free_gretl_mp_results (mp_results *mpvals)
 
 /* ........................................................... */
 
-mp_results *gretl_mp_results_new (int totvar)
+mp_results *gretl_mp_results_new (int nc)
 {
     mp_results *mpvals;
     int i;
@@ -2400,10 +2400,10 @@ mp_results *gretl_mp_results_new (int totvar)
     mpvals = malloc(sizeof *mpvals);
     if (mpvals == NULL) return NULL;
 
-    mpvals->ncoeff = totvar;
+    mpvals->ncoeff = nc;
 
-    mpvals->coeff = malloc(totvar * sizeof *mpvals->coeff);
-    mpvals->sderr = malloc(totvar * sizeof *mpvals->sderr);
+    mpvals->coeff = malloc(nc * sizeof *mpvals->coeff);
+    mpvals->sderr = malloc(nc * sizeof *mpvals->sderr);
     mpvals->varnames = NULL;
     mpvals->varlist = NULL;
 
@@ -2413,8 +2413,8 @@ mp_results *gretl_mp_results_new (int totvar)
 	return NULL;
     }
 
-    for (i=0; i<totvar; i++) mpvals->coeff[i] = NADBL;
-    for (i=0; i<totvar; i++) mpvals->sderr[i] = NADBL;
+    for (i=0; i<nc; i++) mpvals->coeff[i] = NADBL;
+    for (i=0; i<nc; i++) mpvals->sderr[i] = NADBL;
 
     mpvals->sigma = mpvals->ess = NADBL;
     mpvals->rsq = mpvals->fstt = NADBL;

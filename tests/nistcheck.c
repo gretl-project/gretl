@@ -29,9 +29,9 @@
 #include "libgretl.h"
 
 #ifdef LONGLEY_ONLY
-# define MAX_DIGITS 10
+# define MAX_DIGITS 12
 #else
-# define MAX_DIGITS 10 /* can make this smaller */
+# define MAX_DIGITS 12 
 #endif
 
 #define MIN_DIGITS 4
@@ -330,8 +330,10 @@ int read_nist_file (const char *fname,
 
 	/* allocate results struct once we know its size */
 	if (nvar > 0 && nobs > 0 && certvals == NULL) {	
+	    int nc = nvar + npoly;
 	    
-	    certvals = gretl_mp_results_new(nvar + npoly);
+	    if (!noint) nc++;
+	    certvals = gretl_mp_results_new(nc);
 	    if (certvals == NULL) {
 		fclose(fp);
 		return 1;
@@ -450,35 +452,18 @@ int doubles_differ (const char *v1, const char *v2)
 int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
 		   int digits)
 {
-    int i, nc = pmod->ncoeff;
+    int i;
     char v1[48], v2[48], s[24];
 
-    if (pmod->ifc) {
-	sprintf(v1, "%#.*g", digits, certvals->coeff[0]);
-	sprintf(v2, "%#.*g", digits, pmod->coeff[nc-1]);
-	if (doubles_differ(v1, v2)) {
-	    strcpy(s, "coeff for const");
-	    print_result_error(digits, v1, v2, s);
-	    return 0;
-	}
-	sprintf(v1, "%#.*g", digits, certvals->sderr[0]);
-	sprintf(v2, "%#.*g", digits, pmod->sderr[nc-1]);
-	if (doubles_differ(v1, v2)) {
-	    strcpy(s, "std err for const");
-	    print_result_error(digits, v1, v2, s);
-	    return 0; 
-	}
-    }
-	
-    for (i=0; i<pmod->ncoeff-pmod->ifc; i++) {
-	sprintf(v1, "%#.*g", digits, certvals->coeff[i+pmod->ifc]);
+    for (i=0; i<pmod->ncoeff; i++) {
+	sprintf(v1, "%#.*g", digits, certvals->coeff[i]);
 	sprintf(v2, "%#.*g", digits, pmod->coeff[i]);
 	if (doubles_differ(v1, v2)) {
 	    sprintf(s, "coeff for %s", dinfo->varname[i+1]);
 	    print_result_error(digits, v1, v2, s);
 	    return 0;
 	}
-	sprintf(v1, "%#.*g", digits, certvals->sderr[i+pmod->ifc]);
+	sprintf(v1, "%#.*g", digits, certvals->sderr[i]);
 	sprintf(v2, "%#.*g", digits, pmod->sderr[i]);
 	if (doubles_differ(v1, v2)) {
 	    sprintf(s, "std err for %s", dinfo->varname[i+1]);
@@ -628,10 +613,18 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     list = malloc((realv + 1) * sizeof *list);
     if (list == NULL) return 1;
 
-    list[0] = realv - noint;
-    if (!noint) list[realv] = 0;
-    for (i=1; i<realv; i++) {
-	list[i] = i;
+    if (noint) {
+	list[0] = realv - 1;
+	for (i=1; i<=list[0]; i++) {
+	    list[i] = i;
+	}
+    } else {
+	list[0] = realv;
+	list[1] = 1;
+	list[2] = 0;
+	for (i=3; i<=list[0]; i++) {
+	    list[i] = i - 1;
+	}
     }
 
     /* set up list of polynomial terms, if needed */
@@ -777,10 +770,18 @@ int run_gretl_comparison (const char *datname,
     list = malloc((dinfo->v + 1) * sizeof *list);
     if (list == NULL) return 1;
 
-    list[0] = dinfo->v - noint;
-    if (!noint) list[dinfo->v] = 0;
-    for (i=1; i<dinfo->v; i++) {
-	list[i] = i;
+    if (noint) {
+	list[0] = dinfo->v - 1;
+	for (i=1; i<=list[0]; i++) {
+	    list[i] = i;
+	}
+    } else {
+	list[0] = dinfo->v;
+	list[1] = 1;
+	list[2] = 0;
+	for (i=3; i<=list[0]; i++) {
+	    list[i] = i - 1;
+	}
     }
 
     model = gretl_model_new(dinfo);
@@ -811,14 +812,10 @@ int run_gretl_comparison (const char *datname,
 	model->ID = ++modelnum;
 	printmodel(model, dinfo, prn);
 
-	if (model->ifc) {
-	    printf(" gretl coefficient[0] = %#.10g\n", 
-		   model->coeff[model->ncoeff-1]);
-	}
-	for (i=0; i<model->ncoeff - model->ifc; i++) {
-	    printf(" gretl coefficient[%d] = %#.10g\n", i + model->ifc, 
+	for (i=0; i<model->ncoeff; i++) {
+	    printf(" gretl coefficient[%d] = %#.10g\n", i, 
 		   model->coeff[i]);
-	}
+	}	
     }
 
     /* special treatment when there's no intercept */
