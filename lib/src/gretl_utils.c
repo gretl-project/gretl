@@ -1257,6 +1257,58 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 
 /* ........................................................... */
 
+static void make_stack_label (char *label, char *s)
+{
+    char *p = strstr(s, "--");
+    int len = strlen(s);
+
+    if (p == NULL) {
+	if (len > MAXLABEL - 1) {
+	    strncat(label, s, MAXLABEL - 4);
+	    strcat(label, "...");
+	} else {
+	    strcat(label, s);
+	}
+    } else {
+	int llen = strlen(p) + 1;
+
+	len++;
+	*p = '\0';
+
+	if (len > MAXLABEL - 1) {
+	    strncat(label, s, MAXLABEL - 4 - llen);
+	    strcat(label, "...");
+	} else {
+	    strcat(label, s);
+	}
+	strcat(label, " -");
+	strcat(label, p + 1);
+    }
+}
+
+/* ........................................................... */
+
+static int get_optional_length (const char *s, int n, int *err)
+{
+    const char *p = strstr(s, "--");
+    int len = 0;
+
+    if (p != NULL) {
+	if (strncmp(p, "--length=", 9)) {
+	    *err = E_SYNTAX;
+	} else {
+	    len = atoi(p + 9);
+	    if (len < 0 || len > n) {
+		*err = E_DATA;
+	    }
+	}
+    }
+
+    return len;
+}
+
+/* ........................................................... */
+
 static int missing_tail (const double *x, int n)
 {
     int i, nmiss = 0;
@@ -1302,8 +1354,6 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 	    v1 = varindex(pdinfo, vn1);
 	    v2 = varindex(pdinfo, vn2);
 	}
-
-	printf("v1 is #%d, v2 is #%d\n", v1, v2);
 	if (v1 >= 0 && v2 > v1 && v2 < pdinfo->v) {
 	    nv = v2 - v1 + 1;
 	} else {
@@ -1346,29 +1396,41 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* calculate required series length */
-    maxok = 0;
-    for (i=0; i<nv; i++) {
-	int j, ok;
-
-	j = (vnum == NULL)? i + v1 : vnum[i];
-
-	if (pdinfo->vector[j]) {
-	    ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
-	} else {
-	    ok = 1;
-	}
-	if (ok > maxok) maxok = ok;
+    /* get length specified by user? */
+    maxok = get_optional_length(scpy, pdinfo->n, &err);
+    if (err) {
+	goto bailout;
     }
 
-    /* TODO? play with the condition below for optimal results? */
-
-    if (maxok * nv <= pdinfo->n && pdinfo->n % maxok == 0) {
-	/* suggests that at least one var has already been stacked */
-	bign = pdinfo->n;
+    if (maxok > 0) {
+	bign = nv * maxok;
+	if (bign < pdinfo->n) {
+	    bign = pdinfo->n;
+	}
     } else {
-	/* no stacking done: need to expand series length */
-	bign = nv * pdinfo->n;
+	/* calculate required series length */	
+	maxok = 0;
+	for (i=0; i<nv; i++) {
+	    int j, ok;
+
+	    j = (vnum == NULL)? i + v1 : vnum[i];
+
+	    if (pdinfo->vector[j]) {
+		ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
+	    } else {
+		ok = 1;
+	    }
+	    if (ok > maxok) maxok = ok;
+	}
+
+	if (maxok * nv <= pdinfo->n && pdinfo->n % maxok == 0) {
+	    /* suggests that at least one var has already been stacked */
+	    bign = pdinfo->n;
+	} else {
+	    /* no stacking done: need to expand series length */
+	    bign = nv * pdinfo->n;
+	    maxok = 0;
+	}
     }
 
     /* allocate stacked series */
@@ -1384,13 +1446,13 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 
 	j = (vnum == NULL)? i + v1 : vnum[i];
 
-	if (bign > pdinfo->n) {
-	    bigt = pdinfo->n * i;
-	    tmax = pdinfo->n;
-	} else {
+	if (maxok > 0) {
 	    bigt = maxok * i;
 	    tmax = maxok;
-	}
+	} else {
+	    bigt = pdinfo->n * i;
+	    tmax = pdinfo->n;
+	}	    
 
 	for (t=0; t<tmax; t++) {
 	    if (pdinfo->vector[j]) {
@@ -1433,18 +1495,11 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
     
     /* complete the details */
     if (!err) {
-	int len = strlen(scpy);
-
 	strcpy(pdinfo->varname[genv], newvar);
-	if (len > MAXLABEL - 1) {
-	    strncat(VARLABEL(pdinfo, genv), scpy, MAXLABEL - 4);
-	    strcat(VARLABEL(pdinfo, genv), "...");
-	} else {
-	    strcat(VARLABEL(pdinfo, genv), scpy);
-	}
+	make_stack_label(VARLABEL(pdinfo, genv), scpy);
 	sprintf(gretl_msg, "%s %s %s (ID %d)", 
 		(genv == pdinfo->v - 1)? _("Generated") : _("Replaced"),
-		_("vector"), newvar, i);
+		_("vector"), newvar, genv);
     }
 
  bailout:
