@@ -591,8 +591,8 @@ acepta instrucciones a repetir o un número de veces específico, o
 mientras una condición se satisfaga, o para los sucesivos valores
 enteros de una variable índice (interna) i.
 
-Dentro de un bucle sólo se pueden utilizar seis instrucciones:
-genr, ols, print, smpl, store y summary (store no puede usarse en
+Dentro de un bucle sólo se pueden utilizar 7 instrucciones:
+genr, ols, print, sim, smpl, store y summary (store no puede usarse en
 un bucle "while"). Con genr y ols es posible hacer bastantes cosas.
 Se sale de este modo especial de introducir instrucciones de bucle
 mediante la orden "endloop": en este momento se ejecutan las órdenes
@@ -1098,6 +1098,11 @@ los datos guardados.
 (2) "Comprimido gzip": como arriba, pero utilizando compresión de tipo
      gzip. Esto ahorra espacio de disco, puede ser útil para conjuntos
      de datos grandes.
+     
+Nótese que si Vd. desea guardar el valor de cualquier escalar generado 
+en una sesión de gretl (en lugar de una serie de datos), Vd. debería usar
+la instrucción "store" en la ventana de consola de gretl o en un guión
+de gretl y especificar la lista de variables a guardar.
 
 #
 tsls

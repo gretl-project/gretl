@@ -744,7 +744,7 @@ Esta instrucción (de guión) da acceso a un modo especial, en el cual el
 programa acepta órdenes para repetirlas o un número de veces especificado,
 o mientras se satisfaga una condición, o para valores sucesivos de la
 variable índice i (interna). Dentro de un bucle, sólo se pueden utilizar
-seis instrucciones: genr, ols, print, smpl, store y summary (store no puede
+7 instrucciones: genr, ols, print, sim, smpl, store y summary (store no puede
 usarse en un bucle de 'while'). Con genr y ols se pueden hacer muchas cosas.
 Se sale del modo de introducción de órdenes de bucle con la instrucción
 "endloop": en este punto se ejecutarán las órdenes de todo el bloque. Los
@@ -1302,10 +1302,12 @@ Ejemplos:        store misdatos.gdt
                  store misdatos.csv -c
                  store misdatosbin.gdt -o 2 3 4
 
-"nombre_fichero" es el nombre del fichero en el que se guardarán las 
-variables. Si no se proporciona "lista_var" se guardarán los valores de 
+"nombre_fichero" es el nombre del fichero en el que se guardarán las
+variables. Si no se proporciona "lista_var" se guardarán los valores de
 todas las variables, en caso contrario sólo se grabarán al fichero las
-variables especificadas.
+variables especificadas. Nótese que las variables escalares no se incluirán 
+en el fichero de datos a no ser que Vd. lo pida explícitamente incluyéndolas 
+en "lista_var".
 
 Los valores posibles de "opción" son:
 
