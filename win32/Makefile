@@ -177,6 +177,7 @@ GUISRC = about.c \
 	filelists.c \
 	fileselect.c \
 	gpt_control.c \
+	gpt_dialog.c \
 	graph_page.c \
 	gretl.c \
 	gretlwin32.c \

@@ -114,6 +114,8 @@ SRCS = about.c \
 	fileselect.c \
 	graph_page.c \
 	gpt_control.c \
+	gpt_dialog.c \
+	gpt_dialog.c \
 	gretl.c \
 	guiprint.c \
 	gui_utils.c \

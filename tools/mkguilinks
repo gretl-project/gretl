@@ -26,6 +26,7 @@ for f in \
   fileselect.c dialogs.h \
   graph_page.c graph_page.h \
   gpt_control.c gpt_control.h \
+  gpt_dialog.c gpt_dialog.h \
   gui_utils.c gui_utils.h \
   helpfiles.c helpfiles.h \
   library.c library.h \

@@ -4,120 +4,110 @@
 
   <sect1 id="native-format"><title>Native format</title>
 
-    <para><application>gretl</application> has its own format for data
-      files.  Most users will probably not want to read or write such
-      files outside of <application>gretl</application> itself, but
-      occasionally this may be useful and full details on the file
-      formats are given in <xref linkend="app-datafile"/>.</para>
+    <para><application>gretl</application> has its own format for data files.  Most
+      users will probably not want to read or write such files outside of
+      <application>gretl</application> itself, but occasionally this may be useful
+      and full details on the file formats are given in <xref
+	linkend="app-datafile"/>.</para>
 
   </sect1>
 
   <sect1 id="other-formats"><title>Other data file formats</title>
 
     <para>
-      <application>gretl</application> will read various other data
-      formats.
+      <application>gretl</application> will read various other data formats.
     </para>
 
     <itemizedlist>
 
-      <listitem><para>Plain text (ASCII) files.  These can be brought
-	  in using <application>gretl</application>'s <quote>File,
-	    Open Data, Import ASCII&hellip;</quote> menu item, or the
-	  <command>import</command> script command.  For details on
-	  what <application>gretl</application> expects of such files,
-	  see
+      <listitem><para>Plain text (ASCII) files.  These can be brought in using
+	  <application>gretl</application>'s <quote>File, Open Data, Import
+	    ASCII&hellip;</quote> menu item, or the <command>import</command> script
+	  command.  For details on what <application>gretl</application> expects of
+	  such files, see
 	  <xref linkend="scratch"/>.</para>
       </listitem>
-      <listitem><para>Comma-Separated Values (CSV) files.  These can
-	  be imported using <application>gretl</application>'s
-	  <quote>File, Open Data, Import CSV&hellip;</quote> menu
-	  item, or the <command>import</command> script command. See
-	  also <xref linkend="scratch"/>.</para>
+      <listitem><para>Comma-Separated Values (CSV) files.  These can be imported
+	  using <application>gretl</application>'s <quote>File, Open Data, Import
+	    CSV&hellip;</quote> menu item, or the <command>import</command> script
+	  command. See also <xref linkend="scratch"/>.</para>
       </listitem>
       <listitem><para>Worksheets in the format of either MS
-	  <application>Excel</application> or
-	  <application>Gnumeric</application>. These are also brought
-	  in using <application>gretl</application>'s <quote>File,
-	    Open Data, Import</quote> menu.  The requirements for such
+	  <application>Excel</application> or <application>Gnumeric</application>.
+	  These are also brought in using <application>gretl</application>'s
+	  <quote>File, Open Data, Import</quote> menu.  The requirements for such
 	  files are given in 
 	  <xref linkend="scratch"/>.</para>
       </listitem>
-      <listitem><para>BOX1 format data.  Large amounts of micro data
-	  are available (for free) in this format via the <ulink
-	    url="http://www.census.gov/ftp/pub/DES/www/welcome.html">Data 
-	    Extraction Service</ulink> of the US Bureau of the Census.
-	  BOX1 data may be imported using the <quote>File, Open Data,
-	    Import BOX&hellip;</quote> menu item or the
-	  <command>import -o</command> script command.</para>
+      <listitem><para>BOX1 format data.  Large amounts of micro data are available
+	  (for free) in this format via the <ulink
+	    url="http://www.census.gov/ftp/pub/DES/www/welcome.html">Data Extraction
+	    Service</ulink> of the US Bureau of the Census. BOX1 data may be
+	  imported using the <quote>File, Open Data, Import BOX&hellip;</quote> menu
+	  item or the <command>import -o</command> script command.</para>
       </listitem>
 
     </itemizedlist>
 
     <para>When you import data from the ASCII, CSV or BOX formats,
-      <application>gretl</application> opens a
-      <quote>diagnostic</quote> window, reporting on its progress in
-      reading the data.  If you encounter a problem with ill-formatted
-      data, the messages in this window should give you a handle on
-      fixing the problem.</para>
+      <application>gretl</application> opens a <quote>diagnostic</quote> window,
+      reporting on its progress in reading the data.  If you encounter a problem
+      with ill-formatted data, the messages in this window should give you a handle
+      on fixing the problem.</para>
 
-    <para>For the convenience of anyone wanting to carry out more
-      complex data analysis, <application>gretl</application> has a
-      facility for writing out data in the native formats of GNU R and
-      GNU Octave (see <xref linkend="app-advanced"/>).  In the GUI
-      client this option is found under the <quote>File</quote> menu;
-      in the command-line client use the <command>store</command>
-      command with the flag <command>-r</command> (R) or
-      <command>-m</command> (Octave).</para>
+    <para>For the convenience of anyone wanting to carry out more complex data
+      analysis, <application>gretl</application> has a facility for writing out data
+      in the native formats of GNU R and GNU Octave (see <xref
+	linkend="app-advanced"/>).  In the GUI client this
+      option is found under the <quote>File</quote> menu; in the command-line client
+      use the <command>store</command> command with the flag <command>-r</command>
+      (R) or <command>-m</command> (Octave).</para>
 
   </sect1>
 
   <sect1 id="dbase"><title>Binary databases</title>
   
     <para>For working with large amounts of data I have supplied
-      <application>gretl</application> with a database-handling
-      routine.  A <emphasis>database</emphasis>, as opposed to a
-      <emphasis>data file</emphasis>, is not read directly into the
-      program's workspace.  A database can contain series of mixed
-      frequencies and sample ranges.  You open the database and select
-      series to import into the working dataset.  You can then save
-      those series in a native format data file if you wish. Databases
-      can be accessed via <application>gretl</application>'s menu item
-      <quote>File, Browse databases</quote>.</para>
+      <application>gretl</application> with a database-handling routine.  A
+      <emphasis>database</emphasis>, as opposed to a <emphasis>data file</emphasis>,
+      is not read directly into the program's workspace.  A database can contain
+      series of mixed frequencies and sample ranges.  You open the database and
+      select series to import into the working dataset.  You can then save those
+      series in a native format data file if you wish. Databases can be accessed via
+      <application>gretl</application>'s menu item <quote>File, Browse
+	databases</quote>.</para>
 
-    <para>For details on the format of
-      <application>gretl</application> databases, see <xref
+    <para>For details on the format of <application>gretl</application> databases,
+      see <xref
 	linkend="app-datafile"/>.</para>
   
     <sect2 id="online-data"><title>Online access to databases</title>
 
-      <para>As of version 0.40, <application>gretl</application> is
-	able to access databases via the internet.  Several databases
-	are available from Wake Forest University.  Your computer must
-	be connected to the internet for this option to work.  Please
-	see the item on <quote>Online databases</quote> under
-	<application>gretl</application>'s Help menu.</para>
+      <para>As of version 0.40, <application>gretl</application> is able to access
+	databases via the internet.  Several databases are available from Wake
+	Forest University.  Your computer must be connected to the internet for this
+	option to work.  Please see the item on <quote>Online databases</quote>
+	under <application>gretl</application>'s Help menu.</para>
 
     </sect2>
 
     <sect2 id="RATS"><title>RATS 4 databases</title>
 
-      <para>Thanks to Thomas Doan of <citetitle>Estima</citetitle>,
-	who provided me with the specification of the database format
-	used by RATS 4 (Regression Analysis of Time Series),
-	<application>gretl</application> can also handle such
-	databases.  Well, actually, a subset of same: I have only
-	worked on time-series databases containing monthly and
-	quarterly series.  My university has the RATS G7 database
-	containing data for the seven largest OECD economies and
-	<application>gretl</application> will read that OK.</para>
+      <para>Thanks to Thomas Doan of <citetitle>Estima</citetitle>, who provided me
+	with the specification of the database format used by RATS 4 (Regression
+	Analysis of Time Series), <application>gretl</application> can also handle
+	such databases.  Well, actually, a subset of same: I have only worked on
+	time-series databases containing monthly and quarterly series.  My
+	university has the RATS G7 database containing data for the seven largest
+	OECD economies and <application>gretl</application> will read that
+	OK.</para>
 
       <tip><para>Visit the <application>gretl</application> <ulink
-	    url="http://gretl.sourceforge.net/gretl_data.html">data 
-	    page</ulink> for details and updates on available
-	  data.</para></tip>
+	    url="http://gretl.sourceforge.net/gretl_data.html">data page</ulink> for
+	  details and updates on available data.</para></tip>
 
     </sect2>
+
   </sect1>
 
   <sect1 id="scratch"><title>Creating a data file from scratch</title>
