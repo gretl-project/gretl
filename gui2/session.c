@@ -27,6 +27,7 @@
 #include "guiprint.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -214,9 +215,10 @@ static void edit_session_notes (void)
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 {
     char pltname[MAXLEN], savedir[MAXLEN];
-    gchar *grname;
+    char grname[32];
     int i = session.ngraphs;
     int boxplot_count;
+    extern int errno = 0;
 
     get_default_dir(savedir);
 
@@ -226,17 +228,19 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 
 #endif
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
-	grname = g_strdup_printf("%s %d", _("Graph"), plot_count + 1);
+	sprintf(grname, "%s %d", _("Graph"), plot_count + 1);
 #ifdef GNUPLOT_PNG
-	if (copyfile(plot->fname, pltname)) {
+	/* move temporary plot file to permanent */	
+	if (rename(plot->fname, pltname)) {
+	    errbox(strerror(errno));
+	    /* errbox(_("Failed to copy graph file")); */
 	    return;
 	}
+	strcpy(plot->fname, pltname);
 	if (remove_png_term_from_plotfile(pltname)) {
 	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
-	remove(plot->fname);
-	strcpy(plot->fname, pltname);
 	mark_plot_as_saved(plot);
 #else
 	if (copyfile(paths.plotfile, pltname)) {
@@ -248,7 +252,7 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     else if (code == GRETL_BOXPLOT) {
 	boxplot_count = augment_boxplot_count();
 	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count);
-	grname = g_strdup_printf("%s %d", _("Boxplot"), boxplot_count);
+	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
 	if (copyfile(boxplottmp, pltname)) {
 	    return;
 	} 
@@ -267,16 +271,15 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	session.graphs = mymalloc(sizeof(GRAPHT *));
     }
 
-    if (session.graphs == NULL) goto getout;
+    if (session.graphs == NULL) return;
 
     session.graphs[i] = mymalloc(sizeof(GRAPHT));
-    if (session.graphs[i] == NULL) goto getout;
+    if (session.graphs[i] == NULL) return;
 
     (session.graphs[i])->sort = code;
 
     strcpy((session.graphs[i])->fname, pltname);
     strcpy((session.graphs[i])->name, grname);
-    g_free(grname);
     (session.graphs[i])->ID = plot_count++;
     session.ngraphs += 1;
     
@@ -290,9 +293,6 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     }
 
     return;
-
- getout:
-    g_free(grname);
 }
 
 /* ........................................................... */
