@@ -66,35 +66,28 @@ int sstsize = 0, sstnext = 0;
 struct rowdescr *rowptr = NULL;
 int lastrow = 0; 
 
-static double get_le_double (const void *p)
+static double get_le_double (const unsigned char *rec) 
 {
+    union { 
+        unsigned char cc[8];
+        double d;
+    } dconv;
+    unsigned char *d;
+    const unsigned char *s;
+    int i;
+
+    if (sizeof(double) != 8) {
+	fputs("Size of double != 8; this won't work!\n", stderr);
+	return NADBL;
+    }
+
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-    if (sizeof(double) == 8) {
-	double d;
-	int i;
-	guint8 *t  = (guint8 *) &d;
-	guint8 *p2 = (guint8 *) p;
-	int sd = sizeof d;
+    for (s=rec+8, d=dconv.cc, i=0; i<8; i++) *(d++) = *(--s);
+#else       
+    for (s=rec, d=dconv.cc, i=0; i<8; i++) *(d++) = *(s++);
+#endif     
 
-	for (i = 0; i < sd; i++) {
-	    t[i] = p2[sd - 1 - i];
-	}
-	return d;
-    } else {
-	g_error ("Big endian machine, but weird size of doubles");
-    }
-#elif G_BYTE_ORDER == G_LITTLE_ENDIAN
-    if (sizeof(double) == 8) {
-	double data;
-
-	memcpy(&data, p, sizeof data);
-	return data;
-    } else {
-	g_error ("Little endian machine, but weird size of doubles");
-    }
-#else
-#error "Byte order not recognised -- out of luck"
-#endif
+    return dconv.d;
 }
 
 static double biff_get_rk (const unsigned char *ptr)
