@@ -47,6 +47,17 @@ static int just_replaced (int i, const DATAINFO *pdinfo,
     return 0; 
 }
 
+static int in_list (int k, const int *list)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == k) return 1;
+    }
+
+    return 0;
+}
+
 /* augment orig with add, return resulting big list (private) */
 
 int *big_list (const int *orig, const int *add, const DATAINFO *pdinfo, 
@@ -117,19 +128,31 @@ int *big_list (const int *orig, const int *add, const DATAINFO *pdinfo,
  */
 
 static int 
-omit_from_list (int *list, const int *omitvars, int *newlist,
+omit_from_list (const int *list, const int *omitvars, int *newlist,
 		const DATAINFO *pdinfo, int model_count)
 {
-    int i, j, k, nomit = omitvars[0], l0 = list[0], match; 
+    int match, nomit = omitvars[0];
+    int i, j, k;
 
-    /* attempting to omit all vars or more ? */
-    if (nomit >= l0 - 1) return E_NOVARS;
+    /* check for spurious "omissions" */
+    for (i=1; i<=omitvars[0]; i++) {
+	if (!in_list(omitvars[i], list)) {
+	    sprintf(gretl_errmsg, _("Variable %d was not in the original list"),
+				 omitvars[i]);
+	    return 1;
+	}
+    }
+
+    if (nomit >= list[0] - 1) {
+	/* attempting to omit all vars or more ? */
+	return E_NOVARS;
+    }
 
     newlist[0] = 1;
     newlist[1] = list[1];
     k = 1;
 
-    for (i=2; i<=l0; i++) {
+    for (i=2; i<=list[0]; i++) {
         match = 0;
         for (j=1; j<=nomit; j++) {
             if (list[i] == omitvars[j]) {
@@ -138,8 +161,7 @@ omit_from_list (int *list, const int *omitvars, int *newlist,
             }
         }
         if (!match) { /* var is not in omit list: keep it */
-	    k++;
-            newlist[k] = list[i];
+            newlist[++k] = list[i];
         }
     }
     newlist[0] = k;
@@ -551,17 +573,6 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     return err;
 }
 
-static int in_omit_list (int k, const int *list)
-{
-    int i;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == k) return 1;
-    }
-
-    return 0;
-}
-
 static int omit_index (int i, const int *list, const MODEL *pmod)
 {
     /* return pos. in model coeff array of ith var to omit */
@@ -572,7 +583,7 @@ static int omit_index (int i, const int *list, const MODEL *pmod)
 	int j, match = 0;
 
 	for (j=2; j<=pmod->list[0]; j++) {
-	    if (in_omit_list(pmod->list[j], list)) {
+	    if (in_list(pmod->list[j], list)) {
 		if (match == i) {
 		    k = j - 2;
 		    break;

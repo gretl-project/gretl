@@ -4983,7 +4983,7 @@ int gui_exec_line (char *line,
 		   const char *myname) 
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
-    int dbdata = 0, arch_model = 0, renumber;
+    int dbdata = 0, do_arch = 0, do_nls = 0, renumber;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
@@ -5198,7 +5198,7 @@ int gui_exec_line (char *line,
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
-	    arch_model = 1;
+	    do_arch = 1;
 	    swap_models(&models[0], &models[1]);
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, 0, outprn);
@@ -5380,6 +5380,7 @@ int gui_exec_line (char *line,
 		break;
 	    }
 	    (models[0])->ID = ++model_count;
+	    do_nls = 1;
 	    printmodel(models[0], datainfo, outprn);
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, 0, outprn);
@@ -6072,11 +6073,11 @@ int gui_exec_line (char *line,
 	outprn = NULL;
     }
 
-    if (!err && (is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)
-		 || arch_model)) {
+    if (!err && (is_model_cmd(cmd.cmd) || do_nls || do_arch)
+	&& !is_quiet_model_test(cmd.ci, cmd.opt)) {
 	gretl_model_set_int(models[0], "script", 1);
 	err = stack_model(models[0]);
-	if (exec_code != REBUILD_EXEC && !arch_model && *cmd.savename != '\0') {
+	if (exec_code != REBUILD_EXEC && !do_arch && *cmd.savename != '\0') {
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
 	}
     }

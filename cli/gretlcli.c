@@ -623,7 +623,7 @@ static void printf_strip (char *s)
 void exec_line (char *line, PRN *prn) 
 {
     int chk, nulldata_n, renumber;
-    int dbdata = 0, arch_model = 0;
+    int dbdata = 0, do_arch = 0, do_nls = 0;
     gretlopt lsqopt = 0L;
     char s1[12], s2[12];
     double rho;
@@ -799,7 +799,7 @@ void exec_line (char *line, PRN *prn)
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
-	    arch_model = 1;
+	    do_arch = 1;
 	    swap_models(&models[0], &models[1]); 
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
@@ -960,6 +960,7 @@ void exec_line (char *line, PRN *prn)
 		break;
 	    }
 	    (models[0])->ID = ++model_count;
+	    do_nls = 1;
 	    printmodel(models[0], datainfo, prn);
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
@@ -1666,8 +1667,7 @@ void exec_line (char *line, PRN *prn)
 	break;
     }
 
-    if (!err && 
-	(is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7) || arch_model)
+    if (!err && (is_model_cmd(cmd.cmd) || do_nls || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 
 	if (fullZ != NULL) {
