@@ -2539,40 +2539,41 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	}
 
 	if (!dums) { /* add separator, branch and "none" */
-	    dumitem.path = mymalloc(64);
-
 	    /* separator */
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
-	    strcpy(dumitem.path, _(mpath[0]));
+	    dumitem.path = g_strdup(_(mpath[0]));
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	    g_free(dumitem.path);
 
 	    /* menu branch */
 	    dumitem.item_type = "<Branch>";
-	    strcpy(dumitem.path, _(mpath[1]));
+	    dumitem.path = g_strdup(_(mpath[1]));
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	    g_free(dumitem.path);
 
 	    /* "none" option */
 	    dumitem.callback = plot_dummy_call;
 	    dumitem.item_type = "<RadioItem>";
-	    sprintf(dumitem.path, _("%s/none"), mpath[1]);
+	    dumitem.path = g_strdup_printf(_("%s/none"), mpath[1]);
 	    radiopath = g_strdup(dumitem.path);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	    g_free(dumitem.path);
 	    dums = 1;
 	} 
 
 	dumitem.callback_action = pmod->list[i]; 
 	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
-	sprintf(dumitem.path, _("%s/by %s"), mpath[1], tmp);
 	dumitem.callback = plot_dummy_call;	    
 	dumitem.item_type = radiopath;
+	dumitem.path = g_strdup_printf(_("%s/by %s"), mpath[1], tmp);
 	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
+	g_free(dumitem.path);
 
     }
 
-    free(dumitem.path);
-    free(radiopath);
+    g_free(radiopath);
 }
 
 /* ........................................................... */
