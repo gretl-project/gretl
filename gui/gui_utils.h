@@ -21,7 +21,7 @@ void add_files_to_menu (int filetype);
 
 int copyfile (const char *src, const char *dest);
 
-void prn_to_clipboard (print_t *prn);
+void prn_to_clipboard (PRN *prn);
 
 int isdir (const char *path);
 
@@ -71,7 +71,7 @@ void free_windata (GtkWidget *w, gpointer data);
 
 void file_viewer_save (GtkWidget *widget, gpointer data);
 
-windata_t *view_buffer (print_t *prn, int hsize, int vsize, 
+windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			char *title, int action,
 			GtkItemFactoryEntry menu_items[]);
 
@@ -79,7 +79,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		      int hsize, int vsize, char *title, 
 		      GtkItemFactoryEntry menu_items[]);
 
-int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize, 
+int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);
 
 void setup_column (GtkWidget *listbox, int column, int width);

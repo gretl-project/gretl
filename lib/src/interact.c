@@ -176,7 +176,7 @@ static int aliased (char *cmd)
 /* ........................................................... */
 
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
-	     int *ignore, double **pZ, print_t *cmds)
+	     int *ignore, double **pZ, PRN *cmds)
 {
     int i, j, nf, linelen, n, v, gotdata = 0, ar = 0;
     int spacename = 0;
@@ -513,7 +513,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
 /* ........................................................... */
 
-int help (const char *cmd, const char *helpfile, print_t *prn)
+int help (const char *cmd, const char *helpfile, PRN *prn)
 {
     FILE *fq;
     char line[MAXLEN], tmp[MAXLEN], cmdcopy[9];
@@ -591,7 +591,7 @@ int help (const char *cmd, const char *helpfile, print_t *prn)
 /* ........................................................... */
 
 static int parse_criteria (const char *line, const DATAINFO *pdinfo, 
-			   double **pZ, print_t *prn)
+			   double **pZ, PRN *prn)
 {
     int i, n = pdinfo->n;
     double ess;
@@ -805,7 +805,7 @@ int shell (const char *arg)
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
 	       const int nopause, const int gui, const int oflag, 
-	       print_t *prn)
+	       PRN *prn)
      /* echo a given command: depending on the circumstances, either
 	to stdout or to a buffer, or both */
 
@@ -913,7 +913,7 @@ static void showlabels (const DATAINFO *pdinfo)
 int simple_commands (CMD *cmd, const char *line, 
 		     double **pZ, DATAINFO *datainfo, PATHS *paths,
 		     const int pause, const int oflag, 
-		     print_t *prn)
+		     PRN *prn)
      /* common code for command-line and GUI client programs, where
 	the command doesn't require special handling on the client
 	side */

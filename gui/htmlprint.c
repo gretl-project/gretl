@@ -22,24 +22,24 @@
 #include "gretl.h"
 #include "htmlprint.h"
 
-static void h_print_float_10 (const double x, print_t *htm);
+static void h_print_float_10 (const double x, PRN *htm);
 static void h_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			 const int c, print_t *htm);
-static void h_depvarstats (const MODEL *pmod, print_t *htm);
-static int h_essline (const MODEL *pmod, print_t *htm, int wt);
-static void h_rsqline (const MODEL *pmod, print_t *htm);
-static void h_Fline (const MODEL *pmod, print_t *htm);
-static void h_dwline (const MODEL *pmod, print_t *htm);
-static void h_dhline (const MODEL *pmod, print_t *htm);
-static void h_print_aicetc (const MODEL *pmod, print_t *htm);
+			 const int c, PRN *htm);
+static void h_depvarstats (const MODEL *pmod, PRN *htm);
+static int h_essline (const MODEL *pmod, PRN *htm, int wt);
+static void h_rsqline (const MODEL *pmod, PRN *htm);
+static void h_Fline (const MODEL *pmod, PRN *htm);
+static void h_dwline (const MODEL *pmod, PRN *htm);
+static void h_dhline (const MODEL *pmod, PRN *htm);
+static void h_print_aicetc (const MODEL *pmod, PRN *htm);
 static void h_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 print_t *htm);
+			 PRN *htm);
 
 #define SPACER " <td width=\"5%\">&nbsp;</td>\n"
 
 /* ......................................................... */ 
 
-static void h_noconst (print_t *htm)
+static void h_noconst (PRN *htm)
 {
     pprintf(htm, "<p>The model has no constant term.</br>\n"  
 	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
@@ -50,7 +50,7 @@ static void h_noconst (print_t *htm)
 
 /* ......................................................... */ 
 
-static void h_depvarstats (const MODEL *pmod, print_t *htm)
+static void h_depvarstats (const MODEL *pmod, PRN *htm)
 {
     pprintf(htm, 
 	    "<tr>\n"
@@ -65,7 +65,7 @@ static void h_depvarstats (const MODEL *pmod, print_t *htm)
 
 /* ......................................................... */ 
 
-static void h_print_float_10 (const double x, print_t *htm)
+static void h_print_float_10 (const double x, PRN *htm)
 {
     double xx = x;
 
@@ -106,7 +106,7 @@ static void h_print_float_10 (const double x, print_t *htm)
 
 /* ......................................................... */ 
 
-static int h_essline (const MODEL *pmod, print_t *htm, int wt)
+static int h_essline (const MODEL *pmod, PRN *htm, int wt)
 {
     if ((wt && pmod->ess_wt < 0) || (!(wt) && pmod->ess < 0)) {
 	pprintf(htm, "</table>\n"
@@ -128,7 +128,7 @@ static int h_essline (const MODEL *pmod, print_t *htm, int wt)
 
 /* ......................................................... */ 
 
-static void h_rsqline (const MODEL *pmod, print_t *htm)
+static void h_rsqline (const MODEL *pmod, PRN *htm)
 {
     double xx = pmod->rsq;
 
@@ -152,7 +152,7 @@ static void h_rsqline (const MODEL *pmod, print_t *htm)
 
 /* ......................................................... */ 
 
-static void h_Fline (const MODEL *pmod, print_t *htm)
+static void h_Fline (const MODEL *pmod, PRN *htm)
 {
     pprintf(htm, "<tr>\n <td>F-statistic (%d, %d)</td>\n",
 	    pmod->dfn, pmod->dfd);
@@ -174,7 +174,7 @@ static void h_Fline (const MODEL *pmod, print_t *htm)
 
 /* ......................................................... */ 
 
-static void h_dwline (const MODEL *pmod, print_t *htm)
+static void h_dwline (const MODEL *pmod, PRN *htm)
 {
     pprintf(htm, "<tr>\n");
     if (na(pmod->dw))
@@ -197,7 +197,7 @@ static void h_dwline (const MODEL *pmod, print_t *htm)
 
 /* ......................................................... */ 
 
-static void h_dhline (const MODEL *pmod, print_t *htm)
+static void h_dhline (const MODEL *pmod, PRN *htm)
 {
     double sderr, h = 0.0;
     int i = pmod->ldepvar, T = pmod->nobs - 1;
@@ -226,7 +226,7 @@ static void h_dhline (const MODEL *pmod, print_t *htm)
 
 /* ......................................................... */ 
 
-static void stats_table_start (print_t *htm)
+static void stats_table_start (PRN *htm)
 {
 
     pprintf(htm, "<br/>\n"
@@ -235,7 +235,7 @@ static void stats_table_start (print_t *htm)
 
 /* ......................................................... */
 
-static void h_print_model_tests (const MODEL *pmod, print_t *htm)
+static void h_print_model_tests (const MODEL *pmod, PRN *htm)
 {
     int i;
 
@@ -252,7 +252,7 @@ static void h_print_model_tests (const MODEL *pmod, print_t *htm)
 /* ......................................................... */ 
 
 void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-		   print_t *htm)
+		   PRN *htm)
 {
     int i, ncoeff;
     char startdate[8];
@@ -447,7 +447,7 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ....................................................... */
 
-static void h_print_aicetc (const MODEL *pmod, print_t *htm)
+static void h_print_aicetc (const MODEL *pmod, PRN *htm)
 {
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
@@ -495,7 +495,7 @@ static void h_print_aicetc (const MODEL *pmod, print_t *htm)
 /* ......................................................... */ 
 
 static void h_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			   const int c, print_t *htm)
+			   const int c, PRN *htm)
 {
     double t, pvalue;
 
@@ -562,7 +562,7 @@ static int _pmax (const MODEL *pmod)
 /* ......................................................... */ 
 
 static void h_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 print_t *htm)
+			 PRN *htm)
 {
     int k = pmod->ncoeff - pmod->ifc;
 

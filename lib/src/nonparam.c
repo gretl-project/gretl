@@ -44,8 +44,8 @@ static int inverse_compare_doubles (const void *a, const void *b)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int spearman (const int *list, const double *Z, const DATAINFO *pdinfo, 
-	      const int opt, print_t *prn)
+int spearman (const LIST list, const double *Z, const DATAINFO *pdinfo, 
+	      const int opt, PRN *prn)
 {
     double xx, yy, *sx, *sy, *rx, *ry, *tmp;
     double xdate, rsum, avg, z = 0;
@@ -211,7 +211,7 @@ int spearman (const int *list, const double *Z, const DATAINFO *pdinfo,
  */
 
 int runs_test (const int varno, const double *Z, const DATAINFO *pdinfo, 
-	       print_t *prn)
+	       PRN *prn)
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n, runs = 1;
     int nn;

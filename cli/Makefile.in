@@ -42,7 +42,7 @@ endif
 
 # General compile options and libs:
 LIBS = $(CLI_LIBS)
-INCLUDES = -I.
+INCLUDES = -I. -I../lib/src
 
 # Directories
 srcdir  = .

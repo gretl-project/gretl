@@ -41,6 +41,12 @@ typedef enum {
     GRETL_PRINT_NULL
 } prn_codes;
 
+typedef enum {
+    TIME_SERIES = 1,
+    STACKED_TIME_SERIES,
+    STACKED_CROSS_SECTION
+} ts_codes;
+
 typedef int *LIST;  
 
 /* information on data set */
@@ -176,13 +182,13 @@ typedef struct {
     int nmodels;
     int *model_ID;
     char **model_name;
-} session_t;
+} SESSIONBUILD;
 
 typedef struct {
     FILE *fp;
     char *buf;
     size_t bufsize;
-} print_t;
+} PRN;
 
 
 #include "commands.h"

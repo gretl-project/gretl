@@ -27,8 +27,8 @@
 # include <windows.h>
 #endif
 
-extern void mxout (const double *rr, const int *list, const int ci,
-		   const DATAINFO *pdinfo, const int pause, print_t *prn);
+extern void _mxout (const double *rr, const int *list, const int ci,
+		    const DATAINFO *pdinfo, const int pause, PRN *prn);
 
 /* ........................................................... */
 
@@ -119,7 +119,7 @@ void free_freq (FREQDIST *freq)
 }
 
 /**
- * freq_func:
+ * freqdist:
  * @pZ: pointer to data matrix (or NULL)
  * @pdinfo: information on the data set.
  * @zz: if pZ is NULL, data vector.
@@ -134,7 +134,7 @@ void free_freq (FREQDIST *freq)
  *
  */
 
-FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
+FREQDIST *freqdist (double **pZ, const DATAINFO *pdinfo, double *zz,
 		     const int nzz, const char *varname, const int params)
 {
     FREQDIST *freq;
@@ -321,7 +321,7 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
 
 int corrgram (const int varno, const int order, double **pZ, 
 	      DATAINFO *pdinfo, const PATHS *ppaths, 
-	      const int batch, print_t *prn)
+	      const int batch, PRN *prn)
 {
     double *x, *y, *acf, *xl, box;
     double *pacf = NULL;
@@ -491,7 +491,7 @@ static int roundup_half (int i)
 
 /* ...................................................... */
 
-static int fract_int (int n, double *hhat, double *omega, print_t *prn)
+static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 {
     double xx, tstat, *tmpZ = NULL;
     DATAINFO tmpdinfo;
@@ -554,7 +554,7 @@ static int fract_int (int n, double *hhat, double *omega, print_t *prn)
 
 int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo, 
 		 const PATHS *ppaths, const int batch, 
-		 const int opt, print_t *prn)
+		 const int opt, PRN *prn)
 {
     double *autocov, *omega, *hhat;
     double xx, yy, varx, w;
@@ -618,7 +618,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
 	    fprintf(fq, "set x2label 'quarters'\n");
 	else if (pdinfo->pd == 12)
 	    fprintf(fq, "set x2label 'months'\n");
-	else if (pdinfo->pd == 1 && pdinfo->time_series == 1)
+	else if (pdinfo->pd == 1 && pdinfo->time_series == TIME_SERIES)
 	    fprintf(fq, "set x2label 'years'\n");
 	else
 	    fprintf(fq, "set x2label 'periods'\n");
@@ -691,7 +691,7 @@ int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo,
 
 /* ............................................................. */
 
-static void printf17 (const double zz, print_t *prn)
+static void printf17 (const double zz, PRN *prn)
 {
     if (na(zz)) pprintf(prn, "      undefined");
     else _printxs(zz, 17, SUMMARY, prn);
@@ -700,7 +700,7 @@ static void printf17 (const double zz, print_t *prn)
 /* ............................................................... */
 
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
-		   const int ci, print_t *prn)
+		   const int ci, PRN *prn)
 {
     char date1[9], date2[9];
 
@@ -708,10 +708,10 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     ntodate(date2, pdinfo->t2, pdinfo);
 
     pprintf(prn, "\n");
-    if (pdinfo->pd != 1) space((ci == SUMMARY)? 10 : 7, prn);
+    if (pdinfo->pd != 1) _bufspace((ci == SUMMARY)? 10 : 7, prn);
     else {
-	if (pdinfo->sd0 > 1900) space((ci == SUMMARY)? 12 : 9, prn);
-	else space((ci == SUMMARY)? 15 : 12, prn);
+	if (pdinfo->sd0 > 1900) _bufspace((ci == SUMMARY)? 12 : 9, prn);
+	else _bufspace((ci == SUMMARY)? 15 : 12, prn);
     } 
     
     pprintf(prn, "%s, using the observations %s - %s\n", str, date1, date2);
@@ -734,14 +734,14 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
 
 void print_summary (GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
-		    const int pause, print_t *prn)
+		    const int pause, PRN *prn)
 {
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv, lineno = 4;
 
     prhdr("Summary Statistics", pdinfo, SUMMARY, prn);
     if (lo == 1) {
-	space(16, prn);
+	_bufspace(16, prn);
 	pprintf(prn, "for the variable '%s' (%d valid observations)\n\n", 
 		pdinfo->varname[summ->list[1]], summ->n);
     } else {
@@ -759,7 +759,7 @@ void print_summary (GRETLSUMMARY *summ,
 	xbar = summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
-	else space(2, prn);
+	else _bufspace(2, prn);
 	printf17(xbar, prn);
 	printf17(summ->xmedian[v], prn);
 	printf17(summ->xpx[v], prn);
@@ -778,7 +778,7 @@ void print_summary (GRETLSUMMARY *summ,
 	lv = summ->list[v];
 	if (lo > 1)
 	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
-	else space(2, prn);
+	else _bufspace(2, prn);
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
@@ -826,9 +826,9 @@ void free_summary (GRETLSUMMARY *summ)
  *
  */
 
-GRETLSUMMARY *summary (int *list, 
+GRETLSUMMARY *summary (LIST list, 
 		       double **pZ, const DATAINFO *pdinfo,
-		       print_t *prn) 
+		       PRN *prn) 
 {
     int mm, lo;
     int v, *tmp = NULL;
@@ -921,7 +921,7 @@ void free_corrmat (CORRMAT *corrmat)
  * 
  */
 
-CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
+CORRMAT *corrlist (LIST list, double **pZ, const DATAINFO *pdinfo)
 {
     CORRMAT *corrmat;
     int *p = NULL;
@@ -985,13 +985,13 @@ CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
  */
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
-			const int pause, print_t *prn)
+			const int pause, PRN *prn)
 {
     prhdr("Correlation Coefficients", pdinfo, CORR, prn);
     pprintf(prn, "              5%% critical value (two-tailed) = "
 	    "%.3f for n = %d\n\n", rhocrit95(corr->n), corr->n);
 
-    mxout(corr->xpx, corr->list, CORR, pdinfo, pause, prn);
+    _mxout(corr->xpx, corr->list, CORR, pdinfo, pause, prn);
 }
 
 /**
@@ -1008,8 +1008,8 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo, 
-		const int pause, print_t *prn)
+int esl_corrmx (LIST list, double **pZ, const DATAINFO *pdinfo, 
+		const int pause, PRN *prn)
 {
     CORRMAT *corr;
 
@@ -1034,8 +1034,8 @@ int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int means_test (int *list, double *Z, const DATAINFO *pdinfo, 
-		const int vareq, print_t *prn)
+int means_test (LIST list, double *Z, const DATAINFO *pdinfo, 
+		const int vareq, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
     double *x = NULL, *y = NULL;
@@ -1105,8 +1105,8 @@ int means_test (int *list, double *Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int vars_test (int *list, double *Z, const DATAINFO *pdinfo, 
-	       print_t *prn)
+int vars_test (LIST list, double *Z, const DATAINFO *pdinfo, 
+	       PRN *prn)
 {
     double m, skew, kurt, s1, s2, var1, var2, F;
     double *x = NULL, *y = NULL;

@@ -449,7 +449,7 @@ int genr_scalar_index (int opt, int put)
 }
 
 /**
- * genr_func:
+ * generate:
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @line: command line fr parsing.
@@ -464,9 +464,9 @@ int genr_scalar_index (int opt, int put)
  * Returns: a #GENERATE struct.
  */
 
-GENERATE genr_func (double **pZ, DATAINFO *pdinfo, 
-		    const char *line, const int model_count, 
-		    MODEL *pmod, const int oflag)
+GENERATE generate (double **pZ, DATAINFO *pdinfo, 
+		   const char *line, const int model_count, 
+		   MODEL *pmod, const int oflag)
 {
     int nleft1, nleft2, nright1, nright2, vi, lv, ig, iw, nt; 
     int v, ls, nv = pdinfo->v, er, lword, nv1, nvtmp = 0;
@@ -1390,7 +1390,7 @@ static int _getxvec (char *ss, double *xxvec,
 	else if (v1 == TNUM) { /* auto trend/index */
 	    if (pdinfo->time_series && pdinfo->pd == 1) /* annual */ 
 		for (i=0; i<n; i++) xxvec[i] = pdinfo->sd0 + i;
-	    else if (pdinfo->time_series == 1 && 
+	    else if (pdinfo->time_series == TIME_SERIES && 
 		     (pdinfo->pd == 4 || pdinfo->pd == 12)) {
 		char obsstr[8];
 		
@@ -1794,7 +1794,7 @@ static void _uniform (double *a, const int t1, const int t2)
  * Prints a list of the names of the variables currently defined.
  */
 
-void varlist (const DATAINFO *pdinfo, print_t *prn)
+void varlist (const DATAINFO *pdinfo, PRN *prn)
 {
     register int i;
     int n = pdinfo->v;
@@ -1888,7 +1888,7 @@ static void _genrfree (double **pZ, DATAINFO *pdinfo, GENERATE *genr,
  * Returns: the number of variables generated, or -1 on failure.
  */
 
-int logs (const int *list, double **pZ, DATAINFO *pdinfo)
+int logs (const LIST list, double **pZ, DATAINFO *pdinfo)
 {
     register int i;
     int j, t, v, nvar = pdinfo->v, n = pdinfo->n;
@@ -1966,7 +1966,7 @@ int logs (const int *list, double **pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int lags (const int *list, double **pZ, DATAINFO *pdinfo)
+int lags (const LIST list, double **pZ, DATAINFO *pdinfo)
 /* generates lag variables for each var in list */
 {
     int check, l, v, lv, opt = 1;
@@ -2040,7 +2040,7 @@ int _parse_lagvar (const char *varname, LAGVAR *plagv, DATAINFO *pdinfo)
  * Returns: The number of variables generated, or -1 on error.
  */
 
-int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo, 
+int xpxgenr (const LIST list, double **pZ, DATAINFO *pdinfo, 
 	     const int opt, const int nodup)
 {
     int check, i, j, t, li, lj, l0 = list[0];
@@ -2136,7 +2136,7 @@ int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int rhodiff (char *param, const int *list, double **pZ, DATAINFO *pdinfo)
+int rhodiff (char *param, const LIST list, double **pZ, DATAINFO *pdinfo)
 {
     int i, j, maxlag, p, t, t1, nv, v = pdinfo->v, n = pdinfo->n;
     char s[64], parmbit[9];

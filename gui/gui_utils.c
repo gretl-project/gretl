@@ -428,7 +428,7 @@ void do_open_data (GtkWidget *w, gpointer data)
      */
 {
     gint datatype, err;
-    print_t *prn;
+    PRN *prn;
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
 
@@ -539,7 +539,7 @@ void save_session (char *fname)
     char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
     char session_base[MAXLEN], tmp[MAXLEN], grftmp[64];
     FILE *fp;
-    print_t *prn;
+    PRN *prn;
 
     spos = slashpos(fname);
     if (spos) 
@@ -868,7 +868,7 @@ void free_windata (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-windata_t *view_buffer (print_t *prn, int hsize, int vsize, 
+windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			char *title, int action,
 			GtkItemFactoryEntry menu_items[]) 
 {
@@ -1355,7 +1355,7 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
 /* ........................................................... */
 
-int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize, 
+int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title) 
 {
     windata_t *vwin;
@@ -2220,7 +2220,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
 
 /* .................................................................. */
 
-void prn_to_clipboard (print_t *prn)
+void prn_to_clipboard (PRN *prn)
 {
     size_t len;
 
@@ -2241,7 +2241,7 @@ void prn_to_clipboard (print_t *prn)
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
     windata_t *mydata = (windata_t *) data;
-    print_t *prn;
+    PRN *prn;
 
     /* mydata->action code says what sort of thing is displayed in
        the window in question */

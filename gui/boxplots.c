@@ -851,7 +851,7 @@ five_numbers (gpointer data)
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
     int i;
-    print_t *prn;
+    PRN *prn;
     extern GtkItemFactoryEntry view_items[];
 
     if (bufopen(&prn)) return 1;

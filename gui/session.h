@@ -51,9 +51,9 @@ void free_session (void);
 
 int saved_objects (char *fname);
 
-int parse_savefile (char *fname, SESSION *psession, session_t *rebuild);
+int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild);
 
-int recreate_session (char *fname, SESSION *psession, session_t *rebuild);
+int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild);
 
 void view_session (void);
 

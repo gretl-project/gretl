@@ -21,7 +21,7 @@
 /* common.c -- material in common between cli and gui clients */
 
 int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum, 
-		    print_t *prn) 
+		    PRN *prn) 
 /* special version of command executor for monte carlo loop */
 {
     int i, m, oflag = 0;
@@ -44,8 +44,8 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	{
 	    GENERATE genr;
 
-	    genr = genr_func(&Z, datainfo, linecpy, model_count,
-			     tmpmodel, oflag);
+	    genr = generate(&Z, datainfo, linecpy, model_count,
+			    tmpmodel, oflag);
 	    if (genr.errcode) {
 		errmsg(genr.errcode, prn);
 		return 1;
@@ -92,7 +92,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	}
 	if (plp->lvar) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
-	    m = get_modnum_by_id(plp, cmdnum);
+	    m = get_modnum_by_cmdnum(plp, cmdnum);
 	    swap_models(&models[0], &plp->models[m]);
 	    (plp->models[m])->ID = cmdnum;
 	    /* "correct" is being borrowed here, to mark the '-o' */
@@ -104,7 +104,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		pprintf(prn, "Failed to initialize model for loop\n");
 		return 1;
 	    } else if (update_loop_model(plp, cmdnum, models[0], 
-					 datainfo, oflag)) {
+					 datainfo)) {
 		pprintf(prn, "Failed to add results to loop model\n");
 		return 1;
 	    }
@@ -141,7 +141,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	if (oflag) {
 	    if (restore_full_sample(&subZ, &fullZ, &Z,
 				    &subinfo, &fullinfo, &datainfo)) {
-		pprintf(prn, "%s\n", gretl_errmsg);
+		pprintf(prn, "%s\n", get_gretl_errmsg());
 		return 1;
 	    }
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
@@ -150,7 +150,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    }
 	    if (set_sample_dummy(linecpy, &Z, &subZ, datainfo, 
 				 subinfo, oflag)) {
-		pprintf(prn, "%s\n", gretl_errmsg);
+		pprintf(prn, "%s\n", get_gretl_errmsg());
 		return 1;
 	    }
 	    fullZ = Z;

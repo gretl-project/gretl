@@ -653,7 +653,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
 void do_save_graph (const char *fname, char *savestr)
 {
     FILE *fq;
-    print_t *prn;
+    PRN *prn;
     char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
     char termstr[MAXLEN];
     int cmds;

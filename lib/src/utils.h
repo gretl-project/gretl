@@ -88,7 +88,7 @@ void list_exclude (const int n, int *list);
 
 int set_obs (char *line, DATAINFO *pdinfo, int opt);
 
-char *addpath (char *filename, PATHS *ppaths, int script);
+char *addpath (char *fname, PATHS *ppaths, int script);
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 int setpath, int script);
@@ -99,7 +99,7 @@ int catchflag (char *line, int *oflag);
 
 MODEL *gretl_model_new (void);
 
-int clear_model (void *ptr, SESSION *psession, session_t *rebuild);
+int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild);
 
 void show_paths (PATHS *ppaths);
 
@@ -120,7 +120,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 int swap_models (MODEL **targ, MODEL **src);
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double **pZ, DATAINFO *pdinfo, print_t *prn,
+		     double **pZ, DATAINFO *pdinfo, PRN *prn,
 		     const PATHS *ppaths, const int plot);
 
 int is_model_cmd (const char *line);

@@ -22,10 +22,10 @@
 /* functions follow */
 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
-			const int standalone, print_t *prn);
+			const int standalone, PRN *prn);
 
 int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
-		     const int standalone, print_t *prn);
+		     const int standalone, PRN *prn);
 
 int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,

@@ -290,7 +290,7 @@ dfstat_t chi_vals[NCHI] = {{1,{2.706,3.841,5.024,6.635,10.828}},
 
 /* .................................................................. */
 
-static void other_tables (print_t *prn)
+static void other_tables (PRN *prn)
 {
     pprintf(prn, "\n\nFor more comprehensive statistical tables, please consult "
 	    "a statistics or econometrics text, e.g. Ramanathan's "
@@ -299,7 +299,7 @@ static void other_tables (print_t *prn)
 
 /* .................................................................. */
 
-void dw_lookup (int n, print_t *prn)
+void dw_lookup (int n, PRN *prn)
 {
     int i, j, nlo, nhi;
 
@@ -336,7 +336,7 @@ void dw_lookup (int n, print_t *prn)
 
 /* .................................................................. */
 
-void norm_lookup (print_t *prn)
+void norm_lookup (PRN *prn)
 {
     pprintf(prn, "Critical values for standard normal distribution\n\n");
     pprintf(prn, "Column headings show alpha (significance level) for "
@@ -353,7 +353,7 @@ void norm_lookup (print_t *prn)
 
 /* .................................................................. */
 
-void t_lookup (int df, print_t *prn)
+void t_lookup (int df, PRN *prn)
 {
     int i, j, dflo, dfhi;
 
@@ -392,7 +392,7 @@ void t_lookup (int df, print_t *prn)
 
 /* .................................................................. */
 
-void chisq_lookup (int df, print_t *prn)
+void chisq_lookup (int df, PRN *prn)
 {
     int i, j;
 

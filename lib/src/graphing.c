@@ -27,7 +27,7 @@
 # include <windows.h>
 #endif
 
-extern void _printstr (print_t *prn, const double xx, int *ls);
+extern void _printstr (PRN *prn, const double xx, int *ls);
 
 extern double _gamma_func (double x);
 
@@ -43,7 +43,7 @@ static int printv (FILE *fp, const int nt, const int v1,
     register int i;
     int n = pdinfo->n, v2 = list[0], ls = 0, miss = 0;
     double xx;
-    print_t prn;
+    PRN prn;
 
     prn.fp = fp;
     prn.buf = NULL;
@@ -63,7 +63,7 @@ static int printv (FILE *fp, const int nt, const int v1,
 /* ........................................................ */
 
 static void prntdate (const int nt, const int n, 
-		      const DATAINFO *pdinfo, print_t *prn)
+		      const DATAINFO *pdinfo, PRN *prn)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     double xx;
@@ -129,7 +129,7 @@ static void initpx (const int nn, char *pp)
 
 /* ........................................................ */
 
-static void drawline (const int nn, print_t *prn)
+static void drawline (const int nn, PRN *prn)
 {
     int t;
 
@@ -157,8 +157,8 @@ static void drawline (const int nn, print_t *prn)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot (const int *list, double *Z, const DATAINFO *pdinfo, 
-	  int oflag, int pause, print_t *prn)
+int plot (const LIST list, double *Z, const DATAINFO *pdinfo, 
+	  int oflag, int pause, PRN *prn)
 /*
 	plot var1 ;		plots var1 values
 	plot var1 var2 ;	plots var1 and var2 values
@@ -202,11 +202,11 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
 	pprintf(prn, "%s", word);
 	sprintf(word, "x-max = %g", xmax);
 	ls = 78-ls-strlen(word);
-	space(ls, prn);
+	_bufspace(ls, prn);
 	pprintf(prn, "%s\n", word); 
 	if (cntrline) {
 	    iy = (-xmin/xrange)*ncols;
-	    space(iy+7, prn);
+	    _bufspace(iy+7, prn);
 	    pprintf(prn, "0.0\n"); 
 	}
 	drawline(ncols, prn);
@@ -256,7 +256,7 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
 	pprintf(prn, "%s", word);
 	sprintf(word, "xy-max = %g", xymax);
 	ls = 78-ls-strlen(word);
-	space(ls, prn);
+	_bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     }
     else {
@@ -266,14 +266,14 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
 	pprintf(prn, "%s", word);
 	sprintf(word, "o-max = %g", ymax);
 	ls = 78-ls-strlen(word);
-	space(ls, prn);
+	_bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
 	sprintf(word, "        x-min = %g", xmin);
 	ls = strlen(word);
 	pprintf(prn, "%s", word);
 	sprintf(word, "x-max = %g", xmax);
 	ls = 78-ls-strlen(word);
-	space(ls, prn);
+	_bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     }
     /*  First x and y values are scaled, then it checks to see which scaled
@@ -286,7 +286,7 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
     cntrline = (floatgt(xymax, 0) && floatlt(xymin, 0))? 1 : 0;
     if (cntrline) {
 	iz = (-xymin/xyrange)*ncols;
-	space(iz+7, prn);
+	_bufspace(iz+7, prn);
 	pprintf(prn, "0.0\n");
     }
     drawline(ncols, prn);
@@ -336,8 +336,8 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int graph (const int *list, double *Z, const DATAINFO *pdinfo, 
-	   const int oflag, print_t *prn)
+int graph (const LIST list, double *Z, const DATAINFO *pdinfo, 
+	   const int oflag, PRN *prn)
 /*
   graph var1 var2 ;	graphs var1 (y-axis) against var2 (x-axis)
 			in 20 rows and 60 columns
@@ -477,7 +477,7 @@ int gnuplot_display (const char *gpt, const char *fname)
  * command fails, or 1 if there are missing data values.
  */
 
-int gnuplot (int *list, const int *lines, 
+int gnuplot (LIST list, const int *lines, 
 	     double **pZ, DATAINFO *pdinfo,
 	     const PATHS *ppaths, int *plot_count, 
 	     const int batch, const int gui, const int opt)
@@ -749,7 +749,7 @@ int gnuplot (int *list, const int *lines,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int multi_scatters (const int *list, const int pos, double **pZ, 
+int multi_scatters (const LIST list, const int pos, double **pZ, 
 		    const DATAINFO *pdinfo, const PATHS *ppaths)
 {
     int i, t, err = 0, xvar, yvar, *plotlist;

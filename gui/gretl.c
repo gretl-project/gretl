@@ -116,10 +116,10 @@ double *subZ;               /* sub-sampled data set */
 double *fullZ;              /* convenience pointer */
 MODEL **models;             /* gretl models structs */
 SESSION session;            /* hold models, graphs */
-session_t rebuild;          /* rebuild session later */
+SESSIONBUILD rebuild;          /* rebuild session later */
 
 int plot_count, data_file_open, orig_vars;
-print_t *cmds;
+PRN *cmds;
 gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 
 /* defaults for some options */
@@ -433,7 +433,7 @@ static void get_runfile (char *str)
 
     strncpy(scriptfile, str, MAXLEN-1);
     if (addpath(scriptfile, &paths, 1) == NULL) {
-	fprintf(stderr, "Couldn't open script \"%s\"\n", scriptfile);
+	fprintf(stderr, "Couldn't find script \"%s\"\n", scriptfile);
 	exit(EXIT_FAILURE);
     } else {
 	fprintf(stderr, "%s found\n", scriptfile);
@@ -593,7 +593,7 @@ int main (int argc, char *argv[])
     /* get the data file, if specified on the command line */
     if (!(gui_get_data)) {
 	int ftype;
-	print_t prn;
+	PRN prn;
 
 	prn.fp = stderr;
 	clear(paths.datfile, MAXLEN);

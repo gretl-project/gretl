@@ -145,7 +145,7 @@ static int ldiffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
  *
  */
 
-int list_diffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
+int list_diffgenr (const LIST list, double **pZ, DATAINFO *pdinfo)
 {
     int i;
     
@@ -167,7 +167,7 @@ int list_diffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
  *
  */
 
-int list_ldiffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
+int list_ldiffgenr (const LIST list, double **pZ, DATAINFO *pdinfo)
 {
     int i;
     
@@ -244,8 +244,8 @@ static int get_listlen (const int *varlist, const int order, double *Z,
  *
  */
 
-int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
-	 const int pause, print_t *prn)
+int var (const int order, const LIST list, double **pZ, DATAINFO *pdinfo,
+	 const int pause, PRN *prn)
 {
     /* construct the respective lists by adding the appropriate
        number of lags ("order") to the variables in list 
@@ -392,7 +392,7 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
 	    pprintf(prn, "p-value %f\n", fdist(F, neqns, dfd)); 
 	}
 	pprintf(prn, "\n");
-	if (pause) takenotes(0);
+	if (pause) page_break(0, NULL, 0);
     }
     pprintf(prn, "\n");
 
@@ -420,8 +420,8 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
  *
  */
 
-int coint (const int order, const int *list, double **pZ, 
-	   DATAINFO *pdinfo, print_t *prn)
+int coint (const int order, const LIST list, double **pZ, 
+	   DATAINFO *pdinfo, PRN *prn)
      /* FIXME - need proper error checking here */
 {
     int i, t, n, nv, l0 = list[0];
@@ -494,7 +494,7 @@ int coint (const int order, const int *list, double **pZ,
  */
 
 int adf_test (const int order, const int varno, double **pZ,
-	      DATAINFO *pdinfo, print_t *prn)
+	      DATAINFO *pdinfo, PRN *prn)
 {
     int i, l, T, k, row, orig_nvars = pdinfo->v;
     int *adflist;
@@ -632,7 +632,7 @@ int adf_test (const int order, const int varno, double **pZ,
 
 /* ....................................................... */
 
-int ma_model (int *list, double **pZ, DATAINFO *pdinfo, print_t *prn)
+int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int t, n = pdinfo->n, v = pdinfo->v, err = 0;
     int malist[4], iv = list[2];
@@ -679,7 +679,7 @@ int ma_model (int *list, double **pZ, DATAINFO *pdinfo, print_t *prn)
 	}
 	pprintf(prn, "%5.2f %10.4g", a, mamod.ess);
 	if (step%4 == 0) pprintf(prn, "\n");
-	else space(3, prn);
+	else _bufspace(3, prn);
 	if (step == 1 || mamod.ess < essmin) {
 	    essmin = mamod.ess;
 	    aopt = a;

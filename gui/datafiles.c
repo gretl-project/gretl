@@ -131,7 +131,7 @@ static void browse_header (GtkWidget *w, gpointer data)
     char hdrname[MAXLEN], line[MAXLEN];
     FILE *fp;
     windata_t *mydata = (windata_t *) data;
-    print_t *prn;
+    PRN *prn;
     gchar *fname;
 
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 

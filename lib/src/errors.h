@@ -83,7 +83,10 @@ typedef enum {
 
 /* functions follow */
  
-char *get_errmsg (const int errcode, char *errtext, print_t *prn);
+char *get_errmsg (const int errcode, char *errtext, PRN *prn);
 
-void errmsg (const int errcode, print_t *prn);
+void errmsg (const int errcode, PRN *prn);
 
+int get_gretl_errno (void);
+
+char *get_gretl_errmsg (void);

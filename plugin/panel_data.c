@@ -55,7 +55,7 @@ static int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 
 /* .................................................................. */
 
-static void print_panel_const (MODEL *panelmod, print_t *prn)
+static void print_panel_const (MODEL *panelmod, PRN *prn)
 {
     char numstr[18];
     int i = panelmod->list[0] - 1;
@@ -69,7 +69,7 @@ static void print_panel_const (MODEL *panelmod, print_t *prn)
 
 static void print_panel_coeff (MODEL *pmod, MODEL *panelmod,
 			       DATAINFO *pdinfo, int i, 
-			       print_t *prn)
+			       PRN *prn)
 {
     char numstr[18];
 
@@ -307,7 +307,7 @@ static int haus_invert (hausman_t *haus)
 /* .................................................................. */
 
 static double LSDV (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
-		    int nunits, int T, hausman_t *haus, print_t *prn) 
+		    int nunits, int T, hausman_t *haus, PRN *prn) 
 {
     int i, t, oldv = pdinfo->v, start;
     int *dvlist;
@@ -388,7 +388,7 @@ static double LSDV (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 
 static int random_effects (MODEL *pmod, double *Z, DATAINFO *pdinfo, 
 			   double *groupZ, double theta, int nunits, int T, 
-			   hausman_t *haus, print_t *prn)
+			   hausman_t *haus, PRN *prn)
 {
     double *reZ;
     DATAINFO *reinfo;
@@ -460,7 +460,7 @@ static int random_effects (MODEL *pmod, double *Z, DATAINFO *pdinfo,
 /* .................................................................. */
 
 int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo, 
-		      int nunits, int T, print_t *prn)
+		      int nunits, int T, PRN *prn)
 {
     double *ubar, LM, eprime = 0.0;
     int i, t, start = 0;
@@ -504,7 +504,7 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-static int hausman_test (hausman_t *haus, print_t *prn)
+static int hausman_test (hausman_t *haus, PRN *prn)
 {
 /*      int i, ns = haus->ns; */
 /*      int nterms = (ns * ns + ns) / 2; */
@@ -539,7 +539,7 @@ static int hausman_test (hausman_t *haus, print_t *prn)
 /* .................................................................. */
 
 int panel_diagnostics (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
-		       print_t *prn)
+		       PRN *prn)
 {
     int nunits, ns, T;
     double var1, var2, theta;

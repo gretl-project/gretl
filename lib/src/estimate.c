@@ -41,8 +41,8 @@ typedef struct {
     int errcode;
 } CHOLBETA;
 
-extern void print_rho (int *arlist, const MODEL *pmod, 
-		       const int c, print_t *prn);
+extern void _print_rho (int *arlist, const MODEL *pmod, 
+			const int c, PRN *prn);
 
 static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2, 
 			    const double *Z, const int n, const int nwt, 
@@ -913,7 +913,7 @@ static void _dropwt (int *list)
  */
 
 int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo, 
-	       const int opt, print_t *prn)
+	       const int opt, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
     double finalrho = 0, ess = 0, essmin = 0, ssr[22], rh[22]; 
@@ -948,7 +948,7 @@ int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo,
 	    nn++;
 	    pprintf(prn, "%5.2f %10.4g", rho, ess);
 	    if (step%4 == 0) pprintf(prn, "\n");
-	    else space(3, prn);
+	    else _bufspace(3, prn);
 	    if (step == 1) essmin = ess;
 	    essmin = (ess < essmin)? ess : essmin;
 	    if (ess-essmin > -SMALL && ess-essmin < SMALL)
@@ -1491,7 +1491,7 @@ MODEL hccm_func (LIST list, double **pZ, DATAINFO *pdinfo)
  */
 
 int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
-		 print_t *prn, GRETLTEST *test)
+		 PRN *prn, GRETLTEST *test)
 {
     int err, lo, ncoeff, yno, i, t, n = pdinfo->n, check;
     int shrink, v = pdinfo->v, *tmplist, *list, listlen;
@@ -1588,7 +1588,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
  */
 
 MODEL ar_func (LIST list, const int pos, double **pZ, 
-	       DATAINFO *pdinfo, int *model_count, print_t *prn)
+	       DATAINFO *pdinfo, int *model_count, PRN *prn)
 {
     double diff = 100.0, ess = 0, tss = 0, xx;
     int i, j, t, t1, t2, p, vc, yno, ryno = 0, iter = 0;
@@ -1654,7 +1654,7 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
     rholist[1] = v;
 
     pprintf(prn, "Generalized Cochrane-Orcutt estimation\n\n");
-    space(17, prn);
+    _bufspace(17, prn);
     pprintf(prn, "ITER             ESS           %% CHANGE\n\n");
     /* now loop while ess is changing */
     while (diff > 0.005) {
@@ -1723,7 +1723,7 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
     pprintf(prn, "Estimates of the AR coefficients:\n\n");
     xx = 0.0;
     for (i=1; i<=arlist[0]; i++) {
-	print_rho(arlist, &rhomod, i, prn);
+	_print_rho(arlist, &rhomod, i, prn);
 	xx += rhomod.coeff[i];
     }
     pprintf(prn, "\nSum of AR coefficients = %f\n\n", xx);
@@ -2008,7 +2008,7 @@ static double _wt_dummy_stddev (const MODEL *pmod, const double *Z,
  */
 
 MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo, 
-	    int *model_count, print_t *prn, GRETLTEST *test)
+	    int *model_count, PRN *prn, GRETLTEST *test)
 {
     MODEL archmod;
     int *wlist = NULL, *arlist = NULL, nv, n = pdinfo->n;

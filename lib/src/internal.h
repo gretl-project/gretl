@@ -32,19 +32,21 @@ int _multiply (char *s, int *list, char *sfx, double **pZ,
 	       DATAINFO *pdinfo);
 
 void _print_add (const COMPARE *add, const int *addvars, 
-		 const DATAINFO *pdinfo, const int aux_code, print_t *prn);
+		 const DATAINFO *pdinfo, const int aux_code, PRN *prn);
 
 void _print_omit (const COMPARE *omit, const int *omitvars, 
-		  const DATAINFO *pdinfo, print_t *prn);
+		  const DATAINFO *pdinfo, PRN *prn);
 
 void _graphyzx (const int *list, const double *zy1, const double *zy2, 
 		const double *zx, int n, const char *yname, 
 		const char *xname, const DATAINFO *pdinfo, 
-		int oflag, print_t *prn);
+		int oflag, PRN *prn);
 
-void _printxs (double xx, int n, int ci, print_t *prn);
+void _printxs (double xx, int n, int ci, PRN *prn);
 
-void _print_ar (MODEL *pmod, print_t *prn);
+void _bufspace (int n, PRN *prn);
+
+void _print_ar (MODEL *pmod, PRN *prn);
 
 void _delete (char *str, const int indx, const int count);
 
@@ -80,7 +82,7 @@ double _esl_variance (const int t1, const int t2, const double *x);
 void _aicetc (MODEL *pmod);
 
 void _criteria (const double ess, const int nobs, const int ncoeff, 
-		print_t *prn);
+		PRN *prn);
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		  const double *Z, const int n, int *misst);

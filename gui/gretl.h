@@ -33,7 +33,7 @@
 #endif
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
-#include "../lib/src/libgretl.h"
+#include "libgretl.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -52,10 +52,10 @@ extern double *Z;
 extern DATAINFO *datainfo;
 extern PATHS paths; 
 extern CMD command;
-extern print_t *cmds;
+extern PRN *cmds;
 extern MODEL **models;
 extern SESSION session;
-extern session_t rebuild;
+extern SESSIONBUILD rebuild;
 
 /* global counters */
 extern int plot_count;

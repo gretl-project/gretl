@@ -194,9 +194,9 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     datainfo->markers = 0;
 
     if (datainfo->sd0 >= 2.0) 
-        datainfo->time_series = 1; /* actual time series? */
+        datainfo->time_series = TIME_SERIES; 
     else if (datainfo->sd0 > 1.0)
-	datainfo->time_series = 2; /* panel data? */
+	datainfo->time_series = STACKED_TIME_SERIES; /* panel data? */
     else datainfo->time_series = 0;
 
     strcpy(datainfo->varname[1], firstvar);

@@ -108,7 +108,7 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
  */
 
 
-MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
+MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
      /* EM algorithm, see Ruud */
 {
     int i, t, v, depvar = list[1];

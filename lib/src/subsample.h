@@ -41,6 +41,6 @@ int restore_full_sample (double **subZ, double **fullZ, double **Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
 			 DATAINFO **datainfo); 
 
-int count_missing_values (double **pZ, DATAINFO *pdinfo, print_t *prn);
+int count_missing_values (double **pZ, DATAINFO *pdinfo, PRN *prn);
 
 #endif /* SUBSAMPLE_H */

@@ -143,10 +143,16 @@ double _covar (const int n, const double *zx, const double *zy)
     return sxy/(nn - 1);
 }
 
-/* ........................................................  */
+/**
+ * date:
+ * @nt: observation number (zero-based).
+ * @pd: data periodicity or frequency.
+ * @sd0: floating point representation of starting date.
+ *
+ * Returns: the date corresponding to @nt, as a double-precision number.
+ */
 
 double date (const int nt, const int pd, const double sd0)
-/*  returns date in double precision, given observation no. nt */
 {
     int ysd = (int) sd0, yy, pp, yp;
     double dd;
@@ -165,12 +171,20 @@ double date (const int nt, const int pd, const double sd0)
     return (yy + yp * dd);
 }
 
-/* .......................................................  */
+/**
+ * ijton:
+ * @i: row number.
+ * @j: column number.
+ * @lo: total number of elements in array.
+ *
+ * Given references i (row) and j (column) of a 2-dimensional array,
+ * finds the corresponding position in the 1-dimensional array of
+ * the same elements.
+ *
+ * Returns: position in 1-dimensional array.
+ */
 
 int ijton (const int i, const int j, const int lo)
-/*  Given references i (row) and j (column) of a 2 dimensional array,
-    returns the corresponding position in the 1 dimensional array of 
-    the same elements.  lo is the number of variables in the list */
 {
     int n;
 
@@ -178,11 +192,19 @@ int ijton (const int i, const int j, const int lo)
     return n;
 }
 
-/* ........................................................ */
+/**
+ * ztox:
+ * @i: index number of variable to extract.
+ * @px: array into which to write the series.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * 
+ * Pull one series from data matrix and put it into @px.
+ *
+ * Returns: the number of valid observations put into @px.
+ */
 
 int ztox (const int i, double *px, const double *Z, const DATAINFO *pdinfo) 
-/* pull one series from data matrix; return number of valid
-   observations */
 {
     int t, m = 0, n = pdinfo->n;
     double xx;
@@ -205,13 +227,23 @@ int ztox (const int i, double *px, const double *Z, const DATAINFO *pdinfo)
     return m;
 }
 
-/* .......................................................  */
+/**
+ * isdummy:
+ * @varnum: index number of variable to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ * @Z: data matrix.
+ * @n: full length of data series in @Z.
+ * 
+ * Check whether variable @varnum has only 0 or 1 values over the
+ * given sample range. 
+ *
+ * Returns: 0 if the variable is not a 0/1 dummy, otherwise the
+ * number of 1s in the series.
+ */
 
 int isdummy (const int varnum, const int t1, const int t2, 
 	     const double *Z, const int n)
-/* check whether variable varnum has only 0 or 1 values over
-   sample range.  return 0 if it's not a dummy variable,
-   otherwise return the number of 1s. */
 {
     int t, m = 0;
     double xx;
@@ -241,10 +273,15 @@ int _iszero (const int t1, const int t2, const double *x)
     else return 0;
 }
 
-/* .........................................................   */
+/**
+ * list_exclude:
+ * @n: position of element to be removed (zero-based). 
+ * @list: array of integers.
+ * 
+ * Removes the element at position @n within @list.
+ */
 
 void list_exclude (const int n, int *list)
-/* deletes variable number n from list */
 {
     int i;
 
@@ -384,16 +421,22 @@ double _esl_variance (const int t1, const int t2, const double *x)
     else return NADBL;
 }
 
-/* ...........................................................*/
+/**
+ * printlist:
+ * @list: array of integers.
+ * @msg: message to print along with @list (or NULL).
+ * 
+ * Prints to stderr the given @list of integers along with a message.
+ */
 
 void printlist (const int *list, const char *msg)
 {
     int i;
 
-    if (msg) fprintf(stdout, "%s:\n", msg);
-    else fprintf(stdout, "list: ");
-    for (i = 0; i <= list[0]; i++) fprintf(stdout, "%d ", list[i]);
-    fputc('\n', stdout);
+    if (msg) fprintf(stderr, "%s:\n", msg);
+    else fprintf(stderr, "list: ");
+    for (i=0; i<=list[0]; i++) fprintf(stderr, "%d ", list[i]);
+    fputc('\n', stderr);
 }
 
 /* ....................................................... */
@@ -429,7 +472,7 @@ void _aicetc (MODEL *pmod)
 /* ....................................................... */
 
 void _criteria (const double ess, const int nobs, const int ncoeff, 
-		print_t *prn)
+		PRN *prn)
 {
     double zz, zx, ersq, zn;
     double criterion[8];
@@ -511,7 +554,16 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     return 0;
 }
 
-/* .......................................................... */
+/**
+ * set_obs:
+ * @line: command line.
+ * @pdinfo: data information struct.
+ * @opt: OPT_S for stacked time-series, OPT_C for stacked cross-section.
+ * 
+ * Impose a time-series or panel interpretation on a data set.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int set_obs (char *line, DATAINFO *pdinfo, int opt)
 {
@@ -577,12 +629,12 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
-    if (opt == OPT_S) pdinfo->time_series = 2;
-    else if (opt == OPT_C) pdinfo->time_series = 3;
+    if (opt == OPT_S) pdinfo->time_series = STACKED_TIME_SERIES;
+    else if (opt == OPT_C) pdinfo->time_series = STACKED_CROSS_SECTION;
     else if (pdinfo->sd0 >= 2.0) 
-        pdinfo->time_series = 1; /* actual time series? */
+        pdinfo->time_series = TIME_SERIES; /* actual time series? */
     else if (pdinfo->sd0 > 1.0) 
-	pdinfo->time_series = 2; /* panel data? */
+	pdinfo->time_series = STACKED_TIME_SERIES; /* panel data? */
     else pdinfo->time_series = 0;
 
     /* and report */
@@ -604,7 +656,7 @@ char *unslash (const char *src)
 
 /* .......................................................... */
 
-int get_subdir (const char *topdir, int first, char *fname)
+static int get_subdir (const char *topdir, int first, char *fname)
 {
     DIR *try;
     struct dirent *dirent;
@@ -645,7 +697,8 @@ int get_subdir (const char *topdir, int first, char *fname)
 
 /* .......................................................... */
 
-char *search_dir (char *filename, const char *topdir, const int recurse)
+static char *search_dir (char *filename, const char *topdir, 
+			 const int recurse)
 {
     FILE *test;
     int got = 0;
@@ -678,7 +731,18 @@ char *search_dir (char *filename, const char *topdir, const int recurse)
     return NULL;
 }
 
-/* .......................................................... */
+/**
+ * addpath:
+ * @fname: initially given file name.
+ * @ppaths: path information struct.
+ * @script: if non-zero, suppose the file is a command script.
+ * 
+ * Elementary path-searching: try adding various paths to the given
+ * @fname and see if it can be opened.  Usually called by getopenfile().
+ *
+ * Returns: the full name of the file that was found, or NULL if no
+ * file could be found.
+ */
 
 char *addpath (char *fname, PATHS *ppaths, int script)
 {
@@ -747,17 +811,31 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     return NULL;
 }
 
-/* .......................................................... */
+/**
+ * getopenfile:
+ * @line: command line (e.g. "open foo").
+ * @fname: filename to be filled out.
+ * @ppaths: path information struct.
+ * @setpath: if non-zero, set @ppaths->currdir based on the file
+ * that is found (if any).
+ * @script: if non-zero, suppose the file is a command script.
+ * 
+ * Elementary path-searching: try adding various paths to the given
+ * @fname and see if it can be opened.
+ *
+ * Returns: 0 on successful parsing of @line, 1 on error.
+ */
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 int setpath, int script)
 {
-    char cmd[5];
     int spos, n;
 
-    if (sscanf(line, "%s %s", cmd, fname) != 2) return 1;
+    /* get the initial filename off the command line */
+    if (sscanf(line, "%*s %s", fname) != 1) return 1;
+    /* try a basic path search on this filename */
     addpath(fname, ppaths, script);
-    if (setpath) {
+    if (addpath != NULL && setpath) {
 	ppaths->currdir[0] = '.';
 	ppaths->currdir[1] = SLASH;
 	ppaths->currdir[2] = '\0';
@@ -905,7 +983,7 @@ MODEL *gretl_model_new (void)
 
 /* ........................................................... */
 
-int silent_remember (MODEL **ppmod, SESSION *psession, session_t *rebuild)
+int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild)
 {
     int i = psession->nmodels;
     MODEL *pmod = *ppmod;
@@ -940,7 +1018,7 @@ int silent_remember (MODEL **ppmod, SESSION *psession, session_t *rebuild)
     
 /* .......................................................... */
 
-int clear_model (void *ptr, SESSION *psession, session_t *rebuild)
+int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild)
 {
     int i;
     static int save;
@@ -1393,7 +1471,7 @@ int _full_model_list (MODEL *pmod, int **plist)
 /* ........................................................... */
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double **pZ, DATAINFO *pdinfo, print_t *prn,
+		     double **pZ, DATAINFO *pdinfo, PRN *prn,
 		     const PATHS *ppaths, const int plot)
      /* use Salkever's method to generate forecasts plus forecast
 	variances -- FIXME ifc = 0, and methods other than OLS */
@@ -1554,7 +1632,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     }
 
     if (plot) {
-	if (pdinfo->time_series == 1) {
+	if (pdinfo->time_series == TIME_SERIES) {
 	    switch (pdinfo->pd) {
 	    case 1:
 		plotvar(pZ, pdinfo, "annual");
@@ -1669,7 +1747,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     CMD command;
     int err = 0, ignore = 0, model_count = 0;
     double rho = 0;
-    print_t prn;
+    PRN prn;
 
     prn.fp = NULL;
     prn.buf = NULL;
@@ -1738,11 +1816,11 @@ int guess_panel_structure (double *Z, DATAINFO *pdinfo)
 	panel = 0; /* can't guess */
     else {
 	if (floateq(Z[n*v], Z[n*v+1])) { /* "year" is same for first two obs */
-	    pdinfo->time_series = 3; /* stacked cross-sections? */
-	    panel = 3;
+	    pdinfo->time_series = STACKED_CROSS_SECTION; 
+	    panel = STACKED_CROSS_SECTION;
 	} else {
-	    pdinfo->time_series = 2; /* stacked time series? */
-	    panel = 2;
+	    pdinfo->time_series = STACKED_TIME_SERIES; 
+	    panel = STACKED_TIME_SERIES;
 	}
     }
     return panel;

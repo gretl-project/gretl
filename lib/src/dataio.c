@@ -524,9 +524,9 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     pdinfo->extra = 0;    
 
     if (pdinfo->sd0 >= 2.0) 
-        pdinfo->time_series = 1; /* actual time series? */
+        pdinfo->time_series = TIME_SERIES; /* actual time series? */
     else if (pdinfo->sd0 > 1.0)
-	pdinfo->time_series = 2; /* panel data? */
+	pdinfo->time_series = STACKED_TIME_SERIES; /* panel data? */
     else pdinfo->time_series = 0;
 
     pdinfo->bin = 0;
@@ -540,17 +540,17 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 	    pdinfo->markers = 1;
 	else if (strcmp(option, "PANEL2") == 0) {
 	    panel = 1;
-	    pdinfo->time_series = 2;
+	    pdinfo->time_series = STACKED_TIME_SERIES;
 	} else if (strcmp(option, "PANEL3") == 0) {
 	    panel = 1;
-	    pdinfo->time_series = 3;
+	    pdinfo->time_series = STACKED_CROSS_SECTION;
 	}
     }
     if (!panel && fscanf(fp, "%6s", option) == 1) {
 	if (strcmp(option, "PANEL2") == 0)
-	    pdinfo->time_series = 2;
+	    pdinfo->time_series = STACKED_TIME_SERIES;
 	else if (strcmp(option, "PANEL3") == 0)
-	    pdinfo->time_series = 3;
+	    pdinfo->time_series = STACKED_CROSS_SECTION;
     }
     if (fp != NULL) fclose(fp);
     return 0;
@@ -699,7 +699,7 @@ static int blank_check (FILE *fp)
  * 
  */
 
-int get_info (const char *hdrfile, print_t *prn)
+int get_info (const char *hdrfile, PRN *prn)
 {      
     char s[MAXLEN];
     int i = 0;
@@ -796,9 +796,9 @@ static int writehdr (const char *hdrfile, const int *list,
 	fputs("BYOBS\n", fp);
 	if (pdinfo->markers) fputs("MARKERS\n", fp);
     }
-    if (pdinfo->time_series == 2) 
+    if (pdinfo->time_series == STACKED_TIME_SERIES) 
 	fprintf(fp, "PANEL2\n");
-    else if (pdinfo->time_series == 3) 
+    else if (pdinfo->time_series == STACKED_CROSS_SECTION) 
 	fprintf(fp, "PANEL3\n");
     
     if (fp != NULL) fclose(fp);
@@ -869,7 +869,7 @@ int write_data (const char *fname, const int *list,
     if (opt == GRETL_DATA_GZIPPED && !has_gz_suffix(datfile))
 	strcat(datfile, ".gz");
 
-    if (opt == GRETL_DATA_R && pdinfo->time_series == 1) 
+    if (opt == GRETL_DATA_R && pdinfo->time_series == TIME_SERIES) 
 	opt = GRETL_DATA_R_ALT;
 
     /* write header and label files if not exporting to other formats */
@@ -1009,7 +1009,7 @@ int write_data (const char *fname, const int *list,
 		    fprintf(fp, "\n");
 	    }
 	    fprintf(fp, ")");
-	    if (pdinfo->time_series == 1) 
+	    if (pdinfo->time_series == TIME_SERIES) 
 		fprintf(fp, ",\n.Tsp = c(%f, %f, %d), class = \"ts\"",
 			obs_float(pdinfo, 0), obs_float(pdinfo, 1), 
 			pdinfo->pd);
@@ -1256,7 +1256,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
 	   pdinfo->stobs, pdinfo->endobs);
 
     fprintf(fp, "\nReading ");
-    fprintf(fp, (pdinfo->time_series == 1) ? 
+    fprintf(fp, (pdinfo->time_series == TIME_SERIES) ? 
 	    "time-series" : "cross-sectional");
     fprintf(fp, " datafile");
     if (strlen(ppaths->datfile) > 40) putc('\n', fp);
@@ -1297,7 +1297,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
 
 int open_nulldata (double **pZ, DATAINFO *pdinfo, 
 		   const int data_file_open, const int length,
-		   print_t *prn) 
+		   PRN *prn) 
 {
     /* clear any existing data info */
     if (data_file_open) clear_datainfo(pdinfo, 0);
@@ -1330,7 +1330,7 @@ int open_nulldata (double **pZ, DATAINFO *pdinfo,
 
 /* ......................................................... */
 
-static int test_label (DATAINFO *pdinfo, print_t *prn)
+static int test_label (DATAINFO *pdinfo, PRN *prn)
      /* attempt to parse csv row labels as dates.  Return -1 if
 	this doesn't work out, 0 if the labels seem to be just
 	integer observation numbers, else return the inferred data
@@ -1423,7 +1423,7 @@ static int test_label (DATAINFO *pdinfo, print_t *prn)
 /* ......................................................... */
 
 static int check_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo, 
-			    print_t *prn)
+			    PRN *prn)
 {
     pprintf(prn, "Checking for conformability with present data set...\n");
     if (pdinfo->n != pcinfo->n) {
@@ -1449,7 +1449,7 @@ static int check_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
 /* ......................................................... */
 
 static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
-			 double **pZ, double **csvZ, print_t *prn)
+			 double **pZ, double **csvZ, PRN *prn)
 {
     int i, t, newvars = pcinfo->v, oldvars = pdinfo->v;
     int n = pdinfo->n;
@@ -1504,7 +1504,7 @@ static void trim_csv_line (char *line)
  */
 
 int import_csv (double **pZ, DATAINFO *pdinfo, 
-		const char *fname, print_t *prn)
+		const char *fname, PRN *prn)
 {
     int n, nv, missval = 0, ncols = 0, chkcols = 0;
     char c, cbak;
@@ -1740,7 +1740,7 @@ int import_csv (double **pZ, DATAINFO *pdinfo,
 	dataset_dates_defaults(&csvinfo);
     }	
     if (csvinfo.pd != 1 || strcmp(csvinfo.stobs, "1")) 
-        csvinfo.time_series = 1;
+        csvinfo.time_series = TIME_SERIES;
 
     /* If there were observation labels and they were not interpretable
        as dates, and they weren't simply "1, 2, 3, ...", then they 
@@ -1847,7 +1847,7 @@ static char *unspace (char *s)
  */
 
 int import_box (double **pZ, DATAINFO *pdinfo, 
-		const char *fname, print_t *prn)
+		const char *fname, PRN *prn)
 {
     int c, cc, i, t, v, realv, gotdata;
     int maxline, dumpvars;
@@ -2058,7 +2058,7 @@ int import_box (double **pZ, DATAINFO *pdinfo,
  *
  */
 
-int detect_filetype (char *fname, PATHS *ppaths, print_t *prn)
+int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 {
     size_t n = strlen(fname);
     int i, c, comma, ftype = GRETL_NATIVE_DATA;

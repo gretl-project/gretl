@@ -24,9 +24,9 @@
 
 /* general purpose functions */
 
-char *user_fopen (const char *fname, char *fullname, print_t **pprn);
+char *user_fopen (const char *fname, char *fullname, PRN **pprn);
 
-gint bufopen (print_t **pprn);
+gint bufopen (PRN **pprn);
 
 gint check_cmd (char *line);
  
@@ -157,8 +157,8 @@ void do_save_html (char *fname, const int code, MODEL *pmod);
 void do_save_text (char *fname, MODEL *pmod);
 
 int execute_script (const char *runfile, 
-		    SESSION *psession, session_t *rebuild,
-		    print_t *prn, int exec_code);
+		    SESSION *psession, SESSIONBUILD *rebuild,
+		    PRN *prn, int exec_code);
 
 #endif /* LIB_H */
 

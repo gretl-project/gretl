@@ -36,16 +36,22 @@ static int monte_carlo_init (LOOPSET *ploop);
 static void _free_loop_model (LOOP_MODEL *plmod);
 static void _free_loop_print (LOOP_PRINT *pprn);
 static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
-			       const DATAINFO *pdinfo, print_t *prn);
+			       const DATAINFO *pdinfo, PRN *prn);
 static void _print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *plmod, 
-			       const int c, const int n, print_t *prn);
+			       const int c, const int n, PRN *prn);
 static void _print_loop_prn (LOOP_PRINT *pprn, const int n,
-			     const DATAINFO *pdinfo, print_t *prn);
-static int _print_loop_store (LOOPSET *ploop, print_t *prn, PATHS *ppaths,
+			     const DATAINFO *pdinfo, PRN *prn);
+static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 			      char *loopstorefile);
 static int get_prnnum_by_id (LOOPSET *ploop, const int id);
 
-/* ......................................................  */
+/**
+ * ok_in_loop:
+ * @ci: command index.
+ *
+ * Returns: 1 if the given command is acceptable inside a loop construct,
+ * 0 otherwise.
+ */
 
 int ok_in_loop (int ci)
 {
@@ -60,7 +66,16 @@ int ok_in_loop (int ci)
     return 0;
 }
 
-/* ......................................................  */
+/**
+ * parse_loopline:
+ * @line: command line.
+ * @ploop: loop commands struct.
+ * @pdinfo: data information struct.
+ *
+ * Parse a line specifying a loop condition.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 {
@@ -131,7 +146,17 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
     return 1;
 }
 
-/* ......................................................  */
+/**
+ * loop_condition:
+ * @k: in case of a simple count loop, the number of iterations so far.
+ * @ploop: loop commands struct.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Check whether a looping condition is still satisfied.
+ *
+ * Returns: 1 to indicate looping should continue, 0 to terminate.
+ */
 
 int loop_condition (int k, LOOPSET *ploop, double *Z, DATAINFO *pdinfo)
 {
@@ -203,7 +228,13 @@ static int monte_carlo_init (LOOPSET *ploop)
     return 0;
 }
 
-/* ......................................................  */
+/**
+ * monte_carlo_free:
+ * @ploop: loop commands struct.
+ *
+ * Free allocated elements of @ploop.
+ *
+ */
 
 void monte_carlo_free (LOOPSET *ploop)
 {
@@ -257,7 +288,16 @@ void monte_carlo_free (LOOPSET *ploop)
     }
 }
 
-/* ......................................................  */
+/**
+ * loop_model_init:
+ * @plmod: pointer to struct to initialize.
+ * @pmod: model to take as basis.
+ * @id: ID number to assign to @plmod.
+ *
+ * Initialize a #LOOP_MODEL struct, based on @pmod.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
 		     const int id)
@@ -292,9 +332,18 @@ int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
     return 1;
 }
 
-/* ......................................................  */
+/**
+ * loop_print_init:
+ * @pprn: pointer to struct to initialize.
+ * @list: list of variables to be printed.
+ * @id: ID number to assign to @pprn.
+ *
+ * Initialize a #LOOP_PRINT struct.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
-int loop_print_init (LOOP_PRINT *pprn, const int *list, const int id)
+int loop_print_init (LOOP_PRINT *pprn, const LIST list, const int id)
 {
     int i;
 
@@ -316,9 +365,18 @@ int loop_print_init (LOOP_PRINT *pprn, const int *list, const int id)
     return 1;
 }
 
-/* ......................................................  */
+/**
+ * loop_store_init:
+ * @ploop: pointer to loop struct.
+ * @list: list of variables to be stored (written to file).
+ * @pdinfo: data information struct.
+ *
+ * Set up @ploop for saving a set of variables.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
-int loop_store_init (LOOPSET *ploop, const int *list, DATAINFO *pdinfo)
+int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
 {
     int i, tot;
 
@@ -345,13 +403,23 @@ int loop_store_init (LOOPSET *ploop, const int *list, DATAINFO *pdinfo)
     return 1;
 }
 
-/* ......................................................  */
+/**
+ * update_loop_model:
+ * @ploop: pointer to loop struct.
+ * @cmdnum: sequential index number of the command within @ploop.
+ * @pmod: contains estimates from the current iteration.
+ * @pdinfo: data information struct.
+ *
+ * Update a #LOOP_MODEL belonging to @ploop, based on the results
+ * in @pmod.
+ *
+ * Returns: 0 on successful completion.
+ */
 
 int update_loop_model (LOOPSET *ploop, const int cmdnum,
-		       MODEL *pmod, const DATAINFO *pdinfo, 
-		       const int oflag)
+		       MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int j, i = get_modnum_by_id(ploop, cmdnum);
+    int j, i = get_modnum_by_cmdnum(ploop, cmdnum);
     LOOP_MODEL *plmod;
 
     plmod = &ploop->lmodels[i];
@@ -364,10 +432,24 @@ int update_loop_model (LOOPSET *ploop, const int cmdnum,
     return 0;
 }
 
-/* ......................................................  */
+/**
+ * update_loop_print:
+ * @ploop: pointer to loop struct.
+ * @cmdnum: sequential index number of the command within @ploop.
+ * @list: list of variables to be printed.
+ * @pZ: pointer to data matrix.
+ * @n: full length of data series in @Z.
+ * @t: current observation number.
+ *
+ * Update a #LOOP_PRINT belonging to @ploop, based on the current
+ * data values.
+ *
+ * Returns: 0 on successful completion.
+ */
+
 
 int update_loop_print (LOOPSET *ploop, const int cmdnum, 
-		       const int *list, double **pZ, 
+		       const LIST list, double **pZ, 
 		       const int n, const int t)
 {
     int j, i = get_prnnum_by_id(ploop, cmdnum);
@@ -380,10 +462,21 @@ int update_loop_print (LOOPSET *ploop, const int cmdnum,
     return 0;
 }
 
-/* ......................................................  */
+/**
+ * print_loop_results:
+ * @ploop: pointer to loop struct.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ * @ppaths: path information struct.
+ * @model_count: pointer to count of models estimated so far.
+ * @loopstorefile: name of file into which to save data (or NULL).
+ *
+ * Print out the results after completion of the loop @ploop.
+ *
+ */
 
 void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo, 
-			 print_t *prn, PATHS *ppaths, int *model_count,
+			 PRN *prn, PATHS *ppaths, int *model_count,
 			 char *loopstorefile)
 {
     int i, j;
@@ -451,11 +544,20 @@ static void _free_loop_print (LOOP_PRINT *pprn)
     free(pprn->ssq);
 }
 
-/* ......................................................  */
+/**
+ * add_to_loop:
+ * @ploop: pointer to loop struct.
+ * @line: command line.
+ * @ci: command index number.
+ * @opt: option flag associated with the command.
+ *
+ * Add line and command index to accumulated loop buffer.
+ *
+ * Returns: 0 on successful completion.
+ */
 
 int add_to_loop (LOOPSET *ploop, char *line, const int ci,
-		 double **pZ, DATAINFO *pdinfo, const int opt)
-/* for loop command, add line and command index to accumulated buffer */
+		 const int opt)
 {
     int i = ploop->ncmds;
 
@@ -477,7 +579,7 @@ int add_to_loop (LOOPSET *ploop, char *line, const int ci,
 /* ......................................................... */ 
 
 static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
-			       const DATAINFO *pdinfo, print_t *prn)
+			       const DATAINFO *pdinfo, PRN *prn)
 {
     int i, nc = plmod->ncoeff;
     char startdate[8];
@@ -508,7 +610,7 @@ static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
 
 static void _print_loop_coeff (const DATAINFO *pdinfo, 
 			       const LOOP_MODEL *plmod, 
-			       const int c, const int n, print_t *prn)
+			       const int c, const int n, PRN *prn)
 {
     long double m1, m2, var1, var2, sd1, sd2;
 
@@ -529,7 +631,7 @@ static void _print_loop_coeff (const DATAINFO *pdinfo,
 /* ......................................................... */ 
 
 static void _print_loop_prn (LOOP_PRINT *pprn, const int n,
-			     const DATAINFO *pdinfo, print_t *prn)
+			     const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
     long double mean, var, sd;
@@ -549,7 +651,7 @@ static void _print_loop_prn (LOOP_PRINT *pprn, const int n,
 
 /* ......................................................... */ 
 
-static int _print_loop_store (LOOPSET *ploop, print_t *prn, PATHS *ppaths,
+static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 			      char *loopstorefile)
 {
     int i, t, dot;
@@ -611,20 +713,35 @@ static int get_prnnum_by_id (LOOPSET *ploop, const int id)
     return -1;
 }
 
-/* ......................................................... */ 
+/**
+ * get_modnum_by_cmdnum:
+ * @ploop: pointer to loop struct.
+ * @cmdnum: sequential index of command within @ploop.
+ *
+ * Determine the ID number of a model within a "while" loop construct.
+ *
+ * Returns: model ID number, or -1 in case of no match.
+ */
 
-int get_modnum_by_id (LOOPSET *ploop, const int id)
+int get_modnum_by_cmdnum (LOOPSET *ploop, const int cmdnum)
 {
     int i;
 
     for (i=0; i<ploop->nmod; i++) {
-	if (ploop->lvar && (ploop->models[i])->ID == id) return i;
-	if (ploop->lvar == 0 && ploop->lmodels[i].ID == id) return i;
+	if (ploop->lvar && (ploop->models[i])->ID == cmdnum) return i;
+	if (ploop->lvar == 0 && ploop->lmodels[i].ID == cmdnum) return i;
     }
     return -1;
 }
 
-/* ......................................................... */
+/**
+ * get_cmd_ci:
+ * @line: command line.
+ * @command: pointer to gretl command struct.
+ *
+ * Parse @line and assign to @command->ci the index number of
+ * the command embedded in @line.
+ */
 
 void get_cmd_ci (const char *line, CMD *command)
 {

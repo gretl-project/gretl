@@ -23,7 +23,7 @@
 
 /* ......................................................... */
 
-static void tex_print_float (const double x, const int tab, print_t *prn)
+static void tex_print_float (const double x, const int tab, PRN *prn)
      /* prints a floating point number as a TeX math string.
 	if tab != 0, print the sign in front, separated by a
 	tab symbol (for equation-style regression printout).
@@ -73,7 +73,7 @@ char *tex_escape (char *targ, const char *src)
 /* ......................................................... */ 
 
 static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			     const int c, print_t *prn)
+			     const int c, PRN *prn)
 {
     int n;
     double decbit;
@@ -107,7 +107,7 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 /* ......................................................... */
 
 static int make_texfile (const PATHS *ppaths, const int model_count,
-			 int equation, char *texfile, print_t *prn)
+			 int equation, char *texfile, PRN *prn)
 {
     prn->buf = NULL;
 
@@ -134,7 +134,7 @@ static int make_texfile (const PATHS *ppaths, const int model_count,
  */
 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
-			const int standalone, print_t *prn)
+			const int standalone, PRN *prn)
 {
 
     int i, start, constneg = 0, ncoeff = pmod->list[0];
@@ -225,7 +225,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
  */
 
 int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
-		     const int standalone, print_t *prn)
+		     const int standalone, PRN *prn)
 {
     int i, ncoeff = pmod->list[0];
     int t1 = pmod->t1, t2 = pmod->t2;
@@ -333,7 +333,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
 	      const int model_count, int oflag)
 {
-    print_t prn;
+    PRN prn;
 
     if (make_texfile(ppaths, model_count, 0, texfile, &prn))
 	return 1;
@@ -363,7 +363,7 @@ int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
 	      const int model_count, int oflag)
 {
-    print_t prn;
+    PRN prn;
 
     if (make_texfile(ppaths, model_count, 1, texfile, &prn))
 	return 1;

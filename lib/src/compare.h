@@ -50,27 +50,27 @@ typedef struct {
 
 /* functions follow */
  
-int auxreg (int *addvars, 
+int auxreg (LIST addvars, 
 	    MODEL *orig, MODEL *new, int *model_count, 
 	    double **pZ, DATAINFO *pdinfo, 
 	    const int aux_code, 
-	    print_t *prn, GRETLTEST *test);
+	    PRN *prn, GRETLTEST *test);
 
-int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
+int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, 
 	       double **pZ, DATAINFO *pdinfo, 
-	       print_t *prn);
+	       PRN *prn);
 
 int autocorr_test (MODEL *pmod, 
 		   double **pZ, DATAINFO *pdinfo, 
-		   print_t *prn, GRETLTEST *test);
+		   PRN *prn, GRETLTEST *test);
 
 int chow_test (const char *line, MODEL *pmod, 
 	       double **pZ, DATAINFO *pdinfo, 
-	       print_t *prn, GRETLTEST *test);
+	       PRN *prn, GRETLTEST *test);
 
 int cusum_test (MODEL *pmod, 
 		double **pZ, DATAINFO *pdinfo, 
-		print_t *prn, 
+		PRN *prn, 
 		const PATHS *ppaths, 
 		GRETLTEST *test);

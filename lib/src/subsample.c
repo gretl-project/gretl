@@ -248,7 +248,7 @@ int set_sample_dummy (const char *line,
 
 	/* + 4 below to omit the word "smpl" */
 	sprintf(formula, "genr subdum=%s", line + 4);
-	genr = genr_func(oldZ, oldinfo, formula, 0, NULL, 1);
+	genr = generate(oldZ, oldinfo, formula, 0, NULL, 1);
 	if (genr.errcode) {
 	    return 1;
 	}
@@ -481,7 +481,7 @@ int restore_full_sample (double **subZ, double **fullZ, double **Z,
 
 /* ........................................................... */
 
-int count_missing_values (double **pZ, DATAINFO *pdinfo, print_t *prn)
+int count_missing_values (double **pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int i, v, t, n = pdinfo->n;
     int missval = 0, missobs = 0, oldmiss = 0, tmiss;

@@ -239,7 +239,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 
 static void display_dbdata (double **dbZ, DATAINFO *dbdinfo)
 {
-    print_t *prn;
+    PRN *prn;
 
     if (bufopen(&prn)) return;
 

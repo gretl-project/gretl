@@ -31,7 +31,7 @@ MODEL lsq (LIST list,
 
 int hilu_corc (double *toprho, LIST list, 
 	       double **pZ, DATAINFO *pdinfo, 
-	       const int opt, print_t *prn);
+	       const int opt, PRN *prn);
 
 MODEL tsls_func (LIST list, const int pos, 
 		 double **pZ, DATAINFO *pdinfo);
@@ -44,15 +44,15 @@ MODEL hccm_func (LIST list,
 
 int whites_test (MODEL *pmod, 
 		 double **pZ, DATAINFO *pdinfo, 
-		 print_t *prn, GRETLTEST *test);
+		 PRN *prn, GRETLTEST *test);
 
 MODEL ar_func (LIST list, const int pos, 
 	       double **pZ, DATAINFO *pdinfo, 
-	       int *model_count, print_t *prn);
+	       int *model_count, PRN *prn);
 
 MODEL arch (int order, LIST list, 
 	    double **pZ, DATAINFO *pdinfo, 
-	    int *model_count, print_t *prn, 
+	    int *model_count, PRN *prn, 
 	    GRETLTEST *test);
 
 int makevcv (MODEL *pmod);

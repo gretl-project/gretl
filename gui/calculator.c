@@ -86,7 +86,7 @@ static int printnum (char *dest, const char *s, int d)
 
 /* ........................................................... */
 
-static double getval (const char *s, print_t *prn) 
+static double getval (const char *s, PRN *prn) 
 {
     if (s == NULL || strlen(s) == 0) {
 	errbox("Incomplete entry for hypothesis test");
@@ -98,7 +98,7 @@ static double getval (const char *s, print_t *prn)
 
 /* ........................................................... */
 
-static int getint (const char *s, print_t *prn) 
+static int getint (const char *s, PRN *prn) 
 {
     if (s == NULL || strlen(s) == 0) {
 	errbox("Incomplete entry for hypothesis test");
@@ -115,12 +115,12 @@ static void get_critical (GtkWidget *w, gpointer data)
     lookup_t **look = (lookup_t **) data;
     void *handle;
     void *funp = NULL;
-    void (*norm_table)(print_t *) = NULL;
-    void (*dw)(int, print_t *) = NULL;
-    void (*tcrit)(int, print_t *) = NULL;
-    void (*chicrit)(int, print_t *) = NULL;
+    void (*norm_table)(PRN *) = NULL;
+    void (*dw)(int, PRN *) = NULL;
+    void (*tcrit)(int, PRN *) = NULL;
+    void (*chicrit)(int, PRN *) = NULL;
     int i, n = 0, df = 0;
-    print_t *prn;
+    PRN *prn;
     extern GtkItemFactoryEntry view_items[];
 
     if (open_plugin("stats_tables", &handle)) return;
@@ -199,7 +199,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     gint i, j;
     double val, xx;
     gchar *tmp, cmd[128];
-    print_t *prn;
+    PRN *prn;
     extern GtkItemFactoryEntry view_items[];
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(pval[0]->book));
@@ -267,7 +267,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static void print_pv (print_t *prn, double p1, double p2)
+static void print_pv (PRN *prn, double p1, double p2)
 {
     pprintf(prn, "Two-tailed p-value = %.4g\n(one-tailed = %.4g)\n",
 	    p1, p2);
@@ -404,7 +404,7 @@ static void h_test (GtkWidget *w, gpointer data)
     int i, j, n1, n2, grf = 0;
     double x[5], sderr, ts, pv;
     gchar *tmp;
-    print_t *prn;
+    PRN *prn;
     extern GtkItemFactoryEntry view_items[];
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(test[0]->book));

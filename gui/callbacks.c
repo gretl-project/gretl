@@ -219,7 +219,7 @@ void dummy_call (void)
 
 void open_info (gpointer data, guint edit, GtkWidget *widget)
 {
-    print_t *prn;
+    PRN *prn;
     gint err;
 
     if (bufopen(&prn)) return;

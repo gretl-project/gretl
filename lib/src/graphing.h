@@ -59,22 +59,22 @@ typedef enum {
 
 /* functions follow */
  
-int plot (const int *list, 
+int plot (const LIST list, 
 	  double *Z, const DATAINFO *pdinfo, 
-	  int oflag, int pause, print_t *prn);
+	  int oflag, int pause, PRN *prn);
 
-int graph (const int *list, 
+int graph (const LIST list, 
 	   double *Z, const DATAINFO *pdinfo, 
-	   const int oflag, print_t *prn);
+	   const int oflag, PRN *prn);
 
 int gnuplot_display (const char *gpt, const char *fname);
 
-int gnuplot (int *list, const int *lines, 
+int gnuplot (LIST list, const int *lines, 
 	     double **pZ, DATAINFO *pdinfo, 
 	     const PATHS *ppaths, int *plot_count, 
 	     const int batch, const int gui, const int opt);
 
-int multi_scatters (const int *list, const int pos, 
+int multi_scatters (const LIST list, const int pos, 
 		    double **pZ, const DATAINFO *pdinfo, 
 		    const PATHS *ppaths);
 

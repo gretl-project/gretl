@@ -29,45 +29,41 @@ void gui_logo (void);
 
 void printmodel (const MODEL *pmod, 
 		 const DATAINFO *pdinfo, 
-		 print_t *prn);
+		 PRN *prn);
 
 void print_model_confints (const MODEL *pmod, 
 			   const DATAINFO *pdinfo, 
-			   print_t *prn);
+			   PRN *prn);
 
 void printfreq (FREQDIST *freq, 
-		print_t *prn);
+		PRN *prn);
 
 void printcorr (const CORRMAT *corrmat, 
 		const DATAINFO *pdinfo, 
-		print_t *prn);
+		PRN *prn);
 
 void print_smpl (const DATAINFO *pdinfo, 
-		 int fulln, print_t *prn); 
+		 int fulln, PRN *prn); 
 
 int outcovmx (MODEL *pmod, 
 	      const DATAINFO *pdinfo, 
-	      const int nopause, print_t *prn);
+	      const int pause, PRN *prn);
 
-void print_white_vcv (const MODEL *pmod, print_t *prn);
-
-int takenotes (int quit_option);
+void print_white_vcv (const MODEL *pmod, PRN *prn);
 
 int page_break (const int n, int *lineno, const int quit_option);
 
-void space (int n, print_t *prn);
-
-int printdata (int *list, 
+int printdata (LIST list, 
 	       double **pZ, const DATAINFO *pdinfo, 
-	       int nopause, int byobs, print_t *prn);
+	       int pause, int byobs, PRN *prn);
 
 int print_fit_resid (const MODEL *pmod, 
 		     double **pZ, DATAINFO *pdinfo, 
-		     print_t *prn);
+		     PRN *prn);
 
 void printxx (const double xx, char *str, const int ci);
 
-void gretl_print_destroy (print_t *prn);
+void gretl_print_destroy (PRN *prn);
 
-print_t *gretl_print_new (int prncode, const char *fname);
+PRN *gretl_print_new (int prncode, const char *fname);
 

@@ -56,7 +56,7 @@ int dateton (const char *date, const int pd, const char *startdate);
 
 void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo);
 
-int get_info (const char *hdrfile, print_t *prn);
+int get_info (const char *hdrfile, PRN *prn);
 
 int write_data (const char *fname, const int *list, 
 		double *Z, const DATAINFO *pdinfo, 
@@ -73,17 +73,17 @@ int get_data (double **pZ, DATAINFO *pdinfo,
 
 int open_nulldata (double **pZ, DATAINFO *pdinfo, 
 		   const int data_file_open, const int length,
-		   print_t *prn);
+		   PRN *prn);
 
 int import_csv (double **pZ, DATAINFO *pdinfo, 
-                const char *fname, print_t *prn);
+                const char *fname, PRN *prn);
 
 int import_box (double **pZ, DATAINFO *pdinfo, 
-		const char *fname, print_t *prn);
+		const char *fname, PRN *prn);
 
 int add_case_markers (DATAINFO *pdinfo, const char *fname);
 
-int detect_filetype (char *fname, PATHS *ppaths, print_t *prn);
+int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
 
 

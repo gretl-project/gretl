@@ -45,9 +45,9 @@ enum option_codes {
 /* functions follow */
  
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
-	     int *ignore, double **pZ, print_t *cmds);
+	     int *ignore, double **pZ, PRN *cmds);
 
-int help (const char *cmd, const char *helpfile, print_t *prn);
+int help (const char *cmd, const char *helpfile, PRN *prn);
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
 	   double **pZ);
@@ -60,12 +60,12 @@ int shell (const char *arg);
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
 	       const int batch, const int gui, const int oflag, 
-	       print_t *prn);
+	       PRN *prn);
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double **pZ, DATAINFO *datainfo, PATHS *paths,
 		     const int batch, const int oflag, 
-		     print_t *prn);
+		     PRN *prn);
 
 #endif /* INTERACT_H */
 

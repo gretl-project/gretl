@@ -56,7 +56,7 @@ int top_n_tail (char *str);
 
 void compress_spaces (char *str);
 
-int pprintf (print_t *prn, const char *template, ...);
+int pprintf (PRN *prn, const char *template, ...);
 
 char *safecpy (char *targ, const char *src, int n);
 

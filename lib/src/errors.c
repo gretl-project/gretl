@@ -100,7 +100,7 @@ const char *gretl_error_messages[] = {
  * Returns: the error text string, or NULL if @errtext is NULL.
  */
 
-char *get_errmsg (const int errcode, char *errtext, print_t *prn)
+char *get_errmsg (const int errcode, char *errtext, PRN *prn)
 {
     if (errcode < E_MAX && gretl_error_messages[errcode]) {
 	if (errtext == NULL) {
@@ -124,9 +124,19 @@ char *get_errmsg (const int errcode, char *errtext, print_t *prn)
  * 
  */
 
-void errmsg (const int errcode, print_t *prn)
+void errmsg (const int errcode, PRN *prn)
 {
     if (gretl_errmsg[0] == '\0') 
 	get_errmsg(errcode, NULL, prn);
     else pprintf(prn, "%s\n", gretl_errmsg);
+}
+
+int get_gretl_errno (void)
+{
+    return gretl_errno;
+}
+
+char *get_gretl_errmsg (void)
+{
+    return gretl_errmsg;
 }

@@ -24,7 +24,7 @@
 
 void h_printmodel (const MODEL *pmod, 
 		   const DATAINFO *pdinfo, 
-		   print_t *htm);
+		   PRN *htm);
 
 #endif /* HTMLPRINT_H */
 

@@ -401,7 +401,7 @@ void compress_spaces (char *str)
  * 
  */
 
-int pprintf (print_t *prn, const char *template, ...)
+int pprintf (PRN *prn, const char *template, ...)
 {
     va_list args;
     size_t blen;

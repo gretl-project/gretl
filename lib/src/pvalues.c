@@ -282,7 +282,7 @@ double normal (const double x)
 
 double batch_pvalue (const char *str, 
 		     const double *Z, const DATAINFO *pdinfo, 
-                     print_t *prn)
+                     PRN *prn)
 {
     int i, df1 = 0, df2 = 0;
     char stat;

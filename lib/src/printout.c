@@ -28,28 +28,28 @@
 #define isnan(x) ((x) != (x))
 #endif
 
-static void print_float_10 (const double x, print_t *prn);
+static void print_float_10 (const double x, PRN *prn);
 static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			 const int c, print_t *prn);
-static void _depvarstats (const MODEL *pmod, print_t *prn);
-static int _essline (const MODEL *pmod, print_t *prn, int wt);
-static void _rsqline (const MODEL *pmod, print_t *prn);
-static void _Fline (const MODEL *pmod, print_t *prn);
-static void _dwline (const MODEL *pmod, print_t *prn);
+			 const int c, PRN *prn);
+static void _depvarstats (const MODEL *pmod, PRN *prn);
+static int _essline (const MODEL *pmod, PRN *prn, int wt);
+static void _rsqline (const MODEL *pmod, PRN *prn);
+static void _Fline (const MODEL *pmod, PRN *prn);
+static void _dwline (const MODEL *pmod, PRN *prn);
 static void print_discrete_stats (const MODEL *pmod, 
 				  const DATAINFO *pdinfo, 
-				  print_t *prn);
+				  PRN *prn);
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
-				  const int c, const double t, print_t *prn);
-static void print_aicetc (const MODEL *pmod, print_t *prn);
+				  const int c, const double t, PRN *prn);
+static void print_aicetc (const MODEL *pmod, PRN *prn);
 void _putxx (const double xx);
-void mxout (const double *rr, const int *list, const int ci,
-	    const DATAINFO *pdinfo, const int pause, print_t *prn);
+void _mxout (const double *rr, const int *list, const int ci,
+	     const DATAINFO *pdinfo, const int pause, PRN *prn);
 
 
 /* ......................................................... */ 
 
-static void noconst (print_t *prn)
+static void noconst (PRN *prn)
 {
     pprintf(prn, "The model has no constant term.\n"  
 	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
@@ -60,13 +60,28 @@ static void noconst (print_t *prn)
 
 /* ......................................................... */ 
 
-static void _depvarstats (const MODEL *pmod, print_t *prn)
+static void _depvarstats (const MODEL *pmod, PRN *prn)
 {
     pprintf(prn, "Mean of dep. var. %17.3f  S.D. of dep. variable %17.3f\n", 
 	    pmod->ybar, pmod->sdy);
 }
 
-/* ........................................................... */
+/* ........................................................ */
+  
+void _bufspace (int n, PRN *prn)
+{
+    if (n > 0) while (n--) pprintf(prn, " ");
+}
+
+/**
+ * printxx:
+ * @xx: number to print.
+ * @str: buffer into which to print.
+ * @ci: command index (PRINT, STORE, or SUMMARY).
+ *
+ * Print a string representation of the double-precision value @xx
+ * to the buffer @str, in a format that depends on @ci.
+ */
 
 void printxx (const double xx, char *str, const int ci)
 {
@@ -112,7 +127,7 @@ void printxx (const double xx, char *str, const int ci)
 
 /* ......................................................... */ 
 
-static int _essline (const MODEL *pmod, print_t *prn, int wt)
+static int _essline (const MODEL *pmod, PRN *prn, int wt)
 {
     if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
 	pprintf(prn, "Error sum of squares (%g) is not > 0\n\n", 
@@ -121,10 +136,10 @@ static int _essline (const MODEL *pmod, print_t *prn, int wt)
     }
 
     pprintf(prn, "Error Sum of Sq (ESS) ");
-    space(3, prn);
+    _bufspace(3, prn);
     print_float_10(wt? pmod->ess_wt : pmod->ess, prn);
     pprintf(prn, "  Std Err of Resid. (sgmahat) ");
-    space(1, prn);
+    _bufspace(1, prn);
     print_float_10(wt? pmod->sigma_wt : pmod->sigma, prn);
     pprintf(prn, "\n");
     return 0;
@@ -132,7 +147,7 @@ static int _essline (const MODEL *pmod, print_t *prn, int wt)
 
 /* ......................................................... */ 
 
-static void _rsqline (const MODEL *pmod, print_t *prn)
+static void _rsqline (const MODEL *pmod, PRN *prn)
 {
     double xx = pmod->rsq;
 
@@ -150,13 +165,13 @@ static void _rsqline (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void _Fline (const MODEL *pmod, print_t *prn)
+static void _Fline (const MODEL *pmod, PRN *prn)
 {
     char tmp[32];
 
     sprintf(tmp, "F-statistic (%d, %d)", pmod->dfn, pmod->dfd);
     pprintf(prn, "%s", tmp);
-    space(24 - strlen(tmp), prn);
+    _bufspace(24 - strlen(tmp), prn);
     if (na(pmod->fstt))
 	pprintf(prn, "%11s  p-value for F() %23s\n", "undefined", "undefined");
     else pprintf(prn, "%11g  p-value for F() %23f\n", pmod->fstt,
@@ -165,7 +180,7 @@ static void _Fline (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void _dwline (const MODEL *pmod, print_t *prn)
+static void _dwline (const MODEL *pmod, PRN *prn)
 {
     if (na(pmod->dw))
     pprintf(prn, "Durbin-Watson stat. %15s  First-order autocorr. "
@@ -178,7 +193,7 @@ static void _dwline (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void dhline (const MODEL *pmod, print_t *prn)
+static void dhline (const MODEL *pmod, PRN *prn)
 {
     double sderr, h = 0.0;
     int i = pmod->ldepvar, T = pmod->nobs - 1;
@@ -219,7 +234,7 @@ static int _pmax (const MODEL *pmod)
 /* ......................................................... */ 
 
 static void _pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-			print_t *prn)
+			PRN *prn)
 {
     int k = pmod->ncoeff - pmod->ifc;
 
@@ -231,7 +246,7 @@ static void _pmax_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ......................................................... */ 
 
-static void covhdr (print_t *prn)
+static void covhdr (PRN *prn)
 {
     pprintf(prn, "\nCOVARIANCE MATRIX OF REGRESSION COEFFICIENTS\n\n");
 }
@@ -244,7 +259,11 @@ void _putxx (const double xx)
     else printf("%g\n", xx);
 }
 
-/* ......................................................... */
+/**
+ * session_time:
+ *
+ * Print to stdout the current time.
+ */
 
 void session_time (void)
 {
@@ -253,7 +272,11 @@ void session_time (void)
     printf("Current session: %s", ctime(&runtime));
 }
 
-/* ......................................................... */
+/**
+ * logo:
+ *
+ * Print to stdout gretl version information.
+ */
 
 void logo (void)
 {
@@ -262,7 +285,11 @@ void logo (void)
     puts("This is free software with ABSOLUTELY NO WARRANTY.");
 }
 
-/* ......................................................... */
+/**
+ * gui_logo:
+ *
+ * Print to stdout gretl GUI version information.
+ */
 
 void gui_logo (void)
 {
@@ -271,10 +298,18 @@ void gui_logo (void)
     puts("This is free software with ABSOLUTELY NO WARRANTY.");
 }
 
-/* ......................................................... */
+/**
+ * print_model_confints:
+ * @pmod: pointer to gretl model.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print to @prn the 95 percent confidence intervals for the parameter
+ * estimates in @pmod.
+ */
 
 void print_model_confints (const MODEL *pmod, const DATAINFO *pdinfo, 
-			   print_t *prn)
+			   PRN *prn)
 {
     int i, ncoeff = pmod->list[0];
     double t = _tcrit95(pmod->dfd);
@@ -294,7 +329,7 @@ void print_model_confints (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ......................................................... */
 
-static void print_model_tests (const MODEL *pmod, print_t *prn)
+static void print_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i;
 
@@ -308,9 +343,17 @@ static void print_model_tests (const MODEL *pmod, print_t *prn)
     }
 }
 
-/* ......................................................... */ 
+/**
+ * printmodel:
+ * @pmod: pointer to gretl model.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print to @prn the estimates in @pmod plus associated statistics.
+ * 
+ */
 
-void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, print_t *prn)
+void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, ncoeff;
     char startdate[8];
@@ -484,7 +527,7 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, print_t *prn)
 /* ........................................................... */
 
 void _print_add (const COMPARE *add, const int *addvars, 
-		 const DATAINFO *pdinfo, const int aux_code, print_t *prn)
+		 const DATAINFO *pdinfo, const int aux_code, PRN *prn)
 {
     int i;
     char spc[3];
@@ -532,7 +575,7 @@ void _print_add (const COMPARE *add, const int *addvars,
 /* ........................................................... */
 
 void _print_omit (const COMPARE *omit, const int *omitvars, 
-		  const DATAINFO *pdinfo, print_t *prn)
+		  const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
 
@@ -568,7 +611,7 @@ void _print_omit (const COMPARE *omit, const int *omitvars,
 
 /* ....................................................... */
 
-static void print_aicetc (const MODEL *pmod, print_t *prn)
+static void print_aicetc (const MODEL *pmod, PRN *prn)
 {
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
@@ -610,10 +653,18 @@ static int make_list (int **plist, const DATAINFO *pdinfo)
     return 0;
 }
 
-/* ......................................................... */ 
+/**
+ * printcorr:
+ * @corrmat: gretl correlation matrix struct.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print correlation matrix to @prn in a simple columnar format.
+ * 
+ */
 
 void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo, 
-		print_t *prn)
+		PRN *prn)
 {
     int i = 1, j, k = 0, m, ncoeffs;
     char corrstring[25];
@@ -644,9 +695,16 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
     pprintf(prn, "\n");
 }
 
-/* ......................................................... */ 
+/**
+ * printfreq:
+ * @freq: gretl frequency distribution struct.
+ * @prn: gretl printing struct.
+ *
+ * Print frequency distribution to @prn.
+ * 
+ */
 
-void printfreq (FREQDIST *freq, print_t *prn)
+void printfreq (FREQDIST *freq, PRN *prn)
 {
     int i, k, nlw, K = freq->numbins - 1;
     char word[32];
@@ -667,11 +725,11 @@ void printfreq (FREQDIST *freq, print_t *prn)
 	else sprintf(word, "%.3g", freq->endpt[k+1]);
 	pprintf(prn, "%s", word);
 	nlw = 10 - strlen(word);
-	space(nlw, prn);
+	_bufspace(nlw, prn);
 	sprintf(word, " %.3g", freq->midpt[k]);
 	pprintf(prn, "%s", word);
 	nlw = 10 - strlen(word);
-	space(nlw, prn);
+	_bufspace(nlw, prn);
 	pprintf(prn, "%6d  ", freq->f[k]);
 	i = 36.0 * freq->f[k]/freq->n;
 	while (i--) pprintf(prn, "*");
@@ -683,9 +741,17 @@ void printfreq (FREQDIST *freq, print_t *prn)
 	   freq->chisqu, chisq(freq->chisqu, 2));
 }
 
-/* ......................................................... */ 
+/**
+ * print_smpl:
+ * @pdinfo: data information struct
+ * @fulln: full length of data series.
+ * @prn: gretl printing struct.
+ *
+ * Print current sample information to @prn.
+ * 
+ */
 
-void print_smpl (const DATAINFO *pdinfo, int fulln, print_t *prn)
+void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 {
     char date1[8], date2[8];
 
@@ -708,7 +774,7 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, print_t *prn)
 
 /* ......................................................... */ 
 
-static void print_float_10 (const double x, print_t *prn)
+static void print_float_10 (const double x, PRN *prn)
 {
     int pad;
     char numstr[10];
@@ -724,7 +790,7 @@ static void print_float_10 (const double x, print_t *prn)
 	if (xx < 0.0) sprintf(numstr, "%.4g", xx);
 	else sprintf(numstr, "%.5g", xx);
 	pad = (10 - strlen(numstr));
-	if (pad > 0) space(pad, prn);
+	if (pad > 0) _bufspace(pad, prn);
 	pprintf(prn, "%s", numstr);
 	return;
     }
@@ -740,7 +806,7 @@ static void print_float_10 (const double x, print_t *prn)
 	if (xx < 0.0) sprintf(numstr, "%.4g", xx);
 	else sprintf(numstr, "%.5g", xx);
 	pad = (10 - strlen(numstr));
-	if (pad > 0) space(pad, prn);
+	if (pad > 0) _bufspace(pad, prn);
 	pprintf(prn, "%s", numstr);
 	return;
     } 
@@ -754,17 +820,17 @@ static void print_float_10 (const double x, print_t *prn)
 /* ......................................................... */ 
 
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
-				  const int c, const double t, print_t *prn)
+				  const int c, const double t, PRN *prn)
 {
     double maxerr;
 
     pprintf(prn, " %3d) %8s ", pmod->list[c], 
 	   pdinfo->varname[pmod->list[c]]);
-    space(6, prn);
+    _bufspace(6, prn);
     if (isnan(pmod->coeff[c-1]))
 	pprintf(prn, "%10s", "undefined");
     else print_float_10 (pmod->coeff[c-1], prn);
-    space(4, prn);
+    _bufspace(4, prn);
     if (isnan(pmod->sderr[c-1])) {
 	pprintf(prn, "%10s", "undefined");
     } else {
@@ -781,17 +847,17 @@ static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod,
 /* ......................................................... */ 
 
 static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			 const int c, print_t *prn)
+			 const int c, PRN *prn)
 {
     double t, pvalue;
 
     pprintf(prn, " %3d) %8s ", pmod->list[c], 
 	   pdinfo->varname[pmod->list[c]]);
-    space(6, prn);
+    _bufspace(6, prn);
     if (isnan(pmod->coeff[c-1]))
 	pprintf(prn, "%10s", "undefined");
     else print_float_10 (pmod->coeff[c-1], prn);
-    space(4, prn);
+    _bufspace(4, prn);
     if (isnan(pmod->sderr[c-1])) {
 	pprintf(prn, "%10s", "undefined");
 	pprintf(prn, "%12s", "undefined");
@@ -822,16 +888,16 @@ static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */ 
 
-void print_rho (int *arlist, const MODEL *pmod, 
-		const int c, print_t *prn)
+void _print_rho (int *arlist, const MODEL *pmod, 
+		 const int c, PRN *prn)
 {
     char ustr[5];
     
     sprintf(ustr, "u_%d", arlist[c]);
     pprintf(prn, "%14s ", ustr); 
-    space(6, prn);
+    _bufspace(6, prn);
     print_float_10 (pmod->coeff[c], prn);
-    space(4, prn);
+    _bufspace(4, prn);
     print_float_10 (pmod->sderr[c], prn); 
     pprintf(prn, " %12.3f %14f\n",
 	   pmod->coeff[c]/pmod->sderr[c],
@@ -839,10 +905,21 @@ void print_rho (int *arlist, const MODEL *pmod,
 		 pmod->dfd));	
 }
 
-/* ......................................................... */ 
+/**
+ * outcovmx:
+ * @pmod: pointer to model.
+ * @pdinfo: data information struct.
+ * @pause: if non-zero, pause after displaying each screen of information.
+ * @prn: gretl printing struct.
+ * 
+ * Print to @prn the variance-covariance matrix for the parameter
+ * estimates in @pmod.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, const int pause, 
-	      print_t *prn)
+	      PRN *prn)
 {
     int k, nbetas;
     int *tmplist = NULL;
@@ -853,15 +930,23 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, const int pause,
     tmplist[0] = nbetas;
 
     if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
-    mxout(pmod->vcv, tmplist, pmod->ci, pdinfo, pause, prn);  
+    _mxout(pmod->vcv, tmplist, pmod->ci, pdinfo, pause, prn);  
 
     free(tmplist);
     return 0;
 }
 
-/* ......................................................... */ 
+/**
+ * print_white_vcv:
+ * @pmod: pointer to model.
+ * @prn: gretl printing struct.
+ * 
+ * Print to @prn White's heteroskedasticity-adjusted variance-covariance 
+ * matrix for the parameter estimates in @pmod.
+ *
+ */
 
-void print_white_vcv (const MODEL *pmod, print_t *prn)
+void print_white_vcv (const MODEL *pmod, PRN *prn)
 {
     int i, j, index, ncoeff;
 
@@ -880,7 +965,7 @@ void print_white_vcv (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void outxx (const double xx, const int ci, print_t *prn)
+static void outxx (const double xx, const int ci, PRN *prn)
 {
     if (ci == CORR) {
 	if (na(xx)) pprintf(prn, " %13s", "undefined");
@@ -892,9 +977,7 @@ static void outxx (const double xx, const int ci, print_t *prn)
     }
 }
 
-/* ........................................................... */
-  
-int takenotes (int quit_option)
+static int takenotes (int quit_option)
 {
     char s[4];
 
@@ -908,20 +991,30 @@ int takenotes (int quit_option)
     return 0;
 }
 
-/* ......................................................... */ 
+/**
+ * page_break:
+ * @n: line offset (will be added to *lineno).
+ * @lineno: pointer to line number (or NULL).
+ * @quit_option: if non-zero, give the user the option of quitting.
+ * 
+ * Break "page" when printing a large amount of information.
+ * 
+ * Returns: 1 if @quit_option is non-zero and the user chose to quit,
+ * otherwise 0.
+ */
 
 int page_break (const int n, int *lineno, const int quit_option)
 {
-    if (*lineno + n <= 20) return 0;
+    if (lineno != NULL && *lineno + n <= 20) return 0;
     if (takenotes(quit_option)) return 1;
-    *lineno = 1;
+    if (lineno != NULL) *lineno = 1;
     return 0;
 }
 
-/* ......................................................... */
+/* ........................................................ */
 
-void mxout (const double *rr, const int *list, const int ci,
-	     const DATAINFO *pdinfo, const int pause, print_t *prn)
+void _mxout (const double *rr, const int *list, const int ci,
+	     const DATAINFO *pdinfo, const int pause, PRN *prn)
      /*  Given a single dimensional array, which represents a
 	 symmetric matrix, prints out an upper triangular matrix
 	 of any size. 
@@ -954,7 +1047,7 @@ void mxout (const double *rr, const int *list, const int ci,
 	for (j=1; j<=p; ++j)  {
 	    ljnf = list[j + nf];
 	    strcpy(s, pdinfo->varname[ljnf]);
-	    space(9 - strlen(s), prn);
+	    _bufspace(9 - strlen(s), prn);
 	    pprintf(prn, "%3d) %s", ljnf, s);
 	}
 	pprintf(prn, "\n");
@@ -976,7 +1069,7 @@ void mxout (const double *rr, const int *list, const int ci,
 	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
 	    ij2 = nf + j;
-	    space(14 * (j - 1), prn);
+	    _bufspace(14 * (j - 1), prn);
 	    for (k=j; k<=p; k++) {
 		index = ijton(ij2, nf+k, lo);
 		outxx(rr[index], ci, prn);
@@ -987,16 +1080,10 @@ void mxout (const double *rr, const int *list, const int ci,
     }
 }
 
-/* ........................................................ */
-  
-void space (int n, print_t *prn)
-{
-    if (n > 0) while (n--) pprintf(prn, " ");
-}
 
 /* ........................................................ */
 
-static void printgx (const double xx, print_t *prn)
+static void printgx (const double xx, PRN *prn)
 {
     static char word[32];
     int lw;
@@ -1004,7 +1091,7 @@ static void printgx (const double xx, print_t *prn)
     sprintf(word, "%11g", xx);
     lw = strlen(word);
     pprintf(prn, "%s", word);
-    space(13 - lw, prn);
+    _bufspace(13 - lw, prn);
 } 
 
 /* ........................................................ */
@@ -1012,7 +1099,7 @@ static void printgx (const double xx, print_t *prn)
 void _graphyzx (const int *list, const double *zy1, const double *zy2, 
 		const double *zx, int n, const char *yname, 
 		const char *xname, const DATAINFO *pdinfo, 
-		int oflag, print_t *prn)
+		int oflag, PRN *prn)
 /*
   if n > 0 graphs zy1 against zx, otherwise
   graphs zy1[i] and zy2[i] against zx[i] for i = 1, 2, .... n
@@ -1108,16 +1195,16 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 	    xx = ymin + ((ymax-ymin) * i/nrows);
 	    printgx(xx, prn);
 	}
-	else space(13, prn);
+	else _bufspace(13, prn);
 	for (j=0; j<=ncols+1; ++j) pprintf(prn, "%c", p[i][j]);
 	pprintf(prn, "\n");
     }
-    space(13, prn);
+    _bufspace(13, prn);
     pprintf(prn, "|");
     for (j=0; j<=ncols; j++) if (j%10 == 0) pprintf(prn, "+");
     else pprintf(prn, "-");
     pprintf(prn, "\n");
-    space(14, prn);
+    _bufspace(14, prn);
     sprintf(word, "%g", xmin);
     lx = strlen(word);
     lw = 13 + lx;
@@ -1125,16 +1212,16 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
     sprintf(word, "%s", xname);
     ly = strlen(word);
     ls = 30 - lx - ly/2;
-    space(ls, prn);
+    _bufspace(ls, prn);
     pprintf(prn, "%s", word);
     lw = lw + ls + ly; 
     sprintf(word, "%g", xmax);
 
     ls = strlen(word);
-    if (ls < 7) space(73 - lw, prn);
+    if (ls < 7) _bufspace(73 - lw, prn);
     else { 
 	lw = lw + ls;
-	space(79 - lw, prn);
+	_bufspace(79 - lw, prn);
     }
     pprintf(prn, "%s\n\n", word);
 }
@@ -1142,7 +1229,7 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 /* ........................................................... */
 
 static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo, 
-			    print_t *prn)
+			    PRN *prn)
 {
     int i;
     char label[9], date1[8], date2[8]; 
@@ -1173,7 +1260,7 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
 
 static void varheading (const int v1, const int v2, 
 			const DATAINFO *pdinfo, const int *list,
-			print_t *prn)
+			PRN *prn)
 /*  skips to new page and prints names of variables
     from v1 to v2 */
 {
@@ -1189,7 +1276,7 @@ static void varheading (const int v1, const int v2,
 
 /* ........................................................... */
 
-void _printxs (double xx, int n, int ci, print_t *prn)
+void _printxs (double xx, int n, int ci, PRN *prn)
 {
     int ls;
     char s[32];
@@ -1197,13 +1284,13 @@ void _printxs (double xx, int n, int ci, print_t *prn)
     printxx(xx, s, ci);
     ls = strlen(s);
     pprintf(prn, " ");
-    space(n-3-ls, prn);
+    _bufspace(n-3-ls, prn);
     pprintf(prn, "%s", s);
 }
 
 /* ........................................................ */
 
-void _printstr (print_t *prn, const double xx, int *ls)
+void _printstr (PRN *prn, const double xx, int *ls)
 {
     int lwrd;
     char str[32];
@@ -1222,7 +1309,7 @@ void _printstr (print_t *prn, const double xx, int *ls)
 /* ........................................................... */
 
 static void printz (const double *z, const DATAINFO *pdinfo, 
-		    print_t *prn)
+		    PRN *prn)
 /* prints series z from current sample t1 to t2 */
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
@@ -1238,16 +1325,9 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 
 /* ........................................................... */
 
-static void bufspace (char *buf, int n)
-{
-    if (n > 0) while (n--) strcat(buf, " ");
-}
-
-/* ........................................................... */
-
 #undef PRN_DEBUG
 
-int get_signif (double *x, int n)
+static int get_signif (double *x, int n)
      /* return either (a) the number of significant digits in
 	a data series (+), or (b) the number of decimal places to
 	use when printing the series (-) */
@@ -1298,7 +1378,7 @@ int get_signif (double *x, int n)
 
 /* ........................................................... */
 
-int bufprintnum (char *buf, double x, int signif, int width)
+static int bufprintnum (char *buf, double x, int signif, int width)
 {
     static char numstr[24];
     int i, l;
@@ -1356,13 +1436,23 @@ int bufprintnum (char *buf, double x, int signif, int width)
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * printdata:
+ * @list: list of variables to print.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @pause: if non-zero, pause after each screen of data.
+ * @byobs: if non-zero, print the data by observation (series in columns).
+ * @prn: gretl printing struct.
+ *
+ * Print the data for the variables in @list, from observations t1 to
+ * t2.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
-int printdata (int *list, double **pZ, const DATAINFO *pdinfo, 
-	       int pause, int byobs, print_t *prn)
-/*  prints the data for the variables in list, from obs t1 to
-    obs t2.
-*/
+int printdata (LIST list, double **pZ, const DATAINFO *pdinfo, 
+	       int pause, int byobs, PRN *prn)
 {
     int idate, l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
     register int t;
@@ -1453,9 +1543,8 @@ int printdata (int *list, double **pZ, const DATAINFO *pdinfo,
 		for (v=v1; v<=v2; v++) {
 		    xx = (*pZ)[n*list[v] + t];
 		    if (na(xx)) {
-			bufspace(line, 13);
+			strcat(line, "             ");
 		    } else { 
-			/*  bufprintxs(line, xx); */ 
 			bufprintnum(line, xx, pmax[v-1], 13);
 		    }
 		}
@@ -1480,10 +1569,20 @@ int printdata (int *list, double **pZ, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * print_fit_resid:
+ * @pmod: pointer to gretl model.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Print to @prn the fitted values and residuals from @pmod.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int print_fit_resid (const MODEL *pmod, double **pZ, 
-		     DATAINFO *pdinfo, print_t *prn)
+		     DATAINFO *pdinfo, PRN *prn)
 {
     int pmax, idate, depvar, t, nfit, ast = 0;
     int pd = pdinfo->pd, t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
@@ -1538,7 +1637,7 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
 
 /* ........................................................... */
 
-void _print_ar (MODEL *pmod, print_t *prn)
+void _print_ar (MODEL *pmod, PRN *prn)
 {
     pprintf(prn, "Statistics based on the rho-differenced data\n"
            "(R-squared is computed as the square of the correlation "
@@ -1555,17 +1654,17 @@ void _print_ar (MODEL *pmod, print_t *prn)
 
 static void print_discrete_coeff (const DATAINFO *pdinfo, 
 				  const MODEL *pmod, 
-				  const int c, print_t *prn)
+				  const int c, PRN *prn)
 {
     double tstat;
 
     pprintf(prn, " %3d) %8s ", pmod->list[c], 
 	   pdinfo->varname[pmod->list[c]]);
-    space(6, prn);
+    _bufspace(6, prn);
     if (isnan(pmod->coeff[c-1]))
 	pprintf(prn, "%10s", "undefined");
     else print_float_10 (pmod->coeff[c-1], prn);
-    space(4, prn);
+    _bufspace(4, prn);
     print_float_10 (pmod->sderr[c-1], prn);
     tstat = pmod->coeff[c-1]/pmod->sderr[c-1];
     pprintf(prn, " %12.3f  ", tstat);
@@ -1578,7 +1677,7 @@ static void print_discrete_coeff (const DATAINFO *pdinfo,
 
 static void print_discrete_stats (const MODEL *pmod, 
 				  const DATAINFO *pdinfo, 
-				  print_t *prn)
+				  PRN *prn)
 {
     int i, ncoeff = pmod->list[0];
 
@@ -1608,9 +1707,15 @@ static void print_discrete_stats (const MODEL *pmod,
     } else pprintf(prn, "\n");
 }
 
-/* ........................................................... */
+/**
+ * gretl_print_destroy:
+ * @prn: pointer to gretl printing struct.
+ *
+ * Close a gretl printing struct and free any associated resources.
+ *
+ */
 
-void gretl_print_destroy (print_t *prn)
+void gretl_print_destroy (PRN *prn)
 {
     if (prn == NULL) return;
 
@@ -1628,11 +1733,21 @@ void gretl_print_destroy (print_t *prn)
     prn = NULL;
 }
 
-/* ........................................................... */
+/**
+ * gretl_print_new:
+ * @prncode: code indicating the desired printing mode (see #prn_codes).
+ * @fname: filename for opening in case of GRETL_PRINT_FILE, otherwise
+ * NULL.
+ * 
+ * Create and initialize a gretl printing struct so that it is
+ * ready for printing.
+ *
+ * Returns: pointer to newly created struct, or NULL on failure.
+ */
 
-print_t *gretl_print_new (int prncode, const char *fname)
+PRN *gretl_print_new (int prncode, const char *fname)
 {
-    print_t *prn = NULL;
+    PRN *prn = NULL;
 
     if (prncode == GRETL_PRINT_FILE && fname == NULL) {
 	fprintf(stderr, "gretl_prn_new: Must supply a filename\n");

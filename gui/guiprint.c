@@ -25,26 +25,26 @@
 # include <windows.h>
 #endif
 
-static void r_print_float_10 (const double x, print_t *prn);
+static void r_print_float_10 (const double x, PRN *prn);
 static void r_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			 const int c, print_t *prn);
-static void r_depvarstats (const MODEL *pmod, print_t *prn);
-static int r_essline (const MODEL *pmod, print_t *prn, int wt);
-static void r_rsqline (const MODEL *pmod, print_t *prn);
-static void r_Fline (const MODEL *pmod, print_t *prn);
-static void r_dwline (const MODEL *pmod, print_t *prn);
-static void r_dhline (const MODEL *pmod, print_t *prn);
-static void r_print_aicetc (const MODEL *pmod, print_t *prn);
+			 const int c, PRN *prn);
+static void r_depvarstats (const MODEL *pmod, PRN *prn);
+static int r_essline (const MODEL *pmod, PRN *prn, int wt);
+static void r_rsqline (const MODEL *pmod, PRN *prn);
+static void r_Fline (const MODEL *pmod, PRN *prn);
+static void r_dwline (const MODEL *pmod, PRN *prn);
+static void r_dhline (const MODEL *pmod, PRN *prn);
+static void r_print_aicetc (const MODEL *pmod, PRN *prn);
 static void r_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 print_t *prn);
+			 PRN *prn);
 static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			  print_t *prn);
+			  PRN *prn);
 
 
 #ifdef G_OS_WIN32
 
 /* win32 only: copy rtf to clipboard for pasting into Word */
-int win_copy_rtf (print_t *prn)
+int win_copy_rtf (PRN *prn)
 {
     HGLOBAL winclip;
     char *ptr;
@@ -77,7 +77,7 @@ int win_copy_rtf (print_t *prn)
 
 void model_to_rtf (MODEL *pmod)
 {
-    print_t *prn;
+    PRN *prn;
 
     if (bufopen(&prn)) return;
     
@@ -107,7 +107,7 @@ void model_to_rtf (MODEL *pmod)
 
 /* ......................................................... */ 
 
-static void r_noconst (print_t *prn)
+static void r_noconst (PRN *prn)
 {
     pprintf(prn, "The model has no constant term. "  
 	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
@@ -118,7 +118,7 @@ static void r_noconst (print_t *prn)
 
 /* ......................................................... */ 
 
-static void r_depvarstats (const MODEL *pmod, print_t *prn)
+static void r_depvarstats (const MODEL *pmod, PRN *prn)
 {
     pprintf(prn, "{"
 	    STATS_ROW
@@ -132,7 +132,7 @@ static void r_depvarstats (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void r_print_float_10 (const double x, print_t *prn)
+static void r_print_float_10 (const double x, PRN *prn)
 {
     double xx = x;
 
@@ -173,7 +173,7 @@ static void r_print_float_10 (const double x, print_t *prn)
 
 /* ......................................................... */ 
 
-static int r_essline (const MODEL *pmod, print_t *prn, int wt)
+static int r_essline (const MODEL *pmod, PRN *prn, int wt)
 {
     if ((wt && pmod->ess_wt < 0) || (!(wt) && pmod->ess < 0)) {
 	pprintf(prn, "\\par "
@@ -193,7 +193,7 @@ static int r_essline (const MODEL *pmod, print_t *prn, int wt)
 
 /* ......................................................... */ 
 
-static void r_rsqline (const MODEL *pmod, print_t *prn)
+static void r_rsqline (const MODEL *pmod, PRN *prn)
 {
     double xx = pmod->rsq;
 
@@ -216,7 +216,7 @@ static void r_rsqline (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void r_Fline (const MODEL *pmod, print_t *prn)
+static void r_Fline (const MODEL *pmod, PRN *prn)
 {
     pprintf(prn, STATS_ROW
 	    " \\ql F-statistic (%d, %d)\\cell",
@@ -237,7 +237,7 @@ static void r_Fline (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void r_dwline (const MODEL *pmod, print_t *prn)
+static void r_dwline (const MODEL *pmod, PRN *prn)
 {
     pprintf(prn, STATS_ROW);
     if (na(pmod->dw))
@@ -258,7 +258,7 @@ static void r_dwline (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */ 
 
-static void r_dhline (const MODEL *pmod, print_t *prn)
+static void r_dhline (const MODEL *pmod, PRN *prn)
 {
     double sderr, h = 0.0;
     int i = pmod->ldepvar, T = pmod->nobs - 1;
@@ -288,7 +288,7 @@ static void r_dhline (const MODEL *pmod, print_t *prn)
 
 /* ......................................................... */
 
-static void r_print_model_tests (const MODEL *pmod, print_t *prn)
+static void r_print_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i;
 
@@ -305,7 +305,7 @@ static void r_print_model_tests (const MODEL *pmod, print_t *prn)
 /* ......................................................... */ 
 
 static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			  print_t *prn)
+			  PRN *prn)
 {
     int i, ncoeff;
     char startdate[8];
@@ -492,7 +492,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ....................................................... */
 
-static void r_print_aicetc (const MODEL *pmod, print_t *prn)
+static void r_print_aicetc (const MODEL *pmod, PRN *prn)
 {
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
@@ -537,7 +537,7 @@ static void r_print_aicetc (const MODEL *pmod, print_t *prn)
 /* ......................................................... */ 
 
 static void r_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			   const int c, print_t *prn)
+			   const int c, PRN *prn)
 {
     double t, pvalue;
 
@@ -605,7 +605,7 @@ static int _pmax (const MODEL *pmod)
 /* ......................................................... */ 
 
 static void r_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 print_t *prn)
+			 PRN *prn)
 {
     int k = pmod->ncoeff - pmod->ifc;
 
@@ -617,7 +617,7 @@ static void r_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ............................................................. */
 
-static void printfrtf (const double zz, print_t *prn, int endrow)
+static void printfrtf (const double zz, PRN *prn, int endrow)
 {
     if (na(zz)) {
 	if (endrow)
@@ -646,7 +646,7 @@ static void printfrtf (const double zz, print_t *prn, int endrow)
 
 void rtfprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
-		       print_t *prn)
+		       PRN *prn)
 {
     char date1[9], date2[9];
     double xbar, std, xcv;
@@ -717,7 +717,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 
 /* ............................................................. */
 
-static void printftex (const double zz, print_t *prn, int endrow)
+static void printftex (const double zz, PRN *prn, int endrow)
 {
     if (na(zz)) {
 	if (endrow)
@@ -739,7 +739,7 @@ static void printftex (const double zz, print_t *prn, int endrow)
 
 void texprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
-		       print_t *prn)
+		       PRN *prn)
 {
     char date1[9], date2[9], tmp[16];
     double xbar, std, xcv;
@@ -806,7 +806,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 
 /* ......................................................... */ 
 
-static void outxx (const double xx, print_t *prn)
+static void outxx (const double xx, PRN *prn)
 {
     if (na(xx)) pprintf(prn, "undefined & ");
     else pprintf(prn, "$%.3f$ & ", xx);
@@ -814,7 +814,7 @@ static void outxx (const double xx, print_t *prn)
 
 /* ......................................................... */ 
 
-static void rtf_outxx (const double xx, print_t *prn)
+static void rtf_outxx (const double xx, PRN *prn)
 {
     if (na(xx)) pprintf(prn, "undefined\\cell ");
     else pprintf(prn, "%.3f\\cell ", xx);
@@ -828,7 +828,7 @@ static void rtf_outxx (const double xx, print_t *prn)
 
 void rtfprint_corrmat (CORRMAT *corr,
 		       const DATAINFO *pdinfo, 
-		       print_t *prn)
+		       PRN *prn)
 {
     register int i, j;
     int lo, ljnf, nf, li2, p, k, index, ij2;
@@ -892,7 +892,7 @@ void rtfprint_corrmat (CORRMAT *corr,
 
 void texprint_corrmat (CORRMAT *corr,
 		       const DATAINFO *pdinfo, 
-		       print_t *prn)
+		       PRN *prn)
 {
     register int i, j;
     int lo, ljnf, nf, li2, p, k, index, ij2;

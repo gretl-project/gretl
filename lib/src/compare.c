@@ -242,9 +242,9 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count, 
+int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count, 
 	    double **pZ, DATAINFO *pdinfo, const int aux_code, 
-	    print_t *prn, GRETLTEST *test)
+	    PRN *prn, GRETLTEST *test)
 {
     COMPARE add;             
     int *newlist, *tmplist = NULL;
@@ -427,9 +427,9 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
+int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, double **pZ, DATAINFO *pdinfo, 
-	       print_t *prn)
+	       PRN *prn)
 {
     COMPARE omit;             /* Comparison struct for two models */
     int *tmplist, m = *model_count, check, err, pos = 0;
@@ -527,7 +527,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
  */
 
 int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
-		   print_t *prn, GRETLTEST *test)
+		   PRN *prn, GRETLTEST *test)
 {
     int *newlist;
     MODEL aux;
@@ -623,7 +623,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
  */
 
 int chow_test (const char *line, MODEL *pmod, double **pZ,
-	       DATAINFO *pdinfo, print_t *prn, GRETLTEST *test)
+	       DATAINFO *pdinfo, PRN *prn, GRETLTEST *test)
 {
     int *chowlist;
     int newvars = pmod->list[0] - 1;
@@ -750,7 +750,7 @@ static double vprime_M_v (double *v, double *M, int n)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, print_t *prn, 
+int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, PRN *prn, 
 		const PATHS *ppaths, GRETLTEST *test)
 {
     int err = 0, n_est, i, j, t;

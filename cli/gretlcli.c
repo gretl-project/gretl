@@ -20,6 +20,8 @@
 /* interactive client program for libgretl - 
    uses the GNU readline library if available */
 
+
+
 #ifndef OS_WIN32
 # include "../config.h"
 #else
@@ -30,7 +32,7 @@
 #include <math.h>
 #include <dirent.h>
 
-#include "../lib/src/libgretl.h"
+#include "libgretl.h"
 
 #ifdef HAVE_READLINE
 #include <readline/readline.h>
@@ -61,7 +63,7 @@ FREQDIST *freq;               /* struct for freq distributions */
 CMD command;                  /* struct for command characteristics */
 PATHS paths;                  /* useful paths */
 LOOPSET loop;                 /* struct for monte carlo loop */
-print_t *cmds;
+PRN *cmds;
 MODELSPEC *modelspec;
 MODEL tmpmod;
 FILE *dat, *fb;
@@ -79,9 +81,9 @@ char response[3];
 char linebak[MAXLEN];      /* for storing comments */
 char *line_read;
 
-void exec_line (char *line, print_t *prn); 
+void exec_line (char *line, PRN *prn); 
 extern int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, print_t *prn);
+			   const int cmdnum, PRN *prn);
 
 void usage(void)
 {
@@ -148,13 +150,13 @@ void noalloc (char *str)
     exit(EXIT_FAILURE);
 }
 
-void nosub (print_t *prn) 
+void nosub (PRN *prn) 
 {
     pprintf(prn, "Can't do: the current data set is different from " 
 	    "the one on which\nthe reference model was estimated.\n");
 }
 
-int model_test_start (const int id, print_t *prn, const int ols_only)
+int model_test_start (const int id, PRN *prn, const int ols_only)
 {
     int m = (id)? id - 1 : 0;
 
@@ -206,7 +208,7 @@ int main (int argc, char *argv[])
 {
     int cont = 0, cli_get_data = 0;
     char tmp[MAXLINE];
-    print_t prn;
+    PRN prn;
 
 #ifdef OS_WIN32
     strcpy(tmp, argv[0]);
@@ -464,7 +466,7 @@ int main (int argc, char *argv[])
 
 static int data_option (int flag);
 
-void exec_line (char *line, print_t *prn) 
+void exec_line (char *line, PRN *prn) 
 {
     int check, nulldata_n;
     char s1[12], s2[12];
@@ -500,7 +502,7 @@ void exec_line (char *line, print_t *prn)
 	    echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 
 		     0, oflag, cmds);
 	    if (command.ci != ENDLOOP) {
-		if (add_to_loop(&loop, line, command.ci, &Z, datainfo, oflag)) 
+		if (add_to_loop(&loop, line, command.ci, oflag)) 
 		    printf("Failed to add command to loop stack.\n");
 		return;
 	    }
@@ -733,13 +735,13 @@ void exec_line (char *line, print_t *prn)
 	break;
 		
     case FREQ:
-	freq = freq_func(&Z, datainfo, NULL, 0,
-			 datainfo->varname[command.list[1]], 1);
+	freq = freqdist(&Z, datainfo, NULL, 0,
+			datainfo->varname[command.list[1]], 1);
 	if (freq == NULL) {
 	    err = E_ALLOC;
 	    break;
 	}
-	if ((err = gretl_errno)) 
+	if ((err = get_gretl_errno())) 
 	    errmsg(err, prn);
 	else {
 	    printfreq(freq, prn); 
@@ -755,8 +757,8 @@ void exec_line (char *line, print_t *prn)
 	{
 	    GENERATE genr;
 
-	    genr = genr_func(&Z, datainfo, line, model_count,
-			     models[0], oflag);
+	    genr = generate(&Z, datainfo, line, model_count,
+			    models[0], oflag);
 	    if ((err = genr.errcode)) 
 		errmsg(err, prn);
 	    else {
@@ -881,7 +883,7 @@ void exec_line (char *line, print_t *prn)
 	    clear_model(models[1], NULL, NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (oflag == OPT_S || (!batch && takenotes(1))) break;
+	    if (oflag == OPT_S || (!batch && page_break(0, NULL, 1))) break;
 	}
 	/* non-linearity (logs) */
 	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
@@ -890,7 +892,7 @@ void exec_line (char *line, print_t *prn)
 	    clear_model(models[1], NULL, NULL); 
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (oflag == OPT_L || (!batch && takenotes(1))) break;
+	    if (oflag == OPT_L || (!batch && page_break(0, NULL, 1))) break;
 	}
 	/* autocorrelation or heteroskedasticity */
 	if (oflag == OPT_M || oflag == OPT_O) {
@@ -921,7 +923,7 @@ void exec_line (char *line, print_t *prn)
     case LOOP:
 	errfatal = 1;
 	if ((err = parse_loopline(line, &loop, datainfo))) {
-	    pprintf(prn, "%s\n", gretl_errmsg);
+	    pprintf(prn, "%s\n", get_gretl_errmsg());
 	    break;
 	}
 	if (loop.lvar == 0 && loop.ntimes < 2) {
@@ -1144,14 +1146,14 @@ void exec_line (char *line, print_t *prn)
 
     case TESTUHAT:
 	if ((err = model_test_start(0, prn, 0))) break;
-	freq = freq_func(NULL, NULL, (models[0])->uhat, 
-			 (models[0])->t2 - (models[0])->t1 + 1, 
-			 "uhat", (models[0])->ncoeff);
+	freq = freqdist(NULL, NULL, (models[0])->uhat, 
+			(models[0])->t2 - (models[0])->t1 + 1, 
+			"uhat", (models[0])->ncoeff);
 	if (freq == NULL) {
 	    err = E_ALLOC;
 	    break;
 	}
-	if ((err = gretl_errno)) 
+	if ((err = get_gretl_errno())) 
 	    errmsg(err, prn);
 	else {
 	    printfreq(freq, prn); 

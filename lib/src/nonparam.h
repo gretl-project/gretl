@@ -21,11 +21,11 @@
 
 /* functions follow */
  
-int spearman (const int *list, 
+int spearman (const LIST list, 
 	      const double *Z, const DATAINFO *pdinfo,
-	      const int opt, print_t *prn);
+	      const int opt, PRN *prn);
 
 int runs_test (const int varno, 
 	       const double *Z, const DATAINFO *pdinfo, 
-	       print_t *prn);
+	       PRN *prn);
 

@@ -49,9 +49,9 @@ typedef struct {
 
 /* functions follow */
  
-GENERATE genr_func (double **pZ, DATAINFO *pdinfo, 
-		    const char *line, const int model_count, 
-		    MODEL *pmod, const int oflag);
+GENERATE generate (double **pZ, DATAINFO *pdinfo, 
+		   const char *line, const int model_count, 
+		   MODEL *pmod, const int oflag);
 
 int dummy (double **pZ, DATAINFO *pdinfo);
 
@@ -61,21 +61,21 @@ int paneldum (double **pZ, DATAINFO *pdinfo,
 int plotvar (double **pZ, DATAINFO *pdinfo, 
 	     const char *period);
 
-void varlist (const DATAINFO *pdinfo, print_t *prn);
+void varlist (const DATAINFO *pdinfo, PRN *prn);
 
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
-int logs (const int *list, 
+int logs (const LIST list, 
 	  double **pZ, DATAINFO *pdinfo);
 
-int lags (const int *list, 
+int lags (const LIST list, 
 	  double **pZ, DATAINFO *pdinfo);
 
-int xpxgenr (const int *list, 
+int xpxgenr (const LIST list, 
 	     double **pZ, DATAINFO *pdinfo, 
 	     const int opt, const int nodup);
 
-int rhodiff (char *param, const int *list, 
+int rhodiff (char *param, const LIST list, 
 	     double **pZ, DATAINFO *pdinfo);
 
 int simulate (char *cmd, 

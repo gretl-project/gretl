@@ -118,7 +118,7 @@ static void session_open_object (GtkWidget *widget,
 
 /* ........................................................... */
 
-static int rebuild_init (session_t *rebuild)
+static int rebuild_init (SESSIONBUILD *rebuild)
 {
     rebuild->nmodels = 0;
     rebuild->model_ID = malloc(sizeof(int));
@@ -133,7 +133,7 @@ static int rebuild_init (session_t *rebuild)
 
 /* ........................................................... */
 
-static void free_rebuild (session_t *rebuild)
+static void free_rebuild (SESSIONBUILD *rebuild)
 {
     int i;
 
@@ -485,7 +485,7 @@ int saved_objects (char *fname)
 
 /* ........................................................... */
 
-int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
+int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 {
     FILE *fp;
     char line[MAXLEN], object[7], *tmp;
@@ -600,10 +600,10 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 
 /* ........................................................... */
 
-int recreate_session (char *fname, SESSION *psession, session_t *rebuild)
+int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
      /* called on start-up when a "session" file is loaded */
 {
-    print_t *prn;
+    PRN *prn;
     extern int replay; /* lib.c */
 
     /* no printed output wanted */
@@ -1174,7 +1174,7 @@ static gui_obj *session_add_object (gpointer data, int sort)
 
 static void open_gui_model (gui_obj *gobj)
 { 
-    print_t *prn;
+    PRN *prn;
     MODEL *pmod = (MODEL *) gobj->data;
 
     if (bufopen(&prn)) return;

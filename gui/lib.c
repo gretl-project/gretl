@@ -36,7 +36,7 @@ extern double *fullZ;
 /* ../cli/common.c */
 static int data_option (int flag);
 extern int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, print_t *prn);
+			   const int cmdnum, PRN *prn);
 /* boxplots.c */
 extern int boxplots (int *list, 
 		     double **pZ, const DATAINFO *pdinfo, 
@@ -45,8 +45,8 @@ extern int boxplots (int *list,
 /* private functions */
 static int gui_exec_line (char *line, 
 			  LOOPSET *plp, int *plstack, int *plrun, 
-			  SESSION *psession, session_t *rebuild,
-			  print_t *prn, int exec_code, 
+			  SESSION *psession, SESSIONBUILD *rebuild,
+			  PRN *prn, int exec_code, 
 			  const char *myname); 
 static void console_exec (void);
 static void finish_genr (MODEL *pmod);
@@ -247,7 +247,7 @@ void clear_data (int full)
 
 /* ........................................................... */
 
-char *user_fopen (const char *fname, char *fullname, print_t **pprn)
+char *user_fopen (const char *fname, char *fullname, PRN **pprn)
 {
     strcpy(fullname, paths.userdir);
     strcat(fullname, fname);
@@ -262,7 +262,7 @@ char *user_fopen (const char *fname, char *fullname, print_t **pprn)
 
 /* ........................................................... */
 
-gint bufopen (print_t **pprn)
+gint bufopen (PRN **pprn)
 {
     *pprn = gretl_print_new (GRETL_PRINT_BUFFER, NULL);
     if (*pprn == NULL) {
@@ -274,7 +274,7 @@ gint bufopen (print_t **pprn)
 
 /* ........................................................... */
 
-static int freq_error (FREQDIST *freq, print_t *prn)
+static int freq_error (FREQDIST *freq, PRN *prn)
 {
     if (freq == NULL) {
 	if (prn == NULL)
@@ -283,11 +283,11 @@ static int freq_error (FREQDIST *freq, print_t *prn)
 	    pprintf(prn, "Out of memory in frequency distribution\n");
 	return 1;
     }
-    if (gretl_errno) {
+    if (get_gretl_errno()) {
 	if (prn == NULL)
-	    gui_errmsg(gretl_errno);
+	    gui_errmsg(get_gretl_errno());
 	else
-	    errmsg(gretl_errno, prn);
+	    errmsg(get_gretl_errno(), prn);
 	free_freq(freq);
 	return 1;
     }
@@ -314,7 +314,7 @@ gint check_cmd (char *line)
 gint cmd_init (char *line)
 {
     size_t len;
-    print_t *echo;
+    PRN *echo;
 
     if (n_cmds == 0) 
 	cmd_stack = mymalloc(sizeof *cmd_stack);
@@ -403,7 +403,7 @@ static gint model_cmd_init (char *line, int ID)
 	part of the session mechanism */
 {
     int i, sn;
-    print_t *echo;
+    PRN *echo;
     size_t len;
 
     /* have we started this stuff at all, yet? */
@@ -562,7 +562,7 @@ gint dump_cmd_stack (char *fname)
 
 void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 {
-    print_t *prn;
+    PRN *prn;
     char title[48];
     int err = 0;
     windata_t *vwin;
@@ -617,8 +617,8 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	matrix_print_corr(obj, datainfo, 1, prn);
 	break;
     case FREQ:
-	obj = freq_func(&Z, datainfo, NULL, 0,
-			datainfo->varname[mdata->active_var], 1);
+	obj = freqdist(&Z, datainfo, NULL, 0,
+		       datainfo->varname[mdata->active_var], 1);
 	if (freq_error(obj, NULL)) {
 	    gretl_print_destroy(prn);
 	    return;
@@ -654,7 +654,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext;
-    print_t *prn;
+    PRN *prn;
     char title[48];
     int err = 0, order = 0, mvar = mdata->active_var;
     gint hsize = 78, vsize = 300;
@@ -774,7 +774,7 @@ void view_log (void)
 
 void console (void)
 {
-    print_t *prn;
+    PRN *prn;
     char fname[MAXLEN];
     windata_t *vwin;
 
@@ -898,7 +898,7 @@ gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 
 void console_exec (void)
 {
-    print_t *prn;
+    PRN *prn;
     int len, loopstack = 0, looprun = 0;
     gchar *c_line; 
     char execline[MAXLEN];
@@ -945,8 +945,10 @@ void console_exec (void)
 
 void gui_errmsg (const int errcode)
 {
-    if (gretl_errmsg[0] != '\0') 
-	errbox(gretl_errmsg);
+    char *msg = get_gretl_errmsg();
+
+    if (msg[0] != '\0') 
+	errbox(msg);
     else 
 	errbox(get_errmsg(errcode, errtext, NULL));
 }
@@ -1073,7 +1075,7 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 
 void count_missing (void)
 {
-    print_t *prn;
+    PRN *prn;
 
     if (bufopen(&prn)) return;
     if (count_missing_values(&Z, datainfo, prn)) {
@@ -1111,7 +1113,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
     windata_t *mydata = ddata->data;
     MODEL *pmod = mydata->data;
     char *edttext;
-    print_t *prn;
+    PRN *prn;
     int err;
 
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
@@ -1138,7 +1140,7 @@ void do_add_omit (GtkWidget *widget, dialog_t *ddata)
 {
     windata_t *mydata = ddata->data;
     char *edttext;
-    print_t *prn;
+    PRN *prn;
     char title[26];
     MODEL *orig, *pmod;
     gint err;
@@ -1224,7 +1226,7 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 
 /* ........................................................... */
 
-static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
+static void PRNest_to_window (GRETLTEST *test, GtkWidget *w)
 {
     gchar *tempstr;
 
@@ -1251,7 +1253,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
     int err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
-    print_t *prn;
+    PRN *prn;
     char title[40];
     GRETLTEST test;
 
@@ -1269,7 +1271,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	} else {
 	    strcat(title, "(heteroskedasticity)");
 	    if (add_test_to_model(&test, pmod) == 0)
-		print_test_to_window(&test, mydata->w);
+		PRNest_to_window(&test, mydata->w);
 	}
     } 
     else if (aux_code == AUX_AR) {
@@ -1282,7 +1284,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	} else {
 	    strcat(title, "(autocorrelation)");
 	    if (add_test_to_model(&test, pmod) == 0)
-		print_test_to_window(&test, mydata->w);
+		PRNest_to_window(&test, mydata->w);
 	}
     } 
     else {
@@ -1303,7 +1305,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	    model_count--;
 	    strcat(title, "(non-linearity)");
 	    if (add_test_to_model(&test, pmod) == 0)
-		print_test_to_window(&test, mydata->w);
+		PRNest_to_window(&test, mydata->w);
 	} 
     }
 
@@ -1342,8 +1344,8 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     void *handle;
-    void (*panel_diagnostics)(MODEL *, double **, DATAINFO *, print_t *);
-    print_t *prn;
+    void (*panel_diagnostics)(MODEL *, double **, DATAINFO *, PRN *);
+    PRN *prn;
 
     if (open_plugin("panel_data", &handle)) return;
     panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
@@ -1369,7 +1371,7 @@ static void do_chow_cusum (gpointer data, int code)
     dialog_t *ddata = NULL;
     MODEL *pmod;
     char *edttext;
-    print_t *prn;
+    PRN *prn;
     GRETLTEST test;
     gint err;
 
@@ -1406,7 +1408,7 @@ static void do_chow_cusum (gpointer data, int code)
     } 
 
     if (add_test_to_model(&test, pmod) == 0)
-	print_test_to_window(&test, mydata->w);
+	PRNest_to_window(&test, mydata->w);
 
     if (check_cmd(line) || model_cmd_init(line, pmod->ID))
 	return;
@@ -1439,7 +1441,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     MODEL *pmod = mydata->data;
     GRETLTEST test;
     char *edttext;
-    print_t *prn;
+    PRN *prn;
     char tmpstr[26];
     int order, err, i;
 
@@ -1469,7 +1471,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	errmsg(err, prn);
     else {
 	if (add_test_to_model(&test, pmod) == 0)
-	    print_test_to_window(&test, mydata->w);
+	    PRNest_to_window(&test, mydata->w);
 	if (oflag) outcovmx(models[1], datainfo, 0, prn);
     }
     clear_model(models[1], NULL, NULL);
@@ -1502,7 +1504,7 @@ static int model_error (const MODEL *pmod)
 
 /* ........................................................... */
 
-static int model_output (MODEL *pmod, print_t *prn)
+static int model_output (MODEL *pmod, PRN *prn)
 {
     if (model_error(pmod)) return 1;
 
@@ -1517,7 +1519,7 @@ static int model_output (MODEL *pmod, print_t *prn)
 
 static gint check_model_cmd (char *line, char *modelgenr)
 {
-    print_t *getgenr;
+    PRN *getgenr;
 
     if (bufopen(&getgenr)) return 1;
     strcpy(command.param, "");
@@ -1537,7 +1539,7 @@ static gint check_model_cmd (char *line, char *modelgenr)
 void do_model (GtkWidget *widget, dialog_t *ddata) 
 {
     char *edttext;
-    print_t *prn;
+    PRN *prn;
     char title[26], estimator[9], modelgenr[80];
     int order, err = 0, action = ddata->code;
     double rho;
@@ -1694,7 +1696,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext;
     int err, nulldata_n;
-    print_t *prn;
+    PRN *prn;
 
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (*edttext == '\0') return;
@@ -1840,12 +1842,12 @@ static void finish_genr (MODEL *pmod)
     GENERATE genr;
 
     if (pmod != NULL)
-	genr = genr_func(&Z, datainfo, line, model_count, 
-			 pmod, 0); 
+	genr = generate(&Z, datainfo, line, model_count, 
+			pmod, 0); 
     else
-	genr = genr_func(&Z, datainfo, line, model_count, 
-			 (last_model == 's')? models[0] : models[2], 
-			 0); 
+	genr = generate(&Z, datainfo, line, model_count, 
+			(last_model == 's')? models[0] : models[2], 
+			0); 
     if (genr.errcode) {
 	gui_errmsg(genr.errcode);
 	free(cmd_stack[n_cmds-1]);
@@ -1921,15 +1923,15 @@ static void normal_test (GRETLTEST *test, FREQDIST *freq)
 void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 {
     FREQDIST *freq;
-    print_t *prn;
+    PRN *prn;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     GRETLTEST test;
 
     if (bufopen(&prn)) return;
 
-    freq = freq_func(NULL, NULL, pmod->uhat, pmod->t2 - pmod->t1 + 1, 
-		     "uhat", pmod->ncoeff);
+    freq = freqdist(NULL, NULL, pmod->uhat, pmod->t2 - pmod->t1 + 1, 
+		    "uhat", pmod->ncoeff);
     if (freq_error(freq, NULL)) {
 	gretl_print_destroy(prn);
 	return;
@@ -1938,7 +1940,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     normal_test(&test, freq);
 
     if (add_test_to_model(&test, pmod) == 0)
-	print_test_to_window(&test, mydata->w);
+	PRNest_to_window(&test, mydata->w);
 
     clear(line, MAXLEN);
     strcpy(line, "testuhat");
@@ -1967,8 +1969,8 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
     if (check_cmd(line) || cmd_init(line)) return;
 
-    freq = freq_func(&Z, datainfo, NULL, 0,
-		     datainfo->varname[mdata->active_var], 1);
+    freq = freqdist(&Z, datainfo, NULL, 0,
+		    datainfo->varname[mdata->active_var], 1);
 
     if (!freq_error(freq, NULL)) { 
 	if (dist == GAMMA && freq->midpt[0] < 0.0 && freq->f[0] > 0) {
@@ -1989,7 +1991,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
-    print_t *prn;
+    PRN *prn;
 
     if (bufopen(&prn)) return;
 
@@ -2019,7 +2021,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 
 void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 {
-    print_t *prn;
+    PRN *prn;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
 
@@ -2035,7 +2037,7 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 
 void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 {
-    print_t *prn;
+    PRN *prn;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
 
@@ -2057,9 +2059,9 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
     clear(line, MAXLEN);
 
     if (panel) {
-	if (datainfo->time_series == 2)
+	if (datainfo->time_series == STACKED_TIME_SERIES)
 	    sprintf(line, "genr paneldum");
-	else if (datainfo->time_series == 3)
+	else if (datainfo->time_series == STACKED_CROSS_SECTION)
 	    sprintf(line, "genr paneldum -o");
 	else {
 	    errbox("Data set is not recognized as a panel.\n"
@@ -2072,7 +2074,8 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
     if (check_cmd(line) || cmd_init(line)) return;
 
     if (panel) 
-	err = paneldum(&Z, datainfo, (datainfo->time_series == 2)? 0 : 1);
+	err = paneldum(&Z, datainfo, 
+		       (datainfo->time_series == STACKED_TIME_SERIES)? 0 : 1);
     else 
 	err = dummy(&Z, datainfo);
 
@@ -2330,7 +2333,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 void display_data (gpointer data, guint u, GtkWidget *widget)
 {
     int err;
-    print_t *prn;
+    PRN *prn;
 
     if (datainfo->v * datainfo->n > MAXDISPLAY) { /* use file */
 	char fname[MAXLEN];
@@ -2358,7 +2361,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 void display_selected (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext; 
-    print_t *prn;
+    PRN *prn;
     int ig = 0;
     CMD prcmd;
 
@@ -2407,7 +2410,7 @@ void display_selected (GtkWidget *widget, dialog_t *ddata)
 
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 {
-    print_t *prn;
+    PRN *prn;
     int err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
@@ -2568,7 +2571,7 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
 void display_var (void)
 {
     int list[2];
-    print_t *prn;
+    PRN *prn;
 
     list[0] = 1;
     list[1] = mdata->active_var;
@@ -2603,7 +2606,7 @@ static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
 
 static void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
-    print_t *prn;
+    PRN *prn;
     char *runfile = NULL, fname[MAXLEN];
 
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
@@ -2656,7 +2659,7 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 
 void do_new_script (gpointer data, guint loop, GtkWidget *widget) 
 {
-    print_t *prn;
+    PRN *prn;
     char fname[MAXLEN];
 
     if (!user_fopen("script_tmp", fname, &prn)) return;
@@ -2673,7 +2676,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
 void do_open_csv_box (char *fname, int code)
 {
     int err;
-    print_t *prn;
+    PRN *prn;
     char buf[30];
 
     if (bufopen(&prn)) return;
@@ -2781,7 +2784,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 
 void do_save_tex (char *fname, const int code, MODEL *pmod)
 {
-    print_t *texprn;
+    PRN *texprn;
 
     texprn = gretl_print_new(GRETL_PRINT_FILE, fname);
     if (texprn == NULL) {
@@ -2802,8 +2805,8 @@ void do_save_tex (char *fname, const int code, MODEL *pmod)
 /* ........................................................... */
 
 int execute_script (const char *runfile, 
-		    SESSION *psession, session_t *rebuild,
-		    print_t *prn, int exec_code)
+		    SESSION *psession, SESSIONBUILD *rebuild,
+		    PRN *prn, int exec_code)
      /* run commands in runfile, output to prn */
 {
     FILE *fb;
@@ -2930,7 +2933,7 @@ static int ready_for_command (char *line)
 
 /* ........................................................... */
 
-static int script_model_test (const int id, print_t *prn, const int ols_only)
+static int script_model_test (const int id, PRN *prn, const int ols_only)
 {
     /* need to work in terms of modelspec here, _not_ model_count */
 
@@ -2976,8 +2979,8 @@ static int script_model_test (const int id, print_t *prn, const int ols_only)
 
 static int gui_exec_line (char *line, 
 			  LOOPSET *plp, int *plstack, int *plrun, 
-			  SESSION *psession, session_t *rebuild,
-			  print_t *prn, int exec_code, 
+			  SESSION *psession, SESSIONBUILD *rebuild,
+			  PRN *prn, int exec_code, 
 			  const char *myname) 
 {
     int i, err = 0, check = 0, order, nulldata_n, lines[1];
@@ -3031,7 +3034,7 @@ static int gui_exec_line (char *line,
         } else {
             echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
             if (command.ci != ENDLOOP) {
-                if (add_to_loop(plp, line, command.ci, &Z, datainfo, oflag)) {
+                if (add_to_loop(plp, line, command.ci, oflag)) {
                     pprintf(prn, "Failed to add command to loop stack.\n");
 		    return 1;
                 }
@@ -3064,7 +3067,7 @@ static int gui_exec_line (char *line,
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
     case GRAPH: case PLOT:
-    case INFO: case LABELS: case LIST:
+    case INFO: case LABELS: case VARLIST:
     case PRINT:
     case SUMMARY:
     case MEANTEST: case VARTEST:
@@ -3287,8 +3290,8 @@ static int gui_exec_line (char *line,
 	break;
 		
     case FREQ:
-	freq = freq_func(&Z, datainfo, NULL, 0,
-			 datainfo->varname[command.list[1]], 1);
+	freq = freqdist(&Z, datainfo, NULL, 0,
+			datainfo->varname[command.list[1]], 1);
 	if ((err = freq_error(freq, prn))) {
 	    break;
 	}
@@ -3304,9 +3307,9 @@ static int gui_exec_line (char *line,
 	{
 	    GENERATE genr;
 
-	    genr = genr_func(&Z, datainfo, line, model_count,
-			     (last_model == 's')? models[0] : models[2], 
-			     oflag);
+	    genr = generate(&Z, datainfo, line, model_count,
+			    (last_model == 's')? models[0] : models[2], 
+			    oflag);
 	    if ((err = genr.errcode)) 
 		errmsg(genr.errcode, prn);
 	    else {
@@ -3467,7 +3470,7 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	if ((err = parse_loopline(line, plp, datainfo))) {
-	    pprintf(prn, "%s\n", gretl_errmsg);
+	    pprintf(prn, "%s\n", get_gretl_errmsg());
 	    break;
 	}
 	if (plp->lvar == 0 && plp->ntimes < 2) {
@@ -3669,9 +3672,9 @@ static int gui_exec_line (char *line,
 
     case TESTUHAT:
 	if ((err = script_model_test(0, prn, 0))) break;
-	freq = freq_func(NULL, NULL, (models[0])->uhat, 
-			 (models[0])->t2 - (models[0])->t1 + 1, 
-			 "uhat", (models[0])->ncoeff);
+	freq = freqdist(NULL, NULL, (models[0])->uhat, 
+			(models[0])->t2 - (models[0])->t1 + 1, 
+			"uhat", (models[0])->ncoeff);
 
 	if (!(err = freq_error(freq, prn))) {
 	    if (rebuild) {

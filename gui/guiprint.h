@@ -23,26 +23,26 @@
 #define GUIPRINT_H
 
 #ifdef G_OS_WIN32
-int win_copy_rtf (print_t *prn);
+int win_copy_rtf (PRN *prn);
 #endif
 
 void model_to_rtf (MODEL *pmod);
 
 void texprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
-		       print_t *prn);
+		       PRN *prn);
 
 void rtfprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
-		       print_t *prn);
+		       PRN *prn);
 
 void texprint_corrmat (CORRMAT *corr,
 		       const DATAINFO *pdinfo, 
-		       print_t *prn);
+		       PRN *prn);
 
 void rtfprint_corrmat (CORRMAT *corr,
 		       const DATAINFO *pdinfo, 
-		       print_t *prn);
+		       PRN *prn);
 
 void augment_copy_menu (windata_t *vwin);
 
