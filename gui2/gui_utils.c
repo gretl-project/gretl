@@ -557,7 +557,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	is open yet
      */
 {
-    gint datatype, err;
+    gint datatype, err = 0;
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
     int append = APPENDING(code);
@@ -614,12 +614,14 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }    
     else { /* native data */
 	PRN prn;
+
 	prn.buf = NULL; prn.fp = stderr;
-	if (datatype == GRETL_XML_DATA)
+	if (datatype == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, trydatfile, &paths, 
 			      data_status, &prn, 1);
-	else
+	} else {
 	    err = get_data(&Z, datainfo, trydatfile, &paths, data_status, &prn);
+	}
     }
 
     if (err) {
@@ -630,7 +632,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     /* trash the practice files window that launched the query? */
     if (fwin != NULL) {
-	gtk_widget_destroy(fwin->w); 
+	gtk_widget_destroy(fwin->w);
     }
 
     strcpy(paths.datfile, trydatfile);

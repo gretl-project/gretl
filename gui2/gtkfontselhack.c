@@ -682,7 +682,7 @@ cmp_families (const void *a, const void *b)
   return g_utf8_collate (a_name, b_name);
 }
 
-#define FONT_FILTER_DEBUG
+/* #define FONT_FILTER_DEBUG */
 
 #ifdef FONT_FILTER_DEBUG
 FILE *dbg;

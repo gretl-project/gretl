@@ -2608,8 +2608,9 @@ void *get_plugin_function (const char *funcname, void *handle)
     funp = GetProcAddress(handle, funcname);
 #else
     funp = dlsym(handle, funcname);
-    if (funp == NULL) 
+    if (funp == NULL) {
 	fputs (dlerror(), stderr);
+    }
 #endif   
     return funp;
 }
@@ -2838,7 +2839,7 @@ static int write_xmldata (const char *fname, const int *list,
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
-		close_plugin(&handle);
+		close_plugin(handle);
 		sz = 0;
 	    }
 	} else {
@@ -2999,7 +3000,7 @@ static int write_xmldata (const char *fname, const int *list,
 
     if (sz) {
 	(*show_progress)(0, pdinfo->t2 - pdinfo->t1 + 1, SP_FINISH);
-	close_plugin(&handle);
+	close_plugin(handle);
     }  
 
     if (pmax) free(pmax);
@@ -3128,15 +3129,15 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
 
-    if (progress) {
+    if (progress > 0) {
 	if (open_plugin(PROGRESS_BAR, &handle) == 0) {
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
-		close_plugin(&handle);
-		progress = 0;
+		close_plugin(handle);
+		progress = 0L;
 	    }
-	} else progress = 0;
+	} else progress = 0L;
     }
 
     if (tmp) {
@@ -3221,13 +3222,13 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    }
 	}	    
 	cur = cur->next;
-	if (progress && t % 50 == 0) 
+	if (progress && t > 0 && t % 50 == 0) 
 	    (*show_progress) (50, pdinfo->n, SP_NONE);
     }
 
     if (progress) {
 	(*show_progress)(0, pdinfo->n, SP_FINISH);
-	close_plugin(&handle);
+	close_plugin(handle);
     }
 
     if (t != pdinfo->n) {

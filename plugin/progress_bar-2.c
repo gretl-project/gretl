@@ -17,7 +17,7 @@
  *
  */
 
-/* progress.c for gretl */
+/* progress.c for gretl, gtk-2.0 version */
 
 #include <gtk/gtk.h>
 #ifdef G_OS_WIN32
@@ -63,12 +63,15 @@ static ProgressData *progress_window (int flag)
 		     G_CALLBACK(destroy_progress),
 		     pdata);
 
-    if (flag == SP_LOAD_INIT) 
+    if (flag == SP_LOAD_INIT) {
 	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: loading data"));
-    else if (flag == SP_SAVE_INIT)
+    } 
+    else if (flag == SP_SAVE_INIT) {
 	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: storing data"));
-    else if (flag == SP_FONT_INIT)
+    } 
+    else if (flag == SP_FONT_INIT) {
 	gtk_window_set_title(GTK_WINDOW(pdata->window), _("gretl: scanning fonts"));
+    }
 	
     gtk_container_set_border_width(GTK_CONTAINER(pdata->window), 0);
 
@@ -130,29 +133,30 @@ int show_progress (long res, long expected, int flag)
     }
 
     if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT || flag == SP_FONT_INIT) {
-	char bytestr[48];
+	gchar *bytestr = NULL;
 
 	offs = 0L;
 	if ((pdata = progress_window(flag)) == NULL) return 0;
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), (gdouble) 0);
 	if (flag == SP_LOAD_INIT) {
-	    sprintf(bytestr, "%s %ld Kbytes", _("Retrieving"),
-		    expected / 1024);
+	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Retrieving"),
+				      expected / 1024);
 	}
 	else if (flag == SP_SAVE_INIT) {
-	    sprintf(bytestr, "%s %ld Kbytes", _("Storing"),
-		    expected / 1024);
+	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Storing"),
+				      expected / 1024);
 	}
 	else if (flag == SP_FONT_INIT) {
-	    sprintf(bytestr, _("Scanning %ld fonts"), expected);
+	    bytestr = g_strdup_printf(_("Scanning %ld fonts"), expected);
 	}
 	gtk_label_set_text(GTK_LABEL(pdata->label), bytestr);
+	g_free(bytestr);
 	while (gtk_events_pending()) gtk_main_iteration();
     }
 
     offs += res;
 
-    if (offs > expected && pdata != NULL) {
+    if (offs >= expected && pdata != NULL) {
 	gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
 	return 0;
     }

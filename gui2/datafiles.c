@@ -194,10 +194,12 @@ void browser_open_data (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), win->active_var, 
 			 0, &datname);
 
-    if (win->role == PWT_DATA)
+    if (win->role == PWT_DATA) {
 	build_path(pwtpath, datname, trydatfile, ".gdt");
-    else if (win->role == RAMU_DATA)
+    }
+    else if (win->role == RAMU_DATA) {
 	build_path(paths.datadir, datname, trydatfile, ".gdt");
+    }
     else if (win->role == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
@@ -483,9 +485,11 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     gtk_box_pack_start (GTK_BOX (button_box), openbutton, FALSE, TRUE, 0);
     g_signal_connect(G_OBJECT(openbutton), "clicked",
 		     G_CALLBACK(browse_func), fdata);
-    if (code != NATIVE_DB && code != RATS_DB && code != REMOTE_DB) 
+
+    if (code != NATIVE_DB && code != RATS_DB && code != REMOTE_DB) {
        	g_signal_connect(G_OBJECT(openbutton), "clicked", 
 			 G_CALLBACK(delete_widget), fdata->w); 
+    }
 
     if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
 	|| code == JW_DATA || code == REMOTE_DB) {
