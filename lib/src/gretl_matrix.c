@@ -346,6 +346,15 @@ double gretl_matrix_get (const gretl_matrix *m, int i, int j)
     return x;
 }
 
+double gretl_vector_get (const gretl_vector *v, int i)
+{
+    if (v == NULL || v->val == NULL) return NADBL;
+
+    if (i >= v->rows && i >= v->cols) return NADBL;
+
+    return v->val[i];
+}
+
 /* ....................................................... */
 
 int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
@@ -362,6 +371,19 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
 
     return 0;
 }
+
+int gretl_vector_set (gretl_vector *v, int i, double x)
+{
+    if (v == NULL || v->val == NULL) return 1;
+
+    if (i >= v->rows && i >= v->cols) return 1;
+
+    v->val[i] = x;
+
+    return 0;
+}
+
+/* ....................................................... */
 
 void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
 {
@@ -907,20 +929,50 @@ int gretl_matrix_rows (const gretl_matrix *m)
     return m->rows;
 }
 
-int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
-		      gretl_vector *b)
+/* ....................................................... */
+
+static int
+get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
+	     const gretl_vector *b, gretl_matrix *vcv)
 {
-    gretl_matrix *XTy = NULL;
+    double u, sigma2 = 0.0;
+    int k = X->cols;
+    int n = X->rows;
+    int i, j;
+
+    if (gretl_invert_symmetric_matrix(vcv)) return 1;
+
+    for (i=0; i<n; i++) {
+	u = y->val[i];
+	for (j=0; j<k; j++) {
+	    u -= X->val[mdx(X, i,j)] * b->val[j];
+	}
+	sigma2 += u * u;
+    }
+
+    sigma2 /= (n - k);
+
+    gretl_matrix_multiply_by_scalar(vcv, sigma2);  
+
+    return 0;
+}
+
+/* ....................................................... */
+
+int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
+		      gretl_vector *b, gretl_matrix *vcv)
+{
+    gretl_vector *XTy = NULL;
     gretl_matrix *XTX = NULL;
     int k = X->cols;
     int err = GRETL_MATRIX_OK;
 
-    if (b->rows != k) {
+    if (gretl_vector_get_length(b) != k) {
 	err = GRETL_MATRIX_NON_CONFORM;
     }
 
     if (!err) {
-	XTy = gretl_matrix_alloc(k, 1);
+	XTy = gretl_column_vector_alloc(k);
 	if (XTy == NULL) err = GRETL_MATRIX_NOMEM;
     }
 
@@ -941,6 +993,10 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 					XTX);
     }
 
+    if (!err && vcv != NULL) {
+	err = gretl_matrix_copy_values(vcv, XTX);
+    }
+
     if (!err) {
 	err = gretl_LU_solve(XTX, XTy);
     }
@@ -950,6 +1006,9 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	
 	for (i=0; i<k; i++) {
 	    b->val[i] = XTy->val[i];
+	}
+	if (vcv != NULL) {
+	    err = get_ols_vcv(y, X, b, vcv);
 	}
     }
 

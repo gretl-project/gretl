@@ -45,10 +45,6 @@ typedef struct _gretl_matrix gretl_vector;
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
 #define gretl_column_vector_alloc(i) gretl_matrix_alloc((i),1)
 #define gretl_vector_free(v) gretl_matrix_free(v)
-#define gretl_vector_get(v,i) gretl_matrix_get((v),0,(i))
-#define gretl_column_vector_get(v,i) gretl_matrix_get((v),(i),0)
-#define gretl_vector_set(v,i,x) gretl_matrix_set((v),0,(i),(x))
-#define gretl_column_vector_set(v,i,x) gretl_matrix_set((v),(i),0,(x))
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
 
@@ -76,7 +72,11 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
 
 double gretl_matrix_get (const gretl_matrix *m, int i, int j);
 
+double gretl_vector_get (const gretl_vector *v, int i);
+
 int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);
+
+int gretl_vector_set (gretl_vector *v, int i, double x);
 
 int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
 
@@ -109,7 +109,7 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
-		      gretl_vector *b);
+		      gretl_vector *b, gretl_matrix *vcv);
 
 void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn);
 
