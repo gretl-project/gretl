@@ -33,6 +33,16 @@
 # include "winconfig.h"
 #endif
 
+#ifdef ENABLE_NLS
+# ifdef OLD_GTK
+#  define I_(String) _(String)
+# else 
+#  define I_(String) iso_gettext (String) 
+# endif /* OLD_GTK */
+#else
+# define I_(String) String
+#endif /* ENABLE_NLS */
+
 #ifndef __GNOME_I18N_H__
 # ifdef ENABLE_NLS
 #  include "libintl.h"
@@ -44,12 +54,6 @@
 #  define N_(String) String
 # endif /* ENABLE_NLS */
 #endif /* __GNOME_I18N_H__ */
-
-#ifdef ENABLE_NLS
-# define I_(String) iso_gettext (String) 
-#else
-# define I_(String) String
-#endif
 
 #define MAXLABEL 128  /* maximum length of decsriptive labels for variables */
 #define MAXLEN   512  /* max length of "long" strings */
