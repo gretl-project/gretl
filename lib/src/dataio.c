@@ -3783,20 +3783,42 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 {
     int i;
     double x;
+    char valstr[32];
+    int err = 0;
 
-    for (i=1; i<pdinfo->v; i++) {
+    *gretl_errmsg = '\0';
+
+    for (i=1; i<pdinfo->v && !err; i++) {
 	if (!pdinfo->vector[i]) continue;
 	s = strpbrk(s, "01234567890+-NA");
-	if (!strncmp(s, "NA", 2)) x = NADBL;
-	else if (*s && (sscanf(s, "%lf", &x) != 1)) {
-	    sprintf(gretl_errmsg, _("Failed to parse data values at obs %d"), t+1);
-	    return 1;
+	if (s == NULL) {
+	    fprintf(stderr, "i = %d: s == NULL in process_values()\n", i);
+	    err = 1;
+	} else {
+	    if (*s == '\0' || sscanf(s, "%31s", valstr) != 1) {
+		fputs("s is blank in process_values()\n", stderr);
+		err = 1;
+	    } else {
+		if (!strcmp(valstr, "NA")) {
+		    x = NADBL;
+		} else if (check_atof(valstr)) {
+		    err = 1;
+		} else {
+		    sscanf(valstr, "%lf", &x);
+		}
+	    }
 	}
-	Z[i][t] = x;
-	s = strpbrk(s, " \t\n\r");
+	if (!err) {
+	    Z[i][t] = x;
+	    s = strpbrk(s, " \t\n\r");
+	}
     }
 
-    return 0;
+    if (err && *gretl_errmsg == '\0') {
+	sprintf(gretl_errmsg, _("Failed to parse data values at obs %d"), t+1);
+    }
+
+    return err;
 }
 
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
@@ -3885,8 +3907,9 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    }
 	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (tmp) {
-		if (process_values(*pZ, pdinfo, t, tmp))
+		if (process_values(*pZ, pdinfo, t, tmp)) {
 		    return 1;
+		}
 		free(tmp);
 		t++;
 	    } else {

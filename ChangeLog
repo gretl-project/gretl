@@ -15,6 +15,7 @@ version 1.2.4
 - Fix curious Windows bug: line-endings in scripts were not
   recognized in some cases
 - Improve path-searching for data files
+- Beef up error-checking on opening of native gretl data files
 
 2/24/2004 version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack
