@@ -12,11 +12,11 @@
       general form of a loop is:</para>
     
     <programlisting>
-      loop <replaceable>control-expression</replaceable> [ --progressive ]
+      loop <replaceable>control-expression</replaceable> [ --progressive | --verbose ]
          <replaceable>loop body</replaceable>
       endloop</programlisting>
 
-    <para>Four forms of <replaceable>control-expression</replaceable>
+    <para>Five forms of <replaceable>control-expression</replaceable>
       are available, as explained below.  In the <replaceable>loop
 	body</replaceable> the following commands are accepted:
       <command>genr</command>, <command>ols</command>,
@@ -26,14 +26,35 @@
       <command>summary</command>, <command>if</command>,
       <command>else</command> and <command>endif</command>.</para>
 
+    <para>By default, the <command>genr</command> operates quietly in
+      the context of a loop (without printing information on the
+      variable generated).  To force the printing of feedback from
+      <command>genr</command> you may specify the
+      <literal>--verbose</literal> option to <command>loop</command>.
+    </para>
+
     <para>The <literal>--progressive</literal> option to
       <command>loop</command> modifies the behavior of the commands
       <command>ols</command>, <command>print</command> and
       <command>store</command> in a manner that may be useful with
-      Monte Carlo analyses.  The following sections explain the
-      various forms of the loop control expression and the effects of
-      the <literal>--progressive</literal> option.  The chapter ends
-      with some examples of use of loops.</para>  
+      Monte Carlo analyses (see <xref linkend="loop-progressive"/>).
+    </para>
+
+    <para>
+      The following sections explain the various forms of the loop
+      control expression and provide some examples of use of loops.
+    </para>  
+
+    <tip>
+      <para>
+	If you are carrying out a substantial Monte Carlo analysis
+	with many thousands of repetitions, memory capacity and
+	processing time may be an issue.  To minimize the use of
+	computer resources, run your script using the command-line
+	program, <application>gretlcli</application>, with output
+	redirected to a file.
+      </para>
+    </tip>
 
   </sect1>
 
@@ -100,6 +121,27 @@
 	loop is set up.  In addition, with time series data you can
 	give the starting and ending values in the form of dates, as
 	in <command>loop i=1950:1..1999:4</command>.
+      </para>
+
+    </sect2>
+
+    <sect2 id="loop-each"><title><quote>For each</quote> loop</title>
+
+      <para>The fourth form of loop control also uses the internal
+	variable <varname>i</varname>, but in this case the variable
+	ranges over a specified list of strings.  The loop is
+	executed once for each string in the list.  This can be useful
+	for performing repetitive operations on a list of variables.
+	Here is an example of the syntax:
+      </para>
+
+      <programlisting>
+	loop foreach i peach pear plum
+	   print "$i"
+	endloop</programlisting>
+      <para>This loop will execute three times, printing out
+	   <quote>peach</quote>, <quote>pear</quote> and
+	   <quote>plum</quote> on the respective iterations.
       </para>
 
     </sect2>

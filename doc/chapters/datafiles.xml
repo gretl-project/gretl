@@ -393,20 +393,24 @@
     <para>If <application>gretl</application> detects any missing
       values <quote>inside</quote> the (possibly truncated) sample
       range for a regression, the result depends on the character of
-      the dataset and the estimator chosen.  In the case of
-      cross-sectional data, <application>gretl</application> will
-      automatically skip the missing observations when calculating the
-      regression results, unless the estimator is two-stage least
-      squares or one of the system estimators such as SUR.  In the
-      case of time-series or panel data, or if the estimator is one of
-      those just mentioned, the program gives an error message and
+      the dataset and the estimator chosen.  In many cases, the
+      program will automatically skip the missing observations when
+      calculating the regression results.  In this situation a message
+      is printed stating how many observations were dropped.  On the
+      other hand, the skipping of missing observations is not
+      supported for all procedures: exceptions include all
+      autoregressive estimators, system estimators such as SUR, and
+      nonlinear least squares.  In the case of panel data, the
+      skipping of missing observations is supported only if their
+      omission leaves a balanced panel. If missing observations are
+      found in cases where they are not supported,
+      <application>gretl</application> gives an error message and
       refuses to produce estimates.</para>
 
-    <para>Missing values in the middle of a time-series dataset are a
-      problem. For those who know what they are doing (!), the
-      <command>misszero</command> function is provided under the
-      <command>genr</command> command.  By doing
-    </para> 
+    <para>In case missing values in the middle of a dataset present a
+      problem, the <command>misszero</command> function (use with
+      care!) is provided under the <command>genr</command> command. By
+      doing </para>
 
     <para><command>genr foo = misszero(bar)</command>
     </para>
