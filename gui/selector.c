@@ -31,6 +31,20 @@ static GtkWidget *scatters_label;
 static GtkWidget *scatters_menu;
 static GtkWidget *x_axis_item;
 
+struct _selector {
+    GtkWidget *dlg;
+    GtkWidget *varlist;
+    GtkWidget *depvar;
+    GtkWidget *rightvars;
+    GtkWidget *auxvars;
+    GtkWidget *default_check;
+    GtkWidget *extra;
+    int code;
+    int error;
+    char *cmdlist;
+    gpointer data;
+};
+
 void clear_selector (void)
 {
     default_var = 0;
@@ -1446,4 +1460,21 @@ char *mdata_selection_to_string (int n_required)
     }
 
     return lmkr.liststr;
+}
+
+/* accessor functions */
+
+int selector_code (const selector *sr)
+{
+    return sr->code;
+}
+
+const char *selector_list (const selector *sr)
+{
+    return sr->cmdlist;
+}
+
+gpointer selector_get_data (const selector *sr)
+{
+    return sr->data;
 }

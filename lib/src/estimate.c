@@ -673,7 +673,7 @@ static int make_ess (MODEL *pmod, double **Z)
 	if (nwt) {
 	    resid *= Z[nwt][t];
 	}
-	pmod->ess = pmod->ess + resid * resid;
+	pmod->ess += resid * resid;
     }
     return 0;
 }

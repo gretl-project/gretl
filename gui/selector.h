@@ -36,19 +36,7 @@
 
 #define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
 
-typedef struct {
-    GtkWidget *dlg;
-    GtkWidget *varlist;
-    GtkWidget *depvar;
-    GtkWidget *rightvars;
-    GtkWidget *auxvars;
-    GtkWidget *default_check;
-    GtkWidget *extra;
-    int code;
-    int error;
-    char *cmdlist;
-    gpointer data;
-} selector;
+typedef struct _selector selector;
 
 void clear_selector (void);
 
@@ -60,3 +48,9 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 void data_save_selection_wrapper (int file_code);
 
 char *mdata_selection_to_string (int n_required);
+
+int selector_code (const selector *sr);
+
+const char *selector_list (const selector *sr);
+
+gpointer selector_get_data (const selector *sr);

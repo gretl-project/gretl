@@ -640,7 +640,9 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	    }
 	}     
     }
+
     *t1 = t1min; *t2 = t2max;
+
     return 0;
 }
 
@@ -1147,7 +1149,8 @@ int _list_dups (const int *list, int ci)
 
     if (ci == ARCH) start = 3;
 
-    if (ci == TSLS || ci == AR || ci == SCATTERS || ci == MPOLS) {
+    if (ci == TSLS || ci == AR || ci == ARMA || 
+	ci == SCATTERS || ci == MPOLS) {
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == 999) {
 		start = i+1;

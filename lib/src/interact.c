@@ -630,7 +630,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	linelen = strlen(line);
     }
 
-    if (command->ci == AR) ar = 1;
+    if (command->ci == AR || command->ci == ARMA) ar = 1;
 
     command->list = realloc(command->list, (1 + nf) * sizeof *command->list);
     if (command->list == NULL) {
@@ -744,7 +744,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	else if (*field == ';') {
 	    /* could be the separator between two sub-lists */
 	    if (command->ci == TSLS || command->ci == AR ||
-		command->ci == MPOLS || command->ci == SCATTERS) {
+		command->ci == MPOLS || command->ci == SCATTERS ||
+		command->ci == ARMA) {
 		command->param = realloc(command->param, 4);
 		sprintf(command->param, "%d", j);
 		n += strlen(field) + 1;
@@ -815,19 +816,19 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->errcode = E_ARGS;
 
     if ((command->ci == AR || command->ci == TSLS || 
-	 command->ci == SCATTERS) && strlen(command->param) == 0) {
+	 command->ci == ARMA || command->ci == SCATTERS) 
+	&& strlen(command->param) == 0) {
 	command->errcode = E_ARGS;
     }
 
     free(remainder);
-    return;
 }
 
 static void nl_strip (char *line)
 {
     int n = strlen(line);
 
-    if (line[n-1] == '\n') line[n-1] = 0;
+    if (n && line[n-1] == '\n') line[n-1] = 0;
 }
 
 /**
@@ -1138,7 +1139,7 @@ int shell (const char *arg)
  * 
  */
 
-#define hold_param(c) (c == TSLS || c == AR || c == CORRGM || \
+#define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
                        c == MPOLS || c == SCATTERS || c == GNUPLOT)
 
 void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
@@ -1175,7 +1176,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (strcmp(line, "quit") == 0 || line[0] == '!' ||
 	strlen(line) == 0) return;
 
-    if (cmd->ci == AR) gotsep = 0;
+    if (cmd->ci == AR || cmd->ci == ARMA) gotsep = 0;
 
     /* command is preceded by a "savename" to which a object will
        be assigned */
@@ -1245,6 +1246,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    if (!batch) pprintf(prn, " %s", cmd->param);
 	}
 
+	/* check for duplicated vars */
 	err = _list_dups(cmd->list, cmd->ci);
 	if (err) {
 	    printf(_("\nvar number %d duplicated in the command list.\n"),

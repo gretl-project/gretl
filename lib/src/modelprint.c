@@ -45,6 +45,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_aicetc (const MODEL *pmod, PRN *prn);
 static void tex_print_aicetc (const MODEL *pmod, PRN *prn);
 static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
+static void print_ll (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
 
@@ -312,6 +313,7 @@ static void dwline (const MODEL *pmod, PRN *prn)
 
     else if (TEX_FORMAT(prn->format)) {
 	char x1str[32], x2str[32];
+
 	tex_dcolumn_double(pmod->dw, x1str);
 	tex_dcolumn_double(pmod->rho, x2str);
 	pprintf(prn, "%s & %s \\\\\n %s & %s \n",
@@ -468,6 +470,7 @@ const char *estimator_string (int ci, int format)
     else if (ci == LOGIT) return N_("Logit");
     else if (ci == POOLED) return N_("Pooled OLS");
     else if (ci == NLS) return N_("NLS");
+    else if (ci == ARMA) return N_("ARMA");
     else if (ci == CORC) {
 	if (TEX_FORMAT(format)) return N_("Cochrane--Orcutt");
 	else return N_("Cochrane-Orcutt");
@@ -835,11 +838,12 @@ static void print_model_heading (const MODEL *pmod,
 		(tex)? vname : pmod->params[0]);
     }
     else { 
-	/* ordinary dependent variable */
-	if (tex) tex_escape(vname, pdinfo->varname[pmod->list[1]]);
+	int v = (pmod->ci == ARMA)? pmod->list[4] : pmod->list[1];
+
+	if (tex) tex_escape(vname, pdinfo->varname[v]);
 	pprintf(prn, "%s: %s%s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
-		(tex)? vname : pdinfo->varname[pmod->list[1]],
+		(tex)? vname : pdinfo->varname[v],
 		(pmod->ci == TSLS && tex)? "\\\\\n" : 
 		(pmod->ci == TSLS && RTF_FORMAT(prn->format))? "\\par\n" : "\n");
     }
@@ -1023,12 +1027,38 @@ static void model_format_end (PRN *prn)
     else if (RTF_FORMAT(prn->format)) {
 	pputs(prn, "\n}\n");
     }
-}  
+} 
+
+static int print_arma_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, 
+				    PRN *prn)
+{
+    int i, err = 0, gotnan = 0;
+    int p = pmod->list[1], q = pmod->list[2];
+
+    for (i=0; i<=p+q; i++) {
+	if (PLAIN_FORMAT(prn->format)) {
+	    err = print_coeff(pdinfo, pmod, i, prn);
+	}
+	else if (TEX_FORMAT(prn->format)) {
+	    err = tex_print_coeff(pdinfo, pmod, i, prn);
+	}
+	else if (RTF_FORMAT(prn->format)) {
+	    err = rtf_print_coeff(pdinfo, pmod, i, prn);
+	}
+	if (err) gotnan = 1;
+    }
+
+    return gotnan;
+}
 
 static int print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0, gotnan = 0;
     int n = pmod->list[0];
+
+    if (pmod->ci == ARMA) {
+	return print_arma_coefficients(pmod, pdinfo, prn);
+    }
 
     for (i=2; i<=n; i++) {
 	if (pmod->list[i] == LISTSEP) break;
@@ -1239,10 +1269,10 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }
 
-    if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
+    if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
 	|| pmod->ci == HCCM || pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
-	|| (pmod->ci == WLS && pmod->wt_dummy)) {
+	|| pmod->ci == ARMA || (pmod->ci == WLS && pmod->wt_dummy)) {
 	print_middle_table_start(prn);
 	if (pmod->ci != VAR) depvarstats(pmod, prn);
 	if (essline(pmod, prn, 0)) {
@@ -1266,6 +1296,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 		dwline(pmod, prn);
 	    }
 	}
+
+	if (pmod->ci == ARMA) print_ll(pmod, prn);
 
 	print_middle_table_end(prn);
 
@@ -1430,6 +1462,22 @@ static void print_pval_str (double pval, char *str)
 
 /* ......................................................... */ 
 
+static void arma_coeff_name (char *varname, const DATAINFO *pdinfo,
+			     const MODEL *pmod, int c)
+{
+    int p = pmod->list[1];
+
+    if (c == 0) {
+	strcpy(varname, pdinfo->varname[0]);
+    } else if (c <= p) {
+	sprintf(varname, "%s(-%d)", pdinfo->varname[pmod->list[4]], c);
+    } else {
+	sprintf(varname, "e(-%d)", c - p);
+    }
+}
+
+/* ......................................................... */ 
+
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			int c, PRN *prn)
 {
@@ -1438,16 +1486,23 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[12];
 
-    /* special treatment for ARCH model coefficients, NLS */
+    /* special treatment for ARCH model coefficients, NLS, ARMA */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
     } else if (pmod->ci == NLS) {
 	strcpy(varname, pmod->params[c-1]);
+    } else if (pmod->ci == ARMA) {
+	arma_coeff_name(varname, pdinfo, pmod, c);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }
 
-    pprintf(prn, " %3d) %8s ", pmod->list[c], varname);
+    if (pmod->ci == ARMA) {
+	pprintf(prn, " %3d) %8s ", c, varname);
+	c += 2;
+    } else {
+	pprintf(prn, " %3d) %8s ", pmod->list[c], varname);
+    }
 
     _bufspace(2, prn);
 
@@ -1684,6 +1739,22 @@ static void tex_float_str (double x, char *str)
 	sprintf(str + 3, "%.*g", GRETL_DIGITS, -x);
     } else {
 	sprintf(str, "%.*g", GRETL_DIGITS, x);
+    }
+}
+
+static void print_ll (const MODEL *pmod, PRN *prn)
+{
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+    }
+    else if (RTF_FORMAT(prn->format)) {
+	pprintf(prn, "\\par %s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+    }
+    else if (TEX_FORMAT(prn->format)) {
+	char lnlstr[32];
+
+	tex_dcolumn_double(pmod->lnL, lnlstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), lnlstr);
     }
 }
 

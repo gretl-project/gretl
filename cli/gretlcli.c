@@ -738,6 +738,19 @@ void exec_line (char *line, PRN *prn)
 	clear_model(models[1], NULL);
 	break;
 
+    case ARMA:
+	clear_model(models[0], NULL);
+	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
+			  (cmd.opt)? prn : NULL);
+	if ((err = (models[0])->errcode)) { 
+	    errmsg(err, prn); 
+	    break;
+	}	
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn);	
+	break;
+
     case CHOW:
         if ((err = model_test_start(0, prn, 1))) break;
 	err = chow_test(line, models[0], &Z, datainfo, prn, NULL);

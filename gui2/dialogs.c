@@ -1430,3 +1430,135 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_show_all(rset->dlg);
 }
 
+/* ARMA options stuff */
+
+struct arma_options {
+    int v;
+    int ar;
+    int ma;
+    GtkWidget *dlg;
+};
+
+static void arma_opt_callback (GtkWidget *w, gint *var)
+{
+    GtkWidget *entry = g_object_get_data(G_OBJECT(w), "entry");
+
+    *var = atoi(gtk_entry_get_text(GTK_ENTRY(entry)));
+}
+
+static GtkWidget *make_labeled_combo (const gchar *label, 
+				      GtkWidget *tbl, gint row,
+				      GList *list, gint *var)
+{
+    GtkWidget *w;
+    char numstr[2];
+
+    w = gtk_label_new(label);
+    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_RIGHT);
+    gtk_table_attach(GTK_TABLE(tbl), w, 0, 1, row, row + 1,
+		     0, 0, 0, 0);
+    gtk_widget_show(w);
+
+    w = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(w), list); 
+    sprintf(numstr, "%d", *var);
+    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), numstr);
+
+    gtk_widget_set_size_request(w, 48, -1);
+    gtk_table_attach(GTK_TABLE(tbl), w, 1, 2, row, row + 1,
+		     0, 0, 0, 0);
+
+    g_object_set_data(G_OBJECT(GTK_COMBO(w)->list), "entry", 
+		      GTK_COMBO(w)->entry);
+    g_signal_connect(G_OBJECT(GTK_COMBO(w)->list), "selection-changed",
+		     G_CALLBACK(arma_opt_callback), 
+		     var);
+
+    return w;
+}
+
+static GtkWidget *arma_opt_table (struct arma_options *opts)
+{
+    GtkWidget *tbl, *tmp;
+    int i, row = 0;
+    GList *twolist = NULL;
+    gchar *intvals[] = {
+	"0", "1", "2"
+    };
+
+    for (i=0; i<3; i++) {
+	twolist = g_list_append(twolist, intvals[i]);
+    }
+
+    tbl = gtk_table_new(2, 2, FALSE);
+
+    tmp = make_labeled_combo(_("AR terms:"), tbl, row++,
+			     twolist, &opts->ar);
+
+    tmp = make_labeled_combo(_("MA terms:"), tbl, row,
+			     twolist, &opts->ma);
+
+    return tbl;
+}
+
+static void free_arma_opts (GtkWidget *w, struct arma_options *opts)
+{
+    free(opts);
+}
+
+static void destroy_arma_opts (GtkWidget *w, gpointer p)
+{
+    gtk_widget_destroy(GTK_WIDGET(p));
+}
+
+static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
+{
+    do_arma(opts->v, opts->ar, opts->ma, 1);
+    gtk_widget_destroy(GTK_WIDGET(opts->dlg));
+}
+
+void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
+{
+    GtkWidget *tmp, *tbl;
+    struct arma_options *opts;
+
+    opts = mymalloc(sizeof *opts);
+    if (opts == NULL) return;
+    
+    opts->dlg = gtk_dialog_new();
+    opts->ar = opts->ma = 1;
+    opts->v = mdata->active_var;
+
+    g_signal_connect (G_OBJECT(opts->dlg), "destroy", 
+		      G_CALLBACK(free_arma_opts), opts);
+
+    gtk_window_set_title(GTK_WINDOW(opts->dlg), _("ARMA"));
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (opts->dlg)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (opts->dlg)->action_area), 5); 
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (opts->dlg)->vbox), 5);
+    gtk_window_set_position (GTK_WINDOW (opts->dlg), GTK_WIN_POS_MOUSE);
+
+    tbl = arma_opt_table(opts);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+		       tbl, FALSE, FALSE, 5);
+
+    /* Create the "OK" button */
+    tmp = standard_button(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (opts->dlg)->action_area), 
+			tmp, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(exec_arma_opts), opts);
+    gtk_widget_grab_default (tmp);
+
+    /* And a Cancel button */
+    tmp = standard_button(GTK_STOCK_CANCEL);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(opts->dlg)->action_area), 
+			tmp, TRUE, TRUE, 0);
+    g_signal_connect (G_OBJECT (tmp), "clicked", 
+		      G_CALLBACK(destroy_arma_opts), opts->dlg);
+
+    gtk_widget_show_all(opts->dlg);
+}

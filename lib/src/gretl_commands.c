@@ -36,6 +36,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ADF,      "adf" },      
     { AR,       "ar" },       
     { ARCH,     "arch" },
+    { ARMA,     "arma" },
     { BXPLOT,   "boxplot" },
     { CHOW,     "chow" },     
     { COEFFSUM, "coeffsum" },

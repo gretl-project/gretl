@@ -3,6 +3,10 @@ version 1.2.1
   files or script file
 - Add support for the data files from Davidson & MacKinnon,
   Econometric Theory and Methods (ETM)
+- Make the NIST linear regression test suite available as a
+  plugin
+- Add ARMA model to the variable menu (plus "arma" command)
+- Fix bug with displaying a TSLS model in the GUI program
 
 12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)

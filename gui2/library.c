@@ -986,11 +986,11 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 static void real_do_coint (gpointer p, int action)
 {
     selector *sr = (selector *) p;
-    char *buf;
+    const char *buf;
     PRN *prn;
     int err = 0, order = 0;
 
-    buf = sr->cmdlist;
+    buf = selector_list(sr);
     if (*buf == 0) return;
 
     clear(line, MAXLEN);
@@ -1413,15 +1413,15 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 void do_coeff_sum (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    windata_t *vwin = sr->data;
-    char *buf;
+    windata_t *vwin = selector_get_data(sr);
+    const char *buf;
     PRN *prn;
     char title[48];
     MODEL *pmod;
     gint err;
 
     pmod = vwin->data;
-    buf = sr->cmdlist;
+    buf = selector_list(sr);
     if (*buf == 0) return;
     
     clear(line, MAXLEN);
@@ -1447,19 +1447,19 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 void do_add_omit (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    windata_t *vwin = sr->data;
-    char *buf;
+    windata_t *vwin = selector_get_data(sr);
+    const char *buf;
     PRN *prn;
     char title[48];
     MODEL *orig, *pmod;
     gint err;
 
     orig = vwin->data;
-    buf = sr->cmdlist;
+    buf = selector_list(sr);
     if (*buf == 0) return;
     
     clear(line, MAXLEN);
-    if (sr->code == ADD) 
+    if (selector_code(sr) == ADD) 
         sprintf(line, "addto %d %s", orig->ID, buf);
     else 
         sprintf(line, "omitfrom %d %s", orig->ID, buf);
@@ -1473,7 +1473,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (sr->code == ADD) 
+    if (selector_code(sr) == ADD) 
         err = auxreg(cmd.list, orig, pmod, &model_count, 
                      &Z, datainfo, AUX_ADD, prn, NULL);
     else 
@@ -2012,7 +2012,8 @@ static gint check_model_cmd (char *line, char *modelgenr)
 	return 1;
     }
 
-    if (*getgenr->buf != '\0') strcpy(modelgenr, getgenr->buf);
+    if (*getgenr->buf != '\0' && modelgenr != NULL) 
+	strcpy(modelgenr, getgenr->buf);
 
     gretl_print_destroy(getgenr);
 
@@ -2035,10 +2036,10 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     PRN *prn;
     mp_results *mpvals = NULL;
 
-    action = sr->code;
+    action = selector_code(sr);
     strcpy(estimator, gretl_command_word(action));
 
-    buf = sr->cmdlist;    
+    buf = selector_list(sr);    
     if (*buf == 0) return;
 
     clear(line, MAXLEN);
@@ -2173,7 +2174,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
 void do_model (GtkWidget *widget, gpointer p) 
 {
-    char *buf;
+    const char *buf;
     PRN *prn;
     char title[26], estimator[9], modelgenr[80];
     int order, err = 0, action;
@@ -2182,10 +2183,10 @@ void do_model (GtkWidget *widget, gpointer p)
     GRETL_VAR *var = NULL;
     selector *sr = (selector *) p;  
 
-    action = sr->code;
+    action = selector_code(sr);
     strcpy(estimator, gretl_command_word(action));
 
-    buf = sr->cmdlist;    
+    buf = selector_list(sr);    
     if (buf == NULL || *buf == 0) return;
 
     clear(line, MAXLEN);
@@ -2230,29 +2231,29 @@ void do_model (GtkWidget *widget, gpointer p)
     case WLS:
     case POOLED:
 	*pmod = lsq(cmd.list, &Z, datainfo, action, 1, 0.0);
-	if ((err = model_output(pmod, prn))) break;
+	err = model_output(pmod, prn);
 	break;
 
     case HSK:
 	*pmod = hsk_func(cmd.list, &Z, datainfo);
-	if ((err = model_output(pmod, prn))) break;
+	err = model_output(pmod, prn);
 	break;
 
     case HCCM:
 	*pmod = hccm_func(cmd.list, &Z, datainfo);
-	if ((err = model_output(pmod, prn))) break;
+	err = model_output(pmod, prn);
 	break;
 
     case TSLS:
 	*pmod = tsls_func(cmd.list, atoi(cmd.param), 
-				&Z, datainfo);
-	if ((err = model_output(pmod, prn))) break;
+			  &Z, datainfo);
+	err = model_output(pmod, prn);
 	break;
 
     case AR:
 	*pmod = ar_func(cmd.list, atoi(cmd.param), 
-			      &Z, datainfo, &model_count, prn);
-	if ((err = model_error(pmod))) break;
+			&Z, datainfo, &model_count, prn);
+	err = model_error(pmod);
 	break;
 
     case VAR:
@@ -2312,6 +2313,61 @@ void do_model (GtkWidget *widget, gpointer p)
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
     /* fprintf(stderr, "do_model: calling view_model\n"); */
+    view_model(prn, pmod, 78, 400, title); 
+}
+
+/* ........................................................... */
+
+void do_arma (int v, int ar, int ma, int verbose)
+{
+    char title[26];
+    int err = 0;
+    MODEL *pmod;
+    PRN *prn;
+
+    sprintf(line, "arma %d %d ; %d%s", ar, ma, v, 
+	    (verbose)? " -o" : "");
+
+    if (check_model_cmd(line, NULL)) return;
+
+    echo_cmd(&cmd, datainfo, line, 0, 1, NULL);
+
+    if (bufopen(&prn)) return;
+
+    pmod = gretl_model_new(datainfo);
+    if (pmod == NULL) {
+	errbox(_("Out of memory"));
+	return;
+    }
+
+    *pmod = arma(cmd.list, (const double **) Z, datainfo,
+		 (verbose)? prn : NULL); 
+    err = model_output(pmod, prn);
+
+    if (err) {
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    if (cmd_init(line) || stack_model(1)) {
+	errbox(_("Error saving model information"));
+	return;
+    }
+
+    /* make copy of most recent model */
+    if (copy_model(models[2], pmod, datainfo))
+	errbox(_("Out of memory copying model"));
+
+    /* record sub-sample info (if any) with the model */
+    if (fullZ != NULL) {
+	fullinfo->varname = datainfo->varname;
+	fullinfo->varinfo = datainfo->varinfo;	
+	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+    }
+    
+    /* record the fact that the last model was estimated via GUI */
+    sprintf(title, _("gretl: model %d"), pmod->ID);
+
     view_model(prn, pmod, 78, 400, title); 
 }
 
@@ -3591,10 +3647,10 @@ void do_boxplot_var (int varnum)
 void do_scatters (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    char *buf;
+    const char *buf;
     gint err; 
 
-    buf = sr->cmdlist;
+    buf = selector_list(sr);
     if (*buf == 0) return;
 
     clear(line, MAXLEN);
@@ -3644,10 +3700,10 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
      /* X, Y scatter with separation by dummy (factor) */
 {
     selector *sr = (selector *) p;
-    char *buf;
+    const char *buf;
     gint err, lines[1] = {0}; 
 
-    buf = sr->cmdlist;
+    buf = selector_list(sr);
     if (*buf == 0) return;
 
     clear(line, MAXLEN);
@@ -3677,17 +3733,17 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
 void do_graph_from_selector (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    char *buf;
+    const char *buf;
     gint i, err, *lines = NULL;
-    gint imp = (sr->code == GR_IMP);
+    gint imp = (selector_code(sr) == GR_IMP);
 
-    buf = sr->cmdlist;
+    buf = selector_list(sr);
     if (*buf == '\0') return;
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s%s", buf, (imp)? " -m" : "");
 
-    if (sr->code == GR_PLOT) { 
+    if (selector_code(sr) == GR_PLOT) { 
         strcat(line, " time");
     }
 
@@ -3697,7 +3753,7 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     if (lines == NULL) return;
 
     for (i=0; i<cmd.list[0]-1 ; i++) {
-        if (sr->code == GR_PLOT) lines[i] = 1;
+        if (selector_code(sr) == GR_PLOT) lines[i] = 1;
         else lines[i] = 0;
     }
 
@@ -3791,10 +3847,10 @@ static int get_terminal (char *s)
 void do_splot_from_selector (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
-    char *buf;
+    const char *buf;
     gint err;
 
-    buf = sr->cmdlist;
+    buf = selector_list(sr);
     if (*buf == '\0') return;
 
     clear(line, MAXLEN);
@@ -4921,6 +4977,19 @@ int gui_exec_line (char *line,
 	} else if (rebuild)
 	    add_test_to_model(ptest, models[0]);
 	clear_model(models[1], NULL);
+	break;
+
+    case ARMA:
+	clear_model(models[0], NULL);
+	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
+			  (cmd.opt)? prn : NULL);
+	if ((err = (models[0])->errcode)) { 
+	    errmsg(err, prn); 
+	    break;
+	}	
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn);	
 	break;
 
     case BXPLOT:

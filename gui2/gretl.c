@@ -545,6 +545,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL, GNULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL, GNULL },
+    { N_("/Variable/ARMA model"), NULL, arma_options_dialog, 0, NULL, GNULL },
 #ifdef HAVE_X12A
     { N_("/Variable/X-12-ARIMA analysis"), NULL, do_tramo_x12a, X12A, NULL, GNULL },
 #endif

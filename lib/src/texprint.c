@@ -154,25 +154,43 @@ static int tex_greek_param (char *targ, const char *src)
     return (*targ != 0);
 }
 
+static void tex_arma_coeff_name (char *varname, const DATAINFO *pdinfo,
+				 const MODEL *pmod, int c)
+{
+    int p = pmod->list[1];
+
+    if (c == 0) {
+	strcpy(varname, pdinfo->varname[0]);
+    } else if (c <= p) {
+	char tmp[16];
+
+	tex_escape(tmp, pdinfo->varname[pmod->list[4]]);
+	sprintf(varname, "%s$_{t-%d}$", tmp, c);
+    } else {
+	sprintf(varname, "e$_{t-%d}$", c - p);
+    }
+}
+
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int c, PRN *prn)
 {
-    char tmp[16], coeff[64], sderr[64], tratio[64], pval[64];
+    char tmp[24], coeff[64], sderr[64], tratio[64], pval[64];
+    int v = (pmod->ci == ARMA)? c : c - 2;
 
-    if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
+    if (isnan(pmod->coeff[v]) || na(pmod->coeff[v])) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
 	tex_dcolumn_double(pmod->coeff[c-2], coeff);
     }
 
-    if (isnan(pmod->sderr[c-2]) || na(pmod->sderr[c-2])) {
+    if (isnan(pmod->sderr[v]) || na(pmod->sderr[v])) {
 	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
 	tex_dcolumn_double(pmod->sderr[c-2], sderr);
-	sprintf(tratio, "%.4f", pmod->coeff[c-2] / pmod->sderr[c-2]);
-	sprintf(pval, "%.4f", tprob(pmod->coeff[c-2] / pmod->sderr[c-2], 
+	sprintf(tratio, "%.4f", pmod->coeff[v] / pmod->sderr[v]);
+	sprintf(pval, "%.4f", tprob(pmod->coeff[v] / pmod->sderr[v], 
 				    pmod->dfd));
     }    
 
@@ -183,6 +201,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	if (!tex_greek_param(tmp, pmod->params[c-1])) {
 	    tex_escape(tmp, pmod->params[c-1]);
 	}
+    } else if (pmod->ci == ARMA) {
+	tex_arma_coeff_name(tmp, pdinfo, pmod, c);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }

@@ -27,6 +27,7 @@ typedef enum {
     ADF,
     AR,      
     ARCH,
+    ARMA,
     BXPLOT,
     CHOW,
     COEFFSUM,

@@ -402,4 +402,6 @@ struct _VCV {
 # include "gretl_win32.h"
 #endif
 
+MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn);
+
 #endif /* LIBGRETL_H */

@@ -33,6 +33,23 @@ enum {
     SR_EXTRA
 };
 
+struct _selector {
+    GtkWidget *dlg;
+    GtkWidget *vbox;
+    GtkWidget *action_area;
+    GtkWidget *varlist;
+    GtkWidget *depvar;
+    GtkWidget *rightvars;
+    GtkWidget *auxvars;
+    GtkWidget *default_check;
+    GtkWidget *extra;
+    int code;
+    int active_var;
+    int error;
+    char *cmdlist;
+    gpointer data;
+};
+
 static int default_var;
 static int *xlist;
 static int *auxlist;
@@ -1640,4 +1657,21 @@ void data_save_selection_wrapper (int file_code)
 		     NULL);
     gtk_main(); /* the corresponding gtk_main_quit() is in
 		   the function destroy_selector() */
+}
+
+/* accessor functions */
+
+int selector_code (const selector *sr)
+{
+    return sr->code;
+}
+
+const char *selector_list (const selector *sr)
+{
+    return sr->cmdlist;
+}
+
+gpointer selector_get_data (const selector *sr)
+{
+    return sr->data;
 }
