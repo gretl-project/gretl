@@ -216,6 +216,11 @@ static void win_help (void)
 }
 
 static int unmangle (const char *dosname, char *longname);
+
+enum {
+    TO_BACKSLASH,
+    FROM_BACKSLASH
+};
 #endif
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
@@ -1745,12 +1750,16 @@ void gretl_fork (const char *prog, const char *arg)
 /* ........................................................... */
 
 #ifdef G_OS_WIN32
-static char *slash_convert (char *str)
+static char *slash_convert (char *str, int which)
 {
     char *p = str;
 
     while (*p) {
-	if (*p == '\\') *p = '/';
+	if (which == FROM_BACKSLASH) {
+	    if (*p == '\\') *p = '/';
+	} else if (which == TO_BACKSLASH) {
+	    if (*p == '/') *p = '\\';
+	}
 	p++;
     }
 
@@ -1799,14 +1808,15 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 
     if (dataset_is_time_series(datainfo)) {
 #ifdef G_OS_WIN32
-	fprintf(fp, "source(\"%s\")\n", slash_convert(Rdata));
+	fprintf(fp, "source(\"%s\")\n", slash_convert(Rdata, FROM_BACKSLASH));
 #else
 	fprintf(fp, "source(\"%s\")\n", Rdata);
 #endif
 	fprintf(fp, "ls()\n");
     } else {
 #ifdef G_OS_WIN32
-	fprintf(fp, "gretldata <- read.table(\"%s\")\n", slash_convert(Rdata));
+	fprintf(fp, "gretldata <- read.table(\"%s\")\n", 
+		slash_convert(Rdata, FROM_BACKSLASH));
 #else
 	fprintf(fp, "gretldata <- read.table(\"%s\")\n", Rdata);
 #endif
@@ -2112,6 +2122,7 @@ drag_data_received  (GtkWidget *widget,
     char *suff = NULL, tmp[MAXLEN];
     int pos, skip = 5;
 
+    /* handle drag of pointer from database window */
     if (info == GRETL_POINTER && data != NULL && 
 	data->type == GDK_SELECTION_TYPE_INTEGER) {
 	import_db_series(*(void **) data->data);
@@ -2135,6 +2146,10 @@ drag_data_received  (GtkWidget *widget,
 	strncat(tmp, dfname + skip, pos - skip);
     } else
 	strcat(tmp, dfname + skip);
+
+#ifdef G_OS_WIN32
+    slash_convert(tmp, TO_BACKSLASH);
+#endif
 
     suff = strrchr(tmp, '.');
     if (suff && (!strncmp(suff, ".gretl", 6) || 
