@@ -20,7 +20,7 @@
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || \
                        c == TSLS || c == LOGIT || c == PROBIT || \
-                       c == AR || c == VAR)
+                       c == AR || c == VAR || c == COINT)
 
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
                         c == DIFF || c == LDIFF)
@@ -34,7 +34,12 @@ typedef struct {
     GtkWidget *extra;
     int code;
     char *cmdlist;
+    gpointer data;
 } selector;
 
 void selection_dialog (const char *title, const char *oktxt, 
 		       void (*okfunc)(), guint cmdcode);
+
+void simple_selection (const char *title, const char *oktxt, 
+		       void (*okfunc)(), guint cmdcode,
+		       gpointer p);

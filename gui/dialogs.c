@@ -323,27 +323,8 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 {
-    gchar title[26];
-    
-    switch (add_code) {
-    case LOGS:
-	strcpy(title, _("gretl: generate logs"));
-	break;
-    case LAGS:
-	strcpy(title, _("gretl: generate lags"));
-	break;	
-    case SQUARE:
-	strcpy(title, _("gretl: generate squares"));
-	break;
-    case DIFF:
-	strcpy(title, _("gretl: generate differences"));
-	break;
-    case LDIFF:
-	strcpy(title, _("gretl: log differences"));
-	break;
-
-    }
-    selection_dialog (title, _("Apply"), add_logs_etc, add_code);    
+    simple_selection (_("gretl: data transformations"), 
+		      _("Apply"), add_logs_etc, add_code, NULL);    
 }
 
 /* ........................................................... */

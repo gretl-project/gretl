@@ -28,6 +28,8 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget);
 
 void model_callback (gpointer data, guint model_code, GtkWidget *widget);
 
+void add_omit_callback (gpointer data, guint action, GtkWidget *widget);
+
 void gretl_callback (gpointer data, guint action, GtkWidget *widget);
 
 void model_test_callback (gpointer data, guint action, GtkWidget *widget);

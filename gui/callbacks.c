@@ -303,18 +303,6 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 		"(between %s and %s):"), startdate, enddate);
 	okfunc = do_chow;
 	break;
-    case OMIT:
-	strcpy(title, _("gretl: omit vars"));
-	strcpy(query, _("Names (or numbers) of variables to omit:"));
-	okfunc = do_add_omit;
-	varclick = 1;
-	break;	
-    case ADD:
-	strcpy(title, _("gretl: add vars"));
-	strcpy(query, _("Names (or numbers) of variables to add:"));
-	okfunc = do_add_omit;
-	varclick = 1;
-	break;
     case FCAST: 
 	strcpy(title, _("gretl: forecast"));
 	sprintf(query, _("Starting obs (min = %s)\n"
@@ -334,6 +322,15 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
     edit_dialog(title, query, defstr, 1,
 		_(" Apply "), okfunc, mydata, 
 		_(" Cancel "), NULL, NULL, action, varclick);   
+}
+
+/* ........................................................... */
+
+void add_omit_callback (gpointer data, guint action, GtkWidget *widget)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    simple_selection ("gretl: model tests", "Apply", do_add_omit, action, vwin);
 }
 
 /* ........................................................... */

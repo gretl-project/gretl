@@ -1264,21 +1264,22 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-void do_add_omit (GtkWidget *widget, dialog_t *ddata)
+void do_add_omit (GtkWidget *widget, gpointer p)
 {
-    windata_t *mydata = ddata->data;
+    selector *sr = (selector *) p;
+    windata_t *vwin = sr->data;
     char *edttext;
     PRN *prn;
     char title[26];
     MODEL *orig, *pmod;
     gint err;
 
-    orig = mydata->data;
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    orig = vwin->data;
+    edttext = sr->cmdlist;
     if (*edttext == '\0') return;
     
     clear(line, MAXLEN);
-    if (ddata->code == ADD) 
+    if (sr->code == ADD) 
         sprintf(line, "addto %d %s", orig->ID, edttext);
     else 
         sprintf(line, "omitfrom %d %s", orig->ID, edttext);
@@ -1292,7 +1293,7 @@ void do_add_omit (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    if (ddata->code == ADD) 
+    if (sr->code == ADD) 
         err = auxreg(command.list, orig, pmod, &model_count, 
                      &Z, datainfo, AUX_ADD, prn, NULL);
     else 
@@ -1713,12 +1714,12 @@ void do_model (GtkWidget *widget, gpointer p)
     int order, err = 0, action;
     double rho;
     MODEL *pmod = NULL;
-    selector *ddata = (selector *) p;  
+    selector *sr = (selector *) p;  
 
-    action = ddata->code;
+    action = sr->code;
     strcpy(estimator, commands[action]);
 
-    edttext = ddata->cmdlist;    
+    edttext = sr->cmdlist;    
     if (*edttext == '\0') return;
 
     clear(line, MAXLEN);

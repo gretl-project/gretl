@@ -66,7 +66,7 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata);
 
 void do_forecast (GtkWidget *widget, dialog_t *ddata);
 
-void do_add_omit (GtkWidget *widget, dialog_t *ddata);
+void do_add_omit (GtkWidget *widget, gpointer p);
 
 void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget);
 
