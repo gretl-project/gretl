@@ -794,11 +794,14 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    if (err) gui_errmsg(err);
-    else if (ddata->code == CORRGM) 
-	graphmenu_state(TRUE);
-
-    view_buffer(prn, hsize, vsize, title, ddata->code, view_items);
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	if (ddata->code == CORRGM) 
+	    graphmenu_state(TRUE);
+	view_buffer(prn, hsize, vsize, title, ddata->code, view_items);
+    }
 }
 
 /* ........................................................... */

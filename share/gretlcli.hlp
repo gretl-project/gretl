@@ -930,9 +930,9 @@ for the variable named xvar.
 shell
 @Utilities
 Usage:		! [shell command]
-A "!" at the beginning of an ESL command line is interpreted as an escape
-to the user's shell.  Thus arbitrary shell commands can be excuted from
-within ESL.
+A "!" at the beginning of an gretl command line is interpreted as an escape
+to the user's shell.  Thus arbitrary shell commands can be executed from
+within gretl.
 
 #
 sim

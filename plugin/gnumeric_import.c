@@ -71,8 +71,10 @@ static void gsheet_init (gsheet *sheet)
 static void gsheet_free (gsheet *sheet)
 {
     int i;
+    int rows = sheet->maxrow + 2 - sheet->startrow;
+    int cols = sheet->maxcol + 2 - sheet->startcol;
 
-    for (i=0; i<=sheet->maxcol; i++) {
+    for (i=0; i<cols; i++) {
 	if (sheet->varname) 
 	    free(sheet->varname[i]);
 	if (sheet->Z)
@@ -80,7 +82,7 @@ static void gsheet_free (gsheet *sheet)
     }
 
     if (sheet->label) { 
-	for (i=0; i<=sheet->maxrow; i++) 
+	for (i=0; i<rows; i++) 
 	    free(sheet->label[i]);
 	free(sheet->label);
     }
@@ -501,12 +503,6 @@ void gsheet_menu_cancel (GtkWidget *w, gbook *book)
 }
 
 static 
-void gsheet_menu_quit (GtkWidget *w, gbook *book)
-{
-    gtk_main_quit();
-}
-
-static 
 void gbook_get_startcol (GtkWidget *w, gbook *book)
 {
     book->startcol = gtk_spin_button_get_value_as_int
@@ -529,7 +525,7 @@ static void gsheet_menu (gbook *book, int multisheet)
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(w), "gretl: gnumeric import");
     gtk_signal_connect(GTK_OBJECT(w), "destroy",  
-		       GTK_SIGNAL_FUNC(gsheet_menu_quit), NULL);
+		       GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
 
     vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
@@ -594,7 +590,7 @@ static void gsheet_menu (gbook *book, int multisheet)
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 5);
 
     gtk_container_add(GTK_CONTAINER(w), vbox);
-    
+
     gtk_widget_show_all(w);
     gtk_main();
 }

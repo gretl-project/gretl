@@ -490,7 +490,7 @@ int coint (const int order, const LIST list, double ***pZ,
  * Carries out and prints the results of the Augmented Dickey-Fuller test for 
  * a unit root.
  *
- * Returns: 0 on successful completion.
+ * Returns: 0 on successful completion, non-zero on error.
  *
  */
 
@@ -542,6 +542,8 @@ int adf_test (const int order, const int varno, double ***pZ,
     adflist[2] = _lagvarnum(varno, 1, pdinfo);
     adflist[3] = 0;
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
+    if (adf_model.errcode)
+	return adf_model.errcode;
     DFt = adf_model.coeff[1] / adf_model.sderr[1];
     T = adf_model.nobs;
     row = (T > 500)? 5 : (T > 450)? 4 : (T > 240)? 3 : (T > 90)? 2 : 
@@ -589,6 +591,8 @@ int adf_test (const int order, const int varno, double ***pZ,
     }
     /*  printlist(adflist); */
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
+    if (adf_model.errcode)
+	return adf_model.errcode;
     adf_model.aux = AUX_ADF;
     printmodel(&adf_model, pdinfo, prn);
     essu = adf_model.ess;
@@ -601,6 +605,8 @@ int adf_test (const int order, const int varno, double ***pZ,
 	shortlist[2+i] = adflist[4+i];
     /*  printlist(shortlist); */
     adf_model = lsq(shortlist, pZ, pdinfo, OLS, 0, 0.0);
+    if (adf_model.errcode)
+	return adf_model.errcode;	
     F = (adf_model.ess - essu) * (T - k)/(2 * essu);
     clear_model(&adf_model, NULL, NULL, pdinfo);
 
@@ -630,6 +636,7 @@ int adf_test (const int order, const int varno, double ***pZ,
     free(adflist);
     free(shortlist);
     dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
+
     return 0;
 }
 

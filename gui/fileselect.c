@@ -465,7 +465,9 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     if (action == OPEN_DATA || action == OPEN_CSV || 
 	action == OPEN_BOX || action == OPEN_GNUMERIC) {
 	strcpy(trydatfile, fname);
+	gtk_widget_destroy(GTK_WIDGET(fs));  
 	verify_open_data(NULL);
+	return;
     }
     else if (action == OPEN_SCRIPT) {
 	int spos;

@@ -1375,7 +1375,10 @@ static int get_signif (double *x, int n)
 	s = strlen(numstr) - 1;
 	for (j=s; j>0; j--) {
 	    if (numstr[j] == '0') s--;
-	    else if (numstr[j] == '.') continue;
+	    else if (numstr[j] == '.') {
+		if (xx < 10000) break;
+		else continue;
+	    }
 	    else break;
 	}
 	if (s > smax) smax = s;

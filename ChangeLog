@@ -1,6 +1,8 @@
 version 0.992
 - bounds checking for critical values look-up; also add this
-  as a regular gretlcli command, "critical".
+  as a regular gretlcli command, "critical"
+- add sanity checks for regression commands and ADF test
+- add a (rudimentary) Gnumeric workbook importer
 
 03/20/2002 version 0.991
 - fix several "out of bounds" bugs kindly reported by Tavis Barr
