@@ -205,8 +205,8 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     pmod->arinfo->rho[1] = pmod->rho_in = rho;
 
     if (pmod->ifc) {
-	pmod->coeff[pmod->ncoeff-1] /= (1.0 - rho);
-	pmod->sderr[pmod->ncoeff-1] /= (1.0 - rho);
+	pmod->coeff[0] /= (1.0 - rho);
+	pmod->sderr[0] /= (1.0 - rho);
     }
 
     pmod->uhat[pmod->t1] = NADBL;
@@ -214,13 +214,14 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 
     for (t=pmod->t1+1; t<=pmod->t2; t++) {
 	x = Z[yno][t] - rho * Z[yno][t-1];
-	for (i=0; i<pmod->ncoeff - pmod->ifc; i++) {
+	for (i=pmod->ifc; i<pmod->ncoeff; i++) {
 	    x -= pmod->coeff[i] * 
 		(Z[pmod->list[i+2]][t] - 
 		 rho * Z[pmod->list[i+2]][t-1]);
 	}
-	if (pmod->ifc) 
-	    x -= (1 - rho) * pmod->coeff[pmod->ncoeff-1];
+	if (pmod->ifc) {
+	    x -= (1 - rho) * pmod->coeff[0];
+	}
 	pmod->uhat[t] = x;
 	pmod->yhat[t] = Z[yno][t] - x;
     }
@@ -403,7 +404,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* if regressor list contains a constant, place it first */
     i = _hasconst(mdl.list);
-    if (i > 1) mdl.ifc = 1; 
+    mdl.ifc = (i > 1);
     if (i > 2) rearrange_list(mdl.list);
 
     /* check for presence of lagged dependent variable */
@@ -1402,6 +1403,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     clear_model(&corc_model, pdinfo);
 
     *toprho = rho;
+
     return 0;
 }
 
@@ -1603,8 +1605,8 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     tsls.rsq = corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
 		       yhat + tsls.t1);
     tsls.adjrsq = 
-	1 - ((1 - tsls.rsq)*(tsls.nobs - 1)/tsls.dfd);
-    tsls.fstt = tsls.rsq*tsls.dfd/(tsls.dfn*(1-tsls.rsq));
+	1 - ((1 - tsls.rsq) * (tsls.nobs - 1) / tsls.dfd);
+    tsls.fstt = tsls.rsq * tsls.dfd / (tsls.dfn * (1-tsls.rsq));
     gretl_aic_etc(&tsls);
     tsls.rho = rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
     tsls.dw = dwstat(0, &tsls, *pZ);
@@ -1665,16 +1667,20 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     }
 
     free(tmplist);
-    tmplist = malloc((check + 2) * sizeof(int));
+    tmplist = malloc((check + 2) * sizeof *tmplist);
     if (tmplist == NULL) return E_ALLOC;
+
     tmplist[0] = pdinfo->v - v - 1;
-    for (i=1; i<=tmplist[0]; i++) 
+    for (i=1; i<=tmplist[0]; i++) {
 	tmplist[i] = i + v;
+    }
+
     check = _addtolist(pmod->list, tmplist, &list, pdinfo, 999);
     if (check && check != E_VARCHANGE) {
 	free(tmplist);
 	return check;
     }
+
     list[1] = v;
 
     aux = lsq(list, pZ, pdinfo, OLS, 0, 0.);
@@ -1747,11 +1753,11 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     /* get fitted value from last regression and process */
     for (t=hsk.t1; t<=hsk.t2; t++) {
 	zz = (*pZ)[pdinfo->v - 1][t];
-	(*pZ)[pdinfo->v - 1][t] = 1.0/sqrt(exp(zz));
+	(*pZ)[pdinfo->v - 1][t] = 1.0 / sqrt(exp(zz));
     }    
 
     /* prepare to run weighted least squares */
-    hsklist = malloc((lo + 2) * sizeof(int));
+    hsklist = malloc((lo + 2) * sizeof *hsklist);
     if (hsklist == NULL) {
 	hsk.errcode = E_ALLOC;
 	free(uhat1);
@@ -2121,7 +2127,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 {
     int arvars = list[0] + 1;
     int i, j, t, v = pdinfo->v;
-    int ifc;
+    int ifc = 0;
     int *arlist;
     double rho = 0.0;
     double ess, essdiff = 1.0;
@@ -2457,7 +2463,8 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     } /* end "ess changing" loop */
 
     for (i=0; i<=reglist[0]; i++) ar.list[i] = reglist[i];
-    ar.ifc = _hasconst(reglist);
+    i = _hasconst(reglist);
+    if (i > 1) ar.ifc = 1;
     if (ar.ifc) ar.dfn -= 1;
     ar.ci = AR;
 
@@ -2471,26 +2478,30 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     /* special computation of fitted values */
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
-	for (j=2; j<=reglist[0]; j++) 
+	for (j=2; j<=reglist[0]; j++) { 
 	    xx += ar.coeff[j-2] * (*pZ)[reglist[j]][t];
+	}
 	ar.uhat[t] = (*pZ)[yno][t] - xx;
-	for (j=1; j<=arlist[0]; j++)
-	    if (t - t1 >= arlist[j]) 
+	for (j=1; j<=arlist[0]; j++) {
+	    if (t - t1 >= arlist[j]) {
 		xx += rhomod.coeff[j-1] * ar.uhat[t - arlist[j]];
+	    }
+	}
 	ar.yhat[t] = xx;
     }
 
     for (t=t1; t<=t2; t++) { 
 	ar.uhat[t] = (*pZ)[yno][t] - ar.yhat[t];
     }
+
     ar.rsq = corrrsq(ar.nobs, &(*pZ)[reglist[1]][ar.t1], ar.yhat + ar.t1);
     ar.adjrsq = 1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
-    /*  ar.fstt = ar.rsq*ar.dfd/(ar.dfn*(1 - ar.rsq)); */
 
     /* special computation of TSS */
     xx = _esl_mean(ar.t1, ar.t2, (*pZ)[ryno]);
-    for (t=ar.t1; t<=ar.t2; t++)
+    for (t=ar.t1; t<=ar.t2; t++) {
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
+    }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
     gretl_aic_etc(&ar);
     ar.dw = dwstat(p, &ar, *pZ);
@@ -2712,11 +2723,13 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z)
 	    if (na(Z[yno][t])) {
 		m--;
 		continue;
-	    } else sum += Z[yno][t]; 
+	    } else {
+		sum += Z[yno][t]; 
+	    }
 	}
     }
 
-    return sum/m;
+    return sum / m;
 }
 
 /* .............................................................  */
@@ -2738,10 +2751,11 @@ static double wt_dummy_stddev (const MODEL *pmod, double **Z)
     for (t=pmod->t1; t<=pmod->t2; t++) {
         xx = Z[yno][t] - xbar;
         if (floatneq(Z[pmod->nwt][t], 0.0) && !na(Z[yno][t]))
-	    sumsq += xx*xx;
+	    sumsq += xx * xx;
     }
 
-    sumsq = (m > 1)? sumsq/(m-1) : 0.0;
+    sumsq = (m > 1)? sumsq / (m-1) : 0.0;
+
     if (sumsq >= 0) return sqrt(sumsq);
     else return NADBL;
 }

@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "gpt_control.h"
+#include "session.h"
 
 #ifdef GNUPLOT_PNG
 # include <gdk-pixbuf/gdk-pixbuf.h>

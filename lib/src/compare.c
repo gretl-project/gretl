@@ -33,7 +33,7 @@ static int _justreplaced (int i, const DATAINFO *pdinfo,
 
 /* ........................................................... */
 
-int _addtolist (const int *oldlist, const int *addvars, int **pnewlist,
+int _addtolist (const int *oldlist, const int *addvars, int **plist,
 		const DATAINFO *pdinfo, int model_count)
 /* Adds specified independent variables to a specified
    list, forming newlist.  The first element of addvars
@@ -41,12 +41,13 @@ int _addtolist (const int *oldlist, const int *addvars, int **pnewlist,
    elements are the ID numbers of the variables to be added.
 */
 {
-    int i, j, k, nadd = addvars[0], match; 
+    int i, j, k, match;
+    const int nadd = addvars[0];
 
-    *pnewlist = malloc((oldlist[0] + nadd + 1) * sizeof(int));
-    if (*pnewlist == NULL) return E_ALLOC;
+    *plist = malloc((oldlist[0] + nadd + 1) * sizeof **plist);
+    if (*plist == NULL) return E_ALLOC;
 
-    for (i=0; i<=oldlist[0]; i++) (*pnewlist)[i] = oldlist[i];
+    for (i=0; i<=oldlist[0]; i++) (*plist)[i] = oldlist[i];
     k = oldlist[0];
 
     for (i=1; i<=addvars[0]; i++) {
@@ -54,27 +55,31 @@ int _addtolist (const int *oldlist, const int *addvars, int **pnewlist,
 	for (j=1; j<=oldlist[0]; j++) {
 	    if (addvars[i] == oldlist[j]) {
 		/* a "new" var was already present */
-		free(*pnewlist);
+		free(*plist);
 		return E_ADDDUP;
 	    }
 	}
 	if (!match) {
-	    (*pnewlist)[0] += 1;
+	    (*plist)[0] += 1;
 	    k++;
-	    (*pnewlist)[k] = addvars[i];
+	    (*plist)[k] = addvars[i];
 	}
     }
 
-    if ((*pnewlist)[0] == oldlist[0]) 
+    if ((*plist)[0] == oldlist[0]) {
 	return E_NOADD;
-    if (_justreplaced(model_count, pdinfo, oldlist)) 
+    }
+
+    if (_justreplaced(model_count, pdinfo, oldlist)) {
 	return E_VARCHANGE;
+    }
+
     return 0;
 }
 
 /* ........................................................... */
 
-int _omitfromlist (int *list, const int *omitvars, int newlist[],
+int _omitfromlist (int *list, const int *omitvars, int *newlist,
 		   const DATAINFO *pdinfo, int model_count)
 /* Drops specified independent variables from a specified
    list, forming newlist.  The first element of omitvars
@@ -106,11 +111,16 @@ int _omitfromlist (int *list, const int *omitvars, int newlist[],
     }
     newlist[0] = k;
 
-    if (newlist[0] == list[0]) /* no vars were omitted */
+    if (newlist[0] == list[0]) {
+	/* no vars were omitted */
 	return E_NOOMIT; 
-    if (_justreplaced(model_count, pdinfo, newlist)) 
-	return E_VARCHANGE; /* values of one or more vars to be
-				omitted have changed */
+    }
+
+    if (_justreplaced(model_count, pdinfo, newlist)) {
+	/* values of one or more vars to omit have changed */
+	return E_VARCHANGE; 
+    }
+
     return 0;
 }
 
@@ -326,17 +336,17 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    double ***pZ, DATAINFO *pdinfo, int aux_code, 
 	    PRN *prn, GRETLTEST *test)
 {
-    COMPARE add;             
-    int *newlist, *tmplist = NULL;
+    COMPARE add;  
     MODEL aux;
-    int i, t, n = pdinfo->n, orig_nvar = pdinfo->v; 
-    int m = *model_count, pos = 0, listlen; 
+    int *newlist, *tmplist = NULL;
+    int i, j, t, listlen, pos = 0, m = *model_count;
+    const int n = pdinfo->n, orig_nvar = pdinfo->v; 
     double trsq = 0.0, rho = 0.0; 
     int newvars = 0, err = 0;
 
     if (orig->ci == TSLS || orig->ci == NLS) return E_NOTIMP;
 
-    /* temporarily impose the sample that was in force when the
+    /* temporarily re-impose the sample that was in force when the
        original model was estimated */
     exchange_smpl(orig, pdinfo);
 
@@ -344,20 +354,26 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
     /* was a specific list of vars to add passed in, or should we
        concoct one? (e.g. "lmtest") */
+
     if (addvars != NULL) {
+	/* specific list was given */
 	err = _addtolist(orig->list, addvars, &newlist, pdinfo, m);
     } else {
-	/* does the original list contain a constant? */
-	if (orig->ifc) listlen = orig->list[0] - 1;
-	else listlen = orig->list[0];
+	/* we should concoct one */
+	listlen = orig->list[0] - orig->ifc;
 	tmplist = malloc(listlen * sizeof *tmplist);
 	if (tmplist == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    tmplist[0] = listlen - 1;
-	    for (i=1; i<=tmplist[0]; i++) tmplist[i] = orig->list[i+1];
+	    j = 2;
+	    for (i=1; i<=tmplist[0]; i++) {
+		if (orig->list[j] == 0) j++;
+		tmplist[i] = orig->list[j++];
+	    }
 	    /* no cross-products yet */
-	    if (aux_code == AUX_SQ) { /* add squares of original variables */
+	    if (aux_code == AUX_SQ) { 
+		/* add squares of original variables */
 		newvars = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
 		if (newvars < 0) {
 		    fprintf(stderr, "gretl: generation of squares failed\n");
@@ -373,16 +389,17 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		    err = E_LOGS;
 		}
 	    }	    
-	    /* now construct an "addvars" list including all
-	       the vars that were just generated.  Use tmplist again. */
+	    /* now construct an "addvars" list including all the
+	       vars that were just generated -- re-use tmplist */
 	    if (!err) {
 		tmplist = realloc(tmplist, (newvars + 2) * sizeof *tmplist);
 		if (tmplist == NULL) {
 		    err = E_ALLOC;
 		} else {
 		    tmplist[0] = pdinfo->v - orig_nvar;
-		    for (i=1; i<=tmplist[0]; i++) 
+		    for (i=1; i<=tmplist[0]; i++) { 
 			tmplist[i] = i + orig_nvar - 1;
+		    }
 		    err = _addtolist(orig->list, tmplist, &newlist,
 				     pdinfo, m);
 		}
@@ -443,10 +460,12 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	if (dataset_add_vars(1, pZ, pdinfo)) {
 	    err = E_ALLOC;
 	} else {
-	    for (t=0; t<n; t++)
+	    for (t=0; t<n; t++) {
 		(*pZ)[pdinfo->v - 1][t] = NADBL;
-	    for (t=orig->t1; t<=orig->t2; t++)
+	    }
+	    for (t=orig->t1; t<=orig->t2; t++) {
 		(*pZ)[pdinfo->v - 1][t] = orig->uhat[t];
+	    }
 	    newlist[1] = pdinfo->v - 1;
 	    pdinfo->extra = 1;
 
