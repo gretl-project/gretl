@@ -17,17 +17,24 @@
  *
  */
 
+#define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
+                       c == POOLED || c == HCCM || c == HSK || \
+                       c == TSLS || c == LOGIT || c == PROBIT || \
+                       c == AR || c == VAR)
+
+#define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
+                        c == DIFF || c == LDIFF)
+
 typedef struct {
     GtkWidget *dlg;
     GtkWidget *varlist;
     GtkWidget *depvar;
-    GtkWidget *indepvars;
+    GtkWidget *rightvars;
     GtkWidget *default_check;
-    GtkWidget *extra_entry;
-    char cmdlist[MAXLEN];
-    int *default_var;
-    guint code;
+    GtkWidget *extra;
+    int code;
+    char *cmdlist;
 } new_dialog;
 
 void new_edit_dialog (const char *title, const char *oktxt, 
-		      void (*okfunc)(), guint cmdcode, int *list);
+		      void (*okfunc)(), guint cmdcode);

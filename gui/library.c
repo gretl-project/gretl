@@ -28,7 +28,7 @@
 #endif
 
 #include "htmlprint.h"
-#ifdef DIALOG_TEST
+#ifndef OLD_DIALOGS
 # include "fancy_dialog.h"
 #endif
 
@@ -1715,20 +1715,20 @@ void do_model (GtkWidget *widget, gpointer p)
     int order, err = 0, action;
     double rho;
     MODEL *pmod = NULL;
-#ifdef DIALOG_TEST
-    new_dialog *ddata = (new_dialog *) p;  
-#else
+#ifdef OLD_DIALOGS
     dialog_t *ddata = (dialog_t *) p;
+#else
+    new_dialog *ddata = (new_dialog *) p;  
 #endif
 
     action = ddata->code;
 
     strcpy(estimator, commands[action]);
 
-#ifdef DIALOG_TEST
-    edttext = ddata->cmdlist;
-#else
+#ifdef OLD_DIALOGS
     edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
+#else
+    edttext = ddata->cmdlist;    
 #endif
     if (*edttext == '\0') return;
 
@@ -2368,12 +2368,21 @@ void add_time (gpointer data, guint index, GtkWidget *widget)
 
 /* ......................................................... */
 
-void add_logs_etc (GtkWidget *widget, dialog_t *ddata)
+void add_logs_etc (GtkWidget *widget, gpointer p)
 {
     gint err = 0;
     char *edttext, msg[80];
+#ifdef OLD_DIALOGS
+    dialog_t *ddata = (dialog_t *) p;
+#else
+    new_dialog *ddata = (new_dialog *) p;
+#endif
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+#ifdef OLD_DIALOGS
+    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
+#else
+    edttext = ddata->cmdlist;
+#endif
     if (*edttext == '\0') return;
 
     line[0] = '\0';

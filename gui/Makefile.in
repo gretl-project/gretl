@@ -78,7 +78,8 @@ vpath %.c $(topsrc)/cli
 
 OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
-	webget.o calculator.o htmlprint.o guiprint.o boxplots.o
+	webget.o calculator.o htmlprint.o guiprint.o boxplots.o \
+	fancy_dialog.o
 
 $(PROG): $(OBJS)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(LIBS) $(INETLIB)

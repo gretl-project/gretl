@@ -118,7 +118,7 @@ void add_dummies (gpointer data, guint action, GtkWidget *widget);
 
 void add_time (gpointer data, guint index, GtkWidget *widget);
 
-void add_logs_etc (GtkWidget *widget, dialog_t *ddata);
+void add_logs_etc (GtkWidget *widget, gpointer p);
 
 int add_fit_resid (MODEL *pmod, const int code, const int undo);
 

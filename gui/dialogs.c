@@ -27,6 +27,10 @@
 extern const char *version_string;
 #endif
 
+#ifndef OLD_DIALOGS
+# include "fancy_dialog.h"
+#endif
+
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern void show_spreadsheet (DATAINFO *pdinfo);
@@ -319,6 +323,35 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 
 /* ........................................................... */
 
+#ifndef OLD_DIALOGS
+
+void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
+{
+    gchar title[26];
+    
+    switch (add_code) {
+    case LOGS:
+	strcpy(title, _("gretl: generate logs"));
+	break;
+    case LAGS:
+	strcpy(title, _("gretl: generate lags"));
+	break;	
+    case SQUARE:
+	strcpy(title, _("gretl: generate squares"));
+	break;
+    case DIFF:
+	strcpy(title, _("gretl: generate differences"));
+	break;
+    case LDIFF:
+	strcpy(title, _("gretl: log differences"));
+	break;
+
+    }
+    new_edit_dialog (title, _("Apply"), add_logs_etc, add_code);    
+}
+
+#else
+
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 {
     gchar *liststr, number[4], title[26], tmp[64];
@@ -360,6 +393,8 @@ void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 		 _(" Cancel "), NULL, NULL, add_code, 1);    
     free(liststr);
 }
+
+#endif /* OLD_DIALOGS */
 
 /* ........................................................... */
 
