@@ -31,6 +31,7 @@ sub unescape {
     $line =~ s/\\char95{}/_/g;
     $line =~ s/\\{/{/g;
     $line =~ s/\\}/}/g;
+    $line =~ s/\\&/&/g;
     $line =~ s/\\\$/\$/g;
 }
 

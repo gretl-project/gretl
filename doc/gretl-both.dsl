@@ -55,7 +55,7 @@
 ;; If #t, rules will be drawn before and after each Table.
 (define %table-rules%
   ;; Specify rules before and after an Table
-  #t)
+  #f)
 
 ;; If true, the URL of each ULink will appear in parenthesis after the 
 ;; text of the link. If the text of the link and the URL are identical, 
@@ -126,7 +126,7 @@
         (normalize "subtitle")
         (normalize "author")
         (normalize "date")))
-
+        
 (define %footnote-size-factor% 
   ;; When printing footnotes, the current font size is multiplied by the
   ;; '%footnote-size-factor%'.  Default 0.9
@@ -164,7 +164,7 @@
 (define %head-before-factor% 
   ;; The space before a title is calculated by multiplying the font size
   ;; used in the title by the '%head-before-factor%'.  Default 0.75
-  0.5)
+  0.4)
 
 (define %head-after-factor% 
   ;; The space after a title is calculated by multiplying the font size used
@@ -175,7 +175,7 @@
   ;; The '%block-sep%' is the vertical distance between
   ;; block elements (figures, tables, etc.)
   ;; Default (* %para-sep% 2.0)
-  (* %para-sep% 1.0))
+  (* %para-sep% 1.5))
 
 (define formal-object-float
   ;; If '#t', formal objects will float if floating is supported by the
