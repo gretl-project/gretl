@@ -76,7 +76,7 @@ SHELL = /bin/sh
 LIBTOOL = ../libtool
 PROG  = gretl_x11
 
-vpath %.c $(topsrc)/cli
+VPATH = $(topsrc)/gui2:$(topsrc)/cli
 
 SRCS = boxplots.c calculator.c callbacks.c console.c database.c \
 	datafiles.c dialogs.c fileselect.c gpt_control.c gretl.c \
