@@ -1275,7 +1275,7 @@ int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo,
  */
 
 int means_test (LIST list, double **Z, const DATAINFO *pdinfo, 
-		int vareq, PRN *prn)
+		int vardiff, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
     double *x = NULL, *y = NULL;
@@ -1288,6 +1288,7 @@ int means_test (LIST list, double **Z, const DATAINFO *pdinfo,
 
     n1 = ztox(list[1], x, Z, pdinfo);
     n2 = ztox(list[2], y, Z, pdinfo);
+
     if (n1 == 0 || n2 == 0) {
 	pputs(prn, _("Sample range has no valid observations."));
 	free(x); free(y);
@@ -1304,7 +1305,7 @@ int means_test (LIST list, double **Z, const DATAINFO *pdinfo,
     moments(0, n2-1, y, &m2, &s2, &skew, &kurt, 1);
     mdiff = m1 - m2;
 
-    if (vareq) {
+    if (!vardiff) {
 	double sp2;
 
 	sp2 = ((n1-1)*s1*s1 + (n2-1)*s2*s2) / df;
@@ -1316,7 +1317,11 @@ int means_test (LIST list, double **Z, const DATAINFO *pdinfo,
     pval = tprob(t, df);
 
     pprintf(prn, _("\nEquality of means test "
-	    "(assuming %s variances)\n\n"), (vareq)? _("equal") : _("unequal"));
+	    "(assuming %s variances)\n\n"), (vardiff)? _("unequal") : _("equal"));
+    pprintf(prn, "   %s: ", pdinfo->varname[list[1]]);
+    pprintf(prn, _("Number of observations = %d\n"), n1);
+    pprintf(prn, "   %s: ", pdinfo->varname[list[2]]);
+    pprintf(prn, _("Number of observations = %d\n"), n2);
     pprintf(prn, _("   Difference between sample means = %g - %g = %g\n"), 
 	    m1, m2, mdiff);
     pputs(prn, _("   Null hypothesis: The two population means are the same.\n"));

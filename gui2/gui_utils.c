@@ -1316,14 +1316,28 @@ static void create_source (windata_t *vwin, GtkSourceBuffer **buf,
 {
     GtkSourceLanguagesManager *lm;
     GtkSourceBuffer *sbuf;
+    GtkSourceTagStyle *tagstyle;
+    GdkColor blue;
+
+    blue.green = blue.red = 0;
+    blue.blue = 65535.0;
 
     lm = gtk_source_languages_manager_new ();
+    tagstyle = gtk_source_tag_style_new ();
     
-    sbuf = GTK_SOURCE_BUFFER (gtk_source_buffer_new (NULL));
+    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
     g_object_ref (lm);
     g_object_set_data_full (G_OBJECT (sbuf), "languages-manager",
 			    lm, (GDestroyNotify) g_object_unref); 
-    g_object_unref (lm); /* ?? */
+    g_object_unref (lm); 
+
+    tagstyle->mask = GTK_SOURCE_TAG_STYLE_USE_FOREGROUND;
+    tagstyle->foreground = blue;
+    g_object_set_data_full (G_OBJECT (sbuf), "tag-style",
+			    tagstyle, 
+			    (GDestroyNotify) gtk_source_tag_style_free); 
+    gtk_source_buffer_set_bracket_match_style(sbuf, tagstyle);
+    gtk_source_buffer_set_check_brackets(sbuf, TRUE);
 
     vwin->w = gtk_source_view_new_with_buffer(sbuf);
     *buf = sbuf;
@@ -1579,8 +1593,8 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf,
     manager = g_object_get_data (G_OBJECT (sbuf), "languages-manager");
 
     language = 
-	gtk_source_languages_manager_get_language_from_mime_type (manager,
-								  "application/x-gretlsession");
+	gtk_source_languages_manager_get_language_from_mime_type 
+	(manager, "application/x-gretlsession");
 
     if (language == NULL) {
 	g_object_set (G_OBJECT(sbuf), "highlight", FALSE, NULL);
@@ -2326,9 +2340,9 @@ int validate_varname (const char *varname)
 	errbox(errtext);
 	return 1;
     }
-    if (!(isalpha(varname[0]))) {
+    if (!(isalpha(*varname))) {
 	sprintf(errtext, _("First char of name ('%c') is bad\n"
-	       "(first must be alphabetical)"), varname[0]);
+	       "(first must be alphabetical)"), *varname);
 	errbox(errtext);
 	return 1;
     }

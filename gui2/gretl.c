@@ -1976,14 +1976,18 @@ static void show_calc (void)
 
 /* ........................................................... */
 
+#ifdef SELECT_EDITOR
+
 static void show_edit (void)
 {
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
     create_child_process(editor, NULL);
-#else
+# else
     gretl_fork(editor, NULL);
-#endif 
+# endif 
 }
+
+#endif /* SELECT_EDITOR */
 
 /* ........................................................... */
 
@@ -2083,6 +2087,11 @@ static GtkWidget *image_button_new (GdkPixbuf *pix, void (*toolfunc)())
     return button;
 }
 
+static void new_script_callback (void)
+{
+    do_new_script(NULL, 0, NULL);
+}
+
 /* ........................................................... */
 
 static void make_toolbar (GtkWidget *w, GtkWidget *box)
@@ -2092,7 +2101,11 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     int i;
     const char *toolstrings[] = {
 	N_("launch calculator"), 
+#ifdef SELECT_EDITOR
 	N_("launch editor"), 
+#else
+	N_("new script"), 
+#endif
 	N_("open gretl console"),
 	N_("session icon view"),
 	N_("gretl website"), 
@@ -2125,7 +2138,11 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;
 	case 1:
 	    toolxpm = mini_edit_xpm;
+#ifdef SELECT_EDITOR
 	    toolfunc = show_edit;
+#else
+	    toolfunc = new_script_callback;
+#endif
 	    break;
 	case 2:
 	    toolxpm = mini_sh_xpm;

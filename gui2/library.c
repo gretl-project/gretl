@@ -893,10 +893,10 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	err = spearman(command.list, Z, datainfo, 1, prn);
 	break;
     case MEANTEST:
-	err = means_test(command.list, Z, datainfo, 1, prn);;
+	err = means_test(command.list, Z, datainfo, 1, prn);
 	break;
     case MEANTEST2:
-	err = means_test(command.list, Z, datainfo, 0, prn);;
+	err = means_test(command.list, Z, datainfo, 0, prn);
 	break;
     case VARTEST:
 	err = vars_test(command.list, Z, datainfo, prn);
