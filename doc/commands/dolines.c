@@ -90,11 +90,11 @@ static int format_buf (char *buf)
 	q = p;
 	strncat(line, p, MAXLEN);
 	trim(line);
+	out += strlen(line);
 	p = q + strlen(line);
 	if (!blank_string(line)) {
 	    printf("%s\n", (*line == ' ')? line + 1 : line);
 	}
-	out += strlen(line);
     }
     
     return 0;
@@ -113,7 +113,7 @@ int main (void)
 { 
     char buf[8096]; 
     char line[128];
-    int blank = 0, inpara = 0;
+    int blank = 0, inpara = 0, last = 0;
     char *p;
 
     while (fgets(line, sizeof line, stdin)) {
@@ -126,16 +126,20 @@ int main (void)
 	    *buf = 0;
 	    inpara = 1;
 	}
+
 	if ((p = strstr(line, "[/PARA]"))) {
 	    strip_marker(p, "[/PARA]");
 	    strcat(buf, line);
 	    format_buf(buf);
 	    inpara = 0;
+	    last = 1;
+	} else {
+	    last = 0;
 	}
 	
 	if (inpara) {
 	    strcat(buf, line);
-	} else {
+	} else if (!last) {
 	    /* alow only single blank lines in output */
 	    if (blank_string(line)) blank++;
 	    if (blank == 2) {

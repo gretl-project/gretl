@@ -31,7 +31,7 @@ test: skeleton.xml formatter gretlman.xsl gretltxt.xsl
 
 # a sample: the ols help
 sample: formatter reflow test_command.xml gretlman.xsl gretltxt.xsl
-	./formatter test_command.xml 
+	./formatter inprogress.xml # test_command.xml 
 	./reflow < commands.txt > commands.hlp
 
 clean:

@@ -100,12 +100,62 @@
   <emphasis><xsl:apply-templates/></emphasis>
 </xsl:template>
 
+<xsl:template match="book">
+  <citetitle><xsl:apply-templates/></citetitle>
+</xsl:template>
+
+<xsl:template match="quote">
+  <quote><xsl:apply-templates/></quote>
+</xsl:template>
+
+<xsl:template match="filename">
+  <filename><xsl:apply-templates/></filename>
+</xsl:template>
+
+<xsl:template match="function">
+  <function><xsl:apply-templates/></function>
+</xsl:template>
+
+<xsl:template match="equation">
+ <xsl:choose>
+  <xsl:when test="(@status='display')">
+   <informalequation>
+    <alt role="tex"><xsl:value-of select="@tex"/></alt>
+    <graphic fileref="figures/{@graphic}"/>
+   </informalequation>
+  </xsl:when>
+  <xsl:otherwise>
+   <inlineequation>
+    <alt role="tex"><xsl:value-of select="@tex"/></alt> 
+    <inlinemediaobject>
+     <imageobject>
+      <imagedata align="center" fileref="figures/{@graphic}"/>
+     </imageobject>
+    </inlinemediaobject>
+   </inlineequation>
+  </xsl:otherwise>
+ </xsl:choose>
+</xsl:template>
+
 <xsl:template match="para">
   <xsl:text>&#xa;</xsl:text>
   <para>
     <xsl:apply-templates/>
   </para>
   <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="code">
+<programlisting>
+<xsl:apply-templates/></programlisting>
+</xsl:template>
+
+<xsl:template match="menu-path">
+ <para>Menu path: <xsl:apply-templates/></para>
+</xsl:template>
+
+<xsl:template match="other-access">
+  <para>Other access: <xsl:apply-templates/></para>
 </xsl:template>
 
 </xsl:stylesheet>

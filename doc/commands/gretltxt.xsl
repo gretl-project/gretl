@@ -2,12 +2,6 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
-<!-- doesn't work as intended
-<xsl:template match = "/">
-<xsl:value-of select = "translate(.,'&#x2013;','-')"/>
-</xsl:template> 
--->
-
 <xsl:template match="commandlist"> 
  <xsl:apply-templates/> 
 </xsl:template>
@@ -95,9 +89,41 @@ Examples:   </xsl:when>
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="book">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="quote">
+  <xsl:text>"</xsl:text><xsl:apply-templates/><xsl:text>"</xsl:text>
+</xsl:template>
+
+<xsl:template match="filename">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="function">
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="equation">
+<xsl:if test="(@status='display')">
+<xsl:text>[/PARA]&#xa;&#xa;&#xa;  </xsl:text>
+</xsl:if>
+<xsl:value-of select="@ascii"/>
+<xsl:if test="(@status='display')">
+<xsl:text>&#xa;&#xa;&#xa;[PARA]</xsl:text>
+</xsl:if>
+</xsl:template>
+
 <xsl:template match="para">
   <xsl:text>&#xa;[PARA]</xsl:text>
   <xsl:apply-templates/>[/PARA]
+</xsl:template>
+
+<xsl:template match="code">
+  <xsl:text>&#xa;&#xa;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>&#xa;&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="menu-path">
@@ -105,7 +131,7 @@ Menu path:   <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="other-access">
-Oher access: <xsl:apply-templates/>
+Other access: <xsl:apply-templates/>
 </xsl:template>
 
 </xsl:stylesheet>

@@ -36,7 +36,7 @@
 <!ELEMENT optargs      (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
-<!ELEMENT description  (para)+>
+<!ELEMENT description  (para, code)+>
 <!ELEMENT option-notes (para)+>
 <!ELEMENT addendum     (para)+>
 <!ELEMENT gui-access   (menu-path, other-access?)>
@@ -52,7 +52,10 @@
 <!ELEMENT other-access (#PCDATA)>
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
-                literal | emphasis | cmd)*>
+                literal | emphasis | book | quote | filename |
+                function | cmd)*>
+
+<!ELEMENT code (#PCDATA)>
 
 <!-- stuff that can go into paras -->
 
@@ -68,6 +71,10 @@
 <!ELEMENT program  (#PCDATA)>
 <!ELEMENT literal  (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
+<!ELEMENT book     (#PCDATA)>
+<!ELEMENT quote    (#PCDATA)>
+<!ELEMENT filename (#PCDATA)>
+<!ELEMENT function (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>
 <!ELEMENT mathvar  (#PCDATA | sub | super)*>
 <!ELEMENT sub      (#PCDATA)>
