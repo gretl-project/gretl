@@ -69,91 +69,16 @@ do_hurst_plot (int n, double **Z, double *yhat, const char *vname)
 
 #define log_2(x) (log(x) / LOG2)
 
-#ifdef USE_DMA
-
-static int dma_get_depth (int N)
-{
-    int n, depth = 0;
-
-    for (n=MINSAMP; n<N-1; n += 8) {
-	depth++;
-    }
-
-    return depth;
-}
-
-static void calc_xma (double *xma, const double *x, int N, int n)
-{
-    int t, k;
-
-    for (t=n-1; t<N; t++) {
-	xma[t] = 0.0;
-	for (k=0; k<n; k++) {
-	    xma[t] += x[t - k];
-	}
-	xma[t] /= n;
-    }
-}
-
-static double 
-calc_sigma_dma (const double *x, double *xma, int N, int n)
-{
-    double sdma = 0.0;
-    int t;
-
-    calc_xma(xma, x, N, n);
-
-    for (t=n-1; t<N; t++) {
-	double d = x[t] - xma[t];
-	
-	sdma += d * d;
-    }
-
-    return sqrt(sdma / (N - n));
-}
-
-static int hurst_calc_dma (const double *x, int N, int depth,
-			   double **Z, PRN *prn)
-{
-    double *xma;
-    int i, n;
-
-    xma = malloc(N * sizeof *xma);
-    if (xma == NULL) return 1;
-
-    n = 8;
-    for (i=0; i<depth; i++) {
-	double RS = calc_sigma_dma(x, xma, N, n);
-	
-	Z[1][i] = log_2(RS);
-	Z[2][i] = log_2(n);
-
-	pprintf(prn, "%4d %10.5g %10.5g %10.5g\n", n, RS, Z[2][i], Z[1][i]);
-
-	n += 8;
-    }
-
-    free(xma);
-
-    return 0;
-}
-
-#endif /* USE_DMA */
-
 static double get_xbar (const double *x, int n)
 {
     double xsum = 0.0;
-    int i, m = n;
+    int i;
 
     for (i=0; i<n; i++) {
-	if (na(x[i])) {
-	    m--;
-	} else {
-	    xsum += x[i];
-	}
+	xsum += x[i];
     }
 
-    return xsum / m;
+    return xsum / n;
 }
 
 static double cum_range (const double *x, int n, double xbar)
@@ -164,9 +89,6 @@ static double cum_range (const double *x, int n, double xbar)
     w = wmin = wmax = 0.0;
 
     for (i=1; i<n; i++) {
-	if (na(x[i-1])) {
-	    continue;
-	}
 	w += x[i-1] - xbar;
 	if (w > wmax) {
 	    wmax = w;
@@ -181,19 +103,15 @@ static double cum_range (const double *x, int n, double xbar)
 static double stdev (const double *x, int n, double xbar)
 {
     double dev, ssx = 0.0;
-    int i, m = n;
+    int i;
 
     for (i=0; i<n; i++) {
-	if (na(x[i])) {
-	    m--;
-	} else {
-	    dev = x[i] - xbar;
-	    ssx += dev * dev;
-	}
+	dev = x[i] - xbar;
+	ssx += dev * dev;
     }
 
     if (ssx > 0.0) {
-	dev = sqrt(ssx / m);
+	dev = sqrt(ssx / n);
     } else {
 	dev = 0.0;
     }
@@ -206,10 +124,6 @@ static int hurst_calc (const double *x, int n, int depth,
 {
     int m, i, j;
 
-# if HDEBUG
-    fprintf(stderr, "\nmax depth = %d\n", depth);
-# endif
-
     pprintf(prn, "%5s%11s%11s%11s\n", "Size", "R/S(avg)",
 	    "log(Size)", "log(R/S)");
 
@@ -217,10 +131,10 @@ static int hurst_calc (const double *x, int n, int depth,
 	double RS = 0.0;
 	int nsub = n / m;
 
-# if HDEBUG
+#if HDEBUG
 	fprintf(stderr, "nsub = %d\n", nsub);
 	fprintf(stderr, "calculating at m = %d...\n", m);
-# endif
+#endif
 
 	for (j=0; j<nsub; j++) {
 	    double xbar, r, s;
@@ -228,10 +142,10 @@ static int hurst_calc (const double *x, int n, int depth,
 	    xbar = get_xbar(x + j*m, m);
 	    r = cum_range(x + j*m, m, xbar);
 	    s = stdev(x + j*m, m, xbar);
-# if HDEBUG
+#if HDEBUG
 	    fprintf(stderr, "range x + %d (%d) = %g\n", j*m, m, r);
 	    fprintf(stderr, "stdev x + %d (%d) = %g\n", j*m, m, s);
-# endif
+#endif
 	    RS += r / s;
 	}
 
@@ -281,7 +195,8 @@ static int h_adjust_t1t2 (int v, const double **Z, int *t1, int *t2)
 
     for (t=t1min; t<t2max; t++) {
 	if (na(Z[v][t])) {
-	    miss++;
+	    miss = 1;
+	    break;
 	}
     }
 
@@ -305,21 +220,21 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 
     missing = h_adjust_t1t2(vnum, Z, &t1, &t2);
 
-    T = t2 - t1 + 1;
-
-    if (T - missing < 96) {
-	pputs(prn, _("Sample is too small for Hurst exponent\n"));
-	errmsg(err, prn);
+    if (missing) {
+	pputs(prn, _("There were missing data values"));
+	pputc(prn, '\n');
 	return 1;
-    } else if (missing) {
-	pputs(prn, _("Warning: there were missing values\n"));
     }
 
-#ifdef USE_DMA
-    k = dma_get_depth(T);
-#else
+    T = t2 - t1 + 1;
+
+    if (T < 96) {
+	pputs(prn, _("Sample is too small for Hurst exponent"));
+	pputc(prn, '\n');
+	return 1;
+    }
+
     k = get_depth(T);
-#endif
 
     hinfo = create_new_dataset(&hZ, 3, k, 0);
     if (hinfo == NULL) return E_ALLOC;
@@ -330,12 +245,8 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
     pputs(prn, _("(logs are to base 2)"));
     pputs(prn, "\n\n");
 
-#ifdef USE_DMA
-    hurst_calc_dma(Z[vnum] + t1, T, k, hZ, prn);
-#else
     /* do the rescaled range calculations */
     hurst_calc(Z[vnum] + t1, T, k, hZ, prn);
-#endif
 
     strcpy(hinfo->varname[1], "RSavg");
     strcpy(hinfo->varname[2], "size");

@@ -177,11 +177,12 @@ int model_command_init (char *line, CMD *cmd, int ID)
     }
 
     mstack = mstack_from_model_id(ID);
+
     if (mstack == NULL) {
 	mstack = add_model_stack(ID);
-    }
-    if (mstack == NULL) {
-	return 1;
+	if (mstack == NULL) {
+	    return 1;
+	}
     }
 
     if (bufopen(&echo)) {

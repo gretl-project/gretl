@@ -570,18 +570,26 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
 
 int calculate_criteria (double *x, double ess, int nobs, int ncoeff)
 {
-    if (na(ess) || ess < 0.0 || ncoeff < 1 || nobs <= ncoeff) {
+    if (na(ess) || ess <= 0.0 || ncoeff < 1 || nobs <= ncoeff) {
 	x[C_AIC] = NADBL;
 	x[C_BIC] = NADBL;
 
 	return 1;
     } else {
 	const double ln2pi1 = 2.837877066409345;
-	double ll1 = -.5 * nobs * log(ess);
-	double ll = (-.5 * nobs) * (ln2pi1 - log((double) nobs)) + ll1;
+	double ll;
 
-	x[C_AIC] = -2.0 * ll + 2 * ncoeff;
-	x[C_BIC] = -2.0 * ll + ncoeff * log(nobs);
+	errno = 0;
+	ll = -.5 * nobs * log(ess);
+
+	if (errno == EDOM || errno == ERANGE) {
+	    x[C_AIC] = NADBL;
+	    x[C_BIC] = NADBL;
+	} else {
+	    ll += -.5 * nobs * (ln2pi1 - log((double) nobs));
+	    x[C_AIC] = -2.0 * ll + 2 * ncoeff;
+	    x[C_BIC] = -2.0 * ll + ncoeff * log(nobs);
+	}
 
 	return 0;
     }

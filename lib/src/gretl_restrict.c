@@ -652,10 +652,17 @@ gretl_restriction_set *
 restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 {
     gretl_restriction_set *rset = NULL;
-    char *sysname;
+    char *sysname = NULL;
 
-    sysname = get_system_name_from_line(line + 9);
+#if RDEBUG
+    fprintf(stderr, "restriction_set_start: line='%s'\n", line);
+#endif
 
+    if (!strncmp(line, "restrict", 8)) {
+	sysname = get_system_name_from_line(line + 8);
+    }
+
+    /* are we applying a restriction to a named system of equations? */
     if (sysname != NULL) {
 	gretl_equation_system *sys;
 
@@ -669,19 +676,15 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 	    }	    
 	}
 	free(sysname);
-	return rset;
-    } 
+    } else {
+	rset = real_restriction_set_start(pmod, pdinfo, NULL);
 
-    rset = real_restriction_set_start(pmod, pdinfo, NULL);
-
-    if (rset == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
-	return NULL;
-    }
-
-    if (real_restriction_set_parse_line(rset, line, 1)) {
-	sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
-	return NULL;
+	if (rset == NULL) {
+	    strcpy(gretl_errmsg, _("Out of memory!"));
+	} else if (real_restriction_set_parse_line(rset, line, 1)) {
+	    sprintf(gretl_errmsg, _("parse error in '%s'\n"), line);
+	    rset = NULL;
+	}
     }
 
     return rset;

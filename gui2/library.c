@@ -1941,11 +1941,17 @@ static int record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 	model_command_init(line, &cmd, pmod->ID);
     }
 
+    gretl_cmd_set_context(&cmd, RESTRICT);
+
     while (bufgets(line, MAXLEN-1, buf)) {
-	if (string_is_blank(line)) continue;
+	if (string_is_blank(line)) {
+	    continue;
+	}
 	top_n_tail(line);
 	model_command_init(line, &cmd, pmod->ID);
     }
+
+    gretl_cmd_destroy_context(&cmd);
 
     if (!got_end) {
 	strcpy(line, "end restrict");
@@ -1971,15 +1977,21 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
     if (buf == NULL) return;
 
     bufgets(NULL, 0, buf);
+
     while (bufgets(line, MAXLEN-1, buf) && !err) {
-	if (string_is_blank(line)) continue;
+	if (string_is_blank(line)) {
+	    continue;
+	}
+
 	top_n_tail(line);
+
 	if (!strcmp(line, "end restrict")) {
 	    got_end_line = 1;
 	    break;
 	} else if (!strncmp(line, "restrict", 8)) {
 	    got_start_line = 1;
 	}
+
 	if (rset == NULL) {
 	    rset = restriction_set_start(line, pmod, datainfo);
 	    if (rset == NULL) {
