@@ -1,4 +1,4 @@
-Y   gini coefficient (range 0<Yt<1, 0 is perfect equality)
+Y   gini coefficient (range 0 to 1, 0 is perfect equality)
 Gnp per capita GNP (base 1976)
 Gdp growth rate (%) of GDP
 pop growth rate of population (0.3 - 3.5)

@@ -175,7 +175,8 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
 /**
  * datainfo_new:
  *
- * Create a new data information struct pointer from scratch.
+ * Create a new data information struct pointer from scratch,
+ * properly initialized.
  * 
  * Returns: pointer to data information struct, or NULL on error.
  *
@@ -187,10 +188,23 @@ DATAINFO *datainfo_new (void)
 
     dinfo = malloc(sizeof *dinfo);
     if (dinfo == NULL) return NULL;
+
+    dinfo->v = 0;
+    dinfo->n = 0;
+    dinfo->pd = 1;
+    dinfo->bin = 0;
+    dinfo->extra = 0;
+    dinfo->sd0 = 1.0;
+    dinfo->t1 = 0;
+    dinfo->t2 = 0;
+    dinfo->stobs[0] = '\0';
+    dinfo->endobs[0] = '\0';
     dinfo->varname = NULL;
-    dinfo->label = NULL;
+    dinfo->label = NULL;    
+    dinfo->markers = 0;    
     dinfo->S = NULL;
     dinfo->descrip = NULL;
+
     return dinfo;
 }
 
@@ -2237,7 +2251,7 @@ int write_xmldata (const char *fname, const int *list,
     int i, t, n = pdinfo->n;
     FILE *fp = NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    char startdate[8], enddate[8], datname[MAXLEN];
+    char startdate[8], enddate[8], datname[MAXLEN], type[24];
 
     fp = fopen(fname, "w");
     if (fp == NULL) {
@@ -2261,14 +2275,26 @@ int write_xmldata (const char *fname, const int *list,
     fprintf(fp, "<?xml version=\"1.0\"?>\n"
 	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 	    "<gretldata name=\"%s\" frequency=\"%d\" "
-	    "startobs=\"%s\" endobs=\"%s\">\n", 
+	    "startobs=\"%s\" endobs=\"%s\" ", 
 	    datname, pdinfo->pd, startdate, enddate);
 
-    /* first deal with description, if any */
-    if (pdinfo->descrip != NULL) {
-	/* FIXME: check this is idempotent!! */
-	fprintf(fp, "<description>\n%s</description>\n", pdinfo->descrip);
+    switch (pdinfo->time_series) {
+    case 0:
+	strcpy(type, "cross-section"); break;
+    case TIME_SERIES:
+	strcpy(type, "time-series"); break;
+    case STACKED_TIME_SERIES:
+	strcpy(type, "stacked-time-series"); break;
+    case STACKED_CROSS_SECTION:
+	strcpy(type, "stacked-cross-section"); break;
+    default:
+	strcpy(type, "cross-section"); break;
     }
+    fprintf(fp, "type=\"%s\">\n", type);
+
+    /* first deal with description, if any */
+    if (pdinfo->descrip != NULL) 
+	fprintf(fp, "<description>\n%s</description>\n", pdinfo->descrip);
 
     /* then listing of variable names and labels */
     fprintf(fp, "<variables count=\"%d\">\n", list[0]);

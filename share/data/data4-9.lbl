@@ -1,8 +1,8 @@
-rtrd   % of retired men who are between the ages of 16 and 65
-hlth   % of people 16-64 yrs unable to work due to disability
+rtrd % of retired men who are between the ages of 16 and 65
+hlth % of people 16-64 yrs unable to work due to disability
 mssec  Mean social security income in $
 mpubas Mean public assistance income in $
 unemp  Unemployment rate in percent
-dep    % of households that are married couples with children <18
+dep    % of households that are married couples with children below 18
 race   % of men who are nonwhite
 
