@@ -22,6 +22,8 @@ version 1.3.3
 - corc, hilu and pwe AR(1) commands: make these available in
   loop mode
 - add "quiet" option for the commands adf, kpss and wls
+- add "simple-print" option for ols command (just print the
+  coefficient table, with no auxiliary statistics)
 
 01/28/2005 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking

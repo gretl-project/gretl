@@ -95,6 +95,7 @@ struct gretl_option gretl_opts[] = {
     { OLS,      OPT_P, "print-final" },
     { OLS,      OPT_R, "robust" },
     { OLS,      OPT_Q, "quiet" },
+    { OLS,      OPT_S, "simple-print" },
     { OMIT,     OPT_Q, "quiet" },
     { OMITFROM, OPT_Q, "quiet" },
     { OUTFILE,  OPT_A, "append" },

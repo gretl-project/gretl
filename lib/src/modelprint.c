@@ -1587,6 +1587,11 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
+    if (opt & OPT_S) {
+	/* --simple-print */
+	goto close_format;
+    }
+
     if (!pmod->ifc && pmod->ci != NLS && PLAIN_FORMAT(prn->format)) {
 	noconst(pmod, prn);
     }
