@@ -33,33 +33,6 @@ typedef struct {
 
 /* .................................................................. */
 
-static int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
-{
-    int err = 0;
-
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	*nunits = pdinfo->n / pdinfo->pd;
-	*T = pdinfo->pd;
-    } 
-    else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-	char Tstr[8];
-
-	if (sscanf(pdinfo->endobs, "%[^.].%d", Tstr, nunits) != 2)
-	    err = 1;
-	else 
-	    *T = atoi(Tstr);
-    } else err = 1;
-
-#ifdef PDEBUG
-    fprintf(stderr, "get_panel_structure: units=%d, periods=%d\n",
-	    *nunits, *T);
-#endif
-
-    return err;
-}
-
-/* .................................................................. */
-
 static void print_panel_const (MODEL *panelmod, PRN *prn)
 {
     char numstr[18];
@@ -392,10 +365,12 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    print_panel_coeff(&lsdv, &lsdv, pdinfo, i, prn);
 	    haus->bdiff[i] = lsdv.coeff[i];
 	} for (i=pmod->list[0]; i<=dvlist[0]; i++) {
+	    char dumstr[9];
+
 	    if (i < dvlist[0]) 
 		lsdv.coeff[i-1] += lsdv.coeff[dvlist[0] - 1];
-	    pprintf(prn, "      a_%d: %14.4g\n", 
-		    i - pmod->list[0] + 1, lsdv.coeff[i-1]);
+	    sprintf(dumstr, "a_%d", i - pmod->list[0] + 1);
+	    pprintf(prn, "%9s: %14.4g\n", dumstr, lsdv.coeff[i-1]);
 	}
 	pprintf(prn, "\nResidual variance: %g/(%d - %d) = %g\n", 
 		lsdv.ess, pdinfo->n, lsdv.ncoeff, var);

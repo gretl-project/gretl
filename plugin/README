@@ -1,0 +1,18 @@
+The material in here has been hived off in the form of "plugins" 
+(loaded dynamically at run time if needed) for various reasons.
+
+* The stats_tables and panel_data plugins (look-up of critical values
+  for common distributions, and hypothesis testing in relation to
+  pooled cross-section time-series models, respectively) have
+  been separated out in an attempt to avoid "bloat", since they
+  are likely to be used less than other features of gretl.
+
+* The progress_bar plugin (display progress of a possibly time-
+  consuming operation via GTK) has been separated so that its
+  functionality can be accessed via the libgretl library, without
+  the need to link the latter against glib and gtk.  
+
+* The longname plugin (win32 only) represents a work-around for 
+  the fact that the Windows function that returns the long name
+  counterpart to a DOS 8.3 mangled filename is available only in
+  Windows 98 and higher.

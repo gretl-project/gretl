@@ -419,6 +419,36 @@ var3.  This is particularly useful to graph observed and predicted values
 against time.
 
 #
+hausman
+@Tests
+Usage:          hausman
+This test is available only after estimating a model using the "pooled"
+command (see also the commands panel and setobs).  It tests the simple pooled
+model against the principal alternatives, the fixed effects and random effects
+models.
+
+The fixed effects model adds a dummy variable for all but one of the
+cross-sectional units, allowing the intercept of the regression to vary across
+the units.  An F-test for the joint significance of these dummies is
+presented.  The random effects model decomposes the residual variance into two
+parts, one part specific to the cross-sectional unit and the other specific to
+the particular observation.  (This estimator can be computed only if the
+number of cross-sectional units in the data set exceeds the number of
+parameters to be estimated.)  The Breusch-Pagan LM statistic tests the null
+hypothesis (that the pooled OLS estimator is adequate) against the random
+effects alternative.
+
+The pooled OLS model may be rejected against both of the alternatives, fixed
+effects and random effects. Provided the unit- or group-specific error is
+uncorrelated with the independent variables, the random effects estimator is
+more efficient than the fixed effects estimator; otherwise the random effects
+estimator is inconsistent and the fixed effects estimator is to be preferred.
+The null hypothesis for the Hausman test is that the group-specific error is
+not so correlated (and therefore the random effects model is preferable).  A
+low p-value for this test counts against the random effects model and in
+favor of fixed effects.
+
+#
 hccm
 @Estimation
 Usage:          hccm depvar indepvar      
@@ -705,6 +735,19 @@ newly opened one.  The program will try to detect the format of the data file
 ("native", CSV or BOX1) and treat it accordingly.
 
 #
+panel
+@Dataset
+Usage:          panel
+                panel -s
+	        panel -c
+Request that the current data set be interpreted as a panel (pooled cross
+section and time series).  With no flag, or with the -s flag, the data set is
+taken to be in the form of stacked time series (successive blocks of data
+contain time series for each cross-sectional unit).  With the -c flag, the
+data set is read as stacked cross-sections (successive blocks contain cross
+sections for each time period).  Also see the setobs command.
+
+#
 pergm
 @Statistics
 Usage:          pergm varname 
@@ -728,6 +771,15 @@ plotted horizontally.  If the flag -o is present, x1 and x2 are plotted in the
 same scale, otherwise x1 and x2 are scaled appropriately.  The -o flag should
 be used only if the variables have approximately the same range of values
 (e.g. observed and predicted dependent variable).
+
+#
+pooled
+@Estimation
+Usage:         pooled depvar indepvar
+Estimates a model via OLS (see the ols command for details on syntax), and
+flags it as a pooled or panel model, so that the "panel diagnostics" test item
+becomes available.  For an account of these diagnostics see the hausman
+command.
 
 #
 print

@@ -1963,8 +1963,33 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 
 /* ........................................................... */
 
+int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
+{
+    int err = 0;
+
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+        *nunits = pdinfo->n / pdinfo->pd;
+        *T = pdinfo->pd;
+    } 
+    else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+        char Tstr[8];
+
+        if (sscanf(pdinfo->endobs, "%[^.].%d", Tstr, nunits) != 2)
+            err = 1;
+        else 
+            *T = atoi(Tstr);
+    } else err = 1;
+
+    return err;
+}
+
+/* ........................................................... */
+
 int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
 {
+    int nunits, T;
+    int old_ts = pdinfo->time_series;
+
     if (pdinfo->pd == 1) {
 	pprintf(prn, "The current data frequency, 1, is not "
 		"compatible with panel data.\nPlease see the 'setobs' "
@@ -1972,14 +1997,22 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
 
-    if (flag) {
-	pprintf(prn, "Panel structure set to stacked cross sections\n");
+    if (flag == OPT_C) 
 	pdinfo->time_series = STACKED_CROSS_SECTION;
-    } else {
-	pprintf(prn, "Panel structure set to stacked time series\n");
+    else 
 	pdinfo->time_series = STACKED_TIME_SERIES;
-    }
 
+    if (get_panel_structure(pdinfo, &nunits, &T)) {
+	pprintf(prn, "Failed to set panel structure\n");
+	pdinfo->time_series = old_ts;
+	return 1;
+    } else {
+	pprintf(prn, "Panel structure set to %s\n",
+		(pdinfo->time_series = STACKED_CROSS_SECTION)? 
+		"stacked cross sections" : "stacked time series");
+	pprintf(prn, "(%d units observed in each of %d periods)\n",
+		nunits, T);
+    }
     return 0;
 }
 

@@ -718,7 +718,7 @@ fixed effects estimator; otherwise the random effects estimator is
 inconsistent, in which case the fixed effects estimator is to be preferred.
 The null hypothesis for the Hausman test is that the group-specific error is
 not so correlated (and therefore the random effects model is preferable).
-Thus a low p-value for this tests counts against the random effects model and
+Thus a low p-value for this test counts against the random effects model and
 in favor of fixed effects.  
 
 For a rigorous discussion of this topic, see Greene's Econometric Analysis

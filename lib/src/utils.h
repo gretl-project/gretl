@@ -147,6 +147,8 @@ int ijton (const int i, const int j, const int lo);
 int ztox (const int i, double *px, 
 	  double **Z, const DATAINFO *pdinfo);
 
+int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T);
+
 int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn); 
 
 int balanced_panel (const DATAINFO *pdinfo);

@@ -1006,7 +1006,7 @@ static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
 	return HOSTERR;
 
     sock_name.sin_family = AF_INET;
-    sock_name.sin_port = g_htons(port);
+    sock_name.sin_port = htons(port); /* was g_htons */
 
     if ((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
 	return CONSOCKERR;
