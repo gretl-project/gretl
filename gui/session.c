@@ -324,6 +324,7 @@ static int alloc_graph (GRAPHT **pgraph)
     (*pgraph)->fname = mymalloc(64);
     if ((*pgraph)->name == NULL || (*pgraph)->fname == NULL) 
 	return 1;
+    (*pgraph)->ID = 0;
     return 0;
 }
 
@@ -530,6 +531,7 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 	    n = haschar('"', tmp);
 	    strcpy((psession->graphs[k])->fname, tmp + n + 1);
 	    top_n_tail((psession->graphs[k])->fname);
+	    (psession->graphs[k])->ID = plot_count++;
 	    k++;
 	    continue;
 	}

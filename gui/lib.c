@@ -24,7 +24,7 @@
 # include "../lib/src/cmdlist.h"
 #endif
 
-/* #define CMD_DEBUG */
+#define CMD_DEBUG
 
 #include "htmlprint.h"
 
@@ -53,7 +53,6 @@ static void console_exec (void);
 static void finish_genr (MODEL *pmod);
 static void do_run_script (gpointer data, guint code, GtkWidget *w);
 static void auto_save_script (gpointer data, guint action, GtkWidget *w);
-
 
 GtkWidget *console_view;
 GtkWidget *console_dialog;
@@ -116,16 +115,22 @@ GtkItemFactoryEntry view_items[] = {
 
 const char *CANTDO = "Can't do this: no model has been estimated yet\n";
 
+typedef struct {
+    int ID, cmdnum;
+    int n;
+    char **cmds;
+} model_stack;
+
+static model_stack *mstack;
+static int n_mstacks;
+
 static int model_count;
 static int n_cmds;
-static int stacked_models;
 static MODELSPEC *modelspec;
 static char *model_origin;
 static gint stack_model (int gui);
 /* apparatus for storing commands issued via GUI */
 static char **cmd_stack;
-static char ***model_cmds;
-int *n_model_cmds = NULL;
 char errline[MAXLEN] = "";
 char last_model = 's';
 
@@ -192,19 +197,15 @@ void free_command_stack (void)
     }
     n_cmds = 0;
 
-    if (model_cmds != NULL) {  
-	for (i=0; i<stacked_models; i++) {
-	    for (j=0; j<n_model_cmds[i]; j++)
-		free(model_cmds[i][j]); 
-	    if (n_model_cmds[i] > 0) 
-		free(model_cmds[i]); 
+    if (n_mstacks > 0 && mstack != NULL) {  
+	for (i=0; i<n_mstacks; i++) {
+	    for (j=0; j<mstack[i].n; j++)
+		free(mstack[i].cmds[j]); 
 	}
-	free(model_cmds);
-	model_cmds = NULL;
-	free(n_model_cmds);
-	n_model_cmds = NULL;
+	free(mstack);
+	mstack = NULL;
     }
-    stacked_models = 0;
+    n_mstacks = 0;
 }
 
 /* ........................................................... */
@@ -356,69 +357,103 @@ static gint record_model_genr (char *line)
 
 /* ........................................................... */
 
-static gint model_cmd_init (char *line, int ID)
+static int grow_mstack (int i, int model_id)
 {
-    static int old_model_count;
-    static char going;
-    int m = stacked_models - 1; /* was ID - 1 */
+    if (n_mstacks == 0) { 
+#ifdef CMD_DEBUG
+	fprintf(stderr, "grow_mstack: starting from scratch\n");
+#endif
+	mstack = mymalloc(sizeof *mstack);
+    } else { 
+#ifdef CMD_DEBUG
+	fprintf(stderr, "grow_mstack: reallocating to %d stacks\n",
+		n_mstacks+1);
+#endif
+	mstack = realloc(mstack, (n_mstacks+1) * sizeof *mstack);
+    }
+    if (mstack == NULL) {
+	n_mstacks = 0;
+	return 1;
+    }
+    mstack[i].ID = model_id;    
+    mstack[i].cmdnum = n_cmds-1;
+    mstack[i].n = 0;
+#ifdef CMD_DEBUG
+    fprintf(stderr, "mstack[%d]: ID=%d, cmdnum=%d\n", i, model_id, n_cmds-1);
+#endif
+    mstack[i].cmds = mymalloc(sizeof(char **));
+    if (mstack[i].cmds == NULL) return 1;
+    n_mstacks++;
+#ifdef CMD_DEBUG
+    fprintf(stderr, "grow_mstack: n_mstacks now = %d\n", n_mstacks);
+#endif
+    return 0;
+}
+
+/* ........................................................... */
+
+static gint model_cmd_init (char *line, int ID)
+     /* this makes a record of commands associated with
+	a given model, so that they may be reconstructed later as
+	part of the session mechanism */
+{
+    int i, sn;
     print_t *echo;
     size_t len;
 
-    /* FIXME -- this makes a real mess if you try to add a test
-       to a model that was saved as part of a session, then
-       reopened after the session was reopened */
-
-#ifdef CMD_DEBUG
-    fprintf(stderr, "model_cmd_init:\nID=%d, m=%d, old_model_count=%d\n"
-	   "line='%s'\n", ID, m, old_model_count, line);
-#endif
-
-    if (!going) {/* starting from scratch? */
-	model_cmds = mymalloc(sizeof *model_cmds);
-#ifdef CMD_DEBUG
-	fprintf(stderr, "starting from scratch: mallocing model_cmds\n");
-#endif
-    }
-    if (m > old_model_count) { /* a new model? */
-	model_cmds = realloc(model_cmds, (m + 1) * sizeof *model_cmds);
-#ifdef CMD_DEBUG
-	fprintf(stderr, "m > old_model_count: reallocing model_cmds\n");
-#endif
+    /* have we started this stuff at all, yet? */
+    if (n_mstacks == 0) { /* no */
+	if (grow_mstack(0, ID)) {
+	    free(mstack);
+	    return 1;
+	}
     }
 
-    if (model_cmds == NULL) 
-	return 1;
-
-    if (!going || m > old_model_count) { /* start a model cmd stack */
-	if (m < 0) m = 0;
-	model_cmds[m] = mymalloc(sizeof(char *));
-	printf("starting a new stack, model_cmds[%d]\n", m);
-    } else {/* grow the existing model cmd stack */
-	model_cmds[m] = realloc(model_cmds[m], 
-				(n_model_cmds[m] + 1) * sizeof(char *));
-	printf("reallocing model_cmds[%d]\n", m);
+    /* have we already started a stack for this model? */
+    sn = -1;
+    for (i=0; i<n_mstacks; i++) {
+	if (mstack[i].ID == ID) { /* yes */
+	    sn = i;
+	    break;
+	}
     }
-    if (model_cmds[m] == NULL) return 1;
-    
+    if (sn == -1) { /* no, not yet */
+	sn = n_mstacks;
+	if (grow_mstack(sn, ID)) { 
+	    free(mstack);
+	    return 1;
+	}
+    } 
+
+    if (mstack[sn].n > 0) { /* stack already underway for this model; 
+			       make space for another command string */
+#ifdef CMD_DEBUG
+	fprintf(stderr, "model_cmd_init: realloc mstack[%d] for %d cmds\n",
+		sn, mstack[sn].n+1);
+#endif
+	mstack[sn].cmds = realloc(mstack[sn].cmds,
+					 (mstack[sn].n+1) * sizeof(char **));
+	if (mstack[sn].cmds == NULL) {
+	    /* do more stuff! */
+	    return 1;
+	}
+    }
+
     if (bufopen(&echo)) return 1;
     echo_cmd(&command, datainfo, line, 0, 1, oflag, echo);
 
     len = strlen(echo->buf);
-    model_cmds[m][n_model_cmds[m]] = mymalloc(len + 1);
-    if (model_cmds[m][n_model_cmds[m]] == NULL) {
+
+    mstack[sn].cmds[mstack[sn].n] = mymalloc(len + 1);
+    if (mstack[sn].cmds[mstack[sn].n] == NULL) {
 	gretl_print_destroy(echo);
 	return 1;
     }
-    strcpy(model_cmds[m][n_model_cmds[m]], echo->buf);
-/*      printf("copied '%s' to model_cmds[%d][%d]\n",  */
-/*  	   echo.buf, m, n_model_cmds[m]); */
+    strcpy(mstack[sn].cmds[mstack[sn].n], echo->buf);
     gretl_print_destroy(echo);
 
-    n_model_cmds[m] += 1;
-    /*  printf("n_model_cmds[%d] now equals %d\n", m, n_model_cmds[m]); */
-    
-    if (m > old_model_count) old_model_count++;
-    going = 1;
+    mstack[sn].n += 1;
+
     return 0;
 }
 
@@ -443,19 +478,12 @@ static gint stack_model (int gui)
     last_model = (gui == 1)? 'g' : 's';
     model_origin[model_count - 1] = last_model;
 
-    if (gui == 1) { /* model estimated via GUI */
-	int ms = stacked_models;
-
-	if (ms == 0) 
-	    n_model_cmds = malloc(sizeof(int));
-	else 
-	    n_model_cmds = realloc(n_model_cmds, (ms + 1) * sizeof(int));
-	if (n_model_cmds == NULL) return 1;
-
-	n_model_cmds[ms] = 0;
-	stacked_models++;
-    } else if (gui == 0) { /* model estimated via console or script */
-	if (modelspec == NULL) /* was just 1? */
+    if (!gui) { /* Model estimated via console or script: unlike a gui
+		   model, which is kept in memory so long as its window
+		   is open, these models are immediately discarded.  So
+		   if we want to be able to refer back to them later we
+		   need to record their specification */
+	if (modelspec == NULL) 
 	    modelspec = mymalloc(2 * sizeof *modelspec);
 	else 
 	    modelspec = myrealloc(modelspec, (m+2) * (sizeof *modelspec));
@@ -481,12 +509,11 @@ static gint stack_model (int gui)
 
 static void dump_model_cmds (FILE *fp, int m)
 {
-    int j;
+    int i;
 
-    fprintf(fp, "(* commands pertaining to model %d *)\n", m + 1);
-    for (j=0; j<n_model_cmds[m]; j++) {
-	fprintf(fp, "%s", model_cmds[m][j]);
-    }
+    fprintf(fp, "(* commands pertaining to model %d *)\n", mstack[m].ID);
+    for (i=0; i<mstack[m].n; i++) 
+	fprintf(fp, "%s", mstack[m].cmds[i]);
 }
 
 /* ........................................................... */
@@ -496,7 +523,7 @@ gint dump_cmd_stack (char *fname)
 	session */
 {
     FILE *fp;
-    int i, m = 0;
+    int i, j;
 
     if (fname == NULL) return 0;
 
@@ -508,10 +535,16 @@ gint dump_cmd_stack (char *fname)
 
     for (i=0; i<n_cmds; i++) {
 	fprintf(fp, "%s", cmd_stack[i]);
-	if (is_model_cmd(cmd_stack[i]) && n_model_cmds != NULL
-	    && n_model_cmds[m]) {
-	    dump_model_cmds(fp, m);
-	    m++;
+	if (is_model_cmd(cmd_stack[i]) && mstack != NULL) {
+#ifdef CMD_DEBUG
+	    fprintf(stderr, "cmd_stack[%d]: looking for model commands\n", i);
+#endif
+	    for (j=0; j<n_mstacks; j++) { 
+		if (mstack[j].cmdnum == i) {
+		   dump_model_cmds(fp, j);
+		   break;
+		} 
+	    }
 	}
     }
 
