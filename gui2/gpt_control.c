@@ -2228,8 +2228,11 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 	    plot->zoom->ymax = plot->zoom->ymin;
 	    plot->zoom->ymin = z;
 	}
-	
-	zoom_unzoom_png(plot, PNG_ZOOM);
+
+	if (plot->zoom->xmin != plot->zoom->xmax &&
+	    plot->zoom->ymin != plot->zoom->ymax) {
+	    zoom_unzoom_png(plot, PNG_ZOOM);
+	}
 	plot->flags ^= PLOT_ZOOMING;
 	gdk_window_set_cursor(plot->canvas->window, NULL);
 	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
