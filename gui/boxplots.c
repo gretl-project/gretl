@@ -703,7 +703,6 @@ static int cb_copy_image (gpointer data)
     guint32 pixel, white_pixel;
     
     int nSizeDIB = 0;
-    int nSizeLine = 0; /* DIB lines are 32 bit aligned */
 
     HANDLE hDIB;
     BOOL bRet;
@@ -714,8 +713,7 @@ static int cb_copy_image (gpointer data)
     white_pixel = pow(2, image->depth) - 1;
 
     /* allocate room for DIB */
-    nSizeLine = ((grp->width*3-1)/4+1)*4;
-    nSizeDIB = nSizeLine * grp->height + sizeof (BITMAPINFOHEADER);
+    nSizeDIB = grp->width * grp->height + sizeof (BITMAPINFOHEADER);
   
     hDIB = GlobalAlloc (GMEM_MOVEABLE | GMEM_DDESHARE, nSizeDIB);
     if (NULL == hDIB) {
