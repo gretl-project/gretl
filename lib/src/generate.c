@@ -3297,16 +3297,42 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
 
 /* ........................................................  */
 
+static void 
+make_panel_time_var (double *x, const DATAINFO *pdinfo)
+{
+    int t, xt = 0;
+
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t % pdinfo->pd == 0) {
+		xt = 1;
+	    }
+	    x[t] = (double) xt++;
+	}
+    } else {
+	/* stacked cross-sections */
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t % pdinfo->pd == 0) {
+		xt++;
+	    }
+	    x[t] = (double) xt;
+	}
+    }
+}
+
 static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
 		     int time)
      /* create time trend variable */
 {
-    int i, t, n = pdinfo->n, v = pdinfo->v;
+    int i, t;
 
-    if (time) i = varindex(pdinfo, "time");
-    else i = varindex(pdinfo, "index");
+    if (time) {
+	i = varindex(pdinfo, "time");
+    } else {
+	i = varindex(pdinfo, "index");
+    }
 
-    if (i == v) {
+    if (i == pdinfo->v) {
 	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     }
 
@@ -3319,9 +3345,15 @@ static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
 	strcpy(pdinfo->varname[i], "index");
 	strcpy(VARLABEL(pdinfo, i), _("data index variable"));
     }
-
-    for (t=0; t<n; t++) {
-	(*pZ)[i][t] = (double) (t + 1);
+    
+    if (time && 
+	(pdinfo->time_series == STACKED_TIME_SERIES ||
+	 pdinfo->time_series == STACKED_CROSS_SECTION)) {
+	make_panel_time_var((*pZ)[i], pdinfo);
+    } else {
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[i][t] = (double) (t + 1);
+	}
     }
 
     genr->varnum = i;
