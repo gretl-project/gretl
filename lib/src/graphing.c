@@ -1583,7 +1583,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
 
-	    plotmin = freq->endpt[1] - barwidth;
+	    plotmin = freq->endpt[0] - barwidth;
 	    if (plotmin > freq->xbar - 3.3 * freq->sdx) {
 		plotmin = freq->xbar - 3.3 * freq->sdx;
 	    }
@@ -1632,6 +1632,9 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	fputs("(simple)\n", fp);
 
 	lambda = 1.0 / freq->n;
+	plotmin = freq->midpt[0] - barwidth;
+	plotmax = freq->midpt[K-1] + barwidth;
+	fprintf(fp, "set xrange [%.8g:%.8g]\n", plotmin, plotmax);
 	fputs("set nokey\n", fp);
 	fprintf(fp, "set xlabel '%s %s'\n", 
 		I_("Frequency distribution for"), freq->varname);	

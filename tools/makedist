@@ -16,6 +16,7 @@ cd ${topdir} && date > share/gretl.stamp
 # make the archive and remove the dist dir
 cd $parent 
 echo "making archive..."
+rm -f gretl/gui/gtp_control.c gretl/gui/gpt_control.h
 rm -f gretl/gui/model_table.c gretl/gui/model_table.h
 rm -f gretl/gui/objectsave.c gretl/gui/objectsave.h
 rm -f gretl/gui/session.c gretl/gui/session.h

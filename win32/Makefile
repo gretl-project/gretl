@@ -253,7 +253,7 @@ plugins/leverage.dll: leverage.o dllinit.o
 
 plugins/pca.dll: pca.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) $(LAPACK_LIBS)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
