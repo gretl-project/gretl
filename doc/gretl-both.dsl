@@ -2,11 +2,11 @@
 <!ENTITY % html "IGNORE">
 <![%html;[
 <!ENTITY % print "IGNORE">
-<!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.73/html/docbook.dsl" CDATA dsssl>
+<!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.74b/html/docbook.dsl" CDATA dsssl>
 ]]>
 <!ENTITY % print "INCLUDE">
 <![%print;[
-<!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.73/print/docbook.dsl" CDATA dsssl>
+<!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.74b/print/docbook.dsl" CDATA dsssl>
 ]]>
 <!ENTITY htmlmath.dsl SYSTEM "HTMLMath.dsl">
 <!ENTITY texmath.dsl SYSTEM "TeXMath.dsl">

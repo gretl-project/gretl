@@ -24,8 +24,7 @@
 
 #ifndef G_OS_WIN32
 # include <unistd.h>
-/* program icon */
-# include "pixmaps/gretl.xpm"
+# include "pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h> 
 #endif
@@ -76,7 +75,7 @@ GdkColor red, blue;
 static int popup_connected;
 int *default_list = NULL;
 
-#ifdef USE_GNOME
+#if defined (USE_GNOME) || defined(G_OS_WIN32)
 static GtkTargetEntry target_table[] = {
         {"text/plain", 0, 0}
 };
@@ -1027,7 +1026,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     setup_column(mdata->listbox, 1, listbox_varname_width);
     setup_column(mdata->listbox, 2, listbox_label_width);
 
-#ifdef USE_GNOME
+#if defined(USE_GNOME) || defined(G_OS_WIN32)
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
 		       target_table, 1,
@@ -1579,10 +1578,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     gtk_widget_show(toolbar_box);
 }
 
+/* Icon handling for X */
 #ifndef G_OS_WIN32
-
-/* ........................................................... */
-
 void set_wm_icon (GtkWidget *w, gpointer data)
 {
     GdkPixmap *icon;
@@ -1590,11 +1587,10 @@ void set_wm_icon (GtkWidget *w, gpointer data)
     icon = gdk_pixmap_create_from_xpm_d(w->window, NULL, NULL, gretl_xpm);
     gdk_window_set_icon(w->window, NULL, icon, NULL);
 }
-
 #endif
 
-#ifdef USE_GNOME
-
+/* Drag 'n' drop under gnome, win32 */
+#if defined(USE_GNOME) || defined (G_OS_WIN32)
 static void  
 target_drag_data_received  (GtkWidget *widget,
                             GdkDragContext *context,
@@ -1608,13 +1604,12 @@ target_drag_data_received  (GtkWidget *widget,
 
     if ((dfname) && (strlen(dfname) > 5) &&  
 	strncmp(dfname, "file:", 5) == 0) {
-	strcpy(paths.datfile, dfname + 5);
-	top_n_tail(paths.datfile);
-	fprintf(stderr, "drag: paths.datfile = '%s'\n", paths.datfile);
+	strcpy(trydatfile, dfname + 5);
+	top_n_tail(trydatfile);
+	fprintf(stderr, "drag: datafile = '%s'\n", trydatfile);
 	verify_open_data(NULL);
     }
 }
-
 #endif
 
 /* ........................................................... */

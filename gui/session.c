@@ -418,7 +418,7 @@ static int delete_session_object (gui_obj *obj)
 
     if (obj == NULL) return 0; 
 
-    if (obj->sort == 'm') { /* a model */
+    if (obj->sort == 'm') { /* it's a model */
 	MODEL **ppmod, *junk = (MODEL *) obj->data;
 
 	/* special case: only one model currently */
@@ -441,7 +441,7 @@ static int delete_session_object (gui_obj *obj)
 	}
 	session.nmodels -= 1;
     }
-    else if (obj->sort == 'g') { /* a graph */    
+    else if (obj->sort == 'g') { /* it's a graph */    
 	GRAPHT **ppgr, *junk = (GRAPHT *) obj->data;
 
 	/* special case: only one graph currently */
@@ -925,7 +925,6 @@ static void session_build_popups (void)
 
 void save_session_callback (GtkWidget *w, guint i, gpointer data)
 {
-    /* for use in main menu */
     if (i == 0 && session_file_open && scriptfile[0]) 
 	save_session(scriptfile);
     else

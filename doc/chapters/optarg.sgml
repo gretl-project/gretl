@@ -123,7 +123,7 @@
     <para>Settings chosen in this way are handled differently
     depending on the context.  Under MS Windows they are stored in the
     Windows registry.  Under the <application>gnome</application>
-    desktop they are stored in <filename>.gnome/Gretl</filename> in
+    desktop they are stored in <filename>.gnome/gretl</filename> in
     the user's home directory.  Otherwise they are stored in a file named
       <filename>.gretlrc</filename> in the user's home directory.
       </para>

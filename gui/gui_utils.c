@@ -619,7 +619,7 @@ void save_session (char *fname)
     mkfilelist(2, fname);
 
     /* save session notes, if any */
-    sprintf(tmp, "%ssession.Notes", paths.userdir);
+    sprintf(tmp, "%ssession.Notes", savedir);
     fp = fopen(tmp, "r"); 
     if (fp != NULL) {
 	char test[5];
@@ -643,10 +643,7 @@ void save_session (char *fname)
     execute_script(fname, NULL, NULL, prn, SESSION_EXEC); 
     gretl_print_destroy(prn);
 
-    if (savedir)
-	sprintf(msg, "session saved to directory %s -\n", savedir);
-    else 
-	strcpy(msg, "session saved -\n");
+    sprintf(msg, "session saved to %s -\n", savedir);
     strcat(msg, "commands: ");
     strcat(msg, (spos)? fname + spos + 1 : fname);
     strcat(msg, "\noutput: ");

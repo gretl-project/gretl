@@ -1,8 +1,8 @@
 #!/bin/sh
 
 DB_STYLESHEET=../gretl-both.dsl\#html
-HTML_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.73/frames/docbook.css
-ADMON_GRAPHICS=/usr/share/sgml/docbook-dsssl-1.73/images/*.gif
+HTML_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.74b/frames/docbook.css
+ADMON_GRAPHICS=/usr/share/sgml/docbook-dsssl-1.74b/images/*.gif
 
 output=db2html-dir
 TMPDIR=DBTOHTML_OUTPUT_DIR$$

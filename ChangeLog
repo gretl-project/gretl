@@ -11,6 +11,8 @@ version 0.98
 - allow copying LaTeX equation representation of models 
   to clipboard; also improve the typsetting of these
 - change default user directory to ~/gretl under unix
+- add option to make cwd rather than userdir the default
+  for file opening and saving
 
 version 0.97
 - fix breakage of var command in GUI
