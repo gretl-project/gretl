@@ -256,7 +256,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    return 1;
 	}
 #ifdef EDEBUG
-	fprintf(stderr, "Got SST: allocated sst at size %d (%d bytes), %p\n", 
+	fprintf(stderr, "Got SST: allocated for %d strings (%d bytes), %p\n", 
 		sstsize, sstsize * sizeof *sst, (void *) sst);
 #endif
 	for (i=oldsz; i<sstsize; i++) {
@@ -266,10 +266,15 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	ptr = q->data + 8;
 	for (i=oldsz; i<sstsize && (ptr - q->data) < q->length; i++) {
 #ifdef EDEBUG
-	    fprintf(stderr, "Working on sst[%d]\n", i);
+	    fprintf(stderr, "Working on sst[%d], data offset=%d, length=%d\n", 
+		    i, (int) (ptr - q->data), (int) q->length);
 #endif
 	    sst[i] = copy_unicode_string(ptr, &skip);
 	    ptr += skip;
+#ifdef EDEBUG
+	    fprintf(stderr, "skip = %d, data offset now = %d\n", 
+		    skip, (int) (ptr - q->data));
+#endif
 	}
 	if (i < sstsize) {
 	    sstnext = i;
@@ -404,7 +409,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 			(unsigned) fcode);
 #endif
 		if (fcode == 0x0) {
-#if 0
+#if 1
 		    pprintf(prn, "Sorry, can't handle string formulas in "
 			    "worksheet");
 		    return 1;
