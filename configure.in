@@ -31,11 +31,11 @@ build_gui="yes"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
-have_libole2="no"
+have_libole2="NA"
 have_gtk="no"
 have_gtksourceview="no"
 have_gnome="no"
-have_gtkextra="no"
+have_gtkextra="NA"
 have_gmp="no"
 have_lapack="no"
 seek_inet_addr="no"
@@ -139,7 +139,7 @@ then
 fi,)
 
 AC_ARG_WITH(libole2,
-[  --with-libole2   Use installed libole2 [default=auto]],
+[  --with-libole2   Use installed libole2 (gtk 1.2 only) [default=auto]],
 if test "x${withval}" = "xno"
 then
   try_ole=no
@@ -149,7 +149,7 @@ fi,
 try_ole=yes)
 
 AC_ARG_WITH(gtkextra,
-[  --with-gtkextra   Use installed gtkextra [default=auto]],
+[  --with-gtkextra   Use installed gtkextra (gtk 1.2 only) [default=auto]],
 if test "x${withval}" = "xno"
 then
   try_gtkextra=no
@@ -386,12 +386,6 @@ AC_SUBST(GTKSOURCEVIEW_LIBS)
 dnl
 dnl Should we try to use an installed version of libole2?
 dnl
-if test ${try_ole} = yes && test ${have_gtk} = "2.0" ; then
-    PKG_CHECK_MODULES(LIBOLE2, libole2-2.0,
-        have_libole2="yes",
-        have_libole2="no"
-    )
-fi
 if test ${try_ole} = yes && test ${have_gtk} = "1.2" ; then
     AM_PATH_LIBOLE2(0.2.4,
         have_libole2="yes",

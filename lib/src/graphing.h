@@ -39,7 +39,7 @@ enum gptspec_flags {
     GPTSPEC_OLS_HIDDEN = 1 << 3
 }; 
 
-#define MAXTITLE 80
+#define MAXTITLE 128
 #define MAX_PLOT_LABELS 2
 
 typedef struct {

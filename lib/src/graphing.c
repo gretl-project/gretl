@@ -793,6 +793,14 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	if (gnuplot_init(ppaths, PLOT_REGULAR, &fq)) return E_FOPEN;
     }
 
+    /* setting yscale at this point is not a commitment, we will
+       do some further tests below */
+    if (lo > 2 && lo < 7 && 
+	(flags & ~GP_RESIDS) && (flags & ~GP_FA)
+	&& (flags & ~GP_DUMMY)) {
+	yscale = 1;
+    }
+
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
 	if (get_timevar(pdinfo, s2) >= 0) {
 	    int pv = plotvar(pZ, pdinfo, s2);
@@ -805,7 +813,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	}
 	/* strcpy(xlabel, I_("Observation")); */
 	*xlabel = 0;
-	if (lo > 2 && lo < 7) yscale = 1;
     } else {
 	if (flags & GP_DUMMY) {
 	    strcpy(xlabel, get_series_name(pdinfo, list[2])); 
@@ -899,7 +906,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     } else if ((flags & GP_RESIDS) && (flags & GP_DUMMY)) { 
 	make_gtitle(fq, GTITLE_RESID, depvar, NULL);
 	fprintf(fq, "set ylabel '%s'\n", I_("residual"));
-	fputs("set key left top\n", fq);
+	fputs("set key left top height 1 width 1 box\n", fq);
     } else if (flags & GP_FA) {
 	if (list[3] == pdinfo->v - 1) { 
 	    /* x var is just time or index: is this always right? */
@@ -909,17 +916,16 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 			get_series_name(pdinfo, list[3]));
 	}
 	fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[2]));
-	fputs("set key left top\n", fq);	
+	fputs("set key left top height 1 width 1 box\n", fq);	
     } else {
-	fputs("set key left top\n", fq);
+	fputs("set key left top height 1 width 1 box\n", fq);
     }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    xvar = (flags & GP_DUMMY)? 
-	list[lo - 1] : list[lo];
+    xvar = (flags & GP_DUMMY)? list[lo - 1] : list[lo];
 
     if (isdummy((*pZ)[xvar], t1, t2)) {
 	fputs("set xrange[-1:2]\n", fq);	
@@ -937,7 +943,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     }
 
     if (yscale) { 
-	/* two or more y vars plotted against some x */
+	/* two or more y vars plotted against some x: test to
+	   see if we want to use two y axes */
 	double ymin[6], ymax[6];
 	double ratio;
 	int oddcount;
@@ -979,11 +986,13 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    if (i != oddman) {
 		fprintf(fq, "'-' using 1:($2) axes x1y1 title '%s (%s)' %s",
 			get_series_name(pdinfo, list[i]), I_("left"),
-			(pdist)? "w impulses" : "w lines");
+			(pdist)? "w impulses" : 
+			(ts_plot)? "w lines" : "w points");
 	    } else {
 		fprintf(fq, "'-' using 1:($2) axes x1y2 title '%s (%s)' %s",
 			get_series_name(pdinfo, list[i]), I_("right"),
-			(pdist)? "w impulses" : "w lines");
+			(pdist)? "w impulses" : 
+			(ts_plot)? "w lines" : "w points");
 	    }
 	    if (i == lo - 1) fputc('\n', fq);
 	    else fputs(" , \\\n", fq);
