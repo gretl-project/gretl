@@ -60,7 +60,7 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 #include "../pixmaps/model_table.xpm"
 #include "../pixmaps/graph_page.xpm"
 
-#define SESSION_DEBUG
+#undef SESSION_DEBUG
 
 #define OBJNAMLEN   32
 #define SHOWNAMELEN 12
