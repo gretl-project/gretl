@@ -784,15 +784,19 @@ static void reset_list (int *list1, int *list2)
     }
 }
 
-/* ...................................................................  */
+/* parse varlist (for a VAR) and determine how long the augmented list
+   will be, once all the appropriate lag terms are inserted
+*/
 
-static int get_listlen (int *varlist, char *detlist, int order, 
-			double **Z, const DATAINFO *pdinfo)
-     /* parse varlist (for a VAR) and determine how long the augmented 
-	list will be, once all the appropriate lag terms are inserted */
+static int 
+get_var_listlen (int *varlist, char *detlist, 
+		 int order, int *depvars,
+		 double **Z, const DATAINFO *pdinfo)
 {
     int i, j = 1, v = 1;
     int gotsep = 0;
+
+    depvars[0] = 0;
 
     for (i=1; i<=varlist[0]; i++) {
 	if (varlist[i] == LISTSEP) {
@@ -808,6 +812,8 @@ static int get_listlen (int *varlist, char *detlist, int order,
 	} else {
 	    v += order;
 	    detlist[j] = 0;
+	    depvars[0] += 1;
+	    depvars[depvars[0]] = varlist[i];
 	}
 	varlist[j++] = varlist[i];
     }
@@ -900,7 +906,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	    end++;
 	}
 	pprintf(prn, _("All lags of %-8s "), 
-		pdinfo->varname[depvars[j]]);
+		pdinfo->varname[depvars[j + 1]]);
 
 	if (robust) {
 	    gretl_list_diff(outlist, varmod->list, shortlist);
@@ -977,31 +983,29 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
     return err;
 }
 
-/* ...................................................................  */
+/* construct the respective VAR lists by adding the appropriate
+   number of lags ("order") to the variables in list 
+
+   Say the list is "x_1 const time x_2 x_3", and the order is 2.
+   Then the first list should be
+
+   x_1 const time x_1(-1) x_1(-2) x_2(-1) x_2(-2) x_3(-1) x_3(-2)
+
+   the second:
+
+   x_2 const time x_1(-1) x_1(-2) x_2(-1) x_2(-2) x_3(-1) x_3(-2)
+
+   and so on.
+
+   Run the regressions and print the results.
+*/
 
 static int real_var (int order, const LIST inlist, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     GRETL_VAR **pvar, struct var_resids *resids, 
 		     PRN *prn, gretlopt opts, char flags)
 {
-    /* construct the respective lists by adding the appropriate
-       number of lags ("order") to the variables in list 
-
-       Say the list is "x_1 const time x_2 x_3", and the order is 2.
-       Then the first list should be
-
-       x_1 const time x_1(-1) x_1(-2) x_2(-1) x_2(-2) x_3(-1) x_3(-2)
-
-       the second:
-
-       x_2 const time x_1(-1) x_1(-2) x_2(-1) x_2(-2) x_3(-1) x_3(-2)
-
-       and so on.
-
-       Run the regressions and print the results.
-    */
-
-    int i, idx, k, l, listlen, end, neqns = 0;
+    int i, idx, k, l, listlen, end, neqns;
     int *list = NULL, *varlist = NULL, *depvars = NULL;
     char *detlist = NULL;
     int t1, t2, oldt1, oldt2;
@@ -1022,7 +1026,9 @@ static int real_var (int order, const LIST inlist,
 
     listlen = inlist[0] + 1;
     detlist = malloc(listlen * sizeof *detlist);
-    if (detlist == NULL) return E_ALLOC;
+    if (detlist == NULL) {
+	return E_ALLOC;
+    }
 
     list = copylist(inlist);
     if (list == NULL) {
@@ -1030,20 +1036,36 @@ static int real_var (int order, const LIST inlist,
 	return E_ALLOC;
     }
 
+    depvars = malloc(listlen * sizeof *depvars);
+    if (depvars == NULL) {
+	free(detlist);
+	free(list);
+	return E_ALLOC;
+    }
+
     /* how long will our list have to be? */
-    listlen = get_listlen(list, detlist, order, *pZ, pdinfo);
+    listlen = get_var_listlen(list, detlist, order, depvars,
+			      *pZ, pdinfo);
 
     varlist = gretl_list_new(listlen);
-    depvars = gretl_list_new(listlen);
-    if (varlist == NULL || depvars == NULL) {
+    if (varlist == NULL) {
 	err = E_ALLOC;
 	goto var_bailout;
     }
 
+    neqns = depvars[0];
+
+    /* generate the required lags */
+    if (real_list_laggenr(depvars, pZ, pdinfo, order)) {
+	err = E_ALLOC;
+	goto var_bailout;
+    }
+
+    /* initialize */
     idx = 2; /* skip beyond the counter and the dep var */
     end = listlen;
 
-    /* now fill out the list */
+    /* and fill out the list */
     for (i=1; i<=list[0]; i++) {
 	if (detlist[i]) {
 	    /* deterministic var: put at end of list */
@@ -1054,14 +1076,11 @@ static int real_var (int order, const LIST inlist,
 	/* otherwise it's a "real" variable and we replace it with
 	   <order> lags of itself */
 	if (varindex(pdinfo, pdinfo->varname[list[i]]) < pdinfo->v) {
-	    depvars[neqns] = list[i];
-	    neqns++;
 	    for (l=1; l<=order; l++) {
-		int lnum = laggenr(list[i], l, pZ, pdinfo);
+		int lnum = lagvarnum(list[i], l, pdinfo);
 
 		if (lnum > 0) {
-		    varlist[idx] = lnum; 
-		    idx++;
+		    varlist[idx++] = lnum; 
 		} else {
 		    err = E_ALLOC;
 		    goto var_bailout;
@@ -1073,7 +1092,7 @@ static int real_var (int order, const LIST inlist,
     /* sort out sample range */
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
-    varlist[1] = depvars[0];
+    varlist[1] = depvars[1];
 
     if ((missv = adjust_t1t2(NULL, varlist, &t1, &t2, 
 			     (const double **) *pZ, &misst))) {
@@ -1123,7 +1142,7 @@ static int real_var (int order, const LIST inlist,
 	    pmod = &var_model;
 	}
 
-	varlist[1] = depvars[i];
+	varlist[1] = depvars[i + 1];
 
 	/* run an OLS regression for the current dependent var */
 	*pmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);

@@ -109,6 +109,11 @@ void gretl_test_init (GRETLTEST *test);
 
 int vars_identical (const double *x, const double *y, int n);
 
+int real_list_laggenr (const int *list, double ***pZ, 
+		       DATAINFO *pdinfo, int maxlag);
+
+int lagvarnum (int v, int l, const DATAINFO *pdinfo);
+
 int get_genr_function (const char *s);
 
 void gretl_varinfo_init (VARINFO *vinfo);

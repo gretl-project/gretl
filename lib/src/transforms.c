@@ -512,8 +512,12 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
 	}
     }
 
+    len += trim;
+
     if (len < 8) {
 	len = 8;
+    } else if (len > VNAMELEN) {
+	len = VNAMELEN;
     }
 
     return len;
@@ -558,28 +562,12 @@ int list_loggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
     return (n_ok > 0)? 0 : E_LOGS;
 }
 
-/**
- * list_laggenr:
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generates and adds to the data set lagged values of the 
- * variables given in @list (up to the frequency of the data).
- *
- * Returns: 0 on successful completion, 1 on error.
- */
-
-int list_laggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
+int 
+real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
+		   int maxlag)
 {
     int lagnum, l, i, v;
-    int maxlag = pdinfo->pd;
     int startlen;
-
-    /* play safe with panel data */
-    if (dataset_is_panel(pdinfo)) {
-	maxlag = 1;
-    }
 
     startlen = get_starting_length(list, pdinfo, 
 				   (maxlag > 9)? 3 : 2);
@@ -598,6 +586,30 @@ int list_laggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     return 0;
+}
+
+/**
+ * list_laggenr:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generates and adds to the data set lagged values of the 
+ * variables given in @list (up to the frequency of the data).
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
+
+int list_laggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
+{
+    int maxlag = pdinfo->pd;
+
+    /* play safe with panel data */
+    if (dataset_is_panel(pdinfo)) {
+	maxlag = 1;
+    }
+
+    return real_list_laggenr(list, pZ, pdinfo, maxlag);  
 }
 
 /**
@@ -708,6 +720,22 @@ int list_xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     return (n_ok > 0)? 0 : E_SQUARES;
+}
+
+int lagvarnum (int v, int l, const DATAINFO *pdinfo)
+{
+    char label[MAXLABEL];
+    int i;
+
+    make_transform_label(label, pdinfo->varname[v], LAGS, l);
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!strcmp(label, VARLABEL(pdinfo, i))) {
+	    return i;
+	}
+    }
+
+    return -1;
 }
 
 #undef RHODEBUG
