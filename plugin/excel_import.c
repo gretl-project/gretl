@@ -753,7 +753,13 @@ static int got_valid_varnames (wbook *book, int ncols, int skip)
     return VARNAMES_OK;
 }
 
-static int data_block (wbook *book, int ncols, int skip)
+struct string_err {
+    int row;
+    int column;
+    char *str;
+};
+
+static int data_block (wbook *book, int ncols, int skip, struct string_err *err)
 {
     int i, t;
 
@@ -768,11 +774,16 @@ static int data_block (wbook *book, int ncols, int skip)
 		return -1;
 	    }
 	    if (IS_STRING(rowptr[t].cells[i])) {
-#ifdef EDEBUG
-		fprintf(stderr, "data_block: rowptr[%d].cells[%d] is '%s'\n",
-			t, i, rowptr[t].cells[i]);
-#endif		
-		return 0;
+		if (!strcmp(rowptr[t].cells[i], "NA") ||
+		    !strcmp(rowptr[t].cells[i], "na")) {
+		    rowptr[t].cells[i] = g_strdup("-999.0");
+		    return -1;
+		} else {
+		    err->row = t + 1;
+		    err->column = i + 1;
+		    err->str = g_strdup(rowptr[t].cells[i]);
+		    return 0;
+		}
 	    }
 	}
     }
@@ -843,6 +854,10 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	int i, j, t, i_sheet, t_sheet;
 	int label_strings, time_series = 0;
 	int skip, ncols, maxcols = 0;
+	struct string_err strerr;
+
+	strerr.row = strerr.column = 0;
+	strerr.str = NULL;
 
 	lastrow--;
 	while (lastrow > 0 && !rowptr[lastrow].cells) lastrow--;
@@ -877,9 +892,12 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 	if (err) goto getout; 
 
-	gotdata = data_block(&book, ncols, label_strings);
+	gotdata = data_block(&book, ncols, label_strings, &strerr);
 	if (gotdata == 0) {
-	    sprintf(errbuf, _("Expected numeric data, found string.\n"));
+	    sprintf(errbuf, _("Expected numeric data, found string:\n"
+			      "'%s' at row %d, column %d\n"),
+		    strerr.str, strerr.row, strerr.column);
+	    g_free(strerr.str);
 	    strcat(errbuf, _(adjust_rc));
 	    err = 1;
 	    goto getout; 
