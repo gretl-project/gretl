@@ -1127,13 +1127,10 @@ void set_sample_label (DATAINFO *pdinfo)
 {
     char pdstr[16];
     char stobs[OBSLEN], endobs[OBSLEN];
-    char t1str[OBSLEN], t2str[OBSLEN];
     char labeltxt[80];
 
     ntodate(stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);
-    ntodate(t1str, pdinfo->t1, pdinfo);
-    ntodate(t2str, pdinfo->t2, pdinfo);
 
     if (dataset_is_time_series(pdinfo)) {
 	switch (pdinfo->pd) {
@@ -1172,10 +1169,20 @@ void set_sample_label (DATAINFO *pdinfo)
     flip(mdata->ifac, "/Sample/Restructure panel...", 
 	 pdinfo->time_series == STACKED_CROSS_SECTION);
 
-    sprintf(labeltxt, _("%s: Full range %s - %s; current sample"
-	    " %s - %s"), pdstr, stobs, endobs,
-	    t1str, t2str);
-    gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
+    sprintf(labeltxt, _("%s: Full range %s - %s"), 
+	    pdstr, stobs, endobs);
+
+    if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
+	char t1str[OBSLEN], t2str[OBSLEN];
+	char biglabel[128];
+
+	ntodate(t1str, pdinfo->t1, pdinfo);
+	ntodate(t2str, pdinfo->t2, pdinfo);
+	sprintf(biglabel, _("%s; sample %s - %s"), labeltxt, t1str, t2str);
+	gtk_label_set_text(GTK_LABEL(mdata->status), biglabel);
+    } else {
+	gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
+    }
 
     if (strlen(paths.datfile) > 2) {
 	if (strrchr(paths.datfile, SLASH) == NULL) {
@@ -1196,6 +1203,8 @@ void set_sample_label (DATAINFO *pdinfo)
 	strcpy(labeltxt, _(" Unsaved data "));
 	gtk_label_set_text(GTK_LABEL(datalabel), labeltxt);
     }
+
+    console_record_sample(datainfo);
 }
 
 /* ......................................................... */
