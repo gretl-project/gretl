@@ -464,9 +464,15 @@ static int freq_error (FREQDIST *freq, PRN *prn)
 
 gint check_cmd (char *line)
 {
+    int err;
+
     *cmd.param = '\0';
 
-    catchflags(line, &cmd.opt);
+    err = catchflags(line, &cmd.opt);
+    if (err) {
+	gui_errmsg(err);
+	return 1;
+    } 	
 
     getcmd(line, datainfo, &cmd, &ignore, &Z, NULL); 
     if (cmd.errcode) {
@@ -1313,7 +1319,6 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 	
     clear(line, MAXLEN);
     sprintf(line, "setobs %s %s ", pdstr, stobs);
-    catchflags(line, &cmd.opt);
     if (verify_and_record_command(line)) return;
 
     err = set_obs(line, datainfo, cmd.opt);
@@ -1618,7 +1623,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
     clear(line, MAXLEN);
 
     if (aux_code == AUX_WHITE) {
-	strcpy(line, "lmtest -c");
+	strcpy(line, "lmtest -w");
 	err = whites_test(pmod, &Z, datainfo, prn, &test);
 	if (err) {
 	    gui_errmsg(err);
@@ -2042,13 +2047,18 @@ static int model_output (MODEL *pmod, PRN *prn)
 
 static gint check_model_cmd (char *line, char *modelgenr)
 {
+    int err;
     PRN *getgenr;
 
     if (bufopen(&getgenr)) return 1;
 
     *cmd.param = '\0';
 
-    catchflags(line, &cmd.opt);
+    err = catchflags(line, &cmd.opt);
+    if (err) {
+	gui_errmsg(err);
+	return 1;
+    }	
 
     getcmd(line, datainfo, &cmd, &ignore, &Z, getgenr); 
     if (cmd.errcode) {
@@ -2384,7 +2394,7 @@ void do_arma (int v, int ar, int ma, unsigned long opts)
     MODEL *pmod;
     PRN *prn;
 
-    sprintf(line, "arma %d %d ; %d%s", ar, ma, v, print_flags(opts));
+    sprintf(line, "arma %d %d ; %d%s", ar, ma, v, print_flags(opts, ARMA));
 
     if (check_model_cmd(line, NULL)) return;
 
@@ -4239,7 +4249,7 @@ int do_store (char *savename, unsigned long oflag, int overwrite)
 
     if (oflag != 0) { 
 	/* not a bog-standard native save */
-	const char *flagstr = print_flags(oflag);
+	const char *flagstr = print_flags(oflag, STORE);
 
 	tmp = g_strdup_printf("store '%s' %s%s", savename, 
 			      (showlist)? storelist : "", flagstr);
@@ -4914,7 +4924,11 @@ int gui_exec_line (char *line,
     *linecopy = 0;
     strncat(linecopy, line, sizeof linecopy - 1);
 
-    catchflags(line, &cmd.opt);
+    err = catchflags(line, &cmd.opt);
+    if (err) {
+        errmsg(err, prn);
+        return 1;
+    }	
 
     /* but if we're stacking commands for a loop, parse "lightly" */
     if (*plstack) { 
@@ -5556,7 +5570,7 @@ int gui_exec_line (char *line,
 	    if (err) errmsg(err, prn);
 	    /* FIXME: need to respond? */
 	} 
-	if ((cmd.opt & OPT_C) || !cmd.opt) {
+	if ((cmd.opt & OPT_W) || !cmd.opt) {
 	    err = whites_test(models[0], &Z, datainfo, outprn, ptest);
 	    if (err) errmsg(err, prn);
 	}

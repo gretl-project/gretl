@@ -1200,7 +1200,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop? */
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
-	    const char *flagstr = print_flags(cmd->opt);
+	    const char *flagstr = print_flags(cmd->opt, cmd->ci);
 
 	    pprintf(prn, "%s", flagstr);
 	}
@@ -1299,7 +1299,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 
     if (cmd->opt) { 
-	const char *flagstr = print_flags(cmd->opt);
+	const char *flagstr = print_flags(cmd->opt, cmd->ci);
 
 	if (cli) fputs(flagstr, stdout);
 	if (!batch) pputs(prn, flagstr);

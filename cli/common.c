@@ -75,7 +75,12 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     int err = 0;
 
     strcpy(linecpy, plp->lines[cmdnum]);
-    catchflags(linecpy, &cmd.opt);
+
+    err = catchflags(linecpy, &cmd.opt);
+    if (err) {
+	errmsg(err, prn);
+	return 1;
+    }
 
     substitute_dollar_i(linecpy);
 

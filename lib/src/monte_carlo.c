@@ -766,7 +766,7 @@ int add_to_loop (LOOPSET *ploop, char *line, int ci,
     strncpy(ploop->lines[i], line, MAXLEN - 4);
 
     if (oflags) {
-	const char *flagstr = print_flags(oflags);
+	const char *flagstr = print_flags(oflags, ci);
 
 	strcat(ploop->lines[i], flagstr);
     }

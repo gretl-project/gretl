@@ -287,7 +287,7 @@ static int make_texfile (const PATHS *ppaths, int model_count,
  * tex_print_equation:
  * @pmod:  pointer to gretl MODEL struct.
  * @pdinfo:  information regarding the data set.
- * @standalone: indicator variable.
+ * @standalone: print as full doc (1) or fragment (0).
  * @prn: gretl printing struct.
  *
  * Prints a gretl model in the form of a LaTeX equation, either as
@@ -395,7 +395,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
  * tex_print_model:
  * @pmod:  pointer to gretl MODEL struct.
  * @pdinfo:  information regarding the data set.
- * @standalone: indicator variable.
+ * @standalone: print as full doc (1) or fragment (0).
  * @prn: gretl printing struct.
  *
  * Prints a gretl model in the form of a LaTeX table, either as
@@ -421,7 +421,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
  * @ppaths: struct containing information on paths.
  * @texfile: name of file to save.
  * @model_count: count of models estimated so far.
- * @oflag: option: standalone or not.
+ * @oflag: option: complete doc or fragment
  *
  * Prints to file a gretl model in the form of a LaTeX table, either as
  * a stand-alone document or as a fragment of LaTeX source for
@@ -439,7 +439,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
     if (make_texfile(ppaths, model_count, 0, texfile, &prn))
 	return 1;
 
-    tex_print_model(pmod, pdinfo, (int) oflag, &prn);
+    tex_print_model(pmod, pdinfo, (oflag & OPT_O), &prn);
     if (prn.fp != NULL) fclose(prn.fp);
     return 0;
 }
@@ -451,7 +451,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
  * @ppaths: struct containing information on paths.
  * @texfile: name of file to save.
  * @model_count: count of models estimated so far.
- * @oflag: option: standalone or not.
+ * @oflag: option: complete doc or fragment
  *
  * Prints to file a gretl model in the form of a LaTeX equation, either as
  * a stand-alone document or as a fragment of LaTeX source for
@@ -469,7 +469,7 @@ int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
     if (make_texfile(ppaths, model_count, 1, texfile, &prn))
 	return 1;
 
-    tex_print_equation(pmod, pdinfo, (int) oflag, &prn);
+    tex_print_equation(pmod, pdinfo, (oflag & OPT_O), &prn);
     if (prn.fp != NULL) fclose(prn.fp);
     return 0;
 }

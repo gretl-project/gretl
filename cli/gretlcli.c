@@ -587,7 +587,12 @@ void exec_line (char *line, PRN *prn)
     }
 
     /* parse the command line... */
-    catchflags(line, &cmd.opt);
+    err = catchflags(line, &cmd.opt);
+    if (err) {
+	errmsg(err, prn);
+	return;
+    }
+
     compress_spaces(line);
 
     /* ...but if we're stacking commands for a loop, parse lightly */
@@ -1182,7 +1187,7 @@ void exec_line (char *line, PRN *prn)
 	    if (err) errmsg(err, prn);
 	}
 	/* heteroskedasticity */
-	if ((cmd.opt & OPT_C) || !cmd.opt) {
+	if ((cmd.opt & OPT_W) || !cmd.opt) {
 	    err = whites_test(models[0], &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
 	    /* need to take more action in case of err? */

@@ -88,10 +88,11 @@ gretl_matrix *gretl_diagonal_matrix (const double *d, int n, int mod)
 		if (mod == GRETL_MOD_SQUARE) {
 		    m->val[mdx(m, i, j)] = x * x;
 		} else {
-		    m->val[mdx(m, i, j)] = x;
+		    m->val[mdx(m, i, j)] = x; 
 		}
+	    } else {
+		m->val[mdx(m, i, j)] = 0.0;
 	    }
-	    m->val[mdx(m, i, j)] = 0.0;
 	}
     }
 

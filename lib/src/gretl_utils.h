@@ -122,7 +122,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
 int catchflags (char *line, unsigned long *oflag);
 
-const char *print_flags (unsigned long flags);
+const char *print_flags (unsigned long flags, int ci);
 
 MODEL *gretl_model_new (const DATAINFO *pdinfo);
 

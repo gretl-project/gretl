@@ -1090,6 +1090,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 /* .......................................................... */
 
 struct gretl_opt {
+    int ci;
     unsigned long o;
     const char *longopt;
 };
@@ -1099,31 +1100,58 @@ struct flag_match {
     unsigned char c;
 };
 
-/* below: this is used as a one-way mapping from the long form
+/* Below: This is used as a one-way mapping from the long form
    to the char, so a given char can have more than one long-form
-   counterpart */
+   counterpart. */
 
 struct gretl_opt gretl_opts[] = {
-    { OPT_C, "csv" },
-    { OPT_L, "logs" },             
-    { OPT_M, "with-impulses" },    /* in graphing context */
-    { OPT_M, "gnu-octave" },       /* in data-save context */
-    { OPT_N, "native" },
-    { OPT_O, "with-lines" },       /* graphing context */
-    { OPT_O, "vcv" },              /* model context */
-    { OPT_O, "autocorr" },         /* lmtest context */
-    { OPT_O, "dummy" },            /* smpl context */
-    { OPT_Q, "quiet" },
-    { OPT_R, "gnu-R" },            /* data export context */
-    { OPT_R, "restrict" },         /* smpl context */
-    { OPT_R, "robust" },           /* model context */
-    { OPT_S, "suppress-fitted" },  /* graphing context */
-    { OPT_S, "squares" },          /* lmtest context */    
-    { OPT_T, "traditional" },
-    { OPT_V, "verbose" },
-    { OPT_X, "x-12-arima" },
-    { OPT_Z, "gzipped" },
-    { 0L, NULL }
+    { ARMA,     OPT_N, "native" },
+    { ARMA,     OPT_V, "verbose" },
+    { ARMA,     OPT_X, "x-12-arima" },
+    { COINT2,   OPT_O, "verbose" },
+    { EQNPRINT, OPT_F, "outfile" },
+    { TABPRINT, OPT_F, "outfile" },
+    { EQNPRINT, OPT_O, "complete" },
+    { TABPRINT, OPT_O, "complete" },
+    { FCASTERR, OPT_O, "plot" },
+    { GNUPLOT,  OPT_O, "with-lines" },
+    { GNUPLOT,  OPT_M, "with-impulses" },
+    { GNUPLOT,  OPT_S, "suppress-fitted" },
+    { GNUPLOT,  OPT_Z, "dummy" },
+    { GRAPH,    OPT_O, "wide" },
+    { IMPORT,   OPT_O, "box1" },
+    { LEVERAGE, OPT_O, "save" },
+    { LMTEST,   OPT_L, "logs" },
+    { LMTEST,   OPT_O, "autocorr" },
+    { LMTEST,   OPT_S, "squares" },    
+    { LMTEST,   OPT_W, "white" },
+    { MEANTEST, OPT_O, "unequal-vars" },
+    { OLS,      OPT_O, "vcv" }, 
+    { OLS,      OPT_R, "robust" },
+    { OLS,      OPT_Q, "quiet" },
+    { OUTFILE,  OPT_A, "append" },
+    { OUTFILE,  OPT_C, "close" },
+    { OUTFILE,  OPT_W, "write" },
+    { PANEL,    OPT_C, "cross-section" },
+    { PANEL,    OPT_S, "time-series" },
+    { PCA,      OPT_A, "save-all" },
+    { PCA,      OPT_O, "save" },
+    { PERGM,    OPT_O, "bartlett" },
+    { PLOT,     OPT_O, "one-scale" },
+    { PRINT,    OPT_O, "byobs" },
+    { PRINT,    OPT_T, "ten" },
+    { SMPL,     OPT_O, "dummy" },
+    { SMPL,     OPT_R, "restrict" },
+    { SPEARMAN, OPT_O, "verbose" },
+    { SQUARE,   OPT_O, "cross" },
+    { STORE,    OPT_C, "csv" },
+    { STORE,    OPT_M, "gnu-octave" },
+    { STORE,    OPT_R, "gnu-R" },
+    { STORE,    OPT_T, "traditional" },
+    { STORE,    OPT_Z, "gzipped" },
+    { VAR,      OPT_Q, "quiet" },    
+
+    { 0,        0L,    NULL }
 };
 
 struct flag_match flag_matches[] = {
@@ -1131,6 +1159,7 @@ struct flag_match flag_matches[] = {
     { OPT_B, 'b' },
     { OPT_C, 'c' },
     { OPT_D, 'd' },
+    { OPT_F, 'f' },
     { OPT_I, 'i' },
     { OPT_L, 'l' },
     { OPT_M, 'm' },
@@ -1147,17 +1176,11 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-static unsigned char isflag (unsigned char c)
-{
-    if (c == 'a' || c == 'b' || c == 'c' || c == 'd' ||
-	c == 'i' || c == 'l' || c == 'm' || c == 'n' || 
-	c == 'o' || c == 'q' || c == 'r' || c == 's' || 
-	c == 't' || c == 'v' || c == 'w' || c == 'x' || 
-	c == 'z') {
-	return c;
-    }
-    return 0;
-}
+#define isflag(c) (c == 'a' || c == 'b' || c == 'c' || c == 'd' || \
+                   c == 'f' || c == 'i' || c == 'l' || c == 'm' || \
+                   c == 'n' || c == 'o' || c == 'q' || c == 'r' || \
+                   c == 's' || c == 't' || c == 'v' || c == 'w' || \
+                   c == 'x' || c == 'z')
 
 static unsigned long opt_from_flag (unsigned char c)
 {
@@ -1170,22 +1193,50 @@ static unsigned long opt_from_flag (unsigned char c)
     return 0L;
 }
 
-static unsigned long get_short_opts (char *line)
+static int opt_is_valid (unsigned long opt, int ci,
+			 char c, const char *s)
+{
+    int i;
+
+    if (opt == OPT_O && is_model_cmd(gretl_command_word(ci))) {
+	return 1;
+    }
+
+    for (i=0; gretl_opts[i].ci != 0; i++) {
+	if (ci == gretl_opts[i].ci && opt == gretl_opts[i].o) {
+	    return 1;
+	}
+    }
+
+    if (c != 0) {
+	sprintf(gretl_errmsg, "Invalid option '-%c'", c);
+    } else if (s != NULL) {
+	sprintf(gretl_errmsg, "Invalid option '--%s'", s);
+    }
+
+    return 0;
+}
+
+static unsigned long get_short_opts (char *line, int ci, int *err)
 {
     char *p = strchr(line, '-');
-    unsigned long ret = 0L;
+    unsigned long opt, ret = 0L;
 
     while (p != NULL) {
-	unsigned char c, flag, prev;
+	unsigned char c, prev;
 	int match = 0;
 	size_t n = strlen(p);
 
 	c = *(p + 1);
 	prev = *(p - 1);
 	
-	if (isspace(prev) && (flag = isflag(c)) && 
-	    (n == 2 || isspace(*(p + 2)))) {
-	    ret |= opt_from_flag(flag);
+	if (isspace(prev) && isflag(c) && (n == 2 || isspace(*(p + 2)))) {
+	    opt = opt_from_flag(c);
+	    if (!opt_is_valid(opt, ci, c, NULL)) {
+		*err = 1;
+		return 0L;
+	    }
+	    ret |= opt;
 	    _delete(p, 0, 2);
 	    match = 1;
 	}
@@ -1196,10 +1247,10 @@ static unsigned long get_short_opts (char *line)
     return ret;
 }
   
-static unsigned long get_long_opts (char *line)
+static unsigned long get_long_opts (char *line, int ci, int *err)
 {
     char *p = strstr(line, "--");
-    unsigned long ret = 0L;
+    unsigned long opt, ret = 0L;
 
     while (p != NULL) {
 	char longopt[32];
@@ -1208,8 +1259,13 @@ static unsigned long get_long_opts (char *line)
 	sscanf(p + 2, "%31s", longopt);
 	for (i=0; gretl_opts[i].o != 0; i++) {
 	    if (!strcmp(longopt, gretl_opts[i].longopt)) {
+		opt = gretl_opts[i].o;
+		if (!opt_is_valid(opt, ci, 0, longopt)) {
+		    *err = 1;
+		    return 0L;
+		}
 		ret |= gretl_opts[i].o;
-                _delete(p, 0, 2 + strlen(longopt));
+		_delete(p, 0, 2 + strlen(longopt));
 		match = 1;
 		break;
 	    }
@@ -1224,15 +1280,17 @@ static unsigned long get_long_opts (char *line)
 int catchflags (char *line, unsigned long *oflags)
      /* check for option flags in line: if found, chop them out 
 	and set oflags value accordingly.  
-	Strip trailing semicolon while we're at it. 
+	Strip trailing semicolon while we're at it.
+	Return 0 if all is OK, 1 if there's an invalid option.
      */
 {
     int n = strlen(line);
     unsigned long opt;
     char cmdword[9];
-    int ret = 0;
+    int ci, err = 0;
 
     *oflags = 0L;
+    *gretl_errmsg = '\0';
 
     if (n < 2) return 0;
 
@@ -1246,40 +1304,57 @@ int catchflags (char *line, unsigned long *oflags)
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
     sscanf(line, "%8s", cmdword);
-    if (!strcmp(cmdword, "genr") || 
-	!strcmp(cmdword, "sim")) return ret;
+    if (!strcmp(cmdword, "genr") || !strcmp(cmdword, "sim") ||
+	!strcmp(cmdword, "label")) return 0;
+
+    ci = gretl_command_number(cmdword);
+    if (ci == 0) return 0;
 
     /* try for short-form options (e.g. "-o") */
-    opt = get_short_opts(line);
-    if (opt) {
-	*oflags |= opt;
-	ret = 1;
-    }    
+    opt = get_short_opts(line, ci, &err);
+    if (err) return 1;
+    if (opt) *oflags |= opt;
 
-    /* try for long-form options (e.g. "--verbose") */
-    opt = get_long_opts(line);
-    if (opt) {
-	*oflags |= opt;
-	ret = 1;
-    }
+    /* try for long-form options (e.g. "--vcv") */
+    opt = get_long_opts(line, ci, &err);
+    if (err) return 1;
+    if (opt) *oflags |= opt;
 
-    return ret;
+    return err;
 }
 
-const char *print_flags (unsigned long flags)
+const char *print_flags (unsigned long flags, int ci)
 {
-    static char flagstr[32];
-    char fbit[4];
+    static char flagstr[64];
+    char fbit[20];
     int i;
 
     flagstr[0] = '\0';
 
+    if (flags == 0L) return flagstr;
+
+    /* special: -o (--vcv) can be used with several model
+       commands */
+    if ((flags & OPT_O) && is_model_cmd(gretl_command_word(ci))) {
+	strcat(flagstr, " --vcv");
+	flags &= ~OPT_O;
+    }
+
+    for (i=0; gretl_opts[i].ci != 0; i++) {
+	if (ci == gretl_opts[i].ci && (flags & gretl_opts[i].o)) {
+	    sprintf(fbit, " --%s", gretl_opts[i].longopt);
+	    strcat(flagstr, fbit);
+	}
+    }
+
+#if 0 /* old: print the short-form option */
     for (i=0; flag_matches[i].o != 0L; i++) {
 	if (flags & flag_matches[i].o) {
 	    sprintf(fbit, " -%c", flag_matches[i].c);
 	    strcat(flagstr, fbit);
 	}
     }
+#endif
 
     return flagstr;
 }

@@ -1266,7 +1266,7 @@ static void add_pca_data (windata_t *vwin)
 	    
 	    err = print_list_to_buffer(corrmat->list, listbuf, sizeof listbuf);
 	    if (!err) {
-		const char *flagstr = print_flags(oflag); 
+		const char *flagstr = print_flags(oflag, PCA); 
 
 		sprintf(line, "pca %s%s", listbuf, flagstr);
 		verify_and_record_command(line);
