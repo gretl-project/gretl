@@ -795,7 +795,7 @@ static void set_copy_format (GtkWidget *w, struct format_info *finfo)
     }
 }
 
-void copy_format_dialog (windata_t *vwin)
+void copy_format_dialog (windata_t *vwin, int unused)
 {
     GtkWidget *dialog, *tempwid, *button, *hbox;
     GtkWidget *internal_vbox;

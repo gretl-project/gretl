@@ -261,6 +261,7 @@ enum copy_variants {
     COPY_LATEX,
     COPY_LATEX_EQUATION,
     COPY_RTF,
+    COPY_TEXT_AS_RTF,
     COPY_EMF
 };
 

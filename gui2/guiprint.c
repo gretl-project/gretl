@@ -29,9 +29,9 @@
 
 #ifdef G_OS_WIN32
 
-static char *dosify_buffer (const char *buf)
+static char *dosify_buffer (const char *buf, int format)
 {
-    int nlines = 0;
+    int extra = 0, nlines = 0;
     char *targ, *q;
     const char *p;
 
@@ -41,12 +41,23 @@ static char *dosify_buffer (const char *buf)
     while (*p) {
 	if (*p++ == '\n') nlines++;
     }
+    extra = nlines + 1;
 
-    targ = malloc(strlen(buf) + nlines + 1);
+    if (format == COPY_TEXT_AS_RTF) {
+	extra += 32;
+    }
+
+    targ = malloc(strlen(buf) + extra);
     if (targ == NULL) return NULL;
 
+    if (format == COPY_TEXT_AS_RTF) {
+	strcpy(targ, "{\\rtf1\\fmodern\\fs18 ");
+	q = targ + strlen(targ);
+    } else {
+	q = targ;
+    }
+
     p = buf;
-    q = targ;
     while (*p) {
 	if (*p == '\n') {
 	    *q++ = '\r';
@@ -57,6 +68,10 @@ static char *dosify_buffer (const char *buf)
 	p++;
     } 
     *q = 0;
+
+    if (format == COPY_TEXT_AS_RTF) {
+	strcat(q, "}\n");
+    }
 
     return targ;
 }
@@ -83,13 +98,13 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
     EmptyClipboard();
 
-    if (nls_on && format == COPY_TEXT) {
+    if (nls_on && format == COPY_TEXT) { 
 	gsize bytes;
 
 	tr = g_locale_from_utf8 (buf, -1, NULL, &bytes, NULL);
-	winbuf = dosify_buffer(tr);
+	winbuf = dosify_buffer(tr, format);
     } else {
-	winbuf = dosify_buffer(buf);
+	winbuf = dosify_buffer(buf, format);
     }
 
     if (winbuf == NULL) {

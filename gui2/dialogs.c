@@ -783,7 +783,7 @@ static void set_copy_format (GtkWidget *w, struct format_info *finfo)
     }
 }
 
-void copy_format_dialog (windata_t *vwin)
+void copy_format_dialog (windata_t *vwin, int multicopy)
 {
     GtkWidget *dialog, *tempwid, *button, *hbox;
     GtkWidget *internal_vbox;
@@ -794,13 +794,21 @@ void copy_format_dialog (windata_t *vwin)
     if (finfo == NULL) return;
 
     dialog = gtk_dialog_new();
-    
+
     finfo->vwin = vwin;
     finfo->dialog = dialog;
 #ifdef G_OS_WIN32
-    finfo->format = COPY_RTF;
+    if (multicopy) {
+	finfo->format = COPY_RTF;
+    } else {
+	finfo->format = COPY_TEXT_AS_RTF;
+    }
 #else
-    finfo->format = COPY_LATEX;
+    if (multicopy) {
+	finfo->format = COPY_LATEX;
+    } else {
+	finfo->format = COPY_TEXT;
+    }
 #endif
 
     gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: copy formats"));
@@ -830,41 +838,59 @@ void copy_format_dialog (windata_t *vwin)
     /* RTF option */
     button = gtk_radio_button_new_with_label(NULL, "RTF (MS Word)");
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));    
+    if (multicopy) {
+	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));  
+    } else {
+	g_object_set_data(G_OBJECT(button), "format", 
+			  GINT_TO_POINTER(COPY_TEXT_AS_RTF));
+    }
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_widget_show (button);
 
-    /* LaTeX option */
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, "LaTeX");
-    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
-    gtk_widget_show (button);
+    /* LaTeX option? */
+    if (multicopy) {
+	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+	button = gtk_radio_button_new_with_label(group, "LaTeX");
+	gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_copy_format), finfo);
+	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));  
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+	gtk_widget_show (button);
+    }
 
 #else /* not MS Windows: reverse the first two options */
 
-    /* LaTeX option */
-    button = gtk_radio_button_new_with_label(NULL, "LaTeX");
-    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
-    gtk_widget_show (button);   
+    /* LaTeX option? */
+    if (multicopy) {
+	button = gtk_radio_button_new_with_label(NULL, "LaTeX");
+	gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_copy_format), finfo);
+	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	gtk_widget_show (button);   
+    }
 
     /* RTF option */
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, "RTF");
+    if (multicopy) {
+	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+	button = gtk_radio_button_new_with_label(group, "RTF");
+    } else {
+	button = gtk_radio_button_new_with_label(NULL, "RTF");
+    }	
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));    
+    if (multicopy) {
+	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));   
+    } else {
+	g_object_set_data(G_OBJECT(button), "format", 
+			  GINT_TO_POINTER(COPY_TEXT_AS_RTF)); 
+    }
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     gtk_widget_show (button);
 
 #endif /* G_OS_WIN32 */
@@ -873,10 +899,14 @@ void copy_format_dialog (windata_t *vwin)
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label (group, _("plain text"));
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_TEXT));
+#ifdef G_OS_WIN32
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+#else
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), !multicopy);
+#endif
     gtk_widget_show (button);
 
     hbox = gtk_hbox_new(FALSE, 5);

@@ -280,7 +280,7 @@ static GtkItemFactoryEntry var_items[] = {
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
 {
-    copy_format_dialog((windata_t *) p);
+    copy_format_dialog((windata_t *) p, 1);
 }
 
 #ifdef ENABLE_NLS
@@ -1207,7 +1207,7 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
-    copy_format_dialog(vwin);
+    copy_format_dialog(vwin, MULTI_COPY_ENABLED(vwin->role));
 }
 
 /* ........................................................... */
@@ -1429,10 +1429,16 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if (viewbar_items[i].flag == COPY_ITEM && 
-	    MULTI_COPY_ENABLED(vwin->role)) {
+#if 0  /* broken as of now */
+	if (viewbar_items[i].flag == COPY_ITEM) {
 	    toolfunc = choose_copy_format_callback;
 	}
+#else
+        if (viewbar_items[i].flag == COPY_ITEM && 
+            MULTI_COPY_ENABLED(vwin->role)) {
+            toolfunc = choose_copy_format_callback;
+        }
+#endif
 
 	if (viewbar_items[i].flag == SAVE_ITEM) { 
 	    if (!edit_ok || vwin->role == SCRIPT_OUT) {
@@ -3009,19 +3015,33 @@ int prn_to_clipboard (PRN *prn, int copycode)
     if (clipboard_buf) g_free(clipboard_buf);
     clipboard_buf = NULL;
 
-    if (copycode == COPY_TEXT) { /* need to convert from utf8 */
+    if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
+	/* need to convert from utf8 */
 	gchar *trbuf;
 	gsize bytes;
+	char *p;
 	
 	trbuf = g_locale_from_utf8(prn->buf, -1, NULL, &bytes, NULL);
 	if (bytes > 0) {
-	    clipboard_buf = mymalloc(bytes + 1);
+	    if (copycode == COPY_TEXT_AS_RTF) {
+		clipboard_buf = mymalloc(bytes + 1 + 32);
+	    } else {
+		clipboard_buf = mymalloc(bytes + 1);
+	    }
 	    if (clipboard_buf == NULL) {
 		g_free(trbuf);
 		return 1;
 	    }
-	    memcpy(clipboard_buf, trbuf, bytes + 1);
+	    p = clipboard_buf;
+	    if (copycode == COPY_TEXT_AS_RTF) {
+		strcpy(clipboard_buf, "{\\rtf1\\fmodern\\fs18 ");
+		p += strlen(p);
+	    }
+	    memcpy(p, trbuf, bytes + 1);
 	    g_free(trbuf);
+	    if (copycode == COPY_TEXT_AS_RTF) {
+		strcat(clipboard_buf, "}\n");
+	    }
 	}
     } else { /* copying TeX, RTF or CSV */
 	size_t len;
@@ -3252,10 +3272,13 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
     /* copying plain text from window */
 #ifndef OLD_GTK
-    else if (how == COPY_TEXT || how == COPY_SELECTION) {
+    else if (how == COPY_TEXT || how == COPY_TEXT_AS_RTF || how == COPY_SELECTION) {
 	GtkTextBuffer *textbuf = 
 	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	PRN textprn;
+	int myhow = how;
+
+	if (myhow == COPY_SELECTION) myhow = COPY_TEXT;
 
 	if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
 	    /* there is a selection in place */
@@ -3265,7 +3288,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
 	    selbuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
 	    gretl_print_attach_buffer(&textprn, selbuf);
-	    prn_to_clipboard(&textprn, COPY_TEXT);
+	    prn_to_clipboard(&textprn, myhow);
 	    g_free(selbuf);
 	    infobox(_("Copied selection to clipboard"));
 	    return;
@@ -3273,7 +3296,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    /* no selection: copy everything */
 	    gretl_print_attach_buffer(&textprn,
 				      textview_get_text(GTK_TEXT_VIEW(vwin->w))); 
-	    prn_to_clipboard(&textprn, COPY_TEXT);
+	    prn_to_clipboard(&textprn, myhow);
 	    g_free(textprn.buf);
 	}
     }
@@ -3294,7 +3317,8 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
     msg = g_strdup_printf(_("Copied contents of window as %s"),
 			  (how == COPY_LATEX)? "LaTeX" :
-			  (how == COPY_RTF)? "RTF" : _("plain text"));
+			  (how == COPY_RTF || how == COPY_TEXT_AS_RTF)? 
+			  "RTF" : _("plain text"));
     infobox(msg);
     g_free(msg);
 }
