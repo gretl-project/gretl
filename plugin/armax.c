@@ -27,7 +27,7 @@
 
 #include "../cephes/polrt.c"
 
-#undef ARMA_DEBUG
+#define ARMA_DEBUG
 
 #define DEFAULT_MAX_ITER 1000
 #define SUBITERMAX         40
@@ -111,14 +111,16 @@ static int get_maxiter (void)
 }
 
 static double update_fcast_errs (double *e, const double *y, 
+				 const double **X,
 				 const double *coeff, 
 				 const DATAINFO *ainfo,
-				 int p, int q)
+				 int p, int q, int r)
 {
     int i, t;
     double s2 = 0.0;
     const double *ar_coeff = coeff;
     const double *ma_coeff = coeff + p;
+    const double *reg_coeff = coeff + p + q;
 
     for (t=ainfo->t1; t<=ainfo->t2; t++) {
 
@@ -141,6 +143,15 @@ static double update_fcast_errs (double *e, const double *y,
 	    }
 	}
 
+	for (i=1; i<=r; i++) {
+	    e[t] -= reg_coeff[i] * X[i-1][t];
+	    if (t==ainfo->t1) {
+		fprintf(stderr, "regress part: coeff=%g, X[%d][%d]=%g\n",
+			reg_coeff[i], i-1, t, X[i-1][t]);
+	    }
+	}
+
+
 #ifdef ARMA_DEBUG
 	if (t < ainfo->t1 + 3) {
 	    fprintf(stderr, "update_fcast_errs: after processing: e[%d] = %g\n", 
@@ -161,10 +172,11 @@ static double update_fcast_errs (double *e, const double *y,
     return s2;
 }
 
-static void update_error_partials (double *e, const double *y, 
+static void update_error_partials (double *e, 
+				   const double *y, const double **X,
 				   double **Z, const double *ma_coeff,
 				   const DATAINFO *ainfo,
-				   int p, int q)
+				   int p, int q, int r)
 {
     int t, col, i, j, t2;
 
@@ -200,20 +212,32 @@ static void update_error_partials (double *e, const double *y,
 		}
 	    }
 	}
+
+	/* ordinary regressors */
+	for (j=0; j<r; j++) {
+	    col++;
+	    Z[col][t] = -X[j][t]; 
+	    if (t==ainfo->t1) fprintf(stderr, "starting Z[%d][%d] at %g\n", col, t, Z[col][t]);
+	    for (i=1; i<=q; i++) {
+		Z[col][t] -= ma_coeff[i] * Z[col][t-i];
+	    }
+	    if (t==ainfo->t1) fprintf(stderr, "now Z[%d][%d] = %g\n", col, t, Z[col][t]);
+	}	    
     }
 }
 
 static void update_ll_partials (double *e, double **Z, double s2,
-				const DATAINFO *ainfo, int p, int q)
+				const DATAINFO *ainfo, 
+				int p, int q, int r)
 {
     int i, t, col;
-    int nc = p + q + 1;
+    int nc = p + q + r + 1;
 
     for (t=ainfo->t1; t<=ainfo->t2; t++) {
 	double x = e[t] / s2;
 
 	for (i=0; i<nc; i++) {
-	    col = 3 + p + q + i;
+	    col = 3 + p + q + r + i;
 	    Z[col][t] = -Z[col-nc][t] * x;
 	}
     }
@@ -361,7 +385,7 @@ static int check_arma_list (const int *list)
 {
     int err = 0;
 
-    if (list[0] != 4) err = 1;
+    if (list[0] < 4) err = 1;
 
     /* for now we'll accept ARMA (4,4) at max */
     else if (list[1] < 0 || list[1] > 4) err = 1;
@@ -375,52 +399,101 @@ static int check_arma_list (const int *list)
     return err;
 }
 
+static const double **make_armax_X (int *list, const double **Z, int offset)
+{
+    const double **X;
+    int nv = list[0] - 4;
+    int v, i;
+
+    X = malloc(nv * sizeof *X);
+    if (X == NULL) return NULL;
+
+    for (i=0; i<nv; i++) {
+	v = list[i + 5];
+#ifdef ARMA_DEBUG
+	fprintf(stderr, "make_armax_X: setting X[%d] -> Z[%d] + %d\n", i, v, offset);
+#endif
+	X[i] = Z[v] + offset;
+    }
+
+    return X;
+}
+
 /* below: run an initial OLS to get starting values for the
    AR coefficients */
 
-static int ar_init_by_ols (int v, int p, double *coeff,
+static int ar_init_by_ols (const int *list, double *coeff,
 			   const double **Z, const DATAINFO *pdinfo,
 			   int arma_t1)
 {
     int an = pdinfo->t2 - arma_t1 + 1;
+    int p = list[1];
+    int q = list[2];
+    int ynum = list[4];
+    int n_regcoeff = list[0] - 4;
+    int av = p + 2 + n_regcoeff;
     double **aZ = NULL;
     DATAINFO *ainfo = NULL;
     int *alist = NULL;
     MODEL armod;
-    int i, t, err = 0;
+    int i, j, t, err = 0;
 
     gretl_model_init(&armod, NULL);  
 
-    alist = malloc((p + 3) * sizeof *alist);
+    alist = malloc((av + 1) * sizeof *alist);
     if (alist == NULL) return 1;
 
-    alist[0] = p + 2;
+    alist[0] = av;
     alist[1] = 1;
     alist[2] = 0;
     for (i=0; i<p; i++) {
 	alist[i + 3] = i + 2;
     }
+    for (i=0; i<n_regcoeff; i++) {
+	alist[i + 3 + p] = i + p + 2;
+    }
 
-    ainfo = create_new_dataset(&aZ, p + 2, an, 0);
+    printlist(alist, "armax init list");
+
+    ainfo = create_new_dataset(&aZ, av, an, 0);
     if (ainfo == NULL) {
 	free(alist);
 	return 1;
     }
     
     for (t=0; t<an; t++) {
-	for (i=0; i<=p; i++) {
-	    int s = t + arma_t1 - i;
+	int j, s;
 
-	    aZ[i+1][t] = Z[v][s];
+	for (i=0; i<=p; i++) {
+	    s = t + arma_t1 - i;
+	    aZ[i+1][t] = Z[ynum][s];
+	    if (t==0) {
+		fprintf(stderr, "set aZ[%d] to Z[%d] + %d\n", 
+			i+1, ynum, s);
+	    }	    
+	}
+	for (i=0; i<n_regcoeff; i++) {
+	    j = list[i+5];
+	    s = t + arma_t1;
+	    aZ[i+p+2][t] = Z[j][s];
+	    if (t==0) {
+		fprintf(stderr, "set aZ[%d] to Z[%d] + %d\n", 
+			i+p+2, j, s);
+	    }
 	}
     }
 
     armod = lsq(alist, &aZ, ainfo, OLS, OPT_A, 0.0);
     err = armod.errcode;
     if (!err) {
+	j = 0;
 	for (i=0; i<armod.ncoeff; i++) {
-	    coeff[i] = armod.coeff[i];
+	    if (i == p + 1) j += q; /* leave space for MA coeffs */
+	    coeff[j++] = armod.coeff[i];
 	}
+	for (i=0; i<q; i++) {
+	    coeff[i+p+1] = 0.0;
+	} 
     }
     
     free(alist);
@@ -428,36 +501,41 @@ static int ar_init_by_ols (int v, int p, double *coeff,
     clear_datainfo(ainfo, CLEAR_FULL);
     free(ainfo);
 
-    clear_model(&armod, NULL);
-
 #ifdef ARMA_DEBUG
     fprintf(stderr, "\n");
-    for (i=0; i<armod.ncoeff; i++) {
+    for (i=0; i<=p + q + n_regcoeff; i++) {
 	fprintf(stderr, "ar_init_by_ols: coeff[%d] = %g\n", 
 		i, coeff[i]);
     }
 #endif
 
+    clear_model(&armod, NULL);
+
     return err;
 }
 
 #ifdef ARMA_DEBUG
-static void make_tmp_varnames (DATAINFO *ainfo, int p, int q)
+static void make_tmp_varnames (DATAINFO *ainfo, int p, int q, int r)
 {
     int i;
 
     strcpy(ainfo->varname[1], "e");
     strcpy(ainfo->varname[2], "de_c");
-    strcpy(ainfo->varname[2+p+q+1], "dl_c");
+    strcpy(ainfo->varname[2+p+q+r+1], "dl_c");
 
     for (i=0; i<p; i++) {
 	sprintf(ainfo->varname[3+i], "de_a%d", i + 1);
-	sprintf(ainfo->varname[3+p+q+1+i], "dl_a%d", i + 1);
+	sprintf(ainfo->varname[3+p+q+r+1+i], "dl_a%d", i + 1);
     }
 
     for (i=0; i<q; i++) {
 	sprintf(ainfo->varname[3+p+i], "de_m%d", i + 1);
-	sprintf(ainfo->varname[3+2*p+q+1+i], "dl_m%d", i + 1);
+	sprintf(ainfo->varname[3+2*p+q+r+1+i], "dl_m%d", i + 1);
+    }
+
+    for (i=0; i<r; i++) {
+	sprintf(ainfo->varname[3+p+q+i], "de_x%d", i + 1);
+	sprintf(ainfo->varname[3+2*p+q+r+1+i], "dl_x%d", i + 1);
     }   
 }
 #endif
@@ -503,10 +581,10 @@ static int adjust_sample (DATAINFO *pdinfo, const double *y,
     return 0;
 }
 
-MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
-		  PRN *prn)
+MODEL armax_model (int *list, const double **Z, DATAINFO *pdinfo, 
+		   PRN *prn)
 {
-    int nc, v, p, q, maxlag;
+    int nc, v, p, q, r, maxlag;
     int subiters, iters, itermax;
     int arma_t1, arma_t2;
     int i, t;
@@ -514,7 +592,8 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     double steplength, ll_prev = -1.0e+8;
     double *e, *coeff, *d_coef;
     const double *y;
-    double **aZ;
+    double **aZ = NULL;
+    const double **X = NULL;
     DATAINFO *ainfo;
     int *alist;
     MODEL armod;
@@ -536,14 +615,21 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     q = list[2]; /* MA order */
     maxlag = (p > q)? p : q; /* maximum lag in the model */
 
+    /* number of ordinary regressors */
+    r = list[0] - 4;
+
+    fprintf(stderr, "armax: number of regression coeffs = %d\n", r);
+
     /* adjust sample? */
     if (adjust_sample(pdinfo, y, p, q, v, &arma_t1, &arma_t2)) {
         armod.errcode = E_DATA;
         return armod;
     }
 
+    fprintf(stderr, "armax: t1 = %d, t2 = %d\n", arma_t1, arma_t2);
+
     /* number of coefficients */
-    nc = 1 + p + q;
+    nc = 1 + p + q + r;
 
     alist = malloc((nc + 2) * sizeof *alist);
     if (alist == NULL) {
@@ -553,9 +639,11 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     alist[0] = nc + 1;
     alist[1] = 0; /* dep var is constant, in OPG */
-    for (i=0; i<=p+q; i++) {
-	alist[i+2] = 3 + p + q + i;
+    for (i=0; i<=p+q+r; i++) {
+	alist[i+2] = 3 + p + q + r + i;
     }
+
+    printlist(alist, "OPG list");
 
     /* coefficient vector */
     coeff = malloc(nc * sizeof *coeff);
@@ -587,9 +675,13 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     ainfo->t1 = arma_t1;
     ainfo->t2 = arma_t2;
 
-    /* initialize the coefficients: AR part by OLS, MA at 0 */
-    ar_init_by_ols(v, p, coeff, Z, pdinfo, ainfo->t1);
-    for (i=0; i<q; i++) coeff[i+p+1] = 0.0;
+    fprintf(stderr, "armax: made dataset with %d vars\n", ainfo->v);
+
+    /* initialize the coefficients: AR and regression part by OLS, 
+       MA at 0 */
+    ar_init_by_ols(list, coeff, Z, pdinfo, ainfo->t1);
+
+    fprintf(stderr, "armax: done coeff init\n");
 
     /* initialize forecast errors and derivatives */
     for (t=0; t<ainfo->n; t++) {
@@ -598,11 +690,23 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	}
     }
 
+    /* construct virtual dataset for real regressors */
+    if (r > 0) {
+	X = make_armax_X(list, Z, ainfo->t1);
+	if (X == NULL) {
+	    armod.errcode = E_ALLOC;
+	    free(alist);
+	    free(coeff);
+	    free(d_coef);
+	    return armod;
+	}
+    }
+
     /* forecast errors */
     e = aZ[1];
 
 #ifdef ARMA_DEBUG
-    make_tmp_varnames(ainfo, p, q);
+    make_tmp_varnames(ainfo, p, q, r);
 #endif 
 
     crit = 1.0;
@@ -612,7 +716,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     steplength = 0.125;
 
     /* generate one-step forecast errors */
-    s2 = update_fcast_errs(e, y, coeff, ainfo, p, q);
+    s2 = update_fcast_errs(e, y, X, coeff, ainfo, p, q, r);
 
     /* calculate log-likelihood */
     ll = get_ll(e, ainfo);
@@ -628,10 +732,10 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 #endif
 
         /* partials of e wrt coeffs */
-	update_error_partials(e, y, aZ, coeff + p, ainfo, p, q);
+	update_error_partials(e, y, X, aZ, coeff + p, ainfo, p, q, r);
 
 	/* partials of l wrt coeffs */
-	update_ll_partials(e, aZ, s2, ainfo, p, q);
+	update_ll_partials(e, aZ, s2, ainfo, p, q, r);
 
 	/* OPG regression */
 	clear_model(&armod, NULL);
@@ -656,7 +760,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	}
 
 	/* compute log-likelihood at new point */
-	s2 = update_fcast_errs(e, y, coeff, ainfo, p, q);
+	s2 = update_fcast_errs(e, y, X, coeff, ainfo, p, q, r);
 	ll = get_ll(e, ainfo);
 
 	/* subiterations for best steplength */
@@ -676,7 +780,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	    }
 
 	    /* compute loglikelihood again */
-	    s2 = update_fcast_errs(e, y, coeff, ainfo, p, q);
+	    s2 = update_fcast_errs(e, y, X, coeff, ainfo, p, q, r);
 	    ll = get_ll(e, ainfo);
 
 #ifdef ARMA_DEBUG
