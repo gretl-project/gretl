@@ -296,6 +296,13 @@ static void browser_ok (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+static gpointer get_browser_ptr (int role)
+{
+    return (gpointer) &(browsers[role - TEXTBOOK_DATA]);
+}
+
+/* ........................................................... */
+
 static void get_local_status (char *fname, char *status, time_t remtime)
 {
     char fullname[MAXLEN];
@@ -944,11 +951,16 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 			   guint page_num, windata_t *fdata)
 {
     char winnum[3];
+    gpointer p;
 
-#if 0 /* FIXME */
-    if (!data_filesel_open) return;
-#endif
+    p = gtk_object_get_data(GTK_OBJECT(notebook), "browse_ptr");
+    if (p == NULL) return;
+    else {
+	GtkWidget *w = *(GtkWidget **) p;
 
+	if (w == NULL) return;
+    }
+    
     sprintf(winnum, "%d", (int) page_num);
     fdata->listbox = gtk_object_get_data(GTK_OBJECT(notebook), winnum);
 }
@@ -1035,6 +1047,8 @@ static GtkWidget *files_notebook (windata_t *fdata,
 
     fdata->role = role;
 
+    gtk_object_set_data(GTK_OBJECT(GTK_NOTEBOOK(notebook)), "browse_ptr",
+			get_browser_ptr(role));
     gtk_signal_connect(GTK_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
 		       GTK_SIGNAL_FUNC(switch_file_page_callback),
 		       fdata);
