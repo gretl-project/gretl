@@ -474,7 +474,7 @@ static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod,
     _bufspace(3, prn);
 
     if (isnan(pmod->coeff[c-1])) {
-	pprintf(prn, "%16s", _("undefined"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
     } else {
 	gretl_print_value (pmod->coeff[c-1], prn);
     }
@@ -482,7 +482,7 @@ static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod,
     _bufspace(2, prn);
 
     if (isnan(pmod->sderr[c-1])) {
-	pprintf(prn, "%10s", _("undefined"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
     } else {
 	maxerr = (pmod->sderr[c-1] > 0)? t * pmod->sderr[c-1] : 0;
 	pprintf(prn, " (%#.*g, %#.*g)", 
@@ -555,7 +555,7 @@ void print_white_vcv (const MODEL *pmod, PRN *prn)
 static void outxx (const double xx, int ci, PRN *prn)
 {
     if (ci == CORR) {
-	if (na(xx)) pprintf(prn, " %13s", _("undefined"));
+	if (na(xx)) pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), 13), _("undefined"));
 	else pprintf(prn, " %13.4f", xx);
     } else {
 	if (xx > -0.001 && xx < 0.001)
@@ -819,7 +819,7 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
 			    PRN *prn)
 {
     int i, t2 = pmod->t2;
-    char label[9], date1[9], date2[9]; 
+    char label[16], date1[9], date2[9]; 
 
     if (pmod->data != NULL) 
         t2 += get_misscount(pmod);
@@ -839,7 +839,7 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (i == 1) strcpy(label, pdinfo->varname[pmod->list[1]]);
 	if (i == 2) strcpy(label, _("fitted"));
 	if (i == 3) strcpy(label, _("residuals"));
-	pprintf(prn, "%13s", label);
+	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
     }
     pprintf(prn, "\n");
 }

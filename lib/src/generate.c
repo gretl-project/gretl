@@ -1553,6 +1553,9 @@ static int getxvec (char *s, double *xvec,
 	 type1 == R_TRSQ)) 
 	return E_BADSTAT;
 
+    if (pmod && pmod->ci == LAD && (type1 == R_RSQ || type1 == R_TRSQ))
+	return E_BADSTAT;
+
     switch (type1) {  
 
     case R_ESS:

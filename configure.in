@@ -284,6 +284,7 @@ dnl Check for GTK 2.0, if appropriate
 dnl
 orig_CFLAGS=$CFLAGS
 if test "$try_gtk2" = "yes" ; then
+    PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
     PKG_CHECK_MODULES(GTK, gtk+-2.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
@@ -308,14 +309,14 @@ fi
 
 dnl record the results of the above tests
 AC_SUBST(have_gtk)
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 
 dnl
 dnl Should we try to use an installed version of libole2?
 dnl
 if test ${try_ole} = yes && test ${have_gtk} = "2.0" ; then
     PKG_CHECK_MODULES(LIBOLE2, libole2-2.0,
-        AC_SUBST(LIBOLE_CFLAGS)
-        AC_SUBST(LIBOLE_LIBS)
         have_libole2="yes",
         have_libole2="no"
     )
@@ -332,9 +333,7 @@ dnl Check for system PNG support
 dnl
 if test ${png_graphics} = yes && test ${have_gtk} = "2.0" ; then
     PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= 0.7.0,
-        pixbuf_failed="no"
-        AC_SUBST(GDK_PIXBUF_CFLAGS)
-        AC_SUBST(GDK_PIXBUF_LIBS), 
+        pixbuf_failed="no",
 	pixbuf_failed="yes"
    )
 fi
@@ -416,9 +415,14 @@ if test x"${XML_LIBS}" = x ; then
   fi
 fi
 
-dnl record results on libxml
+dnl record results on various libraries
 AC_SUBST(XML_CFLAGS)
 AC_SUBST(XML_LIBS)
+AC_SUBST(GDK_PIXBUF_CFLAGS)
+AC_SUBST(GDK_PIXBUF_LIBS) 
+AC_SUBST(LIBOLE_CFLAGS)
+AC_SUBST(LIBOLE_LIBS)
+
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then

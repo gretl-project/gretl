@@ -22,6 +22,10 @@
 #include "libgretl.h"
 #include <stdarg.h>
 
+#if defined(ENABLE_NLS) && defined(USE_GTK2)
+#include <glib.h>
+#endif
+
 char gretl_tmp_str[MAXLEN];
 
 /**
@@ -649,5 +653,14 @@ const char *print_time (const time_t *timep)
     strftime(timestr, 47, "%c", local);
 
     return timestr;
+}
+
+int get_utf_width (const char *str, int width)
+{
+#if defined(ENABLE_NLS) && defined(USE_GTK2)
+    width += strlen(str) - g_utf8_strlen(str, -1);
+#endif
+
+    return width;
 }
 

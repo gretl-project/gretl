@@ -2008,8 +2008,8 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	    pmod->dfd, tval);
     pprintf(prn, "\n     Obs ");
     pprintf(prn, "%12s", pdinfo->varname[v1]);
-    pprintf(prn, "%14s", _("prediction"));
-    pprintf(prn, "%14s", _(" std. error"));
+    pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
+    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
     pprintf(prn, _("   95%% confidence interval\n"));
     pprintf(prn, "\n");
 

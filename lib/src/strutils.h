@@ -76,6 +76,11 @@ char *colonize_obs (char *obs);
 
 #ifdef ENABLE_NLS
 char *iso_gettext (const char *msgid);
+int get_utf_width (const char *str, int width);
+#define UTF_WIDTH(s, w) get_utf_width(s, w) 
+int get_utf_width (const char *str, int width);
+#else
+#define UTF_WIDTH(s, w)    w
 #endif  
 
 const char *print_time (const time_t *timep);

@@ -807,7 +807,8 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
 static void printf15 (double zz, PRN *prn)
 {
-    if (na(zz)) pprintf(prn, "%15s", _("undefined"));
+    if (na(zz)) pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 15), 
+			_("undefined"));
     else {
 	pprintf(prn, " ");
 	gretl_print_fullwidth_double(zz, 5, prn);	
@@ -819,7 +820,8 @@ static void printf15 (double zz, PRN *prn)
 #ifdef notdef
 static void printf17 (double zz, PRN *prn)
 {
-    if (na(zz)) pprintf(prn, "%17s", _("undefined"));
+    if (na(zz)) pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17),
+			_("undefined"));
     else {
 	pprintf(prn, " ");
 	gretl_print_value(zz, prn);

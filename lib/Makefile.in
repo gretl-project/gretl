@@ -10,6 +10,8 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_LIBS = @GLIB_LIBS@
 have_gtk = @have_gtk@
 
 ifeq ($(INSTALL_PROGRAM),)
@@ -40,7 +42,7 @@ else
   INSTALL_CFG = install-cfg-old
 endif
 
-LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS)
+LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS)
 
 #### End of system configuration section. ####
 
@@ -69,7 +71,7 @@ CEPHES_LOBJ = $(CEPHES_SRC:.c=.lo)
 
 LIBTOOL = $(topsrc)/libtool
 
-override CFLAGS += -I. -I./src -I.. $(XML_CFLAGS) -DHAVE_CONFIG_H
+override CFLAGS += -I. -I./src -I.. $(XML_CFLAGS) $(GLIB_CFLAGS) -DHAVE_CONFIG_H
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 

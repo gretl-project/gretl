@@ -1281,7 +1281,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[c-1])) {
-	pprintf(prn, "%17s", _("undefined"));
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
 	gotnan = 1;
     } else {
 	gretl_print_value (pmod->coeff[c-1], prn);
@@ -1291,7 +1291,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     /* get out if std error is undefined */
     if (isnan(pmod->sderr[c-1])) {
-	pprintf(prn, "%16s\n", _("undefined"));
+	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
 	return 1;
     }
 
@@ -1303,18 +1303,18 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	pprintf(prn, " %7.3f", t);
 	if (pmod->aux == AUX_ADF) {
 	    do_pval = 0;
-	    pprintf(prn, "%12s", _("unknown"));
+	    pprintf(prn, "%*s", UTF_WIDTH(_("unknown"), 12), _("unknown"));
 	}
 	if (do_pval) {
 	    char pvalstr[16];
 
 	    pvalue = tprob(t, pmod->dfd);
 	    print_pval_str(pvalue, pvalstr);
-	    pprintf(prn, "%12s", pvalstr);
+	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 12), pvalstr);
 	}
     } else if (do_pval) { /* zero standard error */
 	do_pval = 0;
-	pprintf(prn, "     %12s", _("undefined"));
+	pprintf(prn, "     %*s", UTF_WIDTH(_("undefined"), 12), _("undefined"));
     }
 
     if (do_pval) {

@@ -18,6 +18,8 @@ DLLTOOL = $(MGW_PREFIX)-dlltool
 # libraries
 GTKLIBS := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
                           pkg-config --libs gtk+-win32-2.0)
+GLIBLIB := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
+                          pkg-config --libs glib-2.0)
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
@@ -168,7 +170,7 @@ DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lmingwex
+	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lmingwex $(GLIBLIB)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
