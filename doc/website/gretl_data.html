@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Data for gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="./css-gretl.html">
+</head>
+
+<body>
+[<a href="./index.html">gretl main page</a>]
+
+<center>
+<h1>Data for gretl</h1>
+</center>
+
+<table cellspacing=8>
+<tr>
+  <td><img alt="gretl image" 
+            src="./images/gretl-image.png"></td>
+  <td align=left>
+     <font face="sans-serif" size="-1">
+      <p><a href="#db">gretl databases</a>
+      <p><a href="#df">big datafiles</a>
+      <p><a href="#jw">textbook datasets</a>
+      <p><a href="#custom">custom data collections</a>
+      <p><a href="#perl">data utilities</a>
+      </font> 
+  </td>
+</tr>  
+</table>
+
+<h2>Terminology</h2>
+
+<p>In gretl parlance, a <b>database</b> is a (usually large) collection
+of series that may be of mixed frequencies and observation ranges.
+The data are stored in binary format, as single-precision "floats" [<a
+href="#float">Note</a>].  You access such files via gretl's
+<kbd>File/Browse databases</kbd> menu.  From there you can import
+selected series into gretl's workspace.  Gretl databases have a
+<kbd>.bin</kbd> filename suffix, and are accompanied by an index file
+(suffix <kbd>.idx</kbd>) containing information on the series.</p>
+
+<p>A gretl <b>datafile</b>, on the other hand, is a collection of series that
+is homogeneous with respect to frequency and observation range (though
+there may be missing values for some variables at some observations).
+Such a file may be read directly into gretl's workspace.  Gretl
+datafiles typically have a <kbd>.gdt</kbd> suffix; by default they
+are in XML format.</p>
+
+<p>For further details, please see the <a href="./manual.pdf">gretl
+manual</a>.</p> 
+
+<h2><a name="db">1. gretl databases</a></h2>
+
+<p>The gretl distribution contains one sample database, the "Business
+Cycle Indicators" set from the U.S. Department of Commerce.  <a
+href="http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_DBS">Several
+more databases</a> are available for free downloading, or online
+access. Note that with gretl 0.40 and higher you can access these
+additional databases via the menu item <kbd>File/Browse databases/on
+database server</kbd> (provided you are connected to the
+internet).</p>
+
+<h2><a name="df">2. Big datafiles</a></h2>
+
+<p>The following packages each contain one or more gretl datafiles with
+accompanying header and label files.  They should be unzipped into the
+user's gretl directory (by default <kbd>$HOME/gretl</kbd> on unix-type
+systems, or <kbd>c:\userdata\gretl\user</kbd> on MS Windows).</p>
+
+<table width="90%" border=0 cellspacing=4 cellpadding=4>
+<tr><th align=left bgcolor="#808080"><FONT COLOR="white">Source (with
+  list of series)</font></th>
+  <th align=left bgcolor="#808080"><FONT COLOR="white">Description</font></th>
+    <th align=left bgcolor="#808080"><FONT COLOR="white">Zipfile (FTP)</font></th>
+      <th align=left bgcolor="#808080"><FONT COLOR="white">Size (bytes)</font></th></tr> 
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://pwt.econ.upenn.edu/">U. Penn</a></td>
+    <td>Penn World Table, PWT56 (cross-country macro panel data)</td>
+     <td>
+	 <a
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/pwt56.tar.gz">pwt56.tar.gz</a>
+	 </td>
+   <td align=right>566100&nbsp;</td></tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.nber.org/databases/jones-obstfeld/index.html">NBER</a></td>
+    <td>Jones-Obstfeld Saving and Investment Data for 13 Countries
+	(historical panel)</td>
+     <td>
+	 <a
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/jones_obst.zip">jones_obst.zip</a>
+     </td>
+   <td align=right>42895&nbsp;</td></tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.nber.org/nberprod/">NBER</a></td>
+    <td>NBER-CES/Census Manufacturing Industry Productivity Data
+	11/25/98 (covers c. 17,000 industries)</td>
+      <td><a
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/nberpr87.zip">nberpr87.zip</a>
+	 </td>
+   <td align=right>899962&nbsp;</td></tr>
+   <tr><td>&nbsp;</td></tr>
+</table>
+
+<p>You should follow up the links in the first column above to get
+full details on these data sets.  I am in the process of assembling
+my own notes on these packages; for the moment I have only done this
+for the Penn World Table.</p>
+
+<h3>Penn World Table</h3>
+
+<p>PWT56 is a rich macroeconomic panel dataset, spanning 152 countries
+over the years 1950 to 1992.  The package for gretl comprises three
+main data files:</p>
+
+<ul>
+  
+<li><p><kbd>pwt56.gdt</kbd>: the entire pwt56.  This dataset has many missing
+      observations.</p></li>
+      
+<li><p><kbd>pwt56_60_89.gdt</kbd>: A panel data set of 120 countries for
+the 30 years 1960-89, containing 20 variables.  This data set has no
+missing observations.</p></li>
+      
+<li><p><kbd>pwt56_1985.gdt</kbd>: More data are available for 1985 than for
+any other year, so I also made a pure cross-sectional data file for
+all 152 countries for this year.  This file has some missing
+observations, but these will not be quite so difficult to deal with in
+a cross section as in a panel data set.</p></li>
+
+</ul>
+
+<p>The package includes full documentation and sample scripts to analyse
+the data.</p> 
+
+<p>I suggest you consult the <a href="./manual.pdf">gretl manual</a> for
+advice on dealing with panel data.</p>
+
+<h2><a name="jw">3. Textbook datasets</a></h2>
+
+<p><i>Wooldridge</i>: gretl offers support for the datasets used in
+Jeffrey Wooldridge's textbook, <a
+href="http://www.swcollege.com/bef/wooldridge/wooldridge2e/wooldridge2e.html">Introductory
+Econometrics: A Modern Approach</a>.  
+The datasets are available as a Windows self-installer,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a>, 
+or as a compressed archive,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.tar.gz">wooldridge_data.tar.gz</a>.</p>
+</p>
+
+<p><i>Gujarati</i>: gretl supports the datasets in Damodar Gujarati's
+<a href="http://www.mhhe.com/economics/gujarati4/">Basic Econometrics</a>.
+Please look <a href="./gujarati/index.html">here</a> for details.</p>
+
+<p><i>Davidson and MacKinnon</i>: gretl supports the datasets in their
+<a href="http://www.econ.queensu.ca/ETM/">Econometric Theory and Methods</a>.
+The datasets are available as a Windows self-installer,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a>, 
+or as a compressed archive,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.tar.gz">ETM_data.tar.gz</a>.</p>
+
+<h2><a name="custom">4. Custom data collections</a></h2>
+
+<p>If you use gretl in your teaching you may wish to set up a custom collection
+of data files (or scripts) for your students to access.  Look
+<a href="./collections.html">here</a> for details.</p>
+
+<h2><a name="perl">5. Data utilities</a></h2>
+
+<p>Besides offering pre-packaged databases, gretl comes with some scripts
+that can be used to create databases using data available via the
+internet.  These can be found in the <kbd>utils</kbd> subdirectory of
+the gretl source package (see the gretl <a
+href="./index.html">main page</a>).  To
+run the scripts you need to have perl installed on your computer, and
+you need to be connected to the internet.</p>
+
+<hr noshade>
+
+<p>
+<address>
+Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Fri May 31 09:42:21 EDT 2002
+<!-- hhmts end -->
+</p>
+
+</body>
+</html>

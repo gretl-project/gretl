@@ -1,0 +1,79 @@
+# gretlnet.txt: gretl network config file for Windows
+
+# Main gretl directory on server (users do not need write permission)
+gretldir = L:\userdata\gretl
+
+# User's gretl directory (users must have permission to write
+# to this dir -- it will be created if it does not exist)
+userdir = C:\userdata\gretl
+
+# Command to launch gnuplot (required)
+gnuplot = L:\userdata\gretl\wgnuplot.exe
+
+# Command to launch GNU R (optional)
+Rcommand = RGui.exe
+
+# Command to view DVI files (optional)
+viewdvi = windvi.exe
+
+# Calculator (optional)
+calculator = calc.exe
+
+# path to x12arima (optional)
+x12a = L:\userdata\x12arima\x12a.exe
+
+# path to tramo (optional)
+tramo = L:\userdata\tramo\tramo.exe
+
+# gretl database directory (write permission not needed)
+binbase = L:\userdata\gretl\db
+
+# RATS data directory (write permission not needed)
+ratsbase = L:\userdata\rats
+
+# Database server IP (should be left alone)
+dbhost_ip = 152.17.150.2
+
+# HTTP proxy (ipnumber:port)
+# Change "useproxy" to "true" and set this if you're behind a firewall
+dbproxy = 
+
+# Use HTTP proxy (see previous entry)
+useproxy = false
+
+# Fixed (monospaced) font
+Fixed_font = Courier New 10
+
+# Menu font
+App_font = Tahoma 8
+
+# PNG graph font
+Png_font = verdana 8
+
+# Boolean options below can probably be left to default.
+# The default values are shown, commented out; you may 
+# uncomment and set these if you wish.
+
+# Expert mode (no warnings)?
+# expert = false
+
+# Tell user about gretl updates?
+# updater = false
+
+# Show gretl toolbar?
+# toolbar = true
+
+# Use locale setting for decimal point?
+# lcnumeric = true
+
+# Use current working directory as default?
+# usecwd = false
+
+# Use ".dat" as default datafile suffix?
+# olddat = false
+
+# Use QR decomposition?
+# useqr = false
+
+# Emulate Windows look?
+# wimp = false

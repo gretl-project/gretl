@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>Running gretl over a network</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="../index.html">gretl main page</a>]
+
+<center>
+<h1>Running gretl over a network</h1>
+</center>
+
+<p>In some settings it may be necessary or desirable to have users run
+gretl over a network.  For example, the gretl executable resides on a
+server in a computer lab, and users access the program from PCs that
+do not themselves have gretl installed.</p>
+
+<p>In this context the usual mechanism whereby the Windows version of
+gretl gets its configuration information, namely reading from the
+Windows registry on the local machine, will not work.  Since gretl is
+not installed on the local machine, no relevant registry entries will
+be found (and the default values will be inappropriate).</p>
+
+<p>To meet this situation, gretl (version 1.2.1 or higher) offers a
+special configuration option: If a plain text configuration file named
+<b>gretlnet.txt</b> is found in the same directory as the gretl
+executable, <b>gretlw32.exe</b>, this file will be read in preference to
+the local registry.  Configuration options found in <b>gretlnet.txt</b>
+will override the local registry, and will appear as fixed from the user's
+point of view (the corresponding items in the gretl preferences dialog
+will show as "grayed out" or insensitive).  For this to work (i.e. for
+gretl to find the special config file), gretl must be invoked on the
+client machine using the full path to the installed binary, e.g.
+<kbd>L:\userdata\gretl\gretlw32.exe</kbd>.  </p>
+
+<p>A network administrator using this facility should consider which
+of gretl's options need to be set centrally, and which can be left up
+to the local user.  If an option should be up to the user, it should
+<i>not</i> be set in <b>gretlnet.txt</b>.  Typically, one might expect
+that path settings should be made centrally, while boolean options may
+be left to the user.  (Note that unlike paths, the boolean options
+will be given appropriate default values even if no gretl entries can
+be read from the local registry on start-up of the program.)</p>
+
+<p>There follows an annotated example of <b>gretlnet.txt</b>.  The format of
+this plain text file should be self-explanatory.  Lines beginning with a hash
+mark (<kbd>#</kbd>) are comments.  Actual configuration lines take the form
+<kbd>key = value</kbd> (the single spaces around the equals sign are
+mandatory).  The example below is based on these assumptions:</p>
+
+<ul>
+  <li><p>gretl is installed on a server that is mapped as drive
+  <kbd>L</kbd> from the point of view of the client PCs.</p>
+  <li><p>The (primary) hard drive on the client machines is drive
+  <kbd>C</kbd>.</p>
+  <li><p>When gretl was installed on the server, the default installation
+  path of <kbd>c:\userdata\gretl</kbd> was used.</p>
+  <li><p>Users of the client PCs have write access to a
+  directory named <kbd>c:\userdata</kbd> on the local machine.</p>
+ </ul>
+
+<p>You can edit this file in any text editor (e.g. Windows notepad).
+If your setup differs in respect of the drive letter for the network
+installation, replace <kbd>L:</kbd> throughout.  If gretl was
+installed in (say) <kbd>c:\Program Files</kbd> on the server, then
+replace <kbd>L:\userdata</kbd> with <kbd>L:\Program Files</kbd>
+throughout. Items with embedded spaces (e.g. "Progam Files") will be
+handled correctly as is, do not wrap them in quotes.
+  You can grab a copy of the example with DOS-style
+  line-termination here: <a href="./gretlnet.txt">gretlnet.txt</a>.</p>
+  
+
+<pre>  
+# gretlnet.txt: gretl network config file for Windows
+
+# Main gretl directory on server (users do not need write permission)
+gretldir = L:\userdata\gretl
+
+# User's gretl directory (users must have permission to write
+# to this dir -- it will be created if it does not exist)
+userdir = C:\userdata\gretl
+
+# Command to launch gnuplot (required)
+gnuplot = L:\userdata\gretl\wgnuplot.exe
+
+# Command to launch GNU R (optional)
+Rcommand = RGui.exe
+
+# Command to view DVI files (optional)
+viewdvi = windvi.exe
+
+# Calculator (optional)
+calculator = calc.exe
+
+# path to x12arima (optional)
+x12a = L:\userdata\x12arima\x12a.exe
+
+# path to tramo (optional)
+tramo = L:\userdata\tramo\tramo.exe
+
+# gretl database directory (write permission not needed)
+binbase = L:\userdata\gretl\db
+
+# RATS data directory (optional, write permission not needed)
+ratsbase = L:\userdata\rats
+
+# Database server IP (should be left alone)
+dbhost_ip = 152.17.150.2
+
+# HTTP proxy (ipnumber:port)
+# Change "useproxy" to "true" and set this if you're behind a firewall
+dbproxy = 
+
+# Use HTTP proxy (see previous entry)
+useproxy = false
+
+# Fixed (monospaced) font
+Fixed_font = Courier New 10
+
+# Menu font
+App_font = Tahoma 8
+
+# PNG graph font
+Png_font = verdana 8
+
+# Boolean options below can probably be left to default.
+# The default values are shown, commented out; you may 
+# uncomment and set these if you wish.
+
+# Expert mode (no warnings)?
+# expert = false
+
+# Tell user about gretl updates?
+# updater = false
+
+# Show gretl toolbar?
+# toolbar = true
+
+# Use locale setting for decimal point?
+# lcnumeric = true
+
+# Use current working directory as default?
+# usecwd = false
+
+# Use ".dat" as default datafile suffix?
+# olddat = false
+
+# Use QR decomposition?
+# useqr = false
+
+# Emulate Windows look?
+# wimp = false
+
+</pre>
+
+
+ 
+
+</body>
+
+

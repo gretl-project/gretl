@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>gretl sobre Mac OS X</title>
+<LINK REL=STYLESHEET TYPE="text/css"
+HREF="http://gretl.sourceforge.net/css-gretl.html">
+</head>
+
+<body>
+[<a href="http://gretl.sourceforge.net/index.html">página principal de gretl</a>]
+
+<center>
+<h1>Instalando gretl sobre Mac OS X</h1>
+</center>
+
+<p>La interfaz gráfica de gretl utiliza las bibliotecas GTK. Para ejecutar gretl
+sobre Mac OS X es necesario tener instaladas las bibliotecas GTK. Hay un par de proyectos
+cuyo objetivo es proporcionar una forma de utilizar de forma nativa GTK sobre OS X, pero 
+ninguno de ellos está aún en una etapa de disponibilidad para su utilización. Actualmente 
+la única forma de ejecutar gretl sobre OS X es usar una versión X11 ("Sistema de ventanas X") 
+de GTK.</p>
+
+<p>Sin duda hay más de una forma de hacer esto. Pero aquí hay una manera que
+al menos ha funcionado bien para mí en abril de 2003. Los componentes esenciales son:</p>
+
+<ol>
+
+<li><p class="in-list">La última versión de OS X, en concreto la 10.2.4 en el momento de escribir esto. Ver
+   <a href="http://www.apple.com/macosx/">http://www.apple.com/macosx/</a>.</p></li>
+<li><p class="in-list">La última versión de Apple/XFree86 X11 para Mac (actualmente "beta3"), disponible en
+   <a
+  href="http://www.apple.com/macosx/x11/download/">http://www.apple.com/macosx/x11/download/</a>.
+   Nótese que Vd. necesitará los ficheros SDK además de los 'runtime'.</p></li>
+<li><p class="in-list">La última distribución de Fink.  Fink proporciona la funcionalidad de unix y manejo básico
+de paquetes que no proporcionan OS X o la distribución Apple de X11.  Está disponible en
+   <a
+  href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p></li>
+</ol>
+
+
+<p>Además de la instalación básica del propio Fink, para construir y ejecutar gretl, Vd. 
+necesitará asegurarse de que los siguientes paquetes de Fink están presentes y son los 
+correctos (algunos de ellos puede que ya hayan sido instalados y actualizados, en este caso
+Fink le informará de ello).  Después de cada paquete, indico la instrucción (a escribir en el 
+'prompt' de instrucciones en un xterm o en la aplicación de terminal Mac) para hacer el trabajo:</p>
+
+<table cellspacing=8>
+  <tr>
+    <td>system-xfree86</td><td><kbd>fink install system-xfree86</kbd></td>
+    </tr>
+  <tr>
+    <td>gtk</td><td><kbd>fink install gtk+2</kbd></td>
+    </tr>
+  <tr>
+    <td>libxml2</td><td><kbd>fink install libxml2</kbd></td>
+    </tr>
+  <tr>
+    <td>dlcompat</td><td><kbd>fink install dlcompat</kbd></td>
+    </tr>
+  <tr>
+    <td>dlcompat-dev</td><td><kbd>fink install dlcompat-dev</kbd></td>
+    </tr>
+  <tr>
+    <td>gnuplot</td><td><kbd>fink install gnuplot</kbd></td>
+    </tr>
+  <tr>
+    <td>recode</td><td><kbd>fink install recode</kbd></td>
+    </tr>
+</table>
+
+<p>En particular, Vd. debería asegurarse de que gnuplot está actualizado (el 
+número del paquete debe de ser al menos 3.8i0-2 para trabajar junto con gretl).</p>
+
+<p>Una vez que tenga las versiones correctas de OS X, el X11 de Apple, Fink y 
+los paquetes necesarios de Fink, la instalación de gretl debería ser bastante directa.
+Espero preparar un paquete de instalación de gretl para Fink dentro de poco, pero por 
+ahora Vd. tiene que instalarlo desde el código fuente. Aquí se indica cómo hacer esto:</p>
+
+<ol>
+<li><p class="in-list">Descargar el paquete de código fuente:<br>
+
+   <kbd>curl ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl-1.2.2.tar.bz2</kbd></p></li>
+
+<li><p class="in-list">Descomprimir las fuentes:<br>
+
+   <kbd>tar xvfj gretl-1.2.2.tar.bz2</kbd></p></li>
+
+<li><p class="in-list">Ir al directorio fuente de gretl:<br>
+
+   <kbd>cd gretl-1.2.2</kbd></p></li>
+
+<li><p class="in-list">Configurar el paquete de código fuente:<br>
+
+   <kbd>CFLAGS=-Wno-long-double ./configure --prefix=/sw
+     --disable-png-comments</kbd></p></li>
+
+<li><p class="in-list">Escribir <kbd>make</kbd> para construir gretl.  Esto tarda un rato.</p></li>
+
+<li><p class="in-list">Escribir <kbd>sudo make install</kbd> para instalar gretl.</p></li>
+</ol>
+
+
+<p>Ahora Vd. debería de poder ejecutar gretl escribiendo "gretl" en el 'prompt' 
+de instrucciones en una xterm (obtenida iniciando una sesión X11 de Apple).</p>
+
+<h2>Fichero info provisional de gretl para Fink</h2>
+
+<p>gretl-1.2.2-1.info:</p>
+
+<pre>
+Package: gretl
+Version: 1.2.2
+Revision: 1
+Maintainer: Allin Cottrell <cottrell@wfu.edu>
+Description: GNU Econometrics package
+Homepage: http://gretl.sourceforge.net/
+DescDetail: <<
+gretl is an econometrics package. It comprises a shared library,
+a command-line client and a gui client that uses GTK.  gretl offers
+several least-squares based estimators.  Besides reading data files
+in its own format it also reads RATS 4 databases.  It has a built-in
+spreadsheet for editing data, and uses gnuplot for graphing.  It can
+output regression results in LaTeX format.
+<<
+License: GPL
+Depends: gtk+2-shlibs, libxml2-shlibs, gmp-shlibs, dlcompat-shlibs, readline-shlibs, gnuplot (>= 3.8i.0-2)
+BuildDepends: gtk+2-dev, libxml2, gmp, dlcompat-dev, readline, recode (>=3.6)
+Source: ftp://ricardo.ecn.wfu.edu/pub/gretl/%n-%v.tar.bz2
+setCFLAGS: -Wno-long-double -g -O2
+DocFiles: README COPYING NEWS INSTALL
+ConfigureParams: --disable-png-comments --with-gmp-prefix=%p --with-readline-prefix=%p --with-libintl-prefix=%p --with-iconv-prefix=%p
+</pre>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+

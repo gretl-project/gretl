@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Data for gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="./css-gretl.html">
+</head>
+
+<body>
+[<a href="./gretl_espanol.html">página principal de gretl</a>]
+
+<center>
+<h1>Datos para gretl</h1>
+</center>
+
+<table cellspacing=8>
+<tr>
+  <td><img alt="gretl image"
+            src="./images/gretl-image.png"></td>
+  <td align=left>
+     <font face="sans-serif" size="-1">
+      <p><a href="#db">Bases de datos gretl</a>
+      <p><a href="#df">Grandes ficheros de datos</a>
+      <p><a href="#jw">Datos del libro de Wooldridge</a>
+      <p><a href="#perl">Utilidades para el manejo de datos</a>
+      </font>
+  </td>
+</tr>
+</table>
+
+<h2>Terminología</h2>
+
+<p>En el lenguaje de gretl, una <b>base de datos</b> es una colección de series 
+(normalmente grande) en la que puede haber datos mezclados de diferentes frecuencias 
+y rangos de observación. Los datos se almacenan en formato binario, como números "flotantes"
+de precisión simple [<a
+href="#float">Nota</a>]. Se puede acceder a dichos ficheros por medio del menú
+<kbd>Archivo/Revisar base de datos</kbd> de gretl. Desde allí Vd. puede importar
+al espacio de trabajo de gretl las series que desee. Los ficheros de bases de datos 
+gretl tienen extensión <kbd>.bin</kbd>, y van acompañados de un fichero de índice
+(con extensión <kbd>.idx</kbd>) que contiene la información sobre las series.</p>
+
+<p>Por otro lado, un <b>fichero de datos</b> gretl, es una colección de series que
+es homogéneo en cuanto a frecuencia y rango de observación (aunque puede haber valores 
+ausentes para algunas variables en algunas observaciones). Este tipo de ficheros puede 
+leerse directamente y ser cargado dentro del espacio de trabajo de gretl. Los ficheros de 
+datos de gretl suelen tener extensión <kbd>.gdt</kbd> ; por defecto están en formato
+XML.</p>
+
+<p>Para más detalles, consulte por favor el <a href="./manual.pdf">manual de gretl</a>.</p>
+
+<h2><a name="db">1. Bases de datos de gretl</a></h2>
+
+<p>La distribución de gretl contiene una base de datos de ejemplo, el conjunto de "Indicadores 
+del ciclo de negocios" del U.S. Department of Commerce.  Hay <a
+href="http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_DBS">algunas bases de datos más
+</a> disponibles para su descarga de forma gratuita, o para acceso en línea. Nótese que con gretl 0.40
+y superiores Vd. puede acceder a estas bases de datos adicionales por medio del menú 
+<kbd>Archivo/Revisar base de datos/sobre servidor</kbd> (siempre que Vd. esté conectado a internet).</p>
+
+<h2><a name="df">2. Grandes ficheros de datos</a></h2>
+
+<p>Los siguientes paquetes contienen, cada uno, uno o más ficheros de datos de gretl 
+con los correspondientes ficheros de encabezamientos y de etiquetas. Para usarlos hay que 
+descomprimirlos (usando unzip) dentro del directorio gretl del usuario
+(por defecto <kbd>$HOME/gretl</kbd> en los sistemas tipo unix, o 
+<kbd>c:\userdata\gretl\user</kbd> en MS Windows).</p>
+
+<table width="90%" border=0 cellspacing=4 cellpadding=4>
+<tr><th align=left bgcolor="#808080"><FONT COLOR="white">Fuente (con lista de las series)</font></th>
+  <th align=left bgcolor="#808080"><FONT COLOR="white">Descripción</font></th>
+    <th align=left bgcolor="#808080"><FONT COLOR="white">Fichero zip (FTP)</font></th>
+      <th align=left bgcolor="#808080"><FONT COLOR="white">Tamaño (bytes)</font></th></tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://pwt.econ.upenn.edu/">U. Penn</a></td>
+    <td>Tabla mundial de Penn, PWT56 (datos de panel cruzados entre países (cross-country))</td>
+     <td>
+	 <a
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/pwt56.tar.gz">pwt56.tar.gz</a>
+	 </td>
+   <td align=right>566100&nbsp;</td></tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.nber.org/databases/jones-obstfeld/index.html">NBER</a></td>
+    <td>Datos de Inversión y Ahorro de Jones-Obstfeld para 13 países
+	(panel histórico)</td>
+     <td>
+	 <a
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/jones_obst.zip">jones_obst.zip</a>
+     </td>
+   <td align=right>42895&nbsp;</td></tr>
+<tr bgcolor="#E0E0E0">
+  <td><a href="http://www.nber.org/nberprod/">NBER</a></td>
+    <td>NBER-CES/Census Datos de productividad de las Industrias Manufactureras
+	25/11/98 (cubre 17,000 industrias)</td>
+      <td><a
+	 href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/nberpr87.zip">nberpr87.zip</a>
+	 </td>
+   <td align=right>899962&nbsp;</td></tr>
+   <tr><td>&nbsp;</td></tr>
+</table>
+
+<p>Vd. debería seguir los enlaces de la primera columna de arriba para obtener los 
+detalles completos sobre estos conjuntos de datos. Estoy en el proceso de preparar mis 
+propias notas sobre estos paquetes; por el momento sólo lo he hecho para la Tabla Mundial 
+de Penn.</p>
+
+<h3>Tabla Mundial de Penn</h3>
+
+<p>PWT56 es un conjunto de datos de panel bastante rico, recoge 152 países
+a lo largo de los años 1950 a 1992.  El paquete para gretl comprende tres ficheros de datos:</p>
+
+<ul>
+
+<li><p><kbd>pwt56.gdt</kbd>: pwt56 entera.  Este conjunto de datos tiene muchas observaciones 
+ausentes.</p></li>
+
+<li><p><kbd>pwt56_60_89.gdt</kbd>: es un conjunto de datos de panel de 120 países durante
+los 30 años 1960-89, y contiene 20 variables.  Este conjunto de datos no tiene observaciones 
+ausentes.</p></li>
+
+<li><p><kbd>pwt56_1985.gdt</kbd>: Hay más datos disponibles para 1985 que para ningún otro año, 
+así que también construí un fichero de datos puro de sección cruzada para los 152 países para este año.
+Este fichero tiene algunas observaciones ausentes, pero éstas no son tan difíciles de tratar
+en una sección cruzada como en un panel.</p></li>
+
+</ul>
+
+<p>El paquete incluye la documentación completa y guiones ('scripts') de ejemplo para analizar 
+los datos.</p>
+
+<p>Le sugiero que consulte el <a href="./manual.pdf">manual de gretl</a> como guía para
+trabajar con datos de panel.</p>
+
+<h2><a name="jw">3. Datos del libro de Wooldridge</a></h2>
+
+<p>Desde la versión 1.0, gretl ofrece soporte para los conjuntos de datos que se usan en el 
+libro de Jeffrey Wooldridge, <a
+href="http://www.swcollege.com/bef/wooldridge/wooldridge2e/wooldridge2e.html">Introductory
+Econometrics: A Modern Approach</a>.  En <a href="http://wooldridge-datasets.swcollege.com/">swcollege.com</a> 
+puede encontrarse un paquete que contiene los datos en el formato XML nativo de gretl.
+</p>
+
+<h2><a name="perl">4. Utilidades para el manejo de datos</a></h2>
+
+<p>Además de ofrecer bases de datos especialmente preparadas, gretl contiene algunos guiones ('scripts')
+que pueden usarse para crear bases de datos usando datos disponibles vía internet. Estos se 
+encuentran en el subdirectorio <kbd>utils</kbd> del paquete de fuentes de gretl 
+(ver la <a
+href="./gretl_espanol.html">página principal</a>) de gretl.  Para ejecutar esos guiones, Vd. necesita tener 
+instalado perl y estar conectado a internet.</p>
+
+<hr noshade>
+
+<p class="note">
+<a name="float">Nota</a>:  Las bases de datos binarias mencionadas arriba
+fueron preparadas en un PC ix86. Si Vd. desea utilizar los datos sobre otra arquitectura
+, por favor, hágamelo saber; puedo proporcionarle las bases de datos en formato ASCII con un 
+pequeño programa en C que extraiga los números en formato binario.</p>
+
+<hr noshade>
+
+<p>
+<address>
+Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<!-- hhmts start -->
+Última modificación: Thu jun 19 18:42:21 EDT 2002
+<!-- hhmts end -->
+</p>
+
+</body>
+</html>

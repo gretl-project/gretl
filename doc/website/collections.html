@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Data for gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="./css-gretl.html">
+</head>
+
+<body>
+[<a href="./index.html">gretl main page</a>]
+
+<center>
+<h1>Data and script collections</h1>
+</center>
+
+<p>
+If you're using gretl in a teaching context you may be interested in adding a
+collection of data files and/or scripts that relate specifically to your
+course, in such a way that students can browse and access them easily.</p>
+
+<p>
+This is now supported in gretl 1.2.1.  In previous gretl versions this is what
+happened "behind" the windows that appear if you select "File, Open data,
+sample file", or select "File, Open command file, practice file", or click the
+folder icon on the gretl toolbar:</p>
+
+<ol>
+<li><p>The data and script files included in the gretl distribution are
+   automatically shown (this includes files relating to Ramanathan's
+   Introductory Econometrics and Greene's Econometric Analysis).</p>
+
+<li><p>The program looks for certain known collections of data files available as
+   optional extras for gretl, namely the datafiles from the textbooks by
+   Wooldridge and Gujarati, and the Penn World Table (PWT 5.6).  (See
+   <a href="http://gretl.sourceforge.net/gretl_data.html">the gretl
+  data page</a> for information on these
+   collections.)  If the additional files are found, they are added to the
+   selection windows.</p>
+</ol>
+
+<p>  
+In gretl 1.2.1 this mechanism is generalized.  When one or other of the menu
+items mentioned above is accessed, gretl searches for valid file collections
+(not necessarily "known in advance") in these places: the "system" gretl data
+directory, the system gretl script directory, the gretl user directory, and
+all first-level subdirectories of these.  For reference, typical values for
+these directories are:</p>
+
+<center>
+<table>
+<tr><th></th><th>Linux</th><th>Windows</th></tr>
+<tr><td><p>system data dir</p></td>
+  <td><kbd>/usr/share/gretl/data</kbd></td>
+    <td><kbd>c:\userdata\gretl\data</kbd></tr>
+<tr><td><p>system script dir</p></td>
+  <td><kbd>/usr/share/gretl/scripts</kbd></td>
+    <td><kbd>c:\userdata\gretl\scripts</kbd></tr>
+<tr><td><p>user dir</p></td>
+  <td><kbd>/home/me/gretl</kbd></td>
+    <td><kbd>c:\userdata\gretl\user</kbd></tr>
+</table>
+</center>
+
+<p> Any valid collections will be added to the selection windows.  So
+what constitutes a valid file collection?  This comprises either a set
+of data files in gretl's XML format (with the <kbd>.gdt</kbd> suffix)
+or a set of script files containing gretl commands (with
+<kbd>.inp</kbd> suffix), in each case accompanied by a "master file"
+or catalog.  The current gretl distribution contains several example
+catalog files, for instance the file <kbd>descriptions</kbd> in the
+"misc" sub-directory of the gretl data directory and
+<kbd>ps_descriptions</kbd> in the "misc" sub-directory of the gretl
+scripts directory.</p>
+
+<p>  
+I recommend that if you are adding your own collection, data catalogs should
+be named "descriptions" and script catalogs should be be named
+"ps_descriptions".  In each case these files should be placed (along with the
+associated data or script files) in their own specific sub-directories
+(e.g. <kbd>/usr/share/gretl/data/mydata</kbd> or
+ <kbd>c:\userdata\gretl\data\mydata</kbd>).</p>
+
+<p> 
+The syntax of the (plain text) description files is straightforward.  here,
+for example, are the first few lines of gretl's "misc" data catalog:</p>
+
+<pre>
+ # Gretl: various illustrative datafiles
+ "arma","artificial data for ARMA script example"
+ "ects_nls","Nonlinear least squares example"
+ "hamilton","Prices and exchange rate, U.S. and Italy"
+</pre>
+
+<p> 
+The first line, which must start with a hash mark, contains a short name, here
+"Gretl", which will appear as the label for this collection's tab in the data
+browser window, followed by a colon, followed by an optional short description
+of the collection.</p>
+
+<p> Subsequent lines contain two elements, separated by a comma and
+wrapped in double quotation marks.  The first is a datafile name
+(leave off the .gdt suffix here) and the second is a short description
+of the content of that datafile.  There should be one such line for
+each datafile in the collection.</p>
+
+<p> A script catalog file looks very similar, except that there are
+three fields in the file lines: a filename (without its
+<kbd>.inp</kbd> suffix), a brief description of the econometric point
+illustrated in the script, and a brief indication of the nature of the
+data used.  Again, here are the first few lines of the gretl "misc" script
+catalog:</p>
+
+<pre>
+ # Gretl: various sample scripts
+ "arma.inp","ARMA modeling","artificial data"
+ "ects_nls","Nonlinear least squares (Davidson)","artificial data"
+ "leverage","Influential observations","artificial data"
+ "longley","Multicollinearity","US employment"
+</pre>
+
+<p> 
+If you want to make your own data collection available in gretl, these are the
+steps:</p>
+
+<ol>
+<li><p>Assemble the data, in whatever format is convenient.</p>
+
+<li><p>Convert the data to gretl format and save as .gdt files.  It is probably
+   easiest to convert the data by importing them into gretl from plain text,
+   CSV, or a spreadsheet format (MS Excel or Gnumeric) then saving as gdt.
+   You may wish to add descriptions of the individual variables (the
+   "Variable, Edit attributes" menu item), and add information on the source
+   of the data (the "Data, Edit info" menu item).</p>
+
+<li><p>Write a "descriptions" file for the collection using a text editor.</p>
+
+<li><p>Put the datafiles plus the descriptions file in a subdirectory of
+   the gretl data directory (or user directory).</p>
+</ol>
+
+<p> 
+If you assemble such a collection, and the data are not proprietary, I
+would encourage you to submit the collection for packaging as a gretl
+"optional extra".</p>  
+
+<p>
+<address>
+Allin Cottrell <a
+href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<br>
+January, 2004
+</p>
+
+</body>
+</html>
+
+
+
+
+
+

@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>gretl and TRAMO/SEATS</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="../index.html">gretl main page</a>]
+
+<center>
+<h1>gretl and TRAMO/SEATS</h1>
+</center>
+
+<p>TRAMO stands for "Time series Regression with ARIMA noise, Missing
+values and Outliers" and SEATS for "Signal Extraction in ARIMA Time
+Series".  These programs (which are commonly used together) were
+developed by Victor Gómez and Agustín Maravall at the Bank of Spain.</p>
+
+<p>The home page for these programs is at <a
+href="http://www.bde.es/servicio/software/econome.htm">www.bde.es</a>.
+To quote the description given there, "The programs are fundamentally
+aimed at monthly or lower frequency time series. Although structured
+to meet the needs of an expert analyst, they can be reliably used in
+an entirely automatic manner. The main applications are forecasting,
+seasonal adjustment, trend-cycle estimation, construction of composite
+leading indicators, interpolation, detection and correction of
+outliers, estimation of special effects, and quality control of data."</p>
+
+<p>To install TRAMO/SEATS for use with gretl under
+  <b>GNU/Linux</b> please use the binary rpm <a
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/tramo-seats-98-1.i386.rpm">tramo-seats-98-1.i386.rpm</a>.
+(Source code for the programs is not freely available, although the
+authors were kind enough to give me access to the source to build this
+version.)  </p>
+
+<p>If you wish to use TRAMO/SEATS with gretl on <b>Windows</b>, you
+should download the self-installer, <a
+  href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a>
+  and run it.  You will be prompted for an installation directory, by
+  default <kbd>c:\userdata\tramo</kbd>.  This package contains
+  the programs <kbd>tramo.exe</kbd> and <kbd>seats.exe</kbd> in win32
+console form, along with
+  examples and documentation in PDF format.  I am grateful to Gianluca
+Caporello for permission to redistribute tramo and seats in this
+form.</p>
+
+<p>Support for TRAMO/SEATS is new in version 1.0.3 of gretl and at
+present it is quite limited, but if there is interest in this feature
+I will probably aim to develop it further.  The following pictures
+illustrate what you can do as of now.</p>
+
+<p>After opening a suitable data set (i.e. containing seasonal time
+series), select a variable in the gretl main window and pull down the
+Variable menu.  Select "TRAMO analysis".</p>
+
+<center>
+<IMG SRC="tramo-menu.png" ALT="Variable menu">
+</center>
+
+<p>You will then see a dialog box which gives you the choice of saving
+(into the current gretl data set) up to three of the series generated
+by SEATS, namely the seasonally adjusted version of the input
+series, the estimated trend/cycle component of the series, and the
+estimated "irregular" component.  At this point you can also choose
+whether or not to display a graph showing these series.</p>
+
+<center>
+<IMG SRC="tramo-dialog.png" ALT="Dialog box">
+</center>
+
+<p>If you choose to display the graph, you should see something like
+this:</p>
+
+<center>
+<IMG SRC="tramo-graph.png" ALT="tramo graph">
+</center>
+
+<p>Besides saving output series and displaying the graph, you will
+also see the full output from the SEATS analysis.  An excerpt
+from this is shown below.</p>
+
+<center>
+<IMG SRC="tramo-output.png" ALT="tramo output">
+</center>
+
+<p>&nbsp;</p>
+<hr>
+ 
+
+</body>
+
+
+
+

@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>gretl y ARIMA-X-12</title>
+<LINK REL=STYLESHEET TYPE="text/css"
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+[<a href="../gretl_espanol.html">página principal de gretl</a>]
+
+<center>
+<h1>gretl y X-12-ARIMA</h1>
+</center>
+
+<p>X-12-ARIMA es el programa que usa actualmente el U.S. Census Bureau
+para corrección estacional.  La página web de este programa está en <a
+  href="http://www.census.gov/srd/www/x12a/">www.census.gov</a>.
+Por favor, consulte esa página para ver su documentación y otros detalles.</p>
+
+<p>Si Vd. desea instalar X-12-ARIMA para utilizarlo junto con gretl bajo
+  <b>GNU/Linux</b> puede</p>
+
+<ul>
+<li><p>Compilar el código fuente Vd. mismo, en cuyo caso le sugiero
+que ejecute el guión de shell
+  <kbd>x12arima.sh</kbd>.   Este se suministra en el paquete de fuentes de gretl;
+  Vd. también puede <a href="x12arima.sh.txt">verlo</a> o <a
+  href="./x12arima.sh">descargarlo</a> desde aquí.  Este guión descarga los archivos
+  necesarios, hace unas ligeras modificaciones que se necesitan para compilarlo bajo Linux,
+  compila el programa (para esto, necesita Vd. el compilador GNU Fortran, <kbd>g77</kbd>),
+  y lo instala en el lugar que Vd. elija.</p></li>
+
+<li><p>Instalar un paquete binario RPM, <a
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a>
+(Este paquete fue creado bajo Red Hat Linux 7.3).</p></li>
+</ul>
+
+
+<p>Si desea usar X-12-ARIMA junto con gretl bajo <b>Windows</b>, debería
+descargar el autoinstalador, <a
+  href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a>
+  y ejecutarlo. Se le preguntará por un directorio de instalación, por defecto
+  <kbd>c:\userdata\x12arima</kbd>.  Este paquete contiene el programa
+  <kbd>x12a.exe</kbd> adecuado para una consola de win32 (Ventana MSDOS en Windows),
+  algunos ejemplos y documentación en formato PDF.  Deseo dar las gracias a Brian
+Monsell, de la <i>Statistical Research Division of the U.S. Census
+Bureau</i>, por su permiso para redistribuir X-12-ARIMA en esta forma.</p>
+
+<p>La interconexión con X-12-ARIMA es nueva en la versión 1.0.2 de gretl y por ahora
+es bastante limitada, pero si hay interés en esta opción probablemente procederé a
+desarrollarla con más detalle.  Las siguientes imágenes ilustran lo que actualmente
+se puede hacer.</p>
+
+<p>Después de abrir un conjunto de datos adecuado (p.ej. que contenga series temporales
+estacionales), seleccione una variable en la ventana principal de gretl y abra el menú de
+'Variable'.  Seleccione ahora "Análisis X-12-ARIMA".</p>
+
+<center>
+<IMG SRC="x12a-menu_es.png" ALT="menú Variable">
+</center>
+
+<p>Entonces Vd. verá un cuadro de diálogo que le da la oportunidad de
+guardar (en el conjunto de datos actual de gretl) hasta tres de las series 
+generadas por X-12-ARIMA, concretamente, la versión corregida de estacionalidad 
+de la serie seleccionada, el componente tendencia/ciclo estimado de la serie y 
+el componente "irregular" estimado. En este momento Vd. también puede elegir si 
+desea o no obtener un gráfico que muestre estas series.
+</p>
+
+<center>
+<IMG SRC="x12a-dialog_es.png" ALT="cuadro de diálogo">
+</center>
+
+<p>Si elige obtener el gráfico, verá algo como esto:</p>
+
+<center>
+<IMG SRC="x12a-graph_es.png" ALT="gráfico x12a">
+</center>
+
+<p>Además de guardar las series obtenidas y mostrar el gráfico también
+obtendrá la salida completa del análisis X-12-ARIMA.   A continuación se puede ver
+un extracto de esta.
+</p>
+
+<center>
+<IMG SRC="x12a-output_es.png" ALT="salida x12a">
+</center>
+
+<p>&nbsp;</p>
+<hr>
+
+
+</body>
+
+
+
+

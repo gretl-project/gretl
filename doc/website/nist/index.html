@@ -1,0 +1,716 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML
+><HEAD
+><TITLE
+>Assessing gretl's accuracy: the NIST
+      datasets</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.74b"><LINK
+REL="STYLESHEET"
+TYPE="text/css"
+HREF="../css-basic.html"><META
+http-equiv="Content-Type"
+CONTENT="text/html; charset=utf-8"></HEAD
+><BODY
+CLASS="article"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="ARTICLE"
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="title"
+><A
+NAME="nistdoc"
+>Assessing gretl's accuracy: the NIST
+      datasets</A
+></H1
+><H3
+CLASS="author"
+><A
+NAME="AEN4"
+>Allin Cottrell</A
+></H3
+><DIV
+CLASS="affiliation"
+><SPAN
+CLASS="orgdiv"
+>Department of Economics<BR></SPAN
+><SPAN
+CLASS="orgdiv"
+>Wake Forest University<BR></SPAN
+></DIV
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>1. <A
+HREF="#AEN14"
+>About gretl</A
+></DT
+><DT
+>2. <A
+HREF="#AEN18"
+>The NIST reference datasets</A
+></DT
+><DT
+>3. <A
+HREF="#AEN38"
+>Gretl's performance</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="section"
+><H1
+CLASS="section"
+><A
+NAME="AEN14"
+>1. About gretl</A
+></H1
+><P
+>Gretl is an open-source, cross-platform econometrics
+    program.  Its development is hosted by <A
+HREF="http://gretl.sourceforge.net"
+TARGET="_top"
+>sourceforge</A
+>.</P
+></DIV
+><DIV
+CLASS="section"
+><H1
+CLASS="section"
+><A
+NAME="AEN18"
+>2. The NIST reference datasets</A
+></H1
+><P
+>&#13;      The U.S. National Institute of Standards and Technology (NIST)
+      publishes a set of statistical reference datasets.  The object
+      of this project is to <SPAN
+CLASS="QUOTE"
+>"improve the accuracy of statistical
+	software by providing reference datasets with certified
+	computational results that enable the objective evaluation of
+	statistical software"</SPAN
+>.</P
+><P
+>As of May 2000 the website for the project can be found
+      at:</P
+><P
+><A
+HREF="http://www.nist.gov/itl/div898/strd/general/main.html"
+TARGET="_top"
+>&#13;	<TT
+CLASS="literal"
+>http://www.nist.gov/itl/div898/strd/general/main.html</TT
+></A
+></P
+><P
+>while the datasets are at</P
+><P
+><A
+HREF="http://www.nist.gov/itl/div898/strd/general/dataarchive.html"
+TARGET="_top"
+> 
+	<TT
+CLASS="literal"
+>http://www.nist.gov/itl/div898/strd/general/dataarchive.html</TT
+></A
+></P
+><P
+>For testing <TT
+CLASS="application"
+>gretl</TT
+> I have made use
+      of the datasets pertaining to Linear Regression and Univariate
+      Summary Statistics (the others deal with ANOVA and nonlinear
+      regression).</P
+><P
+>I quote from the NIST text <SPAN
+CLASS="QUOTE"
+>"Certification Method &#38;
+	Definitions"</SPAN
+> regarding their certified computational
+      results (emphasis added):</P
+><A
+NAME="AEN34"
+></A
+><BLOCKQUOTE
+CLASS="BLOCKQUOTE"
+><P
+>For all datasets, multiple precision calculations
+	(accurate to 500 digits) were made using the preprocessor and
+	FORTRAN subroutine package of Bailey (1995, available from
+	NETLIB). Data were read in exactly as multiple precision
+	numbers and all calculations were made with this very high
+	precision. The results were output in multiple precision, and
+	only then rounded to fifteen significant digits.
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>These multiple precision results are an
+	  idealization. They represent what would be achieved if
+	  calculations were made without roundoff or other
+	  errors.</I
+></SPAN
+> Any typical numerical algorithm (i.e.
+	not implemented in multiple precision) will introduce
+	computational inaccuracies, and will produce results which
+	differ slightly from these certified values.</P
+></BLOCKQUOTE
+><P
+>It is not to be expected that results obtained from ordinary
+      statistical packages will agree exactly with NIST's multiple
+      precision benchmark figures.  But the benchmark provides a very
+      useful test for egregious errors and imprecision.</P
+></DIV
+><DIV
+CLASS="section"
+><H1
+CLASS="section"
+><A
+NAME="AEN38"
+>3. Gretl's performance</A
+></H1
+><P
+><A
+HREF="#tab-linreg"
+>Table 1</A
+> below shows the performance of
+    both gretl's standard regression facility and the gretl plugin
+    based on the Gnu Multiple Precision (GMP) library.  In the Gretl
+    column the <SPAN
+CLASS="QUOTE"
+>"min. correct significant digits"</SPAN
+> figure
+    shows, for each model, the least number of correct significant
+    digits in the gretl results when the various statistics associated
+    with the model (regression coefficients and standard errors, sum
+    of squared residuals, standard error of residuals,
+    <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+> statistic and <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>R</I
+></SPAN
+><SUP
+>2</SUP
+>) are compared with the
+    NIST certified values.  The GMP plugin column simply records
+    whether the gretl results were correct to at least 12 sigificant
+    figures for all the statistics.  For these tests gretl was compiled
+    using gcc 2.95.3 with the -O2 optimization flag, linked against
+    glibc-2.2.5, and run on an IBM ThinkPad with Pentium III processor.</P
+><DIV
+CLASS="table"
+><A
+NAME="tab-linreg"
+></A
+><P
+><B
+>Table 1. NIST linear regression tests</B
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Dataset</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Model</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Gretl (min. correct significant digits)</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>GMP plugin (correct to at least 12 digits?)</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Norris</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Simple linear regression</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Pontius</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Quadratic</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>8</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>NoInt1</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Simple regression, no intercept</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9 (but see text)</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>NoInt2</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Simple regression,
+	      no intercept </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9 (but see text)</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Filip</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>10th degree polynomial </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>0 (see text)</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Longley</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Multiple regression,
+	      six independent variables</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>8</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler1</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5th degree polynomial</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler2</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5th degree polynomial</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>9</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler3</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5th degree polynomial</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler4</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5th degree polynomial</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Wampler5</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>5th degree polynomial</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>7</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Yes</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>As can be seen from the table,
+      <TT
+CLASS="application"
+>gretl</TT
+> does a good job of tracking the
+      certified results. With the <TT
+CLASS="filename"
+>Filip</TT
+> data set,
+      where the model is
+      <DIV
+CLASS="informalequation"
+><A
+NAME="AEN115"
+></A
+><P
+></P
+><IMG
+SRC="figures/poly.png"
+ALT="
+	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
+	  +\beta_{10}x^{10}_t+\epsilon\]
+	"><P
+></P
+></DIV
+>
+      <TT
+CLASS="application"
+>gretl</TT
+> refuses to produce estimates
+      due to a high degree of multicollinearity (the popular
+      commercial econometrics program <I
+CLASS="citetitle"
+>Eviews
+	3.1</I
+> also baulks at this regression).  Other than
+      that, the program produces accurate coefficient estimates in all
+      cases.</P
+><P
+>In the <TT
+CLASS="filename"
+>NoInt1</TT
+> and
+      <TT
+CLASS="filename"
+>NoInt2</TT
+> datasets there is a methodological
+      disagreement over the calculation of the coefficient of
+      determination, <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>R</I
+></SPAN
+><SUP
+>2</SUP
+>, where the regression does not have an
+      intercept. <TT
+CLASS="application"
+>gretl</TT
+> reports the square
+      of the correlation coefficient between the fitted and actual
+      values of the dependent variable in this case, while the NIST
+      figure is 
+      <DIV
+CLASS="informalequation"
+><A
+NAME="AEN126"
+></A
+><P
+></P
+><IMG
+SRC="figures/nistr2.png"
+ALT=" 
+	\[R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}\] 
+      "><P
+></P
+></DIV
+>
+      There is no universal agreement among statisticians on the
+      <SPAN
+CLASS="QUOTE"
+>"correct"</SPAN
+> formula (see for instance the discussion
+      in Ramanathan, 2002, pp. 163&#8211;4). <I
+CLASS="citetitle"
+>Eviews
+	3.1</I
+> produces a different figure again (which has a
+      negative value for the <TT
+CLASS="filename"
+>NoInt</TT
+> test files).
+      The figure chosen by NIST was obtained for these regressions
+      using the command</P
+><P
+><TT
+CLASS="command"
+> genr r2alt = 1 - $ess/sum(y * y)
+    </TT
+></P
+><P
+>and the numbers thus obtained were in agreement with the
+      certified values, up to <TT
+CLASS="application"
+>gretl</TT
+>'s
+      precision.</P
+><P
+>&#13;      As for the univariate summary statistics, the certified
+      values given by NIST are for the sample mean, sample standard
+      deviation and sample lag-1 autocorrelation coefficient.  NIST
+      note that the latter statistic <SPAN
+CLASS="QUOTE"
+>"may have several
+	definitions"</SPAN
+>. The certified value is computed as 
+
+      <DIV
+CLASS="informalequation"
+><A
+NAME="AEN138"
+></A
+><P
+></P
+><IMG
+SRC="figures/nistr1.png"
+ALT="
+	  \[r_1=\frac{\sum^T_{t=2}(y_t-\bar{y})(y_{t-1}-\bar{y})} 
+                     {\sum^T_{t=1}(y_t - \bar{y})^2}\]
+	"><P
+></P
+></DIV
+>
+      
+      while <TT
+CLASS="application"
+>gretl</TT
+>
+      gives the correlation coefficient between 
+      <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+><SUB
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+></SUB
+>
+      and
+      <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+><SUB
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>&#8722;1</SUB
+>.
+      For the purposes of comparison, the NIST figure was computed
+      within <TT
+CLASS="application"
+>gretl</TT
+> as follows:</P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;      genr y1 = y(-1) 
+      genr ybar = mean(y) 
+      genr devy = y - ybar genr
+      devy1 = y1 - ybar 
+      genr ssy = sum(devy * devy) 
+      smpl 2 ; 
+      genr ssyy1 = sum(devy * devy1) 
+      genr rnist = ssyy1 / ssy</PRE
+></TD
+></TR
+></TABLE
+><P
+>The figure <TT
+CLASS="varname"
+>rnist</TT
+> was then compared with the
+      certified value.
+    </P
+><P
+>With this modification, all the summary statistics were in
+      agreement (to the precision given by
+      <TT
+CLASS="application"
+>gretl</TT
+>) for all datasets
+      (<TT
+CLASS="filename"
+>PiDigits</TT
+>, <TT
+CLASS="filename"
+>Lottery</TT
+>,
+      <TT
+CLASS="filename"
+>Lew</TT
+>, <TT
+CLASS="filename"
+>Mavro</TT
+>,
+      <TT
+CLASS="filename"
+>Michelso</TT
+>, <TT
+CLASS="filename"
+>NumAcc1</TT
+>,
+      <TT
+CLASS="filename"
+>NumAcc2</TT
+>, <TT
+CLASS="filename"
+>NumAcc3</TT
+> and
+      <TT
+CLASS="filename"
+>NumAcc4</TT
+>).</P
+></DIV
+></DIV
+></BODY
+></HTML
+>

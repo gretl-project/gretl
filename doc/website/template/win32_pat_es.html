@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<html>
+<head><title>gretl para win32</title>
+<LINK REL=STYLESHEET TYPE="text/css"
+HREF="../css-gretl.html">
+</head>
+<body>
+[<a href="../gretl_espanol.html">página principal de gretl</a>]
+
+<center>
+<h1>Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>versión para win32</h2>
+</center>
+
+<h2>Descarga</h2>
+
+<p>gretl para win32 viene en un fichero ejecutable auto-extraíble, <a
+href="http://prdownloads.sourceforge.net/gretl/gretl_install.exe">gretl_install.exe</a>
+(SHORTDATE, aproximadamente 7MB). Vd. sólo tiene que descargarlo y
+ejecutarlo. Durante el proceso de instalación se le preguntará por el
+directorio donde desea instalar el programa (por defecto es
+<kbd>c:\userdata\gretl</kbd>). Es posible que desee también instalar
+los programas de corrección estacional X-12-ARIMA o TRAMO/SEATS
+en una forma adecuada
+para usarlo junto con gretl: para esto descargue los programas
+de instalación <a
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a> o
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ts_install.exe">ts_install.exe</a>.
+</p>
+
+<p>El manual de gretl (en Inglés) se encuentra aparte en un fichero de formato PDF:
+<a
+href="../manual.pdf">manual.pdf</a>.  Éste está formateado para el tipo de
+papel 'US letter'; también hay una versión A4: <a
+href="../manual-a4.pdf">manual-a4.pdf</a>.  Si Vd. no tiene el programa para
+leer ficheros PDF, puede descargarlo de forma gratuíta desde <a
+href="http://www.adobe.com/products/acrobat/readstep2.html"> el sitio web de
+Adobe</a>.</p>
+
+<p>Los ficheros ejecutables se compilaron bajo GNU/Linux usando
+<a href="http://www.mingw.org/">mingw32</a> y el <a
+href="http://www.gimp.org/~tml/gimp/win32/downloads.html">gtk para
+win32</a> de Tor Lillqvist. El programa de instalación, también gratuíto, es
+cortesía de <a
+href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+
+<h2>Actualizando gretl</h2>
+
+<p>Cuando se actualiza gretl, teniendo instalada una versión previa,
+probablemente no sea mala idea ejecutar primero el programa desinstalador
+<kbd>unins000.exe</kbd>, que debería estar en el directorio principal de gretl.
+Esto evitará que gretl funcione mal debido al uso de DLLs antiguos o
+inscripciones anteriores en el registro de Windows. Nótese que al ejecutar el 
+desinstalador no se tocará ningún fichero de usuario que Vd. haya creado en el 
+directorio <kbd>gretl/user</kbd>, pero se borrará la configuración personal que 
+haya determinado utilizando el menú 'preferencias', así que tendrá Vd. que
+restablecerla cuando ejecute la nueva versión del programa.</p>
+
+<h2>Construyendo gretl para win32</h2>
+
+<p>Si Vd. desea construir gretl para Windows Vd. mismo, descargue el paquete de
+fuentes de gretl (vaya <a
+href="http://sourceforge.net/projects/gretl/">aquí</a> para encontrar el más 
+reciente) y eche un vistazo al subdirectorio <kbd>win32</kbd>.
+Aquí encontrará el archivo 'Makefile' para la versión Windows:
+actualmente está diseñado para cross-compilar gretl en Linux pero no debería ser 
+muy difícil modificarlo para compilar en Windows, especialmente
+si Vd. utiliza el compilador mingw32.</p>
+
+<h2>gnuplot</h2>
+
+<p><b>gretl</b> llama a <a href="http://www.gnuplot.org">gnuplot</a> para
+generar los gráficos. Hay una copia de gnuplot en el propio fichero
+de instalación de gretl.</p>
+
+<hr>
+
+<p>
+Allin Cottrell (<a href="mailto:cottrell@wfu.edu">cottrell@wfu.edu</a>)<br>
+SHORTDATE</p>
+
+</body>
+</html>
+
+
+
+

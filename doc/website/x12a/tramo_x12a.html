@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+     "http://www.w3.org/TR/REC-html40/loose.dtd"> 
+
+<head><title>gretl, TRAMO and X-12-ARIMA</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="../css-gretl.html">
+<META NAME="GENERATOR" CONTENT="GNU Emacs">
+</head>
+<body>
+
+
+<h1>X-12-ARIMA</h1>
+
+<p>The home page for this program is at <a
+  href="http://www.census.gov/srd/www/x12a/">www.census.gov</a>.
+Please look there for documentation and details.</p>
+
+<p>If you wish to install X-12-ARIMA for use with gretl under
+  <b>GNU/Linux</b> you can</p>
+
+<ul>
+<li>Compile the source yourself, in which case 
+I suggest running the shell script
+  <kbd>x12arima.sh</kbd>.   This is supplied in the gretl source
+  package; you can also <a href="x12arima.sh.txt">view it</a> or <a
+  href="./x12arima.sh">download it</a> from here.  This script
+  downloads the necessary files, makes some slight modifications that
+  are needed for compilation under Linux, compiles the program (for
+  this you need the GNU Fortran compiler, <kbd>g77</kbd>), and installs
+  it in a location of your choice.</p> <li>Install a binary rpm
+package, <a
+href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a-0.2.10-1.i386.rpm">x12a-0.2.10-1.i386.rpm</a>
+(this package was built on Red Hat Linux 7.3).  
+</ul>
+
+
+<p>If you wish to use X-12-ARIMA with gretl on <b>Windows</b>, you
+should download the self-installer, <a
+  href="ftp://ricardo.ecn.wfu.edu/pub/gretl/x12a_install.exe">x12a_install.exe</a>
+  and run it.  You will be prompted for an installation directory, by
+  default <kbd>c:\userdata\x12arima</kbd>.  This package contains
+  the program <kbd>x12a.exe</kbd> in win32 console form, along with
+  examples and documentation in PDF format.  I am grateful to Brian
+Monsell, at the Statistical Research Division of the U.S. Census
+Bureau, for permission to redistribute X-12-ARIMA in this form.</p>
+
+<h1>gretl and X-12-ARIMA</h1>
+
+<p>Support for X-12-ARIMA is new in version 1.0.2 of gretl and at
+present it is quite limited, but if there is interest in this feature
+I will probably aim to develop it further.  The following pictures
+illustrate what you can do as of now.</p>
+
+<p>After opening a suitable data set (i.e. containing seasonal time
+series), select a variable in the gretl main window and pull down the
+Variable menu.  Select "X-12-ARIMA analysis".</p>
+
+<center>
+<IMG SRC="x12a-menu.png" ALT="Variable menu">
+</center>
+
+<p>You will then see a dialog box which gives you the choice of saving
+(into the current gretl data set) up to three of the series generated
+by X-12-ARIMA, namely the seasonally adjusted version of the input
+series, the estimated trend/cycle component of the series, and the
+estimated "irregular" component.  At this point you can also choose
+whether or not to display a graph showing these series.</p>
+
+<center>
+<IMG SRC="x12a-dialog.png" ALT="Dialog box">
+</center>
+
+<p>If you choose to display the graph, you should see something like
+this:</p>
+
+<center>
+<IMG SRC="x12a-graph.png" ALT="x12a graph">
+</center>
+
+<p>Besides saving output series and displaying the graph, you will
+also see the full output from the X-12-ARIMA analysis.  An excerpt
+from this is shown below.</p>
+
+<center>
+<IMG SRC="x12a-output.png" ALT="x12a output">
+</center>
+
+<p>&nbsp;</p>
+<hr>
+
+<h1>TRAMO and SEATS</h1>
+
+<p>The home page for these programs is at <a
+href="http://www.bde.es/servicio/software/econome.htm">www.bde.es</a></p>
+
+<p>If you wish to install TRAMO/SEATS for use with gretl under
+  <b>GNU/Linux</b> I suggest running the shell script
+  <kbd>tramo_install.sh</kbd>.   This is supplied in the gretl source
+  package; you can also <a href="tramo_install.sh.txt">view it</a> or <a
+  href="./tramo_install.sh">download it</a> from here.  This script
+  downloads the necessary files (Linux binaries and documentation --
+  no source code is available), decompresses them, and installs them 
+  it in a location of your choice.</p>
+
+<p>DOS version download (<a
+href="http://www.bde.es/servicio/software/tramo/dos.exe">dos.exe</a>).</p>
+
+
+  
+
+</body>
+
+
+
+
