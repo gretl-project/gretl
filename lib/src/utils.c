@@ -1035,7 +1035,7 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
     } else 
 	sprintf(ppaths->helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
 
-    if (ppaths->userdir[strlen(ppaths->userdir) - 2] != SLASH)
+    if (ppaths->userdir[strlen(ppaths->userdir) - 1] != SLASH)
 	strcat(ppaths->userdir, SLASHSTR);
 
     sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);

@@ -102,17 +102,17 @@ typedef struct {
     char *key,         /* config file variable name */
          *description; /* How the field will show up in the options dialog */
     char *var;         /* string variable */
-    char type;         /* 'C' for string, 'I' for integer */
+    char type;         /* 'C' or 'S' for string, 'I' for integer */
     int len;           /* storage size for string variable */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
 } RCVARS;
 
 RCVARS rc_vars[] = {
-    {"gretldir", "Main gretl directory", paths.gretldir, 'C', MAXLEN, 1, NULL},
+    {"gretldir", "Main gretl directory", paths.gretldir, 'S', MAXLEN, 1, NULL},
     {"userdir", "User's gretl directory", paths.userdir, 'C', MAXLEN, 1, NULL},
-    {"gnuplot", "Command to launch gnuplot", paths.gnuplot, 'C', MAXLEN, 1, NULL},
-    {"Rcommand", "Command to launch GNU R", Rcommand, 'C', MAXSTR, 1, NULL},
+    {"gnuplot", "Command to launch gnuplot", paths.gnuplot, 'S', MAXLEN, 1, NULL},
+    {"Rcommand", "Command to launch GNU R", Rcommand, 'S', MAXSTR, 1, NULL},
     {"expert", "Expert mode (no warnings)", expert, 'I', 6, 1, NULL},
     {"updater", "Tell me about gretl updates", updater, 'I', 6, 1, NULL},
     {"binbase", "gretl database directory", paths.binbase, 'C', MAXLEN, 2, NULL},
@@ -1795,7 +1795,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 		    strcpy(rc_vars[i].var, "true");
 		else strcpy(rc_vars[i].var, "false");
 	    } 
-	    if (rc_vars[i].type == 'C') {
+	    if (rc_vars[i].type == 'C' || rc_vars[i].type == 'S') {
 		tempstr = gtk_entry_get_text
 		    (GTK_ENTRY(rc_vars[i].widget));
 		if (tempstr != NULL && strlen(tempstr)) 
@@ -1845,7 +1845,7 @@ static void read_rc (void)
 		rc_vars[i].description, 
 		rc_vars[i].key);
 	if ((value = gnome_config_get_string(gpath)) != NULL) {
-	    strcpy(rc_vars[i].var, value);
+	    strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
 	    g_free(value);
 	}
 	i++;
@@ -1892,8 +1892,8 @@ void write_rc (void)
 {
     int i = 0;
 
-    while (rc_vars[i].var != NULL) {
-	write_reg_val((i == 0)? 
+    while (rc_vars[i].key != NULL) {
+	write_reg_val((rc_vars[i].type == 'S')? 
 		      HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 		      rc_vars[i].key, rc_vars[i].var);
 	i++;
@@ -1907,13 +1907,13 @@ void write_rc (void)
 void read_rc (void) 
 {
     int i = 0;
-    char *rpath, value[MAXLEN];
+    char rpath[MAXSTR], value[MAXSTR];
 
-    while (rc_vars[i].var != NULL) {
-	if (read_reg_val((i == 0)? 
+    while (rc_vars[i].key != NULL) {
+	if (read_reg_val((rc_vars[i].type == 'S')? 
 			 HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 			 rc_vars[i].key, value) == 0)
-	    strcpy(rc_vars[i].var, value);
+	    strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
 	i++;
     }
 
@@ -1925,25 +1925,22 @@ void read_rc (void)
     }
     /* get recent file lists */
     for (i=0; i<MAXRECENT; i++) {
-	rpath =  g_strdup_printf("recent data files\\%d", i);
+	sprintf(rpath, "recent data files\\%d", i);
 	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
 	    strcpy(datalist[i], value);
-	g_free(rpath);
-	if (value[0] == '\0') break;
+	else break;
     }    
     for (i=0; i<MAXRECENT; i++) {
-	rpath = g_strdup_printf("recent session files\\%d", i);
+	sprintf(rpath, "recent session files\\%d", i);
 	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
 	    strcpy(sessionlist[i], value);
-	g_free(rpath);
-	if (value[0] == '\0') break;
+	else break;
     } 
     for (i=0; i<MAXRECENT; i++) {
-	rpath = g_strdup_printf("recent script files\\%d", i);
+	sprintf(rpath, "recent script files\\%d", i);
 	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
 	    strcpy(scriptlist[i], value);
-	g_free(rpath);
-	if (value[0] == '\0') break;
+	else break;
     }
     set_paths(&paths, 0, 1);
 }

@@ -12,13 +12,13 @@ $(DOC).tex: $(DOC).sgml $(DSL) $(MATHSS) titlepage.dsl
 	jade -t tex -d $(DSL)\#print $(DOC).sgml
 	./unescape_math.pl $(DOC).tex
 
-html: $(DOC).sgml db2html $(HDSL) $(HMATHSS) pix
+html: $(DOC).sgml db2html $(DSL) $(HMATHSS) pix
 	./db2html $(DOC).sgml
 
 clean:
 	rm -rf $(DOC) $(DOC).junk $(DOC).tex *.log *.out *.aux
 
 pix: $(DOC).sgml
-	./grab_equations.pl
+	./grab_equations.pl $(DOC).sgml
 
 

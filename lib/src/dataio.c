@@ -1725,6 +1725,8 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 	    unspace(boxinfo.varname[realv]);
 	    lower(boxinfo.varname[realv]);
 	    pprintf(prn, " variable %d: '%s'\n", v+1, boxinfo.varname[realv]);
+#ifdef notdef  
+	    /* This is wrong!  How do you identify character data? */
 	    if (line[51] != '2') {
 		pprintf(prn, "   Non-numeric data: will be skipped\n");
 		varstart[v] = 0;
@@ -1732,6 +1734,7 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 		v++;
 		break;
 	    }
+#endif
 	    strncpy(tmp, line+52, 6);
 	    tmp[6] = '\0';
 	    varstart[v] = atoi(tmp) - 1;
