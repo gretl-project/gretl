@@ -55,6 +55,14 @@ static gboolean font_is_latin_text_font (PangoFontDescription *desc,
     return ok;
 }
 
+static gboolean weird_font (const gchar *name)
+{
+    if (strstr(name, "arioso") || strstr(name, "dings") || strstr(name, "chancery"))
+	return TRUE;
+    else
+	return FALSE;
+}
+
 /* We can test for a font for "latin text" compatibility, via the heuristic
    of seeing if it contains the letter 'A' in US English.  Given the
    latin text characteristic, we can then see if the font is monospaced
@@ -110,6 +118,8 @@ static gboolean validate_font_family (const gchar *familyname,
 	    handle = NULL;
 	}
 #endif
+
+	if (weird_font(familyname)) return FALSE;
 
 	fontname = g_strdup_printf("%s 10", familyname);
 	desc = pango_font_description_from_string(fontname);

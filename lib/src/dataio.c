@@ -2058,8 +2058,9 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     }
     pprintf(prn, _("   longest line: %d characters\n"), maxlen + 1);
 
-    if (cbak != '\n') 
+    if (cbak != '\n') {
 	fprintf(stderr, "last char was not newline: could be a problem\n");
+    }
 
     if (!blank_1) {
 	rewind(fp);
@@ -2086,6 +2087,12 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 
     fclose(fp);
     /* end initial checking */
+
+    if (csvinfo->n == 0) {
+	pprintf(prn, _("Invalid data file\n"));
+	free(csvinfo);
+	return 1;
+    }
 
     /* initialize datainfo and Z */
     if (start_new_Z(&csvZ, csvinfo, 0)) return E_ALLOC;
