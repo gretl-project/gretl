@@ -599,15 +599,15 @@ GtkItemFactoryEntry data_items[] = {
 static void gui_usage (void)
 {
     gui_logo(stdout);
-    printf(_("You may supply the name of a data file on the command line.\n"));
-    printf(_("Or you may do \"gretl -r script_file\" to open a script.\n"));
-    printf(_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
+    printf(I_("You may supply the name of a data file on the command line.\n"));
+    printf(I_("Or you may do \"gretl -r script_file\" to open a script.\n"));
+    printf(I_("Or you may do \"gretl -d database\" to open a gretl database.\n"));
     exit(0);
 }
 
 static void noalloc (const char *str)
 {
-    fprintf(stderr, _("Couldn't allocate memory for %s\n"), str);
+    fprintf(stderr, I_("Couldn't allocate memory for %s\n"), str);
     exit(EXIT_FAILURE);
 }
 
@@ -622,10 +622,10 @@ static void get_runfile (char *fname)
     strncat(tryscript, fname, MAXLEN-1);
 #endif
     if (addpath(tryscript, &paths, 1) == NULL) {
-	fprintf(stderr, _("Couldn't find script '%s'\n"), tryscript);
+	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryscript);
 	exit(EXIT_FAILURE);
     } else {
-	fprintf(stderr, _("%s found\n"), tryscript);
+	fprintf(stderr, I_("%s found\n"), tryscript);
 	i = slashpos(tryscript);
 	if (i) {
 	    paths.currdir[0] = 0;

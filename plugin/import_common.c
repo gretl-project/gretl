@@ -23,17 +23,19 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
 {
     int i, t;
 
-    for (i=1; i<pdinfo->v; i++)
-	for (t=0; t<pdinfo->n; t++)
+    for (i=1; i<pdinfo->v; i++) {
+	for (t=0; t<pdinfo->n; t++) {
 	    Z[i][t] = NADBL;
+	}
+    }
 }
 
 #endif
 
-static void invalid_varname (char *errbuf)
+static void invalid_varname (PRN *prn)
 {
-    strcpy(errbuf, get_gretl_errmsg());
-    strcat(errbuf, _("\nPlease rename this variable and try again"));
+    pputs(prn, get_gretl_errmsg());
+    pputs(prn, _("\nPlease rename this variable and try again"));
 }
 
 static int label_is_date (char *str)

@@ -39,7 +39,7 @@ int attach_subsample_to_model (MODEL *pmod, double ***fullZ,
 
     i = varindex(fullinfo, "subdum");
     if (i == fullinfo->v) { /* safety measure: should be impossible */
-	fprintf(stderr, _("mystery failure in attach_subsample_to_model\n"));
+	fprintf(stderr, I_("mystery failure in attach_subsample_to_model\n"));
 	return 1;   
     } 
 
@@ -88,7 +88,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	if (!subsampled(Z, pdinfo, i)) return 0;
 	/* data set is subsampled, model is not: problem */
 	else {
-	    fprintf(stderr, _("dataset is subsampled, model is not\n"));
+	    fprintf(stderr, I_("dataset is subsampled, model is not\n"));
 	    return 1;
 	}
     }
@@ -96,13 +96,13 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
     /* case: model has sub-sampling info recorded */
     if (!subsampled(Z, pdinfo, i)) {
 	/* data set not sub-sampled: problem */
-	fprintf(stderr, _("model is subsampled, dataset is not\n"));
+	fprintf(stderr, I_("model is subsampled, dataset is not\n"));
 	return 1;
     } else { /* do the subsamples (model and current data set) agree? */
 	if (vars_identical(Z[i], subdum, n))
 	    return 0;
 	else {
-	    fprintf(stderr, _("model and dataset subsamples not the same\n"));
+	    fprintf(stderr, I_("model and dataset subsamples not the same\n"));
 	    return 1;
 	}
     }

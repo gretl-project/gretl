@@ -329,7 +329,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     else if (dinfo->info == 1) {
 	startfrac = 0;
     } else {
-	fprintf(stderr, _("frequency (%d) does not make seem to make sense"),
+	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
 		(int) dinfo->info);
 	err = 1;
     }   
@@ -378,7 +378,7 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 	pd = 'A';
 	startfrac = 0;
     } else {
-	fprintf(stderr, _("frequency (%d) does not make seem to make sense"),
+	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
 		(int) dinfo->info);
 	err = 1;
     }

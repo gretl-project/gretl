@@ -38,8 +38,6 @@ typedef enum {
     VALUE_ARRAY     = 80
 } ValueType;
 
-char *errbuf;
-
 #include "import_common.c"
 
 static void wsheet_init (wsheet *sheet)
@@ -180,7 +178,7 @@ static int wsheet_get_real_size (xmlNodePtr node, wsheet *sheet)
     return 0;
 }
 
-static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
+static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 {
     xmlNodePtr p = node->xmlChildrenNode;
     char *tmp;
@@ -232,22 +230,22 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 		    vtype = atoi(tmp);
 		    free(tmp);
 		} else { /* a formula perhaps? */
-		    sprintf(errbuf, _("Couldn't get value for col %d, row %d.\n"
-			    "Maybe there's a formula in the sheet?"),
+		    pprintf(prn, _("Couldn't get value for col %d, row %d.\n"
+				   "Maybe there's a formula in the sheet?"),
 			    i, t);
 		    err = 1;
 		}
 		/* check the top-left cell */
 		if (!err && i_real == 0 && t_real == 0) {
 		    if (VTYPE_IS_NUMERIC(vtype)) {
-			sprintf(errbuf, _("Expected to find a variable name"));
+			pputs(prn, _("Expected to find a variable name"));
 			err = 1;
 		    }
 		}
 		else if (!err && i_real >= 1 && t_real == 0 && 
 			 !(vtype == VALUE_STRING)) {
 		    /* ought to be a varname here */
-		    sprintf(errbuf, _("Expected to find a variable name"));
+		    pputs(prn, _("Expected to find a variable name"));
 		    err = 1;
 		}
 		if (!err && (tmp = xmlNodeGetContent(p))) {
@@ -267,7 +265,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 			    if (i_real == 0 && !strcmp(tmp, "obs")) {
 				; /* keep going */
 			    } else if (check_varname(sheet->varname[i_real])) {
-				invalid_varname(errbuf);
+				invalid_varname(prn);
 				err = 1;
 			    }
 			}
@@ -287,11 +285,11 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 	    if (toprows[t]) sheet->text_rows += 1;
 
 	if (sheet->text_rows > 1) {
-	    sprintf(errbuf, _("Found an extraneous row of text"));
+	    pputs(prn, _("Found an extraneous row of text"));
 	    err = 1;
 	}
 	if (sheet->text_cols > 1) {
-	    sprintf(errbuf, _("Found an extraneous column of text"));
+	    pputs(prn, _("Found an extraneous column of text"));
 	    err = 1;
 	}
     }
@@ -302,7 +300,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
     return err;
 }
 
-static int wsheet_get_data (const char *fname, wsheet *sheet) 
+static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
@@ -314,19 +312,19 @@ static int wsheet_get_data (const char *fname, wsheet *sheet)
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(errbuf, _("xmlParseFile failed on %s"), fname);
+	pprintf(prn, _("xmlParseFile failed on %s"), fname);
 	return 1;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(errbuf, _("%s: empty document"), fname);
+        pprintf(prn, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	return 1;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
-        sprintf(errbuf, _("File of the wrong type, root node not Workbook"));
+        pputs(prn, _("File of the wrong type, root node not Workbook"));
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -373,7 +371,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet)
 			else if (got_sheet &&
 				 !xmlStrcmp(snode->name, (UTF) "Cells")) {
 			    wsheet_get_real_size(snode, sheet);
-			    err = wsheet_parse_cells(snode, sheet);
+			    err = wsheet_parse_cells(snode, sheet, prn);
 			}
 			snode = snode->next;
 		    }
@@ -403,7 +401,7 @@ static int wbook_record_name (char *name, wbook *book)
     return 0;
 }
 
-static int wbook_get_info (const char *fname, wbook *book) 
+static int wbook_get_info (const char *fname, wbook *book, PRN *prn) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
@@ -417,19 +415,19 @@ static int wbook_get_info (const char *fname, wbook *book)
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(errbuf, _("xmlParseFile failed on %s"), fname);
+	pprintf(prn, _("xmlParseFile failed on %s"), fname);
 	return 1;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(errbuf, _("%s: empty document"), fname);
+        pprintf(prn, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	return 1;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
-        sprintf(errbuf, _("File of the wrong type, root node not Workbook"));
+        pputs(prn, _("File of the wrong type, root node not Workbook"));
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -511,7 +509,7 @@ static int consistent_date_labels (wsheet *sheet)
 }
 
 int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    char *errtext)
+		    PRN *prn)
 {
     wbook book;
     wsheet sheet;
@@ -519,12 +517,9 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     double **newZ = NULL;
     DATAINFO *newinfo;
 
-    errbuf = errtext;
-    *errbuf = '\0';
-
     newinfo = datainfo_new();
     if (newinfo == NULL) {
-	sprintf(errtext, _("Out of memory\n"));
+	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
 
@@ -532,14 +527,14 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    if (wbook_get_info(fname, &book)) {
-	sprintf(errbuf, _("Failed to get workbook info"));
+    if (wbook_get_info(fname, &book, prn)) {
+	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
     } else
 	wbook_print_info(&book);
 
     if (book.nsheets == 0) {
-	sprintf(errbuf, _("No worksheets found"));
+	pputs(prn, _("No worksheets found"));
     }
     else if (book.nsheets > 1) {
 	wsheet_menu(&book, 1);
@@ -557,12 +552,13 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (!err && sheetnum >= 0) {
 	fprintf(stderr, "Getting data...\n");
 	if (wsheet_setup(&sheet, &book, sheetnum)) {
-	    sprintf(errbuf, _("error in wsheet_setup()"));
+	    pputs(prn, _("error in wsheet_setup()"));
 	    err = 1;
 	} else {
-	    err = wsheet_get_data(fname, &sheet);
-	    if (!err) 
+	    err = wsheet_get_data(fname, &sheet, prn);
+	    if (!err) {
 		wsheet_print_info(&sheet);
+	    }
 	}
     } /* else ??? */
 
@@ -640,10 +636,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    *pZ = newZ;
 	    *pdinfo = *newinfo;
 	} else {
-	    PRN prn;
-
-	    gretl_print_attach_buffer(&prn, errtext);
-	    err = merge_data(pZ, pdinfo, newZ, newinfo, &prn, 1);
+	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn, 1);
 	}
     } 	    
 

@@ -157,13 +157,13 @@ int ws_startup (void)
     requested = MAKEWORD(1, 1);
 
     if (WSAStartup(requested, &data)) {
-	fprintf(stderr, _("Couldn't find usable socket driver\n"));
+	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
 	return 1;
     }
 
     if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
 				   HIBYTE (requested) < 1)) {
-	fprintf(stderr, _("Couldn't find usable socket driver\n"));
+	fprintf(stderr, I_("Couldn't find usable socket driver\n"));
 	WSACleanup();
 	return 1;
     }

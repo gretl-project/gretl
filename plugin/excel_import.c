@@ -41,14 +41,12 @@ extern int excel_book_get_info (const char *fname, wbook *book);
 
 static void free_sheet (void);
 static int getshort (char *rec, int offset);
-static int process_item (int rectype, int reclen, char *rec, wbook *book); 
+static int process_item (int rectype, int reclen, char *rec, wbook *book, PRN *prn); 
 static int allocate_row_col (int row, int col, wbook *book);
 static char *copy_unicode_string (char **src);
 static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
-
-char *errbuf;
 
 /* #define EDEBUG 1 */
 /* #define FULL_EDEBUG 1 */
@@ -83,7 +81,8 @@ static char *format_double (char *rec, int offset)
     return buffer;
 }
 
-static int process_sheet (FILE *input, const char *filename, wbook *book) 
+static int process_sheet (FILE *input, const char *filename, wbook *book,
+			  PRN *prn) 
 {    
     long rectype;
     long reclen;
@@ -107,14 +106,14 @@ static int process_sheet (FILE *input, const char *filename, wbook *book)
 		itemsread = fread(rec, reclen, 1, input);
 		break;
 	    } else {
-		sprintf(errbuf, _("%s: Invalid BOF record"), filename);
+		pprintf(prn, _("%s: Invalid BOF record"), filename);
 	        return 1;
 	    } 
 	}
     }    
 
     if (feof(input)) {
-	sprintf(errbuf, _("%s: No BOF record found"), filename);
+	pprintf(prn, _("%s: No BOF record found"), filename);
 	return 1;
     }  
    
@@ -152,7 +151,7 @@ static int process_sheet (FILE *input, const char *filename, wbook *book)
 	    rec[reclen] = '\0';
 	}
     
-	if (process_item(rectype, reclen, rec, book)) {
+	if (process_item(rectype, reclen, rec, book, prn)) {
 	    err = 1;
 	    break;
 	}
@@ -258,7 +257,8 @@ static double biff_get_rk (const unsigned char *ptr)
     return -999.0;
 }
 
-static int process_item (int rectype, int reclen, char *rec, wbook *book) 
+static int process_item (int rectype, int reclen, char *rec, wbook *book,
+			 PRN *prn) 
 {
     switch (rectype) {
     case SST: {
@@ -329,7 +329,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
 	if (string_no >= sstsize) {
-	    sprintf(errbuf, _("String index too large"));
+	    pprintf(prn, _("String index too large"));
 	} else if (sst[string_no] != NULL) {	
 	    int len = strlen(sst[string_no]);
 	    char *outptr;
@@ -444,7 +444,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	int len;
 
 	if (!saved_reference) {
-	    sprintf(errbuf, _("String record without preceding string formula"));
+	    pprintf(prn, _("String record without preceding string formula"));
 	    break;
 	}
 	len = getshort(rec, 0);
@@ -813,7 +813,7 @@ static int data_block (wbook *book, int ncols, int skip, struct string_err *err)
 }
 
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    char *errtext)
+		    PRN *prn)
 {
     FILE *fp;
     wbook book;
@@ -823,12 +823,9 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     const char *adjust_rc = N_("Perhaps you need to adjust the "
 			       "starting column or row?");
 
-    errbuf = errtext;
-    *errbuf = '\0';
-
     newinfo = datainfo_new();
     if (newinfo == NULL) {
-	sprintf(errbuf, _("Out of memory\n"));
+	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
 
@@ -839,11 +836,11 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     wbook_init(&book);
 
     if (excel_book_get_info(fname, &book)) {
-	sprintf(errbuf, _("Failed to get workbook info"));
+	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
     }
     else if (book.nsheets == 0) {
-	sprintf(errbuf, _("No worksheets found"));
+	pputs(prn, _("No worksheets found"));
 	err = 1;
     }
     else 
@@ -866,12 +863,13 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     /* processing for specific worksheet */
     fp = fopen(fname, "rb");
     if (fp == NULL) return 1;
-    err = process_sheet(fp, fname, &book);
+    err = process_sheet(fp, fname, &book, prn);
 
     if (err) {
-	if (*errbuf == 0)
-	    sprintf(errbuf, _("Failed to process Excel file"));
-	fprintf(stderr, "%s\n", errbuf);
+	if (*prn->buf == 0) {
+	    pputs(prn, _("Failed to process Excel file"));
+	}
+	fprintf(stderr, "%s\n", prn->buf);
     } else {
 	int i, j, t, i_sheet, t_sheet;
 	int label_strings, time_series = 0;
@@ -896,8 +894,8 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
 
 	if (ncols <= 0 || lastrow < 1) {
-	    sprintf(errbuf, _("No data found.\n"));
-	    strcat(errbuf, _(adjust_rc));
+	    pputs(prn, _("No data found.\n"));
+	    pputs(prn, _(adjust_rc));
 	    err = 1;
 	    goto getout; 
 	}
@@ -906,25 +904,25 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	err = got_valid_varnames(&book, ncols, label_strings);
 	if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
-	    sprintf(errbuf, _("One or more variable names are missing.\n"));
-	    strcat(errbuf, _(adjust_rc));
+	    pputs(prn, _("One or more variable names are missing.\n"));
+	    pputs(prn, _(adjust_rc));
 	}
 	else if (err == VARNAMES_INVALID) {
-	    invalid_varname(errbuf);
+	    invalid_varname(prn);
 	}
 	if (err) goto getout; 
 
 	gotdata = data_block(&book, ncols, label_strings, &strerr);
 	if (gotdata == 0) {
-	    sprintf(errbuf, _("Expected numeric data, found string:\n"
-			      "%s at row %d, column %d\n"),
+	    pprintf(prn, _("Expected numeric data, found string:\n"
+			   "%s at row %d, column %d\n"),
 		    strerr.str, strerr.row, strerr.column);
 	    g_free(strerr.str);
-	    strcat(errbuf, _(adjust_rc));
+	    pputs(prn, _(adjust_rc));
 	    err = 1;
 	    goto getout; 
 	} else if (gotdata == -1) {
-	    sprintf(errbuf, _("Warning: there were missing values\n"));
+	    pputs(prn, _("Warning: there were missing values\n"));
 	}	    
 
 	i = book.col_offset;
@@ -1008,10 +1006,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    *pZ = newZ;
 	    *pdinfo = *newinfo;
 	} else {
-	    PRN prn;
-
-	    gretl_print_attach_buffer(&prn, errtext);
-	    err = merge_data(pZ, pdinfo, newZ, newinfo, &prn, 1);
+	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn, 1);
 	}
     }
 

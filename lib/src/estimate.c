@@ -2080,7 +2080,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	/* now add squares */
 	check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
 	if (check < 1) {
-	    fprintf(stderr, _("generation of squares failed\n"));
+	    fprintf(stderr, I_("generation of squares failed\n"));
 	    free(tmplist);
 	    err = E_SQUARES;
 	}
@@ -2107,7 +2107,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	err = _addtolist(pmod->list, tmplist, &list, pdinfo, 999);
 	if (err) {
 	    if (err != E_VARCHANGE) 
-		fprintf(stderr, _("didn't add to list\n"));
+		fprintf(stderr, I_("didn't add to list\n"));
 	    else {
 		err = 0;
 	    }
@@ -2961,14 +2961,14 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (open_plugin("lad", &handle)) {
-	fprintf(stderr, _("Couldn't load plugin function\n"));
+	fprintf(stderr, I_("Couldn't load plugin function\n"));
 	lad_model.errcode = E_FOPEN;
 	return lad_model;
     }
 
     lad_driver = get_plugin_function("lad_driver", handle);
     if (lad_driver == NULL) {
-	fprintf(stderr, _("Couldn't load plugin function\n"));
+	fprintf(stderr, I_("Couldn't load plugin function\n"));
 	close_plugin(handle);
 	lad_model.errcode = E_FOPEN;
 	return lad_model;

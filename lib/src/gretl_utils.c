@@ -778,9 +778,9 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
 
     /* and report? */
 #if 0
-    fprintf(stderr, _("setting data frequency = %d\n"), pd);
+    fprintf(stderr, I_("setting data frequency = %d\n"), pd);
     if (pdinfo->n > 0) {
-	fprintf(stderr, _("data range: %s - %s\n"), pdinfo->stobs, pdinfo->endobs);
+	fprintf(stderr, I_("data range: %s - %s\n"), pdinfo->stobs, pdinfo->endobs);
     }
 #endif
 
@@ -852,7 +852,7 @@ static char *search_dir (char *filename, const char *topdir,
 
     if (path_append(filename, topdir) == 0) {
 #ifdef PATH_DEBUG
-	fprintf(stderr, _("Trying %s\n"), filename);
+	fprintf(stderr, I_("Trying %s\n"), filename);
 #endif
 	test = fopen(filename, "r");
 	if (test != NULL) {
@@ -865,7 +865,7 @@ static char *search_dir (char *filename, const char *topdir,
 		strcpy(filename, origfile);
 		if (got && path_append(filename, trypath) == 0) {
 #ifdef PATH_DEBUG
-		    fprintf(stderr, _("Trying %s\n"), filename);
+		    fprintf(stderr, I_("Trying %s\n"), filename);
 #endif
 		    test = fopen(filename, "r");
 		    if (test != NULL) {
@@ -2052,7 +2052,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	free_Z(fZ, &fdatainfo);
 	free(list);
 	free_fit_resid(fr);
-	fprintf(stderr, _("forecasting model failed in fcast_with_errs()\n"));
+	fprintf(stderr, I_("forecasting model failed in fcast_with_errs()\n"));
 	return NULL;
     }
 

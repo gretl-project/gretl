@@ -223,7 +223,7 @@ static int real_helpfile_init (int cli)
     /* first pass: find length and number of topics */
     fp = fopen(helpfile, "r");
     if (fp == NULL) {
-	fprintf(stderr, _("help file %s is not accessible\n"), helpfile);
+	fprintf(stderr, I_("help file %s is not accessible\n"), helpfile);
 	return -1;
     }
 

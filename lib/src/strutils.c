@@ -627,9 +627,11 @@ char *colonize_obs (char *obs)
     return obs;
 }
 
-/* fudge for gnuplot strings */
+/* fudges for strings that should not be in utf8 under some 
+   conditions */
 
 #ifdef ENABLE_NLS
+
 char *iso_gettext (const char *msgid)
 {
    char *ret;
@@ -651,6 +653,16 @@ char *iso_gettext (const char *msgid)
    bind_textdomain_codeset(PACKAGE, "UTF-8");
    return ret;
 } 
+
+/* library global */
+int printing_to_console;
+
+char *maybe_iso_gettext (const char *msgid)
+{
+   if (printing_to_console) return iso_gettext(msgid);
+   else return gettext(msgid);
+} 
+
 #endif  
 
 const char *print_time (const time_t *timep)

@@ -528,7 +528,8 @@ int get_worksheet_data (const char *fname, int datatype, int append)
 {
     int err;
     void *handle;
-    int (*sheet_get_data)(const char*, double ***, DATAINFO *, char *);
+    PRN *errprn;
+    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *prn);
 
     if (datatype == GRETL_GNUMERIC) {
 	if (gui_open_plugin("gnumeric_import", &handle)) return 1;
@@ -549,19 +550,29 @@ int get_worksheet_data (const char *fname, int datatype, int append)
         return 1;
     }
 
-    err = (*sheet_get_data)(fname, &Z, datainfo, errtext);
+    if (bufopen(&errprn)) {
+	close_plugin(handle);
+	return 1;
+    }
+
+    err = (*sheet_get_data)(fname, &Z, datainfo, errprn);
     close_plugin(handle);
 
     if (err == -1) /* the user canceled the import */
 	return 0;
 
     if (err) {
-	if (strlen(errtext)) errbox(errtext);
-	else errbox(_("Failed to import spreadsheet data"));
+	if (*errprn->buf != '\0') {
+	    errbox(errprn->buf);
+	} else {
+	    errbox(_("Failed to import spreadsheet data"));
+	}
 	return 1;
     } else {
-	if (strlen(errtext)) errbox(errtext);
+	if (*errprn->buf != '\0') infobox(errprn->buf);
     }
+
+    gretl_print_destroy(errprn);
 
     if (append) {
 	infobox(_("Data appended OK"));

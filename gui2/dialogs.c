@@ -150,7 +150,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	/* try to infer structure from ending obs */
 	if (sscanf(endobs, "%[^:]:%s", unit, period) == 2) { 
 	    datainfo->pd = atoi(period);
-	    fprintf(stderr, _("Setting data frequency = %d\n"), datainfo->pd);
+	    fprintf(stderr, I_("Setting data frequency = %d\n"), datainfo->pd);
 	} else {
 	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
 	    errbox(errtext);

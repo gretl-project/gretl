@@ -282,7 +282,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     _init_model(&var_model, pdinfo);
 
     if (resids == NULL && order < 1) {
-	fprintf(stderr, _("Not much point in a zero-order \"VAR\" surely?\n"));
+	fprintf(stderr, I_("Not much point in a zero-order \"VAR\" surely?\n"));
 	return 1;
     }
 

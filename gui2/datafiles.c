@@ -216,7 +216,7 @@ static void browse_header (GtkWidget *w, gpointer data)
 	view_buffer(prn, 80, 300, _("gretl: data header"), INFO, NULL);
     } else {
 	errbox(_("Failed to retrieve description of data"));
-	fprintf(stderr, _("didn't get description from %s\n"), hdrname);
+	fprintf(stderr, I_("didn't get description from %s\n"), hdrname);
     }
 }
 
