@@ -85,7 +85,11 @@ static void read_rc (void);
 static char fixedfontname[MAXLEN] = "Courier New 10";
 #else
 # ifndef OLD_GTK
+#  ifdef OSX_BUILD
+static char fixedfontname[MAXLEN] = "Monospace 12";
+#  else
 static char fixedfontname[MAXLEN] = "Monospace 10";
+#  endif
 # else
 static char fixedfontname[MAXLEN] = 
 "-b&h-lucidatypewriter-medium-r-normal-sans-12-*-*-*-*-*-*-*";
@@ -95,7 +99,11 @@ static char fixedfontname[MAXLEN] =
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "tahoma 8";
 #elif !defined(USE_GNOME) && !defined(OLD_GTK)
+# ifdef OSX_BUILD
+static char appfontname[MAXLEN] = "Luxi Sans 12";
+# else
 static char appfontname[MAXLEN] = "Sans 10";
+# endif
 #endif
 
 #ifndef OLD_GTK

@@ -298,7 +298,9 @@ dnl Apple _will_ be different
 dnl
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
-  *darwin*) LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
+  *darwin*) 
+    LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
+    AC_DEFINE(OSX_BUILD)
   ;; 
 esac
 AM_PATH_LAPACK(, have_lapack="yes")
@@ -396,16 +398,18 @@ if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
     )
 fi
 
-dnl Fallback on supplied gtksourceview? Check for libxml2 first
+dnl Fallback on supplied gtksourceview? Check for libxml2 and gtk >= 2.2.0
 if test "$have_gtk" = "2.0" && \
    test "$try_sourceview" = "yes" && \
    test "$have_gtksourceview" = "no" ; then
     PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0,
     have_libxml2="yes",
     have_libxml2="no")
+    PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.2.0,,
+    try_sourceview="no")
 fi
 
-dnl Now try using supplied gtksourceview
+dnl Now try using supplied gtksourceview if preconditions are met
 if test "$have_gtk" = "2.0" && \
    test "$try_sourceview" = "yes" && \
    test "$have_gtksourceview" = "no" && \

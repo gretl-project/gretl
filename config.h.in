@@ -111,4 +111,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Use flite for speech synthesis */
 #undef HAVE_FLITE
 
+/* Building for Mac OS X? */
+#undef OSX_BUILD
+
 #endif /* CONFIG_H */

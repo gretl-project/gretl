@@ -24,7 +24,7 @@
 #include <ctype.h>
 #include <float.h>
 
-#undef SSDEBUG
+#define SSDEBUG
 
 typedef struct {
     GtkWidget *view;
@@ -595,7 +595,7 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
     /* this is connected to the "cursor-changed" signal */
 
 #ifdef SSDEBUG
-    fprintf(stderr, "update_cell_position:\n");
+    fprintf(stderr, "** update_cell_position()\n");
 #endif
 
     gtk_tree_view_get_cursor(view, &path, &column);
@@ -629,7 +629,7 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 
     if (path != NULL) gtk_tree_path_free(path);
 
-    return TRUE;
+    return TRUE; /* is this right? */
 }
 
 /* ........................................................... */
@@ -912,6 +912,10 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     GdkModifierType mods; 
     gint ret = FALSE;
 
+#ifdef SSDEBUG
+    fprintf(stderr, "** catch_spreadsheet_click()\n");
+#endif
+
     if (event->type != GDK_BUTTON_PRESS) {
 	return FALSE;
     }
@@ -960,6 +964,10 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	}
 	gtk_tree_path_free(path);
     }
+
+#ifdef SSDEBUG
+    fprintf(stderr, "catch_spreadsheet_click returning %d\n", ret);
+#endif
 
     return ret;
 }

@@ -766,9 +766,11 @@ static int get_point_size (const char *font)
 {
     int pts;
 
-    if (sscanf(font, "%*s %d\n", &pts) == 1) 
+    if (sscanf(font, "%*s %d\n", &pts) == 1) {
 	return pts;
-    return 10;
+    } else {
+	return 10;
+    }
 }
 
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
