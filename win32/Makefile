@@ -78,7 +78,7 @@ GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	selector.c settings.c helpfiles.c treeutils.c console.c 
 GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
 	webget.h guiprint.h selector.h settings.h helpfiles.h \
-	treeutils.h
+	treeutils.h build.h
 GUIOBJ = $(GUISRC:.c=.o)
 
 HACK_SRC = gtkfontselhack.c font_filter.c
@@ -98,7 +98,7 @@ PROBOBJ = $(PROBSRC:.c=.o)
 MO = mo/es.mo
 
 # targets begin
-all: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
+all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
@@ -108,11 +108,11 @@ $(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES)
 
 $(CLIOBJ): $(CLI_SRC) 
 
-$(GUIOBJ): $(GUISRC) $(GUIHDR) build.h
+$(GUIOBJ): $(GUISRC) $(GUIHDR)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
-build.h:
+buildstamp:
 	./builddate.pl
 
 $(EXTRAOBJ): $(EXTRAHDR) $(EXTRASRC) 

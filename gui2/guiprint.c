@@ -215,7 +215,7 @@ void winprint (char *fullbuf, char *selbuf)
     page = 1;
     x = px / 2; /* attempt at left margin */
     time_string(hdrstart);
-    while (*p && printok) { /* pages loop */
+    while (*printbuf && printok) { /* pages loop */
 	StartPage(dc);
 	SelectObject(dc, fixed_font);
 	SetMapMode(dc, MM_TEXT);
@@ -224,7 +224,7 @@ void winprint (char *fullbuf, char *selbuf)
 	TextOut(dc, x, px / 8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
-	while (*p && line < page_lines) { /* lines loop */
+	while (*printbuf && line < page_lines) { /* lines loop */
 	    len = strcspn(printbuf, "\n");
 	    TextOut(dc, x, y, printbuf, len);
 	    printbuf += len + 1;
