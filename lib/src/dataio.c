@@ -2309,18 +2309,20 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
        for (i=orig_vars; i<nvars && !err; i++) {
 	   strcpy(pdinfo->varname[i], addinfo->varname[i - orig_vars + 1]);
+
 	   if (offset >= 0) {
+	       /* positive offset means new data start later */
 	       for (t=0; t<pdinfo->n; t++) {
-		   if (t < offset) {
-		       (*pZ)[i][t] = NADBL;
-		   } else {
+		   if (t >= offset && t - offset < addinfo->n) {
 		       (*pZ)[i][t] = addZ[i - orig_vars + 1][t - offset];
+		   } else {
+		       (*pZ)[i][t] = NADBL;
 		   }
 	       }
 	   } else {
 	       /* negative offset: new data start earlier */
 	       for (t=0; t<pdinfo->n; t++) {
-		   if (t < addinfo->n + offset) {
+		   if (t - offset < addinfo->n) {
 		       (*pZ)[i][t] = addZ[i - orig_vars + 1][t - offset];
 		   } else {
 		       (*pZ)[i][t] = NADBL;
