@@ -536,21 +536,22 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause, 
 	      PRN *prn)
 {
-    int k, nbetas = 0;
+    int k, nbeta = 0;
     int *tmplist = NULL;
 
     if (pmod->ci == TSLS) {
 	k = 2;
-	nbetas = 0;
-	while (pmod->list[k++] != LISTSEP) nbetas++;
+	while (pmod->list[k++] != LISTSEP) nbeta++;
+    } else if (pmod->ci == ARMA) {
+	nbeta = 1 + pmod->list[1] + pmod->list[2] + pmod->list[0] - 4;
     } else {
-	nbetas = pmod->list[0] - 1;
+	nbeta = pmod->list[0] - 1;
     }
 
-    tmplist = malloc((nbetas + 1) * sizeof *tmplist);
+    tmplist = malloc((nbeta + 1) * sizeof *tmplist);
     if (tmplist == NULL) return E_ALLOC;
 
-    tmplist[0] = nbetas;
+    tmplist[0] = nbeta;
     for (k=1; k<=tmplist[0]; k++) {
 	tmplist[k] = pmod->list[k+1];
     }

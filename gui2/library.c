@@ -2337,6 +2337,12 @@ void do_model (GtkWidget *widget, gpointer p)
 	err = model_output(pmod, prn);
 	break;
 
+    case ARMA:
+	*pmod = arma(cmd.list, (const double **) Z, datainfo, 
+		     (cmd.opt & OPT_V)? prn : NULL); 
+	err = model_output(pmod, prn);
+	break;
+
     case LOGISTIC:
 	delete_selection_dialog(sr);
 	*pmod = logistic_model(cmd.list, &Z, datainfo, NULL);

@@ -37,6 +37,7 @@ struct _selector {
     GtkWidget *auxvars;
     GtkWidget *default_check;
     GtkWidget *extra;
+    GtkWidget *extra2;
     int code;
     int error;
     unsigned long opts;
@@ -44,7 +45,7 @@ struct _selector {
     gpointer data;
 };
 
-#define WANT_TOGGLES(c) (c == OLS || c == TOBIT)
+#define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA)
 
 void clear_selector (void)
 {
@@ -338,12 +339,27 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
     else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
-	GtkAdjustment *adj = 
-	    gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
-
+	GtkAdjustment *adj;
+ 
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
 	strcat(sr->cmdlist, numstr);
+    }
+    else if (sr->code == ARMA) {
+	GtkAdjustment *adj;
+
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
+	i = (gint) adj->value;
+	sprintf(numstr, "%d ", i);
+	strcat(sr->cmdlist, numstr);
+
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra2));
+	i = (gint) adj->value;
+	sprintf(numstr, "%d ", i);
+	strcat(sr->cmdlist, numstr);
+
+	strcat(sr->cmdlist, " ; ");
     }
     else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
@@ -494,6 +510,8 @@ static char *est_str (int cmdnum)
 	return N_("Two-stage least squares");
     case AR:
 	return N_("Autoregressive");
+    case ARMA:
+	return N_("ARMAX");
     case VAR:
 	return N_("VAR");
     case LAD:
@@ -905,6 +923,34 @@ static void verbose_callback (GtkWidget *w,  selector *sr)
     }
 }
 
+static void build_arma_spinners (selector *sr)
+{
+    GtkWidget *hbox, *tmp;
+    GtkObject *adj;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    tmp = gtk_label_new(_("AR order:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_widget_show(tmp);
+    adj = gtk_adjustment_new(1, 0, 4, 1, 1, 1);
+    sr->extra = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->extra, FALSE, FALSE, 5);
+    gtk_widget_show(sr->extra);
+
+    tmp = gtk_label_new(_("MA order:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_widget_show(tmp);
+    adj = gtk_adjustment_new(1, 0, 4, 1, 1, 1);
+    sr->extra2 = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->extra2, FALSE, FALSE, 5);
+    gtk_widget_show(sr->extra2);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
+		       hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox);
+}
+
 static void 
 build_selector_switches (selector *sr) 
 {
@@ -916,7 +962,7 @@ build_selector_switches (selector *sr)
 			   GTK_SIGNAL_FUNC(robust_callback), sr);
 
     }
-    else if (sr->code == TOBIT) {
+    else if (sr->code == TOBIT || sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
 			   GTK_SIGNAL_FUNC(verbose_callback), sr);
@@ -1171,6 +1217,11 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 		       big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
+
+    /* AR and MA spinners for ARMAX */
+    if (sr->code == ARMA) {
+	build_arma_spinners(sr);
+    }
 
     /* toggle switches for some cases */
     if (WANT_TOGGLES(sr->code)) {

@@ -546,7 +546,7 @@ if test x"${XML_LIBS}" = x ; then
 fi
 
 dnl Check for libxslt (for the helpfiles)
-PKG_CHECK_MODULES(XSLT, libxslt >= 1.1.2,	
+PKG_CHECK_MODULES(XSLT, libxslt >= 1.0.30,	
   have_xslt="no",
   have_xslt="yes"
 )

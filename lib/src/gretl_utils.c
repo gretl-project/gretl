@@ -898,6 +898,7 @@ struct gretl_opt gretl_opts[] = {
     { IMPORT,   OPT_O, "box1" },
     { LEVERAGE, OPT_O, "save" },
     { LMTEST,   OPT_L, "logs" },
+    { LMTEST,   OPT_M, "autocorr" },
     { LMTEST,   OPT_O, "autocorr" },
     { LMTEST,   OPT_S, "squares" },    
     { LMTEST,   OPT_W, "white" },
@@ -930,20 +931,6 @@ struct gretl_opt gretl_opts[] = {
     { VAR,      OPT_Q, "quiet" },    
     { 0,        0L,    NULL }
 };
-
-#if 0
-unsigned long get_opts_for_gretl_command (int ci)
-{
-    unsigned long opts;
-    int i = 0;
-
-    for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (gretl_opts[i].ci == ci) opts |= gretl_opts[i].o;
-    }
-
-    return ret;
-}
-#endif
 
 const char **get_opts_for_command (int ci)
 {
@@ -1120,7 +1107,7 @@ int catchflags (char *line, unsigned long *oflags)
 {
     int n = strlen(line);
     unsigned long opt;
-    char cmdword[9];
+    char cmdword[9] = {0};
     int ci, err = 0;
 
     *oflags = 0L;
@@ -1138,6 +1125,7 @@ int catchflags (char *line, unsigned long *oflags)
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
     get_cmdword(line, cmdword);
+
     if (!strcmp(cmdword, "genr") || !strcmp(cmdword, "sim") ||
 	!strcmp(cmdword, "label")) return 0;
 

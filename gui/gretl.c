@@ -449,6 +449,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL },
     { N_("/Model/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
     { N_("/Model/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
+    { N_("/Model/ARMA_X..."), NULL, model_callback, ARMA, NULL },
     { N_("/Model/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
     { N_("/Model/Cointegration test"), NULL, NULL, 0, "<Branch>" },
     { N_("/Model/Cointegration test/Engle-Granger..."), NULL, 

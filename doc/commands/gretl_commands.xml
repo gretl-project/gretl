@@ -224,6 +224,7 @@
         <argument>p</argument>
 	<argument>q</argument>
 	<argument separated="true">depvar</argument>
+	<argument optional="true">indepvars</argument>
       </arguments>
       <options>
         <option>
@@ -250,16 +251,25 @@
     </usage>
 
     <description>
-      <para>
-	Estimates a univariate ARMA (Autoregressive, Moving Average)
-	model.  The integer values <repl>p</repl> and <repl>q</repl>
-	represent the AR and MA orders respectively. 
+      <para context="cli">
+	If no <repl>indepvars</repl> list is given, estimates a
+	univariate ARMA (Autoregressive, Moving Average) model.  The
+	integer values <repl>p</repl> and <repl>q</repl> represent the
+	AR and MA orders respectively.  If <repl>indepvars</repl> are
+	added, the model becomes ARMAX.
+      </para>
+
+      <para context="gui">
+	When chosen from the Variable menu, estimates a univariate
+	ARMA (Autoregressive, Moving Average) model.  When chosen from
+	the Model menu (<quote>ARMAX</quote>), estimates an ARMAX
+	model, with additional exogenous regressors.
       </para>
 
       <para>The default is to use the <quote>native</quote> gretl ARMA
-	function; <program>X-12-ARIMA</program> may be used instead
-	(if the <program>X-12-ARIMA</program> package for gretl is
-	installed).  
+	function; in the case of a univariate ARMA model
+	<program>X-12-ARIMA</program> may be used instead (if the
+	<program>X-12-ARIMA</program> package for gretl is installed).
       </para>
 
       <para context="cli">The options given above may be combined,
@@ -271,9 +281,10 @@
 	likelihood procedure, implemented via iterated least squares
 	estimation of the outer product of the gradient (OPG)
 	regression.  See <manref targ="jack-arma"/> for the logic of
-	the procedure.  The AR coefficients are initialized using an
-	OLS auto-regression, and the MA coefficients are initialized
-	at zero.</para>
+	the procedure.  The AR coefficients (and those for any
+	additional regressors) are initialized using an OLS
+	auto-regression, and the MA coefficients are initialized at
+	zero.</para>
 
       <para>The AIC value given in connection with ARMA models is
 	calculated according to the definition used in

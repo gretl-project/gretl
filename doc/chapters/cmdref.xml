@@ -359,7 +359,7 @@
 	    <entry></entry>
 	    <entry><literal>--autocorr</literal></entry>
 	    <entry>serial correlation</entry>
-	    <entry><literal>-o</literal></entry>
+	    <entry><literal>-m</literal></entry>
 	  </row>
 	  <row>
 	    <entry><command>meantest</command></entry>

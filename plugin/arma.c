@@ -357,11 +357,27 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 
     /* AIC, as per X-12-ARIMA */
     pmod->criterion[C_AIC] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
+
     /* BIC, as per X-12-ARIMA */
     pmod->criterion[C_BIC] = -2.0 * pmod->lnL + (pmod->ncoeff + 1) * log(pmod->nobs);
 }
 
-static int check_arma_list (const int *list)
+static void remove_const (int *list)
+{
+    int i, j;
+
+    for (i=5; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    for (j=i; j<list[0]; j++) {
+		list[j] = list[j+1];
+	    }
+	    list[0] -= 1;
+	    break;
+	}
+    }
+}
+
+static int check_arma_list (int *list)
 {
     int err = 0;
 
@@ -371,6 +387,12 @@ static int check_arma_list (const int *list)
     else if (list[1] < 0 || list[1] > 4) err = 1;
     else if (list[2] < 0 || list[2] > 4) err = 1;
     else if (list[1] + list[2] == 0) err = 1;
+
+    /* remove const from list of regressors (ARMAX), since it
+       is added automatically */
+    if (list[0] > 4) {
+	remove_const(list);
+    }
 
     if (err) {
 	gretl_errmsg_set(_("Error in arma command"));
