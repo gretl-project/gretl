@@ -1999,6 +1999,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     const char *emftmp = "gpttmp.emf";
     gchar *emfbuf;
     GError *error = NULL;
+    size_t emflen;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
 
@@ -2030,10 +2031,10 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     remove(plottmp);
 
     /* EMF file is written: now we grab it into memory */
-    g_file_get_contents (emftmp, &emfbuf, NULL, &error);
+    g_file_get_contents (emftmp, &emfbuf, &emflen, &error);
 
     /* place the buffer on the clipboard */
-
+    win_copy_buf(emfbuf, COPY_EMF, emflen);
 
     /* clean up: delete the EMF on disk, and free the buffer that has
        been copied to the clipboard */

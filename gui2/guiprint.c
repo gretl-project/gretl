@@ -61,7 +61,7 @@ static char *dosify_buffer (const char *buf)
 }
 
 /* win32 only: copy buffer to clipboard */
-int win_copy_buf (char *buf, int format)
+int win_copy_buf (char *buf, int format, size_t buflen)
 {
     HGLOBAL winclip;
     LPTSTR ptr;
@@ -99,12 +99,16 @@ int win_copy_buf (char *buf, int format)
 	return 1;
     }
 
-    len = strlen(winbuf); /* FIXME EMF */
+    if (buflen == 0) {
+	len = strlen(winbuf) + 1; 
+    } else {
+	len = buflen;
+    }
         
-    winclip = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));        
+    winclip = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(TCHAR));        
 
     ptr = GlobalLock(winclip);
-    memcpy(ptr, winbuf, len + 1);
+    memcpy(ptr, winbuf, len);
     GlobalUnlock(winclip); 
 
     if (format == COPY_RTF) { 
