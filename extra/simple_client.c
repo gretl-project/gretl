@@ -35,7 +35,7 @@ int main (void)
 {
 
     DATAINFO *datainfo;         /* data information struct */
-    double *Z;                  /* the data set */
+    double **Z;                 /* the data array */
     int *list;                  /* list of regressors etc. */
     MODEL *model;               /* pointer to model struct */
     PRN *prn;                   /* pointer to struct for printing */
@@ -62,29 +62,25 @@ int main (void)
     /* Fill in the dataset, Z.  Note that Z may be a superset of the 
        data actually used in the regression equation.
 
-       Elements 0 to n-1 in Z are automatically reserved for the
+       The elements of Z[0] are automatically reserved for the
        constant (via create_new_dataset()), so we fill in data values
-       starting from position n.  
-       
-       The first column below gives 14 (that is, n) values for the
-       first variable in the data set, the second column supplies
-       14 observations on the second variable...
+       starting from column 1.  
     */
 
-    Z[14] = 199.9;	Z[28] = 1065;
-    Z[15] = 228;	Z[29] = 1254;
-    Z[16] = 235;	Z[30] = 1300;
-    Z[17] = 285;	Z[31] = 1577;
-    Z[18] = 239;	Z[32] = 1600;
-    Z[19] = 293;	Z[33] = 1750;
-    Z[20] = 285;	Z[34] = 1800;
-    Z[21] = 365;	Z[35] = 1870;
-    Z[22] = 295;	Z[36] = 1935;
-    Z[23] = 290;	Z[37] = 1948;
-    Z[24] = 385;	Z[38] = 2254;
-    Z[25] = 505;	Z[39] = 2600;
-    Z[26] = 425;	Z[40] = 2800;
-    Z[27] = 415;	Z[41] = 3000;
+    Z[1][0] = 199.9;	Z[2][0]  = 1065;
+    Z[1][1]  = 228;	Z[2][1]  = 1254;
+    Z[1][2]  = 235;	Z[2][2]  = 1300;
+    Z[1][3]  = 285;	Z[2][3]  = 1577;
+    Z[1][4]  = 239;	Z[2][4]  = 1600;
+    Z[1][5]  = 293;	Z[2][5]  = 1750;
+    Z[1][6]  = 285;	Z[2][6]  = 1800;
+    Z[1][7]  = 365;	Z[2][7]  = 1870;
+    Z[1][8]  = 295;	Z[2][8]  = 1935;
+    Z[1][9]  = 290;	Z[2][9]  = 1948;
+    Z[1][10] = 385;	Z[2][10] = 2254;
+    Z[1][11] = 505;	Z[2][11] = 2600;
+    Z[1][12] = 425;	Z[2][12] = 2800;
+    Z[1][13] = 415;	Z[2][13] = 3000;
 
     /* Set up the "list", which is fed to the regression function.
        The first element of list represents the length of the list
@@ -104,7 +100,7 @@ int main (void)
 
     /* Now we call the lsq function from libgretl to get least squares 
        estimates and associated statistics. */
-    model = gretl_model_new();
+    model = gretl_model_new(datainfo);
     if (model == NULL) noalloc();
     *model = lsq(list, &Z, datainfo, OLS, 1, 0.0);
 
@@ -124,7 +120,7 @@ int main (void)
 
     /* memory management check -- try explicitly freeing all allocated
        memory */
-    free(Z); 
+    free_Z(Z, datainfo); 
     free_model(model);
     free(list);
     free_datainfo(datainfo);
