@@ -2219,7 +2219,7 @@ int _forecast (int t1, int t2, int nv,
 	}
 
 	if (pmod->ci == LOGISTIC) {
-	    zz = 1.0 / (1.0 + exp(zz));
+	    zz = 1.0 / (1.0 + exp(-zz));
 	    if (gretl_model_get_int(pmod, "logistic_percent")) {
 		zz *= 100.0;
 	    }

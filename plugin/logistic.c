@@ -31,11 +31,11 @@ static int get_lmax (const double *y, const DATAINFO *pdinfo)
     int t, ret = LMAX_ONE;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (y[t] < 0.0 || y[t] > 100.0) {
+	if (y[t] <= 0.0 || y[t] >= 100.0) {
 	    ret = LMAX_BAD;
 	    break;
 	}
-	if (y[t] > 1.0) {
+	if (y[t] >= 1.0) {
 	    ret = LMAX_HUNDRED;
 	}
     }
@@ -76,7 +76,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     for (t=0; t<pdinfo->n; t++) {
 	x = pmod->yhat[t];
 	if (na(x)) continue;
-	pmod->yhat[t] = exp(x) / (1.0 + exp(x));
+	pmod->yhat[t] = 1.0 / (1.0 + exp(-x));
 	if (lmax == LMAX_HUNDRED) {
 	    pmod->yhat[t] *= 100.0;
 	} 
@@ -117,7 +117,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo) 
+MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo) 
 {
     int lmax;
     int dv = list[1];

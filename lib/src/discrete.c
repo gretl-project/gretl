@@ -103,20 +103,20 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
 
 /* .......................................................... */
 
-static MODEL get_logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
+MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
 {
     MODEL lmod;
     void *handle;
-    MODEL (*logistic_model) (int *, double ***, DATAINFO *);
+    MODEL (*logistic_estimate) (int *, double ***, DATAINFO *);
 
-    logistic_model = get_plugin_function("logistic_model", &handle);
-    if (logistic_model == NULL) {
+    logistic_estimate = get_plugin_function("logistic_estimate", &handle);
+    if (logistic_estimate == NULL) {
 	gretl_model_init(&lmod, pdinfo);
 	lmod.errcode = E_FOPEN;
 	return lmod;
     }
 
-    lmod = (*logistic_model) (list, pZ, pdinfo);
+    lmod = (*logistic_estimate) (list, pZ, pdinfo);
 
     close_plugin(handle);
 
@@ -179,7 +179,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     dummy = isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
     if (!dummy) {
 	if (opt == LOGIT) {
-	    dmod = get_logistic_model(list, pZ, pdinfo);
+	    dmod = logistic_model(list, pZ, pdinfo);
 	    return dmod;
 	} else {
 	    dmod.errcode = E_UNSPEC;

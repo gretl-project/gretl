@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "../cephes/polrt.c"
 
 #define DEFAULT_MAX_ITER 1000
 
@@ -137,8 +138,6 @@ static double update_fcast_errs (double *e, const double *y,
     return s2;
 }
 
-/* FIXME: the general case below needs more checking */
-
 static void update_error_partials (double *e, const double *y, 
 				   double **Z, const double *coeff,
 				   int n, int p, int q)
@@ -215,10 +214,59 @@ static double get_ll (const double *e, int n, int maxlag)
     }
 
     s2 = ll / SampleSize;
-    ll = -0.5 * SampleSize * log(s2);
-    ll -= SampleSize * K;
+    ll = -SampleSize * (0.5 * log(s2) + K);
 
     return ll;
+}
+
+static cmplx *arma_roots (int p, int q, const double *coeff) 
+     /*
+       Given an ARMA process $A(L) y_t = C(L) \epsilon_t$, returns the 
+       roots of the two polynomials;
+
+       Syntax:
+       p: order of A(L)
+       q: order of C(L)
+       coeff: p+q+1 vector of coefficients (element 0 is the constant
+       and is ignored)
+       returns: the p + q roots (AR part first)
+     */
+{
+    int maxlag = (p>q) ? p : q;
+
+    double *temp, *temp2;
+    cmplx  *roots;
+    int j;
+
+    temp =  malloc((maxlag+1) * sizeof *temp);
+    temp2 = malloc((maxlag+1) * sizeof *temp2);
+    roots = malloc((p + q) * sizeof *roots);
+
+    if (temp == NULL || temp2 == NULL || roots == NULL) {
+	return NULL;
+    }
+
+    temp[0] = 1.0;
+
+    /* A(L) */
+    for (j=1; j<p+1; j++){
+	temp[j] = -coeff[j];
+    }
+
+    polrt(temp, temp2, p, roots);
+
+    /* C(L) */
+    for (j=1; j<q+1; j++){
+	temp[j] = coeff[j+p];
+    }
+
+    polrt(temp, temp2, q, roots + p);
+
+    /* free stuff */
+    free(temp);
+    free(temp2);
+
+    return roots;
 }
 
 static int reallocate_hat_series (MODEL *pmod, int n)
@@ -319,7 +367,10 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     pmod->t1 = realt1;
     pmod->t2 += pdinfo->t1;
 
-    gretl_aic_etc(pmod);
+    /* AIC, as per X-12-ARIMA */
+    pmod->criterion[0] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
+    /* BIC, as per X-12-ARIMA */
+    pmod->criterion[1] = -2.0 * pmod->lnL + (pmod->ncoeff + 1) * log(pmod->nobs);
 }
 
 static int check_arma_list (const int *list)
@@ -467,12 +518,13 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     if (ainfo == NULL) {
 	free(alist);
 	free(coeff);
+	free(d_coef);
 	armod.errcode = E_ALLOC;
 	return armod;
     }
     ainfo->extra = 1; /* ? can't remember what this does */
 
-    /* initialize the coefficients (FIXME) */
+    /* initialize the coefficients */
     /* AR part by OLS, MA at 0's */
     ar_init_by_ols(v, p, coeff, Z, pdinfo);
     for (i=0; i<q; i++) coeff[i+p+1] = 0.0; 
@@ -587,10 +639,37 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     if (crit > tol) {
 	armod.errcode = E_NOCONV;
     } else {
+	cmplx *roots;
 	y = Z[v];
-	/* "ll" does not seem to be a true log-likelihood */
-	armod.lnL = NADBL; 
+	armod.lnL = ll; 
 	rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
+
+	/* compute and print polynomial roots */
+	roots = arma_roots(p, q, coeff);
+	if (roots != NULL) {
+	    pprintf(prn,"  %s:\t", _("AR roots"));
+
+	    for (i=0; i<p; i++) {
+		pprintf(prn, "%7.4f", roots[i].r);
+		if (roots[i].i != 0) {
+		    pputs(prn, (roots[i].i > 0) ? "+" : "");
+		    pprintf(prn, "%6.4fi", roots[i].i);
+		}
+		pputc(prn, '\t');
+	    }
+	    pputc(prn, '\n');
+	
+	    pprintf(prn,"  %s:\t", _("MA roots"));
+	    for (i=p; i<p+q; i++) {
+		pprintf(prn,"%7.4f", roots[i].r);
+		if (roots[i].i != 0) {
+		    pprintf(prn, (roots[i].i > 0) ? "+" : "");
+		    pprintf(prn, "%6.4fi", roots[i].i);
+		}
+		pputc(prn, '\t');
+	    }
+	    pputc(prn, '\n');
+	}
     }
 
     if (!armod.errcode) {

@@ -5442,6 +5442,20 @@ int gui_exec_line (char *line,
 	    add_test_to_model(ptest, models[0]);
 	break;
 
+    case LOGISTIC:
+	clear_or_save_model(&models[0], datainfo, rebuild);
+	*models[0] = logistic_model(cmd.list, &Z, datainfo);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, prn);
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	if (printmodel(models[0], datainfo, prn))
+	    (models[0])->errcode = E_NAN;
+	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn); 
+	break;
+
     case LOGIT:
     case PROBIT:
 	clear_or_save_model(&models[0], datainfo, rebuild);

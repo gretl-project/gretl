@@ -23,3 +23,5 @@ MODEL logit_probit (int *list,
 		    double ***pZ, DATAINFO *pdinfo, 
 		    int opt);
 
+MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo);
+

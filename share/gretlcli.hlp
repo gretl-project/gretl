@@ -775,6 +775,19 @@ If the internal creation of squares causes exact multicollinearity, LM test
 statistics cannot be obtained.
 
 #
+logistic
+@Estimation
+Usage:          logistic depvar indepvars
+
+Logistic regression: an OLS regression using the logistic transformation of
+the dependent variable, log(y/(1-y)).  The dependent variable should be a
+decimal fraction, between 0 and 1, or a percentage, between 0 and 100.  The
+fitted values and residuals from the regression are transformed so as to be
+comparable with the original dependent variable.  
+
+If the dependent variable is binary, use the logit command instead.
+
+#
 logit
 @Estimation
 Usage:          logit depvar indepvars

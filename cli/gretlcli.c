@@ -1168,6 +1168,19 @@ void exec_line (char *line, PRN *prn)
 	}
 	break;
 
+    case LOGISTIC:
+	clear_model(models[0], NULL);
+	*models[0] = logistic_model(cmd.list, &Z, datainfo);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, prn);
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn);
+	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); 
+	break;	
+
     case LOGIT:
     case PROBIT:
 	clear_model(models[0], NULL);
