@@ -1,0 +1,257 @@
+<HTML
+><HEAD
+><TITLE
+>Binary databases</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Data files"
+HREF="c674.html"><LINK
+REL="PREVIOUS"
+TITLE="Other data file formats"
+HREF="x682.html"><LINK
+REL="NEXT"
+TITLE="Creating a data file from scratch"
+HREF="x749.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x682.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 4. Data files</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x749.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="dbase"
+></A
+>Binary databases</H1
+><P
+>For working with large amounts of data I have supplied
+      <TT
+CLASS="application"
+>gretl</TT
+> with a database-handling
+      routine.  A <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>database</I
+></SPAN
+>, as opposed to a
+      <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>data file</I
+></SPAN
+>, is not read directly into the
+      program's workspace.  A database can contain series of mixed
+      frequencies and sample ranges.  You open the database and select
+      series to import into the working data set.  You can then save
+      those series in a native format data file if you wish. Databases
+      can be accessed via <TT
+CLASS="application"
+>gretl</TT
+>'s menu item
+      <SPAN
+CLASS="QUOTE"
+>"File, Browse databases"</SPAN
+>.</P
+><P
+>For details on the format of
+      <TT
+CLASS="application"
+>gretl</TT
+> databases, see <A
+HREF="a4331.html"
+>Appendix A</A
+>.</P
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="online-data"
+></A
+>Online access to databases</H2
+><P
+>As of version 0.40, <TT
+CLASS="application"
+>gretl</TT
+> is
+	able to access databases via the internet.  Several databases
+	are available from Wake Forest University.  Your computer must
+	be connected to the internet for this option to work.  Please
+	see the item on <SPAN
+CLASS="QUOTE"
+>"Online databases"</SPAN
+> under
+	<TT
+CLASS="application"
+>gretl</TT
+>'s Help menu.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="RATS"
+></A
+>RATS 4 databases</H2
+><P
+>Thanks to Thomas Doan of <I
+CLASS="citetitle"
+>Estima</I
+>,
+	who provided me with the specification of the database format
+	used by RATS 4 (Regression Analysis of Time Series),
+	<TT
+CLASS="application"
+>gretl</TT
+> can also handle such
+	databases.  Well, actually, a subset of same: I have only
+	worked on time-series databases containing monthly and
+	quarterly series.  My university has the RATS G7 database
+	containing data for the seven largest OECD economies and
+	<TT
+CLASS="application"
+>gretl</TT
+> will read that OK.</P
+><DIV
+CLASS="tip"
+><BLOCKQUOTE
+CLASS="tip"
+><P
+><B
+>Tip: </B
+>Visit the <TT
+CLASS="application"
+>gretl</TT
+> <A
+HREF="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html"
+TARGET="_top"
+>data 
+	    page</A
+> for details and updates on available
+	  data.</P
+></BLOCKQUOTE
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x682.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x749.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Other data file formats</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c674.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Creating a data file from scratch</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

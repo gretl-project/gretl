@@ -1,0 +1,223 @@
+<HTML
+><HEAD
+><TITLE
+>Pooled estimation</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Panel data"
+HREF="c896.html"><LINK
+REL="PREVIOUS"
+TITLE="Using lagged values with panel
+      data"
+HREF="x989.html"><LINK
+REL="NEXT"
+TITLE="Illustration: the Penn World Table"
+HREF="x1035.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x989.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Panel data</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1035.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="pooled-est"
+></A
+>Pooled estimation</H1
+><P
+>Having come this far, we can reveal that there is a special
+      purpose estimation command for use with panel data, the
+      <SPAN
+CLASS="QUOTE"
+>"Pooled OLS"</SPAN
+> option under the
+      <SPAN
+CLASS="guimenu"
+>Model</SPAN
+> menu. This command is available only if
+      the data set is recognized as a panel.  To take advantage of it,
+      you should specify a model without any dummy variables
+      representing cross-sectional units.  The routine presents
+      estimates for straightforward pooled OLS, which treats
+      cross-sectional and time-series variation at par.  This model
+      may or may not be appropriate.  Under the
+      <SPAN
+CLASS="guimenu"
+>Tests</SPAN
+> menu in the model window, you will find
+      an item <SPAN
+CLASS="QUOTE"
+>"panel diagnostics"</SPAN
+>, which tests pooled OLS
+      against the principal alternatives, the fixed effects and random
+      effects models.</P
+><P
+>The fixed effects model adds a dummy variable for all but
+      one of the cross-sectional units, allowing the intercept of the
+      regression to vary across the units.  An
+      <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>-test for the joint significance of these
+      dummies is presented: if the p-value for this test is small,
+      that counts against the null hypothesis (that the simple pooled
+      model is adequate) and in favor of the fixed effects
+      model.</P
+><P
+>The random effects model, on the other hand, decomposes the
+      residual variance into two parts, one part specific to the
+      cross-sectional unit or <SPAN
+CLASS="QUOTE"
+>"group"</SPAN
+> and the other
+      specific to the particular observation.  (This estimator can be
+      computed only if the panel is <SPAN
+CLASS="QUOTE"
+>"wide"</SPAN
+> enough, that
+      is, if the number of cross-sectional units in the data set
+      exceeds the number of parameters to be estimated.)  The
+      Breusch&#8211;Pagan LM statistic tests the null hypothesis
+      (again, that the pooled OLS estimator is adequate) against the
+      random effects alternative.</P
+><P
+>It is quite possible that the pooled OLS model is rejected
+      against both of the alternatives, fixed effects and random
+      effects. How, then, to assess the relative merits of the two
+      alternative estimators?  The Hausman test (also reported,
+      provided the random effects model can be estimated) addresses
+      this issue.  Provided the unit- or group-specific error is
+      uncorrelated with the independent variables, the random effects
+      estimator is more efficient than the fixed effects estimator;
+      otherwise the random effects estimator is inconsistent, in which
+      case the fixed effects estimator is to be preferred.  The null
+      hypothesis for the Hausman test is that the group-specific error
+      is not so correlated (and therefore the random effects model is
+      preferable).  Thus a low p-value for this tests counts against
+      the random effects model and in favor of fixed effects.</P
+><P
+>For a rigorous discussion of this topic, see Greene (2000),
+      chapter 14.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x989.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1035.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Using lagged values with panel
+      data</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c896.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Illustration: the Penn World Table</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

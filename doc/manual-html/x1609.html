@@ -1,0 +1,419 @@
+<HTML
+><HEAD
+><TITLE
+>Path searching</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Options, arguments and
+    path-searching"
+HREF="c1430.html"><LINK
+REL="PREVIOUS"
+TITLE="gretlcli"
+HREF="x1544.html"><LINK
+REL="NEXT"
+TITLE="Command Reference"
+HREF="c1685.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1544.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 9. Options, arguments and
+    path-searching</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c1685.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="path-search"
+></A
+>Path searching</H1
+><P
+>When the name of a data file or script file is supplied to
+      <TT
+CLASS="application"
+>gretl</TT
+> or
+      <TT
+CLASS="application"
+>gretlcli</TT
+> on the command line (see
+      <A
+HREF="c1430.html#optarg1"
+>the Section called <I
+>gretl</I
+></A
+> and <A
+HREF="x1544.html"
+>the Section called <I
+>gretlcli</I
+></A
+>), the file
+      is looked for as follows:</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+><SPAN
+CLASS="QUOTE"
+>"As is"</SPAN
+>.  That is, in the current
+	  working directory or, if a full path is specified, at the
+	  specified location.</P
+></LI
+><LI
+><P
+>In the user's gretl directory (see <A
+HREF="x1609.html#tab-path"
+>Table 9-1</A
+> for the default values).</P
+></LI
+><LI
+><P
+>In any immediate sub-directory of the user's
+	  gretl directory.</P
+></LI
+><LI
+><P
+>In the case of a data file, search continues
+	  with the main <TT
+CLASS="application"
+>gretl</TT
+> data
+	  directory. In the case of a script file, the search proceeds
+	  to the system script directory.  See <A
+HREF="x1609.html#tab-path"
+>Table 9-1</A
+> for the default settings.</P
+></LI
+><LI
+><P
+>In the case of data files the search then
+	  proceeds to all immediate sub-directories of the main data
+	  directory.</P
+></LI
+></OL
+><DIV
+CLASS="table"
+><A
+NAME="tab-path"
+></A
+><P
+><B
+>Table 9-1. Default path settings</B
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+> </TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Linux</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>MS Windows</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>User directory</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="filename"
+>$HOME/gretl</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="filename"
+>PREFIX\gretl\user</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>System data directory</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="filename"
+>PREFIX/share/gretl/data</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="filename"
+>PREFIX\gretl\data</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>System script directory</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="filename"
+>PREFIX/share/gretl/scripts</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="filename"
+>PREFIX\gretl\scripts</TT
+></TD
+></TR
+></TBODY
+></TABLE
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Note:</I
+></SPAN
+>
+	      <TT
+CLASS="filename"
+>PREFIX</TT
+> denotes the base directory
+	      chosen at the time <TT
+CLASS="application"
+>gretl</TT
+> is
+	      installed.
+	    </TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>Thus it is not necessary to specify the full path for a data
+      or script file unless you wish to override the automatic
+      searching mechanism. (This also applies within
+      <TT
+CLASS="application"
+>gretlcli</TT
+>, when you supply a filename
+      as an argument to the <TT
+CLASS="command"
+>open</TT
+> or
+      <TT
+CLASS="command"
+>run</TT
+> commands.)</P
+><P
+>When a command script contains an instruction to open a data
+      file, the search order for the data file is as stated above,
+      except that the directory containing the script is also
+      searched, immediately after trying to find the data file
+      <SPAN
+CLASS="QUOTE"
+>"as is"</SPAN
+>.
+    </P
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="MS-behave"
+></A
+>MS Windows</H2
+><P
+>&#13;	Under MS Windows configuration information for
+	<TT
+CLASS="application"
+>gretl</TT
+> and
+	<TT
+CLASS="application"
+>gretlcli</TT
+> is stored in the Windows
+	registry. A suitable set of registry entries is created when
+	<TT
+CLASS="application"
+>gretl</TT
+> is first installed, and the
+	settings can be changed under
+	<TT
+CLASS="application"
+>gretl</TT
+>'s <SPAN
+CLASS="QUOTE"
+>"File,
+	  Preferences"</SPAN
+> menu. In case anyone needs to make
+	manual adjustments to this information, the entries can be
+	found (using the standard Windows program
+	<TT
+CLASS="application"
+>regedit.exe</TT
+>) under
+	<TT
+CLASS="literal"
+>Software\gretl</TT
+> in
+	<TT
+CLASS="literal"
+>HKEY_CLASSES_ROOT</TT
+> (the main
+	<TT
+CLASS="application"
+>gretl</TT
+> directory and the command to
+	invoke <TT
+CLASS="application"
+>gnuplot</TT
+>) and
+	<TT
+CLASS="literal"
+>HKEY_CURRENT_USER</TT
+> (all other configurable
+	variables).</P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1544.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c1685.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>gretlcli</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c1430.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Command Reference</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,249 @@
+<HTML
+><HEAD
+><TITLE
+>Indexed loop</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Loop constructs"
+HREF="c1320.html"><LINK
+REL="PREVIOUS"
+TITLE="Iterated least squares"
+HREF="x1364.html"><LINK
+REL="NEXT"
+TITLE="Options, arguments and
+    path-searching"
+HREF="c1430.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x1364.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 8. Loop constructs</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c1430.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="AEN1405"
+></A
+>Indexed loop</H1
+><P
+>The third form of loop construct offered in
+      <TT
+CLASS="application"
+>gretl</TT
+> is an indexed loop, using the
+      internal variable <TT
+CLASS="varname"
+>i</TT
+>.  You specify starting
+      and ending values for <TT
+CLASS="varname"
+>i</TT
+>, which is incremented
+      by one each time round the loop.  The syntax looks like this:
+      <TT
+CLASS="command"
+>loop i=1..20</TT
+>. <A
+HREF="x1405.html#panel-loop"
+>Example 8-4</A
+>
+      shows one use of this construct.  We have a panel data set, with
+      observations on a number of hospitals for the years 1991 to
+      2000.  We restrict the sample to each of these years in turn and
+      print cross-sectional summary statistics for variables 1 through
+      4.</P
+><DIV
+CLASS="example"
+><A
+NAME="panel-loop"
+></A
+><P
+><B
+>Example 8-4. Indexed loop example</B
+></P
+><PRE
+CLASS="programlisting"
+>&#13;	  open hospitals.gdt
+	  loop for i=1991..2000
+	    smpl -r (year=i)
+	    summary 1 2 3 4
+	  endloop</PRE
+></DIV
+><P
+>The <TT
+CLASS="command"
+>smpl</TT
+> command in the above example
+    illustrates the use of the variable <TT
+CLASS="varname"
+>i</TT
+> within a
+    loop.  In addition, you can use the expression
+    <TT
+CLASS="varname"
+>$i</TT
+>: in this case the value of
+    <TT
+CLASS="varname"
+>i</TT
+> will be substituted before the command is
+    evaluated.  This enables you to construct strings (for example,
+    variable names) within the loop, as in <A
+HREF="x1405.html#string-loop"
+>Example 8-5</A
+>.</P
+><DIV
+CLASS="example"
+><A
+NAME="string-loop"
+></A
+><P
+><B
+>Example 8-5. Second indexed loop example</B
+></P
+><PRE
+CLASS="programlisting"
+>&#13;	open bea.dat
+	loop for i=1987..2001
+	  genr V = COMP$i
+	  genr TC = GOC$i - PBT$i
+	  genr C = TC - V
+	  ols PBT$i const TC V
+	endloop</PRE
+></DIV
+><P
+>The first time round this loop <TT
+CLASS="varname"
+>V</TT
+> will be
+      set to equal <TT
+CLASS="varname"
+>COMP1987</TT
+> and the dependent
+      variable for the <TT
+CLASS="command"
+>ols</TT
+> will be
+      <TT
+CLASS="varname"
+>PBT1987</TT
+>, and so on.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x1364.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c1430.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Iterated least squares</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c1320.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Options, arguments and
+    path-searching</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

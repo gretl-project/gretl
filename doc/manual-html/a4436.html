@@ -1,0 +1,289 @@
+<HTML
+><HEAD
+><TITLE
+>Technical notes</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Binary database details"
+HREF="x4412.html"><LINK
+REL="NEXT"
+TITLE="Numerical accuracy"
+HREF="a4470.html"></HEAD
+><BODY
+CLASS="appendix"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x4412.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="a4470.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="appendix"
+><H1
+><A
+NAME="app-technote"
+></A
+>Appendix B. Technical notes</H1
+><P
+>&#13;    <TT
+CLASS="application"
+>Gretl</TT
+> is written in the C programming
+    language.  I have abided as far as possible by the ISO/ANSI C
+    Standard (C89), although the graphical user interface and some
+    other components necessarily make use of platform-specific
+    extensions.
+  </P
+><P
+>&#13;    <TT
+CLASS="application"
+>gretl</TT
+> is being developed under Linux.
+    The shared library and command-line client should compile and run
+    on any platform that (a) supports ISO/ANSI C and (b) has the zlib
+    (compression) and libxml (XML manipulation) libraries installed.
+    The homepage for zlib can be found at <A
+HREF="http://www.info-zip.org/pub/infozip/zlib/"
+TARGET="_top"
+>info-zip.org</A
+>. 
+    Libxml is at <A
+HREF="http:/xmlsoft.org/"
+TARGET="_top"
+>xmlsoft.org</A
+>.
+    If the GNU readline library is found on the host system this will
+    be used for <TT
+CLASS="application"
+>gretcli</TT
+>, providing a much
+    enhanced editable command line. See the <A
+HREF="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html"
+TARGET="_top"
+>readline 
+      homepage</A
+>.
+  </P
+><P
+>The graphical client program should compile and run on any
+    system that, in addition to the above requirements, offers GTK
+    version 1.2.3 or higher (see <A
+HREF="http://www.gtk.org/"
+TARGET="_top"
+>gtk.org</A
+>).  As of this writing
+    there are two main variants of the GTK libraries: the 1.2 series
+    and the 2.0 series which was launched in summer 2002.  These
+    variants are mutually incompatible.
+    <TT
+CLASS="application"
+>gretl</TT
+> can be built using either one
+    &#8212; the source code package includes two sub-directories,
+    <TT
+CLASS="filename"
+>gui</TT
+> for GTK 1.2 and <TT
+CLASS="filename"
+>gui2</TT
+>
+    for GTK 2.0.  I recommend use of GTK 2.0 if it is available, since
+    it offers many enhancements over GTK 1.2.
+  </P
+><P
+>&#13;    <TT
+CLASS="application"
+>gretl</TT
+> calls gnuplot for graphing. You
+    can find gnuplot at <A
+HREF="http://www.gnuplot.info/"
+TARGET="_top"
+>gnuplot.info</A
+>.  As of this
+    writing the most recent official release is 3.7.3 (of December,
+    2002).  If you are comfortable compiling source code I would
+    recommend installing gnuplot 3.8j0 or higher (source package
+    available from <A
+HREF="http://sourceforge.net/projects/gnuplot/"
+TARGET="_top"
+>sourceforge.net/projects/gnuplot</A
+>.
+    The MS Windows version of <TT
+CLASS="application"
+>gretl</TT
+> comes
+    with a Windows version gnuplot 3.8j0; the gretl website also
+    offers an rpm of gnuplot 3.8j0 for x86 Linux systems.
+  </P
+><P
+>&#13;    Some features of <TT
+CLASS="application"
+>gretl</TT
+> make use of
+    Adrian Feguin's <TT
+CLASS="application"
+>gtkextra</TT
+> library. You
+    can find gtkextra at <A
+HREF="http://gtkextra.sourceforge.net/"
+TARGET="_top"
+>gtkextra.sourceforge.net</A
+>. 
+    Unfortunately, it seems that <TT
+CLASS="application"
+>gtkextra</TT
+>
+    is no longer being maintained.  The relevant parts of this package
+    are included (in slightly modified form) with the
+    <TT
+CLASS="application"
+>gretl</TT
+> source distribution.
+  </P
+><P
+>&#13;    A binary version of the program is available for the Microsoft
+    Windows platform (32-bit version, i.e. Windows 95 or higher). This
+    version was cross-compiled under Linux using mingw (the GNU C
+    compiler, <TT
+CLASS="application"
+>gcc</TT
+>, ported for use with
+    win32) and linked against the Microsoft C library,
+    <TT
+CLASS="filename"
+>msvcrt.dll</TT
+>.  It uses Tor Lillqvist's port of
+    GTK 2.0 to win32. The (free, open-source) Windows installer
+    program is courtesy of Jordan Russell (<A
+HREF="http://www.jrsoftware.org/"
+TARGET="_top"
+>jrsoftware.org</A
+>).
+  </P
+><P
+>I'm hopeful that some users with coding skills may consider
+    <TT
+CLASS="application"
+>gretl</TT
+> sufficiently interesting to be
+    worth improving and extending.  The documentation of the libgretl
+    API is by no means complete, but you can find some details by
+    following the link <SPAN
+CLASS="QUOTE"
+>"Libgretl API docs"</SPAN
+> on the
+    <TT
+CLASS="application"
+>gretl</TT
+> homepage.
+  </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x4412.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="a4470.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Binary database details</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Numerical accuracy</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

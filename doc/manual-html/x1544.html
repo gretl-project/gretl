@@ -1,0 +1,393 @@
+<HTML
+><HEAD
+><TITLE
+>gretlcli</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Options, arguments and
+    path-searching"
+HREF="c1430.html"><LINK
+REL="PREVIOUS"
+TITLE="Options, arguments and
+    path-searching"
+HREF="c1430.html"><LINK
+REL="NEXT"
+TITLE="Path searching"
+HREF="x1609.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c1430.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 9. Options, arguments and
+    path-searching</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1609.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="optarg2"
+></A
+>gretlcli</H1
+><P
+><TT
+CLASS="command"
+>gretlcli</TT
+></P
+><P
+>&#8212; Opens the program and waits for user input.
+    </P
+><P
+><TT
+CLASS="command"
+>gretlcli</TT
+>
+      <TT
+CLASS="replaceable"
+><I
+>datafile</I
+></TT
+></P
+><P
+>&#8212; Starts the program with the specified datafile in
+      its workspace. The data file may be in native
+      <TT
+CLASS="application"
+>gretl</TT
+> format, CSV format, or BOX1
+      format (see <A
+HREF="c674.html"
+>Chapter 4</A
+>).  The program will try
+      to detect the format of the file and treat it appropriately. See
+      also <A
+HREF="x1609.html"
+>the Section called <I
+>Path searching</I
+></A
+> for
+      path-searching behavior.</P
+><P
+><TT
+CLASS="command"
+>gretlcli --help</TT
+> (or <TT
+CLASS="command"
+>gretlcli
+	-h</TT
+>)</P
+><P
+>&#8212; Prints a brief summary of usage.</P
+><P
+><TT
+CLASS="command"
+>gretlcli --version</TT
+> (or <TT
+CLASS="command"
+>gretlcli
+	-v</TT
+>)</P
+><P
+>&#8212; Prints version identification for the
+      program.</P
+><P
+><TT
+CLASS="command"
+>gretlcli --pvalue</TT
+> (or <TT
+CLASS="command"
+>gretlcli
+	-p</TT
+>)</P
+><P
+>&#8212; Starts the program in a mode in which you can
+      interactively determine p-values for various common
+      statistics.</P
+><P
+><TT
+CLASS="command"
+>gretlcli --run</TT
+>
+      <TT
+CLASS="replaceable"
+><I
+>scriptfile</I
+></TT
+> (or <TT
+CLASS="command"
+>gretlcli
+	-r</TT
+> <TT
+CLASS="replaceable"
+><I
+>scriptfile</I
+></TT
+>)</P
+><P
+>&#8212; Execute the commands in
+      <TT
+CLASS="replaceable"
+><I
+>scriptfile</I
+></TT
+> then hand over input to
+      the command line.  See <A
+HREF="x1609.html"
+>the Section called <I
+>Path searching</I
+></A
+> for
+      path-searching behavior.</P
+><P
+><TT
+CLASS="command"
+>gretlcli --batch</TT
+>
+      <TT
+CLASS="replaceable"
+><I
+>scriptfile</I
+></TT
+> (or <TT
+CLASS="command"
+>gretlcli
+	-b</TT
+> <TT
+CLASS="replaceable"
+><I
+>scriptfile</I
+></TT
+>)</P
+><P
+>&#8212; Execute the commands in
+      <TT
+CLASS="replaceable"
+><I
+>scriptfile</I
+></TT
+> then exit.  When using
+      this option you will probably want to redirect output to a file.
+      See <A
+HREF="x1609.html"
+>the Section called <I
+>Path searching</I
+></A
+> for path-searching
+      behavior.</P
+><P
+>When using the <TT
+CLASS="command"
+>--run</TT
+> and
+      <TT
+CLASS="command"
+>--batch</TT
+> options, the script file in question
+      must call for a data file to be opened. This can be done using
+      the <TT
+CLASS="command"
+>open</TT
+> command within the script. For
+      backward compatibility with Ramanathan's original
+      <TT
+CLASS="application"
+>ESL</TT
+> program another mechanism is
+      offered (<TT
+CLASS="application"
+>ESL</TT
+> doesn't have the
+      <TT
+CLASS="command"
+>open</TT
+> command).  A line of the form:
+      
+      <PRE
+CLASS="programlisting"
+> 
+	(* ! myfile.gdt *)</PRE
+> will (a) cause
+      <TT
+CLASS="application"
+>gretlcli</TT
+> to load
+      <TT
+CLASS="filename"
+>myfile.gdt</TT
+>, but will (b) be ignored as a
+      comment by the original <TT
+CLASS="application"
+>ESL</TT
+>.  Note
+      the specification carefully: There is exactly one space between
+      the begin comment marker, <TT
+CLASS="literal"
+>(*</TT
+>, and the
+      <TT
+CLASS="literal"
+>!</TT
+>; there is exactly one space between the
+      <TT
+CLASS="literal"
+>!</TT
+> and the name of the data file.</P
+><P
+>One further kludge enables <TT
+CLASS="application"
+>gretl</TT
+>
+      and <TT
+CLASS="application"
+>gretlcli</TT
+> to get datafile
+      information from the <TT
+CLASS="application"
+>ESL</TT
+>
+      <SPAN
+CLASS="QUOTE"
+>"practice files"</SPAN
+> included with the
+      <TT
+CLASS="application"
+>gretl</TT
+> package.  A typical practice
+      file begins like this:</P
+><P
+>&#13;      <TT
+CLASS="literal"
+> (* PS4.1, using data file DATA4-1, for reproducing
+	Table 4.2 *) </TT
+>
+    </P
+><P
+>This algorithm is used: if an input line begins with the
+      comment marker, search it for the string <TT
+CLASS="literal"
+>DATA</TT
+>
+      (upper case).  If this is found, extract the string from the
+      <TT
+CLASS="literal"
+>D</TT
+> up to the next space or comma, put it into
+      lower case, and treat it as the name of a data file to be
+      opened.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c1430.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1609.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Options, arguments and
+    path-searching</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c1430.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Path searching</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

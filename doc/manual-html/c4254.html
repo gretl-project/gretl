@@ -1,0 +1,364 @@
+<HTML
+><HEAD
+><TITLE
+>The command line interface</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Auxiliary programs"
+HREF="x4220.html"><LINK
+REL="NEXT"
+TITLE="Changes from Ramanathan's ESL"
+HREF="x4300.html"></HEAD
+><BODY
+CLASS="chapter"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x4220.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x4300.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="chapter"
+><H1
+><A
+NAME="cli"
+></A
+>Chapter 12. The command line interface</H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="c4254.html#cli-console"
+>Gretl at the console</A
+></DT
+><DT
+><A
+HREF="x4300.html"
+>Changes from Ramanathan's ESL</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="cli-console"
+></A
+>Gretl at the console</H1
+><P
+>&#13;      The <TT
+CLASS="application"
+>gretl</TT
+> package includes the
+      command-line program <TT
+CLASS="application"
+>gretlcli</TT
+>. On
+      Linux it can be run from the console, or in an xterm (or
+      similar).  Under MS Windows it can be run in a console window
+      (sometimes inaccurately called a <SPAN
+CLASS="QUOTE"
+>"DOS box"</SPAN
+>).
+      <TT
+CLASS="application"
+>gretlcli</TT
+> has its own help file, which
+      may be accessed by typing <SPAN
+CLASS="QUOTE"
+>"help"</SPAN
+> at the prompt. It
+      can be run in batch mode, sending outout directly to a file (see
+      <A
+HREF="x1544.html"
+>the Section called <I
+>gretlcli</I
+> in Chapter 9</A
+> above).
+    </P
+><P
+>&#13;      If <TT
+CLASS="application"
+>gretlcli</TT
+> is linked to the
+      <TT
+CLASS="application"
+>readline</TT
+> library (this is
+      automatically the case in the MS Windows version; also see
+      <A
+HREF="a4436.html"
+>Appendix B</A
+>), the command line is recallable
+      and editable, and offers command completion.  You can use the Up
+      and Down arrow keys to cycle through previously typed commands.
+      On a given command line, you can use the arrow keys to move
+      around, in conjunction with Emacs editing
+      keystokes.<A
+NAME="AEN4269"
+HREF="#FTN.AEN4269"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+> The most common of these are:
+    </P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN4272"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Keystroke</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Effect</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>Ctrl-a</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>go to start of line</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>Ctrl-e</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>go to end of line</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>Ctrl-d</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>delete character to right</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;      where <SPAN
+CLASS="QUOTE"
+>"<TT
+CLASS="literal"
+>Ctrl-a</TT
+>"</SPAN
+> means press the
+      <SPAN
+CLASS="QUOTE"
+>"<TT
+CLASS="literal"
+>a</TT
+>"</SPAN
+> key while the
+      <SPAN
+CLASS="QUOTE"
+>"<TT
+CLASS="literal"
+>Ctrl</TT
+>"</SPAN
+> key is also depressed.
+      Thus if you want to change something at the beginning of a
+      command, you <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>don't</I
+></SPAN
+> have to backspace over
+      the whole line, erasing as you go.  Just hop to the start and
+      add or delete characters.
+    </P
+><P
+>If you type the first letters of a command name then press
+      the Tab key, readline will attempt to complete the command name
+      for you.  If there's a unique completion it will be put in place
+      automatically.  If there's more than one completion, pressing
+      Tab a second time brings up a list.</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN4269"
+HREF="c4254.html#AEN4269"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>Actually, the key bindings shown below
+	  are only the defaults; they can be customized.  See the
+	  <A
+HREF="http://cnswww.cns.cwru.edu/~chet/readline/readline.html"
+TARGET="_top"
+>readline 
+	    manual</A
+>.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x4220.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x4300.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Auxiliary programs</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Changes from Ramanathan's ESL</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

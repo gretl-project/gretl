@@ -1,0 +1,310 @@
+<HTML
+><HEAD
+><TITLE
+>Auxiliary programs</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Troubleshooting gretl"
+HREF="c4213.html"><LINK
+REL="PREVIOUS"
+TITLE="Troubleshooting gretl"
+HREF="c4213.html"><LINK
+REL="NEXT"
+TITLE="The command line interface"
+HREF="c4254.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c4213.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 11. Troubleshooting gretl</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="c4254.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="trouble-programs"
+></A
+>Auxiliary programs</H1
+><P
+>&#13;      As mentioned above, <TT
+CLASS="application"
+>gretl</TT
+> calls some
+      other programs to accomplish certain tasks (gnuplot for
+      graphing, LaTeX for high-quality typesetting of regression
+      output, GNU R).  If something goes wrong with such external
+      links, it is not always easy to produce an informative error
+      message window.  If such a link fails when accessed from the
+      <TT
+CLASS="application"
+>gretl</TT
+> graphical interface, you may be
+      able to get more information by starting
+      <TT
+CLASS="application"
+>gretl</TT
+> from the command prompt (e.g.
+      from an xterm under the X window system, or from a <SPAN
+CLASS="QUOTE"
+>"DOS
+	box"</SPAN
+> under MS Windows, in which case type
+      <TT
+CLASS="command"
+>gretlw32.exe</TT
+>), rather than via a desktop menu
+      entry or icon.  Additional error messages may be displayed on
+      the terminal window.</P
+><P
+>&#13;      Also please note that for most external calls,
+      <TT
+CLASS="application"
+>gretl</TT
+> assumes that the programs in
+      question are available in your <SPAN
+CLASS="QUOTE"
+>"path"</SPAN
+> &#8212; that
+      is, that they can be invoked simply via the name of the program,
+      without supplying the program's full
+      location.<A
+NAME="AEN4231"
+HREF="#FTN.AEN4231"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+>  Thus if a given program fails, try the experiment
+      of typing the program name at the command prompt, as shown
+      below.</P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN4233"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>System</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Graphing</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Typsetting</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>GNU R</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>X window system</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>gnuplot</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>latex, xdvi</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>R</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>MS Windows</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>wgnuplot.exe</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>latex, windvi</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>RGui.exe</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;      If the program fails to start from the prompt, it's not a
+      <TT
+CLASS="application"
+>gretl</TT
+> issue but rather that the
+      program's home directory is not in your path, or the program is
+      not installed (properly).  For details on modifying your path
+      please see the documentation or online help for your operating
+      system or shell.
+    </P
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN4231"
+HREF="x4220.html#AEN4231"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>The exception to this rule is the
+	  invocation of gnuplot under MS Windows, where a full path to
+	  the program is given.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c4213.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c4254.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Troubleshooting gretl</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c4213.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>The command line interface</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

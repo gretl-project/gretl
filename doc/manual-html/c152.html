@@ -1,0 +1,442 @@
+<HTML
+><HEAD
+><TITLE
+>Getting started</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Installing the programs"
+HREF="x95.html"><LINK
+REL="NEXT"
+TITLE="Estimation output"
+HREF="x212.html"></HEAD
+><BODY
+CLASS="chapter"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x95.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x212.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="chapter"
+><H1
+><A
+NAME="getting-started"
+></A
+>Chapter 2. Getting started</H1
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="c152.html#starting-regression"
+>Let's run a
+      regression</A
+></DT
+><DT
+><A
+HREF="x212.html"
+>Estimation output</A
+></DT
+><DT
+><A
+HREF="x239.html"
+>The main window menus</A
+></DT
+><DT
+><A
+HREF="x479.html"
+>The gretl toolbar</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="starting-regression"
+></A
+>Let's run a
+      regression</H1
+><P
+>This introduction is mostly angled towards the graphical
+      client program; please see <A
+HREF="c1685.html"
+>Chapter 10</A
+> and
+      <A
+HREF="c4254.html"
+>Chapter 12</A
+>  below for details on the command-line
+      program, <TT
+CLASS="application"
+>gretlcli</TT
+>.
+    </P
+><P
+>&#13;      You can supply the name of a data file to open as an argument to
+      <TT
+CLASS="application"
+>gretl</TT
+>, but for the moment let's not
+      do that: just fire up the program.<A
+NAME="AEN162"
+HREF="#FTN.AEN162"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+> You should see a
+      main window (which will hold information on the data set but
+      which is at first blank) and various menus, some of them
+      disabled at first.
+    </P
+><P
+>&#13;    What can you do at this point?  You can browse the supplied data
+      files (or databases), open a data file, create a new data file,
+      read the help items, or open a command script.  For now let's
+      browse the supplied data files.  Under the File menu choose
+      <SPAN
+CLASS="QUOTE"
+>"Open data, sample file, Ramanathan&#8230;"</SPAN
+>.  A
+      second window should open, presenting a list of data files
+      supplied with the package (see <A
+HREF="c152.html#fig-datafiles"
+>Figure 2-1</A
+>).
+      The numbering of the files corresponds to the chapter
+      organization of Ramanathan (2002), which contains discussion of
+      the analysis of these data. The data will be useful for practice
+      purposes even without the text.
+    </P
+><DIV
+CLASS="figure"
+><A
+NAME="fig-datafiles"
+></A
+><P
+><B
+>Figure 2-1. Practice data files window</B
+></P
+><P
+><IMG
+SRC="figures/datafiles.png"
+ALIGN="center"></P
+></DIV
+><P
+>&#13;      If you select a row in this window and click on
+      <SPAN
+CLASS="QUOTE"
+>"Info"</SPAN
+> this pops open the the <SPAN
+CLASS="QUOTE"
+>"header
+	file"</SPAN
+> for the data set in question, which tells you
+      something about the source and definition of the variables.  If
+      you find a file that is of interest, you may open it by clicking
+      on <SPAN
+CLASS="QUOTE"
+>"Open"</SPAN
+>, or just double-clicking on the file
+      name. For the moment let's open <TT
+CLASS="filename"
+>data3-6</TT
+>.
+    </P
+><DIV
+CLASS="tip"
+><BLOCKQUOTE
+CLASS="tip"
+><P
+><B
+>Tip: </B
+>In <TT
+CLASS="application"
+>gretl</TT
+> windows containing
+	lists, double-clicking on a line launches a default action for
+	the associated list entry: e.g. displaying the values of a
+	data series, opening a file.</P
+></BLOCKQUOTE
+></DIV
+><P
+>&#13;      This file contains data pertaining to a classic econometric
+      <SPAN
+CLASS="QUOTE"
+>"chestnut"</SPAN
+>, the consumption function.  The data
+      window should now display the name of the current data file, the
+      overall data range and sample range, and the names of the
+      variables along with brief descriptive tags &#8212; see
+      <A
+HREF="c152.html#fig-mainwin"
+>Figure 2-2</A
+>.
+    </P
+><DIV
+CLASS="figure"
+><A
+NAME="fig-mainwin"
+></A
+><P
+><B
+>Figure 2-2. Main window, with a practice data file open</B
+></P
+><P
+><IMG
+SRC="figures/mainwin.png"
+ALIGN="center"></P
+></DIV
+><P
+>&#13;      OK, what can we do now?  Hopefully the various menu options
+      should be fairly self explanatory.  For now we'll dip into the
+      Model menu; a brief tour of all the main window menus is given
+      in
+    <A
+HREF="x239.html"
+>the Section called <I
+>The main window menus</I
+></A
+> below.
+    </P
+><P
+>&#13;    <TT
+CLASS="application"
+>gretl</TT
+>'s Model menu offers numerous
+      various econometric estimation routines.  The simplest and most
+      standard is Ordinary Least Squares (OLS). Selecting OLS pops up
+      a dialog box calling for a <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>model
+	specification</I
+></SPAN
+> &#8212; see <A
+HREF="c152.html#fig-selector"
+>Figure 2-3</A
+>.
+    </P
+><DIV
+CLASS="figure"
+><A
+NAME="fig-selector"
+></A
+><P
+><B
+>Figure 2-3. Model specification dialog</B
+></P
+><P
+><IMG
+SRC="figures/selector.png"
+ALIGN="center"></P
+></DIV
+><P
+>&#13;      To select the dependent variable, highlight the variable you
+      want in the list on the left and click the <SPAN
+CLASS="QUOTE"
+>"Choose"</SPAN
+>
+      button that points to the Dependent variable slot.  If you check
+      the <SPAN
+CLASS="QUOTE"
+>"Set as default"</SPAN
+> box this variable will be
+      pre-selected as dependent when you next open the model dialog
+      box. Shortcut: double-clicking on a variable on the left selects
+      it as dependent and also sets it as the default. To select
+      independent variables, highlight them on the left and click the
+      <SPAN
+CLASS="QUOTE"
+>"Add"</SPAN
+> button (or click the right mouse button over
+      the highlighted variable).  To select several variable in the
+      list box, drag the mouse over them; to select several
+      non-contiguous variables, hold down the <TT
+CLASS="literal"
+>Ctrl</TT
+>
+      key and click on the variables you want.
+    </P
+><P
+>To run a regression with consumption as the dependent
+      variable and income as independent, click <TT
+CLASS="varname"
+>Ct</TT
+>
+      into the Dependent slot and add <TT
+CLASS="varname"
+>Yt</TT
+> to the
+      Independent variables list.</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN162"
+HREF="c152.html#AEN162"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>For
+	  convenience I will refer to the graphical client program
+	  simply as <TT
+CLASS="application"
+>gretl</TT
+> in this manual.
+	  Note, however, that the specific name of the program differs
+	  according to the computer platform.  On Linux it is called
+	  <TT
+CLASS="filename"
+>gretl_x11</TT
+> while on MS Windows it is
+	  <TT
+CLASS="filename"
+>gretlw32.exe</TT
+>. On Linux systems a
+	  wrapper script named <TT
+CLASS="filename"
+>gretl</TT
+> is also
+	  installed &#8212; see also <A
+HREF="c1430.html"
+>Chapter 9</A
+>.</P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x95.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x212.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Installing the programs</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Estimation output</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,10145 @@
+<HTML
+><HEAD
+><TITLE
+>gretl commands</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Command Reference"
+HREF="c1685.html"><LINK
+REL="PREVIOUS"
+TITLE="Command Reference"
+HREF="c1685.html"><LINK
+REL="NEXT"
+TITLE="Estimators and tests: summary"
+HREF="x4065.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c1685.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 10. Command Reference</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x4065.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="cmd-cmd"
+></A
+>gretl commands</H1
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="add"
+></A
+>add</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1729"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>add 5 7 9</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>add xx yy zz -o</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Must be invoked after an estimation command.  The variables in
+	<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> are added to the previous
+	model and the new model estimated.  If more than one variable
+	is added, the <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+> statistic for the added
+	variables will be printed (for the OLS procedure only) along
+	with its p-value.  A p-value below 0.05 means that the
+	coefficients are jointly significant at the 5 percent level. A
+	number of internal variables may be retrieved using the
+	<TT
+CLASS="command"
+>genr</TT
+> command, provided
+	<TT
+CLASS="command"
+>genr</TT
+> is invoked directly after this
+	command. The <TT
+CLASS="literal"
+>-o</TT
+> flag causes the coefficient
+	variance&#8211;covariance matrix to be printed.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="addto"
+></A
+>addto</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1754"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>modelID varlist</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>addto 2 5 7 9</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Works like the <TT
+CLASS="command"
+>add</TT
+> command, except that you
+	specify a previous model (using its ID number, which is
+	printed at the start of the model output) to take as the base
+	for adding variables.  The example above adds variables number
+	5, 7 and 9 to Model 2.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="adf"
+></A
+>adf</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1771"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>order varname</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>adf 2 x1</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	  Computes statistics for two Dickey&#8211;Fuller tests.  In
+	each case the null hypothesis is that the variable in question
+	exhibits a unit root. The first is a
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>-test based on the model 
+	  <DIV
+CLASS="informalequation"
+><A
+NAME="AEN1785"
+></A
+><P
+></P
+><IMG
+SRC="figures/adf1.png"><P
+></P
+></DIV
+> The null hypothesis is that
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>g</I
+></SPAN
+> = 0. The second (augmented) test
+	proceeds by estimating an unrestricted regression (with
+	regressors a constant, a time trend, the first lag of the
+	variable, and <TT
+CLASS="replaceable"
+><I
+>order</I
+></TT
+> lags of the
+	first difference) and a restricted version (dropping the time
+	trend and the first lag).  The test statistic is
+	  <DIV
+CLASS="informalequation"
+><A
+NAME="AEN1790"
+></A
+><P
+></P
+><IMG
+SRC="figures/adf2.png"><P
+></P
+></DIV
+> where <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>T</I
+></SPAN
+> is the
+	sample size, <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+> the number of parameters
+	in the unrestricted model, and the subscripts
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>u</I
+></SPAN
+> and <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>r</I
+></SPAN
+> denote the
+	unrestricted and restricted models respectively. Note that the
+	critical values for these statistics are not the usual ones; a
+	p-value range is printed, when it can be determined.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="ar"
+></A
+>ar</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1799"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>lags</I
+></TT
+>
+		<TT
+CLASS="literal"
+>;</TT
+> <TT
+CLASS="replaceable"
+><I
+>depvar
+		  indepvars</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+> 
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>ar 1 3 4 ; y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes parameter estimates using the generalized
+	Cochrane&#8211;Orcutt iterative procedure (see Section 9.5 of
+	Ramanathan). Iteration is terminated when successive error
+	sums of squares do not differ by more than 0.005 percent or
+	after 20 iterations. <TT
+CLASS="replaceable"
+><I
+>lags</I
+></TT
+> is a list
+	of lags in the residuals, terminated by a semicolon. In the
+	above example, the error term is specified as 
+	<DIV
+CLASS="informalequation"
+><A
+NAME="AEN1816"
+></A
+><P
+></P
+><IMG
+SRC="figures/corc.png"><P
+></P
+></DIV
+> <TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+> is the
+	dependent variable and <TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> is
+	the list of independent variables.  If the
+	<TT
+CLASS="literal"
+>-o</TT
+> flag is given, the covariance matrix of
+	regression coefficients is printed. Residuals of the
+	transformed regression are stored under the name
+	<TT
+CLASS="varname"
+>uhat</TT
+>, which can be retrieved by
+	<TT
+CLASS="command"
+>genr</TT
+>.  A number of other internal variables
+	may be retrieved using the <TT
+CLASS="command"
+>genr</TT
+> command,
+	provided <TT
+CLASS="command"
+>genr</TT
+> is invoked after this
+	command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="arch"
+></A
+>arch</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1828"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>order depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>arch 4 y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Tests the model for ARCH (Autoregressive Conditional
+	Heteroskedasticity) of the lag order specified in
+	<TT
+CLASS="replaceable"
+><I
+>order</I
+></TT
+>, which must be an integer. If
+	the LM test statistic has p-value below 0.10, then ARCH
+	estimation is also carried out.  If the predicted variance of
+	any observation in the auxiliary regression is not positive,
+	then the corresponding squared residual is used instead.
+	Weighted least square estimation is then performed on the
+	original model. The flag <TT
+CLASS="literal"
+>-o</TT
+> calls for the
+	coefficient covariance matrix.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="arma"
+></A
+>arma</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1846"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>p q</I
+></TT
+>
+	      <TT
+CLASS="literal"
+>;</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -v | -n ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>arma 1 2 ; y</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>arma 2 2 ; y -v</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Estimates a univariate ARMA (Autoregressive, Moving Average)
+	model.  The integer values <TT
+CLASS="replaceable"
+><I
+>p</I
+></TT
+> and
+	<TT
+CLASS="replaceable"
+><I
+>q</I
+></TT
+> represent the AR and MA orders
+	respectively.  If the <TT
+CLASS="literal"
+>-v</TT
+>
+	(<SPAN
+CLASS="QUOTE"
+>"verbose"</SPAN
+>) flag is given, details of the
+	iterative estimation procedure are shown.
+	</P
+><P
+>The default is to call the
+	<TT
+CLASS="application"
+>X-12-ARIMA</TT
+> program for the
+	estimation; the <TT
+CLASS="literal"
+>-n</TT
+> flag calls for use of
+	the <SPAN
+CLASS="QUOTE"
+>"native"</SPAN
+> gretl ARMA function instead.  If the
+	<TT
+CLASS="application"
+>X-12-ARIMA</TT
+> package is not installed
+	it may be necessary to use the <TT
+CLASS="literal"
+>-n</TT
+> flag.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="chow"
+></A
+>chow</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1878"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>obs</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>chow 25</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>chow 1988.1</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Must follow an OLS regression.  Creates a dummy variable which
+	equals 1 from the split point specified by
+	<TT
+CLASS="replaceable"
+><I
+>obs</I
+></TT
+> to the end of the sample, 0
+	otherwise, and also creates interaction terms between this
+	dummy and the original independent variables.  An augmented
+	regression is run including these terms and an
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+> statistic is calculated, taking the
+	augmented regression as the unrestricted and the original as
+	restricted.  This statistic is appropriate for testing the
+	null hypothesis of no structural break at the given split
+	point.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="coeffsum"
+></A
+>coeffsum</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1899"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>coeffsum xt xt_1 xr_2</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Must follow an regression.  Calculates the sum of the
+	coefficients on the variables in the
+	<TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> list.  Prints this sum
+	along with its standard error and the p-value for the null
+	hypothesis that the sum is zero.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="coint"
+></A
+>coint</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1915"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>order depvar indepvar</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>coint 2 y x</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>coint 4 y x1 x2</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Carries out Augmented Dickey&#8211;Fuller tests on the null
+	hypothesis that each of the variables listed has a unit root,
+	using the given lag order.  The cointegrating regression is
+	estimated, and an ADF test is run on the residuals from this
+	regression.  The Durbin&#8211;Watson statistic for the
+	cointegrating regression is also given.  Note that none of
+	these test statistics can be referred to the usual statistical
+	tables.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="johansen"
+></A
+>coint2</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1934"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>order depvar indepvar</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>coint2 2 y x</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>coint2 4 y x1 x2 -o</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Carries out the Johansen trace test for cointegration among
+	the listed variables for the given order.  For details of this
+	test see Hamilton (1994, Chapter 19).  If the
+	<TT
+CLASS="literal"
+>-o</TT
+> flag is given the results of the various
+	auxiliary regressions are printed.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="corc"
+></A
+>corc</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1954"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>corc 1 0 2 4 6 7</TT
+> 
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>corc -o 1 0 2 4 6 7</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>corc y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>corc -o y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes parameter estimates using the Cochrane&#8211;Orcutt
+	iterative procedure (see Section 9.4 of Ramanathan) with
+	<TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+> as the dependent variable
+	and <TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> as the list of
+	independent variables.  Iteration is terminated when
+	successive estimates of the autocorrelation coefficient do not
+	differ by more than 0.001 or after 20 iterations.  If the
+	<TT
+CLASS="literal"
+>-o</TT
+> flag is given, the covariance matrix of
+	regression coefficients is printed.  Residuals of this
+	transformed regression are stored under the name
+	<TT
+CLASS="varname"
+>uhat</TT
+>.  Various internal variables may be
+	retrieved using the <TT
+CLASS="command"
+>genr</TT
+> command, provided
+	<TT
+CLASS="command"
+>genr</TT
+> is invoked immediately after this
+	command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="corr"
+></A
+>corr</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN1988"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>[ <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> ]
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>corr 1 3 5</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>corr y x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Prints the pairwise correlation coefficients for the variables
+	in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>, or for all variables in
+	the data set if <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> is not
+	given.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="corrgm"
+></A
+>corrgm</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2009"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>variable</I
+></TT
+> [
+		<TT
+CLASS="replaceable"
+><I
+>maxlag</I
+></TT
+> ]
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Prints the values of the autocorrelation function for the
+	<TT
+CLASS="replaceable"
+><I
+>variable</I
+></TT
+> specified (either by name
+	or number).  See Ramanathan, Section 11.7.  It is thus
+	<SPAN
+CLASS="inlinemediaobject"
+><IMG
+SRC="figures/autocorr.png"
+ALIGN="center"></SPAN
+> where
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>u</I
+></SPAN
+><SUB
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+></SUB
+> 
+	is the <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>th observation of the variable
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>u</I
+></SPAN
+> and <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>s</I
+></SPAN
+> is the
+	number of lags.
+      </P
+><P
+>&#13;	The partial autocorrelations are also shown: these are net of
+	the effects of intervening lags.  The command also graphs the
+	correlogram and prints the Box-Pierce <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Q</I
+></SPAN
+>
+	statistic for testing the null hypothesis that the series is
+	<SPAN
+CLASS="QUOTE"
+>"white noise"</SPAN
+>. This is asymptotically distributed
+	as chi-square with degrees of freedom equal to the number of
+	lags used.
+      </P
+><P
+>&#13;	If an (optional) integer <TT
+CLASS="replaceable"
+><I
+>maxlag</I
+></TT
+>
+	value is supplied the length of the correlogram is limited to
+	at most that number of lags, otherwise the length is
+	determined automatically.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="criteria"
+></A
+>criteria</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2038"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>ess T k</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>criteria 23.45 45 8</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes the model selection statistics (see Ramanathan,
+	Section 4.3), given <TT
+CLASS="replaceable"
+><I
+>ess</I
+></TT
+> (error sum
+	of squares), the number of observations
+	(<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>T</I
+></SPAN
+>), and the number of coefficients
+	(<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+>). <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>T</I
+></SPAN
+>,
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+>, and <TT
+CLASS="replaceable"
+><I
+>ess</I
+></TT
+> may
+	be numerical values or names of previously defined variables.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="critical"
+></A
+>critical</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2059"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>dist param1 </I
+></TT
+>
+		<TT
+CLASS="literal"
+>[</TT
+> <TT
+CLASS="replaceable"
+><I
+>param2</I
+></TT
+>
+		<TT
+CLASS="literal"
+>]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>critical t 20</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>critical X 5</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>critical F 3 37</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>If <TT
+CLASS="replaceable"
+><I
+>dist</I
+></TT
+> is
+	<TT
+CLASS="literal"
+>t</TT
+>, <TT
+CLASS="literal"
+>X</TT
+> or
+	<TT
+CLASS="literal"
+>F</TT
+>, prints out the critical values for the
+	student's <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>, chi-square or
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+> distribution respectively, for the
+	common significance levels and using the specified degrees of
+	freedom, given as <TT
+CLASS="replaceable"
+><I
+>param1</I
+></TT
+> for t and
+	chi-square, or <TT
+CLASS="replaceable"
+><I
+>param1</I
+></TT
+> and
+	<TT
+CLASS="replaceable"
+><I
+>param2</I
+></TT
+> for <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>.
+	If <TT
+CLASS="replaceable"
+><I
+>dist</I
+></TT
+> is <TT
+CLASS="literal"
+>d</TT
+>,
+	prints the upper and lower values of the Durbin-Watson
+	statistic at 5 percent significance, for the given number of
+	observations, <TT
+CLASS="replaceable"
+><I
+>param1</I
+></TT
+>, and for the
+	range of 1 to 5 explanatory variables.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="cusum"
+></A
+>cusum</H2
+><P
+>&#13;	Must follow the estimation of a model via OLS.  Performs the
+	CUSUM test for parameter stability.  A series of (scaled)
+	one-step ahead forecast errors is obtained by running a series
+	of regressions: the first regression uses the first
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+> observations and is used to generate a
+	prediction of the dependent variable at observation at
+	observation <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+> + 1; the second uses the
+	first <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+> + 1 observations and generates a
+	prediction for observation <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+> + 2, and so
+	on (where <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+> is the number of parameters
+	in the original model).  The cumulated sum of the scaled
+	forecast errors is printed and graphed.  The null hypothesis
+	of parameter stability is rejected at the 5 percent
+	significance level if the cumulated sum strays outside of the
+	95 percent confidence band.
+      </P
+><P
+>&#13;	The Harvey&#8211;Collier <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>-statistic for
+	testing the null hypothesis of parameter stability is also
+	printed.  See Chapter 7 of Greene's <I
+CLASS="citetitle"
+>Econometric
+	  Analysis</I
+> for details.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="data"
+></A
+>data</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2109"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Reads the variables in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	from a database (gretl or RATS 4.0), which must have been
+	opened previously using the <TT
+CLASS="command"
+>open</TT
+> command.
+	In addition, a data frequency and sample range must be
+	established using the the <TT
+CLASS="command"
+>setobs</TT
+> and
+	<TT
+CLASS="command"
+>smpl</TT
+> commands prior to using this command.
+	Here is a full example:</P
+><PRE
+CLASS="programlisting"
+>&#13;	open macrodat.rat
+	setobs 4 1959:1
+	smpl ; 1999:4
+	data GDP_JP GDP_UK</PRE
+><P
+>These commands open a database named
+	<TT
+CLASS="filename"
+>macrodat.rat</TT
+>, establish a quarterly data
+	set starting in the first quarter of 1959 and ending in the
+	fourth quarter of 1999, and then import the series named
+	<TT
+CLASS="varname"
+>GDP_JP</TT
+> and
+	<TT
+CLASS="varname"
+>GDP_UK</TT
+>.</P
+><P
+>If the series to be read are of higher frequency than the
+	working data set, you must specify a compaction method as
+	below:</P
+><PRE
+CLASS="programlisting"
+>&#13;	data (compact=average) LHUR PUNEW</PRE
+><P
+>The four available compaction methods are
+	<SPAN
+CLASS="QUOTE"
+>"average"</SPAN
+> (takes the mean of the high frequency
+	observations), <SPAN
+CLASS="QUOTE"
+>"last"</SPAN
+> (uses the last
+	observation), <SPAN
+CLASS="QUOTE"
+>"first"</SPAN
+> and <SPAN
+CLASS="QUOTE"
+>"sum"</SPAN
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="delete"
+></A
+>delete</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2136"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Removes the listed variables (given by name or number)
+	from the dataset. <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Use with caution</I
+></SPAN
+>: no
+	confirmation is asked, and any variables with higher ID
+	numbers will be re-numbered.</P
+><P
+>If no <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> is given with
+	this command, it deletes the last (highest numbered) variable
+	from the dataset.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="diff"
+></A
+>diff</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2150"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	The first difference of each variable in
+	<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> is obtained and the result
+	stored in a new variable with the prefix
+	<TT
+CLASS="varname"
+>d_</TT
+>.  Thus <TT
+CLASS="command"
+>diff x y</TT
+>
+	creates the new variables <TT
+CLASS="varname"
+>d_x = x(t) -
+	  x(t-1)</TT
+> and <TT
+CLASS="varname"
+>d_y = y(t) - y(t-1)</TT
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="cmd-end"
+></A
+>end</H2
+><P
+>&#13;	Ends a block of commands of some sort.  For example,
+	<TT
+CLASS="command"
+>end system</TT
+> terminates an equation system.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="endloop"
+></A
+>endloop</H2
+><P
+>&#13;	Terminates a simulation loop.  See <TT
+CLASS="command"
+>loop</TT
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="equation"
+></A
+>equation</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2174"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>equation y x1 x2 x3 const</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Specifies an equation within a system of equations (see the
+	<TT
+CLASS="command"
+>system</TT
+> command).  The sytax for specifying
+	an equation is the same as that for, e.g., the
+	<TT
+CLASS="command"
+>ols</TT
+> command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="eqnprint"
+></A
+>eqnprint</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2192"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Options:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>[ -o ]</TT
+> <TT
+CLASS="literal"
+>[ -f</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>filename</I
+></TT
+>
+		<TT
+CLASS="literal"
+>]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Must follow the estimation of a model via OLS.  Prints the
+	estimated model in the form of a LaTeX equation.  If a
+	filename is specified using the <TT
+CLASS="literal"
+>-f</TT
+> flag
+	output goes to that file, otherwise it goes to a file with a
+	name of the form <TT
+CLASS="filename"
+>equation_N.tex</TT
+>, where
+	<TT
+CLASS="literal"
+>N</TT
+> is the number of models estimated to date
+	in the current session.  See also the
+	<TT
+CLASS="command"
+>tabprint</TT
+> command.</P
+><P
+>&#13;	If the <TT
+CLASS="literal"
+>-o</TT
+> flag is given the LaTeX file is
+	a complete document, ready for processing; otherwise it must
+	be included in a document.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="fcast"
+></A
+>fcast</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2212"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>[ <TT
+CLASS="replaceable"
+><I
+>startobs endobs</I
+></TT
+> ]
+		<TT
+CLASS="replaceable"
+><I
+>newvarname</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>fcast 1997.1 1999.4 f1</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>fcast f2</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Must follow an estimation command.  Forecasts are generated
+	for the specified range (or the largest possible range if no
+	<TT
+CLASS="replaceable"
+><I
+>startobs</I
+></TT
+> and
+	<TT
+CLASS="replaceable"
+><I
+>endobs</I
+></TT
+> are given) and the values
+	saved as <TT
+CLASS="replaceable"
+><I
+>newvarname</I
+></TT
+>, which can be
+	printed, graphed, or plotted. The right-hand side variables
+	are those in the original model.  There is no provision to
+	substitute other variables.  If an autoregressive error
+	process is specified (for <TT
+CLASS="command"
+>hilu</TT
+>,
+	<TT
+CLASS="command"
+>corc</TT
+>, and <TT
+CLASS="command"
+>ar</TT
+>) the
+	forecast is conditional one step ahead and incorporates the
+	error process.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="fcasterr"
+></A
+>fcasterr</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2238"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>startobs endobs</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	After estimating an OLS model which includes a constant and at
+	least one independent variable (these restrictions may be
+	relaxed at some point) you can use this command to print out
+	fitted values over the specified observation range, along with
+	the estimated standard errors of those predictions and 95
+	percent confidence intervals.  If the <TT
+CLASS="literal"
+>-o</TT
+>
+	flag is given the results will also be displayed using
+	gnuplot.  The augmented regression method of Salkever (1976)
+	is used to generate the forecast standard errors.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="fit"
+></A
+>fit</H2
+><P
+>&#13;	The <TT
+CLASS="command"
+>fit</TT
+> command (must follow an estimation
+	command) is a shortcut for the <TT
+CLASS="command"
+>fcast</TT
+>
+	command.  It generates fitted values, in a series called
+	<TT
+CLASS="command"
+>autofit</TT
+>, for the current sample, based on
+	the last regression.  In the case of time-series models,
+	<TT
+CLASS="command"
+>fit</TT
+> also pops up a gnuplot graph of fitted
+	and actual values of the dependent variable against time.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="freq"
+></A
+>freq</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2258"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>var</I
+></TT
+> 
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Prints the frequency distribution for
+	<TT
+CLASS="replaceable"
+><I
+>var</I
+></TT
+> (given by name or number) along
+	with a chi-square test for normality. In interactive mode a
+	gnuplot graph of the distribution is displayed.  
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="genr"
+></A
+>genr</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2270"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>newvar</I
+></TT
+> =
+		<TT
+CLASS="replaceable"
+><I
+>formula</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Creates new variables, usually through transformations of
+	existing variables. See also <TT
+CLASS="command"
+>diff</TT
+>,
+	<TT
+CLASS="command"
+>logs</TT
+>, <TT
+CLASS="command"
+>lags</TT
+>,
+	<TT
+CLASS="command"
+>ldiff</TT
+>, <TT
+CLASS="command"
+>multiply</TT
+> and
+	<TT
+CLASS="command"
+>square</TT
+> for shortcuts.
+      </P
+><P
+>&#13;	Supported <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>arithmetical operators</I
+></SPAN
+> are, in
+	order of precedence: <TT
+CLASS="literal"
+>^</TT
+> (exponentiation);
+	<TT
+CLASS="literal"
+>*</TT
+>, <TT
+CLASS="literal"
+>/</TT
+> and
+	<TT
+CLASS="literal"
+>%</TT
+> (modulus or remainder);
+	<TT
+CLASS="literal"
+>+</TT
+> and <TT
+CLASS="literal"
+>-</TT
+>. 
+      </P
+><P
+>&#13;	The available <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Boolean operators</I
+></SPAN
+> are
+	(again, in order of precedence): <TT
+CLASS="literal"
+>!</TT
+>
+	(negation), <TT
+CLASS="literal"
+>&#38;</TT
+> (logical AND),
+	<TT
+CLASS="literal"
+>|</TT
+> (logical OR), <TT
+CLASS="literal"
+>&#62;</TT
+>,
+	<TT
+CLASS="literal"
+>&#60;</TT
+>, <TT
+CLASS="literal"
+>=</TT
+>,
+	<TT
+CLASS="literal"
+>&#62;=</TT
+> (greater than or equal),
+	<TT
+CLASS="literal"
+>&#60;=</TT
+> (less than or equal) and
+	<TT
+CLASS="literal"
+>!=</TT
+> (not equal).  The Boolean operators can
+	be used in constructing dummy variables: for instance
+	<TT
+CLASS="literal"
+>(x &#62; 10)</TT
+> returns 1 if <TT
+CLASS="literal"
+>x</TT
+>
+	&#62; 10, 0 otherwise. Supported <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>functions</I
+></SPAN
+>
+	fall into these groups:
+      </P
+><P
+></P
+><UL
+><LI
+><P
+>Standard math functions:
+	    <TT
+CLASS="function"
+>abs</TT
+>, <TT
+CLASS="function"
+>cos</TT
+>,
+	    <TT
+CLASS="function"
+>exp</TT
+>, <TT
+CLASS="function"
+>int</TT
+>
+	    (integer part), <TT
+CLASS="function"
+>ln</TT
+> (natural log:
+	    <TT
+CLASS="function"
+>log</TT
+> is a synonym),
+	    <TT
+CLASS="function"
+>sin</TT
+>,
+	    <TT
+CLASS="function"
+>sqrt</TT
+>.</P
+></LI
+><LI
+><P
+>Statistical functions:
+	    <TT
+CLASS="function"
+>max</TT
+> (maximum value in a series),
+	    <TT
+CLASS="function"
+>min</TT
+> (minimum),
+	    <TT
+CLASS="function"
+>mean</TT
+> (arithmetic mean),
+	    <TT
+CLASS="function"
+>median</TT
+>, <TT
+CLASS="function"
+>var</TT
+>
+	    (variance) <TT
+CLASS="function"
+>sd</TT
+> (standard deviation),
+	    <TT
+CLASS="function"
+>sst</TT
+> (sum of squared deviations from
+	    the mean), <TT
+CLASS="function"
+>sum</TT
+>,
+	    <TT
+CLASS="function"
+>cov</TT
+> (covariance),
+	    <TT
+CLASS="function"
+>corr</TT
+> (correlation coefficient),
+	    <TT
+CLASS="function"
+>pvalue</TT
+></P
+></LI
+><LI
+><P
+>Time-series functions:
+	    <TT
+CLASS="function"
+>diff</TT
+> (first difference),
+	    <TT
+CLASS="function"
+>ldiff</TT
+> (log-difference, or first
+	    difference of natural logs).  To generate lags of a
+	    variable <TT
+CLASS="varname"
+>x</TT
+>, use the syntax
+	    <TT
+CLASS="command"
+>x(-N)</TT
+>, where <TT
+CLASS="varname"
+>N</TT
+>
+	    represents the desired lag length; to generate leads, use
+	    <TT
+CLASS="command"
+>x(+N)</TT
+>;</P
+></LI
+><LI
+><P
+>Miscellaneous: <TT
+CLASS="function"
+>cum</TT
+>
+	    (cumulate), <TT
+CLASS="function"
+>sort</TT
+>,
+	    <TT
+CLASS="function"
+>uniform</TT
+>, <TT
+CLASS="function"
+>normal</TT
+>,
+	    <TT
+CLASS="function"
+>misszero</TT
+> (replace the missing
+	    observation code in a given series with zeros),
+	    <TT
+CLASS="command"
+>zeromiss</TT
+> (the inverse operation to
+	    <TT
+CLASS="command"
+>misszero</TT
+>), <TT
+CLASS="function"
+>nobs</TT
+>
+	    (return the number of valid observations in a given data
+	    series).</P
+></LI
+></UL
+><P
+>&#13;	All of the above functions with the exception of
+	<TT
+CLASS="function"
+>cov</TT
+>, <TT
+CLASS="function"
+>corr</TT
+>,
+	<TT
+CLASS="function"
+>pvalue</TT
+>, <TT
+CLASS="function"
+>uniform</TT
+> and
+	<TT
+CLASS="function"
+>normal</TT
+> take as their single argument
+	either the name of a variable (note that you can't refer to
+	variables by their ID numbers in a <TT
+CLASS="command"
+>genr</TT
+>
+	command) or a composite expression that evaluates to a
+	variable (e.g. <TT
+CLASS="literal"
+>ln((x1+x2)/2)</TT
+>).
+	<TT
+CLASS="function"
+>cov</TT
+> and <TT
+CLASS="function"
+>corr</TT
+> both
+	require two arguments, and return respectively the covariance
+	and the correlation coefficient between two named variables.
+	The <TT
+CLASS="function"
+>pvalue</TT
+> function takes the same
+	arguments as the <TT
+CLASS="command"
+>pvalue</TT
+> command (see
+	below), but in this context commas should be placed between
+	the arguments. <TT
+CLASS="function"
+>uniform()</TT
+> and
+	<TT
+CLASS="function"
+>normal()</TT
+>, which do not take arguments,
+	return pseudo-random series drawn from the uniform (0&#8211;1)
+	and standard normal distributions respectively (see also the
+	<TT
+CLASS="command"
+>seed</TT
+> command).  Uniform series are
+	generated using the C library function
+	<TT
+CLASS="function"
+>rand()</TT
+>; for normal series the method of
+	Box and Muller (1958) is used.</P
+><P
+>Besides the operators and functions just noted there are
+	some special uses of <TT
+CLASS="command"
+>genr</TT
+>:
+      </P
+><P
+></P
+><UL
+><LI
+><P
+><TT
+CLASS="command"
+>genr time</TT
+> creates a time
+	    trend variable (1,2,3,&#8230;) called
+	    <TT
+CLASS="command"
+>time</TT
+>. <TT
+CLASS="command"
+>genr index</TT
+>
+	    does the same thing except that the variable is called
+	    <TT
+CLASS="varname"
+>index</TT
+>.</P
+></LI
+><LI
+><P
+><TT
+CLASS="command"
+>genr dummy</TT
+> creates dummy
+	    variables up to the periodicity of the data.  E.g. in the
+	    case of quarterly data (periodicity 4), the program
+	    creates <TT
+CLASS="varname"
+>dummy_1</TT
+> = 1 for first quarter
+	    and 0 in other quarters, <TT
+CLASS="varname"
+>dummy_2</TT
+> = 1
+	    for the second quarter and 0 in other quarters, and so
+	    on.</P
+></LI
+><LI
+><P
+><TT
+CLASS="command"
+>genr paneldum</TT
+> creates a set
+	    of special dummy variables for use with a panel data set
+	    &#8212; see <A
+HREF="c896.html"
+>Chapter 5</A
+> above.</P
+></LI
+><LI
+><P
+>Various internal variables defined in the
+	    course of running a regression can be retrieved using
+	    <TT
+CLASS="command"
+>genr</TT
+>, as follows:</P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2387"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$ess</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>error sum of squares
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$rsq</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>unadjusted <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>R</I
+></SPAN
+>-squared
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$T</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>number of observations used
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$df</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>degrees of freedom
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$trsq</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>TR</I
+></SPAN
+>-squared (sample size
+		    times <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>R</I
+></SPAN
+>-squared)
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$sigma</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>standard error of residuals
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$lnl</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>log-likelihood (logit and probit models)
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="varname"
+>$sigma</TT
+></TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>standard error of residuals
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>coeff(<TT
+CLASS="replaceable"
+><I
+>var</I
+></TT
+>)</TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>estimated coefficient for variable
+		    <TT
+CLASS="replaceable"
+><I
+>var</I
+></TT
+>
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>stderr(<TT
+CLASS="replaceable"
+><I
+>var</I
+></TT
+>)</TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>estimated standard error for variable
+		    <TT
+CLASS="replaceable"
+><I
+>var</I
+></TT
+>
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>rho(<TT
+CLASS="replaceable"
+><I
+>i</I
+></TT
+>)</TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>i</I
+></TT
+>th order
+		    autoregressive coefficient for residuals
+		  </TD
+></TR
+><TR
+><TD
+WIDTH="133"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>vcv(<TT
+CLASS="replaceable"
+><I
+>var1</I
+></TT
+>,<TT
+CLASS="replaceable"
+><I
+>var2</I
+></TT
+>)</TD
+><TD
+WIDTH="400"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>covariance between coefficients for named
+		    variables <TT
+CLASS="replaceable"
+><I
+>var1</I
+></TT
+> and
+		    <TT
+CLASS="replaceable"
+><I
+>var2</I
+></TT
+>
+		  </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></LI
+></UL
+><P
+>&#13;	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Note</I
+></SPAN
+>: In the command-line program,
+	<TT
+CLASS="command"
+>genr</TT
+> commands that retrieve model-related
+	data always reference the model that was estimated most
+	recently.  This is also true in the GUI program, if one uses
+	<TT
+CLASS="command"
+>genr</TT
+> in the <SPAN
+CLASS="QUOTE"
+>"gretl console"</SPAN
+> or
+	enters a formula using the <SPAN
+CLASS="QUOTE"
+>"Define new variable"</SPAN
+>
+	option under the Variable menu in the main window.  With the
+	GUI, however, you have the option of retrieving data from any
+	model currently displayed in a window (whether or not it's the
+	most recent model).  You do this under the <SPAN
+CLASS="QUOTE"
+>"Model
+	  data"</SPAN
+> menu in the model's window.</P
+><P
+>The internal series <TT
+CLASS="varname"
+>uhat</TT
+> and
+	<TT
+CLASS="varname"
+>yhat</TT
+> hold, respectively, the residuals and
+	fitted values from the last regression.</P
+><P
+>&#13;	Three other <SPAN
+CLASS="QUOTE"
+>"internal"</SPAN
+> variables are available:
+	<TT
+CLASS="varname"
+>$nobs</TT
+> holds the number of observations in
+	the current sample range (note that this may or may not equal
+	the value of <TT
+CLASS="varname"
+>$T</TT
+>, the number of observations
+	used in estimating the last model).  The variable
+	<TT
+CLASS="varname"
+>t</TT
+> serves as an index of the observations.
+	Thus for instance <TT
+CLASS="literal"
+>genr dum = (t=15)</TT
+> will
+	generate a dummy variable that has value 1 for observation 15,
+	0 otherwise.  The variable <TT
+CLASS="varname"
+>$pd</TT
+> holds the
+	frequency or periodicity of the data (e.g. 4 for quarterly
+	data).</P
+><P
+>&#13;	<A
+HREF="x1725.html#tab-genr"
+>Table 10-1</A
+> gives several examples of uses of
+	<TT
+CLASS="command"
+>genr</TT
+> with explanatory notes; here are a
+	couple of tips on dummy variables:
+      </P
+><P
+></P
+><UL
+><LI
+><P
+>Suppose <TT
+CLASS="varname"
+>x</TT
+> is coded with
+	    values 1, 2, or 3 and you want three dummy variables,
+	    <TT
+CLASS="varname"
+>d1</TT
+> = 1 if <TT
+CLASS="varname"
+>x</TT
+> = 1, 0
+	    otherwise, <TT
+CLASS="varname"
+>d2</TT
+> = 1 if
+	    <TT
+CLASS="varname"
+>x</TT
+> = 2, and so on.  To create these, use
+	    the commands: 
+
+	    <PRE
+CLASS="programlisting"
+>&#13;	      genr d1 = (x=1)
+	      genr d2 = (x=2)
+	      genr d3 = (x=3)</PRE
+>
+	  </P
+></LI
+><LI
+><P
+>To create <TT
+CLASS="varname"
+>z</TT
+> =
+	    <TT
+CLASS="literal"
+>max(x,y)</TT
+> do
+
+	   <PRE
+CLASS="programlisting"
+>&#13;	      genr d = x&#62;y
+	      genr z = (x*d)+(y*(1-d))</PRE
+>
+	  </P
+></LI
+></UL
+><DIV
+CLASS="table"
+><A
+NAME="tab-genr"
+></A
+><P
+><B
+>Table 10-1. Examples of use of genr command</B
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><THEAD
+><TR
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Command</TH
+><TH
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Comment</TH
+></TR
+></THEAD
+><TBODY
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = x1^3</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>x1</TT
+> cubed</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y =
+		  ln((x1+x2)/x3)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr z = x&#62;y</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>sets <TT
+CLASS="command"
+>z(t)</TT
+> to 1 if
+		<TT
+CLASS="command"
+>x(t) &#62; y(t)</TT
+> else to 0</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = x(-2)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+><TT
+CLASS="varname"
+>x</TT
+> lagged 2
+		  periods</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = x(2)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+><TT
+CLASS="varname"
+>x</TT
+> led 2
+		  periods</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = diff(x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>y(t) = x(t) - x(t-1)</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = ldiff(x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>y(t) = log x(t) - log x(t-1)</TT
+>,
+		the instantaneous rate of growth of
+		<TT
+CLASS="varname"
+>x</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = sort(x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>sorts <TT
+CLASS="varname"
+>x</TT
+> in increasing order
+		and stores in <TT
+CLASS="varname"
+>y</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = -sort(-x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>sort <TT
+CLASS="varname"
+>x</TT
+> in decreasing
+		order</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = int(x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>truncate <TT
+CLASS="varname"
+>x</TT
+> and store its
+		integer value as <TT
+CLASS="varname"
+>y</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = abs(x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>store the absolute values of
+		<TT
+CLASS="command"
+>x</TT
+></TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = sum(x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>sum <TT
+CLASS="varname"
+>x</TT
+> values excluding missing
+		&#8722;999 entries</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr y = cum(x)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>cumulation: 
+		<SPAN
+CLASS="inlinemediaobject"
+><IMG
+SRC="figures/cumulate.png"
+ALIGN="center"></SPAN
+>
+	      </TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr aa = $ess</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>set <TT
+CLASS="varname"
+>aa</TT
+> equal to the Error Sum
+		of Squares from last regression</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr x = coeff(sqft)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>grab the estimated coefficient on the variable
+		<TT
+CLASS="varname"
+>sqft</TT
+> from the last
+		regression</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr rho4 = rho(4)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>grab the 4th-order autoregressive coefficient
+		from the last model (presumes an <TT
+CLASS="command"
+>ar</TT
+>
+		model)</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr cvx1x2 = vcv(x1,
+		  x2)</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>grab the estimated coefficient covariance of vars
+		<TT
+CLASS="varname"
+>x1</TT
+> and <TT
+CLASS="varname"
+>x2</TT
+> from
+		the last model</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr foo = uniform()</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>uniform pseudo-random variable in range
+		0&#8211;1</TD
+></TR
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>genr bar = 3 *
+		  normal()</TT
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>normal pseudo-random variable, &#956; = 0, &#963;
+		= 3</TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><P
+>&#13;	 
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="gnuplot"
+></A
+>gnuplot</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2597"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>yvars xvar</I
+></TT
+> <TT
+CLASS="literal"
+>[
+		  -o | -m ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Addendum:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>{ </TT
+> <TT
+CLASS="replaceable"
+><I
+>literal
+		  gnuplot commands</I
+></TT
+> <TT
+CLASS="literal"
+>}</TT
+> 
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Alternate form:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-z</TT
+> <TT
+CLASS="replaceable"
+><I
+>yvar xvar
+		  dummy</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	In the first case the <TT
+CLASS="replaceable"
+><I
+>yvars</I
+></TT
+> are
+	graphed against <TT
+CLASS="replaceable"
+><I
+>xvar</I
+></TT
+>.  If the flag
+	<TT
+CLASS="literal"
+>-o</TT
+> is supplied the plot will use lines; if
+	the flag <TT
+CLASS="literal"
+>-m</TT
+> is given the plot uses impulses
+	(vertical lines); otherwise points will be used.
+      </P
+><P
+>&#13;	In the <SPAN
+CLASS="QUOTE"
+>"alternate form"</SPAN
+> (with
+	<TT
+CLASS="literal"
+>-z</TT
+>) <TT
+CLASS="replaceable"
+><I
+>yvar</I
+></TT
+> is
+	graphed against <TT
+CLASS="replaceable"
+><I
+>xvar</I
+></TT
+> with the
+	points shown in different colors depending on whether the
+	value of <TT
+CLASS="replaceable"
+><I
+>dummy</I
+></TT
+> is 1 or 0.
+      </P
+><P
+>&#13;	To make a time-series graph, do <TT
+CLASS="command"
+>gnuplot</TT
+>
+	<TT
+CLASS="replaceable"
+><I
+>yvars</I
+></TT
+> <TT
+CLASS="varname"
+>time</TT
+>. If
+	no variable named <TT
+CLASS="varname"
+>time</TT
+> already exists, then
+	it will be generated automatically.  Special dummy variables
+	will be created for plotting quarterly and monthly data.
+      </P
+><P
+>&#13;	In interactive mode the result is piped to gnuplot for
+	display.  In batch mode a plot file named
+	<TT
+CLASS="filename"
+>gpttmp01.plt</TT
+> is written.  (With
+	subsequent uses of <TT
+CLASS="command"
+>gnuplot</TT
+> similar files
+	are created, with the number in the file name incremented.)
+	The plots can be generated later using the command
+	<TT
+CLASS="command"
+>gnuplot gpttmp.plt</TT
+>.  (Under MS Windows,
+	start <TT
+CLASS="application"
+>wgnuplot</TT
+> and open the file
+	<TT
+CLASS="filename"
+>gpttmp01.plt</TT
+>.)
+      </P
+><P
+>A further option to this command is available: following
+	the specification of the variables to be plotted and the
+	option flag (if any), you may add literal gnuplot commands to
+	control the appearance of the plot (for example, setting the
+	plot title and/or the axis ranges).  These commands should be
+	enclosed in braces, and each gnuplot command must be
+	terminated with a semi-colon.  A backslash may be used to
+	continue a set of gnuplot commands over more than one line.
+	Here is an example of the syntax:
+      </P
+><P
+>&#13;	<TT
+CLASS="literal"
+>{ set title 'My Title'; set yrange [0:1000];
+	  }</TT
+>
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="graph"
+></A
+>graph</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2644"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>yvars xvar</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	ASCII graphics.  The <TT
+CLASS="replaceable"
+><I
+>yvars</I
+></TT
+> (which
+	may be given by name or number) are  graphed against
+	<TT
+CLASS="replaceable"
+><I
+>xvar</I
+></TT
+> using ASCII symbols. The
+	<TT
+CLASS="literal"
+>-o</TT
+> flag will graph with 40 rows and 60
+	columns. Without it, the graph will be 20 by 60 (for screen
+	output). See also the <TT
+CLASS="command"
+>gnuplot</TT
+> command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="hausman"
+></A
+>hausman</H2
+><P
+>&#13;	This test is available only after estimating a model using the
+	<TT
+CLASS="command"
+>pooled</TT
+> command (see also
+	<TT
+CLASS="command"
+>panel</TT
+> and <TT
+CLASS="command"
+>setobs</TT
+>).  It
+	tests the simple pooled model against the principal
+	alternatives, the fixed effects and random effects
+	models.</P
+><P
+>&#13;	The fixed effects model adds a dummy variable for all but one
+	of the cross-sectional units, allowing the intercept of the
+	regression to vary across the units.  An
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>-test for the joint significance of
+	these dummies is presented.  The random effects model
+	decomposes the residual variance into two parts, one part
+	specific to the cross-sectional unit and the other specific to
+	the particular observation.  (This estimator can be computed
+	only if the number of cross-sectional units in the data set
+	exceeds the number of parameters to be estimated.) The
+	Breusch&#8211;Pagan LM statistic tests the null hypothesis
+	(that the pooled OLS estimator is adequate) against the random
+	effects alternative.</P
+><P
+>&#13;	The pooled OLS model may be rejected against both of the
+	alternatives, fixed effects and random effects. Provided the
+	unit- or group-specific error is uncorrelated with the
+	independent variables, the random effects estimator is more
+	efficient than the fixed effects estimator; otherwise the
+	random effects estimator is inconsistent and the fixed effects
+	estimator is to be preferred. The null hypothesis for the
+	Hausman test is that the group-specific error is not so
+	correlated (and therefore the random effects model is
+	preferable).  A low p-value for this test counts against the
+	random effects model and in favor of fixed effects.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="hccm"
+></A
+>hccm</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2669"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Presents OLS estimates with the heteroskedasticity consistent
+	covariance matrix estimates for the standard errors of
+	regression coefficients using MacKinnon and White (1985)
+	<SPAN
+CLASS="QUOTE"
+>"jackknife"</SPAN
+> estimates (see Ramanathan, Section
+	8.3).  The coefficient covariance matrix is printed if the
+	<TT
+CLASS="literal"
+>-o</TT
+> flag is given.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="help"
+></A
+>help</H2
+><P
+>&#13;	Gives a list of available commands. <TT
+CLASS="command"
+>help</TT
+>
+	<TT
+CLASS="replaceable"
+><I
+>command</I
+></TT
+> describes
+	<TT
+CLASS="replaceable"
+><I
+>command</I
+></TT
+> (e.g. <TT
+CLASS="command"
+>help
+	  smpl</TT
+>).  You can type <TT
+CLASS="command"
+>man</TT
+>
+	instead of <TT
+CLASS="command"
+>help</TT
+> if you like. 
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="hilu"
+></A
+>hilu</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2692"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>hilu 1 0 2 4 6 7</TT
+>  
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>hilu -o y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Computes parameter estimates using the Hildreth&#8211;Lu
+	search procedure (fine tuned by the CORC procedure) with
+	<TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+> as the dependent variable
+	and <TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> as the list of
+	independent variables. The error sum of squares of the
+	transformed model is graphed against the value of rho from
+	&#8722;0.99 to 0.99.  If the <TT
+CLASS="literal"
+>-o</TT
+> flag is
+	present, the covariance matrix of regression coefficients will
+	be printed. Residuals of this transformed regression are
+	stored under the name <TT
+CLASS="varname"
+>uhat</TT
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="hsk"
+></A
+>hsk</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2716"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Prints heteroskedasticity corrected estimates (see Ramanathan,
+	ch. 8) and associated statistics.  The auxiliary regression
+	predicts the log of the square of residuals (using squares of
+	independent variables but not their cross products) from which
+	weighted least squares estimates are obtained.  If the
+	<TT
+CLASS="literal"
+>-o</TT
+> flag is given, the covariance matrix of
+	regression coefficients is printed. Various internal variables
+	may be retrieved using the <TT
+CLASS="command"
+>genr</TT
+> command,
+	provided <TT
+CLASS="command"
+>genr</TT
+> is invoked immediately after
+	this command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="if"
+></A
+>if</H2
+><P
+>Flow control for command execution.  The syntax is</P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2732"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>if</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>condition</I
+></TT
+></TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+> <TT
+CLASS="replaceable"
+><I
+>commands</I
+></TT
+></TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>else</TT
+></TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+> <TT
+CLASS="replaceable"
+><I
+>commands</I
+></TT
+></TD
+><TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>endif</TT
+></TD
+><TD
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+><TT
+CLASS="replaceable"
+><I
+>condition</I
+></TT
+> must be a Boolean
+	expression, for the syntax of which see <A
+HREF="x1725.html#genr"
+>the Section called <I
+>genr</I
+></A
+>.  The <TT
+CLASS="command"
+>else</TT
+> block is
+	optional; <TT
+CLASS="literal"
+>if</TT
+> &#8230;
+	<TT
+CLASS="literal"
+>endif</TT
+> blocks may be nested.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="import"
+></A
+>import</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2760"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>filename</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	  Without the <TT
+CLASS="literal"
+>-o</TT
+> flag, brings in data from
+	a comma-separated values (CSV) format file, such as can easily
+	be written from a spreadsheet program.  The file should have
+	variable names on the first line and a rectangular data matrix
+	on the remaining lines.  Variables should be arranged
+	<SPAN
+CLASS="QUOTE"
+>"by observation"</SPAN
+> (one column per variable; each
+	row represents an observation).  See <A
+HREF="c674.html"
+>Chapter 4</A
+> for details.
+      </P
+><P
+>&#13;	With the <TT
+CLASS="literal"
+>-o</TT
+> flag, reads a data file in BOX1
+	format, as can be obtained using the Data Extraction Service
+	of the US Bureau of the Census.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="info"
+></A
+>info</H2
+><P
+>&#13;	<TT
+CLASS="command"
+>info</TT
+> prints out any information contained
+	in the header file corresponding to the current datafile.
+	(This information must be enclosed between
+	<TT
+CLASS="literal"
+>(*</TT
+> and <TT
+CLASS="literal"
+>*)</TT
+>, these markers
+	being placed on separate lines.)
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="label"
+></A
+>label</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2783"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varname</I
+></TT
+> <TT
+CLASS="literal"
+>-d
+		  "</TT
+><TT
+CLASS="replaceable"
+><I
+>Descriptive
+		  string</I
+></TT
+><TT
+CLASS="literal"
+>" -n
+		  "</TT
+><TT
+CLASS="replaceable"
+><I
+>display
+		  name</I
+></TT
+><TT
+CLASS="literal"
+>"</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Sets the descriptive label for the given variable (if the
+	<TT
+CLASS="literal"
+>-d</TT
+> flag is given, followed by a string in
+	double quotes) and/or the <SPAN
+CLASS="QUOTE"
+>"display name"</SPAN
+> for the
+	variable (if the <TT
+CLASS="literal"
+>-n</TT
+> flag is given, followed
+	by a quoted string).  If a variable has a display name, this
+	is used when generating graphs.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="labels"
+></A
+>labels</H2
+><P
+>&#13;	Prints out the informative labels for any variables that have
+	been generated using <TT
+CLASS="command"
+>genr</TT
+>, and any labels
+	added to the data set via the GUI.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="lad"
+></A
+>lad</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2806"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Calculates a regression that minimizes the sum of the absolute
+	deviations of the observed from the fitted values of the
+	dependent variable.  Coefficient estimates are derived using
+	the Barrodale&#8211;Roberts simplex algorithm; a warning is
+	printed if the solution is not unique. Standard errors are
+	derived using the bootstrap procedure with 500 drawings.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="lags"
+></A
+>lags</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2817"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Creates new variables which are lagged values of each of the
+	variables in varlist.  The number of lagged variables equals
+	the periodicity. For example, if the periodicity is 4
+	(quarterly), the command <TT
+CLASS="command"
+>lags x y</TT
+> creates
+	<TT
+CLASS="varname"
+>x_1</TT
+> = <TT
+CLASS="varname"
+>x(t-1)</TT
+>,
+	<TT
+CLASS="varname"
+>x_2</TT
+> = <TT
+CLASS="varname"
+>x(t-2)</TT
+>,
+	<TT
+CLASS="varname"
+>x_3</TT
+> = <TT
+CLASS="varname"
+>x(t-3)</TT
+> and
+	<TT
+CLASS="varname"
+>x_4</TT
+> <TT
+CLASS="varname"
+>x(t-4)</TT
+>. Similarly
+	for <TT
+CLASS="varname"
+>y</TT
+>. These variables must be referred to
+	in the exact form, that is, with the underscore.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="ldiff"
+></A
+>ldiff</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2838"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	The first difference of the natural log of each variable in
+	varlist is obtained and the result stored in a new variable
+	with the prefix <TT
+CLASS="varname"
+>ld_</TT
+>.  Thus <TT
+CLASS="command"
+>ldiff x
+	  y</TT
+> creates the new variables
+	<TT
+CLASS="varname"
+>ld_x</TT
+> =
+	  <SPAN
+CLASS="inlinemediaobject"
+><IMG
+SRC="figures/ldx.png"
+ALIGN="center"></SPAN
+> and <TT
+CLASS="varname"
+>ld_y</TT
+> =
+	  <SPAN
+CLASS="inlinemediaobject"
+><IMG
+SRC="figures/ldy.png"
+ALIGN="center"></SPAN
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="leverage"
+></A
+>leverage</H2
+><P
+>&#13;	  Must immediately follow an <TT
+CLASS="command"
+>ols</TT
+> command.
+	Calculates the leverage (<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>h</I
+></SPAN
+>, which must
+	lie in the range 0 to 1) for each data point in the sample on
+	which the previous model was estimated.  Displays the residual
+	(<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>u</I
+></SPAN
+>) for each observation along with its
+	leverage and a measure of its influence on the estimates, 
+	  <SPAN
+CLASS="inlinemediaobject"
+><IMG
+SRC="figures/influence.png"
+ALIGN="center"></SPAN
+>.  <SPAN
+CLASS="QUOTE"
+>"Leverage points"</SPAN
+> for which
+	the value of <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>h</I
+></SPAN
+> exceeds
+	2<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+>/<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>n</I
+></SPAN
+> (where
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+> is the number of parameters being
+	estmated and <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>n</I
+></SPAN
+> is the sample size) are
+	flagged with an asterisk.  For details on the concepts of
+	leverage and influence see Davidson and MacKinnon (1993,
+	Chapter 2).
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="lmtest"
+></A
+>lmtest</H2
+><P
+>&#13;	Must immediately follow an <TT
+CLASS="command"
+>ols</TT
+> command.
+	Prints the Lagrange Multiplier test statistics (and associated
+	p-values) for nonlinearity and heteroskedasticity (White's
+	test) or, if the <TT
+CLASS="literal"
+>-o</TT
+> flag is given, the LMF
+	test statistic for serial correlation up to the periodicity
+	(see Kiviet, 1986).  The corresponding auxiliary regression
+	coefficients are also printed out.  See Ramanathan, Chapters
+	7, 8, and 9 for details. In the case of White's test, only the
+	squared independent variables are used and not their cross
+	products.  In the case of the autocorrelation test, if the
+	p-value of the LMF statistic is less than 0.05 then serial
+	correlation-robust standard errors are calculated and
+	displayed.  For details on the calculation of these standard
+	errors see Wooldridge (2002, Chapter 12).
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="logistic"
+></A
+>logistic</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2885"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[
+		  ymax=</TT
+><TT
+CLASS="replaceable"
+><I
+>value</I
+></TT
+>
+		<TT
+CLASS="literal"
+>]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>logistic y const x</TT
+>  
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>logistic y const x ymax=50</TT
+>  
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Logistic regression: carries out an OLS regression using the
+	logistic transformation of the dependent variable,
+	<DIV
+CLASS="informalequation"
+><A
+NAME="AEN2905"
+></A
+><P
+></P
+><IMG
+SRC="figures/logistic1.png"><P
+></P
+></DIV
+></P
+><P
+>The dependent variable must be strictly positive.  If it
+	is a decimal fraction, between 0 and 1, the default is to use
+	a <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+><SUP
+>*</SUP
+>
+	value (the asymptotic maximum of the dependent variable) of 1.
+	If the dependent variable is a percentage, between 0 and 100,
+	the default
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+><SUP
+>*</SUP
+> is
+	100.  If you wish to set a different maximum, use the optional
+	<TT
+CLASS="literal"
+>ymax=</TT
+><TT
+CLASS="replaceable"
+><I
+>value</I
+></TT
+> syntax
+	following the list of regressors.  The supplied value must be
+	greater than all of the observed values of the dependent
+	variable.</P
+><P
+>The fitted values and residuals from the regression are
+	automatically transformed using 	  
+	<DIV
+CLASS="informalequation"
+><A
+NAME="AEN2916"
+></A
+><P
+></P
+><IMG
+SRC="figures/logistic2.png"><P
+></P
+></DIV
+> 
+	where <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>x</I
+></SPAN
+> represents either a fitted value
+	or a residual from the OLS regression using the transformed
+	dependent variable.  The reported values are therefore
+	comparable with the original dependent variable.</P
+><P
+>Note that if the dependent variable is binary, you should
+	use the <TT
+CLASS="command"
+>logit</TT
+> command instead.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="logit"
+></A
+>logit</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2924"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Binomial logit regression. The dependent variable should be a
+	binary variable.  Maximum likelihood estimates of the
+	coefficients on <TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> are
+	obtained via the EM or Expectation&#8211;Maximization method
+	(see Ruud, 2000, Chapter 27).  As the model is nonlinear the
+	slopes depend on the values of the independent variables: the
+	reported slopes are evaluated at the means of those variables.
+	The chi-square statistic tests the null hypothesis that all
+	coefficients are zero apart from the constant.
+      </P
+><P
+>&#13;	If you want to use logit for analysis of proportions (where
+	the dependent variable is the proportion of cases having a
+	certain characteristic, at each observation, rather than a 1
+	or 0 variable indicating whether the characteristic is present
+	or not) you should not use the <TT
+CLASS="command"
+>logit</TT
+>
+	command, but rather construct the logit variable (e.g.
+	<TT
+CLASS="command"
+>genr lgt_p = log(p/(1 - p))</TT
+>) and use this
+	as the dependent variable in an OLS regression.  See
+	Ramanathan, Chapter 12.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="logs"
+></A
+>logs</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2939"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	The natural log of each of the variables in varlist is
+	obtained and the result stored in a new variable with the
+	prefix <TT
+CLASS="literal"
+>l_</TT
+> which is <SPAN
+CLASS="QUOTE"
+>"el"</SPAN
+>
+	underscore.  <TT
+CLASS="command"
+>logs x y</TT
+> creates the new
+	variables <TT
+CLASS="varname"
+>l_x</TT
+> = ln(<TT
+CLASS="varname"
+>x</TT
+>)
+	and <TT
+CLASS="varname"
+>l_y</TT
+> = ln(<TT
+CLASS="varname"
+>y</TT
+>).
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="loop"
+></A
+>loop</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN2958"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Usage:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>loop</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>number_of_times</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>loop while</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>condition</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>loop for i=</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>start</I
+></TT
+><TT
+CLASS="command"
+>..</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>end</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>loop 1000</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>loop while essdiff &#62; .00001</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>loop for i=1991..2000</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Opens a special mode in which the program accepts commands
+	to be repeated either a specified number of times, or so long
+	as a specified condition holds true, or for successive integer
+	values of the (internal) index variable <TT
+CLASS="varname"
+>i</TT
+>.
+	Within a loop, only 7 commands can be used:
+	<TT
+CLASS="command"
+>genr</TT
+>, <TT
+CLASS="command"
+>ols</TT
+>,
+	<TT
+CLASS="command"
+>print</TT
+>, <TT
+CLASS="command"
+>sim</TT
+>,
+	<TT
+CLASS="command"
+>smpl</TT
+>, <TT
+CLASS="command"
+>store</TT
+> and
+	<TT
+CLASS="command"
+>summary</TT
+> (store can't be used in a
+	<SPAN
+CLASS="QUOTE"
+>"while"</SPAN
+> loop).  You exit the mode of entering
+	loop commands with <TT
+CLASS="command"
+>endloop</TT
+>: at this point
+	the stacked commands are executed.  Loops cannot be nested.
+	See <A
+HREF="c1320.html"
+>Chapter 8</A
+> for details.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="meantest"
+></A
+>meantest</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3005"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>var1 var2</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Calculates the <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+> statistic for the null
+	hypothesis that the population means are equal for the
+	variables <TT
+CLASS="replaceable"
+><I
+>var1</I
+></TT
+> and
+	<TT
+CLASS="replaceable"
+><I
+>var2</I
+></TT
+>, and shows its p-value.
+	Without the <TT
+CLASS="literal"
+>-o</TT
+> flag, the statistic is
+	computed on the assumption that the variances are equal for
+	the two variables; with the <TT
+CLASS="literal"
+>-o</TT
+> flag the
+	variances are assumed to be unequal. (The flag will make a
+	difference only if there are different numbers of non-missing
+	observations for the two variables.)
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="mpols"
+></A
+>mpols</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3022"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples: </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>mpols 1 0 2 4 6 7</TT
+>  
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>mpols y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes OLS estimates with <TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+>
+	as the dependent variable and
+	<TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> as the list of
+	independent variables, using multiple precision floating-point
+	arithmetic. The variables may be specified by name or number;
+	use the number zero for a constant term. This command is
+	available only if <TT
+CLASS="application"
+>gretl</TT
+> is compiled
+	with support for the Gnu Multiple Precision library (GMP).
+      </P
+><P
+>&#13;	To estimate a polynomial fit, using multiple precision
+	arithmetic to generate the required powers of the independent
+	variable, use the form, e.g. <TT
+CLASS="command"
+>mpols y 0 x ; 2 3
+	  4</TT
+> This does a regression of <TT
+CLASS="varname"
+>y</TT
+>
+	on <TT
+CLASS="varname"
+>x</TT
+>, <TT
+CLASS="varname"
+>x</TT
+> squared,
+	<TT
+CLASS="varname"
+>x</TT
+> cubed and <TT
+CLASS="varname"
+>x</TT
+> to the
+	fourth power.  That is, the numbers (which must be positive
+	integers) to the right of the semicolon specify the powers of
+	<TT
+CLASS="varname"
+>x</TT
+> to be used.  If more than one independent
+	variable is specified, the last variable before the semicolon
+	is taken to be the one that should be raised to various
+	powers.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="multiply"
+></A
+>multiply</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3052"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>x suffix varlist</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>multiply invpop pc 3 4 5 6</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>multiply 1000 big x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	The variables in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	(referenced by name or number) are multiplied by
+	<TT
+CLASS="replaceable"
+><I
+>x</I
+></TT
+>, which may be either a numerical
+	value or the name of a variable already defined. The products
+	are named with the specified <TT
+CLASS="replaceable"
+><I
+>suffix</I
+></TT
+>
+	(maximum 3 characters). The original variable names are
+	truncated first if need be. For instance, suppose you want to
+	create per capita versions of certain variables, and you have
+	the variable <TT
+CLASS="varname"
+>pop</TT
+> (population).  A suitable
+	set of commands is then: <TT
+CLASS="command"
+>genr invpop =
+	  1/pop</TT
+> <TT
+CLASS="command"
+>multiply invpop pc income
+	  expend</TT
+> which will create
+	<TT
+CLASS="varname"
+>incomepc</TT
+> as the product of
+	<TT
+CLASS="varname"
+>income</TT
+> and <TT
+CLASS="varname"
+>invpop</TT
+>, and
+	<TT
+CLASS="varname"
+>expendpc</TT
+> as <TT
+CLASS="varname"
+>expend</TT
+> times
+	<TT
+CLASS="varname"
+>invpop</TT
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="nls"
+></A
+>nls</H2
+><P
+>&#13;	Performs Nonlinear Least Squares (NLS) estimation using a
+	modified version of the Levenberg&#8211;Marquandt algorithm.
+	The user must supply a function specification.  The parameters
+	of this function must be declared and given starting values
+	(using the <TT
+CLASS="command"
+>genr</TT
+> command) prior to
+	estimation. Optionally, the user may specify the derivatives
+	of the regression function with respect to each of the
+	parameters; if analytical derivatives are not supplied, a
+	numerical approximation to the Jacobian is computed.</P
+><P
+>&#13;	It is easiest to show what is required by example.  The
+	following is a complete script to estimate the nonlinear
+	consumption function set out in William Greene's
+	<I
+CLASS="citetitle"
+>Econometric Analysis</I
+>, in chapter 11 of
+	the 4th edition, or chapter 9 of the 5th.  (The numbers to the
+	left of the lines are for reference and are not part of the
+	commands.)</P
+><PRE
+CLASS="programlisting"
+>&#13;	1   open greene11_3.gdt
+	2   ols C 0 Y
+	3   genr alpha = coeff(0)
+	4   genr beta = coeff(Y)
+	5   genr gamma = 1.0
+	6   nls C = alpha + beta * Y^gamma
+	7   deriv alpha = 1
+	8   deriv beta = Y^gamma
+	9   deriv gamma = beta * Y^gamma * log(Y)
+	10  end nls
+      </PRE
+><P
+>&#13;	It is often convenient to initialize the parameters by
+	reference to a related linear model; that is accomplished here
+	on lines 2 to 5.  The parameters alpha, beta and gamma could
+	be set to any initial values (not necessarily based on a model
+	estimated with OLS), although convergence of the NLS procedure
+	is not guaranteed for an arbitrary starting point.</P
+><P
+>&#13;	The actual NLS commands occupy lines 6 to 10. On line 6 the
+	<TT
+CLASS="command"
+>nls</TT
+> command is given: a dependent variable
+	is specified, followed by an equals sign, followed by a
+	function specification.  The syntax for the expression on the
+	right is the same as that for the <TT
+CLASS="command"
+>genr</TT
+>
+	command.  The next three lines specify the derivatives of the
+	regression function with respect to each of the parameters in
+	turn.  Each line begins with the keyword
+	<TT
+CLASS="command"
+>deriv</TT
+>, gives the name of a parameter, an
+	equals sign, and an expression whereby the derivative can be
+	calculated (again, the syntax here is the same as for
+	<TT
+CLASS="command"
+>genr</TT
+>). These <TT
+CLASS="command"
+>deriv</TT
+> lines
+	are optional, but it is recommended that you supply them if
+	possible. Line 10, <TT
+CLASS="command"
+>end nls</TT
+>, completes the
+	command and calls for estimation.</P
+><P
+>For further details on NLS estimation please see
+	<A
+HREF="c1141.html"
+>Chapter 7</A
+>.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="noecho"
+></A
+>noecho</H2
+><P
+>&#13;	Suppresses the echoing of commands and comments (other than
+	those inserted using the <TT
+CLASS="command"
+>print</TT
+> command)
+	when executing a command script.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="nulldata"
+></A
+>nulldata</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3104"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>series_length</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>nulldata 100</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Establishes a <SPAN
+CLASS="QUOTE"
+>"blank"</SPAN
+> data set, containing only a
+	constant, with periodicity 1 and the specified number of
+	observations. This may be used for simulation purposes: some
+	of the <TT
+CLASS="command"
+>genr</TT
+> commands (e.g. <TT
+CLASS="command"
+>genr
+	  uniform()</TT
+>, <TT
+CLASS="command"
+>genr normal()</TT
+>,
+	<TT
+CLASS="command"
+>genr time</TT
+>) will generate dummy data from
+	scratch to fill out the data set. This command may be useful
+	in conjunction with <TT
+CLASS="command"
+>loop</TT
+>.  See also the
+	<TT
+CLASS="command"
+>seed</TT
+> command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="ols"
+></A
+>ols</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3126"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -o | -q ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples: </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>ols 1 0 2 4 6 7</TT
+>  
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>ols -o y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>ols -q y 0 x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes ordinary least squares (OLS) estimates with
+	<TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+> as the dependent variable
+	and <TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> as the list of
+	independent variables. The <TT
+CLASS="literal"
+>-o</TT
+> flag calls
+	for printing of the covariance matrix of regression
+	coefficients in addition to the various statistics that are
+	printed by default.  The <TT
+CLASS="literal"
+>-q</TT
+> flag suppresses
+	the printing of output.
+      </P
+><P
+>Variables may be specified by name or number; use the
+	number zero for a constant term. The program also prints the
+	p-values for <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+> (two-tailed) and
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>-statistics.  A p-value below 0.01
+	indicates significance at the 1 percent level and is denoted
+	by <TT
+CLASS="literal"
+>***</TT
+>. <TT
+CLASS="literal"
+>**</TT
+> indicates
+	significance between 1 and 5 percent and <TT
+CLASS="literal"
+>*</TT
+>
+	indicates significance between 5 and 10 percent levels. Model
+	selection statistics (described in Ramanathan, Section 4.3)
+	are also printed. Various internal variables may be retrieved
+	using the <TT
+CLASS="command"
+>genr</TT
+> command, provided
+	<TT
+CLASS="command"
+>genr</TT
+> is invoked immediately after this
+	command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="omit"
+></A
+>omit</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3162"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>omit 5 7 9</TT
+> 
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	This command must be invoked after an estimation command. The
+	variables in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> are omitted
+	from the previous model and the new model estimated. If more
+	than one variable is omitted, the Wald
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>-statistic for the omitted variables
+	will be printed along with its p-value (for the OLS procedure
+	only).  A p-value below 0.05 means that the coefficients are
+	jointly significant at the 5 percent level. Various internal
+	variables may be retrieved using the <TT
+CLASS="command"
+>genr</TT
+>
+	command, provided <TT
+CLASS="command"
+>genr</TT
+> is invoked
+	immediately after this command. The coefficient covariance
+	matrix is printed if the <TT
+CLASS="literal"
+>-o</TT
+> flag is given.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="omitfrom"
+></A
+>omitfrom</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3184"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>modelID varlist</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example: </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>omitfrom 2 5 7 9</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Works like the <TT
+CLASS="command"
+>omit</TT
+> command, except
+	that you specify a previous model (using its ID number, which
+	is printed at the start of the model output) to take as the
+	base for omitting variables.  The example above omits
+	variables number 5, 7 and 9 from Model 2.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="open"
+></A
+>open</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3200"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>datafile</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Opens a data file.  If a data file is already open, it is
+	replaced by the newly opened one.  The program will try to
+	detect the format of the data file (native, CSV or BOX1).
+      </P
+><P
+>&#13;	This command can also be used to open a database (gretl or
+	RATS 4.0) for reading, in which case it should be followed by
+	the <TT
+CLASS="command"
+>data</TT
+> command to extract particular
+	series from the database.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="outfile"
+></A
+>outfile</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3213"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>[</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>flag</I
+></TT
+> <TT
+CLASS="literal"
+>]</TT
+>
+		<TT
+CLASS="literal"
+>[</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>filename</I
+></TT
+>
+		<TT
+CLASS="literal"
+>]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>outfile -w regress.txt</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>ols y 0 x1 x2</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>outfile -c</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Divert output to <TT
+CLASS="replaceable"
+><I
+>filename</I
+></TT
+>,
+	until further notice.  Use the flag <TT
+CLASS="literal"
+>-a</TT
+> to
+	append output to an existing file, or <TT
+CLASS="literal"
+>-w</TT
+> to
+	start a new file (or overwrite an existing one).  Only one
+	file can be opened in this way at any given time.</P
+><P
+>The <TT
+CLASS="literal"
+>-c</TT
+> flag is used to close an output
+	file that was previously opened as above.  Output will then
+	revert to the default stream.</P
+><P
+>In the example above, the results of one regression are
+	written to the file <TT
+CLASS="filename"
+>regress.txt</TT
+>, which is
+	then closed.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="pca"
+></A
+>pca</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3245"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[</TT
+> <TT
+CLASS="replaceable"
+><I
+>flag</I
+></TT
+>
+		<TT
+CLASS="literal"
+>]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Rudimentary Principal Components Analysis.  Prints the
+	eigenvalues of the correlation matrix for the variables in
+	<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> along with the proportion
+	of the joint variance accounted for by each component.  Also
+	prints the corresponding eigenvectors (<SPAN
+CLASS="QUOTE"
+>"component
+	  loadings"</SPAN
+>).</P
+><P
+>If the <TT
+CLASS="literal"
+>-o</TT
+> flag is given, components
+	with eigenvalues greater than 1.0 are saved to the dataset as
+	variables, with names <TT
+CLASS="varname"
+>PC1</TT
+>,
+	<TT
+CLASS="varname"
+>PC2</TT
+> and so on.  These artificial variables
+	are formed as the sum of (component loading) times
+	(standardized <TT
+CLASS="varname"
+>Xi</TT
+>), where
+	<TT
+CLASS="varname"
+>Xi</TT
+> denotes the <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>i</I
+></SPAN
+>th
+	variable in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>.</P
+><P
+>If the <TT
+CLASS="literal"
+>-a</TT
+> flag is given, all of the
+	components are saved as described above.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="panel-cmd"
+></A
+>panel</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3271"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-s</TT
+> or <TT
+CLASS="literal"
+>-c</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Request that the current data set be interpreted as a
+	panel (pooled cross section and time series).  With no flag,
+	or with the <TT
+CLASS="literal"
+>-s</TT
+> flag, the data set is taken
+	to be in the form of stacked time series (successive blocks of
+	data contain time series for each cross-sectional unit).  With
+	the <TT
+CLASS="literal"
+>-c</TT
+> flag, the data set is read as
+	stacked cross-sections (successive blocks contain cross
+	sections for each time period).  See also <A
+HREF="x1725.html#setobs"
+>the Section called <I
+>setobs</I
+></A
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="pergm"
+></A
+>pergm</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3286"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varname</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes and displays (and if not in batch mode, graphs) the
+	spectrum of the specified variable.  Without the
+	<TT
+CLASS="literal"
+>-o</TT
+> flag the sample periodogram is given;
+	with the flag a Bartlett lag window of length 2 root
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>T</I
+></SPAN
+> (where <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>T</I
+></SPAN
+> is the
+	sample size) is used in estimating the spectrum (see Chapter
+	18 of Greene's <I
+CLASS="citetitle"
+>Econometric Analysis</I
+>).
+	When the sample periodogram is printed, a
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>-test for fractional integration of the
+	series (<SPAN
+CLASS="QUOTE"
+>"long memory"</SPAN
+>) is also given: the null
+	hypothesis is that the integration order is zero.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="plot"
+></A
+>plot</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3304"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>plot x1</TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>plot x1 x2</TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>plot -o x1 x2</TT
+></TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Plots data values for specified variables, for the range of
+	observations currently in effect, using ASCII symbols.  Each
+	line stands for an observation and the values are plotted
+	horizontally.  If the flag <TT
+CLASS="literal"
+>-o</TT
+> is present,
+	<TT
+CLASS="varname"
+>x1</TT
+> and <TT
+CLASS="varname"
+>x2</TT
+> are plotted in
+	the same scale, otherwise <TT
+CLASS="varname"
+>x1</TT
+> and
+	<TT
+CLASS="varname"
+>x2</TT
+> are scaled appropriately.  The
+	<TT
+CLASS="literal"
+>-o</TT
+> flag should be used only if the
+	variables have approximately the same range of values (e.g.
+	observed and predicted dependent variable).  See also
+	<TT
+CLASS="command"
+>gnuplot</TT
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="pooled"
+></A
+>pooled</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3330"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Estimates a model via OLS (see <TT
+CLASS="command"
+>ols</TT
+> for
+	details on syntax), and flags it as a pooled or panel model,
+	so that the <TT
+CLASS="command"
+>hausman</TT
+> test item becomes
+	available.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="print"
+></A
+>print</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3344"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>[
+		<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> ] <TT
+CLASS="literal"
+>[ -o |
+		  -t ]</TT
+> or [
+		<TT
+CLASS="replaceable"
+><I
+>string</I
+></TT
+> ]
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>print</TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>print x y</TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>print 1 2 3 -o</TT
+>  </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	If <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> is given, prints the
+	values of the specified variables; if no list is given, prints
+	the values of all variables in the current data file. If the
+	<TT
+CLASS="literal"
+>-o</TT
+> flag is given the data are printed by
+	observation, otherwise they are printed by variable.  If the
+	<TT
+CLASS="literal"
+>-t</TT
+> flag is given the data are printed by
+	variable to 10 significant digits.
+      </P
+><P
+>&#13;	If the argument to <TT
+CLASS="command"
+>print</TT
+> is a literal
+	string (which must start with a double-quote,
+	<TT
+CLASS="literal"
+>"</TT
+>), the string is printed as is.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="printf"
+></A
+>printf</H2
+><P
+>&#13;	Prints scalar values under the control of a format string
+	(providing a small subset of the <TT
+CLASS="literal"
+>printf()</TT
+>
+	statement in the C programming language). Recognized formats
+	are <TT
+CLASS="literal"
+>%g</TT
+> and <TT
+CLASS="literal"
+>%f</TT
+>, in each
+	case with the various modifiers available in C.  Examples: the
+	format <TT
+CLASS="literal"
+>%.10g</TT
+> prints a value to 10
+	significant figures; <TT
+CLASS="literal"
+>%12.6f</TT
+> prints a value
+	to 6 decimal places, with a width of 12 characters.</P
+><P
+>The format string itself must be enclosed in double
+	quotes.  The values to be printed must follow the format
+	string, separated by commas.  These values should take the
+	form of either (a) the names of variables in the dataset, or
+	(b) expressions that are valid for the <TT
+CLASS="command"
+>genr</TT
+>
+	command.  The following example prints the values of two
+	variables plus that of a calculated expression:</P
+><PRE
+CLASS="programlisting"
+>&#13;	ols 1 0 2 3
+	genr b = coeff(2)
+	genr se_b = stderr(2)
+	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
+      </PRE
+><P
+>&#13;	The maximum length of a format string is 127 characters.  The
+	escape sequences <TT
+CLASS="literal"
+>\n</TT
+> (newline),
+	<TT
+CLASS="literal"
+>\t</TT
+> (tab), <TT
+CLASS="literal"
+>\v</TT
+> (vertical
+	tab) and <TT
+CLASS="literal"
+>\\</TT
+> (literal backslash) are
+	recognized.  To print a literal percent sign, use
+	<TT
+CLASS="literal"
+>%%</TT
+>.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="probit"
+></A
+>probit</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3392"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar indepvars</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Probit regression. The dependent variable should be a binary
+	variable. Maximum likelihood estimates of the coefficients on
+	<TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> are obtained via iterated
+	least squares (the EM or Expectation&#8211;Maximization
+	method).  As the model is nonlinear the slopes depend on the
+	values of the independent variables: the reported slopes are
+	evaluated at the means of those variables.  The chi-square
+	statistic tests the null hypothesis that all coefficients are
+	zero apart from the constant.
+      </P
+><P
+>&#13;	Probit for analysis of proportions is not implemented in
+	<TT
+CLASS="application"
+>gretl</TT
+> at this point.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="pvalue"
+></A
+>pvalue</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3406"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Usage:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>pvalue 1</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>xvalue</I
+></TT
+> (normal
+		distribution)
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>pvalue  2</TT
+> <TT
+CLASS="replaceable"
+><I
+>df
+		  xvalue</I
+></TT
+> (<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>
+		distribution)
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>pvalue 3</TT
+> <TT
+CLASS="replaceable"
+><I
+>df
+		  xvalue</I
+></TT
+> (chi-square distribution)
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>pvalue 4</TT
+> <TT
+CLASS="replaceable"
+><I
+>dfn dfd
+		  xvalue</I
+></TT
+> (<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>
+		distribution)
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>pvalue 5</TT
+> <TT
+CLASS="replaceable"
+><I
+>mean
+		  variance xvalue</I
+></TT
+> (Gamma distribution)
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes the area to the right of
+	<TT
+CLASS="replaceable"
+><I
+>xvalue</I
+></TT
+> in the specified
+	distribution.  <TT
+CLASS="replaceable"
+><I
+>df</I
+></TT
+> is the degrees of
+	freedom, <TT
+CLASS="replaceable"
+><I
+>dfn</I
+></TT
+> is the d.f. for the
+	numerator, <TT
+CLASS="replaceable"
+><I
+>dfd</I
+></TT
+> is the d.f. for the
+	denominator.  Instead of the code numbers you can use
+	<TT
+CLASS="literal"
+>z</TT
+>, <TT
+CLASS="literal"
+>t</TT
+>,
+	<TT
+CLASS="literal"
+>X</TT
+>, <TT
+CLASS="literal"
+>F</TT
+> and
+	<TT
+CLASS="literal"
+>G</TT
+> for the normal, <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>t</I
+></SPAN
+>,
+	chi-square, <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>, and gamma distributions
+	respectively.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="quit"
+></A
+>quit</H2
+><P
+>&#13;	Exits from the program, giving you the option of saving the
+	output from the session on the way out.  
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="rename"
+></A
+>rename</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3457"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varnumber newname</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>Changes the name of the variable with identification
+	number <TT
+CLASS="replaceable"
+><I
+>varnumber</I
+></TT
+> to
+	<TT
+CLASS="replaceable"
+><I
+>newname</I
+></TT
+>.  The
+	<TT
+CLASS="replaceable"
+><I
+>varnumber</I
+></TT
+> must be between 1 and the
+	number of variables in the dataset.  The new name must be of 8
+	characters maximum, must start with a letter, and must be
+	composed of only letters, digits, and the underscore
+	character.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="reset"
+></A
+>reset</H2
+><P
+>&#13;	Must immediately follow the estimation of a model via OLS.
+	Carries out Ramsey's RESET test for model specification
+	(non-linearity) by adding the square and the cube of the
+	fitted values to the regression and calculating the
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+> statistic for the null hypothesis that
+	the parameters on the two added terms are zero.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="rhodiff"
+></A
+>rhodiff</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3476"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>rholist</I
+></TT
+>
+		<TT
+CLASS="literal"
+>;</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples: </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>rhodiff .65 ; 2 3 4</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>rhodiff r1 r2 ; x1 x2 x3</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Creates rho-differenced counterparts of the variables (given
+	by number or by name) in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	and adds them to the data set, using the suffix
+	<TT
+CLASS="literal"
+>#</TT
+> for the new variables. Given variable
+	<TT
+CLASS="varname"
+>v1</TT
+> in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>,
+	and entries <TT
+CLASS="varname"
+>r1</TT
+> and <TT
+CLASS="varname"
+>r2</TT
+> in
+	<TT
+CLASS="replaceable"
+><I
+>rholist</I
+></TT
+>, <TT
+CLASS="varname"
+>v1# = v1(t) -
+	  r1*v1(t-1) - r2*v1(t-2)</TT
+> is created. The
+	<TT
+CLASS="replaceable"
+><I
+>rholist</I
+></TT
+> entries can be given as
+	numerical values or as the names of variables previously
+	defined.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="rmplot"
+></A
+>rmplot</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3506"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varname</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Range&#8211;mean plot: this command creates a simple graph to
+	help in deciding whether a time series,
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+>(t), has constant variance or not.  We
+	take the full sample t=1,...,T and divide it into small
+	subsamples of arbitrary size <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>k</I
+></SPAN
+>. The first
+	subsample is formed by
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+>(1),...,<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+>(k), the
+	second is <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+>(k+1), ...,
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+>(2k), and so on.  For each subsample we
+	calculate the sample mean and range (= maximum minus minimum),
+	and we construct a graph with the means on the horizontal axis
+	and the ranges on the vertical. So each subsample is
+	represented by a point in this plane.  If the variance of the
+	series is constant we would expect the subsample range to be
+	independent of the subsample mean; if we see the points
+	approximate an upward-sloping line this suggests the variance
+	of the series is increasing in its mean; and if the points
+	approximate a downward sloping line this suggests the variance
+	is decreasing in the mean.</P
+><P
+>Besides the graph, gretl displays the means and ranges for
+	each subsample, along with the slope coefficient for an OLS
+	regression of the range on the mean and the p-value for the
+	null hypothesis that this slope is zero.  If the slope
+	coefficient is significant at the 10 percent significance
+	level then the fitted line from the regression of range on
+	mean is shown on the graph.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="run"
+></A
+>run</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3524"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>inputfile</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Execute the commands in <TT
+CLASS="replaceable"
+><I
+>inputfile</I
+></TT
+>
+	then return control to the interactive prompt.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="runs"
+></A
+>runs</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3536"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varname</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Carries out the nonparametric <SPAN
+CLASS="QUOTE"
+>"runs"</SPAN
+> test for
+	randomness of the specified variable.  If you want to test for
+	randomness of deviations from the median, for a variable named
+	<TT
+CLASS="varname"
+>x1</TT
+> with a non-zero median, you can do the
+	following:</P
+><PRE
+CLASS="programlisting"
+>&#13;	genr signx1 = x1 - median(x1)
+	runs signx1
+      </PRE
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="scatters"
+></A
+>scatters</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3550"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>yvar</I
+></TT
+>
+		<TT
+CLASS="literal"
+>;</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>xvarlist</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>scatters</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>yvarlist</I
+></TT
+>
+		<TT
+CLASS="literal"
+>;</TT
+> <TT
+CLASS="replaceable"
+><I
+>xvar</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>scatters 1 ; 2 3 4 5</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>scatters 1 2 3 4 5 6 ; time</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Plots pairwise scatters of <TT
+CLASS="replaceable"
+><I
+>yvar</I
+></TT
+>
+	against all the variables in
+	<TT
+CLASS="replaceable"
+><I
+>xvarlist</I
+></TT
+>, or of all the variables
+	in <TT
+CLASS="replaceable"
+><I
+>yvarlist</I
+></TT
+> against
+	<TT
+CLASS="replaceable"
+><I
+>xvar</I
+></TT
+>.  The first example above puts
+	variable 1 on the <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+>-axis and draws four
+	graphs, the first having variable 2 on the
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>x</I
+></SPAN
+>-axis, the second variable 3 on the
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>x</I
+></SPAN
+>-axis, and so on.  The second example
+	plots each of variables 1 through 6 against time. Scanning a
+	set of such plots can be a useful step in exploratory data
+	analysis.  The maximum number of plots is six; any extra
+	variable in the list will be ignored.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="seed"
+></A
+>seed</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3585"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>integer</I
+></TT
+> 
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Sets the seed for the pseudo-random number generator for the
+	<TT
+CLASS="function"
+>uniform()</TT
+> and
+	<TT
+CLASS="function"
+>normal()</TT
+> functions (see the
+	<TT
+CLASS="command"
+>genr</TT
+> command).  By default the seed is set
+	when the program is started, using the system time.  If you
+	want to obtain repeatable sequences of pseudo-random numbers
+	you will need to set the seed manually.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="setobs"
+></A
+>setobs</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3599"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>periodicity startobs</I
+></TT
+>
+		  
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>setobs 4 1990.1</TT
+> 
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>setobs 12 1978.03</TT
+> 
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>setobs 20 1.01</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Force the program to interpret the current data set as time
+	series or panel, when the data have been read in as simple
+	undated series.  <TT
+CLASS="replaceable"
+><I
+>periodicity</I
+></TT
+> must
+	be an integer; <TT
+CLASS="replaceable"
+><I
+>startobs</I
+></TT
+> is a string
+	representing the date or panel ID of the first observation.
+	See also <A
+HREF="c896.html"
+>Chapter 5</A
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="setmiss"
+></A
+>setmiss</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3625"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>value</I
+></TT
+>
+		<TT
+CLASS="literal"
+>[</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+		<TT
+CLASS="literal"
+>]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>setmiss -1</TT
+> 
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>setmiss 100 x2</TT
+> 
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Get the program to interpret some specific numerical data
+	value (the first parameter to the command) as a code for
+	<SPAN
+CLASS="QUOTE"
+>"missing"</SPAN
+>, in the case of imported data.  If this
+	value is the only parameter, as in the first example above,
+	the interpretation will be applied to all series in the data
+	set.  If <TT
+CLASS="replaceable"
+><I
+>value</I
+></TT
+> is followed by a
+	list of variables, by name or number, the interpretation is
+	confined to the specified variable(s). Thus in the second
+	example the data value 100 is interpreted as a code for
+	<SPAN
+CLASS="QUOTE"
+>"missing"</SPAN
+>, but only for the variable
+	<TT
+CLASS="literal"
+>x2</TT
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="shell"
+></A
+>shell</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3651"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Usage:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>!</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>shellcommand</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	A <TT
+CLASS="command"
+>!</TT
+> at the beginning of a command line is
+	interpreted as an escape to the user's shell.  Thus arbitrary
+	shell commands can be executed from within the program.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="sim"
+></A
+>sim</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3664"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>[ <TT
+CLASS="replaceable"
+><I
+>startobs endobs</I
+></TT
+> ]
+		<TT
+CLASS="replaceable"
+><I
+>y a0 a1 a2</I
+></TT
+> &#8230;
+	      </TD
+></TR
+></TBODY
+></TABLE
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>sim 1979.2 1983.1 y 0 0.9</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>creates <TT
+CLASS="varname"
+>y(t) =  0.9*y(t-1)</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>sim 15 25 y 10 0.8 x</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>creates <TT
+CLASS="varname"
+>y(t) = 10 + 0.8*y(t-1) +
+		  x(t)*y(t-2)</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>sim y 10 0.8 -x</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>creates <TT
+CLASS="varname"
+>y(t) = 10 + 0.8*y(t-1) -
+		  x(t)*y(t-2)</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Simulates values for <TT
+CLASS="replaceable"
+><I
+>y</I
+></TT
+> for the
+	current sample range, or for the range
+	<TT
+CLASS="replaceable"
+><I
+>startobs</I
+></TT
+> through
+	<TT
+CLASS="replaceable"
+><I
+>endobs</I
+></TT
+> if these optional arguments
+	are given.  The variable <TT
+CLASS="replaceable"
+><I
+>y</I
+></TT
+> must
+	have been defined earlier with appropriate initial values. The
+	formula used is <TT
+CLASS="varname"
+>y(t) = a0(t) + a1(t)*y(t-1) +
+	  a2(t)*y(t-2) + &#8230;</TT
+> The
+	<TT
+CLASS="varname"
+>ai(t)</TT
+> may be either numerical constants or
+	variable names previously defined; these terms may be prefixed
+	with minus sign.
+      </P
+><P
+>Note that as of gretl 1.2.0, <TT
+CLASS="command"
+>genr</TT
+> (see
+	<A
+HREF="x1725.html#genr"
+>the Section called <I
+>genr</I
+></A
+> above) works dynamically, and you will
+	probably find it easier than <TT
+CLASS="command"
+>sim</TT
+> for
+	creating an autoregressive series.  For example</P
+><PRE
+CLASS="programlisting"
+>&#13;	genr y = 0 * const
+	genr y = .8*y(-1) -.2*y(-2) + normal()</PRE
+><P
+>now achieves the same object as (and with greater clarity
+	than):</P
+><PRE
+CLASS="programlisting"
+>&#13;	genr y = 0 * const
+	genr u = normal()
+	sim y u .8 -.2
+      </PRE
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="smpl"
+></A
+>smpl</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3710"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>startobs endobs</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl</TT
+>
+		<TT
+CLASS="command"
+>+</TT
+><TT
+CLASS="replaceable"
+><I
+>i</I
+></TT
+>
+		<TT
+CLASS="command"
+>-</TT
+><TT
+CLASS="replaceable"
+><I
+>j</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl -o</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>dummyvar</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl -o</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl -r</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>condition</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl full</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Resets the sample range.  In the first form
+	<TT
+CLASS="replaceable"
+><I
+>startobs</I
+></TT
+> and
+	<TT
+CLASS="replaceable"
+><I
+>endobs</I
+></TT
+> must be consistent with the
+	periodicity of the data.  In the second form, the integers
+	<TT
+CLASS="replaceable"
+><I
+>i</I
+></TT
+> and <TT
+CLASS="replaceable"
+><I
+>j</I
+></TT
+>
+	are taken as offsets relative to the existing sample range. In
+	the third form <TT
+CLASS="replaceable"
+><I
+>dummyvar</I
+></TT
+> must be an
+	indicator variable with values 0 or 1 at each observation; the
+	sample will be restricted to observations where the value is
+	1. The fourth form, <TT
+CLASS="command"
+>smpl -o</TT
+>, drops all
+	observations for which values of one or more variables are
+	missing.  The fifth form (<TT
+CLASS="literal"
+>-r</TT
+>) restricts the
+	sample to observations that satisfy the given (Boolean)
+	condition.  The last form, <TT
+CLASS="command"
+>smpl full</TT
+>,
+	restores the full data range.
+      </P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3753"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl 3 10</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>data with periodicity 1</TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl 1950 1990</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>annual data, periodicity 1</TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl 1960.2 1982.4</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>quarterly data</TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl 1960.04 1985.10</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>monthly data</TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl 1960.2 ;</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>keep <TT
+CLASS="replaceable"
+><I
+>endobs</I
+></TT
+> unchanged
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl ; 1984.3</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>keep <TT
+CLASS="replaceable"
+><I
+>startobs</I
+></TT
+>
+		unchanged
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl +1 -1</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>advance the starting observation by one; move the
+		ending observation back one
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl -o dum1</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>draw sample of observations where
+		<TT
+CLASS="literal"
+>dum1=1</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="192"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>smpl -r income &#62; 30000</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>sample cases where <TT
+CLASS="varname"
+>income</TT
+> has
+		a value greater than 30000.
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>The intenal variable <TT
+CLASS="varname"
+>obs</TT
+> may be used in
+	the last-noted form of <TT
+CLASS="command"
+>smpl</TT
+> above, to
+	exclude particular observations from the sample.  For example,
+	<TT
+CLASS="command"
+>smpl -r obs!=4</TT
+> will drop just the fourth
+	observation. If the data points are identified by labels,
+	<TT
+CLASS="command"
+>smpl -r obs!="USA"</TT
+> will drop the
+	observation with label <SPAN
+CLASS="QUOTE"
+>"USA"</SPAN
+>.</P
+><P
+>&#13;	One point should be noted about the <TT
+CLASS="literal"
+>-o</TT
+> and
+	<TT
+CLASS="literal"
+>-r</TT
+> forms of <TT
+CLASS="command"
+>smpl</TT
+>: Any
+	<SPAN
+CLASS="QUOTE"
+>"structural"</SPAN
+> information in the data header file
+	(regarding the time series or panel nature of the data) is
+	lost when this command is issued.  You may reimpose structure
+	with the <TT
+CLASS="command"
+>setobs</TT
+> command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="spearman"
+></A
+>spearman</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3811"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>x y</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Prints Spearman's rank correlation coefficient for the two
+	variables <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>x</I
+></SPAN
+> and <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>y</I
+></SPAN
+>.
+	The variables do not have to be ranked manually in advance;
+	the function takes care of this. If the <TT
+CLASS="literal"
+>-o</TT
+>
+	flag is supplied, the original data and the ranked data are
+	printed out side by side.
+      </P
+><P
+>&#13;	The automatic ranking is from largest to smallest (i.e. the
+	largest data value gets rank 1).  If you need to invert this
+	ranking, create a new variable which is the negative of the
+	original first.  For example:
+      </P
+><PRE
+CLASS="programlisting"
+>&#13;	  genr altx = -x
+	spearman altx y</PRE
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="square"
+></A
+>square</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3828"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Generates new variables which are squares and cross products
+	of the variables in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	(<TT
+CLASS="literal"
+>-o</TT
+> will create the cross products).  For
+	example <TT
+CLASS="command"
+>square x y</TT
+> will generate
+	<TT
+CLASS="varname"
+>sq_x</TT
+> = <TT
+CLASS="varname"
+>x</TT
+> squared,
+	<TT
+CLASS="varname"
+>sq_y</TT
+> = <TT
+CLASS="varname"
+>y</TT
+> squared and
+	<TT
+CLASS="varname"
+>x_y</TT
+> = <TT
+CLASS="varname"
+>x</TT
+> times
+	<TT
+CLASS="varname"
+>y</TT
+>.  If a particular variable is a dummy
+	variable it is not squared because we will get the same
+	variable.  
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="store"
+></A
+>store</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3850"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>datafile</I
+></TT
+> [
+		<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> ] [
+		<TT
+CLASS="replaceable"
+><I
+>flag</I
+></TT
+> ] 
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	<TT
+CLASS="replaceable"
+><I
+>datafile</I
+></TT
+> is the name of the file in
+	which the values should be stored. 
+      </P
+><P
+>&#13;	If <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> is absent, the values of
+	all the data series in the current data set will be stored.
+	Note that any scalar variables will not be saved
+	automatically: if you wish to save scalars you must explicitly
+	list them in <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>.
+      </P
+><P
+>&#13;	By default storage is in native
+	<TT
+CLASS="application"
+>gretl</TT
+> XML format.  There are six
+	valid (mutually exclusive) <TT
+CLASS="replaceable"
+><I
+>flags</I
+></TT
+>:
+      </P
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3868"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-z</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>The default format, but gzip compressed.
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-o</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Store the data by variables, in binary format
+		using double precision.
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-s</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Store the data by variables, in binary format
+		using single precision.
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-c</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Store the data in CSV (comma-separated values)
+		format.  Such data can be read directly by spreadsheet
+		programs.
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-r</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Store the data in GNU R format.
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-m</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Store the data in GNU Octave format.
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>-t</TT
+>
+	      </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Store the data in <SPAN
+CLASS="QUOTE"
+>"traditional"</SPAN
+> ESL
+		format, with an ascii data file and a separate
+		informative header file.
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="summary"
+></A
+>summary</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3903"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Argument:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>[ <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> ]
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Print summary statistics for the variables in
+	<TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>, or for all the variables
+	in the data set if <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+> is
+	omitted. Output consists of the mean, standard deviation (sd),
+	coefficient of variation (= sd/mean), median, minimum,
+	maximum, skewness coefficient, and excess kurtosis.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="eqnsystem"
+></A
+>system</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3916"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>type=<TT
+CLASS="replaceable"
+><I
+>systype</I
+></TT
+> [
+		savevars=<TT
+CLASS="replaceable"
+><I
+>vars</I
+></TT
+> ]
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Examples: </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>system type=sur</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>system type=sur save=resids</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>&nbsp;</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>system type=sur
+		  save=resids,fitted</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Starts a system of equations.  At present the only type of
+	system supported is <TT
+CLASS="command"
+>sur</TT
+> (Seemingly
+	Unrelated Regressions).  In the optional
+	<TT
+CLASS="command"
+>save=</TT
+> field of the command you can specify
+	whether to save the residuals (<TT
+CLASS="command"
+>resids</TT
+>)
+	and/or the fitted values (<TT
+CLASS="command"
+>fitted</TT
+>).  The
+	system must contain at least two equations specified using the
+	<TT
+CLASS="command"
+>equation</TT
+> command, and it must be terminated
+	with the line <TT
+CLASS="command"
+>end system</TT
+>.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="tabprint"
+></A
+>tabprint</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3946"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Options:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="literal"
+>[ -o ]</TT
+> <TT
+CLASS="literal"
+>[ -f</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>filename</I
+></TT
+>
+		<TT
+CLASS="literal"
+>]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Must follow the estimation of a model via OLS.  Prints the
+	estimated model in the form of a LaTeX tabular environment.
+	If a filename is specified using the <TT
+CLASS="literal"
+>-f</TT
+>
+	flag output goes to that file, otherwise it goes to a file
+	with a name of the form <TT
+CLASS="filename"
+>model_N.tex</TT
+>,
+	where <TT
+CLASS="literal"
+>N</TT
+> is the number of models estimated
+	to date in the current session.  See also the
+	<TT
+CLASS="command"
+>eqnprint</TT
+> command.</P
+><P
+>&#13;	If the <TT
+CLASS="literal"
+>-o</TT
+> flag is given the LaTeX file is
+	a complete document, ready for processing; otherwise it must
+	be included in a document.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="testuhat"
+></A
+>testuhat</H2
+><P
+>&#13;	Must follow a model estimation command.  Gives the frequency
+	distribution for the residual from the model along with a
+	chi-square test for normality.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="tsls"
+></A
+>tsls</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3969"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>depvar varlist1</I
+></TT
+>
+		<TT
+CLASS="literal"
+>;</TT
+>
+		<TT
+CLASS="replaceable"
+><I
+>varlist2</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example: </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5
+		  x6</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Computes two-stage least squares (TSLS) estimates of
+	parameters.  <TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+> is the
+	dependent variable, <TT
+CLASS="replaceable"
+><I
+>varlist1</I
+></TT
+> is the
+	list of independent variables (including right-hand side
+	endogenous variables) in the structural equation for which
+	TSLS estimates are needed. <TT
+CLASS="replaceable"
+><I
+>varlist2</I
+></TT
+>
+	is the combined list of exogenous and predetermined variables
+	in all the equations. If <TT
+CLASS="replaceable"
+><I
+>varlist2</I
+></TT
+>
+	is not at least as long as
+	<TT
+CLASS="replaceable"
+><I
+>varlist1</I
+></TT
+>, the model is not
+	identified.  The <TT
+CLASS="literal"
+>-o</TT
+> flag will print the
+	covariance matrix of the coefficients.  In the above example,
+	the <TT
+CLASS="varname"
+>y</TT
+>s are the endogenous variables and the
+	<TT
+CLASS="varname"
+>x</TT
+>s are the exogenous and predetermined
+	variables.  A number of internal variables may be retrieved
+	using the <TT
+CLASS="command"
+>genr</TT
+> command, provided
+	<TT
+CLASS="command"
+>genr</TT
+> is invoked immediately after this
+	command.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="var"
+></A
+>var</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN3997"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>order varlist</I
+></TT
+> ; 
+		<TT
+CLASS="replaceable"
+><I
+>detlist</I
+></TT
+>
+	      </TD
+></TR
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Example: </TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="command"
+>var 4 x1 x2 x3 ; const time</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Sets up and estimates (using OLS) a vector autoregression
+	(VAR).  The first argument specifies the lag order, then
+	follows the setup for the first equation.  Don't include lags
+	among the elements of <TT
+CLASS="replaceable"
+><I
+>varlist</I
+></TT
+>
+	&#8212; they will be added automatically.  The semi-colon
+	separates the stochastic variables, for which
+	<TT
+CLASS="replaceable"
+><I
+>order</I
+></TT
+> lags will be included, from
+	deterministic terms in <TT
+CLASS="replaceable"
+><I
+>detlist</I
+></TT
+>, such
+	as the constant, a time trend, and dummy variables.</P
+><P
+>&#13;	In fact, gretl is able to recognize the more common
+	deterministic variables (constant, time trend, dummy variables
+	with no values other than 0 and 1) as such, so these do not
+	have to placed after the semi-colon.  More complex
+	deterministic variables (e.g. a time trend interacted with a
+	dummy variable) must be put after the semi-colon.</P
+><P
+>&#13;	A separate regression is run for each variable in varlist.
+	Output for each equation includes <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>-tests
+	for zero restrictions on all lags of each of the variables; an
+	<SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+>-test for the significance of the
+	maximum lag; forecast variance decompositions; and impulse
+	response functions.</P
+><P
+>&#13;	The variance decompositions and impulse responses are based on
+	the Cholesky decomposition of the contemporaneous covariance
+	matrix, and in this context the order in which the
+	(stochastic) variables are given matters.  The first variable
+	in the list is assumed to be <SPAN
+CLASS="QUOTE"
+>"most exogenous"</SPAN
+>
+	within-period.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="list"
+></A
+>varlist</H2
+><P
+>&#13;	Prints a listing of variables currently available.
+	<TT
+CLASS="command"
+>list</TT
+> and <TT
+CLASS="command"
+>ls</TT
+> are
+	synonyms.  
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="vartest"
+></A
+>vartest</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN4027"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>var1 var2</I
+></TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Calculates the <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>F</I
+></SPAN
+> statistic for the null
+	hypothesis that the population variances for the variables
+	<TT
+CLASS="replaceable"
+><I
+>var1</I
+></TT
+> and
+	<TT
+CLASS="replaceable"
+><I
+>var2</I
+></TT
+> are equal, and shows its
+	p-value.
+      </P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="wls"
+></A
+>wls</H2
+><DIV
+CLASS="informaltable"
+><A
+NAME="AEN4041"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="109"
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+>Arguments:</TD
+><TD
+ALIGN="LEFT"
+VALIGN="MIDDLE"
+><TT
+CLASS="replaceable"
+><I
+>weightvar depvar
+		  indepvars</I
+></TT
+> <TT
+CLASS="literal"
+>[ -o ]</TT
+>
+	      </TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+><P
+>&#13;	Weighted least squares estimates are obtained using
+	<TT
+CLASS="replaceable"
+><I
+>weightvar</I
+></TT
+> as the weight,
+	<TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+> as the dependent variable
+	and <TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+> as the list of
+	independent variables.  More specifically, an OLS regression
+	is run on <TT
+CLASS="replaceable"
+><I
+>weightvar</I
+></TT
+>
+	<TT
+CLASS="literal"
+>*</TT
+> <TT
+CLASS="replaceable"
+><I
+>depvar</I
+></TT
+> against
+	<TT
+CLASS="replaceable"
+><I
+>weight</I
+></TT
+> <TT
+CLASS="literal"
+>*</TT
+>
+	<TT
+CLASS="replaceable"
+><I
+>indepvars</I
+></TT
+>. If the
+	<TT
+CLASS="replaceable"
+><I
+>weightvar</I
+></TT
+> is a dummy variable, this
+	is equivalent to eliminating all observations with the number
+	zero for <TT
+CLASS="replaceable"
+><I
+>weightvar</I
+></TT
+>. The flag
+	<TT
+CLASS="literal"
+>-o</TT
+> will print the covariance matrix of
+	coefficients.  A number of internal variables may be retrieved
+	using the <TT
+CLASS="command"
+>genr</TT
+> command, provided
+	<TT
+CLASS="command"
+>genr</TT
+> is invoked immediately after this
+	command.
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c1685.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x4065.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Command Reference</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c1685.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Estimators and tests: summary</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

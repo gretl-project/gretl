@@ -1,0 +1,322 @@
+<HTML
+><HEAD
+><TITLE
+>Dummy variables</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Panel data"
+HREF="c896.html"><LINK
+REL="PREVIOUS"
+TITLE="Panel data"
+HREF="c896.html"><LINK
+REL="NEXT"
+TITLE="Using lagged values with panel
+      data"
+HREF="x989.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="c896.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Panel data</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x989.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="dummies"
+></A
+>Dummy variables</H1
+><P
+>In a panel study you may wish to construct dummy variables
+      of one or both of the following sorts: (a) dummies as unique
+      identifiers for the cross-sectional units, and (b) dummies as
+      unique identifiers of the time periods.  The former may be used
+      to allow the intercept of the regression to differ across the
+      units, the latter to allow the intercept to differ across
+      periods.</P
+><P
+>You can use two special functions to create such dummies.
+      These are found under the <SPAN
+CLASS="QUOTE"
+>"Data, Add variables"</SPAN
+>
+      menu in the GUI, or under the <TT
+CLASS="command"
+>genr</TT
+> command in
+      script mode or <TT
+CLASS="application"
+>gretlcli</TT
+>.</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+><SPAN
+CLASS="QUOTE"
+>"periodic dummies"</SPAN
+> (script command
+	  <TT
+CLASS="command"
+>genr dummy</TT
+>).  The common use for this
+	  command is to create a set of periodic dummy variables up to
+	  the data frequency in a time-series study (for instance a
+	  set of quarterly dummies for use in seasonal adjustment).
+	  But it also works with panel data. Note that the
+	  interpretation of the dummies created by this command
+	  differs depending on whether the data rows are grouped by
+	  unit or by period. If the grouping is by
+	  <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>unit</I
+></SPAN
+> (frequency <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>T</I
+></SPAN
+>)
+	  the resulting variables are <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>period
+	    dummies</I
+></SPAN
+> and there will be
+	  <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>T</I
+></SPAN
+> of them. For instance
+	  <TT
+CLASS="varname"
+>dummy_2</TT
+> will have value 1 in each data
+	  row corresponding to a period 2 observation, 0 otherwise. If
+	  the grouping is by <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>period</I
+></SPAN
+> (frequency
+	  <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>n</I
+></SPAN
+>) then <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>n</I
+></SPAN
+>
+	  <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>unit dummies</I
+></SPAN
+> will be generated:
+	  <TT
+CLASS="varname"
+>dummy_2</TT
+> will have value 1 in each data
+	  row associated with cross-sectional unit 2, 0
+	  otherwise.</P
+></LI
+><LI
+><P
+><SPAN
+CLASS="QUOTE"
+>"panel dummies"</SPAN
+> (script command
+	  <TT
+CLASS="command"
+>genr paneldum</TT
+>).  This creates all the
+	  dummies, unit and period, at a stroke.  The default
+	  presumption is that the data rows are grouped by unit. The
+	  unit dummies are named <TT
+CLASS="varname"
+>du_1</TT
+>,
+	  <TT
+CLASS="varname"
+>du_2</TT
+> and so on, while the period dummies
+	  are named <TT
+CLASS="varname"
+>dt_1</TT
+>, <TT
+CLASS="varname"
+>dt_2</TT
+>,
+	  etc. The <TT
+CLASS="varname"
+>u</TT
+> (for unit) and
+	  <TT
+CLASS="varname"
+>t</TT
+> (for time) in these names will be wrong
+	  if the data rows are grouped by period: to get them right in
+	  that setting use <TT
+CLASS="command"
+>genr paneldum -o</TT
+> (script
+	  mode only).</P
+></LI
+></OL
+><P
+>If a panel data set has the <TT
+CLASS="literal"
+>YEAR</TT
+> of the
+      observation entered as one of the variables you can create a
+      periodic dummy to pick out a particular year, e.g. <TT
+CLASS="command"
+>genr
+	dum = (YEAR=1960)</TT
+>.  You can also create periodic
+      dummy variables using the modulus operator,
+      <TT
+CLASS="literal"
+>%</TT
+>.  For instance, to create a dummy with
+      value 1 for the first observation and every thirtieth
+      observation thereafter, 0 otherwise, do</P
+><PRE
+CLASS="programlisting"
+>&#13;      genr index 
+      genr dum = ((index-1)%30) = 0
+    </PRE
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="c896.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x989.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Panel data</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c896.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Using lagged values with panel
+      data</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

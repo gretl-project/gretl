@@ -1,0 +1,281 @@
+<HTML
+><HEAD
+><TITLE
+>Using lagged values with panel
+      data</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Panel data"
+HREF="c896.html"><LINK
+REL="PREVIOUS"
+TITLE="Dummy variables"
+HREF="x951.html"><LINK
+REL="NEXT"
+TITLE="Pooled estimation"
+HREF="x1021.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x951.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 5. Panel data</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x1021.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="panel-lagged"
+></A
+>Using lagged values with panel
+      data</H1
+><P
+>If the time periods are evenly spaced you may want to use
+      lagged values of variables in a panel regression.  In this case
+      arranging the data rows by <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>unit</I
+></SPAN
+> (stacked
+      time-series) is definitely preferable.</P
+><P
+>Suppose you create a lag of variable<TT
+CLASS="varname"
+>x1</TT
+>,
+      using <TT
+CLASS="command"
+>genr x1_1 = x1(-1)</TT
+>.  The values of this
+      variable will be mostly correct, but at the boundaries of the
+      unit data blocks they are not unusable: the
+      <SPAN
+CLASS="QUOTE"
+>"previous"</SPAN
+> value is not actually the first lag of
+      <TT
+CLASS="varname"
+>x1_1</TT
+> but rather the last observation of
+      <TT
+CLASS="varname"
+>x1</TT
+> for the previous cross-sectional
+      unit.  Such values are marked as missing by
+      <TT
+CLASS="application"
+>gretl</TT
+>.
+    </P
+><P
+>If a lag of this sort is to be included in a regression you
+      must ensure that the first observation from each unit block is
+      dropped. One way to achieve this is to use Weighted Least
+      Squares (<TT
+CLASS="command"
+>wls</TT
+>) using an appropriate dummy
+      variable as weight.  This dummy (call it
+      <TT
+CLASS="command"
+>lagdum</TT
+>) should have value 0 for the
+      observations to be dropped, 1 otherwise.  In other words, it is
+      complementary to a dummy variable for period 1.  Thus if you
+      have already issued the command <TT
+CLASS="command"
+>genr dummy</TT
+>
+      you can now do <TT
+CLASS="command"
+>genr lagdum = 1 - dummy_1</TT
+>.  If
+      you have used <TT
+CLASS="command"
+>genr paneldum</TT
+> you would now say
+      <TT
+CLASS="command"
+>genr lagdum = 1 - dt_1</TT
+>. Either way, you can
+      now do</P
+><P
+>&#13;      <TT
+CLASS="command"
+>wls lagdum y const x1_1 ...</TT
+>
+    </P
+><P
+>to get a pooled regression using the first lag of
+      <TT
+CLASS="varname"
+>x1</TT
+>, dropping all observations from period
+      1.</P
+><P
+>Another option is to use the <TT
+CLASS="command"
+>smpl</TT
+> with
+      the <TT
+CLASS="command"
+>-o</TT
+> flag and a suitable dummy variable.
+      <A
+HREF="x1035.html#examp-pwt"
+>Example 5-2</A
+> shows illustrative commands,
+      assuming the unit data blocks each contain 30 observations and
+      we want to drop the first row of each.  You can then run
+      regressions on the restricted data set without having to use the
+      <TT
+CLASS="command"
+>wls</TT
+> command.  If you plan to reuse the
+      restricted data set you may wish to save it using the
+      <TT
+CLASS="command"
+>store</TT
+> command (see <A
+HREF="c1685.html"
+>Chapter 10</A
+> below).
+    </P
+><DIV
+CLASS="example"
+><A
+NAME="examp-panel-lags"
+></A
+><P
+><B
+>Example 5-1. Lags with panel data</B
+></P
+><PRE
+CLASS="programlisting"
+>&#13;      (* create index variable *) 
+      genr index 
+      (* create dum = 0 for every 30th obs *) 
+      genr dum = ((index-1)%30) &#62; 0 
+      (* sample based on this dummy *) 
+      smpl -o dum 
+      (* recreate the obs. structure, for 56 units *) 
+      setobs 29 1.01 56.29
+    </PRE
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x951.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x1021.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Dummy variables</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c896.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Pooled estimation</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

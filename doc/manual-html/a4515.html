@@ -1,0 +1,292 @@
+<HTML
+><HEAD
+><TITLE
+>Advanced econometric analysis
+    with free software</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="PREVIOUS"
+TITLE="Numerical accuracy"
+HREF="a4470.html"><LINK
+REL="NEXT"
+TITLE="Listing of URLs"
+HREF="a4549.html"></HEAD
+><BODY
+CLASS="appendix"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="a4470.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+></TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="a4549.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="appendix"
+><H1
+><A
+NAME="app-advanced"
+></A
+>Appendix D. Advanced econometric analysis
+    with free software</H1
+><P
+>As mentioned in the main text,
+    <TT
+CLASS="application"
+>gretl</TT
+> offers a reasonably full
+    selection of least-squares based estimators, plus a few additional
+    estimators such as (binomial) logit and probit and Least Absolute
+    Deviations. Advanced users may, however, find
+    <TT
+CLASS="application"
+>gretl</TT
+>'s menu of statistical routines
+    restrictive.</P
+><P
+>No doubt some advanced users will prefer to write their own
+    statistical code in a fundamental computer language such as C, C++
+    or Fortran.  Another option is to use a relatively high-level
+    language that offers easy matrix manipulation and that already has
+    numerous statistical routines built in, or available as add-on
+    packages. If the latter option sounds attractive, and you are
+    interested in using free, open source software, I would recommend
+    taking a look at either GNU R (<A
+HREF="http://www.r-project.org/"
+TARGET="_top"
+>r-project.org</A
+>) or
+    (<A
+HREF="http://www.octave.org/"
+TARGET="_top"
+>GNU Octave</A
+>). These
+    programs are very close to the commercial programs S and Matlab
+    respectively. 
+  </P
+><P
+>&#13;    Also as mentioned above, <TT
+CLASS="application"
+>gretl</TT
+> offers
+    the facility of exporting data in the formats of both Octave and
+    R.  In the case of Octave, the <TT
+CLASS="application"
+>gretl</TT
+>
+    data set is saved thus: the first variable listed for export is
+    treated as the dependent variable and is saved as a vector,
+    <TT
+CLASS="varname"
+>y</TT
+>, while the remaining variables are saved
+    jointly as a matrix, <TT
+CLASS="varname"
+>X</TT
+>. You can pull the
+    <TT
+CLASS="varname"
+>X</TT
+> matrix apart if you wish, once the data are
+    loaded in Octave. See the Octave manual for details. As for R, the
+    exported data file preserves any time series structure that is
+    apparent to <TT
+CLASS="application"
+>gretl</TT
+>. The series are saved
+    as individual structures. The data should be brought into R using
+    the <TT
+CLASS="command"
+>source()</TT
+> command.
+  </P
+><P
+>&#13;    Of these two programs, R is perhaps more likely to be of immediate
+    interest to econometricians since it offers more in the way of
+    statistical routines (e.g. generalized linear models, maximum
+    likelihood estimation, time series methods). I have therefore
+    supplied <TT
+CLASS="application"
+>gretl</TT
+> with a convenience
+    function for moving data quickly into R. Under
+    <TT
+CLASS="application"
+>gretl</TT
+>'s Session menu, you will find the
+    entry <SPAN
+CLASS="QUOTE"
+>"Start GNU R"</SPAN
+>.  This writes out an R version of
+    the current <TT
+CLASS="application"
+>gretl</TT
+> data set
+    (<TT
+CLASS="filename"
+>Rdata.tmp</TT
+>, in the user's gretl directory),
+    and sources it into a new R session. A few details on this follow.
+  </P
+><P
+>&#13;    First, the data are brought into R by writing a temporary version
+    of <TT
+CLASS="filename"
+>.Rprofile</TT
+> in the current working
+    directory.  (If such a file exists it is referenced by R at
+    startup.)  In case you already have a personal
+    <TT
+CLASS="filename"
+>.Rprofile</TT
+> in place, the original file is
+    temporarily moved to <TT
+CLASS="filename"
+>.Rprofile.gretltmp</TT
+>, and
+    on exit from <TT
+CLASS="application"
+>gretl</TT
+> it is restored.  (If
+    anyone can suggest a cleaner way of doing this I'd be happy to
+    hear of it.)
+  </P
+><P
+>&#13;    Second, the particular way R is invoked depends on the internal
+    <TT
+CLASS="application"
+>gretl</TT
+> variable
+    <TT
+CLASS="varname"
+>Rcommand</TT
+>, whose value may be set under the
+    File, Preferences menu.  The default command is
+    <TT
+CLASS="command"
+>RGui.exe</TT
+> under MS Windows. Under X it is either
+    <TT
+CLASS="command"
+>R --gui=gnome</TT
+> if an installation of the Gnome
+    desktop (<A
+HREF="http://www.gnome.org/"
+TARGET="_top"
+>gnome.org</A
+>) was
+    detected at compile time, or <TT
+CLASS="command"
+>xterm -e R</TT
+> if
+    Gnome was not found. Please note that at most three
+    space-separated elements in this command string will be processed;
+    any extra elements are ignored.
+  </P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="a4470.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="a4549.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Numerical accuracy</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Listing of URLs</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

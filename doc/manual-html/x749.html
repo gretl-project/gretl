@@ -1,0 +1,675 @@
+<HTML
+><HEAD
+><TITLE
+>Creating a data file from scratch</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Data files"
+HREF="c674.html"><LINK
+REL="PREVIOUS"
+TITLE="Binary databases"
+HREF="x722.html"><LINK
+REL="NEXT"
+TITLE="Missing data values"
+HREF="x863.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="x722.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Chapter 4. Data files</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x863.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="scratch"
+></A
+>Creating a data file from scratch</H1
+><P
+>There are five ways to do this: (1) Find, or create using a
+      text editor, a plain text data file and open it with
+      <TT
+CLASS="application"
+>gretl</TT
+>'s <SPAN
+CLASS="QUOTE"
+>"Import ASCII"</SPAN
+>
+      option. (2) Use your favorite spreadsheet to establish the data
+      file, save it in Comma Separated Values format if necessary
+      (this should not be necessary if the spreadsheet program is MS
+      Excel or Gnumeric), then use one of
+      <TT
+CLASS="application"
+>gretl</TT
+>'s <SPAN
+CLASS="QUOTE"
+>"Import"</SPAN
+> options
+      (CSV, Excel or Gnumeric, as the case may be). (3) Use
+      <TT
+CLASS="application"
+>gretl</TT
+>'s built-in spreadsheet. (4)
+      Select data series from a suitable database. (5) Use your
+      favorite text editor or other software tools to a create data
+      file in <TT
+CLASS="application"
+>gretl</TT
+> format
+      independently.</P
+><P
+>Here are a few comments and details on these methods.</P
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN759"
+></A
+>Common points on imported data</H2
+><P
+>Options (1) and (2) involve using
+	<TT
+CLASS="application"
+>gretl</TT
+>'s <SPAN
+CLASS="QUOTE"
+>"import"</SPAN
+>
+	mechanism.  For <TT
+CLASS="application"
+>gretl</TT
+> to read such
+	data successfully, certain general conditions must be
+	satisfied:</P
+><P
+></P
+><UL
+><LI
+><P
+>The first row must contain valid variable names.  A
+	    valid variable name is of 8 characters maximum; starts
+	    with a letter; and contains nothing but letters, numbers
+	    and the underscore character, <TT
+CLASS="literal"
+>_</TT
+>.
+	    (Longer variable names will be truncated to 8 characters.)
+	    Qualifications to the above:  First, in the case of an
+	    ASCII or CSV import, if the file contains no row with
+	    variable names the program will automatically add names,
+	    <TT
+CLASS="varname"
+>v1</TT
+>, <TT
+CLASS="varname"
+>v2</TT
+> and so on.
+	    Second, by <SPAN
+CLASS="QUOTE"
+>"the first row"</SPAN
+> is meant the first
+	    <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>relevant</I
+></SPAN
+> row.  In the case of ASCII
+	    and CSV imports, blank rows and rows beginning with a hash
+	    mark, <TT
+CLASS="literal"
+>#</TT
+>, are ignored.  In the case of
+	    Excel and Gnumeric imports, you are presented with a
+	    dialog box where you can select an offset into the
+	    spreadsheet, so that <TT
+CLASS="application"
+>gretl</TT
+> will
+	    ignore a specified number of rows and/or columns.
+	  </P
+></LI
+><LI
+><P
+>Data values: these should constitute a rectangular
+	    block, with one variable per column (and one observation
+	    per row).  The number of variables (data columns) must
+	    match the number of variable names given. See also
+	    <A
+HREF="x863.html"
+>the Section called <I
+>Missing data values</I
+></A
+>.  
+	  </P
+></LI
+><LI
+><P
+>Dates (or observation labels): Optionally, the
+	    <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>first</I
+></SPAN
+> column may contain strings such
+	    as dates, or labels for cross-sectional observations.
+	    Such strings have a maximum of 8 characters (as with
+	    variable names, longer strings will be truncated).  A
+	    column of this sort should be headed with the string
+	    <TT
+CLASS="literal"
+>obs</TT
+> or <TT
+CLASS="literal"
+>date</TT
+>, or the
+	    first row entry may be left blank.</P
+><P
+>For dates to be recognized as such, the date strings
+	    must adhere to one or other of a set of specific formats,
+	    as follows.  For <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>annual</I
+></SPAN
+> data: 4-digit
+	    years.  For <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>quarterly</I
+></SPAN
+> data: a 4-digit
+	    year, followed by a separator (either a period, a colon,
+	    or the letter <TT
+CLASS="literal"
+>Q</TT
+>), followed by a 1-digit
+	    quarter.  Examples: <TT
+CLASS="literal"
+>1997.1</TT
+>,
+	    <TT
+CLASS="literal"
+>2002:3</TT
+>, <TT
+CLASS="literal"
+>1947Q1</TT
+>.  For
+	    <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>monthly</I
+></SPAN
+> data: a 4-digit year,
+	    followed by a period or a colon, followed by a two-digit
+	    month.  Examples: <TT
+CLASS="literal"
+>1997.01</TT
+>,
+	    <TT
+CLASS="literal"
+>2002:10</TT
+>.
+	  </P
+></LI
+></UL
+><P
+>CSV files can use comma, space or tab as the column
+	separator.  When you use the <SPAN
+CLASS="QUOTE"
+>"Import CSV"</SPAN
+> menu
+	item you are prompted to specify the separator.  In the case
+	of <SPAN
+CLASS="QUOTE"
+>"Import ASCII"</SPAN
+> the program attempts to
+	auto-detect the separator that was used.</P
+><P
+>If you use a spreadsheet to prepare your data you are able
+	to carry out various transformations of the <SPAN
+CLASS="QUOTE"
+>"raw"</SPAN
+>
+	data with ease (adding things up, taking percentages or
+	whatever): note, however, that you can also do this sort of
+	thing easily &#8212; perhaps more easily &#8212; within
+	<TT
+CLASS="application"
+>gretl</TT
+>, by using the tools under the
+	<SPAN
+CLASS="QUOTE"
+>"Data, Add variables"</SPAN
+> menu and/or
+	<SPAN
+CLASS="QUOTE"
+>"Variable, define new variable"</SPAN
+>.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN801"
+></A
+>Appending imported data</H2
+><P
+>You may wish to establish a
+	<TT
+CLASS="application"
+>gretl</TT
+> data set piece by piece, by
+	incremental importation of data from other sources.  This is
+	supported via the <SPAN
+CLASS="QUOTE"
+>"File, Append data"</SPAN
+> menu items.
+	<TT
+CLASS="application"
+>gretl</TT
+> will check the new data for
+	conformability with the existing data set and, if everything
+	seems OK, will merge the data.  You can add new variables in
+	this way, provided the data frequency matches that of the
+	existing data set.  Or you can append new observations for
+	data series that are already present; in this case the
+	variable names must match up correctly.  Note that by default
+	(that is, if you choose <SPAN
+CLASS="QUOTE"
+>"Open data"</SPAN
+> rather than
+	<SPAN
+CLASS="QUOTE"
+>"Append data"</SPAN
+>), opening a new data file closes
+	the current one.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN809"
+></A
+>Using the built-in spreadsheet</H2
+><P
+>Under <TT
+CLASS="application"
+>gretl</TT
+>'s <SPAN
+CLASS="QUOTE"
+>"File,
+	  Create data set"</SPAN
+> menu you can choose the sort of data
+	set you want to establish (e.g. quarterly time series,
+	cross-sectional).  You will then be prompted for starting and
+	ending dates (or observation numbers) and the name of the
+	first variable to add to the data set. After supplying this
+	information you will be faced with a simple spreadsheet into
+	which you can type data values.  In the spreadsheet window,
+	clicking the right mouse button will invoke a popup menu which
+	enables you to add a new variable (column), to add an
+	observation (append a row at the foot of the sheet), or to
+	insert an observation at the selected point (move the data
+	down and insert a blank row.)</P
+><P
+>Once you have entered data into the spreadsheet you import
+	these into <TT
+CLASS="application"
+>gretl</TT
+>'s workspace using
+	the spreadsheet's <SPAN
+CLASS="QUOTE"
+>"Apply changes"</SPAN
+> button.</P
+><P
+>Please note that <TT
+CLASS="application"
+>gretl</TT
+>'s
+	spreadsheet is quite basic and has no support for functions or
+	formulas.  Data transformations are done via the
+	<SPAN
+CLASS="QUOTE"
+>"Data"</SPAN
+> or <SPAN
+CLASS="QUOTE"
+>"Variable"</SPAN
+> menus in the
+	main <TT
+CLASS="application"
+>gretl</TT
+> window.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN822"
+></A
+>Selecting from a database</H2
+><P
+>Another alternative is to establish your data set by
+	selecting variables from a database.
+	<TT
+CLASS="application"
+>gretl</TT
+> comes with a database of US
+	macroeconomic time series and, as mentioned above, the program
+	will reads RATS 4 databases.</P
+><P
+>Begin with <TT
+CLASS="application"
+>gretl</TT
+>'s <SPAN
+CLASS="QUOTE"
+>"File,
+	  Browse databases"</SPAN
+> menu item. This has three forks:
+	<SPAN
+CLASS="QUOTE"
+>"gretl native"</SPAN
+>, <SPAN
+CLASS="QUOTE"
+>"RATS 4"</SPAN
+> and
+	<SPAN
+CLASS="QUOTE"
+>"on database server"</SPAN
+>.  You should be able to find
+	the file <TT
+CLASS="filename"
+>bcih.bin</TT
+> in the file selector
+	that opens if you choose the <SPAN
+CLASS="QUOTE"
+>"gretl native"</SPAN
+>
+	option &#8212; this file is supplied with the
+	distribution.</P
+><P
+>You won't find anything under <SPAN
+CLASS="QUOTE"
+>"RATS 4"</SPAN
+> unless
+	you have purchased RATS data.<A
+NAME="AEN836"
+HREF="#FTN.AEN836"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+>  If you do possess RATS data you should go into
+	<TT
+CLASS="application"
+>gretl</TT
+>'s <SPAN
+CLASS="QUOTE"
+>"File, Preferences,
+	  General"</SPAN
+> dialog, select the Databases tab, and fill
+	in the correct path to your RATS files.</P
+><P
+>If your computer is connected to the internet you should
+	find several databases (at Wake Forest University) under
+	<SPAN
+CLASS="QUOTE"
+>"on database server"</SPAN
+>.  You can browse these
+	remotely; you also have the option of installing them onto
+	your own computer.  The initial remote databases window has an
+	item showing, for each file, whether it is already installed
+	locally (and if so, if the local version is up to date with
+	the version at Wake Forest).</P
+><P
+>Assuming you have managed to open a database you can
+	import selected series into <TT
+CLASS="application"
+>gretl</TT
+>'s
+	workspace by using the <SPAN
+CLASS="QUOTE"
+>"Import"</SPAN
+> menu item in the
+	database window (or via the popup menu that appears if you
+	click the right mouse button).</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN846"
+></A
+>Creating a gretl data file independently</H2
+><P
+>It is possible to create a data file in one or other of
+	<TT
+CLASS="application"
+>gretl</TT
+>'s own formats using a text
+	editor or software tools such as
+	<TT
+CLASS="application"
+>awk</TT
+>, <TT
+CLASS="application"
+>sed</TT
+>
+	or <TT
+CLASS="application"
+>perl</TT
+>.  This may be a good choice
+	if you have large amounts of data already in machine readable
+	form. You will, of course, need to study the
+	<TT
+CLASS="application"
+>gretl</TT
+> data formats (XML format or
+	<SPAN
+CLASS="QUOTE"
+>"traditional"</SPAN
+> format) as described in 
+	<A
+HREF="c674.html"
+>Chapter 4</A
+>.</P
+></DIV
+><DIV
+CLASS="sect2"
+><H2
+CLASS="sect2"
+><A
+NAME="AEN856"
+></A
+>Further note</H2
+><P
+>&#13;	<TT
+CLASS="application"
+>gretl</TT
+> has no problem compacting
+	data series of relatively high frequency (e.g. monthly) to a
+	lower frequency (e.g. quarterly): this is done by averaging.
+	But it has no way of converting lower frequency data to
+	higher.  Therefore if you want to import series of various
+	different frequencies from a database into
+	<TT
+CLASS="application"
+>gretl</TT
+> <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>you must start by
+	  importing a series of the lowest frequency you intend to
+	  use.</I
+></SPAN
+> This will initialize your
+	<TT
+CLASS="application"
+>gretl</TT
+> data set to the low
+	frequency, and higher frequency data can be imported
+	subsequently (they will be compacted automatically).  If you
+	start with a high frequency series you will not be able to
+	import any series of lower frequency.</P
+></DIV
+></DIV
+><H3
+CLASS="FOOTNOTES"
+>Notes</H3
+><TABLE
+BORDER="0"
+CLASS="FOOTNOTES"
+WIDTH="100%"
+><TR
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="5%"
+><A
+NAME="FTN.AEN836"
+HREF="x749.html#AEN836"
+><SPAN
+CLASS="footnote"
+>[1]</SPAN
+></A
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="95%"
+><P
+>See <A
+HREF="http://www.estima.com/"
+TARGET="_top"
+>www.estima.com</A
+></P
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="x722.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x863.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Binary databases</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="c674.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Missing data values</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

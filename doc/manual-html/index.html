@@ -1,0 +1,1240 @@
+<HTML
+><HEAD
+><TITLE
+>Gretl Manual</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="NEXT"
+TITLE="Introduction"
+HREF="c21.html"></HEAD
+><BODY
+CLASS="book"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="BOOK"
+><A
+NAME="index"
+></A
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="title"
+><A
+NAME="index"
+></A
+>Gretl Manual</H1
+><H2
+CLASS="subtitle"
+>Gnu Regression, Econometrics and Time-series
+      Library</H2
+><IMG
+SRC="figures/gretl-logo.png"
+ALT=""><H3
+CLASS="author"
+><A
+NAME="AEN5"
+></A
+>Allin Cottrell</H3
+><DIV
+CLASS="affiliation"
+><SPAN
+CLASS="orgdiv"
+>Department of Economics<BR></SPAN
+><SPAN
+CLASS="orgdiv"
+>Wake Forest University<BR></SPAN
+></DIV
+><P
+CLASS="copyright"
+>Copyright &copy; 2001&#8211;2003 Allin Cottrell</P
+><DIV
+CLASS="legalnotice"
+><A
+NAME="legalnotice"
+></A
+><P
+></P
+><P
+>Permission is granted to copy, distribute and/or modify
+	this document under the terms of the <I
+CLASS="citetitle"
+>GNU Free
+	  Documentation License</I
+>, Version 1.1 or any later
+	version published by the Free Software Foundation (see
+	<A
+HREF="http://www.gnu.org/licenses/fdl.html"
+TARGET="_top"
+>http://www.gnu.org/licenses/fdl.html</A
+>).
+      </P
+><P
+></P
+></DIV
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+>1. <A
+HREF="c21.html"
+>Introduction</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c21.html#features"
+>Features at a glance</A
+></DT
+><DT
+><A
+HREF="x72.html"
+>Acknowledgements</A
+></DT
+><DT
+><A
+HREF="x95.html"
+>Installing the programs</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x95.html#linux-install"
+>Linux</A
+></DT
+><DT
+><A
+HREF="x95.html#windows-install"
+>MS Windows</A
+></DT
+><DT
+><A
+HREF="x95.html#updating"
+>Updating</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>2. <A
+HREF="c152.html"
+>Getting started</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c152.html#starting-regression"
+>Let's run a
+      regression</A
+></DT
+><DT
+><A
+HREF="x212.html"
+>Estimation output</A
+></DT
+><DT
+><A
+HREF="x239.html"
+>The main window menus</A
+></DT
+><DT
+><A
+HREF="x479.html"
+>The gretl toolbar</A
+></DT
+></DL
+></DD
+><DT
+>3. <A
+HREF="c518.html"
+>Modes of working</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c518.html#scripts"
+>Command scripts</A
+></DT
+><DT
+><A
+HREF="x582.html"
+>The gretl console</A
+></DT
+><DT
+><A
+HREF="x593.html"
+>The <SPAN
+CLASS="QUOTE"
+>"session"</SPAN
+>
+      concept</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x593.html#session-intro"
+>Introduction</A
+></DT
+><DT
+><A
+HREF="x593.html#model-table"
+>The model table</A
+></DT
+><DT
+><A
+HREF="x593.html#session-save"
+>Saving and re-opening
+	sessions</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>4. <A
+HREF="c674.html"
+>Data files</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c674.html#native-format"
+>Native format</A
+></DT
+><DT
+><A
+HREF="x682.html"
+>Other data file formats</A
+></DT
+><DT
+><A
+HREF="x722.html"
+>Binary databases</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x722.html#online-data"
+>Online access to databases</A
+></DT
+><DT
+><A
+HREF="x722.html#RATS"
+>RATS 4 databases</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x749.html"
+>Creating a data file from scratch</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x749.html#AEN759"
+>Common points on imported data</A
+></DT
+><DT
+><A
+HREF="x749.html#AEN801"
+>Appending imported data</A
+></DT
+><DT
+><A
+HREF="x749.html#AEN809"
+>Using the built-in spreadsheet</A
+></DT
+><DT
+><A
+HREF="x749.html#AEN822"
+>Selecting from a database</A
+></DT
+><DT
+><A
+HREF="x749.html#AEN846"
+>Creating a gretl data file independently</A
+></DT
+><DT
+><A
+HREF="x749.html#AEN856"
+>Further note</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x863.html"
+>Missing data values</A
+></DT
+></DL
+></DD
+><DT
+>5. <A
+HREF="c896.html"
+>Panel data</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c896.html#panel-structure"
+>Panel structure</A
+></DT
+><DT
+><A
+HREF="x951.html"
+>Dummy variables</A
+></DT
+><DT
+><A
+HREF="x989.html"
+>Using lagged values with panel
+      data</A
+></DT
+><DT
+><A
+HREF="x1021.html"
+>Pooled estimation</A
+></DT
+><DT
+><A
+HREF="x1035.html"
+>Illustration: the Penn World Table</A
+></DT
+></DL
+></DD
+><DT
+>6. <A
+HREF="c1051.html"
+>Graphs and plots</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1051.html#gnuplot-graphs"
+>Gnuplot graphs</A
+></DT
+><DT
+><A
+HREF="x1117.html"
+>Boxplots</A
+></DT
+></DL
+></DD
+><DT
+>7. <A
+HREF="c1141.html"
+>Nonlinear least squares</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1141.html#nls-intro"
+>Introduction and examples</A
+></DT
+><DT
+><A
+HREF="x1162.html"
+>Initializing the parameters</A
+></DT
+><DT
+><A
+HREF="x1172.html"
+>NLS dialog window</A
+></DT
+><DT
+><A
+HREF="x1186.html"
+>Analytical and numerical derivatives</A
+></DT
+><DT
+><A
+HREF="x1194.html"
+>Controlling termination</A
+></DT
+><DT
+><A
+HREF="x1205.html"
+>Details on the code</A
+></DT
+><DT
+><A
+HREF="x1238.html"
+>Numerical accuracy</A
+></DT
+></DL
+></DD
+><DT
+>8. <A
+HREF="c1320.html"
+>Loop constructs</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1320.html#monte-carlo"
+>Monte Carlo simulations</A
+></DT
+><DT
+><A
+HREF="x1364.html"
+>Iterated least squares</A
+></DT
+><DT
+><A
+HREF="x1405.html"
+>Indexed loop</A
+></DT
+></DL
+></DD
+><DT
+>9. <A
+HREF="c1430.html"
+>Options, arguments and
+    path-searching</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1430.html#optarg1"
+>gretl</A
+></DT
+><DT
+><A
+HREF="x1544.html"
+>gretlcli</A
+></DT
+><DT
+><A
+HREF="x1609.html"
+>Path searching</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x1609.html#MS-behave"
+>MS Windows</A
+></DT
+></DL
+></DD
+></DL
+></DD
+><DT
+>10. <A
+HREF="c1685.html"
+>Command Reference</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c1685.html#cmd-intro"
+>Introduction</A
+></DT
+><DT
+><A
+HREF="x1725.html"
+>gretl commands</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="x1725.html#add"
+>add</A
+></DT
+><DT
+><A
+HREF="x1725.html#addto"
+>addto</A
+></DT
+><DT
+><A
+HREF="x1725.html#adf"
+>adf</A
+></DT
+><DT
+><A
+HREF="x1725.html#ar"
+>ar</A
+></DT
+><DT
+><A
+HREF="x1725.html#arch"
+>arch</A
+></DT
+><DT
+><A
+HREF="x1725.html#arma"
+>arma</A
+></DT
+><DT
+><A
+HREF="x1725.html#chow"
+>chow</A
+></DT
+><DT
+><A
+HREF="x1725.html#coeffsum"
+>coeffsum</A
+></DT
+><DT
+><A
+HREF="x1725.html#coint"
+>coint</A
+></DT
+><DT
+><A
+HREF="x1725.html#johansen"
+>coint2</A
+></DT
+><DT
+><A
+HREF="x1725.html#corc"
+>corc</A
+></DT
+><DT
+><A
+HREF="x1725.html#corr"
+>corr</A
+></DT
+><DT
+><A
+HREF="x1725.html#corrgm"
+>corrgm</A
+></DT
+><DT
+><A
+HREF="x1725.html#criteria"
+>criteria</A
+></DT
+><DT
+><A
+HREF="x1725.html#critical"
+>critical</A
+></DT
+><DT
+><A
+HREF="x1725.html#cusum"
+>cusum</A
+></DT
+><DT
+><A
+HREF="x1725.html#data"
+>data</A
+></DT
+><DT
+><A
+HREF="x1725.html#delete"
+>delete</A
+></DT
+><DT
+><A
+HREF="x1725.html#diff"
+>diff</A
+></DT
+><DT
+><A
+HREF="x1725.html#cmd-end"
+>end</A
+></DT
+><DT
+><A
+HREF="x1725.html#endloop"
+>endloop</A
+></DT
+><DT
+><A
+HREF="x1725.html#equation"
+>equation</A
+></DT
+><DT
+><A
+HREF="x1725.html#eqnprint"
+>eqnprint</A
+></DT
+><DT
+><A
+HREF="x1725.html#fcast"
+>fcast</A
+></DT
+><DT
+><A
+HREF="x1725.html#fcasterr"
+>fcasterr</A
+></DT
+><DT
+><A
+HREF="x1725.html#fit"
+>fit</A
+></DT
+><DT
+><A
+HREF="x1725.html#freq"
+>freq</A
+></DT
+><DT
+><A
+HREF="x1725.html#genr"
+>genr</A
+></DT
+><DT
+><A
+HREF="x1725.html#gnuplot"
+>gnuplot</A
+></DT
+><DT
+><A
+HREF="x1725.html#graph"
+>graph</A
+></DT
+><DT
+><A
+HREF="x1725.html#hausman"
+>hausman</A
+></DT
+><DT
+><A
+HREF="x1725.html#hccm"
+>hccm</A
+></DT
+><DT
+><A
+HREF="x1725.html#help"
+>help</A
+></DT
+><DT
+><A
+HREF="x1725.html#hilu"
+>hilu</A
+></DT
+><DT
+><A
+HREF="x1725.html#hsk"
+>hsk</A
+></DT
+><DT
+><A
+HREF="x1725.html#if"
+>if</A
+></DT
+><DT
+><A
+HREF="x1725.html#import"
+>import</A
+></DT
+><DT
+><A
+HREF="x1725.html#info"
+>info</A
+></DT
+><DT
+><A
+HREF="x1725.html#label"
+>label</A
+></DT
+><DT
+><A
+HREF="x1725.html#labels"
+>labels</A
+></DT
+><DT
+><A
+HREF="x1725.html#lad"
+>lad</A
+></DT
+><DT
+><A
+HREF="x1725.html#lags"
+>lags</A
+></DT
+><DT
+><A
+HREF="x1725.html#ldiff"
+>ldiff</A
+></DT
+><DT
+><A
+HREF="x1725.html#leverage"
+>leverage</A
+></DT
+><DT
+><A
+HREF="x1725.html#lmtest"
+>lmtest</A
+></DT
+><DT
+><A
+HREF="x1725.html#logistic"
+>logistic</A
+></DT
+><DT
+><A
+HREF="x1725.html#logit"
+>logit</A
+></DT
+><DT
+><A
+HREF="x1725.html#logs"
+>logs</A
+></DT
+><DT
+><A
+HREF="x1725.html#loop"
+>loop</A
+></DT
+><DT
+><A
+HREF="x1725.html#meantest"
+>meantest</A
+></DT
+><DT
+><A
+HREF="x1725.html#mpols"
+>mpols</A
+></DT
+><DT
+><A
+HREF="x1725.html#multiply"
+>multiply</A
+></DT
+><DT
+><A
+HREF="x1725.html#nls"
+>nls</A
+></DT
+><DT
+><A
+HREF="x1725.html#noecho"
+>noecho</A
+></DT
+><DT
+><A
+HREF="x1725.html#nulldata"
+>nulldata</A
+></DT
+><DT
+><A
+HREF="x1725.html#ols"
+>ols</A
+></DT
+><DT
+><A
+HREF="x1725.html#omit"
+>omit</A
+></DT
+><DT
+><A
+HREF="x1725.html#omitfrom"
+>omitfrom</A
+></DT
+><DT
+><A
+HREF="x1725.html#open"
+>open</A
+></DT
+><DT
+><A
+HREF="x1725.html#outfile"
+>outfile</A
+></DT
+><DT
+><A
+HREF="x1725.html#pca"
+>pca</A
+></DT
+><DT
+><A
+HREF="x1725.html#panel-cmd"
+>panel</A
+></DT
+><DT
+><A
+HREF="x1725.html#pergm"
+>pergm</A
+></DT
+><DT
+><A
+HREF="x1725.html#plot"
+>plot</A
+></DT
+><DT
+><A
+HREF="x1725.html#pooled"
+>pooled</A
+></DT
+><DT
+><A
+HREF="x1725.html#print"
+>print</A
+></DT
+><DT
+><A
+HREF="x1725.html#printf"
+>printf</A
+></DT
+><DT
+><A
+HREF="x1725.html#probit"
+>probit</A
+></DT
+><DT
+><A
+HREF="x1725.html#pvalue"
+>pvalue</A
+></DT
+><DT
+><A
+HREF="x1725.html#quit"
+>quit</A
+></DT
+><DT
+><A
+HREF="x1725.html#rename"
+>rename</A
+></DT
+><DT
+><A
+HREF="x1725.html#reset"
+>reset</A
+></DT
+><DT
+><A
+HREF="x1725.html#rhodiff"
+>rhodiff</A
+></DT
+><DT
+><A
+HREF="x1725.html#rmplot"
+>rmplot</A
+></DT
+><DT
+><A
+HREF="x1725.html#run"
+>run</A
+></DT
+><DT
+><A
+HREF="x1725.html#runs"
+>runs</A
+></DT
+><DT
+><A
+HREF="x1725.html#scatters"
+>scatters</A
+></DT
+><DT
+><A
+HREF="x1725.html#seed"
+>seed</A
+></DT
+><DT
+><A
+HREF="x1725.html#setobs"
+>setobs</A
+></DT
+><DT
+><A
+HREF="x1725.html#setmiss"
+>setmiss</A
+></DT
+><DT
+><A
+HREF="x1725.html#shell"
+>shell</A
+></DT
+><DT
+><A
+HREF="x1725.html#sim"
+>sim</A
+></DT
+><DT
+><A
+HREF="x1725.html#smpl"
+>smpl</A
+></DT
+><DT
+><A
+HREF="x1725.html#spearman"
+>spearman</A
+></DT
+><DT
+><A
+HREF="x1725.html#square"
+>square</A
+></DT
+><DT
+><A
+HREF="x1725.html#store"
+>store</A
+></DT
+><DT
+><A
+HREF="x1725.html#summary"
+>summary</A
+></DT
+><DT
+><A
+HREF="x1725.html#eqnsystem"
+>system</A
+></DT
+><DT
+><A
+HREF="x1725.html#tabprint"
+>tabprint</A
+></DT
+><DT
+><A
+HREF="x1725.html#testuhat"
+>testuhat</A
+></DT
+><DT
+><A
+HREF="x1725.html#tsls"
+>tsls</A
+></DT
+><DT
+><A
+HREF="x1725.html#var"
+>var</A
+></DT
+><DT
+><A
+HREF="x1725.html#list"
+>varlist</A
+></DT
+><DT
+><A
+HREF="x1725.html#vartest"
+>vartest</A
+></DT
+><DT
+><A
+HREF="x1725.html#wls"
+>wls</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="x4065.html"
+>Estimators and tests: summary</A
+></DT
+></DL
+></DD
+><DT
+>11. <A
+HREF="c4213.html"
+>Troubleshooting gretl</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c4213.html#trouble-bugs"
+>Bug reports</A
+></DT
+><DT
+><A
+HREF="x4220.html"
+>Auxiliary programs</A
+></DT
+></DL
+></DD
+><DT
+>12. <A
+HREF="c4254.html"
+>The command line interface</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="c4254.html#cli-console"
+>Gretl at the console</A
+></DT
+><DT
+><A
+HREF="x4300.html"
+>Changes from Ramanathan's ESL</A
+></DT
+></DL
+></DD
+><DT
+>A. <A
+HREF="a4331.html"
+>Data file details</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="a4331.html#native"
+>Basic native format</A
+></DT
+><DT
+><A
+HREF="x4344.html"
+>Traditional ESL format</A
+></DT
+><DT
+><A
+HREF="x4412.html"
+>Binary database details</A
+></DT
+></DL
+></DD
+><DT
+>B. <A
+HREF="a4436.html"
+>Technical notes</A
+></DT
+><DT
+>C. <A
+HREF="a4470.html"
+>Numerical accuracy</A
+></DT
+><DT
+>D. <A
+HREF="a4515.html"
+>Advanced econometric analysis
+    with free software</A
+></DT
+><DT
+>E. <A
+HREF="a4549.html"
+>Listing of URLs</A
+></DT
+><DT
+><A
+HREF="b4685.html"
+>Bibliography</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="LOT"
+><DL
+CLASS="LOT"
+><DT
+><B
+>List of Tables</B
+></DT
+><DT
+>7-1. <A
+HREF="x1238.html#tab-nls"
+>Nonlinear regression: the NIST tests</A
+></DT
+><DT
+>9-1. <A
+HREF="x1609.html#tab-path"
+>Default path settings</A
+></DT
+><DT
+>10-1. <A
+HREF="x1725.html#tab-genr"
+>Examples of use of genr command</A
+></DT
+><DT
+>10-2. <A
+HREF="x4065.html#tab-estim"
+>Estimators</A
+></DT
+><DT
+>10-3. <A
+HREF="x4065.html#tab-tests"
+>Tests for models</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="LOT"
+><DL
+CLASS="LOT"
+><DT
+><B
+>List of Figures</B
+></DT
+><DT
+>2-1. <A
+HREF="c152.html#fig-datafiles"
+>Practice data files window</A
+></DT
+><DT
+>2-2. <A
+HREF="c152.html#fig-mainwin"
+>Main window, with a practice data file open</A
+></DT
+><DT
+>2-3. <A
+HREF="c152.html#fig-selector"
+>Model specification dialog</A
+></DT
+><DT
+>2-4. <A
+HREF="x212.html#fig-modelwin"
+>Model output window</A
+></DT
+><DT
+>3-1. <A
+HREF="c518.html#fig-scriptwin"
+>Script window, editing a command file</A
+></DT
+><DT
+>3-2. <A
+HREF="x593.html#fig-session"
+>Icon view: one model and one graph have been added to
+	  the default icons</A
+></DT
+><DT
+>3-3. <A
+HREF="x593.html#fig-model-table"
+>Example of model table</A
+></DT
+><DT
+>6-1. <A
+HREF="c1051.html#fig-plot"
+>gretl's gnuplot controller</A
+></DT
+><DT
+>7-1. <A
+HREF="x1172.html#fig-nls-dialog"
+>NLS dialog box</A
+></DT
+></DL
+></DIV
+><DIV
+CLASS="LOT"
+><DL
+CLASS="LOT"
+><DT
+><B
+>List of Examples</B
+></DT
+><DT
+>5-1. <A
+HREF="x989.html#examp-panel-lags"
+>Lags with panel data</A
+></DT
+><DT
+>5-2. <A
+HREF="x1035.html#examp-pwt"
+>Use of the Penn World Table</A
+></DT
+><DT
+>7-1. <A
+HREF="c1141.html#nls-cons"
+>Consumption function from
+	  Greene</A
+></DT
+><DT
+>7-2. <A
+HREF="c1141.html#nls-ects"
+>Nonlinear function from Russell
+	Davidson</A
+></DT
+><DT
+>8-1. <A
+HREF="c1320.html#script-loop"
+>Simple Monte Carlo loop</A
+></DT
+><DT
+>8-2. <A
+HREF="x1364.html#greene-consump"
+>Nonlinear consumption function</A
+></DT
+><DT
+>8-3. <A
+HREF="x1364.html#jack-arma"
+>ARMA 1, 1</A
+></DT
+><DT
+>8-4. <A
+HREF="x1405.html#panel-loop"
+>Indexed loop example</A
+></DT
+><DT
+>8-5. <A
+HREF="x1405.html#string-loop"
+>Second indexed loop example</A
+></DT
+></DL
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="c21.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+>&nbsp;</TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Introduction</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

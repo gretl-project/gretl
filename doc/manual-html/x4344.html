@@ -1,0 +1,445 @@
+<HTML
+><HEAD
+><TITLE
+>Traditional ESL format</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
+REL="HOME"
+TITLE="Gretl Manual"
+HREF="index.html"><LINK
+REL="UP"
+TITLE="Data file details"
+HREF="a4331.html"><LINK
+REL="PREVIOUS"
+TITLE="Data file details"
+HREF="a4331.html"><LINK
+REL="NEXT"
+TITLE="Binary database details"
+HREF="x4412.html"></HEAD
+><BODY
+CLASS="sect1"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+SUMMARY="Header navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="3"
+ALIGN="center"
+>Gretl Manual: Gnu Regression, Econometrics and Time-series
+      Library</TH
+></TR
+><TR
+><TD
+WIDTH="10%"
+ALIGN="left"
+VALIGN="bottom"
+><A
+HREF="a4331.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="80%"
+ALIGN="center"
+VALIGN="bottom"
+>Appendix A. Data file details</TD
+><TD
+WIDTH="10%"
+ALIGN="right"
+VALIGN="bottom"
+><A
+HREF="x4412.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+></TABLE
+><HR
+ALIGN="LEFT"
+WIDTH="100%"></DIV
+><DIV
+CLASS="sect1"
+><H1
+CLASS="sect1"
+><A
+NAME="traddata"
+></A
+>Traditional ESL format</H1
+><P
+>For backward compatibility, <TT
+CLASS="application"
+>gretl</TT
+>
+      can also handle data files in the <SPAN
+CLASS="QUOTE"
+>"traditional"</SPAN
+>
+      format inherited from Ramanathan's
+      <TT
+CLASS="application"
+>ESL</TT
+> program.  In this format (which
+      was the default in <TT
+CLASS="application"
+>gretl</TT
+> prior to
+      version 0.98) a data set is represented by two files.  One
+      contains the actual data and the other information on how the
+      data should be read.  To be more specific:</P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Actual data</I
+></SPAN
+>: A rectangular
+	  matrix of white-space separated numbers.  Each column
+	  represents a variable, each row an observation on each of
+	  the variables (spreadsheet style). Data columns can be
+	  separated by spaces or tabs. The filename should have the
+	  suffix <TT
+CLASS="filename"
+>.gdt</TT
+>.  By default the data file
+	  is ASCII (plain text).  Optionally it can be gzip-compressed
+	  to save disk space. You can insert comments into a data
+	  file: if a line begins with the hash mark
+	  (<TT
+CLASS="literal"
+>#</TT
+>) the entire line is ignored. This is
+	  consistent with gnuplot and octave data
+	  files.</P
+></LI
+><LI
+><P
+><SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>Header</I
+></SPAN
+>: The data file must
+	  be accompanied by a header file which has the same basename
+	  as the data file plus the suffix <TT
+CLASS="filename"
+>.hdr</TT
+>.
+	  This file contains, in order:</P
+><P
+></P
+><UL
+><LI
+STYLE="list-style-type: dash"
+><P
+>(Optional) <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>comments</I
+></SPAN
+> on
+	      the data, set off by the opening string
+	      <TT
+CLASS="literal"
+>(*</TT
+> and the closing string
+	      <TT
+CLASS="literal"
+>*)</TT
+>, each of these strings to occur on
+	      lines by themselves.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>(Required) list of white-space separated
+	      <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>names of the variables</I
+></SPAN
+> in the data
+	      file. Names are limited to 8 characters, must start with
+	      a letter, and are limited to alphanumeric characters
+	      plus the underscore.  The list may continue over more
+	      than one line; it is terminated with a semicolon,
+	      <TT
+CLASS="literal"
+>;</TT
+>.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>(Required) <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>observations</I
+></SPAN
+>
+	      line of the form <TT
+CLASS="literal"
+>1 1 85</TT
+>.  The first
+	      element gives the data frequency (1 for undated or
+	      annual data, 4 for quarterly, 12 for monthly).  The
+	      second and third elements give the starting and ending
+	      observations. Generally these will be 1 and the number
+	      of observations respectively, for undated data.  For
+	      time-series data one can use dates of the form
+	      <TT
+CLASS="command"
+>1959.1</TT
+> (quarterly, one digit after
+	      the point) or <TT
+CLASS="command"
+>1967.03</TT
+> (monthly, two
+	      digits after the point). See <A
+HREF="c896.html"
+>Chapter 5</A
+> for
+	      special use of this line in the case of panel
+	      data.</P
+></LI
+><LI
+STYLE="list-style-type: dash"
+><P
+>The keyword
+	      <TT
+CLASS="literal"
+>BYOBS</TT
+>.</P
+></LI
+></UL
+></LI
+></OL
+><P
+>Here is an example of a well-formed data header file.
+
+	<PRE
+CLASS="programlisting"
+> 
+	  (* 
+	  DATA9-6: 
+	  Data on log(money), log(income) and interest rate from US. 
+	  Source: Stock and Watson (1993) Econometrica 
+	  (unsmoothed data) Period is 1900-1989 (annual data). 
+	  Data compiled by Graham Elliott. 
+	  *) 
+	  lmoney lincome intrate ; 
+	  1 1900 1989 BYOBS</PRE
+> The corresponding data
+      file contains three columns of data, each having 90
+      entries.</P
+><P
+>&#13;      Three further features of the <SPAN
+CLASS="QUOTE"
+>"traditional"</SPAN
+> data
+      format may be noted.
+    </P
+><P
+></P
+><OL
+TYPE="1"
+><LI
+><P
+>If the <TT
+CLASS="literal"
+>BYOBS</TT
+> keyword is
+	  replaced by <TT
+CLASS="literal"
+>BYVAR</TT
+>, and followed by the
+	  keyword <TT
+CLASS="literal"
+>BINARY</TT
+>, this indicates that the
+	  corresponding data file is in binary format.  Such data
+	  files can be written from
+	  <TT
+CLASS="application"
+>gretlcli</TT
+> using the
+	  <TT
+CLASS="command"
+>store</TT
+> command with the
+	  <TT
+CLASS="command"
+>-s</TT
+> flag (single precision) or the
+	  <TT
+CLASS="command"
+>-o</TT
+> flag (double
+	  precision).</P
+></LI
+><LI
+><P
+>If <TT
+CLASS="literal"
+>BYOBS</TT
+> is followed by the
+	  keyword <TT
+CLASS="literal"
+>MARKERS</TT
+>,
+	  <TT
+CLASS="application"
+>gretl</TT
+> expects a data file in
+	  which the <SPAN
+CLASS="emphasis"
+><I
+CLASS="emphasis"
+>first column</I
+></SPAN
+> contains strings
+	  (8 characters maximum) used to identify the observations.
+	  This may be handy in the case of cross-sectional data where
+	  the units of observation are identifiable: countries,
+	  states, cities or whatever.  It can also be useful for
+	  irregular time series data, such as daily stock price data
+	  where some days are not trading days &#8212; in this case
+	  the observations can be marked with a date string such as
+	  <TT
+CLASS="command"
+>10/01/98</TT
+>.  (Remember the 8-character
+	  maximum.)  Note that <TT
+CLASS="command"
+>BINARY</TT
+> and
+	  <TT
+CLASS="command"
+>MARKERS</TT
+> are mutually exclusive flags.
+	  Also note that the <SPAN
+CLASS="QUOTE"
+>"markers"</SPAN
+> are not considered
+	  to be a variable: this column does not have a corresponding
+	  entry in the list of variable names in the header
+	  file.</P
+></LI
+><LI
+><P
+>If a file with the same base name as the data
+	  file and header files, but with the suffix
+	  <TT
+CLASS="filename"
+>.lbl</TT
+>, is found, it is read to fill out
+	  the descriptive labels for the data series. The format of
+	  the label file is simple: each line contains the name of one
+	  variable (as found in the header file), followed by one or
+	  more spaces, followed by the descriptive label. Here is an
+	  example: <TT
+CLASS="literal"
+>price  New car price index, 1982 base
+	    year</TT
+>
+
+	</P
+></LI
+></OL
+><P
+>If you want to save data in traditional format, use the
+      <TT
+CLASS="command"
+>-t</TT
+> flag with the <TT
+CLASS="command"
+>store</TT
+>
+      command, either in the command-line program or in the console
+      window of the GUI program.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><HR
+ALIGN="LEFT"
+WIDTH="100%"><TABLE
+SUMMARY="Footer navigation table"
+WIDTH="100%"
+BORDER="0"
+CELLPADDING="0"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+><A
+HREF="a4331.html"
+ACCESSKEY="P"
+>Prev</A
+></TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="index.html"
+ACCESSKEY="H"
+>Home</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+><A
+HREF="x4412.html"
+ACCESSKEY="N"
+>Next</A
+></TD
+></TR
+><TR
+><TD
+WIDTH="33%"
+ALIGN="left"
+VALIGN="top"
+>Data file details</TD
+><TD
+WIDTH="34%"
+ALIGN="center"
+VALIGN="top"
+><A
+HREF="a4331.html"
+ACCESSKEY="U"
+>Up</A
+></TD
+><TD
+WIDTH="33%"
+ALIGN="right"
+VALIGN="top"
+>Binary database details</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
