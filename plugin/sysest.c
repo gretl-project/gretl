@@ -740,6 +740,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     double llbak = -1.0e9;
     int single_equation = 0;
     int do_iteration = 0;
+    int r3sls = 0;
     int iters = 0;
     int err = 0;
 
@@ -751,6 +752,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (systype == SYS_OLS || systype == SYS_TSLS) {
 	single_equation = 1;
+    }
+
+    if (nr > 0 && systype == SYS_3SLS) {
+	/* doing 3SLS with restrictions */
+	r3sls = 1;
     }
 
     /* get uniform sample starting and ending points */
@@ -846,7 +852,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	goto print_save;
     }
 
-    if (single_equation) {
+    if (single_equation || r3sls) {
 	gretl_matrix_zero(X);
     } else {
 	err = gretl_invert_symmetric_matrix(sigma);    
@@ -887,7 +893,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    double sij;
 
 	    if (i != j) {
-		if (single_equation) {
+		if (single_equation || r3sls) {
 		    kcol += models[j]->ncoeff;
 		    continue;
 		}
@@ -902,7 +908,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    err = gretl_matrix_multiply_mod(Xi, GRETL_MOD_TRANSPOSE,
 					    Xk, GRETL_MOD_NONE, 
 					    M);
-	    if (single_equation) {
+	    if (single_equation || r3sls) {
 		sij = 1.0;
 	    } else {
 		sij = gretl_matrix_get(sigma, i, j);
@@ -921,7 +927,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	augment_X_with_restrictions(X, mk, sys);
     }
 
-    if (!do_iteration) {
+    if (!do_iteration && !r3sls) {
 	gretl_matrix_free(Xj);
 	Xj = NULL;
 	gretl_matrix_free(M);
@@ -943,7 +949,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    double yv = 0.0;
 	    int lmin = 0, lmax = m;
 
-	    if (single_equation) {
+	    if (single_equation || r3sls) {
 		/* no cross terms wanted */
 		lmin = i;
 		lmax = i + 1;
@@ -958,7 +964,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		for (t=0; t<T; t++) {
 		    xx += gretl_matrix_get(Xi, t, j) * yl[t + pdinfo->t1];
 		}
-		if (single_equation) {
+		if (single_equation || r3sls) {
 		    sil = 1.0;
 		} else {
 		    sil = gretl_matrix_get(sigma, i, l);
@@ -985,6 +991,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     */
     calculate_sys_coefficients(sys, models, (const double **) *pZ, X, 
 			       uhat, y, m, mk);
+
+    if (r3sls) {
+	r3sls = 0;
+	goto iteration_start;
+    }
 
     if (do_iteration) {
 	double ll = sur_ll(sys, uhat, m, T);
