@@ -177,24 +177,26 @@ static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     return printmodel (pmod, pdinfo, prn);
 }
 
-/* ......................................................... */ 
+/* ............................................................. */
 
 static void printfrtf (double zz, PRN *prn, int endrow)
 {
+    /* was using "qr" for right alignment */
+
     if (na(zz)) {
 	if (endrow) {
-	    pprintf(prn, "\\qr %s\\cell\\intbl \\row\n",
+	    pprintf(prn, "\\qc %s\\cell\\intbl \\row\n",
 		    I_("undefined"));
 	} else {
-	    pprintf(prn, "\\qr %s\\cell", I_("undefined"));
+	    pprintf(prn, "\\qc %s\\cell", I_("undefined"));
 	}
 	return;
     }
 
     if (endrow) {
-	pprintf(prn, "\\qr %#*g\\cell\\intbl \\row\n", GRETL_DIGITS, zz);
+	pprintf(prn, "\\qc %#.*g\\cell\\intbl \\row\n", GRETL_DIGITS, zz);
     } else {
-	pprintf(prn, "\\qr %#*g\\cell", GRETL_DIGITS, zz);
+	pprintf(prn, "\\qc %#.*g\\cell", GRETL_DIGITS, zz);
     }
 }
 
@@ -286,19 +288,21 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 static void printftex (double zz, PRN *prn, int endrow)
 {
     if (na(zz)) {
-	if (endrow)
+	if (endrow) {
 	    pprintf(prn, "\\multicolumn{1}{c}{%s}\\\\", I_("undefined"));
-	else
+	} else {
 	    pprintf(prn, "\\multicolumn{1}{c}{%s} & ", I_("undefined"));
+	}
     } else {
 	char s[32];
 
 	tex_dcolumn_double(zz, s);
 
-	if (endrow) 
+	if (endrow) {
 	    pprintf(prn, "%s\\\\", s);
-	else
+	} else {
 	    pprintf(prn, "%s & ", s);
+	}
     }	
 }
 
@@ -389,18 +393,24 @@ void texprint_summary (GRETLSUMMARY *summ,
 
 /* ......................................................... */ 
 
-static void outxx (const double xx, PRN *prn)
+static void tex_outxx (double xx, PRN *prn)
 {
-    if (na(xx)) pprintf(prn, "%s & ", I_("undefined"));
-    else pprintf(prn, "$%.4f$ & ", xx);
+    if (na(xx)) {
+	pprintf(prn, "%s & ", I_("undefined"));
+    } else {
+	pprintf(prn, "$%.4f$ & ", xx);
+    }
 }
 
 /* ......................................................... */ 
 
-static void rtf_outxx (const double xx, PRN *prn)
+static void rtf_outxx (double xx, PRN *prn)
 {
-    if (na(xx)) pprintf(prn, "\\qc %s\\cell ", I_("undefined"));
-    else pprintf(prn, "\\qc %.4f\\cell ", xx);
+    if (na(xx)) {
+	pprintf(prn, "\\qc %s\\cell ", I_("undefined"));
+    } else {
+	pprintf(prn, "\\qc %.4f\\cell ", xx);	
+    }
 }
 
 /* ......................................................... */ 
@@ -495,7 +505,11 @@ rtfprint_matrix (const double *vec, const int *list,
 	    if (pad) rtf_table_pad(pad, prn);
 	    for (k=1; k<=p; k++) {
 		index = ijton(j, nf+k, lo);
-		rtf_outxx(vec[index], prn);
+		if (ci == CORR) {
+		    rtf_outxx(vec[index], prn);
+		} else {
+		    printfrtf(vec[index], prn, 0);
+		}
 	    }
 	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[j]);
 	}
@@ -507,7 +521,11 @@ rtfprint_matrix (const double *vec, const int *list,
 	    ij2 = nf + j;
 	    for (k=j; k<=p; k++) {
 		index = ijton(ij2, nf+k, lo);
-		rtf_outxx(vec[index], prn);
+		if (ci == CORR) {
+		    rtf_outxx(vec[index], prn);
+		} else {
+		    printfrtf(vec[index], prn, 0);
+		}
 	    }
 	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[ij2]);
 	}
@@ -535,7 +553,10 @@ texprint_matrix (const double *vec, const int *list,
     register int i, j;
     int lo, ljnf, nf, li2, p, k, index, ij2;
     char vname[16], tmp[128];
-    enum { FIELDS = 5 };
+    int fields;
+
+    if (ci == CORR) fields = 5;
+    else fields = 4;
 
     lo = list[0];
 
@@ -553,42 +574,63 @@ texprint_matrix (const double *vec, const int *list,
 	sprintf(tmp, I_("5\\%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);
 	pprintf(prn, "%s\\\\\n", tmp);
-	pprintf(prn, "\\vspace{8pt}\n");
     }
     else if (ci == COVAR) {
 	pprintf(prn, "\\begin{center}\n%s\\\\\n", 
 		I_("Coefficient covariance matrix"));
-	pprintf(prn, "\\vspace{8pt}\n");
     }
 
-    pprintf(prn, "\\begin{tabular}{rrr%s}\n",
-	    (lo == 3)? "r" : (lo == 4)? "rr" : "rrr");
+    pprintf(prn, "\\vspace{8pt}\n");
 
-    for (i=0; i<=lo/FIELDS; i++) {
-	nf = i * FIELDS;
+    if (ci == CORR) {
+	pprintf(prn, "\\begin{tabular}{rrr%s}\n",
+		(lo == 3)? "r" : (lo == 4)? "rr" : "rrr");
+    } else {
+	char pt = get_local_decpoint();
+
+	pprintf(prn, "\\begin{tabular}{");
+	for (i=0; i<=lo && i<fields; i++) {
+	    pprintf(prn, "D{%c}{%c}{-1}", pt, pt);
+	}
+	pprintf(prn, "r}\n");
+    }
+
+    for (i=0; i<=lo/fields; i++) {
+	nf = i * fields;
 	li2 = lo - nf;
-	p = (li2 > FIELDS) ? FIELDS : li2;
+	p = (li2 > fields) ? fields : li2;
 	if (p == 0) break;
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
 	    ljnf = list[j + nf];
 	    tex_escape(vname, pdinfo->varname[ljnf]);
-	    pprintf(prn, "%d) %s%s", ljnf, vname,
-		    (j == p)? " &\\\\" : " & ");
+	    if (ci == CORR) {
+		pprintf(prn, "%d) %s%s", ljnf, vname,
+			(j == p)? " &\\\\" : " & ");
+	    } else {
+		pprintf(prn, "\\multicolumn{1}{c}{%d) %s}%s", ljnf, vname,
+			(j == p)? " &\\\\\n" : " &\n");
+	    }
 	}
-	pprintf(prn, "\n");
 	
 	/* insert spacers */
-	for (j=1; j<=p; ++j) 
-	    pprintf(prn, "\\rule{13ex}{0pt} & ");
-	pprintf(prn, "\\\\\[-6pt]\n");    
+	if (ci == CORR) {
+	    for (j=1; j<=p; ++j) {
+		pprintf(prn, "\\rule{13ex}{0pt} & ");
+	    }
+	    pprintf(prn, "\\\\\[-6pt]\n"); 
+	}   
 
 	/* print rectangular part, if any, of matrix */
 	for (j=1; j<=nf; j++) {
 	    for (k=1; k<=p; k++) {
 		index = ijton(j, nf+k, lo);
-		outxx(vec[index], prn);
+		if (ci == CORR) {
+		    tex_outxx(vec[index], prn);
+		} else {
+		    printftex(vec[index], prn, 0);
+		}
 	    }
 	    pprintf(prn, "(%d\\\\\n", list[j]);
 	}
@@ -599,7 +641,11 @@ texprint_matrix (const double *vec, const int *list,
 	    for (k=0; k<j-1; k++) pprintf(prn, " & ");
 	    for (k=j; k<=p; k++) {
 		index = ijton(ij2, nf+k, lo);
-		outxx(vec[index], prn);
+		if (ci == CORR) {
+		    tex_outxx(vec[index], prn);
+		} else {
+		    printftex(vec[index], prn, 0);
+		}
 	    }
 	    pprintf(prn, "(%d\\\\\n", list[ij2]);
 	}
@@ -868,7 +914,7 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);
 	printfrtf(fr->sderr[t], prn, 0);
-	pprintf(prn, "\\qc (%#*g, %#*g)\\cell \\intbl \\row\n", 
+	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell \\intbl \\row\n", 
 		GRETL_DIGITS, fr->fitted[t] - maxerr, 
 		GRETL_DIGITS, fr->fitted[t] + maxerr);
     }
@@ -878,20 +924,127 @@ void rtfprint_fcast_with_errs (const FITRESID *fr,
 
 /* .................................................................. */
 
-void texprint_confints (const CONFINT *cf, 
-			const DATAINFO *pdinfo, 
-			PRN *prn)
+static void 
+texprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
+			 int c, PRN *prn)
 {
-    dummy_call();
+    char vname[16];
+
+    tex_escape(vname, pdinfo->varname[cf->list[c]]);
+    pprintf(prn, " %3d) & %8s & ", cf->list[c], vname);
+
+    if (isnan(cf->coeff[c-1])) {
+	pprintf(prn, "\\multicolumn{1}{c}{%s} & ", I_("undefined"));
+    } else {
+	char coeff[32];
+
+	tex_dcolumn_double(cf->coeff[c-1], coeff);
+	pprintf(prn, "%s & ", coeff);
+    }
+
+    if (isnan(cf->maxerr[c-1])) {
+	pprintf(prn, "\\multicolumn{2}{c}{%s}", I_("undefined"));
+    } else {
+	char lo[32], hi[32];
+
+	tex_dcolumn_double(cf->coeff[c-1] - cf->maxerr[c-1], lo);
+	tex_dcolumn_double(cf->coeff[c-1] + cf->maxerr[c-1], hi);
+	pprintf(prn, "%s & %s", lo, hi);
+    }
+    pprintf(prn, "\\\\\n");
 }
 
 /* .................................................................. */
 
-void rtfprint_confints (const CONFINT *cf, 
-			const DATAINFO *pdinfo, 
+void texprint_confints (const CONFINT *cf, const DATAINFO *pdinfo, 
 			PRN *prn)
 {
-    dummy_call();
+    int i, ncoeff = cf->list[0];
+    char pt = get_local_decpoint();
+
+    pprintf(prn, "$t(%d, .025) = %.3f$\n\n", cf->df, tcrit95(cf->df));
+
+    pprintf(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+
+    pprintf(prn, "\\begin{center}\n"
+	    "\\begin{tabular}{rrD{%c}{%c}{-1}D{%c}{%c}{-1}D{%c}{%c}{-1}}\n",
+	    pt, pt, pt, pt, pt, pt);
+
+    pprintf(prn, " & %s%%\n"
+	    " & \\multicolumn{1}{c}{%s}%%\n"
+	    "  & \\multicolumn{2}{c}{%s}\\\\\n",
+	    I_("Variable"), I_("Coefficient"), I_("95\\% confidence interval"));
+
+    pprintf(prn, " & & & \\multicolumn{1}{c}{%s}%%\n"
+	    "  & \\multicolumn{1}{c}{%s}\\\\\n",
+	    I_("low"), I_("high"));
+
+    if (cf->ifc) {
+	texprint_coeff_interval(cf, pdinfo, ncoeff, prn);
+	ncoeff--;
+    }
+
+    for (i=2; i<=ncoeff; i++) {
+	texprint_coeff_interval(cf, pdinfo, i, prn);
+    }
+
+    pprintf(prn, "\\end{tabular}\n"
+	    "\\end{center}\n");
+}
+
+/* .................................................................. */
+
+static void 
+rtfprint_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
+			 int c, PRN *prn)
+{
+    pprintf(prn, "\\qr %d)\\cell \\qc %s\\cell", cf->list[c], 
+	    pdinfo->varname[cf->list[c]]);
+
+    printfrtf(cf->coeff[c-1], prn, 0);
+
+    if (isnan(cf->maxerr[c-1])) {
+	pprintf(prn, "\\qc %s\\cell ", I_("undefined"));
+    } else {
+	pprintf(prn, "\\qc (%#.*g, %#.*g)\\cell ", 
+		GRETL_DIGITS, cf->coeff[c-1] - cf->maxerr[c-1], 
+		GRETL_DIGITS, cf->coeff[c-1] + cf->maxerr[c-1]);
+    }
+    pprintf(prn, " \\intbl \\row\n");
+}
+
+/* .................................................................. */
+
+#define CF_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                "\\cellx800\\cellx2400\\cellx4000\\cellx7200\n" 
+
+void rtfprint_confints (const CONFINT *cf, const DATAINFO *pdinfo, 
+			PRN *prn)
+{
+    int i, ncoeff = cf->list[0];
+
+    pprintf(prn, "{\\rtf1\\par\n\\qc t(%d, .025) = %.3f\\par\n\\par\n", 
+	    cf->df, tcrit95(cf->df));
+
+    pprintf(prn, "{" CF_ROW "\\intbl ");
+    pprintf(prn, 
+	    " \\qc \\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\intbl \\row\n", 
+	    I_("Variable"), I_("Coefficient"), I_("95% confidence interval"));
+
+    if (cf->ifc) {
+	rtfprint_coeff_interval(cf, pdinfo, ncoeff, prn);
+	ncoeff--;
+    }
+
+    for (i=2; i<=ncoeff; i++) {
+	rtfprint_coeff_interval(cf, pdinfo, i, prn);
+    }
+
+    pprintf(prn, "}}\n");
 }
 
 /* .................................................................. */

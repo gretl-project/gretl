@@ -2041,7 +2041,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	fr->actual[t] = (*pZ)[v1][ft1 + t];
     }
 
-    fr->tval = _tcrit95(pmod->dfd);
+    fr->tval = tcrit95(pmod->dfd);
     strcpy(fr->depvar, pdinfo->varname[v1]);
 
     fr->t1 = ft1;
@@ -2474,7 +2474,7 @@ void free_fit_resid (FITRESID *fr)
 CONFINT *get_model_confints (const MODEL *pmod)
 {
     int i, ncoeff = pmod->list[0];
-    double t = _tcrit95(pmod->dfd);
+    double t = tcrit95(pmod->dfd);
     CONFINT *cf;
 
     cf = malloc(sizeof *cf);

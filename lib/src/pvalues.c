@@ -38,7 +38,7 @@ double _gammadist (double s1, double s2, double x, int control);
 const char negval[] = N_("\nEnter x value (value < 0 will exit menu): "); 
 
 /**
- * _tcrit95:
+ * tcrit95:
  * @df: degrees of freedom.
  * 
  * Returns: the 95 percent critical value for the t distribution
@@ -46,7 +46,7 @@ const char negval[] = N_("\nEnter x value (value < 0 will exit menu): ");
  *
  */
 
-double _tcrit95 (int df)
+double tcrit95 (int df)
 {
     return stdtri(df, 0.975);
 }

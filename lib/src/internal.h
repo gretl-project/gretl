@@ -95,8 +95,6 @@ int _full_model_list (MODEL *pmod, int **plist);
 
 void _init_model (MODEL *pmod, const DATAINFO *pdinfo);
 
-double _tcrit95 (int df);
-
 int _ztoxy (int v1, int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, double **Z);
 

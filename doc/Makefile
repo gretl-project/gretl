@@ -1,3 +1,12 @@
+# location of various things
+
+XSLDIR = /usr/share/sgml/docbook-xsl
+XMLDCL = /opt/jade/share/xml.dcl
+JADE = jade
+SAXON = saxon
+CONVERT = convert # from ImageMagick suite
+HHC = wine "c:/Program Files/HTML Help Workshop/hhc.exe"
+
 DOC = manual
 SRC = $(DOC).xml
 DSL = $(DOC)-both.dsl
@@ -6,8 +15,6 @@ ALTSRC = $(ALTDOC).xml
 ALTDSL = manual-a4.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
-XSLDIR = /usr/share/sgml/docbook-xsl
-XMLDCL = /opt/jade/share/xml.dcl
 HTMLDIR = $(DOC)-html
 
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
@@ -36,12 +43,12 @@ altthumbs: $(ALTSRC) $(CHAPTERS)
 	thumbpdf $(ALTDOC)
 
 $(DOC).tex: $(SRC) $(CHAPTERS) $(DSL) $(MATHSS)
-	jade -t tex -d $(DSL)\#print $(XMLDCL) $(SRC)
+	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $(SRC)
 	./unescape_math.pl $(DOC).tex
 
 $(ALTDOC).tex: $(ALTSRC) $(CHAPTERS) $(ALTDSL) $(MATHSS)
 	echo "Running jade on $(ALTSRC)"
-	jade -t tex -d $(ALTDSL)\#print $(XMLDCL) $(ALTSRC)
+	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $(ALTSRC)
 	echo "Unescaping math in $(ALTDOC).tex"
 	./unescape_math.pl $(ALTDOC).tex
 
@@ -60,10 +67,10 @@ topdoc = .
 chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml 
 	mkdir -p htmlhelp/figures
 	cp $(topdoc)/figures/*.png htmlhelp/figures
-	for f in htmlhelp/figures/*.png ; do convert $$f $${f%.png}.gif ; done
+	for f in htmlhelp/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
 	cd htmlhelp && \
-	saxon ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl tex.math.in.alt=latex
-	wine "c:/Program Files/HTML Help Workshop/hhc.exe" htmlhelp/gretl.hhp
+	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl tex.math.in.alt=latex
+	$(HHC) htmlhelp/gretl.hhp
 
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex

@@ -27,6 +27,8 @@ double chisq (double x, int df);
 
 double normal (double x);
 
+double tcrit95 (int df);
+
 double rhocrit95 (int n);
 
 double batch_pvalue (const char *str, 

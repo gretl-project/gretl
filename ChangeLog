@@ -2,8 +2,11 @@ version 1.0.3
 - further fix to pathnames with .Rprofile for win32
 - LaTeX view: fix for dvi file living in a directory with
   spaces in its name on win32
+- Add option to copy as LaTeX or RTF for the various "Model data"
+  windows (e.g. forecasts with standard errors)
 - Reorganize management of win32 registry entries
-- Add tramo/seats for win32 version
+- Add tramo/seats for win32 version, and make tramo support the
+  default for Linux
 - In window displaying a single data, add menu options to show 
   the series sorted, to graph the variable, and to format the data 
   values to a specified number of significant digits or decimal places
