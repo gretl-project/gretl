@@ -3,8 +3,9 @@
 DB_STYLESHEET=../gretl-both.dsl\#html
 HTML_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.74b/frames/docbook.css
 ADMON_GRAPHICS=/usr/share/sgml/docbook-dsssl-1.74b/images/*.gif
+XMLDCL=/opt/jade/share/xml.dcl
 
-output=db2html-dir
+output="manual-html"
 TMPDIR=DBTOHTML_OUTPUT_DIR$$
 
 echo TMPDIR is $TMPDIR
@@ -25,7 +26,7 @@ then
   if echo $1 | egrep -i '\.sgml' >/dev/null 2>&1
   then
     # now make sure that the output directory is always a subdirectory
-    # of hte current directory
+    # of the current directory
     echo
     input_file=`basename $1`
     output="`echo $input_file | sed 's,\.xml$,,;s,\.sgml$,,'`"
@@ -34,18 +35,14 @@ then
   fi
 fi
 
-# we used to generate a single file, but with the modular DB_STYLESHEETs
-# it's best to make a new directory with several html files in it
-#cat $* | jade -d $DB_STYLESHEET -t sgml -V nochunks > $TMPFN
-
 mkdir $TMPDIR
 SAVE_PWD=`pwd`
 if [ $1 = `basename $1` ]; then
   echo "working on ../$1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} ../$1; cd $SAVE_PWD)
+  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $XMLDCL ../$1; cd $SAVE_PWD)
 else
   echo "working on $1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $1; cd $SAVE_PWD)
+  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $XMLDCL $1; cd $SAVE_PWD)
 fi
 
 if [ $# -eq 1 ]

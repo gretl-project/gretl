@@ -1,6 +1,4 @@
-
-<?PSGML NOFILL programlisting example informalequation>
-
+<?PSGML NOFILL programlisting example informalequation?>
 
   <chapter id="cmdref"><title>Command Reference</title>
 
@@ -164,9 +162,7 @@
 	  exhibits a unit root. The first is a
 	  <emphasis>t</emphasis>-test based on the model 
 	  <informalequation>
-	    <alt>
-	      \[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]
-	    </alt>
+	    <alt role="tex">\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]</alt>
 		<graphic fileref="figures/adf1.png"/>
 	  </informalequation>
 	  The null hypothesis is that
@@ -177,9 +173,7 @@
 	  first difference) and a restricted version (dropping the
 	  time trend and the first lag).  The test statistic is
 	  <informalequation>
-	    <alt>
-	      \[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]
-	    </alt>
+	    <alt role="tex">\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]</alt>
 		<graphic fileref="figures/adf2.png"/>
 	  </informalequation>
 	  where <emphasis>T</emphasis> is the sample size,
@@ -224,10 +218,8 @@
 	a list of lags in the residuals, terminated by a semicolon. In
 	the above example, the error term is specified as 
 	<informalequation>
-	  <alt>
-	    \[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
-	    e_t\]
-	  </alt>
+	  <alt role="tex">\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
+	    e_t\]</alt>
 	  <graphic fileref="figures/corc.png"/>
 	</informalequation>
 	<replaceable>depvar</replaceable> is the dependent variable
@@ -274,9 +266,7 @@
 	any observation in the auxiliary regression is not positive,
 	then the corresponding 
 	<inlineequation>
-	  <alt>
-	    $\hat{u}^2$
-	  </alt>
+	  <alt role="tex">$\hat{u}^2$</alt>
 	  <graphic align="center" fileref="figures/uhatsq.png"/>
         </inlineequation> is used instead. Weighted
 	least square estimation is then performed on the original
@@ -474,7 +464,7 @@
 	<replaceable>variable</replaceable> specified (either by name
 	or number).  See Ramanathan, Section 11.7.  It is thus
 	<inlineequation>
-	  <alt>$\rho(u_t, u_{t-s})$</alt>
+	  <alt role="tex">$\rho(u_t, u_{t-s})$</alt>
 	  <graphic align="center" fileref="figures/autocorr.png"/>
 	</inlineequation> where 
 	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> is the
@@ -1048,7 +1038,7 @@
 	<entry><command>genr y = cum(x)</command></entry>
 	<entry>cumulation: 
 	  <inlineequation>
-	   <alt>$y_t = \sum_{\tau=1}^t x_{\tau}$</alt>
+	   <alt role="tex">$y_t = \sum_{\tau=1}^t x_{\tau}$</alt>
 	   <graphic align="center" fileref="figures/cumulate.png"/>
 	  </inlineequation>
 	</entry>
@@ -1420,12 +1410,12 @@
 	  y</command> creates the new variables
 	<varname>ld_x</varname> =
 	  <inlineequation>
-	    <alt>$\ln(x_t) - \ln(x_{t-1})$</alt>
+	    <alt role="tex">$\ln(x_t) - \ln(x_{t-1})$</alt>
 		<graphic align="center" fileref="figures/ldx.png"/>
 	  </inlineequation> and
 	<varname>ld_y</varname> =
 	  <inlineequation>
-	    <alt>$\ln(y_t) - \ln(y_{t-1})$</alt>
+	    <alt role="tex">$\ln(y_t) - \ln(y_{t-1})$</alt>
 		<graphic align="center" fileref="figures/ldy.png"/>
 	  </inlineequation>.
       </para>
@@ -1881,7 +1871,7 @@ linkend="looping"/> for details.
 	  <literal>-o</literal> flag the sample periodogram is given;
 	  with the flag a Bartlett lag window of length 
 	  <inlineequation>
-	  <alt>$2\sqrt{T}$</alt>
+	  <alt role="tex">$2\sqrt{T}$</alt>
 	  <graphic align="center" fileref="figures/bartlett.png"/>
 	  </inlineequation>
 	  (where <emphasis>T</emphasis> is the sample size).  is used
@@ -3022,6 +3012,7 @@ linkend="looping"/> for details.
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: sgml
-sgml-parent-document:("../manual.sgml" "book" "chapter")
+sgml-parent-document:("../manual.xml" "book" "chapter")
 End:
 -->
+

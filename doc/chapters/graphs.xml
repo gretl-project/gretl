@@ -134,8 +134,9 @@ outliers = true
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
 sgml-default-dtd-file:"../manual.ced"
-sgml-parent-document:("../manual.sgml" "book" "chapter")
+mode: sgml
+sgml-parent-document:("../manual.xml" "book" "chapter")
 End:
 -->
+

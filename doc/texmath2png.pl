@@ -4,9 +4,10 @@ use strict;
 $^W=1; # turn warning on
 
 my @figfiles;
-my ($line, $eqn, $foo, $figfile);
+my ($line, $eqn, $figfile);
 my ($i, $n, $match);
 my ($opt, $den, $pkg);
+my $den_dflt = "96x96";
 my $textmp = "./eqntmp";
 
 sub usage
@@ -46,49 +47,29 @@ sub printtex {
     system ("convert -density $den $textmp.eps $figfile");
     system ("rm -f $textmp.*");
 }
-sub get_latexopt {
-    $opt = $line;
-    $line = <DOC>;
-    $opt = $opt . $line;
-    if ($opt =~ /\<latexopt\s*\>\s*((?:.|\s)*)<\/latexopt/) {
-	$opt = $1;
-	print "Got LaTeX option: '" . $opt . "'\n";
-    }
-}
-
-sub get_density {
-    $den = $line;
-    $line = <DOC>;
-    $den = $den . $line;
-    if ($den =~ /\<density\s*\>\s*((?:.|\s)*)<\/density/) {
-	$den = $1;
-	print "Got image density spec: '" . $den . "'\n";
-    }
-}
-
-sub get_package {
-    $pkg = $line;
-    $line = <DOC>;
-    $pkg = $pkg . $line;
-    if ($pkg =~ /\<usepackage\s*\>\s*((?:.|\s)*)<\/usepackage/) {
-	$pkg = $1;
-	print "Got package call: '" . $pkg . "'\n";
-    }
-}
 
 if (@ARGV == 0) { &usage; }
 my $doc = $ARGV[0];
 
 open (DOC, "<$doc") || die "Can't open $doc";
 
-$den = "96x96";
+$den = $den_dflt;
 $opt = undef;
 $pkg = undef;
 
 while ($line = <DOC>) {
-    if ($line =~ /\<latexopt/) { get_latexopt(); }
-    if ($line =~ /\<density/) { get_density(); }
-    if ($line =~ /\<usepackage/) { get_package(); }
+    if ($line =~ /latexopt="(\S+)"/) { 
+	$opt = $1; 
+	print "got LaTeX document option $opt\n";
+    }
+    if ($line =~ /density="(\S+)"/) { 
+	$den = $1;
+	print "got density specification $den\n";
+    }
+    if ($line =~ /usepackage="(\S+)"/) { 
+	$pkg = $1; 
+	print "got usepackage line $pkg\n";
+    }
     if ($line =~ /\<texequation/) { 
 	$eqn = $line;
 	while ($line !~ /\<\/texequation/) {

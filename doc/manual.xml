@@ -1,4 +1,7 @@
-<!DOCTYPE Book PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+          "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
+
 <!ENTITY version "0.97">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
@@ -6,20 +9,20 @@
 <!ENTITY cmdcol "82pt">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
 <!ENTITY chisq SYSTEM "chisqu.def">
-<!ENTITY intro SYSTEM "chapters/intro.sgml">
-<!ENTITY starting SYSTEM "chapters/starting.sgml">
-<!ENTITY menus SYSTEM "chapters/menus.sgml">
-<!ENTITY modes SYSTEM "chapters/modes.sgml">
-<!ENTITY datafiles SYSTEM "chapters/datafiles.sgml">
-<!ENTITY panel SYSTEM "chapters/panel.sgml">
-<!ENTITY graphs SYSTEM "chapters/graphs.sgml">
-<!ENTITY looping SYSTEM "chapters/looping.sgml">
-<!ENTITY optarg SYSTEM "chapters/optarg.sgml">
-<!ENTITY cmdref SYSTEM "chapters/cmdref.sgml">
-<!ENTITY trouble SYSTEM "chapters/trouble.sgml">
-<!ENTITY cli SYSTEM "chapters/cli.sgml">
-<!ENTITY nist SYSTEM "chapters/nist.sgml">
-<!ENTITY appendices SYSTEM "chapters/appendices.sgml">
+<!ENTITY intro SYSTEM "chapters/intro.xml">
+<!ENTITY starting SYSTEM "chapters/starting.xml">
+<!ENTITY menus SYSTEM "chapters/menus.xml">
+<!ENTITY modes SYSTEM "chapters/modes.xml">
+<!ENTITY datafiles SYSTEM "chapters/datafiles.xml">
+<!ENTITY panel SYSTEM "chapters/panel.xml">
+<!ENTITY graphs SYSTEM "chapters/graphs.xml">
+<!ENTITY looping SYSTEM "chapters/looping.xml">
+<!ENTITY optarg SYSTEM "chapters/optarg.xml">
+<!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
+<!ENTITY trouble SYSTEM "chapters/trouble.xml">
+<!ENTITY cli SYSTEM "chapters/cli.xml">
+<!ENTITY nist SYSTEM "chapters/nist.xml">
+<!ENTITY appendices SYSTEM "chapters/appendices.xml">
 ]>
 
 <!-- =============Document Header ============================= -->

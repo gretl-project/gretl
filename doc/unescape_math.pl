@@ -1,6 +1,7 @@
-#!/usr/bin/perl
-
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}' && eval 'exec perl -S $0 $argv:q'
+  if 0;
 use strict;
+$^W=1; # turn warning on
 
 my $line;
 my $textmp = "./tmp.tex";
@@ -38,12 +39,16 @@ sub unescape {
 
 while ($line = <MAN>) {
     $begin = 0;
-    if ($line =~ s/BEGINTEXMATH//) {
+    if ($line =~ /{}BEGINTEXLITERAL/) {
+	$line =~ s/BEGINTEXLITERAL//;
         $inmath = 1;
 	$begin = 1;
     }
-    if ($line =~ s/ENDTEXMATH//) {
-        $inmath = 0;
+    if ($line =~ /ENDTEXLITERAL/) {
+        if ($inmath) {
+	    $line =~ s/ENDTEXLITERAL//;
+	    $inmath = 0;
+	}
     }    
     if ($inmath || $begin) {
 	unescape();
