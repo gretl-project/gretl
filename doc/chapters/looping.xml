@@ -125,7 +125,7 @@
 
     </sect2>
 
-    <sect2 id="loop-each"><title><quote>For each</quote> loop</title>
+    <sect2 id="loop-each"><title>For each loop</title>
 
       <para>The fourth form of loop control also uses the internal
 	variable <varname>i</varname>, but in this case the variable
@@ -194,8 +194,7 @@
 
   </sect1>
 
-  <sect1 id="loop-progressive"><title><quote>Progressive</quote>
-      mode</title>
+  <sect1 id="loop-progressive"><title>Progressive mode</title>
 
     <para>If the <literal>--progressive</literal> option is given for
       a command loop, the effects of the commands <command>ols</command>,
