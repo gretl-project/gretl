@@ -1639,7 +1639,18 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 	    errbox(_("Error unzipping compressed data"));
 	}
     } else {
-	infobox(_("database installed"));
+	/* installed OK: give option of opening database now */
+        int resp = yes_no_dialog ("gretl",                      
+                                  _("Database installed.\n"
+                                    "Open it now?"), 0);
+
+        if (resp == GRETL_YES) { 
+	    char dbpath[MAXLEN];
+	    
+	    strcpy(dbpath, ggzname);
+	    strcpy(strrchr(dbpath, '.'), ".bin");
+	    open_named_db_clist(dbpath);
+        }
 	populate_filelist(mydata);
     }
 

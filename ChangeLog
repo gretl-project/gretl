@@ -6,6 +6,8 @@ version 1.0.7
 - In GUI program, display Hildreth-Lu plot using gnuplot
 - Translate a few more untranslated strings
 - Fix bug in title of residual graph
+- When the user installs a local copy of a remote database,
+  give the option of opening it right away
 
 03/16/03 version 1.0.6
 - minor adjustment to model print output formatting
