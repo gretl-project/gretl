@@ -61,6 +61,8 @@ int ok_in_loop (int ci)
 	ci == PVALUE ||
 	ci == SMPL ||
 	ci == SUMMARY ||
+	ci == IF ||
+	ci == ENDIF ||
 	ci == ENDLOOP) 
 	return 1;
     return 0;
@@ -575,7 +577,10 @@ int add_to_loop (LOOPSET *ploop, char *line, const int ci,
     ploop->lines[i] = malloc(MAXLEN);
     if (ploop->lines[i] == NULL) return E_ALLOC;
     top_n_tail(line);
-    ploop->ci[i] = ci;
+    if (ci == PRINT && ploop->type != COUNT_LOOP)
+	ploop->ci[i] = 0;
+    else
+	ploop->ci[i] = ci;
     strncpy(ploop->lines[i], line, MAXLEN - 4);
     if (opt) {
 	char flagstr[4];

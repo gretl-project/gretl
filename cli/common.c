@@ -28,6 +28,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     char linecpy[MAXLEN];
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
+    static int if_skip;
 
     strcpy(linecpy, plp->lines[cmdnum]);
     catchflag(linecpy, &oflag);
@@ -41,7 +42,18 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     if (!echo_off && plp->type == FOR_LOOP)
 	echo_cmd(&command, datainfo, linecpy, 0, 1, oflag, prn);
 
+    if (if_skip && command.ci != ENDIF) return 0;
+
     switch (command.ci) {
+
+    case IF:
+        if_skip = !(if_eval(linecpy, Z, datainfo));
+        if (if_skip < 0) return 1;
+        break;
+
+    case ENDIF:
+        if_skip = 0;
+        break;
 
     case GENR:
 	{
@@ -115,6 +127,11 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	break;
 
     case PRINT:
+	if (strlen(command.param)) {
+	    simple_commands(&command, linecpy, &Z, datainfo, &paths,
+			    0, oflag, prn);
+	    break;
+	}
 	if (plp->type != COUNT_LOOP) {
 	    printdata(command.list, &Z, datainfo, 0, oflag, prn);
 	    break;
