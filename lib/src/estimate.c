@@ -54,16 +54,16 @@ typedef struct {
 } CHOLBETA;
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
-			const int c, PRN *prn);
+			int c, PRN *prn);
 extern int _addtolist (const int *oldlist, const int *addvars, 
 		       int **pnewlist, const DATAINFO *pdinfo, 
-		       const int model_count);
+		       int model_count);
 
 /* private function prototypes */
 static XPXXPY xpxxpy_func (const int *list, int t1, int t2, 
 			   double **Z, int nwt, double rho);
 static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
-		     int n, const double rho);
+		     int n, double rho);
 static CHOLBETA cholbeta (XPXXPY xpxxpy);
 static void diaginv (XPXXPY xpxxpy, double *diag);
 static double dwstat (int order, MODEL *pmod, double **Z);
@@ -120,6 +120,45 @@ static int reorganize_uhat_yhat (MODEL *pmod)
     return 0;
 }
 
+static int ar_info_init (MODEL *pmod, int nterms)
+{
+    int i;
+
+    pmod->arinfo = malloc(sizeof *pmod->arinfo);
+    if (pmod->arinfo == NULL) return 1;
+
+    pmod->arinfo->arlist = malloc(nterms * sizeof(int));
+    if (pmod->arinfo->arlist == NULL) {
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
+	return 1; 
+    }
+
+    pmod->arinfo->rho = malloc(nterms * sizeof(double));
+    if (pmod->arinfo->rho == NULL) {
+	free(pmod->arinfo->arlist);
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
+	return 1; 
+    }
+
+    pmod->arinfo->sderr = malloc(nterms * sizeof(double));
+    if (pmod->arinfo->sderr == NULL) {
+	free(pmod->arinfo->arlist);
+	free(pmod->arinfo->rho);
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
+	return 1; 
+    }
+
+    for (i=0; i<nterms; i++) {
+	pmod->arinfo->arlist[i] = 0;
+	pmod->arinfo->sderr[i] = pmod->arinfo->rho[i] = NADBL;
+    }
+
+    return 0;
+}
+
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
@@ -136,7 +175,7 @@ static int reorganize_uhat_yhat (MODEL *pmod)
  */
 
 MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo, 
-	   const int ci, const int opt, const double rho)
+	   int ci, int opt, double rho)
 {
     int l0, ifc, nwt, yno, i, n;
     int t, t1, t2, v, order, effobs = 0;
@@ -280,14 +319,12 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* Doing an autoregressive procedure? */
     if (ci == CORC || ci == HILU) {
-	model.arlist = malloc(2 * sizeof(int));
-	model.rhot = malloc(2 * sizeof(double));
-	if (model.arlist == NULL || model.rhot == NULL) {
+	if (ar_info_init (&model, 2)) {
 	    model.errcode = E_ALLOC;
 	    return model;
 	}
-	model.arlist[0] = model.arlist[1] = 1;
-	model.rhot[1] = model.rho_in = rho;
+	model.arinfo->arlist[0] = model.arinfo->arlist[1] = 1;
+	model.arinfo->rho[1] = model.rho_in = rho;
 	if (model.ifc) {
 	    model.coeff[model.ncoeff] /= (1.0 - rho);
 	    model.sderr[model.ncoeff] /= (1.0 - rho);
@@ -474,16 +511,16 @@ static XPXXPY xpxxpy_func (const int *list, int t1, int t2,
         for (t=t1; t<=t2; t++) xx += Z[yno][t] * Z[li][t];
         xpxxpy.xpy[i-1] = xx;
     }
+
     xpxxpy.ivalue = 0;
-/*      for (i=1; i<=m; i++)  */
-/*  	printf("xpx[%d] = %10.18f\n", i, xpxxpy.xpx[i]); */
+
     return xpxxpy; 
 }
 
 /* .......................................................... */
 
 static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
-		     int n, const double rho)
+		     int n, double rho)
 /*
         This function takes xpx, the X'X matrix ouput
         by xpxxpy_func(), and xpy, which is X'y, and
@@ -595,33 +632,7 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
     if (sgmasq <= 0.0 || pmod->dfd == 0) pmod->fstt = NADBL;
     else pmod->fstt = (rss - zz * pmod->ifc)/(sgmasq * pmod->dfn);
 
-    /* special treatment for weighted least squares (Ramanathan) */
-#ifdef RAMANATHAN
-    if (nwt && !(pmod->wt_dummy)) {
-	int wobs = nobs;
-	double *altyhat;
-
-	altyhat = malloc(n * sizeof(double));
-	zz = 0.0;
-	for (t=pmod->t1; t<=pmod->t2; t++) { 
-	    if (Z[nwt][t] == 0) {
-		altyhat[t] = NADBL;
-		wobs--;
-		pmod->dfd -= 1;
-	    } else {
-		zz += pmod->yhat[t] * pmod->yhat[t];
-		altyhat[t] = pmod->yhat[t] / Z[nwt][t];
-	    }
-	}
-	pmod->dfn += 1;
-	pmod->fstt = (zz * pmod->dfd)/(pmod->dfn * ess);
-	pmod->rsq = corrrsq(nobs, &Z[yno][pmod->t1], altyhat + pmod->t1);
-	pmod->adjrsq = 
-           1 - ((1 - pmod->rsq)*(wobs - 1)/pmod->dfd);
-	free(altyhat);
-    }
-#else
-    /* alternative calculation of WLS stats, in agreement with GNU R */
+    /* Calculation of WLS stats in agreement with GNU R */
     if (nwt && !(pmod->wt_dummy)) {
 	int wobs = nobs;
 	double w2, wmean = 0.0, wsum = 0.0;
@@ -647,13 +658,13 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
 	pmod->rsq = (1 - (ess/zz));
 	pmod->adjrsq = 1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
     }
-#endif /* RAMANATHAN */
 
     diag = malloc((nv+1) * sizeof *diag); 
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
 	return;
     }
+
     diaginv(xpxxpy, diag);
     for (v=1; v <= nv; v++) { 
        pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
@@ -849,15 +860,23 @@ int makevcv (MODEL *pmod)
     }
 
     if (pmod->ci == CUSUM) return 0;
+
     if ((pmod->ci == WLS && !(pmod->wt_dummy)) || 
-	pmod->ci == ARCH || pmod->ci == HSK) sigma = pmod->sigma_wt;
-    else sigma = pmod->sigma; 
+	pmod->ci == ARCH || pmod->ci == HSK) {
+	sigma = pmod->sigma_wt;
+    } else {
+	sigma = pmod->sigma; 
+    }
+
     /* some estimators need special treatment */
-    if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) 
+    if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) {
 	for (k=0; k<idxpx; k++) pmod->vcv[k] = 
 				    pmod->vcv[k+1] * sigma * sigma;
-    if (pmod->ci == LOGIT || pmod->ci == PROBIT) 
+    }
+
+    if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	for (k=0; k<idxpx; k++) pmod->vcv[k] = pmod->vcv[k+1];
+    }
 
     if ((pmod->ci == CORC || pmod->ci == HILU) && pmod->ifc) {
 	d = 1.0/(1.0 - pmod->rho_in);
@@ -934,7 +953,7 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
 
 /* .........................................................   */
 
-static double altrho (const int order, int t1, int t2, const double *uhat)
+static double altrho (int order, int t1, int t2, const double *uhat)
 /* alternative calculation of rho */
 {
     double *ut, *ut1;    
@@ -1026,7 +1045,7 @@ static void dropwt (int *list)
  */
 
 int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo, 
-	       const int opt, PRN *prn)
+	       int opt, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
     double finalrho = 0, ess = 0, essmin = 0, ssr[22], rh[22]; 
@@ -1085,6 +1104,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     pprintf(prn, "                 ITER       RHO        ESS\n");
+
     while (diff > 0.001) {
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
@@ -1103,6 +1123,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	rho0 = rho;
 	if (iter == 20) break;
     }
+
     pprintf(prn, _("                final %11.5f\n\n"), rho);
     free(uhat);
     clear_model(&corc_model, pdinfo);
@@ -1120,9 +1141,12 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	xx = Z[i][t];
-	for (v=1; v<=pmod->ncoeff - pmod->ifc; v++)
+	for (v=1; v<=pmod->ncoeff - pmod->ifc; v++) {
 	    xx -= pmod->coeff[v] * Z[pmod->list[v+1]][t];
-	if (pmod->ifc) xx -= pmod->coeff[pmod->ncoeff] / pmod->dw;
+	}
+	if (pmod->ifc) {
+	    xx -= pmod->coeff[pmod->ncoeff] / pmod->dw;
+	}
 	uhat[t] = xx;
     }
 }
@@ -1141,8 +1165,7 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (LIST list, const int pos, double ***pZ, 
-		 DATAINFO *pdinfo)
+MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, t, v, ncoeff, *list1, *list2, *newlist, *s1list, *s2list;
     int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
@@ -1314,6 +1337,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     tsls.dw = dwstat(0, &tsls, *pZ);
 
     tsls.ci = TSLS;
+
     /* put the original list back */
     for (i=2; i<=list1[0]; i++) tsls.list[i] = list1[i];
     /* put the yhats into the model */
@@ -1454,6 +1478,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	free(uhat1);
 	return hsk;
     }
+
     /* "hsklist" will be one variable longer than the original
        regression list, because it includes a weight variable */
     hsklist[0] = lo + 1;
@@ -1556,19 +1581,23 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	    p[i][t] = xx;
 	}
     }
+
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
 	for (i=1; i<=ncoeff; i++) xx += (*pZ)[list[i+1]][t] * p[i][t];
 	if (floateq(xx, 1.0)) xx = 0.0;
 	uhat1[t] = hccm.uhat[t] / (1 - xx);
     }
+
     for (i=1; i<=ncoeff; i++) {
 	xx = 0.0;
 	for (t=t1; t<=t2; t++) xx += p[i][t] * uhat1[t];
 	st[i] = xx;
     }
-    for (t=t1; t<=t2; t++) 
+
+    for (t=t1; t<=t2; t++) {
 	for (i=1; i<=ncoeff; i++) p[i][t] *= uhat1[t];
+    }
 
     index = 1;
     for (i=1; i<=ncoeff; i++) {
@@ -1720,7 +1749,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_func (LIST list, const int pos, double ***pZ, 
+MODEL ar_func (LIST list, int pos, double ***pZ, 
 	       DATAINFO *pdinfo, int *model_count, PRN *prn)
 {
     double diff = 100.0, ess = 0, tss = 0, xx;
@@ -1749,8 +1778,10 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     
     arlist[0] = pos - 1;
     for (i=1; i<pos; i++) arlist[i] = list[i];
+
     reglist2[0] = reglist[0] = list[0] - pos;
-    for (i=1; i<=reglist[0]; i++) reglist[i] = list[i+pos];
+    for (i=1; i<=reglist[0]; i++) reglist[i] = list[i + pos];
+
     rholist[0] = arlist[0] + 1;
     p = arlist[arlist[0]];
     /*  printf("arlist:\n"); printlist(arlist); */
@@ -1782,12 +1813,14 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 
     /*  rearrange(reglist); */ 
     yno = reglist[1];
+
     /* first pass: estimate model via OLS */
     ar = lsq(reglist, pZ, pdinfo, OLS, 0, 0.0);
     if (ar.errcode) {
 	free(reglist);	
 	return ar;
     }
+
     t1 = ar.t1; t2 = ar.t2;
     rholist[1] = v;
 
@@ -1822,9 +1855,6 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 
 	/* and rho-transform the data */
 	for (i=1; i<=reglist[0]; i++) {
-/*  	    printf("i = %d, vc = %d, t1 = %d\n" */
-/*  		   "using var %d, setting var %d\n", */
-/*  		   i, vc, t1, reglist[i], vc); */
 	    for (t=0; t<n; t++) (*pZ)[vc][t] = NADBL;
 	    for (t=t1+p; t<=t2; t++) {
 		xx = (*pZ)[reglist[i]][t];
@@ -1849,7 +1879,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 	if (iter > 1) pprintf(prn, "%13.3f\n", diff);
 	else pprintf(prn, "%15s\n", _("undefined")); 
 	if (iter == 20) break;
-    } /* end loop */
+    } /* end "ess changing" loop */
 
     for (i=0; i<=reglist[0]; i++) ar.list[i] = reglist[i];
     ar.ifc = _hasconst(reglist);
@@ -1857,16 +1887,6 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     ar.ci = AR;
     *model_count += 1;
     ar.ID = *model_count;
-    printmodel(&ar, pdinfo, prn);
-
-    pprintf(prn, "%s:\n\n", _("Estimates of the AR coefficients"));
-    xx = 0.0;
-    for (i=1; i<=arlist[0]; i++) {
-	_print_rho(arlist, &rhomod, i, prn);
-	xx += rhomod.coeff[i];
-    }
-    pprintf(prn, "\n%s = %#g\n\n", _("Sum of AR coefficients"), xx);
-    ar.rho_in = xx;
 
     /* special computation of fitted values */
     for (t=t1; t<=t2; t++) {
@@ -1878,14 +1898,13 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 	    if (t - t1 >= arlist[j]) 
 		xx += rhomod.coeff[j] * ar.uhat[t - arlist[j]];
 	ar.yhat[t] = xx;
-	/*  printf("yhat[%d] = %f\n", t, ar.yhat[t]); */
     }
 
-    for (t=t1; t<=t2; t++) 
+    for (t=t1; t<=t2; t++) { 
 	ar.uhat[t] = (*pZ)[yno][t] - ar.yhat[t];
+    }
     ar.rsq = corrrsq(ar.nobs, &(*pZ)[reglist[1]][ar.t1], ar.yhat + ar.t1);
-    ar.adjrsq = 
-	1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
+    ar.adjrsq = 1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
     /*  ar.fstt = ar.rsq*ar.dfd/(ar.dfn*(1 - ar.rsq)); */
 
     /* special computation of TSS */
@@ -1897,21 +1916,23 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     ar.dw = dwstat(p, &ar, *pZ);
     ar.rho = rhohat(p, ar.t1, ar.t2, ar.uhat);
 
-    _print_ar(&ar, prn);
-
     dataset_drop_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo);
     free(reglist);
     free(reglist2);
     free(rholist);
 
-    ar.rhot = malloc((1 + p) * sizeof(double));
-    if (ar.rhot == NULL) ar.errcode = E_ALLOC;
-    else {
-	for (i=1; i<=arlist[0]; i++) 
-	    ar.rhot[i] = rhomod.coeff[i];
+    if (ar_info_init (&ar, 1 + p)) {
+	ar.errcode = E_ALLOC;
+    } else {
+	for (i=0; i<=arlist[0]; i++) { 
+	    ar.arinfo->arlist[i] = arlist[i];
+	    ar.arinfo->rho[i] = rhomod.coeff[i];
+	    ar.arinfo->sderr[i] = rhomod.sderr[i];
+	}
     }
-    ar.arlist = NULL;
-    copylist(&(ar.arlist), arlist);
+
+    printmodel(&ar, pdinfo, prn);    
+
     free(arlist);
     clear_model(&rhomod, pdinfo);
     return ar;

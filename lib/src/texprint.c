@@ -86,8 +86,8 @@ void tex_dcolumn_double (double xx, char *numstr)
     }
 }
 
-static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			     int c, PRN *prn)
+int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+		      int c, PRN *prn)
 {
     char tmp[16], coeff[32], sderr[32];
     double t_ratio = pmod->coeff[c-1] / pmod->sderr[c-1];
@@ -108,6 +108,8 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    sderr,
 	    t_ratio,
 	    tprob(t_ratio, pmod->dfd));	
+
+    return 0;
 }
 
 /* ......................................................... */
@@ -218,100 +220,6 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* stats printing functions */
-
-static void tex_depvarstats (const MODEL *pmod, PRN *prn,
-			     char *x1str, char *x2str)
-{
-    tex_dcolumn_double(pmod->ybar, x1str);
-    tex_dcolumn_double(pmod->sdy, x2str);
-    pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
-	    I_("Mean of dependent variable"), x1str,
-	    I_("S.D. of dependent variable"), x2str);
-} 
-
-static void tex_essline (const MODEL *pmod, PRN *prn,
-			 char *x1str, char *x2str)
-{
-    tex_dcolumn_double(pmod->ess, x1str);
-    tex_dcolumn_double(pmod->sigma, x2str);
-    pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\sigma}$) & %s \\\\\n",
-	    I_("Sum of squared residuals"), x1str,
-	    I_("Standard error of residuals"), x2str);
-} 
-
-static void tex_rsqline (const MODEL *pmod, PRN *prn,
-			 char *x1str, char *x2str)
-{
-    tex_dcolumn_double(pmod->rsq, x1str);
-    tex_dcolumn_double(pmod->adjrsq, x2str);
-    pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
-	    I_("Unadjusted $R^2$"), x1str, 
-	    I_("Adjusted $\\bar{R}^2$"), x2str);
-} 
-
-static void tex_fline (const MODEL *pmod, PRN *prn,
-		       char *x1str, char *x2str)
-{
-    tex_dcolumn_double(pmod->fstt, x1str);
-    tex_dcolumn_double(fdist(pmod->fstt, pmod->dfn, pmod->dfd), x2str);
-    pprintf(prn, "%s (%d, %d) & %s \\\\\n %s & %s \\\\\n",
-	    I_("F-statistic"), pmod->dfn, pmod->dfd, x1str,
-	    I_("p-value for F()"), x2str);
-} 
-
-static void tex_dwline (const MODEL *pmod, PRN *prn,
-			char *x1str, char *x2str)
-{
-    tex_dcolumn_double(pmod->dw, x1str);
-    tex_dcolumn_double(pmod->rho, x2str);
-    pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\rho}$) & %s \n",
-	    I_("Durbin--Watson statistic"), x1str, 
-	    I_("First-order autocorrelation coeff."), x2str);
-} 
-
-static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
-{
-    pprintf(prn, 
-	    "\\vspace{1em}\n\n"
-	    "%s\n\n"
-	    "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n",
-	    I_("Model selection statistics"));
-    pprintf(prn, 
-	    "\\textsc{sgmasq}  & %#g & "  
-	    "\\textsc{aic}     & %#g & "  
-	    "\\textsc{fpe}     & %#g \\\\\n"
-	    "\\textsc{hq}      & %#g & "
-	    "\\textsc{schwarz} & %#g & "  
-	    "\\textsc{shibata} & %#g \\\\\n"
-	    "\\textsc{gcv}     & %#g & "  
-	    "\\textsc{rice}    & %#g\n",
-	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
-	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
-	    pmod->criterion[6], pmod->criterion[7]);
-    pprintf(prn, "\\end{tabular*}\n\n");
-}
-
-/* ......................................................... */
-
-static const char *tex_estimator_string (int ci)
-{
-    if (ci == OLS || ci == VAR) return I_("OLS");
-    else if (ci == WLS) return I_("WLS"); 
-    else if (ci == ARCH) return I_("WLS (ARCH)");
-    else if (ci == CORC) return I_("Cochrane--Orcutt");
-    else if (ci == HILU) return I_("Hildreth--Lu");
-    else if (ci == TSLS) return I_("TSLS");
-    else if (ci == HSK) return I_("Heteroskedasticity");
-    else if (ci == AR) return I_("AR");
-    else if (ci == HCCM) return I_("HCCM");
-    else if (ci == PROBIT) return I_("Probit");
-    else if (ci == LOGIT) return I_("Logit");
-    else if (ci == POOLED) return I_("Pooled OLS");
-    else return "";
-}
-
 /**
  * tex_print_model:
  * @pmod:  pointer to gretl MODEL struct.
@@ -329,108 +237,10 @@ static const char *tex_estimator_string (int ci)
 int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
 		     int standalone, PRN *prn)
 {
-    int i, ncoeff = pmod->list[0];
-    int t1 = pmod->t1, t2 = pmod->t2;
-    char tmp[16], x1str[32], x2str[32];
-    char startdate[9], enddate[9], topstr[128];
-    char pt = get_local_decpoint();
-
-    modelprint_setup_obs(pmod, &t1, &t2);
-
-    ncoeff = pmod->list[0];
-    ntodate(startdate, t1, pdinfo);
-    ntodate(enddate, t2, pdinfo);
-
-    if (standalone) {
-	pprintf(prn, "\\documentclass{article}\n"
-		"\\usepackage{dcolumn}\n");
-#ifdef ENABLE_NLS
-	pprintf(prn, "\\usepackage[latin1]{inputenc}\n");
-#endif
-	pprintf(prn, "\\begin{document}\n\n"
-		"\\thispagestyle{empty}\n");
-    }
-
-    pprintf(prn, "\\begin{center}\n");
-
-    tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
-
-    sprintf(topstr, I_("Model %d: %s estimates using the %d observations %s--%s"),
-	    pmod->ID, tex_estimator_string(pmod->ci), pmod->nobs,
-	    startdate, enddate);
+    if (standalone) prn->format = GRETL_PRINT_FORMAT_TEX_DOC;
+    else prn->format = GRETL_PRINT_FORMAT_TEX;
     
-    pprintf(prn, "\\textbf{%s}\\\\\n%s: %s", 
-	    topstr, I_("Dependent variable"), tmp);
-
-    if (pmod->ci == WLS || pmod->ci == ARCH) { 
-	tex_escape(tmp, pdinfo->varname[pmod->nwt]);
-	pprintf(prn, "\\\\\n%s: %s\n\n", I_("Variable used as weight"), tmp);
-    } else
-	pprintf(prn, "\n\n");
-
-    /* start table of coefficients */
-    pprintf(prn, "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}"
-	    "{@{\\extracolsep{\\fill}}\n"
-	    "l%% col 1: varname\n"
-	    "  D{%c}{%c}{-1}%% col 2: coeff\n"
-	    "    D{%c}{%c}{-1}%% col 3: sderr\n"
-	    "      D{%c}{%c}{-1}%% col 4: t-stat\n"
-	    "        D{%c}{%c}{4}}%% col 5: p-value\n"
-	    "Variable &\n"
-	    "  \\multicolumn{1}{c}{%s} &\n"
-	    "    \\multicolumn{1}{c}{%s} &\n"
-	    "      \\multicolumn{1}{c}{%s} &\n"
-	    "        \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
-	    pt, pt, pt, pt, pt, pt, pt, pt,
-	    I_("Coefficient"), I_("Std.\\ Error"), 
-	    I_("$t$-statistic"), I_("p-value"));
-
-    if (pmod->ifc) {
-	tex_print_coeff(pdinfo, pmod, ncoeff, prn);
-	ncoeff--;
-    }
-    for (i=2; i<=ncoeff; i++) tex_print_coeff(pdinfo, pmod, i, prn);
-
-    pprintf(prn, "\\end{tabular*}\n\n");
-
-    if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF)
-	goto stop_tex;
-
-    if (pmod->ci == CORC || pmod->ci == HILU)
-	pprintf(prn, "\\vspace{1em}\n%s ($\\rho=%g$)\n\n", 
-		I_("Statistics based on quasi-differenced data"), 
-		pmod->rhot[1]);
-
-    pprintf(prn, 
-	    "\\vspace{1em}\n\n"
-	    "\\begin{tabular}{lD{%c}{%c}{-1}}\n",
-	    pt, pt, pt, pt);
-
-    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
-	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR) {
-	tex_rsqline(pmod, prn, x1str, x2str);
-    } else {
-	if (pmod->ci != CORC && pmod->ci != HILU) {
-	    tex_depvarstats(pmod, prn, x1str, x2str);
-	}
-	tex_essline(pmod, prn, x1str, x2str);
-	tex_rsqline(pmod, prn, x1str, x2str);
-	tex_fline(pmod, prn, x1str, x2str);
-	tex_dwline(pmod, prn, x1str, x2str);
-    }
-
-    pprintf(prn, "\\end{tabular}\n\n");
-    
-    tex_print_aicetc(pmod, prn);
-
- stop_tex:
-    pprintf(prn, "\n\\end{center}\n");
-
-    if (standalone) 
-	pprintf(prn, "\n\\end{document}\n");
-
-    return 0;
+    return printmodel (pmod, pdinfo, prn);
 }
 
 /**

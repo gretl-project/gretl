@@ -50,11 +50,11 @@ libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 
 SRCS = estimate.c compare.c gretl_utils.c errors.c pvalues.c dataio.c \
-	generate.c strutils.c describe.c printout.c texprint.c var.c \
+	generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
 	interact.c graphing.c monte_carlo.c nonparam.c discrete.c \
 	subsample.c calendar.c
 HDRS = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
-	compare.h dataio.h generate.h strutils.h describe.h printout.h \
+	compare.h dataio.h generate.h strutils.h describe.h printout.h modelprint.h \
 	version.h texprint.h var.h interact.h graphing.h monte_carlo.h \
 	nonparam.h discrete.h subsample.h calendar.h internal.h
 OBJS = $(SRCS:.c=.o)
@@ -72,7 +72,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): $(OBJS) $(LOBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_OBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 16:0:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 17:0:0
 
 .PHONY: 
 

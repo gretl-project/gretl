@@ -822,16 +822,17 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 				genr.xvec[i] = pmod->rho;
 			    break;
 			}
-			if (pmod->arlist == NULL) {
+			if (pmod->arinfo == NULL || 
+			    pmod->arinfo->arlist == NULL || pmod->arinfo->rho == NULL) {
 			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
 			    return E_INVARG;
 			}
-			if (!(vi = ismatch(atoi(sexpr), pmod->arlist))) {
+			if (!(vi = ismatch(atoi(sexpr), pmod->arinfo->arlist))) {
 			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
 			    return E_INVARG;
 			}
 			for (i=0; i<n; i++) 
-			    genr.xvec[i] = pmod->rhot[vi];
+			    genr.xvec[i] = pmod->arinfo->rho[vi];
 			break;
 		    }
 		    if (nt == T_NORMAL) {

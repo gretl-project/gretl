@@ -459,7 +459,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     exchange_smpl(orig, pdinfo);
 
     if (orig->ci == AR) 
-	maxlag = orig->arlist[orig->arlist[0]];
+	maxlag = orig->arinfo->arlist[orig->arinfo->arlist[0]];
     else if (orig->ci == ARCH) 
 	maxlag = orig->order;
     pdinfo->t1 = orig->t1 - maxlag;

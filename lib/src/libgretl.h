@@ -72,6 +72,13 @@ typedef enum {
 } prn_codes;
 
 typedef enum {
+    GRETL_PRINT_FORMAT_PLAIN,
+    GRETL_PRINT_FORMAT_TEX,
+    GRETL_PRINT_FORMAT_TEX_DOC,
+    GRETL_PRINT_FORMAT_RTF
+} gretl_print_formats;
+
+typedef enum {
     TIME_SERIES = 1,
     STACKED_TIME_SERIES,
     STACKED_CROSS_SECTION
@@ -161,6 +168,12 @@ typedef struct {
     int t2;
 } SAMPLE;
 
+typedef struct {
+    int *arlist;                /* list of autoreg lags */
+    double *rho;                /* array of autoreg. coeffs. */
+    double *sderr;              /* and their standard errors */
+} ARINFO;
+
 /* struct to hold model results */
 typedef struct {
     int ID;                      /* ID number for model */
@@ -205,8 +218,7 @@ typedef struct {
 				    order autocorrelation coefficient */
     double rho_in;               /* the rho value input into the 
 				    regression (e.g. CORC) */
-    int *arlist;                 /* list of autoreg lags */
-    double *rhot;                /* array of autoreg. coeffs. */
+    ARINFO *arinfo;             /* struct to hold special info for autoregressive model */ 
     double *slope;               /* for nonlinear models */
     int errcode;                 /* Error code in case of failure */
     char *name;
@@ -245,6 +257,7 @@ typedef struct {
     FILE *fp;
     char *buf;
     size_t bufsize;
+    int format;
 } PRN;
 
 typedef struct {
@@ -269,6 +282,7 @@ typedef struct {
 #include "strutils.h"
 #include "describe.h"
 #include "printout.h"
+#include "modelprint.h"
 #include "texprint.h"
 #include "var.h"
 #include "interact.h"

@@ -1082,8 +1082,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->uhat = NULL;
     pmod->xpx = NULL;
     pmod->vcv = NULL;
-    pmod->arlist = NULL;
-    pmod->rhot = NULL;
+    pmod->arinfo = NULL;
     pmod->slope = NULL;
     pmod->name = NULL;
     pmod->ntests = 0;
@@ -1173,6 +1172,18 @@ int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
 
 /* .......................................................... */
 
+static void clear_ar_info (MODEL *pmod)
+{
+    if (pmod->arinfo->arlist) free(pmod->arinfo->arlist);
+    if (pmod->arinfo->rho) free(pmod->arinfo->rho);
+    if (pmod->arinfo->sderr) free(pmod->arinfo->sderr);
+
+    free(pmod->arinfo);
+    pmod->arinfo = NULL;
+}
+
+/* .......................................................... */
+
 void clear_model (MODEL *pmod, DATAINFO *pdinfo)
 {
     if (pmod != NULL) {
@@ -1185,9 +1196,8 @@ void clear_model (MODEL *pmod, DATAINFO *pdinfo)
 	if (pmod->xpx) free(pmod->xpx);
 	if (pmod->vcv) free(pmod->vcv);
 	if (pmod->name) free(pmod->name);
-	if (pmod->ci == AR || pmod->ci == CORC || pmod->ci == HILU) {
-	    if (pmod->arlist) free(pmod->arlist);
-	    if (pmod->rhot) free(pmod->rhot);
+	if (pmod->arinfo) {
+	    clear_ar_info(pmod);
 	}
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	    if (pmod->slope) free(pmod->slope);
@@ -1640,6 +1650,47 @@ double *copyvec (const double *src, int n)
 
 /* ........................................................... */
 
+static ARINFO *copy_ar_info (const ARINFO *src)
+{
+    ARINFO *targ;
+
+    targ = malloc(sizeof *targ);
+    if (targ == NULL) return NULL;
+
+    if (src->arlist != NULL) {
+	int i, m = src->arlist[0];
+
+      	if ((targ->rho = copyvec(src->rho, m)) == NULL) {
+	    free(targ);
+	    targ = NULL;
+	    return NULL; 
+	}
+
+      	if ((targ->sderr = copyvec(src->sderr, m)) == NULL) { 
+	    free(targ->rho);
+	    free(targ);
+	    targ = NULL;
+	    return NULL; 
+	}
+
+	targ->arlist = malloc((m + 1) * sizeof(int));
+	if (targ->arlist == NULL) {
+	    free(targ->rho);
+	    free(targ->sderr);
+	    free(targ);
+	    targ = NULL;
+	    return NULL; 
+	}
+	for (i=0; i<=m; i++) {
+	    targ->arlist[i] = src->arlist[i];
+	}
+    }    
+
+    return targ;
+}
+
+/* ........................................................... */
+
 int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 {
     int i = src->list[0] - 1;
@@ -1661,14 +1712,13 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 	(targ->subdum = copyvec(src->subdum, pdinfo->n)) == NULL) return 1;
     if (src->vcv != NULL && 
 	(targ->vcv = copyvec(src->vcv, m + 1)) == NULL) return 1;
-    if (src->arlist != NULL) {
-      	if ((targ->rhot = copyvec(src->rhot, src->arlist[0])) == NULL) 
+
+    if (src->arinfo != NULL) {
+	targ->arinfo = copy_ar_info(src->arinfo);
+	if (targ->arinfo == NULL) 
 	    return 1; 
-	m = src->arlist[0];
-	targ->arlist = malloc((m + 1) * sizeof(int));
-	if (targ->arlist == NULL) return 1;
-	for (i=0; i<=m; i++) targ->arlist[i] = src->arlist[i];
     }
+
     if (src->slope != NULL &&
 	(targ->slope = copyvec(src->slope, src->ncoeff + 1)) == NULL)
 	    return 1;
@@ -1700,12 +1750,14 @@ int _forecast (int t1, int t2, int nv,
     double xx, zz, zr;
     int i, k, maxlag = 0, yno = pmod->list[1], ARMODEL;
     int v, t, miss;
+    const int *arlist = NULL;
 
     ARMODEL = (pmod->ci == AR || pmod->ci == CORC || 
 	       pmod->ci == HILU)? 1 : 0;
 
     if (ARMODEL) {
-	maxlag = pmod->arlist[pmod->arlist[0]];
+	arlist = pmod->arinfo->arlist;
+	maxlag = arlist[arlist[0]];
 	if (t1 < maxlag) t1 = maxlag; 
     }
 
@@ -1713,12 +1765,12 @@ int _forecast (int t1, int t2, int nv,
 	miss = 0;
 	zz = 0.0;
 	if (ARMODEL) 
-	    for (k=1; k<=pmod->arlist[0]; k++) {
-	    xx = (*pZ)[yno][t-pmod->arlist[k]];
-	    zr = pmod->rhot[k];
+	    for (k=1; k<=arlist[0]; k++) {
+	    xx = (*pZ)[yno][t - arlist[k]];
+	    zr = pmod->arinfo->rho[k];
 	    if (na(xx)) {
 		if (zr == 0) continue;
-		xx = (*pZ)[nv][t-pmod->arlist[k]];
+		xx = (*pZ)[nv][t - arlist[k]];
 		if (na(xx)) {
 		    (*pZ)[nv][t] = NADBL;
 		    miss = 1;
@@ -1735,8 +1787,8 @@ int _forecast (int t1, int t2, int nv,
 	    }
 	    if (!miss && ARMODEL) {
 		xx = (*pZ)[k][t];
-		for (i=1; i<=pmod->arlist[0]; i++) 
-		    xx -= pmod->rhot[i] * (*pZ)[k][t-pmod->arlist[i]];
+		for (i=1; i<=arlist[0]; i++) 
+		    xx -= pmod->arinfo->rho[i] * (*pZ)[k][t - arlist[i]];
 	    }
 	    if (!miss) 
 		zz = zz + xx * pmod->coeff[v];
@@ -1764,15 +1816,16 @@ int _full_model_list (MODEL *pmod, int **plist)
 	mylist[1] = pmod->nwt;
     }
     else if (pmod->ci == AR) {
-	pos = pmod->arlist[0] + 1;
+	pos = pmod->arinfo->arlist[0] + 1;
 	len = pos + (*plist)[0] + 2;
 	mylist = malloc(len * sizeof *mylist);
 	if (mylist == NULL) return -1;
 	mylist[0] = len - 2;
-	for (i=1; i<pos; i++) mylist[i] = pmod->arlist[i];
+	for (i=1; i<pos; i++) mylist[i] = pmod->arinfo->arlist[i];
 	mylist[pos] = 999;
-	for (i=1; i<=(*plist)[0]; i++) 
+	for (i=1; i<=(*plist)[0]; i++) {
 	    mylist[pos+i] = (*plist)[i];
+	}
     }
     copylist(plist, mylist);
     free(mylist);
@@ -2041,9 +2094,10 @@ int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
     sprintf(spec->cmd, "%s ", commands[pmod->ci]);
     
     if (pmod->ci == AR) {
-	store_list(pmod->arlist, spec->cmd);
+	store_list(pmod->arinfo->arlist, spec->cmd);
 	strcat(spec->cmd, "; ");
     }
+
     store_list(pmod->list, spec->cmd);
 
     if (pmod->subdum != NULL) {

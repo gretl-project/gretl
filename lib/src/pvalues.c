@@ -24,8 +24,7 @@
 #include "libgretl.h" 
 #include "../../cephes/libprob.h"
  
-extern void _putxx (double xx);
-
+static void _putxx (double xx);
 static void _pnormal (void);
 static void _ptvalue (void);
 static void _pchisq (void);
@@ -308,6 +307,12 @@ double batch_pvalue (const char *str,
 	pprintf(prn, _("\nunrecognized pvalue code\n"));
 	return NADBL;
     }
+}
+
+static void _putxx (double xx)
+{
+    if (xx < 0.0001) puts("< 0.0001");
+    else printf("%g\n", xx);
 }
 
 /**

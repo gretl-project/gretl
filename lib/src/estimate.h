@@ -25,11 +25,11 @@
  
 MODEL lsq (LIST list, 
 	   double ***pZ, DATAINFO *pdinfo, 
-	   const int ci, const int opt, const double rho);
+	   int ci, int opt, double rho);
 
 int hilu_corc (double *toprho, LIST list, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       const int opt, PRN *prn);
+	       int opt, PRN *prn);
 
 MODEL tsls_func (LIST list, const int pos, 
 		 double ***pZ, DATAINFO *pdinfo);
@@ -44,7 +44,7 @@ int whites_test (MODEL *pmod,
 		 double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test);
 
-MODEL ar_func (LIST list, const int pos, 
+MODEL ar_func (LIST list, int pos, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       int *model_count, PRN *prn);
 

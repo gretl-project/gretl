@@ -29,16 +29,6 @@ void logo (void);
 
 void gui_logo (FILE *fp);
 
-const char *aux_string (int aux);
-
-const char *estimator_string (int ci);
-
-void modelprint_setup_obs (const MODEL *pmod, int *t1, int *t2);
-
-int printmodel (const MODEL *pmod, 
-		const DATAINFO *pdinfo, 
-		PRN *prn);
-
 void print_model_confints (const MODEL *pmod, 
 			   const DATAINFO *pdinfo, 
 			   PRN *prn);

@@ -17,30 +17,14 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* texprint.h for gretl */
+/* modelprint.h for gretl */
 
-/* functions follow */
+const char *aux_string (int aux);
 
-int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
-			const int standalone, PRN *prn);
+const char *estimator_string (int ci, int format);
 
-int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
-		     const int standalone, PRN *prn);
+void modelprint_setup_obs (const MODEL *pmod, int *t1, int *t2);
 
-int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-		      int c, PRN *prn);
-
-int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
-	      const PATHS *ppaths, char *texfile,
-	      const int model_count, int oflag);
-
-int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
-	      const PATHS *ppaths, char *texfile,
-	      const int model_count, int oflag);
-
-char *tex_escape (char *targ, const char *src);
-
-void tex_dcolumn_double (double xx, char *numstr);
-
-
-
+int printmodel (const MODEL *pmod, 
+		const DATAINFO *pdinfo, 
+		PRN *prn);
