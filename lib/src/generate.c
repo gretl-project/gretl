@@ -63,6 +63,8 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 			MODEL *pmod);
 static int genr_mpow (const char *str, double *xvec, double **pZ, 
 		      DATAINFO *pdinfo);
+static int genr_mlog (const char *str, double *xvec, double **pZ, 
+		      DATAINFO *pdinfo);
 static void genr_msg (GENERATE *pgenr, int nv);
 static int ismatch (int lv, const int *list);
 static void varerror (const char *ss);
@@ -102,6 +104,7 @@ enum transformations {
     T_ZEROMISS,
     T_PVALUE,
     T_MPOW,
+    T_MLOG,
     T_SST
 };
 
@@ -160,6 +163,7 @@ static char *math[] = {
     "zeromiss",
     "pvalue",
     "mpow",
+    "mlog",
     "sst",
     NULL
 };
@@ -910,6 +914,15 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    if (nt == T_MPOW) {
 			genr.scalar = 0;
 			err = genr_mpow(sexpr, genr.xvec, *pZ, pdinfo);
+			if (err) {
+			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
+			    return E_INVARG;
+			}
+			break;
+		    }
+		    if (nt == T_MLOG) {
+			genr.scalar = 0;
+			err = genr_mlog(sexpr, genr.xvec, *pZ, pdinfo);
 			if (err) {
 			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
 			    return E_INVARG;
@@ -2606,6 +2619,45 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
     }
 
     err = mp_raise (Z[v], xvec, pdinfo->n, pwr);
+
+    close_plugin(handle);
+    
+    return err;
+}
+
+/* ...................................................... */
+
+static int genr_mlog (const char *str, double *xvec, double **Z, 
+		      DATAINFO *pdinfo)
+{
+    int err, v;
+    char vname[9];
+    void *handle = NULL;
+    int (*mp_log) (const double *, double *, int);
+    
+    if (sscanf(str, "%8s", vname) != 1) {
+	return 1;
+    }
+
+    v = varindex(pdinfo, vname);
+    if (v >= pdinfo->v) {
+	return 1;
+    } 
+
+    if (open_plugin("mp_ols", &handle)) {
+        fprintf(stderr, _("Couldn't access GMP plugin\n"));
+        return 1;
+    }
+
+    mp_log = get_plugin_function("mp_vector_ln", handle);
+
+    if (mp_log == NULL) {
+        fprintf(stderr, _("Couldn't load plugin function\n"));
+        close_plugin(handle);
+        return 1;
+    }
+
+    err = mp_log (Z[v], xvec, pdinfo->n);
 
     close_plugin(handle);
     

@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include <gmp.h>
+#include <mpfr.h>
 
 /* #define MP_DEBUG 1 */
 
@@ -70,6 +71,7 @@ typedef struct {
 } MPCHOLBETA;
 
 static void set_gretl_mp_bits (void);
+static void set_gretl_mpfr_bits (void);
 static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ);
 static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 			char *errbuf);
@@ -459,6 +461,41 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
     return 0;
 }
 
+/**
+ * mp_vector_ln:
+ * @srcvec: source vector (doubles)
+ * @targvec: vector to be filled in with results
+ * @n: length of vector
+ *
+ * Returns: 0 on success, error code on failure.
+ */
+
+int mp_vector_ln (const double *srcvec, double *targvec, int n)
+{
+    int t;
+    mpfr_t src, targ;
+
+    set_gretl_mpfr_bits();
+
+    mpfr_init (src);
+    mpfr_init (targ);
+
+    for (t=0; t<n; t++) {
+	if (na(srcvec[t])) {
+	    targvec[t] = NADBL;
+	    continue;
+	}
+	mpfr_set_d (src, srcvec[t], GMP_RNDN);
+	mpfr_log(targ, src, GMP_RNDN);
+	targvec[t] = mpfr_get_d (targ, GMP_RNDN);
+    }
+
+    mpfr_clear (src);
+    mpfr_clear (targ);
+
+    return 0;
+}
+
 static int poly_check (MPMODEL *pmod, const int *list)
 {
     int i;
@@ -515,6 +552,16 @@ static void set_gretl_mp_bits (void)
     }
 }
 
+static void set_gretl_mpfr_bits (void)
+{
+    char *user_bits = getenv("GRETL_MP_BITS");
+    
+    if (user_bits != NULL) {
+	mpfr_set_default_prec ((unsigned long) atoi(user_bits));
+    } else {
+	mpfr_set_default_prec ((unsigned long) DEFAULT_GRETL_MP_BITS);
+    }
+} 
 static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
 			    mp_results *results)
 {
