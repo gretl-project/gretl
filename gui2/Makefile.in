@@ -14,7 +14,7 @@ have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
 have_gtksourceview = @have_gtksourceview@
-have_gnu_regex = @have_gnu_regex@
+use_gtksourceview = @use_gtksourceview@
 
 GNOME_CFLAGS = @GNOME_CFLAGS@
 GNOME_LIBS = @GNOME_LIBS@
@@ -52,7 +52,7 @@ ifeq ($(have_gtksourceview),yes)
 endif
 
 ifeq ($(have_gtksourceview),no)
-  ifeq ($(have_gnu_regex),yes)
+  ifeq ($(use_gtksourceview),yes)
     GTKSOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
     GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
     MY_SOURCEVIEW_LIB = gtksourceview/libgtksourceview-lite.a

@@ -44,6 +44,7 @@ have_gmp="no"
 have_lapack="no"
 seek_inet_addr="no"
 png_comments="yes"
+highlight="yes"
 prefer_xml1="no"
 have_tramo="yes"
 have_x12a="yes"
@@ -86,8 +87,17 @@ else
   png_comments=no
 fi])
 
+AC_ARG_ENABLE(highlight,
+[  --enable-highlight   Syntax highlighting for scripts (gtk2 only) [default=yes]],
+[if test "$enableval" = "yes"
+then
+  highlight=yes
+else
+  highlight=no
+fi])
+
 AC_ARG_WITH(gmake,
-[  --with-gmake           Use GNU make explicitly [default=no]],
+[  --with-gmake         Use GNU make explicitly [default=no]],
 [ case "$withval" in
   yes)
         MAKE="gmake"
@@ -159,11 +169,11 @@ AC_ARG_WITH(gtksourceview,
 [  --with-gtksourceview   Use installed gtksourceview (gtk 2.0 only) [default=auto]],
 if test "x${withval}" = "xno" || test "$try_gnome" = "no"
 then
-  try_sourceview=no
+  try_installed_sourceview=no
 else
-  try_sourceview=yes
+  try_installed_sourceview=yes
 fi,
-try_sourceview=yes)
+try_installed_sourceview=yes)
 
 AC_ARG_WITH(gtkextra,
 [  --with-gtkextra   Use installed gtkextra (gtk 1.2 only) [default=auto]],
@@ -392,10 +402,9 @@ if test "$have_gtk" = "2.0" ; then
 fi
 
 dnl ...and try for gtksourceview flags, unless prohibited
-if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
+if test "$have_gtk" = "2.0" && test "$try_installed_sourceview" = "yes" ; then
      PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
      have_gtksourceview="yes"
-     have_gnu_regex="yes"
      use_gtksourceview="yes"
      AC_DEFINE(USE_GTKSOURCEVIEW),
      have_gtksourceview="no"
@@ -403,26 +412,23 @@ if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
 fi
 
 dnl Fallback on supplied gtksourceview? Check for libxml2 and gtk >= 2.2.0
-if test "$have_gtk" = "2.0" && \
-   test "$try_sourceview" = "yes" && \
+if test "$have_gtk" = "2.0" && test "$highlight" = "yes" && \
    test "$have_gtksourceview" = "no" ; then
-    PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0,
-    have_libxml2="yes",
-    have_libxml2="no")
-    PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.2.0,,
-    try_sourceview="no")
+     PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0,
+     have_libxml2="yes",
+     have_libxml2="no")
+     PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.2.0,,
+     highlight="no")
 fi
 
 dnl Now try using supplied gtksourceview if preconditions are met
-if test "$have_gtk" = "2.0" && \
-   test "$try_sourceview" = "yes" && \
+if test "$highlight" = "yes" && \
    test "$have_gtksourceview" = "no" && \
    test "$have_libxml2" = "yes" ; then
-    AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
-    AC_DEFINE(USE_GTKSOURCEVIEW)
-    have_gnu_regex="yes"
-    use_gtksourceview="yes",
-    have_gtksourceview="no")
+     AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
+     AC_DEFINE(USE_GTKSOURCEVIEW)
+     use_gtksourceview="yes",
+     use_gtksourceview="no")
 fi
 
 dnl Or fall back on GTK 1.2
@@ -444,7 +450,7 @@ dnl record the results of the above tests
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_gtksourceview)
-AC_SUBST(have_gnu_regex)
+AC_SUBST(use_gtksourceview)
 AC_SUBST(have_audio)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
@@ -676,7 +682,8 @@ Configuration:
   Gnu Multiple Precision support:         ${have_gmp}
   LAPACK support:                         ${have_lapack}
   Build with GTK version:                 ${have_gtk}
-  Use gtksourceview for scripts:          ${use_gtksourceview}
+  Script syntax highlighting:             ${use_gtksourceview}
+  Use installed gtksourceview:            ${have_gtksourceview}
   Use installed libole2:                  ${have_libole2}
   Use installed gtkextra:		  ${have_gtkextra}
   Build with gnome support:               ${have_gnome}
