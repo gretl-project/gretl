@@ -119,19 +119,12 @@ static int read_des (const char *fname, double ***pZ,
 	    blankbak = 0;
 	if ((p = strchr(line, '\n'))) *p = 0;
 	if ((p = strchr(line, '\r'))) *p = 0;
-	if (blocknum == 0) {
-	    if (names_differ(fname, line)) {
-		fprintf(stderr, "filename check failed: '%s' versus '%s'\n", 
-			fname, line);
-		err = 1;
-	    }
-	}
-	else if (blocknum == 1) {
+	if (blocknum == 1) {
 	    count_varnames(line, &v);
 	}
 	else if (blocknum == 2) {
 	    if (sscanf(line, "%*s %d", &n) != 1) {
-		fprintf(stderr, "Failed to read number of observations\n");
+		sprintf(errbuf, "Failed to read number of observations");
 		err = 1;
 	    }
 	}
@@ -145,13 +138,13 @@ static int read_des (const char *fname, double ***pZ,
 		    *ppinfo = dinfo;
 		    donealloc = 1;
 		} else {
-		    fprintf(stderr, "Out of memory\n");
+		    sprintf(errbuf, "Out of memory");
 		    err = 1;
 		}
 	    }
 
 	    if (!err && sscanf(line, "%d. %9s", &i, varname) != 2) {
-		fprintf(stderr, "Failed to read variables info block\n");
+		sprintf(errbuf, "Failed to read variables info block");
 		err = 1;
 	    } else {
 		char *p = go_to_field(line, 3);
@@ -166,12 +159,12 @@ static int read_des (const char *fname, double ***pZ,
     }
 
     if (v2 != v) {
-	fprintf(stderr, "Numbers of vars in block 1 and block 3 differ\n");
+	sprintf(errbuf, "Numbers of vars in block 1 and block 3 differ");
 	err = 1;
     }
 
     if (!err)
-	fprintf(stderr, "%s: got %d vars, %d observations\n", 
+	sprintf(errbuf, "%s: got %d vars, %d observations", 
 		fname, dinfo->v, dinfo->n);
 
     fclose(fp);
@@ -192,7 +185,7 @@ static int read_raw (const char *fname, DATAINFO *pdinfo)
     for (t=0; t<pdinfo->n; t++) {
 	for (i=0; i<pdinfo->v; i++) {
 	    if (fscanf(fp, "%15s", value) != 1) {
-		fprintf(stderr, "scan fail on data[%d][%d]\n", i, t);
+		sprintf(errbuf, "scan fail on data[%d][%d]", i, t);
 		err = 1;
 	    } else {
 		printf("got data[%d][%d] = '%s'\n", i, t, value);
@@ -209,10 +202,10 @@ static int read_raw (const char *fname, DATAINFO *pdinfo)
     }
 
     if (literal)
-	printf("Data file contains non-numeric entries\n");
+	sprintf(errbuf, "Data file contains non-numeric entries");
 
     if (litcol)
-	fprintf(stderr, "%s: found literal data in col %d\n",
+	sprintf(errbuf, "%s: found literal data in col %d",
 		fname, litcol + 1);
 
     fclose(fp);
@@ -350,7 +343,7 @@ int main (int argc, char *argv[])
 
     pdinfo = datainfo_new();
     if (pdinfo == NULL) {
-	fprintf(stderr, "Out of memory\n");
+	sprintf(errbuf, "Out of memory\n");
 	exit(EXIT_FAILURE);
     }
 
