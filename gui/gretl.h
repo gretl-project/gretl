@@ -157,7 +157,8 @@ enum exec_codes {
     CONSOLE_EXEC,
     SCRIPT_EXEC,
     SESSION_EXEC,
-    REBUILD_EXEC
+    REBUILD_EXEC,
+    SAVE_SESSION_EXEC
 };
 
 enum cgi_options {

@@ -2172,8 +2172,10 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     FILE *fp;
 
     /* might be a script file? */
-    if (n > 4 && strcmp(fname + n - 4, ".inp") == 0) 
+    if (n > 4 && !strcmp(fname + n - 4, ".inp")) 
 	return GRETL_SCRIPT;
+    if (n > 6 && !strcmp(fname + n - 6, ".gretl")) 
+	return GRETL_SCRIPT;    
 
     addpath(fname, ppaths, 0); 
 

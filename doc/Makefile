@@ -51,6 +51,7 @@ html: $(SRC) db2html $(DSL) $(HMATHSS)
 	./texmath2png.pl $(DOC)-html/equation-list.sgml
 
 htmlhelp:
+	mkdir -p gretlhlp
 	cd gretlhlp && \
 	saxon ../$(SRC) ../gretlhlp.xsl tex.math.in.alt=latex
 	mkdir -p gretlhlp/figures

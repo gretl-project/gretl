@@ -450,10 +450,8 @@ void register_data (const char *fname, int record)
     menubar_state(TRUE);
     session_state(TRUE);
 
-    if (!record) return;
-
     /* record opening of data file in command log */
-    if (fname != NULL) {
+    if (record && fname != NULL) {
 	mkfilelist(1, fname);
 	sprintf(datacmd, "open %s", fname);
 	check_cmd(datacmd);
@@ -599,6 +597,10 @@ void save_session (char *fname)
 	safecpy(savedir, fname, spos);
     else *savedir = 0;
 
+#ifdef CMD_DEBUG
+    dump_cmd_stack("stderr");
+#endif
+
     /* save commands, by dumping the command stack */
     if (haschar('.', fname) < 0)
 	strcat(fname, ".gretl");
@@ -672,7 +674,7 @@ void save_session (char *fname)
 	errbox("Couldn't open output file for writing");
 	return;
     }
-    execute_script(fname, NULL, NULL, prn, SESSION_EXEC); 
+    execute_script(fname, NULL, NULL, prn, SAVE_SESSION_EXEC); 
     gretl_print_destroy(prn);
 
     sprintf(msg, "session saved to %s -\n", savedir);
@@ -876,8 +878,6 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
 static void file_viewer_save (GtkWidget *widget, windata_t *mydata)
 {
-    /* windata_t *mydata = (windata_t *) data; */
-
     /* special case: a newly created script */
     if (strstr(mydata->fname, "script_tmp") || !strlen(mydata->fname)) {
 	file_save(mydata, SAVE_SCRIPT, NULL);

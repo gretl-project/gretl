@@ -24,8 +24,6 @@
 # include "../lib/src/cmdlist.h"
 #endif
 
-/* #define CMD_DEBUG */
-
 #include "htmlprint.h"
 
 extern DATAINFO *subinfo;
@@ -244,7 +242,6 @@ void clear_data (int full)
     stack_model(-1);
     model_count = 0;
 }
-
 
 /* ........................................................... */
 
@@ -545,7 +542,7 @@ static void dump_model_cmds (FILE *fp, int m)
 
 /* ........................................................... */
 
-gint dump_cmd_stack (char *fname)
+gint dump_cmd_stack (const char *fname)
      /* ship out the stack of commands entered in the current
 	session */
 {
@@ -554,10 +551,15 @@ gint dump_cmd_stack (char *fname)
 
     if (fname == NULL) return 0;
 
-    fp = fopen(fname, "w"); 
-    if (fp == NULL) {
-	errbox("Couldn't open command file for writing");
-	return 1;
+    if (!strcmp(fname, "stderr")) {
+	fp = stderr;
+	fprintf(fp, "dumping command stack:\n");
+    } else {
+	fp = fopen(fname, "w"); 
+	if (fp == NULL) {
+	    errbox("Couldn't open command file for writing");
+	    return 1;
+	}
     }
 
     for (i=0; i<n_cmds; i++) {
@@ -575,7 +577,8 @@ gint dump_cmd_stack (char *fname)
 	}
     }
 
-    fclose(fp);
+    if (strcmp(fname, "stderr")) 
+	fclose(fp);
 
     return 0;
 }
@@ -2900,7 +2903,8 @@ int execute_script (const char *runfile,
     }
 
     /* reset model count to 0 if starting/saving session */
-    if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC) 
+    if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
+	exec_code == SAVE_SESSION_EXEC) 
 	model_count = 0;
 
     /* monte carlo struct */
@@ -3236,7 +3240,8 @@ static int gui_exec_line (char *line,
 	break;
 
     case BXPLOT:
-	if (exec_code == REBUILD_EXEC) break;
+	if (exec_code == REBUILD_EXEC || exec_code == SAVE_SESSION_EXEC) 
+	    break;
 	err = boxplots (command.list, &Z, datainfo, (oflag != 0));
 	break;
 
@@ -3402,6 +3407,8 @@ static int gui_exec_line (char *line,
 	break;
 
     case GNUPLOT:
+	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
+	    break;
 	if (plp != NULL) {
 	    pprintf(prn, "script mode: gnuplot command ignored.\n");
 	    break;
@@ -3448,19 +3455,21 @@ static int gui_exec_line (char *line,
 	break;
 		
     case IMPORT:
+	if (exec_code == SAVE_SESSION_EXEC) break;
         err = getopenfile(line, datfile, &paths, 0, 0);
         if (err) {
             pprintf(prn, "import command is malformed.\n");
             break;
         }
-	close_session();
+	if (data_status & HAVE_DATA)
+	    close_session();
         if (oflag)
             err = import_box(&Z, datainfo, datfile, prn);
         else
             err = import_csv(&Z, datainfo, datfile, prn);
         if (!err) { 
 	    data_status |= IMPORT_DATA;
-	    register_data(datfile, 1);
+	    register_data(datfile, (exec_code != REBUILD_EXEC));
             print_smpl(datainfo, 0, prn);
             varlist(datainfo, prn);
             pprintf(prn, "You should now use the \"print\" command "
@@ -3471,12 +3480,17 @@ static int gui_exec_line (char *line,
         break;
 
     case OPEN:
+	if (exec_code == SAVE_SESSION_EXEC) break;
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
 	    errbox("'open' command is malformed");
 	    break;
 	}
-	close_session();
+#ifdef CMD_DEBUG
+	fprintf(stderr, "OPEN in gui_exec_line, datfile='%s'\n", datfile);
+#endif
+	if (data_status & HAVE_DATA)
+	    close_session();
 	check = detect_filetype(datfile, &paths, prn);
 	if (check == GRETL_CSV_DATA)
 	    err = import_csv(&Z, datainfo, datfile, prn);

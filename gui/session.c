@@ -160,6 +160,8 @@ char *space_to_score (char *str)
 
 /* .................................................................. */
 
+extern GtkItemFactoryEntry edit_items[]; /* gui_utils.c */
+
 static void edit_session_notes (void)
 {
     FILE *fp;
@@ -176,7 +178,7 @@ static void edit_session_notes (void)
     if (fp != NULL) {
 	fclose(fp);
 	view_file(notesfile, 1, 0, 78, 370, 
-		  "gretl: session notes", NULL);
+		  "gretl: session notes", edit_items);
     } else 
 	errbox("Couldn't open session notes");
 }
@@ -213,7 +215,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     /* write graph into session struct */
     if (session.ngraphs)
 	session.graphs = myrealloc(session.graphs, 
-				 (i + 1) * sizeof(GRAPHT *));
+				   (i + 1) * sizeof(GRAPHT *));
     else
 	session.graphs = mymalloc(sizeof(GRAPHT *));
 
@@ -222,12 +224,6 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     session.graphs[i] = mymalloc(sizeof(GRAPHT));
     if (session.graphs[i] == NULL) return;
 
-    (session.graphs[i])->name = mymalloc(24);
-    (session.graphs[i])->fname = mymalloc(MAXLEN);
-    if ((session.graphs[i])->name == NULL || 
-	(session.graphs[i])->fname == NULL) {
-	return;
-    }
     strcpy((session.graphs[i])->fname, pltname);
     strcpy((session.graphs[i])->name, grname);
     (session.graphs[i])->ID = plot_count++;
@@ -282,10 +278,11 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 int session_changed (int set)
 {
     static int has_changed;
+    int orig;
 
-    if (set == -1) has_changed = 0;
-    else if (set == 1) has_changed = 1;
-    return has_changed;
+    orig = has_changed;
+    has_changed = set;
+    return orig;
 }
 
 /* ........................................................... */
@@ -297,7 +294,7 @@ void session_init (void)
     session.nmodels = 0;
     session.ngraphs = 0;
     session.name[0] = '\0';
-    session_changed(-1);
+    session_changed(0);
 }
 
 /* ........................................................... */
@@ -365,32 +362,7 @@ void close_session (void)
     session_file_open = 0;
     if (iconview != NULL) 
 	gtk_widget_destroy(iconview);
-    session_changed(-1);
-}
-
-/* ........................................................... */
-
-static void free_graph (GRAPHT *graph)
-{
-    if (graph != NULL) {
-	free(graph->name);
-	free(graph->fname);
-	free(graph);
-    }
-}
-
-/* ........................................................... */
-
-static int alloc_graph (GRAPHT **pgraph)
-{
-    *pgraph = mymalloc(sizeof **pgraph);
-    if (*pgraph == NULL) return 1;
-    (*pgraph)->name = mymalloc(24);
-    (*pgraph)->fname = mymalloc(128);
-    if ((*pgraph)->name == NULL || (*pgraph)->fname == NULL) 
-	return 1;
-    (*pgraph)->ID = 0;
-    return 0;
+    session_changed(0);
 }
 
 /* ........................................................... */
@@ -405,8 +377,6 @@ void free_session (void)
 	free(session.models);
     }
     if (session.graphs) {
-	for (i=0; i<session.ngraphs; i++) 
-	    free_graph(session.graphs[i]);
 	free(session.graphs);
     }
     session.nmodels = 0;
@@ -418,9 +388,9 @@ void free_session (void)
 
 /* ........................................................... */
 
+#ifdef SESSION_DEBUG
 void print_session (void)
 {
-    /* testing */
     int i;
 
     printf("Session contains %d models:\n", session.nmodels);
@@ -434,6 +404,7 @@ void print_session (void)
 	       (session.graphs[i])->fname);
     }
 }
+#endif
 
 /* ........................................................... */
 
@@ -471,7 +442,7 @@ static int delete_session_object (gui_obj *obj)
 
 	/* special case: only one graph currently */
 	if (session.ngraphs == 1) {
-	    free_graph(session.graphs[0]);
+	    free(session.graphs[0]);
 	} else {
 	    ppgr = mymalloc((session.ngraphs - 1) * sizeof(GRAPHT *));
 	    if (session.ngraphs > 1 && ppgr == NULL) {
@@ -482,7 +453,7 @@ static int delete_session_object (gui_obj *obj)
 		if ((session.graphs[i])->ID != junk->ID) 
 		    ppgr[j++] = session.graphs[i];
 		else 
-		    free_graph(session.graphs[i]);
+		    free(session.graphs[i]);
 	    }
 	    free(session.graphs);
 	    session.graphs = ppgr;
@@ -608,8 +579,12 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    } else {
 		psession->graphs = mymalloc(sizeof(GRAPHT *));
 	    }
-	    if (psession->graphs == NULL || 
-		alloc_graph(&(psession->graphs[k]))) {
+	    if (psession->graphs == NULL) {
+		fclose(fp);
+		return 1;
+	    }
+	    psession->graphs[k] = mymalloc(sizeof(GRAPHT));
+	    if (psession->graphs[k] == NULL) {
 		fclose(fp);
 		return 1;
 	    }
@@ -632,8 +607,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    (psession->graphs[k])->ID = plot_count++;
 	    k++;
 	    continue;
-	}
-	else {
+	} else {
 	    errbox("Session file is corrupted, ignoring");
 	    fclose(fp);
 	    return 1;
@@ -653,24 +627,20 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 {
     PRN *prn;
     extern int replay; /* lib.c */
-    int ngraphs = psession->ngraphs;
 
     /* no printed output wanted */
     prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "recreate_session: fname = %s\n", fname);
-    fprintf(stderr, "recreate_session: ngraphs = %d\n", psession->ngraphs);
+    print_session();
 #endif
 
     if (execute_script(fname, psession, rebuild, prn, REBUILD_EXEC)) 
 	errbox("Error recreating session");
-    psession->ngraphs = ngraphs;
 #ifdef SESSION_DEBUG
-    fprintf(stderr, "recreate_session: after execute_script() nmodels = %d\n", 
-	    psession->nmodels);
-    fprintf(stderr, "recreate_session: after execute_script() ngraphs = %d\n", 
-	    psession->ngraphs);
+    fprintf(stderr, "recreate_session: after execute_script()\n");
+    print_session();
 #endif
     free_rebuild(rebuild);
     gretl_print_destroy(prn);
@@ -974,7 +944,7 @@ void save_session_callback (GtkWidget *w, guint i, gpointer data)
 {
     if (i == 0 && session_file_open && scriptfile[0]) {
 	save_session(scriptfile);
-	session_changed(-1);
+	session_changed(0);
     } else {
 	file_selector("Save session", SAVE_SESSION, NULL);
     }

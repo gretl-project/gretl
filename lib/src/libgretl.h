@@ -173,8 +173,8 @@ typedef struct {
 
 typedef struct {
     int ID;
-    char *name;
-    char *fname;
+    char name[24];
+    char fname[MAXLEN];
 } GRAPHT; 
 
 typedef struct {
