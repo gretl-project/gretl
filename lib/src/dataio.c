@@ -22,6 +22,8 @@
 #include <zlib.h>
 #include <ctype.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -2676,7 +2678,8 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 }
 
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
-				 double ***pZ, DATAINFO *pdinfo)
+				 double ***pZ, DATAINFO *pdinfo,
+				 int progress)
 {
     xmlNodePtr cur;
     char *tmp = xmlGetProp(node, (UTF) "count");
@@ -2762,6 +2765,8 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    }
 	}	    
 	cur = cur->next;
+	if (progress && t % 60 == 0) 
+	    fprintf(stderr, "%d%%\n", 100 * t / pdinfo->n);
     }
 
     if (t != pdinfo->n) {
@@ -2769,6 +2774,16 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return 1;
     }
     else return 0;
+}
+
+static long get_filesize (const char *fname)
+{
+    struct stat buf;
+
+    if (stat(fname, &buf) == 0)
+        return buf.st_size;
+    else
+        return -1;
 }
 
 /**
@@ -2794,13 +2809,22 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     xmlDocPtr doc;
     xmlNodePtr cur;
     char *tmp;
-    int gotvars = 0, gotobs = 0;
+    int gotvars = 0, gotobs = 0, progress = 0;
+    long fsz;
 
     gretl_errmsg[0] = '\0';
 
     /* COMPAT: Do not generate nodes for formatting spaces */
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
+
+    fsz = get_filesize(fname);
+    if (fsz > 30000) {
+	    fprintf(stderr, "%s %ld bytes of data...\n", 
+		    (is_gzipped(fname))? "Uncompressing" : "Reading",
+		    fsz);
+	    progress = 1;
+    }
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
@@ -2905,7 +2929,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		sprintf(gretl_errmsg, "variables information is missing");
 		return 1;
 	    }
-	    if (process_observations(doc, cur, pZ, pdinfo)) 
+	    if (process_observations(doc, cur, pZ, pdinfo, progress)) 
 		return 1;
 	    else
 		gotobs = 1;
