@@ -204,7 +204,7 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 	prn = bufopen_with_size(sz + 1);
 	if (prn != NULL) { 
 	    strcpy(prn->buf, datainfo->descrip);
-	    view_buffer(prn, 80, 300, "gretl: data info", INFO, NULL);
+	    view_buffer(prn, 80, 400, "gretl: data info", INFO, NULL);
 	}
     }
 }

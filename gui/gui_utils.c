@@ -257,8 +257,6 @@ GtkItemFactoryEntry script_help_items[] = {
 };
 
 GtkItemFactoryEntry edit_items[] = {
-    { "/_File", NULL, NULL, 0, "<Branch>" }, 
-    { "/File/Save _As...", NULL, file_save, SAVE_SCRIPT, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },

@@ -728,6 +728,7 @@ static void save_data_callback (void)
 {
     file_save(NULL, SAVE_DATA, NULL);
     data_status ^= MODIFIED_DATA;
+    fprintf(stderr, "changed data_status\n");
     /* FIXME: need to do more here */
 }
 

@@ -3910,7 +3910,7 @@ static void replace_string_dialog (struct search_replace *s)
 		       gtk_main_quit, NULL);
 
     /* find button -- make this the default */
-    button = gtk_button_new_with_label ("Replace");
+    button = gtk_button_new_with_label ("Replace all");
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
@@ -3980,6 +3980,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     if (count) {
 	sz += count * diff;
     } else {
+	errbox("String to replace was not found");
 	free(buf);
 	return;
     }
