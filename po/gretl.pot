@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-09-19 15:24-0400\n"
+"POT-Creation-Date: 2002-09-20 10:34-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3682,7 +3682,7 @@ msgstr ""
 #: gui/datafiles.c:678 gui/dialogs.c:459 gui/gpt_control.c:626
 #: gui/gpt_control.c:1353 gui/gpt_control.c:1396 gui/selector.c:775
 #: gui2/boxplots.c:181 gui2/boxplots.c:211 gui2/gpt_control.c:1391
-#: gui2/gpt_control.c:1434 gui2/gui_utils.c:2313
+#: gui2/gpt_control.c:1434 gui2/gui_utils.c:2360
 msgid "Help"
 msgstr ""
 
@@ -3694,7 +3694,7 @@ msgstr ""
 #: gui2/boxplots.c:184 gui2/boxplots.c:212 gui2/database.c:584
 #: gui2/datafiles.c:487 gui2/gpt_control.c:1414 gui2/gpt_control.c:1435
 #: gui2/gpt_control.c:1440 gui2/gui_utils.c:902 gui2/gui_utils.c:1266
-#: gui2/gui_utils.c:1360 gui2/gui_utils.c:1508 gui2/gui_utils.c:2312
+#: gui2/gui_utils.c:1360 gui2/gui_utils.c:1508 gui2/gui_utils.c:2359
 msgid "Close"
 msgstr ""
 
@@ -4445,7 +4445,7 @@ msgstr ""
 
 #: gui/callbacks.c:407 gui/dialogs.c:104 gui/dialogs.c:110 gui/dialogs.c:300
 #: gui/dialogs.c:319 gui/dialogs.c:328 gui/settings.c:235 gui/ssheet.c:142
-#: gui/ssheet.c:154 gui2/gui_utils.c:2309
+#: gui/ssheet.c:154 gui2/gui_utils.c:2356
 msgid "Apply"
 msgstr ""
 
@@ -4795,7 +4795,7 @@ msgstr ""
 #: gui/database.c:1687 gui/datafiles.c:668 gui/dialogs.c:830
 #: gui/gpt_control.c:819 gui/helpfiles.c:663 gui/library.c:4615
 #: gui/selector.c:766 gui/ssheet.c:143 gui/ssheet.c:155 gui2/gpt_control.c:851
-#: gui2/gui_utils.c:2310 gui2/helpfiles.c:694 gui2/library.c:4472
+#: gui2/gui_utils.c:2357 gui2/helpfiles.c:694 gui2/library.c:4472
 #: plugin/progress_bar-2.c:101 plugin/progress_bar.c:92
 msgid "Cancel"
 msgstr ""
@@ -5158,7 +5158,7 @@ msgstr ""
 msgid "period (.)"
 msgstr ""
 
-#: gui/dialogs.c:1062 gui/gui_utils.c:1900 gui2/gui_utils.c:2314
+#: gui/dialogs.c:1062 gui/gui_utils.c:1900 gui2/gui_utils.c:2361
 msgid "OK"
 msgstr ""
 
@@ -5302,7 +5302,7 @@ msgstr ""
 
 #: gui/gpt_control.c:610 gui/gpt_control.c:810 gui/gui_utils.c:931
 #: gui/session.c:79 gui/session.c:1045 gui2/gpt_control.c:842
-#: gui2/gui_utils.c:892 gui2/gui_utils.c:2315 gui2/session.c:92
+#: gui2/gui_utils.c:892 gui2/gui_utils.c:2362 gui2/session.c:92
 #: gui2/session.c:1588
 msgid "Save"
 msgstr ""
@@ -7096,11 +7096,11 @@ msgid ""
 "Use only unaccented letters, digits and underscore"
 msgstr ""
 
-#: gui/gui_utils.c:2092 gui2/gui_utils.c:2104
+#: gui/gui_utils.c:2092 gui2/gui_utils.c:2151
 msgid "No undo information available"
 msgstr ""
 
-#: gui/gui_utils.c:2153 gui2/gui_utils.c:2201
+#: gui/gui_utils.c:2153 gui2/gui_utils.c:2248
 #, c-format
 msgid "Failed to load plugin: %s"
 msgstr ""
@@ -7855,7 +7855,7 @@ msgstr ""
 msgid "<- Remove"
 msgstr ""
 
-#: gui/selector.c:758 gui2/gui_utils.c:2311
+#: gui/selector.c:758 gui2/gui_utils.c:2358
 msgid "Clear"
 msgstr ""
 
@@ -8614,7 +8614,7 @@ msgstr ""
 msgid "Failed to generate graph"
 msgstr ""
 
-#: gui2/gui_utils.c:2192
+#: gui2/gui_utils.c:2239
 #, c-format
 msgid "Couldn't load plugin %s"
 msgstr ""

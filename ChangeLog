@@ -1,4 +1,4 @@
-version 1.0pre1
+09/20/2002 version 1.0pre2 (pre1 was "for translators only")
 - add range-mean graph option to GUI Variable menu, and
   as new command "rmplot"
 - add retrievable variable $pd = data periodicity

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 0.996\n"
-"POT-Creation-Date: 2002-09-19 15:24-0400\n"
+"POT-Creation-Date: 2002-09-20 10:34-0400\n"
 "PO-Revision-Date: 2002-09-19 17:14-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -139,7 +139,10 @@ msgid ""
 "\n"
 "Harvey-Collier t(%d) = %g with p-value %.4g\n"
 "\n"
-msgstr "\nTest de Harvey-Collier(%d) = %g avec p-valeur %.4g\n\n"
+msgstr ""
+"\n"
+"Test de Harvey-Collier(%d) = %g avec p-valeur %.4g\n"
+"\n"
 
 #: lib/src/compare.c:966
 msgid "CUSUM test for parameter stability"
@@ -958,7 +961,9 @@ msgstr "Statistique Q Box-Pierce = %.4f\n"
 msgid ""
 "Degrees of freedom = %d, p-value = %.4f\n"
 "\n"
-msgstr "Degrés de liberté = %d, p-valeur = %.4f\n\n"
+msgstr ""
+"Degrés de liberté = %d, p-valeur = %.4f\n"
+"\n"
 
 #: lib/src/describe.c:479 gui/gretl.c:1298 gui/gretl.c:1331 gui2/gretl.c:1346
 #: gui2/gretl.c:1377
@@ -1051,7 +1056,9 @@ msgstr ""
 msgid ""
 "\n"
 "Periodogram for %s\n"
-msgstr "\nPériodigramme de %s\n"
+msgstr ""
+"\n"
+"Périodigramme de %s\n"
 
 #: lib/src/describe.c:744
 #, c-format
@@ -1121,7 +1128,9 @@ msgstr "Variable"
 msgid ""
 "      MEAN            MEDIAN            MIN              MAX\n"
 "\n"
-msgstr "             MOYENNE      MÉDIANE           MIN            MAX\n\n"
+msgstr ""
+"             MOYENNE      MÉDIANE           MIN            MAX\n"
+"\n"
 
 #: lib/src/describe.c:914
 msgid ""
@@ -2401,7 +2410,9 @@ msgstr "Statistique $h$ de Durbin"
 #: lib/src/modelprint.c:388 lib/src/modelprint.c:393
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
-msgstr "Exlcusion de la constante, p-valeur était la plus grande pour la variable %d (%s)"
+msgstr ""
+"Exlcusion de la constante, p-valeur était la plus grande pour la variable %d "
+"(%s)"
 
 #: lib/src/modelprint.c:406
 msgid "Auxiliary regression for non-linearity test (squared terms)"
@@ -2535,7 +2546,8 @@ msgstr "Variable de poids est une variable bidon, observations effectives ="
 #: lib/src/modelprint.c:767
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT       SLOPE\n"
-msgstr "      VARIABLE      COEFFICIENT      ERREUR TYPE      STAT T       PENTE\n"
+msgstr ""
+"      VARIABLE      COEFFICIENT      ERREUR TYPE      STAT T       PENTE\n"
 
 #: lib/src/modelprint.c:770
 msgid "(at mean)"
@@ -2546,7 +2558,10 @@ msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |"
 "T|)\n"
 "\n"
-msgstr "      VARIABLE      COEFFICIENT      ERREUR TYPE      STAT T    ProbX2(t > |T|)\n\n"
+msgstr ""
+"      VARIABLE      COEFFICIENT      ERREUR TYPE      STAT T    ProbX2(t > |"
+"T|)\n"
+"\n"
 
 #: lib/src/modelprint.c:794 lib/src/modelprint.c:809 lib/src/modelprint.c:821
 #, fuzzy
@@ -2579,7 +2594,8 @@ msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
 "fitted values of the dependent variable"
 msgstr ""
-"R-carré est calculé comme le carré de la corrélation entre les valeurs observées\n"
+"R-carré est calculé comme le carré de la corrélation entre les valeurs "
+"observées\n"
 "et les valeurs 'fitted' de la variable dépendantes."
 
 #: lib/src/modelprint.c:924 lib/src/modelprint.c:928 lib/src/modelprint.c:932
@@ -2661,7 +2677,8 @@ msgstr "Somme des carrés des résidus"
 #: lib/src/modelprint.c:1636 plugin/mp_ols.c:401
 #, c-format
 msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
-msgstr "Estimées OLS en précision multiple utilisant les %d observations %s-%s\n"
+msgstr ""
+"Estimées OLS en précision multiple utilisant les %d observations %s-%s\n"
 
 #: lib/src/modelprint.c:1642 plugin/mp_ols.c:407
 #, fuzzy
@@ -2943,7 +2960,9 @@ msgstr ""
 msgid ""
 "  Of the 8 model selection statistics, %d %s\n"
 "\n"
-msgstr "  Des 8 statistiques de sélection de modèle, %d %s\n\n"
+msgstr ""
+"  Des 8 statistiques de sélection de modèle, %d %s\n"
+"\n"
 
 #: lib/src/printout.c:233
 msgid "has improved"
@@ -4038,7 +4057,7 @@ msgstr "Sauvegarder en tant que XPM..."
 #: gui/datafiles.c:678 gui/dialogs.c:459 gui/gpt_control.c:626
 #: gui/gpt_control.c:1353 gui/gpt_control.c:1396 gui/selector.c:775
 #: gui2/boxplots.c:181 gui2/boxplots.c:211 gui2/gpt_control.c:1391
-#: gui2/gpt_control.c:1434 gui2/gui_utils.c:2313
+#: gui2/gpt_control.c:1434 gui2/gui_utils.c:2360
 msgid "Help"
 msgstr "Aide"
 
@@ -4050,7 +4069,7 @@ msgstr "Aide"
 #: gui2/boxplots.c:184 gui2/boxplots.c:212 gui2/database.c:584
 #: gui2/datafiles.c:487 gui2/gpt_control.c:1414 gui2/gpt_control.c:1435
 #: gui2/gpt_control.c:1440 gui2/gui_utils.c:902 gui2/gui_utils.c:1266
-#: gui2/gui_utils.c:1360 gui2/gui_utils.c:1508 gui2/gui_utils.c:2312
+#: gui2/gui_utils.c:1360 gui2/gui_utils.c:1508 gui2/gui_utils.c:2359
 msgid "Close"
 msgstr "Fermer"
 
@@ -4840,7 +4859,7 @@ msgstr "gretl: traçage de série temporelle"
 
 #: gui/callbacks.c:407 gui/dialogs.c:104 gui/dialogs.c:110 gui/dialogs.c:300
 #: gui/dialogs.c:319 gui/dialogs.c:328 gui/settings.c:235 gui/ssheet.c:142
-#: gui/ssheet.c:154 gui2/gui_utils.c:2309
+#: gui/ssheet.c:154 gui2/gui_utils.c:2356
 msgid "Apply"
 msgstr "Appliquer"
 
@@ -5209,7 +5228,7 @@ msgstr "Utiliser les valeurs de début des périodes"
 #: gui/database.c:1687 gui/datafiles.c:668 gui/dialogs.c:830
 #: gui/gpt_control.c:819 gui/helpfiles.c:663 gui/library.c:4615
 #: gui/selector.c:766 gui/ssheet.c:143 gui/ssheet.c:155 gui2/gpt_control.c:851
-#: gui2/gui_utils.c:2310 gui2/helpfiles.c:694 gui2/library.c:4472
+#: gui2/gui_utils.c:2357 gui2/helpfiles.c:694 gui2/library.c:4472
 #: plugin/progress_bar-2.c:101 plugin/progress_bar.c:92
 msgid "Cancel"
 msgstr "Annuler"
@@ -5603,7 +5622,7 @@ msgstr ""
 msgid "period (.)"
 msgstr "période"
 
-#: gui/dialogs.c:1062 gui/gui_utils.c:1900 gui2/gui_utils.c:2314
+#: gui/dialogs.c:1062 gui/gui_utils.c:1900 gui2/gui_utils.c:2361
 msgid "OK"
 msgstr "OK"
 
@@ -5752,7 +5771,7 @@ msgstr "Redessiner"
 
 #: gui/gpt_control.c:610 gui/gpt_control.c:810 gui/gui_utils.c:931
 #: gui/session.c:79 gui/session.c:1045 gui2/gpt_control.c:842
-#: gui2/gui_utils.c:892 gui2/gui_utils.c:2315 gui2/session.c:92
+#: gui2/gui_utils.c:892 gui2/gui_utils.c:2362 gui2/session.c:92
 #: gui2/session.c:1588
 msgid "Save"
 msgstr "Sauvegarder"
@@ -7599,11 +7618,11 @@ msgstr ""
 "Nom contient un caractère illégal (à la position %d)\n"
 "Utiliser seulement des lettres, des chiffres et des soulignés"
 
-#: gui/gui_utils.c:2092 gui2/gui_utils.c:2104
+#: gui/gui_utils.c:2092 gui2/gui_utils.c:2151
 msgid "No undo information available"
 msgstr "Pas d'information disponible pour renverser la commande "
 
-#: gui/gui_utils.c:2153 gui2/gui_utils.c:2201
+#: gui/gui_utils.c:2153 gui2/gui_utils.c:2248
 #, c-format
 msgid "Failed to load plugin: %s"
 msgstr "Échec de chargement du plugin: %s"
@@ -8386,7 +8405,7 @@ msgstr "Ajouter ->"
 msgid "<- Remove"
 msgstr "<- Enlever"
 
-#: gui/selector.c:758 gui2/gui_utils.c:2311
+#: gui/selector.c:758 gui2/gui_utils.c:2358
 msgid "Clear"
 msgstr "Effacer"
 
@@ -9063,7 +9082,7 @@ msgstr "Entrer 2 variables par leur nom ou leur numéro:"
 
 #: gui2/gretl.c:368
 #, fuzzy
-msgid "/Données/Sort variables/by name"
+msgid "/Data/Sort variables/by name"
 msgstr "/Données/Add variables/sep"
 
 #: gui2/gretl.c:371
@@ -9194,7 +9213,7 @@ msgstr "gretl: sauvegarde du graphe"
 msgid "Failed to generate graph"
 msgstr "Échec de génération du corrélogramme\n"
 
-#: gui2/gui_utils.c:2192
+#: gui2/gui_utils.c:2239
 #, c-format
 msgid "Couldn't load plugin %s"
 msgstr "Ne peut charger le plugin %s"

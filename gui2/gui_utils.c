@@ -1941,26 +1941,73 @@ int validate_varname (const char *varname)
 
 /* .................................................................. */
 
-int prn_to_clipboard (PRN *prn, int code)
-{
-#ifdef G_OS_WIN32
-    return win_copy_text(prn, code);
-#else
-    size_t len;
+#if defined(G_OS_WIN32)
 
-    if (prn->buf == NULL) return 1;
-    len = strlen(prn->buf);
+static int prn_to_clipboard (PRN *prn, int copycode)
+{
+    return win_copy_text(prn, copycode);
+}
+
+#elif defined(ENABLE_NLS)
+
+static int prn_to_clipboard (PRN *prn, int copycode)
+{
+    if (prn->buf == NULL) return 0;
 
     if (clipboard_buf) g_free(clipboard_buf);
-    clipboard_buf = mymalloc(len + 1);
+    clipboard_buf = NULL;
 
-    memcpy(clipboard_buf, prn->buf, len + 1); /* encoding?? */
+    if (copycode == COPY_TEXT) { /* need to convert from utf8 */
+	gchar *trbuf;
+	gsize bytes;
+	
+	trbuf = g_locale_from_utf8(prn->buf, -1, NULL, &bytes, NULL);
+	if (bytes > 0) {
+	    clipboard_buf = mymalloc(bytes + 1);
+	    if (clipboard_buf == NULL) {
+		g_free(trbuf);
+		return 1;
+	    }
+	    memcpy(clipboard_buf, trbuf, bytes + 1);
+	    g_free(trbuf);
+	}
+    } else { /* copying TeX or RTF */
+	size_t len;
+
+	len = strlen(prn->buf);
+	clipboard_buf = mymalloc(len + 1);
+	if (clipboard_buf == NULL) return 1;
+	memcpy(clipboard_buf, prn->buf, len + 1);
+    }
+
     gtk_selection_owner_set(mdata->w,
 			    GDK_SELECTION_PRIMARY,
 			    GDK_CURRENT_TIME);
     return 0;
-#endif
 }
+
+#else /* plain GTK, no NLS */
+
+static int prn_to_clipboard (PRN *prn, int copycode)
+{
+    size_t len;
+    
+    if (prn->buf == NULL) return 0;
+    len = strlen(prn->buf);
+    if (len == 0) return 0;
+
+    if (clipboard_buf) g_free(clipboard_buf);
+    clipboard_buf = mymalloc(len + 1);
+    if (clipboard_buf == NULL) return 1;
+
+    memcpy(clipboard_buf, prn->buf, len + 1);
+    gtk_selection_owner_set(mdata->w,
+			    GDK_SELECTION_PRIMARY,
+			    GDK_CURRENT_TIME);
+    return 0;
+}
+
+#endif /* switch for prn_to_clipboard */
 
 /* .................................................................. */
 
