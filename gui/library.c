@@ -2761,7 +2761,7 @@ static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
     }
 
     if ((fp = fopen(mydata->fname, "w")) == NULL) {
-	sprintf(msg, _("couldn't write to %s"), mydata->fname);
+	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
 	errbox(msg); 
 	return;
     }
@@ -3096,7 +3096,7 @@ int execute_script (const char *runfile,
     while (strcmp(command.cmd, "quit")) {
 	if (looprun) { /* Are we doing a Monte Carlo simulation? */
 	    if (!loop.ncmds) {
-		pprintf(prn, _("No commands in loop.\n"));
+		pprintf(prn, _("No commands in loop\n"));
 		looprun = 0;
 		continue;
 	    }
@@ -3147,7 +3147,7 @@ int execute_script (const char *runfile,
 				     &looprun, psession, rebuild, 
 				     prn, exec_code, runfile);
 	    if (exec_err) {
-		pprintf(prn, _("\nError executing script: halting.\n"));
+		pprintf(prn, _("\nError executing script: halting\n"));
 		pprintf(prn, "> %s\n", tmp);
 		return 1;
 	    }
@@ -3211,13 +3211,13 @@ static int script_model_test (const int id, PRN *prn, const int ols_only)
     }    
     if (ols_only && strncmp(modelspec[m].cmd, "ols", 3)) {
 	pprintf(prn, _("This command is only available for OLS models "
-		"at present.\n"));
+		"at present\n"));
 	return 1;
     }
     if (model_sample_issue(NULL, &modelspec[m], (fullZ == NULL)? Z : fullZ, 
 			   (fullZ == NULL)? datainfo : fullinfo)) {
 	pprintf(prn, _("Can't do: the current data set is different from "
-		"the one on which\nthe reference model was estimated.\n"));
+		"the one on which\nthe reference model was estimated\n"));
 	return 1;
     }
     return 0;
@@ -3280,13 +3280,13 @@ static int gui_exec_line (char *line,
     }
     if (*plstack) {  /* accumulating loop commands */
 	if (!ok_in_loop(command.ci)) {
-            pprintf(prn, _("Sorry, this command is not available in loop mode.\n"));
+            pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         } else {
             echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
             if (command.ci != ENDLOOP) {
                 if (add_to_loop(plp, line, command.ci, oflag)) {
-                    pprintf(prn, _("Failed to add command to loop stack.\n"));
+                    pprintf(prn, _("Failed to add command to loop stack\n"));
 		    return 1;
                 }
                 return 0;
@@ -3305,7 +3305,7 @@ static int gui_exec_line (char *line,
      if (is_model_ref_cmd(command.ci)) {
  	if (model_sample_issue(models[0], &Z, datainfo)) {
  	    pprintf(prn, _("Can't do: the current data set is different from "
- 		   "the one on which\nthe reference model was estimated.\n"));
+ 		   "the one on which\nthe reference model was estimated\n"));
  	    return 1;
  	}
      }
@@ -3487,7 +3487,7 @@ static int gui_exec_line (char *line,
     case ENDLOOP:
 	if (*plstack != 1) {
 	    pprintf(prn, _("You can't end a loop here, "
-		    "you haven't started one.\n"));
+		    "you haven't started one\n"));
 	    break;
 	}
 	*plstack = 0;
@@ -3504,7 +3504,7 @@ static int gui_exec_line (char *line,
 	    err = tabprint(models[0], datainfo, &paths, 
 			   texfile, model_count, oflag);
 	if (err) 
-	    pprintf(prn, _("Couldn't open tex file for writing.\n"));
+	    pprintf(prn, _("Couldn't open tex file for writing\n"));
 	else 
 	    pprintf(prn, _("Model printed to %s\n"), texfile);
 	break;
@@ -3514,7 +3514,7 @@ static int gui_exec_line (char *line,
 	err = fcast(line, models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
-	    printf(_("Error retrieving fitted values.\n"));
+	    printf(_("Error retrieving fitted values\n"));
 	    errmsg(err, prn);
 	    break;
 	}
@@ -3538,7 +3538,7 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	err = 0;
-	pprintf(prn, _("Retrieved fitted values as \"autofit\".\n"));
+	pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	varlist(datainfo, prn); 
 	if (dataset_is_time_series(datainfo)) {
 	    plotvar(&Z, datainfo, "time");
@@ -3550,7 +3550,7 @@ static int gui_exec_line (char *line,
 	    lines[0] = oflag;
 	    err = gnuplot(command.list, lines, &Z, datainfo,
 			  &paths, &plot_count, 1, 0, 0);
-	    if (err < 0) pprintf(prn, _("gnuplot command failed.\n"));
+	    if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
 	    else graphmenu_state(TRUE);
 	}
 	break;
@@ -3563,7 +3563,7 @@ static int gui_exec_line (char *line,
 	printfreq(freq, prn);
 	if (exec_code == CONSOLE_EXEC) {
 	    if (plot_freq(freq, &paths, NORMAL))
-		pprintf(prn, _("gnuplot command failed.\n"));
+		pprintf(prn, _("gnuplot command failed\n"));
 	}
 	free_freq(freq);
 	break;
@@ -3579,7 +3579,7 @@ static int gui_exec_line (char *line,
 		errmsg(genr.errcode, prn);
 	    else {
 		if (add_new_var(datainfo, &Z, &genr)) {
-		    pprintf(prn, _("Failed to add new variable.\n"));
+		    pprintf(prn, _("Failed to add new variable\n"));
 		} else {
 		    pprintf(prn, "%s", genr.msg); 
 		    if (exec_code == CONSOLE_EXEC)
@@ -3593,7 +3593,7 @@ static int gui_exec_line (char *line,
 	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
 	    break;
 	if (plp != NULL) {
-	    pprintf(prn, _("script mode: gnuplot command ignored.\n"));
+	    pprintf(prn, _("script mode: gnuplot command ignored\n"));
 	    break;
 	}
 	if (oflag == OPT_M) { /* plot with impulses */
@@ -3646,7 +3646,7 @@ static int gui_exec_line (char *line,
 	if (exec_code == SAVE_SESSION_EXEC) break;
         err = getopenfile(line, datfile, &paths, 0, 0);
         if (err) {
-            pprintf(prn, _("import command is malformed.\n"));
+            pprintf(prn, _("import command is malformed\n"));
             break;
         }
 	if (data_status & HAVE_DATA)
@@ -3661,9 +3661,9 @@ static int gui_exec_line (char *line,
             print_smpl(datainfo, 0, prn);
             varlist(datainfo, prn);
             pprintf(prn, _("You should now use the \"print\" command "
-		    "to verify the data.\n"));
+		    "to verify the data\n"));
             pprintf(prn, _("If they are OK, use the  \"store\" command "
-		    "to save them in gretl format.\n"));
+		    "to save them in gretl format\n"));
         }
         break;
 
@@ -3751,7 +3751,7 @@ static int gui_exec_line (char *line,
     case LOOP:
 	if (plp == NULL) {
 	    pprintf(prn, _("Sorry, Monte Carlo loops not available "
-		    "in this mode.\n"));
+		    "in this mode\n"));
 	    break;
 	}
 	if ((err = parse_loopline(line, plp, datainfo))) {
@@ -3759,7 +3759,7 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	if (plp->lvar == 0 && plp->ntimes < 2) {
-	    printf(_("Loop count missing or invalid.\n"));
+	    printf(_("Loop count missing or invalid\n"));
 	    monte_carlo_free(plp);
 	    break;
 	}
@@ -3769,18 +3769,18 @@ static int gui_exec_line (char *line,
     case NULLDATA:
 	nulldata_n = atoi(command.param);
 	if (nulldata_n < 2) {
-	    pprintf(prn, _("Data series length count missing or invalid.\n"));
+	    pprintf(prn, _("Data series length count missing or invalid\n"));
 	    err = 1;
 	    break;
 	}
 	if (nulldata_n > 1000000) {
-	    pprintf(prn, _("Data series too long.\n"));
+	    pprintf(prn, _("Data series too long\n"));
 	    err = 1;
 	    break;
 	}
 	err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
 	if (err) { 
-	    pprintf(prn, _("Failed to create empty data set.\n"));
+	    pprintf(prn, _("Failed to create empty data set\n"));
 	    break;
 	}
 	paths.datfile[0] = '\0';
@@ -3827,12 +3827,12 @@ static int gui_exec_line (char *line,
 
     case QUIT:
 	if (plp) pprintf(prn, _("Script done\n"));
-	else pprintf(prn, _("Please use the Close button to exit.\n"));
+	else pprintf(prn, _("Please use the Close button to exit\n"));
 	break;
 
     case RHODIFF:
 	if (!command.list[0]) {
-	    pprintf(prn, _("This command requires a list of variables.\n"));
+	    pprintf(prn, _("This command requires a list of variables\n"));
 	    err = 1;
 	    break;
 	}
@@ -3844,11 +3844,11 @@ static int gui_exec_line (char *line,
     case RUN:
 	err = getopenfile(line, runfile, &paths, 1, 1);
 	if (err) { 
-	    pprintf(prn, _("Run command failed.\n"));
+	    pprintf(prn, _("Run command failed\n"));
 	    break;
 	}
 	if (myname != NULL && strcmp(runfile, myname) == 0) { 
-	    pprintf(prn, _("Infinite loop detected in script.\n"));
+	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    return 1;
 	}
 	execute_script(runfile, NULL, NULL, prn, SESSION_EXEC);
@@ -3857,11 +3857,11 @@ static int gui_exec_line (char *line,
 
     case SCATTERS:
         if (plp != NULL) /* fixme? */
-            pprintf(prn, _("scatters command not available in batch mode.\n"));
+            pprintf(prn, _("scatters command not available in batch mode\n"));
         else {
             err = multi_scatters(command.list, atoi(command.param), &Z, 
                                  datainfo, &paths);
-            if (err) pprintf(prn, _("scatters command failed.\n"));
+            if (err) pprintf(prn, _("scatters command failed\n"));
         }               
         break;
 
@@ -3926,10 +3926,10 @@ static int gui_exec_line (char *line,
 	if (oflag) check = xpxgenr(command.list, &Z, datainfo, 1, 1);
 	else check = xpxgenr(command.list, &Z, datainfo, 0, 1);
 	if (check < 0) {
-	    pprintf(prn, _("Failed to generate squares.\n"));
+	    pprintf(prn, _("Failed to generate squares\n"));
 	    err = 1;
 	} else {
-	    pprintf(prn, _("Squares generated OK.\n"));
+	    pprintf(prn, _("Squares generated OK\n"));
 	    varlist(datainfo, prn);
 	}
 	break;
@@ -3945,25 +3945,25 @@ static int gui_exec_line (char *line,
 	    else
 		pprintf(prn, _("store: using filename %s\n"), command.param);
 	} else {
-	    pprintf(prn, _("store: no filename given.\n"));
+	    pprintf(prn, _("store: no filename given\n"));
 	    break;
 	}
 	if (write_data(command.param, command.list, 
 		       Z, datainfo, data_option(oflag), NULL)) {
-	    pprintf(prn, _("write of data file failed.\n"));
+	    pprintf(prn, _("write of data file failed\n"));
 	    err = 1;
 	    break;
 	}
 	pprintf(prn, _("Data written OK.\n"));
 	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) 
 	    pprintf(prn, _("Warning: case markers not saved in "
-		    "binary datafile.\n"));
+		    "binary datafile\n"));
 	break;
 
     case TESTUHAT:
 	if ((err = script_model_test(0, prn, 0))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
-	    pprintf(prn, _("Out of memory attempting to add variable.\n"));
+	    pprintf(prn, _("Out of memory attempting to add variable\n"));
 	    err = 1;
 	    break;
 	}

@@ -3266,18 +3266,14 @@ msgstr ""
 msgid "Retrieved fitted values as \"autofit\".\n"
 msgstr ""
 
-#: ../cli/gretlcli.c:737 ../cli/gretlcli.c:753 ../gui/library.c:3553
-#: ../gui/library.c:3566
-msgid "gnuplot command failed.\n"
-msgstr ""
-
 #: ../cli/gretlcli.c:780
 msgid ""
 "You must supply three variables, the last of which is a dummy variable\n"
 "(with values 1 or 0)\n"
 msgstr ""
 
-#: ../cli/gretlcli.c:792 ../gui/library.c:3607
+#: ../cli/gretlcli.c:792 ../cli/gretlcli.c:737 ../cli/gretlcli.c:753
+#: ../gui/library.c:3607../gui/library.c:3553 ../gui/library.c:3566
 msgid "gnuplot command failed\n"
 msgstr ""
 

@@ -1319,7 +1319,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
 
     if ((fp = fopen(mydata->fname, "w")) == NULL) {
-	sprintf(msg, _("couldn't write to %s"), mydata->fname);
+	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
 	errbox(msg); 
 	return;
     }

@@ -1694,7 +1694,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	pprintf(prn, _("couldn't open %s\n"), fname);
+	pprintf(prn, _("Couldn't open %s\n"), fname);
 	return 1;
     }
 
@@ -2034,7 +2034,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	pprintf(prn, _("couldn't open %s\n"), fname);
+	pprintf(prn, _("Couldn't open %s\n"), fname);
 	return 1;
     }
 

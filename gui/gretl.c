@@ -450,7 +450,7 @@ static void gui_usage (void)
 
 static void noalloc (char *str)
 {
-    fprintf(stderr, _("Couldn't allocate memory for %s.\n"), str);
+    fprintf(stderr, _("Couldn't allocate memory for %s\n"), str);
     exit(EXIT_FAILURE);
 }
 
@@ -614,7 +614,7 @@ int main (int argc, char *argv[])
     strcat(cmdfile, "session.inp");
     cmds = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
     if (cmds == NULL) {
-	fprintf(stderr, _("Can't open file to save commands.\n"));
+	fprintf(stderr, _("Can't open file to save commands\n"));
 	return EXIT_FAILURE;
     }
     fclose(cmds->fp);

@@ -157,13 +157,13 @@ int ws_startup (void)
     requested = MAKEWORD(1, 1);
 
     if (WSAStartup(requested, &data)) {
-	fprintf(stderr, _("Couldn't find usable socket driver.\n"));
+	fprintf(stderr, _("Couldn't find usable socket driver\n"));
 	return 1;
     }
 
     if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
 				   HIBYTE (requested) < 1)) {
-	fprintf(stderr, _("Couldn't find usable socket driver.\n"));
+	fprintf(stderr, _("Couldn't find usable socket driver\n"));
 	WSACleanup();
 	return 1;
     }
@@ -524,7 +524,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     switch (err) {
     case HOSTERR:
-	sprintf(conn->errbuf, "%s: %s.\n", conn->host, herrmsg(h_errno));
+	sprintf(conn->errbuf, "%s: %s\n", conn->host, herrmsg(h_errno));
 	return HOSTERR;
 	break;
     case CONSOCKERR:
@@ -532,7 +532,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	return CONSOCKERR;
 	break;
     case CONREFUSED:
-	sprintf(conn->errbuf, "Connection to %s:%hu refused.\n", 
+	sprintf(conn->errbuf, "Connection to %s:%hu refused\n", 
 		conn->host, conn->port);
 	close(sock);
 	return CONREFUSED;
