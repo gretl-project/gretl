@@ -36,7 +36,6 @@ char rcfile[MAXLEN];
 char *storelist = NULL;
 
 static GtkWidget *help_view = NULL;
-int db_is_native = 0;
 
 extern GtkTooltips *gretl_tips;
 extern int session_saved;
@@ -101,10 +100,12 @@ static char fontspec[MAXLEN] =
 GdkFont *fixed_font;
 
 static int usecwd;
+int olddat;
 
 typedef struct {
-    char *key,         /* config file variable name */
-         *description; /* How the field will show up in the options dialog */
+    char *key;         /* config file variable name */
+    char *description; /* How the field will show up in the options dialog */
+    char *radio;       /* in case of radio button pair, alternate string */
     void *var;         /* pointer to variable */
     char type;         /* 'U' (user) or 'R' (root) for string, 'B' for boolean */
     int len;           /* storage size for string variable */
@@ -113,22 +114,36 @@ typedef struct {
 } RCVARS;
 
 RCVARS rc_vars[] = {
-    {"gretldir", "Main gretl directory", paths.gretldir, 'R', MAXLEN, 1, NULL},
-    {"userdir", "User's gretl directory", paths.userdir, 'U', MAXLEN, 1, NULL},
-    {"gnuplot", "Command to launch gnuplot", paths.gnuplot, 'R', MAXLEN, 1, NULL},
-    {"Rcommand", "Command to launch GNU R", Rcommand, 'R', MAXSTR, 1, NULL},
-    {"expert", "Expert mode (no warnings)", &expert, 'B', 0, 1, NULL},
-    {"updater", "Tell me about gretl updates", &updater, 'B', 0, 1, NULL},
-    {"binbase", "gretl database directory", paths.binbase, 'U', MAXLEN, 2, NULL},
-    {"ratsbase", "RATS data directory", paths.ratsbase, 'U', MAXLEN, 2, NULL},
-    {"dbhost_ip", "Database server IP", paths.dbhost_ip, 'U', 16, 2, NULL},
-    {"calculator", "Calculator", calculator, 'U', MAXSTR, 3, NULL},
-    {"editor", "Editor", editor, 'U', MAXSTR, 3, NULL},
-    {"toolbar", "Show gretl toolbar", &want_toolbar, 'B', 0, 3, NULL},
+    {"gretldir", "Main gretl directory", NULL, paths.gretldir, 
+     'R', MAXLEN, 1, NULL},
+    {"userdir", "User's gretl directory", NULL, paths.userdir, 
+     'U', MAXLEN, 1, NULL},
+    {"gnuplot", "Command to launch gnuplot", NULL, paths.gnuplot, 
+     'R', MAXLEN, 1, NULL},
+    {"Rcommand", "Command to launch GNU R", NULL, Rcommand, 
+     'R', MAXSTR, 1, NULL},
+    {"expert", "Expert mode (no warnings)", NULL, &expert, 
+     'B', 0, 1, NULL},
+    {"updater", "Tell me about gretl updates", NULL, &updater, 
+     'B', 0, 1, NULL},
+    {"binbase", "gretl database directory", NULL, paths.binbase, 
+     'U', MAXLEN, 2, NULL},
+    {"ratsbase", "RATS data directory", NULL, paths.ratsbase, 
+     'U', MAXLEN, 2, NULL},
+    {"dbhost_ip", "Database server IP", NULL, paths.dbhost_ip, 
+     'U', 16, 2, NULL},
+    {"calculator", "Calculator", NULL, calculator, 
+     'U', MAXSTR, 3, NULL},
+    {"editor", "Editor", NULL, editor, 
+     'U', MAXSTR, 3, NULL},
+    {"toolbar", "Show gretl toolbar", NULL, &want_toolbar, 
+     'B', 0, 3, NULL},
     {"usecwd", "Use current working directory as default", 
-     &usecwd, 'B', 0, 4, NULL},
-    {"fontspec", "Fixed font", fontspec, 'U', MAXLEN, 0, NULL},
-    {NULL, NULL, NULL, 0, 0, 0, NULL}   
+     "Use gretl user directory as default", &usecwd, 'B', 0, 4, NULL},
+    {"olddat", "Use \".dat\" as default datafile suffix", 
+     "Use \".gdt\" as default suffix", &olddat, 'B', 0, 5, NULL},
+    {"fontspec", "Fixed font", NULL, fontspec, 'U', MAXLEN, 0, NULL},
+    {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
 
 GtkItemFactoryEntry model_items[] = {
@@ -1621,6 +1636,7 @@ void options_dialog (gpointer data)
     make_prefs_tab (notebook, 2);
     make_prefs_tab (notebook, 3);
     make_prefs_tab (notebook, 4);
+    make_prefs_tab (notebook, 5);
    
     tempwid = gtk_button_new_with_label ("OK");
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
@@ -1676,6 +1692,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	tempwid = gtk_label_new ("Toolbar");
     else if (tab == 4)
 	tempwid = gtk_label_new ("Open/Save path");
+    else if (tab == 5)
+	tempwid = gtk_label_new ("Data files");
     
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
@@ -1697,7 +1715,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     i = 0;
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].tab == tab) {
-	    if (rc_vars[i].type == 'B') { /* boolean variable */
+	    if (rc_vars[i].type == 'B' 
+		&& rc_vars[i].radio == NULL) { /* simple boolean variable */
 		tempwid = gtk_check_button_new_with_label 
 		    (rc_vars[i].description);
 		gtk_table_attach_defaults 
@@ -1717,6 +1736,32 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    tbl_num++;
 		    gtk_table_resize (GTK_TABLE (inttbl), tbl_num + 1, 2);
 		}
+	    } 
+	    else if (rc_vars[i].type == 'B') { /* radio dichotomy */
+		int val = *(int *)(rc_vars[i].var);
+		GSList *group;
+
+		tbl_num += 2;
+		gtk_table_resize (GTK_TABLE(inttbl), tbl_num + 1, 2);
+
+		tempwid = gtk_radio_button_new_with_label(NULL, 
+							  rc_vars[i].description);
+		gtk_table_attach_defaults 
+		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
+		     tbl_num - 2, tbl_num - 1);    
+		if (val) 
+		    gtk_toggle_button_set_active 
+			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
+		gtk_widget_show (tempwid);
+		group = gtk_radio_button_group(GTK_RADIO_BUTTON(tempwid));
+		tempwid = gtk_radio_button_new_with_label(group, rc_vars[i].radio);
+		gtk_table_attach_defaults 
+		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
+		     tbl_num - 1, tbl_num);  
+		if (!val)
+		    gtk_toggle_button_set_active
+			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
+		gtk_widget_show (tempwid);
 	    } else { /* string variable */
 		tbl_len++;
 		gtk_table_resize (GTK_TABLE (chartbl), tbl_len, 2);

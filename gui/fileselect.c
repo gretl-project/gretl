@@ -35,13 +35,13 @@ struct extmap {
     char *ext;
 };
 
-const char datext[] = ".dat";
+const char datext[5] = ".gdt";
 
 static struct extmap action_map[] = {
-    {SAVE_DATA, ".dat"},
+    {SAVE_DATA, ".gdt"},
     {SAVE_GZDATA, ".gz"},
-    {SAVE_BIN1, ".dat"},
-    {SAVE_BIN2, ".dat"},
+    {SAVE_BIN1, ".gdt"},
+    {SAVE_BIN2, ".gdt"},
     {SAVE_CMDS, ".inp"},
     {SAVE_SCRIPT, ".inp"},
     {SAVE_CONSOLE, ".inp"},
@@ -58,7 +58,7 @@ static struct extmap action_map[] = {
     {SAVE_OUTPUT, ".txt"},
     {SAVE_TEX_TAB, ".tex"},
     {SAVE_TEX_EQ, ".tex"},
-    {OPEN_DATA, ".dat"},
+    {OPEN_DATA, ".gdt"},
     {OPEN_SCRIPT, ".inp"},
     {OPEN_SESSION, ".gretl"},
     {OPEN_CSV,  ".csv"},
@@ -92,6 +92,20 @@ static char *get_gp_ext (const char *termtype)
     else if (!strcmp(termtype, "png")) return ".png";
     else if (!strcmp(termtype, "plot commands")) return ".gp";
     else return "*";
+}
+
+extern int olddat; /* gui_utils.c */
+
+/* ........................................................... */
+
+static void dat_compat (char *s)
+{
+    if (olddat && s != NULL) {
+        size_t n = strlen(s);
+
+        if (n > 4 && strncmp(s+n-4, ".gdt", 4) == 0)
+            strcpy(s+n-4, ".dat")
+    }
 }
 
 /* ........................................................... */
@@ -137,8 +151,10 @@ static void maybe_add_ext (char *fname, int action, gpointer data)
     
     /* otherwise add an appropriate extension */
     ext = get_ext(action, data);
-    if (ext != NULL && strlen(ext) > 1)
+    if (ext != NULL && strlen(ext) > 1) {
 	strcat(fname, ext);
+	dat_compat(fname);
+    }
 }
 
 /* ........................................................... */
@@ -311,7 +327,7 @@ void file_selector (char *msg, int action, gpointer data)
 
     suff = strrchr(fname, '.');
     if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, datext)) {
-	errbox("The .dat suffix should be used only\n"
+	errbox("The .gdt suffix should be used only\n"
 	       "for gretl datafiles");
 	return;
     }
@@ -439,7 +455,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     suff = strrchr(fname, '.');
 
     if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, datext)) {
-	errbox("The .dat suffix should be used only\n"
+	errbox("The .gdt suffix should be used only\n"
 	       "for gretl datafiles");
 	gtk_widget_destroy(GTK_WIDGET(fs));
 	return;
@@ -538,7 +554,8 @@ void file_selector (char *msg, int action, gpointer data)
 
     gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
 
-    extra_get_filter (action, data, suffix);
+    extra_get_filter(action, data, suffix);
+    dat_compat(suffix);
     gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), suffix);
 
     gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->ok_button),
