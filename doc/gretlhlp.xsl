@@ -3,6 +3,13 @@
 
 <xsl:import href="/usr/share/sgml/docbook-xsl/htmlhelp/htmlhelp.xsl"/>
 
+<!--
+<xsl:param name="htmlhelp.encoding" select="'windows-1250'"/>
+<xsl:param name="chunker.output.encoding" select="'UTF-8'"/>
+<xsl:param name="saxon.character.representation" select="'native'"/> 
+-->
+
+
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:template match="command">
