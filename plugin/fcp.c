@@ -138,14 +138,14 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
     for (i = 0; i < nalfa; ++i) {
 	alfin[i] = amax[3 + i];
 #if FFDEBUG
-	fprintf(stderr, "read initial alpha[%d] = %g\n", i, alfin[i]);
+	fprintf(stderr, "read initial alpha[%d] = %.9g\n", i, alfin[i]);
 #endif
     }
 
     for (i = 0; i < nbeta; ++i) {
 	betin[i] = amax[3 + nalfa + i];
 #if FFDEBUG
-	fprintf(stderr, "read initial beta[%d] = %g\n", i, betin[i]);
+	fprintf(stderr, "read initial beta[%d] = %.9g\n", i, betin[i]);
 #endif
     }
 
@@ -196,7 +196,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 
 #ifdef FFDEBUG
     for (i = 0; i < 3; i++) {
-	fprintf(stderr, "after ols g[%d] = %g\n", i, g[i]);
+	fprintf(stderr, "after ols g[%d] = %.9g\n", i, g[i]);
     } 
 #endif    
 
@@ -212,7 +212,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 		      X, nobs, nx, t1, t2, param, b, &alfa0, alfa, 
 		      beta, nalfa, nbeta, ht);
 
-	fprintf(stderr, "iteration %d: Log-likelihood = %g\n", izo, fu);
+	fprintf(stderr, "iteration %d: Log-likelihood = %.9g\n", izo, fu);
 
 	if (++nzo > NLL) {
 	    nzo = NLL;
@@ -224,7 +224,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 	    parpre[i] = param[i];
 	    partrc[nix(i,nzo-1)] = param[i]; /* FIXME */
 #ifdef FDEBUG
-	    fprintf(stderr, "param[%d] = %g\n", i, param[i]);	    
+	    fprintf(stderr, "param[%d] = %.9g\n", i, param[i]);	    
 #endif
 	}
 
@@ -312,19 +312,19 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 	}
 
 	if (sumgra >= 1.0e-4) {
-	    fprintf(stderr, "Sum of gradients = %g\n", (double) sumgra);
+	    fprintf(stderr, "Sum of gradients = %.9g\n", (double) sumgra);
 	    *info = 2;
 	    return 1;
 	}
 
-	fprintf(stderr, "Full Hessian convergence at iteration %d, tol = %g\n",
+	fprintf(stderr, "Full Hessian convergence at iteration %d, tol = %.9g\n",
 		nzo, toler2);
 
 	*iters = nzo;
 	amax[0] = toler2;
 
 	for (i = 0; i < nzo; ++i) {
-	    fprintf(stderr, " %g\n", flikel[i]);
+	    fprintf(stderr, " %.9g\n", flikel[i]);
 	}
 
 	tollog = 0.0;
@@ -494,20 +494,20 @@ garch_ll (double *c, int nc, double *res2,
 
     *alfa0 = param[nc];
 #ifdef FDEBUG
-    fprintf(stderr, "garch_ll: alfa0 = %g\n", *alfa0);
+    fprintf(stderr, "garch_ll: alfa0 = %.9g\n", *alfa0);
 #endif
 
     for (i = 0; i < nalfa; ++i) {
 	alfa[i] = param[nc + 1 + i];
 #ifdef FDEBUG
-	fprintf(stderr, " alfa[%d] = %g\n", i, alfa[i]);
+	fprintf(stderr, " alfa[%d] = %.9g\n", i, alfa[i]);
 #endif	
     }
 
     for (i = 0; i < nbeta; ++i) {
 	beta[i] = param[nc + nalfa + 1 + i];
 #ifdef FDEBUG
-	fprintf(stderr, " beta[%d] = %g\n", i, beta[i]);
+	fprintf(stderr, " beta[%d] = %.9g\n", i, beta[i]);
 #endif	
     }
 
@@ -518,7 +518,7 @@ garch_ll (double *c, int nc, double *res2,
 	get_yhat(&ystoc[t], X, nx, nobs, t, yobs, b, &ydet[t]);
 #if FFDEBUG
 	if (t < 5)
-	    fprintf(stderr, " ydet[%d] = %g\n", t, ydet[t]);
+	    fprintf(stderr, " ydet[%d] = %.9g\n", t, ydet[t]);
 #endif
     }
 
@@ -529,7 +529,7 @@ garch_ll (double *c, int nc, double *res2,
 	uncvar += res2[t];
     }
 #ifdef FDEBUG
-    fprintf(stderr, "uncvar = %g/%d = %g\n", uncvar, t2 - t1 + 1,
+    fprintf(stderr, "uncvar = %.9g/%d = %.9g\n", uncvar, t2 - t1 + 1,
 	    uncvar / (t2 - t1 + 1));
 #endif
     uncvar /= (t2 - t1 + 1);
@@ -565,8 +565,8 @@ garch_ll (double *c, int nc, double *res2,
 
     ll = 0.0;
     for (t = t1; t <= t2; ++t) {
-#ifdef FFDEBUG
-	if (t < 5) fprintf(stderr, "h[%d] = %g, res2[%d] = %g\n",
+#ifdef FDEBUG
+	if (t < 5) fprintf(stderr, "h[%d] = %.9g, res2[%d] = %.9g\n",
 			   t, ht[t], t, res2[t]);
 #endif
 	ll = ll - log(ht[t]) * .5 - res2[t] * .5 / ht[t] - .9189385332056725;
@@ -662,20 +662,20 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
     *alfa0 = param[nc];
 #ifdef FDEBUG
-    fprintf(stderr, "garcim: alfa0=%g\n", *alfa0);
+    fprintf(stderr, "garcim: alfa0=%.9g\n", *alfa0);
 #endif
 
     for (i = 0; i < nalfa; ++i) {
 	alfa[i] = param[nc + 1 + i];
 #ifdef FDEBUG
-	fprintf(stderr, "garcim: alfa[%d]=%g\n", i, alfa[i]);
+	fprintf(stderr, "garcim: alfa[%d]=%.9g\n", i, alfa[i]);
 #endif
     }
 
     for (i = 0; i < nbeta; ++i) {
 	beta[i] = param[nc + 1 + nalfa + i];
 #ifdef FDEBUG
-	fprintf(stderr, "garcim: beta[%d]=%g\n", i, beta[i]);
+	fprintf(stderr, "garcim: beta[%d]=%.9g\n", i, beta[i]);
 #endif
     }
 
@@ -728,7 +728,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 #if FFDEBUG
 	if (t < 10) {
 	    for (i=0; i<nvparm; i++) {
-		 fprintf(stderr, "I(%d,%d) = %g\n", nc+i, t, 
+		 fprintf(stderr, "I(%d,%d) = %.9g\n", nc+i, t, 
 			 I[nix(nc+i,t)]);
 	    }
 	}
@@ -738,7 +738,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #if FFDEBUG
     for (i=0; i<=nalfa + nbeta; i++) {
-	fprintf(stderr, "zt[%d] = %g\n", i, zt[i]);
+	fprintf(stderr, "zt[%d] = %.9g\n", i, zt[i]);
     }
 #endif    
 
@@ -864,7 +864,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #if FFDEBUG
     for (i=0; i<NPMAX*NPMAX; i++) {
-	fprintf(stderr, "vc5[%d] = %g\n", i, vc5[i]);
+	fprintf(stderr, "vc5[%d] = %.9g\n", i, vc5[i]);
     }
 #endif
 
@@ -909,7 +909,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FFDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(1) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(1) = %.9g\n", i, param[i]);
     }
 #endif    
 
@@ -920,7 +920,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     stre = sqrt(stre);
 
 #ifdef FDEBUG
-    fprintf(stderr, "s_2 = %g\n", s_2);
+    fprintf(stderr, "s_2 = %.9g\n", s_2);
 #endif
 
     oldstp = s_2;
@@ -953,7 +953,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 		       X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		       beta, nalfa, nbeta, ht);
 #ifdef FFDEBUG
-	fprintf(stderr, "ivolta=1, f1=%g\n", f1);
+	fprintf(stderr, "ivolta=1, f1=%.9g\n", f1);
 #endif
     }
     for (i = 0; i < nparam; ++i) {
@@ -963,7 +963,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(2) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(2) = %.9g\n", i, param[i]);
     }
 #endif 
 
@@ -971,7 +971,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-    fprintf(stderr, "f2=%g, f1=%g\n", f2, f1);
+    fprintf(stderr, "f2=%.9g, f1=%.9g\n", f2, f1);
 #endif    
     if (f2 > f1) {
 	goto L307;
@@ -988,7 +988,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(3) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(3) = %.9g\n", i, param[i]);
     }
 #endif    
 
@@ -1011,7 +1011,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(4) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(4) = %.9g\n", i, param[i]);
     }
 #endif 
 
@@ -1047,7 +1047,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(5) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(5) = %.9g\n", i, param[i]);
     }
 #endif 
 
@@ -1074,7 +1074,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(6) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(6) = %.9g\n", i, param[i]);
     }
 #endif
 
@@ -1100,7 +1100,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(7) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(7) = %.9g\n", i, param[i]);
     }
 #endif
 
@@ -1205,7 +1205,7 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(8) = %g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(8) = %.9g\n", i, param[i]);
     }
 #endif
 
@@ -1273,20 +1273,20 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     }
     *alfa0 = param[nc];
 #ifdef FDEBUG
-    fprintf(stderr, "hessian: alfa0=%g\n", *alfa0);
+    fprintf(stderr, "hessian: alfa0=%.9g\n", *alfa0);
 #endif
 
     for (i = 0; i < nalfa; ++i) {
 	alfa[i] = param[nc + 1 + i];
 #ifdef FDEBUG
-	fprintf(stderr, "hessian: alfa[%d]=%g\n", i, alfa[i]);
+	fprintf(stderr, "hessian: alfa[%d]=%.9g\n", i, alfa[i]);
 #endif
     }
 
     for (i = 0; i < nbeta; ++i) {
 	beta[i] = param[nc + 1 + nalfa + i];
 #ifdef FDEBUG
-	fprintf(stderr, "hessian: beta[%d]=%g\n", i, beta[i]);
+	fprintf(stderr, "hessian: beta[%d]=%.9g\n", i, beta[i]);
 #endif
     }
 
@@ -1298,7 +1298,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
        varianza noncondizionata calcolata dai residui.
     */
 
-    for (t = 0; t < nbeta; ++t) { /* or 1 to <= nbeta ? */
+    for (t = 0; t <= nbeta; ++t) { /* or 1 to <= nbeta ? */
 	for (i = 0; i < nvparm; ++i) {
 	    I[nix(nc+i, t1-t)] = 0.0;
 	    for (j = 0; j < nvparm; ++j) {
@@ -1380,7 +1380,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 			g[gix(i,isp)] * g[gix(j,isp)] / n;
 #ifdef FFDEBUG  
 		    if (isp == t1 || isp == t2) {
-			fprintf(stderr, "set H[%d][%d][%d] = %g\n",
+			fprintf(stderr, "set H[%d][%d][%d] = %.9g\n",
 				i,j,t+1, H[i][j][t+1]);
 		    }
 #endif
@@ -1420,7 +1420,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 #ifdef FFDEBUG
 	if (t == t1 || t == t2) {
 	    for (i = 0; i < nc; ++i) {
-		fprintf(stderr, "I(%d,%d) = %g\n", i,t, I[nix(i,t)]);
+		fprintf(stderr, "I(%d,%d) = %.9g\n", i,t, I[nix(i,t)]);
 	    }
 	}
 #endif
@@ -1449,7 +1449,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 #ifdef FFDEBUG
 	if (t == t1 || t == t2) {
 	    for (i=0; i<nc; i++) {
-		fprintf(stderr, " (prima) aux3[%d] = %g\n", i, aux3[i]);
+		fprintf(stderr, " (prima) aux3[%d] = %.9g\n", i, aux3[i]);
 	    }
 	}
 #endif
@@ -1463,7 +1463,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 #ifdef FFDEBUG
 	if (t == t1 || t == t2) {
 	    for (i=0; i<nvparm; i++) {
-		fprintf(stderr, " (seconda) aux3[%d] = %g\n", nc+i, aux3[nc+i]);
+		fprintf(stderr, " (seconda) aux3[%d] = %.9g\n", nc+i, aux3[nc+i]);
 	    }
 	}
 #endif
@@ -1472,7 +1472,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 
 #ifdef FFDEBUG
     for (i=0; i<nvparm; i++) {
-	fprintf(stderr, " aux3[%d] = %g\n", i, aux3[i]);
+	fprintf(stderr, " aux3[%d] = %.9g\n", i, aux3[i]);
     }
 #endif
 
@@ -1512,7 +1512,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		    }
 #ifdef FFDEBUG
 		    if (t==t1 || t==t2) {
-			fprintf(stderr, "step1 H[%d][%d][0]=%g\n", 
+			fprintf(stderr, "step1 H[%d][%d][0]=%.9g\n", 
 				i, j, H[i][j][0]);
 		    }
 #endif
@@ -1527,7 +1527,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		}
 #ifdef FFDEBUG
 		if (t==t1 || t==t2) {
-		    fprintf(stderr, "step2 H[%d][%d][0]=%g\n", 
+		    fprintf(stderr, "step2 H[%d][%d][0]=%.9g\n", 
 			    i, j, H[i][j][0]);
 		}
 #endif
@@ -1543,7 +1543,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		}
 #ifdef FFDEBUG
 		if (t==t1 || t==t2) {
-		    fprintf(stderr, "step3 H[%d][%d][0]=%g\n", 
+		    fprintf(stderr, "step3 H[%d][%d][0]=%.9g\n", 
 			    i, nc+k, H[i][nc+k][0]);
 		}
 #endif
@@ -1553,7 +1553,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 	    }
 #ifdef FFDEBUG
 	    if (t==t1 || t==t2) {
-		fprintf(stderr, "step4 H[%d][%d][0]=%g\n", 
+		fprintf(stderr, "step4 H[%d][%d][0]=%.9g\n", 
 			i, nc+nalfa+k, H[i][nc+nalfa+k][0]);
 	    }
 #endif
@@ -1567,7 +1567,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 #ifdef FFDEBUG
 		    if (t==t1 || t==t2) {
 			fprintf(stderr, "step5 H[%d][%d][0] += "
-				"H[%d][%d][%d] * beta[%d]: %g*%g -> %g\n", 
+				"H[%d][%d][%d] * beta[%d]: %.9g*%.9g -> %.9g\n", 
 				i, nc+j,i,nc+j,k,k-1,H[i][nc+j][k], beta[k-1],
 				H[i][nc+j][0]);
 		    }
@@ -1617,6 +1617,14 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		    for (j = 0; j < nvparm; ++j) { 
 			/* FIXME uninitialized data */
 			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
+#ifdef FDEBUG
+			if ((t==t1 || t==t2)) {
+			    fprintf(stderr, "Set H[%d][%d][0] = %.9g\n",
+				    nc+i, nc+j, H[nc+i][nc+j][0]);
+			    fprintf(stderr, "incr = %.9g * %.9g\n",
+				    H[nc+i][nc+j][k], beta[k-1]);
+			}
+#endif
 		    }
 		}
 	    }
@@ -1628,6 +1636,12 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		    + .5 * usuh2 * I[nix(i,t)] * I[nix(j,t)] 
 		    - r2suh3 * I[nix(i,t)] * I[nix(j,t)] 
 		    + .5 * (r2suh - 1.0) / ht[t] * H[i][j][0];
+#ifdef FDEBUG
+		    if ((t==t1 || t==t2)) {
+			fprintf(stderr, "Set vc5[%d] = %.9g (using Hval %.9g)\n",
+				nix(i,j), vc5[nix(i,j)], H[i][j][0]);
+		    }
+#endif
 	    }
 	}
 
@@ -1650,7 +1664,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		    H[i][j][lag-k] = H[i][j][lag-k-1];
 #ifdef FFDEBUG
 		    if (t==t1 || t==t2) {
-			fprintf(stderr, "Set H[%d][%d][%d] = H[%d][%d][%d] = %g\n",
+			fprintf(stderr, "Set H[%d][%d][%d] = H[%d][%d][%d] = %.9g\n",
 				i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
 		    }
 #endif		    
@@ -1666,7 +1680,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     for (i = 0; i < nc; ++i) {
 	for (j = 0; j < nvparm; ++j) {
 #ifdef FDEBUG
-	    fprintf(stderr, "setting vc5[%d]=vc5[%d]=%g\n",
+	    fprintf(stderr, "setting vc5[%d]=vc5[%d]=%.9g\n",
 		    nix(nc+j, i), nix(i, nc+j), vc5[nix(i, nc+j)]);
 #endif
 	    vc5[nix(nc+j, i)] = vc5[nix(i, nc+j)];
@@ -1744,7 +1758,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		       X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		       beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-	fprintf(stderr, "hess: f1 = %g\n", f1);
+	fprintf(stderr, "hess: f1 = %.9g\n", f1);
 #endif  
     }
 
@@ -1757,7 +1771,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-    fprintf(stderr, "hess: f2 = %g\n", f2);
+    fprintf(stderr, "hess: f2 = %.9g\n", f2);
 #endif    
     if (f2 > f1) {
 	goto L307;
@@ -1776,7 +1790,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-    fprintf(stderr, "hess: f3 = %g\n", f3);
+    fprintf(stderr, "hess: f3 = %.9g\n", f3);
 #endif    
     goto L325;
 
@@ -1796,7 +1810,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-    fprintf(stderr, "hess: f1(2) = %g\n", f1);
+    fprintf(stderr, "hess: f1(2) = %.9g\n", f1);
 #endif    
 
 
@@ -1807,7 +1821,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     di = d23 * f1 + d31 * f2 + d12 * f3;
     bigd = di * -2.0 / (d23 * d31 * d12);
 #ifdef FDEBUG
-    fprintf(stderr, "hess: bigd = %g\n", bigd);
+    fprintf(stderr, "hess: bigd = %.9g\n", bigd);
 #endif    
     if (bigd > 0.0) {
 	goto L400;
@@ -1832,7 +1846,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-    fprintf(stderr, "hess: f1(3) = %g\n", f1);
+    fprintf(stderr, "hess: f1(3) = %.9g\n", f1);
 #endif    
 
     if (++ncall > 100) {
@@ -1856,7 +1870,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-    fprintf(stderr, "hess: f3(2) = %g\n", f3);
+    fprintf(stderr, "hess: f3(2) = %.9g\n", f3);
 #endif    
 
     ++ncall;
@@ -1880,7 +1894,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, ht);
 #ifdef FDEBUG
-    fprintf(stderr, "hess: fs = %g, ds = %g\n", fs, ds);
+    fprintf(stderr, "hess: fs = %.9g, ds = %.9g\n", fs, ds);
 #endif    
 
     if (++ncall > 100) {
@@ -2102,10 +2116,9 @@ static void gj_invert (double *g, int ig, int n, double *aux, int *ier)
 
     /* Parameter adjustments */
     --aux;
-    --g;
 
 #ifdef FDEBUG
-    if (1) {
+    if (0) {
 	int i, j, k = 1;
 	static int m;
 
@@ -2113,13 +2126,29 @@ static void gj_invert (double *g, int ig, int n, double *aux, int *ier)
 
 	for (i=0; i<ig; i++) {
 	    for (j=0; j<n; j++) {
-		fprintf(stderr, "invert[%d]: got g[%d] = %g\n", m, k, g[k]);
+		fprintf(stderr, "invert[%d]: got g[%d] = %.9g\n", m, k, g[k]);
 		k++;
 	    }
 	}
 	m++;
+    } else {
+	int i, j;
+	static int m;
+
+	fprintf(stderr, "Mat invert[%d], got ig=%d, n=%d\n", 
+		m, ig, n);
+
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		fprintf(stderr, "%14.9g ", g[i + ig * j]);
+	    }
+	    fputc('\n', stderr);
+	}
+	m++;
     }
 #endif
+
+    --g;
 
     ing = 1;
     inder = *ier;

@@ -116,12 +116,14 @@ int do_fcp (const int *list, const double **Z,
 
     /* initialize at unconditional mean of y */
     coeff[0] = _esl_mean(0, nobs - 1, Z[ynum]);
+    coeff[0] = -0.0164268;
 
     /* initialize elements of alpha, beta such that 
        alpha_0/(1 - alpha_1 - beta_1) = unconditional
        variance of y (?)
     */
     amax[0] = _esl_variance(0, nobs - 1, Z[ynum]);
+    amax[0] = .22113; /* test */
     amax[1] = p;
     amax[2] = q; 
     for (i=0; i<p+q; i++) {
