@@ -1124,6 +1124,11 @@ static void really_set_variable_info (GtkWidget *w,
     if (gui_changed)
 	populate_main_varlist();
 
+    if (changed || gui_changed) {
+	data_status |= MODIFIED_DATA;
+	set_sample_label(datainfo);
+    }
+
     gtk_widget_destroy(vset->dlg);
 }
 

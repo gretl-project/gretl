@@ -22,15 +22,20 @@
 #ifndef INTERACT_H
 #define INTERACT_H
 
-typedef struct {
-    char cmd[9];
-    char str[4];
-    int ci;
-    int nolist;
-    int *list;
-    char *param;
-    int errcode;
-} CMD;
+#define MAXSAVENAME 32
+
+typedef struct _CMD CMD;
+
+struct _CMD {
+    char cmd[9];                /* command word */
+    char savename[MAXSAVENAME]; /* name used to save an object from the command */
+    char str[4];                /* used, e.g., in "multiply" command */
+    int ci;                     /* command index number */
+    int nolist;                 /* = 1 if the command does not take a list */
+    int *list;                  /* list of variables by ID number */
+    char *param;                /* general-purpose parameter to command */
+    int errcode;                /* error code */
+};
 
 enum option_codes {
     OPT_BATCH = 1,

@@ -50,10 +50,10 @@ static int trydatafile (char *line, int *ignore)
     int i, m, n = strlen(line);
     char datfile[MAXLEN];
 
-    datfile[0] = '\0';
+    *datfile = '\0';
     for (i=0; i<n; i++) {
 	if ((n - i) > 4 && strncmp(line+i, "DATA", 4) == 0) {
-	    sscanf(line+i, "%s", datfile);
+	    sscanf(line + i, "%s", datfile);
 	    m = strlen(datfile);
 	    if (datfile[m-1] == ',') datfile[m-1] = '\0';
 	    lower(datfile);
@@ -61,7 +61,7 @@ static int trydatafile (char *line, int *ignore)
 	}
 	else if (line[i] == '*' && line[i+1] == ')') *ignore = 0;
     }
-    if (datfile[0] != '\0') {
+    if (*datfile) {
 	sprintf(line, "open %s.gdt", datfile);
 	return 1;
     } 
@@ -79,7 +79,7 @@ static int filter_comments (char *line, int *ignore)
 	if (line[i] == '(' && line [i+1] == '*') {
 	    *ignore = 1;
 	    if (line[i+3] == '!') { /* special code for data file to open */
-		sscanf(line+4, "%s", datfile);
+		sscanf(line + 4, "%s", datfile);
 		sprintf(line, "open %s", datfile);
 		*ignore = 0;  /* FIXME ? */
 		return 0;
@@ -89,13 +89,14 @@ static int filter_comments (char *line, int *ignore)
 	    *ignore = 0; i += 2;
 	    while (isspace((unsigned char) line[i]) && i < n) i++;
 	}
-	if (!(*ignore) && line[i] != 13) {
+	if (!(*ignore) && line[i] != '\r') {
 	    tmpstr[j] = line[i];
 	    j++;
 	}
     }
     tmpstr[j] = '\0';
     strcpy(line, tmpstr);
+
     if (strlen(line)) return 0;
     else return 1;
 }
@@ -107,11 +108,15 @@ static int get_rhodiff_param (char *str, CMD *cmd)
     int k;
 
     if ((k = haschar(';', str)) < 0) return 1;
+
     cmd->param = realloc(cmd->param, k+1);
     if (cmd->param == NULL) return E_ALLOC;
-    strncpy(cmd->param, str, k);
-    cmd->param[k] = '\0';
+
+    *cmd->param = 0;
+    strncat(cmd->param, str, k);
+
     _shiftleft(str, k + 1);
+
     return 0;
 }
 
@@ -129,9 +134,9 @@ int command_number (const char *cmd)
 {    
     int i;
 
-    for (i=0; i<NC; i++) 
-	if (strcmp(cmd, gretl_commands[i]) == 0) 
-	    return i;
+    for (i=0; i<NC; i++) {
+	if (strcmp(cmd, gretl_commands[i]) == 0) return i;
+    }
     return 0;
 }
 
@@ -238,6 +243,18 @@ static int flow_control (const char *line, double ***pZ,
     return 1;
 }
 
+static void get_savename (char *line, CMD *command)
+{
+    *command->savename = 0;
+
+    if (strstr(line, " := ") && 
+	sscanf(line, "%s :=", command->savename) == 1) {
+	int len = strcspn(line, "=");
+
+	_shiftleft(line, len + 1);
+    }
+}
+
 static void get_gnuplot_block (char *line, CMD *command)
 {
     char *p = strchr(line, '{');
@@ -278,15 +295,17 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     command->ci = 0;
     command->errcode = 0;
-    gretl_errmsg[0] = '\0';
     command->nolist = 0;
-    command->param[0] = '\0';
+    *command->param = '\0';
+
+    *gretl_errmsg = '\0';
 
     /* look for ramu practice files */
     if (line[0] == '(' && line[1] == '*') {
 	*ignore = 1;
 	gotdata = trydatafile(line, ignore);
     }
+
     /* trap comments */
     if (!gotdata) {
 	if (filter_comments(line, ignore)) {
@@ -296,9 +315,12 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
     }
 
+    /* extract "savename" for storing an object? */
+    get_savename(line, command);
+
     linelen = strlen(line);
 
-    if (line[0] == '#' || sscanf(line, "%s", command->cmd) != 1) {
+    if (*line == '#' || sscanf(line, "%s", command->cmd) != 1) {
 	command->nolist = 1;
 	command->ci = -1;
 	return;
@@ -522,7 +544,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	sscanf(remainder, "%s", field);
 	/* fprintf(stderr, "remainder: %s\n", remainder); */
 
-	if (isalpha((unsigned char) field[0])) {
+	if (isalpha((unsigned char) *field)) {
 	    /* fprintf(stderr, "field: %s\n", field); */
 	    if (field[strlen(field)-1] == ';')
 		field[strlen(field)-1] = '\0';
@@ -543,7 +565,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		    } else { 
 			command->list[j] = pdinfo->v - 1;
 			if (cmds) {
-			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, pdinfo->v - 1));
+			    pprintf(cmds, "genr %s\n", 
+				    VARLABEL(pdinfo, pdinfo->v - 1));
 			}
 			n += strlen(field) + 1;
 			continue; 
@@ -577,9 +600,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		    }
 		}
 	    }
-	} /* end if isalpha(field[0]) */
+	} /* end if isalpha(*field) */
 
-	if (isdigit(field[0])) {
+	if (isdigit(*field)) {
 	    v = atoi(field);
 	    if (!ar && !poly && v > pdinfo->v - 1) {
 		command->errcode = 1;
@@ -591,7 +614,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    command->list[j] = v;
 	}
 
-	else if (field[0] == ';') {
+	else if (*field == ';') {
 	    if (command->ci == TSLS || command->ci == AR ||
 		command->ci == MPOLS || command->ci == SCATTERS) {
 		command->param = realloc(command->param, 4);
@@ -608,9 +631,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    }
 	}
 
-	if (!isalpha((unsigned char) field[0]) && 
-	    !isdigit((unsigned char) field[0]) &&
-	    !(spacename && (field[0] == '"' || field[0] == '\''))) { 
+	if (!isalpha((unsigned char) *field) && 
+	    !isdigit((unsigned char) *field) &&
+	    !(spacename && (*field == '"' || *field == '\''))) { 
 	    command->errcode = 1;
 	    sprintf(gretl_errmsg, 
 		    _("field '%s' in command is invalid"), field);
@@ -847,7 +870,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 	t2 = pdinfo->t2;
     }
 
-    if (!isalpha((unsigned char) varname[0])) {
+    if (!isalpha((unsigned char) *varname)) {
         sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
                "(first must be alphabetical)"), varname[0]);
 	return -1;
@@ -1393,8 +1416,20 @@ int simple_commands (CMD *cmd, const char *line,
 int ready_for_command (const char *line)
 {
     const char *ok_cmds[] = {
-	"open", "run", "nulldata", "import", "pvalue", "!",
-	"(*", "man ", "help", "noecho", "critical", "seed", NULL };
+	"open", 
+	"run", 
+	"nulldata", 
+	"import", 
+	"pvalue", 
+	"!",
+	"(*", 
+	"man ", 
+	"help", 
+	"noecho", 
+	"critical", 
+	"seed", 
+	NULL 
+    };
     const char **p = ok_cmds;
 
     if (*line == 'q' || *line == 'x' || 
