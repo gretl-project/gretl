@@ -612,7 +612,7 @@ static int consistent_date_labels (void)
     int pd = 0, pdbak = 0;
     double x, xbak = 0.0;
     char *test;
-    
+
     for (t=1; t<=lastrow; t++) {
 	test = rowptr[t].cells[0];
 	if (test[0] == '\0') return 0;
@@ -697,6 +697,10 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	sprintf(errbuf, _("Out of memory\n"));
 	return 1;
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     wbook_init(&book);
 
@@ -871,6 +875,9 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
  getout:
     wbook_free(&book);
     free_sheet();
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
     return err;
 }  
 

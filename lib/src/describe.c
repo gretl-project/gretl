@@ -441,7 +441,7 @@ int corrgram (const int varno, const int order, double ***pZ,
     }
 
     /* send data inline */
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
     for (l=1; l<=m; l++) 
@@ -450,7 +450,7 @@ int corrgram (const int varno, const int order, double ***pZ,
     for (l=1; l<=maxlag; l++) 
 	fprintf(fq, "%f %f\n", l + .1, pacf[l-1]);
     fprintf(fq, "e\n");
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
@@ -679,11 +679,11 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 	if (savexx == NULL) {
 	    fclose(fq);
 	} else {
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
 	    setlocale(LC_NUMERIC, "C");
 #endif
 	    for (t=1; t<=nobs/2; t++) fprintf(fq, "%d %f\n", t, savexx[t]);
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
 	    setlocale(LC_NUMERIC, "");
 #endif
 	    fprintf(fq, "e\n");

@@ -411,6 +411,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 {
     int i, t, n = pdinfo->n;
     char c, marker[9];
+    int err = 0;
     float x;
 
     gretl_errmsg[0] = '\0';
@@ -436,7 +437,10 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	    }
 	}
     } else { /* ascii data file */
-	for (t=0; t<n; t++) {
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "C");
+#endif
+	for (t=0; t<n && !err; t++) {
 	    eatspace(fp);
 	    c = fgetc(fp);  /* test for a #-opened comment line */
 	    if (c == '#') while (c != '\n') c = fgetc(fp);
@@ -450,12 +454,16 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 		    sprintf(gretl_errmsg, 
 			    _("WARNING: ascii data read error at var %d, "
 			    "obs %d"), i, t + 1);
-		    return 1;
+		    err = 1;
+		    break;
 		}
 	    }
 	}
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
     }
-    return 0;
+    return err;
 }
 
 /* ................................................. */
@@ -463,6 +471,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 {
     int i, t, n = pdinfo->n;
+    int err = 0;
     
     gretl_errmsg[0] = '\0';
 
@@ -495,13 +504,17 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 
 	line = malloc(llen);
 	if (line == NULL) return E_ALLOC;
+
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "C");
+#endif
 	for (t=0; t<n; t++) {
 	    offset = 0L;
 	    if (!gzgets(fz, line, llen - 1)) {
 		sprintf(gretl_errmsg, _("WARNING: ascii data read error at "
 			"obs %d"), t + 1);
-		free(line);
-		return 1;
+		err = 1;
+		break;
 	    }
 	    chopstr(line);
 	    compress_spaces(line);
@@ -514,8 +527,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 		   sprintf(gretl_errmsg, 
 			   _("WARNING: failed to read case marker for "
 			   "obs %d"), t + 1);
-		   free(line);
-		   return 1;
+		   err = 1;
+		   break;
 		}
 		pdinfo->S[t][8] = 0;
 		offset += strlen(pdinfo->S[t]) + 1;
@@ -525,17 +538,21 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 		    sprintf(gretl_errmsg, 
 			    _("WARNING: ascii data read error at var %d, "
 			    "obs %d"), i, t + 1);
-		    return 1;
+		    err = 1;
+		    break;
 		}
 		numstr[23] = 0;
-		Z[i][t] = atod(numstr, pdinfo);
-		if (i < pdinfo->v - 1)
-		    offset += strlen(numstr) + 1;
+		Z[i][t] = atof(numstr);
+		if (i < pdinfo->v - 1) offset += strlen(numstr) + 1;
 	    }
+	    if (err) break;
 	}
 	free(line);
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
     }
-    return 0;
+    return err;
 }
 
 /**
@@ -1109,6 +1126,10 @@ int write_data (const char *fname, const int *list,
 	}	
     }
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     if (opt == GRETL_DATA_TRAD) { /* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->markers && pdinfo->S != NULL) 
@@ -1205,6 +1226,10 @@ int write_data (const char *fname, const int *list,
 	}
 	fputc('\n', fp);
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     if (pmax) free(pmax);
     if (fp != NULL) fclose(fp);
@@ -2349,6 +2374,10 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     if (fp == NULL) return 1;
     pprintf(prn, _("reading variable information...\n"));
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     /* second pass: get detailed info on variables */
     v = 0; realv = 1; t = 0;
     dumpvars = 0; gotdata = 0;
@@ -2451,6 +2480,10 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	    break;
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     pprintf(prn, _("done reading data\n"));
     fclose(fp);
@@ -2720,11 +2753,6 @@ static int write_xmldata (const char *fname, const int *list,
     long sz = 0L;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
-    char decpoint = '.';
-
-#ifdef ENABLE_NLS
-    decpoint = get_local_decpoint();
-#endif
 
     err = 0;
     if (opt) {
@@ -2779,16 +2807,16 @@ static int write_xmldata (const char *fname, const int *list,
     if (opt) {
 	gzprintf(fz, "<?xml version=\"1.0\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		 "<gretldata name=\"%s\" frequency=\"%d\" decpoint=\"%c\" "
+		 "<gretldata name=\"%s\" frequency=\"%d\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
-		 datname, pdinfo->pd, decpoint, startdate, enddate);
+		 datname, pdinfo->pd, startdate, enddate);
 
     } else {
 	fprintf(fp, "<?xml version=\"1.0\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		"<gretldata name=\"%s\" frequency=\"%d\" decpoint=\"%c\" "
+		"<gretldata name=\"%s\" frequency=\"%d\" "
 		"startobs=\"%s\" endobs=\"%s\" ", 
-		datname, pdinfo->pd, decpoint, startdate, enddate);
+		datname, pdinfo->pd, startdate, enddate);
     }
 
     switch (pdinfo->time_series) {
@@ -2825,6 +2853,10 @@ static int write_xmldata (const char *fname, const int *list,
 #endif
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     /* then listing of variable names and labels */
     if (opt) gzprintf(fz, "<variables count=\"%d\">\n", list[0]);
@@ -2897,6 +2929,10 @@ static int write_xmldata (const char *fname, const int *list,
 
     if (opt) gzprintf(fz, "</observations>\n</gretldata>\n");
     else fprintf(fp, "</observations>\n</gretldata>\n");
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     if (sz) {
 	(*show_progress)(0, pdinfo->t2 - pdinfo->t1 + 1, SP_FINISH);
@@ -2978,7 +3014,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 		    char *val = xmlGetProp(cur, (UTF) "value");
 		    
 		    if (val) {
-			double xx = atod(val, pdinfo);
+			double xx = atof(val);
 
 			free(val);
 			(*pZ)[i] = malloc(sizeof ***pZ);
@@ -3004,13 +3040,6 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 {
     int i;
     double x;
-    static int local_decpoint;
-
-    if (local_decpoint == 0) local_decpoint = get_local_decpoint();
-
-    if (local_decpoint != pdinfo->decpoint) {
-	charsub(s, pdinfo->decpoint, local_decpoint);
-    }
 
     for (i=1; i<pdinfo->v; i++) {
 	if (!pdinfo->vector[i]) continue;
@@ -3190,10 +3219,10 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 
     fsz = get_filesize(fname);
     if (fsz > 100000) {
-	    fprintf(stderr, _("%s %ld bytes of data...\n"), 
-		    (is_gzipped(fname))? _("Uncompressing") : _("Reading"),
-		    fsz);
-	    if (gui) progress = fsz;
+	fprintf(stderr, _("%s %ld bytes of data...\n"), 
+		(is_gzipped(fname))? _("Uncompressing") : _("Reading"),
+		fsz);
+	if (gui) progress = fsz;
     }
 
     doc = xmlParseFile(fname);
@@ -3254,20 +3283,6 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	free(tmp);
     }
 
-    pdinfo->decpoint = '.';
-    tmp = xmlGetProp(cur, (UTF) "decpoint");
-    if (tmp) {
-	char dec;
-	
-	if (sscanf(tmp, "%c", &dec) == 1) 
-	    pdinfo->decpoint = dec;
-	else {
-	    strcpy(gretl_errmsg, _("Failed to recognize decimal point character"));
-	    return 1;
-	}
-	free(tmp);
-    }    
-
     strcpy(pdinfo->stobs, "1");
     tmp = xmlGetProp(cur, (UTF) "startobs");
     if (tmp) {
@@ -3314,33 +3329,43 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	free(tmp);
     }
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
-    while (cur != NULL) {
+    while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (UTF) "description")) {
 	    pdinfo->descrip = 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (UTF) "variables")) {
 	    if (process_varlist(cur, pdinfo, pZ)) 
-		return 1;
+		err = 1;
 	    else
 		gotvars = 1;
 	}
         else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
 	    if (!gotvars) {
 		sprintf(gretl_errmsg, _("Variables information is missing"));
-		return 1;
+		err = 1;
 	    }
 	    if (process_observations(doc, cur, pZ, pdinfo, ppaths, progress)) 
-		return 1;
+		err = 1;
 	    else
 		gotobs = 1;
 	}
-	cur = cur->next;
+	if (!err) cur = cur->next;
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     xmlFreeDoc(doc);
     xmlCleanupParser();
+
+    if (err) return err;
 
     if (!gotvars) {
 	sprintf(gretl_errmsg, _("Variables information is missing"));

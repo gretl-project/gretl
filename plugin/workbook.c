@@ -18,7 +18,7 @@
  */
 
 /*
-  Mostly borrowed from Gnumeric's Excel importer my Michael Meeks
+  Mostly borrowed from Gnumeric's Excel importer, written by Michael Meeks
 */
 
 #include <stdio.h>

@@ -45,10 +45,6 @@
 # endif /* ENABLE_NLS */
 #endif /* __GNOME_I18N_H__ */
 
-#ifdef ENABLE_NLS
-#define LOCAL_NUMERIC 1
-#endif
-
 #define MAXLABEL 128  /* maximum length of decsriptive labels for variables */
 #define MAXLEN   512  /* max length of "long" strings */
 #define ERRLEN   256  /* max length of libgretl error messages */

@@ -48,18 +48,6 @@ char *errbuf;
 
 #include "import_common.c"
 
-static double atod (char *s)
-{
-    static int local_decpoint;
-
-    if (local_decpoint == 0) local_decpoint = get_local_decpoint();
-
-    if (local_decpoint != '.') {
-	charsub(s, '.', local_decpoint);
-    }
-    return atof(s);
-}
-
 static void wsheet_init (wsheet *sheet)
 {
     sheet->maxcol = sheet->maxrow = 0;
@@ -239,7 +227,7 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 			    strncat(sheet->label[t_real], tmp, 8);
 		    }
 		    if (VTYPE_IS_NUMERIC(vtype)) {
-			x = atod(tmp);
+			x = atof(tmp);
 			sheet->Z[i_real][t_real] = x;
 			toprows[t_real] = leftcols[i_real] = 0;
 		    }
@@ -474,7 +462,7 @@ static int consistent_date_labels (wsheet *sheet)
     int t, rows = sheet->maxrow + 1 - sheet->row_offset;
     int pd = 0, pdbak = 0;
     double x, xbak = 0.0;
-    
+
     for (t=1; t<rows; t++) {
 	if (sheet->label[t][0] == '\0') return 0;
 	pd = label_is_date(sheet->label[t]);
@@ -507,6 +495,10 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	sprintf(errtext, _("Out of memory\n"));
 	return 1;
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     if (wbook_get_info(fname, &book)) {
 	sprintf(errbuf, _("Failed to get workbook info"));
@@ -612,6 +604,10 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     } 	    
 
     wsheet_free(&sheet);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     return err;
 

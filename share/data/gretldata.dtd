@@ -9,7 +9,6 @@
 <!ATTLIST gretldata
    name         NMTOKEN #IMPLIED
    frequency    CDATA #IMPLIED
-   decpoint     CDATA #IMPLIED
    startobs     CDATA #IMPLIED
    endobs       CDATA #IMPLIED
    type         CDATA #REQUIRED

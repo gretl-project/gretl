@@ -841,7 +841,7 @@ static int chop_comma (char *str)
 
 static void get_gpt_data (char *line, double *x, double *y)
 {
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
     if (x != NULL) {
@@ -853,7 +853,7 @@ static void get_gpt_data (char *line, double *x, double *y)
     } else {
 	if (sscanf(line, "%*s %lf", y) != 1) *y = NADBL;
     }
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 }
@@ -1436,14 +1436,14 @@ static int make_new_png (png_plot_t *plot, int view)
 	}
 
 	/* switch to zoomed data range */
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
 	fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom->xmin,
 		plot->zoom->xmax);
 	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom->ymin,
 		plot->zoom->ymax);
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
 
@@ -1645,13 +1645,13 @@ static int get_plot_yrange (png_plot_t *plot)
 	if (fpin == NULL) return 1;
 
 	/* read the y-axis min and max from the ascii graph */
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
 	    if (sscanf(line, "%lf", &(y[i])) == 1) i++;
 	}
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
@@ -1689,7 +1689,7 @@ static int get_plot_ranges (png_plot_t *plot)
     fp = fopen(plot->spec->fname, "r");
     if (fp == NULL) return 0;
 
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
     while (fgets(line, MAXLEN-1, fp)) {
@@ -1702,7 +1702,7 @@ static int get_plot_ranges (png_plot_t *plot)
 	    plot->title = 1;	
 	if (!strncmp(line, "plot ", 5)) break;
     }
-#ifdef LOCAL_NUMERIC
+#ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
