@@ -22,31 +22,39 @@ enum cgi_options {
 };
 
 #ifdef OS_WIN32
-static void msgbox (const char *msg, int err)
+static int msgbox (const char *msg, int err)
 {
-    if (err) 
-        MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONERROR);
-    else
-        MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONINFORMATION);
+    int ret;
+
+    if (err) {
+        ret = MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONERROR);
+    } else {
+        ret = MessageBox(NULL, msg, "gretl updater", MB_OK | MB_ICONINFORMATION);
+    }
+
+    return ret;
 }
 #else
-static void msgbox (const char *msg, int err)
+static int msgbox (const char *msg, int err)
 {
-    if (err) 
+    if (err) { 
 	fprintf(stderr, "%s\n", msg);
-    else
+    } else {
 	printf("%s\n", msg);
+    }
+
+    return 0;
 }
 #endif
 
-void errbox (const char *msg) 
+int errbox (const char *msg) 
 {
-    msgbox(msg, 1);
+    return msgbox(msg, 1);
 }
 
-void infobox (const char *msg) 
+int infobox (const char *msg) 
 {
-    msgbox(msg, 0);
+    return msgbox(msg, 0);
 }
 
 #ifdef OS_WIN32
