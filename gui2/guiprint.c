@@ -224,9 +224,6 @@ void winprint (char *fullbuf, char *selbuf)
     int px, x, y, incr, page_lines = 47;
     gchar *printbuf, *hdrstart, hdr[90];
     size_t len;
-#ifdef ENABLE_NLS
-    gsize bytes;
-#endif
 
     memset(&pdlg, 0, sizeof pdlg);
     pdlg.lStructSize = sizeof pdlg;

@@ -592,7 +592,7 @@ char *tailstrip (char *str)
     int i, len;
 
     if (str == NULL || *str == 0) {
-	return;
+	return str;
     }
 
     len = strlen(str);
