@@ -262,7 +262,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	gtk_clist_clear(GTK_CLIST(sr->rightvars));
     }
 
-    if (MODEL_CODE(sr->code) && sr->code != COINT2) {
+    if (MODEL_CODE(sr->code)) {
 	row[0] = "0";
 	row[1] = "const";
 	gtk_clist_append(GTK_CLIST(sr->rightvars), row);
@@ -928,7 +928,8 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 
 static int screen_scalar (int i, int c)
 {
-    if ((MODEL_CODE(c) || GRAPH_CODE(c) || c == LAGS || c == DIFF || c == LDIFF)
+    if ((MODEL_CODE(c) || COINT_CODE(c) || GRAPH_CODE(c) || 
+	 c == LAGS || c == DIFF || c == LDIFF)
 	&& datainfo->vector[i] == 0)
 	return 1;
     return 0;
@@ -1177,7 +1178,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 
     selector_init(sr, cmdcode, title);
 
-    if (MODEL_CODE(cmdcode))
+    if (MODEL_CODE(cmdcode) || COINT_CODE(cmdcode))
 	strcpy(topstr, _(est_str(cmdcode)));
     else if (cmdcode == GR_XY)
 	strcpy(topstr, _("XY scatterplot"));
@@ -1212,7 +1213,6 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	gchar id[5];
 
 	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
-	if (i == 0 && cmdcode == COINT2) continue;
         if (hidden_var(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	sprintf(id, "%d", i);
@@ -1239,7 +1239,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
-    if (MODEL_CODE(cmdcode) && cmdcode != COINT2) {
+    if (MODEL_CODE(cmdcode)) {
 	/* models: top right -> dependent variable */
 	build_depvar_section(sr, right_vbox);
     } else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
@@ -1256,7 +1256,9 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     }
     
     /* lower right: selected (independent) variables */
-    if (MODEL_CODE(cmdcode)) {
+    if (COINT_CODE(cmdcode)) {
+	tmp = gtk_label_new(_("Variables to test"));
+    } else if (MODEL_CODE(cmdcode)) {
 	tmp = gtk_label_new(_("Independent variables"));
     } else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
 	tmp = gtk_label_new(_("Y-axis variables"));
@@ -1303,23 +1305,24 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	sr->rightvars = gtk_clist_new(2);
 	gtk_clist_clear(GTK_CLIST(sr->rightvars));
 
-	if (MODEL_CODE(cmdcode) && xlist != NULL) {
-	    for (i=1; i<=xlist[0]; i++) {
-		gchar *row[2];
-		gchar id[4];
+	if (MODEL_CODE(cmdcode)) {
+	    if (xlist != NULL) {
+		for (i=1; i<=xlist[0]; i++) {
+		    gchar *row[2];
+		    gchar id[4];
 
-		sprintf(id, "%d", xlist[i]);
-		row[0] = id;
-		row[1] = datainfo->varname[xlist[i]];
+		    sprintf(id, "%d", xlist[i]);
+		    row[0] = id;
+		    row[1] = datainfo->varname[xlist[i]];
+		    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+		}
+	    } else if (cmdcode != VAR) {
+		gchar *row[2];
+
+		row[0] = "0";
+		row[1] = "const";
 		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	    }
-	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT2 && 
-		   cmdcode != VAR) {
-	    gchar *row[2];
-
-	    row[0] = "0";
-	    row[1] = "const";
-	    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	}
 
 	gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80 * gui_scale);

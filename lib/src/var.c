@@ -930,7 +930,9 @@ static int organize_var_lists (const int *list, const double **Z,
     int i, j, k, li;
     
     d = calloc(list[0] + 1, 1);
-    if (d == NULL) return E_ALLOC;
+    if (d == NULL) {
+	return E_ALLOC;
+    }
 
     /* figure out the lengths of the lists */
     for (i=1; i<=list[0]; i++) {
@@ -2295,9 +2297,13 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     int orig_v = pdinfo->v;
     int *varlist;
     int verbose = (opt & OPT_O);
-    int hasconst = gretl_hasconst(list);
+    int hasconst = 0;
     int l0 = list[0];
     int trends = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == 0) hasconst = 1;
+    }
 
     if (order <= 0 || list[0] - hasconst < 2) {
 	strcpy(gretl_errmsg, "coint2: needs a positive lag order "
@@ -2336,16 +2342,18 @@ int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* now get first differences and put them into list */
+    j = 1;
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) {
 	    continue;
 	}
-	varlist[i] = diffgenr(list[i], pZ, pdinfo, 0);
-	if (varlist[i] < 0) {
+	varlist[j] = diffgenr(list[i], pZ, pdinfo, 0);
+	if (varlist[j] < 0) {
 	    free(varlist);
 	    free(resids.levels_list);
 	    return E_DATA;
-	}
+	} 
+	j++;
     }
 
     /* add the constant to the VAR list */

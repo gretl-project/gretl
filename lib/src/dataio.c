@@ -2698,6 +2698,91 @@ static int test_markers_for_dates (DATAINFO *pdinfo, PRN *prn)
     return -1;
 }
 
+static int extend_markers (DATAINFO *pdinfo, int old_n, int new_n)
+{
+    char **S = realloc(pdinfo->S, new_n * sizeof *S);
+    int t, err = 0;
+	   
+    if (S == NULL) {
+	err = 1;
+    } else {
+	pdinfo->S = S;
+	for (t=old_n; t<new_n && !err; t++) {
+	    S[t] = malloc(OBSLEN);
+	    if (S[t] == NULL) {
+		err = 1;
+	    } 
+	}
+    }
+
+    return err;
+}
+
+#if 0
+
+static int 
+shuffle_data_forward (double **Z, DATAINFO *pdinfo, int new_n, int offset)
+{
+    double *tmp;
+    int old_n = pdinfo->n;
+    size_t oldsize = old_n * sizeof *tmp;
+    int i, t, err = 0;
+
+    tmp = malloc(oldsize);
+    if (tmp == NULL) {
+	return 1;
+    }
+
+    for (i=0; i<pdinfo->v; i++) {
+	double *x;
+	
+	if (!pdinfo->vector[i]) {
+	    continue;
+	}
+
+	x = realloc(Z[i], new_n * sizeof *x);
+	if (x == NULL) {
+	    err = 1;
+	    break;
+	}
+
+	if (i == 0) {
+	    for (t=0; t<new_n; t++) {
+		x[t] = 1.0;
+	    }
+	} else {
+	    memcpy(tmp, x, oldsize);
+	    for (t=0; t<offset; t++) {
+		x[t] = NADBL;
+	    }
+	    memcpy(x + offset, tmp, oldsize);
+	    for (t=old_n+offset; t<new_n; t++) {
+		x[t] = NADBL;
+	    }
+	}
+	
+	Z[i] = x;
+    }
+
+    pdinfo->n = new_n;
+    
+    if (oldinfo->S != NULL) {
+	err = extend_markers(pdinfo, old_n, new_n);
+	if (!err) {
+	    for (t=old_n-1; t>=0; t--) {
+		strcpy(pdinfo->S[t + offset], pdinfo->S[t]);
+		pdinfo->S[t][0] = '\0';
+	    }
+	}
+    }
+
+    free(tmp);
+
+    return err;
+}
+
+#endif
+
 static int count_add_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo)
 {
     int addvars = addinfo->v - 1;
@@ -2828,52 +2913,45 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     /* if checks are passed, try merging the data */
 
     if (!err && addobs > 0) { 
-       int i, t, tnew = pdinfo->n + addobs;
-       double *xx;
+	int i, t, new_n = pdinfo->n + addobs;
 
-       if (pdinfo->markers) {
-	   char **S = realloc(pdinfo->S, tnew * sizeof *S);
-	   
-	   if (S == NULL) {
-	       err = 1;
-	   } else {
-	       for (t=pdinfo->n; t<tnew && !err; t++) {
-		   S[t] = malloc(OBSLEN);
-		   if (S[t] == NULL) {
-		       err = 1;
-		   } else {
-		       strcpy(S[t], addinfo->S[t - offset]);
-		   }
-	       }
-	       pdinfo->S = S;
-	   }
-       }
+	if (pdinfo->markers) {
+	    err = extend_markers(pdinfo, pdinfo->n, new_n);
+	    if (!err) {
+		for (t=pdinfo->n; t<new_n; t++) {
+		    strcpy(pdinfo->S[t], addinfo->S[t - offset]);
+		}
+	    }
+	}
 
-       for (i=0; i<pdinfo->v && !err; i++) {
-	   if (!pdinfo->vector[i]) {
-	       continue;
-	   }
-	   xx = realloc((*pZ)[i], tnew * sizeof *xx);
-	   if (xx == NULL) {
+	for (i=0; i<pdinfo->v && !err; i++) {
+	    double *x;
+
+	    if (!pdinfo->vector[i]) {
+		continue;
+	    }
+
+	   x = realloc((*pZ)[i], new_n * sizeof *x);
+	   if (x == NULL) {
 	       err = 1;
 	       break;
-	   } else {
-	       for (t=pdinfo->n; t<tnew; t++) {
-		   if (i == 0) {
-		       xx[t] = 1.0;
-		   } else {
-		       xx[t] = NADBL;
-		   }
-	       }
-	       (*pZ)[i] = xx;
 	   }
+
+	   for (t=pdinfo->n; t<new_n; t++) {
+	       if (i == 0) {
+		   x[t] = 1.0;
+	       } else {
+		   x[t] = NADBL;
+	       }
+	   }
+	   (*pZ)[i] = x;
        }
 
        if (err) { 
 	   merge_error(_("Out of memory adding data\n"), prn);
        } else {
-	   pdinfo->n = tnew;
-	   ntodate_full(pdinfo->endobs, tnew - 1, pdinfo);
+	   pdinfo->n = new_n;
+	   ntodate_full(pdinfo->endobs, new_n - 1, pdinfo);
 	   pdinfo->t2 = pdinfo->n - 1;
        }
    }

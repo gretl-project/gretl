@@ -275,8 +275,11 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
 
     gtk_tree_model_get (model, iter, 0, &vnum, 1, &vname, -1);
 
-    if (which == SR_AUXVARS) list = sr->auxvars;
-    else list = sr->rightvars;
+    if (which == SR_AUXVARS) {
+	list = sr->auxvars;
+    } else {
+	list = sr->rightvars;
+    }
 
     if (!GTK_IS_TREE_VIEW(list)) return;
 
@@ -454,7 +457,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	clear_varlist(sr->rightvars);
     }
 
-    if (MODEL_CODE(sr->code) && sr->code != COINT2) {
+    if (MODEL_CODE(sr->code)) {
 	GtkTreeModel *model = 
 	    gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rightvars));
 	GtkTreeIter iter;
@@ -1134,7 +1137,8 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 
 static int screen_scalar (int i, int c)
 {
-    if ((MODEL_CODE(c) || GRAPH_CODE(c) || c == LAGS || c == DIFF || c == LDIFF)
+    if ((MODEL_CODE(c) || COINT_CODE(c) || GRAPH_CODE(c) || 
+	 c == LAGS || c == DIFF || c == LDIFF)
 	&& datainfo->vector[i] == 0) {
 	return 1;
     } else {
@@ -1414,7 +1418,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 
     selector_init(sr, cmdcode, title);
 
-    if (MODEL_CODE(cmdcode))
+    if (MODEL_CODE(cmdcode) || COINT_CODE(cmdcode))
 	topstr = _(est_str(cmdcode));
     else if (cmdcode == GR_XY)
 	topstr = _("XY scatterplot");
@@ -1444,7 +1448,6 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     
     for (i=0; i<datainfo->v; i++) {
 	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
-	if (i == 0 && cmdcode == COINT2) continue;
         if (hidden_var(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	gtk_list_store_append(store, &iter);
@@ -1458,7 +1461,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
 
-    if (MODEL_CODE(cmdcode) && cmdcode != COINT2) { 
+    if (MODEL_CODE(cmdcode)) { 
 	/* models: top right -> dependent variable */
 	build_depvar_section(sr, right_vbox);
     } else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
@@ -1485,7 +1488,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	GtkWidget *remove;
 	GtkWidget *indepvar_hbox;
 
-	if (cmdcode == COINT2) {
+	if (COINT_CODE(cmdcode)) {
 	    tmp = gtk_label_new(_("Variables to test"));
 	} else if (MODEL_CODE(cmdcode)) {
 	    tmp = gtk_label_new(_("Independent variables"));
@@ -1533,7 +1536,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 				       1, datainfo->varname[xlist[i]], 
 				       -1);
 		}
-	    } else if (cmdcode != COINT2 && cmdcode != VAR) {
+	    } else if (cmdcode != VAR) {
 		/* stick the constant in by default */
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
