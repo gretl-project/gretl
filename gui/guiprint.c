@@ -73,6 +73,76 @@ int win_copy_rtf (PRN *prn)
     return 0;
 }
 
+/* also Windows only: print using Windows spooler */
+
+void winprint(char *p, size_t len)
+{
+    HDC dc;
+    PRINTDLG pdlg;
+    int printok;
+    LOGFONT LogFont;
+    HFONT aFont, *oldFont;
+    DOCINFO di;
+
+    memset(&pdlg, 0, sizeof(pdlg));
+    pdlg.lStructSize = sizeof(pdlg);
+    pdlg.Flags = PD_RETURNDC | PD_NOPAGENUMS;
+    PrintDlg(&pdlg);
+    dc = pdlg.hDC;
+    
+    /* use Textmappingmode, that's easiest to map the fontsize */
+    SetMapMode(dc, MM_TEXT);
+    
+    /* setup font specifics */
+    LogFont.lfHeight = -MulDiv(10, GetDeviceCaps(dc, LOGPIXELSY), 72);
+    LogFont.lfWidth = 0;
+    LogFont.lfEscapement = 0;
+    LogFont.lfOrientation = 0;
+    LogFont.lfWeight = 0;
+    LogFont.lfItalic = 0;
+    LogFont.lfUnderline = 0;
+    LogFont.lfStrikeOut = 0;
+    LogFont.lfCharSet = ANSI_CHARSET;
+    LogFont.lfOutPrecision = OUT_TT_PRECIS;
+    LogFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    LogFont.lfQuality = DEFAULT_QUALITY;
+    LogFont.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+    lstrcpy (LogFont.lfFaceName, "MS Sans Serif");
+    aFont = CreateFontIndirect(&LogFont);
+    /* ok, we've build the font, now use it */
+    oldFont = SelectObject(dc, &aFont);        
+        
+    /* Initialise print document details */
+    memset(&di, 0, sizeof(DOCINFO));
+    di.cbSize = sizeof(DOCINFO);
+    /* application title appears in the spooler view */
+    di.lpszDocName = "gretl";
+    
+    printok = StartDoc(dc, &di);
+        
+    /* begin new page */
+    StartPage(dc);
+       
+    /* print text */
+    TextOut(dc, 0, 0, p, len);
+        
+    /* end page */
+    printok = (EndPage(dc) > 0);
+    
+    /* end print job */
+    if (printok)
+        EndDoc(dc);
+    else
+        AbortDoc(dc);
+    
+    /* restore font */
+    SelectObject(dc, oldFont);
+    /* free font memory */
+    DeleteObject(aFont);
+    /* detach the printer DC */
+    DeleteDC(dc);
+}
+
 #endif /* G_OS_WIN32 */
 
 void model_to_rtf (MODEL *pmod)
