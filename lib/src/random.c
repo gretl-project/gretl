@@ -130,6 +130,15 @@ void gretl_normal_dist (double *a, int t1, int t2)
     }
 }
 
+unsigned gretl_rand_int (void)
+{
+#ifdef HAVE_G_RAND
+    return g_rand_int(gretl_rand);
+#else
+    return genrand_int32();
+#endif
+}
+
 /**
  * gretl_rand_int_max:
  *

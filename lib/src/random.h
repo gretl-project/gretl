@@ -27,5 +27,7 @@ void gretl_uniform_dist (double *a, int t1, int t2);
 
 void gretl_normal_dist (double *a, int t1, int t2);
 
+unsigned gretl_rand_int (void);
+
 unsigned gretl_rand_int_max (unsigned max);
 

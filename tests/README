@@ -6,8 +6,11 @@ http://www.nist.gov/itl/div898/strd/general/main.html
 The checker validates libgretl and (if available) the gretl multiple
 precision plugin.
 
-Results with libgretl
-=====================
+There's also a tester for the Pseudo-Random Number Generator (PRNG) in
+gretl -- see below.
+
+NIST Results with libgretl
+==========================
 
 If all is well there should be exactly one failure, namely gretl
 will not be able to obtain estimates on the Filip model (a 10th degree
@@ -26,8 +29,8 @@ You can get more details on gretl's performance on the tests by
 running the 'nistcheck' program in verbose mode (-v flag) or very
 verbose mode (-vv).  
 
-Results with multiple precision plugin
-======================================
+NIST Results with multiple precision plugin
+===========================================
 
 If the Gnu Multiple Precision library (GMP) was detected when gretl
 was configured, and gretl's GMP plugin was built, then each NIST test
@@ -51,5 +54,35 @@ checker thus:
 
 GRETL_MP_BITS=4096 ./nistcheck -v
 
+
+Check on gretl's PRNG
+=====================
+
+Also included here is a slightly modified version of George
+Marsaglia's "diehard" tester for Pseudo-Random Number Generators.
+(The modifications do not concern the substance of Marsaglia's test
+suite; they are purely to do with convenience when running his program
+as a check on gretl.)
+
+To run this set of tests, do "make randcheck".  It's possible you may
+have to edit the Makefile, if the "diehard" program is not produced
+correctly (perhaps modifying the libraries that are required to link
+what was originally a FORTRAN program).  If the test programs build
+OK, you should find in this directory a large (around 11MB) file of
+pseudo-random unsigned integers generated via gretl's PRNG, and a file
+named "gretl_rand.txt" containing a summary of the analysis.  (You
+should also see the results zipping by on standard output, probably
+too fast to read.)  Basically, you are looking for p-values from the
+various tests uniformly distributed on (0, 1).  If you should see
+blocks of p-values of 0.0 or 1.0, something is seriously wrong.
+
+Doing "make clean" in here will delete the big file of random numbers,
+along with the auxiliary programs.
+
+For more details on the tests see marsaglia.txt or diehard.txt, or
+visit the web site from which these tests derive at
+
+http://stat.fsu.edu/pub/diehard/
+
 Allin Cottrell
-August 2002
+March 2003
