@@ -1206,20 +1206,6 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     return 0;
 }
 
-static int csv_buf_to_clipboard (PRN *prn)
-{
-    size_t len = strlen(prn->buf);
-
-    clipboard_buf = mymalloc(len + 1);
-    if (clipboard_buf == NULL) return 1;
-
-    memcpy(clipboard_buf, prn->buf, len + 1);
-    gtk_selection_owner_set(mdata->w,
-                            GDK_SELECTION_PRIMARY,
-                            GDK_CURRENT_TIME);
-    return 0;
-}
-
 int csv_to_clipboard (void)
 {
     int err = 0;
@@ -1241,7 +1227,7 @@ int csv_to_clipboard (void)
             err = data_to_buf_as_csv(command.list, prn);
         }
         if (!err) {
-            err = csv_buf_to_clipboard(prn);
+            err = prn_to_clipboard(prn);
         }
 
         gretl_print_destroy(prn);

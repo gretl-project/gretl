@@ -41,6 +41,11 @@ extern char *space_to_score (char *str);
 #define MARK_SCRIPT_SAVED(w) (w->active_var = 0)
 #define SCRIPT_IS_CHANGED(w) (w->active_var == 1)
 
+#define MULTI_COPY_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY \
+	                      || c == CORR || c == FCASTERR \
+	                      || c == FCAST || c == COEFFINT \
+	                      || c == COVAR || c == VIEW_MODEL)
+
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
@@ -361,24 +366,7 @@ void delete_widget (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-gint catch_view_key (GtkWidget *w, GdkEventKey *key)
-{
-    if (key->keyval == GDK_q) { 
-        gtk_widget_destroy(w);
-    }
-    else if (key->keyval == GDK_s) {
-	windata_t *vwin = g_object_get_data(G_OBJECT(w), "ddata");
-
-	if (Z != NULL && vwin != NULL && vwin->role == VIEW_MODEL) {
-	    remember_model(vwin, 1, NULL);
-	}
-    }
-    return FALSE;
-}
-
-/* ........................................................... */
-
-static gint catch_button (GtkWidget *w, GdkEventButton *event)
+static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
 {
     GdkModifierType mods;
 
@@ -386,6 +374,47 @@ static gint catch_button (GtkWidget *w, GdkEventButton *event)
     if (mods & GDK_BUTTON3_MASK) {
 	return TRUE;
     }
+    return FALSE;
+}
+
+/* ........................................................... */
+
+#ifdef G_OS_WIN32
+static void win_ctrl_c (windata_t *vwin)
+{
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
+	text_copy(vwin, COPY_SELECTION, NULL);
+    } else if (MULTI_COPY_ENABLED(vwin->role)) {
+	text_copy(vwin, COPY_RTF, NULL);
+    } else {
+	text_copy(vwin, COPY_TEXT, NULL);
+    }
+}
+#endif
+
+/* ........................................................... */
+
+static gint catch_view_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    if (key->keyval == GDK_q) { 
+        gtk_widget_destroy(w);
+    }
+    else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
+	remember_model(vwin, 1, NULL);
+    }
+#ifdef G_OS_WIN32
+    else if (key->keyval == GDK_c) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    win_ctrl_c(vwin);
+	    return TRUE;
+	}	
+    }
+#endif
     return FALSE;
 }
 
@@ -409,7 +438,8 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    } else {
 		file_viewer_save(NULL, vwin);
 	    }
-	} else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
+	} 
+	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
 	    if (vwin->role == EDIT_SCRIPT && SCRIPT_IS_CHANGED(vwin)) {
 		gint resp;
 
@@ -419,6 +449,12 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		gtk_widget_destroy(w);
 	    }
 	}
+#ifdef G_OS_WIN32 
+	else if (key->keyval == GDK_c) {
+	    win_ctrl_c(vwin);
+	    return TRUE;
+	}
+#endif
     }
     return FALSE;
 }
@@ -1327,10 +1363,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gretl_print_destroy(prn);
     
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_view_key), vwin->dialog);
+		     G_CALLBACK(catch_view_key), vwin);
 
     g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
-		      G_CALLBACK(catch_button), vwin->w);
+		      G_CALLBACK(catch_button_3), vwin->w);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
@@ -1476,7 +1512,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     /* catch some keystrokes */
     if (!editable) {
 	g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-			 G_CALLBACK(catch_view_key), vwin->dialog);
+			 G_CALLBACK(catch_view_key), vwin);
     } else {
 	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
 	g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
@@ -1484,7 +1520,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     } 
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
-		     G_CALLBACK(catch_button), vwin->w);
+		     G_CALLBACK(catch_button_3), vwin->w);
 
     /* offer chance to save script on exit */
     if (role == EDIT_SCRIPT)
@@ -1535,7 +1571,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     if (*pbuf) gtk_text_buffer_set_text(tbuf, *pbuf, -1);
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
-		     G_CALLBACK(catch_button), vwin->w);
+		     G_CALLBACK(catch_button_3), vwin->w);
+
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_edit_key), vwin);	
 
@@ -1591,12 +1628,11 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     copylist(&default_list, pmod->list);
 
     /* attach shortcuts */
-    g_object_set_data(G_OBJECT(vwin->dialog), "ddata", vwin);
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_view_key), vwin->dialog);
+		     G_CALLBACK(catch_view_key), vwin);
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
-		     G_CALLBACK(catch_button), vwin->w);
+		     G_CALLBACK(catch_button_3), vwin->w);
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
@@ -1742,11 +1778,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
 
-    /* reinstate role == MPOLS below when ready */
-    if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR || vwin->role == FCASTERR
-	|| vwin->role == FCAST || vwin->role == COEFFINT
-	|| vwin->role == COVAR) {
+    /* give MPOLS this status when ready */
+    if (MULTI_COPY_ENABLED(vwin->role) && vwin->role != VIEW_MODEL) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -2045,14 +2078,14 @@ int validate_varname (const char *varname)
 
 #if defined(G_OS_WIN32)
 
-static int prn_to_clipboard (PRN *prn, int copycode)
+int prn_to_clipboard (PRN *prn, int copycode)
 {
     return win_copy_buf(prn->buf, copycode, 0);
 }
 
 #elif defined(ENABLE_NLS)
 
-static int prn_to_clipboard (PRN *prn, int copycode)
+int prn_to_clipboard (PRN *prn, int copycode)
 {
     if (prn->buf == NULL) return 0;
 
@@ -2073,7 +2106,7 @@ static int prn_to_clipboard (PRN *prn, int copycode)
 	    memcpy(clipboard_buf, trbuf, bytes + 1);
 	    g_free(trbuf);
 	}
-    } else { /* copying TeX or RTF */
+    } else { /* copying TeX, RTF or CSV */
 	size_t len;
 
 	len = strlen(prn->buf);
@@ -2090,7 +2123,7 @@ static int prn_to_clipboard (PRN *prn, int copycode)
 
 #else /* plain GTK, no NLS */
 
-static int prn_to_clipboard (PRN *prn, int copycode)
+int prn_to_clipboard (PRN *prn, int copycode)
 {
     size_t len;
     
@@ -2103,6 +2136,7 @@ static int prn_to_clipboard (PRN *prn, int copycode)
     if (clipboard_buf == NULL) return 1;
 
     memcpy(clipboard_buf, prn->buf, len + 1);
+
     gtk_selection_owner_set(mdata->w,
 			    GDK_SELECTION_PRIMARY,
 			    GDK_CURRENT_TIME);
@@ -2278,7 +2312,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
-    /* otherwise copying plain text from window */
+    /* copying plain text from window */
     if (how == COPY_TEXT) {
 	PRN textprn;
 
@@ -2286,8 +2320,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	textprn.buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
 	prn_to_clipboard(&textprn, COPY_TEXT);
 	g_free(textprn.buf);
-    } else { /* COPY_SELECTION */
-#ifdef G_OS_WIN32
+    } else if (how == COPY_SELECTION) { 
 	GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	GtkTextIter selstart, selend;
 	gchar *selbuf;
@@ -2300,11 +2333,6 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    prn_to_clipboard(&selprn, COPY_TEXT);
 	    g_free(selbuf);
 	}
-#else
-	gtk_text_buffer_copy_clipboard (gtk_text_view_get_buffer
-					(GTK_TEXT_VIEW(vwin->w)),
-					 gtk_clipboard_get(GDK_NONE));
-#endif
     }
 }
 

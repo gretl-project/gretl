@@ -2472,6 +2472,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
 
     /* generate gnuplot source file to make emf */
     emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
+    /* pprintf(prn, "set term emf monochrome dashed\n"); */
     pprintf(prn, "set term emf\n");
     pprintf(prn, "set output '%s'\n", emfname);
     while (fgets(plotline, MAXLEN-1, fq)) {
@@ -2497,7 +2498,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
 	emf_to_clip(emfname);
     }
 
-    remove(emfname);
+    remove(emfname); 
     g_free(emfname);
 }
 

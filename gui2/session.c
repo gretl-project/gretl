@@ -1305,6 +1305,17 @@ static void rearrange_icons (void)
 
 /* ........................................................... */
 
+static gint catch_iconview_key (GtkWidget *w, GdkEventKey *key, 
+				gpointer p)
+{
+    if (key->keyval == GDK_q) { 
+        gtk_widget_destroy(w);
+    }
+    return FALSE;
+}
+
+/* ........................................................... */
+
 void view_session (void)
 {
     GtkWidget *hbox, *scroller;
@@ -1331,8 +1342,7 @@ void view_session (void)
     g_signal_connect(G_OBJECT(iconview), "destroy",
 		     G_CALLBACK(session_view_free), NULL);
     g_signal_connect(G_OBJECT(iconview), "key_press_event",
-		     G_CALLBACK(catch_view_key), 
-		     (gpointer) iconview);
+		     G_CALLBACK(catch_iconview_key), NULL);
 
     session_build_popups();
 

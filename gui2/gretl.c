@@ -23,6 +23,7 @@
 #include "treeutils.h"
 #include "ssheet.h"
 #include "gpt_control.h"
+#include "guiprint.h"
 
 #include <dirent.h>
 
@@ -65,8 +66,10 @@ extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
 static void populate_list (GtkWidget *widget, DATAINFO *datainfo);
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
-static void clip_init (GtkWidget *w);
 static GtkWidget *make_main_window (int gui_get_data);
+#ifndef G_OS_WIN32
+static void clip_init (GtkWidget *w);
+#endif
 
 static void build_var_popup (windata_t *win);
 static void build_selection_popup (void);
@@ -854,7 +857,9 @@ int main (int argc, char *argv[])
     if (!gui_get_data) set_sample_label(datainfo);
 
     /* enable special copying to clipboard */
+#ifndef G_OS_WIN32
     clip_init(mdata->w);
+#endif
 
     init_fileptrs();
     add_files_to_menu(1);
@@ -1480,6 +1485,8 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
 	do_menu_op(NULL, CORR_SELECTED, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
+    else if (!strcmp(item, _("Copy to clipboard"))) 
+	csv_selected_to_clipboard();
     return TRUE;
 }
 
@@ -1489,7 +1496,8 @@ static void build_selection_popup (void)
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Correlation matrix"),
-	N_("Time series plot")
+	N_("Time series plot"),
+	N_("Copy to clipboard"),
     };
 
     GtkWidget *item;
@@ -2056,17 +2064,18 @@ drag_data_received  (GtkWidget *widget,
 
 /* ........................................................... */
 
-static gint 
-special_selection_get (GtkWidget *widget,
-		       GtkSelectionData *selection_data,
-		       guint info,
-		       guint time)
+#ifndef G_OS_WIN32
+
+static void gretl_clipboard_get (GtkClipboard *clip,
+				 GtkSelectionData *selection_data,
+				 guint info,
+				 gpointer p)
 {
     gchar *str;
     gint length;
 
-    str = clipboard_buf;
-    if (str == NULL) return TRUE;
+    str = clipboard_buf; /* global */
+    if (str == NULL) return;
     length = strlen(str);
   
     if (info == TARGET_STRING) {
@@ -2078,45 +2087,68 @@ special_selection_get (GtkWidget *widget,
     } else if (info == TARGET_TEXT || info == TARGET_COMPOUND_TEXT) {
 	guchar *text;
 	gchar c;
-	GdkAtom encoding;
+	GdkAtom seltype;
 	gint format;
 	gint new_length;
 
 	c = str[length];
 	str[length] = '\0';
-	gdk_string_to_compound_text(str, &encoding, &format, 
+	gdk_string_to_compound_text(str, &seltype, &format, 
 				    &text, &new_length);
-	gtk_selection_data_set(selection_data, encoding, format, 
+	gtk_selection_data_set(selection_data, seltype, format, 
 			       text, new_length);
 	gdk_free_compound_text(text);
 	str[length] = c;
     }
+
+    /* experiment */
+    if (1) {
+	gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY),
+			       "eggblot", -1);
+    }
+
+#if 1
     g_free(str);
     clipboard_buf = NULL;
-    return TRUE;
+#endif
+}
+
+/* ........................................................... */
+
+static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
+{
+#if 0
+    free(clipboard_buf);
+    clipboard_buf = NULL;
+#endif
+    return;
 }
 
 /* ........................................................... */
 
 static void clip_init (GtkWidget *w)
 {
-    GdkAtom clipboard_atom = GDK_NONE;
+    GtkClipboard *clip;
     GtkTargetEntry targets[] = {
 	{ "STRING", 0, TARGET_STRING },
 	{ "TEXT",   0, TARGET_TEXT }, 
 	{ "COMPOUND_TEXT", 0, TARGET_COMPOUND_TEXT }
     };
 
-    gint n_targets = sizeof(targets) / sizeof(targets[0]);
-  
-    clipboard_atom = gdk_atom_intern("CLIPBOARD", FALSE);
-    gtk_selection_add_targets(w, GDK_SELECTION_PRIMARY,
-			      targets, n_targets);
-    gtk_selection_add_targets(w, clipboard_atom,
-			      targets, n_targets);
-    g_signal_connect (G_OBJECT(mdata->w), "selection_get",
-		      G_CALLBACK(special_selection_get), NULL);    
+    gint n_targets = sizeof targets / sizeof targets[0];
+
+    clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+
+    if (!gtk_clipboard_set_with_owner(clip,
+				      targets, n_targets,
+				      gretl_clipboard_get,
+				      gretl_clipboard_clear,
+				      G_OBJECT(w))) {
+	fprintf(stderr, "Failed to initialize clipboard\n");
+    }
 }
+
+#endif /* G_OS_WIN32 */
 
 /* ........................................................... */
 

@@ -13,6 +13,7 @@ version 1.0.3
 - Fix bug in command echo for "store" and a few others
 - Add selector for variables to be saved when doing "Save as"
   or "Export" (gtk-2 version only)
+- Add facility to copy data to clipboard as CSV
 - Add PNG graphs to win32 version, and standardize on PNG graphs for
   all display including graph editing
 - Update win32 version to gtk version 2.2.0

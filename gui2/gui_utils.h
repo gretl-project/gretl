@@ -25,8 +25,6 @@ void delete_model (GtkWidget *widget, gpointer data);
 
 void delete_widget (GtkWidget *widget, gpointer data);
 
-gint catch_view_key (GtkWidget *w, GdkEventKey *key);
-
 void *mymalloc (size_t size); 
 
 void *myrealloc (void *ptr, size_t size);
@@ -95,6 +93,8 @@ gchar *textview_get_text (GtkTextView *view);
 
 int build_path (const char *dir, const char *fname, char *path, 
 		const char *ext);
+
+int prn_to_clipboard (PRN *prn, int copycode);
 
 GtkWidget *standard_button (const gchar *flag);
 

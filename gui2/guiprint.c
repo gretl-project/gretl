@@ -111,6 +111,8 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
     if (format == COPY_RTF) { 
 	clip_format = RegisterClipboardFormat("Rich Text Format");
+    } else if (format == COPY_CSV) {
+	clip_format = RegisterClipboardFormat("CSV");
     } else {
 	clip_format = CF_TEXT;
     }
@@ -1486,20 +1488,6 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     return 0;
 }
 
-static int csv_buf_to_clipboard (PRN *prn)
-{
-    size_t len = strlen(prn->buf);
-
-    clipboard_buf = mymalloc(len + 1);
-    if (clipboard_buf == NULL) return 1;
-
-    memcpy(clipboard_buf, prn->buf, len + 1);
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY,
-			    GDK_CURRENT_TIME);
-    return 0;
-}
-
 int csv_to_clipboard (void)
 {
     int err = 0;
@@ -1521,12 +1509,45 @@ int csv_to_clipboard (void)
 	    err = data_to_buf_as_csv(command.list, prn);
 	}
 	if (!err) {
-	    err = csv_buf_to_clipboard(prn);
+	    err = prn_to_clipboard(prn, COPY_CSV);
 	}
 
         gretl_print_destroy(prn);
 	free(storelist);
 	storelist = NULL;
+    }
+
+    return err;
+}
+
+int csv_selected_to_clipboard (void)
+{
+    char *liststr;
+    PRN *prn = NULL;
+    int err = 0;
+
+    liststr = mdata_selection_to_string(0);
+    if (liststr == NULL) return;
+
+    delimiter_dialog();
+
+    *line = 0;
+    sprintf(line, "store csv %s", liststr);
+    free(liststr);
+
+    err = check_cmd(line);
+    if (!err) {
+	err = bufopen(&prn);
+    }
+    if (!err) {
+	err = data_to_buf_as_csv(command.list, prn);
+    }
+    if (!err) {
+	err = prn_to_clipboard(prn, COPY_CSV);
+    }
+
+    if (prn != NULL) {
+	gretl_print_destroy(prn);
     }
 
     return err;

@@ -82,4 +82,6 @@ void augment_copy_menu (windata_t *vwin);
 
 int csv_to_clipboard (void);
 
+int csv_selected_to_clipboard (void);
+
 #endif /* GUIPRINT_H */
