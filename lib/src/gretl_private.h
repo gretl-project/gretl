@@ -127,5 +127,6 @@ int get_vcv_index (MODEL *pmod, int i, int j, int n);
 int omit_from_list (int *list, const int *omitvars, int *newlist,
 		    const DATAINFO *pdinfo, int model_count);
 
+int path_append (char *file, const char *path);
 
 #endif /* GRETL_PRIVATE_H */

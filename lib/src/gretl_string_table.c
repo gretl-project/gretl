@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_string_table.h"
+#include "gretl_private.h"
 
 typedef struct _col_table col_table;
 
@@ -65,7 +66,7 @@ static int col_table_get_index (const col_table *ct, const char *s)
     int i;
 
     for (i=0; i<ct->n_strs; i++) {
-	if (!strcmp(s, ct->strs[i])) return i + 1;
+	if (!strcmp(s, ct->strs[i])) return i;
     }
 
     return -1;
@@ -87,7 +88,7 @@ col_table_add_string (col_table *ct, const char *s)
     strcpy(strs[n-1], s);
     ct->n_strs += 1;
 
-    return ct->n_strs;
+    return n - 1;
 }
 
 static col_table *
@@ -169,22 +170,41 @@ void gretl_string_table_destroy (gretl_string_table *st)
     free(st);
 }
 
-void gretl_string_table_print (gretl_string_table *st, PRN *prn)
+int gretl_string_table_print (gretl_string_table *st, PATHS *ppaths, 
+			       PRN *prn)
 {
     int i, j;
     const col_table *ct;
+    char stname[MAXLEN];
+    FILE *fp;
+    int err = 0;
 
-    if (st == NULL) return;
+    if (st == NULL) return 1;
+
+    strcpy(stname, "string_table.txt");
+    path_append(stname, ppaths->userdir);
+    fp = fopen(stname, "w");
+    if (fp == NULL) err = 1;
 
     for (i=0; i<st->n_cols; i++) {
 	ct = st->cols[i];
+	if (!err) {
+	    fprintf(fp, M_("String code table for variable %d:\n"), ct->idx);
+	}
 	pprintf(prn, M_("String code table for variable %d:\n"), ct->idx);
 	for (j=0; j<ct->n_strs; j++) {
-	    pprintf(prn, "%3d = '%s'\n", j + 1, ct->strs[j]);
+	    if (!err) {
+		fprintf(fp, "%3d = '%s'\n", j, ct->strs[j]);
+	    }
+	    pprintf(prn, "%3d = '%s'\n", j, ct->strs[j]);
 	}
     }
 
+    if (fp != NULL) fclose(fp);
+
     gretl_string_table_destroy(st);
+
+    return err;
 }
 
 

@@ -112,7 +112,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn);
 
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
-                const char *fname, PRN *prn);
+                const char *fname, PATHS *ppaths, PRN *prn);
 
 int import_box (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PRN *prn);

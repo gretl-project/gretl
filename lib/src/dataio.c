@@ -2528,6 +2528,17 @@ static int count_csv_fields (const char *line, char delim)
     return nf + 1;
 }
 
+static void remove_quoted_commas (char *line)
+{
+    int inquote = 0;
+    char *p = line;
+
+    while (*p) {
+	if (*p == '"') inquote = !inquote;
+	p++;
+    }
+}
+
 static void compress_csv_line (char *line, char delim, int trail)
 {
     int n = strlen(line);
@@ -2596,7 +2607,7 @@ static int csv_missval (const char *str, int i, int t, PRN *prn)
     int miss = 0;
 
     if (*str == '\0') {
-	if (t < 500) {
+	if (t < 100) {
 	    pprintf(prn, M_("   the cell for variable %d, obs %d "
 			    "is empty: treating as missing value\n"), 
 		    i, t);
@@ -2605,7 +2616,7 @@ static int csv_missval (const char *str, int i, int t, PRN *prn)
     }
 
     if (ISNA(str)) {
-	if (t < 500) {
+	if (t < 100) {
 	    pprintf(prn, M_("   warning: missing value for variable "
 			    "%d, obs %d\n"), i, t);
 	}
@@ -2677,7 +2688,7 @@ static int process_csv_obs (const char *str, int i, int t,
 	    if (*pst != NULL) {
 		ix = gretl_string_table_index(*pst, str, i, addcol, prn);
 	    }
-	    if (ix > 0) {
+	    if (ix >= 0) {
 		Z[i][t] = (double) ix;
 	    } else {
 		pprintf(prn, M_("At variable %d, observation %d:\n"), i, t+1);
@@ -2708,7 +2719,7 @@ static int process_csv_obs (const char *str, int i, int t,
  */
 
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
-		const char *fname, PRN *prn)
+		const char *fname, PATHS *ppaths, PRN *prn)
 {
     int ncols, chkcols;
     int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;
@@ -2961,7 +2972,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 #endif
 
     if (st != NULL) {
-	gretl_string_table_print(st, prn);
+	gretl_string_table_print(st, ppaths, prn);
     }
 
     csvinfo->t1 = 0;

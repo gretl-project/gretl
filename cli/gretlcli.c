@@ -344,7 +344,7 @@ int main (int argc, char *argv[])
 			      DATA_NONE, prn, 0);
 	} 
 	else if (err == GRETL_CSV_DATA) {
-	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
+	    err = import_csv(&Z, &datainfo, paths.datfile, &paths, prn);
 	} 
 	else if (err == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, paths.datfile, prn);
@@ -1101,7 +1101,7 @@ void exec_line (char *line, PRN *prn)
 	if (cmd.opt)
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	else
-	    err = import_csv(&Z, &datainfo, datfile, prn);
+	    err = import_csv(&Z, &datainfo, datfile, &paths, prn);
 	if (!err) { 
 	    data_status = 1;
 	    print_smpl(datainfo, 0, prn);
@@ -1136,7 +1136,7 @@ void exec_line (char *line, PRN *prn)
 	}
 
 	if (chk == GRETL_CSV_DATA) {
-	    err = import_csv(&Z, &datainfo, datfile, prn);
+	    err = import_csv(&Z, &datainfo, datfile, &paths, prn);
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {

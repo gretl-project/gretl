@@ -58,7 +58,7 @@ static int add_gdt_suffix (char *fname)
 
 /* .......................................................... */
 
-static int path_append (char *file, const char *path)
+int path_append (char *file, const char *path)
 {
     char temp[MAXLEN];
     int n, pathlen = strlen(file) + strlen(path) + 1;
