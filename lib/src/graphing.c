@@ -1339,6 +1339,11 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 		I_("Frequency distribution for"), freq->varname);	
     }
 
+    if (isnan(lambda)) {
+	if (fp) fclose(fp);
+	return 1;
+    }
+
     /* plot instructions */
 #ifdef USE_BARS
     strcat(withstring, "w filledcurve");
