@@ -4,6 +4,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 exec_prefix_set=no
 version=@LIBVERSION@
+XML_LIBS="@XML_LIBS@"
 
 usage()
 {
@@ -78,7 +79,7 @@ if test "$echo_cflags" = "yes"; then
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L${prefix}/lib -lgretl -lm
+      echo -L${prefix}/lib -lgretl-1.0 ${XML_LIBS} -lm
 fi
 
 

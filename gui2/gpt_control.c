@@ -87,7 +87,8 @@ typedef enum {
     PLOT_XLABEL         = 1 << 1,
     PLOT_YLABEL         = 1 << 3,
     PLOT_Y2AXIS         = 1 << 4,
-    PLOT_Y2LABEL        = 1 << 5
+    PLOT_Y2LABEL        = 1 << 5,
+    PLOT_LABELS_UP      = 1 << 6
 } plot_format_flags;
 
 #define plot_is_saved(p)        (p->flags & PLOT_SAVED)
@@ -103,6 +104,7 @@ typedef enum {
 #define plot_has_ylabel(p)      (p->format & PLOT_YLABEL)
 #define plot_has_y2axis(p)      (p->format & PLOT_Y2AXIS)
 #define plot_has_y2label(p)     (p->format & PLOT_Y2LABEL)
+#define plot_has_data_labels(p) (p->format & PLOT_LABELS_UP)
 
 #ifdef GNUPLOT_PNG
 typedef enum {
@@ -241,47 +243,45 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 
 static int add_or_remove_png_term (const char *fname, int add)
 {
-    FILE *fs;
-    int ftmp;
-    char tmp[MAXLEN], fline[MAXLEN];
+    FILE *fsrc, *ftmp;
+    char temp[MAXLEN], fline[MAXLEN];
 
-    sprintf(tmp, "%sgpttmp.XXXXXX", paths.userdir);
-    ftmp = g_mkstemp(tmp);
-    if (ftmp < 0) {
-        sprintf(errtext, _("Couldn't write to %s"), tmp);
+    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
+    if (mktemp(temp) == NULL) return 1;
+
+    ftmp = fopen(temp, "w");
+    if (ftmp == NULL) {
+        sprintf(errtext, _("Couldn't write to %s"), temp);
         errbox(errtext);
         return 1;
     }
 
-    fs = fopen(fname, "r");
-    if (!fs) {
+    fsrc = fopen(fname, "r");
+    if (fsrc == NULL) {
 	sprintf(errtext, _("Couldn't open %s"), fname);
 	errbox(errtext);
-	close(ftmp);
+	fclose(ftmp);
 	return 1;
     }
 
     if (add) {
-	gchar *outline;
-
-	outline = g_strdup_printf("set term png\n"
-				  "set output '%sgretltmp.png'\n", 
-				  paths.userdir);
-	write(ftmp, outline, strlen(outline));
-	g_free(outline);
+	fprintf(ftmp, "set term png\n"
+		"set output '%sgretltmp.png'\n", 
+		paths.userdir);
     }
 
-    while (fgets(fline, MAXLEN-1, fs)) {
+    while (fgets(fline, MAXLEN-1, fsrc)) {
 	if (add || (strncmp(fline, "set term", 8) && 
 	    strncmp(fline, "set output", 10))) {
-	    write(ftmp, fline, strlen(fline));
+	    fputs(fline, ftmp);
 	}
     }
 
-    fclose(fs);
-    close(ftmp);
+    fclose(fsrc);
+    fclose(ftmp);
 
-    return rename(tmp, fname);
+    remove(fname);
+    return rename(temp, fname);
 }
 
 static int add_png_term_to_plotfile (const char *fname)
@@ -1713,29 +1713,19 @@ static void
 write_label_to_plot (png_plot_t *plot, const gchar *label,
 		     gint x, gint y)
 {
-    static GdkFont *label_font;
-    size_t len = strlen(label);
-
-    if (label_font == NULL) {
-#ifdef G_OS_WIN32
-	label_font = 
-	    gdk_font_load("-b&h-lucidatypewriter-medium-r-normal"
-			  "-sans-12-*-*-*-*-*-*-*");
-#else
-	label_font = gdk_font_load("fixed");
-#endif
-    }
+    PangoContext *context;
+    PangoLayout *pl;
 
     if (plot->invert_gc == NULL) {
 	create_selection_gc(plot);
     }
 
+    context = gtk_widget_get_pango_context(plot->shell);
+    pl = pango_layout_new(context);
+    pango_layout_set_text(pl, label, -1);
+
     /* draw the label */
-    gdk_draw_text (plot->pixmap,
-		   label_font,
-		   plot->invert_gc,
-		   x, y,
-		   label, len);
+    gdk_draw_layout (plot->pixmap, plot->invert_gc, x, y, pl);
 
     /* show the modified pixmap */
     gdk_window_copy_area(plot->canvas->window,
@@ -1745,12 +1735,11 @@ write_label_to_plot (png_plot_t *plot, const gchar *label,
 			 0, 0,
 			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
 
-    /* draw (invert) again to erase the label */
-    gdk_draw_text (plot->pixmap,
-		   label_font,
-		   plot->invert_gc,
-		   x, y,
-		   label, len);
+    /* trash the pango layout */
+    g_object_unref (G_OBJECT(pl));
+
+    /* record that a label is shown */
+    plot->format |= PLOT_LABELS_UP;
 }
 
 #define TOLDIST 0.01
@@ -1852,7 +1841,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	get_data_xy(plot, x, y, &data_x, &data_y);
 
 	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250 &&
-	    !(plot_has_no_labels(plot))) {
+	    !(plot_has_no_labels(plot)) && !plot_is_zooming(plot)) {
 	    identify_point(plot, x, y, data_x, data_y);
 	}
 
@@ -1965,6 +1954,9 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help (NULL, GINT_TO_POINTER(RANGE_MEAN));
     }
+    else if (!strcmp(item, _("Clear data labels"))) { 
+	zoom_unzoom_png(plot, PNG_START);
+    }
     else if (!strcmp(item, _("Zoom..."))) { 
 	GdkCursor* cursor;
 
@@ -2012,6 +2004,7 @@ static void build_plot_menu (png_plot_t *plot)
 	N_("Copy to clipboard"),
 #endif
 	N_("Save to session as icon"),
+	N_("Clear data labels"),
 	N_("Zoom..."), 
 #ifdef USE_GNOME
 	N_("Print..."),
@@ -2076,6 +2069,11 @@ static void build_plot_menu (png_plot_t *plot)
 	}
 	if (plot_has_controller(plot) &&
 	    !strcmp(plot_items[i], "Edit")) {
+	    i++;
+	    continue;
+	}
+	if (!plot_has_data_labels(plot) &&
+	    !strcmp(plot_items[i], "Clear data labels")) {
 	    i++;
 	    continue;
 	}
@@ -2182,7 +2180,7 @@ static int zoom_unzoom_png (png_plot_t *plot, int view)
 
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  fullname);
-    } else { /* PNG_UNZOOM */
+    } else { /* PNG_UNZOOM or PNG_START */
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  plot->spec->fname);
     }
@@ -2324,6 +2322,7 @@ static void render_pngfile (png_plot_t *plot, int view)
     if (plot->labeled != NULL) {
 	free(plot->labeled);
 	plot->labeled = NULL;
+	plot->format ^= PLOT_LABELS_UP;
     }
 
     gdk_pixbuf_render_to_drawable(pbuf, plot->pixmap, 
@@ -2357,10 +2356,14 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
 	remove(plot->spec->fname);
     }
 
-    /* if the png plot has a controller, destroy it too */
     if (plot_has_controller(plot)) {
+	/* if the png plot has a controller, destroy it too */
 	plot->spec->ptr = NULL;
 	gtk_widget_destroy(gpt_control);
+    } else {
+	/* no controller: take responsibility for freeing the
+	   plot specification */
+	free_plotspec(plot->spec);
     }
 
     /* free allocated elements of png_plot struct */

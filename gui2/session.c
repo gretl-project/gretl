@@ -218,7 +218,8 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     char grname[32];
     int i = session.ngraphs;
     int boxplot_count;
-    extern int errno = 0;
+    
+    errno = 0;
 
     get_default_dir(savedir);
 
@@ -230,18 +231,17 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
 	sprintf(grname, "%s %d", _("Graph"), plot_count + 1);
 #ifdef GNUPLOT_PNG
-	/* move temporary plot file to permanent */	
-	if (rename(plot->fname, pltname)) {
-	    errbox(strerror(errno));
-	    /* errbox(_("Failed to copy graph file")); */
+	/* move temporary plot file to permanent */
+	if (copyfile(plot->fname, pltname)) {
 	    return;
-	}
-	strcpy(plot->fname, pltname);
+	} 
 	if (remove_png_term_from_plotfile(pltname)) {
 	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
-	mark_plot_as_saved(plot);
+	remove(plot->fname);
+	strcpy(plot->fname, pltname);
+	mark_plot_as_saved(plot);	
 #else
 	if (copyfile(paths.plotfile, pltname)) {
 	    return;

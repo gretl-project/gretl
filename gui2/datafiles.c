@@ -807,8 +807,9 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
 		"as %s?"), _(label));
 	resp = yes_no_dialog(_("gretl: time series data"), msg, 0);
 	if (resp == YES_BUTTON) {
-	    if (!(datainfo->time_series == TIME_SERIES))
+	    if (!(datainfo->time_series == TIME_SERIES)) {
 		data_status |= MODIFIED_DATA;
+	    }
 	    datainfo->time_series = TIME_SERIES;
 	    set_sample_label(datainfo);
 	}

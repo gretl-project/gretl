@@ -70,8 +70,7 @@ static GtkWidget *make_main_window (int gui_get_data);
 static void clip_init (GtkWidget *w);
 #endif
 
-static void build_var_popup (windata_t *win);
-static void build_selection_popup (void);
+static void build_main_popups (void);
 static gint var_popup_click (GtkWidget *widget, gpointer data);
 static gboolean main_popup_handler (GtkWidget *widget, GdkEvent *event,
 				    gpointer data);
@@ -480,7 +479,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/_Display values"), NULL, display_var, 0, NULL },
     { N_("/Variable/_Summary statistics"), NULL, do_menu_op, 
       VAR_SUMMARY, NULL },
-    { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL },
     { N_("/Variable/_Frequency distribution"), NULL, do_menu_op, 
       FREQ, NULL },
     { N_("/Variable/Frequency plot"), NULL, NULL, 0, "<Branch>" },
@@ -489,7 +487,9 @@ GtkItemFactoryEntry data_items[] = {
       NORMAL, NULL },
     { N_("/Variable/Frequency plot/against Gamma"), NULL, do_freqplot, 
       GAMMA, NULL },
+    { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL },
     { N_("/Variable/Correlogram"), NULL, gretl_callback, CORRGM, NULL },
     { N_("/Variable/Spectrum"), NULL, NULL, 0, "<Branch>" },
     { N_("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL }, 
@@ -502,7 +502,6 @@ GtkItemFactoryEntry data_items[] = {
 #ifdef HAVE_TRAMO
     { N_("/Variable/TRAMO analysis"), NULL, do_tramo_x12a, TRAMO, NULL },
 #endif
-    { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
     { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/_Rename"), NULL, mdata_edit, RENAME, NULL },
@@ -530,11 +529,10 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL },
     { N_("/Model/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
     { N_("/Model/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
-    { N_("/Model/sep3"),  NULL, NULL, 0, "<Separator>" },
     { N_("/Model/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
     { N_("/Model/Cointe_gration test..."), NULL, selector_callback, COINT, NULL },
+    { N_("/Model/sep3"),  NULL, NULL, 0, "<Separator>" },
     { N_("/Model/_Two-Stage Least Squares..."), NULL, model_callback, TSLS, NULL },
-    { N_("/Model/sep4"),  NULL, NULL, 0, "<Separator>" },
     { N_("/Model/_Logit..."), NULL, model_callback, LOGIT, NULL },
     { N_("/Model/_Probit..."), NULL, model_callback, PROBIT, NULL },
     { N_("/Model/Least _Absolute Deviation..."), NULL, model_callback, LAD, NULL },
@@ -971,6 +969,31 @@ void graphmenu_state (gboolean s)
 
 /* ........................................................... */
 
+static void time_series_menu_state (gboolean s)
+{
+    if (mdata->ifac != NULL) {
+	flip(mdata->ifac, "/Data/Graph specified vars/Time-series plot...", s);
+	flip(mdata->ifac, "/Variable/Time series plot", s);
+	flip(mdata->ifac, "/Variable/Correlogram", s);
+	flip(mdata->ifac, "/Variable/Spectrum", s);
+	flip(mdata->ifac, "/Variable/Runs test", s);
+	flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
+#ifdef HAVE_X12A
+	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", s);
+#endif
+#ifdef HAVE_TRAMO
+	flip(mdata->ifac, "/Variable/TRAMO analysis", s);
+#endif
+	flip(mdata->ifac, "/Model/Cochrane-Orcutt...", s);
+	flip(mdata->ifac, "/Model/Hildreth-Lu...", s);
+	flip(mdata->ifac, "/Model/Autoregressive estimation...", s);
+	flip(mdata->ifac, "/Model/Vector Autoregression...", s);
+	flip(mdata->ifac, "/Model/Cointegration test...", s);
+    }
+}
+
+/* ........................................................... */
+
 void panel_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
@@ -1056,15 +1079,12 @@ void populate_varlist (void)
     }
 
     if (mdata->popup == NULL) {
-	build_var_popup(mdata);
-	build_selection_popup();
-	g_signal_connect(G_OBJECT(mdata->listbox), "button_press_event",
-			 G_CALLBACK(main_popup_handler), 
-			 mdata->popup);
 	g_signal_connect (G_OBJECT(mdata->listbox), "button_press_event",
 			  G_CALLBACK(main_varclick),
 			  mdata);
     }
+
+    build_main_popups();
 }
 
 /* ......................................................... */
@@ -1095,6 +1115,10 @@ void clear_sample_label (void)
     gtk_label_set_text(GTK_LABEL(mdata->status), "");
     gtk_label_set_text(GTK_LABEL(datalabel), _(" No datafile loaded "));
 }
+
+/* ......................................................... */
+
+
 
 /* ......................................................... */
 
@@ -1132,6 +1156,7 @@ void set_sample_label (DATAINFO *pdinfo)
 	strcpy(pdstr, _("Undated"));
 
     panel_menu_state(dataset_is_panel(pdinfo));
+    time_series_menu_state(dataset_is_time_series(pdinfo));
 
     flip(mdata->ifac, "/Sample/Interpret as time series...", 
 	 !(dataset_is_time_series(pdinfo)));
@@ -1474,11 +1499,15 @@ static void build_var_popup (windata_t *win)
     };
 
     GtkWidget *var_item;
-    int i;
+    int i, n_items = sizeof var_items / sizeof var_items[0];
 
     win->popup = gtk_menu_new();
 
-    for (i=0; i<(sizeof var_items / sizeof var_items[0]); i++) {
+    for (i=0; i<n_items; i++) {
+	if (!dataset_is_time_series(datainfo) && (i == 2 ||
+	    i == 6 || i == 7 || i == 8 || i == 9)) {
+	    continue;
+	}
 	var_item = gtk_menu_item_new_with_label(_(var_items[i]));
 	g_signal_connect(G_OBJECT(var_item), "activate",
 			 G_CALLBACK(var_popup_click),
@@ -1518,17 +1547,61 @@ static void build_selection_popup (void)
     };
 
     GtkWidget *item;
-    int i;
+    int i, n_items = sizeof items / sizeof items[0];
 
     selection_popup = gtk_menu_new();
 
-    for (i=0; i<(sizeof items / sizeof items[0]); i++) {
+    for (i=0; i<n_items; i++) {
+	if (!dataset_is_time_series(datainfo) && i == 3) {
+	    continue;
+	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(selection_popup_click),
 			 _(items[i]));
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(selection_popup), item);
+    }
+}
+
+/* ........................................................... */
+
+static void build_main_popups (void)
+{
+    static int old_time_series = 1;  
+    int time_series; 
+    static gulong sig_id;
+
+    if (datainfo != NULL) {
+	time_series = dataset_is_time_series(datainfo);
+    } else {
+	time_series = 1;
+    }
+
+#ifdef POPUP_DEBUG
+    fprintf(stderr, "Doing build_main_popups():\n"
+	    "old_time_series=%d, time_series=%d, sig_id=%lu, mdata->popup=%p\n", 
+	    old_time_series, time_series, sig_id, (void *) mdata->popup);
+#endif
+
+    if (mdata->popup == NULL || time_series != old_time_series) {
+
+	if (mdata->popup != NULL) {
+	    gtk_widget_destroy(mdata->popup);
+	    g_signal_handler_disconnect(G_OBJECT(mdata->listbox), sig_id);
+	}
+
+	build_var_popup(mdata);
+	sig_id = g_signal_connect(G_OBJECT(mdata->listbox), "button_press_event",
+				  G_CALLBACK(main_popup_handler), 
+				  mdata->popup);
+
+	if (selection_popup != NULL) {
+	    gtk_widget_destroy(selection_popup);
+	}
+	build_selection_popup();
+
+	old_time_series = time_series;
     }
 }
 

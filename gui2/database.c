@@ -157,8 +157,9 @@ static double get_date_x (int pd, const char *obs)
 
 static void set_time_series (DATAINFO *pdinfo)
 {
-    if (pdinfo->pd != 1 || strcmp(pdinfo->stobs, "1")) 
+    if (pdinfo->pd != 1 || strcmp(pdinfo->stobs, "1")) { 
 	pdinfo->time_series = TIME_SERIES;
+    }
 }
 
 /* ........................................................... */

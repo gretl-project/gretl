@@ -266,7 +266,7 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
     GtkTreeModel *orig_model;
     GtkTreeIter orig_iter;
     gint vnum, test;
-    gchar *vname;
+    gchar *vname = NULL;
     gint already_there = 0;
 
     gtk_tree_model_get (model, iter, 0, &vnum, 1, &vname, -1);
@@ -275,7 +275,10 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
     else list = sr->rightvars;
 
     orig_model = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
-    if (orig_model == NULL) return;
+    if (orig_model == NULL) {
+	g_free(vname);
+	return;
+    }
 
     if (gtk_tree_model_get_iter_first(orig_model, &orig_iter)) {
 	while (1) {
@@ -293,6 +296,7 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
         gtk_list_store_set(GTK_LIST_STORE(orig_model), &orig_iter, 
 			   0, vnum, 1, vname, -1);
     }
+    g_free(vname);
 }
 
 static void add_instrument (GtkTreeModel *model, GtkTreePath *path,
