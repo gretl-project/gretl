@@ -4,7 +4,7 @@
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
 
-  <command name="add" section="Tests" label="Aggiunge variabili">
+  <command name="add" section="Tests" label="Variabili aggiunte">
 
     <usage>
       <arguments>
@@ -577,9 +577,8 @@
 
 	<li><para>Somma: i nuovi valori saranno la somma dei 
             corrispondenti valori della serie a frequenza maggiore.
-	    the sum of the relevant higher-frequency values.  Ad esempio,
-            il valore per il primo trimestre sarà la somma dei valori di
-            gennaio, febbraio e marzo.</para>
+            Ad esempio, il valore per il primo trimestre sarà la somma dei
+            valori di gennaio, febbraio e marzo.</para>
 	</li>
 
 	<li><para>Valori di fine periodo: il nuovo valore è l'ultimo
@@ -595,9 +594,9 @@
 	</li>
       </ilist>
 
-      <para>Se si compatta un intero dataset, il metodo di compattazione
+      <para>Se si compatta un intero dataset, il metodo di compattamento
         scelto diventa quello predefinito, ma se si è scelto un metodo di
-        compattazione per una certa variabile (nel menù <quote>Variabile/Modifica
+        compattamento per una certa variabile (nel menù <quote>Variabile/Modifica
         attributi</quote>) viene usato quel metodo al posto di quello predefinito.
 	</para>
 
@@ -1022,10 +1021,13 @@
     <description>
       <para>
 	Specifica un'equazione all'interno di un sistema di equzioni
-        (si veda <cmdref targ="system"/>). La sintassi è la stessa usata
-        ad esempio in <cmdref targ="ols"/> (eccetto per un sistema con
-        minimi quadrati a tre stadi, per cui la sintassi è la stessa di
-	<cmdref targ="tsls"/>).
+        (si veda <cmdref targ="system"/>). La sintassi per specificare
+        un'equazione in un sistema SUR è la stessa usata ad esempio in <cmdref
+        targ="ols"/>. Per un'equazione in un sistema con minimi quadrati 
+        a tre stadi, invece è possibile usare una specificazione simile a quella
+        usata per OLS e indicare una lista di strumenti comuni usando l'istruzione
+        <cmd>instr</cmd> (si veda ancora <cmdref targ="system"/>), oppure si può
+        usare la stessa sintassi di <cmdref targ="tsls"/>.
       </para>
     </description>
 
@@ -1779,7 +1781,7 @@
 	</li>
 	<li><para>Copia negli appunti: permette di copiare il grafico
         per poi incollarlo in altri programmi Windows, come ad esempio
-        MS Word (disponibile solo in MS Windows only)</para>
+        MS Word (disponibile solo in MS Windows)</para>
 	</li>
 	<li><para>Modifica: apre una finestra che permette di modificare
         vari dettagli dell'aspetto del grafico</para>
@@ -2690,7 +2692,7 @@
   </command>
 
   <command name="modeltab" section="Utilities"
-    label="La tabella modelli">
+    label="Tabella modelli">
 
     <usage>
       <arguments>
@@ -4485,6 +4487,10 @@
 	  <flag>--gzipped</flag>
 	  <effect>comprime con gzip</effect>
         </option>
+        <option>
+	  <flag>--dat</flag>
+	  <effect>usa il formato ASCII di PcGive</effect>
+        </option>
       </options>
     </usage>
 
@@ -4501,10 +4507,11 @@
         (Comma-Separated Values, dati separati da virgole) possono
         essere letti dai programmi di foglio elettronico e possono
         essere modificati con un editor di testi. I formati
-	<program>Octave</program> e <program>R</program> sono destinati
-        ad essere usati con i rispettivi programmi. La compressione con
-        gzip può essere utile per grandi dataset. Si veda <manref
-        targ="datafiles"/> per i dettagli sui vari formati.</para>
+        <program>Octave</program>, <program>R</program> e
+        <program>PcGive</program> sono destinati ad essere usati con i
+        rispettivi programmi. La compressione con gzip può essere utile per
+        grandi dataset. Si veda <manref targ="datafiles"/> per i dettagli sui
+        vari formati.</para>
 
       <para>
 	Si noti che le variabili scalari non saranno salvate
@@ -4572,6 +4579,13 @@
         almeno due equazioni specificate con il comando
         <cmd>equation</cmd> e deve essere chiuso con la riga <cmd>end
         system</cmd>.
+
+      <para>
+        Nel contesto di un sistema minimi quadrati a tre stadi, è possibile
+        fornire un elenco di strumenti (indicando le variabili per nome o per
+        numero), inserendole in una riga a sé stante, all'interno del blocco
+        <cmd>system</cmd>, preceduta dall'istruzione <cmd>instr</cmd>.
+      </para>
       </para>
     </description>
 
