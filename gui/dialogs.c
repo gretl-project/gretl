@@ -536,7 +536,7 @@ void about_dialog (gpointer data)
     };
 
     dlg = gnome_about_new("gretl", version_string,
-			  "(c) 2000-2001 Allin Cottrell", 
+			  "(c) 2000-2002 Allin Cottrell", 
 			  authors, 
 			  "An econometrics program for the gnome desktop "
 			  "issued under the GNU General Public License.  "

@@ -760,7 +760,6 @@ int main (int argc, char *argv[])
 
     /* opening a script from the command line? */
     if (tryscript[0] != '\0') { 
-	strcpy(scriptfile, tryscript);
 	do_open_script(NULL, NULL);
     }
 

@@ -913,14 +913,17 @@ void do_help (gpointer data, guint code, GtkWidget *widget)
 static void edit_script_help (GtkWidget *widget, gpointer data)
 {
     windata_t *mydata = (windata_t *) data;
+    gchar *text;
     guint pt = GTK_EDITABLE(mydata->w)->current_pos;
-    gchar *text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 
-					 0, pt + 8);
-    int pos = 0;
+    int len = gtk_text_get_length(GTK_TEXT(mydata->w));
+
+    text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 
+				  0, (pt + 9 > len)? -1 : pt + 8);
 
     if (text != NULL && strlen(text) > 0) {
 	char *p, *q;
 	char word[9];
+	int pos;
 
 	p = q = text + pt;
 	if (pt > 0)
@@ -929,6 +932,7 @@ static void edit_script_help (GtkWidget *widget, gpointer data)
 	    while (*q && !isspace(*q)) q++;
 	*word = '\0';
 	strncat(word, p, (q - p > 8)? 8 : q - p);
+	fprintf(stderr, "word: '%s'\n", word);
 	pos = help_index(word, 1);
 	if (pos > 0) 
 	    help_show(NULL, pos, NULL);

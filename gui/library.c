@@ -2717,6 +2717,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
     char *runfile = NULL, fname[MAXLEN];
+    int err;
 
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
@@ -2725,8 +2726,11 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     auto_save_script(data, 1, NULL);
 
-    execute_script(runfile, NULL, NULL, prn, code);
+    err = execute_script(runfile, NULL, NULL, prn, code);
     gretl_print_destroy(prn);
+
+    if (err == -1) return;
+
     refresh_data();
 
     view_file(fname, 0, 1, 77, 450, SCRIPT_OUT, script_out_items);
@@ -2746,8 +2750,7 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 		MAXLEN-1);
 	gtk_widget_destroy(GTK_WIDGET (fs)); 
     } else {
-	if (!strlen(scriptfile))
-	    strcpy(scriptfile, tryscript);
+	strcpy(scriptfile, tryscript); /* might cause problems? */
     }
 
     /* is this a "session" file? */
@@ -2961,8 +2964,30 @@ int execute_script (const char *runfile,
     fb = fopen(runfile, "r");
     if (fb == NULL) {
 	errbox("Couldn't open script");
-	return 1;
+	return -1;
     }
+
+    /* check that the file has something in it */
+    cont = 0;
+    while (fgets(tmp, MAXLEN-1, fb)) {
+	if (strlen(tmp)) {
+	    for (i=0; i<strlen(tmp); i++) {
+		if (!isspace(tmp[i])) {
+		    cont = 1;
+		    break;
+		}
+	    }
+	}
+	if (cont) break;
+    }
+    fclose(fb);
+
+    if (!cont) {
+	errbox("No commands to execute");
+	return -1;
+    }
+    
+    fb = fopen(runfile, "r");
 
     /* reset model count to 0 if starting/saving session */
     if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
