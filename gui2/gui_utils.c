@@ -2423,7 +2423,9 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     } 
 
     /* disallow saving an already-saved model */
-    if (pmod->name) model_save_state(vwin->ifac, FALSE);
+    if (pmod->name != NULL) {
+	model_save_state(vwin->ifac, FALSE);
+    }
 
     if (pmod->ci == LAD) {
 	fcast_menu_off(vwin->ifac);
@@ -2594,7 +2596,7 @@ static void add_model_dataset_items (windata_t *vwin)
     }
 
     if (pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != GARCH &&
-	!(LIMDEP(pmod->ci))) {
+	!(LIMDEP(pmod->ci)) && !na(pmod->rsq)) {
 	n = sizeof r_squared_items / sizeof r_squared_items[0];
 	for (i=0; i<n; i++) {
 	    gtk_item_factory_create_item(vwin->ifac, &r_squared_items[i], 
