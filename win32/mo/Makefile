@@ -2,6 +2,8 @@ include ../config.mk
 
 PODIR = ../../po
 
+all: es.mo fr.mo
+
 es.mo: $(PODIR)/es.po
 	$(WIN32_MSGFMT) $<
 	mv messages $@

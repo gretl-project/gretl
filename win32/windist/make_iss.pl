@@ -66,6 +66,8 @@ print "Name: \"{app}\\lib\\pango\\1.0.0\\modules\"\n";
 print "Name: \"{app}\\lib\\locale\"\n";
 print "Name: \"{app}\\lib\\locale\\es\"\n";
 print "Name: \"{app}\\lib\\locale\\es\\LC_MESSAGES\"\n";
+print "Name: \"{app}\\lib\\locale\\fr\"\n";
+print "Name: \"{app}\\lib\\locale\\fr\\LC_MESSAGES\"\n";
 
 # pango module catalog
 print "Name: \"{app}\\etc\"\n";

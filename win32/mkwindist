@@ -53,6 +53,8 @@ mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
+mkdir -p windist/gretl/locale/fr/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
 
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
@@ -119,9 +121,11 @@ add_file ${TOPDIR}/share/bcih/bcih.bin gretl/db/bcih.bin
 add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx 
 
 # translations
-add_file mo/es.mo gretl/locale/es/LC_MESSAGES/gretl.mo
-add_file $GTK2MO/glib20.mo gretl/lib/locale/es/LC_MESSAGES/glib20.mo
-add_file $GTK2MO/gtk20.mo gretl/lib/locale/es/LC_MESSAGES/gtk20.mo
+for lang in es fr ; do
+  add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
+  add_file $GTK2MO/$lang/LC_MESSAGES/glib20.mo gretl/lib/locale/$lang/LC_MESSAGES/glib20.mo
+  add_file $GTK2MO/$lang/LC_MESSAGES/gtk20.mo gretl/lib/locale/$lang/LC_MESSAGES/gtk20.mo
+done
 
 # misc files
 add_file gretl_website.url gretl/gretl_website.url
