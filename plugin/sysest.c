@@ -222,12 +222,16 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 	if (systype == SUR) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("SUR residual, equation %d"), 
 		    i + 1);
-	} else {
+	} else if (systype == THREESLS) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("3SLS residual, equation %d"), 
 		    i + 1);
-	}	    
+	} else {
+	    sprintf(VARLABEL(pdinfo, *pj), "system residual, equation %d", 
+		    i + 1);
+	}
 	*pj += 1;
     }
+
     if (system_save_yhat(sys)) {
 	for (t=0; t<pdinfo->n; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {
@@ -240,8 +244,11 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 	if (systype == SUR) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("SUR fitted value, equation %d"), 
 		    i + 1);
-	} else {
+	} else if (systype == THREESLS) {
 	    sprintf(VARLABEL(pdinfo, *pj), _("3SLS fitted value, equation %d"), 
+		    i + 1);
+	} else {
+	    sprintf(VARLABEL(pdinfo, *pj), "system fitted value, equation %d", 
 		    i + 1);
 	}	    
 	*pj += 1;
@@ -314,6 +321,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     /* number of observations per series */
     T = t2 - t1 + 1;
+    system_set_n_obs(sys, T);
 
     models = malloc(m * sizeof *models);
     if (models == NULL) {
@@ -469,6 +477,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 			       tmp_y, m, mk);
 
     gls_sigma_from_uhat(sigma, uhat, m, T);
+
+    /* FIXME: implement FIML here, after getting 3SLS starting values */
+    if (systype == FIML) {
+	;
+    }
 
     j = 0;
     if (system_save_uhat(sys)) {

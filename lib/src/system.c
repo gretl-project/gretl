@@ -51,6 +51,7 @@ struct _gretl_equation_system {
     int type;
     int n_equations;
     int n_identities;
+    int n_obs;
     char flags;
     int **lists;
     int *endog_vars;
@@ -157,6 +158,7 @@ static gretl_equation_system *gretl_equation_system_new (int type)
     sys->type = type;
     sys->n_equations = 0;
     sys->n_identities = 0;
+    sys->nobs = 0;
     sys->flags = 0;
     sys->lists = NULL;
     sys->endog_vars = NULL;
@@ -399,6 +401,11 @@ int *compose_tsls_list (const gretl_equation_system *sys, int i)
     return list;
 }
 
+void system_set_n_obs (gretl_equation_system *sys, int n)
+{
+    sys->n_obs = n;
+}
+
 /* simple accessor functions */
 
 int system_save_uhat (const gretl_equation_system *sys)
@@ -419,6 +426,11 @@ int system_n_equations (const gretl_equation_system *sys)
 int system_n_indentities (const gretl_equation_system *sys)
 {
     return sys->n_identities;
+}
+
+int system_n_obs (const gretl_equation_system *sys)
+{
+    return sys->n_obs;
 }
 
 int *system_get_list (const gretl_equation_system *sys, int i)

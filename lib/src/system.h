@@ -56,6 +56,10 @@ int system_n_equations (const gretl_equation_system *sys);
 
 int system_n_identities (const gretl_equation_system *sys);
 
+int system_n_obs (const gretl_equation_system *sys);
+
+void system_set_n_obs (gretl_equation_system *sys, int n);
+
 int system_max_indep_vars (const gretl_equation_system *sys);
 
 int system_n_indep_vars (const gretl_equation_system *sys);
