@@ -55,7 +55,11 @@ extern void file_selector (char *msg, char *startdir, int action,
 
 int ps_print_plots (const char *fname, int flag, gpointer data);
 static int five_numbers (gpointer data);
- 
+
+#ifdef G_OS_WIN32
+static void CopyWndToClipboard (CWnd *pWnd); 
+#endif
+
 /* ............................................................. */
 
 /* Create a new backing pixmap of the appropriate size */
@@ -132,7 +136,7 @@ static gint popup_activated (GtkWidget *w, gpointer data)
                       SAVE_BOXPLOT_PS, ptr);
 #ifdef G_OS_WIN32
     else if (!strcmp(item, "Copy to clipboard"))
-	dummy_call();
+	CopyWndToClipboard((CWnd *) grp->area->window);
 #endif
     else if (!strcmp(item, "Close")) { 
 	gtk_widget_destroy(grp->popup);

@@ -1,4 +1,5 @@
 version 0.97
+- add facility to draw boxplots
 - add various formats to copy of models to clipboard (HTML,
   RTF, LaTeX)
 - enable LaTeX and RTF copying for correlation matrix and
