@@ -47,7 +47,7 @@ static char *format_double (char *rec, int offset)
     return buffer;
 }
 
-static int do_table (FILE *input, char *filename) 
+static int do_table (FILE *input, const char *filename) 
 {    
     long rectype;
     long reclen;
@@ -566,21 +566,13 @@ static void print_value (char *value)
     }
 }    
 
-int main (int argc, char *argv[])
+int get_excel_data (const char *fname)
 {
-    FILE *input;
-    char *filename;
-    int i;
- 
-    for (i=1; i<argc; i++) {
-	filename = argv[i];
-	input = fopen(filename, "rb");
-	if (!input) {
-	    perror(filename);
-	    exit(1);
-	}   
-        do_table(input, filename);
-    }	
+    FILE *fp;
 
+    fp = fopen(fname, "rb");
+    if (fp == NULL) return 1;
+    if (do_table(fp, fname)) return 1;
     return 0;
-}
+}  
+
