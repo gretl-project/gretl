@@ -44,7 +44,9 @@ enum {
     OUTPUT_ALL,
     OUTPUT_DOCBOOK,
     OUTPUT_DOCBOOK_STANDALONE,
-    OUTPUT_HLP
+    OUTPUT_HLP,
+    OUTPUT_CLI_HLP,
+    OUTPUT_GUI_HLP
 };
 
 #define ROOTNODE "commandlist"
@@ -60,21 +62,35 @@ static void full_fname (const char *fname, const char *dir,
     }
 }
 
+static void build_params (char const **params, int output, 
+			  const char *lang)
+{
+    int i = 0;
 
-int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
+    if (strcmp(lang, "en")) {
+	params[0] = "lang";
+	params[1] = lang;
+	i = 2;
+    }    
+    
+    if (output == OUTPUT_DOCBOOK_STANDALONE) {
+	params[i++] = "standalone";
+	params[i++] = "\"true\"";
+    }
+
+    else if (output == OUTPUT_GUI_HLP) {
+	params[i++] = "hlp";
+	params[i++] = "\"gui\"";
+    }
+}
+
+int apply_xslt (xmlDocPtr doc, int output, const char *lang, 
+		const char *docdir)
 {
     xsltStylesheetPtr style;
     xmlDocPtr result;
     char styname[FILENAME_MAX];
-    const char **null_params = NULL;
-    const char *gui_params[] = {
-	"hlp", "\"gui\"",
-	NULL
-    };
-    const char *standalone_params[] = {
-	"standalone", "\"true\"",
-	NULL
-    };
+    char const *xsl_params[5] = {0};
     FILE *fp;
     int err = 0;
 
@@ -87,7 +103,8 @@ int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
 	if (style == NULL) {
 	    err = 1;
 	} else {
-	    result = xsltApplyStylesheet(style, doc, null_params);
+	    build_params(xsl_params, OUTPUT_DOCBOOK, lang);
+	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
 	    } else {
@@ -111,7 +128,8 @@ int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
 	if (style == NULL) {
 	    err = 1;
 	} else {
-	    result = xsltApplyStylesheet(style, doc, standalone_params);
+	    build_params(xsl_params, OUTPUT_DOCBOOK_STANDALONE, lang);
+	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
 	    } else {
@@ -136,7 +154,8 @@ int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
 	    err = 1;
 	} else {
 	    /* cli version */
-	    result = xsltApplyStylesheet(style, doc, null_params);
+	    build_params(xsl_params, OUTPUT_CLI_HLP, lang);
+	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
 	    } else {
@@ -150,7 +169,8 @@ int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
 		xmlFreeDoc(result);
 	    }
 	    /* gui version */
-	    result = xsltApplyStylesheet(style, doc, gui_params);
+	    build_params(xsl_params, OUTPUT_GUI_HLP, lang);
+	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
 	    } else {
@@ -170,10 +190,27 @@ int apply_xslt (xmlDocPtr doc, int output, const char *docdir)
     return err;
 }
 
-int parse_commands_data (const char *fname, int output, const char *docdir) 
+char *get_lang_from_fname (char *lang, const char *fname)
+{
+    char *p = strrchr(fname, '_');
+
+    if (p != NULL && strlen(p) > 3 && !strcmp(p + 3, ".xml")) {
+	char tmp[3];
+
+	if (sscanf(p, "_%2s", tmp)) {
+	    sprintf(lang, "\"%s\"", tmp);
+	}
+    }
+
+    return lang;
+}
+
+int parse_commands_data (const char *fname, int output, 
+			 const char *docdir) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
+    char lang[8] = "en";
     int err = 0;
 
     LIBXML_TEST_VERSION 
@@ -200,7 +237,8 @@ int parse_commands_data (const char *fname, int output, const char *docdir)
 	goto bailout;
     }
 
-    apply_xslt(doc, output, docdir);
+    get_lang_from_fname(lang, fname);
+    apply_xslt(doc, output, lang, docdir);
 
  bailout:
 

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<phrases>
+  <phrase key="args" 
+      lang="en">Arguments:  </phrase>
+  <phrase key="args" 
+      lang="it">Argomenti:  </phrase>
+  <phrase key="arg" 
+      lang="en">Argument:   </phrase>
+  <phrase key="arg" 
+      lang="it">Argomento:  </phrase>
+  <phrase key="altforms" 
+      lang="en">Alternate forms:  </phrase>
+  <phrase key="altforms" 
+      lang="it">Forme alternative: </phrase>
+  <phrase key="opts" 
+      lang="en">Options:    </phrase>
+  <phrase key="opts" 
+      lang="it">Opzioni:    </phrase>
+  <phrase key="opt" 
+      lang="en">Option:     </phrase>
+  <phrase key="opt" 
+      lang="it">Opzione:    </phrase>
+  <phrase key="examples" 
+      lang="en">Examples:   </phrase>
+  <phrase key="examples" 
+      lang="it">Esempi:     </phrase>
+  <phrase key="example" 
+      lang="en">Example:    </phrase>
+  <phrase key="example" 
+      lang="it">Esempio:    </phrase>
+  <phrase key="fullman" 
+      lang="en">the gretl manual</phrase>
+  <phrase key="fullman" 
+      lang="it">il manuale di gretl</phrase>
+  <phrase key="menupath" 
+      lang="en">Menu path:    </phrase>
+  <phrase key="menupath" 
+      lang="it">Percorso menù: </phrase>
+  <phrase key="otheraccess" 
+      lang="en">Other access: </phrase>
+  <phrase key="otheraccess" 
+      lang="it">Accesso alternativo: </phrase>
+  <phrase key="tablebelow" 
+      lang="en">The table below </phrase>
+  <phrase key="tablebelow" 
+      lang="it">La tabella seguente </phrase>
+  <phrase key="scriptcommand" 
+      lang="en">Script command: </phrase>
+  <phrase key="scriptcommand" 
+      lang="it">Comando script: </phrase>
+  <phrase key="or" 
+      lang="en"> or </phrase>
+  <phrase key="or" 
+      lang="it"> o </phrase>
+</phrases>

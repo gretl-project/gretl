@@ -4,8 +4,18 @@
 
 <xsl:param name="hlp">cli</xsl:param>
 <xsl:param name="standalone">false</xsl:param>
+<xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
+
+<xsl:variable name="phrases"
+  select="document('manual_strings.xml')/phrases"/>
+
+<xsl:template name="gettext">
+  <xsl:param name="key"/>
+  <xsl:value-of
+    select="$phrases/phrase[@key=$key and @lang=$lang]"/>
+</xsl:template>
 
 <xsl:template match="commandlist"> 
  <xsl:apply-templates/> 
@@ -47,10 +57,18 @@
  <row>
    <xsl:choose>
      <xsl:when test="count(argument) > 1">
-       <entry>Arguments:</entry>
+       <entry>
+         <xsl:call-template name="gettext">
+           <xsl:with-param name="key" select="'args'"/>
+         </xsl:call-template>
+       </entry>
      </xsl:when>
      <xsl:otherwise>
-       <entry>Argument:</entry>
+       <entry>
+         <xsl:call-template name="gettext">
+           <xsl:with-param name="key" select="'arg'"/>
+         </xsl:call-template>
+       </entry>
      </xsl:otherwise>
    </xsl:choose>
   <entry><xsl:apply-templates/></entry>
@@ -60,7 +78,11 @@
 
 <xsl:template match="argument">
 <xsl:if test="(@separated)">; </xsl:if>
-<xsl:if test="(@alternate)"> or </xsl:if>
+<xsl:if test="(@alternate)">
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'or'"/>
+  </xsl:call-template>
+</xsl:if>
 <xsl:if test="(@optional)"><literal>[ </literal></xsl:if>
   <xsl:if test="@flag">
     <literal><xsl:value-of select="@flag"/></literal>
@@ -74,7 +96,11 @@
   <row>
     <xsl:choose>
       <xsl:when test="position() = 1">
-        <entry>Alternate forms:</entry>
+        <entry>
+          <xsl:call-template name="gettext">
+            <xsl:with-param name="key" select="'altforms'"/>
+          </xsl:call-template>
+        </entry>
       </xsl:when>
       <xsl:otherwise>
         <entry/>
@@ -91,10 +117,18 @@
       <xsl:when test="position() = 1">
         <xsl:choose>
           <xsl:when test="count(../option) > 1">
-            <entry>Options:</entry>
+            <entry>
+              <xsl:call-template name="gettext">
+                <xsl:with-param name="key" select="'opts'"/>
+              </xsl:call-template>
+            </entry>
           </xsl:when>
           <xsl:otherwise>
-            <entry>Option:</entry>
+            <entry>
+              <xsl:call-template name="gettext">
+                <xsl:with-param name="key" select="'opt'"/>
+              </xsl:call-template>
+            </entry>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
@@ -113,10 +147,18 @@
       <xsl:when test="position() = 1">
         <xsl:choose>
           <xsl:when test="count(../example) > 1">
-            <entry>Examples:</entry>
+            <entry>
+              <xsl:call-template name="gettext">
+                <xsl:with-param name="key" select="'examples'"/>
+              </xsl:call-template>
+            </entry>
           </xsl:when>
           <xsl:otherwise>
-            <entry>Example:</entry>
+            <entry>
+              <xsl:call-template name="gettext">
+                <xsl:with-param name="key" select="'example'"/>
+              </xsl:call-template>
+            </entry>
           </xsl:otherwise>
         </xsl:choose>
       </xsl:when>
@@ -244,11 +286,13 @@
 <xsl:template match="manref">
   <xsl:choose>
     <xsl:when test="$standalone='true'">
-	  <xsl:text>the full gretl manual</xsl:text>
-	</xsl:when>
-	<xsl:otherwise>
+      <xsl:call-template name="gettext">
+        <xsl:with-param name="key" select="'fullman'"/>
+      </xsl:call-template>
+    </xsl:when>
+    <xsl:otherwise>
       <xref linkend="{@targ}"/>
-	</xsl:otherwise>
+    </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
@@ -257,11 +301,19 @@
 </xsl:template>
 
 <xsl:template match="menu-path">
-  <para>Menu path: <xsl:apply-templates/></para>
+  <para>
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'menupath'"/>
+    </xsl:call-template>
+  <xsl:apply-templates/></para>
 </xsl:template>
 
 <xsl:template match="other-access">
-  <para>Other access: <xsl:apply-templates/></para>
+  <para>
+    <xsl:call-template name="gettext">
+      <xsl:with-param name="key" select="'otheraccess'"/>
+    </xsl:call-template>
+  <xsl:apply-templates/></para>
 </xsl:template>
 
 <xsl:template match="table[not(@context) or @context=$hlp]">
