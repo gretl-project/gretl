@@ -2,7 +2,7 @@
 
 # Shell script to make gretl2 win32 distribution
 
-GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp372w32.zip
+GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp373w32.zip
 
 HOME_WIN32=/home/cottrell/stats/esl/win32/runtime
 GTK2RT=$HOME_WIN32/gtk-2.0-runtime.tar.gz

@@ -3373,23 +3373,25 @@ static int get_latex_path (char *latex_path)
     return (ret == 0);
 }
 
-int winfork (char *cmdline, const char *dir, int wshow)
+int winfork (char *cmdline, const char *dir, int wshow,
+	     DWORD flags)
 {
     int child;
     STARTUPINFO si;
     PROCESS_INFORMATION pi; 
+    DWORD exitcode;
 
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
+    ZeroMemory(&si, sizeof si);
+    si.cb = sizeof si;
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = wshow;
 
-    ZeroMemory(&pi, sizeof(pi));    
+    ZeroMemory(&pi, sizeof pi);  
 
     /* zero return means failure */
     child = CreateProcess(NULL, cmdline, 
 			  NULL, NULL, FALSE,
-			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+			  flags,
 			  NULL, dir,
 			  &si, &pi);
 
@@ -3399,7 +3401,10 @@ int winfork (char *cmdline, const char *dir, int wshow)
 	return 1;
     }
 
-    WaitForSingleObject(pi.hProcess, INFINITE);    
+    WaitForSingleObject(pi.hProcess, INFINITE); 
+
+    GetExitCodeProcess(pi.hProcess, &exitcode);
+   
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
@@ -3449,7 +3454,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	}
 
 	sprintf(tmp, "\"%s\" %s", latex_path, texshort);
-	if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED)) {
+	if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	    return;
 	} else {
 	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);

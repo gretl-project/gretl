@@ -27,7 +27,8 @@
 #ifdef G_OS_WIN32
 void win_show_error (DWORD dw);
 
-int winfork (char *cmdline, const char *dir, int wshow);
+int winfork (char *cmdline, const char *dir, int wshow,
+	     DWORD flags);
 #endif
 
 char *user_fopen (const char *fname, char *fullname, PRN **pprn);

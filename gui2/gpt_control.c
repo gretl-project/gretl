@@ -722,9 +722,9 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
     fclose(fq);
 
 #ifdef G_OS_WIN32
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
@@ -785,9 +785,9 @@ void do_save_graph (const char *fname, char *savestr)
     fclose(fq);
 
 #ifdef G_OS_WIN32
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
@@ -1590,7 +1590,7 @@ static int make_new_png (png_plot_t *plot, int view)
 	fclose(fpin);
 
 #ifdef G_OS_WIN32
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  fullname);
 #else
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
@@ -1598,7 +1598,7 @@ static int make_new_png (png_plot_t *plot, int view)
 #endif
     } else { /* PNG_UNZOOM */
 #ifdef G_OS_WIN32
-	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  plot->spec->fname);
 #else
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
@@ -1607,7 +1607,7 @@ static int make_new_png (png_plot_t *plot, int view)
     }
 
 #ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
     err = system(plotcmd);
 #endif
@@ -1791,9 +1791,9 @@ static int get_plot_yrange (png_plot_t *plot)
     fclose(fpout);
 
 #ifdef G_OS_WIN32
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot,
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
 			      dumbgp);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
 			      dumbgp);
@@ -2050,16 +2050,29 @@ int gnuplot_show_png (const char *plotfile, int saved)
    it on the clipboard.
 */
 
-static int win_copy_emf (HENHMETAFILE hemf)
+static int win_copy_emf (gchar *emfbuf, size_t emflen)
 {
+    HENHMETAFILE hemf, hemf2;
+
+    if (emfbuf == NULL) {
+        errbox(_("Copy buffer was empty"));
+        return 1;
+    }
+
     if (!OpenClipboard(NULL)) {
 	errbox(_("Cannot open the clipboard"));
 	return 1;
     }
 
     EmptyClipboard();
-    SetClipboardData(CF_ENHMETAFILE, hemf);
+
+    hemf = SetEnhMetaFileBits(emflen, emfbuf);
+    hemf2 = CopyEnhMetaFile(hemf, NULL);
+    SetClipboardData(CF_ENHMETAFILE, hemf2);
+
     CloseClipboard();
+
+    DeleteEnhMetaFile(hemf);
 
     return 0;
 }
@@ -2072,7 +2085,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     gchar *plotcmd = NULL;
     gchar *emfname = NULL;
     gchar *emfbuf = NULL;
-    HENHMETAFILE hemf;
+    HENHMETAFILE hemf = NULL;
     size_t emflen;
     int err;
 
@@ -2097,41 +2110,47 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
     gretl_print_destroy(prn);
     fclose(fq);
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.pgnuplot, 
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
 
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 
     g_free(plotcmd);
     remove(plottmp);
     
     if (err) {
         errbox(_("Gnuplot error creating graph"));
-	g_free(emfname);
-	return;
+	goto emf_bailout;
     }
 
     hemf = GetEnhMetaFile(emfname);
-    emflen = GetEnhMetaFileBits(hemf, 0, NULL);
-    GetEnhMetaFileBits(hemf, emflen, emfbuf);
-    {
-	gchar *msg = g_strdup_printf("Got %d bytes from %s",
-				     (int) emflen, emfname);
-	infobox(msg);
-	g_free(msg);
+    if (hemf == NULL) {
+        errbox(_("Gnuplot error creating graph"));
+	goto emf_bailout;
     }
-    DeleteEnhMetaFile(hemf); /* trash the handle */
 
-    /* place the buffer on the clipboard */    
-    hemf = SetEnhMetaFileBits(emflen, emfbuf);
-    win_copy_emf(hemf);
+    emflen = GetEnhMetaFileBits(hemf, 0, NULL);
+    if (emflen == 0) {
+        errbox(_("Gnuplot error creating graph"));
+	goto emf_bailout;
+    }
 
-    /* clean up: delete the EMF on disk, and free the buffer that has
-       been copied to the clipboard */
+    emfbuf = mymalloc(emflen);
+    if (emfbuf == NULL) {
+	goto emf_bailout;
+    }
+
+    emflen = GetEnhMetaFileBits(hemf, emflen, emfbuf);
+    DeleteEnhMetaFile(hemf); /* close the handle */
+
+    /* place the Metafile buffer on the clipboard */    
+    win_copy_emf(emfbuf, emflen);
+
+    /* clean up: delete the EMF on disk and free the data buffer */
+ emf_bailout:
     remove(emfname);
     g_free(emfname);
     free(emfbuf);
-    DeleteEnhMetaFile(hemf);
 }
 
 #endif /* G_OS_WIN32 */

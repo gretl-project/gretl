@@ -14,13 +14,17 @@ A. Additional files:
    glib/gdk/gtk DLLs should be placed in a subdirectory named "dlls"
    of this directory.
 
-2. libxml, libreadline, zlib and gmp
+2. libxml, libreadline, libpng, zlib and gmp
 
 For all of the above, you need DLLs, import libraries (.a) and
-headers.  See http://mingwrep.sourceforge.net/ for a repository of
-such packages.  For convenience, I have assembled a zip archive,
-gretl-win32-build.zip, which contains all that is needed in regard
-to libxml, libreadline, zlib and gmp. See
+headers.  See 
+
+http://gnuwin32.sourceforge.net/
+http://mingwrep.sourceforge.net/ 
+
+for repositories of such packages.  For convenience, I have assembled a
+zip archive, gretl-win32-build.zip, which contains all that is needed
+in regard to libxml, libreadline, zlib and gmp. See
 
   ftp://ricardo.ecn.wfu.edu/pub/gretl/winbuild/
 
