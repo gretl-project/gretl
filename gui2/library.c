@@ -3882,7 +3882,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	buf = textview_get_text(GTK_TEXT_VIEW(mydata->w));
 #endif
 
-	if (buf == NULL || !strlen(buf)) {
+	if (buf == NULL || *buf == '\0') {
 	    errbox("No commands to execute");
 	    gretl_print_destroy(prn);
 	    if (buf) g_free(buf);

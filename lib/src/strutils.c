@@ -658,19 +658,23 @@ char *iso_gettext (const char *msgid)
    return ret;
 } 
 
-/* library global */
-int printing_to_console;
+static int printing_to_console;
 
 char *maybe_iso_gettext (const char *msgid)
 {
-   if (printing_to_console) return iso_gettext(msgid);
-   else return gettext(msgid);
+   if (printing_to_console) {
+       return iso_gettext(msgid);
+   } else {
+       return gettext(msgid);
+   }
 } 
 
 void check_for_console (PRN *prn)
 {
-    if (prn->fp == stdout || prn ->fp == stderr) {
+    if (prn->fp == stdout || prn->fp == stderr) {
 	printing_to_console = 1;
+    } else {
+	printing_to_console = 0;
     }
 }
 

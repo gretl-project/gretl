@@ -75,8 +75,13 @@ print "Name: \"{app}\\etc\"\n";
 print "Name: \"{app}\\etc\\gtk-2.0\"\n";
 print "Name: \"{app}\\etc\\pango\"\n";
 
-# gtksourceview shared file
+# gtksourceview shared files; intl message catalogs
 print "Name: \"{app}\\share\\gtksourceview-1.0\\language-specs\"\n";
+print "Name: \"{app}\\share\\locale\"\n";
+print "Name: \"{app}\\share\\locale\\es\"\n";
+print "Name: \"{app}\\share\\locale\\es\\LC_MESSAGES\"\n";
+print "Name: \"{app}\\share\\locale\\fr\"\n";
+print "Name: \"{app}\\share\\locale\\fr\\LC_MESSAGES\"\n";
 
 print "\n[Files]\n";
 

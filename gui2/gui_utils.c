@@ -1684,13 +1684,72 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf,
 
 #endif
 
+static gchar *my_utf_string (char *t)
+{
+    static gchar *s = NULL;
+    GError *error = NULL;
+    gsize r_bytes, w_bytes;
+    unsigned char *c;
+    const char *fc;
+    const char *smb;
+    gchar *from_codeset = NULL;
+    
+    if (t == NULL) return NULL;
+
+    if (g_utf8_validate(t, -1, NULL)) return t;   
+    
+    /* so we got a non-UTF-8 */
+
+    smb = getenv("SMB_CODESET");
+    if (smb != NULL && *smb != '\0') {
+	from_codeset = g_strdup(smb);
+    } else {
+    	g_get_charset(&fc);
+    	if (fc) from_codeset = g_strdup(fc);
+    	else from_codeset = g_strdup("ISO-8859-1");
+    }
+    
+    if (!strcmp(from_codeset, "ISO-")) {
+	g_free(from_codeset);
+	from_codeset = g_strdup("ISO-8859-1");
+    }  
+  
+    if (s) g_free(s);
+
+    for (c = (unsigned char *)t; *c != 0; c++) {
+	if (*c < 32 && *c != '\n') {
+	    *c = ' ';
+	}
+    }
+
+    s = g_convert(t, strlen(t), "UTF-8", from_codeset, &r_bytes, &w_bytes,
+		  &error);
+
+    g_free(from_codeset);
+
+    if (s == NULL) {
+	s = g_strdup(t);
+	for (c = s; *c != 0; c++) if (*c > 128) *c = '?';
+    }
+
+    if (error) {
+        printf("DBG: %s. Codeset for system is: %s\n",
+	       error->message,from_codeset);
+        printf("DBG: You should set the environment variable "
+	       "SMB_CODESET to ISO-8859-1\n");
+	g_error_free(error);
+    }
+
+    return s;
+}
+
 static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, 
 				     int role)
 {
     FILE *fp;
     GtkTextIter iter;    
     int thiscolor, nextcolor;
-    char readbuf[MAXSTR], *chunk = NULL;
+    char readbuf[MAXSTR], *chunk;
 
     fp = fopen(fname, "r");
     if (fp == NULL) return;
@@ -1701,13 +1760,9 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
     memset(readbuf, 0, sizeof readbuf);
 
-    while (fgets(readbuf, sizeof readbuf - 1, fp)) {
+    while (fgets(readbuf, sizeof readbuf, fp)) {
 #ifdef ENABLE_NLS
-	if (!g_utf8_validate(readbuf, sizeof readbuf, NULL)) {
-	    gsize bytes;
-
-	    chunk = g_locale_to_utf8(readbuf, -1, NULL, &bytes, NULL);
-	} else chunk = readbuf;
+	chunk = my_utf_string(readbuf);
 #else
 	chunk = readbuf;
 #endif
@@ -1739,11 +1794,8 @@ static void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 	}
 	thiscolor = nextcolor;
 	memset(readbuf, 0, sizeof readbuf);
-	if (chunk != NULL && chunk != readbuf) {
-	    free(chunk);
-	    chunk = NULL;
-	}
     }
+
     fclose(fp);
 }
 

@@ -11,7 +11,7 @@ plugindir = ../plugin
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -Wall -O2 -g -mms-bitfields
+CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
 
@@ -23,12 +23,11 @@ GLIBLIB := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lgtksourceview -lwsock32 #-lhhctrl
-GRETLLIB = -L$(imports) -lgretl -lintl.dll
+GRETLLIB = -L$(imports) -lgretl -lintl # was lintl.dll
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas -lf2c
 
 # flags/defines
-LDFLAGS = -s 
 CFLAGS = -I. -I$(libdir) -I$(extradir) -I$(plugindir)
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
@@ -137,7 +136,7 @@ $(CLIPROG): $(CLIOBJ)
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB) -lmingwex
 
 $(GUIPROG): $(GUIOBJ) $(WRES)
-	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng $(ZLIB_LIB) -lmingwex
+	$(CC) -mwindows -o $@ $^ $(LIBS) $(GUI_LIBS) -lpng $(ZLIB_LIB) -lmingwex -s
 
 $(CHECKER): $(CHECKSRC)
 	$(CC) -s -I. -I../lib/src -DUSE_GMP -o $@ $^ $(LIBS) $(ZLIB_LIB)

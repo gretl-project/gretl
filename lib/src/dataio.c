@@ -2620,7 +2620,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (line != NULL) free(line);
     if (csvinfo != NULL) 
 	clear_datainfo(csvinfo, CLEAR_FULL);
+
     console_off();
+
     return 1;
 }
 
@@ -3719,7 +3721,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     doc = xmlParseFile(fname);
     if (doc == NULL) {
 	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
-	return 1;
+	err = 1;
+	goto xmldata_bailout;
     }
 
     /* clear any existing data info */
@@ -3729,13 +3732,15 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     if (cur == NULL) {
         sprintf(gretl_errmsg, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
-	return 1;
+	err = 1;
+	goto xmldata_bailout;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
         sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
 	xmlFreeDoc(doc);
-	return 1;
+	err = 1;
+	goto xmldata_bailout;
     }
 
     /* set some datainfo parameters */
@@ -3743,7 +3748,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     if (tmp == NULL) {
 	sprintf(gretl_errmsg, 
 		_("Required attribute 'type' is missing from data file"));
-	return 1;
+	err = 1;
+	goto xmldata_bailout;
     } else {
 	if (!strcmp(tmp, "cross-section")) 
 	    pdinfo->time_series = 0;
@@ -3755,7 +3761,9 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
 	else {
 	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
-	    return 1;
+	    free(tmp);
+	    err = 1;
+	    goto xmldata_bailout;
 	}
 	free(tmp);
     }
@@ -3765,11 +3773,13 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     if (tmp) {
 	int pd = 0;
 
-	if (sscanf(tmp, "%d", &pd) == 1)
+	if (sscanf(tmp, "%d", &pd) == 1) {
 	    pdinfo->pd = pd;
-	else {
+	} else {
 	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
-	    return 1;
+	    free(tmp);
+	    err = 1;
+	    goto xmldata_bailout;
 	}
 	free(tmp);
     }
@@ -3799,7 +3809,9 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	}
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
-	    return 1;
+	    free(tmp);
+	    err = 1;
+	    goto xmldata_bailout;
 	}
 	strncpy(pdinfo->stobs, tmp, 8);
 	pdinfo->stobs[8] = '\0';
@@ -3821,7 +3833,9 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	} 
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse endobs"));
-	    return 1;
+	    free(tmp);
+	    err = 1;
+	    goto xmldata_bailout;
 	}
 	strncpy(pdinfo->endobs, tmp, 8);
 	pdinfo->endobs[8] = '\0';
@@ -3863,15 +3877,17 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    if (err) return err;
+    if (err) goto xmldata_bailout;
 
     if (!gotvars) {
 	sprintf(gretl_errmsg, _("Variables information is missing"));
-	return 1;
+	err = 1;
+	goto xmldata_bailout;
     }
     if (!gotobs) {
 	sprintf(gretl_errmsg, _("No observations were found"));
-	return 1;
+	err = 1;
+	goto xmldata_bailout;
     }
 
     if (fname != ppaths->datfile) {
@@ -3883,9 +3899,11 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		    "observations range: %s-%s\n\n"), pdinfo->pd, pdinfo->n,
 	    pdinfo->stobs, pdinfo->endobs);
 
+ xmldata_bailout:
+
     console_off();
 
-    return 0;
+    return err;
 }
 
 /**
