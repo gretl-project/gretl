@@ -262,7 +262,6 @@ static cmplx *arma_roots (int p, int q, const double *coeff)
 
     polrt(temp, temp2, q, roots + p);
 
-    /* free stuff */
     free(temp);
     free(temp2);
 
@@ -446,7 +445,7 @@ static int ar_init_by_ols (int v, int p, double *coeff,
     clear_datainfo(ainfo, CLEAR_FULL);
     free(ainfo);
 
-    clear_model(&armod, ainfo);
+    clear_model(&armod, NULL);
 
     return err;
 }
