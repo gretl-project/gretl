@@ -703,7 +703,9 @@ static void fit_resid_head (const FITRESID *fr,
     pprintf(prn, _("Model estimation range: %s - %s"), mdate1, mdate2);
     pprintf(prn, " (n = %d)\n", fr->nobs);
 
-    pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
+    if (!na(fr->sigma)) {
+	pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
+    }
     
     pprintf(prn, "\n     %s ", _("Obs"));
 

@@ -1802,7 +1802,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     int depvar, t, ft;
     FITRESID *fr;
 
-    if (pmod->ci == ARMA) {
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	depvar = pmod->list[4];
     } else {
 	depvar = pmod->list[1];
@@ -1814,6 +1814,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     }
 
     fr->sigma = pmod->sigma;
+
     fr->t1 = pmod->t1;
     fr->t2 = pmod->t2;
 
