@@ -169,23 +169,36 @@ double date (int nt, int pd, const double sd0)
 
 /**
  * ijton:
- * @i: row number.
- * @j: column number.
- * @lo: total number of elements in array.
+ * @i: row number (1-based)
+ * @j: column number (1-based)
+ * @nrows: number of rows (and columns) in symmetric matrix.
  *
- * Given references i (row) and j (column) of a 2-dimensional array,
- * finds the corresponding position in the 1-dimensional array of
- * the same elements.
+ * Given a (row, column) reference into a symmetric 2-dimensional 
+ * matrix A, finds the 0-based index into a 1-dimensional array 
+ * x composed of the non-redundant elements of A.
  *
- * Returns: position in 1-dimensional array.
+ * E.g. for the 3 x 3 case with 6 non-redundant elements, 0 to 5,
+ *
+ *    A(1,1) = x[0]  A(1,2) = x[1]  A(1,3) = x[2]
+ *    A(2,1) = x[1]  A(2,2) = x[3]  A(2,3) = x[4]
+ *    A(3,1) = x[2]  A(3,2) = x[4]  A(3,3) = x[5]
+ *
+ * Returns: 0-based index into flat array.
  */
 
-int ijton (int i, int j, int lo)
+int ijton (int i, int j, int nrows)
 {
-    int n;
+    int idx;
 
-    n = lo * (i - 1) + j - i - ((i - 2) * (i - 1)/2);
-    return n;
+    if (i > j) {
+	int tmp = i;
+
+	i = j;
+	j = tmp;
+    }
+
+    idx = nrows * (i - 1) + j - i - ((i - 2) * (i - 1)/2);
+    return idx;
 }
 
 /**

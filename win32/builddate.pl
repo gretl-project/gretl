@@ -12,7 +12,7 @@ if (open (BUILD_H, "< build.h")) {
 	@fields = split(/ +/);
 	$test = $fields[4];
 	$test =~ s/\\n\"//;
-	if ($test == $datestr) { $update = 0; }
+	if ($test eq $datestr) { $update = 0; }
     }
     close BUILD_H;
 }

@@ -30,8 +30,6 @@ int win_copy_text (PRN *prn, int format);
 void winprint (char *fullbuf, char *selbuf);
 #endif
 
-void model_to_rtf (MODEL *pmod);
-
 void texprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);

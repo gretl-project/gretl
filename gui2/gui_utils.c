@@ -1941,20 +1941,25 @@ int validate_varname (const char *varname)
 
 /* .................................................................. */
 
-void prn_to_clipboard (PRN *prn)
+int prn_to_clipboard (PRN *prn, int code)
 {
+#ifdef G_OS_WIN32
+    return win_copy_text(prn, code);
+#else
     size_t len;
 
-    if (prn->buf == NULL) return;
+    if (prn->buf == NULL) return 1;
     len = strlen(prn->buf);
 
     if (clipboard_buf) g_free(clipboard_buf);
     clipboard_buf = mymalloc(len + 1);
 
-    memcpy(clipboard_buf, prn->buf, len + 1);
+    memcpy(clipboard_buf, prn->buf, len + 1); /* encoding?? */
     gtk_selection_owner_set(mdata->w,
 			    GDK_SELECTION_PRIMARY,
 			    GDK_CURRENT_TIME);
+    return 0;
+#endif
 }
 
 /* .................................................................. */
@@ -1972,17 +1977,14 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	GRETLSUMMARY *summ = (GRETLSUMMARY *) vwin->data;
 	
 	if (bufopen(&prn)) return;
+
 	if (how == COPY_LATEX) {
 	    texprint_summary(summ, datainfo, prn);
-	    prn_to_clipboard(prn);
-	} else { /* RTF */
+	} else if (how == COPY_RTF) { 
 	    rtfprint_summary(summ, datainfo, prn);
-#ifdef G_OS_WIN32
-	    win_copy_text(prn, COPY_RTF);
-#else
-	    prn_to_clipboard(prn);
-#endif
 	}
+
+	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -1992,18 +1994,15 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	CORRMAT *corr = (CORRMAT *) vwin->data;
 
 	if (bufopen(&prn)) return;
+
 	if (how == COPY_LATEX) { 
 	    texprint_corrmat(corr, datainfo, prn);
-	    prn_to_clipboard(prn);
 	} 
-	else { /* RTF */
+	else if (how == COPY_RTF) { 
 	    rtfprint_corrmat(corr, datainfo, prn);
-#ifdef G_OS_WIN32
-	    win_copy_text(prn, COPY_RTF);
-#else
-	    prn_to_clipboard(prn);
-#endif
 	}
+
+	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2013,20 +2012,17 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	mp_results *mpvals = (mp_results *) vwin->data;
 
 	if (bufopen(&prn)) return;
+
 	if (how == COPY_LATEX) { 
 	    prn->format = GRETL_PRINT_FORMAT_TEX;
 	    print_mpols_results (mpvals, datainfo, prn);
-	    prn_to_clipboard(prn);
 	} 
-	else { /* RTF */
+	else if (how == COPY_RTF) { 
 	    prn->format = GRETL_PRINT_FORMAT_RTF;
 	    print_mpols_results (mpvals, datainfo, prn);
-#ifdef G_OS_WIN32
-	    win_copy_text(prn, COPY_RTF);
-#else
-	    prn_to_clipboard(prn);
-#endif
 	}
+
+	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2042,21 +2038,21 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    return;
 	}
 
-	if (how == COPY_RTF) {
-	    model_to_rtf(pmod);
-	    return;
-	}
-
 	if (bufopen(&prn)) return;
 
-	if (how == COPY_LATEX) {
-	    tex_print_model(pmod, datainfo, 0, prn);
+	if (how == COPY_RTF) {
+	    prn->format = GRETL_PRINT_FORMAT_RTF;
+	    printmodel(pmod, datainfo, prn);
+	}
+	else if (how == COPY_LATEX) {
+	    prn->format = GRETL_PRINT_FORMAT_TEX;
+	    printmodel (pmod, datainfo, prn);
 	}
 	else if (how == COPY_LATEX_EQUATION) {
 	    tex_print_equation(pmod, datainfo, 0, prn);
 	}
 
-	prn_to_clipboard(prn);
+	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2067,11 +2063,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	textprn.fp = NULL;
 	textprn.buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
-# ifdef G_OS_WIN32
-	win_copy_text(&textprn, COPY_TEXT);	
-# else
-	prn_to_clipboard(&textprn);
-# endif /* G_OS_WIN32 */
+	prn_to_clipboard(&textprn, COPY_TEXT);
 	g_free(textprn.buf);
     } else { /* COPY_SELECTION */
 	gtk_text_buffer_copy_clipboard (gtk_text_view_get_buffer
@@ -2093,8 +2085,9 @@ void window_print (windata_t *vwin, guint u, GtkWidget *widget)
 
     buf = textview_get_text(tedit);
 
-    if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end))
+    if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+    }
 
     winprint(buf, selbuf);
 }

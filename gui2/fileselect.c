@@ -199,6 +199,10 @@ static void save_editable_content (int action, const char *fname,
 {
     FILE *fp;
     gchar *buf;
+#ifdef ENABLE_NLS
+    gsize bytes;
+    gchar *trbuf;
+#endif
 
     buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
 
@@ -213,8 +217,16 @@ static void save_editable_content (int action, const char *fname,
 	return;
     }
 
+#ifdef ENABLE_NLS
+    trbuf = g_locale_from_utf8(buf, -1, NULL, &bytes, NULL);
+    fprintf(fp, "%s", trbuf);
+    g_free(trbuf);
+#else
     fprintf(fp, "%s", buf);
+#endif
+
     g_free(buf);
+
     infobox(_("File saved OK"));
     fclose(fp);
     

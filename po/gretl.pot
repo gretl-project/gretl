@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-09-16 22:33-0400\n"
+"POT-Creation-Date: 2002-09-17 07:34-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3369,18 +3369,18 @@ msgid "Couldn't allocate memory for %s\n"
 msgstr ""
 
 #: cli/gretlcli.c:156 gui/library.c:3674 gui/library.c:3763
-#: gui2/library.c:3525 gui2/library.c:3615
+#: gui2/library.c:3532 gui2/library.c:3622
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
 msgstr ""
 
 #: cli/gretlcli.c:165 gui/library.c:136 gui/library.c:3645 gui2/library.c:128
-#: gui2/library.c:3496
+#: gui2/library.c:3503
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr ""
 
-#: cli/gretlcli.c:169 gui/library.c:3649 gui2/library.c:3500
+#: cli/gretlcli.c:169 gui/library.c:3649 gui2/library.c:3507
 #, c-format
 msgid "Can't do this: there is no model %d\n"
 msgstr ""
@@ -3420,15 +3420,15 @@ msgstr ""
 msgid "Type \"open filename\" to open a data set\n"
 msgstr ""
 
-#: cli/gretlcli.c:417 gui/library.c:3544 gui2/library.c:3398
+#: cli/gretlcli.c:417 gui/library.c:3544 gui2/library.c:3405
 msgid "No commands in loop\n"
 msgstr ""
 
-#: cli/gretlcli.c:427 gui/library.c:3554 gui2/library.c:3408
+#: cli/gretlcli.c:427 gui/library.c:3554 gui2/library.c:3415
 msgid "Error in command loop: aborting\n"
 msgstr ""
 
-#: cli/gretlcli.c:527 gui/library.c:3700 gui2/library.c:3552
+#: cli/gretlcli.c:527 gui/library.c:3700 gui2/library.c:3559
 msgid "You must open a data file first\n"
 msgstr ""
 
@@ -3437,53 +3437,53 @@ msgstr ""
 msgid "Command '%s' ignored; not available in loop mode\n"
 msgstr ""
 
-#: cli/gretlcli.c:557 gui/library.c:3745 gui2/library.c:3597
+#: cli/gretlcli.c:557 gui/library.c:3745 gui2/library.c:3604
 msgid "Failed to add command to loop stack\n"
 msgstr ""
 
-#: cli/gretlcli.c:621 gui/library.c:3817 gui2/library.c:3669
+#: cli/gretlcli.c:621 gui/library.c:3817 gui2/library.c:3676
 #, c-format
 msgid "Failed to reconstruct model %d\n"
 msgstr ""
 
-#: cli/gretlcli.c:717 gui/library.c:3938 gui2/library.c:3790
+#: cli/gretlcli.c:717 gui/library.c:3938 gui2/library.c:3797
 msgid "Failed to generate correlogram\n"
 msgstr ""
 
-#: cli/gretlcli.c:722 gui/library.c:3943 gui2/library.c:3795
+#: cli/gretlcli.c:722 gui/library.c:3943 gui2/library.c:3802
 msgid "Can't delete last variable when in sub-sample mode\n"
 msgstr ""
 
 #: cli/gretlcli.c:727 gui/library.c:2236 gui/library.c:3948
-#: gui2/library.c:2084 gui2/library.c:3800
+#: gui2/library.c:2084 gui2/library.c:3807
 msgid "Failed to shrink the data set"
 msgstr ""
 
-#: cli/gretlcli.c:733 gui/library.c:3954 gui2/library.c:3806
+#: cli/gretlcli.c:733 gui/library.c:3954 gui2/library.c:3813
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr ""
 
-#: cli/gretlcli.c:751 gui/library.c:3976 gui2/library.c:3828
+#: cli/gretlcli.c:751 gui/library.c:3976 gui2/library.c:3835
 msgid "Couldn't open tex file for writing\n"
 msgstr ""
 
-#: cli/gretlcli.c:753 gui/library.c:3978 gui2/library.c:3830
+#: cli/gretlcli.c:753 gui/library.c:3978 gui2/library.c:3837
 #, c-format
 msgid "Model printed to %s\n"
 msgstr ""
 
 #: cli/gretlcli.c:761 cli/gretlcli.c:781 gui/library.c:3986
-#: gui2/library.c:3838
+#: gui2/library.c:3845
 msgid "Error retrieving fitted values\n"
 msgstr ""
 
-#: cli/gretlcli.c:786 gui/library.c:4010 gui2/library.c:3862
+#: cli/gretlcli.c:786 gui/library.c:4010 gui2/library.c:3869
 msgid "Retrieved fitted values as \"autofit\"\n"
 msgstr ""
 
 #: cli/gretlcli.c:798 cli/gretlcli.c:814 cli/gretlcli.c:845 gui/library.c:4022
-#: gui/library.c:4035 gui/library.c:4068 gui2/library.c:3874
-#: gui2/library.c:3887 gui2/library.c:3920
+#: gui/library.c:4035 gui/library.c:4068 gui2/library.c:3881
+#: gui2/library.c:3894 gui2/library.c:3927
 msgid "gnuplot command failed\n"
 msgstr ""
 
@@ -3493,15 +3493,15 @@ msgid ""
 "(with values 1 or 0)\n"
 msgstr ""
 
-#: cli/gretlcli.c:883 gui/library.c:4112 gui2/library.c:3964
+#: cli/gretlcli.c:883 gui/library.c:4112 gui2/library.c:3971
 msgid "import command is malformed\n"
 msgstr ""
 
-#: cli/gretlcli.c:894 gui/library.c:4126 gui2/library.c:3978
+#: cli/gretlcli.c:894 gui/library.c:4126 gui2/library.c:3985
 msgid "You should now use the \"print\" command to verify the data\n"
 msgstr ""
 
-#: cli/gretlcli.c:896 gui/library.c:4128 gui2/library.c:3980
+#: cli/gretlcli.c:896 gui/library.c:4128 gui2/library.c:3987
 msgid ""
 "If they are OK, use the  \"store\" command to save them in gretl format\n"
 msgstr ""
@@ -3518,7 +3518,7 @@ msgstr ""
 msgid "OK, staying with current data set\n"
 msgstr ""
 
-#: cli/gretlcli.c:998 gui/library.c:4229 gui2/library.c:4081
+#: cli/gretlcli.c:998 gui/library.c:4229 gui2/library.c:4088
 msgid "Loop count missing or invalid\n"
 msgstr ""
 
@@ -3526,15 +3526,15 @@ msgstr ""
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 
-#: cli/gretlcli.c:1015 gui/library.c:4243 gui2/library.c:4095
+#: cli/gretlcli.c:1015 gui/library.c:4243 gui2/library.c:4102
 msgid "Data series length count missing or invalid\n"
 msgstr ""
 
-#: cli/gretlcli.c:1020 gui/library.c:4248 gui2/library.c:4100
+#: cli/gretlcli.c:1020 gui/library.c:4248 gui2/library.c:4107
 msgid "Data series too long\n"
 msgstr ""
 
-#: cli/gretlcli.c:1027 gui/library.c:4254 gui2/library.c:4106
+#: cli/gretlcli.c:1027 gui/library.c:4254 gui2/library.c:4113
 msgid "Failed to create empty data set\n"
 msgstr ""
 
@@ -3542,7 +3542,7 @@ msgstr ""
 msgid "mpols command failed\n"
 msgstr ""
 
-#: cli/gretlcli.c:1064 gui/library.c:4297 gui2/library.c:4149
+#: cli/gretlcli.c:1064 gui/library.c:4297 gui2/library.c:4156
 msgid "Failed to generate periodogram\n"
 msgstr ""
 
@@ -3564,7 +3564,7 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr ""
 
-#: cli/gretlcli.c:1110 gui/library.c:4314 gui2/library.c:4166
+#: cli/gretlcli.c:1110 gui/library.c:4314 gui2/library.c:4173
 msgid "This command requires a list of variables\n"
 msgstr ""
 
@@ -3582,15 +3582,15 @@ msgstr ""
 msgid "%s opened OK\n"
 msgstr ""
 
-#: cli/gretlcli.c:1141 gui/library.c:4339 gui2/library.c:4191
+#: cli/gretlcli.c:1141 gui/library.c:4339 gui2/library.c:4198
 msgid "scatters command not available in batch mode\n"
 msgstr ""
 
-#: cli/gretlcli.c:1145 gui/library.c:4343 gui2/library.c:4195
+#: cli/gretlcli.c:1145 gui/library.c:4343 gui2/library.c:4202
 msgid "scatters command failed\n"
 msgstr ""
 
-#: cli/gretlcli.c:1151 gui/library.c:4349 gui2/library.c:4201
+#: cli/gretlcli.c:1151 gui/library.c:4349 gui2/library.c:4208
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
 msgstr ""
@@ -3599,24 +3599,24 @@ msgstr ""
 msgid "shell command not implemented in win32\n"
 msgstr ""
 
-#: cli/gretlcli.c:1207 gui/library.c:4412 gui2/library.c:4264
+#: cli/gretlcli.c:1207 gui/library.c:4412 gui2/library.c:4271
 msgid "Failed to generate squares\n"
 msgstr ""
 
-#: cli/gretlcli.c:1210 gui/library.c:4415 gui2/library.c:4267
+#: cli/gretlcli.c:1210 gui/library.c:4415 gui2/library.c:4274
 msgid "Squares generated OK\n"
 msgstr ""
 
-#: cli/gretlcli.c:1221 gui/library.c:4429 gui2/library.c:4281
+#: cli/gretlcli.c:1221 gui/library.c:4429 gui2/library.c:4288
 #, c-format
 msgid "store: using filename %s\n"
 msgstr ""
 
-#: cli/gretlcli.c:1223 gui/library.c:4431 gui2/library.c:4283
+#: cli/gretlcli.c:1223 gui/library.c:4431 gui2/library.c:4290
 msgid "store: no filename given\n"
 msgstr ""
 
-#: cli/gretlcli.c:1228 gui/library.c:4436 gui2/library.c:4288
+#: cli/gretlcli.c:1228 gui/library.c:4436 gui2/library.c:4295
 msgid "write of data file failed\n"
 msgstr ""
 
@@ -3624,11 +3624,11 @@ msgstr ""
 msgid "Data written OK\n"
 msgstr ""
 
-#: cli/gretlcli.c:1233 gui/library.c:4442 gui2/library.c:4294
+#: cli/gretlcli.c:1233 gui/library.c:4442 gui2/library.c:4301
 msgid "Warning: case markers not saved in binary datafile\n"
 msgstr ""
 
-#: cli/gretlcli.c:1239 gui/library.c:4449 gui2/library.c:4301
+#: cli/gretlcli.c:1239 gui/library.c:4449 gui2/library.c:4308
 msgid "Out of memory attempting to add variable\n"
 msgstr ""
 
@@ -3846,7 +3846,7 @@ msgstr ""
 #: gui/calculator.c:181 gui/gui_utils.c:519 gui/library.c:1519
 #: gui/library.c:1786 gui/library.c:2370 gui/library.c:2403
 #: gui2/calculator.c:181 gui2/gui_utils.c:492 gui2/library.c:1367
-#: gui2/library.c:1637 gui2/library.c:2206 gui2/library.c:2256
+#: gui2/library.c:1637 gui2/library.c:2206 gui2/library.c:2257
 msgid "Couldn't load plugin function"
 msgstr ""
 
@@ -3899,9 +3899,9 @@ msgstr ""
 #: gui/library.c:3003 gui/library.c:3046 gui/session.c:1313 gui/session.c:1317
 #: gui/session.c:1398 gui/session.c:1402 gui2/calculator.c:433
 #: gui2/database.c:297 gui2/fileselect.c:519 gui2/fileselect.c:635
-#: gui2/gpt_control.c:1150 gui2/library.c:2167 gui2/library.c:2580
-#: gui2/library.c:2621 gui2/library.c:2748 gui2/library.c:2781
-#: gui2/library.c:2834 gui2/library.c:2878 gui2/library.c:2910
+#: gui2/gpt_control.c:1150 gui2/library.c:2167 gui2/library.c:2583
+#: gui2/library.c:2624 gui2/library.c:2754 gui2/library.c:2787
+#: gui2/library.c:2840 gui2/library.c:2884 gui2/library.c:2916
 #: gui2/session.c:955 gui2/session.c:959 gui2/session.c:990 gui2/session.c:994
 msgid "gnuplot command failed"
 msgstr ""
@@ -4795,7 +4795,7 @@ msgstr ""
 #: gui/database.c:1687 gui/datafiles.c:668 gui/dialogs.c:830
 #: gui/gpt_control.c:819 gui/helpfiles.c:663 gui/library.c:4615
 #: gui/selector.c:766 gui/ssheet.c:143 gui/ssheet.c:155 gui2/gpt_control.c:825
-#: gui2/gui_utils.c:2317 gui2/helpfiles.c:694 gui2/library.c:4463
+#: gui2/gui_utils.c:2317 gui2/helpfiles.c:694 gui2/library.c:4470
 #: plugin/progress_bar-2.c:101 plugin/progress_bar.c:92
 msgid "Cancel"
 msgstr ""
@@ -6944,7 +6944,7 @@ msgstr ""
 
 #: gui/gui_utils.c:438 gui/gui_utils.c:449 gui/library.c:2820
 #: gui/session.c:609 gui2/gui_utils.c:411 gui2/gui_utils.c:422
-#: gui2/library.c:1645 gui2/library.c:2672 gui2/session.c:657
+#: gui2/library.c:1645 gui2/library.c:2676 gui2/session.c:657
 msgid "Out of memory!"
 msgstr ""
 
@@ -7513,7 +7513,7 @@ msgid "Failed to create empty data set"
 msgstr ""
 
 #: gui/library.c:2006 gui/library.c:2541 gui2/library.c:1869
-#: gui2/library.c:2394
+#: gui2/library.c:2397
 msgid "Error generating index variable"
 msgstr ""
 
@@ -7569,7 +7569,7 @@ msgid "error is normally distributed"
 msgstr ""
 
 #: gui/library.c:2283 gui/library.c:2597 gui/library.c:2627
-#: gui2/library.c:2116 gui2/library.c:2450 gui2/library.c:2480
+#: gui2/library.c:2116 gui2/library.c:2453 gui2/library.c:2483
 msgid "Out of memory attempting to add variable"
 msgstr ""
 
@@ -7601,166 +7601,166 @@ msgstr ""
 msgid "gretl: TRAMO analysis"
 msgstr ""
 
-#: gui/library.c:2423 gui2/library.c:2276
+#: gui/library.c:2423 gui2/library.c:2277
 msgid "gretl: range-mean statistics"
 msgstr ""
 
-#: gui/library.c:2448 gui2/library.c:2301
+#: gui/library.c:2448 gui2/library.c:2303
 msgid "Periodogram command failed"
 msgstr ""
 
-#: gui/library.c:2454 gui2/library.c:2307
+#: gui/library.c:2454 gui2/library.c:2309
 msgid "gretl: periodogram"
 msgstr ""
 
-#: gui/library.c:2469 gui2/library.c:2322
+#: gui/library.c:2469 gui2/library.c:2325
 msgid "gretl: coefficient confidence intervals"
 msgstr ""
 
-#: gui/library.c:2482 gui2/library.c:2335
+#: gui/library.c:2482 gui2/library.c:2338
 msgid "Data set is gone"
 msgstr ""
 
-#: gui/library.c:2491 gui2/library.c:2344
+#: gui/library.c:2491 gui2/library.c:2347
 msgid "gretl: coefficient covariances"
 msgstr ""
 
-#: gui/library.c:2509 gui2/library.c:2362
+#: gui/library.c:2509 gui2/library.c:2365
 msgid ""
 "Data set is not recognized as a panel.\n"
 "Please use \"Sample/Set frequency, startobs\"."
 msgstr ""
 
-#: gui/library.c:2542 gui2/library.c:2395
+#: gui/library.c:2542 gui2/library.c:2398
 msgid "Error generating time trend"
 msgstr ""
 
-#: gui/library.c:2584 gui2/library.c:2437
+#: gui/library.c:2584 gui2/library.c:2440
 msgid "Error adding variables"
 msgstr ""
 
-#: gui/library.c:2637 gui2/library.c:2490
+#: gui/library.c:2637 gui2/library.c:2493
 #, c-format
 msgid "error sum of squares from model %d"
 msgstr ""
 
-#: gui/library.c:2644 gui2/library.c:2497
+#: gui/library.c:2644 gui2/library.c:2500
 #, c-format
 msgid "R-squared from model %d"
 msgstr ""
 
-#: gui/library.c:2650 gui2/library.c:2503
+#: gui/library.c:2650 gui2/library.c:2506
 #, c-format
 msgid "T*R-squared from model %d"
 msgstr ""
 
-#: gui/library.c:2656 gui2/library.c:2509
+#: gui/library.c:2656 gui2/library.c:2512
 #, c-format
 msgid "degrees of freedom from model %d"
 msgstr ""
 
-#: gui/library.c:2663 gui2/library.c:2516
+#: gui/library.c:2663 gui2/library.c:2519
 #, c-format
 msgid "std err of residuals from model %d"
 msgstr ""
 
-#: gui/library.c:2670 gui2/library.c:2523
+#: gui/library.c:2670 gui2/library.c:2526
 #, c-format
 msgid "log likelihood from model %d"
 msgstr ""
 
-#: gui/library.c:2682 gui2/library.c:2535
+#: gui/library.c:2682 gui2/library.c:2538
 msgid "variable added"
 msgstr ""
 
-#: gui/library.c:2709 gui/library.c:2757 gui2/library.c:2562
-#: gui2/library.c:2610
+#: gui/library.c:2709 gui/library.c:2757 gui2/library.c:2565
+#: gui2/library.c:2613
 msgid "Failed to add plotting index variable"
 msgstr ""
 
-#: gui/library.c:2799 gui/library.c:2848 gui2/library.c:2652
-#: gui2/library.c:2702
+#: gui/library.c:2799 gui/library.c:2848 gui2/library.c:2655
+#: gui2/library.c:2706
 msgid "Out of memory in display buffer"
 msgstr ""
 
 #: gui/library.c:2803 gui/library.c:2852 gui/library.c:2874 gui/library.c:3063
-#: gui2/library.c:2656 gui2/library.c:2706 gui2/library.c:2728
-#: gui2/library.c:2927
+#: gui2/library.c:2659 gui2/library.c:2710 gui2/library.c:2733
+#: gui2/library.c:2933
 msgid "gretl: display data"
 msgstr ""
 
-#: gui/library.c:2871 gui2/library.c:2725
+#: gui/library.c:2871 gui2/library.c:2730
 msgid "Failed to generate fitted values"
 msgstr ""
 
-#: gui/library.c:2892 gui/library.c:3045 gui2/library.c:2746
-#: gui2/library.c:2876 gui2/library.c:2909
+#: gui/library.c:2892 gui/library.c:3045 gui2/library.c:2752
+#: gui2/library.c:2882 gui2/library.c:2915
 msgid "No data were available to graph"
 msgstr ""
 
 #: gui/library.c:2908 gui/library.c:2950 gui/library.c:2973
-#: gui2/library.c:2762 gui2/library.c:2804
+#: gui2/library.c:2768 gui2/library.c:2810
 msgid "boxplot command failed"
 msgstr ""
 
-#: gui/library.c:2995 gui2/library.c:2826
+#: gui/library.c:2995 gui2/library.c:2832
 msgid ""
 "You must supply three variables, the last\n"
 "of which is a dummy variable (values 1 or 0)"
 msgstr ""
 
-#: gui/library.c:3138 gui2/boxplots.c:1310 gui2/library.c:2990
+#: gui/library.c:3138 gui2/boxplots.c:1310 gui2/library.c:2997
 #: plugin/des_import.c:157 plugin/des_import.c:204 plugin/des_import.c:345
 #, c-format
 msgid "Couldn't open %s"
 msgstr ""
 
-#: gui/library.c:3188 gui2/library.c:3040
+#: gui/library.c:3188 gui2/library.c:3047
 #, c-format
 msgid "gretl: import %s data"
 msgstr ""
 
-#: gui/library.c:3221 gui2/library.c:3073
+#: gui/library.c:3221 gui2/library.c:3080
 msgid "gretl: save data"
 msgstr ""
 
-#: gui/library.c:3222 gui2/library.c:3074
+#: gui/library.c:3222 gui2/library.c:3081
 msgid ""
 "There is already a data file of this name.\n"
 "OK to overwrite it?"
 msgstr ""
 
-#: gui/library.c:3242 gui2/library.c:3094
+#: gui/library.c:3242 gui2/library.c:3101
 msgid "Couldn't make backup of data file"
 msgstr ""
 
-#: gui/library.c:3249 gui2/library.c:3101
+#: gui/library.c:3249 gui2/library.c:3108
 #, c-format
 msgid ""
 "Write of data file failed\n"
 "%s"
 msgstr ""
 
-#: gui/library.c:3258 gui2/library.c:3110
+#: gui/library.c:3258 gui2/library.c:3117
 #, c-format
 msgid "%s written OK"
 msgstr ""
 
-#: gui/library.c:3356 gui/library.c:3412 gui2/library.c:3208
-#: gui2/library.c:3265
+#: gui/library.c:3356 gui/library.c:3412 gui2/library.c:3215
+#: gui2/library.c:3272
 msgid "Couldn't open tex file for writing"
 msgstr ""
 
-#: gui/library.c:3427 gui2/library.c:3280
+#: gui/library.c:3427 gui2/library.c:3287
 msgid "LaTeX file saved"
 msgstr ""
 
-#: gui/library.c:3482 gui2/library.c:3337
+#: gui/library.c:3482 gui2/library.c:3344
 msgid "Couldn't open script"
 msgstr ""
 
-#: gui/library.c:3502 gui/library.c:3507 gui2/library.c:3356
-#: gui2/library.c:3361
+#: gui/library.c:3502 gui/library.c:3507 gui2/library.c:3363
+#: gui2/library.c:3368
 msgid "No commands to execute"
 msgstr ""
 
@@ -7768,94 +7768,94 @@ msgstr ""
 msgid "Out of memory loading command line"
 msgstr ""
 
-#: gui/library.c:3602 gui2/library.c:3454
+#: gui/library.c:3602 gui2/library.c:3461
 msgid ""
 "\n"
 "Error executing script: halting\n"
 msgstr ""
 
-#: gui/library.c:3662 gui2/library.c:3513
+#: gui/library.c:3662 gui2/library.c:3520
 msgid ""
 "Sorry, can't do this.\n"
 "To operate on a model estimated via the graphical interface, please use the\n"
 "menu items in the model window.\n"
 msgstr ""
 
-#: gui/library.c:3668 gui2/library.c:3519
+#: gui/library.c:3668 gui2/library.c:3526
 msgid "This command is only available for OLS models at present\n"
 msgstr ""
 
-#: gui/library.c:3739 gui2/library.c:3591
+#: gui/library.c:3739 gui2/library.c:3598
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr ""
 
-#: gui/library.c:3965 gui2/library.c:3817
+#: gui/library.c:3965 gui2/library.c:3824
 msgid "Couldn't format model\n"
 msgstr ""
 
-#: gui/library.c:4057 gui2/library.c:3909
+#: gui/library.c:4057 gui2/library.c:3916
 msgid "script mode: gnuplot command ignored\n"
 msgstr ""
 
-#: gui/library.c:4137 gui2/library.c:3989
+#: gui/library.c:4137 gui2/library.c:3996
 msgid "'open' command is malformed"
 msgstr ""
 
-#: gui/library.c:4220 gui2/library.c:4072
+#: gui/library.c:4220 gui2/library.c:4079
 msgid "Sorry, Monte Carlo loops not available in this mode\n"
 msgstr ""
 
-#: gui/library.c:4308 gui2/library.c:4160
+#: gui/library.c:4308 gui2/library.c:4167
 msgid "Script done\n"
 msgstr ""
 
-#: gui/library.c:4309 gui2/library.c:4161
+#: gui/library.c:4309 gui2/library.c:4168
 msgid "Please use the Close button to exit\n"
 msgstr ""
 
-#: gui/library.c:4326 gui2/library.c:4178
+#: gui/library.c:4326 gui2/library.c:4185
 msgid "Run command failed\n"
 msgstr ""
 
-#: gui/library.c:4330 gui2/library.c:4182
+#: gui/library.c:4330 gui2/library.c:4189
 msgid "Infinite loop detected in script\n"
 msgstr ""
 
-#: gui/library.c:4367 gui2/library.c:4219
+#: gui/library.c:4367 gui2/library.c:4226
 msgid "shell command not implemented in script mode\n"
 msgstr ""
 
-#: gui/library.c:4427 gui2/library.c:4279
+#: gui/library.c:4427 gui2/library.c:4286
 #, c-format
 msgid "store: using filename %s.gz\n"
 msgstr ""
 
-#: gui/library.c:4440 gui2/library.c:4292
+#: gui/library.c:4440 gui2/library.c:4299
 msgid "Data written OK.\n"
 msgstr ""
 
-#: gui/library.c:4494 gui2/library.c:4346
+#: gui/library.c:4494 gui2/library.c:4353
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr ""
 
-#: gui/library.c:4566 gui2/library.c:4414
+#: gui/library.c:4566 gui2/library.c:4421
 msgid "gretl: replace"
 msgstr ""
 
-#: gui/library.c:4571 gui2/library.c:4419
+#: gui/library.c:4571 gui2/library.c:4426
 msgid "Find:"
 msgstr ""
 
-#: gui/library.c:4583 gui2/library.c:4431
+#: gui/library.c:4583 gui2/library.c:4438
 msgid "Replace with:"
 msgstr ""
 
-#: gui/library.c:4605 gui2/library.c:4453
+#: gui/library.c:4605 gui2/library.c:4460
 msgid "Replace all"
 msgstr ""
 
-#: gui/library.c:4690 gui2/library.c:4542
+#: gui/library.c:4690 gui2/library.c:4549
 msgid "String to replace was not found"
 msgstr ""
 
@@ -8634,11 +8634,11 @@ msgstr ""
 msgid "Failed to generate graph"
 msgstr ""
 
-#: gui2/library.c:3198
+#: gui2/library.c:3205
 msgid "Sorry, can't format this model"
 msgstr ""
 
-#: gui2/library.c:3240
+#: gui2/library.c:3247
 msgid "Failed to process TeX file"
 msgstr ""
 

@@ -68,6 +68,7 @@ plugin/excel_import.c
 plugin/gnumeric_import.c
 plugin/import_common-2.c
 plugin/import_common.c
+plugin/lad.c
 plugin/longname.c
 plugin/mp_ols.c
 plugin/panel_data.c

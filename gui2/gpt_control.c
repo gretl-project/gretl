@@ -94,11 +94,22 @@ static void flip_manual_range (GtkWidget *widget, gpointer data)
 static void widget_to_str (GtkWidget *w, char *str, size_t n)
 {
     const gchar *tmp;
-
-    str[0] = '\0';
+    
+    *str = '\0';
     tmp = gtk_entry_get_text(GTK_ENTRY(w));
-    if (tmp != NULL && strlen(tmp))
-	safecpy(str, tmp, n-1);
+
+    if (tmp != NULL && strlen(tmp)) {
+#ifdef ENABLE_NLS
+	gchar *trstr;
+	gsize bytes;
+
+	trstr = g_locale_from_utf8(tmp, -1, NULL, &bytes, NULL);
+	strncat(str, trstr, n-1);
+	g_free(trstr);
+#else
+	strncat(str, tmp, n-1);
+#endif
+    }
 }
 
 /* ........................................................... */
@@ -163,10 +174,11 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 	return;
     }
 
-    if (save)  /* do something other than a screen graph? */
+    if (save) { /* do something other than a screen graph? */
 	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, plot);
-    else 
+    } else { 
 	go_gnuplot(plot, NULL, &paths);
+    }
 
     session_changed(1);
 }
@@ -225,6 +237,9 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].tab == 0) {
+	    gsize bytes;
+	    gchar *titlestr;
+
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
 	    tempwid = gtk_label_new(_(gpt_titles[i].description));
@@ -235,7 +250,10 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
 	    tempwid = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 1, 2, tbl_len-1, tbl_len);
-	    gtk_entry_set_text(GTK_ENTRY(tempwid), plot->titles[i]);
+	    titlestr = g_locale_to_utf8(plot->titles[i], -1, NULL,
+					&bytes, NULL);
+	    gtk_entry_set_text(GTK_ENTRY(tempwid), titlestr);
+	    g_free(titlestr);
 	    g_signal_connect(G_OBJECT(tempwid), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     plot);
@@ -361,6 +379,9 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 
     for (i=0; i<numlines; i++) {
 	/* identifier and key or legend text */
+	gsize bytes;
+	gchar *titlestr;
+
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	sprintf(label_text, _("line %d: "), i + 1);
@@ -378,11 +399,16 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 	linetitle[i] = gtk_entry_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  linetitle[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_entry_set_text (GTK_ENTRY(linetitle[i]), plot->lines[i].title);
+
+	titlestr = g_locale_to_utf8(plot->lines[i].title, -1, NULL,
+				    &bytes, NULL);
+	gtk_entry_set_text (GTK_ENTRY(linetitle[i]), titlestr);
+	g_free(titlestr);
 	g_signal_connect (G_OBJECT(linetitle[i]), "activate", 
 			  G_CALLBACK(apply_gpt_changes), 
 			  plot);
 	gtk_widget_show(linetitle[i]);
+
 	/* line type or style */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);

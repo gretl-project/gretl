@@ -1585,9 +1585,15 @@ gint populate_dbfilelist (windata_t *win)
 	dbdir = paths.binbase;
     }
 
-#ifdef G_OS_WIN32 /* opendir doesn't work on e.g. c:\foo\ */
-    if (dbdir[strlen(dbdir) - 1] == '\\') 
+#ifdef G_OS_WIN32 
+    /* opendir doesn't work on e.g. c:\foo\ */
+    if (strlen(dbdir) > 3 && dbdir[strlen(dbdir) - 1] == '\\') {
 	dbdir[strlen(dbdir) - 1] = '\0';
+    }
+    /* but neither does it work on e.g. f: */
+    if (dbdir[strlen(dbdir) - 1] == ':') {
+	strcat(dbdir, "\\");
+    }
 #endif
 
     if ((dir = opendir(dbdir)) == NULL) {

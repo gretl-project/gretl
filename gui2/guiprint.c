@@ -26,9 +26,6 @@
 # include <windows.h>
 #endif
 
-static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 PRN *prn);
-
 #ifdef G_OS_WIN32
 
 static char *dosify_buffer (const char *buf)
@@ -36,6 +33,8 @@ static char *dosify_buffer (const char *buf)
     int nlines = 0;
     char *targ, *q;
     const char *p;
+
+    if (buf == NULL) return NULL;
 
     p = buf;
     while (*p) {
@@ -67,48 +66,54 @@ int win_copy_text (PRN *prn, int format)
     HGLOBAL winclip;
     LPTSTR ptr;
     char *winbuf;
-    unsigned rtf_format;
+    unsigned clip_format;
     size_t len;
     gchar *tr = NULL;
-
-    if (format == COPY_RTF) { 
-	rtf_format = RegisterClipboardFormat("Rich Text Format");
-    } else {
-	rtf_format = CF_TEXT;
-    }
 
     if (prn->buf == NULL) return 0;
 
     if (!OpenClipboard(NULL)) return 1;
-
     EmptyClipboard();
 
-    if (nls_on) {
-	gint wrote;
+    if (nls_on && format == COPY_TEXT) {
+	gsize bytes;
 
-	tr = g_locale_from_utf8 (prn->buf, -1, NULL, &wrote, NULL);
+	tr = g_locale_from_utf8 (prn->buf, -1, NULL, &bytes, NULL);
+	winbuf = dosify_buffer(tr);
+    } else {
+	winbuf = dosify_buffer(prn->buf);
     }
 
-    winbuf = dosify_buffer((nls_on)? tr : prn->buf);
+    if (winbuf == NULL) {
+	CloseClipboard();
+	return 1;
+    }
+
     len = strlen(winbuf);
         
-    winclip = GlobalAlloc(GMEM_MOVEABLE, len + 1);        
+    winclip = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));        
 
     ptr = GlobalLock(winclip);
     memcpy(ptr, winbuf, len + 1);
     GlobalUnlock(winclip); 
 
-    SetClipboardData(rtf_format, winclip);
+    if (format == COPY_RTF) { 
+	clip_format = RegisterClipboardFormat("Rich Text Format");
+    } else {
+	clip_format = CF_TEXT;
+    }
+
+    SetClipboardData(clip_format, winclip);
 
     CloseClipboard();
 
-    if (nls_on) g_free(tr);
+    if (tr != NULL) free(tr);
     free(winbuf);
 
     return 0;
 }
 
-#endif
+#endif /* G_OS_WIN32 */
 
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
 
@@ -410,36 +415,10 @@ void gnome_print_graph (const char *fname)
 
 #endif /* G_OS_WIN32, USE_GNOME */
 
-void model_to_rtf (MODEL *pmod)
-{
-    PRN *prn;
-
-    if (bufopen(&prn)) return;
-    
-    r_printmodel(pmod, datainfo, prn);
-
-#ifdef G_OS_WIN32
-    win_copy_text(prn, COPY_RTF);
-#else
-    prn_to_clipboard(prn);
-#endif
-    gretl_print_destroy(prn);
-}
-
 /* row format specifications for RTF "tables" */
 
 #define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx2700\\cellx4000\\cellx6700\\cellx8000\n\\intbl"
-
-/* ......................................................... */ 
-
-static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 PRN *prn)
-{
-    prn->format = GRETL_PRINT_FORMAT_RTF;
-    
-    return printmodel (pmod, pdinfo, prn);
-}
 
 /* ............................................................. */
 
@@ -510,8 +489,9 @@ void rtfprint_summary (GRETLSUMMARY *summ,
     for (v=1; v<=lo; v++) {
 	lv = summ->list[v];
 	xbar = summ->coeff[v];
-	if (lo > 1)
+	if (lo > 1) {
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
+	}
 	printfrtf(xbar, prn, 0);
 	printfrtf(summ->xmedian[v], prn, 0);
 	printfrtf(summ->xpx[v], prn, 0);
@@ -530,12 +510,16 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 
     for (v=1; v<=lo; v++) {
 	lv = summ->list[v];
-	if (lo > 1)
+	if (lo > 1) {
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
+	}
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
-	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
-	else xcv = -999;
+	if (xbar != 0.0) {
+	    xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
+	} else {
+	    xcv = -999;
+	}
 	printfrtf(std, prn, 0);
 	printfrtf(xcv, prn, 0);
 	printfrtf(summ->xskew[v], prn, 0);

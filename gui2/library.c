@@ -690,11 +690,13 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case SUMMARY:
 	strcpy(line, "summary");
 	strcat(title, _("summary statistics"));
+	hsize = 82;
 	break;
     case SUMMARY_SELECTED:
 	strcpy(line, "summary");
 	strcat(line, liststr);
 	strcat(title, _("summary statistics"));
+	hsize = 82;
 	break;
     case VAR_SUMMARY:
 	sprintf(line, "summary %s", datainfo->varname[mdata->active_var]);
