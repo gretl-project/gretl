@@ -42,7 +42,7 @@ extern int excel_book_get_info (const char *fname, wbook *book);
 static void free_sheet (void);
 static int getshort (char *rec, int offset);
 static int process_item (int rectype, int reclen, char *rec, wbook *book); 
-static int allocate (int row, int col, wbook *book);
+static int allocate_row_col (int row, int col, wbook *book);
 static char *copy_unicode_string (char **src);
 static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
@@ -50,8 +50,8 @@ static char *mark_string (char *instr);
 
 char *errbuf;
 
-/* #define EDEBUG 1 */
-/* #define FULL_EDEBUG 1 */
+#define EDEBUG 1
+#define FULL_EDEBUG 1
 
 #define EXCEL_IMPORTER
 
@@ -183,7 +183,7 @@ struct rowdescr {
     char **cells;
 };	
 
-char **sst;
+char **sst = NULL;
 int sstsize = 0, sstnext = 0;
 int codepage = 1251; /* default */
 struct rowdescr *rowptr = NULL;
@@ -269,6 +269,11 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	char *ptr = rec + 8;
 	int i;
 
+	if (sst != NULL) {
+	    fprintf(stderr, "Got a second SST: problem\n");
+	    return 1;
+	}
+
 	sstsize = getshort(rec, 4);
 	sst = malloc(sstsize * sizeof(char *));
 	if (sst == NULL) return 1;
@@ -310,7 +315,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col, book)) return 1;
+	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
 	prow->cells[col] = mark_string(convert8to7(rec+8, len));
 	break;
@@ -325,7 +330,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	fprintf(stderr, "Got CONSTANT_STRING, row=%d, col=%d\n", row, col);
 #endif
 	saved_reference = NULL;
-	if (allocate(row, col, book)) return 1;
+	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
 	if (string_no >= sstsize) {
 	    sprintf(errbuf, _("String index too large"));
@@ -341,7 +346,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	    *(outptr++) = '"';
 	    strcpy(outptr, sst[string_no]);
 	} else {
-	    prow->cells[col] = malloc(1);
+	    prow->cells[col] = malloc(2);
 	    strcpy(prow->cells[col], "");
 	}	
 	break;
@@ -356,7 +361,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 #ifdef EDEBUG
 	fprintf(stderr, "Got NUMBER, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col, book)) return 1;
+	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
 	prow->cells[col] = g_strdup(format_double(rec, 6));
 	break;
@@ -373,7 +378,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 #ifdef EDEBUG
 	fprintf(stderr, "Got RK, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col, book)) return 1;
+	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
 	v = biff_get_rk(rec + 6);
 	sprintf(tmp, "%.10g", v);
@@ -398,7 +403,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	    char tmp[32];
 
 	    v = biff_get_rk(rec + 6 + 6*i);
-	    if (allocate(row, col, book)) return 1;
+	    if (allocate_row_col(row, col, book)) return 1;
 	    prow = rowptr + row;
 	    sprintf(tmp, "%.10g", v);
 	    prow->cells[col] = g_strdup(tmp);
@@ -416,7 +421,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 #ifdef EDEBUG
 	fprintf(stderr, "Got FORMULA, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate(row, col, book)) return 1;
+	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
 	if (((unsigned char) rec[12] == 0xFF) && 
 	    (unsigned char) rec[13] == 0xFF) {
@@ -580,9 +585,18 @@ static char *convert16to7 (char *src, int count)
     return dest;    
 }
 
-static int allocate (int row, int col, wbook *book) 
+#define NEW_ALLOC 1
+
+static void rowptr_init (struct rowdescr row)
 {
-    int newrow, newcol;
+    row.last = 0;
+    row.end = 0;
+    row.cells = NULL;
+}
+
+static int allocate_row_col (int row, int col, wbook *book) 
+{
+    int newlastrow, newcol, i;
     static int started;
 
     if (!started && row > book->row_offset) {
@@ -596,21 +610,49 @@ static int allocate (int row, int col, wbook *book)
 	    row, col, lastrow);
 #endif
     if (row >= lastrow) {
-	newrow = (row/16 + 1) * 16;
-	rowptr = realloc(rowptr, newrow * sizeof(struct rowdescr));
+	newlastrow = (row/16 + 1) * 16;
+	rowptr = realloc(rowptr, newlastrow * sizeof *rowptr);
 	if (rowptr == NULL) return 1;
-	memset(rowptr + lastrow, 0, (newrow-lastrow) * sizeof(struct rowdescr));
-	lastrow = newrow;
+#ifdef NEW_ALLOC
+	for (i=lastrow; i<newlastrow; i++) {
+# ifdef FULL_EDEBUG
+	    fprintf(stderr, "allocate: initing rowptr[%d]\n", i);
+# endif
+	    rowptr_init(rowptr + i);
+	    fprintf(stderr, "rowptr[%d].end=%d\n", i, rowptr[i].end);
+	}
+#else
+	memset(rowptr + lastrow, 0, (newlastrow - lastrow) * sizeof *rowptr);
+#endif
+	lastrow = newlastrow;
     }
+
+#ifdef FULL_EDEBUG
+    fprintf(stderr, "allocate: col=%d and rowptr[%d].end = %d\n",
+	    col, row, rowptr[row].end);
+#endif
+
     if (col >= rowptr[row].end) {
 	newcol = (col/16 + 1) * 16;
+#ifdef FULL_EDEBUG
+	fprintf(stderr, "allocate: allocating %d cells on row %d\n", 
+		newcol-rowptr[row].end, row);
+#endif
 	rowptr[row].cells = realloc(rowptr[row].cells, newcol * sizeof(char *));
 	if (rowptr[row].cells == NULL) return 1;
-	memset(rowptr[row].cells + rowptr[row].end, 0, (newcol-rowptr[row].end)
-	       *sizeof(char *));
+#ifdef NEW_ALLOC
+	for (i=rowptr[row].end; i<newcol; i++) {
+	    rowptr[row].cells[i] = NULL;
+	}
+#else
+	memset(rowptr[row].cells + rowptr[row].end, 0, (newcol - rowptr[row].end)
+	       * sizeof(char *));
+#endif
 	rowptr[row].end = newcol;
-    }  
+    } 
+ 
     if (col > rowptr[row].last) rowptr[row].last = col;
+
     return 0;
 }
 
@@ -630,8 +672,9 @@ static void free_sheet (void)
 
     /* free shared string table */
     if (sst != NULL) {
-	for (i=0; i<sstsize; i++) 
+	for (i=0; i<sstsize; i++) {
 	    if (sst[i] != NULL) free(sst[i]);
+	}
 	free(sst);
     }
 
@@ -640,8 +683,9 @@ static void free_sheet (void)
 	for (i=0; i<=lastrow; i++) {
 	    if (rowptr[i].cells == NULL) continue;
 	    for (j=0; j<rowptr[i].end; j++) {
-		if (rowptr[i].cells[j] != NULL) 
-		    free(rowptr[i].cells[j]);
+		if (rowptr[i].cells[j] != NULL) {
+		    free(rowptr[i].cells[j]); /* crash here */
+		}
 	    }
 	    free(rowptr[i].cells);
 	}
