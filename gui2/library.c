@@ -1474,7 +1474,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
 
     sprintf(title, _("gretl: model %d"), model_count);
-    view_model(prn, pmod, 78, 400, title);
+    view_model(prn, pmod, 78, 420, title);
 }
 
 /* ........................................................... */
@@ -2241,7 +2241,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
-    view_model(prn, pmod, 78, 400, title); 
+    view_model(prn, pmod, 78, 420, title); 
 }
 
 /* ........................................................... */
@@ -2425,7 +2425,7 @@ void do_model (GtkWidget *widget, gpointer p)
     /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
-    view_model(prn, pmod, 78, 400, title); 
+    view_model(prn, pmod, 78, 420, title); 
 }
 
 /* ........................................................... */
@@ -2493,7 +2493,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
     /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
-    view_model(prn, pmod, 78, 400, title); 
+    view_model(prn, pmod, 78, 420, title); 
 }
 
 /* ........................................................... */

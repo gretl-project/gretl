@@ -133,7 +133,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 		      G_CALLBACK (destroy_dialog_data), 
 		      d);
 
-    if (cmdcode == NLS) {
+    if (cmdcode == NLS || cmdcode == RESTRICT) {
 	int hsize = 62;
 	gchar *lbl;
 
