@@ -32,7 +32,6 @@
 
 #define QUOTE                  '\''
 #define SCALAR_DIGITS           12
-#define PMAX_NOT_AVAILABLE     666
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
 

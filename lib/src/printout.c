@@ -484,7 +484,7 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 				  int c, PRN *prn)
 {
     pprintf(prn, " %3d) %8s ", cf->list[c], 
-	   pdinfo->varname[cf->list[c]]);
+	    pdinfo->varname[cf->list[c]]);
 
     _bufspace(3, prn);
 
@@ -609,6 +609,23 @@ int page_break (int n, int *lineno, int quit_option)
     return 0;
 }
 
+static void get_arma_string (char *s, const DATAINFO *pdinfo,
+			     const MODEL *pmod, int i)
+{
+    int p = pmod->list[1];
+
+    if (i == 1 && pmod->ifc) {
+	strcpy(s, pdinfo->varname[0]);
+	return;
+    }
+
+    if (i <= p + 1) {
+	sprintf(s, "%s(-%d)", pdinfo->varname[pmod->list[4]], i - 1);
+    } else {
+	sprintf(s, "e(-%d)", i - p - 1);
+    }
+}
+
 /* ........................................................ */
 
 void text_print_matrix (const double *rr, const int *list, 
@@ -630,6 +647,7 @@ void text_print_matrix (const double *rr, const int *list,
     register int i, j;
     int lo, ljnf, nf, li2, p, k, m, index, ij2, lineno = 0;
     int nls = (pmod != NULL && pmod->ci == NLS);
+    int arma = (pmod != NULL && pmod->ci == ARMA);
     char s[16];
     enum { FIELDS = 5 };
     
@@ -650,6 +668,9 @@ void text_print_matrix (const double *rr, const int *list,
 	    if (nls) {
 		ljnf = j + nf;
 		strcpy(s, pmod->params[ljnf]);
+	    } else if (arma) {
+		ljnf = j + nf;
+		get_arma_string(s, pdinfo, pmod, ljnf);
 	    } else {
 		ljnf = list[j + nf];
 		strcpy(s, pdinfo->varname[ljnf]);
@@ -681,7 +702,7 @@ void text_print_matrix (const double *rr, const int *list,
 		index = ijton(ij2, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
-	    pprintf(prn, "   (%d\n", (nls)? ij2 : list[ij2]);
+	    pprintf(prn, "   (%d\n", (nls || arma)? ij2 : list[ij2]);
 	}
 	pputc(prn, '\n');
     }
@@ -1339,7 +1360,7 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	    xx = fr->actual[t] - fr->fitted[t];
 	    ast = (fabs(xx) > 2.5 * fr->sigma);
 	    if (ast) anyast = 1;
-	    if (fr->pmax != 999) {
+	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
 			fr->pmax, fr->actual[t],
 			fr->pmax, fr->fitted[t], fr->pmax, xx,

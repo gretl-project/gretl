@@ -1078,21 +1078,20 @@ int makevcv (MODEL *pmod)
 
 VCV *get_vcv (MODEL *pmod)
 {
-    int i, m = pmod->list[0];
-    int nv;
+    int i, nv = pmod->ncoeff;
     VCV *vcv;
 
     vcv = malloc(sizeof *vcv);
     if (vcv == NULL) return NULL;
 
-    vcv->list = malloc(m * sizeof *vcv->list);
+    vcv->list = malloc((nv + 1) * sizeof *vcv->list);
     if (vcv->list == NULL) {
 	free(vcv);
 	return NULL;
     }
 
-    vcv->list[0] = m - 1;
-    for (i=1; i<m; i++) {
+    vcv->list[0] = nv;
+    for (i=1; i<=nv; i++) {
 	vcv->list[i] = pmod->list[i+1];
     }
 
@@ -1103,7 +1102,6 @@ VCV *get_vcv (MODEL *pmod)
     }
 
     /* calculate number of elements in vcv */
-    nv = pmod->ncoeff;
     nv = (nv * nv + nv) / 2;
 
     /* copy vcv */

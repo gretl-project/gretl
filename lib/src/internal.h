@@ -22,6 +22,8 @@
 #ifndef GRETL_INTERNAL_H
 #define GRETL_INTERNAL_H
 
+#define PMAX_NOT_AVAILABLE     666
+
 int laggenr (int parent, int lag, int opt, double ***pZ, 
 	     DATAINFO *pdinfo);
 

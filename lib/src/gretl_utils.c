@@ -2038,13 +2038,17 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     char fcastline[32];
     FITRESID *fr;
 
-    depvar = pmod->list[1];
+    if (pmod->ci == ARMA) {
+	depvar = pmod->list[4];
+    } else {
+	depvar = pmod->list[1];
+    }
 
     if (pmod->data != NULL) {
 	t2 += get_misscount(pmod);
     }
 
-    if (pmod->ci != NLS) {
+    if (pmod->ci != NLS && pmod->ci != ARMA) {
 	sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
 		pdinfo->endobs);
 	nfit = fcast(fcastline, pmod, pdinfo, pZ); 
@@ -2055,10 +2059,14 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     if (fr == NULL) return NULL;
 
     fr->sigma = pmod->sigma;
+
     for (t=0; t<n; t++) {
 	fr->actual[t] = (*pZ)[depvar][t];
-	if (pmod->ci == NLS) fr->fitted[t] = pmod->yhat[t];
-	else fr->fitted[t] = (*pZ)[nfit][t];
+	if (pmod->ci == NLS || pmod->ci == ARMA) {
+	    fr->fitted[t] = pmod->yhat[t];
+	} else {
+	    fr->fitted[t] = (*pZ)[nfit][t];
+	}
     }
 
     if (isdummy(fr->actual, 0, n) > 0) {
@@ -2066,7 +2074,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     } else {
 	fr->pmax = get_precision(fr->actual, n);
     }
-
+    
     strcpy(fr->depvar, pdinfo->varname[depvar]);
     
     fr->t1 = t1;
@@ -2714,6 +2722,24 @@ void free_fit_resid (FITRESID *fr)
     free(fr);
 }
 
+static int copy_main_list (int **targ, const int *src)
+{
+    int i, n = 0;
+
+    if (src == NULL) return 1;
+
+    for (i=1; i<=src[0] && src[i]!=LISTSEP; i++) n++;
+
+    if (*targ != NULL) free(*targ);
+    *targ = malloc((n + 2) * sizeof *targ);
+    if (*targ == NULL) return 1;
+    
+    (*targ)[0] = n;
+    for (i=1; i<=n; i++) (*targ)[i] = src[i];
+
+    return 0;
+}
+
 /* ........................................................... */
 
 /**
@@ -2728,20 +2754,20 @@ void free_fit_resid (FITRESID *fr)
 
 CONFINT *get_model_confints (const MODEL *pmod)
 {
-    int i, ncoeff = pmod->list[0];
+    int i;
     double t = tcrit95(pmod->dfd);
     CONFINT *cf;
 
     cf = malloc(sizeof *cf);
     if (cf == NULL) return NULL;
 
-    cf->coeff = malloc(ncoeff * sizeof *cf->coeff);
+    cf->coeff = malloc(pmod->ncoeff * sizeof *cf->coeff);
     if (cf->coeff == NULL) {
 	free(cf);
 	return NULL;
     }
 
-    cf->maxerr = malloc(ncoeff * sizeof *cf->maxerr);
+    cf->maxerr = malloc(pmod->ncoeff * sizeof *cf->maxerr);
     if (cf->maxerr == NULL) {
 	free(cf);
 	free(cf->coeff);
@@ -2749,14 +2775,14 @@ CONFINT *get_model_confints (const MODEL *pmod)
     }
 
     cf->list = NULL;
-    if (copylist(&cf->list, pmod->list)) {
+    if (copy_main_list(&cf->list, pmod->list)) {
 	free(cf);
 	free(cf->coeff);
 	free(cf->maxerr);
 	return NULL;
     }
 
-    for (i=0; i<ncoeff; i++) { /* FIXME? */
+    for (i=0; i<pmod->ncoeff; i++) { 
 	cf->coeff[i] = pmod->coeff[i];
 	cf->maxerr[i] = (pmod->sderr[i] > 0)? t * pmod->sderr[i] : 0;
     }
