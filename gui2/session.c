@@ -2714,6 +2714,16 @@ int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo,
     return 0;
 }
 
+static void maybe_delete_graph_file (const char *fname)
+{
+    /* delete the file only if it has a generic, non-saved name */
+    const char *p = strrchr(fname, SLASH);
+
+    if (p != NULL && !strncmp(p, "session.", 8)) {
+	remove(fname);
+    }
+}
+
 void print_saved_object_specs (const char *session_base, FILE *fp)
 {
     int i;
@@ -2721,33 +2731,30 @@ void print_saved_object_specs (const char *session_base, FILE *fp)
 
     fprintf(fp, "(* saved objects:\n");
 
-    /* save session models */
     for (i=0; i<session.nmodels; i++) {
-	fprintf(fp, "model %d \"%s\"\n", 
-		(session.models[i])->ID, 
-		(session.models[i])->name);
+	fprintf(fp, "model %d \"%s\"\n", session.models[i]->ID, 
+		session.models[i]->name);
     }
 
-    /* save session graphs */
     for (i=0; i<session.ngraphs; i++) {
 	/* formulate save name for graph */
 	sprintf(tmp, "%sGraph_%d", session_base, i + 1);
-	/* does the constructed filename differ from the
+	/* does the constructed filename (tmp) differ from the
 	   current one? */
-	if (strcmp((session.graphs[i])->fname, tmp)) {
-	    if (copyfile((session.graphs[i])->fname, tmp)) {
+	if (strcmp(session.graphs[i]->fname, tmp)) {
+	    if (copyfile(session.graphs[i]->fname, tmp)) {
+		/* copy failed */
 		continue;
-	    } else {
-		remove((session.graphs[i])->fname);
-		strcpy((session.graphs[i])->fname, tmp);
 	    }
+	    maybe_delete_graph_file(session.graphs[i]->fname);
+	    strcpy(session.graphs[i]->fname, tmp);
 	}
 	fprintf(fp, "%s %d \"%s\" %s\n", 
-		((session.graphs[i])->sort == GRETL_BOXPLOT)?
+		(session.graphs[i]->sort == GRETL_BOXPLOT)?
 		"plot" : "graph",
-		(session.graphs[i])->ID, 
-		(session.graphs[i])->name, 
-		(session.graphs[i])->fname);
+		session.graphs[i]->ID, 
+		session.graphs[i]->name, 
+		session.graphs[i]->fname);
     }
 
     fprintf(fp, "*)\n");
