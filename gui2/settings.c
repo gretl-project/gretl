@@ -309,7 +309,9 @@ static int check_for_prog (const char *prog)
 
 static void set_tramo_x12a_dirs (void)
 {
+#ifndef G_OS_WIN32
     char cmd[MAXLEN];
+#endif
 
 #ifdef HAVE_TRAMO 
     set_tramo_ok(check_for_prog(tramo));
@@ -320,33 +322,12 @@ static void set_tramo_x12a_dirs (void)
 #ifdef HAVE_X12A
     set_x12a_ok(check_for_prog(x12a));
     if (*x12adir == 0) {
-	build_path(paths.userdir, "x12a", x12adir, NULL);
+	build_path(paths.userdir, "x12arima", x12adir, NULL);
     }
 #endif
 
-    /* make directory structure */
-#ifdef G_OS_WIN32
-# ifdef HAVE_X12A
-    CreateDirectory(x12adir, NULL);
-# endif
-# ifdef HAVE_TRAMO
-    CreateDirectory(tramodir, NULL);
-    sprintf(cmd, "%s\\output", tramodir);
-    CreateDirectory(cmd, NULL);
-    sprintf(cmd, "%s\\graph", tramodir);
-    CreateDirectory(cmd, NULL);
-    sprintf(cmd, "%s\\graph\\acf", tramodir);
-    CreateDirectory(cmd, NULL);
-    sprintf(cmd, "%s\\graph\\filters", tramodir);
-    CreateDirectory(cmd, NULL);
-    sprintf(cmd, "%s\\graph\\forecast", tramodir);
-    CreateDirectory(cmd, NULL);
-    sprintf(cmd, "%s\\graph\\series", tramodir);
-    CreateDirectory(cmd, NULL);
-    sprintf(cmd, "%s\\graph\\spectra", tramodir);
-    CreateDirectory(cmd, NULL);
-# endif /* HAVE_TRAMO */
-#else /* not win32 */
+    /* make directory structure (?) */
+#ifndef G_OS_WIN32
 # ifdef HAVE_X12A
     sprintf(cmd, "mkdir -p %s", x12adir);
     system(cmd);
@@ -365,7 +346,7 @@ static void set_tramo_x12a_dirs (void)
     sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
     system(cmd);
 # endif /* HAVE_TRAMO */
-#endif /* win32 vs unix */
+#endif /* not win32 */
 }
 #endif /* tramo or x12a */
 

@@ -120,13 +120,14 @@ static int win_fork_prog (char *cmdline, const char *dir)
         return 1;
     }
 
-    WaitForSingleObject(pi.hProcess, INFINITE);    
+    /* revolting hack die to Windows brokenness: 2 second timeout */
+    WaitForSingleObject(pi.hProcess, 2000); 
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
     return 0;
 }
-#endif
+#endif /* win32-specific functions */
 
 #if GTK_MAJOR_VERSION == 1
 static void tx_dialog_ok (GtkWidget *w, tx_request *request)
@@ -141,7 +142,7 @@ static void tx_dialog_cancel (GtkWidget *w, tx_request *request)
     gtk_widget_hide(request->dialog);
     gtk_main_quit();
 }
-#endif
+#endif /* variant gtk functions */
 
 static int tx_dialog (tx_request *request, int opt)
 {
@@ -165,7 +166,7 @@ static int tx_dialog (tx_request *request, int opt)
     request->dialog = gtk_dialog_new();
     gtk_window_set_title (GTK_WINDOW(request->dialog), 
 			  (opt == TRAMO)? "TRAMO/SEATS" : "X-12-ARIMA");
-#endif
+#endif /* variant gtk functions */
 
     tmp = gtk_label_new (_("Save data"));
     gtk_widget_show(tmp);
@@ -240,7 +241,7 @@ static int tx_dialog (tx_request *request, int opt)
 #endif
 }
 
-static void get_seats_command (char *seats, const char *tramo)
+static char *get_seats (char *seats, const char *tramo)
 {
     char *p;
 
@@ -248,6 +249,8 @@ static void get_seats_command (char *seats, const char *tramo)
     p = strrchr(seats, SLASH);
     if (p != NULL) strcpy(p + 1, "seats");
     else strcpy(seats, "seats");
+
+    return seats;
 }
 
 static void truncate (char *str, int n)
@@ -268,8 +271,6 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
-
-    /* FIXME tics? */
 
     if (opt == TRAMO) {
 	fputs("# TRAMO/SEATS tri-graph (no auto-parse)\n", fp);
@@ -347,7 +348,7 @@ static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
     strcpy(targinfo->label[targv], srcinfo->label[srcv]);
 }
 
-static int add_series_from_file (const char *fname, int code,
+static int add_series_from_file (const char *path, int code,
 				 double **Z, DATAINFO *pdinfo,
 				 int v, int opt, char *errmsg)
 {
@@ -358,10 +359,18 @@ static int add_series_from_file (const char *fname, int code,
     int t;
 
     if (opt == TRAMO) {
-	sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
+#ifdef G_OS_WIN32
+	char seatsdir[MAXLEN];
+
+	get_seats(seatsdir, path);
+	sprintf(sfname, "%s\\graph\\series\\%s", seatsdir, 
 		tramo_series_strings[code]);
+#else
+	sprintf(sfname, "%s/graph/series/%s", path, 
+		tramo_series_strings[code]);
+#endif
     } else {
-	strcpy(sfname, fname);
+	strcpy(sfname, path);
 	p = strrchr(sfname, '.');
 	if (p != NULL) strcpy(p + 1, x12a_series_strings[code]);
     }
@@ -639,6 +648,38 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+#ifdef OS_WIN32
+static int win32_run_tramo (const char *prog, const char *tramodir, 
+			    const char *varname)
+{
+    char seatsdir[MAXLEN];
+    char cmd[MAXLEN];
+    char oldserie[MAXLEN], newserie[MAXLEN];
+    int err;
+
+    sprintf(cmd, "TRAMO_DIR=%s", tramodir);
+    putenv(cmd);
+    sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
+    err = win_fork_prog(cmd, tramodir);
+
+    if (err) return 1;
+
+    get_seats(seatsdir, tramodir);
+    sprintf(oldserie, "%s\\serie", tramodir);
+    sprintf(newserie, "%s\\serie", seatsdir);
+    if (CopyFile(oldserie, newserie, FALSE) == 0) { /* no go */
+	return 1;
+    }
+
+    sprintf(cmd, "SEATS_DIR=%s", seatsdir);
+    putenv(cmd);
+    sprintf(cmd, "\"%s\\seats.com\" -OF %s", seatsdir, varname);
+    err = win_fork_prog(cmd, seatsdir);
+
+    return err;
+}
+#endif /* win32 */
+
 int write_tx_data (char *fname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, 
 		   PATHS *paths, int *graph,
@@ -715,23 +756,17 @@ int write_tx_data (char *fname, int varnum,
 	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", workdir, prog, varname);
 	err = system(cmd);
 #endif
-    } else { /* TRAMO -- currently does not work under Windows */
+    } else { /* TRAMO */
+#ifdef OS_WIN32 
+	err = win32_run_tramo(prog, workdir, varname);
+#else
 	char seats[MAXLEN];
 
-#ifdef OS_WIN32 
-	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
-	err = win_fork_prog(cmd, workdir);
-	if (!err) {
-	    get_seats_command(seats, prog);
-	    sprintf(cmd, "\"%s\" -OF %s", seats, varname);
-	    err = win_fork_prog(cmd, workdir);
-	}
-#else
 	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 
 		varname);
 	err = system(cmd);
 	if (!err) {
-	    get_seats_command(seats, prog);
+	    get_seats(seats, prog);
 	    sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, seats, varname);
 	    err = system(cmd);
 	}
@@ -742,7 +777,14 @@ int write_tx_data (char *fname, int varnum,
 	if (opt == X12A) {
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
 	} else {
-	    sprintf(fname, "%s%coutput%c%s.OUT", workdir, SLASH, SLASH, varname);
+#ifdef OS_WIN32
+	    char seatsdir[MAXLEN];
+
+	    get_seats(seatsdir, workdir);
+	    sprintf(fname, "%s\\output\\%s.out", seatsdir, varname);
+#else
+	    sprintf(fname, "%s/output/%s.OUT", workdir, varname);
+#endif
 	} 
 
 	/* save vars locally if needed; graph if wanted */

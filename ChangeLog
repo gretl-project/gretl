@@ -1,5 +1,9 @@
 version 1.0.3
 - further fix to pathnames with .Rprofile for win32
+- LaTeX view: fix for dvi file living in a directory with
+  spaces in its name on win32
+- Reorganize management of win32 registry entries
+- Add tramo/seats for win32 version?
 
 12/09/02 version 1.0.2
 - generalize support for X-12-ARIMA to gtk-1.2 version, and 
