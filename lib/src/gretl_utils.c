@@ -2096,6 +2096,8 @@ static void store_list (int *list, char *buf)
 
 int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
 {
+    if (pmod->list == NULL) return 1;
+
     sprintf(spec->cmd, "%s ", commands[pmod->ci]);
     
     if (pmod->ci == AR) {

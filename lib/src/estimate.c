@@ -2304,128 +2304,40 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
 MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    double x, cdiff = 1.0, *last_coeff = NULL;
-    double residsum, medresid, *absuhat = NULL;
-    int i, t, index, iter = 0, err = 0;
-    int wtnum, *wlist = NULL;
+    int i, index, err = 0;
     MODEL lad_model;
     XPXXPY xpxxpy;
     CHOLBETA cb;
+    void *handle;
+    int (*lad_driver)(MODEL *, double **, DATAINFO *, PRN *);
 
-    _init_model(&lad_model, pdinfo);
-
-    rearrange(list);
-
-    wlist = malloc((list[0] + 2) * sizeof *wlist);
-    if (wlist == NULL) {
-	lad_model.errcode = E_ALLOC;
-	return lad_model;
-    }
-
-    last_coeff = malloc(list[0] * sizeof *last_coeff);
-    if (last_coeff == NULL) {
-	free(wlist);
-	lad_model.errcode = E_ALLOC;
-	return lad_model;
-    }
-
-    /* make room for special weight var in data set */
-    if (dataset_add_vars(1, pZ, pdinfo)) {
-	lad_model.errcode = E_ALLOC;
-	return lad_model;
-    }
-
-    wtnum = pdinfo->v - 1;
-    strcpy(pdinfo->varname[wtnum], "abswt");
-
-    wlist[0] = list[0] + 1;
-    wlist[1] = wtnum;
-    for (i=1; i<=list[0]; i++) {
-	wlist[i+1] = list[i];
-    }
-
+    /* run an initial OLS to "set the model up" and check for errors.
+       the lad function will overwrite the coefficients etc.
+    */
     lad_model = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
 
     if ((err = lad_model.errcode)) {
-	goto lad_bailout;
+        return lad_model;
     }
 
-    absuhat = malloc(lad_model.nobs * sizeof *absuhat); 
-    if (absuhat == NULL) {
-	lad_model.errcode = E_ALLOC;
-	goto lad_bailout;
+    if (open_plugin("lad", &handle)) {
+	lad_model.errcode = E_FOPEN;
+	return lad_model;
     }
 
-    while (cdiff > 0.0001 && iter++ < 20) {
-	double u;
-
-	for (t=lad_model.t1; t<=lad_model.t2; t++) {
-	    absuhat[t-lad_model.t1] = fabs(lad_model.uhat[t]);
-	}
-
-	medresid = gretl_median(absuhat, lad_model.nobs);
-	if (na(medresid)) {
-	    lad_model.errcode = E_ALLOC;
-	    goto lad_bailout;
-	}
-
-	for (t=lad_model.t1; t<=lad_model.t2; t++) {
-	    u = fabs(lad_model.uhat[t]);
-	    if (fabs(u) > medresid) {
-		(*pZ)[wtnum][t] = medresid / fabs(u);
-	    } else {
-		(*pZ)[wtnum][t] = 1.0;
-	    }
-	}
-
-	for (i=1; i<=lad_model.ncoeff; i++) {
-	    last_coeff[i] = lad_model.coeff[i];
-	}
-
-	clear_model(&lad_model, pdinfo);
-	lad_model = lsq(wlist, pZ, pdinfo, WLS, 0, 0.0);
-
-	if ((err = lad_model.errcode)) {
-	    free(wlist);
-	    free(last_coeff);
-	    return lad_model;
-	}
-
-	/* printmodel(&lad_model, pdinfo, prn); */
-
-	cdiff = 0.0;
-	for (i=1; i<=lad_model.ncoeff; i++) {
-	    x = fabs(lad_model.coeff[i] - last_coeff[i]);
-	    x /= fabs(last_coeff[i]);
-	    if (x > cdiff) cdiff = x;
-	}
-	
-	/* pprintf(prn, "*** cdiff=%g\n", cdiff); */
+    lad_driver = get_plugin_function("lad_driver", handle);
+    if (lad_driver == NULL) {
+	pprintf(prn, _("Couldn't load plugin function\n"));
+	close_plugin(handle);
+	return lad_model;
     }
 
-    /* prepare the model for printing */
+    (*lad_driver) (&lad_model, *pZ, pdinfo, prn);
+    close_plugin(handle);
+
     lad_model.ci = LAD;
 
-    residsum = 0.0;
-    for (t=lad_model.t1; t<=lad_model.t2; t++) {
-	residsum += fabs(lad_model.uhat[t]);
-    }
-
-    lad_model.ess = residsum;                    /* not really "ess" */
-    lad_model.sigma = residsum / lad_model.nobs; /* not really sigma */
-
-    /* allocation: 
-
-    if we're going to replace model.xpx, we should
-    free it first since it is already allocated.
-
-    if we're going to discard cb.coeff (not hook it to model.coeff)
-    we should free it after calling cholbeta
-
-    */
-
-    free(lad_model.xpx);
-    lad_model.xpx = NULL;
+    /* FIXME: this does not produce correct standard errors */
 
     xpxxpy = xpxxpy_func(list, lad_model.t1, lad_model.t2, *pZ, 0, 0.0);
     cb = cholbeta(xpxxpy);    
@@ -2440,16 +2352,8 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	lad_model.sderr[i] = sqrt(lad_model.vcv[index]);
     }
 
-    lad_bailout:
-
-    /* trash the special weight variable */
-    dataset_drop_vars(1, pZ, pdinfo);
-
-    free(wlist);
-    free(last_coeff);
-    free(absuhat);
+    free(lad_model.vcv);
+    lad_model.vcv = NULL;
 
     return lad_model;
 }
-
-
