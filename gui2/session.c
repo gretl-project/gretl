@@ -68,6 +68,8 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
 /* #define SESSION_DEBUG */
 
+#define OBJECT_NAMELEN 12
+
 typedef struct _SESSION SESSION;
 typedef struct _SESSIONBUILD SESSIONBUILD;
 typedef struct _gui_obj gui_obj;
@@ -222,7 +224,7 @@ static int rebuild_init (void)
     rebuild.model_name = malloc(sizeof *rebuild.model_name);
     if (rebuild.model_name == NULL) return 1;
 
-    rebuild.model_name[0] = malloc(64);
+    rebuild.model_name[0] = malloc(32);
     if (rebuild.model_name[0] == NULL) return 1;
 
     return 0;
@@ -911,11 +913,13 @@ int parse_savefile (char *fname)
 #endif
 	    if (i > 0) {
 		rebuild.model_ID = myrealloc(rebuild.model_ID,
-					      rebuild.nmodels * sizeof(int));
+					     rebuild.nmodels * 
+					     sizeof *rebuild.model_ID);
 		rebuild.model_name = 
 		    myrealloc(rebuild.model_name,
-			      rebuild.nmodels * sizeof(char *));
-		rebuild.model_name[i] = mymalloc(24);
+			      rebuild.nmodels * 
+			      sizeof *rebuild.model_name);
+		rebuild.model_name[i] = mymalloc(32);
 		if (rebuild.model_ID == NULL ||
 		    rebuild.model_name == NULL ||
 		    rebuild.model_name[i] == NULL) {
@@ -925,7 +929,8 @@ int parse_savefile (char *fname)
 	    }
 	    rebuild.model_ID[i] = id;
 	    tmp = strchr(line, '"') + 1;
-	    strncpy(rebuild.model_name[i], tmp, 23);
+	    *rebuild.model_name[i] = '\0';
+	    strncat(rebuild.model_name[i], tmp, 31);
 	    n = strlen(rebuild.model_name[i]);
 	    for (j=n; j>0; j--) {
 		if (rebuild.model_name[i][j] == '"') {
@@ -946,8 +951,8 @@ int parse_savefile (char *fname)
 	    session.ngraphs += 1;
 	    if (k > 0) {
 		session.graphs = myrealloc(session.graphs,
-					     session.ngraphs * 
-					     sizeof *session.graphs);
+					   session.ngraphs * 
+					   sizeof *session.graphs);
 	    } else {
 		session.graphs = mymalloc(sizeof *session.graphs);
 	    }
@@ -1384,12 +1389,20 @@ static void rename_session_model (MODEL *pmod, const char *newname)
     }
 }
 
+static void rename_session_var (GRETL_VAR *var, const char *newname)
+{
+    gretl_var_assign_specific_name(var, newname);
+}
+
 static void rename_session_graph (GRAPHT *graph, const char *newname)
 {
+    int i;
+
     for (i=0; i<session.ngraphs; i++) {
 	if ((session.graphs[i])->ID == graph->ID) { 
 	    (session.graphs[i])->name[0] = '\0';
-	    strncat((session.graphs[i])->name, newname, 23);
+	    strncat((session.graphs[i])->name, newname, 
+		    sizeof (session.graphs[i])->name - 1);
 	    break;
 	}
     }
@@ -1412,6 +1425,9 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 
 	rename_session_graph(graph, newname);
     }
+
+    free(obj->name);
+    obj->name = g_strdup(newname);
 
     replay = 0;
 }
@@ -2026,6 +2042,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     MODEL *pmod = NULL;
     GRETL_VAR *var = NULL;
     GRAPHT *graph = NULL;
+    int icon_named = 0;
 
     switch (sort) {
     case 'm':
@@ -2068,43 +2085,46 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 
     gobj = gui_object_new(name, sort);
 
-    if (sort == 'm') {
-	char *str = model_cmd_str(pmod);
-
-	gobj->data = pmod;
-	model_drag_connect(gobj->icon, pmod);
-	if (str != NULL) {
-	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
-	    free(str);
-	}
+    if (strlen(name) > OBJECT_NAMELEN) {
+	gretl_tooltips_add(GTK_WIDGET(gobj->icon), name);
+	icon_named = 1;
     }
-    else if (sort == 'g') {
-	char *str = graph_str(graph);
 
-	gobj->data = graph;
-	if (str != NULL) {
-	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
-	    free(str);
-	}
-    }    
-    else if (sort == 'b') {
-	char *str = boxplot_str(graph);
+    if (sort == 'm' || sort == 'g' || sort == 'b') {
+	if (sort == 'm') {
+	    gobj->data = pmod;
+	    model_drag_connect(gobj->icon, pmod);
+	} else {
+	    gobj->data = graph;
+	} 
 
-	gobj->data = graph;
-	if (str != NULL) {
-	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
-	    free(str);
+	if (!icon_named) {
+	    char *str = NULL;
+	    
+	    if (sort == 'm') {
+		str = model_cmd_str(pmod);
+	    } else if (sort == 'g') {
+		str = graph_str(graph);
+	    } else if (sort == 'b') {
+		str = boxplot_str(graph);
+	    }
+	    if (str != NULL) {
+		gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
+		free(str);
+	    }
 	}
-    }
+    }	    
+
     else if (sort == 'v') gobj->data = var;
     else if (sort == 'd') gobj->data = paths.datfile;
     else if (sort == 's') gobj->data = cmdfile;
     else if (sort == 't') gobj->data = NULL;
 
-    if (mode == ICON_ADD_SINGLE) 
+    if (mode == ICON_ADD_SINGLE) {
 	pack_single_icon(gobj);
-    else if (mode == ICON_ADD_BATCH)
+    } else if (mode == ICON_ADD_BATCH) {
 	icon_list = g_list_append(icon_list, gobj);
+    }
 
     return gobj;
 }
@@ -2120,10 +2140,10 @@ static int silent_remember (MODEL **ppmod, DATAINFO *pdinfo)
     fprintf(stderr, "session.nmodels = %d\n", session.nmodels);
 #endif
 
-    if ((pmod->name = malloc(64)) == NULL) return 1;
+    if ((pmod->name = malloc(32)) == NULL) return 1;
 
     *pmod->name = 0;
-    strncat(pmod->name, rebuild.model_name[session.nmodels], 63);
+    strncat(pmod->name, rebuild.model_name[session.nmodels], 31);
 
     if (session.nmodels == 0) {
 	session.models = malloc(sizeof *session.models);
@@ -2491,6 +2511,67 @@ static void create_gobj_icon (gui_obj *gobj, char **data)
 
 #else
 
+static void size_name_entry (GtkWidget *w, const char *name)
+{
+    int n = strlen(name) + 2;
+
+    if (n > OBJECT_NAMELEN) n = OBJECT_NAMELEN;
+    gtk_entry_set_width_chars(GTK_ENTRY(w), n);    
+}
+
+static gboolean object_name_return (GtkWidget *w,
+				    GdkEventKey *key,
+				    gui_obj *gobj)
+{
+    if (!gtk_editable_get_editable(GTK_EDITABLE(gobj->label))) {
+	return FALSE;
+    }
+
+    if (key->keyval == GDK_Return) {
+	const gchar *newname = gtk_entry_get_text(GTK_ENTRY(gobj->label));
+
+	gtk_editable_set_position(GTK_EDITABLE(gobj->label), 0);
+	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
+	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
+	
+	if (newname != NULL && *newname != '\0' &&
+	    strcmp(newname, gobj->name)) {
+	    rename_session_object(gobj, newname);
+	    size_name_entry(gobj->label, newname);
+	}
+	return TRUE;
+    } 
+
+    return FALSE;
+}
+
+static gboolean start_rename_object (GtkWidget *w,
+				     GdkEventButton *event,
+				     gui_obj *gobj)
+{
+    if (gtk_editable_get_editable(GTK_EDITABLE(gobj->label))) {
+	return FALSE;
+    }
+
+    gtk_entry_set_width_chars(GTK_ENTRY(gobj->label), OBJECT_NAMELEN);
+    gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), TRUE);
+    gtk_editable_set_editable(GTK_EDITABLE(gobj->label), TRUE);
+    gtk_editable_select_region(GTK_EDITABLE(gobj->label), 0, -1);
+    
+    return TRUE;
+}
+
+static void make_short_label_string (char *targ, const char *src)
+{
+    if (strlen(src) > OBJECT_NAMELEN) {
+	*targ = '\0';
+	strncat(targ, src, OBJECT_NAMELEN - 3);
+	strcat(targ, "...");
+    } else {
+	strcpy(targ, src);
+    }
+}
+
 static void create_gobj_icon (gui_obj *gobj, const char **data)
 {
     GdkPixbuf *pbuf;
@@ -2509,7 +2590,24 @@ static void create_gobj_icon (gui_obj *gobj, const char **data)
 
     if (gobj->sort == 't') table_drag_setup(gobj->icon);
 
-    gobj->label = gtk_label_new(gobj->name);
+    if (gobj->sort == 'm' || gobj->sort == 'g' ||
+	gobj->sort == 'v' || gobj->sort == 'b') { 
+	gobj->label = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
+	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
+	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
+	gtk_entry_set_max_length(GTK_ENTRY(gobj->label), 32);
+	size_name_entry(gobj->label, gobj->name);
+	g_signal_connect(G_OBJECT(gobj->label), "button-press-event",
+			 G_CALLBACK(start_rename_object), gobj);
+	g_signal_connect(G_OBJECT(gobj->label), "key-press-event",
+			 G_CALLBACK(object_name_return), gobj);
+    } else {
+	gchar str[OBJECT_NAMELEN + 1];
+
+	make_short_label_string(str, gobj->name);
+	gobj->label = gtk_label_new(str);
+    }
 
     g_signal_connect(G_OBJECT(gobj->icon), "button_press_event",
 		     G_CALLBACK(session_icon_click), gobj);

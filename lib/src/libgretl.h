@@ -313,7 +313,7 @@ struct _MODELSPEC {
 struct _GRAPHT {
     int ID;
     int sort;
-    char name[24];
+    char name[32];
     char fname[MAXLEN];
 }; 
 
