@@ -36,7 +36,8 @@ enum equation_system_flags {
     GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
     GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
     GRETL_SYSTEM_ITERATE   = 1 << 2,
-    GRETL_SYSTEM_RESTRICT  = 1 << 3
+    GRETL_SYSTEM_RESTRICT  = 1 << 3,
+    GRETL_SYSTEM_DFCORR    = 1 << 4
 };
 
 gretl_equation_system *system_start (const char *line);
@@ -69,6 +70,7 @@ const char *system_get_full_string (const gretl_equation_system *sys);
 int system_save_uhat (const gretl_equation_system *sys);
 int system_save_yhat (const gretl_equation_system *sys);
 int system_doing_iteration (const gretl_equation_system *sys);
+int system_want_df_corr (const gretl_equation_system *sys);
 
 int system_n_equations (const gretl_equation_system *sys);
 int system_n_identities (const gretl_equation_system *sys);

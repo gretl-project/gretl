@@ -649,6 +649,12 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	sys->flags |= GRETL_SYSTEM_ITERATE;
     }
 
+    if (method == SYS_OLS || method == SYS_TSLS) {
+	if (!(opt & OPT_N)) {
+	    sys->flags |= GRETL_SYSTEM_DFCORR;
+	}
+    }    
+
     return gretl_equation_system_estimate(sys, pZ, pdinfo, prn);
 }
 
@@ -792,6 +798,11 @@ int system_doing_iteration (const gretl_equation_system *sys)
 	return 0;
     }
 } 
+
+int system_want_df_corr (const gretl_equation_system *sys)
+{
+    return sys->flags & GRETL_SYSTEM_DFCORR;
+}
 
 int system_n_equations (const gretl_equation_system *sys)
 {

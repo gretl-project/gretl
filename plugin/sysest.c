@@ -153,7 +153,8 @@ gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e,
 /* compute SUR or 3SLS parameter (or OLS or TSLS) residuals */
 
 static void 
-sys_resids (int systype, MODEL *pmod, const double **Z, gretl_matrix *uhat)
+sys_resids (gretl_equation_system *sys, MODEL *pmod, 
+	    const double **Z, gretl_matrix *uhat)
 {
     double yh;
     int i, t;
@@ -172,28 +173,38 @@ sys_resids (int systype, MODEL *pmod, const double **Z, gretl_matrix *uhat)
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    /* df correction? apply one for single-equation methods? */
-    if (systype == SYS_OLS || systype == SYS_TSLS) {
+    /* df correction? */
+    if (system_want_df_corr(sys)) {
 	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
     } else {
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     }
 }
 
-static double system_sigma (MODEL **models, int m, int nr)
+static double 
+system_sigma (gretl_equation_system *sys, MODEL **models, int m)
 {
     double ess = 0.0;
-    int df = 0;
+    int nr = 0, dfc = 0;
+    int den = 0;
     int i;
+
+    if (system_want_df_corr(sys)) {
+	nr = system_n_restrictions(sys);
+	dfc = 1;
+    }
 
     for (i=0; i<m; i++) {
 	ess += models[i]->ess;
-	df += models[i]->nobs - models[i]->ncoeff;
+	den += models[i]->nobs;
+	if (dfc) {
+	    den -= models[i]->ncoeff;
+	}
     }
 
-    df += nr;
+    den += nr;
 
-    return sqrt(ess / df);
+    return sqrt(ess / den);
 }
 
 /* compute SUR or 3SLS parameter estimates (or restricted OLS, TSLS) */
@@ -235,13 +246,12 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 	    models[i]->coeff[j] = gretl_vector_get(y, k);
 	    models[i]->sderr[j] = sqrt(gretl_matrix_get(vcv, k, k));
 	}
-	sys_resids(systype, models[i], Z, uhat);
+	sys_resids(sys, models[i], Z, uhat);
 	j0 += models[i]->ncoeff;
     }
 
     if (systype == SYS_OLS || systype == SYS_TSLS) {
-	int nr = system_n_restrictions(sys);
-	double s = system_sigma(models, m, nr);
+	double s = system_sigma(sys, models, m);
 
 	for (i=0; i<m; i++) {
 	    for (j=0; j<models[i]->ncoeff; j++) {
