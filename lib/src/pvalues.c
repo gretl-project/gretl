@@ -239,9 +239,9 @@ double batch_pvalue (const char *str,
 	    return -1;
 	}	
 	pprintf(prn, _("\nStandard normal: area to the %s "
-		"of %g = %.4g\n"), (xval > 0)? _("right"): _("left"), 
+		"of %g = %g\n"), (xval > 0)? _("right"): _("left"), 
 		xval, xx);
-	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
+	pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		2.0 * xx, 1.0 - 2.0 * xx);
 	return xx;
 
@@ -256,10 +256,10 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, _("\nt(%d): area to the %s of %g = %.4g\n"), 
+	pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
 		df1, (xval > 0)? _("right"): _("left"),
 		xval, 0.5 * xx);
-	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
+	pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		xx, 1.0 - xx);
 	return xx;
 
@@ -276,9 +276,9 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, _("\nChi-square(%d): area to the right of %g = %.4g\n"), 
+	pprintf(prn, _("\nChi-square(%d): area to the right of %g = %g\n"), 
 		df1, xval, xx);
-	pprintf(prn, _("(to the left: %.4g)\n"), 1.0 - xx);
+	pprintf(prn, _("(to the left: %g)\n"), 1.0 - xx);
 	return xx;
 
     case '4':
@@ -293,9 +293,9 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, _("\nF(%d, %d): area to the right of %g = %.4g\n"), 
+	pprintf(prn, _("\nF(%d, %d): area to the right of %g = %g\n"), 
 		df1, df2, xval, xx);
-	pprintf(prn, _("(to the left: %.4g)\n"), 1.0 - xx);
+	pprintf(prn, _("(to the left: %g)\n"), 1.0 - xx);
 	return xx;
 
     case '5':
@@ -306,7 +306,7 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\nError computing gamma distribution\n"));
 	else
 	    pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
-		    "\n area to the right of %f = %.4g\n"), 
+		    "\n area to the right of %g = %g\n"), 
 		    mean, variance, mean*mean/variance, variance/mean,
 		    xval, 1.0 - xx);
 	return xx;

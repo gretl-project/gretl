@@ -1854,7 +1854,7 @@ int sum_test (LIST sumvars, MODEL *pmod,
 		tval = summod.coeff[testcoeff - 2] / 
 		    summod.sderr[testcoeff - 2];
 		pprintf(prn, "   t(%d) = %g ", summod.dfd, tval);
-		pprintf(prn, _("with p-value = %f\n"), 
+		pprintf(prn, _("with p-value = %g\n"), 
 			tprob(tval, summod.dfd));
 	    }
 	}

@@ -31,8 +31,6 @@
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
-static DIR *dir;
-
 /* .......................................................... */
 
 static int path_append (char *file, const char *path)
@@ -44,10 +42,12 @@ static int path_append (char *file, const char *path)
 
     strcpy(temp, path);
     n = strlen(temp);
+
     if (temp[n - 1] != SLASH && n < MAXLEN - 1) {
 	temp[n] = SLASH;
 	temp[n + 1] = '\0';
     }
+
     strcat(temp, file);
     strcpy(file, temp);
 
@@ -67,57 +67,62 @@ static char *unslash (const char *src)
 
 /* .......................................................... */
 
-static int get_subdir (const char *topdir, int first, char *fname)
+static int find_in_subdir (const char *topdir, char *fname)
 {
-    DIR *try;
+    DIR *sub, *dir = NULL;
     struct dirent *dirent;
-#ifdef WIN32
-    char *tmp = unslash(topdir);
-
-    if (tmp == NULL) return -1;
-#endif
-
-    if (first) {
-#ifdef WIN32
-	if ((dir = opendir(tmp)) == NULL) {
-	    free(tmp);
-	    return -1;
-	}
-	free(tmp);
+    FILE *fp;
+    char tmp[MAXLEN], orig[MAXLEN];
+    int found = 0;
+#ifndef WIN32
+    const char *top = topdir;
 #else
-	if ((dir = opendir(topdir)) == NULL) return -1;
+    char *top = unslash(topdir);
+
+    if (top == NULL) return 0;
 #endif
-    } else {
-	if ((dirent = readdir(dir)) == NULL) {
-	    closedir(dir);
-	    dir = NULL;
-	    return -1;
-	} else {
+
+    strcpy(orig, fname);
+
+    dir = opendir(top);
+    if (dir != NULL) {
+	while ((dirent = readdir(dir)) != NULL && !found) {
 	    if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, "..")) {
-		return 0;
+		continue;
 	    }
-	    strcpy(fname, topdir);
-	    strcat(fname, dirent->d_name);
-	    if ((try = opendir(fname)) != NULL) {
-		closedir(try);
-		return 1;
-	    } else {
-		return 0;
+	    strcpy(tmp, topdir);
+	    strcat(tmp, dirent->d_name);
+	    sub = opendir(tmp);
+	    if (sub != NULL) { 
+		/* we got a subdir */
+		closedir(sub);
+		path_append(fname, tmp);
+		fp = fopen(fname, "r");
+		if (fp != NULL) {
+		    fclose(fp);
+		    found = 1;
+		} else {
+		    /* failed: drop back to original filename */
+		    strcpy(fname, orig);
+		}
 	    }
 	}
+	closedir(dir);
     }
 
-    return 1;
+#ifdef WIN32
+    free(top);
+#endif
+
+    return found;
 }
 
 /* .......................................................... */
 
-static char *search_dir (char *fname, const char *topdir, 
-			 int recurse)
+static char *search_dir (char *fname, const char *topdir, int trysub)
 {
     FILE *test;
-    int got = 0;
-    char orig[MAXLEN], trypath[MAXLEN];
+    char orig[MAXLEN];
 
     strcpy(orig, fname);
 
@@ -130,20 +135,9 @@ static char *search_dir (char *fname, const char *topdir,
 	    fclose(test);
 	    return fname;
 	}
-	if (recurse && get_subdir(topdir, 1, trypath) > 0) {
-	    while ((got = get_subdir(topdir, 0, trypath)) >= 0) {
-		strcpy(fname, orig);
-		if (got && path_append(fname, trypath) == 0) {
-#ifdef PATH_DEBUG
-		    fprintf(stderr, I_("Trying %s\n"), fname);
-#endif
-		    test = fopen(fname, "r");
-		    if (test != NULL) {
-			fclose(test);
-			return fname;
-		    }		    
-		}
-	    }
+	strcpy(fname, orig);
+	if (trysub && find_in_subdir(topdir, fname)) {
+	    return fname;
 	}
     }
 
@@ -219,18 +213,18 @@ char *addpath (char *fname, PATHS *ppaths, int script)
     strcpy(fname, orig);
 
     if (script) {
-	/* for a script, try system script dir (and recurse) */
+	/* for a script, try system script dir (and subdirs) */
 	if ((fname = search_dir(fname, ppaths->scriptdir, 1))) { 
 	    return fname;
 	}
     } else {
-	/* for a data file, try system data dir (and recurse) */
+	/* for a data file, try system data dir (and subdirs) */
 	if ((fname = search_dir(fname, ppaths->datadir, 1))) { 
 	    return fname;
 	}
     } 
 
-    /* or try looking in user's dir (and recurse) */
+    /* or try looking in user's dir (and subdirs) */
     fname = tmp;
     strcpy(fname, orig);
     if ((fname = search_dir(fname, ppaths->userdir, 1))) { 
@@ -313,11 +307,6 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 	    ppaths->currdir[1] = SLASH;
 	    ppaths->currdir[2] = '\0';
 	}	    
-    }
-
-    if (dir != NULL) {  /* dir is static, declared outside of funcs */
-	closedir(dir);     
-	dir = NULL;
     }
 
     return 0;
