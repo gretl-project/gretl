@@ -640,40 +640,16 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	armod.errcode = E_NOCONV;
     } else {
 	cmplx *roots;
+
 	y = Z[v];
 	armod.lnL = ll; 
 	rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
 
-	/* compute and print polynomial roots */
+	/* compute and save polynomial roots */
 	roots = arma_roots(p, q, coeff);
-
 	if (roots != NULL) {
-	    pprintf(prn,"  %s:\t", _("AR roots"));
-
-	    for (i=0; i<p; i++) {
-		pprintf(prn, "%7.4f", roots[i].r);
-		if (roots[i].i != 0) {
-		    pputs(prn, (roots[i].i > 0) ? "+" : "");
-		    pprintf(prn, "%6.4fi", roots[i].i);
-		}
-		pputc(prn, '\t');
-	    }
-	    pputc(prn, '\n');
-	
-	    pprintf(prn,"  %s:\t", _("MA roots"));
-	    for (i=p; i<p+q; i++) {
-		pprintf(prn,"%7.4f", roots[i].r);
-		if (roots[i].i != 0) {
-		    pprintf(prn, (roots[i].i > 0) ? "+" : "");
-		    pprintf(prn, "%6.4fi", roots[i].i);
-		}
-		pputc(prn, '\t');
-	    }
-	    pputc(prn, '\n');
-
-	    /* we'll get around to saving the roots for later printing,
-	       but for now let's not leak memory */
-	    free(roots);
+	    gretl_model_set_data(&armod, "roots", roots,
+				 (p + q) * sizeof *roots);
 	}
     }
 

@@ -22,6 +22,14 @@
 #include "libgretl.h"
 #include "internal.h"
 
+#ifndef cmplx
+typedef struct _cmplx cmplx;
+struct _cmplx {
+    double r;
+    double i;
+};
+#endif
+
 #define PLAIN_FORMAT(c) (c == GRETL_PRINT_FORMAT_PLAIN)
 #define RTF_FORMAT(c) (c == GRETL_PRINT_FORMAT_RTF)
 #define TEX_FORMAT(c) (c == GRETL_PRINT_FORMAT_TEX || c == GRETL_PRINT_FORMAT_TEX_DOC)
@@ -1760,6 +1768,39 @@ static void print_ll_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n", I_("AIC"), xstr);
 	tex_dcolumn_double(pmod->criterion[1], xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("BIC"), xstr);
+    }
+
+    if (PLAIN_FORMAT(prn->format) && pmod->ci == ARMA) {
+	cmplx *roots = gretl_model_get_data(pmod, "roots");
+
+	if (roots != NULL) {
+	    int p = pmod->list[1];
+	    int q = pmod->list[2];
+	    int i;
+	    
+	    pprintf(prn,"\n  %s:\t", _("AR roots"));
+
+	    for (i=0; i<p; i++) {
+		pprintf(prn, "%7.4f", roots[i].r);
+		if (roots[i].i != 0) {
+		    pputs(prn, (roots[i].i > 0) ? "+" : "");
+		    pprintf(prn, "%6.4fi", roots[i].i);
+		}
+		pputc(prn, '\t');
+	    }
+	    pputc(prn, '\n');
+	
+	    pprintf(prn,"  %s:\t", _("MA roots"));
+	    for (i=p; i<p+q; i++) {
+		pprintf(prn,"%7.4f", roots[i].r);
+		if (roots[i].i != 0) {
+		    pprintf(prn, (roots[i].i > 0) ? "+" : "");
+		    pprintf(prn, "%6.4fi", roots[i].i);
+		}
+		pputc(prn, '\t');
+	    }
+	    pputc(prn, '\n');	
+	}
     }
 }
 
