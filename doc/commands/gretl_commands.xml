@@ -1254,6 +1254,7 @@
 	<repl>var</repl> (given by name or number) and shows the
 	results of the Doornik&ndash;Hansen chi-square test for
 	normality.
+      </para>
       <para>
 	If the <literal>--quiet</literal> option is given, the
 	histogram is not shown.  If the <literal>--gamma</literal>

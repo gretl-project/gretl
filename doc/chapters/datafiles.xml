@@ -122,20 +122,45 @@
 
   <sect1 id="scratch"><title>Creating a data file from scratch</title>
 
-    <para>There are five ways to do this: (1) Find, or create using a
-      text editor, a plain text data file and open it with
-      <application>gretl</application>'s <quote>Import ASCII</quote>
-      option. (2) Use your favorite spreadsheet to establish the data
-      file, save it in Comma Separated Values format if necessary
-      (this should not be necessary if the spreadsheet program is MS
-      Excel or Gnumeric), then use one of
-      <application>gretl</application>'s <quote>Import</quote> options
-      (CSV, Excel or Gnumeric, as the case may be). (3) Use
-      <application>gretl</application>'s built-in spreadsheet. (4)
-      Select data series from a suitable database. (5) Use your
-      favorite text editor or other software tools to a create data
-      file in <application>gretl</application> format
-      independently.</para>
+    <para>There are five ways to do this:</para>
+
+    <orderedlist>
+      <listitem>
+	<para>
+	  Find, or create using a text editor, a plain text data file
+	  and open it with <application>gretl</application>'s
+	  <quote>Import ASCII</quote> option.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Use your favorite spreadsheet to establish the data file,
+	  save it in Comma Separated Values format if necessary (this
+	  should not be necessary if the spreadsheet program is MS
+	  Excel or Gnumeric), then use one of
+	  <application>gretl</application>'s <quote>Import</quote>
+	  options (CSV, Excel or Gnumeric, as the case may be).
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Use <application>gretl</application>'s built-in spreadsheet.
+	  (4) Select data series from a suitable database.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Select data series from a suitable database.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Use your favorite text editor or other software tools to a
+	  create data file in <application>gretl</application> format
+	  independently.
+	</para>
+      </listitem>
+    </orderedlist>
 
     <para>Here are a few comments and details on these methods.</para>
 
