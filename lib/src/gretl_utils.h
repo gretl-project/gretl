@@ -17,10 +17,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* utils.h for gretl */
-
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef GRETL_UTILS_H
+#define GRETL_UTILS_H
 
 #include <stdio.h>
 
@@ -35,17 +33,6 @@ enum {
     C_RICE,
     C_MAX
 } model_selection_criteria;
-
-/**
- * free_model:
- * @p: pointer to #MODEL.
- *
- * Free allocated content of MODEL then the pointer itself.
- */
-#define free_model(p) if (p != NULL) { \
-                             clear_model(p, NULL); \
-                             free(p); \
-                          }
 
 /**
  * dataset_is_time_series:
@@ -119,30 +106,6 @@ int catchflags (char *line, unsigned long *oflag);
 
 const char *print_flags (unsigned long flags, int ci);
 
-MODEL *gretl_model_new (const DATAINFO *pdinfo);
-
-void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo);
-
-void gretl_model_set_auxiliary (MODEL *pmod, int aux);
-
-void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
-
-void clear_model (MODEL *pmod, const DATAINFO *pdinfo);
-
-int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size);
-
-int gretl_model_set_int (MODEL *pmod, const char *key, int val);
-
-int gretl_model_set_double (MODEL *pmod, const char *key, double val);
-
-void *gretl_model_get_data (const MODEL *pmod, const char *key);
-
-int gretl_model_get_int (const MODEL *pmod, const char *key);
-
-double gretl_model_get_double (const MODEL *pmod, const char *key);
-
-void debug_print_model_info (const MODEL *pmod, const char *msg);
-
 int copylist (int **target, const int *src);
 
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
@@ -164,10 +127,6 @@ int rename_var_by_id (const char *str, const char *vname,
 		      DATAINFO *pdinfo);
 
 int hidden_var (int i, const DATAINFO *pdinfo);
-
-int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
-
-int swap_models (MODEL **targ, MODEL **src);
 
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
 			 DATAINFO *pdinfo);
@@ -221,4 +180,4 @@ void free_confint (CONFINT *cf);
 int gretl_spawn (const char *cmdline);
 #endif
 
-#endif /* UTILS_H */
+#endif /* GRETL_UTILS_H */

@@ -342,9 +342,12 @@ static void add_coeffs_to_model (MODEL *pmod, double *coeff)
 static int add_param_names_to_model (MODEL *pmod)
 {
     int i;
+    int np = pmod->ncoeff + 1;
 
-    pmod->params = malloc((1 + pmod->ncoeff) * sizeof *pmod->params);
+    pmod->params = malloc(np * sizeof *pmod->params);
     if (pmod->params == NULL) return 1;
+
+    pmod->nparams = np;
 
     pmod->params[0] = malloc(VNAMELEN);
     if (pmod->params[0] == NULL) {
@@ -361,6 +364,7 @@ static int add_param_names_to_model (MODEL *pmod)
 	    for (j=0; j<i; j++) free(pmod->params[j]);
 	    free(pmod->params);
 	    pmod->params = NULL;
+	    pmod->nparams = 0;
 	    return 1;
 	}
 	strcpy(pmod->params[i], nlspec.terms[i-1].name);

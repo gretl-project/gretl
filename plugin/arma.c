@@ -75,6 +75,8 @@ static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 	return;
     }
 
+    pmod->nparams = np;
+
     for (i=0; i<np; i++) {
 	pmod->params[i] = malloc(VNAMELEN);
 	if (pmod->params[i] == NULL) {
@@ -83,6 +85,7 @@ static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 	    for (j=0; j<i; j++) free(pmod->params[j]);
 	    free(pmod->params);
 	    pmod->params = NULL;
+	    pmod->nparams = 0;
 	    pmod->errcode = E_ALLOC;
 	    return;
 	}

@@ -316,6 +316,7 @@ struct _MODEL {
 				    autoregressive model */ 
     int errcode;                 /* Error code in case of failure */
     char *name;
+    int nparams;                 /* number of named model parameters */
     char **params;               /* for named model parameters */
     int ntests;
     GRETLTEST *tests;
@@ -398,6 +399,7 @@ struct _VCV {
 #include "generate.h"
 #include "gretl_paths.h"
 #include "gretl_utils.h"
+#include "gretl_model.h"
 #include "compare.h"
 #include "pvalues.h"
 #include "dataio.h"
