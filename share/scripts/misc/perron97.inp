@@ -75,7 +75,11 @@ loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1)
     if kstar > 1
 	ols y 0 DU time DT y_1 dyt(-1 to -kstar) --quiet
     else
-	ols y 0 DU time DT y_1 dyt_1 --quiet
+	if kstar > 0
+	    ols y 0 DU time DT y_1 dyt_1 --quiet
+	else
+	    ols y 0 DU time DT y_1 --quiet
+	endif
     endif
    
     genr t_alpha = (coeff(y_1) - 1.0) / stderr(y_1)
@@ -100,9 +104,12 @@ printf "\n\n**** min(t_alpha) = %g in %d ****\n", t_a_min, Tbstar
 if Tbk > 1
     ols y 0 DU time DT y_1 dyt(-1 to -Tbk)
 else
-    ols y 0 DU time DT y_1 dyt_1
-endif 
-
+    if Tbk > 0
+	ols y 0 DU time DT y_1 dyt_1
+    else
+	ols y 0 DU time DT y_1 
+    endif 
+endif
 
   
 

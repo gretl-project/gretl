@@ -22,15 +22,6 @@
 #ifndef MONTE_CARLO_H
 #define MONTE_CARLO_H
 
-enum ifcodes {
-    SET_FALSE,
-    SET_TRUE,
-    SET_ELSE,
-    SET_ENDIF,
-    IS_FALSE,
-    RELAX
-};
-
 typedef struct LOOPSET_ LOOPSET;
 
 /* functions follow */
@@ -48,11 +39,5 @@ void get_cmd_ci (const char *line, CMD *cmd);
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
 	       MODEL **models, int *echo_off, PRN *prn);
-
-int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
-
-int ifstate (int code);
-
-int loop_index_char (int c);
 
 #endif /* MONTE_CARLO_H */

@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 #include "gretl_private.h"
+#include "loop_private.h"
 #include "genstack.h"
 #include "libset.h"
 #include "modelspec.h"
@@ -37,8 +38,6 @@ enum {
     OBSBOOLNUM,
     INDEXNUM
 } genr_numbers;
-
-#define N_INDICES 5
 
 static double calc_xy (double x, double y, char op, int t, int *err);
 
@@ -479,8 +478,6 @@ static int get_arg_string (char *str, const char *s, int func, GENERATE *genr)
     return err;
 }
 
-#define internal_index_var(v) (v >= INDEXNUM && v < INDEXNUM + N_INDICES)
-
 static genatom *parse_token (const char *s, char op,
 			     GENERATE *genr, int level)
 {
@@ -498,6 +495,7 @@ static genatom *parse_token (const char *s, char op,
 		scalar = 1;
 	    } else {
 		v = varindex(genr->pdinfo, s);
+
 		if (v == genr->pdinfo->v) { 
 		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
 			    s);
@@ -506,21 +504,18 @@ static genatom *parse_token (const char *s, char op,
 		    DPRINTF(("recognized var '%s' (#%d)\n", s, v));
 		}
 
-		if (internal_index_var(v)) { 
-		    int k = genr_scalar_index(*s, 0, 0);
+		if (v == INDEXNUM) { 
+		    int k = loop_scalar_index(*s, 0, 0);
 
 		    val = k;
 		    scalar = 1;
-		}
-
-		/* handle scalar vars here */
-		if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+		} else if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+		    /* handle regular scalar variables here */
 		    val = (*genr->pZ)[v][0];
 		    scalar = 1;
 		}
 	    }
-	}
-	else if (strchr(s, '(')) {
+	} else if (strchr(s, '(')) {
 	    /* try for a function first */
 	    lag = 0;
 	    v = -1;
@@ -561,7 +556,7 @@ static genatom *parse_token (const char *s, char op,
 		    scalar = 1;
 		}
 	    } else {
-		/* not a function: try a lag variable */
+		/* not a function: try a lagged variable */
 		v = get_lagvar(s, &lag, genr);
 		if (v > 0) {
 		    DPRINTF(("recognized var #%d lag %d\n", v, lag));
@@ -571,8 +566,7 @@ static genatom *parse_token (const char *s, char op,
 		    genr->err = E_SYNTAX; 
 		}
 	    }
-	} 
-	else if (strchr(s, '[')) {
+	} else if (strchr(s, '[')) {
 	    val = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo);
 	    if (val == NADBL) {
 		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
@@ -613,14 +607,10 @@ static genatom *parse_token (const char *s, char op,
 	} else {
 	    genr->err = E_UNKVAR;
 	}
-    }
-
-    else if (numeric_string(s)) {
+    } else if (numeric_string(s)) {
 	val = dot_atof(s);
 	scalar = 1;
-    }
-
-    else if (*s == '"') {
+    } else if (*s == '"') {
 	/* observation label? (basis for dummy series) */
 	val = obs_num(s, genr->pdinfo);
 	if (val > 0) {
@@ -628,9 +618,7 @@ static genatom *parse_token (const char *s, char op,
 	} else{
 	    genr->err = E_SYNTAX;
 	}
-    }
-
-    else if (strchr(s, ':')) {
+    } else if (strchr(s, ':')) {
 	/* time-series observation? */
 	val = obs_num(s, genr->pdinfo);
 	if (val > 0) {
@@ -638,9 +626,7 @@ static genatom *parse_token (const char *s, char op,
 	} else {
 	    genr->err = E_SYNTAX;
 	}
-    }
-
-    else {
+    } else {
 	DPRINTF(("dead end in parse_token, s='%s'\n", s));
 	genr->err = E_SYNTAX;
     }
@@ -2106,45 +2092,6 @@ static void get_genr_formula (char *formula, const char *line,
     *formula = '\0';
 
     copy_compress(formula, line, MAXLEN - 10);
-}
-
-/* check the code in monte_carlo.c, around parse_as_for_loop(),
-   before making changes in this area
-*/
-
-/**
- * genr_scalar_index:
- * @c: character represting a particular index (i to m).
- * @opt: If opt = 1, set the value of the (static) index, using
- * the value of @put.  If opt = 2, increment the static index by
- * the value of @put.
- * @put: value for set or increment.
- *
- * Reads the value of a static index variable (after setting or
- * incrementing the index using @put if @opt is non-zero).
- * 
- * Returns: the new value of the index.
- */
-
-int genr_scalar_index (int c, int opt, int put)
-{
-    static int idx[N_INDICES];
-    int i = 0;
-
-    if (c == 'i') i = 0;
-    else if (c == 'j') i = 1;
-    else if (c == 'k') i = 2;
-    else if (c == 'l') i = 3;
-    else if (c == 'm') i = 4;
-    else return -1;
-
-    if (opt == 1) {
-	idx[i] = put;
-    } else if (opt == 2) {
-	idx[i] += put;
-    }
-
-    return idx[i];
 }
 
 static int gentoler (const char *s)
@@ -4446,18 +4393,16 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 	return HNUM; 
     }
 
-    /* FIXME: should we allow "$i", "$t", "$obs" ?? */
-    if (strlen(check) == 1 && loop_index_char(*check)) {
-	return INDEXNUM;
-    }
-    if (!strcmp(check, "t")) {
-	return TNUM;
-    }
-    if (!strcmp(check, "obs")) {
+    if (!strcmp(check, "t") || !strcmp(check, "obs")) {
 	return TNUM;
     }
     if (!strcmp(check, "const") || !strcmp(check, "CONST")) {
 	return 0;
+    }
+
+    if (strlen(check) == 1 && is_active_index_loop_char(*check)) {
+	/* loop index variable: 'i', 'j' or such */
+	return INDEXNUM;
     }
 
     if (gretl_executing_function()) {

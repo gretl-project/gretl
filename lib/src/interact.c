@@ -23,6 +23,7 @@
 #include "var.h"
 #include "gretl_func.h"
 #include "gretl_private.h"
+#include "loop_private.h"
 #include "compat.h"
 #include "system.h"
 
@@ -256,23 +257,34 @@ static int aliased (char *str)
 static int flow_control (const char *line, double ***pZ, 
 			 DATAINFO *pdinfo, CMD *cmd)
 {
-    /* clear to proceed */
+    int ci = cmd->ci;
+    int err = 0;
+
+    /* clear to proceed? */
     if (!ifstate(IS_FALSE) && 
-	cmd->ci != IF && cmd->ci != ELSE && cmd->ci != ENDIF) {
+	ci != IF && ci != ELSE && ci != ENDIF) {
 	return 0;
     }
 
-    if (cmd->ci == IF) {
-	int ret = if_eval(line, pZ, pdinfo);
+    if (ci == IF) {
+	int ok = if_eval(line, pZ, pdinfo);
 
-	if (ret == -1 || ifstate((ret)? SET_TRUE : SET_FALSE)) { 
-	    cmd->errcode = E_SYNTAX;
+	if (ok == -1) {
+	    err = 1;
+	} else if (ok) {
+	    err = ifstate(SET_TRUE);
+	} else {
+	    err = ifstate(SET_FALSE);
 	}
-    } else if (cmd->ci == ELSE && ifstate(SET_ELSE)) {
-	cmd->errcode = E_SYNTAX;
-    } else if (cmd->ci == ENDIF && ifstate(SET_ENDIF)) {
-	cmd->errcode = E_SYNTAX;
+    } else if (ci == ELSE) {
+	err = ifstate(SET_ELSE);
+    } else if (ci == ENDIF) {
+	err = ifstate(SET_ENDIF);
     }
+
+    if (err) {
+	cmd->errcode = E_SYNTAX;
+    }    
 
     return 1;
 }

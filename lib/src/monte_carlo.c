@@ -22,6 +22,7 @@
 
 #include "libgretl.h" 
 #include "gretl_private.h"
+#include "loop_private.h"
 #include "libset.h"
 #include "compat.h"
 
@@ -144,8 +145,10 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 static int print_loop_store (LOOPSET *loop, PRN *prn);
 static int get_prnnum_by_id (LOOPSET *loop, int id);
 static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum);
+static void set_active_loop (LOOPSET *loop);
 
 #define LOOP_BLOCK 32
+#define N_LOOP_INDICES 5
 
 /**
  * ok_in_loop:
@@ -333,23 +336,23 @@ static int get_int_value (const char *s, const DATAINFO *pdinfo,
     return ret;
 }
 
-const char *ok_ichars = "ijklm";
-
-int loop_index_char (int c)
+static int loop_index_char_pos (int c)
 {
-    return (strchr(ok_ichars, c) != NULL);
-}
+    static const char ichars[N_LOOP_INDICES] = "ijklm";   
+    int i;
 
-/* Watch out: compare the code in generate.c, around the function
-   genr_scalar_index(), before making changes here. This should
-   really be integrated in one place.
-*/
+    for (i=0; i<N_LOOP_INDICES; i++) {
+	if (c == ichars[i]) return i;
+    }
+
+    return -1;
+}
 
 static int bad_ichar (char c)
 {
     int err = 0;
 
-    if (strchr(ok_ichars, c) == NULL) {
+    if (loop_index_char_pos(c) < 0) {
 	strcpy(gretl_errmsg, _("The index in a 'for' loop must be a "
 			      "single character in the range 'i' to 'm'")); 
 	err = 1;
@@ -421,7 +424,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	}
 	loop->ichar = ichar;
 	/* set up internal variable for genr */
-	genr_scalar_index(ichar, 1, loop->initval);
+	loop_scalar_index(ichar, 1, loop->initval);
     }
 
     return err;
@@ -2075,8 +2078,10 @@ static void top_of_loop (LOOPSET *loop, double **Z)
     if (loop->type == FOR_LOOP) {
 	Z[loop->lvar][0] = loop->initval;
     } else if (indexed_loop(loop)) {
-	genr_scalar_index(loop->ichar, 1, loop->initval);
+	loop_scalar_index(loop->ichar, 1, loop->initval);
     }
+
+    set_active_loop(loop);
 }
 
 static void 
@@ -2409,7 +2414,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	loop->iter += 1;
 
 	if (indexed_loop(loop)) {
-	    genr_scalar_index(loop->ichar, 2, 1);
+	    loop_scalar_index(loop->ichar, 2, 1);
 	}
 
     } /* end iterations of loop */
@@ -2439,11 +2444,72 @@ int loop_exec (LOOPSET *loop, char *line,
 	*line = '\0';
     } 
 
+    set_active_loop(loop->parent);
+
     if (get_halt_on_error()) {
 	return err;
     } else {
 	return 0;
     }
+}
+
+static int ichar_in_parentage (const LOOPSET *loop, int c)
+{
+    while ((loop = loop->parent) != NULL) {
+	if (indexed_loop(loop) && loop->ichar == c) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/* apparatus relating to retrieval of loop index value in genr */
+
+int loop_scalar_index (int c, int opt, int put)
+{
+    static int idx[N_LOOP_INDICES];
+    int i = loop_index_char_pos(c);
+    int ret = -1;
+
+    if (i >= 0) {
+	if (opt == 1) {
+	    idx[i] = put;
+	} else if (opt == 2) {
+	    idx[i] += put;
+	}
+	ret = idx[i];
+    }
+
+    return ret;
+}
+
+static int indexed_loop_record (LOOPSET *loop, int set, int test)
+{
+    static LOOPSET *active_loop;
+    int ret = 0;
+
+    if (set) {
+	active_loop = loop;
+    } else if (active_loop != NULL) {
+	if (indexed_loop(active_loop) && active_loop->ichar == test) {
+	    ret = 1;
+	} else if (ichar_in_parentage(active_loop, test)) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+static void set_active_loop (LOOPSET *loop)
+{
+    indexed_loop_record(loop, 1, 0);
+}
+
+int is_active_index_loop_char (int c)
+{
+    return indexed_loop_record(NULL, 0, c);
 }
 
 #define IFDEBUG 0
@@ -2459,19 +2525,26 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "if_eval: line = '%s'\n", line);
 #endif
 
-    /* + 2 below to omit "if" */
-    sprintf(formula, "__iftest=%s", line + 2);
+    if (!strncmp(line, "if", 2)) {
+	line += 2;
+    } else if (!strncmp(line, "elif", 4)) {
+	line += 4;
+    }
+
+    sprintf(formula, "__iftest=%s", line);
 
     err = generate(pZ, pdinfo, formula, NULL);
 
-    if (!err) {
+    if (err) {
+	strcpy(gretl_errmsg, _("error evaluating 'if'"));
+    } else {
 	int v = varindex(pdinfo, "iftest");
 	
 	if (v < pdinfo->v) {
 	    double val = (*pZ)[v][0];
 
 	    if (na(val)) {
-		sprintf(gretl_errmsg, _("indeterminate condition for 'if'"));
+		strcpy(gretl_errmsg, _("indeterminate condition for 'if'"));
 	    } else {
 		ret = (int) val;
 	    }
@@ -2508,14 +2581,14 @@ int ifstate (int code)
 	got_else[indent] = 0;
     } else if (code == SET_ELSE) {
 	if (got_else[indent] || !got_if[indent]) {
-	    sprintf(gretl_errmsg, "Unmatched \"else\"");
+	    strcpy(gretl_errmsg, "Unmatched \"else\"");
 	    return 1; 
 	}
 	T[indent] = !T[indent];
 	got_else[indent] = 1;
     } else if (code == SET_ENDIF) {
 	if (!got_if[indent] || indent == 0) {
-	    sprintf(gretl_errmsg, "Unmatched \"endif\"");
+	    strcpy(gretl_errmsg, "Unmatched \"endif\"");
 	    return 1; 
 	}
 	got_if[indent] = 0;

@@ -50,7 +50,5 @@ int get_generated_value (const char *argv, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
 			 MODEL *pmod, int t);
 
-int genr_scalar_index (int c, int opt, int put);
-
 #endif /* GENERATE_H */
 
