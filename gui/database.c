@@ -362,7 +362,7 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
 	    strcpy(datainfo->varname[1], sinfo->varname);
 	    strcpy(datainfo->label[1], sinfo->descrip);	
 	    set_sample_label(datainfo);
-	    data_file_open = 1;
+	    data_file_open = 2;
 	    menubar_state(TRUE);
 	}
     }
