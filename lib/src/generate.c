@@ -2482,8 +2482,7 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
 
 void varlist (const DATAINFO *pdinfo, PRN *prn)
 {
-    register int i;
-    int n = pdinfo->v;
+    int i, n = pdinfo->v;
 
     pprintf(prn, _("Listing %d variables:\n"), n);
     for (i=0; i<n; i++) {

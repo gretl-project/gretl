@@ -48,7 +48,9 @@ static int xmlfile (const char *fname);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
-extern int printing_to_console; /* strutils.c */
+/* from strutils.c */
+extern void check_for_console (PRN *prn);
+extern void console_off (void);
 
 #define PROGRESS_BAR "progress_bar"
 
@@ -2327,9 +2329,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     char delim = (*ppdinfo)->delim;
     int numcount, auto_name_vars = 0;
 
-    if (prn->fp == stdout || prn->fp == stderr) {
-	printing_to_console = 1;
-    }
+    check_for_console(prn);
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -2600,7 +2600,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     fclose(fp); 
     free(line);
 
-    printing_to_console = 0;
+    console_off();
 
     return 0;
 
@@ -2609,7 +2609,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (line != NULL) free(line);
     if (csvinfo != NULL) 
 	clear_datainfo(csvinfo, CLEAR_FULL);
-    printing_to_console = 0;
+    console_off();
     return 1;
 }
 
@@ -2701,23 +2701,28 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
     int c, cc, i, t, v, realv, gotdata;
     int maxline, dumpvars;
     char tmp[48];
-    unsigned *varsize, *varstart;
-    char *line;
+    unsigned *varsize = NULL, *varstart = NULL;
+    char *line = NULL;
     double x;
     FILE *fp;
     DATAINFO *boxinfo;
     double **boxZ = NULL;
+    int err = 0;
+
+    check_for_console(prn);
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
-	return 1;
+	err = E_FOPEN;
+	goto box_bailout;
     }
 
     boxinfo = datainfo_new();
     if (boxinfo == NULL) {
 	pputs(prn, M_("Out of memory\n"));
-	return 1;
+	err = E_ALLOC;
+	goto box_bailout;
     }
 
     pprintf(prn, "%s %s...\n", M_("parsing"), fname);
@@ -2732,15 +2737,16 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 	    pprintf(prn, M_("Binary data (%d) encountered: this is not a valid "
 		   "BOX1 file\n"), c);
 	    fclose(fp);
-	    return 1;
+	    err = 1;
+	    goto box_bailout;
 	}
 	if (c == '\n') {
 	    if (cc > maxline) maxline = cc;
 	    cc = 0;
-	    if ((c=getc(fp)) != EOF) {
+	    if ((c = getc(fp)) != EOF) {
 		tmp[0] = c; cc++;
 	    } else break;
-	    if ((c=getc(fp)) != EOF) {
+	    if ((c = getc(fp)) != EOF) {
 		tmp[1] = c; cc++;
 	    } else break;
 	    tmp[2] = '\0';
@@ -2759,17 +2765,31 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 
     /* allocate space for data etc */
     pputs(prn, M_("allocating memory for data... "));
-    if (start_new_Z(&boxZ, boxinfo, 0)) return E_ALLOC;
+
+    if (start_new_Z(&boxZ, boxinfo, 0)) {
+	err = E_ALLOC;
+	goto box_bailout;
+    }
+
     varstart = malloc((boxinfo->v - 1) * sizeof *varstart);
-    if (varstart == NULL) return E_ALLOC;
     varsize = malloc((boxinfo->v - 1) * sizeof *varsize);
-    if (varsize == NULL) return E_ALLOC;
     line = malloc(maxline);
-    if (line == NULL) return E_ALLOC;
+
+    if (varstart == NULL || varsize == NULL || line == NULL) {
+	free(varstart);
+	free(varsize);
+	free(line);
+	err = E_ALLOC;
+	goto box_bailout;
+    }
+
     pputs(prn, M_("done\n"));
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	err = E_FOPEN;
+	goto box_bailout;
+    }
     pputs(prn, M_("reading variable information...\n"));
 
 #ifdef ENABLE_NLS
@@ -2892,7 +2912,11 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 	*ppdinfo = boxinfo;
     }
 
-    return 0;
+ box_bailout:
+
+    console_off();
+
+    return err;
 }
 
 static int xmlfile (const char *fname)
@@ -3649,6 +3673,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 
     *gretl_errmsg = '\0';
 
+    check_for_console(prn);
+
     /* COMPAT: Do not generate nodes for formatting spaces */
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
@@ -3823,10 +3849,12 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	strcpy(ppaths->datfile, fname);
     }
 
-    pprintf(prn, I_("\nRead datafile %s\n"), fname);
-    pprintf(prn, I_("periodicity: %d, maxobs: %d, "
-	   "observations range: %s-%s\n\n"), pdinfo->pd, pdinfo->n,
+    pprintf(prn, M_("\nRead datafile %s\n"), fname);
+    pprintf(prn, M_("periodicity: %d, maxobs: %d, "
+		    "observations range: %s-%s\n\n"), pdinfo->pd, pdinfo->n,
 	    pdinfo->stobs, pdinfo->endobs);
+
+    console_off();
 
     return 0;
 }

@@ -25,6 +25,7 @@
 #include "../pixmaps/mouse.xpm"
 
 /* #define POINTS_DEBUG 1 */
+/* #define PLOT_FONT_SELECTOR */
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -69,7 +70,8 @@ static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *termcombo;
 static GtkWidget *no_ols_check;
-static GtkWidget *ttfentry;
+static GtkWidget *ttfcombo;
+static GtkWidget *ttfspin;
 
 GtkWidget *filesavebutton;
 
@@ -132,9 +134,9 @@ typedef enum {
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 
-#define NO_LINES_TAB(s)  (s->code == PLOT_FREQ_SIMPLE || \
-			  s->code == PLOT_FREQ_NORMAL || \
-			  s->code == PLOT_FREQ_GAMMA)
+#define frequency_plot(s)       (s->code == PLOT_FREQ_SIMPLE || \
+			         s->code == PLOT_FREQ_NORMAL || \
+			         s->code == PLOT_FREQ_GAMMA)
 
 #ifdef GNUPLOT_PNG
 typedef enum {
@@ -182,6 +184,7 @@ static int zoom_unzoom_png (png_plot_t *plot, int view);
 static int redisplay_edited_png (png_plot_t *plot);
 static void create_selection_gc (png_plot_t *plot);
 static int get_plot_ranges (png_plot_t *plot);
+static const char *get_font_filename (const char *showname);
 #endif /* GNUPLOT_PNG */
 
 #ifdef PNG_COMMENTS
@@ -542,7 +545,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     spec->flags &= ~GPTSPEC_Y2AXIS;
 
-    if (!NO_LINES_TAB(spec)) {    
+    if (!frequency_plot(spec)) {    
 	for (i=0; i<spec->nlines; i++) {
 	    spec->lines[i].yaxis = 1;
 	    yaxis = 
@@ -572,7 +575,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    if (!NO_LINES_TAB(spec)) {   
+    if (!frequency_plot(spec)) {   
 	for (i=0; i<spec->nlines; i++) {
 	    widget_to_str(GTK_COMBO(stylecombo[i])->entry, 
 			  spec->lines[i].style, 
@@ -618,12 +621,22 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	}
     }
 
-    if (ttfentry != NULL) {
-	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(ttfentry));
+    if (ttfcombo != NULL && ttfspin != NULL) {
+	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry));
+#ifdef OLD_GTK
+	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ttfspin));
+#else
+	int ptsize = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(ttfspin));
+#endif
 
-	if (tmp != NULL) {
-	    *paths.pngfont = 0;
-	    strncat(paths.pngfont, tmp, sizeof(paths.pngfont) - 1);
+	if (tmp != NULL && *tmp != '\0') {
+	    const char *fname = get_font_filename(tmp);
+
+	    if (fname != NULL && ptsize > 5 && ptsize < 25) {
+		sprintf(paths.pngfont, "%s %d", fname, ptsize);
+	    } else {
+		*paths.pngfont = '\0';
+	    }
 	}
     }
 
@@ -680,7 +693,7 @@ static void save_session_graph_plotspec (GtkWidget *w, GPT_SPEC *spec)
 
 static void set_keyspec_sensitivity (GPT_SPEC *spec)
 {
-    if (!NO_LINES_TAB(spec)) {
+    if (!frequency_plot(spec)) {
 	int i; 
 	const char *p;
 
@@ -697,19 +710,96 @@ static void set_keyspec_sensitivity (GPT_SPEC *spec)
 
 /* ........................................................... */
 
-#ifdef GNUPLOT_FONT_SELECTOR
+#define TAB_MAIN_COLS 3
 
-static void graph_font_callback (GtkWidget *w, GtkWidget *fentry)
+struct font_info {
+    const char *fname;
+    const char *showname;
+};
+
+static struct font_info ttf_fonts[] = {
+    { "arial", "Arial", },
+    { "georgia", "Georgia", },
+#ifndef G_OS_WIN32
+    { "luxirr", "Luxi Serif" },
+    { "luxisr", "Luxi Sans" },
+    { "Vera", "Vera" },
+#endif
+    { "tahoma", "Tahoma" },
+    { "trebuc", "Trebuchet" },
+    { "verdana", "Verdana" }
+};
+
+static const char *get_font_filename (const char *showname)
 {
-    font_selector(NULL, GRAPH_FONT_SELECTION, NULL);
-    gtk_entry_set_text(GTK_ENTRY(fentry), paths.pngfont);
+    int i, nfonts = sizeof ttf_fonts / sizeof ttf_fonts[0];
+
+    for (i=0; i<nfonts; i++) {
+	if (!strcmp(ttf_fonts[i].showname, showname)) {
+	    return ttf_fonts[i].fname;
+	}
+    }
+    return NULL;
 }
 
-# define TAB_MAIN_COLS 3
-#else
-# define TAB_MAIN_COLS 2
+#ifndef G_OS_WIN32
 
-#endif /* GNUPLOT_FONT_SELECTOR */
+static int font_is_ok (const char *fname)
+{
+    char cmd[64];
+    int err;
+
+    sprintf(cmd, "set term png font %s 10", fname);
+    err = gnuplot_test_command(cmd);
+
+    return err == 0;
+}
+
+#endif
+
+static struct font_info *get_gnuplot_ttf_list (int *nf)
+{
+    static struct font_info *retlist = NULL;
+    static int goodfonts = -1;
+
+    if (goodfonts >= 0) {
+	*nf = goodfonts;
+    } else {
+	int i, j, nfonts = sizeof ttf_fonts / sizeof ttf_fonts[0];
+
+	retlist = malloc(nfonts * sizeof *retlist);
+	if (retlist == NULL) return NULL;
+
+	j = 0;
+	for (i=0; i<nfonts; i++) {
+#ifdef G_OS_WIN32
+	    retlist[j++] = ttf_fonts[i];
+#else
+	    if (font_is_ok(ttf_fonts[i].fname)) {
+		retlist[j++] = ttf_fonts[i];
+	    }
+#endif
+	}
+	goodfonts = j;
+	*nf = goodfonts;
+    }
+
+    return retlist;
+}
+
+static int font_match (const char *ttfname, const char *pngfont)
+{
+    return !strncmp(ttfname, pngfont, strlen(ttfname));
+}
+
+static int get_point_size (const char *font)
+{
+    int pts;
+
+    if (sscanf(font, "%*s %d\n", &pts) == 1) 
+	return pts;
+    return 10;
+}
 
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
@@ -815,9 +905,23 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     /* set TT font (if gnuplot uses libgd and freetype) */
     if (gnuplot_has_ttf()) {
 	GtkWidget *ebox;
-#ifdef GNUPLOT_FONT_SELECTOR
-	GtkWidget *fbutton;
+#ifdef OLD_GTK
+	GtkObject *adj;
 #endif
+	GList *fontnames = NULL;
+	struct font_info *ttflist;
+	const char *default_font = NULL;
+	int nfonts;
+
+	ttflist = get_gnuplot_ttf_list(&nfonts);
+	for (i=0; i<nfonts; i++) {
+	    fontnames = g_list_append(fontnames, (gpointer) ttflist[i].showname);
+	    if (font_match(ttflist[i].fname, paths.pngfont)) {
+		default_font = ttflist[i].showname;
+	    }
+	}
+	fontnames = g_list_append(fontnames, _("None"));
+	if (default_font == NULL) default_font = _("None");
 
 	/* first a separator */
 	tbl_len++;
@@ -828,10 +932,12 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
 	tbl_len++;
 	ebox = gtk_event_box_new();
+#if 0
 	gretl_tooltips_add(ebox, _("This box may contain the name of a "
 				   "TrueType font, such as arial or verdana, "
 				   "and a size in points.  Leave blank to "
 				   "use the default graph font."));
+#endif
 	tempwid = gtk_label_new (_("TrueType font"));
 	gtk_container_add(GTK_CONTAINER(ebox), tempwid);
 	gtk_table_attach_defaults(GTK_TABLE (tbl), 
@@ -839,41 +945,45 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(tempwid);
 	gtk_widget_show(ebox);
 
-	ttfentry = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(ttfentry), 15);
+	ttfcombo = gtk_combo_new();
+	gtk_entry_set_max_length(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  ttfentry, 1, 2, tbl_len-1, tbl_len);
-	gtk_entry_set_text(GTK_ENTRY(ttfentry), paths.pngfont);
+				  ttfcombo, 1, 2, tbl_len-1, tbl_len);
+	gtk_combo_set_popdown_strings(GTK_COMBO(ttfcombo), fontnames); 
+	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), default_font);
 #ifdef OLD_GTK
-	gtk_signal_connect(GTK_OBJECT(ttfentry), "activate", 
+	gtk_signal_connect(GTK_OBJECT(GTK_COMBO(ttfcombo)->entry), "activate", 
 			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			   spec);
 #else
-	gtk_entry_set_width_chars(GTK_ENTRY(ttfentry), 15);
-	g_signal_connect(G_OBJECT(ttfentry), "activate", 
+	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
+	g_signal_connect(G_OBJECT(GTK_COMBO(ttfcombo)->entry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
 #endif
-	gtk_widget_show (ttfentry);
+	gtk_widget_show (ttfcombo);
 
-#ifdef GNUPLOT_FONT_SELECTOR
-	fbutton = gtk_button_new_from_stock(GTK_STOCK_SELECT_FONT);	
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  fbutton, 2, 3, tbl_len-1, tbl_len);
-	g_signal_connect(G_OBJECT(fbutton), "clicked", 
-			 G_CALLBACK(graph_font_callback), 
-			 ttfentry);
-	gtk_widget_show (fbutton);
+#ifdef OLD_GTK
+	adj = gtk_adjustment_new(10, 6, 24, 1, 1, 1);
+	ttfspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+#else
+	ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
 #endif
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ttfspin), 
+				  get_point_size(paths.pngfont));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  ttfspin, 2, 3, tbl_len-1, tbl_len);
+	gtk_widget_show (ttfspin);
     } else {
-	ttfentry = NULL;
+	ttfcombo = NULL;
+	ttfspin = NULL;
     }
 
-    if (gnuplot_has_specified_colors()) { 
+    if (!frequency_plot(spec) && gnuplot_has_specified_colors()) { 
 	tbl_len++;
 	tempwid = gtk_hseparator_new();
 	gtk_table_attach_defaults 
-	    (GTK_TABLE (tbl), tempwid, 0, 2, tbl_len-1, tbl_len);  
+	    (GTK_TABLE (tbl), tempwid, 0, TAB_MAIN_COLS, tbl_len-1, tbl_len);  
 	gtk_widget_show (tempwid);	
 
 	for (i=0; i<3; i++) {
@@ -1542,7 +1652,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     if (spec->flags & GPTSPEC_Y2AXIS) {
 	gpt_tab_XY(notebook, spec, 2);
     }
-    if (!NO_LINES_TAB(spec)) {
+    if (!frequency_plot(spec)) {
 	gpt_tab_lines(notebook, spec);
     }    
     gpt_tab_labels(notebook, spec); 

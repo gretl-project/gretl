@@ -1188,10 +1188,13 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 	write_rc();
     } 
 
+# ifdef PLOT_FONT_SELECTOR
     else if (which == GRAPH_FONT_SELECTION) {
-	strcpy(paths.pngfont, fontname);
-	*paths.pngfont = tolower(*paths.pngfont);
+	GtkWidget *fentry = g_object_get_data(G_OBJECT(fs), "font_entry");
+
+	gtk_entry_set_text(GTK_ENTRY(fentry), fontname);
     }
+# endif
 
 # ifndef USE_GNOME /* gnome handles the app font */
     else if (which == APP_FONT_SELECTION) {
@@ -1212,6 +1215,13 @@ static void fontsel_quit (GtkWidget *w, gpointer p)
 void font_selector (gpointer data, guint which, GtkWidget *widget)
 {
     static GtkWidget *fontsel = NULL;
+    int filter = GTK_FONT_HACK_LATIN;
+    char *title = NULL;
+    const char *fontname = NULL;
+
+# ifdef USE_GNOME
+    if (which == APP_FONT_SELECTION) return; /* shouldn't happen */
+# endif
 
     if (fontsel != NULL) {
 	if (!GTK_WIDGET_VISIBLE(fontsel)) gtk_widget_show (fontsel);
@@ -1220,36 +1230,34 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
     }
 
     if (which == FIXED_FONT_SELECTION) {
-	fontsel = gtk_font_selection_hack_dialog_new 
-	    (_("Font for gretl output windows"));
-	gtk_font_selection_hack_dialog_set_filter
-	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
-	     GTK_FONT_HACK_LATIN_MONO);
-	gtk_font_selection_hack_dialog_set_font_name 
-	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fixedfontname);
-	g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
-    } else if (which == APP_FONT_SELECTION) {
-# ifdef USE_GNOME
-	return; /* shouldn't be reached: gnome handles the app font */
-# else
-	fontsel = gtk_font_selection_hack_dialog_new 
-	    (_("Font for menus and labels"));
-	gtk_font_selection_hack_dialog_set_filter
-	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
-	     GTK_FONT_HACK_LATIN);
-	gtk_font_selection_hack_dialog_set_font_name 
-	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), appfontname);
-	g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
-# endif /* USE_GNOME */
-    } else if (which == GRAPH_FONT_SELECTION) {
-	fontsel = gtk_font_selection_hack_dialog_new(NULL);
-	gtk_font_selection_hack_dialog_set_filter
-	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
-	     GTK_FONT_HACK_LATIN);
-	gtk_font_selection_hack_dialog_set_font_name 
-	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), paths.pngfont);
-	g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
-    }	
+	title = _("Font for gretl output windows");
+	filter = GTK_FONT_HACK_LATIN_MONO;
+	fontname = fixedfontname;
+    }
+# ifndef USE_GNOME
+    else if (which == APP_FONT_SELECTION) {
+	title = _("Font for menus and labels");
+	fontname = appfontname;
+    }
+# endif
+# ifdef PLOT_FONT_SELECTOR
+    else if (which == GRAPH_FONT_SELECTION) {
+	fontname = paths.pngfont;
+    }
+# endif
+
+    fontsel = gtk_font_selection_hack_dialog_new(title);
+    gtk_font_selection_hack_dialog_set_filter
+	(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), filter);
+    gtk_font_selection_hack_dialog_set_font_name 
+	(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fontname); 
+    g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
+
+# ifdef PLOT_FONT_SELECTOR
+    if (which == GRAPH_FONT_SELECTION) {
+	 g_object_set_data(G_OBJECT(fontsel), "font_entry", widget);
+    }
+# endif
 
     gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
 
@@ -1259,11 +1267,10 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
     g_signal_connect (G_OBJECT(fontsel), "destroy",
 		      G_CALLBACK(fontsel_quit),
 		      NULL);
-    g_signal_connect (G_OBJECT 
-		      (GTK_FONT_SELECTION_HACK_DIALOG 
-		       (fontsel)->ok_button),
-		      "clicked", G_CALLBACK(font_selection_ok),
-		      GTK_FONT_SELECTION_HACK_DIALOG (fontsel));
+    g_signal_connect (G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->ok_button),
+		      "clicked", 
+		      G_CALLBACK(font_selection_ok),
+		      fontsel);
     g_signal_connect(G_OBJECT(GTK_FONT_SELECTION_HACK_DIALOG(fontsel)->cancel_button),
 		     "clicked", 
 		     G_CALLBACK(delete_widget),
@@ -1327,9 +1334,15 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
     if (which == FIXED_FONT_SELECTION) {
 	cf.Flags |= CF_FIXEDPITCHONLY;
 	fontname_to_win32(fixedfontname, 1, lf.lfFaceName, &(cf.iPointSize));
-    } else {
+    } 
+    else if (which == APP_FONT_SELECTION) {
 	fontname_to_win32(appfontname, 0, lf.lfFaceName, &(cf.iPointSize));
+    } 
+# ifdef PLOT_FONT_SELECTOR
+    else if (which == GRAPH_FONT_SELECTION) {
+	fontname_to_win32(paths.pngfont, 0, lf.lfFaceName, &(cf.iPointSize));
     }
+# endif
 
     cf.lpLogFont = &lf;
 
@@ -1346,9 +1359,11 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 	    set_app_font(fontname);
 	    write_rc();
 	}
+# ifdef PLOT_FONT_SELECTOR
 	else if (which == GRAPH_FONT_SELECTION) {
-	    strcpy(paths.pngfont, fontname);
+	    gtk_entry_set_text(GTK_ENTRY(widget), fontname);
 	}
+# endif
     }
 }
 

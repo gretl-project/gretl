@@ -42,12 +42,17 @@ gui/gretl.c
 gui/guiprint.c
 gui/gui_utils.c
 gui/helpfiles.c
+gui/library.c
+gui/model_table.c
+gui/objectsave.c
 gui/obsbutton.c
 gui/plotps.c
 gui/selector.c
 gui/series_view.c
+gui/session.c
 gui/settings.c
 gui/ssheet.c
+gui/webget.c
 gui2/boxplots.c
 gui2/calculator.c
 gui2/callbacks.c

@@ -185,8 +185,13 @@ static void console_exec (void)
 
     if (!redirected) {
 	/* put results into console window */
-	gtk_text_buffer_insert(buf, &start, console_prn->buf, 
-			       strlen(console_prn->buf));
+	if (!g_utf8_validate(console_prn->buf, -1, NULL)) {
+	    fprintf(stderr, "text did not validate as utf8:\n'%s'\n", 
+		    console_prn->buf);
+	} else {
+	    gtk_text_buffer_insert(buf, &start, console_prn->buf, 
+				   strlen(console_prn->buf));
+	}
     }
 
     if (console_prn->fp == NULL) {

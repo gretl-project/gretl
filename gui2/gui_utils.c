@@ -1602,7 +1602,7 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
     GtkTextIter iter;    
     char readbuf[MAXSTR], *chunk = NULL;
 
-    fp = fopen(fname, "r");
+    fp = fopen(fname, "rb");
     if (fp == NULL) return 1;
 
     gtk_source_buffer_begin_not_undoable_action (sbuf);
@@ -1614,7 +1614,7 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
 
     while (fgets(readbuf, sizeof readbuf - 1, fp)) {
 #ifdef ENABLE_NLS
-	if (!g_utf8_validate(readbuf, sizeof readbuf, NULL)) {
+	if (!g_utf8_validate(readbuf, -1, NULL)) {
 	    gsize bytes;
 
 	    chunk = g_locale_to_utf8(readbuf, -1, NULL, &bytes, NULL);

@@ -663,6 +663,18 @@ char *maybe_iso_gettext (const char *msgid)
    else return gettext(msgid);
 } 
 
+void check_for_console (PRN *prn)
+{
+    if (prn->fp == stdout || prn ->fp == stderr) {
+	printing_to_console = 1;
+    }
+}
+
+void console_off (void)
+{
+    printing_to_console = 0;
+}
+
 #endif  
 
 const char *print_time (const time_t *timep)

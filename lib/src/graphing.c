@@ -26,16 +26,17 @@
 
 #include <unistd.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 # include <windows.h>
 #else
 # include <glib.h>
-#if GLIB_CHECK_VERSION(2,0,0)
+# if GLIB_CHECK_VERSION(2,0,0)
 #  define GLIB2
 #  include <signal.h>
 #  include <wait.h>
 # endif /* GLIB_CHECK_VERSION */
-#endif
+#endif /* ! _WIN32 */
+
 
 /* pvalues.c */
 extern double gamma_dist (double s1, double s2, double x, int control);
@@ -50,10 +51,11 @@ static const char *auto_ols_string = "# plot includes automatic OLS line\n";
 
 /* #define SPAWN_DEBUG */
 
-static int gnuplot_test_command (const char *cmd)
+int gnuplot_test_command (const char *cmd)
 {
     int ok, ret = 1;
-    int child_pid = 0, sinp = 0;
+    char errbuf[32];
+    int child_pid = 0, sinp = 0, serr = 0;
     GError *error = NULL;
     gchar *argv[] = {
 	(*gnuplot_path == 0)? "gnuplot" : gnuplot_path,
@@ -67,14 +69,13 @@ static int gnuplot_test_command (const char *cmd)
 				   NULL,
 				   G_SPAWN_SEARCH_PATH |
 				   G_SPAWN_STDOUT_TO_DEV_NULL |
-				   G_SPAWN_STDERR_TO_DEV_NULL |
 				   G_SPAWN_DO_NOT_REAP_CHILD,
 				   NULL,
 				   NULL,
 				   &child_pid,
 				   &sinp,
 				   NULL,
-				   NULL,
+				   &serr,
 				   &error);
 
 #ifdef SPAWN_DEBUG
@@ -85,19 +86,28 @@ static int gnuplot_test_command (const char *cmd)
 
     if (ok) {
 	int test, status;
+	int errbytes;
 
 	write(sinp, cmd, strlen(cmd));
 	write(sinp, "\n", 1);
 	close(sinp);
 	test = waitpid(child_pid, &status, 0);
-#ifdef SPAWN_DEBUG
+# ifdef SPAWN_DEBUG
 	fprintf(stderr, "waitpid returned %d, WIFEXITED %d, "
 		"WEXITSTATUS %d\n", test, WIFEXITED(status),
 		WEXITSTATUS(status));
-#endif
+# endif
 	if (test == child_pid && WIFEXITED(status)) {
 	    ret = WEXITSTATUS(status);
 	}
+	errbytes = read(serr, errbuf, sizeof errbuf - 1);
+	if (errbytes > 0) {
+	    errbuf[errbytes] = '\0';
+	    if (strstr(errbuf, "not find/open font")) {
+		ret = 1;
+	    }
+	} 
+	close(serr);
     } else {
 	fprintf(stderr, "error: '%s'\n", error->message);
 	g_error_free(error);
@@ -106,11 +116,11 @@ static int gnuplot_test_command (const char *cmd)
     return ret;
 }
 
-#elif !defined(WIN32)
+#elif !defined(_WIN32)
 
 #include <signal.h>
 
-static int gnuplot_test_command (const char *cmd)
+int gnuplot_test_command (const char *cmd)
 {
     char fullcmd[512];
     int err;
@@ -568,33 +578,33 @@ static int gnuplot_has_filledcurve (void)
 
 int gnuplot_has_ttf (void)
 {
-    static int t = -1; 
+    static int err = -1; 
 
-    if (t == -1) {
-	t = gnuplot_test_command("set term png font arial 8");
+    if (err == -1) {
+	err = gnuplot_test_command("set term png font arial 8");
     }
-    return !t;
+    return !err;
 }
 
 int gnuplot_has_specified_colors (void)
 {
-    static int c = -1; 
+    static int err = -1; 
 
-    if (c == -1) {
+    if (err == -1) {
 	/* try the old-style command: if it fails, we have the new driver */
-	c = gnuplot_test_command("set term png color");
+	err = gnuplot_test_command("set term png color");
     }
-    return c;
+    return err;
 }
 
 static int gnuplot_has_filledcurve (void)
 {
-    static int t = -1; 
+    static int err = -1; 
 
-    if (t == -1) {
-	t = gnuplot_test_command("set data style filledcurve");
+    if (err == -1) {
+	err = gnuplot_test_command("set data style filledcurve");
     }
-    return !t;
+    return !err;
 }
 
 #endif /* WIN32 */

@@ -173,3 +173,5 @@ void set_gnuplot_pallette (int i, const char *colstr);
 
 const char *get_gnuplot_pallette (int i, int plottype);
 
+int gnuplot_test_command (const char *cmd);
+

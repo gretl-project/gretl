@@ -1024,7 +1024,9 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
     /* get the initial filename off the command line */
     if (get_quoted_filename(line, fname)) return 0; 
+
     if (sscanf(line, "%*s %s", fname) != 1) return 1;
+
     /* try a basic path search on this filename */
     addpath(fname, ppaths, script);
     if (addpath != NULL && setpath) {

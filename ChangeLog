@@ -31,8 +31,9 @@ version 1.2.0
 - Improvements to data-editing spreadsheet in gtk-2.0 version
 - New, improved dialogs for setting the sample range and sub-
   sampling using a dummy variable
-- Add color selection to the graph editing dialog (only applies
-  if gnuplot has the "new" PNG driver, i.e. gnuplot 3.8)
+- Add color selection to the graph editing dialog and improve
+  the mechanism for selecting a graph font (only applies if 
+  gnuplot has the "new" PNG driver, i.e. gnuplot 3.8)
 - minor fixes to the build process
 - updates to gtk-1.2 GUI (make more consistent with the gtk-2.0 
   version)
