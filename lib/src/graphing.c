@@ -456,6 +456,16 @@ static int factorized_vars (double ***pZ,
     return 0;
 }
 
+#ifndef OS_WIN32
+static int gp_png_wants_color (void)
+{
+    int c; 
+
+    c = system("echo \"set term png color\" | `which gnuplot` 2>/dev/null");
+    return !c;
+}
+#endif
+
 /**
  * gnuplot_init:
  * @ppaths: pointer to path information struct.
@@ -479,11 +489,14 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
     *fpp = fopen(ppaths->plotfile, "w");
     if (*fpp == NULL) return 1;
     if (GRETL_GUI(ppaths)) {
-	/* fprintf(*fpp, "set term png color\n"); */
-	fprintf(*fpp, "set term png\n");
+#ifdef OS_WIN32
+	fprintf(*fpp, "set term png color\n");
+#else /* see if the png terminal wants the "color" parameter */
+	fprintf(*fpp, "set term png%s\n", (gp_png_wants_color())? " color" : "");
+#endif
 	fprintf(*fpp, "set output 'gretltmp.png'\n");
     }
-#else
+#else /* not GNUPLOT_PNG */
     *fpp = fopen(ppaths->plotfile, "w");
     if (*fpp == NULL) return 1;
 #endif
