@@ -431,8 +431,6 @@ int get_base (char *targ, const char *src, char c)
 	}
     }
 
-    fprintf(stderr, "get_base: src='%s', targ='%s'\n", src, targ);
-
     return 0;
 }
 

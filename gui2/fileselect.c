@@ -68,42 +68,42 @@ struct extmap {
 };
 
 static struct extmap action_map[] = {
-    {SAVE_DATA, ".gdt"},
-    {SAVE_DATA_AS, ".gdt"},
-    {SAVE_GZDATA, ".gdt"},
-    {SAVE_BIN1, ".gdt"},
-    {SAVE_BIN2, ".gdt"},
-    {SAVE_CMDS, ".inp"},
-    {SAVE_SCRIPT, ".inp"},
-    {SAVE_CONSOLE, ".inp"},
-    {SAVE_MODEL, ".txt"},
-    {SAVE_SESSION, ".gretl"},
-    {SAVE_GP_CMDS, ".plt"},
-    {SAVE_BOXPLOT_EPS, ".eps"},
-    {SAVE_BOXPLOT_PS, ".ps"},
-    {SAVE_BOXPLOT_XPM, ".xpm"},
-    {EXPORT_CSV, ".csv"},
-    {EXPORT_R, ".R"},
-    {EXPORT_R_ALT, ".R"},
-    {EXPORT_OCTAVE, ".m"},
-    {SAVE_OUTPUT, ".txt"},
-    {SAVE_TEX_TAB, ".tex"},
-    {SAVE_TEX_EQ, ".tex"},
-    {SAVE_TEX_TAB_FRAG, ".tex"},
-    {SAVE_TEX_EQ_FRAG, ".tex"},
-    {OPEN_DATA, ".gdt"},
-    {OPEN_SCRIPT, ".inp"},
-    {OPEN_SESSION, ".gretl"},
-    {OPEN_CSV, ".csv"},
-    {APPEND_CSV, ".csv"},
-    {OPEN_ASCII, ".txt"},
-    {APPEND_ASCII, ".txt"},
-    {OPEN_BOX, ".box"},
-    {OPEN_GNUMERIC, ".gnumeric"},
-    {APPEND_GNUMERIC, ".gnumeric"},
-    {OPEN_EXCEL, ".xls"},
-    {APPEND_EXCEL, ".xls"},
-    {FILE_OP_MAX, NULL}
+    { SAVE_DATA,         ".gdt" },
+    { SAVE_DATA_AS,      ".gdt" },
+    { SAVE_GZDATA,       ".gdt" },
+    { SAVE_BIN1,         ".gdt" },
+    { SAVE_BIN2,         ".gdt" },
+    { SAVE_CMDS,         ".inp" },
+    { SAVE_SCRIPT,       ".inp" },
+    { SAVE_CONSOLE,      ".inp" },
+    { SAVE_MODEL,        ".txt" },
+    { SAVE_SESSION,      ".gretl" },
+    { SAVE_GP_CMDS,      ".plt" },
+    { SAVE_BOXPLOT_EPS,  ".eps" },
+    { SAVE_BOXPLOT_PS,   ".ps" },
+    { SAVE_BOXPLOT_XPM,  ".xpm" },
+    { EXPORT_CSV,        ".csv" },
+    { EXPORT_R,          ".R" },
+    { EXPORT_R_ALT,      ".R" },
+    { EXPORT_OCTAVE,     ".m" },
+    { SAVE_OUTPUT,       ".txt" },
+    { SAVE_TEX_TAB,      ".tex" },
+    { SAVE_TEX_EQ,       ".tex" },
+    { SAVE_TEX_TAB_FRAG, ".tex" },
+    { SAVE_TEX_EQ_FRAG,  ".tex" },
+    { OPEN_DATA,         ".gdt" },
+    { OPEN_SCRIPT,       ".inp" },
+    { OPEN_SESSION,      ".gretl" },
+    { OPEN_CSV,          ".csv" },
+    { APPEND_CSV,        ".csv" },
+    { OPEN_ASCII,        ".txt" },
+    { APPEND_ASCII,      ".txt" },
+    { OPEN_BOX,          ".box" },
+    { OPEN_GNUMERIC,     ".gnumeric" },
+    { APPEND_GNUMERIC,   ".gnumeric" },
+    { OPEN_EXCEL,        ".xls" },
+    { APPEND_EXCEL,      ".xls" },
+    { FILE_OP_MAX,       NULL }
 };
 
 /* ........................................................... */
@@ -126,10 +126,10 @@ static unsigned long action_to_opt (const int action)
 
 static const char *get_gp_ext (const char *termtype)
 {
-    if (!strncmp(termtype, "postscript", 10)) return ".eps";
-    else if (!strcmp(termtype, "fig")) return ".fig";
-    else if (!strcmp(termtype, "latex")) return ".tex";
-    else if (!strcmp(termtype, "png")) return ".png";
+    if (!strncmp(termtype, "postscript", 10))    return ".eps";
+    else if (!strcmp(termtype, "fig"))           return ".fig";
+    else if (!strcmp(termtype, "latex"))         return ".tex";
+    else if (!strcmp(termtype, "png"))           return ".png";
     else if (!strcmp(termtype, "plot commands")) return ".plt";
     else return "*";
 }
@@ -413,41 +413,41 @@ static struct winfilter get_filter (int action, gpointer data)
     int i;
     struct winfilter filter;
     static struct win32_filtermap map[] = {
-	{SAVE_DATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{SAVE_DATA_AS, { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{SAVE_GZDATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{SAVE_BIN1, { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{SAVE_BIN2, { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{SAVE_CMDS, { N_("gretl command files (*.inp)"), "*.inp" }},
-	{SAVE_SCRIPT, { N_("gretl script files (*.inp)"), "*.inp" }},
+	{SAVE_GZDATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_BIN1,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_BIN2,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_CMDS,    { N_("gretl command files (*.inp)"), "*.inp" }},
+	{SAVE_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{SAVE_CONSOLE, { N_("gretl command files (*.inp)"), "*.inp" }},
-	{SAVE_MODEL, { N_("text files (*.txt)"), "*.txt" }},
+	{SAVE_MODEL,   { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
 	{SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
-	{SAVE_BOXPLOT_PS, { N_("postscript files (*.ps)"), "*.ps" }},
+	{SAVE_BOXPLOT_PS,  { N_("postscript files (*.ps)"), "*.ps" }},
 	{SAVE_GP_CMDS, { N_("gnuplot files (*.plt)"), "*.plt" }},
-	{EXPORT_CSV, { N_("CSV files (*.csv)"), "*.csv" }},
-	{EXPORT_R, { N_("GNU R files (*.R)"), "*.R" }},
+	{EXPORT_CSV,   { N_("CSV files (*.csv)"), "*.csv" }},
+	{EXPORT_R,     { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_R_ALT, { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
-	{SAVE_OUTPUT, { N_("text files (*.txt)"), "*.txt" }},
+	{SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_TEX_TAB, { N_("TeX files (*.tex)"), "*.tex" }},
-	{SAVE_TEX_EQ, { N_("TeX files (*.tex)"), "*.tex" }},
+	{SAVE_TEX_EQ,  { N_("TeX files (*.tex)"), "*.tex" }},
 	{SAVE_TEX_TAB_FRAG, { N_("TeX files (*.tex)"), "*.tex" }},
-	{SAVE_TEX_EQ_FRAG, { N_("TeX files (*.tex)"), "*.tex" }},
-	{OPEN_DATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{OPEN_SCRIPT, { N_("gretl script files (*.inp)"), "*.inp" }},
+	{SAVE_TEX_EQ_FRAG,  { N_("TeX files (*.tex)"), "*.tex" }},
+	{OPEN_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{OPEN_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{OPEN_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
-	{OPEN_CSV, { N_("CSV files (*.csv)"), "*.csv" }},
-	{APPEND_CSV, { N_("CSV files (*.csv)"), "*.csv" }},
-	{OPEN_ASCII, { N_("ASCII files (*.txt)"), "*.txt" }},
+	{OPEN_CSV,     { N_("CSV files (*.csv)"), "*.csv" }},
+	{APPEND_CSV,   { N_("CSV files (*.csv)"), "*.csv" }},
+	{OPEN_ASCII,   { N_("ASCII files (*.txt)"), "*.txt" }},
 	{APPEND_ASCII, { N_("ASCII files (*.txt)"), "*.txt" }},
-	{OPEN_BOX, { N_("BOX data files (*.box)"), "*.box" }},
-	{OPEN_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
+	{OPEN_BOX,     { N_("BOX data files (*.box)"), "*.box" }},
+	{OPEN_GNUMERIC,   { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
-	{OPEN_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
+	{OPEN_EXCEL,   { N_("Excel files (*.xls)"), "*.xls" }},
 	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
-	{SET_PATH, { N_("program files (*.exe)"), "*.exe" }}
+	{SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
     };
     static struct winfilter olddat_filter = {
 	N_("gretl data files (*.dat)"), "*.dat"
