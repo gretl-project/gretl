@@ -466,7 +466,7 @@ int mplsq (const int *list, const int *polylist,
 
     model.polylist = polylist; /* attached for convenience */
 
-    if (poly_nonsense(&model, list)) return E_DATA;
+    if (polylist != NULL && poly_nonsense(&model, list)) return E_DATA;
 
     /* check for missing obs in sample */
     if (data_problems(list, *pZ, pdinfo, errbuf)) return E_DATA;
