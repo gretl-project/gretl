@@ -89,7 +89,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ) $(CEPHES_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 0:6:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:7:0
 
 -include $(OBJS:.o=.d)
 

@@ -98,4 +98,6 @@ int prn_to_clipboard (PRN *prn, int copycode);
 
 GtkWidget *standard_button (const gchar *flag);
 
+int get_worksheet_data (const char *fname, int datatype, int append);
+
 #endif /* GUI_UTILS_H */

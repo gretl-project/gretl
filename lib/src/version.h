@@ -21,7 +21,7 @@
 #define GRETL_VERSION_H
 
 #define LIBGRETL_CURRENT   0
-#define LIBGRETL_REVISION  6
+#define LIBGRETL_REVISION  7
 #define LIBGRETL_AGE       0
 
 const char *version_string = "1.0.8";

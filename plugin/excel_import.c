@@ -753,6 +753,25 @@ static int got_valid_varnames (wbook *book, int ncols, int skip)
     return VARNAMES_OK;
 }
 
+static int missval_string (const char *s)
+{
+    if (s + 1 == 0) return 1;
+    else {
+	char *p, test[6];
+
+	*test = 0;
+	strncat(test, s + 1, 4);
+	p = test;
+	while (*p) {
+	    *p = tolower(*p);
+	    p++;
+	}
+	if (!strcmp(test, "na") || !strcmp(test, "n.a."))
+	    return 1;
+    }
+    return 0;
+}
+
 struct string_err {
     int row;
     int column;
@@ -774,8 +793,8 @@ static int data_block (wbook *book, int ncols, int skip, struct string_err *err)
 		return -1;
 	    }
 	    if (IS_STRING(rowptr[t].cells[i])) {
-		if (!strcmp(rowptr[t].cells[i], "NA") ||
-		    !strcmp(rowptr[t].cells[i], "na")) {
+		if (missval_string(rowptr[t].cells[i])) {
+		    free(rowptr[t].cells[i]);
 		    rowptr[t].cells[i] = g_strdup("-999.0");
 		    return -1;
 		} else {
@@ -802,7 +821,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 			       "starting column or row?");
 
     errbuf = errtext;
-    errbuf[0] = '\0';
+    *errbuf = '\0';
 
     newinfo = datainfo_new();
     if (newinfo == NULL) {
@@ -903,9 +922,6 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    goto getout; 
 	} else if (gotdata == -1) {
 	    sprintf(errbuf, _("Warning: there were missing values\n"));
-	    strcat(errbuf, _(adjust_rc));
-	    /* err = 1; */
-	    /* goto getout;  */
 	}	    
 
 	i = book.col_offset;

@@ -13,7 +13,13 @@ version 1.0.8
 - Fix bug in editing of varnames and labels (could get onto
   the wrong line in some cases)
 - Fix gretl's startup routine for Gnu R so that it never over-
-  writes the file .Profile
+  writes the file .Rprofile
+- Enhancements to Excel importer plugin (better warnings)
+- Permit opening Excel or Gnumeric data from initial command-
+  line invocation of gretl
+- Autocorrelation test: add calculation and display of serial
+  correlation-robust standard errors, if significant at the 5
+  per cent level
 
 04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey

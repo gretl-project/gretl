@@ -544,42 +544,43 @@ void register_data (const char *fname, int record)
 
 /* ........................................................... */
 
-static void get_worksheet_data (const char *fname, int datatype,
-				int append)
+int get_worksheet_data (const char *fname, int datatype, int append)
 {
     int err;
     void *handle;
     int (*sheet_get_data)(const char*, double ***, DATAINFO *, char *);
 
     if (datatype == GRETL_GNUMERIC) {
-	if (gui_open_plugin("gnumeric_import", &handle)) return;
+	if (gui_open_plugin("gnumeric_import", &handle)) return 1;
 	sheet_get_data = get_plugin_function("wbook_get_data", handle);
     }
     else if (datatype == GRETL_EXCEL) {
-	if (gui_open_plugin("excel_import", &handle)) return;
+	if (gui_open_plugin("excel_import", &handle)) return 1;
 	sheet_get_data = get_plugin_function("excel_get_data", handle);
     }
     else {
 	errbox(_("Unrecognized data type"));
-	return;
+	return 1;
     }
 
     if (sheet_get_data == NULL) {
         errbox(_("Couldn't load plugin function"));
         close_plugin(handle);
-        return;
+        return 1;
     }
 
     err = (*sheet_get_data)(fname, &Z, datainfo, errtext);
     close_plugin(handle);
 
     if (err == -1) /* the user canceled the import */
-	return;
+	return 0;
 
     if (err) {
 	if (strlen(errtext)) errbox(errtext);
 	else errbox(_("Failed to import spreadsheet data"));
-	return;
+	return 1;
+    } else {
+	if (strlen(errtext)) errbox(errtext);
     }
 
     if (append) {
@@ -589,8 +590,10 @@ static void get_worksheet_data (const char *fname, int datatype,
     } else {
 	data_status |= IMPORT_DATA;
 	strcpy(paths.datfile, fname);
-	register_data(fname, 1);
+	if (mdata != NULL) register_data(fname, 1);
     }
+
+    return 0;
 }
 
 /* ........................................................... */

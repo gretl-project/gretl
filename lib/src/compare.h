@@ -22,12 +22,13 @@
 #include <stdio.h>
 
 typedef enum {
-    NONE,      /* not an auxiliary regression */
+    AUX_NONE,  /* not an auxiliary regression */
     AUX_SQ,    /* aux. regression for nonlinearity (squared terms) */
     AUX_LOG,   /* aux. regression for nonlinearity (log terms) */
     AUX_CHOW,  /* aux. regression for Chow test */
     AUX_ADD,   /* aux. regression for adding variables */
     AUX_AR,    /* aux. regression for autocorrelation test */
+    AUX_SCR,   /* regression showing serial correlation-robust std errs */
     AUX_WHITE, /* aux. regression for heteroskedasticity (White's test) */
     AUX_COINT, /* aux. regression for cointegreation test */
     AUX_ARCH,  /* aux. regression for ARCH test */

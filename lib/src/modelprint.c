@@ -764,14 +764,19 @@ static void print_model_heading (const MODEL *pmod,
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
     }
-    else { /* ordinary dependent variable */
+    else { 
+	/* ordinary dependent variable */
 	if (tex) tex_escape(vname, pdinfo->varname[pmod->list[1]]);
 	pprintf(prn, "%s: %s\n", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? vname : pdinfo->varname[pmod->list[1]]);
     }
 
-    if (pmod->ci == WLS || pmod->ci == ARCH) {
+    if (pmod->aux == AUX_SCR) {
+	pprintf(prn, _("Serial correlation-robust standard errors, "
+		"lag order %d\n"), pmod->order);
+    }
+    else if (pmod->ci == WLS || pmod->ci == ARCH) {
 	if (tex) {
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
 	    pputs(prn, "\\\\\n");
@@ -780,8 +785,7 @@ static void print_model_heading (const MODEL *pmod,
 		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
 		(tex)? vname : pdinfo->varname[pmod->nwt]);
     }
-
-    if (pmod->ci == CORC || pmod->ci == HILU) {
+    else if (pmod->ci == CORC || pmod->ci == HILU) {
 	if (tex) {
 	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", pmod->rho_in);
 	}
@@ -1103,7 +1107,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     print_coeff_table_end (prn);
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
-	pmod->aux == AUX_RESET) {
+	pmod->aux == AUX_RESET || pmod->aux == AUX_SCR) {
 	goto close_format;
     }
 

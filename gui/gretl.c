@@ -673,8 +673,6 @@ int main (int argc, char *argv[])
 	ftype = detect_filetype(paths.datfile, &paths, prn);
 
 	switch (ftype) {
-	case GRETL_UNRECOGNIZED:
-	    exit(EXIT_FAILURE);
 	case GRETL_NATIVE_DATA:
 	    err = get_data(&Z, datainfo, paths.datfile, &paths, data_status, 
 			   prn);
@@ -689,12 +687,23 @@ int main (int argc, char *argv[])
 	case GRETL_BOX_DATA:
 	    err = import_box(&Z, datainfo, paths.datfile, prn);
 	    break;
+	case GRETL_EXCEL:
+	case GRETL_GNUMERIC:
+	    err = get_worksheet_data(paths.datfile, ftype, 0);
+	    break;
 	case GRETL_SCRIPT:
 	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
 	    paths.datfile[0] = '\0';
 	    break;
+	case GRETL_UNRECOGNIZED:
+	    exit(EXIT_FAILURE);
+	    break;
+	default:
+	    exit(EXIT_FAILURE);
+	    break;
 	}
+
 	if (ftype != GRETL_SCRIPT && err) {
 	    errmsg(err, prn);
 	    exit(EXIT_FAILURE);
@@ -1711,7 +1720,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 
     cmap = gdk_colormap_get_system();
     toolbar_box = gtk_handle_box_new();
-    gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(toolbar_box), NONE);
+    gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(toolbar_box), 
+				   GTK_SHADOW_NONE);
     gtk_box_pack_start(GTK_BOX(box), toolbar_box, FALSE, FALSE, 0);
 
     gretl_toolbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL,

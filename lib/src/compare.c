@@ -623,7 +623,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	*model_count += 1;
 	free(tmplist);
 	if (orig->ci == LOGIT || orig->ci == PROBIT)
-	    new->aux = NONE;
+	    new->aux = AUX_NONE;
     }
 
     pdinfo->t1 = t1;
@@ -771,6 +771,126 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+/* Below: apparatus for generating standard errors that are robust in 
+   face of general serial correlation (see Wooldridge, Introductory
+   Econometrics, chapter 12)
+*/
+
+static double get_vhat (double *ahat, int g, int t1, int t2)
+{
+    int t, h;
+    double mult, a_cross_sum;
+    double vhat;
+
+    vhat = 0.0;
+
+    for (t=t1; t<=t2; t++) {
+	vhat += ahat[t] * ahat[t];
+    }
+
+    for (h=1; h<=g; h++) {
+	mult = 1.0 - (double) h / (g + 1);
+	a_cross_sum = 0.0;
+	for (t=h+t1; t<=t2; t++) {
+	    a_cross_sum += ahat[t] * ahat[t-h];
+	}
+	vhat += 2.0 * mult * a_cross_sum;
+    }
+
+    return vhat;
+}
+
+static int autocorr_standard_errors (MODEL *pmod, double ***pZ, 
+				     DATAINFO *pdinfo, PRN *prn)
+{
+    int *auxlist = NULL;
+    double *ahat = NULL;
+    double *robust = NULL;
+    double *tmp;
+    int i, j, g;
+    int aux = AUX_NONE, order = 0;
+    MODEL auxmod;
+
+    auxlist = malloc(pmod->list[0] * sizeof *auxlist);
+    ahat = malloc(pdinfo->n * sizeof *ahat);
+    robust = malloc((pmod->ncoeff + 1) * sizeof *robust);
+
+    if (auxlist == NULL || ahat == NULL || robust == NULL) {
+	free(auxlist);
+	free(ahat);
+	free(robust);
+	return E_ALLOC;
+    }
+
+    /* Newey-West suggestion */
+    g = 4.0 * pow(pmod->nobs/100.0, 2.0/9.0);
+
+    auxlist[0] = pmod->list[0] - 1;
+
+    _init_model(&auxmod, pdinfo);
+
+    /* loop across the indep vars in the original model */
+    for (i=2; i<=pmod->list[0]; i++) {
+	double vhat = 0;
+	double sderr;
+	int k, t;
+
+	/* set the given indep var as the dependent */
+	auxlist[1] = pmod->list[i];
+
+	k = 2;
+	for (j=2; j<=pmod->list[0]; j++) {
+	    /* add other indep vars as regressors */
+	    if (pmod->list[j] == auxlist[1]) continue;
+	    auxlist[k++] = pmod->list[j];
+	}
+
+	auxmod = lsq(auxlist, pZ, pdinfo, OLS, 0, 0.0);
+
+	if (auxmod.errcode) {
+	    fprintf(stderr, "Error estimating auxiliary model, code=%d\n", 
+		    auxmod.errcode);
+	    pmod->sderr[i-1] = NADBL;
+	} else {
+	    /* compute robust standard error */
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		ahat[t] = pmod->uhat[t] * auxmod.uhat[t];
+	    }
+	    vhat = get_vhat(ahat, g, pmod->t1, pmod->t2);
+	    sderr = pmod->sderr[i-1] / pmod->sigma;
+	    sderr = sderr * sderr;
+	    sderr *= sqrt(vhat);
+	    robust[i-1] = sderr;
+	}
+
+	clear_model(&auxmod, pdinfo);
+    }
+
+    /* save original model data */
+    tmp = pmod->sderr;
+    aux = pmod->aux;
+    order = pmod->order;
+
+    /* adjust data for SC-robust version */
+    pmod->sderr = robust;
+    pmod->aux = AUX_SCR;
+    pmod->order = g;
+
+    /* print original model, showing robust std errors */
+    printmodel(pmod, pdinfo, prn);  
+
+    /* reset the original model data */
+    pmod->sderr = tmp;
+    pmod->aux = aux;
+    pmod->order = order;
+
+    free(auxlist);
+    free(ahat);
+    free(robust);
+	
+    return 0;
+}
+
 /**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
@@ -794,7 +914,7 @@ int autocorr_test (MODEL *pmod, int order,
     int *newlist;
     MODEL aux;
     int i, k, t, n = pdinfo->n, v = pdinfo->v; 
-    double trsq, LMF, lb;
+    double trsq, LMF, lb, pval = 1.0;
     int err = 0;
 
     if (dataset_is_panel(pdinfo)) {
@@ -882,9 +1002,9 @@ int autocorr_test (MODEL *pmod, int order,
 	    (aux.nobs - pmod->ncoeff - order)/order; 
 
 	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
+	pval = fdist(LMF, order, aux.nobs - pmod->ncoeff - order);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		order, aux.nobs - pmod->ncoeff - order, LMF,
-		fdist(LMF, order, aux.nobs - pmod->ncoeff - order));
+		order, aux.nobs - pmod->ncoeff - order, LMF, pval);
 
 	pprintf(prn, "\n%s: TR^2 = %f,\n", 
 		_("Alternative statistic"), trsq);
@@ -914,6 +1034,11 @@ int autocorr_test (MODEL *pmod, int order,
     free(newlist);
     dataset_drop_vars(k, pZ, pdinfo); 
     clear_model(&aux, pdinfo); 
+
+    if (pval < 0.05) {
+	autocorr_standard_errors(pmod, pZ, pdinfo, prn);
+    }
+
     exchange_smpl(pmod, pdinfo);
 
     return err;

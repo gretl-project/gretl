@@ -802,8 +802,8 @@ int main (int argc, char *argv[])
 	PRN *prn; 
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-	if (prn == NULL) 
-	    exit(EXIT_FAILURE);
+	if (prn == NULL) exit(EXIT_FAILURE);
+
 	paths.datfile[0] = '\0';
 #ifdef G_OS_WIN32
 	if (unmangle(argv[1], paths.datfile)) 
@@ -814,8 +814,6 @@ int main (int argc, char *argv[])
 	ftype = detect_filetype(paths.datfile, &paths, prn);
 
 	switch (ftype) {
-	case GRETL_UNRECOGNIZED:
-	    exit(EXIT_FAILURE);
 	case GRETL_NATIVE_DATA:
 	    err = get_data(&Z, datainfo, paths.datfile, &paths, data_status, 
 			   prn);
@@ -830,12 +828,23 @@ int main (int argc, char *argv[])
 	case GRETL_BOX_DATA:
 	    err = import_box(&Z, datainfo, paths.datfile, prn);
 	    break;
+	case GRETL_EXCEL:
+	case GRETL_GNUMERIC:
+	    err = get_worksheet_data(paths.datfile, ftype, 0);
+	    break;
 	case GRETL_SCRIPT:
 	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
 	    paths.datfile[0] = '\0';
 	    break;
+	case GRETL_UNRECOGNIZED:
+	    exit(EXIT_FAILURE);
+	    break;
+	default:
+	    exit(EXIT_FAILURE);
+	    break;
 	}
+
 	if (ftype != GRETL_SCRIPT && err) {
 	    errmsg(err, prn);
 	    exit(EXIT_FAILURE);
@@ -847,7 +856,7 @@ int main (int argc, char *argv[])
     gretl_tooltips_init();
 
     /* create main window */
-    if ((mdata = mymalloc(sizeof(windata_t))) == NULL)
+    if ((mdata = mymalloc(sizeof *mdata)) == NULL)
 	noalloc(_("GUI"));
     if ((datalabel = make_main_window(gui_get_data)) == NULL) 
 	noalloc(_("main window"));
@@ -2028,7 +2037,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
 
     toolbar_box = gtk_handle_box_new();
-    gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(toolbar_box), NONE);
+    gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(toolbar_box), 
+				   GTK_SHADOW_NONE);
     gtk_box_pack_start(GTK_BOX(hbox), toolbar_box, FALSE, FALSE, 0);
 
     gretl_toolbar = gtk_toolbar_new();

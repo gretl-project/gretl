@@ -1129,7 +1129,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->data = NULL;
     pmod->errcode = 0;
     pmod->ci = 0;
-    pmod->aux = 0;
+    pmod->aux = AUX_NONE;
     gretl_errmsg[0] = '\0';
     gretl_msg[0] = '\0';
     
