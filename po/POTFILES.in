@@ -78,6 +78,8 @@ gui2/treeutils.c
 gui2/webget.c
 plugin/arma.c
 plugin/arma_x12.c
+plugin/audio.c
+plugin/audioprint.c
 plugin/excel_import.c
 plugin/fcp.c
 plugin/garch.c
@@ -88,6 +90,7 @@ plugin/lad.c
 plugin/leverage.c
 plugin/logistic.c
 plugin/longname.c
+plugin/midi_utils.c
 plugin/mp_ols.c
 plugin/panel_data.c
 plugin/pca.c
