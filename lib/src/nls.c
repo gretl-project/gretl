@@ -435,6 +435,30 @@ static MODEL GNR (double *fvec, double *fjac)
     return gnr;
 }
 
+static void clear_nls_spec (void)
+{
+    int i;
+
+    for (i=0; i<nlspec.nparam; i++) {
+	free(nlspec.terms[i].deriv);
+    }
+
+    free(nlspec.terms);
+    nlspec.terms = NULL;
+
+    free(nlspec.nlfunc);
+    nlspec.nlfunc = NULL;
+
+    free(nlspec.coeff);
+    nlspec.coeff = NULL;
+
+    nlspec.mode = NUMERIC_DERIVS;
+    nlspec.nparam = 0;
+    nlspec.depvar = 0;
+    nlspec.iters = 0;
+    nlspec.t1 = nlspec.t2 = 0;
+}
+
 static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
 {
     char depvarname[9];
@@ -442,14 +466,19 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
     int v;
 
     /* do we already have an nls specification under way? */
-    if (nlspec.nlfunc != NULL) return E_PARSE;
+    if (nlspec.nlfunc != NULL) {
+	clear_nls_spec();
+    }
 
     if (strncmp(nlfunc, "nls ", 4) == 0) 
 	p = nlfunc + 4;
     else 
 	p = nlfunc;
 
-    if (sscanf(p, "%8s = %*s", depvarname) != 1) return E_PARSE;
+    if (sscanf(p, "%8s = %*s", depvarname) != 1) {
+	sprintf(gretl_errmsg, _("parse error in '%s'\n"), p);
+	return E_PARSE;
+    }
 
     v = varindex(dinfo, depvarname);
     if (v == dinfo->v) return E_UNKVAR;
@@ -485,6 +514,7 @@ static int parse_deriv_line (const char *line, int i, nls_term *term,
     if (sscanf(line, "deriv %8s = %s", term->name, term->deriv) != 2) {
 	free(term->deriv);
 	term->deriv = NULL;
+	fprintf(stderr, "parse error in line: '%s'\n", line);
 	return E_PARSE;
     }
 
@@ -548,30 +578,6 @@ int nls_parse_line (const char *line, const double **Z,
     else {
 	return nls_spec_start(line, dinfo);
     }
-}
-
-static void clear_nls_spec (void)
-{
-    int i;
-
-    for (i=0; i<nlspec.nparam; i++) {
-	free(nlspec.terms[i].deriv);
-    }
-
-    free(nlspec.terms);
-    nlspec.terms = NULL;
-
-    free(nlspec.nlfunc);
-    nlspec.nlfunc = NULL;
-
-    free(nlspec.coeff);
-    nlspec.coeff = NULL;
-
-    nlspec.mode = NUMERIC_DERIVS;
-    nlspec.nparam = 0;
-    nlspec.depvar = 0;
-    nlspec.iters = 0;
-    nlspec.t1 = nlspec.t2 = 0;
 }
 
 static int check_derivs (integer m, integer n, double *x,
@@ -676,7 +682,7 @@ static int lm_calculate (double *fvec, double *fjac)
     case 1:
     case 2:
     case 3:
-	pprintf(prn, _("NLS: convergence achieved after %d iterations\n"),
+	pprintf(prn, _("Convergence achieved after %d iterations\n"),
 		nlspec.iters);
 	break;
     case 4:
@@ -855,7 +861,9 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     if (!err) {
 	nlsmod = GNR(fvec, fjac);
     } else {
-	nlsmod.errcode = E_UNSPEC;
+	if (nlsmod.errcode == 0) { 
+	    nlsmod.errcode = E_UNSPEC;
+	}
     }
 
     if (!err) {

@@ -409,7 +409,7 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
 	gtk_widget_show (tempwid);
 	g_free(lbl);
 
-	d->edit = text_edit_new (&hsize);
+	d->edit = cancel_d->edit = text_edit_new (&hsize);
 	dialog_table_setup(d, hsize);	
     } else {
 	tempwid = gtk_label_new (infotxt);
@@ -448,14 +448,11 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
-    if (okfunc) 
+    if (okfunc) {
 	gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
 			    GTK_SIGNAL_FUNC (okfunc), (gpointer) d);
-#if 0
-    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
-			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-			       GTK_OBJECT (d->dialog));
-#endif
+    }
+
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 

@@ -30,6 +30,26 @@
 char gretl_tmp_str[MAXLEN];
 
 /**
+ * string_is_blank:
+ * @s: the string to examine.
+ *
+ * Returns: 1 if the string is NULL, of length zero, or contains
+ * nothing but space characters, otherwise returns 0.
+ */
+
+int string_is_blank (const char *s)
+{
+    if (s == NULL) return 1;
+
+    while (*s) {
+        if (!isspace((unsigned char) *s)) return 0;
+        s++;
+    }
+
+    return 1;
+}
+
+/**
  * dotpos:
  * @str: the string to examine.
  *

@@ -1310,17 +1310,6 @@ int termtype_to_termstr (const char *termtype, char *termstr)
 
 /* ........................................................... */
 
-static int blank (const char *s)
-{
-    while (*s) {
-	if (!isspace((unsigned char) *s)) return 0;
-	s++;
-    }
-    return 1;
-}
-
-/* ........................................................... */
-
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t, datlines;
@@ -1328,16 +1317,16 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     int miss = 0;
     double xx;
 
-    if (!blank(spec->titles[0])) {
+    if (!string_is_blank(spec->titles[0])) {
 	fprintf(fp, "set title '%s'\n", spec->titles[0]);
     }
-    if (!blank(spec->titles[1])) {
+    if (!string_is_blank(spec->titles[1])) {
 	fprintf(fp, "set xlabel '%s'\n", spec->titles[1]);
     }
-    if (!blank(spec->titles[2])) {
+    if (!string_is_blank(spec->titles[2])) {
 	fprintf(fp, "set ylabel '%s'\n", spec->titles[2]);
     }
-    if (spec->y2axis && !blank(spec->titles[3])) {
+    if (spec->y2axis && !string_is_blank(spec->titles[3])) {
 	fprintf(fp, "set y2label '%s'\n", spec->titles[3]);
     }
 
@@ -1357,10 +1346,10 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }
 
     /* customized xtics? */
-    if (!blank(spec->xtics)) {
+    if (!string_is_blank(spec->xtics)) {
 	fprintf(fp, "set xtics %s\n", spec->xtics);
     }
-    if (!blank(spec->mxtics)) {
+    if (!string_is_blank(spec->mxtics)) {
 	fprintf(fp, "set mxtics %s\n", spec->mxtics);
     }
 

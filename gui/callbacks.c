@@ -60,11 +60,13 @@ void selectrow (GtkCList *clist, gint row, gint column,
 			      datainfo->varname[mydata->active_var]);
 	gtk_entry_append_text(GTK_ENTRY (active_edit_name), " ");
     }
+#if 0
     else if (active_edit_text != NULL) {
 	gtk_text_insert (GTK_TEXT (active_edit_text), fixed_font, 
 			 NULL, NULL, datainfo->varname[mydata->active_var],
 			 strlen(datainfo->varname[mydata->active_var]));
     }
+#endif
 
     /* response to double-click */
     if (event != NULL && event->type == GDK_2BUTTON_PRESS 

@@ -1890,29 +1890,20 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     return TRUE;
 }
 
-static int blank (const char *s)
-{
-    while (*s) {
-	if (!isspace((unsigned char) *s)) return 0;
-	s++;
-    }
-    return 1;
-}
-
 static void set_plot_format_flags (png_plot_t *plot)
 {
     plot->format = 0;
 
-    if (!blank(plot->spec->titles[0])) {
+    if (!string_is_blank(plot->spec->titles[0])) {
 	plot->format |= PLOT_TITLE;
     }
-    if (!blank(plot->spec->titles[1])) {
+    if (!string_is_blank(plot->spec->titles[1])) {
 	plot->format |= PLOT_XLABEL;
     }
-    if (!blank(plot->spec->titles[2])) {
+    if (!string_is_blank(plot->spec->titles[2])) {
 	plot->format |= PLOT_YLABEL;
     }
-    if (!blank(plot->spec->titles[3])) {
+    if (!string_is_blank(plot->spec->titles[3])) {
 	plot->format |= PLOT_Y2LABEL;
     }
     if (plot->spec->y2axis) {

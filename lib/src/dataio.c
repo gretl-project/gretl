@@ -2013,18 +2013,6 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim, PRN *prn)
     return maxlen;
 }
 
-static int line_is_blank (const char *line)
-{
-    const char *p = line;
-
-    while (*p) {
-	if (!isspace((unsigned char) *p)) return 0;
-	p++;
-    }
-
-    return 1;
-}
-
 static int count_fields (const char *line, char delim)
 {
     int cbak, nf = 0;
@@ -2197,7 +2185,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	/* skip comment lines */
 	if (*line == '#') continue;
 	/* skip blank lines */
-	if (line_is_blank(line)) continue;
+	if (string_is_blank(line)) continue;
 	csvinfo->n += 1;
 	compress_csv_line(line, delim);
 	if (!gotdata) {
@@ -2261,7 +2249,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 
     while (fgets(line, maxlen + 1, fp)) {
 	if (*line == '#') continue;
-	if (line_is_blank(line)) continue;
+	if (string_is_blank(line)) continue;
 	else break;
     }
     compress_csv_line(line, delim);    
@@ -2312,7 +2300,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	int nv;
 
 	if (*line == '#') continue;
-	if (line_is_blank(line)) continue;
+	if (string_is_blank(line)) continue;
 	compress_csv_line(line, delim);
 	p = line;
 	if (delim == ' ' && *p == ' ') p++;

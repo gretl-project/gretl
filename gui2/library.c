@@ -1847,6 +1847,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
     bufgets(NULL, 0, buf);
     while (bufgets(line, MAXLEN-1, buf) && !err) {
+	if (string_is_blank(line)) continue;
 	if (!started && !strncmp(line, "genr", 4)) {
 	    err = do_nls_genr();
 	    continue;
