@@ -1,5 +1,5 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef MIDI_UTILS_H
+#define MIDI_UTILS_H
 
 int write_var_len (long val, FILE *fp);
 int delta_time (double beat, int nticks, FILE *fp);
@@ -14,4 +14,4 @@ void write_midi_header (int format, int tracks, int ticks,
 
 const char *get_patch_name (int pnum);
 
-#endif
+#endif /* MIDI_UTILS_H */

@@ -1,3 +1,6 @@
+#ifndef MIDITYPES_H
+#define MIDITYPES_H
+
 #define MIDI_META            0xff
 
 #define MIDI_SEQUENCE_NUMBER 0x00
@@ -31,3 +34,5 @@
 #define PC_ALTO_SAX         65
 #define PC_BASSOON          70
 #define PC_CLARINET         71
+
+#endif /* MIDITYPES_H */
