@@ -986,7 +986,7 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
 
     sprintf(tmp, I_("Standard error of residuals = %g"), 
 		    fr->sigma);
-    pprintf(prn, "\\qc %s\\par\n", tmp);
+    pprintf(prn, "\\qc %s\\par\n\\par\n", tmp);
 }
 
 /* ........................................................... */
@@ -1005,12 +1005,11 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
     pprintf(prn, "\n\\begin{center}\n"
 	    "\\begin{tabular}{rrrrl}\n"
-	    "\\multicolumn{1}{c}{%s} & \n"
+	    " & \n"
 	    " \\multicolumn{1}{c}{%s} & \n"
 	    "  \\multicolumn{1}{c}{%s} & \n"
 	    "   \\multicolumn{1}{c}{%s}\\\\\n",
-	    I_("Obs"), vname,
-	    I_("fitted"), I_("residuals"));
+	    vname, I_("fitted"), I_("residuals"));
 
     for (t=0; t<n; t++) {
 	if (t == fr->t1 && t) pprintf(prn, "\\\\\n");
@@ -1045,7 +1044,7 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
 #define FR_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                 "\\cellx800\\cellx2400\\cellx4000\\cellx5600" \
-                "\\cellx6000\n"
+                "\\cellx6100\n"
 
 void rtfprint_fit_resid (const FITRESID *fr, 
 			 const DATAINFO *pdinfo, 
@@ -1059,12 +1058,13 @@ void rtfprint_fit_resid (const FITRESID *fr,
 
     pprintf(prn, "{" FR_ROW "\\intbl ");
     pprintf(prn, 
+	    " \\qc \\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
-	    " \\qc %s\\cell"
+	    " \\ql \\cell"
 	    " \\intbl \\row\n",
-	    I_("Obs"), fr->depvar, I_("fitted"), I_("residual"));
+	    fr->depvar, I_("fitted"), I_("residual"));
 
     for (t=0; t<n; t++) {
 	pprintf(prn, "\\qr ");
@@ -1072,7 +1072,8 @@ void rtfprint_fit_resid (const FITRESID *fr,
 	pprintf(prn, "\\cell"); 
 	
 	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
-	    pprintf(prn, "\\intbl \\row\n"); 
+	    pprintf(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
+		    " \\intbl \\row\n"); 
 	} else {
 	    int ast;
 
@@ -1082,8 +1083,8 @@ void rtfprint_fit_resid (const FITRESID *fr,
 	    printfrtf(fr->actual[t], prn, 0);
 	    printfrtf(fr->fitted[t], prn, 0);
 	    printfrtf(xx, prn, 0);
-	    if (ast) pprintf(prn, "\\ql *\\cell");
-	    pprintf(prn, "\\intbl \\row\n");
+	    pprintf(prn, "\\ql %s\\cell \\intbl \\row\n", 
+		    (ast)? "*" : "");
 	}
     }
 

@@ -450,7 +450,9 @@ void file_selector (const char *msg, int action, gpointer data)
 	gint wrote;
 
 	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
-    } else trmsg = msg;
+    } else {
+	trmsg = g_strdup(msg);
+    }
 
     /* initialize file dialog info struct */
     memset(&of, 0, sizeof of);
@@ -479,7 +481,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	retval = GetSaveFileName(&of);
 
     free(filter);
-    if (nls_on) g_free(trmsg);
+    g_free(trmsg);
 
     if (!retval) {
 	if (CommDlgExtendedError())
