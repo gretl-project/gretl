@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-02-22 11:26-0500\n"
-"PO-Revision-Date: 2005-01-14 17:18-0500\n"
+"PO-Revision-Date: 2005-02-24 16:01-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -1599,7 +1599,7 @@ msgstr "Matrice de covariance des coefficients"
 
 #: lib/src/describe.c:1881
 msgid "Mahalanobis distances from the centroid"
-msgstr ""
+msgstr "Distances de Mahalanobis du centroide"
 
 #: lib/src/describe.c:1882
 #, fuzzy
@@ -1628,7 +1628,7 @@ msgstr ""
 
 #: lib/src/estimate.c:692
 msgid "Omitted due to exact collinearity:"
-msgstr ""
+msgstr "Omis multicollinéarité exacte"
 
 #: lib/src/estimate.c:823 lib/src/estimate.c:1920 plugin/arma.c:555
 #: plugin/arma_x12.c:658
@@ -2785,12 +2785,12 @@ msgstr "Générateur de nombre pseudo-aléatoire avec germe %d\n"
 #: lib/src/libset.c:312
 #, c-format
 msgid "Baxter-King approximation = %d\n"
-msgstr ""
+msgstr "Approximation Baxter-King = %d\n"
 
 #: lib/src/libset.c:331
 #, c-format
 msgid "Baxter-King band = %d-%d periods\n"
-msgstr ""
+msgstr "Bande Baxter-King = %d-%d périodes\n"
 
 #: lib/src/missing.c:495
 #, c-format
@@ -3064,7 +3064,7 @@ msgstr "Tobit"
 
 #: lib/src/modelprint.c:570 gui/selector.c:546 gui2/selector.c:816
 msgid "Poisson"
-msgstr ""
+msgstr "Poisson"
 
 #: lib/src/modelprint.c:571 gui/selector.c:548 gui2/selector.c:818
 msgid "Pooled OLS"
@@ -5391,7 +5391,7 @@ msgstr "/Données/_Principaux composants"
 
 #: gui/gretl.c:328 gui2/gretl.c:387
 msgid "/Data/_Mahalanobis distances"
-msgstr ""
+msgstr "Données/Distances de _Mahalanobis"
 
 #: gui/gretl.c:330 gui2/gretl.c:389
 msgid "/Data/sep4"
@@ -9230,7 +9230,7 @@ msgstr "principaux composants"
 
 #: gui2/library.c:591 gui2/menustate.c:297 gui2/menustate.c:322
 msgid "Mahalanobis distances"
-msgstr ""
+msgstr "distances de Mahalanobis"
 
 #: gui2/library.c:595
 msgid "frequency distribution"
@@ -10838,13 +10838,12 @@ msgid "Rescaled-range plot for"
 msgstr "étendue-moyenne du traçage pour"
 
 #: plugin/fractals.c:43
-#, fuzzy
 msgid "log(sample size)"
-msgstr "taille de l'échantillon"
+msgstr "log(taille de l'échantillon)"
 
 #: plugin/fractals.c:43
 msgid "log(R/S)"
-msgstr ""
+msgstr "log(R/S)"
 
 #: plugin/fractals.c:232
 #, fuzzy
