@@ -368,7 +368,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
     double xx, prange, spike = 0.0;
     FILE *fp = NULL;
 
-    if (gnuplot_init(&paths, &fp)) return;
+    if (gnuplot_init(&paths, PLOT_SAMPLING_DIST, &fp)) return;
 
     fprintf(fp, "# sampling distribution\n");
 

@@ -201,7 +201,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     char title[32];
     int t;
 
-    if (gnuplot_init(paths, &fp)) return E_FOPEN;
+    if (gnuplot_init(paths, PLOT_TRI_GRAPH, &fp)) return E_FOPEN;
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");

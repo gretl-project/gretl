@@ -548,7 +548,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     if (batch) {
 	goto acf_getout;
-    } else if (gnuplot_init(ppaths, &fq)) {
+    } else if (gnuplot_init(ppaths, PLOT_CORRELOGRAM, &fq)) {
 	err = E_FOPEN;
 	goto acf_getout;
     }
@@ -768,7 +768,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     xmax = roundup_half(nobs);
 
-    if (do_graph && gnuplot_init(ppaths, &fq) == 0) {
+    if (do_graph && gnuplot_init(ppaths, PLOT_PERIODOGRAM, &fq) == 0) {
 	char titlestr[80];
 
 	fprintf(fq, "# periodogram\n");

@@ -48,7 +48,7 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
     FILE *fp = NULL;
     int t;
 
-    if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+    if (gnuplot_init(ppaths, PLOT_RANGE_MEAN, &fp)) return E_FOPEN;
 
     fprintf(fp, "# range-mean plot for %s\n", varname);
     fputs("set nokey\n", fp);

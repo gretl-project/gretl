@@ -28,12 +28,16 @@
 # include <windows.h>
 #endif
 
+#define USE_BARS
+
 extern double _gamma_func (double x);
 extern double _gammadist (double s1, double s2, double x, int control);
 
 static char gnuplot_path[MAXLEN];
 
 static const char *auto_ols_string = "# plot includes automatic OLS line\n";
+
+static const char *get_gnuplot_pallette (int i, int plottype);
 
 /* ........................................................ */
 
@@ -499,34 +503,45 @@ int gnuplot_has_ttf (void)
  * Returns: the term string, "set term png ..."
  */
 
-const char *get_gretl_png_term_line (const PATHS *ppaths)
+const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
 {
-    static char png_term_line[128];
+    static char png_term_line[256];
+    char font_string[128];
+    char color_string[64];
+    int oldgp = 0;
     const char *grfont = NULL;
 
-    strcpy(png_term_line, "set term png");
+    *font_string = 0;
+    *color_string = 0;
+#ifndef OS_WIN32
+    oldgp = old_gnuplot_png();
+#endif
 
-    if (*ppaths->pngfont != 0) 
+    /* plot font setup */
+    if (*ppaths->pngfont != 0) {
 	grfont = ppaths->pngfont;
-    else 
-	grfont = getenv("GRETL_PNG_GRAPH_FONT");
-
-    if (grfont != NULL && *grfont != 0) {
-	strcat(png_term_line, " font ");
-	strcat(png_term_line, grfont);
-    }
-
-#ifdef OS_WIN32
-    strcat(png_term_line, 
-	   " xffffff x000000 x202020 xff0000 x0000ff x00ff00");
-#else
-    if (old_gnuplot_png()) {
-	strcat(png_term_line, " color"); 
     } else {
-	strcat(png_term_line, 
-	       " xffffff x000000 x202020 xff0000 x0000ff x00aa00"); 
+	grfont = getenv("GRETL_PNG_GRAPH_FONT");
     }
-#endif 
+    if (grfont != NULL && *grfont != 0) {
+	sprintf(font_string, " font %s", grfont);
+    }
+
+    /* plot color setup */
+    if (oldgp) {
+	strcpy(color_string, " color");
+    } else {
+	int i;
+
+	strcpy(color_string, " xffffff x000000 x202020");
+	for (i=0; i<3; i++) {
+	    strcat(color_string, " ");
+	    strcat(color_string, get_gnuplot_pallette(i, plottype));
+	}
+    }	
+
+    sprintf(png_term_line, "set term png%s%s",
+	    font_string, color_string);
 
     return png_term_line;
 }
@@ -534,6 +549,7 @@ const char *get_gretl_png_term_line (const PATHS *ppaths)
 /**
  * gnuplot_init:
  * @ppaths: pointer to path information struct.
+ * @plottype: code for the type of plot.
  * @fpp: pointer to stream to be opened.
  *
  * If GNUPLOT_PNG is defined and we're in GUI mode, writes a unique
@@ -544,7 +560,7 @@ const char *get_gretl_png_term_line (const PATHS *ppaths)
  * Returns: 0 on success, 1 on failure
  */
 
-int gnuplot_init (PATHS *ppaths, FILE **fpp)
+int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
 {
 #ifdef GNUPLOT_PNG
     if (*gnuplot_path == 0) {
@@ -562,7 +578,7 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
     if (*fpp == NULL) return 1;
 
     if (GRETL_GUI(ppaths)) {
-	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ppaths));
+	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ppaths, plottype));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
     }
 #else /* not GNUPLOT_PNG */
@@ -764,7 +780,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	fq = fopen(ppaths->plotfile, "w");
 	if (fq == NULL) return E_FOPEN;
     } else {
-	if (gnuplot_init(ppaths, &fq)) return E_FOPEN;
+	if (gnuplot_init(ppaths, PLOT_REGULAR, &fq)) return E_FOPEN;
     }
 
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
@@ -1137,7 +1153,7 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 	fp = fopen(ppaths->plotfile, "w");
 	if (fp == NULL) return E_FOPEN;
     } else {
-	if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+	if (gnuplot_init(ppaths, PLOT_MULTI_SCATTER, &fp)) return E_FOPEN;
     }
 
     fputs("# multiple scatterplots\n", fp);
@@ -1221,8 +1237,20 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;
     int i, K = freq->numbins;
+    char withstring[32];
+    double plotmin = 0.0, plotmax = 0.0;
+    double barwidth = freq->endpt[K-1] - freq->endpt[K-2];
+#ifdef USE_BARS
+    double barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
+#endif
+    int plottype = PLOT_FREQ_SIMPLE;
 
-    if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+    if (dist == NORMAL) plottype = PLOT_FREQ_NORMAL;
+    else if (dist == GAMMA) plottype = PLOT_FREQ_GAMMA;
+
+    if (gnuplot_init(ppaths, plottype, &fp)) return E_FOPEN;
+
+    *withstring = 0;
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -1231,7 +1259,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     fputs("# frequency plot ", fp);
 
     if (dist) {
-	double propn, plotmin = 0.0, plotmax = 0.0;
+	double propn;
 
 	/* find the endpts that straddle the mean... */
 	for (i=0; i<K ; i++) 
@@ -1251,9 +1279,15 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
-	    plotmin = freq->xbar - 3.3 * freq->sdx;
-	    if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
-	    plotmax = freq->xbar + 3.3 * freq->sdx;
+
+	    plotmin = freq->endpt[1] - barwidth;
+	    if (plotmin > freq->xbar - 3.3 * freq->sdx) {
+		plotmin = freq->xbar - 3.3 * freq->sdx;
+	    }
+	    plotmax = freq->endpt[K-1] + barwidth;
+	    if (plotmax < freq->xbar + 3.3 * freq->sdx) {
+		plotmax = freq->xbar + 3.3 * freq->sdx;
+	    }
 
 	    if (!na(freq->chisqu)) {
 		fprintf(fp, "set label '%s:' at graph .05, graph .9\n",
@@ -1302,25 +1336,52 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     }
 
     /* plot instructions */
+#ifdef USE_BARS
+    strcat(withstring, "w filledcurve");
+#else
+    strcat(withstring, "w impulses");
+#endif
+
     if (!dist) {
-	fputs("plot '-' using 1:($2) w impulses\n", fp);
+	fprintf(fp, "plot '-' using 1:($2) %s\n", withstring);
     } else if (dist == NORMAL) {
-	fprintf(fp, "(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
-		"title 'N(%.4f,%.4f)' w lines , \\\n"
-		"'-' using 1:($2) title '%s' w impulses\n",
-		freq->xbar, freq->sdx, freq->varname);
+	fprintf(fp, "'-' using 1:($2) title '%s' %s , \\\n"
+		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
+		"title 'N(%.4f,%.4f)' w lines\n",
+		freq->varname, withstring, freq->xbar, freq->sdx);
     }
     else if (dist == GAMMA) {
-	fprintf(fp, "x**(alpha-1.0)*exp(-x/beta)/(gamma(alpha)*(beta**alpha)) "
-		"title 'gamma(%.4f,%.4f)' w lines , \\\n"
-		"'-' using 1:($2) title '%s' w impulses\n",
-		alpha, beta, freq->varname); 
+	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"
+		"x**(alpha-1.0)*exp(-x/beta)/(gamma(alpha)*(beta**alpha)) "
+		"title 'gamma(%.4f,%.4f)' w lines\n",
+		freq->varname, withstring, alpha, beta); 
     }
 
     /* send sample data inline */
+#ifdef USE_BARS
+    /* construct solid histogram bars? */
+    for (i=0; i<K; i++) { 
+	double y = lambda * freq->f[i];
+	double x1, x2;
+
+	x1 = (i == 0)? freq->endpt[i+1] - barwidth : freq->endpt[i];
+	x2 = (i == K-1)? freq->endpt[i] + barwidth : freq->endpt[i+1];
+
+	if (dist) {
+	    if (x1 < plotmin) x1 = plotmin;
+	    if (x2 > plotmax) x2 = plotmax;
+	}
+
+	fprintf(fp, "%.8g 0.0\n", x1 + barskip);
+	fprintf(fp, "%.8g %.8g\n", x1 + barskip, y);
+	fprintf(fp, "%.8g %.8g\n", x2 - barskip, y);
+	fprintf(fp, "%.8g 0\n", x2 - barskip);
+    }
+#else /* not USE_BARS: use impulses */
     for (i=0; i<K; i++) { 
 	fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
     }
+#endif
     fputs("e\n", fp);
 
 #ifdef ENABLE_NLS
@@ -1345,7 +1406,7 @@ int plot_fcast_errs (int n, const double *obs,
     double xmin, xmax, xrange;
     int t;
 
-    if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+    if (gnuplot_init(ppaths, PLOT_FORECAST, &fp)) return E_FOPEN;
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
 
@@ -1432,7 +1493,8 @@ int termtype_to_termstr (const char *termtype, char *termstr,
     else if (!strcmp(termtype, "latex")) 
 	strcpy(termstr, "latex");
     else if (!strcmp(termtype, "png")) { 
-	const char *png_str = get_gretl_png_term_line(ppaths);
+	const char *png_str = 
+	    get_gretl_png_term_line(ppaths, PLOT_REGULAR);
 
 	strcpy(termstr, png_str + 9);
     }
@@ -1587,8 +1649,11 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "%s ", spec->lines[i-1].formula); 
 	    datlines--;
 	}
-	fprintf(fp, "axes x1y%d title '%s' w %s", 
-		spec->lines[i-1].yaxis,
+	/* FIXME below */
+	if (spec->lines[i-1].yaxis != 1) {
+	    fprintf(fp, "axes x1y%d ", spec->lines[i-1].yaxis);
+	}
+	fprintf(fp, "title '%s' w %s", 
 		spec->lines[i-1].title,
 		spec->lines[i-1].style);
 	if (i == lo - 1) {
@@ -1750,4 +1815,47 @@ int is_auto_ols_string (const char *s)
     return 0;
 }
 
+/* ........................................................... */
 
+static char gnuplot_pallette[3][8] = {
+    "xff0000", 
+    "x0000ff", 
+    "x00ff00"
+};
+
+static const char *get_gnuplot_pallette (int i, int ptype)
+{
+    if (i == 0 && (ptype == PLOT_FREQ_SIMPLE ||
+		   ptype == PLOT_FREQ_NORMAL || 
+		   ptype == PLOT_FREQ_GAMMA)) {
+	return "xaabbcc";
+    }
+    else if (i >= 0 && i < 3) {
+	return gnuplot_pallette[i];
+    } else {
+	return "";
+    }
+}
+
+static int colstr_is_valid (const char *colstr)
+{
+    int i;
+    const char *ok = "0123456789abcdef";
+
+    if (*colstr != 'x') return 0;
+    if (strlen(colstr) != 7) return 0;
+    for (i=1; i<7; i++) {
+	if (strchr(ok, colstr[i]) == NULL) return 0;
+    }
+
+    return 1;
+}
+
+void set_gnuplot_pallette (int i, const char *colstr)
+{
+    if (i >= 0 && i < 3 && colstr_is_valid(colstr)) {
+	strcpy(gnuplot_pallette[i], colstr);
+    } else {
+	fprintf(stderr, "Invalid color spec, '%s'\n", colstr);
+    }
+}

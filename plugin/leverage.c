@@ -32,7 +32,7 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     int t, tmod;
     int timeplot = 0;
 
-    if (gnuplot_init(ppaths, &fp)) return 1;
+    if (gnuplot_init(ppaths, PLOT_LEVERAGE, &fp)) return 1;
 
     if (dataset_is_time_series(pdinfo) && 
 	(pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {

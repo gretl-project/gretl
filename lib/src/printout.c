@@ -320,12 +320,12 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 void printfreq (FREQDIST *freq, PRN *prn)
 {
     int i, k, nlw, K = freq->numbins - 1;
-    char word[32];
+    char word[64];
 
     pprintf(prn, _("\nFrequency distribution for %s, obs %d-%d "
 	    "(%d valid observations)\n"),
 	   freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);
-    pprintf(prn, _("number of bins = %d, mean = %.3f, sd = %.3f\n"), 
+    pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
 	   freq->numbins, freq->xbar, freq->sdx);
     pputs(prn, _("\n       interval          midpt      frequency\n\n"));
 
@@ -333,13 +333,13 @@ void printfreq (FREQDIST *freq, PRN *prn)
 	*word = '\0';
 	if (k == 0) pputs(prn, "          <  ");
 	else if (k == K) pputs(prn, "          >= ");
-	else pprintf(prn, "%10.3g - ", freq->endpt[k]);
-	if (k == K) sprintf(word, "%.3g", freq->endpt[k]);
-	else sprintf(word, "%.3g", freq->endpt[k+1]);
+	else pprintf(prn, "%10g - ", freq->endpt[k]);
+	if (k == K) sprintf(word, "%g", freq->endpt[k]);
+	else sprintf(word, "%g", freq->endpt[k+1]);
 	pprintf(prn, "%s", word);
 	nlw = 10 - strlen(word);
 	_bufspace(nlw, prn);
-	sprintf(word, " %.3g", freq->midpt[k]);
+	sprintf(word, " %g", freq->midpt[k]);
 	pputs(prn, word);
 	nlw = 10 - strlen(word);
 	_bufspace(nlw, prn);

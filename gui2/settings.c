@@ -1523,3 +1523,60 @@ void add_files_to_menu (int filetype)
 	} else break;
     }
 }
+
+static double scale_round (double val)
+{
+    return val * 255.0 / 65535.0;
+}
+
+static void color_ok (GtkWidget *button, GtkWidget *w)
+{
+    GtkWidget *csel;
+    GdkColor color;
+    char color_string[12];
+    gint i;
+
+    csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
+    gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &color);
+
+    sprintf(color_string, "x%2x%2x%2x",
+	    (guint) (scale_round (color.red)),
+	    (guint) (scale_round (color.green)),
+	    (guint) (scale_round (color.blue)));
+
+    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
+
+    set_gnuplot_pallette(i, color_string);
+  
+    gtk_widget_destroy(w);
+}
+
+static void color_cancel (GtkWidget *button, GtkWidget *w)
+{
+    gtk_widget_destroy(w);
+}
+
+void gnuplot_color_selector (GtkWidget *w, gpointer p)
+{
+    GtkWidget *cdlg;
+    GtkWidget *button;
+    gint i = GPOINTER_TO_INT(p);
+
+    fprintf(stderr, "Doing selection for color %d\n", i);
+
+    cdlg = gtk_color_selection_dialog_new("gretl color selection");
+
+    fprintf(stderr, "cdlg = %p\n", (void *) cdlg);
+
+    g_object_set_data(G_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
+
+    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(color_ok), cdlg);
+
+    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->cancel_button;
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(color_cancel), cdlg);
+    
+    gtk_dialog_run(GTK_DIALOG(cdlg));
+}

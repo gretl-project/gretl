@@ -101,7 +101,8 @@ typedef enum {
     PLOT_CUSUM,
     PLOT_MULTI_SCATTER,
     PLOT_TRI_GRAPH,
-    PLOT_RANGE_MEAN
+    PLOT_RANGE_MEAN,
+    PLOT_LEVERAGE
 } plot_type_codes;
     
 #define GRETL_GUI(p) (p->binbase[0] && p->ratsbase[0] && p->dbhost_ip[0])
@@ -116,9 +117,9 @@ int graph (const LIST list,
 	   double **Z, const DATAINFO *pdinfo, 
 	   unsigned char oflag, PRN *prn);
 
-const char *get_gretl_png_term_line (const PATHS *ppaths);
+const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype);
 
-int gnuplot_init (PATHS *ppaths, FILE **fpp);
+int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp);
 
 int gnuplot_display (const PATHS *ppaths);
 
@@ -154,5 +155,5 @@ int is_auto_ols_string (const char *s);
 
 int gnuplot_has_ttf (void);
 
-
+void set_gnuplot_pallette (int i, const char *colstr);
 

@@ -25,6 +25,8 @@ void set_fixed_font (void);
 
 void set_app_font (const char *fontname);
 
+void gnuplot_color_selector (GtkWidget *w, gpointer p);
+
 char *endbit (char *dest, char *src, int addscore);
 
 void get_default_dir (char *s);

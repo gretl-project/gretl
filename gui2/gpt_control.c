@@ -315,7 +315,8 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     }
 
     if (add) {
-	fprintf(ftmp, "%s\n", get_gretl_png_term_line(&paths));
+	fprintf(ftmp, "%s\n", 
+		get_gretl_png_term_line(&paths, spec->code));
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", 
 		paths.userdir);
     }
@@ -358,15 +359,15 @@ void mark_plot_as_saved (GPT_SPEC *spec)
     plot->status_flags |= PLOT_SAVED;
 }
 
-static int gnuplot_png_init (const char *fname, FILE **fpp)
+static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 {
-    *fpp = fopen(fname, "w");
+    *fpp = fopen(spec->fname, "w");
     if (*fpp == NULL) {
-	sprintf(errtext, _("Couldn't write to %s"), fname);
+	sprintf(errtext, _("Couldn't write to %s"), spec->fname);
 	errbox(errtext);
 	return 1;
     }
-    fprintf(*fpp, "%s\n", get_gretl_png_term_line(&paths));
+    fprintf(*fpp, "%s\n", get_gretl_png_term_line(&paths, spec->code));
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
     return 0;
 }
@@ -663,6 +664,42 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     } else {
 	ttfentry = NULL;
     }
+
+#ifdef GNUPLOT_COLOR_SELECTION
+    /* Allow setting of gnuplot pallette: not ready yet */
+    if (1) {
+	GtkWidget *cbox, *button;
+
+	/* first a separator */
+	tbl_len++;
+	tempwid = gtk_hseparator_new ();
+	gtk_table_attach_defaults 
+	    (GTK_TABLE (tbl), tempwid, 0, 2, tbl_len-1, tbl_len);  
+	gtk_widget_show (tempwid);	
+
+	for (i=0; i<3; i++) {
+	    char labstr[16];
+
+	    tbl_len++;
+	    cbox = gtk_hbox_new(FALSE, 2);
+	    sprintf(labstr, _("Color %d"), i + 1);
+	    tempwid = gtk_label_new (labstr);
+	    gtk_container_add(GTK_CONTAINER(cbox), tempwid);
+	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
+				      cbox, 0, 1, tbl_len-1, tbl_len);
+	    gtk_widget_show(tempwid);
+	    gtk_widget_show(cbox);
+
+	    button = gtk_button_new_with_label(_("Select color"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      button, 1, 2, tbl_len-1, tbl_len);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(gnuplot_color_selector), 
+			     GINT_TO_POINTER(i));
+	    gtk_widget_show (button);
+	}
+    }
+#endif /* GNUPLOT_COLOR_SELECTION */
 }
 
 /* ........................................................... */
@@ -2609,7 +2646,7 @@ static int redisplay_edited_png (png_plot_t *plot)
     int err = 0;
 
     /* open file in which to dump plot specification */
-    gnuplot_png_init(plot->spec->fname, &fp);
+    gnuplot_png_init(plot->spec, &fp);
     if (fp == NULL) return 1;
 
     /* dump the edited plot details to file */

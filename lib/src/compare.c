@@ -1348,7 +1348,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
         setlocale(LC_NUMERIC, "C");
 #endif
 	/* plot with 95% confidence bands, if not batch mode */
-	if (prn->fp == NULL && gnuplot_init(ppaths, &fq) == 0) {
+	if (prn->fp == NULL && gnuplot_init(ppaths, PLOT_CUSUM, &fq) == 0) {
 	    fputs("# CUSUM test\n", fq);
 	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
 	    fputs("set xzeroaxis\n", fq);
