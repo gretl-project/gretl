@@ -20,7 +20,7 @@
 #ifndef GPT_CONTROL_H
 #define GPT_CONTROL_H
 
-int read_plotfile (const char *fname);
+int read_plotfile (const char *fname, GPT_SPEC *spec);
 
 void do_save_graph (const char *fname, char *savestr);
 
