@@ -243,24 +243,21 @@ static int flow_control (const char *line, double ***pZ,
     return 1;
 }
 
-static void get_savename (char *line, CMD *command)
+static void get_savename (char *s, CMD *cmd)
 {
-    *command->savename = 0;
+    *cmd->savename = 0;
 
-    if (strstr(line, " := ")) {
-	int n, len;
-	char *p = line;
+    if (strncmp(s, "genr ", 5) && strstr(s, " <- ")) {
+	int n, len, quote;
 
-	while (*p && isspace(*p)) p++;
-	if (*p == '"') p++;
-
-	len = strcspn(p, "=");
-	if (len < 3) return;
-	n = len - 2;
+	quote = (*s == '"');
+	len = strcspn(s, "<");
+	if (len < 2) return;
+	n = len - 1 - quote;
 	if (n > MAXSAVENAME - 1) n = MAXSAVENAME - 1;
-	strncat(command->savename, p, n);
-	charsub(command->savename, '"', 0);
-	_shiftleft(line, len + 1 + (p - line));
+	strncat(cmd->savename, s + quote, n);
+	if (cmd->savename[n-1] == '"') cmd->savename[n-1] = 0;
+	_shiftleft(s, len + 3);
     }
 }
 

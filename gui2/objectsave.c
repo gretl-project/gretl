@@ -27,6 +27,7 @@ enum {
     OBJ_NONE,
     OBJ_MODEL_SHOW,
     OBJ_MODEL_FREE,
+    OBJ_MODEL_STAT,
     OBJ_GRAPH_SHOW,
     OBJ_GRAPH_FREE
 };
@@ -37,6 +38,7 @@ static int match_object_command (const char *s, char sort)
 	if (*s == 0) return OBJ_MODEL_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_MODEL_SHOW;
 	if (strcmp(s, "free") == 0) return OBJ_MODEL_FREE; 
+	return OBJ_MODEL_STAT;
     }
 
     if (sort == 'g') {
@@ -46,6 +48,26 @@ static int match_object_command (const char *s, char sort)
     }    
 
     return OBJ_NONE;
+}
+
+static void print_model_stat (MODEL *pmod, const char *param, PRN *prn)
+{
+    /* FIXME NatLangS */
+    if (!strcmp(param, "ess")) {
+	pprintf(prn, _("%s: ess = %.8g\n"), pmod->name, pmod->ess);
+    }
+    else if (!strcmp(param, "rsq")) {
+	pprintf(prn, _("%s: R^2 = %.8g\n"), pmod->name, pmod->rsq);
+    }
+    else if (!strcmp(param, "sigma")) {
+	pprintf(prn, _("%s: sigma = %.8g\n"), pmod->name, pmod->sigma);
+    }
+    else if (!strcmp(param, "df")) {
+	pprintf(prn, _("%s: df = %d\n"), pmod->name, pmod->dfd);
+    }
+    else {
+	pprintf(prn, _("%s: no data for '%s'\n"), pmod->name, param);
+    }	
 }
 
 static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
@@ -112,29 +134,28 @@ static void get_word_and_command (const char *s, char *word,
 }
 
 static int parse_object_request (const char *line, 
-				 char *objname, void **pptr,
-				 PRN *prn)
+				 char *objname, char *param,
+				 void **pptr, PRN *prn)
 {
     char word[MAXSAVENAME];
-    char cmdstr[9];
     char sort = 0;
     int action;
 
     /* get object name (if any) and dot element */
-    get_word_and_command(line, word, cmdstr);
+    get_word_and_command(line, word, param);
 
     /* see if the object name actually belongs to an object */
     *pptr = get_session_object_by_name(word, &sort);
 
     if (*pptr == NULL) {
 	/* no matching object */
-	if (*cmdstr) {
+	if (*param) {
 	    pprintf(prn, _("%s: no such object\n"), word);
 	}
 	return OBJ_NONE;
     }
 
-    action = match_object_command(cmdstr, sort);
+    action = match_object_command(param, sort);
 
     if (action != OBJ_NONE) {
 	strcpy(objname, word);
@@ -146,7 +167,7 @@ static int parse_object_request (const char *line,
 /* public interface below */
 
 int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
-		      DATAINFO *pdinfo)
+		      DATAINFO *pdinfo, PRN *prn)
 {
     int err;
 
@@ -159,14 +180,18 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     if (!err) {
 	MODEL *mnew = gretl_model_new(pdinfo);
 	
-	if (mnew != NULL) *ppmod = mnew;
+	if (mnew != NULL) {
+	    *ppmod = mnew;
+	    pprintf(prn, _("%s saved\n"), cmd->savename);
+	}
 	else err = E_ALLOC;
     }
 
     return err;
 }
 
-int maybe_save_graph (const CMD *cmd, const char *fname, int code)
+int maybe_save_graph (const CMD *cmd, const char *fname, int code,
+		      PRN *prn)
 {
     char savedir[MAXLEN];
     gchar *tmp, *plotfile;
@@ -174,18 +199,27 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code)
 
     if (*cmd->savename == 0) return 0;
 
+    if (named_graph_aleady_present(cmd->savename)) {
+	pprintf(prn, _("%s: there's already a graph of this name\n"), 
+		cmd->savename);	
+	return 1;
+    }
+
     get_default_dir(savedir);
 
     tmp = g_strdup(cmd->savename);
     plotfile = g_strdup_printf("%ssession.%s", savedir, 
 			       space_to_score(tmp));
     g_free(tmp);
-			       
+
     if (code == GRETL_GNUPLOT_GRAPH) {
 	err = copyfile(fname, plotfile);
 	if (!err) {
-	    real_add_graph_to_session(plotfile, cmd->savename, code);
-	    remove(fname);
+	    err = real_add_graph_to_session(plotfile, cmd->savename, code);
+	    if (!err) {
+		remove(fname);
+		pprintf(prn, _("%s saved\n"), cmd->savename);
+	    }
 	}
     }
 
@@ -199,10 +233,10 @@ int saved_object_action (const char *line,
 			 PRN *prn)
 {
     int action;
-    char savename[MAXSAVENAME];
+    char savename[MAXSAVENAME], param[9];
     void *ptr;
 
-    action = parse_object_request(line, savename, &ptr, prn);
+    action = parse_object_request(line, savename, param, &ptr, prn);
 
     if (action == OBJ_NONE || ptr == NULL) return 0;
 
@@ -213,6 +247,10 @@ int saved_object_action (const char *line,
     else if (action == OBJ_MODEL_FREE) {
 	delete_model_from_session((MODEL *) ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
+    }
+
+    else if (action == OBJ_MODEL_STAT) {
+	print_model_stat((MODEL *) ptr, param, prn);
     }
 
     else if (action == OBJ_GRAPH_SHOW) {

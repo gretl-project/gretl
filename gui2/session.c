@@ -238,6 +238,18 @@ static void edit_session_notes (void)
 
 /* .................................................................. */
 
+int named_graph_aleady_present (const char *grname)
+{
+    int i;
+
+    for (i=0; i<session.ngraphs; i++) {
+	if (strcmp(grname, (session.graphs[i])->name) == 0) {
+	    return 1;
+	}
+    }
+    return 0;
+}
+
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code)
 {

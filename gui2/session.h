@@ -35,6 +35,8 @@ enum {
 
 void session_menu_state (gboolean s);
 
+int named_graph_aleady_present (const char *grname);
+
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code);
 

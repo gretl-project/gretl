@@ -21,9 +21,9 @@
 #define OBJECTSAVE_H
 
 int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
-		      DATAINFO *pdinfo);
+		      DATAINFO *pdinfo, PRN *prn);
 
-int maybe_save_graph (const CMD *cmd, const char *fname, int code);
+int maybe_save_graph (const CMD *cmd, const char *fname, int code, PRN *prn);
 
 int saved_object_action (const char *line, 
 			 const DATAINFO *pdinfo,

@@ -3755,7 +3755,7 @@ static char *bufgets (char *s, int size, const char *buf)
     return s;
 }
 
-#if 1
+#if 0
 static const char *exec_string (int i)
 {
     switch (i) {
@@ -3782,7 +3782,7 @@ int execute_script (const char *runfile, const char *buf,
     char tmp[MAXLEN];
     LOOPSET loop;            /* struct for monte carlo loop */
 
-#if 1
+#if 0
     fprintf(stderr, "execute_script, exec_code = %d (%s)\n",
 	    exec_code, exec_string(exec_code));
 #endif
@@ -4016,7 +4016,7 @@ int gui_exec_line (char *line,
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
 
-#if 1
+#if 0
     fprintf(stderr, "gui_exec_line: exec_code = %d (%s)\n",
 	    exec_code, exec_string(exec_code));
 #endif
@@ -4465,12 +4465,10 @@ int gui_exec_line (char *line,
 	}
 	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	else {
+	    /* FIXME: sort out exec_code business here */
 	    if (plp == NULL) register_graph();
-	    else {
-		/* pprintf(prn, _("Graph written to %s\n"), paths.plotfile); */
-		err = maybe_save_graph(&command, paths.plotfile,
-				       GRETL_GNUPLOT_GRAPH);
-	    }
+	    err = maybe_save_graph(&command, paths.plotfile,
+				   GRETL_GNUPLOT_GRAPH, prn);
 	}
 	break;
 
@@ -4696,7 +4694,6 @@ int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
-	maybe_save_model(&command, &models[0], datainfo); 
 	break;
 
 #ifdef ENABLE_GMP
@@ -4933,6 +4930,9 @@ int gui_exec_line (char *line,
     if ((is_model_cmd(command.cmd) || !strncmp(line, "end nls", 7))
 	&& !err) {
 	err = stack_model(0);
+	if (*command.savename != 0) {
+	    maybe_save_model(&command, &models[0], datainfo, prn);
+	}
     }
 		
     if (err) return 1;
