@@ -668,7 +668,7 @@ void set_miss (LIST list, const char *param, double **Z,
 int set_obs (char *line, DATAINFO *pdinfo, int opt)
 {
     int pd, pos, i, len, dc = 0, bad = 0;
-    char stobs[9], endobs[9], endbit[7];
+    char stobs[9], endobs[9], endbit[7], *p;
     long ed0 = 0L;
 
     gretl_errmsg[0] = '\0';
@@ -683,6 +683,12 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 	sprintf(gretl_errmsg, 
 		_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;
+    }
+
+    p = stobs;
+    while (*p) {
+	if (*p == ':') *p = '.';
+	p++;
     }
 
     /* special case: dated daily data */

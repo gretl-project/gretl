@@ -4,6 +4,11 @@ version 1.0.6
 - fix for correlogram graph (was incompatible with older gnuplot)
 - add (optional) LAPACK support for various "advanced"
   features
+- fix time-series attributes of data9-1, data9-10
+- prevent normal random generator from outputting NaNs
+- fix bug with use of "store" command in a loop, in GUI program
+- fix translation problems that disabled some menus when not
+  shown in English
 
 02/20/03 version 1.0.5
 - fix missing translations; fix build of rpm

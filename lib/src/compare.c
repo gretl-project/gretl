@@ -85,11 +85,12 @@ int _omitfromlist (int *list, const int *omitvars, int newlist[],
     int i, j, k, nomit = omitvars[0], l0 = list[0], match; 
 
     /* attempting to omit all vars or more ? */
-    if (nomit >= l0-1) return E_NOVARS;
+    if (nomit >= l0 - 1) return E_NOVARS;
 
     newlist[0] = 1;
     newlist[1] = list[1];
     k = 1;
+
     for (i=2; i<=l0; i++) {
         match = 0;
         for (j=1; j<=nomit; j++) {
@@ -104,6 +105,7 @@ int _omitfromlist (int *list, const int *omitvars, int newlist[],
         }
     }
     newlist[0] = k;
+
     if (newlist[0] == list[0]) /* no vars were omitted */
 	return E_NOOMIT; 
     if (_justreplaced(model_count, pdinfo, newlist)) 
@@ -120,6 +122,7 @@ static void _difflist (int *biglist, int *smalist, int *targ)
 
     targ[0] = biglist[0] - smalist[0];
     k = 1;
+
     for (i=2; i<=biglist[0]; i++) {
 	match = 0;
 	for (j=2; j<=smalist[0]; j++) {
@@ -129,8 +132,7 @@ static void _difflist (int *biglist, int *smalist, int *targ)
 	    }
 	}
 	if (!match) {
-	    targ[k] = biglist[i];
-	    k++;
+	    targ[k++] = biglist[i];
 	}
     }
 }
@@ -207,6 +209,7 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
     if (pmodA->ci == LOGIT || pmodA->ci == PROBIT)
 	omit.discrete = 1;
     omit.score = 0;
+
     if (omit.ols || omit.discrete) {
 	omit.dfn = pmodA->dfn - pmodB->dfn;
 	omit.dfd = pmodA->dfd;
@@ -219,10 +222,67 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
 	    return omit;
 	}
     }
+
     for (i=0; i<8; i++) 
 	if (pmodB->criterion[i] < pmodA->criterion[i]) omit.score++;
+
     return omit;
-}	    
+}
+
+#if 0
+static double robust_lm_test (MODEL *orig, MODEL *new, int *omitvars,
+			      double ***pZ, DATAINFO *pdinfo)
+{
+    double **r = NULL;
+    double lm;
+    MODEL aux;
+    int *auxlist = NULL;
+    int i, q = omitvars[0];
+    int origv = pdinfo->v;
+
+    r = malloc(q * sizeof *r);
+    if (r == NULL) return -1.0;
+
+    _init_model(&aux, pdinfo);
+
+    for (i=1; i<=omitvars[1]; i++) {
+	new->list[1] = omitvars[i];
+	auxmod = lsq(new->list, pZ, pdinfo, OLS, 1, 0.0);
+	r[i] = auxmod->uhat;
+	auxmod->uhat = NULL;
+	clear_model(&aux, pdinfo);
+    }
+
+    if (dataset_add_vars(q, pZ, pdinfo)) {
+	free(r);
+	return -1.0;
+    }
+
+    auxlist[0] = q + 1;
+
+    for (i=origv; i<pdinfo->v; i++) {
+	int t;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (na(new->uhat[t]) || na(r[j][t])) {
+		(*pZ)[i][t] = NADBL;
+	    } else {
+		(*pZ)[i][t] = new->uhat[t] * r[j][t];
+	    }
+	}
+	auxlist[] = i;
+    }
+	
+    aux = lsq(auxlist, pZ, pdinfo, OLS, 1, 0.0);
+
+    lm = (aux.t2 - aux.t1 + 1) - aux.ess;
+
+    free(r);
+    dataset_drop_vars();
+
+    return lm;
+}
+#endif	    
 
 /**
  * auxreg:
@@ -523,6 +583,8 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     if (!err) {
 	++m;
 	new->ID = m;
+	if (orig->ci == HCCM) 
+	    robust_lm_test(orig, new);
 	omit = omit_compare(orig, new);
 	if (orig->ci != AR && orig->ci != ARCH) 
 	    printmodel(new, pdinfo, prn); 
