@@ -85,8 +85,20 @@ target_drag_data_received  (GtkWidget          *widget,
                             GtkSelectionData   *data,
                             guint               info,
                             guint               time);
-#endif
 
+char *optrun = NULL, *optdb = NULL;
+
+static const struct poptOption options[] = {
+	{"run", 'r', POPT_ARG_STRING, &optrun, 0, 
+	 N_("open a script file on startup"), N_("SCRIPT")},
+	{"db", 'd', POPT_ARG_STRING, &optdb, 0, 
+	 N_("open a database on startup"), N_("DATABASE")},
+	{"webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
+	 N_("open a remote (web) database on startup"), N_("REMOTE_DB")},
+	{NULL, '\0', 0, NULL, 0}
+};
+
+#endif
 
 static GtkWidget *make_main_window (int gui_get_data);
 static GtkWidget *build_var_menu (void);
@@ -441,6 +453,22 @@ static void get_runfile (char *str)
     }
 }
 
+static void fix_dbname (char *db)
+{
+    FILE *fp;
+
+    if (strstr(db, ".bin") == NULL)
+	strcat(db, ".bin");
+    fp = fopen(db, "r");
+    if (fp == NULL && strstr(db, paths.binbase) == NULL) {
+	char tmp[MAXLEN];
+
+	strcpy(tmp, db);
+	sprintf(db, "%s%s", paths.binbase, tmp);
+    }
+    if (fp != NULL) fclose(fp);
+}
+
 #ifdef G_OS_WIN32
 extern int ws_startup (void);
 
@@ -473,9 +501,13 @@ int main (int argc, char *argv[])
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc("startup");
 
+    scriptfile[0] = '\0';
+    paths.datfile[0] = '\0';
+
     /* Initialize gnome or GTK */
 #ifdef USE_GNOME
-    gnome_init("gretl", version_string, argc, argv);
+    gnome_init_with_popt_table("gretl", version_string, argc, argv,
+			       options, 0, NULL);
 #else
     gtk_init(&argc, &argv);
 #endif
@@ -497,8 +529,6 @@ int main (int argc, char *argv[])
     set_rcfile();
     make_userdir(&paths);
 #endif
-    scriptfile[0] = '\0';
-    paths.datfile[0] = '\0';
 
     if (argc > 1) {
 	opt = parseopt(argv[1]);
@@ -511,15 +541,24 @@ int main (int argc, char *argv[])
 	    exit(EXIT_SUCCESS);
 	    break;
 	case OPT_RUNIT:
+#ifdef USE_GNOME
+	    get_runfile(optrun);
+#else
 	    if (argc != 3) gui_usage();
-	    gui_get_data = 1;
 	    get_runfile(argv[2]);
+#endif
+	    gui_get_data = 1;
 	    break;
 	case OPT_DBOPEN:
 	case OPT_WEBDB:
+#ifdef USE_GNOME
+	    strncpy(dbname, optdb, MAXLEN-1);
+#else
 	    if (argc != 3) gui_usage();
-	    gui_get_data = opt;
 	    strncpy(dbname, argv[2], MAXLEN-1);
+#endif
+	    if (opt == OPT_DBOPEN) fix_dbname(dbname);
+	    gui_get_data = opt;
 	    break;
 	default:
 	    /* let's suppose the argument is a data file */

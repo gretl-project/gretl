@@ -662,7 +662,7 @@ static int _full_list (const DATAINFO *pdinfo, CMD *command)
 
 int parseopt (const char *s)
 {
-    if (strcmp(s, "-b") == 0 || strcmp(s, "--batch") == 0) 
+    if (strcmp(s, "-b") == 0 || strncmp(s, "--batch", 7) == 0) 
 	return OPT_BATCH;
     if (strcmp(s, "-h") == 0 || strcmp(s, "--help") == 0) 
 	return OPT_HELP;
@@ -670,11 +670,11 @@ int parseopt (const char *s)
 	return OPT_PVALS;
     if (strcmp(s, "-v") == 0 || strcmp(s, "--version") == 0) 
 	return OPT_VERSION;
-    if (strcmp(s, "-r") == 0 || strcmp(s, "--run") == 0) 
+    if (strcmp(s, "-r") == 0 || strncmp(s, "--run", 5) == 0) 
 	return OPT_RUNIT;
-    if (strcmp(s, "-d") == 0 || strcmp(s, "--db") == 0) 
+    if (strcmp(s, "-d") == 0 || strncmp(s, "--db", 4) == 0) 
 	return OPT_DBOPEN;
-    if (strcmp(s, "-w") == 0 || strcmp(s, "--webdb") == 0) 
+    if (strcmp(s, "-w") == 0 || strncmp(s, "--webdb", 7) == 0) 
 	return OPT_WEBDB;
     return 0;
 }

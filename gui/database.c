@@ -1229,6 +1229,9 @@ void open_named_remote_clist (char *dbname)
 	    errbox(errbuf);
 	} else
 	    errbox("Error retrieving data from server");
+    } 
+    else if (strncmp(getbuf, "Couldn't open", 13) == 0) {
+	errbox(getbuf);
     } else 
 	display_db_series_list(REMOTE_SERIES, dbname, getbuf);
 

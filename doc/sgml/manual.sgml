@@ -2013,16 +2013,39 @@
       specified script file, ready to run.  See <xref linkend="path-search"/>
       below for path-searching behavior.</para>
 
+    <para>
+      <command>gretl --db</command> <replaceable>database</replaceable> (or
+      <command>gretl -d</command>
+      <replaceable>database</replaceable>)</para>
+
+    <para>&mdash; Start the program and open a window displaying the
+      specified database.  If the database files (the
+      <filename>.bin</filename> file and its accompanying
+      <filename>.idx</filename> file---see <xref linkend="dbase"/>) is not
+	in the default system database directory, you must specify the
+	full path.
+      </para>
+
+    <para>
+      <command>gretl --webdb</command> <replaceable>database</replaceable> (or
+      <command>gretl -w</command>
+      <replaceable>database</replaceable>)</para>
+
+    <para>&mdash; Start the program and open a window displaying the
+      specified remote (web) database.  The name of the database
+      should be given without the <filename>.bin</filename> suffix.
+      </para>
+
     <para>Some things in <application>gretl</application> are
       configurable under the <quote>File, Preferences</quote>
       menu.</para>  
 
     <itemizedlist>
-      <listitem><para>The user's base directory for
-	  <application>gretl</application>-related
-	  files.</para></listitem>
       <listitem><para>The base directory for
 	  <application>gretl</application>'s shared
+	  files.</para></listitem>
+      <listitem><para>The user's base directory for
+	  <application>gretl</application>-related
 	  files.</para></listitem>
       <listitem><para>The command to launch GNU R (see 
 	  <xref linkend="app-c"/>).</para></listitem>
@@ -2043,18 +2066,19 @@
 
     <para>There are also some check boxes.  Checking the
       <quote>expert</quote> box quells some warnings that are
-      otherwise issued.  Unchecking <quote>Tell me about gretl
-	updates</quote> stops <application>gretl</application> from
-      attempting to query the update server at start-up. Unchecking
+      otherwise issued.  Checking <quote>Tell me about gretl
+	updates</quote> makes <application>gretl</application> 
+      attempt to query the update server at start-up. Unchecking
       <quote>Show gretl toolbar</quote> turns the icon toolbar
       off.</para>
 
-    <para>Settings chosen in this way are stored in a file named
-      <filename>.gretlrc</filename> in the user's home directory on
-      unix-like systems, or in a file named
-      <filename>gretl.rc</filename> in the user's gretl directory
-      (default <filename>c:\userdata\gretl\user</filename>) under MS
-      Windows.</para>
+    <para>Settings chosen in this way are handled differently
+    depending on the context.  Under MS Windows they are stored in the
+    Windows registry.  Under the <application>gnome</application>
+    desktop they are stored in <filename>.gnome/Gretl</filename> in
+    the user's home directory.  Otherwise they are stored in a file named
+      <filename>.gretlrc</filename> in the user's home directory.
+      </para>
 
   </sect1>
 
@@ -2086,6 +2110,12 @@
 
     <para>&mdash; Prints version identification for the
       program.</para>
+
+    <para><command>gretlcli --pvalue</command> (or <command>gretlcli
+	-p</command>)</para>
+
+    <para>&mdash; Starts the program in a mode in which you can
+    interactively determine p-values for various common statistics.</para>
 
     <para><command>gretlcli --run</command>
       <replaceable>scriptfile</replaceable> (or <command>gretlcli
@@ -2238,36 +2268,20 @@
       <sect2 id="MS-behave"><title>MS Windows</title>
 
 	<para>
-	  Under MS Windows the default behavior of
+	  Under MS Windows configuration information for
 	  <application>gretl</application> and
-	  <application>gretlcli</application> is controlled by the
-	  configuration file <filename>libgretl.cfg</filename>. This
-	  is first searched for in the directory containing the
-	  <application>gretlcli</application> executable; if it is not
-	  found there it is looked for in the root directory of the
-	  current drive (i.e. as <filename>libgretl.cfg</filename>).
-	  This file specifies, in order, the system gretl directory,
-	  the user's home gretl directory and the path to the gnuplot
-	  executable. For example, it might read as follows:
-
-	  <programlisting> 
-	    c:\userdata\gretl 
-	    c:\userdata\gretl\user
-	    c:\userdata\gp371w32\wgnupl32.exe 
-	  </programlisting> 
-
-	  When <application>gretl</application> for win32 is
-	  installed, a version of this file, appropriate to the user's
-	  choice of where to install the package, is written out
-	  automatically.  You should not have to bother with this file
-	  unless you should happen to want to move a
-	  <application>gretl</application> installation.  In that case
-	  you'll have to edit <filename>libgretl.cfg</filename>
-	  appropriately, maintaining its plain ASCII character and
-	  exact filename (N.B. no stupid
-	  <quote><filename>.txt</filename></quote> extension as kindly
-	  supplied by MS Notepad!).
-	</para>
+	  <application>gretlcli</application> is stored in the Windows
+	  registry. A suitable set of registry entries is created when
+	  <application>gretl</application> is first installed.  
+	  In case anyone needs to make manual adjustments
+	  to this information, the entries can be found (using the
+	  standard Windows program
+	  <application>regedit.exe</application>)
+	  user <literal>HKEY_CLASSES_ROOT\gretl</literal> (the main
+	  <application>gretl</application> directory and the command
+	  to invoke <application>gnuplot</application>) and 
+	  <literal>HKEY_CURRENT_USER\gretl</literal> (all other
+	  configurable variables).</para>
 
       </sect2>
     </sect1>
