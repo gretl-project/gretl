@@ -8,6 +8,8 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
 
+GTK_CFLAGS = @GTK_CFLAGS@
+GTK_LIBS = @GTK_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 OLE_CFLAGS = @OLE_CFLAGS@
@@ -24,13 +26,11 @@ endif
 share = $(prefix)/share/gretl
 
 LIBTOOL = $(topsrc)/libtool
-COMPILE = $(LIBTOOL) --mode=compile $(CC) -c -fPIC -DPIC $(CFLAGS) 
+COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
 LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) -shared
 
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl.la
-GTKINC = `gtk-config --cflags`
-GTKLIB = `gtk-config --libs`
 
 PLUGINS = stats_tables.so panel_data.so progress_bar.so \
 	gnumeric_import.so excel_import.so
@@ -50,13 +50,13 @@ panel_data.so: panel_data.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 progress_bar.so: progress_bar.lo
-	$(LINK) -o $@ $< $(GTKLIB)
+	$(LINK) -o $@ $< $(GTK_LIBS)
 
 gnumeric_import.so: gnumeric_import.lo
-	$(LINK) -o $@ $< $(GTKLIB) $(GRETLLIB) $(XML_LIBS)
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
 excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
-	$(LINK) -o $@ $^ $(GTKLIB) $(GRETLLIB) $(OLE_LIBS)
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(OLE_LIBS)
 
 stats_tables.lo: stats_tables.c $(GRETLLIB) 
 	$(COMPILE) $(GRETLINC) $< 
@@ -65,13 +65,13 @@ panel_data.lo: panel_data.c $(GRETLLIB)
 	$(COMPILE) $(GRETLINC) $< 
 
 progress_bar.lo: progress_bar.c
-	$(COMPILE) $(GRETLINC) $(GTKINC) $< 
+	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 
 
 gnumeric_import.lo: gnumeric_import.c import_common.c $(GRETLLIB)
-	$(COMPILE) $(GRETLINC) $(GTKINC) $(XML_CFLAGS) $< 
+	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $(XML_CFLAGS) $< 
 
 excel_import.lo: excel_import.c import_common.c xltypes.h $(GRETLLIB)
-	$(COMPILE) $(GRETLINC) $(GTKINC) $<
+	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $<
 
 workbook.lo: workbook.c biff.h
 	$(COMPILE) $(GRETLINC) $(OLE_CFLAGS) $<

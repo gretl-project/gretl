@@ -49,7 +49,9 @@ LOBJS = $(SRCS:.c=.lo)
 
 LIBTOOL = $(topsrc)/libtool
 
-COMPILE = $(LIBTOOL) --mode=compile $(CC) -c -I.. -I./src $(CFLAGS) $(XML_CFLAGS)
+override CFLAGS += -I. -I./src $(XML_CFLAGS)
+
+COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 .c.o:        
 	$(COMPILE) $<

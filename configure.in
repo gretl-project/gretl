@@ -249,6 +249,8 @@ AC_DEFUN(AC_PROG_GNOME,
 [AC_CHECK_PROG(GNOME,gnome-config,yes)])
 
 AC_PROG_GNOME
+GNOME_CFLAGS=''
+GNOME_LIBS=''
 test x"${GNOME}" = xyes && AC_DEFINE(USE_GNOME)
 if test x"${GNOME}" = xyes
 then
@@ -256,9 +258,13 @@ have_gnome=yes
 if test "${gnome_prefix}" = "NA"
   then
     gnome_prefix="`gnome-config --prefix`"
+    GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
+    GNOME_LIBS=`gnome-config --libs gnomeui print`
   fi
 fi
 AC_SUBST(have_gnome)
+AC_SUBST(GNOME_CFLAGS)
+AC_SUBST(GNOME_LIBS)
 fi
 
 AC_SUBST(gnome_prefix)
@@ -411,6 +417,8 @@ main ()
      AC_SUBST(have_gtk)
      GUI="gretl"
      AC_SUBST(GUI)
+     AC_SUBST(GTK_CFLAGS)
+     AC_SUBST(GTK_LIBS)
      ifelse([$2], , :, [$2])     
   else
      AC_MSG_RESULT(no)
@@ -585,12 +593,12 @@ main ()
 # end added stuff
     fi
   fi
-  AC_SUBST(GTK_EXTRA_CFLAGS)
-  AC_SUBST(GTK_EXTRA_LIBS)
 ])
 
 AM_PATH_GTKEXTRA(0.99.15)
 AC_SUBST(have_gtkextra)
+AC_SUBST(GTK_EXTRA_CFLAGS)
+AC_SUBST(GTK_EXTRA_LIBS)
 
 # end of "build_gui" conditionality
 fi

@@ -16,6 +16,13 @@ have_gtk = @have_gtk@
 have_gtkextra = @have_gtkextra@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
+
+GNOME_CFLAGS = @GNOME_CFLAGS@
+GNOME_LIBS = @GNOME_LIBS@
+GTK_CFLAGS = @GTK_CFLAGS@
+GTK_LIBS = @GTK_LIBS@
+GTK_EXTRA_CFLAGS = @GTK_EXTRA_CFLAGS@
+GTK_EXTRA_LIBS = @GTK_EXTRA_LIBS@
 PIXBUF_CFLAGS = @PIXBUF_CFLAGS@
 PIXBUF_LIBS = @PIXBUF_LIBS@
 
@@ -38,19 +45,19 @@ ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`
 endif
 ifeq ($(have_gnome),yes)
-  LIBS = `gnome-config --libs gnomeui print` `gtkextra-config --libs` ../lib/libgretl.la
-  GUI_CFLAGS = `gnome-config --cflags gnomeui print` `gtkextra-config --cflags`
+  LIBS = $(GNOME_LIBS) $(GTK_EXTRA_LIBS) ../lib/libgretl.la
+  GUI_CFLAGS = $(GNOME_CFLAGS) $(GTK_EXTRA_CFLAGS)
   desktopdir = $(gnome_prefix)/share/gnome/apps/Applications
   mimedir = $(gnome_prefix)/share/mime-info
   gpixmaps = $(gnome_prefix)/share/pixmaps
   ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
   query_install_gnome = install-gnome
 else
-  LIBS = `gtk-config --libs` `gtkextra-config --libs` ../lib/libgretl.la
-  GUI_CFLAGS = `gtk-config --cflags` `gtkextra-config --cflags`
+  LIBS = $(GTK_LIBS) $(GTK_EXTRA_LIBS) ../lib/libgretl.la
+  GUI_CFLAGS = $(GTK_CFLAGS) $(GTK_EXTRA_CFLAGS)
 endif
 
-override CFLAGS += $(PIXBUF_CFLAGS)
+override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(PIXBUF_CFLAGS)
 override LIBS += $(PIXBUF_LIBS)
 
 # Directories
@@ -72,11 +79,6 @@ vpath %.c $(topsrc)/cli
 OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
 	webget.o calculator.o htmlprint.o guiprint.o boxplots.o
-
-COMPILE = $(CC) -c -I. -I$(libsrc) $(CFLAGS) $(GUI_CFLAGS)
-
-.c.o:
-	$(COMPILE) $<
 
 $(PROG): $(OBJS)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(LIBS) $(INETLIB)
