@@ -221,7 +221,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 	pmod->yhat[t] = NADBL;
     }
 
-    for (t=pmod->t1; t<=pmod->t2; t++) {
+    for (t=pmod->t1 + 1; t<=pmod->t2; t++) {
 	x = Z[yno][t] - rho * Z[yno][t-1];
 	for (i=0; i<pmod->ncoeff; i++) {
 	    x -= pmod->coeff[i] * 

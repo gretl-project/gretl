@@ -167,7 +167,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	}
     } else if (pmod->nwt) {
 	for (t=0; t<fulln; t++) {
-	    if (t < pmod->t1 || t > pmod->t2) {
+	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
 		y = Z[yvar][t];

@@ -37,7 +37,7 @@ enum {
     OBSBOOLNUM
 } genr_numbers;
 
-static double calc_xy (double x, double y, char op, int t);
+static double calc_xy (double x, double y, char op, int t, int *err);
 
 static void genrfree (GENERATE *genr);
 static void get_lag (int v, int lag, double *lagvec, double **Z, 
@@ -209,15 +209,27 @@ static const char *get_func_word (int fnum);
 #define TOKLEN   128
 #define ARGLEN    64
 
+#define genr_is_scalar(g) ((g)->flags & GENR_SCALAR)
+#define genr_set_scalar(g) ((g)->flags |= GENR_SCALAR)
+#define genr_unset_scalar(g) ((g)->flags &= ~GENR_SCALAR)
+
+#define genr_doing_save(g) ((g)->flags & GENR_SAVE)
+#define genr_set_save(g) ((g)->flags |= GENR_SAVE)
+#define genr_unset_save(g) ((g)->flags &= ~GENR_SAVE)
+
+#define genr_is_local(g) ((g)->flags & GENR_LOCAL)
+#define genr_set_local(g) ((g)->flags |= GENR_LOCAL)
+
+#define genr_warn(g) ((g)->flags & GENR_WARN)
+#define genr_set_warn(g) ((g)->flags |= GENR_WARN)
+
 /* ...................................................... */
 
 static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
 		       MODEL *pmod)
 {
     genr->err = 0;
-    genr->save = 1;
-    genr->scalar = 1;
-    genr->local = 0;
+    genr->flags = GENR_SAVE | GENR_SCALAR;
     genr->xvec = NULL;
     genr->varnum = 0;
     genr->obs = -1;
@@ -830,24 +842,36 @@ static double *eval_compound_arg (GENERATE *genr,
 
 	while ((atom = pop_child_atom(this_atom))) {
 	    double y = eval_atom(atom, genr, t, x);
+	    int err;
 
-	    if (genr->err) break;
+	    if (genr->err) {
+		break;
+	    }
+
 	    if (0 && y == NADBL) { /* watch out? */
 		x = NADBL;
 	    } else {
 		if (atom->level < level) {
 		    x = calc_pop(genr);
 		}
-		x = calc_xy(x, y, atom->op, t);
+		x = calc_xy(x, y, atom->op, t, &err);
+		if (err) {
+		    genr_set_warn(genr);
+		}
 	    }
+
 	    if (atom->level > level) { 
 		genr->err = calc_push(xbak, genr);
 	    }
+
 	    level = atom->level;
 	    xbak = x;
 	}
 
-	if (genr->err) break;
+	if (genr->err) {
+	    break;
+	}
+
 	reset_calc_stack(genr);
 	xtmp[t] = x;
     }
@@ -946,12 +970,20 @@ static int evaluate_genr (GENERATE *genr)
 	}	
     }
 
-    if (genr->err) return genr->err;
+    if (genr->err) {
+	return genr->err;
+    }
 
-    genr->scalar = atom_stack_check_for_scalar(genr);
-    DPRINTF(("evaluate_genr: check for scalar, result = %d\n", genr->scalar));
+    if (atom_stack_check_for_scalar(genr)) {
+	genr_set_scalar(genr);
+    } else {
+	genr_unset_scalar(genr);
+    }
 
-    if (genr->scalar) {
+    DPRINTF(("evaluate_genr: check for scalar, result = %d\n", 
+	     genr_is_scalar(genr)));
+
+    if (genr_is_scalar(genr)) {
 	t2 = tstart;
     } else if (tstart < m) {
 	/* autoregressive genr */
@@ -970,8 +1002,11 @@ static int evaluate_genr (GENERATE *genr)
 
 	while ((atom = pop_atom(genr))) {
 	    double y = eval_atom(atom, genr, t, x);
+	    int err;
 
-	    if (genr->err) break;
+	    if (genr->err) {
+		break;
+	    }
 
 	    if (0 && y == NADBL) { /* watch out? */
 		x = NADBL;
@@ -981,8 +1016,12 @@ static int evaluate_genr (GENERATE *genr)
 		    npop++;
 		    DPRINTF(("popped %g\n", x));
 		}
-		x = calc_xy(x, y, atom->op, t);
+		x = calc_xy(x, y, atom->op, t, &err);
+		if (err) {
+		    genr_set_warn(genr);
+		}
 	    }
+
 	    if (atom->level > level) {
 		int pad = atom->level - level - 1;
 
@@ -995,6 +1034,7 @@ static int evaluate_genr (GENERATE *genr)
 		    npush++;
 		}
 	    }
+
 	    level = atom->level;
 	    xbak = x;
 	}
@@ -1008,7 +1048,9 @@ static int evaluate_genr (GENERATE *genr)
 
 	reset_calc_stack(genr);
 
-	if (genr->err) break;
+	if (genr->err) {
+	    break;
+	}
 
 	genr->xvec[t] = x;
 	if (m > 0 && !na(x)) {
@@ -1897,10 +1939,10 @@ static void get_genr_formula (char *formula, const char *line,
     while (isspace((unsigned char) *line)) line++;
 
     if (!strncmp(line, "eval", 4)) {
-	genr->save = 0;
+	genr_unset_save(genr);
     }
 
-    if (!strncmp(line, "genr", 4) || !genr->save) {
+    if (!strncmp(line, "genr", 4) || !(genr_doing_save(genr))) {
 	line += 4;
 	while (isspace((unsigned char) *line)) line++;
     }
@@ -1917,7 +1959,7 @@ static void get_genr_formula (char *formula, const char *line,
     if (gretl_executing_function()) {
 	/* allow for generation of vars local to function */
 	if (sscanf(line, "my %8s =", vname)) {
-	    genr->local = 1;
+	    genr_set_local(genr);
 	    line += 3;
 	}
     }
@@ -2062,8 +2104,9 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     /* special cases which are not of the form "lhs=rhs" */
     if (strcmp(s, "dummy") == 0) {
 	genr.err = dummy(pZ, pdinfo);
-	if (!genr.err)
+	if (!genr.err) {
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
+	}
 	return genr.err;
     }
     else if (strcmp(s, "paneldum") == 0) {
@@ -2087,7 +2130,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	if (!genr.err) {
 	    strcpy(genr.varname, s);
 	    genr.varnum = varindex(pdinfo, s);
-	    genr.scalar = 0;
+	    genr_unset_scalar(&genr);
 	    genr_msg(&genr, oldv);
 	}
 	return genr.err;
@@ -2111,10 +2154,10 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
-	genr.varnum = real_varindex(pdinfo, newvar, genr.local);
+	genr.varnum = real_varindex(pdinfo, newvar, genr_is_local(&genr));
     } else {
 	/* no "lhs=" bit */
-	if (!genr.save) {
+	if (!(genr_doing_save(&genr))) {
 	    strcpy(newvar, "$eval");
 	} else {
 	    genr.err = E_SYNTAX;
@@ -2198,7 +2241,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     } else {
 	make_genr_varname(&genr, newvar);
 	genr_msg(&genr, oldv);
-	if (genr.save) {
+	if (genr_doing_save(&genr)) {
 	    const char *vname;
 
 	    if (genr.varnum < oldv) {
@@ -2234,7 +2277,7 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	modify = 1;
 	if (!pdinfo->vector[v]) {
 	    was_scalar = 1;
-	} else if (genr->scalar) {
+	} else if (genr_is_scalar(genr)) {
 	    vectorize = 1;
 	}
     }
@@ -2243,10 +2286,10 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 
     if (!vectorize) {
 	/* do not coerce existing vectors into scalars */
-	pdinfo->vector[v] = !genr->scalar;
+	pdinfo->vector[v] = !(genr_is_scalar(genr));
     }
 
-    if (genr->local) {
+    if (genr_is_local(genr)) {
 	/* record as a var local to a particular function
 	   stack depth */
 	STACK_LEVEL(pdinfo, v) = gretl_function_stack_depth();
@@ -2256,14 +2299,14 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "add_new_var: adding %s '%s' (#%d, %s)\n",
-	    (genr->scalar && !vectorize)? "scalar" : "vector",
+	    (genr_is_scalar(genr) && !vectorize)? "scalar" : "vector",
 	    pdinfo->varname[v], v,
 	    (modify)? "replaced" : "newly created");
 #endif
 
     if (genr->obs >= 0) {
 	/* replacing single observation */
-	if (genr->scalar) {
+	if (genr_is_scalar(genr)) {
 	    (*pZ)[v][genr->obs] = xx;
 	} else {
 	    (*pZ)[v][genr->obs] = genr->xvec[genr->obs];
@@ -2273,7 +2316,7 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	for (t=0; t<n; t++) {
 	    (*pZ)[v][t] = xx;
 	}
-    } else if (genr->scalar) {
+    } else if (genr_is_scalar(genr)) {
 	strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = xx;
@@ -2307,10 +2350,12 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 
 /* ............................................................ */
 
-static double calc_xy (double x, double y, char op, int t) 
+static double calc_xy (double x, double y, char op, int t, int *err) 
 {
     long int ny;
     double xx, yy;
+
+    *err = 0;
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "calc_xy: in: x=%g, y=%g, ", x, y);
@@ -2319,11 +2364,14 @@ static double calc_xy (double x, double y, char op, int t)
 #endif
 
     /* special case: 0.0 * anything (including even NA) = 0.0 */
-    if (op == '*' && (x == 0.0 || y == 0.0))
+    if (op == '*' && (x == 0.0 || y == 0.0)) {
 	return 0.0;
+    }
 
     /* otherwise, NA propagates to the result */
-    if (op && (na(x) || na(y))) return NADBL;
+    if (op && (na(x) || na(y))) {
+	return NADBL;
+    }
 
     switch (op) {
     case '\0':
@@ -2333,10 +2381,11 @@ static double calc_xy (double x, double y, char op, int t)
 	x += y;
 	break;
     case '|':
-	if (floatneq(x, 0.) || floatneq(y, 0.))
+	if (floatneq(x, 0.) || floatneq(y, 0.)) {
 	    x = 1.0;
-	else
+	} else {
 	    x = 0.0;
+	}
 	break;
     case '-':
 	x -= y;
@@ -2346,18 +2395,21 @@ static double calc_xy (double x, double y, char op, int t)
 	break;
     case '&':
 	x *= y;
-	if (x != 0.) x = 1.0;
+	if (x != 0.) {
+	    x = 1.0;
+	}
 	break;
     case '%':
 	x = (double) ((int) x % (int) y);
 	break;
     case '/':
-	xx = y;
-	if (floateq(xx, 0.0)) {  
-	    sprintf(gretl_errmsg, _("Zero denominator for obs %d"), t+1);
-	    return 1;
+	if (floateq(y, 0.0)) { 
+	    sprintf(gretl_errmsg, _("Zero denominator for obs %d"), t + 1);
+	    x = NADBL;
+	    *err = 1;
+	} else {
+	    x /= y;
 	}
-	x /= xx;
 	break;
     case '^':
 	xx = x;
@@ -2368,40 +2420,66 @@ static double calc_xy (double x, double y, char op, int t)
 	    sprintf(gretl_errmsg, 
 		    _("Invalid power function args for obs. %d"
 		      "\nbase value = %f, exponent = %f"), t, xx, yy);
-	    return 1;
+	    x = NADBL;
+	    *err = 1;
+	} else if (floateq(xx, 0.0)) {
+	    x = 0.0;
+	} else {
+	    x = pow(xx, yy);
 	}
-	if (floateq(xx, 0.0)) x = 0.0;
-	else x = pow(xx, yy);
 	break;
     case '<':
-	if (x < y) x = 1.0;
-	else x = 0.0;
+	if (x < y) {
+	    x = 1.0;
+	} else {
+	    x = 0.0;
+	}
 	break;
     case '>':
-	if (x > y) x = 1.0;
-	else x = 0.0;
+	if (x > y) {
+	    x = 1.0;
+	} else {
+	    x = 0.0;
+	}
 	break;
     case '=':
-	if (floateq(x, y)) x = 1.0;
-	else x = 0.0;
+	if (floateq(x, y)) {
+	    x = 1.0;
+	} else {
+	    x = 0.0;
+	}
 	break;
     case NEQ: /* not equals */
-	if (floateq(x, y)) x = 0.0;
-	else x = 1.0;
+	if (floateq(x, y)) {
+	    x = 0.0;
+	} else {
+	    x = 1.0;
+	}
 	break;
     case GEQ: /* greater than or equal */
-	if (floateq(x, y)) x = 1.0;
-	else if (x > y) x = 1.0;
-	else x = 0.0;
+	if (floateq(x, y)) {
+	    x = 1.0;
+	} else if (x > y) {
+	    x = 1.0;
+	} else {
+	    x = 0.0;
+	}
 	break;
     case LEQ: /* less than or equal */
-	if (floateq(x, y)) x = 1.0;
-	else if (x < y) x = 1.0;
-	else x = 0.0;
+	if (floateq(x, y)) {
+	    x = 1.0;
+	} else if (x < y) {
+	    x = 1.0;
+	} else {
+	    x = 0.0;
+	}
 	break;
     case '!':
-	if (floatneq(y, 0.0)) x = 0.0;
-	else x = 1.0;
+	if (floatneq(y, 0.0)) {
+	    x = 0.0;
+	} else {
+	    x = 1.0;
+	}
 	break;
     } 
 
@@ -4693,12 +4771,12 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 static void genr_msg (GENERATE *genr, int oldv)
 {
     double x;
-    int scalar = genr->scalar;
+    int scalar = genr_is_scalar(genr);
     int mutant = 0;
 
     if (!strcmp(genr->varname, "argv")) return;
 
-    if (!genr->save) {
+    if (!(genr_doing_save(genr))) {
 	x = genr->xvec[genr->pdinfo->t1];
 	if (na(x)) {
 	    strcpy(gretl_msg, " NA");
@@ -4711,7 +4789,7 @@ static void genr_msg (GENERATE *genr, int oldv)
     if (genr->varnum < oldv) {
 	if (genr->pdinfo->vector[genr->varnum]) {
 	    scalar = 0;
-	} else if (!genr->scalar) {
+	} else if (!scalar) {
 	    mutant = 1;
 	}
     }
@@ -4733,6 +4811,12 @@ static void genr_msg (GENERATE *genr, int oldv)
 	    sprintf(numstr, " = %g", x);
 	}
 	strcat(gretl_msg, numstr);
+    }
+
+    if (genr_warn(genr)) {
+	strcat(gretl_msg, "\n");
+	strcat(gretl_msg, gretl_errmsg);
+	*gretl_errmsg = '\0';
     }
 }
 

@@ -1518,9 +1518,13 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (!(pmod->ci == ARMA && !na(pmod->lnL))) {
-	if (PLAIN_FORMAT(prn->format)) print_aicetc(pmod, prn);
-	else if (TEX_FORMAT(prn->format)) tex_print_aicetc(pmod, prn);
-	else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
+	if (PLAIN_FORMAT(prn->format)) {
+	    print_aicetc(pmod, prn);
+	} else if (TEX_FORMAT(prn->format)) {
+	    tex_print_aicetc(pmod, prn);
+	} else if (RTF_FORMAT(prn->format)) {
+	    rtf_print_aicetc(pmod, prn);
+	}
     }
 
     if (PLAIN_FORMAT(prn->format) && 
@@ -1590,25 +1594,34 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
 	return;
     }
 
-    pprintf(prn, "  %s\n\n", _("MODEL SELECTION STATISTICS"));	
+    pprintf(prn, "  %s\n\n", _("MODEL SELECTION STATISTICS"));
+	
     pputs(prn, "  SGMASQ    ");
     print_aicetc_value(pmod->criterion[C_SGMASQ], prn);
+
     pputs(prn, "     AIC       ");
     print_aicetc_value(pmod->criterion[C_AIC], prn);
+
     pputs(prn, "     FPE       ");
     print_aicetc_value(pmod->criterion[C_FPE], prn);
+
     pputs(prn, "\n  HQ        ");
     print_aicetc_value(pmod->criterion[C_HQ], prn);
+
     pputs(prn, "     SCHWARZ   ");
     print_aicetc_value(pmod->criterion[C_BIC], prn);
+
     pputs(prn, "     SHIBATA   ");
     print_aicetc_value(pmod->criterion[C_SHIBATA], prn);
+
     pputs(prn, "\n  GCV       ");
     print_aicetc_value(pmod->criterion[C_GCV], prn);
+
     pputs(prn, "     RICE      ");
-    if (pmod->criterion[C_RICE] > 0.0) {
+    if (!na(pmod->criterion[C_RICE])) {
 	print_aicetc_value(pmod->criterion[C_RICE], prn);
     } else {
+	pputs(prn, "  ");
 	pputs(prn, _("undefined"));
     }
     pputs(prn, "\n\n");
@@ -2198,10 +2211,11 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 	    pmod->criterion[C_BIC], pmod->criterion[C_SHIBATA],
 	    pmod->criterion[C_GCV]);
 
-    if (pmod->criterion[C_RICE] > 0.0) 
+    if (!na(pmod->criterion[C_RICE])) {
 	pprintf(prn, "\\textsc{rice}    & %g\n", pmod->criterion[C_RICE]);
-    else
+    } else {
 	pprintf(prn, "\\textsc{rice}    & %s\n", I_("undefined"));
+    }
     
     pputs(prn, "\\end{tabular*}\n\n");
 }
@@ -2248,10 +2262,11 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
 	    crit_strs[0], crit_strs[1], 
 	    crit_strs[2], crit_strs[3], 
 	    crit_strs[4], crit_strs[5], crit_strs[6]);
-    if (pmod->criterion[7] > 0.0) 
+    if (!na(pmod->criterion[C_RICE])) {
 	pprintf(prn, " \\qc %s\\cell", crit_strs[7]);
-    else
+    } else {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
+    }
     pputs(prn, " \\qr \\cell \\qr \\cell");
 
     pputs(prn, " \\intbl \\row}\n\n");
@@ -2284,11 +2299,13 @@ static void mp_other_stats (const mp_results *mpvals, PRN *prn)
 
     sprintf(fstr, "F(%d, %d)", mpvals->dfn, mpvals->dfd);
     pprintf(prn, "%-*s", len, fstr);
+
     if (na(mpvals->fstt)) {
 	pprintf(prn, "            %s", _("undefined"));
     } else {
 	gretl_print_fullwidth_double(mpvals->fstt, GRETL_MP_DIGITS, prn);
     }
+
     pputs(prn, "\n\n");
 }
 

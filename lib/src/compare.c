@@ -95,6 +95,9 @@ add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
     }
 
     for (i=0; i<8; i++) { 
+	if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
+	    continue;
+	}
 	if (pmodB->criterion[i] < pmodA->criterion[i]) {
 	    cmp.score++;
 	}

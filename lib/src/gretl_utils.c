@@ -526,24 +526,28 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
 static void calculate_criteria (double *criterion, double ess, 
 				int nobs, int ncoeff)
 {
-    double zz, zx, ersq, zn;
+    double sig2 = ess / nobs;
+    double nx = nobs;
+    double dfx = nobs - ncoeff;
+    double cobs = (double) ncoeff / nobs;
+    double cobs1 = 1.0 - cobs;
+    double cobs2 = 2.0 * cobs;
 
-    zz = (double) (nobs - ncoeff);
-    criterion[C_SGMASQ]  = ess / zz;
-    ersq = ess / nobs;
-    criterion[C_FPE]     = ersq * (nobs + ncoeff) / zz;
-    zz = 2.0 * ncoeff / nobs;
-    criterion[C_AIC]     = ersq * exp(zz);
-    criterion[C_SHIBATA] = ersq * (1.0 + zz);
-    criterion[C_RICE]    = ((1-zz) > 0.0)? ersq / (1 - zz) : NADBL;
-    zn = (double) nobs;
-    zx = log(zn);
-    criterion[C_HQ]      = ersq * pow(zx, zz);
-    zz = (double) ncoeff;
-    zz /= zn;
-    criterion[C_BIC]     = ersq * pow(zn, zz);
-    zz = 1.0 - zz;
-    criterion[C_GCV]     = ersq / (zz * zz);
+    criterion[C_SGMASQ] = ess / dfx;
+
+    criterion[C_FPE] = sig2 * (nobs + ncoeff) / dfx;
+
+    criterion[C_AIC] = sig2 * exp(cobs2);
+
+    criterion[C_SHIBATA] = sig2 * (1.0 + cobs2);
+
+    criterion[C_RICE] = (cobs2 < 1.0)? (sig2 / (1.0 - cobs2)) : NADBL;
+
+    criterion[C_HQ] = sig2 * pow(log(nx), cobs2);
+
+    criterion[C_BIC] = sig2 * pow((double) nobs, cobs);
+
+    criterion[C_GCV] = sig2 / (cobs1 * cobs1);
 }
 
 /* Compute model selection criteria */
@@ -570,10 +574,10 @@ void gretl_criteria (const double ess, int nobs, int ncoeff,
 	    criterion[C_SGMASQ], criterion[C_AIC], 
 	    criterion[C_FPE], criterion[C_HQ], 
 	    criterion[C_BIC], criterion[C_SHIBATA], criterion[C_GCV]);
-    if (criterion[C_RICE] > 0.0) {
+    if (!na(criterion[C_RICE])) {
 	pprintf(prn, "     RICE      %13g\n", criterion[C_RICE]);
     } else {
-	pputs(prn, "     RICE          undefined\n");
+	pputs(prn, "     RICE            undefined\n");
     }
     pputc(prn, '\n');
 }

@@ -1,0 +1,40 @@
+# Replicate Table 1, "Estimation of the Textbook
+# Solow model," in Mankiw, Romer and Weil, QJE 1992
+open mrw.gdt
+genr lny = log(gdp85)
+genr ngd = 0.05 + (popgrow/100.0)
+genr lngd = log(ngd)
+genr linv = log(inv/100.0)
+# generate variable for testing Solow restriction
+genr x3 = linv - lngd
+# set sample to non-oil producing countries
+smpl nonoil --dummy
+model1 <- ols lny const linv lngd
+genr essu = $ess
+genr dfu1 = $df
+# restricted regression
+ols lny const x3
+genr F1 = ($ess - essu)/(essu/dfu1)
+# set sample to the "better data" countries
+smpl intermed --dummy --replace
+model2 <- ols lny const linv lngd
+genr essu = $ess
+genr dfu2 = $df
+# restricted regression
+ols lny const x3
+genr F2 = ($ess - essu)/(essu/dfu2)
+# set sample to the OECD countries
+smpl OECD --dummy --replace
+model3 <- ols lny const linv lngd
+genr essu = $ess
+genr dfu3 = $df
+# restricted regression
+ols lny const x3
+genr F3 = ($ess - essu)/(essu/dfu3)
+print F1 F2 F3
+# pvalues for test of Solow restriction in each sample
+pvalue F 1 dfu1 F1
+pvalue F 1 dfu2 F2
+pvalue F 1 dfu3 F3
+
+

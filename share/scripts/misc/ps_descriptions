@@ -7,6 +7,7 @@
 "klein","System estimation","US macro data"
 "leverage","Influential observations","artificial data"
 "longley","Multicollinearity","US employment"
+"mrw","Solow growth model (Mankiw, Romer, Weil)","cross-country"
 "pscoin","Johansen cointegration test","prices & exchange rate"
 "restrict","Parameter restrictions","private school enrollment"
 "sw_ch12","Augmented Dickey-Fuller test","inflation & unemployment"
