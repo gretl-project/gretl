@@ -2040,7 +2040,7 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 		      plot->spec);
     } 
 #ifdef G_OS_WIN32
-    else if (!strcmp(parent_item, _("Copy to clipboard"))) {
+    else if (!strcmp(parent_item, "Copy to clipboard")) {
 	gnuplot_graph_to_clipboard(plot->spec, color);
     }    
 #endif   
@@ -2196,8 +2196,8 @@ static void build_plot_menu (png_plot_t *plot)
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(plot->popup), item);
 
-	if (!strcmp(plot_items[i], _("Save as postscript (EPS)...")) ||
-	    !strcmp(plot_items[i], _("Copy to clipboard"))) {
+	if (!strcmp(plot_items[i], "Save as postscript (EPS)...") ||
+	    !strcmp(plot_items[i], "Copy to clipboard")) {
 	    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), plot->color_popup);
 	    g_object_set_data(G_OBJECT(item), "string", _(plot_items[i]));
 	} else {

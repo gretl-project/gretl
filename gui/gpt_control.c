@@ -2081,7 +2081,7 @@ static void build_plot_menu (png_plot_t *plot)
         gtk_widget_show(item);
         gtk_menu_append(GTK_MENU(plot->popup), item);
 
-	if (!strcmp(plot_items[i], _("Save as postscript (EPS)..."))) {
+	if (!strcmp(plot_items[i], "Save as postscript (EPS)...")) {
 	    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), plot->color_popup);
 	    gtk_object_set_data(GTK_OBJECT(item), "string", _(plot_items[i]));
 	} else {
