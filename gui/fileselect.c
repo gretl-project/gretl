@@ -487,6 +487,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	strcpy(trydatfile, fname);
 	gtk_widget_destroy(GTK_WIDGET(fs)); 
 	do_open_data(NULL, NULL, action);
+	return;
     }
     else if (action == OPEN_SCRIPT) {
 	int spos;

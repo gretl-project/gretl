@@ -827,6 +827,7 @@ void menubar_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
 
+    flip(mdata->ifac, _("/File/Append data"), s);
     flip(mdata->ifac, _("/File/Clear data set"), s);
     flip(mdata->ifac, _("/File/Save data"), s);
     flip(mdata->ifac, _("/File/Save data as"), s);

@@ -701,9 +701,17 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     FILE *fp;
     wbook book;
     int err = 0;
+    double **newZ;
+    DATAINFO *newinfo;
 
     errbuf = errtext;
     errbuf[0] = '\0';
+
+    newinfo = datainfo_new();
+    if (newinfo == NULL) {
+	sprintf(errtext, _("Out of memory\n"));
+	return 1;
+    }
 
     wbook_init(&book);
 
@@ -791,40 +799,40 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    
 	    t = 1 + book.row_offset;
 	    if (pd) {
-		pdinfo->pd = pd;
-		pdinfo->sd0 = atof(rowptr[t].cells[i]);
-		strcpy(pdinfo->stobs, rowptr[t].cells[i]);
-		pdinfo->time_series = TIME_SERIES;
+		newinfo->pd = pd;
+		newinfo->sd0 = atof(rowptr[t].cells[i]);
+		strcpy(newinfo->stobs, rowptr[t].cells[i]);
+		newinfo->time_series = TIME_SERIES;
 		time_series = 1;
 	    }
 	}
 
 	skip = book.col_offset + (time_series || label_strings);
 
-	pdinfo->v = ncols + 1 - skip;
-	pdinfo->n = lastrow - book.row_offset;
-	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d\n",
-		pdinfo->v, pdinfo->n);
+	newinfo->v = ncols + 1 - skip;
+	newinfo->n = lastrow - book.row_offset;
+	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
+		newinfo->v, newinfo->n);
 
-	start_new_Z(pZ, pdinfo, 0);
-	set_all_missing(*pZ, pdinfo);
+	start_new_Z(&newZ, newinfo, 0);
+	set_all_missing(newZ, newinfo);
 
 	if (!time_series) {
-	    strcpy(pdinfo->stobs, "1");
-	    sprintf(pdinfo->endobs, "%d", pdinfo->n);
-	    pdinfo->sd0 = 1.0;
-	    pdinfo->pd = 1;
-	    pdinfo->time_series = 0;
+	    strcpy(newinfo->stobs, "1");
+	    sprintf(newinfo->endobs, "%d", newinfo->n);
+	    newinfo->sd0 = 1.0;
+	    newinfo->pd = 1;
+	    newinfo->time_series = 0;
 	} else {
-	    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+	    ntodate(newinfo->endobs, newinfo->n - 1, newinfo);
 	}
-	pdinfo->extra = 0; 
+	newinfo->extra = 0; 
 
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<newinfo->v; i++) {
 	    i_sheet = i - 1 + skip;
-	    pdinfo->varname[i][0] = 0;
-	    strncat(pdinfo->varname[i], rowptr[0].cells[i_sheet] + 1, 8);
-	    for (t=0; t<pdinfo->n; t++) {
+	    newinfo->varname[i][0] = 0;
+	    strncat(newinfo->varname[i], rowptr[0].cells[i_sheet] + 1, 8);
+	    for (t=0; t<newinfo->n; t++) {
 		t_sheet = t + 1 + book.row_offset;
 		if (rowptr[t_sheet].cells == NULL ||
 		    rowptr[t_sheet].cells[i_sheet] == NULL) continue;
@@ -833,7 +841,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 			"= '%s'\n", i, t, i_sheet, t_sheet, 
 			rowptr[t_sheet].cells[i_sheet]);
 #endif
-		(*pZ)[i][t] = 
+		newZ[i][t] = 
 		    atof(rowptr[t_sheet].cells[i_sheet]);
 	    }
 	}
@@ -841,17 +849,28 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	if (label_strings) {
 	    char **S = NULL;
 
-	    pdinfo->markers = 1;
-	    if (allocate_case_markers(&S, pdinfo->n) == 0) {
-		pdinfo->markers = 1;
+	    newinfo->markers = 1;
+	    if (allocate_case_markers(&S, newinfo->n) == 0) {
+		newinfo->markers = 1;
 		i = book.col_offset;
-		for (t=0; t<pdinfo->n; t++) {
+		for (t=0; t<newinfo->n; t++) {
 		    t_sheet = t + 1 + book.row_offset;
 		    S[t][0] = 0;
 		    strncat(S[t], rowptr[t_sheet].cells[i] + 1, 8);
 		}
-		pdinfo->S = S;
+		newinfo->S = S;
 	    }
+	}
+	if (*pZ == NULL) {
+	    *pZ = newZ;
+	    *pdinfo = *newinfo;
+	} else {
+	    PRN prn;
+
+	    prn.fp = NULL;
+	    prn.buf = errtext;
+	    if (merge_data(pZ, pdinfo, newZ, newinfo, &prn, 1))
+		err = 1;
 	}
 #endif /* STANDALONE */
     }

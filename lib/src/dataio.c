@@ -1598,104 +1598,106 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
     return -1;
 }
 
+#define MSG(p, s, g) do { \
+                        if (g) pprintf(p, s); \
+                        else pprintf(p, "   %s\n", s); \
+                     } while (0); 
 
-enum {
-    DATA_ADD_COLS,
-    DATA_ADD_ROWS
-} merge_codes;
+/**
+ * merge_data:
+ * @pZ: pointer to data set.
+ * @pdinfo: data information struct.
+ * @addZ: new data set to be merged in.
+ * @addinfo: data information associated with @addZ.
+ * @prn: print struct to accept messages.
+ * @gui: if = 1, messages will be suitable for GUI message box,
+ * otherwise they will be line-print oriented.
+ * 
+ * Attempt to merge the content of a newly opened data file into
+ * gretl's current working data set.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
 
-
-static int merge_data (double ***pZ, DATAINFO *pdinfo,
-		       double **addZ, DATAINFO *addinfo,
-		       int code, PRN *prn)
+int merge_data (double ***pZ, DATAINFO *pdinfo,
+		double **addZ, DATAINFO *addinfo,
+		PRN *prn, int gui)
 {
-    int err = 0;
+    int err = 0, addrows = 0, addcols = 0;
 
     /* first check for conformability */
 
     if (pdinfo->pd != addinfo->pd) {
-	pprintf(prn, _("   Data frequency does not match\n"));
-	return 1;
+	MSG(prn, _("Data frequency does not match"), gui);
+	err = 1;
     }
 
-    if (code == DATA_ADD_COLS) {
-	if (pdinfo->n != addinfo->n) {
-	    pprintf(prn, _("   Number of observations does not match\n"));
-	    return 1;
+    if (!err && pdinfo->n != addinfo->n && pdinfo->v != addinfo->v) {
+	MSG(prn, _("New data not conformable for appending"), gui);
+	err = 1;
+    }
+    else if (!err && pdinfo->n == addinfo->n && pdinfo->v != addinfo->v)
+	addcols = 1;
+    else if (!err && pdinfo->n != addinfo->n && pdinfo->v == addinfo->v)
+	addrows = 1;
+    else if (!err && pdinfo->n == addinfo->n && pdinfo->v == addinfo->v) {
+	int i;
+
+	addrows = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (strcmp(pdinfo->varname[i], addinfo->varname[i])) {
+		addcols = 1;
+		addrows = 0;
+		break;
+	    }
 	}
+    }
+
+    if (addcols) {
 	if (strcmp(pdinfo->stobs, addinfo->stobs)) {
-	    pprintf(prn, _("   Starting observation does not match\n"));
-	    return 1;
+	    MSG(prn, _("Starting observation does not match"), gui);
+	    err = 1;
 	} 
-	if (strcmp(pdinfo->endobs, addinfo->endobs)) {
-	    pprintf(prn, _("   Ending observation does not match\n"));
-	    return 1;
+	else if (strcmp(pdinfo->endobs, addinfo->endobs)) {
+	    MSG(prn, _("Ending observation does not match"), gui);
+	    err = 1;
 	}
+	if (err) addcols = 0;
     }
 
-    else if (code == DATA_ADD_ROWS) {
-	if (pdinfo->v != addinfo->v) {
-	    pprintf(prn, _("   Number of variables does not match\n"));
-	    return 1;
+    else if (addrows) {
+	if (pdinfo->time_series && 
+	    dateton(addinfo->stobs, pdinfo) != pdinfo->n) {
+	    MSG(prn, _("Starting point of new data does not fit"), gui);
+	    err = 1;
 	}
-	if (dateton(addinfo->stobs, pdinfo) != pdinfo->n + 1) {
-	    pprintf(prn, _("   Starting point of new data does not fit\n"));
-	    return 1;
+	else if (pdinfo->markers != addinfo->markers) {
+	    MSG(prn, _("Inconsistency in observation markers"), gui);
+	    err = 1;
 	}
-	if (pdinfo->markers != addinfo->markers) {
-	    pprintf(prn, _("   Inconsistency in observation markers\n"));
-	    return 1;
-	}
+	if (err) addrows = 0;
     }
 
     /* if checks are passed, try merging the data */
 
-   if (code == DATA_ADD_COLS) { 
+   if (addcols) { 
+       int orig_vars = pdinfo->v;
        int i, t, nvars = pdinfo->v + addinfo->v - 1;
-       double **newZ = realloc(*pZ, nvars * sizeof *newZ);
-       unsigned char *vector = realloc(pdinfo->vector, nvars);
-       char **varname = realloc(pdinfo->varname, nvars * sizeof *varname);
 
-       if (vector == NULL || newZ == NULL || varname == NULL)
+       if (dataset_add_vars(addinfo->v - 1, pZ, pdinfo)) {
+	   MSG(prn, _("Out of memory adding data"), gui);
 	   err = 1;
-       
-       if (!err) {
-	   for (i=pdinfo->v; i<nvars; i++) {
-	       newZ[i] = malloc(pdinfo->n * sizeof **newZ);
-	       if (newZ[i] == NULL) {
-		   err = 1;
-		   break;
-	       } else {
-		   vector[i] = 1;
-		   for (t=0; t<pdinfo->n; t++)
-		       newZ[i][t] = addZ[i - pdinfo->v + 1][t];
-	       }
-	   }
-       } else err = 1;
-
-       for (i=pdinfo->v; i<nvars && !err; i++) {
-	   varname[i] = malloc(9);
-	   if (varname[i] == NULL) {
-	       err = 1;
-	       break;
-	   } else 
-	       strcpy(varname[i], addinfo->varname[i - pdinfo->v + 1]);
        }
 
-       if (err) {
-	   pprintf(prn, _("   Out of memory adding data\n"));
-	   return 1;
+       for (i=orig_vars; i<nvars && !err; i++) {
+	   strcpy(pdinfo->varname[i], addinfo->varname[i - orig_vars + 1]);
+	   for (t=0; t<pdinfo->n; t++)
+	       (*pZ)[i][t] = addZ[i - orig_vars + 1][t];
        }
-
-       *pZ = newZ;
-       pdinfo->vector = vector;
-       pdinfo->varname = varname;
-       pdinfo->v = nvars;
-
-       return 0;
    }
 
-   else if (code == DATA_ADD_ROWS) { 
+   else if (addrows) { 
        int i, t, tnew = pdinfo->n + addinfo->n;
        double *xx;
 
@@ -1710,8 +1712,8 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 		   if (S[t] == NULL) err = 1;
 		   else strcpy(S[t], addinfo->S[t - pdinfo->n]);
 	       }
+	       pdinfo->S = S;
 	   }
-	   pdinfo->S = S;
        }
 
        for (i=0; i<pdinfo->v && !err; i++) {
@@ -1726,19 +1728,19 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	   }
        }
 
-       
-       if (err) {
-	   pprintf(prn, _("   Out of memory adding data\n"));
-	   return 1;
+       if (err) { 
+	   MSG(prn, _("Out of memory adding data"), gui);
+       } else {
+	   pdinfo->n = tnew;
+	   ntodate(pdinfo->endobs, tnew - 1, pdinfo);
+	   pdinfo->t2 = pdinfo->n - 1;
        }
-
-       pdinfo->n = tnew;
-       ntodate(pdinfo->endobs, tnew - 1, pdinfo);
-
-       return 0;       
    }
 
-   return 1;
+   free_Z(addZ, addinfo);
+   clear_datainfo(addinfo, CLEAR_FULL);
+
+   return err;
 }
 
 /* ......................................................... */
@@ -1857,8 +1859,12 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    ok = 0; 
 	    chkcols = (bad_commas)? -1: 0;
 	}
+	cbak = c;
     }
     pprintf(prn, _("   longest line: %d characters\n"), maxlen + 1);
+
+    if (cbak != '\n') 
+	fprintf(stderr, "last char was not newline: could be a problem\n");
 
     if (!blank_1) {
 	rewind(fp);
@@ -2031,7 +2037,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	*pZ = csvZ;
 	*pdinfo = *csvinfo;
     } else {
-	if (merge_data(pZ, pdinfo, csvZ, csvinfo, DATA_ADD_COLS, prn))
+	if (merge_data(pZ, pdinfo, csvZ, csvinfo, prn, 0))
 	    return 1;
     }
 

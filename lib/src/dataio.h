@@ -83,6 +83,10 @@ int has_gz_suffix (const char *fname);
 
 void gz_switch_ext (char *targ, char *src, char *ext);
 
+int merge_data (double ***pZ, DATAINFO *pdinfo,
+		double **addZ, DATAINFO *addinfo,
+		PRN *prn, int gui);
+
 int get_data (double ***pZ, DATAINFO *pdinfo, 
 	      char *datfile, PATHS *ppaths, 
 	      const int data_status, PRN *prn);
