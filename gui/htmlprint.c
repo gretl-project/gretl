@@ -145,7 +145,7 @@ static void h_noconst (html_t *htm)
     hprintf(htm, "<p>The model has no constant term.</br>\n"  
 	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
 	    "Econometrics.<br/>\n"
-	    "R-squared is the square of the correlation between the "
+	    "R&sup2; is the square of the correlation between the "
 	    "observed and fitted</br> values of the dependent variable.</p>\n");
 }
 
@@ -498,7 +498,7 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 	    h_dwline(pmod, htm);
 	hprintf(htm, "</table>\n");
 	if (pmod->ci == TSLS) hprintf(htm, "\n"
-	       "<p>R-squared is computed as the square of the correlation "
+	       "<p>R&sup2; is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.</p>\n");
 	h_print_aicetc(pmod, htm);
@@ -529,7 +529,7 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     }
     else if (pmod->ci == CORC || pmod->ci == HILU) {
 	hprintf(htm, "<p>Statistics based on the rho-differenced data:\n\n"
-	       "R-squared is computed as the square of the correlation "
+	       "R&sup2; is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.</p>\n\n");	
 	stats_table_start(htm);

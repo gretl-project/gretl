@@ -67,12 +67,12 @@ PROG  = gretl_x11
 
 SRCS = gretl.c lib.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c fileselect.c gpt_control.c session.c \
-	webget.c calculator.c htmlprint.c ../cli/common.c 
+	webget.c calculator.c htmlprint.c rtfprint.c ../cli/common.c 
 HDRS = gretl.h lib.h gui_utils.h callbacks.h dialogs.h session.h \
 	gretltypes.h webget.h htmlprint.h
 OBJS = gui_utils.o lib.o gretl.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
-	webget.o calculator.o htmlprint.o
+	webget.o calculator.o htmlprint.o rtfprint.o
 COMPILE = $(CC) -c -I$(srcdir) $(CFLAGS) $(GUI_CFLAGS) $(EXTRAI)
 
 .c.o:
@@ -208,6 +208,7 @@ gui_utils.o: ../lib/src/interact.h ../lib/src/graphing.h
 gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
 gui_utils.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+gui_utils.o: rtfprint.c
 lib.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 lib.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 lib.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h

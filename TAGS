@@ -1,0 +1,1377 @@
+
+lib/src/compare.c,357
+int _addtolist 36,1092
+int _omitfromlist 77,2199
+static void _difflist 117,3419
+static int _justreplaced 140,3839
+static COMPARE add_compare 159,4428
+static COMPARE omit_compare 193,5350
+int auxreg 229,6339
+int handle_omit 400,11467
+int autocorr_test 487,13655
+int chow_test 561,15736
+static double vprime_M_v 650,18545
+int cusum_test 680,19096
+
+lib/src/dataio.c,1233
+#define QUOTE 24,866
+static char STARTCOMMENT[33,1207
+static char ENDCOMMENT[34,1243
+void clear_datainfo 38,1343
+static void dataset_dates_defaults 68,2022
+static int skipcomments 80,2320
+static int comment_lines 98,2850
+static int dataset_allocate_markers 127,3558
+static int dataset_allocate_varnames 145,3928
+DATAINFO *create_new_dataset 166,4571
+int start_new_Z 197,5309
+static int prepZ 220,5734
+static void eatspace 235,6095
+static int readdata 250,6312
+static int gz_readdata 300,7599
+int check_varname 376,9389
+static int readhdr 406,10359
+static int check_date 515,13217
+int dateton 536,13711
+void ntodate 590,15169
+int get_info 607,15624
+static int writehdr 638,16366
+int get_precision 703,18134
+int write_data 729,18726
+static double obs_float 915,24043
+static int readlbl 938,24584
+static int writelbl 972,25474
+int has_gz_suffix 1003,26213
+void gz_switch_ext 1015,26435
+int get_data 1030,26783
+int open_nulldata 1119,29269
+static int test_label 1154,30186
+static int check_csv_merge 1246,32846
+static int do_csv_merge 1272,33588
+static void trim_csv_line 1296,34279
+int import_csv 1315,34706
+int add_case_markers 1578,41600
+int import_box 1619,42430
+int detect_filetype 1818,47420
+
+lib/src/describe.c,436
+#define PI 31,974
+double esl_median 41,1256
+static void moments 55,1596
+void free_freq 96,2571
+FREQDIST freq_func 105,2737
+static int get_pacf 217,5464
+int corrgram 269,6736
+static int roundup_half 428,10938
+static int fract_int 440,11167
+int periodogram 487,12258
+static void printf17 625,16170
+static void prhdr 633,16388
+int summary 655,17079
+int esl_corrmx 762,20109
+int means_test 816,21479
+int vars_test 872,23137
+
+lib/src/dftab.c,13
+int foo 1,0
+
+lib/src/discrete.c,399
+#define TINY 25,901
+static double _norm_pdf 36,1265
+#define PI 39,1320
+static double _norm_cdf 47,1486
+static double _logit 54,1628
+static double _logit_pdf 61,1765
+static void Lr_chisq 70,1941
+static double _logit_probit_llhood 85,2412
+MODEL logit_probit 102,2790
+static double *hessian 252,6756
+static double *hess_wts 290,7623
+static int neginv 316,8272
+static int choleski 358,9284
+
+lib/src/errors.c,47
+char *get_errmsg 26,922
+void errmsg 209,5991
+
+lib/src/estimate.c,1017
+#define TINY 26,901
+#define SMALL 27,922
+} XPXXPY;XPXXPY35,1040
+} CHOLBETA;CHOLBETA42,1140
+MODEL lsq 89,3150
+static XPXXPY _xpxxpy_func 289,9015
+static void _regress 413,12720
+static CHOLBETA _cholbeta 558,16577
+static void _diaginv 644,18965
+int makevcv 685,20078
+static double _dwstat 763,21981
+static double _rhohat 789,22702
+static double _altrho 817,23405
+static double _corrrsq 846,24095
+static int _hatvar 858,24374
+static void _dropwt 881,25005
+int hilu_corc 894,25256
+static void _autores 983,28005
+MODEL tsls_func 1000,28438
+static int _get_aux_uhat 1188,34171
+MODEL hsk_func 1252,35963
+MODEL hccm_func 1322,37602
+int whites_test 1428,39977
+MODEL ar_func 1511,42279
+static void _omitzero 1704,48037
+static void _tsls_omitzero 1748,49224
+static void _rearrange 1762,49546
+static int _zerror 1784,50081
+static int _lagdepvar 1807,50607
+static int _tsls_match 1838,51551
+static double _wt_dummy_mean 1866,52322
+static double _wt_dummy_stddev 1889,52881
+MODEL arch 1915,53625
+
+lib/src/generate.c,2141
+enum transformations transformations61,2636
+	T_LOG 62,2659
+	T_EXP,63,2672
+	T_SIN,64,2681
+	T_COS,65,2690
+	T_DIFF,66,2699
+	T_LDIFF,67,2708
+	T_MEAN,68,2719
+	T_SD,69,2729
+	T_SORT,70,2737
+	T_INT,71,2747
+	T_LN,72,2756
+	T_COEFF,73,2764
+	T_ABS,74,2774
+	T_RHO,75,2783
+	T_SQRT,76,2792
+	T_SUM,77,2802
+	T_NORMAL,78,2811
+	T_UNIFORM,79,2823
+	T_STDERR,80,2836
+	T_CUM,81,2847
+	T_MISSZERO,82,2856
+	T_CORR,83,2869
+	T_VCV,84,2878
+	T_VAR,85,2886
+	T_COV,86,2894
+	T_MEDIAN,87,2902
+	T_ZEROMISS88,2913
+static char *math[91,2930
+static char operators[122,3311
+#define LEVELS 128,3422
+static int is_operator 132,3502
+static void catch_not_equals 143,3700
+static int op_level 157,3953
+static void count_ops 178,4379
+static int insert_paren 186,4540
+static int paren_state 199,4847
+static int parenthesize 216,5189
+int _identical 296,6834
+static void otheruse 309,7111
+static int reserved 317,7356
+static void copy 373,8885
+static int getword 386,9200
+static void get_genr_formula 411,9870
+int genr_scalar_index 426,10336
+GENERATE genr_func 442,10738
+static int _cstack 847,22912
+static int _domath 956,25632
+static int _evalexp 1182,29805
+static void _getvar 1205,30436
+static int check_modelstat 1232,31131
+static int _getxvec 1276,32215
+static void _lag 1383,34802
+static int _scanb 1405,35423
+static char _strtype 1438,36122
+static int _whichtrans 1486,37347
+int dummy 1499,37598
+int paneldum 1529,38497
+static void _genrtime 1581,40199
+int plotvar 1606,40844
+int laggenr 1658,42328
+#define PI 1699,43530
+static int _normal_dist 1696,43421
+static void _uniform 1715,43854
+void varlist 1728,44133
+int varindex 1744,44512
+static int _createvar 1766,45153
+static void _genrfree 1792,45882
+int logs 1806,46261
+int lags 1876,48235
+int _parse_lagvar 1895,48651
+int xpxgenr 1937,49678
+int rhodiff 2031,52616
+static double _genr_cov 2107,54727
+static double _genr_corr 2138,55550
+static double _genr_vcv 2168,56369
+static void _genr_msg 2217,57668
+static int _ismatch 2226,57923
+static void _varerror 2237,58141
+int simulate 2254,58780
+int multiply 2348,61050
+int genr_fit_resid 2401,62393
+
+lib/src/graphing.c,550
+#define PI 26,892
+static const char missing[33,980
+static int printv 44,1291
+static void prntdate 70,1832
+static int get_timevar 89,2319
+int _ztox 108,2710
+int _ztoxy 128,3156
+static void initpx 146,3572
+static void drawline 157,3774
+int plot 171,4053
+int graph 337,8915
+static int factorized_vars 402,10501
+int gnuplot 437,11236
+int multi_scatters 707,18748
+int plot_freq 804,21637
+int plot_fcast_errs 902,24893
+void free_plot 947,26243
+int open_gnuplot_pipe 961,26521
+int termtype_to_termstr 983,26992
+int go_gnuplot 1003,27542
+
+lib/src/interact.c,432
+static int trydatafile 48,1435
+static int filter_comments 73,2032
+static int get_rhodiff_param 105,2838
+int _command_number 123,3383
+void getcmd 135,3601
+int help 458,12350
+static int parse_criteria 524,13731
+int fcast 569,15012
+int add_new_var 611,16214
+static int _full_list 645,17134
+int parseopt 663,17672
+int shell 686,18354
+void echo_cmd 737,19473
+static void showlabels 829,22187
+int simple_commands 844,22522
+
+lib/src/monte_carlo.c,775
+enum inequalities inequalities27,908
+    GT 28,928
+    LT29,940
+int ok_in_loop 50,1779
+int parse_loopline 65,2015
+int loop_condition 132,3841
+static int monte_carlo_init 181,5058
+void monte_carlo_free 204,5601
+int loop_model_init 258,6822
+int loop_print_init 293,7912
+int loop_store_init 317,8534
+int update_loop_model 346,9469
+int update_loop_print 365,10023
+void print_loop_results 381,10475
+static void _free_loop_model 432,11975
+static void _free_loop_print 443,12227
+int add_to_loop 452,12407
+static void _print_loop_model 475,13019
+static void _print_loop_coeff 505,14042
+static void _print_loop_prn 527,14796
+static int _print_loop_store 548,15408
+static int get_prnnum_by_id 601,17033
+int get_modnum_by_id 612,17265
+void get_cmd_ci 625,17579
+
+lib/src/nonparam.c,89
+static int inverse_compare_doubles 25,886
+int spearman 35,1154
+int runs_test 190,5152
+
+lib/src/printout.c,1849
+#define isnan(isnan28,973
+static void noconst 51,1916
+static void _depvarstats 62,2301
+static void printxx 70,2539
+#define BIG 72,2604
+#define SMALL 73,2623
+static int _essline 114,3404
+static void _rsqline 134,3997
+static void _Fline 152,4478
+static void _dwline 167,4957
+static void dhline 180,5342
+static int _pmax 202,5995
+static void _pmax_line 220,6393
+static void covhdr 233,6753
+void _putxx 240,6930
+void session_time 248,7098
+void logo 257,7279
+void gui_logo 266,7560
+void print_model_confints 275,7827
+static void print_model_tests 296,8413
+void printmodel 312,8813
+void print_add 480,14430
+void print_omit 528,16170
+void print_aicetc 565,17501
+static int make_list 591,18378
+void printcorr 609,18788
+void printfreq 650,19792
+void print_smpl 690,21112
+static void print_float_10 713,21813
+static void print_coeff_interval 758,22829
+static void print_coeff 785,23631
+void print_rho 827,24794
+int outcovmx 846,25290
+void print_white_vcv 866,25828
+static void outxx 885,26275
+void takenotes 899,26635
+int takenotes_quit 911,26932
+int _pgbreak_quit 926,27311
+void _pgbreak 937,27619
+void _mxout 948,27872
+void space 1017,29814
+static void printgx 1024,29962
+void graphyzx 1037,30232
+static void fit_resid_head 1169,34017
+static void varheading 1199,35011
+void printxs 1217,35510
+void _printstr 1231,35780
+static void printz 1249,36120
+static void bufspace 1266,36552
+static void bufprintxx 1274,36727
+#define BIG 1276,36781
+#define SMALL 1277,36800
+static void bufprintxs 1298,37262
+int get_signif 1313,37543
+static int get_leftvals 1352,38597
+static int get_leading_zeros 1366,38865
+int bufprintnum 1381,39180
+int printdata 1410,39823
+int print_fit_resid 1534,43001
+void print_ar 1588,44794
+static void print_discrete_coeff 1603,45283
+static void print_discrete_stats 1626,45955
+
+lib/src/pvalues.c,842
+const char negval[38,1226
+double tcrit95 42,1373
+double _rhocrit95 53,1608
+double tprob 64,1896
+double fdist 76,2139
+double chisq 140,3399
+double normal 203,4712
+double batch_pvalue 230,5419
+int interact_pvalue 373,8999
+static void _pnormal 427,10056
+static void _ptvalue 442,10376
+static void _pchisq 462,10810
+static void _pfvalue 481,11197
+static void _pgamma 503,11697
+static double _getvalue 525,12267
+static void _enterdf 537,12460
+#define M_PI 550,12810
+static const double tolerance 553,12854
+double _gamma_func 566,13289
+double _gammadist 586,13630
+static double gamma_stirling 616,14274
+static double gamma_12 631,14641
+static double gamma_integral_expansion 655,15254
+static double gamma_integral_fraction 677,15731
+static double gamma_integral 709,16643
+static double gammadist_wilson_hilferty 726,16959
+
+lib/src/strutils.c,441
+int dotpos 27,940
+int slashpos 38,1145
+void copy 49,1354
+void delchar 61,1655
+void delete 74,1878
+int haschar 85,2145
+int isnumber 100,2475
+void lower 129,3186
+void esl_trunc 139,3385
+void clear 149,3573
+int count_fields 156,3707
+void shiftleft 169,3962
+void chopstr 183,4220
+char *switch_ext 196,4537
+int get_base 210,4824
+int top_n_tail 230,5267
+void compress_spaces 257,5968
+int pprintf 272,6241
+char *safecpy 324,7694
+
+lib/src/subsample.c,365
+int attach_subsample_to_model 27,923
+static int subsampled 54,1668
+int model_sample_issue 68,2070
+int allocate_case_markers 117,3575
+static void prep_subdinfo 137,3916
+int case_sample_direct 152,4290
+int set_sample_dummy 200,5447
+int set_sample 344,9396
+static int datamerge 393,10609
+int restore_full_sample 433,11585
+int count_missing_values 479,12841
+
+lib/src/texprint.c,171
+static void tex_print_float 26,934
+static void tex_escape 52,1696
+static void tex_print_coeff 65,1987
+char *tex_print_equation 99,2852
+char *tex_print_model 198,5662
+
+lib/src/utils.c,1500
+static DIR *dir;32,1000
+static int path_append 43,1311
+double corr 62,1787
+double covar 112,3068
+double date 148,3845
+int ijton 170,4410
+int isdummy 183,4819
+int iszero 203,5369
+void list_exclude 219,5741
+int isconst 230,5986
+double esl_mean 241,6230
+void minmax 266,6757
+static int _pdton 290,7282
+int hasconst 299,7458
+int compare_doubles 313,7728
+double esl_stddev 323,7984
+double esl_variance 338,8369
+void printlist 362,8907
+void aicetc 374,9210
+void criteria 404,10043
+CORRMAT corrlist 444,11347
+int adjust_t1t2 486,12415
+int set_obs 531,13493
+char *unslash 608,15621
+int get_subdir 620,15852
+char *search_dir 661,16682
+char *addpath 696,17530
+int getopenfile 765,19293
+static int isflag 794,20013
+char getflag 810,20353
+int catchflag 826,20691
+int list_dups 859,21464
+void init_model 884,21936
+MODEL *gretl_model_new 909,22494
+int silent_remember 919,22676
+int clear_model 949,23592
+void show_paths 998,24854
+int set_paths 1012,25267
+int copylist 1069,26862
+int grow_nobs 1084,27218
+int grow_Z 1113,27927
+int shrink_Z 1153,29128
+int hidden_var 1186,30062
+double *copyvec 1199,30444
+int copy_model 1214,30759
+int swap_models 1257,32220
+int forecast 1268,32409
+int full_model_list 1318,33610
+double getvalue 1351,34502
+int fcast_with_errs 1363,34822
+int is_model_cmd 1560,40213
+int is_model_ref_cmd 1580,40717
+static void store_list 1597,40996
+int save_model_spec 1610,41241
+int re_estimate 1634,41800
+int guess_panel_structure 1698,43226
+
+lib/src/var.c,352
+static int gettrend 27,952
+static int diffvarnum 46,1434
+static int diffgenr 61,1880
+static int ldiffgenr 99,2869
+int list_diffgenr 137,3888
+int list_ldiffgenr 148,4143
+int lagvarnum 159,4400
+static void reset_list 175,4917
+static int get_listlen 184,5115
+int var 203,5722
+int coint 367,10539
+int adf_test 431,12665
+int ma_model 571,17735
+
+lib/src/win32.c,88
+static int readw 26,905
+static void path_defaults 63,1697
+void set_win_paths 82,2413
+
+cli/common.c,27
+int loop_exec_line 23,927
+
+cli/complete.c,161
+char *dupstr 36,1109
+static char *command_generator 46,1276
+static char **gretl_completion 75,2118
+char *rl_gets 104,3015
+void initialize_readline 126,3647
+
+cli/gretlcli.c,1602
+#define MAXLINE 42,1356
+char loopstorefile[44,1378
+char prefix[45,1406
+char runfile[46,1427
+char cmdfile[47,1449
+char datfile[48,1471
+char outfile[49,1493
+char hdrfile[50,1515
+char syscmd[51,1537
+char msg[52,1558
+double *Z;53,1572
+double *subZ;54,1617
+double *fullZ;55,1674
+MODEL **models;56,1730
+DATAINFO *datainfo;57,1794
+DATAINFO *subinfo;58,1847
+DATAINFO *fullinfo;59,1912
+FREQDIST freq;60,1968
+CMD command;61,2034
+GENERATE genr;62,2105
+PATHS paths;63,2165
+LOOPSET loop;64,2214
+print_t cmds;65,2278
+MODELSPEC *modelspec;66,2292
+MODEL tmpmod;67,2314
+FILE *dat,68,2328
+FILE *dat, *fb;68,2328
+int i,69,2344
+int i, j,69,2344
+int i, j, dot,69,2344
+int i, j, dot, opt,69,2344
+int i, j, dot, opt, err,69,2344
+int i, j, dot, opt, err, errfatal,69,2344
+int i, j, dot, opt, err, errfatal, oflag,69,2344
+int i, j, dot, opt, err, errfatal, oflag, batch;69,2344
+int runit,70,2393
+int runit, loopstack,70,2393
+int runit, loopstack, looprun;70,2393
+int data_file_open,71,2424
+int data_file_open, runfile_open;71,2424
+int model_count;72,2458
+int plot_count;73,2525
+int ignore;74,2578
+int order;75,2630
+int lines[76,2678
+char *line;77,2732
+char *texfile;78,2792
+char response[79,2807
+char linebak[80,2825
+char *line_read;81,2879
+char *errtext;82,2896
+void usage(88,3055
+int ready_for_command 105,3664
+int make_userdir 123,4126
+void gretl_abort 140,4542
+void noalloc 147,4709
+void nosub 153,4827
+int model_test_start 159,4993
+void file_get_line 195,5776
+int main 207,6054
+    if 438,11740
+    if 450,12055
+    return 467,12414
+void exec_line 470,12431
+
+gui/calculator.c,873
+#define NTESTS 22,797
+#define NLOOKUPS 23,814
+#define NTESTENTRY 24,833
+#define NLOOKUPENTRY 25,854
+} test_t;test_t40,1150
+} lookup_t;lookup_t45,1235
+static int printnum 49,1315
+static double getval 89,2187
+static int getint 101,2456
+static void get_critical 113,2719
+static void get_pvalue 195,4790
+static void print_pv 270,6960
+static double chi_crit 278,7181
+static double f_crit 289,7442
+static double f_crit_a 300,7709
+static void htest_graph 314,8070
+static void h_test 401,10720
+static void add_lookup_entry 620,18157
+static void make_lookup_tab 648,19129
+static void make_dist_tab 692,20431
+static void trash_look 750,22560
+static void trash_test 762,22803
+static void add_test_entry 774,23039
+static void add_test_label 797,23848
+static void add_test_check 813,24328
+static void make_test_tab 829,24834
+void stats_calculator 914,28442
+
+gui/callbacks.c,445
+GtkWidget *active_edit_id 39,1456
+GtkWidget *active_edit_name 40,1490
+char remember_dir[42,1527
+void selectrow 46,1625
+void open_data 105,3217
+void open_script 124,3696
+void file_save 144,4163
+void dummy_call 219,6121
+void open_info 226,6269
+void edit_header 243,6655
+void fit_resid_callback 251,6875
+void model_stat_callback 261,7130
+void model_callback 271,7386
+void gretl_callback 332,8976
+void save_session_callback 531,14673
+
+gui/database.c,2492
+#define isnan(isnan36,1014
+#define RECNUM 39,1052
+#define NAMELENGTH 40,1072
+#define RATSCOMMENTLENGTH 41,1094
+#define RATSCOMMENTS 42,1123
+typedef float dbnumber;dbnumber44,1147
+#define LINEAR 51,1388
+#define PANEL 52,1451
+#define INTRADAY 53,1509
+#define UNDATEDCLASS 57,1729
+#define IRREGULARCLASS 58,1796
+#define PERYEARCLASS 59,1861
+#define PERWEEKCLASS 60,1919
+#define DAILYCLASS 61,1977
+} DATEINFO;DATEINFO67,2291
+} RATSDirect;RATSDirect88,3359
+} RATSData;RATSData94,3574
+} SERIESINFO;SERIESINFO105,3748
+enum db_data_actions db_data_actions132,5012
+    DB_DISPLAY,133,5035
+    DB_GRAPH,134,5051
+    DB_IMPORT135,5065
+GtkItemFactoryEntry db_items[138,5083
+static int get_db_data 148,5433
+} netfloat;netfloat174,6001
+float retrieve_float 176,6014
+static int get_remote_db_data 188,6262
+static void display_dbdata 249,7822
+static void graph_dbdata 263,8132
+static void add_dbdata 286,8772
+static void gui_display_series 383,11778
+static void gui_graph_series 388,11878
+static void gui_import_series 393,11974
+void gui_get_series 400,12139
+static void db_menu_find 449,13530
+static void build_db_menu 456,13677
+static void set_up_db_menu 476,14245
+void display_db_series_list 489,14699
+static int check_serinfo 569,17009
+static int populate_series_list 591,17621
+static int populate_remote_series_list 631,18628
+static int rats_populate_series_list 657,19264
+static gint db_popup_handler 678,19738
+static GtkWidget *database_window 695,20224
+static int check_import 746,22046
+static void get_padding 768,22636
+static int mon_to_quart 777,22912
+static int to_annual 831,24433
+static int get_precision 884,25875
+static int get_endobs 900,26171
+static int get_rats_series 927,26820
+static int read_RATSDirect 958,27637
+static int find_RATSDirect 1040,30376
+static int get_rats_series_offset 1058,30791
+static int read_RATSBase 1074,31282
+static SERIESINFO *get_series_info 1092,31748
+static int get_rats_data 1135,32886
+void open_named_db_clist 1161,33677
+void open_db_clist 1184,34198
+static void update_statusline 1207,34836
+void open_named_remote_clist 1220,35169
+void open_remote_clist 1244,35760
+#define BUFSIZE 1277,36669
+#define INFOLEN 1278,36690
+static int ggz_extract 1280,36711
+void grab_remote_db 1363,38866
+static gchar *get_descrip 1403,39852
+gint populate_dbfilelist 1434,40554
+static void set_compact_type 1484,41741
+static void abort_compact 1494,42037
+static void data_compact_dialog 1503,42226
+
+gui/datafiles.c,623
+extern GtkWidget *log_menubar;34,1247
+extern GtkItemFactoryEntry sample_script_items[35,1278
+char pwtpath[37,1330
+static int file_sel_open 38,1352
+static int read_ps_descriptions 48,1659
+static int read_data_descriptions 86,2573
+static void browse_header 131,3684
+void browser_open_data 178,4852
+void browser_open_ps 201,5511
+static void file_sel_ok 226,6194
+static void get_local_status 236,6420
+static int process_line 259,6994
+void trim_ext 292,7806
+static gint populate_remote_dblist 302,8002
+void display_files 357,9248
+static gint populate_filelist 472,12950
+static GtkWidget *files_window 490,13375
+
+gui/dialogs.c,575
+extern const char *version_string;26,877
+extern GtkWidget *active_edit_id;29,920
+extern GtkWidget *active_edit_name;30,954
+GtkWidget *open_dialog;33,1040
+static int make_default_storelist 37,1132
+static void cancel_data_save 59,1627
+int storevars_dialog 68,1823
+void random_dialog 87,2295
+static void prep_spreadsheet 107,2876
+void newdata_dialog 207,5827
+void addvars_dialog 244,6680
+void graph_dialog 288,7906
+void destroy_dialog_data 338,9223
+void edit_dialog 358,9756
+void about_dialog 479,14059
+static int open_xpm 502,14640
+void about_dialog 523,15195
+
+gui/fileselect.c,629
+extern GtkWidget *log_menubar;25,912
+extern GtkItemFactoryEntry script_items[26,943
+extern GtkItemFactoryEntry sample_script_items[27,987
+extern char remember_dir[28,1038
+static int action_to_flag 33,1208
+static char *get_gp_filter 57,1795
+struct win32_filtermap win32_filtermap72,2261
+static char *get_filters 77,2324
+void file_selector 125,4367
+static char *get_gp_suffix 274,8309
+struct extmap extmap284,8673
+static char *get_filters 289,8724
+static void filesel_callback 335,9795
+void file_selector 465,13544
+static void show_tree 522,15424
+static void hide_tree 529,15605
+void new_file_selector 538,15854
+
+gui/gpt_control.c,1072
+struct gpt_titles_t gpt_titles_t31,982
+} GPT_RANGE;GPT_RANGE42,1276
+GtkWidget *linetitle[44,1290
+GtkWidget *stylecombo[45,1315
+GtkWidget *yaxiscombo[46,1341
+GtkWidget *linescale[47,1367
+static GtkWidget *gpt_control;48,1392
+static GtkWidget *keycombo;49,1423
+static GtkWidget *termcombo;50,1451
+GtkWidget *filesavebutton;51,1480
+GPT_RANGE axis_range[53,1508
+#define NTITLES 55,1534
+struct gpt_titles_t gpt_titles[57,1553
+static void close_plot 66,1792
+static void flip_manual_range 81,2088
+static void widget_to_str 96,2617
+static void apply_gpt_changes 108,2891
+static void save_session_graph 190,5168
+static void gpt_tab_main 206,5611
+static void gpt_tab_output 275,7798
+static void gpt_tab_lines 334,9663
+static void gpt_tab_XY 450,13681
+void gnuplot_dialog 578,18317
+void do_save_graph 656,21362
+static void plot_save_filesel 698,22467
+static void kill_gpt_save_dialog 711,22899
+void gpt_save_dialog 721,23134
+static void charsub 793,25707
+static int chop_comma 807,25957
+static void get_gpt_data 823,26250
+int read_plotfile 846,26718
+
+gui/gretl.c,3223
+extern GtkWidget *iconview;61,2044
+GtkWidget *dataframe;63,2073
+GtkWidget *main_vbox;64,2095
+GtkWidget *toolbar_box 65,2117
+GtkWidget *gretl_toolbar 66,2148
+GtkAccelGroup *main_accel;67,2181
+GtkTooltips *gretl_tips;68,2208
+GdkColor red,69,2233
+GdkColor red, blue;69,2233
+int popup_connected;71,2254
+int *default_list 72,2275
+static GtkTargetEntry target_table[76,2320
+windata_t *mdata;103,3318
+DATAINFO *datainfo;104,3336
+DATAINFO *subinfo;105,3356
+DATAINFO *fullinfo;106,3375
+char *errtext;107,3395
+char cmdfile[108,3410
+char cmdfile[MAXLEN], savefile[108,3410
+char line[109,3450
+char scriptfile[110,3469
+PATHS paths;111,3494
+CMD command;112,3541
+double *Z;113,3596
+double *subZ;114,3639
+double *fullZ;115,3694
+MODEL **models;116,3748
+SESSION session;117,3803
+session_t rebuild;118,3857
+GENERATE genr;119,3913
+int session_saved;121,3977
+int oflag,122,3996
+int oflag, plot_count,122,3996
+int oflag, plot_count, data_file_open,122,3996
+int oflag, plot_count, data_file_open, batch 122,3996
+int model_action,123,4046
+int model_action, orig_vars;123,4046
+print_t cmds;124,4075
+gchar *clipboard_buf;125,4089
+char expert[128,4184
+char updater[129,4211
+char want_toolbar[130,4238
+char fontspec[131,4269
+    char Rcommand[136,4427
+    char editor[137,4467
+    char calculator[138,4508
+    char editor[140,4556
+    char calculator[141,4591
+    char Rcommand[143,4648
+    extern const char *version_string;144,4693
+    char Rcommand[146,4739
+static void spreadsheet_edit 150,4797
+static void gnome_help 160,5044
+GtkItemFactoryEntry data_items[168,5200
+static void make_userdir 396,17980
+static void gui_usage 413,18427
+static void noalloc 422,18720
+static void get_runfile 428,18845
+void dummy_output_handler 447,19292
+WinMain 458,19552
+int main 464,19674
+void refresh_data 691,25373
+void menubar_state 699,25537
+void graphmenu_state 714,25951
+void panel_menu_state 724,26192
+void console_state 735,26504
+void session_state 743,26684
+void restore_sample_state 754,26964
+gint main_popup 764,27223
+gint populate_clist 784,27820
+void clear_sample_label 816,28629
+void set_sample_label 824,28855
+#define NAME_BUFFER_LEN 868,30060
+static int get_windows_font 870,30088
+static GtkWidget *make_main_window 904,30869
+static void set_up_main_menu 1029,34834
+static gint popup_activated 1043,35346
+static GtkWidget *build_var_menu 1077,36619
+static void check_for_pwt 1114,37513
+void restore_sample 1145,38337
+static int work_done 1168,38847
+static gint dont_quit 1200,39701
+static void menu_exit 1213,40042
+static gint wm_exit 1230,40418
+BOOL CreateChildProcess 1249,40831
+static void startR 1274,41675
+static void Rcleanup 1368,43850
+static void show_calc 1382,44126
+static void show_edit 1403,44508
+static void open_ramudata 1424,44878
+static void colorize_tooltips 1431,45025
+void show_toolbar 1448,45522
+static void netscape_open 1458,45721
+static void gretl_website 1485,46250
+static void gretl_pdf 1495,46451
+static void xy_graph 1505,46668
+#define TOOLS 1515,46878
+static void make_toolbar 1517,46895
+void set_wm_icon 1602,49044
+target_drag_data_received 1615,49287
+special_selection_get 1639,49960
+static void clip_init 1680,50917
+
+gui/gui_utils.c,4113
+char rcfile[27,897
+char *storelist 28,918
+static GtkWidget *help_view 30,943
+int db_is_native 31,979
+extern GtkItemFactoryEntry view_items[33,1002
+extern GtkTooltips *gretl_tips;34,1044
+extern int session_saved;35,1076
+extern GtkWidget *console_view;36,1102
+extern GtkWidget *console_dialog;37,1134
+extern GtkWidget *mysheet;38,1168
+extern GtkWidget *toolbar_box;39,1195
+extern char want_toolbar[42,1268
+extern char calculator[43,1297
+extern char editor[44,1329
+extern char Rcommand[45,1357
+#define MAXRECENT 48,1409
+static char datalist[57,1613
+static char datalist[MAXRECENT][MAXSTR], *datap[57,1613
+static char sessionlist[58,1673
+static char sessionlist[MAXRECENT][MAXSTR], *sessionp[58,1673
+static char scriptlist[59,1739
+static char scriptlist[MAXRECENT][MAXSTR], *scriptp[59,1739
+static int help_length,62,1824
+static int help_length, gui_help_length,62,1824
+static int help_length, gui_help_length, script_help_length;62,1824
+static GtkWidget *find_window 74,2431
+static GtkWidget *find_entry;75,2469
+static char *needle;76,2499
+} RCVARS;RCVARS95,3319
+RCVARS rc_vars[97,3330
+GtkItemFactoryEntry model_items[113,4190
+GtkItemFactoryEntry help_items[179,7791
+GtkItemFactoryEntry script_help_items[211,9601
+int copyfile 217,9759
+int isdir 240,10234
+int getbufline 252,10445
+void append_dir 273,10793
+void set_rcfile 281,10982
+void set_win_rcfile 293,11199
+static void delete_file 302,11398
+static void delete_file_viewer 310,11560
+void delete_model 317,11743
+void delete_widget 328,11972
+void catch_key 335,12128
+void *mymalloc 346,12430
+void *myrealloc 357,12634
+void clear_clist 368,12856
+void register_data 381,13175
+void do_open_data 406,13761
+void verify_open_data 456,14985
+void verify_open_session 473,15531
+static void set_data_from_filelist 490,16091
+static void set_session_from_filelist 499,16316
+static void set_script_from_filelist 508,16550
+void save_session 517,16782
+void helpfile_init 607,19142
+void helpwin 631,19764
+static int help_index 647,20229
+void menu_find 674,20771
+void datafile_find 684,21035
+void context_help 691,21219
+void do_help 700,21432
+static void update_header 745,22651
+static void close_console 766,23215
+static void close_help 774,23374
+void windata_init 781,23505
+void free_windata 794,23800
+int view_buffer 816,24385
+int view_file 911,27437
+void flip 1076,32549
+static void model_panel_menu_state 1085,32775
+static void model_menu_state 1092,32964
+static void lmmenu_state 1113,33891
+static void latex_menu_state 1126,34332
+static void model_save_state 1133,34497
+static void set_up_viewer_menu 1141,34739
+static void add_vars_to_plot_menu 1174,35837
+static void plot_dummy_call 1221,37215
+static void add_dummies_to_plot_menu 1231,37516
+static void check_model_menu 1282,39248
+int view_model 1317,40727
+void setup_column 1443,44811
+void yes_no_dialog 1455,45210
+static void msgbox 1522,47296
+static void msgbox 1530,47464
+void errbox 1569,48606
+void infobox 1576,48729
+int validate_varname 1583,48853
+void options_dialog 1616,49715
+static void make_prefs_tab 1680,52119
+static void apply_changes 1758,54624
+void write_rc_file 1793,55537
+static void read_rc_file 1810,55958
+void write_rc_file 1858,57228
+static void read_rc_file 1881,57785
+static void font_selection_ok 1961,59841
+void font_selector 1974,60196
+static void close_find_dialog 2013,61519
+static void find_in_help 2021,61720
+static void find_in_clist 2057,62949
+static int look_for_string 2094,63990
+static void cancel_find 2109,64399
+static void find_string_dialog 2117,64603
+#define CHUNK 2192,67221
+static int file_to_clipboard 2194,67241
+void text_copy 2224,67876
+void make_menu_item 2258,68918
+void allocate_fileptrs 2272,69330
+void mkfilelist 2285,69580
+char *endbit 2349,71309
+static void gnome_printfilelist 2383,71959
+static void printfilelist 2412,72597
+void add_files_to_menu 2440,73190
+int open_plugin 2513,75168
+void *get_plugin_function 2529,75520
+void close_plugin 2543,75797
+int open_plugin 2558,76031
+void *get_plugin_function 2582,76574
+void close_plugin 2605,77047
+
+gui/htmlprint.c,672
+#define SPACER 38,1564
+int h_fopen 42,1680
+int h_bufopen 57,1940
+void h_bufclose 79,2386
+int hprintf 89,2616
+void h_bufclose 115,3235
+int hprintf 123,3379
+static void h_noconst 143,3796
+static void h_depvarstats 154,4198
+static void h_print_float_10 169,4575
+static int h_essline 210,5630
+static void h_rsqline 232,6294
+static void h_Fline 256,6922
+static void h_dwline 278,7525
+static void h_dhline 301,8145
+static void stats_table_start 330,8943
+static void h_print_model_tests 339,9147
+void h_printmodel 355,9582
+static void h_print_aicetc 551,15974
+static void h_print_coeff 598,17384
+static int _pmax 647,18844
+static void h_pmax_line 665,19277
+
+gui/lib.c,3825
+extern DATAINFO *subinfo;29,935
+extern DATAINFO *fullinfo;30,961
+extern double *subZ;31,988
+extern double *fullZ;32,1009
+int ignore 40,1308
+char loopstorefile[41,1324
+GtkWidget *console_view;53,1760
+GtkWidget *console_dialog;54,1785
+GtkItemFactoryEntry log_items[56,1813
+GtkItemFactoryEntry console_items[65,2205
+GtkItemFactoryEntry script_items[73,2538
+GtkItemFactoryEntry sample_script_items[83,2987
+GtkItemFactoryEntry script_out_items[92,3390
+GtkItemFactoryEntry view_items[100,3728
+const char *CANTDO 106,3946
+static int model_count;108,4020
+static int n_cmds;109,4044
+static int stacked_models;110,4063
+static MODELSPEC *modelspec;111,4090
+static char *model_origin;112,4119
+static char **cmd_stack;115,4233
+static char ***model_cmds;116,4258
+int *n_model_cmds 117,4285
+char errline[118,4311
+char last_model 119,4338
+GdkFont *fixed_font 122,4395
+int quiet_sample_check 126,4491
+static void set_sample_label_special 145,4841
+void free_modelspec 157,5152
+void free_command_stack 175,5484
+void clear_data 204,6064
+char *user_fopen 237,6802
+gint bufopen 252,7188
+void prnclose 264,7423
+gint check_cmd 277,7728
+gint cmd_init 291,8051
+static gint record_model_genr 318,8698
+static gint model_cmd_init 338,9158
+static gint stack_model 396,11003
+static void dump_model_cmds 451,12556
+gint dump_cmd_stack 463,12837
+void do_menu_op 523,13972
+void do_dialog_cmd 603,15885
+void view_log 711,18559
+void console 726,18882
+static int backkey 750,19452
+static int last_console_line_len 759,19653
+gboolean console_handler 773,19974
+void console_exec 836,22036
+void gui_errmsg 884,23393
+void change_sample 892,23624
+void bool_subsample 913,24157
+void do_samplebool 952,25138
+void do_sampledum 968,25546
+void do_setobs 986,26013
+void count_missing 1012,26640
+void do_add_markers 1028,27008
+void do_forecast 1045,27429
+void do_add_omit 1073,28136
+static gint add_test_to_model 1136,29822
+static void print_test_to_window 1162,30494
+void do_lmtest 1186,31123
+void set_panel_structure 1254,32899
+void do_panel_diagnostics 1278,33626
+static void do_chow_cusum 1304,34360
+void do_chow 1361,35638
+void do_cusum 1369,35808
+void do_arch 1376,35970
+void set_storelist 1423,37208
+static int model_error 1435,37483
+static int model_output 1446,37696
+static gint check_model_cmd 1472,38143
+void do_model 1492,38708
+void do_sim 1638,42330
+void do_simdata 1660,42922
+void do_genr 1703,43978
+void do_model_genr 1719,44355
+void do_random 1736,44836
+void do_seed 1787,46198
+static void finish_genr 1806,46635
+void do_rename_var 1828,47206
+void delete_var 1842,47602
+void do_edit_label 1857,47928
+static void normal_test 1871,48324
+void do_resid_freq 1881,48693
+void do_freqplot 1917,49573
+void do_pergm 1951,50490
+void do_coeff_intervals 1982,51197
+void do_outcovmx 1998,51626
+void add_dummies 2015,52099
+void add_time 2047,52880
+void add_logs_etc 2065,53404
+int add_fit_resid 2107,54554
+void add_model_stat 2137,55368
+void resid_plot 2198,57218
+void fit_actual_plot 2246,58644
+#define MAXDISPLAY 2287,59946
+void display_data 2292,60114
+void display_selected 2322,60885
+void display_fit_resid 2374,62214
+void do_graph_var 2394,62719
+void do_scatters 2415,63293
+void do_dummy_graph 2434,63839
+void do_graph 2465,64708
+void display_var 2497,65604
+static void auto_save_script 2511,65931
+static void do_run_script 2533,66503
+void do_open_script 2559,67186
+void do_new_script 2593,68139
+void do_open_csv_box 2609,68597
+void do_store 2633,69104
+void view_latex 2681,70270
+void do_save_tex 2719,71264
+void do_save_html 2740,71791
+void do_save_text 2755,72150
+int execute_script 2771,72485
+static int ready_for_command 2879,75392
+static int script_model_test 2898,75972
+static int gui_exec_line 2942,77326
+void view_script_default 3685,98104
+
+gui/rtfprint.c,552
+int copy_rtf 44,1661
+int copy_rtf 75,2195
+static void r_noconst 86,2306
+static void r_depvarstats 97,2692
+static void r_print_float_10 111,3050
+static int r_essline 152,3971
+static void r_rsqline 174,4643
+static void r_Fline 198,5237
+static void r_dwline 220,5790
+static void r_dhline 243,6363
+static void stats_table_start 272,7157
+static void r_print_model_tests 281,7364
+void r_printmodel 297,7783
+static void r_print_aicetc 493,14033
+static void r_print_coeff 537,15287
+static int _pmax 587,16627
+static void r_pmax_line 605,17060
+
+gui/session.c,1646
+static char *model_items[49,1369
+static char *graph_items[55,1446
+static char *dataset_items[63,1571
+GtkItemFactoryEntry gp_edit_items[69,1658
+int session_file_open 79,2107
+static GtkWidget *iconview;81,2135
+static GtkWidget *model_popup;82,2163
+static GtkWidget *graph_popup;83,2194
+static GtkWidget *data_popup;84,2225
+static GtkWidget *iconlist1;85,2255
+static GList *gobjects;86,2284
+static GtkIconListItem *active_icon;87,2308
+static gui_obj *active_object;88,2345
+void session_close_state 118,3473
+static int rebuild_init 126,3654
+static void free_rebuild 141,4090
+char *space_to_score 157,4450
+void add_last_graph 168,4658
+void remember_model 208,5851
+void quick_remember_model 241,6833
+void session_init 270,7696
+void do_open_session 280,7897
+void close_session 317,8744
+static void free_graph 329,9013
+static int alloc_graph 340,9210
+void free_session 353,9559
+void print_session 375,10026
+int delete_session_model 394,10548
+int saved_objects 422,11306
+int parse_savefile 446,11787
+int recreate_session 552,14412
+static void iconview_off 569,14862
+static gint null_sort 586,15238
+void view_session 593,15371
+static gint check_object_name 668,17900
+static void rename_object 731,19264
+static void object_popup_show 756,19947
+void session_open_object 774,20576
+static void session_build_popups 817,21645
+static void data_popup_activated 861,23001
+static void object_popup_activated 875,23407
+gui_obj *session_add_object 927,24932
+void open_gui_model 977,26005
+void open_gui_graph 1001,26534
+gui_obj *gui_object_new 1019,26983
+static void auto_save_gp 1051,27823
+void gp_to_gnuplot 1073,28398
+
+gui/ssheet.c,1128
+#define DEFAULT_PRECISION 31,1009
+#define DEFAULT_SPACE 32,1037
+GtkWidget *gretlsheet;34,1062
+GtkWidget *sheetwin;35,1085
+GtkWidget *locator;36,1106
+GtkWidget *topentry;37,1126
+GtkWidget *sheet_popup;38,1147
+static char newvarname[40,1172
+static char newvarname[9], newobsmarker[40,1172
+static int numcolumns,41,1216
+static int numcolumns, numrows;41,1216
+static int check_atof 45,1316
+static int check_data_in_sheet 75,2008
+static void name_new_var 96,2468
+static void name_new_obs 107,2779
+static void name_var_dialog 119,3095
+static void new_case_dialog 131,3384
+static gint popup_activated 142,3672
+static GtkWidget *build_menu 208,5913
+static gint do_sheet_popup 236,6686
+static void parse_numbers 256,7262
+static void clipboard_handler 272,7811
+static void show_sheet_entry 290,8429
+static void activate_sheet_entry 307,8869
+static void show_entry 329,9470
+static gint activate_sheet_cell 344,9852
+static void get_data_from_sheet 373,10808
+static void add_data_to_sheet 426,12205
+static void add_skel_to_sheet 465,13342
+static void free_spreadsheet 489,14051
+void show_spreadsheet 496,14211
+
+gui/webget.c,3064
+extern int errno;46,1223
+extern int h_errno;49,1264
+#define DEFAULT_HTTP_PORT 52,1292
+#define DEFAULT_FTP_PORT 53,1321
+#define MINVAL(MINVAL54,1349
+#define TEXTHTML_S 56,1395
+#define HTTP_ACCEPT 57,1426
+#define H_20X(H_20X60,1495
+#define H_PARTIAL(H_PARTIAL61,1549
+#define H_REDIRECTED(H_REDIRECTED62,1611
+#define HTTP_STATUS_OK	67,1815
+#define HTTP_STATUS_CREATED	68,1844
+#define HTTP_STATUS_ACCEPTED	69,1877
+#define HTTP_STATUS_NO_CONTENT	70,1911
+#define HTTP_STATUS_PARTIAL_CONTENTS	71,1947
+#define HTTP_STATUS_MULTIPLE_CHOICES	74,2013
+#define HTTP_STATUS_MOVED_PERMANENTLY	75,2054
+#define HTTP_STATUS_MOVED_TEMPORARILY	76,2096
+#define HTTP_STATUS_NOT_MODIFIED	77,2138
+#define HTTP_STATUS_BAD_REQUEST	80,2201
+#define HTTP_STATUS_UNAUTHORIZED	81,2238
+#define HTTP_STATUS_FORBIDDEN	82,2275
+#define HTTP_STATUS_NOT_FOUND	83,2310
+#define HTTP_STATUS_INTERNAL	86,2372
+#define HTTP_STATUS_NOT_IMPLEMENTED	87,2406
+#define HTTP_STATUS_BAD_GATEWAY	88,2446
+#define HTTP_STATUS_UNAVAILABLE	89,2483
+enum uflags uflags91,2521
+    URELATIVE 92,2535
+    URELATIVE     = 0x0001,92,2535
+    UNOPROTO 93,2591
+    UNOPROTO      = 0x0002,93,2591
+    UABS2REL 94,2657
+    UABS2REL      = 0x0004,94,2657
+    UREL2ABS 95,2726
+    UREL2ABS      = 0x0008 95,2726
+    HG_OK,99,2806
+    HG_ERROR,100,2818
+    HG_EOF101,2833
+enum header_get_flags header_get_flags104,2848
+    HG_NONE 105,2873
+    HG_NO_CONTINUATIONS 106,2890
+    HG_NO_CONTINUATIONS = 0x2 106,2890
+enum spflags spflags110,2958
+    SP_NONE,111,2974
+    SP_INIT,112,2988
+    SP_FINISH 113,3002
+extern const char *version_string;116,3021
+static void ws_cleanup 155,4788
+int ws_startup 162,4908
+static char *time_str 187,5423
+static int rbuf_peek 206,5814
+static int header_get 223,6208
+static int header_extract_number 272,7433
+static int header_strdup 288,7780
+static int skip_lws 296,7969
+static int header_process 307,8204
+static void rbuf_initialize 327,8684
+static int parse_http_status_line 336,8895
+struct http_process_range_closure http_process_range_closure398,10524
+static int http_process_range 406,10704
+static int http_process_none 442,11774
+static int http_process_type 457,12114
+#define FREEHSTAT(FREEHSTAT477,12560
+static int numdigit 487,12809
+static char *herrmsg 498,12979
+static uerr_t gethttp 512,13270
+#define MAXTRY 770,19831
+static uerr_t http_loop 774,19916
+static size_t rbuf_flush 844,21328
+static struct urlinfo *newurl 864,21887
+static void freeurl 878,22197
+static int show_progress 898,22695
+static int get_contents 935,23636
+static int store_hostaddress 985,24847
+#define ECONNREFUSED 998,25100
+static uerr_t make_connection 1003,25212
+static int iread 1029,25939
+static int iwrite 1043,26226
+static char *print_option 1066,26845
+static int get_update_info 1085,27185
+static size_t get_size 1123,28042
+int update_query 1143,28409
+int retrieve_url 1223,30432
+static void destroy_progress 1283,31848
+static ProgressData *progress_window 1292,32053
+long GetRegKey 1361,34229
+int goto_url 1381,34583
+
+plugin/panel_data.c,621
+} hausman_t;hausman_t32,1014
+static int get_panel_structure 36,1102
+static void print_panel_const 58,1563
+static void print_panel_coeff 70,1892
+static double group_means_variance 84,2278
+static void vcv_slopes 136,3590
+#define TINY 155,4072
+static int lu_decomp 157,4094
+static void lu_backsub 214,5268
+static double bXb 237,5755
+static int haus_invert 252,6048
+static double LSDV 309,7290
+static int random_effects 389,9832
+int breusch_pagan_LM 462,11891
+static int hausman_test 507,13160
+int panel_diagnostics 541,14273
+static void set_panel_structure 592,15777
+void panel_structure_dialog 606,16154
+
+plugin/stats_tables.c,332
+} dw_t;dw_t27,911
+} dfstat_t;dfstat_t32,969
+#define NDW 34,982
+#define NTSTAT 35,997
+#define NCHI 36,1016
+dw_t dw_vals[38,1034
+dfstat_t t_vals[82,3550
+dfstat_t chi_vals[188,8082
+static void other_tables 293,13200
+void dw_lookup 302,13500
+void norm_lookup 339,14511
+void t_lookup 356,15233
+void chisq_lookup 395,16391

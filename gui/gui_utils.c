@@ -84,6 +84,7 @@ extern void save_plot (char *fname, GPT_SPEC *plot);
 extern gboolean console_handler (GtkWidget *w, GdkEventKey *key, 
 				 gpointer user_data);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
+extern void model_to_rtf (MODEL *pmod);
 
 typedef struct {
     char *key,         /* config file variable name */
@@ -123,6 +124,7 @@ GtkItemFactoryEntry model_items[] = {
     { "/Edit/Copy _all/as plain _text", NULL, text_copy, COPY_TEXT, NULL },
     { "/Edit/Copy _all/as _HTML", NULL, text_copy, COPY_HTML, NULL },
     { "/Edit/Copy _all/as _LaTeX", NULL, text_copy, COPY_LATEX, NULL },
+    { "/Edit/Copy _all/as _RTF", NULL, text_copy, COPY_RTF, NULL },
     { "/_Tests", NULL, NULL, 0, "<Branch>" },    
     { "/Tests/omit variables", NULL, gretl_callback, OMIT, NULL },
     { "/Tests/add variables", NULL, gretl_callback, ADD, NULL },
@@ -2224,7 +2226,14 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data;
 
-    /* cases where we want to copy special stuff, or where we're
+    if (how == COPY_RTF) {
+	MODEL *pmod = (MODEL *) mydata->data;
+
+	model_to_rtf(pmod);	
+	return;
+    }
+
+    /* other cases where we want to copy special stuff, or where we're
        copying from a GtkHTML window */
     if (how == COPY_HTML || how == COPY_LATEX || GTK_IS_HTML(mydata->w)) {    
 	MODEL *pmod = (MODEL *) mydata->data;
