@@ -8,9 +8,9 @@
       The <application>gretl</application> package includes the
       command-line program <application>gretlcli</application>.  This
       is essentially an updated version of Ramu Ramanathan's
-      <application>ESL</application>.  On unix-like systems it can be
-      run from the console, or in an xterm (or similar).  Under MS
-      Windows it can be run in a <quote>DOS box</quote>.
+      <application>ESL</application>.  On Linux it can be run from the
+      console, or in an xterm (or similar).  Under MS Windows it can
+      be run in a <quote>DOS box</quote>.
       <application>gretlcli</application> has its own help file, which
       may be accessed by typing <quote>help</quote> at the prompt. It
       can be run in batch mode, sending outout directly to a file (see

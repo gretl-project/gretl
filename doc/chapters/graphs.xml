@@ -1,109 +1,122 @@
  <chapter id="graphs-plots"><title>Graphs and plots</title>
 
-  <sect1 id="gnuplot-graphs"><title>Gnuplot graphs</title>
+    <sect1 id="gnuplot-graphs"><title>Gnuplot graphs</title>
 
-    <para>A separate program, <application>gnuplot</application>, is
-      called to generate graphs. Gnuplot is a very full-featured
-      graphing program with myriad options. It is available from
-      <ulink url="http://www.gnuplot.info/">www.gnuplot.info</ulink>
-      (but note that a copy of gnuplot is bundled with the MS Windows
-      version of <application>gretl</application>).
-      <application>gretl</application> gives you direct access, via a
-      graphical interface, to only a small subset of gnuplot's options
-      but it tries to choose sensible values for you; it also allows
-      you to take complete control over graph details if you
-      wish.</para>
+      <para>A separate program, <application>gnuplot</application>, is
+	called to generate graphs. Gnuplot is a very full-featured
+	graphing program with myriad options. It is available from
+	<ulink url="http://www.gnuplot.info/">www.gnuplot.info</ulink>
+	(but note that a copy of gnuplot is bundled with the MS
+	Windows version of <application>gretl</application>).
+	<application>gretl</application> gives you direct access, via
+	a graphical interface, to only a small subset of gnuplot's
+	options but it tries to choose sensible values for you; it
+	also allows you to take complete control over graph details if
+	you wish.</para>
 
-    <para>Under MS Windows you can click at the top left corner of a
-      graph window for a pull-down gnuplot menu that lets you choose
-      various things (including copying the graph to the Windows
-      clipboard and sending it to a printer).</para>
+      <para>The details of graph handling in
+	<application>gretl</application>differ slightly between Linux
+	and MS Windows.</para>
 
-    <para>For full control over a graph, follow this procedure:</para>
+      <para>Under Linux, clicking on a graph produces a pop-up menu
+	which gives you the options of saving the graph to file
+	(either as an encapsulated postscript file or in PNG format)
+	or saving it to the current session <quote>as an icon</quote>.
+	With most graphs you also have the option of zooming in to
+	inspect regions of interest.  If
+	<application>gretl</application> is built with
+	<application>gnome</application> support this menu also offers
+	the option of printing the graph.</para>
 
-    <orderedlist>
-      <listitem><para>Close the graph window.</para></listitem>
-      <listitem><para>From the Session menu, choose <quote>Add last
-	    graph</quote>.</para></listitem>
-      <listitem><para>In the session icon window, right-click on the
-	  new graph icon and choose either <quote>Edit using
-	    GUI</quote> or <quote>Edit plot
-	    commands</quote>.</para></listitem>
-    </orderedlist>
+      <para>Under MS Windows you can click at the top left corner of a
+	graph window for a pull-down gnuplot menu that lets you choose
+	various things (including copying the graph to the Windows
+	clipboard and sending it to a printer).  This menu does not
+	include the option of saving the graph as a
+	<application>gretl</application> session icon &mdash; to do
+	that, you should close the graph window then, from the Session
+	menu, choose <quote>Add last graph</quote>.  Clicking on the
+	little camera icon on the toolbar accomplishes the same
+	thing.</para>
 
-    <para>The <quote>Edit using GUI</quote> item pops up a graphical
-      controller for gnuplot which lets you fine-tune various aspects
-      of the graph.  The <quote>Edit plot commands</quote> item opens
-      an editor window containing the actual gnuplot command file for
-      generating the graph: this gives you full control over graph
-      details &mdash; if you know something about gnuplot. To find out
-      more, see the gnuplot <ulink
-	url="http://ricardo.ecn.wfu.edu/gnuplot.html">online
-	manual</ulink> or <ulink
-	url="http://www.gnuplot.info/">www.gnuplot.info</ulink>.</para>
+      <para>Once as a graph is saved as a session icon, you can
+	further customize it as follows. Open the session icon window,
+	right-click on the new graph icon and choose either
+	<quote>Edit using GUI</quote> or <quote>Edit plot
+	  commands</quote>. The <quote>Edit using GUI</quote> item
+	pops up a graphical controller for gnuplot which lets you
+	fine-tune various aspects of the graph.  The <quote>Edit plot
+	  commands</quote> item opens an editor window containing the
+	actual gnuplot command file for generating the graph: this
+	gives you full control over graph details &mdash; if you know
+	something about gnuplot. To find out more, see the gnuplot
+	<ulink url="http://ricardo.ecn.wfu.edu/gnuplot.html">online
+	  manual</ulink> or <ulink
+	  url="http://www.gnuplot.info/">www.gnuplot.info</ulink>.</para>
 
-    <para>See also the entry for <command>gnuplot</command> in 
+      <para>See also the entry for <command>gnuplot</command> in 
       <xref linkend="cmdref"/> below &mdash; and the
-      <command>graph</command> and <command>plot</command> commands
-      for <quote>quick and dirty</quote> ASCII graphs.</para>
+	<command>graph</command> and <command>plot</command> commands
+	for <quote>quick and dirty</quote> ASCII graphs.</para>
 
-    <figure id="fig-plot" float="1" pgwide="1">
-      <title>gretl's gnuplot controller</title>
-      <screenshot>
-	<screeninfo>gnuplot controller</screeninfo>
-	<graphic fileref="figures/plot_control" align="center"/>
-      </screenshot>
-    </figure>
+      <figure id="fig-plot" float="1" pgwide="1">
+	<title>gretl's gnuplot controller</title>
+	<screenshot>
+	  <screeninfo>gnuplot controller</screeninfo>
+	  <graphic fileref="figures/plot_control" align="center"/>
+	</screenshot>
+      </figure>
 
   </sect1>
 
-  <sect1 id="boxplots"><title>Boxplots</title>
+    <sect1 id="boxplots"><title>Boxplots</title>
 
-    <para>Boxplots are not generated using gnuplot, but rather by
-      <application>gretl</application> itself.</para>
+      <para>Boxplots are not generated using gnuplot, but rather by
+	<application>gretl</application> itself.</para>
 
-    <para>These plots (after Tukey and Chambers) display the
-      distribution of a variable. The central box encloses the middle
-      50 percent of the data, i.e. it is bounded by the first and
-      third quartiles.  The <quote>whiskers</quote> extend to the
-      minimum and maximum values.  A line is drawn across the box at
-      the median.</para> 
+      <para>These plots (after Tukey and Chambers) display the
+	distribution of a variable. The central box encloses the
+	middle 50 percent of the data, i.e. it is bounded by the first
+	and third quartiles.  The <quote>whiskers</quote> extend to
+	the minimum and maximum values.  A line is drawn across the
+	box at the median.</para> 
 
-    <para>In the case of notched boxes, the notch shows the limits of
-      an approximate 90 percent confidence interval.  This is obtained
-      by the bootstrap method, which can take a while if the data
-      series is very long.</para>
+      <para>In the case of notched boxes, the notch shows the limits
+	of an approximate 90 percent confidence interval.  This is
+	obtained by the bootstrap method, which can take a while if
+	the data series is very long.</para>
 
-    <para>Clicking the mouse in the boxplots window brings up a menu
-      which enables you to save the plots as encapsulated postscript
-      (EPS) or as a full-page postscript file.  Under the X window
-      system you can also save the window as an XPM file; under MS
-      Windows you can copy it to the clipboard as a bitmap.  The menu
-      also gives you the option of opening a summary window which
-      displays five-number summaries (minimum, first quartile, median,
-      third quartile, maxmimum), plus a confidence interval for the
-      median if the <quote>notched</quote> option was chosen.
-    </para>
+      <para>Clicking the mouse in the boxplots window brings up a menu
+	which enables you to save the plots as encapsulated postscript
+	(EPS) or as a full-page postscript file.  Under the X window
+	system you can also save the window as an XPM file; under MS
+	Windows you can copy it to the clipboard as a bitmap.  The
+	menu also gives you the option of opening a summary window
+	which displays five-number summaries (minimum, first quartile,
+	median, third quartile, maxmimum), plus a confidence interval
+	for the median if the <quote>notched</quote> option was
+	chosen.
+      </para>
 
-    <para>Some details of gretl's boxplots can be controlled via a
-      (plain text) file named <filename>.boxplotrc</filename> which is
-      looked for, in turn, in the current working directory, the
-      user's home directory (corresponding to the environment variable
-      <envar>HOME</envar>) and the gretl user directory (which is
-      displayed and may be changed under the <quote>File, Preferences,
-	General</quote> menu).  Options that can be set in this way
-      are the font to use when producing postscript output (must be a
-      valid generic postscript font name; the default is Helvetica),
-      the size of the font in points (also for postscript output;
-      default is 12), the minimum and maximum for the y-axis range,
-      the width and height of the plot in pixels (default, 560 x 448),
-      whether numerical values should be printed for the quartiles and
-      median (default, don't print them), and whether outliers (points
-      lying beyond 1.5 times the interquartile range from the central
-      box) should be indicated separately (default, no).  Here is an
-      example:</para>
+      <para>Some details of gretl's boxplots can be controlled via a
+	(plain text) file named <filename>.boxplotrc</filename> which
+	is looked for, in turn, in the current working directory, the
+	user's home directory (corresponding to the environment
+	variable <envar>HOME</envar>) and the gretl user directory
+	(which is displayed and may be changed under the <quote>File,
+	  Preferences, General</quote> menu).  Options that can be set
+	in this way are the font to use when producing postscript
+	output (must be a valid generic postscript font name; the
+	default is Helvetica), the size of the font in points (also
+	for postscript output; default is 12), the minimum and maximum
+	for the y-axis range, the width and height of the plot in
+	pixels (default, 560 x 448), whether numerical values should
+	be printed for the quartiles and median (default, don't print
+	them), and whether outliers (points lying beyond 1.5 times the
+	interquartile range from the central box) should be indicated
+	separately (default, no).  Here is an example:</para>
 
-    <programlisting>
+      <programlisting>
 font = Times-Roman
 fontsize = 16
 max = 4.0
@@ -112,35 +125,36 @@ width = 400
 height = 448
 numbers = %3.2f
 outliers = true
-    </programlisting>
+      </programlisting>
 
-    <para>On the second to last line, the value associated with
-      <literal>numbers</literal> is a <quote>printf</quote> format
-      string as in the C programming language; if specified, this
-      controls the printing of the median and quartiles next to the
-      boxplot, if no <literal>numbers</literal> entry is given these
-      values are not printed.  In the example, the values will be
-      printed to a width of 3 digits, with 2 digits of precision
-      following the decimal point.</para>
+      <para>On the second to last line, the value associated with
+	<literal>numbers</literal> is a <quote>printf</quote> format
+	string as in the C programming language; if specified, this
+	controls the printing of the median and quartiles next to the
+	boxplot, if no <literal>numbers</literal> entry is given these
+	values are not printed.  In the example, the values will be
+	printed to a width of 3 digits, with 2 digits of precision
+	following the decimal point.</para>
 
-    <para>Not all of the options need be specified, and the order
-      doesn't matter.  Lines not matching the pattern <quote>key =
-	value</quote> are ignored, as are lines that begin with the
-      hash mark, <literal>#</literal>.</para>
+      <para>Not all of the options need be specified, and the order
+	doesn't matter.  Lines not matching the pattern <quote>key =
+	  value</quote> are ignored, as are lines that begin with the
+	hash mark, <literal>#</literal>.</para>
 
-    <para>After each variable specified in the boxplot command, a
-      parenthesized boolean expression may be added, to limit the
-      sample for the variable in question.  A space must be inserted
-      between the variable name or number and the expression.  Suppose
-      you have salary figures for men and women, and you have a dummy
-      variable <literal>GENDER</literal> with value 1 for men and 0
-      for women.  In that case you could draw comparative boxplots
-      with the following line in the boxplots dialog:</para>
-    <programlisting>
+      <para>After each variable specified in the boxplot command, a
+	parenthesized boolean expression may be added, to limit the
+	sample for the variable in question.  A space must be inserted
+	between the variable name or number and the expression.
+	Suppose you have salary figures for men and women, and you
+	have a dummy variable <literal>GENDER</literal> with value 1
+	for men and 0 for women.  In that case you could draw
+	comparative boxplots with the following line in the boxplots
+	dialog:</para>
+      <programlisting>
       salary (GENDER=1) salary (GENDER=0)
-    </programlisting>
+      </programlisting>
 
-  </sect1>
+    </sect1>
 
   </chapter>
 

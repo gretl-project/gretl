@@ -1316,6 +1316,8 @@
 	  are stored under the name <varname>uhat</varname>.
       </para>
 
+     <para role="bodge">&nbsp;</para> 
+
     </sect2>
 
     <sect2 id="hsk"><title>hsk</title>
@@ -1591,7 +1593,7 @@
 	Ramanathan, ch. 12.
       </para>
 
-      <para role="bodgea4">&nbsp;</para>
+
 
     </sect2>
 
@@ -1814,8 +1816,6 @@
 	those inserted using the <command>print</command> command) when
 	executing a command script.
       </para>
-
-      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -2241,6 +2241,8 @@
 	the parameters on the two added terms are zero.
       </para>
 
+      <para role="bodgea4">&nbsp;</para>
+
     </sect2>
 
     <sect2 id="rhodiff"><title>rhodiff</title>
@@ -2376,6 +2378,8 @@
 	genr signx1 = x1 - median(x1)
 	runs signx1
       </programlisting>
+
+
 
     </sect2>
 
@@ -3044,8 +3048,6 @@
 	p-value.
       </para>
 
-      <para role="bodge">&nbsp;</para>
-
     </sect2>
 
     <sect2 id="wls"><title>wls</title>
@@ -3192,7 +3194,9 @@
       </tgroup>
     </table>
 
-    <!-- <para role="bodge">&nbsp;</para> -->
+    <para role="bodge">&nbsp;</para>
+    <para role="bodge">&nbsp;</para>
+    <para role="bodge">&nbsp;</para>
 
     <para><xref linkend="tab-tests"/> shows the tests that are available
       under the Tests menu in a model window, after estimation.</para>

@@ -1328,8 +1328,7 @@ void view_session (void)
     iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(iconview), title);
     g_free(title);
-
-    gtk_widget_set_size_request(iconview, 400, 300);
+    gtk_window_set_default_size(GTK_WINDOW(iconview), 400, 300);
     gtk_container_set_border_width(GTK_CONTAINER(iconview), 0);
 
     g_signal_connect(G_OBJECT(iconview), "destroy",

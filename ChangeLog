@@ -1,5 +1,7 @@
 version 1.0
 - change *nix library name to libgretl-1.0
+- improve sizing of some windows
+- incorporate new translations
 
 11/06/02 version 1.0pre4 (for translators)
 - fix bug in progress bar when loading large data set

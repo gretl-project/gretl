@@ -15,15 +15,14 @@
       You can supply the name of a data file to open as an argument to
       <application>gretl</application>, but for the moment let's not
       do that: just fire up the program.<footnote><para>For
-	  convenience I
-	  will refer to the graphical client program simply as
-	  <application>gretl</application> in this manual. Note,
-	  however, that the specific name of the program differs
-	  according to the computer platform.  On unix-like systems it
-	  is called <filename>gretl_x11</filename> while on MS Windows
-	  it is <filename>gretlw32.exe</filename>. On unix-like
-	  systems a wrapper script named <filename>gretl</filename> is
-	  also installed &mdash; see also <xref
+	  convenience I will refer to the graphical client program
+	  simply as <application>gretl</application> in this manual.
+	  Note, however, that the specific name of the program differs
+	  according to the computer platform.  On Linux it is called
+	  <filename>gretl_x11</filename> while on MS Windows it is
+	  <filename>gretlw32.exe</filename>. On Linux systems a
+	  wrapper script named <filename>gretl</filename> is also
+	  installed &mdash; see also <xref
 	    linkend="optarg"/>.</para></footnote> You should see a
       main window (which will hold information on the data set but
       which is at first blank) and various menus, some of them
@@ -168,14 +167,20 @@
       word processor, you may copy and paste from an output window,
       using its <guimenuitem>Edit</guimenuitem> menu, to the target
       program.  Many (not all) <application>gretl</application>
-      windows offer the option of copying in RTF or &latex; format. If
-      you are pasting into a word processor, RTF may be a good option
-      because the tabular formatting of the output is preserved.
-      Alternatively, you can save the output to a (plain text) file
-      then import the file into the target program.  When you finish a
-      <application>gretl</application> session you are given the
-      option of saving all the output from the session to a single
-      file.</para>
+      windows offer the option of copying in RTF (Microsoft's
+      <quote>Rich Text Format</quote>) or as &latex;. If you are
+      pasting into a word processor, RTF may be a good option because
+      the tabular formatting of the output is
+      preserved.<footnote><para>Note that when you copy as RTF under
+	  MS Windows, Windows will only allow you to paste the
+	  material into applications that <quote>understand</quote>
+	  RTF.  Thus you will be able to paste into MS Word, but not
+	  into <application>notepad</application>.</para>
+      </footnote>  Alternatively, you can save the output to a (plain
+      text) file then import the file into the target program.  When
+      you finish a <application>gretl</application> session you are
+      given the option of saving all the output from the session to a
+      single file.</para>
 
     <para>Note that on the <application>gnome</application> desktop
       and under MS Windows, the <guimenuitem>File</guimenuitem> menu
@@ -185,7 +190,7 @@
     <tip><para>When pasting or importing plain text
 	<application>gretl</application> output into a word processor,
 	select a monospaced or typewriter-style font (e.g. Courier) to
-	preserve the output's tabular formatting.  Select a small font
+	preserve the output's tabular formatting. Select a small font
 	(10-point Courier should do) to prevent the output lines from
 	being broken in the wrong place.</para>
     </tip>
@@ -541,10 +546,13 @@
       <listitem><para>Open the dialog box for defining a
 	  graph.</para></listitem>
       <listitem><para>Capture the last displayed graph for
-	  editing.</para></listitem>
+	  editing.  (This button is not shown under Linux, where a
+	  graph can be captured via its popup menu.)</para></listitem>
       <listitem><para>Open a window listing the datasets associated
 	  with Ramanathan's <citetitle>Introductory
-	    Econometrics</citetitle>.</para></listitem>
+	    Econometrics</citetitle> (or this button can be configured
+	  to show the datasets from Wooldridge (2002) instead &mdash;
+	  see <xref linkend="optarg"/>).</para></listitem>
     </orderedlist>
 
     <para>

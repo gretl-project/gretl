@@ -61,9 +61,8 @@
       </varlistentry>
       <varlistentry><term>Accurate</term>
 	<listitem><para><application>gretl</application> does well on
-	    the NIST reference datasets.  For documentation of this
-	    point, see <ulink url="http://gretl.sourceforge.net/">the
-	      <application>gretl</application> website</ulink>.</para>
+	    the NIST reference datasets. See <xref
+	      linkend="app-accuracy"/>.</para>
 	</listitem>
       </varlistentry>
       <varlistentry><term>Internet ready</term>
@@ -130,19 +129,24 @@
   <sect1 id="install"><title>Installing the programs</title>
 
 
-    <sect2 id="linux-install"><title>Linux/unix</title>
+    <sect2 id="linux-install"><title>Linux</title>
 
       <para>
-	On the Linux platform you have the choice of compiling the
-	<application>gretl</application> code yourself or making use
-	of a pre-built package. Ready-to-run packages are available in
-	<application>rpm</application> format (suitable for Red Hat
-	Linux and related systems) and also
-	<application>deb</application> format (Debian GNU/Linux).  I
-	am grateful to Dirk Eddelb&uuml;ttel for making the latter. If
-	you prefer to compile your own (or are using a unix system for
-	which pre-built packages are not available) here is what to
-	do.
+	On the Linux<footnote><para>Terminology is a bit of a problem
+	    here, but in this manual I will use <quote>Linux</quote>
+	    as shorthand to refer to the GNU/Linux operating system.
+	    What is said herein about Linux mostly applies to other
+	    unix-type systems too, though some local modifications may
+	    be needed.</para></footnote> platform you have the choice
+	of compiling the <application>gretl</application> code
+	yourself or making use of a pre-built package. Ready-to-run
+	packages are available in <application>rpm</application>
+	format (suitable for Red Hat Linux and related systems) and
+	also <application>deb</application> format (Debian GNU/Linux).
+	I am grateful to Dirk Eddelb&uuml;ttel for making the latter.
+	If you prefer to compile your own (or are using a unix system
+	for which pre-built packages are not available) here is what
+	to do.
       </para>
 
       <orderedlist>
