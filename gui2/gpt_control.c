@@ -592,7 +592,7 @@ static int cant_zoom (const char *line)
 static int cant_edit (const char *line)
 {
     if (strncmp(line, "# mult", 6) == 0) {
-	/* multiple scatterplots */
+	/* multiple scatterplots (or excessive number of lines) */
 	return 1;
     }
     if (strncmp(line, "# CUSUM", 7) == 0) {

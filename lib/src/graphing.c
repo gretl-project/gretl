@@ -64,6 +64,7 @@ struct gnuplot_info {
     int npoints;
     int miss;
     int oddman;
+    int toomany;
     double xrange;
     double *yvar1;
     double *yvar2;
@@ -840,6 +841,11 @@ gp_info_init (struct gnuplot_info *gpinfo, unsigned char flags,
     gpinfo->miss = 0;
     gpinfo->oddman = 0;
     gpinfo->xrange = 0.0;
+    gpinfo->toomany = 0;
+
+    if (lo > MAX_PLOT_LINES + 1) {
+	gpinfo->toomany = 1;
+    }
 
     if (lo > 2 && lo < 7 && !(flags & GP_RESIDS) && !(flags & GP_FA)
 	&& !(flags & GP_DUMMY)) {
@@ -884,12 +890,6 @@ int gnuplot (int *list, const int *lines, const char *literal,
     struct gnuplot_info gpinfo;
 
     *gretl_errmsg = '\0';
-
-    if (list[0] > MAX_PLOT_LINES + 1) {
-	sprintf(gretl_errmsg, _("Too many series in plot: maximum is %d"),
-		MAX_PLOT_LINES);
-	return E_DATA;
-    }
 
 #ifdef WIN32
     /* only gnuplot 3.8 or higher will accept "height" here */
@@ -970,7 +970,11 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     /* special tics for short time series plots */
     if (gpinfo.ts_plot) {
-	fprintf(fp, "# timeseries %d\n", pdinfo->pd);
+	if (gpinfo.toomany) {
+	    fprintf(fp, "# multiple timeseries %d\n", pdinfo->pd);
+	} else {
+	    fprintf(fp, "# timeseries %d\n", pdinfo->pd);
+	}
 	if (pdinfo->pd == 4 && (gpinfo.t2 - gpinfo.t1) / 4 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 4\n", fp);
@@ -979,6 +983,8 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 12\n", fp);
 	}
+    } else if (gpinfo.toomany) {
+	fputs("# multiple data series\n", fp);
     }
 
     fprintf(fp, "set xlabel '%s'\n", xlabel);
@@ -1017,6 +1023,10 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	}
 	fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[2]));
     } 
+
+    if (gpinfo.toomany) {
+	strcpy(keystr, "set key outside\n");
+    }
 
     fputs(keystr, fp);
 
