@@ -462,7 +462,8 @@ rtfprint_matrix (const double *vec, const int *list,
 	pprintf(prn, "%s\\par\n\\par\n{", tmp);
     } 
     else if (ci == COVAR) {
-	; /* FIXME */
+	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n{",
+		I_("Coefficient covariance matrix"));
     }
     
     lo = list[0];
