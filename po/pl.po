@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 14:41-0500\n"
-"PO-Revision-Date: 2005-01-16 18:00+0100\n"
+"PO-Revision-Date: 2005-01-21 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -363,7 +363,7 @@ msgstr "Dla polecenia 'sim' zmienne musz± byæ wcze¶niej zdefiniowane"
 #: lib/src/compat.c:806
 #, c-format
 msgid "You can't use the constant for this purpose"
-msgstr "Nie mozna wykorzystywaæ 'sta³ej' do realizacji tego celu"
+msgstr "Nie mo¿na wykorzystywaæ 'sta³ej' do realizacji tego celu"
 
 #: lib/src/compat.c:827
 #, c-format
@@ -1957,12 +1957,12 @@ msgstr "Reszty regresji (=obserwcje - wyrównane %s)"
 #: lib/src/graphing.c:547 lib/src/graphing.c:551
 #, c-format
 msgid "Actual and fitted %s"
-msgstr "Faktyczne i wyrównane warto¶ci %s"
+msgstr "Empiryczne i wyrównane wartosci zmiennej: %s"
 
 #: lib/src/graphing.c:553
 #, c-format
 msgid "Actual and fitted %s versus %s"
-msgstr "Faktyczne i wyrównane warto¶ci %s wzglêdem %s"
+msgstr "Empiryczne i wyrównane wartosci %s wzglêdem %s"
 
 #: lib/src/graphing.c:676
 msgid "least squares fit"
@@ -1983,7 +1983,7 @@ msgstr "wyrownane"
 
 #: lib/src/graphing.c:1061
 msgid "actual"
-msgstr "faktyczne"
+msgstr "empiryczne"
 
 #: lib/src/graphing.c:1487
 msgid "Test statistic for normality"
@@ -3588,7 +3588,7 @@ msgstr "Niemo¿liwe za³adowanie funkcji"
 
 #: lib/src/printout.c:64
 msgid "COVARIANCE MATRIX OF REGRESSION COEFFICIENTS"
-msgstr "Macierz wariancji i kowariancji oecen parametrów regresji"
+msgstr "Macierz wariancji i kowariancji ocen parametrów regresji"
 
 #: lib/src/printout.c:78 lib/src/printout.c:130
 msgid "Current session"
@@ -3736,12 +3736,12 @@ msgstr "  prognoza"
 
 #: lib/src/printout.c:1260
 msgid " std. error"
-msgstr "b³±d exante"
+msgstr "b³±d ex ante"
 
 #: lib/src/printout.c:1261
 #, c-format
 msgid "   95%% confidence interval\n"
-msgstr "    95%% przedzia³ ufno¶ci\n"
+msgstr "   95%% przedzia³ ufno¶ci\n"
 
 #: lib/src/printout.c:1394
 #, c-format
@@ -4223,7 +4223,7 @@ msgstr "kontynuacja"
 #: lib/src/var.c:658 lib/src/var.c:669
 #, c-format
 msgid "Decomposition of variance for %s"
-msgstr "Dekompozycja wariancji dla %s"
+msgstr "Dekompozycja wariancji dla zmiennej: %s"
 
 #: lib/src/var.c:691 lib/src/var.c:693 gui2/guiprint_common.c:740
 #: gui2/guiprint_common.c:792
@@ -5172,7 +5172,7 @@ msgstr "/Dane/Test równo¶ci dwóch ¶rednich/przypadek ró¿nych warinacji..."
 
 #: gui/gretl.c:335 gui2/gretl.c:394
 msgid "/Data/Difference of variances..."
-msgstr "/Dane/Test równo¶ci dwóch wariancji.../"
+msgstr "/Dane/Test równo¶ci dwóch wariancji..."
 
 #: gui/gretl.c:336 gui2/gretl.c:395
 msgid "/Data/sep5"
@@ -5284,7 +5284,7 @@ msgstr "/Próba/_Zmienne 0-1 dla podpróby..."
 
 #: gui/gretl.c:374 gui2/gretl.c:434
 msgid "/Sample/_Restrict, based on criterion..."
-msgstr "/Próba/_Restrykcji dla podpróby..."
+msgstr "/Próba/_Restrykcje dla podpróby..."
 
 #: gui/gretl.c:376 gui2/gretl.c:436
 msgid "/Sample/R_andom sub-sample..."
@@ -6891,7 +6891,7 @@ msgstr "gretl: nieliniowa metoda najmniejszych kwadratów"
 
 #: gui2/callbacks.c:593
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr "NLS: WysSpecyfikuj funkcje i jej mo¿liwe pochodne:"
+msgstr "NLS: Wyspecyfikuj funkcje i jej mo¿liwe pochodne:"
 
 #: gui2/callbacks.c:598
 msgid "gretl: linear restrictions"
@@ -8406,7 +8406,7 @@ msgstr "/Wykresy/wykres reszt modelu"
 
 #: gui2/gui_utils.c:149 gui2/gui_utils.c:218 gui2/gui_utils.c:2659
 msgid "/Graphs/fitted, actual plot"
-msgstr "/Wykresy/wykres wyrównanych i faktycznych"
+msgstr "/Wykresy/wykres empirycznych i wyrównanych"
 
 #: gui2/gui_utils.c:150 gui2/gui_utils.c:219
 msgid "/_Model data"
@@ -8414,7 +8414,7 @@ msgstr "/_Dane modelu"
 
 #: gui2/gui_utils.c:151 gui2/gui_utils.c:220
 msgid "/Model data/Display actual, fitted, residual"
-msgstr "/Dane modelu/Poka¿ faktyczne, wyrównane i reszty"
+msgstr "/Dane modelu/Poka¿ empiryczne, wyrównane i reszty"
 
 #: gui2/gui_utils.c:153 gui2/gui_utils.c:222
 msgid "/Model data/Forecasts with standard errors"
@@ -9350,11 +9350,11 @@ msgstr "Niemo¿liwe usuniêcie wykorzystywanej zmiennej %s"
 #: gui2/library.c:3643 gui2/library.c:3651 gui2/session.c:1731
 #, c-format
 msgid "Really delete %s?"
-msgstr "Czy na pewno usun±æ zmienne: %s?"
+msgstr "Czy na pewno usun±æ: %s?"
 
 #: gui2/library.c:3654 gui2/session.c:1732
 msgid "gretl: delete"
-msgstr "gretl: usuwanie zmiennych"
+msgstr "gretl: usuwanie"
 
 #: gui2/library.c:3679
 msgid "Cannot delete the specified variables"
@@ -10641,7 +10641,7 @@ msgstr "Warto¶ci niedodatnie s± niew³a¶ciwe dla zmiennej zale¿nej"
 #: plugin/mp_ols.c:131
 #, c-format
 msgid "Missing observations for variable '%s'"
-msgstr "Puste obserwacje dla zmiennej '%s'"
+msgstr "Brak danych dla zmiennej '%s'"
 
 #: plugin/mp_ols.c:140
 #, c-format
@@ -10816,7 +10816,7 @@ msgstr "Analiza g³ównych sk³adowych"
 
 #: plugin/pca.c:233
 msgid "Eigenanalysis of the Correlation Matrix"
-msgstr ""
+msgstr "Macierz korelacji wartoœci w³asnych"
 
 #: plugin/pca.c:235
 msgid "Component  Eigenvalue  Proportion   Cumulative\n"
@@ -10954,7 +10954,7 @@ msgid ""
 "Critical values for Student's t distribution\n"
 "\n"
 msgstr ""
-"Warto¶ci krytyczne dla rozk³adu t-Studenta\n"
+"Warto¶ci krytyczne dla rozk³adu t-Studenta (uwaga: przesuniêcie opisów)\n"
 "\n"
 
 #: plugin/stats_tables.c:385
@@ -10966,7 +10966,7 @@ msgid ""
 "Critical values for Chi-square distribution\n"
 "\n"
 msgstr ""
-"Warto¶ci krytyczne dla rozk³adu Chi-kwadrat\n"
+"Warto¶ci krytyczne dla rozk³adu Chi-kwadrat (uwaga: przesuniêcie opisów)\n"
 "\n"
 
 #: plugin/stats_tables.c:405

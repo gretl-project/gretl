@@ -340,6 +340,11 @@ int loop_index_char (int c)
     return (strchr(ok_ichars, c) != NULL);
 }
 
+/* Watch out: compare the code in generate.c, around the function
+   genr_scalar_index(), before making changes here. This should
+   really be integrated in one place.
+*/
+
 static int bad_ichar (char c)
 {
     int err = 0;

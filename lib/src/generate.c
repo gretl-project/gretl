@@ -2108,6 +2108,10 @@ static void get_genr_formula (char *formula, const char *line,
     copy_compress(formula, line, MAXLEN - 10);
 }
 
+/* check the code in monte_carlo.c, around parse_as_for_loop(),
+   before making changes in this area
+*/
+
 /**
  * genr_scalar_index:
  * @c: character represting a particular index (i to m).
@@ -2124,11 +2128,6 @@ static void get_genr_formula (char *formula, const char *line,
 
 int genr_scalar_index (int c, int opt, int put)
 {
-    /* opt = 1, set index (using "put")
-       opt = 2, increment index value
-       Refers to an "internal" variable named "i", "j", ... "m"
-       available in genr commands, and with ID number INDEXNUM+
-    */
     static int idx[N_INDICES];
     int i = 0;
 
