@@ -279,7 +279,7 @@ static int tobit_ll (double *theta, const double **X, double **Z, tobit_info *to
 }
 
 static void print_iter_info (int iter, double *theta, int m, double ll,
-			     PRN *prn)
+			     double steplength, PRN *prn)
 {
     int i;
 
@@ -288,7 +288,7 @@ static void print_iter_info (int iter, double *theta, int m, double ll,
 	if (i && i % 5 == 0) pputc(prn, '\n');
 	pprintf(prn, "%#12.5g ", theta[i]);
     }
-    pprintf(prn, "\n    ll = %g\n\n", ll);
+    pprintf(prn, "\n    steplength = %g, ll = %g\n", steplength, ll);
 }
 
 #ifdef STANDALONE /* the test program, not the plugin */
@@ -473,7 +473,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     while (crit > tol && iters++ < itermax && !err) {
 
 	/* compute loglikelihood and score matrix */
-	err = tobit_ll(tobit.theta, X, tZ, &tobit, 1); 
+	tobit_ll(tobit.theta, X, tZ, &tobit, 1); 
 
 	/* BHHH via OPG regression (OPT_A -> "this is an auxiliary regression") */
 	tmod = lsq(tobit.list, &tZ, tinfo, OLS, OPT_A, 0.0);
@@ -489,16 +489,19 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	clear_model(&tmod, NULL);
 
 	/* see if we've gone up... (0 means "don't compute score") */
-	tobit_ll(tobit.deltmp, X, tZ, &tobit, 0); 
+	err = tobit_ll(tobit.deltmp, X, tZ, &tobit, 0); 
 
-	while (tobit.ll2 < tobit.ll && stepsize > smallstep && !err) { 
+	while ((tobit.ll2 < tobit.ll || err) && stepsize > smallstep) { 
 	    /* ... if not, halve steplength, as with ARMA models */
 	    stepsize *= 0.5;
 	    for (i=0; i<=k; i++) {
 		tobit.delta[i] *= 0.5;
 		tobit.deltmp[i] = tobit.theta[i] + tobit.delta[i];
 	    }
-	    tobit_ll(tobit.deltmp, X, tZ, &tobit, 0);
+#ifdef DEBUG
+	    printf("Halving steplength... %g\n", stepsize);
+#endif
+	    err = tobit_ll(tobit.deltmp, X, tZ, &tobit, 0);
 	}
 
 	/* double the steplength? */
@@ -509,7 +512,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	    tobit.theta[i] += tobit.delta[i];
 	}
 
-	print_iter_info(iters, tobit.theta, k+1, tobit.ll, prn);
+	print_iter_info(iters, tobit.theta, k+1, tobit.ll, stepsize, prn);
 
 	if (tobit.theta[k] < 0.0) {
 	    /* if the variance is negative here, we're stuck */
