@@ -147,9 +147,9 @@ double gretl_matrix_get (const gretl_matrix *m, int i, int j)
 {
     double x;
 
-    if (m == NULL || m->val == NULL) return -999.0;
+    if (m == NULL || m->val == NULL) return NADBL;
 
-    if (i >= m->rows || j >= m->cols) return -999.0;
+    if (i >= m->rows || j >= m->cols) return NADBL;
 
     if (m->packed) {
 	x = m->val[packed_idx(m->rows, i, j)];

@@ -705,7 +705,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		command->param = realloc(command->param, 4);
 		sprintf(command->param, "%d", j);
 		n += strlen(field) + 1;
-		command->list[j] = 999;
+		command->list[j] = LISTSEP;
 		ar = 0; /* turn off acceptance of AR lags */
 		if (command->ci == MPOLS) poly = 1;
 		continue;
@@ -1105,7 +1105,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	to stdout or to a buffer, or both */
 
 {
-    int i, err, got999 = 1;
+    int i, err, gotsep = 1;
     int cli = !gui;
 
     if (line == NULL) return;
@@ -1133,7 +1133,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (strcmp(line, "quit") == 0 || line[0] == '!' ||
 	strlen(line) == 0) return;
 
-    if (cmd->ci == AR) got999 = 0;
+    if (cmd->ci == AR) gotsep = 0;
 
     /* command is preceded by a "savename" to which a object will
        be assigned */
@@ -1168,25 +1168,31 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    if (!batch) pputs(prn, " \\\n");
 	}
 	for (i=1; i<=cmd->list[0]; i++) {
-	    if (cmd->list[i] == 999) {
+	    if (cmd->list[i] == LISTSEP) {
 		if (cli) printf(" ;");
 		if (!batch) pputs(prn, " ;");
-		got999 = (cmd->ci != MPOLS)? 1 : 0;
+		gotsep = (cmd->ci != MPOLS)? 1 : 0;
 		continue;
 	    }
 	    if (cli) {
-		if (got999) 
+		if (gotsep) {
 		    printf(" %s", pdinfo->varname[cmd->list[i]]);
-		else printf(" %d", cmd->list[i]);
-		if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) 
+		} else {
+		    printf(" %d", cmd->list[i]);
+		}
+		if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) {
 		    printf(" \\\n"); /* line continuation */
+		}
 	    }
 	    if (!batch) {
-		if (got999) 
+		if (gotsep) {
 		    pprintf(prn, " %s", pdinfo->varname[cmd->list[i]]);
-		else pprintf(prn, " %d", cmd->list[i]);
-		if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) 
+		} else {
+		    pprintf(prn, " %d", cmd->list[i]);
+		}
+		if (i > 1 && i < cmd->list[0] && (i+1) % 10 == 0) {
 		    pputs(prn, " \\\n"); /* line continuation */
+		}
 	    }
 	}
 

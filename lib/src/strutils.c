@@ -483,6 +483,7 @@ void compress_spaces (char *s)
 
     p = s;
     while (*s) {
+	if (*s == '\t') *s = ' '; /* trash tabs */
 	if (*s == ' ') {
 	    p = s + 1;
 	    if (*p == 0) break;

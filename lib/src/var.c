@@ -98,10 +98,11 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
 	}	
 	x0 = (*pZ)[iv][t];
 	x1 = (*pZ)[iv][t-1];
-	if (na(x0) || na(x1)) 
+	if (na(x0) || na(x1)) {
 	    (*pZ)[v][t] = NADBL;
-	else				      
+	} else {				      
 	    (*pZ)[v][t] = x0 - x1;
+	}
     }
 
     strcpy(pdinfo->varname[v], s);
@@ -140,10 +141,11 @@ static int ldiffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
 	}
 	x0 = (*pZ)[iv][t];
 	x1 = (*pZ)[iv][t-1];
-	if (na(x0) || na(x1) || x0/x1 < 0.) 
+	if (na(x0) || na(x1) || x0 / x1 <= 0.) {
 	    (*pZ)[v][t] = NADBL;
-	else				      
-	    (*pZ)[v][t] = log(x0/x1);
+	} else {			      
+	    (*pZ)[v][t] = log(x0 / x1);
+	}
     }
 
     strcpy(pdinfo->varname[v], s);
@@ -170,8 +172,9 @@ int list_diffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int i;
     
-    for (i=1; i<=list[0]; i++)
+    for (i=1; i<=list[0]; i++) {
 	if (diffgenr(list[i], pZ, pdinfo)) return 1;
+    }
     return 0;
 }
 
@@ -192,8 +195,9 @@ int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int i;
     
-    for (i=1; i<=list[0]; i++)
+    for (i=1; i<=list[0]; i++) {
 	if (ldiffgenr(list[i], pZ, pdinfo)) return 1;
+    }
     return 0;
 }
 
@@ -292,8 +296,13 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     varlist = malloc((listlen + 1) * sizeof *varlist);
     depvars = malloc((listlen + 1) * sizeof *depvars);
     shortlist = malloc(listlen * sizeof *shortlist);
-    if (varlist == NULL || depvars == NULL || shortlist == NULL)
+
+    if (varlist == NULL || depvars == NULL || shortlist == NULL) {
+	free(varlist);
+	free(depvars);
+	free(shortlist);
 	return E_ALLOC;
+    }
 
     varlist[0] = listlen;
     index = 2; /* skip beyond the counter and the dep var */
@@ -312,8 +321,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	/* otherwise it's a "real" variable and we replace it with
 	   <order> lags of itself */
-	if (varindex(pdinfo, pdinfo->varname[list[i]]) 
-	    < pdinfo->v) {
+	if (varindex(pdinfo, pdinfo->varname[list[i]]) < pdinfo->v) {
 	    depvars[neqns] = list[i];
 	    neqns++;
 	    for (l=1; l<=order; l++) {
@@ -332,12 +340,14 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     t1 = oldt1 = pdinfo->t1;
     t2 = oldt2 = pdinfo->t2;
     varlist[1] = depvars[0];
+
     if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, *pZ, &misst))) {
 	free(varlist);
 	free(depvars);
 	free(shortlist);
 	return 1;
     }
+
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
 
@@ -356,9 +366,11 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     for (i=0; i<neqns; i++) {
 	varlist[1] = depvars[i];
+
 	/* run an OLS regression for the current dep var */
 	var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
 	var_model.aux = VAR;
+
 	/* save the residuals if required */
 	if (resids != NULL) {
 	    resids->t1 = var_model.t1;
@@ -366,15 +378,19 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    resids->uhat[i] = var_model.uhat;
 	    var_model.uhat = NULL;
 	} 
+
 	if (flags & VAR_PRINT_MODELS) {
 	    printmodel(&var_model, pdinfo, prn);
 	}
+
 	if (flags & VAR_DO_FTESTS) {
 	    /* keep some results for hypothesis testing */
 	    essu = var_model.ess;
 	    dfd = var_model.dfd;	    
 	}
+
 	clear_model(&var_model, pdinfo);
+
 	if (resids != NULL) {
 	    /* estimate equations for Johansen test too */
 	    varlist[1] = resids->levels_list[i + 1]; 
@@ -387,10 +403,12 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    var_model.uhat = NULL;
 	    clear_model(&var_model, pdinfo);
 	}
+
 	if (flags & VAR_DO_FTESTS) {
-	    /* now build truncated lists for hyp. tests */
+	    /* now build truncated lists for hypothesis tests */
 	    shortlist[1] = varlist[1];
 	    pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
+
 	    for (j=0; j<neqns; j++) {
 		reset_list(shortlist, varlist);
 		for (l=1; l<=order; l++) {
@@ -412,6 +430,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
 		pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
 	    }
+
 	    if (order > 1) {
 		pprintf(prn, _("All vars, lag %-6d "), order);
 		reset_list(shortlist, varlist);
@@ -427,13 +446,13 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		    shortlist[l] = varlist[varlist[0]-end];
 		    end++;
 		}
-		/*  printlist(shortlist); */
 		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 		F = ((var_model.ess - essu)/neqns)/(essu/dfd);
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
 		pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
 	    }
+
 	    pputs(prn, "\n");
 	    if (flags & VAR_PRINT_PAUSE) page_break(0, NULL, 0);
 	}
@@ -447,6 +466,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* reset sample range to what it was before */
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
+
     return 0;
 }
 
@@ -516,8 +536,9 @@ int coint (int order, const LIST list, double ***pZ,
 	for (i=0; i<=l0; i++) cointlist[i] = list[i];
 	cointlist[l0 + 1] = 0;
 	cointlist[0] += 1;
-    } else 
+    } else {
 	copylist(&cointlist, list);
+    }
 
     pputs(prn, "\n");
     pprintf(prn, _("Step %d: cointegration\n"), l0 + 1);
@@ -530,12 +551,17 @@ int coint (int order, const LIST list, double ***pZ,
     n = pdinfo->n;
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     nv = pdinfo->v - 1;
-    for (t=0; t<coint_model.t1; t++)
+
+    for (t=0; t<coint_model.t1; t++) {
 	(*pZ)[nv][t] = NADBL;
-    for (t = coint_model.t1; t<=coint_model.t2; t++)
+    }
+    for (t = coint_model.t1; t<=coint_model.t2; t++) {
 	(*pZ)[nv][t] = coint_model.uhat[t];
-    for (t=coint_model.t2 + 1; t<n; t++) 
+    }
+    for (t=coint_model.t2 + 1; t<n; t++) {
 	(*pZ)[nv][t] = NADBL;
+    }
+
     strcpy(pdinfo->varname[nv], "uhat");
 
     /* Run ADF test on these residuals */
@@ -553,6 +579,7 @@ int coint (int order, const LIST list, double ***pZ,
     clear_model(&coint_model, pdinfo);
     free(cointlist);
     dataset_drop_vars(1, pZ, pdinfo);
+
     return 0;
 }
 
@@ -575,8 +602,8 @@ int adf_test (int order, int varno, double ***pZ,
 	      DATAINFO *pdinfo, PRN *prn)
 {
     int i, l, T, k, row, orig_nvars = pdinfo->v;
-    int *adflist;
-    int *shortlist;
+    int *adflist = NULL;
+    int *shortlist = NULL;
     MODEL adf_model;
     double essu, F, DFt;
     char pval[40];
@@ -602,9 +629,15 @@ int adf_test (int order, int varno, double ***pZ,
 
     _init_model(&adf_model, pdinfo);
     k = 3 + order;
+
     adflist = malloc((5 + order) * sizeof *adflist);
     shortlist = malloc(k * sizeof *shortlist);
-    if (adflist == NULL || shortlist == NULL) return E_ALLOC;
+
+    if (adflist == NULL || shortlist == NULL) {
+	free(adflist);
+	free(shortlist);
+	return E_ALLOC;
+    }
 
     i = pdinfo->t1;
     pdinfo->t1 = 0;
@@ -661,6 +694,7 @@ int adf_test (int order, int varno, double ***pZ,
 	    "   %s\n"),
 	    pdinfo->varname[varno], pdinfo->varname[varno],
 	    adf_model.coeff[1], DFt, adf_model.nobs, pval);
+
     clear_model(&adf_model, pdinfo);
 
     /* then do ADF test using F-statistic */
@@ -682,7 +716,7 @@ int adf_test (int order, int varno, double ***pZ,
 	free(shortlist);
 	return E_ALLOC;
     }
-    /*  printlist(adflist); */
+
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
     if (adf_model.errcode)
 	return adf_model.errcode;
@@ -694,12 +728,16 @@ int adf_test (int order, int varno, double ***pZ,
 
     shortlist[0] = adflist[0] - 2;
     shortlist[1] = adflist[1];
-    for (i=0; i<=order; i++) 
+    for (i=0; i<=order; i++) {
 	shortlist[2+i] = adflist[4+i];
-    /*  printlist(shortlist); */
+    }
+
     adf_model = lsq(shortlist, pZ, pdinfo, OLS, 0, 0.0);
-    if (adf_model.errcode)
-	return adf_model.errcode;	
+    if (adf_model.errcode) {
+	/* FIXME: clean up */
+	return adf_model.errcode;
+    }	
+
     F = (adf_model.ess - essu) * (T - k)/(2 * essu);
     clear_model(&adf_model, pdinfo);
 

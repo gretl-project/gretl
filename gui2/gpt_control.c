@@ -264,6 +264,7 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
     const gchar *p;
     
     *str = 0;
+    g_return_if_fail(GTK_IS_ENTRY(w));
     p = gtk_entry_get_text(GTK_ENTRY(w));
 
     if (p != NULL && *p != '\0') {
@@ -290,6 +291,7 @@ get_label_pos_from_entry (GtkWidget *w, char *str, size_t n)
     int chk;
 
     *str = 0;
+    g_return_if_fail(GTK_IS_ENTRY(w));
     p = gtk_entry_get_text(GTK_ENTRY(w));
     
     strncat(str, p, n-1);

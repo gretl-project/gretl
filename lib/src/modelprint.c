@@ -656,6 +656,62 @@ static void modelprint_setup_obs (const MODEL *pmod, int *t1, int *t2)
 
 /* ......................................................... */
 
+static int print_tsls_instruments (LIST list, const DATAINFO *pdinfo, PRN *prn)
+{
+    int i, j, pos = 0;
+    int ccount = 0;
+    char vname[16];
+    int tex = TEX_FORMAT(prn->format);
+    int utf = PLAIN_FORMAT(prn->format);
+
+    if (utf) {
+	pprintf(prn, "%s: ", _("Instruments"));
+    } else {
+	pprintf(prn, "%s: ", I_("Instruments"));
+    }
+
+    ccount += strlen(_("Instruments") + 2);
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    pos = i;
+	    continue;
+	}
+	if (pos && list[i] > 0) {
+	    int dup = 0;
+
+	    for (j=2; j<pos; j++) {
+		if (list[i] == list[j]) {
+		    dup = 1;
+		    break;
+		}
+	    }
+	    if (!dup) {
+		if (tex) tex_escape(vname, pdinfo->varname[list[i]]);
+		else strcpy(vname, pdinfo->varname[list[i]]);
+		pprintf(prn, "%s ", vname);
+		ccount += strlen(vname) + 1;
+		if (ccount >= 76) {
+		    if (tex) pputs(prn, "\\\\\n");
+		    else if (RTF_FORMAT(prn->format)) pputs(prn, "\\par\n");
+		    else pputs(prn, "\n  "); 
+		    ccount = 0;
+		}
+	    }
+	}
+    }
+
+    if (ccount > 0) {
+	if (tex) pputs(prn, "\\\\\n");
+	else if (RTF_FORMAT(prn->format)) pputs(prn, "\\par\n");
+	else pputs(prn, "\n");
+    }
+
+    return 0;
+}
+
+/* ......................................................... */
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 PRN *prn)
@@ -774,9 +830,11 @@ static void print_model_heading (const MODEL *pmod,
     else { 
 	/* ordinary dependent variable */
 	if (tex) tex_escape(vname, pdinfo->varname[pmod->list[1]]);
-	pprintf(prn, "%s: %s\n", 
+	pprintf(prn, "%s: %s%s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
-		(tex)? vname : pdinfo->varname[pmod->list[1]]);
+		(tex)? vname : pdinfo->varname[pmod->list[1]],
+		(pmod->ci == TSLS && tex)? "\\\\\n" : 
+		(pmod->ci == TSLS && RTF_FORMAT(prn->format))? "\\par\n" : "\n");
     }
 
     if (pmod->aux == AUX_SCR) {
@@ -796,6 +854,8 @@ static void print_model_heading (const MODEL *pmod,
 	if (tex) {
 	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", pmod->rho_in);
 	}
+    } else if (pmod->ci == TSLS) {
+	print_tsls_instruments (pmod->list, pdinfo, prn);
     }
 
     if (PLAIN_FORMAT(prn->format) && gretl_msg[0] != '\0' &&
@@ -964,6 +1024,7 @@ static int print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *p
     int n = pmod->list[0];
 
     for (i=2; i<=n; i++) {
+	if (pmod->list[i] == LISTSEP) break;
 	if (PLAIN_FORMAT(prn->format)) {
 	    err = print_coeff(pdinfo, pmod, i, prn);
 	}
@@ -1006,7 +1067,7 @@ static void print_middle_table_end (PRN *prn)
 
 static void r_squared_message (PRN *prn)
 {
-    pprintf(prn, "\n%s.\n",    
+    pprintf(prn, "%s.\n\n",    
 	    _("R-squared is computed as the square of the correlation "
 	      "between observed and\nfitted values of the dependent variable"));
 }

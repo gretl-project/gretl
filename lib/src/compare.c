@@ -33,8 +33,8 @@ static int _justreplaced (int i, const DATAINFO *pdinfo,
 
 /* ........................................................... */
 
-int _addtolist (const int *oldlist, const int *addvars, int **plist,
-		const DATAINFO *pdinfo, int model_count)
+int addtolist (const int *oldlist, const int *addvars, int **plist,
+	       const DATAINFO *pdinfo, int model_count)
 /* Adds specified independent variables to a specified
    list, forming newlist.  The first element of addvars
    is the number of variables to be added; the remaining
@@ -47,7 +47,9 @@ int _addtolist (const int *oldlist, const int *addvars, int **plist,
     *plist = malloc((oldlist[0] + nadd + 1) * sizeof **plist);
     if (*plist == NULL) return E_ALLOC;
 
-    for (i=0; i<=oldlist[0]; i++) (*plist)[i] = oldlist[i];
+    for (i=0; i<=oldlist[0]; i++) {
+	(*plist)[i] = oldlist[i];
+    }
     k = oldlist[0];
 
     for (i=1; i<=addvars[0]; i++) {
@@ -70,7 +72,7 @@ int _addtolist (const int *oldlist, const int *addvars, int **plist,
 	return E_NOADD;
     }
 
-    if (_justreplaced(model_count, pdinfo, oldlist)) {
+    if (model_count >= 0 && _justreplaced(model_count, pdinfo, oldlist)) {
 	return E_VARCHANGE;
     }
 
@@ -160,8 +162,9 @@ static int _justreplaced (int i, const DATAINFO *pdinfo,
 
     for (j=1; j<=list[0]; j++) {
 	if (strncmp(VARLABEL(pdinfo, list[j]), _("Replaced"), 8) == 0 &&
-	    sscanf(VARLABEL(pdinfo, list[j]), "%*s %*s %*s %d", &repl) == 1)
-	if (repl >= i) return 1;
+	    sscanf(VARLABEL(pdinfo, list[j]), "%*s %*s %*s %d", &repl) == 1) {
+	    if (repl >= i) return 1;
+	}
     }
     return 0; 
 }
@@ -357,7 +360,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
     if (addvars != NULL) {
 	/* specific list was given */
-	err = _addtolist(orig->list, addvars, &newlist, pdinfo, m);
+	err = addtolist(orig->list, addvars, &newlist, pdinfo, m);
     } else {
 	/* we should concoct one */
 	listlen = orig->list[0] - orig->ifc;
@@ -400,8 +403,8 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		    for (i=1; i<=tmplist[0]; i++) { 
 			tmplist[i] = i + orig_nvar - 1;
 		    }
-		    err = _addtolist(orig->list, tmplist, &newlist,
-				     pdinfo, m);
+		    err = addtolist(orig->list, tmplist, &newlist,
+				    pdinfo, m);
 		}
 	    }
 	} /* tmplist != NULL */
@@ -1267,8 +1270,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     cresid = malloc(n_est * sizeof *cresid);
     W = malloc(n_est * sizeof *W);
     xvec = malloc(K * sizeof *xvec);
-    if (cresid == NULL || W == NULL || xvec == NULL) 
+
+    if (cresid == NULL || W == NULL || xvec == NULL) {
 	err = E_ALLOC;
+    }
 
     if (!err) {
 	_init_model(&cum_mod, pdinfo);
@@ -1666,10 +1671,13 @@ int sum_test (LIST sumvars, MODEL *pmod,
 
     if (pmod->ci == TSLS) return E_NOTIMP;
 
-    /* try the necessary allocation first */
     tmplist = malloc((pmod->list[0] + 1) * sizeof *tmplist);
     if (tmplist == NULL) return E_ALLOC;
-    if (dataset_add_vars(add, pZ, pdinfo)) return E_ALLOC;
+
+    if (dataset_add_vars(add, pZ, pdinfo)) {
+	free(tmplist);
+	return E_ALLOC;
+    }
 
     nullprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 

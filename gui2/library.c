@@ -4281,8 +4281,10 @@ int execute_script (const char *runfile, const char *buf,
 
 	/* check that the file has something in it */
 	while (fgets(tmp, MAXLEN-1, fb)) {
-	    if (strlen(tmp)) {
-		for (i=0; i<(int)strlen(tmp); i++) {
+	    if (*tmp != '\0') {
+		size_t n = strlen(tmp);
+
+		for (i=0; i<n; i++) {
 		    if (!isspace(tmp[i])) {
 			content = 1;
 			break;
@@ -4299,7 +4301,7 @@ int execute_script (const char *runfile, const char *buf,
 	}
     } else { 
 	/* no runfile, commands from buffer */
-	if (buf == NULL || !strlen(buf)) {
+	if (buf == NULL || *buf == '\0') {
 	    errbox(_("No commands to execute"));
 	    return -1;	
 	}
@@ -4367,16 +4369,17 @@ int execute_script (const char *runfile, const char *buf,
 	    /* end if Monte Carlo stuff */
 	    int bslash;
 
-	    *line = 0;
+	    *line = '\0';
 	    if ((fb && fgets(line, MAXLEN, fb) == NULL) ||
 		(fb == NULL && bufgets(line, MAXLEN, buf) == NULL)) {
+		/* done reading */
 		goto endwhile;
 	    }
 
 	    while ((bslash = top_n_tail(line))) {
 		/* handle backslash-continued lines */
 		*tmp = '\0';
-		if (fb) {
+		if (fb != NULL) {
 		    fgets(tmp, MAXLEN - 1, fb);
 		} else {
 		    bufgets(tmp, MAXLEN - 1, buf); 

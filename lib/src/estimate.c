@@ -41,9 +41,6 @@
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			int c, PRN *prn);
-extern int _addtolist (const int *oldlist, const int *addvars, 
-		       int **pnewlist, const DATAINFO *pdinfo, 
-		       int model_count);
 
 /* private function prototypes */
 static int form_xpxxpy (const int *list, int t1, int t2, 
@@ -1462,7 +1459,9 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
 
 MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 {
-    int i, j, t, v, ncoeff, *list1, *list2, *newlist, *s1list, *s2list;
+    int i, j, t, v, ncoeff;
+    int *list1 = NULL, *list2 = NULL, *newlist = NULL;
+    int *s1list = NULL, *s2list = NULL;
     int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
     int nv, nxpx;
     MODEL tsls;
@@ -1472,31 +1471,49 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     _init_model(&tsls, pdinfo);
 
-    if ((newlist = malloc(pos * sizeof(int))) == NULL ||
-	(list1 = malloc(pos * sizeof(int))) == NULL ||
-	(s2list = malloc(pos * sizeof(int))) == NULL ||
-	(list2 = malloc((list[0] - pos + 1) * sizeof(int))) == NULL ||
-	(s1list = malloc((list[0] - pos + 2) * sizeof(int))) == NULL) {
+    list1 = malloc(pos * sizeof *list1);
+    list2 = malloc((list[0] - pos + 1) * sizeof *list2);
+    s1list = malloc((list[0] - pos + 2) * sizeof *s1list);
+    s2list = malloc(pos * sizeof *s2list);
+    newlist = malloc(pos * sizeof *newlist);
+
+    if (list1 == NULL || list2 == NULL || s1list == NULL ||
+	s2list == NULL || newlist == NULL) {
+	free(list1);
+	free(list2);
+	free(s1list);
+	free(s2list);
+	free(newlist);
 	tsls.errcode = E_ALLOC;
 	return tsls;
     }	
 
     list1[0] = pos - 1;
-    for (i=1; i<pos; i++) list1[i] = list[i];
+    for (i=1; i<pos; i++) {
+	list1[i] = list[i];
+    }
     tsls_omitzero(list1, *pZ, pdinfo->t1, pdinfo->t2);
     rearrange_list(list1);
-    for (i=0; i<pos; i++) s2list[i] = list1[i];
+
+    for (i=0; i<pos; i++) {
+	s2list[i] = list1[i];
+    }
+
     list2[0] = list[0] - pos;
-    for (i=1; i<=list2[0]; i++) list2[i] = list[i+pos];
+    for (i=1; i<=list2[0]; i++) {
+	list2[i] = list[i+pos];
+    }
 
     ncoeff = list2[0];
-    if (ncoeff < list1[0]-1) {
+    if (ncoeff < list1[0] - 1) {
         sprintf(gretl_errmsg, 
 		_("Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
 		"varlist1."), list1[0] - 1 - ncoeff);
-	free(list1); free(list2);
-	free(s1list); free(s2list);
+	free(list1); 
+	free(list2);
+	free(s1list); 
+	free(s2list);
 	free(newlist);
 	tsls.errcode = E_UNSPEC; 
 	return tsls;
@@ -1504,8 +1521,10 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     /* now determine which fitted vals to obtain */
     if (tsls_match(list1, list2, newlist)) {
-	free(list1); free(list2);
-	free(s1list); free(s2list);
+	free(list1); 
+	free(list2);
+	free(s1list); 
+	free(s2list);
 	free(newlist);
 	strcpy(gretl_errmsg, 
 	       _("Constant term is in varlist1 but not in varlist2"));
@@ -1515,8 +1534,10 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     /* newlist[0] holds the number of new vars to create */
     if (dataset_add_vars(newlist[0], pZ, pdinfo)) {
-	free(list1); free(list2);
-	free(s1list); free(s2list);
+	free(list1); 
+	free(list2);
+	free(s1list); 
+	free(s2list);
 	free(newlist);
 	tsls.errcode = E_ALLOC;
 	return tsls;	
@@ -1536,8 +1557,10 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	clear_model(&tsls, pdinfo);
 	tsls = lsq(s1list, pZ, pdinfo, OLS, 0, 0.0);
 	if (tsls.errcode) {
-	    free(list1); free(list2);
-	    free(s1list); free(s2list);
+	    free(list1); 
+	    free(list2);
+	    free(s1list); 
+	    free(s2list);
 	    dataset_drop_vars(newlist[0], pZ, pdinfo);
 	    free(newlist);
 	    return tsls;
@@ -1565,8 +1588,10 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     tsls = lsq(s2list, pZ, pdinfo, OLS, 1, 0.0);
 
     if (tsls.errcode) {
-	free(list1); free(list2);
-	free(s1list); free(s2list);
+	free(list1); 
+	free(list2);
+	free(s1list); 
+	free(s2list);
 	dataset_drop_vars(newlist[0], pZ, pdinfo);
 	free(newlist);
 	return tsls;
@@ -1576,8 +1601,10 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
        and associated statistics */
     yhat = malloc(n * sizeof *yhat);
     if (yhat == NULL) {
-	free(list1); free(list2);
-	free(s1list); free(s2list);
+	free(list1); 
+	free(list2);
+	free(s1list); 
+	free(s2list);
 	dataset_drop_vars(newlist[0], pZ, pdinfo);
 	free(newlist);
 	tsls.errcode = E_ALLOC;
@@ -1603,8 +1630,10 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     diag = malloc((s2list[0] - 1) * sizeof *diag);
 
     if (xpy == NULL || xpx == NULL || diag == NULL) {
-	free(list1); free(list2);
-	free(s1list); free(s2list);
+	free(list1); 
+	free(list2);
+	free(s1list); 
+	free(s2list);
 	clear_model(&tsls, pdinfo);
 	dataset_drop_vars(newlist[0], pZ, pdinfo);
 	free(newlist);
@@ -1635,16 +1664,25 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     tsls.ci = TSLS;
 
-    /* put the original list back */
-    for (i=2; i<=list1[0]; i++) 
-	tsls.list[i] = list1[i];
+    /* put the original list back in place */
+    tsls.list = realloc(tsls.list, (list[0] + 1) * sizeof *tsls.list);
+    if (tsls.list == NULL) {
+	tsls.errcode = E_ALLOC;
+    } else {
+	for (i=0; i<=list[0]; i++) {
+	    tsls.list[i] = list[i];
+	}
+    }
 
     /* put the yhats into the model */
-    for (t=tsls.t1; t<=tsls.t2; t++) 
+    for (t=tsls.t1; t<=tsls.t2; t++) {
 	tsls.yhat[t] = yhat[t];
+    }
 
-    free(list1); free(list2);
-    free(s1list); free(s2list);
+    free(list1); 
+    free(list2);
+    free(s1list); 
+    free(s2list);
     free(yhat); 
 
     dataset_drop_vars(newlist[0], pZ, pdinfo);
@@ -1704,7 +1742,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	tmplist[i] = i + v;
     }
 
-    check = _addtolist(pmod->list, tmplist, &list, pdinfo, 999);
+    check = addtolist(pmod->list, tmplist, &list, pdinfo, -1);
     if (check && check != E_VARCHANGE) {
 	free(tmplist);
 	return check;
@@ -2118,7 +2156,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = _addtolist(pmod->list, tmplist, &list, pdinfo, 999);
+	err = addtolist(pmod->list, tmplist, &list, pdinfo, -1);
 	if (err) {
 	    if (err != E_VARCHANGE) 
 		fprintf(stderr, I_("didn't add to list\n"));
@@ -2700,8 +2738,9 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
    among the regressors -- if found, return the position of this
    lagged var in the list; otherwise return 0 */
 {
-    int i, c, t;
+    int i, t;
     char depvar[9], othervar[9];
+    char *p;
 
     /* this may be an auxiliary regression */
     if (pdinfo->extra) return 0;
@@ -2709,15 +2748,20 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
     strcpy(depvar, pdinfo->varname[list[1]]);
 
     for (i=2; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) break;
 	strcpy(othervar, pdinfo->varname[list[i]]);
-	c = haschar('_', othervar);
-	if (c > 0 && isdigit(othervar[c+1]) 
-	    && strncmp(depvar, othervar, c-1) == 0) {
-	    /* strong candidate for lagged depvar, but make sure */
-	    for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) 
-		if ((*pZ)[list[1]][t-1] 
-		    != (*pZ)[list[i]][t]) return 0;
-	    return i; 
+	p = strrchr(othervar, '_');
+	if (p != NULL && isdigit(*(p + 1))) {
+	    /* looks like a lag */
+	    size_t len = strlen(othervar) - strlen(p);
+
+	    if (strncmp(depvar, othervar, len) == 0) {
+		/* strong candidate for lagged depvar, but make sure */
+		for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) 
+		    if ((*pZ)[list[1]][t-1] 
+			!= (*pZ)[list[i]][t]) return 0;
+		return i; 
+	    }
 	}
     } 
     return 0;

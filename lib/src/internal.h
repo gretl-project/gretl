@@ -114,4 +114,7 @@ void gretl_varinfo_init (VARINFO *vinfo);
 
 double corrrsq (int nobs, const double *y, const double *yhat);
 
+int addtolist (const int *oldlist, const int *addvars, int **plist,
+	       const DATAINFO *pdinfo, int model_count);
+
 #endif /* GRETL_INTERNAL_H */

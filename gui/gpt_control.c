@@ -268,6 +268,8 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 
     *str = 0;
 
+    g_return_if_fail(GTK_IS_ENTRY(w));
+
     p = gtk_entry_get_text(GTK_ENTRY(w));
 
     if (p != NULL && *p != 0) {
@@ -283,6 +285,9 @@ get_label_pos_from_entry (GtkWidget *w, char *str, size_t n)
     int chk;
 
     *str = 0;
+
+    g_return_if_fail(GTK_IS_ENTRY(w));
+
     p = gtk_entry_get_text(GTK_ENTRY(w));
     
     strncat(str, p, n-1);
@@ -476,7 +481,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	    spec->lines[i].yaxis = 1;
 	    yaxis = 
 		gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
-	    if (yaxis != NULL && strlen(yaxis) && !strcmp(yaxis, "right")) {
+	    if (yaxis != NULL && *yaxis && !strcmp(yaxis, "right")) {
 		spec->lines[i].yaxis = 2;
 	    }	
 	    if (spec->lines[i].yaxis == 2) {
@@ -2928,9 +2933,9 @@ static void set_approx_pixel_bounds (png_plot_t *plot,
 	plot->pixel_xmax -= 11;
     }
 
-#if 0
+#ifdef PNG_DEBUG
     fprintf(stderr, "set_approx_pixel_bounds:\n"
-	    "pixel_xmin=%d, xmax=%d; ymin=%d, ymax=%d\n",
+	    " pixel_xmin=%d, xmax=%d; ymin=%d, ymax=%d\n",
 	    plot->pixel_xmin, plot->pixel_xmax,
 	    plot->pixel_ymin, plot->pixel_ymax);
 #endif
@@ -2958,10 +2963,11 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 
     /* switch to the "dumb" (ascii) terminal in gnuplot */
     while (fgets(line, MAXLEN-1, fpin)) {
-	if (strstr(line, "set term")) 
+	if (strstr(line, "set term")) {
 	    fputs("set term dumb\n", fpout);
-	else if (strstr(line, "set output")) 
+	} else if (strstr(line, "set output")) {
 	    fprintf(fpout, "set output '%s'\n", dumbtxt);
+	}
 	else fputs(line, fpout);
 	if (strstr(line, "x2range")) x2axis = 1;
     }
@@ -3047,7 +3053,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	}
 
 #ifdef PNG_DEBUG
-	fprintf(stderr, "Reading from dumb plot: plot->ymin=%g, plot->ymax=%g\n",
+	fprintf(stderr, "Reading y range from text plot: plot->ymin=%g, plot->ymax=%g\n",
 		plot->ymin, plot->ymax);
 #endif
 
@@ -3137,6 +3143,9 @@ static int get_plot_ranges (png_plot_t *plot)
 
 #ifdef PNG_COMMENTS
     /* now try getting coordinate info from PNG file */
+#ifdef PNG_DEBUG
+    fprintf(stderr, "Trying to get coodinate info from PNG file\n");
+#endif
     coords = get_png_bounds_info(&b);
     if (coords == 0) {
 	/* retrieved accurate coordinates */
@@ -3154,7 +3163,8 @@ static int get_plot_ranges (png_plot_t *plot)
 #endif /* PNG_COMMENTS */
 
 #ifdef PNG_DEBUG
-    fprintf(stderr, "png: pixel_xmin=%d, xmax=%d, ymin=%d, ymax=%d\n",
+    fprintf(stderr, "get_plot_ranges:\n "
+	    "pixel_xmin=%d, pixel_xmax=%d, pixel_ymin=%d, pixel_ymax=%d\n",
 	    plot->pixel_xmin, plot->pixel_xmax, plot->pixel_ymin,
 	    plot->pixel_ymax);
 #endif
@@ -3267,7 +3277,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     gtk_box_pack_start(GTK_BOX(vbox), canvas_hbox, TRUE, TRUE, 0);
     gtk_widget_show(canvas_hbox);
 
-    /*  eventbox and hbox for status area  */
+    /* eventbox and hbox for status area */
     plot->statusarea = gtk_event_box_new();
     gtk_box_pack_start(GTK_BOX(vbox), plot->statusarea, FALSE, FALSE, 0);
 

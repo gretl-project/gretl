@@ -1294,8 +1294,6 @@ void exec_line (char *line, PRN *prn)
 	}
 	break;
 
-
-
     case SEED:
 	gretl_rand_set_seed(atoi(command.param));
 	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),

@@ -206,6 +206,7 @@ static int var_is_in_model (int v, const MODEL *pmod)
     int i;
 
     for (i=2; i<=pmod->list[0]; i++) {
+	if (pmod->list[i] == LISTSEP) break;
 	if (v == pmod->list[i]) return i;
     }
 
@@ -235,6 +236,17 @@ static void add_to_grand_list (const int *list)
     }
 }
 
+static int get_real_model_list_length (int *list)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) return i - 1;
+    }
+
+    return list[0];
+}
+
 static int make_grand_varlist (void)
 {
     int i, j, f = 1;
@@ -245,7 +257,7 @@ static int make_grand_varlist (void)
 
     for (i=0; i<model_list_len; i++) {
 	if (model_list[i] == NULL) continue;
-	l0 += (model_list[i])->list[0];
+	l0 += get_real_model_list_length((model_list[i])->list);
     }
 
     grand_list = mymalloc((l0 + 1) * sizeof *grand_list);
@@ -256,6 +268,7 @@ static int make_grand_varlist (void)
 	pmod = model_list[i];
 	if (f == 1) {
 	    for (j=0; j<=pmod->list[0]; j++) {
+		if (pmod->list[j] == LISTSEP) break;
 		grand_list[j] = pmod->list[j];
 	    }
 	    f = 0;

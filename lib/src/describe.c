@@ -1155,7 +1155,7 @@ void print_summary (GRETLSUMMARY *summ,
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
-	else xcv = -999;
+	else xcv = NADBL;
 	printf15(std, prn);
 	printf15(xcv, prn);
 	printf15(summ->xskew[v], prn);

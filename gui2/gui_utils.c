@@ -2234,6 +2234,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     for (i=2; i<pmod->list[0]; i++) {
 
 	if (pmod->list[i] == 0) continue;
+	if (pmod->list[i] == LISTSEP) break;
 
 	if (!isdummy(Z[pmod->list[i]], datainfo->t1, datainfo->t2)) {
 	    continue;

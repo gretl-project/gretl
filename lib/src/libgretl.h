@@ -74,6 +74,8 @@
 # define M_PI 3.14159265358979323846
 #endif
 
+#define LISTSEP 999
+
 /* numbers smaller than the given limit will print as zero */
 #define screen_zero(x)  ((fabs(x) > 1.0e-13)? x : 0.0)
 
