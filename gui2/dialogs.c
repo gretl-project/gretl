@@ -1492,14 +1492,14 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     /* AR spinner */
     tmp = gtk_label_new (_("AR order:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    opts->arspin = gtk_spin_button_new_with_range(0, 2, 1);
+    opts->arspin = gtk_spin_button_new_with_range(0, 3, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->arspin), 1);
     gtk_box_pack_start(GTK_BOX(hbox), opts->arspin, FALSE, FALSE, 0);
 
     /* MA spinner */
     tmp = gtk_label_new (_("MA order:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    opts->maspin = gtk_spin_button_new_with_range(0, 2, 1);
+    opts->maspin = gtk_spin_button_new_with_range(0, 3, 1);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(opts->maspin), 1);
     gtk_box_pack_start(GTK_BOX(hbox), opts->maspin, FALSE, FALSE, 0);
 

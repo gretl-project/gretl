@@ -40,6 +40,7 @@ static void series_view_sort (windata_t *vwin, guint a, GtkWidget *w);
 static void series_view_graph (windata_t *vwin, guint a, GtkWidget *w);
 static void scalar_to_clipboard (windata_t *vwin, guint a, GtkWidget *w);
 
+#ifndef OLD_GTK
 GtkItemFactoryEntry series_view_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
@@ -58,6 +59,25 @@ GtkItemFactoryEntry scalar_view_items[] = {
     { N_("/Edit/_Copy value"), NULL, scalar_to_clipboard, 0, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
+#else
+GtkItemFactoryEntry series_view_items[] = {
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL },
+    { N_("/_Series"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Series/_Sort"), NULL, series_view_sort, 0, NULL },
+    { N_("/Series/_Graph"), NULL, series_view_graph, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
+
+GtkItemFactoryEntry scalar_view_items[] = {
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL },
+    { N_("/Edit/_Copy value"), NULL, scalar_to_clipboard, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
+#endif
 
 
 GtkItemFactoryEntry *get_series_view_menu_items (int code)
@@ -165,15 +185,15 @@ static int series_view_allocate (series_view_t *sview)
 
 static void series_view_print (windata_t *vwin)
 {
-    PRN *prn;
+#ifndef OLD_GTK
     GtkTextBuffer *tbuf;
+#endif
+    PRN *prn;
     series_view_t *sview = (series_view_t *) vwin->data;
     int t;
 
     if (bufopen(&prn)) return;
     
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-
     /* print formatted data to buffer */
     if (datainfo->vector[sview->varnum]) {
 	pprintf(prn, "\n     Obs ");
@@ -204,7 +224,17 @@ static void series_view_print (windata_t *vwin)
     }
 
     /* clear existing text buffer and insert data */
+#ifndef OLD_GTK
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
     gtk_text_buffer_set_text(tbuf, prn->buf, -1);
+#else
+    gtk_text_freeze(GTK_TEXT(vwin->w));
+    gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
+    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+		    NULL, NULL, prn->buf, 
+		    strlen(prn->buf));
+    gtk_text_thaw(GTK_TEXT(vwin->w));
+#endif
 
     gretl_print_destroy(prn);
 }
@@ -309,7 +339,11 @@ set_series_float_format (GtkWidget *w, gpointer p)
     series_view_t *sview = (series_view_t *) p;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
+#ifndef OLD_GTK
         i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+#else
+        i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+#endif
         sview->format = i;
     }
 }
@@ -327,8 +361,13 @@ series_view_format_dialog (windata_t *vwin, guint action, GtkWidget *src)
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(w), _("gretl: data format"));
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(w), "destroy",  
 		     G_CALLBACK(gtk_main_quit), NULL);
+#else
+    gtk_signal_connect(GTK_OBJECT(w), "destroy",  
+		     GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
+#endif
 
     vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
@@ -343,8 +382,13 @@ series_view_format_dialog (windata_t *vwin, guint action, GtkWidget *src)
     tmp = gtk_label_new(_("Show"));
     adj = gtk_adjustment_new(sview->digits, 1, 10, 1, 1, 1);
     sview->digit_spin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+#ifndef OLD_GTK
     g_signal_connect (adj, "value_changed",
 		      G_CALLBACK (series_view_get_figures), sview);
+#else
+    gtk_signal_connect (adj, "value_changed",
+			GTK_SIGNAL_FUNC (series_view_get_figures), sview);
+#endif
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), sview->digit_spin, FALSE, FALSE, 5);
 
@@ -353,45 +397,77 @@ series_view_format_dialog (windata_t *vwin, guint action, GtkWidget *src)
     gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     if (sview->format == 'G')
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_series_float_format), sview);
     g_object_set_data(G_OBJECT(tmp), "action", 
                       GINT_TO_POINTER('G'));
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_series_float_format), sview);
+    gtk_object_set_data(GTK_OBJECT(tmp), "action", 
+			GINT_TO_POINTER('G'));
+#endif
 
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (tmp));
     tmp = gtk_radio_button_new_with_label(group, _("decimal places"));
     gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     if (sview->format == 'f')
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_series_float_format), sview);
     g_object_set_data(G_OBJECT(tmp), "action", 
-                      GINT_TO_POINTER('f'));    
+                      GINT_TO_POINTER('f')); 
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_series_float_format), sview);
+    gtk_object_set_data(GTK_OBJECT(tmp), "action", 
+			GINT_TO_POINTER('f'));    
+#endif   
 
     /* control buttons */
     hbox = gtk_hbox_new (TRUE, 5);
-    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
+    tmp = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
+#ifndef OLD_GTK
     g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
 			      G_CALLBACK (gtk_widget_destroy), 
 			      G_OBJECT (w));
+#else
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
+			GTK_SIGNAL_FUNC (delete_widget), 
+			GTK_OBJECT (w));
+#endif
 
-    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
+    tmp = standard_button(GTK_STOCK_CANCEL);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
+#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (tmp), "clicked", 
 		      G_CALLBACK (series_view_format_cancel), sview);
     g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
 			      G_CALLBACK (gtk_widget_destroy), 
 			      G_OBJECT (w));
+#else
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
+			GTK_SIGNAL_FUNC (series_view_format_cancel), sview);
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
+			GTK_SIGNAL_FUNC (delete_widget), 
+			GTK_OBJECT (w));
+#endif
 
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     gtk_container_add(GTK_CONTAINER(w), vbox);
 
     gtk_widget_show_all(w);
+
+#ifdef OLD_GTK
+    gtk_window_set_transient_for(GTK_WINDOW(w),
+				 GTK_WINDOW(vwin->dialog));
+#endif
 
     gtk_window_set_modal(GTK_WINDOW(w), TRUE);
 
