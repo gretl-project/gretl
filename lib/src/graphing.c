@@ -29,8 +29,11 @@
 # include <windows.h>
 #else
 # include <glib.h>
-# include <signal.h>
-# include <wait.h>
+#if GLIB_CHECK_VERSION(2,0,0)
+#  define GLIB_SPAWN
+#  include <signal.h>
+#  include <wait.h>
+# endif /* GLIB_CHECK_VERSION */
 #endif
 
 /* pvalues.c */
@@ -44,20 +47,7 @@ static const char *get_gnuplot_pallette (int i, int plottype);
 
 /* ........................................................ */
 
-#ifdef ORIG_CODE /* also needed for earlier glib version */
-
-#define gretl_spawn(s) system(s)
-
-static int gnuplot_test_command (const char *cmd)
-{
-    char cmd[512];
-
-    sprintf(cmd, "echo \"%s\" | %s 2>/dev/null", cmd,
-		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
-    return system(cmd);
-}
-
-#else
+#ifdef GLIB_SPAWN
 
 static int gretl_spawn (const char *cmd)
 {
@@ -76,11 +66,12 @@ static int gretl_spawn (const char *cmd)
 
     if (!ok) {
 	strcpy(gretl_errmsg, error->message);
-	fprintf(stderr, "!ok: '%s'\n", error->message);
+	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
+	g_error_free(error);
 	ret = 1;
     } else if (errout && *errout) {
 	strcpy(gretl_errmsg, errout);
-	fprintf(stderr, "errout: '%s'\n", errout);
+	fprintf(stderr, "stderr: '%s'\n", errout);
 	ret = 1;
     } else if (status != 0) {
 	sprintf(gretl_errmsg, "%s\n%s", 
@@ -140,12 +131,28 @@ static int gnuplot_test_command (const char *cmd)
 	if (test == child_pid && WIFEXITED(status)) {
 	    ret = WEXITSTATUS(status);
 	}
+    } else {
+	fprintf(stderr, "error: '%s'\n", error->message);
+	g_error_free(error);
     }
 
     return ret;
 }
 
-#endif /* ORIG_CODE */
+#elif !defined(OS_WIN32)
+
+# define gretl_spawn(s) system(s)
+
+static int gnuplot_test_command (const char *cmd)
+{
+    char fullcmd[512];
+
+    sprintf(fullcmd, "echo \"%s\" | %s 2>/dev/null", cmd,
+	    (*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
+    return system(fullcmd);
+}
+
+#endif /* ! GLIB_SPAWN, ! WIN32 */
 
 /* ........................................................ */
 

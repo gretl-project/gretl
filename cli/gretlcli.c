@@ -29,7 +29,12 @@
 
 #ifdef OS_WIN32
 # include <windows.h>
-#endif
+#else
+# include <sys/stat.h>
+# include <sys/types.h>
+# include <fcntl.h>
+# include <unistd.h>
+#endif 
 
 #ifdef HAVE_READLINE
 # include <readline/readline.h>
@@ -103,24 +108,29 @@ void usage(void)
     exit(EXIT_SUCCESS);
 }
 
+#ifndef OS_WIN32
+
 int make_userdir (PATHS *ppaths) 
 {
-    char buf[MAXLEN];
     DIR *dir = NULL;
+    int err = 0;
     
     if ((dir = opendir(ppaths->userdir)) == NULL) {
-        sprintf(buf, "mkdir -p \"%s\"", ppaths->userdir);
-        if (system(buf)) {
+	err = mkdir(ppaths->userdir, 0755);
+	if (err) {
 	    fprintf(stderr, _("Couldn't create user directory %s\n"), 
 		    ppaths->userdir);
-	    return 1;
-	} else 
+	} else {
 	    fprintf(stderr, _("Created user directory %s\n"), ppaths->userdir);
+	}
     } else {
 	closedir(dir);
     }
-    return 0;
+
+    return err;
 }
+
+#endif /* WIN32 */
 
 void gretl_abort (char *line)
 {

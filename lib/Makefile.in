@@ -79,10 +79,11 @@ LIBTOOL = ../libtool
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GMP_CFLAGS) -DHAVE_CONFIG_H
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
+DEPEND = $(CC) -M $(CFLAGS)
 
 %.lo: %.c
 	$(COMPILE) -o $@ $<
-	$(CC) -MM -MG -I$(libsrc) $< > $*.d 2>/dev/null
+	$(DEPEND) $< -MF $*.d
 
 $(LIBGRETL): $(LOBJS) $(AUX_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(AUX_LOBJ) \

@@ -285,8 +285,8 @@ necessarily the same as the data range over which the model was estimated.
 The standard errors are calculated in the manner described by Wooldridge in
 chapter 6 of his Introductory Econometrics.  They incorporate two sources of
 variation: the variance associated with the expected value of the dependent
-variable, conditional on the given values of the indepedent variables, and the
-variance of the regression residuals.
+variable, conditional on the given values of the independent variables, and
+the variance of the regression residuals.
 
 #
 genr
