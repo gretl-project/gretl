@@ -127,7 +127,7 @@ int autocorr_test 603,16675
 int chow_test 722,19951
 static double vprime_M_v 827,22924
 int cusum_test 869,23788
-int hausman_test 1015,27829
+int hausman_test 1016,27872
 
 lib/src/compare.h,289
     NONE,25,922
@@ -575,46 +575,48 @@ enum option_codes option_codes35,1063
 lib/src/internal.h,32
 #define GRETL_INTERNAL_H23,949
 
-lib/src/libgretl.h,1096
+lib/src/libgretl.h,1145
 #define LIBGRETL_H21,879
-#  define _(_36,1099
-#  define N_(N_37,1126
-#define MAXLABEL 41,1210
-#define MAXLEN 42,1289
-#define ERRLEN 43,1346
-# define M_PI 46,1426
-    GRETL_PRINT_STDOUT,50,1486
-    GRETL_PRINT_STDERR,51,1510
-    GRETL_PRINT_FILE,52,1534
-    GRETL_PRINT_BUFFER,53,1556
-    GRETL_PRINT_NULL54,1580
-} prn_codes;prn_codes55,1601
-    TIME_SERIES 58,1630
-    STACKED_TIME_SERIES,59,1651
-    STACKED_CROSS_SECTION60,1676
-} ts_codes;ts_codes61,1702
-    GENR_RESID,64,1730
-    GENR_FITTED,65,1746
-    GENR_RESID266,1763
-} auto_genr;auto_genr67,1779
-    SP_NONE,70,1808
-    SP_LOAD_INIT,71,1822
-    SP_SAVE_INIT,72,1840
-    SP_FINISH 73,1858
-} progress_flags;progress_flags74,1873
-typedef int *LIST;LIST76,1892
-} DATAINFO;DATAINFO98,2969
-} PATHS;PATHS117,3396
-} GRETLTEST;GRETLTEST124,3504
-} GRETLSUMMARY;GRETLSUMMARY130,3626
-} CORRMAT;CORRMAT136,3711
-} SAMPLE;SAMPLE141,3764
-} MODEL;MODEL196,6829
-} MODELSPEC;MODELSPEC201,6891
-} GRAPHT;GRAPHT207,6977
-} SESSION;SESSION216,7117
-} SESSIONBUILD;SESSIONBUILD222,7206
-} PRN;PRN228,7289
+#  define _(_35,1092
+#  define N_(N_36,1129
+#  define _(_38,1179
+#  define N_(N_39,1206
+#define MAXLABEL 43,1290
+#define MAXLEN 44,1369
+#define ERRLEN 45,1426
+# define M_PI 48,1506
+    GRETL_PRINT_STDOUT,52,1566
+    GRETL_PRINT_STDERR,53,1590
+    GRETL_PRINT_FILE,54,1614
+    GRETL_PRINT_BUFFER,55,1636
+    GRETL_PRINT_NULL56,1660
+} prn_codes;prn_codes57,1681
+    TIME_SERIES 60,1710
+    STACKED_TIME_SERIES,61,1731
+    STACKED_CROSS_SECTION62,1756
+} ts_codes;ts_codes63,1782
+    GENR_RESID,66,1810
+    GENR_FITTED,67,1826
+    GENR_RESID268,1843
+} auto_genr;auto_genr69,1859
+    SP_NONE,72,1888
+    SP_LOAD_INIT,73,1902
+    SP_SAVE_INIT,74,1920
+    SP_FINISH 75,1938
+} progress_flags;progress_flags76,1953
+typedef int *LIST;LIST78,1972
+} DATAINFO;DATAINFO100,3049
+} PATHS;PATHS119,3476
+} GRETLTEST;GRETLTEST126,3584
+} GRETLSUMMARY;GRETLSUMMARY132,3706
+} CORRMAT;CORRMAT138,3791
+} SAMPLE;SAMPLE143,3844
+} MODEL;MODEL198,6909
+} MODELSPEC;MODELSPEC203,6971
+} GRAPHT;GRAPHT209,7057
+} SESSION;SESSION218,7197
+} SESSIONBUILD;SESSIONBUILD224,7286
+} PRN;PRN230,7369
 
 lib/src/monte_carlo.c,826
 enum inequalities inequalities27,908
@@ -853,49 +855,49 @@ void _aicetc 448,10541
 void _criteria 478,11371
 int _adjust_t1t2 518,12672
 static int real_setmiss 563,13731
-void set_miss 597,14431
-int set_obs 642,15593
-char *unslash 736,18196
-static int get_subdir 748,18427
-static char *search_dir 789,19264
-char *addpath 836,20463
-static int get_quoted_filename 903,22160
-int getopenfile 948,23083
-static int isflag 979,23961
-char getflag 996,24329
-int catchflag 1013,24695
-int _list_dups 1046,25469
-void _init_model 1071,25942
-MODEL *gretl_model_new 1101,26638
-void exchange_smpl 1111,26841
-int silent_remember 1125,27148
-int clear_model 1161,28157
-void show_paths 1227,29860
-int set_paths 1241,30275
-int set_paths 1287,31541
-int copylist 1347,33217
-int grow_nobs 1362,33573
-int dataset_add_vars 1393,34305
-int dataset_add_scalar 1441,35663
-int dataset_drop_var 1482,36820
-int dataset_drop_vars 1524,37867
-int hidden_var 1562,38927
-double *copyvec 1575,39309
-int copy_model 1590,39624
-int swap_models 1633,41094
-int _forecast 1644,41283
-int _full_model_list 1698,42499
-int fcast_with_errs 1731,43392
-int is_model_cmd 1952,49241
-int is_model_ref_cmd 1973,49778
-static void store_list 1990,50057
-int save_model_spec 2003,50302
-int re_estimate 2027,50861
-int guess_panel_structure 2092,52316
-int get_panel_structure 2115,52898
-int set_panel_structure 2137,53432
-int balanced_panel 2170,54343
-double get_xvalue 2188,54732
+void set_miss 598,14451
+int set_obs 643,15613
+char *unslash 737,18216
+static int get_subdir 749,18447
+static char *search_dir 790,19284
+char *addpath 837,20483
+static int get_quoted_filename 904,22180
+int getopenfile 949,23103
+static int isflag 980,23981
+char getflag 997,24349
+int catchflag 1014,24715
+int _list_dups 1047,25489
+void _init_model 1072,25962
+MODEL *gretl_model_new 1109,26809
+void exchange_smpl 1119,27012
+int silent_remember 1133,27319
+int clear_model 1169,28328
+void show_paths 1235,30031
+int set_paths 1249,30446
+int set_paths 1295,31712
+int copylist 1355,33388
+int grow_nobs 1370,33744
+int dataset_add_vars 1401,34476
+int dataset_add_scalar 1449,35834
+int dataset_drop_var 1490,36991
+int dataset_drop_vars 1532,38038
+int hidden_var 1570,39098
+double *copyvec 1583,39480
+int copy_model 1598,39795
+int swap_models 1641,41265
+int _forecast 1652,41454
+int _full_model_list 1706,42670
+int fcast_with_errs 1739,43563
+int is_model_cmd 1960,49412
+int is_model_ref_cmd 1981,49949
+static void store_list 1998,50228
+int save_model_spec 2011,50473
+int re_estimate 2035,51032
+int guess_panel_structure 2100,52487
+int get_panel_structure 2123,53069
+int set_panel_structure 2145,53603
+int balanced_panel 2178,54514
+double get_xvalue 2196,54903
 
 lib/src/utils.h,752
 #define UTILS_H23,901
