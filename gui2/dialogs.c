@@ -1212,7 +1212,16 @@ void varinfo_dialog (int varnum)
 			tempwid, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (delete_widget), vset->dlg);
-    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* And a Help button */
+    tempwid = standard_button(GTK_STOCK_HELP);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    g_signal_connect (G_OBJECT (tempwid), "clicked", 
+		      G_CALLBACK (context_help), 
+		      GINT_TO_POINTER(LABEL));
     gtk_widget_show (tempwid);
 
     gtk_widget_show (vset->dlg);

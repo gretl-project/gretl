@@ -629,7 +629,8 @@ labels
 Usage:          labels
 
 Prints out the informative labels for any variables that have been defined
-using the "genr" command.
+using the "genr" command, or have had labels attached to them using the
+"label" command.
 
 #
 lad

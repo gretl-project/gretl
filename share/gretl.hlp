@@ -446,9 +446,25 @@ The weight series is formed as 1/sqrt(exp(fit)), where "fit" denotes the
 fitted values from the auxiliary regression.
 
 #
+label
+@Dataset
+
+In this dialog box you can:
+
+* Rename a variable.
+
+* Add or edit a description of the variable: this appears next to the variable
+  name in the gretl main window.
+
+* Add or edit the "display name" for the variable.  This string (maximum 19
+  characters) is shown in place of the variable name when the variable is
+  displayed in a graph.  This for instance you can associate a more
+  comprehensible string such as "T-bill rate" with a cryptically named
+  variable such as "tb3".
+
+#
 lad
 @Estimation
-Usage:          lad depvar indepvars
 
 Calculates a regression that minimizes the sum of the absolute deviations of
 the observed from the fitted values of the dependent variable.  Coefficient
