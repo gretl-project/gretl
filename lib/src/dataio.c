@@ -67,8 +67,7 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 
     if (Z == NULL) return;
 
-    for (i=0; i<pdinfo->v; i++)
-	free(Z[i]);
+    for (i=0; i<pdinfo->v; i++) free(Z[i]);
     free(Z);
 }
 
@@ -201,16 +200,18 @@ static int comment_lines (FILE *fp, char **pbuf)
 
 static int dataset_allocate_markers (DATAINFO *pdinfo)
 {
-    int i;
+    int i, k;
 
-    pdinfo->S = malloc(pdinfo->n * sizeof(char *));
+    pdinfo->S = malloc(pdinfo->n * sizeof *pdinfo->S);
 
     if (pdinfo->S == NULL) return 1; 
 
     for (i=0; i<pdinfo->n; i++) {
 	pdinfo->S[i] = malloc(9);
 	if (pdinfo->S[i] == NULL) {
+	    for (k=0; k<i; k++) free(pdinfo->S[k]);
 	    free(pdinfo->S);
+	    pdinfo->S = NULL;
 	    return 1; 
 	}
     }
@@ -222,8 +223,8 @@ static int dataset_allocate_markers (DATAINFO *pdinfo)
 
 void gretl_varinfo_init (VARINFO *vinfo)
 {
-    vinfo->label[0] = 0;
-    vinfo->display_name[0] = 0;
+    *vinfo->label = '\0';
+    *vinfo->display_name = '\0';
     vinfo->compact_method = COMPACT_NONE;
 }
 
@@ -313,8 +314,8 @@ DATAINFO *datainfo_new (void)
     dinfo->sd0 = 1.0;
     dinfo->t1 = 0;
     dinfo->t2 = 0;
-    dinfo->stobs[0] = '\0';
-    dinfo->endobs[0] = '\0';
+    *dinfo->stobs = '\0';
+    *dinfo->endobs = '\0';
     dinfo->varname = NULL;
     dinfo->varinfo = NULL;    
     dinfo->markers = 0;  
@@ -464,7 +465,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
     if (pdinfo->bin == 1) { /* single-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
-		if (!fread(&x, sizeof(float), 1, fp)) {
+		if (!fread(&x, sizeof x, 1, fp)) {
 		    sprintf(gretl_errmsg, _("WARNING: binary data read error at "
 			    "var %d"), i);
 		    return 1;
@@ -488,8 +489,11 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	for (t=0; t<n && !err; t++) {
 	    eatspace(fp);
 	    c = fgetc(fp);  /* test for a #-opened comment line */
-	    if (c == '#') while (c != '\n') c = fgetc(fp);
-	    else ungetc(c, fp);
+	    if (c == '#') {
+		while (c != '\n') c = fgetc(fp);
+	    } else {
+		ungetc(c, fp);
+	    }
 	    if (pdinfo->markers) {
 		fscanf(fp, "%8s", marker);
 		strcpy(pdinfo->S[t], marker);
@@ -618,7 +622,7 @@ int check_varname (const char *varname)
 {
     int i, n = strlen(varname);
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     if (_reserved(varname)) return 1;
     
@@ -655,7 +659,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     int n, i = 0, panel = 0, descrip = 0;
     char str[MAXLEN], byobs[6], option[8];
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     fp = fopen(hdrfile, "r");
     if (fp == NULL) {
@@ -1444,7 +1448,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
     char line[MAXLEN], *label, varname[9];
     int v;
     
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     fp = fopen(lblfile, "r");
     if (fp == NULL) return 0;
@@ -1470,8 +1474,9 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 	    fprintf(stderr, I_("extraneous label for var '%s'\n"), varname);
 	}
     }
-    if (fp != NULL) 
-	fclose(fp);
+
+    if (fp != NULL) fclose(fp);
+
     return 0;
 }
 
@@ -1502,8 +1507,10 @@ static int writelbl (const char *lblfile, const int *list,
 	    fprintf(fp, "%s %s\n", pdinfo->varname[list[i]],
 		    VARLABEL(pdinfo, list[i]));
 	}
-    }    
+    }
+    
     if (fp != NULL) fclose(fp);
+
     return 0;
 }
 
@@ -1525,8 +1532,10 @@ int is_gzipped (const char *fname)
 
     fp = fopen(fname, "r");
     if (fp == NULL) return 0;
+
     if (fgetc(fp) == 037 && fgetc(fp) == 0213) 
 	gz = 1;
+
     fclose(fp);
     return gz;
 }
@@ -1617,10 +1626,10 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     int err, gzsuff = 0, add_gdt = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     /* get filenames organized */
-    hdrfile[0] = '\0';
+    *hdrfile = '\0';
     gzsuff = has_gz_suffix(datfile);
 
     if (addpath(datfile, ppaths, 0) == NULL) { /* not found yet */
@@ -1628,7 +1637,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	int found = 0;
 
 	/* try using the .gdt suffix? */
-	tryfile[0] = '\0';
+	*tryfile = '\0';
 	strncat(tryfile, datfile, MAXLEN-1);
 	try_gdt(tryfile); 
 	found = (addpath(tryfile, ppaths, 0) != NULL);
@@ -1877,7 +1886,7 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		}
 	    }
 	    if (n1 == 8) {
-		/* try YYYYMMDD */
+		/* try YYYYMMDD? */
 		;
 	    }
 	} else pputs(prn, M_("   definitely not a four-digit year\n"));
@@ -1950,8 +1959,6 @@ static int new_data_offset_ok (const DATAINFO *pdinfo,
  * @addZ: new data set to be merged in.
  * @addinfo: data information associated with @addZ.
  * @prn: print struct to accept messages.
- * @plugin: if = 1, messages will be suitable for GUI message box,
- * otherwise they will be line-print oriented.
  * 
  * Attempt to merge the content of a newly opened data file into
  * gretl's current working data set.
@@ -1962,7 +1969,7 @@ static int new_data_offset_ok (const DATAINFO *pdinfo,
 
 int merge_data (double ***pZ, DATAINFO *pdinfo,
 		double **addZ, DATAINFO *addinfo,
-		PRN *prn, int plugin)
+		PRN *prn)
 {
     int err = 0, addrows = 0, addcols = 0;
     int offset = 0;
@@ -2452,7 +2459,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 		strncat(csvinfo->S[t], csvstr, 8);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
-		if (csv_missval(csvstr, k+1, t+1, prn)) {
+		if (csv_missval(csvstr, k, t+1, prn)) {
 		    csvZ[nv][t] = NADBL;
 		} else {
 		    csvZ[nv][t] = atof(csvstr);
@@ -2495,7 +2502,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	*pZ = csvZ;
 	*pdinfo = *csvinfo;
     } else {
-	if (merge_data(pZ, pdinfo, csvZ, csvinfo, prn, 0))
+	if (merge_data(pZ, pdinfo, csvZ, csvinfo, prn))
 	    goto csv_bailout;
     }
 
@@ -2558,8 +2565,7 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
     fclose(fp);
 
     if (pdinfo->S != NULL) {
-	for (i=0; i<pdinfo->n; i++) 
-	    free (pdinfo->S[i]);
+	for (i=0; i<pdinfo->n; i++) free (pdinfo->S[i]);
 	free(pdinfo->S);
     }
     pdinfo->S = S;
@@ -2653,6 +2659,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	} else
 	    cc++;
     } while (c != EOF);
+
     fclose(fp);
 
     pprintf(prn, M_("   found %d variables\n"), boxinfo->v - 1);
@@ -2980,15 +2987,16 @@ static char *simple_fname (char *dest, const char *src)
     char *p;
 
     /* take last part of src filename */
-    if (strrchr(src, SLASH))
+    if (strrchr(src, SLASH)) {
         strcpy(dest, strrchr(src, SLASH) + 1);
-    else
+    } else {
         strcpy(dest, src);
+    }
 
     /* trash any extension */
     p = strrchr(dest, '.');
     if (p != NULL && strlen(dest) > 3)
-	strcpy(p, "");
+	*p = '\0';
 
     return dest;
 }
@@ -3024,6 +3032,7 @@ static int write_xmldata (const char *fname, const int *list,
     int (*show_progress) (long, long, int) = NULL;
 
     err = 0;
+
     if (opt) {
 	fz = gzopen(fname, "wb");
 	if (fz == Z_NULL) err = 1;
@@ -3552,7 +3561,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     int gotvars = 0, gotobs = 0, err = 0;
     long fsz, progress = 0L;
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     /* COMPAT: Do not generate nodes for formatting spaces */
     LIBXML_TEST_VERSION
@@ -3657,7 +3666,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	free(tmp);
     }
 
-    pdinfo->endobs[0] = '\0';
+    *pdinfo->endobs = '\0';
     tmp = xmlGetProp(cur, (UTF) "endobs");
     if (tmp) {
 	if (dataset_is_daily(pdinfo)) {
@@ -3750,7 +3759,7 @@ char *get_xml_description (const char *fname)
     xmlNodePtr cur;
     char *buf = NULL;
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);

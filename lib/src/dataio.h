@@ -93,7 +93,7 @@ void gz_switch_ext (char *targ, char *src, char *ext);
 
 int merge_data (double ***pZ, DATAINFO *pdinfo,
 		double **addZ, DATAINFO *addinfo,
-		PRN *prn, int plugin);
+		PRN *prn);
 
 int get_data (double ***pZ, DATAINFO *pdinfo, 
 	      char *datfile, PATHS *ppaths, 

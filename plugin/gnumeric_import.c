@@ -636,7 +636,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    *pZ = newZ;
 	    *pdinfo = *newinfo;
 	} else {
-	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn, 1);
+	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn);
 	}
     } 	    
 
