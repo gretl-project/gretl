@@ -21,6 +21,7 @@ version 1.1.0
 - Fix bugs associated with starting a dataset by importing from
   a database
 - Allow access to RATS databases via command line and scripts
+- Fixes (I think) for R startup 
 - Clean-up: remove all wasted array elements
 - Update to libtool 1.5
 - Update win32 version to gtk version 2.2.2

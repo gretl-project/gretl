@@ -743,7 +743,7 @@
 	    <tbody>
 	      <row>
 		<entry>Options:</entry>
-		<entry>&opto <literal>[ -f</literal>
+		<entry>&opto; <literal>[ -f</literal>
 		<replaceable>filename</replaceable> <literal>]</literal>
 		</entry>
 	      </row>
@@ -3301,7 +3301,7 @@
 	    <tbody>
 	      <row>
 		<entry>Options:</entry>
-		<entry>&opto <literal>[ -f</literal>
+		<entry>&opto; <literal>[ -f</literal>
 		<replaceable>filename</replaceable> <literal>]</literal>
 		</entry>
 	      </row>
