@@ -1287,15 +1287,17 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 }
 
 /* compact an individual series, in the context of converting an
-   entire working dataset to a lower frequency
+   entire working dataset to a lower frequency: used in all cases
+   except conversion from daily to monthly
 */
 
-static double *compact_series (double *src, int i, int n, int oldn,
+static double *compact_series (const double *src, int i, int n, int oldn,
 			       int startskip, int min_startskip, int compfac,
 			       int method)
 {
-    int t, j, idx;
+    int t, idx;
     int lead = startskip - min_startskip;
+    int to_weekly = (compfac == 5 || compfac == 7);
     double *x;
 
 #ifdef DB_DEBUG
@@ -1315,20 +1317,32 @@ static double *compact_series (double *src, int i, int n, int oldn,
     }
 
     idx = startskip;
+
     for (t=lead; t<n && idx<oldn; t++) {
-	if (method == COMPACT_SOP || method == COMPACT_EOP) {
-	    x[t] = src[idx];
-	} else {
-	    /* sum or average */
-	    int st, den = compfac;
+	if (method == COMPACT_SOP) {
+	    if (to_weekly && na(src[idx]) && idx < oldn - 1) {
+		/* allow one day's slack */
+		x[t] = src[idx + 1];
+	    } else {
+		x[t] = src[idx];
+	    }
+	} else if (method == COMPACT_EOP) {
+	    if (to_weekly && na(src[idx]) && idx > startskip) {
+		/* one day's slack */
+		x[t] = src[idx - 1];
+	    } else {
+		x[t] = src[idx];
+	    }
+	} else if (method == COMPACT_SUM || method == COMPACT_AVG) {
+	    int j, st, den = compfac;
 
 	    if (idx + compfac - 1 > oldn - 1) break;
+
 	    x[t] = 0.0;
 	    for (j=0; j<compfac; j++) {
 		st = idx + j;
 		if (na(src[st])) {
-		    if ((compfac == 5 || compfac == 7) &&
-			method == COMPACT_AVG) {
+		    if (to_weekly) {
 			den--;
 		    } else {
 			x[t] = NADBL;
@@ -1347,6 +1361,144 @@ static double *compact_series (double *src, int i, int n, int oldn,
 	    }
 	}
 	idx += compfac;
+    }
+
+    return x;
+}
+
+/* specific apparatus for converting daily time series to monthly */
+
+static double *extend_series (const double *z, int n)
+{
+    double *x = malloc(n * sizeof *x);
+
+    if (x != NULL) {
+	int t;
+
+	x[0] = NADBL;
+	for (t=1; t<n; t++) {
+	    x[t] = z[t-1];
+	}
+    }
+
+    return x;
+}
+
+static double *
+daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i, 
+			 int nm, int yr, int mon, int offset, 
+			 int any_eop, int method)
+{
+    double *x;
+    const double *z;
+    double *tmp = NULL;
+    int t, mdbak;
+    int sopt, eopt;
+
+    x = malloc(nm * sizeof *x);
+    if (x == NULL) return NULL;
+
+    if (i == 0) {
+	for (t=0; t<nm; t++) {
+	    x[t] = 1.0;
+	}
+	return x;
+    }
+
+    if (offset < 0) {
+	tmp = extend_series(src, pdinfo->n + 1);
+	if (tmp == NULL) {
+	    free(x);
+	    return NULL;
+	}
+	/* this permits use of a negative offset */
+	z = tmp + 1;
+    } else {
+	z = src;
+    }
+
+    /* note: we can't necessarily assume that the first obs
+       is the first day of a month  
+    */
+
+    /* the "one day's slack" business with start-of-period
+       and end-of-period compaction is designed to allow for
+       the possibility that the first (or last) day of the
+       month may not have been a trading day
+    */
+
+    mdbak = 0;
+    sopt = offset;
+    eopt = offset - 1;
+
+#if 0
+    printf("offset=%d, sopt=%d\n", offset, sopt);
+#endif
+
+    for (t=0; t<nm; t++) {
+	int mdays = get_days_in_month(mon, yr, pdinfo->pd);
+
+	sopt += mdbak;
+	eopt += mdays;
+
+	if (t == 0 && offset > 0 && any_eop &&
+	    method != COMPACT_EOP) {
+	    x[t] = NADBL;
+	} else if (method == COMPACT_SOP) {
+	    /* allow one days's slack */
+	    if (na(z[sopt]) && sopt < pdinfo->n - 1) {
+		x[t] = z[sopt + 1];
+	    } else {
+		x[t] = z[sopt];
+	    }
+	} else if (method == COMPACT_EOP) {
+	    if (eopt >= pdinfo->n) {
+		x[t] = NADBL;
+	    } else {
+		/* allow one days's slack */
+		if (na(z[eopt]) && eopt > 0) {
+		    x[t] = z[eopt - 1];
+		} else {
+		    x[t] = z[eopt];
+		}
+	    }
+	} else if (method == COMPACT_SUM ||
+		   method == COMPACT_AVG) {
+	    int j, dayt, den = mdays;
+
+	    x[t] = 0.0;
+	    for (j=0; j<mdays; j++) {
+		dayt = sopt + j;
+		if (dayt >= pdinfo->n) {
+		    x[t] = NADBL;
+		    break;
+		} else if (na(z[dayt]) && method == COMPACT_AVG) {
+		    den--;
+		} else if (!na(z[dayt])) {
+		    x[t] += z[dayt];
+		}
+	    }
+	    if (method == COMPACT_AVG && !na(x[t])) {
+		if (den > 0) {
+		    x[t] /= (double) den;
+		} else {
+		    x[t] = NADBL;
+		}
+	    }
+	}
+
+	mdbak = mdays;
+
+	if (mon == 12) {
+	    mon = 1;
+	    yr++;
+	} else {
+	    mon++;
+	}
+    }
+
+    if (tmp != NULL) {
+	free(tmp);
     }
 
     return x;
@@ -1510,12 +1662,11 @@ static int get_daily_offset (const DATAINFO *pdinfo,
 static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 			    int *startyr, int *startmon,
 			    int *endyr, int *endmon,
-			    int *offset, int *pad, 
-			    int *p_any_eop)
+			    int *offset, int *p_any_eop)
 {
     int y1, m1, d1, y2, m2, d2;
     int any_eop, any_sop, all_same;
-    int skip = 0, nm = -1;
+    int skip = 0, pad = 0, nm = -1;
 
     if (sscanf(pdinfo->stobs, "%d/%d/%d", &y1, &m1, &d1) != 3) {
 	return -1;
@@ -1540,9 +1691,8 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
     *startmon = m1;
     *endyr = y2;
     *endmon = m2;
-    *pad = 0;
 
-    if (!day_starts_month(d1, m1, y1, pdinfo->pd, pad) && !any_eop) {
+    if (!day_starts_month(d1, m1, y1, pdinfo->pd, &pad) && !any_eop) {
 	if (*startmon == 12) {
 	    *startmon = 1;
 	    *startyr += 1;
@@ -1563,146 +1713,15 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 	nm--;
     }
 
-    if (*pad == 0) {
-	*offset = get_daily_offset(pdinfo, y1, m1, d1, skip);
+    if (pad) {
+	*offset = -1;
     } else {
-	*offset = 0;
+	*offset = get_daily_offset(pdinfo, y1, m1, d1, skip);
     }
 
     *p_any_eop = any_eop;
 
     return nm;
-}
-
-static double *series_plus_pad (double *z, int n)
-{
-    double *x = malloc(n * sizeof *x);
-
-    if (x != NULL) {
-	int t;
-
-	x[0] = NADBL;
-	for (t=1; t<n; t++) {
-	    x[t] = z[t-1];
-	}
-    }
-
-    return x;
-}
-
-/* driver for converting daily time series to monthly */
-
-static double *
-daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
-			 int i, int default_method, int nm,
-			 int yr, int mon, int offset, int pad,
-			 int any_eop)
-{
-    int method = COMPACT_METHOD(pdinfo, i);
-    double *x, *z;
-    double *tmp = NULL;
-    int t, mdbak;
-    int sopt, eopt;
-
-    x = malloc(nm * sizeof *x);
-    if (x == NULL) return NULL;
-
-    if (pad) {
-	tmp = series_plus_pad(Z[i], pdinfo->n + 1);
-	if (tmp == NULL) {
-	    free(x);
-	    return NULL;
-	}
-	z = tmp + 1;
-    } else {
-	z = Z[i];
-    }
-
-    if (i == 0) {
-	for (t=0; t<nm; t++) {
-	    x[t] = 1.0;
-	}
-	return x;
-    }
-
-    if (method == COMPACT_NONE) {
-	method = default_method;
-    }
-
-    /* We can't necessarily assume that the first obs
-       is the first day of a month.  If it's not, we have
-       to skip forward to the right starting point. */
-
-    mdbak = 0;
-    sopt = offset - pad;
-    eopt = offset - 1 - pad;
-
-#if 0
-    printf("offset=%d, pad=%d, sopt=%d\n", offset, pad, sopt);
-#endif
-
-    for (t=0; t<nm; t++) {
-	int mdays = get_days_in_month(mon, yr, pdinfo->pd);
-
-	sopt += mdbak;
-	eopt += mdays;
-
-	if (t == 0 && offset > 0 && any_eop &&
-	    method != COMPACT_EOP) {
-	    x[t] = NADBL;
-	} else if (method == COMPACT_SOP) {
-	    x[t] = z[sopt];
-	} else if (method == COMPACT_EOP) {
-	    if (eopt >= pdinfo->n) {
-		x[t] = NADBL;
-	    } else {
-		x[t] = z[eopt];
-	    }
-	} else if (method == COMPACT_SUM ||
-		   method == COMPACT_AVG) {
-	    int mt, dayt, den = mdays;
-
-	    x[t] = 0.0;
-	    for (mt=0; mt<mdays; mt++) {
-		dayt = sopt + mt;
-		if (dayt >= pdinfo->n) {
-		    x[t] = NADBL;
-		    break;
-		} else if (na(z[dayt])) {
-		    if (method == COMPACT_AVG) {
-			den--;
-		    } else {
-			x[t] = NADBL;
-			break;
-		    }
-		} else {
-		    x[t] += z[dayt];
-		}
-	    }
-	    if (method == COMPACT_AVG && !na(x[t])) {
-		if (den > 0) {
-		    x[t] /= (double) den;
-		} else {
-		    x[t] = NADBL;
-		}
-	    }
-	}
-
-	mdbak = mdays;
-
-	if (mon == 12) {
-	    mon = 1;
-	    yr++;
-	} else {
-	    mon++;
-	}
-    }
-
-    if (tmp != NULL) {
-	free(tmp);
-    }
-
-    return x;
 }
 
 /* driver for converting full dataset from daily to monthly */
@@ -1711,26 +1730,32 @@ static int dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 			       int default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
-    int offset, pad, any_eop;
+    int offset, any_eop;
     int i, err = 0;
 
     nm = get_n_ok_months(pdinfo, default_method, &startyr, &startmon,
-			 &endyr, &endmon, &offset, &pad, &any_eop);
+			 &endyr, &endmon, &offset, &any_eop);
 
     if (nm <= 0) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
 	err = 1;
     } else {
 	for (i=0; i<pdinfo->v && !err; i++) {
+	    int method;
 	    double *x;
 
 	    if (i > 0 && !pdinfo->vector[i]) {
 		continue;
 	    }
-	    x = daily_series_to_monthly(*pZ, pdinfo, i,
-					default_method, nm,
+
+	    method = COMPACT_METHOD(pdinfo, i);
+	    if (method == COMPACT_NONE) {
+		method = default_method;
+	    }
+
+	    x = daily_series_to_monthly((*pZ)[i], pdinfo, i, nm,
 					startyr, startmon, 
-					offset, pad, any_eop);
+					offset, any_eop, method);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    } else {
