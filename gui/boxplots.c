@@ -700,7 +700,7 @@ static int cb_copy_image (gpointer data)
     PLOTGROUP *grp = (PLOTGROUP *) data;
     GdkImage *image;
     int i, j;
-    guint32 pixel;
+    guint32 pixel, white_pixel;
     
     int nSizeDIB = 0;
     int nSizeLine = 0; /* DIB lines are 32 bit aligned */
@@ -710,6 +710,8 @@ static int cb_copy_image (gpointer data)
 
     image = gdk_image_get(grp->area->window, 0, 0, 
 			  grp->width, grp->height);
+
+    white_pixel = pow(2, image->depth) - 1;
 
     /* allocate room for DIB */
     nSizeLine = ((grp->width*3-1)/4+1)*4;
