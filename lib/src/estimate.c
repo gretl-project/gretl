@@ -24,7 +24,7 @@
 #include "internal.h"
 
 /* There's a balancing act with 'TINY' here.  It's the minimum value
-   for determinant that libgretl will accept before rejecting a
+   for test that libgretl will accept before rejecting a
    data matrix as too highly collinear.  If you set it too high,
    data sets for which gretl could produce reasonable estimates will
    be rejected.  If you set it too low (and even 100 * DBL_EPSILON
@@ -823,6 +823,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
 	      int nv)
 /*
+
   This function does an in-place Choleski decomposition of xpx
   (lower triangular matrix stacked in columns) and then
   solves the normal equations for coeff.  xpx is X'X
@@ -830,7 +831,13 @@ int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
   the X'y vector on input and Choleski-transformed t vector
   on output. coeff is the vector of estimated coefficients; 
   nv is the number of regression coefficients including the 
-  constant.  */
+  constant. 
+
+  The number of floating-point operations is basically 3.5 * nv^2
+  plus (nv^3) / 3.
+
+*/
+
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
