@@ -4,11 +4,11 @@ add
 Uso:            add listavar
 Ejemplos:       add 5 7 9	          add xx yy zz
 
-Se añaden las variables de la lista 'listavar' al modelo anterior y se estima
-el nuevo modelo. Si se añade más de una variable, se presenta el estadístico F
-para las variables añadidas (sólo para el método MCO) junto con su valor-p. Un
-valor-p inferior a 0.05 indica que los coeficientes son conjuntamente
-significativos al nivel del 5 por ciento.
+Se añaden las variables de la lista 'listavar' al modelo anterior y se
+estima el nuevo modelo. Si se añade más de una variable, se presenta el
+estadístico F para las variables añadidas (sólo para el método MCO) junto
+con su valor-p. Un valor-p inferior a 0.05 indica que los coeficientes son
+conjuntamente significativos al nivel del 5 por ciento.
 
 #
 addto
@@ -19,8 +19,8 @@ Ejemplo:        addto 2 5 7 9
 Funciona como la instrucción "add", pero aquí hay que especificar un modelo
 anterior (lo cual se hace utilizando su número de ID, que se presenta al
 principio de los resultados del modelo) para tomarlo como base al añadir las
-variables. En el ejemplo de arriba se añaden las variables con números 5, 7 y
-9 al modelo 2.
+variables. En el ejemplo de arriba se añaden las variables con números 5, 7
+y 9 al modelo 2.
 
 #
 adf
@@ -56,9 +56,9 @@ Ejemplo:        ar 1 3 4 ; y 0 x1 x2 x3
 
 Calcula las estimaciones de un modelo utilizando el procedimiento iterativo
 generalizado de Cochrane-Orcutt (ver Ramanathan, sección 9.5). Las iteraciones
-se terminan cuando las sucesivas sumas de cuadrados residuales no varían más
-del 0.005 por ciento o cuando han transcurrido 20 iteraciones. 'retardos' es
-una lista de retardos de los residuos, que acaba con un punto y coma. En el
+se terminan cuando las sucesivas sumas de cuadrados residuales no varían más del
+0.005 por ciento o cuando han transcurrido 20 iteraciones. 'retardos' es una
+lista de retardos de los residuos, que acaba con un punto y coma. En el
 ejemplo de arriba el término de error se especifica como
 
 u(t) = rho1 u(t-1) + rho3 u(t-3) + rho4 u(t-4) + et
@@ -67,8 +67,8 @@ u(t) = rho1 u(t-1) + rho3 u(t-3) + rho4 u(t-4) + et
 independientes que van separadas con espacios. Utilice el número 0 para un
 término constante. Si se usa la opción -o se presentará la matriz de varianzas
 y covarianzas de los coeficientes de regresión. Los residuos de la regresión
-transformada se guardan bajo el nombre 'uhat' y pueden recuperarse usando la
-instrucción 'genr'.
+transformada se guardan bajo el nombre 'uhat' y pueden recuperarse
+usando la instrucción 'genr'.
 
 #
 arch
@@ -79,10 +79,10 @@ Ejemplos:       arch 4 1 0 2 4 6 7      o  arch 4 y 0 x1 x2 x3 x4
 Esta instrucción contrasta la posibilidad de un ARCH en el modelo, del orden
 especificado en "retardo" (que debe de ser entero). Si el estadístico de
 contraste LM tiene un valor-p inferior a 0.10 también se realiza la estimación
-ARCH. Si la varianza predicha de cualquier observación en la regresión
-auxiliar no es positiva, se utiliza en su lugar el correspondiente 'uhat'
-(residuo) al cuadrado. Luego, se estima por mínimos cuadrados ponderados el
-modelo original.
+ARCH. Si la varianza predicha de cualquier observación en la regresión auxiliar
+no es positiva, se utiliza en su lugar el correspondiente 'uhat' (residuo)
+al cuadrado. Luego, se estima por mínimos cuadrados ponderados el modelo 
+original.
 
 
 #
@@ -92,14 +92,14 @@ Uso:           chow obs
 Ejemplos:      chow 25
                chow 1988.1
 
-Primero debe ejecutarse una regresión por MCO. Crea una variable ficticia que
-es igual a 1 desde el punto de corte especificado en "obs" hasta el final de
-la muestra y 0 en el resto. También crea los términos de interacción entre
+Primero debe ejecutarse una regresión por MCO. Crea una variable ficticia
+que es igual a 1 desde el punto de corte especificado en "obs" hasta el final
+de la muestra y 0 en el resto. También crea los términos de interacción entre
 esta variable ficticia y las variables independientes originales. Se ejecuta
-una regresión aumentada incluyendo estos términos y se calcula un estadístico
-F, tomando la regresión aumentada como 'no restringida' y la original como
-'restringida'. Este estadístico es adecuado para contrastar la hipótesis nula
-de que no hay cambio estructural en el punto de ruptura indicado.
+una regresión aumentada incluyendo estos términos y se calcula un estadístico F,
+tomando la regresión aumentada como 'no restringida' y la original como
+'restringida'. Este estadístico es adecuado para contrastar la hipótesis nula de
+que no hay cambio estructural en el punto de ruptura indicado.
 
 
 #
@@ -109,15 +109,15 @@ Uso:	        coint orden vardep varindep
 Ejemplos:       coint 2 y x
                 coint 4 y x1 x2
 
-Realiza los contrastes de Dickey-Fuller para cada una de las variables
-listadas.  Para cada variable, considera la hipótesis nula de que la variable
-tiene una raíz unitaria y utiliza para el contraste el orden de retardos dado.
-Se estima la regresión cointegrante y se realiza un contraste ADF sobre los
-residuos de esta regresión. También se proporciona el estadístico de
+Realiza los contrastes de Dickey-Fuller para cada una de las variables listadas.
+Para cada variable, considera la hipótesis nula de que la variable tiene una 
+raíz
+unitaria y utiliza para el contraste el orden de retardos dado.
+Se estima la regresión cointegrante y se realiza un contraste ADF sobre
+los residuos de esta regresión. También se proporciona el estadístico de 
 Durbin-Watson para la regresión cointegrante.
-
-	Hay que señalar que para ninguno de estos estadísticos de contraste se
-pueden aplicar las tablas estadísticas usuales.
+	Hay que señalar que para ninguno de estos estadísticos de contraste
+se pueden aplicar las tablas estadísticas usuales.
 
 #
 corc
@@ -128,15 +128,17 @@ Ejemplos:       corc 1 0 2 4 6 7                corc -o 1 0 2 4 6 7
 
 Calcula las estimaciones de un modelo utilizando el procedimiento iterativo de
 Cochrane-Orcutt (ver Ramanathan, Sección 9.4) siendo 'vardep' la variable
-dependiente y siendo 'varindep' una lista de variables independientes
-separadas por espacios y acabando con un ;. Utilice el número 0 para un
-término constante.  El proceso iterativo se detiene cuando valores sucesivos
-de rho no difieren en más de 0.001 o cuando han transcurrido 20
-iteraciones. Si se utiliza la opción -o, se muestra la matriz de covarianzas
-de los coeficientes de regresión. La regresión transformada final se calcula
-para el rango de observación primobs+1 ultobs que esté actualmente en
-efecto. Los residuos de esta regresión transformada se guardan con el nombre
-'uhat'.
+dependiente y siendo 'varindep' una lista de variables independientes separadas
+por espacios y acabando con un ;. Utilice el número 0 para un término constante. 
+
+
+El proceso iterativo se detiene cuando valores sucesivos de rho no difieren en 
+más
+de 0.001 o cuando han transcurrido 20 iteraciones. Si se utiliza la opción -o, 
+se muestra la matriz de covarianzas de los coeficientes de regresión. La 
+regresión transformada final se calcula para el rango de observación
+primobs+1 ultobs que esté actualmente en efecto. Los residuos de esta regresión
+transformada se guardan con el nombre 'uhat'.
 
 
 #
@@ -145,10 +147,10 @@ corr
 Uso:         corr
              corr listavar
 
-'corr' muestra los coeficientes de correlación para todos los pares de
-variables que hay en el conjunto de datos (los valores perdidos, que se
-denotan por -999, no se tienen en cuenta). 'corr listavar' muestra los
-coeficientes de correlación para las variables listadas.
+'corr' muestra los coeficientes de correlación para todos los pares de variables
+que hay en el conjunto de datos (los valores perdidos, que se denotan por -999,
+no se tienen en cuenta). 'corr listavar' muestra los coeficientes de correlación
+para las variables listadas.
 
 
 #
@@ -158,18 +160,18 @@ Uso:          corrgm nombrevar o numerovar
               corrgm nombrevar o numerovar maxretardo
 
 Muestra los valores de la función de autocorrelación para la variable
-especificada (ver Ramanathan, sección 11.7). Es, por tanto, corr[u(t),
-u(t-s)], donde u(t) es la observación t-ésima de la variable u y s es el
-número de retardos. También se muestran las correlaciones parciales: estas
-tienen descontado el efecto de los retardos que intervienen. La instrucción
-también representa el correlograma y calcula el estadístico Q de Box-Pierce
-para contrastar la hipótesis nula de que la serie es 'ruido blanco'. Este se
-distribuye asintóticamente como una chi-cuadrado con un número de grados de
-libertad igual al número de retardos utilizados.
+especificada (ver Ramanathan, sección 11.7). Es, por tanto, corr[u(t), u(t-s)],
+donde u(t) es la observación t-ésima de la variable u y s es el número
+de retardos. También se muestran las correlaciones parciales: estas tienen
+descontado el efecto de los retardos que intervienen. La instrucción también
+representa el correlograma y calcula el estadístico Q de Box-Pierce para
+contrastar la hipótesis nula de que la serie es 'ruido blanco'. Este se
+distribuye asintóticamente como una chi-cuadrado con un número de grados
+de libertad igual al número de retardos utilizados.
 
-Si se suministra un número entero 'maxretardo' la largura del correlograma se
-limita a, como máximo, ese número de retardos, en caso contrario la largura se
-determina automáticamente.
+Si se suministra un número entero 'maxretardo' la largura del correlograma
+se limita a, como máximo, ese número de retardos, en caso contrario la largura
+se determina automáticamente.
 
 
 #
@@ -177,7 +179,7 @@ criteria
 @Utilities
 Uso:          criteria scr T k        p.ej. criteria 23.45 45 8
 
-Dados scr (suma de cuadrados de los residuos), el número de observaciones (T)
+Dados scr (suma de cuadrados de los residuos), el número de observaciones (T) 
 y el número de coeficientes (k), calcula los estadísticos de selección de
 modelos (ver Ramanathan, Sección 4.4). T, k y scr pueden ser valores numéricos
 o los nombres de variables definidas previamente.
@@ -190,13 +192,13 @@ Uso:            critical t gl           p.ej. critical t 20
                 critical F gln gld      p.ej. critical F 3 37
                 critical d n            p.ej. critical d 24
 
-Si el primer parámetro es t, X o F, muestra los valores críticos para la
-distribución t de student, chi-cuadrado o F respectivamente, para los niveles
+Si el primer parámetro es t, X o F, muestra los valores críticos para la 
+distribución t de student, chi-cuadrado o F respectivamente, para los niveles 
 de significación más comunes, utilizando los grados de libertad especificados.
-Si el primer parámetro es d, muestra los valores superior e inferior del
-estadístico de Durbin-Watson al nivel de significación del 5 por ciento para
-el valor de n (número de observaciones) dado y para el rango de 1 a 5
-variables explicativas.
+Si el primer parámetro es d, muestra los valores superior e inferior del 
+estadístico de Durbin-Watson al nivel de significación del 5 por ciento para el 
+valor de n (número de observaciones) dado y para el rango de 1 a 5 variables 
+explicativas.
 
 
 #
@@ -204,40 +206,39 @@ cusum
 @Tests
 Uso:          cusum
 
-Debe ejecutarse después de una estimación MCO. Desarrolla el contraste CUSUM
-de estabilidad de los parámetros. Se obtiene una serie de errores de
+Debe ejecutarse después de una estimación MCO. Desarrolla el contraste 
+CUSUM de estabilidad de los parámetros. Se obtiene una serie de errores de
 predicción (escalados) un paso hacia adelante, ejecutando para ello una serie
 de regresiones: la primera regresión se realiza con las primeras k
-observaciones (donde k es el número de parámetros en el modelo original) y se
-usa para generar una predicción de la variable dependiente para la observación
-k+1; la segunda utiliza las primeras k+1 observaciones y genera una predicción
-para la observación k+2 y así sucesivamente. Se muestra y representa
-gráficamente la suma acumulada de los errores de predicción escalados. Se
-rechaza, al nivel de significación del 5 por ciento, la hipótesis nula de
-estabilidad de los parámetros si la suma acumulada sale fuera de las bandas
-del 95 por ciento de confianza.
+observaciones (donde k es el número de parámetros en el modelo original)
+y se usa para generar una predicción de la variable dependiente para la
+observación k+1; la segunda utiliza las primeras k+1 observaciones y genera
+una predicción para la observación k+2 y así sucesivamente. Se muestra y 
+representa gráficamente la suma acumulada de los errores de predicción 
+escalados. Se rechaza, al nivel de significación del 5 por ciento, la 
+hipótesis nula de estabilidad de los parámetros si la suma acumulada 
+sale fuera de las bandas del 95 por ciento de confianza.
 
-También se proporciona el estadístico t de Harvey-Collier para contrastar la
-hipótesis nula de estabilidad de los parámetros. Ver Capítulo 7 del libro de
-Greene 'Econometric Analysis' para más detalles.
+También se proporciona el estadístico t de Harvey-Collier para contrastar 
+la hipótesis nula de estabilidad de los parámetros. Ver Capítulo 7 del libro 
+de Greene 'Econometric Analysis' para más detalles.
 
 #
 delete
 @Dataset
 Uso:          delete
 
-Elimina la última (la de número más alto) variable del conjunto de datos
-actual.  Utilícela con precaución: no se pide confirmación. Puede ser útil
-para eliminar variables ficticias temporales. Sólo se puede eliminar la última
-variable.
+Elimina la última (la de número más alto) variable del conjunto de datos actual.
+Utilícela con precaución: no se pide confirmación. Puede ser útil para eliminar 
+variables ficticias temporales. Sólo se puede eliminar la última variable.
 
 #
 diff
 @Transformations
 Uso:          diff listavar
 
-Se toma la primera diferencia de cada variable en 'listavar' y el resultado se
-guarda en una nueva variable con el prefijo "d_". Así, "diff x y" crea las
+Se toma la primera diferencia de cada variable en 'listavar' y el resultado se 
+guarda en una nueva variable con el prefijo "d_". Así, "diff x y" crea las 
 nuevas variables d_x=x(t)-x(t-1) y d_y = y(t) - y(t-1).
 
 #
@@ -258,9 +259,9 @@ en forma de ecuación LaTeX, a un fichero cuyo nombre tiene la estructura
 en la sesión actual. Este puede incorporarse en un documento LaTeX. Ver
 también la instrucción 'tabprint'.
 
-Si se utiliza la opción -o, el fichero LaTeX es un documento completo (con
-preámbulo LaTeX) listo para procesar; en caso contrario debe incluirse en un
-documento (que ya tenga el preámbulo).
+Si se utiliza la opción -o, el fichero LaTeX es un documento completo
+(con preámbulo LaTeX) listo para procesar; en caso contrario debe incluirse
+en un documento (que ya tenga el preámbulo).
 
 
 #
@@ -270,13 +271,13 @@ Uso:            fcast primobs ultobs nuevonombrevar
                 fcast nuevonombrevar
 Ejemplo:        fcast ajustados
 
-Los valores ajustados en la última regresión ejecutada se guardan bajo
-'nuevonombrevar'. Estos valores pueden mostrarse e representarse
+Los valores ajustados en la última regresión ejecutada se guardan bajo 
+'nuevonombrevar'. Estos valores pueden mostrarse e representarse 
 gráficamente. Las variables del lado derecho de la ecuación son las del modelo
-original. No hay posibilidad de cambiar a otras variables. Si se especifican
+original. No hay posibilidad de cambiar a otras variables. Si se especifican 
 las observaciones inicial ('primobs') y final ('ultobs') la predicción se
-restringe al rango especificado. Si se ha especificado un término de error
-autorregresivo (en 'hilu','corc' y 'ar'), la predicción es condicional un paso
+restringe al rango especificado. Si se ha especificado un término de error 
+autorregresivo (en 'hilu','corc' y 'ar'), la predicción es condicional un paso 
 adelante e incorpora el proceso del error.
 
 
@@ -286,13 +287,12 @@ fcasterr
 Uso:            fcasterr primobs ultobs
                 fcasterr primobs ultobs -o
 
-Después de estimar un modelo MCO que incluya una constante y al menos una
+Después de estimar un modelo MCO que incluya una constante y al menos una 
 variable independiente (estas restricciones pueden relajarse en algún punto),
-se puede usar esta instrucción para mostrar los valores ajustados sobre el
-rango de observación especificado, junto con las desviaciones típicas
-estimadas de estas predicciones y los intervalos de 95 por ciento de
-confianza. Si se utiliza la opción -o también se mostrarán los resultados en
-gráficos gnuplot.
+se puede usar esta instrucción para mostrar los valores ajustados sobre el 
+rango de observación especificado, junto con las desviaciones típicas estimadas
+de estas predicciones y los intervalos de 95 por ciento de confianza. Si se 
+utiliza la opción -o también se mostrarán los resultados en gráficos gnuplot.
 
 
 #
@@ -301,24 +301,25 @@ fit
 Uso:		fit
 
 Esta orden (que debe seguir a una instrucción de estimación) es una atajo para
-la instrucción 'fcast'. Genera valores ajustados para la muestra actual,
+la instrucción 'fcast'. Genera valores ajustados para la muestra actual, 
 basados en la última regresión y los guarda en una serie denominada "autofit".
-En modelos de series temporales también muestra un gráfico gnuplot de los
-valores actual y estimado de la variable dependiente contra el tiempo.
+En modelos de series temporales también muestra un gráfico gnuplot de los 
+valores
+actual y estimado de la variable dependiente contra el tiempo.
 
 #
 freq
 @Statistics
 Uso:          freq nombrevar (o numerovar)
 
-Muestra la distribución de frecuencias de 'nombrevar' o 'numerovar'; también
-se proporcionan los resultados de una contraste chi-cuadrado de normalidad. El
-estadístico para este último es:
+Muestra la distribución de frecuencias de 'nombrevar' o 'numerovar';
+también se proporcionan los resultados de una contraste chi-cuadrado de 
+normalidad. El estadístico para este último es:
 
   tamaño_muestral * [asimetría^2/6 + (CURTOSIS - 3.0)^2/24.0]
 
-Bajo la hipótesis nula de normalidad se distribuye como una chi-cuadrado con 2
-grados de libertad.
+Bajo la hipótesis nula de normalidad se distribuye como una chi-cuadrado
+con 2 grados de libertad.
 
 En modo interactivo se genera un gráfico gnuplot de la distribución.
 
@@ -328,9 +329,9 @@ genr
 @Dataset
 Uso:          genr nuevonombrevar = formula
 
-Crea nuevas variables, normalmente por medio de transformaciones de variables
-ya existentes. Ver también 'diff', 'logs', 'lags', 'ldiff', 'multiply' y
-'square' como atajos.
+Crea nuevas variables, normalmente por medio de transformaciones de
+variables ya existentes. Ver también 'diff', 'logs', 'lags', 'ldiff',
+'multiply' y 'square' como atajos.
 
 Las operaciones aritméticas permitidas son, en orden de precedencia:
 ^(exponenciación); *, / y % (módulo o resto); + y -.
@@ -357,19 +358,21 @@ misszero (reemplazar los códigos de 'observación perdida'  por ceros),
 zeromiss (operación inversa de misszero), y pvalue (valor de probabilidad
 para un estadístico dado contra una distribución especificada).
 
-Todas las funciones anteriores, con las excepciones de cov, corr, uniform,
-normal y pvalue, toman como único argumento o el nombre de una variable (hay
-que tener en cuenta que en 'genr' no podemos referirnos a una variable por su
-número de ID) o una expresión compuesta que se evalúa en una variable (p.ej.
-ln((x1+x2)/2)).  'cov' y 'corr' necesitan dos argumentos y producen
-respectivamente la covarianza y el coeficiente de correlación entre dos
-variables especificadas.  uniform() y normal(), que no tienen argumentos,
-producen series pseudo-aleatorias obtenidas a partir de la distribución
-uniforme (0-100) y la distribución normal standard respectivamente (ver
-también la instrucción seed).
+Todas las funciones anteriores, con las excepciones de cov, corr, uniform, 
+normal
+y pvalue, toman como único argumento o el nombre de una variable (hay que tener
+en cuenta que en 'genr' no podemos referirnos a una variable por su número de 
+ID)
+o una expresión compuesta que se evalúa en una variable (p.ej.  ln((x1+x2)/2)).
+'cov' y 'corr' necesitan dos argumentos y producen respectivamente la
+covarianza y el coeficiente de correlación entre dos variables especificadas.
+uniform() y normal(), que no tienen argumentos, producen series
+pseudo-aleatorias obtenidas a partir de la distribución uniforme (0-100) y la
+distribución normal standard respectivamente (ver también la instrucción seed).
 
-La función pvalue() toma los mismos argumentos que la orden pvalue (ver más
-abajo), pero en este contexto deben situarse comas entre sus argumentos.
+La función pvalue() toma los mismos argumentos que la orden pvalue
+(ver más abajo), pero en este contexto deben situarse comas entre sus 
+argumentos.
 
 Además de los operadores y funciones mencionados hay algunos usos especiales 
 de 'genr':
@@ -419,23 +422,26 @@ Ejemplos de instrucciones 'genr':
   genr y = - sort(-x)    [ordena x en orden decreciente]
   genr y = int(x)        [trunca x y guarda su valor entero como y]
   genr y = abs(x)        [guarda los valores absolutos de x]
-  genr y = sum(x)        [suma los valores de x excluyendo los valores 
-                          perdidos -999]
+  genr y = sum(x)        [suma los valores de x excluyendo los valores perdidos 
+-999]
   genr y = cum(x)        [acumula x: y(t) es la suma de x hasta t]
-  genr aa = $ess         [aa = suma de cuadrados de los residuos de la 
-                          última regresión]
-  genr x = coeff(sqft)   [guarda en x el coeficiente de la variable sqft obtenido 
+  genr aa = $ess         [aa = suma de cuadrados de los residuos de la última 
+regresión]
+  genr x = coeff(sqft)   [guarda en x el coeficiente de la variable sqft 
+obtenido 
                           en el último modelo]
-  genr rho4 = rho(4)     [guarda en rho4 el coeficiente autorregresivo de 
-                          cuarto orden
+  genr rho4 = rho(4)     [guarda en rho4 el coeficiente autorregresivo de cuarto 
+
+orden
                           obtenido del último modelo (supone un modelo ar)]
   genr cv=vcv(x1, x2)    [covarianza entre los coeficientes de x1 y x2 en el 
-                          último modelo]
+último modelo]
   genr x=uniform()/100   [variable pseudo-aleatoria uniforme, de rango 0 a 1]
-  genr x=3*normal()      [variable pseudo-aleatoria normal, de media 0 y
-                          desv. típica 3]
-  genr x=pvalue(t,20,1.4)[valor p para 1.4, bajo la distribución t con 20 
-                          grados de libertad]
+  genr x=3*normal()      [variable pseudo-aleatoria normal, de media 0 y desv. 
+típica 3]
+  genr x=pvalue(t,20,1.4)[valor p para 1.4, bajo la distribución t con 20 grados 
+
+de libertad]
 
 Sugerencias sobre variables ficticias:
 
@@ -444,7 +450,7 @@ variables ficticias d1 = 1 si x = 1, 0 en otro caso, d2 = 1 si x = 2, y así
 sucesivamente. Para crear estas, utilice las instrucciones 
 genr d1 = (x=1), genr d2 = (x=2), y genr d3 = (x=3).
 
-* Para obtener la serie z = max(x,y) haga genr d=x>y y genr z=(x*d)+(y*(1-d))
+* Para obtener la serie z = máx(x,y) haga genr d=x>y y genr z=(x*d)+(y*(1-d))
 
 #
 gnuplot
@@ -453,22 +459,22 @@ Uso:            gnuplot yvar1 xvar [ opción ]
                 gnuplot yvar1 yvar2 xvar [ opción ]
 		gnuplot yvar xvar ficticia -z
 
-En los dos primeros casos las variables yvars se representan contra xvar.  Si
-se proporciona la opción -o el gráfico utilizará líneas; si se da la opción -m
-el gráfico utiliza impulsos (líneas verticales); en los demás casos se usan
-puntos.
+En los dos primeros casos las variables yvars se representan contra xvar.
+Si se proporciona la opción -o el gráfico utilizará líneas; si se da la
+opción -m el gráfico utiliza impulsos (líneas verticales); en los demás
+casos se usan puntos.
 
 En el tercer caso, yvar se representa contra xvar mostrando los puntos en
 diferentes colores dependiendo de si el valor de 'ficticia' es 1 o 0.
 
-Para crear un gráfico de serie temporal, pedir "gnuplot yvars time".  Si no
-existe la variable "time", se generará automáticamente.  Se crearán variables
-ficticias especiales para representar datos trimestrales y mensuales.
+Para crear un gráfico de serie temporal, pedir "gnuplot yvars time".
+Si no existe la variable "time", se generará automáticamente.  Se crearán
+variables ficticias especiales para representar datos trimestrales y mensuales.
 
-En modo interactivo, el resultado se pasa a gnuplot para que lo muestre en
-pantalla.  En modo 'batch' se graba un fichero de nombre gpttmp<n>.plt, donde
-<n> es un número entre 1 y 99. Más tarde, pueden generarse los gráficos usando
-la instrucción de consola "gnuplot gpttmp<n>.plt".
+En modo interactivo, el resultado se pasa a gnuplot para que lo muestre
+en pantalla.  En modo 'batch' se graba un fichero de nombre gpttmp<n>.plt,
+donde <n> es un número entre 1 y 99. Más tarde, pueden generarse los gráficos
+usando la instrucción de consola "gnuplot gpttmp<n>.plt".
 
 #
 graph
@@ -478,44 +484,44 @@ Uso:            graph var1 var2
                 graph var1 var2 var3
 
 En los dos primeros ejemplos, la variable var1 (que puede ser un nombre o un
-número) se representa (eje y) contra var2 (eje x). La opción -o hará el
-gráfico con 40 filas y 60 columnas, sin ella el gráfico será de 20 por 60
-(salida de pantalla). En el tercer ejemplo, las dos, var1 y var2 se
-representarán (sobre el eje y) contra var3. Esto es especialmente útil para
-representar los valores observados y predichos contra el tiempo.
+número) se representa (eje y) contra var2 (eje x). La opción -o hará el gráfico
+con 40 filas y 60 columnas, sin ella el gráfico será de 20 por 60 (salida de
+pantalla). En el tercer ejemplo, las dos, var1 y var2 se representarán (sobre
+el eje y) contra var3. Esto es especialmente útil para representar los valores
+observados y predichos contra el tiempo.
 
 #
 hausman
 @Tests
 Uso:          hausman
 
-Este contraste sólo está disponible después de haber estimado un modelo
-utilizando la orden "pooled" (ver también las instrucciones "panel" y
-"setobs"). Contrasta el modelo combinado simple contra las alternativas
+Este contraste sólo está disponible después de haber estimado un modelo 
+utilizando la orden "pooled" (ver también las instrucciones "panel" y 
+"setobs"). Contrasta el modelo combinado simple contra las alternativas 
 principales, los modelos de efectos fijos y de efectos aleatorios.
 
 En el modelo de efectos fijos se añade una variable ficticia para todas las
 unidades de sección cruzada menos una, permitiendo al término constante de la
-regresión que varíe a través de las unidades. En el modelo de efectos
-aleatorios se descompone la varianza residual en dos partes, una parte
-específica de la unidad de sección cruzada y la otra específica de la
-observación particular. (Este estimador sólo puede calcularse si el número de
-unidades de sección cruzada en el conjunto de datos es mayor que el número de
-parámetros a estimar. Se presenta el estadístico LM de Breusch-Pagan para
-contrastar la hipótesis nula (de que el estimador MCO combinado es adecuado)
+regresión que varíe a través de las unidades. En el modelo de efectos 
+aleatorios se descompone la varianza residual en dos partes, una parte 
+específica de la unidad de sección cruzada y la otra específica de la 
+observación particular. (Este estimador sólo puede calcularse si el número 
+de unidades de sección cruzada en el conjunto de datos es mayor que el número
+de parámetros a estimar. Se presenta el estadístico LM de Breusch-Pagan para 
+contrastar la hipótesis nula (de que el estimador MCO combinado es adecuado) 
 contra la alternativa de efectos aleatorios.
 
-El modelo de MCO combinados puede ser rechazado contra ambas alternativas,
-efectos fijos y efectos aleatorios. Si el error específico de grupo -o de
-unidad- está incorrelacionado con las variables independientes, el estimador
-de efectos aleatorios es más eficiente que el estimador de efectos fijos; en
-caso contrario, el estimador de efectos aleatorios es inconsistente y será
-preferible utilizar el estimador de efectos fijos. La hipótesis nula para el
-contraste de Hausman es que el error específico de grupo no está
-correlacionado con las variables explicativas (y por tanto, que es preferible
-el modelo de efectos aleatorios). Un valor p bajo para este contraste es una
-indicación en contra del modelo de efectos aleatorios y a favor del de efectos
-fijos.
+El modelo de MCO combinados puede ser rechazado contra ambas alternativas, 
+efectos fijos y  efectos aleatorios. Si el error específico de grupo 
+-o de unidad- está incorrelacionado con las variables independientes, el 
+estimador de efectos aleatorios es más eficiente que el estimador de efectos 
+fijos; en caso contrario, el estimador de efectos aleatorios es inconsistente
+y será preferible utilizar el estimador de efectos fijos. La hipótesis nula 
+para el contraste de Hausman es que el error específico de grupo no está 
+correlacionado con las variables explicativas (y por tanto, que es preferible 
+el modelo de efectos aleatorios). Un valor p bajo para este contraste es 
+una indicación en contra del modelo de efectos aleatorios y a favor del de 
+efectos fijos.
 
 
 #
@@ -524,10 +530,11 @@ hccm
 Uso:           hccm vardep varindep
             o  hccm -o vardep varindep
 
-(Heteroskedasticity Consistent Covariance Matrix) Presenta las estimaciones de
-MCO con las desviaciones típicas de los coeficientes obtenidas por medio de
-una estimación de la matriz de varianzas y covarianzas consistente ante
-heterocedasticidad. Utiliza para ello el método "jacknife" de MacKinnon-White.
+(Heteroskedasticity Consistent Covariance Matrix)
+Presenta las estimaciones de MCO con las desviaciones típicas de los
+coeficientes obtenidas por medio de una estimación de la matriz de varianzas
+y covarianzas consistente ante heterocedasticidad. Utiliza para ello el
+método "jacknife" de MacKinnon-White.
 
 
 #
@@ -543,17 +550,17 @@ Uso:            hilu vardep varindep       o    hilu -o vardep varindep
 Ejemplos:       hilu 1 0 2 4 6 7                hilu -o 1 0 2 4 6 7
                 hilu y 0 x1 x2 x3               hilu -o y 0 x1 x2 x3
 
-Calcula las estimaciones de un modelo utilizando el procedimiento de búsqueda
-de Hildreth-Lu (se hace el ajuste fino usando el método de Cochrane-Orcutt)
-siendo 'vardep' la variable dependiente y 'varindep' una lista de variables
-independientes separadas por espacios. Utilice el número 0 para incluir un
-término constante. Se representa gráficamente la suma de cuadrados de los
-residuos del modelo transformado contra los valores de rho desde -0.99 hasta
-0.99. Si se usa la opción -o se mostrará también la matriz de varianzas y
-covarianzas de los coeficientes. Finalmente, la última regresión transformada
-se estima para el rango de observación primobs+1 ultobs que esté en
-efecto. Los residuos de esta regresión transformada se guardan bajo el nombre
-'uhat'.
+Calcula las estimaciones de un modelo utilizando el procedimiento de
+búsqueda de Hildreth-Lu (se hace el ajuste fino usando el método de
+Cochrane-Orcutt) siendo 'vardep' la variable dependiente y 'varindep'
+una lista de variables independientes separadas por espacios. Utilice el
+número 0 para incluir un término constante. Se representa gráficamente la
+suma de cuadrados de los residuos del modelo transformado contra los
+valores de rho desde -0.99 hasta 0.99. Si se usa la opción -o se mostrará
+también la matriz de varianzas y covarianzas de los coeficientes. Finalmente,
+la última regresión transformada se estima para el rango de observación
+primobs+1 ultobs que esté en efecto. Los residuos de esta regresión
+transformada se guardan bajo el nombre 'uhat'.
 
 
 #
@@ -562,13 +569,13 @@ hsk
 Uso:            hsk vardep varindep
             o   hsk -o vardep varindep
 
-Calcula estimaciones corregidas de heterocedasticidad y sus estadísticos
-asociados. Se ajusta una regresión auxiliar para el logaritmo de los cuadrados
-de los residuos (utilizando los cuadrados de las variables independientes,
-pero no sus productos cruzados) y a partir de esta estimación se obtienen los
-estimadores de mínimos cuadrados ponderados del modelo inicial. Si se usa la
-opción -o, se mostrará también la matriz de varianzas y covarianzas estimada
-de los coeficientes de la regresión.
+Calcula estimaciones corregidas de heterocedasticidad y sus estadísticos 
+asociados. Se ajusta una regresión auxiliar para el logaritmo de los 
+cuadrados de los residuos (utilizando los cuadrados de las variables 
+independientes, pero no sus productos cruzados) y a partir de esta 
+estimación se obtienen los estimadores de mínimos cuadrados ponderados del
+modelo inicial. Si se usa la opción -o, se mostrará también la matriz de
+varianzas y covarianzas estimada de los coeficientes de la regresión.
 
 
 #
@@ -579,15 +586,16 @@ Uso:            if condición_boolena
                   instrucción2 ...
                 endif
 
-Las instrucciones gretl que están dentro del bloque "if ... endif" se ejecutan
-si y sólo si la condición booleana se evalúa como cierta (no cero).  Para
-conocer la sintaxis de las condiciones booleanas en gretl, ver la instrucción
-'genr'. Opcionalmente, la orden "endif" puede ir precedida de una orden "else"
-(en una línea aparte para ella sola, como las instrucciones "if" y "endif"),
-seguida de un bloque de instrucciones a ejecutar si la condición booleana
-original se evalúa como falsa (cero). Los bloques entre "if", "else" y "endif"
-pueden contener tantas órdenes como Vd quiera y estas condiciones pueden estar
-anidadas. Cada orden "if" debe estar emparejada con una orden "endif".
+Las instrucciones gretl que están dentro del bloque "if ... endif" se 
+ejecutan si y sólo si la condición booleana se evalúa como cierta (no cero).
+Para conocer la sintaxis de las condiciones booleanas en gretl, ver la 
+instrucción 'genr'. Opcionalmente, la orden "endif" puede ir precedida de
+una orden "else" (en una línea aparte para ella sola, como las instrucciones 
+"if" y "endif"), seguida de un bloque de instrucciones a ejecutar si
+la condición booleana original se evalúa como falsa (cero). Los bloques
+entre "if", "else" y "endif" pueden contener tantas órdenes como Vd
+quiera y estas condiciones pueden estar anidadas. Cada orden "if" debe 
+estar emparejada con una orden "endif".
 
 
 #
@@ -596,24 +604,25 @@ import
 Uso:            import archivo_csv
                 import -o archivo_box
 
-Sin la opción -o, importa datos desde un archivo que tenga formato de 'valores
-separados por comas' (CSV), como por ejemplo los que se pueden escribir
-fácilmente desde cualquier programa de hoja de cálculo. El archivo debería
-tener en la primera línea nombres de variables y, en el resto, una matriz de
-datos rectangular. Las variables deberían estar alineadas "por observación"
-(una columna para cada variable; cada fila representa una observación).
+Sin la opción -o, importa datos desde un archivo que tenga formato de
+'valores separados por comas' (CSV), como por ejemplo los que se pueden
+escribir fácilmente desde cualquier programa de hoja de cálculo. El
+archivo debería tener en la primera línea nombres de variables y, en
+el resto, una matriz de datos rectangular. Las variables deberían estar
+alineadas "por observación" (una columna para cada variable; cada fila
+representa una observación).
 
-Con la opción -o, lee un fichero de datos en formato BOX1, como los que se
-obtienen utilizando el servicio de extracción de datos del 'US Bureau of the
-Census'.
+Con la opción -o, lee un fichero de datos en formato BOX1, como los que
+se obtienen utilizando el servicio de extracción de datos del 'US Bureau
+of the Census'.
 
 #
 info
 @Dataset
 Uso:          info
 
-Muestra la información contenida en el archivo de cabecera correspondiente al
-fichero de datos actual. Esta información debe estar limitada entre los
+Muestra la información contenida en el archivo de cabecera correspondiente
+al fichero de datos actual. Esta información debe estar limitada entre los 
 caracteres "(*" y "*)", estando situados estos marcadores en líneas separadas.
 
 #
@@ -630,12 +639,13 @@ lags
 @Transformations
 Uso:          lags listavar
 
-Crea variables nuevas que son valores retardados de cada una de las variables
-que haya en 'listavar'. El número de variables retardadas que se crean es
-igual a la periodicidad. Por ejemplo, si la periodicidad fuera 4 (datos
-trimestrales), la orden 'lags x y' creará x_1 = x(-1), x_2 = x(-2), x_3 =
-x(-3) y x_4 = x(-4); y de igual forma para y. Estas variables deben
-referenciarse de forma exacta, es decir, con el carácter de subrayado.
+Crea variables nuevas que son valores retardados de cada una de 
+las variables que haya en 'listavar'. El número de variables retardadas 
+que se crean es igual a la periodicidad. Por ejemplo, si la periodicidad 
+fuera 4 (datos trimestrales), la orden 'lags x y' creará x_1  = x(-1), 
+x_2 = x(-2), x_3 = x(-3) y x_4 = x(-4); y de igual forma para y. Estas 
+variables deben referenciarse de forma exacta, es decir, con el carácter de 
+subrayado.
 
 
 #
@@ -643,9 +653,10 @@ ldiff
 @Transformations
 Uso:          ldiff listavar
 
-Se calcula la primera diferencia del logaritmo natural de cada variable de
-'listavar' y el resultado se guarda en una variable nueva que lleva el prefijo
-"ld_". Así por ejemplo, "ldiff x y" crea las nuevas variables
+Se calcula la primera diferencia del logaritmo natural de cada 
+variable de 'listavar' y el resultado se guarda en una variable nueva
+que lleva el prefijo "ld_". Así por ejemplo, "ldiff x y" crea las 
+nuevas variables
 
                ld_x = ln[x(t)] - ln[x(t-1)]
                ld_y = ln[y(t)] - ln[y(t-1)].
@@ -656,17 +667,18 @@ lmtest
 Uso:            lmtest
                 lmtest -o
 
-Debe utilizarse justo después de una instrucción 'ols'. Calcula el estadístico
-de contraste del multiplicador de Lagrange (LM) para las hipótesis
-alternativas de no linealidad y de heterocedasticidad (Contraste de White) o,
-si se utiliza la opción -o, para correlación de orden hasta la
-periodicidad. También se muestran los coeficientes de la regresión auxiliar
-correspondiente. (Ver capítulos 7, 8 y 9 del libro de Ramanathan para más
-detalles).
+Debe utilizarse justo después de una instrucción 'ols'. Calcula el 
+estadístico de contraste del multiplicador de Lagrange (LM) para las 
+hipótesis alternativas de no linealidad y de heterocedasticidad 
+(Contraste de White) o, si se utiliza la opción -o, para correlación de 
+orden hasta la periodicidad. También se muestran los coeficientes
+de la regresión auxiliar correspondiente. (Ver capítulos 7, 8 y 9 del
+libro de Ramanathan para más detalles).
 
-Sólo se usan los cuadrados de las variables independientes, y no sus productos
-cruzados. No se pueden obtener los estadísticos de contraste LM si la
-generación interna de los cuadrados causa multicolinealidad exacta.
+Sólo se usan los cuadrados de las variables independientes, y no sus
+productos cruzados. No se pueden obtener los estadísticos de
+contraste LM si la generación interna de los cuadrados causa
+multicolinealidad exacta.
 
 
 #
@@ -674,14 +686,14 @@ logit
 @Estimation
 Uso:          logit vardep varindeps
 
-Regresión Logit: la variable dependiente debería ser una variable binaria.  Se
-obtienen las estimaciones por máxima verosimilitud de los coeficientes de
-'varindeps' por medio de mínimos cuadrados iterados (Método EM, o de
-expectativa-maximización). Como el modelo no es lineal, las pendientes
-dependen de los valores de las variables independientes: las pendientes que se
-muestran se evalúan en la media de dichas variables. El estadístico
-Chi-cuadrado contrasta la hipótesis nula de que todos los coeficientes,
-excepto la constante, son cero.
+Regresión Logit: la variable dependiente debería ser una variable binaria.
+Se obtienen las estimaciones por máxima verosimilitud de los coeficientes de 
+'varindeps' por medio de mínimos cuadrados iterados (Método EM, o de 
+expectativa-maximización). Como el modelo no es lineal, las pendientes dependen
+de los valores de las variables independientes: las pendientes que se muestran 
+se evalúan en la media de dichas variables. El estadístico Chi-cuadrado 
+contrasta la hipótesis nula de que todos los coeficientes, excepto la 
+constante, son cero.
 
 
 #
@@ -689,9 +701,9 @@ logs
 @Transformations
 Uso:          logs listavar
 
-Se obtiene el logaritmo natural de cada variable en 'listavar' y el resultado
-se guarda en una nueva variable con prefijo "l_". Así por ejemplo, "logs x y"
-crea las nuevas variables l_x = ln(x) y l_y = ln(y).
+Se obtiene el logaritmo natural de cada variable en 'listavar' y el 
+resultado se guarda en una nueva variable con prefijo "l_". Así por ejemplo,
+"logs x y" crea las nuevas variables l_x = ln(x) y l_y = ln(y).
 
 
 #
@@ -705,14 +717,14 @@ Ejemplos:       loop 1000
 		loop for i=1991..2000
 
 Esta instrucción (de guión) da acceso a un modo especial, en el cual el
-programa acepta órdenes para repetirlas o un número de veces especificado, o
-mientras se satisfaga una condición, o para valores sucesivos de la variable
-índice i (interna). Dentro de un bucle, sólo se pueden utilizar seis
-instrucciones: genr, ols, print, smpl, store y summary (store no puede usarse
-en un bucle de 'while'). Con genr y ols se pueden hacer muchas cosas.  Se sale
-del modo de introducción de órdenes de bucle con la instrucción "endloop": en
-este punto se ejecutarán las órdenes de todo el bloque. Los bucles construidos
-mediante "loop" no pueden estar anidados.
+programa acepta órdenes para repetirlas o un número de veces especificado,
+o mientras se satisfaga una condición, o para valores sucesivos de la
+variable índice i (interna). Dentro de un bucle, sólo se pueden utilizar
+seis instrucciones: genr, ols, print, smpl, store y summary (store no puede
+usarse en un bucle de 'while'). Con genr y ols se pueden hacer muchas cosas.
+Se sale del modo de introducción de órdenes de bucle con la instrucción
+"endloop": en este punto se ejecutarán las órdenes de todo el bloque. Los
+bucles construidos mediante "loop" no pueden estar anidados.
 
 La instrucción ols proporciona un cuadro de resultados especial, dependiendo
 del tipo de bucle. Si se especifica un "número_de_veces" no se muestran los
@@ -728,18 +740,18 @@ condición "while" se muestran los resultados del modelo especificado
 obtenidos en la última estimación del bucle: esto está diseñado para mínimos
 cuadrados iterativos.
 
-La instrucción "print" también se comporta de modo diferente en el contexto de
-un bucle con "número_de_veces". Muestra la media y desviación típica de la
-variable a lo largo de las repeticiones del bucle. Está pensado para usarlo
-con variables que toman un solo valor en cada iteración, por ejemplo la scr
-(suma de cuadrados de los residuos) de una regresión. La instrucción "print"
-funciona de la forma usual para los demás tipos de bucles.
+La instrucción "print" también se comporta de modo diferente en el contexto
+de un bucle con "número_de_veces". Muestra la media y desviación típica de 
+la variable a lo largo de las repeticiones del bucle. Está pensado para 
+usarlo con variables que toman un solo valor en cada iteración, por ejemplo
+la scr (suma de cuadrados de los residuos) de una regresión. La 
+instrucción "print" funciona de la forma usual para los demás tipos de bucles.
 
 La instrucción "store" (sólo se puede usar una por bucle y sólo en los bucles
 de tipo "número_de_veces") escribe los valores de las variables especificadas,
 en cada iteración del bucle, al fichero especificado. De este modo, guarda una
-copia completa de las variables. Luego puede leerse mediante gretl este
-fichero de datos para analizarlo.
+copia completa de las variables. Luego puede leerse mediante gretl este fichero 
+de datos para analizarlo.
 
 Ejemplo de programa de bucle (Monte Carlo):
 
@@ -762,10 +774,10 @@ meantest
 Uso:            meantest x1 x2
                 meantest x1 x2 -o
 
-Calcula el estadístico t para contrastar la hipótesis nula de que las medias
+Calcula el estadístico t para contrastar la hipótesis nula de que las medias 
 poblacionales de las variables x1 y x2 son iguales y muestra su valor p. Sin
-la opción -o, el estadístico se calcula bajo el supuesto de que las varianzas
-son iguales para las dos variables; con la opción -o se supone que las
+la opción -o, el estadístico se calcula bajo el supuesto de que las varianzas 
+son iguales para las dos variables; con la opción -o se supone que las 
 varianzas son distintas. (La opción implicara diferencia sólo si hay
 diferentes números de observaciones no perdidas para las dos variables)
 
@@ -777,13 +789,13 @@ Uso:            multiply x sufijo vars
 Ejemplos:       multiply invpop pc 3 4 5 6
                 multiply 1000 big x1 x2 x3
 
-Las variables de la lista "vars" (referenciadas por nombre o número) se
-multiplican por x, que puede ser o un valor numérico o el nombre de una
-variable previamente definida. Los productos se nombran con el prefijo que se
-suministre (máximo tres caracteres). Si hace falta, se truncan los nombres de
-las variables originales. Por ejemplo, supongamos que Vd desea crear las
-versiones "per cápita" de algunas variables y Vd tiene la variable "pob"
-(población). Las instrucciones adecuadas son
+Las variables de la lista "vars" (referenciadas por nombre o número) se 
+multiplican por x, que puede ser o un valor numérico o el nombre de una 
+variable previamente definida. Los productos se nombran con el prefijo 
+que se suministre (máximo tres caracteres). Si hace falta, se truncan los 
+nombres de las variables originales. Por ejemplo, supongamos que Vd desea 
+crear las versiones "per cápita" de algunas variables y Vd tiene la variable
+"pob" (población). Las instrucciones adecuadas son
 
   genr invpob = 1/pob
   multiply invpob pc renta gasto
@@ -808,10 +820,10 @@ Uso:            nulldata tamaño_serie
 Ejemplo:        nulldata 100
 
 Establece un conjunto de datos vacío, que contiene sólo una constante, con
-periodicidad 1 y el numero de observaciones especificado. Este puede usarse al
-hacer simulación: algunas de las órdenes genr (p.ej. genr uniform(), genr
-normal(), genr time) generarán datos ficticios desde cero para llenar el
-conjunto de datos. La orden "nulldata" también puede ser útil al utilizarla
+periodicidad 1 y el numero de observaciones especificado. Este puede usarse
+al hacer simulación: algunas de las órdenes genr (p.ej. genr uniform(),
+genr normal(), genr time) generarán datos ficticios desde cero para llenar
+el conjunto de datos. La orden "nulldata" también puede ser útil al utilizarla
 conjuntamente con "loop".
 
 
@@ -822,16 +834,17 @@ Uso:            ols vardep varindep       o      ols -o vardep varindep
 Ejemplos:       ols 1 0 2 4 6 7                  ols -o 1 0 2 4 6 7
                 ols y 0 x1 x2 x3                 ols -o y 0 x1 x2 x3
 
-Calcula las estimaciones de mínimos cuadrados ordinarios con 'vardep' como
-variable dependiente y siendo 'varindep' una lista de variables
-independientes. Con la opción -o se mostrará la matriz de covarianzas de los
-coeficientes de regresión. Las variables pueden introducirse mediante nombres
-o números. Utilice el número cero para incluir un término constante. El
-programa muestra también los valores p para los estadísticos t (a dos colas) y
-F. Un valor p inferior a 0.01 indica significatividad al nivel del 1 por
-ciento y se denota mediante tres *.  Dos * indican significatividad a niveles
-entre el 1 y el 5 por ciento.  También se muestran los estadísticos de
-selección de modelos descritos en el libro de Ramanathan, sección 4.4.
+Calcula las estimaciones de mínimos cuadrados ordinarios con 'vardep'
+como variable dependiente y siendo 'varindep' una lista de variables 
+independientes. Con la opción -o se mostrará la matriz de covarianzas 
+de los coeficientes de regresión. Las variables pueden introducirse 
+mediante nombres o números. Utilice el número cero para incluir un 
+término constante. El programa muestra también los valores p para los 
+estadísticos t (a dos colas) y F. Un valor p inferior a 0.01 indica 
+significatividad al nivel del 1 por ciento y se denota mediante tres *.
+Dos * indican significatividad a niveles entre el 1 y el 5 por ciento.
+También se muestran los estadísticos de selección de modelos descritos
+en el libro de Ramanathan, sección 4.4.
 
  
 #
@@ -843,10 +856,10 @@ Ejemplos:       omit 5 7 9
 
 Se ejecuta después de estimar un modelo. Las variables de la lista 'varlist'
 se omitirán del modelo anterior y se estimará el nuevo modelo. Si se omite más
-de una variable, se muestra el estadístico F de Wald para las variable
-omitidas junto con su valor p (sólo para el método MCO). Un valor p inferior a
-0.05 implica que los coeficientes son conjuntamente significativos al nivel
-del 5 por ciento.
+de una variable, se muestra el estadístico F de Wald para las variable omitidas
+junto con su valor p (sólo para el método MCO). Un valor p inferior a 0.05 
+implica que los coeficientes son conjuntamente significativos al nivel del 
+5 por ciento.
 
 
 #
@@ -856,8 +869,8 @@ Uso:            omitfrom ID_de_modelo varlist
 Ejemplo:        omitfrom 2 5 7 9
 
 Funciona como la orden "omit", pero aquí se puede especificar un modelo previo
-(usando su número de ID, que se muestra al principio de los resultados del
-modelo) para tomarlo como base al omitir las variables. En el ejemplo de
+(usando su número de ID, que se muestra al principio de los resultados del 
+modelo) para tomarlo como base al omitir las variables. En el ejemplo de 
 arriba se omiten las variables con números 5, 7 y 9 del modelo 2.
 
 
@@ -866,7 +879,7 @@ open
 @Dataset
 Uso:          open datafile
 
-Abre un fichero de datos. Si ya hay un fichero de datos abierto, se reemplaza
+Abre un fichero de datos. Si ya hay un fichero de datos abierto, se reemplaza 
 por el nuevo. El programa intentará detectar el formato del fichero de datos
 ("nativo", CSV o BOX1) y lo tratará como corresponda.
 
@@ -879,11 +892,11 @@ Uso:            panel
 	        panel -c
 
 Propone que el conjunto de datos actual sea tratado como un panel (combinando
-datos de sección cruzada y de series temporales). Sin ninguna opción o con la
-opción -s, los datos se consideran formados por series temporales apiladas
-(bloques sucesivos de datos contienen series temporales para cada unidad de
-sección cruzada). Con la opción -c, los datos se leen como datos de sección
-cruzada apilados (bloques sucesivos contienen secciones cruzadas para cada
+datos de sección cruzada y de series temporales). Sin ninguna opción o con 
+la opción -s, los datos se consideran formados por series temporales apiladas
+(bloques sucesivos de datos contienen series temporales para cada unidad de 
+sección cruzada). Con la opción -c, los datos se leen como datos de sección 
+cruzada apilados (bloques sucesivos contienen secciones cruzadas para cada 
 periodo temporal). Ver también la instrucción "setobs".
 
 
@@ -893,11 +906,11 @@ pergm
 Uso:            pergm varname
                 pergm varname -o
 
-Calcula y muestra (y, en modo interactivo, representa) el espectro de la
+Calcula y muestra (y, en modo interactivo, representa) el espectro de la 
 variable especificada. Sin la opción -o se obtiene el periodograma muestral;
 con la opción -o se usa una ventana de retardos de Bartlett de tamaño
 2*sqrt(tamaño muestral) para estimar el espectro (ver Capítulo 18 del libro
-"Análisis Econométrico" de Greene). Cuando se muestra el periodograma
+"Análisis Econométrico" de Greene). Cuando se muestra el periodograma 
 muestral, se ofrece también un contraste t de integración fraccional: la
 hipótesis nula es que el orden de integración de la serie es cero.
 
@@ -908,13 +921,14 @@ plot
 Uso:            plot x1       plot x1 x2
                 plot 3 7      plot -o x1 x2
 
-Representa ( en un gráfico de tipo texto) los valores de los datos de las
-variables especificadas, para el rango de observación actualmente en
-efecto. Cada línea se refiere a una observación y los valores se representan
-horizontalmente. Si se utiliza la opción -o, x1 y x2 se representan en la
-misma escala, en otro caso, cada una de ellas se escala adecuadamente. La
-opción -o sólo debería usarse si las variables tienen aproximadamente el mismo
-rango de valores (p.ej. la variable dependiente observada y su predicción)
+Representa ( en un gráfico de tipo texto) los valores de los datos de 
+las variables especificadas, para el rango de observación actualmente en 
+efecto. Cada línea se refiere a una observación y los valores se 
+representan horizontalmente. Si se utiliza la opción -o, x1 y x2 se 
+representan en la misma escala, en otro caso, cada una de ellas se escala
+adecuadamente. La opción -o sólo debería usarse si las variables tienen 
+aproximadamente el mismo rango de valores (p.ej. la variable dependiente 
+observada y su predicción)
 
 
 #
@@ -922,9 +936,9 @@ pooled
 @Estimation
 Uso:         pooled vardep varindeps
 
-Estima un modelo mediante MCO (ver la instrucción "ols" para detalles sobre su
-sintaxis) y lo marca como 'modelo de panel' (o 'combinado') de manera que la
-opción de contraste "diagnósticos de panel" esté disponible. Para consulta
+Estima un modelo mediante MCO (ver la instrucción "ols" para detalles sobre 
+su sintaxis) y lo marca como 'modelo de panel' (o 'combinado') de manera que
+la opción de contraste "diagnósticos de panel" esté disponible. Para consulta 
 sobre dichos diagnósticos ver la orden "hausman".
 
 #
@@ -949,14 +963,14 @@ probit
 @Estimation
 Uso:          probit vardep varindeps
 
-Regresión probit: la variable dependiente debe ser una variable binaria. Se
+Regresión probit: la variable dependiente debe ser una variable binaria. Se 
 calculan, mediante mínimos cuadrados iterativos (método EM ó de
 expectativa-maximización), los estimadores de máxima verosimilitud de los
 coeficientes de 'varindeps'. Como el modelo es no lineal, las pendientes
-dependen de los valores de las variables independientes: las pendientes que se
-muestran se evalúan en las medias de estas variables. El estadístico
-Chi-cuadrado contrasta la hipótesis nula de que todos los coeficientes,
-excepto el término constante, son cero.
+dependen de los valores de las variables independientes: las pendientes que
+se muestran se evalúan en las medias de estas variables. El estadístico
+Chi-cuadrado contrasta la hipótesis nula de que todos los coeficientes, excepto
+el término constante, son cero.
 
 
 #
@@ -989,10 +1003,10 @@ Uso:           rhodiff listarho ; listavar
 Ejemplos:      rhodiff .65 ; 2 3 4
                rhodiff r1 r2 ; x1 x2 x3
 
-Crea las transformaciones rho-diferenciadas de las variables contenidas en
+Crea las transformaciones rho-diferenciadas de las variables contenidas en 
 'listvar'(referenciadas mediante número o nombre) y las añade al conjunto de
-datos utilizando el prefijo # para las nuevas variables. Dada la variable v1
-en listavar y r1 y r2 en listarho, se crea
+datos utilizando el prefijo # para las nuevas variables. Dada la variable 
+v1 en listavar y r1 y r2 en listarho, se crea
 
 v1# = v1(t) - r1*v1(t-1) - r2*v1(t-2)
 
@@ -1004,7 +1018,7 @@ run
 @Programming
 Uso:          run fichero
 
-Si el fichero "fichero" contiene instrucciones gretl, esta orden (que se
+Si el fichero "fichero" contiene instrucciones gretl, esta orden (que se 
 invoca desde dentro de gretl) las ejecutará de una en una. Esta es una forma
 muy útil de ejecutar instrucciones 'batch' desde una sesión interactiva.
 
@@ -1029,14 +1043,14 @@ Uso:            scatters vary ; listavarx    o
 Ejemplos:       scatters 1 ; 2 3 4 5
                 scatters 1 2 3 4 5 6 ; time
 
-Representa (mediante gnuplot) gráficos bivariantes (scatters) por parejas de
-variables, de vary con respecto a todas las variables de listavarx, o de todas
-las variables de listavary con respecto a varx. En el primer ejemplo de arriba
-se sitúa la variable 1 en el eje y y se dibujan cuatro gráficos, el primero
-con la variable 2 en el eje x, el segundo con la variable 3 en el eje x, y así
-sucesivamente. Revisar un conjunto de gráficos como éste puede ser interesante
-al hacer un análisis de datos exploratorio. El número máximo de gráficos es
-seis; cualquier variable extra en la lista será ignorada.
+Representa (mediante gnuplot) gráficos bivariantes (scatters) por parejas de 
+variables, de vary con respecto a todas las variables de listavarx, o de 
+todas las variables de listavary con respecto a varx. En el primer ejemplo de 
+arriba se sitúa la variable 1 en el eje y y se dibujan cuatro gráficos, el 
+primero con la variable 2 en el eje x, el segundo con la variable 3 en el 
+eje x, y así sucesivamente. Revisar un conjunto de gráficos como éste puede 
+ser interesante al hacer un análisis de datos exploratorio. El número máximo 
+de gráficos es seis; cualquier variable extra en la lista será ignorada.
 
 
 #
@@ -1044,10 +1058,10 @@ seed
 @Programming
 Uso:            seed entero
 
-Establece la semilla para el generador de números pseudo-aleatorios para la
-distribución uniforme y normal (ver la instrucción 'genr'). Por defecto la
-semilla se establece cuando se inicia el programa, dependiendo de la hora del
-sistema. Si se desean obtener secuencias de números pseudo-aleatorios
+Establece la semilla para el generador de números pseudo-aleatorios para 
+la distribución uniforme y normal (ver la instrucción 'genr'). Por defecto
+la semilla se establece cuando se inicia el programa, dependiendo de la hora
+del sistema. Si se desean obtener secuencias de números pseudo-aleatorios
 repetibles será necesario establecer la semilla de forma manual.
 
 
@@ -1059,18 +1073,18 @@ Ejemplos:       setobs 4 1990.1
                 setobs 12 1978.03
                 setobs 20 1.01
 
-Utilice esta orden para forzar al programa a interpretar el conjunto de datos
-actual como de series temporales o de panel, cuando los datos se han leído
-inicialmente como series simples sin fecha. La "periodicidad" debe ser un
-número entero; "primobs" es una cadena que representa la fecha o
-identificación de panel de la primera observación. Utilice un dígito después
-del punto en "primobs" para los datos con periodicidad menor que 10, dos
+Utilice esta orden para forzar al programa a interpretar el conjunto de datos 
+actual como de series temporales o de panel, cuando los datos se han leído 
+inicialmente como series simples sin fecha. La "periodicidad" debe ser un 
+número entero; "primobs" es una cadena que representa la fecha o 
+identificación de panel de la primera observación. Utilice un dígito después 
+del punto en "primobs" para los datos con periodicidad menor que 10, dos 
 dígitos (con un primer cero si es necesario) para periodicidad entre 10 y 99.
 
 En caso de utilizar datos diarios se requiere una forma especial de la cadena
 "primobs", concretamente la fecha ha de seguir el patrón YY/MM/DD, por ejemplo
-si los datos comienzan el 15 de febrero de 1955 sería "55/02/15" . Si la parte
-YY es menor que 50 se supone que el año pertenece al siglo XXI, en caso
+si los datos comienzan el 15 de febrero de 1955 sería "55/02/15" . Si la 
+parte YY es menor que 50 se supone que el año pertenece al siglo XXI, en caso
 contrario se supone que está en el siglo XX. (Con datos diarios, se aceptan
 las dos periodicidades, 5 y 7)
 
@@ -1096,17 +1110,17 @@ shell
 @Utilities
 Uso:		! [shell command]
 
-Un "!" al comienzo de la línea de instrucciones gretl se interpreta como una
-salida al "shell" del usuario. Así se pueden ejecutar instrucciones del shell
-desde dentro de gretl.
+Un "!" al comienzo de la línea de instrucciones gretl se interpreta como 
+una salida al "shell" del usuario. Así se pueden ejecutar instrucciones
+del shell desde dentro de gretl.
 
 #
 sim
 @Dataset
 Uso:            sim primobs ultobs y a0 a1 a2 ...
 
-Simula valores para y para los periodos desde "primobs" hasta "ultobs". La
-variable y debe haber sido definida antes con los valores iniciales
+Simula valores para y para los periodos desde "primobs" hasta "ultobs". La 
+variable y debe haber sido definida antes con los valores iniciales 
 apropiados. "primobs" y "ultobs" deben ser consistentes con la periodicidad.
 La fórmula que se usa es:
 
@@ -1127,14 +1141,16 @@ Uso:           smpl primobs ultobs
                smpl -o
                smpl -r <expresión booleana>
 
-Restablece el rango muestral. En la primera forma, "primobs" y "ultobs" deben
-ser consistentes con la periodicidad de los datos. En la segunda forma,
-"var_ficticia" debe ser una variable indicador con valores 0 ó 1: la muestra
-se restringirá a aquellas observaciones en las que el valor indicador sea
-1. La tercera forma, smpl -o, quita todas las observaciones para las cuales
-los valores de una o más variables estén 'perdidos'.  La cuarta forma, usando
-la opción -r, restringe la muestra a los casos que satisfagan la condición
-dada.
+Restablece el rango muestral. En la primera forma, "primobs" y "ultobs"
+deben ser consistentes con la periodicidad de los datos. En la segunda forma,
+"var_ficticia" debe ser una variable indicador con valores 0 ó 1: la
+muestra se restringirá a aquellas observaciones en las que el valor
+indicador sea 1. La tercera forma, smpl -o, quita todas las observaciones 
+para las cuales los valores de una o más variables estén 'perdidos'.
+La cuarta forma, usando la opción -r, restringe la muestra a los casos 
+que satisfagan la condición dada.
+
+
 
     smpl 3 10                para datos con periodicidad 1
     smpl 1950 1990           para datos anuales con periodicidad 1
@@ -1145,6 +1161,7 @@ dada.
     smpl -o dum1             para crear una muestra basada en "dum1"
     smpl -r sqft>1400        para restringir la muestra a los casos en los que 
                              la variable sqft tenga un valor mayor que 1400
+
 
 Hay que señalar un punto especial sobre las formas "-o" y "-r" de smpl:
 cualquier información "estructural" en el fichero de cabecera de datos (que
@@ -1159,13 +1176,14 @@ spearman
 Uso:            spearman x y
                 spearman x y -o
 
-Calcula el coeficiente de correlación por rangos de Spearman para las dos
-variables x e y. No es necesario ordenar las variables y asignar los rangos
-manualmente; la instrucción ya tiene en cuenta esto. Si se proporciona la
-opción -o, se muestran los datos originales junto a los ordenados.
+Calcula el coeficiente de correlación por rangos de Spearman para las dos 
+variables x e y. No es necesario ordenar las variables y asignar los 
+rangos manualmente; la instrucción ya tiene en cuenta esto. Si se 
+proporciona la opción -o, se muestran los datos originales junto a los 
+ordenados.
 
-La ordenación automática se hace de mayor a menor (es decir, al dato mayor se
-le asigna rango 1). Si Vd necesita invertir ese orden, puede crear una nueva
+La ordenación automática se hace de mayor a menor (es decir, al dato mayor se 
+le asigna rango 1). Si Vd necesita invertir ese orden, puede crear una nueva 
 variable cuyos valores sean los de la variable original cambiados de signo.
 Por ejemplo:
 
@@ -1177,11 +1195,11 @@ square
 @Transformations
 Uso:          square x y       o     square -o x y
 
-Genera nuevas variables que son los cuadrados y productos cruzados de las
+Genera nuevas variables que son los cuadrados y productos cruzados de las 
 variables seleccionadas (-o crea los productos cruzados). En el ejemplo de
-arriba las variables creadas serán sq_x = x^2, sq_y = y^2 y x_y = x * y.  Si
-una de las variables es una variable ficticia no se tomará su cuadrado, ya que
-se obtendría la misma variable.
+arriba las variables creadas serán sq_x = x^2, sq_y = y^2 y x_y = x * y. 
+Si una de las variables es una variable ficticia no se tomará su cuadrado,
+ya que se obtendría la misma variable.
 
 
 #
@@ -1193,10 +1211,10 @@ Ejemplos:        store misdatos.gdt
                  store misdatos.csv -c
                  store misdatosbin.gdt -o 2 3 4
 
-"nombre_fichero" es el nombre del fichero en el que se guardarán las
-variables. Si no se proporciona "lista_var" se guardarán los valores de todas
-las variables, en caso contrario sólo se grabarán al fichero las variables
-especificadas.
+"nombre_fichero" es el nombre del fichero en el que se guardarán las 
+variables. Si no se proporciona "lista_var" se guardarán los valores de 
+todas las variables, en caso contrario sólo se grabarán al fichero las 
+variables especificadas.
 
 Los valores posibles de "opción" son:
 
@@ -1229,7 +1247,7 @@ summary x y z    muestra los estadísticos principales para las variables
 
 Como resultado se ofrecen los siguientes estadísticos: media, desviación
 típica (dt), coeficiente de variación (CV= CURTOSIS), mediana, mínimo,
-máximo, coeficiente de asimetría y exceso de kurtosis.
+máximo, coeficiente de asimetría y exceso de curtosis.
 
 
 #
@@ -1238,7 +1256,7 @@ tabprint
 Uso:            tabprint
                 tabprint -o
 
-Debe ejecutarse después de la estimación de una modelo por medio de 'ols'.
+Debe ejecutarse después de la estimación de una modelo por medio de 'ols'. 
 Copia el modelo estimado en forma de entorno tabular de LaTeX, a un fichero
 con nombre "model_N.tex", donde N es el número de modelos estimados hasta el
 momento en la sesión actual. Esto puede incorporarse en un documento LaTeX.
@@ -1264,10 +1282,10 @@ tsls
 Uso:            tsls vardep listavar1 ; listavar2       [-o es opcional]
 Ejemplo:        tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6
 
-Calcula las estimaciones de los parámetros de mínimos cuadrados en dos etapas
-(MC2E). "vardep" es la variable dependiente, "listavar1" es la lista de
-variables independientes (incluyendo variables endógenas del lado derecho de
-la ecuación) en la ecuación estructural para las cuales se necesitan las
+Calcula las estimaciones de los parámetros de mínimos cuadrados en dos
+etapas (MC2E). "vardep" es la variable dependiente, "listavar1" es la lista de
+variables independientes (incluyendo variables endógenas del lado derecho
+de la ecuación) en la ecuación estructural para las cuales se necesitan las
 estimaciones MC2E. "listavar2" es la lista combinada de variables exógenas y
 predeterminadas en todas las ecuaciones. Si "listavar2" no es al menos tan
 larga como "listavar1", el modelo no está identificado. La opción -o mostrará
@@ -1283,15 +1301,15 @@ Uso:            var orden vardep varindep
 Ejemplos:       var 4 x1 const time x2 x3
                 var 3 1 0 2 3 4
 
-Organiza y estima (vía MCO) una autorregresión vectorial. El primer argumento
-especifica el orden del retardo, después se proporciona la estructura para la
-primera ecuación, de igual forma que en la instrucción 'ols'. No hay que
-incluir retardos entre los elementos de la lista "varindep" -- se añadirán
-automáticamente. Se ejecutará una regresión para cada variable de la lista,
-excluyendo la constante, la tendencia temporal y las posibles variables
-ficticias. Los resultados de cada ecuación incluyen los contrastes F para
-restricciones cero de todos los retardos de cada variable y un contraste F
-para el máximo retardo.
+Organiza y estima (vía MCO) una autorregresión vectorial. El primer 
+argumento especifica el orden del retardo, después se proporciona la 
+estructura para la primera ecuación, de igual forma que en la instrucción 
+'ols'. No hay que incluir retardos entre los elementos de la lista 
+"varindep" -- se añadirán automáticamente. Se ejecutará una regresión 
+para cada variable de la lista, excluyendo la constante, la tendencia 
+temporal y las posibles variables ficticias. Los resultados de cada 
+ecuación incluyen los contrastes F para restricciones cero de todos
+los retardos de cada variable y un contraste F para el máximo retardo.
 
 
 #
@@ -1299,8 +1317,8 @@ varlist
 @Dataset
 Uso:          varlist
 
-Muestra una lista de las variables definidas actualmente. "list" y "ls" son
-sinónimos.
+Muestra una lista de las variables definidas actualmente. "list" y "ls"
+son sinónimos.
 
 
 #
@@ -1317,18 +1335,21 @@ wls
 @Estimation
 Uso:          wls varpesos vardep varindep            [-o opcional]
 
-Se calculan los estimadores de mínimos cuadrados ponderados siendo "varpesos"
-la variable de ponderaciones, "vardep" la variable dependiente y "varindep" la
-lista de variables independientes. Más concretamente, se ejecuta una regresión
-MCO de varpesos*vardep con respecto a varpesos*varindep.
+Se calculan los estimadores de mínimos cuadrados ponderados siendo
+"varpesos" la variable de ponderaciones, "vardep" la variable
+dependiente y "varindep" la lista de variables independientes. Más
+concretamente, se ejecuta una regresión MCO de varpesos*vardep
+con respecto a varpesos*varindep. 
 
-Si la variable de ponderaciones es una variable ficticia, esto es equivalente
-a eliminar todas las observaciones que tengan valor cero para "varpesos".
+Si la variable de ponderaciones es una variable ficticia, esto es 
+equivalente a eliminar todas las observaciones que tengan valor cero 
+para "varpesos".
 
-Con la opción -o se mostrará la matriz de covarianzas de los coeficientes. Se
-pueden recuperar algunas variables internas utilizando la instrucción
-'genr'. Para ello es necesario utilizar la orden 'genr' inmediatamente después
-de esta instrucción. Escriba "help genr" para ver más detalles sobre esto.
+Con la opción -o se mostrará la matriz de covarianzas de los 
+coeficientes. Se pueden recuperar algunas variables internas 
+utilizando la instrucción 'genr'. Para ello es necesario utilizar 
+la orden 'genr' inmediatamente después de esta instrucción. Escriba 
+"help genr" para ver más detalles sobre esto.
 
   
 

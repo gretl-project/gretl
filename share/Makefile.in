@@ -18,7 +18,7 @@ endif
 
 .PHONY :
 
-all: install
+all: $(UTF8_FILES)
 
 install: installdirs install_datafiles install_scripts install_help
 	$(INSTALL_DATA) gretl.stamp $(gretldir)/gretl.stamp
@@ -54,8 +54,8 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)/data/greene
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts $(gretldir)/db
 
-gretl.hlp.es.utf8: gretl.hlp.es
-	recode l1..utf-8 < $< > $@
+$(UTF8_FILES): gretl.hlp.es gretlcli.hlp.es
+	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done
 
-gretlcli.hlp.es.utf8: gretlcli.hlp.es
-	recode l1..utf-8 < $< > $@
+clean: 
+	rm -f *.txt *.utf8

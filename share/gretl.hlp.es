@@ -79,13 +79,13 @@ original utilizando mínimos cuadrados ponderados.
 boxplots
 @Gráficos
 (Gráficos de caja)
-Analisis exploratorio de los datos.
+Análisis exploratorio de los datos.
 
 Estos gráficos (debidos a Tukey y Chambers) presentan la distribución de
 una variable. La caja central incluye el 50 por ciento de los datos que
 están en el medio de la distribución, es decir, está delimitada por el
 primer y el tercer cuartiles. Las "patillas" se extienden desde esta
-caja hasta los valores mínimo y máximo. Se dibuja una línea alo largo de
+caja hasta los valores mínimo y máximo. Se dibuja una línea a lo largo de
 la caja en la situación de la mediana.
 
 En el caso de cajas recortadas, el recorte muestra los límites de un
@@ -96,8 +96,8 @@ si la serie es muy larga.
 Haciendo "click" con el ratón en ventana del gráfico de caja aparece un
 menú que permite guardar el gráfico en formato postscript encapsulado
 (EPS) o como fichero postscript de página completa. Bajo el sistema X
-window (linux) también se puede guardar el gráfico en formato XPM; bajo
-MS Windows se puede copiar al portapapeles como mapa de bits.
+windows (linux) también se puede guardar el gráfico en formato XPM; bajo
+MS Windows se puede copiar al porta-papeles como mapa de bits.
 
 El menú también ofrece la posibilidad de abrir una ventana de texto que
 muestra un "resumen de 5 números" (mínimo, primer cuartil, mediana,
@@ -112,13 +112,13 @@ directorio gretl del usuario (que se puede observar y cambiar en
 Archivo, Preferencias, Menú general). Las opciones que pueden cambiarse
 de esta manera son: la fuente a usar al producir una salida postscript
 (debe ser un nombre de fuente genérica postscript válido; por defecto es
-Helvetica), el tamaño de la fuente en puntos (también para la salida
+Helvética), el tamaño de la fuente en puntos (también para la salida
 postscript; por defecto es 12), el mínimo y el máximo para el rango
 del eje y, la anchura y altura del gráfico en pixels (por defecto, 560 x
 448), si se deben imprimir los valores numéricos para los cuartiles y la
 mediana (por defecto, no imprimirlos), y si los 'outliers' (puntos que
 quedan más allá de 1.5 veces el rango intercuartílico desde la caja
-central) seberían indicarse de forma separada (por defecto, no).
+central) deberían indicarse de forma separada (por defecto, no).
 Por ejemplo:
 
 font = Times-Roman
@@ -162,7 +162,7 @@ Contraste de Chow de homogeneidad estructural
 Esta orden necesita un número de observaciones (o fechas, si los datos
 tienen fecha).
 
-Debe ejecutarse despues de una regresión MCO. Crea una variable ficticia
+Debe ejecutarse después de una regresión MCO. Crea una variable ficticia
 
 
 que es igual a 1 desde el punto de ruptura que se especifique hasta el
@@ -180,9 +180,9 @@ coint
 @Contrastes
 Contraste de cointegración
 
-Con esta orden (que necesita un orden de retardops entero) se realizan
+Con esta orden (que necesita un orden de retardos entero) se realizan
 los contrastes de Dickey-Fuller de la hipótesis nula de que cada una de
-las variables seleccionadas tiene una raiz unitaria, considerando el
+las variables seleccionadas tiene una raíz unitaria, considerando el
 orden de retardos dado. Se estima la regresión cointegrante y se realiza
 
 
@@ -223,7 +223,7 @@ introduciría el valor de marzo de 1990.
 
 3. Valores de 'principio de periodo': el valor escrito en el conjunto de
 datos es el primer valor del periodo correspondiente en los datos de
-mdelás alta frecuencia. Por ejemplo, en el primer trimestre de 1990 se
+más alta frecuencia. Por ejemplo, en el primer trimestre de 1990 se
 introduciría el valor de enero de 1990.
 
 
@@ -261,9 +261,9 @@ Para elegir las variables independientes, selecciónelas a la izquierda y
 
 
 presione el botón "Añadir->" (o haga "click" con el botón derecho del
-ratón). Se pueden seleccionar varias variables contíguas arrastrándolas
+ratón). Se pueden seleccionar varias variables contiguas arrastrándolas
 con el ratón. Se puede seleccionar un grupo de variables no
-contíguas haciendo click sobre ellas mientras se pulsa la tecla Ctrl.
+contiguas haciendo click sobre ellas mientras se pulsa la tecla Ctrl.
 
 
 #
@@ -281,7 +281,7 @@ export
 @Conjunto de datos
 Exporta datos de gretl a otros formatos.
 
-Se pueden exportar datos en fomato CSV (Valores separados por comas):
+Se pueden exportar datos en formato CSV (Valores separados por comas):
 estos datos pueden abrirse desde hojas de cálculo y muchos otros
 programas.
 
@@ -296,13 +296,13 @@ factorized plot
 @Gráficos
 (Gráfico con factor de separación)
 
-Esta orden necesita que vd elija tres variables y la última de ellas
+Esta orden necesita que Vd elija tres variables y la última de ellas
 ha de ser una variable ficticia (con valor 1 ó 0). La variable Y se
 representa con respecto a la variable X, con los puntos coloreados de
 forma diferente dependiendo del valor de la tercera variable.
 
 Por ejemplo: si vd tiene datos de salarios y nivel de educación para una
-muetra de varias personas; y vd también tiene una variable ficticia con
+muestra de varias personas; y Vd también tiene una variable ficticia con
 valor 1 para los hombres y 0 para las mujeres (como en el fichero que se
 suministra con gretl, data7-2). Un "gráfico factorizado" de SALARIOS
 con respecto a EDUCACIÓN usando la variable SEXO como factor mostrará
@@ -328,7 +328,7 @@ lógico), & (Y lógico), | (O lógico), >, <, = y != (No igual). Los
 operadores booleanos pueden usarse al construir variables ficticias: por
 ejemplo (x>10) devuelve 1 si x(t)>10 y en caso contrario 0.
 
-Las fucniones que se soportan pertenecen a estos grupos:
+Las funciones que se soportan pertenecen a estos grupos:
 - Funciones matemáticas standard: abs, cos, exp, int (parte entera), ln
 (logaritmo natural: log es un sinónimo), sin (seno), sqrt (raíz
 cuadrada).
@@ -351,7 +351,7 @@ variables utilizando su número de ID) o una expresión compuesta que se
 evalúa en una variable (p.ej. ln((x1+x2)/2)). cov y corr requieren dos
 argumentos (dos variables) y devuelven, respectivamente, la covarianza y
 el coeficiente de correlación entre las dos variables mencionadas.
-unifrom() y normal() no tienen argumentos y devuelven, respectivamente,
+uniform() y normal() no tienen argumentos y devuelven, respectivamente,
 series pseudoaleatorias obtenidas a partir de las distribuciones
 uniforme (0-100) y normal standard (ver también la instrucción seed).
 
@@ -408,7 +408,7 @@ Ejemplos de fórmulas válidas:
    rho4 = rho(4)     [recoge el coeficiente autorregresivo de
                       4º orden del último modelo (se supone un modelo
                       ar)]
-   cv=vcv(x1, x2)    [covarianza de los coeficeintes de x1 y x2
+   cv=vcv(x1, x2)    [covarianza de los coeficientes de x1 y x2
                       en el último modelo]
    x=uniform()/100   [variable pseudoaleatoria uniforme, rango 0 a 1]
    x=3*normal()      [variable pseudoaleatoria normal, con media 0
@@ -416,11 +416,11 @@ Ejemplos de fórmulas válidas:
 
 Sugerencias sobre variables ficticias:
 
-* Supongamos que x se codifica con valores 1, 2 o 3 y vd desea tres
+* Supongamos que x se codifica con valores 1, 2 o 3 y Vd desea tres
 variables ficticias, d1 si x=1, 0 en caso contrario, d2=1 si x=2, 0 en
 caso contrario y así sucesivamente. Para crearlas, use las fórmulas
 d1 = (x=1), d2 = (x=2), y d3 = (x=3).
-* Para obtener z = max(x,y) genere d=x>y y después
+* Para obtener z = máx(x,y) genere d=x>y y después
 z=(x*d)+(y*(1-d))
 
 #
@@ -430,17 +430,17 @@ graphing
 generando gráficos de varios tipos
 
 Gretl llama a un programa aparte, gnuplot, para generar los gráficos.
-Gnuplot es un programa gráfico de multiples características con
-miles de opciones. Gretl le proporciona a vd acceso directo, vía una
+Gnuplot es un programa gráfico de múltiples características con
+miles de opciones. Gretl le proporciona a Vd acceso directo, vía una
 interface gráfica, a sólo un pequeño subconjunto de esas opciones e
 intenta elegir para vd los valores adecuados; también permite que vd
 tome completamente el control sobre los detalles del gráfico si así lo
 desea.
 
-Bajo MS Windows vd puede hacer click en la esquina de arriba a la
-izquierda de la ventana del gráfico, obteniendo así un menú gnuplot que
+Bajo MS Vdndows vd puede hacer click en la esquina de arriba a la
+izquierda de la ventana del gráfico, obteniendo así un menú porta-papeles
 le permite elegir varias cosas (incluyendo copiar el gráfico al
-portapapeles de Windows y enviarlo a la impresora).
+porta-papeles de Windows y enviarlo a la impresora).
 
 Para tener un control completo sobre el gráfico, siga este
 procedimiento:
@@ -449,11 +449,11 @@ procedimiento:
 - Desde el menú de sesión, seleccione "Añadir el último gráfico".
 - En la ventana de iconos de sesión, haga click con el botón
 derecho del ratón sobre el icono del nuevo gráfico y seleccione o
-"Editar usando GUI" o "Editar las órdenes de grafico". La entrada de
-"The Editar usando GUI" abre un controlador gráfico para gnuplot que le
+"Editar usando GUI" o "Editar las órdenes de gráfico". La entrada de
+" Editar usando GUI" abre un controlador gráfico para gnuplot que le
 permite refinar varios aspectos del gráfico. La entrada de "Editar las
-órdenes de grafico" abre una ventana de editor que contiene el fichero
-actual de instrucciones de gnuplot para generar el gráfico: esto le
+órdenes de gráfico" abre una ventana de editor que contiene el fichero
+actual de instrucciones de Vduplot para generar el gráfico: esto le
 proporciona a vd un control completo sobre los detalles del gráfico --si
 vd conoce algo sobre gnuplot. Para más detalles,ver
 http://ricardo.ecn.wfu.edu/gnuplot.html or www.gnuplot.org.
@@ -513,7 +513,7 @@ variables de la lista que se suministra. El número de contrapartes
 retardadas para cada una de las variables listadas es igual a la
 periodicidad de los datos. Por ejemplo, si la periodicidad es 4 (datos
 trimestrales), se crearán cuatro términos retardados; si en la lista que
-se ha sumnistradoi está la variable "x", la orden crea x_1 = x(t-1),
+se ha suministrado está la variable "x", la orden crea x_1 = x(t-1),
 x_2 = x(t-2), x_3 = x(t-3) y x_4 = x(t-4).
 
 
@@ -750,7 +750,7 @@ Acceso a bases de datos vía internet
 
 Gretl puede acceder a las bases de datos del sitio web de gretl, en
 Wake Forest University (su ordenador debe de estar conectado a 
-internyour et para que esto funcione).
+internet para que esto funcione).
 
 Bajo el menú "Archivo, Revisar bases de datos" seleccione la entrada
 "sobre servidor". Ahora debería aparecer una ventana mostrando las bases 
@@ -854,7 +854,7 @@ que el error específico de unidad --o grupo-- está incorrelacionado con
 las variables independientes, el estimador de efectos aleatorios es más
 eficiente que el de efectos fijos; en caso contrario el estimador de 
 efectos aleatorios es inconsistente y entonces será preferible el
-estimador de efectos fijos. La hipotesis nula para el contraste de
+estimador de efectos fijos. La hipótesis nula para el contraste de
 Hausman es que el error específico de grupo no está muy correlacionado 
 (y por tanto, es preferible el estimador de efectos fijos). Entonces,
 para este contraste, un valor p pequeño es una indicación en contra del
@@ -892,12 +892,12 @@ rd_v1 = v1(t) - rho*v1(t-1).
 #
 scatters
 @Gráficos
-Multiples gráficos cruzados por parejas
+Múltiples gráficos cruzados por parejas
 
-Representa un conjunto de graficos cruzados de la "variable del eje Y"
+Representa un conjunto de gráficos cruzados de la "variable del eje Y"
 elegida con respecto a las "variables del eje X" elegidas
 consecutivamente. Puede ser útil echar un vistazo a estos gráficos al 
-hacer un análisis exploratorio de datos. El número maximo de gráficos es 
+hacer un análisis exploratorio de datos. El número máximo de gráficos es 
 seis; cualquier variable extra en el eje X será ignorada.
 
 #
@@ -981,7 +981,7 @@ en la caja de diálogo).
 Si se elige "Muestra/Restringir a partir de criterio..." es necesario 
 proporcionar una expresión booleana (lógica), del mismo tipo que 
 se utilizaría para definir una variable ficticia. Por ejemplo, la 
-expresión "sqft > 1400" seleccionará sólo los casos para los que lña 
+expresión "sqft > 1400" seleccionará sólo los casos para los que la 
 variable sqft tenga un valor mayor que 1400. Las condiciones pueden 
 estar concatenadas utilizando los operadores lógicos "&" (Y lógico) y
 "|" (O lógico).
@@ -989,7 +989,7 @@ estar concatenadas utilizando los operadores lógicos "&" (Y lógico) y
 La entrada de menú "Muestra/Quitar todas las obs. con valores 
 perdidos..." redefine la muestra excluyendo todas las observaciones para 
 las que los valores de una o más variables están "perdidos" (dejando 
-sólo las observacione completas, en las que hay un valor numérico para 
+sólo las observaciones completas, en las que hay un valor numérico para 
 todas las variables).
 
 Al definir una muestra a partir de una variable ficticia, una expresión 
@@ -1008,7 +1008,7 @@ smpl
 @Conjunto de datos
 (Establecer el rango muestral)
 
-Reestablece el rango muestral especificando una observación inicial y
+Restablece el rango muestral especificando una observación inicial y
 una observación final (Muestra/Establecer rango...). Este mecanismo se
 utiliza para establecer una submuestra de una serie temporal de datos.
 Las observaciones inicial y final dadas deberían estar en un formato
@@ -1064,7 +1064,7 @@ variables independientes que aparecerán en el modelo dado y un conjunto
 de "instrumentos". Este último comprende las variables exógenas y/o 
 predeterminadas que pueden usarse como regresores para obtener valores 
 estimados de las variables endógenas del lado derecho e la ecuación del 
-modelo. Si alguna de lñas variables del lado derecho del modelo son
+modelo. Si alguna de las variables del lado derecho del modelo son
 exógenas, éstas deberían aparecer en ambas listas.
 
 
@@ -1082,7 +1082,7 @@ de variables independientes --se añadirán automáticamente.
 En general, se realizará una regresión para cada variable de la lista, 
 excepto la constante, la tendencia temporal y cualquier variable 
 ficticia. La salida de cada ecuación incluye los contrastes F para 
-restyricciones cero sobre todos los retardos de cada una de las 
+restricciones cero sobre todos los retardos de cada una de las 
 variables y un contraste F para el máximo retardo.
 
 #

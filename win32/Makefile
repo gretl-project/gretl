@@ -22,7 +22,6 @@ ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
 GRETLLIB = -L$(imports) -lgretl -lintl.dll
-PIXBUFLIB = -L$(imports) -lgdk-pixbuf -lpng -lz.dll
 LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines

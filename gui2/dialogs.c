@@ -516,6 +516,7 @@ void about_dialog (gpointer data)
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
     char *tempstr, *no_gpl, buf[MAXSTR];
+    const gchar *tr_credit = "";
     FILE *fd;
 
     no_gpl = 
@@ -544,6 +545,12 @@ void about_dialog (gpointer data)
 	gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 30);
 	gtk_widget_show (tempwid);
     }
+
+#ifdef ENABLE_NLS
+    if (strcmp(_("translator_credits"), "translator_credits")) {
+	tr_credit = _("translator_credits");
+    }
+#endif    
     
     tempstr = g_strdup_printf ("gretl, version %s\n"
 #ifdef G_OS_WIN32
@@ -551,8 +558,8 @@ void about_dialog (gpointer data)
 #endif
 			       "Copyright (C) 2000-2001 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://gretl.sourceforge.net/",
-			       version_string);
+			       "http://gretl.sourceforge.net/ "
+			       "%s", version_string, tr_credit);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
 
