@@ -12,6 +12,7 @@ version 1.0.1
   command was not getting recorded properly in the log file)
 - fix bug in model printout when F() is undefined (line-break
   was missing)
+- make "sim" command available in loops
 
 11/15/02 version 1.0
 - change *nix library name to libgretl-1.0

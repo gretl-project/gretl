@@ -80,7 +80,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ) $(CEPHES_OBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 0:0:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:1:0
 
 .PHONY: 
 
