@@ -313,11 +313,13 @@ static void model_stats_init (MODEL *pmod)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ci: command index (see gretl_commands.h)
- * @opts: option flags: if & OPT_R compute robust standard errors;
- *                      if & OPT_C force use of Cholesky decomp;
- *                      if & OPT_D calculate dw stat and rhohat;
- *                      if & OPT_A treat as auxiliary regression
- *                      if & OPT_P use Prais-Winsten for first obs
+ * @opts: option flags: 
+ *   if & OPT_R compute robust standard errors;
+ *   if & OPT_C force use of Cholesky decomp;
+ *   if & OPT_D calculate dw stat and rhohat;
+ *   if & OPT_A treat as auxiliary regression (don't bother checking
+ *     for presence of lagged dependent var, don't augment model count);
+ *   if & OPT_P use Prais-Winsten for first obs.
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
  *
@@ -439,7 +441,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     mdl.ifc = (i > 1);
     if (i > 2) rearrange_list(mdl.list);
 
-    /* check for presence of lagged dependent variable? */
+    /* check for presence of lagged dependent variable? 
+       Don't bother if this is an auxiliary regression. */
     if (!(opts & OPT_A)) {
 	ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
 	if (ldepvar) {

@@ -250,7 +250,6 @@ char *charsub (char *str, char find, char repl)
 int numeric_string (const char *str)
 {
     char *test;
-    extern int errno;
     int ret = 1;
 
     if (!strcmp(str, "inf") || !strcmp(str, "nan")) {
@@ -258,14 +257,14 @@ int numeric_string (const char *str)
 	return 0;
     }
 
-    errno = 0;
-
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 
+    errno = 0;
+
     strtod(str, &test);
-    if (*test != '\0' || !strcmp(str, test) || errno == ERANGE) {
+    if (*test != '\0' || errno == ERANGE) {
 	ret = 0;
     }
 

@@ -291,7 +291,7 @@ MODEL logistic_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 
     list[1] = pdinfo->v - 1;
 
-    lmod = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
+    lmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (!lmod.errcode) {
 	rewrite_logistic_stats((const double **) *pZ, pdinfo, &lmod,
 			       dv, lmax);

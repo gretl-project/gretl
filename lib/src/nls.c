@@ -76,9 +76,9 @@ static int nls_auto_gen (int i)
     int err;
 
     if (i == 0) {
-	sprintf(formula, "$nls_y = %s", nlspec.nlfunc);
+	sprintf(formula, "$nl_y = %s", nlspec.nlfunc);
     } else {
-	sprintf(formula, "$nls_x%d = %s", i, nlspec.terms[i-1].deriv);
+	sprintf(formula, "$nl_x%d = %s", i, nlspec.terms[i-1].deriv);
     }
 
     err = generate(pZ, pdinfo, formula, NULL);
@@ -222,7 +222,7 @@ static int get_resid (double *fvec)
 
     if (nls_auto_gen(0)) return 1;
 
-    v = varindex(pdinfo, "$nls_y");
+    v = varindex(pdinfo, "$nl_y");
     if (v == pdinfo->v) return 1;
 
     nlspec.ess = 0.0;
@@ -232,6 +232,7 @@ static int get_resid (double *fvec)
 	nlspec.ess += fvec[j] * fvec[j];
 	j++;
     }
+
     print_iter_ess();
 
     return 0;
@@ -244,7 +245,7 @@ static int get_deriv (int i, double *deriv)
 
     if (nls_auto_gen(i + 1)) return 1;
 
-    sprintf(varname, "$nls_x%d", i + 1);
+    sprintf(varname, "$nl_x%d", i + 1);
     v = varindex(pdinfo, varname);
     if (v == pdinfo->v) return 1;
 

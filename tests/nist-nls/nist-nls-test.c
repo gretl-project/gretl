@@ -833,10 +833,16 @@ static int real_run_check (int round, PRN *prn)
 		pmod->ID = 0;
 		printmodel(pmod, datainfo, prn);
 	    }
+	    
+	    print_tol = gretl_model_get_double(pmod, "tol");
+	    total_iters += gretl_model_get_int(pmod, "iters");
+#if 0
 	    /* bodge */
 	    print_tol = pmod->chisq;
 	    total_iters += pmod->correct;
 	    /* end bodge */
+#endif
+
 	    get_accuracy(pmod, &coeff_acc, &sderr_acc);
 	    if (coeff_acc < worst_coeff_acc) {
 		worst_coeff_acc = coeff_acc;

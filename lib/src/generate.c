@@ -85,6 +85,7 @@ static double get_obs_value (const char *s, double **Z,
 static int model_scalar_stat_index (const char *s);
 static int model_vector_index (const char *s);
 static int dataset_var_index (const char *s);
+static int op_level (int c);
 
 static double *get_model_series (const DATAINFO *pdinfo,
 				 const MODEL *pmod, int v);
@@ -121,7 +122,7 @@ enum retrieve {
     R_PD
 };
 
-enum composites {
+enum special_ops {
     NEQ = 21,
     GEQ,
     LEQ
@@ -368,32 +369,35 @@ static genatom *parse_token (const char *s, char op,
     double val = 0.0;
     char str[ATOMLEN] = {0};
 
-    if (isalpha(*s)) {
+    DPRINTF(("parse_token: looking at '%s'\n", s));
+
+    if (isalpha((unsigned char) *s)) {
 	if (!strchr(s, '(') && !strchr(s, '[')) {
 	    if (!strcmp(s, "pi")) {
 		val = M_PI;
 		scalar = 1;
-	    }
-	    v = varindex(genr->pdinfo, s);
-	    if (v == genr->pdinfo->v) { 
-		sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
-			s);
-		genr->err = E_UNKVAR;
 	    } else {
-		DPRINTF(("recognized var '%s' (#%d)\n", s, v));
-	    }
+		v = varindex(genr->pdinfo, s);
+		if (v == genr->pdinfo->v) { 
+		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"),
+			    s);
+		    genr->err = E_UNKVAR;
+		} else {
+		    DPRINTF(("recognized var '%s' (#%d)\n", s, v));
+		}
 
-	    if (v == INDEXNUM) { /* internal index variable */
-		int k = genr_scalar_index(0, 0);
+		if (v == INDEXNUM) { /* internal index variable */
+		    int k = genr_scalar_index(0, 0);
 
-		val = k;
-		scalar = 1;
-	    }
+		    val = k;
+		    scalar = 1;
+		}
 
-	    /* handle scalar vars here */
-	    if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
-		val = (*genr->pZ)[v][0];
-		scalar = 1;
+		/* handle scalar vars here */
+		if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+		    val = (*genr->pZ)[v][0];
+		    scalar = 1;
+		}
 	    }
 	}
 	else if (strchr(s, '(')) {
@@ -450,17 +454,18 @@ static genatom *parse_token (const char *s, char op,
 	}
     }
 
+    /* first char is not alpha */
     else if (*s == '$') {
 	int i;
 
 	if ((i = model_scalar_stat_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
-		    s, i));
+		     s, i));
 	    val = get_model_scalar_stat(genr->pmod, i, &genr->err);
 	    scalar = 1;
 	} else if ((i = model_vector_index(s)) > 0) { 
 	    DPRINTF(("recognized '%s' as model vector, index #%d\n", 
-		    s, i));
+		     s, i));
 	    v = i;
 	} else if ((i = dataset_var_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
@@ -468,7 +473,7 @@ static genatom *parse_token (const char *s, char op,
 	    val = get_dataset_statistic(genr->pdinfo, i);
 	    scalar = 1;
 	} else {
-		genr->err = E_UNKVAR;
+	    genr->err = E_UNKVAR;
 	}
     }
 
@@ -608,11 +613,11 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
     return x;
 }
 
-static int genr_add_var (GENERATE *genr, double *x)
+static int genr_add_temp_var (GENERATE *genr, double *x)
 {
     double **gZ;    
     int v = genr->tmpv; 
-  
+
     gZ = realloc(genr->tmpZ, (v + 1) * sizeof *gZ);
     if (gZ == NULL) {
 	genr->err = E_ALLOC;
@@ -633,7 +638,7 @@ static int add_random_series_to_genr (GENERATE *genr, genatom *atom)
     x = get_random_series(genr->pdinfo, atom->func);
     if (x == NULL) return 1;
 
-    if (genr_add_var(genr, x)) {
+    if (genr_add_temp_var(genr, x)) {
 	free(x);
 	return E_ALLOC;
     }
@@ -651,7 +656,7 @@ static int add_model_series_to_genr (GENERATE *genr, genatom *atom)
 			 genr->pmod, atom->varnum);
     if (x == NULL) return 1;
 
-    if (genr_add_var(genr, x)) {
+    if (genr_add_temp_var(genr, x)) {
 	free(x);
 	return E_ALLOC;
     }
@@ -668,7 +673,7 @@ static int add_mp_series_to_genr (GENERATE *genr, genatom *atom)
     x = get_mp_series(atom->str, genr, atom->func, &genr->err);
     if (x == NULL) return 1;
 
-    if (genr_add_var(genr, x)) {
+    if (genr_add_temp_var(genr, x)) {
 	free(x);
 	return E_ALLOC;
     }
@@ -744,7 +749,7 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
     if (y == NULL) return genr->err;
     free(x);
 
-    if (genr_add_var(genr, y)) {
+    if (genr_add_temp_var(genr, y)) {
 	free(y);
 	return E_ALLOC;
     }
@@ -898,27 +903,65 @@ static int evaluate_genr (GENERATE *genr)
 
 /* ...................................................... */
 
-static void catch_double_symbols (char *s)
+static int insert_ghost_zero (char *full, char *pos)
 {
+    int fulln = strlen(full);
+    int posn = strlen(pos);
+    char *ins = pos;
+
+    if (fulln + 1 >= MAXLEN) return 1;
+
+    /* move material right */
+    memmove(pos + 1, pos, posn + 1);
+    *ins = '0';
+
+    return 0;
+}
+
+#define unary_minus(c) (c == 0 || op_level(c) || c == '(')
+
+static int catch_special_operators (char *s)
+{
+    char *p = s;
+    int cbak = 0;
+    int rcomp;
+    int err = 0;
+
     while (*s) {
+	rcomp = 0;
+
 	if (*s == '!' && *(s+1) == '=') {
 	    *s = NEQ;
-	    *(++s) = ' ';
+	    rcomp = '=';
 	}
 	else if (*s == '>' && *(s+1) == '=') {
 	    *s = GEQ;
-	    *(++s) = ' ';
+	    rcomp = '=';
 	}
 	else if (*s == '<' && *(s+1) == '=') {
 	    *s = LEQ;
-	    *(++s) = ' ';
+	    rcomp = '=';
 	}
 	else if (*s == '*' && *(s+1) == '*') {
 	    *s = '^';
-	    *(++s) = ' ';
+	    rcomp = '*';
 	}
+	else if (*s == '-' && unary_minus(cbak)) {
+	    err = insert_ghost_zero(p, s);
+	    s++;
+	}
+
+	if (rcomp) {
+	    cbak = rcomp;
+	    *(++s) = ' ';
+	} else {
+	    cbak = *s;
+	}
+
 	s++;
     }
+
+    return err;
 }
 
 /* ...................................................... */
@@ -939,6 +982,7 @@ static int op_level (int c)
 	return 6;
     if (c == '|') 
 	return 7;
+
     return 0;
 }
 
@@ -962,19 +1006,21 @@ static int string_arg_function (const char *s)
 static int token_is_atomic (const char *s, GENERATE *genr)
 {
     int count = 0;
-    const char *p = s;
 
     DPRINTF(("token_is_atomic: looking at '%s'\n", s));
+
+    /* number in scientific notation */
+    if (numeric_string(s)) return 1;
 
     /* treat lag variable as atom */
     if (get_lagvar(s, NULL, genr)) return 1;
 
-    while (*p) {
+    while (*s) {
 	/* token is non-atomic if it contains an operator,
 	   or parentheses */
-	if (op_level(*p) || *p == '(') count++;
+	if (op_level(*s) || *s == '(') count++;
 	if (count > 0) break;
-	p++;
+	s++;
     }
 
     return (count == 0);
@@ -987,13 +1033,12 @@ static int token_is_function (char *s, GENERATE *genr, int level)
     const char *p = s;
 
     while (*p) {
-	/* if (isalpha(*p) || *p == '_') wlen++; */
 	if (!op_level(*p) && *p != '(') wlen++; /* might be a problem */
 	else break;
 	p++;
     }
 
-    ret = (*p == '(' && p[strlen(p)-1] == ')'); 
+    ret = (*p == '(' && p[strlen(p) - 1] == ')'); 
 
     if (ret) {
 	DPRINTF(("token is function...\n"));
@@ -1125,8 +1170,17 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	s++;
     }
 
+    DPRINTF(("math_tokenize: looking at '%s'\n", s));
+
     q = p = s;
 
+    /* allow for the possibility that the token is a plain 
+       number in scientific notation */
+    if (numeric_string(s)) {
+	DPRINTF(("got a constant numeric token\n"));
+	goto numeric_case;
+    }
+	    
     while (*p) {
 	if (*p == '(') inparen++;
 	else if (*p == ')') inparen--;
@@ -1155,6 +1209,8 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	return E_UNBAL;
     }    
 
+ numeric_case:
+	
     if (*q) {
 	if (strlen(q) > TOKLEN - 1) {
 	    fprintf(stderr, "genr error: remainder too long: '%s'\n", q);
@@ -1464,8 +1520,10 @@ static int getword (char *word, char *str, char c)
     strncat(word, str, i);
     gretl_delete(str, 0, ++i);
 
-    if (!strcmp(word, "__subdum") || !strcmp(word, "__iftest")) ;
-    else if (gretl_is_reserved(word)) {
+    if (!strcmp(word, "__subdum") || !strcmp(word, "__iftest")) {
+	/* we'll let these "internals" through */
+	;
+    } else if (gretl_is_reserved(word)) {
 	i = 0;
     }
 
@@ -1566,12 +1624,20 @@ make_genr_varname (GENERATE *genr, const char *vname)
 static void 
 make_genr_label (GENERATE *genr, char *genrs, const char *vname)
 {
-    if (vname != NULL && strncmp(vname, "__", 2)) {
-	sprintf(genr->label, _("Replaced after model %d: "), 
-		get_model_count());
-    }	
-    if (strlen(genrs) > MAXLABEL - 1) {
-	strncat(genr->label, genrs, MAXLABEL - 4);
+    int llen = 0;
+
+    if (vname != NULL) {
+	if (!strncmp(vname, "$nl", 3) || !strncmp(vname, "__", 2)) {
+	    return;
+	} else {
+	    sprintf(genr->label, _("Replaced after model %d: "), 
+		    get_model_count());
+	    llen = 48;
+	}
+    }
+
+    if (strlen(genrs) > MAXLABEL - 1 - llen) {
+	strncat(genr->label, genrs, MAXLABEL - 4 - llen);
 	strcat(genr->label, "...");
     } else {
 	strncat(genr->label, genrs, MAXLABEL - 1);
@@ -1612,7 +1678,11 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     get_genr_formula(s, line, &genr);
     delchar('\n', s);
     strcpy(genrs, s);
-    catch_double_symbols(s);
+
+    if ((genr.err = catch_special_operators(s))) {
+	return genr.err;
+    }
+
     delchar(' ', s);
 
 #ifdef ENABLE_NLS
@@ -1662,7 +1732,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
 	gretl_trunc(newvar, VNAMELEN - 1);
 
-	if (strncmp(newvar, "$nls", 4) && 
+	if (strncmp(newvar, "$nl", 3) && 
 	    strncmp(newvar, "__", 2) && 
 	    check_varname(newvar)) {
 	    genr.err = E_SYNTAX;
@@ -1725,6 +1795,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     reset_calc_stack();
 
  genr_return:
+
     if (genr.err) {
 	genrfree(&genr);
     } else {
@@ -1750,7 +1821,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 {
     int t, n = pdinfo->n, v = genr->varnum;
-    int modify = 0, old_scalar = 0;
+    int modify = 0, was_scalar = 0;
     double xx;
 
     /* is the new variable an addition to data set? */
@@ -1759,24 +1830,41 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	strcpy(pdinfo->varname[v], genr->varname);
     } else {
 	modify = 1;
-	if (!pdinfo->vector[v]) old_scalar = 1;
+	if (!pdinfo->vector[v]) was_scalar = 1;
     }
 
     strcpy(VARLABEL(pdinfo, v), genr->label);
     pdinfo->vector[v] = !genr->scalar;
     xx = genr->xvec[pdinfo->t1];
 
+#ifdef GENR_DEBUG
+    fprintf(stderr, "add_new_var: adding %s '%s' (#%d, %s)\n",
+	    (genr->scalar)? "scalar" : "vector",
+	    pdinfo->varname[v], v,
+	    (modify)? "replaced" : "newly created");
+#endif
+
     if (genr->scalar) {
 	strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = xx;
     } else {
-	if (old_scalar) {
-	    (*pZ)[v] = realloc((*pZ)[v], pdinfo->n * sizeof ***pZ);
-	    if ((*pZ)[v] == NULL) return E_ALLOC;
+	if (was_scalar) {
+	    double *tmp;
+
+	    /* variable was previously a scalar, now a vector */
+	    tmp = realloc((*pZ)[v], pdinfo->n * sizeof *tmp);
+	    if (tmp == NULL) {
+		return E_ALLOC;
+	    } else {
+		(*pZ)[v] = tmp;
+	    }
 	}
 	if (!modify) {
-	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
+	    /* newly created var: initialize all to missing */
+	    for (t=0; t<n; t++) {
+		(*pZ)[v][t] = NADBL;
+	    }
 	}
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	    (*pZ)[v][t] = genr->xvec[t];
@@ -3321,21 +3409,28 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 
 int varindex (const DATAINFO *pdinfo, const char *varname)
 {
+    const char *check;
     int i;
 
     if (varname == NULL) return pdinfo->v;
 
-    if (!strcmp(varname, "uhat")) return UHATNUM; 
-    if (!strcmp(varname, "yhat")) return YHATNUM; 
-    if (!strcmp(varname, "i"))    return INDEXNUM;
-    if (!strcmp(varname, "t"))    return TNUM;
-    if (!strcmp(varname, "obs"))  return TNUM;
+    if (!strncmp(varname, "__", 2)) {
+	check = varname + 2;
+    } else {
+	check = varname;
+    }
 
-    if (!strcmp(varname, "const") || !strcmp(varname, "CONST"))
+    if (!strcmp(check, "uhat")) return UHATNUM; 
+    if (!strcmp(check, "yhat")) return YHATNUM; 
+    if (!strcmp(check, "i"))    return INDEXNUM;
+    if (!strcmp(check, "t"))    return TNUM;
+    if (!strcmp(check, "obs"))  return TNUM;
+
+    if (!strcmp(check, "const") || !strcmp(check, "CONST"))
 	return 0;
 
     for (i=0; i<pdinfo->v; i++) { 
-	if (!strcmp(pdinfo->varname[i], varname)) { 
+	if (!strcmp(pdinfo->varname[i], check)) { 
 	    return i;
 	}
     }
@@ -3364,8 +3459,12 @@ static void genrfree (GENERATE *genr)
 
     if (genr == NULL) return;
 
+    DPRINTF(("genrfree: freeing %d vars\n", genr->tmpv));
+
     if (genr->tmpv > 0) {
-	for (i=0; i<genr->tmpv; i++) free(genr->tmpZ[i]);
+	for (i=0; i<genr->tmpv; i++) {
+	    free(genr->tmpZ[i]);
+	}
 	free(genr->tmpZ);
     }
 

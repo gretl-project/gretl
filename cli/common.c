@@ -20,33 +20,6 @@
 
 /* common.c -- material in common between cli and gui clients */
 
-#ifdef WIN32_DEBUG
-int numeric_check_model (MODEL *pmod, 
-			 double **Z, const DATAINFO *pdinfo, 
-			 int lround, PRN *prn)
-{
-    int j;
-
-    for (j=0; j<pmod->ncoeff; j++) {
-	if (isnan(pmod->coeff[j])) {
-	    int i, t;
-
-	    pprintf(prn, "Round %d: got NaN in loop model coeff\n", lround);
-	    pputs(prn, "Data:\n");
-	    for (t=0; t<pdinfo->n; t++) {
-                pprintf(prn, "obs %d: ", t);
-		for (i=0; i<4; i++) {
-		    pprintf(prn, "Z[%d]=%g ", i, Z[i][t]);
-		}
-		pputs(prn, "\n");
-	    }
-	    return 1;
-	}
-    }
-    return 0;
-}
-#endif
-
 static void substitute_dollar_i (char *str)
 {
     char *p;
@@ -182,6 +155,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    swap_models(&models[0], &plp->models[m]);
 	    (plp->models[m])->ID = cmdnum;
 	    tmpmodel = plp->models[m];
+	    model_count_minus();
 	} else { 
 	    /* looping a fixed number of times */
 	    if (lround == 0 && loop_model_init(&plp->lmodels[plp->nmod - 1], 

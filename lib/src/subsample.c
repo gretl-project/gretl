@@ -167,16 +167,16 @@ static int overlay_masks (double *targ, const double *src, int n)
 }
 
 static int make_boolean_mask (double ***pZ, DATAINFO *pdinfo, const char *line,
-			      double *tmpdum, int *dnum)
+			      double *oldmask, int *dnum)
 {
     char formula[MAXLEN];
     int t, subv = 0;
 
-    if (tmpdum != NULL) {
+    if (oldmask != NULL) {
 	/* copy across the old mask */
 	subv = varindex(pdinfo, "subdum");
 	for (t=0; t<pdinfo->n; t++) {
-	    tmpdum[t] = (*pZ)[subv][t];
+	    oldmask[t] = (*pZ)[subv][t];
 	}
     }
 
@@ -197,16 +197,21 @@ static int make_boolean_mask (double ***pZ, DATAINFO *pdinfo, const char *line,
 
 static int 
 make_missing_mask (const double **Z, const DATAINFO *pdinfo,
-		   const int *list, double *dum)
+		   const int *list, double *mask)
 {
     int i, t, v, sn = 0;
     int lmax;
 
-    if (list != NULL) lmax = list[0];
-    else lmax = pdinfo->v - 1;
+    if (list != NULL) {
+	/* examine only a specified list of variables */
+	lmax = list[0];
+    } else {
+	/* default: examine all variables */
+	lmax = pdinfo->v - 1;
+    }
 
     for (t=0; t<pdinfo->n; t++) {
-	dum[t] = 1.0;
+	mask[t] = 1.0;
 	for (i=1; i<=lmax; i++) {
 	    if (list != NULL) {
 		v = list[i];
@@ -214,11 +219,11 @@ make_missing_mask (const double **Z, const DATAINFO *pdinfo,
 		v = i;
 	    }
 	    if (pdinfo->vector[v] && na(Z[v][t])) {
-		dum[t] = 0.;
+		mask[t] = 0.;
 		break;
 	    }
 	}
-	if (floateq(dum[t], 1.0)) sn++;
+	if (mask[t] == 1.0) sn++;
     }
 
     return sn;
@@ -250,7 +255,7 @@ static int count_selected_cases (double *x, int n)
     return count;
 }
 
-static int make_random_mask (double *dum, double *oldmask, int fulln, int subn)
+static int make_random_mask (double *mask, double *oldmask, int fulln, int subn)
 {
     int i, cases = 0, err = 0;
     unsigned u;
@@ -268,15 +273,17 @@ static int make_random_mask (double *dum, double *oldmask, int fulln, int subn)
 	return 0;
     }	
 
-    for (i=0; i<fulln; i++) dum[i] = 0.0;
+    for (i=0; i<fulln; i++) {
+	mask[i] = 0.0;
+    }
 
     for (i=0; (cases != subn); i++) {
 	u = gretl_rand_int_max(fulln);
 	if (oldmask == NULL || oldmask[u] == 1.0) {
-	    dum[u] = 1.0;
+	    mask[u] = 1.0;
 	}
 	if (i >= subn - 1) {
-	    cases = count_selected_cases(dum, fulln);
+	    cases = count_selected_cases(mask, fulln);
 	}
     }
 
@@ -291,14 +298,17 @@ enum {
     SUBSAMPLE_RANDOM
 } subsample_options;
 
+/* restrict_sample: 
+ * sub-sample the data set, based on the criterion of skipping all
+ * observations with missing data values; or using as a mask a
+ * specified dummy variable; or masking with a specified boolean
+ * condition; or selecting at random.
+*/
+
 int restrict_sample (const char *line, 
 		     double ***oldZ, double ***newZ,
 		     DATAINFO *oldinfo, DATAINFO *newinfo,
 		     const int *list, gretlopt oflag)
-     /* sub-sample the data set, based on the criterion of skipping
-	all observations with missing data values; or using as a
-	mask a specified dummy variable; or masking with a specified
-	boolean condition; or selecting at random. */
 {
     double xx, *tmpdum = NULL;
     char **S = NULL, dname[VNAMELEN] = {0};
@@ -326,6 +336,7 @@ int restrict_sample (const char *line,
 	return 1;
     }
 
+    /* if no existing sub-sample mask, oldmask will be NULL */
     oldmask = get_old_mask(*oldZ, oldinfo);
 
     if (opt == SUBSAMPLE_DROP_MISSING || opt == SUBSAMPLE_RANDOM ||
@@ -406,6 +417,7 @@ int restrict_sample (const char *line,
     /* create "hidden" dummy to record sub-sample, if need be */
     subnum = varindex(oldinfo, "subdum");
     if (subnum == oldinfo->v) {
+	/* variable doesn't exist: create it */
 	if (dataset_add_vars(1, oldZ, oldinfo)) {
 	    free(tmpdum);
 	    return E_ALLOC;

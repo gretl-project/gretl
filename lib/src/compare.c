@@ -151,6 +151,14 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 
 /* ........................................................... */
 
+static int be_quiet (gretlopt opt)
+{
+    if ((opt & OPT_A) || (opt & OPT_Q)) return 1;
+    else return 0;
+}
+
+/* ........................................................... */
+
 static MODEL replicate_estimator (const MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
 				  gretlopt lsqopt, PRN *prn)
@@ -220,7 +228,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
     /* if the model count went up for an aux regression,
        bring it back down */
-    if ((lsqopt & OPT_A) && get_model_count() > mc) {
+    if (be_quiet(lsqopt) && get_model_count() > mc) {
 	model_count_minus();
     }
 
@@ -328,8 +336,8 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
     /* ADD: run an augmented regression, matching the original
        estimation method */
     if (!err && aux_code == AUX_ADD) {
-	*new = replicate_estimator(orig, &newlist, pZ, pdinfo, OPT_D, prn);
-
+	*new = replicate_estimator(orig, &newlist, pZ, pdinfo, 
+				   opt | OPT_D, prn);
 	if (new->errcode) {
 	    err = new->errcode;
 	    free(newlist);
@@ -590,7 +598,8 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	pdinfo->t1 -= 1;
     }
 
-    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, OPT_D, prn);
+    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
+			       opt | OPT_D, prn);
 
     if (new->errcode) {
 	pprintf(prn, "%s\n", gretl_errmsg);
