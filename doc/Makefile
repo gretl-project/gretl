@@ -14,6 +14,9 @@ DSL = $(DOC)-both.dsl
 ALTDOC = $(DOC)-a4
 ALTSRC = $(ALTDOC).xml
 ALTDSL = manual-a4.dsl
+TESTDOC = $(DOC)-times
+TESTSRC = $(TESTDOC).xml
+TESTDSL = manual-times.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
 HTMLDIR = $(DOC)-html
@@ -37,6 +40,11 @@ altpdf: $(ALTDOC).tex jadetex.cfg lucidabr.tex
 	-pdfjadetex $(ALTDOC)
 	-pdfjadetex $(ALTDOC)
 
+pdftest: $(TESTDOC).tex jadetex.cfg 
+	-pdfjadetex $(TESTDOC)
+	-pdfjadetex $(TESTDOC)
+	-pdfjadetex $(TESTDOC)
+
 thumbs: $(SRC) $(CHAPTERS)
 	thumbpdf $(DOC)
         
@@ -53,9 +61,17 @@ $(ALTDOC).tex: $(ALTSRC) $(CHAPTERS) $(ALTDSL) $(MATHSS)
 	echo "Unescaping math in $(ALTDOC).tex"
 	./unescape_math.pl $(ALTDOC).tex
 
+$(TESTDOC).tex: $(TESTSRC) $(CHAPTERS) $(TESTDSL) $(MATHSS)
+	$(JADE) -t tex -d $(TESTDSL)\#print $(XMLDCL) $(TESTSRC)
+	./unescape_math.pl $(TESTDOC).tex
+
 $(ALTSRC): $(SRC)
 	echo "Copying $(SRC) to $(ALTSRC)"
-	cp $(SRC) $(ALTSRC)       
+	cp $(SRC) $(ALTSRC) 
+
+$(TESTSRC): $(SRC)
+	echo "Copying $(SRC) to $(TESTSRC)"
+	cp $(SRC) $(TESTSRC) 
 
 html: $(SRC) db2html $(DSL) $(HMATHSS) 
 	./db2html $(SRC)
@@ -74,8 +90,11 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml
 	$(HHC) htmlhelp/gretl.hhp
 
 clean:
-	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex
+	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex $(TESTDOC).tex
 	rm -rf $(DOC)-html htmlhelp
+
+texclean:
+	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex $(TESTDOC).tex
 
 install: 
 	cp manual.pdf manual-a4.pdf $(WEBDIR)

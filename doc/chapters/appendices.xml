@@ -306,10 +306,12 @@
       accuracy</quote>).</para>
 
   <para>In October 2002 I had a useful exchange with Giovanni Baoicchi
-    and Walter Disasto, who were writing a review of
+    and Walter Distaso, who were writing a review of
     <application>gretl</application> for the <citetitle>Journal of
       Applied Econonetrics</citetitle>, and James McKinnon, software
-    review editor for the journal. I am grateful to Baoicchi and
+    review editor for the journal.<footnote><para>This review has
+    since been published; see Baoicchi and Distaso (2003).</para>
+    </footnote> and I am grateful to Baoicchi and
     Disasto for their careful examination of the program, which
     prompted the following modifications.</para>
 
@@ -385,7 +387,7 @@
   <para>As mentioned in the main text,
     <application>gretl</application> offers a reasonably full
     selection of least-squares based estimators, plus a few additional
-    estimators sych as (binomial) logit and probit and Least Absolute
+    estimators such as (binomial) logit and probit and Least Absolute
     Deviations. Advanced users may, however, find
     <application>gretl</application>'s menu of statistical routines
     restrictive.</para>

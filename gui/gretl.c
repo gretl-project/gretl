@@ -64,7 +64,6 @@ static gint popup_activated (GtkWidget *widget, gpointer data);
 static void check_for_extra_data (void);
 static void set_up_main_menu (void);
 static void startR (gpointer p, guint opt, GtkWidget *w);
-static void Rcleanup (void);
 static void auto_store (void);
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 
@@ -787,7 +786,6 @@ int main (int argc, char *argv[])
     free_modelspec();
 
     remove(paths.plotfile);
-    Rcleanup();
 
     return EXIT_SUCCESS;
 }
@@ -1516,11 +1514,10 @@ void gretl_fork (const char *prog, const char *arg)
     }
 }
 
-/* ........................................................... */
-
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
-    char Rdata[MAXLEN], line[MAXLEN];
+    char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
+    const char *suppress = "--no-init-file";
     FILE *fp;
     int i;
     char *s0, *s1, *s2;
@@ -1531,27 +1528,28 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	return;
     }
 
-    fp = fopen(".Rprofile", "r");
-    if (fp != NULL) {
-	fclose(fp);
-	if (copyfile(".Rprofile", ".Rprofile.gretltmp")) {
-	    errbox(_("Couldn't move existing .Rprofile out of the way"));
-	    return;
-	}
-    }
-    fp = fopen(".Rprofile", "w");
+    build_path(paths.userdir, "gretl.Rprofile", Rprofile, NULL);
+    fp = fopen(Rprofile, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't write R startup file"));
 	return;
     }
+
+    if (setenv("R_PROFILE", Rprofile, 1)) {
+	errbox(_("Couldn't set R_PROFILE environment variable"));
+	fclose(fp);
+	return;
+    } 
+
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
-    sprintf(line, "store -r %s", Rdata); 
+    sprintf(line, "store \"%s\" -r", Rdata); 
     if (check_cmd(line) || cmd_init(line) ||
 	write_data(Rdata, command.list, Z, datainfo, GRETL_DATA_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 
     }
+
     if (dataset_is_time_series(datainfo)) {
 	fprintf(fp, "source(\"%s\")\n", Rdata);
 	fprintf(fp, "ls()\n");
@@ -1560,6 +1558,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	fprintf(fp, "attach(gretldata)\n");
 	fprintf(fp, "ls(2)\n");
     }
+
     fclose(fp);
 
     s0 = mymalloc(64);
@@ -1584,38 +1583,17 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	return;
     } else if (pid == 0) {  
 	if (i == 1)
-	    execlp(s0, s0, NULL);
+	    execlp(s0, s0, suppress, NULL);
 	else if (i == 2)
-	    execlp(s0, s0, s1, NULL);
+	    execlp(s0, s0, s1, suppress, NULL);
 	else if (i == 3)
-	    execlp(s0, s0, s1, s2, NULL);
+	    execlp(s0, s0, s1, s2, suppress, NULL);
 	perror("execlp");
 	_exit(EXIT_FAILURE);
     }
     free(s0); 
     free(s1); 
     free(s2);
-}
-
-/* ........................................................... */
-
-static void Rcleanup (void)
-{
-    FILE *fp;
-    char Rdata[MAXLEN];
-
-    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
-    remove(Rdata);
-
-    fp = fopen(".Rprofile.gretltmp", "r");
-    if (fp != NULL) {
-	fclose(fp);
-	if (copyfile(".Rprofile.gretltmp", ".Rprofile")) 
-	    errbox(_("Error restoring .Rprofile from\n"
-		   "the temporary copy, .Rprofile.gretltmp"));
-	else 
-	    remove(".Rprofile.gretltmp");
-    }
 }
 
 /* ........................................................... */

@@ -2,6 +2,15 @@
   <bibliography id="bib">
 
     <bibliomixed>
+      <bibliomset relation='article'>Baiocchi, G. and Distaso,
+      W. (2003) 
+      <title>GRETL: Econometric software for the GNU generation</title>,
+	 </bibliomset> <bibliomset
+	relation='journal'><title>Journal of Applied Econometrics</title>,
+	18, pp. 105&ndash;10.</bibliomset>
+    </bibliomixed>
+
+    <bibliomixed>
       <bibliomset relation='article'>Box, G. E. P. and Muller, M. E.
 	(1958) <title>A Note on the Generation of Random Normal
 	  Deviates</title>,</bibliomset> <bibliomset
@@ -11,7 +20,7 @@
 
     <bibliomixed>
       Davidson, R. and MacKinnon, J. G. (1993) <title>Estimation and
-      Inference in Econometrics</title>, New York: Ocford University
+      Inference in Econometrics</title>, New York: Oxford University
       Press.
     </bibliomixed>
 

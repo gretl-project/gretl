@@ -11,5 +11,3 @@
 }
 \clubpenalty=5000
 \widowpenalty=5000
-\input lucidabr.tex
-\usepackage[pdftex]{thumbpdf}

@@ -632,6 +632,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     else if (code == OPEN_DES) {
         datatype = GRETL_DES_DATA;
     } else {
+	/* no filetype specified: have to guess */
 	PRN *prn;	
 
 	if (bufopen(&prn)) return;

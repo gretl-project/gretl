@@ -12,6 +12,8 @@ version 1.0.8
   show missing values as missing)
 - Fix bug in editing of varnames and labels (could get onto
   the wrong line in some cases)
+- Fix gretl's startup routine for Gnu R so that it never over-
+  writes the file .Profile
 
 04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey
