@@ -484,7 +484,7 @@ static GtkWidget *make_path_browse_button (RCVARS *rc)
 
     b = gtk_button_new_with_label(_("Browse..."));
     g_signal_connect(G_OBJECT(b), "clicked",
-		     G_SIGNAL_FUNC(browse_button_callback), 
+		     G_CALLBACK(browse_button_callback), 
 		     rc);
     return b;
 }
