@@ -383,7 +383,7 @@
     <application>gretl</application> (except when the
     multiple-precision plugin is used, then results are given to 12
     figures).  If you want to examine a particular value more closely,
-    first save it (see <xref linkend="genr"/>) then print it using 
+    first save it (see <xref linkend="cmd-genr"/>) then print it using 
     <command>print -t</command> (see <xref linkend="cmdref"/>).  This
     will show the value to 10 digits.</para>
 
