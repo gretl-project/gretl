@@ -221,16 +221,19 @@
   </para>
 
   <para>
-    <application>gretl</application> is being developed under Linux.
-    The shared library and command-line client should compile and run
-    on any platform that (a) supports ISO/ANSI C and (b) has the zlib
-    (compression) and libxml (XML manipulation) libraries installed.
-    The homepage for zlib can be found at <ulink
-      url="http://www.info-zip.org/pub/infozip/zlib/">info-zip.org</ulink>. 
-    Libxml is at <ulink url="http:/xmlsoft.org/">xmlsoft.org</ulink>.
-    If the GNU readline library is found on the host system this will
-    be used for <application>gretcli</application>, providing a much
-    enhanced editable command line. See the <ulink
+    <application>gretl</application> was developed under Linux. The
+    shared library and command-line client should compile and run on
+    any platform that (a) supports ISO/ANSI C, (b) has the following
+    libraries installed: zlib (data compression), libxml (XML
+    manipulation), and LAPACK (linear algebra support). The homepage
+    for zlib can be found at <ulink
+      url="http://www.info-zip.org/pub/infozip/zlib/">info-zip.org</ulink>; 
+    libxml is at <ulink url="http://xmlsoft.org/">xmlsoft.org</ulink>;
+    LAPACK is at <ulink
+      url="http://www.netlib.org/lapack/">netlib.org</ulink>. If the
+    GNU readline library is found on the host system this will be used
+    for <application>gretcli</application>, providing a much enhanced
+    editable command line. See the <ulink
       url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">readline 
       homepage</ulink>.
   </para>
@@ -264,10 +267,9 @@
     Adrian Feguin's <application>gtkextra</application> library. You
     can find gtkextra at <ulink
       url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>. 
-    Unfortunately, it seems that <application>gtkextra</application>
-    is no longer being maintained.  The relevant parts of this package
-    are included (in slightly modified form) with the
-    <application>gretl</application> source distribution.
+    The relevant parts of this package are included (in slightly
+    modified form) with the <application>gretl</application> source
+    distribution.
   </para>
 
   <para>

@@ -26,10 +26,10 @@
       <command>summary</command>, <command>if</command>,
       <command>else</command> and <command>endif</command>.</para>
 
-    <para>By default, the <command>genr</command> operates quietly in
-      the context of a loop (without printing information on the
-      variable generated).  To force the printing of feedback from
-      <command>genr</command> you may specify the
+    <para>By default, the <command>genr</command> command operates
+      quietly in the context of a loop (without printing information
+      on the variable generated).  To force the printing of feedback
+      from <command>genr</command> you may specify the
       <literal>--verbose</literal> option to <command>loop</command>.
     </para>
 

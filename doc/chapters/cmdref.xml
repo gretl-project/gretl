@@ -519,12 +519,6 @@
 	  </row>
 	  <row>
 	    <entry><command>store</command></entry>
-	    <entry><literal>--cross</literal></entry>
-	    <entry>generate cross-products</entry>
-	    <entry><literal>-o</literal></entry>
-	  </row>
-	  <row>
-	    <entry><command>store</command></entry>
 	    <entry><literal>--csv</literal></entry>
 	    <entry>comma-separated values</entry>
 	    <entry><literal>-c</literal></entry>

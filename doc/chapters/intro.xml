@@ -16,9 +16,10 @@
 	    intuitive user interface; it is very easy to get up and
 	    running with econometric analysis. Thanks to its
 	    association with the econometrics textbooks by Ramu
-	    Ramanathan and Jeffrey Wooldridge the package offers many
-	    practice data files and command scripts.  These are well
-	    annotated and accessible.</para>
+	    Ramanathan, Jeffrey Wooldridge, and James Stock and Mark
+	    Watson the package offers many practice data files and
+	    command scripts.  These are well annotated and
+	    accessible.</para>
 	</listitem>
       </varlistentry>  
       <varlistentry><term>Flexible</term>
@@ -34,7 +35,7 @@
 	    Windows.  I have compiled it on Mac OS X and AIX and it
 	    should work on any unix-like system that has the
 	    appropriate basic libraries (see
-	<xref linkend="app-technote"/>).</para>
+	    <xref linkend="app-technote"/>).</para>
 	</listitem>
       </varlistentry>  
       <varlistentry><term>Open source</term>
@@ -75,7 +76,7 @@
       </varlistentry>
       <varlistentry><term>International</term>
 	<listitem><para><application>gretl</application> will produce
-	    its output in English, French, Italian or Spanish,
+	    its output in English, French, Italian, Spanish or Polish,
 	    depending on your computer's native language
 	    setting.</para>
 	</listitem>
@@ -102,21 +103,33 @@
     </para>
 
     <para>
-      I am grateful to William Greene, author of
-      <citetitle>Econometric Analysis</citetitle>, for permission to
-      include in the <application>gretl</application> distribution
-      some of the data sets analysed in his text, and to Jeffrey
-      Wooldridge for helping me prepare a
-      <application>gretl</application> version of the data sets from
-      his <citetitle>Introductory Econometrics: A Modern
-      Approach</citetitle>.
+      I am grateful to the authors of several econometrics textbooks
+      for permission to package for <application>gretl</application>
+      various datasets associated with their texts.  This list
+      currently includes William Greene, author of
+      <citetitle>Econometric Analysis</citetitle>; Jeffrey Wooldridge
+      (<citetitle>Introductory Econometrics: A Modern
+	Approach</citetitle>); James Stock and Mark Watson
+      (<citetitle>Introduction to Econometrics</citetitle>); Damodar
+      Gujarati (<citetitle>Basic Econometrics</citetitle>); and
+      Russell Davidson and James MacKinnon (<citetitle>Econometric
+	Theory and Methods</citetitle>).
+    </para>
+
+    <para>GARCH estimation in <application>gretl</application> is
+      based on code deposited in the archive of the <citetitle>Journal
+	of Applied Econometrics</citetitle> by Professors Fiorentini,
+      Calzolari and Pannatoni, and the code to generate
+      <emphasis>p</emphasis>-values for Dickey Fuller tests is due to
+      James MacKinnon.  In each case I am grateful to the authors for
+      permission to use their work.
     </para>
 
     <para>With regard to the internationalization of
       <application>gretl</application>, I wish to thank Ignacio
-      D&iacute;az-Emparanza, Michel Robitaille and Cristian
-      Rigamonti, who prepared the Spanish, French and Italian
-      translations respectively.</para>
+      D&iacute;az-Emparanza, Michel Robitaille, Cristian Rigamonti and
+      Tadeusz Kufel, who prepared the Spanish, French, Italian and
+      Polish translations respectively.</para>
 
     <para>I have benefitted greatly from the work of numerous
       developers of open-source software: for specifics please see
@@ -129,10 +142,11 @@
     <para>Many users of <application>gretl</application> have
       submitted useful suggestions and bug reports.  In this
       connection particular thanks are due to Ignacio
-      D&iacute;az-Emparanza, Riccardo <quote>Jack</quote> Lucchetti,
-      who has contributed some very helpful patches, and Dirk
-      Eddelbuettel, who maintains the <application>gretl</application>
-      package for Debian GNU/Linux.</para>
+      D&iacute;az-Emparanza, Tadeusz Kufel, Alan Isaac, Riccardo
+      <quote>Jack</quote> Lucchetti, who has contributed some very
+      helpful patches, and Dirk Eddelbuettel, who maintains the
+      <application>gretl</application> package for Debian
+      GNU/Linux.</para>
 
   </sect1>
 
