@@ -24,23 +24,21 @@ static void utf_replace (char *s)
 
     while (1) {
 	p = strstr(s, "&#x2013;"); /* &ndash; */
-	if (p != NULL) {
-	    *p = '-';
-	    memmove(p+1, p+8, strlen(p+8) + 1);
-	}
-	
-	p = strstr(s, "&#x3BB;"); /* &lgr; */
-	if (p != NULL) {
-	    *p++ = 'l';
-	    *p++ = 'a';
-	    *p++ = 'm';
-	    *p++ = 'b';
-	    *p++ = 'd';
-	    *p++ = 'a';
-	    memmove(p, p+1, strlen(p+1) + 1);
-	}
-
 	if (p == NULL) break;
+	*p = '-';
+	memmove(p+1, p+8, strlen(p+8) + 1);
+    }
+
+    while (1) {
+	p = strstr(s, "&#x3BB;"); /* &lgr; */
+	if (p == NULL) break;
+	*p++ = 'l';
+	*p++ = 'a';
+	*p++ = 'm';
+	*p++ = 'b';
+	*p++ = 'd';
+	*p++ = 'a';
+	memmove(p, p+1, strlen(p+1) + 1);
     }
 }
 
@@ -163,7 +161,7 @@ int main (void)
 	    strip_marker(p, "[/PARA]");
 	    strcat(buf, line);
 	    format_buf(buf);
-	    inpara = 0;
+	    blank = inpara = 0;
 	    last = 1;
 	} else {
 	    last = 0;

@@ -13,7 +13,7 @@
 <xsl:value-of select="@section"/>
 <xsl:text>&#xa;</xsl:text>
 <xsl:apply-templates/>
-<xsl:text>&#xa;</xsl:text>
+<xsl:text>&#xa;&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="usage">
