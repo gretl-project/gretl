@@ -45,9 +45,13 @@ int get_halt_on_error (void);
 
 double get_hp_lambda (void);
 
+int get_bkbp_k (void);
+
 void gretl_set_text_pause (int p);
 
 int gretl_get_text_pause (void);
+
+void get_bkbp_periods (int *periods);
 
 #endif /* LIBSET_H */
 

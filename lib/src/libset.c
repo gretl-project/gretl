@@ -26,6 +26,8 @@
 static int use_qr = -1;
 static int halt_on_error = -1;
 static double hp_lambda;
+static int bkbp_k = 8;
+static int bkbp_periods[2] = { 8, 32 };
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -46,6 +48,17 @@ int get_hc_version (void)
 double get_hp_lambda (void)
 {
     return hp_lambda;
+}
+
+int get_bkbp_k (void)
+{
+    return bkbp_k;
+}
+
+void get_bkbp_periods (int *periods)
+{
+    periods[0] = bkbp_periods[0];
+    periods[1] = bkbp_periods[1];
 }
 
 static int get_or_set_force_hc (int f)
@@ -199,12 +212,12 @@ void set_garch_robust_vcv (const char *s)
 
 int parse_set_line (const char *line, int *echo_off, PRN *prn)
 {
-    char setobj[16], setarg[16];
+    char setobj[16], setarg[16], setarg2[16];
     int nw, err = E_PARSE;
 
-    *setobj = *setarg = '\0';
+    *setobj = *setarg = *setarg2 = '\0';
 
-    nw = sscanf(line, "%*s %15s %15s", setobj, setarg);
+    nw = sscanf(line, "%*s %15s %15s %15s", setobj, setarg, setarg2);
     
     if (nw == 1) {
 	if (!strcmp(setobj, "echo")) {
@@ -259,8 +272,7 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 	    if (!strcmp(setarg, "on")) {
 		use_qr = 1;
 		err = 0;
-	    }
-	    else if (!strcmp(setarg, "off")) {
+	    } else if (!strcmp(setarg, "off")) {
 		use_qr = 0;
 		err = 0;
 	    }
@@ -268,8 +280,7 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 	    if (!strcmp(setarg, "on")) {
 		halt_on_error = 1;
 		err = 0;
-	    }
-	    else if (!strcmp(setarg, "off")) {
+	    } else if (!strcmp(setarg, "off")) {
 		halt_on_error = 0;
 		err = 0;
 	    }
@@ -293,7 +304,36 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 		hp_lambda = atof(setarg);
 		err = 0;
 	    }
+	} else if (!strcmp(setobj, "bkbp_k")) {
+	    /* Baxter-King approximation order */
+	    if (isdigit(*setarg)) {
+		bkbp_k = atoi(setarg);
+		pprintf(prn, 
+			_("Baxter-King approximation = %d\n"), bkbp_k);
+		err = 0;
+	    }
 	}	
+    } else if (nw == 3) {
+	if (!strcmp(setobj, "bkbp_limits")) {
+	    /* Baxter-King threshold periodicities */
+	    if (isdigit(*setarg)) {
+		bkbp_periods[0] = atoi(setarg);
+		if (isdigit(*setarg2)) {
+		    bkbp_periods[1] = atoi(setarg2);
+		    if (bkbp_periods[1] < bkbp_periods[0]) {
+			/* 2nd entry should be bigger than 1st one */
+			int tmp = bkbp_periods[1];
+
+			bkbp_periods[1] = bkbp_periods[0];
+			bkbp_periods[0] = tmp;
+		    }
+		    pprintf(prn, 
+			    _("Baxter-King band = %d-%d periods\n"), 
+			    bkbp_periods[0], bkbp_periods[1]);
+		    err = 0;
+		}
+	    }
+	}
     }
 		    
     return err;

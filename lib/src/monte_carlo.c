@@ -97,6 +97,7 @@ struct LOOPSET_ {
     int ntimes;
     int index;
     double initval;
+    char ichar;
     int lvar;
     int rvar;
     double rval;
@@ -325,11 +326,26 @@ static int get_int_value (const char *s, const DATAINFO *pdinfo,
     return ret;
 }
 
+static int bad_ichar (char c)
+{
+    const char *ok_ichars = "ijklm";
+    int err = 0;
+
+    if (strchr(ok_ichars, c) == NULL) {
+	strcpy(gretl_errmsg, _("The index in a 'for' loop must be a "
+			      "single character in the range 'i' to 'm'")); 
+	err = 1;
+    }
+
+    return err;
+}
+
 #define maybe_date(s) (strchr(s, ':') || strchr(s, '/'))
 
 static int parse_as_indexed_loop (LOOPSET *loop,
 				  const DATAINFO *pdinfo,
 				  const double **Z,
+				  char ichar,
 				  const char *lvar, 
 				  const char *start,
 				  const char *end)
@@ -338,12 +354,15 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     int dated = 0;
     int err = 0;
 
-    if (lvar != NULL && strcmp(lvar, "i")) {
-	sprintf(gretl_errmsg, 
-		_("The index variable in a 'for' loop must be the "
-		  "special variable 'i'"));
-	err = 1;
+    if (lvar != NULL) {
+	if (strlen(lvar) > 1) {
+	    ichar = 'x';
+	} else {
+	    ichar = *lvar;
+	}
     }
+
+    err = bad_ichar(ichar);
 
     if (!err) {
 	if (maybe_date(start)) {
@@ -382,6 +401,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	} else {
 	    loop->type = INDEX_LOOP;
 	}
+	loop->ichar = ichar;
     }
 
     return err;
@@ -511,23 +531,45 @@ test_forloop_element (const char *s, LOOPSET *loop,
     return err;
 }
 
+static void destroy_each_strings (LOOPSET *loop, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	free(loop->eachstrs[i]);
+    }
+    
+    free(loop->eachstrs);
+    loop->eachstrs = NULL;
+}
+
+static int allocate_each_strings (LOOPSET *loop, int n)
+{
+    int i, err = 0;
+
+    loop->eachstrs = malloc(n * sizeof *loop->eachstrs);
+    if (loop->eachstrs == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<n; i++) {
+	    loop->eachstrs[i] = NULL;
+	}
+    }
+
+    return err;
+}
+
 static int
 each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo, 
-				const char *s)
+				char *s)
 {
     char vn1[VNAMELEN], vn2[VNAMELEN];
-    char *scpy;
     int nf = 0;
     int err = 0;
 
-    scpy = gretl_strdup(s);
-    if (scpy == NULL) {
-	return E_ALLOC;
-    }
+    delchar(' ', s);
 
-    delchar(' ', scpy);
-
-    if (sscanf(scpy, "%8[^.]..%8s", vn1, vn2) != 2) {
+    if (sscanf(s, "%8[^.]..%8s", vn1, vn2) != 2) {
 	err = 1;
     } else {
 	int v1, v2;
@@ -543,33 +585,22 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 		err = 1;
 	    }
 	}
+	
+	err = allocate_each_strings(loop, nf);
 
 	if (!err) {
-	    loop->eachstrs = malloc(nf * sizeof *loop->eachstrs);
-	    if (loop->eachstrs == NULL) {
-		err = E_ALLOC;
-	    } 
-	}
-
-	if (!err) {
-	    int i, j = 0;
+	    int i;
 
 	    for (i=v1; i<=v2 && !err; i++) {
-		loop->eachstrs[j++] = gretl_strdup(pdinfo->varname[i]);
-		if (loop->eachstrs[i] == NULL) {
-		    for (j=0; j<i; j++) {
-			free(loop->eachstrs[i]);
-		    }
-		    free(loop->eachstrs);
-		    loop->eachstrs = NULL;
+		loop->eachstrs[i-v1] = gretl_strdup(pdinfo->varname[i]);
+		if (loop->eachstrs[i-v1] == NULL) {
+		    destroy_each_strings(loop, nf);
 		    err = E_ALLOC;
 		}
 	    }
 	}
     }
     
-    free(scpy);
-
     if (!err) {
 	loop->type = EACH_LOOP;
 	loop->ntimes = nf;
@@ -579,9 +610,10 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 }
 
 static int
-parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, const char *s)
+parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 {
-    char ivar[3];
+    char ivar[8] = {0};
+    char ichar = 0;
     int i, nf, err = 0;
 
     s += strlen("loop foreach");
@@ -591,10 +623,14 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, const char *s)
     }
 
     s++;
-    if (sscanf(s, "%2s", ivar) != 1) {
+
+    if (sscanf(s, "%7s", ivar) != 1) {
 	err = 1;
-    } else if (strcmp(ivar, "i") && strcmp(ivar, "$i")) {
+    } else if (strlen(ivar) > 1) {
 	err = 1;
+    } else {
+	ichar = *ivar;
+	err = bad_ichar(ichar);
     }
 
     if (err) {
@@ -608,28 +644,22 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, const char *s)
 	return 1;
     }
 
+    loop->ichar = ichar;
+
     if (nf <= 3 && strstr(s, "..") != NULL) {
 	err = each_strings_from_list_of_vars(loop, pdinfo, s);
     } else {
-	loop->eachstrs = malloc(nf * sizeof *loop->eachstrs);
-
-	if (loop->eachstrs == NULL) {
-	    err = E_ALLOC;
-	}
+	err = allocate_each_strings(loop, nf);
 
 	for (i=0; i<nf && !err; i++) {
-	    int len, j;
+	    int len;
 
 	    while (isspace((unsigned char) *s)) s++;
 	    len = strcspn(s, " ");
 
 	    loop->eachstrs[i] = gretl_strndup(s, len);
 	    if (loop->eachstrs[i] == NULL) {
-		for (j=0; j<i; j++) {
-		    free(loop->eachstrs[j]);
-		}
-		free(loop->eachstrs);
-		loop->eachstrs = NULL;
+		destroy_each_strings(loop, nf);
 		err = E_ALLOC;
 	    } else {
 		s += len;
@@ -648,7 +678,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, const char *s)
 static int 
 parse_as_for_loop (LOOPSET *loop,
 		   DATAINFO *pdinfo, double ***pZ,
-		   const char *s)
+		   char *s)
 {
     char *p = strchr(s, '(');
     int err = 0;
@@ -714,6 +744,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 {
     LOOPSET *loop;
     char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
+    char ichar;
     int err = 0;
 
 #ifdef LOOP_DEBUG
@@ -752,14 +783,14 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
     }
 
-    else if (sscanf(line, "loop i = %8[^.]..%8s", op, rvar) == 2) {
+    else if (sscanf(line, "loop %c = %8[^.]..%8s", &ichar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
-				    NULL, op, rvar);
+				    ichar, NULL, op, rvar);
     }	
 
     else if (sscanf(line, "loop for %8[^= ] = %8[^.]..%8s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
-				    lvar, op, rvar);
+				    0, lvar, op, rvar);
     }
 
     else if (strstr(line, "loop foreach") != NULL) {
@@ -957,6 +988,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->index = 0;
     loop->initval = 0.0;
     loop->err = 0;
+    loop->ichar = 0;
     loop->lvar = 0;
     loop->rvar = 0;
     loop->rval = 0.0;
@@ -1954,23 +1986,30 @@ void get_cmd_ci (const char *line, CMD *cmd)
 }
 
 static int 
-substitute_dollar_lvar (char *str, const LOOPSET *loop,
+substitute_dollar_targ (char *str, const LOOPSET *loop,
 			const double **Z, const DATAINFO *pdinfo)
 {
-    char targ[VNAMELEN + 3];
-    int targlen;
+    char targ[VNAMELEN + 3] = {0};
     char *p;
+    int targlen;
+    int idx = 0;
     int err = 0;
 
-    if (loop->type != FOR_LOOP) {
+    if (loop->type == FOR_LOOP) {
+	sprintf(targ, "$%s", pdinfo->varname[loop->lvar]);
+	targlen = strlen(targ);
+    } else if (indexed_loop(loop)) {
+	targ[0] = '$';
+	targ[1] = loop->ichar;
+	targlen = 2;
+	idx = loop->initval + loop->index;
+    } else {
 	return 1;
     }
 
-    sprintf(targ, "$%s", pdinfo->varname[loop->lvar]);
-    targlen = strlen(targ);
-
     while ((p = strstr(str, targ)) != NULL) {
 	char ins[32];
+	char *pins = ins;
 	char *q;
 
 	q = malloc(strlen(p));
@@ -1980,56 +2019,27 @@ substitute_dollar_lvar (char *str, const LOOPSET *loop,
 	}
 
 	strcpy(q, p + targlen);
-	
-	sprintf(ins, "%g", Z[loop->lvar][0]); /* scalar */
 
-	if (p - str > 0 && *(p - 1) == '[' && *(p + targlen) == ']') {
-	    /* got an obs-type string, on the pattern [$lvar] */
-	    int t = dateton(ins, pdinfo);
+	if (loop->type == FOR_LOOP) {
+	    sprintf(ins, "%g", Z[loop->lvar][0]); /* scalar */
 
-	    if (t < 0) {
-		t = atoi(ins) - 1;
-	    }
-	    sprintf(ins, "%d", t);
-	} 
+	    if (p - str > 0 && *(p - 1) == '[' && *(p + targlen) == ']') {
+		/* got an obs-type string, on the pattern [$lvar] */
+		int t = dateton(ins, pdinfo);
 
-	strcpy(p, ins);
-	strcpy(p + strlen(ins), q);
-	free(q);	
-    }
-
-    return err;
-}
-
-static int substitute_dollar_i (char *str, const LOOPSET *loop,
-				const DATAINFO *pdinfo)
-{
-    char *p;
-    int i = loop->initval + loop->index;
-    int err = 0;
-
-    if (!indexed_loop(loop)) {
-	return 1;
-    }
-
-    while ((p = strstr(str, "$i")) != NULL) {
-	char ins[OBSLEN];
-	char *pins = ins;
-	char *q;
-
-	q = malloc(strlen(p));
-	if (q == NULL) {
-	    err = 1;
-	    break;
-	}
-	strcpy(q, p + 2);
-	if (loop->type == INDEX_LOOP) {
-	    sprintf(ins, "%d", i);
+		if (t < 0) {
+		    t = atoi(ins) - 1;
+		}
+		sprintf(ins, "%d", t);
+	    } 
+	} else if (loop->type == INDEX_LOOP) {
+	    sprintf(ins, "%d", idx);
 	} else if (loop->type == DATED_LOOP) {
-	    ntodate(ins, i, pdinfo);
+	    ntodate(ins, idx, pdinfo);
 	} else if (loop->type == EACH_LOOP) {
-	    pins = loop->eachstrs[i];
+	    pins = loop->eachstrs[idx];
 	}
+
 	strcpy(p, pins);
 	strcpy(p + strlen(pins), q);
 	free(q);	
@@ -2071,39 +2081,40 @@ print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
     int i = loop->initval + loop->index;
 
     if (loop->type == INDEX_LOOP) {
-	pprintf(prn, "loop: i = %d\n\n", i);
+	pprintf(prn, "loop: %c = %d\n\n", loop->ichar, i);
     } else if (loop->type == DATED_LOOP) {
 	char obs[OBSLEN];
 
 	ntodate(obs, i, pdinfo);
-	pprintf(prn, "loop: i = %s\n\n", obs);
+	pprintf(prn, "loop: %c = %s\n\n", loop->ichar, obs);
     }
 }
 
-static const LOOPSET *indexed_loop_in_play (const LOOPSET *loop)
+static const LOOPSET *
+subst_loop_in_parentage (const LOOPSET *loop)
 {
-    const LOOPSET *iloop = loop;
-
-    while (1) {
-	if (iloop == NULL || indexed_loop(iloop)) {
-	    return iloop;
-	} else {
-	    iloop = iloop->parent;
-	}
+    while ((loop = loop->parent) != NULL) {
+	if (indexed_loop(loop) || loop->type == FOR_LOOP) break;
     }
+
+    return loop;
 }
 
-static const LOOPSET *for_loop_in_play (const LOOPSET *loop)
+static int 
+make_dollar_substitutions (char *str, const LOOPSET *loop,
+			   const double **Z, const DATAINFO *pdinfo)
 {
-    const LOOPSET *floop = loop;
+    int err = 0;
 
-    while (1) {
-	if (floop == NULL || floop->type == FOR_LOOP) {
-	    return floop;
-	} else {
-	    floop = floop->parent;
-	}
+    if (indexed_loop(loop) || loop->type == FOR_LOOP) {
+	err = substitute_dollar_targ(str, loop, Z, pdinfo);
     }
+
+    while (!err && (loop = subst_loop_in_parentage(loop)) != NULL) {
+	err = substitute_dollar_targ(str, loop, Z, pdinfo);
+    }
+
+    return err;
 }
 
 int loop_exec (LOOPSET *loop, char *line,
@@ -2112,7 +2123,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	       PRN *prn)
 {
     CMD cmd;
-    const LOOPSET *refloop = NULL;
     MODEL *lastmod = models[0];
     char linecpy[MAXLINE];
     int m = 0, lround = 0, ignore = 0;
@@ -2162,20 +2172,11 @@ int loop_exec (LOOPSET *loop, char *line,
 	    strcpy(linecpy, loop->lines[j]);
 
 	    cmd.opt = get_gretl_options(linecpy, &err);
-	    if (err) {
-		break;
-	    }
+	    if (err) break;
 
-	    if ((refloop = indexed_loop_in_play(loop)) != NULL) {
-		err = substitute_dollar_i(linecpy, refloop, *ppdinfo);
-	    }
-
-	    if ((refloop = for_loop_in_play(loop)) != NULL) {
-		err = substitute_dollar_lvar(linecpy, refloop,
-					     (const double **) *pZ,
-					     *ppdinfo);
-	    }
-
+	    err = make_dollar_substitutions(linecpy, loop, 
+					    (const double **) *pZ,
+					    *ppdinfo);
 	    if (err) break;
 
 	    /* We already have the "ci" index recorded, but this line
