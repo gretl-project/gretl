@@ -136,7 +136,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	     int *ignore, double **pZ, print_t *cmds)
 {
     int i, j, nf, linelen, n, v, gotdata = 0, ar = 0;
-    char field[10], *remainder, *tmpstr;
+    int spacename = 0;
+    char field[10], *remainder;
     LAGVAR lagvar;
 
     command->errcode = 0;
@@ -174,6 +175,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->param = realloc(command->param, 2);
 	strcpy(command->param, "x");
     }
+    if (strcmp(command->cmd, "let") == 0) 
+	strcpy(command->cmd, "genr");
     if (strcmp(command->cmd, "ls") == 0) 
 	strcpy(command->cmd, "list");
     if (strcmp(command->cmd, "man") == 0) 
@@ -234,7 +237,6 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* now we're probably dealing with a command that wants a list... */    
     nf = count_fields(line) - 1;
     n = strlen(command->cmd);
-    remainder = malloc(linelen-n+1);
 
     /* ...unless it's "help", "loop", or "nulldata" 
        which are special */
@@ -245,24 +247,18 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->nolist = 1;
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
-	    for (i=0; i<=linelen-n; i++) 
-		remainder[i] = line[i+n]; 
-	    remainder[linelen-n] = '\0'; 
-	    sscanf(remainder, "%s", command->param);
-	    free(remainder);    
-	    return;
-	} else command->param[0] = '\0';
-	free(remainder);    
+	    sscanf(line + n + 1, "%s", command->param);
+	}
 	return;
     }
+
+    remainder = malloc(linelen-n+1);
 
     /* need to treat rhodiff specially -- put everything from
        the end of the command word to the first semicolon into
        "param", for processing later */
     if (command->ci == RHODIFF) {  /* FIXME */
-	for (i=0; i<linelen-n; i++) 
-	    remainder[i] = line[i+n+1];
-	remainder[linelen-n] = '\0'; 
+	strcpy(remainder, line + n + 1);
 	if (get_rhodiff_param(remainder, command)) {
 	    command->errcode = E_SYNTAX;
 	    free(remainder);
@@ -274,11 +270,47 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	n = 0;
     }
 
+    /* "store" is a special case since the filename that comes
+       before the list may be quoted, and have spaces in it.  Groan */
+    if (command->ci == STORE && nf) {
+	int q, qmatch = 0;
+
+	if ((q = line[n+1]) == '"' || (q = line[n+1]) == '\'') {
+	    spacename = 1;
+	    command->param = realloc(command->param, linelen - n + 1);
+	    strcpy(remainder, line + n + 1);
+	    for (i=1; i<strlen(remainder); i++) {
+		if (remainder[i] == q) {
+		    strncpy(command->param, remainder, i + 1);
+		    command->param[i+1] = '\0';
+		    qmatch = 1;
+		    break;
+		}
+		if (remainder[i] == ' ') nf--;
+	    }
+	    if (!qmatch) {
+		command->errcode = E_SYNTAX;
+		free(remainder);
+		return;
+	    }
+	    /* fprintf(stderr, "got filename '%s'\n", command->param); */
+	    shiftleft(remainder, strlen(command->param));
+	    /* unquote the filename */
+	    for (i=0; i<strlen(command->param) - 2; i++)
+		command->param[i] = command->param[i+1];
+	    command->param[i] = '\0';
+	    strcpy(line, remainder);
+	    nf--;
+	    n = 0;
+	    linelen = strlen(line);
+	}
+    }
+
     /* "store" takes a filename before the list, "var" takes a 
        lag order, "adf" takes a lag order, "arch" takes a lag 
        order, "multiply" takes a multiplier.  "omitfrom" and
        "addto" take the ID of a previous model */
-    if (command->ci == STORE || 
+    if ((command->ci == STORE && !spacename) ||
 	command->ci == ADF ||
 	command->ci == ARCH ||
 	command->ci == COINT ||
@@ -288,31 +320,27 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == VAR) {
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
-	    for (i=0; i<linelen-n; i++) 
-		remainder[i] = line[i+n+1];
-	    remainder[linelen-n] = '\0'; 
+	    strcpy(remainder, line + n + 1);
 	    sscanf(remainder, "%s", command->param);
 	    shiftleft(remainder, strlen(command->param));
 	    strcpy(line, remainder);
-	    nf -= 1;
+	    nf--;
 	    n = 0;
 	    linelen = strlen(line);
 	} 
     }
+
     if (command->ci == MULTIPLY) {  /* suffix string */
-	tmpstr = malloc(32);
-	if (tmpstr == NULL) {
-	    command->errcode = E_ALLOC;
-	    return;
-	}
-	sscanf(line, "%s", tmpstr);
-	strncpy(command->str, tmpstr, 3);
-	shiftleft(line, strlen(tmpstr));
-	nf -= 1;
+	char suffix[4];
+
+	sscanf(line, "%3s", suffix);
+	strcpy(command->str, suffix);
+	shiftleft(line, strlen(suffix));
+	nf--;
 	n = 0;
 	linelen = strlen(line);
-	free(tmpstr);
     }
+
     if (command->ci == AR) ar = 1;
 
     command->list = realloc(command->list, (1+nf) * sizeof(int));
@@ -327,9 +355,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* now assemble the command list */
     for (j=1; j<=nf; j++) {
 
-	for (i=0; i<linelen-n; i++) 
-	    remainder[i] = line[i+n+1];
-	remainder[linelen-n] = '\0'; 
+	strcpy(remainder, line + n + 1);
 
 	/* special: optional lag order for correlogram */
 	if (command->ci == CORRGM && j == 2) {
@@ -411,7 +437,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 
 	if (!isalpha((unsigned char) field[0]) && 
-	    !isdigit((unsigned char) field[0])) { 
+	    !isdigit((unsigned char) field[0]) &&
+	    !(spacename && (field[0] == '"' || field[0] == '\''))) { 
 	    command->errcode = 1;
 	    sprintf(command->errmsg, 
 		    "field '%s' in command is invalid", field);
