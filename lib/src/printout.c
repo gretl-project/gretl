@@ -1559,7 +1559,6 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	/* print data by variables */
 	for (j=1; j<=list[0]; j++) {
 	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[list[j]]);
-	    pprintf(prn, _("Data frequency: %d\n"), pdinfo->pd);
 	    print_smpl (pdinfo, 0, prn);
 	    pprintf(prn, "\n");
 	    printz((*pZ)[list[j]], pdinfo, prn);

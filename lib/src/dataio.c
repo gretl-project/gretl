@@ -932,10 +932,11 @@ static int writehdr (const char *hdrfile, const int *list,
 
 int get_precision (double *x, int n)
 {
-    int i, p = 6, pmax = 0;
+    int i, p, pmax = 0;
     char *s, numstr[48];
 
     for (i=0; i<n; i++) {
+	p = 6;
 	if (na(x[i])) continue;
 	sprintf(numstr, "%f", x[i]);
 	s = numstr + strlen(numstr) - 1;

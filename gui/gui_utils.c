@@ -53,6 +53,10 @@ int use_proxy;
 /* filelist stuff */
 #define MAXRECENT 4
 
+#define SCRIPT_CHANGED(w) w->active_var = 1
+#define SCRIPT_SAVED(w) w->active_var = 0
+#define SCRIPT_IS_CHANGED(w) w->active_var == 1
+
 static void printfilelist (int filetype, FILE *fp);
 
 static char datalist[MAXRECENT][MAXSTR], *datap[MAXRECENT];
@@ -87,6 +91,7 @@ static void edit_script_help (GtkWidget *widget, gpointer data);
 static void file_viewer_save (GtkWidget *widget, windata_t *mydata);
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
+static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 #ifndef G_OS_WIN32
 static void read_rc (void);
 #endif
@@ -430,7 +435,15 @@ static void delete_file (GtkWidget *widget, char *fle)
 
 static void delete_file_viewer (GtkWidget *widget, gpointer data) 
 {
-    gtk_widget_destroy((GtkWidget *) data);
+    windata_t *vwin = (windata_t *) data;
+
+    if (vwin->role == EDIT_SCRIPT && SCRIPT_IS_CHANGED(vwin)) {
+	gint resp;
+
+	resp = query_save_script(NULL, NULL, vwin);
+	if (!resp) gtk_widget_destroy(vwin->dialog);
+    } else 
+	gtk_widget_destroy(vwin->dialog);
 }
 
 /* ........................................................... */
@@ -455,8 +468,10 @@ void delete_widget (GtkWidget *widget, gpointer data)
 
 void catch_key (GtkWidget *w, GdkEventKey *key)
 {
-    if (key->keyval == GDK_q) 
+    
+    if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
+    }
     else if (key->keyval == GDK_s) {
 	windata_t *mydata = gtk_object_get_data(GTK_OBJECT(w), "ddata");
 
@@ -479,8 +494,15 @@ void catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     else if (mods & GDK_CONTROL_MASK) {
 	if (gdk_keyval_to_upper(key->keyval) == GDK_S) 
 	    file_viewer_save(NULL, vwin);
-	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) 
-	    gtk_widget_destroy(w);
+	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
+	    if (vwin->role == EDIT_SCRIPT && SCRIPT_IS_CHANGED(vwin)) {
+		gint resp;
+
+		resp = query_save_script(NULL, NULL, vwin);
+		if (!resp) gtk_widget_destroy(vwin->dialog);
+	    } else 
+		gtk_widget_destroy(w);
+	}
     }
 
 #ifdef notyet
@@ -1289,7 +1311,8 @@ static void file_viewer_save (GtkWidget *widget, windata_t *mydata)
 	    g_free(text);
 	    sprintf(buf, _("Saved %s\n"), mydata->fname);
 	    infobox(buf);
-	    if (mydata->role == EDIT_SCRIPT) mydata->active_var = 0;
+	    if (mydata->role == EDIT_SCRIPT) 
+		SCRIPT_SAVED(mydata);
 	}
     }
 } 
@@ -1357,7 +1380,7 @@ void free_windata (GtkWidget *w, gpointer data)
 #include "pixmaps/question.xpm"
 #include "pixmaps/close.xpm"
 
-static void make_editbar (windata_t *vwin, GtkWidget *dialog)
+static void make_editbar (windata_t *vwin)
 {
     GtkWidget *iconw, *button, *editbar;
     GdkPixmap *icon;
@@ -1380,7 +1403,8 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 
     colormap = gdk_colormap_get_system();
     editbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
-    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), editbar);
+    gtk_container_add(GTK_CONTAINER(GTK_DIALOG(vwin->dialog)->action_area), 
+		      editbar);
 
     colorize_tooltips(GTK_TOOLBAR(editbar)->tooltips);
 
@@ -1433,7 +1457,6 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 	case 8:
 	    toolxpm = close_xpm;
 	    toolfunc = delete_file_viewer;
-	    ptr = dialog;
 	    break;
 	default:
 	    break;
@@ -1569,6 +1592,8 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: session notes")); break;
     case GR_PLOT:
 	title = g_strdup(_("gretl: edit plot commands")); break;
+    case SCRIPT_OUT:
+	title = g_strdup(_("gretl: script output")); break;
     default:
 	break;
     }
@@ -1579,7 +1604,52 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 static void script_changed (GtkWidget *w, windata_t *vwin)
 {
-    vwin->active_var = 1;
+    SCRIPT_CHANGED(vwin);
+}
+
+/* ........................................................... */
+
+static void auto_save_script (windata_t *vwin)
+{
+    FILE *fp;
+    char msg[MAXLEN];
+    gchar *savestuff;
+
+    if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
+	file_save(vwin, SAVE_SCRIPT, NULL);
+	strcpy(vwin->fname, scriptfile);
+    }
+
+    if ((fp = fopen(vwin->fname, "w")) == NULL) {
+	sprintf(msg, _("Couldn't write to %s"), vwin->fname);
+	errbox(msg); 
+	return;
+    }
+    savestuff = 
+	gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+    fprintf(fp, "%s", savestuff);
+    g_free(savestuff); 
+    fclose(fp);
+    infobox(_("script saved"));
+    SCRIPT_SAVED(vwin);
+}
+
+/* ........................................................... */
+
+static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin)
+{
+    if (SCRIPT_IS_CHANGED(vwin)) {
+	int button;
+
+	button = yes_no_dialog(_("gretl: script"), 
+			       _("Save changes?"), 1);
+
+	if (button == CANCEL_BUTTON)
+	    return TRUE;
+	if (button == YES_BUTTON)
+	    auto_save_script(vwin);
+    }
+    return FALSE;
 }
 
 /* ........................................................... */
@@ -1692,7 +1762,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     /* should we show an editing toolbar? */
     if (show_editbar) 
-	make_editbar(vwin, dialog);
+	make_editbar(vwin);
 
     /* close button for non-editable windows and console */
     if (role == CONSOLE || !editable) {
@@ -1743,7 +1813,12 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_object_set_data(GTK_OBJECT(dialog), "vwin", vwin);
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 			   GTK_SIGNAL_FUNC(catch_edit_key), vwin);	
-    }    
+    }  
+
+    /* offer chance to save script on exit */
+    if (role == EDIT_SCRIPT)
+	gtk_signal_connect(GTK_OBJECT(dialog), "delete_event", 
+			   GTK_SIGNAL_FUNC(query_save_script), vwin);
 
     /* clean up when dialog is destroyed */
     if (del_file) {
@@ -1822,7 +1897,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     gtk_widget_show(table);
 
     /* add an editing bar */
-    make_editbar(vwin, dialog);    
+    make_editbar(vwin);    
 
     /* insert the buffer text */
     if (*pbuf)

@@ -89,7 +89,7 @@ double _corr (const int n, const double *zx, const double *zy)
     zxbar = sx/nn;
     zybar = sy/nn;
     sxx = syy = sxy = 0.0;
-    for (i = 0; i < n; ++i) {
+    for (i=0; i<n; ++i) {
         zxi = zx[i];
         zyi = zy[i];
         if (na(zxi) || na(zyi)) continue;
@@ -454,7 +454,7 @@ void _aicetc (MODEL *pmod)
     double zz, zx, ersq, zn;
     double ess = pmod->ess;
     int nobs = pmod->nobs, ncoeff = pmod->ncoeff;
-    
+
     zz = (double) (nobs - ncoeff);
     pmod->criterion[0] = ess/zz;
     ersq = ess/nobs;

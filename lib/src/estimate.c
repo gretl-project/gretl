@@ -303,22 +303,20 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
            1 - ((1 - model.rsq)*(t2 - t1 - 1)/model.dfd);
     }
 
-    /* if opt = 1, compute residuals and rhohat */
-    if (opt) {
-	order = (ci == CORC || ci == HILU)? 1 : 0;
-	model.rho = _rhohat(order, t1, t2, model.uhat);
-	model.dw = _dwstat(order, &model, *pZ);
-    }
-
     /* weighted least squares: fix fitted values, ESS, sigma */
     if (ci == WLS && !(model.wt_dummy)) {
 	model.ess_wt = model.ess;
 	model.sigma_wt = model.sigma;
 	model.ess = 0.0;
 	for (t=t1; t<=t2; t++) {
-	    model.yhat[t] /= (*pZ)[nwt][t];
-	    xx = model.uhat[t] /= (*pZ)[nwt][t];
-	    model.ess += xx * xx;
+	    if ((*pZ)[nwt][t] == 0.0) {
+		model.yhat[t] = model.uhat[t] = NADBL;
+		model.nobs -= 1;
+	    } else {
+		model.yhat[t] /= (*pZ)[nwt][t];
+		xx = model.uhat[t] /= (*pZ)[nwt][t];
+		model.ess += xx * xx;
+	    }
 	}
 	model.sigma = sqrt(model.ess/model.dfd);
     }
@@ -327,6 +325,13 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	    if (floateq((*pZ)[nwt][t], 0.0)) 
 		model.yhat[t] = model.uhat[t] = NADBL;
 	}
+    }
+
+    /* if opt = 1, compute residuals and rhohat */
+    if (opt) {
+	order = (ci == CORC || ci == HILU)? 1 : 0;
+	model.rho = _rhohat(order, t1, t2, model.uhat);
+	model.dw = _dwstat(order, &model, *pZ);
     }
 
     /* Generate model selection statistics */
@@ -585,17 +590,25 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
 
     /* special treatment for weighted least squares */
     if (nwt && !(pmod->wt_dummy)) {
+	int wobs = nobs;
+
 	altyhat = malloc(n * sizeof(double));
 	zz = 0.0;
 	for (t=pmod->t1; t<=pmod->t2; t++) { 
-	    zz += pmod->yhat[t] * pmod->yhat[t];
-	    altyhat[t] = pmod->yhat[t] / Z[nwt][t];
+	    if (Z[nwt][t] == 0) {
+		altyhat[t] = NADBL;
+		wobs--;
+		pmod->dfd -= 1;
+	    } else {
+		zz += pmod->yhat[t] * pmod->yhat[t];
+		altyhat[t] = pmod->yhat[t] / Z[nwt][t];
+	    }
 	}
 	pmod->dfn += 1; 
 	pmod->fstt = (zz * pmod->dfd)/(pmod->dfn * ess);
 	pmod->rsq = _corrrsq(nobs, &Z[yno][pmod->t1], altyhat + pmod->t1);
 	pmod->adjrsq = 
-           1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
+           1 - ((1 - pmod->rsq)*(wobs - 1)/pmod->dfd);
 	free(altyhat);
     }
 

@@ -183,14 +183,48 @@ static void maybe_add_ext (char *fname, int action, gpointer data)
 
 /* ........................................................... */
 
-static void script_set_title (windata_t *vwin, char *fname)
+static void script_set_title (windata_t *vwin, const char *fname)
 {
-    gchar *title, *p = strrchr(fname, SLASH);
+    gchar *title;
+    const char *p = strrchr(fname, SLASH);
 
     title = g_strdup_printf("gretl: %s", p? p + 1 : fname);
     gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
     strcpy(vwin->fname, fname);
     g_free(title);
+}
+
+/* ........................................................... */
+
+static void save_editable_content (int action, const char *fname,
+				   windata_t *vwin)
+{
+    FILE *fp;
+    gchar *buf;
+
+    if ((fp = fopen(fname, "w")) == NULL) {
+	errbox(_("Couldn't open file for writing"));
+	return;
+    }
+
+    buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+    if (buf == NULL) {
+	errbox("Couldn't retrieve buffer");
+	fclose(fp);
+	return;
+    }
+
+    fprintf(fp, "%s", buf);
+    g_free(buf);
+    infobox(_("File saved OK"));
+    fclose(fp);
+    
+    if (action == SAVE_SCRIPT) {
+	strcpy(scriptfile, fname);
+	mkfilelist(3, scriptfile);
+	vwin->active_var = 0; /* zero out "changed" flag */
+	script_set_title(vwin, fname);
+    }
 }
 
 /* ........................................................... */
@@ -422,36 +456,11 @@ void file_selector (char *msg, int action, gpointer data)
 	MODEL *pmod = (MODEL *) data;
 	do_save_tex(fname, action, pmod); 
     }
-    else if (action == SAVE_SCRIPT) {
+    else {
 	windata_t *vwin = (windata_t *) data;
-	FILE *fp;
 
-	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox(_("Couldn't open file for writing"));
-	    return;
-	}
-	fprintf(fp, "%s", 
-		gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1));
-	fclose(fp);
-	infobox(_("File saved OK"));
-	strcpy(scriptfile, fname);
-	mkfilelist(3, scriptfile);
-	vwin->active_var = 0; /* zero out "changed" flag */
-	script_set_title(vwin, fname);
-    }
-    else { /* save contents of an editable text window */
-	GtkWidget *editwin;
-	FILE *fp;
+	save_editable_content(action, fname, vwin);
 
-	editwin = (GtkWidget *) data;
-	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox(_("Couldn't open file for writing"));
-	    return;
-	}
-	fprintf(fp, "%s", 
-		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
-	fclose(fp);
-	infobox(_("File saved OK"));
     }
 }
 
@@ -596,40 +605,13 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
 	do_save_tex(fname, action, pmod); 
     }
-    else if (action == SAVE_SCRIPT) {
-	windata_t *vwin;
-	FILE *fp;
+    else {
+	windata_t *vwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
 
-	vwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
-	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox(_("Couldn't open file for writing"));
-	    gtk_widget_destroy(GTK_WIDGET(fs));
-	    return;
-	}
-	fprintf(fp, "%s", 
-		gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1));
-	fclose(fp);
-	infobox(_("File saved OK"));
-	strcpy(scriptfile, fname);
-	mkfilelist(3, scriptfile);
-	vwin->active_var = 0; /* zero out "changed" flag */
-	script_set_title(vwin, fname);
-    }
-    else { /* save contents of an editable text window */
-	GtkWidget *editwin;
-	FILE *fp;
+	save_editable_content(action, fname, vwin);
 
-	editwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
-	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox(_("Couldn't open file for writing"));
-	    gtk_widget_destroy(GTK_WIDGET(fs));
-	    return;
-	}
-	fprintf(fp, "%s", 
-		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
-	fclose(fp);
-	infobox(_("File saved OK"));
     }
+
     gtk_widget_destroy(GTK_WIDGET(fs));    
 }
 

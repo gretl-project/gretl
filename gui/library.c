@@ -51,7 +51,6 @@ static int gui_exec_line (char *line,
 			  const char *myname); 
 static void console_exec (void);
 static void finish_genr (MODEL *pmod);
-static void auto_save_script (gpointer data, guint action, GtkWidget *w);
 static gint stack_model (int gui);
 
 int replay;                 /* shared, to indicate whether we're just
@@ -2804,63 +2803,19 @@ void display_var (void)
 
 /* ........................................................... */
 
-static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
-{
-    FILE *fp;
-    char msg[MAXLEN];
-    gchar *savestuff;
-    windata_t *mydata = (windata_t *) data;
-
-    if (strstr(mydata->fname, "script_tmp") || !strlen(mydata->fname)) {
-	file_save(mydata, SAVE_SCRIPT, NULL);
-	strcpy(mydata->fname, scriptfile);
-    }
-
-    if ((fp = fopen(mydata->fname, "w")) == NULL) {
-	sprintf(msg, _("Couldn't write to %s"), mydata->fname);
-	errbox(msg); 
-	return;
-    }
-    savestuff = 
-	gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
-    fprintf(fp, "%s", savestuff);
-    g_free(savestuff); 
-    fclose(fp);
-    if (!quiet) infobox(_("script saved"));
-    mydata->active_var = 0; /* zero out the "changed" flag */
-}
-
-/* ........................................................... */
-
 void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
     char *runfile = NULL, fname[MAXLEN];
-    int err, button, changed = 0;
-    windata_t *mydata = NULL;
+    int err;
 
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
     if (code == SCRIPT_EXEC) runfile = scriptfile;
     else if (code == SESSION_EXEC) runfile = cmdfile;
 
-    if (data != NULL) {
-	mydata = (windata_t *) data;
-	changed = mydata->active_var;
-    }
-
-#ifdef notdef
-    if (code == SCRIPT_EXEC && changed) {
-	button = yes_no_dialog(_("gretl: run script"), 
-			       _("Save changes first?"), 1);
-	if (button == CANCEL_BUTTON)
-	    return;
-	if (button == YES_BUTTON)
-	    auto_save_script(data, 1, NULL);
-    }
-#endif
-
     if (data != NULL) { /* get commands from script edit buffer */
+	windata_t *mydata = (windata_t *) data;
 	gchar *buf = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
 
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
@@ -3095,32 +3050,38 @@ void do_save_tex (char *fname, const int code, MODEL *pmod)
 
 /* ........................................................... */
 
-static int bufgets (char *s, int size, const char *buf)
+static char *bufgets (char *s, int size, const char *buf)
 {
     int i;
     static const char *p;
 
-    if (!s) {
+    /* mechanism for resetting p */
+    if (s == NULL || size == 0) {
 	p = NULL;
 	return 0;
     }
 
+    /* start at beginning of buffer */
     if (p == NULL) p = buf;
 
-    if (p && *p == 0) return 0;
+    /* signal that we've reached the end of the buffer */
+    if (p && *p == 0) return NULL;
 
     *s = 0;
+    /* advance to newline, end of buffer, or maximum size,
+       whichever comes first */
     for (i=0; i<size; i++) {
 	s[i] = p[i];
 	if (p[i] == 0) break;
 	if (p[i] == '\n') {
+	    /* throw away newlines */
 	    s[i] = 0;
 	    break;
 	}
     }
-    /* FIXME */
-    p += i + 1;
-    return 1;
+    /* advance the buffer pointer */
+    p += i + (p[i] != 0);
+    return s;
 }
 
 /* ........................................................... */
@@ -3227,7 +3188,7 @@ int execute_script (const char *runfile, const char *buf,
 	} else { /* end if Monte Carlo stuff */
 	    line[0] = '\0';
 	    if ((fb && fgets(line, MAXLEN, fb) == NULL) ||
-		bufgets(line, MAXLEN, buf) == 0) 
+		bufgets(line, MAXLEN, buf) == NULL) 
 		goto endwhile;
 	    while ((cont = top_n_tail(line))) {
 		if (cont == E_ALLOC) {
