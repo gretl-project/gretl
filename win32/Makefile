@@ -23,7 +23,7 @@ GLIBLIB := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
-GRETLLIB = -L$(imports) -lgretl -lintl.dll
+GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas -lf2c
 
@@ -186,7 +186,7 @@ DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lf2c -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lgmp \
+	-o $@ $^ -lf2c -lm -L$(imports) -lxml -lz.dll -lintl -lprob -lgmp \
 	-lmingwex $(GLIBLIB) $(LAPACK_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
@@ -221,7 +221,7 @@ plugins/tramo-x12a.dll: tramo-x12a.o tramo_options.o dllinit.o
 
 plugins/progress_bar.dll: progress_bar.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L$(imports) -lintl.dll
+	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L$(imports) -lintl
 
 plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
