@@ -885,7 +885,14 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 void time_series_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
+	/* Data menu */
 	flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
+	flip(mdata->ifac, "/Data/Add variables/time trend", s);
+	flip(mdata->ifac, "/Data/Add variables/lags of selected variables", s);
+	flip(mdata->ifac, "/Data/Add variables/first differences of selected variables", s);
+	flip(mdata->ifac, "/Data/Add variables/log differences of selected variables", s);
+	flip(mdata->ifac, "/Data/Add variables/periodic dummies", s);
+	/* Variable menu */
 	flip(mdata->ifac, "/Variable/Time series plot", s);
 	flip(mdata->ifac, "/Variable/Correlogram", s);
 	flip(mdata->ifac, "/Variable/Spectrum", s);
@@ -898,8 +905,10 @@ void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Variable/TRAMO analysis", s);
 #endif
 	flip(mdata->ifac, "/Variable/Runs test", s);
+	/* sample menu */
 	flip(mdata->ifac, "/Sample/Compact data...", 
 	     s && DATASET_COMPACTABLE(datainfo));
+	/* Model menu */
 	flip(mdata->ifac, "/Model/Time series", s);
 
 	if (s) {
