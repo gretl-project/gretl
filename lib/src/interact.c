@@ -1069,7 +1069,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case CRITICAL:
-	err = print_critical(line, paths, prn);
+	err = print_critical(line, prn);
 	break;
 
     case DIFF:

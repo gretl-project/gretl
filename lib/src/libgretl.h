@@ -34,11 +34,11 @@
 #endif
 
 #ifdef ENABLE_NLS
-# ifdef OLD_GTK
-#  define I_(String) _(String)
-# else 
+# ifdef USE_GTK2
 #  define I_(String) iso_gettext (String) 
-# endif /* OLD_GTK */
+# else
+#  define I_(String) _(String)
+# endif /* USE_GTK2 */
 #else
 # define I_(String) String
 #endif /* ENABLE_NLS */

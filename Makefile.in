@@ -10,16 +10,16 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 CLI_LIBS = @CLI_LIBS@
 RL_OBJ = @RL_OBJ@
-USE_GTK2 = @USE_GTK2@
+have_gtk = @have_gtk@
 
 ifeq ($(CC),)
   CC = gcc
 endif
 
-ifeq ($(USE_GTK2),"yes")
+ifeq ($(have_gtk),2.0)
   GUIDIR = gui2
 else
-  GUDIR = gui
+  GUIDIR = gui
 endif
 
 INSTALL_PROGRAM = ${INSTALL} -m 755

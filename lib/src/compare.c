@@ -1007,7 +1007,6 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ppaths: information on relevant paths.
  * @prn: gretl printing struct.
  *
  * Tests the given pooled model for fixed and random effects.
@@ -1016,7 +1015,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
  */
 
 int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		  const PATHS *ppaths, PRN *prn) 
+		  PRN *prn) 
 {
     if (pmod->ci != POOLED) {
 	pprintf(prn, _("This test is only relevant for pooled models\n"));
@@ -1032,7 +1031,7 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	void *handle;
 	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
 
-	if (open_plugin(ppaths, "panel_data", &handle)) {
+	if (open_plugin("panel_data", &handle)) {
 	    pprintf(prn, _("Couldn't access panel plugin\n"));
 	    return 1;
 	}
@@ -1060,13 +1059,13 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  */
 
 int mp_ols (const LIST list, double ***pZ, DATAINFO *pdinfo, 
-	    const PATHS *ppaths, PRN *prn) 
+	    PRN *prn) 
 {
     void *handle;
     int (*mplsq)(const int *, double ***, DATAINFO *, PRN *, char *);
     int err;
 
-    if (open_plugin(ppaths, "mp_ols", &handle)) {
+    if (open_plugin("mp_ols", &handle)) {
 	pprintf(prn, _("Couldn't access GMP plugin\n"));
 	return 1;
     }

@@ -55,7 +55,7 @@ char *errbuf;
 
 #define EXCEL_IMPORTER
 
-#ifdef GRETL2
+#ifdef USE_GTK2
 # include "import_common-2.c"
 #else
 # include "import_common.c"

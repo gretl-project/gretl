@@ -47,10 +47,10 @@ static int xmlfile (const char *fname);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
-#ifdef GRETL2
-#define PROGRESS_BAR "progress_bar-2"
+#ifdef USE_GTK2
+# define PROGRESS_BAR "progress_bar-2"
 #else
-#define PROGRESS_BAR "progress_bar"
+# define PROGRESS_BAR "progress_bar"
 #endif
 
 static double atod (char *s, const DATAINFO *pdinfo)
@@ -1300,7 +1300,7 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 	    ctime(&prntime));
 
     if (pdinfo->descrip != NULL && strlen(pdinfo->descrip)) {
-	pprintf(prn, _("Description:\n\n"));
+	pprintf(prn, "%s:\n\n", _("Description"));
 	pprintf(prn, "%s\n\n", pdinfo->descrip);
     }
 
@@ -1312,10 +1312,10 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 	pprintf(prn, "%s: %s\n", _("Frequency"), pdstr);
     }	
 
-    pprintf(prn, _("%s: %s - %s (n = %d)\n\n"), _("Range"),
+    pprintf(prn, "%s: %s - %s (n = %d)\n\n", _("Range"),
 	    startdate, enddate, pdinfo->n);
 
-    pprintf(prn, _("Listing of variables:\n\n"));
+    pprintf(prn, "%s:\n\n", _("Listing of variables"));
 
     for (i=1; i<pdinfo->v; i++) 
 	pprintf(prn, "%9s  %s\n", pdinfo->varname[i], pdinfo->label[i]);
@@ -1986,7 +1986,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     }
     csvinfo->delim = delim;
 
-    pprintf(prn, _("parsing %s...\n"), fname);
+    pprintf(prn, "%s %s...\n", _("parsing"), fname);
     pprintf(prn, _("using delimiter '%c'\n"), delim);
 
     /* count chars and fields in first line */
@@ -2347,7 +2347,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    pprintf(prn, _("parsing %s...\n"), fname);
+    pprintf(prn, "%s %s...\n", _("parsing"), fname);
 
     /* first pass: find max line length, number of vars and number
        of observations, plus basic sanity check */
@@ -2555,16 +2555,16 @@ static int xmlfile (const char *fname)
 # include <dlfcn.h>
 #endif
 
-int open_plugin (const PATHS *ppaths, const char *plugin, void **handle)
+int open_plugin (const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 
 #ifdef OS_WIN32
-    sprintf(pluginpath, "%s\\plugins\\%s.dll", ppaths->gretldir, plugin);
+    sprintf(pluginpath, "%s\\plugins\\%s.dll", fetch_gretl_path(), plugin);
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) return 1;
 #else
-    sprintf(pluginpath, "%splugins/%s.so", ppaths->gretldir, plugin);
+    sprintf(pluginpath, "%splugins/%s.so", fetch_gretl_path(), plugin);
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {
 	fprintf(stderr, "%s\n", dlerror());
@@ -2806,7 +2806,7 @@ static int write_xmldata (const char *fname, const int *list,
     } else sz = 0L;
 
     if (sz) {
-	if (open_plugin(ppaths, PROGRESS_BAR, &handle) == 0) {
+	if (open_plugin(PROGRESS_BAR, &handle) == 0) {
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
@@ -3083,7 +3083,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
 				 double ***pZ, DATAINFO *pdinfo,
-				 PATHS *ppaths, long progress)
+				 long progress)
 {
     xmlNodePtr cur;
     char *tmp = xmlGetProp(node, (UTF) "count");
@@ -3092,7 +3092,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     int (*show_progress) (long, long, int) = NULL;
 
     if (progress) {
-	if (open_plugin(ppaths, PROGRESS_BAR, &handle) == 0) {
+	if (open_plugin(PROGRESS_BAR, &handle) == 0) {
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
@@ -3245,9 +3245,9 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 
     fsz = get_filesize(fname);
     if (fsz > 100000) {
-	fprintf(stderr, _("%s %ld bytes of data...\n"), 
+	fprintf(stderr, "%s %ld bytes %s...\n", 
 		(is_gzipped(fname))? _("Uncompressing") : _("Reading"),
-		fsz);
+		fsz, _("of data"));
 	if (gui) progress = fsz;
     }
 
@@ -3376,7 +3376,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		sprintf(gretl_errmsg, _("Variables information is missing"));
 		err = 1;
 	    }
-	    if (process_observations(doc, cur, pZ, pdinfo, ppaths, progress)) 
+	    if (process_observations(doc, cur, pZ, pdinfo, progress)) 
 		err = 1;
 	    else
 		gotobs = 1;

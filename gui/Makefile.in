@@ -40,7 +40,7 @@ endif
 ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`
 endif
-ifeq ($(have_gnome),yes)
+ifeq ($(have_gnome),"1.4")
   LIBS = $(GNOME_LIBS) $(GTK_EXTRA_LIBS) ../lib/libgretl.la
   GUI_CFLAGS = $(GNOME_CFLAGS) $(GTK_EXTRA_CFLAGS)
   desktopdir = $(gnome_prefix)/share/gnome/apps/Applications

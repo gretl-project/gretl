@@ -3951,7 +3951,7 @@ static int gui_exec_line (char *line,
 
     case HAUSMAN:
 	if ((err = script_model_test(0, prn, 0))) break;
-	err = hausman_test(models[0], &Z, datainfo, &paths, prn);
+	err = hausman_test(models[0], &Z, datainfo, prn);
 	break;
 
     case HCCM:
@@ -4163,7 +4163,7 @@ static int gui_exec_line (char *line,
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(command.list, &Z, datainfo, &paths, prn);
+	err = mp_ols(command.list, &Z, datainfo, prn);
 	break;
 #endif
 

@@ -1228,6 +1228,27 @@ int save_model_copy (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
 
     return 0;
 }
+
+/* .......................................................... */
+
+static char *internal_path_stuff (int code, const char *path)
+{
+    static char gretldir[MAXLEN];
+
+    if (code == 1) {
+	strcpy(gretldir, path);
+	return NULL;
+    } 
+    else if (code == 0) {
+	return gretldir;
+    }
+    return NULL;
+}
+
+const char *fetch_gretl_path (void)
+{
+    return internal_path_stuff (0, NULL);
+}
     
 /* .......................................................... */
 
@@ -1287,7 +1308,9 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
     if (get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH))
 	strcat(ppaths->pgnuplot, "pgnuplot.exe");
     else
-	strcpy(ppaths->pgnuplot, "pgnuplot.exe");	
+	strcpy(ppaths->pgnuplot, "pgnuplot.exe");
+
+    internal_path_stuff (1, ppaths->gretldir);
 
     return 0;
 }
@@ -1349,6 +1372,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 		_("gretlcli.hlp"));
 
     sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
+
+    internal_path_stuff (1, ppaths->gretldir);
 
     return 0;
 }

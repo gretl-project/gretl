@@ -1404,7 +1404,7 @@ int retrieve_boxplot (const char *fname)
     return 0;
 
     corrupt:
-    fprintf(stderr, _("boxplot file is corrupt\n"));
+    errbox(_("boxplot file is corrupt"));
     fclose(fp);
     return 1;
 }

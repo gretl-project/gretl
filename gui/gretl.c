@@ -592,7 +592,7 @@ void nls_init (void)
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
-#ifndef OLD_GTK /* gtk 1.2 doesn't use utf-8 */
+#ifdef USE_GTK2 /* gtk 1.2 doesn't use utf-8 */
     bind_textdomain_codeset (PACKAGE, "UTF-8");
 #endif
     nls_on = doing_nls();

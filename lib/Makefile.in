@@ -10,7 +10,7 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
-USE_GTK2 = @USE_GTK2@
+have_gtk = @have_gtk@
 
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
@@ -31,11 +31,14 @@ pkgconfigdir = $(libdir)/pkgconfig
 INSTALLDIRS = $(libdir) $(includedir) $(aclocaldir)
 
 # Libraries:
-ifeq ($(USE_GTK2),"yes")
+ifeq ($(have_gtk),2.0)
   LIBGRETL = libgretl-2.la 
-  INSTALLDIRS += $(pkgconfigdir) 
+  INSTALLDIRS += $(pkgconfigdir)
+  INSTALL_CFG = install-cfg-new
+
 else
   LIBGRETL = libgretl.la
+  INSTALL_CFG = install-cfg-old
 endif
 LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS)
 
@@ -79,10 +82,15 @@ install: $(LIBGRETL) install-data
 install-strip: $(LIBGRETL) install-data
 	$(LIBTOOL) $(INSTALL_PROGRAM) -s $< $(libdir)/$<
 
-install-data: installdirs
+install-data: installdirs $(INSTALL_CFG)
 	$(INSTALL_DATA) $(srcdir)/*.h $(includedir)
 	$(INSTALL_DATA) ../gretl.m4 $(aclocaldir)
+
+install-cfg-old: ../gretl-config
 	$(INSTALL_PROGRAM) ../gretl-config $(bindir)
+
+install-cfg-new: ../gretl2.pc
+	$(INSTALL_DATA) ../gretl2.pc $(pkgconfigdir)
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)

@@ -37,6 +37,6 @@ void interact_pvalue (void);
 
 double f_crit_a (double a, int df1, int df2);
 
-int print_critical (const char *line, PATHS *ppaths, PRN *prn);
+int print_critical (const char *line, PRN *prn);
 
 

@@ -22,7 +22,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define WINCONFIG_H
 
 /* Are we using gtk 2.0 / gnome 2.0 ? */
-#define GRETL2 1
+#define USE_GTK2 1
 
 /* Native language support */
 #define ENABLE_NLS 1
@@ -60,6 +60,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Do we have paths.h? */
 /* #define HAVE_PATHS_H 1 */
+
+/* Do we have unistd.h? */
+#define HAVE_UNISTD_H 1 
 
 /* Define if the `long double' type works.  */
 /* #undef HAVE_LONG_DOUBLE */

@@ -2499,8 +2499,6 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 
 /* ...................................................... */
 
-# include <dlfcn.h>
-
 static int genr_mpow (const char *str, double *xvec, double **Z, 
 		      DATAINFO *pdinfo)
 {
@@ -2518,18 +2516,10 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
 	return 1;
     } 
 
-#ifdef FIXME
-    if (open_plugin(ppaths, "mp_ols", &handle)) {
-        pprintf(prn, _("Couldn't access GMP plugin\n"));
-        return 1;
-    }
-#else
-    handle = dlopen("/opt/esl/share/gretl/plugins/mp_ols.so", RTLD_LAZY);
-    if (handle == NULL) {
+    if (open_plugin("mp_ols", &handle)) {
         fprintf(stderr, _("Couldn't access GMP plugin\n"));
         return 1;
     }
-#endif
 
     mp_raise = 
 	get_plugin_function("mp_vector_raise_to_power", handle);

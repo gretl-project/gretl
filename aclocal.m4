@@ -1,4 +1,4 @@
-# aclocal.m4 generated automatically by aclocal 1.6.1 -*- Autoconf -*-
+# aclocal.m4 generated automatically by aclocal 1.6.2 -*- Autoconf -*-
 
 # Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
 # Free Software Foundation, Inc.
@@ -5086,402 +5086,6 @@ AC_DEFUN([AM_PROG_NM],        [AC_PROG_NM])
 # This is just to silence aclocal about the macro not being used
 ifelse([AC_DISABLE_FAST_INSTALL])
 
-# Configure paths for gdk-pixbuf
-# Elliot Lee 2000-01-10
-# stolen from Raph Levien 98-11-18
-# stolen from Manish Singh    98-9-30
-# stolen back from Frank Belew
-# stolen from Manish Singh
-# Shamelessly stolen from Owen Taylor
-
-dnl AM_PATH_GDK_PIXBUF([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for GDK_PIXBUF, and define GDK_PIXBUF_CFLAGS and GDK_PIXBUF_LIBS
-dnl
-AC_DEFUN(AM_PATH_GDK_PIXBUF,
-[dnl 
-dnl Get the cflags and libraries from the gdk-pixbuf-config script
-dnl
-AC_ARG_WITH(gdk-pixbuf-prefix,[  --with-gdk-pixbuf-prefix=PFX   Prefix where GDK_PIXBUF is installed (optional)],
-            gdk_pixbuf_prefix="$withval", gdk_pixbuf_prefix="")
-AC_ARG_WITH(gdk-pixbuf-exec-prefix,[  --with-gdk-pixbuf-exec-prefix=PFX Exec prefix where GDK_PIXBUF is installed (optional)],
-            gdk_pixbuf_exec_prefix="$withval", gdk_pixbuf_exec_prefix="")
-AC_ARG_ENABLE(gdk_pixbuftest, [  --disable-gdk_pixbuftest       Do not try to compile and run a test GDK_PIXBUF program],
-		    , enable_gdk_pixbuftest=yes)
-
-  if test x$gdk_pixbuf_exec_prefix != x ; then
-     gdk_pixbuf_args="$gdk_pixbuf_args --exec-prefix=$gdk_pixbuf_exec_prefix"
-     if test x${GDK_PIXBUF_CONFIG+set} = xset ; then
-        GDK_PIXBUF_CONFIG=$gdk_pixbuf_exec_prefix/gdk-pixbuf-config
-     fi
-  fi
-  if test x$gdk_pixbuf_prefix != x ; then
-     gdk_pixbuf_args="$gdk_pixbuf_args --prefix=$gdk_pixbuf_prefix"
-     if test x${GDK_PIXBUF_CONFIG+set} = xset ; then
-        GDK_PIXBUF_CONFIG=$gdk_pixbuf_prefix/bin/gdk-pixbuf-config
-     fi
-  fi
-
-  AC_PATH_PROG(GDK_PIXBUF_CONFIG, gdk-pixbuf-config, no)
-  min_gdk_pixbuf_version=ifelse([$1], ,0.2.5,$1)
-  AC_MSG_CHECKING(for GDK_PIXBUF - version >= $min_gdk_pixbuf_version)
-  no_gdk_pixbuf=""
-  if test "$GDK_PIXBUF_CONFIG" = "no" ; then
-    no_gdk_pixbuf=yes
-  else
-    GDK_PIXBUF_CFLAGS=`$GDK_PIXBUF_CONFIG $gdk_pixbufconf_args --cflags`
-    GDK_PIXBUF_LIBS=`$GDK_PIXBUF_CONFIG $gdk_pixbufconf_args --libs`
-
-    gdk_pixbuf_major_version=`$GDK_PIXBUF_CONFIG $gdk_pixbuf_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-    gdk_pixbuf_minor_version=`$GDK_PIXBUF_CONFIG $gdk_pixbuf_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-    gdk_pixbuf_micro_version=`$GDK_PIXBUF_CONFIG $gdk_pixbuf_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
-    if test "x$enable_gdk_pixbuftest" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $GDK_PIXBUF_CFLAGS"
-      LIBS="$LIBS $GDK_PIXBUF_LIBS"
-dnl
-dnl Now check if the installed GDK_PIXBUF is sufficiently new. (Also sanity
-dnl checks the results of gdk-pixbuf-config to some extent
-dnl
-      rm -f conf.gdk_pixbuftest
-      AC_TRY_RUN([
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-
-char*
-my_strdup (char *str)
-{
-  char *new_str;
-  
-  if (str)
-    {
-      new_str = malloc ((strlen (str) + 1) * sizeof(char));
-      strcpy (new_str, str);
-    }
-  else
-    new_str = NULL;
-  
-  return new_str;
-}
-
-int main ()
-{
-  int major, minor, micro;
-  char *tmp_version;
-
-  system ("touch conf.gdk_pixbuftest");
-
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = my_strdup("$min_gdk_pixbuf_version");
-  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
-     printf("%s, bad version string\n", "$min_gdk_pixbuf_version");
-     exit(1);
-   }
-
-   if (($gdk_pixbuf_major_version > major) ||
-      (($gdk_pixbuf_major_version == major) && ($gdk_pixbuf_minor_version > minor)) ||
-      (($gdk_pixbuf_major_version == major) && ($gdk_pixbuf_minor_version == minor) && ($gdk_pixbuf_micro_version >= micro)))
-    {
-      return 0;
-    }
-  else
-    {
-      printf("\n*** 'gdk-pixbuf-config --version' returned %d.%d.%d, but the minimum version\n", $gdk_pixbuf_major_version, $gdk_pixbuf_minor_version, $gdk_pixbuf_micro_version);
-      printf("*** of GDK_PIXBUF required is %d.%d.%d. If gdk-pixbuf-config is correct, then it is\n", major, minor, micro);
-      printf("*** best to upgrade to the required version.\n");
-      printf("*** If gdk-pixbuf-config was wrong, set the environment variable GDK_PIXBUF_CONFIG\n");
-      printf("*** to point to the correct copy of gdk-pixbuf-config, and remove the file\n");
-      printf("*** config.cache before re-running configure\n");
-      return 1;
-    }
-}
-
-],, no_gdk_pixbuf=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-       CFLAGS="$ac_save_CFLAGS"
-       LIBS="$ac_save_LIBS"
-     fi
-  fi
-  if test "x$no_gdk_pixbuf" = x ; then
-     AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
-  else
-     AC_MSG_RESULT(no)
-     if test "$GDK_PIXBUF_CONFIG" = "no" ; then
-       echo "*** The gdk-pixbuf-config script installed by GDK_PIXBUF could not be found"
-       echo "*** If GDK_PIXBUF was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the GDK_PIXBUF_CONFIG environment variable to the"
-       echo "*** full path to gdk-pixbuf-config."
-     else
-       if test -f conf.gdk_pixbuftest ; then
-        :
-       else
-          echo "*** Could not run GDK_PIXBUF test program, checking why..."
-          CFLAGS="$CFLAGS $GDK_PIXBUF_CFLAGS"
-          LIBS="$LIBS $GDK_PIXBUF_LIBS"
-          AC_TRY_LINK([
-#include <stdio.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-],      [ return 0; ],
-        [ echo "*** The test program compiled, but did not run. This usually means"
-          echo "*** that the run-time linker is not finding GDK_PIXBUF or finding the wrong"
-          echo "*** version of GDK_PIXBUF. If it is not finding GDK_PIXBUF, you'll need to set your"
-          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
-          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
-          echo "*** is required on your system"
-	  echo "***"
-          echo "*** If you have an old version installed, it is best to remove it, although"
-          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
-        [ echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means GDK_PIXBUF was incorrectly installed"
-          echo "*** or that you have moved GDK_PIXBUF since it was installed. In the latter case, you"
-          echo "*** may want to edit the gdk-pixbuf-config script: $GDK_PIXBUF_CONFIG" ])
-          CFLAGS="$ac_save_CFLAGS"
-          LIBS="$ac_save_LIBS"
-       fi
-     fi
-     GDK_PIXBUF_CFLAGS=""
-     GDK_PIXBUF_LIBS=""
-     ifelse([$3], , :, [$3])
-  fi
-  AC_SUBST(GDK_PIXBUF_CFLAGS)
-  AC_SUBST(GDK_PIXBUF_LIBS)
-  rm -f conf.gdk_pixbuftest
-])
-
-# Configure paths for libole2
-# Arturo Tena (tenix)	  1999-09-24
-#
-# This file is a modified version of the
-# file glib.m4 that came with glib 1.2.3:
-# Configure paths for GLIB
-# Owen Taylor     97-11-3
-
-# This m4 macro don't depend on GNOME, just glib.
-
-dnl AM_PATH_LIBOLE2([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
-dnl Test for libole2, and define LIBOLE2_CFLAGS and LIBOLE2_LIBS
-dnl
-dnl Example of use (write the following in your 'configure.in'):
-dnl AM_PATH_LIBOLE2(0.0.1, [LIBS="$LIBS $LIBOLE2_LIBS" CFLAGS="$CFLAGS $LIBOLE2_CFLAGS"], AC_MSG_ERROR([Can't find libole2.]))
-dnl
-dnl
-AC_DEFUN(AM_PATH_LIBOLE2,
-[dnl 
-dnl Get the cflags and libraries from the libole2-config script
-dnl
-AC_ARG_WITH(libole2-prefix,[  --with-libole2-prefix=PFX   Prefix where libole2 is installed (optional)],
-           libole2_config_prefix="$withval", libole2_config_prefix="")
-AC_ARG_WITH(libole2-exec-prefix,[  --with-libole2-exec-prefix=PFX Exec prefix where libole2 is installed (optional)],
-           libole2_config_exec_prefix="$withval", libole2_config_exec_prefix="")
-AC_ARG_ENABLE(libole2test, [  --disable-libole2test       Do not try to compile and run a test libole2 program],
-		    , enable_libole2test=yes)
-
-  if test x$libole2_config_exec_prefix != x ; then
-     libole2_config_args="$libole2_config_args --exec-prefix=$libole2_config_exec_prefix"
-     if test x${LIBOLE2_CONFIG+set} != xset ; then
-        LIBOLE2_CONFIG=$libole2_config_exec_prefix/bin/libole2-config
-     fi
-  fi
-  if test x$libole2_config_prefix != x ; then
-     libole2_config_args="$libole2_config_args --prefix=$libole2_config_prefix"
-     if test x${LIBOLE2_CONFIG+set} != xset ; then
-        LIBOLE2_CONFIG=$libole2_config_prefix/bin/libole2-config
-     fi
-  fi
-
-dnl  for module in . $4
-dnl  do
-dnl      case "$module" in
-dnl         gmodule) 
-dnl             glib_config_args="$glib_config_args gmodule"
-dnl         ;;
-dnl         gthread) 
-dnl             glib_config_args="$glib_config_args gthread"
-dnl         ;;
-dnl      esac
-dnl  done
-
-  AC_PATH_PROG(LIBOLE2_CONFIG, libole2-config, no)
-  min_libole2_version=ifelse([$1], ,0.0.1,$1)
-  AC_MSG_CHECKING(for libole2 - version >= $min_libole2_version)
-  no_libole2=""
-  if test "$LIBOLE2_CONFIG" = "no" ; then
-    no_libole2=yes
-  else
-    LIBOLE2_CFLAGS="`$LIBOLE2_CONFIG $libole2_config_args --cflags` `glib-config --cflags`"
-    LIBOLE2_LIBS=`$LIBOLE2_CONFIG $libole2_config_args --libs`
-    libole2_config_major_version=`$LIBOLE2_CONFIG $libole2_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-    libole2_config_minor_version=`$LIBOLE2_CONFIG $libole2_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-    libole2_config_micro_version=`$LIBOLE2_CONFIG $libole2_config_args --version | \
-           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
-
-    if test "x$enable_libole2test" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $LIBOLE2_CFLAGS"
-      LIBS="$LIBOLE2_LIBS $LIBS"
-dnl
-dnl Now check if the installed libole2 is sufficiently new. (Also sanity
-dnl checks the results of libole2-config to some extent)
-dnl
-      rm -f conf.libole2test
-      AC_TRY_RUN([
-#include <libole2/libole2.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int
-mystrlen (char * s)
-{
-	char *p;
-	for (p = s; *p; p++) ;
-	return p - s;
-}
-
-char *
-mystrdup (char * s)
-{
-	char *ret, *p1, *p2;
-
-	ret = malloc (mystrlen (s));
-	if (ret == NULL) return NULL;
-
-	p1 = s; p2 = ret;
-	while (*p1) {
-		*p2 = *p1;
-		p1++;
-		p2++;
-	}
-
-	return ret;
-}
-
-int 
-main ()
-{
-  int major, minor, micro;
-  char *tmp_version;
-
-  system ("touch conf.libole2test");
-
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = mystrdup("$min_libole2_version");
-  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
-     printf("%s, bad version string\n", "$min_libole2_version");
-     exit(1);
-   }
-
-  if ((libole2_major_version != $libole2_config_major_version) ||
-      (libole2_minor_version != $libole2_config_minor_version) ||
-      (libole2_micro_version != $libole2_config_micro_version))
-    {
-      printf("\n*** 'libole2-config --version' returned %d.%d.%d, but libole2 (%d.%d.%d)\n", 
-             $libole2_config_major_version, $libole2_config_minor_version, $libole2_config_micro_version,
-             libole2_major_version, libole2_minor_version, libole2_micro_version);
-      printf ("*** was found! If libole2-config was correct, then it is best\n");
-      printf ("*** to remove the old version of libole2. You may also be able to fix the error\n");
-      printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
-      printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
-      printf("*** required on your system.\n");
-      printf("*** If libole2-config was wrong, set the environment variable LIBOLE2_CONFIG\n");
-      printf("*** to point to the correct copy of libole2-config, and remove the file\n");
-      printf("*** config.cache before re-running configure\n");
-    } 
-  else if ((libole2_major_version != LIBOLE2_MAJOR_VERSION) ||
-	   (libole2_minor_version != LIBOLE2_MINOR_VERSION) ||
-           (libole2_micro_version != LIBOLE2_MICRO_VERSION))
-    {
-      printf("*** LIBOLE2 header files (version %d.%d.%d) do not match\n",
-	   LIBOLE2_MAJOR_VERSION, LIBOLE2_MINOR_VERSION, LIBOLE2_MICRO_VERSION);
-      printf("*** library (version %d.%d.%d)\n",
-	   libole2_major_version, libole2_minor_version, libole2_micro_version);
-    }
-  else
-    {
-      if ((libole2_major_version > major) ||
-        ((libole2_major_version == major) && (libole2_minor_version > minor)) ||
-        ((libole2_major_version == major) && (libole2_minor_version == minor) && (libole2_micro_version >= micro)))
-      {
-        return 0;
-       }
-     else
-      {
-        printf("\n*** An old version of libole2 (%d.%d.%d) was found.\n",
-               libole2_major_version, libole2_minor_version, libole2_micro_version);
-        printf("*** You need a version of libole2 newer than %d.%d.%d. The latest version of\n", major, minor, micro);
-        printf("*** libole2 is always available from ftp://ftp.gnome.org.\n");
-        printf("***\n");
-        printf("*** If you have already installed a sufficiently new version, this error\n");
-        printf("*** probably means that the wrong copy of the libole2-config shell script is\n");
-        printf("*** being found. The easiest way to fix this is to remove the old version\n");
-        printf("*** of libole2, but you can also set the LIBOLE2_CONFIG environment to point to\n");
-        printf("*** the correct copy of libole2-config. (In this case, you will have to\n");
-        printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
-        printf("*** so that the correct libraries are found at run-time))\n");
-      }
-    }
-  return 1;
-}
-],, no_libole2=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
-       CFLAGS="$ac_save_CFLAGS"
-       LIBS="$ac_save_LIBS"
-     fi
-  fi
-  if test "x$no_libole2" = x ; then
-     AC_MSG_RESULT(yes)
-     ifelse([$2], , :, [$2])     
-  else
-     AC_MSG_RESULT(no)
-     if test "$LIBOLE2_CONFIG" = "no" ; then
-       echo "*** The libole2-config script installed by libole2 could not be found"
-       echo "*** If libole2 was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the LIBOLE2_CONFIG environment variable to the"
-       echo "*** full path to libole2-config."
-     else
-       if test -f conf.libole2test ; then
-        :
-       else
-          echo "*** Could not run libole2 test program, checking why..."
-          CFLAGS="$CFLAGS $LIBOLE2_CFLAGS"
-          LIBS="$LIBS $LIBOLE2_LIBS"
-          AC_TRY_LINK([
-#include <libole2/libole2.h>
-#include <stdio.h>
-],      [ return ((libole2_major_version) || (libole2_minor_version) || (libole2_micro_version)); ],
-        [ echo "*** The test program compiled, but did not run. This usually means"
-          echo "*** that the run-time linker is not finding libole2 or finding the wrong"
-          echo "*** version of libole2. If it is not finding libole2, you'll need to set your"
-          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
-          echo "*** to the installed location. Also, make sure you have run ldconfig if that"
-          echo "*** is required on your system"
-	  echo "***"
-          echo "*** If you have an old version installed, it is best to remove it, although"
-          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH" ],
-        [ echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means libole2 was incorrectly"
-          echo "*** installed or that you have moved libole2 since it was installed. In the"
-          echo "*** latter case, you may want to edit the libole2-config script:"
-          echo "*** $LIBOLE2_CONFIG" ])
-          CFLAGS="$ac_save_CFLAGS"
-          LIBS="$ac_save_LIBS"
-       fi
-     fi
-     LIBOLE2_CFLAGS=""
-     LIBOLE2_LIBS=""
-     ifelse([$3], , :, [$3])
-  fi
-  AC_SUBST(LIBOLE2_CFLAGS)
-  AC_SUBST(LIBOLE2_LIBS)
-  rm -f conf.libole2test
-])
-
 # Configure paths for GMP
 # Hans Petter Jansson     2001-04-29
 
@@ -5623,6 +5227,64 @@ main ()
   AC_SUBST(GMP_LIBS)
   rm -f conf.gmptest
 ])
+
+
+dnl PKG_CHECK_MODULES(GSTUFF, gtk+-2.0 >= 1.3 glib = 1.3.4, action-if, action-not)
+dnl defines GSTUFF_LIBS, GSTUFF_CFLAGS, see pkg-config man page
+dnl also defines GSTUFF_PKG_ERRORS on error
+AC_DEFUN(PKG_CHECK_MODULES, [
+  succeeded=no
+
+  if test -z "$PKG_CONFIG"; then
+    AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+  fi
+
+  if test "$PKG_CONFIG" = "no" ; then
+     echo "*** The pkg-config script could not be found. Make sure it is"
+     echo "*** in your path, or set the PKG_CONFIG environment variable"
+     echo "*** to the full path to pkg-config."
+     echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+  else
+     PKG_CONFIG_MIN_VERSION=0.9.0
+     if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
+        AC_MSG_CHECKING(for $2)
+
+        if $PKG_CONFIG --exists "$2" ; then
+            AC_MSG_RESULT(yes)
+            succeeded=yes
+
+            AC_MSG_CHECKING($1_CFLAGS)
+            $1_CFLAGS=`$PKG_CONFIG --cflags "$2"`
+            AC_MSG_RESULT($$1_CFLAGS)
+
+            AC_MSG_CHECKING($1_LIBS)
+            $1_LIBS=`$PKG_CONFIG --libs "$2"`
+            AC_MSG_RESULT($$1_LIBS)
+        else
+            $1_CFLAGS=""
+            $1_LIBS=""
+            ## If we have a custom action on failure, don't print errors, but 
+            ## do set a variable so people can do so.
+            $1_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "$2"`
+            ifelse([$4], ,echo $$1_PKG_ERRORS,)
+        fi
+
+        AC_SUBST($1_CFLAGS)
+        AC_SUBST($1_LIBS)
+     else
+        echo "*** Your version of pkg-config is too old. You need version $PKG_CONFIG_MIN_VERSION or newer."
+        echo "*** See http://www.freedesktop.org/software/pkgconfig"
+     fi
+  fi
+
+  if test $succeeded = yes; then
+     ifelse([$3], , :, [$3])
+  else
+     ifelse([$4], , AC_MSG_ERROR([Library requirements ($2) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them.]), [$4])
+  fi
+])
+
+
 
 # Configure paths for GTK+
 # Owen Taylor     97-11-3
@@ -6013,5 +5675,401 @@ main ()
   AC_SUBST(GTK_EXTRA_CFLAGS)
   AC_SUBST(GTK_EXTRA_LIBS)
   rm -f conf.gtkextratest
+])
+
+# Configure paths for libole2
+# Arturo Tena (tenix)	  1999-09-24
+#
+# This file is a modified version of the
+# file glib.m4 that came with glib 1.2.3:
+# Configure paths for GLIB
+# Owen Taylor     97-11-3
+
+# This m4 macro don't depend on GNOME, just glib.
+
+dnl AM_PATH_LIBOLE2([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl Test for libole2, and define LIBOLE2_CFLAGS and LIBOLE2_LIBS
+dnl
+dnl Example of use (write the following in your 'configure.in'):
+dnl AM_PATH_LIBOLE2(0.0.1, [LIBS="$LIBS $LIBOLE2_LIBS" CFLAGS="$CFLAGS $LIBOLE2_CFLAGS"], AC_MSG_ERROR([Can't find libole2.]))
+dnl
+dnl
+AC_DEFUN(AM_PATH_LIBOLE2,
+[dnl 
+dnl Get the cflags and libraries from the libole2-config script
+dnl
+AC_ARG_WITH(libole2-prefix,[  --with-libole2-prefix=PFX   Prefix where libole2 is installed (optional)],
+           libole2_config_prefix="$withval", libole2_config_prefix="")
+AC_ARG_WITH(libole2-exec-prefix,[  --with-libole2-exec-prefix=PFX Exec prefix where libole2 is installed (optional)],
+           libole2_config_exec_prefix="$withval", libole2_config_exec_prefix="")
+AC_ARG_ENABLE(libole2test, [  --disable-libole2test       Do not try to compile and run a test libole2 program],
+		    , enable_libole2test=yes)
+
+  if test x$libole2_config_exec_prefix != x ; then
+     libole2_config_args="$libole2_config_args --exec-prefix=$libole2_config_exec_prefix"
+     if test x${LIBOLE2_CONFIG+set} != xset ; then
+        LIBOLE2_CONFIG=$libole2_config_exec_prefix/bin/libole2-config
+     fi
+  fi
+  if test x$libole2_config_prefix != x ; then
+     libole2_config_args="$libole2_config_args --prefix=$libole2_config_prefix"
+     if test x${LIBOLE2_CONFIG+set} != xset ; then
+        LIBOLE2_CONFIG=$libole2_config_prefix/bin/libole2-config
+     fi
+  fi
+
+dnl  for module in . $4
+dnl  do
+dnl      case "$module" in
+dnl         gmodule) 
+dnl             glib_config_args="$glib_config_args gmodule"
+dnl         ;;
+dnl         gthread) 
+dnl             glib_config_args="$glib_config_args gthread"
+dnl         ;;
+dnl      esac
+dnl  done
+
+  AC_PATH_PROG(LIBOLE2_CONFIG, libole2-config, no)
+  min_libole2_version=ifelse([$1], ,0.0.1,$1)
+  AC_MSG_CHECKING(for libole2 - version >= $min_libole2_version)
+  no_libole2=""
+  if test "$LIBOLE2_CONFIG" = "no" ; then
+    no_libole2=yes
+  else
+    LIBOLE2_CFLAGS="`$LIBOLE2_CONFIG $libole2_config_args --cflags` `glib-config --cflags`"
+    LIBOLE2_LIBS=`$LIBOLE2_CONFIG $libole2_config_args --libs`
+    libole2_config_major_version=`$LIBOLE2_CONFIG $libole2_config_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+    libole2_config_minor_version=`$LIBOLE2_CONFIG $libole2_config_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+    libole2_config_micro_version=`$LIBOLE2_CONFIG $libole2_config_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+
+    if test "x$enable_libole2test" = "xyes" ; then
+      ac_save_CFLAGS="$CFLAGS"
+      ac_save_LIBS="$LIBS"
+      CFLAGS="$CFLAGS $LIBOLE2_CFLAGS"
+      LIBS="$LIBOLE2_LIBS $LIBS"
+dnl
+dnl Now check if the installed libole2 is sufficiently new. (Also sanity
+dnl checks the results of libole2-config to some extent)
+dnl
+      rm -f conf.libole2test
+      AC_TRY_RUN([
+#include <libole2/libole2.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int
+mystrlen (char * s)
+{
+	char *p;
+	for (p = s; *p; p++) ;
+	return p - s;
+}
+
+char *
+mystrdup (char * s)
+{
+	char *ret, *p1, *p2;
+
+	ret = malloc (mystrlen (s));
+	if (ret == NULL) return NULL;
+
+	p1 = s; p2 = ret;
+	while (*p1) {
+		*p2 = *p1;
+		p1++;
+		p2++;
+	}
+
+	return ret;
+}
+
+int 
+main ()
+{
+  int major, minor, micro;
+  char *tmp_version;
+
+  system ("touch conf.libole2test");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = mystrdup("$min_libole2_version");
+  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
+     printf("%s, bad version string\n", "$min_libole2_version");
+     exit(1);
+   }
+
+  if ((libole2_major_version != $libole2_config_major_version) ||
+      (libole2_minor_version != $libole2_config_minor_version) ||
+      (libole2_micro_version != $libole2_config_micro_version))
+    {
+      printf("\n*** 'libole2-config --version' returned %d.%d.%d, but libole2 (%d.%d.%d)\n", 
+             $libole2_config_major_version, $libole2_config_minor_version, $libole2_config_micro_version,
+             libole2_major_version, libole2_minor_version, libole2_micro_version);
+      printf ("*** was found! If libole2-config was correct, then it is best\n");
+      printf ("*** to remove the old version of libole2. You may also be able to fix the error\n");
+      printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
+      printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
+      printf("*** required on your system.\n");
+      printf("*** If libole2-config was wrong, set the environment variable LIBOLE2_CONFIG\n");
+      printf("*** to point to the correct copy of libole2-config, and remove the file\n");
+      printf("*** config.cache before re-running configure\n");
+    } 
+  else if ((libole2_major_version != LIBOLE2_MAJOR_VERSION) ||
+	   (libole2_minor_version != LIBOLE2_MINOR_VERSION) ||
+           (libole2_micro_version != LIBOLE2_MICRO_VERSION))
+    {
+      printf("*** LIBOLE2 header files (version %d.%d.%d) do not match\n",
+	   LIBOLE2_MAJOR_VERSION, LIBOLE2_MINOR_VERSION, LIBOLE2_MICRO_VERSION);
+      printf("*** library (version %d.%d.%d)\n",
+	   libole2_major_version, libole2_minor_version, libole2_micro_version);
+    }
+  else
+    {
+      if ((libole2_major_version > major) ||
+        ((libole2_major_version == major) && (libole2_minor_version > minor)) ||
+        ((libole2_major_version == major) && (libole2_minor_version == minor) && (libole2_micro_version >= micro)))
+      {
+        return 0;
+       }
+     else
+      {
+        printf("\n*** An old version of libole2 (%d.%d.%d) was found.\n",
+               libole2_major_version, libole2_minor_version, libole2_micro_version);
+        printf("*** You need a version of libole2 newer than %d.%d.%d. The latest version of\n", major, minor, micro);
+        printf("*** libole2 is always available from ftp://ftp.gnome.org.\n");
+        printf("***\n");
+        printf("*** If you have already installed a sufficiently new version, this error\n");
+        printf("*** probably means that the wrong copy of the libole2-config shell script is\n");
+        printf("*** being found. The easiest way to fix this is to remove the old version\n");
+        printf("*** of libole2, but you can also set the LIBOLE2_CONFIG environment to point to\n");
+        printf("*** the correct copy of libole2-config. (In this case, you will have to\n");
+        printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
+        printf("*** so that the correct libraries are found at run-time))\n");
+      }
+    }
+  return 1;
+}
+],, no_libole2=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+       CFLAGS="$ac_save_CFLAGS"
+       LIBS="$ac_save_LIBS"
+     fi
+  fi
+  if test "x$no_libole2" = x ; then
+     AC_MSG_RESULT(yes)
+     ifelse([$2], , :, [$2])     
+  else
+     AC_MSG_RESULT(no)
+     if test "$LIBOLE2_CONFIG" = "no" ; then
+       echo "*** The libole2-config script installed by libole2 could not be found"
+       echo "*** If libole2 was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** your path, or set the LIBOLE2_CONFIG environment variable to the"
+       echo "*** full path to libole2-config."
+     else
+       if test -f conf.libole2test ; then
+        :
+       else
+          echo "*** Could not run libole2 test program, checking why..."
+          CFLAGS="$CFLAGS $LIBOLE2_CFLAGS"
+          LIBS="$LIBS $LIBOLE2_LIBS"
+          AC_TRY_LINK([
+#include <libole2/libole2.h>
+#include <stdio.h>
+],      [ return ((libole2_major_version) || (libole2_minor_version) || (libole2_micro_version)); ],
+        [ echo "*** The test program compiled, but did not run. This usually means"
+          echo "*** that the run-time linker is not finding libole2 or finding the wrong"
+          echo "*** version of libole2. If it is not finding libole2, you'll need to set your"
+          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+          echo "*** to the installed location. Also, make sure you have run ldconfig if that"
+          echo "*** is required on your system"
+	  echo "***"
+          echo "*** If you have an old version installed, it is best to remove it, although"
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH" ],
+        [ echo "*** The test program failed to compile or link. See the file config.log for the"
+          echo "*** exact error that occured. This usually means libole2 was incorrectly"
+          echo "*** installed or that you have moved libole2 since it was installed. In the"
+          echo "*** latter case, you may want to edit the libole2-config script:"
+          echo "*** $LIBOLE2_CONFIG" ])
+          CFLAGS="$ac_save_CFLAGS"
+          LIBS="$ac_save_LIBS"
+       fi
+     fi
+     LIBOLE2_CFLAGS=""
+     LIBOLE2_LIBS=""
+     ifelse([$3], , :, [$3])
+  fi
+  AC_SUBST(LIBOLE2_CFLAGS)
+  AC_SUBST(LIBOLE2_LIBS)
+  rm -f conf.libole2test
+])
+
+# Configure paths for gdk-pixbuf
+# Elliot Lee 2000-01-10
+# stolen from Raph Levien 98-11-18
+# stolen from Manish Singh    98-9-30
+# stolen back from Frank Belew
+# stolen from Manish Singh
+# Shamelessly stolen from Owen Taylor
+
+dnl AM_PATH_GDK_PIXBUF([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl Test for GDK_PIXBUF, and define GDK_PIXBUF_CFLAGS and GDK_PIXBUF_LIBS
+dnl
+AC_DEFUN(AM_PATH_GDK_PIXBUF,
+[dnl 
+dnl Get the cflags and libraries from the gdk-pixbuf-config script
+dnl
+AC_ARG_WITH(gdk-pixbuf-prefix,[  --with-gdk-pixbuf-prefix=PFX   Prefix where GDK_PIXBUF is installed (optional)],
+            gdk_pixbuf_prefix="$withval", gdk_pixbuf_prefix="")
+AC_ARG_WITH(gdk-pixbuf-exec-prefix,[  --with-gdk-pixbuf-exec-prefix=PFX Exec prefix where GDK_PIXBUF is installed (optional)],
+            gdk_pixbuf_exec_prefix="$withval", gdk_pixbuf_exec_prefix="")
+AC_ARG_ENABLE(gdk_pixbuftest, [  --disable-gdk_pixbuftest       Do not try to compile and run a test GDK_PIXBUF program],
+		    , enable_gdk_pixbuftest=yes)
+
+  if test x$gdk_pixbuf_exec_prefix != x ; then
+     gdk_pixbuf_args="$gdk_pixbuf_args --exec-prefix=$gdk_pixbuf_exec_prefix"
+     if test x${GDK_PIXBUF_CONFIG+set} = xset ; then
+        GDK_PIXBUF_CONFIG=$gdk_pixbuf_exec_prefix/gdk-pixbuf-config
+     fi
+  fi
+  if test x$gdk_pixbuf_prefix != x ; then
+     gdk_pixbuf_args="$gdk_pixbuf_args --prefix=$gdk_pixbuf_prefix"
+     if test x${GDK_PIXBUF_CONFIG+set} = xset ; then
+        GDK_PIXBUF_CONFIG=$gdk_pixbuf_prefix/bin/gdk-pixbuf-config
+     fi
+  fi
+
+  AC_PATH_PROG(GDK_PIXBUF_CONFIG, gdk-pixbuf-config, no)
+  min_gdk_pixbuf_version=ifelse([$1], ,0.2.5,$1)
+  AC_MSG_CHECKING(for GDK_PIXBUF - version >= $min_gdk_pixbuf_version)
+  no_gdk_pixbuf=""
+  if test "$GDK_PIXBUF_CONFIG" = "no" ; then
+    no_gdk_pixbuf=yes
+  else
+    GDK_PIXBUF_CFLAGS=`$GDK_PIXBUF_CONFIG $gdk_pixbufconf_args --cflags`
+    GDK_PIXBUF_LIBS=`$GDK_PIXBUF_CONFIG $gdk_pixbufconf_args --libs`
+
+    gdk_pixbuf_major_version=`$GDK_PIXBUF_CONFIG $gdk_pixbuf_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+    gdk_pixbuf_minor_version=`$GDK_PIXBUF_CONFIG $gdk_pixbuf_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+    gdk_pixbuf_micro_version=`$GDK_PIXBUF_CONFIG $gdk_pixbuf_config_args --version | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+    if test "x$enable_gdk_pixbuftest" = "xyes" ; then
+      ac_save_CFLAGS="$CFLAGS"
+      ac_save_LIBS="$LIBS"
+      CFLAGS="$CFLAGS $GDK_PIXBUF_CFLAGS"
+      LIBS="$LIBS $GDK_PIXBUF_LIBS"
+dnl
+dnl Now check if the installed GDK_PIXBUF is sufficiently new. (Also sanity
+dnl checks the results of gdk-pixbuf-config to some extent
+dnl
+      rm -f conf.gdk_pixbuftest
+      AC_TRY_RUN([
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
+
+char*
+my_strdup (char *str)
+{
+  char *new_str;
+  
+  if (str)
+    {
+      new_str = malloc ((strlen (str) + 1) * sizeof(char));
+      strcpy (new_str, str);
+    }
+  else
+    new_str = NULL;
+  
+  return new_str;
+}
+
+int main ()
+{
+  int major, minor, micro;
+  char *tmp_version;
+
+  system ("touch conf.gdk_pixbuftest");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = my_strdup("$min_gdk_pixbuf_version");
+  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
+     printf("%s, bad version string\n", "$min_gdk_pixbuf_version");
+     exit(1);
+   }
+
+   if (($gdk_pixbuf_major_version > major) ||
+      (($gdk_pixbuf_major_version == major) && ($gdk_pixbuf_minor_version > minor)) ||
+      (($gdk_pixbuf_major_version == major) && ($gdk_pixbuf_minor_version == minor) && ($gdk_pixbuf_micro_version >= micro)))
+    {
+      return 0;
+    }
+  else
+    {
+      printf("\n*** 'gdk-pixbuf-config --version' returned %d.%d.%d, but the minimum version\n", $gdk_pixbuf_major_version, $gdk_pixbuf_minor_version, $gdk_pixbuf_micro_version);
+      printf("*** of GDK_PIXBUF required is %d.%d.%d. If gdk-pixbuf-config is correct, then it is\n", major, minor, micro);
+      printf("*** best to upgrade to the required version.\n");
+      printf("*** If gdk-pixbuf-config was wrong, set the environment variable GDK_PIXBUF_CONFIG\n");
+      printf("*** to point to the correct copy of gdk-pixbuf-config, and remove the file\n");
+      printf("*** config.cache before re-running configure\n");
+      return 1;
+    }
+}
+
+],, no_gdk_pixbuf=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+       CFLAGS="$ac_save_CFLAGS"
+       LIBS="$ac_save_LIBS"
+     fi
+  fi
+  if test "x$no_gdk_pixbuf" = x ; then
+     AC_MSG_RESULT(yes)
+     ifelse([$2], , :, [$2])     
+  else
+     AC_MSG_RESULT(no)
+     if test "$GDK_PIXBUF_CONFIG" = "no" ; then
+       echo "*** The gdk-pixbuf-config script installed by GDK_PIXBUF could not be found"
+       echo "*** If GDK_PIXBUF was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** your path, or set the GDK_PIXBUF_CONFIG environment variable to the"
+       echo "*** full path to gdk-pixbuf-config."
+     else
+       if test -f conf.gdk_pixbuftest ; then
+        :
+       else
+          echo "*** Could not run GDK_PIXBUF test program, checking why..."
+          CFLAGS="$CFLAGS $GDK_PIXBUF_CFLAGS"
+          LIBS="$LIBS $GDK_PIXBUF_LIBS"
+          AC_TRY_LINK([
+#include <stdio.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
+],      [ return 0; ],
+        [ echo "*** The test program compiled, but did not run. This usually means"
+          echo "*** that the run-time linker is not finding GDK_PIXBUF or finding the wrong"
+          echo "*** version of GDK_PIXBUF. If it is not finding GDK_PIXBUF, you'll need to set your"
+          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+          echo "*** is required on your system"
+	  echo "***"
+          echo "*** If you have an old version installed, it is best to remove it, although"
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
+        [ echo "*** The test program failed to compile or link. See the file config.log for the"
+          echo "*** exact error that occured. This usually means GDK_PIXBUF was incorrectly installed"
+          echo "*** or that you have moved GDK_PIXBUF since it was installed. In the latter case, you"
+          echo "*** may want to edit the gdk-pixbuf-config script: $GDK_PIXBUF_CONFIG" ])
+          CFLAGS="$ac_save_CFLAGS"
+          LIBS="$ac_save_LIBS"
+       fi
+     fi
+     GDK_PIXBUF_CFLAGS=""
+     GDK_PIXBUF_LIBS=""
+     ifelse([$3], , :, [$3])
+  fi
+  AC_SUBST(GDK_PIXBUF_CFLAGS)
+  AC_SUBST(GDK_PIXBUF_LIBS)
+  rm -f conf.gdk_pixbuftest
 ])
 

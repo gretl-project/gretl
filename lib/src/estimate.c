@@ -1847,7 +1847,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 	ess = ar.ess;
 	pprintf(prn, "%16c%3d %20f ", ' ', iter, ess);
 	if (iter > 1) pprintf(prn, "%13.3f\n", diff);
-	else pprintf(prn, _("      undefined\n")); 
+	else pprintf(prn, "%15s\n", _("undefined")); 
 	if (iter == 20) break;
     } /* end loop */
 

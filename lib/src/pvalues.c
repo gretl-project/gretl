@@ -530,7 +530,6 @@ static int parse_critical_input (const char *str, int *i,
  * critical t df (student's t)
  * critical X df (chi-square)
  * critical F dfn dfd (F distribution)
- * @ppaths: pointer to paths information struct.
  * @prn: gretl printing struct.
  *
  * Prints critical values for the specified distribution at the
@@ -540,7 +539,7 @@ static int parse_critical_input (const char *str, int *i,
  *
  */
 
-int print_critical (const char *line, PATHS *ppaths, PRN *prn)
+int print_critical (const char *line, PRN *prn)
 {
     void *handle;
     void *funp = NULL;
@@ -550,7 +549,7 @@ int print_critical (const char *line, PATHS *ppaths, PRN *prn)
     void (*chicrit)(int, PRN *, int) = NULL;
     int i, n = -1, df = -1, err = 0;
 
-    if (open_plugin(ppaths, "stats_tables", &handle)) return 1;
+    if (open_plugin("stats_tables", &handle)) return 1;
 
     if (parse_critical_input(line, &i, &df, &n)) {
 	pprintf(prn, _("Invalid input\n"));

@@ -825,7 +825,7 @@ void exec_line (char *line, PRN *prn)
 
     case HAUSMAN:
 	if ((err = model_test_start(0, prn, 0))) break;
-	err = hausman_test(models[0], &Z, datainfo, &paths, prn);
+	err = hausman_test(models[0], &Z, datainfo, prn);
 	break;
 
     case HCCM:
@@ -1023,7 +1023,7 @@ void exec_line (char *line, PRN *prn)
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(command.list, &Z, datainfo, &paths, prn);
+	err = mp_ols(command.list, &Z, datainfo, prn);
 	break;
 #endif
 

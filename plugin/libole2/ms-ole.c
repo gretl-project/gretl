@@ -10,7 +10,9 @@
 
 #include <stdio.h>
 
-#ifdef HAVE_CONFIG_H
+#if defined(OS_WIN32)
+# include "winconfig.h"
+#elif defined (HAVE_CONFIG_H)
 # include "config.h"
 #endif
 

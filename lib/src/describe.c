@@ -1210,8 +1210,9 @@ int vars_test (LIST list, double **Z, const DATAINFO *pdinfo,
 
     pprintf(prn, _("\nEquality of variances test\n\n"));
     pprintf(prn, _("   Ratio of sample variances = %g\n"), F);
-    pprintf(prn, _("   Null hypothesis: The two population variances are equal.\n"));
-    pprintf(prn, _("   Test statistic: F(%d,%d) = %g\n"), dfn, dfd, F);
+    pprintf(prn, "   %s: %s\n", _("Null hypothesis"), 
+	    _("The two population variances are equal"));
+    pprintf(prn, "   %s: F(%d,%d) = %g\n", _("Test statistic"), dfn, dfd, F);
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), fdist(F, dfn, dfd));
     if (fdist(F, dfn, dfd) > .10)
 	pprintf(prn, _("   The difference is not statistically significant.\n\n"));
