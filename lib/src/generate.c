@@ -3903,7 +3903,7 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
     } 
 
     /* inside a function, generating a "my" local var:
-       ignore globals */
+       ignore globals altogether */
     if (local) {
 	for (i=1; i<pdinfo->v; i++) { 
 	    if (!strcmp(pdinfo->varname[i], check) &&
@@ -3914,18 +3914,24 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 	}
     } else if (sd > 0) {
 	/* executing a function: pick a local var as first
-	   choice, global as second */
+	   choice, parent-local or global as second */
 	int localv = -1;
 	int globalv = -1;
+	int slmax = -1;
 
 	for (i=1; i<pdinfo->v; i++) { 
 	    if (!strcmp(pdinfo->varname[i], check)) {
-		if (STACK_LEVEL(pdinfo, i) == 0) {
-		    globalv = i;
-		} else if (STACK_LEVEL(pdinfo, i) == sd) {
+		int sl = STACK_LEVEL(pdinfo, i);
+
+		if (sl < sd) {
+		    if (sl > slmax) {
+			slmax = sl;
+			globalv = i;
+		    }
+		} else if (sl == sd) {
 		    localv = i;
 		}
-		if (globalv > 0 && localv > 0) {
+		if (localv > 0) {
 		    break;
 		}
 	    }
@@ -3937,7 +3943,7 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
 	    ret = globalv;
 	}
     } else {
-	/* not inside a function, simple */
+	/* not inside a function, nice and simple */
 	for (i=1; i<pdinfo->v; i++) { 
 	    if (!strcmp(pdinfo->varname[i], check)) { 
 		ret = i;
