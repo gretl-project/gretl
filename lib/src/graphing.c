@@ -444,17 +444,20 @@ static int factorized_vars (double ***pZ,
     return 0;
 }
 
-#ifndef OS_WIN32
 static int gp_png_wants_color (void)
 {
+    /* "color" is wanted for gnuplot 3.7, but not 3.8 */
+#ifdef OS_WIN32
+    return 0;
+#else
     static int c = -1; 
 
     if (c == -1) {
 	c = system("echo \"set term png color\" | `which gnuplot` 2>/dev/null");
     }
     return !c;
-}
 #endif
+}
 
 /**
  * gnuplot_init:
@@ -476,16 +479,26 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
 	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
 	if (mktemp(ppaths->plotfile) == NULL) return 1;
     }
+
     *fpp = fopen(ppaths->plotfile, "w");
     if (*fpp == NULL) return 1;
 
     if (GRETL_GUI(ppaths)) {
-#ifdef OS_WIN32
-	/* "color" is wanted here for gnuplot 3.7, but not 3.8 */
-	fputs("set term png\n", *fpp);
-#else /* see if the png terminal wants the "color" parameter */
-	fprintf(*fpp, "set term png%s\n", (gp_png_wants_color())? " color" : "");
-#endif
+	const char *grfont = NULL;
+	const char *grfsize = NULL;
+	char fontspec[32];
+
+	grfont = getenv("GRETL_PNG_GRAPH_FONT");
+	grfsize = getenv("GRETL_PNG_GRAPH_FONT_SIZE");
+	if (grfont != NULL && grfsize != NULL) {
+	    sprintf(fontspec, " font '%s' %s", grfont, grfsize);
+	} else {
+	    *fontspec = 0;
+	}
+
+	fprintf(*fpp, "set term png%s%s\n", 
+		(gp_png_wants_color())? " color" : "", fontspec);
+
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
     }
 #else /* not GNUPLOT_PNG */
