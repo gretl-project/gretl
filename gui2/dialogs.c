@@ -39,10 +39,6 @@ struct dialog_t_ {
     gretlopt opt;
 };
 
-/* was NOT on for gtk2: needs checking */
-
-#define EDIT_DIALOG_BLOCKS 0 
-
 /* ........................................................... */
 
 static GtkWidget *open_dialog;
@@ -63,12 +59,10 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
 {
     dialog_t *ddata = (dialog_t *) data;
 
-#if EDIT_DIALOG_BLOCKS
-    gtk_main_quit();
-#endif
+    g_free (ddata); 
 
-    g_free (ddata);
     open_dialog = NULL;
+
     if (active_edit_id) active_edit_id = NULL;
     if (active_edit_name) active_edit_name = NULL;
     if (active_edit_text) active_edit_text = NULL;
@@ -400,6 +394,11 @@ static void no_resize (GtkWidget *w)
 
 /* ........................................................... */
 
+#define dialog_help_available(c) (c != 0 && c != PRINT && \
+                                  c != CREATE_USERDIR && \
+                                  c != GENR_NORMAL && \
+                                  c != GENR_UNIFORM)
+
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick)
@@ -407,6 +406,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     dialog_t *d;
     GtkWidget *tempwid;
     GtkWidget *top_vbox, *button_box;
+    int modal = 0;
 
     if (open_dialog != NULL) {
 	gdk_window_raise(open_dialog->window);
@@ -471,6 +471,8 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	active_edit_name = d->edit;
     } else if (varclick == VARCLICK_INSERT_TEXT) { 
 	active_edit_text = d->edit;
+    } else {
+	modal = 1;
     }
 
     gtk_widget_grab_focus(d->edit);
@@ -490,8 +492,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     }
 
     /* Create a "Help" button if wanted */
-    if (cmdcode && cmdcode != PRINT && cmdcode != CREATE_USERDIR) {
+    if (dialog_help_available(cmdcode)) {
 	context_help_button(button_box, cmdcode);
+	modal = 0;
     }
 
 #ifndef OLD_GTK
@@ -500,9 +503,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     gtk_widget_show(d->dialog); 
 
-#if EDIT_DIALOG_BLOCKS
-    gtk_main();
-#endif
+    if (modal) {
+	gtk_window_set_modal(GTK_WINDOW(d->dialog), TRUE);
+    }
 } 
 
 /* ........................................................... */
@@ -580,17 +583,18 @@ int yes_no_dialog (char *title, char *message, int cancel)
     GtkWidget *dialog, *label;
     int button;
 
-    if (cancel)
+    if (cancel) {
 	dialog = gnome_dialog_new (title,
 				   GNOME_STOCK_BUTTON_YES,
 				   GNOME_STOCK_BUTTON_NO,
 				   GNOME_STOCK_BUTTON_CANCEL,
 				   NULL);
-    else
+    } else {
 	dialog = gnome_dialog_new (title,
 				   GNOME_STOCK_BUTTON_YES,
 				   GNOME_STOCK_BUTTON_NO,
 				   NULL);
+    }
 
     gnome_dialog_set_parent (GNOME_DIALOG (dialog), 
 			     GTK_WINDOW(mdata->w));
@@ -730,9 +734,10 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	if (resp == GRETL_YES) {
 	    save_session_callback(NULL, SAVE_RENAME, NULL);
 	    return TRUE; /* bodge */
+	} else if (resp == GRETL_CANCEL || resp == -1) {
+	    /* resp -1 = wm close */
+	    return TRUE;
 	}
-	/* resp -1 = wm close */
-	else if (resp == GRETL_CANCEL || resp == -1) return TRUE;
 	/* else resp = GRETL_NO: so fall through */
     }
 
@@ -743,8 +748,9 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	if (resp == GRETL_YES) {
 	    save_data_callback();
 	    return TRUE; 
+	} else if (resp == GRETL_CANCEL || resp == -1) {
+	    return TRUE;
 	}
-	else if (resp == GRETL_CANCEL || resp == -1) return TRUE;
     } 
 
     write_rc();

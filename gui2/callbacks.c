@@ -758,6 +758,28 @@ static int prep_spreadsheet (const char *dataspec)
     return 0;
 }
 
+static void n_obs_callback (GtkWidget *w, dialog_t *ddata)
+{
+    const gchar *buf;
+    char obsstr[32];
+    int n;
+
+    buf = dialog_data_get_text(ddata);
+    if (buf == NULL) return;
+
+    n = atoi(buf);
+    if (n < 1 || n > 10000) {
+	errbox(_("Invalid number of observations"));
+	return;
+    }
+
+    close_dialog(ddata);
+
+    datainfo->n = n;
+    sprintf(obsstr, "1 %d", n);
+    prep_spreadsheet(obsstr);
+}
+
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 
 {
     gchar *obsstr = NULL;
@@ -765,6 +787,12 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
     if (pd_code == 0) {
 	datainfo->structure = CROSS_SECTION;
 	datainfo->pd = 1;
+	datainfo->sd0 = 1.0;
+	strcpy(datainfo->stobs, "1");
+	edit_dialog (_("gretl: create data set"), 
+		     _("Number of observations:"), "50",
+		     n_obs_callback, NULL, 0, 0);
+	return;
     } else {
 	datainfo->structure = TIME_SERIES;
 	datainfo->pd = pd_code;
