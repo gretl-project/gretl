@@ -1404,6 +1404,11 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
+    if (pmod->ifc == 0) {
+	pputs(prn, _("This test requires that the model contains a constant\n"));
+	return 1;
+    }
+
     if (!balanced_panel(pdinfo)) {
 	pputs(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
 		"You need to have the same number of observations\n"

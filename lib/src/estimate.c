@@ -1644,7 +1644,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	adds that series to the data set */
 {
     int *tmplist, *list, t, v = pdinfo->v;
-    int i, l0 = pmod->list[0], listlen, check, shrink;
+    int i, j, l0 = pmod->list[0], listlen, check, shrink;
     MODEL aux;
 
     _init_model(&aux, pdinfo);
@@ -1652,17 +1652,25 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     /* add uhat1 to data set temporarily */
-    for (t=pmod->t1; t<=pmod->t2; t++)
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	(*pZ)[v][t] = uhat1[t];
+    }
 
+    /* tmplist is first used to construct a list of
+       vars to be squared */
     listlen = (pmod->ifc)? l0 - 1 : l0;
-    tmplist = malloc(listlen * sizeof(int));
+    tmplist = malloc(listlen * sizeof *tmplist);
     if (tmplist == NULL) return E_ALLOC;
-    tmplist[0] = listlen - 1;
-    for (i=1; i<=tmplist[0]; i++) tmplist[i] = pmod->list[i+1];
-    /*  printlist(tmplist); */
 
-    /* now add squares */
+    tmplist[0] = listlen - 1;
+    j = 1;
+    for (i=2; i<=pmod->list[0]; i++) {
+	if (pmod->list[i] != 0) {
+	    tmplist[j++] = pmod->list[i];
+	}
+    }
+
+    /* now generate the required squares */
     check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
     if (check < 1) {
 	printf(_("generation of squares failed\n"));
@@ -1670,8 +1678,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	return E_SQUARES;
     }
 
-    free(tmplist);
-    tmplist = malloc((check + 2) * sizeof *tmplist);
+    tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
     if (tmplist == NULL) return E_ALLOC;
 
     tmplist[0] = pdinfo->v - v - 1;
@@ -1771,11 +1778,15 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     /* "hsklist" will be one variable longer than the original
        regression list, because it includes a weight variable */
     hsklist[0] = lo + 1;
+
     /* the variable last added to the dataset will be the weight var */
     nwt = hsklist[1] = pdinfo->v - 1;
-    for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
-    /* put the original dependent variable in a position 2 */
+
+    /* put the original dependent variable in at position 2 */
     hsklist[2] = yno;
+
+    /* put the original indep vars into the WLS list */
+    for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
 
     clear_model(&hsk, pdinfo);
     hsk = lsq(hsklist, pZ, pdinfo, WLS, 1, 0.0);
@@ -1783,8 +1794,10 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     shrink = pdinfo->v - orig_nvar;
     if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
+
     free(hsklist);
     free(uhat1);
+
     return hsk;
 }
 
@@ -2615,7 +2628,7 @@ void old_rearrange_list (int *list)
 
 void rearrange_list (int *list)
 /* checks a list for a constant term (ID # 0), and if present, 
-   move it to the first dep var position
+   moves it to the first dep var position
 */
 {
     int i, v;

@@ -357,7 +357,7 @@ argumentos (dos variables) y devuelven, respectivamente, la covarianza y
 el coeficiente de correlación entre las dos variables mencionadas.
 uniform() y normal() no tienen argumentos y devuelven, respectivamente,
 series pseudoaleatorias obtenidas a partir de las distribuciones
-uniforme (0-100) y normal standard (ver también la instrucción seed).
+uniforme (0-1) y normal standard (ver también la instrucción seed).
 
 Hay varias variables que se definen internamente al ejecutar una
 regresión, que pueden usarse también en transformaciones, como son:
@@ -417,7 +417,7 @@ Ejemplos de fórmulas válidas:
                       ar)]
    cv=vcv(x1, x2)    [covarianza de los coeficientes de x1 y x2
                       en el último modelo]
-   x=uniform()/100   [variable pseudoaleatoria uniforme, rango 0 a 1]
+   x=uniform()       [variable pseudoaleatoria uniforme, rango 0 a 1]
    x=3*normal()      [variable pseudoaleatoria normal, con media 0
                       y desviación típica 3]
 
@@ -629,7 +629,7 @@ de datos puede después ser leído y analizado mediante gretl.
 
 Ejemplo de código de bucle (Monte Carlo):
 
-   genr x = uniform()
+   genr x = 100 * uniform()
    loop 100
    genr u = normal()
    genr y = (10*x) + (20*u)

@@ -917,7 +917,7 @@
 	  the arguments. <function>uniform()</function> and
 	  <function>normal()</function>, which do not take arguments,
 	  return pseudo-random series drawn from the uniform
-	  (0&ndash;100) and standard normal distributions respectively
+	  (0&ndash;1) and standard normal distributions respectively
 	  (see also the <command>seed</command> command).  Uniform
 	  series are generated using the C library function
 	  <function>rand()</function>; for normal series the method of
@@ -1199,7 +1199,7 @@
 	      </row>
 	      <row>
 		<entry><command>genr foo =
-		    uniform()/100</command></entry>
+		    uniform()</command></entry>
 		<entry>uniform pseudo-random variable in range
 		  0&ndash;1</entry>
 	      </row>

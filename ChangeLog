@@ -5,6 +5,9 @@ version 1.1.0
   display name for a variable
 - Add option to use QR decomposition instead of Cholesky for
   calculating regression results
+- Fix bug: periodogram command failed in batch mode
+- Make uniform() PRNG generate in the standard range 0-1
+  (rather than 1-100, as it was previously)
 - Clean-up: remove all wasted array elements
 - Update to libtool 1.5
 

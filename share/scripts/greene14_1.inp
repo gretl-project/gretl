@@ -1,0 +1,6 @@
+# Replicate panel example in William Greene, 4e, Chapter 14
+open greene14_1.gdt
+logs C Q PF
+pooled l_C 0 l_Q l_PF LF
+hausman
+

@@ -1,0 +1,4 @@
+# Classic test for ill-conditioned data
+open longley.gdt
+ols 1 0 2 3 4 5 6 7 -o
+

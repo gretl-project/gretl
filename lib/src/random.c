@@ -78,7 +78,7 @@ void gretl_rand_set_seed (unsigned seed)
  * @t2: end of the fill range
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the uniform distribution on 0-100, using the Mersenne
+ * from the uniform distribution on 0-1, using the Mersenne
  * Twister.
  *
  */
@@ -89,9 +89,9 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
     for (t=t1; t<=t2; t++) {
 #ifdef HAVE_G_RAND
-	a[t] = g_rand_double_range(gretl_rand, 0.0, 100.0);
+	a[t] = g_rand_double_range(gretl_rand, 0.0, 1.0);
 #else
-	a[t] = genrand_int32() * (100.0 / 4294967296.0);
+	a[t] = genrand_int32() * (1.0 / 4294967296.0);
 #endif 
     }
 }

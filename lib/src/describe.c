@@ -636,8 +636,8 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 
     list[0] = 3;
     list[1] = 1;
-    list[2] = 2;
-    list[3] = 0;
+    list[2] = 0;
+    list[3] = 2;
 
     _init_model(&tmp, &tmpdinfo);
     tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, 0, 0);
@@ -779,7 +779,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	fprintf(fq, "plot '-' using 1:2 w lines\n");
     }
 
-    if (fq == NULL) {
+    if (do_graph && fq == NULL) {
 	do_graph = 0;
 	err = 1;
     }
@@ -813,7 +813,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	xx /= 2 * M_PI;
 	pprintf(prn, " %.4f%9d%16.2f%14.4f\n", yy, t, 
 		(double) (nobs / 2) / (2 * t), xx);
-	if (do_graph) savexx[t] = xx;
+	if (savexx != NULL) savexx[t] = xx;
 	if (t <= nT) {
 	    omega[t-1] = yy;
 	    hhat[t-1] = xx;

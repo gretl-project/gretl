@@ -49,7 +49,7 @@
     <programlisting>
 	  (* create a blank data set with series length 50 *) 
 	  nulldata 50 
-	  genr x = uniform() 
+	  genr x = 100 * uniform() 
 	  (* open a loop, to be repeated 100 times *) 
 	  loop 100 
 	    genr u = normal()

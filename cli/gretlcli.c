@@ -401,7 +401,9 @@ int main (int argc, char *argv[])
     }
 
     /* should we stop immediately on error, in batch mode? */
-    errfatal = batch;  /* exit on error in batch mode */
+    if (getenv("GRETL_KEEP_GOING") == NULL) {
+	errfatal = batch;  /* exit on error in batch mode */
+    }
 
     /* main command loop */
     while (strcmp(command.cmd, "quit")) {

@@ -379,7 +379,7 @@ or a composite expression that evaluates to a variable (e.g. ln((x1+x2)/2)).
 cov and corr both require two arguments, and return respectively the
 covariance and the correlation coefficient between two named variables.
 uniform() and normal(), which do not take arguments, return pseudo-random
-series drawn from the uniform (0-100) and standard normal distributions
+series drawn from the uniform (0-1) and standard normal distributions
 respectively (see also the seed command).  The pvalue() function takes the
 same arguments as the pvalue command (see below), but in this context commas
 should be placed between the arguments.  The mpow function takes as its
@@ -447,7 +447,7 @@ Examples of genr commands:
   genr rho4 = rho(4)     [grab 4th-order autoregressive coeff. from last
                           model (presumes an ar model)]
   genr cv=vcv(x1, x2)    [covariance of x1 and x2 coeffs. in last model]
-  genr x=uniform()/100   [uniform pseudo-random variable, range 0 to 1]
+  genr x=uniform()       [uniform pseudo-random variable, range 0 to 1]
   genr x=3*normal()      [normal pseudo-random var, mean 0, std. dev. 3]
   genr x=pvalue(t,20,1.4) [p-value for 1.4, under the t distribution with
                            20 degrees of freedom]
@@ -770,7 +770,7 @@ and analysed.
 
 Example of loop code (Monte Carlo):
 
-   genr x = uniform()
+   genr x = 100 * uniform()
    loop 100
    genr u = normal()
    genr y = (10*x) + (20*u)

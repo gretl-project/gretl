@@ -373,7 +373,7 @@ ln((x1+x2)/2)). 'cov' y 'corr' necesitan dos argumentos y producen
 respectivamente la covarianza y el coeficiente de correlación entre dos
 variables especificadas. uniform() y normal(), que no tienen argumentos,
 producen series pseudo-aleatorias obtenidas a partir de la distribución uniforme
-(0-100) y la distribución normal standard respectivamente (ver también la
+(0-1) y la distribución normal standard respectivamente (ver también la
 instrucción seed). La función pvalue() toma los mismos argumentos que la orden
 pvalue (ver más abajo), pero en este contexto deben situarse comas entre sus
 argumentos. La función mpow toma como argumentos el nombre de una serie de datos 
@@ -446,7 +446,7 @@ orden
                           obtenido del último modelo (supone un modelo ar)]
   genr cv=vcv(x1, x2)    [covarianza entre los coeficientes de x1 y x2 en el 
 último modelo]
-  genr x=uniform()/100   [variable pseudo-aleatoria uniforme, de rango 0 a 1]
+  genr x=uniform()       [variable pseudo-aleatoria uniforme, de rango 0 a 1]
   genr x=3*normal()      [variable pseudo-aleatoria normal, de media 0 y desv. 
 típica 3]
   genr x=pvalue(t,20,1.4)[valor p para 1.4, bajo la distribución t con 20 grados 
@@ -779,7 +779,7 @@ de datos para analizarlo.
 
 Ejemplo de programa de bucle (Monte Carlo):
 
-   genr x = uniform()
+   genr x = 100 * uniform()
    loop 100
    genr u = normal()
    genr y = (10*x) + (20*u)
