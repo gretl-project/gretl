@@ -1569,7 +1569,8 @@
 	    (somma cumulata), <func>resample</func> (ricampiona una serie
             con rimpiazzo, utile per il bootstrap), <func>hpfilt</func> (filtro
             di Hodrick&ndash;Prescott: produce la componente di
-            <quote>ciclo</quote> della serie).</para>
+            <quote>ciclo</quote> della serie), <func>bkfilt</func> (filtro passa-banda
+            di Baxter&ndash;King).</para>
 	</li>
 	<li><para>Funzioni per serie storiche: <func>diff</func>
             (differenza prima), <func>ldiff</func> (log-differenza,
