@@ -512,7 +512,66 @@ test_forloop_element (const char *s, LOOPSET *loop,
 }
 
 static int
-parse_as_each_loop (LOOPSET *loop, const char *s)
+each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo, 
+				const char *s)
+{
+    char vn1[VNAMELEN], vn2[VNAMELEN];
+    int nf = 0;
+    int err = 0;
+
+    while (isspace((unsigned char) *s)) s++;
+
+    if (sscanf(s, "%8[^.]..%8s", vn1, vn2) != 2) {
+	err = 1;
+    } else {
+	int v1, v2;
+
+	v1 = varindex(pdinfo, vn1);
+	v2 = varindex(pdinfo, vn2);
+
+	if (v1 < 0 || v2 < 0 || v1 >= pdinfo->v || v2 >= pdinfo->v) {
+	    err = 1;
+	} else {
+	    nf = v2 - v1 + 1;
+	    if (nf <= 0) {
+		err = 1;
+	    }
+	}
+
+	if (!err) {
+	    loop->eachstrs = malloc(nf * sizeof *loop->eachstrs);
+	    if (loop->eachstrs == NULL) {
+		err = E_ALLOC;
+	    } 
+	}
+
+	if (!err) {
+	    int i, j = 0;
+
+	    for (i=v1; i<=v2 && !err; i++) {
+		loop->eachstrs[j++] = gretl_strdup(pdinfo->varname[i]);
+		if (loop->eachstrs[i] == NULL) {
+		    for (j=0; j<i; j++) {
+			free(loop->eachstrs[i]);
+		    }
+		    free(loop->eachstrs);
+		    loop->eachstrs = NULL;
+		    err = E_ALLOC;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	loop->type = EACH_LOOP;
+	loop->ntimes = nf;
+    }    
+
+    return err;
+}
+
+static int
+parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, const char *s)
 {
     char ivar[3];
     int i, nf, err = 0;
@@ -536,39 +595,43 @@ parse_as_each_loop (LOOPSET *loop, const char *s)
 
     s += strlen(ivar);
     nf = count_fields(s);
+
     if (nf == 0) {
 	return 1;
     }
 
-    loop->eachstrs = malloc(nf * sizeof *loop->eachstrs);
-    if (loop->eachstrs == NULL) {
-	err = E_ALLOC;
-    }
+    if (nf == 1 && strstr(s, "..") != NULL) {
+	err = each_strings_from_list_of_vars(loop, pdinfo, s);
+    } else {
+	loop->eachstrs = malloc(nf * sizeof *loop->eachstrs);
 
-    for (i=0; i<nf && !err; i++) {
-	int len;
-
-	while (isspace((unsigned char) *s)) s++;
-	len = strcspn(s, " ");
-
-	loop->eachstrs[i] = gretl_strndup(s, len);
-	if (loop->eachstrs[i] == NULL) {
-	    int j;
-	    
-	    for (j=0; j<i; j++) {
-		free(loop->eachstrs[j]);
-	    }
-	    free(loop->eachstrs);
-	    loop->eachstrs = NULL;
+	if (loop->eachstrs == NULL) {
 	    err = E_ALLOC;
-	} else {
-	    s += len;
 	}
-    }
 
-    if (!err) {
-	loop->type = EACH_LOOP;
-	loop->ntimes = nf;
+	for (i=0; i<nf && !err; i++) {
+	    int len, j;
+
+	    while (isspace((unsigned char) *s)) s++;
+	    len = strcspn(s, " ");
+
+	    loop->eachstrs[i] = gretl_strndup(s, len);
+	    if (loop->eachstrs[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(loop->eachstrs[j]);
+		}
+		free(loop->eachstrs);
+		loop->eachstrs = NULL;
+		err = E_ALLOC;
+	    } else {
+		s += len;
+	    }
+	}
+
+	if (!err) {
+	    loop->type = EACH_LOOP;
+	    loop->ntimes = nf;
+	}
     }
 
     return err;
@@ -692,7 +755,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
     }
 
     else if (strstr(line, "loop foreach") != NULL) {
-	err = parse_as_each_loop(loop, line);
+	err = parse_as_each_loop(loop, pdinfo, line);
     }    
 
     else if (strstr(line, "loop for") != NULL) {
