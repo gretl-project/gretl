@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include <stdarg.h>
+#include <errno.h>
 
 #if defined(ENABLE_NLS) && defined(USE_GTK2)
 #include <glib.h>
@@ -181,27 +182,16 @@ char *charsub (char *str, char find, char repl)
 
 int _isnumber (const char *str)
 {
-    size_t i, n = strlen(str);
-    int decimal = 0, efound = 0;
-    char c;
+    char *test;
+    extern int errno;
 
-    c = str[0];
-    if (c != '+' && c !='-' && c != '.' && !isdigit((unsigned char) c))
-        return 0;
-    for (i=1; i<=n-1; i++) {
-        c = str[i];
-        if (c == '.') {
-            if (decimal) return 0;
-            else decimal = 1;
-        }
-        else if (c == 'e' || c == 'E')  {
-            if (efound) return 0;
-            i++;
-            efound = 1;
-        }
-        else if (isdigit((unsigned char) c)) continue;
-	else return 0;
+    errno = 0;
+    strtod(str, &test);
+
+    if (*test != '\0' || !strcmp(str, test) || errno == ERANGE) {
+	return 0;
     }
+
     return 1;
 }
 

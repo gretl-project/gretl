@@ -1634,6 +1634,14 @@ static void model_latex_copy_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
+static void model_autocorr_menu_state (GtkItemFactory *ifac, gboolean s)
+{
+    flip(ifac, "/Tests/autocorrelation", s);
+    flip(ifac, "/Tests/ARCH", s);
+}
+
+/* ........................................................... */
+
 static void model_panel_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/Tests/panel diagnostics", s);
@@ -1753,6 +1761,10 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (pmod->name) model_save_state(vwin->ifac, FALSE);
 
 	if (pmod->ci == LAD) lad_menu(vwin->ifac);
+
+	if (dataset_is_panel(datainfo)) {
+	    model_autocorr_menu_state(vwin->ifac, FALSE);
+	}
     }
 }
 

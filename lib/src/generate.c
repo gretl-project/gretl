@@ -1178,7 +1178,7 @@ static int panel_missing (int t, const DATAINFO *pdinfo)
     char *p, obs[9];
 
     ntodate(obs, t, pdinfo);
-    p = strchr(obs, '.');
+    p = strchr(obs, ':');
     if (atoi(p + 1) == 1) return 1;
     return 0;
 }
@@ -1714,7 +1714,7 @@ static void get_lag (int v, int lag, double *lagvec, double **Z,
 
 	for (t=t1; t<=pdinfo->t2; t++) {
 	    ntodate(obs, t, pdinfo);
-	    p = strchr(obs, '.');
+	    p = strchr(obs, ':');
 	    j = atoi(p + 1);
 	    if (j <= lag) lagvec[t] = NADBL;
 	}

@@ -1890,19 +1890,29 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
        run on a sub-sample */
 
     nfcast = ft2 - ft1 + 1;
+
+    /* sanity check */
+    if (nfcast > 1024) return E_ALLOC; /* requires > 16MB RAM for fZ */
+
     fn = fdatainfo.n = nfcast + pdinfo->t2 + 1;
     fv = fdatainfo.v = nfcast + orig_v;
 
     fZ = malloc(fv * sizeof *fZ);
-    if (fZ != NULL) 
-	for (i=0; i<fv; i++) 
-	    fZ[i] = malloc(fn * sizeof **fZ);
+    if (fZ == NULL) return E_ALLOC;
+
+    for (i=0; i<fv; i++) {
+	fZ[i] = malloc(fn * sizeof **fZ);
+	if (fZ[i] == NULL) return E_ALLOC;
+    }
+
     list = malloc((fv + 1) * sizeof *list);
+    if (list == NULL) return E_ALLOC;
     yhat = malloc(nfcast * sizeof *yhat);
+    if (yhat == NULL) return E_ALLOC;
     sderr = malloc(nfcast * sizeof *sderr);
+    if (sderr == NULL) return E_ALLOC;
     depvar = malloc(nfcast * sizeof *depvar);
-    if (fZ == NULL || list == NULL || yhat == NULL 
-	|| sderr == NULL || depvar == NULL) return E_ALLOC;
+    if (depvar == NULL) return E_ALLOC;
 
     strcpy(fdatainfo.stobs, pdinfo->stobs);
     fdatainfo.t1 = pdinfo->t1;

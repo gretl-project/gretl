@@ -406,6 +406,9 @@ MODEL lad 2364,61416
 
 lib/src/estimate.h,0
 
+lib/src/foo.c,15
+int main 3,20
+
 lib/src/generate.c,2976
 } GENERATE;GENERATE33,1017
 enum transformations transformations72,2808
@@ -630,20 +633,20 @@ int swap_models 1759,43138
 int _forecast 1770,43327
 int _full_model_list 1826,44571
 int fcast_with_errs 1860,45491
-int is_model_cmd 2066,50924
-int is_model_ref_cmd 2088,51491
-static void store_list 2105,51764
-int save_model_spec 2118,52009
-int re_estimate 2145,52616
-int guess_panel_structure 2210,54059
-int get_panel_structure 2233,54641
-int set_panel_structure 2255,55175
-int balanced_panel 2288,56087
-double get_xvalue 2306,56476
-static void free_mp_varnames 2316,56690
-int allocate_mp_varnames 2330,56973
-void free_gretl_mp_results 2350,57418
-mp_results *gretl_mp_results_new 2367,57759
+int is_model_cmd 2076,51130
+int is_model_ref_cmd 2098,51697
+static void store_list 2115,51970
+int save_model_spec 2128,52215
+int re_estimate 2155,52822
+int guess_panel_structure 2220,54265
+int get_panel_structure 2243,54847
+int set_panel_structure 2265,55381
+int balanced_panel 2298,56293
+double get_xvalue 2316,56677
+static void free_mp_varnames 2326,56891
+int allocate_mp_varnames 2340,57174
+void free_gretl_mp_results 2360,57619
+mp_results *gretl_mp_results_new 2377,57960
 
 lib/src/gretl_utils.h,752
 #define UTILS_H23,901
@@ -963,36 +966,36 @@ static double gammadist_wilson_hilferty 812,19035
 lib/src/pvalues.h,0
 
 lib/src/strutils.c,786
-char gretl_tmp_str[29,945
-int dotpos 41,1199
-int slashpos 61,1558
-void copy 84,2007
-void delchar 102,2328
-void _delete 123,2707
-int haschar 141,3017
-char *charsub 163,3425
-int _isnumber 182,3689
-void lower 216,4395
-void _esl_trunc 233,4695
-void clear 250,4946
-int _count_fields 263,5131
-void _shiftleft 284,5513
-void chopstr 304,5821
-char *switch_ext 327,6365
-int get_base 352,6930
-int top_n_tail 377,7410
-void compress_spaces 417,8201
-int pprintf 449,8836
-char *safecpy 520,10489
-int doing_nls 534,10693
-static int decpoint;556,11008
-int reset_local_decpoint 558,11030
-int get_local_decpoint 571,11216
-double obs_str_to_double 588,11517
-char *colonize_obs 609,11943
-char *iso_gettext 623,12211
-const char *print_time 646,12697
-int get_utf_width 658,12891
+char gretl_tmp_str[30,964
+int dotpos 42,1218
+int slashpos 62,1577
+void copy 85,2026
+void delchar 103,2347
+void _delete 124,2726
+int haschar 142,3036
+char *charsub 164,3444
+int _isnumber 183,3708
+void lower 206,4042
+void _esl_trunc 223,4342
+void clear 240,4593
+int _count_fields 253,4778
+void _shiftleft 274,5160
+void chopstr 294,5468
+char *switch_ext 317,6012
+int get_base 342,6577
+int top_n_tail 367,7057
+void compress_spaces 407,7848
+int pprintf 439,8483
+char *safecpy 510,10136
+int doing_nls 524,10340
+static int decpoint;546,10655
+int reset_local_decpoint 548,10677
+int get_local_decpoint 561,10863
+double obs_str_to_double 578,11164
+char *colonize_obs 599,11590
+char *iso_gettext 613,11858
+const char *print_time 636,12344
+int get_utf_width 648,12538
 
 lib/src/strutils.h,196
 #define STRUTILS_H23,907
@@ -1405,27 +1408,27 @@ gui2/fileselect.c,913
 static char remember_dir[33,1114
 struct extmap extmap35,1149
 static struct extmap action_map[40,1200
-static int action_to_flag 80,2274
-static const char *get_gp_ext 96,2693
-static int dat_ext 108,3122
-static const char *get_ext 126,3524
-static int check_maybe_add_ext 155,4140
-static void script_set_title 185,4888
-static void save_editable_content 198,5258
-static void set_startdir 244,6183
-static void filesel_open_script 258,6505
-static void filesel_open_session 278,6952
-struct winfilter winfilter303,7595
-} winfilter;306,7660
-struct win32_filtermap win32_filtermap308,7674
-static struct winfilter get_gp_filter 313,7748
-static struct winfilter get_filter 338,8463
-static char *make_winfilter 402,11100
-void file_selector 428,11634
-static void filesel_callback 570,15209
-static void extra_get_filter 694,18498
-gtk_file_selection_glob_populate 711,18830
-void file_selector 744,19704
+static int action_to_flag 80,2275
+static const char *get_gp_ext 96,2694
+static int dat_ext 108,3124
+static const char *get_ext 126,3526
+static int check_maybe_add_ext 155,4142
+static void script_set_title 185,4890
+static void save_editable_content 198,5260
+static void set_startdir 244,6185
+static void filesel_open_script 258,6507
+static void filesel_open_session 278,6954
+struct winfilter winfilter303,7597
+} winfilter;306,7662
+struct win32_filtermap win32_filtermap308,7676
+static struct winfilter get_gp_filter 313,7750
+static struct winfilter get_filter 338,8467
+static char *make_winfilter 402,11106
+void file_selector 428,11640
+static void filesel_callback 570,15215
+static void extra_get_filter 694,18504
+gtk_file_selection_glob_populate 711,18836
+void file_selector 744,19710
 
 gui2/fileselect.h,297
 #define IS_DAT_ACTION(IS_DAT_ACTION3,32
@@ -1483,38 +1486,38 @@ static int cant_edit 922,28292
 static int plotspec_init 945,28862
 static int parse_set_line 974,29488
 int read_plotfile 1033,31076
-    PNG_START,1227,35749
-    PNG_ZOOM,1228,35764
-    PNG_UNZOOM1229,35778
-} png_zoom;png_zoom1230,35793
-typedef struct zoom_t zoom_t1232,35806
-} zoom_t;zoom_t1237,35934
-typedef struct png_plot_t png_plot_t1239,35945
-} png_plot_t;png_plot_t1257,36337
-#define WIDTH 1263,36510
-#define HEIGHT 1264,36546
-#define PLOTXMIN 1271,36725
-#define PLOTXMAX 1272,36747
-#define PLOTYMIN 1273,36770
-#define PLOTYMAX 1274,36792
-#define NOTITLE_YMIN 1275,36815
-static void get_data_xy 1277,36842
-static void x_to_date 1307,37551
-static void create_selection_gc 1321,37920
-static void draw_selection_rectangle 1329,38121
-motion_notify_event 1361,39020
-static gint plot_popup_activated 1399,40041
-static GtkWidget *build_plot_menu 1449,41598
-static int make_new_png 1505,42858
-static gint plot_button_release 1566,44162
-static gint plot_button_press 1595,44923
-plot_key_handler 1616,45500
-void plot_expose 1625,45664
-static void render_pngfile 1641,46184
-static void plot_quit 1686,47252
-static int get_plot_yrange 1696,47478
-static int get_plot_ranges 1769,49031
-int gnuplot_show_png 1820,50186
+    PNG_START,1233,35881
+    PNG_ZOOM,1234,35896
+    PNG_UNZOOM1235,35910
+} png_zoom;png_zoom1236,35925
+typedef struct zoom_t zoom_t1238,35938
+} zoom_t;zoom_t1243,36066
+typedef struct png_plot_t png_plot_t1245,36077
+} png_plot_t;png_plot_t1263,36469
+#define WIDTH 1269,36642
+#define HEIGHT 1270,36678
+#define PLOTXMIN 1277,36857
+#define PLOTXMAX 1278,36879
+#define PLOTYMIN 1279,36902
+#define PLOTYMAX 1280,36924
+#define NOTITLE_YMIN 1281,36947
+static void get_data_xy 1283,36974
+static void x_to_date 1313,37683
+static void create_selection_gc 1327,38052
+static void draw_selection_rectangle 1335,38253
+motion_notify_event 1367,39152
+static gint plot_popup_activated 1405,40173
+static GtkWidget *build_plot_menu 1455,41730
+static int make_new_png 1511,42990
+static gint plot_button_release 1572,44294
+static gint plot_button_press 1601,45055
+plot_key_handler 1622,45632
+void plot_expose 1631,45796
+static void render_pngfile 1647,46316
+static void plot_quit 1692,47384
+static int get_plot_yrange 1702,47610
+static int get_plot_ranges 1775,49163
+int gnuplot_show_png 1826,50318
 
 gui2/gpt_control.h,29
 #define GPT_CONTROL_H21,791
@@ -1922,7 +1925,7 @@ void augment_copy_menu 859,21912
 gui2/guiprint.h,26
 #define GUIPRINT_H23,850
 
-gui2/gui_utils.c,3631
+gui2/gui_utils.c,3681
 char *storelist 31,944
 GtkWidget *active_edit_id 32,968
 GtkWidget *active_edit_name 33,1002
@@ -1985,46 +1988,47 @@ static void dialog_table_setup 1245,33854
 static void cursor_to_top 1264,34440
 windata_t *view_buffer 1279,34929
 windata_t *view_file 1333,36479
-windata_t *edit_buffer 1487,40818
-int view_model 1531,42036
-void flip 1594,43945
-static void model_rtf_copy_state 1609,44301
-static void model_latex_copy_state 1616,44485
-static void model_panel_menu_state 1623,44673
-static void model_ml_menu_state 1630,44862
-static void model_menu_state 1637,45066
-static void lmmenu_state 1660,46127
-static void lad_menu 1673,46568
-static void latex_menu_state 1684,46984
-static void model_save_state 1691,47149
-static void set_up_viewer_menu 1699,47388
-static void add_vars_to_plot_menu 1747,48823
-static void plot_dummy_call 1793,50202
-static void add_dummies_to_plot_menu 1803,50499
-static gint check_model_menu 1867,52374
-static void msgbox 1920,54329
-static void msgbox 1942,54748
-void errbox 1959,55182
-void infobox 1966,55305
-int validate_varname 1973,55429
-static int prn_to_clipboard 2011,56368
-static int prn_to_clipboard 2018,56494
-static int prn_to_clipboard 2056,57360
-#define SPECIAL_COPY(SPECIAL_COPY2079,57929
-void text_copy 2081,57989
-void window_print 2206,61052
-void text_undo 2226,61574
-void text_paste 2254,62326
-gint popup_menu_handler 2271,62841
-void add_popup_item 2289,63347
-int gui_open_plugin 2307,63812
-void text_set_cursor 2338,64571
-gint get_char_width 2355,65029
-gchar *textview_get_text 2377,65566
-int build_path 2391,65948
-#define USE_GTK_STOCK_BUTTONS2420,66623
-struct button_type button_type2424,66697
-GtkWidget *standard_button 2430,66775
+windata_t *edit_buffer 1501,41138
+int view_model 1545,42356
+void flip 1608,44265
+static void model_rtf_copy_state 1623,44621
+static void model_latex_copy_state 1630,44805
+static void model_autocorr_menu_state 1637,44993
+static void model_panel_menu_state 1645,45217
+static void model_ml_menu_state 1652,45406
+static void model_menu_state 1659,45610
+static void lmmenu_state 1682,46671
+static void lad_menu 1695,47112
+static void latex_menu_state 1706,47528
+static void model_save_state 1713,47693
+static void set_up_viewer_menu 1721,47932
+static void add_vars_to_plot_menu 1773,49457
+static void plot_dummy_call 1819,50836
+static void add_dummies_to_plot_menu 1829,51133
+static gint check_model_menu 1893,53008
+static void msgbox 1946,54963
+static void msgbox 1968,55382
+void errbox 1985,55816
+void infobox 1992,55939
+int validate_varname 1999,56063
+static int prn_to_clipboard 2037,57002
+static int prn_to_clipboard 2044,57128
+static int prn_to_clipboard 2082,57994
+#define SPECIAL_COPY(SPECIAL_COPY2105,58563
+void text_copy 2107,58623
+void window_print 2232,61686
+void text_undo 2252,62208
+void text_paste 2280,62960
+gint popup_menu_handler 2297,63475
+void add_popup_item 2315,63981
+int gui_open_plugin 2333,64446
+void text_set_cursor 2364,65205
+gint get_char_width 2381,65663
+gchar *textview_get_text 2403,66200
+int build_path 2417,66582
+#define USE_GTK_STOCK_BUTTONS2446,67257
+struct button_type button_type2450,67331
+GtkWidget *standard_button 2456,67409
 
 gui2/gui_utils.h,25
 #define GUI_UTILS_H2,20
@@ -2071,7 +2075,7 @@ void text_find_callback 708,19686
 gui2/helpfiles.h,25
 #define HELPFILES_H2,20
 
-gui2/library.c,4288
+gui2/library.c,4295
 int echo_off;60,1658
 int replay;61,1712
 GtkItemFactoryEntry log_items[63,1793
@@ -2132,78 +2136,78 @@ static void print_test_to_window 1246,31515
 void do_lmtest 1278,32398
 void gui_set_panel_structure 1333,33815
 void do_panel_diagnostics 1348,34196
-static void do_chow_cusum 1389,35233
-void do_chow 1452,36583
-void do_cusum 1459,36752
-void do_reset 1466,36914
-void do_autocorr 1498,37672
-void do_arch 1536,38615
-void set_storelist 1584,39876
-static int model_error 1602,40384
-static int model_output 1613,40583
-static gint check_model_cmd 1627,40899
-void do_mp_ols 1648,41410
-void do_model 1711,42922
-void do_sim 1852,46477
-void do_simdata 1875,47070
-void do_genr 1922,48284
-void do_model_genr 1938,48668
-void do_random 1955,49156
-void do_seed 2006,50570
-static void finish_genr 2025,51014
-static int real_do_setmiss 2049,51501
-void do_global_setmiss 2071,51882
-void do_variable_setmiss 2092,52374
-void delete_var 2120,53061
-static void normal_test 2136,53403
-void do_resid_freq 2149,53817
-void do_freqplot 2196,54935
-void do_tramo_x12a 2236,55904
-void do_range_mean 2328,58010
-void do_pergm 2366,58868
-void do_coeff_intervals 2398,59607
-void do_outcovmx 2414,60024
-void add_dummies 2436,60571
-void add_time 2471,61410
-void add_logs_etc 2489,61918
-int add_fit_resid 2532,63027
-void add_model_stat 2564,63882
-void resid_plot 2635,65836
-void fit_actual_plot 2683,67264
-#define MAXDISPLAY 2724,68567
-void display_data 2729,68735
-void display_selected 2758,69481
-void display_fit_resid 2811,70793
-void do_graph_var 2831,71319
-void do_boxplot_var 2852,71894
-void do_scatters 2865,72275
-void do_box_graph_trad 2885,72813
-void do_dummy_graph 2907,73494
-void do_graph_from_selector 2938,74342
-void plot_from_selection 2986,75525
-void display_var 3016,76334
-void do_run_script 3031,76672
-void do_open_script 3080,77870
-void do_new_script 3111,78668
-void do_open_csv_box 3126,79091
-static int dat_suffix 3156,79741
-int do_store 3173,80029
-void win_show_error 3249,81820
-static int get_latex_path 3268,82204
-int winfork 3278,82376
-void view_latex 3314,83102
-void do_save_tex 3384,84782
-static char *bufgets 3410,85475
-int execute_script 3446,86238
-static int ready_for_command 3594,90185
-static int script_model_test 3614,90632
-int gui_exec_line 3659,91996
-void view_script_default 4499,114990
-struct search_replace search_replace4509,115230
-static void replace_string_callback 4519,115436
-static void trash_replace 4531,115787
-static void replace_string_dialog 4541,116019
-void text_replace 4611,118538
+static void do_chow_cusum 1387,35231
+void do_chow 1450,36581
+void do_cusum 1457,36750
+void do_reset 1464,36912
+void do_autocorr 1496,37670
+void do_arch 1534,38613
+void set_storelist 1582,39874
+static int model_error 1600,40382
+static int model_output 1611,40581
+static gint check_model_cmd 1625,40897
+void do_mp_ols 1646,41408
+void do_model 1709,42920
+void do_sim 1850,46475
+void do_simdata 1873,47068
+void do_genr 1920,48282
+void do_model_genr 1936,48666
+void do_random 1953,49154
+void do_seed 2004,50568
+static void finish_genr 2023,51012
+static int real_do_setmiss 2047,51499
+void do_global_setmiss 2069,51880
+void do_variable_setmiss 2090,52372
+void delete_var 2118,53059
+static void normal_test 2134,53401
+void do_resid_freq 2147,53815
+void do_freqplot 2194,54933
+void do_tramo_x12a 2234,55902
+void do_range_mean 2326,58072
+void do_pergm 2364,58930
+void do_coeff_intervals 2396,59669
+void do_outcovmx 2412,60086
+void add_dummies 2434,60633
+void add_time 2469,61472
+void add_logs_etc 2487,61980
+int add_fit_resid 2530,63089
+void add_model_stat 2562,63944
+void resid_plot 2633,65898
+void fit_actual_plot 2681,67326
+#define MAXDISPLAY 2722,68629
+void display_data 2727,68797
+void display_selected 2756,69543
+void display_fit_resid 2809,70855
+void do_graph_var 2829,71381
+void do_boxplot_var 2850,71956
+void do_scatters 2863,72337
+void do_box_graph_trad 2883,72875
+void do_dummy_graph 2905,73556
+void do_graph_from_selector 2936,74404
+void plot_from_selection 2984,75587
+void display_var 3014,76396
+void do_run_script 3029,76734
+void do_open_script 3078,77932
+void do_new_script 3109,78730
+void do_open_csv_box 3124,79153
+static int dat_suffix 3154,79803
+int do_store 3171,80091
+void win_show_error 3247,81882
+static int get_latex_path 3266,82266
+static int winfork 3276,82438
+void view_latex 3312,83171
+void do_save_tex 3382,84851
+static char *bufgets 3408,85544
+int execute_script 3444,86307
+static int ready_for_command 3592,90254
+static int script_model_test 3612,90701
+int gui_exec_line 3657,92065
+void view_script_default 4497,115059
+struct search_replace search_replace4507,115299
+static void replace_string_callback 4517,115505
+static void trash_replace 4529,115856
+static void replace_string_dialog 4539,116088
+void text_replace 4609,118607
 
 gui2/library.h,25
 #define LIBRARY_H23,814
@@ -2322,39 +2326,39 @@ static char *model_cmd_str 837,20475
 static gchar *graph_str 857,20875
 static char *boxplot_str 896,21665
 static void auto_save_gp 923,22211
-static void gp_to_gnuplot 949,22844
-static void open_gui_model 973,23532
-static void open_gui_graph 986,23856
-static void open_boxplot 1005,24366
-static void delete_delfiles 1014,24559
-void session_file_manager 1019,24645
-static int delete_session_object 1048,25268
-static void session_view_init 1117,26965
-static void delete_icons_at_close 1125,27119
-static void session_view_free 1130,27226
-static GdkColor *get_white 1142,27499
-static void white_bg_style 1158,27860
-#define SESSION_VIEW_COLS 1165,28059
-static void session_delete_icon 1167,28088
-static void foreach_delete_icons 1185,28597
-static void real_pack_icon 1195,28911
-static void pack_single_icon 1214,29452
-static void batch_pack_icons 1236,29917
-static void add_all_icons 1257,30390
-static void rearrange_icons 1299,31687
-void view_session 1311,31935
-static void object_popup_show 1374,33812
-static gboolean session_icon_click 1410,34428
-static void session_build_popups 1469,35799
-static void global_popup_activated 1573,39200
-static void session_popup_activated 1587,39631
-static void info_popup_activated 1601,40098
-static void data_popup_activated 1613,40412
-static void object_popup_activated 1627,40827
-static gboolean icon_entered 1670,42004
-static gboolean icon_left 1678,42180
-static gui_obj *gui_object_new 1688,42415
-static void session_add_icon 1738,43859
+static void gp_to_gnuplot 960,23052
+static void open_gui_model 984,23740
+static void open_gui_graph 997,24064
+static void open_boxplot 1016,24574
+static void delete_delfiles 1025,24767
+void session_file_manager 1030,24853
+static int delete_session_object 1059,25476
+static void session_view_init 1128,27173
+static void delete_icons_at_close 1136,27327
+static void session_view_free 1141,27434
+static GdkColor *get_white 1153,27707
+static void white_bg_style 1169,28068
+#define SESSION_VIEW_COLS 1176,28267
+static void session_delete_icon 1178,28296
+static void foreach_delete_icons 1196,28805
+static void real_pack_icon 1206,29119
+static void pack_single_icon 1225,29660
+static void batch_pack_icons 1247,30125
+static void add_all_icons 1268,30598
+static void rearrange_icons 1310,31895
+void view_session 1322,32143
+static void object_popup_show 1385,34020
+static gboolean session_icon_click 1421,34636
+static void session_build_popups 1480,36007
+static void global_popup_activated 1584,39408
+static void session_popup_activated 1598,39839
+static void info_popup_activated 1612,40306
+static void data_popup_activated 1624,40620
+static void object_popup_activated 1638,41035
+static gboolean icon_entered 1681,42212
+static gboolean icon_left 1689,42388
+static gui_obj *gui_object_new 1699,42623
+static void session_add_icon 1749,44067
 
 gui2/session.h,191
 #define SESSION_H23,814
@@ -2365,7 +2369,7 @@ gui2/session.h,191
     SAVE_AS_IS,41,1062
     SAVE_RENAME42,1078
 
-gui2/settings.c,1799
+gui2/settings.c,1800
 char rcfile[35,1033
 int use_proxy;54,1404
 #define MAXRECENT 57,1441
@@ -2390,35 +2394,35 @@ void set_fixed_font 171,5800
 void set_app_font 183,6109
 void get_default_dir 217,6919
 static void set_tramo_x12a_dirs 237,7245
-void set_rcfile 251,7582
-void set_rcfile 263,7752
-void options_dialog 271,7876
-static void flip_sensitive 336,10243
-static void make_prefs_tab 345,10492
-static void set_lcnumeric 484,14834
-static void apply_changes 499,15127
-static void str_to_boolvar 542,16284
-static void boolvar_to_str 551,16451
-void write_rc 562,16674
-static void read_rc 591,17335
-void write_rc 673,19109
-void read_rc 694,19657
-void write_rc 752,21065
-static void read_rc 781,21812
-static void font_selection_ok 865,23780
-void font_selector 891,24356
-void init_fileptrs 943,26026
-static void clear_files_list 956,26272
-void mkfilelist 980,26878
-void delete_from_filelist 1034,28218
-char *endbit 1069,29056
-static void printfilelist 1103,29712
-static void printfilelist 1142,30559
-static void printfilelist 1169,31151
-static void set_data_from_filelist 1197,31704
-static void set_session_from_filelist 1207,31985
-static void set_script_from_filelist 1216,32218
-void add_files_to_menu 1225,32446
+void set_rcfile 288,8790
+void set_rcfile 300,8960
+void options_dialog 308,9084
+static void flip_sensitive 373,11451
+static void make_prefs_tab 382,11700
+static void set_lcnumeric 521,16042
+static void apply_changes 536,16335
+static void str_to_boolvar 579,17492
+static void boolvar_to_str 588,17659
+void write_rc 599,17882
+static void read_rc 628,18543
+void write_rc 710,20317
+void read_rc 731,20865
+void write_rc 789,22273
+static void read_rc 818,23020
+static void font_selection_ok 902,24988
+void font_selector 928,25564
+void init_fileptrs 980,27234
+static void clear_files_list 993,27480
+void mkfilelist 1017,28086
+void delete_from_filelist 1071,29426
+char *endbit 1106,30264
+static void printfilelist 1140,30920
+static void printfilelist 1179,31767
+static void printfilelist 1206,32359
+static void set_data_from_filelist 1234,32912
+static void set_session_from_filelist 1244,33193
+static void set_script_from_filelist 1253,33426
+void add_files_to_menu 1262,33654
 
 gui2/settings.h,24
 #define SETTINGS_H2,19
@@ -3092,12 +3096,12 @@ int breusch_pagan_LM 477,12122
 static int do_hausman_test 525,13492
 int panel_diagnostics 561,14588
 
-plugin/progress_bar-2.c,200
-typedef struct _ProgressData _ProgressData31,939
-} ProgressData;ProgressData35,1036
-static void destroy_progress 39,1120
-static ProgressData *progress_window 48,1325
-int show_progress 121,3610
+plugin/progress_bar-2.c,199
+typedef struct _ProgressData _ProgressData25,859
+} ProgressData;ProgressData29,956
+static void destroy_progress 33,1040
+static ProgressData *progress_window 42,1245
+int show_progress 115,3530
 
 plugin/progress_bar.c,199
 typedef struct _ProgressData _ProgressData26,843
@@ -3106,10 +3110,10 @@ static void destroy_progress 34,1024
 static ProgressData *progress_window 43,1229
 int show_progress 109,3469
 
-plugin/range-mean.c,105
-static void get_range_and_mean 3,23
-static int do_range_mean_plot 26,429
-int range_mean_graph 73,1585
+plugin/range-mean.c,108
+static void get_range_and_mean 22,806
+static int do_range_mean_plot 45,1212
+int range_mean_graph 92,2369
 
 plugin/stats_tables.c,332
 } dw_t;dw_t27,911
@@ -3140,37 +3144,38 @@ static int read_grunfeld 317,7522
 static void print_grunfeld 352,8295
 int main 364,8481
 
-plugin/tramo-x12a.c,958
-    TRAMO,11,153
-    X12A12,164
-} opt_codes;opt_codes13,173
-    D11,16,202
-    D12,17,248
-    D13,18,279
-    TRIGRAPH 19,318
-} tx_objects;tx_objects20,368
-const char *x12a_series_strings[22,383
-const char *tramo_series_strings[26,449
-const char *tx_descrip_formats[30,528
-const char *default_mdl 36,669
-} opt_info;opt_info49,952
-} tx_request;tx_request58,1091
-static int win_fork_prog 61,1124
-static void tx_dialog_ok 94,1920
-static void tx_dialog_cancel 101,2067
-static int tx_dialog 108,2203
-static void get_seats_command 201,5361
-static void truncate 211,5576
-static int graph_series 218,5678
-static void copy_variable 291,7566
-static int add_series_from_file 304,7904
-static void set_opts 387,9812
-static int write_tramo_file 403,10110
-static int write_spc_file 455,11230
-static void form_varlist 520,12623
-static void copy_basic_data_info 534,12876
-static int save_vars_to_dataset 544,13124
-int write_tx_data 578,13985
+plugin/tramo-x12a.c,1005
+    TRAMO,30,936
+    X12A31,947
+} opt_codes;opt_codes32,956
+    D11,35,985
+    D12,36,1031
+    D13,37,1062
+    TRIGRAPH 38,1101
+} tx_objects;tx_objects39,1151
+const char *x12a_series_strings[41,1166
+const char *tramo_series_strings[45,1232
+const char *tx_descrip_formats[49,1311
+const char *default_mdl 55,1452
+} opt_info;opt_info68,1735
+} tx_request;tx_request77,1874
+static void win_show_error 80,1907
+static int win_fork_prog 99,2438
+static void tx_dialog_ok 132,3231
+static void tx_dialog_cancel 139,3378
+static int tx_dialog 146,3514
+static void get_seats_command 243,6788
+static void truncate 253,7003
+static int graph_series 260,7105
+static void copy_variable 333,9034
+static int add_series_from_file 346,9372
+static void set_opts 442,11536
+static int write_tramo_file 458,11834
+static int write_spc_file 512,13007
+static void form_varlist 579,14453
+static void copy_basic_data_info 593,14706
+static int save_vars_to_dataset 603,14954
+int write_tx_data 638,15828
 
 plugin/workbook.c,536
 typedef struct _BiffBoundsheetData_BiffBoundsheetData32,991
