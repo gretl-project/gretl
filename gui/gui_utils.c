@@ -35,8 +35,6 @@ char rcfile[MAXLEN];
 
 char *storelist = NULL;
 
-static GtkWidget *help_view = NULL;
-
 extern GtkTooltips *gretl_tips;
 extern int session_saved;
 extern GtkWidget *mysheet;
@@ -66,8 +64,7 @@ struct help_head_t {
     int *pos;
     int ntopics;
 };
-
-static int help_length, gui_help_length, script_help_length;
+static int gui_help_length, script_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
 
 /* searching stuff */
@@ -235,12 +232,6 @@ GtkItemFactoryEntry model_items[] = {
 
 GtkItemFactoryEntry help_items[] = {
     { "/_Topics", NULL, NULL, 0, "<Branch>" },    
-    { "/_Find", NULL, menu_find, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL}
-};
-
-GtkItemFactoryEntry script_help_items[] = {
-    { "/_Topics", NULL, NULL, 0, "<Branch>" },
     { "/_Find", NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
@@ -868,7 +859,6 @@ void helpfile_init (void)
 {
     gui_help_length = real_helpfile_init(0);
     script_help_length = real_helpfile_init(1);
-    help_length = gui_help_length;
 }
 
 /* ......................................................... */
@@ -935,12 +925,10 @@ static windata_t *helpwin (int script)
     windata_t *vwin = NULL;
 
     if (script) {
-	help_length = script_help_length;
 	vwin = view_file(paths.cmd_helpfile, 0, 0, 77, 400, 
-			 CLI_HELP, script_help_items);
+			 CLI_HELP, help_items);
 	add_help_topics(vwin, 1);
     } else {
-	help_length = gui_help_length;
 	vwin = view_file(paths.helpfile, 0, 0, 77, 400, 
 			 HELP, help_items);
 	add_help_topics(vwin, 0);
@@ -996,24 +984,30 @@ static void real_do_help (guint pos, int cli)
 {
     double frac;
     gfloat adj;
+    static GtkWidget *gui_help_view;
+    static GtkWidget *script_help_view;
+    GtkWidget *w = (cli)? script_help_view : gui_help_view;
 
-    if (help_view == NULL) {
+    if (w == NULL) {
 	windata_t *hwin = helpwin(cli);
 
-	if (hwin != NULL) help_view = hwin->w;
-	gtk_signal_connect(GTK_OBJECT(help_view), "destroy",
+	if (hwin != NULL) {
+	    if (cli) w = script_help_view = hwin->w;
+	    else w = gui_help_view = hwin->w;
+	}
+	gtk_signal_connect(GTK_OBJECT(w), "destroy",
 			   GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-			   &help_view);	
+			   (cli)? &script_help_view : &gui_help_view);	
     } else {
-	gdk_window_show(help_view->parent->window);
-	gdk_window_raise(help_view->parent->window);
+	gdk_window_show(w->parent->window);
+	gdk_window_raise(w->parent->window);
     }
     
-    frac = (double) pos * (double) GTK_TEXT(help_view)->vadj->upper;
-    frac /= (double) help_length;
+    frac = (double) pos * (double) GTK_TEXT(w)->vadj->upper;
+    frac /= (double) (cli)? script_help_length : gui_help_length;
     adj = 0.999 * frac;
 
-    gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, adj);
+    gtk_adjustment_set_value(GTK_TEXT(w)->vadj, adj);
 }
 
 /* ........................................................... */
@@ -2037,7 +2031,7 @@ void setup_column (GtkWidget *listbox, int column, int width)
 
 /* ........................................................... */
 
-#ifdef USE_GNOME
+#if defined(USE_GNOME)
 
 static void msgbox (const char *msg, int err)
 {
@@ -2045,8 +2039,7 @@ static void msgbox (const char *msg, int err)
     else gnome_app_message(GNOME_APP(mdata->w), msg);
 }
 
-#else
-#ifdef G_OS_WIN32
+#elif defined(G_OS_WIN32)
 
 static void msgbox (const char *msg, int err)
 {
@@ -2056,7 +2049,7 @@ static void msgbox (const char *msg, int err)
 	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONINFORMATION);
 }
 
-#else /* win32 */
+#else /* plain GTK */
 
 static void msgbox (const char *msg, int err) 
 {
@@ -2093,7 +2086,6 @@ static void msgbox (const char *msg, int err)
     gtk_widget_show(w);  
 }
 
-#endif
 #endif
 
 /* ........................................................... */
@@ -2715,31 +2707,37 @@ static void close_find_dialog (GtkWidget *widget, gpointer data)
 static void find_in_help (GtkWidget *widget, gpointer data)
 {
     int nIndex = 0, i, linecount = 0;
-    char *haystack;   
+    int help_length;
+    char *haystack;
+    windata_t *hwin = 
+	(windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
 
-    haystack = gtk_editable_get_chars(GTK_EDITABLE(help_view), 0,
-	gtk_text_get_length(GTK_TEXT(help_view)));
+    haystack = gtk_editable_get_chars(GTK_EDITABLE(hwin->w), 0,
+	gtk_text_get_length(GTK_TEXT(hwin->w)));
+
+    if (hwin->role == CLI_HELP) help_length = script_help_length;
+    else help_length = gui_help_length;
 
     if (needle) g_free(needle);
 
     needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
-    nIndex = GTK_EDITABLE (help_view)->selection_end_pos;
+    nIndex = GTK_EDITABLE(hwin->w)->selection_end_pos;
 
     nIndex = look_for_string(haystack, needle, nIndex);
 
     if (nIndex >= 0) {
-	gtk_text_freeze(GTK_TEXT(help_view));
-        gtk_text_set_point (GTK_TEXT (help_view), nIndex);
-        gtk_text_insert (GTK_TEXT (help_view), NULL, NULL, NULL, " ", 1);
-        gtk_text_backward_delete (GTK_TEXT (help_view), 1);
-	gtk_text_thaw(GTK_TEXT(help_view));
-        gtk_editable_select_region (GTK_EDITABLE (help_view), 
-				    nIndex, nIndex + strlen (needle));
+	gtk_text_freeze(GTK_TEXT(hwin->w));
+        gtk_text_set_point (GTK_TEXT(hwin->w), nIndex);
+        gtk_text_insert (GTK_TEXT(hwin->w), NULL, NULL, NULL, " ", 1);
+        gtk_text_backward_delete (GTK_TEXT(hwin->w), 1);
+	gtk_text_thaw(GTK_TEXT(hwin->w));
+        gtk_editable_select_region (GTK_EDITABLE(hwin->w), 
+				    nIndex, nIndex + strlen(needle));
 	for (i=0; i<nIndex; i++) 
 	    if (haystack[i] == '\n') linecount++;
-	gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 
+	gtk_adjustment_set_value(GTK_TEXT(hwin->w)->vadj, 
 				 (gfloat) (linecount - 2) *
-				 GTK_TEXT(help_view)->vadj->upper / help_length);
+				 GTK_TEXT(hwin->w)->vadj->upper / help_length);
 	find_window = NULL;
     } else infobox("String was not found.");
 

@@ -1870,9 +1870,6 @@ static void _rearrange (int *list)
             return;
         }
     }
-    /* add constant if implicit */
-/*      list[0] += 1; */
-/*      list[list[0]] = 0; */
 }
 
 /* ...........................................................*/
