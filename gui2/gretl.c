@@ -194,8 +194,9 @@ static void win_help (void)
     char hlpfile[MAXLEN];
 
     sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
-    if (WinExec(hlpfile, SW_SHOWNORMAL) < 32)
+    if (WinExec(hlpfile, SW_SHOWNORMAL) < 32) {
         errbox(_("Couldn't access help file"));
+    }
 }
 
 static int unmangle (const char *dosname, char *longname);
@@ -1530,8 +1531,7 @@ BOOL CreateChildProcess (char *prog)
     ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
     siStartInfo.cb = sizeof(STARTUPINFO); 
  
-    return CreateProcess(
-			 NULL, 
+    return CreateProcess(NULL, 
 			 prog,          /* command line */
 			 NULL,          /* process security attributes  */
 			 NULL,          /* primary thread security attributes */ 
@@ -1557,10 +1557,11 @@ void gretl_fork (const char *prog, const char *arg)
 	perror("fork");
 	return;
     } else if (pid == 0) {
-	if (arg != NULL) 
+	if (arg != NULL) {
 	    execlp(prog, prog, arg, NULL);
-	else
+	} else {
 	    execlp(prog, prog, NULL);
+	}
 	perror("execlp");
 	_exit(EXIT_FAILURE);
     }
@@ -1593,19 +1594,23 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	    return;
 	}
     }
+
     fp = fopen(".Rprofile", "w");
     if (fp == NULL) {
 	errbox(_("Couldn't write R startup file"));
 	return;
     }
+
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
-    sprintf(line, "store -r %s", Rdata); 
+
+    sprintf(line, "store \"%s\" -r", Rdata); 
     if (check_cmd(line) || cmd_init(line) ||
 	write_data(Rdata, command.list, Z, datainfo, GRETL_DATA_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 
     }
+
     if (dataset_is_time_series(datainfo)) {
 	fprintf(fp, "source(\"%s\")\n", Rdata);
 	fprintf(fp, "ls()\n");
@@ -1614,6 +1619,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	fprintf(fp, "attach(gretldata)\n");
 	fprintf(fp, "ls(2)\n");
     }
+
     fclose(fp);
 
 #ifdef G_OS_WIN32

@@ -70,9 +70,16 @@ int win_copy_text (PRN *prn, int format)
     size_t len;
     gchar *tr = NULL;
 
-    if (prn->buf == NULL) return 0;
+    if (prn->buf == NULL) {
+	errbox(_("Copy buffer was empty"));
+	return 0;
+    }
 
-    if (!OpenClipboard(NULL)) return 1;
+    if (!OpenClipboard(NULL)) {
+	errbox(_("Cannot open the clipboard"));
+	return 1;
+    }
+
     EmptyClipboard();
 
     if (nls_on && format == COPY_TEXT) {

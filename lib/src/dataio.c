@@ -651,8 +651,10 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
         safecpy(pdinfo->varname[i], str, 8);
 	if (check_varname(pdinfo->varname[i++])) 
 	    goto varname_error;
-    } else
+    } else {
 	descrip = 1; /* comments were found */
+    }
+
     while (1) {
         fscanf(fp, "%s", str);
 	n = strlen(str);
@@ -727,12 +729,14 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 	if ((lines = comment_lines(fp, &dbuf)) > 0) {
 	    delchar('\r', dbuf);
 	    pdinfo->descrip = malloc(strlen(dbuf) + 1);
-	    if (pdinfo->descrip != NULL) 
+	    if (pdinfo->descrip != NULL) {
 		strcpy(pdinfo->descrip, dbuf);
+	    }
 	    free(dbuf);
 	}
-	else if (lines < 0) 
+	else if (lines < 0) {
 	    fprintf(stderr, _("Failed to store data comments\n"));
+	}
 	fclose(fp);
     } 
 	
@@ -966,9 +970,10 @@ static int writehdr (const char *hdrfile, const int *list,
     if (pdinfo->descrip != NULL) {
 	size_t len = strlen(pdinfo->descrip);
 
-	if (len > 2) 
+	if (len > 2) {
 	    fprintf(fp, "(*\n%s%s*)\n", pdinfo->descrip,
 		    (pdinfo->descrip[len-1] == '\n')? "" : "\n");
+	}
     }
 
     /* then list of variables */

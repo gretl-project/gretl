@@ -85,8 +85,9 @@ configure_event (GtkWidget *widget, GdkEventConfigure *event, gpointer data)
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
 
-    if (grp->pixmap)
-	g_object_unref(grp->pixmap);
+    if (grp->pixmap) {
+	g_object_unref(G_OBJECT(grp->pixmap));
+    }
 
     grp->pixmap = gdk_pixmap_new(widget->window,
 				 widget->allocation.width,
@@ -598,7 +599,7 @@ destroy_boxplots (GtkWidget *w, gpointer data)
     }
     free(grp->plots);
     free(grp->numbers);
-    g_object_unref(grp->pixmap);
+    g_object_unref(G_OBJECT(grp->pixmap));
     free(grp);
 }
 
@@ -1041,8 +1042,9 @@ static int cb_copy_image (gpointer data)
           
 	GlobalUnlock(hDIB);
 	ret = TRUE;
-    } else 
+    } else {
 	errbox(_("Failed to lock DIB Header"));
+    }
 
     /* fill color map */
     if (ret) {
@@ -1061,8 +1063,9 @@ static int cb_copy_image (gpointer data)
 	  
 	    ret = TRUE;
 	    GlobalUnlock(hDIB);
-	} else
+	} else {
 	    errbox (_("Failed to lock DIB Palette"));
+	}
     } 
   
     /* copy data to DIB */
@@ -1093,8 +1096,9 @@ static int cb_copy_image (gpointer data)
 	    }
 	    ret = TRUE;
 	    GlobalUnlock (hDIB);
-	} else 
+	} else {
 	    errbox(_("Failed to lock DIB Data"));
+	}
     } /* copy data to DIB */
   
     /* copy DIB to ClipBoard */
@@ -1113,14 +1117,15 @@ static int cb_copy_image (gpointer data)
 		else
 		    errbox (_("Failed to set clipboard data"));
 	    }
-	    if (!CloseClipboard ())
+	    if (!CloseClipboard ()) {
 		errbox (_("Failed to close Clipboard"));
+	    }
 	}
     }
-    /* done */
+
     if (hDIB) GlobalFree(hDIB);
   
-    g_object_unref (image);
+    g_object_unref (G_OBJECT(image));
   
     return ret;
 } 
@@ -1165,7 +1170,7 @@ int plot_to_xpm (const char *fname, gpointer data)
 	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
     }
 
-    g_object_unref(image);
+    g_object_unref(G_OBJECT(image));
 
     fclose(fp);
 

@@ -1,3 +1,10 @@
+version 1.0pre3
+- fixes for Excel reader -- handle missing obs and Far East info
+- fix for gretlcli under NLS: ensure that the translations come
+  out in the local encoding, not utf-8
+- remove Gtk 2.0 right click menu on text windows
+- update translations and integrate the French translation
+
 09/20/2002 version 1.0pre2 (pre1 was "for translators only")
 - add range-mean graph option to GUI Variable menu, and
   as new command "rmplot"

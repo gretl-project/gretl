@@ -273,27 +273,30 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book)
 	sst = malloc(sstsize * sizeof(char *));
 	if (sst == NULL) return 1;
 #ifdef EDEBUG
-	fprintf(stderr, "Got SST: malloced sst at %d bytes, %p\n", 
-		sstsize * sizeof(char *), (void *) sst);
+	fprintf(stderr, "Got SST: malloced sst at size %d (%d bytes), %p\n", 
+		sstsize, sstsize * sizeof(char *), (void *) sst);
 #endif
-	for (i=0; i<sstsize && (ptr-rec)<reclen; i++) {
+	for (i=0; i<sstsize && (ptr - rec)<reclen; i++) {
 	    sst[i] = copy_unicode_string(&ptr);
 	}
-	if (i < sstsize) 
+	if (i < sstsize) {
 	    sstnext = i;
+	}
 	break;
     }	
     case CONTINUE: {
 	int i;
 	char *ptr = rec;
 
-	if (sstnext == 0) 
+	if (sstnext == 0) {
 	    break;
-	for (i=sstnext; i<sstsize && (ptr-rec)<reclen; i++) {
+	}
+	for (i=sstnext; i<sstsize && (ptr - rec)<reclen; i++) {
 	    sst[i] = copy_unicode_string(&ptr);
 	}
-	if (i < sstsize) 
+	if (i < sstsize) {
 	    sstnext = i;
+	}
 	break;
     }			   
     case LABEL: {
@@ -477,66 +480,104 @@ static char *copy_unicode_string (char **src)
 {
     int count = getshort(*src, 0);
     int flags = *(*src + 2);
-    int to_skip = 0;
+    int this_skip = 3;
+    int skip_to_next = 3;
     int charsize = (flags & 0x01)? 2 : 1;
     char *realstart;
 
+    skip_to_next += count * charsize;
+
+    if (flags & 0x08) {
+	unsigned short rich_text_info_len = 0;
+
+#ifdef EDEBUG
+	fprintf(stderr, "copy_unicode_string: contains Rich-Text info\n");
+#endif
+	rich_text_info_len = 4 * getshort(*src, 3);
+	this_skip += 2;
+	skip_to_next += 2 + rich_text_info_len;
+    } 
+
     if (flags & 0x04) {
-	/* extended string */
-	if (flags & 0x08) {
-	    /* rich string */;
-	    to_skip = 3 + 4 + (charsize*count) + 2 + 4 * getshort(*src, 3) +
-		getshort(*src, 5);
-	} else {
-	    to_skip = 3 + 4 + (charsize * count) + getshort(*src, 3);
-	}
-	fprintf(stderr, "Extended string found length=%d charsize=%d "
-		"%d bytes to skip", count, charsize, to_skip);
-	*src += to_skip;
-	return g_strdup("Extended string");
-    } else {
-	to_skip = 3 + charsize * count + 
-	    ((flags & 0x8)? (2 + 4 * getshort(*src, 3)) : 0);
+	unsigned far_east_info_len = 0;
+	int far_east_offset = 3;
+
+#ifdef EDEBUG
+	fprintf(stderr, "copy_unicode_string: contains Far-East info\n");
+#endif
+	if (flags & 0x08) far_east_offset = 5;
+	far_east_info_len = MS_OLE_GET_GUINT32 (*src + far_east_offset);
+	this_skip += 4;
+	skip_to_next += 4 + far_east_info_len;
     }
-    realstart = *src + ((flags & 0x8)? 6 : 3);
-    *src += to_skip;
-    if (charsize == 1) 
+
+    /* for this read */
+    realstart = *src + this_skip;
+
+    /* set up for the next read */
+    *src += skip_to_next;
+
+    if (charsize == 1) {
 	return convert8to7(realstart, count);
-    else 
+    } else { 
 	return convert16to7(realstart, count);
+    }
 }
 
 static char *convert8to7 (char *src, int count) 
 {
-    char *dest = malloc(count + 1);
-    int i, u;
+    char *p, *dest = malloc(9);
+    int i, j = 0;
+    unsigned char u;
 
     if (dest == NULL) return NULL;
+    memset(dest, 0, 9);
+    p = dest;
 
-    for (i=0; i<count; i++) {
+    for (i=0; i<count && j<8; i++) {
 	u = (unsigned char) src[i];
-	dest[i] = (u < 128)? u : '_';
+#ifdef EDEBUG
+	fprintf(stderr, "convert8to7: src[%d] = %u\n", i, u);
+#endif
+	if (isalnum(u) && u < 128) {
+	    *p++ = u;
+	    j++;
+	}
     }
-    dest[i] = 0;
+
+    if (strlen(dest) == 0) {
+	strcpy(dest, "varname");
+    }
+#ifdef EDEBUG
+    fprintf(stderr, "convert8to7: returning '%s'\n", dest);
+#endif
 
     return dest;
 }
 
 static char *convert16to7 (char *src, int count) 
 {
-    char *s = src, *dest = malloc(count + 1);
+    char *p, *s = src, *dest = malloc(9);
     int i, j = 0, u;
 
     if (dest == NULL) return NULL;
+    memset(dest, 0, 9);
+    p = dest;
 
-    for (i=0; i<count; i++) {
+    for (i=0; i<count && j<8; i++) {
 	u = getshort(s, 0);
-	dest[j++] = (u < 128)? u : '_';
 	s += 2;
+	if (isalnum(u) && u < 128) {
+	    *p++ = u;
+	    j++;
+	}
     }
-    dest[i] = 0;
 
-    return dest;
+    if (strlen(dest) == 0) {
+	strcpy(dest, "varname");
+    }
+
+    return dest;    
 }
 
 static int allocate (int row, int col, wbook *book) 
@@ -611,7 +652,7 @@ static void free_sheet (void)
     lastrow = 0;
 }
 
-#define IS_STRING(v) (v[0] == '"')
+#define IS_STRING(v) ((v[0] == '"'))
 
 static int consistent_date_labels (void)
 {
@@ -666,10 +707,17 @@ static int got_valid_varnames (wbook *book, int ncols, int skip)
 #endif
 	    return VARNAMES_NULL;
 	}
-	if (!IS_STRING(rowptr[t].cells[i]))
+#ifdef EDEBUG
+	fprintf(stderr, "got_varnames: rowptr[%d].cells[%d] is '%s'\n",
+		t, i, rowptr[t].cells[i]);
+#endif
+	if (!IS_STRING(rowptr[t].cells[i])) {
 	    return VARNAMES_NOTSTR;
+	}
 	test = rowptr[t].cells[i] + 1;
-	if (check_varname(test)) return VARNAMES_INVALID;
+	if (check_varname(test)) {
+	    return VARNAMES_INVALID;
+	}
     }
     return VARNAMES_OK;
 }
@@ -678,10 +726,25 @@ static int data_block (wbook *book, int ncols, int skip)
 {
     int i, t;
 
-    for (i=book->col_offset+skip; i<ncols; i++)
-	for (t=1+book->row_offset; t<=lastrow; t++)
-	    if (IS_STRING(rowptr[t].cells[i]))
+    for (i=book->col_offset+skip; i<ncols; i++) {
+	for (t=1+book->row_offset; t<=lastrow; t++) {
+	    if (rowptr == NULL || rowptr[t].cells[i] == NULL) {
+#ifdef EDEBUG
+		fprintf(stderr, "data_block: rowptr[%d].cells[%d] is NULL\n",
+			t, i);
+#endif
+		rowptr[t].cells[i] = g_strdup("-999.0");
+		return -1;
+	    }
+	    if (IS_STRING(rowptr[t].cells[i])) {
+#ifdef EDEBUG
+		fprintf(stderr, "data_block: rowptr[%d].cells[%d] is '%s'\n",
+			t, i, rowptr[t].cells[i]);
+#endif		
 		return 0;
+	    }
+	}
+    }
     return 1;
 }
 
@@ -690,7 +753,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 {
     FILE *fp;
     wbook book;
-    int err = 0;
+    int err = 0, gotdata;
     double **newZ = NULL;
     DATAINFO *newinfo;
     const char *adjust_rc = N_("Perhaps you need to adjust the "
@@ -783,12 +846,18 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 	if (err) goto getout; 
 
-	if (!data_block(&book, ncols, label_strings)) {
+	gotdata = data_block(&book, ncols, label_strings);
+	if (gotdata == 0) {
 	    sprintf(errbuf, _("Expected numeric data, found string.\n"));
 	    strcat(errbuf, _(adjust_rc));
 	    err = 1;
 	    goto getout; 
-	}
+	} else if (gotdata == -1) {
+	    sprintf(errbuf, _("Warning: there were missing values\n"));
+	    strcat(errbuf, _(adjust_rc));
+	    /* err = 1; */
+	    /* goto getout;  */
+	}	    
 
 	i = book.col_offset;
 	if (!label_strings && 
