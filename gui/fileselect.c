@@ -353,12 +353,15 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	    errbox("Couldn't open specified file");
 	    return;
 	} else fclose(fp);
-    } else {
+    } 
+#ifdef notdef
+    else { /* funky! */
 	if ((fp = fopen(fname, "a")) == NULL) {
 	    errbox("Couldn't open specified file");
 	    return;
 	} else fclose(fp);
     }
+#endif
 
     strcpy(title, "gretl: ");
     strncat(title, test, 40);

@@ -2637,10 +2637,45 @@ void do_open_csv_box (char *fname, int code)
 
 /* ........................................................... */
 
+static int maybe_add_ext (char *fname, int opt)
+{
+    FILE *fp;
+
+    /* don't mess with the name of a previously existing file */
+    fp = fopen(fname, "r");
+    if (fp != NULL && fgetc(fp) != EOF) {
+	fclose(fp);
+	return 0;
+    }    
+
+    /* don't mess with a filename that already has an extension */
+    if (dotpos(fname) != strlen(fname)) return 1;
+    
+    /* otherwise add an appropriate extension */
+    switch (opt) {
+    case OPT_C:
+	strcat(fname, ".csv"); break;
+    case OPT_M:
+	strcat(fname, ".m"); break;
+    case OPT_R:
+    case OPT_R_ALT:
+	strcat(fname, ".R"); break;
+    default:
+	strcat(fname, ".dat");
+    }
+    return 1;
+}
+
+/* ........................................................... */
+
 void do_store (char *mydatfile, const int opt)
 {
     char f = getflag(opt);
+    gchar *msg;
     FILE *fp;
+    int ext;
+
+    ext = maybe_add_ext(mydatfile, opt);
 
     line[0] = '\0';
 
@@ -2652,11 +2687,10 @@ void do_store (char *mydatfile, const int opt)
     if (check_cmd(line) || cmd_init(line)) return; 
 
     /* back up existing datafile if need be */
-    fp = fopen(mydatfile, "r");
-    if (fp != NULL) {
+    if (ext == 0 || ((fp = fopen(mydatfile, "r")) && fgetc(fp) != EOF &&
+	fclose(fp) == 0)) {
 	char backup[MAXLEN];
 
-	fclose(fp);
 	sprintf(backup, "%s~", mydatfile);
 	if (copyfile(mydatfile, backup)) {
 	    errbox("Couldn't make backup of data file");
@@ -2679,7 +2713,9 @@ void do_store (char *mydatfile, const int opt)
 		switch_ext(paths.hdrfile, mydatfile, "hdr");
 	}
     } 
-    infobox("Data written OK");
+    msg = g_strdup_printf("%s written OK", mydatfile);
+    infobox(msg);
+    g_free(msg);
     return;
 }
 
