@@ -19,7 +19,7 @@
 
 /* generate.c for gretl */
 
-/* #define GENR_DEBUG */
+#define GENR_DEBUG
 
 #include "libgretl.h"
 #include "internal.h"
@@ -762,12 +762,12 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     i = getword('=', s, newvar, oflag);
 
     if (i > 0) {
-	if (!strlen(newvar)) {
+	if (*newvar == '\0') {
 	    err = E_NOVAR;
 	    goto genr_return;
 	}
 	_esl_trunc(newvar, VNAMELEN - 1);
-	if (!isalpha((unsigned char) newvar[0]) &&
+	if (!isalpha((unsigned char) *newvar) &&
 	    strncmp(newvar, "$nls", 4)) {
 	    err = E_NOTALPH;
 	    goto genr_return;
@@ -787,7 +787,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* deal with leading (unary) minus */
-    if (s[0] == '-') {
+    if (*s == '-') {
 	strcpy(s1, "0");
 	strcat(s1, s);
 	strcpy(s, s1);
@@ -878,8 +878,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
         } else { /* indx1 != NULL: left paren was found */
             nright1 = strlen(indx1);    /* no. of characters to right of ( */
             nleft1 = ls - nright1;      /* no. of characters before ( */
-            strncpy(sleft, s, nleft1);  /* string to left of (  */
-            strcpy(sleft + nleft1, "\0");
+	    *sleft = '\0';
+	    strncat(sleft, s, nleft1);  /* string to left of (  */
             /* calculate equation inside parenthesis */
             strcpy(sright, indx1);         /* string to right of ( */
             indx2 = strchr(sright, ')');  /* point to first ) */
@@ -892,8 +892,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 					       including */
             indx1++;
             strcpy(sright, indx1);
-            strncpy(sexpr, sright, nleft2);   /* sexpr is expr inside ()  */
-            strcpy(sexpr + nleft2, "\0");
+	    *sexpr = '\0';
+	    strncat(sexpr, sright, nleft2);   /* sexpr is expr inside ()  */
             iw = scanb(sleft, word);  /* scan backwards for word in
 					 front of ( */
 
@@ -925,7 +925,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		}
                 strcpy(s, snew);
             } else  {
-		/* there is a math function or lag/lead in form of ( */
+		/* there is a math function or lag/lead */
                 nvtmp++;
                 if (nvtmp > MAXTERMS) {
                     err = E_NEST;
@@ -951,6 +951,10 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			goto genr_return; 
 		    } 
 		    genr.scalar = 0;
+		    if (!strcmp(newvar, word)) {
+			fprintf(stderr, "genr: found lag %d of LHS var\n", 
+				atoi(sexpr));
+		    }
 		    get_lag(vi, -atoi(sexpr), mvec, *pZ, pdinfo);
 		    for (i=t1; i<=t2; i++) genr.xvec[i] = mvec[i];
 		    break;
@@ -1106,7 +1110,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		    goto genr_return;
 
 		default:
-		    if (strlen(word) != 0) { 
+		    if (*word != '\0') { 
 			sprintf(gretl_errmsg, 
 				_("%s is not a variable or function"), word);
 		    }
@@ -1116,7 +1120,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
                 }  /* end of switch on type2 */
 
                 lword = strlen(word);
-                strcpy(sleft + nleft1 - lword, "\0");
+		*(sleft + nleft1 - lword) = '\0';
 		memmove(sright, indx2, strlen(indx2) + 1);
 		/* create temp var */
 		ig = createvar(genr.xvec, snew, sleft, sright, 
