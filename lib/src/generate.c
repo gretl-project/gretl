@@ -1942,6 +1942,8 @@ static void fix_calendar_date (char *s)
     }
 }
 
+#undef OBS_DEBUG
+
 int get_t_from_obs_string (char *s, const double **Z, 
 			   const DATAINFO *pdinfo)
 {
@@ -1967,7 +1969,7 @@ int get_t_from_obs_string (char *s, const double **Z,
 	    int v = varindex(pdinfo, s);
 
 	    if (v < pdinfo->v) {
-		t = (int) Z[v][0] - 1;
+		t = (int) Z[v][0];
 #if OBS_DEBUG
 		fprintf(stderr, " based on var %d: t = %d\n", v, t);
 #endif
@@ -1979,6 +1981,9 @@ int get_t_from_obs_string (char *s, const double **Z,
 #if OBS_DEBUG
 		    fprintf(stderr, " revised via dateton: t = %d\n", t);
 #endif
+		} else {
+		    /* convert to 0-based */
+		    t--;
 		}
 	    }
 	}
