@@ -749,7 +749,6 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
     }
     
     if (found >= 0) {
-	if (wrapped) infobox(_("Search wrapped"));
 	GtkTreePath *path = gtk_tree_model_get_path(model, &iter);
 
 	gtk_tree_view_scroll_to_cell(GTK_TREE_VIEW(win->listbox),
@@ -758,6 +757,7 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 				 path, NULL, FALSE);
 	win->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
+	if (wrapped) infobox(_("Search wrapped"));
     } else {
 	infobox(_("String was not found."));
     }
