@@ -758,7 +758,7 @@ build_selector_buttons (selector *sr, const char *oktxt, void (*okfunc)())
 {
     GtkWidget *tmp;
 
-    tmp = gtk_button_new_with_label (oktxt);
+    tmp = gtk_button_new_with_label(oktxt);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
 		       tmp, TRUE, TRUE, 0);
@@ -982,7 +982,7 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
-    build_selector_buttons (sr, oktxt, okfunc);
+    build_selector_buttons(sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
     gtk_main();
@@ -1054,6 +1054,18 @@ static void add_omit_list (gpointer p, selector *sr)
     }
 }
 
+static GtkWidget *selection_top_label (int code)
+{
+    GtkWidget *label = NULL;
+    const char *str = get_topstr(code);
+
+    if (strlen(str)) {
+	label = gtk_label_new(_(str));
+    } 
+
+    return label;
+}
+
 void simple_selection (const char *title, const char *oktxt, 
 		       void (*okfunc)(), guint cmdcode,
 		       gpointer p) 
@@ -1061,7 +1073,6 @@ void simple_selection (const char *title, const char *oktxt,
     GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *scroller;
     selector *sr;
-    char topstr[64];
     int i;
 
     if (open_dialog != NULL) {
@@ -1076,11 +1087,12 @@ void simple_selection (const char *title, const char *oktxt,
 
     sr->data = p;
 
-    strcpy(topstr, _(get_topstr(cmdcode)));
-    tmp = gtk_label_new(topstr);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
-			       tmp, TRUE, TRUE, 0);
-    gtk_widget_show(tmp);
+    tmp = selection_top_label(cmdcode);
+    if (tmp != NULL) {
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
+			   tmp, TRUE, TRUE, 0);
+	gtk_widget_show(tmp);
+    }
 
     /* for titles */
     top_hbox = gtk_hbox_new(FALSE, 0); 
@@ -1191,7 +1203,7 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
-    build_selector_buttons (sr, oktxt, okfunc);
+    build_selector_buttons(sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
     gtk_main();

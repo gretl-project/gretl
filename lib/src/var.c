@@ -797,6 +797,52 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
+static int 
+has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
+{
+    int i;
+    int origv = pdinfo->v;
+    int tlist[4];
+    int trends = 0;
+    MODEL tmod;
+
+    _init_model(&tmod, pdinfo);
+
+    tlist[0] = 3;
+    tlist[3] = 0;
+
+    for (i=1; i<=varlist[0]; i++) {
+	double tstat;
+	int v, vl;
+
+	v = varlist[i];
+	if (v == 0) continue;
+	if (diffgenr(v, pZ, pdinfo)) {
+	    trends = -1;
+	    break;
+	}
+	vl = _lagvarnum(v, 1, pdinfo);
+	tlist[1] = v;
+	tlist[2] = vl;
+	tmod = lsq(tlist, pZ, pdinfo, OLS, 0, 0.0);
+	if (tmod.errcode) {
+	    trends = -1;
+	    clear_model(&tmod, pdinfo);
+	    break;
+	}
+	tstat = tmod.coeff[2] / tmod.sderr[2];
+	if (tprob(tstat, tmod.dfd) < 0.05) {
+	    trends = 1;
+	}
+	clear_model(&tmod, pdinfo);
+	if (trends) break;
+    }
+
+    dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
+
+    return trends;
+}
+
 static int allocate_sigmas (double ***X, double ***Y, double ***Z, int k)
 {
     int i, j;
@@ -874,12 +920,21 @@ print_sigmas (const double **X, const double **Y, const double **Z,
     int i, j, l;
     const double **P = NULL;
 
-    pputs(prn, "\nSample variance-covariance matrices for residuals\n\n");
+    pprintf(prn, "\n%s\n\n", _("Sample variance-covariance matrices for residuals"));
 
     for (l=0; l<3; l++) {
-	if (l == 0) P = X;
-	else if (l == 1) P = Y;
-	else P = Z;
+	if (l == 0) {
+	    P = X;
+	    pprintf(prn, " %s\n\n", _("VAR system in first differences"));
+	}
+	else if (l == 1) {
+	    P = Y;
+	    pprintf(prn, " %s\n\n", _("System with levels as dependent variable"));
+	}
+	else {
+	    P = Z;
+	    pprintf(prn, " %s\n\n", _("Cross-products"));
+	}
 	for (i=0; i<k; i++) {
 	    for (j=0; j<k; j++) {
 		pprintf(prn, "%#12.6g", P[i][j]);
@@ -892,11 +947,11 @@ print_sigmas (const double **X, const double **Y, const double **Z,
 
 static int 
 johansen_complete (const double **X, const double **Y, const double **Z,
-		   int k, int T, PRN *prn)
+		   int k, int T, int trends, PRN *prn)
 {
     void *handle;
     int (*johansen) (const double **, const double **, const double **,
-		     int, int, PRN *);
+		     int, int, int, PRN *);
     int err = 0;
     
     if (open_plugin("johansen", &handle)) {
@@ -912,7 +967,7 @@ johansen_complete (const double **X, const double **Y, const double **Z,
         goto system_bailout;
     }
         
-    err = (* johansen) (X, Y, Z, k, T, prn);
+    err = (* johansen) (X, Y, Z, k, T, trends, prn);
     
  system_bailout:
     if (handle != NULL) {
@@ -934,6 +989,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     int orig_v = pdinfo->v;
     int *varlist;
     int hasconst = 0;
+    int trends = 0;
 
     /* we're assuming that the list we are fed is in levels */
     resids.levels_list = malloc((1 + list[0]) * sizeof *list);
@@ -1037,10 +1093,16 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 #endif
 
-	/* now get johansen plugin to find the sorted eigenvalues */
+	trends = has_time_trend(list, pZ, pdinfo);
+	if (trends == -1) {
+	    pprintf(prn, "%s\n", _("Error checking for time trends"));
+	    goto johansen_bailout;
+	}
+
+	/* now get johansen plugin to finish the job */
 	err = johansen_complete((const double **) Suu, 
 				(const double **) Svv, 
-				(const double **) Suv, k, T, prn);
+				(const double **) Suv, k, T, trends, prn);
 
     johansen_bailout:
 	

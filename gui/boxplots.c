@@ -839,9 +839,8 @@ five_numbers (gpointer data)
     if (bufopen(&prn)) return 1;
 
     if (grp->plots[0].conf[0] == -999.0) { /* no confidence intervals */
-	pprintf(prn, _("Five-number summar%s\n\n"
-		"%20s%10s%10s%10s%10s\n"),
-		(grp->nplots > 1)? _("ies") : "y",
+	pprintf(prn, "%s\n\n%20s%10s%10s%10s%10s\n",
+		_("Five-number summary"), 
 		"min", "Q1", _("median"), "Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
@@ -851,14 +850,13 @@ five_numbers (gpointer data)
 		    grp->plots[i].uq, grp->plots[i].max);
 	}
     } else { /* confidence intervals */
-	char intstr[24];
+	char intstr[32];
 
-	pprintf(prn, _("Five-number summar%s with bootstrapped confidence "
-		"interval for median\n\n"
-		"%18s%10s%10s%17s%10s%10s\n"),
-		(grp->nplots > 1)? _("ies") : "y",
+	pprintf(prn, "%s\n\n%18s%10s%10s%17s%10s%10s\n",
+		_("Five-number summary with bootstrapped confidence "
+		  "interval for median"),
 		"min", "Q1", _("median"), _("(90% interval)"), "Q3", "max");
-
+	
 	for (i=0; i<grp->nplots; i++) {
 	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 
 		    grp->plots[i].conf[1]);

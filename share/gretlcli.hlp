@@ -109,6 +109,18 @@ regression is also given.  Note that none of these test statistics can be
 referred to the usual statistical tables.
 
 #
+coint2
+@Tests
+Usage:	        coint2 order depvar indepvar
+Examples:       coint2 2 y x
+                coint2 12 y x1 x2 -o
+
+Carries out the Johansen trace test for cointegration among the listed
+variables for the given order.  For details of this test see for instance
+James D. Hamilton, Time Series Analysis, chapter 19.  If the -o flag is
+given the results of the various auxiliary regressions are printed.
+
+#
 corc
 @Estimation
 Usage:          corc depvar indepvar       or   corc -o depvar indepvar 
@@ -221,10 +233,27 @@ stored in a new variable with the prefix "d_".  Thus "diff x y" creates the
 new variables d_x = x(t) - x(t-1) and d_y = y(t) - y(t-1).
 
 #
+end
+@Programming
+
+Ends a block of commands of some sort.  For example, "end system" terminates
+an equation system.
+
+#
 endloop
 @Programming
 
 Terminates a simulation loop.  See "loop".
+
+#
+equation
+@Estimation
+Usage:          equation depvar indepvar
+Example:        equation y x1 x2 x3 const
+
+Specifies an equation within a system of equations (see the "system" command).
+The sytax for specifying an equarion is the same as that for, e.g., the
+"ols" command.
 
 # 
 eqnprint
@@ -665,11 +694,15 @@ Examples:       loop 1000
 This (script) command opens a special mode in which the program accepts
 commands to be repeated either a specified number of times, or so long as a
 specified condition holds true, or for successive integer values of the
-(internal) index variable i.  Within a loop, only 7 commands can be used:
-genr, ols, print, sim, smpl, store and summary (store can't be used in a
-"while" loop).  With genr and ols it is possible to do quite a lot.  You exit
-the mode of entering loop commands with "endloop": at this point the stacked
-commands are executed.  Loops cannot be nested.
+(internal) index variable i.
+
+Within a loop, only a subset of gretl commands can be used: genr, ols, print,
+sim, smpl, store and summary (store can't be used in a "while" loop).  Within
+a "number of times" loop some additional estimation commands are available,
+namely hccm, hsk and lad.
+
+You exit the mode of entering loop commands with "endloop": at this point the
+stacked commands are executed.  Loops cannot be nested.
 
 The ols command gives special output, depending on the sort of loop.  If a
 number of times is specified the results from each individual regression are
@@ -1209,6 +1242,21 @@ summary x y z      prints summary statistics for the variables x, y, and z
 Output consists of the mean, standard deviation (sd), coefficient of variation
 (CV = sd/mean), median, minimum, maximum, skewness coefficient, and excess
 kurtosis.
+
+#
+system
+@Estimation
+Usage:          system type=systype save=savevars
+Examples:       system type=sur 
+                system type=sur save=resids
+                system type=sur save=resids,fitted
+
+Starts a system of equations.  At present the only type of system supported is
+"sur" (Seemingly Unrelated Regressions).  In the optional "save=" field of the
+command you can specify whether to save the residuals ("resids") and/or the
+fitted values ("fitted").  The system must contain at least two equations
+specified using the "equation" command, and it must be terminated with the
+line "end system".
 
 #
 tabprint

@@ -9,6 +9,10 @@ version 1.0.6
 - fix bug with use of "store" command in a loop, in GUI program
 - fix translation problems that disabled some menus when not
   shown in English
+- fix translation problem that caused a crash when trying to save
+  data under a different name in non-English versions on Linux
+- add new commands, "system" (supports SUR) and "coint2" 
+  (Johansen trace test for cointegration)
 
 02/20/03 version 1.0.5
 - fix missing translations; fix build of rpm

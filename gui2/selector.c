@@ -927,7 +927,7 @@ static int screen_scalar (int i, int c)
 static void selector_init (selector *sr, guint code, const char *title)
 {
     GtkWidget *base, *hsep;
-    int dlgwidth = 340, dlgheight = 300;
+    int dlgheight = 300;
 
     sr->varlist = NULL;
     sr->depvar = NULL;
@@ -944,10 +944,8 @@ static void selector_init (selector *sr, guint code, const char *title)
 
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
 
-    dlgwidth *= gui_scale;
     dlgheight *= gui_scale;
-    gtk_widget_set_size_request(sr->dlg, dlgwidth, dlgheight);
-    /* gtk_window_set_resizable(GTK_WINDOW(sr->dlg), FALSE); */
+    gtk_widget_set_size_request(sr->dlg, -1, dlgheight); 
 
     g_signal_connect (G_OBJECT(sr->dlg), "destroy", 
 		      G_CALLBACK(destroy_selector), 
@@ -1264,6 +1262,18 @@ static void add_omit_list (gpointer p, selector *sr)
     }
 }
 
+static GtkWidget *selection_top_label (int code)
+{
+    GtkWidget *label = NULL;
+    const char *str = get_topstr(code);
+
+    if (strlen(str)) {
+	label = gtk_label_new(_(str));
+    } 
+
+    return label;
+}
+
 void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p) 
 {
@@ -1272,7 +1282,6 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     GtkListStore *store;
     GtkTreeIter iter;
     selector *sr;
-    char topstr[64];
     int i;
 
     if (open_dialog != NULL) {
@@ -1287,10 +1296,11 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
     sr->data = p;
 
-    strcpy(topstr, _(get_topstr(cmdcode)));
-    tmp = gtk_label_new(topstr);
-    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
+    tmp = selection_top_label(cmdcode);
+    if (tmp != NULL) {
+	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
+	gtk_widget_show(tmp);
+    }    
 
     /* for titles */
     top_hbox = gtk_hbox_new(FALSE, 0); 
@@ -1372,7 +1382,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     gtk_widget_show(big_hbox);
 
     /* buttons: "OK", Clear, Cancel, Help */
-    build_selector_buttons (sr, okfunc);
+    build_selector_buttons(sr, okfunc);
 
     gtk_widget_show(sr->dlg);
 }

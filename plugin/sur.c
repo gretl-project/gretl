@@ -371,8 +371,9 @@ int sur (gretl_equation_system *sys,
 	free_model(models[i]);
     }
 
-    pputs(prn, "Cross-equation VCV for residuals\n"
-	  "(correlations above the diagonal)\n\n");
+    pprintf(prn, "%s\n(%s)\n\n",
+	    _("Cross-equation VCV for residuals"),
+	    _("correlations above the diagonal"));
 
     print_sur_vcv(sigma, 1, prn);
 

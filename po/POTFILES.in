@@ -17,6 +17,7 @@ lib/src/printout.c
 lib/src/pvalues.c
 lib/src/strutils.c
 lib/src/subsample.c
+lib/src/system.c
 lib/src/texprint.c
 lib/src/var.c
 cli/common.c
@@ -67,7 +68,9 @@ gui2/treeutils.c
 gui2/webget.c
 plugin/excel_import.c
 plugin/gnumeric_import.c
+plugin/gretl_matrix.c
 plugin/import_common.c
+plugin/johansen.c
 plugin/lad.c
 plugin/longname.c
 plugin/mp_ols.c

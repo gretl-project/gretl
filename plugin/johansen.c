@@ -126,7 +126,7 @@ static int inverse_compare_doubles (const void *a, const void *b)
 }
 
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
-			int k, int T, PRN *prn)
+			int k, int T, int trends, PRN *prn)
 {
     gretl_matrix *Suu, *Svv, *Suv;
     gretl_matrix *Inv, *TmpL, *TmpR, *M;
@@ -185,13 +185,13 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	pprintf(prn, _("\nAlternative hypothesis: %d cointegrating "
 		"relations\n\n"), k);
 	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
-	p_value_string(lr, 3, k, HA_NO_RESTRICTIONS, prn);
+	p_value_string(lr, trends? 3 : 2, k, HA_NO_RESTRICTIONS, prn);
 
 	pputs(prn, "\nAlternative hypothesis: one cointegrating "
 	      "relation\n\n");
 	lr = - T * log(1.0 - eigvals[0]);
 	pprintf(prn, "%s = %g\n\n", _("Likelihood ratio test"), lr);
-	p_value_string(lr, 3, k, HA_H_PLUS_ONE, prn);
+	p_value_string(lr, trends? 3 : 2, k, HA_H_PLUS_ONE, prn);
 
 	free(eigvals);
 
