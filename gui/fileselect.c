@@ -105,9 +105,11 @@ static char *get_ext (int action, gpointer data)
     else if (action == SAVE_LAST_GRAPH) 
 	s = get_gp_ext(data);
     else {
-	for (i=0; i < sizeof map / sizeof *map; i++) {
-	    if (action == map[i].action) {
-		s = map[i].ext;
+	int i;
+
+	for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
+	    if (action == action_map[i].action) {
+		s = action_map[i].ext;
 		break;
 	    }
 	}
