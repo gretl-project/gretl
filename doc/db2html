@@ -18,6 +18,7 @@ rm -f $WORKDIR/*.html
 
 SAVE_PWD=`pwd`
 echo "working on ../$SRC"
-(cd $WORKDIR; jade -t sgml -ihtml -d ../${DB_STYLESHEET}\#html $XMLDCL ../$SRC; cd $SAVE_PWD)
+(cd $WORKDIR; jade -t sgml -ihtml -d ../${DB_STYLESHEET}\#html $XMLDCL ../$SRC; \
+../fixfigs.sh; cd $SAVE_PWD)
 
 exit 0
