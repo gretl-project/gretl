@@ -174,9 +174,10 @@ static void win_help (void)
 
 # ifdef USE_HHCTRL
     sprintf(hlpfile, "%s\\gretl.chm", paths.gretldir);
-    if (!HtmlHelp(GetDesktopWindow(), hlpfile, HH_DISPLAY_TOPIC, NULL))
+    if (!HtmlHelp(GetDesktopWindow(), hlpfile, HH_DISPLAY_TOPIC, 0))
 	errbox("Couldn't access help file");
 # else
+    /* hh.exe myfile.chm::/mytopic.htm */
     sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
     if (WinExec(hlpfile, SW_SHOWNORMAL) < 32)
         errbox("Couldn't access help file");
