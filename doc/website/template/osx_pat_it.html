@@ -1,31 +1,46 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html> <head>
-<title>gretl per Mac OS X</title>
+<title>gretl per OS X</title>
 <LINK REL=STYLESHEET TYPE="text/css" 
 HREF="./css-gretl.html">
 </head>
 
 <body>
-[<a href="http://gretl.sourceforge.net/gretl_italiano.html">pagina principale</a>]
+<p>[<a href="http://gretl.sourceforge.net/gretl_italiano.html">pagina principale</a>]</p>
 
 <center>
-<h1>Installare gretl su Mac OS X</h1>
+<h1>Gretl: Gnu Regression, Econometrics and Time-series Library</h1>
+<h2>per Mac OS X</h2>
 </center>
 
-<p>Il modo più semplice, se funziona nel vostro caso, consiste nell'installare
-gretl da un'immagine disco di OS X, 
-<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl.dmg">gretl.dmg</a>.
-Questa procedura è stata testata su OS X v10.2.4, ma non su OS X 10.3 "Panther".
-Il pacchetto dipende dal sistema X11 di Apple (il porting di Apple per Mac del
-sistema X Window).</p>
+<h2>Pre-built disk image</h2>
 
-<p>In alternativa, è possibile compilare gretl dal sorgente. Per questo è richiesto,
-oltre all'X11 di Apple, il pacchetto Fink disponibile da:
+<p>Il modo più semplice di installare gretl per OS X, se funziona nel vostro
+caso, prevede di usare l'immagine disco  
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl.dmg">gretl.dmg</a>.
+(versione corrente: VERSION, circa 8MB). Scaricate l'immagine sul vostro desktop,
+fate doppio clic su di essa per aprirla, quindi trascinate la cartella
+Gretl_Folder contenuta all'interno in una posizione adatta all'installazione
+(ad esempio, la propria cartella Programmi).</p>
+
+<p>Questa procedura è stata testata su OS X v10.2.4; su OS X 10.3 "Panther" dovrebbe
+funzionare ma potrebbero verificarsi problemi con i caratteri. L'immagine disco è
+documentata brevemente nel file
+<a href="./README.pdf">README.pdf</a>, che contiene suggerimenti da seguire nel caso
+in cui i caratteri non appaiano correttamente.</p>
+
+<p>Si noti che questo pacchetto dipende dal sistema X11 di Apple (il porting di
+Apple per Mac del sistema X Window).</p>
+
+<h2>Metodo alternativo: compilare usando Fink</h2>
+
+<p>Se l'immagine precompilata non funziona, o se si vuole un maggior controllo
+sulla compilazione, è possibile compilare gretl dal sorgente. Per questo è richiesto,
+oltre all'X11 di Apple e a un certo grado di famigliarità con i comandi unix, il sistema
+Fink disponibile da:
 <a
   href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p>
 
-<h2>Pacchetti Fink richiesti</h2>
-  
 <p>Oltre all'installazione base di Fink, per compilare ed eseguire gretl
 occorre assicurarsi che i seguenti pacchetti Fink siano installati e
 aggiornati (alcuni potrebbero già esserlo, nel qual caso Fink avvertirà
@@ -35,25 +50,36 @@ l'installazione:</p>
 
 <table cellspacing=8>
   <tr>
-    <td>system-xfree86</td><td><kbd>fink install system-xfree86</kbd></td>
+    <td><p class="in-cell">system-xfree86</p></td>
+    <td><kbd>fink install system-xfree86</kbd></td>
     </tr>
   <tr>
-    <td>gtk</td><td><kbd>fink install gtk+2</kbd></td>
+    <td><p class="in-cell">gtk+2</p></td>
+    <td><kbd>fink install gtk+2</kbd></td>
     </tr>
   <tr>
-    <td>libxml2</td><td><kbd>fink install libxml2</kbd></td>
+    <td><p class="in-cell">gtk+2-dev</p></td>
+    <td><kbd>fink install gtk+2-dev</kbd></td>
     </tr>
   <tr>
-    <td>dlcompat</td><td><kbd>fink install dlcompat</kbd></td>
+    <td><p class="in-cell">libxml2</p></td>
+    <td><kbd>fink install libxml2</kbd></td>
     </tr>
   <tr>
-    <td>dlcompat-dev</td><td><kbd>fink install dlcompat-dev</kbd></td>
+    <td><p class="in-cell">dlcompat</p></td>
+    <td><kbd>fink install dlcompat</kbd></td>
     </tr>
   <tr>
-    <td>gnuplot</td><td><kbd>fink install gnuplot</kbd></td>
+    <td><p class="in-cell">dlcompat-dev</p></td>
+    <td><kbd>fink install dlcompat-dev</kbd></td>
     </tr>
   <tr>
-    <td>recode</td><td><kbd>fink install recode</kbd></td>
+    <td><p class="in-cell">gnuplot</p></td>
+    <td><kbd>fink install gnuplot</kbd></td>
+    </tr>
+  <tr>
+    <td><p class="in-cell">recode</p></td>
+    <td><kbd>fink install recode</kbd></td>
     </tr>
 </table>
 
