@@ -1002,6 +1002,7 @@ gint main_varclick (GtkWidget *widget, GdkEventButton *event,
 			   event->button, event->time);
 	}
     }
+
     return TRUE;
 }
 
