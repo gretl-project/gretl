@@ -17,7 +17,7 @@
  *
  */
 
-/* win32.c for gretl */
+/* gretl_win32.c for gretl */
 
 #include "libgretl.h"
 #include <windows.h>
@@ -126,6 +126,68 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
     }
 }
+
+/* ............................................................ */
+
+void win_show_error (DWORD dw)
+{
+    LPVOID buf;
+
+    FormatMessage( 
+		  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+		  FORMAT_MESSAGE_FROM_SYSTEM | 
+		  FORMAT_MESSAGE_IGNORE_INSERTS,
+		  NULL,
+		  dw,
+		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		  (LPTSTR) &buf,
+		  0,
+		  NULL 
+		  );
+    MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
+    LocalFree(buf);
+}
+
+/* ............................................................ */
+
+int winfork (char *cmdline, const char *dir, int wshow,
+	     DWORD flags)
+{
+    int child;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi; 
+    DWORD exitcode;
+
+    ZeroMemory(&si, sizeof si);
+    si.cb = sizeof si;
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = wshow;
+
+    ZeroMemory(&pi, sizeof pi);  
+
+    /* zero return means failure */
+    child = CreateProcess(NULL, cmdline, 
+			  NULL, NULL, FALSE,
+			  flags,
+			  NULL, dir,
+			  &si, &pi);
+
+    if (!child) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
+	return 1;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE); 
+
+    GetExitCodeProcess(pi.hProcess, &exitcode);
+   
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return 0;
+}
+
 
 
 

@@ -30,6 +30,11 @@
 #ifdef GNUPLOT_PNG
 # include <gdk-pixbuf/gdk-pixbuf.h>
 # include <gdk/gdkkeysyms.h>
+# define PNG_COMMENTS 1
+#endif
+
+#ifdef PNG_COMMENTS
+# include <png.h>
 #endif
 
 struct gpt_titles_t {
@@ -117,6 +122,29 @@ static void render_pngfile (png_plot_t *plot, int view);
 static int zoom_unzoom_png (png_plot_t *plot, int view);
 static int redisplay_edited_png (png_plot_t *plot);
 #endif /* GNUPLOT_PNG */
+
+#ifdef PNG_COMMENTS
+enum {
+    GRETL_PNG_NO_OPEN = 1,
+    GRETL_PNG_NOT_PNG,
+    GRETL_PNG_NO_COMMENTS,
+    GRETL_PNG_BAD_COMMENTS,
+    GRETL_PNG_NO_COORDS
+};
+
+typedef struct {
+    int xleft;
+    int xright;
+    int ybot;
+    int ytop;
+    double xmin;
+    double xmax;
+    double ymin;
+    double ymax;
+} png_bounds_t;
+
+static int get_png_bounds_info (png_bounds_t *bounds);
+#endif /* PNG_COMMENTS */
 
 /* ........................................................... */
 
@@ -1498,20 +1526,26 @@ void start_editing_session_graph (const char *fname)
 #ifdef GNUPLOT_PNG
 
 /* Size of drawing area */
-#define WIDTH  640   /* try 576? 608? */
-#define HEIGHT 480   /* try 432? 456? */
+#define PLOT_PIXEL_WIDTH  640   /* try 576? 608? */
+#define PLOT_PIXEL_HEIGHT 480   /* try 432? 456? */
 
 #ifdef USE_GNOME
 extern void gnome_print_graph (const char *fname);
 #endif
 
-/* rough screen coordinates of actual plot area of gnuplot PNG graph */
+/* very rough screen coordinates of actual plot area of gnuplot PNG graph */
 #define PLOTXMIN 54.0     /* was 52 */
 #define PLOTXMAX 618.0    /* was 620 */
 #define PLOTYMIN 36.0     /* was 32 */
 #define PLOTYMAX 444.0    /* was 446 */
 #define NOTITLE_YMAX 464.0 /* new */
 #define NOTITLE_YMIN 24.0 /* was 13 */
+
+static int png_got_coords;
+static int pixel_xmin;
+static int pixel_xmax;
+static int pixel_ymin;
+static int pixel_ymax;
 
 static void get_data_xy (png_plot_t *plot, int x, int y, 
 			 double *data_x, double *data_y)
@@ -1531,20 +1565,32 @@ static void get_data_xy (png_plot_t *plot, int x, int y,
 	ymax = plot->ymax;
     }
 
-    *data_x = xmin + ((double) x - PLOTXMIN) / (PLOTXMAX - PLOTXMIN) *
+    *data_x = xmin + ((double) x - pixel_xmin) / (pixel_xmax - pixel_xmin) *
 	(xmax - xmin);
     if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
 	*data_y = NADBL;
     } else {
 #if 1
-	int plotymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+	int plotymin;
 
-	*data_y = ymax - ((double) y - plotymin) / (PLOTYMAX - plotymin) *
+	if (png_got_coords) {
+	    plotymin = pixel_ymin;
+	} else {
+	    plotymin = (plot->title)? pixel_ymin : NOTITLE_YMIN;
+	}
+
+	*data_y = ymax - ((double) y - plotymin) / (pixel_ymax - plotymin) *
 	    (ymax - ymin);
 #else
-	int plotymax = (plot->title)? PLOTYMAX : NOTITLE_YMAX;
+	int plotymax;
 
-	*data_y = ymax - ((double) y - PLOTYMIN) / (plotymax - PLOTYMIN) *
+	if (png_got_coords) {
+	    plotymax = pixel_ymax;
+	} else {
+	    plotymax = (plot->title)? pixel_ymax : NOTITLE_YMAX;
+	}
+
+	*data_y = ymax - ((double) y - pixel_ymin) / (plotymax - pixel_ymin) *
 	    (ymax - ymin);
 #endif
     }
@@ -1595,7 +1641,7 @@ static void draw_selection_rectangle (png_plot_t *plot,
 			 0, 0,
 			 plot->pixmap,
 			 0, 0,
-			 WIDTH, HEIGHT);
+			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
     /* draw (invert) again to erase the rectangle */
     gdk_draw_rectangle(plot->pixmap,
 		       plot->invert_gc,
@@ -1610,7 +1656,13 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     int x, y;
     GdkModifierType state;
     gchar label[32], label_y[16];
-    int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+    int ymin;
+
+    if (png_got_coords) {
+	ymin = pixel_ymin;
+    } else {
+	ymin = (plot->title)? pixel_ymin : NOTITLE_YMIN;
+    }
 
     if (event->is_hint)
         gdk_window_get_pointer (event->window, &x, &y, &state);
@@ -1620,7 +1672,8 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
         state = event->state;
     }
 
-    if (x > PLOTXMIN && x < PLOTXMAX && y > ymin && y < PLOTYMAX) {
+    *label = 0;
+    if (x > pixel_xmin && x < pixel_xmax && y > ymin && y < pixel_ymax) {
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
@@ -1635,8 +1688,8 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
 	}
-    } else
-	*label = 0;
+    } 
+
     gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
   
     return TRUE;
@@ -2044,7 +2097,7 @@ static void render_pngfile (png_plot_t *plot, int view)
 			     0, 0,
 			     plot->pixmap,
 			     0, 0,
-			     WIDTH, HEIGHT);
+			     PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
 	if (view == PNG_ZOOM) {
 	    plot->flags |= PLOT_ZOOMED;
 	} else if (view == PNG_UNZOOM) {
@@ -2074,7 +2127,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
     free(plot);
 }
 
-static int get_plot_yrange (png_plot_t *plot)
+static int get_dumb_plot_yrange (png_plot_t *plot)
 {
     FILE *fpin, *fpout;
     char line[MAXLEN], dumbgp[MAXLEN], dumbtxt[MAXLEN];
@@ -2117,9 +2170,9 @@ static int get_plot_yrange (png_plot_t *plot)
     g_free(plotcmd);
     remove(dumbgp);
 
-    if (err) 
+    if (err) {
 	return 1;
-    else {
+    } else {
 	double y[16];
 	int i = 0;
 
@@ -2161,6 +2214,10 @@ static int get_plot_ranges (png_plot_t *plot)
     FILE *fp;
     char line[MAXLEN];
     int got_x = 0, got_pd = 0;
+#ifdef PNG_COMMENTS
+    int coords;    
+    png_bounds_t b;
+#endif
 
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;   
@@ -2194,13 +2251,52 @@ static int get_plot_ranges (png_plot_t *plot)
 
     fclose(fp);
 
-    if (got_x) {
-	int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+#ifdef PNG_COMMENTS
+    /* now try getting coordinate info from PNG file */
+    coords = get_png_bounds_info(&b);
+    if (coords == 0) {
+	/* retrieved accurate coordinates */
+	png_got_coords = 1;
+	got_x = 1;
+	pixel_xmin = b.xleft;
+	pixel_xmax = b.xright;
+	pixel_ymin = PLOT_PIXEL_HEIGHT - b.ytop;
+	pixel_ymax = PLOT_PIXEL_HEIGHT - b.ybot;
+	plot->xmin = b.xmin;
+	plot->xmax = b.xmax;
+	plot->ymin = b.ymin;
+	plot->ymax = b.ymax;
+    } else { 
+	/* didn't get accurate coordinates from PNG, so fudge it? */
+	png_got_coords = 0;
+	pixel_xmin = PLOTXMIN;
+	pixel_xmax = PLOTXMAX;
+	pixel_ymin = PLOTYMIN;
+	pixel_ymax = PLOTYMAX;
+    }
+#else
+    pixel_xmin = PLOTXMIN;
+    pixel_xmax = PLOTXMAX;
+    pixel_ymin = PLOTYMIN;
+    pixel_ymax = PLOTYMAX;
+#endif /* PNG_COMMENTS */
 
-	get_plot_yrange(plot);
-	if ((plot->xmax - plot->xmin) / (PLOTXMAX - PLOTXMIN) >= 1.0)
+    if (got_x) {
+	int ymin;
+
+	if (png_got_coords) {
+	    ymin = pixel_ymin;
+	} else {
+	    ymin = (plot->title)? pixel_ymin : NOTITLE_YMIN;
+	}
+
+	if (!png_got_coords) {
+	    get_dumb_plot_yrange(plot);
+	} 
+
+	if ((plot->xmax - plot->xmin) / (pixel_xmax - pixel_xmin) >= 1.0)
 	    plot->xint = 1;
-	if ((plot->ymax - plot->ymin) / (PLOTYMAX - ymin) >= 1.0)
+	if ((plot->ymax - plot->ymin) / (pixel_ymax - ymin) >= 1.0)
 	    plot->yint = 1;
     }
 
@@ -2276,7 +2372,8 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
-    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), WIDTH, HEIGHT);
+    gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), 
+				PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
     gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
                            | GDK_BUTTON_PRESS_MASK
@@ -2352,7 +2449,9 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /*  set the focus to the canvas area  */
     gtk_widget_grab_focus (plot->canvas);  
 
-    plot->pixmap = gdk_pixmap_new(plot->shell->window, WIDTH, HEIGHT, -1);
+    plot->pixmap = gdk_pixmap_new(plot->shell->window, 
+				  PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT, 
+				  -1);
     g_signal_connect(G_OBJECT(plot->canvas), "expose_event",
 		     G_CALLBACK(plot_expose), plot->pixmap);
 
@@ -2360,6 +2459,140 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     return 0;
 }
+
+/* apparatus for getting coordinate info out of PNG files created using
+   Allin Cottrell's modified version of gnuplot, which writes such info
+   into the PNG comment fields
+*/
+
+#ifdef PNG_COMMENTS
+
+static int get_png_plot_bounds (const char *str, png_bounds_t *bounds)
+{
+    if (sscanf(str, "xleft=%d xright=%d ybot=%d ytop=%d", 
+	       &bounds->xleft, &bounds->xright,
+	       &bounds->ybot, &bounds->ytop) != 4) {
+	return GRETL_PNG_BAD_COMMENTS;
+    } else if (bounds->xleft == 0 && bounds->xright == 0 &&
+	       bounds->ybot == 0 && bounds->ytop == 0) {
+	return GRETL_PNG_NO_COORDS;
+    } else {
+	return 0;
+    }
+}
+
+static int get_png_data_bounds (const char *str, png_bounds_t *bounds)
+{
+    if (sscanf(str, "xmin=%lf xmax=%lf ymin=%lf ymax=%lf", 
+	       &bounds->xmin, &bounds->xmax,
+	       &bounds->ymin, &bounds->ymax) != 4) {
+	return GRETL_PNG_BAD_COMMENTS;
+    } else if (bounds->xmin == 0.0 && bounds->xmax == 0.0 &&
+	       bounds->ymin == 0.0 && bounds->ymax == 0.0) {
+	return GRETL_PNG_NO_COORDS;
+    } else {
+	return 0;
+    }
+}
+
+#define PNG_CHECK_BYTES 4
+
+static int get_png_bounds_info (png_bounds_t *bounds)
+{
+    FILE *fp;
+    char header[PNG_CHECK_BYTES];
+    char pngname[MAXLEN];
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_text *text_ptr = NULL;
+    int i, ret = 0;
+    int num_text;
+
+    build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
+
+    fp = fopen(pngname, "rb");
+    if (fp == NULL) return GRETL_PNG_NO_OPEN;
+
+    fread(header, 1, PNG_CHECK_BYTES, fp);
+
+#ifdef G_OS_WIN32
+
+
+#else   
+    if (png_sig_cmp(header, 0, PNG_CHECK_BYTES)) {
+	fclose(fp);
+	sprintf(errtext, "Bad PNG header: Got bytes %x %x %x %x", 
+		header[0],header[1],header[2],header[3]);
+	errbox(errtext);
+	return GRETL_PNG_NOT_PNG;
+    }
+#endif
+
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 
+				     NULL, NULL, NULL);
+    if (png_ptr == NULL) {
+	fclose(fp);
+	return GRETL_PNG_NO_OPEN;
+    }
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (info_ptr == NULL) {
+        png_destroy_read_struct(&png_ptr, (png_infopp) NULL, 
+				(png_infopp) NULL);
+	fclose(fp);
+        return GRETL_PNG_NO_OPEN;
+    }
+
+    if (setjmp(png_ptr->jmpbuf)) {
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        fclose(fp);
+        return GRETL_PNG_NO_OPEN;
+    }
+
+    png_init_io(png_ptr, fp);
+
+    png_set_sig_bytes(png_ptr, PNG_CHECK_BYTES);
+    png_read_info(png_ptr, info_ptr);
+
+    num_text = png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
+
+    if (num_text > 1) {
+	int plot_ret = -1, data_ret = -1;
+
+	for (i=1; i<num_text; i++) {
+	    if (!strcmp(text_ptr[i].key, "plot bounds")) {
+		plot_ret = get_png_plot_bounds(text_ptr[i].text, bounds);
+
+	    }
+	    if (!strcmp(text_ptr[i].key, "data bounds")) {
+		data_ret = get_png_data_bounds(text_ptr[i].text, bounds);
+	    }
+	}
+	if (plot_ret == GRETL_PNG_NO_COORDS && data_ret == GRETL_PNG_NO_COORDS) {
+	    /* comments were present and correct, but all zero */
+	    ret = GRETL_PNG_NO_COORDS;
+	}
+	else if (plot_ret != 0 || data_ret != 0) {
+	    /* one or both set of coordinates bad or missing */
+	    if (plot_ret >= 0 || data_ret >= 0) {
+		ret = GRETL_PNG_BAD_COMMENTS;
+	    } else {
+		ret = GRETL_PNG_NO_COMMENTS;
+	    }
+	}
+    } else {
+	/* no coordinates comments present */
+	ret = GRETL_PNG_NO_COMMENTS;
+    }
+
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+    fclose(fp);
+    
+    return ret;
+}
+
+#endif /* PNG_COMMENTS */
 
 #ifdef G_OS_WIN32
 
@@ -2378,106 +2611,6 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
    figure.
 */
 
-/* #define CLIPTEST 1 */
-
-#if 0
-static void emf_to_clip_as_wmf (HENHMETAFILE hemf)
-{
-    /* int mfscale = 2540; */
-    size_t mflen;
-    HDC dc;
-    GLOBALHANDLE hmem;
-    HMETAFILE hmf;
-    LPMETAFILEPICT lpmfp;
-    char *mfbuf;
-
-    dc = GetDC(NULL);
-
-    /* determine storage size */
-    mflen = GetWinMetaFileBits(hemf, 0, NULL,
-			       MM_ANISOTROPIC, dc);
-
-    /* allocate storage */
-    mfbuf = malloc(mflen);
-
-    /* copy the bits into buffer */
-    GetWinMetaFileBits(hemf, mflen, mfbuf, 
-		       MM_ANISOTROPIC, dc);
-
-    /* create memory-based metafile */
-    hmf = SetMetaFileBitsEx(mflen, mfbuf);
-
-    /* assemble the LPMETAFILEPICT */
-    hmem = GlobalAlloc(GMEM_MOVEABLE, (DWORD) sizeof(METAFILEPICT));
-    lpmfp = (LPMETAFILEPICT) GlobalLock(hmem);
-    lpmfp->mm = MM_ANISOTROPIC;
-    lpmfp->xExt = 0;
-    lpmfp->yExt = 0;
-    lpmfp->hMF = hmf;
-    GlobalUnlock(hmem);
-
-    OpenClipboard(NULL);
-    EmptyClipboard();
-    SetClipboardData(CF_METAFILEPICT, hmem);
-    CloseClipboard();
-
-    ReleaseDC(NULL, dc);
-    free(mfbuf);
-}
-#endif
-
-#ifdef CLIPTEST
-static int emf_to_clip (char *emfname)
-{
-    LPBYTE emfbuf;
-    UINT emflen;
-    HENHMETAFILE hemf, hemfclip, hemftest;
-
-    hemf = GetEnhMetaFile(emfname);
-    if (hemf == NULL) {
-        errbox(_("Gnuplot error creating graph"));
-	return 1;
-    }
-
-    emflen = GetEnhMetaFileBits(hemf, 0, NULL);
-    if (emflen == 0) {
-        errbox(_("Gnuplot error creating graph"));
-	return 1;
-    }
-
-    emfbuf = mymalloc(emflen);
-    if (emfbuf == NULL) {
-	DeleteEnhMetaFile(hemf);
-	return 1;
-    }
-
-    emflen = GetEnhMetaFileBits(hemf, emflen, emfbuf);
-    DeleteEnhMetaFile(hemf); /* close the handle */
-
-    sprintf(errtext, "Read %u bytes from emf file", emflen);
-    infobox(errtext);
-
-    if (!OpenClipboard(NULL)) {
-	errbox(_("Cannot open the clipboard"));
-	return 1;
-    }
-
-    EmptyClipboard();
-
-    hemfclip = SetEnhMetaFileBits(emflen, emfbuf);
-    SetClipboardData(CF_ENHMETAFILE, hemfclip);
-    
-    CloseClipboard();
-
-    /* test */
-    hemftest = CopyEnhMetaFile(hemfclip, "c:\\userdata\\gretl\\user\\clipbd.emf");
-    DeleteEnhMetaFile(hemftest);
-
-    free(emfbuf);
-
-    return 0;
-}
-#else
 static int emf_to_clip (char *emfname)
 {
     HENHMETAFILE hemf, hemfclip;
@@ -2490,21 +2623,14 @@ static int emf_to_clip (char *emfname)
     EmptyClipboard();
 
     hemf = GetEnhMetaFile(emfname);
-
-#if 0
-    emf_to_clip_as_wmf(hemf);
-#else
     hemfclip = CopyEnhMetaFile(hemf, NULL);
     SetClipboardData(CF_ENHMETAFILE, hemfclip);
 
     CloseClipboard();
-#endif
-
     DeleteEnhMetaFile(hemf);
 
     return 0;
 }
-#endif /* CLIPTEST */
 
 static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
 {
@@ -2534,7 +2660,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
 	pprintf(prn, "set term emf mono dash\n");
     }
     pprintf(prn, "set output '%s'\n", emfname);
-    pprintf(prn, "set size 0.85,0.85\n");
+    pprintf(prn, "set size 0.8,0.8\n");
     while (fgets(plotline, MAXLEN-1, fq)) {
 	if (strncmp(plotline, "set term", 8) && 
 	    strncmp(plotline, "set output", 10))

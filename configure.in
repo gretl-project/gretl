@@ -385,7 +385,31 @@ if test ${try_ole} = yes && test ${have_gtk} = "1.2" ; then
 fi
 
 dnl
-dnl Check for system PNG support
+dnl Check for PNG support
+dnl
+if test ${png_graphics} = yes && test ${have_gtk} = "2.0" ; then
+    PKG_CHECK_MODULES(PNG, libpng,
+        png_failed="no",
+	png_failed="yes"
+   )
+fi
+if test ${png_graphics} = yes && test ${have_gtk} = "1.2" ; then
+   AC_CHECK_LIB(png, png_init_io,png_failed="no",png_failed="yes",-lz)
+   PNG_CFLAGS=
+   PNG_LIBS=
+   AC_SUBST(PNG_CFLAGS)
+   AC_SUBST(PNG_LIBS)
+fi
+
+if test ${png_graphics} = yes && test ${png_failed} = yes ; then
+    echo "* gretl wants but did not find libpng for PNG graphs."
+    echo "* You can turn off this dependency by configuring with the option"
+    echo "* --disable-png-graphics"
+    exit
+fi
+
+dnl
+dnl Check for gdk-pixbuf support
 dnl
 if test ${png_graphics} = yes && test ${have_gtk} = "2.0" ; then
     PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= 0.7.0,

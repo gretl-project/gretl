@@ -25,6 +25,11 @@
 #ifdef GNUPLOT_PNG
 # include <gdk-pixbuf/gdk-pixbuf.h>
 # include <gdk/gdkkeysyms.h>
+# define PNG_COMMENTS 1
+#endif
+
+#ifdef PNG_COMMENTS
+# include <png.h>
 #endif
 
 struct gpt_titles_t {
@@ -114,6 +119,29 @@ static void render_pngfile (png_plot_t *plot, int view);
 static int zoom_unzoom_png (png_plot_t *plot, int view);
 static int redisplay_edited_png (png_plot_t *plot);
 #endif /* GNUPLOT_PNG */
+
+#ifdef PNG_COMMENTS
+enum {
+    GRETL_PNG_NO_OPEN = 1,
+    GRETL_PNG_NOT_PNG,
+    GRETL_PNG_NO_COMMENTS,
+    GRETL_PNG_BAD_COMMENTS,
+    GRETL_PNG_NO_COORDS
+};
+
+typedef struct {
+    int xleft;
+    int xright;
+    int ybot;
+    int ytop;
+    double xmin;
+    double xmax;
+    double ymin;
+    double ymax;
+} png_bounds_t;
+
+static int get_png_bounds_info (png_bounds_t *bounds);
+#endif
 
 /* ........................................................... */
 
@@ -1423,19 +1451,26 @@ void start_editing_session_graph (const char *fname)
 #ifdef GNUPLOT_PNG
 
 /* Size of drawing area */
-#define WIDTH 640    /* try 576? */
-#define HEIGHT 480   /* try 432? */
+#define PLOT_PIXEL_WIDTH  640   /* try 576? 608? */
+#define PLOT_PIXEL_HEIGHT 480   /* try 432? 456? */
 
 #ifdef USE_GNOME
 extern void gnome_print_graph (const char *fname);
 #endif
 
-/* screen coordinates of actual plot area of gnuplot PNG graph */
-#define PLOTXMIN 52.0
-#define PLOTXMAX 620.0
-#define PLOTYMIN 32.0
-#define PLOTYMAX 446.0
-#define NOTITLE_YMIN 13.0
+/* very rough screen coordinates of actual plot area of gnuplot PNG graph */
+#define PLOTXMIN 54.0     /* was 52 */
+#define PLOTXMAX 618.0    /* was 620 */
+#define PLOTYMIN 36.0     /* was 32 */
+#define PLOTYMAX 444.0    /* was 446 */
+#define NOTITLE_YMAX 464.0 /* new */
+#define NOTITLE_YMIN 24.0 /* was 13 */
+
+static int png_got_coords;
+static int pixel_xmin;
+static int pixel_xmax;
+static int pixel_ymin;
+static int pixel_ymax;
 
 static void get_data_xy (png_plot_t *plot, int x, int y, 
 			 double *data_x, double *data_y)
@@ -1512,7 +1547,7 @@ static void draw_selection_rectangle (png_plot_t *plot,
 			 0, 0,
 			 plot->pixmap,
 			 0, 0,
-			 WIDTH, HEIGHT);
+			 PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
     /* draw (invert) again to erase the rectangle */
     gdk_draw_rectangle(plot->pixmap,
 		       plot->invert_gc,
@@ -1937,7 +1972,7 @@ static void render_pngfile (png_plot_t *plot, int view)
 			     0, 0,
 			     plot->pixmap,
 			     0, 0,
-			     WIDTH, HEIGHT);
+			     PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
 	if (view == PNG_ZOOM) {
 	    plot->flags |= PLOT_ZOOMED;
 	} else if (view == PNG_UNZOOM) {
@@ -1967,7 +2002,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
     free(plot);
 }
 
-static int get_plot_yrange (png_plot_t *plot)
+static int get_dumb_plot_yrange (png_plot_t *plot)
 {
     FILE *fpin, *fpout;
     char line[MAXLEN], dumbgp[MAXLEN], dumbtxt[MAXLEN];
@@ -2046,6 +2081,10 @@ static int get_plot_ranges (png_plot_t *plot)
     FILE *fp;
     char line[MAXLEN];
     int got_x = 0, got_pd = 0;
+#ifdef PNG_COMMENTS
+    int coords;    
+    png_bounds_t b;
+#endif
 
     plot->xmin = plot->xmax = 0.0;
     plot->ymin = plot->ymax = 0.0;   
@@ -2079,13 +2118,52 @@ static int get_plot_ranges (png_plot_t *plot)
 
     fclose(fp);
 
-    if (got_x) {
-	int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+#ifdef PNG_COMMENTS
+    /* now try getting coordinate info from PNG file */
+    coords = get_png_bounds_info(&b);
+    if (coords == 0) {
+	/* retrieved accurate coordinates */
+	png_got_coords = 1;
+	got_x = 1;
+	pixel_xmin = b.xleft;
+	pixel_xmax = b.xright;
+	pixel_ymin = PLOT_PIXEL_HEIGHT - b.ytop;
+	pixel_ymax = PLOT_PIXEL_HEIGHT - b.ybot;
+	plot->xmin = b.xmin;
+	plot->xmax = b.xmax;
+	plot->ymin = b.ymin;
+	plot->ymax = b.ymax;
+    } else { 
+	/* didn't get accurate coordinates from PNG, so fudge it? */
+	png_got_coords = 0;
+	pixel_xmin = PLOTXMIN;
+	pixel_xmax = PLOTXMAX;
+	pixel_ymin = PLOTYMIN;
+	pixel_ymax = PLOTYMAX;
+    }
+#else
+    pixel_xmin = PLOTXMIN;
+    pixel_xmax = PLOTXMAX;
+    pixel_ymin = PLOTYMIN;
+    pixel_ymax = PLOTYMAX;
+#endif /* PNG_COMMENTS */
 
-	get_plot_yrange(plot);
-	if ((plot->xmax - plot->xmin) / (PLOTXMAX - PLOTXMIN) >= 1.0)
+    if (got_x) {
+	int ymin;
+
+	if (png_got_coords) {
+	    ymin = pixel_ymin;
+	} else {
+	    ymin = (plot->title)? pixel_ymin : NOTITLE_YMIN;
+	}
+
+	if (!png_got_coords) {
+	    get_dumb_plot_yrange(plot);
+	} 
+
+	if ((plot->xmax - plot->xmin) / (pixel_xmax - pixel_xmin) >= 1.0)
 	    plot->xint = 1;
-	if ((plot->ymax - plot->ymin) / (PLOTYMAX - ymin) >= 1.0)
+	if ((plot->ymax - plot->ymin) / (pixel_ymax - ymin) >= 1.0)
 	    plot->yint = 1;
     }
 
@@ -2166,7 +2244,8 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
-    gtk_drawing_area_size(GTK_DRAWING_AREA(plot->canvas), WIDTH, HEIGHT);
+    gtk_drawing_area_size(GTK_DRAWING_AREA(plot->canvas), 
+			  PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
     gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
                            | GDK_BUTTON_PRESS_MASK
@@ -2243,7 +2322,9 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /*  set the focus to the canvas area  */
     gtk_widget_grab_focus (plot->canvas);  
 
-    plot->pixmap = gdk_pixmap_new(plot->shell->window, WIDTH, HEIGHT, -1);
+    plot->pixmap = gdk_pixmap_new(plot->shell->window, 
+				  PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT, 
+				  -1);
     gtk_signal_connect(GTK_OBJECT(plot->canvas), "expose_event",
 		       GTK_SIGNAL_FUNC(plot_expose), plot->pixmap);
 
@@ -2254,4 +2335,130 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
 #endif /* GNUPLOT_PNG */
 
+/* apparatus for getting coordinate info out of PNG files created using
+   Allin Cottrell's modified version of gnuplot, which writes such info
+   into the PNG comment fields
+*/
+
+#ifdef PNG_COMMENTS
+
+#define PNG_CHECK_BYTES 8
+
+static int get_png_plot_bounds (const char *str, png_bounds_t *bounds)
+{
+    if (sscanf(str, "xleft=%d xright=%d ybot=%d ytop=%d", 
+	       &bounds->xleft, &bounds->xright,
+	       &bounds->ybot, &bounds->ytop) != 4) {
+	return GRETL_PNG_BAD_COMMENTS;
+    } else if (bounds->xleft == 0 && bounds->xright == 0 &&
+	       bounds->ybot == 0 && bounds->ytop == 0) {
+	return GRETL_PNG_NO_COORDS;
+    } else {
+	return 0;
+    }
+}
+
+static int get_png_data_bounds (const char *str, png_bounds_t *bounds)
+{
+    if (sscanf(str, "xmin=%lf xmax=%lf ymin=%lf ymax=%lf", 
+	       &bounds->xmin, &bounds->xmax,
+	       &bounds->ymin, &bounds->ymax) != 4) {
+	return GRETL_PNG_BAD_COMMENTS;
+    } else if (bounds->xmin == 0.0 && bounds->xmax == 0.0 &&
+	       bounds->ymin == 0.0 && bounds->ymax == 0.0) {
+	return GRETL_PNG_NO_COORDS;
+    } else {
+	return 0;
+    }
+}
+
+static int get_png_bounds_info (png_bounds_t *bounds)
+{
+    FILE *fp;
+    unsigned char header[PNG_CHECK_BYTES];
+    char pngname[MAXLEN];
+    png_structp png_ptr;
+    png_infop info_ptr;
+    png_text *text_ptr = NULL;
+    int is_png, i, ret = 0;
+    int num_text;
+
+    build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
+
+    fp = fopen(pngname, "rb");
+    if (!fp) return GRETL_PNG_NO_OPEN;
+
+    fread(header, 1, PNG_CHECK_BYTES, fp);
+
+    is_png = !png_sig_cmp(header, 0, PNG_CHECK_BYTES);
+    if (!is_png) {
+	fclose(fp);
+	return GRETL_PNG_NOT_PNG;
+    }
+
+    png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 
+				     NULL, NULL, NULL);
+    if (!png_ptr) {
+	fclose(fp);
+	return GRETL_PNG_NO_OPEN;
+    }
+
+    info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+        png_destroy_read_struct(&png_ptr, (png_infopp) NULL, 
+				(png_infopp) NULL);
+	fclose(fp);
+        return GRETL_PNG_NO_OPEN;
+    }
+
+    if (setjmp(png_ptr->jmpbuf)) {
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        fclose(fp);
+        return GRETL_PNG_NO_OPEN;
+    }
+
+    png_init_io(png_ptr, fp);
+
+    png_set_sig_bytes(png_ptr, PNG_CHECK_BYTES);
+    png_read_info(png_ptr, info_ptr);
+
+    num_text = png_get_text(png_ptr, info_ptr, &text_ptr, &num_text);
+
+    if (num_text > 1) {
+	int plot_ret = -1, data_ret = -1;
+
+	for (i=1; i<num_text; i++) {
+	    if (!strcmp(text_ptr[i].key, "plot bounds")) {
+		plot_ret = get_png_plot_bounds(text_ptr[i].text, bounds);
+
+	    }
+	    if (!strcmp(text_ptr[i].key, "data bounds")) {
+		data_ret = get_png_data_bounds(text_ptr[i].text, bounds);
+	    }
+	}
+	if (plot_ret == GRETL_PNG_NO_COORDS && data_ret == GRETL_PNG_NO_COORDS) {
+	    /* comments were present and correct, but all zero */
+	    ret = GRETL_PNG_NO_COORDS;
+	}
+	else if (plot_ret != 0 || data_ret != 0) {
+	    /* one or both set of coordinates bad or missing */
+	    if (plot_ret >= 0 || data_ret >= 0) {
+		ret = GRETL_PNG_BAD_COMMENTS;
+	    } else {
+		ret = GRETL_PNG_NO_COMMENTS;
+	    }
+	}
+    } else {
+	/* no coordinates comments present */
+	ret = GRETL_PNG_NO_COMMENTS;
+    }
+
+    png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+
+    fclose(fp);
+    
+    return ret;
+}
+
+#endif /* PNG_COMMENTS */
 

@@ -17,8 +17,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef WIN32_H
-#define WIN32_H
+#ifndef GRETL_WIN32_H
+#define GRETL_WIN32_H
 
 #ifdef OS_WIN32
 
@@ -32,6 +32,11 @@ int write_reg_val (HKEY tree, const char *base,
 
 void cli_read_registry (char *callname, PATHS *ppaths);
 
+void win_show_error (DWORD dw);
+
+int winfork (char *cmdline, const char *dir, int wshow,
+	     DWORD flags);
+
 #endif /* OS_WIN32 */
 
-#endif /* WIN32_H */
+#endif /* GRETL_WIN32_H */

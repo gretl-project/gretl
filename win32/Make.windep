@@ -18,7 +18,7 @@ depend:
 ../gui2/boxplots.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/boxplots.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/boxplots.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/boxplots.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/boxplots.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/boxplots.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/boxplots.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/boxplots.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -34,7 +34,7 @@ depend:
 ../gui2/calculator.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/calculator.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/calculator.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/calculator.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/calculator.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/calculator.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/calculator.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/calculator.o: ../gui2/session.h ../gui2/settings.h
@@ -50,7 +50,7 @@ depend:
 ../gui2/callbacks.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/callbacks.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/callbacks.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/callbacks.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/callbacks.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/callbacks.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/callbacks.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/callbacks.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -66,7 +66,7 @@ depend:
 ../gui2/console.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/console.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/console.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/console.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/console.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/console.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/console.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/console.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -81,7 +81,7 @@ depend:
 ../gui2/database.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/database.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/database.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/database.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/database.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/database.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/database.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/database.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -97,7 +97,7 @@ depend:
 ../gui2/datafiles.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/datafiles.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/datafiles.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/datafiles.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/datafiles.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/datafiles.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/datafiles.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/datafiles.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -113,7 +113,7 @@ depend:
 ../gui2/dialogs.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/dialogs.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/dialogs.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/dialogs.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/dialogs.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/dialogs.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/dialogs.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/dialogs.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -130,7 +130,7 @@ depend:
 ../gui2/fileselect.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/fileselect.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/fileselect.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/fileselect.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/fileselect.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/fileselect.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/fileselect.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/fileselect.o: ../gui2/session.h ../gui2/settings.h
@@ -147,7 +147,7 @@ depend:
 ../gui2/gpt_control.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/gpt_control.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/gpt_control.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/gpt_control.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/gpt_control.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/gpt_control.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/gpt_control.o: ../gui2/callbacks.h ../gui2/dialogs.h
 ../gui2/gpt_control.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
@@ -163,10 +163,11 @@ depend:
 ../gui2/gretl.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 ../gui2/gretl.o: ../lib/src/nonparam.h ../lib/src/discrete.h
 ../gui2/gretl.o: ../lib/src/subsample.h ../lib/src/calendar.h
-../gui2/gretl.o: ../lib/src/win32.h ../gui2/gretltypes.h ../gui2/gui_utils.h
-../gui2/gretl.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
-../gui2/gretl.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
-../gui2/gretl.o: ../gui2/treeutils.h ../gui2/ssheet.h ../gui2/gpt_control.h
+../gui2/gretl.o: ../lib/src/gretl_win32.h ../gui2/gretltypes.h
+../gui2/gretl.o: ../gui2/gui_utils.h ../gui2/callbacks.h ../gui2/dialogs.h
+../gui2/gretl.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
+../gui2/gretl.o: ../gui2/helpfiles.h ../gui2/treeutils.h ../gui2/ssheet.h
+../gui2/gretl.o: ../gui2/gpt_control.h ../gui2/guiprint.h
 ../gui2/gretl.o: ../pixmaps/mini.calc.xpm ../pixmaps/mini.edit.xpm
 ../gui2/gretl.o: ../pixmaps/mini.sh.xpm ../pixmaps/mini.session.xpm
 ../gui2/gretl.o: ../pixmaps/mini.manual.xpm ../pixmaps/mini.netscape.xpm
@@ -183,7 +184,7 @@ depend:
 ../gui2/gtkfontselhack.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/gtkfontselhack.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/gtkfontselhack.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/gtkfontselhack.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/gtkfontselhack.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/gtkfontselhack.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/gtkfontselhack.o: ../gui2/callbacks.h ../gui2/dialogs.h
 ../gui2/gtkfontselhack.o: ../gui2/library.h ../gui2/session.h
@@ -200,10 +201,11 @@ depend:
 ../gui2/guiprint.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/guiprint.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/guiprint.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/guiprint.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/guiprint.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/guiprint.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/guiprint.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/guiprint.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
+../gui2/guiprint.o: ../gui2/selector.h
 ../gui2/gui_utils.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
 ../gui2/gui_utils.o: ../lib/src/commands.h ../lib/src/errors.h
 ../gui2/gui_utils.o: ../lib/src/estimate.h ../lib/src/generate.h
@@ -215,7 +217,7 @@ depend:
 ../gui2/gui_utils.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/gui_utils.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/gui_utils.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/gui_utils.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/gui_utils.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/gui_utils.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -231,7 +233,7 @@ depend:
 ../gui2/helpfiles.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/helpfiles.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/helpfiles.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/helpfiles.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/helpfiles.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/helpfiles.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/helpfiles.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/helpfiles.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -247,7 +249,7 @@ depend:
 ../gui2/library.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/library.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/library.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/library.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/library.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/library.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/library.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/library.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -265,7 +267,7 @@ depend:
 ../gui2/selector.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/selector.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/selector.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/selector.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/selector.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/selector.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/selector.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/selector.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -281,7 +283,7 @@ depend:
 ../gui2/series_view.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/series_view.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/series_view.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/series_view.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/series_view.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/series_view.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/series_view.o: ../gui2/callbacks.h ../gui2/dialogs.h
 ../gui2/series_view.o: ../gui2/library.h ../gui2/session.h ../gui2/settings.h
@@ -297,16 +299,17 @@ depend:
 ../gui2/session.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/session.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/session.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/session.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/session.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/session.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/session.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/session.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
 ../gui2/session.o: ../gui2/selector.h ../gui2/boxplots.h ../gui2/ssheet.h
-../gui2/session.o: ../gui2/gpt_control.h ../pixmaps/model.xpm
-../gui2/session.o: ../pixmaps/boxplot.xpm ../pixmaps/gnuplot.xpm
-../gui2/session.o: ../pixmaps/xfm_sc.xpm ../pixmaps/xfm_info.xpm
-../gui2/session.o: ../pixmaps/xfm_text.xpm ../pixmaps/xfm_make.xpm
-../gui2/session.o: ../pixmaps/rhohat.xpm ../pixmaps/summary.xpm
+../gui2/session.o: ../gui2/gpt_control.h ../gui2/guiprint.h
+../gui2/session.o: ../pixmaps/model.xpm ../pixmaps/boxplot.xpm
+../gui2/session.o: ../pixmaps/gnuplot.xpm ../pixmaps/xfm_sc.xpm
+../gui2/session.o: ../pixmaps/xfm_info.xpm ../pixmaps/xfm_text.xpm
+../gui2/session.o: ../pixmaps/xfm_make.xpm ../pixmaps/rhohat.xpm
+../gui2/session.o: ../pixmaps/summary.xpm
 ../gui2/settings.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
 ../gui2/settings.o: ../lib/src/commands.h ../lib/src/errors.h
 ../gui2/settings.o: ../lib/src/estimate.h ../lib/src/generate.h
@@ -318,7 +321,7 @@ depend:
 ../gui2/settings.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/settings.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/settings.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/settings.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/settings.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/settings.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/settings.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/settings.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -334,7 +337,7 @@ depend:
 ../gui2/ssheet.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/ssheet.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/ssheet.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/ssheet.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/ssheet.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/ssheet.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/ssheet.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/ssheet.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -350,7 +353,7 @@ depend:
 ../gui2/treeutils.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/treeutils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/treeutils.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/treeutils.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/treeutils.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/treeutils.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/treeutils.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/treeutils.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
@@ -366,7 +369,7 @@ depend:
 ../gui2/webget.o: ../lib/src/interact.h ../lib/src/graphing.h
 ../gui2/webget.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 ../gui2/webget.o: ../lib/src/discrete.h ../lib/src/subsample.h
-../gui2/webget.o: ../lib/src/calendar.h ../lib/src/win32.h
+../gui2/webget.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 ../gui2/webget.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 ../gui2/webget.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 ../gui2/webget.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h

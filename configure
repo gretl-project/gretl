@@ -9486,20 +9486,167 @@ fi
   else
      PKG_CONFIG_MIN_VERSION=0.9.0
      if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
+        echo $ac_n "checking for libpng""... $ac_c" 1>&6
+echo "configure:9491: checking for libpng" >&5
+
+        if $PKG_CONFIG --exists "libpng" ; then
+            echo "$ac_t""yes" 1>&6
+            succeeded=yes
+
+            echo $ac_n "checking PNG_CFLAGS""... $ac_c" 1>&6
+echo "configure:9498: checking PNG_CFLAGS" >&5
+            PNG_CFLAGS=`$PKG_CONFIG --cflags "libpng"`
+            echo "$ac_t""$PNG_CFLAGS" 1>&6
+
+            echo $ac_n "checking PNG_LIBS""... $ac_c" 1>&6
+echo "configure:9503: checking PNG_LIBS" >&5
+            PNG_LIBS=`$PKG_CONFIG --libs "libpng"`
+            echo "$ac_t""$PNG_LIBS" 1>&6
+        else
+            PNG_CFLAGS=""
+            PNG_LIBS=""
+            ## If we have a custom action on failure, don't print errors, but 
+            ## do set a variable so people can do so.
+            PNG_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libpng"`
+            
+        fi
+
+        
+        
+     else
+        echo "*** Your version of pkg-config is too old. You need version $PKG_CONFIG_MIN_VERSION or newer."
+        echo "*** See http://www.freedesktop.org/software/pkgconfig"
+     fi
+  fi
+
+  if test $succeeded = yes; then
+     png_failed="no"
+  else
+     png_failed="yes"
+   
+  fi
+
+fi
+if test ${png_graphics} = yes && test ${have_gtk} = "1.2" ; then
+   echo $ac_n "checking for png_init_io in -lpng""... $ac_c" 1>&6
+echo "configure:9533: checking for png_init_io in -lpng" >&5
+ac_lib_var=`echo png'_'png_init_io | sed 'y%./+-%__p_%'`
+if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  ac_save_LIBS="$LIBS"
+LIBS="-lpng -lz $LIBS"
+cat > conftest.$ac_ext <<EOF
+#line 9541 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char png_init_io();
+
+int main() {
+png_init_io()
+; return 0; }
+EOF
+if { (eval echo configure:9552: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=yes"
+else
+  echo "configure: failed program was:" >&5
+  cat conftest.$ac_ext >&5
+  rm -rf conftest*
+  eval "ac_cv_lib_$ac_lib_var=no"
+fi
+rm -f conftest*
+LIBS="$ac_save_LIBS"
+
+fi
+if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+  png_failed="no"
+else
+  echo "$ac_t""no" 1>&6
+png_failed="yes"
+fi
+
+   PNG_CFLAGS=
+   PNG_LIBS=
+   
+   
+fi
+
+if test ${png_graphics} = yes && test ${png_failed} = yes ; then
+    echo "* gretl wants but did not find libpng for PNG graphs."
+    echo "* You can turn off this dependency by configuring with the option"
+    echo "* --disable-png-graphics"
+    exit
+fi
+
+if test ${png_graphics} = yes && test ${have_gtk} = "2.0" ; then
+    
+  succeeded=no
+
+  if test -z "$PKG_CONFIG"; then
+    # Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+echo "configure:9594: checking for $ac_word" >&5
+if eval "test \"`echo '$''{'ac_cv_path_PKG_CONFIG'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  case "$PKG_CONFIG" in
+  /*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  ?:/*)			 
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a dos path.
+  ;;
+  *)
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
+  ac_dummy="$PATH"
+  for ac_dir in $ac_dummy; do 
+    test -z "$ac_dir" && ac_dir=.
+    if test -f $ac_dir/$ac_word; then
+      ac_cv_path_PKG_CONFIG="$ac_dir/$ac_word"
+      break
+    fi
+  done
+  IFS="$ac_save_ifs"
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
+  ;;
+esac
+fi
+PKG_CONFIG="$ac_cv_path_PKG_CONFIG"
+if test -n "$PKG_CONFIG"; then
+  echo "$ac_t""$PKG_CONFIG" 1>&6
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+  fi
+
+  if test "$PKG_CONFIG" = "no" ; then
+     echo "*** The pkg-config script could not be found. Make sure it is"
+     echo "*** in your path, or set the PKG_CONFIG environment variable"
+     echo "*** to the full path to pkg-config."
+     echo "*** Or see http://www.freedesktop.org/software/pkgconfig to get pkg-config."
+  else
+     PKG_CONFIG_MIN_VERSION=0.9.0
+     if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
         echo $ac_n "checking for gdk-pixbuf-2.0 >= 0.7.0""... $ac_c" 1>&6
-echo "configure:9491: checking for gdk-pixbuf-2.0 >= 0.7.0" >&5
+echo "configure:9638: checking for gdk-pixbuf-2.0 >= 0.7.0" >&5
 
         if $PKG_CONFIG --exists "gdk-pixbuf-2.0 >= 0.7.0" ; then
             echo "$ac_t""yes" 1>&6
             succeeded=yes
 
             echo $ac_n "checking GDK_PIXBUF_CFLAGS""... $ac_c" 1>&6
-echo "configure:9498: checking GDK_PIXBUF_CFLAGS" >&5
+echo "configure:9645: checking GDK_PIXBUF_CFLAGS" >&5
             GDK_PIXBUF_CFLAGS=`$PKG_CONFIG --cflags "gdk-pixbuf-2.0 >= 0.7.0"`
             echo "$ac_t""$GDK_PIXBUF_CFLAGS" 1>&6
 
             echo $ac_n "checking GDK_PIXBUF_LIBS""... $ac_c" 1>&6
-echo "configure:9503: checking GDK_PIXBUF_LIBS" >&5
+echo "configure:9650: checking GDK_PIXBUF_LIBS" >&5
             GDK_PIXBUF_LIBS=`$PKG_CONFIG --libs "gdk-pixbuf-2.0 >= 0.7.0"`
             echo "$ac_t""$GDK_PIXBUF_LIBS" 1>&6
         else
@@ -9569,7 +9716,7 @@ fi
   # Extract the first word of "gdk-pixbuf-config", so it can be a program name with args.
 set dummy gdk-pixbuf-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:9573: checking for $ac_word" >&5
+echo "configure:9720: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GDK_PIXBUF_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -9604,7 +9751,7 @@ fi
 
   min_gdk_pixbuf_version=0.2.5
   echo $ac_n "checking for GDK_PIXBUF - version >= $min_gdk_pixbuf_version""... $ac_c" 1>&6
-echo "configure:9608: checking for GDK_PIXBUF - version >= $min_gdk_pixbuf_version" >&5
+echo "configure:9755: checking for GDK_PIXBUF - version >= $min_gdk_pixbuf_version" >&5
   no_gdk_pixbuf=""
   if test "$GDK_PIXBUF_CONFIG" = "no" ; then
     no_gdk_pixbuf=yes
@@ -9628,7 +9775,7 @@ echo "configure:9608: checking for GDK_PIXBUF - version >= $min_gdk_pixbuf_versi
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 9632 "configure"
+#line 9779 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -9686,7 +9833,7 @@ int main ()
 
 
 EOF
-if { (eval echo configure:9690: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:9837: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
 then
   :
 else
@@ -9720,7 +9867,7 @@ fi
           CFLAGS="$CFLAGS $GDK_PIXBUF_CFLAGS"
           LIBS="$LIBS $GDK_PIXBUF_LIBS"
           cat > conftest.$ac_ext <<EOF
-#line 9724 "configure"
+#line 9871 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -9730,7 +9877,7 @@ int main() {
  return 0; 
 ; return 0; }
 EOF
-if { (eval echo configure:9734: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:9881: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
    echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding GDK_PIXBUF or finding the wrong"
@@ -9782,7 +9929,7 @@ if test "$try_gnome" = "yes" ; then
     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:9786: checking for $ac_word" >&5
+echo "configure:9933: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -9826,19 +9973,19 @@ fi
      PKG_CONFIG_MIN_VERSION=0.9.0
      if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
         echo $ac_n "checking for libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0""... $ac_c" 1>&6
-echo "configure:9830: checking for libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0" >&5
+echo "configure:9977: checking for libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0" >&5
 
         if $PKG_CONFIG --exists "libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0" ; then
             echo "$ac_t""yes" 1>&6
             succeeded=yes
 
             echo $ac_n "checking GNOME_CFLAGS""... $ac_c" 1>&6
-echo "configure:9837: checking GNOME_CFLAGS" >&5
+echo "configure:9984: checking GNOME_CFLAGS" >&5
             GNOME_CFLAGS=`$PKG_CONFIG --cflags "libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0"`
             echo "$ac_t""$GNOME_CFLAGS" 1>&6
 
             echo $ac_n "checking GNOME_LIBS""... $ac_c" 1>&6
-echo "configure:9842: checking GNOME_LIBS" >&5
+echo "configure:9989: checking GNOME_LIBS" >&5
             GNOME_LIBS=`$PKG_CONFIG --libs "libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0"`
             echo "$ac_t""$GNOME_LIBS" 1>&6
         else
@@ -9881,7 +10028,7 @@ EOF
     # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:9885: checking for $ac_word" >&5
+echo "configure:10032: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -9925,19 +10072,19 @@ fi
      PKG_CONFIG_MIN_VERSION=0.9.0
      if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
         echo $ac_n "checking for libxml-2.0""... $ac_c" 1>&6
-echo "configure:9929: checking for libxml-2.0" >&5
+echo "configure:10076: checking for libxml-2.0" >&5
 
         if $PKG_CONFIG --exists "libxml-2.0" ; then
             echo "$ac_t""yes" 1>&6
             succeeded=yes
 
             echo $ac_n "checking XML_CFLAGS""... $ac_c" 1>&6
-echo "configure:9936: checking XML_CFLAGS" >&5
+echo "configure:10083: checking XML_CFLAGS" >&5
             XML_CFLAGS=`$PKG_CONFIG --cflags "libxml-2.0"`
             echo "$ac_t""$XML_CFLAGS" 1>&6
 
             echo $ac_n "checking XML_LIBS""... $ac_c" 1>&6
-echo "configure:9941: checking XML_LIBS" >&5
+echo "configure:10088: checking XML_LIBS" >&5
             XML_LIBS=`$PKG_CONFIG --libs "libxml-2.0"`
             echo "$ac_t""$XML_LIBS" 1>&6
         else
@@ -9966,7 +10113,7 @@ echo "configure:9941: checking XML_LIBS" >&5
 	    # Extract the first word of "gconftool-2", so it can be a program name with args.
 set dummy gconftool-2; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:9970: checking for $ac_word" >&5
+echo "configure:10117: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GCONFTOOL'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -10042,7 +10189,7 @@ fi
        # Extract the first word of "gnome-config", so it can be a program name with args.
 set dummy gnome-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:10046: checking for $ac_word" >&5
+echo "configure:10193: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_GNOME'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -10099,7 +10246,7 @@ do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:10103: checking for $ac_word" >&5
+echo "configure:10250: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_XMLCONF'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -10134,7 +10281,7 @@ do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:10138: checking for $ac_word" >&5
+echo "configure:10285: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_XMLCONF'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -10406,6 +10553,8 @@ s%@have_gtk@%$have_gtk%g
 s%@LIBOLE2_CFLAGS@%$LIBOLE2_CFLAGS%g
 s%@LIBOLE2_LIBS@%$LIBOLE2_LIBS%g
 s%@LIBOLE2_CONFIG@%$LIBOLE2_CONFIG%g
+s%@PNG_CFLAGS@%$PNG_CFLAGS%g
+s%@PNG_LIBS@%$PNG_LIBS%g
 s%@GDK_PIXBUF_CFLAGS@%$GDK_PIXBUF_CFLAGS%g
 s%@GDK_PIXBUF_LIBS@%$GDK_PIXBUF_LIBS%g
 s%@GDK_PIXBUF_CONFIG@%$GDK_PIXBUF_CONFIG%g

@@ -20,6 +20,8 @@ GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GTK_EXTRA_CFLAGS = @GTK_EXTRA_CFLAGS@
 GTK_EXTRA_LIBS = @GTK_EXTRA_LIBS@
+PNG_CFLAGS = @PNG_CFLAGS@
+PNG_LIBS = @PNG_LIBS@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 USE_NLS = @USE_NLS@
@@ -44,6 +46,10 @@ ifeq ($(GTK_EXTRA_LIBS),)
   query_gtkextra_lib = gtkextra-lib
 endif
 
+ifeq ($(PNG_LIBS),)
+  PNG_LIBS = -lz -lpng
+endif
+
 ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`
 endif
@@ -61,8 +67,8 @@ ifeq ($(USE_NLS),yes)
   DEFS = -DLOCALEDIR=\"$(localedir)\"
 endif
 
-override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
-override LIBS += $(GDK_PIXBUF_LIBS)
+override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
+override LIBS += $(PNG_LIBS) $(GDK_PIXBUF_LIBS)
 
 # Directories
 bindir	= $(prefix)/bin

@@ -341,7 +341,7 @@ typedef struct {
 #include "subsample.h"
 #include "calendar.h"
 #ifdef OS_WIN32
-# include "win32.h"
+# include "gretl_win32.h"
 #endif
 
 #endif /* LIBGRETL_H */
