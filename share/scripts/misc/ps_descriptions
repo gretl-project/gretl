@@ -9,6 +9,7 @@
 "leverage","Influential observations","artificial data"
 "longley","Multicollinearity","US employment"
 "mrw","Solow growth model (Mankiw, Romer, Weil)","cross-country"
+"perron97","Unit-root testing with breaks","Nelson-Plosser data"
 "pscoin","Johansen cointegration test","prices & exchange rate"
 "restrict","Parameter restrictions","private school enrollment"
 "sw_ch12","Augmented Dickey-Fuller test","inflation & unemployment"

@@ -1,0 +1,123 @@
+# Replicate the analysis of Perron, "Further evidence on
+# breaking trend functions in macroeconomic variables" (Journal
+# of Econometrics, 1997, pp. 355-385), Table 3.
+
+# Open Nelson-Plosser data (supplied with gretl)
+open np.gdt
+
+# Select the variable to test (here, real GNP)
+genr y = log(rgnp)
+
+# Maximum lag to try for the first difference of y
+genr maxlag = 10
+
+# generate trend, first lag, first difference
+genr time
+genr yr = time + 1860 - 1
+genr y_1 = y(-1)
+genr dyt = y - y_1
+
+# generate lagged differences
+set echo off
+loop for j=1..maxlag
+   genr dyt_$j = dyt(-$j)
+endloop
+
+# starting year for the series (the first non-missing
+# observation)
+genr startyr = min(zeromiss(yr * ok(y)))
+genr smplmin = startyr + maxlag + 1
+
+genr t_a_min = 10000
+genr Tbstar = 0
+genr Tbk = 0
+
+# loop across possible breakpoints
+
+genr Tbmin = smplmin + 3;
+genr Tbmax = 1970 - 3;
+
+loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1)
+
+  printf "\n*** Trying break in %d\n", Tb
+
+  smpl full
+
+  genr DU = (yr > Tb)
+  genr DT = (yr = (Tb + 1))
+
+  # The arguments to "smpl" can be variables
+  smpl smplmin ;
+
+  # Regression including all lags (using wildcard)
+  ols y 0 DU time DT y_1 dyt_* --quiet
+  genr essu = $ess
+  genr dfu = $df
+
+  genr prevsig = 0
+  genr sig = 0
+  genr kstar = 0
+
+  # Now try trimming the list of lags
+  loop for k=1..maxlag
+     # drop the last lag
+     omit --quiet
+     genr essr = $ess
+     genr dfr = $df
+     genr tstat = sqrt((essr - essu) / (essu / dfu))
+     genr pval = 2 * pvalue(z, tstat)
+     genr sig = pval < .10
+     genr testlag = maxlag - $k + 1
+     # printf "last lag (%d): t=%g, asy. p-value = %g\n", \
+	 # testlag, tstat, pval
+     if (prevsig = 0 & sig = 1)
+        genr kstar = testlag
+		break
+     endif
+     genr essu = essr
+     genr dfu = dfr
+     genr prevsig = sig
+   endloop
+
+   printf "*** optimal k = %d ***\n", kstar
+
+   # Re-run the regression with kstar lags: we can
+   # use variables in the lags field for dyt
+   if kstar > 1
+      ols y 0 DU time DT y_1 dyt(-1 to -kstar) --quiet
+   else
+      ols y 0 DU time DT y_1 dyt_1 --quiet
+   endif
+   
+   genr t_alpha = (coeff(y_1) - 1.0) / stderr (y_1)
+   printf "%d: t_alpha = %g\n", Tb, t_alpha
+   
+   if t_alpha < t_a_min
+      genr t_a_min = t_alpha
+      genr Tbstar = Tb
+	  genr Tbk = kstar
+   endif
+   
+endloop
+
+smpl smplmin ;
+
+genr DU = (yr > Tbstar)
+genr DT = (yr = (Tbstar + 1))
+# print -o time yr DU DT
+
+printf "\n\n**** min(t_alpha) = %g in %d ****\n", t_a_min, Tbstar
+
+# print the regression ("Model 1") with the selected
+# break year
+
+if Tbk > 1
+  ols y 0 DU time DT y_1 dyt(-1 to -Tbk)
+else
+   ols y 0 DU time DT y_1 dyt_1
+endif 
+
+
+  
+
+ 
