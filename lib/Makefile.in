@@ -58,7 +58,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 	$(COMPILE) $<
 
 $(LIBGRETL): $(OBJS) $(LOBJS)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) \
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) ../cephes/libprob.la \
 	-rpath $(prefix)/lib $(LIBS) -version-info 15:0:0
 
 .PHONY: 
