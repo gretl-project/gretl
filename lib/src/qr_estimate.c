@@ -460,7 +460,6 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     char norm = '1';
     int i, j;
     int err = 0;
-    int robust = (opts & OPT_R);
 
     m = pmod->nobs;               /* # of rows = # of observations */
     lda = m;                      /* leading dimension of Q */
@@ -600,7 +599,8 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 			      xpxinv);
 
     /* VCV and standard errors */
-    if (robust) {
+    if (opts & OPT_R) { 
+	gretl_model_set_int(pmod, "robust", 1);
 	if (opts & OPT_T) {
 	    qr_make_hac(pmod, Z, xpxinv);
 	} else {

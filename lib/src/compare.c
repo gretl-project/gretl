@@ -883,7 +883,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
 	return E_ALLOC;
     }
 
-    /* Newey-West suggestion */
+    /* Newey-West suggestion (from Wooldridge) */
     g = 4.0 * pow(pmod->nobs/100.0, 2.0/9.0);
 
     auxlist[0] = pmod->list[0] - 1;
@@ -1096,7 +1096,11 @@ int autocorr_test (MODEL *pmod, int order,
     clear_model(&aux, pdinfo); 
 
     if (pval < 0.05) {
-	autocorr_standard_errors(pmod, pZ, pdinfo, prn);
+	int robust = gretl_model_get_int(pmod, "robust");
+
+	if (!robust) {
+	    autocorr_standard_errors(pmod, pZ, pdinfo, prn);
+	}
     }
 
     exchange_smpl(pmod, pdinfo);

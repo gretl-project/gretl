@@ -1889,66 +1889,6 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     return hsk;
 }
 
-/* #define WHITES_STD_ERRS */
-
-#ifdef WHITES_STD_ERRS
-
-static int whites_standard_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
-{
-    int *auxlist;
-    int i, j;
-    MODEL auxmod;
-
-    auxlist = malloc(pmod->list[0] * sizeof *auxlist);
-    if (auxlist == NULL) return E_ALLOC;
-
-    auxlist[0] = pmod->list[0] - 1;
-
-    gretl_model_init(&auxmod, pdinfo);
-
-    /* loop across the indep vars in the original model */
-    for (i=2; i<=pmod->list[0]; i++) {
-	double varhat = 0;
-	int k, t;
-
-	/* set the given indep var as the dependent */
-	auxlist[1] = pmod->list[i];
-
-	k = 2;
-	for (j=2; j<=pmod->list[0]; j++) {
-	    /* add other indep vars as regressors */
-	    if (pmod->list[j] == auxlist[1]) continue;
-	    auxlist[k++] = pmod->list[j];
-	}
-
-	auxmod = lsq(auxlist, pZ, pdinfo, OLS, OPT_A, 0.0);
-
-	if (auxmod.errcode) {
-	    fprintf(stderr, "Error estimating auxiliary model, code=%d\n", 
-		    auxmod.errcode);
-	    pmod->sderr[i-1] = NADBL;
-	} else {
-	    /* compute robust variance */
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		double x = pmod->uhat[t] * pmod->uhat[t];
-		double y = auxmod.uhat[t] * auxmod.uhat[t];
-
-		varhat += x * y;
-	    }
-	    varhat /= (auxmod.ess * auxmod.ess);
-	    pmod->sderr[i-2] = sqrt(varhat);
-	}
-
-	clear_model(&auxmod, pdinfo);
-    }
-
-    free(auxlist);
-	
-    return 0;
-}
-
-#endif /* WHITES_STD_ERRS */
-
 /**
  * hccm_func:
  * @list: dependent variable plus list of regressors.
@@ -2014,10 +1954,6 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     hccm.ci = HCCM;
     nobs = hccm.nobs;
 
-#ifdef WHITES_STD_ERRS
-    whites_standard_errors(&hccm, pZ, pdinfo);
-#endif
-
     if (use_qr) {
 	/* vcv is already computed */
 	int nt = (ncoeff * ncoeff + ncoeff) / 2; 
@@ -2071,9 +2007,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	    for (t=t1; t<=t2; t++) xx += p[i][t] * p[j][t];
 	    xx = xx * (nobs - 1) / nobs -
 		(nobs - 1) * st[i] * st[j] / (nobs * nobs);
-#ifndef WHITES_STD_ERRS
 	    if (i == j) hccm.sderr[i-1] = sqrt(xx);
-#endif
 	    hccm.vcv[index++] = xx;
 	}
     }
