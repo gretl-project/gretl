@@ -18,6 +18,7 @@ for f in \
   console.c console.h dialogs.c \
   database.c database.h \
   datafiles.c datafiles.h \
+  filelists.c filelists.h \
   fileselect.c dialogs.h \
   graph_page.c graph_page.h \
   gpt_control.c gpt_control.h \

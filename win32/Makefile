@@ -119,6 +119,7 @@ GUISRC = about.c \
 	database.c \
 	datafiles.c \
 	dialogs.c \
+	filelists.c \
 	fileselect.c \
 	gpt_control.c \
 	graph_page.c \

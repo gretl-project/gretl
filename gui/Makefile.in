@@ -81,16 +81,35 @@ PROG  = gretl_x11
 vpath %.c = $(topsrc)/gui
 vpath %.h = $(topsrc)/gui
 
-SRCS = about.c boxplots.c calculator.c callbacks.c cmdstack.c console.c  \
-	database.c datafiles.c \
-	dialogs.c fileselect.c gpt_control.c graph_page.c gretl.c guiprint.c \
-	gui_utils.c helpfiles.c library.c model_table.c obsbutton.c \
-	objectsave.c selector.c series_view.c session.c settings.c ssheet.c \
-	textbuf.c textutil.c webget.c 
-
-COMMONSRC = about.c calculator.c gpt_control.c gpt_control.h guiprint_common.c \
-	library.c library.h objectsave.c objectsave.h model_table.c model_table.h \
-	session.c session.h textutil.c textutil.h webget.c webget.h
+SRCS = about.c \
+	boxplots.c \
+	calculator.c \
+	callbacks.c \
+	cmdstack.c \
+	console.c  \
+	database.c \
+	datafiles.c \
+	dialogs.c \
+	filelists.c \
+	fileselect.c \
+	gpt_control.c \
+	graph_page.c \
+	gretl.c \
+	guiprint.c \
+	gui_utils.c \
+	helpfiles.c \
+	library.c \
+	model_table.c \
+	obsbutton.c \
+	objectsave.c \
+	selector.c \
+	series_view.c \
+	session.c \
+	settings.c \
+	ssheet.c \
+	textbuf.c \
+	textutil.c \
+	webget.c 
 
 OBJS = $(SRCS:.c=.o)
 

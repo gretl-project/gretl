@@ -27,6 +27,7 @@
 #include "webget.h"
 #include "database.h"
 #include "datafiles.h"
+#include "filelists.h"
 #include "settings.h"
 #include "cmdstack.h"
 
@@ -753,9 +754,8 @@ int main (int argc, char *argv[])
     /* enable special copying to clipboard */
     clip_init(mdata->w);
 
-    add_files_to_menu(FILE_LIST_DATA);
-    add_files_to_menu(FILE_LIST_SESSION);
-    add_files_to_menu(FILE_LIST_SCRIPT);
+    add_files_to_menus();
+
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);

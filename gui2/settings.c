@@ -1066,7 +1066,7 @@ static void read_rc (void)
 				       GCONF_VALUE_STRING, NULL);
 	if (flist != NULL) {
 	    for (j=0; j<MAXRECENT; j++) {
-		write_filename_to_list(i + 1, j, flist->data);
+		write_filename_to_list(i, j, flist->data);
 		flist = flist->next;
 	    }
 	    g_slist_free(flist);
@@ -1148,7 +1148,7 @@ static void read_rc (void)
 	for (i=0; i<MAXRECENT; i++) {
 	    sprintf(gpath, "/gretl/%s/%d", file_sections[j], i);
 	    if ((value = gnome_config_get_string(gpath)) != NULL) { 
-		write_filename_to_list(j + 1, i, value);
+		write_filename_to_list(j, i, value);
 		g_free(value);
 	    } else {
 		break;
@@ -1317,7 +1317,7 @@ void read_rc (void)
 	for (i=0; i<MAXRECENT; i++) {
 	    sprintf(rpath, "%s\\%d", file_sections[j], i);
 	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
-		write_filename_to_list(j + 1, i, value);
+		write_filename_to_list(j, i, value);
 	    } else {
 		break;
 	    }
