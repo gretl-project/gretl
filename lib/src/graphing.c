@@ -1823,7 +1823,7 @@ int is_auto_ols_string (const char *s)
 static char gnuplot_pallette[3][8] = {
     "xff0000", 
     "x0000ff", 
-    "x00ff00"
+    "x00cc00"  /* full-intensity green is not very legible */
 };
 
 static const char *get_gnuplot_pallette (int i, int ptype)
