@@ -547,12 +547,13 @@ int main (int argc, char *argv[])
     if (runfile_open && fb != NULL) fclose(fb);
     free(line);
 
-    if (modelspec) {
+    if (modelspec != NULL) {
 	i = 0;
 	while (modelspec[i].cmd != NULL) {
 	    free(modelspec[i].cmd);
-	    if (modelspec[i].subdum != NULL)
+	    if (modelspec[i].subdum != NULL) {
 		free(modelspec[i].subdum);
+	    }
 	    i++;
 	}
 	free(modelspec);
@@ -1535,18 +1536,20 @@ void exec_line (char *line, PRN *prn)
 	break;
     }
 
-    if ((is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)) 
-	&& !err) { 
+    if ((is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)) && !err) { 
 	int m = model_count;
 
 	if (modelspec == NULL) {
 	    modelspec = malloc(2 * sizeof *modelspec);
 	} else {
-	    modelspec = realloc(modelspec, (m+1) * (sizeof *modelspec));
+	    modelspec = realloc(modelspec, (m+1) * sizeof *modelspec);
 	}
 	if (modelspec == NULL) noalloc(_("model command"));
 
 	modelspec[m-1].cmd = malloc(MAXLEN);
+	if (modelspec[m-1].cmd == NULL) {
+	    noalloc(_("model command"));
+	}
 	modelspec[m-1].subdum = NULL;
 
 	modelspec[m].cmd = NULL;

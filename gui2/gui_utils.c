@@ -74,8 +74,6 @@ extern int session_saved;
 	                      || c == COVAR || c == VIEW_MODEL \
                               || c == VIEW_MODELTABLE || c == VAR)
 
-#define ARMA_BY_X12(m) (m->ci == ARMA && !na(m->lnL))
-
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
@@ -99,6 +97,13 @@ static void close_model (gpointer data, guint close, GtkWidget *widget)
     windata_t *vwin = (windata_t *) data;
 
     gtk_widget_destroy(vwin->dialog);
+}
+
+static int arma_by_x12a (const MODEL *pmod)
+{
+    if (pmod->ci != ARMA) return 0;
+    if (gretl_model_get_int(pmod, "arma_by_x12a")) return 1;
+    return 0;
 }
 
 #ifndef OLD_GTK
@@ -548,7 +553,7 @@ static void delete_unnamed_model (GtkWidget *widget, gpointer data)
     }
 
     if (pmod->name == NULL) {
-	if (ARMA_BY_X12(pmod)) {
+	if (arma_by_x12a(pmod)) {
 	    maybe_delete_x12_file(pmod);
 	}
 	free_model(pmod);
@@ -2427,7 +2432,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
 	else if (pmod->ci == ARMA) {
 	    arma_menu_mod(vwin->ifac);
-	    if (ARMA_BY_X12(pmod)) {
+	    if (arma_by_x12a(pmod)) {
 		arma_x12_menu_mod(vwin);
 	    }
 	}

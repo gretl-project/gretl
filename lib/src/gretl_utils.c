@@ -2541,27 +2541,28 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 
 /* ........................................................... */
 
-int is_model_cmd (const char *line)
+int is_model_cmd (const char *s)
 {
-    if (line == NULL || *line == '\0') return 0;
+    if (s == NULL || *s == '\0') return 0;
 
-    if (!strncmp(line, "ols", 3)  ||
-	!strncmp(line, "corc", 4) ||
-	!strncmp(line, "hilu", 4) ||
-	!strncmp(line, "wls", 3)  ||
-	!strncmp(line, "pooled", 6)  ||
-	!strncmp(line, "hccm", 4) ||
-	!strncmp(line, "hsk", 3)  ||
-	!strncmp(line, "add", 3)  ||
-	!strncmp(line, "lad", 3)  ||
-	!strncmp(line, "omit", 4) ||
-	!strncmp(line, "tsls", 4) ||
-	!strncmp(line, "logit", 5)  ||
-	!strncmp(line, "probit", 6) ||
-	!strncmp(line, "logistic", 8) ||
-	!strncmp(line, "end nls", 7) ||
-	!strncmp(line, "arma", 4) ||
-	!strncmp(line, "ar ", 3)) {
+    if (!strncmp(s, "ols", 3)  ||
+	!strncmp(s, "corc", 4) ||
+	!strncmp(s, "hilu", 4) ||
+	!strncmp(s, "wls", 3)  ||
+	!strncmp(s, "pooled", 6)  ||
+	!strncmp(s, "hccm", 4) ||
+	!strncmp(s, "hsk", 3)  ||
+	!strncmp(s, "add", 3)  ||
+	!strncmp(s, "lad", 3)  ||
+	!strncmp(s, "omit", 4) ||
+	!strncmp(s, "tsls", 4) ||
+	!strncmp(s, "logit", 5)  ||
+	!strncmp(s, "probit", 6) ||
+	!strncmp(s, "logistic", 8) ||
+	!strncmp(s, "end nls", 7) ||
+	!strncmp(s, "arma", 4) ||
+	!strncmp(s, "ar ", 3) ||
+	!strcmp(s, "ar")) {
 	return 1;
     }
 

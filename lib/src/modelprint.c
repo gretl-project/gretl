@@ -1789,6 +1789,8 @@ static void print_ll_stats (const MODEL *pmod, PRN *prn)
 		    pputc(prn, '\t');
 		}
 		pputc(prn, '\n');
+	    } else {
+		pputc(prn, '\n');
 	    }
 
 	    if (q > 0) {

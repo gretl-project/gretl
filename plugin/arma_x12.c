@@ -24,6 +24,7 @@
 
 #ifdef WIN32
 # include <windows.h>
+# include <io.h>
 #else
 # if GLIB_CHECK_VERSION(2,0,0)
 #  define GLIB2
@@ -707,6 +708,7 @@ MODEL arma_x12_model (int *list, const double **Z,
 	}
 	if (!armod.errcode) {
 	    add_unique_output_file(&armod, path);
+	    gretl_model_set_int(&armod, "arma_by_x12a", 1);
 	}	
     } else {
 	armod.errcode = E_UNSPEC;
