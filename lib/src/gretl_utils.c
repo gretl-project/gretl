@@ -1974,10 +1974,13 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     fdatainfo.vector = NULL;
     fdatainfo.descrip = NULL;
 
-    /* start new list */
+    /* create new list */
     list[0] = fv;
-    for (i=1; i<=list[0]; i++) list[i] = i;
-    if (pmod->ifc) list[list[0]] = 0;
+    k = 1;
+    for (i=1; i<=list[0]; i++) {
+	if (i == 2 && pmod->ifc) list[i] = 0;
+	else list[i] = k++;
+    }
 
     /* set new data matrix to zero */
     for (i=1; i<fv; i++) {
@@ -1992,15 +1995,20 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     }
 
     /* insert orig model vars into fZ */
-    k = pmod->ifc? orig_v-1: orig_v;
-    for (i=1; i<=k; i++) {
+    k = 1;
+    for (i=1; i<=orig_v; i++) {
+	if (i > 1 && pmod->list[i] == 0) continue;
 	for (t=0; t<=pdinfo->t2; t++) {
-	    fZ[i][t] = (*pZ)[pmod->list[i]][t];
+	    fZ[k][t] = (*pZ)[pmod->list[i]][t];
 	}
-	if (i == 1) continue;
+	if (i == 1) {
+	    k++;
+	    continue;
+	}
 	for (t=pdinfo->t2+1; t<fn; t++) {
-	    fZ[i][t] = (*pZ)[pmod->list[i]][t - (pdinfo->t2+1) + ft1];
+	    fZ[k][t] = (*pZ)[pmod->list[i]][t - (pdinfo->t2+1) + ft1];
 	}
+	k++;
     }
 
     /* insert -I section */
@@ -2027,7 +2035,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 
     /* find the fitted values */
     t = 0;
-    for (i=orig_v-2; i<fv-2; i++) {
+    for (i=orig_v-1; i<fv-1; i++) {
 	fr->fitted[t] = fmod.coeff[i];
 	t++;
     }    
@@ -2035,16 +2043,15 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     /* and the variances */
     if (makevcv(&fmod)) return NULL; /* E_ALLOC */
 
-    k = -1;
-    t = 0;
+    t = k = 0;
     for (i=1; i<fv; i++) {
 	for (j=1; j<fv; j++) {
 	    if (j < i) continue;
-	    k++;
-	    if (j == i && i < fv - 1 && i > orig_v - 2) {
+	    if (j == i && i < fv && i > orig_v - 1) {
 		fr->sderr[t] = sqrt(fmod.vcv[k]);
 		t++;
 	    }
+	    k++;
 	}
     } 
 

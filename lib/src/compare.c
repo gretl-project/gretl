@@ -1197,28 +1197,31 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 static double vprime_M_v (double *v, double *M, int n)
      /* compute v'Mv, for symmetric M */
 {
-    int i, j, jmin, jmax, k = 1;
+    int i, j, jmin, jmax, k;
     double xx, val = 0.0;
 
-    jmin = 0;
+    k = jmin = 0;
     for (i=0; i<n; i++) {
 	xx = 0.0;
-	for (j=jmin; j<n; j++) 
+	for (j=jmin; j<n; j++) {
 	    xx += v[j] * M[k++];
-	jmin++;
+	}
 	val += xx * v[i];
+	jmin++;
     }
+
     jmax = 1;
     for (i=1; i<n; i++) {
-	k = i + 1;
+	k = i;
 	xx = 0.0;
 	for (j=0; j<jmax; j++) {
 	    xx += v[j] * M[k];
 	    k += n - j - 1;
 	}
-	jmax++;
 	val += xx * v[i];
+	jmax++;
     }
+
     return val;
 }
 
@@ -1242,7 +1245,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     int n_est, i, j, t;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int xno, yno = pmod->list[1];
-    int T = pmod->t2 - pmod->t1 + 1, K = pmod->ncoeff;
+    const int T = pmod->t2 - pmod->t1 + 1;
+    const int K = pmod->ncoeff;
     MODEL cum_mod;
     char cumdate[9];
     double xx, yy, sigma, hct, wbar = 0.0;
@@ -1275,10 +1279,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    } else {
 		t = pdinfo->t2 + 1;
 		yy = 0.0;
-		for (i=1; i<=K; i++) {
-		    xno = cum_mod.list[i+1];
-		    xvec[i-1] = (*pZ)[xno][t];
-		    yy += cum_mod.coeff[i-1] * (*pZ)[xno][t];
+		for (i=0; i<K; i++) {
+		    xno = cum_mod.list[i+2];
+		    xvec[i] = (*pZ)[xno][t];
+		    yy += cum_mod.coeff[i] * (*pZ)[xno][t];
 		}
 		cresid[j] = (*pZ)[yno][t] - yy;
 		cum_mod.ci = CUSUM;
