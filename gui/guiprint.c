@@ -843,7 +843,8 @@ void rtfprint_corrmat (CORRMAT *corr,
 	    "(skipping any missing values)\\par\n",
 	    date1, date2);
     pprintf(prn, "5%% critical value (two-tailed) = "
-	    "%.3f for n = %d\\par\\par\n", rhocrit95(corr->n), corr->n);
+	    "%.3f for n = %d\\par\n\\par\n{", 
+	    rhocrit95(corr->n), corr->n);
     
     lo = corr->list[0];
 
