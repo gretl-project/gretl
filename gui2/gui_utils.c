@@ -467,30 +467,6 @@ static void win_ctrl_c (windata_t *vwin)
 
 /* ........................................................... */
 
-static gint catch_view_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
-{
-    if (key->keyval == GDK_q) { 
-        gtk_widget_destroy(w);
-    }
-    else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
-	remember_model(vwin, 1, NULL);
-    }
-#ifdef G_OS_WIN32
-    else if (key->keyval == GDK_c) {
-	GdkModifierType mods;
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
-	if (mods & GDK_CONTROL_MASK) {
-	    win_ctrl_c(vwin);
-	    return TRUE;
-	}	
-    }
-#endif
-    return FALSE;
-}
-
-/* ........................................................... */
-
 static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods;
@@ -535,6 +511,32 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 #endif
     }
 
+    return FALSE;
+}
+
+static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    if (gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {
+	return catch_edit_key(w, key, vwin);
+    }
+
+    if (key->keyval == GDK_q) { 
+        gtk_widget_destroy(w);
+    }
+    else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
+	remember_model(vwin, 1, NULL);
+    }
+#ifdef G_OS_WIN32
+    else if (key->keyval == GDK_c) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    win_ctrl_c(vwin);
+	    return TRUE;
+	}	
+    }
+#endif
     return FALSE;
 }
 
@@ -1058,7 +1060,7 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 
 static void make_viewbar (windata_t *vwin, int text_out)
 {
-    GtkWidget *button, *viewbar, *hbox;
+    GtkWidget *button, *hbox;
     int i;
     static char *viewstrings[] = {
 	N_("Save"),
@@ -1109,8 +1111,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-    viewbar = gtk_toolbar_new();
-    gtk_box_pack_start(GTK_BOX(hbox), viewbar, FALSE, FALSE, 0);
+    vwin->mbar = gtk_toolbar_new();
+    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 
     for (i=0; viewstrings[i] != NULL; i++) {
 	switch (i) {
@@ -1222,15 +1224,66 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	button = gtk_image_new();
 	gtk_image_set_from_stock(GTK_IMAGE(button), stockicon, 
 				 GTK_ICON_SIZE_MENU);
-        gtk_toolbar_append_item(GTK_TOOLBAR(viewbar),
+        gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
 				NULL, toolstr, NULL,
 				button, toolfunc, vwin);
     }
 
-    gtk_widget_show(viewbar);
+    gtk_widget_show(vwin->mbar);
     gtk_widget_show(hbox);
 }
 
+static void add_edit_items_to_viewbar (windata_t *vwin)
+{
+    GtkWidget *button;
+    static char *editstrings[] = {
+	N_("Save"),
+	N_("Paste"),
+	N_("Replace..."),
+	N_("Undo"),
+	NULL
+    };
+    const gchar *stockicon = NULL;
+    void (*toolfunc)() = NULL;
+    gchar *toolstr;
+    int i, pos = 0;
+
+    for (i=0; editstrings[i] != NULL; i++) {
+	switch (i) {
+	case 0:
+	    stockicon = GTK_STOCK_SAVE;
+	    toolfunc = file_viewer_save;
+	    pos = 0;
+	    break;
+	case 1:
+	    stockicon = GTK_STOCK_PASTE;
+	    toolfunc = text_paste_callback;
+	    pos = 5;
+	    break;
+	case 2:
+	    stockicon = GTK_STOCK_FIND_AND_REPLACE;
+	    toolfunc = text_replace_callback;
+	    pos = 7;
+	    break;
+	case 3:
+	    stockicon = GTK_STOCK_UNDO;
+	    toolfunc = text_undo_callback;
+	    pos = 8;
+	    break;
+	default:
+	    break;
+	}
+
+	toolstr = _(editstrings[i]);
+
+	button = gtk_image_new();
+	gtk_image_set_from_stock(GTK_IMAGE(button), stockicon, 
+				 GTK_ICON_SIZE_MENU);
+        gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
+				NULL, toolstr, NULL,
+				button, toolfunc, vwin, pos);
+    }
+}
 
 /* ........................................................... */
 
@@ -1584,7 +1637,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gretl_print_destroy(prn);
     
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_view_key), vwin);
+		     G_CALLBACK(catch_viewer_key), vwin);
 
     g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
 		      G_CALLBACK(catch_button_3), vwin->w);
@@ -1851,6 +1904,8 @@ windata_t *view_file (char *filename, int editable, int del_file,
     text_buffer_insert_file(tbuf, filename, role);
 #endif
 
+    g_object_set_data(G_OBJECT(vwin->w), "tbuf", tbuf);
+
     /* grab the "changed" signal when editing a script */
     if (role == EDIT_SCRIPT) {
 	g_signal_connect(G_OBJECT(tbuf), "changed", 
@@ -1858,14 +1913,12 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
 
     /* catch some keystrokes */
-    if (!editable) {
-	g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-			 G_CALLBACK(catch_view_key), vwin);
-    } else {
+    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+		     G_CALLBACK(catch_viewer_key), vwin);
+
+    if (editable) {
 	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
-	g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-			 G_CALLBACK(catch_edit_key), vwin);	
-    } 
+    }
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
@@ -1888,6 +1941,25 @@ windata_t *view_file (char *filename, int editable, int del_file,
     cursor_to_top(vwin);
 
     return vwin;
+}
+
+/* ........................................................... */
+
+void file_view_set_editable (windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), TRUE);
+    g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
+    vwin->role = EDIT_SCRIPT;
+
+    tbuf = GTK_TEXT_BUFFER(g_object_get_data(G_OBJECT(vwin->w), "tbuf"));
+    g_signal_connect(G_OBJECT(tbuf), "changed", 
+		     G_CALLBACK(script_changed), vwin);
+
+    /* redo viewer toolbar */
+    add_edit_items_to_viewbar(vwin);
 }
 
 /* ........................................................... */
@@ -1918,7 +1990,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 		     G_CALLBACK(catch_button_3), vwin->w);
 
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_edit_key), vwin);	
+		     G_CALLBACK(catch_viewer_key), vwin);	
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
@@ -1981,7 +2053,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     /* attach shortcuts */
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_view_key), vwin);
+		     G_CALLBACK(catch_viewer_key), vwin);
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
@@ -2357,6 +2429,7 @@ static void add_var_menu_items (windata_t *vwin)
 
     for (i=0; i<neqns; i++) {
 	char maj[32], min[16];
+	char findmaj[32], findmin[16]; /* FIXME: not needed? */
 
 	/* save resids items */
 	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
@@ -2369,8 +2442,11 @@ static void add_var_menu_items (windata_t *vwin)
 
 	/* impulse responses: make branch for target */
 	vtarg = gretl_var_get_variable_number(var, i);
+
+	sprintf(findmaj, _("response of %s"), datainfo->varname[vtarg]);
 	double_underscores(tmp, datainfo->varname[vtarg]);
 	sprintf(maj, _("response of %s"), tmp);
+
 	varitem.path = g_strdup_printf("%s/%s", _(gpath), maj);
 	varitem.callback = NULL;
 	varitem.callback_action = 0;
@@ -2386,14 +2462,21 @@ static void add_var_menu_items (windata_t *vwin)
 	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_var_get_variable_number(var, j);
 	    varitem.callback_action = j;
+
+	    sprintf(findmin, _("to %s"), datainfo->varname[vshock]);
 	    double_underscores(tmp, datainfo->varname[vshock]);
 	    sprintf(min, _("to %s"), tmp);
+
 	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
 	    varitem.callback = impulse_response_call;
 	    varitem.callback_action = j;
 	    varitem.item_type = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    w = gtk_item_factory_get_widget(vwin->ifac, varitem.path);
+	    g_free(varitem.path);
+	    /* drop the doubled underscores to _find_ the item */
+	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), 
+					   findmaj, findmin);
+	    w = gtk_item_factory_get_item(vwin->ifac, varitem.path);
 	    g_object_set_data(G_OBJECT(w), "targ", GINT_TO_POINTER(i));
 	    g_free(varitem.path);
 	}

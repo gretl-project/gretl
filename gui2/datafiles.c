@@ -269,10 +269,11 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     file_code = GPOINTER_TO_INT
 	(g_object_get_data(G_OBJECT(vwin->listbox), "file_code"));
 
-    if (file_code == PWT_PS)
+    if (file_code == PWT_PS) {
 	build_path(pwtpath, fname, scriptfile, ".inp");
-    else
+    } else {
 	build_path(paths.scriptdir, fname, scriptfile, ".inp");
+    }
 
     g_free(fname);
     gtk_widget_destroy(GTK_WIDGET(vwin->w));

@@ -401,22 +401,7 @@ void delete_widget (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-void catch_view_key (GtkWidget *w, GdkEventKey *key)
-{
-    
-    if (key->keyval == GDK_q) { 
-        gtk_widget_destroy(w);
-    }
-    else if (key->keyval == GDK_s) {
-	windata_t *vwin = gtk_object_get_data(GTK_OBJECT(w), "ddata");
-
-	if (Z != NULL && vwin != NULL && vwin->role == VIEW_MODEL)
-	    remember_model(vwin, 1, NULL);
-    }
-}
-
-/* ........................................................... */
-
+static
 void catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods;
@@ -475,6 +460,24 @@ void catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	if (starter != NULL) g_free(starter);
     }
 #endif
+}
+
+/* ........................................................... */
+
+static 
+void catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    /* FIXME: see if text window is editable, and if so return
+       catch_edit_key()
+    */
+    if (key->keyval == GDK_q) { 
+        gtk_widget_destroy(w);
+    }
+    else if (key->keyval == GDK_s) {
+	if (Z != NULL && vwin != NULL && vwin->role == VIEW_MODEL) {
+	    remember_model(vwin, 1, NULL);
+	}
+    }
 }
 
 /* ........................................................... */
@@ -985,7 +988,7 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 
 static void make_viewbar (windata_t *vwin, int text_out)
 {
-    GtkWidget *iconw, *button, *viewbar, *hbox;
+    GtkWidget *iconw, *button, *hbox;
     GdkPixmap *icon;
     GdkBitmap *mask;
     GdkColormap *cmap;
@@ -1037,15 +1040,15 @@ static void make_viewbar (windata_t *vwin, int text_out)
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-    viewbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
-    gtk_toolbar_set_button_relief(GTK_TOOLBAR(viewbar), GTK_RELIEF_NONE);
-    gtk_toolbar_set_space_size(GTK_TOOLBAR(viewbar), 3);
+    vwin->mbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
+    gtk_toolbar_set_button_relief(GTK_TOOLBAR(vwin->mbar), GTK_RELIEF_NONE);
+    gtk_toolbar_set_space_size(GTK_TOOLBAR(vwin->mbar), 3);
 
-    gtk_box_pack_start(GTK_BOX(hbox), viewbar, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 
     cmap = gdk_colormap_get_system();
 
-    colorize_tooltips(GTK_TOOLBAR(viewbar)->tooltips);
+    colorize_tooltips(GTK_TOOLBAR(vwin->mbar)->tooltips);
 
     for (i=0; viewstrings[i] != NULL; i++) {
 	switch (i) {
@@ -1150,14 +1153,71 @@ static void make_viewbar (windata_t *vwin, int text_out)
 						     toolxpm);
 	iconw = gtk_pixmap_new(icon, mask);
 	toolstr = _(viewstrings[i]);
-	button = gtk_toolbar_append_item(GTK_TOOLBAR(viewbar),
+	button = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
 					 NULL, toolstr, NULL,
 					 iconw, toolfunc, vwin);
-	gtk_toolbar_append_space(GTK_TOOLBAR(viewbar));
+	gtk_toolbar_append_space(GTK_TOOLBAR(vwin->mbar));
     }
 
-    gtk_widget_show(viewbar);
+    gtk_widget_show(vwin->mbar);
     gtk_widget_show(hbox);
+}
+
+static void add_edit_items_to_viewbar (windata_t *vwin)
+{
+    GtkWidget *iconw, *button;
+    GdkPixmap *icon;
+    GdkBitmap *mask;
+    GdkColormap *cmap;
+    static char *editstrings[] = {
+	N_("Save"),
+	N_("Paste"),
+	N_("Replace..."),
+	N_("Undo"),
+	NULL
+    };
+    gchar **toolxpm = NULL;
+    void (*toolfunc)() = NULL;
+    gchar *toolstr;
+    int i, pos = 0;
+
+    cmap = gdk_colormap_get_system();
+
+    for (i=0; editstrings[i] != NULL; i++) {
+	switch (i) {
+	case 0:
+	    toolxpm = stock_save_16_xpm;
+	    toolfunc = file_viewer_save;
+	    pos = 0;
+	    break;
+	case 1:
+	    toolxpm = stock_paste_16_xpm;
+	    toolfunc = text_paste_callback;
+	    pos = 10;
+	    break;
+	case 2:
+	    toolxpm = stock_search_replace_16_xpm;
+	    toolfunc = text_replace_callback;
+	    pos = 14;
+	    break;
+	case 3:
+	    toolxpm = stock_undo_16_xpm;
+	    toolfunc = text_undo_callback;
+	    pos = 16;
+	    break;
+	default:
+	    break;
+	}
+
+	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
+						     toolxpm);
+	iconw = gtk_pixmap_new(icon, mask);
+	toolstr = _(editstrings[i]);
+	button = gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
+					 NULL, toolstr, NULL,
+					 iconw, toolfunc, vwin, pos);
+	gtk_toolbar_insert_space(GTK_TOOLBAR(vwin->mbar), pos + 1);
+    }
 }
 
 /* ........................................................... */
@@ -1342,7 +1402,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gretl_print_destroy(prn);
     
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_view_key), dialog);
+		       GTK_SIGNAL_FUNC(catch_viewer_key), vwin);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
@@ -1473,7 +1533,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     /* catch some keystrokes */
     if (!editable) {
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-			   GTK_SIGNAL_FUNC(catch_view_key), dialog);
+			   GTK_SIGNAL_FUNC(catch_viewer_key), vwin);
     } else {
 	gtk_object_set_data(GTK_OBJECT(dialog), "vwin", vwin);
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
@@ -1505,6 +1565,20 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
 /* ........................................................... */
 
+void file_view_set_editable (windata_t *vwin)
+{
+    gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
+    gtk_object_set_data(GTK_OBJECT(vwin->dialog), "vwin", vwin);
+    vwin->role = EDIT_SCRIPT;
+    gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
+		       GTK_SIGNAL_FUNC(script_changed), vwin);
+
+    /* redo viewer toolbar */
+    add_edit_items_to_viewbar(vwin);
+}
+
+/* ........................................................... */
+
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role) 
 {
@@ -1520,14 +1594,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     viewer_box_config(vwin);
 
     /* add a menu bar */
-#if 0
-    set_up_viewer_menu(dialog, vwin, edit_items);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-		       vwin->mbar, FALSE, TRUE, 0);
-    gtk_widget_show(vwin->mbar);
-#else
     make_viewbar(vwin, 0);
-#endif
 
     dialog_table_setup(vwin);
 
@@ -1613,8 +1680,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     /* attach shortcuts */
     gtk_object_set_data(GTK_OBJECT(dialog), "ddata", vwin);
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_view_key), 
-		       dialog);
+		       GTK_SIGNAL_FUNC(catch_viewer_key), 
+		       vwin);
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
@@ -2082,8 +2149,10 @@ static void add_var_menu_items (windata_t *vwin)
 
 	/* impulse responses: make branch for target */
 	vtarg = gretl_var_get_variable_number(var, i);
+
 	double_underscores(tmp, datainfo->varname[vtarg]);
 	sprintf(maj, _("response of %s"), tmp);
+
 	varitem.path = g_strdup_printf("%s/%s", _(gpath), maj);
 	varitem.callback = NULL;
 	varitem.callback_action = 0;
@@ -2099,14 +2168,16 @@ static void add_var_menu_items (windata_t *vwin)
 	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_var_get_variable_number(var, j);
 	    varitem.callback_action = j;
+
 	    double_underscores(tmp, datainfo->varname[vshock]);
 	    sprintf(min, _("to %s"), tmp);
+
 	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
 	    varitem.callback = impulse_response_call;
 	    varitem.callback_action = j;
 	    varitem.item_type = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-	    w = gtk_item_factory_get_widget(vwin->ifac, varitem.path);
+	    w = gtk_item_factory_get_widget_by_action(vwin->ifac, j);
 	    gtk_object_set_data(GTK_OBJECT(w), "targ", GINT_TO_POINTER(i));
 	    g_free(varitem.path);
 	}

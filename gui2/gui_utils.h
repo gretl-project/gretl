@@ -59,6 +59,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);
 
+void file_view_set_editable (windata_t *vwin);
+
 void errbox (const char *msg);
 
 void infobox (const char *msg);

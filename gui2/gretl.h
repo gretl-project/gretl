@@ -22,7 +22,7 @@
 #ifndef GRETL_H
 #define GRETL_H
 
-#ifdef WIN32
+#ifdef _WIN32
 # include "winconfig.h"
 #else
 # include "config.h"

@@ -124,6 +124,8 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
 /* .................................................................. */
 
+#if 0 /* not doing listbox edit of variable info any more */
+
 static int listbox_rename_var (const gchar *newname, gint varnum) 
 {
     if (*newname == '\0' || validate_varname(newname)) return 1;
@@ -138,8 +140,6 @@ static int listbox_rename_var (const gchar *newname, gint varnum)
     return 0;
 }
 
-/* .................................................................. */
-
 static void listbox_edit_label (const gchar *newlabel, gint varnum) 
 {
     *VARLABEL(datainfo, varnum) = 0;
@@ -147,8 +147,6 @@ static void listbox_edit_label (const gchar *newlabel, gint varnum)
     data_status |= MODIFIED_DATA; 
     set_sample_label(datainfo);
 }
-
-/* .................................................................. */
 
 static void cell_edited (GtkCellRendererText *cell,
                          const gchar *path_string,
@@ -186,6 +184,8 @@ static void cell_edited (GtkCellRendererText *cell,
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, 3, FALSE, -1);
     gtk_tree_path_free(path);
 }
+
+#endif /* old listbox edit stuff */
 
 /* .................................................................. */
 
@@ -244,8 +244,10 @@ GtkWidget *list_box_create (windata_t *win, GtkBox *box,
 	for (i=0; i<ncols; i++) {
 	    renderer = gtk_cell_renderer_text_new ();
 	    g_object_set (renderer, "ypad", 0, NULL);
+#if 0
 	    g_signal_connect (G_OBJECT (renderer), "edited",
 			      G_CALLBACK (cell_edited), GTK_TREE_MODEL(store));
+#endif
 	    g_object_set_data(G_OBJECT(renderer), "column", (gint *) i);
 	    column = gtk_tree_view_column_new_with_attributes (titles[i],
 							       renderer,

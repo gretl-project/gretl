@@ -190,15 +190,21 @@ static void maybe_add_ext (char *fname, int action, gpointer data)
 
 /* ........................................................... */
 
-static void script_set_title (windata_t *vwin, const char *fname)
+static void script_window_update (windata_t *vwin, const char *fname)
 {
     gchar *title;
     const char *p = strrchr(fname, SLASH);
 
+    /* update the window title */
     title = g_strdup_printf("gretl: %s", p? p + 1 : fname);
     gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
     strcpy(vwin->fname, fname);
     g_free(title);
+
+    /* make the window editable? */
+    if (vwin->role == VIEW_SCRIPT) {
+	file_view_set_editable(vwin);
+    }    
 }
 
 /* ........................................................... */
@@ -230,7 +236,7 @@ static void save_editable_content (int action, const char *fname,
 	strcpy(scriptfile, fname);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	vwin->active_var = 0; /* zero out "changed" flag */
-	script_set_title(vwin, fname);
+	script_window_update(vwin, fname);
     }
 }
 

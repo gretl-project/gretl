@@ -1412,9 +1412,6 @@ void varinfo_dialog (int varnum)
 			tempwid, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(really_set_variable_info), vset);
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (delete_widget), 
-		      vset->dlg);
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
