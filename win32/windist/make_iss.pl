@@ -39,7 +39,7 @@ print "ChangesAssociations=yes\n";
 print "MinVersion=4,3.51\n";
 # print "UsePreviousAppDir=no\n";
 
-print "[Dirs]\n";
+print "\n[Dirs]\n";
 print "Name: \"{app}\\user\"\n";
 print "Name: \"{app}\\data\"\n";
 print "Name: \"{app}\\data\\greene\"\n";
@@ -51,7 +51,7 @@ print "Name: \"{app}\\locale\"\n";
 print "Name: \"{app}\\locale\\es\"\n";
 print "Name: \"{app}\\locale\\es\\LC_MESSAGES\"\n";
 print "Name: \"{app}\\..\\gnuplot\"\n";
-print "Name: \"{app}\\..\\gnuplot\\demo\"\n\n";
+print "Name: \"{app}\\..\\gnuplot\\demo\"\n";
 
 # extra GTK module dirs for gtk-2.0
 print "Name: \"{app}\\lib\"\n";
@@ -74,7 +74,7 @@ print "Name: \"{app}\\lib\\locale\\fr\\LC_MESSAGES\"\n";
 print "Name: \"{app}\\etc\"\n";
 print "Name: \"{app}\\etc\\pango\"\n";
 
-print "[Files]\n";
+print "\n[Files]\n";
 
 while ($line = <STDIN>) {
    $line =~ s+/+\\+g;
@@ -102,8 +102,8 @@ print "Name: \"{group}\\gretl updater\"; Filename: \"{app}\\gretl_updater.exe\"\
 
 print "\n[Registry]\n";
 print "; Start \"gretl\" keys under HKEY_CURRENT_USER and HKEY_CLASSES_ROOT.\n"; 
-print "Root: HKCR; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n"; 
-print "Root: HKCU; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
+print "Root: HKCR; Subkey: \"Software\\gretl\"\n"; 
+print "Root: HKCU; Subkey: \"Software\\gretl\"\n";
 print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n"; 
 print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";

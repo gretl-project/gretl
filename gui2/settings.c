@@ -240,16 +240,71 @@ void get_default_dir (char *s)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
+#ifdef HAVE_TRAMO
+void set_tramo_ok (int set)
+{
+    static int ok;
+
+    if (set >= 0) ok = set;
+    if (mdata != NULL) {
+	flip(mdata->ifac, "/Variable/TRAMO analysis", ok);
+    }
+}
+#endif
+
+#ifdef HAVE_X12A
+void set_x12a_ok (int set)
+{
+    static int ok;
+
+    if (set >= 0) ok = set;
+    if (mdata != NULL) {
+	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ok);
+    }
+}
+#endif
+
+static int check_for_prog (const char *prog)
+{
+    int ret = 1;
+    char tmp[MAXLEN];
+#ifdef G_OS_WIN32
+    WIN32_FIND_DATA find_data;
+    HANDLE hfind;
+#endif
+
+    if (prog == NULL || *prog == 0) return 0;
+
+#ifdef G_OS_WIN32
+    hfind = FindFirstFile(prog, &find_data);
+    if (hfind == INVALID_HANDLE_VALUE) ret = 0;
+    FindClose(hfind);
+
+    if (ret == 0) {
+	char *p;
+
+	ret = SearchPath(NULL, prog, NULL, MAXLEN, tmp, &p);
+    }
+#else
+    sprintf(tmp, "%s > /dev/null 2>&1", prog);
+    ret = (system(tmp) == 0);
+#endif
+
+    return ret;
+}
+
 static void set_tramo_x12a_dirs (void)
 {
     char cmd[MAXLEN];
 
 #ifdef HAVE_TRAMO 
+    set_tramo_ok(check_for_prog(tramo));
     if (*tramodir == 0) {
 	build_path(paths.userdir, "tramo", tramodir, NULL);
     }
 #endif
 #ifdef HAVE_X12A
+    set_x12a_ok(check_for_prog(x12a));
     if (*x12adir == 0) {
 	build_path(paths.userdir, "x12a", x12adir, NULL);
     }
@@ -276,8 +331,8 @@ static void set_tramo_x12a_dirs (void)
     CreateDirectory(cmd, NULL);
     sprintf(cmd, "%s\\graph\\spectra", tramodir);
     CreateDirectory(cmd, NULL);
-# endif
-#else
+# endif /* HAVE_TRAMO */
+#else /* not win32 */
 # ifdef HAVE_X12A
     sprintf(cmd, "mkdir -p %s", x12adir);
 # endif
@@ -296,7 +351,7 @@ static void set_tramo_x12a_dirs (void)
     sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
     system(cmd);
 # endif /* HAVE_TRAMO */
-#endif /* not win32 */
+#endif /* win32 vs unix */
 }
 #endif /* tramo or x12a */
 
@@ -583,11 +638,18 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	gtk_widget_destroy(toolbar_box);
 	toolbar_box = NULL;
     }
+
 #ifdef ENABLE_NLS
     set_lcnumeric();
     if (lcnumeric != lcnum_bak) 
 	infobox(_("Please restart gretl to ensure consistent results"));
+
 #endif
+
+#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+    set_tramo_x12a_dirs();
+#endif
+
     proxy_init(dbproxy);
 }
 
