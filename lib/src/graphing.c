@@ -721,7 +721,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     int xvar, miss = 0, ols_ok = 0, tmplist[4];
     int npoints;
 
-    fprintf(stderr, "flags=%d, lines=%p\n", (int) flags, (void *) lines);
+    *withstring = 0;
 
     if ((flags & GP_IMPULSES) || lines == NULL) {
 	if (flags & ~GP_OLS_OMIT) {
@@ -943,7 +943,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    else fputs(" , \\\n", fq);
 	}
     } else if (flags & GP_DUMMY) { 
-	/* FIXME GP_DUMMY with time series? */
 	fputs("plot \\\n", fq);
 	if (!(flags & GP_RESIDS)) {
 	    strcpy(s1, get_series_name(pdinfo, list[1]));
@@ -963,7 +962,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		strcpy(s1, get_series_name(pdinfo, list[i]));
 	    }
 	    if (!pdist) { 
-		withstring[0] = '\0';
 		if ((flags & GP_GUI)? lines[i-1] : lines[0]) {
 		    strcpy(withstring, "w lines");
 		}
