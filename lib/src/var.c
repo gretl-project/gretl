@@ -1217,7 +1217,7 @@ static int real_var (int order, const int *inlist,
 	compose_varlist(&vlists, vlists.stochvars[i + 1], 
 			order, 0, pdinfo);
 	*pmod = lsq(vlists.reglist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
-	pmod->aux = VAR;
+	pmod->aux = AUX_VAR;
 	pmod->ID = i + 1;
 
 	/* save the residuals if required */
@@ -1245,7 +1245,8 @@ static int real_var (int order, const int *inlist,
 	    vlists.reglist[1] = resids->levels_list[i + 1]; 
 	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 	    if (flags & VAR_PRINT_MODELS) {
-		jmod.aux = VAR;
+		jmod.aux = AUX_JOHANSEN;
+		jmod.ID = -1;
 		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
 	    resids->uhat[i + neqns] = jmod.uhat;
@@ -1398,6 +1399,8 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
  * @list: specifies the variables to use.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
+ * @opt: if OPT_N, do not an include a constant in the
+ *       cointegrating regression.
  * @prn: gretl printing struct.
  *
  * Test for cointegration.  
@@ -1407,12 +1410,19 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
  */
 
 int coint (int order, const int *list, double ***pZ, 
-	   DATAINFO *pdinfo, PRN *prn)
+	   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     int i, t, n, nv, l0 = list[0];
+    int hasconst = gretl_hasconst(list);
     MODEL cmod;
     int *cointlist = NULL;
     int adfcode = UR_CONST;
+
+    if (order <= 0 || list[0] - hasconst < 2) {
+	strcpy(gretl_errmsg, "coint: needs a positive lag order "
+	       "and at least two variables");
+	return 1;
+    }
 
     gretl_model_init(&cmod);
 
@@ -1427,7 +1437,8 @@ int coint (int order, const int *list, double ***pZ,
     }
 
     /* step 2: carry out the cointegrating regression */
-    if (gretl_hasconst(list) == 0) {
+    if (!hasconst && !(opt & OPT_N)) {
+	/* add const to coint regression list */
 	cointlist = malloc((l0 + 2) * sizeof *cointlist);
 	if (cointlist == NULL) {
 	    return E_ALLOC;

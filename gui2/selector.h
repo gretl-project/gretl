@@ -40,8 +40,6 @@
 
 #define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
 
-#define COINT_CODE(c) (c == COINT || c == COINT2)
-
 typedef struct _selector selector;
 
 void clear_selector (void);
@@ -60,6 +58,8 @@ void data_save_selection_wrapper (int file_code);
 int selector_code (const selector *sr);
 
 const char *selector_list (const selector *sr);
+
+int selector_list_hasconst (const selector *sr);
 
 gpointer selector_get_data (const selector *sr);
 

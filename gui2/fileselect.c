@@ -317,7 +317,9 @@ static void set_startdir (char *startdir)
     }
 
 #ifndef G_OS_WIN32
-    if (startdir[strlen(startdir) - 1] != '/') strcat(startdir, "/");
+    if (startdir[strlen(startdir) - 1] != '/') {
+	strcat(startdir, "/");
+    }
 #endif
 }
 
@@ -425,25 +427,37 @@ static char *suggested_exportname (const char *fname, int action)
     return s;
 }
 
+static void remember_this_dir (const char *fname)
+{
+    int spos = slashpos(fname);
+    
+    if (spos > 0 && spos < sizeof remember_dir) {
+	*remember_dir = '\0';
+	strncat(remember_dir, fname, spos);
+    }
+}
+
 static void
 file_selector_process_result (const char *in_fname, int action, gpointer data)
 {
     char fname[FILENAME_MAX];
-    FILE *fp;
 
     *fname = 0;
     strncat(fname, in_fname, FILENAME_MAX - 1);
 
-    /* do some elementary checking */
     if (action < END_OPEN) {
-	if ((fp = fopen(fname, "r")) == NULL) {
+	FILE *fp = fopen(fname, "r");
+
+	if (fp == NULL) {
 	    errbox(_("Couldn't open the specified file"));
 	    return;
-	} else fclose(fp);
+	} else {
+	    fclose(fp);
+	}
     } 
 
     if (action != SET_PATH) {
-	strncpy(remember_dir, fname, slashpos(fname));
+	remember_this_dir(fname);
     }
 
     if (OPEN_DATA_ACTION(action)) {

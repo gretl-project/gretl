@@ -101,8 +101,6 @@ int system_get_df (const gretl_equation_system *sys);
 int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 			 int rhsvar);
 
-int total_included_exog_vars (const gretl_equation_system *sys, int eq);
-
 void 
 print_equation_system_info (const gretl_equation_system *sys, 
 			    const DATAINFO *pdinfo, PRN *prn);

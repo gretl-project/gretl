@@ -47,6 +47,8 @@ enum aux_codes {
     AUX_OMIT,  /* aux. regression for omitting variables */
     AUX_RESET, /* aux. regression for Ramsey's RESET */
     AUX_SYS,   /* single equation from multivariate system */
+    AUX_VAR,   /* single equation from VAR */
+    AUX_JOHANSEN,  /* Johansen cointegration test */
     AUX_GROUPWISE, /* testing for groupwise heteroskedasticity */
     AUX_AUX    /* auxiliary regression not otherwise specified */
 };

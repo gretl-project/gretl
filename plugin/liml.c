@@ -130,7 +130,7 @@ liml_make_reglist (const gretl_equation_system *sys, const int *list,
     return reglist;
 }
 
-/* implements Greene's equation (16-28), 4e, p. 686 */
+/* Implements Greene's equation (16-28), 4e, p. 686. */
 
 static gretl_matrix * 
 liml_get_gamma_hat (const gretl_matrix *W0, const gretl_matrix *W1, 
@@ -187,8 +187,8 @@ liml_get_gamma_hat (const gretl_matrix *W0, const gretl_matrix *W1,
     return g;
 }
 
-/* implements the regression on p. 687 of Greene, 4e,
-   following equation (16-28)
+/* Implements the regression on p. 687 of Greene, 4e,
+   following equation (16-28).
 */
 
 static int 
@@ -289,7 +289,8 @@ liml_set_residuals_etc (MODEL *pmod, const int *list,
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    pmod->sigma = sqrt(pmod->ess / pmod->nobs); /* or pmod->dfd (TSP) */
+    /* could apply a df correction here (TSP seems to) */
+    pmod->sigma = sqrt(pmod->ess / pmod->nobs); 
 
     for (i=0; i<pmod->ncoeff; i++) {
 	double xii = gretl_matrix_get(XTX, i, i);
@@ -298,10 +299,15 @@ liml_set_residuals_etc (MODEL *pmod, const int *list,
     } 
 }
 
+/* Compute and invert the special counterpart of "X-transpose X"
+   that forms the basis for var(betahat) in LIML.  See Davidson
+   and MacKinnon, Econometric Theory and Methods, equation (12.96).
+*/
+
 static gretl_matrix *
-liml_get_XTX (const gretl_matrix *E, const int *exlist, 
-	      const int *list, int T, int t1, double lmin, 
-	      const double **Z)
+liml_get_XTX_inverse (const gretl_matrix *E, const int *exlist, 
+		      const int *list, int T, int t1, double lmin, 
+		      const double **Z)
 {
     gretl_matrix *X = NULL;
     gretl_matrix *Xmod = NULL;
@@ -368,7 +374,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
 
     double *lambda, lmin = 1.0;
     double ll = 0.0;
-    MODEL *olsmod;
+    MODEL *pmod;
     MODEL lmod;
     int *reglist;
     int idf;
@@ -381,30 +387,23 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     printlist(list, "original equation list");
 #endif
 
-    olsmod = system_get_model(sys, eq);
+    /* degrees of freedom for over-identification test:
+       total exog vars minus number of params in equation.
+       FIXME: handle case of idf = 0.
+    */
+    idf = exlist[0] - (list[0] - 1);
+    
+    /* pointer to TSLS model */
+    pmod = system_get_model(sys, eq);
 
     /* make regression list using only included exogenous vars */
     reglist = liml_make_reglist(sys, list, &k);
     if (reglist == NULL) {
 	return E_ALLOC;
     }
-
-    /* degrees of freedom for over-identification test */
-#if 0
-    idf = exlist[0] - total_included_exog_vars(sys, eq) - k;
-    fprintf(stderr, "K_star_j = %d, M_j = %d, idf = %d\n",
-	    idf + k, k, idf);
-#else
-    /* Davidson and MacKinnon: df = total exog vars - params in equation */
-    idf = exlist[0] - (list[0] - 1);
-#endif
-
 #if LDEBUG
     printf("number of endogenous vars in equation: k = %d\n", k);
-    printf("over-identification df = %d\n", idf);
 #endif
-
-    /* FIXME: handle case of idf = 0 */
 
     /* allocate matrices */
     E = gretl_matrix_alloc(T, k);
@@ -466,8 +465,8 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
 
     lmin = lambda_min(lambda, k);
     free(lambda);
-    gretl_model_set_double(olsmod, "lmin", lmin);
-    gretl_model_set_int(olsmod, "idf", idf);
+    gretl_model_set_double(pmod, "lmin", lmin);
+    gretl_model_set_int(pmod, "idf", idf);
 
 #if LDEBUG
     printf("smallest eigenvalue: %g\n\n", lmin);
@@ -481,35 +480,35 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     }
 
     /* estimates of coeffs on included exogenous vars */
-    err = liml_get_betahat(olsmod, reglist, list, exlist, g, 
+    err = liml_get_betahat(pmod, reglist, list, exlist, g, 
 			   pZ, pdinfo);
     if (err) {
 	goto bailout;
     }
 
-    /* covariance matrix of coefficient estimates */
-    XTX = liml_get_XTX(E, exlist, list, T, pdinfo->t1, lmin,
-		       (const double **) *pZ);
+    /* for covariance matrix of coefficient estimates */
+    XTX = liml_get_XTX_inverse(E, exlist, list, T, pdinfo->t1, lmin,
+			       (const double **) *pZ);
     if (XTX == NULL) {
 	err = 1;
 	goto bailout;
     }
 
     /* correct yhat, uhat, ESS, sigma, standard errors */
-    liml_set_residuals_etc(olsmod, list, XTX, (const double **) *pZ);
+    liml_set_residuals_etc(pmod, list, XTX, (const double **) *pZ);
 
     /* compute and set log-likelihood, etc */
     ll = system_n_equations(sys) * LN_2_PI;
     ll += log(lmin);
     ll += gretl_matrix_log_determinant(W1);
     ll *= -(T / 2.0);
-    olsmod->lnL = ll;
+    pmod->lnL = ll;
 
 #if LDEBUG
     printf("log-likelihood = %g\n", ll);
 #endif
 
-    mle_aic_bic(olsmod, 0); /* check the "0" (additional params) here */
+    mle_aic_bic(pmod, 0); /* check the "0" (additional params) here */
 
  bailout:
 
@@ -523,6 +522,35 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     gretl_matrix_free(XTX);
 
     return err;
+}
+
+/* re-write the cross-equation VCV using the LIML residuals */
+
+static void 
+liml_rewrite_sigma (gretl_matrix *sigma, gretl_equation_system *sys,
+		    int t1)
+{
+    const MODEL *imod, *jmod;
+    int g = system_n_equations(sys);
+    int T = system_n_obs(sys);
+    int i, j, t;
+    double xx;
+
+    for (i=0; i<g; i++) {
+	imod = system_get_model(sys, i);
+	for (j=i; j<g; j++) {
+	    jmod = system_get_model(sys, j);
+	    xx = 0.0;
+	    for (t=0; t<T; t++) {
+		xx += imod->uhat[t + t1] * jmod->uhat[t + t1];
+	    }
+	    xx /= T;
+	    gretl_matrix_set(sigma, i, j, xx);
+	    if (j != i) {
+		gretl_matrix_set(sigma, j, i, xx);
+	    }
+	}
+    }
 }
 
 /* Driver function for LIML */
@@ -543,7 +571,7 @@ int liml_driver (gretl_equation_system *sys, double ***pZ,
 	liml_do_equation(sys, i, pZ, pdinfo, prn);
     }
 
-    /* FIXME: need to correct the cross-equation VCV estimates */
+    liml_rewrite_sigma(sigma, sys, pdinfo->t1);
 
     return err;
 }

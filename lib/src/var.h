@@ -43,7 +43,7 @@ void gretl_var_free_unnamed (GRETL_VAR *var);
 
 int coint (int order, const int *list, 
 	   double ***pZ, DATAINFO *pdinfo, 
-	   PRN *prn);
+	   gretlopt opt, PRN *prn);
 
 int adf_test (int order, int varno, 
 	      double ***pZ, DATAINFO *pdinfo, 

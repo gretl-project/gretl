@@ -105,40 +105,53 @@ static int make_instrument_list (gretl_equation_system *sys);
 static gretl_equation_system **system_stack;
 static int n_systems;
 
+static gretl_equation_system *
+get_equation_system_by_name (const char *sysname, int *snum)
+{
+    int i;
+
+    for (i=0; i<n_systems; i++) {
+	if (!strcmp(sysname, system_stack[i]->name)) {
+	    if (snum != NULL) {
+		*snum = i;
+	    }
+	    return system_stack[i];
+	}
+    }
+
+    return NULL;
+}
+
 static int stack_system (gretl_equation_system *sys, PRN *prn)
 {
-    gretl_equation_system **sstack;
+    gretl_equation_system *orig;
+    int snum;
 
     /* only feasible for named systems */
     if (sys == NULL || sys->name == NULL) {
 	return 1;
     }
 
-    sstack = realloc(system_stack, (n_systems + 1) * sizeof *sstack);
-    if (sstack == NULL) {
-	return E_ALLOC;
+    orig = get_equation_system_by_name(sys->name, &snum);
+
+    if (orig != NULL) {
+	/* replace existing system of same name */
+	gretl_equation_system_destroy(orig);
+	system_stack[snum] = sys;
+	pprintf(prn, "Replaced equation system '%s'\n", sys->name);
+    } else {
+	gretl_equation_system **sstack;
+
+	sstack = realloc(system_stack, (n_systems + 1) * sizeof *sstack);
+	if (sstack == NULL) {
+	    return E_ALLOC;
+	}
+	system_stack = sstack;
+	system_stack[n_systems++] = sys;
+	pprintf(prn, "Added equation system '%s'\n", sys->name);
     }
-
-    system_stack = sstack;
-    system_stack[n_systems++] = sys;
-
-    pprintf(prn, "Added equation system '%s'\n", sys->name);
 
     return 0;
-}
-
-static gretl_equation_system *
-get_equation_system_by_name (const char *sysname)
-{
-    int i;
-
-    for (i=0; i<n_systems; i++) {
-	if (!strcmp(sysname, system_stack[i]->name)) {
-	    return system_stack[i];
-	}
-    }
-
-    return NULL;
 }
 
 void gretl_equation_systems_cleanup (void)
@@ -597,7 +610,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    sys = get_equation_system_by_name(sysname);
+    sys = get_equation_system_by_name(sysname, NULL);
     if (sys == NULL) {
 	sprintf(gretl_errmsg, "'%s': unrecognized name", sysname);
 	free(sysname);
@@ -860,74 +873,6 @@ int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
     }
 
     return 0;
-}
-
-int test_in_list (const int *list, int v)
-{
-    int i;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == v) return 1;
-    }
-
-    return 0;
-}
-
-/* total number of exog vars included in a given equation,
-   either directly or via identities!
-*/
-
-int total_included_exog_vars (const gretl_equation_system *sys, int eq)
-{
-    const int *exlist = system_get_instr_vars(sys);
-    const int *list = system_get_list(sys, eq);
-    int *testlist;
-    int nex = 0;
-    int i, j, k;
-
-    testlist = malloc((exlist[0] + 1) * sizeof *testlist);
-    if (testlist == NULL) {
-	return -1;
-    }
-
-    testlist[0] = 0;
-
-    /* direct inclusion */
-    for (i=2; i<=list[0]; i++) {
-	if (test_in_list(exlist, list[i])) {
-	    testlist[0] += 1;
-	    testlist[testlist[0]] = list[i];
-	}
-    }
-
-    /* indirect inclusion */
-    for (i=2; i<=list[0]; i++) {
-	if (test_in_list(testlist, list[i])) {
-	    continue;
-	}
-	for (j=0; j<sys->n_identities; j++) {
-	    if (sys->idents[j]->depvar == list[i]) {
-		for (k=0; k<sys->idents[j]->n_atoms; k++) {
-		    int av = sys->idents[j]->atoms[k].varnum;
-
-		    if (test_in_list(exlist, av) &&
-			!test_in_list(testlist, av)) {
-			testlist[0] += 1;
-			testlist[testlist[0]] = av;
-		    }
-		}
-	    }
-	}
-    }
-
-    printlist(exlist, "full exog vars list");
-    printlist(list, "this model list");
-    printlist(testlist, "exog vars, this model");
-
-    nex = testlist[0];
-    free(testlist);
-
-    return nex;
 }
 
 static void destroy_ident (identity *pident)

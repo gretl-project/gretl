@@ -288,14 +288,14 @@ void clear_data (void)
 
     if (Z != NULL) {
 	free_Z(Z, datainfo);
+	Z = NULL;
     } 
 
     clear_datainfo(datainfo, CLEAR_FULL);
 
-    Z = NULL;
-
     clear_varlist(mdata->listbox);
     clear_sample_label();
+
     data_status = 0;
     orig_vars = 0;
     main_menubar_state(FALSE);
@@ -630,11 +630,11 @@ static void real_do_coint (gpointer p, int action)
 
     clear(line, MAXLEN);
 
-    cmd.opt = selector_get_opts(sr);
-
     if (action == COINT) {
-	sprintf(line, "coint %s", buf);
+	cmd.opt = (selector_list_hasconst(sr))? OPT_NONE : OPT_N;
+	sprintf(line, "coint %s%s", buf, (cmd.opt)? " --nc" : "");
     } else {
+	cmd.opt = selector_get_opts(sr);
 	sprintf(line, "coint2 %s%s", buf, (cmd.opt)? " --verbose" : "");
     }	
 
@@ -649,7 +649,7 @@ static void real_do_coint (gpointer p, int action)
     }
 
     if (action == COINT) {
-	err = coint(order, cmd.list, &Z, datainfo, prn);
+	err = coint(order, cmd.list, &Z, datainfo, cmd.opt, prn);
     } else {
 	johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);
     }

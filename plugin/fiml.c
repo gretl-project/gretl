@@ -852,6 +852,21 @@ static int fiml_get_std_errs (fiml_system *fsys)
     return err;
 }
 
+static void fiml_print_gradients (const gretl_matrix *b, PRN *prn)
+{
+    int i;
+
+    pprintf(prn, "\n%s:\n\n", _("Gradients at last iteration"));
+
+    for (i=0; i<b->rows; i++) {
+	pprintf(prn, " %14e ", b->val[i]);
+	if ((i + 1) % 4 == 0) {
+	    pputc(prn, '\n');
+	}
+    }
+    pputc(prn, '\n');
+}
+
 /* Driver function for FIML as described in Davidson and MacKinnon,
    ETM, chap 12, section 5.
 */
@@ -954,9 +969,8 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	err = 1;
     }
 
-    /* print the gradients here? */
-
     if (!err) {
+	fiml_print_gradients(fsys->artb, prn);
 	err = fiml_get_std_errs(fsys);
     }
 
@@ -967,7 +981,6 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 
  bailout:
     
-    /* clean up */
     fiml_system_destroy(fsys);
 
     return err;

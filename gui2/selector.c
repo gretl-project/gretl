@@ -165,8 +165,10 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
 void clear_selector (void)
 {
     default_var = 0;
+
     free(xlist);
     xlist = NULL;
+
     free(auxlist);
     auxlist = NULL;
 }
@@ -441,7 +443,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	clear_varlist(sr->rightvars);
     }
 
-    if (MODEL_CODE(sr->code)) {
+    if (MODEL_CODE(sr->code) && sr->code != COINT2) {
 	GtkTreeModel *model = 
 	    gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rightvars));
 	GtkTreeIter iter;
@@ -514,8 +516,10 @@ static int add_to_cmdlist (selector *sr, const char *add)
 	int blocks = 2 + n / MAXLEN;
 
 	cmdlist = realloc(sr->cmdlist, blocks * MAXLEN);
-	if (cmdlist == NULL) return 1;
-	else sr->cmdlist = cmdlist;
+	if (cmdlist == NULL) {
+	    return 1;
+	}
+	sr->cmdlist = cmdlist;
     }
 
     strcat(sr->cmdlist, add);
@@ -533,7 +537,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     sr->error = 0;
 
     sr->cmdlist = mymalloc(MAXLEN); 
-    if (sr->cmdlist == NULL) return FALSE;
+    if (sr->cmdlist == NULL) {
+	return FALSE;
+    }
 
     sr->cmdlist[0] = 0;
 
@@ -553,8 +559,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	    sprintf(numstr, "%d ", i);
 	    add_to_cmdlist(sr, numstr);
 	}
-    }
-    else if (sr->code == AR) {
+    } else if (sr->code == AR) {
 	const gchar *lags;
 
 	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra));
@@ -565,16 +570,14 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	    add_to_cmdlist(sr, lags);
 	    add_to_cmdlist(sr, " ; ");
 	}
-    }
-    else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
+    } else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
 	GtkAdjustment *adj;
  
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
 	add_to_cmdlist(sr, numstr);
-    }
-    else if (sr->code == ARMA || sr->code == GARCH) {
+    } else if (sr->code == ARMA || sr->code == GARCH) {
 	GtkAdjustment *adj;
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
@@ -587,8 +590,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	sprintf(numstr, "%d ", i);
 	add_to_cmdlist(sr, numstr);
 	add_to_cmdlist(sr, " ; ");
-    }
-    else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
+    } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
 	if (str == NULL || !strlen(str)) {
@@ -652,10 +654,14 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
     if (MODEL_CODE(sr->code)) {
 	if (rows > 0) { 
-	    xlist = realloc(xlist, (rows + 1) * sizeof *xlist);
-	    if (xlist != NULL) {
-		xlist[0] = rows;
+	    int *rlist;
+
+	    rlist = myrealloc(xlist, (rows + 1) * sizeof *rlist);
+	    if (rlist == NULL) {
+		return FALSE;
 	    }
+	    xlist = rlist;
+	    xlist[0] = rows;
 	}
     }
 
@@ -1367,7 +1373,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     
     for (i=0; i<datainfo->v; i++) {
 	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
-	if (i == 0 && COINT_CODE(cmdcode)) continue;
+	if (i == 0 && cmdcode == COINT2) continue;
         if (hidden_var(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	gtk_list_store_append(store, &iter);
@@ -1381,14 +1387,12 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
 
-    /* for models: top right -> dependent variable */
-    if (MODEL_CODE(cmdcode)) { 
+    if (MODEL_CODE(cmdcode) && cmdcode != COINT2) { 
+	/* models: top right -> dependent variable */
 	build_depvar_section(sr, right_vbox);
-    }
-
-    /* graphs: top right -> x-axis variable */
-    else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
-	     || cmdcode == SCATTERS || cmdcode == GR_3D) {
+    } else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
+	       || cmdcode == SCATTERS || cmdcode == GR_3D) {
+	/* graphs: top right -> x-axis variable */
 	build_x_axis_section(sr, right_vbox);
     }
 
@@ -1410,13 +1414,13 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	GtkWidget *remove;
 	GtkWidget *indepvar_hbox;
 
-	if (MODEL_CODE(cmdcode)) {
+	if (cmdcode == COINT2) {
+	    tmp = gtk_label_new(_("Variables to test"));
+	} else if (MODEL_CODE(cmdcode)) {
 	    tmp = gtk_label_new(_("Independent variables"));
-	}
-	else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
+	} else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
 	    tmp = gtk_label_new(_("Y-axis variables"));
-	}
-	else if (cmdcode == SCATTERS) {
+	} else if (cmdcode == SCATTERS) {
 	    scatters_label = tmp = gtk_label_new(_("X-axis variables"));
 	}
     
@@ -1454,8 +1458,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 		gtk_list_store_set(store, &iter, 0, xlist[i], 
 				   1, datainfo->varname[xlist[i]], -1);
 	    }
-	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT &&
-		   cmdcode != COINT2 && cmdcode != VAR) {
+	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT2 && cmdcode != VAR) {
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 0, 0, 1, "const", -1);
 	}
@@ -1840,6 +1843,14 @@ int selector_code (const selector *sr)
 const char *selector_list (const selector *sr)
 {
     return sr->cmdlist;
+}
+
+int selector_list_hasconst (const selector *sr)
+{
+    int hc = sr->cmdlist != NULL && 
+	strstr(sr->cmdlist, " 0") != NULL;
+
+    return hc;
 }
 
 gpointer selector_get_data (const selector *sr)

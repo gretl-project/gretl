@@ -249,13 +249,18 @@ static void clear_vars (GtkWidget *w, selector *sr)
     gchar *row[2];
 
     gtk_clist_unselect_all(GTK_CLIST(sr->varlist));
-    if (sr->depvar != NULL) 
+
+    if (sr->depvar != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
-    if (sr->code == GR_DUMMY || sr->code == GR_3D)
+    }
+
+    if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
-    else
+    } else {
 	gtk_clist_clear(GTK_CLIST(sr->rightvars));
-    if (MODEL_CODE(sr->code)) {
+    }
+
+    if (MODEL_CODE(sr->code) && sr->code != COINT2) {
 	row[0] = "0";
 	row[1] = "const";
 	gtk_clist_append(GTK_CLIST(sr->rightvars), row);
@@ -697,10 +702,12 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *depvar_hbox;
 
-    if (sr->code == VAR)
+    if (sr->code == VAR) {
 	tmp = gtk_label_new (_("First dependent variable"));
-    else
+    } else {
 	tmp = gtk_label_new (_("Dependent variable"));
+    }
+
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
@@ -1136,7 +1143,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	gchar id[5];
 
 	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
-	if (i == 0 && COINT_CODE(cmdcode)) continue;
+	if (i == 0 && cmdcode == COINT2) continue;
         if (hidden_var(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	sprintf(id, "%d", i);
@@ -1163,19 +1170,21 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
-    /* for models: top right -> dependent variable */
-    if (MODEL_CODE(cmdcode)) 
+    if (MODEL_CODE(cmdcode) && cmdcode != COINT2) {
+	/* models: top right -> dependent variable */
 	build_depvar_section(sr, right_vbox);
-    /* graphs: top right -> x-axis variable */
-    else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
-	     || cmdcode == SCATTERS || cmdcode == GR_3D)
+    } else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
+	       || cmdcode == SCATTERS || cmdcode == GR_3D) {
+	/* graphs: top right -> x-axis variable */
 	build_x_axis_section(sr, right_vbox);
+    }
 
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
 	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 ||
-	cmdcode == GR_DUMMY || cmdcode == GR_3D) 
+	cmdcode == GR_DUMMY || cmdcode == GR_3D) {
 	build_mid_section(sr, right_vbox);
+    }
     
     /* lower right: selected (independent) variables */
     if (MODEL_CODE(cmdcode)) {
@@ -1235,8 +1244,8 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 		row[1] = datainfo->varname[xlist[i]];
 		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	    }
-	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT &&
-		   cmdcode != COINT2 && cmdcode != VAR) {
+	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT2 && 
+		   cmdcode != VAR) {
 	    gchar *row[2];
 
 	    row[0] = "0";
@@ -1638,6 +1647,14 @@ int selector_code (const selector *sr)
 const char *selector_list (const selector *sr)
 {
     return sr->cmdlist;
+}
+
+int selector_list_hasconst (const selector *sr)
+{
+    int hc = sr->cmdlist != NULL && 
+	strstr(sr->cmdlist, " 0") != NULL;
+
+    return hc;
 }
 
 gpointer selector_get_data (const selector *sr)

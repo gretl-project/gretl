@@ -2018,7 +2018,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case COINT:
 	order = atoi(cmd->param);
-	err = coint(order, cmd->list, pZ, datainfo, prn);
+	err = coint(order, cmd->list, pZ, datainfo, cmd->opt, prn);
 	break;
 
     case COINT2:

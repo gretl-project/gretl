@@ -982,14 +982,15 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, "\n%s %d: ", 
 		(utf)? _("Equation") : I_("Equation"), pmod->ID + 1);
 	break;	
-    case VAR:
+    case AUX_VAR:
 	pprintf(prn, "\n%s %d: ", 
 		(utf)? _("Equation") : I_("Equation"), pmod->ID);
 	break;
     case AUX_ADD:
     default:
-	if (pmod->ID < 0) pputs(prn, "\n");
-	else if (pmod->name) {
+	if (pmod->ID < 0) {
+	    pputc(prn, '\n');
+	} else if (pmod->name) {
 	    pprintf(prn, "\n%s:\n", pmod->name);
 	} else {
 	    pprintf(prn, "\n%s %d: ", (utf)? _("Model") : I_("Model"), pmod->ID);
