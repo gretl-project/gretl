@@ -49,6 +49,10 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo,
 MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	     unsigned long opt);
 
+const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i);
+
+void tsls_free_data (const MODEL *pmod);
+
 MODEL tsls_func (LIST list, const int pos, 
 		 double ***pZ, DATAINFO *pdinfo,
 		 unsigned long opt);

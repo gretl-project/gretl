@@ -229,12 +229,26 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     return err;
 }
 
+static int get_real_list_length (const int *list)
+{
+    int i, len = list[0];
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    len = i - 1;
+	    break;
+	}
+    }
+
+    return len;
+}
+
 int system_n_indep_vars (const gretl_equation_system *sys)
 {
     int i, nvi, nv = 0;
 
     for (i=0; i<sys->n_equations; i++) {
-	nvi = sys->lists[i][0] - 1;
+	nvi = get_real_list_length(sys->lists[i]) - 1;
 	if (nvi > nv) nv = nvi;
     }
 

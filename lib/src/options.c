@@ -96,7 +96,8 @@ struct gretl_opt gretl_opts[] = {
     { STORE,    OPT_T, "traditional" },
     { STORE,    OPT_Z, "gzipped" },
     { TOBIT,    OPT_V, "verbose" },
-    { TSLS,     OPT_R, "robust" },    
+    { TSLS,     OPT_R, "robust" },  
+    { TSLS,     OPT_S, "save" },
     { VAR,      OPT_Q, "quiet" },    
     { 0,        0L,    NULL }
 };

@@ -1476,6 +1476,93 @@ static int get_pos (const int *list)
     return -1;
 }
 
+/* .......................................................... */
+
+static int tsls_save_data (MODEL *pmod, const int *list, 
+			   double **Z, DATAINFO *pdinfo)
+{
+    double **X = NULL;
+    char *endog = NULL;
+    int addvars = list[0];
+    int i, j, k, pos, m, err = 0;
+
+    pos = get_pos(pmod->list);
+    m = pos - 2;
+
+    X = malloc(list[0] * sizeof *X);
+    
+    endog = malloc(m * sizeof *endog);
+    if (X == NULL || endog == NULL) {
+	free(X);
+	free(endog);
+	return E_ALLOC;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	k = pdinfo->v - 1 + i - addvars;
+	X[i-1] = Z[k];
+	Z[k] = NULL;
+    }
+
+    for (i=0; i<m; i++) {
+	k = pmod->list[i+2];
+	endog[i] = 0;
+	for (j=1; j<=list[0]; j++) {
+	    if (list[j] == k) {
+		endog[i] = 1;
+		break;
+	    }
+	}
+    }
+
+    /* now attach X and endog to the model */
+    gretl_model_set_data(pmod, "tslsX", X, sizeof X);
+    gretl_model_set_data(pmod, "endog", endog, m);
+
+    return err;
+}
+
+const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i)
+{
+    const char *endog;
+    double **X;
+    const double *ret;
+
+    endog = gretl_model_get_data(pmod, "endog");
+    X = gretl_model_get_data(pmod, "tslsX");
+
+    if (endog == NULL || X == NULL) return NULL;
+
+    if (!endog[i]) {
+	ret = Z[pmod->list[i+2]];
+    } else {
+	int j, k = 0;
+
+	for (j=0; j<i; j++) {
+	    if (endog[j]) k++;
+	}
+	ret = X[k];
+    }
+
+    return ret;
+}
+
+void tsls_free_data (const MODEL *pmod)
+{
+    const char *endog = gretl_model_get_data(pmod, "endog");
+    double **X = gretl_model_get_data(pmod, "tslsX");
+    int i, m = 0;
+
+    if (endog != NULL && X != NULL) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    if (endog[i]) m++;
+	}
+	for (i=0; i<m; i++) {
+	    free(X[i]);
+	}
+    }
+}
+
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
@@ -1483,7 +1570,8 @@ static int get_pos (const int *list)
  *   of variables and list of instruments.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: may contain OPT_R for robust VCV.
+ * @opt: may contain OPT_R for robust VCV, OPT_S to save second-
+ * stage regressors.
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.
@@ -1703,6 +1791,10 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     free(s2list);
     free(yhat); 
 
+    if (opt & OPT_S) {
+	tsls_save_data(&tsls, newlist, *pZ, pdinfo);
+    } 
+	
     dataset_drop_vars(addvars, pZ, pdinfo);
     free(newlist);
 
