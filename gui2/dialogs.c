@@ -3144,8 +3144,7 @@ datawiz_make_changes (DATAINFO *dwinfo)
 
     sprintf(setline, "setobs %d %s", dwinfo->pd, dwinfo->stobs);
 
-    if (dwinfo->structure == TIME_SERIES || 
-	dwinfo->structure == TIME_SERIES_SPECIAL) {
+    if (dwinfo->structure == TIME_SERIES) {
 	opt = OPT_T;
     } else if (dwinfo->structure == STACKED_TIME_SERIES) {
 	opt = OPT_S;
@@ -3176,7 +3175,7 @@ struct freq_info ts_info[] = {
     { 52, N_("Weekly") },
     {  5, N_("Daily") },
     { 24, N_("Hourly") },
-    {  0, N_("Other") },
+    { PD_SPECIAL, N_("Other") },
 };
 
 struct panel_info {
@@ -3280,7 +3279,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	{  6, N_("daily data") },
 	{  7, N_("daily data") },
 	{ 24, N_("hourly data") },
-	{  0, N_("time-series data") }
+	{  PD_SPECIAL, N_("time-series data") }
     };
 
     if (dwinfo->structure == CROSS_SECTION) {
@@ -3302,7 +3301,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	    tslabel = N_("time-series data");
 	}
 
-	if (dwinfo->pd != 52) {
+	if (dwinfo->pd != 52 && dwinfo->pd != PD_SPECIAL) {
 	    int lastobs = dwinfo->t1 + datainfo->n - 1;
 
 	    if (lastobs > dwinfo->n - 1) {
@@ -3329,10 +3328,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 		(dwinfo->structure == STACKED_TIME_SERIES)? 
 		_("stacked time series") : _("stacked cross sections"),
 		nunits, nperiods);
-    } else if (dwinfo->structure == TIME_SERIES_SPECIAL) {
-	sprintf(ctxt, _("time-series data, observations 1 to %d"),
-		datainfo->n);
-    }	
+    } 
 }
 
 /* we do this only in case of time series */
@@ -3386,7 +3382,7 @@ static void dw_compute_datainfo (DATAINFO *dwinfo)
 
 static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
 {
-    /* in case of panel data, "t1" is being borrowed to represent the
+    /* in case of panel data, "t1" is borrowed to represent the
        number of cross-sectional units
     */
     dwinfo->t1 = (int) GTK_ADJUSTMENT(w)->value;
@@ -3621,8 +3617,10 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_TS_FREQUENCY) {
 		if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
 		    step = DW_WEEK_DAYS;
-		} else if (dwinfo->pd == 52 || dwinfo->pd == 24) {
-		    /* we don't do dates for weekly or hourly */
+		} else if (dwinfo->pd == 52 || 
+			   dwinfo->pd == 24 ||
+			   dwinfo->pd == PD_SPECIAL) {
+		    /* we don't do dates for weekly or hourly or... */
 		    step = DW_CONFIRM;
 		} else {
 		    step = DW_STARTING_OBS;
@@ -3651,7 +3649,9 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 		step = DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
 		if (dwinfo->structure == TIME_SERIES) {
-		    if (dwinfo->pd != 52 && dwinfo->pd != 24) {
+		    if (dwinfo->pd != 52 && 
+			dwinfo->pd != 24 &&
+			dwinfo->pd != PD_SPECIAL) {
 			step = DW_STARTING_OBS;
 		    } else {
 			step = DW_TS_FREQUENCY;

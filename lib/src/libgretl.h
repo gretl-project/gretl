@@ -83,6 +83,7 @@
 
 #define LISTSEP            999
 #define PMAX_NOT_AVAILABLE 666
+#define PD_SPECIAL         666
 #define OPT_NONE           0L
 
 /* numbers smaller than the given limit will print as zero */
@@ -108,8 +109,7 @@ enum ts_codes {
     CROSS_SECTION,
     TIME_SERIES,
     STACKED_TIME_SERIES,
-    STACKED_CROSS_SECTION,
-    TIME_SERIES_SPECIAL
+    STACKED_CROSS_SECTION
 };
 
 enum auto_genr {

@@ -980,7 +980,8 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	    return daily_obs_number(date, pdinfo);
 	}
     } else if (dataset_is_daily(pdinfo) ||
-	       dataset_is_weekly(pdinfo)) {
+	       dataset_is_weekly(pdinfo) ||
+	       custom_time_series(pdinfo)) {
 	/* undated time series */
 	if (sscanf(date, "%d", &i) && i > 0 && i <= pdinfo->n) {
 	    return i - 1;
@@ -1039,8 +1040,8 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     return n;
 }
 
-static char *real_ntodate (char *datestr, int t, const DATAINFO *pdinfo,
-			   int full)
+static char *
+real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 {
     double x;
     static int decpoint;
@@ -1061,7 +1062,8 @@ static char *real_ntodate (char *datestr, int t, const DATAINFO *pdinfo,
 	}
 	return datestr;
     } else if (dataset_is_daily(pdinfo) || 
-	       dataset_is_weekly(pdinfo)) {
+	       dataset_is_weekly(pdinfo) ||
+	       custom_time_series(pdinfo)) {
 	/* undated time series */
 	x = date(t, 1, pdinfo->sd0);
 	sprintf(datestr, "%d", (int) x);
@@ -1654,6 +1656,8 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
 	strcpy(str, _("daily")); break;
     case 7:
 	strcpy(str, _("daily")); break;
+    case PD_SPECIAL:
+	strcpy(str, _("special")); break;
     default:
 	strcpy(str, _("unknown")); break;
     }
@@ -3918,7 +3922,9 @@ static int write_xmldata (const char *fname, const int *list,
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    char startdate[OBSLEN], enddate[OBSLEN], datname[MAXLEN], type[32];
+    char startdate[OBSLEN], enddate[OBSLEN];
+    char datname[MAXLEN], type[32];
+    char freqstr[16];
     char *xmlbuf = NULL;
     long sz = 0L;
     void *handle = NULL;
@@ -3983,18 +3989,24 @@ static int write_xmldata (const char *fname, const int *list,
     xmlbuf = gretl_xml_encode(datname);
     if (xmlbuf == NULL) return 1;
 
+    if (pdinfo->pd == PD_SPECIAL) {
+	strcpy(freqstr, "special");
+    } else {
+	sprintf(freqstr, "%d", pdinfo->pd);
+    }
+
     if (opt) {
 	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		 "<gretldata name=\"%s\" frequency=\"%d\" "
+		 "<gretldata name=\"%s\" frequency=\"%s\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
-		 enc, datname, pdinfo->pd, startdate, enddate);
+		 enc, datname, freqstr, startdate, enddate);
     } else {
 	fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		"<gretldata name=\"%s\" frequency=\"%d\" "
+		"<gretldata name=\"%s\" frequency=\"%s\" "
 		"startobs=\"%s\" endobs=\"%s\" ", 
-		enc, datname, pdinfo->pd, startdate, enddate);
+		enc, datname, freqstr, startdate, enddate);
     }
 
     free(xmlbuf);
@@ -4611,7 +4623,9 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     if (tmp) {
 	int pd = 0;
 
-	if (sscanf(tmp, "%d", &pd) == 1) {
+	if (!strcmp(tmp, "special")) {
+	    tmpdinfo->pd = PD_SPECIAL;
+	} else if (sscanf(tmp, "%d", &pd) == 1) {
 	    tmpdinfo->pd = pd;
 	} else {
 	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));

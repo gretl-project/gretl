@@ -712,9 +712,11 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	    return 1;
 	}
 	if (pd > 1 && pos == len) {
-	    strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
-		   "frequency > 1"));
-	    return 1;
+	    if (pd != 52 && pd != PD_SPECIAL) {
+		strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
+				       "frequency > 1"));
+		return 1;
+	    }
 	}
 	if (pd == 1 && pos < len) {
 	    strcpy(gretl_errmsg, _("no ':' allowed in starting obs with "

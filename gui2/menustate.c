@@ -383,6 +383,8 @@ void set_sample_label (DATAINFO *pdinfo)
 	case 6:
 	case 7:
 	    strcpy(pdstr, _("Daily")); break;
+	case PD_SPECIAL:
+	    strcpy(pdstr, _("Time series")); break;
 	default:
 	    strcpy(pdstr, _("Unknown")); break;
 	}
