@@ -2,6 +2,7 @@ version 1.0pre3
 - improve accuracy of calculation of standard errors, and
   numerical accuracy on MS Windows in general
 - fix more translation issues
+- fix bug in normality chi-square test for large n
 - fix bug that prevented CUSUM plot from displaying
 - fix normality of residual test: print to model window was
   incomplete
