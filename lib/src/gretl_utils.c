@@ -670,14 +670,14 @@ void set_miss (LIST list, const char *param, double **Z,
  * set_obs:
  * @line: command line.
  * @pdinfo: data information struct.
- * @opt: OPT_S for stacked time-series, OPT_C for stacked cross-section.
+ * @opt: 's' for stacked time-series, 'c' for stacked cross-section.
  * 
  * Impose a time-series or panel interpretation on a data set.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int set_obs (char *line, DATAINFO *pdinfo, int opt)
+int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
 {
     int pd, pos, i, len, dc = 0, bad = 0;
     char stobs[9], endobs[9], endbit[7], *p;
@@ -767,8 +767,8 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
-    if (opt == OPT_S) pdinfo->time_series = STACKED_TIME_SERIES;
-    else if (opt == OPT_C) pdinfo->time_series = STACKED_CROSS_SECTION;
+    if (opt == 's') pdinfo->time_series = STACKED_TIME_SERIES;
+    else if (opt == 'c') pdinfo->time_series = STACKED_CROSS_SECTION;
     else if (pdinfo->sd0 >= 1.0) 
         pdinfo->time_series = TIME_SERIES; /* but might be panel? */
     else pdinfo->time_series = 0;
@@ -1035,41 +1035,19 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
 /* .......................................................... */
 
-static int isflag (int c)
+static unsigned char isflag (unsigned char c)
 {
-    switch (c) {
-    case 'o': return OPT_O;
-    case 'c': return OPT_C;
-    case 'm': return OPT_M;
-    case 'r': return OPT_R;
-    case 's': return OPT_S;
-    case 't': return OPT_T;
-    case 'l': return OPT_L;
-    case 'z': return OPT_Z;
-    default: return 0;
+    if (c == 'o' || c == 'c' || c == 'i' || c == 'm' ||
+	c == 'r' || c == 's' || c == 't' || c == 'l' ||
+	c == 'a' || c == 'z') {
+	return c;
     }
-}
-
-/* ........................................................... */
-
-char getflag (int opt)
-{
-    switch (opt) {
-    case OPT_R: return 'r';
-    case OPT_S: return 's';
-    case OPT_T: return 't';
-    case OPT_O: return 'o';
-    case OPT_C: return 'c';
-    case OPT_M: return 'm';
-    case OPT_L: return 'l';
-    case OPT_Z: return 'z';
-    default: return 0;
-    }
+    return 0;
 }
 
 /* .......................................................... */
 
-int catchflag (char *line, int *oflag)
+int catchflag (char *line, unsigned char *oflag)
      /* check for "-<char>" in line: if found, chop it out and set
 	oflag value accordingly.  
 	Strip trailing semicolon while we're at it. 
@@ -2337,7 +2315,7 @@ int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 
 /* ........................................................... */
 
-int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
+int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn)
 {
     int nunits, T;
     int old_ts = pdinfo->time_series;
@@ -2349,7 +2327,7 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
 
-    if (flag == OPT_C) 
+    if (flag == 'c') 
 	pdinfo->time_series = STACKED_CROSS_SECTION;
     else 
 	pdinfo->time_series = STACKED_TIME_SERIES;

@@ -1030,19 +1030,18 @@ int shell (const char *arg)
                        c == MPOLS || c == SCATTERS || c == GNUPLOT)
 
 void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, int oflag, PRN *prn)
+	       int batch, int gui, unsigned char oflag, PRN *prn)
      /* echo a given command: depending on the circumstances, either
 	to stdout or to a buffer, or both */
 
 {
     int i, err, got999 = 1;
-    char flagc;
     int cli = !gui;
 
     if (line == NULL) return;
 
 #if 0
-    fprintf(stderr, "echo_cmd: line='%s', gui=%d, oflag=%d, batch=%d "
+    fprintf(stderr, "echo_cmd: line='%s', gui=%d, oflag='%c', batch=%d "
 	    "param='%s', nolist=%d\n", line, gui, oflag, batch, cmd->param,
 	    cmd->nolist);
 #endif
@@ -1055,7 +1054,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop */
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (oflag) { 
-	    pprintf(prn, " -%c", getflag(oflag));
+	    pprintf(prn, " -%c", oflag);
 	}
 	pputs(prn, "\n");
 	return;
@@ -1145,9 +1144,8 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 
     if (oflag) { 
-	flagc = getflag(oflag);
-	if (cli) printf(" -%c", flagc);
-	if (!batch) pprintf(prn, " -%c", flagc);
+	if (cli) printf(" -%c", oflag);
+	if (!batch) pprintf(prn, " -%c", oflag);
     }
 
     if (cli) putchar('\n');
@@ -1306,7 +1304,7 @@ static void do_print_string (char *str, PRN *prn)
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     int pause, int oflag, PRN *prn)
+		     int pause, unsigned char oflag, PRN *prn)
      /* common code for command-line and GUI client programs, where
 	the command doesn't require special handling on the client
 	side */

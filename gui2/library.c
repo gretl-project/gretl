@@ -44,7 +44,7 @@ extern double **subZ;
 extern double **fullZ;
 
 /* ../cli/common.c */
-static int data_option (int flag);
+static int data_option (unsigned char flag);
 static int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, PRN *prn);
 
@@ -136,7 +136,7 @@ typedef struct {
 
 /* file scope state variables */
 static int ignore;
-static int oflag;
+static unsigned char oflag;
 static char loopstorefile[MAXLEN];
 static model_stack *mstack;
 static int n_mstacks;
@@ -1032,8 +1032,8 @@ void change_sample (GtkWidget *widget, dialog_t *ddata)
 
 void bool_subsample (gpointer data, guint opt, GtkWidget *w)
      /* opt = 0     -- drop all obs with missing data values 
-	opt = OPT_O -- sample using dummy variable
-	opt = OPT_R -- sample using boolean expression
+	opt = 'o'   -- sample using dummy variable
+	opt = 'r'   -- sample using boolean expression
      */
 {
     int err = 0;
@@ -1043,7 +1043,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 	return;
 
     if (opt == 0)
-	err = set_sample_dummy(NULL, &Z, &subZ, datainfo, subinfo, OPT_O);
+	err = set_sample_dummy(NULL, &Z, &subZ, datainfo, subinfo, 'o');
     else
 	err = set_sample_dummy(line, &Z, &subZ, datainfo, subinfo, opt);
     if (err) {
@@ -1079,7 +1079,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
     if (verify_and_record_command(line)) return;
 
     close_dialog(ddata);
-    bool_subsample(NULL, OPT_R, NULL);
+    bool_subsample(NULL, 'r', NULL);
 }
 
 /* ........................................................... */
@@ -1100,7 +1100,7 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
     if (verify_and_record_command(line)) return;
 
     close_dialog(ddata);    
-    bool_subsample(NULL, OPT_O, NULL);
+    bool_subsample(NULL, 'o', NULL);
 }
 
 /* ........................................................... */
@@ -1109,7 +1109,8 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
     char pdstr[8], stobs[9];
-    int err, opt;
+    unsigned char oflag;
+    int err;
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
@@ -1118,10 +1119,10 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 	
     clear(line, MAXLEN);
     sprintf(line, "setobs %s %s ", pdstr, stobs);
-    catchflag(line, &opt);
+    catchflag(line, &oflag);
     if (verify_and_record_command(line)) return;
 
-    err = set_obs(line, datainfo, opt);
+    err = set_obs(line, datainfo, oflag);
     if (err) {
 	errbox(get_gretl_errmsg());
 	return;
@@ -3551,9 +3552,8 @@ int maybe_restore_full_data (int action)
 
 /* ........................................................... */
 
-int do_store (char *mydatfile, int opt, int overwrite)
+int do_store (char *mydatfile, unsigned char oflag, int overwrite)
 {
-    char f = getflag(opt);
     gchar *msg, *tmp = NULL;
     FILE *fp;
     int showlist = 1;
@@ -3566,13 +3566,13 @@ int do_store (char *mydatfile, int opt, int overwrite)
     /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;
 
-    if (f) { /* not a standard native save */
+    if (oflag) { /* not a standard native save */
 	tmp = g_strdup_printf("store '%s' %s -%c", mydatfile, 
-			      (showlist)? storelist : "", f);
+			      (showlist)? storelist : "", oflag);
     } else if (dat_suffix(mydatfile)) { /* saving as ".dat" */
 	tmp = g_strdup_printf("store '%s' %s -t", mydatfile, 
 			      (showlist)? storelist : "");
-	opt = OPT_T;
+	oflag = 't';
     } else {
 	if (!overwrite) {
 	    fp = fopen(mydatfile, "r");
@@ -3610,7 +3610,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
     }
 
     if (write_data(mydatfile, command.list, Z, datainfo, 
-		   data_option(opt), &paths)) {
+		   data_option(oflag), &paths)) {
 	sprintf(errtext, _("Write of data file failed\n%s"),
 		get_gretl_errmsg());
 	errbox(errtext);
@@ -3618,7 +3618,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
 	goto store_get_out;
     }
 
-    if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT) {
+    if (oflag != 'm' && oflag != 'r' && oflag != 'a') {
 	mkfilelist(FILE_LIST_DATA, mydatfile);
     }
 
@@ -3627,7 +3627,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
     g_free(msg);
 
     /* record that data have been saved */
-    if (!f) {
+    if (!oflag) {
 	data_status = (HAVE_DATA|USER_DATA);
 	set_sample_label(datainfo);
     }
@@ -4032,6 +4032,20 @@ static int script_model_test (const int id, PRN *prn, const int ols_only)
 	return 1;
     }
     return 0;
+}
+
+/* ........................................................... */
+
+static unsigned char gp_flags (int batch, unsigned char opt)
+{
+    unsigned char flags = 0;
+
+    if (batch) flags |= GP_BATCH;
+    if (opt == 'm') flags |= GP_IMPULSES;
+    else if (opt == 'z') flags |= GP_DUMMY;
+    else if (opt == 's') flags |= GP_OLS_OMIT;
+
+    return flags;
 }
 
 /* ........................................................... */
@@ -4476,13 +4490,12 @@ int gui_exec_line (char *line,
     case GNUPLOT:
 	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
 	    break;
-	if (exec_code == SCRIPT_EXEC) plotflags = GP_BATCH;
-	if (oflag == OPT_M) { /* plot with impulses */
-	    plotflags |= GP_IMPULSES;
+	plotflags = gp_flags((exec_code == SCRIPT_EXEC), oflag);
+	if (oflag == 'm' || oflag == 'z' || oflag == 's') { 
 	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
 			  &paths, &plot_count, plotflags); 
-	} else {	
-	    lines[0] = oflag;
+	} else {
+	    lines[0] = (oflag != 0);
 	    err = gnuplot(command.list, lines, command.param, 
 			  &Z, datainfo, &paths, &plot_count, plotflags);
 	}
@@ -4604,7 +4617,7 @@ int gui_exec_line (char *line,
     case LMTEST:
 	if ((err = script_model_test(0, prn, 1))) break;
 	/* non-linearity (squares) */
-	if (oflag == OPT_S || oflag == OPT_O || !oflag) {
+	if (oflag == 's' || oflag == 'o' || !oflag) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, ptest);
 	    clear_model(models[1], NULL);
@@ -4612,7 +4625,7 @@ int gui_exec_line (char *line,
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
-	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
+	if (oflag == 'l' || oflag == 'o' || !oflag) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, ptest);
 	    clear_model(models[1], NULL);
@@ -4620,14 +4633,14 @@ int gui_exec_line (char *line,
 	    if (err) errmsg(err, prn);
 	}
 	/* autocorrelation or heteroskedasticity */
-	if (oflag == OPT_M || oflag == OPT_O) {
+	if (oflag == 'm' || oflag == 'o') {
 	    int order = atoi(command.param);
 
 	    err = autocorr_test(models[0], order, &Z, datainfo, prn, ptest);
 	    if (err) errmsg(err, prn);
 	    /* FIXME: need to respond? */
 	} 
-	if (oflag == OPT_C || !oflag) {
+	if (oflag == 'c' || !oflag) {
 	    err = whites_test(models[0], &Z, datainfo, prn, ptest);
 	    if (err) errmsg(err, prn);
 	}
@@ -4872,7 +4885,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	if (strlen(command.param)) {
-	    if (oflag == OPT_Z && !has_gz_suffix(command.param))
+	    if (oflag == 'z' && !has_gz_suffix(command.param))
 		pprintf(prn, _("store: using filename %s.gz\n"), command.param);
 	    else
 		pprintf(prn, _("store: using filename %s\n"), command.param);
@@ -4887,7 +4900,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	pprintf(prn, _("Data written OK.\n"));
-	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) 
+	if ((oflag == 'o' || oflag == 's') && datainfo->markers) 
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));
 	break;

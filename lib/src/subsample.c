@@ -150,7 +150,7 @@ static void prep_subdinfo (DATAINFO *dinfo, int markers, int n)
 int set_sample_dummy (const char *line, 
 		      double ***oldZ, double ***newZ,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
-		      int opt)
+		      unsigned char oflag)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values; or using as a
 	mask a specified dummy variable;, or masking with a specified
@@ -164,7 +164,7 @@ int set_sample_dummy (const char *line,
     gretl_errmsg[0] = '\0';
 
     dumv[0] = '\0';
-    if (opt == OPT_O && 
+    if (oflag == 'o' && 
 	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0)) {
 	missobs = 1; 
     }
@@ -184,7 +184,7 @@ int set_sample_dummy (const char *line,
 	    if (floateq(dum[t], 1.0)) sn++;
 	}
     } 
-    else if (opt == OPT_O) { /* the name of a dummy var was given */ 
+    else if (oflag == 'o') { /* the name of a dummy var was given */ 
 	dumnum = varindex(oldinfo, dumv);
 	if (dumnum == oldinfo->v) {
 	    sprintf(gretl_errmsg, _("Variable '%s' not defined"), dumv);
@@ -192,7 +192,7 @@ int set_sample_dummy (const char *line,
 	} 
 	sn = isdummy((*oldZ)[dumnum], oldinfo->t1, oldinfo->t2);
     } 
-    else if (opt == OPT_R) { /* construct dummy from boolean */
+    else if (oflag == 'r') { /* construct dummy from boolean */
 	char formula[MAXLEN];
 	int err;
 
@@ -212,7 +212,7 @@ int set_sample_dummy (const char *line,
     /* does this policy lead to an empty sample, or no change
        in the sample, perchance? */
     if (sn == 0) {
-	if (opt == OPT_O && !missobs) {
+	if (oflag == 'o' && !missobs) {
 	    sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), dumv);
 	} else if (missobs) {
 	    strcpy(gretl_errmsg, _("No observations would be left!"));
@@ -242,7 +242,7 @@ int set_sample_dummy (const char *line,
     for (t=0; t<n; t++) {
 	if (missobs) {
 	    (*oldZ)[subnum][t] = dum[t];
-	} else if (opt == OPT_O) {
+	} else if (oflag == 'o') {
 	    /* ?possibility of missing values here? */
 	    (*oldZ)[subnum][t] = (*oldZ)[dumnum][t];
 	}

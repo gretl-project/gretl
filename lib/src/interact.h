@@ -64,11 +64,11 @@ int parseopt (const char *s);
 int shell (const char *arg);
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
-	       int batch, int gui, int oflag, PRN *prn);
+	       int batch, int gui, unsigned char oflag, PRN *prn);
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
-		     int batch, int oflag, 
+		     int batch, unsigned char oflag, 
 		     PRN *prn);
 
 int ready_for_command (const char *line);

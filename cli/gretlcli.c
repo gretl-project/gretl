@@ -64,7 +64,7 @@ PRN *cmdprn;
 MODELSPEC *modelspec;
 MODEL tmpmod;
 FILE *dat, *fb;
-int i, j, dot, opt, err, errfatal, oflag, batch;
+int i, j, dot, opt, err, errfatal, batch;
 int runit, loopstack, looprun;
 int data_status, runfile_open;
 int echo_off;               /* suppress command echoing */
@@ -78,6 +78,7 @@ char texfile[MAXLEN];
 char response[3];
 char linebak[MAXLEN];      /* for storing comments */
 char *line_read;
+unsigned char optflag;
 
 gretl_equation_system *sys;
 
@@ -197,13 +198,14 @@ void file_get_line (void)
     }
 }
 
-unsigned char gp_flags (int batch, int opt)
+unsigned char gp_flags (int batch, unsigned char opt)
 {
     unsigned char flags = 0;
-    
+
     if (batch) flags |= GP_BATCH;
-    if (opt == OPT_M) flags |= GP_IMPULSES;
-    if (opt == OPT_Z) flags |= GP_DUMMY;
+    if (opt == 'm') flags |= GP_IMPULSES;
+    else if (opt == 'z') flags |= GP_DUMMY;
+    else if (opt == 's') flags |= GP_OLS_OMIT;
 
     return flags;
 }
@@ -500,7 +502,7 @@ int main (int argc, char *argv[])
 		}
 	    }
 	}
-	oflag = 0;
+	optflag = 0;
 	if (cmd_overflow) {
 	    fprintf(stderr, _("Maximum length of command line "
 			      "(%d bytes) exceeded\n"), MAXLEN);
@@ -549,7 +551,7 @@ int main (int argc, char *argv[])
     return 0;
 }
 
-static int data_option (int flag);
+static int data_option (unsigned char flag);
 
 void exec_line (char *line, PRN *prn) 
 {
@@ -566,7 +568,7 @@ void exec_line (char *line, PRN *prn)
     }
 
     /* parse the command line... */
-    catchflag(line, &oflag);
+    catchflag(line, &optflag);
     compress_spaces(line);
 
     /* ...but if we're stacking commands for a loop, parse lightly */
@@ -604,9 +606,9 @@ void exec_line (char *line, PRN *prn)
 	} else {
 	    if (!echo_off) 
 		echo_cmd(&command, datainfo, line, (batch || runit)? 1 : 0, 
-			 0, oflag, cmdprn);
+			 0, optflag, cmdprn);
 	    if (command.ci != ENDLOOP) {
-		if (add_to_loop(&loop, line, command.ci, oflag)) 
+		if (add_to_loop(&loop, line, command.ci, optflag)) 
 		    printf(_("Failed to add command to loop stack\n"));
 		return;
 	    }
@@ -615,7 +617,7 @@ void exec_line (char *line, PRN *prn)
 
     if (!echo_off && command.ci != ENDLOOP) 
 	echo_cmd(&command, datainfo, line, (batch || runit)? 1 : 0, 0, 
-		 oflag, cmdprn);
+		 optflag, cmdprn);
 
 #ifdef notdef
      if (is_model_ref_cmd(command.ci) &&
@@ -639,7 +641,7 @@ void exec_line (char *line, PRN *prn)
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
-			      !batch, oflag, prn);
+			      !batch, optflag, prn);
 	if (err) errmsg(err, prn);
 	break;
 
@@ -663,7 +665,7 @@ void exec_line (char *line, PRN *prn)
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]); 
 	    clear_model(models[1], NULL);
-	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	    if (optflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
 	break;	
 
@@ -692,7 +694,7 @@ void exec_line (char *line, PRN *prn)
 	} else {
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL);
-	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	    if (optflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
 	clear_model(&tmpmod, NULL);
 	break;
@@ -705,7 +707,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn); 
 	    break;
 	}
-	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	if (optflag) outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
     case ARCH:
@@ -717,7 +719,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
 	    swap_models(&models[0], &models[1]); 
-	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	    if (optflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
 	clear_model(models[1], NULL);
 	break;
@@ -763,7 +765,7 @@ void exec_line (char *line, PRN *prn)
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn); 
-	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	if (optflag) outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
     case LAD:
@@ -776,7 +778,7 @@ void exec_line (char *line, PRN *prn)
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	/* if (oflag) outcovmx(models[0], datainfo, !batch, prn); */
+	/* if (optflag) outcovmx(models[0], datainfo, !batch, prn); */
 	break;
 
     case CORRGM:
@@ -813,7 +815,7 @@ void exec_line (char *line, PRN *prn)
 	    ++model_count;
 	    (models[0])->ID = model_count;
 	    printmodel(models[0], datainfo, prn);
-	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	    if (optflag) outcovmx(models[0], datainfo, !batch, prn);
 	} 
 	else {
 	    err = 1;
@@ -846,10 +848,10 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	if (command.ci == EQNPRINT)
 	    err = eqnprint(models[0], datainfo, &paths, 
-			   texfile, model_count, oflag);
+			   texfile, model_count, optflag);
 	else
 	    err = tabprint(models[0], datainfo, &paths, 
-			   texfile, model_count, oflag);
+			   texfile, model_count, optflag);
 	if (err) 
 	    pputs(prn, _("Couldn't open tex file for writing\n"));
 	else 
@@ -872,7 +874,7 @@ void exec_line (char *line, PRN *prn)
     case FCASTERR:
 	if ((err = model_test_start(0, prn, 0))) break;
 	err = fcast_with_errs(line, models[0], &Z, datainfo, prn,
-			      &paths, oflag); 
+			      &paths, optflag); 
 	if (err) errmsg(err, prn);
 	break;
 
@@ -922,7 +924,7 @@ void exec_line (char *line, PRN *prn)
 
     case GENR:
 	err = generate(&Z, datainfo, line, model_count,
-		       models[0], oflag);
+		       models[0], optflag);
 	if (err) 
 	    errmsg(err, prn);
 	else 
@@ -930,18 +932,18 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case GNUPLOT:
-	if (oflag == OPT_Z && 
+	if (optflag == 'z' && 
 	    (command.list[0] != 3 || 
 	     !isdummy(Z[command.list[3]], datainfo->t1, datainfo->t2))) { 
 	    pputs(prn, _("You must supply three variables, the last of "
 			 "which is a dummy variable\n(with values 1 or 0)\n"));
 	    break;
 	}
-	if (oflag == OPT_M || oflag == OPT_Z) { 
+	if (optflag == 'm' || optflag == 'z' || optflag == 's') { 
 	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
-			  &paths, &plot_count, gp_flags(batch, oflag));
+			  &paths, &plot_count, gp_flags(batch, optflag));
 	} else {
-	    lines[0] = oflag;
+	    lines[0] = (optflag != 0);
 	    err = gnuplot(command.list, lines, command.param, 
 			  &Z, datainfo, &paths, &plot_count, 
 			  gp_flags(batch, 0));
@@ -972,7 +974,7 @@ void exec_line (char *line, PRN *prn)
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	if (optflag) outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
     case HELP:
@@ -987,7 +989,7 @@ void exec_line (char *line, PRN *prn)
 	    pputs(prn, _("import command is malformed\n"));
 	    break;
 	}
-	if (oflag)
+	if (optflag)
 	    err = import_box(&Z, datainfo, datfile, prn);
 	else
 	    err = import_csv(&Z, datainfo, datfile, prn);
@@ -1060,35 +1062,35 @@ void exec_line (char *line, PRN *prn)
     case LMTEST:
 	if ((err = model_test_start(0, prn, 1))) break;
 	/* non-linearity (squares) */
-	if (oflag == OPT_S || oflag == OPT_O || !oflag) {
+	if (optflag == 's' || optflag == 'o' || !optflag) {
 	    clear_model(models[1], NULL);
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, NULL);
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (oflag == OPT_S) break;
+	    if (optflag == 's') break;
 	    if (!err && !batch && page_break(0, NULL, 1)) break; 
 	}
 	/* non-linearity (logs) */
-	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
+	if (optflag == 'l' || optflag == 'o' || !optflag) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, NULL);
 	    clear_model(models[1], NULL); 
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (oflag == OPT_L) break;
+	    if (optflag == 'l') break;
 	    if (!err && !batch && page_break(0, NULL, 1)) break;
 	}
 	/* autocorrelation */
-	if (oflag == OPT_M || oflag == OPT_O) {
+	if (optflag == 'm' || optflag == 'o') {
 	    int order = atoi(command.param);
 
 	    err = autocorr_test(models[0], order, &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
 	}
 	/* heteroskedasticity */
-	if (oflag == OPT_C || !oflag) {
+	if (optflag == 'c' || !optflag) {
 	    err = whites_test(models[0], &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
 	    /* need to take more action in case of err? */
@@ -1106,7 +1108,7 @@ void exec_line (char *line, PRN *prn)
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
+	if (optflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
     case LOOP:
@@ -1167,7 +1169,7 @@ void exec_line (char *line, PRN *prn)
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
+	if (optflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
 #ifdef ENABLE_GMP
@@ -1181,12 +1183,12 @@ void exec_line (char *line, PRN *prn)
 #endif
 
     case PANEL:	
-	err = set_panel_structure(oflag, datainfo, prn);
+	err = set_panel_structure(optflag, datainfo, prn);
 	break;
 
     case PERGM:
 	err = periodogram(command.list[1], &Z, datainfo, &paths,
-			  batch, oflag, prn);
+			  batch, optflag, prn);
 	if (err) pputs(prn, _("Failed to generate periodogram\n"));
 	break;
 
@@ -1280,7 +1282,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case SETOBS:
-	err = set_obs(line, datainfo, oflag);
+	err = set_obs(line, datainfo, optflag);
 	if (err) errmsg(err, prn);
 	else {
 	    if (datainfo->n > 0) {
@@ -1309,7 +1311,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case SMPL:
-	if (oflag) {
+	if (optflag) {
 	    err = restore_full_sample(&subZ, &fullZ, &Z,
 				      &subinfo, &fullinfo, &datainfo);
 	    if (err) {
@@ -1320,7 +1322,7 @@ void exec_line (char *line, PRN *prn)
 		err = E_ALLOC;
 	    } else {
 		err = set_sample_dummy(line, &Z, &subZ, datainfo, 
-				       subinfo, oflag);
+				       subinfo, optflag);
 	    }
 	    if (!err) {
 		fullZ = Z;
@@ -1338,12 +1340,12 @@ void exec_line (char *line, PRN *prn)
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    print_smpl(datainfo, (oflag)? fullinfo->n : 0, prn);
+	    print_smpl(datainfo, (optflag)? fullinfo->n : 0, prn);
 	}
 	break;
 
     case SQUARE:
-	if (oflag) chk = xpxgenr(command.list, &Z, datainfo, 1, 1);
+	if (optflag) chk = xpxgenr(command.list, &Z, datainfo, 1, 1);
 	else chk = xpxgenr(command.list, &Z, datainfo, 0, 1);
 	if (chk < 0) {
 	    pputs(prn, _("Failed to generate squares\n"));
@@ -1366,12 +1368,12 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (write_data(command.param, command.list, Z, datainfo, 
-		       data_option(oflag), NULL)) {
+		       data_option(optflag), NULL)) {
 	    fprintf(stderr, _("write of data file failed\n"));
 	    break;
 	}
 	pputs(prn, _("Data written OK\n"));
-	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) { 
+	if ((optflag == 'o' || optflag == 's') && datainfo->markers) { 
 	    pputs(prn, _("Warning: case markers not saved in binary datafile\n"));
 	}
 	break;
@@ -1418,7 +1420,7 @@ void exec_line (char *line, PRN *prn)
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
 	/* is this OK? */
-	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
+	if (optflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
 #ifdef notyet

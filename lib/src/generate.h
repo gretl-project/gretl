@@ -41,12 +41,12 @@ typedef struct {
  
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, int model_count, 
-	      MODEL *pmod, int oflag);
+	      MODEL *pmod, unsigned char oflag);
 
 int dummy (double ***pZ, DATAINFO *pdinfo);
 
 int paneldum (double ***pZ, DATAINFO *pdinfo, 
-	      int opt);
+	      unsigned char opt);
 
 int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
 

@@ -24,18 +24,6 @@
 
 #include <stdio.h>
 
-enum flagvals {
-    OPT_O = 1, /* write double-precision binary data */
-    OPT_M,     /* write data in Gnu Octave format */
-    OPT_C,     /* write data in Comma Separated Values format */
-    OPT_R,     /* write data in Gnu R format */
-    OPT_S,     /* write single-precision binary data */
-    OPT_T,     /* write traditional (ESL-style) data */
-    OPT_L,
-    OPT_Z,     /* write gzipped data */
-    OPT_R_ALT, /* write data in alternate Gnu R format */
-};
-
 /**
  * free_model:
  * @p: pointer to #MODEL.
@@ -106,7 +94,7 @@ void printlist (const int *list, const char *msg);
 
 void list_exclude (int n, int *list);
 
-int set_obs (char *line, DATAINFO *pdinfo, int opt);
+int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt);
 
 void set_miss (LIST list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn);
@@ -116,9 +104,7 @@ char *addpath (char *fname, PATHS *ppaths, int script);
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 int setpath, int script);
 
-char getflag (int opt);
-
-int catchflag (char *line, int *oflag);
+int catchflag (char *line, unsigned char *oflag);
 
 MODEL *gretl_model_new (DATAINFO *pdinfo);
 
@@ -182,7 +168,7 @@ int ztox (int i, double *px,
 
 int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T);
 
-int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn); 
+int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn); 
 
 int balanced_panel (const DATAINFO *pdinfo);
 

@@ -1947,15 +1947,15 @@ static void clip_init (GtkWidget *w)
 
 static void auto_store (void)
 {
-    int opt = 0;
+    unsigned char oflag = 0;
 
     /* if there's already a datafile, and it's gzipped, then
        arrange for the new store to be gzipped too */
     if (strlen(paths.datfile) && is_gzipped(paths.datfile))
-	opt = OPT_Z;
+	oflag = 'z';
 
     if (data_status & USER_DATA)
-	do_store(paths.datfile, opt, 1);
+	do_store(paths.datfile, oflag, 1);
     else
 	file_selector(_("Save data file"), SAVE_DATA, NULL);	
 }

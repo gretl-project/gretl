@@ -81,16 +81,16 @@ static struct extmap action_map[] = {
 
 /* ........................................................... */
 
-static int action_to_flag (const int action)
+static unsigned char action_to_flag (const int action)
 {
     switch (action) {
-    case SAVE_GZDATA: return OPT_Z;
-    case SAVE_BIN1: return OPT_S;
-    case SAVE_BIN2: return OPT_O;
-    case EXPORT_OCTAVE: return OPT_M;
-    case EXPORT_R: return OPT_R;
-    case EXPORT_R_ALT: return OPT_R_ALT;
-    case EXPORT_CSV: return OPT_C;
+    case SAVE_GZDATA: return 'z';
+    case SAVE_BIN1: return 's';
+    case SAVE_BIN2: return 'o';
+    case EXPORT_OCTAVE: return 'm';
+    case EXPORT_R: return 'r';
+    case EXPORT_R_ALT: return 'a';
+    case EXPORT_CSV: return 'c';
     default: return 0;
     }
 }

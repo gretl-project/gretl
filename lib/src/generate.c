@@ -493,7 +493,7 @@ static void copy (const char *str, int indx,
 
 /* .........................................................    */
 
-static int getword (char c, char *str, char *word, int oflag)
+static int getword (char c, char *str, char *word, unsigned char oflag)
 
      /* Scans string str for char c, gets word to the left of it as
 	"word" and deletes word from str.
@@ -609,7 +609,7 @@ static int gentoler (const char *s)
 
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, int model_count, 
-	      MODEL *pmod, int oflag)
+	      MODEL *pmod, unsigned char oflag)
 {
     int nleft1, nleft2, nright1, nright2, vi, lv, ig, iw, nt; 
     int v, ls, lword, nv1, type2, nvtmp = 0;
@@ -2151,9 +2151,10 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int paneldum (double ***pZ, DATAINFO *pdinfo, int opt)
+int paneldum (double ***pZ, DATAINFO *pdinfo, unsigned char opt)
      /* creates panel data dummies (unit and period) 
-	opt = 0 for stacked time-series, 1 for stacked cross-section
+	opt = 0 for stacked time-series, 
+	non-zero for stacked cross-section
      */
 {
     static char word[16];

@@ -694,7 +694,7 @@ static void printgx (const double xx, PRN *prn)
 void _graphyzx (const int *list, const double *zy1, const double *zy2, 
 		const double *zx, int n, const char *yname, 
 		const char *xname, const DATAINFO *pdinfo, 
-		int oflag, PRN *prn)
+		unsigned char oflag, PRN *prn)
 /*
   if n > 0 graphs zy1 against zx, otherwise
   graphs zy1[i] and zy2[i] against zx[i] for i = 1, 2, .... n
@@ -730,7 +730,7 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
     xzero = yzero = 0;
     /* setting the number of columns and rows to be used */
     ncols = 60;
-    if (oflag == OPT_O) nrows = 40;
+    if (oflag == 'o') nrows = 40;
     else nrows = option ? 16 : 18 ;
     nr2 = nrows/2;
     nc2 = ncols/2;
@@ -918,19 +918,19 @@ static void printstr (PRN *prn, double xx, int *ls)
 /* ........................................................... */
 
 static void printz (const double *z, const DATAINFO *pdinfo, 
-		    PRN *prn, int opt)
+		    PRN *prn, unsigned char opt)
 /* prints series z from current sample t1 to t2 */
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
     double xx;
 
     if (_isconst(t1, t2, z)) {
-	if (opt == OPT_T) printstr_ten(prn, z[t1], &ls);
+	if (opt == 't') printstr_ten(prn, z[t1], &ls);
 	else printstr(prn, z[t1], &ls);
     }
     else for (t=t1; t<=t2; t++) {
 	xx = z[t];
-	if (opt == OPT_T) printstr_ten(prn, xx, &ls);
+	if (opt == 't') printstr_ten(prn, xx, &ls);
 	else printstr(prn, xx, &ls);
     }
     pputs(prn, "\n");
@@ -1095,8 +1095,8 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @pause: if non-zero, pause after each screen of data.
- * @option: if = OPT_O, print the data by observation (series in columns);
- *          if = OPT_T, print the data to 10 significant digits.
+ * @oflag: if = 'o', print the data by observation (series in columns);
+ *          if = 't', print the data to 10 significant digits.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list, from observations t1 to
@@ -1106,7 +1106,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
  */
 
 int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo, 
-	       int pause, int option, PRN *prn)
+	       int pause, unsigned char oflag, PRN *prn)
 {
     int l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
     register int t;
@@ -1137,7 +1137,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     /* screen out any scalars and print them first */
     for (j=1; j<=list[0]; j++) {
 	if (!pdinfo->vector[list[j]]) {
-	    if (option == OPT_T) {
+	    if (oflag == 't') {
 		pprintf(prn, "\n%8s = %.10g", pdinfo->varname[list[j]], 
 			(*pZ)[list[j]][0]);
 	    } else {
@@ -1166,7 +1166,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     }
     if (isconst) {
 	for (j=1; j<=list[0]; j++) {
-	    if (option == OPT_T) {
+	    if (oflag == 't') {
 		pprintf(prn, "%8s = %.10g\n", pdinfo->varname[list[j]], 
 			(*pZ)[list[j]][t1]);
 	    } else {
@@ -1178,13 +1178,13 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	return 0;
     }
 
-    if (option != OPT_O) { /* not by observations, but by variable */
+    if (oflag != 'o') { /* not by observations, but by variable */
 	if (list[0] > 0) pputs(prn, "\n");
 	for (j=1; j<=list[0]; j++) {
 	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[list[j]]);
 	    print_smpl (pdinfo, 0, prn);
 	    pputs(prn, "\n");
-	    printz((*pZ)[list[j]], pdinfo, prn, option);
+	    printz((*pZ)[list[j]], pdinfo, prn, oflag);
 	    pputs(prn, "\n");
 	}
 	return 0;

@@ -121,7 +121,8 @@ void print_loop_results (LOOPSET *ploop,
 			 PRN *prn, PATHS *ppaths, int *model_count,
 			 char *loopstorefile);
 
-int add_to_loop (LOOPSET *ploop, char *line, int ci, int opt);
+int add_to_loop (LOOPSET *ploop, char *line, int ci, 
+		 unsigned char oflag);
 
 void get_cmd_ci (const char *line, CMD *command);
 

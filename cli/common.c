@@ -67,8 +67,9 @@ static void substitute_dollar_i (char *str)
 static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
      /* special version of command executor for loop construct */
 {
-    int i, err, m, oflag = 0;
+    int i, err, m;
     char linecpy[MAXLEN];
+    unsigned char oflag = 0;
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
 
@@ -312,22 +313,22 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     return 0;
 }
 
-static int data_option (int flag)
+static int data_option (unsigned char flag)
 {
     switch (flag) {
-    case OPT_S:
+    case 's':
 	return GRETL_DATA_FLOAT;
-    case OPT_T:
+    case 't':
 	return GRETL_DATA_TRAD;
-    case OPT_O:
+    case 'o':
 	return GRETL_DATA_DOUBLE;
-    case OPT_M:
+    case 'm':
 	return GRETL_DATA_OCTAVE;
-    case OPT_C:
+    case 'c':
 	return GRETL_DATA_CSV;
-    case OPT_R:
+    case 'r':
 	return GRETL_DATA_R;
-    case OPT_Z:
+    case 'z':
 	return GRETL_DATA_GZIPPED;
     default:
 	return 0;

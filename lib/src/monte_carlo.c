@@ -683,7 +683,7 @@ static void free_loop_print (LOOP_PRINT *pprn)
  * @ploop: pointer to loop struct.
  * @line: command line.
  * @ci: command index number.
- * @opt: option flag associated with the command.
+ * @oflag: option flag associated with the command.
  *
  * Add line and command index to accumulated loop buffer.
  *
@@ -691,7 +691,7 @@ static void free_loop_print (LOOP_PRINT *pprn)
  */
 
 int add_to_loop (LOOPSET *ploop, char *line, int ci,
-		 int opt)
+		 unsigned char oflag)
 {
     int i = ploop->ncmds;
 
@@ -710,10 +710,10 @@ int add_to_loop (LOOPSET *ploop, char *line, int ci,
 
     strncpy(ploop->lines[i], line, MAXLEN - 4);
 
-    if (opt) {
+    if (oflag) {
 	char flagstr[4];
 
-	sprintf(flagstr, " -%c", getflag(opt));
+	sprintf(flagstr, " -%c", oflag);
 	strcat(ploop->lines[i], flagstr);
     }
 

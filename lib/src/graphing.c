@@ -163,7 +163,7 @@ static void drawline (int nn, PRN *prn)
  */
 
 int plot (const LIST list, double **Z, const DATAINFO *pdinfo, 
-	  int oflag, int pause, PRN *prn)
+	  unsigned char oflag, int pause, PRN *prn)
 /*
 	plot var1 ;		plots var1 values
 	plot var1 var2 ;	plots var1 and var2 values
@@ -259,7 +259,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     pprintf(prn, _("%17cNOTE: o stands for %s,   x stands for %s\n%17c+ means %s "
 	   "and %s are equal when scaled\n"), ' ', s1, s2, ' ', s1, s2);
     lineno = 6;
-    if (oflag == OPT_O) {
+    if (oflag == 'o') {
 	pprintf(prn, _("%20c%s and %s are plotted on same scale\n\n%8c"),
 	       ' ', s1, s2, ' ');
 	sprintf(word, "xy-min = %g", xymin);
@@ -311,7 +311,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	yy = Z[vz][t];
 	if (na(xxx) || na(yy)) continue;
 	prntdate(t, n, pdinfo, prn);
-	if (oflag == OPT_O) {
+	if (oflag == 'o') {
 	    ix = (floatneq(xyrange, 0.0))? ((xxx-xymin)/xyrange)*ncols : nc2;
 	    iy = (floatneq(xyrange, 0.0))? ((yy-xymin)/xyrange)*ncols : nc2;
 	}
@@ -354,7 +354,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
  */
 
 int graph (const LIST list, double **Z, const DATAINFO *pdinfo, 
-	   int oflag, PRN *prn)
+	   unsigned char oflag, PRN *prn)
 /*
   graph var1 var2 ;	graphs var1 (y-axis) against var2 (x-axis)
 			in 20 rows and 60 columns
@@ -721,8 +721,12 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     int xvar, miss = 0, ols_ok = 0, tmplist[4];
     int npoints;
 
+    fprintf(stderr, "flags=%d, lines=%p\n", (int) flags, (void *) lines);
+
     if ((flags & GP_IMPULSES) || lines == NULL) {
-	strcpy(withstring, "w i");
+	if (flags & ~GP_OLS_OMIT) {
+	    strcpy(withstring, "w i");
+	}
 	pdist = 1;
     }
 
