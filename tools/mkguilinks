@@ -10,23 +10,23 @@ fi
 
 cd ${TOPSRC}/gui && \
 for f in \
-  gretltypes.h \
+  gretl.h gretltypes.h \
   boxplots.c boxplots.h \
   calculator.c guiprint_common.c \
   callbacks.c callbacks.h \
   console.c console.h \
   database.c database.h \
   datafiles.c datafiles.h \
-  fileselect.c \
+  fileselect.c dialogs.h \
   graph_page.c graph_page.h \
   gpt_control.c gpt_control.h \
-  gui_utils.c gui_utils.h \
+  gui_utils.c gui_utils.h guiprint.h \
   helpfiles.c helpfiles.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
   series_view.c series_view.h \
-  session.c session.h \
-  settings.c settings.h \
+  session.c session.h selector.h \
+  settings.c settings.h ssheet.h \
   webget.c webget.h \
   library.c library.h ; do
     rm -f $f
