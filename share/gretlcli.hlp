@@ -496,9 +496,12 @@ Usage:          gnuplot yvar1 xvar [ flag ]
                 gnuplot yvar1 yvar2 xvar [ flag ]
 		gnuplot yvar xvar dummy -z
 
-In the first two cases the yvars are graphed against xvar.  If the flag -o is
-supplied the plot will use lines; if the flag -m is given the plot uses
-impulses (vertical lines); otherwise points will be used.
+In the first two cases the yvars are graphed against xvar.  The optional flag
+may be any one of the following:
+
+-o  use lines rather than points (points are the default)
+-m  use impulses (vertical lines) rather than points
+-s  suppress the addition of a fitted line in the case of an x, y scatterplot
 
 In the third case yvar is graphed against xvar with the points shown in
 different colors depending on whether the value of "dummy" is 1 or 0.
@@ -508,9 +511,8 @@ To make a time-series graph, do "gnuplot yvars time". If no variable named
 variables will be created for plotting quarterly and monthly data.
 
 In interactive mode the result is piped to gnuplot for display.  In batch mode
-a file named gpttmp<n>.plt is written out, where <n> is a number from 01 to
-99. The plots can be generated later using the shell command "gnuplot
-gpttmp<n>.plt".
+a gnuplot command file named gpttmpNN.plt is written out, where NN is a number
+from 01 to 99.  The plots can be generated later using gnuplot.
 
 #
 graph
