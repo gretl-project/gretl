@@ -20,9 +20,11 @@
 #ifndef QR_ESTIMATE_H
 #define QR_ESTIMATE_H
 
-int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
+int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		      gretlopt opts);
 
 int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts);
+
+int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim);
 
 #endif  /* QR_ESTIMATE_H */

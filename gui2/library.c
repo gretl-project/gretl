@@ -816,6 +816,10 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+
+
+/* ........................................................... */
+
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
@@ -2888,8 +2892,8 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
     void *handle;
-    int (*range_mean_graph) (int, double **, const DATAINFO *, 
-			     PRN *, PATHS *);
+    int (*range_mean_graph) (int, const double **, 
+			     const DATAINFO *, PRN *);
     PRN *prn;
 
     if (reject_scalar(mdata->active_var)) {
@@ -2907,8 +2911,8 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = range_mean_graph (mdata->active_var, Z, datainfo, 
-			    prn, &paths);
+    err = range_mean_graph(mdata->active_var, (const double **) Z, 
+			   datainfo, prn);
 
     close_plugin(handle);
 
@@ -2917,6 +2921,44 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
     }
 
     view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RMPLOT, 
+		NULL);
+}
+
+/* ........................................................... */
+
+void do_hurst (gpointer data, guint opt, GtkWidget *widget)
+{
+    gint err;
+    void *handle;
+    int (*hurst_exponent) (int, const double **, 
+			   const DATAINFO *, PRN *);
+    PRN *prn;
+
+    if (reject_scalar(mdata->active_var)) {
+	return;
+    }
+
+    hurst_exponent = gui_get_plugin_function("hurst_exponent", 
+					     &handle);
+    if (hurst_exponent == NULL) {
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return; 
+    }
+
+    err = hurst_exponent(mdata->active_var, (const double **) Z,
+			 datainfo, prn);
+
+    close_plugin(handle);
+
+    if (!err) {
+	make_and_display_graph();
+    }
+
+    view_buffer(prn, 60, 350, _("gretl: Hurst exponent"), RMPLOT, 
 		NULL);
 }
 

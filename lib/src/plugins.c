@@ -51,7 +51,8 @@ enum {
     P_GARCH,
     P_AUDIO,
     P_URCDIST,
-    P_KERNEL
+    P_KERNEL,
+    P_FRACTAL
 } plugin_codes;
 
 struct plugin_info {
@@ -92,6 +93,7 @@ struct plugin_info plugins[] = {
     { P_AUDIO,           "audio" },
     { P_URCDIST,         "urcdist" },
     { P_KERNEL,          "kernel" },
+    { P_FRACTAL,         "fractals" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -169,6 +171,9 @@ struct plugin_function plugin_functions[] = {
 
     /* kernel density estimation */
     { "kernel_density",    P_KERNEL },
+
+    /* Hurst exponent estimation */
+    { "hurst_exponent",    P_FRACTAL },
 
     /* sentinel */
     { NULL, 0 }

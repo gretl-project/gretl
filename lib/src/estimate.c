@@ -62,12 +62,11 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 static double dwstat (int order, MODEL *pmod, double **Z);
 static double rhohat (int order, int t1, int t2, const double *uhat);
 static int hatvar (MODEL *pmod, int n, double **Z);
-static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z);
-static void tsls_omitzero (int *list, double **Z, int t1, int t2);
+static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo);
+static void tsls_omitzero (int *list, const double **Z, int t1, int t2);
 static int depvar_zero (int t1, int t2, int yno, int nwt, 
 			const double **Z);
-static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
-		      double ***pZ);
+static int lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo); 
 static int jackknife_vcv (MODEL *pmod, const double **Z);
 /* end private protos */
 
@@ -405,6 +404,17 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	}
     }
 
+#if SMPL_DEBUG
+    if (1) {
+	char t1s[OBSLEN], t2s[OBSLEN];
+
+	ntodate(t1s, pmod->t1, pdinfo);
+	ntodate(t2s, pmod->t2, pdinfo);
+	fprintf(stderr, "*** after adjustment, t1=%d (%s), t2=%d (%s)\n", 
+		pmod->t1, t1s, pmod->t2, t2s);
+    }
+#endif
+
     return missv;
 }
 
@@ -419,6 +429,124 @@ static int const_pos (const int *list)
     }
 
     return 0;
+}
+
+static void 
+lagged_depvar_check (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
+{
+    int ldv = lagdepvar(pmod->list, Z, pdinfo);
+
+    if (ldv) {
+	gretl_model_set_int(pmod, "ldepvar", ldv);
+    } else if (gretl_model_get_int(pmod, "ldepvar")) {
+	gretl_model_set_int(pmod, "ldepvar", 0);
+    }
+}
+
+#define COLL_DEBUG 0
+
+int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
+{
+    MODEL cmod;
+    int targ, ml0 = pmod->list[0];
+    int *list;
+    int err = E_SINGULAR;
+    int i, ret = 0;
+
+    if (ml0 < 3) {
+	/* shouldn't happen */
+	return 0;
+    }
+
+    /* can't handle compound lists */
+    for (i=1; i<=ml0; i++) {
+	if (pmod->list[i] == LISTSEP) {
+	    return 0;
+	}
+    }
+
+    list = malloc(ml0 * sizeof *list);
+    if (list == NULL) {
+	return 0;
+    }
+
+#if COLL_DEBUG
+    fprintf(stderr, "\n*** redundant_var called (trim = %d) ***\n", trim);
+    printlist(pmod->list, "original model list");
+#endif
+
+    while (err == E_SINGULAR && ml0 > 3) {
+
+	list[0] = ml0 - 1;
+
+	for (targ=ml0; targ>2; targ--) {
+	    double ess = 1.0, rsq = 0.0;
+	    int j = 2;
+
+	    list[1] = pmod->list[targ];
+
+	    for (i=2; i<=ml0; i++) {
+		if (i != targ) {
+		    list[j++] = pmod->list[i];
+		}
+	    }
+
+#if COLL_DEBUG
+	    fprintf(stderr, "target list position = %d\n", targ);
+	    printlist(list, "temp list for redundancy check");
+#endif
+
+	    cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z, 0.0);
+
+	    err = cmod.errcode;
+	    if (err == 0) {
+		ess = cmod.ess;
+		rsq = cmod.rsq;
+	    } 
+
+	    clear_model(&cmod);
+
+	    if (err && err != E_SINGULAR) {
+		break;
+	    } else if (ess == 0.0 || rsq == 1.0) {
+		ret = 1;
+		break;
+	    }
+	}
+
+	if (ret) break;
+
+	ml0--;
+    }
+
+    if (ret == 1) {
+	static char msg[ERRLEN];
+	int v = pmod->list[targ];
+
+	/* remove var from list and reduce number of coeffs */
+	gretl_list_delete_at_pos(pmod->list, targ);
+	pmod->ncoeff -= 1;
+
+	/* compose a message */
+	if (trim == 0) {
+	    strcpy(msg, _("Omitted due to exact collinearity:"));
+	}
+	if (pdinfo->varname[v][0] != 0) {
+	    strcat(msg, " ");
+	    strcat(msg, pdinfo->varname[v]);
+	}
+
+	strcpy(gretl_msg, msg);
+
+	/* if there's a lagged dep var, it may have moved */
+	if (gretl_model_get_int(pmod, "ldepvar")) {
+	    lagged_depvar_check(pmod, (const double **) *pZ, pdinfo);
+	}
+    }
+
+    free(list);
+
+    return ret;
 }
 
 /**
@@ -436,6 +564,7 @@ static int const_pos (const int *list)
  *   if & OPT_N don't use degrees of freedom correction for standard
  *      error of regression
  *   if & OPT_M reject missing observations within sample range
+ *   if & OPT_Z (internal use) suppress elimination of collinear vars
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
  *
@@ -451,7 +580,6 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     int l0, yno, i;
     int effobs = 0;
     int missv = 0, misst = 0;
-    int ldepvar = 0;
     int jackknife = 0;
     int use_qr = get_use_qr();
     int pwe = (ci == PWE || (opts & OPT_P));
@@ -559,7 +687,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* drop any vars that are all zero and repack the list */
-    omitzero(&mdl, pdinfo, *pZ);
+    omitzero(&mdl, (const double **) *pZ, pdinfo);
 
     /* if regressor list contains a constant, place it first */
     i = const_pos(mdl.list);
@@ -571,10 +699,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     /* Check for presence of lagged dependent variable? 
        (Don't bother if this is an auxiliary regression.) */
     if (!(opts & OPT_A)) {
-	ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
-	if (ldepvar) {
-	    gretl_model_set_int(&mdl, "ldepvar", ldepvar);
-	}
+	lagged_depvar_check(&mdl, (const double **) *pZ, pdinfo);
     }
 
     /* AR1: advance the starting observation by one? */
@@ -613,15 +738,38 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (((opts & OPT_R) && !jackknife) || (use_qr && !(opts & OPT_C))) { 
 	mdl.rho = rho;
-	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n, opts);
+	gretl_qr_regress(&mdl, pZ, pdinfo, opts);
     } else {
-	int l = l0 - 1;
-	int nxpx = l * (l + 1) / 2;
+	int trim = 0;
+	int l, nxpx;
+
+    trim_var:
+
+	if (trim) {
+	    l0 = mdl.list[0];
+	    free(mdl.xpx);
+	    free(mdl.coeff);
+	    free(mdl.sderr);
+	    mdl.errcode = 0;
+	}
+ 
+	l = l0 - 1;
+	nxpx = l * (l + 1) / 2;
 
 	xpy = malloc((l0 + 1) * sizeof *xpy);
 	mdl.xpx = malloc(nxpx * sizeof *mdl.xpx);
 	mdl.coeff = malloc(mdl.ncoeff * sizeof *mdl.coeff);
-	if (xpy == NULL || mdl.xpx == NULL || mdl.coeff == NULL) {
+	mdl.sderr = malloc(mdl.ncoeff * sizeof *mdl.sderr);
+
+	if (mdl.yhat == NULL) {
+	    mdl.yhat = malloc(pdinfo->n * sizeof *mdl.yhat);
+	} 
+	if (mdl.uhat == NULL) {
+	    mdl.uhat = malloc(pdinfo->n * sizeof *mdl.uhat);
+	}
+
+	if (xpy == NULL || mdl.xpx == NULL || mdl.coeff == NULL ||
+	    mdl.sderr == NULL || mdl.yhat == NULL || mdl.uhat == NULL) {
 	    mdl.errcode = E_ALLOC;
 	    return mdl;
 	}
@@ -649,6 +797,11 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 
 	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
 	free(xpy);
+
+	if (mdl.errcode == E_SINGULAR && !(opts & OPT_Z) &&
+	    redundant_var(&mdl, pZ, pdinfo, trim++)) {
+	    goto trim_var;
+	}
     }
 
     if (mdl.errcode) {
@@ -941,15 +1094,6 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     double *diag = NULL;
     int i, err = 0;
 
-    pmod->sderr = malloc(pmod->ncoeff * sizeof *pmod->sderr);
-    pmod->yhat = malloc(n * sizeof *pmod->yhat);
-    pmod->uhat = malloc(n * sizeof *pmod->uhat);
-
-    if (pmod->sderr == NULL || pmod->yhat == NULL || pmod->uhat == NULL) {
-        pmod->errcode = E_ALLOC;
-        return;
-    }
-
     for (i=0; i<n; i++) {
 	pmod->yhat[i] = pmod->yhat[i] = NADBL;
     }    
@@ -1087,7 +1231,9 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
         d2 = xpx[kk] - d;
 	test = d2 / xpx[kk];
         if (test < TINY) {
+#if 0
 	    fprintf(stderr, "cholbeta: test = %g\n", test);
+#endif
 	    if (rss != NULL) *rss = -1.0;
 	    return E_SINGULAR;
         }
@@ -2023,9 +2169,9 @@ MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     /* drop any vars that are all zero, and reshuffle the constant
        into first position among the independent vars 
     */
-    tsls_omitzero(reglist, *pZ, pdinfo->t1, pdinfo->t2);
+    tsls_omitzero(reglist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
     rearrange_list(reglist);
-    tsls_omitzero(instlist, *pZ, pdinfo->t1, pdinfo->t2);
+    tsls_omitzero(instlist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
 
     /* initial composition of second-stage regression list (will be
        modified below) 
@@ -2972,9 +3118,9 @@ MODEL ar_func (int *list, int pos, double ***pZ,
 /* From 2 to end of list, omits variables with all zero observations
    and re-packs the rest of them */
 
-static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
+static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 {
-    int v, lv, offset, drop = 0;
+    int v, lv, offset, dropmsg = 0;
     double xx = 0.0;
     char vnamebit[20];
 
@@ -2986,11 +3132,9 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 	    list_exclude(v, pmod->list);
 	    if (pdinfo->varname[lv][0] != 0) {
 		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
-	    } else {
-		sprintf(vnamebit, "%s %d ", _("variable"), lv);
+		strcat(gretl_msg, vnamebit);
+		dropmsg = 1;
 	    }
-	    strcat(gretl_msg, vnamebit);
-	    drop = 1;
 	}
     }
 
@@ -3009,19 +3153,19 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 	    }
 	    if (wtzero) {
 		list_exclude(v, pmod->list);
-		sprintf(vnamebit, _("weighted %s "), pdinfo->varname[lv]);
+		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
 		strcat(gretl_msg, vnamebit);
-		drop = 1;
+		dropmsg = 1;
 	    }
 	}
     }
 
-    if (drop) {
+    if (dropmsg) {
 	strcat(gretl_msg, _("omitted because all obs are zero."));
     }
 }
 
-static void tsls_omitzero (int *list, double **Z, int t1, int t2)
+static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
 {
     int i, v;
 
@@ -3064,8 +3208,8 @@ static int depvar_zero (int t1, int t2, int yno, int nwt,
    this lagged var in the list; otherwise return 0
 */
 
-static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
-		      double ***pZ)
+static int 
+lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo) 
 {
     int i, t;
     char depvar[VNAMELEN], othervar[VNAMELEN];
@@ -3074,7 +3218,9 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
     strcpy(depvar, pdinfo->varname[list[1]]);
 
     for (i=2; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) break;
+	if (list[i] == LISTSEP) {
+	    break;
+	}
 	strcpy(othervar, pdinfo->varname[list[i]]);
 	p = strrchr(othervar, '_');
 	if (p != NULL && isdigit(*(p + 1))) {
@@ -3086,7 +3232,7 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
 
 		/* strong candidate for lagged depvar, but make sure */
 		for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) {
-		    if ((*pZ)[list[1]][t-1] != (*pZ)[list[i]][t]) {
+		    if (Z[list[1]][t-1] != Z[list[i]][t]) {
 			gotlag = 0;
 			break;
 		    }

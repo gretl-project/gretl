@@ -2231,8 +2231,7 @@ const char *get_gnuplot_pallette (int i, int ptype)
 		   ptype == PLOT_FREQ_NORMAL || 
 		   ptype == PLOT_FREQ_GAMMA)) {
 	return gnuplot_pallette[3];
-    }
-    else if (i >= 0 && i < 3) {
+    } else if (i >= 0 && i < 3) {
 	return gnuplot_pallette[i];
     } else {
 	return "";

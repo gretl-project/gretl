@@ -43,7 +43,7 @@ static void get_range_and_mean (int t1, int t2, double *x,
 }
 
 static int 
-do_range_mean_plot (int n, double **Z, double *yhat, const char *varname)
+do_range_mean_plot (int n, const double **Z, double *yhat, const char *vname)
 {
     FILE *fp = NULL;
     int t;
@@ -52,10 +52,10 @@ do_range_mean_plot (int n, double **Z, double *yhat, const char *varname)
 	return E_FOPEN;
     }
 
-    fprintf(fp, "# range-mean plot for %s\n", varname);
+    fprintf(fp, "# range-mean plot for %s\n", vname);
     fputs("set nokey\n", fp);
     fprintf(fp, "set title '%s %s %s'\n", 
-	    I_("range-mean plot for"), varname, 
+	    I_("range-mean plot for"), vname, 
 	    (yhat == NULL)? "" : I_("with least squares fit"));
     fprintf(fp, "set xlabel '%s'\nset ylabel '%s'\n",
 	    I_("mean"), I_("range"));
@@ -91,7 +91,7 @@ do_range_mean_plot (int n, double **Z, double *yhat, const char *varname)
     return 0;
 }
 
-static int rm_adjust_t1t2 (int varnum, double **Z, int *t1, int *t2)
+static int rm_adjust_t1t2 (int varnum, const double **Z, int *t1, int *t2)
      /* drop first/last observations from sample if missing obs 
         encountered */
 {
@@ -111,10 +111,11 @@ static int rm_adjust_t1t2 (int varnum, double **Z, int *t1, int *t2)
     }
 
     *t1 = t1min; *t2 = t2max;
+
     return 0;
 }
 
-int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
+int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     double **rmZ;
     DATAINFO *rminfo;
@@ -128,7 +129,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
 
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
-    rm_adjust_t1t2(varnum, Z, &t1, &t2);
+    rm_adjust_t1t2(vnum, Z, &t1, &t2);
 
     nsamp = t2 - t1 + 1;
 
@@ -151,7 +152,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
     if (rminfo == NULL) return E_ALLOC;
 
     pprintf(prn, _("Range-mean statistics for %s\n"), 
-	    pdinfo->varname[varnum]);
+	    pdinfo->varname[vnum]);
     pprintf(prn, _("using %d sub-samples of size %d\n\n"),
 	    m, k);
 
@@ -170,7 +171,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
 	    end += extra;
 	}
 
-	get_range_and_mean(start, end, Z[varnum], &range, &mean);
+	get_range_and_mean(start, end, Z[vnum], &range, &mean);
 	rmZ[1][t] = range;
 	rmZ[2][t] = mean;
 
@@ -179,7 +180,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "%s - %s  ", startdate, enddate);
 	gretl_print_fullwidth_double(rmZ[1][t], GRETL_DIGITS, prn);
 	gretl_print_fullwidth_double(rmZ[2][t], GRETL_DIGITS, prn);
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     strcpy(rminfo->varname[1], "range");
@@ -191,7 +192,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
 	pputs(prn, _("Error estimating range-mean model\n"));
 	errmsg(err, prn);
     } else {
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 	pprintf(prn, _("slope of range against mean = %g\n"),
 		rmmod.coeff[1]);
 	if (rmmod.sderr[1] > 0) {
@@ -206,7 +207,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo, PRN *prn)
 	} 
     }
 
-    err = do_range_mean_plot(m, rmZ, yhat, pdinfo->varname[varnum]);
+    err = do_range_mean_plot(m, rmZ, yhat, pdinfo->varname[vnum]);
 
     clear_model(&rmmod);
     free_Z(rmZ, rminfo);

@@ -173,6 +173,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget);
 
 void do_range_mean (gpointer data, guint opt, GtkWidget *widget);
 
+void do_hurst (gpointer data, guint opt, GtkWidget *widget);
+
 void do_outcovmx (gpointer data, guint action, GtkWidget *widget);
 
 void add_dummies (gpointer data, guint action, GtkWidget *widget);

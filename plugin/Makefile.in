@@ -71,6 +71,7 @@ SRCS = excel_import.c \
 	pca.c \
 	progress_bar.c \
 	range-mean.c \
+	fractals.c \
 	stats_tables.c \
 	sysest.c \
 	tramo_options.c \
@@ -100,6 +101,7 @@ PLUGINS = arma.la \
 	pca.la \
 	progress_bar.la \
 	range-mean.la \
+	fractals.la \
 	stats_tables.la \
 	sysest.la \
 	tobit.la \
@@ -155,6 +157,9 @@ panel_data.la: panel_data.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 range-mean.la: range-mean.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+fractals.la: fractals.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 lad.la: lad.lo

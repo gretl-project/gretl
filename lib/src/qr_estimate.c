@@ -697,32 +697,51 @@ static int gretl_QR_decomp (gretl_matrix *Q, gretl_matrix *R,
     return err;
 }
 
-int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
+static void gretl_matrix_null (gretl_matrix **m)
+{
+    gretl_matrix_free(*m);
+    *m = NULL;
+}
+
+int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		      gretlopt opts)
 {
     integer T, k;
     gretl_matrix *Q = NULL, *y = NULL;
     gretl_matrix *R = NULL, *g = NULL, *b = NULL;
     gretl_matrix *xpxinv = NULL;
+    int trim = 0;
     int err = 0;
+
+ trim_var:
 
     T = pmod->nobs;               /* # of rows (observations) */
     k = pmod->list[0] - 1;        /* # of cols (variables) */
 
     Q = gretl_matrix_alloc(T, k);
     R = gretl_matrix_alloc(k, k);
-    y = gretl_matrix_alloc(T, 1);
     xpxinv = gretl_matrix_alloc(k, k);
 
-    if (Q == NULL || R == NULL || y == NULL || xpxinv == NULL) {
+    if (y == NULL) {
+	y = gretl_matrix_alloc(T, 1);
+    }
+
+    if (Q == NULL || R == NULL || xpxinv == NULL || y == NULL) {
 	err = E_ALLOC;
 	goto qr_cleanup;
     }
 
-    get_model_data(pmod, Z, Q, y);
+    get_model_data(pmod, (const double **) *pZ, Q, y);
 
     err = gretl_QR_decomp(Q, R, T, k);
-    if (err) {
+
+    if (err == E_SINGULAR && !(opts & OPT_Z) &&
+	redundant_var(pmod, pZ, pdinfo, trim++)) {
+	gretl_matrix_null(&Q);
+	gretl_matrix_null(&R);
+	gretl_matrix_null(&xpxinv);
+	goto trim_var;
+    } else if (err) {
 	goto qr_cleanup;
     }
 
@@ -734,7 +753,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 	goto qr_cleanup;
     }
 
-    if (allocate_model_arrays(pmod, k, fulln)) {
+    if (allocate_model_arrays(pmod, k, pdinfo->n)) {
 	err = E_ALLOC;
 	goto qr_cleanup;
     }
@@ -751,7 +770,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     gretl_matrix_multiply(Q, g, y);    
 
     /* get vector of residuals and SSR */
-    get_resids_and_SSR(pmod, Z, y, fulln);
+    get_resids_and_SSR(pmod, (const double **) *pZ, y, pdinfo->n);
 
     /* standard error of regression */
     if (T - k > 0) {
@@ -773,16 +792,16 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     if (opts & OPT_R) { 
 	gretl_model_set_int(pmod, "robust", 1);
 	if ((opts & OPT_T) && !get_force_hc()) {
-	    qr_make_hac(pmod, Z, xpxinv);
+	    qr_make_hac(pmod, (const double **) *pZ, xpxinv);
 	} else {
-	    qr_make_hccme(pmod, Z, Q, xpxinv);
+	    qr_make_hccme(pmod, (const double **) *pZ, Q, xpxinv);
 	}
     } else {
 	qr_make_regular_vcv(pmod, xpxinv);
     }
 
     /* get R^2 */
-    qr_compute_r_squared(pmod, Z[pmod->list[1]], T);
+    qr_compute_r_squared(pmod, (*pZ)[pmod->list[1]], T);
     qr_compute_f_stat(pmod, opts);
 
  qr_cleanup:

@@ -219,6 +219,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	unit_root_test(NULL, KPSS, NULL);
     else if (!strcmp(item, _("Runs test"))) 
 	do_menu_op(NULL, RUNS, NULL);
+    else if (!strcmp(item, _("Hurst exponent"))) 
+	do_hurst(NULL, 0, NULL);
     else if (!strcmp(item, _("Edit attributes")))  
 	varinfo_dialog(mdata->active_var, 1);
     else if (!strcmp(item, _("Delete"))) 
@@ -247,6 +249,7 @@ GtkWidget *build_var_popup (void)
 	N_("Dickey-Fuller test"),
 	N_("KPSS test"),
 	N_("Runs test"),
+	N_("Hurst exponent"),
 	N_("Edit attributes"),
 	N_("Delete"),
 	N_("Define new variable...")
