@@ -2678,10 +2678,10 @@ void add_model_stat (MODEL *pmod, const int which)
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
     int err, origv = datainfo->v, plot_list[4], lines[1];
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
     int ts = dataset_is_time_series(datainfo);
-    int pdum = mydata->active_var; 
+    int pdum = vwin->active_var; 
 
     /* add residuals to data set temporarily */
     if (add_fit_resid(pmod, 0, 1)) return;
@@ -2726,8 +2726,8 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
     int err, origv = datainfo->v, plot_list[4], lines[2];
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
 
     if (xvar && pmod->list[0] == 3 && pmod->ifc) {
 	/* special case: simple regression with intercept */
