@@ -103,6 +103,7 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 	break;
     case OPEN_CSV:
     case APPEND_CSV:
+	delimiter_dialog();
 	file_selector(_("Open CSV file"), code, NULL);
 	break;
     case OPEN_BOX:

@@ -39,4 +39,6 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
 
 void menu_exit_check (GtkWidget *w, gpointer data);
 
+void delimiter_dialog (void);
+
 #endif /* DIALOGS_H */

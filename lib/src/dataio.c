@@ -240,7 +240,8 @@ DATAINFO *datainfo_new (void)
     dinfo->endobs[0] = '\0';
     dinfo->varname = NULL;
     dinfo->label = NULL;    
-    dinfo->markers = 0;    
+    dinfo->markers = 0;  
+    dinfo->delim = ',';
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
@@ -281,7 +282,7 @@ DATAINFO *create_new_dataset (double ***pZ,
 	free(pdinfo);
 	return NULL;
     }
-    pdinfo->markers = (short) markers;
+    pdinfo->markers = (unsigned char) markers;
     if (pdinfo->markers) {
 	if (dataset_allocate_markers(pdinfo)) {
 	    free_datainfo(pdinfo);
@@ -323,6 +324,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 
     pdinfo->S = NULL;
     pdinfo->markers = 0;
+    pdinfo->delim = ',';
     pdinfo->descrip = NULL;
     
     return 0;
@@ -1067,27 +1069,27 @@ int write_data (const char *fname, const int *list,
     else if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
 	double xdate;
-	char comma[2];
+	char delim;
 	
-	if (opt == GRETL_DATA_CSV) strcpy(comma, ",");
-	else strcpy(comma, " ");
+	if (opt == GRETL_DATA_CSV) delim = pdinfo->delim;
+	else delim = ' ';
 
 	/* variable names */
 	if (opt == GRETL_DATA_CSV) fprintf(fp, "obs,");
 	for (i=1; i<l0; i++) 
-	    fprintf(fp, "%s%s", pdinfo->varname[list[i]], comma);
+	    fprintf(fp, "%s%c", pdinfo->varname[list[i]], delim);
 	fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->S != NULL) 
-		fprintf(fp, "%s%s", pdinfo->S[t], comma);
+		fprintf(fp, "%s%c", pdinfo->S[t], delim);
 	    else {
 		xdate = date(t, pdinfo->pd, pdinfo->sd0);
 		if (pdinfo->pd == 1) 
-		    fprintf(fp, "\"%d\"%s", (int) xdate, comma);
+		    fprintf(fp, "\"%d\"%c", (int) xdate, delim);
 		else if (pdinfo->pd < 10) 
-		    fprintf(fp, "\"%.1f\"%s", xdate, comma);
-		else fprintf(fp, "\"%.2f\"%s", xdate, comma);
+		    fprintf(fp, "\"%.1f\"%c", xdate, delim);
+		else fprintf(fp, "\"%.2f\"%c", xdate, delim);
 	    }
 	    for (i=1; i<=l0; i++) { 
 		xx = (pdinfo->vector[list[i]])? 
@@ -1096,11 +1098,11 @@ int write_data (const char *fname, const int *list,
 		    fprintf(fp, "NA");
 		else
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
-		if (i < l0) fprintf(fp, "%s", comma);
-		else fprintf(fp, "\n");
+		if (i < l0) fputc(delim, fp);
+		else fputc('\n', fp);
 	    }
 	}
-	fputs("\n", fp);
+	fputc('\n', fp);
     }
     else if (opt == GRETL_DATA_R_ALT) { /* export GNU R (structure) */
 	for (i=1; i<=l0; i++) {
@@ -1114,9 +1116,9 @@ int write_data (const char *fname, const int *list,
 		if (t < pdinfo->t2) fprintf(fp, ", "); 
 		if (t > pdinfo->t1 && (t - pdinfo->t1) % 8 == 0 &&
 		    t < pdinfo->t2)
-		    fprintf(fp, "\n");
+		    fputc('\n', fp);
 	    }
-	    fprintf(fp, ")");
+	    fputc(')', fp);
 	    if (pdinfo->time_series == TIME_SERIES) 
 		fprintf(fp, ",\n.Tsp = c(%f, %f, %d), class = \"ts\"",
 			obs_float(pdinfo, 0), obs_float(pdinfo, 1), 
@@ -1143,9 +1145,9 @@ int write_data (const char *fname, const int *list,
 			(pdinfo->vector[list[i]])? 
 			Z[list[i]][t] : Z[list[i]][0]);
 	    }
-	    fputs("\n", fp);
+	    fputc('\n', fp);
 	}
-	fputs("\n", fp);
+	fputc('\n', fp);
     }
 
     if (pmax) free(pmax);
@@ -1203,20 +1205,20 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     ntodate(startdate, 0, pdinfo);
     ntodate(enddate, pdinfo->n - 1, pdinfo);
 
-    pprintf(prn, "Data file %s\nas of %s\n", 
-	    strlen(ppaths->datfile)? ppaths->datfile : "(unsaved)", 
+    pprintf(prn, _("Data file %s\nas of %s\n"), 
+	    strlen(ppaths->datfile)? ppaths->datfile : _("(unsaved)"), 
 	    ctime(&prntime));
 
     if (pdinfo->descrip != NULL && strlen(pdinfo->descrip)) {
-	pprintf(prn, "Description:\n\n");
+	pprintf(prn, _("Description:\n\n"));
 	pprintf(prn, "%s\n\n", pdinfo->descrip);
     }
 
     pd_string(pdstr, pdinfo);
-    pprintf(prn, "%s data, %s - %s (n = %d)\n\n",
+    pprintf(prn, _("%s data, %s - %s (n = %d)\n\n"),
 	    pdstr, startdate, enddate, pdinfo->n);
 
-    pprintf(prn, "Listing of variables:\n\n");
+    pprintf(prn, _("Listing of variables:\n\n"));
 
     for (i=1; i<pdinfo->v; i++) 
 	pprintf(prn, "%9s  %s\n", pdinfo->varname[i], pdinfo->label[i]);
@@ -1872,6 +1874,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	"should be blank, or should say 'obs' or 'date'.\n"
 	"- The remainder of the file must be a rectangular "
 	"array of data.\n");
+    char delim = pdinfo->delim;
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -1893,7 +1896,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	fclose(fp);
 	return 1;
     }
-    if (cbak == ',') {
+    if (cbak == delim) {
 	blank_1 = 1;
 	pprintf(prn, _("   first field is blank (dates?)\n"));
 	ncols++;
@@ -1907,7 +1910,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	if (c == '\n') break;
 	cbak = c;
 	maxlen++;
-	if (c == ',') ncols++;
+	if (c == delim) ncols++;
     }
     if (!bad_commas) ncols++;
 
@@ -1917,7 +1920,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     chkcols = (bad_commas)? -1: 0;
     while (fread(&c, 1, 1, fp)) {
 	if (!(isspace((unsigned char) c))) ok = 1;
-	if (c == ',') chkcols += 1;
+	if (c == delim) chkcols += 1;
 	if (c != '\n') len++;
 	else {
 	    if (len > maxlen) maxlen = len;
@@ -1946,7 +1949,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     if (!blank_1) {
 	rewind(fp);
 	c = 0; i = 0;
-	while (c != ',') {
+	while (c != delim) {
 	    fread(&c, 1, 1, fp);
 	    field_1[i++] = c;
 	}
@@ -1991,15 +1994,15 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, _("scanning for variable names...\n"));
     fgets(line, maxlen + 1, fp);
     trim_csv_line(line);
-    delchar(' ', line);
+    if (delim != ' ') delchar(' ', line);
     delchar('"', line);
     pprintf(prn, _("   line: %s\n"), line);
     n = strlen(line);
     k = 0;
     for (i=0; i<n; i++) {
-	while (line[i] == ',' || line[i] == '"' || line[i] == QUOTE) i++;
+	while (line[i] == delim || line[i] == '"' || line[i] == QUOTE) i++;
 	j = 0; 
-	while (line[i] != '"' && line[i] != QUOTE && line[i] != ',' && j < 8) 
+	while (line[i] != '"' && line[i] != QUOTE && line[i] != delim && j < 8) 
 	    varname[j++] = line[i++];
 	varname[j] = '\0';
 	k++;
@@ -2028,7 +2031,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	ok = 0;
 	fgets(line, maxlen + 1, fp);
 	trim_csv_line(line);
-	delchar(' ', line);
+	if (delim != ' ') delchar(' ', line);
 	delchar('"', line);
 	n = strlen(line);
 	for (i=0; i<n; i++) {
@@ -2044,11 +2047,11 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	k = 0;
 	/* printf("t=%d: ", t); */
 	for (i=0; i<n; i++) {   /* parse line */
-	    if (i != 0 || line[i] != ',') {
-		if (k == 0 && line[i] == ',') i++;
+	    if (i != 0 || line[i] != delim) {
+		if (k == 0 && line[i] == delim) i++;
 		if (line[i] == '"' || line[i] == QUOTE) i++;
 		j = 0; 
-		while (line[i] != ',' && line[i] != '\n' 
+		while (line[i] != delim && line[i] != '\n' 
 		       && line[i] != '"' && line[i] != QUOTE
 		       && line[i] != '\0') {
 		    numstr[j++] = line[i++];
@@ -2488,7 +2491,7 @@ void close_plugin (void *handle)
 int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 {
     size_t n = strlen(fname);
-    int i, c, comma, ftype = GRETL_NATIVE_DATA;
+    int i, c, ftype = GRETL_NATIVE_DATA;
     char teststr[5];
     FILE *fp;
 
@@ -2518,15 +2521,15 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (n >= 5) {
 	if (strcmp(fname + n - 4, ".csv") == 0) 
 	    ftype = GRETL_CSV_DATA;
+	else if (strcmp(fname + n - 4, ".txt") == 0) 
+	    ftype = GRETL_CSV_DATA;
 	else if (strcmp(fname + n - 4, ".box") == 0) 
 	    ftype = GRETL_BOX_DATA;
     }
     /* then take a peek at content */
-    comma = 0;
     for (i=0; i<80; i++) {
 	c = getc(fp);
 	if (c == EOF || c == '\n') break;
-	if (c == ',') comma = 1;
 	if (!isprint(c) && c != '\r') {
 	    ftype = GRETL_NATIVE_DATA; /* native binary data? */
 	    break;
@@ -2540,11 +2543,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     case GRETL_NATIVE_DATA: 
 	return GRETL_NATIVE_DATA;
     case GRETL_CSV_DATA: 
-	if (comma) return GRETL_CSV_DATA;
-	else {
-	    pprintf(prn, _("csv file seems to be malformed\n"));
-	    return GRETL_UNRECOGNIZED;
-	}
+	return GRETL_CSV_DATA;
     case GRETL_BOX_DATA: 
 	if (strcmp(teststr, "00**") == 0) return GRETL_BOX_DATA;
 	else {

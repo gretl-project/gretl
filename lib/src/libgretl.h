@@ -86,7 +86,9 @@ typedef struct {
     char endobs[9];     /* string representation of ending obs */
     char **varname;     /* array of names of variables */
     char **label;       /* array of descriptive labels for vars */
-    char markers;
+    char markers;       /* whether (1) or not (0) the data file has
+			   observation markers */
+    char delim;         /* default delimiter for "CSV" files */
     char time_series;
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */

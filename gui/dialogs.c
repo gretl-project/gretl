@@ -868,3 +868,120 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     return FALSE;
 }
 
+static void set_delim (GtkWidget *w, gpointer p)
+{
+    gint i, *ptr = (gint *) p;
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+	*ptr = i;
+    }
+}
+
+static void really_set_delim (GtkWidget *w, gpointer p)
+{
+    gint *delim = (gint *) p;
+
+    datainfo->delim = *delim;
+    fprintf(stderr, "datainfo->delim now = '%c' (%d)\n", 
+	    datainfo->delim, datainfo->delim);
+}
+
+static void destroy_delim_dialog (GtkWidget *w, gint *p)
+{
+    free(p);
+    gtk_main_quit();
+}
+
+void delimiter_dialog (void)
+{
+    GtkWidget *dialog, *tempwid, *button;
+    GSList *group;
+    gint *delptr;
+
+    delptr = mymalloc(sizeof *delptr);
+    if (delptr == NULL) return;
+    *delptr = datainfo->delim;
+
+    dialog = gtk_dialog_new();
+
+    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: data delimiter"));
+    gtk_window_set_policy (GTK_WINDOW (dialog), FALSE, FALSE, FALSE);
+    gtk_container_border_width (GTK_CONTAINER 
+				(GTK_DIALOG (dialog)->vbox), 10);
+    gtk_container_border_width (GTK_CONTAINER 
+				(GTK_DIALOG (dialog)->action_area), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->action_area), 15);
+    gtk_box_set_homogeneous (GTK_BOX 
+			     (GTK_DIALOG (dialog)->action_area), TRUE);
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+
+    gtk_signal_connect (GTK_OBJECT (dialog), "destroy", 
+			destroy_delim_dialog, delptr);
+
+    /* comma separator */
+    button = gtk_radio_button_new_with_label (NULL, _("comma (,)"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+    if (*delptr == ',')
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_delim), delptr);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(','));
+    gtk_widget_show (button);
+
+    /* space separator */
+    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("space"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+    if (*delptr == ' ')
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_delim), delptr);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(' '));    
+    gtk_widget_show (button);
+
+    /* tab separator */
+    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("tab"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			button, TRUE, TRUE, FALSE);
+    if (*delptr == '\t')
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(set_delim), delptr);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER('\t'));    
+    gtk_widget_show (button);
+
+    /* Create the "OK" button */
+    tempwid = gtk_button_new_with_label (_("OK"));
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, FALSE);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+                       GTK_SIGNAL_FUNC(really_set_delim), delptr);
+    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (dialog));
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* Create the "Cancel" button */
+    tempwid = gtk_button_new_with_label (_("Cancel"));
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, FALSE);
+    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (dialog));
+    gtk_widget_show (tempwid);
+
+    gtk_widget_show (dialog);
+
+    gtk_main();
+}

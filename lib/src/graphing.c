@@ -500,6 +500,19 @@ int gnuplot_display (const PATHS *ppaths)
     return err;
 }
 
+static void print_xrange (FILE *fp, double xmin, double xmax)
+{
+    char minstr[12], maxstr[12];
+    char *p;
+
+    sprintf(minstr, "%g", xmin);
+    sprintf(maxstr, "%g", xmax);
+    if ((p = strchr(minstr, ','))) *p = '.';
+    if ((p = strchr(maxstr, ','))) *p = '.';
+
+    fprintf(fp, "set xrange [%s:%s]\n", minstr, maxstr);
+}
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
@@ -665,7 +678,7 @@ int gnuplot (LIST list, const int *lines,
 	xrange = xmax - xmin;
 	xmin -= xrange * .025;
 	xmax += xrange * .025;
-	fprintf(fq, "set xrange [%g:%g]\n", xmin, xmax);
+	print_xrange(fq, xmin, xmax);
     }
 
     if (tscale) { /* two or more vars plotted against time */
@@ -959,7 +972,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	/* adjust max if needed */
 	if (freq->midpt[K-1] > plotmax) plotmax = freq->midpt[K-1];
 
-	fprintf(fp, "set xrange [%.3f:%.3f]\n", plotmin, plotmax);
+	print_xrange(fp, plotmin, plotmax);
 	fprintf(fp, "set key right top\n");
 	fprintf(fp, "plot \\\n");
 
