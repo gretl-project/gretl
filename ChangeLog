@@ -1,4 +1,4 @@
-version 0.991
+03/20/2002 version 0.991
 - fix several "out of bounds" bugs kindly reported by Tavis Barr
 - streamline the online help system
 - in GUI, allow deletion of any variable (popup menu)

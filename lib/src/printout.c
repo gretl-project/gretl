@@ -261,6 +261,7 @@ void _putxx (const double xx)
 
 /**
  * session_time:
+ * @fp: stream onto which to print.
  *
  * Print the current time to the specified stream.
  */
@@ -287,6 +288,7 @@ void logo (void)
 
 /**
  * gui_logo:
+ * @fp: stream onto which to print.
  *
  * Print gretl GUI version information to the specified stream.
  */

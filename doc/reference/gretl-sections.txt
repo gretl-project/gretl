@@ -86,7 +86,6 @@ get_gretl_errmsg
 
 <SECTION>
 <FILE>estimate</FILE>
-Z
 lsq
 hilu_corc
 tsls_func

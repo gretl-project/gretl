@@ -766,7 +766,7 @@
 	    (variance) <function>sd</function> (standard deviation),
 	    <function>sum</function>, <function>cov</function>
 	    (covariance), <function>corr</function> (correlation
-	    coefficient).</para>
+	    coefficient), <function>pvalue</function></para>
 	</listitem>
 	<listitem><para>Time-series functions:
 	    <function>lag</function>, <function>lead</function>,
@@ -788,25 +788,29 @@
       <para>
 	All of the above functions with the exception of
 	<function>cov</function>, <function>corr</function>,
-	<function>uniform</function> and <function>normal</function>
-	take as their single argument either the name of a variable
-	(note that you can't refer to variables by their ID numbers in
-	a <command>genr</command> command) or a composite expression
-	that evaluates to a variable (e.g.
-	<literal>ln((x1+x2)/2)</literal>). <function>cov</function>
-	and <function>corr</function> both require two arguments, and
-	return respectively the covariance and the correlation
-	coefficient between two named variables.
-	<function>uniform()</function> and
+	<function>pvalue</function>, <function>uniform</function> and
+	<function>normal</function> take as their single argument
+	either the name of a variable (note that you can't refer to
+	variables by their ID numbers in a <command>genr</command>
+	command) or a composite expression that evaluates to a
+	variable (e.g. <literal>ln((x1+x2)/2)</literal>).
+	<function>cov</function> and <function>corr</function> both
+	require two arguments, and return respectively the covariance
+	and the correlation coefficient between two named variables.
+	The <function>pvalue</function> function takes the same
+	arguments as the <command>pvalue</command> command (see
+	below), but in this context commas should be placed between
+	the arguments. <function>uniform()</function> and
 	<function>normal()</function>, which do not take arguments,
 	return pseudo-random series drawn from the uniform
 	(0&ndash;100) and standard normal distributions respectively
 	(see also the <command>seed</command> command).  Uniform
 	series are generated using the C library function
 	<function>rand()</function>; for normal series the method of
-	Box and Muller (1958) is used. Besides the operators and
-	functions just noted there are some special uses of
-	<command>genr</command>:
+	Box and Muller (1958) is used.</para>
+
+	<para>Besides the operators and functions just noted there are
+	some special uses of <command>genr</command>:
       </para>
 
       <itemizedlist>
@@ -1179,6 +1183,46 @@
 
     </sect2>
 
+    <sect2 id="hausman"><title>hausman</title>
+
+      <para>
+	This test is available only after estimating a model using the
+	<command>pooled</command> command (see also
+	<command>panel</command> and <command>setobs</command>).  It
+	tests the simple pooled model against the principal
+	alternatives, the fixed effects and random effects
+	models.</para>
+
+      <para>
+	The fixed effects model adds a dummy variable for all but one
+	of the cross-sectional units, allowing the intercept of the
+	regression to vary across the units.  An
+	<emphasis>F</emphasis>-test for the joint significance of
+	these dummies is presented.  The random effects model
+	decomposes the residual variance into two parts, one part
+	specific to the cross-sectional unit and the other specific to
+	the particular observation.  (This estimator can be computed
+	only if the number of cross-sectional units in the data set
+	exceeds the number of parameters to be estimated.) The
+	Breusch&ndash;Pagan LM statistic tests the null hypothesis
+	(that the pooled OLS estimator is adequate) against the random
+	effects alternative.</para>
+
+      <para>
+	The pooled OLS model may be rejected against both of the
+	alternatives, fixed effects and random effects. Provided the
+	unit- or group-specific error is uncorrelated with the
+	independent variables, the random effects estimator is more
+	efficient than the fixed effects estimator; otherwise the
+	random effects estimator is inconsistent and the fixed effects
+	estimator is to be preferred. The null hypothesis for the
+	Hausman test is that the group-specific error is not so
+	correlated (and therefore the random effects model is
+	preferable).  A low p-value for this test counts against the
+	random effects model and in favor of fixed effects.</para>
+
+    </sect2>
+
     <sect2 id="hccm"><title>hccm</title>
 
       <informaltable role="cmd" frame="none">
@@ -1411,8 +1455,6 @@
       </para>
 
     </sect2>
-
-
 
     <sect2 id="lmtest"><title>lmtest</title>
 
@@ -1871,6 +1913,29 @@
 
     </sect2>
 
+    <sect2 id="pooled"><title>pooled</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
+		&opto;
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>                
+
+      <para>Estimates a model via OLS (see <command>ols</command> for
+	details on syntax), and flags it as a pooled or panel model,
+	so that the <command>hausman</command> test item becomes
+	available.</para>
+
+    </sect2>
+
+
     <sect2 id="print"><title>print</title>
 
       <informaltable role="cmd" frame="none">
@@ -2218,6 +2283,47 @@
 	be an integer; <replaceable>startobs</replaceable> is a string
 	representing the date or panel ID of the first
 	observation. See also <xref linkend="panel"/>.
+      </para>
+
+    </sect2>
+
+    <sect2 id="setmiss"><title>setmiss</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>value</replaceable> <literal>[</literal>
+		<replaceable>varlist</replaceable> <literal>]</literal>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Examples:</entry>
+	      <entry><command>setmiss -1</command> 
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><command>setmiss 100 x2</command> 
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>
+	Get the program to interpret some specific numerical data
+	value (the first parameter to the command) as a code for
+	<quote>missing</quote>, in the case of imported data.  If this
+	value is the only parameter, as in the first example above,
+	the interpretation will be applied to all series in the data
+	set.  If <replaceable>value</replaceable> is followed by a
+	list of variables, by name or number, the interpretation is
+	confined to the specified variable(s). Thus in the second
+	example the data value 100 is interpreted as a code for
+	<quote>missing</quote>, but only for the variable
+	<literal>x2</literal>.
       </para>
 
     </sect2>
@@ -2857,8 +2963,7 @@
 	    <entry>Correlation with ordinal data</entry>
 	  </row>
 	  <row>
-	    <entry>Pooled OLS
-	      </entry>
+	    <entry>Pooled OLS ((<command>pooled</command>)</entry>
 	    <entry>OLS estimation for pooled cross-section, time
 	      series data</entry>
 	  </row>
@@ -2917,7 +3022,7 @@
 	  </row>
 	  <row>
 	    <entry>Panel diagnostics</entry>
-	    <entry>not available</entry>
+	    <entry><command>hausman</command></entry>
 	  </row>
 	</tbody>
       </tgroup>

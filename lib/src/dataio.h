@@ -59,7 +59,7 @@ DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 			      int markers   /* case markers or not? */
 			      );
 
-void clear_datainfo (DATAINFO *pdinfo, int subsample);
+void clear_datainfo (DATAINFO *pdinfo, int code);
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 

@@ -438,8 +438,7 @@ int update_loop_model (LOOPSET *ploop, const int cmdnum,
  * @cmdnum: sequential index number of the command within @ploop.
  * @list: list of variables to be printed.
  * @pZ: pointer to data matrix.
- * @n: full length of data series in @Z.
- * @t: current observation number.
+ * @pdinfo: pointer to data information struct.
  *
  * Update a #LOOP_PRINT belonging to @ploop, based on the current
  * data values.

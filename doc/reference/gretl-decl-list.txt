@@ -16,13 +16,16 @@ omit_test
 autocorr_test
 chow_test
 cusum_test
+hausman_test
 </SECTION>
 
 <SECTION>
 <FILE>dataio</FILE>
 data_options
 gretl_filetypes
+clear_codes
 free_datainfo
+free_Z
 datainfo_new
 create_new_dataset
 clear_datainfo
@@ -32,6 +35,7 @@ ntodate
 get_info
 get_precision
 write_data
+is_gzipped
 has_gz_suffix
 gz_switch_ext
 get_data
@@ -42,6 +46,9 @@ add_case_markers
 detect_filetype
 get_xmldata
 get_xml_description
+open_plugin
+get_plugin_function
+close_plugin
 </SECTION>
 
 <SECTION>
@@ -86,7 +93,6 @@ get_gretl_errmsg
 
 <SECTION>
 <FILE>estimate</FILE>
-Z
 lsq
 hilu_corc
 tsls_func
@@ -139,6 +145,7 @@ termtype_to_termstr
 <FILE>interact</FILE>
 CMD
 getcmd
+command_number
 help
 fcast
 add_new_var
@@ -158,15 +165,18 @@ MAXLABEL
 MAXLEN
 ERRLEN
 M_PI
+_
 prn_codes
 ts_codes
 auto_genr
+progress_flags
 LIST
 DATAINFO
 PATHS
 GRETLTEST
 GRETLSUMMARY
 CORRMAT
+SAMPLE
 MODEL
 MODELSPEC
 GRAPHT
@@ -274,6 +284,8 @@ tex_escape
 <FILE>utils</FILE>
 free_model
 dataset_is_time_series
+dataset_is_daily
+dated_daily_data
 dataset_is_panel
 floateq
 floatneq
@@ -286,17 +298,21 @@ isdummy
 printlist
 list_exclude
 set_obs
+set_miss
 addpath
 getopenfile
 getflag
 catchflag
 gretl_model_new
+exchange_smpl
 clear_model
 show_paths
 set_paths
 copylist
 grow_nobs
 dataset_add_vars
+dataset_add_scalar
+dataset_drop_var
 dataset_drop_vars
 hidden_var
 copy_model
@@ -309,6 +325,10 @@ re_estimate
 copyvec
 ijton
 ztox
+get_panel_structure
+set_panel_structure
+balanced_panel
+get_xvalue
 </SECTION>
 
 <SECTION>
@@ -323,5 +343,17 @@ ma_model
 
 <SECTION>
 <FILE>version</FILE>
+</SECTION>
+
+<SECTION>
+<FILE>calendar</FILE>
+MISSOBS
+get_epoch_day
+daily_obs_number
+daily_date_string
+missobs_vector
+undo_repack_missing
+repack_missing
+get_misscount
 </SECTION>
 

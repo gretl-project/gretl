@@ -775,7 +775,7 @@ be used only if the variables have approximately the same range of values
 #
 pooled
 @Estimation
-Usage:         pooled depvar indepvar
+Usage:         pooled depvar indepvars
 Estimates a model via OLS (see the ols command for details on syntax), and
 flags it as a pooled or panel model, so that the "panel diagnostics" test item
 becomes available.  For an account of these diagnostics see the hausman

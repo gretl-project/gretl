@@ -212,7 +212,7 @@
 	  linkend="cmdref"/> below).</para>
     </sect1>
 
-  <sect1 id="pooled"><title>Pooled estimation</title>
+  <sect1 id="pooled-est"><title>Pooled estimation</title>
 
     <para>Having come this far, we can reveal that there is a special
       purpose estimation command for use with panel data, the

@@ -15,6 +15,8 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/menus.xml \
 	chapters/optarg.xml chapters/trouble.xml
 
+all: thumbs pdf altthumbs altpdf html htmlhelp
+
 pdf: $(DOC).tex jadetex.cfg lucidabr.tex
 	-pdfjadetex $(DOC)
 	-pdfjadetex $(DOC)
