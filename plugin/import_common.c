@@ -68,7 +68,9 @@ static int label_is_date (char *str)
 	len--;
     }
 
+#if 0
     fprintf(stderr, "label_is_date: looking at '%s'\n", str);
+#endif
 
     for (i=0; i<len; i++) {
 	if (str[i] == ':' || str[i] == 'Q') {
@@ -76,8 +78,6 @@ static int label_is_date (char *str)
 	    break;
 	}
     }
-
-    fprintf(stderr, "label_is_date: after subst, looking at '%s'\n", str);
 
     if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
 	d > 0 && d < 3000) {
@@ -97,21 +97,32 @@ static int label_is_date (char *str)
     return pd;
 }
 
-static int obs_column (char *label)
+static int obs_column_heading (char *label)
 {
-    if (label == NULL) return 1;
-    
-    label++;
+    int ret = 0;
 
-    if (*label == '\0') return 1;    
+    if (label == NULL) {
+	ret = 1;
+    } else {
+#if 0
+	fprintf(stderr, "obs_column_heading: looking at '%s'\n", label);
+#endif
+	if (*label == '"') {
+	    label++;
+	}
+	if (*label == '\0') {
+	    ret = 1;    
+	} else {
+	    lower(label);
+	    if (strncmp(label, "obs", 3) == 0 ||
+		strcmp(label, "date") == 0 ||
+		strcmp(label, "year") == 0) {
+		ret = 1;
+	    }
+	}
+    }
 
-    lower(label);
-    if (strncmp(label, "obs", 3) == 0 ||
-	strcmp(label, "date") == 0 ||
-	strcmp(label, "year") == 0)
-	return 1;
-
-    return 0;
+    return ret;
 }
 
 static void wbook_print_info (wbook *book) 

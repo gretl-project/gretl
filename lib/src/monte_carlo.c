@@ -71,7 +71,7 @@ int ok_in_loop (int ci, const LOOPSET *ploop)
 	return 1;
 
     if (ploop->type == COUNT_LOOP && 
-	(ci == LAD || ci == HSK || ci == HCCM)) 
+	(ci == LAD || ci == HSK || ci == HCCM || ci == WLS)) 
 	return 1;
 
     return 0;
@@ -556,7 +556,7 @@ int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod)
     for (j=0; j<pmod->ncoeff; j++) {
 #ifdef ENABLE_GMP
 	mpf_set_d(m, pmod->coeff[j]);
-	mpf_add(plmod->sum_coeff[j], plmod->sum_coeff[j], m); /* FIXME */
+	mpf_add(plmod->sum_coeff[j], plmod->sum_coeff[j], m); 
 	mpf_mul(m, m, m);
 	mpf_add(plmod->ssq_coeff[j], plmod->ssq_coeff[j], m);
 
@@ -696,7 +696,8 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 	    ploop->next_model += 1;	    
 	}
 	else if (ploop->ci[i] == OLS || ploop->ci[i] == LAD ||
-	    ploop->ci[i] == HSK || ploop->ci[i] == HCCM) {
+		 ploop->ci[i] == HSK || ploop->ci[i] == HCCM || 
+		 ploop->ci[i] == WLS) {
 	    print_loop_model(&ploop->lmodels[ploop->next_model], 
 			     ploop->ntimes, pdinfo, prn);
 	    ploop->next_model += 1;

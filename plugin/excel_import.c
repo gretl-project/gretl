@@ -982,7 +982,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}	    
 
 	i = book.col_offset;
-	if (obs_column(rowptr[book.row_offset].cells[i])) {
+	if (obs_column_heading(rowptr[book.row_offset].cells[i])) {
 	    int pd = consistent_date_labels(book.row_offset);
 
 	    if (pd) {

@@ -855,6 +855,26 @@ gtk_file_selection_glob_populate (GtkFileSelection *fs,
     g_free(pattern);
 }
 
+#if 0
+
+void file_selector (const char *msg, int action, gpointer data) 
+{
+    GtkWidget *filesel;
+    char suffix[16], startdir[MAXLEN];
+
+    set_startdir(startdir);
+
+    filesel = gtk_file_chooser_dialog_new(msg, mdata->w, 
+					  GTK_FILE_CHOOSER_ACTION_OPEN,
+					  GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  NULL);
+
+    gtk_dialog_run(GTK_DIALOG(filesel));
+}
+
+#else
+
 void file_selector (const char *msg, int action, gpointer data) 
 {
     GtkWidget *filesel;
@@ -934,6 +954,8 @@ void file_selector (const char *msg, int action, gpointer data)
     gtk_window_set_modal (GTK_WINDOW(filesel), TRUE);
     gtk_main(); 
 }
+
+#endif
 
 # else /* gtk version diffs */
 

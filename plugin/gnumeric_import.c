@@ -616,7 +616,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	int time_series = 0;
 	int blank_cols = 0;
 
-	if (obs_column(sheet.label[0])) {
+	if (obs_column_heading(sheet.label[0])) {
 	    int pd = consistent_date_labels(&sheet);
 
 	    if (pd) {

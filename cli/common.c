@@ -116,6 +116,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	break;	
 
     case OLS:
+    case WLS:
     case LAD:
     case HSK:
     case HCCM:
@@ -151,8 +152,8 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	/* estimate the model called for */
 	clear_model(models[0], NULL);
 
-	if (cmd.ci == OLS) {
-	    *models[0] = lsq(cmd.list, &Z, datainfo, OLS, lsqopt, 0.0);
+	if (cmd.ci == OLS || cmd.ci == WLS) {
+	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
 	}
 	else if (cmd.ci == LAD) {
 	    *models[0] = lad(cmd.list, &Z, datainfo);
@@ -168,11 +169,6 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    errmsg((models[0])->errcode, prn);
 	    return 1;
 	}
-
-#ifdef WIN32_DEBUG
-	if (numeric_check_model(models[0], Z, datainfo, lround + 1, prn))
-	    return 1;
-#endif
 
 	if (plp->type == FOR_LOOP) {
 	    (models[0])->ID = lround + 1;
