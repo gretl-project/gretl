@@ -34,12 +34,12 @@ typedef enum {
  
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, int model_count, 
-	      MODEL *pmod, unsigned char oflag);
+	      MODEL *pmod, unsigned long oflag);
 
 int dummy (double ***pZ, DATAINFO *pdinfo);
 
 int paneldum (double ***pZ, DATAINFO *pdinfo, 
-	      unsigned char opt);
+	      unsigned long opt);
 
 int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
 

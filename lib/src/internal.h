@@ -37,7 +37,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 void _graphyzx (const int *list, const double *zy1, const double *zy2, 
 		const double *zx, int n, const char *yname, 
 		const char *xname, const DATAINFO *pdinfo, 
-		unsigned char oflag, PRN *prn);
+		unsigned long oflag, PRN *prn);
 
 void _printxs (double xx, int n, int ci, PRN *prn);
 

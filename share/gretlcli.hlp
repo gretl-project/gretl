@@ -157,9 +157,12 @@ Examples:       coint2 2 y x
                 coint2 12 y x1 x2 -o
 
 Carries out the Johansen trace test for cointegration among the listed
-variables for the given order.  For details of this test see for instance
-James D. Hamilton, Time Series Analysis, chapter 19.  If the -o flag is
-given the results of the various auxiliary regressions are printed.
+variables for the given order.  Critical values are computed via J. Doornik's
+gamma approximation (see "Approximations to the Asymptotic Distribution of
+Cointegration Tests," Journal of Economic Surveys, 1998).  For details of this
+test see for instance James D. Hamilton, Time Series Analysis, chapter 19.  If
+the -o flag is given the results of the various auxiliary regressions are
+printed.
 
 #
 corc

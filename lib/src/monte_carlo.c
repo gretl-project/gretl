@@ -626,7 +626,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 			 char *loopstorefile)
 {
     int i, j;
-    unsigned char opt;
+    unsigned long opt;
     MODEL *pmod = NULL;
 
     if (ploop->lvar && ploop->lvar != INDEXNUM) {
@@ -637,7 +637,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 #ifdef LOOP_DEBUG
 	fprintf(stderr, "loop command %d (i=%d): %s\n\n", i+1, i, ploop->lines[i]);
 #endif
-	catchflag(ploop->lines[i], &opt);
+	catchflags(ploop->lines[i], &opt);
 
 	if (ploop->lvar && ploop->ci[i] == OLS) {
 	    double dfadj, sqrta;
@@ -656,11 +656,11 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 		pmod->sderr[j] *= sqrta;
 	    }
 
-	    if (opt != 'q') {
+	    if (!(opt & OPT_Q)) {
 		printmodel(pmod, pdinfo, prn);
 	    }
 
-	    if (opt == 'o') {
+	    if (opt & OPT_O) {
 		if (pmod->vcv) {
 		    int nc = pmod->ncoeff;
 		    int nt = nc * (nc + 1) / 2;
@@ -738,7 +738,7 @@ static void free_loop_print (LOOP_PRINT *pprn)
  * @ploop: pointer to loop struct.
  * @line: command line.
  * @ci: command index number.
- * @oflag: option flag associated with the command.
+ * @oflag: option flag(s) associated with the command.
  *
  * Add line and command index to accumulated loop buffer.
  *
@@ -746,7 +746,7 @@ static void free_loop_print (LOOP_PRINT *pprn)
  */
 
 int add_to_loop (LOOPSET *ploop, char *line, int ci,
-		 unsigned char oflag)
+		 unsigned long oflags)
 {
     int i = ploop->ncmds;
 
@@ -765,10 +765,9 @@ int add_to_loop (LOOPSET *ploop, char *line, int ci,
 
     strncpy(ploop->lines[i], line, MAXLEN - 4);
 
-    if (oflag) {
-	char flagstr[4];
+    if (oflags) {
+	const char *flagstr = print_flags(oflags);
 
-	sprintf(flagstr, " -%c", oflag);
 	strcat(ploop->lines[i], flagstr);
     }
 

@@ -209,14 +209,14 @@ void file_get_line (void)
     }
 }
 
-unsigned char gp_flags (int batch, unsigned char opt)
+unsigned char gp_flags (int batch, unsigned long opt)
 {
     unsigned char flags = 0;
 
     if (batch) flags |= GP_BATCH;
-    if (opt == 'm') flags |= GP_IMPULSES;
-    else if (opt == 'z') flags |= GP_DUMMY;
-    else if (opt == 's') flags |= GP_OLS_OMIT;
+    if (opt & OPT_M) flags |= GP_IMPULSES;
+    else if (opt & OPT_Z) flags |= GP_DUMMY;
+    else if (opt & OPT_S) flags |= GP_OLS_OMIT;
 
     return flags;
 }
@@ -568,7 +568,7 @@ int main (int argc, char *argv[])
     return 0;
 }
 
-static int data_option (unsigned char flag);
+static int data_option (unsigned long flag);
 
 void exec_line (char *line, PRN *prn) 
 {
@@ -585,7 +585,7 @@ void exec_line (char *line, PRN *prn)
     }
 
     /* parse the command line... */
-    catchflag(line, &cmd.opt);
+    catchflags(line, &cmd.opt);
     compress_spaces(line);
 
     /* ...but if we're stacking commands for a loop, parse lightly */
@@ -682,7 +682,9 @@ void exec_line (char *line, PRN *prn)
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]); 
 	    clear_model(models[1], NULL);
-	    if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, !batch, prn);
+	    }
 	}
 	break;	
 
@@ -711,7 +713,9 @@ void exec_line (char *line, PRN *prn)
 	} else {
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL);
-	    if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, !batch, prn);
+	    }
 	}
 	clear_model(&tmpmod, NULL);
 	break;
@@ -724,7 +728,9 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn); 
 	    break;
 	}
-	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, !batch, prn);
+	}
 	break;
 
     case ARCH:
@@ -736,7 +742,9 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
 	    swap_models(&models[0], &models[1]); 
-	    if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, !batch, prn);
+	    }
 	}
 	clear_model(models[1], NULL);
 	break;
@@ -744,16 +752,16 @@ void exec_line (char *line, PRN *prn)
     case ARMA:
 	clear_model(models[0], NULL);
 #ifdef HAVE_X12A
-	if (cmd.opt == 'n') {
+	if (cmd.opt & OPT_N) {
 	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      NULL);
+			      (cmd.opt & OPT_V)? prn : NULL);
 	} else {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
-				  ((cmd.opt == 'v') ? prn : NULL), &paths); 
+				  ((cmd.opt & OPT_V) ? prn : NULL), &paths); 
 	}
 #else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			  (cmd.opt == 'v')? prn : NULL);
+			  (cmd.opt & OPT_V)? prn : NULL);
 #endif
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
@@ -803,7 +811,9 @@ void exec_line (char *line, PRN *prn)
 	}
 	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn); 
-	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, !batch, prn);
+	}
 	break;
 
     case LAD:
@@ -873,7 +883,9 @@ void exec_line (char *line, PRN *prn)
 	    }
 	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
-	    if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, !batch, prn);
+	    }
 	} 
 	else {
 	    err = 1;
@@ -952,7 +964,11 @@ void exec_line (char *line, PRN *prn)
 	    plotvar(&Z, datainfo, "time");
 	    cmd.list = realloc(cmd.list, 4 * sizeof(int));
 	    cmd.list[0] = 3; 
-	    cmd.list[1] = (models[0])->list[1];
+	    if ((models[0])->ci == ARMA) {
+		cmd.list[1] = (models[0])->list[4];
+	    } else {
+		cmd.list[1] = (models[0])->list[1];
+	    }
 	    cmd.list[2] = varindex(datainfo, "autofit");
 	    cmd.list[3] = varindex(datainfo, "time");
 	    lines[0] = 1;
@@ -990,14 +1006,14 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case GNUPLOT:
-	if (cmd.opt == 'z' && 
+	if ((cmd.opt & OPT_Z) && 
 	    (cmd.list[0] != 3 || 
 	     !isdummy(Z[cmd.list[3]], datainfo->t1, datainfo->t2))) { 
 	    pputs(prn, _("You must supply three variables, the last of "
 			 "which is a dummy variable\n(with values 1 or 0)\n"));
 	    break;
 	}
-	if (cmd.opt == 'm' || cmd.opt == 'z' || cmd.opt == 's') { 
+	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
 	    err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
 			  &paths, &plot_count, gp_flags(batch, cmd.opt));
 	} else {
@@ -1042,7 +1058,9 @@ void exec_line (char *line, PRN *prn)
 	}
 	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
-	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, !batch, prn);
+	}
 	break;
 
     case HELP:
@@ -1131,35 +1149,35 @@ void exec_line (char *line, PRN *prn)
     case LMTEST:
 	if ((err = model_test_start(0, prn, 1))) break;
 	/* non-linearity (squares) */
-	if (cmd.opt == 's' || cmd.opt == 'o' || !cmd.opt) {
+	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    clear_model(models[1], NULL);
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, NULL);
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (cmd.opt == 's') break;
+	    if (cmd.opt == OPT_S) break;
 	    if (!err && !batch && page_break(0, NULL, 1)) break; 
 	}
 	/* non-linearity (logs) */
-	if (cmd.opt == 'l' || cmd.opt == 'o' || !cmd.opt) {
+	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, NULL);
 	    clear_model(models[1], NULL); 
 	    model_count--;
 	    if (err) errmsg(err, prn);
-	    if (cmd.opt == 'l') break;
+	    if (cmd.opt == OPT_L) break;
 	    if (!err && !batch && page_break(0, NULL, 1)) break;
 	}
 	/* autocorrelation */
-	if (cmd.opt == 'm' || cmd.opt == 'o') {
+	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
 	    int order = atoi(cmd.param);
 
 	    err = autocorr_test(models[0], order, &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
 	}
 	/* heteroskedasticity */
-	if (cmd.opt == 'c' || !cmd.opt) {
+	if ((cmd.opt & OPT_C) || !cmd.opt) {
 	    err = whites_test(models[0], &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
 	    /* need to take more action in case of err? */
@@ -1167,28 +1185,23 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case LOGISTIC:
-	clear_model(models[0], NULL);
-	*models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn);
-	    break;
-	}
-	(models[0])->ID = ++model_count;
-	printmodel(models[0], datainfo, prn);
-	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); 
-	break;	
-
     case LOGIT:
     case PROBIT:
 	clear_model(models[0], NULL);
-	*models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
+	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
+	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
+	} else {
+	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
+	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
 	}
 	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
-	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); 
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, !batch, prn); 
+	}
 	break;
 
     case LOOP:
@@ -1247,10 +1260,12 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	(models[0])->ID = ++model_count;
-	if (cmd.opt != 'q') {
+	if (!(cmd.opt & OPT_Q)) {
 	    printmodel(models[0], datainfo, prn);
 	}
-	if (cmd.opt == 'o') outcovmx(models[0], datainfo, !batch, prn); 
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, !batch, prn); 
+	}
 	break;
 
 #ifdef ENABLE_GMP
@@ -1456,7 +1471,7 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	pputs(prn, _("Data written OK\n"));
-	if ((cmd.opt == 'o' || cmd.opt == 's') && datainfo->markers) { 
+	if (((cmd.opt & OPT_O) || (cmd.opt & OPT_S)) && datainfo->markers) { 
 	    pputs(prn, _("Warning: case markers not saved in binary datafile\n"));
 	}
 	break;
@@ -1502,7 +1517,7 @@ void exec_line (char *line, PRN *prn)
 	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	/* is this OK? */
-	if (cmd.opt) {
+	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, !batch, prn); 
 	}
 	break;
@@ -1515,7 +1530,8 @@ void exec_line (char *line, PRN *prn)
 
     case VAR:
 	order = atoi(cmd.param);
-	err = simple_var(order, cmd.list, &Z, datainfo, !batch, prn);
+	err = simple_var(order, cmd.list, &Z, datainfo, !batch, 
+			 (cmd.opt & OPT_Q)? NULL : prn);
 	break;
 
     case VARDUP:

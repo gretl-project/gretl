@@ -1388,7 +1388,7 @@ int _reserved (const char *str)
 
 /* .........................................................    */
 
-static int getword (char *word, char *str, char c, unsigned char oflag)
+static int getword (char *word, char *str, char c, unsigned long oflag)
      /* Scans string str for char c, gets word to the left of it as
 	"word" and deletes word from str.
 	Returns number of chars deleted, or -1 if no occurrence of c, 
@@ -1524,7 +1524,7 @@ static void make_genr_label (int replmsg, char *genrs,
 
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, int model_count, 
-	      MODEL *pmod, unsigned char oflag)
+	      MODEL *pmod, unsigned long oflag)
 {
     int i;
     char s[MAXLEN], genrs[MAXLEN];
@@ -2611,7 +2611,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int paneldum (double ***pZ, DATAINFO *pdinfo, unsigned char opt)
+int paneldum (double ***pZ, DATAINFO *pdinfo, unsigned long opt)
      /* creates panel data dummies (unit and period) 
 	opt = 0 for stacked time-series, 
 	non-zero for stacked cross-section

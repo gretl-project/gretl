@@ -134,7 +134,26 @@ typedef enum {
     GRETL_TEST_RESET
 } test_stats;
 
-typedef int *LIST;  
+enum {
+    OPT_A = 1 <<  0,
+    OPT_B = 1 <<  1,
+    OPT_C = 1 <<  2,
+    OPT_D = 1 <<  3,
+    OPT_I = 1 <<  4,
+    OPT_L = 1 <<  5,
+    OPT_M = 1 <<  6,
+    OPT_N = 1 <<  7,
+    OPT_O = 1 <<  8,
+    OPT_Q = 1 <<  9,
+    OPT_R = 1 << 10,
+    OPT_S = 1 << 11,
+    OPT_T = 1 << 12,
+    OPT_V = 1 << 13,
+    OPT_W = 1 << 14,
+    OPT_Z = 1 << 15
+} gretl_opt_flags;
+
+typedef int *LIST; 
 
 typedef struct _VARINFO VARINFO;
 typedef struct _DATAINFO DATAINFO;

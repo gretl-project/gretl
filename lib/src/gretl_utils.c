@@ -733,14 +733,14 @@ void set_miss (LIST list, const char *param, double **Z,
  * set_obs:
  * @line: command line.
  * @pdinfo: data information struct.
- * @opt: 's' for stacked time-series, 'c' for stacked cross-section.
+ * @opt: OPT_S for stacked time-series, OPT_C for stacked cross-section.
  * 
  * Impose a time-series or panel interpretation on a data set.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
+int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
 {
     int pd, pos, i, len, dc = 0, bad = 0;
     char stobs[OBSLEN], endobs[OBSLEN], endbit[7], *p;
@@ -830,8 +830,8 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
-    if (opt == 's') pdinfo->time_series = STACKED_TIME_SERIES;
-    else if (opt == 'c') pdinfo->time_series = STACKED_CROSS_SECTION;
+    if (opt == OPT_S) pdinfo->time_series = STACKED_TIME_SERIES;
+    else if (opt == OPT_C) pdinfo->time_series = STACKED_CROSS_SECTION;
     else if (pdinfo->sd0 >= 1.0) 
         pdinfo->time_series = TIME_SERIES; /* but might be panel? */
     else pdinfo->time_series = 0;
@@ -1095,59 +1095,192 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
 /* .......................................................... */
 
+struct gretl_opt {
+    unsigned long o;
+    const char *longopt;
+};
+
+struct flag_match {
+    unsigned long o;
+    unsigned char c;
+};
+
+/* below: this is used as a one-way mapping from the long form
+   to the char, so a given char can have more than one long-form
+   counterpart */
+
+struct gretl_opt gretl_opts[] = {
+    { OPT_C, "csv" },
+    { OPT_L, "logs" },             
+    { OPT_M, "with-impulses" },    /* in graphing context */
+    { OPT_M, "gnu-octave" },       /* in data-save context */
+    { OPT_N, "native" },
+    { OPT_O, "with-lines" },       /* graphing context */
+    { OPT_O, "vcv" },              /* model context */
+    { OPT_O, "autocorr" },         /* lmtest context */
+    { OPT_Q, "quiet" },
+    { OPT_R, "gnu-R" },
+    { OPT_S, "suppress-fitted" },   /* graphing context */
+    { OPT_S, "squares" },           /* lmtest context */    
+    { OPT_T, "traditional" },
+    { OPT_V, "verbose" },
+    { OPT_Z, "gzipped" },
+    { 0L, NULL }
+};
+
+struct flag_match flag_matches[] = {
+    { OPT_A, 'a' },
+    { OPT_B, 'b' },
+    { OPT_C, 'c' },
+    { OPT_D, 'd' },
+    { OPT_M, 'm' },
+    { OPT_N, 'n' },
+    { OPT_O, 'o' },
+    { OPT_Q, 'q' },
+    { OPT_R, 'r' },
+    { OPT_S, 's' },
+    { OPT_T, 't' },
+    { OPT_V, 'v' },
+    { OPT_W, 'w' },
+    { OPT_Z, 'z' },
+    { 0L,   '\0' }
+};
+
 static unsigned char isflag (unsigned char c)
 {
-    if (c == 'o' || c == 'c' || c == 'i' || c == 'm' ||
-	c == 'r' || c == 's' || c == 't' || c == 'l' ||
-	c == 'a' || c == 'z' || c == 'w' || c == 'q' ||
-	c == 'n' || c == 'v') {
+    if (c == 'a' || c == 'c' || c == 'i' || c == 'l' ||
+	c == 'b' || c == 'd' || 
+	c == 'm' || c == 'n' || c == 'o' || c == 'q' ||
+	c == 'r' || c == 's' || c == 't' || c == 'v' ||
+	c == 'w' || c == 'z') {
 	return c;
     }
     return 0;
 }
 
-/* .......................................................... */
+static unsigned long opt_from_flag (unsigned char c)
+{
+    int i;
 
-int catchflag (char *line, unsigned char *oflag)
-     /* check for "-<char>" in line: if found, chop it out and set
-	oflag value accordingly.  
+    for (i=0; flag_matches[i].c != '\0'; i++) {
+	if (c == flag_matches[i].c) return flag_matches[i].o;
+    }
+
+    return 0L;
+}
+
+static unsigned long get_short_opts (char *line)
+{
+    char *p = strchr(line, '-');
+    unsigned long ret = 0L;
+
+    while (p != NULL) {
+	unsigned char c, flag, prev;
+	int match = 0;
+	size_t n = strlen(p);
+
+	c = *(p + 1);
+	prev = *(p - 1);
+	
+	if (isspace(prev) && (flag = isflag(c)) && 
+	    (n == 2 || isspace(*(p + 2)))) {
+	    ret |= opt_from_flag(flag);
+	    _delete(p, 0, 2);
+	    match = 1;
+	}
+	if (!match) p++;
+	p = strchr(p, '-');
+    }
+
+    return ret;
+}
+  
+static unsigned long get_long_opts (char *line)
+{
+    char *p = strstr(line, "--");
+    unsigned long ret = 0L;
+
+    while (p != NULL) {
+	char longopt[32];
+	int i, match = 0;
+
+	sscanf(p + 2, "%31s", longopt);
+	for (i=0; gretl_opts[i].o != 0; i++) {
+	    if (!strcmp(longopt, gretl_opts[i].longopt)) {
+		ret |= gretl_opts[i].o;
+                _delete(p, 0, 2 + strlen(longopt));
+		match = 1;
+		break;
+	    }
+	}
+	if (!match) p += 2;
+	p = strstr(p, "--");
+    }
+
+    return ret;
+}
+
+int catchflags (char *line, unsigned long *oflags)
+     /* check for option flags in line: if found, chop them out 
+	and set oflags value accordingly.  
 	Strip trailing semicolon while we're at it. 
      */
 {
-    int i, opt, n = strlen(line);
+    int n = strlen(line);
+    unsigned long opt;
     char cmdword[9];
+    int ret = 0;
 
-    *oflag = 0;
+    *oflags = 0L;
 
     if (n < 2) return 0;
 
     /* to enable reading of trad. esl input files */
     if (line[n-2] == ';' && isspace(line[n-1])) {
 	line[n-2] = '\0';
-	n -= 2;
     } else if (line[n-1] == ';') {
 	line[n-1] = '\0';
-	n--;
     }
 
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
     sscanf(line, "%8s", cmdword);
     if (!strcmp(cmdword, "genr") || 
-	!strcmp(cmdword, "sim")) return 0;
+	!strcmp(cmdword, "sim")) return ret;
 
-    for (i=4; i<n-1; i++) {
-	if (line[i] == '-' && 
-	    isspace((unsigned char) line[i-1]) && 
-	    (opt = isflag(line[i+1])) &&
-	    (i+2 == n || isspace((unsigned char) line[i+2]))) {
-		*oflag = opt;
-		_delete(line, i, 2);
-		return 1;
-	    }
+    /* try for short-form options (e.g. "-o") */
+    opt = get_short_opts(line);
+    if (opt) {
+	*oflags |= opt;
+	ret = 1;
+    }    
+
+    /* try for long-form options (e.g. "--verbose") */
+    opt = get_long_opts(line);
+    if (opt) {
+	*oflags |= opt;
+	ret = 1;
     }
 
-    return 0;
+    return ret;
+}
+
+const char *print_flags (unsigned long flags)
+{
+    static char flagstr[32];
+    char fbit[4];
+    int i;
+
+    flagstr[0] = '\0';
+
+    for (i=0; flag_matches[i].o != 0L; i++) {
+	if (flags & flag_matches[i].o) {
+	    sprintf(fbit, " -%c", flag_matches[i].c);
+	    strcat(flagstr, fbit);
+	}
+    }
+
+    return flagstr;
 }
 
 /* .......................................................... */
@@ -2184,9 +2317,18 @@ int _forecast (int t1, int t2, int nv,
 	       const MODEL *pmod, double ***pZ)
 {
     double xx, zz, zr;
-    int i, k, maxlag = 0, yno = pmod->list[1], ARMODEL;
+    int i, k, maxlag = 0, yno, ARMODEL;
     int v, t, miss;
     const int *arlist = NULL;
+
+    if (pmod->ci == NLS || pmod->ci == ARMA) {
+	for (t=t1; t<=t2; t++) {
+	    (*pZ)[nv][t] = pmod->yhat[t];
+	}
+	return 0;
+    }
+
+    yno = pmod->list[1];
 
     ARMODEL = (pmod->ci == AR || pmod->ci == CORC || 
 	       pmod->ci == HILU)? 1 : 0;

@@ -74,7 +74,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     int err = 0;
 
     strcpy(linecpy, plp->lines[cmdnum]);
-    catchflag(linecpy, &cmd.opt);
+    catchflags(linecpy, &cmd.opt);
 
     substitute_dollar_i(linecpy);
 
@@ -169,7 +169,9 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	if (plp->type == FOR_LOOP) {
 	    (models[0])->ID = lround + 1;
 	    printmodel(models[0], datainfo, prn); 
-	    if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, 0, prn);
+	    }
 	}
 	else if (plp->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
@@ -300,22 +302,22 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     return err;
 }
 
-static int data_option (unsigned char flag)
+static int data_option (unsigned long flag)
 {
     switch (flag) {
-    case 's':
+    case OPT_S:
 	return GRETL_DATA_FLOAT;
-    case 't':
+    case OPT_T:
 	return GRETL_DATA_TRAD;
-    case 'o':
+    case OPT_O:
 	return GRETL_DATA_DOUBLE;
-    case 'm':
+    case OPT_M:
 	return GRETL_DATA_OCTAVE;
-    case 'c':
+    case OPT_C:
 	return GRETL_DATA_CSV;
-    case 'r':
+    case OPT_R:
 	return GRETL_DATA_R;
-    case 'z':
+    case OPT_Z:
 	return GRETL_DATA_GZIPPED;
     default:
 	return 0;

@@ -110,17 +110,17 @@ static struct extmap action_map[] = {
 
 /* ........................................................... */
 
-static unsigned char action_to_flag (const int action)
+static unsigned long action_to_opt (const int action)
 {
     switch (action) {
-    case SAVE_GZDATA: return 'z';
-    case SAVE_BIN1: return 's';
-    case SAVE_BIN2: return 'o';
-    case EXPORT_OCTAVE: return 'm';
-    case EXPORT_R: return 'r';
-    case EXPORT_R_ALT: return 'a';
-    case EXPORT_CSV: return 'c';
-    default: return 0;
+    case SAVE_GZDATA:   return OPT_Z;
+    case SAVE_BIN1:     return OPT_S;
+    case SAVE_BIN2:     return OPT_O;
+    case EXPORT_OCTAVE: return OPT_M;
+    case EXPORT_R:      return OPT_R;
+    case EXPORT_R_ALT:  return OPT_A;
+    case EXPORT_CSV:    return OPT_C;
+    default: return 0L;
     }
 }
 
@@ -621,7 +621,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	int overwrite = 0;
 
 	if (!strcmp(fname, paths.datfile)) overwrite = 1;
-	do_store(fname, action_to_flag(action), overwrite);
+	do_store(fname, action_to_opt(action), overwrite);
     }
     else if (action == SAVE_GNUPLOT) {
 	int err = 0;
@@ -759,7 +759,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 	gtk_widget_destroy(GTK_WIDGET(fs));
 	if (!strcmp(fname, paths.datfile)) overwrite = 1;
-	do_store(fname, action_to_flag(action), overwrite);
+	do_store(fname, action_to_opt(action), overwrite);
     }
     else if (action == SAVE_GNUPLOT) {
 	int err = 0;

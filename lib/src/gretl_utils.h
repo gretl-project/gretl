@@ -84,6 +84,8 @@
 #define na(x) (fabs((x) + 999.0) < DBL_EPSILON)
 #define NADBL -999.0
 
+#define want_vcv(o) (o & OPT_O)
+
 /* functions follow */
  
 double date (int nt, int pd, const double sd0);
@@ -96,7 +98,7 @@ int print_list_to_buffer (const int *list, char *buf, size_t len);
 
 void list_exclude (int n, int *list);
 
-int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt);
+int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt);
 
 void set_miss (LIST list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn);
@@ -106,7 +108,9 @@ char *addpath (char *fname, PATHS *ppaths, int script);
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 int setpath, int script);
 
-int catchflag (char *line, unsigned char *oflag);
+int catchflags (char *line, unsigned long *oflag);
+
+const char *print_flags (unsigned long flags);
 
 MODEL *gretl_model_new (const DATAINFO *pdinfo);
 

@@ -161,18 +161,34 @@ static int tex_greek_param (char *targ, const char *src)
     return (*targ != 0);
 }
 
-static void tex_arma_coeff_name (char *targ, const char *src)
+static void tex_arma_coeff_name (char *targ, const char *src,
+				 int inmath)
 {
-    char vname[VNAMELEN], vnesc[16];
+    char vname[VNAMELEN], vnesc[16], texname[24];
     int lag;
 
     if (sscanf(src, "%[^(](-%d)", vname, &lag) == 2) {
 	if (!strcmp(vname, "e")) {
-	    strcpy(vnesc, "$\\varepsilon$");
+	    if (!inmath) {
+		strcpy(texname, "$\\varepsilon$");
+	    } else {
+		strcpy(texname, "\\varepsilon");
+	    }
+	} else if (!strcmp(vname, "y")) {
+	    strcpy(texname, "y");
 	} else {
 	    tex_escape(vnesc, vname);
+	    if (!inmath) {
+		strcpy(texname, vnesc);
+	    } else {
+		sprintf(texname, "\\mbox{%s}", vnesc);
+	    }
 	}
-	sprintf(targ, "%s$_{t-%d}$", vnesc, lag);
+	if (!inmath) {
+	    sprintf(targ, "%s$_{t-%d}$", texname, lag);
+	} else {
+	    sprintf(targ, "%s_{t-%d}", texname, lag);
+	}
     } else {
 	tex_escape(vnesc, src);
 	strcpy(targ, vnesc);
@@ -210,7 +226,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    tex_escape(tmp, pmod->params[c-1]);
 	}
     } else if (pmod->ci == ARMA) {
-	tex_arma_coeff_name(tmp, pmod->params[c-1]);
+	tex_arma_coeff_name(tmp, pmod->params[c-1], 0);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }
@@ -321,14 +337,16 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	tex_print_float(pmod->coeff[i], prn);
 	pputc(prn, '}');
 	if (i > 0 || pmod->ifc == 0) {
-	    pputs(prn, "\\,{\\rm ");
+	    pputs(prn, "\\,");
 	    if (pmod->ci == ARMA) {
-		tex_arma_coeff_name(tmp, pmod->params[i+1]);
+		tex_arma_coeff_name(tmp, pmod->params[i+1], 1);
+		pprintf(prn, "%s", tmp);
 	    } else {
 		tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
+		pprintf(prn, "\\mbox{%s}", tmp);
 	    }
-	    pprintf(prn, "%s}\n", tmp);
 	}
+	pputc(prn, '\n');
     }
     pputs(prn, " \\notag \\\\\n");
 
@@ -412,14 +430,14 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      int model_count, int oflag)
+	      int model_count, unsigned long oflag)
 {
     PRN prn;
 
     if (make_texfile(ppaths, model_count, 0, texfile, &prn))
 	return 1;
 
-    tex_print_model(pmod, pdinfo, oflag, &prn);
+    tex_print_model(pmod, pdinfo, (int) oflag, &prn);
     if (prn.fp != NULL) fclose(prn.fp);
     return 0;
 }
@@ -442,14 +460,14 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      int model_count, int oflag)
+	      int model_count, unsigned long oflag)
 {
     PRN prn;
 
     if (make_texfile(ppaths, model_count, 1, texfile, &prn))
 	return 1;
 
-    tex_print_equation(pmod, pdinfo, oflag, &prn);
+    tex_print_equation(pmod, pdinfo, (int) oflag, &prn);
     if (prn.fp != NULL) fclose(prn.fp);
     return 0;
 }

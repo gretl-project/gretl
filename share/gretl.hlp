@@ -170,7 +170,7 @@ hypothesis that the sum is zero.
 #
 coint
 @Tests
-Cointegration test
+Engle-Granger cointegration test
 
 The command (which needs an integer lag order) carries out Augmented
 Dickey-Fuller tests on the null hypothesis that each of the selected variables
@@ -181,8 +181,19 @@ that none of these test statistics can be referred to the usual statistical
 tables.)
 
 #
-compact
-@Dataset
+coint2
+@Tests
+Johansen cointegration test
+
+Carries out the Johansen trace test for cointegration among the listed
+variables for the given order.  Critical values are computed via J. Doornik's
+gamma approximation (see "Approximations to the Asymptotic Distribution of
+Cointegration Tests," Journal of Economic Surveys, 1998).  For details of this
+test see for instance James D. Hamilton, Time Series Analysis, chapter 19.
+
+# 
+compact 
+@Dataset 
 Writing data to a lower frequency
 
 When you add to a dataset a series that is of higher frequency, it is

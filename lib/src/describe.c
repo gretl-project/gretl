@@ -1449,7 +1449,7 @@ int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo,
  * @list: gives the ID numbers of the variables to compare.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @vareq: assume population variances are equal (1) or not (0).
+ * @vardiff: if non-zero, assume population variances are different.
  * @prn: gretl printing struct.
  *
  * Carries out test of the null hypothesis that the means of two
@@ -1459,7 +1459,7 @@ int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo,
  */
 
 int means_test (LIST list, double **Z, const DATAINFO *pdinfo, 
-		int vardiff, PRN *prn)
+		unsigned long vardiff, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
     double *x = NULL, *y = NULL;
@@ -1489,13 +1489,14 @@ int means_test (LIST list, double **Z, const DATAINFO *pdinfo,
     moments(0, n2-1, y, &m2, &s2, &skew, &kurt, 1);
     mdiff = m1 - m2;
 
-    if (!vardiff) {
+    if (vardiff) {
+	se = sqrt((s1 * s1 / n1) + (s2 * s2 / n2));
+    } else {
 	double sp2;
 
-	sp2 = ((n1-1)*s1*s1 + (n2-1)*s2*s2) / df;
-	se = sqrt(sp2/n1 + sp2/n2);
-    } else 
-	se = sqrt((s1*s1/n1) + (s2*s2/n2));
+	sp2 = ((n1-1) * s1 * s1 + (n2-1) * s2 * s2) / df;
+	se = sqrt(sp2 / n1 + sp2 / n2);
+    }
 
     t = mdiff / se;
     pval = tprob(t, df);

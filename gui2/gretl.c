@@ -2123,12 +2123,12 @@ static int native_datafile (void)
 
 static void auto_store (void)
 {
-    unsigned char oflag = 0;
+    unsigned long oflag = 0L;
 
     /* if there's already a datafile, and it's gzipped, then
        arrange for the new store to be gzipped too */
     if (*paths.datfile && is_gzipped(paths.datfile)) {
-	oflag = 'z';
+	oflag = OPT_Z;
     }
 
     if ((data_status & USER_DATA) && native_datafile()) {

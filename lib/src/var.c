@@ -1860,7 +1860,7 @@ johansen_complete (const double **X, const double **Y, const double **Z,
 }
 
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-		   int verbose, PRN *prn)
+		   unsigned long opt, PRN *prn)
 {
     PRN *varprn = NULL;
     struct var_resids resids;
@@ -1870,6 +1870,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     int orig_t1 = pdinfo->t1;
     int orig_v = pdinfo->v;
     int *varlist;
+    int verbose = (opt & OPT_V);
     int hasconst = 0;
     int trends = 0;
 

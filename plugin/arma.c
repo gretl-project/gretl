@@ -30,7 +30,7 @@
 #undef ARMA_DEBUG
 
 #define DEFAULT_MAX_ITER 1000
-#define SUBITERMAX         20
+#define SUBITERMAX         40
 #define MINSTEPLEN    1.0e-08     
 
 static void arma_coeff_name (char *s, const DATAINFO *pdinfo,
@@ -108,6 +108,7 @@ static int get_maxiter (void)
 }
 
 static double update_fcast_errs (double *e, const double *y, 
+				 int y_offset,
 				 const double *coeff, 
 				 int n, int p, int q)
 {
@@ -118,15 +119,8 @@ static double update_fcast_errs (double *e, const double *y,
 
     for (t=0; t<n; t++) {
 
-	if (na(y[t])) {
-#ifdef ARMA_DEBUG
-	    fprintf(stderr, "y[%d] = NA, skipping\n", t);
-#endif
-	    e[t] = NADBL;
-	    continue;
-	}
+	e[t] = y[t+y_offset] - coeff[0];
 
-	e[t] = y[t] - coeff[0];
 #ifdef ARMA_DEBUG
 	if (t < 3) {
 	    fprintf(stderr, "initializing e[%d] = %g - %g = %g\n", t, 
@@ -134,10 +128,17 @@ static double update_fcast_errs (double *e, const double *y,
 	}
 #endif
 
+	/* problem: there's something funny happening with the
+	   initial values of e, if y has a mean substantially
+	   different from zero... */
+
 	for (i=0; i<p; i++) {
 	    k = t - (i + 1);
-	    if (k < 0 || na(y[k])) continue;
-	    e[t] -= coeff[i+1] * y[k];
+	    if (k < 0) {
+		e[t] = 0.0; /* ... but this seems to help! */
+		continue;
+	    }
+	    e[t] -= coeff[i+1] * y[k+y_offset];
 	}
 
 	for (i=0; i<q; i++) {
@@ -169,7 +170,6 @@ static void update_error_partials (double *e, const double *y,
     int t, col, i, t2;
 
     for (t=0; t<n; t++) {
-	if (na(y[t])) continue;
 
 	/* the constant term */
 	col = 2;
@@ -221,7 +221,7 @@ static void update_ll_partials (double *e, double **Z, double s2,
     for (i=0; i<nc; i++) {
 	j = 3 + p + q + i;
 	for (t=0; t<maxlag; t++) {
-	    Z[j][t] = NADBL;
+	    Z[j][t] = NADBL; /* is there any way around this? */
 	}
 	for (t=maxlag; t<n; t++) {
 	    if (na(e[t])) continue;
@@ -520,18 +520,18 @@ static int adjust_sample (DATAINFO *pdinfo, const double *y,
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int maxlag = (p>q)? p : q;
-    int t, n;
+    int t, n, t1min = 0;
 
-    if (maxlag > pdinfo->t1) {
-	t1 = pdinfo->t1 = maxlag;
-    }
-
-    for (t=pdinfo->t1-maxlag; t<=pdinfo->t2; t++) {
-	if (na(y[t])) t1++;
+    for (t=0; t<=pdinfo->t2; t++) {
+	if (na(y[t])) t1min++;
 	else break;
     }
 
-    for (t=pdinfo->t2; t>=pdinfo->t1; t--) {
+    t1min += maxlag;
+
+    if (t1 < t1min) t1 = t1min;
+
+    for (t=pdinfo->t2; t>=t1; t--) {
 	if (na(y[t])) t2--;
 	else break;
     }
@@ -547,11 +547,10 @@ static int adjust_sample (DATAINFO *pdinfo, const double *y,
     }
 
     pdinfo->t1 = t1;
-    if (p > q) pdinfo->t1 -= p - q;
     pdinfo->t2 = t2;
 
     n = pdinfo->t2 - pdinfo->t1 + 1;
-    
+
     return n;
 }
 
@@ -561,7 +560,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
     int an, nc, v, p, q, maxlag;
     int subiters, iters, itermax;
-    int i, t;
+    int i, t, arma_t1;
     double s2, tol, crit, ll = 0.0;
     double steplength, ll_prev = -1.0e+8;
     double *e, *coeff, *d_coef;
@@ -581,22 +580,22 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	return armod;
     }
 
+    v = list[4]; /* dependent var */
+    y = Z[v];
+
     p = list[1]; /* AR order */
     q = list[2]; /* MA order */
-    v = list[4]; /* dependent var */
     maxlag = (p>q) ? p : q; /* maximum lag in the model */
 
     /* adjust sample? */
-    an = adjust_sample(pdinfo, Z[v], p, q, v);
+    an = adjust_sample(pdinfo, y, p, q, v);
     if (an <= p + q + 1) {
 	pdinfo->t1 = orig_t1;
 	pdinfo->t2 = orig_t2;
 	armod.errcode = E_DATA;
 	return armod;
     }
-
-    /* values of the dependent variable */
-    y = &Z[v][pdinfo->t1];
+    arma_t1 = pdinfo->t1;
 
     /* number of coefficients */
     nc = 1 + p + q;
@@ -646,7 +645,6 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     ar_init_by_ols(v, p, coeff, Z, pdinfo);
     for (i=0; i<q; i++) coeff[i+p+1] = 0.0;
 
-
     /* initialize forecast errors and derivatives */
     for (t=0; t<an; t++) {
 	for (i=1; i<ainfo->v; i++) {
@@ -668,7 +666,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     steplength = 0.125;
 
     /* generate one-step forecast errors */
-    s2 = update_fcast_errs(e, y, coeff, an, p, q);
+    s2 = update_fcast_errs(e, y, arma_t1, coeff, an, p, q);
 
     /* calculate log-likelihood */
     ll = get_ll(e, an, maxlag);
@@ -684,7 +682,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 #endif
 
         /* partials of e wrt coeffs */
-	update_error_partials(e, y, aZ, coeff, an, p, q);
+	update_error_partials(e, y + arma_t1, aZ, coeff, an, p, q);
 
 	/* partials of l wrt coeffs */
 	update_ll_partials(e, aZ, s2, an, p, q);
@@ -712,7 +710,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	}
 
 	/* compute log-likelihood at new point */
-	s2 = update_fcast_errs(e, y, coeff, an, p, q);
+	s2 = update_fcast_errs(e, y, arma_t1, coeff, an, p, q);
 	ll = get_ll(e, an, maxlag);
 
 	/* subiterations for best steplength */
@@ -732,7 +730,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	    }
 
 	    /* compute loglikelihood again */
-	    s2 = update_fcast_errs(e, y, coeff, an, p, q);
+	    s2 = update_fcast_errs(e, y, arma_t1, coeff, an, p, q);
 	    ll = get_ll(e, an, maxlag);
 
 #ifdef ARMA_DEBUG
@@ -786,7 +784,6 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     } else {
 	cmplx *roots;
 
-	y = Z[v];
 	armod.lnL = ll; 
 	rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
 
@@ -816,12 +813,3 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     return armod;
 }
-
-
-
-    
-
-    
-
-    
-    

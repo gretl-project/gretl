@@ -1529,7 +1529,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  */
 
 int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, PATHS *ppaths, unsigned char oflag)
+		   PRN *prn, PATHS *ppaths, unsigned long oflag)
 {
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 

@@ -1245,7 +1245,7 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 static void add_pca_data (windata_t *vwin)
 {
     int err, oldv = datainfo->v;
-    unsigned char oflag = 'd';
+    unsigned long oflag = OPT_D;
     CORRMAT *corrmat = (CORRMAT *) vwin->data;
 
     err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);
@@ -1257,12 +1257,14 @@ static void add_pca_data (windata_t *vwin)
 
     if (datainfo->v > oldv) {
 	/* if data were added, register the command */
-	if (oflag == 'o' || oflag == 'a') {
+	if (oflag == OPT_O || oflag == OPT_A) {
 	    char listbuf[MAXLEN - 8];
 	    
 	    err = print_list_to_buffer(corrmat->list, listbuf, sizeof listbuf);
 	    if (!err) {
-		sprintf(line, "pca %s-%c", listbuf, oflag);
+		const char *flagstr = print_flags(oflag); 
+
+		sprintf(line, "pca %s%s", listbuf, flagstr);
 		verify_and_record_command(line);
 	    }
 	}

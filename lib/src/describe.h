@@ -68,7 +68,7 @@ int esl_corrmx (LIST list,
 
 int means_test (LIST list, 
 		double **Z, const DATAINFO *pdinfo, 
-		int vareq, PRN *prn);
+		unsigned long vardiff, PRN *prn);
 
 int vars_test (LIST list, 
 	       double **Z, const DATAINFO *pdinfo, 

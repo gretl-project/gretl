@@ -192,78 +192,59 @@ static void hush_warnings (void)
 
 #endif /* HUSH_RUNTIME_WARNINGS */
 
-#define NAME_BUFFER_LEN 32
+char *default_windows_menu_fontspec (void)
+{
+    gchar *fontspec = NULL;
+    NONCLIENTMETRICS ncm;
 
-#undef WFDEBUG
+    memset(&ncm, 0, sizeof ncm);
+    ncm.cbSize = sizeof ncm;
+
+    if (SystemParametersInfo(SPI_GETNONCLIENTMETRICS, ncm.cbSize, &ncm, 0)) {
+	HDC screen = GetDC(0);
+	double y_scale = 72.0 / GetDeviceCaps(screen, LOGPIXELSY);
+	int point_size = (int) (ncm.lfMenuFont.lfHeight * y_scale);
+
+	if (point_size < 0) point_size = -point_size;
+	fontspec = g_strdup_printf("%s %d", ncm.lfMenuFont.lfFaceName,
+				   point_size);
+	ReleaseDC(0, screen);
+    }
+
+    return fontspec;
+}
 
 static void try_to_get_windows_font (void)
 {
-    HDC h_dc;
-    HGDIOBJ h_font;
-    TEXTMETRIC tm;
-    char name[NAME_BUFFER_LEN], regfont[MAXLEN];
-#ifdef WFDEBUG
-    gchar *fontmsg;
-#endif
+    char regfont[MAXLEN];
+    gchar *fontspec;
 
     /* don't override user's choice of font */
-#ifndef WFDEBUG
     if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0) 
 	return;
-#endif
 
-    h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);
-    if (h_dc == NULL) return;
+    fontspec = default_windows_menu_fontspec();
 
-    h_font = GetStockObject(SYSTEM_FONT); /* was DEFAULT_GUI_FONT */
-    if (h_font == NULL || !SelectObject(h_dc, h_font)) {
-	DeleteDC(h_dc);
-	return;
-    }
-
-    if (GetTextFace(h_dc, NAME_BUFFER_LEN, name) <= 0) {
-	DeleteDC(h_dc);
-	return;
-    }
-
-    if (!GetTextMetrics(h_dc, &tm)) {
-	DeleteDC(h_dc);
-	return;
-    } else {
-	HDC screen = GetDC(0);
-	double scaleY = GetDeviceCaps(screen, LOGPIXELSY) / 96.0;
-	int pix_height = (int) (tm.tmHeight * scaleY);
+    if (fontspec != NULL) {
 	int match = 0;
 	PangoFontDescription *pfd;
 	PangoFont *pfont;
 	PangoContext *pc;
 	GtkWidget *w;
-	gchar *fontname;
 
-	ReleaseDC(0, screen);
-	DeleteDC(h_dc);
-
-	fontname = g_strdup_printf("%s %d", name, pix_height);
-	pfd = pango_font_description_from_string(fontname);
+	pfd = pango_font_description_from_string(fontspec);
 
 	w = gtk_label_new(NULL);
 	pc = gtk_widget_get_pango_context(w);
 	pfont = pango_context_load_font(pc, pfd);
 	match = (pfont != NULL);
 
-#ifdef WFDEBUG
-	fontmsg = g_strdup_printf("Got default font '%s'; pango match %s", 
-				  fontname, (match)? "succeeded" : "failed");
-	infobox(fontmsg);
-	g_free(fontmsg);
-#endif
-
 	pango_font_description_free(pfd);
 	g_object_unref(G_OBJECT(pc));
 	gtk_widget_destroy(w);
 
-	if (match) set_app_font(fontname);
-	g_free(fontname);
+	if (match) set_app_font(fontspec);
+	g_free(fontspec);
     }
 }
 

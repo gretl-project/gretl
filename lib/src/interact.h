@@ -30,7 +30,7 @@ typedef struct _CMD CMD;
 struct _CMD {
     char cmd[9];                /* command word */
     int ci;                     /* command index number */
-    unsigned char opt;          /* option flag */
+    unsigned long opt;          /* option flags */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
     char str[4];                /* used, e.g., in "multiply" command */
     int nolist;                 /* = 1 if the command does not take a list */
@@ -73,7 +73,7 @@ int simple_commands (CMD *cmd, const char *line,
 		     int batch, PRN *prn);
 
 int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
-		     DATAINFO *pdinfo, unsigned char *pflag,
+		     DATAINFO *pdinfo, unsigned long *pflag,
 		     PRN *prn);
 
 int ready_for_command (const char *line);

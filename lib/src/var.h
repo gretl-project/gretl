@@ -53,7 +53,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 int johansen_test (int order, const LIST list, 
 		   double ***pZ, DATAINFO *pdinfo,
-		   int verbose, PRN *prn);
+		   unsigned long opt, PRN *prn);
 
 double *
 gretl_var_get_impulse_responses (GRETL_VAR *var, int targ, int shock,

@@ -383,7 +383,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	} else if (handle_missing_daily_obs(&mdl, *pZ, pdinfo)) {
 	    return mdl;
 	}
-    }    
+    }
 
     if (ci == WLS) dropwt(mdl.list);
     yno = mdl.list[1];

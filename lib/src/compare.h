@@ -88,7 +88,7 @@ int hausman_test (MODEL *pmod,
 int leverage_test (MODEL *pmod, 
 		   double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, PATHS *ppaths, 
-		   unsigned char oflag);
+		   unsigned long oflag);
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, int opt);

@@ -398,7 +398,7 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 	    }
 	    else if (!strcmp(word, "MA")) {
 		if (sscanf(line, "%*s %*s %*s %*s %lf %lf", &b, &se) == 2) {
-		    coeff[j] = -b;
+		    coeff[j] = -b;  /* MA sign conventions */
 		    sderr[j++] = se;
 		}
 	    }

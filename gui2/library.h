@@ -73,7 +73,7 @@ void clear_data (void);
 
 /* sample-related functions */
 
-int bool_subsample (gpointer data, guint opt, GtkWidget *w);
+int bool_subsample (unsigned long opt);
 
 void do_setobs (GtkWidget *widget, dialog_t *ddata);
 
@@ -211,7 +211,7 @@ void do_new_script (gpointer data, guint action, GtkWidget *widget);
 
 void do_open_csv_box (char *fname, int code, int append);
 
-int do_store (char *mydatfile, unsigned char oflag, int overwrite);
+int do_store (char *mydatfile, unsigned long oflag, int overwrite);
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget);
 

@@ -54,7 +54,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
 int printdata (LIST list, 
 	       double ***pZ, const DATAINFO *pdinfo, 
-	       int pause, unsigned char oflag, PRN *prn);
+	       int pause, unsigned long oflag, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 
 			  const DATAINFO *pdinfo, 

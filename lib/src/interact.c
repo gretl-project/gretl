@@ -1007,8 +1007,6 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     int t, t1, t2, vi;
     char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
 
-    if (pmod->ci == NLS) return -1; /* FIXME? */
-
     *t1str = '\0'; *t2str = '\0';
 
     /* the varname should either be in the 2nd or 4th position */
@@ -1033,7 +1031,6 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 
     if (_reserved(varname)) return -1;
 
-    varname[8] = 0;
     vi = varindex(pdinfo, varname);
 
     if (vi >= pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) 
@@ -1180,7 +1177,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (line == NULL) return;
 
 #if 0
-    fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt='%c', batch=%d, "
+    fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt=%ld, batch=%d, "
 	    "param='%s', nolist=%d\n", line, gui, cmd->opt, batch, cmd->param,
 	    cmd->nolist);
     fprintf(stderr, "cmd->cmd='%s'\n", cmd->cmd);
@@ -1194,7 +1191,9 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (gui && !batch && cmd->ci == STORE) {  /* FIXME monte carlo loop? */
 	pprintf(prn, "# store '%s'", cmd->param);
 	if (cmd->opt) { 
-	    pprintf(prn, " -%c", cmd->opt);
+	    const char *flagstr = print_flags(cmd->opt);
+
+	    pprintf(prn, "%s", flagstr);
 	}
 	pputc(prn, '\n');
 	return;
@@ -1291,8 +1290,10 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     }
 
     if (cmd->opt) { 
-	if (cli) printf(" -%c", cmd->opt);
-	if (!batch) pprintf(prn, " -%c", cmd->opt);
+	const char *flagstr = print_flags(cmd->opt);
+
+	if (cli) fputs(flagstr, stdout);
+	if (!batch) pputs(prn, flagstr);
     }
 
     if (cli) putchar('\n');
@@ -1449,13 +1450,13 @@ static void do_print_string (char *str, PRN *prn)
     pprintf(prn, "%s\n", str);
 }
 
-static int do_outfile_command (unsigned char flag, char *fname,
+static int do_outfile_command (unsigned long flag, char *fname,
 			       PRN *prn)
 {
     static char outname[MAXLEN];
     int output_diverted = 0;
 
-    if (flag != 'w' && flag != 'a' && flag != 'c') {
+    if (flag != OPT_W && flag != OPT_A && flag != OPT_C) {
 	return E_ARGS;
     }
 
@@ -1465,7 +1466,7 @@ static int do_outfile_command (unsigned char flag, char *fname,
     }
 
     /* command to close outfile */
-    if (flag == 'c') {
+    if (flag == OPT_C) {
 	if (!output_diverted) {
 	    pputs(prn, _("Output is not currently diverted to file\n"));
 	    return 1;
@@ -1489,7 +1490,7 @@ static int do_outfile_command (unsigned char flag, char *fname,
 	} else {
 	    FILE *fp;
 
-	    if (flag == 'w') {
+	    if (flag == OPT_W) {
 		fp = fopen(fname, "w");
 	    } else {
 		fp = fopen(fname, "a");
@@ -1521,12 +1522,12 @@ static int do_outfile_command (unsigned char flag, char *fname,
 /* ........................................................ */
 
 int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
-		     DATAINFO *pdinfo, unsigned char *pflag,
+		     DATAINFO *pdinfo, unsigned long *pflag,
 		     PRN *prn)
 {
     void *handle = NULL;
     int (*pca_from_corrmat) (CORRMAT *, double ***, DATAINFO *,
-			     unsigned char *, PRN *);
+			     unsigned long *, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;

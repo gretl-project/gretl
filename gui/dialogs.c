@@ -1199,7 +1199,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	sprintf(line, "smpl %s -o", dumv);
 	if (verify_and_record_command(line)) return TRUE;
-	err = bool_subsample(NULL, 'o', NULL);
+	err = bool_subsample(OPT_O);
 	if (!err) {
 	    gtk_widget_destroy(rset->dlg);
 	} 

@@ -442,10 +442,11 @@
 
       <para>
 	Carries out the Johansen trace test for cointegration among
-	the listed variables for the given order.  For details of this
-	test see Hamilton (1994, Chapter 19).  If the
-	<literal>-o</literal> flag is given the results of the various
-	auxiliary regressions are printed.
+	the listed variables for the given order. Critical values are
+	computed via J. Doornik's gamma approximation (Doornik, 1998).
+	For details of this test see Hamilton (1994, Chapter 19).  If
+	the <literal>-o</literal> flag is given the results of the
+	various auxiliary regressions are printed.
       </para>
 
     </sect2>

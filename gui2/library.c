@@ -51,7 +51,7 @@ extern char tramodir[];
 #endif
 
 /* ../cli/common.c */
-static int data_option (unsigned char flag);
+static int data_option (unsigned long flag);
 static int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, PRN *prn);
 
@@ -69,8 +69,6 @@ static int get_terminal (char *s);
 #endif
 
 const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
-
-#define OPT_O 'o'
 
 typedef struct {
     int ID, cmdnum;
@@ -474,7 +472,7 @@ gint check_cmd (char *line)
 {
     *cmd.param = '\0';
 
-    catchflag(line, &cmd.opt);
+    catchflags(line, &cmd.opt);
 
     getcmd(line, datainfo, &cmd, &ignore, &Z, NULL); 
     if (cmd.errcode) {
@@ -1238,10 +1236,10 @@ void gui_errmsg (const int errcode)
 
 /* ........................................................... */
 
-int bool_subsample (gpointer data, guint opt, GtkWidget *w)
-     /* opt = 0     -- drop all obs with missing data values 
-	opt = 'o'   -- sample using dummy variable
-	opt = 'r'   -- sample using boolean expression
+int bool_subsample (unsigned long opt)
+     /* opt = 0       -- drop all obs with missing data values 
+	opt = OPT_O   -- sample using dummy variable
+	opt = OPT_R   -- sample using boolean expression
      */
 {
     int err = 0;
@@ -1251,8 +1249,8 @@ int bool_subsample (gpointer data, guint opt, GtkWidget *w)
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
 	return 1;
 
-    if (opt == 0) {
-	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, 'o');
+    if (opt == 0L) {
+	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, OPT_O);
     } else {
 	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, opt);
     }
@@ -1283,7 +1281,7 @@ int bool_subsample (gpointer data, guint opt, GtkWidget *w)
 
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
 {
-    bool_subsample(data, opt, w);
+    bool_subsample((unsigned long) opt);
 }
 
 /* ........................................................... */
@@ -1300,7 +1298,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
     sprintf(line, "smpl %s -r", buf); 
     if (verify_and_record_command(line)) return;
 
-    err = bool_subsample(NULL, 'r', NULL);
+    err = bool_subsample(OPT_R);
     if (!err) {
 	close_dialog(ddata);
     }
@@ -1321,7 +1319,7 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 	
     clear(line, MAXLEN);
     sprintf(line, "setobs %s %s ", pdstr, stobs);
-    catchflag(line, &cmd.opt);
+    catchflags(line, &cmd.opt);
     if (verify_and_record_command(line)) return;
 
     err = set_obs(line, datainfo, cmd.opt);
@@ -1965,8 +1963,9 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     else {
 	if (add_test_to_model(&test, pmod) == 0)
 	    print_test_to_window(&test, mydata->w);
-	if (cmd.opt) 
+	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[1], datainfo, 0, prn);
+	}
     }
 
     clear_model(models[1], NULL);
@@ -2013,7 +2012,7 @@ static gint check_model_cmd (char *line, char *modelgenr)
 
     *cmd.param = '\0';
 
-    catchflag(line, &cmd.opt);
+    catchflags(line, &cmd.opt);
 
     getcmd(line, datainfo, &cmd, &ignore, &Z, getgenr); 
     if (cmd.errcode) {
@@ -2204,7 +2203,7 @@ void do_model (GtkWidget *widget, gpointer p)
     *modelgenr = '\0';
     if (check_model_cmd(line, modelgenr)) return;
 
-    cmd.opt = 0;
+    cmd.opt = 0L;
     echo_cmd(&cmd, datainfo, line, 0, 1, NULL);
     if (cmd.ci == VARDUP) {
 	errbox(_("A variable was duplicated in the list of regressors"));
@@ -4186,7 +4185,7 @@ int maybe_restore_full_data (int action)
 
 /* ........................................................... */
 
-int do_store (char *savename, unsigned char oflag, int overwrite)
+int do_store (char *savename, unsigned long oflag, int overwrite)
 {
     gchar *msg, *tmp = NULL;
     FILE *fp;
@@ -4200,13 +4199,15 @@ int do_store (char *savename, unsigned char oflag, int overwrite)
     /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;
 
-    if (oflag) { /* not a standard native save */
-	tmp = g_strdup_printf("store '%s' %s -%c", savename, 
-			      (showlist)? storelist : "", oflag);
+    if (oflag != 0) { /* not a standard native save */
+	const char *flagstr = print_flags(oflag);
+
+	tmp = g_strdup_printf("store '%s' %s%s", savename, 
+			      (showlist)? storelist : "", flagstr);
     } else if (dat_suffix(savename)) { /* saving as ".dat" */
 	tmp = g_strdup_printf("store '%s' %s -t", savename, 
 			      (showlist)? storelist : "");
-	oflag = 't';
+	oflag = OPT_T;
     } else {
 	if (!overwrite) {
 	    fp = fopen(savename, "rb");
@@ -4252,7 +4253,7 @@ int do_store (char *savename, unsigned char oflag, int overwrite)
 	goto store_get_out;
     }
 
-    if (oflag != 'm' && oflag != 'r' && oflag != 'a') {
+    if (oflag != OPT_M && oflag != OPT_R && oflag != OPT_A) {
 	mkfilelist(FILE_LIST_DATA, savename);
     }
 
@@ -4815,14 +4816,14 @@ static int script_model_test (int id, PRN *prn, int ols_only)
 
 /* ........................................................... */
 
-static unsigned char gp_flags (int batch, unsigned char opt)
+static unsigned char gp_flags (int batch, unsigned long opt)
 {
     unsigned char flags = 0;
 
     if (batch) flags |= GP_BATCH;
-    if (opt == 'm') flags |= GP_IMPULSES;
-    else if (opt == 'z') flags |= GP_DUMMY;
-    else if (opt == 's') flags |= GP_OLS_OMIT;
+    if (opt & OPT_M) flags |= GP_IMPULSES;
+    else if (opt & OPT_Z) flags |= GP_DUMMY;
+    else if (opt & OPT_S) flags |= GP_OLS_OMIT;
 
     return flags;
 }
@@ -4871,7 +4872,7 @@ int gui_exec_line (char *line,
     *linecopy = 0;
     strncat(linecopy, line, sizeof linecopy - 1);
 
-    catchflag(line, &cmd.opt);
+    catchflags(line, &cmd.opt);
 
     /* but if we're stacking commands for a loop, parse "lightly" */
     if (*plstack) { 
@@ -4979,7 +4980,9 @@ int gui_exec_line (char *line,
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL);
-	    if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, 0, prn);
+	    }
 	}
 	break;	
 
@@ -5008,7 +5011,9 @@ int gui_exec_line (char *line,
 	} else {
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL);
-	    if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, 0, prn);
+	    }
 	}
 	clear_model(&tmpmod, NULL);
 	break;
@@ -5021,7 +5026,9 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}
-	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, prn);
+	}
 	break;
 
     case ARCH:
@@ -5033,25 +5040,28 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
 	    swap_models(&models[0], &models[1]);
-	    if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
-	} else if (rebuild)
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, 0, prn);
+	    }
+	} else if (rebuild) {
 	    add_test_to_model(ptest, models[0]);
+	}
 	clear_model(models[1], NULL);
 	break;
 
     case ARMA:
 	clear_model(models[0], NULL);
 #ifdef HAVE_X12A
-	if (cmd.opt == 'n') {
+	if (cmd.opt & OPT_N) {
 	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      NULL);
+			      (cmd.opt & OPT_V)? prn : NULL);
 	} else {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
-				  ((cmd.opt == 'v') ? prn : NULL), &paths); 
+				  ((cmd.opt & OPT_V) ? prn : NULL), &paths); 
 	}
 #else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			  (cmd.opt == 'v')? prn : NULL);
+			  (cmd.opt & OPT_V)? prn : NULL);
 #endif
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
@@ -5119,7 +5129,9 @@ int gui_exec_line (char *line,
 	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
-	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, prn);
+	}
 	break;
 
     case LAD:
@@ -5191,7 +5203,9 @@ int gui_exec_line (char *line,
 	    }
 	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
-	    if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, 0, prn);
+	    }
 	} 
 	else {
 	    err = 1;
@@ -5257,7 +5271,7 @@ int gui_exec_line (char *line,
     case FCASTERR:
 	if ((err = script_model_test(0, prn, 0))) break;
 	err = fcast_with_errs(line, models[0], &Z, datainfo, prn,
-			      &paths, cmd.opt); 
+			      &paths, (cmd.opt != 0)); 
 	if (err) errmsg(err, prn);
 	break;
 
@@ -5276,12 +5290,16 @@ int gui_exec_line (char *line,
 	    break;
 	if (dataset_is_time_series(datainfo)) {
 	    plotvar(&Z, datainfo, "time");
-	    cmd.list = myrealloc(cmd.list, 4 * sizeof(int));
+	    cmd.list = myrealloc(cmd.list, 4 * sizeof *cmd.list);
 	    cmd.list[0] = 3; 
-	    cmd.list[1] = (models[0])->list[1]; /* FIXME arma */
+	    if ((models[0])->ci == ARMA) {
+		cmd.list[1] = (models[0])->list[4]; 
+	    } else {
+		cmd.list[1] = (models[0])->list[1]; 
+	    }
 	    cmd.list[2] = varindex(datainfo, "autofit");
 	    cmd.list[3] = varindex(datainfo, "time");
-	    lines[0] = cmd.opt;
+	    lines[0] = (cmd.opt != 0); 
 	    err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
 			  &paths, &plot_count, 0); 
 	    if (err < 0) {
@@ -5324,7 +5342,7 @@ int gui_exec_line (char *line,
 	plotflags = gp_flags((exec_code == SCRIPT_EXEC), cmd.opt);
 	
 	if (cmd.ci == GNUPLOT) {
-	    if (cmd.opt == 'm' || cmd.opt == 'z' || cmd.opt == 's') { 
+	    if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
 		err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
 			      &paths, &plot_count, plotflags); 
 	    } else {
@@ -5371,7 +5389,9 @@ int gui_exec_line (char *line,
 	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
-	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, prn);
+	}
 	break;
 
     case HELP:
@@ -5389,10 +5409,11 @@ int gui_exec_line (char *line,
         }
 	if (data_status & HAVE_DATA)
 	    close_session();
-        if (cmd.opt)
+        if (cmd.opt) {
             err = import_box(&Z, &datainfo, datfile, prn);
-        else
+        } else {
             err = import_csv(&Z, &datainfo, datfile, prn);
+	}
         if (!err) { 
 	    data_status |= IMPORT_DATA;
 	    register_data(datfile, NULL, (exec_code != REBUILD_EXEC));
@@ -5460,7 +5481,7 @@ int gui_exec_line (char *line,
     case LMTEST:
 	if ((err = script_model_test(0, prn, 1))) break;
 	/* non-linearity (squares) */
-	if (cmd.opt == 's' || cmd.opt == 'o' || !cmd.opt) {
+	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_SQ, prn, ptest);
 	    clear_model(models[1], NULL);
@@ -5468,7 +5489,7 @@ int gui_exec_line (char *line,
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
-	if (cmd.opt == 'l' || cmd.opt == 'o' || !cmd.opt) {
+	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_LOG, prn, ptest);
 	    clear_model(models[1], NULL);
@@ -5476,14 +5497,14 @@ int gui_exec_line (char *line,
 	    if (err) errmsg(err, prn);
 	}
 	/* autocorrelation or heteroskedasticity */
-	if (cmd.opt == 'm' || cmd.opt == 'o') {
+	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
 	    int order = atoi(cmd.param);
 
 	    err = autocorr_test(models[0], order, &Z, datainfo, prn, ptest);
 	    if (err) errmsg(err, prn);
 	    /* FIXME: need to respond? */
 	} 
-	if (cmd.opt == 'c' || !cmd.opt) {
+	if ((cmd.opt & OPT_C) || !cmd.opt) {
 	    err = whites_test(models[0], &Z, datainfo, prn, ptest);
 	    if (err) errmsg(err, prn);
 	}
@@ -5492,22 +5513,14 @@ int gui_exec_line (char *line,
 	break;
 
     case LOGISTIC:
-	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn);
-	    break;
-	}
-	(models[0])->ID = ++model_count;
-	if (printmodel(models[0], datainfo, prn))
-	    (models[0])->errcode = E_NAN;
-	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn); 
-	break;
-
     case LOGIT:
     case PROBIT:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
+	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
+	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
+	} else {
+	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
+	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -5515,7 +5528,9 @@ int gui_exec_line (char *line,
 	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
-	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn); 
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, prn); 
+	}
 	break;
 
     case LOOP:
@@ -5576,10 +5591,12 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	(models[0])->ID = ++model_count;
-	if (cmd.opt != 'q' && printmodel(models[0], datainfo, prn)) {
+	if (!(cmd.opt & OPT_Q) && printmodel(models[0], datainfo, prn)) {
 	    (models[0])->errcode = E_NAN;
 	}
-	if (cmd.opt == 'o') outcovmx(models[0], datainfo, 0, prn); 
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, prn); 
+	}
 	break;
 
 #ifdef ENABLE_GMP
@@ -5708,10 +5725,11 @@ int gui_exec_line (char *line,
 	if (err) errmsg(err, prn);
 	else {
 	    print_smpl(datainfo, (cmd.opt)? fullinfo->n : 0, prn);
-	    if (cmd.opt) 
+	    if (cmd.opt) { 
 		set_sample_label_special();
-	    else
+	    } else {
 		set_sample_label(datainfo);
+	    }
 	    if (!chk) restore_sample_state(TRUE);
 	}
 	break;
@@ -5734,10 +5752,11 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	if (strlen(cmd.param)) {
-	    if (cmd.opt == 'z' && !has_gz_suffix(cmd.param))
+	    if ((cmd.opt & OPT_Z) && !has_gz_suffix(cmd.param)) {
 		pprintf(prn, _("store: using filename %s.gz\n"), cmd.param);
-	    else
+	    } else {
 		pprintf(prn, _("store: using filename %s\n"), cmd.param);
+	    }
 	} else {
 	    pprintf(prn, _("store: no filename given\n"));
 	    break;
@@ -5749,7 +5768,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	pprintf(prn, _("Data written OK.\n"));
-	if ((cmd.opt == 'o' || cmd.opt == 's') && datainfo->markers) 
+	if (((cmd.opt & OPT_O) || (cmd.opt & OPT_S)) && datainfo->markers) 
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));
 	break;
@@ -5794,13 +5813,15 @@ int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	/* is this OK? */
-	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn); 
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, prn); 
+	}
 	break;		
 
     case VAR:
 	order = atoi(cmd.param);
 	err = simple_var(order, cmd.list, &Z, datainfo, 0, 
-			 (cmd.opt == 'q')? NULL : prn);
+			 (cmd.opt & OPT_Q)? NULL : prn);
 	if (!err) {
 	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}

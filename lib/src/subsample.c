@@ -183,7 +183,7 @@ enum {
 int restrict_sample (const char *line, 
 		     double ***oldZ, double ***newZ,
 		     DATAINFO *oldinfo, DATAINFO *newinfo,
-		     unsigned char oflag)
+		     unsigned long oflag)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values; or using as a
 	mask a specified dummy variable; or masking with a specified
@@ -198,12 +198,12 @@ int restrict_sample (const char *line,
     *gretl_errmsg = '\0';
     *dumv = '\0';
 
-    if (oflag == 'o' && 
+    if (oflag == OPT_O && 
 	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0)) {
 	opt = SUBSAMPLE_DROP_MISSING;
-    } else if (oflag == 'o') {
+    } else if (oflag == OPT_O) {
 	opt = SUBSAMPLE_USE_DUMMY;
-    } else if (oflag == 'r') {
+    } else if (oflag == OPT_R) {
 	opt = SUBSAMPLE_BOOLEAN;
     } else {
 	strcpy(gretl_errmsg, "Unrecognized sample command");

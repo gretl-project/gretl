@@ -90,7 +90,7 @@ static gboolean pca_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
     return FALSE;
 }
 
-static unsigned char pca_flag_dialog (void)
+static unsigned long pca_flag_dialog (void)
 {
     struct flag_info *finfo;
     GtkWidget *dialog, *tempwid, *button, *hbox;
@@ -215,10 +215,10 @@ static unsigned char pca_flag_dialog (void)
 
     gtk_main();
 
-    if (flag == PCA_SAVE_MAIN) return 'o';
-    if (flag == PCA_SAVE_ALL) return 'a';
+    if (flag == PCA_SAVE_MAIN) return OPT_O;
+    if (flag == PCA_SAVE_ALL) return OPT_A;
 
-    return 0;
+    return 0L;
 }
 
 static void pca_print (CORRMAT *corrmat, gretl_matrix *m,
@@ -276,22 +276,22 @@ static void pca_print (CORRMAT *corrmat, gretl_matrix *m,
 }
 
 int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
-		      DATAINFO *pdinfo, unsigned char *pflag,
+		      DATAINFO *pdinfo, unsigned long *pflag,
 		      PRN *prn)
 {
     gretl_matrix *m;
     double x;
     int i, j, idx, n = corrmat->list[0];
     double *evals;
-    unsigned char oflag = 0;
+    unsigned long oflag = 0L;
 
     if (pflag != NULL) oflag = *pflag;
 
-    if (oflag == 'd') { 
+    if (oflag & OPT_D) { 
 	oflag = pca_flag_dialog();
 	if (!oflag) {
 	    /* canceled */
-	    *pflag = 0;
+	    *pflag = 0L;
 	    return 0; 
 	}
     }    
@@ -322,7 +322,7 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 	int v = pdinfo->v;
 	int nc = 0, err = 0;
 	double **sZ = NULL;
-	int add_all = (oflag == 'a');
+	int add_all = (oflag == OPT_A);
 	int *list;
 
 	if (add_all) {

@@ -116,11 +116,11 @@ typedef enum {
  
 int plot (const LIST list, 
 	  double **Z, const DATAINFO *pdinfo, 
-	  unsigned char oflag, int pause, PRN *prn);
+	  unsigned long oflag, int pause, PRN *prn);
 
 int graph (const LIST list, 
 	   double **Z, const DATAINFO *pdinfo, 
-	   unsigned char oflag, PRN *prn);
+	   unsigned long oflag, PRN *prn);
 
 const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype);
 

@@ -23,9 +23,8 @@
  
 int spearman (const LIST list, 
 	      double **Z, const DATAINFO *pdinfo,
-	      const int opt, PRN *prn);
+	      unsigned long opt, PRN *prn);
 
-int runs_test (const int varno, 
-	       double **Z, const DATAINFO *pdinfo, 
+int runs_test (int varno, double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn);
 

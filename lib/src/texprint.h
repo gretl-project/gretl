@@ -32,11 +32,11 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      const int model_count, int oflag);
+	      const int model_count, unsigned long oflag);
 
 int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      const int model_count, int oflag);
+	      const int model_count, unsigned long oflag);
 
 char *tex_escape (char *targ, const char *src);
 
