@@ -1409,9 +1409,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     /* put stuff into list box, activate menus */
     if (!gui_get_data) populate_varlist();
 
-    /* create gretl toolbar */
-    if (want_toolbar) make_toolbar(mdata->w, main_vbox);
-
     /* get a monospaced font for various windows */
     set_fixed_font();
 
@@ -1421,6 +1418,9 @@ static GtkWidget *make_main_window (int gui_get_data)
 #endif
 
     gtk_widget_show_all(mdata->w); 
+
+    /* create gretl toolbar */
+    if (want_toolbar) make_toolbar(mdata->w, main_vbox);
 
     return dlabel;
 }
@@ -2032,7 +2032,6 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     GtkWidget *button, *hbox;
     GdkPixmap *icon;
     GdkBitmap *mask;
-    GdkColormap *cmap;
     int i;
     const char *toolstrings[] = {
 	N_("launch calculator"), 
@@ -2051,19 +2050,13 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     void (*toolfunc)() = NULL;
     const char *toolstr;
 
-    cmap = gdk_colormap_get_system();
-
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
 
     toolbar_box = gtk_handle_box_new();
-    gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(toolbar_box), 
-				   GTK_SHADOW_NONE);
     gtk_box_pack_start(GTK_BOX(hbox), toolbar_box, FALSE, FALSE, 0);
 
     gretl_toolbar = gtk_toolbar_new();
-
-    gtk_container_set_border_width(GTK_CONTAINER(gretl_toolbar), 0);
     gtk_container_add(GTK_CONTAINER(toolbar_box), gretl_toolbar);
 
     for (i=0; toolstrings[i] != NULL; i++) {
@@ -2119,8 +2112,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 #endif
 
 	toolstr = _(toolstrings[i]);
-	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, 
-						     NULL, toolxpm);
+	icon = gdk_pixmap_create_from_xpm_d(mdata->w->window, &mask, 
+					    NULL, toolxpm);
 	button = image_button_new(icon, mask, toolfunc);
 	gtk_toolbar_append_widget(GTK_TOOLBAR(gretl_toolbar), button,
 				  toolstr, NULL);
