@@ -109,14 +109,16 @@ void model_to_rtf (MODEL *pmod)
     prnclose(&prn);
 }
 
+/* row format specifications for RTF "tables" */
+
 #define COEFF_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                    "\\cellx500\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                    "\\cellx7500\\cellx8000\n\\intbl"
 
-#define STATS_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+#define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx2700\\cellx4000\\cellx6700\\cellx8000\n\\intbl"
 
-#define SELST_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+#define SELST_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx1333\\cellx2666\\cellx4000\\cellx5333" \
                    "\\cellx6666\\cellx8000\n\\intbl"
 
