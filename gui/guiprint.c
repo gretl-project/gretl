@@ -275,7 +275,7 @@ void gnome_print_graph (const char *fname)
     GnomePrinter *printer;
     GnomePrintContext *pc; 
     GdkPixbuf *pbuf;
-    char plotcmd[MAXLEN];
+    char tmp[MAXLEN];
     int image_left_x = 530, image_bottom_y = 50;
     int width, height;
 
@@ -284,17 +284,18 @@ void gnome_print_graph (const char *fname)
     if (!printer) return;
 
     /* run gnuplot on the plotfile to generate pngtmp */
-    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, fname);
-    if (system(plotcmd)) {
+    sprintf(tmp, "\"%s\" \"%s\"", paths.gnuplot, fname);
+    if (system(tmp)) {
 	errbox("Failed to generate graph");
 	gtk_object_unref(GTK_OBJECT(printer));
 	return;
     }
 
-    pbuf = gdk_pixbuf_new_from_file("gretltmp.png");
+    sprintf(tmp, "%sgretltmp.png", paths.userdir);
+    pbuf = gdk_pixbuf_new_from_file(tmp);
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
-    remove("gretltmp.png");
+    remove(tmp);
 
     pc = gnome_print_context_new_with_paper_size(printer, "US-Letter");
 

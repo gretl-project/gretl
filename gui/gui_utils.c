@@ -41,6 +41,10 @@ extern GdkColor red, blue;
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
+static void add_vars_to_plot_menu (windata_t *vwin);
+static void add_dummies_to_plot_menu (windata_t *vwin);
+static void check_model_menu (GtkWidget *w, GdkEventButton *eb, 
+			      gpointer data);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 
@@ -878,6 +882,13 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 
 /* ........................................................... */
 
+static void script_changed (GtkWidget *w, windata_t *vwin)
+{
+    SCRIPT_CHANGED(vwin);
+}
+
+/* ........................................................... */
+
 #include "pixmaps/save.xpm"
 #include "pixmaps/saveas.xpm"
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
@@ -1036,94 +1047,6 @@ static void make_viewbar (windata_t *vwin)
 
 /* ........................................................... */
 
-windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
-			char *title, int role,
-			GtkItemFactoryEntry menu_items[]) 
-{
-    GtkWidget *dialog, *close, *table;
-    GtkWidget *vscrollbar; 
-    windata_t *vwin;
-
-    if ((vwin = mymalloc(sizeof *vwin)) == NULL) return NULL;
-    windata_init(vwin);
-    vwin->role = role;
-
-    hsize *= gdk_char_width(fixed_font, 'W');
-    hsize += 48;
-
-    dialog = gtk_dialog_new();
-    vwin->dialog = dialog;
-    winstack_add(dialog);
-    gtk_widget_set_usize (dialog, hsize, vsize);
-    gtk_window_set_title(GTK_WINDOW(dialog), title);
-    gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_container_border_width 
-	(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
-#ifndef G_OS_WIN32
-    gtk_signal_connect_after(GTK_OBJECT(dialog), "realize", 
-			     GTK_SIGNAL_FUNC(set_wm_icon), 
-			     NULL);
-#endif
-
-    if (menu_items != NULL) {
-	set_up_viewer_menu(dialog, vwin, menu_items);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			   vwin->mbar, FALSE, TRUE, 0);
-	gtk_widget_show(vwin->mbar);
-    }
-
-    table = gtk_table_new(1, 2, FALSE);
-    /* gtk_widget_set_usize(table, 500, 400); */
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       table, TRUE, TRUE, FALSE);
-
-    vwin->w = gtk_text_new(NULL, NULL);
-
-    gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
-
-    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
-    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
-		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
-		     GTK_SHRINK, 0, 0);
-    gtk_widget_show(vwin->w);
-
-    vscrollbar = gtk_vscrollbar_new(GTK_TEXT (vwin->w)->vadj);
-    gtk_table_attach (GTK_TABLE (table), 
-		      vscrollbar, 1, 2, 0, 1,
-		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
-    gtk_widget_show (vscrollbar);
-
-    gtk_widget_show(table);
-
-    /* close button */
-    close = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       close, FALSE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
-    gtk_widget_show(close);
-
-    /* insert and then free the text buffer */
-    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-		    NULL, NULL, prn->buf, 
-		    strlen(prn->buf));
-    gretl_print_destroy(prn);
-    
-    gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-			   GTK_SIGNAL_FUNC(catch_key), dialog);
-
-    /* clean up when dialog is destroyed */
-    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(free_windata), vwin);
-
-    gtk_widget_show(dialog);
-    return vwin;
-}
-
-/* ........................................................... */
-
 static gchar *make_viewer_title (int role, const char *fname)
 {
     gchar *title = NULL;
@@ -1160,54 +1083,128 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 /* ........................................................... */
 
-static void script_changed (GtkWidget *w, windata_t *vwin)
+static windata_t *common_viewer_new (int role, const char *title, 
+                                     gpointer data, int record)
 {
-    SCRIPT_CHANGED(vwin);
+    windata_t *vwin;
+
+    if ((vwin = mymalloc(sizeof *vwin)) == NULL) return NULL;
+
+    windata_init(vwin);
+    vwin->role = role;
+    vwin->data = data;
+    vwin->dialog = gtk_dialog_new();
+    gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
+
+    if (record) winstack_add(vwin->dialog);
+
+    return vwin;
 }
 
 /* ........................................................... */
 
-static void auto_save_script (windata_t *vwin)
+static void create_text (windata_t *vwin, int hsize, int vsize, 
+			 gboolean editable)
 {
-    FILE *fp;
-    char msg[MAXLEN];
-    gchar *savestuff;
+    vwin->w = gtk_text_new(NULL, NULL);
+    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
+    gtk_text_set_editable(GTK_TEXT(vwin->w), editable);
 
-    if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
-	file_save(vwin, SAVE_SCRIPT, NULL);
-	strcpy(vwin->fname, scriptfile);
-    }
-
-    if ((fp = fopen(vwin->fname, "w")) == NULL) {
-	sprintf(msg, _("Couldn't write to %s"), vwin->fname);
-	errbox(msg); 
-	return;
-    }
-    savestuff = 
-	gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-    fprintf(fp, "%s", savestuff);
-    g_free(savestuff); 
-    fclose(fp);
-    infobox(_("script saved"));
-    SCRIPT_SAVED(vwin);
+    hsize *= gdk_char_width(fixed_font, 'W');
+    hsize += 48;
+    gtk_widget_set_usize (vwin->dialog, hsize, vsize);
 }
 
 /* ........................................................... */
 
-static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin)
+static void dialog_box_config (GtkWidget *dialog)
 {
-    if (SCRIPT_IS_CHANGED(vwin)) {
-	int button;
+    gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
+    gtk_container_border_width 
+	(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
+    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
+#ifndef G_OS_WIN32
+    gtk_signal_connect_after(GTK_OBJECT(dialog), "realize", 
+			     GTK_SIGNAL_FUNC(set_wm_icon), 
+			     NULL);
+#endif
+}
 
-	button = yes_no_dialog(_("gretl: script"), 
-			       _("Save changes?"), 1);
+/* ........................................................... */
 
-	if (button == CANCEL_BUTTON)
-	    return TRUE;
-	if (button == YES_BUTTON)
-	    auto_save_script(vwin);
+static void dialog_table_setup (windata_t *vwin)
+{
+    GtkWidget *table, *vscroll;
+
+    table = gtk_table_new(1, 2, FALSE);
+    gtk_widget_set_usize(table, 500, 400);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vwin->dialog)->vbox), 
+		       table, TRUE, TRUE, FALSE);
+
+    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
+		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
+		     GTK_SHRINK, 0, 0);
+    gtk_widget_show(vwin->w);
+
+    vscroll = gtk_vscrollbar_new(GTK_TEXT(vwin->w)->vadj);
+    gtk_table_attach (GTK_TABLE (table), 
+		      vscroll, 1, 2, 0, 1,
+		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
+    gtk_widget_show (vscroll);
+
+    gtk_widget_show(table);
+}
+
+/* ........................................................... */
+
+windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
+			char *title, int role,
+			GtkItemFactoryEntry menu_items[]) 
+{
+    GtkWidget *dialog, *close;
+    windata_t *vwin;
+
+    vwin = common_viewer_new(role, title, NULL, 1);
+    if (vwin == NULL) return NULL;   
+
+    create_text(vwin, hsize, vsize, FALSE);
+
+    dialog = vwin->dialog;
+    dialog_box_config(dialog);
+
+    if (menu_items != NULL) {
+	set_up_viewer_menu(dialog, vwin, menu_items);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   vwin->mbar, FALSE, TRUE, 0);
+	gtk_widget_show(vwin->mbar);
     }
-    return FALSE;
+
+    dialog_table_setup(vwin);
+
+    /* close button */
+    close = gtk_button_new_with_label(_("Close"));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+		       close, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
+		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
+    gtk_widget_show(close);
+
+    /* insert and then free the text buffer */
+    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+		    NULL, NULL, prn->buf, 
+		    strlen(prn->buf));
+    gretl_print_destroy(prn);
+    
+    gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
+			   GTK_SIGNAL_FUNC(catch_key), dialog);
+
+    /* clean up when dialog is destroyed */
+    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
+		       GTK_SIGNAL_FUNC(free_windata), vwin);
+
+    gtk_widget_show(dialog);
+    return vwin;
 }
 
 /* ........................................................... */
@@ -1216,7 +1213,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		      int hsize, int vsize, int role, 
 		      GtkItemFactoryEntry menu_items[]) 
 {
-    GtkWidget *dialog, *table, *vscrollbar; 
+    GtkWidget *dialog; 
     void *colptr = NULL, *nextcolor = NULL;
     char tempstr[MAXSTR], *fle = NULL;
     FILE *fd = NULL;
@@ -1237,34 +1234,17 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	return NULL;
     }
 
-    if ((vwin = mymalloc(sizeof *vwin)) == NULL)
-	return NULL;
-    windata_init(vwin);
-    strcpy(vwin->fname, filename);
-    vwin->role = role;
-
-    hsize *= gdk_char_width(fixed_font, 'W');
-    hsize += 48;
-
-    dialog = gtk_dialog_new();
-    vwin->dialog = dialog;
-    if (!doing_script) winstack_add(dialog);
-    gtk_widget_set_usize (dialog, hsize, vsize);
-
     title = make_viewer_title(role, filename);
-    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    vwin = common_viewer_new(role, title, NULL, !doing_script);
     g_free(title);
+    if (vwin == NULL) return NULL; 
 
-    gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_container_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
-#ifndef G_OS_WIN32
-    gtk_signal_connect_after(GTK_OBJECT(dialog), "realize", 
-			     GTK_SIGNAL_FUNC(set_wm_icon), 
-			     NULL);
-#endif
+    create_text(vwin, hsize, vsize, editable);
+
+    dialog = vwin->dialog;
+    dialog_box_config(dialog);
+   
+    strcpy(vwin->fname, filename);
 
     if (menu_items != NULL) {
 	set_up_viewer_menu(dialog, vwin, menu_items);
@@ -1273,12 +1253,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_widget_show(vwin->mbar);
     }
 
-    table = gtk_table_new(1, 2, FALSE);
-    gtk_widget_set_usize(table, 500, 400);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       table, TRUE, TRUE, FALSE);
-
-    vwin->w = gtk_text_new(NULL, NULL);
+    dialog_table_setup(vwin);
 
     if (style == NULL) {
 	style = gtk_style_new();
@@ -1286,8 +1261,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	style->font = fixed_font;
     }
     gtk_widget_set_style(GTK_WIDGET(vwin->w), style);
-
-    gtk_text_set_editable(GTK_TEXT(vwin->w), editable);
 
     /* special case: the gretl console */
     if (role == CONSOLE) {
@@ -1299,20 +1272,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_signal_connect_after(GTK_OBJECT(vwin->w), "button_press_event",
 				 (GtkSignalFunc) edit_script_help, vwin);
     } 
-
-    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
-    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
-		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
-		     GTK_SHRINK, 0, 0);
-    gtk_widget_show(vwin->w);
-
-    vscrollbar = gtk_vscrollbar_new (GTK_TEXT (vwin->w)->vadj);
-    gtk_table_attach (GTK_TABLE (table), 
-		      vscrollbar, 1, 2, 0, 1,
-		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
-    gtk_widget_show (vscrollbar);
-
-    gtk_widget_show(table);
 
     /* is the file to be deleted after viewing? */
     if (del_file) {
@@ -1396,34 +1355,16 @@ windata_t *view_file (char *filename, int editable, int del_file,
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role) 
 {
-    GtkWidget *dialog, *table;
-    GtkWidget *vscrollbar; 
+    GtkWidget *dialog;
     windata_t *vwin;
 
-    if ((vwin = mymalloc(sizeof *vwin)) == NULL)
-	return NULL;
-    windata_init(vwin);
-    vwin->data = pbuf;
-    vwin->role = role;
+    vwin = common_viewer_new(role, title, pbuf, 1);
+    if (vwin == NULL) return NULL;
 
-    hsize *= gdk_char_width(fixed_font, 'W');
-    hsize += 48;
+    create_text(vwin, hsize, vsize, TRUE);
 
-    dialog = gtk_dialog_new();
-    vwin->dialog = dialog;
-    winstack_add(dialog);
-    gtk_widget_set_usize (dialog, hsize, vsize);
-    gtk_window_set_title(GTK_WINDOW(dialog), title);
-    gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_container_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
-#ifndef G_OS_WIN32
-    gtk_signal_connect_after(GTK_OBJECT(dialog), "realize", 
-			     GTK_SIGNAL_FUNC(set_wm_icon), 
-			     NULL);
-#endif
+    dialog = vwin->dialog;
+    dialog_box_config(dialog);
 
     /* add a menu bar */
     set_up_viewer_menu(dialog, vwin, edit_items);
@@ -1431,28 +1372,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 		       vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
-    table = gtk_table_new(1, 2, FALSE);
-    gtk_widget_set_usize(table, 500, 400);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       table, TRUE, TRUE, FALSE);
-
-    vwin->w = gtk_text_new(NULL, NULL);
-
-    gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
-    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
-
-    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
-		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
-		     GTK_SHRINK, 0, 0);
-    gtk_widget_show(vwin->w);
-
-    vscrollbar = gtk_vscrollbar_new (GTK_TEXT (vwin->w)->vadj);
-    gtk_table_attach (GTK_TABLE (table), 
-		      vscrollbar, 1, 2, 0, 1,
-		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
-    gtk_widget_show (vscrollbar);
-
-    gtk_widget_show(table);
+    dialog_table_setup(vwin);
 
     /* add an editing bar */
     make_viewbar(vwin);    
@@ -1462,6 +1382,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 			NULL, NULL, *pbuf, strlen(*pbuf));
     else {
+	printf("doing the start edit thing\n");
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 			NULL, NULL, "A", strlen("A"));
 	gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
@@ -1474,6 +1395,115 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     gtk_widget_show(dialog);
 
     return vwin;
+}
+
+/* ........................................................... */
+
+int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
+		char *title) 
+{
+    windata_t *vwin;
+    GtkWidget *dialog, *close;
+
+    vwin = common_viewer_new(VIEW_MODEL, title, pmod, 1);
+    if (vwin == NULL) return 1;    
+
+    create_text(vwin, hsize, vsize, FALSE);
+
+    dialog = vwin->dialog;
+    dialog_box_config(dialog);
+
+    set_up_viewer_menu(dialog, vwin, model_items);
+
+    /* add menu of indep vars, against which to plot resid */
+    add_vars_to_plot_menu(vwin);
+    add_dummies_to_plot_menu(vwin);
+    gtk_signal_connect(GTK_OBJECT(vwin->mbar), "button_press_event", 
+		       GTK_SIGNAL_FUNC(check_model_menu), vwin);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       vwin->mbar, FALSE, TRUE, 0);
+    gtk_widget_show(vwin->mbar);
+
+    dialog_table_setup(vwin);
+
+    /* close button */
+    close = gtk_button_new_with_label(_("Close"));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+		       close, FALSE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
+		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
+    gtk_widget_show(close);
+
+    /* insert and then free the model buffer */
+    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+		    NULL, NULL, prn->buf, 
+		    strlen(prn->buf));
+    gretl_print_destroy(prn);
+
+    copylist(&default_list, pmod->list);
+
+    /* attach shortcuts */
+    gtk_object_set_data(GTK_OBJECT(dialog), "ddata", vwin);
+    gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
+		       GTK_SIGNAL_FUNC(catch_key), 
+		       dialog);
+
+    /* clean up when dialog is destroyed */
+    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
+		       GTK_SIGNAL_FUNC(delete_model), 
+		       vwin->data);
+    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
+		       GTK_SIGNAL_FUNC(free_windata), 
+		       vwin);
+
+    gtk_widget_show_all(dialog);
+    return 0;
+}
+
+/* ........................................................... */
+
+static void auto_save_script (windata_t *vwin)
+{
+    FILE *fp;
+    char msg[MAXLEN];
+    gchar *savestuff;
+
+    if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
+	file_save(vwin, SAVE_SCRIPT, NULL);
+	strcpy(vwin->fname, scriptfile);
+    }
+
+    if ((fp = fopen(vwin->fname, "w")) == NULL) {
+	sprintf(msg, _("Couldn't write to %s"), vwin->fname);
+	errbox(msg); 
+	return;
+    }
+    savestuff = 
+	gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+    fprintf(fp, "%s", savestuff);
+    g_free(savestuff); 
+    fclose(fp);
+    infobox(_("script saved"));
+    SCRIPT_SAVED(vwin);
+}
+
+/* ........................................................... */
+
+static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin)
+{
+    if (SCRIPT_IS_CHANGED(vwin)) {
+	int button;
+
+	button = yes_no_dialog(_("gretl: script"), 
+			       _("Save changes?"), 1);
+
+	if (button == CANCEL_BUTTON)
+	    return TRUE;
+	if (button == YES_BUTTON)
+	    auto_save_script(vwin);
+    }
+    return FALSE;
 }
 
 /* ........................................................... */
@@ -1781,107 +1811,6 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
     flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
     flip(mwin->ifac, "/Model data/Define new variable...", s);
-}
-
-/* ........................................................... */
-
-int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
-		char *title) 
-{
-    windata_t *vwin;
-    GtkWidget *dialog, *close, *table, *scroller;
-
-    if ((vwin = mymalloc(sizeof *vwin)) == NULL) return 1;
-    windata_init(vwin);
-
-    hsize *= gdk_char_width (fixed_font, 'W');
-    hsize += 48;
-
-    vwin->data = pmod;
-    vwin->role = VIEW_MODEL;
-
-    dialog = gtk_dialog_new();
-    vwin->dialog = dialog;
-    winstack_add(dialog);
-    gtk_widget_set_usize (dialog, hsize, vsize);
-    gtk_window_set_title(GTK_WINDOW(dialog), title);
-    gtk_container_border_width (GTK_CONTAINER 
-				(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_container_border_width 
-	(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_box_set_homogeneous(GTK_BOX 
-			    (GTK_DIALOG(dialog)->action_area), TRUE);
-#ifndef G_OS_WIN32
-    gtk_signal_connect_after(GTK_OBJECT(dialog), "realize", 
-			     GTK_SIGNAL_FUNC(set_wm_icon), 
-			     NULL);
-#endif
-
-    set_up_viewer_menu(dialog, vwin, model_items);
-
-    /* add menu of indep vars, against which to plot resid */
-    add_vars_to_plot_menu(vwin);
-    add_dummies_to_plot_menu(vwin);
-    gtk_signal_connect(GTK_OBJECT(vwin->mbar), "button_press_event", 
-		       GTK_SIGNAL_FUNC(check_model_menu), vwin);
-
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       vwin->mbar, FALSE, TRUE, 0);
-    gtk_widget_show(vwin->mbar);
-
-    table = gtk_table_new(1, 2, FALSE);
-    gtk_widget_set_usize(table, hsize, vsize); 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       table, TRUE, TRUE, FALSE);
-
-    vwin->w = gtk_text_new(NULL, NULL);
-    gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
-    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
-    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
-		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
-		     GTK_SHRINK, 0, 0);
-    gtk_widget_show(vwin->w);
-    scroller = gtk_vscrollbar_new(GTK_TEXT(vwin->w)->vadj);
-    gtk_table_attach (GTK_TABLE(table), 
-		      scroller, 1, 2, 0, 1,
-		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
-    gtk_widget_show(scroller);
-
-    gtk_widget_show(table);
-
-    /* close button */
-    close = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       close, FALSE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
-    gtk_widget_show(close);
-
-    /* insert and then free the model buffer */
-    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-		    NULL, NULL, prn->buf, 
-		    strlen(prn->buf));
-    gretl_print_destroy(prn);
-
-    copylist(&default_list, pmod->list);
-
-    /* attach shortcuts */
-    gtk_object_set_data(GTK_OBJECT(dialog), "ddata", vwin);
-    gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_key), 
-		       dialog);
-
-    /* clean up when dialog is destroyed */
-    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(delete_model), 
-		       vwin->data);
-    gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(free_windata), 
-		       vwin);
-
-    gtk_widget_show_all(dialog);
-    return 0;
 }
 
 /* ......................................................... */
