@@ -37,14 +37,6 @@ int session_saved;
 
 /* ........................................................... */
 
-void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
-{
-    simple_selection (_("gretl: data transformations"), 
-		      add_logs_etc, add_code, NULL);    
-}
-
-/* ........................................................... */
-
 void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     dialog_t *ddata = (dialog_t *) data;

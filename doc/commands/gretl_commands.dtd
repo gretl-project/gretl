@@ -9,7 +9,7 @@
 <!ENTITY hellip "&#8230;">
 <!ENTITY mdash  "&#8212;">
 <!ENTITY latex  "LaTeX">
-<!ENTITY minus  "-">
+<!ENTITY minus  "&#8211;">
 
 
 <!ELEMENT commandlist (command)+>
@@ -62,7 +62,7 @@
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
-                function | manref | cmdref| tabref | cmd)*>
+                func | manref | cmdref| tabref | cmd)*>
 
 <!ELEMENT code (#PCDATA)>
 
@@ -82,8 +82,6 @@
 <!ELEMENT manref EMPTY>
 <!ATTLIST manref
    targ    CDATA #REQUIRED
-   before  CDATA #IMPLIED
-   after   CDATA #IMPLIED
 >
 
 <!ELEMENT cmdref EMPTY>
@@ -105,10 +103,8 @@
    rwidth   CDATA #IMPLIED
    id       CDATA #IMPLIED
    title    CDATA #IMPLIED
->
-
-<!ATTLIST row
-   head   (true | false) "false"
+   lhead    CDATA #IMPLIED
+   rhead    CDATA #IMPLIED
 >
 
 <!ELEMENT repl     (#PCDATA)>
@@ -118,7 +114,7 @@
 <!ELEMENT book     (#PCDATA)>
 <!ELEMENT quote    (#PCDATA | lit)*>
 <!ELEMENT filename (#PCDATA)>
-<!ELEMENT function (#PCDATA)>
+<!ELEMENT func     (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>
 <!ELEMENT mathvar  (#PCDATA | sub | super)*>
 <!ELEMENT sub      (#PCDATA)>

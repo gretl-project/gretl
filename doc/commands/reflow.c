@@ -31,6 +31,7 @@ struct utf_stuff replacers[] = {
     { "&#x2014;", " -- " },  /* &ndash; */
     { "&gt;", ">" }, 
     { "&lt;", "<" }, 
+    { "&amp;", "&" },
     { "&#x3BB;", "lambda" }, /* &lgr; */
     { "&#x3BC;", "mu" },     /* &mu; */
     { "&#x3C3;", "sigma" },  /* &sigma; */    

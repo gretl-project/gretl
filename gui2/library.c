@@ -2620,16 +2620,18 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
     const gchar *buf;
     char tmp[32];
 
-    buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
 
     sscanf(buf, "%31s", tmp);
 	
     clear(line, MAXLEN);
-    sprintf(line, "seed %s", tmp); 
+    sprintf(line, "set seed %s", tmp); 
     if (verify_and_record_command(line)) return;
 
     gretl_rand_set_seed(atoi(tmp));
+
+    close_dialog(ddata);
 }
 
 /* ........................................................... */
@@ -5750,14 +5752,8 @@ int gui_exec_line (char *line,
 			     exec_code);
 	break;
 
-    case SEED:
-	gretl_rand_set_seed(atoi(cmd.param));
-	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
-		atoi(cmd.param));
-	break;
-
     case SET:
-	err = parse_set_line(line, &echo_off);
+	err = parse_set_line(line, &echo_off, prn);
 	if (err) errmsg(err, prn);
 	break;
 

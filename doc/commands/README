@@ -2,42 +2,37 @@ What's here?
 
 ----------
 
-skeleton.c makes a program called "skeleton", which goes through
-the full list of gretl commands (from libgretl) and outputs a
-skeleton XML command reference.  Mostly this is blank, but it
-contain a mostly correct listing of the options available in
-connection with each command (if any), again taken from libgretl.
+skeleton.c makes a program called "skeleton", which goes through the
+full list of gretl commands (from libgretl) and outputs a skeleton XML
+command reference.  Mostly this is blank, but it contain a mostly
+correct listing of the options available in connection with each
+command (if any), again taken from libgretl.
 
-The output of skeleton is directed to skeleton.xml, an xml file
-that should validate in relation to the gretl command reference
-DTD, gretl_commands.dtd.  This could provide a basis for a
-translation.  It is designed as a purely content-oriented
-"database" for the gretl command reference.
+The output of skeleton is directed to skeleton.xml, an xml file that
+should validate in relation to the gretl command reference DTD,
+gretl_commands.dtd.  This could provide a basis for a translation.  It
+is designed as a purely content-oriented "database" for the gretl
+command reference.
 
-The DTD itself is, I'd say, more than half-done.  It could do with
-some more work in places, and as we go through the entire command
-listing I'm sure we'll find that more elements or attributes
-need to be added (e.g., for tables, which appear in the manual
-entries for some commands).
+The DTD itself is basically done.  It could do maybe do with some
+fine-tuning in places.
 
 ------------
 
-formatter.c makes a program called "formatter", which parses an
-XML command listing such as skeleton.xml and uses XSL to transform
-the information.  The program is very short and uses libxml and 
-libxsl to do most of the work. The idea is that this approach
-will be developed to the point where it can output:
+formatter.c makes a program called "formatter", which parses an XML
+command listing such as skeleton.xml and uses XSL to transform the
+information.  The program is very short and uses libxml and  libxsl to
+do most of the work. This program outputs:
 
-* a replacement for cmdref.xml, the command reference chapter of
-  the manual
+* a command reference section in DocBook XML, cmdlist.xml,
+  which is designed for inclusion in the full manual; and
 
-* the "online" help files gretl.hlp and gretlcli.hlp
+* gretlcli.hlp, the "online" scripts commands help file.
 
-This is partly implemented at present.  It uses the two XSL
-stylesheets, gretlman.xsl and gretltxt.xsl.  These need more work.
-Right now the text stylesheet leaves a certain amount of work undone,
-and it is supplemented by a C post-processor (see doline.c, which is
-used to make the "reflow" program.)  
+The progam uses the two XSL stylesheets, gretlman.xsl and
+gretltxt.xsl.  The text stylesheet leaves a certain amount of work
+undone, and it is supplemented by a C post-processor (see reflow.c,
+which is used to make the "reflow" program.)  
 
 You will probably have to edit the Makefile before doing anything
 else.  Once that's ready, try:
@@ -48,13 +43,20 @@ and take a look at the output: skeleton.xml.
 
 You may also try
 
-make chapter
+make docbook
+make hlp
 
-which processes inprogress.xml.  This file is based on skeleton.xml,
-but I have now filled out most of the fields with the content from the
-existing manual and helpfiles. "make chapter" should generate
-command.xml and commands.hlp.  The first of these is  part-way towards
-the chapters/cmdref.xml replacement, while the second is part-way to a
-replacement for the online help file(s).
+which both process gretl_commands.xml.  This file is based on
+skeleton.xml, but I have filled all of the fields with the content from
+the existing manual and helpfiles. 
+
+-----------
+
+validate.c makes a program, "validate", which checks a command
+reference database such as gretl_commands.xml against libgretl.  It
+flags any command which are present in the library but not the
+reference database, and vice versa.  It also checks (imperfectly) for
+disagreement between the options recognized as valid by libgretl and
+those appearing in the reference.
 
 Allin Cottrell, February 2004

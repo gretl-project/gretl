@@ -11,10 +11,6 @@
   <xsl:value-of select="@name"/>
   <xsl:text>&#xa;@</xsl:text>
   <xsl:value-of select="@section"/>
-  <xsl:text>&#xa;</xsl:text>
-  <xsl:if test="not(usage)">
-    <xsl:text>&#xa;</xsl:text>
-  </xsl:if>
   <xsl:apply-templates/>
   <xsl:text>&#xa;&#xa;</xsl:text>
 </xsl:template>
@@ -150,7 +146,7 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="function">
+<xsl:template match="func">
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -198,13 +194,11 @@
 </xsl:template>
 
 <xsl:template match="manref">
-  <xsl:value-of select="@before"/>
-  <xsl:text> the gretl manual </xsl:text>
-  <xsl:value-of select="@after"/>
+  <xsl:text>the gretl manual</xsl:text>
 </xsl:template>
 
 <xsl:template match="tabref">
-  <xsl:text>The following table </xsl:text>
+  <xsl:text>The table below </xsl:text>
 </xsl:template>
 
 <xsl:template match="menu-path">
@@ -217,6 +211,16 @@ Other access: <xsl:apply-templates/>
 
 <xsl:template match="table">
   <xsl:text>[TABLE]&#xa;</xsl:text>
+    <xsl:if test="@id">
+      <xsl:text>[ROW]&#xa;[CELL]&#xa;</xsl:text>
+      <xsl:value-of select="@lhead"/>
+      <xsl:text>[/CELL]&#xa;[CELL]&#xa;</xsl:text>
+      <xsl:value-of select="@rhead"/>
+      <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
+      <xsl:text>[ROW]&#xa;[CELL]&#xa;-------</xsl:text>
+      <xsl:text>[/CELL]&#xa;[CELL]&#xa;-------</xsl:text>
+      <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
+    </xsl:if>
   <xsl:apply-templates/>
   <xsl:text>[/TABLE]&#xa;</xsl:text>
 </xsl:template>

@@ -164,7 +164,7 @@
   <filename><xsl:apply-templates/></filename>
 </xsl:template>
 
-<xsl:template match="function">
+<xsl:template match="func">
   <function><xsl:apply-templates/></function>
 </xsl:template>
 
@@ -217,9 +217,7 @@
 </xsl:template>
 
 <xsl:template match="manref">
-<xsl:value-of select="@before"/>
-<xsl:text> </xsl:text><xref linkend="{@targ}"/>
-<xsl:text> </xsl:text><xsl:value-of select="@after"/>
+  <xref linkend="{@targ}"/>
 </xsl:template>
 
 <xsl:template match="tabref">
@@ -238,8 +236,14 @@
   <xsl:choose>
     <xsl:when test="@id">
       <table id="{@id}" frame="none">
-        <title>"{@title}"</title>
+        <title><xsl:value-of select="@title"/></title>
         <tgroup cols="2">
+          <thead>
+            <row>
+              <entry><xsl:value-of select="@lhead"/></entry>
+              <entry><xsl:value-of select="@rhead"/></entry>
+            </row>
+          </thead>
           <tbody>
             <xsl:apply-templates/>
           </tbody>

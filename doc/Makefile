@@ -8,75 +8,62 @@ CONVERT = convert # from ImageMagick suite
 HHC = wine "c:/Program Files/HTML Help Workshop/hhc.exe"
 WEBDIR = /home/cottrell/stats/esl/website
 
-DOC = manual
-SRC = $(DOC).xml
-DSL = $(DOC)-both.dsl
-ALTDOC = $(DOC)-a4
-ALTSRC = $(ALTDOC).xml
+DSL = manual-both.dsl
 ALTDSL = manual-a4.dsl
-TESTDOC = $(DOC)-times
-TESTSRC = $(TESTDOC).xml
-TESTDSL = manual-times.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
-HTMLDIR = $(DOC)-html
+HTMLDIR = manual-html
 
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
 	chapters/nls.xml chapters/looping.xml chapters/starting.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
-	chapters/trouble.xml chapters/biblio.xml chapters/cmdlist.xml
+	chapters/trouble.xml chapters/biblio.xml 
 
-all: $(DOC).pdf $(ALTDOC).pdf html chm # thumbs altthumbs
+CMDLIST = chapters/cmdlist.xml
 
-$(DOC).pdf: $(DOC).tex jadetex.cfg lucidabr.tex
-	pdfjadetex $(DOC)
-	-grep undefined $(DOC).log >/dev/null && pdfjadetex $(DOC)
-	-grep undefined $(DOC).log >/dev/null && pdfjadetex $(DOC)
+CMDREF = commands/gretl_commands.xml
+MANXSL = commands/gretlman.xsl
 
-$(ALTDOC).pdf: $(ALTDOC).tex jadetex.cfg lucidabr.tex
-	pdfjadetex $(ALTDOC)
-	-grep undefined $(ALTDOC).log >/dev/null && pdfjadetex $(ALTDOC)
-	-grep undefined $(ALTDOC).log >/dev/null && pdfjadetex $(ALTDOC)
+all: manual.pdf manual-a4.pdf html chm # thumbs altthumbs
 
-pdftest: $(TESTDOC).tex jadetex.cfg 
-	-pdfjadetex $(TESTDOC)
-	-pdfjadetex $(TESTDOC)
-	-pdfjadetex $(TESTDOC)
+manual.pdf: manual.tex jadetex.cfg lucidabr.tex
+	pdfjadetex manual
+	-grep undefined manual.log >/dev/null && pdfjadetex manual
+	-grep undefined manual.log >/dev/null && pdfjadetex manual
+	-grep undefined manual.log >/dev/null && pdfjadetex manual
 
-thumbs: $(SRC) $(CHAPTERS)
-	thumbpdf $(DOC)
-	pdfjadetex $(DOC)
+manual-a4.pdf: manual-a4.tex jadetex.cfg lucidabr.tex
+	pdfjadetex manual-a4
+	-grep undefined manual-a4.log >/dev/null && pdfjadetex manual-a4
+	-grep undefined manual-a4.log >/dev/null && pdfjadetex manual-a4
+	-grep undefined manual-a4.log >/dev/null && pdfjadetex manual-a4
+
+thumbs: manual.pdf
+	thumbpdf manual
+	pdfjadetex manual
         
-altthumbs: $(ALTSRC) $(CHAPTERS)
-	thumbpdf $(ALTDOC)
-	pdfjadetex $(ALTDOC)
+altthumbs: manual-a4.pdf
+	thumbpdf manual-a4
+	pdfjadetex manual-a4
 
-$(DOC).tex: $(SRC) $(CHAPTERS) $(DSL) $(MATHSS)
-	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $(SRC)
-	./unescape_math.pl $(DOC).tex
+manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(CMDLIST)
+	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
 
-$(ALTDOC).tex: $(ALTSRC) $(CHAPTERS) $(ALTDSL) $(MATHSS)
-	echo "Running jade on $(ALTSRC)"
-	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $(ALTSRC)
-	echo "Unescaping math in $(ALTDOC).tex"
-	./unescape_math.pl $(ALTDOC).tex
+manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(CMDLIST)
+	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
+	./unescape_math.pl $@
 
-$(TESTDOC).tex: $(TESTSRC) $(CHAPTERS) $(TESTDSL) $(MATHSS)
-	$(JADE) -t tex -d $(TESTDSL)\#print $(XMLDCL) $(TESTSRC)
-	./unescape_math.pl $(TESTDOC).tex
+manual-a4.xml: manual.xml
+	cp $< $@
 
-$(ALTSRC): $(SRC)
-	echo "Copying $(SRC) to $(ALTSRC)"
-	cp $(SRC) $(ALTSRC) 
+$(CMDLIST): $(CMDREF) $(MANXSL) 
+	make -C commands docbook
 
-$(TESTSRC): $(SRC)
-	echo "Copying $(SRC) to $(TESTSRC)"
-	cp $(SRC) $(TESTSRC) 
-
-html: $(SRC) db2html $(DSL) $(HMATHSS) 
-	./db2html $(SRC)
-	./texmath2png.pl $(DOC)-html/equation-list.sgml
+html: manual.xml db2html $(DSL) $(HMATHSS) 
+	./db2html manual.xml
+	./texmath2png.pl manual-html/equation-list.sgml
 
 # make windows HTML help file for gretl
 
@@ -87,15 +74,15 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml
 	cp $(topdoc)/figures/*.png htmlhelp/figures
 	for f in htmlhelp/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
 	cd htmlhelp && \
-	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl tex.math.in.alt=latex && \
-	$(HHC) gretl.hhp
+	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl \
+	tex.math.in.alt=latex && $(HHC) gretl.hhp
 
 clean:
-	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex $(TESTDOC).tex
-	rm -rf $(DOC)-html htmlhelp
+	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex
+	rm -rf manual-html htmlhelp
 
 texclean:
-	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex $(TESTDOC).tex
+	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex
 
 install: 
 	cp manual.pdf manual-a4.pdf $(WEBDIR)

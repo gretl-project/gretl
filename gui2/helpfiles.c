@@ -114,7 +114,8 @@ static struct gui_help_item gui_help_items[] = {
     { GSETMISS,   "missing" },
     { GUI_HELP,   "dialog" },
     { MODELTABLE, "model" },
-    { GRAPHPAGE , "graphpag" },    
+    { GRAPHPAGE , "graphpag" },
+    { SETSEED,    "seed" },
     { 0,          NULL },
 };
 

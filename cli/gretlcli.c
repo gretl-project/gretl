@@ -1383,14 +1383,8 @@ void exec_line (char *line, PRN *prn)
 	}
 	break;
 
-    case SEED:
-	gretl_rand_set_seed(atoi(cmd.param));
-	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
-		atoi(cmd.param));
-	break;
-
     case SET:
-	err = parse_set_line(line, &echo_off);
+	err = parse_set_line(line, &echo_off, prn);
 	if (err) errmsg(err, prn);
 	break;
 

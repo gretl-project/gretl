@@ -439,7 +439,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Add variables/random uniform..."), NULL, 
       add_random_callback, GENR_UNIFORM, NULL, GNULL },
     { N_("/Data/Add variables/seed generator..."), NULL, gretl_callback, 
-      SEED, NULL, GNULL },
+      SETSEED, NULL, GNULL },
     { N_("/Data/Add variables/sep2"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Add variables/Define _new variable..."), NULL, gretl_callback, 
       GENR, NULL, GNULL },

@@ -949,7 +949,7 @@ const char **get_opts_for_command (int ci)
     int i, j, nopt = 0;
     const char **ret = NULL;
 
-    if (is_model_ci(ci) && ci != OLS) {
+    if (is_model_ci(ci) && ci != OLS && ci != LAD) {
 	nopt++; /* vcv */
     }
 
@@ -969,7 +969,7 @@ const char **get_opts_for_command (int ci)
 	}
     }
 
-    if (is_model_ci(ci) && ci != OLS) {
+    if (is_model_ci(ci) && ci != OLS && ci != LAD) {
 	ret[j++] = "vcv";
     }
 

@@ -11,7 +11,6 @@ coint2:
 eqnprint, 
 tabprint:
          --complete         complete TeX document          -o
-         -f                 specify filename               -f
 
 fcasterr: 
          --plot             display graph                  -o

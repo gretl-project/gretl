@@ -30,10 +30,7 @@
 	<mathvar>F</mathvar> statistic for the added variables will be
 	printed (for the OLS procedure only) along with its p-value.
 	A p-value below 0.05 means that the coefficients are jointly
-	significant at the 5 percent level. A number of internal
-	variables may be retrieved using the <cmd>genr</cmd> command,
-	provided <cmd>genr</cmd> is invoked directly after this
-	command.
+	significant at the 5 percent level. 
       </para>
     </description>
 
@@ -125,6 +122,12 @@
         <argument>lags</argument>
         <argument separated="true">indepvars</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
       <examples>
         <example>ar 1 3 4 ; y 0 x1 x2 x3</example>
       </examples>
@@ -145,11 +148,7 @@
 	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
 	  graphic="corc"/> where <repl>depvar</repl> is the dependent
 	variable and <repl>indepvars</repl> is the list of independent
-	variables.  Residuals of the transformed regression are stored
-	under the name <lit>uhat</lit>, which can be retrieved by
-	<cmd>genr</cmd>.  A number of other internal variables may be
-	retrieved using the <cmd>genr</cmd> command, provided
-	<cmd>genr</cmd> is invoked after this command.
+	variables.  
       </para>
     </description>
 
@@ -175,13 +174,13 @@
     <description>
       <para>
 	Tests the model for ARCH (Autoregressive Conditional
-	Heteroskedasticity) of the lag order specified in
-	<repl>order</repl>, which must be an integer. If the LM test
-	statistic has p-value below 0.10, then ARCH estimation is also
-	carried out.  If the predicted variance of any observation in
-	the auxiliary regression is not positive, then the
-	corresponding squared residual is used instead. Weighted least
-	square estimation is then performed on the original model.
+	Heteroskedasticity) of the (integer) lag order specified in
+	<repl>order</repl>. If the LM test statistic has p-value below
+	0.10, then ARCH estimation is also carried out.  If the
+	predicted variance of any observation in the auxiliary
+	regression is not positive, then the corresponding squared
+	residual is used instead. Weighted least square estimation is
+	then performed on the original model.
       </para>
     </description>
 
@@ -245,10 +244,10 @@
 	<quote>Jack</quote> Lucchetti.  It uses a conditional maximum
 	likelihood procedure, implemented via iterated least squares
 	estimation of the outer product of the gradient (OPG)
-	regression.  <manref targ="jack-arma" before="See" after="for
-	  the logic of the procedure"/>.  The AR coefficients are
-	initialized using an OLS auto-regression, and the MA
-	coefficients are initialized at zero.</para>
+	regression.  See <manref targ="jack-arma"/> for the logic of
+	the procedure.  The AR coefficients are initialized using an
+	OLS auto-regression, and the MA coefficients are initialized
+	at zero.</para>
 
       <para>The AIC value given in connection with ARMA models is
 	calculated according to the definition used in
@@ -294,6 +293,8 @@
 	and third quartiles. The <quote>whiskers</quote> extend to the
 	minimum and maximum values.  A line is drawn across the box at
 	the median.</para>
+
+      <para>See <manref targ="sect-boxplots"/> for further details.</para>
     </description>
 
     <gui-access>
@@ -351,7 +352,10 @@
 	Must follow an regression.  Calculates the sum of the
 	coefficients on the variables in the <repl>indepvars</repl>
 	list.  Prints this sum along with its standard error and the
-	p-value for the null hypothesis that the sum is zero.
+	p-value for the null hypothesis that the sum is zero.  Note the
+	difference between this and <cmdref targ="omit"/>, which tests
+	the null hypothesis that the coefficients on a specified
+	subset of independent variables are all equal to zero.
       </para>
     </description>
 
@@ -419,7 +423,8 @@
 	Carries out the Johansen trace test for cointegration among
 	the listed variables for the given order. Critical values are
 	computed via J. Doornik's gamma approximation (Doornik, 1998).
-	For details of this test see Hamilton (1994, Chapter 20).
+	For details of this test see Hamilton, <book>Time Series
+	Analysis</book> (1994), Chapter 20.
       </para>
     </description>
 
@@ -456,10 +461,7 @@
 	Iteration is terminated when successive estimates of the
 	autocorrelation coefficient do not differ by more than 0.001
 	or after 20 iterations.  Residuals of this transformed
-	regression are stored under the name <lit>uhat</lit>.  Various
-	internal variables may be retrieved using the <cmd>genr</cmd>
-	command, provided <cmd>genr</cmd> is invoked immediately after
-	this command.
+	regression are stored under the name <lit>uhat</lit>.
       </para>
     </description>
 
@@ -570,10 +572,6 @@
 	previously defined variables.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>None</menu-path>
-    </gui-access>
 
   </command>
 
@@ -987,66 +985,59 @@
       </para>
 
       <ilist>
-	<li><para>Standard math functions: <function>abs</function>,
-	    <function>cos</function>, <function>exp</function>,
-	    <function>int</function> (integer part),
-	    <function>ln</function> (natural log:
-	    <function>log</function> is a synonym),
-	    <function>sin</function>,
-	    <function>sqrt</function>.</para>
+	<li><para>Standard math functions: <func>abs</func>,
+	    <func>cos</func>, <func>exp</func>, <func>int</func>
+	    (integer part), <func>ln</func> (natural log:
+	    <func>log</func> is a synonym), <func>sin</func>,
+	    <func>sqrt</func>.</para>
 	</li>
-	<li><para>Statistical functions: <function>max</function>
-	    (maximum value in a series), <function>min</function>
-	    (minimum), <function>mean</function> (arithmetic mean),
-	    <function>median</function>, <function>var</function>
-	    (variance) <function>sd</function> (standard deviation),
-	    <function>sst</function> (sum of squared deviations from
-	    the mean), <function>sum</function>,
-	    <function>cov</function> (covariance),
-	    <function>corr</function> (correlation coefficient),
-	    <function>pvalue</function>.</para>
+	<li><para>Statistical functions: <func>max</func> (maximum
+	    value in a series), <func>min</func> (minimum),
+	    <func>mean</func> (arithmetic mean), <func>median</func>,
+	    <func>var</func> (variance) <func>sd</func> (standard
+	    deviation), <func>sst</func> (sum of squared deviations
+	    from the mean), <func>sum</func>, <func>cov</func>
+	    (covariance), <func>corr</func> (correlation coefficient),
+	    <func>pvalue</func>.</para>
 	</li>
-	<li><para>Time-series functions: <function>diff</function>
-	    (first difference), <function>ldiff</function>
-	    (log-difference, or first difference of natural logs).  To
-	    generate lags of a variable <lit>x</lit>, use the syntax
-	    <cmd>x(-N)</cmd>, where <lit>N</lit> represents the
-	    desired lag length; to generate leads, use
-	    <cmd>x(+N)</cmd>;</para>
+	<li><para>Time-series functions: <func>diff</func> (first
+	    difference), <func>ldiff</func> (log-difference, or first
+	    difference of natural logs).  To generate lags of a
+	    variable <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>,
+	    where <lit>N</lit> represents the desired lag length; to
+	    generate leads, use <cmd>x(+N)</cmd>;</para>
 	</li>
-	<li><para>Miscellaneous: <function>cum</function> (cumulate),
-	    <function>sort</function>, <function>uniform</function>,
-	    <function>normal</function>, <function>misszero</function>
-	    (replace the missing observation code in a given series
-	    with zeros), <cmd>zeromiss</cmd> (the inverse operation to
-	    <cmd>misszero</cmd>), <function>nobs</function> (return
-	    the number of valid observations in a given data
-	    series).</para>
+	<li><para>Miscellaneous: <func>cum</func> (cumulate),
+	    <func>sort</func>, <func>uniform</func>,
+	    <func>normal</func>, <func>misszero</func> (replace the
+	    missing observation code in a given series with zeros),
+	    <cmd>zeromiss</cmd> (the inverse operation to
+	    <cmd>misszero</cmd>), <func>nobs</func> (return the number
+	    of valid observations in a given data series).</para>
 	</li>
       </ilist> 
 
       <para>
 	All of the above functions with the exception of
-	<function>cov</function>, <function>corr</function>,
-	<function>pvalue</function>, <function>uniform</function> and
-	<function>normal</function> take as their single argument
-	either the name of a variable (note that you can't refer to
-	variables by their ID numbers in a <cmd>genr</cmd> command) or
-	a composite expression that evaluates to a variable (e.g.
-	<lit>ln((x1+x2)/2)</lit>). <function>cov</function> and
-	<function>corr</function> both require two arguments, and
-	return respectively the covariance and the correlation
-	coefficient between two named variables. The
-	<function>pvalue</function> function takes the same arguments
-	as the <cmd>pvalue</cmd> command (see below), but in this
-	context commas should be placed between the arguments.
-	<function>uniform()</function> and
-	<function>normal()</function>, which do not take arguments,
-	return pseudo-random series drawn from the uniform (0&ndash;1)
-	and standard normal distributions respectively (see also the
-	<cmd>seed</cmd> command).  Uniform series are generated using
-	the C library function <function>rand()</function>; for normal
-	series the method of Box and Muller (1958) is used.</para>
+	<func>cov</func>, <func>corr</func>, <func>pvalue</func>,
+	<func>uniform</func> and <func>normal</func> take as their
+	single argument either the name of a variable (note that you
+	can't refer to variables by their ID numbers in a
+	<cmd>genr</cmd> command) or a composite expression that
+	evaluates to a variable (e.g. <lit>ln((x1+x2)/2)</lit>).
+	<func>cov</func> and <func>corr</func> both require two
+	arguments, and return respectively the covariance and the
+	correlation coefficient between two named variables. The
+	<func>pvalue</func> function takes the same arguments as the
+	<cmd>pvalue</cmd> command (see below), but in this context
+	commas should be placed between the arguments.
+	<func>uniform()</func> and <func>normal()</func>, which do not
+	take arguments, return pseudo-random series drawn from the
+	uniform (0&ndash;1) and standard normal distributions
+	respectively (see also the <cmdref targ="set"/> command,
+	<lit>seed</lit> option).  Uniform series are generated using
+	the C library function <func>rand()</func>; for normal series
+	the method of Box and Muller (1958) is used.</para>
 
       <para>Besides the operators and functions just noted there are
 	some special uses of <cmd>genr</cmd>:
@@ -1195,11 +1186,8 @@
 	</li>
       </ilist>
 
-      <table id="tab-genr" title="Examples of use of genr command">
-	<row head="true">
-	  <cell>Command</cell>
-	  <cell>Comment</cell>
-	</row>
+      <table id="tab-genr" title="Examples of use of genr command"
+	lhead="Command" rhead="Comment">
 	<row>
 	  <cell><lit>genr y = x1^3</lit></cell>
 	  <cell><lit>x1</lit> cubed</cell>
@@ -1350,15 +1338,12 @@
       </para>
 
       <para>
-	In interactive mode the result is piped to gnuplot for
-	display.  In batch mode a plot file named
-	<filename>gpttmp01.plt</filename> is written.  (With
-	subsequent uses of <cmd>gnuplot</cmd> similar files are
-	created, with the number in the file name incremented.) The
-	plots can be generated later using the command <cmd>gnuplot
-	  gpttmp.plt</cmd>.  (Under MS Windows, start
-	<program>wgnuplot</program> and open the file
-	<filename>gpttmp01.plt</filename>.)
+	In interactive mode the result is displayed immediately. In
+	batch mode a gnuplot command file is written, with a name on
+	the pattern <filename>gpttmpN.plt</filename>, starting with N
+	= <lit>01</lit>. The actual plots may be generated later using
+	<program>gnuplot</program> (under MS Windows,
+	<program>wgnuplot</program>).
       </para>
 
       <para>A further option to this command is available: following
@@ -1417,7 +1402,7 @@
     <description>
       <para>
 	This test is available only after estimating a model using the
-	<cmd>pooled</cmd> command (see also <cmd>panel</cmd> and
+	<cmdref targ="pooled"/> command (see also <cmd>panel</cmd> and
 	<cmd>setobs</cmd>).  It tests the simple pooled model against
 	the principal alternatives, the fixed effects and random
 	effects models.</para>
@@ -1575,15 +1560,19 @@
     <description>
       <para>Flow control for command execution.  The syntax is:</para>
 
-      <!-- include as table for manual? -->
-
-      <code>
-	if condition
-	  commands
-        else
-	  commands
-	endif
-      </code>
+      <table lwidth="25pt" rwidth="100pt">
+	<row><cell><lit>if</lit></cell>
+	  <cell><repl>condition</repl></cell>
+	</row>
+	<row><cell></cell><cell><repl>commands1</repl></cell>
+	</row>
+	<row><cell><lit>else</lit></cell><cell></cell>
+	</row>
+	<row><cell></cell><cell><repl>commands2</repl></cell>
+	</row>
+	<row><cell><lit>endif</lit></cell><cell></cell>
+	</row>
+      </table>
 
       <para><repl>condition</repl> must be a Boolean expression, for
 	the syntax of which see <cmdref targ="genr"/>.  The
@@ -1892,6 +1881,12 @@
         <argument>indepvars</argument>
 	<argument optional="true" flag="ymax=">value</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
       <examples>
         <example>logistic y const x</example>
         <example>logistic y const x ymax=50</example>
@@ -2097,12 +2092,12 @@
     </usage>
 
     <description>
-      <para>Manipulates the gretl <quote>model table</quote>.
-	<manref targ="modes" before="See" after="for details"/>. The
-	sub-commands have the following effects: <cmd>add</cmd> adds
-	the last model estimated to the model table, if possible;
-	<cmd>show</cmd> displays the model table in a window; and
-	<cmd>free</cmd> clears the table.</para>
+      <para>Manipulates the gretl <quote>model table</quote>. See
+	<manref targ="modes"/> for details. The sub-commands have
+	the following effects: <cmd>add</cmd> adds the last model
+	estimated to the model table, if possible; <cmd>show</cmd>
+	displays the model table in a window; and <cmd>free</cmd>
+	clears the table.</para>
     </description>
 
     <gui-access>
@@ -2198,6 +2193,12 @@
         <argument>function</argument>
         <argument>derivatives</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
@@ -2216,10 +2217,12 @@
 	It is easiest to show what is required by example.  The
 	following is a complete script to estimate the nonlinear
 	consumption function set out in William Greene's
-	<book>Econometric Analysis</book>, in chapter 11 of the 4th
-	edition, or chapter 9 of the 5th.  (The numbers to the left of
+	<book>Econometric Analysis</book> (Chapter 11 of the 4th
+	edition, or Chapter 9 of the 5th).  The numbers to the left of
 	the lines are for reference and are not part of the
-	commands.)</para>
+	commands.  Note that the <lit>--vcv</lit> option, for printing
+	the covariance matrix of the parameter estimates, attaches to
+	the final command, <lit>end nls</lit>.</para>
 
       <code>
 	1   open greene11_3.gdt
@@ -2231,7 +2234,7 @@
 	7   deriv alpha = 1
 	8   deriv beta = Y^gamma
 	9   deriv gamma = beta * Y^gamma * log(Y)
-	10  end nls
+	10  end nls --vcv
       </code>
 
       <para>
@@ -2268,6 +2271,13 @@
 
   </command>
 
+  <command name="noecho" section="Printing">
+    <description>
+      <para>Obsolete command.  See <cmdref targ="set"/>.
+      </para>
+    </description>
+  </command>
+
   <command name="nulldata" section="Dataset">
 
     <usage>
@@ -2289,7 +2299,7 @@
 	will generate dummy data from scratch to fill out the data
 	set. This command may be useful in conjunction with
 	<cmd>loop</cmd>.  See also the <quote>seed</quote> option to
-	the <cmd>set</cmd> command.
+	the <cmdref targ="set"/> command.
       </para>
     </description>
 
@@ -2344,9 +2354,13 @@
 	significance between 5 and 10 percent levels. Model selection
 	statistics (described in Ramanathan, Section 4.3) are also
 	printed. Various internal variables may be retrieved using the
-	<cmd>genr</cmd> command, provided <cmd>genr</cmd> is invoked
-	immediately after this command.
+	<cmdref targ="genr"/> command, provided <cmd>genr</cmd> is
+	invoked immediately after this command.
       </para>
+
+      <para>The specific formula used for generating robust standard
+	errors (when the <lit>--robust</lit> option is given) can be
+	adjusted via the <cmdref targ="set"/> command.</para>
     </description>
 
     <gui-access>
@@ -2375,14 +2389,13 @@
 
     <description>
       <para>
-	This command must be invoked after an estimation command. The
-	variables in <repl>varlist</repl> are omitted from the
-	previous model and the new model estimated. If more than one
-	variable is omitted, the Wald <mathvar>F</mathvar>-statistic
-	for the omitted variables will be printed along with its
-	p-value (for the OLS procedure only).  A p-value below 0.05
-	means that the coefficients are jointly significant at the 5
-	percent level.
+	This command must follow an estimation command. The variables
+	in <repl>varlist</repl> are omitted from the previous model
+	and the new model estimated. If more than one variable is
+	omitted, the Wald <mathvar>F</mathvar>-statistic for the
+	omitted variables will be printed along with its p-value (for
+	the OLS procedure only).  A p-value below 0.05 means that the
+	coefficients are jointly significant at the 5 percent level.
       </para>
     </description>
 
@@ -2405,11 +2418,11 @@
     </usage>
 
     <description>
-      <para>Works like the <cmd>omit</cmd> command, except that you
-	specify a previous model (using its ID number, which is
-	printed at the start of the model output) to take as the base
-	for omitting variables.  The example above omits variables
-	number 5, 7 and 9 from Model 2.
+      <para>Works like <cmdref targ="omit"/>, except that you specify
+	a previous model (using its ID number, which is printed at the
+	start of the model output) to take as the base for omitting
+	variables.  The example above omits variables number 5, 7 and
+	9 from Model 2.
       </para>
     </description>
 
@@ -2431,12 +2444,13 @@
       <para>
 	Opens a data file.  If a data file is already open, it is
 	replaced by the newly opened one.  The program will try to
-	detect the format of the data file (native, CSV or BOX1).
+	detect the format of the data file (native, pain text, CSV or
+	BOX1).
       </para>
 
       <para>
 	This command can also be used to open a database (gretl or
-	RATS 4.0) for reading, in which case it should be followed by
+	RATS 4.0) for reading.  In that case it should be followed by
 	the <cmdref targ="data"/> command to extract particular series
 	from the database.
       </para>
@@ -2479,7 +2493,7 @@
     <description>
       <para>Diverts output to <repl>filename</repl>, until further
 	notice.  Use the flag <lit>--append</lit> to append output to
-	an existing file, or <lit>--write</lit> to start a new file
+	an existing file or <lit>--write</lit> to start a new file
 	(or overwrite an existing one).  Only one file can be opened
 	in this way at any given time.</para>
 
@@ -2487,10 +2501,10 @@
 	file that was previously opened as above.  Output will then
 	revert to the default stream.</para>
 
-      <para>In the first example above, the file
+      <para>In the first example command above, the file
 	<filename>regress.txt</filename> is opened for writing, and in
-	the second example it is closed.  This would make sense as a
-	sequence only if some commands were issued before the
+	the second it is closed.  This would make sense as a sequence
+	only if some commands were issued before the
 	<lit>--close</lit>.  For example if an <cmd>ols</cmd> command
 	intervened, its output would go to
 	<filename>regress.txt</filename> rather than the
@@ -2552,11 +2566,11 @@
     </usage>
 
     <description>
-      <para>Rudimentary Principal Components Analysis.  Prints the
-	eigenvalues of the correlation matrix for the variables in
+      <para>Principal Components Analysis.  Prints the eigenvalues of
+	the correlation matrix for the variables in
 	<repl>varlist</repl> along with the proportion of the joint
 	variance accounted for by each component.  Also prints the
-	corresponding eigenvectors (<quote>component
+	corresponding eigenvectors (or <quote>component
 	  loadings</quote>).</para>  
 
       <para>If the <lit>--save</lit> flag is given, components with
@@ -2596,11 +2610,14 @@
 	Computes and displays (and if not in batch mode, graphs) the
 	spectrum of the specified variable.  Without the
 	<lit>--bartlett</lit> flag the sample periodogram is given;
-	with the flag a Bartlett lag window of length 2 root
-	<mathvar>T</mathvar> (where <mathvar>T</mathvar> is the sample
-	size) is used in estimating the spectrum (see Chapter 18 of
-	Greene's <book>Econometric Analysis</book>). When the sample
-	periodogram is printed, a <mathvar>t</mathvar>-test for
+	with the flag a Bartlett lag window of length
+	<equation status="inline"
+	  tex="$2\sqrt{T}$"
+	  ascii="2*sqrt(T)"
+	  graphic="tworootT"/> (where <mathvar>T</mathvar> is the
+	sample size) is used in estimating the spectrum (see Chapter
+	18 of Greene's <book>Econometric Analysis</book>). When the
+	sample periodogram is printed, a <mathvar>t</mathvar>-test for
 	fractional integration of the series (<quote>long
 	  memory</quote>) is also given: the null hypothesis is that
 	the integration order is zero.
@@ -2647,6 +2664,12 @@
         <argument>depvar</argument>
         <argument>indepvars</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
@@ -2877,12 +2900,12 @@
 
     <description>
       <para>
-	Must immediately follow the estimation of a model via OLS.
-	Carries out Ramsey's RESET test for model specification
-	(non-linearity) by adding the square and the cube of the
-	fitted values to the regression and calculating the
-	<mathvar>F</mathvar> statistic for the null hypothesis that
-	the parameters on the two added terms are zero.
+	Must follow the estimation of a model via OLS. Carries out
+	Ramsey's RESET test for model specification (non-linearity) by
+	adding the square and the cube of the fitted values to the
+	regression and calculating the <mathvar>F</mathvar> statistic
+	for the null hypothesis that the parameters on the two added
+	terms are zero.
       </para>
     </description>
 
@@ -3053,6 +3076,13 @@
 
   </command>
 
+  <command name="seed" section="Programming">
+    <description>
+      <para>Obsolete command.  See <cmdref targ="set"/>.
+      </para>
+    </description>
+  </command>
+
   <command name="set" section="Programming">
 
     <usage>
@@ -3073,21 +3103,21 @@
 	option is given to the <cmd>ols</cmd> command. 
       </para>
 
-      <table lwidth="60pt" rwidth="400pt">
+      <table lwidth="80pt" rwidth="320pt">
 	<row>
-	  <cell>echo</cell>
+	  <cell><lit>echo</lit></cell>
 	  <cell>values: <lit>off</lit> or <lit>on</lit> (the default).
 	    Suppress or resume the echoing of commands in gretl's
 	    output.</cell>
 	</row>
 	<row>
-	  <cell>qr</cell>
+	  <cell><lit>qr</lit></cell>
 	  <cell>values: <lit>on</lit> or <lit>off</lit> (the default).
 	    Use QR rather than Cholesky decomposition in calculating
 	    OLS estimates.</cell>
 	</row>
 	<row>
-	  <cell>hac_lag</cell>
+	  <cell><lit>hac_lag</lit></cell>
 	  <cell>values: <lit>nw1</lit> (the default) or
 	    <lit>nw2</lit>, or an integer.  Sets the maximum lag
 	    value, <mathvar>p</mathvar>, used when calculating HAC
@@ -3097,18 +3127,18 @@
 	    two variant automatic calculations based on the sample
 	    size, <mathvar>T</mathvar>: for nw1, 
 	  <equation status="inline"
-	    tex="p = 0.75 \times T^{1/3}\]"
+	    tex="$p = 0.75 \times T^{1/3}$"
 	    ascii="p = 0.75 * T^(1/3)"
 	    graphic="nw1"/>,
 	    and for nw2, 
 	  <equation status="inline"
-	    tex="p = 4 \times (T/100)^{2/9}\]"
+	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
 	    graphic="nw2"/>.	  
 	  </cell>
 	</row>
 	<row>
-	  <cell>hc_version</cell>
+	  <cell><lit>hc_version</lit></cell>
 	  <cell>values: 0 (the default), 1, 2 or 3. Sets the variant
 	    used when calculating Heteroskedasticity Consistent
 	    standard errors with cross-sectional data.  The options
@@ -3231,11 +3261,14 @@
 	sample range, or for the range <repl>startobs</repl> through
 	<repl>endobs</repl> if these optional arguments are given. The
 	variable <repl>y</repl> must have been defined earlier with
-	appropriate initial values. The formula used is <lit>y(t) =
-	  a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + &hellip;</lit> The
-	<lit>ai(t)</lit> may be either numerical constants or variable
-	names previously defined; these terms may be prefixed with a
-	minus sign.
+	appropriate initial values. The formula used is 
+	<equation status="display"
+	  tex="\[y_t=a_{0t} + a_{1t}y_{t-1} + a_{2t}y_{t-2} + \dots\]"
+	  ascii="y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ..."
+	  graphic="simformula"/> 
+	The <lit>ai(t)</lit> terms may be
+	either numerical constants or variable names previously
+	defined; these terms may be prefixed with a minus sign.
       </para>
 
       <para>This command is deprecated.  You should use <cmdref
@@ -3425,11 +3458,11 @@
 
       <para>
 	By default the data are saved in <quote>native</quote> gretl
-	format, but the option flags permit saving in any of five
-	additional formats.  CSV (Comma-Separated Values) data may be
+	format, but the option flags permit saving in several
+	alternative formats.  CSV (Comma-Separated Values) data may be
 	read into spreadsheet programs, and can also be manipulated
-	using a text editor.  The <program>Octave</program> and
-	<program>R</program> formats are designed for use with the
+	using a text editor.  The formats of <program>Octave</program>
+	and <program>R</program> are designed for use with the
 	respective programs.  Gzip compression may be useful for large
 	datasets.  See <manref targ="datafiles"/> for details on the
 	various formats.</para>
@@ -3567,8 +3600,12 @@
       </arguments>
       <options>
         <option>
-	  <flag>--verbose</flag>
+	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
         </option>
       </options>
     </usage>
@@ -3581,7 +3618,8 @@
 	no negative values, yet decisions on such purchases may be
 	thought of as outcomes of an underlying, unobserved
 	disposition to purchase that may be negative in some cases.
-	FIXME reference to Green.</para>
+	For details see Greene's <book>Econometric Analysis</book>,
+	Chapter 20.</para>
     </description>
 
     <gui-access>
@@ -3600,7 +3638,7 @@
       </arguments>
       <options>
         <option>
-	  <flag>--verbose</flag>
+	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
       </options>      
@@ -3645,7 +3683,7 @@
       <options>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print impulse responses</effect>
+	  <effect>don't print impulse responses etc.</effect>
         </option>
       </options>
       <examples>
@@ -3735,13 +3773,13 @@
 
     <usage>
       <arguments>
-        <argument>weightvar</argument>
+        <argument>wtvar</argument>
         <argument>depvar</argument>
 	<argument>indepvars</argument>
       </arguments>
       <options>
         <option>
-	  <flag>--verbose</flag>
+	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
       </options> 
@@ -3750,14 +3788,14 @@
     <description>
       <para>
 	Computes weighted least squares estimates using
-	<repl>weightvar</repl> as the weight, <repl>depvar</repl> as
-	the dependent variable and <repl>indepvars</repl> as the list
-	of independent variables.  More specifically, an OLS
-	regression is run on <repl>weightvar</repl> <lit>*</lit>
-	<repl>depvar</repl> against <repl>weight</repl> <lit>*</lit>
-	<repl>indepvars</repl>. If the <repl>weightvar</repl> is a
-	dummy variable, this is equivalent to eliminating all
-	observations with the number zero for <repl>weightvar</repl>.
+	<repl>wtvar</repl> as the weight, <repl>depvar</repl> as the
+	dependent variable, and <repl>indepvars</repl> as the list of
+	independent variables.  Specifically, an OLS regression is run
+	on <repl>wtvar</repl> <lit>*</lit> <repl>depvar</repl> against
+	<repl>wtvar</repl> <lit>*</lit> <repl>indepvars</repl>. If the
+	<repl>wtvar</repl> is a dummy variable, this is equivalent to
+	eliminating all observations with value zero for
+	<repl>wtvar</repl>.
       </para>
     </description>
 

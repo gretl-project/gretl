@@ -446,10 +446,19 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	return;
     }
 
-    /* backwards compatibility */
+    /* backwards compatibility for obsolete commands */
     if (!strcmp(command->cmd, "noecho")) {
 	strcpy(command->cmd, "set");
 	strcpy(line, "set echo off");
+    } else if (!strcmp(command->cmd, "seed")) {
+	char seedstr[16];
+
+	strcpy(command->cmd, "set");
+	if (sscanf(line, "%*s %15s", seedstr)) {
+	    sprintf(line, "set seed %s", seedstr);
+	} else {
+	    strcpy(line, "set seed");
+	}
     }
 
     /* command aliases */
@@ -538,7 +547,6 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     if (command->ci == HELP ||
 	command->ci == LOOP ||
 	command->ci == END ||
-	command->ci == SEED ||
 	command->ci == LMTEST ||
 	command->ci == NULLDATA ||
 	(command->ci == PRINT && strstr(line, "\""))) {

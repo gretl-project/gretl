@@ -8,13 +8,16 @@ XML_LIBS = `pkg-config --libs libxml-2.0 libxslt`
 GRETL_CFLAGS = `gretl-config --cflags`
 GRETL_LIBS = `gretl-config --libs`
 
-progs: xsltrans skeleton reflow
+progs: xsltrans skeleton reflow validate
 
 xsltrans: xsltrans.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
 
 skeleton: skeleton.c
 	$(CC) $(GRETL_CFLAGS) -o $@ $^ $(GRETL_LIBS)
+
+validate: validate.c
+	$(CC) $(XML_CFLAGS) $(GRETL_CFLAGS) -o $@ $^ $(GRETL_LIBS) $(XML_LIBS)
 
 reflow: reflow.c
 	$(CC) -o $@ $^ 
@@ -30,16 +33,18 @@ test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 	xmllint --valid --noout $< && ./xsltrans skeleton.xml
 
 # Generate docbook XML for the command-reference section of the 
-# full manual
+# full manual, cmdlist.xml
 docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
 	./xsltrans gretl_commands.xml && \
 	cat cmdlist.xml | fgrep -v '<?x' > ../chapters/cmdlist.xml
 
-# Generate script commands help file
+# Generate script commands help file, gretlcli.hlp
 hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
 	./xsltrans gretl_commands.xml && \
-	./reflow < cmdlist.txt > gretlcli.hlp
+	./reflow < cmdlist.txt > ../../share/gretlcli.hlp
 
-clean:
-	rm -f xsltrans skeleton reflow skeleton.xml cmdlist.txt \
-	cmdlist.xml gretlcli.hlp *~
+docclean:
+	 rm -f skeleton.xml cmdlist.*
+
+clean: docclean
+	rm -f xsltrans skeleton reflow validate

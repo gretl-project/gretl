@@ -512,7 +512,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	       "starting observation string:"));
 	okfunc = do_setobs;
 	break;
-    case SEED:
+    case SETSEED:
 	strcpy(title, _("gretl: random variables"));
 	strcpy(query, _("Enter integer seed for\n"
 	       "pseudo-random number generator:"));

@@ -15,7 +15,12 @@
       &mdash; it is implicit from the context. One other difference is
       that some commands support option flags, but you cannot enter
       these in GUI dialog boxes; generally there are menu items which
-      achieve the same effect.
+      achieve the same effect.</para>
+
+    <para>The option flags shown below are in <quote>long
+	form</quote>, with a somewhat mnemonic term preceded by two
+      dashes.  There are also corresponding short forms: these are
+      shown in <xref linkend="tab-options"/>.
     </para>
 
     <para>
@@ -241,6 +246,300 @@
 	  <row>
 	    <entry>Panel diagnostics</entry>
 	    <entry><command>hausman</command></entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <para><xref linkend="tab-options"/> shows the correspondence
+      between the long-form option flags used in the command reference
+      above and the short versions.</para>
+
+    <table id="tab-options" frame="none">
+      <title>Long- and short-form options</title>
+      <tgroup cols="4">
+	<colspec colwidth="75pt"/>
+	<colspec colwidth="105pt"/>
+	<colspec colwidth="190pt"/>
+	<colspec colwidth="75pt"/>
+	<thead>
+	  <row>
+	    <entry>Command</entry>
+	    <entry>Option</entry>
+	    <entry>Effect</entry>
+	    <entry>Short form</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry><command>arma</command></entry>
+	    <entry><literal>--x-12-arima</literal></entry>
+	    <entry>estimate with X-12-ARIMA</entry>
+	    <entry><literal>-x</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--verbose</literal></entry>
+	    <entry>print iteration details</entry>
+	    <entry><literal>-v</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>coint2</command></entry>
+	    <entry><literal>--verbose</literal></entry>
+	    <entry>print details of VARs</entry>
+	    <entry><literal>-v</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>eqnprint, tabprint</command></entry>
+	    <entry><literal>--complete</literal></entry>
+	    <entry>complete TeX document</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>fcasterr</command></entry>
+	    <entry><literal>--plot</literal></entry>
+	    <entry>show graph</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>fcasterr</command></entry>
+	    <entry><literal>--plot</literal></entry>
+	    <entry>show graph</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>gnuplot</command></entry>
+	    <entry><literal>--with-lines</literal></entry>
+	    <entry>plot with lines</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--with-impulses</literal></entry>
+	    <entry>plot with impulses</entry>
+	    <entry><literal>-m</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--suppress-fitted</literal></entry>
+	    <entry>don't show fitted line</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--dummy</literal></entry>
+	    <entry>factor separation</entry>
+	    <entry><literal>-z</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>import</command></entry>
+	    <entry><literal>--box1</literal></entry>
+	    <entry>import BOX1 data</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>leverage</command></entry>
+	    <entry><literal>--save</literal></entry>
+	    <entry>save values to dataset</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>lmtest</command></entry>
+	    <entry><literal>--logs</literal></entry>
+	    <entry>non-linearity (logs)</entry>
+	    <entry><literal>-l</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--squares</literal></entry>
+	    <entry>non-linearity (squares)</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--white</literal></entry>
+	    <entry>White's test (heteroskedasticity)</entry>
+	    <entry><literal>-w</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--autocorr</literal></entry>
+	    <entry>serial correlation</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>meantest</command></entry>
+	    <entry><literal>--unequal-vars</literal></entry>
+	    <entry>assume unequal variances</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>leverage</command></entry>
+	    <entry><literal>--save</literal></entry>
+	    <entry>save values to dataset</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>ols</command></entry>
+	    <entry><literal>--robust</literal></entry>
+	    <entry>robust standard errors</entry>
+	    <entry><literal>-r</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--vcv</literal></entry>
+	    <entry>print covariance matrix</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--quiet</literal></entry>
+	    <entry>don't print results</entry>
+	    <entry><literal>-q</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>outfile</command></entry>
+	    <entry><literal>--write</literal></entry>
+	    <entry>open file for writing</entry>
+	    <entry><literal>-w</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--append</literal></entry>
+	    <entry>append to existing file</entry>
+	    <entry><literal>-a</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--close</literal></entry>
+	    <entry>close file</entry>
+	    <entry><literal>-c</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>panel</command></entry>
+	    <entry><literal>--time-series</literal></entry>
+	    <entry>stacked time series</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--cross-section</literal></entry>
+	    <entry>stacked cross-sections</entry>
+	    <entry><literal>-c</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>pca</command></entry>
+	    <entry><literal>--save</literal></entry>
+	    <entry>save useful eigenvectors</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--save-all</literal></entry>
+	    <entry>save all eigenvectors</entry>
+	    <entry><literal>-a</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>pergm</command></entry>
+	    <entry><literal>--bartlett</literal></entry>
+	    <entry>use Bartlett lag window</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>plot</command></entry>
+	    <entry><literal>--one-scale</literal></entry>
+	    <entry>don't scale variables</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>print</command></entry>
+	    <entry><literal>--byobs</literal></entry>
+	    <entry>variables in columns</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--ten</literal></entry>
+	    <entry>use 10 significant figures</entry>
+	    <entry><literal>-t</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>smpl</command></entry>
+	    <entry><literal>--dummy</literal></entry>
+	    <entry>restrict using dummy var</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--no-missing</literal></entry>
+	    <entry>only complete observations</entry>
+	    <entry><literal>-m</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--restrict</literal></entry>
+	    <entry>use boolean criterion</entry>
+	    <entry><literal>-r</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>spearman</command></entry>
+	    <entry><literal>--verbose</literal></entry>
+	    <entry>print original, ranked data</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>square</command></entry>
+	    <entry><literal>--cross</literal></entry>
+	    <entry>generate cross-products</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>store</command></entry>
+	    <entry><literal>--cross</literal></entry>
+	    <entry>generate cross-products</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>store</command></entry>
+	    <entry><literal>--csv</literal></entry>
+	    <entry>comma-separated values</entry>
+	    <entry><literal>-c</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--traditional</literal></entry>
+	    <entry>traditional ESL format</entry>
+	    <entry><literal>-t</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--gnu-octave</literal></entry>
+	    <entry>GNU Octave format</entry>
+	    <entry><literal>-m</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--gnu-R</literal></entry>
+	    <entry>GNU R format</entry>
+	    <entry><literal>-r</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--gzipped</literal></entry>
+	    <entry>gzip compression</entry>
+	    <entry><literal>-z</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>var</command></entry>
+	    <entry><literal>--quiet</literal></entry>
+	    <entry>don't print all results</entry>
+	    <entry><literal>-q</literal></entry>
+	  </row>
+	  <row>
+	    <entry>Model commands</entry>
+	    <entry><literal>--vcv</literal></entry>
+	    <entry>print covariance matrix</entry>
+	    <entry><literal>-o</literal></entry>
 	  </row>
 	</tbody>
       </tgroup>

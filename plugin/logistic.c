@@ -222,6 +222,9 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     pmod->ybar = _esl_mean(pmod->t1, pmod->t2, Z[dv]);
     pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, Z[dv]);
 
+    /* make the VCV matrix before messing with the model stats */
+    makevcv(pmod);
+
     pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
 	x = pmod->yhat[t];

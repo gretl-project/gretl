@@ -10,6 +10,8 @@ then
   exit 1
 fi
 
+mkdir -p $WORKDIR
+
 SAVE_PWD=`pwd`
 echo "working on ../$1"
 (cd $WORKDIR; jade -t sgml -ihtml -d ../${DB_STYLESHEET}\#html $XMLDCL ../$1; cd $SAVE_PWD)

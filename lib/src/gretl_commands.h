@@ -103,7 +103,6 @@ typedef enum {
     RUN,
     RUNS,
     SCATTERS,
-    SEED,
     SET,
     SETOBS,
     SETMISS,

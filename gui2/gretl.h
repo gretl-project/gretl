@@ -26,9 +26,6 @@
 # include "winconfig.h"
 #else
 # include "config.h"
-# ifdef GTKEXTRA_FILE_SELECTOR
-#   include <gtkextra/gtkiconfilesel.h>
-# endif
 # ifdef USE_GNOME
 #   include <gnome.h>
 # endif
@@ -44,6 +41,9 @@
 
 #if GTK_MAJOR_VERSION < 2
 # define OLD_GTK
+# include <gtkextra/gtkiconfilesel.h>
+#else
+# define GNULL (gconstpointer) NULL
 #endif
 
 #ifdef USE_GTKSOURCEVIEW
@@ -64,7 +64,6 @@
 
 #define GRETL_BUFSIZE 8192
 #define MAXSTR 255
-#define GNULL (gconstpointer) NULL
 
 /* basic global program vars */
 extern double **Z;
@@ -105,8 +104,12 @@ extern char viewps[MAXSTR];
 
 /* global GUI equipment */
 extern windata_t *mdata;
-extern PangoFontDescription *fixed_font;
 extern GtkTargetEntry gretl_drag_targets[];
+#ifdef OLD_GTK
+extern GdkFont *fixed_font;
+#else
+extern PangoFontDescription *fixed_font;
+#endif
 
 enum extra_cmds {
     RELABEL = NC,
@@ -114,6 +117,7 @@ enum extra_cmds {
     GSETMISS,
     SMPLDUM,
     SMPLBOOL,
+    SETSEED,
     MARKERS,
     STORE_MODEL,
     VAR_SUMMARY,

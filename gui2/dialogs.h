@@ -20,8 +20,6 @@ void infobox (const char *msg);
 
 int make_default_storelist (void);
 
-int storevars_dialog (int export); 
-
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
 		  guint hlpcode, guint varclick);
@@ -46,6 +44,8 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w);
 
-void ssheet_precision_dialog (int *digits);
+#ifdef OLD_GTK
+GtkWidget *standard_button (int code);
+#endif
 
 #endif /* DIALOGS_H */

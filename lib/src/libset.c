@@ -59,7 +59,7 @@ int get_hac_lag (int m)
     return 0.75 * pow(m, 1.0 / 3.0);
 }
 
-int parse_set_line (const char *line, int *echo_off)
+int parse_set_line (const char *line, int *echo_off, PRN *prn)
 {
     char setobj[16], setarg[16];
     int nw, err = E_PARSE;
@@ -126,8 +126,13 @@ int parse_set_line (const char *line, int *echo_off)
 	else if (!strcmp(setobj, "seed")) {
 	    /* seed for PRNG */
 	    if (isdigit(*setarg)) {
-		gretl_rand_set_seed(atoi(setarg));
+		int k = atoi(setarg);
+
+		gretl_rand_set_seed(k);
+		pprintf(prn, 
+			_("Pseudo-random number generator seeded with %d\n"), k);
 		err = 0;
+
 	    }
 	}	
     }
