@@ -18,6 +18,7 @@
 #endif /* GLIB_CHECK_VERSION */
 
 #undef DEBUG
+
 #define HAVE_FLITE 1
 
 #ifdef HAVE_FLITE
@@ -414,7 +415,7 @@ static void speak_dataset_comments (const dataset *dset)
 
     flite_init();
 
-    v = register_cmu_us_kal16();
+    v = register_cmu_us_kal();
 
     for (i=0; i<dset->n_comments; i++) {
 	flite_text_to_speech(dset->comments[i], v, "play");
