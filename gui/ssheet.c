@@ -271,11 +271,11 @@ static GtkWidget *build_menu (GtkWidget *sheet)
     };
     GtkWidget *menu;
     GtkWidget *item;
-    int i;
+    int i, n_items = sizeof items / sizeof items[0];
 
     menu = gtk_menu_new();
 
-    for (i=0; i<(sizeof items / sizeof items[0]); i++) {
+    for (i=0; i<n_items; i++) {
         item = gtk_menu_item_new_with_label(_(items[i]));
         gtk_signal_connect(GTK_OBJECT(item), "activate",
                            (GtkSignalFunc) popup_activated,

@@ -674,13 +674,18 @@ static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look)
 {
     GtkWidget *tempwid, *box, *tbl;
     gint tbl_len;
-    const gchar *titles[] = {"normal", " t ", "chi-square", " F ", " DW "};
+    const gchar *titles[] = {N_("normal"), 
+			     N_(" t "), 
+			     N_("chi-square"), 
+			     N_(" F "), 
+			     N_(" DW ")
+    };
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 10);
     gtk_widget_show (box);
 
-    tempwid = gtk_label_new (titles[code]);
+    tempwid = gtk_label_new (_(titles[code]));
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
@@ -695,17 +700,17 @@ static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look)
     case 0: /* normal */
 	break;
     case 1: /* t */
-	add_lookup_entry(tbl, &tbl_len, "df", look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, _("df"), look, code, 0);
 	break;
     case 2: /* chi-square */
-	add_lookup_entry(tbl, &tbl_len, "df", look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, _("df"), look, code, 0);
 	break;
     case 3: /* F */
-	add_lookup_entry(tbl, &tbl_len, "dfn", look, code, 0);
-	add_lookup_entry(tbl, &tbl_len, "dfd", look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, _("dfn"), look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, _("dfd"), look, code, 0);
 	break;	
     case 4: /* DW */
-	add_lookup_entry(tbl, &tbl_len, "n", look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, _("n"), look, code, 0);
 	break;
     default:
 	break;
@@ -718,13 +723,18 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
 {
     GtkWidget *tempwid, *box, *tbl;
     gint tbl_len;
-    const gchar *titles[] = {"normal", " t ", "chi-square", " F ", "gamma"};
+    const gchar *titles[] = {N_("normal"), 
+			     N_(" t "), 
+			     N_("chi-square"), 
+			     N_(" F "), 
+			     N_("gamma")
+    };
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 10);
     gtk_widget_show (box);
 
-    tempwid = gtk_label_new (titles[code]);
+    tempwid = gtk_label_new (_(titles[code]));
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
@@ -737,33 +747,33 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
    
     switch (code) {
     case 0: /* normal */
-	add_lookup_entry(tbl, &tbl_len, "value", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "mean", pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("mean"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[1]), "0");
-	add_lookup_entry(tbl, &tbl_len, "std. deviation", pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("std. deviation"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[2]), "1");
 	break;
     case 1: /* t */
-	add_lookup_entry(tbl, &tbl_len, "df", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "value", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "mean", pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("df"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("mean"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[2]), "0");
-	add_lookup_entry(tbl, &tbl_len, "std. deviation", pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("std. deviation"), pval, code, 1);
 	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[3]), "1");
 	break;
     case 2: /* chi-square */
-	add_lookup_entry(tbl, &tbl_len, "df", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "x-value", pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("df"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("x-value"), pval, code, 1);
 	break;
     case 3: /* F */
-	add_lookup_entry(tbl, &tbl_len, "dfn", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "dfd", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "F-value", pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("dfn"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("dfd"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("F-value"), pval, code, 1);
 	break;
     case 4: /* gamma */
-	add_lookup_entry(tbl, &tbl_len, "mean", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "variance", pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, "x-value", pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("mean"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("variance"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, _("x-value"), pval, code, 1);
 	break;
     default:
 	break;
@@ -855,14 +865,19 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t **test)
 {
     GtkWidget *tempwid, *box, *tbl;
     gint tbl_len;
-    const gchar *titles[] = {"mean", "variance", "proportion",
-			     "2 means", "2 variances", "2 proportions"};
+    const gchar *titles[] = { N_("mean"), 
+			      N_("variance"), 
+			      N_("proportion"),
+			      N_("2 means"), 
+			      N_("2 variances"), 
+			      N_("2 proportions")
+    };
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 10);
     gtk_widget_show (box);
 
-    tempwid = gtk_label_new (titles[code]);
+    tempwid = gtk_label_new (_(titles[code]));
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
@@ -875,48 +890,48 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t **test)
    
     switch (code) {
     case 0: /* mean */
-	add_test_entry(tbl, &tbl_len, "sample mean", test, code);
-	add_test_entry(tbl, &tbl_len, "std. deviation", test, code);
-	add_test_entry(tbl, &tbl_len, "sample size", test, code);
-	add_test_entry(tbl, &tbl_len, "H0: mean =", test, code);
-	add_test_check(tbl, &tbl_len, "Assume standard deviation is "
-		       "population value", test, code);
+	add_test_entry(tbl, &tbl_len, _("sample mean"), test, code);
+	add_test_entry(tbl, &tbl_len, _("std. deviation"), test, code);
+	add_test_entry(tbl, &tbl_len, _("sample size"), test, code);
+	add_test_entry(tbl, &tbl_len, _("H0: mean ="), test, code);
+	add_test_check(tbl, &tbl_len, _("Assume standard deviation is "
+		       "population value"), test, code);
 	break;
     case 1: /* variance */
-	add_test_entry(tbl, &tbl_len, "sample variance", test, code);
-	add_test_entry(tbl, &tbl_len, "sample size", test, code);
-	add_test_entry(tbl, &tbl_len, "H0: variance =", test, code);
+	add_test_entry(tbl, &tbl_len, _("sample variance"), test, code);
+	add_test_entry(tbl, &tbl_len, _("sample size"), test, code);
+	add_test_entry(tbl, &tbl_len, _("H0: variance ="), test, code);
 	break;
     case 2: /* proportion */
-	add_test_entry(tbl, &tbl_len, "sample proportion", test, code);
-	add_test_entry(tbl, &tbl_len, "sample size", test, code);
-	add_test_entry(tbl, &tbl_len, "H0: proportion =", test, code);
+	add_test_entry(tbl, &tbl_len, _("sample proportion"), test, code);
+	add_test_entry(tbl, &tbl_len, _("sample size"), test, code);
+	add_test_entry(tbl, &tbl_len, _("H0: proportion ="), test, code);
 	break;
     case 3: /* two means */
-	add_test_entry(tbl, &tbl_len, "mean of sample 1", test, code);
-	add_test_entry(tbl, &tbl_len, "std. deviation, sample 1", test, code);
-	add_test_entry(tbl, &tbl_len, "size of sample 1", test, code);
-	add_test_entry(tbl, &tbl_len, "mean of sample 2", test, code);
-	add_test_entry(tbl, &tbl_len, "std. deviation, sample 2", test, code);
-	add_test_entry(tbl, &tbl_len, "size of sample 2", test, code);
-	add_test_entry(tbl, &tbl_len, "H0: Difference of means =", test, code);
+	add_test_entry(tbl, &tbl_len, _("mean of sample 1"), test, code);
+	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 1"), test, code);
+	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, code);
+	add_test_entry(tbl, &tbl_len, _("mean of sample 2"), test, code);
+	add_test_entry(tbl, &tbl_len, _("std. deviation, sample 2"), test, code);
+	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, code);
+	add_test_entry(tbl, &tbl_len, _("H0: Difference of means ="), test, code);
 	gtk_entry_set_text(GTK_ENTRY(test[3]->entry[6]), "0");
-	add_test_check(tbl, &tbl_len, "Assume common population standard "
-		       "deviation", test, code);
+	add_test_check(tbl, &tbl_len, _("Assume common population standard "
+		       "deviation"), test, code);
 	break;
     case 4: /* two variances */
-	add_test_entry(tbl, &tbl_len, "variance of sample 1", test, code);
-	add_test_entry(tbl, &tbl_len, "size of sample 1", test, code);
-	add_test_entry(tbl, &tbl_len, "variance of sample 2", test, code);
-	add_test_entry(tbl, &tbl_len, "size of sample 2", test, code);
-	add_test_label(tbl, &tbl_len, "H0: Ratio of variances = 1");
+	add_test_entry(tbl, &tbl_len, _("variance of sample 1"), test, code);
+	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, code);
+	add_test_entry(tbl, &tbl_len, _("variance of sample 2"), test, code);
+	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, code);
+	add_test_label(tbl, &tbl_len, _("H0: Ratio of variances = 1"));
 	break;
     case 5: /* two proportions */
-	add_test_entry(tbl, &tbl_len, "proportion, sample 1", test, code);
-	add_test_entry(tbl, &tbl_len, "size of sample 1", test, code);
-	add_test_entry(tbl, &tbl_len, "proportion, sample 2", test, code);
-	add_test_entry(tbl, &tbl_len, "size of sample 2", test, code);
-	add_test_label(tbl, &tbl_len, "H0: Difference of proportions = 0");
+	add_test_entry(tbl, &tbl_len, _("proportion, sample 1"), test, code);
+	add_test_entry(tbl, &tbl_len, _("size of sample 1"), test, code);
+	add_test_entry(tbl, &tbl_len, _("proportion, sample 2"), test, code);
+	add_test_entry(tbl, &tbl_len, _("size of sample 2"), test, code);
+	add_test_label(tbl, &tbl_len, _("H0: Difference of proportions = 0"));
 	break;
     default:
 	break;

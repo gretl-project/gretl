@@ -414,7 +414,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
-    char title[36], query[MAXLABEL], defstr[MAXLEN];
+    char title[64], query[MAXLABEL], defstr[MAXLEN];
     char startdate[9], enddate[9];
     void (*okfunc)() = NULL;
     int v;
