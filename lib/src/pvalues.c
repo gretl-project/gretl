@@ -164,6 +164,7 @@ double batch_pvalue (const char *str,
     char stat = 0;
     double xx = NADBL, mean = 0, variance = 0, xval = 0, tmp;
     char cmd[7], df1str[9], df2str[9], fstr[9]; 
+    int gotvar, err = 0;
 
     for (;;) {
 	if (sscanf(str, "%c,%[^,],%[^,],%s", &stat, df1str, df2str, fstr) == 4)
@@ -187,35 +188,57 @@ double batch_pvalue (const char *str,
 	break;
     }
 
-    if (isalpha((unsigned char) df1str[0])) {
+    if (isalpha((unsigned char) *df1str)) {
+	gotvar = 0;
 	for (i=0; i<pdinfo->v; i++) {
 	    if (strcmp(df1str, pdinfo->varname[i]) == 0) {
+		gotvar = 1;
 		df1 = (int) Z[i][0];
 		mean = Z[i][0];
 		break;
 	    }
 	}
+	if (!gotvar) {
+	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), df1str);
+	    err = 1;
+	}
     } else {
-	df1 = atoi(df1str);
-	mean = atof(df1str);
+	if (*df1str && check_atof(df1str)) {
+	    err = 1;
+	} else {
+	    df1 = atoi(df1str);
+	    mean = atof(df1str);
+	}
     }
 
-    if (isalpha((unsigned char) df2str[0])) {
+    if (isalpha((unsigned char) *df2str)) {
+	gotvar = 0;
 	for (i=0; i<pdinfo->v; i++) {
 	    if (strcmp(df2str, pdinfo->varname[i]) == 0) {
+		gotvar = 1;
 		df2 = (int) Z[i][0];
 		variance = Z[i][0];
 		break;
 	    }
 	}
+	if (!gotvar) {
+	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), df2str);
+	    err = 1;
+	}
     } else {
-	df2 = atoi(df2str);
-	variance = atof(df2str);
+	if (*df2str && check_atof(df2str)) {
+	    err = 1;
+	} else {
+	    df2 = atoi(df2str);
+	    variance = atof(df2str);
+	}
     }
 
-    if (isalpha((unsigned char) fstr[0])) {
+    if (isalpha((unsigned char) *fstr)) {
+	gotvar = 0;
 	for (i=0; i<pdinfo->v; i++) {
 	    if (strcmp(fstr, pdinfo->varname[i]) == 0) {
+		gotvar = 1;
 		xval = get_xvalue(i, Z, pdinfo);
 		if (na(xval)) {
 		    pputs(prn, _("\nstatistic has missing value code\n"));
@@ -224,7 +247,19 @@ double batch_pvalue (const char *str,
 		break;
 	    }
 	}
-    } else xval = atof(fstr);
+	if (!gotvar) {
+	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), fstr);
+	    err = 1;
+	}
+    } else {
+	if (*fstr && check_atof(fstr)) err = 1;
+	else xval = atof(fstr);
+    }
+
+    if (err) {
+	pprintf(prn, "%s\n", gretl_errmsg);
+	return NADBL;
+    }
 
     switch (stat) {
 

@@ -23,6 +23,7 @@
 #define STRUTILS_H
 
 #include "libgretl.h"
+#include <time.h>
 
 #ifdef WIN32
 #define SLASH '\\'
