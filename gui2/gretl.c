@@ -249,7 +249,7 @@ extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
 static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
 {
-    varinfo_dialog(mdata->active_var);
+    varinfo_dialog(mdata->active_var, 1);
 }
 
 GtkItemFactoryEntry data_items[] = {
@@ -1574,7 +1574,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Runs test"))) 
 	do_menu_op(NULL, RUNS, NULL);
     else if (!strcmp(item, _("Edit attributes")))  
-	varinfo_dialog(mdata->active_var);
+	varinfo_dialog(mdata->active_var, 1);
     else if (!strcmp(item, _("Delete"))) 
 	delete_var_by_id(mdata->active_var);
     else if (!strcmp(item, _("Simulate..."))) 

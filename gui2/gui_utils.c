@@ -1058,29 +1058,46 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 
 /* ........................................................... */
 
+struct viewbar_item {
+    const char *str;
+    const gchar *icon;
+    void (*toolfunc)();
+    int flag;
+};
+
+enum {
+    SAVE_ITEM = 1,
+    SAVE_AS_ITEM,
+    EDIT_ITEM,
+    GP_ITEM,
+    RUN_ITEM,
+    COPY_ITEM,
+    MODELTABLE_ITEM,
+} viewbar_codes;
+
+static struct viewbar_item viewbar_items[] = {
+    { N_("Save"), GTK_STOCK_SAVE, file_viewer_save, SAVE_ITEM },
+    { N_("Save as..."), GTK_STOCK_SAVE_AS, file_save_callback, SAVE_AS_ITEM },
+    { N_("Send to gnuplot"), GTK_STOCK_EXECUTE, gp_send_callback, GP_ITEM },
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    { N_("Print..."), GTK_STOCK_PRINT, window_print_callback, 0 },
+#endif
+    { N_("Run"), GTK_STOCK_EXECUTE, run_script_callback, RUN_ITEM },
+    { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
+    { N_("Paste"), GTK_STOCK_PASTE, text_paste_callback, EDIT_ITEM },
+    { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
+    { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
+    { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
+    { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
+    { N_("LaTeX"), "STOCK_TEX", modeltable_tex_view, MODELTABLE_ITEM },
+    { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
+    { NULL, NULL, NULL, 0 }};
+
 static void make_viewbar (windata_t *vwin, int text_out)
 {
     GtkWidget *button, *hbox;
+    void (*toolfunc)();
     int i;
-    static char *viewstrings[] = {
-	N_("Save"),
-	N_("Save as..."),
-	N_("Send to gnuplot"),
-	N_("Print..."),
-	N_("Run"),
-	N_("Copy"), 
-	N_("Paste"),
-	N_("Find..."),
-	N_("Replace..."),
-	N_("Undo"),
-	N_("Help on command"),
-	N_("LaTeX"),
-	N_("Close"),
-	NULL
-    };
-    const gchar *stockicon = NULL;
-    void (*toolfunc)() = NULL;
-    gchar *toolstr;
 
     int run_ok = (vwin->role == EDIT_SCRIPT ||
 		  vwin->role == VIEW_SCRIPT ||
@@ -1096,11 +1113,6 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES);
 
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
-    int print_ok = 1;
-#else
-    int print_ok = 0;
-#endif
 
     if (vwin->role == VIEW_MODELTABLE) tex_icon_init();
 
@@ -1114,118 +1126,53 @@ static void make_viewbar (windata_t *vwin, int text_out)
     vwin->mbar = gtk_toolbar_new();
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
 
-    for (i=0; viewstrings[i] != NULL; i++) {
-	switch (i) {
-	case 0:
-	    if (edit_ok && vwin->role != SCRIPT_OUT) {
-		stockicon = GTK_STOCK_SAVE;
-		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
-		    toolfunc = buf_edit_save;
-		} else if (vwin->role == GR_PLOT) {
-		    toolfunc = save_plot_commands_callback;
-		} else {
-		    toolfunc = file_viewer_save;
-		}
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 1:
-	    if (save_as_ok) {
-		stockicon = GTK_STOCK_SAVE_AS;
-		toolfunc = file_save_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 2:
-	    if (vwin->role == GR_PLOT) {
-		stockicon = GTK_STOCK_EXECUTE;
-		toolfunc = gp_send_callback;
-	    } else
-		toolfunc = NULL;
-	    break;	    
-	case 3:
-	    if (print_ok) {
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
-		stockicon = GTK_STOCK_PRINT;
-		toolfunc = window_print_callback;
-#endif
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 4:
-	    if (run_ok) {
-		stockicon = GTK_STOCK_EXECUTE;
-		toolfunc = run_script_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 5:
-	    stockicon = GTK_STOCK_COPY;
-	    if (MULTI_COPY_ENABLED(vwin->role)) {
-		toolfunc = choose_copy_format_callback;
-	    } else {
-		toolfunc = text_copy_callback;
-	    }
-	    break;
-	case 6:
-	    if (edit_ok) {
-		stockicon = GTK_STOCK_PASTE;
-		toolfunc = text_paste_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 7:
-	    if (vwin->role != VIEW_MODELTABLE) {
-		stockicon = GTK_STOCK_FIND;
-		toolfunc = text_find_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 8:
-	    if (edit_ok) {
-		stockicon = GTK_STOCK_FIND_AND_REPLACE;
-		toolfunc = text_replace_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 9:
-	    if (edit_ok) {
-		stockicon = GTK_STOCK_UNDO;
-		toolfunc = text_undo_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 10:
-	    if (run_ok) {
-		stockicon = GTK_STOCK_HELP;
-		toolfunc = activate_script_help;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 11:
-	    if (vwin->role == VIEW_MODELTABLE) {
-		stockicon = "STOCK_TEX";
-		toolfunc = modeltable_tex_view;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 12:
-	    stockicon = GTK_STOCK_CLOSE;
-	    toolfunc = delete_file_viewer;
-	    break;
-	default:
-	    break;
+    for (i=0; viewbar_items[i].str != NULL; i++) {
+
+	toolfunc = viewbar_items[i].toolfunc;
+
+	if (!edit_ok && viewbar_items[i].flag == EDIT_ITEM) {
+	    continue;
 	}
 
-	if (toolfunc == NULL) continue;
+	if (!save_as_ok && viewbar_items[i].flag == SAVE_AS_ITEM) {
+	    continue;
+	}
 
-	toolstr = _(viewstrings[i]);
+	if (!run_ok && viewbar_items[i].flag == RUN_ITEM) {
+	    continue;
+	}
+
+	if (vwin->role != GR_PLOT && viewbar_items[i].flag == GP_ITEM) {
+	    continue;
+	}
+
+	if (vwin->role != VIEW_MODELTABLE && 
+	    viewbar_items[i].flag == MODELTABLE_ITEM) {
+	    continue;
+	}
+
+	if (viewbar_items[i].flag == COPY_ITEM && 
+	    MULTI_COPY_ENABLED(vwin->role)) {
+	    toolfunc = choose_copy_format_callback;
+	}
+
+	if (viewbar_items[i].flag == SAVE_ITEM) { 
+	    if (!edit_ok || vwin->role == SCRIPT_OUT) {
+		/* script output doesn't already have a filename */
+		continue;
+	    }
+	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
+		toolfunc = buf_edit_save;
+	    } else if (vwin->role == GR_PLOT) {
+		toolfunc = save_plot_commands_callback;
+	    }
+	}
 
 	button = gtk_image_new();
-	gtk_image_set_from_stock(GTK_IMAGE(button), stockicon, 
+	gtk_image_set_from_stock(GTK_IMAGE(button), viewbar_items[i].icon, 
 				 GTK_ICON_SIZE_MENU);
         gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				NULL, toolstr, NULL,
+				NULL, _(viewbar_items[i].str), NULL,
 				button, toolfunc, vwin);
     }
 
@@ -1236,52 +1183,22 @@ static void make_viewbar (windata_t *vwin, int text_out)
 static void add_edit_items_to_viewbar (windata_t *vwin)
 {
     GtkWidget *button;
-    static char *editstrings[] = {
-	N_("Save"),
-	N_("Paste"),
-	N_("Replace..."),
-	N_("Undo"),
-	NULL
-    };
-    const gchar *stockicon = NULL;
-    void (*toolfunc)() = NULL;
-    gchar *toolstr;
     int i, pos = 0;
 
-    for (i=0; editstrings[i] != NULL; i++) {
-	switch (i) {
-	case 0:
-	    stockicon = GTK_STOCK_SAVE;
-	    toolfunc = file_viewer_save;
-	    pos = 0;
-	    break;
-	case 1:
-	    stockicon = GTK_STOCK_PASTE;
-	    toolfunc = text_paste_callback;
-	    pos = 5;
-	    break;
-	case 2:
-	    stockicon = GTK_STOCK_FIND_AND_REPLACE;
-	    toolfunc = text_replace_callback;
-	    pos = 7;
-	    break;
-	case 3:
-	    stockicon = GTK_STOCK_UNDO;
-	    toolfunc = text_undo_callback;
-	    pos = 8;
-	    break;
-	default:
-	    break;
+    for (i=0; viewbar_items[i].str != NULL; i++) {
+	if (viewbar_items[i].flag == SAVE_ITEM ||
+	    viewbar_items[i].flag == EDIT_ITEM) {
+
+	    button = gtk_image_new();
+	    gtk_image_set_from_stock(GTK_IMAGE(button), 
+				     viewbar_items[i].icon, 
+				     GTK_ICON_SIZE_MENU);
+	    gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
+				    NULL, _(viewbar_items[i].str), NULL,
+				    button, viewbar_items[i].toolfunc, 
+				    vwin, pos);
 	}
-
-	toolstr = _(editstrings[i]);
-
-	button = gtk_image_new();
-	gtk_image_set_from_stock(GTK_IMAGE(button), stockicon, 
-				 GTK_ICON_SIZE_MENU);
-        gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
-				NULL, toolstr, NULL,
-				button, toolfunc, vwin, pos);
+	if (viewbar_items[i].flag != GP_ITEM) pos++;
     }
 }
 
@@ -2429,7 +2346,6 @@ static void add_var_menu_items (windata_t *vwin)
 
     for (i=0; i<neqns; i++) {
 	char maj[32], min[16];
-	char findmaj[32], findmin[16]; /* FIXME: not needed? */
 
 	/* save resids items */
 	varitem.path = g_strdup_printf("%s/%s %d", _(dpath), 
@@ -2442,8 +2358,6 @@ static void add_var_menu_items (windata_t *vwin)
 
 	/* impulse responses: make branch for target */
 	vtarg = gretl_var_get_variable_number(var, i);
-
-	sprintf(findmaj, _("response of %s"), datainfo->varname[vtarg]);
 	double_underscores(tmp, datainfo->varname[vtarg]);
 	sprintf(maj, _("response of %s"), tmp);
 
@@ -2462,8 +2376,6 @@ static void add_var_menu_items (windata_t *vwin)
 	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_var_get_variable_number(var, j);
 	    varitem.callback_action = j;
-
-	    sprintf(findmin, _("to %s"), datainfo->varname[vshock]);
 	    double_underscores(tmp, datainfo->varname[vshock]);
 	    sprintf(min, _("to %s"), tmp);
 
@@ -2473,12 +2385,8 @@ static void add_var_menu_items (windata_t *vwin)
 	    varitem.item_type = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
-	    /* drop the doubled underscores to _find_ the item */
-	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), 
-					   findmaj, findmin);
-	    w = gtk_item_factory_get_item(vwin->ifac, varitem.path);
+	    w = gtk_item_factory_get_widget_by_action(vwin->ifac, j);
 	    g_object_set_data(G_OBJECT(w), "targ", GINT_TO_POINTER(i));
-	    g_free(varitem.path);
 	}
     }
 }

@@ -98,4 +98,6 @@ char *gretl_xml_encode (char *buf);
 
 void unescape_url (char *url);
 
+char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);
+
 #endif /* STRUTILS_H */

@@ -2,6 +2,8 @@ version 1.2.0
 - add "rename" command (rename a variable)
 - "delete" command: add the ability to delete a specific
   variable, identified by its number
+- When adding a variable to the dataset from a model window,
+  give the user a chance to edit the name and description
 - Windows: add option to emulate Windows look (via WIMP)
 - add "--no-restore-data" to R invocation
 - Fix for launching R from gretl on Windows XP

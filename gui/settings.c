@@ -405,6 +405,14 @@ static GtkWidget *make_path_browse_button (RCVARS *rc)
 
 /* .................................................................. */
 
+static gboolean takes_effect_on_restart (void)
+{
+    infobox(_("This change will take efect when you restart gretl"));
+    return FALSE;
+}
+
+/* .................................................................. */
+
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
     GtkWidget *box, *b_table, *s_table, *tempwid = NULL;
@@ -456,12 +464,19 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
 		     b_len, b_len + 1);
-		if (*(int *)(rc->var))
+		if (*(int *)(rc->var)) {
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), TRUE);
-		else
+		} else {
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), FALSE);
+		}
+		/* special case: warning */
+		if (!strcmp(rc->key, "lcnumeric")) {
+		    gtk_signal_connect(GTK_OBJECT(tempwid), "toggled",
+				       GTK_SIGNAL_FUNC(takes_effect_on_restart), 
+				       NULL);
+		}
 		/* special case: link between toggle and preceding entry */
 		if (rc->len) {
 		    gtk_widget_set_sensitive(rc_vars[i-1].widget,
@@ -574,9 +589,6 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     const gchar *tempstr;
     extern void show_toolbar (void);
     int i = 0;
-#ifdef ENABLE_NLS
-    int lcnum_bak = lcnumeric;
-#endif
 
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].widget != NULL) {
@@ -605,12 +617,6 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     }
 
     set_use_qr(useqr);
-
-#ifdef ENABLE_NLS
-    set_lcnumeric();
-    if (lcnumeric != lcnum_bak) 
-	infobox(_("Please restart gretl to ensure consistent results"));
-#endif
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
     set_tramo_x12a_dirs();

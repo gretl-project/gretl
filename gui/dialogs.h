@@ -39,6 +39,6 @@ void delimiter_dialog (void);
 
 void copy_format_dialog (windata_t *vwin);
 
-void varinfo_dialog (int varnum);
+void varinfo_dialog (int varnum, int full);
 
 #endif /* DIALOGS_H */

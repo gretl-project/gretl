@@ -1374,6 +1374,48 @@ static void maybe_delete_session_object (gui_obj *obj)
     g_free(msg);
 }
 
+static void rename_session_model (MODEL *pmod, const char *newname)
+{
+    char *tmp = g_strdup(newname);
+
+    if (tmp != NULL) {
+	free(pmod->name);
+	pmod->name = tmp;
+    }
+}
+
+static void rename_session_graph (GRAPHT *graph, const char *newname)
+{
+    for (i=0; i<session.ngraphs; i++) {
+	if ((session.graphs[i])->ID == graph->ID) { 
+	    (session.graphs[i])->name[0] = '\0';
+	    strncat((session.graphs[i])->name, newname, 23);
+	    break;
+	}
+    }
+}
+
+static void rename_session_object (gui_obj *obj, const char *newname)
+{
+    if (obj->sort == 'm') { /* it's a model */
+	MODEL *pmod = (MODEL *) obj->data;
+
+	rename_session_model(pmod, newname);
+    }
+    if (obj->sort == 'v') { /* it's a VAR */
+	GRETL_VAR *var = (GRETL_VAR *) obj->data;
+
+	rename_session_var(var, newname);
+    }
+    else if (obj->sort == 'g' || obj->sort == 'b') { /* it's a graph */    
+	GRAPHT *graph = (GRAPHT *) obj->data;
+
+	rename_session_graph(graph, newname);
+    }
+
+    replay = 0;
+}
+
 static gui_obj *get_gui_obj_from_data (void *finddata)
 {
     gui_obj *gobj = NULL;

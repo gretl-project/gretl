@@ -760,4 +760,28 @@ void unescape_url (char *url)
     url[x] = '\0';
 }
 
+char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
+{
+    int i, j, conflict;
+    size_t n = strlen(vname);
+    const char *add = "abcdefghijklmnopqrstuvwxyz";
+
+    if (n > 7) n = 7;
+
+    for (j=0; j<26; j++) {
+	conflict = 0;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (i != v && !strcmp(vname, pdinfo->varname[i])) {
+		conflict = 1;
+		break;
+	    }
+	}
+	if (!conflict) break;
+	vname[n] = add[j];
+	vname[n+1] = '\0';
+    }
+
+    return vname;
+}
+
 

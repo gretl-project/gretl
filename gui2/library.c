@@ -2948,10 +2948,18 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
     }
 
     if (!undo) {
-	int v;
+	int v = datainfo->v - 1;
 	char line[32];
 
-	v = datainfo->v - 1;
+	/* give the user a chance to choose a different name */
+	varinfo_dialog(v, 0);
+
+	if (*datainfo->varname[v] == '\0') {
+	    /* the user canceled */
+	    dataset_drop_var(v, &Z, datainfo);
+	    return 0;
+	}	
+
 	populate_varlist();
 
 	if (code == 0) {
@@ -2976,7 +2984,7 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 
 int add_var_resid (GRETL_VAR *var, int eqnum)
 {
-    int err;
+    int err, v;
 
     err = gretl_var_add_resids_to_dataset(var, eqnum,
 					  &Z, datainfo);
@@ -2985,6 +2993,17 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 	errbox(_("Out of memory attempting to add variable"));
 	return 1;
     }
+
+    v = datainfo->v - 1;
+
+    /* give the user a chance to choose a different name */
+    varinfo_dialog(v, 0);
+
+    if (*datainfo->varname[v] == '\0') {
+	/* the user canceled */
+	dataset_drop_var(v, &Z, datainfo);
+	return 0;
+    }    
 
     populate_varlist();
     infobox(_("variable added"));
@@ -2998,6 +3017,7 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 void add_model_stat (MODEL *pmod, const int which)
 {
     char vname[9], vlabel[MAXLABEL], cmdstr[MAXLEN];
+    char statname[8];
     int i, n;
 
     if (dataset_add_scalar(&Z, datainfo)) {
@@ -3014,45 +3034,57 @@ void add_model_stat (MODEL *pmod, const int which)
 	sprintf(vlabel, _("error sum of squares from model %d"), 
 		pmod->ID);
 	Z[i][0] = pmod->ess;
-	sprintf(cmdstr, "genr ess_%d = $ess", pmod->ID);
+	strcpy(statname, "$ess");
 	break;
     case R2:
 	sprintf(vname, "r2_%d", pmod->ID);
 	sprintf(vlabel, _("R-squared from model %d"), pmod->ID);
 	Z[i][0] = pmod->rsq;
-	sprintf(cmdstr, "genr r2_%d = $rsq", pmod->ID);
+	strcpy(statname, "$rsq");
 	break;
     case TR2:
 	sprintf(vname, "trsq%d", pmod->ID);
 	sprintf(vlabel, _("T*R-squared from model %d"), pmod->ID);
 	Z[i][0] = pmod->nobs * pmod->rsq;
-	sprintf(cmdstr, "genr trsq%d = $trsq", pmod->ID);
+	strcpy(statname, "$trsq");
 	break;
     case DF:
 	sprintf(vname, "df_%d", pmod->ID);
 	sprintf(vlabel, _("degrees of freedom from model %d"), 
 		pmod->ID);
 	Z[i][0] = (double) pmod->dfd;
-	sprintf(cmdstr, "genr df_%d = $df", pmod->ID);
+	strcpy(statname, "$df");
 	break;
     case SIGMA:
 	sprintf(vname, "sgma_%d", pmod->ID);
 	sprintf(vlabel, _("std err of residuals from model %d"), 
 		pmod->ID);
 	Z[i][0] = pmod->sigma;
-	sprintf(cmdstr, "genr sgma_%d = $sigma", pmod->ID);
+	strcpy(statname, "$sigma");
 	break;
     case LNL:
 	sprintf(vname, "lnl_%d", pmod->ID);
 	sprintf(vlabel, _("log likelihood from model %d"), 
 		pmod->ID);
 	Z[i][0] = pmod->lnL;
-	sprintf(cmdstr, "genr lnl_%d = $lnl", pmod->ID);
+	strcpy(statname, "$lnl");
 	break;	
     }
 
-    strcpy(datainfo->varname[i], vname);
+    strcpy(datainfo->varname[i], make_varname_unique(vname, i, datainfo));
     strcpy(VARLABEL(datainfo, i), vlabel);
+
+    /* give the user a chance to choose a different name */
+    varinfo_dialog(i, 0);
+
+    if (*datainfo->varname[i] == '\0') {
+	/* the user canceled */
+	dataset_drop_var(i, &Z, datainfo);
+	return;
+    }
+
+    sprintf(cmdstr, "genr %s = %s", datainfo->varname[i], statname);
+
     populate_varlist();
     check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);
@@ -3060,8 +3092,7 @@ void add_model_stat (MODEL *pmod, const int which)
 
     /* note: since this is a scalar, which will not be saved by
        default on File/Save data, we will not mark the data set
-       as "modified" here.
-    */
+       as "modified" here. (FIXME saving scalars?) */
 }
 
 /* ........................................................... */

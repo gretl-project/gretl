@@ -1208,6 +1208,7 @@ struct varinfo_settings {
     GtkWidget *display_name_entry;
     GtkWidget *compaction_menu;
     int varnum;
+    int full;
 };
 
 static void really_set_variable_info (GtkWidget *w, 
@@ -1220,8 +1221,15 @@ static void really_set_variable_info (GtkWidget *w,
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
     if (strcmp(datainfo->varname[v], edttext)) {
+	int err;
+
 	sprintf(line, "rename %d %s", v, edttext);
-	if (verify_and_record_command(line)) {
+	if (vset->full) {
+	    err = verify_and_record_command(line);
+	} else {
+	    err = check_cmd(line);
+	}
+	if (err) {
 	    return;
 	} else {
 	    strcpy(datainfo->varname[v], edttext);
@@ -1237,14 +1245,16 @@ static void really_set_variable_info (GtkWidget *w,
 	gui_changed = 1;
     }
 
-    edttext = gtk_entry_get_text(GTK_ENTRY(vset->display_name_entry));
-    if (strcmp(DISPLAYNAME(datainfo, v), edttext)) {
-	*DISPLAYNAME(datainfo, v) = 0;
-	strncat(DISPLAYNAME(datainfo, v), edttext, MAXDISP - 1);
-	changed = 1;
+    if (vset->display_name_entry != NULL) {
+	edttext = gtk_entry_get_text(GTK_ENTRY(vset->display_name_entry));
+	if (strcmp(DISPLAYNAME(datainfo, v), edttext)) {
+	    *DISPLAYNAME(datainfo, v) = 0;
+	    strncat(DISPLAYNAME(datainfo, v), edttext, MAXDISP - 1);
+	    changed = 1;
+	}
     }
 
-    if (dataset_is_time_series(datainfo)) {
+    if (vset->compaction_menu != NULL) {
 	comp_method = 
 	    gtk_option_menu_get_history(GTK_OPTION_MENU(vset->compaction_menu));
 	if (comp_method != COMPACT_METHOD(datainfo, v)) {
@@ -1253,18 +1263,29 @@ static void really_set_variable_info (GtkWidget *w,
 	}
     }
 
-    if (changed) {
-	sprintf(line, "label %s -d \"%s\" -n \"%s\"", datainfo->varname[v],
-		VARLABEL(datainfo, v), DISPLAYNAME(datainfo, v));
-	verify_and_record_command(line);
+    if (vset->full) {
+	if (changed) {
+	    sprintf(line, "label %s -d \"%s\" -n \"%s\"", datainfo->varname[v],
+		    VARLABEL(datainfo, v), DISPLAYNAME(datainfo, v));
+	    verify_and_record_command(line);
+	}
+
+	if (gui_changed)
+	    populate_varlist();
+
+	if (changed || comp_changed || gui_changed) {
+	    data_status |= MODIFIED_DATA;
+	    set_sample_label(datainfo);
+	}
     }
 
-    if (gui_changed)
-	populate_varlist();
+    gtk_widget_destroy(vset->dlg);
+}
 
-    if (changed || comp_changed || gui_changed) {
-	data_status |= MODIFIED_DATA;
-	set_sample_label(datainfo);
+static void varinfo_cancel (GtkWidget *w, struct varinfo_settings *vset)
+{
+    if (!vset->full) {
+	*datainfo->varname[vset->varnum] = '\0';
     }
 
     gtk_widget_destroy(vset->dlg);
@@ -1273,6 +1294,7 @@ static void really_set_variable_info (GtkWidget *w,
 static void free_vsettings (GtkWidget *w, 
 			    struct varinfo_settings *vset)
 {
+    if (!vset->full) gtk_main_quit();
     free(vset);
 }
 
@@ -1286,7 +1308,7 @@ static const char *comp_int_to_string (int i)
     else return N_("not set");
 }
 
-void varinfo_dialog (int varnum)
+void varinfo_dialog (int varnum, int full)
 {
     GtkWidget *tempwid, *hbox;
     struct varinfo_settings *vset;
@@ -1296,6 +1318,9 @@ void varinfo_dialog (int varnum)
 
     vset->varnum = varnum;
     vset->dlg = gtk_dialog_new();
+    vset->display_name_entry = NULL;
+    vset->compaction_menu = NULL;
+    vset->full = full;
 
     g_signal_connect (G_OBJECT(vset->dlg), "destroy", 
 		      G_CALLBACK(free_vsettings), vset);
@@ -1350,30 +1375,32 @@ void varinfo_dialog (int varnum)
 		       hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);  
 
-    /* read/set display name */
-    hbox = gtk_hbox_new(FALSE, 5);
-    tempwid = gtk_label_new (_("display name (shown in graphs):"));
-    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
-    gtk_widget_show(tempwid);
+    /* read/set display name? */
+    if (full) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	tempwid = gtk_label_new (_("display name (shown in graphs):"));
+	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+	gtk_widget_show(tempwid);
 
-    vset->display_name_entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(vset->display_name_entry), 
-			     MAXDISP-1);
-    gtk_entry_set_width_chars(GTK_ENTRY(vset->display_name_entry), 
-			      MAXDISP+4);
-    gtk_entry_set_text(GTK_ENTRY(vset->display_name_entry), 
-		       DISPLAYNAME(datainfo, varnum));
-    gtk_box_pack_start(GTK_BOX(hbox), 
-		       vset->display_name_entry, FALSE, FALSE, 0);
-    gtk_widget_show(vset->display_name_entry); 
-    gtk_entry_set_activates_default(GTK_ENTRY(vset->display_name_entry), TRUE);
+	vset->display_name_entry = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(vset->display_name_entry), 
+				 MAXDISP-1);
+	gtk_entry_set_width_chars(GTK_ENTRY(vset->display_name_entry), 
+				  MAXDISP+4);
+	gtk_entry_set_text(GTK_ENTRY(vset->display_name_entry), 
+			   DISPLAYNAME(datainfo, varnum));
+	gtk_box_pack_start(GTK_BOX(hbox), 
+			   vset->display_name_entry, FALSE, FALSE, 0);
+	gtk_widget_show(vset->display_name_entry); 
+	gtk_entry_set_activates_default(GTK_ENTRY(vset->display_name_entry), TRUE);
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-		       hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox); 
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+	gtk_widget_show(hbox); 
+    }
 
     /* read/set compaction method? */
-    if (dataset_is_time_series(datainfo)) {  
+    if (full && dataset_is_time_series(datainfo)) {  
 	GtkWidget *menu;
 	int i;
 
@@ -1421,19 +1448,23 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
 			tempwid, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (delete_widget), vset->dlg);
+		      G_CALLBACK (varinfo_cancel), vset);
     gtk_widget_show (tempwid);
 
-    /* And a Help button */
-    tempwid = standard_button(GTK_STOCK_HELP);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
-			tempwid, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (context_help), 
-		      GINT_TO_POINTER(LABEL));
-    gtk_widget_show (tempwid);
+    /* And a Help button? */
+    if (full) {
+	tempwid = standard_button(GTK_STOCK_HELP);
+	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
+			    tempwid, TRUE, TRUE, 0);
+	g_signal_connect (G_OBJECT (tempwid), "clicked", 
+			  G_CALLBACK (context_help), 
+			  GINT_TO_POINTER(LABEL));
+	gtk_widget_show (tempwid);
+    }
 
     gtk_widget_show (vset->dlg);
+
+    if (!full) gtk_main();
 }
 

@@ -2153,7 +2153,6 @@ int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
     }
 
     strcpy(pdinfo->varname[i], vname);
-
     strcpy(VARLABEL(pdinfo, i), vlabel);
 
     return 0;

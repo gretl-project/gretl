@@ -986,32 +986,51 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
     copy_format_dialog(vwin);
 }
 
+/* ........................................................... */
+
+struct viewbar_item {
+    const char *str;
+    gchar **toolxpm;
+    void (*toolfunc)();
+    int flag;
+};
+
+enum {
+    SAVE_ITEM = 1,
+    SAVE_AS_ITEM,
+    EDIT_ITEM,
+    GP_ITEM,
+    RUN_ITEM,
+    COPY_ITEM,
+    MODELTABLE_ITEM,
+} viewbar_codes;
+
+static struct viewbar_item viewbar_items[] = {
+    { N_("Save"), stock_save_16_xpm, file_viewer_save, SAVE_ITEM },
+    { N_("Save as..."), stock_save_as_16_xpm, file_save_callback, SAVE_AS_ITEM },
+    { N_("Send to gnuplot"), stock_exec_16_xpm, gp_send_callback, GP_ITEM },
+#ifdef USE_GNOME
+    { N_("Print..."), stock_print_16_xpm, window_print_callback, 0 },
+#endif
+    { N_("Run"), stock_exec_16_xpm, run_script_callback, RUN_ITEM },
+    { N_("Copy"), stock_copy_16_xpm, text_copy_callback, COPY_ITEM }, 
+    { N_("Paste"), stock_paste_16_xpm, text_paste_callback, EDIT_ITEM },
+    { N_("Find..."), stock_search_16_xpm, text_find_callback, 0 },
+    { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
+    { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
+    { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
+    { N_("LaTeX"), mini_tex_xpm, modeltable_tex_view, MODELTABLE_ITEM },
+    { N_("Close"), stock_close_16_xpm, delete_file_viewer, 0 },
+    { NULL, NULL, NULL, 0 }};
+
 static void make_viewbar (windata_t *vwin, int text_out)
 {
-    GtkWidget *iconw, *button, *hbox;
+    GtkWidget *iconw, *hbox;
     GdkPixmap *icon;
     GdkBitmap *mask;
     GdkColormap *cmap;
     int i;
-    static char *viewstrings[] = {
-	N_("Save"),
-	N_("Save as..."),
-	N_("Send to gnuplot"),
-	N_("Print..."),
-	N_("Run"),
-	N_("Copy"), 
-	N_("Paste"),
-	N_("Find..."),
-	N_("Replace..."),
-	N_("Undo"),
-	N_("Help on command"),
-	N_("LaTeX"),
-	N_("Close"),
-	NULL
-    };
-    gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
-    gchar *toolstr;
 
     int run_ok = (vwin->role == EDIT_SCRIPT ||
 		  vwin->role == VIEW_SCRIPT ||
@@ -1026,12 +1045,6 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES);
-
-#if defined(USE_GNOME)
-    int print_ok = 1;
-#else
-    int print_ok = 0;
-#endif
 
     if (text_out || vwin->role == SCRIPT_OUT) {
 	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
@@ -1050,112 +1063,52 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
     colorize_tooltips(GTK_TOOLBAR(vwin->mbar)->tooltips);
 
-    for (i=0; viewstrings[i] != NULL; i++) {
-	switch (i) {
-	case 0:
-	    if (edit_ok && vwin->role != SCRIPT_OUT) {
-		toolxpm = stock_save_16_xpm;	    
-		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
-		    toolfunc = buf_edit_save;
-		else
-		    toolfunc = file_viewer_save;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 1:
-	    if (save_as_ok) {
-		toolxpm = stock_save_as_16_xpm;
-		toolfunc = file_save_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 2:
-	    if (vwin->role == GR_PLOT) {
-		toolxpm = stock_exec_16_xpm;
-		toolfunc = gp_send_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 3:
-	    if (print_ok) {
-#if defined(USE_GNOME)
-		toolxpm = stock_print_16_xpm;
-		toolfunc = window_print_callback;
-#endif
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 4:
-	    if (run_ok) {
-		toolxpm = stock_exec_16_xpm;
-		toolfunc = run_script_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 5:
-	    toolxpm = stock_copy_16_xpm;
-	    if (MULTI_COPY_ENABLED(vwin->role)) {
-		toolfunc = choose_copy_format_callback;
-	    } else {
-		toolfunc = text_copy_callback;
-	    }
-	    break;
-	case 6:
-	    if (edit_ok) {
-		toolxpm = stock_paste_16_xpm;
-		toolfunc = text_paste_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 7:
-	    toolxpm = stock_search_16_xpm;
-	    toolfunc = text_find_callback;
-	    break;
-	case 8:
-	    if (edit_ok) {
-		toolxpm = stock_search_replace_16_xpm;
-		toolfunc = text_replace_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 9:
-	    if (edit_ok) {
-		toolxpm = stock_undo_16_xpm;
-		toolfunc = text_undo_callback;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 10:
-	    if (run_ok) {
-		toolxpm = stock_help_16_xpm;
-		toolfunc = activate_script_help;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 11:
-	    if (vwin->role == VIEW_MODELTABLE) {
-		toolxpm = mini_tex_xpm;
-		toolfunc = modeltable_tex_view;
-	    } else
-		toolfunc = NULL;
-	    break;
-	case 12:
-	    toolxpm = stock_close_16_xpm;
-	    toolfunc = delete_file_viewer;
-	    break;
-	default:
-	    break;
+    for (i=0; viewbar_items[i].str != NULL; i++) {
+
+	toolfunc = viewbar_items[i].toolfunc;
+
+	if (!edit_ok && viewbar_items[i].flag == EDIT_ITEM) {
+	    continue;
 	}
 
-	if (toolfunc == NULL) continue;
+	if (!save_as_ok && viewbar_items[i].flag == SAVE_AS_ITEM) {
+	    continue;
+	}
+
+	if (!run_ok && viewbar_items[i].flag == RUN_ITEM) {
+	    continue;
+	}
+
+	if (vwin->role != GR_PLOT && viewbar_items[i].flag == GP_ITEM) {
+	    continue;
+	}
+
+	if (vwin->role != VIEW_MODELTABLE && 
+	    viewbar_items[i].flag == MODELTABLE_ITEM) {
+	    continue;
+	}
+
+	if (viewbar_items[i].flag == COPY_ITEM && 
+	    MULTI_COPY_ENABLED(vwin->role)) {
+	    toolfunc = choose_copy_format_callback;
+	}
+
+	if (viewbar_items[i].flag == SAVE_ITEM) { 
+	    if (!edit_ok || vwin->role == SCRIPT_OUT) {
+		/* script output doesn't already have a filename */
+		continue;
+	    }
+	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
+		toolfunc = buf_edit_save;
+	    } 
+	}
 
 	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
-						     toolxpm);
+						     viewbar_items[i].toolxpm);
 	iconw = gtk_pixmap_new(icon, mask);
-	toolstr = _(viewstrings[i]);
-	button = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-					 NULL, toolstr, NULL,
-					 iconw, toolfunc, vwin);
+	gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
+				NULL, _(viewbar_items[i].str), NULL,
+				iconw, toolfunc, vwin);
 	gtk_toolbar_append_space(GTK_TOOLBAR(vwin->mbar));
     }
 
@@ -1165,58 +1118,28 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
 static void add_edit_items_to_viewbar (windata_t *vwin)
 {
-    GtkWidget *iconw, *button;
+    GtkWidget *iconw;
     GdkPixmap *icon;
     GdkBitmap *mask;
     GdkColormap *cmap;
-    static char *editstrings[] = {
-	N_("Save"),
-	N_("Paste"),
-	N_("Replace..."),
-	N_("Undo"),
-	NULL
-    };
-    gchar **toolxpm = NULL;
-    void (*toolfunc)() = NULL;
-    gchar *toolstr;
     int i, pos = 0;
 
     cmap = gdk_colormap_get_system();
 
-    for (i=0; editstrings[i] != NULL; i++) {
-	switch (i) {
-	case 0:
-	    toolxpm = stock_save_16_xpm;
-	    toolfunc = file_viewer_save;
-	    pos = 0;
-	    break;
-	case 1:
-	    toolxpm = stock_paste_16_xpm;
-	    toolfunc = text_paste_callback;
-	    pos = 10;
-	    break;
-	case 2:
-	    toolxpm = stock_search_replace_16_xpm;
-	    toolfunc = text_replace_callback;
-	    pos = 14;
-	    break;
-	case 3:
-	    toolxpm = stock_undo_16_xpm;
-	    toolfunc = text_undo_callback;
-	    pos = 16;
-	    break;
-	default:
-	    break;
-	}
+    for (i=0; viewbar_items[i].str != NULL; i++) {
+	if (viewbar_items[i].flag == SAVE_ITEM ||
+	    viewbar_items[i].flag == EDIT_ITEM) {
 
-	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
-						     toolxpm);
-	iconw = gtk_pixmap_new(icon, mask);
-	toolstr = _(editstrings[i]);
-	button = gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
-					 NULL, toolstr, NULL,
-					 iconw, toolfunc, vwin, pos);
-	gtk_toolbar_insert_space(GTK_TOOLBAR(vwin->mbar), pos + 1);
+	    icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
+							 viewbar_items[i].toolxpm);
+	    iconw = gtk_pixmap_new(icon, mask);
+	    gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
+				    NULL, _(viewbar_items[i].str), NULL,
+				    iconw, viewbar_items[i].toolfunc, 
+				    vwin, pos);
+	    gtk_toolbar_insert_space(GTK_TOOLBAR(vwin->mbar), pos + 1);
+	}
+	if (viewbar_items[i].flag != GP_ITEM) pos += 2;
     }
 }
 
