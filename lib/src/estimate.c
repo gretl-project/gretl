@@ -87,7 +87,7 @@ extern int _addtolist (const int *oldlist, const int *addvars,
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
- * @Z: data matrix.
+ * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ci: command index (see commands.h)
  * @opt: option flag: If = 1, then residuals, dw stat and rhohat are obtained.
@@ -99,7 +99,7 @@ extern int _addtolist (const int *oldlist, const int *addvars,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lsq (int *list, double *Z, DATAINFO *pdinfo, 
+MODEL lsq (int *list, double **pZ, DATAINFO *pdinfo, 
 	   const int ci, const int opt, const double rho)
 {
     int l0, ifc, nwt, yno, i, n;
@@ -115,9 +115,9 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
     }	
 
     if (ci == HSK)
-	return hsk_func(list, &Z, pdinfo);
+	return hsk_func(list, pZ, pdinfo);
     if (ci == HCCM)
-	return hccm_func(list, &Z, pdinfo);
+	return hccm_func(list, pZ, pdinfo);
 
     init_model(&model);
 
@@ -138,18 +138,18 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
     model.nwt = nwt = 0;
     if (ci == WLS) { 
 	model.nwt = nwt = model.list[1];
-	if (iszero(model.t1, model.t2, &Z[pdinfo->n*nwt])) {
+	if (iszero(model.t1, model.t2, &(*pZ)[pdinfo->n*nwt])) {
 	    model.errcode = E_WTZERO;
 	    return model;
 	}
-	effobs = isdummy(nwt, model.t1, model.t2, Z, pdinfo->n);
+	effobs = isdummy(nwt, model.t1, model.t2, *pZ, pdinfo->n);
 	if (effobs) model.wt_dummy = 1;
     }
 
     /* check for missing obs in sample */
     if ((missv = adjust_t1t2(&model, model.list, &model.t1, &model.t2, 
-			     Z, pdinfo->n, &misst))) {
-	sprintf(model.errmsg, "Missing value encountered for "
+			     *pZ, pdinfo->n, &misst))) {
+	sprintf(gretl_errmsg, "Missing value encountered for "
 		"variable %d, obs %d", missv, misst);
 	model.errcode = E_DATA;
 	return model;
@@ -173,13 +173,13 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
     }       
 
     /* check for zero dependent var */
-    if (_zerror(t1, t2, yno, nwt, pdinfo->n, &Z)) {  
+    if (_zerror(t1, t2, yno, nwt, pdinfo->n, pZ)) {  
         model.errcode = E_ZERO;
         return model; 
     } 
 
     /* drop any vars that are all zero and repack the list */
-    _omitzero(&model, pdinfo, Z);
+    _omitzero(&model, pdinfo, *pZ);
 
     /* see if the regressor list contains a constant (ID 0) */
     model.ifc = ifc = hasconst(model.list);
@@ -187,7 +187,7 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
     if (ifc) _rearrange(model.list);
 
     /* check for presence of lagged dependent variable */
-    model.ldepvar = _lagdepvar(model.list, pdinfo, &Z);
+    model.ldepvar = _lagdepvar(model.list, pdinfo, pZ);
 
     l0 = model.list[0];  /* holds 1 + number of coeffs */
     model.ncoeff = l0 - 1; 
@@ -197,26 +197,26 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
     /* check degrees of freedom */
     if (model.nobs < model.ncoeff) { 
 	model.errcode = E_DF;
-        sprintf(model.errmsg, "No. of obs (%d) is less than no. "
+        sprintf(gretl_errmsg, "No. of obs (%d) is less than no. "
 		"of parameters (%d)\n", model.nobs, model.ncoeff);
         return model; 
     }
 
     /* calculate regression results */
-    xpxxpy = _xpxxpy_func(model.list, t1, t2, Z, pdinfo->n, nwt, rho);
+    xpxxpy = _xpxxpy_func(model.list, t1, t2, *pZ, pdinfo->n, nwt, rho);
     model.tss = xpxxpy.xpy[l0];
 
-    _regress(&model, xpxxpy, Z, pdinfo->n, rho);
+    _regress(&model, xpxxpy, *pZ, pdinfo->n, rho);
     free(xpxxpy.xpy);
     if (model.errcode) return model;
 
     /* get the mean and sd of depvar and make available */
     if (model.ci == WLS && model.wt_dummy) {
-	model.ybar = _wt_dummy_mean(&model, Z, pdinfo->n);
-	model.sdy = _wt_dummy_stddev(&model, Z, pdinfo->n);
+	model.ybar = _wt_dummy_mean(&model, *pZ, pdinfo->n);
+	model.sdy = _wt_dummy_stddev(&model, *pZ, pdinfo->n);
     } else {
-	model.ybar = esl_mean(t1, t2, &Z(yno, 0));
-	model.sdy = esl_stddev(t1, t2, &Z(yno, 0));
+	model.ybar = esl_mean(t1, t2, &(*pZ)[pdinfo->n*yno]);
+	model.sdy = esl_stddev(t1, t2, &(*pZ)[pdinfo->n*yno]);
     }
 
     /* Doing an autoregressive procedure? */
@@ -236,16 +236,18 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
 	model.uhat[t1] = NADBL;
 	model.yhat[t1] = NADBL;
 	for (t=t1+1; t<=t2; t++) {
-	    xx = Z(yno, t) - rho * Z(yno, t-1);
+	    xx = (*pZ)[pdinfo->n*yno + t] - rho * (*pZ)[pdinfo->n*yno + t-1];
 	    for (v=1; v<=model.ncoeff-model.ifc; v++)
 		xx = xx-model.coeff[v] * 
-		    (Z(model.list[v+1], t) - rho * Z(model.list[v+1], t-1));
+		    (*pZ)[pdinfo->n * model.list[v+1] + t] - 
+		    rho * (*pZ)[pdinfo->n * model.list[v+1] + t-1];
 	    if (model.ifc) xx = xx - (1 - rho) * 
 			     model.coeff[model.ncoeff];
 	    model.uhat[t] = xx;
-	    model.yhat[t] = Z(yno, t) - xx;
+	    model.yhat[t] = (*pZ)[pdinfo->n*yno + t] - xx;
 	}
-	model.rsq = _corrrsq(t2-t1, &Z(yno, t1+1), model.yhat + t1+1);
+	model.rsq = 
+	    _corrrsq(t2-t1, &(*pZ)[pdinfo->n*yno + t1+1], model.yhat + t1+1);
     	model.adjrsq = 
            1 - ((1 - model.rsq)*(t2 - t1 - 1)/model.dfd);
     }
@@ -254,7 +256,7 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
     if (opt) {
 	order = (ci == CORC || ci == HILU)? 1 : 0;
 	model.rho = _rhohat(order, t1, t2, model.uhat);
-	model.dw = _dwstat(order, &model, Z, pdinfo->n);
+	model.dw = _dwstat(order, &model, *pZ, pdinfo->n);
     }
 
     /* weighted least squares: fix fitted values, ESS, sigma */
@@ -263,15 +265,15 @@ MODEL lsq (int *list, double *Z, DATAINFO *pdinfo,
 	model.sigma_wt = model.sigma;
 	model.ess = 0.0;
 	for (t=t1; t<=t2; t++) {
-	    model.yhat[t] /= Z(nwt, t);
-	    xx = model.uhat[t] /= Z(nwt, t);
+	    model.yhat[t] /= (*pZ)[pdinfo->n*nwt + t];
+	    xx = model.uhat[t] /= (*pZ)[pdinfo->n*nwt + t];
 	    model.ess += xx * xx;
 	}
 	model.sigma = sqrt(model.ess/model.dfd);
     }
     if (ci == WLS && model.wt_dummy) {
 	for (t=t1; t<=t2; t++) {
-	    if (floateq(Z(nwt, t), 0.0)) 
+	    if (floateq((*pZ)[pdinfo->n*nwt + t], 0.0)) 
 		model.yhat[t] = model.uhat[t] = NADBL;
 	}
     }
@@ -481,7 +483,7 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, const double *Z,
     if (ess < SMALL && ess > (-SMALL)) pmod->ess = ess = 0.0;
     else if (ess < 0.0) { 
         /*  pmod->errcode = E_ESS; */ 
-	sprintf(pmod->errmsg, "Error sum of squares (%g) is not > 0",
+	sprintf(gretl_errmsg, "Error sum of squares (%g) is not > 0",
 		ess);
         return; 
     }
@@ -897,7 +899,7 @@ static void _dropwt (int *list)
  * hilu_corc:
  * @toprho: pointer to receive final rho value.
  * @list: dependent variable plus list of regressors.
- * @Z: data matrix.
+ * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu.
  * @prn: gretl printing struct
@@ -910,7 +912,7 @@ static void _dropwt (int *list)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int hilu_corc (double *toprho, int *list, double *Z, DATAINFO *pdinfo, 
+int hilu_corc (double *toprho, int *list, double **pZ, DATAINFO *pdinfo, 
 	       const int opt, print_t *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
@@ -931,7 +933,7 @@ int hilu_corc (double *toprho, int *list, double *Z, DATAINFO *pdinfo,
 	    else if (rho > 0.995) rho = 0.99;
 	    if (step == 2) rho = -.90;
 	    clear_model(&corc_model, NULL, NULL);
-	    corc_model = lsq(list, Z, pdinfo, OLS, 1, rho);
+	    corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	    if ((err = corc_model.errcode)) {
 		free(uhat);
 		clear_model(&corc_model, NULL, NULL);
@@ -959,7 +961,7 @@ int hilu_corc (double *toprho, int *list, double *Z, DATAINFO *pdinfo,
 	graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
 	pprintf(prn, "\n\nFine-tune rho using the CORC procedure...\n\n"); 
     } else { /* Go straight to Cochrane-Orcutt */
-	corc_model = lsq(list, Z, pdinfo, OLS, 1, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, NULL, NULL);
@@ -974,7 +976,7 @@ int hilu_corc (double *toprho, int *list, double *Z, DATAINFO *pdinfo,
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, NULL, NULL);
-	corc_model = lsq(list, Z, pdinfo, OLS, 1, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, NULL, NULL);
@@ -982,7 +984,7 @@ int hilu_corc (double *toprho, int *list, double *Z, DATAINFO *pdinfo,
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
 	corc_model.dw = 1 - rho;
-	_autores(corc_model.list[1], Z, pdinfo->n, 
+	_autores(corc_model.list[1], *pZ, pdinfo->n, 
 		 &corc_model, uhat);
 	rho = _rhohat(1, corc_model.t1, corc_model.t2, uhat);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
@@ -1067,7 +1069,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
 
     ncoeff = list2[0];
     if (ncoeff < list1[0]-1) {
-        sprintf(tsls.errmsg, 
+        sprintf(gretl_errmsg, 
 		"Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
 		"varlist1.\n", list1[0] - 1 - ncoeff);
@@ -1083,7 +1085,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	free(newlist);
-	strcpy(tsls.errmsg, 
+	strcpy(gretl_errmsg, 
 	       "Constant term is in varlist1 but not in varlist2");
 	tsls.errcode = E_UNSPEC;
 	return tsls;
@@ -1110,7 +1112,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
 /*  	printf("running 1st stage:\n"); */
 /*  	printlist(s1list); */
 	clear_model(&tsls, NULL, NULL);
-	tsls = lsq(s1list, *pZ, pdinfo, OLS, 0, 0.0);
+	tsls = lsq(s1list, pZ, pdinfo, OLS, 0, 0.0);
 	if (tsls.errcode) {
 	    free(list1); free(list2);
 	    free(s1list); free(s2list);
@@ -1133,7 +1135,7 @@ MODEL tsls_func (const int *list, const int pos, double **pZ,
 
     /* second-stage regression */
     clear_model(&tsls, NULL, NULL);
-    tsls = lsq(s2list, *pZ, pdinfo, OLS, 1, 0.0);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, 1, 0.0);
 /*      printf("second stage\n"); */
 /*      printlist(s2list); */
     if (tsls.errcode) {
@@ -1262,7 +1264,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
     }
     list[1] = v;
 
-    aux = lsq(list, *pZ, pdinfo, OLS, 0, 0.);
+    aux = lsq(list, pZ, pdinfo, OLS, 0, 0.);
     check = aux.errcode;
     if (check) shrink = pdinfo->v - v;
     else {
@@ -1305,7 +1307,7 @@ MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
     ncoeff = list[0] - 1;
     _rearrange(list);
 
-    hsk = lsq(list, *pZ, pdinfo, OLS, 1, 0.0);
+    hsk = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
     if (hsk.errcode) return hsk;
 
     uhat1 = malloc(n * sizeof(double));
@@ -1348,7 +1350,7 @@ MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
     hsklist[2] = yno;
 
     clear_model(&hsk, NULL, NULL);
-    hsk = lsq(hsklist, *pZ, pdinfo, WLS, 1, 0.0);
+    hsk = lsq(hsklist, pZ, pdinfo, WLS, 1, 0.0);
     hsk.ci = HSK;
 
     shrink = pdinfo->v - orig_nvar;
@@ -1409,7 +1411,7 @@ MODEL hccm_func (int *list, double **pZ, DATAINFO *pdinfo)
     _rearrange(list);
 
     /* run a regular OLS */
-    hccm = lsq(list, *pZ, pdinfo, OLS, 1, 0.0);
+    hccm = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
     if (hccm.errcode) {
 	free(uhat1);
 	free(st);
@@ -1538,7 +1540,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     list[1] = v;
 
     /* run auxiliary regression and print results */
-    white = lsq(list, *pZ, pdinfo, OLS, 0, 0.);
+    white = lsq(list, pZ, pdinfo, OLS, 0, 0.);
     err = white.errcode;
     if (err) {
 	clear_model(&white, NULL, NULL);
@@ -1620,9 +1622,9 @@ MODEL ar_func (int *list, const int pos, double **pZ,
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	err = hilu_corc(&xx, reglist, *pZ, pdinfo, CORC, prn);
+	err = hilu_corc(&xx, reglist, pZ, pdinfo, CORC, prn);
 	if (err) ar.errcode = err;
-	else ar = lsq(reglist, *pZ, pdinfo, CORC, 1, xx);
+	else ar = lsq(reglist, pZ, pdinfo, CORC, 1, xx);
 	*model_count += 1;
 	ar.ID = *model_count;
 	printmodel(&ar, pdinfo, prn); 
@@ -1643,7 +1645,7 @@ MODEL ar_func (int *list, const int pos, double **pZ,
     /*  _rearrange(reglist); */ 
     yno = reglist[1];
     /* first pass: estimate model via OLS */
-    ar = lsq(reglist, *pZ, pdinfo, OLS, 0, 0.0);
+    ar = lsq(reglist, pZ, pdinfo, OLS, 0, 0.0);
     if (ar.errcode) {
 	free(reglist);	
 	return ar;
@@ -1677,7 +1679,7 @@ MODEL ar_func (int *list, const int pos, double **pZ,
 
 	/* now estimate the rho terms */
 	if (iter > 1) clear_model(&rhomod, NULL, NULL);
-	rhomod = lsq(rholist, *pZ, pdinfo, OLS, 0, 0.0);
+	rhomod = lsq(rholist, pZ, pdinfo, OLS, 0, 0.0);
 
 	/* and rho-transform the data */
 	for (i=1; i<=reglist[0]; i++) {
@@ -1699,7 +1701,7 @@ MODEL ar_func (int *list, const int pos, double **pZ,
 
 	/* estimate the transformed model */
 	clear_model(&ar, NULL, NULL);
-	ar = lsq(reglist2, *pZ, pdinfo, OLS, 0, 0.0);
+	ar = lsq(reglist2, pZ, pdinfo, OLS, 0, 0.0);
 
         if (iter > 1) diff = 100 * (ar.ess - ess)/ess;
         if (diff < 0.0) diff = -diff;
@@ -2018,7 +2020,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
     /* assess the lag order */
     if (order < 1) {
 	archmod.errcode = E_UNSPEC;
-	sprintf(archmod.errmsg, "Invalid lag order for arch (%d)", order);
+	sprintf(gretl_errmsg, "Invalid lag order for arch (%d)", order);
 	return archmod;
     }
 
@@ -2035,7 +2037,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
     arlist[2] = 0;
 
     /* run OLS and get squared residuals */
-    archmod = lsq(list, *pZ, pdinfo, OLS, 0, 0.0);
+    archmod = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
     if (archmod.errcode) {
 	shrink_Z(order + 1, pZ, pdinfo);
 	free(arlist);
@@ -2059,7 +2061,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
 
     /* run aux. regression */
     clear_model(&archmod, NULL, NULL);
-    archmod = lsq(arlist, *pZ, pdinfo, OLS, 1, 0.0);
+    archmod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
     if (archmod.errcode) {
 	shrink_Z(order + 1, pZ, pdinfo);
 	free(arlist);
@@ -2107,7 +2109,7 @@ MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo,
 	}
 	strcpy(pdinfo->varname[nwt], "1/sigma");
 	clear_model(&archmod, NULL, NULL);
-	archmod = lsq(wlist, *pZ, pdinfo, WLS, 1, 0.0);
+	archmod = lsq(wlist, pZ, pdinfo, WLS, 1, 0.0);
 	if (model_count != NULL) {
 	    *model_count += 1;
 	    archmod.ID = *model_count;

@@ -32,7 +32,7 @@ static int inverse_compare_doubles (const void *a, const void *b)
 
 /**
  * spearman:
- * @list: list of variables to process.
+ * @list: list of (two) variables to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
  * @opt: if non-zero, print both the "raw" and the ranked data.
@@ -199,7 +199,7 @@ int spearman (const int *list, const double *Z, const DATAINFO *pdinfo,
 
 /**
  * runs_test:
- * @list: in place 1 is the ID number of the variable to process.
+ * @varno: ID number of the variable to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
@@ -210,11 +210,11 @@ int spearman (const int *list, const double *Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int runs_test (const int *list, const double *Z, const DATAINFO *pdinfo, 
+int runs_test (const int varno, const double *Z, const DATAINFO *pdinfo, 
 	       print_t *prn)
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n, runs = 1;
-    int nn, vx = list[1];
+    int nn;
     double xx, *x, mean, sd, z;
 
     nn = t2 - t1 + 1;
@@ -223,7 +223,7 @@ int runs_test (const int *list, const double *Z, const DATAINFO *pdinfo,
 
     nn = 0;
     for (t=t1; t<=t2; t++) {
-	xx = Z[n*vx + t];
+	xx = Z[n*varno + t];
 	if (na(xx)) continue;
 	else x[nn++] = xx;
     }
@@ -240,7 +240,7 @@ int runs_test (const int *list, const double *Z, const DATAINFO *pdinfo,
     sd = sqrt((double) n - 1)/2.0;
     z = fabs((runs - mean)/sd);
     pprintf(prn, "\nNumber of runs (R) in the variable '%s' = %d\n", 
-	    pdinfo->varname[vx], runs);
+	    pdinfo->varname[varno], runs);
     pprintf(prn, "Under the null hypothesis of randomness, R "
 	    "follows N(%f, %f)\n", mean, sd);
     pprintf(prn, "z-score = %f, with two-tailed p-value %f\n", z, 

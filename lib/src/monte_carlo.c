@@ -62,14 +62,13 @@ int ok_in_loop (int ci)
 
 /* ......................................................  */
 
-int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
-		    char *msg)
+int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 {
     char lvar[9], rvar[9], op[8];
     int start, end;
     int n, v;
 
-    msg[0] = '\0';
+    gretl_errmsg[0] = '\0';
     monte_carlo_init(ploop);
 
     /* try parsing as a while loop */
@@ -79,7 +78,8 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
 	v = varindex(pdinfo, lvar);
 	if (v > 0 && v < pdinfo->v) ploop->lvar = v;
 	else {
-	    sprintf(msg, "Undefined variable '%s' in loop condition.", lvar);
+	    sprintf(gretl_errmsg, 
+		    "Undefined variable '%s' in loop condition.", lvar);
 	    return 1;
 	}
 	if (isdigit((unsigned char) rvar[0]) 
@@ -92,7 +92,8 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
 	    ploop->rvar = v;
 	    return 0;
 	} else {
-	    sprintf(msg, "Undefined variable '%s' in loop condition.", rvar);
+	    sprintf(gretl_errmsg, 
+		    "Undefined variable '%s' in loop condition.", rvar);
 	    ploop->lvar = 0;
 	    return 1;
 	}
@@ -101,12 +102,13 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
     /* or try parsing as a for loop */
     else if (sscanf(line, "loop for %[^= ] = %d..%d", lvar, &start, &end) == 3) {
 	if (strcmp(lvar, "i")) {
-	    sprintf(msg, "The index variable in a 'for' loop must be the "
+	    sprintf(gretl_errmsg, 
+		    "The index variable in a 'for' loop must be the "
 		    "special variable 'i'");
 	    return 1;
 	}
 	if (end <= start) {
-	    sprintf(msg, "Ending value for loop index must be greater "
+	    sprintf(gretl_errmsg, "Ending value for loop index must be greater "
 		    "than starting value.");
 	    return 1;
 	}
@@ -125,7 +127,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
     }
 
     /* out of options, complain */
-    strcpy(msg, "No valid loop condition was given.");
+    strcpy(gretl_errmsg, "No valid loop condition was given.");
     return 1;
 }
 
@@ -408,7 +410,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 			sqrt((double) pmod->dfd /(double) pmod->nobs);
 		printmodel(pmod, pdinfo, prn);
 		if (pmod->correct) /* -o flag was given */
-		    outcovmx(pmod, pdinfo, 1, prn);
+		    outcovmx(pmod, pdinfo, 0, prn);
 		ploop->next_model += 1;	    
 		continue;
 	    }
@@ -633,7 +635,7 @@ void get_cmd_ci (const char *line, CMD *command)
     }
     if ((command->ci = _command_number(command->cmd)) == 0) {
 	command->errcode = 1;
-	sprintf(command->errmsg, "command \"%s\" not recognized", 
+	sprintf(gretl_errmsg, "command \"%s\" not recognized", 
 		command->cmd);
 	return;
     }    

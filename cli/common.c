@@ -34,7 +34,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     getcmd(linecpy, datainfo, &command, &ignore, &Z, cmds);
     if (command.ci < 0) return 0;
     if (command.errcode) {
-	errmsg(command.errcode, command.errmsg, prn);
+	errmsg(command.errcode, prn);
 	return 1;
     }    
 
@@ -47,7 +47,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    genr = genr_func(&Z, datainfo, linecpy, model_count,
 			     tmpmodel, oflag);
 	    if (genr.errcode) {
-		errmsg(genr.errcode, NULL, prn);
+		errmsg(genr.errcode, prn);
 		return 1;
 	    } 
 	    else if (add_new_var(datainfo, &Z, &genr)) {
@@ -85,9 +85,9 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	} /* end of basic round 0 setup */
 	/* estimate the model called for */
 	clear_model(models[0], NULL, NULL);
-	*models[0] = lsq(command.list, Z, datainfo, OLS, 1, 0.0);
+	*models[0] = lsq(command.list, &Z, datainfo, OLS, 1, 0.0);
 	if ((models[0])->errcode) {
-	    errmsg((models[0])->errcode, (models[0])->errmsg, prn);
+	    errmsg((models[0])->errcode, prn);
 	    return 1;
 	}
 	if (plp->lvar) { /* conditional loop */
@@ -114,7 +114,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 
     case PRINT:
 	if (plp->lvar) {
-	    printdata(command.list, &Z, datainfo, 1, oflag, prn);
+	    printdata(command.list, &Z, datainfo, 0, oflag, prn);
 	    break;
 	}
 	if (round == 0) {
@@ -140,9 +140,8 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     case SMPL:
 	if (oflag) {
 	    if (restore_full_sample(&subZ, &fullZ, &Z,
-				    &subinfo, &fullinfo, &datainfo,
-				    errtext)) {
-		pprintf(prn, "%s\n", errtext);
+				    &subinfo, &fullinfo, &datainfo)) {
+		pprintf(prn, "%s\n", gretl_errmsg);
 		return 1;
 	    }
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
@@ -150,8 +149,8 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		return 1;
 	    }
 	    if (set_sample_dummy(linecpy, &Z, &subZ, datainfo, 
-				 subinfo, errtext, oflag)) {
-		pprintf(prn, "%s\n", errtext);
+				 subinfo, oflag)) {
+		pprintf(prn, "%s\n", gretl_errmsg);
 		return 1;
 	    }
 	    fullZ = Z;
@@ -193,7 +192,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	if (summ == NULL)
 	    pprintf(prn, "generation of summary stats failed\n");
 	else {
-	    print_summary(summ, datainfo, prn, 1);
+	    print_summary(summ, datainfo, 0, prn);
 	    free_summary(summ);
 	}	    
 	break; 

@@ -22,7 +22,15 @@
 #include "libgretl.h"
 #include <stdarg.h>
 
-/* .......................................................... */
+/**
+ * dotpos:
+ * @str: the string to examine.
+ *
+ * Returns: the integer position of the last "." within @str,
+ * or strlen(@str) in case a dot is not found, or the string
+ * ends with a (backward or forward) slash.
+ *
+ */
 
 int dotpos (const char *str)
 { 
@@ -35,7 +43,14 @@ int dotpos (const char *str)
     return n;    
 }
 
-/* .......................................................... */
+/**
+ * slashpos:
+ * @str: the string to examine.
+ *
+ * Returns: the integer position of the last #SLASH within @str,
+ * or 0 in case a #SLASH is not found.
+ *
+ */
 
 int slashpos (const char *str)
 { 
@@ -46,10 +61,18 @@ int slashpos (const char *str)
     return 0;    
 }
 
-/* .......................................................... */
+/**
+ * copy:
+ * @str: the source string.
+ * @indx: position in @str from which to start the copying.
+ * @count: number of characters to copy.
+ * @dest: destination string (must be pre-allocated).
+ *
+ * Copies @count characters from @indx in @str to @dest.
+ *
+ */
 
 void copy (const char *str, const int indx, const int count, char *dest)
-/* copies count chars from indx in str to dest */
 {
     int i;
 
@@ -58,7 +81,14 @@ void copy (const char *str, const int indx, const int count, char *dest)
     dest[count] = '\0';
 }
 
-/* .......................................................... */
+/**
+ * delchar:
+ * @c: the character to delete.
+ * @str: the string from which to delete @c.
+ *
+ * Deletes all instances of @c within @str.
+ *
+ */
 
 void delchar (const int c, char *str)
 {
@@ -71,10 +101,17 @@ void delchar (const int c, char *str)
 
 }
 
-/* .......................................................... */
+/**
+ * delete:
+ * @str: the string to process.
+ * @indx: the starting point for deleting characters.
+ * @count: the number of characters to delete.
+ *
+ * Deletes @count characters from @str, starting at position @indx.
+ *
+ */
 
 void delete (char *str, const int indx, const int count)
-/* deletes count characters from indx in str */
 {
     size_t i, n = strlen(str);
 
@@ -82,11 +119,17 @@ void delete (char *str, const int indx, const int count)
 	str[i] = str[count+i];
 }
 
-/* .......................................................... */
+/**
+ * haschar:
+ * @c: the character to look for.
+ * @str: the string to examine.
+ *
+ * Returns: the first position of @c in @str, or -1 if @c is not
+ * found.
+ *
+ */
 
 int haschar (const char c, const char *str)
-/* scans str for first position of char c.  returns position or -1 if
-   not found */
 {
     size_t i = 0, n = strlen(str);
 
@@ -97,10 +140,15 @@ int haschar (const char c, const char *str)
     return -1;
 }
 
-/* .......................................................... */
+/**
+ * isnumber:
+ * @str: the string to examine.
+ *
+ * Returns: 1 if the given @str is numeric, otherwise 0.
+ *
+ */
 
 int isnumber (const char *str)
-/* check if str is numeric, if yes return 1 else return 0 */
 {
     size_t i, n = strlen(str);
     int decimal = 0, efound = 0;
@@ -126,7 +174,13 @@ int isnumber (const char *str)
     return 1;
 }
 
-/* .......................................................... */
+/**
+ * lower:
+ * @str: the string to transform.
+ *
+ * Converts any upper case characters in @str to lower case.
+ *
+ */
 
 void lower (char *str)
 {
@@ -136,7 +190,14 @@ void lower (char *str)
     }
 }
 
-/* .......................................................... */
+/**
+ * esl_trunc:
+ * @str: the string to truncate.
+ * @n: the desired length of the truncated string.
+ *
+ * Truncates the given @str to the specified length.
+ *
+ */
 
 void esl_trunc (char *str, const int n)
 {
@@ -146,14 +207,27 @@ void esl_trunc (char *str, const int n)
 	delete(str, n, len - n);  
 }
 
-/* .......................................................... */
+/**
+ * clear:
+ * @str: the string to clear.
+ * @len: the length of the string to be cleared.
+ *
+ * Sets all bytes in @str to 0.
+ *
+ */
 
 void clear (char *str, const int len)
 {
     memset(str, 0, len);
 }
 
-/* .......................................................... */
+/**
+ * count_fields:
+ * @str: the string to process.
+ *
+ * Returns: the number of space-separated fields in @str.
+ *
+ */
 
 int count_fields (const char *str)
 {
@@ -166,7 +240,15 @@ int count_fields (const char *str)
     return n;
 }
 
-/* .......................................................... */
+/**
+ * shiftleft:
+ * @str: the string to process.
+ * @move: the number of places to shift.
+ *
+ * Shifts the content of @str left by @move places, dropping
+ * leading bytes as needed.
+ *
+ */
 
 void shiftleft (char *str, size_t move)
 {
@@ -180,10 +262,15 @@ void shiftleft (char *str, size_t move)
     str[n - move] = '\0';
 }
 
-/* .......................................................... */
+/**
+ * chopstr:
+ * @str: the string to process.
+ *
+ * Removes both leading and trailing space from a string.
+ *
+ */
 
 void chopstr (char *str)
-/* remove leading and trailing space from a string */
 {
     int i = (int) strspn(str, " ");
 
@@ -193,7 +280,18 @@ void chopstr (char *str)
 	else break;
 }
 
-/* ........................................................... */
+/**
+ * switch_ext:
+ * @targ: the target or output string (must be pre-allocated).
+ * @src: the source or input string.
+ * @ext: the extension or suffix to attach.
+ *
+ * For processing filenames: copies @src to @targ, minus any existing
+ * filename extension, and adds to @targ the specified extension.
+ *
+ * Returns: the output string.
+ *
+ */
 
 char *switch_ext (char *targ, const char *src, char *ext)
 {
@@ -207,12 +305,20 @@ char *switch_ext (char *targ, const char *src, char *ext)
     return targ;
 }
 
-/* .......................................................... */
+/**
+ * get_base:
+ * @targ: the target or output string (must be pre-allocated).
+ * @src: the source or input string.
+ * @c: the "base marker" character.
+ *
+ * If @c is found in @src, puts into @targ the portion of @src up to and 
+ * including the last occurrence of @c within @src.
+ *
+ * Returns: 1 if @c is found in @str, othewise 0.
+ *
+ */
 
 int get_base (char *targ, const char *src, char c)
-     /* Puts into targ the portion of src up to and
-	including the last occurrence of char.  Returns 1
-	if c is found, 0 otherwise. */
 {
     int i, n = strlen(src);
 	
@@ -226,13 +332,18 @@ int get_base (char *targ, const char *src, char c)
     return 0;
 }
 
-/* ................................................. */
+/**
+ * top_n_tail:
+ * @str: the string to process.
+ *
+ * Drop leading space and trailing space and newline from string,
+ * then replace a trailing backslash (if any) with a space.
+ * 
+ * Returns: 1 if a trailing backslash was found, otherwise 0.
+ *
+ */
 
 int top_n_tail (char *str)
-     /* drop leading space and trailing newline/space from string.
-	If the last char is then a backslash, replace it with a 
-	space and return 1, else return 0
-     */
 {
     int i;
 
@@ -253,7 +364,14 @@ int top_n_tail (char *str)
     return 0;
 }  
 
-/* ................................................. */
+/**
+ * compress_spaces:
+ * @str: the string to process.
+ *
+ * Reduce multiple contiguous space characters to single spaces
+ * within @str.
+ * 
+ */
 
 void compress_spaces (char *str)
 {
@@ -268,11 +386,22 @@ void compress_spaces (char *str)
     }
 }   
 
-/* ................................................. */
+/**
+ * pprintf:
+ * @prn: gretl printing struct.
+ * @template: as in printf().
+ * @Varargs: arguments to be printed.
+ *
+ * Multi-purpose printing function: can output to stream, to buffer
+ * or to nowhere (silently discarding the output), depending on
+ * how @prn was initialized.
+ * 
+ * Returns: 0 on successful completion, 1 on memory allocation
+ * failure.
+ * 
+ */
 
 int pprintf (print_t *prn, const char *template, ...)
-     /* multi-purpose print routine: output to stream, to buffer,
-	or to nowhere */
 {
     va_list args;
     size_t blen;
@@ -289,8 +418,10 @@ int pprintf (print_t *prn, const char *template, ...)
     if (strncmp(template, "@init", 5) == 0) {
 	prn->bufsize = 2048;
 	prn->buf = malloc(prn->bufsize);
-/*  	fprintf(stderr, "pprintf: malloced %d bytes at %p\n", prn->bufsize,  */
-/*  	       (void *) prn->buf); */
+#ifdef PRN_DEBUG
+  	fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
+		(void *) prn->buf); 
+#endif
 	if (prn->buf == NULL) return 1;
 	memset(prn->buf, 0, 1);
 	return 0;
@@ -301,26 +432,45 @@ int pprintf (print_t *prn, const char *template, ...)
     if (prn->bufsize - blen < 1024) { 
 	char *tmp;
 
-/*  	fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n", */
-/*  		prn->bufsize - blen, prn->buf, 2 * prn->bufsize); */
+#ifdef PRN_DEBUG
+ 	fprintf(stderr, "%d bytes left\ndoing realloc(%p, %d)\n",
+ 		prn->bufsize - blen, prn->buf, 2 * prn->bufsize);
+#endif
 	prn->bufsize *= 2; 
-	tmp = realloc(prn->buf, prn->bufsize); /* segfault */
+	tmp = realloc(prn->buf, prn->bufsize); 
 	if (tmp == NULL) return 1;
 	prn->buf = tmp;
-/*  	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n", */
-/*  		prn->bufsize, (void *) prn->buf); */
+#ifdef PRN_DEBUG
+ 	fprintf(stderr, "realloc: prn->buf is %d bytes at %p\n",
+ 		prn->bufsize, (void *) prn->buf);
+#endif
 	memset(prn->buf + blen, 0, 1);
     }
     va_start(args, template);
-/*      fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen)); */
+#ifdef PRN_DEBUG
+     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
+#endif
     vsprintf(prn->buf + blen, template, args);
     va_end(args);
-/*      fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen); */
+#ifdef PRN_DEBUG
+     fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
+#endif
 
     return 0;
 }
 
-/* ................................................. */
+/**
+ * safecpy:
+ * @targ: target or output string (must be pre-allocated).
+ * @src: source or input string.
+ * @n: maximum length of target string.
+ *
+ * Copies at most @n characters from @src to @targ, and ensures that
+ * @targ[@n] is a NUL byte.
+ * 
+ * Returns: the output string.
+ *
+ */
 
 char *safecpy (char *targ, const char *src, int n)
 {

@@ -200,7 +200,7 @@ int case_sample_direct (double **oldZ, double **newZ,
 int set_sample_dummy (const char *line, 
 		      double **oldZ, double **newZ,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
-		      char *msg, const int opt)
+		      const int opt)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values, or using as a
 	mask a specified dummy variable, or masking with a specified
@@ -211,7 +211,8 @@ int set_sample_dummy (const char *line,
     int missobs = 0, subnum = 0, dumnum = 0;
     int i, t, st, sn, n = oldinfo->n;
 
-    *msg = '\0';
+    gretl_errmsg[0] = '\0';
+
     dumv[0] = '\0';
     if (opt == OPT_O && 
 	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0))
@@ -236,7 +237,7 @@ int set_sample_dummy (const char *line,
 	/* the name of a dummy variable was passed in */
 	dumnum = varindex(oldinfo, dumv);
 	if (dumnum == oldinfo->v) {
-	    sprintf(msg, "Variable '%s' not defined", dumv);
+	    sprintf(gretl_errmsg, "Variable '%s' not defined", dumv);
 	    return 1;
 	} 
 	sn = isdummy(dumnum, oldinfo->t1, oldinfo->t2, *oldZ, n);
@@ -249,11 +250,10 @@ int set_sample_dummy (const char *line,
 	sprintf(formula, "genr subdum=%s", line + 4);
 	genr = genr_func(oldZ, oldinfo, formula, 0, NULL, 1);
 	if (genr.errcode) {
-	    strcpy(msg, genr.errmsg);
 	    return 1;
 	}
 	if (add_new_var(oldinfo, oldZ, &genr)) {
-	    strcpy(msg, "Failed to add sub-sampling dummy variable");
+	    strcpy(gretl_errmsg, "Failed to add sub-sampling dummy variable");
 	    return 1;
 	}
 	subnum = varindex(oldinfo, "subdum");
@@ -261,7 +261,7 @@ int set_sample_dummy (const char *line,
 	sn = isdummy(subnum, oldinfo->t1, oldinfo->t2, *oldZ, n);
     } else {
 	/* impossible */
-	strcpy(msg, "Sub-sample command failed mysteriously");
+	strcpy(gretl_errmsg, "Sub-sample command failed mysteriously");
 	return 1;
     }
 
@@ -269,19 +269,19 @@ int set_sample_dummy (const char *line,
        in the sample, perchance? */
     if (sn == 0) {
 	if (opt == OPT_O && !missobs)
-	    sprintf(msg, "'%s' is not a dummy variable", dumv);
+	    sprintf(gretl_errmsg, "'%s' is not a dummy variable", dumv);
 	else if (missobs)
-	    strcpy(msg, "No observations would be left!");
+	    strcpy(gretl_errmsg, "No observations would be left!");
 	else { /* case of boolean expression */
 	    if ((*oldZ)[subnum * n + oldinfo->t1] == 0)
-		strcpy(msg, "No observations would be left!");
+		strcpy(gretl_errmsg, "No observations would be left!");
 	    else
-		strcpy(msg, "No observations were dropped!");
+		strcpy(gretl_errmsg, "No observations were dropped!");
 	}
 	return 1;
     }
     if (sn == n) {
-	strcpy(msg, "No observations were dropped!");
+	strcpy(gretl_errmsg, "No observations were dropped!");
 	return 1;
     }
 
@@ -341,10 +341,12 @@ int set_sample_dummy (const char *line,
 
 /* .......................................................... */
 
-int set_sample (const char *line, DATAINFO *pdinfo, char *msg)
+int set_sample (const char *line, DATAINFO *pdinfo)
 {
     int nf, new_t1, new_t2;
     char cmd[5], newstart[8], newstop[8];
+
+    gretl_errmsg[0] = '\0';
 
     nf = count_fields(line);
 
@@ -352,13 +354,13 @@ int set_sample (const char *line, DATAINFO *pdinfo, char *msg)
 	
     if (nf == 2) {
 	if (sscanf(line, "%s %s", cmd, newstart) != 2) {
-	    sprintf(msg, "error reading smpl line");
+	    sprintf(gretl_errmsg, "error reading smpl line");
 	    return 1;
 	} else {
-	    new_t1 = dateton(newstart, pdinfo->pd, pdinfo->stobs, msg);
-	    if (new_t1 < 0 || strlen(msg)) return 1;
+	    new_t1 = dateton(newstart, pdinfo->pd, pdinfo->stobs);
+	    if (new_t1 < 0 || strlen(gretl_errmsg)) return 1;
 	    if (new_t1 > pdinfo->n) {
-		sprintf(msg, "error in new starting obs");
+		sprintf(gretl_errmsg, "error in new starting obs");
 		return 1;
 	    }
 	    pdinfo->t1 = new_t1;
@@ -366,21 +368,21 @@ int set_sample (const char *line, DATAINFO *pdinfo, char *msg)
 	}
     }
     if (sscanf(line, "%s %s %s", cmd, newstart, newstop) != 3) {
-	sprintf(msg, "error reading smpl line");
+	sprintf(gretl_errmsg, "error reading smpl line");
 	return 1;
     }
     if (strcmp(newstart, ";")) {
-	new_t1 = dateton(newstart, pdinfo->pd, pdinfo->stobs, msg);
-	if (new_t1 < 0 || strlen(msg)) {
+	new_t1 = dateton(newstart, pdinfo->pd, pdinfo->stobs);
+	if (new_t1 < 0 || strlen(gretl_errmsg)) {
 	    return 1;
 	}
 	pdinfo->t1 = new_t1;
     }
     if (strcmp(newstop, ";")) {
-	new_t2 = dateton(newstop, pdinfo->pd, pdinfo->stobs, msg);
-	if (strlen(msg)) return 1;
+	new_t2 = dateton(newstop, pdinfo->pd, pdinfo->stobs);
+	if (strlen(gretl_errmsg)) return 1;
 	if (new_t2 >= pdinfo->n) {
-	    sprintf(msg, "error in new ending obs");
+	    sprintf(gretl_errmsg, "error in new ending obs");
 	    return 1;
 	}
 	pdinfo->t2 = new_t2;
@@ -432,9 +434,11 @@ static int datamerge (double **fullZ, DATAINFO *fullinfo,
 
 int restore_full_sample (double **subZ, double **fullZ, double **Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
-			 DATAINFO **datainfo, char *msg)
+			 DATAINFO **datainfo)
 {
     int i, t, n, err = 0;
+
+    gretl_errmsg[0] = '\0';
 
     if (*subZ == NULL) {
         (*datainfo)->t1 = 0;
@@ -447,9 +451,10 @@ int restore_full_sample (double **subZ, double **fullZ, double **Z,
     /* in case any new vars added, try to merge them in */
     err = datamerge(fullZ, *fullinfo, Z, *subinfo);
     if (err == E_ALLOC)
-        sprintf(msg, "Out of memory expanding data set\n");
+        sprintf(gretl_errmsg, "Out of memory expanding data set\n");
     if (err == E_NOMERGE)
-        sprintf(msg, "Missing sub-sample information; can't merge data\n");
+        sprintf(gretl_errmsg, 
+		"Missing sub-sample information; can't merge data\n");
 
     /* zero out the "subdum" dummy variable */
     i = varindex(*fullinfo, "subdum");

@@ -42,7 +42,7 @@ void view_log (void);
 
 void console (void);
 
-void gui_errmsg (const int errcode, const char *msg);
+void gui_errmsg (const int errcode);
 
 /* sample-related functions */
 

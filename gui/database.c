@@ -243,7 +243,7 @@ static void display_dbdata (double **dbZ, DATAINFO *dbdinfo)
 
     if (bufopen(&prn)) return;
 
-    printdata(NULL, dbZ, dbdinfo, 1, 1, prn);
+    printdata(NULL, dbZ, dbdinfo, 0, 1, prn);
 
     view_buffer(prn, 36, 350, "gretl: display database series", PRINT,
 		NULL); 
@@ -761,7 +761,7 @@ static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 static void get_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
 			 int *pad1, int *pad2)
 {
-    *pad1 = dateton(sinfo->stobs, pdinfo->pd, pdinfo->stobs, NULL); 
+    *pad1 = dateton(sinfo->stobs, pdinfo->pd, pdinfo->stobs); 
     *pad2 = pdinfo->n - sinfo->nobs - *pad1;
 } 
 

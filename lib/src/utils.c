@@ -180,8 +180,7 @@ int ijton (const int i, const int j, const int lo)
 
 /* ........................................................ */
 
-int ztox (const int i, double *px, const DATAINFO *pdinfo, 
-	  const double *Z)
+int ztox (const int i, double *px, const double *Z, const DATAINFO *pdinfo) 
 /* pull one series from data matrix; return number of valid
    observations */
 {
@@ -514,19 +513,22 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 
 /* .......................................................... */
 
-int set_obs (char *line, DATAINFO *pdinfo, int opt, char *msg)
+int set_obs (char *line, DATAINFO *pdinfo, int opt)
 {
     int pd, pos, i, len, dc = 0, bad = 0;
-    char stobs[8], endobs[8], buf[72], endbit[7];
+    char stobs[8], endobs[8], endbit[7];
+
+    gretl_errmsg[0] = '\0';
 
     if (sscanf(line, "%*s %d %7s", &pd, stobs) != 2) {
-	strcpy(msg, "Failed to parse line as frequency, startobs");
+	strcpy(gretl_errmsg, "Failed to parse line as frequency, startobs");
 	return 1;
     }
 
     /* does frequency make sense? */
     if (pd < 1 || pd > pdinfo->n) {
-	sprintf(msg, "frequency (%d) does not make seem to make sense", pd);
+	sprintf(gretl_errmsg, 
+		"frequency (%d) does not make seem to make sense", pd);
 	return 1;
     }
     /* is stobs acceptable? */
@@ -539,21 +541,21 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt, char *msg)
 	if (stobs[i] == '.') dc++;
     }
     if (bad || dc > 1) {
-	sprintf(msg, "starting obs '%s' is invalid", stobs);
+	sprintf(gretl_errmsg, "starting obs '%s' is invalid", stobs);
 	return 1;
     }
     pos = dotpos(stobs);
     if (pd > 1 && pos == len) {
-	strcpy(msg, "starting obs must contain a '.' with frequency > 1");
+	strcpy(gretl_errmsg, "starting obs must contain a '.' with frequency > 1");
 	return 1;
     }
     if (pd == 1 && pos < len) {
-	strcpy(msg, "no '.' allowed in starting obs with frequency 1");
+	strcpy(gretl_errmsg, "no '.' allowed in starting obs with frequency 1");
 	return 1;
     }    
     if ((pd > 1 && pd < 10 && strlen(stobs+pos) != 2) ||
 	(pd >= 10 && pd < 100 && strlen(stobs+pos) != 3)) {
-	sprintf(msg, "starting obs '%s' is incompatible with frequency", 
+	sprintf(gretl_errmsg, "starting obs '%s' is incompatible with frequency", 
 		stobs);
 	return 1;
     }
@@ -561,7 +563,8 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt, char *msg)
 	strcpy(endbit, stobs+pos+1);
 	dc = atoi(endbit);
 	if (dc < 0 || dc > pd) {
-	    sprintf(msg, "starting obs '%s' is incompatible with frequency", 
+	    sprintf(gretl_errmsg, 
+		    "starting obs '%s' is incompatible with frequency", 
 		    stobs);
 	    return 1;
 	}	    
@@ -583,10 +586,8 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt, char *msg)
     else pdinfo->time_series = 0;
 
     /* and report */
-    sprintf(msg, "setting data frequency = %d\n", pd);
-    sprintf(buf, "data range: %s - %s", 
-	    stobs, endobs);
-    strcat(msg, buf);
+    fprintf(stderr, "setting data frequency = %d\n", pd);
+    fprintf(stderr, "data range: %s - %s", stobs, endobs);
     return 0;
 }
 
@@ -882,12 +883,12 @@ void init_model (MODEL *pmod)
     pmod->rhot = NULL;
     pmod->slope = NULL;
     pmod->infomsg[0] = '\0';
-    pmod->errmsg[0] = '\0';
     pmod->name = NULL;
     pmod->ntests = 0;
     pmod->tests = NULL;
     pmod->errcode = 0;
     pmod->aux = 0;
+    gretl_errmsg[0] = '\0';
 }
 
 /* ........................................................... */
@@ -1153,7 +1154,7 @@ int grow_nobs (const int newobs, double **pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int grow_Z (const int newvars, double **pZ, DATAINFO *pdinfo)
+int dataset_add_vars (const int newvars, double **pZ, DATAINFO *pdinfo)
 {
     double *newZ;
     char **varname;
@@ -1193,7 +1194,7 @@ int grow_Z (const int newvars, double **pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int shrink_Z (const int delvars, double **pZ, DATAINFO *pdinfo)
+int dataset_drop_vars (const int delvars, double **pZ, DATAINFO *pdinfo)
 {
     double *newZ;
     char **varname;
@@ -1404,8 +1405,8 @@ double getvalue (const char *s, const double *Z, const DATAINFO *pdinfo)
 /* ........................................................... */
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     DATAINFO *pdinfo, double **pZ, print_t *prn,
-		     const PATHS *ppaths, const int plot, char *msg)
+		     double **pZ, DATAINFO *pdinfo, print_t *prn,
+		     const PATHS *ppaths, const int plot)
      /* use Salkever's method to generate forecasts plus forecast
 	variances -- FIXME ifc = 0, and methods other than OLS */
 {
@@ -1422,8 +1423,8 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     /* parse dates */
     if (sscanf(str, "%*s %7s %7s", t1str, t2str) != 2) 
 	return E_OBS; 
-    ft1 = dateton(t1str, pdinfo->pd, pdinfo->stobs, msg);
-    ft2 = dateton(t2str, pdinfo->pd, pdinfo->stobs, msg);
+    ft1 = dateton(t1str, pdinfo->pd, pdinfo->stobs);
+    ft2 = dateton(t2str, pdinfo->pd, pdinfo->stobs);
     if (ft1 < 0 || ft2 < 0 || ft2 < ft1) return E_OBS;
 
     orig_v = pmod->list[0];
@@ -1489,7 +1490,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     
     init_model(&fmod);
     fdatainfo.extra = 1;
-    fmod = lsq(list, fZ, &fdatainfo, OLS, 1, 0.0);
+    fmod = lsq(list, &fZ, &fdatainfo, OLS, 1, 0.0);
     if (fmod.errcode) {
 	err = fmod.errcode;
 	clear_model(&fmod, NULL, NULL);
@@ -1674,8 +1675,8 @@ int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
 
 /* ........................................................... */
 
-int re_estimate (char *model_spec, MODEL *tmpmod, DATAINFO *pdinfo, 
-		 double **pZ)
+int re_estimate (char *model_spec, MODEL *tmpmod, 
+		 double **pZ, DATAINFO *pdinfo) 
 {
     CMD command;
     int err = 0, ignore = 0, model_count = 0;
@@ -1701,10 +1702,10 @@ int re_estimate (char *model_spec, MODEL *tmpmod, DATAINFO *pdinfo,
 	break;
     case CORC:
     case HILU:
-	err = hilu_corc(&rho, command.list, *pZ, pdinfo, 
+	err = hilu_corc(&rho, command.list, pZ, pdinfo, 
 			command.ci, &prn);
 	if (!err)
-	    *tmpmod = lsq(command.list, *pZ, pdinfo, command.ci, 0, rho);
+	    *tmpmod = lsq(command.list, pZ, pdinfo, command.ci, 0, rho);
 	break;
     case HCCM:
 	*tmpmod = hccm_func(command.list, pZ, pdinfo);
@@ -1718,7 +1719,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod, DATAINFO *pdinfo,
 	break;
     case OLS:
     case WLS:
-	*tmpmod = lsq(command.list, *pZ, pdinfo, command.ci, 0, 0.0);
+	*tmpmod = lsq(command.list, pZ, pdinfo, command.ci, 0, 0.0);
 	break;
     case TSLS:
 	break;

@@ -25,9 +25,9 @@
 #include <ctype.h>
 #include <math.h>
 
-#define MAXLABEL 128
-#define MAXLEN 512
-#define ERRLEN 256
+#define MAXLABEL 128  /* maximum length of decsriptive labels for variables */
+#define MAXLEN 512    /* max length of "long" strings */
+#define ERRLEN 256    /* max length of libgretl error messages */
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846
@@ -145,7 +145,6 @@ typedef struct {
     double *rhot;                /* array of autoreg. coeffs. */
     double *slope;               /* for nonlinear models */
     int errcode;                 /* Error code in case of failure */
-    char errmsg[ERRLEN];
     char infomsg[ERRLEN];
     char *name;
     int ntests;

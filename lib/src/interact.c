@@ -141,7 +141,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     LAGVAR lagvar;
 
     command->errcode = 0;
-    strcpy(command->errmsg, "");
+    gretl_errmsg[0] = '\0';
     command->nolist = 0;
     command->param[0] = '\0';
 
@@ -191,7 +191,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* trap bogus commands */    
     if ((command->ci = _command_number(command->cmd)) == 0) {
 	command->errcode = 1;
-	sprintf(command->errmsg, "command '%s' not recognized", 
+	sprintf(gretl_errmsg, "command '%s' not recognized", 
 		command->cmd);
 	return;
     }
@@ -349,7 +349,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     command->list = realloc(command->list, (1+nf) * sizeof(int));
     if (command->list == NULL) {
 	command->errcode = E_ALLOC;
-	strcpy (command->errmsg, "Memory allocation failed for command list");
+	strcpy (gretl_errmsg, "Memory allocation failed for command list");
 	free(remainder);
 	return;
     }
@@ -384,7 +384,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		if (_parse_lagvar(field, &lagvar, pdinfo)) {
 		    if (laggenr(lagvar.varnum, lagvar.lag, 0, pZ, pdinfo)) {
 			command->errcode = 1;
-			sprintf(command->errmsg, 
+			sprintf(gretl_errmsg, 
 				"generation of lag variable failed");
 			free(remainder);
 			return;
@@ -404,7 +404,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		    command->list[j] = pdinfo->v - 1;
 		} else {
 		    command->errcode = 1;
-		    sprintf(command->errmsg, 
+		    sprintf(gretl_errmsg, 
 			    "'%s' is not the name of a variable", field);
 		    free(remainder);
 		    return;
@@ -416,7 +416,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    v = atoi(field);
 	    if (!ar && v > pdinfo->v - 1) {
 		command->errcode = 1;
-		sprintf(command->errmsg, 
+		sprintf(gretl_errmsg, 
                        "%d is not a valid variable number", v);
 		free(remainder);
 		return;
@@ -443,7 +443,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    !isdigit((unsigned char) field[0]) &&
 	    !(spacename && (field[0] == '"' || field[0] == '\''))) { 
 	    command->errcode = 1;
-	    sprintf(command->errmsg, 
+	    sprintf(gretl_errmsg, 
 		    "field '%s' in command is invalid", field);
 	    free(remainder);
 	    return;
@@ -597,7 +597,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
 /* ........................................................... */
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
-	   double **pZ, char *msg)
+	   double **pZ)
      /* return ID of var containing the forecast, or negative int on 
 	error */
 {
@@ -612,8 +612,8 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     }
 
     if (*t1str && *t2str) {
-	t1 = dateton(t1str, pdinfo->pd, pdinfo->stobs, msg);
-	t2 = dateton(t2str, pdinfo->pd, pdinfo->stobs, msg);
+	t1 = dateton(t1str, pdinfo->pd, pdinfo->stobs);
+	t2 = dateton(t2str, pdinfo->pd, pdinfo->stobs);
 	if (t1 < 0 || t2 < 0 || t2 < t1) return -1;
     } else {
 	t1 = pdinfo->t1;
@@ -765,7 +765,7 @@ int shell (const char *arg)
 /* ........................................................ */
 
 void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line, 
-	       const int batch, const int gui, const int oflag, 
+	       const int nopause, const int gui, const int oflag, 
 	       print_t *prn)
      /* echo a given command: depending on the circumstances, either
 	to stdout or to a buffer, or both */
@@ -780,7 +780,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 
     if (!pcmd->nolist) { /* print list of params to command */
 	if (!gui) {
-	    if (!batch) printf(" %s", pcmd->cmd);
+	    if (!nopause) printf(" %s", pcmd->cmd);
 	    else printf("\n? %s", pcmd->cmd);
 	    if (pcmd->ci == RHODIFF) printf(" %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
@@ -788,7 +788,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 		     && pcmd->ci != SCATTERS) 
 		printf(" %s", pcmd->param);
 	}
-	if (!batch) {
+	if (!nopause) {
 	    pprintf(prn, "%s", pcmd->cmd);
 	    if (pcmd->ci == RHODIFF) pprintf(prn, " %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
@@ -799,12 +799,12 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	/* if list is very long, break it up over lines */
 	if (pcmd->ci == STORE) {
 	    if (!gui) printf(" \\\n");
-	    if (!batch) pprintf(prn, " \\\n");
+	    if (!nopause) pprintf(prn, " \\\n");
 	}
 	for (i=1; i<=pcmd->list[0]; i++) {
 	    if (pcmd->list[i] == 999) {
 		if (!gui) printf(" ;");
-		if (!batch) pprintf(prn, " ;");
+		if (!nopause) pprintf(prn, " ;");
 		got999 = 1;
 		continue;
 	    }
@@ -815,7 +815,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 		if (i > 1 && i < pcmd->list[0] && (i+1) % 10 == 0) 
 		    printf(" \\\n"); /* break line */
 	    }
-	    if (!batch) {
+	    if (!nopause) {
 		if (got999) 
 		    pprintf(prn, " %s", pdinfo->varname[pcmd->list[i]]);
 		else pprintf(prn, " %d", pcmd->list[i]);
@@ -826,7 +826,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	/* corrgm: param comes last */
 	if (pcmd->ci == CORRGM && strlen(pcmd->param)) { 
 	    if (!gui) printf(" %s", pcmd->param);
-	    if (!batch) pprintf(prn, " %s", pcmd->param);
+	    if (!nopause) pprintf(prn, " %s", pcmd->param);
 	}
 	err = list_dups(pcmd->list, pcmd->ci);
 	if (err) {
@@ -837,18 +837,18 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
     } /* end if !pcmd->nolist */
     else if (strcmp (pcmd->cmd, "quit")) {
 	if (!gui) {
-	    if (batch) printf("? %s", line);
+	    if (nopause) printf("? %s", line);
 	    else printf(" %s", line);
 	}
-	if (!batch) pprintf(prn, "%s", line);
+	if (!nopause) pprintf(prn, "%s", line);
     }
     if (oflag) { 
 	flagc = getflag(oflag);
 	if (!gui) printf(" -%c", flagc);
-	if (!batch) pprintf(prn, " -%c", flagc);
+	if (!nopause) pprintf(prn, " -%c", flagc);
     }
     if (!gui) putchar('\n');
-    if (!batch) {
+    if (!nopause) {
 	pprintf(prn, "\n");
 	if (prn != NULL && prn->fp) fflush(prn->fp);
     }
@@ -873,7 +873,7 @@ static void showlabels (const DATAINFO *pdinfo)
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double **pZ, DATAINFO *datainfo, PATHS *paths,
-		     const int batch, const int oflag, 
+		     const int pause, const int oflag, 
 		     print_t *prn)
      /* common code for command-line and GUI client programs, where
 	the command doesn't require special handling on the client
@@ -892,7 +892,7 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	order = atoi(cmd->param);
 	err = adf_test(order, cmd->list, pZ, datainfo, prn);
-	if (err) errmsg(err, NULL, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case COINT:
@@ -902,7 +902,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case CORR:
 	if (cmd->list[0] > 3) {
-	    err = esl_corrmx(cmd->list, pZ, datainfo, batch, prn);
+	    err = esl_corrmx(cmd->list, pZ, datainfo, pause, prn);
 	    if (err) 
 		pprintf(prn, "Error in generating correlation matrix\n");
 	    break;
@@ -942,7 +942,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case LOGS:
-	err = logs(cmd->list, pZ, datainfo, NULL);
+	err = logs(cmd->list, pZ, datainfo);
 	if (err < cmd->list[0]) 
 	    pprintf(prn, "Error adding logs of variables.\n");
 	if (err > 0) { 
@@ -954,7 +954,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case MULTIPLY:
 	err = multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
-	if (err) errmsg(err, NULL, prn);
+	if (err) errmsg(err, prn);
 	else varlist(datainfo, prn);
 	break;
 
@@ -963,7 +963,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case PLOT:
-	plot(cmd->list, *pZ, datainfo, oflag, batch, prn);
+	plot(cmd->list, *pZ, datainfo, oflag, pause, prn);
 	break;
 
     case INFO:
@@ -981,7 +981,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case PRINT:
-	printdata(cmd->list, pZ, datainfo, batch, oflag, prn);
+	printdata(cmd->list, pZ, datainfo, pause, oflag, prn);
 	break;
 
     case SUMMARY:
@@ -989,23 +989,23 @@ int simple_commands (CMD *cmd, const char *line,
 	if (summ == NULL) 
 	    pprintf(prn, "generation of summary stats failed\n");
 	else {
-	    print_summary(summ, datainfo, prn, batch);
+	    print_summary(summ, datainfo, pause, prn);
 	    free_summary(summ);
 	}
 	break; 
 
     case MEANTEST:
 	err = means_test(cmd->list, *pZ, datainfo, oflag, prn);
-	if (err) errmsg(err, NULL, prn);
+	if (err) errmsg(err, prn);
 	break;	
 
     case VARTEST:
 	err = vars_test(cmd->list, *pZ, datainfo, prn);
-	if (err) errmsg(err, NULL, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case RUNS:
-	err = runs_test(cmd->list, *pZ, datainfo, prn);
+	err = runs_test(cmd->list[1], *pZ, datainfo, prn);
 	break;
 
     case SPEARMAN:

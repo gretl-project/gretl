@@ -30,7 +30,6 @@ typedef struct {
     int *list;
     char *param;
     int errcode;
-    char errmsg[ERRLEN];
 } CMD;
 
 enum option_codes {
@@ -51,7 +50,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 int help (const char *cmd, const char *helpfile, print_t *prn);
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
-	   double **pZ, char *msg);
+	   double **pZ);
 
 int add_new_var (DATAINFO *pdinfo, double **pZ, GENERATE *genr);
 

@@ -19,13 +19,13 @@
 
 /* functions follow */
 
-double tprob (const double x, const int k);
+double tprob (const double x, const int df);
 
-double fdist (const double zx, const int m, const int n);
+double fdist (const double x, const int dfn, const int dfd);
 
-double chisq (const double zx, const int k);
+double chisq (const double x, const int df);
 
-double normal (const double zx);
+double normal (const double x);
 
 double rhocrit95 (const int n);
 
@@ -33,6 +33,6 @@ double batch_pvalue (const char *str,
 		     const double *Z, const DATAINFO *pdinfo, 
                      print_t *prn);
 
-int interact_pvalue (void);
+void interact_pvalue (void);
 
 

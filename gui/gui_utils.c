@@ -449,19 +449,19 @@ void do_open_data (GtkWidget *w, gpointer data)
     /* will this work right? */
     close_session();
 
-    if (datatype == 2) {
+    if (datatype == GRETL_CSV_DATA) {
 	do_open_csv_box(paths.datfile, OPEN_CSV);
 	return;
     }
-    else if (datatype == 3) {
+    else if (datatype == GRETL_BOX_DATA) {
 	do_open_csv_box(paths.datfile, OPEN_BOX);
 	return;
     }
     else 	
 	err = get_data(&Z, datainfo, &paths,
-		       data_file_open, errtext, stderr);
+		       data_file_open, stderr);
     if (err) {
-	gui_errmsg(err, errtext);
+	gui_errmsg(err);
 	return;
     }	
     /* trash the practice files window that launched the query? */

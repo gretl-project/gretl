@@ -32,7 +32,7 @@ static int _evalexp (char *ss, double *xmvec, double *xxvec,
 static void _getvar (char *str, char *word, char *c);
 static int _getxvec (char *ss, double *xxvec, 
 		     const double *Z, const DATAINFO *pdinfo, 
-		     const MODEL *pmod, char *msg);
+		     const MODEL *pmod);
 static int _scanb (const char *ss, char *word);
 static char _strtype (char *ss, const DATAINFO *pdinfo);
 static int _whichtrans (const char *ss);
@@ -308,15 +308,15 @@ int _identical (const double *x, const double *y, const int n)
 
 /* ........................................................  */
 
-static void otheruse (const char *str1, const char *str2, char *targ)
+static void otheruse (const char *str1, const char *str2)
 {
-    sprintf(targ, "'%s' refers to a %s and may not be used as a "
+    sprintf(gretl_errmsg, "'%s' refers to a %s and may not be used as a "
 	    "variable name\n", str1, str2); 
 }
 
 /* .......................................................... */
 
-static int reserved (const char *str, GENERATE *genr)
+static int reserved (const char *str)
 {
     static char *resword[] = {"uhat", 
 			      "c", "const", "C", "CONST", 
@@ -333,34 +333,34 @@ static int reserved (const char *str, GENERATE *genr)
         if (strcmp(str, resword[i]) == 0) {
             switch(i) {
 	    case 0: 
-		otheruse(str, "residual vector", genr->errmsg);
+		otheruse(str, "residual vector");
 		break;
 	    case 1: case 2: case 3: case 4:
-		otheruse(str, "constant", genr->errmsg);
+		otheruse(str, "constant");
 		break;
 	    case 5:
-		otheruse(str, "regr. coeff.", genr->errmsg);
+		otheruse(str, "regr. coeff.");
 		break;
 	    case 6:
-		otheruse(str, "standard error", genr->errmsg);
+		otheruse(str, "standard error");
 		break;
 	    case 7:
-		otheruse(str, "autocorr. coeff.", genr->errmsg);
+		otheruse(str, "autocorr. coeff.");
 		break;
 	    case 8: case 9: case 10: case 11: case 12: case 13:
-		otheruse(str, "stats function", genr->errmsg);
+		otheruse(str, "stats function");
 		break;
 	    case 14: case 15:
-		otheruse(str, "sampling concept", genr->errmsg);
+		otheruse(str, "sampling concept");
 		break;
 	    case 16: case 17: case 18: case 19: case 20:
-		otheruse(str, "plotting variable", genr->errmsg);
+		otheruse(str, "plotting variable");
 		break;
 	    case 21:
-		otheruse(str, "internal variable", genr->errmsg);
+		otheruse(str, "internal variable");
 		break;
 	    default:
-		otheruse(str, "math function", genr->errmsg);
+		otheruse(str, "math function");
 		break;
             }
             return i+1;
@@ -385,8 +385,7 @@ static void copy (const char *str, const int indx,
 
 /* .........................................................    */
 
-static int getword (const char c, char *str, char *word, GENERATE *genr,
-		    const int oflag)
+static int getword (const char c, char *str, char *word, const int oflag)
 
 /* scans string str for char c, gets word to the left of it as word
    and deletes word from str.
@@ -403,7 +402,7 @@ static int getword (const char c, char *str, char *word, GENERATE *genr,
     /* special case for auto sub-sampling dummy */
     if (oflag && strcmp(word, "subdum") == 0)
 	return i+1;
-    if (reserved(word, genr)) 
+    if (reserved(word)) 
 	return 0;
     return i+1;
 }
@@ -423,7 +422,17 @@ static void get_genr_formula (char *formula, const char *line)
     formula[n-k] = '\0';
 }
 
-/* ........................................................... */
+/**
+ * genr_scalar_index:
+ * @opt: If opt = 1, set the value of the (static) index, using
+ * the value of @put.  If opt = 2, increment the static index by
+ * the value of @put.
+ *
+ * Reads the value of a static index variable (after setting or
+ * incrementing the index if @opt is non-zero).
+ * 
+ * Returns: the new value of the index.
+ */
 
 int genr_scalar_index (int opt, int put)
 {
@@ -476,7 +485,8 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
     */
 
     genr.errcode = 0;
-    genr.errmsg[0] = genr.msg[0] = genr.label[0] = '\0';
+    gretl_errmsg[0] = '\0';
+    genr.msg[0] = genr.label[0] = '\0';
     if ((genr.xvec = malloc(n * sizeof(double))) == NULL) {
 	genr.errcode = E_ALLOC;
 	return genr;
@@ -532,7 +542,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
     } else for (i=0; i<n; i++) mvec[i] = 0;
      
     /* get equation newvar = s, where s is expression */
-    i = getword('=', s, newvar, &genr, oflag);
+    i = getword('=', s, newvar, oflag);
     if (i > 0) {
 	if (!strlen(newvar)) {
 	    genr.errcode = E_NOVAR;
@@ -594,7 +604,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
 		    return genr;
 	    } 
 	    else if (op1 == '\0' || is_operator(op1)) {
-		er = _getxvec(s1, genr.xvec, *pZ, pdinfo, pmod, genr.errmsg);
+		er = _getxvec(s1, genr.xvec, *pZ, pdinfo, pmod);
 		if (er == E_BADSTAT) {
 		    genr.errcode = E_BADSTAT;
 		    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -836,7 +846,7 @@ GENERATE genr_func (double **pZ, DATAINFO *pdinfo,
 
 		default:
 		    if (strlen(word) != 0) 
-			sprintf(genr.errmsg, 
+			sprintf(gretl_errmsg, 
 				"%s is not a var. or function\n", word);
 		    genr.errcode = E_UNSPEC;
 		    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -871,7 +881,7 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 
     st2 = malloc(pdinfo->n * sizeof(double));
     if (st2 == NULL) {
-	sprintf(genr->errmsg, "Out of memory in genr");
+	sprintf(gretl_errmsg, "Out of memory in genr");
 	return E_ALLOC;
     }    
     for (i=t1; i<=t2; i++) st2[i] = xstack[i];
@@ -909,7 +919,7 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 	for (i=t1; i<=t2; i++)  {
 	    xx = xxvec[i];
 	    if (floateq(xx, 0.0)) {  
-		sprintf(genr->errmsg, "Zero denominator for obs %d", i+1);
+		sprintf(gretl_errmsg, "Zero denominator for obs %d", i+1);
 		free(st2);
 		return 1;
 	    }
@@ -923,7 +933,7 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 	    ny = (long) yy;
 	    if ((floateq(xx, 0.0) && yy <= 0.0) || 
 		(xx < 0.0 && (double) ny != yy)) {
-		sprintf(genr->errmsg, 
+		sprintf(gretl_errmsg, 
 			"Invalid power function args for obs. %d"
 			"\nbase value = %f, exponent = %f", i, xx, yy);
 		free(st2);
@@ -1213,7 +1223,7 @@ static int _evalexp (char *ss, double *xmvec, double *xxvec,
     do {
 	_getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
-	    ig = _getxvec(s3, xmvec, Z, pdinfo, pmod, genr->errmsg);
+	    ig = _getxvec(s3, xmvec, Z, pdinfo, pmod);
 	    if (ig != 0) return ig;
 	    _cstack(xxvec, xmvec, op3, pdinfo, genr);
 	    op3 = op2;
@@ -1251,32 +1261,38 @@ static void _getvar (char *str, char *word, char *c)
 
 /* ...........................................................*/
 
-static int check_modelstat (const MODEL *pmod, char *msg, int type1)
+static int check_modelstat (const MODEL *pmod, int type1)
 {
     if (pmod == NULL || pmod->list == NULL) {
 	switch (type1) {
 	case 'e':
-	    strcpy(msg, "No $ess (error sum of squares) value is available.");
+	    strcpy(gretl_errmsg, 
+		   "No $ess (error sum of squares) value is available.");
 	    return 1;
 	    break;
 	case 'r':
-	    strcpy(msg, "No $rsq (R-squared) value is available.");
+	    strcpy(gretl_errmsg, 
+		   "No $rsq (R-squared) value is available.");
 	    return 1;
 	    break;
 	case 'q':
-	    strcpy(msg, "No $trsq (T*R-squared) value is available.");
+	    strcpy(gretl_errmsg, 
+		   "No $trsq (T*R-squared) value is available.");
 	    return 1;
 	    break;
 	case 'd':
-	    strcpy(msg, "No $df (degrees of freedom) value is available.");
+	    strcpy(gretl_errmsg, 
+		   "No $df (degrees of freedom) value is available.");
 	    return 1;
 	    break;
 	case 's':
-	    strcpy(msg, "No $sigma (std. err. of model) value is available.");
+	    strcpy(gretl_errmsg, 
+		   "No $sigma (std. err. of model) value is available.");
 	    return 1;
 	    break;
 	case 'l':
-	    strcpy(msg, "No $lnl (log-likelihood) value is available.");
+	    strcpy(gretl_errmsg, 
+		   "No $lnl (log-likelihood) value is available.");
 	    return 1;
 	    break;
 	default:
@@ -1286,8 +1302,8 @@ static int check_modelstat (const MODEL *pmod, char *msg, int type1)
     }
     if (pmod != NULL && pmod->ci != LOGIT && pmod->ci != PROBIT &&
 	type1 == 'l') {
-	strcpy(msg, "$lnl (log-likelihood) is not available for the last "
-	       "model.");
+	strcpy(gretl_errmsg, 
+	       "$lnl (log-likelihood) is not available for the last model.");
 	return 1;
     }
     return 0;
@@ -1297,7 +1313,7 @@ static int check_modelstat (const MODEL *pmod, char *msg, int type1)
 
 static int _getxvec (char *ss, double *xxvec, 
 		     const double *Z, const DATAINFO *pdinfo, 
-		     const MODEL *pmod, char *msg)
+		     const MODEL *pmod)
      /* calculate and return the xxvec vector of values */
 {
     char type1;
@@ -1307,7 +1323,7 @@ static int _getxvec (char *ss, double *xxvec,
 
     type1 = _strtype(ss, pdinfo);
 
-    if (check_modelstat(pmod, msg, type1)) return 1;
+    if (check_modelstat(pmod, type1)) return 1;
     if (pmod && (pmod->ci == LOGIT || pmod->ci == PROBIT) &&
 	(type1 == 'r' || type1 == 'e' || type1 == 's' || type1 == 'q')) 
 	return E_BADSTAT;
@@ -1359,7 +1375,7 @@ static int _getxvec (char *ss, double *xxvec,
 	    if (pmod->uhat == NULL) return 1;
 	    if (pmod->t2 - pmod->t1 + 1 > n ||
 		model_sample_issue(pmod, NULL, Z, pdinfo)) {
-		strcpy(msg, "Can't retrieve uhat: data set has changed");
+		strcpy(gretl_errmsg, "Can't retrieve uhat: data set has changed");
 		return 1;
 	    }	    
 	    for (i=0; i<pmod->t1; i++) xxvec[i] = NADBL;
@@ -1392,7 +1408,7 @@ static int _getxvec (char *ss, double *xxvec,
 
     default:
 	if (strlen(ss) != 0) {
-	    sprintf(msg, "Undefined variable name '%s' in genr", ss);
+	    sprintf(gretl_errmsg, "Undefined variable name '%s' in genr", ss);
 	    return 1;
 	}
 	break;
@@ -1516,10 +1532,18 @@ static int _whichtrans (const char *ss)
     return 0;
 }
 
-/* ......................................................  */
+/**
+ * dummy:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Adds to the data set a set of periodic (usually seasonal)
+ * dummy variables.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int dummy (double **pZ, DATAINFO *pdinfo)
-/* creates periodic (usually seasonal) dummies */
 {
     static char word[16];
     int vi, t, yy, pp, mm;
@@ -1546,7 +1570,17 @@ int dummy (double **pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-/* ......................................................  */
+/**
+ * paneldum:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @opt: 0 for stacked time-series, 1 for stacked cross-sections.
+ *
+ * Adds to the data set a set of panel data dummy variables (for
+ * both unit and period).
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int paneldum (double **pZ, DATAINFO *pdinfo, int opt)
 /* creates panel data dummies (unit and period) 
@@ -1623,7 +1657,17 @@ static void _genrtime (DATAINFO *pdinfo, GENERATE *genr, int time)
     return;
 }
 
-/* ........................................................  */
+/**
+ * plotvar:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @period: string to identify periodicity: "annual", "qtrs",
+ * "months", "time" or "index".
+ *
+ * Adds to the data set a special summy variable for use in plotting.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int plotvar (double **pZ, DATAINFO *pdinfo, const char *period)
 {
@@ -1742,7 +1786,13 @@ static void _uniform (double *a, const int t1, const int t2)
 	a[i] *= scale; 
 }
 
-/* .......................................................... */
+/**
+ * varlist:
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct
+ *
+ * Prints a list of the names of the variables currently defined.
+ */
 
 void varlist (const DATAINFO *pdinfo, print_t *prn)
 {
@@ -1758,12 +1808,18 @@ void varlist (const DATAINFO *pdinfo, print_t *prn)
     if (n%5) pprintf(prn, "\n");
 }
 
-/* .......................................................... */
+/**
+ * varindex:
+ * @pdinfo: data information struct.
+ * @varname: name of variable to test.
+ *
+ * Returns: the ID number of the variable whose name is given,
+ * or the next available ID number if there is no variable of
+ * that name.
+ *
+ */
 
 int varindex (const DATAINFO *pdinfo, const char *varname)
-/*  checks name of variable against list in datainfo.varname.
-    Returns index number of variable or n + 1 if not in list. 
-*/
 {
     int i;
 
@@ -1820,11 +1876,19 @@ static void _genrfree (double **pZ, DATAINFO *pdinfo, GENERATE *genr,
     
 }
 
-/* ...................................................... */
+/**
+ * logs:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generates and adds to the data set the natural logs of the
+ * variables given in @list.
+ *
+ * Returns: the number of variables generated, or -1 on failure.
+ */
 
-int logs (const int *list, double **pZ, DATAINFO *pdinfo, char *msg)
-/* generates logarithms for each var in list 
-   returns number of vars generated, or -1 on failure */
+int logs (const int *list, double **pZ, DATAINFO *pdinfo)
 {
     register int i;
     int j, t, v, nvar = pdinfo->v, n = pdinfo->n;
@@ -1850,10 +1914,10 @@ int logs (const int *list, double **pZ, DATAINFO *pdinfo, char *msg)
 		if (xx <= 0.0) {
 		    (*pZ)[n*(nvar+j) + t] = NADBL;
 		    if (!na(xx)) {
-			if (msg != NULL)
-			    sprintf(msg, "Log error: Variable '%s', obs %d,"
-				    " value = %g\n", pdinfo->varname[v],
-				    t+1, xx);
+			sprintf(gretl_errmsg, 
+				"Log error: Variable '%s', obs %d,"
+				" value = %g\n", pdinfo->varname[v],
+				t+1, xx);
 #ifdef GENR_DEBUG
 			fprintf(stderr, "Log error: Variable '%s', obs %d,"
 				" value = %g\n", pdinfo->varname[v], t+1, xx);
@@ -1890,7 +1954,17 @@ int logs (const int *list, double **pZ, DATAINFO *pdinfo, char *msg)
     return j;
 }
 
-/* ...................................................... */
+/**
+ * lags:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generates and adds to the data set lagged values of the 
+ * variables given in @list (up to the frequency of the data).
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int lags (const int *list, double **pZ, DATAINFO *pdinfo)
 /* generates lag variables for each var in list */
@@ -1907,7 +1981,6 @@ int lags (const int *list, double **pZ, DATAINFO *pdinfo)
     }
     return 0;
 }
-
 
 /* ...................................................... */
 
@@ -1951,19 +2024,24 @@ int _parse_lagvar (const char *varname, LAGVAR *plagv, DATAINFO *pdinfo)
     return 0;
 }
 
-/* ...................................................... */
+/**
+ * xpxgenr:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @opt: If = 0, only squares are generated, if non-zero, both
+ * squares and cross-products are generated.
+ * @nodup: If non-zero, variables will not be created if they
+ * are already present in the data set.
+ *
+ * Generates and adds to the data set squares and (if @opt is non-zero) 
+ * cross-products of the variables given in @list.
+ *
+ * Returns: The number of variables generated, or -1 on error.
+ */
 
 int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo, 
 	     const int opt, const int nodup)
-/* Generates squares, cross products of the variables in "list".  
-   If a variable is a dummy, square is ignored.
-   if opt = 0, only square terms are created.
-   if opt = 1, both squares and cross-products are created.
-       Returns the number of new variables created, or -1 in case of
-   failure.
-       If nodup = 1, vars will not be created if they are already
-   present in the data set.
-*/
 {
     int check, i, j, t, li, lj, l0 = list[0];
     int maxterms, terms, n = pdinfo->n, v = pdinfo->v;
@@ -2045,11 +2123,20 @@ int xpxgenr (const int *list, double **pZ, DATAINFO *pdinfo,
     return terms;
 }
 
-/* ...................................................... */
+/**
+ * rhodiff:
+ * @param: please see the gretl help on rhodiff() for syntax.
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generates and adds to the data set rho-differenced versions
+ * of the variables given in @list.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int rhodiff (char *param, const int *list, double **pZ, DATAINFO *pdinfo)
-     /* creates rho-differenced counterparts of the variables in
-	the input list and adds them to the data set */
 {
     int i, j, maxlag, p, t, t1, nv, v = pdinfo->v, n = pdinfo->n;
     char s[64], parmbit[9];
@@ -2270,7 +2357,7 @@ static void _varerror (const char *ss)
 
 /* .......................................................... */
 
-int simulate (char *cmd, double **pZ, DATAINFO *pdinfo, char *msg)
+int simulate (char *cmd, double **pZ, DATAINFO *pdinfo)
      /* for "sim" command */
 {
     int f, i, t, t1, t2, m, n = pdinfo->n, nv, pv, *isconst;
@@ -2293,9 +2380,9 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo, char *msg)
     }
 
     /* try getting valid obs from stobs and endobs */
-    t1 = dateton(toks[0], pdinfo->pd, pdinfo->stobs, msg);
-    t2 = dateton(toks[1], pdinfo->pd, pdinfo->stobs, msg);
-    if (strlen(msg) || t1 < 0 || t1 >= t2 || t2 > pdinfo->n) {
+    t1 = dateton(toks[0], pdinfo->pd, pdinfo->stobs);
+    t2 = dateton(toks[1], pdinfo->pd, pdinfo->stobs);
+    if (strlen(gretl_errmsg) || t1 < 0 || t1 >= t2 || t2 > pdinfo->n) {
 	free(a);
 	free(toks);
 	return 1;
@@ -2306,7 +2393,7 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo, char *msg)
     esl_trunc(varname, 8);
     nv = varindex(pdinfo, varname);
     if (nv == 0 || nv >= pdinfo->v) {
-	sprintf(msg, (nv)? "For 'sim', the variable must already "
+	sprintf(gretl_errmsg, (nv)? "For 'sim', the variable must already "
 		"exist.\n" :
 		"You can't use the constant for this purpose.\n");
 	free(a);
@@ -2320,7 +2407,7 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo, char *msg)
 	if (isalpha((unsigned char) parm[0])) {
 	    pv = varindex(pdinfo, parm);
 	    if (pv == 0 || pv >= pdinfo->v) {
-		sprintf(msg, "bad varname in sim.\n");
+		sprintf(gretl_errmsg, "bad varname in sim.\n");
 		free(a);
 		free(toks);
 		return 1;

@@ -21,6 +21,9 @@
 
 #include <stdio.h>
 
+extern int gretl_errno;
+extern char gretl_errmsg[ERRLEN];
+
 typedef enum {
     E_DATA = 2,
     E_SINGULAR,
@@ -28,11 +31,9 @@ typedef enum {
     E_YPY,
     E_ZERO,
     E_TSS,
-    E_RSS,
     E_ESS,
     E_NOTALPH,
     E_CONST,
-    E_INEG,
     E_UNBAL,
     E_NEST,
     E_NOTINTG,
@@ -76,12 +77,13 @@ typedef enum {
     E_NOCONST,
     E_MISS,
     E_BADSTAT,
-    E_NOMERGE
+    E_NOMERGE,
+    E_MAX
 } error_codes; 
 
 /* functions follow */
  
 char *get_errmsg (const int errcode, char *errtext, print_t *prn);
 
-void errmsg (const int errcode, const char *msg, print_t *prn);
+void errmsg (const int errcode, print_t *prn);
 

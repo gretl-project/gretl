@@ -146,7 +146,7 @@ static void drawline (const int nn, print_t *prn)
 /* ........................................................ */
 
 int plot (const int *list, double *Z, const DATAINFO *pdinfo, 
-	  int oflag, int batch, print_t *prn)
+	  int oflag, int pause, print_t *prn)
 /*
 	plot var1 ;		plots var1 values
 	plot var1 var2 ;	plots var1 and var2 values
@@ -179,7 +179,7 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
 
     if (l0 == 1) {
 	/* only one variable is to be plotted */
-	n = ztox(vy, x, pdinfo, Z);
+	n = ztox(vy, x, Z, pdinfo);
 	minmax(t1, t2, x, &xmin, &xmax);
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;
@@ -203,7 +203,7 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
 	for (t=t1; t<=t2; ++t) {
 	    xxx = Z(vy, t);
 	    if (na(xxx)) continue;
-	    _pgbreak(1, &lineno, batch);
+	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
 	    prntdate(t, n, pdinfo, prn);
 	    ix = (floatneq(xrange, 0.0))? ((xxx-xmin)/xrange) * ncols : nc2;
@@ -279,7 +279,7 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
     }
     drawline(ncols, prn);
     for (t=t1; t<=t2; ++t) {
-	_pgbreak(1, &lineno, batch); 
+	if (pause) page_break(1, &lineno, 0);
 	lineno++;
 	xxx = Z(vy, t);
 	yy = Z(vz, t);
@@ -492,7 +492,7 @@ int gnuplot (int *list, const int *lines,
 	tmplist[2] = list[2];	
 	tmplist[3] = 0;	
 	init_model(&plotmod);
-	plotmod = lsq(tmplist, *pZ, pdinfo, OLS, 0, 0.0);
+	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
 	    /* is the fit significant? */
 	    b = plotmod.coeff[1];

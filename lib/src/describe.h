@@ -28,8 +28,6 @@ typedef struct {
                                      for a Gaussian distribution */
     int n;
     int t1, t2;
-    int errcode;                  
-    char errmsg[ERRLEN];
 } FREQDIST;
 
 /* functions follow */
@@ -40,12 +38,12 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo,
 		     double *zz, const int nzz, 
 		     const char *varname, const int params);
 
-int corrgram (const int *list, const int order, 
+int corrgram (const int varno, const int order, 
 	      double **pZ, DATAINFO *pdinfo, 
 	      const PATHS *ppaths, const int batch, 
 	      print_t *prn);
 
-int periodogram (const int *list, 
+int periodogram (const int varno, 
 		 double **pZ, const DATAINFO *pdinfo, 
 		 const PATHS *ppaths, const int batch, 
 		 const int opt, print_t *prn);
@@ -56,7 +54,7 @@ GRETLSUMMARY *summary (int *list,
 
 void print_summary (GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
-		    print_t *prn, int batch); 
+		    const int pause, print_t *prn); 
 
 void free_summary (GRETLSUMMARY *summ);
 
@@ -67,7 +65,7 @@ void free_corrmat (CORRMAT *corrmat);
 
 int esl_corrmx (int *list, 
 		double **pZ, const DATAINFO *pdinfo, 
-		const int batch, print_t *prn);
+		const int pause, print_t *prn);
 
 int means_test (int *list, 
 		double *Z, const DATAINFO *pdinfo, 
@@ -78,4 +76,4 @@ int vars_test (int *list,
 	       print_t *prn);
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
-			const int batch, print_t *prn);
+			const int pause, print_t *prn);

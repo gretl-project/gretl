@@ -37,10 +37,16 @@ double _gammadist (double s1, double s2, double x, int control);
 
 const char negval[] = "\nEnter x value (value < 0 will exit menu): "; 
 
-/* ...................................................................	*/
+/**
+ * tcrit95:
+ * @df: degrees of freedom.
+ * 
+ * Returns: the 95 percent critical value for the t distribution
+ * with @df degrees of freedom.
+ *
+ */
 
 double tcrit95 (const int df)
-     /* 95 percent critical value of t */
 {
     double x = 1.960;
     
@@ -48,10 +54,16 @@ double tcrit95 (const int df)
     return x;
 }
 
-/* ...................................................................	*/
+/**
+ * rhocrit95:
+ * @n: sample size.
+ * 
+ * Returns: the 95 percent critical value for the sample correlation
+ * coefficient, sample size @n.
+ *
+ */
 
 double rhocrit95 (const int n)
-     /* 95 percent critical value of sample correlation coeff. */
 {
     double x = 1.960;
     
@@ -59,33 +71,45 @@ double rhocrit95 (const int n)
     return sqrt(x*x / (x*x - 2 + n));
 }
 
-/* ...................................................................	*/
+/**
+ * tprob:
+ * @x: the cutoff point in the distribution.
+ * @df: degrees of freedom.
+ * 
+ * Returns: the probability that t(@df) is greater than @x.
+ *
+ */
 
-double tprob (const double x, const int k)
-/* returns prob that t(k) > x */
+double tprob (const double x, const int df)
 {
     double xx;
 
-    if (k <= 0) return -1.0;
+    if (df <= 0) return -1.0;
     xx = x*x;
-    return fdist(xx, 1, k);
+    return fdist(xx, 1, df);
 }
 
-/* ...................................................................	*/
+/**
+ * fdist:
+ * @x: the cutoff point in the distribution.
+ * @dfn: numerator degrees of freedom.
+ * @dfd: denominator degrees of freedom.
+ * 
+ * Returns: the probability a random variable disstributed as
+ * F(@dfn, @dfd) is greater than @x, or -1 if either @dfn or @dfd is
+ * negative.
+ */
 
-double fdist (const double zx, const int m, const int n)
-/* returns prob that an F(m,n) r.v. is > zx.  
-   Returns -1 if m or n is negative.
-*/
+double fdist (const double x, const int dfn, const int dfd)
 {
     int ia, ib, i, j;
     double xi, fia, fi1, fi2, w, zz, p, zy, d, zk;
 
-    if (m <= 0 || n <= 0) return -1;
-    if (zx <= 0) return 1.0;
-    ia = 2*(m/2)-m+2;
-    ib = 2*(n/2)-n+2;
-    w = zx*m/n;
+    if (dfn <= 0 || dfd <= 0) return -1;
+    if (x <= 0) return 1.0;
+    ia = 2*(dfn/2)-dfn+2;
+    ib = 2*(dfd/2)-dfd+2;
+    w = x*dfn/dfd;
     zz = 1./(1.+w);
     if (ia == 1) {
 	if(ib == 1) {
@@ -110,22 +134,22 @@ double fdist (const double zx, const int m, const int n)
     zy = 2.*w/zz;
     if (ia == 1) {
 	fia = (double) ia;
-	for (i=ib+2; i<=n; i=i+2) {
+	for (i=ib+2; i<=dfd; i=i+2) {
 	    fi1 = (double) (i-1);
 	    fi2 = (double) (i-2);
 	    d = (1.0+fia/fi2)*d*zz;
 	    p = p+d*zy/fi1;
 	}
     } else {
-	xi = (double) ((n - 1)/2);
+	xi = (double) ((dfd - 1)/2);
 	zk = pow(zz,xi);
-	d = d*zk*n/ib;
+	d = d*zk*dfd/ib;
 	p = p*zk+w*zz*(zk-1.0)/(zz-1.0);
     }
     zy = w*zz;
     zz = 2.0/zz;
-    ib = n-2;
-    for (i=ia+2; i<=m; i=i+2) {
+    ib = dfd-2;
+    for (i=ia+2; i<=dfn; i=i+2) {
 	j = i+ib;
 	d = zy*d*j/(i - 2);
 	p = p - zz*d/j;
@@ -135,23 +159,30 @@ double fdist (const double zx, const int m, const int n)
     return (1.0 - p);
 }
 
-/* ............................................................... */
+/**
+ * chisq:
+ * @x: the cutoff point in the distribution.
+ * @df: degrees of freedom.
+ * 
+ * Returns: the probability that a random variable distributed as
+ * Chi-squared(@df) is greater than @x.
+ *
+ */
 
-double chisq (const double zx, const int k)
-/* returns prob that a chisq(k) r.v. is > zx */
+double chisq (const double x, const int df)
 {
     double aa, bb, absx, p, zy, zz, h, d, sum, xs, xh, xi, xx, x2;
     int i, m, iy;
 
-    if (zx <= 0.0 || k <= 0) return 1.0;
-    if (k == 1) {
-	zy = sqrt(zx);
+    if (x <= 0.0 || df <= 0) return 1.0;
+    if (df == 1) {
+	zy = sqrt(x);
 	p = 2.0 * normal(zy);
 	return p;
     }
-    h = (double) k;
-    if (k <= 30) {
-	x2 = -zx/2.0;
+    h = (double) df;
+    if (df <= 30) {
+	x2 = -x/2.0;
 	zy = h/2.0;
 	iy = (int) zy;
 	zy = zy - iy;
@@ -159,12 +190,12 @@ double chisq (const double zx, const int k)
 	    aa = (h - .999)/2.0;
 	    m = (int) aa;
 	    d = 1.0;
-	    zy = sqrt(zx);
+	    zy = sqrt(x);
 	    sum = 0.0;
 	    for (i=1; i<=m; i++) {
 		xi = (double) i;
 		d = d*(2.0*xi-1.0);
-		sum += (pow(zx, xi) / (zy*d));
+		sum += (pow(x, xi) / (zy*d));
 	    }
 	    xs = normal(zy);
 	    p = 2.*xs + 0.7978845612587234 * sum * exp(x2);
@@ -176,32 +207,38 @@ double chisq (const double zx, const int k)
 	    for (i=1; i<=m; i++) {
 		xi = (double) i;
 		d *= 2.0*i;
-		sum += pow(zx,xi)/d;
+		sum += pow(x, xi) / d;
 	    }
-	    if(zx <= 175.0) p = (1.0 + sum) * exp(x2);
+	    if (x <= 175.0) p = (1.0 + sum) * exp(x2);
 	    else p = 0.0;
 	}
 	return p;
     }
     xs = h - 1.0;
-    d = zx - h +2.0/3.0 - .08/h;
-    xx = 2.0*xs;
-    if (floateq(zx, xs)) zz = - (1.0/3.0+.08/h)/sqrt(xx);
+    d = x - h + 2.0/3.0 - .08/h;
+    xx = 2.0 * xs;
+    if (floateq(x, xs)) zz = - (1.0/3.0 + .08/h) / sqrt(xx);
     else {
-	xh = zx - xs;
+	xh = x - xs;
 	absx = (xh>0.0)? xh : -xh;
-	aa = xs/zx;
-	bb = xs*log(aa) + zx - xs;
-	zz = d*sqrt(bb)/absx;
+	aa = xs / x;
+	bb = xs * log(aa) + x - xs;
+	zz = d * sqrt(bb)/absx;
     }
     p = normal(zz);
     return p;
 }
 
-/* ............................................................... */
+/**
+ * normal:
+ * @x: the cutoff point in the distribution.
+ * 
+ * Returns: the probability that a random variable distributed as
+ * N(0, 1) is greater than @x.
+ *
+ */
 
-double normal (const double zx)
-/* returns prob that a normal(0,1) r.v. is > zx */
+double normal (const double x)
 {
     const double a1 = .0705230784;
     const double a2 = .0422820123;
@@ -211,7 +248,7 @@ double normal (const double zx)
     const double a6 = .0000430638;
     double absx, xx, zz, p;
 
-    absx = (zx > 0.0)? zx : -zx;
+    absx = (x > 0.0)? x : -x;
     if (absx <= 14.14) zz = .7071067812*absx;
     else zz = 10.0;
     xx = a6*zz + a5;
@@ -221,22 +258,31 @@ double normal (const double zx)
     xx = xx*zz + a1;
     xx = xx*zz + 1.0;
     p = 0.5 * pow(xx, -16.0);
-    if (zx > 0.0) p = 1.0 - p;
+    if (x > 0.0) p = 1.0 - p;
     return (1.0 - p);
 }
 
-/* ............................................................... */
+/**
+ * batch_pvalue:
+ * @str: the command line, which should be of one of the following forms:
+ * pvalue 1 x (Normal distribution);
+ * pvalue 2 df x (t-distribution);
+ * pvalue 3 df x (Chi-square);
+ * pvalue 4 dfn dfd x (F-distribution); or
+ * pvalue 5 mean variance x (Gamma distribution).
+ * @Z: the data matrix.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ * 
+ * Returns: the probability that a random variable distributed as
+ * specified in the command line @str exceeds the value indicated
+ * in @str, or a negative number in case of failure.
+ *
+ */
 
 double batch_pvalue (const char *str, 
 		     const double *Z, const DATAINFO *pdinfo, 
                      print_t *prn)
-    /*
-     Normal distribution:     pvalue 1 xvalue
-     t-distribution:          pvalue 2 df xvalue
-     Chi-square:              pvalue 3 df xvalue
-     F-distribution:          pvalue 4 dfn dfd xvalue
-     Gamma distribution:      pvalue 5 mean variance xvalue
-    */
 {
     int i, df1 = 0, df2 = 0;
     char stat;
@@ -368,58 +414,62 @@ double batch_pvalue (const char *str,
     }
 }
 
-/* ........................................................ */
+/**
+ * interact_pvalue:
+ * 
+ * P-value finder function for interactive use at the command prompt.
+ *
+ */
 
-int interact_pvalue (void)
+void interact_pvalue (void)
 {
     int choice, v;
     char ans[3];
 
-	startagain: ;
+    do {
+	printf("\n\nChoose one of the following distributions: "
+	       "\n\n\t1) Standard normal\t\t2) Student's t\n\t3) "
+	       "Chi-square\t\t\t4) F\n"
+	       "\t5) Gamma\n\n"
+	       "Enter your choice (a number < 0 to exit gretl, 0 to quit "
+	       "menu, or\n1, 2, 3, 4, or 5): ");
 
-    printf("\n\nChoose one of the following distributions: "
-	   "\n\n\t1) Standard normal\t\t2) Student's t\n\t3) "
-	   "Chi-square\t\t\t4) F\n"
-	   "\t5) Gamma\n\n"
-	   "Enter your choice (a number < 0 to exit gretl, 0 to quit "
-	   "menu, or\n1, 2, 3, 4, or 5): ");
+	fflush(stdout);
+	v = fscanf(stdin, "%d", &choice);
 
-    fflush(stdout);
-    v = fscanf(stdin, "%d", &choice);
+	if (v == EOF || v == 0) return;
+	if (choice < 0) exit(0);
+	printf("%d ", choice);
 
-    if (v == EOF || v == 0) return 0;
-    if (choice < 0) exit(0);
-    printf("%d ", choice);
+	switch (choice) {
+	case 0:
+	    putchar('\n');
+	    return;
+	case 1:		
+	    _pnormal();
+	    break;
+	case 2:		
+	    _ptvalue();
+	    break;
+	case 3:		
+	    _pchisq();
+	    break;
+	case 4:		
+	    _pfvalue();
+	    break;
+	case 5:
+	    _pgamma();
+	    break;
+	default:	
+	    puts("\ninvalid choice");
+	    break;
+	}
 
-    switch (choice) {
-    case 0:
-	putchar('\n');
-	return 0;
-    case 1:		
-	_pnormal();
-	break;
-    case 2:		
-	_ptvalue();
-	break;
-    case 3:		
-	_pchisq();
-	break;
-    case 4:		
-	_pfvalue();
-	break;
-    case 5:
-	_pgamma();
-	break;
-    default:	
-	puts("\ninvalid choice");
-	break;
-    }
+	printf("\nDo you want to continue with more pvalues (y or n)? ");
+	fflush(stdout);
+	fscanf(stdin, "%s", ans);
 
-    printf("\nDo you want to continue with more pvalues (y or n)? ");
-    fflush(stdout);
-    fscanf(stdin, "%s", ans);
-    if (ans[0] == 'Y' || ans[0] == 'y') goto startagain;
-    else return 0;
+    } while (ans[0] == 'Y' || ans[0] == 'y');
 }
 
 /* ........................................................ */

@@ -39,13 +39,32 @@ enum flagvals {
     OPT_RESIDZ
 };
 
+/**
+ * free_model:
+ * @p: pointer to #MODEL.
+ *
+ * Free allocated content of MODEL then the pointer itself.
+ */
 #define free_model(p) if (p != NULL) { \
                              clear_model(p, NULL, NULL); \
                              free(p); \
                           }
-#define dataset_add_vars(n, p1, p2) grow_Z((n), p1, p2)
-#define dataset_drop_vars(n, p1, p2) shrink_Z((n), p1, p2)
+
+/**
+ * dataset_is_time_series:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains time series
+ * data (1) or not (0).
+ */
 #define dataset_is_time_series(p) (p->time_series == 1)
+/**
+ * dataset_is_panel:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains panel
+ * data (1) or not (0).
+ */
 #define dataset_is_panel(p) (p->time_series == 2 || p->time_series == 3)
 
 #include <float.h>
@@ -67,7 +86,7 @@ void printlist (const int *list, const char *msg);
 
 void list_exclude (const int n, int *list);
 
-int set_obs (char *line, DATAINFO *pdinfo, int opt, char *msg);
+int set_obs (char *line, DATAINFO *pdinfo, int opt);
 
 char *addpath (char *filename, PATHS *ppaths, int script);
 
@@ -90,9 +109,9 @@ int copylist (int **target, const int *src);
 
 int grow_nobs (const int newobs, double **pZ, DATAINFO *pdinfo);
 
-int grow_Z (const int newvars, double **pZ, DATAINFO *pdinfo);
+int dataset_add_vars (const int newvars, double **pZ, DATAINFO *pdinfo);
 
-int shrink_Z (const int delvars, double **pZ, DATAINFO *pdinfo);
+int dataset_drop_vars (const int delvars, double **pZ, DATAINFO *pdinfo);
 
 int hidden_var (const int i, const DATAINFO *pdinfo);
 
@@ -101,8 +120,8 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 int swap_models (MODEL **targ, MODEL **src);
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     DATAINFO *pdinfo, double **pZ, print_t *prn,
-		     const PATHS *ppaths, const int plot, char *msg);
+		     double **pZ, DATAINFO *pdinfo, print_t *prn,
+		     const PATHS *ppaths, const int plot);
 
 int is_model_cmd (const char *line);
 
@@ -110,14 +129,14 @@ int is_model_ref_cmd (const int ci);
 
 int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo);
 
-int re_estimate (char *model_spec, MODEL *tmpmod, DATAINFO *pdinfo, 
-		 double **pZ);
+int re_estimate (char *model_spec, MODEL *tmpmod, 
+		 double **pZ, DATAINFO *pdinfo);
 
 double *copyvec (const double *src, const int n);
 
 int ijton (const int i, const int j, const int lo);
 
-int ztox (const int i, double *px, const DATAINFO *pdinfo, 
-	  const double *Z);
+int ztox (const int i, double *px, 
+	  const double *Z, const DATAINFO *pdinfo); 
 
 #endif /* UTILS_H */

@@ -280,7 +280,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 	    }
 	}
 	else if (aux_code == AUX_LOG) { /* add logs of orig vars */
-	    check = logs(tmplist, pZ, pdinfo, NULL);
+	    check = logs(tmplist, pZ, pdinfo);
 	    if (check < 0) {
 		fprintf(stderr, "gretl: generation of logs failed\n");
 		free(tmplist);
@@ -304,7 +304,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
        estimation method */
     if (aux_code == AUX_ADD) {
 	if (orig->ci == CORC || orig->ci == HILU) {
-	    err = hilu_corc(&rho, newlist, *pZ, pdinfo, 
+	    err = hilu_corc(&rho, newlist, pZ, pdinfo, 
 			    orig->ci, prn);
 	    if (err) return err;  
 	}
@@ -325,7 +325,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 	    *new = logit_probit(newlist, pZ, pdinfo, orig->ci);
 	}
 	else 
-	    *new = lsq(newlist, *pZ, pdinfo, orig->ci, 1, rho);
+	    *new = lsq(newlist, pZ, pdinfo, orig->ci, 1, rho);
 
 	if (new->nobs < orig->nobs) 
 	    new->errcode = E_MISS;
@@ -354,7 +354,7 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
 	newlist[1] = pdinfo->v - 1;
 	pdinfo->extra = 1;
 
-	aux = lsq(newlist, *pZ, pdinfo, OLS, 1, rho);
+	aux = lsq(newlist, pZ, pdinfo, OLS, 1, rho);
 	if (aux.errcode) {
 	    err = aux.errcode;
 	    fprintf(stderr, "auxiliary regression failed\n");
@@ -457,7 +457,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     }
 
     if (orig->ci == CORC || orig->ci == HILU) {
-	err = hilu_corc(&rho, tmplist, *pZ, pdinfo, 
+	err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
 			orig->ci, prn);
 	if (err) {
 	    free(tmplist);
@@ -488,10 +488,10 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 	new->aux = AUX_OMIT;
     }
     else 
-	*new = lsq(tmplist, *pZ, pdinfo, orig->ci, 1, rho);
+	*new = lsq(tmplist, pZ, pdinfo, orig->ci, 1, rho);
 
     if (new->errcode) {
-	pprintf(prn, "%s\n", new->errmsg);
+	pprintf(prn, "%s\n", gretl_errmsg);
 	free(tmplist);
 	pdinfo->t1 = t1;
 	return new->errcode; 
@@ -565,11 +565,10 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 
     newlist[1] = v;
     /*  printlist(newlist); */
-    aux = lsq(newlist, *pZ, pdinfo, OLS, 1, 0.0);
+    aux = lsq(newlist, pZ, pdinfo, OLS, 1, 0.0);
     err = aux.errcode;
     if (err) {
-	if (strlen(aux.errmsg)) pprintf(prn, "%s\n", aux.errmsg);
-	else errmsg(aux.errcode, NULL, prn);
+	errmsg(aux.errcode, prn);
 	free(newlist);
 	clear_model(&aux, NULL, NULL);
 	shrink_Z(k, pZ, pdinfo);
@@ -640,7 +639,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 
     if (sscanf(line, "%*s %7s", chowdate) != 1) 
 	return E_PARSE;
-    split = dateton(chowdate, pdinfo->pd, pdinfo->stobs, NULL) - 1;
+    split = dateton(chowdate, pdinfo->pd, pdinfo->stobs) - 1;
     if (split <= 0 || split >= pdinfo->n) 
 	return E_SPLIT;
 
@@ -676,11 +675,9 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
     }
 
     /*  printlist(chowlist); */
-    chow_mod = lsq(chowlist, *pZ, pdinfo, OLS, 1, 0.0);
+    chow_mod = lsq(chowlist, pZ, pdinfo, OLS, 1, 0.0);
     if (chow_mod.errcode) {
-	if (strlen(chow_mod.errmsg)) 
-	    pprintf(prn, "%s\n", chow_mod.errmsg);
-	else errmsg(chow_mod.errcode, NULL, prn);
+	errmsg(chow_mod.errcode, prn);
     } else {
 	chow_mod.aux = AUX_CHOW;
 	printmodel(&chow_mod, pdinfo, prn);
@@ -786,11 +783,9 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, print_t *prn,
 
     wbar = 0.0;
     for (j=0; j<n_est; j++) {
-	cum_mod = lsq(pmod->list, *pZ, pdinfo, OLS, 1, 0.0);
+	cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, 1, 0.0);
 	if (cum_mod.errcode) {
-	    if (strlen(cum_mod.errmsg)) 
-		pprintf(prn, "%s\n", cum_mod.errmsg);
-	    else errmsg(cum_mod.errcode, NULL, prn);
+	    errmsg(cum_mod.errcode, prn);
 	    clear_model(&cum_mod, NULL, NULL);
 	    free(cresid);
 	    free(W);

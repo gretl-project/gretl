@@ -922,7 +922,7 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
     }
 
     for (i=0; i<plotgrp->nplots; i++) {
-	n = ztox(list[i+1], x, pdinfo, *pZ);
+	n = ztox(list[i+1], x, *pZ, pdinfo);
 	if (n < 2) {
 	    char s[63];
 

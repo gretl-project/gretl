@@ -67,8 +67,7 @@ typedef struct {
 int ok_in_loop (int ci);
 
 int parse_loopline (char *line, LOOPSET *ploop, 
-		    DATAINFO *pdinfo,
-		    char *msg);
+		    DATAINFO *pdinfo);
 
 int loop_condition (int k, LOOPSET *ploop, 
 		    double *Z, DATAINFO *pdinfo); 

@@ -33,14 +33,13 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 int set_sample_dummy (const char *line, 
 		      double **oldZ, double **newZ,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
-		      char *msg, const int opt);
+		      const int opt);
 
-int set_sample (const char *line, DATAINFO *pdinfo, char *msg);
+int set_sample (const char *line, DATAINFO *pdinfo);
 
 int restore_full_sample (double **subZ, double **fullZ, double **Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
-			 DATAINFO **datainfo, 
-			 char *msg);
+			 DATAINFO **datainfo); 
 
 int count_missing_values (double **pZ, DATAINFO *pdinfo, print_t *prn);
 

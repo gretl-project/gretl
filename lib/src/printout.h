@@ -47,19 +47,19 @@ void print_smpl (const DATAINFO *pdinfo,
 
 int outcovmx (MODEL *pmod, 
 	      const DATAINFO *pdinfo, 
-	      const int batch, print_t *prn);
+	      const int nopause, print_t *prn);
 
 void print_white_vcv (const MODEL *pmod, print_t *prn);
 
-void takenotes (const int batch, const int runit);
+int takenotes (int quit_option);
 
-int takenotes_quit (const int batch, const int runit);
+int page_break (const int n, int *lineno, const int quit_option);
 
 void space (int n, print_t *prn);
 
 int printdata (int *list, 
 	       double **pZ, const DATAINFO *pdinfo, 
-	       int batch, int byobs, print_t *prn);
+	       int nopause, int byobs, print_t *prn);
 
 int print_fit_resid (const MODEL *pmod, 
 		     double **pZ, DATAINFO *pdinfo, 

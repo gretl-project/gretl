@@ -26,11 +26,11 @@
 /* functions follow */
  
 MODEL lsq (int *list, 
-	   double *Z, DATAINFO *pdinfo, 
+	   double **pZ, DATAINFO *pdinfo, 
 	   const int ci, const int opt, const double rho);
 
 int hilu_corc (double *toprho, int *list, 
-	       double *Z, DATAINFO *pdinfo, 
+	       double **pZ, DATAINFO *pdinfo, 
 	       const int opt, print_t *prn);
 
 MODEL tsls_func (const int *list, const int pos, 

@@ -27,8 +27,8 @@
 # include <windows.h>
 #endif
 
-extern void _mxout (const double *rr, const int *list, const int ci,
-		    const DATAINFO *pdinfo, const int batch, print_t *prn);
+extern void mxout (const double *rr, const int *list, const int ci,
+		   const DATAINFO *pdinfo, const int pause, print_t *prn);
 
 /* ........................................................... */
 
@@ -42,11 +42,16 @@ static int missvals (double *x, int n)
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * esl_median:
+ * @zx: data series (which should be pre-sorted).
+ * @n: length of the series.
+ *
+ * Returns: the median value of the given series.
+ *
+ */
 
 double esl_median (const double *zx, const int n)
-/* if zx is in increasing order, finds median for observations 0
-   to n-1 */
 {
     double xx;
     int n2, n2p;
@@ -99,7 +104,7 @@ static void moments (const int t1, const int t2, const double *zx,
 
 /**
  * free_freq:
- * @freq: gretl frequency distrbution struct
+ * @freq: gretl frequency distribution struct
  *
  * Frees all malloced elements of the struct.
  *
@@ -148,8 +153,8 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 	return NULL;
     }
 
-    freq->errcode = 0;
-    freq->errmsg[0] = '\0';
+    gretl_errno = 0;
+    gretl_errmsg[0] = '\0';
     freq->midpt = NULL;
     freq->endpt = NULL;
     freq->f = NULL;
@@ -157,15 +162,15 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
     if (pZ != NULL) {
 	i = varindex(pdinfo, varname);
 	if (i > pdinfo->v - 1) {
-	    freq->errcode = E_DATA;
-	    sprintf(freq->errmsg, "'%s' is not in the data set", varname);
+	    gretl_errno = E_DATA;
+	    sprintf(gretl_errmsg, "'%s' is not in the data set", varname);
 	    free(x);
 	    return freq;
 	}	
-	n = ztox(i, x, pdinfo, *pZ);
+	n = ztox(i, x, *pZ, pdinfo);
 	if (n < 3) {
-	    freq->errcode = E_DATA;
-	    sprintf(freq->errmsg, "Insufficient data to build frequency "
+	    gretl_errno = E_DATA;
+	    sprintf(gretl_errmsg, "Insufficient data to build frequency "
 		    "distribution for variable %s", varname);
 	    free(x);
 	    return freq;
@@ -180,8 +185,8 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
     freq->t2 = pdinfo->t2;
 
     if (isconst(0, n-1, x)) {
-	freq->errcode = 1;
-	sprintf(freq->errmsg, "%s is a constant", freq->varname);
+	gretl_errno = 1;
+	sprintf(gretl_errmsg, "%s is a constant", freq->varname);
 	return freq;
     }    
     
@@ -194,8 +199,8 @@ FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
     freq->f = malloc(maxend * sizeof(int));
     if (freq->endpt == NULL || freq->midpt == NULL ||
 	freq->f == NULL) {
-	freq->errcode = E_ALLOC;
-	strcpy(freq->errmsg, "Out of memory for frequency distribution");
+	gretl_errno = E_ALLOC;
+	strcpy(gretl_errmsg, "Out of memory for frequency distribution");
 	free(x);
 	return freq;
     }
@@ -283,7 +288,7 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
 	list[0] = i + 2;
 	list[i+2] = 0;
 	for (j=2; j<i+2; j++) list[j] = laglist[j-2];
-	tmp = lsq(list, *pZ, pdinfo, OLS, 0, 0);
+	tmp = lsq(list, pZ, pdinfo, OLS, 0, 0);
 	if ((err = tmp.errcode)) break;
 	pacf[i-1] = tmp.coeff[i];
 	if (i < *maxlag) clear_model(&tmp, NULL, NULL);
@@ -299,12 +304,12 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
 
 /**
  * corrgram:
- * @list: in place 1, contains ID number of variable to process.
+ * @varno: ID number of variable to process.
  * @order: integer order for autocorrelation function.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ppaths: struct containing path information.
- * @batch: should = 1 if we're in batch mode, 0 if interactive.
+ * @batch: if = 1, use ASCII graphic rather than gnuplot graph.
  * @prn: gretl printing struct.
  *
  * Computes autocorrelation function and plots the correlogram for
@@ -314,20 +319,23 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
  *
  */
 
-int corrgram (const int *list, const int order, double **pZ, 
+int corrgram (const int varno, const int order, double **pZ, 
 	      DATAINFO *pdinfo, const PATHS *ppaths, 
 	      const int batch, print_t *prn)
 {
     double *x, *y, *acf, *xl, box;
     double *pacf = NULL;
-    int err = 0, k, l, m, v = list[1], nobs, n = pdinfo->n; 
+    int err = 0, k, l, m, nobs, n = pdinfo->n; 
     int maxlag = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int list[2];
     FILE *fq;
 
+    list[0] = 1;
+    list[1] = varno;
     adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
 
-    if (missvals(&(*pZ)[v*n + t1], nobs)) {
+    if (missvals(&(*pZ)[varno*n + t1], nobs)) {
 	pprintf(prn, "\nMissing values within sample -- can't do correlogram");
 	return 1;
     }
@@ -336,8 +344,8 @@ int corrgram (const int *list, const int order, double **pZ,
 	pprintf(prn, "\nInsufficient observations for correlogram");
 	return 1;
     }
-    if (isconst(t1, t2, &(*pZ)[v*n])) {
-	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[v]);
+    if (isconst(t1, t2, &(*pZ)[varno*n])) {
+	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[varno]);
 	return 1;
     }
 
@@ -368,12 +376,12 @@ int corrgram (const int *list, const int order, double **pZ,
     for (l=1; l<=m; l++) {
 	for (t=t1+l; t<=t2; t++) {
 	    k = t - (t1+l);
-	    x[k] = (*pZ)[v*n + t];
-	    y[k] = (*pZ)[v*n + t-l];
+	    x[k] = (*pZ)[varno*n + t];
+	    y[k] = (*pZ)[varno*n + t-l];
 	}
 	acf[l] = corr(nobs-l, x, y);
     }
-    pprintf(prn, "\nAutocorrelation function for %s\n\n", pdinfo->varname[v]);
+    pprintf(prn, "\nAutocorrelation function for %s\n\n", pdinfo->varname[varno]);
 
     /* add Box-Pierce statistic */
     box = 0;
@@ -395,7 +403,7 @@ int corrgram (const int *list, const int order, double **pZ,
 	if (xl == NULL) return E_ALLOC;
 	for (l=0; l<m; l++) xl[l] = l + 1.0;
         pprintf(prn, "\n\nCorrelogram\n\n");
-	graphyzx(NULL, acf + 1, NULL, xl, m, pdinfo->varname[v], 
+	graphyzx(NULL, acf + 1, NULL, xl, m, pdinfo->varname[varno], 
 		 "lag", NULL, 0, prn);
 	free(x);
 	free(xl);
@@ -410,7 +418,7 @@ int corrgram (const int *list, const int order, double **pZ,
 	err = E_ALLOC;
 	goto getout;
     }
-    err = get_pacf(pacf, &maxlag, v, pZ, pdinfo);
+    err = get_pacf(pacf, &maxlag, varno, pZ, pdinfo);
     pacf[0] = acf[1];
     if (!err) {
 	pprintf(prn, "\nPartial autocorrelations");
@@ -432,7 +440,7 @@ int corrgram (const int *list, const int order, double **pZ,
     fprintf(fq, "# correlogram\n");
     fprintf(fq, "set xlabel \"lag\"\n");
     fprintf(fq, "set xzeroaxis\n");
-    fprintf(fq, "set title \"Correlogram for %s\"\n", pdinfo->varname[v]);
+    fprintf(fq, "set title \"Correlogram for %s\"\n", pdinfo->varname[varno]);
     if (maxlag) {
 	fprintf(fq, "plot '-' using 1:2 title 'autocorrelations' "
 		"w impulses, \\\n"
@@ -511,7 +519,7 @@ static int fract_int (int n, double *hhat, double *omega, print_t *prn)
     list[3] = 0;
 
     init_model(&tmp);
-    tmp = lsq(list, tmpZ, &tmpdinfo, OLS, 0, 0);
+    tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, 0, 0);
 
     if (!tmp.errcode) {
 	tstat = tmp.coeff[1] / tmp.sderr[1];
@@ -530,11 +538,11 @@ static int fract_int (int n, double *hhat, double *omega, print_t *prn)
 
 /**
  * periodogram:
- * @list: in place 1, contains ID number of variable to process.
+ * @varno: ID number of variable to process.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ppaths: struct containing path information.
- * @batch: should = 1 if we're in batch mode, 0 if interactive.
+ * @batch: if non-zero, don't show gnuplot graph.
  * @opt: if non-zero, use Bartlett lag window for periodogram.
  * @prn: gretl printing struct.
  *
@@ -544,20 +552,23 @@ static int fract_int (int n, double *hhat, double *omega, print_t *prn)
  *
  */
 
-int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo, 
+int periodogram (const int varno, double **pZ, const DATAINFO *pdinfo, 
 		 const PATHS *ppaths, const int batch, 
 		 const int opt, print_t *prn)
 {
     double *autocov, *omega, *hhat;
     double xx, yy, varx, w;
-    int err = 0, k, xmax, L, v = list[1], n = pdinfo->n, nT; 
+    int err = 0, k, xmax, L, n = pdinfo->n, nT; 
     int nobs, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int list[2];
     FILE *fq = NULL;
-    
+
+    list[0] = 1;
+    list[1] = varno;
     adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
 
-    if (missvals(&(*pZ)[v*n + t1], nobs)) {
+    if (missvals(&(*pZ)[varno*n + t1], nobs)) {
 	pprintf(prn, "\nMissing values within sample -- can't do periodogram");
 	return 1;
     }    
@@ -566,8 +577,8 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
 	pprintf(prn, "\nInsufficient observations for periodogram");
 	return 1;
     }
-    if (isconst(t1, t2, &(*pZ)[v*n])) {
-	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[v]);
+    if (isconst(t1, t2, &(*pZ)[varno*n])) {
+	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[varno]);
 	return 1;
     }
 
@@ -586,13 +597,13 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
     if (autocov == NULL || omega == NULL || hhat == NULL) 
 	return E_ALLOC;
 
-    xx = esl_mean(t1, t2, &(*pZ)[v*n]);
+    xx = esl_mean(t1, t2, &(*pZ)[varno*n]);
     /* find autocovariances */
     for (k=1; k<=L; k++) {
 	autocov[k] = 0;
 	for (t=t1+k; t<=t2; t++) {
 	    autocov[k] += 
-		((*pZ)[v*n + t] - xx) * ((*pZ)[v*n + t-k] - xx);
+		((*pZ)[varno*n + t] - xx) * ((*pZ)[varno*n + t-k] - xx);
 	}
 	autocov[k] /= nobs;
     }
@@ -622,7 +633,7 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
 	fprintf(fq, "set xlabel 'scaled frequency'\n");
 	fprintf(fq, "set xzeroaxis\n");
 	fprintf(fq, "set nokey\n");
-	fprintf(fq, "set title 'Spectrum of %s", pdinfo->varname[v]);
+	fprintf(fq, "set title 'Spectrum of %s", pdinfo->varname[varno]);
 	if (opt) 
 	    fprintf(fq, " (Bartlett window, length %d)'\n", L);
 	else
@@ -631,13 +642,13 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
 	fprintf(fq, "plot '-' using 1:2 w lines\n");
     }
 
-    pprintf(prn, "\nPeriodogram for %s\n", pdinfo->varname[v]);
+    pprintf(prn, "\nPeriodogram for %s\n", pdinfo->varname[varno]);
     pprintf(prn, "Number of observations = %d\n", nobs);
     if (opt) 
 	pprintf(prn, "Using Bartlett lag window, length %d\n\n", L);
     pprintf(prn, " omega  scaled frequency  periods  spectral density\n\n");
 
-    varx = esl_variance(t1, t2, &(*pZ)[v*n]);
+    varx = esl_variance(t1, t2, &(*pZ)[varno*n]);
     varx *= (double) (nobs - 1) / nobs;
     for (t=1; t<=nobs/2; t++) {
 	yy = 2 * M_PI * t / (double) nobs;
@@ -714,8 +725,8 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
  * print_summary:
  * @summ: gretl summary statistics struct.
  * @pdinfo: information on the data set.
+ * @pause: if non-zero, pause after showing each screen of info.
  * @prn: gretl printing struct.
- * @batch: should = 1 if we're in batch mode, 0 if interactive.
  *
  * Print the summary statistics for a given variable.
  *
@@ -723,7 +734,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
 
 void print_summary (GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
-		    print_t *prn, int batch)
+		    const int pause, print_t *prn)
 {
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv, lineno = 4;
@@ -742,7 +753,7 @@ void print_summary (GRETLSUMMARY *summ,
     pprintf(prn, "             MEAN         MEDIAN            MIN"
             "            MAX\n");
     for (v=1; v<=lo; v++) {
-	_pgbreak(1, &lineno, batch);
+	if (pause) page_break(1, &lineno, 0);
 	lineno++;
 	lv = summ->list[v];
 	xbar = summ->coeff[v];
@@ -755,14 +766,14 @@ void print_summary (GRETLSUMMARY *summ,
 	printf17(summ->xpy[v], prn);
 	pprintf(prn, "\n");
     }
-    _pgbreak(lo + 2, &lineno, batch);
+    if (pause) page_break(lo + 2, &lineno, 0);
     lineno += 2;
     pprintf(prn, "\n");
     if (lo > 1) pprintf(prn, "\nVariable    ");
     pprintf(prn, "             S.D.           C.V.           "
 	 "SKEW       EXCSKURT\n");
     for (v=1; v<=lo; v++) {
-	_pgbreak(1, &lineno, batch);
+	if (pause) page_break(1, &lineno, 0);
 	lineno++;
 	lv = summ->list[v];
 	if (lo > 1)
@@ -841,7 +852,7 @@ GRETLSUMMARY *summary (int *list,
 	return NULL;
 
     for (v=1; v<=lo; v++)  {
-	summ->n = ztox(list[v], x, pdinfo, *pZ);
+	summ->n = ztox(list[v], x, *pZ, pdinfo);
 	if (summ->n < 2) { /* zero or one observations */
 	    if (summ->n == 0)
 		pprintf(prn, "Dropping %s: sample range contains no valid "
@@ -880,7 +891,13 @@ GRETLSUMMARY *summary (int *list,
     return summ;
 }
 
-/* ....................................................... */
+/**
+ * free_corrmat:
+ * @corrmat: gretl correlation matrix struct
+ *
+ * Frees all malloced elements of the struct.
+ *
+ */
 
 void free_corrmat (CORRMAT *corrmat)
 {
@@ -891,13 +908,20 @@ void free_corrmat (CORRMAT *corrmat)
     }
 }
 
-/* ....................................................... */
+/**
+ * corrlist:
+ * @list: list of variables to process, by ID number.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Computes pairwise correlation coefficients for the variables
+ * specified in @list, skipping any constants.
+ *
+ * Returns: gretl correlation matrix struct.
+ * 
+ */
 
 CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
-/* computes pairwise correlation coefficients for 
-   variables in list, skipping any constants, from
-   observation pdinfo->t1 to pdinfo->t2.  
-*/
 {
     CORRMAT *corrmat;
     int *p = NULL;
@@ -949,33 +973,66 @@ CORRMAT *corrlist (int *list, double **pZ, const DATAINFO *pdinfo)
     return corrmat;
 }
 
-/* ............................................................ */
+/**
+ * matrix_print_corr:
+ * @corr: gretl correlation matrix
+ * @pdinfo: data information struct.
+ * @pause: = 1 to pause after showing each screen of info.
+ * @prn: gretl printing struct.
+ *
+ * Prints a gretl correlation matrix.
+ *
+ */
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
-			const int batch, print_t *prn)
+			const int pause, print_t *prn)
 {
     prhdr("Correlation Coefficients", pdinfo, CORR, prn);
     pprintf(prn, "              5%% critical value (two-tailed) = "
 	    "%.3f for n = %d\n\n", rhocrit95(corr->n), corr->n);
 
-    _mxout(corr->xpx, corr->list, CORR, pdinfo, batch, prn);
+    mxout(corr->xpx, corr->list, CORR, pdinfo, pause, prn);
 }
 
-/* ............................................................ */
+/**
+ * esl_corrmx:
+ * @list: gives the ID numbers of the variables to process.
+ * @pZ: pointer to the data matrix.
+ * @pdinfo: data information struct.
+ * @pause: if non-zero, pause after showing each screen of info.
+ * @prn: gretl printing struct.
+ *
+ * Computes and prints the correlation matrix for the specified list
+ * of variables.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int esl_corrmx (int *list, double **pZ, const DATAINFO *pdinfo, 
-		const int batch, print_t *prn)
+		const int pause, print_t *prn)
 {
     CORRMAT *corr;
 
     corr = corrlist(list, pZ, pdinfo);
     if (corr == NULL) return 1;
-    matrix_print_corr(corr, pdinfo, batch, prn);
+    matrix_print_corr(corr, pdinfo, pause, prn);
     free_corrmat(corr);
     return 0;
 }
 
-/* ............................................................ */
+/**
+ * means_test:
+ * @list: gives the ID numbers of the variables to compare.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @vareq: assume population variances are equal (1) or not (0).
+ * @prn: gretl printing struct.
+ *
+ * Carries out test of the null hypothesis that the means of two
+ * variables are equal.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int means_test (int *list, double *Z, const DATAINFO *pdinfo, 
 		const int vareq, print_t *prn)
@@ -989,8 +1046,8 @@ int means_test (int *list, double *Z, const DATAINFO *pdinfo,
     if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
-    n1 = ztox(list[1], x, pdinfo, Z);
-    n2 = ztox(list[2], y, pdinfo, Z);
+    n1 = ztox(list[1], x, Z, pdinfo);
+    n2 = ztox(list[2], y, Z, pdinfo);
     if (n1 == 0 || n2 == 0) {
 	pprintf(prn, "Sample range has no valid observations.");
 	free(x); free(y);
@@ -1035,7 +1092,18 @@ int means_test (int *list, double *Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ............................................................ */
+/**
+ * vars_test:
+ * @list: gives the ID numbers of the variables to compare.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Carries out test of the null hypothesis that the variances of two
+ * variables are equal.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int vars_test (int *list, double *Z, const DATAINFO *pdinfo, 
 	       print_t *prn)
@@ -1049,8 +1117,8 @@ int vars_test (int *list, double *Z, const DATAINFO *pdinfo,
     if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
-    n1 = ztox(list[1], x, pdinfo, Z);
-    n2 = ztox(list[2], y, pdinfo, Z);
+    n1 = ztox(list[1], x, Z, pdinfo);
+    n2 = ztox(list[2], y, Z, pdinfo);
     if (n1 == 0 || n2 == 0) {
 	pprintf(prn, "Sample range has no valid observations.");
 	free(x); free(y);

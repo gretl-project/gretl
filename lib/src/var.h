@@ -27,7 +27,7 @@ int list_ldiffgenr (const int *list,
 
 int var (const int order, const int *list, 
 	 double **pZ, DATAINFO *pdinfo,
-	 const int batch, print_t *prn);
+	 const int pause, print_t *prn);
 
 int coint (const int order, const int *list, 
 	   double **pZ, DATAINFO *pdinfo, 

@@ -25,15 +25,11 @@
 #define HIGHVALU 87
 #define VSMALL 1.0e-14
 
-#define GEN_DUMMY   1
-#define GEN_QTRS    2
-#define GEN_MONTHS  3
-#define GEN_PANELDUM 4
-
-#define UHATNUM     999
-#define TNUM        1000
-#define INDEXNUM    1001
-
+typedef enum {
+    UHATNUM = 999,
+    TNUM,
+    INDEXNUM
+} genr_numbers;
 
 typedef struct {
     double *xvec;
@@ -42,7 +38,6 @@ typedef struct {
     char label[MAXLABEL];
     int errcode;
     char msg[MAXLABEL];
-    char errmsg[MAXLABEL];
     int special;
 } GENERATE;
 
@@ -68,10 +63,10 @@ int plotvar (double **pZ, DATAINFO *pdinfo,
 
 void varlist (const DATAINFO *pdinfo, print_t *prn);
 
-int varindex (const DATAINFO *pdinfo, const char *variable);
+int varindex (const DATAINFO *pdinfo, const char *varname);
 
 int logs (const int *list, 
-	  double **pZ, DATAINFO *pdinfo, char *msg);
+	  double **pZ, DATAINFO *pdinfo);
 
 int lags (const int *list, 
 	  double **pZ, DATAINFO *pdinfo);
@@ -84,8 +79,7 @@ int rhodiff (char *param, const int *list,
 	     double **pZ, DATAINFO *pdinfo);
 
 int simulate (char *cmd, 
-	      double **pZ, DATAINFO *pdinfo, 
-	      char *msg);
+	      double **pZ, DATAINFO *pdinfo); 
 
 int genr_fit_resid (MODEL *pmod, 
 		    double **pZ, DATAINFO *pdinfo,

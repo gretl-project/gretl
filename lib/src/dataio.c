@@ -280,18 +280,19 @@ static void eatspace (FILE *fp)
 
 /* ................................................. */
 
-static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z,
-		     char *msg) 
+static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z)
 {
     int i, t, n = pdinfo->n;
     char c, marker[9];
     float x;
 
+    gretl_errmsg[0] = '\0';
+
     if (pdinfo->bin == 1) { /* single-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof(float), 1, fp)) {
-		    sprintf(msg, "WARNING: binary data read error at "
+		    sprintf(gretl_errmsg, "WARNING: binary data read error at "
 			    "var %d\n", i);
 		    return 1;
 		}
@@ -302,7 +303,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z,
     else if (pdinfo->bin == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!fread(&Z(i, 0), sizeof(double), n, fp)) {
-		sprintf(msg, "WARNING: binary data read error at var %d\n", i);
+		sprintf(gretl_errmsg, 
+			"WARNING: binary data read error at var %d\n", i);
 		return 1;
 	    }
 	}
@@ -318,7 +320,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z,
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
 		if ((fscanf(fp, "%lf", &Z(i, t))) != 1) {
-		    sprintf(msg, "WARNING: ascii data read error at var %d, "
+		    sprintf(gretl_errmsg, 
+			    "WARNING: ascii data read error at var %d, "
 			    "obs %d\n", i, t + 1);
 		    return 1;
 		}
@@ -330,10 +333,11 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z,
 
 /* ................................................. */
 
-static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
-			char *msg) 
+static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z)
 {
     int i, t, n = pdinfo->n;
+    
+    gretl_errmsg[0] = '\0';
 
     if (pdinfo->bin == 1) { /* single-precision binary data */
 	float xx;
@@ -341,7 +345,7 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!gzread(fgz, &xx, sizeof xx)) {
-		    sprintf(msg, "WARNING: binary data read error at "
+		    sprintf(gretl_errmsg, "WARNING: binary data read error at "
 			    "var %d", i);
 		    return 1;
 		}
@@ -352,7 +356,8 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
     else if (pdinfo->bin == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!gzread(fgz, &Z(i, 0), n * sizeof(double))) {
-		sprintf(msg, "WARNING: binary data read error at var %d", i);
+		sprintf(gretl_errmsg, 
+			"WARNING: binary data read error at var %d", i);
 		return 1;
 	    }
 	}
@@ -366,7 +371,7 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
 	for (t=0; t<n; t++) {
 	    offset = 0L;
 	    if (!gzgets(fgz, line, llen - 1)) {
-		sprintf(msg, "WARNING: ascii data read error at "
+		sprintf(gretl_errmsg, "WARNING: ascii data read error at "
 			"obs %d", t + 1);
 		free(line);
 		return 1;
@@ -379,7 +384,8 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
 	    }
 	    if (pdinfo->markers) {
 		if (sscanf(line, "%8s", pdinfo->S[t]) != 1) {
-		   sprintf(msg, "WARNING: failed to read case marker for "
+		   sprintf(gretl_errmsg, 
+			   "WARNING: failed to read case marker for "
 			   "obs %d", t + 1);
 		   free(line);
 		   return 1;
@@ -389,7 +395,8 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
 		if (sscanf(line + offset, "%23s", numstr) != 1) {
-		    sprintf(msg, "WARNING: ascii data read error at var %d, "
+		    sprintf(gretl_errmsg, 
+			    "WARNING: ascii data read error at var %d, "
 			    "obs %d", i, t + 1);
 		    return 1;
 		}
@@ -407,7 +414,6 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
 /**
  * check_varname:
  * @varname: putative name for variable.
- * @msg: buffer for error messages.
  * 
  * Check a variable name for legality.
  * 
@@ -415,13 +421,15 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
  *
  */
 
-int check_varname (const char *varname, char *msg)
+int check_varname (const char *varname)
 {
     int i, n = strlen(varname);
     static char varerr[] = "Reading data header file\n";
+
+    gretl_errmsg[0] = '\0';
     
     if (!(isalpha((unsigned char) varname[0]))) {
-        sprintf(msg, "%sfirst char of varname ('%c') is bad\n"
+        sprintf(gretl_errmsg, "%sfirst char of varname ('%c') is bad\n"
                "(first must be alphabetical)", varerr, varname[0]);
         return 1;
     }
@@ -430,11 +438,11 @@ int check_varname (const char *varname, char *msg)
             && !(isdigit((unsigned char) varname[i]))
             && varname[i] != '_') {
 	    if (isprint((unsigned char) varname[i]))
-		sprintf(msg, "%svarname contains illegal character '%c'\n"
+		sprintf(gretl_errmsg, "%svarname contains illegal character '%c'\n"
 			"Use only letters, digits and underscore", 
 			varerr, varname[i]);
 	    else
-		sprintf(msg, "%svarname contains illegal character 0x%x\n"
+		sprintf(gretl_errmsg, "%svarname contains illegal character 0x%x\n"
 			"Use only letters, digits and underscore", 
 			varerr, (unsigned) varname[i]);
             return 1;
@@ -445,16 +453,17 @@ int check_varname (const char *varname, char *msg)
 
 /* ................................................ */
 
-static int readhdr (const char *hdrfile, DATAINFO *pdinfo, char *msg)
+static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 {
     FILE *fp;
     int n, i = 0, panel = 0;
     char str[MAXLEN], byobs[6], option[8];
 
-    msg[0] = '\0';
+    gretl_errmsg[0] = '\0';
+
     fp = fopen(hdrfile, "r");
     if (fp == NULL) {
-	sprintf(msg, "\nCouldn't open data header file %s\n",  hdrfile);
+	sprintf(gretl_errmsg, "\nCouldn't open data header file %s\n",  hdrfile);
 	return E_FOPEN;
     }
     fscanf(fp, "%s", str);
@@ -462,7 +471,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, char *msg)
     while (1) { /* find number of variables */
         if (fscanf(fp, "%s", str) != 1) {
 	    fclose(fp);
-	    sprintf(msg, "\nOpened header file %s\n"
+	    sprintf(gretl_errmsg, "\nOpened header file %s\n"
 		    "Couldn't find list of variables (must "
 		    "be terminated with a semicolon)", hdrfile);
 	    return 1;
@@ -485,7 +494,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, char *msg)
     fscanf(fp, "%s", str);
     if (skipcomments(fp, str)) {
         safecpy(pdinfo->varname[i], str, 8);
-	if (check_varname(pdinfo->varname[i++], msg)) 
+	if (check_varname(pdinfo->varname[i++])) 
 	    goto varname_error;
     }
     while (1) {
@@ -493,13 +502,13 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, char *msg)
 	n = strlen(str);
 	if (str[n-1] != ';') {
             safecpy(pdinfo->varname[i], str, 8);
-	    if (check_varname(pdinfo->varname[i++], msg)) 
+	    if (check_varname(pdinfo->varname[i++])) 
 		goto varname_error;
         } else {
 	    if (n > 1) {
 		safecpy(pdinfo->varname[i], str, n-1);
 		pdinfo->varname[i][n] = '\0';
-		if (check_varname(pdinfo->varname[i], msg))
+		if (check_varname(pdinfo->varname[i]))
 		    goto varname_error; 
 	    }
 	    break;
@@ -511,7 +520,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, char *msg)
     fscanf(fp, "%s", pdinfo->endobs);
     pdinfo->sd0 = atof(pdinfo->stobs);
     pdinfo->n = dateton(pdinfo->endobs, pdinfo->pd, 
-			pdinfo->stobs, NULL) + 1;
+			pdinfo->stobs) + 1;
     pdinfo->extra = 0;    
 
     if (pdinfo->sd0 >= 2.0) 
@@ -554,19 +563,21 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, char *msg)
 
 /* .......................................................... */
 
-static int check_date (const char *date, char *msg)
+static int check_date (const char *date)
 {
     int i, n = strlen(date);
 
-    msg[0] = 0;
+    gretl_errmsg[0] = 0;
 
     for (i=0; i<n; i++) {
 	if (!isdigit((unsigned char) date[i]) && date[i] != '.' 
 	    && date[i] != ':') {
 	    if (isprint((unsigned char) date[i]))
-		sprintf(msg, "Bad character '%c' in date string", date[i]);
+		sprintf(gretl_errmsg, 
+			"Bad character '%c' in date string", date[i]);
 	    else 
-		sprintf(msg, "Bad character %d in date string", date[i]);
+		sprintf(gretl_errmsg, 
+			"Bad character %d in date string", date[i]);
 	    return 1;
 	}
     }
@@ -578,7 +589,6 @@ static int check_date (const char *date, char *msg)
  * @date: string representation of date for processing.
  * @pd: periodicity or frequency of data.
  * @startdate: string representing starting date.
- * @msg: buffer for error messages.
  * 
  * Given a "current" date string, a periodicity, and a starting
  * date string, returns the observation number corresponding to
@@ -588,16 +598,14 @@ static int check_date (const char *date, char *msg)
  *
  */
 
-int dateton (const char *date, const int pd, const char *startdate,
-	     char *msg) 
+int dateton (const char *date, const int pd, const char *startdate)
 {
     int dotpos1 = 0, dotpos2 = 0, maj = 0, min = 0, n, i;
     char majstr[5], minstr[3];
     char startmajstr[5], startminstr[3];
     int startmaj, startmin;
 
-    if (msg != NULL && check_date(date, msg)) 
-	return -1;
+    if (check_date(date)) return -1;
 
     n = strlen(date);
     for (i=1; i<n; i++) {
@@ -620,8 +628,7 @@ int dateton (const char *date, const int pd, const char *startdate,
 	}
     }
     if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
-	if (msg != NULL)
-	    sprintf(msg, "date strings inconsistent");
+	sprintf(gretl_errmsg, "date strings inconsistent");
 	return -1;  
     }
     if (!dotpos1 && !dotpos2) {
@@ -799,11 +806,19 @@ static int writehdr (const char *hdrfile, const int *list,
     return 0;
 }
 
-/* ................................................. */
+/**
+ * get_precision:
+ * @x: data vector.
+ * @n: length of x.
+ *
+ * Find the number of decimal places required to represent a given
+ * data series uniformly.
+ * 
+ * Returns: the required number of decimal places.
+ *
+ */
 
 int get_precision (double *x, int n)
-     /* for a data series, find the number of decimal places
-	required to represent the series uniformly */
 {
     int i, j, p, dot, len, pmax = 0;
     char numstr[48];
@@ -1051,13 +1066,15 @@ static double obs_float (const DATAINFO *pdinfo, const int end)
 
 /* ................................................. */
 
-static int readlbl (const char *lblfile, DATAINFO *pdinfo, char *msg)
+static int readlbl (const char *lblfile, DATAINFO *pdinfo)
      /* read data "labels" from file */
 {
     FILE * fp;
     char line[MAXLEN], *label, varname[9];
     int len, v;
     
+    gretl_errmsg[0] = '\0';
+
     fp = fopen(lblfile, "r");
     if (fp == NULL) return 0;
     while (1) {
@@ -1067,7 +1084,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo, char *msg)
         }
         if (sscanf(line, "%s", varname) != 1) {
             fclose(fp);
-	    sprintf(msg, "Bad data label in %s", lblfile); 
+	    sprintf(gretl_errmsg, "Bad data label in %s", lblfile); 
             return 0;
         }
         len = strlen(varname);
@@ -1114,7 +1131,15 @@ static int writelbl (const char *lblfile, const int *list,
     return 0;
 }
 
-/* ......................................................... */
+/**
+ * has_gz_suffix:
+ * @fname: filename to examine.
+ * 
+ * Determine if the given filename ends with ".gz".
+ * 
+ * Returns: 1 in case of a ".gz" suffix, otherwise 0.
+ * 
+ */
 
 int has_gz_suffix (const char *fname)
 {
@@ -1126,30 +1151,55 @@ int has_gz_suffix (const char *fname)
 	return 1;
 }
 
-/* ......................................................... */
+/**
+ * gz_switch_ext:
+ * @targ: target or "output" filename (must be pre-allocated).
+ * @src: "source or "input" filename.
+ * @ext: suffix to add to filename.
+ * 
+ * Copy @src filename to @targ, without the existing suffix (if any),
+ * and adding the supplied extension or suffix.
+ * 
+ */
 
 void gz_switch_ext (char *targ, char *src, char *ext)
 {
     int i = dotpos(src), j = slashpos(src), k;
 
     strcpy(targ, src);
-    targ[i] = 0;
+    targ[i] = '\0';
     k = dotpos(targ);
     if (j > 0 && k < strlen(targ) && k > j) i = k;
     targ[i] = '.';
-    targ[i + 1] = 0;
+    targ[i + 1] = '\0';
     strcat(targ, ext);
 }
 
-/* ......................................................... */
+/**
+ * get_data:
+ * @pZ: pointer to data set.
+ * @pdinfo: data information struct.
+ * @ppaths: path information struct.
+ * @data_file_open: indicator for whether a data file is currently open
+ * in gretl's work space (1) or not (0).
+ * @fp: file pointer from which data may be read.
+ * 
+ * Read data from file into gretl's work space, allocating space as
+ * required.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
 
 int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths, 
-	      const int data_file_open, char *msg, FILE *fp) 
+	      const int data_file_open, FILE *fp) 
 {
 
     FILE *dat = NULL;
     gzFile fgz = NULL;
     int err, zipped = 0;
+
+    gretl_errmsg[0] = '\0';
 
     /* get filenames organized */
     clear(ppaths->hdrfile, MAXLEN); 
@@ -1174,7 +1224,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
     if (data_file_open) clear_datainfo(pdinfo, 0);
 
     /* read data header file */
-    err = readhdr(ppaths->hdrfile, pdinfo, msg);
+    err = readhdr(ppaths->hdrfile, pdinfo);
     if (err) return err;
     else 
 	fprintf(fp, "\nReading header file %s\n", ppaths->hdrfile);
@@ -1213,14 +1263,14 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
     fprintf(fp, " %s\n\n", ppaths->datfile);
 
     if (zipped) {
-	err = gz_readdata(fgz, pdinfo, *pZ, msg); 
+	err = gz_readdata(fgz, pdinfo, *pZ); 
 	gzclose(fgz);
     } else {
-	err = readdata(dat, pdinfo, *pZ, msg); 
+	err = readdata(dat, pdinfo, *pZ); 
 	fclose(dat);
     }
     if (err) return err;
-    err = readlbl(ppaths->lblfile, pdinfo, msg);
+    err = readlbl(ppaths->lblfile, pdinfo);
     if (err) return err;
 
     /* Set sample range to entire length of dataset by default */
@@ -1230,7 +1280,20 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
     return 0;
 }
 
-/* ......................................................... */
+/**
+ * open_nulldata:
+ * @pZ: pointer to data set.
+ * @pdinfo: data information struct.
+ * @data_file_open: indicator for whether a data file is currently open
+ * in gretl's work space (1) or not (0).
+ * @length: desired length of data series.
+ * @prn: gretl printing struct.
+ * 
+ * Create an empty "dummy" data set, suitable for Monte Carlo simulations.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
 
 int open_nulldata (double **pZ, DATAINFO *pdinfo, 
 		   const int data_file_open, const int length,
@@ -1426,7 +1489,19 @@ static void trim_csv_line (char *line)
     if (line[n-1] == ',') line[n-1] = '\0';
 }
 
-/* ......................................................... */
+/**
+ * import_csv:
+ * @pZ: pointer to data set.
+ * @pdinfo: data information struct.
+ * @fname: name of CSV file.
+ * @prn: gretl printing struct.
+ * 
+ * Open a Comma-Separated Values data file and read the data into
+ * the current work space.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
 
 int import_csv (double **pZ, DATAINFO *pdinfo, 
 		const char *fname, print_t *prn)
@@ -1689,7 +1764,18 @@ int import_csv (double **pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-/* ................................................. */
+/**
+ * add_case_markers:
+ * @pdinfo: data information struct.
+ * @fname: name of file containing case markers.
+ * 
+ * Read case markers (strings of 8 characters or less that identify
+ * the observations) from a file, and associate tham with the 
+ * current data set.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
 
 int add_case_markers (DATAINFO *pdinfo, const char *fname)
 {
@@ -1745,7 +1831,20 @@ static char *unspace (char *s)
 
 /* #define BOX_DEBUG 1 */
 
-/* ................................................. */
+/**
+ * import_box:
+ * @pZ: pointer to data set.
+ * @pdinfo: data information struct.
+ * @fname: name of CSV file.
+ * @prn: gretl printing struct.
+ * 
+ * Open a BOX1 data file (as produced by the US Census Bureau's
+ * Data Extraction Service) and read the data into
+ * the current work space.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
 
 int import_box (double **pZ, DATAINFO *pdinfo, 
 		const char *fname, print_t *prn)
@@ -1946,7 +2045,18 @@ int import_box (double **pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-/* ................................................. */
+/**
+ * detect_filetype:
+ * @fname: name of CSV file.
+ * @ppaths: path information struct.
+ * @prn: gretl printing struct.
+ * 
+ * Attempt to determine the type of a file to be opened in gretl:
+ * data file (native, CSV or BOX) or command script.
+ * 
+ * Returns: integer code indicating the type of file (see #gretl_filetypes).
+ *
+ */
 
 int detect_filetype (char *fname, PATHS *ppaths, print_t *prn)
 {
@@ -1956,19 +2066,22 @@ int detect_filetype (char *fname, PATHS *ppaths, print_t *prn)
     FILE *fp;
 
     /* might be a script file? */
-    if (n > 4 && strcmp(fname + n - 4, ".inp") == 0) return 4;
+    if (n > 4 && strcmp(fname + n - 4, ".inp") == 0) 
+	return GRETL_SCRIPT;
 
     addpath(fname, ppaths, 0);    
 
     fp = fopen(fname, "r");
     if (fp == NULL)  
-	return 1; /* may be native file in different location */
+	return GRETL_NATIVE_DATA; /* may be native file in different location */
 
     /* first look at extension */
     n = strlen(fname);
     if (n >= 5) {
-	if (strcmp(fname + n - 4, ".csv") == 0) ftype = 2;
-	else if (strcmp(fname + n - 4, ".box") == 0) ftype = 3;
+	if (strcmp(fname + n - 4, ".csv") == 0) 
+	    ftype = GRETL_CSV_DATA;
+	else if (strcmp(fname + n - 4, ".box") == 0) 
+	    ftype = GRETL_BOX_DATA;
     }
     /* then take a peek at content */
     comma = 0;
@@ -1977,7 +2090,7 @@ int detect_filetype (char *fname, PATHS *ppaths, print_t *prn)
 	if (c == EOF || c == '\n') break;
 	if (c == ',') comma = 1;
 	if (!isprint(c) && c != '\r') {
-	    ftype = 1; /* native binary data? */
+	    ftype = GRETL_NATIVE_DATA; /* native binary data? */
 	    break;
 	}
 	if (i < 4) teststr[i] = c;
@@ -1986,21 +2099,21 @@ int detect_filetype (char *fname, PATHS *ppaths, print_t *prn)
     teststr[4] = 0;
 
     switch (ftype) {
-    case 1: /* native data file */
-	return 1;
-    case 2: /* CSV data file? */
-	if (comma) return 2;
+    case GRETL_NATIVE_DATA: 
+	return GRETL_NATIVE_DATA;
+    case GRETL_CSV_DATA: 
+	if (comma) return GRETL_CSV_DATA;
 	else {
 	    pprintf(prn, "csv file seems to be malformed\n");
-	    return -1;
+	    return GRETL_UNRECOGNIZED;
 	}
-    case 3: /* BOX data file? */
-	if (strcmp(teststr, "00**") == 0) return 3;
+    case GRETL_BOX_DATA: 
+	if (strcmp(teststr, "00**") == 0) return GRETL_BOX_DATA;
 	else {
 	    pprintf(prn, "box file seems to be malformed\n");
-	    return -1;
+	    return GRETL_UNRECOGNIZED;
 	}
     }
-    return 0;
+    return GRETL_NATIVE_DATA; /* FIXME? */
 }
 

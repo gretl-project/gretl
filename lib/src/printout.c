@@ -42,8 +42,8 @@ static void print_discrete_stats (const MODEL *pmod,
 static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
 				  const int c, const double t, print_t *prn);
 void _putxx (const double xx);
-void _mxout (const double *rr, const int *list, const int ci,
-	     const DATAINFO *pdinfo, const int batch, print_t *prn);
+void mxout (const double *rr, const int *list, const int ci,
+	    const DATAINFO *pdinfo, const int pause, print_t *prn);
 
 
 /* ......................................................... */ 
@@ -680,8 +680,6 @@ void printfreq (FREQDIST *freq, print_t *prn)
     pprintf(prn, "\nTest for null hypothesis of normal distribution:\n");
     pprintf(prn, "Chi-squared(2) = %.3f with pvalue %.5f\n", 
 	   freq->chisqu, chisq(freq->chisqu, 2));
-    if (strlen(freq->errmsg) > 2) 
-	pprintf(prn, "%s", freq->errmsg);
 }
 
 /* ......................................................... */ 
@@ -842,7 +840,7 @@ void print_rho (int *arlist, const MODEL *pmod,
 
 /* ......................................................... */ 
 
-int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, const int batch, 
+int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, const int pause, 
 	      print_t *prn)
 {
     int k, nbetas;
@@ -854,7 +852,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, const int batch,
     tmplist[0] = nbetas;
 
     if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
-    _mxout(pmod->vcv, tmplist, pmod->ci, pdinfo, batch, prn);  
+    mxout(pmod->vcv, tmplist, pmod->ci, pdinfo, pause, prn);  
 
     free(tmplist);
     return 0;
@@ -895,57 +893,34 @@ static void outxx (const double xx, const int ci, print_t *prn)
 
 /* ........................................................... */
   
-void takenotes (const int batch, const int runit)
+int takenotes (int quit_option)
 {
     char s[4];
 
-    if (batch || runit == 1) return;
-    puts("\nTake notes and then press return key to continue (q to quit)");
+    if (quit_option)
+	puts("\nTake notes then press return key to continue (or q to quit)");
+    else
+	puts("\nTake notes then press return key to continue");
     fflush(stdout);
     fgets(s, 3, stdin);
-}
-
-/* ........................................................... */
-  
-int takenotes_quit (const int batch, const int runit)
-{
-    char s[4];
-
-    if (batch || runit == 1) return 0;
-    puts("\nTake notes and then press return key to continue (q to quit)");
-    fflush(stdout);
-    s[0] = '\0';
-    fgets(s, 3, stdin);
-    if (s[0] == 'q') return 1;
+    if (quit_option && s[0] == 'q') return 1;
     return 0;
-}
-
-/* ........................................................... */
-                
-int _pgbreak_quit (const int n, int *lineno, const int batch)
-{
-    int runit = 0; /* FIXME */
-
-    if (batch || (*lineno + n <= 20)) return 0;
-    if (takenotes_quit(batch, runit)) return 1;
-    *lineno = 1;
-    return 0;
-}
-/* ........................................................... */
-                
-void _pgbreak (const int n, int *lineno, const int batch)
-{
-    int runit = 0; /* FIXME */
-
-    if (batch || (*lineno + n <= 20)) return;
-    takenotes(batch, runit);
-    *lineno = 1;
 }
 
 /* ......................................................... */ 
 
-void _mxout (const double *rr, const int *list, const int ci,
-	     const DATAINFO *pdinfo, const int batch, print_t *prn)
+int page_break (const int n, int *lineno, const int quit_option)
+{
+    if (*lineno + n <= 20) return 0;
+    if (takenotes(quit_option)) return 1;
+    *lineno = 1;
+    return 0;
+}
+
+/* ......................................................... */
+
+void mxout (const double *rr, const int *list, const int ci,
+	     const DATAINFO *pdinfo, const int pause, print_t *prn)
      /*  Given a single dimensional array, which represents a
 	 symmetric matrix, prints out an upper triangular matrix
 	 of any size. 
@@ -972,7 +947,7 @@ void _mxout (const double *rr, const int *list, const int ci,
 	li2 = lo - nf;
 	p = (li2 > FIELDS) ? FIELDS : li2;
 	if (p == 0) break;
-	_pgbreak(3, &lineno, batch);
+	if (pause) page_break(3, &lineno, 0);
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
@@ -982,11 +957,11 @@ void _mxout (const double *rr, const int *list, const int ci,
 	    pprintf(prn, "%3d) %s", ljnf, s);
 	}
 	pprintf(prn, "\n");
-	lineno += 2;;
+	lineno += 2;
 
 	/* print rectangular part, if any, of matrix */
 	for (j=1; j<=nf; j++) {
-	    _pgbreak(1, &lineno, batch);
+	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
 	    for (k=1; k<=p; k++) {
 		index = ijton(j, nf+k, lo);
@@ -997,7 +972,7 @@ void _mxout (const double *rr, const int *list, const int ci,
 
 	/* print upper triangular part of matrix */
 	for (j=1; j<=p; ++j) {
-	    _pgbreak(1, &lineno, batch);
+	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
 	    ij2 = nf + j;
 	    space(14 * (j - 1), prn);
@@ -1383,7 +1358,7 @@ int bufprintnum (char *buf, double x, int signif, int width)
 /* ........................................................... */
 
 int printdata (int *list, double **pZ, const DATAINFO *pdinfo, 
-	       int batch, int byobs, print_t *prn)
+	       int pause, int byobs, print_t *prn)
 /*  prints the data for the variables in list, from obs t1 to
     obs t2.
 */
@@ -1459,7 +1434,7 @@ int printdata (int *list, double **pZ, const DATAINFO *pdinfo,
 	    v2 = (ncol > nvj5)? nvj5 : ncol;
 	    v2 += j5;
 	    varheading(v1, v2, pdinfo, list, prn);
-	    if (!gui && _pgbreak_quit(1, &lineno, batch)) return 0;
+	    if (pause && page_break(1, &lineno, 1)) return 0;
 	    lineno++;
 	    for (t=t1; t<=t2; t++)   {
 		if (pdinfo->markers) { /* data marker strings present */
@@ -1485,12 +1460,12 @@ int printdata (int *list, double **pZ, const DATAINFO *pdinfo,
 		}
 		if (pprintf(prn, "%s\n", line))
 		    return 1;
-		if (!gui && _pgbreak_quit(1, &lineno, batch)) return 0;
+		if (pause && page_break(1, &lineno, 1)) return 0;
 		lineno++;
-		if (!batch) {
+		if (pause) {
 		    if ((t-t1+1) % 21 == 0) {
 			varheading(v1, v2, pdinfo, list, prn);
-			if (!gui && _pgbreak_quit(1, &lineno, batch)) return 0;
+			if (page_break(1, &lineno, 1)) return 0;
 			lineno++;
 		    }
 		}
@@ -1518,7 +1493,7 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
 
     sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
 	    pdinfo->endobs);
-    nfit = fcast(fcastline, pmod, pdinfo, pZ, NULL);
+    nfit = fcast(fcastline, pmod, pdinfo, pZ);
     if (nfit < 0) return 1;
 
     if (isdummy(depvar, t1, t2, *pZ, n) > 0)

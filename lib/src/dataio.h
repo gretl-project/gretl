@@ -27,8 +27,16 @@ typedef enum {
     GRETL_DATA_CSV,       /* data in Comma Separated Values format */
     GRETL_DATA_R,         /* data in Gnu R format */
     GRETL_DATA_R_ALT,     /* data in alternate Gnu R format */
-    GRETL_DATA_GZIPPED    /* write gzipped data */
+    GRETL_DATA_GZIPPED    /* gzipped data */
 } data_options;
+
+typedef enum {
+    GRETL_NATIVE_DATA,    /* gretl native format data file */
+    GRETL_CSV_DATA,       /* comma-separated data file */
+    GRETL_BOX_DATA,       /* BOX1 format data file */
+    GRETL_SCRIPT,         /* file containing gretl commands */
+    GRETL_UNRECOGNIZED    /* none of the above */
+} gretl_filetypes;
 
 #define free_datainfo(p) clear_datainfo(p, 0); free(p);
 
@@ -45,8 +53,7 @@ void clear_datainfo (DATAINFO *pdinfo, int subsample);
 int start_new_Z (double **pZ, DATAINFO *pdinfo, 
 		 int resample);
 
-int dateton (const char *date, const int pd, const char *startdate,
-	     char *msg);
+int dateton (const char *date, const int pd, const char *startdate);
 
 void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo);
 
@@ -62,7 +69,7 @@ void gz_switch_ext (char *targ, char *src, char *ext);
 
 int get_data (double **pZ, DATAINFO *pdinfo, 
 	      PATHS *ppaths, 
-	      const int data_file_open, char *msg, 
+	      const int data_file_open,
 	      FILE *fp);
 
 int open_nulldata (double **pZ, DATAINFO *pdinfo, 

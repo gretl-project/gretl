@@ -154,11 +154,20 @@ int list_ldiffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-/* ...................................................................  */
+/**
+ * lagvarnum:
+ * @iv: ID number of the variable.
+ * @lag: Desired lag length.
+ * @pdinfo: data information struct.
+ *
+ * Given an "ordinary" variable, construct the name of the
+ * corresponding lagged variable and find its ID number.
+ *
+ * Returns: the ID number of the lagged variable.
+ *
+ */
 
 int lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo)
-     /* Given an "ordinary" variable name, construct the name of the
-	corresponding lag variable and find its ID number */
 {
     char lagname[16], s[4];
     
@@ -198,10 +207,23 @@ static int get_listlen (const int *varlist, const int order, double *Z,
     return v;
 }
 
-/* ...................................................................  */
+/**
+ * var:
+ * @order: lag order for the VAR
+ * @list: specification for the first model in the set.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @pause: if = 1, pause after showing each model.
+ * @prn: gretl printing struct.
+ *
+ * Estimate a vector auto-regression (VAR) and print the results.
+ *
+ * Returns: 
+ *
+ */
 
 int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
-	 const int batch, print_t *prn)
+	 const int pause, print_t *prn)
 {
     /* construct the respective lists by adding the appropriate
        number of lags ("order") to the variables in list 
@@ -294,7 +316,7 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
     for (i=0; i<neqns; i++) {
 	varlist[1] = depvars[i];
 	/* run an OLS regression for the current dep var */
-	var_model = lsq(varlist, *pZ, pdinfo, VAR, 0, 0.0);
+	var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
 	var_model.aux = VAR;
 	printmodel(&var_model, pdinfo, prn);
 	/* keep some results for hypothesis testing */
@@ -319,7 +341,7 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
 	    pprintf(prn, "All lags of %-8s ", 
 		   pdinfo->varname[depvars[j]]);
 	    /*  printlist(shortlist); */
-	    var_model = lsq(shortlist, *pZ, pdinfo, VAR, 0, 0.0);
+	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 	    F = ((var_model.ess - essu)/order)/(essu/dfd);
 	    clear_model(&var_model, NULL, NULL);
 	    pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
@@ -341,14 +363,14 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
 		end++;
 	    }
 	    /*  printlist(shortlist); */
-	    var_model = lsq(shortlist, *pZ, pdinfo, VAR, 0, 0.0);
+	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 	    F = ((var_model.ess - essu)/neqns)/(essu/dfd);
 	    clear_model(&var_model, NULL, NULL);
 	    pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
 	    pprintf(prn, "p-value %f\n", fdist(F, neqns, dfd)); 
 	}
 	pprintf(prn, "\n");
-	takenotes(batch, 0);
+	if (pause) takenotes(0);
     }
     pprintf(prn, "\n");
 
@@ -362,7 +384,19 @@ int var (const int order, const int *list, double **pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-/* ...................................................................  */
+/**
+ * coint:
+ * @order: lag order for the test.
+ * @list: specifies the variables to use.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Test for cointegration.  
+ *
+ * Returns: 0 on successful completion.
+ *
+ */
 
 int coint (const int order, const int *list, double **pZ, 
 	   DATAINFO *pdinfo, print_t *prn)
@@ -391,7 +425,7 @@ int coint (const int order, const int *list, double **pZ,
 	cointlist[0] += 1;
     } else copylist(&cointlist, list);
     
-    coint_model = lsq(cointlist, *pZ, pdinfo, OLS, 1, 0.0); 
+    coint_model = lsq(cointlist, pZ, pdinfo, OLS, 1, 0.0); 
     coint_model.aux = AUX_COINT;
     printmodel(&coint_model, pdinfo, prn);
 
@@ -474,7 +508,7 @@ int adf_test (const int order, const int *list, double **pZ,
     adflist[0] = 3;
     adflist[2] = lagvarnum(var, 1, pdinfo);
     adflist[3] = 0;
-    adf_model = lsq(adflist, *pZ, pdinfo, OLS, 0, 0.0);
+    adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
     DFt = adf_model.coeff[1] / adf_model.sderr[1];
     T = adf_model.nobs;
     row = (T > 500)? 5 : (T > 450)? 4 : (T > 240)? 3 : (T > 90)? 2 : 
@@ -521,7 +555,7 @@ int adf_test (const int order, const int *list, double **pZ,
 	return E_ALLOC;
     }
     /*  printlist(adflist); */
-    adf_model = lsq(adflist, *pZ, pdinfo, OLS, 0, 0.0);
+    adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
     adf_model.aux = AUX_ADF;
     printmodel(&adf_model, pdinfo, prn);
     essu = adf_model.ess;
@@ -533,7 +567,7 @@ int adf_test (const int order, const int *list, double **pZ,
     for (i=0; i<=order; i++) 
 	shortlist[2+i] = adflist[4+i];
     /*  printlist(shortlist); */
-    adf_model = lsq(shortlist, *pZ, pdinfo, OLS, 0, 0.0);
+    adf_model = lsq(shortlist, pZ, pdinfo, OLS, 0, 0.0);
     F = (adf_model.ess - essu) * (T - k)/(2 * essu);
     clear_model(&adf_model, NULL, NULL);
 
@@ -604,7 +638,7 @@ int ma_model (int *list, double **pZ, DATAINFO *pdinfo, print_t *prn)
 		(*pZ)[v*n + t], (*pZ)[(v+1)*n + t]); */
 	}
 	clear_model(&mamod, NULL, NULL);
-	mamod = lsq(malist, *pZ, pdinfo, OLS, 0, 0.0);
+	mamod = lsq(malist, pZ, pdinfo, OLS, 0, 0.0);
 	if ((err = mamod.errcode)) {
 	    clear_model(&mamod, NULL, NULL);
 	    return err;
@@ -628,7 +662,7 @@ int ma_model (int *list, double **pZ, DATAINFO *pdinfo, print_t *prn)
     for (t=t0+1; t<T; t++) { 
 	(*pZ)[v*n + t] = (*pZ)[iv*n + t] + a * (*pZ)[v*n + t-1];
     }
-    mamod = lsq(malist, *pZ, pdinfo, OLS, 1, 0.0);
+    mamod = lsq(malist, pZ, pdinfo, OLS, 1, 0.0);
     printmodel(&mamod, pdinfo, prn);
 
     pprintf(prn, "\nEstimates of original parameters:\n");

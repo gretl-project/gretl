@@ -121,7 +121,7 @@ static double group_means_variance (MODEL *pmod,
 	}
     }
 
-    meanmod = lsq(list, *groupZ, ginfo, OLS, 0, 0.0);
+    meanmod = lsq(list, groupZ, ginfo, OLS, 0, 0.0);
     if (meanmod.errcode) xx = NADBL;
     else xx = meanmod.sigma * meanmod.sigma;
     clear_model(&meanmod, NULL, NULL);
@@ -342,11 +342,11 @@ static double LSDV (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     for (i=1; i<nunits; i++) 
 	dvlist[pmod->list[0] + i] = oldv + i - 1;
 
-    lsdv = lsq(dvlist, *pZ, pdinfo, OLS, 0, 0.0);
+    lsdv = lsq(dvlist, pZ, pdinfo, OLS, 0, 0.0);
     if (lsdv.errcode) {
 	var = NADBL;
 	pprintf(prn, "Error estimating fixed effects model\n");
-	errmsg(lsdv.errcode, lsdv.errmsg, prn);
+	errmsg(lsdv.errcode, prn);
     } else {
 	haus->sigma_e = lsdv.sigma;
 	var = lsdv.sigma * lsdv.sigma;
@@ -430,10 +430,10 @@ static int random_effects (MODEL *pmod, double *Z, DATAINFO *pdinfo,
     }
     for (t=0; t<pdinfo->n; t++) reZ[t] = 1.0 - theta;
 
-    remod = lsq(relist, reZ, reinfo, OLS, 0, 0.0);
+    remod = lsq(relist, &reZ, reinfo, OLS, 0, 0.0);
     if ((err = remod.errcode)) {
 	pprintf(prn, "Error estimating random effects model\n");
-	errmsg(err, remod.errmsg, prn);
+	errmsg(err, prn);
     } else {
 	pprintf(prn,
 		"                         Random effects estimator\n"

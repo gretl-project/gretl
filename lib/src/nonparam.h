@@ -25,7 +25,7 @@ int spearman (const int *list,
 	      const double *Z, const DATAINFO *pdinfo,
 	      const int opt, print_t *prn);
 
-int runs_test (const int *list, 
+int runs_test (const int varno, 
 	       const double *Z, const DATAINFO *pdinfo, 
 	       print_t *prn);
 

@@ -600,26 +600,26 @@ int main (int argc, char *argv[])
 	strcpy(paths.datfile, argv[1]);
 	ftype = detect_filetype(paths.datfile, &paths, &prn);
 	switch (ftype) {
-	case -1:
+	case GRETL_UNRECOGNIZED:
 	    exit(EXIT_FAILURE);
-	case 1:
+	case GRETL_NATIVE_DATA:
 	    err = get_data(&Z, datainfo, &paths, data_file_open, 
-			   errtext, stderr);
+			   stderr);
 	    break;
-	case 2:
+	case GRETL_CSV_DATA:
 	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
 	    break;
-	case 3:
+	case GRETL_BOX_DATA:
 	    err = import_box(&Z, datainfo, paths.datfile, &prn);
 	    break;
-	case 4:
+	case GRETL_SCRIPT:
 	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
 	    break;
 	}
 	if (ftype != 4) {
 	    if (err) {
-		errmsg(err, errtext, &prn);
+		errmsg(err, &prn);
 		return EXIT_FAILURE;
 	    }
 	    data_file_open = 1;
@@ -1184,10 +1184,9 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
     int err = 0;
 
     err = restore_full_sample(&subZ, &fullZ, &Z,
-			      &subinfo, &fullinfo, &datainfo,
-			      errtext);
+			      &subinfo, &fullinfo, &datainfo);
     if (err) {
-	gui_errmsg(err, errtext);
+	gui_errmsg(err);
 	return;
     }
     if (verbose) {

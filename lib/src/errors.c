@@ -21,6 +21,72 @@
 
 #include "libgretl.h"
 
+int gretl_errno;
+char gretl_errmsg[ERRLEN];
+
+const char *gretl_error_messages[] = {
+    NULL,
+    NULL,
+    "Data error.",                                            /* E_DATA = 2 */
+    "Exact or near collinearity encountered.",                /* E_SINGULAR */
+    "Insufficient degrees of freedom for regression.",        /* E_DF */
+    "Y-prime * Y equals zero.",                               /* E_YPY */
+    "Dependent variable is all zeros, aborting regression.",  /* E_ZERO */
+    "Total sum of squares was not positive.",                 /* E_TSS */
+    "Sum of squared residuals negative!",                     /* E_ESS */
+    "First character of new name is not a letter.",           /* E_NOTALPH */
+    "You can't redefine the constant in genr.",               /* E_CONST */
+    "Unbalanced parentheses in genr command.",                /* E_UNBAL */
+    "Too many nested parentheses.  genr not done.",           /* E_NEST */
+    "Argument must be an integer.",                           /* E_NOTINTG */
+    "Sorry, command not available for this estimator.",       /* E_NOTIMP */
+    "Evaluation of genr expression failed.",                  /* E_IGNONZERO */
+    "Unrecognized term in genr formula.",                     /* E_CASEU */
+    "Unspecified error -- FIXME",                             /* E_UNSPEC */
+    "Syntax error in genr formula.",                          /* E_SYNTAX */
+    "\"getxvec\" failed in generating new variable.",         /* E_ER */
+    "Unrecognized operator in genr formula.",                 /* E_BADOP */
+    "Variable already exists.",                               /* E_VAREXISTS */
+    "This command won't work with the current periodicity.",  /* E_PDWRONG */
+    "The \"-o\" flag is not implemented for this command.",   /* E_OFLAG */
+    "Error attempting to open file.",                         /* E_FOPEN */
+    "Out of memory error.",                                   /* E_ALLOC */
+    "Missing equals sign in genr.",                           /* E_NOEQ */
+    "No formula supplied in genr.",                           /* E_EQN */
+    "Unknown variable name in command.",                      /* E_UNKVAR */
+    "The observations specified for the regression "
+    "exceed those in the data set.",                          /* E_NODATA */
+    "Command has insufficient arguments.",                    /* E_ARGS */
+    "This command is implemented only for OLS models.",       /* E_OLSONLY */
+    "Couldn't open data file.",                               /* E_DATA_DAT */
+    "Invalid argument for coeff, corr, stderr, or rho.",      /* E_INVARG */
+    "Invalid lag order for adf command.",                     /* E_ADF */
+    "Invalid sample split for Chow test.",                    /* E_SPLIT */
+    "Syntax error in command line.",                          /* E_PARSE */
+    "No independent variables left after omissions.",         /* E_NOVARS */
+    "No independent variables were omitted.",                 /* E_NOOMIT */
+    "Can't do this: some vars in original model "
+    "have been redefined.",                                   /* E_VARCHANGE */
+    "No new independent variables were added.",               /* E_NOADD */
+    "One or more \"added\" vars were already present.",       /* E_ADDDUP */
+    "Error generating logarithms.",                           /* E_LOGS */
+    "Error generating squares.",                              /* E_SQUARES */
+    "Error generating lagged variables.",                     /* E_LAGS */
+    "Error in auxiliary regression for rho.",                 /* E_RHO */
+    "Attempting to take square root of negative number.",     /* E_SQRT */
+    "Excessive exponent in genr formula.",                    /* E_HIGH */
+    "Weight variable is all zeros, aborting regression.",     /* E_WTZERO */
+    "Need valid starting and ending observations.",           /* E_OBS */
+    "New variable name was not supplied.",                    /* E_NOVAR */
+    "You must include a constant in this sort of model.",     /* E_NOCONST */
+    "There were missing observations for the added "
+    "variable(s).\nReset the sample and rerun the original "
+    "regression first.",                                      /* E_MISS */
+    "The statistic you requested is not meaningful "
+    "for this model.",                                        /* E_BADSTAT */
+    "Missing sub-sample information; can't merge data."       /* E_NOMERGE */
+};
+
 /**
  * get_errmsg:
  * @errcode: gretl error code (see #error_codes).
@@ -36,199 +102,31 @@
 
 char *get_errmsg (const int errcode, char *errtext, print_t *prn)
 {
-    char tmpstr[MAXLEN];
-
-    switch (errcode) {
-
-    case E_DATA:
-	strcpy(tmpstr, "Data error.");
-	break;
-    case E_DF:
-	strcpy(tmpstr, "Insufficient degrees of freedom for regression.");
-	break;
-    case E_NODATA:
-        strcpy(tmpstr, "The observations specified for the regression "
-	       "exceed those in the data set.");
-	break;
-    case E_EQN:
-	strcpy(tmpstr, "No formula supplied in genr.");
-	break;
-    case E_NOVAR:
-	strcpy(tmpstr, "New variable name was not supplied.");
-	break;
-    case E_NOEQ:
-	strcpy(tmpstr, "Missing equals sign in genr.");
-	break;
-    case E_UNKVAR:
-	strcpy(tmpstr, "Unknown variable name in command.");
-	break;	
-    case E_SINGULAR:
-	strcpy(tmpstr, "Exact or near collinearity encountered.");
-	break;
-    case E_ESS:
-	strcpy(tmpstr, "Sum of squared residuals negative!");
-	break;
-    case E_NOTALPH:
-	strcpy(tmpstr, "First character of new name is not a letter.");
-	break;
-    case E_CONST:
-	strcpy(tmpstr, "You can't redefine the constant in genr.");
-	break;
-    case E_INEG:
-	strcpy(tmpstr, "New variable name not supplied.");
-	break;
-    case E_UNBAL:
-	strcpy(tmpstr, "Unbalanced parentheses in genr command.");
-	break;
-    case E_NEST:
-	strcpy(tmpstr, "Too many nested parentheses.  genr not done.");
-	break;
-    case E_NOTINTG:
-	strcpy(tmpstr, "Argument must be an integer.");
-	break;
-    case E_NOTIMP:
-	strcpy(tmpstr, "Sorry, command not available for this estimator.");
-	break;
-    case E_IGNONZERO:
-	strcpy(tmpstr, "Evaluation of genr expression failed.");
-	break;
-    case E_ZERO:
-	strcpy(tmpstr, "Dependent variable is all zeros, aborting regression.");
-	break;
-    case E_WTZERO:
-	strcpy(tmpstr, "Weight variable is all zeros, aborting regression.");
-	break;
-    case E_CASEU:
-	strcpy(tmpstr, "Unrecognized term in genr formula.");
-	break;
-    case E_UNSPEC:
-	strcpy(tmpstr, "Unspecified error -- FIXME");
-	break;
-    case E_SYNTAX:
-	strcpy(tmpstr, "Syntax error in genr formula.");
-	break;
-    case E_ER:
-	strcpy(tmpstr, "\"getxvec\" failed in generating new variable.");
-	break;
-    case E_BADOP:
-	strcpy(tmpstr, "Unrecognized operator in genr formula.");
-	break;
-    case E_VAREXISTS:
-	strcpy(tmpstr, "Variable already exists.");
-	break;
-    case E_PDWRONG:
-	strcpy(tmpstr, "This command won't work with the current periodicity.");
-	break;
-    case E_OFLAG:
-	strcpy(tmpstr, "The \"-o\" flag is not implemented for this command.");
-	break;
-    case E_FOPEN:
-	strcpy(tmpstr, "Error attempting to open file.");
-	break;
-    case E_ALLOC:
-	strcpy(tmpstr, "Out of memory error.");
-	break;
-    case E_ARGS:
-	strcpy(tmpstr, "Command has insufficient arguments.");
-	break;
-    case E_OLSONLY:
-	strcpy(tmpstr, "This command is implemented only for OLS models.");
-	break;
-    case E_DATA_DAT:
-	strcpy(tmpstr, "Couldn't open data file.");
-	break;
-    case E_INVARG:
-	strcpy(tmpstr, "Invalid argument for coeff, corr, stderr, or rho.");
-	break;
-    case E_ADF:
-	strcpy(tmpstr, "Invalid lag order for adf command.");
-	break;
-    case E_SPLIT:
-	strcpy(tmpstr, "Invalid sample split for Chow test.");
-	break;
-    case E_PARSE:
-	strcpy(tmpstr, "Syntax error in command line.");
-	break;
-    case E_NOVARS:
-	strcpy(tmpstr, "No independent variables left after omissions.");
-	break;
-    case E_NOOMIT:
-	strcpy(tmpstr, "No independent variables were omitted.");
-	break;
-    case E_NOADD:
-	strcpy(tmpstr, "No new independent variables were added.");
-	break;
-    case E_ADDDUP:
-	strcpy(tmpstr, "One or more \"added\" vars were already present.");
-	break;
-    case E_VARCHANGE:
-	strcpy(tmpstr, "Can't do this: some vars in original model "
-	       "have been redefined.");
-	break;
-    case E_LOGS:
-	strcpy(tmpstr, "Error generating logarithms.");
-	break;
-    case E_SQUARES:
-	strcpy(tmpstr, "Error generating squares.");
-	break;
-    case E_LAGS:
-	strcpy(tmpstr, "Error generating lagged variables.");
-	break;
-    case E_RHO:
-	strcpy(tmpstr, "Error in auxiliary regression for rho.");
-	break;
-    case E_HIGH:
-	strcpy(tmpstr, "Excessive exponent in genr formula.");
-	break;
-    case E_SQRT:
-	strcpy(tmpstr, "Attempting to take square root of negative number.");
-	break;
-    case E_TSS:
-	strcpy(tmpstr, "Total sum of squares was not positive.");
-	break;
-    case E_OBS:
-	strcpy(tmpstr, "Need valid starting and ending observations.");
-	break;
-    case E_NOCONST:
-	strcpy(tmpstr, "You must include a constant in this sort of model.");
-	break;
-    case E_MISS:
-	strcpy(tmpstr, "There were missing observations for the added "
-	       "variable(s).\nReset the sample and rerun the original "
-	       "regression first.");
-	break;
-    case E_BADSTAT:
-	strcpy(tmpstr, "The statistic you requested is not meaningful "
-	       "for this model.");
-	break;
-    default:
-	strcpy(tmpstr, "Unclassified error");
-	fprintf(stderr, "Numeric error code = %d\n", errcode); 
-	break;
-    }
-    if (errtext == NULL) {
-	pprintf(prn, "%s\n", tmpstr);
+    if (errcode < E_MAX && gretl_error_messages[errcode]) {
+	if (errtext == NULL) {
+	    pprintf(prn, "%s\n", gretl_error_messages[errcode]);
+	    return NULL;
+	} else {
+	    strcpy(errtext, gretl_error_messages[errcode]);
+	    return errtext;
+	}
+    } else 
 	return NULL;
-    } else {
-	strcpy(errtext, tmpstr);
-	return errtext;
-    }
 }
 
 /**
  * errmsg:
  * @errcode: gretl error code (see #error_codes).
- * @msg: pre-allocated string, or NULL.
  * @prn: gretl printing struct.
  *
  * Print an error message looked up from a given an error code number, 
- * or a supplied error message.  
+ * or a more specific error message if available.  
  * 
  */
 
-void errmsg (const int errcode, const char *msg, print_t *prn)
+void errmsg (const int errcode, print_t *prn)
 {
-    if (msg == NULL || strlen(msg) == 0) 
+    if (gretl_errmsg[0] == '\0') 
 	get_errmsg(errcode, NULL, prn);
-    else pprintf(prn, "%s\n", msg);
+    else pprintf(prn, "%s\n", gretl_errmsg);
 }

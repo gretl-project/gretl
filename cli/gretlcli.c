@@ -78,7 +78,6 @@ char texfile[MAXLEN];
 char response[3];
 char linebak[MAXLEN];      /* for storing comments */
 char *line_read;
-char *errtext;
 
 void exec_line (char *line, print_t *prn); 
 extern int loop_exec_line (LOOPSET *plp, const int round, 
@@ -212,8 +211,6 @@ int main (int argc, char *argv[])
 #ifdef OS_WIN32
     strcpy(tmp, argv[0]);
 #endif
-    if ((errtext = malloc(MAXLEN)) == NULL) 
-	noalloc("message string"); 
     if ((datainfo = malloc(sizeof *datainfo)) == NULL)
 	noalloc("data information");
     
@@ -279,16 +276,15 @@ int main (int argc, char *argv[])
 	clear(paths.datfile, MAXLEN);
 	strncpy(paths.datfile, argv[1], MAXLEN-1);
 	err = detect_filetype(paths.datfile, &paths, &prn);
-	if (err == -1) 
+	if (err == GRETL_UNRECOGNIZED) 
 	    exit(EXIT_FAILURE);
-	if (err == 1)
-	    err = get_data(&Z, datainfo, &paths, data_file_open, 
-			   errtext, prn.fp);
-	else if (err == 2)
+	if (err == GRETL_NATIVE_DATA)
+	    err = get_data(&Z, datainfo, &paths, data_file_open, prn.fp);
+	else if (err == GRETL_CSV_DATA)
 	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
-	else if (err == 3)
+	else if (err == GRETL_BOX_DATA)
 	    err = import_box(&Z, datainfo, paths.datfile, &prn);
-	else if (err == 4) { /* actually it's a script file? */
+	else if (err == GRETL_SCRIPT) { /* actually it's a script file? */
 	    runit = 1;
 	    strcpy(runfile, paths.datfile); 
 	    clear(paths.datfile, MAXLEN);
@@ -296,7 +292,7 @@ int main (int argc, char *argv[])
 	}
 	if (!cli_get_data) {
 	    if (err) {
-		errmsg(err, errtext, &prn);
+		errmsg(err, &prn);
 		if (err == E_FOPEN) show_paths(&paths);
 		return EXIT_FAILURE;
 	    }
@@ -449,7 +445,6 @@ int main (int argc, char *argv[])
     }
     if (runfile_open && fb != NULL) fclose (fb);
     if (line != NULL) free(line);
-    if (errtext != NULL) free(errtext);
 
     if (modelspec) {
 	i = 0;
@@ -494,7 +489,7 @@ void exec_line (char *line, print_t *prn)
     }
     if (command.ci < 0) return; /* there's nothing there */
     if ((err = command.errcode)) {
-	errmsg(err, command.errmsg, prn);
+	errmsg(err, prn);
 	return;
     }
     if (loopstack) {  /* accumulating loop commands */
@@ -536,7 +531,7 @@ void exec_line (char *line, print_t *prn)
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
-			      batch, oflag, prn);
+			      !batch, oflag, prn);
 	break;
 
     case ADD:
@@ -551,14 +546,14 @@ void exec_line (char *line, print_t *prn)
 	    err = omit_test(command.list, models[0], models[1],
 			    &model_count, &Z, datainfo, prn);
 	if (err) {
-	    errmsg(err, NULL, prn);
+	    errmsg(err, prn);
 	    clear_model(models[1], NULL, NULL);
 	} else {
 	    /* for command-line use, we keep a "stack" of 
 	       two models, and recycle the places */
 	    swap_models(&models[0], &models[1]); 
 	    clear_model(models[1], NULL, NULL);
-	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
 	break;	
 
@@ -567,7 +562,7 @@ void exec_line (char *line, print_t *prn)
 	i = atoi(command.param);
 	if ((err = model_test_start(i, prn, 0))) break;
 	if (i == (models[0])->ID) goto plain_add_omit;
-	err = re_estimate(modelspec[i-1].cmd, &tmpmod, datainfo, &Z);
+	err = re_estimate(modelspec[i-1].cmd, &tmpmod, &Z, datainfo);
 	if (err) {
 	    pprintf(prn, "Failed to reconstruct model %d\n", i);
 	    break;
@@ -581,13 +576,13 @@ void exec_line (char *line, print_t *prn)
 	    err = omit_test(command.list, &tmpmod, models[1],
 			    &model_count, &Z, datainfo, prn);
 	if (err) {
-	    errmsg(err, NULL, prn);
+	    errmsg(err, prn);
 	    clear_model(models[1], NULL, NULL);
 	    break;
 	} else {
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL, NULL);
-	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
 	clear_model(&tmpmod, NULL, NULL);
 	break;
@@ -597,10 +592,10 @@ void exec_line (char *line, print_t *prn)
 	*models[0] = ar_func(command.list, atoi(command.param), &Z, 
 			    datainfo, &model_count, prn);
 	if ((err = (models[0])->errcode)) { 
-	    errmsg(err, (models[0])->errmsg, prn); 
+	    errmsg(err, prn); 
 	    break;
 	}
-	if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
     case ARCH:
@@ -609,10 +604,10 @@ void exec_line (char *line, print_t *prn)
 	*models[1] = arch(order, command.list, &Z, datainfo, 
 			 &model_count, prn, NULL);
 	if ((err = (models[1])->errcode)) 
-	    errmsg(err, (models[1])->errmsg, prn);
+	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
 	    swap_models(&models[0], &models[1]); 
-	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	}
 	clear_model(models[1], NULL, NULL);
 	break;
@@ -620,37 +615,37 @@ void exec_line (char *line, print_t *prn)
     case CHOW:
         if ((err = model_test_start(0, prn, 1))) break;
 	err = chow_test(line, models[0], &Z, datainfo, prn, NULL);
-	if (err) errmsg(err, errtext, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case CUSUM:
 	if ((err = model_test_start(0, prn, 1))) break;
 	err = cusum_test(models[0], &Z, datainfo, prn, &paths, NULL);
-	if (err) errmsg(err, errtext, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case CORC:
     case HILU:
-	err = hilu_corc(&rho, command.list, Z, datainfo, command.ci, prn);
+	err = hilu_corc(&rho, command.list, &Z, datainfo, command.ci, prn);
 	if (err) {
-	    errmsg(err, NULL, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	clear_model(models[0], NULL, NULL);
-	*models[0] = lsq(command.list, Z, datainfo, command.ci, 1, rho);
+	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, rho);
 	if ((err = (models[0])->errcode)) {
-	    errmsg(err, (models[0])->errmsg, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn); 
-	if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
     case CORRGM:
 	order = atoi(command.param);
-	err = corrgram(command.list, order, &Z, datainfo, &paths,
+	err = corrgram(command.list[1], order, &Z, datainfo, &paths,
 		       batch, prn);
 	if (err) pprintf(prn, "Failed to generate correlogram\n");
 	break;
@@ -693,11 +688,11 @@ void exec_line (char *line, print_t *prn)
 
     case FCAST:
 	if ((err = model_test_start(0, prn, 0))) break;
-	err = fcast(line, models[0], datainfo, &Z, errtext);
+	err = fcast(line, models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
 	    pprintf(prn, "Error retrieving fitted values.\n");
-	    errmsg(err, errtext, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	err = 0;
@@ -706,18 +701,18 @@ void exec_line (char *line, print_t *prn)
 
     case FCASTERR:
 	if ((err = model_test_start(0, prn, 0))) break;
-	err = fcast_with_errs(line, models[0], datainfo, &Z, prn,
-			      &paths, oflag, errtext); 
-	if (err) errmsg(err, errtext, prn);
+	err = fcast_with_errs(line, models[0], &Z, datainfo, prn,
+			      &paths, oflag); 
+	if (err) errmsg(err, prn);
 	break;
 
     case FIT:
 	if ((err = model_test_start(0, prn, 0))) break;
-	err = fcast("fcast autofit", models[0], datainfo, &Z, errtext);
+	err = fcast("fcast autofit", models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
 	    pprintf(prn, "Error retrieving fitted values.\n");
-	    errmsg(err, errtext, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	err = 0;
@@ -744,8 +739,8 @@ void exec_line (char *line, print_t *prn)
 	    err = E_ALLOC;
 	    break;
 	}
-	if ((err = freq->errcode)) 
-	    errmsg(err, freq->errmsg, prn);
+	if ((err = gretl_errno)) 
+	    errmsg(err, prn);
 	else {
 	    printfreq(freq, prn); 
 	    if (!batch) {
@@ -763,7 +758,7 @@ void exec_line (char *line, print_t *prn)
 	    genr = genr_func(&Z, datainfo, line, model_count,
 			     models[0], oflag);
 	    if ((err = genr.errcode)) 
-		errmsg(err, genr.errmsg, prn);
+		errmsg(err, prn);
 	    else {
 		if (add_new_var(datainfo, &Z, &genr)) 
 		    pprintf(prn, "Failed to add new variable.\n");
@@ -800,7 +795,7 @@ void exec_line (char *line, print_t *prn)
 	else
 	    *models[0] = hsk_func(command.list, &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
-	    errmsg(err, (models[0])->errmsg, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	++model_count;
@@ -810,7 +805,7 @@ void exec_line (char *line, print_t *prn)
 	if (command.ci == HCCM) 
 	    print_white_vcv(models[0], prn);
 	else
-	    outcovmx(models[0], datainfo, batch, prn);
+	    outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
     case HELP:
@@ -859,15 +854,15 @@ void exec_line (char *line, print_t *prn)
 	}
 	strncpy(paths.datfile, datfile, MAXLEN-1);
 	check = detect_filetype(paths.datfile, &paths, prn);
-	if (check == 2)
+	if (check == GRETL_CSV_DATA)
 	    err = import_csv(&Z, datainfo, paths.datfile, prn);
-	else if (check == 3)
+	else if (check == GRETL_BOX_DATA)
 	    err = import_box(&Z, datainfo, paths.datfile, prn);
 	else 
 	    err = get_data(&Z, datainfo, &paths, 
-			   data_file_open, errtext, prn->fp);
+			   data_file_open, prn->fp);
 	if (err) {
-	    errmsg(err, errtext, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	fullZ = NULL;
@@ -885,8 +880,8 @@ void exec_line (char *line, print_t *prn)
 			 &Z, datainfo, AUX_SQ, prn, NULL);
 	    clear_model(models[1], NULL, NULL);
 	    model_count--;
-	    if (err) errmsg(err, NULL, prn);
-	    if (oflag == OPT_S || takenotes_quit(batch, runit)) break;
+	    if (err) errmsg(err, prn);
+	    if (oflag == OPT_S || (!batch && takenotes(1))) break;
 	}
 	/* non-linearity (logs) */
 	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
@@ -894,17 +889,17 @@ void exec_line (char *line, print_t *prn)
 			 &Z, datainfo, AUX_LOG, prn, NULL);
 	    clear_model(models[1], NULL, NULL); 
 	    model_count--;
-	    if (err) errmsg(err, NULL, prn);
-	    if (oflag == OPT_L || takenotes_quit(batch, runit)) break;
+	    if (err) errmsg(err, prn);
+	    if (oflag == OPT_L || (!batch && takenotes(1))) break;
 	}
 	/* autocorrelation or heteroskedasticity */
 	if (oflag == OPT_M || oflag == OPT_O) {
 	    err = autocorr_test(models[0], &Z, datainfo, prn, NULL);
-	    if (err) errmsg(err, NULL, prn);
+	    if (err) errmsg(err, prn);
 	} 
 	if (oflag == OPT_C || !oflag) {
 	    err = whites_test(models[0], &Z, datainfo, prn, NULL);
-	    if (err) errmsg(err, NULL, prn);
+	    if (err) errmsg(err, prn);
 	    /* need to take more action in case of err? */
 	}
 	break;
@@ -914,19 +909,19 @@ void exec_line (char *line, print_t *prn)
 	clear_model(models[0], NULL, NULL);
 	*models[0] = logit_probit(command.list, &Z, datainfo, command.ci);
 	if ((err = (models[0])->errcode)) {
-	    errmsg(err, (models[0])->errmsg, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
     case LOOP:
 	errfatal = 1;
-	if ((err = parse_loopline(line, &loop, datainfo, errtext))) {
-	    pprintf(prn, "%s\n", errtext);
+	if ((err = parse_loopline(line, &loop, datainfo))) {
+	    pprintf(prn, "%s\n", gretl_errmsg);
 	    break;
 	}
 	if (loop.lvar == 0 && loop.ntimes < 2) {
@@ -962,20 +957,20 @@ void exec_line (char *line, print_t *prn)
     case OLS:
     case WLS:
 	clear_model(models[0], NULL, NULL);
-	*models[0] = lsq(command.list, Z, datainfo, command.ci, 1, 0.0);
+	*models[0] = lsq(command.list, &Z, datainfo, command.ci, 1, 0.0);
 	if ((err = (models[0])->errcode)) {
-	    errmsg(err, (models[0])->errmsg, prn);
+	    errmsg(err, prn);
 	    clear_model(models[0], NULL, NULL);
 	    break;
 	}
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
-	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
     case PERGM:
-	err = periodogram(command.list, &Z, datainfo, &paths,
+	err = periodogram(command.list[1], &Z, datainfo, &paths,
 			  batch, oflag, prn);
 	if (err) pprintf(prn, "Failed to generate periodogram\n");
 	break;
@@ -1026,7 +1021,7 @@ void exec_line (char *line, print_t *prn)
 	    break;
 	}
 	err = rhodiff(command.param, command.list, &Z, datainfo);
-	if (err) errmsg(err, NULL, prn);
+	if (err) errmsg(err, prn);
 	else varlist(datainfo, prn);
 	break;
 
@@ -1068,9 +1063,10 @@ void exec_line (char *line, print_t *prn)
 	break;
 
     case SETOBS:
-	err = set_obs(line, datainfo, oflag, msg);
-	if (err) pprintf(prn, "setobs command failed.\n");
-	pprintf(prn, "%s\n", msg);
+	err = set_obs(line, datainfo, oflag);
+	if (err) errmsg(err, prn);
+	else 
+	    print_smpl(datainfo, 0, prn);
 	break;
 
     case SHELL:
@@ -1082,8 +1078,8 @@ void exec_line (char *line, print_t *prn)
 	break;
 
     case SIM:
-	err = simulate(line, &Z, datainfo, errtext);
-	if (err) errmsg(err, errtext, prn);
+	err = simulate(line, &Z, datainfo);
+	if (err) errmsg(err, prn);
 	break;
 
     case SMPL:
@@ -1093,7 +1089,7 @@ void exec_line (char *line, print_t *prn)
 		err = E_ALLOC;
 	    else 
 		err = set_sample_dummy(line, &Z, &subZ, datainfo, 
-				       subinfo, errtext, oflag);
+				       subinfo, oflag);
 	    if (!err) {
 		fullZ = Z;
 		fullinfo = datainfo;
@@ -1103,11 +1099,10 @@ void exec_line (char *line, print_t *prn)
 	} 
 	else if (strcmp(line, "smpl full") == 0) 
 	    err = restore_full_sample(&subZ, &fullZ, &Z,
-				      &subinfo, &fullinfo, &datainfo,
-				      errtext);
+				      &subinfo, &fullinfo, &datainfo);
 	else 
-	    err = set_sample(line, datainfo, errtext);
-	if (err) errmsg(err, errtext, prn);
+	    err = set_sample(line, datainfo);
+	if (err) errmsg(err, prn);
 	else print_smpl(datainfo, (oflag)? fullinfo->n : 0, prn);
 	break;
 
@@ -1125,7 +1120,7 @@ void exec_line (char *line, print_t *prn)
 
     case STORE:
 	if ((err = command.errcode)) {
-	    errmsg(err, command.errmsg, prn);
+	    errmsg(err, prn);
 	    break;
 	}
 	if (strlen(command.param)) {
@@ -1156,8 +1151,8 @@ void exec_line (char *line, print_t *prn)
 	    err = E_ALLOC;
 	    break;
 	}
-	if ((err = freq->errcode)) 
-	    errmsg(err, freq->errmsg, prn);
+	if ((err = gretl_errno)) 
+	    errmsg(err, prn);
 	else {
 	    printfreq(freq, prn); 
 	    free_freq(freq);
@@ -1169,14 +1164,14 @@ void exec_line (char *line, print_t *prn)
 	*models[0] = tsls_func(command.list, atoi(command.param), 
 			      &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
-	    errmsg((models[0])->errcode, (models[0])->errmsg, prn);
+	    errmsg((models[0])->errcode, prn);
 	    break;
 	}
 	++model_count;
 	(models[0])->ID = model_count;
 	printmodel(models[0], datainfo, prn);
 	/* is this OK? */
-	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	if (oflag) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
 
     case MVAVG:
@@ -1185,7 +1180,7 @@ void exec_line (char *line, print_t *prn)
 
     case VAR:
 	order = atoi(command.param);
-	err = var(order, command.list, &Z, datainfo, batch, prn);
+	err = var(order, command.list, &Z, datainfo, !batch, prn);
 	break;
 
     case 999:

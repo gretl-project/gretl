@@ -122,7 +122,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
     /* check that depvar is really a dummy */
     if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ, n) == 0) {
 	dmod.errcode = E_UNSPEC;
-	sprintf(dmod.errmsg, "The dependent variable '%s' is not a 0/1 "
+	sprintf(gretl_errmsg, "The dependent variable '%s' is not a 0/1 "
 		"variable.\n", pdinfo->varname[depvar]);
 	return dmod;
     }
@@ -142,7 +142,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
     }
     v = pdinfo->v - 1;
 
-    dmod = lsq(list, *pZ, pdinfo, OLS, 0, 0);
+    dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
     if (dmod.ifc == 0) dmod.errcode = E_NOCONST;
     if (dmod.errcode) {
 	(void) shrink_Z(1, pZ, pdinfo);
@@ -181,7 +181,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
 	clear_model(&dmod, NULL, NULL);
-	dmod = lsq(list, *pZ, pdinfo, OLS, 0, 0);
+	dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
 	if (dmod.errcode) {
 	    (void) shrink_Z(1, pZ, pdinfo);
 	    free(xbar);
@@ -201,7 +201,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
     if (dmod.xpx == NULL) {
 	free(xbar);
 	dmod.errcode = E_ALLOC;
-	strcpy(dmod.errmsg, "Failed to construct Hessian matrix");
+	strcpy(gretl_errmsg, "Failed to construct Hessian matrix");
 	return dmod;
     } 
     /* obtain negative inverse of Hessian */
