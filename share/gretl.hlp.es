@@ -329,15 +329,19 @@ operadores booleanos pueden usarse al construir variables ficticias: por
 ejemplo (x>10) devuelve 1 si x(t)>10 y en caso contrario 0.
 
 Las funciones que se soportan pertenecen a estos grupos:
+
 - Funciones matemáticas standard: abs, cos, exp, int (parte entera), ln
 (logaritmo natural: log es un sinónimo), sin (seno), sqrt (raíz
 cuadrada).
+
 - Funciones estadísticas: mean (media aritmética), median (mediana), var
 (varianza), sd (desviación típica o estandard), sum, cov (covarianza),
-corr (coeficiente de correlación).
+corr (coeficiente de correlación, min (mínimo), max (máximo).
+
 - Funciones de series temporales: lag (retardo), lead (adelanto), diff
 (primera diferencia), ldiff (log-diferencia, o primera diferencia del
 logaritmo natural).
+
 - Misceláneas: cum (acumulación), sort (ordenación), uniform
 (distribución uniforme), normal (distribución normal), missing (devuelve
 1 si la variable tiene la observación perdida, en caso contrario 0),
@@ -376,6 +380,9 @@ regresión, que pueden usarse también en transformaciones, como son:
 La variable interna $nobs contiene el número de observaciones del
 dominio muestral actual, que puede ser o puede no ser igual al $T del
 último modelo.
+
+La variable interna $pd contiene la periodicidad o frecuencia de los datos (por 
+ejemplo, 4 para datos trimestrales, 12 para mensuales).
 
 La variable interna t hace referencia a las observaciones, comenzando en
 1. Así, es posible hacer "genr dum15 = (t=15)" para generar una variable
@@ -437,7 +444,7 @@ intenta elegir para vd los valores adecuados; también permite que vd
 tome completamente el control sobre los detalles del gráfico si así lo
 desea.
 
-Bajo MS Vdndows vd puede hacer click en la esquina de arriba a la
+Bajo MS Windows vd puede hacer click en la esquina de arriba a la
 izquierda de la ventana del gráfico, obteniendo así un menú porta-papeles
 le permite elegir varias cosas (incluyendo copiar el gráfico al
 porta-papeles de Windows y enviarlo a la impresora).
@@ -453,7 +460,7 @@ derecho del ratón sobre el icono del nuevo gráfico y seleccione o
 " Editar usando GUI" abre un controlador gráfico para gnuplot que le
 permite refinar varios aspectos del gráfico. La entrada de "Editar las
 órdenes de gráfico" abre una ventana de editor que contiene el fichero
-actual de instrucciones de Vduplot para generar el gráfico: esto le
+actual de instrucciones de Gnuplot para generar el gráfico: esto le
 proporciona a vd un control completo sobre los detalles del gráfico --si
 vd conoce algo sobre gnuplot. Para más detalles,ver
 http://ricardo.ecn.wfu.edu/gnuplot.html or www.gnuplot.org.
@@ -502,6 +509,18 @@ aparece en el cuadro de resultados.
 La serie de ponderaciones se forma como 1/sqrt(exp(fit)), donde "fit"
 representa a los valores ajustados obtenidos de la regresión auxiliar.
 
+#
+lad
+@Estimación
+(Estimador de mínima desviación absoluta)
+Uso:          lad vardep varindeps
+
+Calcula una regresión que minimiza la suma de las desviaciones absolutas
+entre los valores observados y los valores ajustados de la variable dependiente. 
+Las estimaciones de los coeficientes se obtienen utilizando el algoritmo simplex 
+de Barrodale-Roberts; se muestra un aviso si la solución no es única. Las 
+desviaciones típicas se obtienen utilizando un método 'bootstrap' con 500
+iteraciones.
 
 #
 lags
@@ -628,7 +647,7 @@ lmtest
 Contraste de Multiplicador de Lagrange
 
 Bajo este encabezamiento se encuentran varios contrastes de hipótesis. 
-Lo que tienen en común es que el contraste incluye la estimación de una 
+Lo que tienen en común es que el contraste incluye la estimación de una
 regresión auxiliar, en la que la variable dependiente es el residuo de 
 alguna regresión "original". Entre las variables del lado derecho
 se incluyen las de la regresión original y algunas adicionales. El
@@ -651,7 +670,7 @@ Esta instrucción necesita el nombre del fichero que contenga los
 "marcadores de caja", es decir, pequeñas etiquetas que
 identifican a las observaciones individuales en el conjunto de datos
 (por ejemplo, nombres o códigos de países o de ciudades). Estas
-etiquetas no deberían tener más de 8 caracteres. El fichero debería 
+etiquetas no deberían tener más de 8 caracteres. El fichero debería
 tener un marcador por línea y debería haber tantos marcadores como 
 observaciones en el conjunto de datos. Si se satisfacen estas 
 condiciones y se encuentra el fichero especificado, se añadirán los 
@@ -721,7 +740,7 @@ ols
 @Estimación
 Método de mínimos cuadrados ordinarios
 
-Calcula las estimaciones de mínimos cuadrados ordinarios de los 
+Calcula las estimaciones de mínimos cuadrados ordinarios de los
 coeficientes del modelo especificado. Muestra los valores p para los 
 estadísticos t (a dos colas) y F. Un valor p inferior a 0.01 indica 
 significatividad al nivel del 1 por ciento. También se muestran una 
@@ -779,7 +798,7 @@ que interese, en la ventana inicial de bases de datos, y presionar el
 botón "Instalar". Esto hará que la base de datos se descargue en formato 
 comprimido, después se puede descomprimir e instalar en el disco
 duro. Más adelante podremos encontrarla bajo el menú "Archivo, Revisar 
-bases de datos, Nativa gretl". (Esta característica de gretl depende de 
+bases de datos, Nativa gretl". (Esta característica de gretl depende de
 otros proyectos de software de 'fuente abierta': la biblioteca de 
 compresión de datos zlib y el programa descargador GNU "wget", de los 
 cuales gretl ha tomado prestados algunos trozos de código).
@@ -801,12 +820,12 @@ de ciertas variables para el país A durante 10 periodos, las siguientes
 así sucesivamente. "Secciones cruzadas apiladas" significa que los 
 bloques del fichero de datos son secciones cruzadas para cada uno de los 
 periodos. Por ejemplo, las primeras 6 filas de datos podrían representar 
-los valores de ciertas variables para los países A a F para el año 1970, 
-las siguientes 6 filas los valores para los mismos países en 1971, y así 
+los valores de ciertas variables para los países A a F para el año 1970,
+las siguientes 6 filas los valores para los mismos países en 1971, y así
 sucesivamente.
 
-Si se guarda el fichero de datos después de establecer este atributo, la 
-información se grabará en el fichero de datos y no será necesario 
+Si se guarda el fichero de datos después de establecer este atributo, la
+información se grabará en el fichero de datos y no será necesario
 establecerlo de nuevo la próxima vez que se usen estos datos.
 
 
@@ -815,47 +834,47 @@ pooled
 @Estimación
 Estimación de MCO combinados
 
-Esta instrucción se utiliza con datos de panel. Para sacar provecho de 
+Esta instrucción se utiliza con datos de panel. Para sacar provecho de
 ella, se debería especificar un modelo sin ninguna variable ficticia
-representando a las unidades de sección cruzada. La rutina presenta 
+representando a las unidades de sección cruzada. La rutina presenta
 estimaciones de MCO combinados directamente, las cuales tratan las
 variaciones de sección cruzada y de series temporales de igual forma.
-Este modelo puede ser o puede no ser apropiado. Bajo el menú de 
-"Contrastes" en la ventana del modelo se puede encontrar una entrada 
+Este modelo puede ser o puede no ser apropiado. Bajo el menú de
+"Contrastes" en la ventana del modelo se puede encontrar una entrada
 "diagnósticos de panel", en la cual se contrastan MCO combinados contra
-las principales alternativas: los modelos de efectos fijos y de efectos 
+las principales alternativas: los modelos de efectos fijos y de efectos
 aleatorios.
 
-En el modelo de efectos fijos se añade una variable ficticia para todas 
-las unidades de sección cruzada excepto una, permitiendo así al término 
+En el modelo de efectos fijos se añade una variable ficticia para todas
+las unidades de sección cruzada excepto una, permitiendo así al término
 constante de la regresión variar a través de las unidades (individuos).
-Se presenta un estadístico F para contrastar la significatividad 
-conjunta de dichas variables ficticias: si el valor p de este contraste 
+Se presenta un estadístico F para contrastar la significatividad
+conjunta de dichas variables ficticias: si el valor p de este contraste
 es pequeño, esto es una indicación en contra de la hipótesis nula (de
-que el modelo simple combinado es el adecuado) y en favor del modelo de 
+que el modelo simple combinado es el adecuado) y en favor del modelo de
 efectos fijos.
 
-Por otro lado, el modelo de efectos aleatorios descompone la varianza 
-residual en dos partes, una parte específica de la unidad de sección 
-cruzada o "grupo" y la otra específica de la observación particular. 
-(Este estimador sólo puede calcularse si el panel es suficientemente 
-"ancho", es decir, si el número de unidades de sección cruzada que hay 
+Por otro lado, el modelo de efectos aleatorios descompone la varianza
+residual en dos partes, una parte específica de la unidad de sección
+cruzada o "grupo" y la otra específica de la observación particular.
+(Este estimador sólo puede calcularse si el panel es suficientemente
+"ancho", es decir, si el número de unidades de sección cruzada que hay
 en el conjunto de datos es superior al número de parámetros a estimar).
-El estadístico LM de Breusch-Pagan contrasta la hipótesis nula (de 
-nuevo, de que el estimador de MCO combinados es el adecuado) contra la 
+El estadístico LM de Breusch-Pagan contrasta la hipótesis nula (de
+nuevo, de que el estimador de MCO combinados es el adecuado) contra la
 alternativa de efectos aleatorios.
 
-Es muy posible que el modelo de MCO Combinados sea rechazado contra 
-ambas alternativas (efectos fijos y efectos aleatorios). ¿Cómo se puede 
-entonces determinar cuál de los dos estimadores es más apropiado? El 
-contraste de Hausman (que también se presenta, dado que se puede estimar 
+Es muy posible que el modelo de MCO Combinados sea rechazado contra
+ambas alternativas (efectos fijos y efectos aleatorios). ¿Cómo se puede
+entonces determinar cuál de los dos estimadores es más apropiado? El
+contraste de Hausman (que también se presenta, dado que se puede estimar
 el modelo de efectos fijos) da una indicación en este sentido. Si
 que el error específico de unidad --o grupo-- está incorrelacionado con
 las variables independientes, el estimador de efectos aleatorios es más
-eficiente que el de efectos fijos; en caso contrario el estimador de 
+eficiente que el de efectos fijos; en caso contrario el estimador de
 efectos aleatorios es inconsistente y entonces será preferible el
 estimador de efectos fijos. La hipótesis nula para el contraste de
-Hausman es que el error específico de grupo no está muy correlacionado 
+Hausman es que el error específico de grupo no está muy correlacionado
 (y por tanto, es preferible el estimador de efectos fijos). Entonces,
 para este contraste, un valor p pequeño es una indicación en contra del
 modelo de efectos aleatorios y a favor del de efectos fijos.
@@ -879,13 +898,40 @@ contrasta la hipótesis nula de que todos los coeficientes, excepto la
 constante, son cero.
 
 #
+range-mean
+@Gráficos
+Gráfico Rango-Media
+
+Este es un gráfico simple para ayudar a decidir si una serie temporal, y(t), 
+tiene o no varianza constante. Se toma la muestra completa t=1,...,T y se divide 
+en pequeñas submuestras de tamaño arbitrario k [gretl elige k=sqrt(T)]. La 
+primera submuestra se forma con y(1),...,y(k), la segunda con y(k+1),...,y(2k), 
+y así sucesivamente. Para cada submuestra se calcula la media muestral y el 
+rango (=máximo-mínimo) y se construye un gráfico con las medias en el eje 
+horizontal y los rangos en el vertical. De esta forma, cada submuestra está 
+representada por un punto en este plano. Si la varianza de la serie fuera 
+constante los rangos de las submuestras no debería depender de sus medias; si se 
+observa que los puntos se aproximan a una recta con pendiente creciente, esto 
+sugiere que la varianza de la serie aumenta cuando la media aumenta; si los 
+puntos se aproximan a una recta con pendiente decreciente, esto sugiere que la 
+varianza está disminuyendo cuando la media aumenta.
+
+Además del gráfico, gretl presenta una ventana de resultados que muestra las 
+medias y los rangos para cada submuestra, el coeficiente estimado para la
+pendiente en una regresión MCO de los rangos sobre las medias y el valor p para 
+el contraste de la hipótesis nula de que esta pendiente es cero. Si el 
+coeficiente de pendiente es significativo al nivel de significación del 10 por 
+ciento, en el gráfico se muestra también la recta ajustada en la regresión de 
+los rangos sobre las medias.
+
+#
 rhodiff
 @Transformaciones
 Uso:            rhodiff rho listavar
 Ejemplo:        rhodiff .65 2 3 4
 
-Crea las correspondientes variable rho-diferenciadas de las variables 
-(dadas por número o nombre) de listavar y las añade al conjunto de 
+Crea las correspondientes variable rho-diferenciadas de las variables
+(dadas por número o nombre) de listavar y las añade al conjunto de
 datos.  Sea la variable v1 de la lista entonces se crea
 rd_v1 = v1(t) - rho*v1(t-1).
 

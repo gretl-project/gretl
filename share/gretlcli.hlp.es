@@ -132,6 +132,8 @@ dependiente y siendo 'varindep' una lista de variables independientes separadas
 por espacios y acabando con un ;. Utilice el número 0 para un término constante. 
 
 
+
+
 El proceso iterativo se detiene cuando valores sucesivos de rho no difieren en 
 más
 de 0.001 o cuando han transcurrido 20 iteraciones. Si se utiliza la opción -o, 
@@ -193,7 +195,7 @@ Uso:            critical t gl           p.ej. critical t 20
                 critical d n            p.ej. critical d 24
 
 Si el primer parámetro es t, X o F, muestra los valores críticos para la 
-distribución t de student, chi-cuadrado o F respectivamente, para los niveles 
+distribución t de student, chi-cuadrado o F respectivamente, para los niveles
 de significación más comunes, utilizando los grados de libertad especificados.
 Si el primer parámetro es d, muestra los valores superior e inferior del 
 estadístico de Durbin-Watson al nivel de significación del 5 por ciento para el 
@@ -343,38 +345,41 @@ y los símbolos compuestos != (no igual), >= (mayor o igual que) y
 definir variables ficticias: por ejemplo (x > 10)
 produce 1 si x(t) > 10, 0 en los demás casos.
 
-Las funciones permitidas pertenecen a estos grupos: 
--Funciones matemáticas
-standard: abs, cos, exp, int (parte entera), ln (logaritmo natural: log es
-un sinónimo), sin (seno), sqrt (raíz cuadrada). 
--Funciones estadísticas: mean (media aritmética), median (mediana), 
-var (varianza), sd(desviación típica o standard), sum, cov (covarianza), 
-corr (coeficiente de correlación).
--Funciones de series temporales: lag (retardo), lead (adelanto), 
+Las funciones permitidas pertenecen a estos grupos:
+
+-Funciones matemáticas standard: abs, cos, exp, int (parte entera), ln
+(logaritmo natural: log es un sinónimo), sin (seno), sqrt (raíz cuadrada).
+
+-Funciones estadísticas: mean (media aritmética), median (mediana),
+var (varianza), sd(desviación típica o standard), sum, cov (covarianza),
+corr (coeficiente de correlación), min (mínimo) y max (máximo).
+
+-Funciones de series temporales: lag (retardo), lead (adelanto),
 diff (primera diferencia), ldiff (log-diferencia, o primera diferencia del
-logaritmo natural).  
--Misceláneas: cum (acumulación), sort (ordenar), uniform, normal, 
-misszero (reemplazar los códigos de 'observación perdida'  por ceros), 
-zeromiss (operación inversa de misszero), y pvalue (valor de probabilidad
-para un estadístico dado contra una distribución especificada).
+logaritmo natural).
+
+-Misceláneas: cum (acumulación), sort (ordenar), uniform, normal,
+misszero (reemplazar los códigos de 'observación perdida'  por ceros),
+zeromiss (operación inversa de misszero), pvalue (valor de probabilidad
+para un estadístico dado contra una distribución especificada)
+y mpow (elevar una serie a un exponente entero utilizando aritmética de 
+precisión múltiple).
 
 Todas las funciones anteriores, con las excepciones de cov, corr, uniform, 
-normal
-y pvalue, toman como único argumento o el nombre de una variable (hay que tener
-en cuenta que en 'genr' no podemos referirnos a una variable por su número de 
-ID)
-o una expresión compuesta que se evalúa en una variable (p.ej.  ln((x1+x2)/2)).
-'cov' y 'corr' necesitan dos argumentos y producen respectivamente la
-covarianza y el coeficiente de correlación entre dos variables especificadas.
-uniform() y normal(), que no tienen argumentos, producen series
-pseudo-aleatorias obtenidas a partir de la distribución uniforme (0-100) y la
-distribución normal standard respectivamente (ver también la instrucción seed).
+normal, pvalue y mpow toman como único argumento o el nombre de una variable
+(hay que tener en cuenta que en 'genr' no podemos referirnos a una variable por
+su número de ID) o una expresión compuesta que se evalúa en una variable (p.ej.
+ln((x1+x2)/2)). 'cov' y 'corr' necesitan dos argumentos y producen
+respectivamente la covarianza y el coeficiente de correlación entre dos
+variables especificadas. uniform() y normal(), que no tienen argumentos,
+producen series pseudo-aleatorias obtenidas a partir de la distribución uniforme
+(0-100) y la distribución normal standard respectivamente (ver también la
+instrucción seed). La función pvalue() toma los mismos argumentos que la orden
+pvalue (ver más abajo), pero en este contexto deben situarse comas entre sus
+argumentos. La función mpow toma como argumentos el nombre de una serie de datos 
+y un número entero positivo, que es exponente al cual se desea elevar la serie.
 
-La función pvalue() toma los mismos argumentos que la orden pvalue
-(ver más abajo), pero en este contexto deben situarse comas entre sus 
-argumentos.
-
-Además de los operadores y funciones mencionados hay algunos usos especiales 
+Además de los operadores y funciones mencionados hay algunos usos especiales
 de 'genr':
 
 * genr time crea una variable de tendencia temporal (1,2,3,...) denominada time.
@@ -385,7 +390,7 @@ de 'genr':
   para el segundo trimestre y 0 en los otros trimestres, y así sucesivamente.
 * genr paneldum crea un conjunto de variables ficticias especiales para el uso
   con un panel de datos (ver el manual de gretl para más detalle)
-* Pueden recuperarse usando 'genr' varias variables internas que se definen 
+* Pueden recuperarse usando 'genr' varias variables internas que se definen
   mientras se ejecuta una regresión. Esto se hace de la siguiente forma:
 
   $ess         suma de cuadrados de los residuos
@@ -400,11 +405,14 @@ de 'genr':
   rho(i)       coeficiente de autorregresión de orden i-ésimo de los residuos
   vcv(xi,xj)   covarianza entre los coeficientes de las variables xi y xj
 
-La variable interna $nobs contiene el número de observaciones en el rango 
+La variable interna $nobs contiene el número de observaciones en el rango
 muestral actual, que puede ser o puede no ser igual al $T del último modelo.
 
-La variable interna t sirve para referirse a las observaciones, comenzando 
-en 1. Así uno puede hacer "genr dum15 = (t=15)" para generar una variable 
+La variable interna $pd contiene la periodicidad o frecuencia de los datos
+(por ejemplo, 4 para datos trimestrales, 12 para mensuales).
+
+La variable interna t sirve para referirse a las observaciones, comenzando
+en 1. Así uno puede hacer "genr dum15 = (t=15)" para generar una variable
 ficticia con valor 1 para la observación 15 y 0 en el resto.
 
 Ejemplos de instrucciones 'genr':
@@ -432,6 +440,8 @@ obtenido
                           en el último modelo]
   genr rho4 = rho(4)     [guarda en rho4 el coeficiente autorregresivo de cuarto 
 
+
+
 orden
                           obtenido del último modelo (supone un modelo ar)]
   genr cv=vcv(x1, x2)    [covarianza entre los coeficientes de x1 y x2 en el 
@@ -440,6 +450,8 @@ orden
   genr x=3*normal()      [variable pseudo-aleatoria normal, de media 0 y desv. 
 típica 3]
   genr x=pvalue(t,20,1.4)[valor p para 1.4, bajo la distribución t con 20 grados 
+
+
 
 de libertad]
 
@@ -508,7 +520,7 @@ específica de la unidad de sección cruzada y la otra específica de la
 observación particular. (Este estimador sólo puede calcularse si el número 
 de unidades de sección cruzada en el conjunto de datos es mayor que el número
 de parámetros a estimar. Se presenta el estadístico LM de Breusch-Pagan para 
-contrastar la hipótesis nula (de que el estimador MCO combinado es adecuado) 
+contrastar la hipótesis nula (de que el estimador MCO combinado es adecuado)
 contra la alternativa de efectos aleatorios.
 
 El modelo de MCO combinados puede ser rechazado contra ambas alternativas, 
@@ -633,18 +645,30 @@ Uso:          labels
 Muestra las etiquetas informativas de las variables que se hayan definido
 utilizando la instrucción 'genr'.
 
+#
+lad
+@Estimación
+(Estimador de mínima desviación absoluta)
+Uso:          lad vardep varindeps
+
+Calcula una regresión que minimiza la suma de las desviaciones absolutas entre 
+los valores observados y ajustados de la variable dependiente. Las estimaciones 
+de los coeficientes se obtienen utilizando el algoritmo simplex de 
+Barrodale-Roberts; surge un mensaje de aviso si la solución no es única. Las 
+desviaciones típicas se obtienen por un método 'bootstrap' con 500 
+extracciones.
 
 #
 lags
 @Transformations
 Uso:          lags listavar
 
-Crea variables nuevas que son valores retardados de cada una de 
-las variables que haya en 'listavar'. El número de variables retardadas 
-que se crean es igual a la periodicidad. Por ejemplo, si la periodicidad 
-fuera 4 (datos trimestrales), la orden 'lags x y' creará x_1  = x(-1), 
-x_2 = x(-2), x_3 = x(-3) y x_4 = x(-4); y de igual forma para y. Estas 
-variables deben referenciarse de forma exacta, es decir, con el carácter de 
+Crea variables nuevas que son valores retardados de cada una de
+las variables que haya en 'listavar'. El número de variables retardadas
+que se crean es igual a la periodicidad. Por ejemplo, si la periodicidad
+fuera 4 (datos trimestrales), la orden 'lags x y' creará x_1  = x(-1),
+x_2 = x(-2), x_3 = x(-3) y x_4 = x(-4); y de igual forma para y. Estas
+variables deben referenciarse de forma exacta, es decir, con el carácter de
 subrayado.
 
 
@@ -701,7 +725,7 @@ logs
 @Transformations
 Uso:          logs listavar
 
-Se obtiene el logaritmo natural de cada variable en 'listavar' y el 
+Se obtiene el logaritmo natural de cada variable en 'listavar' y el
 resultado se guarda en una nueva variable con prefijo "l_". Así por ejemplo,
 "logs x y" crea las nuevas variables l_x = ln(x) y l_y = ln(y).
 
@@ -741,16 +765,16 @@ obtenidos en la última estimación del bucle: esto está diseñado para mínimos
 cuadrados iterativos.
 
 La instrucción "print" también se comporta de modo diferente en el contexto
-de un bucle con "número_de_veces". Muestra la media y desviación típica de 
-la variable a lo largo de las repeticiones del bucle. Está pensado para 
+de un bucle con "número_de_veces". Muestra la media y desviación típica de
+la variable a lo largo de las repeticiones del bucle. Está pensado para
 usarlo con variables que toman un solo valor en cada iteración, por ejemplo
-la scr (suma de cuadrados de los residuos) de una regresión. La 
+la scr (suma de cuadrados de los residuos) de una regresión. La
 instrucción "print" funciona de la forma usual para los demás tipos de bucles.
 
 La instrucción "store" (sólo se puede usar una por bucle y sólo en los bucles
 de tipo "número_de_veces") escribe los valores de las variables especificadas,
 en cada iteración del bucle, al fichero especificado. De este modo, guarda una
-copia completa de las variables. Luego puede leerse mediante gretl este fichero 
+copia completa de las variables. Luego puede leerse mediante gretl este fichero
 de datos para analizarlo.
 
 Ejemplo de programa de bucle (Monte Carlo):
@@ -774,13 +798,40 @@ meantest
 Uso:            meantest x1 x2
                 meantest x1 x2 -o
 
-Calcula el estadístico t para contrastar la hipótesis nula de que las medias 
+Calcula el estadístico t para contrastar la hipótesis nula de que las medias
 poblacionales de las variables x1 y x2 son iguales y muestra su valor p. Sin
-la opción -o, el estadístico se calcula bajo el supuesto de que las varianzas 
-son iguales para las dos variables; con la opción -o se supone que las 
+la opción -o, el estadístico se calcula bajo el supuesto de que las varianzas
+son iguales para las dos variables; con la opción -o se supone que las
 varianzas son distintas. (La opción implicara diferencia sólo si hay
 diferentes números de observaciones no perdidas para las dos variables)
 
+
+#
+mpols
+@Estimation
+(Mínimos cuadrados ordinarios de alta precisión)
+Uso:            mpols vardep varindep
+Ejemplos:       ols 1 0 2 4 6 7
+                ols y 0 x1 x2 x3
+
+Calcula los estimadores de mínimos cuadrados ordinarios con 'vardep' como
+variable dependiente y 'varindep' como lista de variables independientes,
+utilizando para ello operaciones aritméticas con precisión múltiple. Las 
+variables pueden especificarse por su nombre o por su número; utilice el número 
+cero para el término constante. Esta instrucción sólo está disponible si gretl 
+se configura con soporte para GMP, la biblioteca GNU de precisión múltiple.
+
+Para estimar un ajuste polinómico utilizando aritmética de precisión múltiple al 
+generar las potencias necesarias de la variable independiente utilice, por 
+ejemplo, la forma
+
+mpols y 0 x ; 2 3 4
+
+Esto hace una regresión de y sobre x, x al cuadrado, x al cubo y x a la cuarta 
+potencia. Es decir, los números a la derecha del punto y coma(que deben ser
+enteros y positivos) especifican las potencias de x a utilizar. Si se especifica 
+más de una variable independiente, la última variable antes del punto y coma es 
+la que será elevada a las potencias que se indican.
 
 #
 multiply
@@ -789,11 +840,11 @@ Uso:            multiply x sufijo vars
 Ejemplos:       multiply invpop pc 3 4 5 6
                 multiply 1000 big x1 x2 x3
 
-Las variables de la lista "vars" (referenciadas por nombre o número) se 
-multiplican por x, que puede ser o un valor numérico o el nombre de una 
-variable previamente definida. Los productos se nombran con el prefijo 
-que se suministre (máximo tres caracteres). Si hace falta, se truncan los 
-nombres de las variables originales. Por ejemplo, supongamos que Vd desea 
+Las variables de la lista "vars" (referenciadas por nombre o número) se
+multiplican por x, que puede ser o un valor numérico o el nombre de una
+variable previamente definida. Los productos se nombran con el prefijo
+que se suministre (máximo tres caracteres). Si hace falta, se truncan los
+nombres de las variables originales. Por ejemplo, supongamos que Vd desea
 crear las versiones "per cápita" de algunas variables y Vd tiene la variable
 "pob" (población). Las instrucciones adecuadas son
 
@@ -924,7 +975,7 @@ Uso:            plot x1       plot x1 x2
 Representa ( en un gráfico de tipo texto) los valores de los datos de 
 las variables especificadas, para el rango de observación actualmente en 
 efecto. Cada línea se refiere a una observación y los valores se 
-representan horizontalmente. Si se utiliza la opción -o, x1 y x2 se 
+representan horizontalmente. Si se utiliza la opción -o, x1 y x2 se
 representan en la misma escala, en otro caso, cada una de ellas se escala
 adecuadamente. La opción -o sólo debería usarse si las variables tienen 
 aproximadamente el mismo rango de valores (p.ej. la variable dependiente 
@@ -952,10 +1003,11 @@ print              escribe el conjunto de datos actual en forma tabular
 print 3 6          escribe los valores de las variables números 3 y 6
 print x y z        escribe los valores de las variables denominadas x, y y z
 
-Si se utiliza la opción -o las variables se muestran en columnas, en caso 
-contrario, se muestran en bloques consecutivos.
+Si se utiliza la opción -o las variables se muestran en columnas, en caso
+contrario, se muestran en bloques consecutivos. Si se indica la opción "-t", los 
+datos se muestran con 10 valores significativos.
 
-print "Cadena literal" escribe la cadena especificada.  Las comillas finales no 
+print "Cadena literal" escribe la cadena especificada.  Las comillas finales no
 son necesarias, pero se necesitan las iniciales para obtener este resultado.
 
 #
@@ -963,7 +1015,7 @@ probit
 @Estimation
 Uso:          probit vardep varindeps
 
-Regresión probit: la variable dependiente debe ser una variable binaria. Se 
+Regresión probit: la variable dependiente debe ser una variable binaria. Se
 calculan, mediante mínimos cuadrados iterativos (método EM ó de
 expectativa-maximización), los estimadores de máxima verosimilitud de los
 coeficientes de 'varindeps'. Como el modelo es no lineal, las pendientes
@@ -992,9 +1044,19 @@ gld son los grados de libertad del denominador.
 quit
 @Utilities
 
-Salir de gretl. ('q' es un atajo; 'x' sale sin preguntar si se deben guardar 
+Salir de gretl. ('q' es un atajo; 'x' sale sin preguntar si se deben guardar
 los resultados.)
 
+#
+reset
+@Tests
+Uso:          reset
+
+Debe utilizarse inmediatamente después de una instrucción ols. Realiza el
+contraste RESET de especificación de modelos (no linealidad) de Ramsey añadiendo
+a la regresión el cuadrado y el cubo de los valores ajustados y calculando el
+estadístico F para la hipótesis nula de que los parámetros de los dos términos
+añadidos son cero.
 
 #
 rhodiff
@@ -1003,9 +1065,9 @@ Uso:           rhodiff listarho ; listavar
 Ejemplos:      rhodiff .65 ; 2 3 4
                rhodiff r1 r2 ; x1 x2 x3
 
-Crea las transformaciones rho-diferenciadas de las variables contenidas en 
+Crea las transformaciones rho-diferenciadas de las variables contenidas en
 'listvar'(referenciadas mediante número o nombre) y las añade al conjunto de
-datos utilizando el prefijo # para las nuevas variables. Dada la variable 
+datos utilizando el prefijo # para las nuevas variables. Dada la variable
 v1 en listavar y r1 y r2 en listarho, se crea
 
 v1# = v1(t) - r1*v1(t-1) - r2*v1(t-2)
@@ -1014,11 +1076,38 @@ Las entradas de listarho pueden darse como valores numéricos o mediante
 los nombres de variables previamente definidas.
 
 #
+rmplot
+@Graphs
+(Gráfico Rango-Media)
+Uso:           rmplot nombrevar
+
+Esta instrucción crea un gráfico simple para ayudar a decidir si una serie
+temporal, y(t), tiene o no varianza constante. Se toma la muestra completa
+t=1,...,T y se divide en pequeñas submuestras de tamaño arbitrario k [gretl
+elige k=sqrt(T)]. La primera submuestra se forma con y(1),...,y(k), la segunda
+con y(k+1),...,y(2k), y así sucesivamente. Para cada submuestra se calcula la
+media muestral y el rango (=máximo-mínimo) y se construye un gráfico con las
+medias en el eje horizontal y los rangos en el vertical. De esta forma, cada
+submuestra está representada por un punto en este plano. Si la varianza de la
+serie fuera constante los rangos de las submuestras no deberían depender de sus
+medias; si se observa que los puntos se aproximan a una recta con pendiente
+creciente, esto sugiere que la varianza de la serie aumenta cuando la media
+aumenta; si los puntos se aproximan a una recta con pendiente decreciente, esto
+sugiere que la varianza está disminuyendo cuando la media aumenta.
+
+Además del gráfico, gretl presenta las medias y los rangos para cada submuestra,
+el coeficiente estimado para la pendiente en una regresión MCO de los rangos
+sobre las medias y el valor p para el contraste de la hipótesis nula de que esta
+pendiente es cero. Si el coeficiente de pendiente es significativo al nivel de
+significación del 10 por ciento, en el gráfico se muestra también la recta
+ajustada en la regresión de los rangos sobre las medias.
+
+#
 run
 @Programming
 Uso:          run fichero
 
-Si el fichero "fichero" contiene instrucciones gretl, esta orden (que se 
+Si el fichero "fichero" contiene instrucciones gretl, esta orden (que se
 invoca desde dentro de gretl) las ejecutará de una en una. Esta es una forma
 muy útil de ejecutar instrucciones 'batch' desde una sesión interactiva.
 
@@ -1045,7 +1134,7 @@ Ejemplos:       scatters 1 ; 2 3 4 5
 
 Representa (mediante gnuplot) gráficos bivariantes (scatters) por parejas de 
 variables, de vary con respecto a todas las variables de listavarx, o de 
-todas las variables de listavary con respecto a varx. En el primer ejemplo de 
+todas las variables de listavary con respecto a varx. En el primer ejemplo de
 arriba se sitúa la variable 1 en el eje y y se dibujan cuatro gráficos, el 
 primero con la variable 2 en el eje x, el segundo con la variable 3 en el 
 eje x, y así sucesivamente. Revisar un conjunto de gráficos como éste puede 
@@ -1058,7 +1147,7 @@ seed
 @Programming
 Uso:            seed entero
 
-Establece la semilla para el generador de números pseudo-aleatorios para 
+Establece la semilla para el generador de números pseudo-aleatorios para
 la distribución uniforme y normal (ver la instrucción 'genr'). Por defecto
 la semilla se establece cuando se inicia el programa, dependiendo de la hora
 del sistema. Si se desean obtener secuencias de números pseudo-aleatorios
@@ -1140,6 +1229,7 @@ Uso:           smpl primobs ultobs
                smpl -o var_ficticia
                smpl -o
                smpl -r <expresión booleana>
+	       smpl full
 
 Restablece el rango muestral. En la primera forma, "primobs" y "ultobs"
 deben ser consistentes con la periodicidad de los datos. En la segunda forma,
@@ -1148,7 +1238,8 @@ muestra se restringirá a aquellas observaciones en las que el valor
 indicador sea 1. La tercera forma, smpl -o, quita todas las observaciones 
 para las cuales los valores de una o más variables estén 'perdidos'.
 La cuarta forma, usando la opción -r, restringe la muestra a los casos 
-que satisfagan la condición dada.
+que satisfagan la condición dada. La última forma, "smpl full",
+recupera el rango completo de los datos.
 
 
 
@@ -1179,7 +1270,7 @@ Uso:            spearman x y
 Calcula el coeficiente de correlación por rangos de Spearman para las dos 
 variables x e y. No es necesario ordenar las variables y asignar los 
 rangos manualmente; la instrucción ya tiene en cuenta esto. Si se 
-proporciona la opción -o, se muestran los datos originales junto a los 
+proporciona la opción -o, se muestran los datos originales junto a los
 ordenados.
 
 La ordenación automática se hace de mayor a menor (es decir, al dato mayor se 
@@ -1213,7 +1304,7 @@ Ejemplos:        store misdatos.gdt
 
 "nombre_fichero" es el nombre del fichero en el que se guardarán las 
 variables. Si no se proporciona "lista_var" se guardarán los valores de 
-todas las variables, en caso contrario sólo se grabarán al fichero las 
+todas las variables, en caso contrario sólo se grabarán al fichero las
 variables especificadas.
 
 Los valores posibles de "opción" son:
