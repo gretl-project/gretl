@@ -1694,7 +1694,7 @@ static gchar *my_utf_string (char *t)
     const char *smb;
     gchar *from_codeset = NULL;
     
-    if (t == NULL) return NULL;
+    if (t == NULL || *t == '\0') return t;
 
     if (g_utf8_validate(t, -1, NULL)) return t;   
     
