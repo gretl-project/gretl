@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 14:41-0500\n"
-"PO-Revision-Date: 2005-01-21 23:00+0100\n"
+"PO-Revision-Date: 2005-02-07 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -3746,7 +3746,7 @@ msgstr "   95%% przedzia³ ufno¶ci\n"
 #: lib/src/printout.c:1394
 #, c-format
 msgid "gretl_prn_new: Must supply a filename\n"
-msgstr "gretl_prn_new: musisz wskazaæ nazwê pliku\n"
+msgstr "gretl_prn_new: podaj nazwê pliku\n"
 
 #: lib/src/printout.c:1400 lib/src/printout.c:1434
 #, c-format
@@ -5464,7 +5464,7 @@ msgstr "Model/HCC_M..."
 
 #: gui/gretl.c:435 gui2/gretl.c:497
 msgid "/Model/H_eteroskedasticity corrected..."
-msgstr "Model/Korekta H_eteroskedasticzno¶ci..."
+msgstr "Model/Korekta H_eteroskedastyczno¶ci..."
 
 #: gui/gretl.c:437 gui2/gretl.c:499
 msgid "/Model/sep2"
@@ -6505,7 +6505,7 @@ msgstr ""
 #: gui2/calculator.c:834 gui2/calculator.c:838 gui2/calculator.c:895
 #: gui2/calculator.c:904 plugin/stats_tables.c:383 plugin/stats_tables.c:410
 msgid "df"
-msgstr "st. swobody"
+msgstr "df"
 
 #: gui2/calculator.c:842 gui2/calculator.c:909
 msgid "dfn"
@@ -8785,11 +8785,11 @@ msgstr ""
 
 #: gui2/gui_utils.c:2834
 msgid "/Tests/heteroskedasticity (White's test)"
-msgstr "/Testy/test heteroskedastyczno¶ci (White'a)"
+msgstr "/Testy/heteroskedastyczno¶ci (White'a)"
 
 #: gui2/gui_utils.c:2840
 msgid "/Tests/heteroskedasticity (groupwise)"
-msgstr "/Testy/test heteroskedastyczno¶ci (groupwise)"
+msgstr "/Testy/heteroskedastyczno¶ci (groupwise)"
 
 #: gui2/gui_utils.c:2858
 msgid "x12sep"
@@ -10548,7 +10548,7 @@ msgstr "Warto¶æ w³asna"
 
 #: plugin/johansen.c:255
 msgid "cointegrating vector"
-msgstr "wektor kointegruj±cy"
+msgstr "wektor  kointegruj±cy "
 
 #: plugin/johansen.c:261
 msgid "renormalized"
@@ -10556,7 +10556,7 @@ msgstr "znormalizowany"
 
 #: plugin/johansen.c:361
 msgid "Rank"
-msgstr ""
+msgstr "Rank"
 
 #: plugin/johansen.c:362
 msgid "Trace test"
@@ -10715,7 +10715,7 @@ msgstr ""
 #: plugin/panel_data.c:623
 #, c-format
 msgid " unit %2d: %13.5g\n"
-msgstr ""
+msgstr " unit %2d: %13.5g\n"
 
 #: plugin/panel_data.c:632
 #, c-format
@@ -10954,7 +10954,7 @@ msgid ""
 "Critical values for Student's t distribution\n"
 "\n"
 msgstr ""
-"Warto¶ci krytyczne dla rozk³adu t-Studenta (uwaga: przesuniêcie opisów)\n"
+"Warto¶ci krytyczne rozk³adu t-Studenta dla stopni swobody 'df'\n"
 "\n"
 
 #: plugin/stats_tables.c:385
@@ -10966,7 +10966,7 @@ msgid ""
 "Critical values for Chi-square distribution\n"
 "\n"
 msgstr ""
-"Warto¶ci krytyczne dla rozk³adu Chi-kwadrat (uwaga: przesuniêcie opisów)\n"
+"Warto¶ci krytyczne rozk³adu Chi-kwadrat dla stopni swobody 'df'\n"
 "\n"
 
 #: plugin/stats_tables.c:405
