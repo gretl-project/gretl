@@ -94,7 +94,7 @@ static GtkWidget *text_edit_new (int *hsize)
 
 /* ........................................................... */
 
-void edit_dialog (char *diagtxt, char *infotxt, char *deftext, 
+void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick)
 {
@@ -1327,7 +1327,7 @@ gboolean update_obs_label (GtkEditable *entry, gpointer data)
     return FALSE;
 }
 
-void set_sample_dialog (gpointer p, guint u, GtkWidget *w)
+void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 {
     GtkWidget *tempwid, *hbox;
     struct range_setting *rset;
