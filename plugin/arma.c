@@ -404,7 +404,6 @@ static int ar_init_by_ols (int v, int p, double *coeff,
 	free(alist);
 	return 1;
     }
-    ainfo->extra = 1; 
     
     for (t=0; t<an; t++) {
 	for (i=0; i<=p; i++) {
@@ -414,7 +413,7 @@ static int ar_init_by_ols (int v, int p, double *coeff,
 	}
     }
 
-    armod = lsq(alist, &aZ, ainfo, OLS, 1, 0.0);
+    armod = lsq(alist, &aZ, ainfo, OLS, OPT_A, 0.0);
     err = armod.errcode;
     if (!err) {
 	for (i=0; i<armod.ncoeff; i++) {
@@ -585,7 +584,6 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     }
     ainfo->t1 = arma_t1;
     ainfo->t2 = arma_t2;
-    ainfo->extra = 1; /* ? can't remember what this does */
 
     /* initialize the coefficients: AR part by OLS, MA at 0 */
     ar_init_by_ols(v, p, coeff, Z, pdinfo, ainfo->t1);
@@ -635,7 +633,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
 	/* OPG regression */
 	clear_model(&armod, NULL);
-	armod = lsq(alist, &aZ, ainfo, OLS, 0, 0.0);
+	armod = lsq(alist, &aZ, ainfo, OLS, OPT_A, 0.0);
 	if (armod.errcode) {
 	    goto arma_bailout;
 	}

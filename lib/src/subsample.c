@@ -144,7 +144,6 @@ static void prep_subdinfo (DATAINFO *dinfo, int markers, int n)
     dinfo->sd0 = 1.;
     dinfo->pd = 1;
     dinfo->time_series = 0;
-    dinfo->extra = 0;
     if (markers) dinfo->markers = 1;
     else dinfo->markers = 0;
     strcpy(dinfo->stobs, "1");

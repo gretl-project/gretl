@@ -436,7 +436,7 @@ static MODEL GNR (double *fvec, double *fjac)
 	}
     }
 
-    gnr = lsq(nlist, &nZ, ninfo, OLS, 0, 0.0);
+    gnr = lsq(nlist, &nZ, ninfo, OLS, OPT_A, 0.0);
 
     if (gnr.errcode) {
 	pputs(prn, _("In Gauss-Newton Regression:\n"));

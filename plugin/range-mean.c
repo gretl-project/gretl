@@ -148,7 +148,6 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
 
     rminfo = create_new_dataset(&rmZ, 3, m, 0);
     if (rminfo == NULL) return E_ALLOC;
-    rminfo->extra = 1;
 
     pprintf(prn, _("Range-mean statistics for %s\n"), 
 	    pdinfo->varname[varnum]);
@@ -185,7 +184,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     strcpy(rminfo->varname[1], "range");
     strcpy(rminfo->varname[2], "mean");
 
-    rmmod = lsq(rmlist, &rmZ, rminfo, OLS, 0, 0.0);
+    rmmod = lsq(rmlist, &rmZ, rminfo, OLS, OPT_A, 0.0);
 
     if ((err = rmmod.errcode)) {
 	pputs(prn, _("Error estimating range-mean model\n"));

@@ -1003,7 +1003,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	tmplist[2] = 0;
 	tmplist[3] = list[2];	
 	gretl_model_init(&plotmod, pdinfo);
-	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
+	plotmod = lsq(tmplist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (!plotmod.errcode) {
 	    /* is the fit significant? */
 	    b = plotmod.coeff[1];
@@ -1464,7 +1464,7 @@ int gnuplot_3d (LIST list, const char *literal,
 	_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
 
 	gretl_model_init(&pmod, pdinfo);
-	pmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
+	pmod = lsq(tmplist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (!pmod.errcode && !na(pmod.fstt) &&
 	    (fdist(pmod.fstt, pmod.dfn, pmod.dfd) < .10 ||
 	    flags & GP_FA)) {

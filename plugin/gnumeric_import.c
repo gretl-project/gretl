@@ -608,7 +608,6 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    ntodate(newinfo->endobs, newinfo->n - 1, newinfo);
 	}
-	newinfo->extra = 0; 
 
 	j = 1;
 	for (i=1; i<newinfo->v; i++) {

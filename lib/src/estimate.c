@@ -302,8 +302,9 @@ static void fix_wls_values (MODEL *pmod, double **Z)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ci: command index (see commands.h)
- * @opt: option flag: If = 1, then residuals, dw stat and rhohat are obtained,
- *                    If = 2, then besides the above, force use of Cholesky decomp
+ * @opts: option flags: if & OPT_R calculate dw stat and rhohat;
+ *                      if & OPT_C force use of Cholesky decomp;
+ *                      if & OPT_A treat as auxiliary regression
  * @rho: coefficient for rho-differencing the data.
  *
  * Computes least squares estimates of the model specified by @list,
@@ -313,7 +314,7 @@ static void fix_wls_values (MODEL *pmod, double **Z)
  */
 
 MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo, 
-	   int ci, int opt, double rho)
+	   int ci, unsigned long opts, double rho)
 {
     int l0, yno, i;
     int effobs = 0;
@@ -416,10 +417,12 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     mdl.ifc = (i > 1);
     if (i > 2) rearrange_list(mdl.list);
 
-    /* check for presence of lagged dependent variable */
-    ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
-    if (ldepvar) {
-	gretl_model_set_int(&mdl, "ldepvar", ldepvar);
+    /* check for presence of lagged dependent variable? */
+    if (!(opts & OPT_A)) {
+	ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
+	if (ldepvar) {
+	    gretl_model_set_int(&mdl, "ldepvar", ldepvar);
+	}
     }
 
     l0 = mdl.list[0];  /* holds 1 + number of coeffs */
@@ -438,7 +441,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	if (*s && *s != '0') set_use_qr(1);
     }
 
-    if (use_qr && opt != 2) { /* bodge */
+    if (use_qr && !(opts & OPT_C)) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n);
     } else {
@@ -490,8 +493,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    /* if opt != 0, compute rhohat and DW stat */
-    if (opt) {
+    if (opts & OPT_R) {
 	int order = (ci == CORC || ci == HILU)? 1 : 0;
 	
 	mdl.rho = rhohat(order, mdl.t1, mdl.t2, mdl.uhat);
@@ -1345,7 +1347,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	step = 1;
 	for (rho = -0.990; rho < 1.0; rho += .01) {
 	    clear_model(&corc_model, pdinfo);
-	    corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
+	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_R, rho);
 	    if ((err = corc_model.errcode)) {
 		free(uhat);
 		clear_model(&corc_model, pdinfo);
@@ -1393,7 +1395,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt */
-	corc_model = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_R, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
@@ -1413,7 +1415,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, pdinfo);
-	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_R, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, pdinfo);
@@ -1599,7 +1601,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     /* second-stage regression */
     clear_model(&tsls, pdinfo);
-    tsls = lsq(s2list, pZ, pdinfo, OLS, 1, 0.0);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_R, 0.0);
 
     if (tsls.errcode) {
 	free(list1); 
@@ -1771,7 +1773,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 
     list[1] = v;
 
-    aux = lsq(list, pZ, pdinfo, OLS, 0, 0.);
+    aux = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.);
     check = aux.errcode;
     if (check) shrink = pdinfo->v - v;
     else {
@@ -1783,8 +1785,10 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
 
     clear_model(&aux, pdinfo);
+
     free(tmplist);
     free(list);
+
     return check;
 }
 
@@ -1817,7 +1821,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     ncoeff = list[0] - 1;
     rearrange_list(list);
 
-    hsk = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
+    hsk = lsq(list, pZ, pdinfo, OLS, OPT_R, 0.0);
     if (hsk.errcode) return hsk;
 
     uhat1 = malloc(n * sizeof *uhat1);
@@ -1868,7 +1872,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
 
     clear_model(&hsk, pdinfo);
-    hsk = lsq(hsklist, pZ, pdinfo, WLS, 1, 0.0);
+    hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_R, 0.0);
     hsk.ci = HSK;
 
     shrink = pdinfo->v - orig_nvar;
@@ -1912,7 +1916,7 @@ static int whites_standard_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	    auxlist[k++] = pmod->list[j];
 	}
 
-	auxmod = lsq(auxlist, pZ, pdinfo, OLS, 0, 0.0);
+	auxmod = lsq(auxlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 
 	if (auxmod.errcode) {
 	    fprintf(stderr, "Error estimating auxiliary model, code=%d\n", 
@@ -1993,7 +1997,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     rearrange_list(list);
 
     /* run a regular OLS */
-    hccm = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
+    hccm = lsq(list, pZ, pdinfo, OLS, OPT_R, 0.0);
     if (hccm.errcode) {
 	free(uhat1);
 	free(st);
@@ -2191,7 +2195,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	list[1] = v; 
 	/* run auxiliary regression and print results */
-	white = lsq(list, pZ, pdinfo, OLS, 0, 0.);
+	white = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.);
 	err = white.errcode;
     }
 
@@ -2252,7 +2256,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     gretl_model_init(&armod, pdinfo);
 
     /* run initial OLS */
-    armod = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
+    armod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (armod.errcode) goto ar1_abort;
 
     ifc = armod.ifc;
@@ -2329,7 +2333,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	pprintf(prn, " iteration %2d: SSR = %#g, rho = %#g\n", j, ess, rho);
 
 	/* (re-)estimate linearized model */
-	armod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
+	armod = lsq(arlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (armod.errcode) break;
 
 	/* essdiff = fabs(ess - armod.ess) / ess; */
@@ -2474,7 +2478,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     if (arlist[0] == 1 && arlist[1] == 1) {
 	err = hilu_corc(&xx, reglist, pZ, pdinfo, NULL, 1, CORC, prn);
 	if (err) ar.errcode = err;
-	else ar = lsq(reglist, pZ, pdinfo, CORC, 1, xx);
+	else ar = lsq(reglist, pZ, pdinfo, CORC, OPT_R, xx);
 	if (model_count != NULL) {
 	    *model_count += 1;
 	    ar.ID = *model_count;
@@ -2500,7 +2504,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     yno = reglist[1];
 
     /* first pass: estimate model via OLS */
-    ar = lsq(reglist, pZ, pdinfo, OLS, 0, 0.0);
+    ar = lsq(reglist, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (ar.errcode) {
 	free(reglist);	
 	return ar;
@@ -2538,7 +2542,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
 	/* now estimate the rho terms */
 	if (iter > 1) clear_model(&rhomod, pdinfo);
-	rhomod = lsq(rholist, pZ, pdinfo, OLS, 0, 0.0);
+	rhomod = lsq(rholist, pZ, pdinfo, OLS, OPT_A, 0.0);
 
 	/* and rho-transform the data */
 	for (i=1; i<=reglist[0]; i++) {
@@ -2557,7 +2561,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
 	/* estimate the transformed model */
 	clear_model(&ar, pdinfo);
-	ar = lsq(reglist2, pZ, pdinfo, OLS, 0, 0.0);
+	ar = lsq(reglist2, pZ, pdinfo, OLS, OPT_A, 0.0);
 
         if (iter > 1) diff = 100 * (ar.ess - ess)/ess;
         if (diff < 0.0) diff = -diff;
@@ -2635,6 +2639,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     free(arlist);
     clear_model(&rhomod, pdinfo);
+
     return ar;
 }
 
@@ -2649,6 +2654,7 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
     char vnamebit[20];
 
     offset = (pmod->ci == WLS)? 3 : 2;
+
     for (v=offset; v<=pmod->list[0]; v++) {
         lv = pmod->list[v];
         if (_iszero(pmod->t1, pmod->t2, Z[lv])) {
@@ -2662,6 +2668,7 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 	    drop = 1;
 	}
     }
+
     if (pmod->nwt) {
 	for (v=offset; v<=pmod->list[0]; v++) {
 	    lv = pmod->list[v];
@@ -2681,6 +2688,7 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 	    }
 	}
     }
+
     if (drop) strcat(gretl_msg, _("omitted because all obs are zero."));
 }
 
@@ -2751,9 +2759,6 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
     char depvar[VNAMELEN], othervar[VNAMELEN];
     char *p;
 
-    /* this may be an auxiliary regression */
-    if (pdinfo->extra) return 0;
-
     strcpy(depvar, pdinfo->varname[list[1]]);
 
     for (i=2; i<=list[0]; i++) {
@@ -2807,6 +2812,7 @@ static int tsls_match (const int *list1, const int *list2, int *newlist)
 	}
     }  
     newlist[0] = index;
+
     return 0;
 }
 
@@ -2917,7 +2923,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	arlist[2] = 0;
 
 	/* run OLS and get squared residuals */
-	archmod = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
+	archmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	err = archmod.errcode;
     }
 
@@ -2941,7 +2947,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
 	/* run aux. regression */
 	clear_model(&archmod, pdinfo);
-	archmod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
+	archmod = lsq(arlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	err = archmod.errcode;
     }
 
@@ -2991,7 +2997,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 		}
 		strcpy(pdinfo->varname[nwt], "1/sigma");
 		clear_model(&archmod, pdinfo);
-		archmod = lsq(wlist, pZ, pdinfo, WLS, 1, 0.0);
+		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_R, 0.0);
 		if (model_count != NULL) {
 		    *model_count += 1;
 		    archmod.ID = *model_count;
@@ -3008,6 +3014,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
     if (arlist != NULL) free(arlist);
     if (wlist != NULL) free(wlist);
     dataset_drop_vars(order + 1, pZ, pdinfo); 
+
     return archmod;
 }
 
@@ -3033,7 +3040,7 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
     /* run an initial OLS to "set the model up" and check for errors.
        the lad function will overwrite the coefficients etc.
     */
-    lad_model = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
+    lad_model = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 
     if ((err = lad_model.errcode)) {
         return lad_model;

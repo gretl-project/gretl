@@ -66,7 +66,6 @@ static double group_means_variance (MODEL *pmod,
 
     *ginfo = create_new_dataset(groupZ, pmod->list[0], nunits, 0);
     if (*ginfo == NULL) return NADBL;
-    (*ginfo)->extra = 1;
 
     list = malloc((pmod->list[0] + 1) * sizeof *list);
     if (list == NULL) {
@@ -113,7 +112,7 @@ static double group_means_variance (MODEL *pmod,
     fprintf(stderr, "*groupZ=%p, ginfo=%p\n", (void *)*groupZ, (void *)*ginfo);
 #endif
 
-    meanmod = lsq(list, groupZ, *ginfo, OLS, 0, 0.0);
+    meanmod = lsq(list, groupZ, *ginfo, OLS, OPT_A, 0.0);
 #ifdef PDEBUG
     fprintf(stderr, "gmv: lsq errcode was %d\n", meanmod.errcode);
 #endif
@@ -247,7 +246,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "LSDV: about to run OLS\n");
 #endif
 
-    lsdv = lsq(dvlist, pZ, pdinfo, OLS, 0, 0.0);
+    lsdv = lsq(dvlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 
     if (lsdv.errcode) {
 	var = NADBL;
@@ -315,7 +314,6 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 
     reinfo = create_new_dataset(&reZ, pmod->list[0], pdinfo->n, 0);
     if (reinfo == NULL) return E_ALLOC;
-    reinfo->extra = 1;
 
     relist = malloc((pmod->list[0] + 1) * sizeof *relist);
     if (relist == NULL) {
@@ -359,7 +357,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     fprintf(stderr, "random_effects: about to run OLS\n");
 #endif
 
-    remod = lsq(relist, &reZ, reinfo, OLS, 0, 0.0);
+    remod = lsq(relist, &reZ, reinfo, OLS, OPT_A, 0.0);
     if ((err = remod.errcode)) {
 	pputs(prn, _("Error estimating random effects model\n"));
 	errmsg(err, prn);
@@ -674,7 +672,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     }
 
     if (!err) {
-	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, 1, 0.0);
+	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, OPT_R | OPT_A, 0.0);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);

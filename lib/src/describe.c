@@ -512,7 +512,7 @@ static int get_pacf (double *pacf, int m, int varnum,
 	list[0] = i + 2;
 	list[2] = 0;
 	for (j=0; j<i; j++) list[j+3] = laglist[j];
-	tmp = lsq(list, pZ, pdinfo, OLS, 0, 0);
+	tmp = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
 	if ((err = tmp.errcode)) {
 	    fprintf(stderr, "error estimating model for pacf\n");
 	    break;
@@ -791,7 +791,6 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     tmpdinfo.n = n;
     tmpdinfo.v = 3;
     tmpdinfo.pd = 1;
-    tmpdinfo.extra = 1;
     if (start_new_Z(&tmpZ, &tmpdinfo, 1))
 	return 1;
 
@@ -811,7 +810,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     list[3] = 2;
 
     gretl_model_init(&tmp, &tmpdinfo);
-    tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, 0, 0);
+    tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, OPT_A, 0);
 
     if (!tmp.errcode) {
 	tstat = -tmp.coeff[1] / tmp.sderr[1];

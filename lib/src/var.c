@@ -1141,7 +1141,7 @@ static int real_var (int order, const LIST inlist,
 	varlist[1] = depvars[i];
 
 	/* run an OLS regression for the current dependent var */
-	*pmod = lsq(varlist, pZ, pdinfo, VAR, 1, 0.0);
+	*pmod = lsq(varlist, pZ, pdinfo, VAR, OPT_R | OPT_A, 0.0);
 	pmod->aux = VAR;
 	pmod->ID = i + 1;
 
@@ -1174,7 +1174,7 @@ static int real_var (int order, const LIST inlist,
 	if (resids != NULL) {
 	    /* estimate equations for Johansen test too (use var_model) */
 	    varlist[1] = resids->levels_list[i + 1]; 
-	    var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
+	    var_model = lsq(varlist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    if (flags & VAR_PRINT_MODELS) {
 		var_model.aux = VAR;
 		printmodel(&var_model, pdinfo, prn);
@@ -1203,7 +1203,7 @@ static int real_var (int order, const LIST inlist,
 		}
 		pprintf(prn, _("All lags of %-8s "), 
 			pdinfo->varname[depvars[j]]);
-		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
+		var_model = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
 		F = ((var_model.ess - essu) / order) / (essu / dfd);
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
@@ -1226,7 +1226,7 @@ static int real_var (int order, const LIST inlist,
 		    shortlist[l] = varlist[varlist[0]-end];
 		    end++;
 		}
-		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
+		var_model = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
 		F = ((var_model.ess - essu) / neqns) / (essu / dfd);
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
@@ -1379,7 +1379,7 @@ int coint (int order, const LIST list, double ***pZ,
     pputc(prn, '\n');
     pprintf(prn, _("Step %d: cointegration\n"), l0 + 1);
     
-    coint_model = lsq(cointlist, pZ, pdinfo, OLS, 1, 0.0); 
+    coint_model = lsq(cointlist, pZ, pdinfo, OLS, OPT_R, 0.0); 
     coint_model.aux = AUX_COINT;
     printmodel(&coint_model, pdinfo, prn);
 
@@ -1492,7 +1492,7 @@ int adf_test (int order, int varno, double ***pZ,
     adflist[2] = 0;
     adflist[3] = lagvarnum(varno, 1, pdinfo);
 
-    adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
+    adf_model = lsq(adflist, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (adf_model.errcode) {
 	return adf_model.errcode;
     }
@@ -1553,7 +1553,7 @@ int adf_test (int order, int varno, double ***pZ,
 	return E_ALLOC;
     }
 
-    adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
+    adf_model = lsq(adflist, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (adf_model.errcode)
 	return adf_model.errcode;
     adf_model.aux = AUX_ADF;
@@ -1568,7 +1568,7 @@ int adf_test (int order, int varno, double ***pZ,
 	shortlist[2+i] = adflist[4+i];
     }
 
-    adf_model = lsq(shortlist, pZ, pdinfo, OLS, 0, 0.0);
+    adf_model = lsq(shortlist, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (adf_model.errcode) {
 	/* FIXME: clean up */
 	return adf_model.errcode;
@@ -1647,7 +1647,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 		(*pZ)[v*n + t], (*pZ)[(v+1)*n + t]); */
 	}
 	clear_model(&mamod, pdinfo);
-	mamod = lsq(malist, pZ, pdinfo, OLS, 0, 0.0);
+	mamod = lsq(malist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if ((err = mamod.errcode)) {
 	    clear_model(&mamod, pdinfo);
 	    return err;
@@ -1671,7 +1671,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     for (t=t0+1; t<T; t++) { 
 	(*pZ)[v][t] = (*pZ)[iv][t] + a * (*pZ)[v][t-1];
     }
-    mamod = lsq(malist, pZ, pdinfo, OLS, 1, 0.0);
+    mamod = lsq(malist, pZ, pdinfo, OLS, OPT_R, 0.0);
     printmodel(&mamod, pdinfo, prn);
 
     pputs(prn, "\nEstimates of original parameters:\n");
@@ -1715,7 +1715,7 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
 	vl = lagvarnum(v, 1, pdinfo);
 	tlist[1] = v;
 	tlist[3] = vl;
-	tmod = lsq(tlist, pZ, pdinfo, OLS, 0, 0.0);
+	tmod = lsq(tlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tmod.errcode) {
 	    trends = -1;
 	    clear_model(&tmod, pdinfo);

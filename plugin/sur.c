@@ -253,7 +253,7 @@ int sur (gretl_equation_system *sys,
 
     /* first grab the OLS residuals */
     for (i=0; i<m; i++) {
-	*models[i] = lsq(system_get_list(sys, i), pZ, pdinfo, OLS, 1, 0.0);
+	*models[i] = lsq(system_get_list(sys, i), pZ, pdinfo, OLS, OPT_A, 0.0);
 	if ((models[i])->errcode) {
 	    fprintf(stderr, "model failed on lists[%d], code=%d\n",
 		    i, (models[i])->errcode);

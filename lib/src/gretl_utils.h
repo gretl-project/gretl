@@ -116,6 +116,8 @@ MODEL *gretl_model_new (const DATAINFO *pdinfo);
 
 void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo);
 
+void gretl_model_set_auxiliary (MODEL *pmod, int aux);
+
 void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
 
 void clear_model (MODEL *pmod, const DATAINFO *pdinfo);

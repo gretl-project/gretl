@@ -188,7 +188,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     v = pdinfo->v - 1; /* the last created variable */
 
-    dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
+    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
     if (dmod.ifc == 0) dmod.errcode = E_NOCONST;
     if (dmod.errcode) {
 	dataset_drop_vars(1, pZ, pdinfo);
@@ -232,7 +232,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
 	clear_model(&dmod, NULL);
-	dmod = lsq(dmodlist, pZ, pdinfo, OLS, 0, 0);
+	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
 	if (dmod.errcode) {
 	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);
 	    (void) dataset_drop_vars(1, pZ, pdinfo);

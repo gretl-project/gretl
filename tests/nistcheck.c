@@ -769,7 +769,7 @@ int run_gretl_comparison (const char *datname,
     }
 
     model = gretl_model_new(dinfo);
-    *model = lsq(list, pZ, dinfo, OLS, 1, 0.0);
+    *model = lsq(list, pZ, dinfo, OLS, OPT_R, 0.0);
 
     if (model->errcode) {
 	if (verbose) pputc(prn, '\n');

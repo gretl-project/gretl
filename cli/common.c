@@ -144,7 +144,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	clear_model(models[0], NULL);
 
 	if (cmd.ci == OLS) {
-	    *models[0] = lsq(cmd.list, &Z, datainfo, OLS, 1, 0.0);
+	    *models[0] = lsq(cmd.list, &Z, datainfo, OLS, OPT_R, 0.0);
 	}
 	else if (cmd.ci == LAD) {
 	    *models[0] = lad(cmd.list, &Z, datainfo);

@@ -191,7 +191,6 @@ struct _DATAINFO {
     int n;              /* number of observations */
     int pd;             /* periodicity or frequency of data */
     int bin;            /* data file is binary? (1 or 0) */
-    int extra;
     double sd0;         /* float representation of stobs */
     int t1, t2;         /* start and end of current sample */
     char stobs[9];      /* string representation of starting obs (date) */

@@ -1483,6 +1483,11 @@ static void model_data_items_init (MODEL *pmod)
 
 /* .......................................................... */
 
+void gretl_model_set_auxiliary (MODEL *pmod, int aux)
+{
+    pmod->aux = aux;
+}
+
 void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int i;
@@ -2591,7 +2596,6 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	fr->err = E_ALLOC;
 	return fr;
     }
-    finfo->extra = 1;
 
     /* insert depvar at position 1 */
     for (t=0; t<finfo->n; t++) {
@@ -2634,7 +2638,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	    }
 	}
 	clear_model(&fmod, finfo);
-	fmod = lsq(list, &fZ, finfo, OLS, 1, 0.0);
+	fmod = lsq(list, &fZ, finfo, OLS, OPT_R | OPT_A, 0.0);
 	if (fmod.errcode) {
 	    fr->err = fmod.errcode;
 	    clear_model(&fmod, finfo);

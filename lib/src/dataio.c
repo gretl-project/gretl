@@ -135,7 +135,6 @@ static void dataset_dates_defaults (DATAINFO *pdinfo)
     pdinfo->sd0 = 1.0;
     pdinfo->pd = 1;
     pdinfo->time_series = 0;
-    pdinfo->extra = 0; 
     pdinfo->decpoint = '.';
 }
 
@@ -319,7 +318,6 @@ DATAINFO *datainfo_new (void)
     dinfo->n = 0;
     dinfo->pd = 1;
     dinfo->bin = 0;
-    dinfo->extra = 0;
     dinfo->sd0 = 1.0;
     dinfo->t1 = 0;
     dinfo->t2 = 0;
@@ -745,7 +743,6 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 
     pdinfo->n = -1;
     pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
-    pdinfo->extra = 0;      
 
     pdinfo->bin = 0;
     pdinfo->markers = NO_MARKERS;

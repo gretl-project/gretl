@@ -25,7 +25,7 @@
  
 MODEL lsq (LIST list, 
 	   double ***pZ, DATAINFO *pdinfo, 
-	   int ci, int opt, double rho);
+	   int ci, unsigned long opts, double rho);
 
 int hilu_corc (double *toprho, LIST list, 
 	       double ***pZ, DATAINFO *pdinfo,

@@ -804,7 +804,7 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	clear_model(models[0], NULL);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, 1, rho);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, OPT_R, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -1253,7 +1253,7 @@ void exec_line (char *line, PRN *prn)
     case WLS:
     case POOLED:
 	clear_model(models[0], NULL);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, 1, 0.0);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, OPT_R, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    clear_model(models[0], NULL);
