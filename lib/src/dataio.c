@@ -1270,8 +1270,9 @@ int write_data (const char *fname, const int *list,
 	fputc('\n', fp);
     }
     else if (opt == GRETL_DATA_R_ALT && pdinfo->time_series == TIME_SERIES) {
-	/* new (October, 2003) attempt at R time-series structure */
+	/* new (October, 2003) attempt at improved R time-series structure */
 	char *p, datestr[9];
+	int subper = 1;
 
 	fprintf(fp, "\"%s\" <- ts (t (matrix (data = c(\n", "gretldata");
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -1289,10 +1290,10 @@ int write_data (const char *fname, const int *list,
 	}
 	ntodate(datestr, pdinfo->t1, pdinfo);
 	p = strchr(datestr, ':');
-	fprintf(fp, "nrow = %d, ncol = %d)), start = c(%d,%s), frequency = %d)\n",
+	if (p != NULL) subper = atoi(p + 1);
+	fprintf(fp, "nrow = %d, ncol = %d)), start = c(%d,%d), frequency = %d)\n",
 		l0, pdinfo->t2 - pdinfo->t1 + 1, 
-		atoi(datestr), (p != NULL)? (p + 1) : "1", /* Is this right? */
-		pdinfo->pd);
+		atoi(datestr), subper, pdinfo->pd);
 	fprintf(fp, "colnames(%s) <- c(", "gretldata");
 	for (i=1; i<=l0; i++) {
 	    fprintf(fp, "\"%s\"", pdinfo->varname[list[i]]);

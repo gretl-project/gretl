@@ -1045,7 +1045,7 @@ static GtkWidget *files_notebook (windata_t *fdata,
 	    sprintf(winnum, "%d", j++);
 	    gtk_object_set_data(GTK_OBJECT(notebook), winnum, pages[k]);
 	    gtk_object_set_data(GTK_OBJECT(pages[k]), "file_code", 
-			      GINT_TO_POINTER(i));
+				GINT_TO_POINTER(i));
 	}
     }
 

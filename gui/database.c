@@ -542,6 +542,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     gint i;
     char *titlestr;
     windata_t *dbwin;
+    int db_width = 700, db_height = 420;    
 
     if ((dbwin = mymalloc(sizeof *dbwin)) == NULL)
 	return;
@@ -551,6 +552,10 @@ void display_db_series_list (int action, char *fname, char *buf)
     gtk_signal_connect (GTK_OBJECT (dbwin->w), "destroy",
 			GTK_SIGNAL_FUNC (free_windata),
 			dbwin);
+
+    db_width *= gui_scale;
+    db_height *= gui_scale;
+    gtk_window_set_default_size(GTK_WINDOW(dbwin->w), db_width, db_height);
 
     if (buf == NULL && strrchr(fname, SLASH)) {
 	titlestr = strrchr(fname, SLASH) + 1;

@@ -1141,7 +1141,9 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
     GtkWidget *view, *scroller;
     int listbox_id_width = 30;
     int listbox_varname_width = 90;
-    int listbox_label_width = 400;
+#if 0
+    int listbox_label_width = 370; 
+#endif
 
     if (strcmp(titles[1], "Variable name")) listbox_varname_width = 110;
 
@@ -1153,8 +1155,13 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
 				0, listbox_id_width * gui_scale);
     gtk_clist_set_column_justification (GTK_CLIST (view), 0, 
 					GTK_JUSTIFY_LEFT);
+
     setup_column(view, 1, listbox_varname_width * gui_scale);
-    setup_column(view, 2, listbox_label_width * gui_scale);
+#if 0
+    setup_column(view, 2, listbox_label_width * gui_scale); 
+#else
+    setup_column(view, 2, 0); 
+#endif
 
     gtk_signal_connect_after (GTK_OBJECT (view), "select_row",
 			      GTK_SIGNAL_FUNC (selectrow), (gpointer) mdata);
@@ -1182,8 +1189,8 @@ static GtkWidget *make_main_window (int gui_get_data)
 	_("Variable name"), 
 	_("Descriptive label")
     };
-    int mainwin_width = 520;
-    int mainwin_height = 400;
+    int mainwin_width = 540;
+    int mainwin_height = 420;
 
     mdata->data = NULL;  
     mdata->listbox = NULL;

@@ -1516,15 +1516,7 @@ must be put after the semi-colon.
 
 A separate regression will be run for each variable in varlist.  Output for
 each equation includes F-tests for zero restrictions on all lags of each of
-the variables and an F-test for the maximum lag.  Following the equations,
-impulse responses are shown, for a one-standard error shock to each of the
-elements in "varlist".
-
-The order of the terms in "varlist" matters, since it determines the ordering
-for the Cholesky decomposition of the error covariance matrix, which is used
-in generating estimated impulse responses.  You should place first in the list
-the variable which is "most exogenous", that is, least likely to be affected
-within the period of observation by shocks to the other variables.  
+the variables and an F-test for the maximum lag.  
 
 # 
 varlist

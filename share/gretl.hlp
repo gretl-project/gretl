@@ -1142,15 +1142,23 @@ var
 @Estimation
 Vector Autoregression
 
-This command requires an integer lag order.  Select the dependent and
-independent variables for the first equation in the system; these will be
-permuted to obtain the other equations.  Don't include any lagged variables in
-the list of independent variables -- they will be added automatically.
+This command requires specification of:
 
-In general, a regression will be run for each variable in the list, excluding
-the constant, the time trend and any dummy variables.  Output for each
+- the dependent variable for the first equation in the VAR system; 
+
+- the lag order, that is, the number of lags of each variable that should be
+  included in the system;
+
+- any "deterministic" terms (e.g. the constant, a time trend, seasonal dummy
+  variables and so on); and
+
+- a list of independent variables, lags of which will be included on the
+  right-hand side of the equations (note: do not include lagged variables
+  in this list -- they will be added automatically).
+
+A separate regression will be run for variable in the system.  Output for each
 equation includes F-tests for zero restrictions on all lags of each of the
-variables, and an F-test for the maximum lag.
+variables and an F-test for the maximum lag.
 
 #
 vartest

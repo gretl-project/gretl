@@ -335,27 +335,25 @@ static void dhline (const MODEL *pmod, PRN *prn)
     h = pmod->rho * sqrt(T/(1 - T * sderr * sderr));
 
     if (PLAIN_FORMAT(prn->format)) {
-	char tmp[128];
+        char tmp[128];
 
-	sprintf(tmp, _("Durbin's h stat. %g  First-order autocorr. coeff %g"), 
-		h, pmod->rho);
-	pprintf(prn, "  %s\n", tmp);
+        sprintf(tmp, _("Durbin's h stat. %g"), h);
+        pprintf(prn, "  %s\n", tmp);
 
-	sprintf(tmp, _("(Using variable %d for h stat, with T' = %d)"), 
-		pmod->list[i], T);
-	pprintf(prn, "  %s\n", tmp);
+        sprintf(tmp, _("(Using variable %d for h stat, with T' = %d)"), 
+                pmod->list[i], T);
+        pprintf(prn, "  %s\n", tmp);
     }
 
     else if (RTF_FORMAT(prn->format)) {
-	char tmp[128];
+        char tmp[128];
 
-	sprintf(tmp, I_("Durbin's h stat. %g  First-order autocorr. coeff %g"), 
-		h, pmod->rho);
-	pprintf(prn, RTFTAB "%s\n", tmp);
+        sprintf(tmp, I_("Durbin's h stat. %g"), h);
+        pprintf(prn, RTFTAB "%s\n", tmp);
 
-	sprintf(tmp, I_("(Using variable %d for h stat, with T' = %d)"), 
-		pmod->list[i], T);
-	pprintf(prn, RTFTAB "%s\n", tmp);
+        sprintf(tmp, I_("(Using variable %d for h stat, with T' = %d)"), 
+                pmod->list[i], T);
+        pprintf(prn, RTFTAB "%s\n", tmp);
     }
 
     else if (TEX_FORMAT(prn->format)) {
@@ -1245,12 +1243,12 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	if (pmod->ci != NLS) Fline(pmod, prn);
 
 	if (dataset_is_time_series(pdinfo)) {
-	    if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
-		if (pmod->ldepvar) {
+	    if (pmod->ci == OLS || pmod->ci == VAR ||
+		(pmod->ci == WLS && pmod->wt_dummy)) {
+		dwline(pmod, prn);
+		if (pmod->ci != VAR && pmod->ldepvar) {
 		    dhline(pmod, prn);
-		} else {
-		    dwline(pmod, prn);
-		}
+		} 
 	    }
 	    /* FIXME -- check output below */
 	    if (pmod->ci == HCCM || pmod->ci == TSLS) {

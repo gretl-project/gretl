@@ -221,7 +221,13 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     if (shock >= var->neqns) {
 	fprintf(stderr, "Shock variable out of bounds\n");
 	return 1;
-    }    
+    }  
+
+    if (periods == 0) {
+	if (pdinfo->pd == 4) periods = 20;
+	else if (pdinfo->pd == 12) periods = 24;
+	else periods = 10;
+    }
 
     rtmp = gretl_matrix_alloc(rows, var->neqns);
     if (rtmp == NULL) return E_ALLOC;
@@ -702,8 +708,8 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
 	varlist[1] = depvars[i];
 
-	/* run an OLS regression for the current dep var */
-	*pmod = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
+	/* run an OLS regression for the current dependent var */
+	*pmod = lsq(varlist, pZ, pdinfo, VAR, 1, 0.0);
 	pmod->aux = VAR;
 
 	/* save the residuals if required */
@@ -822,8 +828,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 #endif
 		for (i=0; i<var->neqns; i++) {
 		    /* FIXME: make horizon configurable, or at least smarter */
-		    gretl_var_print_impulse_response(var, i, 10,
-						     pdinfo, prn);
+		    gretl_var_print_impulse_response(var, i, 0, pdinfo, prn);
 		}
 	    } else {
 		fprintf(stderr, "failed: gretl_var_do_error_decomp\n");
@@ -853,7 +858,11 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	 int pause, PRN *prn)
 {
-    char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS | VAR_IMPULSE_RESPONSES;
+    char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS;
+
+#ifdef notyet
+    flags != VAR_IMPULSE_RESPONSES;
+#endif
 
     if (pause) {
 	flags |= VAR_PRINT_PAUSE;

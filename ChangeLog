@@ -1,16 +1,26 @@
-version 1.1.6
+10/31/2003 version 1.1.6
 - Windows: add option to emulate Windows look (via WIMP)
 - add "--no-restore-data" to R invocation
 - Fix for launching R from gretl on Windows XP
+- Improve creation of time-series datasets for use in R
 - Fix problems created by tabs in the command line
 - Two-stage least squares: add list of instruments to printout
   of model results
 - Improve the mechanism for detecting the presence of a lagged
-  dependent variable in a regression list
+  dependent variable in a regression list; also show the
+  Durbin-Watson stat in addition to Durbin's h when a 
+  regression includes a lagged dependent variable
 - Fix bug in graph editing for non-English locales
 - genr command: add facility for using date strings in boolean
   comparisons, e.g. "genr dummy = t > 1973:4" will work for 
   quarterly data
+- "var" command: add facility to separate deterministic
+  terms such as trend and dummies from the other variables in 
+  the regression list; add Durbin-Watson statistic to model 
+  printouts
+- minor fixes to the build process
+- minor updates to gtk-1.2 GUI (make more consistent with the
+  gtk-2.0 version)
 
 10/24/2003 version 1.1.5
 - Updates to manual

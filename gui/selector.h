@@ -41,6 +41,7 @@ typedef struct {
     GtkWidget *varlist;
     GtkWidget *depvar;
     GtkWidget *rightvars;
+    GtkWidget *auxvars;
     GtkWidget *default_check;
     GtkWidget *extra;
     int code;

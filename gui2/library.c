@@ -2095,12 +2095,14 @@ void do_model (GtkWidget *widget, gpointer p)
     strcpy(estimator, gretl_commands[action]);
 
     buf = sr->cmdlist;    
-    if (*buf == 0) return;
+    if (buf == NULL || *buf == 0) return;
 
     clear(line, MAXLEN);
     sprintf(line, "%s %s", estimator, buf);
-    modelgenr[0] = '\0';
+
+    *modelgenr = '\0';
     if (check_model_cmd(line, modelgenr)) return;
+
     echo_cmd(&command, datainfo, line, 0, 1, oflag, NULL);
     if (command.ci == 999) {
 	errbox(_("A variable was duplicated in the list of regressors"));
@@ -2196,7 +2198,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (modelgenr[0] && record_model_genr(modelgenr)) {
+    if (*modelgenr && record_model_genr(modelgenr)) {
 	errbox(_("Error saving model information"));
 	return;
     }
