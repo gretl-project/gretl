@@ -27,6 +27,10 @@
 
 #ifdef OS_WIN32
 # include <windows.h>
+#else
+# include <glib.h>
+# include <signal.h>
+# include <wait.h>
 #endif
 
 /* pvalues.c */
@@ -37,6 +41,111 @@ static char gnuplot_path[MAXLEN];
 static const char *auto_ols_string = "# plot includes automatic OLS line\n";
 
 static const char *get_gnuplot_pallette (int i, int plottype);
+
+/* ........................................................ */
+
+#ifdef ORIG_CODE /* also needed for earlier glib version */
+
+#define gretl_spawn(s) system(s)
+
+static int gnuplot_test_command (const char *cmd)
+{
+    char cmd[512];
+
+    sprintf(cmd, "echo \"%s\" | %s 2>/dev/null", cmd,
+		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
+    return system(cmd);
+}
+
+#else
+
+static int gretl_spawn (const char *cmd)
+{
+    GError *error = NULL;
+    gchar *errout = NULL, *sout = NULL;
+    int ok, status;
+    int ret = 0;
+
+    signal(SIGCHLD, SIG_DFL);
+
+    ok = g_spawn_command_line_sync (cmd,
+				    &sout,   /* standard output */
+				    &errout, /* standard error */
+				    &status, /* exit status */
+				    &error);
+
+    if (!ok) {
+	strcpy(gretl_errmsg, error->message);
+	fprintf(stderr, "!ok: '%s'\n", error->message);
+	ret = 1;
+    } else if (errout && *errout) {
+	strcpy(gretl_errmsg, errout);
+	fprintf(stderr, "errout: '%s'\n", errout);
+	ret = 1;
+    } else if (status != 0) {
+	sprintf(gretl_errmsg, "%s\n%s", 
+		_("gnuplot command failed"),
+		sout);
+	fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	ret = 1;
+    }
+
+    if (errout != NULL) g_free(errout);
+    if (sout != NULL) g_free(sout);
+
+    if (ret) {
+	fprintf(stderr, "Failed command: '%s'\n", cmd);
+    } 
+
+    return ret;
+}
+
+static int gnuplot_test_command (const char *cmd)
+{
+    int ok, ret = 1;
+    int child_pid, sinp;
+    GError *error = NULL;
+    gchar *argv[] = {
+	(*gnuplot_path == 0)? "gnuplot" : gnuplot_path,
+	NULL
+    };
+
+    ok = g_spawn_async_with_pipes (NULL,
+				   argv,
+				   NULL,
+				   G_SPAWN_SEARCH_PATH |
+				   G_SPAWN_STDOUT_TO_DEV_NULL |
+				   G_SPAWN_STDERR_TO_DEV_NULL |
+				   G_SPAWN_DO_NOT_REAP_CHILD,
+				   NULL,
+				   NULL,
+				   &child_pid,
+				   &sinp,
+				   NULL,
+				   NULL,
+				   &error);
+
+#ifdef SPAWN_DEBUG
+    fprintf(stderr, "child_pid = %d, sinp = %d\n",
+	    child_pid, sinp);
+#endif
+
+    if (ok) {
+	int test, status;
+
+	write(sinp, cmd, strlen(cmd));
+	write(sinp, "\n", 1);
+	close(sinp);
+	test = waitpid(child_pid, &status, 0);
+	if (test == child_pid && WIFEXITED(status)) {
+	    ret = WEXITSTATUS(status);
+	}
+    }
+
+    return ret;
+}
+
+#endif /* ORIG_CODE */
 
 /* ........................................................ */
 
@@ -474,11 +583,7 @@ static int old_gnuplot_png (void)
     static int c = -1; 
 
     if (c == -1) {
-	char cmd[512];
-
-	sprintf(cmd, "echo \"set term png color\" | %s 2>/dev/null",
-		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
-	c = system(cmd);
+	c = gnuplot_test_command("set term png color");
     }
     return !c;
 }
@@ -488,11 +593,7 @@ int gnuplot_has_ttf (void)
     static int t = -1; 
 
     if (t == -1) {
-	char cmd[512];
-
-	sprintf(cmd, "echo \"set term png font arial 8\" | %s 2>/dev/null",
-		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
-	t = system(cmd);
+	t = gnuplot_test_command("set term png font arial 8");
     }
     return !t;
 }
@@ -502,11 +603,7 @@ static int gnuplot_has_filledcurve (void)
     static int t = -1; 
 
     if (t == -1) {
-	char cmd[512];
-
-	sprintf(cmd, "echo \"set data style filledcurve\" | %s 2>/dev/null",
-		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
-	t = system(cmd);
+	t = gnuplot_test_command("set data style filledcurve");
     }
     return !t;
 }
@@ -638,7 +735,7 @@ int gnuplot_display (const PATHS *ppaths)
 # else
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
 	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
-    if (system(plotcmd)) err = 1;
+    err = gretl_spawn(plotcmd);  
 # endif /* OS_WIN32 */
 
     return err;
@@ -646,7 +743,7 @@ int gnuplot_display (const PATHS *ppaths)
 
 #else /* following: old non-GNUPLOT_PNG version */
 
-int gnuplot_display (const PATHS *ppaths)
+int gnuplot_display (PATHS *ppaths)
 {
     int err = 0;
     char plotcmd[MAXLEN];
@@ -656,7 +753,7 @@ int gnuplot_display (const PATHS *ppaths)
     if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
 # else
     sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-    if (system(plotcmd)) err = 1;
+    if (gretl_spawn(plotcmd)) err = 1;
 # endif /* OS_WIN32 */
 
     return err;
@@ -2027,7 +2124,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 	}
 # else
-	if (system(plotcmd)) err = 1;
+	if (gretl_spawn(plotcmd)) err = 1;
 # endif 
     }
 #endif /* GNUPLOT_PIPE */
