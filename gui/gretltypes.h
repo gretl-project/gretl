@@ -30,6 +30,7 @@ typedef struct {
 
 typedef struct {
     GtkWidget *dialog;
+    GtkWidget *vbox;
     GtkWidget *listbox; 
     GtkWidget *mbar;
     GtkWidget *w;

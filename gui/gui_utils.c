@@ -825,6 +825,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 void windata_init (windata_t *vwin)
 {
     vwin->dialog = NULL;
+    vwin->vbox = NULL;
     vwin->listbox = NULL;
     vwin->mbar = NULL;
     vwin->w = NULL;
@@ -1103,7 +1104,7 @@ static windata_t *common_viewer_new (int role, const char *title,
     windata_init(vwin);
     vwin->role = role;
     vwin->data = data;
-    vwin->dialog = gtk_dialog_new();
+    vwin->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
 
     if (record) winstack_add(vwin->dialog);
@@ -1127,18 +1128,17 @@ static void create_text (windata_t *vwin, int hsize, int vsize,
 
 /* ........................................................... */
 
-static void dialog_box_config (GtkWidget *dialog)
+static void viewer_box_config (windata_t *vwin)
 {
-    gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_container_border_width 
-	(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
+    vwin->vbox = gtk_vbox_new(FALSE, 1);
+    gtk_container_border_width (GTK_CONTAINER(vwin->vbox), 5);
+    gtk_box_set_spacing (GTK_BOX(vwin->vbox), 5);
 #ifndef G_OS_WIN32
-    gtk_signal_connect_after(GTK_OBJECT(dialog), "realize", 
-			     GTK_SIGNAL_FUNC(set_wm_icon), 
-			     NULL);
+    gtk_signal_connect_after(GTK_OBJECT(vwin->dialog), "realize", 
+                             GTK_SIGNAL_FUNC(set_wm_icon), 
+                             NULL);
 #endif
+    gtk_container_add (GTK_CONTAINER(vwin->dialog), vwin->vbox);
 }
 
 /* ........................................................... */
@@ -1149,7 +1149,7 @@ static void dialog_table_setup (windata_t *vwin)
 
     table = gtk_table_new(1, 2, FALSE);
     gtk_widget_set_usize(table, 500, 400);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vwin->dialog)->vbox), 
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       table, TRUE, TRUE, FALSE);
 
     gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
@@ -1181,11 +1181,11 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     create_text(vwin, hsize, vsize, FALSE);
 
     dialog = vwin->dialog;
-    dialog_box_config(dialog);
+    viewer_box_config(vwin);
 
     if (menu_items != NULL) {
 	set_up_viewer_menu(dialog, vwin, menu_items);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
     }
@@ -1194,7 +1194,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     /* close button */
     close = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       close, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(close), "clicked", 
 		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
@@ -1207,12 +1207,13 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gretl_print_destroy(prn);
     
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-			   GTK_SIGNAL_FUNC(catch_key), dialog);
+		       GTK_SIGNAL_FUNC(catch_key), dialog);
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
 
+    gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
     return vwin;
 }
@@ -1252,13 +1253,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
     create_text(vwin, hsize, vsize, editable);
 
     dialog = vwin->dialog;
-    dialog_box_config(dialog);
+    viewer_box_config(vwin);
    
     strcpy(vwin->fname, filename);
 
     if (menu_items != NULL) {
 	set_up_viewer_menu(dialog, vwin, menu_items);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
     }
@@ -1297,7 +1298,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	GtkWidget *close = 
 	    gtk_button_new_with_label(_("Close"));
 
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   close, FALSE, TRUE, 0);
 	gtk_signal_connect(GTK_OBJECT(close), "clicked", 
 			   GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
@@ -1355,6 +1356,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
 
+    gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
 
     return vwin;
@@ -1374,11 +1376,11 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     create_text(vwin, hsize, vsize, TRUE);
 
     dialog = vwin->dialog;
-    dialog_box_config(dialog);
+    viewer_box_config(vwin);
 
     /* add a menu bar */
     set_up_viewer_menu(dialog, vwin, edit_items);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
@@ -1402,6 +1404,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
 
+    gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
 
     return vwin;
@@ -1421,7 +1424,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     create_text(vwin, hsize, vsize, FALSE);
 
     dialog = vwin->dialog;
-    dialog_box_config(dialog);
+    viewer_box_config(vwin);
 
     set_up_viewer_menu(dialog, vwin, model_items);
 
@@ -1431,7 +1434,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_signal_connect(GTK_OBJECT(vwin->mbar), "button_press_event", 
 		       GTK_SIGNAL_FUNC(check_model_menu), vwin);
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
 
@@ -1439,7 +1442,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     /* close button */
     close = gtk_button_new_with_label(_("Close"));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       close, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(close), "clicked", 
 		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
@@ -1467,6 +1470,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 		       GTK_SIGNAL_FUNC(free_windata), 
 		       vwin);
 
+    gtk_widget_show(vwin->vbox);
     gtk_widget_show_all(dialog);
     return 0;
 }
