@@ -46,6 +46,15 @@ AC_ARG_WITH(gmake,
 )
 AC_SUBST(MAKE)
 
+AC_ARG_WITH(gnome,
+[  --with-gnome            Build with gnome support [default=auto]],
+[if test "$withval" = "yes"
+then
+try_gnome=yes
+else
+try_gnome=no
+fi])
+
 AC_PROG_CC
 AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -130,6 +139,8 @@ then
 	have_latex=yes
 fi
 
+if test "$trygnome" = "yes"
+then
 AC_DEFUN(AC_PROG_GNOME,
 [AC_CHECK_PROG(GNOME,gnome-config,yes)])
 
@@ -143,6 +154,7 @@ then
 	dnl AC_SUBST(have_gtkhtml)
 fi
 AC_SUBST(have_gnome)
+fi
 
 AC_DEFUN(AC_CHECK_ARCH, )
 

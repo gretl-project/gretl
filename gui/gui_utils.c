@@ -1819,12 +1819,12 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 void write_rc (void) 
 {
-    char sectkey[96];
+    char gpath[MAXSTR];
     int i = 0;
 
     while (rc_vars[i].key != NULL) {
-	sprintf(sectkey, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
-	gnome_config_set_string(sectkey, rc_vars[i].var);
+	sprintf(gpath, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
+	gnome_config_set_string(gpath, rc_vars[i].var);
 	i++;
     }
     gnome_printfilelist(1); /* data files */
@@ -1838,7 +1838,7 @@ static void read_rc (void)
 {
     int i = 0;
     gchar *value = NULL;
-    char gpath[MAXLEN];
+    char gpath[MAXSTR];
 
     while (rc_vars[i].key != NULL) {
 	sprintf(gpath, "/gretl/%s/%s", 
