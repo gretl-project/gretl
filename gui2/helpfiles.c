@@ -1058,8 +1058,9 @@ static void find_in_help (GtkWidget *widget, gpointer data)
 	gtk_text_thaw(GTK_TEXT(vwin->w));
         gtk_editable_select_region (GTK_EDITABLE(vwin->w), 
 				    found, found + strlen(needle));
-	for (i=0; i<found; i++) 
+	for (i=0; i<found; i++) {
 	    if (haystack[i] == '\n') linecount++;
+	}
 	gtk_adjustment_set_value(GTK_TEXT(vwin->w)->vadj, 
 				 (gfloat) (linecount - 2) *
 				 GTK_TEXT(vwin->w)->vadj->upper / help_length);
@@ -1198,14 +1199,16 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
     lower(needle);
 
 #ifndef OLD_GTK
-    model = gtk_tree_view_get_model (GTK_TREE_VIEW(win->listbox));
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox));
 
     /* try searching downward from the current line plus one */
     pstr = g_strdup_printf("%d", win->active_var);
     gtk_tree_model_get_iter_from_string (model, &iter, pstr);
     g_free(pstr);
     iterhere = iter;
-    if (!gtk_tree_model_iter_next(model, &iter)) iter = iterhere;
+    if (!gtk_tree_model_iter_next(model, &iter)) {
+	iter = iterhere;
+    }
 
  search_wrap:
 
@@ -1217,8 +1220,13 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 	lower(haystack);
 	found = look_for_string(haystack, needle, 0);
 	if (found >= 0) break;
-	/* then column 0 */
-	gtk_tree_model_get (model, &iter, 0, &tmp, -1);
+	if (win == mdata) {
+	    /* then column 2 */
+	    gtk_tree_model_get(model, &iter, 2, &tmp, -1);
+	} else {
+	    /* then column 0 */
+	    gtk_tree_model_get(model, &iter, 0, &tmp, -1);
+	}
 	strcpy(haystack, tmp);
 	g_free(tmp);
 	lower(haystack);
@@ -1265,8 +1273,13 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 	lower(haystack);
 	found = look_for_string(haystack, needle, 0);
 	if (found >= 0) break;
-	/* try column 0? */
-	gtk_clist_get_text(GTK_CLIST(win->listbox), i, 0, &tmp);
+	if (win == mdata) {
+	    /* try column 2? */
+	    gtk_clist_get_text(GTK_CLIST(win->listbox), i, 2, &tmp);
+	} else {
+	    /* try column 0? */
+	    gtk_clist_get_text(GTK_CLIST(win->listbox), i, 0, &tmp);
+	}
 	strcpy(haystack, tmp);
 	lower(haystack);
 	found = look_for_string(haystack, needle, 0);
@@ -1374,33 +1387,19 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 #endif
 
     if (find_window != NULL) {
-#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(find_window), "windat", mydat);
-#else
-	gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat);
-#endif
 	parent_find(find_window, mydat);
 	gdk_window_raise(find_window->window);
 	return;
     }
 
     find_window = gtk_dialog_new();
-#ifndef OLD_GTK
     g_object_set_data(G_OBJECT(find_window), "windat", mydat);
-#else
-    gtk_object_set_data(GTK_OBJECT(find_window), "windat", mydat);
-#endif
     parent_find(find_window, mydat);
 
-#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (find_window), "destroy",
 		      G_CALLBACK (close_find_dialog),
 		      find_window);
-#else
-    gtk_signal_connect (GTK_OBJECT (find_window), "destroy",
-	                GTK_SIGNAL_FUNC (close_find_dialog),
-	                find_window);
-#endif
 
     gtk_window_set_title (GTK_WINDOW (find_window), _("gretl: find"));
     gtk_container_set_border_width (GTK_CONTAINER (find_window), 5);
@@ -1415,16 +1414,10 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 	gtk_editable_select_region (GTK_EDITABLE (find_entry), 0, 
 				    strlen (needle));
     }
-#ifndef OLD_GTK
-    g_signal_connect(G_OBJECT (find_entry), "activate", 
-		     G_CALLBACK (findfunc), find_window);
-#else
-    gtk_signal_connect(GTK_OBJECT (find_entry), "activate", 
-			GTK_SIGNAL_FUNC(findfunc), find_window);
+    g_signal_connect(G_OBJECT(find_entry), "activate", 
+		     G_CALLBACK(findfunc), find_window);
 
-#endif
-
-    gtk_widget_show (find_entry);
+    gtk_widget_show(find_entry);
 
     gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX(hbox), find_entry, TRUE, TRUE, 0);
@@ -1443,13 +1436,8 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT (button), "clicked",
 		     G_CALLBACK (findfunc), find_window);
-#else
-    gtk_signal_connect(GTK_OBJECT (button), "clicked",
-		       GTK_SIGNAL_FUNC (findfunc), find_window);
-#endif
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
@@ -1457,13 +1445,8 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     button = gtk_button_new_with_label (_("Cancel"));
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT (button), "clicked",
 		     G_CALLBACK (cancel_find), find_window);
-#else
-    gtk_signal_connect(GTK_OBJECT (button), "clicked",
-		       GTK_SIGNAL_FUNC (cancel_find), find_window);
-#endif
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(find_entry);

@@ -1024,7 +1024,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		do_graph_var(mdata->active_var);
 	    } 
 	}
-    }
+    } 
 
     return FALSE;
 }

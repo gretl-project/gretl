@@ -714,6 +714,18 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	}	
     }
 #endif
+
+    /* Ctrl-F for find */
+    if (key->keyval == GDK_f) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    text_find_callback(NULL, vwin);
+	    return TRUE;
+	}
+    }
+
     return FALSE;
 }
 
@@ -1814,14 +1826,12 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     view_buffer_insert_text(vwin, prn);
     gretl_print_destroy(prn);
 
-#ifndef OLD_GTK    
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
+
+#ifndef OLD_GTK    
     g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
 		      G_CALLBACK(catch_button_3), vwin->w);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_viewer_key), vwin);
 #endif
 
     gtk_widget_show(vwin->vbox);
