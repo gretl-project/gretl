@@ -845,24 +845,6 @@ static void create_sheet_cell_renderers (spreadsheet *sheet)
     sheet->datacell = r;
 }
 
-#undef MRENDER
-
-#ifdef MRENDER
-static GtkCellRenderer *data_renderer (spreadsheet *sheet)
-{
-    GtkCellRenderer *r;
-
-    r = gtk_cell_renderer_text_new();
-    g_object_set(r, "ypad", 1, NULL);
-    g_object_set(r, "xalign", 1.0, NULL);
-    g_object_set(r, "editable", TRUE, NULL);
-    g_signal_connect (G_OBJECT (r), "edited",
-		      G_CALLBACK (sheet_cell_edited), sheet);
-
-    return r;
-}
-#endif
-
 #ifdef OLD_SELECTION
 
 /* relatively minimal version for gtk 2.0.N */
@@ -930,14 +912,42 @@ static gboolean update_selected (GtkTreeSelection *selection, spreadsheet *sheet
 
 #else
 
-/* Below: prevent cursor movement outside of the data area */
+static void manufacture_keystroke (GtkWidget *widget, guint uval)
+{
+    GdkKeymapKey *keys;
+    gint n_keys;
+
+    if (gdk_keymap_get_entries_for_keyval(NULL, uval, &keys, &n_keys)) {
+	guint16 hardware_keycode;
+	GdkEvent *event;
+
+	hardware_keycode = keys[0].keycode;
+	g_free(keys);
+
+	event = gdk_event_new(GDK_KEY_PRESS);
+	event->key.window = g_object_ref(widget->window);
+	event->key.hardware_keycode = hardware_keycode;
+
+	event->key.keyval = gdk_unicode_to_keyval(uval);
+	event->key.length = 1;
+
+	event->key.send_event = FALSE;
+	event->key.time = GDK_CURRENT_TIME;   
+
+	gtk_main_do_event(event);
+	gdk_event_free(event);
+    }
+}
 
 static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key, 
 				   spreadsheet *sheet)
 {
     if (key->keyval == GDK_Tab) {
-	key->keyval = GDK_Right;
+	/* FIXME */
+	;
     }
+
+    /* prevent cursor movement outside of the data area */
 
     if (key->keyval == GDK_Right || key->keyval == GDK_Left) {
 	GtkTreeViewColumn *column;
@@ -957,7 +967,8 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	}
     } 
 
-#if 0
+    /* numeric key: start editing */
+
     else if ((key->keyval >= GDK_0 && key->keyval <= GDK_9) ||
 	key->keyval == GDK_minus) {
 	GtkTreePath *path = NULL;
@@ -966,38 +977,12 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
 
 	if (path != NULL && column != NULL) {
-	    GtkCellEditable *editable;
-	    gchar *pathstr = gtk_tree_path_to_string(path);
-	    gint newcol = 
-		GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
-	    GtkCellRenderer *datacell = g_object_get_data(G_OBJECT(column), 
-							  "renderer");
-
-	    if (newcol == 0) {
-		/* not a data column */
-		gtk_tree_path_free(path);
-		return TRUE;
-	    }
-
-	    fprintf(stderr, "tree path = '%s'\n", pathstr);
-	    gtk_tree_view_column_focus_cell(column, sheet->datacell);
-
-	    /* start editing */
-	    editable = gtk_cell_renderer_start_editing(datacell,
-						       NULL,
-						       NULL,
-						       pathstr,
-						       NULL, NULL, 0);
-	    g_free(pathstr);
-	    fprintf(stderr, "editable = %p\n", (void *) editable);
-	    fprintf(stderr, "entry text: '%s'\n",
-		    gtk_entry_get_text(GTK_ENTRY(editable)));
-	    gtk_widget_grab_focus(GTK_WIDGET(editable));
-	    gtk_entry_set_text(GTK_ENTRY(editable), "foo");
+	    gtk_tree_view_set_cursor(GTK_TREE_VIEW(view), path, column, 
+				     TRUE);
 	    gtk_tree_path_free(path);
+	    manufacture_keystroke(view, key->keyval);
 	}
     }
-#endif
 
     return FALSE;
 }
@@ -1135,28 +1120,18 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     colnum = 0;
     for (i=1; i<nvars; i++) {
 	char tmp[16];
-#ifdef MRENDER
-	GtkCellRenderer *datacell = data_renderer(sheet);
-#endif
 
 	if (datainfo->vector[i] == 0) continue;
 	colnum++;
 	double_underscores(tmp, datainfo->varname[i]);
 	column = gtk_tree_view_column_new_with_attributes (tmp,
-#ifdef MRENDER
-							   datacell,
-#else
 							   sheet->datacell,
-#endif
 							   "text", 
 							   colnum, 
 							   NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	set_up_sheet_column(column, width, TRUE);
 	g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(i));
-#ifdef MRENDER
-	g_object_set_data(G_OBJECT(column), "renderer", datacell);
-#endif
     }
 
     /* set the selection property on the tree view */
