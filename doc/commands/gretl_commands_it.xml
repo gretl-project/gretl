@@ -2569,7 +2569,7 @@
 
     <usage>
       <arguments>
-        <argument>control</argument>
+        <argument>controllo</argument>
       </arguments>
       <examples>
         <example>loop 1000</example>
@@ -2579,27 +2579,29 @@
     </usage>
 
     <description>
-      <para>The parameter <repl quote="true">control</repl> must take
-	one of three forms, as shown in the examples: an integer
-	number of times to repeat the commands within the loop;
-	<quote><lit>while</lit></quote> plus a numerical condition; or
-	<quote><lit>for</lit></quote> plus a range of values for the
-	internal index variable <lit>i</lit>.
+      <para>Il parametro <repl quote="true">controllo</repl> deve
+        assumere uno dei tre valori mostrati negli esempi: un numero di
+        volte per cui ripetere i comandi all'interno del loop, oppure
+	<quote><lit>while</lit></quote> seguito da una condizione
+        numerica, o ancora <quote><lit>for</lit></quote> seguito da un
+        intervallo di valori per la variabile interna <lit>i</lit> che
+        funge da indice.
       </para>
 
-      <para>This command opens a special mode in which the program
-	accepts commands to be executed repeatedly.  Within a loop,
-	only certain commands can be used: <cmd>genr</cmd>,
-	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>sim</cmd>,
-	<cmd>smpl</cmd>, <cmd>store</cmd> and <cmd>summary</cmd>
-	(store can't be used in a <quote>while</quote> loop).  You
-	exit the mode of entering loop commands with
-	<cmd>endloop</cmd>: at this point the stacked commands are
-	executed.  Loops cannot be nested.
+      <para>Questo comando apre una modalità speciale, in cui il
+        programma accetta comandi da eseguire più volte. All'interno di
+        un loop possono essere usati solo alcuni tipi di comandi:
+        <cmd>genr</cmd>, <cmd>ols</cmd>, <cmd>print</cmd>,
+        <cmd>sim</cmd>, <cmd>smpl</cmd>, <cmd>store</cmd> e
+        <cmd>summary</cmd> (<cmd>store</cmd> non può essere usato in un
+        loop di tipo <quote>while</quote>). Si esce dalla modalità loop
+        con l'istruzione <cmd>endloop</cmd>: a questo punto i comandi
+        indicati vengono eseguiti. I loop non possono essere nidificati
+        tra loro.
       </para>
 
-      <para>See <manref targ="looping"/> for further details and
-	examples.</para>
+      <para>Si veda <manref targ="looping"/> per ulteriori dettagli ed
+      esempi.</para>
     </description>
 
   </command>
@@ -2609,16 +2611,16 @@
 
     <description>
       <para>
-	This command needs the name of a file containing "case
-	markers", that is, short identifying strings for the
-	individual observations in the data set (for example, country
-	or city names or codes).  These marker strings should be no
-	more than 8 characters long.  The file should contain one
-	marker per line, and there should be just as many markers as
-	observations in the current dataset. If these conditions are
-	met and the specified file is found, the case markers will be
-	added; they will be visible when you choose "Display values"
-	under gretl's Data menu.</para>
+	Questo comando richiede il nome di un file che contiene
+        "marcatori" per le osservazioni, ossia brevi stringhe
+        identificative per singole osservazioni del dataset (ad esempio
+        nomi di paesi o città, o altri codici), che possono essere
+        lunghe fino a 8 caratteri. Il file deve contenere un marcatore
+        per riga e devono esserci tanti marcatori quante sono le
+        osservazioni nel dataset corrente. Se queste condizioni sono
+        rispettate e se il file specificato esiste, i marcatori verranno
+        aggiunti al dataset e saranno visibili scegliendo "Mostra
+        valori" dal menù "Dati" di gretl.</para>
     </description>
   </command>
 
@@ -2633,35 +2635,35 @@
       <options>
         <option>
 	  <flag>--unequal-vars</flag>
-	  <effect>assume variances are unequal</effect>
+	  <effect>assume varianze diseguali</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para context="cli">
-	Calculates the <mathvar>t</mathvar> statistic for the null
-	hypothesis that the population means are equal for the
-	variables <repl>var1</repl> and <repl>var2</repl>, and shows
-	its p-value. By default the test statistic is calculated on
-	the assumption that the variances are equal for the two
-	variables; with the <lit>--unequal-vars</lit>option the
-	variances are assumed to be different.  This will make a
-	difference to the test statistic only if there are different
-	numbers of non-missing observations for the two variables.
+	Calcola la statistica <mathvar>t</mathvar> per l'ipotesi
+	nulla che le medie della popolazione siano uguali per le
+        variabili <repl>var1</repl> e <repl>var2</repl>, mostrando il
+        suo p-value. L'impostazione predefinita prevede di assumere che
+        le varianze delle due variabili siano uguali, mentre usando
+        l'opzione <lit>--unequal-vars</lit>, si assume che esse siano
+        diverse. Questo è rilevante per la statistica test solo se le
+        due variabili contengono un diverso numero di osservazioni
+        valide (non mancanti).
       </para>
       <para context="gui">
-	Calculates the t statistic for the ipotesi nulla that the
-	population means are equal for two selected variables, and
-	shows its p-value.  The command may be called with or without
-	the assumption that the variances are equal for the two
-	variables (although this will make a difference to the test
-	statistic only if there are different numbers of non-missing
-	observations for the two variables.)</para>
+        Calcola la statistica t per l'ipotesi nulla che le medie della
+        popolazione siano uguali per due variabili selezionate,
+        mostrando il suo p-value. Il comando può essere eseguito con o
+        senza l'ipotesi che le varianze delle due variabili siano uguali
+        (anche se questo è rilevante per la statistica test solo se le
+        due variabili contengono un diverso numero di osservazioni
+        valide).</para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Difference of means</menu-path>
+      <menu-path>/Dati/Differenza delle medie</menu-path>
     </gui-access>
 
   </command>
@@ -2670,19 +2672,19 @@
     label="Missing data values">
 
     <description>
-      <para>Set a numerical value that will be interpreted as
-	<quote>missing</quote> or <quote>not available</quote>, either
-	for a particular data series (under the Variable menu) or
-	globally for the entire data set (under the Sample
-	menu).</para> 
+      <para>Imposta un valore numerico che sarà interpretato come
+	<quote>mancante</quote> o <quote>non disponibile</quote>, per
+        una serie particolare (nel menu Variabile) o globalmente per
+        l'intero dataset (nel menu Campione).</para> 
 
-      <para>Gretl has its own internal coding for missing values, but
-	sometimes imported data may employ a different code.  For
-	example, if a particular series is coded such that a value of
-	-1 indicates <quote>not applicable</quote>, you can select
-	<quote>Set missing value code</quote> under the Variable menu
-	and type in the value <quote>-1</quote> (without the quotes).
-	Gretl will then read the -1s as missing observations.</para>
+      <para>Gretl ha un codice interno per i valori mancanti, che non
+      sempre può coincidere con quello usato dai dati importati. Ad
+      esempio, se una serie usa il valore -1 col significato di
+      <quote>non disponibile</quote>, è possibile selezionare
+      <quote>Imposta codice valori mancanti</quote> nel menù
+      Variabile e immettere il valore <quote>-1</quote> (senza le
+      virgolette); gretl interpreterà quindi i valori -1 come osservazioni
+      mancanti.</para>
     </description>
   </command>
 
@@ -2699,79 +2701,79 @@
 
     <description context="gui"> 
       <para>
-	In econometric research it is common to estimate several
-	models with a common dependent variable&mdash;the models
-	differing in respect of which independent variables are
-	included, or perhaps in respect of the estimator used.  In
-	this situation it is convenient to present the regression
-	results in the form of a table, where each column contains the
-	results (coefficient estimates and standard errors) for a
-	given model, and each row contains the estimates for a given
-	variable across the models.</para>
+	Nella ricerca econometrica è prassi stimare vari modelli con una
+        variabil dipendente comune &mdash; mentre i modelli differiscono
+        tra loro per le variabili indipendenti o per lo stimatore usato.
+	In questa situazione è comodo poter rappresentare i risultati
+        delle regressioni in forma di una tabella dove ogni colonna
+        contiene i risultati (stime dei coefficienti e errori standard)
+        per un dato modello e ogni riga contiene le stime per una certa
+        variabile nei differenti modelli.</para>
 
-      <para>Gretl provides a means of constructing such a table (and
-	copying it in plain text, &latex; or Rich Text Format).  Here is
-	how to do it:</para>
+      <para>Gretl dà la possibilità di costruire una tabella simile (e
+      di esportarla in testo semplice, &latex; o RTF - Rich Text Format).
+      Ecco come fare:</para>
 
       <nlist>
-	<li><para>1. Estimate a model which you wish to include in the
-	    table, and in the model display window, under the File
-	    menu, select <quote>Save to session as icon</quote> or
-	    <quote>Save as icon and close</quote>.</para>
+	<li><para>1. Stimare un modello che si vuole includere nella
+            tabella e selezionare, nel menù File della finestra di
+            visualizzazione del modello, <quote>Salva alla sessione come
+            icona</quote> o <quote>Salva come icona e chiudi</quote>.</para>
 	</li>
 
-	<li><para>2. Repeat step 1 for the other models to be included in
-	    the table (up to a total of six models).</para>
+	<li><para>2. Ripetere il punto 1 per gli alri modelli da
+        includere nella tabella (fino a un massimo di sei modelli).</para>
 	</li>
 
-	<li><para>3. When you are done estimating the models, open the
-	    icon view of your gretl session (by selecting <quote>icon
-	      view</quote> under the Session menu in the main gretl
-	    window, or by clicking the <quote>session icon
-	      view</quote> icon on the gretl toolbar).</para>
+	<li><para>3. Completata la stima dei modelli, aprire l'icona
+        della sessione di gretl (selezionando <quote>Visualizza Icone</quote>
+        nel menù Sessione della finestra principale di gretl, o facendo
+        clic su <quote>Icone di sessione</quote> sulla barra degli
+        strumenti di gretl).</para>
 	</li>
 
-	<li><para>4. In session icon view, there is an icon labeled
-	    <quote>Model table</quote>. Decide which model you wish to
-	    appear in the left-most column of the model table and add
-	    it to the table, either by dragging its icon onto the
-	    Model table icon, or by right-clicking on the model icon
-	    and selecting <quote>Add to model table</quote> from the
-	    pop-up menu.</para>
+        <li><para>4. La finestra delle icone di sessione contiene
+        un'icona chiamata <quote>Tabella Modelli</quote>. Per aggiungere
+        alla tabella modelli il modello che deve apparire nella colonna
+        più a sinistra della tabella, basta trascinare l'icona del
+        modello sull'icona della Tabella Modelli, oppure fare clic col
+        tasto destro sull'icona del modello e selezionare
+        <quote>Aggiungi alla tabella modelli</quote> dal menù
+        pop-up.</para>
 	</li>
 
-	<li><para>5. Repeat step 4 for the other models you wish to
-	    include in the table.  The second model selected will
-	    appear in the second column from the left, and so
-	    on.</para>
+	<li><para>5. Ripetere il punto 4 per gli altri modelli da
+        aggiungere alla tabella. Il secondo modello scelto apparirà
+        nella seconda colonna da sinistra della tabella, e così via.
+	</para>
 	</li>
 
-	<li><para>6. When you are finished composing the model table,
-	    display it by double-clicking on its icon.  Under the Edit
-	    menu in the window which appears, you have the option of
-	    copying the table to the clipboard in various
-	    formats.</para>
+	<li><para>6. Ultimata la composizione della tabella, è possibile
+        visualizzarla facendo doppio clic sulla sua icona. Per copiare
+        la tabella negli appunti in uno dei formati supportati, basta
+        fare clic sul menù Modifica della finestra in cui appare la
+        tabella.</para>
 	</li>
 
-	<li><para>7. If the ordering of the models in the table is not
-	    what you wanted, right-click on the model table icon and
-	    select <quote>Clear table</quote>.  Then go back to step 4
-	    above and try again.</para>
+	<li><para>7. Se l'ordinamento dei modelli nella tabella non è
+        quello voluto, fare clic col tasto destro sull'icona della
+        tabella modelli e selezionare <quote>Pulisci</quote>, quindi
+        tornare al punto 4.</para>
 	</li>
       </nlist>
     </description>
 
     <description context="cli">
-      <para>Manipulates the gretl <quote>model table</quote>. See
-	<manref targ="modes"/> for details. The sub-commands have
-	the following effects: <cmd>add</cmd> adds the last model
-	estimated to the model table, if possible; <cmd>show</cmd>
-	displays the model table in a window; and <cmd>free</cmd>
-	clears the table.</para>
+      <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda
+      	<manref targ="modes"/> per i dettagli. Le opzioni hanno i
+        seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo modello
+        stimato alla tabella modelli, se possibile; <cmd>show</cmd>
+	mostra la tabella modelli in una finestra; <cmd>free</cmd>
+	pulisce la tabella.</para>
     </description>
 
     <gui-access>
-      <menu-path>Session window, Model table icon</menu-path>
+      <menu-path>Finestra di sessione, Icona Tabella Modelli</menu-path>
     </gui-access>
 
   </command>
@@ -2788,29 +2790,28 @@
 
     <description>
       <para>
-	Computes OLS estimates for the specified model using multiple
-	precision floating-point arithmetic.  This command is
-	available only if <program>gretl</program> is compiled with
-	support for the Gnu Multiple Precision library (GMP).
+	Calcola le stime OLS per il modello indicato usando aritmetica
+        in virgola mobile a precisione multipla. Questo comando è
+        disponibile solo se <program>gretl</program> è compilato con il
+        supporto per la libreria Gnu Multiple Precision (GMP).
       </para>
 
       <para context="cli">
-	To estimate a polynomial fit, using multiple precision
-	arithmetic to generate the required powers of the independent
-	variable, use the form, e.g. <cmd>mpols y 0 x ; 2 3 4</cmd>
-	This does a regression of <lit>y</lit> on <lit>x</lit>,
-	<lit>x</lit> squared, <lit>x</lit> cubed and <lit>x</lit> to
-	the fourth power.  That is, the numbers (which must be
-	positive integers) to the right of the semicolon specify the
-	powers of <lit>x</lit> to be used.  If more than one
-	independent variable is specified, the last variable before
-	the semicolon is taken to be the one that should be raised to
-	various powers.
+	Per stimare un'interpolazione polinomiale usando l'aritmetica a
+        precisione multipla per generare le potenze richieste della
+        variabile indipendente, si usi la sintassi <cmd>mpols y 0 x ; 2
+        3 4</cmd>. Si otterrà una regressione di <lit>y</lit> su <lit>x</lit>,
+	<lit>x</lit> quadro, <lit>x</lit> al cubo e <lit>x</lit> alla
+        quarta potenza. Quindi i numeri (interi positivi) a destra del
+        punto e virgola specificano le potenze di <lit>x</lit> da usare.
+        Se si indica più di una variabile indipendente, l'ultima
+        variabile prima del punto e virgola è quella di cui verranno
+        calcolate le potenze.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Modello/High precision OLS</menu-path>
+      <menu-path>/Modello/MPOLS - Minimi quadrati in alta precisione</menu-path>
     </gui-access>
 
   </command>
@@ -2820,7 +2821,7 @@
     <usage>
       <arguments>
         <argument>x</argument>
-        <argument>suffix</argument>
+        <argument>suffisso</argument>
         <argument>lista-variabili</argument>
       </arguments>
       <examples>
@@ -2831,23 +2832,24 @@
 
     <description>
       <para>
-	The variables in <repl>lista-variabili</repl> (referenced by name or
-	number) are multiplied by <repl>x</repl>, which may be either
-	a numerical value or the name of a variable already defined.
-	The products are named with the specified <repl>suffix</repl>
-	(maximum 3 characters). The original variable names are
-	truncated first if need be. For instance, suppose you want to
-	create per capita versions of certain variables, and you have
-	the variable <lit>pop</lit> (population).  A suitable set of
-	commands is then:</para>
+	Le variabili nella <repl>lista-variabili</repl> (indicate per
+        nome o numero) sono moltiplicate per <repl>x</repl>, che può
+        essere un valore numerico o il nome di una variabile già
+        definita. I prodotti verranno chiamati con il
+        <repl>suffisso</repl> specificato (massimo 3 caratteri)
+	(maximum 3 characters), troncando i nomi delle variabili
+        originali se ce n'è bisogno per motivi di spazio. Ad esempio, si
+        supponga di voler creare la versione procapite di una serie di
+        variabili, usando la variabile <lit>pop</lit> (popolazione).
+        Lo si può fare con i comandi seguenti:</para>
       
       <code>
 	genr invpop = 1/pop
 	multiply invpop pc income</code>
 
-      <para>which will create <lit>incomepc</lit> as the product of
-	<lit>income</lit> and <lit>invpop</lit>, and
-	<lit>expendpc</lit> as <lit>expend</lit> times
+      <para>che creeranno <lit>incomepc</lit> come prodotto di
+	<lit>income</lit> e <lit>invpop</lit>, e
+	<lit>expendpc</lit> come <lit>expend</lit> per
 	<lit>invpop</lit>.
       </para>
     </description>
@@ -2859,8 +2861,8 @@
 
     <usage>
       <arguments>
-        <argument>function</argument>
-        <argument>derivatives</argument>
+        <argument>funzione</argument>
+        <argument>derivate</argument>
       </arguments>
       <options>
 	<option>
@@ -2872,47 +2874,46 @@
 
     <description context="gui">
 
-      <para>Performs Nonlinear Least Squares (NLS)
-	estimation using a modified version of the Levenberg-Marquandt
-	algorithm. You must supply a function specification; it is
-	recommended that you also supply expressions for the
-	derivatives of this function with respect to each of the
-	parameters if possible.</para>
+      <para>Esegue una stima con minimi quadrati non-lineari (NLS:
+      Nonlinear Least Squares) usando una versione modificata
+      dell'algoritmo di Levenberg-Marquandt. Occorre fornire una
+      specificazione di funzione e si raccomanda di specificare anche le
+      espressioni per le derivate di questa funzione rispetto a ognuno
+      dei parametri, se possibile.</para>
 
-      <para>Example: Suppose we have a data set with
-	variables C and Y (e.g. greene11_3.gdt) and we wish to
-	estimate a nonlinear consumption function of the form
+      <para>Esempio: si supponga di avere un dataset con le variabili
+	C e Y (ad es. greene11_3.gdt) e di voler stimare una funzione di
+        consumo non-lineare del tipo:
 	<equation status="display"
 	  tex="\[C = \alpha + \beta Y^{\gamma}\]"
-	  ascii="C = alpha + beta * Y^gamma"
+	  ascii="C = alfa + beta * Y^gamma"
 	  graphic="greene_Cfunc"/></para>
 
-      <para>The parameters alpha, beta and gamma must
-	first be added to the dataset and given initial values.  This
-	can be done using the genr command or via menu choices.
-	Appropriate <quote>genr</quote> lines may be typed into the
-	NLS specification window prior to the function
-	specification.</para>
+      <para>I parametri alfa, beta e gamma devono per prima cosa essere
+      aggiunti al dataset, indicando un valore iniziale; è possibile
+      farlo usando il comando genr o attraverso i menù. È possibile
+      inserire i comandi <quote>genr</quote> appropriati nella finestra
+      di dialogo della specificazione NLS prima di specificare la
+      funzione.</para>
 
-      <para>In the NLS window we type the following
-	lines:</para>
+      <para>Nella finestra NLS si inseriranno le righe seguenti:</para>
 
       <code>
-	C = alpha + beta * Y^gamma
-	deriv alpha = 1
+	C = alfa + beta * Y^gamma
+	deriv alfa = 1
 	deriv beta = Y^gamma
 	deriv gamma = beta * Y^gamma * log(Y)
       </code>
 
-      <para>The first line specifies the regression
-	function, and the next three lines supply the derivatives of
-	that function with respect to each of the parameters in turn.
-	If the "deriv" lines are not given, a numerical approximation
-	to the Jacobian is computed.</para>
+      <para>La prima riga indica la specificazione della funzione, mentre
+      le righe successive forniscono le derivate della funzione rispetto
+      ad ognuno dei tre parametri. Se non vengono fornite le righe
+      "deriv", viene calcolata un'approssimazione numerica del
+      Jacobiano.</para>
 
-      <para>If the parameters alpha, beta and gamma were
-	not previously declared we could preface the above lines with
-	something like the following:</para>
+      <para>Se i parametri alfa, beta e gamma non sono stati
+      dichiarati in precedenza, è possibile premettere alle righe viste
+      sopra le seguenti:</para>
 
       <code>
 	genr alpha = 1
@@ -2920,86 +2921,84 @@
 	genr gamma = 1
       </code>
 
-      <para>For further details on NLS estimation please see
+      <para>Per ulteriori dettagli sulla stima NLS si veda
 	<manref targ="chap-nls"/>.</para>
 
     </description>
 
     <description context="cli">
 
-      <para>
-	Performs Nonlinear Least Squares (NLS) estimation using a
-	modified version of the Levenberg&ndash;Marquandt algorithm.
-	The user must supply a function specification.  The parameters
-	of this function must be declared and given starting values
-	(using the <cmd>genr</cmd> command) prior to estimation.
-	Optionally, the user may specify the derivatives of the
-	regression function with respect to each of the parameters; if
-	analytical derivatives are not supplied, a numerical
-	approximation to the Jacobian is computed.</para>
+      <para>Esegue una stima con minimi quadrati non-lineari (NLS:
+      Nonlinear Least Squares) usando una versione modificata
+      dell'algoritmo di Levenberg&ndash;Marquandt. Occorre fornire una
+      specificazione di funzione e dichiarare i parametri della funzione
+      (usando il comando <cmd>genr</cmd>) prima della stima.
+      Opzionalmente, è anche possibile specificare le espressioni per le
+      derivate della funzione rispetto a ognuno dei parametri; in caso
+      contrario, viene calcolata un'approssimazione numerica del
+      Jacobiano.</para>
 
       <para>
-	It is easiest to show what is required by example.  The
-	following is a complete script to estimate the nonlinear
-	consumption function set out in William Greene's
-	<book>Econometric Analysis</book> (Chapter 11 of the 4th
-	edition, or Chapter 9 of the 5th).  The numbers to the left of
-	the lines are for reference and are not part of the commands.
-	Note that the <lit>--vcv</lit> option, for printing the
-	matrice di covarianza of the parameter estimates, attaches to the
-	final command, <lit>end nls</lit>.</para>
+	È più semplice mostrare il funzionamento con un esempio. Quello
+        che segue è uno script completo per stimare la funzione di
+        consumo non-lineare presentata in <book>Econometric
+        Analysis</book> di William Greene (capitolo 11 della quarta
+        edizione, o capitolo 9 della quinta). I numeri alla sinistra
+        delle righe sono dei punti di riferimento e non fanno parte dei
+        comandi. Si noti che l'opzione <lit>--vcv</lit> per mostrare la
+	matrice di covarianza delle stime dei parametri, si applica al
+        comando finale <lit>end nls</lit>.</para>
 
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
-	3   genr alpha = coeff(0)
+	3   genr alfa = coeff(0)
 	4   genr beta = coeff(Y)
 	5   genr gamma = 1.0
-	6   nls C = alpha + beta * Y^gamma
-	7   deriv alpha = 1
+	6   nls C = alfa + beta * Y^gamma
+	7   deriv alfa = 1
 	8   deriv beta = Y^gamma
 	9   deriv gamma = beta * Y^gamma * log(Y)
 	10  end nls --vcv
       </code>
 
       <para>
-	It is often convenient to initialize the parameters by
-	reference to a related linear model; that is accomplished here
-	on lines 2 to 5.  The parameters alpha, beta and gamma could
-	be set to any initial values (not necessarily based on a model
-	estimated with OLS), although convergence of the NLS procedure
-	is not guaranteed for an arbitrary starting point.</para>
+	Spesso è comodo inizializzare i parametri con riferimento a un
+        modello lineare collegato, come è mostrato nelle righe da 2 a 5.
+	I parametri alfa, beta e gamma possono essere impostati a
+        qualunque valore iniziale (non necessariamente sulla base di un
+        modello stimato con OLS), ma la convergenza della procedura NLS
+        non è garantita per qualunque punto di partenza.</para>
 
       <para>
-	The actual NLS commands occupy lines 6 to 10. On line 6 the
-	<cmd>nls</cmd> command is given: a dependent variable is
-	specified, followed by an equals sign, followed by a function
-	specification.  The syntax for the expression on the right is
-	the same as that for the <cmd>genr</cmd> command.  The next
-	three lines specify the derivatives of the regression function
-	with respect to each of the parameters in turn.  Each line
-	begins with the keyword <cmd>deriv</cmd>, gives the name of a
-	parameter, an equals sign, and an expression whereby the
-	derivative can be calculated (again, the syntax here is the
-	same as for <cmd>genr</cmd>). These <cmd>deriv</cmd> lines are
-	optional, but it is recommended that you supply them if
-	possible. Line 10, <cmd>end nls</cmd>, completes the command
-	and calls for estimation.</para>
+	I veri comandi NLS occupano le righe da 6 a 10. Sulla riga 6
+        viene dato il comando <cmd>nls</cmd>: viene specificata una
+        variabile dipendente, seguita dal segno uguale, seguito da una
+        specificazione di funzione. La sintassi per l'espressione a
+        destra è la stessa usata per il comando <cmd>genr</cmd>. Le tre
+        righe successive specificano le derivate della funzione di
+        regressione rispetto a ognuno dei parametri. Ogni riga inizia
+        con il comando <cmd>deriv</cmd>, indica il nome di un parametro,
+        il segno di uguale e un'espressione che indica come calcolare la
+        derivata (anche qui la sintassi è la stessa di <cmd>genr</cmd>).
+        Queste righe <cmd>deriv</cmd> sono opzionali, ma si raccomanda
+        di inserirle se possibile. La riga 10, <cmd>end nls</cmd>,
+        completa il comando ed esegue la stima.</para>
 
-      <para>For further details on NLS estimation please see
+      <para>Per ulteriori dettagli sulla stima NLS si veda
 	<manref targ="chap-nls"/>.</para>
 
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Nonlinear Least Squares</menu-path>
+      <menu-path>/Modello/Minimi quadrati non lineari</menu-path>
     </gui-access>
 
   </command>
 
   <command name="noecho" section="Obsolete" context="cli">
     <description>
-      <para>Obsolete command.  See <cmdref targ="set"/>.
+      <para>Comando obsoleto.  Si veda <cmdref targ="set"/>.
       </para>
     </description>
   </command>
@@ -3009,7 +3008,7 @@
 
     <usage>
       <arguments>
-        <argument>series_length</argument>
+        <argument>lunghezza_serie</argument>
       </arguments>
       <examples>
         <example>nulldata 500</example>
@@ -3018,20 +3017,19 @@
 
     <description>
       <para>
-	Establishes a <quote>blank</quote> data set, containing only a
-	constant and an index variable, with periodicity 1 and the
-	specified number of observations. This may be used for
-	simulation purposes: some of the <cmd>genr</cmd> commands
-	(e.g. <cmd>genr uniform()</cmd>, <cmd>genr normal()</cmd>)
-	will generate dummy data from scratch to fill out the data
-	set. This command may be useful in conjunction with
-	<cmd>loop</cmd>.  See also the <quote>seed</quote> option to
-	the <cmdref targ="set"/> command.
+	Crea un dataset <quote>vuoto</quote>, che contiene solo una
+        costante e una variabile indice, con periodicità 1 e il numero
+        indicato di osservazioni. Il dataset può essere usato a scopo di
+        simulazione: alcuni dei comandi <cmd>genr</cmd> (ad es.
+        <cmd>genr uniform()</cmd>, <cmd>genr normal()</cmd>) possono
+        essere usati per riempire il dataset con dati di prova. Questo
+        comando può essere usato insieme a <cmd>loop</cmd>.  Si veda
+        anche l'opzione <quote>seed</quote> del comando <cmdref targ="set"/>.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/File/Create data set</menu-path>
+      <menu-path>/File/Crea dataset</menu-path>
     </gui-access>
 
   </command>
@@ -3051,11 +3049,11 @@
         </option>
         <option>
 	  <flag>--robust</flag>
-	  <effect>robust standard errors</effect>
+	  <effect>errori standard robusti</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>suppress printing of results</effect>
+	  <effect>non mostra i risultati</effect>
         </option>
       </options>
       <examples>
@@ -3067,42 +3065,42 @@
 
     <description>
       <para context="gui">
-        Computes ordinary least squares (OLS) estimates for the
-        specified model.
+        Calcola le stime minimi quadrati ordinari (OLS: Ordinary Least
+        Squares) per il modello specificato.
       </para>
 
       <para context="cli">
-        Computes ordinary least squares (OLS) estimates with
-	<repl>variabile-dipendente</repl> as the dependent variable and
-	<repl>variabili-indipendenti</repl> as the list of independent variables.
-	Variables may be specified by nome o numero; use the number
-	zero for a constant term. 
+        Calcola le stime minimi quadrati ordinari (OLS: Ordinary Least
+        Squares) usando la <repl>variabile-dipendente</repl> e la lista
+        di <repl>variabili-indipendenti</repl>, che possono essere 
+        specificate per nome o numero. Il termine costante può essere
+        indicato usando il numero 0.
       </para>
 
-      <para>Besides coefficient estimates and standard errors, the
-	program also prints p-values for <mathvar>t</mathvar>
-	(two-tailed) and <mathvar>F</mathvar>-statistics.  A p-value
-	below 0.01 indicates significance at the 1 percent level and
-	is denoted by <lit>***</lit>. <lit>**</lit> indicates
-	significance between 1 and 5 percent and <lit>*</lit>
-	indicates significance between 5 and 10 percent levels. Model
-	selection statistics (described in Ramanathan, Section 4.3)
-	are also printed.</para>
+      <para>Oltre alle stime dei coefficienti e gli errori standard, il
+      programma mostra i p-value per le statistiche <mathvar>t</mathvar>
+	(a due code) e <mathvar>F</mathvar>.  Un p-value inferiore a
+	0.01 indica significatività al livello dell'1 per cento ed è
+        denotato con <lit>***</lit>. <lit>**</lit> indica invece la
+        significatività tra l'1 e il 5 per cento, mentre <lit>*</lit>
+	indica un livello di significatività tra il 5 e il 10 per cento.
+	Vengono mostrate anche le statistiche di selezione del modello
+        (descritte in Ramanathan, capitolo 4.3).</para>
 
-      <para context="cli">Various internal variables may be retrieved
-	using the <cmdref targ="genr"/> command, provided
-	<cmd>genr</cmd> is invoked immediately after this command.
+      <para context="cli">È possibile recuperare alcune variabili
+      interne generate durante la stima, usando il comando <cmdref
+      targ="genr"/> subito dopo questo comando.
       </para>
 
-      <para context="cli">The specific formula used for generating robust
-	standard errors (when the <lit>--robust</lit> option is given)
-	can be adjusted via the <cmdref targ="set"/> command.
-      </para>
+      <para context="cli">La formula usata per generare gli errori
+      standard robusti (quando viene usata l'opzione
+      <lit>--robust</lit>) può essere modificata con il comando <cmdref
+      targ="set"/>.  </para>
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Ordinary Least Squares</menu-path>
-      <other-access>Beta-hat button on toolbar</other-access>
+      <menu-path>/Modello/OLS - Minimi quadrati ordinari</menu-path>
+      <other-access>Pulsante Beta-hat sulla barra degli strumenti</other-access>
     </gui-access>
 
   </command>
@@ -3120,7 +3118,7 @@
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print estimates for reduced model</effect>
+	  <effect>non mostra le stime per il modello ridotto</effect>
 	</option>
       </options>
       <examples>
@@ -3130,26 +3128,26 @@
 
     <description>
       <para>
-	This command must follow an estimation command. The selected
-	variables are omitted from the previous model and the new
-	model estimated. If more than one variable is omitted, the
-	Wald <mathvar>F</mathvar>-statistic for the omitted variables
-	will be printed along with its p-value (for the OLS procedure
-	only).  A p-value below 0.05 means that the coefficients are
-	jointly significant at the 5 percent level.
+	Questo comando deve seguire un comando di stima. Omette le
+        variabili indicate dal modello precedente e stima il nuovo
+        modello. Se viene omessa più di una variabile, viene mostrata la
+        statistica <mathvar>F</mathvar> di Wald per le variabili omesse,
+        insieme al suo p-value (solo per la procedura OLS). Un p-value
+        inferiore a 0.05 indica che i coefficienti sono congiuntamente
+        significativi al livello del 5 per cento.
       </para>
       <para context="cli">
-	If the <lit>--quiet</lit> option is given the printed results
-	are confined to the test for the joint significance of the
-	omitted variables, otherwise the estimates for the reduced
-	model are also printed.  In the latter case, the
-	<lit>--vcv</lit> flag causes the matrice di covarianza for the
-	coefficients to be printed also.
+	Se viene usata l'opzione <lit>--quiet</lit>, i risultati
+        mostrati comprendono solo il test per la significatività
+        congiunta delle variabili omesse, altrimenti vengono mostrate
+        anche le stime del moello ridotto. In quest'ultimo caso,
+        l'opzione <lit>--vcv</lit> mostra anche la matrice di covarianza
+        dei coefficienti.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Test/omit variables</menu-path>
+      <menu-path>Finestra del modello, /Test/OMIT - Ometti variabili</menu-path>
     </gui-access>
 
   </command>
@@ -3164,7 +3162,7 @@
       <options>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print estimates for reduced model</effect>
+	  <effect>non mostra le stime per il modello ridotto</effect>
 	</option>
       </options>
       <examples>
@@ -3173,16 +3171,16 @@
     </usage>
 
     <description>
-      <para>Works like <cmdref targ="omit"/>, except that you specify
-	a previous model (using its ID number, which is printed at the
-	start of the model output) to take as the base for omitting
-	variables.  The example above omits variables number 5, 7 and
-	9 from Model 2.
+      <para>Funziona come <cmdref targ="omit"/>, tranne per il fatto che
+      è possibile indicare un modello precedentemente stimato,
+      attraverso il suo numero identificativo (che è mostrato all'inizio
+      dei risultati del modello). L'esempio precedente omette le
+      variabili numero 5, 7 e 9 dal modello 2.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Test/omit variables</menu-path>
+      <menu-path>Finestra del modello, /Test/OMIT - Ometti variabili</menu-path>
     </gui-access>
 
   </command>
