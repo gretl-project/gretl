@@ -20,124 +20,78 @@
 /* win32.c for gretl */
 
 #include "libgretl.h"
+#include <windows.h>
 
 /* ............................................................ */
 
-static int readw (char *word, FILE *fp, int *space)
-/*  	reads characters from file fp into word until end of file or new line
-	is encountered.  Ignores quote characters.
-*/
+static int read_reg_val (char *keyname, char *keyval)
 {
-    int c, n = 0, ncr = 0;
-    *word = '\0';
-    *space = 0;
+    unsigned long datalen = MAXLEN;
+    int winerr, error = 0;
+    HKEY regkey;
 
-    while ((c=getc(fp)) != EOF) switch (c) {
-
-    case '\n':  
-        *word = '\0';
-        ncr++;
-        if (n) return ncr;
-        else continue;
-    case '"':
-	continue;
-    case '\r':
-    case 27:
-    case '\t':
-        *word = '\0';
-        if (n) return ncr;
-        else continue;
-    default:
-        if (c < 32) {
-            printf("Illegal control character (ASCII code %d) "
-                   "encountered\n", c);
-            exit(EXIT_FAILURE);
-        }
-        *word++ = c;
-        n++;
-	if (c == 32) *space = 1;
-        continue;
+    if (RegOpenKeyEx(
+                     HKEY_CLASSES_ROOT,           /* handle to open key */
+                     "gretl",                     /* subkey name */
+                     0,                           /* reserved */
+                     KEY_READ,                    /* access mask */
+                     &regkey                      /* key handle */
+                     ) != ERROR_SUCCESS) {
+        fprintf(stderr, "couldn't open registry\n");
+        return 1;
     }
-    *word = '\0';
-    return c;
+
+    winerr = RegQueryValueEx(
+                             regkey,
+                             keyname,
+                             NULL,
+                             NULL,
+                             keyval,
+                             &datalen
+                             );
+
+    if (winerr != ERROR_SUCCESS) {
+        error = 1;
+    } 
+                  
+    RegCloseKey(regkey);
+
+    return error;
 }
 
 /* ............................................................ */
 
-static void path_defaults (PATHS *ppaths, char *callname)
-{
-    int drive = callname[0];
-
-    sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
-    sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
-    sprintf(ppaths->gnuplot, "%c:\\userdata\\gp371w32\\wgnupl32.exe", drive);
-    sprintf(ppaths->pgnuplot, "%c:\\userdata\\gp371w32\\pgnuplot.exe", drive);
-}
-
-/* ............................................................ */
-
-void set_win_paths (char *callname, PATHS *ppaths, const int reset, 
-		    const int gui)
+void set_win_paths (char *callname, PATHS *ppaths, const int gui)
 {
     FILE *fp;
-    char s[MAXLEN], cfgname[MAXLEN], *progname;
-    const char *cfgstr = "libgretl.cfg";
-    int grspace, usspace, gnspace;
+    int drive = callname[0];
 
     ppaths->currdir[0] = 0;
 
-    /* look for cfg file in same dir as the executable (Dirk E.) */
-    progname = strrchr(callname, (int) SLASH); 
-    strcpy(cfgname, callname);
-    if (progname) {
-	cfgname[strlen(callname) - strlen(progname) + 1] = 0;
-	strcat(cfgname, cfgstr);
-    } else 
-	strcpy(cfgname, cfgstr);
+    ppaths->gretldir[0] = '\0';
+    read_reg_val("gretldir", ppaths->gretldir);
+    if (ppaths->gretldir[0] == '\0')
+	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
 
-    if (!reset) {
-	fp = fopen("\\libgretl.cfg", "r");
-	if (fp == NULL) fp = fopen(cfgname, "r");
-	if (fp == NULL) path_defaults(ppaths, callname);
-	else {
-	    readw(s, fp, &grspace);
-	    if (grspace) {
-		strcpy(ppaths->gretldir, "\"");
-		strncat(ppaths->gretldir, s, MAXLEN - 3);
-	    } else
-		strncpy(ppaths->gretldir, s, MAXLEN - 1);
-	    readw(s, fp, &usspace);
-	    if (usspace) {
-		strcpy(ppaths->userdir, "\"");
-		strncat(ppaths->userdir, s, MAXLEN - 3);
-	    } else
-		strncpy(ppaths->userdir, s, MAXLEN - 1);
-	    readw(s, fp, &gnspace);
-	    if (gnspace) {
-		strcpy(ppaths->gnuplot, "\"");
-		strncat(ppaths->gnuplot, s, MAXLEN - 3);
-	    } else
-		strncpy(ppaths->gnuplot, s, MAXLEN - 1);
-	    fclose(fp);
-	}
-    }
-    strcpy(ppaths->datadir, ppaths->gretldir);
-    strcat(ppaths->datadir, "\\data\\");
-    strcpy(ppaths->scriptdir, ppaths->gretldir);
-    strcat(ppaths->scriptdir, "\\scripts\\");
-    strcpy(ppaths->helpfile, ppaths->gretldir);
+    ppaths->userdir[0] = '\0';
+    read_reg_val("userdir", ppaths->userdir);
+    if (ppaths->userdir[0] == '\0')
+	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
+
+    ppaths->gnuplot[0] = '\0';
+    read_reg_val("gnuplot", ppaths->gnuplot);
+    if (ppaths->gnuplot[0] == '\0')
+	sprintf(ppaths->gnuplot, 
+		"%c:\\userdata\\gp371w32\\pgnuplot.exe", drive);
+    
+    sprintf(ppaths->datadir, "%s\\data\\", ppaths->gretldir);
+    sprintf(ppaths->scriptdir, "%s\\scripts\\", ppaths->gretldir);
+    
     if (gui) {
-	strcat(ppaths->helpfile, "\\gretl.hlp");
-	strcpy(ppaths->cmd_helpfile, ppaths->gretldir);
-	strcat(ppaths->cmd_helpfile, "\\gretlcli.hlp");
-    } else strcat(ppaths->helpfile, "\\gretlcli.hlp");
-    if (grspace) {
-	strcat(ppaths->datadir, "\"");
-	strcat(ppaths->scriptdir, "\"");
-	strcat(ppaths->helpfile, "\"");
-	if (gui) 
-	    strcat(ppaths->cmd_helpfile, "\"");
-    }
+	sprintf(ppaths->helpfile, "%s\\gretl.hlp", ppaths->gretldir);
+	sprintf(ppaths->cmd_helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
+    } else 
+	sprintf(ppaths->helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
 
     if (ppaths->userdir[strlen(ppaths->userdir) - 2] != SLASH)
 	strcat(ppaths->userdir, SLASHSTR);
@@ -145,17 +99,9 @@ void set_win_paths (char *callname, PATHS *ppaths, const int reset,
     strcpy(ppaths->plotfile, ppaths->userdir);
     strcat(ppaths->plotfile, "gpttmp.plt");
     get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
-    if (usspace) {
-	strcat(ppaths->userdir, "\"");
-	strcat(ppaths->plotfile, "\"");
-    }
 
     get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
     strcat(ppaths->pgnuplot, "pgnuplot.exe");
-    if (grspace) {
-	strcat(ppaths->gnuplot, "\"");
-	strcat(ppaths->pgnuplot, "\"");
-    }
 
     strcpy(ppaths->dbhost_ip, "152.17.150.2");
 }

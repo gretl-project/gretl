@@ -481,7 +481,7 @@ int main (int argc, char *argv[])
 #endif
 
 #ifdef G_OS_WIN32
-    set_win_paths(callname, &paths, 0, 1); /* 1 for gui */
+    set_win_paths(callname, &paths, 1); /* 1 = gui */
     g_log_set_handler ("Gtk",
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,

@@ -259,7 +259,7 @@ int main (int argc, char *argv[])
     if (line == NULL) noalloc("command line"); 
 
 #ifdef OS_WIN32
-    set_win_paths(tmp, &paths, 0, 0); /* not reset, not gui */
+    set_win_paths(tmp, &paths, 0); /* 0 = not gui */
 #else
     set_paths(&paths, 0, 0);
     make_userdir(&paths);
