@@ -25,13 +25,14 @@
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == VAR || c == COINT || c == COINT2 || \
-                       c == MPOLS || c == LAD || c == LOGISTIC || c == TOBIT)
+                       c == MPOLS || c == LAD || c == LOGISTIC || c == TOBIT || \
+                       c == PWE)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == VAR || c == COINT || c == COINT2 || \
-                       c == LAD || c == LOGISTIC || c == TOBIT)
+                       c == LAD || c == LOGISTIC || c == TOBIT || c == PWE)
 #endif
 
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \

@@ -740,6 +740,8 @@ static char *est_str (int cmdnum)
 	return N_("Cochrane-Orcutt");
     case HILU:
 	return N_("Hildreth-Lu");
+    case PWE:
+	return N_("Prais-Winsten");
     case LOGIT:
 	return N_("Logit");
     case PROBIT:

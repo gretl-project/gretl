@@ -446,17 +446,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/H_eteroskedasticity corrected..."), NULL, model_callback, 
       HSK, NULL },
     { N_("/Model/sep2"),  NULL, NULL, 0, "<Separator>" },
-    { N_("/Model/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL },
-    { N_("/Model/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
-    { N_("/Model/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
-    { N_("/Model/ARMA_X..."), NULL, model_callback, ARMA, NULL },
-    { N_("/Model/GARCH..."), NULL, model_callback, GARCH, NULL },
-    { N_("/Model/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
-    { N_("/Model/Cointegration test"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Model/Cointegration test/Engle-Granger..."), NULL, 
-      selector_callback, COINT, NULL },
-    { N_("/Model/Cointegration test/Johansen..."), NULL, 
-      selector_callback, COINT2, NULL },
+    { N_("/Model/Time series"), NULL, NULL, 0, "<Branch>" },
     { N_("/Model/sep3"),  NULL, NULL, 0, "<Separator>" },
     { N_("/Model/_Two-Stage Least Squares..."), NULL, model_callback, TSLS, NULL },
     { "/Model/sep4",  NULL, NULL, 0, "<Separator>" },
@@ -846,6 +836,21 @@ void main_menubar_state (gboolean s)
 
 /* ........................................................... */
 
+static GtkItemFactoryEntry time_series_model_items[] = {
+    { N_("/Model/Time series/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL },
+    { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
+    { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL },
+    { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
+    { N_("/Model/Time series/ARMA_X..."), NULL, model_callback, ARMA, NULL },
+    { N_("/Model/Time series/GARCH..."), NULL, model_callback, GARCH, NULL },
+    { N_("/Model/Time series/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
+    { N_("/Model/Time series/Cointegration test"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Model/Time series/Cointegration test/Engle-Granger..."), NULL, 
+      selector_callback, COINT, NULL },
+    { N_("/Model/Time series/Cointegration test/Johansen..."), NULL, 
+      selector_callback, COINT2, NULL }
+};
+
 static void time_series_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
@@ -862,15 +867,26 @@ static void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Variable/TRAMO analysis", s);
 #endif
 	flip(mdata->ifac, "/Variable/Runs test", s);
-	flip(mdata->ifac, "/Model/Cochrane-Orcutt...", s);
-	flip(mdata->ifac, "/Model/Hildreth-Lu...", s);
-	flip(mdata->ifac, "/Model/Autoregressive estimation...", s);
-	flip(mdata->ifac, "/Model/ARMAX...", s);
-	flip(mdata->ifac, "/Model/GARCH...", s);
-	flip(mdata->ifac, "/Model/Vector Autoregression...", s);
-	flip(mdata->ifac, "/Model/Cointegration test", s);
 	flip(mdata->ifac, "/Sample/Compact data...", 
 	     s && (datainfo->pd == 4 || datainfo->pd == 12));
+	flip(mdata->ifac, "/Model/Time series", s);
+
+	if (s) {
+	    GtkWidget *w =  
+		gtk_item_factory_get_widget(mdata->ifac, 
+					    "/Model/Time series/Cochrane-Orcutt...");
+
+	    if (w == NULL) {
+		int i, n = sizeof time_series_model_items / 
+		    sizeof time_series_model_items[0];
+
+		for (i=0; i<n; i++) {
+		    gtk_item_factory_create_item(mdata->ifac, 
+						 &time_series_model_items[i], 
+						 mdata, 1);
+		}
+	    }
+	}	
     }
 }
 

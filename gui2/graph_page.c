@@ -366,13 +366,18 @@ static int spawn_dvips (char *texsrc)
 {
     GError *error = NULL;
     gchar *sout = NULL;
-    gchar *argv[] = {
-	"dvips",
-	texsrc,
-	NULL
-    };
+    gchar *argv[5];
+    char outfile[32];
     int ok, status;
     int ret = 0;
+
+    sprintf(outfile, "%s.ps", texsrc);
+
+    argv[0] = "dvips";
+    argv[1] = "-o";
+    argv[2] = outfile;
+    argv[3] = texsrc;
+    argv[4] = NULL;
 
     signal(SIGCHLD, SIG_DFL);
 
@@ -432,12 +437,12 @@ int dvips_compile (char *texshort)
 	return 1;
     }
 
-    sprintf(tmp, "\"%s\" %s", dvips_path, texshort);
+    sprintf(tmp, "\"%s\" -o %s.ps %s", dvips_path, texshort, texshort);
     if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return 1;
     }
 #elif defined(OLD_GTK)
-    sprintf(tmp, "cd \"%s\" && dvips %s", paths.userdir, texshort);
+    sprintf(tmp, "cd \"%s\" && dvips -o %s.ps %s", paths.userdir, texshort, texshort);
     err = system(tmp);
 #else
     err = spawn_dvips(texshort);
