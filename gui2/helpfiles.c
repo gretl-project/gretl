@@ -25,7 +25,7 @@
 #include "textbuf.h"
 #endif
 
-#define HDEBUG 1
+#undef HDEBUG
 
 #ifdef ENABLE_NLS
 static int translated_helpfile = -1;

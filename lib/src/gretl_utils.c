@@ -1382,9 +1382,8 @@ int full_model_list (MODEL *pmod, int **plist)
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
 			 DATAINFO *pdinfo)
 {
-    int depvar, t, nfit = 0;
+    int depvar, t;
     int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
-    int genfit = 0;
     FITRESID *fr;
 
     if (pmod->ci == ARMA) {
@@ -1404,11 +1403,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 
     for (t=0; t<n; t++) {
 	fr->actual[t] = (*pZ)[depvar][t];
-	if (genfit) {
-	    fr->fitted[t] = (*pZ)[nfit][t];
-	} else {
-	    fr->fitted[t] = pmod->yhat[t];
-	}
+	fr->fitted[t] = pmod->yhat[t];
     }
 
     if (isdummy(fr->actual, 0, n) > 0) {
@@ -1422,8 +1417,6 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     fr->t1 = t1;
     fr->t2 = t2;
     fr->nobs = pmod->nobs;
-
-    /* should we delete the fitted value from *pZ? */
 
     return fr;
 }
