@@ -591,12 +591,16 @@ int garch_estimate (int t1, int t2, int nobs,
 	fprintf(stderr, "*** Calling garch_info_matrix, count=%d\n", count);	    
 #endif
 
-	garch_info_matrix(t1, t2, X, nx, yhat, c, 
-			  nc, res2, res, y,
-			  toler1, &count, vc5, (const double **) g, 
-			  aux3, param, nparam, b, 
-			  &a0, alfa, beta, q,
-			  p, h, dhdp, zt);
+	err = garch_info_matrix(t1, t2, X, nx, yhat, c, 
+				nc, res2, res, y,
+				toler1, &count, vc5, (const double **) g, 
+				aux3, param, nparam, b, 
+				&a0, alfa, beta, q,
+				p, h, dhdp, zt);
+
+	if (err) {
+	    return E_NOCONV;
+	}
 
 	/* if relative euclidean distance is used as converg. */
 	s_1 = s_2 = 0.0;
@@ -1338,7 +1342,8 @@ garch_info_matrix (int t1, int t2,
     /* invert the information matrix */
     err = invert(vcv, nparam);
     if (err) {
-	fprintf(stderr, "matrix inversion failed\n");
+	fprintf(stderr, "garch_info_matrix: matrix inversion failed\n");
+	return 1;
     }
 
     if (count == NULL) {
@@ -1770,7 +1775,7 @@ garch_full_hessian (int t1, int t2,
     /* invert the Hessian */
     err = invert(vcv, nparam);
     if (err) {
-	fprintf(stderr, "matrix inversion failed\n");
+	fprintf(stderr, "garch_full_hessian: matrix inversion failed\n");
     }
 
     /* Start iteration here */

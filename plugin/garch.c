@@ -518,7 +518,9 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	yno = ols_list[1];
 	scale = model.sdy;
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[yno][t] /= scale;
+	    if (!na((*pZ)[yno][t])) {
+		(*pZ)[yno][t] /= scale;
+	    }
 	}
 	for (t=0; t<model.ncoeff; t++) {
 	    model.coeff[t] *= scale;
@@ -531,7 +533,9 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	yno = ols_list[1];
 	scale = model.sigma;
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[yno][t] /= scale;
+	    if (!na((*pZ)[yno][t])) {
+		(*pZ)[yno][t] /= scale;
+	    }
 	}
 	for (t=0; t<model.ncoeff; t++) {
 	    model.coeff[t] *= scale;
@@ -548,7 +552,9 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     if (scale != 1.0) {
 	/* undo scaling of dependent variable */
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[yno][t] *= scale;
+	    if (!na((*pZ)[yno][t])) {
+		(*pZ)[yno][t] *= scale;
+	    }
 	}
     }
 

@@ -940,16 +940,14 @@ static int check_data_block (wbook *book, int ncols, int skip,
 		fprintf(stderr, "data_block: rowptr[%d].cells is NULL\n", t);
 #endif
 		ret = -1;
-	    } 
-	    else if (rowptr[t].cells[i] == NULL) {
+	    } else if (rowptr[t].cells[i] == NULL) {
 #ifdef EDEBUG
 		fprintf(stderr, "data_block: rowptr[%d].cells[%d] is NULL\n",
 			t, i);
 #endif
 		rowptr[t].cells[i] = g_strdup("-999.0");
 		ret = -1;
-	    }
-	    else if (IS_STRING(rowptr[t].cells[i])) {
+	    } else if (IS_STRING(rowptr[t].cells[i])) {
 		if (missval_string(rowptr[t].cells[i])) {
 		    free(rowptr[t].cells[i]);
 		    rowptr[t].cells[i] = g_strdup("-999.0");
@@ -1135,6 +1133,9 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 			rowptr[t_sheet].cells[i_sheet]);
 #endif
 		newZ[i][t] = atof(rowptr[t_sheet].cells[i_sheet]);
+		if (newZ[i][t] == -999.0) {
+		    newZ[i][t] = NADBL;
+		}
 	    }
 	}
 

@@ -1626,7 +1626,7 @@ static int gamma_visible (FREQDIST *freq, double alpha, double beta,
 	double g = pow(x, alpha - 1.0) * exp(-x/beta) /
 	    (gamma(alpha) * pow(beta, alpha));
 
-#if 1
+#if 0
 	fprintf(stderr, "x = %g, f = %g, g = %g\n", x, f, g);
 #endif
 

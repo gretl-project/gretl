@@ -825,6 +825,7 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo,
     }
 
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
+
     for (t=t1; t<=pdinfo->t2; t++) {
 	if (pdinfo->time_series == STACKED_TIME_SERIES &&
 	    panel_unit_first_obs(t, pdinfo)) {
@@ -837,8 +838,8 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo,
 	    x1 = (*pZ)[iv][t-1];
 	}
 	if (logdiff) {
-	    if (!na(x0) && !na(x1) && x0 / x1 > 0.0) {
-		(*pZ)[v][t] = log(x0 / x1);
+	    if (!na(x0) && !na(x1) && x0 > 0 && x1 > 0) {
+		(*pZ)[v][t] = log(x0) - log(x1);
 	    }
 	} else {
 	    if (!na(x0) && !na(x1)) {

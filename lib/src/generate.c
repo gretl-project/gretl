@@ -2974,8 +2974,13 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 	    if (fn == T_DIFF) {
 		x[t] = xx - yy;
 	    } else {
-		if (xx <= 0.0 || yy <= 0.0) *err = E_LOGS;
-		else x[t] = log(xx) - log(yy);
+		/* log difference */
+		if (xx <= 0.0 || yy <= 0.0) {
+		    *err = E_LOGS;
+		    x[t] = NADBL;
+		} else {
+		    x[t] = log(xx) - log(yy);
+		}
 	    }
 	}
 	x[t1] = NADBL;
