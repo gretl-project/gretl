@@ -16,11 +16,6 @@
 
 typedef struct _BiffQuery BiffQuery;
 
-/**
- * Returns query data, it is imperative that copies of
- * 'data *' should _not_ be kept.
- **/
-
 struct _BiffQuery {
     guint8  ms_op;
     guint8  ls_op;
@@ -50,11 +45,6 @@ typedef enum {
 #define EX_GETCOL(p)      (MS_OLE_GET_GUINT16(p->data + 2))
 #define EX_GETXF(p)       (MS_OLE_GET_GUINT16(p->data + 4))
 #define EX_GETSTRLEN(p)   (MS_OLE_GET_GUINT16(p->data + 6))
-
-#define EX_SETROW(p,d)    (MS_OLE_SET_GUINT16(p + 0, d))
-#define EX_SETCOL(p,d)    (MS_OLE_SET_GUINT16(p + 2, d))
-#define EX_SETXF(p,d)     (MS_OLE_SET_GUINT16(p + 4, d))
-#define EX_SETSTRLEN(p,d) (MS_OLE_SET_GUINT16(p + 6, d))
 
 /* Version info types as found in various Biff records */
 typedef enum { 

@@ -35,19 +35,23 @@
 
 static void free_sheet (void);
 static int allocate_row_col (int row, int col, wbook *book);
-static char *copy_unicode_string (unsigned char **src);
+static char *copy_unicode_string (unsigned char *src, int *skip);
 static char *convert8to7 (const unsigned char *s, int count);
 static char *convert16to7 (const unsigned char *s, int count);
 static char *mark_string (char *str);
 
-#undef EDEBUG
+#define EDEBUG
 #undef MEMDEBUG
 
 #define EXCEL_IMPORTER
 #include "import_common.c"
 
-#define cell_record(r) (r == BIFF_LABEL || r == BIFF_STRING || r == BIFF_NUMBER || \
-                        r == BIFF_RK || r == BIFF_MULRK || r == BIFF_FORMULA || \
+#define cell_record(r) (r == BIFF_LABEL || \
+                        r == BIFF_STRING || \
+                        r == BIFF_NUMBER || \
+                        r == BIFF_RK || \
+                        r == BIFF_MULRK || \
+                        r == BIFF_FORMULA || \
                         r == BIFF_LABELSST)
 
 struct rowdescr {
@@ -214,15 +218,17 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 {
     struct rowdescr *prow = NULL;
     static char **string_targ;
+    unsigned char *ptr = NULL;
     int row = 0, col = 0, xfref = 0;
+    double val;
 
     if (cell_record(q->ls_op)) {
-	row = MS_OLE_GET_GUINT16(q->data + 0);
-	col = MS_OLE_GET_GUINT16(q->data + 2);
+	row = EX_GETROW(q);
+	col = EX_GETCOL(q);
 	if (row_col_err(row, col, prn)) {
 	    return 1;
 	}
-	xfref = MS_OLE_GET_GUINT16(q->data + 4);
+	xfref = EX_GETXF(q);
     }
 
 #ifdef FORMAT_INFO
@@ -235,8 +241,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     switch (q->ls_op) {
 
     case BIFF_SST: {
-	unsigned char *ptr = q->data + 8;
-	int i, sz, oldsz = sstsize;
+	int i, skip, oldsz = sstsize;
+	guint16 sz;
 
 	if (sst != NULL) {
 	    fprintf(stderr, "Got a second string table: this is nonsense\n");
@@ -246,7 +252,9 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	sz = MS_OLE_GET_GUINT16(q->data + 4);
 	sstsize += sz;
 	sst = realloc(sst, sstsize * sizeof *sst);
-	if (sst == NULL) return 1;
+	if (sst == NULL) {
+	    return 1;
+	}
 #ifdef EDEBUG
 	fprintf(stderr, "Got SST: allocated sst at size %d (%d bytes), %p\n", 
 		sstsize, sstsize * sizeof *sst, (void *) sst);
@@ -255,8 +263,13 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    /* careful: initialize all pointers to NULL */
 	    sst[i] = NULL;
 	}
+	ptr = q->data + 8;
 	for (i=oldsz; i<sstsize && (ptr - q->data) < q->length; i++) {
-	    sst[i] = copy_unicode_string(&ptr);
+#ifdef EDEBUG
+	    fprintf(stderr, "Working on sst[%d]\n", i);
+#endif
+	    sst[i] = copy_unicode_string(ptr, &skip);
+	    ptr += skip;
 	}
 	if (i < sstsize) {
 	    sstnext = i;
@@ -264,177 +277,184 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	break;
     }	
 
-    case BIFF_CONTINUE: {
-	int i;
-	unsigned char *ptr = q->data;
-
+    case BIFF_CONTINUE: 
 #ifdef EDEBUG
-	fprintf(stderr, "Got CONTINUE, with sstnext = %d\n", sstnext);
+	fprintf(stderr, "Got CONTINUE, sstnext = %d\n", sstnext);
 #endif
+	if (sstnext > 0) {
+	    int i, skip;
 
-	if (sstnext == 0) {
-	    break;
-	}
-	for (i=sstnext; i<sstsize && (ptr - q->data) < q->length; i++) {
-	    sst[i] = copy_unicode_string(&ptr);
-	}
-	if (i < sstsize) {
-	    sstnext = i;
+	    ptr = q->data;
+	    for (i=sstnext; i<sstsize && (ptr - q->data) < q->length; i++) {
+#ifdef EDEBUG
+		fprintf(stderr, "Working on sst[%d]\n", i);
+#endif
+		sst[i] = copy_unicode_string(ptr, &skip);
+		ptr += skip;
+	    }
+	    if (i < sstsize) {
+		sstnext = i;
+	    }
 	}
 	break;
-    }
 			   
-    case BIFF_LABEL: {
-	unsigned int len = MS_OLE_GET_GUINT16(q->data + 6);
-
+    case BIFF_LABEL: 
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate_row_col(row, col, book)) return 1;
-	prow = rowptr + row;
-
-	prow->cells[col] = mark_string(convert8to7(q->data + 8, len));
+	if (allocate_row_col(row, col, book)) {
+	    return 1;
+	} else {
+	    unsigned int len = MS_OLE_GET_GUINT16(q->data + 6);
+	
+	    prow = rowptr + row;
+	    ptr = q->data + 8;
+	    prow->cells[col] = mark_string(convert8to7(ptr, len));
+	}
 	break;
-    }   
   
-    case BIFF_LABELSST: {
-	unsigned int sstidx = MS_OLE_GET_GUINT16(q->data + 6);
-
+    case BIFF_LABELSST:
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABELSST, row=%d, col=%d\n", row, col);
 #endif
-
-	if (allocate_row_col(row, col, book)) return 1;
-	prow = rowptr + row;
-
-	if (sstidx >= sstsize) {
-	    pprintf(prn, _("String index too large"));
-	    pputc(prn, '\n');
-	} else if (sst[sstidx] != NULL) {
-	    check_copy_string(prow, row, col, sstidx, sst[sstidx]);
+	if (allocate_row_col(row, col, book)) {
+	    return 1;
 	} else {
-	    prow->cells[col] = malloc(2);
-	    if (prow->cells[col] != NULL) {
-		*prow->cells[col] = '\0';
+	    unsigned int sstidx = MS_OLE_GET_GUINT16(q->data + 6);
+
+	    prow = rowptr + row;
+	    if (sstidx >= sstsize) {
+		pprintf(prn, _("String index too large"));
+		pputc(prn, '\n');
+	    } else if (sst[sstidx] != NULL) {
+		check_copy_string(prow, row, col, sstidx, sst[sstidx]);
+	    } else {
+		prow->cells[col] = malloc(2);
+		if (prow->cells[col] != NULL) {
+		    prow->cells[col][0] = '\0';
+		}
 	    }
 	}	
 	break;
-    }
 
-    case BIFF_NUMBER: {
-	double v;
-
-	if (allocate_row_col(row, col, book)) return 1;
-	prow = rowptr + row;
-
-	v = get_le_double(q->data + 6);
-	prow->cells[col] = g_strdup_printf("%.10g", v);
+    case BIFF_NUMBER: 
+	if (allocate_row_col(row, col, book)) {
+	    return 1;
+	} else {
+	    val = get_le_double(q->data + 6);
+	    prow = rowptr + row;
+	    prow->cells[col] = g_strdup_printf("%.10g", val);
 #ifdef EDEBUG
-	fprintf(stderr, "Got NUMBER (%g), row=%d, col=%d\n", v, row, col);
+	    fprintf(stderr, "Got NUMBER (%g), row=%d, col=%d\n", val, 
+		    row, col);
 #endif
+	}
 	break;
-    }
 
-    case BIFF_RK: {
-	double v;
-
-	if (allocate_row_col(row, col, book)) return 1;
-	prow = rowptr + row;
-
-	v = biff_get_rk(q->data + 6);
-	prow->cells[col] = g_strdup_printf("%.10g", v);
+    case BIFF_RK: 
+	if (allocate_row_col(row, col, book)) {
+	    return 1;
+	} else {
+	    val = biff_get_rk(q->data + 6);
+	    prow = rowptr + row;
+	    prow->cells[col] = g_strdup_printf("%.10g", val);
 #ifdef EDEBUG
-	fprintf(stderr, "Got RK (%g), row=%d, col=%d\n", v, row, col);
+	    fprintf(stderr, "Got RK (%g), row=%d, col=%d\n", val, 
+		    row, col);
 #endif
+	}
 	break;
-    }
 
     case BIFF_MULRK: {
 	int i, ncols = (q->length - 6) / 6;
-	double v;
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got MULRK, row=%d, first_col=%d, ncols=%d\n", 
 		row, col, ncols);
 #endif
 	for (i=0; i<ncols; i++) {
-	    if (allocate_row_col(row, col, book)) return 1;
+	    if (allocate_row_col(row, col, book)) {
+		return 1;
+	    }
+	    val = biff_get_rk(q->data + 6 + 6 * i);
 	    prow = rowptr + row;
-	    v = biff_get_rk(q->data + 6 + 6 * i);
-	    prow->cells[col] = g_strdup_printf("%.10g", v);
+	    prow->cells[col] = g_strdup_printf("%.10g", val);
 #ifdef EDEBUG
-	    fprintf(stderr, " MULRK[col=%d] = %g\n", col, v);
+	    fprintf(stderr, " MULRK[col=%d] = %g\n", col, val);
 #endif
 	    col++;
 	}
 	break;
     }
 
-    case BIFF_FORMULA: { 
-	const guint8 *result = q->data + 6;
-
+    case BIFF_FORMULA:  
 #ifdef EDEBUG
 	fprintf(stderr, "Got FORMULA, row=%d, col=%d\n", row, col);
 #endif
-	if (allocate_row_col(row, col, book)) return 1;
-	prow = rowptr + row;
-
-	if (result[6] == 0xff && result[7] == 0xff) {
-#ifdef EDEBUG
-	    fprintf(stderr, " non floating-point value, code = 0x%u\n", 
-		    (unsigned) *result);
-#endif
-
-	    switch (*result) {
-	    case 0x0: /* string formula */
-		/* record target for following STRING record */
-		string_targ = prow->cells + col;
-		break;
-	    case 0x1: /* boolean value */
-		prow->cells[col] = g_strdup((result[2])? "1" : "0");
-		break;
-	    case 0x2: /* error code */
-	    case 0x3: /* empty */
-		prow->cells[col] = g_strdup("-999.0");
-		break;
-	    default:
-		fprintf(stderr, "Bad formula code 0x%u\n", 
-			(unsigned) *result);
-		break;
-	    }
+	if (allocate_row_col(row, col, book)) {
+	    return 1;
 	} else {
-	    /* floating-point */
-	    double v = get_le_double(result);
+	    ptr = q->data + 6;
+	    prow = rowptr + row;
+	    if (ptr[6] == 0xff && ptr[7] == 0xff) {
+		unsigned char fcode = ptr[0];
 
 #ifdef EDEBUG
-	    fprintf(stderr, " floating-point value = %g\n", v);
+		fprintf(stderr, " non floating-point value, code = 0x%u\n", 
+			(unsigned) fcode);
 #endif
-	    if (isnan(v)) {
-		fprintf(stderr, "Got a NaN\n");
-		prow->cells[col] = g_strdup("-999.0");
+		if (fcode == 0x0) {
+#if 0
+		    pprintf(prn, "Sorry, can't handle string formulas in "
+			    "worksheet");
+		    return 1;
+#else
+		    /* string formula: record target for following 
+		       STRING record */
+		    string_targ = prow->cells + col;
+#endif
+		} else if (fcode == 0x1) {
+		    /* boolean value */
+		    prow->cells[col] = g_strdup((ptr[2])? "1" : "0");
+		} else if (fcode == 0x2 || fcode == 0x3) {
+		    /* error code or empty */
+		    prow->cells[col] = g_strdup("-999.0");
+		} else {
+		    fprintf(stderr, "Bad formula code 0x%u\n", 
+			    (unsigned) fcode);
+		    prow->cells[col] = g_strdup("-999.0");
+		}
 	    } else {
-		prow->cells[col] = g_strdup_printf("%.10g", v);
+		/* floating-point */
+		val = get_le_double(ptr);
+#ifdef EDEBUG
+		fprintf(stderr, " floating-point value = %g\n", val);
+#endif
+		if (isnan(val)) {
+		    fprintf(stderr, "Got a NaN\n");
+		    prow->cells[col] = g_strdup("-999.0");
+		} else {
+		    prow->cells[col] = g_strdup_printf("%.10g", val);
+		}
 	    }
 	}
 	break;
-    }
 
-    case BIFF_STRING: {
-	unsigned int len;
-
+    case BIFF_STRING: 
 	if (string_targ == NULL) {
-	    pprintf(prn, _("String record without preceding string formula"));
-	    pputc(prn, '\n');
-	    break;
-	}
-	len = MS_OLE_GET_GUINT16(q->data + 0);
-	*string_targ = mark_string(convert8to7(q->data + 2, len));
 #ifdef EDEBUG
-	fprintf(stderr, "Filled out string formula with '%s'\n", *string_targ);	
+	    fprintf(stderr, "String record without preceding string formula\n");
 #endif
-	string_targ = NULL;
+	} else {
+	    char *tmp = copy_unicode_string(q->data, NULL);
+
+	    *string_targ = mark_string(tmp);
+#ifdef EDEBUG
+	    fprintf(stderr, "Filled out string formula with '%s'\n", *string_targ);	
+#endif
+	    string_targ = NULL;
+	}
 	break;
-    }
 
     case BIFF_BOF: 
 	if (rowptr) {
@@ -539,9 +559,12 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
     BiffQuery *q;
     MsOle *file;
 
-    if (ms_ole_open(&file, filename)) return 1;
+    if (ms_ole_open(&file, filename)) {
+	return 1;
+    }
 
     result = ms_ole_stream_open(&stream, file, "/", "workbook", 'r');
+
     if (result != MS_OLE_ERR_OK) {
 	ms_ole_stream_close (&stream);
 
@@ -570,8 +593,8 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 
     while (!err && ms_biff_query_next(q)) {
 #ifdef EDEBUG
-	    fprintf(stderr, "At %lu: q->opcode=0x%02x\n", 
-		    (unsigned long) q->streamPos, q->opcode);
+	fprintf(stderr, "At %lu: q->opcode=0x%02x\n", 
+		(unsigned long) q->streamPos, q->opcode);
 #endif
 	if (q->opcode == BIFF_EOF) {
 #ifdef EDEBUG
@@ -589,8 +612,11 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 			    (unsigned long) stream->position);
 		}
 	    }
-	    if (eofcount == 2) break;
-	    else continue;
+	    if (eofcount == 2) {
+		break;
+	    } else {
+		continue;
+	    }
 	} 
 
 	if (handled_record(q)) {
@@ -624,51 +650,51 @@ static char *mark_string (char *str)
     return ret;
 }    
 
-static char *copy_unicode_string (unsigned char **src) 
+static char *
+copy_unicode_string (unsigned char *src, int *skip) 
 {
-    int count = MS_OLE_GET_GUINT16(*src);
-    int flags = *(*src + 2);
-    int this_skip = 3;
-    int skip_to_next = 3;
+    int count = MS_OLE_GET_GUINT16(src);
+    unsigned char flags = *(src + 2);
+    int this_skip = 3, skip_to_next = 3;
     int csize = (flags & 0x01)? 2 : 1;
-    char *realstart;
 
     skip_to_next += count * csize;
 
     if (flags & 0x08) {
-	unsigned short rich_text_info_len = 0;
+	guint16 rich_text_info_len = 0;
 
 #ifdef EDEBUG
 	fprintf(stderr, "copy_unicode_string: contains Rich-Text info\n");
 #endif
-	rich_text_info_len = 4 * MS_OLE_GET_GUINT16(*src + 3);
+	rich_text_info_len = 4 * MS_OLE_GET_GUINT16(src + 3);
 	this_skip += 2;
 	skip_to_next += 2 + rich_text_info_len;
     } 
 
     if (flags & 0x04) {
-	unsigned far_east_info_len = 0;
+	guint32 far_east_info_len = 0;
 	int far_east_offset = 3;
 
 #ifdef EDEBUG
 	fprintf(stderr, "copy_unicode_string: contains Far-East info\n");
 #endif
-	if (flags & 0x08) far_east_offset = 5;
-	far_east_info_len = MS_OLE_GET_GUINT32 (*src + far_east_offset);
+	if (flags & 0x08) {
+	    far_east_offset = 5;
+	}
+	far_east_info_len = MS_OLE_GET_GUINT32(src + far_east_offset);
 	this_skip += 4;
 	skip_to_next += 4 + far_east_info_len;
     }
 
-    /* for this read */
-    realstart = *src + this_skip;
-
-    /* set up for the next read */
-    *src += skip_to_next;
+    /* skip for the next read */
+    if (skip != NULL) {
+	*skip = skip_to_next;
+    }
 
     if (csize == 1) {
-	return convert8to7(realstart, count);
+	return convert8to7(src + this_skip, count);
     } else { 
-	return convert16to7(realstart, count);
+	return convert16to7(src + this_skip, count);
     }
 }
 
@@ -676,11 +702,11 @@ static char *convert8to7 (const unsigned char *s, int count)
 {
     char *dest;
 
-    if (count > VNAMELEN - 1) {
-	count = VNAMELEN - 1;
+    if (count > USER_VLEN - 1) {
+	count = USER_VLEN - 1;
     }
 
-    dest = malloc(VNAMELEN);
+    dest = malloc(USER_VLEN);
     *dest = '\0';
     strncat(dest, s, count);
     iso_to_ascii(dest);
@@ -702,16 +728,16 @@ static char *convert16to7 (const unsigned char *s, int count)
     int i, j;
     guint16 u;
 
-    dest = malloc(VNAMELEN);
+    dest = malloc(USER_VLEN);
     if (dest == NULL) {
 	return NULL;
     }
 
-    memset(dest, 0, VNAMELEN);
+    memset(dest, 0, USER_VLEN);
 
     p = dest;
     j = 0;
-    for (i=0; i<count && j<VNAMELEN-1; i++) {
+    for (i=0; i<count && j<USER_VLEN-1; i++) {
 	u = MS_OLE_GET_GUINT16(s);
 	s += 2;
 	if ((isalnum(u) || ispunct(u)) && u < 128) {
@@ -747,6 +773,7 @@ static int allocate_row_col (int row, int col, wbook *book)
 	book->row_offset = row;
 	fprintf(stderr, "Missing rows: trying an offset of %d\n", row);
     }
+
     started = 1;
 
 #ifdef MEMDEBUG
@@ -756,7 +783,9 @@ static int allocate_row_col (int row, int col, wbook *book)
     if (row >= lastrow) {
 	newlastrow = (row/16 + 1) * 16;
 	rowptr = realloc(rowptr, newlastrow * sizeof *rowptr);
-	if (rowptr == NULL) return 1;
+	if (rowptr == NULL) {
+	    return 1;
+	}
 	for (i=lastrow; i<newlastrow; i++) {
 #ifdef MEMDEBUG
 	    fprintf(stderr, "allocate: initing rowptr[%d]\n", i);
@@ -781,7 +810,9 @@ static int allocate_row_col (int row, int col, wbook *book)
 		newcol-rowptr[row].end, row);
 #endif
 	rowptr[row].cells = realloc(rowptr[row].cells, newcol * sizeof(char *));
-	if (rowptr[row].cells == NULL) return 1;
+	if (rowptr[row].cells == NULL) {
+	    return 1;
+	}
 	for (i=rowptr[row].end; i<newcol; i++) {
 	    rowptr[row].cells[i] = NULL;
 	}
@@ -1194,7 +1225,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	    newinfo->varname[i][0] = 0;
 	    strncat(newinfo->varname[i], 
-		    rowptr[book.row_offset].cells[i_sheet] + 1, VNAMELEN - 1);
+		    rowptr[book.row_offset].cells[i_sheet] + 1, USER_VLEN - 1);
 	    for (t=0; t<newinfo->n; t++) {
 		t_sheet = t + 1 + book.row_offset;
 		if (rowptr[t_sheet].cells == NULL ||
