@@ -1439,18 +1439,21 @@ static void destroy_arma_opts (GtkWidget *w, gpointer p)
 
 static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
-    int ar, ma, verb, x12;
+    int ar, ma;
+    unsigned long aopt = 0L;
 
     ar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->arspin));
     ma = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->maspin));
-    verb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck));
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck))) {
+	aopt |= OPT_V;
+    }	
 #ifdef HAVE_X12A
-    x12 = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->x12check));
-#else
-    x12 = 0;
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->x12check))) {
+	aopt |= OPT_X;
+    }
 #endif
 
-    do_arma(opts->v, ar, ma, verb, x12);
+    do_arma(opts->v, ar, ma, aopt);
 
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
@@ -1513,18 +1516,18 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       tmp, FALSE, FALSE, 5);
 
-    /* X12 vs native radio buttons */
+    /* native vs X-12-ARIMA radio buttons */
     hbox = gtk_hbox_new(FALSE, 5);
     hbox = gtk_hbox_new(FALSE, 5);
-    opts->x12check = gtk_radio_button_new_with_label(NULL, _("Use X-12-ARIMA"));
-    gtk_box_pack_start(GTK_BOX(hbox), opts->x12check, FALSE, FALSE, 5);
+    tmp = gtk_radio_button_new_with_label(NULL, _("Native code"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON(opts->x12check));
-    tmp = gtk_radio_button_new_with_label(group, _("Native code (experimental)"));
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
+    opts->x12check = gtk_radio_button_new_with_label(group, _("Use X-12-ARIMA"));
+    gtk_box_pack_start(GTK_BOX(hbox), opts->x12check, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
 #endif /* HAVE_X12A */

@@ -276,7 +276,7 @@
 	      <entry><replaceable>p q</replaceable>
 	      <literal>;</literal>
 		<replaceable>depvar</replaceable>
-		<literal>[ -v | -n ]</literal>
+		<literal>[ -v | -x ]</literal>
 	      </entry>
 	    </row>
 	    <row>
@@ -302,13 +302,21 @@
 	iterative estimation procedure are shown.
 	</para>
 
-      <para>The default is to call the
-	<application>X-12-ARIMA</application> program for the
-	estimation; the <literal>-n</literal> flag calls for use of
-	the <quote>native</quote> gretl ARMA function instead.  If the
-	<application>X-12-ARIMA</application> package is not installed
-	it may be necessary to use the <literal>-n</literal> flag.
+      <para>The default is to use the <quote>native</quote> gretl ARMA
+	function; the <literal>-x</literal> flag calls for use of the
+	<application>X-12-ARIMA</application> program instead (this
+	will work only if the <application>X-12-ARIMA</application>
+	package for gretl is installed.
       </para>
+
+      <para>The native gretl ARMA algorithm is largely due to Riccardo
+	<quote>Jack</quote> Lucchetti.  It uses a conditional maximum
+	likelihood procedure, implemented via iterated least squares
+	estimation of the outer product of the gradient (OPG)
+	regression.  See <xref linkend="jack-arma"/> for
+	the logic of the procedure.  The AR coefficients are
+	initialized using an OLS auto-regression, and the MA
+	coefficients are initialized at zero.</para> 
 
     </sect2>
 

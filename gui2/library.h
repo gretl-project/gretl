@@ -113,7 +113,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata);
 
 void do_model (GtkWidget *widget, gpointer p);
 
-void do_arma (int v, int ar, int ma, int verbose, int use_x12);
+void do_arma (int v, int ar, int ma, unsigned long opts);
 
 #ifdef ENABLE_GMP
 void do_mp_ols (GtkWidget *widget, gpointer p);

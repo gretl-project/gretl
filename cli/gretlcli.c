@@ -752,12 +752,12 @@ void exec_line (char *line, PRN *prn)
     case ARMA:
 	clear_model(models[0], NULL);
 #ifdef HAVE_X12A
-	if (cmd.opt & OPT_N) {
-	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      (cmd.opt & OPT_V)? prn : NULL);
-	} else {
+	if (cmd.opt & OPT_X) {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
 				  ((cmd.opt & OPT_V) ? prn : NULL), &paths); 
+	} else {
+	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
+			      (cmd.opt & OPT_V)? prn : NULL);
 	}
 #else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 

@@ -2341,15 +2341,14 @@ void do_model (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-void do_arma (int v, int ar, int ma, int verbose, int use_x12)
+void do_arma (int v, int ar, int ma, unsigned long opts)
 {
     char title[26];
     int err = 0;
     MODEL *pmod;
     PRN *prn;
 
-    sprintf(line, "arma %d %d ; %d%s", ar, ma, v, 
-	    (verbose)? " -o" : "");
+    sprintf(line, "arma %d %d ; %d%s", ar, ma, v, print_flags(opts));
 
     if (check_model_cmd(line, NULL)) return;
 
@@ -2364,21 +2363,21 @@ void do_arma (int v, int ar, int ma, int verbose, int use_x12)
     }
 
 #ifdef HAVE_X12A
-    if (use_x12) {
+    if (opts & OPT_X) {
 	*pmod = arma_x12(cmd.list, (const double **) Z, datainfo,
-			 (verbose ? prn : NULL), &paths); 
+			 ((opts & OPT_V)? prn : NULL), &paths); 
     } else {
 	*pmod = arma(cmd.list, (const double **) Z, datainfo,
-		     (verbose)? prn : NULL); 
+		     (opts & OPT_V)? prn : NULL); 
     }
 #else
     *pmod = arma(cmd.list, (const double **) Z, datainfo,
-		 (verbose)? prn : NULL); 
+		 (opts & OPT_V)? prn : NULL); 
 #endif
     err = model_output(pmod, prn);
 
     if (err) {
-	if (verbose && !use_x12) {
+	if ((opts & OPT_V) && !(opts & OPT_X)) {
 	    view_buffer(prn, 78, 400, _("gretl: ARMA"), PRINT, NULL);
 	} else {
 	    gretl_print_destroy(prn);
@@ -5052,12 +5051,12 @@ int gui_exec_line (char *line,
     case ARMA:
 	clear_model(models[0], NULL);
 #ifdef HAVE_X12A
-	if (cmd.opt & OPT_N) {
-	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      (cmd.opt & OPT_V)? prn : NULL);
-	} else {
+	if (cmd.opt & OPT_X) {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
 				  ((cmd.opt & OPT_V) ? prn : NULL), &paths); 
+	} else {
+	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
+			      (cmd.opt & OPT_V)? prn : NULL);
 	}
 #else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 

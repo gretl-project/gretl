@@ -767,8 +767,14 @@ static gint get_data_col_width (void)
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width)
 {
     gtk_tree_view_column_set_alignment(column, 0.5); /* header centered */
+#if 0
     gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
     gtk_tree_view_column_set_fixed_width(column, width);
+#else
+    gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
+    gtk_tree_view_column_set_resizable(column, TRUE);
+    gtk_tree_view_column_set_min_width(column, width);
+#endif
 }
 
 /* ........................................................... */

@@ -1124,6 +1124,7 @@ struct gretl_opt gretl_opts[] = {
     { OPT_S, "squares" },           /* lmtest context */    
     { OPT_T, "traditional" },
     { OPT_V, "verbose" },
+    { OPT_X, "x-12-arima" },
     { OPT_Z, "gzipped" },
     { 0L, NULL }
 };
@@ -1133,6 +1134,8 @@ struct flag_match flag_matches[] = {
     { OPT_B, 'b' },
     { OPT_C, 'c' },
     { OPT_D, 'd' },
+    { OPT_I, 'i' },
+    { OPT_L, 'l' },
     { OPT_M, 'm' },
     { OPT_N, 'n' },
     { OPT_O, 'o' },
@@ -1142,17 +1145,18 @@ struct flag_match flag_matches[] = {
     { OPT_T, 't' },
     { OPT_V, 'v' },
     { OPT_W, 'w' },
+    { OPT_X, 'x' },
     { OPT_Z, 'z' },
     { 0L,   '\0' }
 };
 
 static unsigned char isflag (unsigned char c)
 {
-    if (c == 'a' || c == 'c' || c == 'i' || c == 'l' ||
-	c == 'b' || c == 'd' || 
-	c == 'm' || c == 'n' || c == 'o' || c == 'q' ||
-	c == 'r' || c == 's' || c == 't' || c == 'v' ||
-	c == 'w' || c == 'z') {
+    if (c == 'a' || c == 'b' || c == 'c' || c == 'd' ||
+	c == 'i' || c == 'l' || c == 'm' || c == 'n' || 
+	c == 'o' || c == 'q' || c == 'r' || c == 's' || 
+	c == 't' || c == 'v' || c == 'w' || c == 'x' || 
+	c == 'z') {
 	return c;
     }
     return 0;
@@ -2464,9 +2468,9 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     }
 
     if (isdummy(fr->actual, 0, n) > 0) {
-	fr->pmax = get_precision(fr->fitted, n);
+	fr->pmax = get_precision(fr->fitted, n, 8);
     } else {
-	fr->pmax = get_precision(fr->actual, n);
+	fr->pmax = get_precision(fr->actual, n, 8);
     }
     
     strcpy(fr->depvar, pdinfo->varname[depvar]);

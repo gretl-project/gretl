@@ -69,10 +69,12 @@ arma
 @Estimation
 Univariate ARMA model
 
-Calls X-12-ARIMA to estimate a univariate ARMA (Autoregressive, Moving
-Average) model.  This command will work only if the X-12-ARIMA package for
-gretl is installed.  See the gretl website, http://gretl.sourceforge.net, for
-details.
+Uses either the native gretl ARMA algorithm (based on conditional maximum
+likelihood), or optionally X-12-ARIMA, to estimate a univariate ARMA
+(Autoregressive, Moving Average) model. 
+
+See the gretl website, gretl.sourceforge.net, for details on X-12-ARIMA for
+gretl.  See the gretl manual for details on the native ARMA algorithm.
 
 #
 boxplots

@@ -1088,6 +1088,7 @@ static int writehdr (const char *hdrfile, const int *list,
  * get_precision:
  * @x: data vector.
  * @n: length of x.
+ * @placemax: maximum number of decimal places to try.
  *
  * Find the number of decimal places required to represent a given
  * data series uniformly.
@@ -1096,7 +1097,7 @@ static int writehdr (const char *hdrfile, const int *list,
  *
  */
 
-int get_precision (double *x, int n)
+int get_precision (double *x, int n, int placemax)
 {
     int i, p, pmax = 0;
     char *s, numstr[48];
@@ -1108,8 +1109,8 @@ int get_precision (double *x, int n)
 	if (x[i] < 1.0e-6 || x[i] > 1.0e+8) {
 	    return PMAX_NOT_AVAILABLE;
 	}
-	p = 8;
-	sprintf(numstr, "%.8f", x[i]);
+	p = placemax;
+	sprintf(numstr, "%.*f", p, x[i]);
 	s = numstr + strlen(numstr) - 1;
 	while (*s-- == '0') p--;
 	if (p > pmax) pmax = p;
@@ -1226,7 +1227,7 @@ int write_data (const char *fname, const int *list,
 	if (pmax == NULL) return 1;
 	for (i=1; i<=l0; i++) {
 	    if (pdinfo->vector[list[i]]) {
-		pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp);
+		pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp, 10);
 	    } else {
 		pmax[i-1] = SCALAR_DIGITS;
 	    }
@@ -1247,7 +1248,7 @@ int write_data (const char *fname, const int *list,
 		if (na(Z[list[i]][t])) {
 		    fprintf(fp, "-999 ");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.10g ", 
+		    fprintf(fp, "%.12g ", 
 			    (pdinfo->vector[list[i]])? 
 			    Z[list[i]][t] : Z[list[i]][0]);
 		} else {
@@ -1288,7 +1289,7 @@ int write_data (const char *fname, const int *list,
 		if (na(xx)) {
 		    fprintf(fp, "NA");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.10g", xx);;
+		    fprintf(fp, "%.12g", xx);;
 		} else {
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
 		}
@@ -1359,7 +1360,7 @@ int write_data (const char *fname, const int *list,
 	/* write out column of values of dep. var. */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	    if (pmax[0] == PMAX_NOT_AVAILABLE) {
-		fprintf(fp, "%.10g\n", Z[list[1]][t]);
+		fprintf(fp, "%.12g\n", Z[list[1]][t]);
 	    } else {
 		fprintf(fp, "%.*f\n", pmax[0], 
 			(pdinfo->vector[list[i]])? 
@@ -1373,7 +1374,7 @@ int write_data (const char *fname, const int *list,
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=2; i<=list[0]; i++) {
 		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.10g ", Z[list[i]][t]);
+		    fprintf(fp, "%.12g ", Z[list[i]][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], 
 			    (pdinfo->vector[list[i]])? 
@@ -3363,7 +3364,7 @@ static int write_xmldata (const char *fname, const int *list,
 
     for (i=1; i<=list[0]; i++) {
 	if (pdinfo->vector[list[i]]) {
-	    pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp);
+	    pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp, 10);
 	} else {
 	    pmax[i-1] = SCALAR_DIGITS;
 	}
@@ -3453,7 +3454,7 @@ static int write_xmldata (const char *fname, const int *list,
 	if (!pdinfo->vector[list[i]]) {
 	    if (opt) { 
 		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    gzprintf(fz, "\n role=\"scalar\" value=\"%.10g\"",
+		    gzprintf(fz, "\n role=\"scalar\" value=\"%.12g\"",
 			     Z[list[i]][0]);
 		} else {
 		    gzprintf(fz, "\n role=\"scalar\" value=\"%.*g\"",
@@ -3461,7 +3462,7 @@ static int write_xmldata (const char *fname, const int *list,
 		}
 	    } else {
 		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "\n role=\"scalar\" value=\"%.10g\"",
+		    fprintf(fp, "\n role=\"scalar\" value=\"%.12g\"",
 			    Z[list[i]][0]);
 		} else {
 		    fprintf(fp, "\n role=\"scalar\" value=\"%.*g\"",
@@ -3529,14 +3530,14 @@ static int write_xmldata (const char *fname, const int *list,
 	    } else {
 		if (opt) {
 		    if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-			gzprintf(fz, "%.10g ", Z[list[i]][t]);
+			gzprintf(fz, "%.12g ", Z[list[i]][t]);
 		    } else {
 			gzprintf(fz, "%.*f ", pmax[i-1], Z[list[i]][t]);
 		    }
 		}
 		else {
 		    if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-			fprintf(fp, "%.10g ", Z[list[i]][t]);
+			fprintf(fp, "%.12g ", Z[list[i]][t]);
 		    } else {
 			fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
 		    }
