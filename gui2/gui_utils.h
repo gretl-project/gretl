@@ -33,6 +33,8 @@ void *myrealloc (void *ptr, size_t size);
 
 void clear_data (int full);
 
+void mark_dataset_as_modified (void);
+
 void register_data (const char *fname, int record);
 
 void do_open_data (GtkWidget *w, gpointer data, int code);

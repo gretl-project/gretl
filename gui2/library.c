@@ -1078,8 +1078,7 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 	sprintf(msg, _("Set data frequency to %d, starting obs to %s"),
 		datainfo->pd, datainfo->stobs);
 	infobox(msg);
-	set_sample_label(datainfo);
-	data_status |= MODIFIED_DATA;
+	mark_dataset_as_modified();
     }
 }
 
@@ -1114,7 +1113,7 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Failed to add case markers"));
     else {
 	infobox(_("Case markers added"));
-	data_status |= MODIFIED_DATA; 
+	mark_dataset_as_modified();
     }
 }
 
@@ -2028,19 +2027,21 @@ static void finish_genr (MODEL *pmod)
 {
     int err;
 
-    if (pmod != NULL)
+    if (pmod != NULL) {
 	err = generate(&Z, datainfo, line, model_count, 
 		       pmod, 0); 
-    else
+    } else {
 	err = generate(&Z, datainfo, line, model_count, 
 		       (last_model == 's')? models[0] : models[2], 0); 
+    }
+
     if (err) {
 	gui_errmsg(err);
 	free(cmd_stack[n_cmds-1]);
 	n_cmds--;
     } else {
 	populate_varlist();
-	data_status |= MODIFIED_DATA;
+	mark_dataset_as_modified();
     }
 }
 
@@ -2083,9 +2084,10 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
     if (count) {
 	sprintf(errtext, _("Set %d values to \"missing\""), count);
 	infobox(errtext);
-	data_status |= MODIFIED_DATA;
-    } else 
-	errbox(_("Didn't find any matching observations"));	
+	mark_dataset_as_modified();
+    } else {
+	errbox(_("Didn't find any matching observations"));
+    }	
 }
 
 void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
@@ -2108,9 +2110,10 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
     if (count) {
 	sprintf(errtext, _("Set %d observations to \"missing\""), count);
 	infobox(errtext);
-	data_status |= MODIFIED_DATA;
-    } else 
+	mark_dataset_as_modified();
+    } else {
 	errbox(_("Didn't find any matching observations"));
+    }
 }
 
 /* ........................................................... */
@@ -2126,7 +2129,7 @@ void delete_var (void)
 	return;
     }
     populate_varlist();
-    data_status |= MODIFIED_DATA; 
+    mark_dataset_as_modified();
 }
 
 /* ........................................................... */
@@ -2518,6 +2521,8 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 	    sprintf(line, "genr %s = uhat*uhat", datainfo->varname[v]);
 	check_cmd(line);
 	model_cmd_init(line, pmod->ID);
+	infobox(_("variable added"));
+	mark_dataset_as_modified();
     }
     return 0;
 }
@@ -2586,6 +2591,11 @@ void add_model_stat (MODEL *pmod, const int which)
     check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);
     infobox(_("variable added"));
+
+    /* note: since this is a scalar, which will not be saved by
+       default on File/Save data, we will not mark the data set
+       as "modified" here.
+    */
 }
 
 /* ........................................................... */

@@ -445,6 +445,14 @@ void *myrealloc (void *ptr, size_t size)
 
 /* ........................................................... */
 
+void mark_dataset_as_modified (void)
+{
+    data_status |= MODIFIED_DATA;
+    set_sample_label(datainfo);
+}
+
+/* ........................................................... */
+
 void register_data (const char *fname, int record)
 {    
     char datacmd[MAXLEN];
@@ -455,12 +463,14 @@ void register_data (const char *fname, int record)
 
     /* set appropriate data_status bits */
     if (fname == NULL) {
-	data_status |= (GUI_DATA|MODIFIED_DATA);
+	data_status |= GUI_DATA;
+	mark_dataset_as_modified();
     } else if (!(data_status & IMPORT_DATA)) {
-	if (strstr(paths.datfile, paths.datadir) != NULL) 
+	if (strstr(paths.datfile, paths.datadir) != NULL) {
 	    data_status |= BOOK_DATA;
-	else
+	} else {
 	    data_status |= USER_DATA; 
+	}
     }
 
     /* sync main window with datafile */
@@ -804,8 +814,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
     if (vwin->role == EDIT_HEADER) {
 	infobox(_("Data info saved"));
-	data_status |= MODIFIED_DATA;
-	set_sample_label(datainfo);
+	mark_dataset_as_modified();
     } 
     else if (vwin->role == EDIT_NOTES) {
 	infobox(_("Notes saved"));
