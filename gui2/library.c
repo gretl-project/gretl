@@ -2241,16 +2241,17 @@ void do_model (GtkWidget *widget, gpointer p)
     action = selector_code(sr);
     strcpy(estimator, gretl_command_word(action));
 
+    cmd.opt = selector_get_opts(sr);
+
     buf = selector_list(sr);    
     if (buf == NULL || *buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "%s %s", estimator, buf);
+    sprintf(line, "%s %s%s", estimator, buf, print_flags(cmd.opt, action));
 
     *modelgenr = '\0';
     if (check_model_cmd(line, modelgenr)) return;
 
-    cmd.opt = 0L;
     echo_cmd(&cmd, datainfo, line, 0, 1, NULL);
     if (cmd.ci == VARDUP) {
 	errbox(_("A variable was duplicated in the list of regressors"));
@@ -2285,7 +2286,8 @@ void do_model (GtkWidget *widget, gpointer p)
     case OLS:
     case WLS:
     case POOLED:
-	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_D, 0.0);
+	cmd.opt |= OPT_D;
+	*pmod = lsq(cmd.list, &Z, datainfo, action, cmd.opt, 0.0);
 	err = model_output(pmod, prn);
 	break;
 
@@ -2330,7 +2332,8 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case TOBIT:
-	*pmod = tobit_model(cmd.list, &Z, datainfo, NULL); /* FIXME */
+	*pmod = tobit_model(cmd.list, &Z, datainfo, 
+			    (cmd.opt & OPT_V)? prn : NULL); 
 	err = model_output(pmod, prn);
 	break;
 

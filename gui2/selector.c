@@ -43,9 +43,12 @@ struct _selector {
     int code;
     int active_var;
     int error;
+    unsigned long opts;
     char *cmdlist;
     gpointer data;
 };
+
+#define WANT_TOGGLES(c) (c == OLS || c == TOBIT)
 
 static int default_var;
 static int *xlist;
@@ -1071,6 +1074,10 @@ static void selector_init (selector *sr, guint code, const char *title)
     else if (code == TSLS) dlgheight = 400;
     else if (code == VAR) dlgheight = 420;
 
+    if (WANT_TOGGLES(code)) {
+	dlgheight += 40;
+    }
+
     sr->varlist = NULL;
     sr->depvar = NULL;
     sr->rightvars = NULL;
@@ -1081,6 +1088,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     sr->data = NULL;
     sr->active_var = 0;
     sr->error = 0;
+    sr->opts = 0L;
 
     sr->code = code;
     sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1121,7 +1129,52 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_container_set_border_width(GTK_CONTAINER(sr->action_area), 5);
     gtk_box_set_spacing(GTK_BOX(sr->action_area), 5);
     gtk_box_set_homogeneous(GTK_BOX(sr->action_area), TRUE);
-}    
+} 
+
+static void robust_callback (GtkWidget *w,  selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts |= OPT_R;
+    } else {
+	sr->opts &= ~OPT_R;
+    }
+}
+
+static void verbose_callback (GtkWidget *w,  selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts |= OPT_V;
+    } else {
+	sr->opts &= ~OPT_V;
+    }
+}
+
+static void 
+build_selector_switches (selector *sr) 
+{
+    GtkWidget *hbox, *tmp = NULL;
+
+    if (sr->code == OLS) {
+	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
+	g_signal_connect(GTK_OBJECT(tmp), "toggled",
+			 G_CALLBACK(robust_callback), sr);
+
+    }
+    else if (sr->code == TOBIT) {
+	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+	g_signal_connect(GTK_OBJECT(tmp), "toggled",
+			 G_CALLBACK(verbose_callback), sr);
+    }
+
+    if (tmp != NULL) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+	gtk_widget_show(tmp);
+
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox);
+    }
+} 
 
 static void 
 build_selector_buttons (selector *sr, void (*okfunc)())
@@ -1327,11 +1380,15 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
+    /* toggle switches for some cases */
+    if (WANT_TOGGLES(sr->code)) {
+	build_selector_switches(sr);
+    }
+
     /* buttons: OK, Clear, Cancel, Help */
     build_selector_buttons (sr, okfunc);
 
     gtk_widget_show(sr->dlg);
-    /* gtk_main(); */
 }
 
 static char *get_topstr (int cmdnum)
@@ -1680,4 +1737,9 @@ const char *selector_list (const selector *sr)
 gpointer selector_get_data (const selector *sr)
 {
     return sr->data;
+}
+
+unsigned long selector_get_opts (const selector *sr)
+{
+    return sr->opts;
 }

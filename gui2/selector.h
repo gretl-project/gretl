@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef SELECTOR_H
+#define SELECTOR_H
+
 #ifdef ENABLE_GMP
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || \
@@ -57,3 +60,6 @@ const char *selector_list (const selector *sr);
 
 gpointer selector_get_data (const selector *sr);
 
+unsigned long selector_get_opts (const selector *sr);
+
+#endif /* SELECTOR_H */

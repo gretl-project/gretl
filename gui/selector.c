@@ -39,9 +39,12 @@ struct _selector {
     GtkWidget *extra;
     int code;
     int error;
+    unsigned long opts;
     char *cmdlist;
     gpointer data;
 };
+
+#define WANT_TOGGLES(c) (c == OLS || c == TOBIT)
 
 void clear_selector (void)
 {
@@ -861,6 +864,7 @@ static void selector_init (selector *sr, guint code, const char *title)
 
     sr->code = code;
     sr->error = 0;
+    sr->opts = 0L;
 
     sr->dlg = gtk_dialog_new();
     open_dialog = sr->dlg;
@@ -1483,4 +1487,9 @@ const char *selector_list (const selector *sr)
 gpointer selector_get_data (const selector *sr)
 {
     return sr->data;
+}
+
+unsigned long selector_get_opts (const selector *sr)
+{
+    return sr->opts;
 }
