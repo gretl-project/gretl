@@ -212,7 +212,7 @@ static unsigned short LPI[4] = {
 #endif 
 
 /* Stirling's formula for the gamma function */
-#if UNK
+#ifdef UNK
 static double STIR[5] = {
  7.87311395793093628397E-4,
 -2.29549961613378126380E-4,
@@ -223,7 +223,7 @@ static double STIR[5] = {
 #define MAXSTIR 143.01608
 static double SQTPI = 2.50662827463100050242E0;
 #endif
-#if DEC
+#ifdef DEC
 static unsigned short STIR[20] = {
 0035516,0061622,0144553,0112224,
 0135160,0131531,0037460,0165740,

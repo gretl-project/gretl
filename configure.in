@@ -299,7 +299,6 @@ gui/gnome/gretl.keys
 cli/Makefile 
 lib/Makefile 
 cephes/Makefile
-cephes/mconf.h
 plugin/Makefile
 po/Makefile.in 
 share/Makefile

@@ -62,7 +62,11 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 */
 
 
-#include "../config.h"
+#ifdef OS_WIN32
+# include "winconfig.h"
+#else
+# include "../config.h"
+#endif
 
 /* Name of package */
 #define PROB_PACKAGE "cephes"
@@ -107,7 +111,7 @@ typedef struct
 
 /* Intel IEEE, low order words come first:
  */
-#define IBMPC 1
+/* #define IBMPC 1 */
 
 /* Motorola IEEE, high order words come first
  * (Sun 680x0 workstation):
@@ -120,7 +124,7 @@ typedef struct
  * roundoff problems in pow.c:
  * (Sun SPARCstation)
  */
-#undef UNK
+#define UNK 1
 
 /* If you define UNK, then be sure to set BIGENDIAN properly. */
 #ifdef FLOAT_WORDS_BIGENDIAN
@@ -137,18 +141,6 @@ typedef struct
  */
 #define VOLATILE
 
-/* For 12-byte long doubles on an i386, pad a 16-bit short 0
- * to the end of real constants initialized by integer arrays.
- *
- * #define XPD 0,
- *
- * Otherwise, the type is 10 bytes long and XPD should be
- * defined blank (e.g., Microsoft C).
- *
- * #define XPD
- */
-#define XPD 0,
-
 /* Define to support tiny denormal numbers, else undefine. */
 #undef DENORMAL
 
@@ -158,7 +150,7 @@ typedef struct
 /* Define to ask for support of numbers that are Not-a-Number,
    else undefine.  This may automatically define INFINITIES in some files. */
 #ifndef OS_WIN32
-# define NANS 1
+/* # define NANS 1 */
 #endif
 
 /* Define to distinguish between -0.0 and +0.0.  */

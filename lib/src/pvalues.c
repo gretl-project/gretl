@@ -49,10 +49,7 @@ const char negval[] = N_("\nEnter x value (value < 0 will exit menu): ");
 
 double _tcrit95 (int df)
 {
-    double x = 1.960;
-    
-    while (tprob(x, df) > .05) x += .001;
-    return x;
+    return stdtri(df, 0.95);
 }
 
 /**
@@ -66,9 +63,8 @@ double _tcrit95 (int df)
 
 double rhocrit95 (int n)
 {
-    double x = 1.960;
+    double x = stdtri(n - 2, 0.95);
     
-    while (tprob(x, n - 2) > .05) x += .001;
     return sqrt(x*x / (x*x - 2 + n));
 }
 
