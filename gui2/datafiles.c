@@ -304,16 +304,26 @@ static void get_local_status (char *fname, char *status, time_t remtime)
     build_path(paths.binbase, fname, fullname, NULL);
 
     if ((err = stat(fullname, &fbuf)) == -1) {
-	if (errno == ENOENT)
+	if (errno == ENOENT) {
+#ifdef G_OS_WIN32
 	    strcpy(status, _("Not installed"));
-	else
+#else
+	    /* try user dir too if not on Windows */
+	    build_path(paths.userdir, fname, fullname, NULL);
+	    if ((err = stat(fullname, &fbuf)) == -1) {
+		strcpy(status, _("Not installed"));
+	    } 
+#endif
+	} else {
 	    strcpy(status, _("Unknown: access error"));
+	}
     }
     if (!err) {
-	if (difftime(remtime, fbuf.st_ctime) > 360)
+	if (difftime(remtime, fbuf.st_ctime) > 360) {
 	    strcpy(status, _("Not up to date"));
-	else 
+	} else {
 	    strcpy(status, _("Up to date"));
+	}
     }
 }
 

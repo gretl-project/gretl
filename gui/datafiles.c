@@ -288,10 +288,14 @@ static void get_local_status (char *fname, char *status, time_t remtime)
 
     build_path(paths.binbase, fname, fullname, NULL);
     if ((err = stat(fullname, &fbuf)) == -1) {
-	if (errno == ENOENT)
-	    strcpy(status, _("Not installed"));
-	else
+	if (errno == ENOENT) {
+	    build_path(paths.userdir, fname, fullname, NULL);
+	    if ((err = stat(fullname, &fbuf)) == -1) {
+		strcpy(status, _("Not installed"));
+	    } 
+	} else {
 	    strcpy(status, _("Unknown: access error"));
+	}
     }
     if (!err) {
 	if (difftime(remtime, fbuf.st_ctime) > 360)
