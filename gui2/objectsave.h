@@ -17,19 +17,14 @@
  *
  */
 
-#ifndef MODELSAVE_H
-#define MODELSAVE_H
+#ifndef OBJECTSAVE_H
+#define OBJECTSAVE_H
 
-enum {
-    DISPLAY_NONE,
-    DISPLAY_MODEL
-};
-
-int maybe_save_model (const CMD *cmd, const MODEL *pmod, 
+int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
 		      DATAINFO *pdinfo);
 
-int display_request (const char *line, char *savename);
+int saved_object_action (const char *line, 
+			 const DATAINFO *pdinfo,
+			 PRN *prn);
 
-MODEL *get_model_from_stack (const char *mname);
-
-#endif /* MODELSAVE_H */
+#endif /* OBJECTSAVE_H */

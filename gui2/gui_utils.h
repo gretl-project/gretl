@@ -21,8 +21,6 @@ int isdir (const char *path);
 
 void append_dir (char *fname, const char *dir);
 
-void delete_model (GtkWidget *widget, gpointer data);
-
 void delete_widget (GtkWidget *widget, gpointer data);
 
 void *mymalloc (size_t size); 

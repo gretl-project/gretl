@@ -1803,7 +1803,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 	    return 1;
 
     m = src->list[0];
-    targ->list = malloc((m + 1) * sizeof(int));
+    targ->list = malloc((m + 1) * sizeof *targ->list);
     if (targ->list == NULL) return 1;
     for (i=0; i<=m; i++) targ->list[i] = src->list[i];    
 

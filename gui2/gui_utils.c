@@ -361,7 +361,7 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-void delete_model (GtkWidget *widget, gpointer data) 
+static void delete_unnamed_model (GtkWidget *widget, gpointer data) 
 {
     MODEL *pmod = (MODEL *) data;
     if (pmod->name == NULL) {
@@ -1658,7 +1658,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
-		     G_CALLBACK(delete_model), 
+		     G_CALLBACK(delete_unnamed_model), 
 		     vwin->data);
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), 

@@ -1015,7 +1015,7 @@ static void open_gui_model (gui_obj *gobj)
     if (bufopen(&prn)) return;
     if (printmodel(pmod, datainfo, prn))
 	pmod->errcode = E_NAN;
-    view_model((void *) prn, pmod, 78, 400, gobj->name);
+    view_model(prn, pmod, 78, 400, gobj->name);
 }
 
 /* ........................................................... */

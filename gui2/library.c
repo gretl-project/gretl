@@ -35,7 +35,7 @@
 #include "selector.h"
 #include "boxplots.h"
 #include "series_view.h"
-#include "modelsave.h"
+#include "objectsave.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -4003,7 +4003,6 @@ int gui_exec_line (char *line,
     int rebuilding = 0;
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
-    char savename[MAXSAVENAME];
     char linecopy[1024];
     char texfile[MAXLEN];
     MODEL tmpmod;
@@ -4011,15 +4010,11 @@ int gui_exec_line (char *line,
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
 
-    /* catch requests to display saved objects, which are not
+    /* catch requests relating to saved objects, which are not
        really "commands" as such */
-    if (display_request(line, savename) == DISPLAY_MODEL) {
-	MODEL *pmod = get_model_from_stack(savename);
-
-	fprintf(stderr, "Got saved model at %p with name '%s'\n",
-		(void *) pmod, savename);
+    if (saved_object_action(line, datainfo, prn)) {
 	return 0;
-    } 
+    }
 
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));
@@ -4689,7 +4684,7 @@ int gui_exec_line (char *line,
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (oflag) outcovmx(models[0], datainfo, 0, prn); 
-	maybe_save_model(&command, models[0], datainfo); 
+	maybe_save_model(&command, &models[0], datainfo); 
 	break;
 
 #ifdef ENABLE_GMP
