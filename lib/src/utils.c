@@ -1274,9 +1274,11 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 
     if (gui) {
 	sprintf(ppaths->helpfile, "%s\\gretl_hlp.txt", ppaths->gretldir);
-	sprintf(ppaths->cmd_helpfile, "%s\\gretlcli_hlp.txt", ppaths->gretldir);
+	sprintf(ppaths->cmd_helpfile, "%s\\%s", ppaths->gretldir,
+		_("gretlcli_hlp.txt"));
     } else 
-	sprintf(ppaths->helpfile, "%s\\gretlcli_hlp.txt", ppaths->gretldir);
+	sprintf(ppaths->helpfile, "%s\\%s", ppaths->gretldir,
+		_("gretlcli_hlp.txt"));
 
     if (ppaths->userdir[strlen(ppaths->userdir) - 1] != SLASH)
 	strcat(ppaths->userdir, "\\");
@@ -1340,16 +1342,18 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
     
     if (gui) {
 	sprintf(ppaths->helpfile, "%sgretl.hlp", ppaths->gretldir);
-	sprintf(ppaths->cmd_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
+	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
+		_("gretlcli.hlp"));
     } else
-	sprintf(ppaths->helpfile, "%sgretlcli.hlp", ppaths->gretldir);
+	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
+		_("gretlcli.hlp"));
 
     sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
 
     return 0;
 }
 
-#endif
+#endif /* win32 versus unix */
 
 /* ........................................................... */
 

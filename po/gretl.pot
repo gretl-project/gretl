@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-05-31 23:48-0400\n"
+"POT-Creation-Date: 2002-07-09 07:40-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: lib/src/compare.c:150 lib/src/generate.c:2569
+#: lib/src/compare.c:150 lib/src/generate.c:2573
 msgid "Replaced"
 msgstr ""
 
@@ -41,7 +41,7 @@ msgstr ""
 msgid "prob(Chi-square(%d) > %f) = %f"
 msgstr ""
 
-#: lib/src/compare.c:641 lib/src/graphing.c:665 lib/src/graphing.c:673
+#: lib/src/compare.c:641 lib/src/graphing.c:704 lib/src/graphing.c:712
 #: lib/src/printout.c:1364
 msgid "residual"
 msgstr ""
@@ -170,7 +170,7 @@ msgstr ""
 msgid "Couldn't access panel plugin\n"
 msgstr ""
 
-#: lib/src/compare.c:1039 lib/src/compare.c:1074 lib/src/pvalues.c:721
+#: lib/src/compare.c:1039 lib/src/compare.c:1074 lib/src/pvalues.c:594
 msgid "Couldn't load plugin function\n"
 msgstr ""
 
@@ -1073,7 +1073,7 @@ msgstr ""
 
 #: lib/src/describe.c:1032
 #, c-format
-msgid "5%% critical value (two-tailed) = %.3f for n = %d"
+msgid "5%% critical value (two-tailed) = %.4f for n = %d"
 msgstr ""
 
 #: lib/src/describe.c:1093 lib/src/describe.c:1164
@@ -1643,147 +1643,147 @@ msgstr ""
 msgid "Undefined variable name '%s' in genr"
 msgstr ""
 
-#: lib/src/generate.c:1728
+#: lib/src/generate.c:1732
 msgid "Scientific notation not allowed for numbers"
 msgstr ""
 
-#: lib/src/generate.c:1786
+#: lib/src/generate.c:1790
 #, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
 msgstr ""
 
-#: lib/src/generate.c:1835 lib/src/generate.c:1851
+#: lib/src/generate.c:1839 lib/src/generate.c:1855
 #, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
 msgstr ""
 
-#: lib/src/generate.c:1837 lib/src/generate.c:1853
+#: lib/src/generate.c:1841 lib/src/generate.c:1857
 msgid "unit"
 msgstr ""
 
-#: lib/src/generate.c:1837 lib/src/generate.c:1853 lib/src/graphing.c:604
+#: lib/src/generate.c:1841 lib/src/generate.c:1857 lib/src/graphing.c:643
 msgid "period"
 msgstr ""
 
-#: lib/src/generate.c:1878 lib/src/generate.c:1946 lib/src/var.c:39
+#: lib/src/generate.c:1882 lib/src/generate.c:1950 lib/src/var.c:39
 msgid "time trend variable"
 msgstr ""
 
-#: lib/src/generate.c:1882
+#: lib/src/generate.c:1886
 msgid "data index variable"
 msgstr ""
 
-#: lib/src/generate.c:1919
+#: lib/src/generate.c:1923
 msgid "annual plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:1924
+#: lib/src/generate.c:1928
 msgid "quarterly plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:1930
+#: lib/src/generate.c:1934
 msgid "monthly plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:1936
+#: lib/src/generate.c:1940
 msgid "hourly plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:1942
+#: lib/src/generate.c:1946
 msgid "index variable"
 msgstr ""
 
-#: lib/src/generate.c:2036
+#: lib/src/generate.c:2040
 #, c-format
 msgid "Listing %d variables:\n"
 msgstr ""
 
-#: lib/src/generate.c:2163
+#: lib/src/generate.c:2167
 #, c-format
 msgid "Log error: Variable '%s', obs %d, value = %g\n"
 msgstr ""
 
-#: lib/src/generate.c:2176
+#: lib/src/generate.c:2180
 msgid " = log of "
 msgstr ""
 
-#: lib/src/generate.c:2331
+#: lib/src/generate.c:2335
 #, c-format
 msgid "%s = %s squared"
 msgstr ""
 
-#: lib/src/generate.c:2359
+#: lib/src/generate.c:2363
 #, c-format
 msgid "%s = %s times %s"
 msgstr ""
 
-#: lib/src/generate.c:2430
+#: lib/src/generate.c:2434
 #, c-format
 msgid "%s = rho-differenced %s"
 msgstr ""
 
-#: lib/src/generate.c:2569
+#: lib/src/generate.c:2573
 msgid "Generated"
 msgstr ""
 
-#: lib/src/generate.c:2570
+#: lib/src/generate.c:2574
 msgid "scalar"
 msgstr ""
 
-#: lib/src/generate.c:2570
+#: lib/src/generate.c:2574
 msgid "vector"
 msgstr ""
 
-#: lib/src/generate.c:2590
+#: lib/src/generate.c:2594
 #, c-format
 msgid "Undefined variable name '%s'"
 msgstr ""
 
-#: lib/src/generate.c:2592
+#: lib/src/generate.c:2596
 msgid "const cannot be used to store values"
 msgstr ""
 
-#: lib/src/generate.c:2595
+#: lib/src/generate.c:2599
 msgid ""
 "uhat can be used only in genr.  First use the command: genr newname = uhat"
 msgstr ""
 
-#: lib/src/generate.c:2598
+#: lib/src/generate.c:2602
 #, c-format
 msgid ""
 "Reserved var. names starting with $ can be used only in genr.\n"
 "First use the command:  genr newname = %s"
 msgstr ""
 
-#: lib/src/generate.c:2641
+#: lib/src/generate.c:2645
 msgid "For 'sim', the variable must already exist"
 msgstr ""
 
-#: lib/src/generate.c:2643
+#: lib/src/generate.c:2647
 msgid "You can't use the constant for this purpose"
 msgstr ""
 
-#: lib/src/generate.c:2655
+#: lib/src/generate.c:2659
 #, c-format
 msgid "Bad varname '%s' in sim"
 msgstr ""
 
-#: lib/src/generate.c:2787
+#: lib/src/generate.c:2791
 #, c-format
 msgid "residual from model %d"
 msgstr ""
 
-#: lib/src/generate.c:2793
+#: lib/src/generate.c:2797
 #, c-format
 msgid "fitted value from model %d"
 msgstr ""
 
-#: lib/src/generate.c:2799
+#: lib/src/generate.c:2803
 #, c-format
 msgid "squared residual from model %d"
 msgstr ""
 
-#: lib/src/graphing.c:200
+#: lib/src/graphing.c:212
 #, c-format
 msgid ""
 "%25cNOTE: o stands for %s\n"
@@ -1791,14 +1791,14 @@ msgid ""
 "%8c"
 msgstr ""
 
-#: lib/src/graphing.c:249
+#: lib/src/graphing.c:267
 #, c-format
 msgid ""
 "%17cNOTE: o stands for %s,   x stands for %s\n"
 "%17c+ means %s and %s are equal when scaled\n"
 msgstr ""
 
-#: lib/src/graphing.c:253
+#: lib/src/graphing.c:271
 #, c-format
 msgid ""
 "%20c%s and %s are plotted on same scale\n"
@@ -1806,65 +1806,65 @@ msgid ""
 "%8c"
 msgstr ""
 
-#: lib/src/graphing.c:356
+#: lib/src/graphing.c:380
 #, c-format
 msgid "var no. %d duplicated in command list.\n"
 msgstr ""
 
-#: lib/src/graphing.c:516
+#: lib/src/graphing.c:555
 #, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr ""
 
-#: lib/src/graphing.c:520
+#: lib/src/graphing.c:559
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr ""
 
-#: lib/src/graphing.c:523
+#: lib/src/graphing.c:562
 #, c-format
 msgid "Actual and fitted %s"
 msgstr ""
 
-#: lib/src/graphing.c:526
+#: lib/src/graphing.c:565
 #, c-format
 msgid "Actual and fitted %s versus %s"
 msgstr ""
 
-#: lib/src/graphing.c:592
+#: lib/src/graphing.c:631
 msgid "Observation"
 msgstr ""
 
-#: lib/src/graphing.c:736 lib/src/pvalues.c:363 lib/src/pvalues.c:381
+#: lib/src/graphing.c:775 lib/src/pvalues.c:235 lib/src/pvalues.c:253
 msgid "left"
 msgstr ""
 
-#: lib/src/graphing.c:740 lib/src/pvalues.c:363 lib/src/pvalues.c:381
+#: lib/src/graphing.c:779 lib/src/pvalues.c:235 lib/src/pvalues.c:253
 msgid "right"
 msgstr ""
 
-#: lib/src/graphing.c:758 lib/src/graphing.c:1071 lib/src/printout.c:1363
+#: lib/src/graphing.c:797 lib/src/graphing.c:1109 lib/src/printout.c:1363
 msgid "fitted"
 msgstr ""
 
-#: lib/src/graphing.c:759
+#: lib/src/graphing.c:798
 msgid "actual"
 msgstr ""
 
-#: lib/src/graphing.c:775
+#: lib/src/graphing.c:814
 msgid "least squares fit"
 msgstr ""
 
-#: lib/src/graphing.c:983
+#: lib/src/graphing.c:1021
 msgid "Test statistic for normality"
 msgstr ""
 
-#: lib/src/graphing.c:984
+#: lib/src/graphing.c:1022
 #, c-format
 msgid "Chi-squared(2) = %.3f, pvalue %.5f"
 msgstr ""
 
-#: lib/src/graphing.c:1071
+#: lib/src/graphing.c:1109
 #, c-format
 msgid "95%% confidence interval"
 msgstr ""
@@ -2750,88 +2750,88 @@ msgstr ""
 msgid "gretl_prn_new: couldn't open %s\n"
 msgstr ""
 
-#: lib/src/pvalues.c:38
+#: lib/src/pvalues.c:39
 msgid ""
 "\n"
 "Enter x value (value < 0 will exit menu): "
 msgstr ""
 
-#: lib/src/pvalues.c:344
+#: lib/src/pvalues.c:214
 msgid ""
 "\n"
 "statistic has missing value code\n"
 msgstr ""
 
-#: lib/src/pvalues.c:359 lib/src/pvalues.c:377 lib/src/pvalues.c:396
-#: lib/src/pvalues.c:413
+#: lib/src/pvalues.c:231 lib/src/pvalues.c:249 lib/src/pvalues.c:269
+#: lib/src/pvalues.c:286
 msgid ""
 "\n"
 "p-value calculation failed\n"
 msgstr ""
 
-#: lib/src/pvalues.c:362
+#: lib/src/pvalues.c:234
 #, c-format
 msgid ""
 "\n"
 "Standard normal: area to the %s of %f = %.4g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:365 lib/src/pvalues.c:383
+#: lib/src/pvalues.c:237 lib/src/pvalues.c:255
 #, c-format
 msgid "(two-tailed value = %.4g; complement = %.4g)\n"
 msgstr ""
 
-#: lib/src/pvalues.c:372
+#: lib/src/pvalues.c:244
 msgid ""
 "\n"
 "pvalue for t: missing parameter\n"
 msgstr ""
 
-#: lib/src/pvalues.c:380
+#: lib/src/pvalues.c:252
 #, c-format
 msgid ""
 "\n"
 "t(%d): area to the %s of %f = %.4g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:391
+#: lib/src/pvalues.c:264
 msgid ""
 "\n"
 "pvalue for chi-square: missing parameter\n"
 msgstr ""
 
-#: lib/src/pvalues.c:399
+#: lib/src/pvalues.c:272
 #, c-format
 msgid ""
 "\n"
 "Chi-square(%d): area to the right of %f = %.4g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:401 lib/src/pvalues.c:418
+#: lib/src/pvalues.c:274 lib/src/pvalues.c:291
 #, c-format
 msgid "(to the left: %.4g)\n"
 msgstr ""
 
-#: lib/src/pvalues.c:408
+#: lib/src/pvalues.c:281
 msgid ""
 "\n"
 "pvalue for F: missing parameter\n"
 msgstr ""
 
-#: lib/src/pvalues.c:416
+#: lib/src/pvalues.c:289
 #, c-format
 msgid ""
 "\n"
 "F(%d, %d): area to the right of %f = %.4g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:426
+#: lib/src/pvalues.c:299
 msgid ""
 "\n"
 "Error computing gamma distribution\n"
 msgstr ""
 
-#: lib/src/pvalues.c:428
+#: lib/src/pvalues.c:301
 #, c-format
 msgid ""
 "\n"
@@ -2839,13 +2839,13 @@ msgid ""
 " area to the right of %f = %.4g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:435
+#: lib/src/pvalues.c:308
 msgid ""
 "\n"
 "unrecognized pvalue code\n"
 msgstr ""
 
-#: lib/src/pvalues.c:453
+#: lib/src/pvalues.c:326
 msgid ""
 "\n"
 "\n"
@@ -2859,100 +2859,100 @@ msgid ""
 "1, 2, 3, 4, or 5): "
 msgstr ""
 
-#: lib/src/pvalues.c:487
+#: lib/src/pvalues.c:360
 msgid ""
 "\n"
 "invalid choice"
 msgstr ""
 
-#: lib/src/pvalues.c:491
+#: lib/src/pvalues.c:364
 msgid ""
 "\n"
 "Do you want to continue with more pvalues (y or n)? "
 msgstr ""
 
-#: lib/src/pvalues.c:508
+#: lib/src/pvalues.c:381
 #, c-format
 msgid ""
 "\n"
 "For the standard normal, area (one-tail) to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:528
+#: lib/src/pvalues.c:401
 #, c-format
 msgid ""
 "\n"
 "For Student's t(%d), area (one-tail) to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:547
+#: lib/src/pvalues.c:420
 #, c-format
 msgid ""
 "\n"
 "For Chi-square(%d), area to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:559
+#: lib/src/pvalues.c:432
 msgid " for the numerator "
 msgstr ""
 
-#: lib/src/pvalues.c:562
+#: lib/src/pvalues.c:435
 msgid " for the denominator "
 msgstr ""
 
-#: lib/src/pvalues.c:569
+#: lib/src/pvalues.c:442
 #, c-format
 msgid ""
 "\n"
 "For F(%d, %d), area to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:581
+#: lib/src/pvalues.c:454
 msgid ""
 "\n"
 "Enter the mean: "
 msgstr ""
 
-#: lib/src/pvalues.c:584
+#: lib/src/pvalues.c:457
 msgid ""
 "\n"
 "Enter the variance: "
 msgstr ""
 
-#: lib/src/pvalues.c:591
+#: lib/src/pvalues.c:464
 #, c-format
 msgid ""
 "\n"
 "For Gamma (mean %g, variance %g), area to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:612
+#: lib/src/pvalues.c:485
 #, c-format
 msgid ""
 "\n"
 "Enter d.f.%s(value <= 0 will exit menu): "
 msgstr ""
 
-#: lib/src/pvalues.c:683
+#: lib/src/pvalues.c:556
 msgid "Invalid input\n"
 msgstr ""
 
-#: lib/src/pvalues.c:688
+#: lib/src/pvalues.c:561
 msgid "Invalid degrees of freedom\n"
 msgstr ""
 
-#: lib/src/pvalues.c:692
+#: lib/src/pvalues.c:565
 msgid "Invalid sample size\n"
 msgstr ""
 
-#: lib/src/pvalues.c:737 gui/calculator.c:197
+#: lib/src/pvalues.c:610 gui/calculator.c:197
 #, c-format
 msgid ""
 "Approximate critical values of F(%d, %d)\n"
 "\n"
 msgstr ""
 
-#: lib/src/pvalues.c:739 gui/calculator.c:199
+#: lib/src/pvalues.c:612 gui/calculator.c:199
 #, c-format
 msgid " 10%% in right tail %.2f\n"
 msgstr ""
@@ -3125,56 +3125,64 @@ msgstr ""
 msgid "Trying %s\n"
 msgstr ""
 
-#: lib/src/utils.c:1237
+#: lib/src/utils.c:1238
 msgid "gretl: using these basic search paths:\n"
 msgstr ""
 
-#: lib/src/utils.c:1846
+#: lib/src/utils.c:1278 lib/src/utils.c:1281
+msgid "gretlcli_hlp.txt"
+msgstr ""
+
+#: lib/src/utils.c:1346 lib/src/utils.c:1349
+msgid "gretlcli.hlp"
+msgstr ""
+
+#: lib/src/utils.c:1851
 msgid "forecasting model failed in fcast_with_errs()\n"
 msgstr ""
 
-#: lib/src/utils.c:1884
+#: lib/src/utils.c:1889
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr ""
 
-#: lib/src/utils.c:1888
+#: lib/src/utils.c:1893
 msgid "prediction"
 msgstr ""
 
-#: lib/src/utils.c:1889
+#: lib/src/utils.c:1894
 msgid " std. error"
 msgstr ""
 
-#: lib/src/utils.c:1890
+#: lib/src/utils.c:1895
 #, c-format
 msgid "   95%% confidence interval\n"
 msgstr ""
 
-#: lib/src/utils.c:2134
+#: lib/src/utils.c:2139
 msgid ""
 "The current data frequency, 1, is not compatible with panel data.\n"
 "Please see the 'setobs' command.\n"
 msgstr ""
 
-#: lib/src/utils.c:2146
+#: lib/src/utils.c:2151
 msgid "Failed to set panel structure\n"
 msgstr ""
 
-#: lib/src/utils.c:2150
+#: lib/src/utils.c:2155
 #, c-format
 msgid "Panel structure set to %s\n"
 msgstr ""
 
-#: lib/src/utils.c:2152
+#: lib/src/utils.c:2157
 msgid "stacked cross sections"
 msgstr ""
 
-#: lib/src/utils.c:2152
+#: lib/src/utils.c:2157
 msgid "stacked time series"
 msgstr ""
 
-#: lib/src/utils.c:2153
+#: lib/src/utils.c:2158
 #, c-format
 msgid "(%d units observed in each of %d periods)\n"
 msgstr ""
@@ -3741,7 +3749,7 @@ msgid "'-' using 1:($2) title 'test statistic' w impulses\n"
 msgstr ""
 
 #: gui/calculator.c:416 gui/database.c:294 gui/fileselect.c:495
-#: gui/fileselect.c:637 gui/gpt_control.c:1136 gui/session.c:1311
+#: gui/fileselect.c:637 gui/gpt_control.c:1138 gui/session.c:1311
 #: gui/session.c:1315 gui/session.c:1396 gui/session.c:1400 gui/library.c:2314
 #: gui/library.c:2623 gui/library.c:2664 gui/library.c:2790 gui/library.c:2823
 #: gui/library.c:2899 gui/library.c:2942
@@ -3902,8 +3910,8 @@ msgid "Test"
 msgstr ""
 
 #: gui/calculator.c:1022 gui/database.c:567 gui/datafiles.c:444
-#: gui/gpt_control.c:618 gui/gpt_control.c:1370 gui/gpt_control.c:1390
-#: gui/gpt_control.c:1395 gui/gui_utils.c:1503 gui/gui_utils.c:1691
+#: gui/gpt_control.c:618 gui/gpt_control.c:1372 gui/gpt_control.c:1392
+#: gui/gpt_control.c:1397 gui/gui_utils.c:1503 gui/gui_utils.c:1691
 #: gui/gui_utils.c:1919 gui/gui_utils.c:2444 gui/gui_utils.c:2545
 #: gui/ssheet.c:633 gui/boxplots.c:173 gui/boxplots.c:201
 msgid "Close"
@@ -5042,52 +5050,52 @@ msgstr ""
 msgid "Plot file is corrupted"
 msgstr ""
 
-#: gui/gpt_control.c:1338 gui/gpt_control.c:1383
+#: gui/gpt_control.c:1340 gui/gpt_control.c:1385
 msgid "Save as postscript (EPS)..."
 msgstr ""
 
-#: gui/gpt_control.c:1343 gui/gpt_control.c:1384
+#: gui/gpt_control.c:1345 gui/gpt_control.c:1386
 msgid "Save as PNG..."
 msgstr ""
 
-#: gui/gpt_control.c:1347 gui/gpt_control.c:1385 gui/boxplots.c:156
+#: gui/gpt_control.c:1349 gui/gpt_control.c:1387 gui/boxplots.c:156
 #: gui/boxplots.c:192
 msgid "Save to session as icon"
 msgstr ""
 
-#: gui/gpt_control.c:1350 gui/gpt_control.c:1386
+#: gui/gpt_control.c:1352 gui/gpt_control.c:1388
 msgid "Zoom..."
 msgstr ""
 
-#: gui/gpt_control.c:1358
+#: gui/gpt_control.c:1360
 msgid " Drag to define zoom rectangle"
 msgstr ""
 
-#: gui/gpt_control.c:1361 gui/gpt_control.c:1394
+#: gui/gpt_control.c:1363 gui/gpt_control.c:1396
 msgid "Restore full view"
 msgstr ""
 
-#: gui/gpt_control.c:1366 gui/gpt_control.c:1388 gui/gui_utils.c:1495
+#: gui/gpt_control.c:1368 gui/gpt_control.c:1390 gui/gui_utils.c:1495
 msgid "Print..."
 msgstr ""
 
-#: gui/gpt_control.c:1476
+#: gui/gpt_control.c:1481
 msgid "Failed to generate PNG file"
 msgstr ""
 
-#: gui/gpt_control.c:1569
+#: gui/gpt_control.c:1575
 msgid "Failed to create pixbuf from file"
 msgstr ""
 
-#: gui/gpt_control.c:1578
+#: gui/gpt_control.c:1585
 msgid "Malformed PNG file for graph"
 msgstr ""
 
-#: gui/gpt_control.c:1767
+#: gui/gpt_control.c:1778
 msgid "gretl: gnuplot graph"
 msgstr ""
 
-#: gui/gpt_control.c:1834
+#: gui/gpt_control.c:1845
 msgid " Click on graph for pop-up menu"
 msgstr ""
 

@@ -10,10 +10,8 @@ INSTALL_DATA = cp -fp
 
 all: install
 
-install: installdirs install_datafiles install_scripts
+install: installdirs install_datafiles install_scripts install_help
 	$(INSTALL_DATA) gretl.stamp $(gretldir)/gretl.stamp
-	$(INSTALL_DATA) gretl.hlp $(gretldir)/gretl.hlp
-	$(INSTALL_DATA) gretlcli.hlp $(gretldir)/gretlcli.hlp
 	$(INSTALL_DATA) bcih/README $(gretldir)/db/README
 	$(INSTALL_DATA) bcih/bcih.bin $(gretldir)/db/bcih.bin
 	$(INSTALL_DATA) bcih/bcih.idx $(gretldir)/db/bcih.idx
@@ -34,10 +32,12 @@ install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
 	$(INSTALL_DATA) gretl.1 $(prefix)/share/man/man1
 
-install-help:
+install_help:
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(INSTALL_DATA) gretl.hlp $(gretldir)/gretl.hlp
 	$(INSTALL_DATA) gretlcli.hlp $(gretldir)/gretlcli.hlp
+	for f in gretlcli.hlp.* ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/$$f ; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
