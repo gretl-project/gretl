@@ -157,6 +157,34 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     return err;
 }
 
+int maybe_save_graph (const CMD *cmd, const char *fname, int code)
+{
+    char savedir[MAXLEN];
+    gchar *tmp, *plotfile;
+    int err = 0;
+
+    if (*cmd->savename == 0) return 0;
+
+    get_default_dir(savedir);
+
+    tmp = g_strdup(cmd->savename);
+    plotfile = g_strdup_printf("%ssession.%s", savedir, 
+			       space_to_score(tmp));
+    g_free(tmp);
+			       
+    if (code == GRETL_GNUPLOT_GRAPH) {
+	err = copyfile(fname, plotfile);
+	if (!err) {
+	    real_add_graph_to_session(plotfile, cmd->savename, code);
+	    remove(fname);
+	}
+    }
+
+    g_free(plotfile);
+
+    return err;
+}
+
 int saved_object_action (const char *line, 
 			 const DATAINFO *pdinfo,
 			 PRN *prn)

@@ -4439,8 +4439,9 @@ int gui_exec_line (char *line,
 	else {
 	    if (plp == NULL) register_graph();
 	    else {
-		pprintf(prn, _("Graph written to %s\n"), paths.plotfile);
-		/* maybe_save_graph */
+		/* pprintf(prn, _("Graph written to %s\n"), paths.plotfile); */
+		err = maybe_save_graph(&command, paths.plotfile,
+				       GRETL_GNUPLOT_GRAPH);
 	    }
 	}
 	break;

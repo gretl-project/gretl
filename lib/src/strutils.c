@@ -476,6 +476,27 @@ void compress_spaces (char *s)
 } 
 
 /**
+ * space_to_score:
+ * @s: the string to process.
+ *
+ * Replace any spaces with underscores in @s.
+ * 
+ * Returns: the (possibly) modified string.
+ */
+
+char *space_to_score (char *s)
+{
+    char *p = s;
+
+    while (*p) {
+	if (*p == ' ') *p = '_';
+	p++;
+    }
+
+    return s;
+}
+
+/**
  * pprintf:
  * @prn: gretl printing struct.
  * @template: as in printf().

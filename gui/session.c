@@ -229,20 +229,6 @@ static void free_rebuild (SESSIONBUILD *rebuild)
 
 /* .................................................................. */
 
-char *space_to_score (char *s)
-{
-    char *p = s;
-
-    while (*p) {
-	if (*p == ' ') *p = '_';
-	p++;
-    }
-
-    return s;
-}
-
-/* .................................................................. */
-
 static void edit_session_notes (void)
 {
     edit_buffer(&session.notes, 80, 400, _("gretl: session notes"),

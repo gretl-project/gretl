@@ -35,6 +35,9 @@ enum {
 
 void session_menu_state (gboolean s);
 
+int real_add_graph_to_session (const char *fname, const char *grname,
+			       int code);
+
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
 void remember_model (gpointer data, guint close, GtkWidget *widget);

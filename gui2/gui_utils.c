@@ -36,7 +36,6 @@ GtkWidget *active_edit_text = NULL;
 
 extern int session_saved;
 extern GtkWidget *mysheet;
-extern char *space_to_score (char *str);
 
 #define MARK_SCRIPT_CHANGED(w) (w->active_var = 1)
 #define MARK_SCRIPT_SAVED(w) (w->active_var = 0)

@@ -53,7 +53,6 @@ extern gboolean console_handler (GtkWidget *w, GdkEventKey *key,
 				 gpointer user_data);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 extern void do_leverage (gpointer data, guint u, GtkWidget *w);
-extern char *space_to_score (char *str); /* session.c */
 
 GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },

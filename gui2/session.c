@@ -230,20 +230,6 @@ static void free_rebuild (SESSIONBUILD *rebuild)
 
 /* .................................................................. */
 
-char *space_to_score (char *s)
-{
-    char *p = s;
-
-    while (*p) {
-	if (*p == ' ') *p = '_';
-	p++;
-    }
-
-    return s;
-}
-
-/* .................................................................. */
-
 static void edit_session_notes (void)
 {
     edit_buffer(&session.notes, 80, 400, _("gretl: session notes"),
@@ -252,12 +238,49 @@ static void edit_session_notes (void)
 
 /* .................................................................. */
 
+int real_add_graph_to_session (const char *fname, const char *grname,
+			       int code)
+{
+    int i = session.ngraphs;
+
+    if (session.ngraphs) {
+	session.graphs = myrealloc(session.graphs, 
+				   (i + 1) * sizeof *session.graphs);
+    } else {
+	session.graphs = mymalloc(sizeof *session.graphs);
+    }
+
+    if (session.graphs == NULL) return E_ALLOC;
+
+    session.graphs[i] = mymalloc(sizeof **session.graphs);
+    if (session.graphs[i] == NULL) return E_ALLOC;
+
+    (session.graphs[i])->sort = code;
+
+    strcpy((session.graphs[i])->fname, fname);
+    strcpy((session.graphs[i])->name, grname);
+    (session.graphs[i])->ID = plot_count++;
+    session.ngraphs += 1;
+    
+    session_changed(1);
+
+    if (icon_list != NULL) {
+	session_add_icon(session.graphs[i], 
+			 (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b',
+			 ICON_ADD_SINGLE);
+    }
+
+    return 0;
+}
+
+/* .................................................................. */
+
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 {
     char pltname[MAXLEN], savedir[MAXLEN];
     char grname[32];
-    int i = session.ngraphs;
     int boxplot_count;
+    int err = 0;
     
     errno = 0;
 
@@ -303,37 +326,11 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	return;
     }
 
-    /* write graph into session struct */
-    if (session.ngraphs) {
-	session.graphs = myrealloc(session.graphs, 
-				   (i + 1) * sizeof *session.graphs);
-    } else {
-	session.graphs = mymalloc(sizeof *session.graphs);
+    err = real_add_graph_to_session(pltname, grname, code);
+
+    if (!err) {
+	infobox(_("Graph saved"));
     }
-
-    if (session.graphs == NULL) return;
-
-    session.graphs[i] = mymalloc(sizeof **session.graphs);
-    if (session.graphs[i] == NULL) return;
-
-    (session.graphs[i])->sort = code;
-
-    strcpy((session.graphs[i])->fname, pltname);
-    strcpy((session.graphs[i])->name, grname);
-    (session.graphs[i])->ID = plot_count++;
-    session.ngraphs += 1;
-    
-    session_changed(1);
-
-    infobox(_("Graph saved"));
-
-    if (icon_list != NULL) {
-	session_add_icon(session.graphs[i], 
-			 (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b',
-			 ICON_ADD_SINGLE);
-    }
-
-    return;
 }
 
 /* ........................................................... */
@@ -1261,7 +1258,7 @@ static void maybe_delete_session_object (gui_obj *obj)
 
 static gui_obj *get_gui_obj_from_data (void *finddata)
 {
-    gui_obj *gobj;
+    gui_obj *gobj = NULL;
     int found = 0;
 
     icon_list = g_list_first(icon_list);

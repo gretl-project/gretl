@@ -23,6 +23,8 @@
 int maybe_save_model (const CMD *cmd, MODEL **ppmod, 
 		      DATAINFO *pdinfo);
 
+int maybe_save_graph (const CMD *cmd, const char *fname, int code);
+
 int saved_object_action (const char *line, 
 			 const DATAINFO *pdinfo,
 			 PRN *prn);
