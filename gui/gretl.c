@@ -1420,7 +1420,7 @@ static void build_selection_popup (void)
     selection_popup = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!dataset_is_time_series(datainfo) && i == 3) {
+	if (!dataset_is_time_series(datainfo) && i == 4) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));

@@ -72,25 +72,25 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 	return 1;
     }
 
-    pputs(prn, "Principal Components Analysis\n\n");
-    pputs(prn, "Eigenanalysis of the Correlation Matrix\n\n");
+    pprintf(prn, "%s\n\n", _("Principal Components Analysis"));
+    pprintf(prn, "%s\n\n", _("Eigenanalysis of the Correlation Matrix"));
 
-    pputs(prn, "Component  Eigenvalue  Proportion   Cumulative\n");
+    pputs(prn, _("Component  Eigenvalue  Proportion   Cumulative\n"));
 
     y = 0.0;
     for (i=n-1; i>=0; i--) {
 	y += evals[i] / n;
-	pprintf(prn, "    %d%13.4f%13.4f%13.4f\n", n - i,
+	pprintf(prn, "%5d%13.4f%13.4f%13.4f\n", n - i,
 		evals[i], evals[i] / n, y);
 	x += evals[i];
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
 #ifdef PCA_DEBUG
     fprintf(stderr, "check: sum of evals = %g\n", x);
 #endif
 
-    pputs(prn, "Eigenvectors (component loadings)\n\n");
+    pprintf(prn, "%s\n\n", _("Eigenvectors (component loadings)"));
 
     cols = n;
     while (cols > 0) {
@@ -98,19 +98,22 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 
 	pputs(prn, "Variable  ");
 	for (i=n-cols; i<n-cols+7 && i<n; i++) {
-	    pprintf(prn, "%8s%d", "PC", i + 1);
+	    char pcname[8];
+
+	    sprintf(pcname, "PC%d", i + 1);
+	    pprintf(prn, "%9s", pcname);
 	    colsdone++;
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 	for (i=0; i<n; i++) {
 	    pprintf(prn, "%-10s", pdinfo->varname[corrmat->list[i+1]]);
 	    for (j=cols-1; j>cols-8 && j>=0; j--) {
 		pprintf(prn, "%9.3f", gretl_matrix_get(m, i, j));
 	    }
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
 	cols -= colsdone;
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     if (oflag) {
