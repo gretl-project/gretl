@@ -1143,10 +1143,12 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
 	return;
 
-    if (opt == 0)
+    if (opt == 0) {
 	err = set_sample_dummy(NULL, &Z, &subZ, datainfo, subinfo, OPT_O);
-    else
+    } else {
 	err = set_sample_dummy(line, &Z, &subZ, datainfo, subinfo, opt);
+    }
+
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -1160,10 +1162,12 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 
     set_sample_label_special();
     restore_sample_state(TRUE);
-    if (opt == 0)
+
+    if (opt == 0) {
 	infobox(_("Sample now includes only complete observations"));
-    else
+    } else {
 	infobox(_("Sub-sampling done"));
+    }
 }
 
 /* ........................................................... */
@@ -4415,11 +4419,13 @@ static int gui_exec_line (char *line,
     case SMPL:
 	if (oflag) {
 	    restore_sample(NULL, 0, NULL);
-	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) 
+	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
 		err = E_ALLOC;
-	    else 
+	    }
+	    else { 
 		err = set_sample_dummy(line, &Z, &subZ, datainfo, 
 				       subinfo, oflag);
+	    }
 	    if (!err) {
 		/* save the full data set for later use */
 		fullZ = Z;
@@ -4432,15 +4438,17 @@ static int gui_exec_line (char *line,
 	    restore_sample(NULL, 0, NULL);
 	    restore_sample_state(FALSE);
 	    check = 1;
-	} else 
+	} else {
 	    err = set_sample(line, datainfo);
+	}
 	if (err) errmsg(err, prn);
 	else {
 	    print_smpl(datainfo, (oflag)? fullinfo->n : 0, prn);
-	    if (oflag) 
+	    if (oflag) { 
 		set_sample_label_special();
-	    else
+	    } else {
 		set_sample_label(datainfo);
+	    }
 	    if (!check) restore_sample_state(TRUE);
 	}
 	break;

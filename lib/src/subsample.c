@@ -151,7 +151,7 @@ static void prep_subdinfo (DATAINFO *dinfo, int markers, int n)
 int set_sample_dummy (const char *line, 
 		      double ***oldZ, double ***newZ,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
-		      const int opt)
+		      int opt)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values; or using as a
 	mask a specified dummy variable;, or masking with a specified
@@ -166,8 +166,9 @@ int set_sample_dummy (const char *line,
 
     dumv[0] = '\0';
     if (opt == OPT_O && 
-	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0))
+	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0)) {
 	missobs = 1; 
+    }
 
     if (missobs) { /* construct missing obs dummy on the fly */
 	dum = malloc(n * sizeof *dum);
@@ -212,18 +213,20 @@ int set_sample_dummy (const char *line,
     /* does this policy lead to an empty sample, or no change
        in the sample, perchance? */
     if (sn == 0) {
-	if (opt == OPT_O && !missobs)
+	if (opt == OPT_O && !missobs) {
 	    sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), dumv);
-	else if (missobs)
+	} else if (missobs) {
 	    strcpy(gretl_errmsg, _("No observations would be left!"));
-	else { /* case of boolean expression */
-	    if ((*oldZ)[subnum][oldinfo->t1] == 0)
+	} else { /* case of boolean expression */
+	    if ((*oldZ)[subnum][oldinfo->t1] == 0) {
 		strcpy(gretl_errmsg, _("No observations would be left!"));
-	    else
+	    } else {
 		strcpy(gretl_errmsg, _("No observations were dropped!"));
+	    }
 	}
 	return 1;
     }
+
     if (sn == n) {
 	strcpy(gretl_errmsg, _("No observations were dropped!"));
 	return 1;
@@ -238,11 +241,12 @@ int set_sample_dummy (const char *line,
     }
 
     for (t=0; t<n; t++) {
-	if (missobs) 
+	if (missobs) {
 	    (*oldZ)[subnum][t] = dum[t];
-	else if (opt == OPT_O)
+	} else if (opt == OPT_O) {
 	    /* ?possibility of missing values here? */
 	    (*oldZ)[subnum][t] = (*oldZ)[dumnum][t];
+	}
     }
 
     /* set up the sub-sampled datainfo */

@@ -1184,12 +1184,18 @@ void exec_line (char *line, PRN *prn)
 
     case SMPL:
 	if (oflag) {
-	    /* FIXME restore_full_sample() first? */
-	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) 
+	    err = restore_full_sample(&subZ, &fullZ, &Z,
+				      &subinfo, &fullinfo, &datainfo);
+	    if (err) {
+		errmsg(err, prn);
+		break;
+	    }
+	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
 		err = E_ALLOC;
-	    else 
+	    } else {
 		err = set_sample_dummy(line, &Z, &subZ, datainfo, 
 				       subinfo, oflag);
+	    }
 	    if (!err) {
 		fullZ = Z;
 		fullinfo = datainfo;
@@ -1197,13 +1203,17 @@ void exec_line (char *line, PRN *prn)
 		Z = subZ;
 	    }
 	} 
-	else if (strcmp(line, "smpl full") == 0) 
+	else if (strcmp(line, "smpl full") == 0) {
 	    err = restore_full_sample(&subZ, &fullZ, &Z,
 				      &subinfo, &fullinfo, &datainfo);
-	else 
+	} else { 
 	    err = set_sample(line, datainfo);
-	if (err) errmsg(err, prn);
-	else print_smpl(datainfo, (oflag)? fullinfo->n : 0, prn);
+	}
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    print_smpl(datainfo, (oflag)? fullinfo->n : 0, prn);
+	}
 	break;
 
     case SQUARE:

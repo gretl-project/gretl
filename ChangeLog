@@ -12,7 +12,7 @@
 - fix translation issue in LaTeX print of equation
 - backport fix for impulse plot to gtk-1.2 version
 - fix bug at exit of gretlcli with "quit" and no filename
-- fies for bugs in gnumeric file reader
+- fixes for bugs in gnumeric file reader
 - fixes for Excel reader -- handle missing obs and Far East info
 - fix for gretlcli under NLS: ensure that the translations come
   out in the local encoding, not utf-8
