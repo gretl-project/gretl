@@ -343,7 +343,7 @@ static int freq_error (FREQDIST *freq, PRN *prn)
 
 gint check_cmd (char *line)
 {
-    strcpy(command.param, "");
+    *command.param = 0;
     catchflag(line, &oflag);
     getcmd(line, datainfo, &command, &ignore, &Z, NULL); 
     if (command.errcode) {
@@ -413,6 +413,13 @@ gint cmd_init (char *line)
     n_cmds++;
 
     return 0;
+}
+
+/* ........................................................... */
+
+int verify_and_record_command (char *line)
+{
+    return (check_cmd(line) || cmd_init(line));
 }
 
 /* ........................................................... */
@@ -704,7 +711,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     }
 
     /* check the command and initialize output buffer */
-    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+    if (verify_and_record_command(line) || bufopen(&prn)) return;
 
     /* execute the command */
     switch (action) {
@@ -766,7 +773,7 @@ void do_coint (GtkWidget *widget, gpointer p)
     sprintf(line, "coint %s", buf);
 
     /* check the command and initialize output buffer */
-    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+    if (verify_and_record_command(line) || bufopen(&prn)) return;
 
     order = atoi(command.param);
     if (!order) {
@@ -866,7 +873,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
     }
 
     /* check the command and initialize output buffer */
-    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+    if (verify_and_record_command(line) || bufopen(&prn)) return;
 
     /* execute the command */
     switch (ddata->code) {
@@ -1155,7 +1162,7 @@ void change_sample (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "smpl %s", buf);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     err = set_sample(line, datainfo);
     if (err) gui_errmsg(err);
@@ -1217,7 +1224,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "smpl %s -r", buf); 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     close_dialog(ddata);
     bool_subsample(NULL, OPT_R, NULL);
@@ -1237,7 +1244,7 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 	
     clear(line, MAXLEN);
     sprintf(line, "smpl %s -o", dumv);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     close_dialog(ddata);
     bool_subsample(NULL, OPT_O, NULL);
@@ -1258,7 +1265,7 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
     clear(line, MAXLEN);
     sprintf(line, "setobs %s %s ", pdstr, stobs);
     catchflag(line, &opt);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     err = set_obs(line, datainfo, opt);
     if (err) {
@@ -1330,7 +1337,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
     
     clear(line, MAXLEN);
     sprintf(line, "fcasterr %s", buf);
-    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+    if (verify_and_record_command(line) || bufopen(&prn)) return;
 
     close_dialog(ddata);
     fr = get_fcast_with_errs(line, pmod, &Z, datainfo, prn);
@@ -1854,7 +1861,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	sprintf(tmpstr, "%d ", pmod->list[i]);
 	strcat(line, tmpstr);
     }
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     order = atoi(command.param);
     if (!order) {
@@ -1952,7 +1959,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     clear(line, MAXLEN);
     sprintf(line, "%s %s", estimator, buf);
 
-    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+    if (verify_and_record_command(line) || bufopen(&prn)) return;
 
     if (gui_open_plugin("mp_ols", &handle)) return;
     mplsq = get_plugin_function("mplsq", handle);
@@ -1993,7 +2000,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
 static int do_nls_genr (void)
 {
-    if (check_cmd(line) || cmd_init(line)) return 1;
+    if (verify_and_record_command(line)) return 1;
     return finish_genr(NULL, NULL);
 }
 
@@ -2234,7 +2241,7 @@ void do_sim (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "sim %s", buf);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     sscanf(line, "%*s %*s %*s %s", varname);
     sprintf(info, _("%s redefined OK"), varname);
@@ -2260,7 +2267,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "nulldata %s", buf);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     nulldata_n = atoi(command.param);
     if (nulldata_n < 2) {
@@ -2307,7 +2314,7 @@ void do_genr (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "genr %s", buf);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     finish_genr(NULL, ddata);
 }
@@ -2375,7 +2382,7 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
 	else sprintf(line, "genr %s = uniform()", vname); 
     }
 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     finish_genr(NULL, ddata);
 }
@@ -2394,7 +2401,7 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
 	
     clear(line, MAXLEN);
     sprintf(line, "seed %s", tmp); 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     gretl_rand_set_seed(atoi(tmp));
 }
@@ -2612,7 +2619,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
     clear(line, MAXLEN);
     sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     freq = freqdist(&Z, datainfo, mdata->active_var, 1);
 
@@ -2831,7 +2838,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
     else
 	sprintf(line, "pergm %s", datainfo->varname[mdata->active_var]);
 
-    if (check_cmd(line) || cmd_init(line)) {
+    if (verify_and_record_command(line)) {
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2922,7 +2929,7 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
     } else 
 	sprintf(line, "genr dummy");
 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     if (panel) 
 	err = paneldum(&Z, datainfo, 
@@ -2943,7 +2950,7 @@ void add_time (gpointer data, guint index, GtkWidget *widget)
     clear(line, MAXLEN);
     if (index) sprintf(line, "genr index");
     else sprintf(line, "genr time");
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     err = plotvar(&Z, datainfo, (index)? "index" : "time");
     if (err) 
@@ -2967,7 +2974,7 @@ void add_logs_etc (GtkWidget *widget, gpointer p)
     msg[0] = '\0';
     sprintf(line, "%s %s", gretl_commands[sr->code], buf);
 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     if (sr->code == LAGS)
 	err = lags(command.list, &Z, datainfo);
@@ -3330,7 +3337,7 @@ void do_graph_var (int varnum)
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s time", datainfo->varname[varnum]);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     lines[0] = 1;
     err = gnuplot(command.list, lines, NULL, &Z, datainfo,
@@ -3356,7 +3363,7 @@ void do_boxplot_var (int varnum)
     if (varnum < 0) return;
     clear(line, MAXLEN);
     sprintf(line, "boxplot %s", datainfo->varname[varnum]);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     if (boxplots(command.list, NULL, &Z, datainfo, 0)) 
 	errbox (_("boxplot command failed"));
@@ -3375,7 +3382,7 @@ void do_scatters (GtkWidget *widget, gpointer p)
 
     clear(line, MAXLEN);
     sprintf(line, "scatters %s", buf);
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
     err = multi_scatters(command.list, atoi(command.param), &Z, 
 			 datainfo, &paths);
     if (err < 0) errbox(_("gnuplot command failed"));
@@ -3398,7 +3405,7 @@ void do_box_graph_trad (GtkWidget *widget, dialog_t *ddata)
 	clear(line, MAXLEN);
 	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", buf);
 
-	if (check_cmd(line) || cmd_init(line)) return;
+	if (verify_and_record_command(line)) return;
 	err = boxplots(command.list, NULL, &Z, datainfo, (code == GR_NBOX));
     }
     if (err) errbox(_("boxplot command failed"));
@@ -3421,7 +3428,7 @@ void do_box_graph (GtkWidget *widget, gpointer p)
 	clear(line, MAXLEN);
 	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", buf);
 
-	if (check_cmd(line) || cmd_init(line)) return;
+	if (verify_and_record_command(line)) return;
 	err = boxplots(command.list, NULL, &Z, datainfo, (code == GR_NBOX));
     }
     if (err) errbox(_("boxplot command failed"));
@@ -3442,7 +3449,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     clear(line, MAXLEN);
     sprintf(line, "gnuplot -z %s", buf);
 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     if (command.list[0] != 3 || 
 	!isdummy(Z[command.list[3]], datainfo->t1, datainfo->t2)) {
@@ -3477,7 +3484,7 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 	strcat(line, " time");
     }
 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
 
     lines = mymalloc((command.list[0] - 1) * sizeof *lines);
     if (lines == NULL) return;
@@ -3520,7 +3527,7 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     sprintf(line, "gnuplot%s time", liststr);
     free(liststr);
 
-    if (check_cmd(line) || cmd_init(line)) return;
+    if (verify_and_record_command(line)) return;
     lines = mymalloc(command.list[0] - 1);
     if (lines == NULL) return;
     for (i=0; i<command.list[0]-1 ; i++) lines[i] = 1;

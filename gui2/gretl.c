@@ -75,7 +75,6 @@ static void build_main_popups (void);
 static gint var_popup_click (GtkWidget *widget, gpointer data);
 static gboolean main_popup_handler (GtkWidget *widget, GdkEvent *event,
 				    gpointer data);
-static void mdata_edit (gpointer data, guint colnum, GtkWidget *w);
 static int tree_view_selection_count (GtkTreeSelection *select);
 
 static void check_for_extra_data (void);
@@ -223,6 +222,11 @@ enum {
 #endif
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
+
+static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
+{
+    varinfo_dialog(mdata->active_var);
+}
 
 GtkItemFactoryEntry data_items[] = {
 
@@ -440,7 +444,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Add variables/seed generator..."), NULL, gretl_callback, 
       SEED, NULL },
     { N_("/Data/Add variables/sep2"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Data/Add variables/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
+    { N_("/Data/Add variables/Define _new variable..."), NULL, gretl_callback, 
+      GENR, NULL },
     { N_("/Data/Refresh window"), NULL, refresh_data, 0, NULL },
 
     /* Sample menu */
@@ -500,12 +505,7 @@ GtkItemFactoryEntry data_items[] = {
 #endif
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
     { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Variable/_Rename"), NULL, mdata_edit, RENAME, NULL },
-    { N_("/Variable/_Edit label"), NULL, mdata_edit, RELABEL, NULL },
-#ifdef notdef
-    { N_("/Variable/_Rename"), NULL, gretl_callback, RENAME, NULL },
-    { N_("/Variable/_Edit label"), NULL, gretl_callback, RELABEL, NULL },
-#endif
+    { N_("/Variable/_Edit attributes"), NULL, varinfo_callback, 0, NULL },
     { N_("/Variable/Set missing value code..."), NULL, gretl_callback, 
       VSETMISS, NULL },
     { N_("/Variable/sep3"), NULL, NULL, 0, "<Separator>" },
@@ -1423,8 +1423,7 @@ static void set_up_main_menu (void)
     mdata->mbar = gtk_item_factory_get_widget (mdata->ifac, "<main>");
 }
 
-/* ........................................................... */
-
+#if 0
 static void mdata_edit (gpointer data, guint action, GtkWidget *w)
 {
     gint row, colnum;
@@ -1460,6 +1459,7 @@ static void mdata_edit (gpointer data, guint action, GtkWidget *w)
 	gtk_tree_path_free(path);
     } 
 }
+#endif
 
 extern void delete_var_by_id (int id); /* callbacks.c */
 
@@ -1487,11 +1487,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	gretl_callback(NULL, ADF, NULL);
     else if (!strcmp(item, _("Runs test"))) 
 	do_menu_op(NULL, RUNS, NULL);
-    else if (!strcmp(item, _("Rename"))) 
-	mdata_edit(NULL, RENAME, NULL);
-    else if (!strcmp(item, _("Edit label")))  
-	mdata_edit(NULL, RELABEL, NULL);
-    else if (!strcmp(item, _("View/edit attributes")))  
+    else if (!strcmp(item, _("Edit attributes")))  
 	varinfo_dialog(mdata->active_var);
     else if (!strcmp(item, _("Delete"))) 
 	delete_var_by_id(mdata->active_var);
@@ -1516,9 +1512,7 @@ static void build_var_popup (windata_t *win)
 	N_("Spectrum"),
 	N_("Dickey-Fuller test"),
 	N_("Runs test"),
-	N_("Rename"),
-	N_("Edit label"),
-	N_("View/edit attributes"),
+	N_("Edit attributes"),
 	N_("Delete"),
 	N_("Simulate..."),
 	N_("Define new variable...")
@@ -1713,8 +1707,7 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
 	set_sample_label(datainfo);    
 	restore_sample_state(FALSE);
 	strcpy(line, "smpl full");
-	check_cmd(line);
-	cmd_init(line);
+	verify_and_record_command(line);
     }
 }
 
@@ -1835,7 +1828,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
-    if (check_cmd(line) || cmd_init(line) ||
+    if (verify_and_record_command(line) ||
 	write_data(Rdata, command.list, Z, datainfo, GRETL_DATA_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);

@@ -209,5 +209,7 @@ int execute_script (const char *runfile, const char *buf,
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
 
+int verify_and_record_command (char *line);
+
 #endif /* LIBRARY_H */
 

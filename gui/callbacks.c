@@ -508,22 +508,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	okfunc = do_genr;
 	varclick = VARCLICK_INSERT_NAME;
 	break;
-    case RENAME:
-	strcpy(title, _("gretl: rename var"));
-	strcpy(query, _("Enter new name for variable\n(max. 8 characters):"));
-	strcpy(defstr, datainfo->varname[mdata->active_var]);
-	okfunc = do_rename_var;
-	break;
-    case RELABEL:
-	v = mdata->active_var;
-	strcpy(title, _("gretl: edit label"));
-	sprintf(query, _("Edit label for variable number %d (%s):"),
-		v, datainfo->varname[v]);
-	if (strlen(VARLABEL(datainfo, v)) > 2) {
-	    strcpy(defstr, VARLABEL(datainfo, v));
-	}
-	okfunc = do_edit_label;
-	break;
     case VSETMISS:
 	strcpy(title, _("gretl: missing code"));
 	strcpy(query, _("Enter value to be read as \"missing\":"));

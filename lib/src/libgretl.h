@@ -65,7 +65,7 @@
 #define MAXLABEL 128  /* maximum length of decsriptive labels for variables */
 #define MAXLEN   512  /* max length of "long" strings */
 #define ERRLEN   256  /* max length of libgretl error messages */
-#define MAXDISP   16  /* max length of "display names" for variables */
+#define MAXDISP   20  /* max length of "display names" for variables */
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846

@@ -1073,3 +1073,162 @@ void delimiter_dialog (void)
 
     gtk_main();
 }
+
+struct varinfo_settings {
+    GtkWidget *dlg;
+    GtkWidget *name_entry;
+    GtkWidget *label_entry;
+    GtkWidget *display_name_entry;
+    int varnum;
+};
+
+static void really_set_variable_info (GtkWidget *w, 
+				      struct varinfo_settings *vset)
+{
+    const char *edttext;
+    int v = vset->varnum;
+    int changed = 0;
+    int gui_changed = 0;
+
+    edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
+    if (validate_varname(edttext)) {
+	return;
+    } else {
+	if (strcmp(datainfo->varname[v], edttext)) {
+	    strcpy(datainfo->varname[v], edttext);
+	    gui_changed = 1;
+	}
+    }
+
+    edttext = gtk_entry_get_text(GTK_ENTRY(vset->label_entry));
+    if (strcmp(VARLABEL(datainfo, v), edttext)) {
+	*VARLABEL(datainfo, v) = 0;
+	strncat(VARLABEL(datainfo, v), edttext, MAXLABEL - 1);
+	changed = 1;
+	gui_changed = 1;
+    }
+
+    edttext = gtk_entry_get_text(GTK_ENTRY(vset->display_name_entry));
+    if (strcmp(DISPLAYNAME(datainfo, v), edttext)) {
+	*DISPLAYNAME(datainfo, v) = 0;
+	strncat(DISPLAYNAME(datainfo, v), edttext, MAXDISP - 1);
+	changed = 1;
+    }
+
+    if (changed) {
+	sprintf(line, "label %s -d \"%s\" -n \"%s\"", datainfo->varname[v],
+		VARLABEL(datainfo, v), DISPLAYNAME(datainfo, v));
+	verify_and_record_command(line);
+    }
+
+    if (gui_changed)
+	populate_main_varlist();
+
+    gtk_widget_destroy(vset->dlg);
+}
+
+static void free_vsettings (GtkWidget *w, 
+			    struct varinfo_settings *vset)
+{
+    free(vset);
+}
+
+void varinfo_dialog (int varnum)
+{
+    GtkWidget *tempwid, *hbox;
+    struct varinfo_settings *vset;
+
+    vset = mymalloc(sizeof *vset);
+    if (vset == NULL) return;
+
+    vset->varnum = varnum;
+    vset->dlg = gtk_dialog_new();
+
+    gtk_signal_connect (GTK_OBJECT(vset->dlg), "destroy", 
+			GTK_SIGNAL_FUNC(free_vsettings), vset);
+
+    gtk_window_set_title(GTK_WINDOW(vset->dlg), _("gretl: variable attributes"));
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (vset->dlg)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (vset->dlg)->action_area), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (vset->dlg)->vbox), 5);
+    gtk_window_set_position (GTK_WINDOW (vset->dlg), GTK_WIN_POS_MOUSE);
+
+    /* read/set name of variable */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("name of variable:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+    gtk_widget_show(tempwid);
+
+    vset->name_entry = gtk_entry_new_with_max_length(8);
+    gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
+		       datainfo->varname[varnum]);
+    gtk_box_pack_start(GTK_BOX(hbox), 
+		       vset->name_entry, FALSE, FALSE, 0);
+    gtk_widget_show(vset->name_entry); 
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox); 
+
+    /* read/set descriptive string */
+    hbox = gtk_hbox_new(FALSE, 0);
+    tempwid = gtk_label_new (_("description:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+    gtk_widget_show(tempwid);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    vset->label_entry = gtk_entry_new_with_max_length(MAXLABEL-1);
+    gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
+		       VARLABEL(datainfo, varnum));
+    gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 0);
+    gtk_widget_show(vset->label_entry);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox); 
+
+    /* read/set display name */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("display name (shown in graphs):"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+    gtk_widget_show(tempwid);
+
+    vset->display_name_entry = gtk_entry_new_with_max_length(MAXDISP-1);
+    gtk_entry_set_text(GTK_ENTRY(vset->display_name_entry), 
+		       DISPLAYNAME(datainfo, varnum));
+    gtk_box_pack_start(GTK_BOX(hbox), 
+		       vset->display_name_entry, FALSE, FALSE, 0);
+    gtk_widget_show(vset->display_name_entry); 
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox); 
+
+    /* Create the "OK" button */
+    tempwid = gtk_button_new_with_label (_("OK"));
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (vset->dlg)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC(delete_widget), 
+			vset->dlg);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* And a Cancel button */
+    tempwid = gtk_button_new_with_label (_("Cancel"));
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC(delete_widget), vset->dlg);
+    gtk_widget_show (tempwid);
+
+    gtk_widget_show (vset->dlg);
+}

@@ -183,6 +183,11 @@ static void gnome_help (void)
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
+static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
+{
+    varinfo_dialog(mdata->active_var);
+}
+
 GtkItemFactoryEntry data_items[] = {
     /* File menu */
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
@@ -434,10 +439,9 @@ GtkItemFactoryEntry data_items[] = {
 #endif
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
     { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Variable/_Rename"), NULL, gretl_callback, RENAME, NULL },
-    { N_("/Variable/_Edit label"), NULL, gretl_callback, RELABEL, NULL },
     { N_("/Variable/Set missing value code..."), NULL, gretl_callback, 
       VSETMISS, NULL },
+    { N_("/Variable/_Edit attributes"), NULL, varinfo_callback, 0, NULL },
     { N_("/Variable/sep3"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/Simulate..."), NULL, gretl_callback, SIM, NULL },
     { N_("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
@@ -1310,10 +1314,8 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 	gretl_callback(NULL, ADF, NULL);
     else if (!strcmp(item, _("Runs test"))) 
 	do_menu_op(NULL, RUNS, NULL);
-    else if (!strcmp(item, _("Rename"))) 
-	gretl_callback(NULL, RENAME, NULL);
-    else if (!strcmp(item, _("Edit label"))) 
-	gretl_callback(NULL, RELABEL, NULL);
+    else if (!strcmp(item, _("Edit attributes"))) 
+	varinfo_dialog(mdata->active_var);
     else if (!strcmp(item, _("Delete"))) 
 	delete_var_by_id(mdata->active_var);
     else if (!strcmp(item, _("Simulate..."))) 
@@ -1339,8 +1341,7 @@ static GtkWidget *build_var_popup (void)
 	N_("Spectrum"),
 	N_("Dickey-Fuller test"),
 	N_("Runs test"),
-	N_("Rename"),
-	N_("Edit label"),
+	N_("Edit attributes"),
 	N_("Delete"),
 	N_("Simulate..."),
 	N_("Define new variable...")
@@ -1496,8 +1497,7 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
 	set_sample_label(datainfo);    
 	restore_sample_state(FALSE);
 	strcpy(line, "smpl full");
-	check_cmd(line);
-	cmd_init(line);
+	verify_and_record_command(line);
     }
 }
 
@@ -1551,7 +1551,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
-    if (check_cmd(line) || cmd_init(line) ||
+    if (verify_and_record_command(line) ||
 	write_data(Rdata, command.list, Z, datainfo, GRETL_DATA_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
