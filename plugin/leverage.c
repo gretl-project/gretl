@@ -37,7 +37,6 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     if (dataset_is_time_series(pdinfo) && 
 	(pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {
 	char per[8];
-	int pv;
 
 	if (pdinfo->pd == 1) strcpy(per, "annual");
 	else if (pdinfo->pd == 4) strcpy(per, "qtrs");
@@ -79,6 +78,7 @@ static int leverage_plot (int n, int tstart, const double *uhat,
 
     /* lower plot: influence factor */
     fputs("set origin 0.0,0.0\n", fp);
+    fputs("set missing '?'\n", fp);
     fputs("set yrange [*:*]\n", fp);
     fprintf(fp, "set title '%s'\n", I_("influence")); 
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
@@ -86,11 +86,19 @@ static int leverage_plot (int n, int tstart, const double *uhat,
 	double f;
 
 	tmod = t + tstart;
-	f = uhat[tmod] * h[t] / (1.0 - h[t]);
-	if (timeplot) {
-	    fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], f);
+	if (h[t] < 1.0) {
+	    f = uhat[tmod] * h[t] / (1.0 - h[t]);
+	    if (timeplot) {
+		fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], f);
+	    } else {
+		fprintf(fp, "%d %g\n", tmod + 1, f);
+	    }
 	} else {
-	    fprintf(fp, "%d %g\n", tmod+1, f);
+	    if (timeplot) {
+		fprintf(fp, "%g ?\n", (*pZ)[timeplot][tmod]);
+	    } else {
+		fprintf(fp, "%d ?\n", tmod + 1);
+	    }
 	}
     }
     fputs("e\n", fp);
@@ -201,6 +209,7 @@ int model_leverage (const MODEL *pmod, double ***pZ,
     for (t=0; t<m; t++) {
 	double f, h = 0.0;
 	int tmod = t + pmod->t1;
+	char fstr[24];
 
 	for (i=0; i<n; i++) {
 	    double q = gretl_matrix_get(Q, t, i);
@@ -208,10 +217,16 @@ int model_leverage (const MODEL *pmod, double ***pZ,
 	    h += q * q;
 	}
 	if (h > lp) gotlp = 1;
-	f = pmod->uhat[tmod] * h / (1.0 - h);
+	if (h < 1.0) {
+	    f = pmod->uhat[tmod] * h / (1.0 - h);
+	    sprintf(fstr, "%12.5g", f);
+	} else {
+	    f = 0.0;
+	    sprintf(fstr, "%12s", _("undefined"));
+	}
 	print_obs_marker(tmod, pdinfo, prn);
-	pprintf(prn, "%12.5g %11.3f%s %12.5g\n", pmod->uhat[tmod], h, 
-		(h > lp)? "*" : " ", f);
+	pprintf(prn, "%12.5g %11.3f%s %s\n", pmod->uhat[tmod], h, 
+		(h > lp)? "*" : " ", fstr);
 	if (hvec != NULL) hvec[t] = h;
     }
 

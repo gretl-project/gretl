@@ -103,7 +103,7 @@ add_file ${TOPDIR}/share/gretl.hlp gretl/gretl_hlp.txt
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file ${TOPDIR}/doc/htmlhelp/gretl.chm gretl/gretl.chm
-add_file ${TOPDIR}/doc/es/htmlhelp/gretl.chm gretl/gretl_es.chm
+add_file /home/cottrell/stats/esl/es/gretl_es.chm gretl/gretl_es.chm
 
 # data files
 for f in ${TOPDIR}/share/data/* ; do

@@ -460,7 +460,7 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 {
     int i, t, n, err = 0;
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
 
     /* simple case: merely a change of start or end of sample */
     if (*subZ == NULL) {
