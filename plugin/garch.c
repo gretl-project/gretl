@@ -88,7 +88,7 @@ static int make_packed_vcv (MODEL *pmod, double *vcv, int np)
 
     for (i=0; i<np; i++) {
 	for (j=0; j<=i; j++) {
-	    k = ijton(i+1, j+1, np);
+	    k = ijton(i, j, np);
 	    pmod->vcv[k] = vcv[i + np * j];
 	}
     }

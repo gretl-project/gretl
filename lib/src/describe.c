@@ -1334,7 +1334,7 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
     }
     for (i=1; i<=lo; i++) {   
 	for (j=i; j<=lo; j++)  {
-	    nij = ijton(i, j, lo);
+	    nij = ijton(i-1, j-1, lo);
 	    if (i == j) {
 		corrmat->xpx[nij] = 1.0;
 		continue;

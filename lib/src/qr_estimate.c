@@ -90,11 +90,11 @@ int get_vcv_index (MODEL *pmod, int i, int j, int n)
     int k, vi, vj;
 
     if (pmod->ifc) {
-	vi = 1 + (i + 1) % n;
-	vj = 1 + (j + 1) % n;
+	vi = (i + 1) % n;
+	vj = (j + 1) % n;
     } else {
-	vi = i + 1;
-	vj = j + 1;
+	vi = i;
+	vj = j;
     }
 
     k = ijton(vi, vj, n);

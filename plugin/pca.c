@@ -301,7 +301,7 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 
     for (i=0; i<n; i++) {
 	for (j=0; j<n; j++) {
-	    idx = ijton(i+1, j+1, n);
+	    idx = ijton(i, j, n);
 	    x = corrmat->xpx[idx];
 	    gretl_matrix_set(m, i, j, x);
 	}

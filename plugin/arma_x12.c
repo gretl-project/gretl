@@ -419,7 +419,7 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 		p += 22;
 		if (i >= j) {
 		    x = atof(valstr);
-		    k = ijton(i + 1, j + 1, nc);
+		    k = ijton(i, j, nc);
 		    pmod->vcv[k] = x;
 		}
 	    }

@@ -161,7 +161,7 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v)
 
     for (i=0; i<nv; i++) {
 	for (j=0; j<=i; j++) {
-	    k = ijton(i+1, j+1, nv);
+	    k = ijton(i, j, nv);
 	    x = gretl_matrix_get(v, i, j);
 	    pmod->vcv[k] = x;
 	}

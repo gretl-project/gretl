@@ -1557,35 +1557,66 @@ double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
     return ret;
 }
 
+static int count_selection (const char *s, int n)
+{
+    int i, c = 0;
+
+    for (i=0; i<n; i++) {
+	if (s[i] != 0) c++;
+    }
+
+    return c;
+}
+
 /**
  * gretl_vcv_matrix_from_model:
  * @pmod: pointer to model
+ * @select: char array indicating which rows and colums to select
+ * (or NULL for the full matrix).
  *
- * Produces the covariance matrix for a gretl #MODEL, in the
- * form of a gretl_matrix.  Storage is allocated, to be freed
- * by the caller.
+ * Produces all or part of the covariance matrix for a gretl #MODEL, 
+ * in the form of a gretl_matrix.  Storage is allocated, to be freed
+ * by the caller.  If @select is non-NULL, it should be an array
+ * with non-zero elements in positions corresponding to the
+ * desired rows (and columns), and zero elements otherwise.
  * 
- * Returns: the covariance matrix, or NULL on error
+ * Returns: the covariance matrix, or NULL on error.
  * 
  */
 
-gretl_matrix *gretl_vcv_matrix_from_model (const MODEL *pmod)
+gretl_matrix *
+gretl_vcv_matrix_from_model (const MODEL *pmod, const char *select)
 {
     gretl_matrix *vcv;
-    int nc = pmod->ncoeff;
-    int i, j, idx;
+    int i, j, idx, nc;
+    int ii, jj;
+    int k = pmod->ncoeff;
+
+    if (select == NULL) {
+	nc = k;
+    } else {
+	nc = count_selection(select, k);
+    }
+    
+    if (nc == 0) return NULL;
 
     vcv = gretl_matrix_alloc(nc, nc);
     if (vcv == NULL) return NULL;
 
-    for (i=0; i<nc; i++) {
+    ii = 0;
+    for (i=0; i<k; i++) {
+	if (select != NULL && !select[i]) continue;
+	jj = 0;
 	for (j=0; j<=i; j++) {
-	    idx = ijton(i+1, j+1, nc);
-	    gretl_matrix_set(vcv, i, j, pmod->vcv[idx]);
-	    if (j != i) {
-		gretl_matrix_set(vcv, j, i, pmod->vcv[idx]);
+	    if (select != NULL && !select[j]) continue;
+	    idx = ijton(i, j, nc);
+	    gretl_matrix_set(vcv, ii, jj, pmod->vcv[idx]);
+	    if (jj != ii) {
+		gretl_matrix_set(vcv, jj, ii, pmod->vcv[idx]);
 	    }
+	    jj++;
 	}
+	ii++;
     }
 
     return vcv;

@@ -122,7 +122,8 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 				 int *err);
 
-gretl_matrix *gretl_vcv_matrix_from_model (const MODEL *pmod);
+gretl_matrix *
+gretl_vcv_matrix_from_model (const MODEL *pmod, const char *select);
 
 void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn);
 

@@ -137,7 +137,7 @@ static void vcv_slopes (hausman_t *haus, MODEL *pmod, int nunits,
 
     for (i=0; i<haus->ns; i++) {
 	for (j=i; j<haus->ns; j++) {
-	    idx = ijton(i+2, j+2, pmod->ncoeff);
+	    idx = ijton(i+1, j+1, pmod->ncoeff);
 #ifdef PDEBUG
 	    fprintf(stderr, "setting sigma[%d] using vcv[%d] (%d, %d) = %g\n",
 		    k, idx, i+2, j+2, pmod->vcv[idx]);

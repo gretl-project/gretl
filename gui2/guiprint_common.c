@@ -388,10 +388,10 @@ rtfprint_matrix (const double *vec, const int *list,
 	}
 
 	/* print rectangular part, if any, of matrix */
-	for (j=1; j<=nf; j++) {
+	for (j=0; j<nf; j++) {
 	    pputs(prn, "\\intbl "); 
 	    if (pad) rtf_table_pad(pad, prn);
-	    for (k=1; k<=p; k++) {
+	    for (k=0; k<p; k++) {
 		index = ijton(j, nf+k, lo);
 		if (ci == CORR) {
 		    rtf_outxx(vec[index], prn);
@@ -399,15 +399,15 @@ rtfprint_matrix (const double *vec, const int *list,
 		    printfrtf(vec[index], prn, 0);
 		}
 	    }
-	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[j]);
+	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[j+1]);
 	}
 
 	/* print upper triangular part of matrix */
-	for (j=1; j<=p; ++j) {
+	for (j=0; j<p; ++j) {
 	    pputs(prn, "\\intbl "); 
-	    rtf_table_pad(pad + j - 1, prn);
+	    rtf_table_pad(pad + j, prn);
 	    ij2 = nf + j;
-	    for (k=j; k<=p; k++) {
+	    for (k=j; k<p; k++) {
 		index = ijton(ij2, nf+k, lo);
 		if (ci == CORR) {
 		    rtf_outxx(vec[index], prn);
@@ -415,7 +415,7 @@ rtfprint_matrix (const double *vec, const int *list,
 		    printfrtf(vec[index], prn, 0);
 		}
 	    }
-	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[ij2]);
+	    pprintf(prn, "\\ql (%d\\cell \\intbl \\row\n", list[ij2+1]);
 	}
     }
     pputs(prn, "}}\n");
@@ -511,8 +511,8 @@ texprint_matrix (const double *vec, const int *list,
 	}   
 
 	/* print rectangular part, if any, of matrix */
-	for (j=1; j<=nf; j++) {
-	    for (k=1; k<=p; k++) {
+	for (j=0; j<nf; j++) {
+	    for (k=0; k<p; k++) {
 		index = ijton(j, nf+k, lo);
 		if (ci == CORR) {
 		    tex_outxx(vec[index], prn);
@@ -520,14 +520,14 @@ texprint_matrix (const double *vec, const int *list,
 		    printftex(vec[index], prn, 0);
 		}
 	    }
-	    pprintf(prn, "(%d\\\\\n", list[j]);
+	    pprintf(prn, "(%d\\\\\n", list[j+1]);
 	}
 
 	/* print upper triangular part of matrix */
-	for (j=1; j<=p; ++j) {
+	for (j=0; j<p; ++j) {
 	    ij2 = nf + j;
-	    for (k=0; k<j-1; k++) pputs(prn, " & ");
-	    for (k=j; k<=p; k++) {
+	    for (k=0; k<j; k++) pputs(prn, " & ");
+	    for (k=j; k<p; k++) {
 		index = ijton(ij2, nf+k, lo);
 		if (ci == CORR) {
 		    tex_outxx(vec[index], prn);
@@ -535,7 +535,7 @@ texprint_matrix (const double *vec, const int *list,
 		    printftex(vec[index], prn, 0);
 		}
 	    }
-	    pprintf(prn, "(%d\\\\\n", list[ij2]);
+	    pprintf(prn, "(%d\\\\\n", list[ij2+1]);
 	}
 	pputs(prn, "\\\\\n");
     }

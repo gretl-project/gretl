@@ -145,7 +145,7 @@ audioprint_matrix (const double *vec, const int *list,
 
     for (i=1; i<=lo; i++) {
 	for (j=i; j<=lo; j++) {
-	    k = ijton(i, j, lo);
+	    k = ijton(i-1, j-1, lo);
 	    if (i == j) {
 		if (ci == CORR) continue;
 		pprintf(prn, "%s, ", pdinfo->varname[list[i]]);

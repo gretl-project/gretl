@@ -635,7 +635,7 @@ double robust_omit_F (const int *list, MODEL *pmod)
 	gretl_vector_set(br, i, pmod->coeff[ii]);
 	for (j=0; j<=i; j++) {
 	    jj = omit_index(j, list, pmod);
-	    idx = ijton(ii+1, jj+1, pmod->ncoeff);
+	    idx = ijton(ii, jj, pmod->ncoeff);
 	    gretl_matrix_set(sigma, i, j, pmod->vcv[idx]);
 	    if (i != j) {
 		gretl_matrix_set(sigma, j, i, pmod->vcv[idx]);

@@ -705,29 +705,29 @@ void text_print_matrix (const double *rr, const int *list,
 	lineno += 2;
 
 	/* print rectangular part, if any, of matrix */
-	for (j=1; j<=nf; j++) {
+	for (j=0; j<nf; j++) {
 	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
-	    for (k=1; k<=p; k++) {
+	    for (k=0; k<p; k++) {
 		index = ijton(j, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
 	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
-		    j : list[j]);
+		    j+1 : list[j+1]);
 	}
 
 	/* print upper triangular part of matrix */
-	for (j=1; j<=p; ++j) {
+	for (j=0; j<p; ++j) {
 	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
 	    ij2 = nf + j;
-	    bufspace(14 * (j - 1), prn);
-	    for (k=j; k<=p; k++) {
+	    bufspace(14 * j, prn);
+	    for (k=j; k<p; k++) {
 		index = ijton(ij2, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
 	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
-		    ij2 : list[ij2]);
+		    ij2+1 : list[ij2+1]);
 	}
 	pputc(prn, '\n');
     }

@@ -2126,7 +2126,9 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	hccm.errcode = E_ALLOC;
 	free(uhat1);
 	free(st);
-	for (i=0; i<lo; i++) free(p[i]);
+	for (i=0; i<lo; i++) {
+	    free(p[i]);
+	}
 	free(p);
 	return hccm;
     } 
@@ -2136,9 +2138,9 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	    xx = 0.0;
 	    for (j=1; j<=ncoeff; j++) {
 		if (i <= j) {
-		    index = ijton(i, j, ncoeff);
+		    index = ijton(i-1, j-1, ncoeff);
 		} else {
-		    index = ijton(j, i, ncoeff);
+		    index = ijton(j-1, i-1, ncoeff);
 		}
 		xx += hccm.vcv[index] * (*pZ)[list[j+1]][t];
 	    }

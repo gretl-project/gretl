@@ -325,7 +325,7 @@ static int add_std_errs_to_model (MODEL *pmod)
     if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
 
     for (i=0; i<pmod->ncoeff; i++) {
-	k = ijton(i+1, i+1, pmod->ncoeff);
+	k = ijton(i, i, pmod->ncoeff);
 	if (pmod->vcv[k] == 0.0) {
 	    pmod->sderr[i] = 0.0;
 	} else if (pmod->vcv[k] > 0.0) {
