@@ -45,7 +45,8 @@ else
   INSTALL_CFG = install-cfg-old
 endif
 
-LIBS = $(FLIB) -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
+# this did start with $(FLIB)
+LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
 
 #### End of system configuration section. ####
 
@@ -58,7 +59,7 @@ SRCS = calendar.c compare.c dataio.c describe.c discrete.c \
 	estimate.c generate.c graphing.c gretl_errors.c \
 	gretl_utils.c interact.c modelprint.c monte_carlo.c nls.c nonparam.c \
 	printout.c pvalues.c random.c strutils.c subsample.c system.c \
-	texprint.c var.c 
+	texprint.c var.c dlog10.c
 
 HDRS = libgretl.h gretl_commands.h estimate.h gretl_utils.h gretl_errors.h pvalues.h \
 	random.h compare.h dataio.h generate.h strutils.h describe.h \
