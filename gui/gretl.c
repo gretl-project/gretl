@@ -83,7 +83,8 @@ int *default_list = NULL;
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list", 0, GRETL_FILENAME },
-    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER }    
+    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER },   
+    { "addvar_pointer", GTK_TARGET_SAME_APP, GRETL_ADDVAR_POINTER }    
 };
 
 static void  

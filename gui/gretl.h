@@ -253,7 +253,8 @@ enum data_status {
 
 enum drag_types {
     GRETL_FILENAME,
-    GRETL_POINTER
+    GRETL_POINTER,
+    GRETL_ADDVAR_POINTER
 };
 
 enum file_lists {
