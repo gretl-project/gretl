@@ -128,18 +128,40 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	errbox("Insufficient dataset information supplied");
 	return;
     }
-    sd0 = strtod(stobs, &test);
-    if (strcmp(stobs, test) == 0 || test[0] != '\0' || sd0 < 0) {
-	sprintf(errtext, "Invalid starting observation '%s'", stobs);
-	errbox(errtext);
-	return;
+
+    /* daily data: special */
+    if (datainfo->pd == 5 || datainfo->pd == 7) {
+	int err = 0;
+	sd0 = (double) get_epoch_day(stobs); 
+	ed0 = (double) get_epoch_day(endobs);
+
+	if (sd0 < 0) {
+	    err = 1;
+	    sprintf(errtext, "Invalid starting observation '%s'", stobs);
+	}
+	if (!err && ed0 < 0) {
+	    err = 1;
+	    sprintf(errtext, "Invalid ending observation '%s'", endobs);
+	}
+	if (err) {
+	    errbox(errtext);
+	    return;
+	}
+    } else { /* not daily data */
+	sd0 = strtod(stobs, &test);
+	if (strcmp(stobs, test) == 0 || test[0] != '\0' || sd0 < 0) {
+	    sprintf(errtext, "Invalid starting observation '%s'", stobs);
+	    errbox(errtext);
+	    return;
+	}
+	ed0 = strtod(endobs, &test);
+	if (strcmp(endobs, test) == 0 || test[0] != '\0' || ed0 < 0) {
+	    sprintf(errtext, "Invalid ending observation '%s'", endobs);
+	    errbox(errtext);
+	    return;
+	}
     }
-    ed0 = strtod(endobs, &test);
-    if (strcmp(endobs, test) == 0 || test[0] != '\0' || ed0 < 0) {
-	sprintf(errtext, "Invalid ending observation '%s'", endobs);
-	errbox(errtext);
-	return;
-    }
+
     if (sd0 > ed0) {
 	sprintf(errtext, "Empty data range '%s - %s'", stobs, endobs);
 	errbox(errtext);
@@ -181,7 +203,8 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 		return;
 	    }
 	}	
-    } else { /* pd != 1 */
+    } 
+    else if (datainfo->pd != 5 && datainfo->pd != 7) { 
 	char year[8], subper[8];
 
 	if (sscanf(stobs, "%[^.].%s", year, subper) != 2 ||
@@ -203,7 +226,12 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	    return;
 	}	    
     }
+
     gtk_widget_destroy(data->dialog); 
+
+    if (datainfo->sd0 >= 1.0) 
+        datainfo->time_series = TIME_SERIES; 
+    else datainfo->time_series = 0;
 
     strcpy(datainfo->stobs, stobs);
     strcpy(datainfo->endobs, endobs);
@@ -212,18 +240,6 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     datainfo->v = 2;
     start_new_Z(&Z, datainfo, 0);
     datainfo->markers = 0;
-
-#ifdef notdef
-    if (datainfo->sd0 >= 2.0) 
-        datainfo->time_series = TIME_SERIES; 
-    else if (datainfo->sd0 > 1.0)
-	datainfo->time_series = STACKED_TIME_SERIES; /* panel data? */
-    else datainfo->time_series = 0;
-#endif
-
-    if (datainfo->sd0 >= 1.0) 
-        datainfo->time_series = TIME_SERIES; 
-    else datainfo->time_series = 0;
 
     strcpy(datainfo->varname[1], firstvar);
 
@@ -235,7 +251,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget) 
 {
     windata_t *wdata = NULL;
-    char obsstr[28];
+    char obsstr[32];
 
     datainfo->pd = pd_code;
 
@@ -251,10 +267,10 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
 	strcpy(obsstr, "1950.1 2001.4 newvar");
 	break;
     case 5:
-	strcpy(obsstr, "1.1 10.5 newvar");
+	strcpy(obsstr, "99/01/18 01/03/31 newvar");
 	break;
     case 7:
-	strcpy(obsstr, "1.1 10.7 newvar");
+	strcpy(obsstr, "99/01/18 01/03/31 newvar");
 	break;
     case 12:
 	strcpy(obsstr, "1950.01 2001.12 newvar");

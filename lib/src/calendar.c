@@ -147,7 +147,7 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
 	}
 	day = rem - modays;
     }
-    sprintf(str, "%02d/%02d/%02d", yr-1900, mo, day);    
+    sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day);    
 }
 
 /* The following functions have nothing to do with the "cal" program,
