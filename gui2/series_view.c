@@ -170,7 +170,9 @@ static void series_view_print (windata_t *vwin)
 	pprintf(prn, "\n     Obs ");
 	pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
 	for (t=0; t<sview->npoints; t++) {
-	    if (sview->format == 'G') {
+	    if (na(sview->points[t].val)) {
+		pprintf(prn, "%8s\n", sview->points[t].label);
+	    } else if (sview->format == 'G') {
 		pprintf(prn, "%8s %#13.*g\n", sview->points[t].label,
 			sview->digits, sview->points[t].val);
 	    } else {

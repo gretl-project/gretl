@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <ctype.h>
 
+#define SHEET_PRECISION 10
+
 typedef struct {
     GtkWidget *view;
     GtkWidget *win;
@@ -88,6 +90,7 @@ static int check_atof (const char *numstr)
 	errbox(errtext);
 	return 1;
     }
+
     return 0;
 }
 
@@ -112,7 +115,7 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
 	path = gtk_tree_path_new_from_string (path_string);
 	gtk_tree_model_get_iter(model, &iter, path);
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-			   GPOINTER_TO_INT(column), atof(new_text), -1);
+			   GPOINTER_TO_INT(column), new_text, -1);
 	gtk_tree_path_free(path);
     }
 }
@@ -213,7 +216,7 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
     }
 
     for (i=1; i<=sheet->datacols; i++) {
-	gtk_list_store_set(store, &iter, i, NADBL, -1);
+	gtk_list_store_set(store, &iter, i, "", -1);
     }
 
     for (i=1; i<=sheet->padcols; i++) {
@@ -333,7 +336,7 @@ static void add_data_column (spreadsheet *sheet)
 
     /* configure the types */
     types[0] = G_TYPE_STRING;
-    for (i=1; i<=sheet->datacols; i++) types[i] = G_TYPE_DOUBLE;
+    for (i=1; i<=sheet->datacols; i++) types[i] = G_TYPE_STRING;
     for (i=0; i<sheet->padcols; i++) types[sheet->datacols+1+i] = G_TYPE_STRING;
     for (i=sheet->totcols-2; i<=sheet->totcols-1; i++) types[i] = G_TYPE_BOOLEAN;
 
@@ -350,7 +353,6 @@ static void add_data_column (spreadsheet *sheet)
     /* copy across the old data */
     for (row=0; row<sheet->datarows; row++) {
 	gchar *str;
-	gdouble xx;
 
 	gtk_list_store_append(new_store, &new_iter);
 
@@ -361,12 +363,13 @@ static void add_data_column (spreadsheet *sheet)
 
 	/* original data values */
 	for (i=1; i<newcolnum; i++) {
-	    gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, i, &xx, -1);
-	    gtk_list_store_set(new_store, &new_iter, i, xx, -1);
+	    gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, i, &str, -1);
+	    gtk_list_store_set(new_store, &new_iter, i, str, -1);
+	    g_free(str);
 	}
 
-	/* new data values ("missing") */
-	gtk_list_store_set(new_store, &new_iter, newcolnum, NADBL, -1);
+	/* new data values blank */
+	gtk_list_store_set(new_store, &new_iter, newcolnum, "", -1);
 
 	/* any padding cols */
 	for (i=1; i<=sheet->padcols; i++) {
@@ -520,11 +523,16 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 	colnum++;
 	gtk_tree_model_get_iter_first(model, &iter);	
 	for (t=0; t<n; t++) {
-	    gdouble xx;
+	    gchar *numstr;
 
-	    gtk_tree_model_get(model, &iter, colnum, &xx, -1);
-	    Z[i][t] = xx; 
-	    if (xx == NADBL) missobs = 1;
+	    gtk_tree_model_get(model, &iter, colnum, &numstr, -1);
+	    if (*numstr) {
+		Z[i][t] = atof(numstr); 
+	    } else {
+		Z[i][t] = NADBL;
+		missobs = 1;
+	    }
+	    g_free(numstr);
 	    gtk_tree_model_iter_next(model, &iter);
 	}
     }
@@ -559,7 +567,6 @@ static void add_data_to_sheet (spreadsheet *sheet)
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeIter iter;
     GtkListStore *store;
-    double xx;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
 
@@ -579,13 +586,19 @@ static void add_data_to_sheet (spreadsheet *sheet)
     /* insert the data values */
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     for (t=0; t<n; t++) {
+	char numstr[32];
+
 	colnum = 0;
 	for (i=1; i<datainfo->v; i++) {
 	    /* don't put scalars into the spreadsheet */
 	    if (datainfo->vector[i] == 0) continue;
-	    xx = Z[i][t];
+	    if (na(Z[i][t])) {
+		*numstr = '\0';
+	    } else {
+		sprintf(numstr, "%.*g", SHEET_PRECISION, Z[i][t]);
+	    }
 	    colnum++;
-	    gtk_list_store_set(store, &iter, colnum, xx, -1);
+	    gtk_list_store_set(store, &iter, colnum, numstr, -1);
 	}
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
@@ -635,7 +648,7 @@ static void add_skel_to_sheet (spreadsheet *sheet)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     for (t=0; t<n; t++) {
 	for (i=1; i<datainfo->v; i++) {
-	    gtk_list_store_set(store, &iter, i, NADBL, -1);
+	    gtk_list_store_set(store, &iter, i, "", -1);
 	}
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
@@ -756,7 +769,7 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
 
     types[0] = G_TYPE_STRING;                             /* observation marker */
     for (i=1; i<=sheet->datacols; i++) 
-	types[i] = G_TYPE_DOUBLE;                         /* data values */
+	types[i] = G_TYPE_STRING;                         /* string rep. of data values */
     for (i=0; i<sheet->padcols; i++) 
 	types[i + sheet->datacols + 1] = G_TYPE_STRING;   /* padding columns */
     types[sheet->totcols - 2] = G_TYPE_BOOLEAN;           /* FALSE editable flag */

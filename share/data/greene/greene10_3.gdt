@@ -5,12 +5,15 @@
 <description>
   William Greene, Econometric Analysis, 3rd ed.
   Table 10.3
-  US macro data
+  US macro data, taken from the 1986 Economic Report of the President
 </description>
 <variables count="3">
-<variable name="r"/>
-<variable name="M"/>
-<variable name="Y"/>
+<variable name="r"
+ label="Discount rate, NY Federal Reserve Bank, end-December"/>
+<variable name="M"
+ label="Money supply M2"/>
+<variable name="Y"
+ label="GNP, in 1982 dollars"/>
 </variables>
 <observations count="20" labels="false">
 <obs>4.50 480.0 2208.3 </obs>
