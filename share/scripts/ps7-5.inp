@@ -1,0 +1,54 @@
+(* PS7.5, using DATA7-2, for the application in Section 7.4 *)  
+square EDUC EXPER AGE
+(* The above generates squares.  The following generate interactions *)
+genr ED_GEN=EDUC*GENDER
+genr ED_RACE=EDUC*RACE
+genr ED_CLER=EDUC*CLERICAL
+genr ED_MAINT=EDUC*MAINT
+genr ED_CRAFT=EDUC*CRAFTS
+genr AGE_GEN=AGE*GENDER
+genr AGE_RACE=AGE*RACE
+genr AGE_CLER=AGE*CLERICAL
+genr AGE_MAIN=AGE*MAINT
+genr AGE_CRFT=AGE*CRAFTS
+genr EXP_GEN=EXPER*GENDER
+genr EXP_RACE=EXPER*RACE
+genr EXP_CLER=EXPER*CLERICAL
+genr EXP_MAIN=EXPER*MAINT
+genr EXP_CRFT=EXPER*CRAFTS
+genr LWAGE = ln(WAGE)
+list
+(*  The following is the basic model *)
+ols LWAGE const EDUC EXPER AGE  
+genr DFR = $df
+genr ut = uhat
+(* Auxiliary regression *)
+ols ut const EDUC EXPER AGE GENDER RACE CLERICAL MAINT CRAFTS sq_EDUC \
+ sq_EXPER sq_AGE ED_GEN ED_RACE ED_CLER ED_MAINT ED_CRAFT AGE_GEN \
+ AGE_RACE AGE_CLER AGE_MAIN AGE_CRFT EXP_GEN EXP_RACE EXP_CLER EXP_MAIN \
+ EXP_CRFT  
+(* Coefficients etc. for above are same as those in kitchen sink model *)
+genr DFU = $df
+(* compute the number of restrictions, LM statistic, and pvalue *)
+genr NR = DFR - DFU
+genr LM = $nrsq
+pvalue X NR LM
+(*  The following is Model 1 in Table 7.5 *)
+ols LWAGE const EDUC EXPER AGE GENDER RACE sq_EDUC sq_EXPER sq_AGE \
+ ED_GEN ED_CLER ED_MAINT ED_CRAFT AGE_GEN AGE_RACE AGE_MAIN AGE_CRFT \
+ EXP_RACE EXP_CRFT  
+(* omit variables with insiginficant coefficients, a few at a time *)
+omit RACE AGE 
+omit GENDER 
+omit sq_EXPER AGE_GEN  
+omit EXP_RACE AGE_RACE  
+(*  Final model labeled Model 2 in Table 7.5 *)
+omit EXP_CRFT  
+(* Model 3 in Table 7.4 -- kitchen sink specification *)
+ols LWAGE const EDUC EXPER AGE GENDER RACE CLERICAL MAINT CRAFTS sq_EDUC \
+ sq_EXPER sq_AGE ED_GEN ED_RACE ED_CLER ED_MAINT ED_CRAFT AGE_GEN \
+ AGE_RACE AGE_CLER AGE_MAIN AGE_CRFT EXP_GEN EXP_RACE EXP_CLER EXP_MAIN \ 
+ EXP_CRFT  
+
+
+

@@ -1,0 +1,31 @@
+(* PS7.6, using DATA7-4, for the Application in Section 7.6 .  First
+generate the interactions between D90 and the explanatory variables.
+*)
+genr D90YF = D90*YF
+genr D90YM=D90*YM
+genr D90EDUC=D90*EDUC
+genr D90UE=D90*UE
+genr D90MR=D90*MR
+genr D90DR=D90*DR
+genr D90URB=D90*URB
+genr D90WH=D90*WH
+list
+(* Estimate the most general model *)
+ols WLFP const D90 YF D90YF YM D90YM EDUC D90EDUC UE D90UE MR D90MR \
+ DR D90DR URB D90URB WH D90WH 
+(* omit variables one at a time *)
+omit YM  
+omit D90EDUC  
+omit D90  
+omit D90YM  
+omit D90WH  
+omit D90URB  
+(* final model *)
+omit D90DR  
+
+
+
+
+
+
+

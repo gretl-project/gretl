@@ -1,0 +1,8 @@
+(*
+  William Greene, Econometric Analysis, 3rd ed.
+  Table 10.3
+  US macro data
+*)  
+r M Y ;
+1 1966 1985
+BYOBS

@@ -1,0 +1,39 @@
+#!/bin/sh
+
+TOOLDIR=$1
+PREFIX=$2
+PAGE=$3
+SECT=$4
+
+if [ "x$TOOLDIR" = "x" ] ; then
+   echo "$0: no tool directory specified (for mkinstalldirs)"
+   exit 1
+fi
+
+if [ "x$PREFIX" = "x" ] ; then
+   echo "$0: no prefix supplied"
+   exit 1
+fi
+
+if [ "x$PAGE" = "x" ] ; then
+   echo "$0: no manpage specified"
+   exit 1
+fi
+
+if [ "x$SECT" = "x" ] ; then
+   SECT=1
+fi
+
+if [ -d $PREFIX/man ] ; then
+   echo "Installing $PAGE in $PREFIX/man/man$SECT"
+   $TOOLDIR/mkinstalldirs $PREFIX/man/man$SECT
+   install -m 644 $PAGE $PREFIX/man/man$SECT
+   exit 0
+else
+   echo "Installing $PAGE in $PREFIX/share/man/man$SECT"
+   $TOOLDIR/mkinstalldirs $PREFIX/share/man/man$SECT
+   install -m 644 $PAGE $PREFIX/share/man/man$SECT
+   exit 0
+fi
+
+   

@@ -1,0 +1,14 @@
+(*
+Annual data on U.S. aggregate income and consumption, 1950-1985.
+From the Economic Report of the President, 1986.
+Reprinted from William Greene, Econometric Analysis (4 ed.),
+Table A10.3.  See Example 11.3 in that book.
+
+Y = income
+C = consumption
+
+This file included with gretl by kind permission of William Greene.
+*)
+Y C ;
+1 1950 1985
+BYOBS

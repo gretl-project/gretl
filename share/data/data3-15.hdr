@@ -1,0 +1,12 @@
+(*
+DATA3-15:  Annual data on U.S. Population and GDP
+    Source:  Economic Report of the President, 1996
+    gdp = Real Gross Domestic Product in billions of 1992 dollars,
+          Seasonally adjusted annual rates, Table B-2.
+          (Range 2212.3 - 6604.2)
+    pop = Population in millions, Table B-30, Page 315
+          (177.82 - 260.66)
+*)
+year gdp pop ;
+1 1959 1994
+BYOBS

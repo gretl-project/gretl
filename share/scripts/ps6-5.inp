@@ -1,0 +1,11 @@
+(* PS6.5 using DATA6-3 for Example 6.4 *)
+genr C1 = Cons(-1)
+(* print C1 to see how it is stored internally; -999 means missing value *)
+print Cons C1
+(* generate DY(t) - DY(t-1) using the diff function *)
+genr DiffI = diff(DI)
+(* print DI and DiffI to see how they are stored internally *)
+print DI DiffI
+(* note that ols starts in 1949 because C1 & DiffI are undefined for
+1948 *)
+ols Cons 0 C1 DiffI

@@ -1,0 +1,8 @@
+(* PS7.4, using DATA7-3, for Practice Problem 7.2 *)
+genr lsqft = log(sqft)
+(* Model A' *)
+ols price 0 lsqft
+(* Model E' *)
+ols price 0 lsqft bedrms baths pool famroom firepl
+(* Model F' *)
+ols price 0 lsqft pool

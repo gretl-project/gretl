@@ -1,0 +1,10 @@
+(*
+DATA3-11: Data on annual (1995) salary for professors at the seven
+      universities: UC Berkeley, UCLA, UC San Diego, Illinois,
+      Michigan, Stanford, and Virginia.
+      salary = annual salary in thousands of dollars (Range 41.3 - 153)
+      years = number of years since Ph.D. (Range 1 - 45)
+*)
+SALARY YEARS ;
+1 1 222
+BYOBS

@@ -1,0 +1,9 @@
+(*
+DATA6-2:  Data on the white tuna (Thunnus Alalunga) fishery production
+    in the Basque region of Spain.  Data compiled by Felix Telleria.
+    catch  = total catch in thousands of tonnes, Range 16.608 - 51.8
+    effort = total days of fishing in thousands, Range 10.31185 - 61.24754
+*)
+year catch effort ;
+1 1961 1994
+BYOBS

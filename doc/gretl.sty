@@ -1,0 +1,76 @@
+%% gretl.sty, Allin Cottrell
+%%
+%% Makes only top-level section-headings numbered, reduces the
+%% size of those headings, and puts the (unnumbered) second-level
+%% section heads in italics rather than boldface.  
+%%
+\ProvidesPackage{gretl}
+\setcounter{secnumdepth}{1}
+
+\renewcommand*\l@section[2]{%
+  \ifnum \c@tocdepth >\z@
+    \addpenalty\@secpenalty
+    \addvspace{0.8em \@plus\p@}%
+    \setlength\@tempdima{2em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      \leavevmode \bfseries
+      \advance\leftskip\@tempdima
+      \hskip -\leftskip
+      #1\nobreak
+      \leaders\hbox{$\m@th
+        \mkern \@dotsep mu\hbox{.}\mkern \@dotsep
+        mu$}\hfill
+     \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+    \endgroup
+  \fi}
+
+
+\newcounter{script}
+\renewcommand\thescript{\@arabic\c@script}
+\def\fps@script{tbp}
+\def\ftype@script{2}
+\def\ext@script{lot}
+\def\fnum@script{\scriptname~\thescript}
+\newenvironment{script}
+               {\@float{script}}
+               {\end@float}
+\newenvironment{script*}
+               {\@dblfloat{script}}
+               {\end@dblfloat}
+\newcommand\scriptname{Script}
+\newcommand\theHscript      {\arabic{script}}
+\def\toclevel@script{0}
+
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+                                   {2.3ex \@plus.2ex}%
+                                   {\normalfont\large\bfseries}}
+\renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
+                                     {-3.25ex\@plus -1ex \@minus -.2ex}%
+                                     {1.5ex \@plus .2ex}%
+                                     {\normalfont\normalsize\itshape}}
+\newcommand\cmdsection{\@startsection{subsection}{2}{\z@}%
+                      {-1ex \@plus -1ex \@minus -.2ex}%
+                      {.5ex \@plus.2ex}%
+                      {\normalfont\normalsize\bfseries}}
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\let\PBS=\PreserveBackslash
+
+\renewenvironment{thebibliography}
+     {\section*{\refname
+        \@mkboth{\MakeUppercase\refname}{\MakeUppercase\refname}}%
+      \list{}{\itemindent -1em\listparindent\itemindent\leftmargin 1em
+      \sloppy
+      \clubpenalty4000
+      \@clubpenalty \clubpenalty
+      \widowpenalty4000%
+      \sfcode`\.\@m\item\relax}}
+      {\endlist}
+      
+
+
+
+
+

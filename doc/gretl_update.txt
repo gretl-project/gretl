@@ -1,0 +1,115 @@
+The automatic updater routine for gretl under win32
+
+Allin Cottrell, January 2001
+
+1. When gretl is started up, it sends a query to the gretl update
+   server on ricardo (gretl_update.cgi), asking if there are updates
+   available.  (This behavior can be turned off by the user under
+   "File, Preferences, General".)  The query supplies time-stamp
+   information, based initially on the time-stamp file installed with
+   gretl, which enables the update server program to tell if any
+   update files on the server are subsequent to the gretl installation
+   on the client.
+
+2. If there are updates available, the server responds with a list of
+   files and their sizes.  On the client side, gretl informs the user
+   and suggests exiting gretl and running the auxiliary program,
+   gretl_updater.exe.  (On *nix, the user is notified of new files but
+   that's all.  I'm presuming that such users would rather control the
+   updating process themselves.)
+
+Details so far: 
+
+The function update_query() in gretl's webget.c is called from within
+main() in gretl.c.  This function stats the file gretl.stamp (in the
+main gretl directory) and sends its "st_mtime" to the server via the
+function get_update_info() (also in webget.c).  The string passed to
+the server is "opt=QUERY&date=<mtime of gretl.stamp>".
+
+The server, the source for which consists of server.c and update.c,
+parses the supplied parameter string.  In the case of a QUERY the
+function tgz_list(), in update.c, is called.  This cycles through the
+files on the server with extension ".tgz" (if any) and outputs their
+names and sizes, if they are newer than the date supplied by the
+client.  If there are no new files it outputs "No new files".
+
+Back on the client side, the result of the query is stored in the char
+buffer "getbuf", declared and allocated in update_query().  If there
+are no new files the output is silently ignored, otherwise the
+information is parsed (the new file sizes are added up to give a total
+byte count) and passed to the user via a dialog box.  Once the
+information is given to the user the buffer is freed.
+
+3. The client updater program, gretl_updater.exe, offers three
+   options, as follows:
+
+      gretl_updater (automatically get any new files)
+      gretl_updater -f foo.tgz (get foo.tgz, output to file)
+      gretl_updater -l (list new files on server)
+
+   When the program is called from the Windows menu the first form
+   (with no option flag) is invoked.  Execution then proceeds in two
+   stages: (1) The server is queried, as by gretl above, for a listing
+   of new files; then (2) the client loops over the list of files
+   supplied by the server, grabbing them from the server and unpacking
+   them one by one.
+
+Details here: 
+
+The source for gretl_updater consists of update_client.c, webget.c (a
+slightly modified version of the gretl source file of the same name),
+and untgz.c (a simple .tgz extractor based on untgz.c from the zlib
+distribution).
+
+At the second stage, the client contacts gretl_update.cgi with the
+parameter string "opt=GRAB_FILE&fname=<desired file>".  
+
+The unpacking of the archive file is done using the function untgz(),
+in untgz.c.  The .tgz file is then removed.
+
+4. Preparation of update files on the server:  These should just be
+   standard gzipped tar files, with extension ".tgz".  They should
+   reside in the same directory on the server as gretl_update.cgi
+   since the tgz_list() function simply looks in ".".  They'll be
+   unpacked in the main gretl directory, and any internal directory
+   structure in the archive should reflect this fact. (check this)
+
+   NOTE: Update files must contain a suitably dated gretl.stamp.
+   The client's stamp file will then be overwritten when the update is
+   unpacked (and the client will not be offered the same update more
+   than once).
+
+   Getting the dates right: An update file for win32 should be made
+   available in the context of the release of a new version (the point
+   being that a package containing only the modified files is likely
+   to be much smaller than the complete distribution, plus the
+   auto-updater should be more convenient for the user than having to
+   visit the gretl website and download and install the new
+   distribution).  The time stamp on the update file (.tgz) itself
+   should then be slightly PRIOR to the gretl.stamp file distributed
+   with the new (complete) packages, otherwise someone who downloads
+   the new complete version will immediately get a message saying that
+   an update is available.  This can be achieved using "touch -t
+   <time> <update file>".  The gretl.stamp contained in the update
+   file, on the other hand, should be equal to or subsequent to the
+   stamp in the corresponding complete package (equal to is "correct",
+   but slightly subsequent would be OK).
+
+Updating the stamp under *nix is trickier, since ordinary users
+generally won't have write permission on the stamp file.  This is not
+done properly in gretl version 0.63 and lower; it's fixed (I think) in
+version 0.64, as follows (in gretl's webget.c).  We check whether the
+current user is the owner of the system-wide gretl.stamp and react
+accordingly.
+
+Owner: Use gretl.stamp as the time reference.  In case notification of
+an update is given, write to gretl.stamp to update its mtime so that
+notification is not given again.
+
+Not owner: See if a per-user ~/.gretl/.gretl.stamp exists.  If so, use
+this as the time reference, otherwise use the system-wide gretl.stamp
+as the reference.  If an update notification is given, write to the
+per-user stamp file (creating it or updating it).
+
+
+

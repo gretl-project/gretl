@@ -1,0 +1,3694 @@
+/*
+ *  Copyright (c) by Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
+/* lib.c for gretl -- main interface to libgretl functions */
+
+#include "gretl.h"
+#ifdef G_OS_WIN32 
+# include "../lib/src/cmdlist.h"
+#endif
+
+#include "htmlprint.h"
+
+extern DATAINFO *subinfo;
+extern DATAINFO *fullinfo;
+extern double *subZ;
+extern double *fullZ;
+
+extern int loop_exec_line (LOOPSET *plp, const int round, 
+			   const int cmdnum, print_t *prn);
+extern void restore_sample (gpointer data, int verbose, GtkWidget *w);
+extern void restore_sample_state (gboolean s);
+extern char *endbit (char *dest, char *src, int addscore);
+
+int ignore = 0;
+char loopstorefile[MAXLEN];
+static int gui_exec_line (char *line, 
+			  LOOPSET *plp, int *plstack, int *plrun, 
+			  SESSION *psession, session_t *rebuild,
+			  print_t *prn, int exec_code, 
+			  const char *myname); 
+static void console_exec (void);
+static void finish_genr (MODEL *pmod);
+static void do_run_script (gpointer data, guint code, GtkWidget *w);
+static void auto_save_script (gpointer data, guint action, GtkWidget *w);
+
+
+GtkWidget *console_view;
+GtkWidget *console_dialog;
+
+GtkItemFactoryEntry log_items[] = {
+    { "/_File", NULL, NULL, 0, "<Branch>" },    
+    { "/File/_Save As...", NULL, file_save, SAVE_CMDS, NULL },
+    { "/File/_Run", NULL, do_run_script, SESSION_EXEC, NULL },
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+};
+
+GtkItemFactoryEntry console_items[] = {
+    { "/_File", NULL, NULL, 0, "<Branch>" }, 
+    { "/File/Save _As...", NULL, file_save, SAVE_CONSOLE, NULL },
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+};
+
+GtkItemFactoryEntry script_items[] = {
+    { "/_File", NULL, NULL, 0, "<Branch>" }, 
+    { "/File/_Save", NULL, auto_save_script, 0, NULL },
+    { "/File/Save _As...", NULL, file_save, SAVE_SCRIPT, NULL },
+    { "/File/_Run", NULL, do_run_script, SCRIPT_EXEC, NULL },
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+};
+
+GtkItemFactoryEntry sample_script_items[] = {
+    { "/_File", NULL, NULL, 0, "<Branch>" },    
+    { "/File/_Save As...", NULL, file_save, SAVE_SCRIPT, NULL },
+    { "/File/_Run", NULL, do_run_script, SCRIPT_EXEC, NULL },
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+};
+
+GtkItemFactoryEntry script_out_items[] = {
+    { "/_File", NULL, NULL, 0, "<Branch>" },    
+    { "/File/Save _As...", NULL, file_save, SAVE_OUTPUT, NULL },
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+};
+
+GtkItemFactoryEntry view_items[] = {
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+};
+
+const char *CANTDO = "Can't do this: no model has been estimated yet\n";
+
+static int model_count;
+static int n_cmds;
+static int stacked_models;
+static MODELSPEC *modelspec;
+static char *model_origin;
+static gint stack_model (int gui);
+/* apparatus for storing commands issued via GUI */
+static char **cmd_stack;
+static char ***model_cmds;
+int *n_model_cmds = NULL;
+char errline[MAXLEN] = "";
+char last_model = 's';
+
+/* for console and other uses */
+GdkFont *fixed_font = NULL;
+
+/* ........................................................... */
+
+int quiet_sample_check (MODEL *pmod)
+{
+    double *checkZ;
+    DATAINFO *pdinfo;
+
+    if (fullZ == NULL) {
+	checkZ = Z;
+	pdinfo = datainfo;
+    } else {
+	checkZ = fullZ;
+	pdinfo = fullinfo;
+    }
+
+    if (model_sample_issue(pmod, NULL, checkZ, pdinfo)) return 1;
+    else return 0;
+}
+
+/* ......................................................... */
+
+static void set_sample_label_special (void)
+{
+    char labeltxt[80];
+
+    sprintf(labeltxt, "Undated: Full range n = %d; current sample"
+	    " n = %d", fullinfo->n, datainfo->n);
+    gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
+
+}
+
+/* ........................................................... */
+
+void free_modelspec (void)
+{
+    int i = 0;
+
+    if (modelspec != NULL) {
+	while (modelspec[i].cmd != NULL) {
+	    free(modelspec[i].cmd);
+	    if (modelspec[i].subdum != NULL)
+		free(modelspec[i].subdum);
+	    i++;
+	}
+	free(modelspec);
+	modelspec = NULL;
+    }
+}
+
+/* ........................................................... */
+
+void free_command_stack (void)
+{
+    int i, j;
+
+    if (cmd_stack != NULL) {
+	for (i=0; i<n_cmds; i++)
+	    if (cmd_stack[i]) free(cmd_stack[i]);
+	free(cmd_stack);
+	cmd_stack = NULL;
+    }
+    n_cmds = 0;
+
+    if (model_cmds != NULL) {  
+	for (i=0; i<stacked_models; i++) {
+	    for (j=0; j<n_model_cmds[i]; j++)
+		free(model_cmds[i][j]); 
+	    if (n_model_cmds[i] > 0) 
+		free(model_cmds[i]); 
+	}
+	free(model_cmds);
+	model_cmds = NULL;
+	free(n_model_cmds);
+	n_model_cmds = NULL;
+    }
+    stacked_models = 0;
+}
+
+/* ........................................................... */
+
+void clear_data (void)
+{
+    extern void clear_clist (GtkWidget *widget);
+
+    clear(paths.hdrfile, MAXLEN); 
+    clear(paths.datfile, MAXLEN);
+    restore_sample(NULL, 0, NULL);
+    clear_datainfo(datainfo, 0);
+    if (Z != NULL) free(Z);
+    Z = NULL;
+    fullZ = NULL;
+    clear_clist(mdata->listbox);
+    clear_sample_label();
+    data_file_open = 0;
+    orig_vars = 0;
+    menubar_state(FALSE);
+
+    /* clear everything out */
+    clear_model(models[0], NULL, NULL);
+    clear_model(models[1], NULL, NULL);
+    clear_model(models[2], NULL, NULL);
+
+    free_command_stack(); 
+    free_modelspec();
+    modelspec = NULL;
+
+    stack_model(-1);
+    model_count = 0;
+}
+
+
+/* ........................................................... */
+
+char *user_fopen (const char *fname, char *fullname, print_t *prn)
+{
+    strcpy(fullname, paths.userdir);
+    strcat(fullname, fname);
+    prn->buf = NULL;    
+    prn->fp = fopen(fullname, "w");    
+    if (prn->fp == NULL) {
+	errbox("Couldn't open temp file for writing");
+	return NULL;
+    }
+    return fullname;
+}
+
+/* ........................................................... */
+
+gint bufopen (print_t *prn)
+{
+    prn->fp = NULL;
+    if (pprintf(prn, "@init")) {
+	errbox("Out of memory allocating output buffer");
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+void prnclose (print_t *prn)
+{
+    if (prn->fp != NULL) fclose(prn->fp);
+    prn->fp = NULL;
+    if (prn->buf != NULL) {
+/*  	fprintf(stderr, "freeing buffer at %p\n", (void *) prn->buf); */
+	free(prn->buf);
+    }
+    prn->buf = NULL;
+}
+
+/* ........................................................... */
+
+gint check_cmd (char *line)
+{
+    strcpy(command.param, "");
+    catchflag(line, &oflag);
+    getcmd(line, datainfo, &command, &ignore, &Z, NULL); 
+    if (command.errcode) {
+	gui_errmsg(command.errcode, command.errmsg);
+	return 1;
+    } 
+    return 0;
+}
+
+/* ........................................................... */
+
+gint cmd_init (char *line)
+{
+    size_t len;
+    print_t echo;
+
+    if (n_cmds == 0) 
+	cmd_stack = mymalloc(sizeof(char *));
+    else 
+	cmd_stack = realloc(cmd_stack, (n_cmds + 1) * sizeof(char *));
+    if (cmd_stack == NULL) return 1;
+
+/*      fprintf(stderr, "cmd_init: opening buffer\n"); */
+    if (bufopen(&echo)) return 1;
+    echo_cmd(&command, datainfo, line, 0, 1, oflag, &echo);
+
+    len = strlen(echo.buf);
+    if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL)
+	return 1;
+    strcpy(cmd_stack[n_cmds], echo.buf);
+    prnclose(&echo);
+    n_cmds++;
+
+    return 0;
+}
+
+/* ........................................................... */
+
+static gint record_model_genr (char *line)
+{
+    size_t len = strlen(line);
+
+    if (n_cmds == 0) 
+	cmd_stack = mymalloc(sizeof(char *));
+    else 
+	cmd_stack = realloc(cmd_stack, (n_cmds + 1) * sizeof(char *));
+    if (cmd_stack == NULL) return 1;
+
+    if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL)
+	return 1;
+    strncpy(cmd_stack[n_cmds], line, len);
+    n_cmds++;
+
+    return 0;
+}
+
+/* ........................................................... */
+
+static gint model_cmd_init (char *line, int ID)
+{
+    static int old_model_count;
+    static char going;
+    int m = stacked_models - 1; /* was ID - 1 */
+    print_t echo;
+    size_t len;
+
+    fprintf(stderr, "model_cmd_init:\nID=%d, m=%d, old_model_count=%d\n"
+	   "line='%s'\n", ID, m, old_model_count, line);
+
+    if (!going) {/* starting from scratch? */
+	model_cmds = mymalloc(sizeof *model_cmds);
+	printf("starting from scratch: mallocing model_cmds\n");
+    }
+    if (m > old_model_count) { /* a new model? */
+	model_cmds = realloc(model_cmds, (m + 1) * sizeof *model_cmds);
+	printf("m > old_model_count: reallocing model_cmds\n");
+    }
+
+    if (model_cmds == NULL) 
+	return 1;
+
+    if (!going || m > old_model_count) { /* start a model cmd stack */
+	model_cmds[m] = mymalloc(sizeof(char *));
+	printf("starting a new stack, model_cmds[%d]\n", m);
+    } else {/* grow the existing model cmd stack */
+	model_cmds[m] = realloc(model_cmds[m], 
+				(n_model_cmds[m] + 1) * sizeof(char *));
+	printf("reallocing model_cmds[%d]\n", m);
+    }
+    if (model_cmds[m] == NULL) return 1;
+    
+/*      fprintf(stderr, "model_cmd_init: opening buffer\n"); */
+    if (bufopen(&echo)) return 1;
+    echo_cmd(&command, datainfo, line, 0, 1, oflag, &echo);
+
+    len = strlen(echo.buf);
+    model_cmds[m][n_model_cmds[m]] = mymalloc(len + 1);
+    if (model_cmds[m][n_model_cmds[m]] == NULL) {
+	prnclose(&echo);
+	return 1;
+    }
+    strcpy(model_cmds[m][n_model_cmds[m]], echo.buf);
+/*      printf("copied '%s' to model_cmds[%d][%d]\n",  */
+/*  	   echo.buf, m, n_model_cmds[m]); */
+    prnclose(&echo);
+
+    n_model_cmds[m] += 1;
+    /*  printf("n_model_cmds[%d] now equals %d\n", m, n_model_cmds[m]); */
+    
+    if (m > old_model_count) old_model_count++;
+    going = 1;
+    return 0;
+}
+
+/* ........................................................... */
+
+static gint stack_model (int gui)
+{
+    static int m;
+
+    if (gui == -1) { /* code for reset, when changing datasets */
+	m = 0;
+	return 0;
+    }
+
+    /* record the way this model was estimated (GUI or not) */
+    if (model_origin == NULL) 
+	model_origin = malloc(sizeof *model_origin);
+    else
+	model_origin = realloc(model_origin, 
+			       model_count * sizeof *model_origin);
+    if (model_origin == NULL) return 1;
+    last_model = (gui == 1)? 'g' : 's';
+    model_origin[model_count - 1] = last_model;
+
+    if (gui == 1) { /* model estimated via GUI */
+	int ms = stacked_models;
+
+	if (ms == 0) 
+	    n_model_cmds = malloc(sizeof(int));
+	else 
+	    n_model_cmds = realloc(n_model_cmds, (ms + 1) * sizeof(int));
+	if (n_model_cmds == NULL) return 1;
+
+	n_model_cmds[ms] = 0;
+	stacked_models++;
+    } else if (gui == 0) { /* model estimated via console or script */
+	if (modelspec == NULL) /* was just 1? */
+	    modelspec = mymalloc(2 * sizeof *modelspec);
+	else 
+	    modelspec = myrealloc(modelspec, (m+2) * (sizeof *modelspec));
+	if (modelspec == NULL) return 1;
+	else {
+	    modelspec[m].cmd = mymalloc(MAXLEN);
+	    modelspec[m].subdum = NULL;
+	    modelspec[m+1].cmd = NULL;
+	    modelspec[m+1].subdum = NULL;
+	    if (fullZ != NULL) {
+		fullinfo->varname = datainfo->varname;
+		fullinfo->label = datainfo->label;			
+		attach_subsample_to_model(models[0], &fullZ, fullinfo);
+	    }
+	    save_model_spec(models[0], &modelspec[m], fullinfo);
+	    m++;
+	}
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+static void dump_model_cmds (FILE *fp, int m)
+{
+    int j;
+
+    fprintf(fp, "(* commands pertaining to model %d *)\n", m + 1);
+    for (j=0; j<n_model_cmds[m]; j++) {
+	fprintf(fp, "%s", model_cmds[m][j]);
+    }
+}
+
+/* ........................................................... */
+
+gint dump_cmd_stack (const char *fname)
+{
+    FILE *fp;
+    int i, m = 0;
+    extern int session_file_open;
+    static int called;
+    static print_t prn;
+
+    if (fname == NULL) {
+	if (called)
+	    prnclose(&prn);
+	called = 0;
+	return 0;
+    }
+
+    fp = fopen(fname, "w"); 
+    if (fp == NULL) {
+	errbox("Couldn't open command file for writing");
+	return 1;
+    }
+
+    if (session_file_open) {  /* first print content of opened file */
+	if (!called) {
+	    FILE *fq;
+	    char line[MAXLEN];
+
+	    if (bufopen(&prn)) {
+		fclose(fp);
+		return 1;
+	    }
+	    fq = fopen(scriptfile, "r");
+	    if (fq != NULL) {
+		while (fgets(line, MAXLEN - 1, fq)) {
+		    if (strncmp(line, "(* saved objects:", 17) == 0) 
+			break;
+		    else 
+			pprintf(&prn, "%s", line);
+		}
+		fclose(fq);
+	    }
+	    called = 1;
+	}
+	fprintf(fp, "%s", prn.buf);
+    }
+
+    for (i=0; i<n_cmds; i++) {
+	fprintf(fp, "%s", cmd_stack[i]);
+	if (is_model_cmd(cmd_stack[i]) && n_model_cmds != NULL
+	    && n_model_cmds[m]) {
+	    dump_model_cmds(fp, m);
+	    m++;
+	}
+    }
+
+    fclose(fp);
+    return 0;
+}
+
+/* ........................................................... */
+
+void do_menu_op (gpointer data, guint action, GtkWidget *widget)
+{
+    print_t prn;
+    char title[48];
+    int err = 0;
+    gint hsize = 78, vsize = 380;
+
+    clear(line, MAXLEN);
+    strcpy(title, "gretl: ");
+
+    switch (action) {
+    case CORR:
+	strcpy(line, "corr");
+	strcat(title, "correlation matrix");
+	break;
+    case FREQ:
+	sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
+	strcat(title, "frequency distribution");
+	vsize = 340;
+	break;
+    case RUNS:
+	sprintf(line, "runs %s", datainfo->varname[mdata->active_var]);
+	strcat(title, "runs test");
+	vsize = 200;
+	break;
+    case SUMMARY:
+	strcpy(line, "summary");
+	strcat(title, "summary statistics");
+	break;
+    case VAR_SUMMARY:
+	sprintf(line, "summary %s", datainfo->varname[mdata->active_var]);
+	strcat(title, "summary stats: ");
+	strcat(title, datainfo->varname[mdata->active_var]);
+	vsize = 300;
+	break;
+    default:
+	break;
+    }
+
+    /* check the command and initialize output buffer */
+    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+
+    /* execute the command */
+    switch (action) {
+    case CORR:
+	err = esl_corrmx(command.list, &Z, datainfo, 1, &prn);
+	break;
+    case FREQ:
+	if (1) {
+	    FREQDIST freq;
+
+	    freq = freq_func(&Z, datainfo, NULL, 0,
+			     datainfo->varname[mdata->active_var], 1);
+	    if (freq.errcode) {
+		gui_errmsg(freq.errcode, freq.errmsg);
+		prnclose(&prn);
+		return;
+	    } 
+	    printfreq(&freq, &prn);
+	    free_freq(&freq);
+	}
+	break;
+    case RUNS:
+	err = runs_test(command.list, Z, datainfo, &prn);
+	break;
+    case SUMMARY:
+	err = summary(command.list, &Z, datainfo, batch, &prn);
+	break;
+    case VAR_SUMMARY:
+	err = summary(command.list, &Z, datainfo, batch, &prn);
+	break;
+    }
+    if (err) gui_errmsg(err, errtext);
+
+    view_buffer(&prn, hsize, vsize, title, 
+		view_items, sizeof view_items);
+}
+
+/* ........................................................... */
+
+void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    print_t prn;
+    char title[48];
+    int err = 0, order = 0, mvar = mdata->active_var;
+    gint hsize = 78, vsize = 300;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+    if (*edttext == '\0' && ddata->code != CORRGM) return;
+
+    clear(line, MAXLEN);
+    strcpy(title, "gretl: ");
+
+    /* set up the command */
+    switch (ddata->code) {
+    case ADF:
+	sprintf(line, "adf %s %s", edttext, datainfo->varname[mvar]);
+	strcat(title, "adf test");
+	vsize = 350;
+	break;
+    case COINT:
+	sprintf(line, "coint %s", edttext);
+	strcat(title, "cointegration test");
+	vsize = 400;
+	break;
+    case SPEARMAN:
+	sprintf(line, "spearman -o %s", edttext);
+	strcat(title, "rank correlation");
+	vsize = 400;
+	break;
+    case MEANTEST:
+	sprintf(line, "meantest -o %s", edttext);
+	strcat(title, "means test");
+	break;
+    case MEANTEST2:
+	sprintf(line, "meantest %s", edttext);
+	strcat(title, "means test");
+	break;
+    case VARTEST:
+	sprintf(line, "vartest %s", edttext);
+	strcat(title, "variances test");
+	break;
+    case CORRGM:
+	if (*edttext != '\0') order = atoi(edttext);
+	if (order) 
+	    sprintf(line, "corrgm %s %d", 
+		    datainfo->varname[mvar], order);
+	else
+	    sprintf(line, "corrgm %s", 
+		    datainfo->varname[mvar]);
+	strcat(title, "correlogram");
+	break;
+    default:
+	dummy_call();
+	return;
+    }
+
+    /* check the command and initialize output buffer */
+    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+
+    /* execute the command */
+    switch (ddata->code) {
+    case ADF:
+    case COINT:
+	order = atoi(command.param);
+	if (!order) {
+	    errbox((ddata->code == ADF)? 
+		   "Couldn't read ADF order" :
+		   "Couldn't read cointegration order");
+	    prnclose(&prn);
+	    return;
+	}
+	if (ddata->code == ADF)
+	    err = adf_test(order, command.list, &Z, datainfo, &prn);
+	else
+	    err = coint(order, command.list, &Z, datainfo, &prn);
+	break;
+    case SPEARMAN:
+	err = spearman(command.list, Z, datainfo, &prn, 1);
+	break;
+    case MEANTEST:
+	err = means_test(command.list, Z, datainfo, 1, &prn);;
+	break;
+    case MEANTEST2:
+	err = means_test(command.list, Z, datainfo, 0, &prn);;
+	break;
+    case VARTEST:
+	err = vars_test(command.list, Z, datainfo, &prn);
+	break;	
+    case CORRGM:
+	err = corrgram(command.list, order, &Z, datainfo, &paths, 0, &prn);
+	break;
+    default:
+	dummy_call();
+	return;
+    }
+
+    if (err) gui_errmsg(err, errtext);
+    else if (ddata->code == CORRGM) 
+	graphmenu_state(TRUE);
+
+    view_buffer(&prn, hsize, vsize, title, 
+		view_items, sizeof view_items);
+}
+
+/* ........................................................... */
+
+void view_log (void)
+{
+    char fname[MAXLEN];
+
+    strcpy(fname, paths.userdir);
+    strcat(fname, "session.inp");
+
+    if (dump_cmd_stack(fname)) return;
+
+    view_file(fname, 1, 0, 78, 370, "gretl: command log", 
+	      log_items, sizeof log_items);
+}
+
+/* ........................................................... */
+
+void console (void)
+{
+    print_t prn;
+    char fname[MAXLEN];
+
+    if (console_view != NULL) {
+	gdk_window_raise(console_view->parent->window);
+	return;
+    }
+
+    if (!user_fopen("console_tmp", fname, &prn)) {
+	errbox("Can't open output file");
+	return;
+    }
+    pprintf(&prn, "? ");
+    prnclose(&prn);
+    view_file(fname, 1, 0, 78, 400, "gretl console", 
+	      console_items, sizeof console_items);
+    gtk_text_set_point(GTK_TEXT(console_view), 2);
+    fixed_font = gdk_font_load (fontspec);
+}
+
+/* ........................................................... */
+
+static int backkey (GdkEventKey *key)
+{
+    if (key->keyval == GDK_BackSpace || 
+	key->keyval == GDK_Left) return 1;
+    return 0;
+}
+
+/* ........................................................... */
+
+static int last_console_line_len (void)
+{
+    int i, c, len;
+
+    len = gtk_text_get_length(GTK_TEXT(console_view));
+    for (i=len; i>0; i--) {
+	c = GTK_TEXT_INDEX(GTK_TEXT(console_view), i - 1);
+	if (c == '\n') break; 
+    }
+    return len - i - 2;
+}
+
+/* ........................................................... */
+
+gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
+{
+    static int lastkey;
+    int cw = gdk_char_width(fixed_font, 'X'); 
+    int len = gtk_text_get_length (GTK_TEXT(console_view));
+    int adjust, currpos, linelen, xpos, savekey = key->keyval;
+    GdkModifierType mods;
+
+    /* null action if not at prompt */
+    currpos = GTK_EDITABLE(console_view)->current_pos;
+    xpos = GTK_TEXT(console_view)->cursor_pos_x / cw; 
+    linelen = last_console_line_len();
+    if ((currpos < len - linelen) || 
+	(backkey(key) && xpos < 3)) {
+	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
+	return TRUE;
+    }
+    /* make return key execute the command */
+    if (key->keyval == GDK_Return) {
+	console_exec();
+	key->keyval = GDK_End;
+	return FALSE;
+    }
+    /* make up-arrow recall last command entered */
+    if (key->keyval == GDK_Up) {
+	key->keyval = GDK_VoidSymbol;
+	if (lastkey != GDK_Up) {
+	    if (errline[0] != '\0') {
+		gtk_editable_insert_text(GTK_EDITABLE(console_view), 
+					 errline, 
+					 strlen(errline),
+					 &len);
+	    } else if (n_cmds > 0 && 
+		       strncmp(cmd_stack[n_cmds-1], "open", 4)) {
+		gtk_editable_insert_text(GTK_EDITABLE(console_view), 
+					 cmd_stack[n_cmds-1], 
+					 strlen(cmd_stack[n_cmds-1]) - 1,
+					 &len);
+	    }
+	}
+    }
+    /* down-arrow clears line */
+    if (lastkey == GDK_Up && key->keyval == GDK_Down) {
+	key->keyval = GDK_VoidSymbol;
+	adjust = GTK_TEXT(console_view)->cursor_pos_x / cw - 2;
+	gtk_editable_delete_text(GTK_EDITABLE(console_view), 
+				 len - adjust, len);
+    }  
+    /* response to Ctrl-A: go to start of typing area */
+    gdk_window_get_pointer(console_dialog->window, NULL, NULL, &mods);
+    if (mods & GDK_CONTROL_MASK && 
+	gdk_keyval_to_upper(key->keyval) == GDK_A) {
+	gtk_editable_set_position(GTK_EDITABLE(console_view), 
+				  len - last_console_line_len());	
+	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
+	return TRUE;
+    }
+    lastkey = savekey;
+    return FALSE;
+}
+
+/* ........................................................... */
+
+void console_exec (void)
+{
+    print_t prn;
+    int len, loopstack = 0, looprun = 0;
+    gchar *c_line; 
+    char execline[MAXLEN];
+    extern GdkColor red;
+
+    len = gtk_text_get_length (GTK_TEXT(console_view));
+    c_line = gtk_editable_get_chars(GTK_EDITABLE(console_view), 
+				    len - last_console_line_len(), len);
+    top_n_tail(c_line);
+
+    if (strcmp(c_line, "quit") == 0 || strcmp(c_line, "q") == 0) {
+	gtk_widget_destroy(console_dialog);
+	g_free(c_line);
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	errbox("Can't open output buffer");
+	g_free(c_line);
+	return;
+    }
+
+    strncpy(execline, c_line, MAXLEN - 1);
+    g_free(c_line);
+    gui_exec_line(execline, NULL, &loopstack, &looprun, NULL, NULL, 
+		  &prn, CONSOLE_EXEC, NULL);
+
+    /* put results into console window */
+    gtk_text_freeze(GTK_TEXT(console_view));
+    gtk_editable_insert_text(GTK_EDITABLE(console_view), 
+			     "\n", 1, &len);
+
+    gtk_text_insert(GTK_TEXT(console_view), fixed_font, 
+		    NULL, NULL, prn.buf, strlen(prn.buf));
+    prnclose(&prn);
+
+    gtk_text_insert(GTK_TEXT(console_view), fixed_font,
+		    &red, NULL, "\n? ", 3);
+    gtk_text_thaw(GTK_TEXT(console_view));
+    len = gtk_text_get_length (GTK_TEXT(console_view));
+    gtk_editable_set_position(GTK_EDITABLE(console_view), len);
+}
+
+/* ........................................................... */
+
+void gui_errmsg (const int errcode, const char *msg)
+{
+    if (msg != NULL && strlen(msg) > 2) errbox(msg);
+    else errbox(get_errmsg(errcode, errtext, NULL));
+}
+
+/* ........................................................... */
+
+void change_sample (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+    int err;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "smpl %s", edttext);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    err = set_sample(line, datainfo, errtext);
+    if (err) gui_errmsg(err, errtext);
+    else {
+	set_sample_label(datainfo);
+	restore_sample_state(TRUE);
+    }
+}
+/* ........................................................... */
+
+void bool_subsample (gpointer data, guint opt, GtkWidget *w)
+     /* opt = 0     -- drop all obs with missing data values 
+	opt = OPT_O -- sample using dummy variable
+	opt = OPT_R -- sample using boolean expression
+     */
+{
+    int err = 0;
+
+    restore_sample(NULL, 0, NULL);
+    if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
+	return;
+
+    if (opt == 0)
+	err = set_sample_dummy(NULL, &Z, &subZ, datainfo, subinfo, 
+			       errtext, OPT_O);
+    else
+	err = set_sample_dummy(line, &Z, &subZ, datainfo, subinfo, 
+			       errtext, opt);
+    if (err) {
+	gui_errmsg(err, errtext);
+	return;
+    }
+
+    /* save the full data set for later use */
+    fullZ = Z;
+    fullinfo = datainfo;
+    datainfo = subinfo;
+    Z = subZ;
+
+    set_sample_label_special();
+    restore_sample_state(TRUE);
+    if (opt == 0)
+	infobox("Sample now includes only complete observations");
+    else
+	infobox("Sub-sampling done");
+}
+
+/* ........................................................... */
+
+void do_samplebool (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext = NULL;
+
+    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "smpl %s -r", edttext); 
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    bool_subsample(NULL, OPT_R, NULL);
+}
+
+/* ........................................................... */
+
+void do_sampledum (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext = NULL, dumv[9];
+
+    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+    sscanf(edttext, "%8s", dumv);
+    dumv[8] = '\0';
+	
+    clear(line, MAXLEN);
+    sprintf(line, "smpl %s -o", dumv);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    bool_subsample(NULL, OPT_O, NULL);
+}
+
+/* ........................................................... */
+
+void do_setobs (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext, pdstr[8], stobs[8], msg[80];
+    int err, opt;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    sscanf(edttext, "%7s %7s", pdstr, stobs);
+	
+    clear(line, MAXLEN);
+    sprintf(line, "setobs %s %s ", pdstr, stobs);
+    catchflag(line, &opt);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    err = set_obs(line, datainfo, opt, msg);
+    if (err) {
+	errbox(msg);
+	return;
+    }
+    infobox(msg);
+    set_sample_label(datainfo);
+}
+
+/* ........................................................... */
+
+void count_missing (void)
+{
+    print_t prn;
+
+    if (bufopen(&prn)) return;
+    if (count_missing_values(&Z, datainfo, &prn)) {
+	view_buffer(&prn, 77, 300, "gretl: missing values info", 
+		    view_items, sizeof view_items);
+    } else {
+	infobox("No missing data values");
+	prnclose(&prn);
+    }
+}
+
+/* ........................................................... */
+
+void do_add_markers (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+    char fname[MAXLEN];
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+    strcpy(fname, edttext);
+
+    if (add_case_markers(datainfo, fname)) 
+	errbox("Failed to add case markers");
+    else
+	infobox("Case markers added");
+}
+
+/* ........................................................... */
+
+void do_forecast (GtkWidget *widget, dialog_t *ddata) 
+{
+    windata_t *mydata = ddata->data;
+    MODEL *pmod = mydata->data;
+    char *edttext;
+    print_t prn;
+    int err;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+    
+    clear(line, MAXLEN);
+    sprintf(line, "fcasterr %s", edttext);
+    if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
+
+    err = fcast_with_errs(line, pmod, datainfo, &Z, &prn,
+			  &paths, 1, errtext); 
+    if (err) {
+	gui_errmsg(err, errtext);
+	prnclose(&prn);
+	return;
+    }
+
+    view_buffer(&prn, 78, 350, "gretl: forecasts", NULL, 0);    
+}
+
+/* ........................................................... */
+
+void do_add_omit (GtkWidget *widget, dialog_t *ddata)
+{
+    windata_t *mydata = ddata->data;
+    char *edttext;
+    print_t prn;
+    char title[26];
+    MODEL *orig, *pmod;
+    gint err;
+
+    orig = mydata->data;
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+    
+    clear(line, MAXLEN);
+    if (ddata->code == ADD) 
+        sprintf(line, "addto %d %s", orig->ID, edttext);
+    else 
+        sprintf(line, "omitfrom %d %s", orig->ID, edttext);
+
+    if (check_cmd(line) || bufopen(&prn)) return;
+
+    pmod = gretl_model_new();
+    if (pmod == NULL) {
+	errbox("Out of memory");
+	return;
+    }
+
+    if (ddata->code == ADD) 
+        err = auxreg(command.list, orig, pmod, &model_count, 
+                     &Z, datainfo, AUX_ADD, &prn, NULL);
+    else 
+        err = handle_omit(command.list, orig, pmod, &model_count, 
+                          &Z, datainfo, &prn);
+
+    if (err) {
+        gui_errmsg(err, NULL);
+        prnclose(&prn);
+        clear_model(pmod, NULL, NULL); 
+        return;
+    }
+
+    if (cmd_init(line) || stack_model(1)) {
+	errbox("Error saving model information");
+	return;
+    }
+
+    /* update copy of most recently estimated model */
+    if (copy_model(models[2], pmod, datainfo))
+	errbox("Out of memory copying model");
+
+    /* record sub-sample info (if any) with the model */
+    if (fullZ != NULL) {
+	fullinfo->varname = datainfo->varname;
+	fullinfo->label = datainfo->label;	
+	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+    }
+
+    sprintf(title, "gretl: model %d", model_count);
+    view_model((void *) &prn, pmod, 78, 400, title);
+}
+
+/* ........................................................... */
+
+static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
+{
+    int i, nt = pmod->ntests;
+
+    if (nt == 0) 
+	pmod->tests = malloc(sizeof(GRETLTEST));
+    else {
+	for (i=0; i<nt; i++) 
+	    if (strcmp(test->type, pmod->tests[i].type) == 0)
+		return -1;
+	pmod->tests = realloc(pmod->tests, (nt + 1) * sizeof(GRETLTEST));
+    }
+    if (pmod->tests == NULL) return 1;
+
+    strcpy(pmod->tests[nt].type, test->type);
+    strcpy(pmod->tests[nt].h_0, test->h_0);
+    strcpy(pmod->tests[nt].teststat, test->teststat);
+    strcpy(pmod->tests[nt].pvalue, test->pvalue);
+
+    pmod->ntests += 1;
+
+    return 0;
+}
+
+/* ........................................................... */
+
+static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
+{
+    gchar *tempstr;
+
+    if (w == NULL) return;
+
+    fixed_font = gdk_font_load (fontspec);
+
+    tempstr = g_strdup_printf("%s -\n"
+			      "  Null hypothesis: %s\n"
+			      "  Test statistic: %s\n"
+			      "  with p-value = %s\n\n",
+			      test->type, test->h_0, 
+			      test->teststat, test->pvalue);
+
+    gtk_text_freeze(GTK_TEXT (w));
+    gtk_text_insert(GTK_TEXT (w), fixed_font, NULL, NULL, tempstr, 
+		    strlen(tempstr));
+    gtk_text_thaw(GTK_TEXT (w));
+    g_free(tempstr);
+}
+
+/* ........................................................... */
+
+void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
+{
+    int err;
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    print_t prn;
+    char title[40];
+    GRETLTEST test;
+
+    if (bufopen(&prn)) return;
+    strcpy(title, "gretl: LM test ");
+    clear(line, MAXLEN);
+
+    if (aux_code == AUX_WHITE) {
+	strcpy(line, "lmtest -c");
+	err = whites_test(pmod, &Z, datainfo, &prn, &test);
+	if (err) {
+	    gui_errmsg(err, NULL);
+	    prnclose(&prn);
+	    return;
+	} else {
+	    strcat(title, "(heteroskedasticity)");
+	    if (add_test_to_model(&test, pmod) == 0)
+		print_test_to_window(&test, mydata->w);
+	}
+    } 
+    else if (aux_code == AUX_AR) {
+	strcpy(line, "lmtest -m");
+	err = autocorr_test(pmod, &Z, datainfo, &prn, &test);
+	if (err) {
+	    gui_errmsg(err, NULL);
+	    prnclose(&prn);
+	    return;
+	} else {
+	    strcat(title, "(autocorrelation)");
+	    if (add_test_to_model(&test, pmod) == 0)
+		print_test_to_window(&test, mydata->w);
+	}
+    } 
+    else {
+	if (aux_code == AUX_SQ) 
+	    strcpy(line, "lmtest -s");
+	else
+	    strcpy(line, "lmtest -l");
+	clear_model(models[0], NULL, NULL);
+	err = auxreg(NULL, pmod, models[0], &model_count, 
+		     &Z, datainfo, aux_code, &prn, &test);
+	if (err) {
+	    gui_errmsg(err, NULL);
+	    clear_model(models[0], NULL, NULL);
+	    prnclose(&prn);
+	    return;
+	} else {
+	    clear_model(models[0], NULL, NULL); 
+	    model_count--;
+	    strcat(title, "(non-linearity)");
+	    if (add_test_to_model(&test, pmod) == 0)
+		print_test_to_window(&test, mydata->w);
+	} 
+    }
+
+    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+
+    view_buffer(&prn, 77, 400, title, view_items, sizeof view_items); 
+}
+
+/* ........................................................... */
+
+void set_panel_structure (gpointer data, guint u, GtkWidget *w)
+{
+    extern GtkWidget *open_dialog;
+    extern void destroy_dialog_data (GtkWidget *w, gpointer data);
+    void *handle;
+    void (*panel_structure_dialog)(DATAINFO *, GtkWidget *, 
+				   void (*)(), void (*)());
+
+    if (open_dialog != NULL) {
+	gdk_window_raise(open_dialog->window);
+	return;
+    }
+
+    if (open_plugin("panel_data", &handle)) return;
+    panel_structure_dialog = 
+	get_plugin_function("panel_structure_dialog", handle);
+    if (panel_structure_dialog == NULL) return;
+    
+    (*panel_structure_dialog)(datainfo, open_dialog, 
+			      destroy_dialog_data, context_help);
+}
+
+/* ........................................................... */
+
+void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
+{
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    void *handle;
+    void (*panel_diagnostics)(MODEL *, double **, DATAINFO *, print_t *);
+    print_t prn;
+
+    if (open_plugin("panel_data", &handle)) return;
+    panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
+
+    if (panel_diagnostics == NULL || bufopen(&prn)) {
+	close_plugin(handle);
+	return;
+    }
+	
+    (*panel_diagnostics)(pmod, &Z, datainfo, &prn);
+
+    close_plugin(handle);
+
+    view_buffer(&prn, 77, 400, "gretl: panel model diagnostics", 
+		view_items, sizeof view_items);
+}
+
+/* ........................................................... */
+
+static void do_chow_cusum (gpointer data, int code)
+{
+    windata_t *mydata;
+    dialog_t *ddata;
+    MODEL *pmod;
+    char *edttext;
+    print_t prn;
+    GRETLTEST test;
+    gint err;
+
+    if (code == CHOW) {
+	ddata = (dialog_t *) data;
+	mydata = ddata->data;
+    } else
+	mydata = (windata_t *) data;
+
+    pmod = mydata->data;
+    if (pmod->ci != OLS) {
+	errbox("This test only implemented for OLS models");
+	return;
+    }
+
+    if (code == CHOW) {
+	edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
+	if (*edttext == '\0') return;
+	clear(line, MAXLEN);
+	sprintf(line, "chow %s", edttext);
+    } else 
+	strcpy(line, "cusum");
+
+    if (bufopen(&prn)) return;
+
+    if (code == CHOW)
+	err = chow_test(line, pmod, &Z, datainfo, &prn, errtext, 
+			&test);
+    else
+	err = cusum_test(pmod, &Z, datainfo, &prn, errtext, 
+			 &paths, &test);
+    if (err) {
+	gui_errmsg(err, errtext);
+	prnclose(&prn);
+	return;
+    } 
+
+    if (add_test_to_model(&test, pmod) == 0)
+	print_test_to_window(&test, mydata->w);
+
+    if (check_cmd(line) || model_cmd_init(line, pmod->ID))
+	return;
+
+    view_buffer(&prn, 77, 400, (code == CHOW)?
+		"gretl: Chow test output": "gretl: CUSUM test output",
+		view_items, sizeof view_items);
+}
+
+/* ........................................................... */
+
+void do_chow (GtkWidget *widget, dialog_t *ddata)
+{
+    do_chow_cusum((gpointer) ddata, CHOW);
+}    
+
+
+/* ........................................................... */
+
+void do_cusum (gpointer data, guint u, GtkWidget *widget)
+{
+    do_chow_cusum(data, CUSUM);
+}
+
+/* ........................................................... */
+
+void do_arch (GtkWidget *widget, dialog_t *ddata)
+{
+    windata_t *mydata = ddata->data;
+    MODEL *pmod = mydata->data;
+    GRETLTEST test;
+    char *edttext;
+    print_t prn;
+    char tmpstr[26];
+    int order, err, i;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "arch %s ", edttext);
+    for (i=1; i<=pmod->list[0]; i++) {
+	sprintf(tmpstr, "%d ", pmod->list[i]);
+	strcat(line, tmpstr);
+    }
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    order = atoi(command.param);
+    if (!order) {
+	errbox("Couldn't read ARCH order");
+	return;
+    }
+
+    if (bufopen(&prn)) return;
+
+    clear_model(models[1], NULL, NULL);
+    *models[1] = arch(order, pmod->list, &Z, datainfo, 
+		     NULL, &prn, &test);
+    if ((err = (models[1])->errcode)) 
+	errmsg(err, (models[1])->errmsg, &prn);
+    else {
+	if (add_test_to_model(&test, pmod) == 0)
+	    print_test_to_window(&test, mydata->w);
+	if (oflag) outcovmx(models[1], datainfo, batch, &prn);
+    }
+    clear_model(models[1], NULL, NULL);
+
+    view_buffer(&prn, 78, 400, "gretl: ARCH test", 
+		view_items, sizeof view_items);
+}
+
+/* ........................................................... */
+
+void set_storelist (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    strcpy(storelist, edttext);
+}
+
+/* ........................................................... */
+
+static int model_error (const MODEL *pmod)
+{
+    if (pmod->errcode) {
+	gui_errmsg(pmod->errcode, pmod->errmsg);
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+static int model_output (MODEL *pmod, void *ptr)
+{
+    if (model_error(pmod)) return 1;
+
+    ++model_count;
+    pmod->ID = model_count;
+
+#ifdef USE_GTKHTML
+    if (1) { 
+	html_t *htm = (html_t *) ptr;
+
+	h_printmodel(pmod, datainfo, htm);
+	h_bufclose(htm);
+    } 
+#else
+    if (1) {
+	print_t *prn = (print_t *) ptr;
+
+	printmodel(pmod, datainfo, prn);
+    }
+#endif
+    return 0;
+}
+
+/* ........................................................... */
+
+static gint check_model_cmd (char *line, char *modelgenr)
+{
+    print_t getgenr;
+
+/*      fprintf(stderr, "check_model_cmd: opening buffer\n"); */
+    if (bufopen(&getgenr)) return 1;
+    strcpy(command.param, "");
+    catchflag(line, &oflag);
+    getcmd(line, datainfo, &command, &ignore, &Z, &getgenr); 
+    if (command.errcode) {
+	gui_errmsg(command.errcode, command.errmsg);
+	return 1;
+    }
+    if (strlen(getgenr.buf)) strcpy(modelgenr, getgenr.buf);
+    prnclose(&getgenr);
+    return 0;
+}
+
+/* ........................................................... */
+
+void do_model (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+    print_t prn;
+    char title[26], estimator[9], modelgenr[80];
+    int order, err, action = ddata->code;
+    double rho;
+    MODEL *pmod;
+    void *ptr;
+#ifdef USE_GTKHTML
+    html_t htm;
+#endif
+
+    strcpy(estimator, commands[action]);
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "%s %s", estimator, edttext);
+    modelgenr[0] = '\0';
+    if (check_model_cmd(line, modelgenr)) return;
+    echo_cmd(&command, datainfo, line, 0, 1, oflag, NULL);
+    if (command.ci == 999) {
+	errbox("A variable was duplicated in the list of regressors");
+	return;
+    }
+
+/*      fprintf(stderr, "do_model: opening buffer\n"); */
+#ifdef USE_GTKHTML
+    if (h_bufopen(&htm)) return;
+    ptr = (void *) &htm;
+#else
+    if (bufopen(&prn)) return;
+    ptr = (void *) &prn;
+#endif
+
+    pmod = gretl_model_new();
+    if (pmod == NULL) {
+	errbox("Out of memory");
+	return;
+    }
+
+    switch (action) {
+
+    case CORC:
+    case HILU:
+	err = hilu_corc(&rho, command.list, Z, datainfo, action, &prn);
+	if (err) {
+	    errmsg(err, NULL, &prn);
+	    break;
+	}
+	*pmod = lsq(command.list, Z, datainfo, action, 1, rho);
+	err = model_output(pmod, (void *) &prn);
+	break;
+
+    case OLS:
+    case WLS:
+    case POOLED:
+	*pmod = lsq(command.list, Z, datainfo, action, 1, 0.0);
+	if ((err = model_output(pmod, ptr))) break;
+	if (oflag) outcovmx(pmod, datainfo, batch, &prn);
+	break;
+
+    case HSK:
+	*pmod = hsk_func(command.list, &Z, datainfo);
+	if ((err = model_output(pmod, ptr))) break;
+	if (oflag) outcovmx(pmod, datainfo, batch, &prn);
+	break;
+
+    case HCCM:
+	*pmod = hccm_func(command.list, &Z, datainfo);
+	if ((err = model_output(pmod, ptr))) break;
+	if (oflag) print_white_vcv(pmod, &prn);
+	break;
+
+    case TSLS:
+	*pmod = tsls_func(command.list, atoi(command.param), 
+				&Z, datainfo);
+	if ((err = model_output(pmod, ptr))) break;
+	if (oflag) outcovmx(pmod, datainfo, batch, &prn);
+	break;
+
+    case AR:
+	*pmod = ar_func(command.list, atoi(command.param), 
+			      &Z, datainfo, &model_count, &prn);
+	if ((err = model_error(pmod))) break;
+	if (oflag) outcovmx(pmod, datainfo, batch, &prn);
+	break;
+
+    case VAR:
+	sscanf(edttext, "%d", &order);
+	err = var(order, command.list, &Z, datainfo, 1, &prn);
+	if (err) errmsg(err, NULL, &prn);
+	break;
+
+    case LOGIT:
+    case PROBIT:
+	*pmod = logit_probit(command.list, &Z, datainfo, action);
+	err = model_output(pmod, ptr);
+	break;	
+
+    default:
+	errbox("Sorry, not implemented yet!");
+	break;
+    }
+
+#ifndef USE_GTKHTML
+    if (err) {
+	prnclose(&prn);
+	return;
+    }
+#endif
+
+    if (modelgenr[0] && record_model_genr(modelgenr)) {
+	errbox("Error saving model information");
+	return;
+    }
+    if (cmd_init(line) || stack_model(1)) {
+	errbox("Error saving model information");
+	return;
+    }
+    /* make copy of most recent model */
+    if (copy_model(models[2], pmod, datainfo))
+	errbox("Out of memory copying model");
+
+    /* record sub-sample info (if any) with the model */
+    if (fullZ != NULL) {
+	fullinfo->varname = datainfo->varname;
+	fullinfo->label = datainfo->label;	
+	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+    }
+    
+    /* record the fact that the last model was estimated via GUI */
+    sprintf(title, "gretl: model %d", pmod->ID);
+
+    /* fprintf(stderr, "do_model: calling view_model\n"); */
+#ifdef USE_GTKHTML
+    view_model((void *) htm.w, pmod, 78, 400, title);
+#else
+    view_model((void *) &prn, pmod, 78, 400, title); 
+#endif
+}
+
+/* ........................................................... */
+
+void do_sim (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext, varname[9], info[24];
+    int err;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "sim %s", edttext);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    sscanf(line, "%*s %*s %*s %s", varname);
+    sprintf(info, "%s redefined OK", varname);
+
+    err = simulate(line, &Z, datainfo, errtext);
+    if (err) gui_errmsg(err, errtext);
+    else infobox(info);
+} 
+
+/* ........................................................... */
+
+void do_simdata (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+    int err, nulldata_n;
+    print_t prn;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "nulldata %s", edttext);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    nulldata_n = atoi(command.param);
+    if (nulldata_n < 2) {
+	errbox("Data series length missing or invalid");
+	return;
+    }
+    if (nulldata_n > 1000000) {
+	errbox("Data series too long");
+	return;
+    }
+
+    prn.fp = NULL;
+    if ((prn.buf = mymalloc(120)) == NULL) return;
+    prn.buf[0] = '\0';
+    err = open_nulldata(&Z, datainfo, data_file_open, 
+			nulldata_n, &prn);
+    if (err) { 
+	errbox("Failed to create empty data set");
+	return;
+    }
+    infobox(prn.buf);
+    prnclose(&prn);
+    populate_clist(mdata->listbox, datainfo);
+    set_sample_label(datainfo);
+    data_file_open = 1;
+    orig_vars = datainfo->v;
+    menubar_state(TRUE);
+}
+
+/* ........................................................... */
+
+void do_genr (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "genr %s", edttext);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    finish_genr(NULL);
+}
+
+/* ........................................................... */
+
+void do_model_genr (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+    windata_t *mydata = (windata_t *) ddata->data;
+    MODEL *pmod = mydata->data;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "genr %s", edttext);
+    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+
+    finish_genr(pmod);
+}
+/* ........................................................... */
+
+void do_random (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+    char tmp[32], vname[9];
+    float f1, f2;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    if (sscanf(edttext, "%s %f %f", tmp, &f1, &f2) != 3) {
+	if (ddata->code == GENR_NORMAL) 
+	    errbox("Specification is malformed\n"
+		   "Should be like \"foo 1 2.5\"");
+	else
+	    errbox("Specification is malformed\n"
+		   "Should be like \"foo 0 10\"");
+	return;
+    }
+    if (ddata->code == GENR_NORMAL && f2 < 0) {
+	errbox("Can't have a negative standard deviation!");
+	return;
+    } else if (ddata->code == GENR_UNIFORM && f1 >= f2) {
+	errbox("Range is non-positive!");
+	return;
+    }
+	
+    strncpy(vname, tmp, 8);
+    vname[8] = '\0';
+    if (validate_varname(vname)) return;
+
+    clear(line, MAXLEN);
+
+    if (ddata->code == GENR_NORMAL) {
+	if (f1 != 0. || f2 != 1.)
+	    sprintf(line, "genr %s = %.3f * normal() + %.3f", 
+		    vname, f2, f1);
+	else sprintf(line, "genr %s = normal()", vname); 
+    } else {
+	if (f1 != 0. || f2 != 100.)
+	    sprintf(line, "genr %s = %.3f + (uniform() * %.3f)", 
+		    vname, f1, (f2 - f1)/100.);
+	else sprintf(line, "genr %s = uniform()", vname); 
+    }
+
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    finish_genr(NULL);
+}
+
+/* ........................................................... */
+
+void do_seed (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    char tmp[32];
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    sscanf(edttext, "%31s", tmp);
+	
+    clear(line, MAXLEN);
+    sprintf(line, "seed %s", tmp); 
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    srand((unsigned) atoi(tmp));
+}
+
+/* ........................................................... */
+
+static void finish_genr (MODEL *pmod)
+{
+    if (pmod != NULL)
+	genr = genr_func(&Z, datainfo, line, model_count, 
+			 pmod, 0); 
+    else
+	genr = genr_func(&Z, datainfo, line, model_count, 
+			 (last_model == 's')? models[0] : models[2], 
+			 0); 
+    if (genr.errcode) {
+	gui_errmsg(genr.errcode, genr.errmsg);
+	free(cmd_stack[n_cmds-1]);
+	n_cmds--;
+    } else {
+	if (add_new_var(datainfo, &Z, &genr)) 
+	    errbox("Failed to add new variable");
+	else populate_clist(mdata->listbox, datainfo);
+    }
+}
+
+/* ........................................................... */
+
+void do_rename_var (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+    
+    if (validate_varname(edttext)) return;
+    strcpy(datainfo->varname[mdata->active_var], edttext);
+    populate_clist(mdata->listbox, datainfo);
+}
+
+/* ........................................................... */
+
+void delete_var (void)
+{
+    if (datainfo->v <= 1) {
+	errbox("Can't delete last variable");
+	return;
+    }
+    if (dataset_drop_vars(1, &Z, datainfo)) {
+	errbox("Failed to shrink the data set");
+	return;
+    }
+    populate_clist(mdata->listbox, datainfo);
+}
+
+/* ........................................................... */
+
+void do_edit_label (GtkWidget *widget, dialog_t *ddata) 
+{
+    char *edttext;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+    
+    /* FIXME - need to validate new label */
+    strcpy(datainfo->label[mdata->active_var], edttext);
+    populate_clist(mdata->listbox, datainfo);
+}
+
+/* ........................................................... */
+
+static void normal_test (GRETLTEST *test, FREQDIST *freq)
+{
+    strcpy(test->type, "Test for normality of residual");
+    strcpy(test->h_0, "error is normally distributed");
+    sprintf(test->teststat, "Chi-squared(2) = %.3f", freq->chisqu);
+    sprintf(test->pvalue, "%f", chisq(freq->chisqu, 2));
+}
+
+/* ........................................................... */
+
+void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
+{
+    FREQDIST freq;
+    print_t prn;
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    GRETLTEST test;
+
+    if (bufopen(&prn)) return;
+
+    freq = freq_func(NULL, NULL, pmod->uhat, pmod->t2 - pmod->t1 + 1, 
+		     "uhat", pmod->ncoeff);
+    if (freq.errcode) {
+	gui_errmsg(freq.errcode, freq.errmsg);
+	prnclose(&prn);
+	return;
+    }
+    
+    normal_test(&test, &freq);
+
+    if (add_test_to_model(&test, pmod) == 0)
+	print_test_to_window(&test, mydata->w);
+
+    clear(line, MAXLEN);
+    strcpy(line, "testuhat");
+    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+ 
+    printfreq(&freq, &prn);
+    free_freq(&freq);
+
+    view_buffer(&prn, 77, 300, "gretl: residual dist.", 
+		NULL, 0);
+}
+
+/* ........................................................... */
+
+void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
+{
+    FREQDIST freq;
+
+    if (mdata->active_var < 0) return;
+    if (mdata->active_var == 0) {
+	errbox("This command is not applicable to the constant");
+	return;
+    }
+
+    clear(line, MAXLEN);
+    sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    freq = freq_func(&Z, datainfo, NULL, 0,
+		     datainfo->varname[mdata->active_var], 1);
+    if (freq.errcode) 
+	gui_errmsg(freq.errcode, freq.errmsg);
+    else {
+	if (dist == GAMMA && freq.midpt[0] < 0.0 && freq.f[0] > 0) {
+	    errbox("Data contain negative values: gamma distribution not "
+		   "appropriate");
+	} else {
+	    if (plot_freq(&freq, &paths, dist))
+		errbox("gnuplot command failed");
+	    else
+		graphmenu_state(TRUE);
+	}
+	free_freq(&freq);
+    }
+}
+
+/* ........................................................... */
+
+void do_pergm (gpointer data, guint opt, GtkWidget *widget)
+{
+    gint err;
+    print_t prn;
+
+    if (bufopen(&prn)) return;
+
+    clear(line, MAXLEN);
+    if (opt)
+	sprintf(line, "pergm %s -o", datainfo->varname[mdata->active_var]);
+    else
+	sprintf(line, "pergm %s", datainfo->varname[mdata->active_var]);
+
+    if (check_cmd(line) || cmd_init(line)) {
+	prnclose(&prn);
+	return;
+    }
+
+    err = periodogram(command.list, &Z, datainfo, &paths, 0, opt, &prn);
+    if (err) {
+	errbox("Periodogram command failed");
+	prnclose(&prn);
+	return;
+    }
+    graphmenu_state(TRUE);
+
+    view_buffer(&prn, 60, 400, "gretl: periodogram", NULL, 0);
+}
+
+/* ........................................................... */
+
+void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
+{
+    print_t prn;
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+
+    if (bufopen(&prn)) return;
+
+    print_model_confints(pmod, datainfo, &prn);
+
+    view_buffer(&prn, 77, 300, "gretl: coefficient confidence intervals", 
+		view_items, sizeof view_items);
+}
+
+/* ........................................................... */
+
+void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
+{
+    print_t prn;
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+
+    if (bufopen(&prn)) return;
+
+    if (pmod->ci == HCCM) print_white_vcv(pmod, &prn);
+    else outcovmx(pmod, datainfo, 1, &prn); 
+
+    view_buffer(&prn, 77, 300, "gretl: coefficient covariances", 
+		view_items, sizeof view_items);
+}
+
+/* ......................................................... */
+
+void add_dummies (gpointer data, guint panel, GtkWidget *widget)
+{
+    gint err;
+
+    clear(line, MAXLEN);
+
+    if (panel) {
+	if (datainfo->time_series == 2)
+	    sprintf(line, "genr paneldum");
+	else if (datainfo->time_series == 3)
+	    sprintf(line, "genr paneldum -o");
+	else {
+	    errbox("Data set is not recognized as a panel.\n"
+		   "Please use \"Sample/Set frequency, startobs\".");
+	    return;
+	}
+    } else 
+	sprintf(line, "genr dummy");
+
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    if (panel) 
+	err = paneldum(&Z, datainfo, (datainfo->time_series == 2)? 0 : 1);
+    else 
+	err = dummy(&Z, datainfo);
+
+    if (err) gui_errmsg(err, NULL);
+    else populate_clist(mdata->listbox, datainfo);
+}
+
+/* ......................................................... */
+
+void add_time (gpointer data, guint index, GtkWidget *widget)
+{
+    gint err;
+
+    clear(line, MAXLEN);
+    if (index) sprintf(line, "genr index");
+    else sprintf(line, "genr time");
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    err = plotvar(&Z, datainfo, (index)? "index" : "time");
+    if (err) 
+	errbox((index)? "Error generating index variable" : 
+	       "Error generating time trend");
+    else populate_clist(mdata->listbox, datainfo);
+}
+
+/* ......................................................... */
+
+void add_logs_etc (GtkWidget *widget, dialog_t *ddata)
+{
+    gint err = 0;
+    char *edttext, msg[80];
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    line[0] = '\0';
+    msg[0] = '\0';
+    sprintf(line, "%s %s", commands[ddata->code], edttext);
+
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    if (ddata->code == LAGS)
+	err = lags(command.list, &Z, datainfo);
+    else if (ddata->code == LOGS) {
+	/* returns number of terms created */
+	err = logs(command.list, &Z, datainfo, msg);
+	if (err < command.list[0]) err = 1;
+	else err = 0;
+    }
+    else if (ddata->code == SQUARE) {
+	/* returns number of terms created */
+	err = xpxgenr(command.list, &Z, datainfo, 0, 1);
+	if (err <= 0) err = 1;
+	else err = 0;
+    } 
+    else if (ddata->code == DIFF)
+	err = list_diffgenr(command.list, &Z, datainfo);
+    else if (ddata->code == LDIFF)
+	err = list_ldiffgenr(command.list, &Z, datainfo);
+
+    if (err) {
+	if (msg[0]) errbox(msg);
+	else errbox("Error adding variables");
+    }
+    else populate_clist(mdata->listbox, datainfo);
+}
+
+/* ......................................................... */
+
+int add_fit_resid (MODEL *pmod, const int code, const int undo)
+   /* If undo = 1, don't bother with the label, don't update
+   the var display in the main window, and don't add to
+   command log. */
+{
+    if (genr_fit_resid(pmod, &Z, datainfo, code, undo)) {
+	errbox("Out of memory attempting to add variable");
+	return 1;
+    }
+
+    if (!undo) {
+	int v;
+	char line[32];
+
+	v = datainfo->v - 1;
+	populate_clist(mdata->listbox, datainfo);
+	if (code == 0)
+	    sprintf(line, "genr %s = uhat", datainfo->varname[v]);
+	else if (code == 1)
+	    sprintf(line, "fcast %s", datainfo->varname[v]);
+	else if (code == 2)
+	    sprintf(line, "genr %s = uhat*uhat", datainfo->varname[v]);
+	check_cmd(line);
+	model_cmd_init(line, pmod->ID);
+    }
+    return 0;
+}
+
+/* ......................................................... */
+
+void add_model_stat (MODEL *pmod, const int which)
+{
+    char vname[9], vlabel[MAXLABEL], cmdstr[MAXLEN];
+    int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
+
+    if (dataset_add_vars(1, &Z, datainfo)) {
+	errbox("Out of memory attempting to add variable");
+	return;
+    }
+    i = datainfo->v - 1;
+    n = datainfo->n;
+
+    for (t=0; t<t1; t++) Z[n*i + t] = NADBL;
+    for (t=t2+1; t<n; t++) Z[n*i + t] = NADBL;
+
+    switch (which) {
+    case ESS:
+	sprintf(vname, "ess_%d", pmod->ID);
+	sprintf(vlabel, "error sum of squares from model %d", 
+		pmod->ID);
+	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->ess;
+	sprintf(cmdstr, "genr ess_%d = $ess", pmod->ID);
+	break;
+    case R2:
+	sprintf(vname, "r2_%d", pmod->ID);
+	sprintf(vlabel, "R-squared from model %d", pmod->ID);
+	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->rsq;
+	sprintf(cmdstr, "genr r2_%d = $rsq", pmod->ID);
+	break;
+    case TR2:
+	sprintf(vname, "trsq%d", pmod->ID);
+	sprintf(vlabel, "T*R-squared from model %d", pmod->ID);
+	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->nobs * pmod->rsq;
+	sprintf(cmdstr, "genr trsq%d = $trsq", pmod->ID);
+	break;
+    case DF:
+	sprintf(vname, "df_%d", pmod->ID);
+	sprintf(vlabel, "degrees of freedom from model %d", 
+		pmod->ID);
+	for (t=t1; t<=t2; t++) Z[n*i + t] = (double) pmod->dfd;
+	sprintf(cmdstr, "genr df_%d = $df", pmod->ID);
+	break;
+    case SIGMA:
+	sprintf(vname, "sgma_%d", pmod->ID);
+	sprintf(vlabel, "std err of residuals from model %d", 
+		pmod->ID);
+	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->sigma;
+	sprintf(cmdstr, "genr sgma_%d = $sigma", pmod->ID);
+	break;
+    }
+
+    strcpy(datainfo->varname[i], vname);
+    strcpy(datainfo->label[i], vlabel);
+    populate_clist(mdata->listbox, datainfo);
+    check_cmd(cmdstr);
+    model_cmd_init(cmdstr, pmod->ID);
+    infobox("variable added");
+}
+
+/* ........................................................... */
+
+void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
+{
+    int err, origv = datainfo->v, plot_list[4], lines[1];
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    int ts = dataset_is_time_series(datainfo);
+    int pdum = mydata->active_var;
+
+    /* add residuals to data set temporarily */
+    if (add_fit_resid(pmod, 0, 1)) return;
+
+    plot_list[0] = 2;
+    plot_list[1] = datainfo->v - 1; /* last var added */
+    strcpy(datainfo->varname[plot_list[1]], 
+	   datainfo->varname[pmod->list[1]]);
+
+    if (xvar) { /* plot against specified xvar */
+	plot_list[2] = xvar;
+	lines[0] = 0;
+    } else {    /* plot against obs index or time */
+	err = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	if (err) {
+	    errbox("Failed to add plotting index variable");
+	    dataset_drop_vars(1, &Z, datainfo);
+	    return;
+	}
+	plot_list[2] = varindex(datainfo, (ts)? "time" : "index");
+	lines[0] = (ts)? 1 : 0;
+    } 
+
+    /* plot separated by dummy variable? */
+    if (pdum) {
+	plot_list[0] = 3;
+	plot_list[3] = pdum;
+    }
+
+    /* generate graph */
+    err = gnuplot(plot_list, lines, &Z, datainfo,
+		  &paths, &plot_count, 0, 1, 
+		  (pdum)? OPT_RESIDZ : OPT_RESID);
+    if (err < 0) errbox("gnuplot command failed");
+    else graphmenu_state(TRUE);
+    
+    dataset_drop_vars(datainfo->v - origv, &Z, datainfo);
+}
+
+/* ........................................................... */
+
+void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
+{
+    int err, origv = datainfo->v, plot_list[4], lines[2];
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    int ts = dataset_is_time_series(datainfo);
+
+    /* add fitted values to data set temporarily */
+    if (add_fit_resid(pmod, 1, 1)) return;
+
+    /* common part of list setup */
+    plot_list[0] = 3;
+    plot_list[1] = datainfo->v - 1; /* last var added */
+    plot_list[2] = pmod->list[1];   /* depvar from regression */
+
+    if (xvar) {  /* plot against specified xvar */
+	plot_list[3] = xvar;
+	lines[0] = (pmod->list[0] == 3)? 1 : 0;
+	lines[1] = 0;
+    } else { /* plot against obs */
+	err = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	if (err) {
+	    errbox("Failed to add plotting index variable");
+	    dataset_drop_vars(1, &Z, datainfo);
+	    return;
+	}
+	plot_list[3] = varindex(datainfo, (ts)? "time" : "index");
+	lines[0] = (ts)? 1 : 0; 
+	lines[1] = (ts)? 1 : 0;
+    } 
+
+    err = gnuplot(plot_list, lines, &Z, datainfo,
+		  &paths, &plot_count, 0, 1, OPT_FA);
+    if (err < 0) errbox("gnuplot command failed");
+    else graphmenu_state(TRUE);
+
+    dataset_drop_vars(datainfo->v - origv, &Z, datainfo);
+}
+
+/* ........................................................... */
+
+#define MAXDISPLAY 4096
+/* max number of observations for which we expect to be able to 
+   use the buffer approach for displaying data, as opposed to
+   disk file */
+
+void display_data (gpointer data, guint u, GtkWidget *widget)
+{
+    int err;
+    print_t prn;
+
+    if (datainfo->v * datainfo->n > MAXDISPLAY) { /* use disk file */
+	char fname[MAXLEN];
+
+	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	    errbox("Can't open output file");
+	    return;
+	}
+	err = printdata(NULL, &Z, datainfo, 1, 1, &prn);
+	prnclose(&prn);
+	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL, 0);
+    } else { /* use buffer */
+	if (bufopen(&prn)) return;
+
+	err = printdata(NULL, &Z, datainfo, 1, 1, &prn);
+	if (err) {
+	    errbox("Out of memory in display buffer");
+	    prnclose(&prn);
+	    return;
+	}
+	view_buffer(&prn, 77, 350, "gretl: display data", NULL, 0);
+    }
+}
+
+/* ........................................................... */
+
+void display_selected (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext; 
+    print_t prn;
+    int ig = 0;
+    CMD prcmd;
+
+    prcmd.list = malloc(sizeof(int));
+    prcmd.param = malloc(1);
+    if (prcmd.list == NULL || prcmd.param == NULL) {
+	errbox("Out of memory!");
+	return;
+    }
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "print %s", edttext);
+    getcmd(line, datainfo, &prcmd, &ig, &Z, NULL);
+    if (prcmd.errcode) {
+	gui_errmsg(prcmd.errcode, prcmd.errmsg);
+	return;
+    }    
+
+    if (prcmd.list[0] * datainfo->n > MAXDISPLAY) { /* use disk file */
+	char fname[MAXLEN];
+
+	if (!user_fopen("data_display_tmp", fname, &prn)) {
+	    errbox("Can't open output file");
+	    return;
+	}
+	printdata(prcmd.list, &Z, datainfo, 1, 1, &prn);
+	prnclose(&prn);
+	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL, 0);
+    } else { /* use buffer */
+	int err;
+
+	if (bufopen(&prn)) return;
+	err = printdata(prcmd.list, &Z, datainfo, 1, 1, &prn);
+	if (err) {
+	    errbox("Out of memory in display buffer");
+	    prnclose(&prn);
+	    return;
+	}
+	view_buffer(&prn, 77, 350, "gretl: display data", NULL, 0);
+    }
+    free(prcmd.list);
+    free(prcmd.param);
+}
+
+/* ........................................................... */
+
+void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
+{
+    print_t prn;
+    int err;
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+
+    if (bufopen(&prn)) return;
+    err = print_fit_resid(pmod, &Z, datainfo, &prn);
+
+    if (err) {
+	errbox("Failed to generate fitted values");
+	prnclose(&prn);
+    } else 
+	view_buffer(&prn, 77, 350, "gretl: display data", 
+		    NULL, 0);    
+}
+
+/* ........................................................... */
+
+void do_graph_var (void)
+{
+    int err, lines[1];
+
+    if (mdata->active_var < 0) return;
+    clear(line, MAXLEN);
+    sprintf(line, "gnuplot %s time", datainfo->varname[mdata->active_var]);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    lines[0] = 1;
+    err = gnuplot(command.list, lines, &Z, datainfo,
+		  &paths, &plot_count, 0, 1, 0);
+    if (err == -999)
+	errbox("No data were available to graph");
+    else if (err < 0) 
+	errbox("gnuplot command failed");
+    else graphmenu_state(TRUE);
+}
+
+/* ........................................................... */
+
+void do_scatters (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    gint err; 
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "scatters %s", edttext);
+    if (check_cmd(line) || cmd_init(line)) return;
+    err = multi_scatters(command.list, atoi(command.param), &Z, 
+			 datainfo, &paths);
+    if (err < 0) errbox("gnuplot command failed");
+    else graphmenu_state(TRUE);
+}
+
+/* ........................................................... */
+
+void do_dummy_graph (GtkWidget *widget, dialog_t *ddata)
+     /* X, Y scatter with separation by dummy (factor) */
+{
+    char *edttext;
+    gint err, lines[1] = {0}; 
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "gnuplot -z %s", edttext);
+
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    if (command.list[0] != 3 || 
+	!isdummy(command.list[3], datainfo->t1, datainfo->t2, Z,
+		 datainfo->n)) {
+	errbox("You must supply three variables, the last\nof which "
+	       "is a dummy variable (values 1 or 0)");
+	return;
+    }
+
+    err = gnuplot(command.list, lines, &Z, datainfo,
+		  &paths, &plot_count, 0, 1, OPT_Z);
+
+    if (err < 0) errbox("gnuplot command failed");
+    else graphmenu_state(TRUE);
+}
+
+/* ........................................................... */
+
+void do_graph (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    gint err, lines[1] = {0}; 
+    gint imp = (ddata->code == GR_IMP);
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "gnuplot %s%s", (imp)? "-m " : "", edttext);
+    if (ddata->code == GR_PLOT) {
+	strcat(line, " time");
+	lines[0] = 1;
+    }
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    if (imp) {
+	err = gnuplot(command.list, NULL, &Z, datainfo,
+		      &paths, &plot_count, 0, 1, OPT_M);
+    } else {
+	err = gnuplot(command.list, lines, &Z, datainfo,
+		      &paths, &plot_count, 0, 1, 0);
+    }
+    if (err == -999)
+	errbox("No data were available to graph");
+    else if (err < 0) errbox("gnuplot command failed");
+    else graphmenu_state(TRUE);
+}
+
+/* ........................................................... */
+
+void display_var (void)
+{
+    int list[2];
+    print_t prn;
+
+    list[0] = 1;
+    list[1] = mdata->active_var;
+    if (bufopen(&prn)) return;
+    printdata(list, &Z, datainfo, 1, 1, &prn);
+    view_buffer(&prn, 24, 350, "gretl: display data", NULL, 0);    
+}
+
+/* ........................................................... */
+
+static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
+{
+    FILE *fp;
+    char msg[MAXLEN];
+    gchar *savestuff;
+    windata_t *mydata = (windata_t *) data;
+
+    if ((fp = fopen(mydata->fname, "w")) == NULL) {
+	sprintf(msg, "couldn't write to %s", mydata->fname);
+	errbox(msg); 
+	return;
+    }
+    savestuff = 
+	gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    fprintf(fp, "%s", savestuff);
+    g_free(savestuff); 
+    fclose(fp);
+    if (!quiet) infobox("script saved");
+}
+
+/* ........................................................... */
+
+static void do_run_script (gpointer data, guint code, GtkWidget *w)
+{
+    print_t prn;
+    char *runfile, fname[MAXLEN];
+    extern void refresh_data (void);
+
+    if (!user_fopen("output_tmp", fname, &prn)) {
+	errbox("Couldn't open output file");
+	return;
+    }
+
+    if (code == SCRIPT_EXEC) runfile = scriptfile;
+    else if (code == SESSION_EXEC) runfile = cmdfile;
+
+    auto_save_script(data, 1, NULL);
+
+    execute_script(runfile, NULL, NULL, &prn, code);
+    prnclose(&prn);
+    refresh_data();
+
+    view_file(fname, 1, 1, 77, 450, "gretl: script output", 
+	      script_out_items, sizeof script_out_items);
+}
+
+/* ........................................................... */
+
+void do_open_script (GtkWidget *w, GtkFileSelection *fs)
+{
+    int n = strlen(paths.scriptdir);
+    char tmp[64], title[48];
+
+    if (fs) {
+	if (isdir(gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs))))
+	    return;
+	strncpy(scriptfile, 
+		gtk_file_selection_get_filename(GTK_FILE_SELECTION (fs)), 
+		MAXLEN-1);
+	gtk_widget_destroy(GTK_WIDGET (fs)); 
+    }
+
+    /* is this a "session" file? */
+    if (saved_objects(scriptfile)) {
+	verify_open_session(NULL);
+	return;
+    }
+    /* ... or just an "ordinary" script */
+    mkfilelist(3, scriptfile);
+    strcpy(title, "gretl: ");
+    strncat(title, endbit(tmp, scriptfile, 0), 40);
+
+    if (strncmp(scriptfile, paths.scriptdir, n)) 
+	view_file(scriptfile, 1, 0, 78, 370, title, 
+		  script_items, sizeof script_items);
+    else 
+	view_file(scriptfile, 1, 0, 78, 370, title, 
+		  sample_script_items, sizeof sample_script_items);
+}
+
+/* ........................................................... */
+
+void do_new_script (gpointer data, guint loop, GtkWidget *widget) 
+{
+    print_t prn;
+    char fname[MAXLEN];
+
+    if (!user_fopen("script_tmp", fname, &prn)) return;
+    if (loop) pprintf(&prn, "loop 1000\n\nendloop\n");
+    prnclose(&prn);
+    strcpy(scriptfile, fname);
+    
+    view_file(scriptfile, 1, 0, 77, 350, "gretl: command script", 
+	      script_items, sizeof script_items);
+}
+
+/* ........................................................... */
+
+void do_open_csv_box (char *fname, int code)
+{
+    int err;
+    print_t prn;
+    char buf[30];
+
+    if (bufopen(&prn)) return;
+
+    if (code == OPEN_BOX)
+	err = import_box(&Z, datainfo, fname, &prn);
+    else
+	err = import_csv(&Z, datainfo, fname, &prn); 
+
+    sprintf(buf, "gretl: import %s data", 
+	    (code == OPEN_BOX)? "BOX" : "CSV");
+    view_buffer(&prn, 77, 350, buf, NULL, 0); 
+
+    if (err) return;
+
+    register_data(fname);
+}
+
+/* ........................................................... */
+
+void do_store (char *mydatfile, const int opt)
+{
+    char f = getflag(opt);
+    FILE *fp;
+
+    line[0] = '\0';
+
+    if (f) 
+	sprintf(line, "store -%c %s %s", f, mydatfile, storelist);
+    else
+	sprintf(line, "store %s %s", mydatfile, storelist);   
+
+    if (check_cmd(line) || cmd_init(line)) return; 
+
+    /* back up existing datafile if need be */
+    fp = fopen(mydatfile, "r");
+    if (fp != NULL) {
+	char backup[MAXLEN];
+
+	fclose(fp);
+	sprintf(backup, "%s~", mydatfile);
+	if (copyfile(mydatfile, backup)) {
+	    errbox("Couldn't make backup of data file");
+	    return;
+	}
+    }
+
+    if (write_data(mydatfile, command.list, Z, datainfo, opt)) {
+	errbox("Write of data file failed");
+	return;
+    }
+
+    if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT)
+	mkfilelist(1, mydatfile);
+    if (opt != OPT_M && opt != OPT_C && opt != OPT_R && opt != OPT_R_ALT) {
+	if (strlen(paths.hdrfile) == 0) {
+	    if (has_gz_suffix(mydatfile))
+		gz_switch_ext(paths.hdrfile, mydatfile, "hdr");
+	    else
+		switch_ext(paths.hdrfile, mydatfile, "hdr");
+	}
+    } 
+    infobox("Data written OK");
+    return;
+}
+
+/* ........................................................... */
+
+void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
+{
+    char *texfile;
+    char texbase[MAXLEN], tmp[MAXLEN];
+    int dot, err;
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+
+    if (prn_code) 
+	texfile = tex_print_equation(pmod, datainfo, 
+				     &paths, model_count, 1, NULL);
+    else texfile = tex_print_model(pmod, datainfo, 
+				   &paths, model_count, 1, NULL);
+
+    if (texfile == NULL) {
+	errbox("Couldn't open tex file for writing");
+	return;
+    }
+
+    dot = dotpos(texfile);
+    clear(texbase, MAXLEN);
+    strncpy(texbase, texfile, dot);
+    sprintf(tmp, "cd %s && latex %s && xdvi %s", paths.userdir,
+	    texbase, texbase);
+    err = system(tmp);
+
+    remove(texfile);
+    sprintf(tmp, "%s.dvi", texbase);
+    remove(tmp);
+    sprintf(tmp, "%s.log", texbase);
+    remove(tmp);
+    sprintf(tmp, "%s.aux", texbase);
+    remove(tmp);
+    free(texfile);
+}
+
+/* ........................................................... */
+
+void do_save_tex (char *fname, const int code, MODEL *pmod)
+{
+    char *texfile;
+
+    if (code == SAVE_TEX_EQ)
+	texfile = tex_print_equation(pmod, datainfo, 
+				     &paths, model_count, 0, fname);
+    else 
+	texfile = tex_print_model(pmod, datainfo, 
+				  &paths, model_count, 0, fname);
+    if (texfile == NULL) {
+	errbox("Couldn't open tex file for writing");
+	return;
+    }
+    free(texfile);
+    if (code != COPY_LATEX)
+	infobox("LaTeX file saved");
+}
+
+/* ........................................................... */
+
+void do_save_html (char *fname, const int filesave, MODEL *pmod)
+{
+    html_t htm;
+
+    if (h_fopen(&htm, fname)) {
+	errbox("Couldn't open html file for writing");
+	return;
+    }	
+    h_printmodel(pmod, datainfo, &htm);
+    h_bufclose(&htm);
+    if (filesave) 
+	infobox("HTML file saved");
+}
+/* ........................................................... */
+
+void do_save_text (char *fname, MODEL *pmod)
+{
+    print_t prn;
+
+    prn.buf = NULL;
+    prn.fp = fopen(fname, "w");
+    if (prn.fp == NULL) {
+	errbox("Couldn't open text file for writing");
+	return;
+    }	
+    printmodel(pmod, datainfo, &prn);
+    prnclose(&prn);
+}
+
+/* ........................................................... */
+
+int execute_script (const char *runfile, 
+		    SESSION *psession, session_t *rebuild,
+		    print_t *prn, int exec_code)
+     /* run commands in runfile, output to prn */
+{
+    FILE *fb;
+    int cont, exec_err = 0;
+    int i, j = 0, loopstack = 0, looprun = 0;
+    char tmp[MAXLEN];
+    LOOPSET loop;            /* struct for monte carlo loop */
+
+    if ((fb = fopen(runfile, "r")) == NULL) {
+	errbox("Couldn't open script");
+	return 1;
+    }
+
+    /* reset model count to 0 if starting/saving session */
+    if (exec_code == SESSION_EXEC) model_count = 0;
+
+    /* monte carlo struct */
+    loop.lines = NULL;
+    loop.models = NULL;
+    loop.lmodels = NULL;
+    loop.prns = NULL;
+    loop.storename = NULL;
+    loop.storelbl = NULL;
+    loop.storeval = NULL;
+    loop.nmod = 0;
+
+    /* Put the action of running this script into the command log? */
+    if (exec_code == SCRIPT_EXEC) {
+	char runcmd[MAXLEN];
+
+	sprintf(runcmd, "run %s", runfile);
+	check_cmd(runcmd);
+	cmd_init(runcmd);
+    }
+
+    command.cmd[0] = '\0';
+
+    while (strcmp(command.cmd, "quit")) {
+	if (looprun) { /* Are we doing a Monte Carlo simulation? */
+	    if (!loop.ncmds) {
+		pprintf(prn, "No commands in loop.\n");
+		looprun = 0;
+		continue;
+	    }
+	    i = 0;
+	    while (j != 1000 && loop_condition(i, &loop, Z, datainfo)) {
+		for (j=0; j<loop.ncmds; j++) {
+		    if (loop_exec_line(&loop, i, j, prn)) {
+			pprintf(prn, "Error in command loop: aborting\n");
+			j = 999;
+			i = loop.ntimes;
+		    }
+		}
+		i++;
+	    }
+	    if (j != 1000) 
+		print_loop_results(&loop, datainfo, prn, &paths, 
+				   &model_count, loopstorefile);
+	    looprun = 0;
+	    monte_carlo_free(&loop);
+	    if (j == 1000) return 1;
+	} else { /* end if Monte Carlo stuff */
+	    line[0] = '\0';
+	    if (fgets(line, MAXLEN, fb) == NULL)
+		goto endwhile;
+	    while ((cont = top_n_tail(line))) {
+		if (cont == E_ALLOC) {
+		    errbox("Out of memory loading command line");
+		    return 1;
+		}
+		*tmp = '\0';
+		fgets(tmp, MAXLEN-1, fb);
+		strcat(line, tmp);
+		compress_spaces(line);
+	    }
+	    if (strncmp(line, "(* saved objects:", 17) == 0) 
+		strcpy(line, "quit"); 
+	    else {
+		if ((line[0] == '(' && line[1] == '*') ||
+		    (line[strlen(line)-1] == ')' && 
+		     line[strlen(line)-2] == '*')) 
+		    pprintf(prn, "\n%s\n", line);
+		else 
+		    pprintf(prn, "\n? %s\n", line);	
+	    }
+	    oflag = 0;
+	    strcpy(tmp, line);
+	    exec_err = gui_exec_line(line, &loop, &loopstack, 
+				     &looprun, psession, rebuild, 
+				     prn, exec_code, runfile);
+	    if (exec_err) {
+		pprintf(prn, "\nError executing script: halting.\n");
+		pprintf(prn, "> %s\n", tmp);
+		return 1;
+	    }
+	} /* end alternative to Monte Carlo stuff */
+    } /* end while() */
+ endwhile:
+    if (psession && rebuild) /* recreating a gretl session */
+	clear_model(&models[0], psession, rebuild);
+    return 0;
+}
+
+/* ........................................................... */
+
+static int ready_for_command (char *line)
+{
+    if (*line == 'q' || *line == 'x' ||
+        *line == '\0' ||
+        strncmp(line, "open", 4) == 0 ||
+        strncmp(line, "run", 3) == 0 ||
+        strncmp(line, "nulldata", 6) == 0 ||
+        strncmp(line, "import", 4) == 0 ||
+        strncmp(line, "pvalue", 6) == 0 ||
+        strncmp(line, "!", 1) == 0 ||
+        strncmp(line, "(*", 2) == 0 ||
+        strncmp(line, "man ", 4) == 0 ||
+        strncmp(line, "help", 4) == 0)
+        return 1;
+    return 0;
+}
+
+/* ........................................................... */
+
+static int script_model_test (const int id, print_t *prn, const int ols_only)
+{
+    /* need to work in terms of modelspec here, _not_ model_count */
+
+    int m = (id)? id - 1 : 0;
+
+    if (model_count == 0) { 
+	pprintf(prn, "Can't do this: no model has been estimated yet\n");
+	return 1;
+    }
+    if (id > model_count) { 
+	pprintf(prn, "Can't do this: there is no model %d\n", id);
+	return 1;
+    }
+    /* ID == 0 -> no model specified -> look for last script model */
+    if (modelspec != NULL && id == 0) {
+	m = model_count - 1;
+	while (m) { 
+	    if (model_origin[m] == 's') break;
+	    m--;
+	}
+    }
+    if (modelspec == NULL || model_origin[m] == 'g') {
+	pprintf(prn, "Sorry, can't do this.\nTo operate on a model estimated "
+		"via the graphical interface, please use the\nmenu items in "
+		"the model window.\n");
+	return 1;
+    }    
+    if (ols_only && strncmp(modelspec[m].cmd, "ols", 3)) {
+	pprintf(prn, "This command is only available for OLS models "
+		"at present.\n");
+	return 1;
+    }
+    if (model_sample_issue(NULL, &modelspec[m], (fullZ == NULL)? Z : fullZ, 
+			   (fullZ == NULL)? datainfo : fullinfo)) {
+	pprintf(prn, "Can't do: the current data set is different from "
+		"the one on which\nthe reference model was estimated.\n");
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+static int gui_exec_line (char *line, 
+			  LOOPSET *plp, int *plstack, int *plrun, 
+			  SESSION *psession, session_t *rebuild,
+			  print_t *prn, int exec_code, 
+			  const char *myname) 
+{
+    int i, err = 0, check = 0, order, nulldata_n, lines[1];
+    double rho;
+    char runfile[MAXLEN], datfile[MAXLEN], msg[80];
+    char linecopy[MAXLEN];
+    char *texfile;
+    MODEL tmpmod;
+    FREQDIST freq;              /* struct for freq distributions */
+    GRETLTEST test;             /* struct for model tests */
+    GRETLTEST *ptest;
+    void *ptr;
+
+    if (!data_file_open && !ready_for_command(line)) {
+	pprintf(prn, "You must open a data file first\n");
+	return 1;
+    }
+
+    /* parse the command line */
+    strcpy(linecopy, line);
+    catchflag(line, &oflag);
+    /* but if we're stacking commands for a loop, parse "lightly" */
+    if (*plstack) get_cmd_ci(line, &command);
+    else getcmd(line, datainfo, &command, &ignore, &Z, &cmds);
+    if (command.ci == -2) { /* line was a comment, pass */
+/*  	cmds.fp = fopen(cmdfile, "a"); */
+/*  	if (cmds.fp) { */
+/*  	    pprintf(&cmds, "%s\n", linecopy); */
+/*  	    fclose(cmds.fp); */
+/*  	} */
+	return 0;
+    }
+    if (command.ci < 0) return 0; /* nothing there */
+    if (command.errcode) {
+        errmsg(command.errcode, command.errmsg, prn);
+	if (exec_code == CONSOLE_EXEC) {
+	    strcpy(errline, linecopy);
+	}
+        return 1;
+    }
+    if (*plstack) {  /* accumulating loop commands */
+	if (!ok_in_loop(command.ci)) {
+            pprintf(prn, "Sorry, this command is not available in loop mode.\n");
+            return 1;
+        } else {
+            echo_cmd(&command, datainfo, line, 1, 1, oflag, &cmds);
+            if (command.ci != ENDLOOP) {
+                if (add_to_loop(plp, line, command.ci, &Z, datainfo, oflag)) {
+                    pprintf(prn, "Failed to add command to loop stack.\n");
+		    return 1;
+                }
+                return 0;
+            } 
+        }
+    } 
+
+    /* if rebuilding a session, add tests back to models */
+    if (rebuild) ptest = &test;
+    else ptest = NULL;
+
+    /* FIXME ?? */
+/*      if (is_model_ref_cmd(command.ci)) { */
+/*  	if (model_sample_issue(models[0], &Z, datainfo)) { */
+/*  	    pprintf(prn, "Can't do: the current data set is different from " */
+/*  		   "the one on which\nthe reference model was estimated.\n"); */
+/*  	    return 1; */
+/*  	} */
+/*      } */
+
+    switch (command.ci) {
+
+    case ADF: case COINT:
+    case CORR:
+    case CRITERIA:
+    case DIFF: case LDIFF: case LAGS: case LOGS:
+    case MULTIPLY:
+    case GRAPH: case PLOT:
+    case INFO: case LABELS: case LIST:
+    case PRINT:
+    case SUMMARY:
+    case MEANTEST: case VARTEST:
+    case RUNS: case SPEARMAN:
+	err = simple_commands(&command, line, &Z, datainfo, &paths,
+			      batch, oflag, prn);
+	break;
+
+    case ADD:
+    case OMIT:
+	if ((err = script_model_test(0, prn, 0))) break;
+    plain_add_omit:
+	clear_model(models[1], NULL, NULL);
+	if (command.ci == ADD || command.ci == ADDTO)
+	    err = auxreg(command.list, models[0], models[1], &model_count, 
+			 &Z, datainfo, AUX_ADD, prn, NULL);
+	else
+	    err = handle_omit(command.list, models[0], models[1],
+			      &model_count, &Z, datainfo, prn);
+	if (err) {
+	    errmsg(err, NULL, prn);
+	    clear_model(models[1], NULL, NULL);
+	} else {
+	    /* for command-line use, we keep a "stack" of 
+	       two models, and recycle the places */
+	    swap_models(&models[0], &models[1]);
+	    clear_model(models[1], NULL, NULL);
+	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	}
+	break;	
+
+    case ADDTO:
+    case OMITFROM:
+	i = atoi(command.param);
+	if ((err = script_model_test(i, prn, 0))) break;
+	if (i == (models[0])->ID) goto plain_add_omit;
+	err = re_estimate(modelspec[i-1].cmd, &tmpmod, datainfo, &Z);
+	if (err) {
+	    pprintf(prn, "Failed to reconstruct model %d\n", i);
+	    break;
+	} 
+	clear_model(models[1], NULL, NULL);
+	tmpmod.ID = i;
+	if (command.ci == ADDTO)
+	    err = auxreg(command.list, &tmpmod, models[1], &model_count, 
+			 &Z, datainfo, AUX_ADD, prn, NULL);
+	else
+	    err = handle_omit(command.list, &tmpmod, models[1],
+			      &model_count, &Z, datainfo, prn);
+	if (err) {
+	    errmsg(err, NULL, prn);
+	    clear_model(models[1], NULL, NULL);
+	    break;
+	} else {
+	    swap_models(&models[0], &models[1]);
+	    clear_model(models[1], NULL, NULL);
+	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	}
+	clear_model(&tmpmod, NULL, NULL);
+	break;
+
+    case AR:
+	ptr = (psession && rebuild)? 
+	    (void *) &models[0] : (void *) models[0];
+	clear_model(ptr, psession, rebuild);
+	*models[0] = ar_func(command.list, atoi(command.param), &Z, 
+			    datainfo, &model_count, prn);
+	if ((err = (models[0])->errcode)) { 
+	    errmsg(err, (models[0])->errmsg, prn); 
+	    break;
+	}
+	if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	break;
+
+    case ARCH:
+	order = atoi(command.param);
+	clear_model(models[1], NULL, NULL);
+	*models[1] = arch(order, command.list, &Z, datainfo, 
+			  &model_count, prn, ptest);
+	if ((err = (models[1])->errcode)) 
+	    errmsg(err, (models[1])->errmsg, prn);
+	if ((models[1])->ci == ARCH) {
+	    swap_models(&models[0], &models[1]);
+	    if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	} else if (rebuild)
+	    add_test_to_model(ptest, models[0]);
+	clear_model(models[1], NULL, NULL);
+	break;
+
+    case CHOW:
+	if ((err = script_model_test(0, prn, 1))) break;
+	err = chow_test(line, models[0], &Z, datainfo, prn, errtext, ptest);
+	if (err) errmsg(err, errtext, prn);
+	else if (rebuild) 
+	    add_test_to_model(ptest, models[0]);
+	break;
+
+    case CUSUM:
+	if ((err = script_model_test(0, prn, 1))) break;
+	err = cusum_test(models[0], &Z, datainfo, prn, errtext, 
+			 &paths, ptest);
+	if (err) errmsg(err, errtext, prn);
+	else if (rebuild) 
+	    add_test_to_model(ptest, models[0]);
+	break;
+
+    case CORC:
+    case HILU:
+	err = hilu_corc(&rho, command.list, Z, datainfo, command.ci, prn);
+	if (err) {
+	    errmsg(err, NULL, prn);
+	    break;
+	}
+	ptr = (psession && rebuild)? 
+	    (void *) &models[0] : (void *) models[0];	
+	clear_model(ptr, psession, rebuild);
+	*models[0] = lsq(command.list, Z, datainfo, command.ci, 1, rho);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, (models[0])->errmsg, prn);
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn); 
+	if (oflag) outcovmx(models[0], datainfo, batch, prn);
+	break;
+
+    case CORRGM:
+	order = atoi(command.param);
+	err = corrgram(command.list, order, &Z, datainfo, &paths,
+		       batch, prn);
+	if (err) pprintf(prn, "Failed to generate correlogram\n");
+	break;
+
+    case DELEET:
+	if (fullZ != NULL) {
+	    pprintf(prn, "Can't delete last variable when in sub-sample"
+		    " mode\n");
+	    break;
+	}
+	if (datainfo->v <= 1 || dataset_drop_vars(1, &Z, datainfo)) 
+	    pprintf(prn, "Failed to shrink the data set");
+	else varlist(datainfo, prn);
+	break;
+
+    case ENDLOOP:
+	if (*plstack != 1) {
+	    pprintf(prn, "You can't end a loop here, "
+		    "you haven't started one.\n");
+	    break;
+	}
+	*plstack = 0;
+	*plrun = 1;
+	break;
+
+    case EQNPRINT:
+    case TABPRINT:
+	if ((err = script_model_test(0, prn, 1))) break;
+	if (command.ci == EQNPRINT)
+	    texfile = tex_print_equation(models[0], datainfo, 
+					 &paths, model_count, oflag, NULL);
+	else
+	    texfile = tex_print_model(models[0], datainfo,
+				      &paths, model_count, oflag, NULL);
+	if (texfile == NULL) {
+	    pprintf(prn, "Couldn't open tex file for writing.\n");
+	    err = 1;
+	} else {
+	    pprintf(prn, "Model printed to %s\n", texfile); 
+	    free(texfile);
+	}
+	break;
+
+    case FCAST:
+	if ((err = script_model_test(0, prn, 0))) break;
+	err = fcast(line, models[0], datainfo, &Z, errtext);
+	if (err < 0) {
+	    err *= -1;
+	    printf("Error retrieving fitted values.\n");
+	    errmsg(err, errtext, prn);
+	    break;
+	}
+	err = 0;
+	varlist(datainfo, prn);
+	break;
+
+    case FCASTERR:
+	if ((err = script_model_test(0, prn, 0))) break;
+	err = fcast_with_errs(line, models[0], datainfo, &Z, prn,
+			      &paths, oflag, errtext); 
+	if (err) errmsg(err, errtext, prn);
+	break;
+
+    case FIT:
+	if ((err = script_model_test(0, prn, 0))) break;
+	err = fcast("fcast autofit", models[0], datainfo, &Z, errtext);
+	if (err < 0) {
+	    err *= -1;
+	    errmsg(err, errtext, prn);
+	    break;
+	}
+	err = 0;
+	pprintf(prn, "Retrieved fitted values as \"autofit\".\n");
+	varlist(datainfo, prn); 
+	if (dataset_is_time_series(datainfo)) {
+	    plotvar(&Z, datainfo, "time");
+	    command.list = realloc(command.list, 4 * sizeof(int));
+	    command.list[0] = 3; 
+	    command.list[1] = (models[0])->list[1];
+	    command.list[2] = varindex(datainfo, "autofit");
+	    command.list[3] = varindex(datainfo, "time");
+	    lines[0] = oflag;
+	    err = gnuplot(command.list, lines, &Z, datainfo,
+			  &paths, &plot_count, batch, 0, 0);
+	    if (err < 0) pprintf(prn, "gnuplot command failed.\n");
+	    else graphmenu_state(TRUE);
+	}
+	break;
+		
+    case FREQ:
+	freq = freq_func(&Z, datainfo, NULL, 0,
+			 datainfo->varname[command.list[1]], 1);
+	if ((err = freq.errcode)) {
+	    errmsg(freq.errcode, freq.errmsg, prn);
+	    break;
+	}
+	printfreq(&freq, prn);
+	if (exec_code == CONSOLE_EXEC) {
+	    if (plot_freq(&freq, &paths, NORMAL))
+		pprintf(prn, "gnuplot command failed.\n");
+	}
+	free_freq(&freq);
+	break;
+
+    case GENR:
+	genr = genr_func(&Z, datainfo, line, model_count,
+			 (last_model == 's')? models[0] : models[2], 
+			 oflag);
+	if ((err = genr.errcode)) 
+	    errmsg(genr.errcode, genr.errmsg, prn);
+	else {
+	    if (add_new_var(datainfo, &Z, &genr)) {
+		pprintf(prn, "Failed to add new variable.\n");
+	    } else {
+		pprintf(prn, "%s", genr.msg); 
+		if (exec_code == CONSOLE_EXEC)
+		    populate_clist(mdata->listbox, datainfo);
+	    }
+	}
+	break;
+
+    case GNUPLOT:
+	if (plp != NULL) {
+	    pprintf(prn, "script mode: gnuplot command ignored.\n");
+	    break;
+	}
+	if (oflag == OPT_M) { /* plot with impulses */
+	    err = gnuplot(command.list, NULL, &Z, datainfo,
+			  &paths, &plot_count, batch, 0, OPT_M);
+	} else {	
+	    lines[0] = oflag;
+	    err = gnuplot(command.list, lines, &Z, datainfo,
+			  &paths, &plot_count, 0, 0, 0);
+	}
+	if (err < 0) pprintf(prn, "gnuplot command failed\n");
+	else graphmenu_state(TRUE);
+	break;
+
+    case HCCM:
+    case HSK:
+	ptr = (psession && rebuild)? 
+	    (void *) &models[0] : (void *) models[0];	
+	clear_model(ptr, psession, rebuild);
+	if (command.ci == HCCM)
+	    *models[0] = hccm_func(command.list, &Z, datainfo);
+	else
+	    *models[0] = hsk_func(command.list, &Z, datainfo);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, (models[0])->errmsg, prn);
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn);
+	if (!oflag) break;
+	if (command.ci == HCCM) 
+	    print_white_vcv(models[0], prn);
+	else
+	    outcovmx(models[0], datainfo, batch, prn);
+	break;
+
+    case HELP:
+	if (strlen(command.param)) 
+	    help(command.param, paths.cmd_helpfile, prn);
+	else help(NULL, paths.cmd_helpfile, prn);
+	break;
+		
+    case IMPORT:
+        err = getopenfile(line, datfile, &paths, 0, 0);
+        if (err) {
+            pprintf(prn, "import command is malformed.\n");
+            break;
+        }
+        if (oflag)
+            err = import_box(&Z, datainfo, datfile, prn);
+        else
+            err = import_csv(&Z, datainfo, datfile, prn);
+        if (!err) { 
+	    register_data(NULL);
+            print_smpl(datainfo, 0, prn);
+            varlist(datainfo, prn);
+            pprintf(prn, "You should now use the \"print\" command "
+		    "to verify the data.\n");
+            pprintf(prn, "If they are OK, use the  \"store\" command "
+		    "to save them in gretl format.\n");
+        }
+        break;
+
+    case OPEN:
+	err = getopenfile(line, datfile, &paths, 0, 0);
+	if (err) {
+	    errbox("'open' command is malformed");
+	    break;
+	}
+	strncpy(paths.datfile, datfile, MAXLEN-1);
+	check = detect_filetype(paths.datfile, &paths, prn);
+	if (check == 2)
+	    err = import_csv(&Z, datainfo, paths.datfile, prn);
+	else if (check == 3)
+	    err = import_box(&Z, datainfo, paths.datfile, prn);
+	else 	
+	    err = get_data(&Z, datainfo, &paths,
+			   data_file_open, errtext, stderr);
+	if (err) {
+	    gui_errmsg(err, errtext);
+	    break;
+	}
+	register_data(NULL);
+	varlist(datainfo, prn);
+	paths.currdir[0] = '\0'; 
+	break;
+
+    case LMTEST:
+	if ((err = script_model_test(0, prn, 1))) break;
+	/* non-linearity (squares) */
+	if (oflag == OPT_S || oflag == OPT_O || !oflag) {
+	    err = auxreg(NULL, models[0], models[1], &model_count, 
+			 &Z, datainfo, AUX_SQ, prn, ptest);
+	    clear_model(models[1], NULL, NULL);
+	    if (err) errmsg(err, NULL, prn);
+	}
+	/* non-linearity (logs) */
+	if (oflag == OPT_L || oflag == OPT_O || !oflag) {
+	    err = auxreg(NULL, models[0], models[1], &model_count, 
+			 &Z, datainfo, AUX_LOG, prn, ptest);
+	    clear_model(models[1], NULL, NULL);
+	    if (err) errmsg(err, NULL, prn);
+	}
+	/* autocorrelation or heteroskedasticity */
+	if (oflag == OPT_M || oflag == OPT_O) {
+	    err = autocorr_test(models[0], &Z, datainfo, prn, ptest);
+	    if (err) errmsg(err, NULL, prn);
+	    /* FIXME: need to respond? */
+	} 
+	if (oflag == OPT_C || !oflag) {
+	    err = whites_test(models[0], &Z, datainfo, prn, ptest);
+	    if (err) errmsg(err, NULL, prn);
+	}
+	if (rebuild)
+	    add_test_to_model(ptest, models[0]);
+	break;
+
+    case LOGIT:
+    case PROBIT:
+	ptr = (psession && rebuild)? 
+	    (void *) &models[0] : (void *) models[0];
+	clear_model(ptr, psession, rebuild);
+	*models[0] = logit_probit(command.list, &Z, datainfo, command.ci);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, (models[0])->errmsg, prn);
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn);
+	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	break;
+
+    case LOOP:
+	if (plp == NULL) {
+	    pprintf(prn, "Sorry, Monte Carlo loops not available "
+		    "in this mode.\n");
+	    break;
+	}
+	if ((err = parse_loopline(line, plp, datainfo, errtext))) {
+	    pprintf(prn, "%s\n", errtext);
+	    break;
+	}
+	if (plp->lvar == 0 && plp->ntimes < 2) {
+	    printf("Loop count missing or invalid.\n");
+	    monte_carlo_free(plp);
+	    break;
+	}
+	*plstack = 1; 
+	break;
+
+    case NULLDATA:
+	nulldata_n = atoi(command.param);
+	if (nulldata_n < 2) {
+	    pprintf(prn, "Data series length count missing or invalid.\n");
+	    err = 1;
+	    break;
+	}
+	if (nulldata_n > 1000000) {
+	    pprintf(prn, "Data series too long.\n");
+	    err = 1;
+	    break;
+	}
+	err = open_nulldata(&Z, datainfo, data_file_open, 
+			    nulldata_n, prn);
+	if (err) { 
+	    pprintf(prn, "Failed to create empty data set.\n");
+	    break;
+	}
+	populate_clist(mdata->listbox, datainfo);
+	set_sample_label(datainfo);
+	data_file_open = 1;
+	orig_vars = datainfo->v;
+	menubar_state(TRUE);
+	break;
+
+    case OLS:
+    case WLS:
+	ptr = (psession && rebuild)? 
+	    (void *) &models[0] : (void *) models[0];
+	clear_model(ptr, psession, rebuild);
+	*models[0] = lsq(command.list, Z, datainfo, command.ci, 1, 0.0);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, (models[0])->errmsg, prn); 
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn);
+	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	break;
+
+    case PERGM:
+	err = periodogram(command.list, &Z, datainfo, &paths,
+			  batch, oflag, prn);
+	if (err) pprintf(prn, "Failed to generate periodogram\n");
+	break;
+
+    case PVALUE:
+	if (strcmp(line, "pvalue") == 0)
+	    help("pvalue", paths.cmd_helpfile, prn);	    
+	else
+	    err = (batch_pvalue(line, Z, datainfo, prn) == NADBL);
+	break;
+
+    case QUIT:
+	if (plp) pprintf(prn, "Script done\n");
+	else pprintf(prn, "Please use the Close button to exit.\n");
+	break;
+
+    case RHODIFF:
+	if (!command.list[0]) {
+	    pprintf(prn, "This command requires a list of variables.\n");
+	    err = 1;
+	    break;
+	}
+	err = rhodiff(command.param, command.list, &Z, datainfo);
+	if (err) errmsg(err, NULL, prn);
+	else varlist(datainfo, prn);
+	break;
+
+    case RUN:
+	err = getopenfile(line, runfile, &paths, 1, 1);
+	if (err) { 
+	    pprintf(prn, "Run command failed.\n");
+	    break;
+	}
+	if (myname != NULL && strcmp(runfile, myname) == 0) { 
+	    pprintf(prn, "Infinite loop detected in script.\n");
+	    return 1;
+	}
+	execute_script(runfile, NULL, NULL, prn, SESSION_EXEC);
+	/* pprintf(prn, "run command not available in script mode\n"); */
+	break;
+
+    case SCATTERS:
+        if (batch && plp != NULL) 
+            pprintf(prn, "scatters command not available in batch mode.\n");
+        else {
+            err = multi_scatters(command.list, atoi(command.param), &Z, 
+                                 datainfo, &paths);
+            if (err) pprintf(prn, "scatters command failed.\n");
+        }               
+        break;
+
+    case SEED:
+	srand((unsigned) atoi(command.param));
+	pprintf(prn, "Pseudo-random number generator seeded with %d\n",
+		atoi(command.param));
+	break;
+
+    case SETOBS:
+	err = set_obs(line, datainfo, oflag, msg);
+	if (err) pprintf(prn, "setobs command failed.\n");
+	else set_sample_label(datainfo);
+	pprintf(prn, "%s\n", msg);
+	break;	
+
+    case SHELL:
+	pprintf(prn, "shell command not implemented in script mode\n");
+	break;
+
+    case SIM:
+	err = simulate(line, &Z, datainfo, errtext);
+	if (err) errmsg(err, errtext, prn);
+	break;
+
+    case SMPL:
+	if (oflag) {
+	    restore_sample(NULL, 0, NULL);
+	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) 
+		err = E_ALLOC;
+	    else 
+		err = set_sample_dummy(line, &Z, &subZ, datainfo, 
+				       subinfo, errtext, oflag);
+	    if (!err) {
+		/* save the full data set for later use */
+		fullZ = Z;
+		fullinfo = datainfo;
+		datainfo = subinfo;
+		Z = subZ;		
+	    }
+	} 
+	else if (strcmp(line, "smpl full") == 0) {
+	    restore_sample(NULL, 0, NULL);
+	    restore_sample_state(FALSE);
+	    check = 1;
+	} else 
+	    err = set_sample(line, datainfo, errtext);
+	if (err) errmsg(err, errtext, prn);
+	else {
+	    print_smpl(datainfo, (oflag)? fullinfo->n : 0, prn);
+	    if (oflag) 
+		set_sample_label_special();
+	    else
+		set_sample_label(datainfo);
+	    if (!check) restore_sample_state(TRUE);
+	}
+	break;
+
+    case SQUARE:
+	if (oflag) check = xpxgenr(command.list, &Z, datainfo, 1, 1);
+	else check = xpxgenr(command.list, &Z, datainfo, 0, 1);
+	if (check < 0) {
+	    pprintf(prn, "Failed to generate squares.\n");
+	    err = 1;
+	} else {
+	    pprintf(prn, "Squares generated OK.\n");
+	    varlist(datainfo, prn);
+	}
+	break;
+
+    case STORE:
+	if ((err = command.errcode)) {
+	    errmsg(command.errcode, command.errmsg, prn);
+	    break;
+	}
+	if (strlen(command.param)) {
+	    if (oflag == OPT_Z && !has_gz_suffix(command.param))
+		pprintf(prn, "store: using filename %s.gz\n", command.param);
+	    else
+		pprintf(prn, "store: using filename %s\n", command.param);
+	} else {
+	    pprintf(prn, "store: no filename given.\n");
+	    break;
+	}
+	if (write_data(command.param, command.list, 
+		       Z, datainfo, oflag)) {
+	    pprintf(prn, "write of data file failed.\n");
+	    err = 1;
+	    break;
+	}
+	pprintf(prn, "Data written OK.\n");
+	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) 
+	    pprintf(prn, "Warning: case markers not saved in "
+		    "binary datafile.\n");
+	break;
+
+    case TESTUHAT:
+	if ((err = script_model_test(0, prn, 0))) break;
+	freq = freq_func(NULL, NULL, (models[0])->uhat, 
+			 (models[0])->t2 - (models[0])->t1 + 1, 
+			 "uhat", (models[0])->ncoeff);
+	if ((err = freq.errcode)) 
+	    errmsg(err, freq.errmsg, prn);
+	else {
+	    if (rebuild) {
+		normal_test(ptest, &freq);
+		add_test_to_model(ptest, models[0]);
+	    }
+	    printfreq(&freq, prn); 
+	    free_freq(&freq);
+	}
+	break;
+
+    case TSLS:
+	ptr = (psession && rebuild)? 
+	    (void *) &models[0] : (void *) models[0];
+	clear_model(ptr, psession, rebuild);
+	*models[0] = tsls_func(command.list, atoi(command.param), 
+			      &Z, datainfo);
+	if ((err = (models[0])->errcode)) {
+	    errmsg((models[0])->errcode, (models[0])->errmsg, prn);
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn);
+	/* is this OK? */
+	if (oflag) outcovmx(models[0], datainfo, batch, prn); 
+	break;		
+
+    case VAR:
+	order = atoi(command.param);
+	err = var(order, command.list, &Z, datainfo, batch, prn);
+	break;
+
+    case 999:
+	err = 1;
+	break;
+
+    default:
+	pprintf(prn, "Sorry, the %s command is not yet implemented "
+		"in libgretl\n", command.cmd);
+	break;
+    } /* end of command switch */
+
+    /* log the specific command? */
+    if (exec_code == CONSOLE_EXEC) {
+	if (err) 
+	    strcpy(errline, line);
+	else {
+	    cmd_init(line);
+	    errline[0] = '\0';
+	}
+    }
+
+    if (is_model_cmd(command.cmd) && !err) 
+	err = stack_model(0);
+		
+    if (err) return 1;
+    else return 0;
+}
+
+/* ........................................................... */
+
+void view_script_default (void)
+     /* for "session" use */
+{
+    if (dump_cmd_stack(cmdfile)) return;
+
+    view_file(cmdfile, 0, 0, 77, 350, "gretl: command script", 
+	      NULL, 0);
+}
+
+#include "../cli/common.c"

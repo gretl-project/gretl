@@ -1,0 +1,10 @@
+D 1 for the second data set and 0 for the first data set
+ENROLL Percentage of students that enroll in private schools
+CATHOL Percentage of population that is Catholic
+PUPIL pupil to teacher ratio for public schools, 1990
+WHITE Percentage of population that is white
+ADMEXP % of educational expenditures devoted to administration
+REV per pupil education revenue (thousands of dollars)
+MEMNEA % membership of NEA among public school teachers
+INCOME per capita income (thousands of dollars) of households
+COLLEGE % of the population that has completed >= 4yrs college

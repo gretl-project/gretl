@@ -1,0 +1,12 @@
+(*
+DATA6-3:  United Kingdom Annual data.
+    Cons = Per capita consumption expenditure in British pounds
+           (Range 1858 - 4744)
+    DI   = Per capita personal disposable income in British pounds
+           (Range 1875 - 5084)
+    Source: Economic Trends, Annual Supplement 1991 Edition.
+    A publication of the Government Statistical Service, London, UK.
+*)
+Year Cons DI ;
+1 1948 1989
+BYOBS

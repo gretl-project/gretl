@@ -1,0 +1,21 @@
+(*
+DATA7-16:
+    Data on the number of college applications and its determinants
+    for 34 schools  --  Compiled by Ho Lee.
+    applied = number of applications for Fall 1987 (Range 1589 - 23670)
+    founded = the year of the school founded (Range 1636 - 1965)
+    applfee = application fee in dollars (Range 10 - 50)
+    tuition = tution fee in dollars (858 - 12960)
+    room    = Room and Board in dollars (Range 2046 - 5416)
+    R_D     = Federal obligations for Research and Developement in
+              Sciences (in thousands of dollars) in 1986,
+              Range 21418 - 188120.
+    pp      = Private (1) or public(0)
+    satv    = percentage of freshmen having SAT-verbal over 600
+              (Range 5 - 81)
+    satm    = percentage of freshman having SAT-math over 600
+              (Range 19 - 100)
+*)
+appl founded applfee tuition room  R_D pp satv satm ;
+1 1 34
+BYOBS

@@ -1,0 +1,17 @@
+(*
+DATA3-3:  Annual data on U.S. Patents and R&D expenditures
+          YEAR = 1960-93, 34 observations.
+          PATENTS = Number of patent applications filed, in thousands
+          (Range 84.5 - 189.4)
+          Source:  Statistical Abstract of the U.S., various years.
+          R_D = R&D expenditures, billions of 1992 dollars obtained as the
+          ratio of expenditure on current dollars divided by the GDP price
+          deflator.  (Range 57.94 - 166.7)
+          Source for R&D expenditures, 1995 Statistical Abstract
+          of the U.S., Table 979, Page 611, and earlier issues
+          Source for GDP deflator, 1996 Economic Report of the President,
+          Table B-3, Page 284.
+*)
+YEAR PATENTS R_D ;
+1 1960 1993
+BYOBS

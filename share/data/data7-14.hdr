@@ -1,0 +1,16 @@
+(*
+DATA7-14:  Data on homicide and related rates
+Source:  Statistical Abstract of the U.S., 1995.  All data are for 1993.
+mr      = Murder per 100,000 population, Table 310, Page 200.
+          (Range 1.6 - 78.5)
+exec    = Number under sentence of death and excuted, Table 357, Page 220,
+          (Range 0 - 17)
+south   = 1 for a Southern State, and 0 otherwise.
+ue      = Percent unemployed, Table 664, Page 423, Range 2.6 - 10.8.
+capital = 1 if capital punishment allowed, Table 357, Page 220
+pcy     = Per capita personal income in thousands of 1987 dollars,
+          Table 713, Page 461, Range 11.647 - 23.302.
+*)
+mr  exec  south ue  capital  pcy ;
+1 1 51
+BYOBS

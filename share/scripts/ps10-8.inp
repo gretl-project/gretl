@@ -1,0 +1,52 @@
+(* PS10.8, using DATA10-4, for the Application section 10.9 *)
+genr ml=um*100/gnpdef
+(* convert to real terms *)
+genr g=ug*100/gnpdef
+(* generate log variables *)
+logs ml g 
+(* generate first difference of logs *)
+genr milit=ldiff(ml)
+genr govt = ldiff(g)
+(* generate error correction term *)
+genr longdef=l_g(-1)-l_ml(-1)
+(* create interaction terms *)
+genr lpres=longdef*pres
+genr lelect=longdef*elect
+genr lreagan=longdef*reagan
+genr lopp=longdef*opp
+genr lhdem=longdef*hdem
+genr lsdem=longdef*sdem
+genr lww2=longdef*ww2
+genr lkwar=longdef*kwar
+genr lvwar=longdef*vwar
+genr lkrus=longdef*krus
+genr lgorb=longdef*gorb
+genr lsalt=longdef*salt
+list
+(* suppress the first observation *)
+smpl 1941 ;
+(* estimate the basic error correction model *)
+ols milit const govt longdef
+(* estimate the model in equation (10.27) *)
+ols milit const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
+ lkwar lvwar lkrus lgorb lsalt
+(* LM test for first order autocorrelation *)
+genr ut = uhat
+genr ut1 = ut(-1)
+smpl 1942 ;
+ols ut const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
+ lkwar lvwar lkrus lgorb lsalt ut1
+genr LM = $nobs*$rsq
+pvalue X 1 LM
+smpl 1941 ;
+(* mixed Hilu-Corc estimation of the general model *)
+hilu milit const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
+ lkwar lvwar lkrus lgorb lsalt
+(* omit variable with the highest p-value *)
+omit lhdem
+omit lelect
+omit lsalt
+omit lreagan
+omit lgorb
+omit lpres
+omit lopp

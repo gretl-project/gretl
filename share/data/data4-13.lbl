@@ -1,0 +1,14 @@
+ATTEND   Attendance in thousands for the years 1984-86
+POP 	 population of home metropolitan area (thousands)
+CAPACITY Capacity of home stadium (thousands)
+PRIORWIN wins the team had in prior year
+CURNTWIN wins the team had in current year
+G1  	 games behind divn. leader as of April 30 
+G2  	 games behind divn. leader as of May 31 
+G3  	 games behind divn. leader as of June 30  
+G4  	 games behind divn. leader as of July 31 
+G5  	 games behind divn. leader as of August 31 
+GF  	 games behind divn. leader at end season 
+OTHER	 number of other baseball teams in metro. area
+TEAMS	 number of Football, Basketball, or Hockey teams in metro. area
+

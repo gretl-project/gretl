@@ -1,0 +1,2 @@
+(* PS7.2, using DATA7-2, for Example 7.1 *)
+ols WAGE const GENDER EXPER

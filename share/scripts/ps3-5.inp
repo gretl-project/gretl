@@ -1,0 +1,13 @@
+(* PS3.5 using DATA3-1, for Example 3.9 *)
+ols price 0 sqft 
+(* regress sqft against price *)
+ols sqft 0 price 
+smpl 1 1
+(* retrieve estimated constant term *)	
+genr astar = coeff(0)
+(* retrieve estimated slope term *)
+genr bstar = coeff(price)
+(* calculate new intercept and slope and print all variables *)
+genr aprime = -astar/bstar
+genr bprime = 1/bstar
+print astar bstar aprime bprime 

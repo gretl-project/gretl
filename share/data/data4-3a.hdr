@@ -1,0 +1,16 @@
+(*
+DATA4-3: Annual data on new housing units and their determinants
+         Source: 1996 Economic Report of the President
+  housing = Total new housing units authorized, in thousands (Table B-52)
+            (Range 1072.1 - 2378.5)
+  pop     = U.S. population in millions, Table B-30, (Range 189.242 -  242.804)
+  gdp     = Gross domestic product in 1992 dollars in billions,
+            Table B-2, (Range 2554 - 5648.4)
+  unemp   = Unemployment rate in % among all civilian workers (Table B-38)
+            (Range 3.5 - 9.7)
+  intrate = New home mortgage yields in %, Table B-69, (Range 5.81 -  15.14)
+*)
+YEAR  HOUSING POP  GDP  UNEMP  INTRATE ;
+1 1963 1994
+BYOBS
+

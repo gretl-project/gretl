@@ -1,0 +1,28 @@
+(* PS8.6, using DATA8-2, to reproduce Example 8.7 *)
+ols exptrav 0 income 
+(* save absolute value of errors as absuhat1 *)
+genr absuhat1=abs(uhat)
+(* auxiliary regression for the Glejer test *)
+ols absuhat1 0 pop
+(* compute test statistic and p-value *)
+genr LM1=$nrsq
+pvalue 3 1 LM1
+(* since heteroscedasticity is detected, divide model by pop and
+estimate by OLS *)
+genr pcexp=exptrav/pop
+genr pcincm=income/pop
+genr invpop=1/pop
+(* estimate transformed model -- note that there is no constant term *)
+ols pcexp invpop pcincm
+(* test for heteroscedasticity on the transformed model *)
+genr absuhat2=abs(uhat)
+ols absuhat2 0 pop
+genr LM2=$nrsq
+(* the high p-value suggests that we cannot reject homoscedasticity and 
+hence OLS is acceptable *)
+pvalue X 1 LM2
+(* wls command is a short cut -- coeff., tstat, ess, should be the same
+but Rsquared will be different *)
+wls invpop exptrav 0 income
+
+

@@ -1,0 +1,28 @@
+(*
+DATA9-11:
+    Monthly data on the volume of Stock market shares sold,
+    compiled by Brian Wampler.  Sources: United States Statistical
+    Abstract, Standard and Poor quarterly reports, Citibase data series,
+    and the University of Alabama Web page at
+    http://bos.business.uab.edu.
+    period  = 1980.1 - 1995.09 (189 observations)
+    volume  = NYSE reported share volume - measured in millions of shares
+              (Range 674 - 8835)
+    sp500   = S&P's common stock price index - measured in dollars
+              (Range 102.97 - 578.77)
+    tbill   = U.S. Treasury bills (3 month) - measured in %
+              (Range 2.84 - 16.295)
+    long    = U.S. Treasury bonds (10 + yrs) - measured in %
+              (Range 5.9 - 14.14)
+    gdp     = gross domestic product (gdpmon= GDP quarterly/3)
+              measured in billions of dollars (Range 906.467 - 2432.833)
+    cconf   = consumer confidence index - measured as 1985=100
+              (Range 47.3 - 120.7)
+    cexpect = consumer expectations index - measured as 1985=100
+              (Range 50 - 124.3)
+    csent = University of Michigan's index of consumer sentiment -
+            measured as Feb 1966=100, Range 51.7 - 101.
+*)
+period volume sp500 tbill long gdp cconf cexpect csent ;
+12 1980.01 1995.09
+BYOBS

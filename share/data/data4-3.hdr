@@ -1,0 +1,17 @@
+(*
+DATA4-3:  Annual data on new housing units and their determinants
+  Source: 1987 Economic Report of the President.  Because the housing
+  series has been discontinued, this data set could not be updated.
+  housing = total new housing units started, in thousands (Table B-50)
+            (Range 1072.1 - 2378.5)
+  pop     = U.S. population in millions (Table B-30), Range 189.242 - 239.283
+  gnp     = gross national product in constant 1982 dollars in billions
+  	        (Table B-2), Range 1873.3 - 3585.2
+  unemp   = unemployment rate in % among all workers (Table B-35)
+            (Range 3.4 - 9,5)
+  intrate = new home mortgage yields, FHLBB, in % (Table B-68)
+            (Range 5.81 - 15.14)
+*)
+year housing pop gnp unemp intrate ;
+1 1963 1985
+BYOBS

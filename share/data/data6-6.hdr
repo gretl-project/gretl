@@ -1,0 +1,8 @@
+(*
+DATA6-6: U.S. farm population as percent of total population
+    (Range 1.9 - 16.6)
+    Source: 1996 Economic Report of the President, Table B-96
+*)
+year farmpop ;
+1 1948 1991
+BYOBS

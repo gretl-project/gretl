@@ -1,0 +1,50 @@
+(*
+DATA4-16
+Data on private school enrolment and its determinants, for the 50 U.S. 
+States and the District of Columbia, compiled by Colleen Dempsey.
+
+enroll =  percentage of students that enrolled in private schools.
+Data Year: 1993
+Sources: Digest of Education Statistics, 1996
+Projections of Education Statistics to 2007
+
+cathol = percentage of the population in each state which is Catholic.
+Data Year: 1990
+Source: Churches and Church Membership in the United States, 1990
+
+pupil = pupil to teacher ratio for public schools in each state.
+Data Year: 1990
+Source: Digest of Education Statistics, 1996
+
+white = percentage of population in each state that is white.
+Data Year: 1990
+Source: Statistical Abstract of the U.S. 1993
+
+admexp = percentage of educational expenditures devoted to
+administration.
+Data Year: 1993
+Source: Digest of Education Statistics, 1996
+
+revenue = per pupil education revenue in thousands of dollars
+Data Year: 1991
+Sources: Digest of Education Statistics, 1996
+              Statistical Abstract of the U.S. 1997
+              Projections of Education Statistics to 2007
+
+memnea = percentage of all public school teachers who are members 
+of the National Education Association 
+Data Year: 1986
+Source: National Education Association Handbook
+
+income = per capita income in thousands of dollars
+Data Year: 1990
+Source: Statistical Abstract of the United States 1997
+
+college = percentage of the population who has completed at least 
+four years of college.
+Data Year: 1990
+Source: Statistical Abstract of the U.S. 1997
+*)
+enroll cathol pupil white admexp revenue memnea income college ;
+1 1 51
+byobs

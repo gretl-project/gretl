@@ -1,0 +1,23 @@
+(* PS10.3, using DATA10-2 for the Breusch-Godfrey LM test for Example 10.4 *)
+genr load1 = load(-1)
+(* Suppress the first observation *)
+smpl 1.02 31.24
+(* Estimate transformed model *)
+ols load 0 load1 temp
+(* save residuals *)
+genr ut=uhat
+(* Generate lag values for ut *)
+genr ut1=ut(-1)
+genr ut2=ut(-2)
+genr ut3=ut(-3)
+genr ut4=ut(-4)
+genr ut5=ut(-5)
+genr ut6=ut(-6)
+(* Suppress the first seven observations *)
+smpl 1.08 31.24
+(* Estimate the auxiliary regression *)
+ols ut 0 ut1 ut2 ut3 ut4 ut5 ut6 load1 temp
+(* compute TR-square statistic and its p-value *)
+genr LM=$trsq
+pvalue X 6 LM
+

@@ -1,0 +1,25 @@
+(*
+DATA9-9
+  Quarterly data on the number of new car sales in the U.S.,
+  Compiled by Brian Robertson.  
+  period   =  1976.1 - 1990.4
+  nocars   =  number of new car sales, in thousands
+              Source:  Wards Automotive Yearbook, various years.
+              Range 1280.413 - 2775.774.
+  pop      =  population, in millions, Source: Economic Report of the
+              President, various years, Range 218.035 - 251.966.
+  Y        =  disposable personal income per capita, in thousands of
+              1982 dollars, Source: Citibase Data Series.
+              Range 9.376 - 11.930.
+  price    =  New car price index, 1982 base year.   Source: Economic
+              Report of the President, various years.
+              Range 68.3 - 122.0.
+  primert  =  Prime interest rate charged by banks (%), Source: Economic
+              Report of the President, various years.
+              Range 6.3 - 20.3.
+  unemp    =  unemployment rate (%), Source: Economic Report of the
+              President, various years, Range 5.0 - 10.6.
+*)
+period nocars pop Y price primert unemp ;
+4 1976.1 1990.4
+BYOBS

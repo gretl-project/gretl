@@ -1,0 +1,21 @@
+(*
+DATA7-12:
+  Data on List Price and Characteristics of 1995 American-made
+  2-door sedans and hatchbacks only.
+  Source:  1995 Wards Automotive Yearbook, Pages 239-244.
+  price   list price in thousands of dollars, Range 8.395 - 68.603 
+  hatch   = 1 for a hatchback, 0 for sedan
+  wbase   wheel base in inches, Range 93.1 - 113.8
+  length  length of car in inches, Range 149.4 - 207.3
+  width   width of car in inches, Range 53.9 - 75.5
+  height  height in inches, Range 46.3 - 55.2
+  weight  weight of car in hundreds of pounds, Range 18.08 -38.18
+  cyl     number of cylinders, Range 3 - 8
+  liters  engine displacement in liters, Range 1 - 2.3
+  gasmpg  estimated gas mile per gallon, averaged between city and
+          freeway driving, Range 20.5 - 51.5
+  trans   = 1 for automatic transmission, 0 otherwise
+*)
+price hatch wbase length width height weight cyl liters gasmpg trans ;
+1 1 82
+BYOBS

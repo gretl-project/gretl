@@ -1,0 +1,44 @@
+Sets of series that I truncated due to data problems (mixed
+frequencies and other missing obs).
+
+A. Consumer sentiment indices:
+
+  U0M058 58. Consumer sentiment, NSA (1966:I=100) COPYRIGHTED (U of Mich)
+  A0M122 122. Index of consumer confidence (1985=100) 
+  A0M123 123. Index of consumer expectations (1985=100) 
+
+I moved the start of these to 1978, from which point they are
+available on a consistent monthly basis.  Some earlier data are available.
+
+B. Trade series:
+
+  A0Q618 618. Merchandise exports, adjusted, excluding military (mil. $) 
+  A0Q620 620. Merchandise imports, adjusted, excluding military (mil. $)  
+  A0Q622 622. Balance on merchandise trade (mil. $) 
+
+Moved start to 1960, when quarterly data become available (annual only from
+1946 to 1959).
+
+C. Mortgage yields:
+
+  U0M118 118. Secondary market yields on FHA mortgages, NSA (pct.)
+  
+Due to many missing observations in earlier periods I moved the start 
+to 1981.   
+
+D. Special cases:
+
+  A0M113 113. Net change in consumer installment credit (AR, bil. $)
+  A0M039 39. Consumer installment loans delinquent 30 days & over (pct.)
+  A0M112 112. Net change in business loans (AR, bil. $)   
+
+These have some missing obs in the middle: I set these to the ESL
+missing code of -999.0
+  
+  U0M525 525. Defense Department prime contract awards in US, NSA (mil.$)
+  
+Truncated at 1988 due to missing obs.  
+
+Allin Cottrell, January 2000
+
+

@@ -1,0 +1,20 @@
+(* PS10.5a, using DATA10-2, for the Breusch-Godfrey test for AR(24) in
+Application Section 10.6 *)
+genr load1 = load(-1)
+(* suppress the first observation *)
+smpl 1.02 31.24
+(* estimate model with lagged dependent variable *)
+ols load 0 load1 temp
+(* Save residuals for Breusch-Godfrey test for AR(24) *)
+genr ut = uhat
+(* generate 24 lags *)
+lags ut
+(* Suppress 25 observations *)
+smpl 2.02 31.24
+(* Estimate the auxiliary regression *)
+ols ut 0 load1 temp ut_1 ut_2 ut_3 ut_4 ut_5 ut_6 ut_7 ut_8 ut_9 ut_10 \
+ut_11 ut_12 ut_13 ut_14 ut_15 ut_16 ut_17 ut_18 ut_19 ut_20 ut_21 ut_22 \
+ut_23 ut_24
+(* Compute nRsquare statistic and p-value *)
+genr LM=$trsq
+pvalue X 24 LM

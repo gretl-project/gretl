@@ -1,0 +1,57 @@
+(* PS8.7, using DATA8-1, for Example 8.8 -- estimation of model by FGLS *)
+genr LNSALARY=ln(SALARY)
+(* generate powers of YEARS for the various tests *)
+genr YRS2 = YEARS*YEARS
+genr YRS3 = YEARS*YRS2
+genr YRS4 = YRS2*YRS2
+(* estimate log quadratic model by OLS *)
+ols LNSALARY const YEARS YRS2 
+(* save absolute value of uhat and uhat squared *)
+genr absuhat=abs(uhat)
+genr usq=uhat*uhat
+(* compute weights using the Glesjer test approach *)
+ols absuhat const YEARS YRS2 
+(* predict uhat as observed minus residual stored as uhat *)
+genr absuhat1=absuhat-uhat
+print absuhat1 
+(* luckily all estimated sigmas are positive and so apply WLS *)
+genr wt1=1/absuhat1
+wls wt1 LNSALARY const YEARS YRS2 
+(* compute weights using the Breusch-Pagan test approach *)
+ols usq const YEARS YRS2 
+(* predict uhat squared as observed uhat square minus residual
+ stored under the name uhat.  Note that even though labelled as uhat, it is 
+ really the residuals for uhat squared model *)
+genr usqhat1=usq-uhat
+(* print estimated variance and note that 3 observations have negative 
+values, which are unacceptable *)
+print usqhat1 
+(* replace these negative values with the original uhat squared values *)
+genr d1=(usqhat1>0.0)
+genr usqhat2=(d1*usqhat1) + ((1-d1)*usq)
+print usqhat2 
+(* compute weights and use FGLS which is also WLS *)
+genr wt2=1/sqrt(usqhat2)
+wls wt2 LNSALARY const YEARS YRS2 
+(* compute weights using the White's test approach *)
+ols usq const YEARS YRS2 YRS3 YRS4 
+genr usqhat3=usq-uhat
+(* print estimated variance and note that this also has negative 
+values, which are unacceptable *)
+print usqhat3 
+(* replace these negative values with the original uhat squared values *)
+genr d2=(usqhat3>0.0)
+genr usqhat4=(d2*usqhat3) + ((1-d2)*usq)
+print usqhat4 
+(* compute weights and use FGLS which is also WLS *)
+genr wt3=1/sqrt(usqhat4)
+wls wt3 LNSALARY const YEARS YRS2 
+(* compute weights using the Harvey-Godfrey test approach *)
+genr lnusq=ln(usq)
+ols lnusq const YEARS YRS2 
+(* save estimated ln(sigma square) and take antilog *)
+genr lnusq1=lnusq-uhat
+genr usqhat5=exp(lnusq1)
+(* compute weights and use FGLS which is also WLS *)
+genr wt4=1/sqrt(usqhat5)
+wls wt4 LNSALARY const YEARS YRS2 

@@ -1,0 +1,17 @@
+(* PS8.3, using DATA8-1, for Example 8.4, Goldfeld-Quandt test *)
+genr LNSALARY=ln(SALARY)
+genr YRS2 = YEARS*YEARS
+(* estimate log quadratic model for first 75 observations *)
+smpl 1 75
+ols LNSALARY const YEARS YRS2 
+genr var1 = $sigma*$sigma
+genr df1 = $df
+(* estimate log quadratic model for last 75 observations *)
+smpl 148 222
+ols LNSALARY const YEARS YRS2 
+genr var2 = $sigma*$sigma
+genr df2 = $df
+(* compute F-statistic and pvalue for test *)
+smpl 1 222
+genr Fc = var2/var1
+pvalue F df1 df2 Fc 

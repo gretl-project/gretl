@@ -1,0 +1,29 @@
+(*
+DATA4-15
+    Cross-country data (n = 41) on inequality coefficients for 1989 base,
+    compiled by Elmer Gamoning.
+    Y   = gini coefficient range 0<Yt<1: 0 is perfect equality.
+          Deininger, Klaus and Lyn Squire, "Measuring Income
+          Inequality: A New Data-base", Range 0.183 - 0.596.
+    Gnp = per capita gross national product,(base 1989)
+          World Bank: World Data CD-Rom 1995, Range 200 - 25450.
+    Gdp = growth rate (%) of gross domestic product.
+          World Bank: World Data CD-Rom 1995, Range -8.9 - 12.7.
+    pop = growth rate of population (%), 
+          World Bank: World Data CD-Rom 1995, Range 0.1 - 3.3.
+    urb = measure of people living in urban areas (%), Range 10.9 - 100.
+    lit = percentage of people in country who can read and write,
+	  Dorgan, Charity A., Editor.  Gale Country and World Rankings
+	  Reporter.  Gale Research, MI, 1995.  Social Indicators of
+	  Development.  The Johns Hopkins University Press, MA.  1996. 
+	  Statistical Yearbook-40th issue.  United Nations Publications. 
+	  1995, Range 29.2 - 99.
+    edu = secondary school enrollment expressed as percentage of the
+          total population of secondary school age, Range 12 - 99.
+          World Tables 1995. The Johns Hopkins University Press, MA. 1995.
+    agr = share of agriculture in GDP (%), Range 0.7 - 56.3.
+          Statistical Abstract of the World.
+*)
+Y gnp gdp   pop  urb lit edu agr ;
+1 1 41
+BYOBS

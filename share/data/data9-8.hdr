@@ -1,0 +1,20 @@
+(*
+DATA9-8:
+  Annual data for estimating Domestic Revenue Passenger Miles.
+  Source: Statistical Abstract of United States, 1947-1989.
+  Data compiled by GRAHAM RUSHALL.
+  pop   = population in millions (Range 144.83 - 243.915)
+  rpm   = domestic revenue passenger miles in billions (Range 6 - 324.5)
+  nop   = number of operators (airlines), Range 31 - 106.
+  oprev = operating revenue from passengers in millions of dollars
+          (Range 256 - 37309)
+  gnp   = gross national product of United States in billions of dollars
+          (Range 232.2 - 4526.7)
+  accid = number of American planes in an accident (Range 12 - 69)
+  fatal = number of fatalities from aircraft accidents (Range 0 - 460)
+  regu  = dummy variable for airline regulation/deregulation
+          = for 1 1979-87 and 0 for 1947-78.
+*)
+year pop rpm nop oprev gnp accid fatal regu ;
+1 1947 1987
+BYOBS

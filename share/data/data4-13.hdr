@@ -1,0 +1,54 @@
+(*
+DATA4-13:
+  Data on the factors affecting baseball attendance -- compiled by
+  Scott Daniel.
+  ATTEND   = Attendance in thousands for the years 1984-86.  Source: The
+             Sporting News Official Baseball Guide 1985,86,87 on p.267,287,
+             and 286.  (Range 655.181 - 3264.593).
+  POP      = the population of the metropolitan area where the team is
+             located (in thousands).  Source: Statistical Abstract of the
+             United States: 1981 p18-20 Table 23.  For the Canadian
+             cities, the source is the Canada Year Book 1980-81 p.133
+             Table 4.9. (Range 1327 - 9120).
+  CAPACITY = Capacity of the Stadium where the team plays its home games.
+             (in thousands).  Source: The Sporting News Official Baseball
+             Guide 1984, 85, 86. pp.280-320. (Range 33.583 - 74.208).
+  PRIORWIN = the number of wins the team had in the year prior to the
+             year under examination.  Source: The Sporting News Official
+             Baseball Guide 1984,85,86 on p.86,160 for the 84 edition,
+             p.86, 160 for the 85 edition, and p.86,160 for the 1986
+             edition.  (Range 57 - 104).
+  CURNTWIN = the number of wins the team had in the year under study. 
+             Source: 1985, 86, and 87 editions of The Sporting News 
+             Baseball Guide on p.86, 160 for 1985 and 1986 editions,
+             P. 78,162 for the 1987 edition. (Range 57 - 108).
+  G1       = the number of games behind the division leader the team is
+             in the standings on April 30.  These are calculated using
+             the individual team reports found in Th Sporting News
+             Official Baseball Guide of 1985,86,87.  They are located
+             from pp 30-160 in each edition.  (Range 0 - 10.5).
+  G2       = the number of games behind the division leader the team is
+             on May 31.  See above for source. (Range 0 - 19.5).
+  G3       = the number of games behind the division leader the team is
+             on June 30.  See above for source. (Range 0 - 22.5).
+  G4       = the number of games behind the division leader the team is
+             on July 31.  See above for source. (Range 0 - 31).
+  G5       = the number of games behind the division leader the team is
+             on August 31.  See above for source. (Range 0 - 37).
+  GF       = the number of games behind the division leader the team is
+             after the season was over.  See above for source.
+             (Range 0 -44).
+  OTHER    = the number of other baseball teams in the metropolitan area.
+             (Range 0 - 1).
+  TEAMS    = the number of Football, Basketball, or Hockey teams found in
+             the Metropolitan area.  The leagues included are the NFL,
+             the CFL, the NBA, and the NHL.  This was independently
+             researched by going through old Sporting News Guides for
+             each of these individual leagues.  The years covered were
+             the guides of 1984, 1985, 1986 for the NFL and the CFL, and
+             the 1984-85, 1985-86, 1986-87 guides for the NHL and the
+             NBA. (Range 1 - 7).
+*) 
+ATTEND POP CAPACITY PRIORWIN CURNTWIN G1 G2 G3 G4 G5 GF OTHER TEAMS;
+1 1 78
+BYOBS

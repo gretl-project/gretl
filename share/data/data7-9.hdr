@@ -1,0 +1,18 @@
+(*
+DATA7-9:  
+    Data reflects first year achievement of students who entered
+    college in Fall, 1985.  Compiled by Susan Wong.
+    colgpa =  Grade point average at college, Fall 1986 (Range 0.85 - 3.97)
+    hsgpa  =  High school GPA (Range 2.29 - 4.5)
+    vsat   =  Verbal SAT score (Range 200 - 700)
+    msat   =  Math SAT score (Range 330 - 770)
+    dsci   =  1  for a science major, 0 otherwise
+    dsoc   =  1  for a social science major, 0 otherwise
+    dhum   =  1  for a humanities major, 0 otherwise
+    darts  =  1  for an arts major, 0 otherwise
+    dcam   =  1  if student lives on campus, 0 otherwise
+    dpub   =  1  if student attended public high school, 0 otherwise
+*)
+colgpa hsgpa vsat msat dsci dsoc dhum darts dcam dpub;
+1 1 427
+BYOBS

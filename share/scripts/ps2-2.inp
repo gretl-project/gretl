@@ -1,0 +1,18 @@
+(* PS2.2, using DATA2-2 -- on means, s.d., c.v., Section 2.2 *)
+summary colgpa 
+(* learn about the summary command *)
+help summary 
+(* verify summary statistics by computing them separately *)
+genr xbar=mean(colgpa)
+(* s.d. of colgpa *)			
+genr sdx=sd(colgpa)
+(* variance of colgpa *)		
+genr varx = sdx*sdx
+(* coefficient of variation *)		
+genr cv = sdx/xbar
+(* list the variables *)                
+list
+(* reset sample range *)		
+smpl 1 1 
+(* print variables *)			
+print xbar varx sdx cv 

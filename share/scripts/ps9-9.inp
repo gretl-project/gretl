@@ -1,0 +1,94 @@
+(* PS9.9, using DATA9-3, for Application Section 9.7 *)  
+genr d74 = period > 1974
+(* create dummy variables for four periods *)
+genr d79 = period > 1979
+genr d83 = period > 1983.2
+(* generate log variables *)  
+genr kwh = reskwh/nocust
+genr lkwh = ln(kwh)
+genr lprice = ln(100*price/cpi)
+genr ly = ln(100*incm/(cpi*pop))
+(* check correlations for possible sign of multicollinearity *)  
+corr ly lprice cdd hdd  
+(* estimate basic model by ols *)  
+ols lkwh const ly lprice cdd hdd  
+(* save residuals *)  
+genr ut = uhat
+(* generate forecast after correcting for log model bias *)
+genr f1 = exp(lkwh-ut+($ess/($df*2)))
+(* forecast error *)
+genr abserr1 = abs(kwh - f1)
+(* generate lagged values for four periods *)  
+lags ut  
+(* suppress first four observations *)  
+smpl 1973.2 1993.4
+(* estimate auxiliary regression *)  
+ols ut const ut_1 ut_2 ut_3 ut_4 ly lprice cdd hdd  
+(* compute nRsquared statistic *)  
+genr LM = $nrsq
+(* compute pvalue *)  
+pvalue 3 4 LM
+(* reset sample range back to beginning *)  
+smpl 1972.2 1993.4
+help ar
+(* estimate AR(4) model by generalized CORC *)  
+ar 1 2 3 4 ; lkwh const ly lprice cdd hdd  
+(* again obtain forecasts and errors *)
+genr f2 = exp(lkwh-uhat+($ess/($df*2)))
+genr abserr2 = abs(kwh - f2)
+(* generate interaction terms to test for structural change *)  
+genr lyd74=ly*d74
+genr lyd79=ly*d79
+genr lyd83=ly*d83
+genr lprd74=lprice*d74
+genr lprd79=lprice*d79
+genr lprd83=lprice*d83
+genr d74cdd=d74*cdd
+genr d79cdd=d79*cdd
+genr d83cdd=d83*cdd
+genr d74hdd=d74*hdd
+genr d79hdd=d79*hdd
+genr d83hdd=d83*hdd
+genr lprcdd=lprice*cdd
+genr lprhdd=lprice*hdd
+list
+(* estimate full model by ols and note that there is no autocorrelation *)  
+ols lkwh const d74 d79 d83 ly lyd74 lyd79 lyd83 lprice lprd74 lprd79 \
+ lprd83 cdd d74cdd d79cdd d83cdd lprcdd hdd d74hdd d79hdd d83hdd \
+ lprhdd  
+(* omit variable with highest pvalue, one at a time *)  
+omit d83  
+omit d74  
+omit d79cdd  
+omit d79hdd  
+omit ly  
+omit d74cdd  
+omit d83cdd  
+omit lprhdd  
+(* generate final model forecasts and errors* *)
+genr f3 = exp(lkwh-uhat+($ess/($df*2)))
+genr abserr3 = abs(kwh - f3)
+(* exclude four initial observations and compute percent errors, mean 
+absolute percent error, and mean squared error *)
+smpl 1973.2 1993.4
+genr pcterr1 = 100*abserr1/kwh
+genr pcterr2 = 100*abserr2/kwh
+genr pcterr3 = 100*abserr3/kwh
+genr mape1=mean(pcterr1)
+genr mape2=mean(pcterr2)
+genr mape3=mean(pcterr3)
+genr mse1=mean(pcterr1*pcterr1)
+genr mse2=mean(pcterr2*pcterr2)
+genr mse3=mean(pcterr3*pcterr3)
+print -o pcterr1 pcterr2 pcterr3 
+print mape1 mape2 mape3 mse1 mse2 mse3 
+
+
+
+
+
+
+
+
+
+

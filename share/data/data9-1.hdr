@@ -1,0 +1,13 @@
+(*
+DATA9-1: Data for the demand for ice cream
+    Source: Hildreth-Lu paper, Table D16, page 73
+    Four week periods from March 18, 1951 to July 11, 1953
+    demand = per capita consumption of ice cream in pints
+             (Range 0.256 - 0.548)
+    income = weekly family income in dollars (Range 76 - 96)
+    price  = price of ice cream in dollars per pint (Range 0.26 - 0.292)
+    temp   = mean temperature in Fahrenheit (Range 24 - 72)
+*)
+demand income price temp ;
+1 1 30
+BYOBS

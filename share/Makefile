@@ -1,0 +1,36 @@
+ifeq ($(prefix),)
+  prefix = /opt/esl
+endif
+
+gretldir = $(prefix)/share/gretl
+tooldir = ../tools
+INSTALL_DATA = cp -fp
+
+all: install
+
+install: installdirs install_datafiles install_scripts
+	$(INSTALL_DATA) gretl.stamp $(gretldir)/gretl.stamp
+	$(INSTALL_DATA) gretl.hlp $(gretldir)/gretl.hlp
+	$(INSTALL_DATA) gretlcli.hlp $(gretldir)/gretlcli.hlp
+	$(INSTALL_DATA) bcih/README $(gretldir)/db/README
+	$(INSTALL_DATA) bcih/bcih.bin $(gretldir)/db/bcih.bin
+	$(INSTALL_DATA) bcih/bcih.idx $(gretldir)/db/bcih.idx
+
+install_datafiles:
+	for f in data/d* ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/data ; done 
+	for f in data/greene/* ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
+	
+install_scripts:
+	for f in scripts/* ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/scripts ; done
+
+install_man: gretl.1
+	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
+	$(INSTALL_DATA) gretl.1 $(prefix)/share/man/man1
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
+	$(tooldir)/mkinstalldirs $(gretldir)/data/greene
+	$(tooldir)/mkinstalldirs $(gretldir)/scripts $(gretldir)/db

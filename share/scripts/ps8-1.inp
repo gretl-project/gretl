@@ -1,0 +1,14 @@
+(* PS8.1, using DATA3-11, for Examples 8.1 and 8.2 *)
+genr LNSALARY=ln(SALARY)
+(* Figure 8.2 and Example 8.1 *)
+graph LNSALARY YEARS 
+genr YRS2 = YEARS*YEARS
+(* estimate basic log quadratic model for Example 8.2 *)
+ols LNSALARY const YEARS YRS2 
+(* save uhat squared and predicted LNSALARY *)
+genr usq=uhat*uhat
+(* genr predicted LNSALARY as actual minus residual stored as uhat *)
+genr yhat=LNSALARY-uhat
+(* graph estimated residual variance against YEARS and yhat *)
+graph usq YEARS 
+graph usq yhat 

@@ -1,0 +1,17 @@
+(* 
+DATA2-3:  Annual data for the U.S. on unemployment and inflation
+    rates and wage growth.
+    Source: 1996 Economic Report of the President.
+    year   =  1959-95, 37 observations
+    unemp  =  Civilian unemployment rate (%), Table B-38,
+              Range 3.5 - 9.7.
+    cpi    =  Consumer price index (1982-84 = 100), Table B-56,
+              Range 29.1 - 152.4.
+    infl   =  Percent change in CPI (inflation rate) calculated
+              as 100*[CPI(t) - CPI(t-1)]/CPI(t-1), Range 0.69 - 13.5.
+    wggr   =  Percent change in average weekly earnings, in current
+              dollars, Table B-43, Range 1.9 - 8.5.
+*)
+year unemp cpi infl wggr ;
+1 1959 1995
+BYOBS

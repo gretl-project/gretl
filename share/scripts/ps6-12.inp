@@ -1,0 +1,21 @@
+(* PS6.12  using DATA6-1 for Ramsey's RESET test - Example 6.9 *)
+ols UNITCOST const OUTPUT INPCOST 
+(* generate estimated Y and its powers *)
+genr yhat1=UNITCOST-uhat
+genr yhat2 = yhat1*yhat1
+genr yhat3=yhat1*yhat2
+genr yhat4=yhat2*yhat2
+list
+(* estimated model with new variables *)
+ols UNITCOST const OUTPUT INPCOST yhat2 yhat3 yhat4  
+omit yhat2 yhat3 yhat4  
+(* Repeat example with the square of OUTPUT added to the model *)
+square OUTPUT 
+ols UNITCOST const OUTPUT INPCOST sq_OUTPU 
+genr yhat5=UNITCOST-uhat
+genr yhat6 = yhat5*yhat5
+genr yhat7=yhat5*yhat6
+genr yhat8=yhat6*yhat6
+list
+ols UNITCOST const OUTPUT INPCOST sq_OUTPU yhat6 yhat7 yhat8  
+omit yhat6 yhat7 yhat8  

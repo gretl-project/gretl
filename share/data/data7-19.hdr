@@ -1,0 +1,19 @@
+(*
+DATA7-19:  Data on demand for cigarette consumption in Turkey 
+   Source:  "Cigarett demand, health scares, and education in Turkey,"
+   by Aysit Tansel, APPLIED ECONOMICS, 1993, pp. 521-529.
+   Q	Cigarette consumption per adult (kg), Range 1.86 - 2.723.
+   Y	Per capita real GNP in 1968 prices ( in Turkish liras),
+        Range 2560 - 5723.
+   P	Real price of cigarettes in Turkey liras per kg,
+        Range 1.361 - 3.968.
+   ED1	Ratio of enrolments in middle and high schools to the
+	population 12-17 years old, Range 0.112 - 0.451.
+   ED2	Ratio in enrollments in universities to the population
+	20-24 years old, Range 0.026 - 0.095.
+   D82	= 1 for 1982 onward
+   D86	= 1 for 1986 onward
+*)
+year Q Y P ED1 ED2 D82 D86 ;
+1 1960 1988
+BYOBS

@@ -1,0 +1,19 @@
+(*
+DATA4-6:  Data on poverty rates and determinants across California
+    counties.  The following was extracted from the County and City Data
+    Book (1994) for California Counties by Kalena Cortes.
+    povrate  =  percentage of families with income below poverty level
+                (Range 3 - 20.8)
+    urb      =  percentage of urban population (Range 2.7 - 94.3)
+    famsize  =  persons per household (Range 2.29 - 3.26)
+    unemp    =  percentage unemployment rate (Range 4 - 21.3)
+    highschl =  percentage of the population (25 years and over) that 
+                had only high school education (Range 43 - 68.5)
+    college  =  percentage of the population (25 years and over) that
+                completed four years of college or higher (Range 9 - 44)
+    medinc   =  median family income in thousands of dollars
+                (Range 24.364 - 59.147)
+    *)
+povrate urb famsize unemp highschl college medinc ;
+1 1 58
+BYOBS

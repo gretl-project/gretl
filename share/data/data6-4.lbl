@@ -1,0 +1,5 @@
+WAGE Wage rate per month (Range 981 - 3833)
+EDUC Yrs of education > 8th grade when hired (Range 1 - 11)
+EXPER Number of years at the company (Range 1 - 23)
+AGE Age of employee (25 - 64)
+

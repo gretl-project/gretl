@@ -1,0 +1,18 @@
+(* PS4.5, using DATA4-5, for Table 4.5 and Application in Section 4.7 *)
+ols wlfp 0 yf ym educ ue mr dr urb wh 
+(* retrieve relevant statistics for Wald F-test *)
+genr ESSU = $ess
+genr DFU = $df
+(* omit variables one at a time - Model B *)
+omit mr 
+(* Model C *)
+omit ym 
+(* Using this final model as the restricted model retrieve ESSR and DFR *)
+genr ESSR = $ess
+genr DFR = $df
+(* compute number of restrictions *)
+genr NR = DFR-DFU
+(* compute F-statistic *)
+genr Fc = (ESSR - ESSU)*DFU/(NR*ESSU)
+(* compute p-value for Fc *)
+pvalue F NR DFU Fc

@@ -1,0 +1,8 @@
+reskwh kilowatt-hour sales to residential customers (millions)
+nocust average number of residential customers (thousands)
+price  average price in cents per kwh for families
+cpi    San Diego consumer price index (1982-84 = 100)
+incm   Total personal income, $ millions, San Diego county
+cdd    cooling degree days
+hdd    heating degree days
+pop    San Diego county population (thousands)

@@ -1,0 +1,614 @@
+/*
+ *  Copyright (c) by Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
+/* fileselect.c for gretl -- use the gtkextra file selector under X11,
+   the native MS file selector under MS Windows */
+
+#include "gretl.h"
+
+extern GtkWidget *log_menubar;
+extern GtkItemFactoryEntry script_items[7];
+extern GtkItemFactoryEntry sample_script_items[6];
+extern char remember_dir[MAXLEN];
+extern void do_save_graph (const char *fname, const char *savestr);
+
+/* ........................................................... */
+
+static int action_to_flag (const int action)
+{
+    switch (action) {
+    case SAVE_GZDATA: return OPT_Z;
+    case SAVE_BIN1: return OPT_S;
+    case SAVE_BIN2: return OPT_O;
+    case EXPORT_OCTAVE: return OPT_M;
+    case EXPORT_R: return OPT_R;
+    case EXPORT_R_ALT: return OPT_R_ALT;
+    case EXPORT_CSV: return OPT_C;
+    default: return 0;
+    }
+}
+
+/* ........................................................... */
+
+          /* MS Windows version of file selection code */
+
+/* ........................................................... */
+
+#ifdef G_OS_WIN32 
+
+#include <windows.h>
+
+static char *get_gp_filter (const char *termtype)
+{
+    if (!strcmp(termtype, "postscript")) 
+	return "postscript files\0*.eps\0";
+    else if (!strcmp(termtype, "fig")) 
+	return "xfig files\0*.fig\0";
+    else if (!strcmp(termtype, "latex")) 
+	return "LaTeX files\0*.tex\0";
+    else if (!strcmp(termtype, "png")) 
+	return "PNG files\0*.png\0";
+    else if (!strcmp(termtype, "plot commands")) 
+	return "gnuplot files\0*.gp\0";
+    else return "all files\0*\0";
+}
+
+struct win32_filtermap {
+    int action;
+    char *filter;
+};
+
+static char *get_filters (int action, gpointer data)
+{
+    int i;
+    char *filter;
+    static struct win32_filtermap map[] = {
+	{SAVE_DATA, "gretl data files (*.dat)\0*.dat\0all files\0*\0"},
+	{SAVE_GZDATA, "compressed data files (*.gz)\0*.gz\0all files\0*\0"},
+	{SAVE_BIN1, "gretl data files (*.dat)\0*.dat\0all files\0*\0"},
+	{SAVE_BIN2, "gretl data files (*.dat)\0*.dat\0all files\0*\0"},
+	{SAVE_CMDS, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},
+	{SAVE_SCRIPT, "gretl script files (*.inp)\0*.inp\0all files\0*\0"},
+	{SAVE_CONSOLE, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},
+	{SAVE_MODEL, "text files (*.txt)\0*.txt\0all files\0*\0"},
+	{SAVE_SESSION, "session files (*.gretl)\0*.gretl\0all files\0*\0"},
+	{SAVE_LAST_GRAPH, "all files\0*\0"},
+	{SAVE_GP_CMDS, "gnuplot files (*.gp)\0*.gp\0all files\0*\0"},
+	{EXPORT_CSV, "CSV files (*.csv)\0*.csv\0all files\0*\0"},
+	{EXPORT_R, "GNU R files (*.R)\0*.R\0all files\0*\0"},
+	{EXPORT_R_ALT, "GNU R files (*.R)\0*.R\0all files\0*\0"},
+	{EXPORT_OCTAVE, "GNU Octave files (*.m)\0*.m\0all files\0*\0"},
+	{SAVE_OUTPUT, "text files (*.txt)\0*.txt\0all files\0*\0"},
+	{SAVE_TEX_TAB, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
+	{SAVE_TEX_EQ, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
+	{SAVE_HTML, "HTML files (*.htm)\0*.htm\0all files\0*\0"},
+	{OPEN_DATA, "gretl data files (*.dat)\0*.dat*\0all files\0*\0"},
+	{OPEN_SCRIPT, "gretl script files (*.inp)\0*.inp\0all files\0*\0"},
+	{OPEN_SESSION, "session files (*.gretl)\0*.gretl\0all files\0*\0"},
+	{OPEN_CSV,  "CSV files (*.csv)\0*.csv\0all files\0*\0"},
+	{OPEN_BOX, "BOX data files (*.box)\0*.box\0all files\0*\0"}};
+
+    if (action == SAVE_GNUPLOT) {
+	GPT_SPEC *plot = (GPT_SPEC *) data;
+	return get_gp_filter(plot->termtype);
+    }
+    if (action == SAVE_LAST_GRAPH) {
+	return get_gp_filter(data);
+    }
+    for (i=0; i< sizeof map/sizeof *map; i++) {
+	if (action == map[i].action) {
+	    filter = map[i].filter;
+	    break;
+	}
+    }
+    return filter;
+}
+
+/* ........................................................... */
+
+void file_selector (char *msg, char *startdir, int action, 
+		    gpointer data) 
+{
+    OPENFILENAME of;
+    int retval, gotdir = 0;
+    char fname[MAXLEN], endname[64], startd[MAXLEN];
+    char *suff, title[48];
+
+    fname[0] = '\0';
+    endname[0] = '\0';
+    strcpy(startd, startdir);
+
+    /* special case: default save of data */
+    if (action == SAVE_DATA && paths.datfile[0] &&
+	!strcmp(paths.datfile + strlen(paths.datfile) - 4, ".dat")) {
+	strcpy(fname, paths.datfile + slashpos(paths.datfile) + 1);
+	get_base(startd, paths.datfile, SLASH);
+    }
+
+    /* initialize file dialog info struct */
+    memset(&of, 0, sizeof of);
+#ifdef OPENFILENAME_SIZE_VERSION_400
+    of.lStructSize = OPENFILENAME_SIZE_VERSION_400;
+#else
+    of.lStructSize = sizeof of;
+#endif
+    of.hwndOwner = NULL;
+    of.lpstrFilter = get_filters(action, data);
+    of.lpstrCustomFilter = NULL;
+    of.nFilterIndex = 1;
+    of.lpstrFile = fname;
+    of.nMaxFile = sizeof fname;
+    of.lpstrFileTitle = endname;
+    of.nMaxFileTitle = sizeof endname;
+    of.lpstrInitialDir = startd;
+    of.lpstrTitle = msg;
+    of.lpstrDefExt = NULL;
+    of.Flags = OFN_HIDEREADONLY;
+
+    if (action < END_OPEN)
+	retval = GetOpenFileName(&of);
+    else  /* a file save action */
+	retval = GetSaveFileName(&of);
+
+    if (!retval) {
+	if (CommDlgExtendedError())
+	    errbox("File dialog box error");
+	return;
+    }
+	
+    strcpy(title, "gretl: ");
+    strncat(title, of.lpstrFileTitle, 40);
+
+    strncpy(remember_dir, fname, slashpos(fname));
+
+    if (action == OPEN_DATA) {
+	strcpy(paths.datfile, fname);
+	verify_open_data(NULL);
+    }
+    else if (action == OPEN_CSV || action == OPEN_BOX) 
+	do_open_csv_box(fname, action);
+    else if (action == OPEN_SCRIPT) {
+	int spos;
+
+	strcpy(scriptfile, fname);
+	spos = slashpos(scriptfile);
+	if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
+	mkfilelist(3, scriptfile);
+
+	view_file(scriptfile, 1, 0, 78, 370, title, 
+		  script_items, sizeof(script_items));
+    }
+    else if (action == OPEN_SESSION) {
+	int n = strlen(paths.scriptdir);
+
+	strcpy(scriptfile, fname);
+	if (saved_objects(scriptfile)) {
+	    verify_open_session(NULL);
+	    return;
+	}
+	if (strncmp(scriptfile, paths.scriptdir, n)) 
+	    view_file(scriptfile, 1, 0, 78, 370, title, 
+		      script_items, sizeof script_items);
+	else 
+	    view_file(scriptfile, 1, 0, 78, 370, title, 
+		      sample_script_items, sizeof sample_script_items);
+    }
+
+    if (action < END_OPEN) return;
+
+    /* now for the save options */
+
+    suff = strrchr(fname, '.');
+    if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, ".dat")) {
+	errbox("The .dat suffix should be used only\n"
+	       "for gretl datafiles");
+	return;
+    }
+
+    if (action >= SAVE_DATA && action < END_SAVE_DATA) {
+	do_store(fname, action_to_flag(action));
+    }
+    else if (action == SAVE_GNUPLOT) {
+	int err = 0;
+	GPT_SPEC *plot = (GPT_SPEC *) data;
+
+	err = go_gnuplot(plot, fname, &paths);
+	if (err == 0) infobox("graph saved");
+	else if (err == 1) errbox("gnuplot command failed");
+	else if (err == 2) infobox("There were missing observations");
+    }
+    else if (action == SAVE_LAST_GRAPH) {
+	char *savestr = (char *) data;
+	
+	do_save_graph(fname, savestr);
+    }    
+    else if (action == SAVE_SESSION) {
+	save_session(fname);
+    }
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) {
+	MODEL *pmod = (MODEL *) data;
+	do_save_tex(fname, action, pmod); 
+    }
+    else if (action == SAVE_HTML) {
+	MODEL *pmod = (MODEL *) data;
+	do_save_html(fname, 1, pmod); 
+    }
+    else { /* save contents of an editable text window */
+	GtkWidget *editwin;
+	FILE *fp;
+
+	editwin = (GtkWidget *) data;
+	if ((fp = fopen(fname, "w")) == NULL) {
+	    errbox("Couldn't open file for writing");
+	    return;
+	}
+	fprintf(fp, "%s", 
+		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
+	fclose(fp);
+	infobox("File saved OK");
+    }
+}
+
+#endif 
+
+/* End of MS Windows file selection code */
+
+#ifndef G_OS_WIN32
+
+static char *get_gp_suffix (const char *termtype)
+{
+    if (!strcmp(termtype, "postscript")) return "*.eps";
+    else if (!strcmp(termtype, "fig")) return "*.fig";
+    else if (!strcmp(termtype, "latex")) return "*.tex";
+    else if (!strcmp(termtype, "png")) return "*.png";
+    else if (!strcmp(termtype, "plot commands")) return "*.gp";
+    else return "*";
+}
+
+struct extmap {
+    int action;
+    char *ext;
+};
+
+static char *get_filters (int action, gpointer data)
+{
+    int i;
+    char *s = "*";
+    static struct extmap map[] = {
+	{SAVE_DATA, "*.dat"},
+	{SAVE_GZDATA, "*.gz"},
+	{SAVE_BIN1, "*.dat"},
+	{SAVE_BIN2, "*.dat"},
+	{SAVE_CMDS, "*.inp"},
+	{SAVE_SCRIPT, "*.inp"},
+	{SAVE_CONSOLE, "*.inp"},
+	{SAVE_MODEL, "*.txt"},
+	{SAVE_SESSION, "*.gretl"},
+	{SAVE_GP_CMDS, "*.gp"},
+	{EXPORT_CSV, "*.csv"},
+	{EXPORT_R, "*.R"},
+	{EXPORT_R_ALT, "*.R"},
+	{EXPORT_OCTAVE, "*.m"},
+	{SAVE_OUTPUT, "*.txt"},
+	{SAVE_TEX_TAB, "*.tex"},
+	{SAVE_TEX_EQ, "*.tex"},
+	{SAVE_HTML, "*.html"},
+	{OPEN_DATA, "*.dat*"},
+	{OPEN_SCRIPT, "*.inp"},
+	{OPEN_SESSION, "*.gretl"},
+	{OPEN_CSV,  "*.csv"},
+	{OPEN_BOX, "*.box"}};
+
+    if (action == SAVE_GNUPLOT) {
+	GPT_SPEC *plot = (GPT_SPEC *) data;
+	return get_gp_suffix(plot->termtype);
+    }
+    if (action == SAVE_LAST_GRAPH) 
+	return get_gp_suffix(data);
+    for (i=0; i < sizeof map / sizeof *map; i++) {
+	if (action == map[i].action) {
+	    s = map[i].ext;
+	    break;
+	}
+    }
+    return s;
+}
+
+/* ........................................................... */
+
+static void filesel_callback (GtkWidget *w, gpointer data) 
+{
+    GtkIconFileSel *fs = GTK_ICON_FILESEL(data);
+    gint action = GPOINTER_TO_INT(gtk_object_get_data
+				  (GTK_OBJECT(data), "action"));
+    char fname[MAXLEN];
+    char *test, *path, *suff, title[48];
+    FILE *fp = NULL;
+
+    test = gtk_entry_get_text(GTK_ENTRY(fs->file_entry));
+    if (test == NULL || *test == '\0') 
+	return;    
+    path = gtk_file_list_get_path(GTK_FILE_LIST(fs->file_list));
+    sprintf(fname, "%s%s", path, test);
+
+    /* do some elementary checking */
+    if (action < END_OPEN) {
+	if ((fp = fopen(fname, "r")) == NULL) {
+	    errbox("Couldn't open specified file");
+	    return;
+	} else fclose(fp);
+    } else {
+	if ((fp = fopen(fname, "a")) == NULL) {
+	    errbox("Couldn't open specified file");
+	    return;
+	} else fclose(fp);
+    }
+
+    strcpy(title, "gretl: ");
+    strncat(title, test, 40);
+    strcpy(remember_dir, path);
+
+    if (action == OPEN_DATA) {
+	strcpy(paths.datfile, fname);
+	verify_open_data(NULL);
+    }
+    else if (action == OPEN_CSV || action == OPEN_BOX) 
+	do_open_csv_box(fname, action);
+    else if (action == OPEN_SCRIPT) {
+	int spos;
+
+	strcpy(scriptfile, fname);
+	spos = slashpos(scriptfile);
+	if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
+	mkfilelist(3, scriptfile);
+
+	view_file(scriptfile, 1, 0, 78, 370, title, 
+		  script_items, sizeof(script_items));
+    }
+    else if (action == OPEN_SESSION) {
+	int n = strlen(paths.scriptdir);
+
+	strcpy(scriptfile, fname);
+	if (saved_objects(scriptfile)) {
+	    verify_open_session(NULL);
+	    gtk_widget_destroy(GTK_WIDGET(fs));    
+	    return;
+	}
+	if (strncmp(scriptfile, paths.scriptdir, n)) 
+	    view_file(scriptfile, 1, 0, 78, 370, title, 
+		      script_items, sizeof script_items);
+	else 
+	    view_file(scriptfile, 1, 0, 78, 370, title, 
+		      sample_script_items, sizeof sample_script_items);
+    }
+
+    if (action < END_OPEN) {
+	gtk_widget_destroy(GTK_WIDGET(fs));    
+	return;
+    }
+
+    /* now for the save options */
+    suff = strrchr(fname, '.');
+    if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, ".dat")) {
+	errbox("The .dat suffix should be used only\n"
+	       "for gretl datafiles");
+	gtk_widget_destroy(GTK_WIDGET(fs));
+	return;
+    }
+
+    if (action >= SAVE_DATA && action < END_SAVE_DATA) {
+	do_store(fname, action_to_flag(action));
+    }
+    else if (action == SAVE_GNUPLOT) {
+	int err = 0;
+	GPT_SPEC *plot = gtk_object_get_data(GTK_OBJECT(fs), "graph");
+
+	err = go_gnuplot(plot, fname, &paths);
+	if (err == 0) infobox("graph saved");
+	else if (err == 1) errbox("gnuplot command failed");
+	else if (err == 2) infobox("There were missing observations");
+    }
+    else if (action == SAVE_LAST_GRAPH) {
+	char *savestr = gtk_object_get_data(GTK_OBJECT(fs), "graph");
+	
+	do_save_graph(fname, savestr);
+    }    
+    else if (action == SAVE_SESSION) {
+	save_session(fname);
+    }
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) {
+	MODEL *pmod;
+	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
+	do_save_tex(fname, action, pmod); 
+    }
+    else if (action == SAVE_HTML) {
+	MODEL *pmod;
+	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
+	do_save_html(fname, 1, pmod); 
+    }
+    else { /* save contents of an editable text window */
+	GtkWidget *editwin;
+	FILE *fp;
+
+	editwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
+	if ((fp = fopen(fname, "w")) == NULL) {
+	    errbox("Couldn't open file for writing");
+	    gtk_widget_destroy(GTK_WIDGET(fs));
+	    return;
+	}
+	fprintf(fp, "%s", 
+		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
+	fclose(fp);
+	infobox("File saved OK");
+    }
+    gtk_widget_destroy(GTK_WIDGET(fs));    
+}
+
+/* ........................................................... */
+
+void file_selector (char *msg, char *startdir, int action, gpointer data) 
+{
+    GtkWidget *filesel;
+    int gotdir = 0;
+
+    filesel = gtk_icon_file_selection_new(msg);
+
+    if (strstr(startdir, "/."))
+	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), TRUE);
+
+    gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
+
+    gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), 
+				       get_filters(action, data));
+
+    gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->ok_button),
+		       "clicked", 
+		       GTK_SIGNAL_FUNC(filesel_callback), filesel);
+
+    if (action > END_OPEN) /* a file save action */
+	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
+
+    /* special cases */
+    if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
+    else if (action == SAVE_HTML) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
+    else if (action == SAVE_DATA && paths.datfile[0] &&
+	!strcmp(paths.datfile + strlen(paths.datfile) - 4, ".dat")) {
+	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
+	char startd[MAXLEN];
+
+	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
+			   fname);
+	if (get_base(startd, paths.datfile, SLASH) == 0) {
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
+	    gotdir = 1;
+	}
+    }
+
+    if (!gotdir)
+	gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startdir);
+
+    gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL
+					 (filesel)->cancel_button),
+			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
+			      GTK_OBJECT (filesel));
+
+    gtk_widget_show(filesel);
+}
+
+/* The following For gtkextra 0.99.15 */
+
+#ifdef notdef
+
+static void show_tree (GtkWidget *widget, gpointer data)
+{
+    GtkWidget *filesel = (GtkWidget *) data;
+
+    gtk_icon_file_selection_show_tree(GTK_ICON_FILESEL(filesel), TRUE); 
+}
+
+static void hide_tree (GtkWidget *widget, gpointer data)
+{
+    GtkWidget *filesel = (GtkWidget *) data;
+
+    gtk_icon_file_selection_show_tree(GTK_ICON_FILESEL(filesel), FALSE); 
+}
+
+/* ........................................................... */
+
+void new_file_selector (char *msg, char *startdir, int action, gpointer data) 
+{
+    GtkWidget *filesel, *box;
+    GtkWidget *show_button, *hide_button;
+    int gotdir = 0;
+
+    filesel = gtk_icon_file_selection_new(msg);
+
+    if (strstr(startdir, "/."))
+	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), TRUE);
+
+    gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
+
+    gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), 
+				       get_filters(action, data));
+
+
+    box = gtk_hbox_new(FALSE, 1);
+    gtk_box_pack_start(GTK_BOX(GTK_BIN(filesel)->child), box, TRUE, TRUE, 0);
+    gtk_widget_show(box);
+
+    show_button = gtk_button_new_with_label("Show Tree");
+    gtk_box_pack_start(GTK_BOX(box), show_button, TRUE, TRUE, 0);
+    gtk_widget_show(show_button);
+
+    hide_button = gtk_button_new_with_label("Hide Tree");
+    gtk_box_pack_start(GTK_BOX(box), hide_button, TRUE, TRUE, 0);
+    gtk_widget_show(hide_button);
+
+    gtk_signal_connect (GTK_OBJECT (GTK_ICON_FILESEL(filesel)->ok_button), 
+			"clicked",
+			GTK_SIGNAL_FUNC (filesel_callback), filesel);
+
+    gtk_signal_connect (GTK_OBJECT (show_button), "clicked",
+			GTK_SIGNAL_FUNC (show_tree), NULL);
+
+    gtk_signal_connect (GTK_OBJECT (hide_button), "clicked",
+			GTK_SIGNAL_FUNC (hide_tree), NULL);
+
+
+    if (action > END_OPEN) /* a file save action */
+	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
+
+    /* special cases */
+    if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
+    else if (action == SAVE_HTML) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
+    else if (action == SAVE_DATA && paths.datfile[0] &&
+	!strcmp(paths.datfile + strlen(paths.datfile) - 4, ".dat")) {
+	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
+	char startd[MAXLEN];
+
+	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
+			   fname);
+	if (get_base(startd, paths.datfile, SLASH) == 0) {
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
+	    gotdir = 1;
+	}
+    }
+
+    if (!gotdir)
+	gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startdir);
+
+    gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL
+					 (filesel)->cancel_button),
+			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
+			      GTK_OBJECT (filesel));
+
+    gtk_widget_show(filesel);
+}
+
+#endif /* bracketed code for gtkextra >= 0.99.15 */
+
+#endif /* end of non-MS Windows code */

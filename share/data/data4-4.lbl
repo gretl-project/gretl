@@ -1,0 +1,8 @@
+BUSTRAVL Urban tranportation by bus (000s of passenger hours)
+FARE Bus fare ($, Range 0.5 - 1.5)
+GASPRICE Price of a gallon of gasoline ($)
+INCOME Average income per capita
+POP Population of city (thousands)
+DENSITY Density of city (persons/sq. mile)
+LANDAREA Land area of the city (sq. miles)
+

@@ -1,0 +1,17 @@
+(*
+DATA7-2:  Data on salaries and employment characteristics of 49
+    employees in a  certain company.  Data compiled by Susan Wong
+    WAGE = Wage rate per month (Range 981 - 3833)
+    EDUC = Years of education beyond 8th grade when hired (Range 1 - 11)
+    EXPER = Number of years at the company (Range 1 - 23)
+    AGE = Age of employee (25 - 64)
+    GENDER = 1 for male and 0 for female
+    RACE = 1 For white, 0 for non-white
+    CLERICAL = 1 for clerical workers, 0 for others
+    MAINT = 1 for workers in maintenance and 0 for others
+    CRAFTS =1 if employee was in crafts, 0 otherwise
+    Control group is professionals.
+*)
+WAGE EDUC EXPER AGE GENDER RACE CLERICAL MAINT CRAFTS ;
+1 1 49
+BYOBS

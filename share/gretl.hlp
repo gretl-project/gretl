@@ -1,0 +1,841 @@
+#
+add
+Add variables to a model and test for their significance
+
+This command needs a list of variables, referenced by their names or numbers
+and separated by spaces.
+
+The variables in the list will be added to the previous model and the new
+model estimated.  If more than one variable is added the F statistic for the
+joint significance of the added variables is printed (for the OLS procedure
+only) along with its p-value.  A p-value below 0.05 means that the
+coefficients are jointly significant at the 5 percent level.
+
+#
+adf
+Augmented Dickey-Fuller test
+
+This command needs an integer lag order.
+
+Computes statistics for two Dickey-Fuller tests.  In each case the null
+hypothesis is that the variable in question exhibits a unit root.
+
+The first is a t-test based on the model 
+
+  (1 - L)x(t) = m + g * x(t-1) + e(t)
+
+The null hypothesis is that g = 0.
+
+The second (augmented) test proceeds by estimating an unrestricted regression
+(with regressors a constant, a time trend, the first lag of the variable, and
+"order" lags of the first difference) and a restricted version (dropping the
+time trend and the first lag).  The test statistic is F, determined as
+
+  [(ESSr - ESSu)/2]/[ESSu/(T - k)] 
+
+where T is the sample size and k the number of parameters in the unrestricted
+model.  Note that the critical values for these statistics are not the usual
+ones.
+
+#
+ar
+Generalized Cochrane-Orcutt (autoregressive) estimation
+
+This command needs two lists: first a list of lags of the residual to
+use; second, an ordinary regression list (as with OLS estimation).
+
+Schematically:  <laglist> ; <varlist>
+Example:        1 3 4 ; y 0 x1 x2 x3 
+
+The procedure computes the estimates of a model using the generalized
+Cochrane-Orcutt iterative procedure.  Iteration is terminated when successive
+error sum of squares do not vary by more than 0.005 percent or when 20
+iterations have been done.  lags is a list of lags in the residuals,
+terminated by a semicolon.  In the above example, the error term is specified
+as
+
+     u(t) = rho1 u(t-1) + rho3 u(t-3) + rho4 u(t-4) + et
+
+depvar is the dependent variable and indepvars is the list of independent
+variables separated by spaces.  Use the number zero for a constant term.
+
+#
+arch
+Test for ARCH (Autoregressive Conditional Heteroskedasticity)
+
+This command needs an integer lag order.
+
+Tests the model for ARCH of the specified order.  If the LM test statistic has
+p-value below 0.10, then ARCH estimation is also carried out.  If the
+predicted variance of any observation in the auxiliary regression is not
+positive, then the corresponding uhat square is used instead.  Weighted least
+square estimation is then performed on the original model.
+
+#
+chow
+Chow test for structural homogeneity
+
+This command need an obervation number (or date, with dated data).
+
+Must follow an OLS regression.  Creates a dummy variable which equals 1 from
+the specified split point to the end of the sample, 0 otherwise, and also
+creates interaction terms between this dummy and the original independent
+variables.  An augmented regression is run including these terms and an F
+statistic is calculated, taking the augmented regression as the unrestricted
+and the original as restricted.  This statistic is appropriate for testing the
+null hypothesis of no structural break at the given split point.
+
+#
+coint
+Cointegration test
+
+This command needs an integer lag order, followed by the ID number or name of
+the dependent variable and the ID numbers or names of the independent
+variables (all separated by spaces).
+
+The command carries out Augmented Dickey-Fuller tests on the null hypothesis
+that each of the variables listed has a unit root, using the given lag
+order. The cointegrating regression is estimated, and an ADF test is run on
+the residuals from this regression.  The Durbin-Watson statistic for the
+cointegrating regression is also given.  (Note that none of these test
+statistics can be referred to the usual statistical tables.)
+
+#
+compact
+Writing data to a lower frequency
+
+When you add to a dataset a series that is of higher frequency, it is
+necessary to "compact" the new series.  For instance, a monthly series will
+have to be compacted to fit into a quarterly dataset.  You are offered three
+options for the compacting:
+
+1. Averaging: the value written to the dataset will be the arithmetic mean of
+   the relevant series values.  For instance the value written for the first
+   quarter of 1990 will be the average of the values for January, February and
+   March of 1990.
+
+2. End-of-period values.  The value written to the dataset is the last
+   relevant value from the higher-frequency data.  For example, the first
+   quarter of 1990 will get the March 1990 value.
+
+3. Start-of-period values.  The value written to the dataset is the first
+   relevant value from the higher-frequency data.  For example, the first
+   quarter of 1990 will get the January 1990 value.
+
+#
+corc
+Cochrane-Orcutt model
+
+This command needs a list of variables, by name or number, separated by
+spaces.
+
+The first variable given is the dependent variable; the rest are the
+independent variables.  It is standard to put "0" or "const" in the second
+place, to include a constant on the right hand side.  Otherwise you are
+forcing the Y-intercept to equal 0, which is not usually appropriate.
+
+To include lagged variables, use an expression like "income(-1)", i.e.  the
+name of the variable followed by the required lag in parentheses, preceded by
+a minus sign.
+
+This procedure computes the estimates of a model using the Cochrane-Orcutt
+iterative procedure.  Iteration is terminated when successive rho values do
+not differ by more than 0.001 or when 20 iterations have been done.  The final
+transformed regression is performed for the observation range stobs+1 endobs
+currently in effect.
+
+#
+diff
+
+The first difference of each variable in the given list is obtained and the
+result stored in a new variable with the prefix "d_".  Thus for instance the
+new variables d_x = x(t) - x(t-1).
+
+#
+export
+Export data from gretl to other formats.  
+
+You may export data in Comma-Separated Values (CSV) format: such data may be
+opened in spreadsheets and many other application programs.
+
+You may also export data in the native formats of GNU R or GNU octave.  For
+further information on these programs (both of which support advanced
+statistical analysis) please see their respective websites,
+http://www.r-project.org/ and http://www.octave.org/
+
+#
+factorized plot
+
+This command requires the names or numbers of three variables, the last of
+which must be a dummy variable (values 1 or 0).  The first variable is plotted
+against the second, with the data points colored differently depending on the
+value of the third.
+
+Example: You have data on wages and years of experience for a sample of
+people; you also have a dummy variable with value 1 for men and 0 for women
+(as in the supplied file data7-2).  A "factorized plot" of wage against
+experience using the gender dummy as factor will show the data points for men
+in one color and those for women in another (with a legend to identify them).  
+
+#
+genr
+Generate a new variable 
+Usage:          newvarname = transformation
+
+Creates new variables, usually through transformations of existing
+variables. See also diff, logs, lags, ldiff, multiply and square for
+shortcuts.
+
+Supported arithmetical operators are, in order of precedence: ^
+(exponentiation); *, / and % (modulus or remainder); + and -.  
+
+Boolean operators (again in order of precedence) are ! (logical NOT), &
+(logical AND), | (logical OR), >, <, = and != (NOT EQUALS).  The Boolean
+operators can be used in constructing dummy variables: for instance (x > 10)
+returns 1 if x(t) > 10, 0 otherwise.
+
+Supported functions fall into these groups: Standard math functions: abs, cos,
+exp, int (integer part), ln (natural log: log is a synonym), sin, sqrt.
+Statistical functions: mean (arithmetic mean), median, var (variance), sd
+(standard deviation), sum, cov (covariance), corr (correlation coefficient).
+Time-series functions: lag, lead, diff (first difference), ldiff
+(log-difference, or first difference of natural logs).  Miscellaneous: cum
+(cumulate), sort, uniform, normal, misszero (replace the missing
+observation code with zero), zeromiss (inverse operation of misszero).
+
+All of the above functions with the exception of cov, corr, uniform and normal
+take as their single argument either the name of a variable (note that you
+can't refer to variable by their ID numbers in a genr command) or a composite
+expression that evaluates to a variable (e.g.  ln((x1+x2)/2)).  cov and corr
+both require two arguments, and return respectively the covariance and the
+correlation coefficient between two named variables.  uniform() and normal(),
+which do not take arguments, return pseudo-random series drawn from the
+uniform (0-100) and standard normal distributions respectively (see also the
+seed command).  
+
+Various internal variables defined in the course of running a regression can
+be used in transformations, as follows:
+
+  $ess         error sum of squares
+  $rsq         unadjusted R-squared
+  $nobs        number of observations
+  $df          degrees of freedom
+  $trsq        TR^2 (sample size times R-squared)
+  $sigma       standard error of residuals
+  $lnl         log-likelihood (logit and probit models)
+  coeff(var)   estimated coefficient for var
+  stderr(var)  estimated std. error for var
+  rho(i)       ith order autoregressive coefficient for residuals
+  vcv(xi,xj)   covariance between coefficients for vars xi and xj
+
+The internal variable t references the observations, starting at 1.  Thus one
+can do "genr dum15 = (t=15)" to generate a dummy variable with value 1 for
+observation 15, 0 otherwise.
+
+Examples of valid formulas:
+
+   y = x1^3          [x1 cubed]           
+   y=ln((x1+x2)/x3)  [composite argument to ln function]   
+   z=x>y             [sets z(t) to 1 if x(t) > y(t) else to 0]
+   y=x(-2)           [x lagged 2 periods]     
+   y=x(2)            [x led 2 periods]
+   y = mean(x)       [arithmetic mean]    
+   y = diff(x)       [y(t) = x(t) - x(t-1)]
+   y = ldiff(x)      [y = ln(x(t)) - ln(x(t-1))]
+                      ldiff(x) is the instantaneous rate of growth of x.
+   y = sort(x)       [sort x in increasing order and store in y]
+   y = - sort(-x)    [sort x in decreasing order]
+   y = int(x)        [truncate x and store its integer value as y]
+   y = abs(x)        [store the absolute values of x]
+   y = sum(x)        [sum x values excluding missing -999 entries]
+   y = cum(x)        [cumulate x: y(t) is the sum of x up to t]
+   aa = $ess         [aa = Error Sum of Squares from last regression]
+   x = coeff(sqft)   [grab sqft coefficient from last model]
+   rho4 = rho(4)     [grab 4th-order autoregressive coeff. from last
+                      model (presumes an ar model)]
+   cv=vcv(x1, x2)    [covariance of x1 and x2 coeffs. in last model]
+   x=uniform()/100   [uniform pseudo-random variable, range 0 to 1]
+   x=3*normal()      [normal pseudo-random var, mean 0, std. dev. 3]
+
+Tips on dummy variables: 
+* Suppose x is coded with values 1, 2, or 3 and you want three dummy
+variables, d1 = 1 if x = 1, 0 otherwise, d2 = 1 if x = 2, and so on.  To
+create these, use the formulas d1 = (x=1), d2 = (x=2), and d3 = (x=3).
+* To get z = max(x,y) generate d=x>y and then z=(x*d)+(y*(1-d))
+
+#
+graphing
+generating plots of various kinds
+
+Gretl calls a separate program, namely gnuplot, to generate graphs.  Gnuplot
+is a very full-featured graphing program with myriad options.  Gretl gives you
+direct access, via a graphical interface, to only a small subset of these
+options but it tries to choose sensible values for you; it also allows you to
+take complete control over graph details if you wish.
+
+Under MS Windows you can click at the top left corner of a graph window for a
+pull-down gnuplot menu that lets you choose various things (including copying
+the graph to the Windows clipboard and sending it to a printer).
+
+For full control over a graph, follow this procedure:
+
+- Close the graph window.
+- From the Session menu, choose "Add last graph".
+- In the session icon window, right-click on the new graph icon and choose
+  either "Edit using GUI" or "Edit plot commands".
+
+The "Edit using GUI" item pops up a graphical controller for gnuplot which
+lets you fine-tune various aspects of the graph.  The "Edit plot commands"
+item opens an editor window containing the actual gnuplot command file for
+generating the graph: this gives you full control over graph details -- if you
+know something about gnuplot. To find out more, see
+http://ricardo.ecn.wfu.edu/gnuplot.html or www.gnuplot.org.
+
+#
+hccm
+Heteroskedasticity Consistent Covariance Matrix
+
+This command runs a regression where the coefficients are estimated via the
+standard ols procedure, but the standard errors of the coefficient estimates
+are computed in a manner that is robust in the face of heteroskedasticity,
+namely using the MacKinnon-White "jackknife" procedure.
+
+#
+hilu
+Hildreth-Lu model
+
+This command needs a list of variables, by name or number, separated by
+spaces.
+
+Computes the estimates of a model using the Hildreth-Lu search procedure (fine
+tuned by the CORC procedure) with the first list entry as the dependent
+variable and the rest as independent variables.  Use the number zero for a
+constant term.  The error sum of squares of the transformed model is graphed
+against the value of rho from -0.99 to 0.99.  The final transformed regression
+is performed for the observation range stobs+1 endobs currently in effect.
+
+#
+hsk
+Heteroskedasticity-corrected estimates
+
+This procedure needs a list of variables, by name or number, separated by
+spaces, just like the "ols" command.
+
+An OLS regression is run and the residuals are saved.  The logs of the squares
+of these residuals then become the dependent variable in an auxiliary
+regression, on the right-hand side of which are the original independent
+variables plus their squares.  The fitted values from the auxiliary regression
+are then used to construct a weight series, and the original model is
+re-estimated using weighted least squares.  This final result is reported.
+
+The weight series is formed as 1/sqrt(exp(fit)), where "fit" denotes the
+fitted values from the auxiliary regression.
+
+#
+lags
+
+Creates new variables which are lagged values of each of the variables in the
+list supplied.  The number of lagged counterparts to each of the listed
+variables equals the periodicity of the data.  For example, if the periodicity
+is 4 (quarterly data), four lagged terms will be created; if the variable "x"
+is in the supplied list, the command creates x_1 = x(t-1), x_2 = x(t-2), x_3 =
+x(t-3) and x_4 = x(t-4).
+
+#
+ldiff
+
+The first difference of the natural log of each variable in the supplied list
+is obtained and the result stored in a new variable with the prefix "ld_".
+Thus for instance the new variable ld_x = ln[x(t)] - ln[x(t-1)].
+
+#
+logit
+Logit regression
+
+This command needs a list of variables, by name or number, separated by
+spaces.
+
+The dependent variable (given first) should be a binary variable.  Maximum
+likelihood estimates of the coefficients on indepvars are obtained via
+interated least squares (the EM or Expectation-Maximization method).  As the
+model is non-linear the slopes depend on the values of the independent
+variables: the reported slopes are evaluated at the means of those variables.
+The Chi-square statistic tests the null hypothesis that all coefficients are
+zero apart from the constant.
+
+#
+logs
+
+The natural log of each of the variables in the supplied list is obtained and
+the result stored in a new variable with the prefix l_ which is "el"
+underscore.  Thus for instance the new variable l_x = ln(x).
+
+#
+loop
+repeated commands
+
+Usage:          loop number_of_times
+                loop while condition
+		loop for i=start..end
+Examples:       loop 1000
+		loop while essdiff > .00001
+		loop for i=1991..2000
+
+This (script) command opens a special mode in which the program accepts
+commands to be repeated either a specified number of times, or so long as a
+specified condition holds true, or for successive integer values of the
+(internal) index variable i.  Within a loop, only six commands can be used:
+genr, ols, print, smpl, store and summary (store can't be used in a "while"
+loop).  With genr and ols it is possible to do quite a lot.  You exit the mode
+of entering loop commands with "endloop": at this point the stacked commands
+are executed.  Loops cannot be nested.
+
+The ols command gives special output, depending on the sort of loop.  If a
+number of times is specified the results from each individual regression are
+not printed, but rather you get a printout of (a) the mean value of each
+estimated coefficient across all the repetitions, (b) the standard devation of
+those coefficent estimates, (c) the mean value of the estimated standard error
+for each coefficent, and (d) the standard devation of the estimated standard
+errors.  This makes sense only if there is some random input at each step.
+The command is designed for Monte Carlo analysis.  If a "while" condition is
+given, you get a printout of the specified model from the last time round the
+loop: this is designed for iterated least squares.
+
+The print command also behaves differently in the context of a "number of
+times" loop.  It prints the mean and standard deviation of the variable,
+across the repetitions of the loop.  It is intended for use with variables
+that have a single value at each iteration, for example the ess from a
+regression.  The print command behaves as usual with the other loop
+constructions.
+
+The store command (use only one of these per loop, and only in a "number
+of times" loop) writes out the values of the specified variables, from
+each time round the loop, to the specified file.  Thus it keeps a complete
+record of the variables.  This data file can then be read into the program
+and analysed.
+
+Example of loop code (Monte Carlo):
+
+   genr x = uniform()
+   loop 100
+   genr u = normal()
+   genr y = (10*x) + (20*u)
+   ols y const x
+   genr r2 = $rsq
+   print r2
+   genr a = coeff(const)
+   genr b = coeff(x)
+   store foo.dat a b
+   endloop
+   
+#
+lmtest
+Lagrange Multiplier test
+
+Under this heading fall several hypothesis tests.  What they have in common is
+that the test involves the estimation of an auxiliary regression, where the
+dependent variable is the residual from some "original" regression.  The
+right-hand side variables include those from the original regression, along
+with some additional terms.  The test statistic is calculated as (sample size
+x Rsquared) from the auxiliary regression: this is distributed as Chi-square
+with degrees of freedom equal to the number of additional terms, under the
+null hypothesis that the additional terms have no explanatory power over the
+residual.  A "large" Chi-squared value (small p-value) suggests that this null
+hypothesis should be rejected.
+
+#
+markers
+Add case markers to data set
+
+This command needs the name of a file containing "case markers", that is,
+short identifying strings for the individual observations in the data set (for
+example, country or city names or codes).  These marker strings should be no
+more than 8 characters long.  The file should contain one marker per line, and
+there should be just as many markers as observations in the current dataset.
+If these conditions are met and the specified file is found, the case markers
+will be added; they will be visible when you choose "Display values" under
+gretl's Data menu.
+
+#
+meantest
+
+Calculates the t statistic for the null hypothesis that the population means
+are equal for two selected variables, and shows its p-value.  The command may
+be called with or without the assumption that the variances are equal for the
+two variables (although this will make a difference to the test statistic only
+if there are different numbers of non-missing observations for the two
+variables.)
+
+#
+ols
+Ordinary Least Squares model
+
+This command needs a list of variables, by name or number, separated by
+spaces.
+
+The first variable given is the dependent variable; the rest are the
+independent variables.  It is standard to put "0" or "const" in the second
+place, to include a constant on the right hand side.  Otherwise you are
+forcing the Y-intercept to equal 0, which is not usually appropriate.
+
+To include lagged variables, use an expression like "income(-1)", i.e.  the
+name of the variable followed by the required lag in parentheses, preceded by
+a minus sign.
+
+Computes ordinary least squares estimates of the coefficients.  Prints the
+p-values for t- (two-tailed) and F-statistics.  A p-value below 0.01 indicates
+significance at the 1 percent level.  Model selection statistics are also
+printed.
+
+#
+omit
+Omit variables from a model and test for their joint significance
+
+This command needs a list of variables, referenced by their names or numbers
+and separated by spaces.
+
+The specified variables are dropped from the previous model and the new model
+estimated.  If more than one variable is omitted, the Wald F-statistic for the
+omitted variables will be printed along with the pvalue for it (for the OLS
+procedure only).  A pvalue below 0.05 means that the coefficients are jointly
+significant at the 5 percent level.
+
+#
+online databases
+Access databases via the internet
+
+gretl is able to access databases at the gretl website, at Wake Forest
+University (your computer must be connected to the internet for this to work).
+
+Under the "File, Browse databases" menu, select the item "on database server".
+A window should appear, showing a listing of the gretl databases available at
+Wake Forest.  (Depending on your location and the speed of your internet
+connection, this may take a few seconds.)  Along with the name of the database
+and a short description, there will appear a "Local status" entry: this shows
+whether you have the database installed locally (on the hard drive of your
+computer) and if so, whether or not it is up to date with the version on the
+server.
+
+If you have a given database installed locally, and it is up to date, there is
+no advantage in accessing it via the server.  But for a database that is not
+already installed and up to date, you may wish to get a listing of the data
+series: click on "Get series listing".  This brings up a further window, from
+which you can display the values of a chosen data series, graph those values,
+or import them into gretl's workspace.  These tasks can be accomplished using
+the "Series" menu, or via the popup menu that appears when you click the right
+mouse button on a given series.  You can also search the listing for a
+variable of interest (the "Find" menu item).
+
+If you want faster access to the data, or wish to access the database offline,
+then select the line showing the database you want, in the initial database
+window, and press the "Install" button.  This will download the database in
+compressed format, then uncompress it and install it on your hard drive.
+Thereafter you should be able to find it under the "File, Browse databases,
+gretl native" menu.
+
+(This feature in gretl depends on other free, open-source software projects:
+the zlib data compression library, and the GNU "wget" downloader program, from
+which chunks of gretl code are borrowed.)
+
+#
+panel
+Set panel data structure
+
+The two options here are "stacked time series" and "stacked cross sections".
+Gretl must know which way your data are organized if you want to make use of
+the "Pooled OLS" model command and its associated panel diagnostics.
+
+Stacked time series means that the blocks in the data file take the form of
+time series for each of the cross-sectional units in turn.  For example, the
+first 10 rows of data might represent the values of certain variables for 
+country A over 10 periods, the next 10 rows the values for country B over the
+same 10 periods, and so on.
+
+Stacked cross sections means that the blocks in the data file take the form of
+cross sections for each of the time periods in turn.  For example, the first
+6 rows of data might represent the values of certain variables for countries A
+to F for the year 1970, the next 6 rows the values for the same countries in
+1971, and so on.
+
+If you save your data file after setting this attribute, the information will
+be recorded in the data header file and you won't have to set it again.  
+
+#
+pooled
+Pooled OLS estimation
+
+This command is for use with panel data.  To take advantage of it, you should
+specify a model without any dummy variables representing cross-sectional
+units.  The routine presents estimates for straightforward pooled OLS, which
+treats cross-sectional and time-series variation at par.  This model may or
+may not be appropriate.  Under the Tests menu in the model window, you will
+find an item "panel diagnostics", which tests pooled OLS against the principal
+alternatives, the fixed effects and random effects models.
+
+The fixed effects model adds a dummy variable for all but one of the
+cross-sectional units, allowing the intercept of the regression to vary across
+the units.  An F-test for the joint significance of these dummies is
+presented: if the p-value for this test is small, that counts against the null
+hypothesis (that the simple pooled model is adequate) and in favor of the
+fixed effects model.  
+
+The random effects model, on the other hand, decomposes the residual variance
+into two parts, one part specific to the cross-sectional unit or "group" and
+the other specific to the particular observation.  (This estimator can be
+computed only if the panel is "wide" enough, that is, if the number of
+cross-sectional units in the data set exceeds the number of parameters to be
+estimated.)  The Breusch-Pagan LM statistic tests the null hypothesis (again,
+that the pooled OLS estimator is adequate) against the random effects
+alternative.
+
+It is quite possible that the pooled OLS model is rejected against both of the
+alternatives, fixed effects and random effects.  How, then, to assess the
+relative merits of the two alternative estimators?  The Hausman test (also
+reported, provided the random effects model can be estimated) addresses this
+issue.  Provided the unit- or group-specific error is uncorrelated with the
+independent variables, the random effects estimator is more efficient than the
+fixed effects estimator; otherwise the random effects estimator is
+inconsistent, in which case the fixed effects estimator is to be preferred.
+The null hypothesis for the Hausman test is that the group-specific error is
+not so correlated (and therefore the random effects model is preferable).
+Thus a low p-value for this tests counts against the random effects model and
+in favor of fixed effects.  
+
+For a rigorous discussion of this topic, see Greene's Econometric Analysis
+(4th edition), chapter 14.
+
+#
+probit
+Probit regression
+
+This command needs a list of variables, by name or number, separated by
+spaces.
+
+The dependent variable (given first) should be a binary variable.  Maximum
+likelihood estimates of the coefficients on indepvars are obtained via
+interated least squares (the EM or Expectation-Maximization method).  As
+the model is non-linear the slopes depend on the values of the independent
+variables: the reported slopes are evaluated at the means of those
+variables.  The Chi-square statistic tests the null hypothesis that all
+coefficients are zero apart from the constant.
+
+#
+rhodiff
+Usage:         rhodiff rho varlist
+Example:       rhodiff .65 2 3 4
+
+Creates rho-differenced counterparts of the variables (given by number or by
+name) in varlist and adds them to the data set.  Given variable v1 in the
+list, rd_v1 = v1(t) - rho*v1(t-1) is created.
+
+#
+scatters
+Multiple pairwise scatter plots
+
+This command wants list input in one or other of these forms:
+
+  yvar ; xvarlist  (Example: 1 ; 2 3 4 5)   
+  yvarlist ; xvar  (Example: 1 2 3 4 5 6 ; time)
+
+It plots pairwise scatters of yvar against all the variables in xvarlist, or
+of all the variables in yvarlist against xvar.  The first example above puts
+variable 1 on the y-axis and draws four graphs, the first having variable 2 on
+the x-axis, the second variable 3 on the x-axis, and so on.  The second draws
+plots of variables 1 through 6 against time.  Scanning a set of such plots can
+be a useful step in exploratory data analysis.  The maximum number of plots is
+six; any extra variable in the list will be ignored.
+
+#
+seed
+Initialize the random number generator
+
+Requires an integer as input.  Sets the seed for the pseudo-random number
+generator used by the random uniform and random normal options under the Data,
+Add variables menu.  By default the seed is set when the program is started,
+using the system time.  If you want to obtain repeatable sequences of
+pseudo-random numbers you need to set the seed manually.
+
+#
+setobs
+Set data frequency and starting observation
+
+Use this commmand to force the program to interpret the current data set as
+time series or panel, when the data have been read in as simple undated
+series.  Two parameters are needed: an integer frequency and a starting
+observation string (usually a date).
+
+Examples of valid input:
+
+  4 1990.1       Interpret the data as quarterly, starting in 1990, Q1
+  12 1978.03     Interpret the data as monthly, starting in March 1978
+  20 1.01        Data frequency 20, starting with obs 1.01 (panel data)
+
+#
+sim
+Put simulated values into a variable
+
+This command requires a starting observation, an ending observation, the name
+of a variable (already present in the data set) into which to put the values,
+and a list of autoregressive coefficients, which may be either numerical
+constants or names of variables.  For example, if you put into the simulation
+dialog
+
+    1979.2 1983.1 y 0 0.9
+
+this will populate y, from 1979.2 to 1983.1, with values:
+
+    y(t) = 0 + 0.9 y(t-1)
+
+Similarly
+
+    15 25 y 10 0.8 x
+
+will generate, from obs 15 to 25:
+
+    y(t) = 10 + 0.8 y(t-1) + x(t) y(t-2)
+
+#
+sampling
+
+Select a sub-sample of the current data set.
+
+If you choose "Sample/Define based on dummy..." you need to supply the name of
+a dummy (indicator) variable, which should have the values 0 or 1 at each
+observation.  The sample will be restricted to observations for which the
+dummy's value is 1.  (Clicking on a variable's line in the main data window
+will insert that variable's name into the dialog box.)
+
+If you choose "Sample/Restrict based on criterion..." you need to supply a
+Boolean (logical) expression, of the same sort that you would use to define a
+dummy variable.  For example the expression "sqft > 1400" will select only
+cases for which the variable sqft has a value greater than 1400.  Conditions
+may be concatenated using the logical operators "&" (AND) and "|" (OR).
+
+The menu item "Sample/Drop all obs with missing values" redefines the sample
+to exclude all observations for which values of one or more variables are
+missing (leaving only complete cases).
+
+One point should be noted about defining a sample based on a dummy variable, a
+Boolean expression, or on the missing values criterion: Any "structural"
+information in the data header file (regarding the time series or panel nature
+of the data) is lost.  You may reimpose structure with "Sample/Set frequency,
+startobs...".
+
+For simple re-setting of the sample by specifying a beginning and ending
+observation, see "smpl" below.
+
+#
+smpl
+
+Reset the sample range by specifying a starting and ending observation
+(Sample/Set range...).  Use this mechanism for sub-sampling with time-series
+data.  The given starting and ending observations should be in a form
+consistent with the frequency of the data, e.g. "1985.1" for quarterly data or
+"1996.03" for monthly (March 1996).  
+
+#
+spearman
+
+Prints Spearman's rank correlation coefficient for a specified pair of
+variables.  The variables do not have to be ranked manually in advance; the
+function takes care of this.
+
+The automatic ranking is from largest to smallest (i.e. the largest data value
+gets rank 1).  If you need to invert this ranking, create a new variable which
+is the negative of the original first.  For example:
+
+  genr altx = -x
+  spearman altx y
+
+#
+square
+
+Generates new variables which are the squares of the variables in the given
+list.  The new variables are named with the prefix "sq_", so for instance the
+new variable sq_x = x squared.
+
+#
+store
+
+Save a gretl dataset.  There are four options for the format of the saved
+data.  
+
+(1) "Standard": the data are saved in columns, spreadsheet-style, as an ASCII
+    (plain text) file.
+(2) As above, but using gzip compression.  This saves disk space; it may be
+    useful for large datasets.  
+(3) Binary, single-precision: the data are stored in binary format, as
+    single-precision floating point numbers.  A compact storage format.
+(4) Binary, double-precision: the data are stored in binary format, as
+    double-precision floating point numbers.  It is unlikely that economic
+    data require this degree of precision.  
+
+Please note if a dataset contains "case markers" (short strings identifying
+the observations, such as might be used if the observations represent
+countries or states) you should NOT store the data in binary format since
+these markers will not be saved.  Use "standard" or gzipped format instead.
+
+#
+tsls
+Two-Stage Least Squares
+
+This command requires two lists of variables (by name or number).  The
+elements of the lists are separated by spaces, while the lists themselves are
+separated by a semi-colon.
+
+Schematically:  <varlist1> ; <varlist2>
+For example:       1 0 2 3 ; 0 4 5 6
+
+The first list is a standard "regression list," as supplied to the ols
+(Ordinary Least Squares) command: the first element is the name or number of
+the dependent variable, and the remaining elements are the names or numbers of
+the independent variables (usually including 0 or "const" for a constant).
+
+The second list comprises the exogenous and/or predetermined variables that
+may be used as regressors to derive fitted values of endogenous variables
+appearing in "right-hand side" positions in the first list.
+
+If some of the right-hand side variables for the model are exogenous, they
+should be referenced in both lists.
+
+#
+var
+Vector Autoregression
+
+This command takes a list: the first (integer) entry is the lag order of the
+system, then the dependent variable in the first equation (by name or number),
+then the list of independent variables in that equation.  DON'T include any
+lagged variables in the list -- they will be added automatically.
+
+Example:       4 x1 const time x2 x3
+
+This calls for a four-lag VAR.  The dependent variable in the first equation
+is x1.  Equations for x2 and x3 will also be estimated.
+
+In general, a regression will be run for each variable in the list, excluding
+the constant, the time trend and any dummy variables.  Output for each
+equation includes F-tests for zero restrictions on all lags of each of the
+variables, and an F-test for the maximum lag.
+
+#
+vartest
+
+Calculates the F statistic for the null hypothesis that the population
+variances for the two selected variables are equal, and shows its p-value.
+
+#
+wls
+Weighted Least Squares model
+
+This command needs a list of variables, by name or number, separated by
+spaces.  The first variable given is the WEIGHT variable, the second the
+dependent variable, and subsequent ones are independent variables.
+
+It is standard to put "0" or "const" in the third place, to include a constant
+on the right hand side.  Otherwise you are forcing the Y-intercept to equal 0,
+which is not usually appropriate.
+
+An OLS regression is run on weightvar*depvar against weight*indepvar.  If the
+weightvar is a dummy variable, this is equivalent to eliminating all
+observations with the number zero for weightvar.
+

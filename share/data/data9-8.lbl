@@ -1,0 +1,9 @@
+pop   population in millions (Range 144.83 - 243.915)
+rpm   domestic revenue passenger miles (billions, 6 - 324.5)
+nop   number of operators (airlines), Range 31 - 106.
+oprev operating revenue from passengers ($ millions)
+gnp   GNP of United States ($ billions)
+accid number of American planes in an accident (Range 12 - 69)
+fatal number of fatalities from aircraft accidents (Range 0 - 460)
+regu  deregulation dummy (1 for 1979-87, 0 before)
+

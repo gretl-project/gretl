@@ -1,0 +1,8 @@
+QNC  number of new cars sold (in thous.) 
+PRICE average real price index of a new car
+INCOME per cap. disposable personal income (thousands of 1982 dollars)
+PRIME prime interest rate (percent)
+UNEMP unemployment rate (percent)
+STOCK number of cars on road (thousands)
+POP Population in millions 
+WINTER 1 for winter quarter, 0 otherwise

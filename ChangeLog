@@ -1,0 +1,422 @@
+version 0.97
+- small fixes to display of databases
+- revert behavior in case of taking logs of series with non-
+  positive values (i.e. fail gracefully)
+- add initial gnome support
+- add display of models in html, using gtkhtml (depends on
+  gnome)
+- convert manual to SGML (DocBook)
+- model windows: can copy content to clipboard as plain text,
+  html or LaTeX.
+
+07/26/2001 version 0.96
+- update to gtkextra version 0.99.16
+- fix bug in Preferences/Toolbar entries
+
+07/17/2001 version 0.95
+- update to gtkextra version 0.99.15
+- fix crash bug on opening a saved "session"
+- fix bug that broke the "run" command on win32
+
+06/14/2001 version 0.94
+- make "false" the default for the automatic gretl update query
+  on startup
+- catch errors in ar, tsls and scatters commands due to insufficient
+  arguments
+
+05/11/2001 version 0.93
+- fix problem with printing of actual, fitted and residual in the
+  case of a binary dependent variable
+- CVS data export: put quote marks around the dates or observation
+  marker strings
+
+04/23/2001 version 0.92
+- library version goes to 6.0.0
+- fixes to pprintf() function
+- add "pooled OLS" model command and panel diagnostics test
+  (fixed effects and random effects models)
+- various fixes suggested by lclint
+- fix bug with zero return from, e.g., auxreg() when there's
+  an error and the return should be non-zero
+- fix bug: logs command in script mode producing spurious error
+- fix bug: when starting a new data set from a gretl database,
+  datainfo->markers was not set to 0, which could produce a crash
+- add options for compacting data when adding a higher-frequency
+  series from a database to the working data set
+
+04/03/2001 version 0.91
+- library version goes to 5.0.0
+- Disable saving anything other than native data file with
+  extension ".dat" (safety measure)
+- Make backup of data file when saving under same name
+- Further improvements/fixes to gnuplot graphing routines
+- Add option to edit plot commands directly, for a graph
+  saved as a session icon
+- GNU R: save cross-sectional data as a "dataframe"
+- Remove the "with controls" gnuplot menu items: edit plots
+  via the session window instead
+- Institute consistent file dialogs: using gtkextra under X,
+  and native Microsoft dialogs under Windows
+- Bug fix in pprintf() function
+
+03/28/01 version 0.90
+- Raise version number to 0.90 reflecting fact that the feature
+  set for version 1.0 is now complete
+- Raise library version to 4.0.0 due to changed interfaces
+- Bugfixes and improvements for built-in spreadsheet
+- Make more statistics accessible under model data menu
+- try to auto-detect script versus data file, when given one
+  program argument and no flag
+- add gretl_model_new() to lib
+- cleanups in library code and headers
+- enable frequency plot graphs in console mode
+- add command-line options (for GUI program) to open a gretl
+  database on start-up.
+- add "t" facility to genr (can say, e.g., "genr dum = t>1979.4"
+  for quarterly data, without previously generating t).
+- add "for loop" facility with auto index variable
+- auto-save changes to scripts in file viewer windows before
+  running
+- TODO: manual is not fully updated yet
+
+03/16/2001 version 0.70
+- Changed a few library interfaces, and so raised the library
+  version number (now 3.0.0)
+- update manual (please consult it on the new options below)
+- add sub-sampling based on a boolean condition (smpl -r)
+- make it possible to restore full sample after sub-sampling
+  based on a dummy variable or boolean condition
+- add graphing option: scatter of Y against X, with the Y values
+  colored differently depending on value of a given dummy
+- suppress echo of varnames in commands (e.g. summary) where
+  a full list of vars is constructed automatically
+- improve mechanism for adding/deleting files from "recent files"
+  lists, and add list for command files
+- improvements to numerical format in printing of data series
+- fix a couple of graphing bugs (impulse plots not working, 
+  frequency plot against gamma distribution wrong)
+- fix precedence of boolean operators in genr expressions
+  ("&" comes before "|", but both of these come after "<", ">"
+  and "="), and add "!=" operator
+- mods to gtk items: disallow resizing of dialog boxes, make
+  clist titles passive
+- fix "on exit" bug if several models estimated and not all
+  have associated saved commands
+- fix memory bug when switching datasets
+- fix issues with displaying data, with very large datasets
+
+03/04/2001 version 0.69
+- change one library interface to permit error box if gnuplot
+  command fails (and so raise library version number)
+- bugfix: after running lmtest for non-linearity, the wrong
+  degrees of freedom were being shown, not in the auxiliary
+  regression window, but in the test summary appended to the
+  model for which the lmtest was run
+- bugfix: with a genr command from the GUI, even if it was
+  erroneous it was being copied into the command log
+- bugfix: parsing of genr expression without fully explicit
+  parentheses failed under some circumstances
+- bugfix: multiple scatterplots did not display under MS Windows
+- bugfix: doing add/omit in GUI did not update the model used
+  as the default for coeff() and such in genr commands
+- console: improve/fix recall of mistyped command using the
+  up arrow key; respond to typing only at the prompt
+- genr: add '&', '|' and '!' logical operators 
+- add program icon for X11
+
+02/26/2001 version 0.68
+- fix functions associated with opening datafiles
+- fix brokenness in logging of commands to script
+- "remember" models generated via GUI so that genr functions 
+  such as coeff() work properly
+- make Save/Export data menu items more compact
+- Fix bug in (not) setting file extensions in some file "save"
+  actions
+- Small improvements to "gretl console"
+
+02/21/2001 version 0.67
+- cleanups in datafile writing routines (avoid excessive
+  trailing zeros in data)
+- make search in list boxes wrap
+- fix bug: user configuration of toolbar had no effect
+- fix bug: if a var is duplicated in list of regressors,
+  gretlcli crashed
+- fix infelicity: if a var is duplicated in regressor list,
+  gui displayed blank model window along with error message
+- fix bug: "gretl website" entry on toolbar under unix/Linux
+  worked only if netscape was already running
+
+02/15/2001 version 0.66
+- add string search to listing of Ramanathan data files
+- add "plugin" for looking up critical values of statistics
+- add a toolbar (partly configurable under Preferences)
+- fix to deletion of auto-generated plotting vars
+- add option to view confidence intervals for coefficients
+  (under Model data menu in model window)
+- add the Ramanathan practice file ps2-1.inp
+
+02/06/2001 version 0.65
+- fix crashing bug in adding data to dataset from model window
+- update bundled gtkextra to release 0.99.13
+- various "internal" bugfixes and cleanups
+- minor fixes to graphing routines, datafile saving
+
+02/02/2001 version 0.64
+- add tooltips to show full path of previously-opened files
+- get "previous files" list working on win32
+- minor improvements to file listing routines
+- add (optional) sampling distribution graph to test calculator
+- add -m (impulses) flag to gnuplot command
+- fixes to auto-update mechanism (plus add documentation)
+
+01/26/2001 version 0.63
+- add gretl manpage
+- add p-value finder to GUI
+- add "hypothesis test calculator" to GUI
+- fix error in normal batch p-value function 
+
+01/15/2001 version 0.62
+- allow comment lines starting with '#' in input files
+- allow estimation of a model with df = zero
+- add CUSUM (parameter stability) test for OLS models
+- fix to path reading for win32 (spaces in path)
+- fixes to difference of means test, difference of variance test,
+  for situation where sample lengths are different
+- small fixes to manual
+
+12/09/2000 version 0.61
+- fix to configure process for gtkextra
+
+12/08/2000 version 0.60
+- various fixes to distribution files
+- change default user dir to $HOME/.gretl
+- fixes to icon file selector
+- basic link to GNU R
+- further updates to manual
+
+version 0.60pre
+- revise PDF manual
+- revise "scatters" command (multiple scatterplots) and add to gui
+- add read/write of gzip-compressed data files (see store command)
+- move descriptions of data files and practice scripts into
+  separate files (no longer hard-coded into gretl)
+- add new data files from Ramu Ramanathan
+- update to gtkextra version 0.99.12
+- add installer program for win32
+- fix context help bug
+- renaming of various components (library is now libgretl, cli 
+  program is now gretlcli, some directories have been renamed)
+
+(note: version 0.50 was a Windows-only one, and was not really
+ released)
+
+11/18/2000 version 0.40
+- add critical value to printout of correlation matrix
+- add capacity to read gretl databases from remote server
+- add built-in data decompression with zlib	
+- rename exported library functions, avoiding leading underscore
+- add libtool versioning
+
+11/03/2000 version 0.32
+- Add capacity to read BOX1-format data files
+- Add lists of recently opened files to file menus
+- fix various bugs connected with "session" concept
+- fix gtkextra headers bug in make process
+
+10/20/2000 version 0.31
+- add gamma distribution to pvalue command
+- fix some more bugs
+- hush gtk warnings in win32 version
+
+10/15/2000 version 0.30
+- introduce experimental "session" idea
+- update manual
+- add "pergm" (periodogram) command.  Also see "Spectrum" under
+  the GUI Variable menu
+- add maxlag parameter to corrgm command; also add printing
+  of Box-Pierce Q stat, and partial autocorrelations
+- fix up "delete" command ("insufficient args" bug)
+- clean up gnuplot background code for gnuplot controller
+- delete extra variables after chow test
+- minor fixes to LaTeX printing
+- use proper pointers to keep track of multiple windows
+- add "max p-value" statement to regression printout
+- put back Durbin-Watson printout line for hccm, tsls
+- fix inconsistency with docs in setting of the break point
+  for the Chow test
+- more fixes to csv file reading
+- bug fix in freq plot after freq print
+- update sample label when excluding missing obs
+- update iconfilesel and gtksheet to gtk+extra-0.99.11
+- configure: use installed gtkextra if available
+- substantial code cleanups and speedups in GUI.
+
+06/14/2000 version 0.2i
+- improve consistency in GUI w.r.t. opening of data files
+  and databases
+- update manual and help files
+- add "delete" command (trash last variable)
+- fix potential data files paths bug
+- fix hsk bug (aux regression could fail silently)
+- add some data files from William Greene's book
+- add "while" syntax to command loop mechanism
+  (useful for iterated least squares -- tested on Greene's
+   example 11.3 of nonlinear estimation).  See manual.
+- fix sample-length bug in add, omit
+- some more informative error messages from genr
+- activate "add" and "omit" for logit, probit
+- make covariance matrix available for logit, probit
+- add more error trapping for "add"
+- code cleanup in compare.c
+- can capture log-likelihood in genr with "$lnl" after logit, probit
+
+06/09/2000 version 0.2h
+- add estimation of logit and probit models and update manual
+- fixes to "configure" script (gtk, termcap, paths.h) after
+  compilation on HPUX
+- eslclient creates user dir if it doesn't exist
+- add (experimental) "parenthesizer" for genr expressions
+- rearrange "summary" output
+- rename Windows dll
+- fix bug in "fcast" command
+
+06/01/2000 version 0.2g
+- "smpl -o" drops all observations with missing values
+- binary datafiles can be saved in single or double precision
+  (-s or -o flags)
+- Binary datafile saving added to GUI
+- Can add case markers from file to an open data set
+- allow for a comment line at the top of a database .idx file
+  (and display it in GUI)
+- code cleanups
+- delete redundant stuff
+- improve some string handling functions
+- fix win32 path-searching bug?
+
+05/24/2000 version 0.2f
+- updates to manual
+- add handler for Penn World Table
+- improve handling of native databases
+- reformat some output
+- add % operator in genr
+- add -o flag to "smpl" command for sampling via a dummy
+  variable mask.
+- GUI: where appropriate, clicking on a var in the main window
+  will pop its ID # into an open dialog box.
+- add fcasterr to GUI, and improve graphing of forecasts
+- move setobs from Data to Sample menu
+- add "Gretl console" to GUI (under File menu) and update manual
+- add to path-searching for datafiles called from scripts
+  (include the script dir in the search)
+
+05/10/2000 version 0.2e
+- minor changes to GUI menus
+- add xpm icon for X
+- correct printout of t-stats for AR coefficients
+- correct wasteful malloc in xpxxpy function
+- better printout for F-statistic
+- add discussion of NIST reference datasets to manual
+- add NIST datasets to package
+- add some error-checking and reporting for datafile opening
+- various fixes to "genr"
+- search for libesl.cfg in dir where executable resides
+  (win32, Dirk's idea)
+- improve handling of constants in corr, corrgm
+- fix error messages from corc_hilu
+- rename eslclnt.exe as eslclient.exe (win32)
+- fix paths in win32 (helpfile and executable, for rerunning
+  commands)
+
+05/05/2000 version 0.2d
+- improvements to manual
+- fix wrong error message for zero weight var in wls
+- explicit check for degeneracy in figuring summary stats
+- add median(), var(), cov() to functions in genr
+- add "spearman" command (rank correlation)
+- add "runs" command (runs test for randomness)
+- fix bug in calculation of rho hat
+- fix lengths of series created by diff, etc, in relation to smpl
+
+05/01/2000 version 0.2c
+- add setobs command
+- add seed command
+- manual: add section on panel data, improve "genr" section
+- more CSV bugfixes
+- make adf, coint commands more informative
+- add "paneldum" (for panel data) to genr command
+
+04/28/2000 version 0.2b
+- add fcasterr command
+- many fixes in response to comments from Ramu Ramanathan and
+  Dirk Eddelbuettel
+- improve Makefiles
+- bugfix in binary datafile handling
+- update manual
+
+04/22/2000 version 0.2a
+- add arch, sim and multiply commands
+- many bugfixes after running numerous test files
+- further code cleanups
+- improvements in printing forecasts
+- fix memory leaks
+
+04/14/2000 version 0.2
+- many fixes for greater consistency with esl
+- printout improvements
+- internal code cleanups
+- bug fixes (notably for CSV file handling)
+
+04/05/2000 version 0.1z
+- add a gui controller for gnuplot graphs
+- many bugfixes
+- reorganize (simplify) command-line arguments
+- more updates to documentation
+
+03/27/2000 version 0.1y
+- improvements and bugfixes to CSV file handling
+- improvements to "add" and "omit" commands
+- add "coint" command (cointegration test)
+
+03/23/2000 version 0.1x
+- many small bugfixes
+- add GNU autoconf apparatus for configuring/compiling
+- updates to documentation
+
+02/29/2000 version 0.1w
+- fixes to build process
+- add iconic file selector
+- add "export CSV" function
+- bug fixes to database reading routines
+
+02/22/2000 version 0.1v
+- add White's standard errors (hccm command)
+- update help files
+- Make model stats (e.g. ess) available for adding to data
+  set in gui, under Model data menu.
+- Add option to display values of selected variables, as well as "all".
+- Fix pvalue in command-line client so that it does not act
+  interactively when supplied with all params on the command line.
+- Add facility to edit the full data header (.hdr) file in
+  gretl (under Data menu).
+- Activate the "Add observation" feature in ssheet; add a
+  similar "Insert Observation" option.  Minimal testing so far.
+- Fix (I think) bug in setup of new spreadsheet data set.
+- Give "infobox" feedback when importing database series.
+
+02/13/2000 version 0.1u
+- save data files in GNU Octave format
+- updates to documentation
+
+02/08/2000 version 0.1t
+- gretl adopted as GNU program
+- add context-sensitive help for command dialogs
+- add file, save for model output windows
+- add search facility for help file, database windows
+
+02/02/2000 version 0.1s
+- Fixes to Makefiles
+- Improvements to loop mode (Monte Carlo simulations)
+
+01/31/2000 version 0.1r
+- Initial public release
+

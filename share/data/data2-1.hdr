@@ -1,0 +1,8 @@
+(*
+DATA2-1:  Verbal and SAT scores of first year undergraduate students
+    vsat   =  Verbal SAT score (Range 200 - 700)
+    msat   =  Math SAT score (Range 330 - 770)
+*)
+vsat msat ;
+1 1 427
+BYOBS

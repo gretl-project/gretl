@@ -1,0 +1,8 @@
+(*
+DATA3-13: Annual data on U.S. population in millions
+    (Range 146.631 - 263.034)
+    Source: Economic Report of the President, 1996, Table B-30, Page 315
+*)
+year pop ;
+1 1948 1995
+BYOBS

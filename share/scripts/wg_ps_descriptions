@@ -1,0 +1,9 @@
+# descriptions of gretl practice files: 
+# first col: name of file, less the .inp extension
+# second col: the theoretical topic 
+# third col: nature of data set used
+"greene7_8","structural instability","gasoline consumption"
+"greene8_3","nonlinear model","Solow production function"
+"greene11_3","nonlinear regression","income and consumption"
+"greene12_1","heteroskedasticity","credit-card spending"
+"greene19_1","logit and probit","economics test scores"

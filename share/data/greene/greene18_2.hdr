@@ -1,0 +1,8 @@
+(*
+Table A18.2 from Greene.
+Data used for Dickey-Fuller test.
+Money, output and price deflator, U.S., quarterly, 1950-1983
+*)
+Y M1 P ;
+4 1950.1 1983.4
+BYOBS

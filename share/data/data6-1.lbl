@@ -1,0 +1,4 @@
+UNITCOST Cost per unit dollars (Range 3.65 - 6.62)
+OUTPUT   Index of output (Range 50 - 104)
+INPCOST  Index of input costs (Range 80 - 150)
+

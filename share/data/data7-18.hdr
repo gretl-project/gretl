@@ -1,0 +1,34 @@
+(*
+DATA7-18:
+    Cross-sectional data on the 58 California counties for the year
+    1990 to explain population differentials - compiled by Alvin Chan.
+    Sources: California Statistical Abstract.
+             California Cities, Towns, & Counties.
+    pop      = county population in thousands, Range 1.192 - 9149.81.
+    educexp  = local government expenditures on education per student
+               (in dollars), Range 3869-9438.
+    recrexp  = expenditures per capita on recreation and cultural
+               services (in dollars),  Range 0 - 3138.
+    policexp = local government expenditures per capita on police
+               protection (in dollars), Range 79 - 674.
+    vcrime   = number of violent crimes per 100,000 population,
+               Range 230 - 1587.
+    othrcrim = number of other crimes per 100,000 population,
+               Range 2130 - 16946.
+    unemprt  = unemployment rate (%), Range 4.8 - 24.9.
+    city     = dummy variable that equals 1 if there is a city in the
+               county with a population over 100,000 inhabitants.
+    inland   = dummy variable that takes the value 1 when the county
+               does not border the Pacific ocean.
+    central  = dummy variable that takes on the value 1 when the county
+               is located in the southern portion of the state and 0
+               when it is in either the northern or southern portion of
+               the state.
+    south    = dummy variable that takes on the value 1 when the county is
+               located in the southern portion of the state and 0 if it
+               is in the central or northern portion of the state.
+*)
+pop educexp recexp policexp vcrime othrcrim unemprt city inland central
+south ;
+1 1 58
+BYOBS

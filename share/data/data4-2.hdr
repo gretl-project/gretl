@@ -1,0 +1,15 @@
+(*
+DATA4-2: Annual data for the U.S. for 1959-94				
+    Source: 1996 Economic Report of the President
+    Ct = real consumption expenditure in billions of 1992 dollars, Table
+         B-2, Page 282 (Range 1393.6 - 4471.1)
+    Yt = Gross domestic product in billions of 1992 dollars, Table B-2,
+         Page 282 (Range 2212.3 - 6604.2)
+    WAGES = total compensation of employees in billions of current dollars,
+            Table B-24, Page 306 (Range 281.2 - 4008.3)
+    PRDEFL = Implicit price deflator for consumption expenditures, 1992 =
+             100, Table B-3, Page 284 (Range 22.8 - 105.1)
+*) 				
+YEAR Ct Yt WAGES PRDEFL ;
+1 1959 1994
+BYOBS

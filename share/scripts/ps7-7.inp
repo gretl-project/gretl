@@ -1,0 +1,45 @@
+(* PS7.7, using DATA7-5, for the Application in Section 7.8 *)  
+ols Q const P HS SHC OC L PL  
+(* Above command estimates Model A. Now generate monthly dummies *)  
+genr dummy
+(* estimate Model B with monthly dummies *)  
+ols Q const P HS SHC OC L PL dummy_2 dummy_3 dummy_4 dummy_5 dummy_6 \
+ dummy_7 dummy_8 dummy_9 dummy_10 dummy_11 dummy_12  
+(* reset sample range to the first period only *)  
+smpl 1983.01 1986.06
+(* Next estimate Model C *)  
+ols Q const P HS SHC OC dummy_2 dummy_3 dummy_4 dummy_5 dummy_6 \
+ dummy_7 dummy_8 dummy_9 dummy_10 dummy_11 dummy_12  
+(* omit variables with highest p-values, a few at a time *)  
+omit dummy_2 dummy_3  
+omit HS  
+omit dummy_8 dummy_9  
+omit dummy_10 dummy_11  
+omit dummy_4  
+omit dummy_5 dummy_7  
+(* This is Model D, the final model with all significant coefficients *)  
+omit dummy_12  
+(* obtain predicted values for the loss and post loss periods *)  
+fcast 1986.07 1990.05 Qhat 
+(* reset sample range to the second and third periods *)  
+smpl 1986.07 1990.05
+(* compute loss in sales for each month *)  
+genr Qloss = Qhat - Q
+(* compute loss in revenues for each month *)  
+genr dolrloss = P*Qloss
+(* print values *)  
+print -o Q Qhat Qloss dolrloss  
+(* set sample range to the middle period *)  
+smpl 1986.07 1988.10
+(* compute sum of losses during the litigation period *)
+genr totqloss = 28*mean(Qloss)
+genr totdloss = 28*mean(dolrloss)
+(* print the values *)  
+print totqloss totdloss 
+(* reset sample range for the post loss period *)  
+smpl 1988.11 1990.05
+(* compute sum of losses for this period *)  
+genr qloss2 = 19*mean(Qloss)
+genr dloss2 = 19*mean(dolrloss)
+(* print the values *)  
+print qloss2 dloss2  

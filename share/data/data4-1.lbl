@@ -1,0 +1,4 @@
+price sale price in thousands of dollars (Range 199.9 - 505)
+sqft square feet of living area (Range 1065 - 3000)
+bedrms number of bedrooms (Range 3 - 4)
+baths number of bathrooms (Range 1.75 - 3)

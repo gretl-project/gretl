@@ -1,0 +1,21 @@
+(* PS6.2 using DATA6-1 for Example 6.2 *)
+square OUTPUT INPCOST
+(* estimate models *)
+ols UNITCOST 0 OUTPUT sq_OUTPU INPCOST sq_INPCO
+omit sq_INPCO
+(* retrieve regression coefficients *)
+genr b1 = coeff(0)
+genr b2 = coeff(OUTPUT)
+genr b3 = coeff(sq_OUTPU)
+genr b4 = coeff(INPCOST)
+(* generate estimated averages to graph the average cost function *)
+genr time
+genr x=40 +(time*5)
+genr INPCOST1 = 80
+genr INPCOST2 = 115
+genr INPCOST3 = 150
+genr yhat1 = b1+(b2*x) + (b3*x*x) + (b4*INPCOST1)
+genr yhat2 = b1+(b2*x) + (b3*x*x) + (b4*INPCOST2)
+genr yhat3 = b1+(b2*x) + (b3*x*x) + (b4*INPCOST3)
+print -o x yhat1 yhat2 yhat3
+

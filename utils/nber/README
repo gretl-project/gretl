@@ -1,0 +1,60 @@
+Tools for making a gretl database using the contents of a given
+section of the NBER Macrohistory Database
+
+http://www.nber.org/databases/macrohistory/contents/index.html
+
+1. get_nber_data.sh
+
+Shell script to grab the .db files for a given "chapter", using the
+GNU program wget (http://www.gnu.org/software/wget/wget.html).
+
+2. nberhist.pl
+
+Perl script to extract series names and descriptions, and the actual
+data, from a set of .db files collected using get_nber_data.sh.
+
+3. idx_abbrev.pl
+
+Perl filter to abbreviate some terms appearing in series descriptions
+(which can be quite verbose).  N.B. Intelligent intervention needed
+here -- see below.
+
+Example of use:
+
+Let's say we want to make a database out of chapter 15, "Government and
+Finance".  (The symbol '$' indicates the command prompt.)
+
+Grab the data:
+
+  $ ./get_nber_data.sh 15
+  
+  This should create a dir named www.nber.org, with a subdir '15' 
+  containing all the relevant .db files.  May take a little while.
+  
+Process the data:  
+  
+  $ ./nberhist.pl 15
+  
+  Processes the data and produces two files, a binary database
+  nberhist15.bin and an accompanying index, nberhist15.idx.  Watch
+  for any error messages indicating db files that cannot be 
+  processed properly.  Such files should be skipped, but you may
+  want to go back and see if you can fix them up.
+
+Abbreviate the series descriptions:
+  
+  $ ./idx_abbrev.pl < nberhist15.idx > foo
+  
+  Makes an abbreviated copy of the index file.  Now open 'foo' in a text
+  editor and check it over, possibly making further abbreviations (things
+  will go wrong if any of the descriptions exceed 127 characters in
+  length). Once you're satisfied:
+  
+  $ mv foo nberhist15.idx
+  
+Finally put the  nberhist15.* files where gretl can find them.  By default
+this will probably be /usr/local/share/gretl/db 
+
+Allin Cottrell
+cottrell@wfu.edu
+ 

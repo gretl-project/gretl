@@ -1,0 +1,827 @@
+/*
+ *  Copyright (c) by Ramu Ramanathan and Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
+/*
+    compare.c - gretl model comparison procedures
+*/
+
+#include "libgretl.h"
+#include "internal.h"
+
+#ifdef OS_WIN32
+# include <windows.h>
+#endif
+
+static int _justreplaced (const int i, const DATAINFO *pdinfo, 
+			  const int *list);
+
+/* ........................................................... */
+
+int _addtolist (const int *oldlist, const int *addvars, int **pnewlist,
+		const DATAINFO *pdinfo, const int model_count)
+/* Adds specified independent variables to a specified
+   list, forming newlist.  The first element of addvars
+   is the number of variables to be added; the remaining
+   elements are the ID numbers of the variables to be added.
+*/
+{
+    int i, j, k, nadd = addvars[0], match; 
+
+    *pnewlist = malloc((oldlist[0] + nadd + 1) * sizeof(int));
+    if (*pnewlist == NULL) return E_ALLOC;
+
+    for (i=0; i<=oldlist[0]; i++) (*pnewlist)[i] = oldlist[i];
+    k = oldlist[0];
+
+    for (i=1; i<=addvars[0]; i++) {
+	match = 0;
+	for (j=1; j<=oldlist[0]; j++) {
+	    if (addvars[i] == oldlist[j]) {
+		/* a "new" var was already present */
+		free(*pnewlist);
+		return E_ADDDUP;
+	    }
+	}
+	if (!match) {
+	    (*pnewlist)[0] += 1;
+	    k++;
+	    (*pnewlist)[k] = addvars[i];
+	}
+    }
+
+    if ((*pnewlist)[0] == oldlist[0]) 
+	return E_NOADD;
+    if (_justreplaced(model_count, pdinfo, oldlist)) 
+	return E_VARCHANGE;
+    return 0;
+}
+
+/* ........................................................... */
+
+int _omitfromlist (int *list, const int *omitvars, int newlist[],
+		   const DATAINFO *pdinfo, const int model_count)
+/* Drops specified independent variables from a specified
+   list, forming newlist.  The first element of omitvars
+   is the number of variables to be omitted; the remaining
+   elements are the ID numbers of the variables to be dropped.
+*/
+{
+    int i, j, k, nomit = omitvars[0], l0 = list[0], match; 
+
+    /* attempting to omit all vars or more ? */
+    if (nomit >= l0-1) return E_NOVARS;
+
+    newlist[0] = 1;
+    newlist[1] = list[1];
+    k = 1;
+    for (i=2; i<=l0; i++) {
+        match = 0;
+        for (j=1; j<=nomit; j++) {
+            if (list[i] == omitvars[j]) {
+                match = 1; /* matching var: omit it */
+		break;
+            }
+        }
+        if (!match) { /* var is not in omit list: keep it */
+	    k++;
+            newlist[k] = list[i];
+        }
+    }
+    newlist[0] = k;
+    if (newlist[0] == list[0]) /* no vars were omitted */
+	return E_NOOMIT; 
+    if (_justreplaced(model_count, pdinfo, newlist)) 
+	return E_VARCHANGE; /* values of one or more vars to be
+				omitted have changed */
+    return 0;
+}
+
+/* ........................................................... */
+
+static void _difflist (int *biglist, int *smalist, int *targ)
+{
+    int i, j, k, match;
+
+    targ[0] = biglist[0] - smalist[0];
+    k = 1;
+    for (i=2; i<=biglist[0]; i++) {
+	match = 0;
+	for (j=2; j<=smalist[0]; j++) {
+	    if (smalist[j] == biglist[i]) {
+		match = 1;
+		break;
+	    }
+	}
+	if (!match) {
+	    targ[k] = biglist[i];
+	    k++;
+	}
+    }
+}
+
+/* ........................................................... */
+
+static int _justreplaced (const int i, const DATAINFO *pdinfo, 
+			  const int *list)
+     /* check if any var in list has been replaced via genr since a
+	previous model (model_count i) was estimated.  Expects
+	the "label" in datainfo to be of the form "Replaced
+	after model <count>" */
+{
+    int j, repl = 0;
+
+    for (j=1; j<=list[0]; j++) {
+	if (strncmp(pdinfo->label[list[j]], "Replaced", 8) == 0 &&
+	    sscanf(pdinfo->label[list[j]], "%*s %*s %*s %d", &repl) == 1)
+	if (repl >= i) return 1;
+    }
+    return 0; 
+}
+
+/* ........................................................... */
+
+static COMPARE add_compare (const MODEL *pmodA, const MODEL *pmodB) 
+/* Generate comparison statistics between an initial model, A,
+   and a new model, B, arrived at by adding variables to A. */
+{
+    COMPARE add;
+    int i;	
+
+    add.m1 = pmodA->ID;
+    add.m2 = pmodB->ID;
+    add.F = 0.0;
+    add.ols = add.discrete = 0;
+
+    if (pmodA->ci == OLS) add.ols = 1;
+    if (pmodA->ci == LOGIT || pmodA->ci == PROBIT)
+	add.discrete = 1;
+    add.score = 0;
+    add.dfn = pmodB->ncoeff - pmodA->ncoeff;
+    add.dfd = pmodB->dfd;
+    if (add.ols && pmodB->aux == AUX_ADD) {
+	add.F = ((pmodA->ess - pmodB->ess)/pmodB->ess)
+	    * add.dfd/add.dfn;
+    }
+    else if (add.discrete) {
+	add.chisq = 2.0 * (pmodB->lnL - pmodA->lnL);
+	return add;
+    }
+    for(i=0; i<8; i++) 
+	if (pmodB->criterion[i] < pmodA->criterion[i]) 
+	    add.score++;
+    return add;
+}	    
+
+/* ........................................................... */
+
+static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
+/* Generate comparison statistics between a general model, A,
+   and a restricted model B, arrived at via one or more
+   zero restrictions on the parameters of A.
+*/
+{
+    COMPARE omit;
+    int i;	
+
+    omit.m1 = pmodA->ID;
+    omit.m2 = pmodB->ID;
+    omit.ols = omit.discrete = 0;
+
+    if (pmodA->ci == OLS) omit.ols = 1;
+    if (pmodA->ci == LOGIT || pmodA->ci == PROBIT)
+	omit.discrete = 1;
+    omit.score = 0;
+    if (omit.ols || omit.discrete) {
+	omit.dfn = pmodA->dfn - pmodB->dfn;
+	omit.dfd = pmodA->dfd;
+	if (pmodA->ifc && !pmodB->ifc) omit.dfn += 1;
+	if (omit.ols) {
+	    omit.F = ((pmodB->ess - pmodA->ess)/pmodA->ess)
+		* omit.dfd/omit.dfn;
+	} else {
+	    omit.chisq = 2.0 * (pmodA->lnL - pmodB->lnL);
+	    return omit;
+	}
+    }
+    for (i=0; i<8; i++) 
+	if (pmodB->criterion[i] < pmodA->criterion[i]) omit.score++;
+    return omit;
+}	    
+
+/* ........................................................... */
+
+int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count, 
+	    double **pZ, DATAINFO *pdinfo, const int aux_code, 
+	    print_t *prn, GRETLTEST *test)
+{
+    COMPARE add;             
+    int *newlist, *tmplist = NULL;
+    MODEL aux;
+    int i, t, err, n = pdinfo->n, orig_nvar = pdinfo->v; 
+    int m = *model_count, check = 0, pos = 0, listlen; 
+    double trsq = 0.0, rho = 0.0; 
+
+    if (orig->ci == TSLS) return E_NOTIMP;
+
+    init_model(&aux);
+
+    /* was a specific list of vars to add passed in, or should we
+       concoct one? (e.g. "lmtest") */
+    if (addvars != NULL) {
+	check = _addtolist(orig->list, addvars, &newlist, pdinfo, m);
+	if (check) return check;
+    } else {
+	/* does the original list contain a constant? */
+	if (orig->ifc) listlen = orig->list[0] - 1;
+	else listlen = orig->list[0];
+	tmplist = malloc(listlen * sizeof *tmplist);
+	if (tmplist == NULL) return E_ALLOC;
+	tmplist[0] = listlen - 1;
+	for (i=1; i<=tmplist[0]; i++) tmplist[i] = orig->list[i+1];
+	/* no cross-products yet */
+	if (aux_code == AUX_SQ) { /* add squares of original variables */
+	    check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
+	    if (check < 0) {
+		fprintf(stderr, "gretl: generation of squares failed\n");
+		free(tmplist);
+		return E_SQUARES;
+	    }
+	}
+	else if (aux_code == AUX_LOG) { /* add logs of orig vars */
+	    check = logs(tmplist, pZ, pdinfo, NULL);
+	    if (check < 0) {
+		fprintf(stderr, "gretl: generation of logs failed\n");
+		free(tmplist);
+		return E_LOGS;
+	    }
+	}	    
+	/* now construct an "addvars" list including all
+	   the vars that were just generated.  Use tmplist again. */
+	/* printf("compare: realloc, check=%d\n", check); */
+	tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
+	if (tmplist == NULL) return E_ALLOC;
+	tmplist[0] = pdinfo->v - orig_nvar;
+	for (i=1; i<=tmplist[0]; i++) 
+	    tmplist[i] = i + orig_nvar - 1;
+	check = _addtolist(orig->list, tmplist, &newlist,
+			   pdinfo, m);
+    }
+    if (check) return check;
+
+    /* ADD: run an augmented regression, matching the original
+       estimation method */
+    if (aux_code == AUX_ADD) {
+	if (orig->ci == CORC || orig->ci == HILU) {
+	    err = hilu_corc(&rho, newlist, *pZ, pdinfo, 
+			    orig->ci, prn);
+	    if (err) return err;  
+	}
+	else if (orig->ci == WLS || orig->ci == AR) {
+	    pos = full_model_list(orig, &newlist);
+	    if (pos < 0) return E_ALLOC;
+	}
+	if (orig->ci == AR) {
+	    *new = ar_func(newlist, pos, pZ, pdinfo, model_count, prn);
+	    *model_count -= 1;
+	}
+	else if (orig->ci == ARCH) {
+	    *new = arch(orig->archp, newlist, pZ, pdinfo, model_count, 
+			prn, NULL);
+	    *model_count -= 1;
+	} 
+	else if (orig->ci == LOGIT || orig->ci == PROBIT) {
+	    *new = logit_probit(newlist, pZ, pdinfo, orig->ci);
+	}
+	else 
+	    *new = lsq(newlist, *pZ, pdinfo, orig->ci, 1, rho);
+
+	if (new->nobs < orig->nobs) 
+	    new->errcode = E_MISS;
+	if (new->errcode) {
+	    err = new->errcode;
+	    free(newlist);
+	    if (addvars == NULL) free(tmplist); 
+	    clear_model(new, NULL, NULL);
+	    return err; 
+	}
+	++m;
+	new->ID = m;
+    } /* end if AUX_ADD */
+
+    /* non-linearity test? Run auxiliary regression here -- 
+       Replace depvar with uhat from orig */
+    if (aux_code == AUX_SQ || aux_code == AUX_LOG) {
+	int df = 0;
+
+	/* grow data set to accommodate new dependent var */
+	if (grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+	for (t=0; t<n; t++)
+	    (*pZ)[n*(pdinfo->v - 1) + t] = NADBL;
+	for (t=orig->t1; t<=orig->t2; t++)
+	    (*pZ)[n*(pdinfo->v - 1) + t] = orig->uhat[t];
+	newlist[1] = pdinfo->v - 1;
+	pdinfo->extra = 1;
+
+	aux = lsq(newlist, *pZ, pdinfo, OLS, 1, rho);
+	if (aux.errcode) {
+	    err = aux.errcode;
+	    fprintf(stderr, "auxiliary regression failed\n");
+	    free(newlist);
+	    if (addvars == NULL) free(tmplist); 
+	    clear_model(&aux, NULL, NULL);
+	    shrink_Z(1, pZ, pdinfo);
+	    return err; 
+	}
+	aux.aux = aux_code;
+	printmodel(&aux, pdinfo, prn);
+	trsq = aux.rsq * aux.nobs;
+
+	if (test) {
+	    df = newlist[0] - orig->list[0];
+	    sprintf(test->type, "Non-linearity test (%s)",
+		    (aux_code == AUX_SQ)? "squares" : "logs");
+	    strcpy(test->h_0, "relationship is linear");
+	    sprintf(test->teststat, "TR^2 = %f", trsq);
+	    sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+		    df, trsq, chisq(trsq, df));
+	}
+
+	clear_model(&aux, NULL, NULL);
+
+	/* shrink for uhat */
+	shrink_Z(1, pZ, pdinfo);
+	pdinfo->extra = 0;
+    }
+
+    if (aux_code == AUX_ADD) new->aux = aux_code;
+    add = add_compare(orig, new);
+    add.trsq = trsq;
+
+    if (aux_code == AUX_ADD && new->ci != AR && new->ci != ARCH)
+	printmodel(new, pdinfo, prn);
+
+    if (addvars != NULL) {
+	_difflist(new->list, orig->list, addvars);
+	print_add(&add, addvars, pdinfo, aux_code, prn);
+    } else {
+	add.dfn = newlist[0] - orig->list[0];
+	print_add(&add, tmplist, pdinfo, aux_code, prn);
+    }
+
+    *model_count += 1;
+    free(newlist);
+    if (addvars == NULL) free(tmplist); 
+
+    /* trash any extra variables generated (squares, logs) */
+    if (pdinfo->v > orig_nvar)
+	shrink_Z(pdinfo->v - orig_nvar, pZ, pdinfo);
+
+    return 0;
+}
+
+/* ........................................................... */
+
+int handle_omit (int *omitvars, MODEL *orig, MODEL *new, 
+		 int *model_count, double **pZ, DATAINFO *pdinfo, 
+		 print_t *prn)
+{
+    COMPARE omit;             /* Comparison struct for two models */
+    int *tmplist, m = *model_count, check, err, pos = 0;
+    int maxlag = 0, t1 = pdinfo->t1;
+    double rho = 0.0;
+
+    if (orig->ci == TSLS) return E_NOTIMP;
+    if (orig->ci == AR) 
+	maxlag = orig->arlist[orig->arlist[0]];
+    else if (orig->ci == ARCH) 
+	maxlag = orig->archp;
+    pdinfo->t1 = orig->t1 - maxlag;
+
+    tmplist = malloc((orig->ncoeff + 2) * sizeof(int));
+    if (tmplist == NULL) { 
+	pdinfo->t1 = t1;
+	return E_ALLOC; 
+    }
+
+    check = _omitfromlist(orig->list, omitvars, tmplist, pdinfo, m);
+    if (check) {
+	free(tmplist);
+	pdinfo->t1 = t1;
+	return check;
+    }
+
+    if (orig->ci == CORC || orig->ci == HILU) {
+	err = hilu_corc(&rho, tmplist, *pZ, pdinfo, 
+			orig->ci, prn);
+	if (err) {
+	    free(tmplist);
+	    pdinfo->t1 = t1;
+	    return err; 
+	}
+    }
+    else if (orig->ci == WLS || orig->ci == AR) {
+	pos = full_model_list(orig, &tmplist);
+	if (pos < 0) {
+	    free(tmplist);
+	    pdinfo->t1 = t1;
+	    return E_ALLOC;
+	}
+    }
+
+    if (orig->ci == AR) {
+	*new = ar_func(tmplist, pos, pZ, pdinfo, model_count, prn);
+	*model_count -= 1;
+    }
+    else if (orig->ci == ARCH) {
+	*new = arch(orig->archp, tmplist, pZ, pdinfo, model_count, 
+		    prn, NULL);
+	*model_count -= 1;
+    } 
+    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
+	*new = logit_probit(tmplist, pZ, pdinfo, orig->ci);
+	new->aux = AUX_OMIT;
+    }
+    else 
+	*new = lsq(tmplist, *pZ, pdinfo, orig->ci, 1, rho);
+
+    if (new->errcode) {
+	pprintf(prn, "%s\n", new->errmsg);
+	free(tmplist);
+	pdinfo->t1 = t1;
+	return new->errcode; 
+    }
+    ++m;
+    new->ID = m;
+    omit = omit_compare(orig, new);
+    if (orig->ci != AR && orig->ci != ARCH) 
+	printmodel(new, pdinfo, prn); 
+    _difflist(orig->list, new->list, omitvars);
+    print_omit(&omit, omitvars, pdinfo, prn);     
+
+    *model_count += 1;
+    free(tmplist);
+    if (orig->ci == LOGIT || orig->ci == PROBIT)
+	new->aux = NONE;
+    pdinfo->t1 = t1;
+    return 0;
+}
+
+/* ........................................................... */
+
+int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
+		   print_t *prn, GRETLTEST *test)
+{
+    int *newlist;
+    MODEL aux;
+    int err, i, k, t, n = pdinfo->n, v = pdinfo->v; 
+    double trsq;
+
+    init_model(&aux);
+
+    k = pdinfo->pd + 1;
+    newlist = malloc((pmod->list[0] + k) * sizeof *newlist);
+    if (newlist == NULL) return E_ALLOC;
+    newlist[0] = pmod->list[0] + pdinfo->pd;
+    for (i=2; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
+
+    if (grow_Z(1, pZ, pdinfo)) {
+	free(newlist);
+	return E_ALLOC;
+    }
+
+    /* add uhat to data set */
+    for (t=0; t<n; t++)
+	(*pZ)[n*v + t] = NADBL;
+    for (t = pmod->t1; t<= pmod->t2; t++)
+	(*pZ)[n*v + t] = pmod->uhat[t];
+    strcpy(pdinfo->varname[v], "uhat");
+    strcpy(pdinfo->label[v], "residual");
+    /* then lags of same */
+    for (i=1; i<=pdinfo->pd; i++) {
+	if (laggenr(v, i, 1, pZ, pdinfo)) {
+	    fprintf(stderr, "lagging uhat failed\n");
+	    free(newlist);
+	    return E_LAGS;
+	} else newlist[pmod->list[0] + i] = v+i;
+    }
+
+    newlist[1] = v;
+    /*  printlist(newlist); */
+    aux = lsq(newlist, *pZ, pdinfo, OLS, 1, 0.0);
+    err = aux.errcode;
+    if (err) {
+	if (strlen(aux.errmsg)) pprintf(prn, "%s\n", aux.errmsg);
+	else errmsg(aux.errcode, NULL, prn);
+	free(newlist);
+	clear_model(&aux, NULL, NULL);
+	shrink_Z(k, pZ, pdinfo);
+	return err;
+    } 
+
+    aux.aux = AUX_AR;
+    printmodel(&aux, pdinfo, prn);
+    trsq = aux.rsq * aux.nobs;
+
+    pprintf(prn, "\nTest statistic: TR^2 = %f,\n", trsq);
+    pprintf(prn, "with p-value = prob(Chi-square(%d) > %f) = %f\n\n", 
+	    pdinfo->pd, trsq, chisq(trsq, pdinfo->pd));
+
+    if (test != NULL) {
+	strcpy(test->type, "LM test for autocorrelation");
+	sprintf(test->h_0, "no autocorrelation up to order %d", pdinfo->pd);
+	sprintf(test->teststat, "TR^2 = %f", trsq);
+	sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+		pdinfo->pd, trsq, chisq(trsq, pdinfo->pd));
+    }
+
+    shrink_Z(k, pZ, pdinfo);
+    free(newlist);
+    clear_model(&aux, NULL, NULL);
+    return 0;
+}
+
+/* ........................................................... */
+
+int chow_test (const char *line, MODEL *pmod, double **pZ,
+	       DATAINFO *pdinfo, print_t *prn, char *msg, 
+	       GRETLTEST *test)
+{
+    int *chowlist;
+    int newvars = pmod->list[0] - 1;
+    int i, t, v = pdinfo->v, n = pdinfo->n;
+    int split;
+    char chowdate[8], s[9];
+    MODEL chow_mod;
+    double F;
+
+    if (pmod->ci != OLS) return E_OLSONLY;
+
+    init_model(&chow_mod);
+
+    if (sscanf(line, "%*s %7s", chowdate) != 1) 
+	return E_PARSE;
+    split = dateton(chowdate, pdinfo->pd, pdinfo->stobs, msg) - 1;
+    if (split <= 0 || split >= pdinfo->n) 
+	return E_SPLIT;
+
+    /* take the original regression list, add a split dummy
+       and interaction terms. */
+    if (pmod->ifc == 0) newvars += 1;
+    if (grow_Z(newvars, pZ, pdinfo)) return E_ALLOC;
+    chowlist = malloc((pmod->list[0] + newvars + 1) * sizeof *chowlist);
+    if (chowlist == NULL) return E_ALLOC;
+
+    chowlist[0] = pmod->list[0] + newvars;
+    for (i=1; i<=pmod->list[0]; i++) 
+	chowlist[i] = pmod->list[i];
+
+    /* generate the split variable */
+    for (t=0; t<n; t++) (*pZ)[n*v + t] = (double) (t > split); 
+    strcpy(pdinfo->varname[v], "splitdum");
+    strcpy(pdinfo->label[v], "dummy variable for Chow test");
+    chowlist[pmod->list[0] + 1] = v;
+
+    /* and the interaction terms */
+    for (i=1; i<newvars; i++) {
+	for (t=0; t<n; t++)
+	   (*pZ)[n*(v+i) + t] = 
+	       (*pZ)[n*v + t] * (*pZ)[n*(pmod->list[1+i]) + t];
+	strcpy(s, pdinfo->varname[pmod->list[1+i]]); 
+	esl_trunc(s, 5);
+	strcpy(pdinfo->varname[v+i], "sd_");
+	strcat(pdinfo->varname[v+i], s);
+	sprintf(pdinfo->label[v+i], "splitdum * %s", 
+		pdinfo->varname[pmod->list[1+i]]);
+	chowlist[pmod->list[0]+1+i] = v+i;
+    }
+
+    /*  printlist(chowlist); */
+    chow_mod = lsq(chowlist, *pZ, pdinfo, OLS, 1, 0.0);
+    if (chow_mod.errcode) {
+	if (strlen(chow_mod.errmsg)) 
+	    pprintf(prn, "%s\n", chow_mod.errmsg);
+	else errmsg(chow_mod.errcode, NULL, prn);
+    } else {
+	chow_mod.aux = AUX_CHOW;
+	printmodel(&chow_mod, pdinfo, prn);
+	F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
+	    (chow_mod.ess * newvars);
+	pprintf(prn, "\nChow test for structural break at observation %s:\n"
+	       "  F(%d, %d) = %f with p-value %f\n\n", chowdate,
+	       newvars, chow_mod.dfd, F, 
+	       fdist(F, newvars, chow_mod.dfd)); 
+
+	if (test != NULL) {
+	    sprintf(test->type, "Chow test for structural break at "
+		   "observation %s", chowdate);
+	    strcpy(test->h_0, "no structural break");
+	    sprintf(test->teststat, "F(%d, %d) = %f", 
+		    newvars, chow_mod.dfd, F);
+	    sprintf(test->pvalue, "%f", fdist(F, newvars, chow_mod.dfd));
+	}
+	clear_model(&chow_mod, NULL, NULL);
+    } 
+
+    /* clean up extra variables */
+    shrink_Z(newvars, pZ, pdinfo);
+    free(chowlist);
+
+    return 0;
+}
+
+/* ........................................................... */
+
+static double vprime_M_v (double *v, double *M, int n)
+     /* compute v'Mv, for symmetric M */
+{
+    int i, j, jmin, jmax, k = 1;
+    double xx, val = 0.0;
+
+    jmin = 0;
+    for (i=0; i<n; i++) {
+	xx = 0.0;
+	for (j=jmin; j<n; j++) 
+	    xx += v[j] * M[k++];
+	jmin++;
+	val += xx * v[i];
+    }
+    jmax = 1;
+    for (i=1; i<n; i++) {
+	k = i + 1;
+	xx = 0.0;
+	for (j=0; j<jmax; j++) {
+	    xx += v[j] * M[k];
+	    k += n - j - 1;
+	}
+	jmax++;
+	val += xx * v[i];
+    }
+    return val;
+}
+
+/* ........................................................... */
+
+int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, print_t *prn, 
+		char *msg, const PATHS *ppaths, GRETLTEST *test)
+{
+    int err = 0, n_est, i, j, t;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
+    int xno, yno = pmod->list[1];
+    int T = pmod->t2 - pmod->t1 + 1, K = pmod->ncoeff;
+    MODEL cum_mod;
+    char cumdate[8];
+    double wbar, xx, yy, sigma, *cresid, *W;
+    double hct, *xvec;
+    FILE *fq;
+    char plotcmd[MAXLEN];
+
+    if (pmod->ci != OLS) return E_OLSONLY;
+
+    n_est = T - K;
+    cresid = malloc(n_est * sizeof *cresid);
+    W = malloc(n_est * sizeof *W);
+    if (cresid == NULL || W == NULL) return E_ALLOC;
+    xvec = malloc(K * sizeof *xvec);
+    if (xvec == NULL) {
+	free(cresid);
+	free(W);
+	return E_ALLOC;
+    }
+
+    init_model(&cum_mod);
+    /* set sample based on model to be tested */
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t1 + K - 1;
+
+    wbar = 0.0;
+    for (j=0; j<n_est; j++) {
+	cum_mod = lsq(pmod->list, *pZ, pdinfo, OLS, 1, 0.0);
+	if (cum_mod.errcode) {
+	    if (strlen(cum_mod.errmsg)) 
+		pprintf(prn, "%s\n", cum_mod.errmsg);
+	    else errmsg(cum_mod.errcode, NULL, prn);
+	    clear_model(&cum_mod, NULL, NULL);
+	    free(cresid);
+	    free(W);
+	    free(xvec);
+	    return 1;
+	} else {
+	    t = pdinfo->t2 + 1;
+	    yy = 0.0;
+	    for (i=1; i<=K; i++) {
+		xno = cum_mod.list[i+1];
+		xvec[i-1] = (*pZ)[n*xno + t];
+		yy += cum_mod.coeff[i] * (*pZ)[n*xno + t];
+	    }
+	    cresid[j] = (*pZ)[n*yno + t] - yy;
+	    cum_mod.ci = CUSUM;
+	    makevcv(&cum_mod);
+	    xx = vprime_M_v(xvec, cum_mod.vcv, K);
+	    cresid[j] /= sqrt(1.0 + xx);
+	    /*  printf("w[%d] = %g\n", t, cresid[j]); */
+	    wbar += cresid[j];
+	    clear_model(&cum_mod, NULL, NULL);
+	    pdinfo->t2 += 1;
+	}
+    }
+
+    wbar /= T - K;
+    pprintf(prn, "\nCUSUM test for stability of parameters\n\n");
+    pprintf(prn, "mean of scaled residuals = %g\n", wbar);
+    sigma = 0;
+    for (j=0; j<n_est; j++) {
+	xx = (cresid[j] - wbar);
+	sigma += xx * xx;
+    }
+    sigma /= T - K - 1;
+    sigma = sqrt(sigma);
+    pprintf(prn, "sigmahat                 = %g\n\n", sigma);
+
+    xx = 0.948*sqrt((double) (T-K));
+    yy = 2.0*xx/(T-K);
+
+    pprintf(prn, "Cumulated sum of scaled residuals\n"
+	    "('*' indicates a value outside of 95%% confidence band):\n\n");
+    
+    for (j=0; j<n_est; j++) {
+	W[j] = 0.0;
+	for (i=0; i<=j; i++) W[j] += cresid[i];
+	W[j] /= sigma;
+	t = pmod->t1 + K + j;
+	ntodate(cumdate, t, pdinfo);
+	/* FIXME printing of number below? */
+	pprintf(prn, " %s %9.3f %s\n", cumdate, W[j],
+		(fabs(W[j]) > xx + (j+1)*yy)? "*" : "");
+    }
+    hct = (sqrt((double) (T-K)) * wbar) / sigma;
+    pprintf(prn, "\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n", 
+	    T-K-1, hct, tprob(hct, T-K-1));
+
+    if (test != NULL) {
+	strcpy(test->type, "CUSUM test for parameter stability");
+	strcpy(test->h_0, "no change in parameters");
+	sprintf(test->teststat, "Harvey-Collier t(%d) = %g", T-K-1, hct);
+	sprintf(test->pvalue, "%f", tprob(hct, T-K-1));
+    }
+
+    /* plot with 95% confidence bands */
+    if (prn->fp != NULL) goto getout;
+    fq = fopen(ppaths->plotfile, "w");
+    if (fq == NULL) {
+	err = E_FOPEN;
+	goto getout;
+    }
+    fprintf(fq, "# CUSUM test\n");
+    fprintf(fq, "set xlabel \"observation\"\n");
+    fprintf(fq, "set xzeroaxis\n");
+    fprintf(fq, "set title \"CUSUM plot with 95%% confidence band\"\n");
+    fprintf(fq, "set nokey\n");
+    fprintf(fq, "plot %f+%f*x w l 1, \\\n", xx - K*yy, yy);
+    fprintf(fq, "%f-%f*x w l 1, \\\n", -xx + K*yy, yy);
+    fprintf(fq, "'-' using 1:2 w lp\n");
+    for (j=0; j<n_est; j++) { 
+	t = pmod->t1 + K + j;
+	fprintf(fq, "%d %f\n", t, W[j]);
+    }
+    fprintf(fq, "e\n");
+
+#ifdef OS_WIN32
+    fprintf(fq, "pause -1\n");
+#endif
+    fclose(fq);
+#ifdef OS_WIN32
+    sprintf(plotcmd, "%s %s", ppaths->gnuplot, ppaths->plotfile);
+    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
+#else
+    sprintf(plotcmd, "%s -persist %s", ppaths->gnuplot, ppaths->plotfile);
+    if (system(plotcmd)) err = 1;
+#endif
+
+ getout:
+    /* restore sample */
+    pdinfo->t1 = t1;
+    pdinfo->t2 = t2;
+    
+    free(cresid);
+    free(W);
+    free(xvec);
+
+    return err;
+}
+

@@ -1,0 +1,5 @@
+(* PS9.2, using DATA4-7, for Example 9.3 *)
+ols chd 0 cig edfat spirits beer
+genr time
+genr ut=uhat
+graph ut time

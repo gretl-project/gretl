@@ -1,0 +1,11 @@
+#!/bin/sh
+
+for f in *.c *.h ; do
+#for f in trial.c ; do
+   cp $f $f.bak
+   cat $f | sed s/$1/$2/g > $f.new
+   if ! diff -s $f $f.new | grep identical >/dev/null ; then
+      mv $f.new $f
+   fi
+done
+

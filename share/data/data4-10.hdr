@@ -1,0 +1,47 @@
+(*
+DATA4-10:
+    The following data file were compiled by Jeffrey Wong for the study
+    involving parental school choice in the United States.  All data
+    are for the year 1986, unless otherwise noted, for all 51 states,
+    including the D.C.
+
+   ENROLL = proportion of students that enroll in private schools.
+            The data for private school enrollment for each state was
+            found by indexing public school enrollment values of the years
+            1980 and 1986.  This index was then used to calculate the
+            private school enrollment for 1986.  Thus, the private school
+            enrollment values are indexed numbers.  This should not cause
+            any problem in the model because the enrollment trends in
+            public and private education do not alter drastically from
+            year to year.
+            Source: Digest of Education Statistics, 1990. (Range 0.16 - 0.255)
+   CATHOL = proportion of population in each state which is Catholic.
+            Source: The Official Catholic Directory, 1986.
+            (Range 0.02105 - 0.65234)
+   PUPIL  = pupil to teacher ratio for public schools in each state.  
+            Source:  Digest of Education Statistics, 1990. (Range 13.7 - 23.4)
+   WHITE  = proportion of population in each state that is white.
+            Source:  United States Statistical Abstract, 1988.
+            (Range 0.3 - 0.987)
+   ADMEXP = proportion of educational expenditures devoted to administrative
+            expenses.  
+            Source: Condition of Education, 1990. (Range 0.268 - 0.518)
+   REV    = per pupil education revenue (in thousands of dollars).
+            Source: Condition of Education, 1990. (Range 1.933 - 5.982)
+   MEMNEA = proportion of all public teachers who are members of the 
+            National Education Association. 
+            Source:  National Education Association Handbook.
+            (Range 0.0573 - 0.999)
+   INCOME = per capita income (in thousands of dollars) of household families.
+            Source: Unites States Statistical Abstract, 1988.
+            (Range 9.665 - 19.548)
+   COLLEGE = the proportion of the population that has completed at least
+             four years of college.
+             Source:  United States Statistical Abstract Supplement,
+             State and Metropolitan Data Book, 1986. (Range 0.104 - 0.275)
+
+*)
+ENROLL CATHOL PUPIL WHITE ADMEXP REV MEMNEA INCOME COLLEGE ;
+1 1 51
+BYOBS
+MARKERS

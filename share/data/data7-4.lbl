@@ -1,0 +1,10 @@
+WLFP persons >= 16 years: % in labor force who are female
+YF   median earnings ($000s) by females >= 15 years
+YM   median earnings ($000s) by males >= 15 years
+EDUC females >= 25 years: percent high school grad. or above
+UE   civilian labor force, % unemployed
+MR   females >= 15 years: percent now married
+DR   females >= 15 years: percent divorced
+URB  percent of population living in urban areas
+WH   females >= 16 years: percent white
+D90  1 for 1990 Census and 0 for 1980 Census

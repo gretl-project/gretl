@@ -1,0 +1,20 @@
+(*
+DATA12-1:
+    Data represent a  random selection of 60 individuals applying to
+    The University of California, San Diego, School of Medicine for the 
+    year 1988.  Compiled by Steven Bramson.
+    Accept = 1 if granted an acceptance, 0 if otherwise
+    GPA = Cumulative undergraduate Grade Point Average, Range 1.88 - 2.9.
+    Bio = Score in Biology portion of the Medical College Admissions
+          Test (MCAT), Range 2 - 9.
+    Chem = Score in Chemistry portion of MCAT, Range 2 - 9.
+    Phy = Score in Physics portion of MCAT, Range 3 - 9.
+    Red = Score in Reading portion of MCAT, Range 3 - 7.
+    Prb = Score in Problem portion of MCAT, Range 2 - 7.
+    Qnt = Score in Quantitative portion of MCAT, Range 2 - 7.
+    Age = Age of Applicant, Range 21 - 23.
+    Gender = 1 if Male, 0 if Female
+*)
+Accept GPA Bio Chem Phy Red Prb Qnt Age Gender ;
+1 1 60
+BYOBS

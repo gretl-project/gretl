@@ -1,0 +1,18 @@
+(*
+Data table A5.1 from Greene, Econometric Analysis, 4ed.
+Micro data on income and credit-card expenditure.
+See Greene, ch. 12, Example 12.1
+
+derog     number of derogatory reports
+accept    credit card application accepted (yes = 1)
+age       age in years + 12ths of a year
+income    income/10000
+expend    average monthly credit card expenditure
+ownrent   own-rent: individual owns (1) or rents (0) home
+selfemp   self-employed (yes = 1)
+
+This file included with gretl by kind permission of William Greene.
+*)
+derog accept age income expend ownrent selfemp ;
+1 1 100
+BYOBS

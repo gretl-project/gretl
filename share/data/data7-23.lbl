@@ -1,0 +1,10 @@
+Y   gini coefficient (range 0<Yt<1, 0 is perfect equality)
+Gnp per capita GNP (base 1976)
+Gdp growth rate (%) of gross domestic product
+pop growth rate of population
+urb percentage of people living in urban areas
+lit percentage literacy rate
+edu secondary school enrollment as % of age group
+agr percentage share of agriculture in GDP
+d   1 for 1989 base and 0 for 1976 base
+

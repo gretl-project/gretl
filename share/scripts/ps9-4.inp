@@ -1,0 +1,16 @@
+(* PS9.4, using DATA6-6, for Example 9.5 *)
+genr time 
+(* graph farmpop against year *)
+graph farmpop year 
+(* linear time trend *)
+ols farmpop 0 time 
+(* generate square of time *)
+genr timesq = time*time
+(* quadratic time trend *)
+ols farmpop 0 time timesq 
+(* compute growth rate of farmpop *)
+genr gfarmpop=ldiff(farmpop)
+(* suppress 1948 observation *)
+smpl 1949 1991
+(* time trend for log difference *)
+ols gfarmpop 0 time 

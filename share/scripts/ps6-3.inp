@@ -1,0 +1,5 @@
+(* PS6.3 using DATA6-2, for Example 6.3 *)
+square effort 
+ols catch effort sq_effor 
+genr yhat1=catch-uhat
+graph yhat1 effort 

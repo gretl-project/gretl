@@ -1,0 +1,11 @@
+GDP     Gross domestic product in billions of 1987 dollars
+CONS    Personal consumption expenditures (billions of 1987 dollars)
+INV     Gross private domestic Investment (billions of 1987 dollars)
+EXPORTS Exports of goods and services (billions of 1987 dollars)
+IMPORTS Imports of goods and services (billions of 1987 dollars)
+GOVEXP  Government purchases (billions of 1987 dollars)
+GOVREC  Federal, State, and Local government receipts ($ billions)
+MONYSUP Money supply measure M2, (billions of current dollars)
+Pt      GDP deflator, Base 1987
+rt      Corporate Aaa bond yields (percent)
+POP     U.S. Population in millions

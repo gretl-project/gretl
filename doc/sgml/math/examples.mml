@@ -1,0 +1,931 @@
+
+<!-- MathML examples
+     David Carlisle
+
+     David Carlisle
+     davidc@nag.co.uk
+
+     Copyright 1998 Nag Ltd, The OpenMath Consortium. Esprit Project 24.969.
+  -->
+
+
+
+
+<mathx>
+
+<p>MathML examples</p>
+<p>David Carlisle  davidc@nag.co.uk</p>
+<p>Copyright 1998 Nag Ltd,
+   The OpenMath Consortium. Esprit Project 24.969</p>
+
+<p>PRESENTATION MathML</p>
+
+<p>mtext, mspace, and mi elements</p>
+<math>
+
+<mtext>ab</mtext><mspace width="2cm"/><mi>c</mi>
+
+</math>
+<p>ms element</p>
+<math>
+
+<ms>one two three</ms>
+
+
+</math>
+<p>frac sqrt and root elements</p>
+<math>
+<mfrac> <mi>a</mi> <mi>b</mi> </mfrac>
+
+<msqrt><mi>a</mi><mi>b</mi><mi>c</mi></msqrt>
+
+
+<mroot> <mi>a</mi> <mn>6</mn> </mroot>
+
+
+<mi>x</mi><mspace width="5in"/><mi>c</mi>
+
+</math>
+
+<p>msub inside msup</p>
+
+<math>
+
+<msup><msub><mi>x</mi><mn>1</mn></msub><mn>2</mn></msup>
+
+</math>
+
+<p>msubsup</p>
+
+<math>
+
+<msubsup><mi>x</mi><mn>1</mn><mn>2</mn></msubsup>
+</math>
+
+<p>mmultiscripts</p>
+
+<math>
+<mmultiscripts>
+  <mi>A</mi>
+    <mn>111</mn>
+    <mn>222</mn>
+    <none/>
+    <mn>444</mn>
+    <mn>555</mn>
+    <none/>
+  <mprescripts/>
+     <mi>aaa</mi>
+    <none/>
+    <none/>
+     <mi>ddd</mi>
+
+</mmultiscripts>
+
+</math>
+
+<p>mo</p>
+<math>
+<mi>a33</mi><mphantom><mi>bcde</mi></mphantom><mi>xyz</mi>
+</math>
+
+
+
+
+<p>mfenced</p>
+<math>
+<mfenced open="(" close="]">
+  <mfrac> <mi>a</mi> <mi>b</mi> </mfrac>
+</mfenced>
+</math>
+
+<p>msqrt</p>
+<math>
+ <msqrt>
+  <mfrac>
+    <mrow><mn>2</mn><mi>&pi;</mi></mrow>
+    <mrow><mi>&kappa;</mi></mrow>
+  </mfrac>  
+   <mfenced  open="(" close=")">
+   <mn>1</mn>
+   <mi>&minus;</mi>
+   <mi>&beta;</mi>
+   <msup>
+     <mrow><mn>2</mn></mrow>
+   </msup> <mi>/</mi><mn>2</mn></mfenced></msqrt></math>
+
+
+
+<p> greek</p>
+<math>
+<mo>&delta</mo> 
+</math>
+
+<p>example 3.4.3</p>
+
+
+<math>
+    <mrow>
+       <msubsup>
+          <mo> &int; </mo>
+          <mn> 0 </mn>
+          <mn> 1 </mn>
+       </msubsup>
+       <mrow>
+          <msup>
+             <mi> &ExponentialE; </mi>
+             <mi> x </mi>
+          </msup>
+          <mo> &InvisibleTimes; </mo>
+          <mrow>
+             <mo> &DifferentialD; </mo>
+             <mi> x </mi>
+          </mrow>
+       </mrow>
+    </mrow>
+</math>
+
+
+
+<p>mfenced</p>
+<math>
+<mfenced open="[" close="]">
+  <mfrac> <mi>a</mi> <mi>b</mi> </mfrac>
+</mfenced>
+</math>
+
+
+<p>mtext and entities</p>
+
+<math>
+<mtext>Complex&Space;numbers&Space;here</mtext><mi>&Copf</mi><mi> &ExponentialE; </mi>
+</math>
+
+
+
+<p>Tables</p>
+
+
+
+
+<p> example 3.5.1, but using fence</p>
+
+
+<math>
+    <mfenced open="(" close=")">
+       <mtable>
+          <mtr> <mn>1</mn> <mn>0</mn> <mn>0</mn> </mtr>
+          <mtr> <mn>0</mn> <mn>1</mn> <mn>0</mn> </mtr>
+          <mtr> <mn>0</mn> <mn>0</mn> <mn>1</mn> </mtr>
+       </mtable>
+    </mfenced>
+</math>
+
+
+
+<p> semantics with presentation mml in first arg, from 2.2.3</p>
+
+<math>
+
+<semantics>
+
+  <mrow>
+    <msubsup>
+      <mo>&int;</mo>
+      <mn>0</mn>
+      <mi>t</mi>
+    </msubsup>
+    <mfrac>
+      <mrow>
+        <mo>&dd;</mo>
+        <mi>x</mi>
+      </mrow>
+      <mi>x</mi>
+    </mfrac>
+  </mrow>
+
+  <annotation-xml encoding="MathML-Content">
+    <apply>
+      <int/>
+      <bvar><ci>x</ci></bvar>
+      <lowlimit><cn>0</cn></lowlimit>
+      <uplimit><ci>t</ci></uplimit>
+      <apply>
+        <divide/>
+        <cn>1</cn>
+        <ci>x</ci>
+      </apply>
+    </apply>
+  </annotation-xml>
+
+</semantics>
+
+</math>
+
+<p> content mml as first arg, presentation in MathML-Presentation, from 2.2.3</p>
+
+<math>
+
+<semantics>
+
+  <apply>
+    <int/>
+    <bvar><ci>x</ci></bvar>
+    <lowlimit><cn>0</cn></lowlimit>
+    <uplimit><ci>t</ci></uplimit>
+    <apply>
+      <divide/>
+      <cn>1</cn>
+      <ci>x</ci>
+    </apply>
+  </apply>
+
+  <annotation-xml encoding="MathML-Presentation">
+    <mrow>
+      <msubsup>
+        <mo>&int;</mo>
+        <mn>0</mn>
+        <mi>t</mi>
+      </msubsup>
+      <mfrac>
+        <mrow>
+          <mo>&dd;</mo>
+          <mi>x</mi>
+        </mrow>
+        <mi>x</mi>
+      </mfrac>
+    </mrow>
+  </annotation-xml>
+
+</semantics>
+</math>
+
+
+<p> semantics example from 4.2.6 </p>
+<math>
+<semantics>
+      <apply> <divide/>
+        <cn>123</cn>
+        <cn>456</cn>
+      </apply>
+
+      <annotation encoding="Mathematica">
+        N[123/456, 39]
+      </annotation>
+
+      <annotation encoding="TeX">
+        $0.269736842105263157894736842105263157894\ldots$
+      </annotation>
+
+      <annotation encoding="Maple">
+        evalf(123/456, 39);
+      </annotation>
+
+      <annotation-xml encoding="MathML-Presentation">
+        <mrow>
+          <mn> 0.269736842105263157894 </mn>
+          <mover accent='true'>
+            <mn> 736842105263157894 </mn>
+            <mo> &horbar; </mo> <!-- dpc was obar -->
+          </mover>
+        </mrow>
+      </annotation-xml>
+
+      <annotation-xml encoding="OpenMath">
+      </annotation-xml>
+    </semantics>
+</math>
+
+
+
+
+<p>CONTENT MathML</p>
+
+
+<p> naray reln (extended version of example 4.2.4)</p>
+
+<math>
+    <reln>
+      <lt/>
+      <ci>a</ci>
+      <ci>b</ci>
+      <ci>c</ci>
+      <ci>d</ci>
+    </reln>
+</math>
+
+
+<math>
+    <apply><sin/>
+       <ci> x </ci>
+    </apply>
+</math>
+
+<math>
+    <apply><sin/>
+       <ci> x </ci>
+       <ci> y </ci>
+    </apply>
+</math>
+
+
+<math>
+    <apply><sin/>
+      <apply><plus/>
+        <apply><cos/>
+          <ci> x </ci>
+        </apply>
+        <apply><power/>
+          <ci> x </ci>
+          <cn> 3 </cn>
+        </apply>
+      </apply>
+    </apply>
+</math>
+
+
+
+
+<p> set 4.4.6.1</p>
+
+<math>
+    <set>
+      <ci> b </ci>
+      <ci> a </ci>
+      <ci> c </ci>
+    </set>
+</math>
+
+
+<math>
+    <set>
+      <bvar><ci> x </ci></bvar>
+      <condition>
+        <reln><lt/>
+          <ci> x </ci>
+          <cn> 5 </cn>
+        </reln>
+      </condition>
+    </set>
+</math>
+
+<p> list 4.4.6.2 </p>
+<math>
+    <list>
+      <bvar><ci> x </ci></bvar>
+      <condition>
+        <reln><lt/>
+          <ci> x </ci>
+          <cn> 5 </cn>
+        </reln>
+      </condition>
+    </list>
+</math>
+
+<p> Union 4.4.6.3</p>
+<math>
+    <apply><union/>
+      <ci> A </ci>
+      <ci> B </ci>
+    </apply>
+</math>
+
+<p> sum 4.4.7.1</p>
+<p> sum</p>
+
+<math>
+<apply>
+<sum/>
+<bvar>
+<ci>x</ci>
+</bvar>
+<lowlimit>
+ <ci> a </ci>
+</lowlimit>
+      <uplimit>
+        <ci> b </ci>
+      </uplimit>
+<apply><fn><ci> f </ci></fn>
+        <ci> x </ci>
+</apply>
+</apply>
+</math>
+
+
+<p> bvar product 4.4.7.2</p>
+
+<math>
+<apply>
+<product/>
+<bvar>
+<ci>x</ci>
+</bvar>
+<lowlimit>
+ <ci> a </ci>
+</lowlimit>
+      <uplimit>
+        <ci> b </ci>
+      </uplimit>
+<apply><fn><ci> f </ci></fn>
+        <ci> x </ci>
+</apply>
+</apply>
+</math>
+
+<p> condition (/bvar missing in report) </p>
+
+<math>
+<apply><product/>
+      <bvar>
+        <ci> x </ci>
+      </bvar>
+      <condition>
+        <reln> <in/>
+          <ci> x </ci>
+          <ci type="set"> B </ci>
+        </reln>
+      </condition>
+      <apply><fn><ci> f </ci></fn>
+        <ci> x </ci>
+      </apply>
+    </apply>
+</math>
+
+
+
+<math>
+    <apply><limit/>
+      <bvar>
+        <ci> x </ci>
+      </bvar>
+      <lowlimit>
+        <cn> 0 </cn>
+      </lowlimit>
+      <apply><sin/>
+        <ci> x </ci>
+      </apply>
+    </apply>
+</math>
+
+<math>
+    <apply><limit/>
+      <bvar>
+        <ci> x </ci>
+      </bvar>
+      <condition>
+        <reln>
+          <tendsto type="above"/>
+          <ci> x </ci>
+          <ci> a </ci>
+        </reln>
+      </condition>
+      <apply><sin/>
+         <ci> x </ci>
+      </apply>
+    </apply>
+</math>
+
+<p> Stastics 4.4.9</p>
+
+<math>
+    <apply><mean/>
+      <ci> X </ci>
+    </apply>
+</math>
+<math>
+    <apply><sdev/>
+      <ci> X </ci>
+    </apply>
+</math>
+<math>
+    <apply><var/>
+      <ci> X </ci>
+    </apply>
+</math>
+<math>
+<apply><median/>
+      <ci> X </ci>
+    </apply>
+</math>
+<math>
+    <apply>
+      <mode/>
+      <ci> X </ci>
+    </apply>
+</math>
+
+<p>4.4.10 vector</p>
+
+<math>
+    <vector>
+      <cn> 1 </cn>
+      <cn> 2 </cn>
+      <cn> 3 </cn>
+      <ci> x </ci>
+    </vector>
+</math>
+
+
+<p>4.4.10.5 transpose</p>
+
+<math>
+    <apply><transpose/>
+      <ci type="matrix"> A </ci>
+    </apply>
+</math>
+
+<p>4.4.1.1 cn note quotes around base.</p>
+
+
+
+<math> <cn> 12345.7 </cn> </math>
+  <math>  <cn type="real"> 12345.7 </cn></math>
+  <math>  <cn type="integer"> 12345 </cn></math>
+  <math>  <cn type="integer" base="16"> AB3 </cn></math>
+   <math> <cn type="rational"> 12342 <sep/> 2342342 </cn></math>
+  <math>  <cn type="complex-cartesian"> 12.3 <sep/> 5 </cn></math>
+   <math> <cn type="complex-polar"> 2 <sep/> 3.1415 </cn></math>
+   <math> <cn type="constant"> &pi; </cn></math>
+
+
+<p>4.4.2.4 interval</p>
+
+
+
+ 
+<math>
+     <interval>
+         <ci> a </ci>
+         <ci> b </ci>
+       </interval>
+</math>
+<math>
+       <interval closure="open-closed">
+          <ci> a </ci>
+          <ci> b </ci>
+        </interval>
+</math>
+
+
+
+ 
+<p>matrix 4.4.10.1</p>
+<math>
+
+    <matrix>
+      <matrixrow>
+        <cn> 0 </cn> <cn> 1 </cn> <cn> 0 </cn>
+      </matrixrow>
+      <matrixrow>
+        <cn> 0 </cn> <cn> 0 </cn> <cn> 1 </cn>
+      </matrixrow>
+      <matrixrow>
+        <cn> 1 </cn> <cn> 0 </cn> <cn> 0 </cn>
+      </matrixrow>
+    </matrix>
+</math>
+
+
+
+<p> compose 4.4.2.10</p>
+<math>
+
+    <apply><compose/>
+      <ci type="fn"> f </ci>
+      <ci type="fn"> g </ci>
+      <ci type="fn"> h </ci>
+    </apply>
+
+</math>
+
+
+
+
+<p> compose inverse and id  4.4.2.11</p>
+<math>
+
+    <reln><eq/>
+      <apply><compose/>
+        <fn><ci> f </ci></fn>
+        <apply><inverse/>
+          <fn><ci> f </ci></fn>
+        </apply>
+      </apply>
+      <ident/>
+    </reln>
+
+</math>
+
+
+
+
+
+<p>factorial 4.4.3.3 </p>
+<math>
+<apply><factorial/>
+       <ci> n </ci>
+    </apply>
+</math>
+
+<p>divide </p>
+<math>
+
+
+    <apply> <divide/>
+       <ci> a </ci>
+       <ci> b </ci>
+    </apply>
+</math>
+
+<p>max 4.4.3.5 </p>
+<math>
+
+
+    <apply><min/>
+      <bvar><ci>x</ci></bvar>
+      <condition>
+        <reln><notin/><ci> x </ci><ci type="set"> B </ci></reln>
+      </condition>
+      <apply>
+        <power/>
+        <ci> x </ci>
+        <cn> 2 </cn>
+      </apply>
+    </apply>
+
+</math>
+
+<p>rem 4.4.3.10 </p>
+<math>
+
+
+<apply><rem/>
+   <ci> a </ci>
+   <ci> b </ci>
+</apply>
+
+</math>
+
+<p>times 4.4.3.10 </p>
+<math>
+<apply> <times/>
+       <ci> a </ci>
+       <ci> b </ci>
+    </apply>
+</math>
+
+<p>root 4.4.3.11 </p>
+<math>
+<apply> <root/>
+       <degree><ci> n </ci></degree>
+       <ci> a </ci>
+    </apply>
+
+</math>
+
+<p>gcd 4.4.3.12 </p>
+<math>
+    <apply> <gcd/>
+       <ci> a </ci>
+       <ci> b </ci>
+       <ci> c </ci>
+    </apply>
+
+</math>
+
+
+
+<p>forall 4.4.3.18 </p>
+<math>
+<apply>
+      <forall/>
+      <bvar><ci> x </ci></bvar>
+      <reln><eq/>
+        <apply>
+          <minus/><ci> x </ci><ci> x </ci>
+        </apply>
+        <cn>0</cn>
+      </reln>
+    </apply>
+
+</math>
+
+<p> forall again (power missing from report) </p>
+<math>
+<apply>
+      <forall/>
+      <bvar><ci> p </ci></bvar>
+      <bvar><ci> q </ci></bvar>
+      <condition>
+        <apply><and/>
+          <reln><in/><ci> p </ci><ci type="set"> Q </ci></reln>
+          <reln><in/><ci> q </ci><ci type="set"> Q </ci></reln>
+          <reln><lt/><ci> p </ci><ci> q </ci></reln>
+        </apply>
+      </condition>
+      <reln><lt/>
+          <ci> p </ci>
+          <apply>
+<power/>
+            <ci> q </ci>
+            <cn> 2 </cn>
+          </apply>
+      </reln>
+    </apply>
+</math>
+
+<p>and the third example  (closing tag of apply missing)
+and equation messed up</p>
+<math>
+<apply>
+      <forall/>
+      <bvar><ci> n </ci></bvar>
+      <condition>
+        <apply><and/>
+          <reln><in/><ci> n </ci><ci type="set"> Z </ci></reln>
+          <reln><gt/><ci> n </ci><cn> 0 </cn></reln>
+        </apply>
+      </condition>
+      <apply>
+        <exists/>
+        <bvar><ci> x </ci></bvar>
+        <bvar><ci> y </ci></bvar>
+        <bvar><ci> z </ci></bvar>
+        <condition>
+          <reln><in/><ci> x </ci><ci type="set"> Z </ci></reln>
+          <reln><in/><ci> y </ci><ci type="set"> Z </ci></reln>
+          <reln><in/><ci> z </ci><ci type="set"> Z </ci></reln>
+        </condition>
+        <reln>
+          <eq/>
+          <apply><plus/>
+            <apply><power/><ci> x </ci><ci> n </ci></apply>
+            <apply><power/><ci> y </ci><ci> n </ci></apply>
+          </apply>
+          <apply><power/><ci> z </ci><ci> n </ci></apply>
+        </reln>
+      </apply>
+    </apply>
+
+</math>
+
+<p>exists 4.4.3.19 </p>
+<math>
+<apply>
+      <exists/>
+      <bvar><ci> x </ci></bvar>
+      <reln><eq/>
+        <apply>
+          <fn><ci> f </ci></fn>
+          <ci> x </ci>
+        </apply>
+        <cn>0</cn>
+      </reln>
+    </apply>
+
+</math>
+
+<p>abs 4.4.3.20 </p>
+<math>
+<apply>
+      <abs/>
+      <ci> x </ci>
+    </apply>
+
+</math>
+
+<p>conjugate 4.4.3.2.1 missing / </p>
+<math>
+<apply><conjugate/>
+      <apply><plus/>
+        <ci> x </ci>
+        <apply><times/>
+          <cn> &ImaginaryI; </cn>
+          <ci> y </ci>
+        </apply>
+      </apply>
+    </apply>
+</math>
+
+<p>log 4.4.5.2 </p>
+<math>
+
+
+    <apply> <log/>
+      <ci> x </ci>
+    </apply>
+
+</math>
+<math>
+
+
+    <apply> <log/>
+      <logbase>
+        <cn> 3 </cn>
+      </logbase>
+      <ci> x </ci>
+    </apply>
+
+</math>
+
+<p>diff 4.4.5.4 </p>
+<math>
+<apply><diff/>
+      <bvar>
+        <ci> x </ci>
+      </bvar>
+      <apply><fn><ci> f </ci></fn>
+        <ci> x </ci>
+      </apply>
+    </apply>
+</math>
+
+<p>diff with degree? </p>
+<math>
+<apply><diff/>
+      <bvar>
+        <ci> x </ci>
+          <degree>
+            <cn> 2 </cn>
+         </degree>
+      </bvar>
+      <apply><fn><ci> f </ci></fn>
+        <ci> x </ci>
+      </apply>
+    </apply>
+</math>
+
+
+<p>partial diff 4.4.5.5 ( bvar and ci closed) </p>
+<math>
+
+    <apply><partialdiff/>
+      <bvar>
+         <ci> x </ci>
+         <degree>
+            <cn> 2 </cn>
+         </degree>
+      </bvar>
+      <bvar>
+         <ci> y </ci>
+      </bvar>
+      <apply><fn><ci> f </ci></fn>
+        <ci> x </ci>
+        <ci> y </ci>
+      </apply>
+    </apply>
+
+</math>
+
+<p>lambda 4.4.2.9  (fixed example)</p>
+<math>
+<lambda>
+      <bvar><ci> b </ci></bvar>
+      <apply>
+        <int/>
+        <bvar>
+           <ci> x </ci>
+        </bvar>
+        <lowlimit>
+           <ci> a </ci>
+        </lowlimit>
+        <uplimit>
+           <ci> b </ci>
+        </uplimit>
+        <apply><fn><ci> f </ci></fn>
+           <ci> x </ci>
+        </apply>
+      </apply>
+    </lambda>
+
+</math>
+
+
+
+
+
+<p> binary reln, example 4.4.4.2</p>
+
+
+<math>
+    <reln><neq/>
+      <ci> a </ci>
+      <ci> b </ci>
+    </reln>
+</math>
+
+<p> naray reln (extended version of example 4.2.4)</p>
+
+<math>
+    <reln>
+      <lt/>
+      <ci>a</ci>
+      <ci>b</ci>
+      <ci>c</ci>
+      <ci>d</ci>
+    </reln>
+</math>
+
+
+
+</mathx>
+

@@ -1,0 +1,12 @@
+airqual   weight of suspended particular matter (Range 59 - 165)
+popln     population in thousands (Range 372 - 11529)
+valadd    value added by indl. manufactures (1972, $000s)
+rain      rain fall in inches (Range 12.63 - 68.13)
+coast     = 1  for SMSAs on the coast, 0 otherwise
+density   population per square mile (Range 271.59 - 12957.5)
+medincm   median per capita income (Range 853 - 59460)
+poverty   100 x the % of families with income < poverty level
+electr    electricity consumed by indl, manufacturers (MW hrs)
+fueloil   000s barrels of fuel oil consumed in indl. sector
+indestab  number of indl. establishments, >= 20 employees
+

@@ -1,0 +1,42 @@
+(* PS3.4 using DATA3-1, for Example 3.8 on conf. intervals *)
+ols 1 0 2
+(* generate predicted price *)
+genr phat = price - uhat 
+(* retrieve the number of obs. *)
+genr n = $nobs 
+(* retrieve degrees of freedom *)
+genr df = $df 
+(* retrieve sigma squared *)
+genr sgmasq=$ess/df 
+(* get mean of sqft *)
+genr xbar=mean(sqft) 
+(* get s.d. of sqft *)
+genr sdx = sd(sqft) 
+(* reset sample range *)
+smpl 1 1 
+(* calculate sxx *)
+genr sxx = 13*sdx*sdx 
+(* other variables for confidence interval calculation *)
+genr x0 = 2000
+genr temp1=((x0-xbar)^2)/sxx 
+genr temp2=(temp1+(1/n)) 
+(* calculate using equations 3.28 and 3.29 *)
+genr sysq1=sgmasq*temp2 
+genr sysq2=sgmasq*(1+temp2) 
+(* take square root for standard errors *)
+genr sy1=sqrt(sysq1) 
+genr sy2=sqrt(sysq2) 
+(* predict mean y for x0 *)
+genr ymean0=52.351+(0.13875*x0) 
+(* compute bounds for confidence interval using equation 3.28 *)
+genr ymean1=ymean0-(2.179*sy1)
+genr ymean2=ymean0+(2.179*sy1)
+(* compute bounds for confidence interval using equation 3.29 *)
+genr y1=ymean0-(2.179*sy2)
+genr y2=ymean0+(2.179*sy2)
+(* compute large sample confidence interval, that is, plus/minus 2 sigma *)
+genr sgmahat = sqrt(sgmasq)
+genr y3 = ymean0 - (2*sgmahat)
+genr y4 = ymean0 + (2*sgmahat)
+print -o n df sgmasq xbar sdx sxx sysq1 sysq2 sy1 sy2 ymean0 ymean1 \
+ymean2 y1 y2 y3 y4

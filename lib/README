@@ -1,0 +1,3 @@
+Don't do "make" in here; rather go up a level, configure and make.
+
+

@@ -1,0 +1,9 @@
+(*
+DATA3-10: Data on total profits and sales of 27 German companies (1995)	
+    Sales are in billions of dollars (Range 1.199 - 58.112) and Profits
+    are in millions of dollars (Range 26 - 1618)
+    Source:  Business week, July 8, 1996, Pages 54-55.
+*)
+profits sales ;
+1 1 27
+BYOBS

@@ -1,0 +1,75 @@
+(*
+DATA7-20: 
+    Data on NBA players' salaries and their determinants compiled by
+    Michael Pepek.
+    SALARY   = Salary earned by players in the 1989-90 NBA season, in
+               thousands of dollars.  Source: San Diego Union, Dec.10,
+               1989, pg H10. (Range 1000 - 3750).
+    YRS      = Number of years that player has been in the NBA,
+               Range 1 - 13.
+    HT       = Height of the players in inches.  Source: the Sporting
+               News Pro-Basketball Handbook, 1989-90. (Range 73 - 88)
+    WT       = The weight of each player in pounds.  Pro-Basketball
+               Handbook. (Range 175 - 290).
+    AGE      = The age of each player determined by their age in 1989.
+               For example, if their birthdate is 4-5-63, then their age
+               is determined by 1989-1963 = 26 years old, Pro-Basketball
+               Handbook. (Range 23 - 36).
+    GAMES    = Number of games that each player played in the 88-89 season,
+               HOOPS - basketball stats book 1989-90. (Range 6 - 82).
+    GAMESTRT = Number of games out of the total games played in that
+               the player started in.  HOOPS. (Range 0 - 82).
+    FORWARD  = Dummy variable for whether the player is primarily a
+               forward.  1 if forward, 0 if not.   SD Union.
+    GUARD    = Dummy var for if player is primarilly a Guard. 1 = guard,
+               0 not.  SD Union.
+    MIN      = Number of minutes that each player played during
+               season, HOOPS.  (Range 189 - 3255).
+    FGA      = Field goal attempts.  All shots taken by the player.
+               This does not include free-throws, Sporting News, May 1989.
+               (Range 104 - 1881).
+    FGPRCNT  = The fraction of shots that each player made.  1.000 is
+               perfect shooting.   Sporting News.  (Range 0.431 - 0.579).
+    FTA      = Free throw attempts.  The total number of free throws
+               attempted by each player after being fouled.  Sporting News.
+               (Range 19 - 918).
+    FTPRCNT  = Fraction of the shot free throws that were made. #made/#shot
+               Sporting News.  (Range 0.553 - 0.911).
+    REBOUNDS = The number of totsl rebounds by each player.  BRDS is
+               short for boards.  Sporting  New. (Range 37 - 1105).
+    ASSISTS  = Number of assists by player.  An assist is when one
+               player makes a pass to another player who scores because
+               of that pass.         Sporting News.  (Range 29 - 1118).
+    STEALS   = Number of times that player stole ball away from other
+               team.    Sporting News.  (Range 6 - 564).
+    BLOCKS   = number of blocked shots.   Sporting News. (Range 5 - 315).
+    POINTS   = number of points that the player scored in the full
+               season.       Sporting News.  (Range 116 - 2633).
+    AVGPNTS  = the average points per games played.  #points/#games played.
+               Sporting News.  (Range 4.7 - 32.5).
+    RACE     = Dummy variable to tell whether the player is white or
+               non-white.  0 = white, 1 = non-white.
+               Sporting News NBA Guide 1987-88.
+    EW       = Dummy var to tell whether each player is Source the east or
+               Source the west devision.  1 = east 0 = west Boston Celtics
+               1988-89 Media Guide
+    TRD      = Dummy var telling whether player has been traded in the
+               last two years.   1 = has been traded   0 = has not.
+               Sporting News.
+    WINTM    = Dummy var telling whether the team that the player is on
+               had more than 45 wins out of the 82 game schedule. 
+               Sporting News.
+    ALLSTAT  = Dummy variable telling whether the player is on the All
+               Star team in the 1990-1991 season.  The reason for using
+               this years AS team is going on the theory that players make
+               it onto the AS team the year after they deserved it.  1 =
+               on the AS team 0 = not.  San Diego Union.
+    XPAN     = dummy variable denoting whether the team is an
+               expansion team in the last 2 seasons.  1 = expansion team
+               Source : Boston Celtics Media Guide.
+ *)
+SALARY YRS HT WT AGE GAMES GAMESTRT FORWARD GUARD MIN FGA FGPRCNT FTA
+FTPRCNT REBOUNDS ASSISTS STEALS BLOCKS POINTS AVGPNTS RACE EW TRD WINTM
+ALLSTAR XPAN ;
+1 1 56
+BYOBS

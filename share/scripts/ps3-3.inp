@@ -1,0 +1,8 @@
+(* PS3.3, using DATA3-2, for Annotated output in Table 3.3, Section 3.7 *)
+graph exphlth income  
+ols exphlth const income  
+(* copy residuals from uhat to ut *)
+genr ut=uhat
+(* predicted value = oberved value - residual *)
+genr yhat=exphlth-ut
+print -o exphlth yhat ut 

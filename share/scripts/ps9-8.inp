@@ -1,0 +1,34 @@
+(* PS9.8, using DATA9-2, ARCH estimation: Example 9.10 and Table 9.4 *)
+genr M1 = M(-1)
+genr M2 = M(-2)
+genr D1 = D(-1)
+genr D2 = D(-2)
+(* estimate model *)
+ols r const M1 M2 D1 D2  
+(* generate uhat square and lags *)
+genr usq = uhat*uhat
+genr usq1 = usq(-1)
+genr usq2 = usq(-2)
+genr usq3 = usq(-3)
+(* estimate auxiliary regression for ARCH(3) *)
+ols usq const usq1 usq2 usq3 
+(* compute nRsquared and pvalue *)
+genr LM1=$nrsq
+pvalue X 3 LM1
+(* ARCH(3) is not supported but ARCH(1) term is significant at 9 percent *)
+ols usq const usq1 
+genr LM2=$nrsq
+(* generate predicted variance as observed minus error uhat *)
+genr usqhat = usq-uhat
+pvalue X 1 LM2
+(* all values of predicted variance are positive *)
+print usqhat 
+(* compute weights for WLS *)
+genr wt=1/sqrt(usqhat)
+(* estimate model by weighted least squares *)
+wls wt r const M1 M2 D1 D2  
+(* compare shortcut command *)
+arch 1 r const M1 M2 D1 D2
+(* omit D2 which has an insignificant coefficient *)
+omit D2
+

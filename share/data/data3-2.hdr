@@ -1,0 +1,11 @@
+(*
+DATA3-2: Aggregate personal income and expenditures on health care,
+     both measured in billions of dollars, 1993, for U.S. States and D.C.
+     Source:  1995 Statistical Abstract of the U.S.
+     exphlth = Personal Health Care Expenditures, Table 153, Page 111,
+               Range 0.998 - 9.029.
+     income  = Personal Income, Table 712, Page 460, Range 9.3 - 64.1.
+*)
+exphlth income ;
+1 1 51
+BYOBS

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+topdir=/home/cottrell/stats/esl/gretl
+version=$(cat lib/src/version.h | grep version_ | \
+     awk '{ print $NF}' | sed s/[\"\;]//g)
+tarfile="gretl-${version}.tar.gz"
+
+echo "making dist file for gretl $version using filename $tarfile"
+
+if [ -f ${topdir}/Makefile ] ; then
+  cd ${topdir} && make distclean
+fi  
+cd ${topdir}/..
+mkdir ${topdir}/../gretl-$version
+date > gretl/share/gretl.stamp
+rm -f gretl/doc/manual.aux gretl/doc/manual.log gretl/doc/manual.toc
+rm -f gretl/doc/manual.out
+cp -ap gretl/* gretl-$version
+find gretl-$version -name "*CVS" | xargs rm -rf
+tar cvfz $tarfile gretl-$version
+rm -rf gretl-$version
+
+scp gretl/doc/manual.pdf cottrell@ricardo:/home/cottrell/www-home/gretl
+scp gretl/ChangeLog cottrell@ricardo:/home/cottrell/www-home/gretl
+
+
+
+

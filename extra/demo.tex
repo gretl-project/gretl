@@ -1,0 +1,51 @@
+\documentclass{article}
+\begin{document}
+
+\newcommand{\libesleqn}[1]{%
+	\setlength{\tabcolsep}{2pt}
+	\begin{center} 
+	\vspace{8pt}
+	\input #1
+	\vspace{8pt}
+	\end{center}
+}
+
+\newcommand{\libeslmodel}[1]{%
+	\begin{center} 
+	\vspace{8pt}
+	\input #1
+	\vspace{8pt}
+	\end{center}
+}
+
+\newcommand{\tabspace}{\vspace{1em}}
+
+\title{Libesl \LaTeX\ equation demo}
+\author{Allin Cottrell}
+\date{November 1999}
+\maketitle
+
+This is just a little file to demo the facility for generating
+\LaTeX\ equations in libesl.  To generate a file suitable
+for inclusion below, do something like the following at the
+command prompt:
+
+\vspace{6pt}
+
+\verb+eslclient data4-1+
+
+\verb+? ols 1 0 2+
+
+\verb+? eqnprint+
+
+\vspace{6pt}
+
+\noindent and \texttt{model\_1.tex} will be generated.
+
+\libesleqn{model_1}
+
+That's all!
+
+\end{document}
+
+

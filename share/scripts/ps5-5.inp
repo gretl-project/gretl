@@ -1,0 +1,12 @@
+(* PS5.5, using DATA4-6 for the second application in Section 5.4 *)
+corr urb famsize unemp highschl college medinc
+(* Model A -- most general specification *)
+ols povrate const urb famsize unemp highschl college medinc
+(* Model B -- omit unemp with the highest p-value *)
+omit unemp
+(* Model C after omitting urb *)
+omit urb
+(* Model D -- exclude medinc *)
+omit medinc
+(* Relate medinc to its determinants and confirm multicollinearity *)
+ols medinc 0 famsize unemp highschl college

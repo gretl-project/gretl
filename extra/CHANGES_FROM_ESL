@@ -1,0 +1,111 @@
+Here is an accounting of the changes from Ramu Ramanathan's
+"ESL", in my "esclient".
+
+1. Change of syntax
+2. Change in command-line arguments
+3. Commands missing from eslclient
+4. Commands redefined in eslclient
+5. New commands added to eslclient
+6. Other features added to eslclient
+
+
+1. Change of syntax
+===================
+
+There is only one significant change.  In esl, a semicolon is used as a
+terminator for many commands.  I decided to remove this in eslclient.
+Semicolons are simply ignored, apart from a few special cases where
+they have a definite meaning: as a separator for two lists in the "ar"
+and "tsls" commands, and as a marker for an unchanged starting or ending
+obesrvation in the "smpl" command.
+
+In esl semicolon termination gives the possibility of breaking long
+commands over more than one line; in eslclient this is done by putting a
+trailing backslash "\" at the end of a line that is to be continued.
+
+2. Change in command-line arguments
+===================================
+
+The command-line syntax for running a batch job is simplified.  For esl
+you type, e.g.
+
+  esl -b datafile <inputfile >outputfile
+  
+For eslclient you type:
+
+  eslclient -b inputfile >outputfile  
+
+The inputfile is treated as a program argument; it should specify a
+datafile to use internally, using 
+
+  open datafile  OR  (* ! datafile *)
+  
+3. Commands missing from eslclient
+==================================
+
+I have not implemented the esl commands designed to make working
+interactively at the DOS command prompt a bit easier ("scroll" and
+"edit").  I presume that with the new gui these will not be needed, and
+that people who choose to use the command-line interface interactively
+will probably be running it in a proper scrollable terminal window (e.g.
+xterm).
+
+4. Commands redefined in eslclient
+==================================
+
+A few esl commands have been simplified, or their output has been
+changed somewhat.
+
+freq: At present you can't specify particular ranges as in esl.  A
+chi-square test for normality has been added.
+
+store: The -o switch now saves the data by variable in binary format. 
+There are two new switches: -c saves in CSV format; -m saves in GNU
+Octave format.
+
+The output from many commands is formatted a little differently.
+
+5. New commands added to eslclient
+==================================
+
+These are described in detail in the helpfile.  Here is a brief summary.
+
+adf:		Augmented Dickey-Fuller test
+chow:		Chow test for structural break
+coint:		Cointegration test
+diff:		Shortcut for generating first differences
+endloop:    Terminate a monte carlo simulation loop
+eqnprint:	Print OLS model as LaTeX equation
+import: 	Open datafile in comma-separated values (CSV) format
+info:       Display any info on data in header file		
+labels:     Display explanatory labels for vars (if any)
+ldiff:		Shortcut for generating log-differences
+loop:		Start a monte carlo simulation loop
+lsqprint:	Print OLS model as LaTeX table
+nulldata:	Set up blank "dummy" data set (for simulations)
+open: 		Open an esl format datafile
+
+6. Other features added to eslclient
+====================================
+
+* Specifying lags: You don't have to create lagged variables in advance
+of a regression.  The syntax "foo(-1)" in a regression list will cause
+the first lag of foo (if foo exists) to be generated and added to the
+data set.
+
+* You can switch data files without quitting eslclient.  If a data file
+has already been read, using the "open" command will replace it with a
+new one (after a prompt for whether this is really wanted).
+
+* You can assign "labels" to variables: explanatory or descriptive tags
+of up to 128 characters.  These go in a file with the same basename as
+the datafile plus the suffix ".lbl".  One variable per line, the name of
+the variable first, followed by white space, followed by the label. 
+These labels will be read if they're present and can be retrieved with
+the "labels" command.
+
+* case markers: The first column of a data file may contain case markers
+(8 chars max), such as the names of states or cities.  This must be
+flagged by the keyword MARKERS at the end of the data header file.  When
+data are printed, the case markers will be used instead of observation
+numbers. 

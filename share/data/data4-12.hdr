@@ -1,0 +1,46 @@
+(*
+DATA4-12:
+  This data set was compiled by Marc Selznick.  It relates the
+  mortality rate in a state to a number of socio-economic variables. 
+  Data are for U.S.  States and D.C.  All variables are in per-capita
+  amounts or represent Proportions of state populations.
+  MORT = Total Mortality Rate per 100,000 Population, by State 
+         National Center For Health Statistics. "Advance Report of
+         Final Mortality Statistics, 1985." August 28, 1987. Table
+         17. Pages 42-43. (Range 396.2 - 1120.5).
+  INCC = Per-Capita Income by State, in Dollars  Pennsylvania
+         Department of Labor and Industry Annual 1986. Table 20.
+         (Range 9187 - 18187).
+  POV  = Proportion of Families Living Below the Poverty Line by State 
+         Statistical Abstract of the United States 1990. Table 742.
+         (Range 0.079 - 0.239).
+  EDU1 = Proportion of Population Completing 4 Years of High School by
+         State  U.S. Department of Education, "Digest of Education
+         Statistics, 1987." Table 10. (Range 0.531 - 0.825).
+  EDU2 = Proportion of Population Completing 4 or More Years of College
+         by State  U.S. Department of Education, "Digest of
+         Education Statistics, 1987." Table 10. (Range 0.104 - 0.275).
+  ALCC = Per-Capita Consumption of Alcohol by State, in Gallons,
+         Metropolitan Life Insurance Company, "Alcohol Use in the U.S."
+         January- March, 1987.  Page 22. (Range 1.53 - 5.34).
+  TOBC = Per-Capita Consumption of Cigarettes by State, in Packs  Tobacco
+         Institute Annual 1987. "Tax Burden on Tobacco." Table 11.
+         (Range 66.5 - 201.1).
+  HEXC = Per-Capita Health Care Expenditures by State, in Dollars (Personal,
+         State, and Federal Spending)  Almanac of the 50 States,
+         1987. Pages 9-357. Various Tables (By State).
+         (Range 1203 - 3872).
+  PHYS = Physicians per 100,000 Population by State  Health
+         Insurance Association of America, "Source Book of Health
+         Insurance Data, 1986-7." Table 7.1. (Range 117 - 552).
+  URB  = Proportion of Population Living in Urban Areas by State 
+         Statistical Abstract of the United States 1990. Page xii.
+         State Rankings Section. (Range 0.2 - 1)
+  AGED = Proportion of Population over the Age of 65, by State  U.S.
+         Department of Commerce. "Current Population Reports, 1987."
+         Page 86. Table 8.  (Range 0.034 0.177).
+*)
+MORT INCC POV EDU1 EDU2 ALCC TOBC HEXC PHYS URB AGED ;
+1 1 51
+BYOBS
+MARKERS

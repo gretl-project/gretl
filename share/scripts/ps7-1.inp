@@ -1,0 +1,12 @@
+(* PS7.1, using DATA7-1, for example in Section 7.1 *)
+ols WAGE 0 D
+genr n=$nobs
+genr nm=sum(D)
+genr wall=sum(WAGE)
+genr wbar=wall/n
+genr nf=n-nm
+genr wm=sum(WAGE*D)
+genr mbar=wm/nm
+genr wf=sum(WAGE*(1-D))
+genr fbar=wf/nf
+print wbar nm mbar nf fbar

@@ -1,0 +1,10 @@
+UCOMP   Unemployment Compensation received ($)
+UHOURS  Head of household's hrs of unemployment, 1982
+HEADY   Head of household's labor income ($, 1982)
+SPOUSEY Spouse's labor income ($, 1982)
+EDUC    Grades of school completed by the head of household
+MALE    Gender of head of houshold, 1 if Male, 0 if female
+MARRIED Marital status of head of household, 1 = married
+FAMSIZE Size of family unit (Range 1 - 9)
+WHITE   Race of head of household, 1 if white, 0 otherwise
+

@@ -1,0 +1,23 @@
+(*
+DATA4-5:  THE FOLLOWING ARE 1990 CENSUS DATA BY STATES
+ 	   PARTICIPATION RATE (IN %) OF ALL WOMEN OVER 16
+ 	   Compiled by Louis Cruz 
+   wlfp = persons 16 years & over--percent in labor force who are
+          female (Range 42.6 - 66.4)
+   yf   = median earnings (in thousands of dollars) by females 15
+          years & over with income in 1989 (Range 14.271 - 25.62)
+   ym   = median earnings (in thousands of dollars) by males 15
+          years & over with income in 1989 (Range 21.425 - 35.622)
+   educ = females 25 years & over--percent high school graduate or
+          higher (Range 64.5 - 86.1)
+   ue   = civilian labor force--percent unemployed (Range 3.5 - 9.6)
+   mr   = female population 15 & over--percent now married (excluding
+          separated), Range 46.88 - 60.92
+   dr   = female population 15 & over--percent who are divorced 
+          (Range 6.42 - 15.06)
+   urb  = percent of population living in urban areas (Range 32.2 - 92.6)
+   wh   = female population--percent 16 years and over who are white
+          (Range 24.69 - 77.73) 
+*)
+wlfp yf ym educ ue mr dr urb wh ;
+ 1 1 50 BYOBS

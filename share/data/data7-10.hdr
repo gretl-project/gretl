@@ -1,0 +1,24 @@
+(*
+DATA7-10:  Data on air quality and its determinants for 30 SMSA's in 
+           California.  Data compiled by Susan Wong are for 1970-72.
+    airqual   weight of suspended particular matter (Range 59 - 165)
+    popln     population in thousands (Range 372 - 11529)
+    valadd    value added by industrial manufactures in 1972 (in thousands
+              of dollars), Range 992.9 - 19733.8.
+    rain      rain fall in inches (Range 12.63 - 68.13)
+    coast     = 1  for SMSA's on the coast, 0 otherwise
+    density   population per square mile of area (Range 271.59 - 12957.5)
+    medincm   medium per capita income (Range 853 - 59460)
+    poverty   100 times the percentage of families with income less than
+              poverty levels (Range 117 - 1939)
+    electr    electricity consumed by industrial manufacturers
+              (megawatt hours), Range 1.7 - 169.8.
+    fueloil   thousands of barrels of fuel oil consumed in industrial
+              manufacturing (Range 18.4 - 1912.9)
+    indestab  number of industrial establishments with 20 or more
+              employees (Range 221 - 9466)
+*)
+airqual popln valadd rain coast density medincm poverty electr fueloil
+indestab ;
+1 1 30
+BYOBS

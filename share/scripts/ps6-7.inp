@@ -1,0 +1,8 @@
+(* PS6.7 using DATA6-4 for Example 6.5 *)  
+logs WAGE  
+square EDUC EXPER AGE  
+ols l_WAGE const EDUC EXPER AGE sq_EDUC sq_EXPER sq_AGE  
+omit AGE  
+omit sq_AGE  
+omit sq_EXPER  
+omit EDUC  

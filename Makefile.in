@@ -1,0 +1,145 @@
+top_builddir = .
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+libdir = @libdir@
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+LN = @LN_S@
+have_readline = @have_readline@
+have_zlib = @have_zlib@
+have_gtk = @have_gtk@
+have_gtkextra = @have_gtkextra@
+have_gnome = @have_gnome@
+have_gtkhtml = @have_gtkhtml@
+need_libbind = @need_libbind@
+CLI_LIBS = @CLI_LIBS@
+RL_OBJ = @RL_OBJ@
+GUI = @GUI@
+
+ifeq ($(prefix),)
+  prefix = /usr/local
+endif
+ifeq ($(libdir),)
+  libdir = $(prefix)/lib
+endif
+ifeq ($(bindir),)
+  bindir = $(prefix)/bin
+endif
+ifeq ($(CC),)
+  CC = gcc
+endif
+ifeq ($(CFLAGS),)
+  CFLAGS = -g -Wall
+endif
+ifeq ($(MAKE),)
+  MAKE = make
+endif
+ifeq ($(INSTALL),)
+  INSTALL = /bin/install -c
+endif
+ifeq ($(LN),)
+  LN = ln -sf
+endif
+ifeq ($(have_readline),)
+  have_readline = yes
+  CLI_LIBS = -lreadline
+endif
+ifeq ($(have_zlib),)
+  have_zlib = yes
+endif
+ifeq ($(have_gtk),)
+  have_gtk = yes
+  GUI = gretl
+endif
+ifeq ($(have_gtkextra),)
+  have_gtkextra = yes
+endif
+
+INSTALL_PROGRAM = ${INSTALL} -m 755
+INSTALL_DATA = ${INSTALL} -m 644
+
+LIBGRETL  = libgretl.la
+CLI = gretlcli
+PLUGIN = stats_tables.so
+
+export
+
+mklibdir = ./lib
+clidir = ./cli
+tooldir = ./tools
+guidir = ./gui
+plugindir = ./plugin
+sharedir = ./share
+
+GUI_SRC = ./gui/gretl.c ./gui/lib.c ./gui/gui_utils.c ./gui/callbacks.c \
+	./gui/dialogs.c ./gui/ssheet.c ./gui/datafiles.c ./gui/database.c \
+	./gui/fileselect.c
+
+PLUGIN_SRC = ./plugin/stats_tables.c
+
+COMMON = ./cli/common.c
+
+all: $(LIBGRETL) $(CLI) $(GUI) $(PLUGIN) Makefile
+
+lib: $(LIBGRETL)
+
+$(LIBGRETL): Makefile
+	cd $(mklibdir) && $(MAKE)
+
+cli: $(CLI)
+
+$(CLI): $(LIBGRETL) Makefile ./cli/gretlcli.c $(COMMON) ./cli/complete.c
+	cd $(clidir) && $(MAKE)
+
+$(GUI): $(LIBGRETL) $(GUI_SRC) $(COMMON) Makefile
+	cd $(guidir) && $(MAKE)
+
+$(PLUGIN): $(PLUGIN_SRC)
+	cd $(plugindir) && $(MAKE)
+
+clean:
+	cd $(mklibdir) && $(MAKE) clean
+	cd $(clidir) && $(MAKE) clean
+	cd $(guidir) && $(MAKE) clean
+	cd $(plugindir) && $(MAKE) clean	
+
+installdirs:
+	$(tooldir)/mkinstalldirs $(libdir) $(includedir) $(bindir)
+
+install: $(GUI) $(CLI) installdirs
+	cd $(mklibdir) && $(MAKE) install
+	cd $(clidir) && $(MAKE) install
+	cd $(guidir) && $(MAKE) install
+	cd $(sharedir) && $(MAKE) install
+	cd $(plugindir) && $(MAKE) install
+	$(tooldir)/install_man $(tooldir) $(prefix) gretl.1 
+	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
+
+install-strip: $(GUI) $(CLI) installdirs
+	cd $(mklibdir) && $(MAKE) install-strip
+	cd $(clidir) && $(MAKE) install-strip
+	cd $(guidir) && $(MAKE) install-strip
+	cd $(sharedir) && $(MAKE) install
+	cd $(plugindir) && $(MAKE) install
+	$(tooldir)/install_man $(tooldir) $(prefix) gretl.1 
+	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
+
+tags:
+	etags lib/src/*.c cli/*.c gui/*.c plugin/*.c
+
+dist:	
+	./tools/makedist
+
+distclean: clean
+	rm -f config.log config.cache config.status config.h 
+	rm -f gretl_sh gretl-config
+	rm -f libtool Makefile
+
+
+
+
+
+

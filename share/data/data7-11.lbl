@@ -1,0 +1,24 @@
+price   sale price ($000s, Range 110 - 590)
+age     age of house in years (Range 1 - 60)
+aircon  = 1 if house has central air, 0 otherwise
+baths   number of bath rooms (Range 1 - 5)
+bedrms  number of bed rooms (Range 2 - 5)
+cond    condition of house from poor (1) to excellent (6)
+corner  = 1 if the house is a corner lot, 0 otherwise
+culd    = 1 if the house is in a cul-de-sac, 0 otherwise
+dish    = 1 if the house has a built-in dishwasher, 0 otherwise
+fence   = 1 if the house has a fence, 0 otherwise
+firepl  number of fireplaces (Range 0 - 2)
+floors  number of floors (Range 1 - 2)
+garage  number of car spaces in garage (Range 0 - 3)
+irreg   = 1 if lot is irregular in shape, 0 otherwise
+lajolla = 1 if the house is located in La Jolla, 0 otherwise
+lndry   = 1 if the house has a laundry area, 0 otherwise
+patio   number of patios (Range 0 - 2)
+pool    = 1 if the house has a swimming pool, 0 otherwise
+rooms   number of rooms excluding bedrms and baths (Range 1 - 5)
+sprink  = 1 if there is a sprinkler system, 0 otherwise
+sqft    living area in square feet (Range 950 - 3775)
+view  = 1 if the house has a view, 0 otherwise
+yard    yard size in square feet (Range 1530 - 36304)
+

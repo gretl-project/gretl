@@ -1,0 +1,9 @@
+(*
+DATA3-12: Population of the United Kingdom, in millions
+         (Range 53.292 - 58.395)
+     Source:  Annual Abstract of Statistics, Central Statistical
+     Office, 1996, Table 2.1, Page 16.
+*)
+year pop ;
+1 1962 1994
+BYOBS

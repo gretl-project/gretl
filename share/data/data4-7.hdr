@@ -1,0 +1,25 @@
+(* 
+DATA4-7: Death rates in the U.S. due to coronary heart disease and their
+         determinants.  Data compiled by Jennifer Whisenand
+  chd    =  death rate per 100,000 population (Range 321.2 - 375.4)
+  cal    =  Per capita consumption of calcium per day in grams
+            (Range 0.9 - 1.06)
+  unemp  =  Percent of civilian labor force unemployed in 1,000 of persons
+	    16 years and older (Range 2.9 - 8.5)
+  cig    =  Per capita consumption of cigarettes in pounds of tobacco
+  	    by persons 18 years and older--approx. 339 cigarettes per pound
+  	    of tobacco (Range 6.75 - 10.46)
+  edfat  =  Per capita intake of edible fats and oil in pounds--includes
+  	    lard, margerine and butter (Range 42 - 56.5)
+  meat   =  Per capita intake of meat in pounds--includes beef, veal, pork,
+	    lamb and mutton (Range 138 - 194.8)
+  spirits = Per capita consumption of distilled spirits in taxed gallons
+  	    for individuals 18 and older (Range 1 - 2.9)
+  beer   =  Per capita consumption of malted liquor in taxed gallons for
+	    individuals 18 and older (Range 15.04 - 34.9)
+  wine   =  Per capita consumption of wine measured in taxed gallons for
+	    individuals 18 and older (Range 0.77 - 2.65)
+*)
+chd cal unemp cig edfat meat spirits beer wine ;
+1 1947 1980
+BYOBS

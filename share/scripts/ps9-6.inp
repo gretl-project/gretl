@@ -1,0 +1,3 @@
+(* PS9.6, using DATA9-1, for Example 9.7 *)
+hilu demand 0 price income temp
+corc demand 0 price income temp

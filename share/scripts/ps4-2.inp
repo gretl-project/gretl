@@ -1,0 +1,34 @@
+(* PS4.2, using DATA4-2, to verify Examples 4.9, 4.10, and 4.11, Sec. 4.4 *)
+genr Wt=WAGES*100/PRDEFL
+(* compute aggregate profits *)
+genr Pt=Yt-Wt
+ols Ct 0 Wt Pt 
+(* retrieve ESS for unrestricted model *)
+genr ESSU = $ess
+(* retrieve d.f. for unrestricted model *)
+genr DFU = $df
+(* Use this and previous regression to calculate F in Example 4.8 *)
+ols Ct 0 Yt 
+(* retrieve ESS for restricted model *)
+genr ESSR = $ess
+(* retrieve d.f. for restricted model *)
+genr DFR = $df
+(* compute number of restrictions *)
+genr NR = DFR - DFU
+(* compute F-statistic for Example 4.9 *)
+genr Fc = (ESSR - ESSU)*DFU/(NR*ESSU)
+pvalue 4 NR DFU Fc
+(* This is for Example 4.10 -- see t-stat on Pt *)
+ols Ct 0 Yt Pt 
+(* Example 4.11: -o shows variances and covariances *)
+ols Ct 0 Wt Pt -o
+(* retrieve coefficient estimates *)
+genr b1 = coeff(Wt)
+genr b2 = coeff(Pt)
+(* generate difference in estimated slopes *)
+genr bdiff = b1-b2
+(* retrieve coefficient variances and covariance *)
+genr tmp = vcv(Wt,Wt) + vcv(Pt,Pt) - (2*vcv(Wt,Pt))
+genr den = sqrt(tmp)
+genr tc = abs(bdiff/den)
+pvalue t 1 tc

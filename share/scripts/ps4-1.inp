@@ -1,0 +1,39 @@
+(* PS4.1, using DATA4-1, for reproducing Table 4.2 *)
+ols price const sqft
+(* add bedrms - Model B *)
+add bedrms  
+(* add bath rooms also - Model C *)
+add baths  
+(* model with only constant - Model D *)
+ols price const  
+(* model without a constant *)
+ols price sqft 
+(* The following commands will be useful for Example 4.6 on Wald F-test *)
+ols price const sqft bedrms baths  
+(* retrieve ESS *)
+genr ESSU = $ess
+(* retrieve d.f. *)
+genr DFU = $df
+(* restricted model R *)
+ols price const sqft 
+(* retrieve ESS *)
+genr ESSR = $ess
+(* retrieve d.f. *)
+genr DFR = $df
+(* number of restrictions *)
+genr NR = DFR - DFU
+(* compute Fc *)
+genr Fc = (ESSR - ESSU)*DFU/(ESSU*NR)
+(* learn about pvalue *)
+help pvalue
+(* compute pvalue - F-distribution is 4 *)
+pvalue F NR DFU Fc
+(* Model U again *)
+ols price const sqft bedrms baths  
+(* use omit command and note that Fc and pvalue are given at the end *)
+omit bedrms baths
+(* commands for Example 4.2 *)
+genr sqft2 = sqft-2000
+genr bedrms2 = bedrms-4
+genr baths2 = baths-2.5
+ols price 0 sqft2 bedrms2 baths2

@@ -1,0 +1,32 @@
+(* PS10.9, using DATA10-5, for Example 10.7 *)
+genr time
+(* For testing for random walk, first generate lagged variables *)
+lags uswage calwage
+(* next generate differences and their lags *)
+genr duswage = diff(uswage)
+genr dcalwage = diff(calwage)
+lags duswage dcalwage
+(* lag of duswage is not defined for 1960 and 1961, start with 1962 *)
+smpl 1962 1994
+(* carry out F-tests for random walks *)
+ols duswage 0 time uswage_1 duswag_1
+omit time uswage_1
+ols dcalwage 0 time calwag_1 dcalwa_1
+omit time calwag_1
+(* For cointegrating regression, reset sample range to the beginning *)
+smpl 1960 1994
+ols calwage 0 uswage
+(* save residuals, generate their lags, and differences in lags *)
+genr ut = uhat
+genr ut1 = ut(-1)
+genr diffut = diff(ut)
+genr diffut_1 = diffut(-1)
+genr diffut_2 = diffut(-2)
+genr diffut_3 = diffut(-3)
+genr diffut_4 = diffut(-4)
+(* now we have to suppress the first five observations *)
+smpl 1965 1994
+ols diffut ut1 diffut_1 diffut_2 diffut_3 diffut_4
+(* compare shortcut command *)
+coint 4 calwage uswage
+

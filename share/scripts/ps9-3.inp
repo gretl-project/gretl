@@ -1,0 +1,16 @@
+(* PS9.3, using DATA4-7, for the LM test in Example 9.4 *)
+ols chd 0 cig edfat spirits beer 
+(* save residuals *)
+genr ut=uhat
+(* generate lag of ut *)
+genr ut1=ut(-1)
+(* print ut and ut1 to see how ut1 is internally stored *)
+print ut ut1
+(* suppress first obs. because ut1 is not defined for it *)
+smpl 1948 1980
+(* auxiliary regression for LM test *)
+ols ut 0 cig edfat spirits beer ut1
+(* compute nrsquare statistic *)
+genr LM = $nrsq
+(* compute pvalue for it *)
+pvalue X 1 LM 

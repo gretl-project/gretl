@@ -1,0 +1,12 @@
+price	list price ($000s, Range 8.395 - 68.603) 
+hatch	= 1 for a hatchback, 0 for sedan
+wbase	wheel base (inches, Range 93.1 - 113.8)
+length  length of car (inches, Range 149.4 - 207.3)
+width	width of car (inches, Range 53.9 - 75.5)
+height  height (inches, Range 46.3 - 55.2)
+weight  weight (hundreds of pounds, Range 18.08 - 38.18)
+cyl 	number of cylinders, Range 3 - 8
+liters  engine displacement in liters, Range 1 - 2.3
+gasmpg  est. mpg, avg between city and freeway
+trans	= 1 for automatic transmission, 0 otherwise
+

@@ -1,0 +1,8 @@
+(* PS6.11 using DATA6-4 for Example 6.8 *)  
+logs WAGE  
+ols l_WAGE const EDUC EXPER AGE 
+genr ut = uhat
+square EDUC EXPER AGE  
+ols ut const EDUC EXPER AGE sq_EDUC sq_EXPER sq_AGE  
+genr LM = $nrsq
+pvalue X 3 LM

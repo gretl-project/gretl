@@ -1,0 +1,21 @@
+(*
+DATA7-22: Data on cable systems in 1979 and 1994.
+    SOURCES: Broadcasting Yearbook 1980 for 1980 data, and the following
+    for 1994 data.  Broadcasting and Cable Year Book 1996, Television
+    and Cable Fact Book 1996, and Editor & Publisher Market Guide, 1995. 
+    1979 data compiled by David Andersen and 1994 data compiled
+    by Cecilia Steen.
+    sub   = The number of subscribers of each system (in thousands)
+           (Range 1 - 462)
+    homes = The number of homes passed by each system (Range 1.7 - 1201.09)
+    inst  = Installation fee in dollars (5.95 - 75)
+    svc   = Monthly service charge of each system (Range 5.08 - 24.93)
+    cblchanl   = The number of television signals carried by each cable system
+           (Range 6 - 120)
+    tvchanl  = The number of television signals received (Range 3 - 15)
+    pcincome    = Per capita income for each television market with cable,
+                  in dollars (Range 7.683 - 28.597)
+    D = 1 for 1994  and 0 for 1979
+*)
+sub homes inst svc cblchanl tvchanl pcincome D ;
+1 1 101 BYOBS

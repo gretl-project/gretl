@@ -1,0 +1,16 @@
+(* PS12.1, using DATA4-5 to illustrate Example 12.1 *)
+genr y = ln(wlfp/(100-wlfp))
+(* estimate the logit model *)
+ols y 0 yf educ ue urb wh
+(* save predicted values *)
+genr yhat=y-uhat
+(* take antilog and correct for bias in log model *)
+genr y1=exp(yhat+($ess/(2*$df)))
+(* predict the participation rate and compute the errors *)
+genr wlfphat = 100*y1/(1+y1)
+genr error = wlfp - wlfphat
+(* compute ESS and adjusted model selection criteria for logit model *)
+genr ess = sum(error*error)
+criteria ess 50 6
+(* estimate linear model *)
+ols wlfp 0 yf educ ue urb wh

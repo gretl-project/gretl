@@ -1,0 +1,11 @@
+pvote     propn. of vote for incumbent
+pvote86   propn. vote for 1986 election (0.55 - 0.88).
+pvote84   propn. vote for 1984 election (0.52 - 1.0).
+vbush     propn. voting for Bush in 1988 Pres. election
+terms     number of previous terms in office (Range 3 - 13).
+amtinc    $000s spent by incumbent in the 1988 election
+amtchall  $000s spent by challenger in the 1988 election
+resources $000s raised by the incumbent for the 1988 election
+lcvrate   environmental rating of incumbent for 1988
+demo      party affiliation: Dem = 1, Rep = 0.
+

@@ -1,0 +1,9 @@
+(*
+DATA3-7:  Data for a Toyota station wagon (57 observations)
+    cost  = cumulative repair cost in actual dollars (11 - 3425)
+    age   = age of car in weeks of ownership (Range 5 - 538)
+    miles = miles driven in thousands (Range 0.8 - 74.4)
+*)
+cost age miles ;
+1 1 57
+BYOBS

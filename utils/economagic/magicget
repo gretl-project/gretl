@@ -1,0 +1,261 @@
+#!/usr/bin/perl
+
+# gretl - The Gnu Regression, Econometrics and Time-series Library
+# Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
+
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License 
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+
+# This software is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License 
+# along with this software; if not, write to the 
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+
+# grab data from the economagic web site and get it into a suitable
+# form for creating a binary database
+
+# arg: economagic source (e.g. fedbog, beana, fedstl)
+
+# use strict;
+use Socket;
+require LWP::UserAgent;
+require "getopts.pl";
+
+my(@fields, @obs, @yr, @subper, @sernames, @dirs);
+my($s, $n, $i, $url, $line, $pdstr, $varname, $pd, $pdcheck);
+my($remote, $port, $iaddr, $paddr, $proto, $msg, $title);
+my($ua, $request, $response);
+my $nseries = 0;
+my $interactive = 1;
+my $verbose = 0;
+
+sub check_series_name {
+    if ($_[0] =~ m@[^a-zA-Z0-9\+-_/]@) { return 1; }
+    if ($_[0] =~ m+/day+) { return 1; }
+    return 0;
+}
+
+sub usage
+{
+    die <<"EndUsage";
+usage: magicget [-b] data_source_identifier
+
+magicget -- A program for grabbing data from www.economagic.com and
+            compiling it into a gretl database.
+Options: 
+     -h  Help -- just display this message and quit.
+     -b  Run in "batch" mode -- don't prompt for proceeding to make
+         database after retrieving list of variable names.
+     -v  Verbose operation.
+
+The "data_source_identifier" (e.g. fedbog, ecb) is the abbreviation used
+by economagic for a given data source.
+
+EndUsage
+}
+
+# Start of main program
+
+# Get command-line options (b for batch, h for help);
+
+if (!(&Getopts('bvh')) || $opt_h) { &usage; }
+if ($opt_b) { $interactive = 0; }
+if ($opt_v) { $verbose = 1; }
+
+if (@ARGV == 0) { &usage; }
+my $source = $ARGV[0];
+
+open (BIN, ">$source.bin") || die "Can't open $source.bin";
+open (IDX, ">$source.idx") || die "Can't open $source.idx";
+
+$remote = "www.economagic.com";
+$port = "80";
+
+# First pass: get series names
+
+print "Trying to connect to $remote...\n";
+
+$title = "http://" . $remote . "/" . $source . ".htm";
+print "$title\n";
+$ua = LWP::UserAgent->new;
+$request = HTTP::Request->new('GET', $title);
+$response = $ua->request($request);
+
+if ($response->is_success) {
+    foreach (split(/\n/, $response->content)) {
+	if (/Server Error/) {
+	    print;
+	    die "Can't get info from server";
+	}
+	chomp;
+	if (/<TITLE>/) {
+	    $i = index($_, "<TITLE>") + 26;
+	    $line = substr($_, $i, rindex($_, "</TITLE>") - $i);
+	    print "$line\n";
+	    print IDX "# $line\n";
+	}
+	if (/data.exe/) {
+	    $i = index($_, "href=") + 6;
+	    $url = substr($_, $i);
+	    $url = substr($url, 0, index($url, "\>") - 1);
+	    $varname = substr($url, rindex($url, "/", 18) + 1);
+	    print "series $varname\n";
+	    if (check_series_name($varname)) {
+		print STDERR "Got bad series name, $varname\n";
+	    } else {
+		$sernames[$nseries] = $varname;
+		# $dir = $url;
+		$nseries++;
+	    }
+	}
+    }
+} else {
+    print "Couldn't get document\n";
+    exit;
+}
+
+if ($nseries == 0) {
+    print "$source: got no good series names\n";
+    exit;
+} else {
+    print "$source: found $nseries series names\n"; 
+}
+
+if ($interactive) {
+    print "Proceed to download data and make database? (Y/n) ";
+    $response = <STDIN>;
+    if ($response =~ /n/) {
+	print "OK, exiting\n";
+	exit;
+    }
+}
+
+# Now get data for the series we want:
+
+$iaddr = inet_aton($remote) or die "Error: $!";
+$paddr = sockaddr_in($port, $iaddr) or die "Error: $!";
+$proto = getprotobyname('tcp') or die "Error: $!";
+
+for ($s = 0; $s < $nseries; $s++) {
+
+    # MAY HAVE TO tinker with the line below ....
+    $msg = "GET /em-cgi/data.exe/$sernames[$s] \n\n";
+    socket(SOCK, PF_INET, SOCK_STREAM, $proto) or die "Error: $!";
+    connect(SOCK, $paddr) or die "Error: $!";
+    send(SOCK, $msg, 0) or die "Cannot send query: $!";
+
+    @yr = ();
+    @subper = ();
+    @obs = ();
+    $n = 0;
+    $pd = 1;
+    $title = "";
+
+    while (<SOCK>) {
+	if (/Server Error/) {
+	    print;
+	    die "Can't get info from server";
+	}
+	chomp;
+	if (/Series Title:/) {
+	    $title = <SOCK>;
+	    chop($title);
+	    next;
+	}
+	if (m+</pre>+) { 
+	    print "got end of data\n";
+	    last; 
+	}	
+	if (/^ 19/ || /^ 20/) { 
+	    # remove economagic obfuscation
+	    s/<.*>/ /i; 
+	    s/\r//;
+	    @fields = split(/ +/);
+	    push(@yr, $fields[1]);
+	    push(@subper, $fields[2]);
+	    push(@obs, $fields[3]);
+	    $pdcheck = $fields[2];
+	    $pdcheck =~ s/^0//;
+	    if ($pdcheck > $pd) {
+		$pd = $pdcheck;
+	    }
+	    # check that dates make sense 
+	    if ($n > 14 && $pd != 4 && $pd != 12 && $pd != 1) { 
+		print STDERR "Unrecognized frequency $pd for $sernames[$s]\n"; 
+		print STDERR "Skipping this series\n";
+		$pd = -1;
+		$done = 1;
+		last;
+	    }
+	    $n++;
+	}
+    }
+    
+    if ($pd == -1) { next; }
+    if ($n == 0) {
+	print "Got no observations on this series\n";
+	next;
+    }
+
+    # print series name and description
+    print "Processing $sernames[$s]...\n";
+    $title =~ s/\r//;
+    $title =~ s/Billions of/Bn./g;
+    $title =~ s/dollars/\$/ig;
+    $title =~ s/chained/ch./ig;
+    $title =~ s/Government/Gov./g;
+    $title =~ s/Nonfinancial/Nonfin./g;
+    $title =~ s/Market/Mkt./;
+    $title =~ s/ the / /;
+    $varname = $sernames[$s];
+    $varname = substr($varname, index($varname, "/") + 1);
+    $varname =~ s/\+.*//;
+    $varname =~ s/-/_/g;
+    print IDX "$varname  $title\n";
+
+    # print the dates/obs line
+    if ($pd == 1) {
+	print IDX "A  $yr[0] - $yr[$n-1]  n = $n\n";
+    } else {
+	if ($pd == 4) {
+	    $pdstr = "Q";
+	    $subper[0] =~ s/0//;
+	    $subper[$n-1] =~ s/0//;
+	} elsif ($pd == 12) {
+	    $pdstr = "M";
+	} 
+	print IDX "$pdstr  $yr[0].$subper[0] - $yr[$n-1].$subper[$n-1]  n = $n\n";
+    }
+
+    # print the data values
+    for ($i = 1; $i <= $n; $i++) {
+	# chop ($obs[$i-1]); PROBLEM in some cases
+	if ($verbose) { 
+	    print " $obs[$i-1]"; 
+	}
+	print BIN pack("f", $obs[$i-1]);
+	if ($verbose && !($i % $pd)) { print "\n"; }
+    }
+    if ($verbose) { print "\n"; }
+    close (SOCK);
+}
+
+close (BIN);
+close (IDX);
+
+
+
+
+
+
+
+
+
+
