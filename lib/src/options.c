@@ -95,6 +95,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_C, "cross-section" },
     { PANEL,    OPT_S, "time-series" },
     { POOLED,   OPT_T, "iterate" },
+    { POOLED,   OPT_V, "verbose" },
     { POOLED,   OPT_W, "unit-weights" },
     { PCA,      OPT_A, "save-all" },
     { PCA,      OPT_O, "save" },

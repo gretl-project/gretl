@@ -52,6 +52,9 @@ MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	     PRN *prn);
 
+MODEL pooled (int *list, double ***pZ, DATAINFO *pdinfo,
+	      gretlopt opt, PRN *prn);
+
 const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i);
 
 void tsls_free_data (const MODEL *pmod);

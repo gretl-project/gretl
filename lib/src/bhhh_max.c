@@ -451,7 +451,7 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
 {
     int i;
 
-    pprintf(prn, "\n*** %s %d: theta, ll ***\n", ("iteration"), iter);
+    pprintf(prn, "\n*** %s %d: theta, ll ***\n", _("iteration"), iter);
     for (i=0; i<m; i++) {
 	if (i && i % 5 == 0) pputc(prn, '\n');
 	if (na(theta[i]) || isnan(theta[i])) {

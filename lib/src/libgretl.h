@@ -298,7 +298,7 @@ struct MODEL_ {
     double ess, tss;             /* Error and Total Sums of Squares */
     double sigma;                /* Standard error of regression */
     double ess_wt;               /* ESS using weighted data (WLS) */
-    double sigma_wt;             /* same thing for std.error */
+    double sigma_wt;             /* same thing for std. error */
     double rsq, adjrsq;          /* Unadjusted and adjusted R^2 */     
     double fstt;                 /* F-statistic */
     double lnL;                  /* log-likelihood */

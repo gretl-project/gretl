@@ -68,8 +68,6 @@ static int depvar_zero (int t1, int t2, int yno, int nwt,
 			const double **Z);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		      double ***pZ);
-static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo,
-			 gretlopt opt);
 /* end private protos */
 
 
@@ -296,8 +294,6 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 	    }
 	}
     } else {
-	double x;
-
 	pmod->ess_wt = pmod->ess;
 	pmod->sigma_wt = pmod->sigma;
 	pmod->ess = 0.0;
@@ -310,8 +306,8 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 		pmod->nobs -= 1;
 	    } else {
 		pmod->yhat[t] /= Z[pmod->nwt][t];
-		x = pmod->uhat[t] /= Z[pmod->nwt][t];
-		pmod->ess += x * x;
+		pmod->uhat[t] /= Z[pmod->nwt][t];
+		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    }
 	}
 	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
@@ -469,9 +465,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	return hsk_func(list, pZ, pdinfo);
     } else if (ci == HCCM) {
 	return hccm_func(list, pZ, pdinfo);
-    } else if (ci == POOLED && (opts & OPT_W)) {
-	return pooled_wls(list, pZ, pdinfo, opts);
-    }
+    } 
 
     gretl_model_init(&mdl);
     gretl_model_smpl_init(&mdl, pdinfo);
@@ -3440,27 +3434,32 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     return gmod;
 } 
 
-static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo,
-			 gretlopt opt)
+MODEL pooled (int *list, double ***pZ, DATAINFO *pdinfo,
+	      gretlopt opt, PRN *prn)
 {
     MODEL wmod;
-    void *handle;
-    MODEL (*panel_wls_by_unit) (int *, double ***, DATAINFO *,
-				gretlopt);
 
     *gretl_errmsg = '\0';
 
-    panel_wls_by_unit = get_plugin_function("panel_wls_by_unit", &handle);
+    if (opt & OPT_W) {
+	void *handle;
+	MODEL (*panel_wls_by_unit) (int *, double ***, DATAINFO *,
+				    gretlopt, PRN *);
 
-    if (panel_wls_by_unit == NULL) {
-	gretl_model_init(&wmod);
-	wmod.errcode = E_FOPEN;
-	return wmod;
+	panel_wls_by_unit = get_plugin_function("panel_wls_by_unit", &handle);
+
+	if (panel_wls_by_unit == NULL) {
+	    gretl_model_init(&wmod);
+	    wmod.errcode = E_FOPEN;
+	    return wmod;
+	}
+
+	wmod = (*panel_wls_by_unit) (list, pZ, pdinfo, opt, prn);
+
+	close_plugin(handle);
+    } else {
+	wmod = lsq(list, pZ, pdinfo, POOLED, opt, 0.0);
     }
-
-    wmod = (*panel_wls_by_unit) (list, pZ, pdinfo, opt);
-
-    close_plugin(handle);
 
     return wmod;
 }

@@ -2163,8 +2163,12 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case OLS:
     case WLS:
-    case POOLED:
 	*pmod = lsq(cmd.list, &Z, datainfo, action, cmd.opt, 0.0);
+	err = model_output(pmod, prn);
+	break;
+
+    case POOLED:
+	*pmod = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
@@ -5801,7 +5805,11 @@ int gui_exec_line (char *line,
     case WLS:
     case POOLED:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
+	if (cmd.ci == POOLED) {
+	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
+	} else {
+	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
+	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 
 	    break;

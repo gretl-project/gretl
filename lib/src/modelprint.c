@@ -521,13 +521,17 @@ const char *estimator_string (int ci, int format)
 static const char *my_estimator_string (const MODEL *pmod,
 					int format)
 {
-    if (pmod->ci != ARMA) {
-	return estimator_string(pmod->ci, format);
-    } else if (pmod->list[0] > 4) {
-	return N_("ARMAX");
+    if (pmod->ci == ARMA) {
+	return (pmod->list[0] > 4)? N_("ARMAX") : N_("ARMA");
+    } else if (pmod->ci == WLS) {
+	if (gretl_model_get_int(pmod, "iters")) {
+	    return N_("Maximum Likelihood");
+	} else {
+	    return N_("WLS");
+	}
     } else {
-	return N_("ARMA");
-    }
+	return estimator_string(pmod->ci, format);
+    } 
 }
 
 /* ......................................................... */
@@ -1389,7 +1393,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (prn->format != GRETL_PRINT_FORMAT_PLAIN) {
 	model_format_start(prn);
-    } else if (pmod->ci == ARMA || pmod->ci == GARCH || pmod->ci == TOBIT) {
+    } else if (pmod->ci == ARMA || pmod->ci == GARCH || 
+	       pmod->ci == TOBIT || pmod->ci == WLS) {
 	int iters = gretl_model_get_int(pmod, "iters");
 
 	if (iters > 0) {

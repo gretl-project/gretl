@@ -910,21 +910,55 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
     return maxdiff;
 }
 
+static double 
+pooled_lm_test (double s2, const double *uvar, int nobs, 
+		int nunits, int *unit_obs, PRN *prn)
+{
+    double x2, s2h = 0.0;
+    int i;
+
+    for (i=0; i<nunits; i++) {
+	int uT = unit_obs[i];
+
+	if (uT > 0) {
+	    s2h += uT * log(uvar[i]);
+	}
+    }
+
+    x2 = nobs * log(s2) - s2h;
+
+    return x2;
+}
+
+static double pooled_ll (const MODEL *pmod)
+{
+    double n = pmod->nobs;
+
+    return -(n / 2.0) * (1.0 + log(2.0*M_PI) - log(n) + log(pmod->ess));
+}
+
 #define SMALLDIFF 0.0001
 #define WLS_MAX   20
 
 MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
-			 gretlopt opt)
+			 gretlopt opt, PRN *prn)
 {
     MODEL mdl;
+    gretlopt wlsopt;
     double *uvar = NULL;
     double *bvec = NULL;
-    double diff = 1.0;
+    double s2, diff = 1.0;
     int *unit_obs = NULL;
     int *wlist = NULL;
     int nunits, effn, T, effT;
     int orig_v = pdinfo->v;
-    int i, iters = 0;
+    int i, iter = 0;
+
+    if (opt & OPT_T) {
+	wlsopt = OPT_N;
+    } else {
+	wlsopt = OPT_NONE;
+    }
 
     gretl_model_init(&mdl);
 
@@ -952,7 +986,13 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     effn = n_included_units(&mdl, pdinfo, unit_obs);
-    effT = effective_T(unit_obs, nunits);    
+    effT = effective_T(unit_obs, nunits);  
+    s2 = mdl.ess / mdl.nobs;
+
+    if ((opt & OPT_V) && (opt & OPT_T)) {
+	pprintf(prn, "\nOLS error variance = %g\n", s2);
+	pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
+    }
 
     if (allocate_weight_var(pZ, pdinfo)) {
 	mdl.errcode = E_ALLOC;
@@ -985,16 +1025,17 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 
     while (diff > SMALLDIFF) {
 
-	iters++;
+	iter++;
 
 	unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
 
 	if (opt & OPT_V) {
-	    fputc('\n', stderr);
+	    pprintf(prn, "\n*** %s %d ***\n", _("iteration"), 
+		    iter);
+	    pputs(prn, " unit    variance\n");
 	    for (i=0; i<nunits; i++) {
 		if (unit_obs[i] > 0) {
-		    fprintf(stderr, "group error variance, unit %d = %g\n",
-			    i + 1, uvar[i]);
+		    pprintf(prn, "%5d%12g\n", i + 1, uvar[i]);
 		}
 	    }
 	}
@@ -1009,15 +1050,20 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 
 	clear_model(&mdl);
 
-	mdl = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
+	mdl = lsq(wlist, pZ, pdinfo, WLS, wlsopt, 0.0);
 
-	if (mdl.errcode || iters > WLS_MAX) {
+	if (mdl.errcode || iter > WLS_MAX) {
 	    mdl.errcode = E_NOCONV;
 	    break;
 	}
 
 	if (opt & OPT_T) {
 	    diff = max_coeff_diff(&mdl, bvec);
+	    if (opt & OPT_V && iter == 1) {
+		pprintf(prn, "\nFGLS error variance = %g\n",
+			mdl.ess / mdl.nobs);
+		pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
+	    }
 	} else {
 	    break;
 	} 
@@ -1026,10 +1072,15 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
     if (!mdl.errcode) {
 	gretl_model_set_int(&mdl, "n_included_units", effn);
 	gretl_model_set_int(&mdl, "unit_weights", 1);
-	if (iters > 1) {
-	    gretl_model_set_int(&mdl, "iters", iters);
+	if (iter > 1) {
+	    gretl_model_set_int(&mdl, "iters", iter);
 	}
 	mdl.nwt = 0;
+	if (opt & OPT_T) {
+	    pprintf(prn, "ML error variance = %g\n", mdl.ess / mdl.nobs);
+	    pooled_lm_test(s2, uvar, mdl.nobs, nunits, unit_obs, prn);
+	    pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
+	}
     }    
 
  bailout:

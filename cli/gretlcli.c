@@ -1359,7 +1359,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case WLS:
     case POOLED:
 	clear_model(models[0]);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
+	if (cmd.ci == POOLED) {
+	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
+	} else {
+	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
+	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    clear_model(models[0]);
