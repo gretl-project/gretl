@@ -201,6 +201,25 @@ static const char *get_func_word (int fnum);
 
 /* ...................................................... */
 
+static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
+		       MODEL *pmod)
+{
+    genr->err = 0;
+    genr->save = 1;
+    genr->scalar = 1;
+    genr->xvec = NULL;
+    genr->varnum = 0;
+    *genr->varname = '\0';
+    *genr->label = '\0';
+    genr->tmpv = 0;
+    genr->tmpZ = NULL;
+    genr->pdinfo = pdinfo;
+    genr->pZ = pZ;
+    genr->pmod = pmod;
+}
+
+/* ...................................................... */
+
 static genatom *make_atom (int scalar, int varnum,
 			   int lag, double val,
 			   int func, char op, char *str,
@@ -1538,16 +1557,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
-    genr.err = 0;
-    genr.scalar = 1;
-    genr.save = 1;
-    genr.varnum = 0;
-    *genr.label = '\0';
-    genr.pdinfo = pdinfo;
-    genr.pZ = pZ;
-    genr.pmod = pmod;
-    genr.tmpZ = NULL;
-    genr.tmpv = 0;
+    genr_init(&genr, pZ, pdinfo, pmod);
 
     *s = *genrs = '\0';
     get_genr_formula(s, line, &genr);

@@ -704,17 +704,15 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
  * @plottype: code for the type of plot.
  * @fpp: pointer to stream to be opened.
  *
- * If GNUPLOT_PNG is defined and we're in GUI mode, writes a unique
- * temporary filename into the plotfile member of @ppaths; opens
- * plotfile for writing as @fpp; If GNUPLOT_PNG is defined and we're in 
- * GUI mode, writes PNG terminal type into plotfile.
+ * If we're in GUI mode, writes a unique temporary filename into the
+ * plotfile member of @ppaths; opens plotfile for writing as @fpp; if
+ * we're in GUI mode, writes PNG terminal type into plotfile.
  *
  * Returns: 0 on success, 1 on failure
  */
 
 int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
 {
-#ifdef GNUPLOT_PNG
     if (*gnuplot_path == 0) {
 	strcpy(gnuplot_path, ppaths->gnuplot);
     }
@@ -733,10 +731,7 @@ int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
 	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ppaths, plottype));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
     }
-#else /* not GNUPLOT_PNG */
-    *fpp = fopen(ppaths->plotfile, "w");
-    if (*fpp == NULL) return 1;
-#endif
+
     return 0;
 }
 
@@ -748,8 +743,6 @@ int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
  *
  * Returns: the return value from the system command.
  */
-
-#ifdef GNUPLOT_PNG
 
 int gnuplot_display (const PATHS *ppaths)
 {
@@ -767,26 +760,6 @@ int gnuplot_display (const PATHS *ppaths)
 
     return err;
 }
-
-#else /* following: old non-GNUPLOT_PNG version */
-
-int gnuplot_display (PATHS *ppaths)
-{
-    int err = 0;
-    char plotcmd[MAXLEN];
-
-# ifdef WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-# else
-    sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-    if (gretl_spawn(plotcmd)) err = 1;
-# endif /* WIN32 */
-
-    return err;
-}
-
-#endif /* GNUPLOT_PNG alternation */
 
 enum {
     GTITLE_VLS,
@@ -949,7 +922,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     if ((flags & GP_FILE) && *ppaths->plotfile) {
 	fq = fopen(ppaths->plotfile, "w");
     } else if ((flags & GP_BATCH) && plot_count != NULL) {  
-	if (*ppaths->plotfile == 0) {
+	if (*ppaths->plotfile == '\0' || 
+	    strstr(ppaths->plotfile, "gpttmp") != NULL) {
 	    *plot_count += 1; 
 	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
 		    *plot_count);
@@ -1262,9 +1236,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-    fputs("pause -1\n", fq);
-#endif
     fclose(fq);
 
     if (!(flags & GP_BATCH)) {
@@ -1389,9 +1360,7 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 #endif
     } 
     fputs("set nomultiplot\n", fp);
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-    fputs("\npause -1\n", fp);
-#endif
+
     fclose(fp);
 
     if (!(flags & GP_BATCH)) {
@@ -1681,10 +1650,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-    fputs("pause -1\n", fp);
-#endif
     if (fp) fclose(fp);
+
     return gnuplot_display(ppaths);
 }
 
@@ -1753,9 +1720,6 @@ int plot_fcast_errs (int n, const double *obs,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-    fputs("pause -1\n", fp);
-#endif
     fclose(fp);
 
     return gnuplot_display(ppaths);
@@ -2182,9 +2146,6 @@ gretl_var_plot_impulse_response (GRETL_VAR *var,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-    fputs("pause -1\n", fp);
-#endif
     fclose(fp);
 
     return gnuplot_display(ppaths);

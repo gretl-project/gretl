@@ -1401,10 +1401,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    }
 	    fputs("e\n", fq);
 
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-	    fputs("pause -1\n", fq);
-#endif
 	    fclose(fq);
+
 	    err = gnuplot_display(ppaths);
 	}
 #ifdef ENABLE_NLS

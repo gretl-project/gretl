@@ -636,19 +636,11 @@ void file_selector (const char *msg, int action, gpointer data)
 	else if (err == 1) errbox(_("gnuplot command failed"));
 	else if (err == 2) infobox(_("There were missing observations"));
     }
-#ifdef GNUPLOT_PNG
     else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
 	save_this_graph(plot, fname);
     }
-#else
-    else if (action == SAVE_LAST_GRAPH) {
-	char *savestr = (char *) data;
-	
-	do_save_graph(fname, savestr);
-    } 
-#endif
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 
@@ -775,21 +767,12 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	else if (err == 1) errbox(_("gnuplot command failed"));
 	else if (err == 2) infobox(_("There were missing observations"));
     }
-# ifdef GNUPLOT_PNG
     else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = g_object_get_data(G_OBJECT(fs), "graph");
 
 	gtk_widget_destroy(GTK_WIDGET(fs));
 	save_this_graph(plot, fname);
     }
-# else
-    else if (action == SAVE_LAST_GRAPH) {
-	char *savestr = g_object_get_data(G_OBJECT(fs), "graph");
-
-	gtk_widget_destroy(GTK_WIDGET(fs));
-	do_save_graph(fname, savestr);
-    } 
-# endif
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 
@@ -1011,6 +994,8 @@ void file_selector (const char *msg, int action, gpointer data)
 	     && paths.datfile[0]) {
 	char *savename = suggested_savename(paths.datfile);
 	char startd[MAXLEN];
+
+	fprintf(stderr, "action = %d (SAVE_DATA || SAVE_GZDATA)\n", action);
 
 	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
 			   savename);

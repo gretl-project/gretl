@@ -366,9 +366,6 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     fputs("e\n", fp);
 
     fputs("set nomultiplot\n", fp);
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-    fputs("pause -1\n", fp);
-#endif
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");

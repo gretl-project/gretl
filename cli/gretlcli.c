@@ -214,6 +214,7 @@ unsigned char gp_flags (int batch, unsigned long opt)
     unsigned char flags = 0;
 
     if (batch) flags |= GP_BATCH;
+
     if (opt & OPT_M) flags |= GP_IMPULSES;
     else if (opt & OPT_Z) flags |= GP_DUMMY;
     else if (opt & OPT_S) flags |= GP_OLS_OMIT;

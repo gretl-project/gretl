@@ -23,6 +23,8 @@ version 1.2.2
   some cases
 - Fix bug: weighted least squares with a dummy variable for
   the weight crashed gretl when using QR decomposition
+- Fix bug: a syntactically incorrect "genr" expression could
+  lead to a crash (thanks to Steve Walesch for spotting this)
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation

@@ -51,9 +51,6 @@
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.ofolder.xpm"
-#ifndef GNUPLOT_PNG
-# include "../pixmaps/mini.camera.xpm"
-#endif
 
 /* #define WINDEBUG 1 */
 #ifdef WINDEBUG
@@ -303,10 +300,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL, GNULL },
     { N_("/File/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-#ifndef GNUPLOT_PNG
-    { N_("/File/Save last graph"), NULL, gpt_save_dialog, 0, NULL, GNULL }, 
-    { N_("/File/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
-#endif
     { N_("/File/_View command log"), NULL, view_log, 0, NULL, GNULL },
     { N_("/File/sep2a"), NULL, NULL, 0, "<Separator>", GNULL },
 
@@ -354,10 +347,6 @@ GtkItemFactoryEntry data_items[] = {
     /* Session menu */
     { N_("/_Session"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Session/_Icon view"), NULL, view_session, 0, NULL, GNULL },
-#ifndef GNUPLOT_PNG
-    { N_("/Session/_Add last graph"), NULL, add_graph_to_session, 
-      GRETL_GNUPLOT_GRAPH, NULL, GNULL },
-#endif
     { N_("/Session/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Session/_Open..."), "", open_script, OPEN_SESSION, "<StockItem>", GTK_STOCK_OPEN },
     { N_("/Session/sep1"), NULL, NULL, 0, "<Separator>", NULL },
@@ -859,9 +848,6 @@ int main (int argc, char *argv[])
     add_files_to_menu(FILE_LIST_DATA);
     add_files_to_menu(FILE_LIST_SESSION);
     add_files_to_menu(FILE_LIST_SCRIPT);
-#ifndef GNUPLOT_PNG
-    graphmenu_state(FALSE);
-#endif
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);
@@ -961,18 +947,6 @@ void main_menubar_state (gboolean s)
 	     !(data_status & BOOK_DATA));
     }
 }
-
-/* ........................................................... */
-
-#ifndef GNUPLOT_PNG
-void graphmenu_state (gboolean s)
-{
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/File/Save last graph", s);
-	flip(mdata->ifac, "/Session/Add last graph", s);
-    }
-}
-#endif
 
 /* ........................................................... */
 
@@ -1875,7 +1849,6 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	N_("show help"), 
 	N_("X-Y graph"), 
 	N_("OLS model"),
-	N_("Capture last graph for editing"),
 	N_("open dataset"),
 	NULL
     };
@@ -1935,22 +1908,12 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    toolfunc = ols_model;
 	    break;
 	case 9:
-#ifndef GNUPLOT_PNG
-	    toolxpm = mini_camera_xpm;
-	    toolfunc = add_graph_to_session;
-#endif
-	    break;
-	case 10:
 	    toolxpm = mini_ofolder_xpm;
 	    toolfunc = open_textbook_data;
 	    break;
 	default:
 	    break;
 	}
-
-#ifdef GNUPLOT_PNG
-	if (i == 9) continue;
-#endif
 
 	toolstr = _(toolstrings[i]);
 	icon = gdk_pixbuf_new_from_xpm_data((const char **) toolxpm);

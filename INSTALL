@@ -33,8 +33,11 @@ gnuplot      required       generate graphs
 
 lapack	     required	    linear algebra operations
 
-gdk-pixbuf   recommended    handle graphs in PNG format; make
+gdk-pixbuf   required       handle graphs in PNG format; make
                             gnuplot graphs interactive
+
+libpng       optional       enhance gretl's ability to work
+                            with PNG graphs created by gnuplot
 
 readline     optional       provides a nice editable command line
                             in gretlcli, the command-line program
@@ -51,11 +54,6 @@ gtksourceview optional      syntax highlighting for gretl scripts
 =================================================================
 
 Notes:
-
-* It is possible to turn off the dependency on gdk-pixbuf by using the
-  option "--disable-png-graphics" with configure.  You will still be
-  able to generate graphs, they just won't be interactive.  This
-  reduces gretl's functionality and is not recommended.
 
 * By default gretl attempts to build against the gtk 2.0
   libraries.  If you want to prevent this (i.e., if you have gtk 2.0

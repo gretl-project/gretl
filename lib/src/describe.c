@@ -755,11 +755,8 @@ int corrgram (int varno, int order, double ***pZ,
     setlocale(LC_NUMERIC, "");
 #endif
 
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-    fputs("pause -1\n", fq);
-#endif
-
     fclose(fq);
+
     err = gnuplot_display(ppaths);
 
  acf_getout:
@@ -1002,9 +999,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	setlocale(LC_NUMERIC, "");
 #endif
 	fprintf(fq, "e\n");
-#if defined(WIN32) && !defined(GNUPLOT_PNG)
-	fprintf(fq, "pause -1\n");
-#endif
+
 	fclose(fq);
 	free(savexx);
 	err = gnuplot_display(ppaths);

@@ -238,7 +238,7 @@ int ztox (int i, double *px, double **Z, const DATAINFO *pdinfo)
     int t, m = 0;
     double xx;
 
-#ifdef notdef
+#if 0
     fprintf(stderr, "ztox: working on %s\n", pdinfo->varname[i]);
 #endif
 
@@ -252,12 +252,19 @@ int ztox (int i, double *px, double **Z, const DATAINFO *pdinfo)
 	if (na(xx)) continue;
 	else px[m++] = xx;
     }
-    if (m == 0)
+
+    if (m == 0) {
 	fprintf(stderr, "\nztox: No valid observations for variable %s\n", 
 		pdinfo->varname[i]);
-    else if (m < pdinfo->t2 - pdinfo->t1 + 1)
+    } 
+
+#if 0
+    else if (m < pdinfo->t2 - pdinfo->t1 + 1) {
 	fprintf(stderr, "\nztox: Dropped missing obs for var %s\n",
 		pdinfo->varname[i]);
+    }
+#endif
+
     return m;
 }
 
@@ -1105,10 +1112,12 @@ struct gretl_opt gretl_opts[] = {
     { OPT_O, "with-lines" },       /* graphing context */
     { OPT_O, "vcv" },              /* model context */
     { OPT_O, "autocorr" },         /* lmtest context */
+    { OPT_O, "dummy" },            /* smpl context */
     { OPT_Q, "quiet" },
-    { OPT_R, "gnu-R" },
-    { OPT_S, "suppress-fitted" },   /* graphing context */
-    { OPT_S, "squares" },           /* lmtest context */    
+    { OPT_R, "gnu-R" },            /* data export context */
+    { OPT_R, "restrict" },         /* smpl context */
+    { OPT_S, "suppress-fitted" },  /* graphing context */
+    { OPT_S, "squares" },          /* lmtest context */    
     { OPT_T, "traditional" },
     { OPT_V, "verbose" },
     { OPT_X, "x-12-arima" },

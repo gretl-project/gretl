@@ -459,9 +459,6 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
 {
-    if (SAVE_DATA_ACTION(sr->code)) {
-	gtk_main_quit();
-    }
     free(sr->cmdlist);
     free(sr);
     open_dialog = NULL;
@@ -882,7 +879,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), TRUE);
 
     gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
-}    
+}
 
 static void 
 build_selector_buttons (selector *sr, void (*okfunc)())
@@ -897,9 +894,9 @@ build_selector_buttons (selector *sr, void (*okfunc)())
 		       GTK_SIGNAL_FUNC(construct_cmdlist), sr);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
 		       GTK_SIGNAL_FUNC(okfunc), sr);
-    gtk_signal_connect_object(GTK_OBJECT (tmp), "clicked", 
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(sr->dlg));
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked", 
+		       GTK_SIGNAL_FUNC(delete_widget), sr->dlg);
+
     gtk_widget_show(tmp);
     gtk_widget_grab_default(tmp);
 
@@ -1127,7 +1124,6 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     build_selector_buttons(sr, okfunc);
 
     gtk_widget_show(sr->dlg);
-    /* gtk_main(); */
 }
 
 static char *get_topstr (int cmdnum)
@@ -1361,7 +1357,6 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     if (SAVE_DATA_ACTION(sr->code)) {
 	gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
     }
-    /* gtk_main(); */
 }
 
 static const char *data_save_title (int code)
@@ -1386,6 +1381,8 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
 {
     selector *sr = (selector *) p;
 
+    gtk_widget_destroy(sr->dlg);
+
     if (sr->cmdlist == NULL || *sr->cmdlist == 0) return;
 
     if (storelist != NULL) {
@@ -1406,8 +1403,6 @@ void data_save_selection_wrapper (int file_code)
 		     _("Copy data") : _("Save data"), 
 		     data_save_selection_callback, file_code, 
 		     NULL);
-    gtk_main(); /* the corresponding gtk_main_quit() is in
-		   the function destroy_selector() */
 }
 
 struct list_maker {

@@ -22,10 +22,7 @@
 #include "gretl.h"
 #include "var.h"
 #include "textbuf.h"
-
-#ifdef GNUPLOT_PNG
-# include "gpt_control.h"
-#endif
+#include "gpt_control.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -142,11 +139,8 @@ void register_graph (void)
 {
     const char *msg;
 
-#ifdef GNUPLOT_PNG
     gnuplot_show_png(paths.plotfile, NULL, 0);
-#else
-    graphmenu_state(TRUE);
-#endif 
+
     msg = get_gretl_errmsg();
     if (msg != NULL && *msg != '\0') {
 	errbox(msg);
