@@ -261,37 +261,24 @@ static void print_mp_coeff_1 (const MPMODEL *pmod, const DATAINFO *pdinfo,
     double xx = mpf_get_d (pmod->coeff[c-1]);
     double yy = mpf_get_d (pmod->sderr[c-1]);
 
-    pprintf(prn, " %3d) %8s %17.12g %17.12g\n", pmod->varlist[c], 
+    pprintf(prn, " %3d) %8s %20.12g %20.12g\n", pmod->varlist[c], 
 	    pdinfo->varname[pmod->varlist[c]], xx, yy);
 }
-
-#ifdef notdef
-static void print_mp_coeff_2 (const MPMODEL *pmod, const DATAINFO *pdinfo,
-			    int c, PRN *prn)
-{
-    char numstr1[24], numstr2[24];
-
-    mpf_print(numstr1, pmod->coeff[c-1]);
-    mpf_print(numstr2, pmod->sderr[c-1]);
-    pprintf(prn, " %3d) %8s %s %s\n", pmod->varlist[c], numstr1, numstr2);
-}
-#endif
-
 
 static void other_stats (const MPMODEL *pmod, PRN *prn)
 {
     double xx;
     
     xx = mpf_get_d (pmod->sigma);
-    pprintf(prn, _("Standard error        %17.12g\n"), xx);
+    pprintf(prn, _("Standard error        %20.12g\n"), xx);
     xx = mpf_get_d (pmod->ess);
-    pprintf(prn, _("Error Sum of Squares  %17.12g\n"), xx);
+    pprintf(prn, _("Error Sum of Squares  %20.12g\n"), xx);
     xx = mpf_get_d (pmod->rsq);
-    pprintf(prn, _("Unadjusted R-squared  %17.12g\n"), xx);
+    pprintf(prn, _("Unadjusted R-squared  %20.12g\n"), xx);
     xx = mpf_get_d (pmod->adjrsq);
-    pprintf(prn, _("Adjusted R-squared    %17.12g\n"), xx);
+    pprintf(prn, _("Adjusted R-squared    %20.12g\n"), xx);
     xx = mpf_get_d (pmod->fstt);
-    pprintf(prn, _("F(%d, %d)             %17.12g\n"), pmod->dfn, pmod->dfd, xx);
+    pprintf(prn, _("F(%d, %d)             %20.12g\n"), pmod->dfn, pmod->dfd, xx);
     
 }
 
