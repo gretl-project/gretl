@@ -860,6 +860,27 @@ static void rho_differenced_stats_message (PRN *prn)
     }	
 }
 
+static void print_whites_results (const MODEL *pmod, PRN *prn)
+{
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), 
+		pmod->rsq * pmod->nobs);
+	pprintf(prn, _("%s = P(%s(%d) > %f) = %f\n\n"), 
+		_("with p-value"), _("Chi-square"), 
+		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
+		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+    }
+
+    else if (TEX_FORMAT(prn->format)) {
+	pprintf(prn, "\n%s: $TR^2$ = %f,\n", I_("Test statistic"), 
+		pmod->rsq * pmod->nobs);
+	pprintf(prn, _("with p-value = $P$($\\chi^2(%d)$ > %f) = %f\n\n"),
+		I_("with p-value"), 
+		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
+		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+    }
+}
+
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
@@ -891,7 +912,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     print_coeff_table_end (prn);
 
-    if (pmod->ci == AR) print_rho_terms (pmod, prn); /* FIXME alt formats */
+    if (pmod->ci == AR) print_rho_terms (pmod, prn); 
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF) {
 	goto close_format;
@@ -906,13 +927,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     if (!pmod->ifc && PLAIN_FORMAT(prn->format)) noconst(prn);
     
-    if (pmod->aux == AUX_WHITE) { /* White's test FIXME alt formats */
+    if (pmod->aux == AUX_WHITE) { 
 	rsqline(pmod, prn);
-	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), 
-		pmod->rsq * pmod->nobs);
-	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
-		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
-		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+	print_whites_results(pmod, prn);
 	goto close_format;
     }
 
@@ -1115,23 +1132,38 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
 {
-    char ustr[5];
-    double xx;
+    char ustr[16];
+    double xx = arinfo->rho[c] / arinfo->sderr[c];
 
-    sprintf(ustr, "u_%d", arinfo->arlist[c]);
-    pprintf(prn, "%14s ", ustr); 
+    if (PLAIN_FORMAT(prn->format)) {
+	sprintf(ustr, "u_%d", arinfo->arlist[c]);
+	pprintf(prn, "%14s ", ustr); 
+	_bufspace(3, prn);
+	gretl_print_value (arinfo->rho[c], prn);
+	_bufspace(2, prn);
+	gretl_print_value (arinfo->sderr[c], prn); 
+	pprintf(prn, " %7.3f %11f\n", xx, tprob(xx, dfd));	
+    }
 
-    _bufspace(3, prn);
+    else if (TEX_FORMAT(prn->format)) {
+	char coeff[32], sderr[32];
 
-    gretl_print_value (arinfo->rho[c], prn);
+	tex_dcolumn_double(arinfo->rho[c], coeff);
+	tex_dcolumn_double(arinfo->sderr[c], sderr);
 
-    _bufspace(2, prn);
+	sprintf(ustr, "$u_{%d}$", arinfo->arlist[c]);
 
-    gretl_print_value (arinfo->sderr[c], prn); 
-
-    xx = arinfo->rho[c] / arinfo->sderr[c];
-
-    pprintf(prn, " %7.3f %11f\n", xx, tprob(xx, dfd));	
+	pprintf(prn, "%s &\n"
+		"  %s &\n"
+		"    %s &\n"
+		"      %.4f &\n"
+		"        %.4f \\\\\n",  
+		ustr,
+		coeff,
+		sderr,
+		arinfo->rho[c] / arinfo->sderr[c],
+		tprob(xx, dfd));
+    }
 }
 
 /* ......................................................... */ 
@@ -1148,7 +1180,9 @@ static void print_rho_terms (const MODEL *pmod, PRN *prn)
 	return;
     }
 
-    pprintf(prn, "%s:\n\n", _("Estimates of the AR coefficients"));
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "%s:\n\n", _("Estimates of the AR coefficients"));
+    }
 
     dfd = pmod->dfd + (pmod->ncoeff - pmod->arinfo->arlist[0]);
 
@@ -1157,7 +1191,9 @@ static void print_rho_terms (const MODEL *pmod, PRN *prn)
 	xx += pmod->arinfo->rho[i]; 
     }
 
-    pprintf(prn, "\n%s = %#g\n\n", _("Sum of AR coefficients"), xx);
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "\n%s = %#g\n\n", _("Sum of AR coefficients"), xx);
+    }
 }
 
 /* ........................................................... */
