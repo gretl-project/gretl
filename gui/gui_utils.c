@@ -975,6 +975,7 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 #include "../pixmaps/stock_search_replace_16.xpm"
 #include "../pixmaps/stock_undo_16.xpm"
 #include "../pixmaps/stock_help_16.xpm"
+#include "../pixmaps/stock_add_16.xpm"
 #include "../pixmaps/stock_close_16.xpm"
 #include "../pixmaps/mini.tex.xpm"
 #if defined(USE_GNOME)
@@ -984,6 +985,19 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 {
     copy_format_dialog(vwin);
+}
+
+static void pca_data_callback (GtkWidget *w, windata_t *vwin)
+{
+    int err, oldv = datainfo->v;
+
+    err = call_pca_plugin((CORRMAT *) vwin->data, &Z, datainfo, 
+			  'd', NULL);
+    if (err) gui_errmsg(err);
+    else if (datainfo->v > oldv) {
+	infobox(_("data added"));
+	populate_varlist();
+    }
 }
 
 /* ........................................................... */
@@ -1003,6 +1017,7 @@ enum {
     RUN_ITEM,
     COPY_ITEM,
     MODELTABLE_ITEM,
+    ADD_ITEM
 } viewbar_codes;
 
 static struct viewbar_item viewbar_items[] = {
@@ -1020,6 +1035,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), mini_tex_xpm, modeltable_tex_view, MODELTABLE_ITEM },
+    { N_("Add to dataset..."), stock_add_16_xpm, pca_data_callback, ADD_ITEM },
     { N_("Close"), stock_close_16_xpm, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }};
 

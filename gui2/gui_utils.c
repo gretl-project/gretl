@@ -1056,6 +1056,19 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
     copy_format_dialog(vwin);
 }
 
+static void pca_data_callback (GtkWidget *w, windata_t *vwin)
+{
+    int err, oldv = datainfo->v;
+
+    err = call_pca_plugin((CORRMAT *) vwin->data, &Z, datainfo, 
+			  'd', NULL);
+    if (err) gui_errmsg(err);
+    else if (datainfo->v > oldv) {
+	infobox(_("data added"));
+	populate_varlist();
+    }
+}
+
 /* ........................................................... */
 
 struct viewbar_item {
@@ -1073,6 +1086,7 @@ enum {
     RUN_ITEM,
     COPY_ITEM,
     MODELTABLE_ITEM,
+    ADD_ITEM
 } viewbar_codes;
 
 static struct viewbar_item viewbar_items[] = {
@@ -1090,6 +1104,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), "STOCK_TEX", modeltable_tex_view, MODELTABLE_ITEM },
+    { N_("Add to dataset..."), GTK_STOCK_ADD, pca_data_callback, ADD_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }};
 
@@ -1148,6 +1163,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
 	if (vwin->role != VIEW_MODELTABLE && 
 	    viewbar_items[i].flag == MODELTABLE_ITEM) {
+	    continue;
+	}
+
+	if (vwin->role != PCA && viewbar_items[i].flag == ADD_ITEM) {
 	    continue;
 	}
 

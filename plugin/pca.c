@@ -20,6 +20,8 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 
+#include <gtk/gtk.h>
+
 #undef PCA_DEBUG
 
 static double *standardize (const double *x, int n)
@@ -45,38 +47,194 @@ static double *standardize (const double *x, int n)
     return sx;
 }
 
-int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
-		      DATAINFO *pdinfo, unsigned char oflag,
-		      PRN *prn)
+struct flag_info {
+    GtkWidget *dialog;
+    gint *flag;
+};
+
+enum pca_flags {
+    PCA_SAVE_NONE,
+    PCA_SAVE_MAIN,
+    PCA_SAVE_ALL
+};
+
+static gboolean destroy_pca_dialog (GtkWidget *w, struct flag_info *finfo)
 {
-    gretl_matrix *m;
+    free(finfo);
+    gtk_main_quit();
+    return FALSE;
+}
+
+static gboolean set_pca_flag (GtkWidget *w, struct flag_info *finfo)
+{
+#if GTK_MAJOR_VERSION >= 2
+    gint opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "opt"));
+#else
+    gint opt = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "opt"));
+#endif
+
+    *(finfo->flag) = opt;
+    return FALSE;
+}
+
+static gboolean cancel_set_flag (GtkWidget *w, struct flag_info *finfo)
+{
+    *(finfo->flag) = PCA_SAVE_NONE;
+    gtk_widget_destroy(finfo->dialog);
+    return FALSE;
+}
+
+static gboolean pca_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
+{
+    gtk_widget_destroy(finfo->dialog);
+    return FALSE;
+}
+
+static unsigned char pca_flag_dialog (void)
+{
+    struct flag_info *finfo;
+    GtkWidget *dialog, *tempwid, *button, *hbox;
+    GtkWidget *internal_vbox;
+    GSList *group;
+    gint flag = PCA_SAVE_MAIN;
+
+    finfo = malloc(sizeof *finfo);
+    if (finfo == NULL) return 0;
+
+    dialog = gtk_dialog_new();
+
+    finfo->dialog = dialog;
+    finfo->flag = &flag;
+    
+    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: save data")); 
+#if GTK_MAJOR_VERSION >= 2
+    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+#endif
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->action_area), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect (G_OBJECT(dialog), "destroy", 
+		      G_CALLBACK(destroy_pca_dialog), finfo);
+#else
+    gtk_signal_connect (GTK_OBJECT(dialog), "destroy", 
+			GTK_SIGNAL_FUNC(destroy_pca_dialog), finfo);
+#endif
+
+    internal_vbox = gtk_vbox_new (FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("Variables to save:"));
+    gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    gtk_widget_show(tempwid);
+    gtk_box_pack_start (GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+    /* Only those with eiganvalues > 1.0 */
+    button = gtk_radio_button_new_with_label(NULL, 
+					     _("Components with eigenvalues > 1.0"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_pca_flag), finfo);
+    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_MAIN)); 
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_pca_flag), finfo);
+    gtk_object_set_data(GTK_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_MAIN)); 
+#endif   
+    gtk_widget_show (button);   
+
+    /* All components */
+#if GTK_MAJOR_VERSION >= 2
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+#else
+    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+#endif
+    button = gtk_radio_button_new_with_label(group, _("All components"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_pca_flag), finfo);
+    g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_ALL)); 
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_pca_flag), finfo);
+    gtk_object_set_data(GTK_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_ALL)); 
+#endif
+   
+    gtk_widget_show (button);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    gtk_widget_show (internal_vbox);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    /* Create the "OK" button */
+#if GTK_MAJOR_VERSION >= 2
+    tempwid = gtk_button_new_from_stock (GTK_STOCK_OK);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(pca_dialog_finalize), finfo);
+#else
+    tempwid = gtk_button_new_with_label(_("OK"));
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(pca_dialog_finalize), finfo);
+#endif
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* "Cancel" button */
+#if GTK_MAJOR_VERSION >= 2
+    tempwid = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(cancel_set_flag), finfo);
+#else
+    tempwid = gtk_button_new_with_label(_("Cancel"));
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(cancel_set_flag), finfo);
+#endif    
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_widget_show (tempwid);
+
+    gtk_widget_show(dialog);
+
+    gtk_main();
+
+    if (flag == PCA_SAVE_MAIN) return 'o';
+    if (flag == PCA_SAVE_ALL) return 'a';
+
+    return 0;
+}
+
+static void pca_print (CORRMAT *corrmat, gretl_matrix *m,
+		       double *evals, DATAINFO *pdinfo, 
+		       PRN *prn)
+{
     double x, y;
-    int i, j, n = corrmat->list[0];
-    int idx, cols;
-    double *evals;
-
-    m = gretl_matrix_alloc(n, n);
-    if (m == NULL) return E_ALLOC;
-
-    for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    idx = ijton(i+1, j+1, n);
-	    x = corrmat->xpx[idx];
-	    gretl_matrix_set(m, i, j, x);
-	}
-    }
-
-    evals = gretl_symmetric_matrix_eigenvals(m, 1);
-    if (evals == NULL) {
-	gretl_matrix_free(m);
-	return 1;
-    }
+    int n = corrmat->list[0];
+    int i, j, cols;
 
     pprintf(prn, "%s\n\n", _("Principal Components Analysis"));
     pprintf(prn, "%s\n\n", _("Eigenanalysis of the Correlation Matrix"));
 
     pputs(prn, _("Component  Eigenvalue  Proportion   Cumulative\n"));
 
+    x = 0.0;
     y = 0.0;
     for (i=n-1; i>=0; i--) {
 	y += evals[i] / n;
@@ -114,6 +272,42 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 	}
 	cols -= colsdone;
 	pputc(prn, '\n');
+    }
+}
+
+int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
+		      DATAINFO *pdinfo, unsigned char oflag,
+		      PRN *prn)
+{
+    gretl_matrix *m;
+    double x;
+    int i, j, idx, n = corrmat->list[0];
+    double *evals;
+
+    if (oflag == 'd') { 
+	oflag = pca_flag_dialog();
+	if (!oflag) return 0; /* canceled */
+    }    
+
+    m = gretl_matrix_alloc(n, n);
+    if (m == NULL) return E_ALLOC;
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    idx = ijton(i+1, j+1, n);
+	    x = corrmat->xpx[idx];
+	    gretl_matrix_set(m, i, j, x);
+	}
+    }
+
+    evals = gretl_symmetric_matrix_eigenvals(m, 1);
+    if (evals == NULL) {
+	gretl_matrix_free(m);
+	return 1;
+    }
+
+    if (prn != NULL) {
+	pca_print(corrmat, m, evals, pdinfo, prn);
     }
 
     if (oflag) {
