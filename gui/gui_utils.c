@@ -2149,9 +2149,27 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
     gtk_editable_paste_clipboard(GTK_EDITABLE(vwin->w));
 }
 
+/* ......................................................... */
+
+gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
+			 gpointer data)
+{
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
+    
+    if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
+	GdkEventButton *bevent = (GdkEventButton *) event; 
+	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
+			bevent->button, bevent->time);
+	return TRUE;
+    }
+    return FALSE;
+}
+
 /* .................................................................. */
 
-void make_menu_item (gchar *label, GtkWidget *menu,
+void add_popup_item (gchar *label, GtkWidget *menu,
 		     GtkSignalFunc func, gpointer data)
 {
     GtkWidget *item;

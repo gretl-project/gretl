@@ -79,7 +79,10 @@ void text_paste (windata_t *mydata, guint u, GtkWidget *widget);
 
 void text_undo (windata_t *mydata, guint u, GtkWidget *widget);
 
-void make_menu_item (gchar *label, GtkWidget *menu,
+gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
+			 gpointer data);
+
+void add_popup_item (gchar *label, GtkWidget *menu,
 		     GtkSignalFunc func, gpointer data);
 
 void get_stats_table (void);

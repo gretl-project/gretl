@@ -482,13 +482,13 @@ static void build_db_menu (windata_t *dbdat)
 
     database_menu = gtk_menu_new();
 
-    make_menu_item(_("Display"), database_menu, gui_display_series, 
+    add_popup_item(_("Display"), database_menu, gui_display_series, 
 		   (gpointer) dbdat);
-    make_menu_item(_("Graph"), database_menu, gui_graph_series, 
+    add_popup_item(_("Graph"), database_menu, gui_graph_series, 
 		   (gpointer) dbdat);
-    make_menu_item(_("Import"), database_menu, gui_import_series, 
+    add_popup_item(_("Import"), database_menu, gui_import_series, 
 		   (gpointer) dbdat);
-    make_menu_item(_("Find..."), database_menu, db_menu_find, 
+    add_popup_item(_("Find..."), database_menu, db_menu_find, 
 		   (gpointer) dbdat);
 
     dbdat->popup = database_menu;
@@ -743,24 +743,6 @@ static int rats_populate_series_list (windata_t *dbdat)
 
 /* ......................................................... */
 
-static gint db_popup_handler (GtkWidget *widget, GdkEvent *event,
-			      gpointer data)
-{
-    GdkModifierType mods;
-
-    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
-    
-    if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
-	GdkEventButton *bevent = (GdkEventButton *) event; 
-	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
-			bevent->button, bevent->time);
-	return TRUE;
-    }
-    return FALSE;
-}
-
-/* ......................................................... */
-
 static GtkWidget *database_window (windata_t *ddata) 
 {
     char *titles[] = {
@@ -799,7 +781,7 @@ static GtkWidget *database_window (windata_t *ddata)
     gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
 
     gtk_signal_connect (GTK_OBJECT(ddata->listbox), "button_press_event",
-			GTK_SIGNAL_FUNC(db_popup_handler), 
+			GTK_SIGNAL_FUNC(popup_menu_handler), 
 			(gpointer) ddata->popup);
 
     gtk_signal_connect_after (GTK_OBJECT (ddata->listbox), "select_row", 

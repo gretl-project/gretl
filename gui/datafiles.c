@@ -354,6 +354,22 @@ static gint populate_remote_dblist (windata_t *ddata)
 
 /* ........................................................... */
 
+static void build_datafiles_popup (windata_t *win)
+{
+    if (win->popup != NULL) return;
+
+    win->popup = gtk_menu_new();
+
+    add_popup_item(_("Info"), win->popup, 
+		   GTK_SIGNAL_FUNC(browse_header), 
+		   win);
+    add_popup_item(_("Open"), win->popup, 
+		   GTK_SIGNAL_FUNC(browser_open_data), 
+		   win);
+}
+
+/* ........................................................... */
+
 void display_files (gpointer data, guint code, GtkWidget *widget)
 {
     GtkWidget *listbox, *openbutton, *midbutton, *closebutton;
@@ -410,6 +426,15 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     listbox = files_window(fdata);
 
     gtk_box_pack_start(GTK_BOX (main_vbox), listbox, TRUE, TRUE, 0);
+
+    /* popup menu? */
+    if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
+	|| code == JW_DATA) {
+	build_datafiles_popup(fdata);
+	gtk_signal_connect (GTK_OBJECT(fdata->listbox), "button_press_event",
+			    GTK_SIGNAL_FUNC(popup_menu_handler), 
+			    (gpointer) fdata->popup);
+    }
 
     if (code == REMOTE_DB) {
 	GtkWidget *hbox;

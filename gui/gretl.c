@@ -1121,11 +1121,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     /* get a monospaced font for various windows */
     load_fixed_font();
 
-    /* and a proportional font for menus, etc */
-#ifndef USE_GNOME
-    set_app_font(NULL);
-#endif
-
     gtk_widget_show_all(mdata->w); 
 
     return dlabel;
