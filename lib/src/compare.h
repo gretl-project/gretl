@@ -32,7 +32,8 @@ typedef enum {
     AUX_COINT, /* aux. regression for cointegreation test */
     AUX_ARCH,  /* aux. regression for ARCH test */
     AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
-    AUX_OMIT   /* aux. regression for omitting variables */
+    AUX_OMIT,  /* aux. regression for omitting variables */
+    AUX_SUR    /* single equation from SUR system */
 } aux_codes;
 
 typedef struct {

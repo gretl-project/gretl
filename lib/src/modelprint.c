@@ -655,6 +655,11 @@ static void print_model_heading (const MODEL *pmod,
 		I_("Test for ARCH of order"), 
 		pmod->order);
 	break;	
+    case AUX_SUR:
+	pprintf(prn, "\n%s %d: ", 
+		(utf)? _("Equation") : I_("Equation"), 
+		pmod->ID + 1);
+	break;	
     case VAR:
 	break;
     case AUX_ADD:
@@ -668,11 +673,19 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     }
 
-    pprintf(prn, (utf)?
-	    _("%s estimates using the %d observations %s%s%s") :
-	    I_("%s estimates using the %d observations %s%s%s"),
-	    _(estimator_string(pmod->ci, prn->format)), 
-	    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+    if (pmod->aux == AUX_SUR) {
+	pprintf(prn, (utf)?
+		_("%s estimates using the %d observations %s%s%s") :
+		I_("%s estimates using the %d observations %s%s%s"),
+		_("SUR"), 
+		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+    } else {
+	pprintf(prn, (utf)?
+		_("%s estimates using the %d observations %s%s%s") :
+		I_("%s estimates using the %d observations %s%s%s"),
+		_(estimator_string(pmod->ci, prn->format)), 
+		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+    }
 
     if (tex) pprintf(prn, "\\\\\n");
     else if (RTF_FORMAT(prn->format)) pprintf(prn, "\\par\n");
@@ -1041,6 +1054,13 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	print_middle_table_end(prn);
 	goto close_format;
     }
+
+    if (pmod->aux == AUX_SUR) {
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	print_middle_table_end(prn);
+	goto close_format;
+    }    
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || pmod->aux == AUX_AR) {
 	print_middle_table_start(prn);
