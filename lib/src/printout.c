@@ -887,17 +887,23 @@ static void print_float_16 (double x, PRN *prn)
     char numstr[24], final[24];
     char *p;
     int i, tmp, forept = 0;
+    char decpoint = '.';
+
+#ifdef ENABLE_NLS
+    decpoint = get_local_decpoint();
+#endif
 
     sprintf(numstr, "%#.*G", 6, x);
+    fix_exponent(numstr);
 
-    p = strchr(numstr, '.');
+    p = strchr(numstr, decpoint);
     if (p != NULL) forept = p - numstr;
     tmp = 6 - forept;
     *final = 0;
     for (i=0; i<tmp; i++) strcat(final, " ");
 
     tmp = strlen(numstr) - 1;
-    if (numstr[tmp] == '.') numstr[tmp] = 0;
+    if (numstr[tmp] == decpoint) numstr[tmp] = 0;
 
     strcat(final, numstr);
 
