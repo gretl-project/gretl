@@ -1,0 +1,39 @@
+March 2003
+
+As of version 1.0.6, gretl offers support for LAPACK.  Routines from
+LAPACK are used for two new commands, which should be considered
+experimental at this point: "system" (equation system, the only sort
+available at present being SUR) and "coint2" (Johansen trace test for
+cointegration).
+
+These commands are not yet in the PDF manual, but they are documented
+in the gretlcli online help file (which is also available in the GUI
+program under the menu item "Help/Script commands syntax").  There are
+no GUI menu items to invoke the commands yet, but they are available
+in gretlcli, via the gretl GUI console, or in a gretl script.
+
+Sample files which illustrate these new commands are supplied.  For
+the SUR system see greene14_2.inp, which uses greene13_1.gdt (Grunfeld
+investment data) to replicate the SUR example in William Greene's
+Econometric Analysis, 5th edition, Chapter 14.  For the Johansen test
+see pscoin.inp, which uses hamilton.gdt to replicate the price
+levels and exchange rate example in James D. Hamilton's Time Series
+Analysis, Chapters 19 and 20.
+
+The new commands depend upon two new plugins, "sur" and "johansen",
+which are linked against the LAPACK and BLAS libraries.  These
+libraries are supplied with the Windows distribution of gretl in the
+form of DLLs.  
+
+If you are building gretl on Linux/unix and wish to have these
+commands available, you will need to install LAPACK before configuring
+gretl.  RPMs and Debian packages for LAPACK are readily available.  Two
+options to gretl's "configure" program are relevant:
+
+* To prevent gretl from linking against LAPACK even if it is available
+  on your system, use "--without-lapack". (Then, of course, the new
+  commands will not be available).
+
+* If you wish to use LAPACK and it is installed somewhere other than
+  in the "/usr" tree, you may need the option "--with-lapack-prefix=",
+  e.g. "--with-lapack-prefix=/usr/local".  
