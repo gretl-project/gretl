@@ -25,7 +25,7 @@
 
 #undef VAR_DEBUG 
 
-struct _GRETL_VAR {
+struct GRETL_VAR_ {
     int neqns;         /* number of equations in system */
     int order;         /* lag order */
     int n;             /* number of observations */
@@ -1000,7 +1000,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
    Run the regressions and print the results.
 */
 
-static int real_var (int order, const LIST inlist, 
+static int real_var (int order, const int *inlist, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     GRETL_VAR **pvar, struct var_resids *resids, 
 		     PRN *prn, gretlopt opts, char flags)
@@ -1253,7 +1253,7 @@ static int real_var (int order, const LIST inlist,
  *
  */
 
-int simple_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+int simple_var (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		int pause, gretlopt opts, PRN *prn)
 {
     char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS;
@@ -1275,7 +1275,7 @@ int simple_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
 /* "full" version returns pointer to VAR struct */
 
-GRETL_VAR *full_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+GRETL_VAR *full_var (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opts, PRN *prn)
 {
     GRETL_VAR *var = NULL;
@@ -1340,7 +1340,7 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
  *
  */
 
-int coint (int order, const LIST list, double ***pZ, 
+int coint (int order, const int *list, double ***pZ, 
 	   DATAINFO *pdinfo, PRN *prn)
 {
     int i, t, n, nv, l0 = list[0];
@@ -1666,7 +1666,7 @@ int adf_test (int order, int varno, double ***pZ,
 }
 
 static int 
-has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
+has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 {
     int i;
     int origv = pdinfo->v;
@@ -1844,7 +1844,7 @@ johansen_complete (const double **X, const double **Y, const double **Z,
 
 #undef JOHANSEN_DEBUG
 
-int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+int johansen_test (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn)
 {
     PRN *varprn = NULL;

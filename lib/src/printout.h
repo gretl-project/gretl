@@ -58,8 +58,7 @@ int page_pause (void);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
-int printdata (LIST list, 
-	       double ***pZ, const DATAINFO *pdinfo, 
+int printdata (int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt oflag, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 

@@ -25,10 +25,11 @@
 #include "gretl_private.h"
 #include "gretl_matrix.h"
 
-typedef struct {
+struct COMPARE {
+    int cmd;       /* ADD or OMIT */
     int m1;        /* ID for first model */
     int m2;        /* ID for second model */
-    int ci;        /* estimator code for the first */
+    int ci;        /* estimator code for the first model */
     int dfn;       /* numerator degrees of freedom */
     int dfd;       /* denominator degrees of freedom */ 
     double F;      /* F test statistic */
@@ -36,56 +37,55 @@ typedef struct {
     double trsq;   /* T*R^2 test statistic */
     int score;     /* "cases correct" for discrete models */
     int robust;    /* = 1 when robust vcv is in use, else 0 */
-} COMPARE;
+};
 
 static void
-gretl_print_add (const COMPARE *add, const int *addvars, 
-		 const DATAINFO *pdinfo, PRN *prn,
-		 gretlopt opt)
+gretl_print_compare (const struct COMPARE *cmp, const int *diffvars, 
+		     const DATAINFO *pdinfo, PRN *prn,
+		     gretlopt opt)
 {
     int i;
-    char spc[3];
 
-    if (add->ci == LAD) {
+    if (cmp->ci == LAD) {
 	return;
     }
 
     if (!(opt & OPT_Q)) {
-	strcpy(spc, "  ");
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
-		add->m1, add->m2);
-    } else {
-	spc[0] = '\0';
-    }
+		cmp->m1, cmp->m2);
+    } 
 
-    if (addvars[0] > 1 && (add->ci == OLS || add->ci == HCCM)) {
-	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
-		       "zero for the added variables\n\n"), spc);
-	for (i=1; i<=addvars[0]; i++) {
-	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
+    if ((cmp->ci == OLS || cmp->ci == HCCM) && 
+	cmp->dfn > 0 && (diffvars[0] > 1 || cmp->cmd == OMIT)) {
+	pputs(prn, _("\n  Null hypothesis: the regression parameters are "
+		     "zero for the variables\n\n"));
+	for (i=1; i<=diffvars[0]; i++) {
+	    pprintf(prn, "    %s\n", pdinfo->varname[diffvars[i]]);	
 	}
-	pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		(add->robust)? _("Robust F"): "F",
-		add->dfn, add->dfd, add->F);
-	pprintf(prn, _("with p-value = %g\n"), 
-		fdist(add->F, add->dfn, add->dfd));
-    } else if (addvars[0] > 1 && LIMDEP(add->ci)) {
-	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
-		       "zero for the added variables\n\n"), spc);
-	for (i=1; i<=addvars[0]; i++) { 
-	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	}
-	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
-		_("Chi-square"), add->dfn, add->chisq);
+	if (!na(cmp->F)) {
+	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		    (cmp->robust)? _("Robust F") : "F",
+		    cmp->dfn, cmp->dfd, cmp->F);
+	    pprintf(prn, _("with p-value = %g\n"), 
+		    fdist(cmp->F, cmp->dfn, cmp->dfd));	    
+	} 
+    } else if (LIMDEP(cmp->ci) && cmp->dfn > 0 && diffvars[0] > 0) {
+        pputs(prn, _("\n  Null hypothesis: the regression parameters are "
+		     "zero for the variables\n\n"));
+        for (i=1; i<=diffvars[0]; i++) { 
+            pprintf(prn, "    %s\n", pdinfo->varname[diffvars[i]]); 
+        }
+	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
+		_("Chi-square"), cmp->dfn, cmp->chisq);
 	pprintf(prn, _("with p-value = %g\n\n"), 
-		chisq(add->chisq, add->dfn));
+		chisq(cmp->chisq, cmp->dfn));
 	return;
     } 
 
     if (!(opt & OPT_Q)) {
-	pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
-		spc, add->score);
-	if (add->score == 1) {
+	pprintf(prn, _("  Of the 8 model selection statistics, %d "), 
+		cmp->score);
+	if (cmp->score == 1) {
 	    pputs(prn, _("has improved.\n"));
 	} else {
 	    pputs(prn, _("have improved.\n\n"));
@@ -93,72 +93,21 @@ gretl_print_add (const COMPARE *add, const int *addvars,
     }
 }
 
-static void 
-gretl_print_omit (const COMPARE *omit, const int *omitvars, 
-		  const DATAINFO *pdinfo, PRN *prn,
-		  gretlopt opt)
-{
-    int i;
-
-    if (omit->ci == LAD) return;
-
-    if (!(opt & OPT_Q)) {
-	pprintf(prn, _("Comparison of Model %d and Model %d:\n\n"),
-		omit->m1, omit->m2);
-    } else {
-	pputc(prn, '\n');
-    }
-
-    if ((omit->ci == OLS || omit->ci == HCCM) && 
-	omit->dfn > 0 && omitvars[0] > 0) {
-	pprintf(prn, _("  Null hypothesis: the regression parameters "
-		"are zero for the variables\n\n"));
-	for (i=1; i<=omitvars[0]; i++) {
-	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
-	}
-	if (!na(omit->F)) {
-	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		    (omit->robust)? _("Robust F") : "F",
-		    omit->dfn, omit->dfd, omit->F);
-	    pprintf(prn, _("with p-value = %g\n"), 
-		    fdist(omit->F, omit->dfn, omit->dfd));	    
-	} 
-    }
-    else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 0) {
-	pputs(prn, _("  Null hypothesis: the regression parameters "
-		"are zero for the variables\n\n"));
-	for (i=1; i<=omitvars[0]; i++) {
-	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
-	} 
-	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
-		_("Chi-square"), omit->dfn, omit->chisq);
-	pprintf(prn, _("with p-value = %g\n\n"), 
-		chisq(omit->chisq, omit->dfn));
-	return;
-    } 
-
-    if (opt & OPT_Q) {
-	pputc(prn, '\n');
-    } else {
-	pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
-		omit->score, (omit->score == 1)? 
-		_("has improved") : _("have improved"));
-    }
-}
-
-static COMPARE 
+static struct COMPARE 
 add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
 {
-    COMPARE cmp;
+    struct COMPARE cmp;
     const MODEL *umod, *rmod;
     int i;	
 
     if (add) {
 	umod = pmodB;
 	rmod = pmodA;
+	cmp.cmd = ADD;
     } else {
 	umod = pmodA;
 	rmod = pmodB;
+	cmp.cmd = OMIT;
     }
 
     cmp.m1 = pmodA->ID;
@@ -471,7 +420,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int add_test (LIST addvars, MODEL *orig, MODEL *new, 
+int add_test (int *addvars, MODEL *orig, MODEL *new, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn)
 {
@@ -509,7 +458,7 @@ int add_test (LIST addvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	COMPARE add;
+	struct COMPARE cmp;
 
 	new->aux = AUX_ADD;
 
@@ -517,13 +466,13 @@ int add_test (LIST addvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, opt, prn);
 	}
 
-	add = add_or_omit_compare(orig, new, 1);
+	cmp = add_or_omit_compare(orig, new, 1);
 
 	gretl_list_diff(addvars, new->list, orig->list);
 	if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
-	    add.F = robust_omit_F(addvars, new);
+	    cmp.F = robust_omit_F(addvars, new);
 	}
-	gretl_print_add(&add, addvars, pdinfo, prn, opt);
+	gretl_print_compare(&cmp, addvars, pdinfo, prn, opt);
     }
 
     /* trash any extra variables generated (squares, logs) */
@@ -664,7 +613,7 @@ double robust_omit_F (const int *list, MODEL *pmod)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
+int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
@@ -709,13 +658,13 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	COMPARE omit;
+	struct COMPARE cmp;
 
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_OMIT;
 	}
 
-	omit = add_or_omit_compare(orig, new, 0);
+	cmp = add_or_omit_compare(orig, new, 0);
 
 	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, opt, prn); 
@@ -724,10 +673,10 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	gretl_list_diff(omitvars, orig->list, new->list);
 
 	if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
-	    omit.F = robust_omit_F(omitvars, orig);
+	    cmp.F = robust_omit_F(omitvars, orig);
 	}
 
-	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
+	gretl_print_compare(&cmp, omitvars, pdinfo, prn, opt); 
 
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_NONE;
@@ -1719,7 +1668,7 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-int make_mp_lists (const LIST list, const char *str,
+int make_mp_lists (const int *list, const char *str,
 		   int **reglist, int **polylist)
 {
     int i, pos;
@@ -1762,7 +1711,7 @@ int make_mp_lists (const LIST list, const char *str,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int mp_ols (const LIST list, const char *pos,
+int mp_ols (const int *list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn) 
 {
@@ -1883,7 +1832,7 @@ int make_sum_test_list (MODEL *pmod, double **Z, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int sum_test (LIST sumvars, MODEL *pmod, 
+int sum_test (const int *sumvars, MODEL *pmod, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn)
 {

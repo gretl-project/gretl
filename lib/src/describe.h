@@ -17,7 +17,22 @@
  * Boston, MA 02111-1307, USA.
  */
 
-typedef struct {
+typedef struct GRETLSUMMARY_ GRETLSUMMARY;
+typedef struct FREQDIST_ FREQDIST;
+
+struct GRETLSUMMARY_ {
+    int n;
+    int *list;
+    double *mean;
+    double *median;
+    double *sd;
+    double *skew; 
+    double *xkurt;
+    double *low;
+    double *high;
+};
+
+struct FREQDIST_ {
     char varname[VNAMELEN];  /* for ID purposes */
     int dist;                /* code for theoretical distribution */
     int numbins;             /* number of bins or intervals */
@@ -31,14 +46,14 @@ typedef struct {
 			     */
     int n;
     int t1, t2;
-} FREQDIST;
+};
 
 /* functions follow */
 
 void free_freq (FREQDIST *freq);
 
-FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
-		    int varno, int params, gretlopt opt);
+FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo, 
+		    int params, gretlopt opt);
 
 int corrgram (int varno, int order, 
 	      double ***pZ, DATAINFO *pdinfo, 
@@ -48,32 +63,29 @@ int periodogram (int varno,
 		 double ***pZ, const DATAINFO *pdinfo, 
 		 int batch, int opt, PRN *prn);
 
-GRETLSUMMARY *summary (LIST list, 
-		       double ***pZ, const DATAINFO *pdinfo,
+GRETLSUMMARY *summary (const int *list, const double **Z, 
+		       const DATAINFO *pdinfo,
 		       PRN *prn);
 
-void print_summary (GRETLSUMMARY *summ,
+void print_summary (const GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
 		    PRN *prn); 
 
 void free_summary (GRETLSUMMARY *summ);
 
-CORRMAT *corrlist (LIST list, 
-		   double ***pZ, const DATAINFO *pdinfo);
+CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo);
 
 void free_corrmat (CORRMAT *corrmat);
 
-int esl_corrmx (LIST list, 
-		double ***pZ, const DATAINFO *pdinfo, 
-		PRN *prn);
+int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
+		  PRN *prn);
 
-int means_test (LIST list, 
-		double **Z, const DATAINFO *pdinfo, 
+int means_test (const int *list, const double **Z, 
+		const DATAINFO *pdinfo, 
 		gretlopt vardiff, PRN *prn);
 
-int vars_test (LIST list, 
-	       double **Z, const DATAINFO *pdinfo, 
-	       PRN *prn);
+int vars_test (const int *list, const double **Z, 
+	       const DATAINFO *pdinfo, PRN *prn);
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 			PRN *prn);

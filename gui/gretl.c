@@ -431,7 +431,6 @@ GtkItemFactoryEntry data_items[] = {
       VSETMISS, NULL },
     { N_("/Variable/_Edit attributes"), NULL, varinfo_callback, 0, NULL },
     { N_("/Variable/sep3"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Variable/Simulate..."), NULL, gretl_callback, SIM, NULL },
     { N_("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
     { N_("/_Model"), NULL, NULL, 0, "<Branch>" },
     { N_("/Model/_Ordinary Least Squares..."), NULL, model_callback, OLS, NULL },
@@ -1648,7 +1647,8 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
     if (verify_and_record_command(line) ||
-	write_data(Rdata, get_cmd_list(), Z, datainfo, OPT_R, NULL)) {
+	write_data(Rdata, get_cmd_list(), (const double **) Z, datainfo, 
+		   OPT_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 

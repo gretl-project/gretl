@@ -778,7 +778,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT: 
-    case SUMMARY:
+    case SIM: case SUMMARY:
     case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&cmd, line, &Z, datainfo, prn);
@@ -1094,7 +1094,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 		
     case FREQ:
-	freq = freqdist(&Z, datainfo, cmd.list[1], 1, cmd.opt);
+	freq = freqdist(cmd.list[1], (const double **) Z, datainfo, 
+			1, cmd.opt);
 	if (freq == NULL) {
 	    err = E_ALLOC;
 	    break;
@@ -1506,15 +1507,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 #endif
 	break;
 
-    case SIM:
-	err = simulate(line, &Z, datainfo);
-	if (err) { 
-	    errmsg(err, prn);
-	} else {
-	    print_gretl_msg(prn);
-	}
-	break;
-
     case SMPL:
 	if (cmd.opt) {
 	    err = restore_full_sample(&Z, &datainfo, cmd.opt);
@@ -1581,8 +1573,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = 1;
 	    break;
 	}
-	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff,
-			OPT_NONE);	
+	freq = freqdist(datainfo->v - 1, (const double **) Z, datainfo, 
+			(models[0])->ncoeff, OPT_NONE);	
 	dataset_drop_vars(1, &Z, datainfo);
 	if (freq == NULL) {
 	    err = E_ALLOC;

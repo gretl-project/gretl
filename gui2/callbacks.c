@@ -498,7 +498,6 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[64], query[MAXLABEL], defstr[MAXLEN];
-    char startdate[OBSLEN], enddate[OBSLEN];
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;
@@ -523,23 +522,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(query, _("Enter integer seed for\n"
 	       "pseudo-random number generator:"));
 	okfunc = do_seed;
-	break; 
-    case SIM:
-	if (mdata->active_var < 0) return;
-	if (mdata->active_var == 0) {
-	    errbox(_("You can't simulate with the constant"));
-	    return;
-	}
-	ntodate(startdate, datainfo->t1 + 1, datainfo);
-	ntodate(enddate, datainfo->n - 1, datainfo);
-	strcpy(title, _("gretl: simulate variable"));
-	strcpy(query, _("Enter spec. for simulation:\n"
-	       "(start end parameters)\n"
-	       "You will probably want to consult the "
-	       "help on sim first"));
-	sprintf(defstr, "%s %s %s", startdate, enddate, 
-		datainfo->varname[mdata->active_var]);
-	okfunc = do_sim;
 	break; 
     case NULLDATA:
 	strcpy(title, _("gretl: simulation data"));

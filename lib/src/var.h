@@ -29,11 +29,11 @@ enum ur_codes {
     UR_TREND_SQUARED
 };
 
-int simple_var (int order, const LIST list, 
+int simple_var (int order, const int *list, 
 		double ***pZ, DATAINFO *pdinfo,
 		int pause, gretlopt opts, PRN *prn);
 
-GRETL_VAR *full_var (int order, const LIST list, 
+GRETL_VAR *full_var (int order, const int *list, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opts, PRN *prn);
 
@@ -41,7 +41,7 @@ void gretl_var_free (GRETL_VAR *var);
 
 void gretl_var_free_unnamed (GRETL_VAR *var);
 
-int coint (int order, const LIST list, 
+int coint (int order, const int *list, 
 	   double ***pZ, DATAINFO *pdinfo, 
 	   PRN *prn);
 
@@ -49,7 +49,7 @@ int adf_test (int order, const int varno,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn);
 
-int johansen_test (int order, const LIST list, 
+int johansen_test (int order, const int *list, 
 		   double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn);
 

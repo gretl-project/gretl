@@ -94,12 +94,12 @@ char *ntodate_full (char *datestr, int t, const DATAINFO *pdinfo);
 
 int get_info (const char *hdrfile, PRN *prn);
 
-int get_precision (double *x, int n, int placemax);
+int get_precision (const double *x, int n, int placemax);
 
 double get_date_x (int pd, const char *obs);
 
 int write_data (const char *fname, const int *list, 
-		double **Z, const DATAINFO *pdinfo, 
+		const double **Z, const DATAINFO *pdinfo, 
 	        gretlopt flag, PATHS *ppaths);
 
 int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn);

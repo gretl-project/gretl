@@ -25,15 +25,15 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
 	       const char *xname, const DATAINFO *pdinfo, 
 	       gretlopt oflag, PRN *prn);
 
-int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo, 
+int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		gretlopt oflag, PRN *prn);
 
-int ascii_graph (const LIST list, double **Z, const DATAINFO *pdinfo, 
+int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt oflag, PRN *prn);
 
-int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo);
+int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo);
+int simulate (const char *cmd, double **Z, DATAINFO *pdinfo);
 
 int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
 		    DATAINFO *pdinfo);

@@ -20,13 +20,13 @@
 #ifndef NONPARAM_H
 #define NONPARAM_H
  
-int spearman (const LIST list, 
-	      double **Z, const DATAINFO *pdinfo,
+int spearman (const int *list, 
+	      const double **Z, const DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 
 double lockes_test (const double *x, const DATAINFO *pdinfo);
 
-int runs_test (int varno, double **Z, const DATAINFO *pdinfo, 
+int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn);
 
 #endif /* NONPARAM_H */

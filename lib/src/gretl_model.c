@@ -22,7 +22,7 @@
 
 #undef MODEL_DEBUG
 
-struct _model_data_item {
+struct model_data_item_ {
     char *key;
     void *ptr;
     size_t size;

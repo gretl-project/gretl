@@ -84,9 +84,6 @@ int *augment_regression_list (const int *orig, int aux,
 int gretl_forecast (int t1, int t2, int nv, 
 		    const MODEL *pmod, double ***pZ);
 
-int z_to_xy (int v1, int v2, double *px, double *py, 
-	     const DATAINFO *pdinfo, double **Z);
-
 int gretl_is_reserved (const char *str);
 
 void gretl_test_init (GRETLTEST *test);

@@ -459,7 +459,7 @@ static int real_setmiss (double missval, int varno,
 
 /**
  * set_miss:
- * @LIST: list of variables to process.
+ * @list: list of variables to process.
  * @param: string with specification of value to treat as missing.
  * @Z: data matrix.
  * @pdinfo: pointer to data information struct.
@@ -470,7 +470,7 @@ static int real_setmiss (double missval, int varno,
  *
  */
 
-void set_miss (LIST list, const char *param, double **Z,
+void set_miss (const int *list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn)
 {
     double missval;

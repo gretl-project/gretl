@@ -53,11 +53,11 @@ enum aux_codes {
  
 double robust_omit_F (const int *list, MODEL *pmod);
 
-int add_test (LIST addvars,  MODEL *orig, MODEL *new,
+int add_test (int *addvars,  MODEL *orig, MODEL *new,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn);
 
-int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
+int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
@@ -95,11 +95,11 @@ int leverage_test (MODEL *pmod,
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, unsigned char opt);
 
-int mp_ols (const LIST list, const char *pos,
+int mp_ols (const int *list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn); 
 
-int sum_test (LIST sumvars, MODEL *pmod, 
+int sum_test (const int *sumvars, MODEL *pmod, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn);
 

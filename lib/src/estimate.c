@@ -404,7 +404,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo, 
+MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo, 
 	   int ci, gretlopt opts, double rho)
 {
     int l0, yno, i;
@@ -1870,7 +1870,7 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
+MODEL tsls_func (int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
     int i, t;
@@ -2274,7 +2274,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
+MODEL hsk_func (int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, err;
     int orig_nvar = pdinfo->v;
@@ -2374,7 +2374,7 @@ static void free_hccm_p (double **p, int m)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
+MODEL hccm_func (int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int nobs, nc, i, j, k, t, t1, t2, tp;
     double *st = NULL, *uhat1 = NULL, **p = NULL;
@@ -2632,7 +2632,7 @@ static int ar_list_max (const int *list)
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_func (LIST list, int pos, double ***pZ, 
+MODEL ar_func (int *list, int pos, double ***pZ, 
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     double diff, ess, tss, xx;
@@ -3008,7 +3008,7 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo, 
+MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo, 
 	    GRETLTEST *test, gretlopt opt, PRN *prn)
 {
     MODEL archmod;
@@ -3157,7 +3157,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
+MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo)
 {
     MODEL lad_model;
     void *handle;
@@ -3320,7 +3320,7 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     MODEL tmod;
     void *handle;

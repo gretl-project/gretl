@@ -506,7 +506,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Set missing value code..."), NULL, gretl_callback, 
       VSETMISS, NULL, GNULL },
     { N_("/Variable/sep3"), NULL, NULL, 0, "<Separator>", NULL },
-    { N_("/Variable/Simulate..."), NULL, gretl_callback, SIM, NULL, GNULL },
     { N_("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL, GNULL },
 
     /* Model menu */
@@ -1876,7 +1875,8 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
     if (verify_and_record_command(line) ||
-	write_data(Rdata, get_cmd_list(), Z, datainfo, OPT_R, NULL)) {
+	write_data(Rdata, get_cmd_list(), (const double **) Z, datainfo, 
+		   OPT_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 

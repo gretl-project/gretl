@@ -141,8 +141,6 @@ void do_mp_ols (GtkWidget *widget, gpointer p);
 
 /* variable-related functions */
 
-void do_sim (GtkWidget *widget, dialog_t *ddata);
-
 void do_simdata (GtkWidget *widget, dialog_t *ddata);
 
 void do_genr (GtkWidget *widget, dialog_t *ddata);

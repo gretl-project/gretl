@@ -589,7 +589,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     /* execute the command */
     switch (action) {
     case CORR:
-	obj = corrlist(cmd.list, &Z, datainfo);
+	obj = corrlist(cmd.list, (const double **) Z, datainfo);
 	if (obj == NULL) {
 	    errbox(_("Failed to generate correlation matrix"));
 	    gretl_print_destroy(prn);
@@ -598,7 +598,8 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	matrix_print_corr(obj, datainfo, prn);
 	break;
     case FREQ:
-	obj = freqdist(&Z, datainfo, mdata->active_var, 1, OPT_NONE);
+	obj = freqdist(mdata->active_var, (const double **) Z, datainfo, 
+		       1, OPT_NONE);
 	if (freq_error(obj, NULL)) {
 	    gretl_print_destroy(prn);
 	    return;
@@ -607,10 +608,10 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	free_freq(obj);
 	break;
     case RUNS:
-	err = runs_test(cmd.list[1], Z, datainfo, prn);
+	err = runs_test(cmd.list[1], (const double **) Z, datainfo, prn);
 	break;
     case PCA:
-	obj = corrlist(cmd.list, &Z, datainfo);
+	obj = corrlist(cmd.list, (const double **) Z, datainfo);
 	if (obj == NULL) {
 	    errbox(_("Failed to generate correlation matrix"));
 	    gretl_print_destroy(prn);
@@ -621,7 +622,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	break;
     case SUMMARY:
     case VAR_SUMMARY:	
-	obj = summary(cmd.list, &Z, datainfo, prn);
+	obj = summary(cmd.list, (const double **) Z, datainfo, prn);
 	if (obj == NULL) {
 	    errbox(_("Failed to generate summary statistics"));
 	    gretl_print_destroy(prn);
@@ -818,16 +819,16 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
     /* execute the command */
     switch (action) {
     case SPEARMAN:
-	err = spearman(cmd.list, Z, datainfo, 1, prn);
+	err = spearman(cmd.list, (const double **) Z, datainfo, 1, prn);
 	break;
     case MEANTEST:
-	err = means_test(cmd.list, Z, datainfo, 1, prn);
+	err = means_test(cmd.list, (const double **) Z, datainfo, 1, prn);
 	break;
     case MEANTEST2:
-	err = means_test(cmd.list, Z, datainfo, 0, prn);
+	err = means_test(cmd.list, (const double **) Z, datainfo, 0, prn);
 	break;
     case VARTEST:
-	err = vars_test(cmd.list, Z, datainfo, prn);
+	err = vars_test(cmd.list, (const double **) Z, datainfo, prn);
 	break;	
     case CORRGM:
 	err = corrgram(cmd.list[1], order, &Z, datainfo, 0, prn);
@@ -2303,34 +2304,6 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 
 /* ........................................................... */
 
-void do_sim (GtkWidget *widget, dialog_t *ddata)
-{
-    const gchar *buf;
-    char varname[VNAMELEN], info[24];
-    int err;
-
-    buf = dialog_data_get_text(ddata);
-    if (buf == NULL) return;
-
-    clear(line, MAXLEN);
-    sprintf(line, "sim %s", buf);
-
-    if (verify_and_record_command(line)) return;
-
-    sscanf(line, "%*s %*s %*s %8s", varname);
-    sprintf(info, _("%s redefined OK"), varname);
-
-    err = simulate(line, &Z, datainfo);
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	close_dialog(ddata);
-	infobox(info);
-    }
-} 
-
-/* ........................................................... */
-
 void do_simdata (GtkWidget *widget, dialog_t *ddata) 
 {
     const gchar *buf;
@@ -2621,7 +2594,8 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    freq = freqdist(&Z, datainfo, datainfo->v - 1, pmod->ncoeff, OPT_NONE);
+    freq = freqdist(datainfo->v - 1, (const double **) Z, datainfo, 
+		    pmod->ncoeff, OPT_NONE);
     dataset_drop_vars(1, &Z, datainfo);
     if (freq_error(freq, NULL)) {
 	gretl_print_destroy(prn);
@@ -2671,7 +2645,8 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
     if (verify_and_record_command(line)) return;
 
-    freq = freqdist(&Z, datainfo, mdata->active_var, 1, opt);
+    freq = freqdist(mdata->active_var, (const double **) Z, datainfo, 
+		    1, opt);
 
     if (!freq_error(freq, NULL)) { 
 	if (dist == GAMMA && freq->midpt[0] < 0.0 && freq->f[0] > 0) {
@@ -3426,13 +3401,13 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	err = printdata(NULL, &Z, datainfo, OPT_O, prn);
+	err = printdata(NULL, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
-	err = printdata(NULL, &Z, datainfo, OPT_O, prn);
+	err = printdata(NULL, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -3491,14 +3466,14 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	printdata(prcmd.list, &Z, datainfo, OPT_O, prn);
+	printdata(prcmd.list, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, width, 350, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
 	if (bufopen(&prn)) return;
-	err = printdata(prcmd.list, &Z, datainfo, OPT_O, prn);
+	err = printdata(prcmd.list, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -3980,14 +3955,14 @@ void display_var (void)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	printdata(list, &Z, datainfo, OPT_O, prn);
+	printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 28, height, VIEW_DATA);
     } else { /* use buffer */
 	int err;
 
 	if (bufopen(&prn)) return;
-	err = printdata(list, &Z, datainfo, OPT_O, prn);
+	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -4323,7 +4298,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
     }
 
     /* actually write the data to file */
-    if (write_data(savename, cmd.list, Z, datainfo, 
+    if (write_data(savename, cmd.list, (const double **) Z, datainfo, 
 		   oflag, &paths)) {
 	sprintf(errtext, _("Write of data file failed\n%s"),
 		get_gretl_errmsg());
@@ -5052,7 +5027,7 @@ int gui_exec_line (char *line,
     case MULTIPLY: case SQUARE: case RHODIFF:
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
-    case PRINT: case SUMMARY:
+    case PRINT: case SIM: case SUMMARY:
     case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case PCA:
     case OUTFILE:
@@ -5407,7 +5382,8 @@ int gui_exec_line (char *line,
 	break;
 		
     case FREQ:
-	freq = freqdist(&Z, datainfo, cmd.list[1], 1, cmd.opt);
+	freq = freqdist(cmd.list[1], (const double **) Z, datainfo, 
+			1, cmd.opt);
 	if ((err = freq_error(freq, prn))) {
 	    break;
 	}
@@ -5769,15 +5745,6 @@ int gui_exec_line (char *line,
 #endif
 	break;
 
-    case SIM:
-	err = simulate(line, &Z, datainfo);
-	if (err) { 
-	    errmsg(err, prn);
-	} else {
-	    print_gretl_msg(prn);
-	}
-	break;
-
     case SMPL:
 	if (cmd.opt) {
 	    err = restore_sample(cmd.opt);
@@ -5850,8 +5817,8 @@ int gui_exec_line (char *line,
 	    err = 1;
 	    break;
 	}
-	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff,
-			OPT_NONE);
+	freq = freqdist(datainfo->v - 1, (const double **) Z, datainfo, 
+			(models[0])->ncoeff, OPT_NONE);
 	dataset_drop_vars(1, &Z, datainfo);
 	if (!(err = freq_error(freq, prn))) {
 	    if (rebuild) {

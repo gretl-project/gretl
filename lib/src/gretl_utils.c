@@ -102,11 +102,13 @@ double gretl_corr (int n, const double *zx, const double *zy)
 
 double gretl_covar (int n, const double *zx, const double *zy)
 {
-    register int i;
-    int nn;
+    int i, nn;
     double sx, sy, sxy, zxi, zyi, zxbar, zybar;
 
-    if (n == 0) return NADBL;
+    if (n == 0) {
+	return NADBL;
+    }
+
     nn = n;
     sx = sy = 0.0;
 
@@ -121,21 +123,26 @@ double gretl_covar (int n, const double *zx, const double *zy)
         sy += zyi;
     }
 
-    if (nn == 0) return NADBL;
-    zxbar = sx/nn;
-    zybar = sy/nn;
+    if (nn == 0) {
+	return NADBL;
+    }
+
+    zxbar = sx / nn;
+    zybar = sy / nn;
     sxy = 0.0;
 
     for (i=0; i<n; i++) {
         zxi = zx[i];
         zyi = zy[i];
-        if (na(zxi) || na(zyi)) continue;
+        if (na(zxi) || na(zyi)) {
+	    continue;
+	}
         sx = zxi - zxbar;
         sy = zyi - zybar;
-        sxy = sxy + (sx*sy);
+        sxy = sxy + (sx * sy);
     }
 
-    return sxy/(nn - 1);
+    return sxy / (nn - 1);
 }
 
 /**
@@ -219,7 +226,7 @@ int ijton (int i, int j, int nrows)
  * Returns: the number of valid observations put into @px.
  */
 
-int ztox (int i, double *px, double **Z, const DATAINFO *pdinfo) 
+int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo) 
 {
     int t, m = 0;
     double xx;
@@ -235,7 +242,9 @@ int ztox (int i, double *px, double **Z, const DATAINFO *pdinfo)
     
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xx = Z[i][t];
-	if (na(xx)) continue;
+	if (na(xx)) {
+	    continue;
+	}
 	else px[m++] = xx;
     }
 
@@ -311,7 +320,10 @@ void list_exclude (int n, int *list)
 {
     int i;
 
-    for (i=n; i<list[0]; i++) list[i] = list[i+1];
+    for (i=n; i<list[0]; i++) {
+	list[i] = list[i+1];
+    }
+
     list[0] = list[0] - 1;
 }
 
@@ -432,12 +444,14 @@ double gretl_stddev (int t1, int t2, const double *x)
 
 double gretl_variance (int t1, int t2, const double *x)
 {
-    int n;
-    register int i;
+    int i, n;
     double sumsq, xx, xbar;
 
     n = t2 - t1 + 1;
-    if (n == 0) return NADBL;
+
+    if (n == 0) {
+	return NADBL;
+    }
 
     xbar = gretl_mean(t1, t2, x);
     if (na(xbar)) {
@@ -445,14 +459,17 @@ double gretl_variance (int t1, int t2, const double *x)
     }
 
     sumsq = 0.0;
+
     for (i=t1; i<=t2; i++) {
 	if (!na(x[i])) {
 	    xx = x[i] - xbar;
 	    sumsq += xx*xx;
-	} else n--;
+	} else {
+	    n--;
+	}
     }
 
-    sumsq = (n > 1)? sumsq/(n - 1) : 0.0;
+    sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
 
     return (sumsq >= 0)? sumsq : NADBL;
 }
@@ -461,10 +478,12 @@ double gretl_variance (int t1, int t2, const double *x)
 
 double gretl_sst (int t1, int t2, const double *x)
 {
-    register int i;
+    int i;
     double sumsq, xx, xbar;
 
-    if (t2 - t1 + 1 == 0) return NADBL;
+    if (t2 - t1 + 1 == 0) {
+	return NADBL;
+    }
 
     xbar = gretl_mean(t1, t2, x);
     if (na(xbar)) {
@@ -472,6 +491,7 @@ double gretl_sst (int t1, int t2, const double *x)
     }
 
     sumsq = 0.0;
+
     for (i=t1; i<=t2; i++) {
 	if (!na(x[i])) {
 	    xx = x[i] - xbar;
@@ -841,7 +861,9 @@ int list_dups (const int *list, int ci)
     
     for (i=start; i<list[0]; i++) {
 	for (j=start+1; j<=list[0]; j++) {
-	    if (i != j && list[i] == list[j]) return list[i];
+	    if (i != j && list[i] == list[j]) {
+		return list[i];
+	    }
 	}
     }
 
@@ -855,11 +877,16 @@ int *copylist (const int *src)
     int *targ;
     int i, n;
 
-    if (src == NULL) return NULL;
+    if (src == NULL) {
+	return NULL;
+    }
+
     n = src[0];
 
     targ = malloc((n + 1) * sizeof *targ);
-    if (targ == NULL) return NULL;
+    if (targ == NULL) {
+	return NULL;
+    }
 
     for (i=0; i<=n; i++) {
 	targ[i] = src[i];
@@ -876,7 +903,9 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
     int t;
 
     S = realloc(pdinfo->S, n * sizeof *S);
-    if (S == NULL) return 1;
+    if (S == NULL) {
+	return 1;
+    }
 
     for (t=pdinfo->n; t<n; t++) {
 	S[t] = malloc(OBSLEN);
@@ -962,11 +991,9 @@ static int real_dataset_add_vars (int newvars, double *x,
     *pZ = newZ;
 
     varname = realloc(pdinfo->varname, (v + newvars) * sizeof *varname);
-    if (varname == NULL) {
-	return E_ALLOC;
-    }
-
+    if (varname == NULL) return E_ALLOC;
     pdinfo->varname = varname;
+
     for (i=0; i<newvars; i++) {
 	pdinfo->varname[v+i] = malloc(VNAMELEN);
 	if (pdinfo->varname[v+i] == NULL) {
@@ -993,8 +1020,8 @@ static int real_dataset_add_vars (int newvars, double *x,
 
     vector = realloc(pdinfo->vector, (v + newvars));
     if (vector == NULL) return E_ALLOC;
-
     pdinfo->vector = vector;
+
     for (i=0; i<newvars; i++) {
 	pdinfo->vector[v+i] = 1;
     }
@@ -1036,25 +1063,29 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 
     varname = realloc(pdinfo->varname, (v + 1) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
-    else pdinfo->varname = varname;
+    pdinfo->varname = varname;
 
     pdinfo->varname[v] = malloc(VNAMELEN);
     if (pdinfo->varname[v] == NULL) return E_ALLOC;
+
     pdinfo->varname[v][0] = '\0';
 
     if (pdinfo->varinfo != NULL) {
 	varinfo = realloc(pdinfo->varinfo, (v + 1) * sizeof *varinfo);
-	if (varinfo == NULL) return E_ALLOC;
-	else pdinfo->varinfo = varinfo;
-
+	if (varinfo == NULL) {
+	    return E_ALLOC;
+	}
+	pdinfo->varinfo = varinfo;
 	pdinfo->varinfo[v] = malloc(sizeof **varinfo);
-	if (pdinfo->varinfo[v] == NULL) return E_ALLOC;
+	if (pdinfo->varinfo[v] == NULL) {
+	    return E_ALLOC;
+	}
 	gretl_varinfo_init(pdinfo->varinfo[v]);
     }
 
     vector = realloc(pdinfo->vector, (v + 1));
     if (vector == NULL) return E_ALLOC;
-    else pdinfo->vector = vector;
+    pdinfo->vector = vector;
 
     pdinfo->vector[v] = 0;
 
@@ -1120,8 +1151,11 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 	    int gap = 1;
 
 	    for (i=v+1; i<vmax; i++) {
-		if ((*pZ)[i] == NULL) gap++;
-		else break;
+		if ((*pZ)[i] == NULL) {
+		    gap++;
+		} else {
+		    break;
+		}
 	    }
 	    if (i < vmax) {
 		if (renumber != NULL) {
@@ -1143,19 +1177,19 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 
     varname = realloc(pdinfo->varname, (oldv - ndel) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
-    else pdinfo->varname = varname;
+    pdinfo->varname = varname;
 
     vector = realloc(pdinfo->vector, (oldv - ndel) * sizeof *vector);
     if (vector == NULL) return E_ALLOC;
-    else pdinfo->vector = vector;
+    pdinfo->vector = vector;
 
     varinfo = realloc(pdinfo->varinfo, (oldv - ndel) * sizeof *varinfo);
     if (varinfo == NULL) return E_ALLOC;
-    else pdinfo->varinfo = varinfo;
+    pdinfo->varinfo = varinfo;
 
     newZ = realloc(*pZ, (oldv - ndel) * sizeof *newZ); 
     if (newZ == NULL) return E_ALLOC;
-    else *pZ = newZ;
+    *pZ = newZ;
 
     pdinfo->v -= ndel;
 
@@ -1172,9 +1206,13 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
     VARINFO **varinfo;
     int i, v = pdinfo->v;   
 
-    if (delvars <= 0) return 0;
+    if (delvars <= 0) {
+	return 0;
+    }
 
-    if (pdinfo->v <= 1) return E_DATA;
+    if (pdinfo->v <= 1) {
+	return E_DATA;
+    }
 
     for (i=v-delvars; i<v; i++) {
 	if (pdinfo->varname[i] != NULL) {
@@ -1190,19 +1228,19 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 
     newZ = realloc(*pZ, (v - delvars) * sizeof *newZ); 
     if (newZ == NULL) return E_ALLOC;
-    else *pZ = newZ;
+    *pZ = newZ;
         
     varname = realloc(pdinfo->varname, (v - delvars) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
-    else pdinfo->varname = varname;
+    pdinfo->varname = varname;
 
     vector = realloc(pdinfo->vector, (v - delvars) * sizeof *vector);
     if (vector == NULL) return E_ALLOC;
-    else pdinfo->vector = vector;
+    pdinfo->vector = vector;
 
     varinfo = realloc(pdinfo->varinfo, (v - delvars) * sizeof *varinfo);
     if (varinfo == NULL) return E_ALLOC;
-    else pdinfo->varinfo = varinfo;
+    pdinfo->varinfo = varinfo;
 
     pdinfo->v -= delvars;
 

@@ -23,19 +23,19 @@
 
 /* functions follow */
 
-MODEL lsq (LIST list, 
+MODEL lsq (int *list, 
 	   double ***pZ, DATAINFO *pdinfo, 
 	   int ci, gretlopt opts, double rho);
 
 double estimate_rho (int *list, double ***pZ, DATAINFO *pdinfo,
 		     int batch, int opt, int *err, PRN *prn);
 
-int hilu_corc (double *toprho, LIST list, 
+int hilu_corc (double *toprho, int *list, 
 	       double ***pZ, DATAINFO *pdinfo,
 	       PATHS *ppaths, int batch,
 	       int opt, PRN *prn);
 
-MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo); 
+MODEL lad (int *list, double ***pZ, DATAINFO *pdinfo); 
 
 MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, 
 	    PRN *prn);
@@ -46,7 +46,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo,
 MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 		      const char *param);
 
-MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, 
+MODEL tobit_model (int *list, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn);
 
 MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
@@ -56,25 +56,25 @@ const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i);
 
 void tsls_free_data (const MODEL *pmod);
 
-MODEL tsls_func (LIST list, int pos_in, 
+MODEL tsls_func (int *list, int pos_in, 
 		 double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt);
 
-MODEL hsk_func (LIST list, 
+MODEL hsk_func (int *list, 
 		double ***pZ, DATAINFO *pdinfo);
 
-MODEL hccm_func (LIST list, 
+MODEL hccm_func (int *list, 
 		 double ***pZ, DATAINFO *pdinfo);
 
 int whites_test (MODEL *pmod, 
 		 double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test);
 
-MODEL ar_func (LIST list, int pos, 
+MODEL ar_func (int *list, int pos, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
-MODEL arch (int order, LIST list, 
+MODEL arch (int order, int *list, 
 	    double ***pZ, DATAINFO *pdinfo, 
 	    GRETLTEST *test, gretlopt opt, PRN *prn);
 

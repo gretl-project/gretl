@@ -54,20 +54,26 @@ static int trydatafile (char *line, int *ignore)
     char datfile[MAXLEN];
 
     *datfile = '\0';
+
     for (i=0; i<n; i++) {
 	if ((n - i) > 4 && strncmp(line+i, "DATA", 4) == 0) {
 	    sscanf(line + i, "%s", datfile);
 	    m = strlen(datfile);
-	    if (datfile[m-1] == ',') datfile[m-1] = '\0';
+	    if (datfile[m-1] == ',') {
+		datfile[m-1] = '\0';
+	    }
 	    lower(datfile);
 	    i += 4;
+	} else if (line[i] == '*' && line[i+1] == ')') {
+	    *ignore = 0;
 	}
-	else if (line[i] == '*' && line[i+1] == ')') *ignore = 0;
     }
+
     if (*datfile) {
 	sprintf(line, "open %s.gdt", datfile);
 	return 1;
     } 
+
     return 0;
 }
 
@@ -78,7 +84,9 @@ static int filter_comments (char *line, int *ignore)
     int i, j = 0, n = strlen(line);
     char tmpstr[MAXLEN], datfile[MAXLEN];
 
-    if (n >= MAXLEN) return 0;
+    if (n >= MAXLEN) {
+	return 0;
+    }
     
     for (i=0; i<n; i++) {
 	if (line[i] == '(' && line [i+1] == '*') {
@@ -99,6 +107,7 @@ static int filter_comments (char *line, int *ignore)
 	    j++;
 	}
     }
+
     tmpstr[j] = '\0';
     strcpy(line, tmpstr);
 
@@ -112,10 +121,14 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 {
     int k;
 
-    if ((k = haschar(';', str)) < 0) return 1;
+    if ((k = haschar(';', str)) < 0) {
+	return 1;
+    }
 
     cmd->param = realloc(cmd->param, k+1);
-    if (cmd->param == NULL) return E_ALLOC;
+    if (cmd->param == NULL) {
+	return E_ALLOC;
+    }
 
     *cmd->param = 0;
     strncat(cmd->param, str, k);
@@ -138,11 +151,12 @@ static int restrict_bnum (const char *s)
 
 static int subsetted_command (const char *cmd)
 {    
-    if (strcmp(cmd, "deriv") == 0) return NLS;
+    if (strcmp(cmd, "deriv") == 0)    return NLS;
     if (strcmp(cmd, "identity") == 0) return SYSTEM;
-    if (strcmp(cmd, "endog") == 0) return SYSTEM;
-    if (strcmp(cmd, "instr") == 0) return SYSTEM;
-    if (restrict_bnum(cmd)) return RESTRICT;
+    if (strcmp(cmd, "endog") == 0)    return SYSTEM;
+    if (strcmp(cmd, "instr") == 0)    return SYSTEM;
+    if (restrict_bnum(cmd))           return RESTRICT;
+
     return 0;
 }
 
@@ -273,11 +287,15 @@ static void get_savename (char *s, CMD *cmd)
 
 	quote = (*s == '"');
 	len = strcspn(s, "<");
-	if (len < 2) return;
+	if (len < 2) {
+	    return;
+	}
 	n = len - 1 - quote;
 	if (n > MAXSAVENAME - 1) n = MAXSAVENAME - 1;
 	strncat(cmd->savename, s + quote, n);
-	if (cmd->savename[n-1] == '"') cmd->savename[n-1] = 0;
+	if (cmd->savename[n-1] == '"') {
+	    cmd->savename[n-1] = 0;
+	}
 	shift_left(s, len + 3);
     }
 }
@@ -314,9 +332,8 @@ static int parse_lagvar (const char *s, LAGVAR *plagv,
 	if (plagv->varnum < pdinfo->v) {
 	    ret = 0;
 	} 
-    }
-
-    else if (sscanf(s, "%8[^(](-%d)", plagv->varname, &plagv->firstlag) == 2) {
+    } else if (sscanf(s, "%8[^(](-%d)", plagv->varname, 
+		      &plagv->firstlag) == 2) {
 	plagv->varnum = varindex(pdinfo, plagv->varname);
 	if (plagv->varnum < pdinfo->v) {
 	    plagv->lastlag = plagv->firstlag;
@@ -1121,11 +1138,16 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	pputs(prn, _("\nValid gretl commands are:\n"));
 	for (i=1; i<NC; i++) {
 	    pprintf(prn, "%-9s", gretl_command_word(i));
-	    if (i%8 == 0) pputs(prn, "\n");
-	    else pputs(prn, " ");
+	    if (i % 8 == 0) {
+		pputc(prn, '\n');
+	    } else {
+		pputc(prn, ' ');
+	    }
 	}
+
 	pputs(prn, _("\n\nFor help on a specific command, type: help cmdname"));
 	pputs(prn, _(" (e.g. help smpl)\n"));
+
 	return 0;
     }
 
@@ -1134,12 +1156,10 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 
     ok = 0;
 
-    if (gretl_command_number(cmd) > 0) ok = 1;
-
-    if (!ok && aliased(cmdcopy)) {
-	if (gretl_command_number(cmdcopy) > 0) {
-	    ok = 1;
-	}
+    if (gretl_command_number(cmd) > 0) {
+	ok = 1;
+    } else if (aliased(cmdcopy) && gretl_command_number(cmdcopy) > 0) {
+	ok = 1;
     }
 
     if (!ok) {
@@ -1155,11 +1175,13 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     ok = 0;
     while (fgets(line, MAXLEN, fq) != NULL) {
 	nl_strip(line);
-	if (strcmp(cmdcopy, line) == 0) {
+	if (!strcmp(cmdcopy, line)) {
 	    ok = 1;
 	    pputs(prn, "\n");
 	    while (fgets(line, MAXLEN, fq)) {
-		if (*line == '#') break;
+		if (*line == '#') {
+		    break;
+		}
 		nl_strip(line);
 		if (*line != '@') {
 		    pprintf(prn, "%s\n", line);
@@ -1174,13 +1196,14 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     }
 
     fclose(fq);
+
     return 0;
 }
 
 /* ........................................................... */
 
-static int parse_criteria (const char *line, const DATAINFO *pdinfo, 
-			   double ***pZ, PRN *prn)
+static int parse_criteria (const char *line, const double **Z,
+			   const DATAINFO *pdinfo, PRN *prn)
 {
     double ess;
     int i, T, k;
@@ -1191,30 +1214,42 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     }
 
     if (isalpha((unsigned char) *essstr) && 
-	(i = varindex(pdinfo, essstr)) < pdinfo->v) 
-	    ess = get_xvalue(i, (const double **) *pZ, pdinfo);
-    else if (isdigit(*essstr)) ess = atof(essstr);
-    else return 1;
+	(i = varindex(pdinfo, essstr)) < pdinfo->v) {
+	ess = get_xvalue(i, Z, pdinfo);
+    } else if (isdigit(*essstr)) {
+	ess = atof(essstr);
+    } else {
+	return 1;
+    }
+
     if (ess < 0) {
 	pputs(prn, _("ess: negative value is out of bounds.\n"));
 	return 1;
     }
 
     if (isalpha((unsigned char) *Tstr) &&
-	(i = varindex(pdinfo, Tstr)) < pdinfo->v) 
-	    T = (int) get_xvalue(i, (const double **) *pZ, pdinfo);
-    else if (isdigit(*Tstr)) T = atoi(Tstr);
-    else return 1;
+	(i = varindex(pdinfo, Tstr)) < pdinfo->v) { 
+	T = (int) get_xvalue(i, Z, pdinfo);
+    } else if (isdigit(*Tstr)) {
+	T = atoi(Tstr);
+    } else {
+	return 1;
+    }
+
     if (T < 0) {
 	pputs(prn, _("T: negative value is out of bounds.\n"));
 	return 1;
     }
 
     if (isalpha((unsigned char) *kstr) &&
-	(i = varindex(pdinfo, kstr)) < pdinfo->v) 
-	    k = (int) get_xvalue(i, (const double **) *pZ, pdinfo);
-    else if (isdigit(*kstr)) k = atoi(kstr);
-    else return 1;
+	(i = varindex(pdinfo, kstr)) < pdinfo->v) {
+	k = (int) get_xvalue(i, Z, pdinfo);
+    } else if (isdigit(*kstr)) {
+	k = atoi(kstr);
+    } else {
+	return 1;
+    }
+
     if (k < 0) {
 	pputs(prn, _("k: negative value is out of bounds.\n"));
 	return 1;
@@ -1263,12 +1298,15 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 	t2 = pdinfo->t2;
     }
 
-    if (check_varname(varname)) return -1;
+    if (check_varname(varname)) {
+	return -1;
+    }
 
     vi = varindex(pdinfo, varname);
 
-    if (vi >= pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) 
+    if (vi >= pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) { 
 	return -1 * E_ALLOC;
+    }
 
     strcpy(pdinfo->varname[vi], varname);
     strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
@@ -1305,11 +1343,9 @@ static int make_full_list (const DATAINFO *pdinfo, CMD *command)
 	if (pdinfo->vector[i] == 0) {
 	    continue;
 	}
-	if (strchr(pdinfo->varname[i], '{')) {
-	    continue;
-	}
 	command->list[n++] = i;
     }
+
     command->list[0] = n - 1;
 
     return 0;
@@ -1384,46 +1420,54 @@ int shell (const char *arg)
     char shellnam[40];
     const char *theshell, *namep; 
 
-    old1 = signal (SIGINT, SIG_IGN);
-    old2 = signal (SIGQUIT, SIG_IGN);
+    old1 = signal(SIGINT, SIG_IGN);
+    old2 = signal(SIGQUIT, SIG_IGN);
 
     if ((pid = fork()) == 0) {
-	for (pid = 3; pid < 20; pid++)
-	    (void) close(pid);
-	(void) signal(SIGINT, SIG_DFL);
-	(void) signal(SIGQUIT, SIG_DFL);
+	for (pid = 3; pid < 20; pid++) {
+	    close(pid);
+	}
+
+	signal(SIGINT, SIG_DFL);
+	signal(SIGQUIT, SIG_DFL);
+
 	theshell = getenv("SHELL");
-	if (theshell == NULL)
+	if (theshell == NULL) {
 #ifdef HAVE_PATHS_H
 	    theshell =_PATH_BSHELL;
 #else
 	    theshell = "/bin/sh"; 
 #endif
+	}
 	namep = strrchr(theshell, '/');
-	if (namep == NULL)
+	if (namep == NULL) {
 	    namep = theshell;
-	(void) strcpy(shellnam,"-");
-	(void) strcat(shellnam, ++namep);
-	if (strcmp(namep, "sh") != 0)
+	}
+	strcpy(shellnam, "-");
+	strcat(shellnam, ++namep);
+	if (strcmp(namep, "sh") != 0) {
 	    shellnam[0] = '+';
+	}
 	if (arg) {
 	    execl(theshell, shellnam, "-c", arg, NULL);
-	}
-	else {
+	} else {
 	    execl(theshell, shellnam, NULL);
 	}
 	perror(theshell);
 	return 1;
     }
 
-    if (pid > 0) while (wait(NULL) != pid);
+    if (pid > 0) {
+	while (wait(NULL) != pid);
+    }
 
-    (void) signal(SIGINT, old1);
-    (void) signal(SIGQUIT, old2);
+    signal(SIGINT, old1);
+    signal(SIGQUIT, old2);
 
     if (pid == -1) {
 	perror(_("Try again later"));
     }
+
     return 0;
 }
 
@@ -1822,8 +1866,6 @@ static void get_optional_filename (const char *line, CMD *cmd)
     }    
 }
 
-/* .......................................................... */
-
 static void showlabels (const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
@@ -1843,7 +1885,9 @@ static void do_print_string (char *str, PRN *prn)
 
     if (*str == '"') str++;
     len = strlen(str);
-    if (str[len-1] == '"') str[len-1] = 0;
+    if (str[len-1] == '"') {
+	str[len-1] = 0;
+    }
 
     pprintf(prn, "%s\n", str);
 }
@@ -1941,14 +1985,13 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
     return err;
 }
 
-/* ........................................................ */
+/* common code for command-line and GUI client programs, where the
+   command doesn't require special handling on the client side 
+*/
 
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *datainfo,
 		     PRN *prn)
-     /* common code for command-line and GUI client programs, where
-	the command doesn't require special handling on the client
-	side */
 {
     int err = 0, order = 0;
     CORRMAT *corrmat;
@@ -1978,12 +2021,13 @@ int simple_commands (CMD *cmd, const char *line,
 
     case CORR:
 	if (cmd->list[0] > 3) {
-	    err = esl_corrmx(cmd->list, pZ, datainfo, prn);
+	    err = gretl_corrmx(cmd->list, (const double **) *pZ, datainfo, 
+			       prn);
 	    if (err) 
 		pputs(prn, _("Error in generating correlation matrix\n"));
 	    break;
 	}
-	corrmat = corrlist(cmd->list, pZ, datainfo);
+	corrmat = corrlist(cmd->list, (const double **) *pZ, datainfo);
 	if (corrmat == NULL) 
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	else printcorr(corrmat, datainfo, prn);
@@ -1991,7 +2035,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case PCA:
-	corrmat = corrlist(cmd->list, pZ, datainfo);
+	corrmat = corrlist(cmd->list, (const double **) *pZ, datainfo);
 	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
@@ -2004,7 +2048,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case CRITERIA:
-	err = parse_criteria(line, datainfo, pZ, prn);
+	err = parse_criteria(line, (const double **) *pZ, datainfo, prn);
 	if (err) 
 	    pputs(prn, _("Error in computing model selection criteria.\n"));
 	break;
@@ -2058,11 +2102,13 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case GRAPH:
-	ascii_graph(cmd->list, *pZ, datainfo, cmd->opt, prn);
+	ascii_graph(cmd->list, (const double **) *pZ, datainfo, 
+		    cmd->opt, prn);
 	break;
 
     case PLOT:
-	ascii_plot(cmd->list, *pZ, datainfo, cmd->opt, prn);
+	ascii_plot(cmd->list, (const double **) *pZ, datainfo, 
+		   cmd->opt, prn);
 	break;
 
     case RMPLOT:
@@ -2097,7 +2143,8 @@ int simple_commands (CMD *cmd, const char *line,
 	if (strlen(cmd->param)) {
 	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, pZ, datainfo, cmd->opt, prn);
+	    printdata(cmd->list, (const double **) *pZ, datainfo, 
+		      cmd->opt, prn);
 	}
 	break;
 
@@ -2107,8 +2154,14 @@ int simple_commands (CMD *cmd, const char *line,
 	else varlist(datainfo, prn);
 	break;
 
+    case SIM:
+	err = simulate(line, *pZ, datainfo);
+	if (err) errmsg(err, prn);
+	else print_gretl_msg(prn);
+	break;
+
     case SUMMARY:
-	summ = summary(cmd->list, pZ, datainfo, prn);
+	summ = summary(cmd->list, (const double **) *pZ, datainfo, prn);
 	if (summ == NULL) 
 	    pputs(prn, _("generation of summary stats failed\n"));
 	else {
@@ -2118,19 +2171,23 @@ int simple_commands (CMD *cmd, const char *line,
 	break; 
 
     case MEANTEST:
-	err = means_test(cmd->list, *pZ, datainfo, cmd->opt, prn);
+	err = means_test(cmd->list, (const double **) *pZ, datainfo, 
+			 cmd->opt, prn);
 	break;	
 
     case VARTEST:
-	err = vars_test(cmd->list, *pZ, datainfo, prn);
+	err = vars_test(cmd->list, (const double **) *pZ, datainfo, 
+			prn);
 	break;
 
     case RUNS:
-	err = runs_test(cmd->list[1], *pZ, datainfo, prn);
+	err = runs_test(cmd->list[1], (const double **) *pZ, datainfo, 
+			prn);
 	break;
 
     case SPEARMAN:
-	err = spearman(cmd->list, *pZ, datainfo, cmd->opt, prn);
+	err = spearman(cmd->list, (const double **) *pZ, datainfo, 
+		       cmd->opt, prn);
 	break;
 
     case OUTFILE:
@@ -2148,7 +2205,7 @@ int simple_commands (CMD *cmd, const char *line,
 	    pprintf(prn, _("store: no filename given\n"));
 	    break;
 	}
-	if (write_data(cmd->param, cmd->list, *pZ,
+	if (write_data(cmd->param, cmd->list, (const double **) *pZ,
 		       datainfo, cmd->opt, NULL)) {
 	    pprintf(prn, _("write of data file failed\n"));
 	    err = 1;

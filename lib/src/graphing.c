@@ -199,27 +199,6 @@ const char *get_timevar_name (DATAINFO *pdinfo)
 
 /* ........................................................ */
 
-int z_to_xy (int v1, int v2, double *px, double *py, 
-	     const DATAINFO *pdinfo, double **Z)
-{
-    int m = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    double x1, x2;
-
-    for (t=t1; t<=t2; t++)  {
-	x1 = Z[v1][t];
-	x2 = Z[v2][t];
-	if (na(x1) || na(x2)) {
-	    continue;
-	}
-	px[m] = x1;
-	py[m++] = x2;
-    }
-
-    return m;
-}
-
-/* ........................................................ */
-
 static int factorized_vars (double ***pZ, 
 			    int t1, int t2,
 			    double **y1, double **y2,
@@ -659,7 +638,7 @@ get_gnuplot_output_file (FILE **fpp, unsigned char flags,
  * command fails, or 1 if there are missing data values.
  */
 
-int gnuplot (LIST list, const int *lines, const char *literal,
+int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, unsigned char flags)
 {
@@ -1040,7 +1019,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int multi_scatters (const LIST list, int pos, double ***pZ, 
+int multi_scatters (const int *list, int pos, double ***pZ, 
 		    const DATAINFO *pdinfo, int *plot_count, 
 		    unsigned char flags)
 {
@@ -1174,7 +1153,7 @@ static int get_3d_output_file (FILE **fpp)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int gnuplot_3d (LIST list, const char *literal,
+int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo,  
 		int *plot_count, unsigned char flags)
 {
@@ -1968,7 +1947,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname)
 
 /* ........................................................... */
 
-int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn)
+int rmplot (const int *list, double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     int err;
     void *handle;

@@ -795,7 +795,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 #define SMAX 7            /* stipulated max. significant digits */
 #define TEST_PLACES 12    /* # of decimal places to use in test string */
 
-static int get_signif (double *x, int n)
+static int get_signif (const double *x, int n)
      /* return either (a) the number of significant digits in
 	a data series (+), or (b) the number of decimal places to
 	use when printing the series (-) */
@@ -998,35 +998,32 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo, 
+int printdata (int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt oflag, PRN *prn)
 {
-    int l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
-    register int t;
-    int gui, isconst; 
+    int j, v, v1, v2, j5, nvj5, lineno, ncol;
+    int allconst, scalars = 0, freelist = 0;
     int *pmax = NULL; 
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    double xx;
-    int *tmplist = NULL, freelist = 0;
+    int t, nsamp;
     char line[96];
+    int err = 0;
 
     int pause = gretl_get_text_pause();
 
-    if (prn->buf != NULL) gui = 1;
-    else gui = 0;
-
     lineno = 1;
     if (list == NULL) {
-	if (make_list(&tmplist, pdinfo)) return 1;
+	int *tmplist;
+
+	if (make_list(&tmplist, pdinfo)) {
+	    return E_ALLOC;
+	}
 	list = tmplist;
 	freelist = 1;
     }
-    l0 = list[0];
 
-    if (l0 == 0) {
+    if (list[0] == 0) {
 	pputs(prn, "No data\n");
-	if (freelist) free(list);
-	return 0;
+	goto endprint;
     }
 
     /* screen out any scalars and print them first */
@@ -1034,95 +1031,114 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	if (!pdinfo->vector[list[j]]) {
 	    if (oflag & OPT_T) {
 		pprintf(prn, "\n%8s = %.10g", pdinfo->varname[list[j]], 
-			(*pZ)[list[j]][0]);
+			Z[list[j]][0]);
 	    } else {
 		pprintf(prn, "\n%8s = %10g", pdinfo->varname[list[j]], 
-			(*pZ)[list[j]][0]);
+			Z[list[j]][0]);
 	    }
+	    scalars = 1;
 	    list_exclude(j, list);
 	    j--;
 	} 
     }
-    if (list[0] < l0) {
+
+    if (scalars) {
 	pputc(prn, '\n');
-	l0 = list[0];
     }
 
     /* special case: all vars have constant value over sample */
-    isconst = 1;
+    allconst = 1;
     for (j=1; j<=list[0]; j++) {
-	for (t=t1+1; t<=t2; t++) {
-	    if (floatneq((*pZ)[list[j]][t], (*pZ)[list[j]][t1])) {
-		isconst = 0;
+	double xx = Z[list[j]][pdinfo->t1];
+
+	for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) {
+	    if (floatneq(Z[list[j]][t], xx)) {
+		allconst = 0;
 		break;
 	    }
 	}
-	if (!isconst) break;
+	if (!allconst) break;
     }
-    if (isconst) {
+
+    if (allconst) {
 	for (j=1; j<=list[0]; j++) {
 	    if (oflag & OPT_T) {
 		pprintf(prn, "%8s = %.10g\n", pdinfo->varname[list[j]], 
-			(*pZ)[list[j]][t1]);
+			Z[list[j]][pdinfo->t1]);
 	    } else {
 		pprintf(prn, "%8s = %10g\n", pdinfo->varname[list[j]], 
-			(*pZ)[list[j]][t1]);
+			Z[list[j]][pdinfo->t1]);
 	    }
 	}
-	if (freelist) free(list);
-	return 0;
+	goto endprint;
     }
 
     if (!(oflag & OPT_O)) { /* not by observations, but by variable */
-	if (list[0] > 0) pputc(prn, '\n');
+	if (list[0] > 0) {
+	    pputc(prn, '\n');
+	}
 	for (j=1; j<=list[0]; j++) {
 	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[list[j]]);
 	    print_smpl (pdinfo, 0, prn);
 	    pputc(prn, '\n');
-	    printz((*pZ)[list[j]], pdinfo, prn, oflag);
+	    printz(Z[list[j]], pdinfo, prn, oflag);
 	    pputc(prn, '\n');
 	}
-	return 0;
+	goto endprint;
     }
 
-    /* experimental */
-    pmax = malloc(l0 * sizeof *pmax);
-    if (pmax == NULL) return 1;
-    for (j=1; j<=l0; j++) {
+    pmax = malloc(list[0] * sizeof *pmax);
+    if (pmax == NULL) {
+	err = E_ALLOC;
+	goto endprint;
+    }
+
+    nsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    for (j=1; j<=list[0]; j++) {
 	/* this runs fairly quickly, even for large dataset */
-	pmax[j-1] = get_signif(&(*pZ)[list[j]][t1], t2-t1+1);
+	pmax[j-1] = get_signif(Z[list[j]] + pdinfo->t1, nsamp);
     }
 
     /* print data by observations */
     ncol = 5;
-    for (j=0; j<=l0/ncol; j++) {
+    for (j=0; j<=list[0]/ncol; j++) {
 	j5 = j * ncol;
-	nvj5 = l0 - j5;
+	nvj5 = list[0] - j5;
 	v1 = j5 +1;
 	if (nvj5) {
 	    /* starting a new block of variables */
 	    v2 = (ncol > nvj5)? nvj5 : ncol;
 	    v2 += j5;
 	    varheading(v1, v2, pdinfo, list, prn);
-	    if (pause && j > 0 && takenotes(1)) return 0;
+
+	    if (pause && j > 0 && takenotes(1)) {
+		goto endprint;
+	    }
+
 	    lineno = 1;
-	    for (t=t1; t<=t2; t++) {
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		char obs_string[OBSLEN];
 
 		get_obs_string(obs_string, t, pdinfo);
 		sprintf(line, "%8s ", obs_string);
 		for (v=v1; v<=v2; v++) {
-		    xx = (*pZ)[list[v]][t];
+		    double xx = Z[list[v]][t];
+
 		    if (na(xx)) {
 			strcat(line, "             ");
 		    } else { 
 			bufprintnum(line, xx, pmax[v-1], 13);
 		    }
 		}
-		if (pprintf(prn, "%s\n", line) < 0)
-		    return 1;
+		strcat(line, "\n");
+		if (pputs(prn, line) < 0) {
+		    err = E_ALLOC;
+		    goto endprint;
+		}
 		if (pause && (lineno % PAGELINES == 0)) {
-		    if (takenotes(1)) return 0;
+		    if (takenotes(1)) {
+			goto endprint;
+		    }
 		    lineno = 1;
 		}
 		lineno++;
@@ -1133,10 +1149,14 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     pputc(prn, '\n');
     lineno++;
 
-    if (freelist) free(list);
+ endprint:
+
+    if (freelist) {
+	free(list);
+    }
     free(pmax);
 
-    return 0;
+    return err;
 }
 
 /* ........................................................... */

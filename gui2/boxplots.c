@@ -1059,7 +1059,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     }
 
     for (i=0, j=0; i<plotgrp->nplots; i++, j++) {
-	n = ztox(list[i+1], x, *pZ, pdinfo);
+	n = ztox(list[i+1], x, (const double **) *pZ, pdinfo);
 	if (n < 2) {
 	    sprintf(errtext, _("Dropping %s: insufficient observations"),
 		    pdinfo->varname[list[i+1]]);
@@ -1110,7 +1110,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 
     if (plotgrp->show_outliers) {
 	for (i=0; i<plotgrp->nplots; i++) {
-	    n = ztox(list[i+1], x, *pZ, pdinfo);
+	    n = ztox(list[i+1], x, (const double **) *pZ, pdinfo);
 	    qsort(x, n, sizeof *x, compare_doubles);
 	    add_outliers(x, n, &plotgrp->plots[i]);
 	}

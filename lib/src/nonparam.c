@@ -242,7 +242,7 @@ static int spearman_rho (const double *x, const double *y, int n,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int spearman (const LIST list, double **Z, const DATAINFO *pdinfo, 
+int spearman (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn)
 {
     double *rx = NULL, *ry = NULL;
@@ -392,7 +392,7 @@ double lockes_test (const double *x, const DATAINFO *pdinfo)
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int runs_test (int varno, double **Z, const DATAINFO *pdinfo, 
+int runs_test (int varno, const double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn)
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;

@@ -160,32 +160,30 @@ enum gretl_opt_flags {
     OPT_Z = 1 << 18
 };
 
-typedef int *LIST; 
 typedef unsigned long gretlopt;
 
-typedef struct _VARINFO VARINFO;
-typedef struct _DATAINFO DATAINFO;
-typedef struct _PATHS PATHS;
-typedef struct _GRETLTEST GRETLTEST;
-typedef struct _GRETLSUMMARY GRETLSUMMARY;
-typedef struct _CORRMAT CORRMAT;
-typedef struct _SAMPLE SAMPLE;
-typedef struct _ARINFO ARINFO;
-typedef struct _MODEL MODEL;
-typedef struct _GRAPHT GRAPHT;
-typedef struct _PRN PRN;
-typedef struct _FITRESID FITRESID;
-typedef struct _CONFINT CONFINT;
-typedef struct _VCV VCV;
-typedef struct _DATASET DATASET;
-typedef struct _GRETL_VAR GRETL_VAR;
+typedef struct VARINFO_ VARINFO;
+typedef struct DATAINFO_ DATAINFO;
+typedef struct PATHS_ PATHS;
+typedef struct GRETLTEST_ GRETLTEST;
+typedef struct CORRMAT_ CORRMAT;
+typedef struct SAMPLE_ SAMPLE;
+typedef struct ARINFO_ ARINFO;
+typedef struct MODEL_ MODEL;
+typedef struct GRAPHT_ GRAPHT;
+typedef struct PRN_ PRN;
+typedef struct FITRESID_ FITRESID;
+typedef struct CONFINT_ CONFINT;
+typedef struct VCV_ VCV;
+typedef struct DATASET_ DATASET;
+typedef struct GRETL_VAR_ GRETL_VAR;
 
-typedef struct _mp_results mp_results;
-typedef struct _model_data_item model_data_item;
+typedef struct mp_results_ mp_results;
+typedef struct model_data_item_ model_data_item;
 
 
 /* information on individual variable */
-struct _VARINFO {
+struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
     char compact_method;
@@ -193,7 +191,7 @@ struct _VARINFO {
 };
 
 /* information on data set */
-struct _DATAINFO { 
+struct DATAINFO_ { 
     int v;              /* number of variables */
     int n;              /* number of observations */
     int pd;             /* periodicity or frequency of data */
@@ -217,12 +215,12 @@ struct _DATAINFO {
 };
 
 /* wrapper for the two main elements of a gretl data set */
-struct _DATASET {
+struct DATASET_ {
     DATAINFO *dinfo;
     double **Z;
 };
 
-struct _PATHS {
+struct PATHS_ {
     char currdir[MAXLEN];
     char userdir[MAXLEN];
     char gretldir[MAXLEN];
@@ -242,7 +240,7 @@ struct _PATHS {
     char pngfont[32];
 };
 
-struct _GRETLTEST {
+struct GRETLTEST_ {
     char type[72];
     char h_0[64];
     char param[VNAMELEN];
@@ -252,37 +250,25 @@ struct _GRETLTEST {
     double pvalue;
 };
 
-struct _GRETLSUMMARY {
-    int n;
-    int *list;
-    double *xskew; 
-    double *xkurt;
-    double *xmedian;
-    double *coeff;
-    double *sderr;
-    double *xpx;
-    double *xpy;
-};
-
-struct _CORRMAT {
+struct CORRMAT_ {
     int n, t1, t2;
     int *list;
     double *xpx;
 };
 
-struct _SAMPLE {
+struct SAMPLE_ {
     int t1;
     int t2;
 };
 
-struct _ARINFO {
+struct ARINFO_ {
     int *arlist;                /* list of autoreg lags */
     double *rho;                /* array of autoreg. coeffs. */
     double *sderr;              /* and their standard errors */
 };
 
 /* struct to hold model results */
-struct _MODEL {
+struct MODEL_ {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
@@ -334,14 +320,14 @@ struct _MODEL {
     model_data_item **data_items; /* pointer to additional data */
 };
 
-struct _GRAPHT {
+struct GRAPHT_ {
     int ID;
     int sort;
     char name[32];
     char fname[MAXLEN];
 }; 
 
-struct _PRN {
+struct PRN_ {
     FILE *fp;
     FILE *fpaux;    
     char *buf;
@@ -349,7 +335,7 @@ struct _PRN {
     int format;
 };
 
-struct _mp_results {
+struct mp_results_ {
     int ncoeff;
     int t1, t2, ifc;
     int dfn, dfd;
@@ -363,7 +349,7 @@ struct _mp_results {
     double fstt;
 };
 
-struct _FITRESID {
+struct FITRESID_ {
     double *actual;
     double *fitted;
     double *sderr;
@@ -377,7 +363,7 @@ struct _FITRESID {
     char depvar[VNAMELEN];
 };
 
-struct _CONFINT {
+struct CONFINT_ {
     int *list;
     double *coeff;
     double *maxerr;
@@ -385,7 +371,7 @@ struct _CONFINT {
     int ifc;
 };
 
-struct _VCV {
+struct VCV_ {
     int ci;
     int *list;
     double *vec;

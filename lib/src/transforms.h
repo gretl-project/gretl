@@ -28,15 +28,15 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo);
 
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo);
 
-int list_diffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo);
+int list_diffgenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo);
+int list_ldiffgenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_laggenr (const LIST list, double ***pZ, DATAINFO *pdinfo);
+int list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_loggenr (const LIST list, double ***pZ, DATAINFO *pdinfo);
+int list_loggenr (const int *list, double ***pZ, DATAINFO *pdinfo);
 
-int list_xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo, 
+int list_xpxgenr (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
 
 #endif /* TRANSFORMS_H */

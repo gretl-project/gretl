@@ -32,7 +32,7 @@
 
 int model_missval_count (const MODEL *pmod);
 
-void set_miss (LIST list, const char *param, double **Z,
+void set_miss (const int *list, const char *param, double **Z,
 	       DATAINFO *pdinfo, PRN *prn);
 
 #endif /* MISSING_H */

@@ -89,7 +89,7 @@ audioprint_summary (GRETLSUMMARY *summ, const DATAINFO *pdinfo,
 		    PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
-    int lo = summ->list[0], v, lv;
+    int lo = summ->list[0], i, vi;
 
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
@@ -103,16 +103,16 @@ audioprint_summary (GRETLSUMMARY *summ, const DATAINFO *pdinfo,
 		date1, date2);
     }
 
-    for (v=0; v<lo; v++) {
-	lv = summ->list[v+1];
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
 	if (lo > 1) {
-	    pprintf(prn, "%s, ", pdinfo->varname[lv]);
+	    pprintf(prn, "%s, ", pdinfo->varname[vi]);
 	}
-	pprintf(prn, "mean, %.4g,\n", summ->coeff[v]);
-	pprintf(prn, "median, %.4g,\n", summ->xmedian[v]);
-	pprintf(prn, "minimum, %.4g,\n", summ->xpx[v]);
-	pprintf(prn, "maximum, %.4g,\n", summ->xpy[v]);
-	pprintf(prn, "standard deviation, %.4g.\n", summ->sderr[v]);
+	pprintf(prn, "mean, %.4g,\n", summ->mean[i]);
+	pprintf(prn, "median, %.4g,\n", summ->median[i]);
+	pprintf(prn, "minimum, %.4g,\n", summ->low[i]);
+	pprintf(prn, "maximum, %.4g,\n", summ->high[i]);
+	pprintf(prn, "standard deviation, %.4g.\n", summ->sd[i]);
     }
 }
 

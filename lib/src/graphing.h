@@ -119,14 +119,6 @@ enum plot_type_codes {
     
 /* functions follow */
  
-int plot (const LIST list, 
-	  double **Z, const DATAINFO *pdinfo, 
-	  gretlopt oflag, PRN *prn);
-
-int graph (const LIST list, 
-	   double **Z, const DATAINFO *pdinfo, 
-	   gretlopt oflag, PRN *prn);
-
 const char *get_gretl_png_term_line (int plottype);
 
 const char *get_gretl_emf_term_line (int plottype, int color);
@@ -137,15 +129,15 @@ int gnuplot_init (int plottype, FILE **fpp);
 
 int gnuplot_make_graph (void);
 
-int gnuplot (LIST list, const int *lines, const char *literal,
+int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, unsigned char flags);
 
-int multi_scatters (const LIST list, int pos, 
+int multi_scatters (const int *list, int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 
 		    int *plot_count, unsigned char flags);
 
-int gnuplot_3d (LIST list, const char *literal,
+int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, 
 		int *plot_count, unsigned char flags);
 
@@ -161,7 +153,7 @@ void free_plotspec (GPT_SPEC *spec);
 
 int get_termstr (const GPT_SPEC *spec, char *termstr);
 
-int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn);
+int rmplot (const int *list, double **Z, DATAINFO *pdinfo, PRN *prn);
 
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 

@@ -246,9 +246,9 @@ double doornik_chisq (double skew, double kurt, int n)
 
 /**
  * freqdist:
+ * @varno: ID number of variable to process.
  * @pZ: pointer to data matrix
  * @pdinfo: information on the data set.
- * @varno: ID number of variable to process.
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
  * @opt: if & OPT_O, compare with gamma distribution, not normal
@@ -259,8 +259,8 @@ double doornik_chisq (double skew, double kurt, int n)
  *
  */
 
-FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
-		    int varno, int params, gretlopt opt)
+FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo, 
+		    int params, gretlopt opt)
 {
     FREQDIST *freq;
     double *x = NULL;
@@ -289,7 +289,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    n = ztox(varno, x, *pZ, pdinfo);
+    n = ztox(varno, x, Z, pdinfo);
     if (n < 8) {
 	gretl_errno = E_DATA;
 	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
@@ -382,7 +382,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
     if (freq->n > 7) {
 	if (opt & OPT_O) {
-	    freq->test = lockes_test((*pZ)[varno], pdinfo);
+	    freq->test = lockes_test(Z[varno], pdinfo);
 	    freq->dist = GAMMA;
 	} else {
 	    freq->test = doornik_chisq(skew, kurt, freq->n); 
@@ -1076,13 +1076,13 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
-static void print_summary_single (GRETLSUMMARY *summ,
+static void print_summary_single (const GRETLSUMMARY *summ,
 				  const DATAINFO *pdinfo,
 				  PRN *prn)
 {
     char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
     double vals[8];
-    double xbar, sd, cv = NADBL;
+    double cv;
     const char *labels[] = {
 	N_("Mean"),
 	N_("Median"),
@@ -1103,17 +1103,19 @@ static void print_summary_single (GRETLSUMMARY *summ,
 	    pdinfo->varname[summ->list[1]], summ->n);
     center_line(tmp, prn, 1);
 
-    xbar = summ->coeff[0];
-    sd = summ->sderr[0];
-    if (xbar != 0.0 && !na(sd)) cv = fabs(sd/xbar);
+    if (summ->mean[0] != 0.0 && !na(summ->sd[0])) {
+	cv = fabs(summ->sd[0] / summ->mean[0]);
+    } else {
+	cv = NADBL;
+    }
 
-    vals[0] = xbar;
-    vals[1] = summ->xmedian[0];
-    vals[2] = summ->xpx[0];
-    vals[3] = summ->xpy[0];
-    vals[4] = sd;
+    vals[0] = summ->mean[0];
+    vals[1] = summ->median[0];
+    vals[2] = summ->low[0];
+    vals[3] = summ->high[0];
+    vals[4] = summ->sd[0];
     vals[5] = cv;
-    vals[6] = summ->xskew[0];
+    vals[6] = summ->skew[0];
     vals[7] = summ->xkurt[0];
 
     for (i=0; i<8; i++) {
@@ -1146,17 +1148,15 @@ static void print_summary_single (GRETLSUMMARY *summ,
  *
  */
 
-void print_summary (GRETLSUMMARY *summ,
+void print_summary (const GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
 		    PRN *prn)
 {
-    double xbar, std, xcv;
-    int lo = summ->list[0], v, lv;
     int pause = gretl_get_text_pause();
-    int lineno;
+    int i, vi, lineno;
     char tmp[128];
 
-    if (lo == 1) {
+    if (summ->list[0] == 1) {
 	print_summary_single(summ, pdinfo, prn);
 	return;
     }
@@ -1170,47 +1170,53 @@ void print_summary (GRETLSUMMARY *summ,
             "             MAX\n\n"));
 
     lineno = 1;
-    for (v=0; v<lo; v++) {
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
 	if (pause && (lineno % PAGELINES == 0)) {
 	    takenotes(0);
 	    lineno = 1;
 	}
-	lv = summ->list[v+1];
-	pprintf(prn, "%-10s", pdinfo->varname[lv]);
-	xbar = summ->coeff[v];
-	printf15(xbar, prn);
-	printf15(summ->xmedian[v], prn);
-	printf15(summ->xpx[v], prn);
-	printf15(summ->xpy[v], prn);
+	pprintf(prn, "%-10s", pdinfo->varname[vi]);
+	printf15(summ->mean[i], prn);
+	printf15(summ->median[i], prn);
+	printf15(summ->low[i], prn);
+	printf15(summ->high[i], prn);
 	pputc(prn, '\n');
 	lineno++;
     }
     pputc(prn, '\n');
 
-    if (pause) takenotes(0);
+    if (pause) {
+	takenotes(0);
+    }
 
     pprintf(prn, "\n%s  ", _("Variable"));
     pputs(prn, _("      S.D.            C.V.           "
 	 " SKEW          EXCSKURT\n\n"));
 
     lineno = 1;
-    for (v=0; v<lo; v++) {
+    for (i=0; i<summ->list[0]; i++) {
+	double cv;
+
+	vi = summ->list[i + 1];
+
 	if (pause && (lineno % PAGELINES == 0)) {
 	    takenotes(0);
 	    lineno = 1;
 	}
-	lv = summ->list[v+1];
-	pprintf(prn, "%-10s", pdinfo->varname[lv]);
 
-	xbar = summ->coeff[v];
-	std = summ->sderr[v];
-	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
-	else xcv = NADBL;
+	pprintf(prn, "%-10s", pdinfo->varname[vi]);
 
-	printf15(std, prn);
-	printf15(xcv, prn);
-	printf15(summ->xskew[v], prn);
-	printf15(summ->xkurt[v], prn);
+	if (summ->mean[i] != 0.0 && !na(summ->sd[i])) {
+	    cv = fabs(summ->sd[i] / summ->mean[i]);
+	} else {
+	    cv = NADBL;
+	}
+
+	printf15(summ->sd[i], prn);
+	printf15(cv, prn);
+	printf15(summ->skew[i], prn);
+	printf15(summ->xkurt[i], prn);
 	pputc(prn, '\n');
 	lineno++;
     }
@@ -1227,42 +1233,51 @@ void print_summary (GRETLSUMMARY *summ,
 
 void free_summary (GRETLSUMMARY *summ)
 {
-    free(summ->xskew);
-    free(summ->xkurt);
-    free(summ->xmedian);
-    free(summ->coeff);
-    free(summ->sderr);
-    free(summ->xpx);
-    free(summ->xpy); 
     free(summ->list);
+
+    free(summ->mean);
+    free(summ->median);
+    free(summ->sd);
+    free(summ->skew);
+    free(summ->xkurt);
+    free(summ->low);
+    free(summ->high); 
+
     free(summ);
 }
 
-static GRETLSUMMARY *summary_new (int nv)
+static GRETLSUMMARY *summary_new (const int *list)
 {
-    GRETLSUMMARY *summ = malloc(sizeof *summ);
+    GRETLSUMMARY *summ;
+    int nv = list[0];
 
+    summ = malloc(sizeof *summ);
     if (summ == NULL) {
 	return NULL;
     }
 
-    summ->list = NULL;
-    summ->xskew = summ->xkurt = summ->xmedian = NULL;
-    summ->coeff = summ->sderr = NULL;
-    summ->xpx = summ->xpy = NULL;
+    summ->list = copylist(list);
+    if (summ->list == NULL) {
+	free(summ);
+	return NULL;
+    }
 
-    summ->xskew = malloc(nv * sizeof *summ->xskew);
+    summ->mean = summ->median = summ->sd = NULL;
+    summ->skew = summ->xkurt = NULL;
+    summ->low = summ->high = NULL;
+
+    summ->mean = malloc(nv * sizeof *summ->mean);
+    summ->median = malloc(nv * sizeof *summ->median);
+    summ->sd = malloc(nv * sizeof *summ->sd);
+    summ->skew = malloc(nv * sizeof *summ->skew);
     summ->xkurt = malloc(nv * sizeof *summ->xkurt);
-    summ->xmedian = malloc(nv * sizeof *summ->xmedian);
-    summ->coeff = malloc(nv * sizeof *summ->coeff);
-    summ->sderr = malloc(nv * sizeof *summ->sderr);
-    summ->xpx = malloc(nv * sizeof *summ->xpx);
-    summ->xpy = malloc(nv * sizeof *summ->xpy);
+    summ->low = malloc(nv * sizeof *summ->low);
+    summ->high = malloc(nv * sizeof *summ->high);
 
-    if (summ->xskew == NULL || summ->xkurt == NULL ||
-	summ->xmedian == NULL || summ->coeff == NULL ||
-	summ->sderr == NULL || summ->xpx == NULL ||
-	summ->xpy == NULL) {
+    if (summ->mean == NULL || summ->median == NULL ||
+	summ->sd == NULL || summ->skew == NULL ||
+	summ->xkurt == NULL || summ->low == NULL ||
+	summ->high == NULL) {
 	free_summary(summ);
 	return NULL;
     }
@@ -1283,16 +1298,15 @@ static GRETLSUMMARY *summary_new (int nv)
  *
  */
 
-GRETLSUMMARY *summary (LIST list, 
-		       double ***pZ, const DATAINFO *pdinfo,
+GRETLSUMMARY *summary (const int *list, 
+		       const double **Z, const DATAINFO *pdinfo,
 		       PRN *prn) 
 {
-    int lo = list[0];
-    int v, *tmp = NULL;
     GRETLSUMMARY *summ;
-    double xbar, std, low, high, skew, kurt, *x = NULL;
+    int i, vi;
+    double *x = NULL;
 
-    summ = summary_new(lo);
+    summ = summary_new(list);
     if (summ == NULL) {
 	return NULL;
     }
@@ -1303,47 +1317,44 @@ GRETLSUMMARY *summary (LIST list,
 	return NULL;
     }
 
-    for (v=0; v<lo; v++)  {
-	summ->n = ztox(list[v+1], x, *pZ, pdinfo);
-	if (summ->n < 2) { /* zero or one observations */
+    for (i=0; i<summ->list[0]; i++)  {
+	vi = summ->list[i + 1];
+
+	summ->n = ztox(vi, x, Z, pdinfo);
+
+	if (summ->n < 2) { 
+	    /* zero or one observations */
 	    if (summ->n == 0) {
 		pprintf(prn, _("Dropping %s: sample range contains no valid "
-			"observations\n"), pdinfo->varname[list[v+1]]);
+			"observations\n"), pdinfo->varname[vi]);
 	    } else {
 		pprintf(prn, _("Dropping %s: sample range has only one "
-			"obs, namely %g\n"), pdinfo->varname[list[v+1]], x[0]);
+			"obs, namely %g\n"), pdinfo->varname[vi], x[0]);
 	    }
-	    list_exclude(v + 1, list);
-	    if (list[0] == 0) {
+	    list_exclude(i + 1, summ->list);
+	    if (summ->list[0] == 0) {
 		free_summary(summ);
 		free(x);
 		return NULL;
 	    } else {
-		lo--;
-		v--;
+		i--;
 		continue;
 	    }
 	}
 
-	gretl_minmax(0, summ->n-1, x, &low, &high);	
-	moments(0, summ->n-1, x, &xbar, &std, &skew, &kurt, 1);
+	gretl_minmax(0, summ->n - 1, x, 
+		     &summ->low[i], 
+		     &summ->high[i]);
+	
+	moments(0, summ->n - 1, x, 
+		&summ->mean[i], 
+		&summ->sd[i], 
+		&summ->skew[i], 
+		&summ->xkurt[i], 1);
 
-	summ->xpx[v] = low;
-	summ->xpy[v] = high;
-	summ->coeff[v] = xbar;
-	summ->sderr[v] = std;
-	summ->xskew[v] = skew;
-	summ->xkurt[v] = kurt;
+	summ->median[i] = gretl_median(x, summ->n);
+    } 
 
-	if (summ->n > 1) {
-	    summ->xmedian[v] = gretl_median(x, summ->n);
-	} else {
-	    summ->xmedian[v] = x[1];
-	}
-    } /* end loop over variables in list */
-
-    tmp = copylist(list);
-    summ->list = tmp;
     free(x);
 
     return summ;
@@ -1379,7 +1390,7 @@ void free_corrmat (CORRMAT *corrmat)
  * 
  */
 
-CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
+CORRMAT *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
 {
     CORRMAT *corrmat;
     int *p = NULL;
@@ -1387,7 +1398,9 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
     int t1 = pdinfo->t1, t2 = pdinfo->t2; 
 
     corrmat = malloc(sizeof *corrmat);
-    if (corrmat == NULL) return NULL;
+    if (corrmat == NULL) {
+	return NULL;
+    }
 
     p = copylist(list);
     if (p == NULL) {
@@ -1397,7 +1410,7 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
 
     /* drop any constants from list */
     for (i=1; i<=p[0]; i++) {
-	if (gretl_isconst(t1, t2, (*pZ)[p[i]])) {
+	if (gretl_isconst(t1, t2, Z[p[i]])) {
 	    list_exclude(i, p);
 	    i--;
 	}
@@ -1407,22 +1420,27 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
     lo = corrmat->list[0];  
     corrmat->n = t2 - t1 + 1;
     mm = (lo * (lo + 1))/2;
+
     corrmat->xpx = malloc(mm * sizeof(double));
     if (corrmat->xpx == NULL) {
 	free_corrmat(corrmat);
 	return NULL;
     }
-    for (i=1; i<=lo; i++) {   
+
+    for (i=1; i<=lo; i++) {  
+	int vi = corrmat->list[i];
+
 	for (j=i; j<=lo; j++)  {
+	    int vj = corrmat->list[j];
+
 	    nij = ijton(i-1, j-1, lo);
 	    if (i == j) {
 		corrmat->xpx[nij] = 1.0;
 		continue;
 	    }
-	    corrmat->xpx[nij] = 
-		gretl_corr(corrmat->n, 
-			   &(*pZ)[corrmat->list[i]][t1],
-			   &(*pZ)[corrmat->list[j]][t1]);
+	    corrmat->xpx[nij] = gretl_corr(corrmat->n, 
+					   Z[vi] + t1,
+					   Z[vj] + t1);
 	}
     }
 
@@ -1455,7 +1473,7 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 }
 
 /**
- * esl_corrmx:
+ * gretl_corrmx:
  * @list: gives the ID numbers of the variables to process.
  * @pZ: pointer to the data matrix.
  * @pdinfo: data information struct.
@@ -1467,15 +1485,19 @@ void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo, 
-		PRN *prn)
+int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
+		  PRN *prn)
 {
     CORRMAT *corr;
 
-    corr = corrlist(list, pZ, pdinfo);
-    if (corr == NULL) return 1;
+    corr = corrlist(list, Z, pdinfo);
+    if (corr == NULL) {
+	return 1;
+    }
+
     matrix_print_corr(corr, pdinfo, prn);
     free_corrmat(corr);
+
     return 0;
 }
 
@@ -1493,7 +1515,7 @@ int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int means_test (LIST list, double **Z, const DATAINFO *pdinfo, 
+int means_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		gretlopt vardiff, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
@@ -1570,7 +1592,7 @@ int means_test (LIST list, double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int vars_test (LIST list, double **Z, const DATAINFO *pdinfo, 
+int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn)
 {
     double m, skew, kurt, s1, s2, var1, var2, F;

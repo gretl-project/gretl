@@ -4471,7 +4471,7 @@
   </command>
 
   <command name="sim" section="Dataset"
-    label="Simulation">
+    label="Simulation" context="cli">
 
     <usage>
       <arguments>

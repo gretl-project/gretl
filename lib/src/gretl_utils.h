@@ -177,8 +177,7 @@ double *copyvec (const double *src, int n);
 
 int ijton (int i, int j, int nrows);
 
-int ztox (int i, double *px, 
-	  double **Z, const DATAINFO *pdinfo);
+int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
 
 int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T);
 

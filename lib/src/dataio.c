@@ -44,7 +44,7 @@ static int writehdr (const char *hdrfile, const int *list,
 		     const DATAINFO *pdinfo, int opt);
 static double obs_float (const DATAINFO *pdinfo, int end);
 static int write_xmldata (const char *fname, const int *list, 
-			  double **Z, const DATAINFO *pdinfo, 
+			  const double **Z, const DATAINFO *pdinfo, 
 			  int opt, PATHS *ppaths);
 static int xmlfile (const char *fname);
 static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
@@ -1237,7 +1237,7 @@ static int writehdr (const char *hdrfile, const int *list,
  *
  */
 
-int get_precision (double *x, int n, int placemax)
+int get_precision (const double *x, int n, int placemax)
 {
     int t, p, pmax = 0;
     char *s, numstr[48];
@@ -1307,7 +1307,7 @@ static int data_option (gretlopt flag)
  */
 
 int write_data (const char *fname, const int *list, 
-		double **Z, const DATAINFO *pdinfo, 
+		const double **Z, const DATAINFO *pdinfo, 
 		gretlopt flag, PATHS *ppaths)
 {
     int i = 0, t, l0, opt, n = pdinfo->n;
@@ -3873,7 +3873,7 @@ static char *simple_fname (char *dest, const char *src)
  */
 
 static int write_xmldata (const char *fname, const int *list, 
-			  double **Z, const DATAINFO *pdinfo, 
+			  const double **Z, const DATAINFO *pdinfo, 
 			  int opt, PATHS *ppaths)
 {
     int err, i, t;

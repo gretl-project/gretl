@@ -23,6 +23,7 @@
 #include "libgretl.h" 
 #include "gretl_private.h"
 #include "libset.h"
+#include "compat.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -1073,7 +1074,7 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-static int loop_print_init (LOOP_PRINT *lprn, const LIST list, int id)
+static int loop_print_init (LOOP_PRINT *lprn, const int *list, int id)
 {
     int i;
 
@@ -1120,7 +1121,7 @@ static int loop_print_init (LOOP_PRINT *lprn, const LIST list, int id)
  */
 
 static int loop_store_init (LOOPSET *loop, const char *fname, 
-			    const LIST list, DATAINFO *pdinfo)
+			    const int *list, DATAINFO *pdinfo)
 {
     int i, tot = list[0] * loop->ntimes;
 
@@ -1254,7 +1255,7 @@ static int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
     return 0;
 }
 
-static int add_loop_print (LOOPSET *loop, const LIST list, int cmdnum)
+static int add_loop_print (LOOPSET *loop, const int *list, int cmdnum)
 {
     LOOP_PRINT *prns;
     int np = loop->nprn + 1;
@@ -1295,7 +1296,7 @@ static int add_loop_print (LOOPSET *loop, const LIST list, int cmdnum)
 
 
 static int update_loop_print (LOOPSET *loop, int cmdnum, 
-			      const LIST list, double ***pZ, 
+			      const int *list, double ***pZ, 
 			      const DATAINFO *pdinfo)
 {
     int j, t, i = get_prnnum_by_id(loop, cmdnum);
@@ -2046,6 +2047,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    switch (cmd.ci) {
 
 	    case SUMMARY:
+	    case SIM:
 		err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
 		break;
 
@@ -2064,10 +2066,6 @@ int loop_exec (LOOPSET *loop, char *line,
 		    print_gretl_msg(prn);
 		}
 		break;
-
-	    case SIM:
-		err = simulate(linecpy, pZ, pdinfo);
-		break;	
 
 	    case OLS:
 	    case WLS:
@@ -2144,7 +2142,8 @@ int loop_exec (LOOPSET *loop, char *line,
 			err = 1;
 		    }
 		} else {
-		    err = printdata(cmd.list, pZ, pdinfo, cmd.opt, prn);
+		    err = printdata(cmd.list, (const double **) *pZ, pdinfo, 
+				    cmd.opt, prn);
 		}
 		break;
 

@@ -97,8 +97,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 		       PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[128];
-    double xbar, std, xcv;
-    int lo = summ->list[0], v, lv;
+    int i, vi;
 
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
@@ -108,7 +107,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 
     pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
     
-    if (lo == 1) {
+    if (summ->list[0] == 1) {
 	sprintf(tmp, I_("for the variable %s (%d valid observations)"), 
 		pdinfo->varname[summ->list[1]], summ->n);
 	pprintf(prn, "%s\\par\n\n", tmp);
@@ -128,20 +127,20 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	    " \\intbl \\row\n",
 	    I_("Mean"), I_("Median"), I_("Minimum"), I_("Maximum"));
 
-    for (v=0; v<lo; v++) {
-	lv = summ->list[v+1];
-	xbar = summ->coeff[v];
-	if (lo > 1) {
-	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
+	if (summ->list[0] > 1) {
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
 	}
-	printfrtf(xbar, prn, 0);
-	printfrtf(summ->xmedian[v], prn, 0);
-	printfrtf(summ->xpx[v], prn, 0);
-	printfrtf(summ->xpy[v], prn, 1);
+	printfrtf(summ->mean[i], prn, 0);
+	printfrtf(summ->median[i], prn, 0);
+	printfrtf(summ->low[i], prn, 0);
+	printfrtf(summ->high[i], prn, 1);
     }
 
-    if (lo > 1) pprintf(prn, "\\intbl \\qc %s\\cell",
-			I_("Variable"));
+    if (summ->list[0] > 1) pprintf(prn, "\\intbl \\qc %s\\cell",
+				   I_("Variable"));
+
     pprintf(prn, 
 	    " \\qc %s\\cell"
 	    " \\qc %s\\cell"
@@ -150,22 +149,24 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	    " \\intbl \\row\n",
 	    I_("Std. Dev."), I_("C.V."), I_("Skewness"), I_("Ex. kurtosis"));
 
-    for (v=0; v<lo; v++) {
-	lv = summ->list[v+1];
-	if (lo > 1) {
-	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[lv]);
+    for (i=0; i<summ->list[0]; i++) {
+	double cv;
+
+	vi = summ->list[i + 1];
+	if (summ->list[0] > 1) {
+	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
 	}
-	xbar = summ->coeff[v];
-	std = summ->sderr[v];
-	if (xbar != 0.0) {
-	    xcv = (xbar > 0)? std/xbar: -std/xbar;
+
+	if (summ->mean[i] != 0.0 && !na(summ->sd[i])) {
+	    cv = fabs(summ->sd[i] / summ->mean[i]);
 	} else {
-	    xcv = NADBL;
+	    cv = NADBL;
 	}
-	printfrtf(std, prn, 0);
-	printfrtf(xcv, prn, 0);
-	printfrtf(summ->xskew[v], prn, 0);
-	printfrtf(summ->xkurt[v], prn, 1);
+
+	printfrtf(summ->sd[i], prn, 0);
+	printfrtf(cv, prn, 0);
+	printfrtf(summ->skew[i], prn, 0);
+	printfrtf(summ->xkurt[i], prn, 1);
     }
 
     pputs(prn, "}}\n");
@@ -201,8 +202,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 		       PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
-    double xbar, std, xcv;
-    int lo = summ->list[0], v, lv;
+    int i, vi;
     char pt = get_local_decpoint();
 
     ntodate(date1, pdinfo->t1, pdinfo);
@@ -213,7 +213,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 
     pprintf(prn, "\\begin{center}\n%s\\\\\n", tmp);
     
-    if (lo == 1) {
+    if (summ->list[0] == 1) {
 	tex_escape(vname, pdinfo->varname[summ->list[1]]);
 	sprintf(tmp, I_("for the variable %s (%d valid observations)"), 
 		vname, summ->n);
@@ -235,22 +235,26 @@ void texprint_summary (GRETLSUMMARY *summ,
 	    "   & \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
 	    I_("Mean"), I_("Median"), I_("Minimum"), I_("Maximum"));
 
-    for (v=0; v<lo; v++) {
-	lv = summ->list[v+1];
-	xbar = summ->coeff[v];
-	if (lo > 1) {
-	    tex_escape(vname, pdinfo->varname[lv]);
+    for (i=0; i<summ->list[0]; i++) {
+	vi = summ->list[i + 1];
+	if (summ->list[0] > 1) {
+	    tex_escape(vname, pdinfo->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
-	printftex(xbar, prn, 0);
-	printftex(summ->xmedian[v], prn, 0);
-	printftex(summ->xpx[v], prn, 0);
-	printftex(summ->xpy[v], prn, 1);
-	if (v == lo - 1) pputs(prn, "[10pt]\n\n");
-	else pputs(prn, "\n");
+	printftex(summ->mean[i], prn, 0);
+	printftex(summ->median[i], prn, 0);
+	printftex(summ->low[i], prn, 0);
+	printftex(summ->high[i], prn, 1);
+	if (i == summ->list[0] - 1) {
+	    pputs(prn, "[10pt]\n\n");
+	} else {
+	    pputc(prn, '\n');
+	}
     }
 
-    if (lo > 1) pprintf(prn, "%s & ", I_("Variable"));
+    if (summ->list[0] > 1) {
+	pprintf(prn, "%s & ", I_("Variable"));
+    }
 
     pprintf(prn, " \\multicolumn{1}{c}{%s}%%\n"
 	    " & \\multicolumn{1}{c}{%s}%%\n"
@@ -258,21 +262,26 @@ void texprint_summary (GRETLSUMMARY *summ,
 	    "   & \\multicolumn{1}{c}{%s} \\\\[1ex]\n",
 	    I_("Std.\\ Dev."), I_("C.V."), I_("Skewness"), I_("Ex.\\ kurtosis"));
 
-    for (v=0; v<lo; v++) {
-	lv = summ->list[v+1];
-	if (lo > 1) {
-	    tex_escape(vname, pdinfo->varname[lv]);
+    for (i=0; i<summ->list[0]; i++) {
+	double cv;
+
+	vi = summ->list[i + 1];
+	if (summ->list[0] > 1) {
+	    tex_escape(vname, pdinfo->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
-	xbar = summ->coeff[v];
-	std = summ->sderr[v];
-	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
-	else xcv = NADBL;
-	printftex(std, prn, 0);
-	printftex(xcv, prn, 0);
-	printftex(summ->xskew[v], prn, 0);
-	printftex(summ->xkurt[v], prn, 1);
-	pputs(prn, "\n");
+
+	if (summ->mean[i] != 0.0 && !na(summ->sd[i])) {
+	    cv = fabs(summ->sd[i] / summ->mean[i]);
+	} else {
+	    cv = NADBL;
+	}
+
+	printftex(summ->sd[i], prn, 0);
+	printftex(cv, prn, 0);
+	printftex(summ->skew[i], prn, 0);
+	printftex(summ->xkurt[i], prn, 1);
+	pputc(prn, '\n');
     }
 
     pputs(prn, "\\end{tabular}\n\\end{center}\n");

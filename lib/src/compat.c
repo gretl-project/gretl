@@ -85,6 +85,25 @@ static void printgx (const double xx, PRN *prn)
     bufspace(13 - lw, prn);
 } 
 
+static int z_to_xy (int v1, int v2, double *px, double *py, 
+		    const double **Z, const DATAINFO *pdinfo)
+{
+    double x1, x2;
+    int t, m = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++)  {
+	x1 = Z[v1][t];
+	x2 = Z[v2][t];
+	if (na(x1) || na(x2)) {
+	    continue;
+	}
+	px[m] = x1;
+	py[m++] = x2;
+    }
+
+    return m;
+}
+
 void graphyzx (const int *list, const double *zy1, const double *zy2, 
 	       const double *zx, int n, const char *yname, 
 	       const char *xname, const DATAINFO *pdinfo, 
@@ -245,7 +264,7 @@ void graphyzx (const int *list, const double *zy1, const double *zy2,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo, 
+int ascii_plot (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		gretlopt oflag, PRN *prn)
 /*
 	plot var1 ;		plots var1 values
@@ -270,7 +289,9 @@ int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     x = malloc(pdinfo->n * sizeof *x);
     y = malloc(pdinfo->n * sizeof *y);
 
-    if (x == NULL || y == NULL) return E_ALLOC;
+    if (x == NULL || y == NULL) {
+	return E_ALLOC;
+    }
 
     l0 = list[0];
     pputc(prn, '\n');
@@ -286,6 +307,7 @@ int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	gretl_minmax(t1, t2, x, &xmin, &xmax);
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;
+
 	/* print headings */
 	pprintf(prn, _("%25cNOTE: o stands for %s\n\n%8c"), ' ', s1, ' ');
 	sprintf(word, "x-min = %g", xmin);
@@ -295,6 +317,7 @@ int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	ls = 78-ls-strlen(word);
 	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word); 
+
 	if (cntrline) {
 	    iy = -(xmin / xrange) * ncols;
 	    bufspace(iy+7, prn);
@@ -309,7 +332,9 @@ int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	lineno = 1;
 	for (t=t1; t<=t2; ++t) {
 	    xxx = Z[vy][t];
-	    if (na(xxx)) continue;
+	    if (na(xxx)) {
+		continue;
+	    }
 	    if (pause && (lineno % PAGELINES == 0)) {
 		takenotes(0);
 		lineno = 1;
@@ -317,12 +342,16 @@ int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	    prntdate(t, n, pdinfo, prn);
 	    ix = (floatneq(xrange, 0.0))? ((xxx-xmin)/xrange) * ncols : nc2;
 	    initpx(ncols, px);
-	    if (cntrline) px[iy+1] = '|';
+	    if (cntrline) {
+		px[iy+1] = '|';
+	    }
 	    px[ix+1] = 'o';
 	    for (i=0; i<=ncols+1; i++) {
 		pprintf(prn, "%c", px[i]); 
 	    }
-	    if (ix == ncols) pputc(prn, '\n');
+	    if (ix == ncols) {
+		pputc(prn, '\n');
+	    }
 	    lineno++;
 	}
 
@@ -339,7 +368,7 @@ int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     /* two variables are to be plotted */
     vz = list[2];
     strcpy(s2, pdinfo->varname[vz]);
-    n = z_to_xy(vy, vz, x, y, pdinfo, Z);
+    n = z_to_xy(vy, vz, x, y, Z, pdinfo);
     /* find maximum and minimum using all values from both arrays */
     gretl_minmax(t1, t2, x, &xmin, &xmax);
     xrange = xmax - xmin;
@@ -468,7 +497,7 @@ int ascii_plot (const LIST list, double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int ascii_graph (const LIST list, double **Z, const DATAINFO *pdinfo, 
+int ascii_graph (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt oflag, PRN *prn)
 /*
   graph var1 var2 ;	graphs var1 (y-axis) against var2 (x-axis)
@@ -503,7 +532,7 @@ int ascii_graph (const LIST list, double **Z, const DATAINFO *pdinfo,
     m = 0;
     if (l0 == 2) {
 	vx = list[2];
-	m = z_to_xy(vx, vy, x, y, pdinfo, Z);
+	m = z_to_xy(vx, vy, x, y, Z, pdinfo);
 	graphyzx(list, y, uhat, x, m, pdinfo->varname[vy], 
 		 pdinfo->varname[vx], pdinfo, oflag, prn);
     }
@@ -550,7 +579,7 @@ int ascii_graph (const LIST list, double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
+int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, maxlag, p, t, t1, nv;
     int v = pdinfo->v, n = pdinfo->n;
@@ -700,19 +729,22 @@ static char *make_sim_label (char *label, const char *vname,
     return label;
 }
 
-int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
+int simulate (const char *cmd, double **Z, DATAINFO *pdinfo)
 {
     int f, i, t, t1, t2, tstart, m, nv = 0, pv;
-    char varname[VNAMELEN], parm[16], tmpstr[MAXLEN];
+    char varname[VNAMELEN], parm[16], cmdcpy[MAXLEN];
     char *isconst = NULL, **toks = NULL;
     double xx, yy, *a = NULL;
     int vtok = 0, err = 0;
 
     *gretl_errmsg = '\0';
 
-    close_minus(cmd);
+    *cmdcpy = 0;
+    strncat(cmdcpy, cmd, MAXLEN - 1);
 
-    f = count_fields(cmd);
+    close_minus(cmdcpy);
+
+    f = count_fields(cmdcpy);
     m = f - 2; /* default: allow for command word varname */
 
     a = malloc(m * sizeof *a);
@@ -724,12 +756,11 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 	goto sim_bailout;
     }
 
-    for (i=0; i<m; i++) isconst[i] = 1;
+    for (i=0; i<m; i++) {
+	isconst[i] = 1;
+    }
 
-    *tmpstr = 0;
-    strncat(tmpstr, cmd, MAXLEN - 1);
-    
-    strtok(tmpstr, " "); /* discard the "sim" command word */
+    strtok(cmdcpy, " "); /* discard the "sim" command word */
     for (i=0; i<f-1; i++) {
 	toks[i] = strtok(NULL, " ");
     }
@@ -798,24 +829,29 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 		goto sim_bailout;
 	    } else {
 		isconst[i] = !pdinfo->vector[pv];
-		a[i] = (isconst[i])? (*pZ)[pv][0] : (double) pv;
+		a[i] = (isconst[i])? Z[pv][0] : (double) pv;
 	    }
 	} else {
 	    a[i] = dot_atof(p);
 	}
 
-	if (neg) a[i] = -a[i];
+	if (neg) {
+	    a[i] = -a[i];
+	}
     }
 
     tstart = t1;
     if (tstart < m - 1) tstart = m - 1;
 
     for (t=tstart; t<=t2; t++) {
-	xx = 0.;
+	xx = 0.0;
 	for (i=0; i<m; i++) {
 	    if (isconst[i]) {
-		if (i == 0) xx += a[i];
-		else xx += a[i] * (*pZ)[nv][t-i];
+		if (i == 0) {
+		    xx += a[i];
+		} else {
+		    xx += a[i] * Z[nv][t-i];
+		}
 	    } else {
 		int neg = 0;
 
@@ -824,17 +860,22 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 		    neg = 1;
 		    pv = -pv;
 		}
-		yy = (*pZ)[pv][t];
+		yy = Z[pv][t];
 		if (na(yy)) {
 		    xx = NADBL;
 		    break;
 		}
-		if (neg) yy = -yy;
-		if (i == 0) xx += yy;
-		else xx += yy * (*pZ)[nv][t-i];
+		if (neg) {
+		    yy = -yy;
+		}
+		if (i == 0) {
+		    xx += yy;
+		} else {
+		    xx += yy * Z[nv][t-i];
+		}
 	    }
 	}
-	(*pZ)[nv][t] = xx;
+	Z[nv][t] = xx;
     }
 
  sim_bailout:
