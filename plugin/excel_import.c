@@ -48,7 +48,7 @@ static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
-#define EDEBUG
+#undef EDEBUG
 /* #define FULL_EDEBUG */
 
 #define EXCEL_IMPORTER
