@@ -150,27 +150,37 @@ int do_fcp (const int *list, const double **Z,
     pprintf(prn, "Number of iterations = %d\n", iters);
 
     if (info == 0) {
-	int k, nparam = ncoeff + p + q + 1;
+	int k = 1, nparam = ncoeff + p + q + 1;
 
 	pprintf(prn, "Convergence reached, with tolerance = %g\n", 
 	       amax[0]);
-	pputs(prn, "\nRegression coefficient estimates:\n");
-	for (i=1; i<=1+nx; i++) {
-	    pprintf(prn, "    A[%d]: %#14.6g (%#.6g)\n", i, amax[i],
-		   amax[i+ncoeff]);
+
+#if 1
+	for (i=1; i<=nparam; i++) {
+	    pprintf(prn, "param[%d]: %#14.6g (%#.6g)\n", amax[i], amax[i+nparam]);
 	}
-	k = i;
+
+#else
+	pputs(prn, "\nRegression coefficient estimates:\n");
+	for (i=0; i<=nx; i++) {
+	    pprintf(prn, "    A[%d]: %#14.6g (%#.6g)\n", i, amax[k],
+		   amax[k+nparam]);
+	    k++;
+	}
+
 	pputs(prn, "\nGARCH coefficient estimates:\n");
-	for (i=k; i<=nparam; i++) {
-	    if (i==k) {
+	for (i=0; i<=p+q; i++) {
+	    if (i==0) {
 		pputs(prn, "alpha[0]: ");
-	    } else if (i-k <= p) {
+	    } else if (i <= p) {
 		pprintf(prn, "alpha[%d]: ", i-k);
 	    } else {
 		pprintf(prn, " beta[%d]: ", i-k-p);
 	    }
 	    pprintf(prn, "%#14.6g (%#.6g)\n", amax[i], amax[i+nparam]);
 	}
+#endif
+
 	pputs(prn, "\n(Standard errors in parentheses)\n");
     }
 
