@@ -1565,11 +1565,9 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 
     if (dataset_is_time_series(datainfo)) {
 	fprintf(fp, "source(\"%s\")\n", Rdata);
-	fprintf(fp, "ls()\n");
     } else {
 	fprintf(fp, "gretldata <- read.table(\"%s\")\n", Rdata);
 	fprintf(fp, "attach(gretldata)\n");
-	fprintf(fp, "ls(2)\n");
     }
 
     fclose(fp);

@@ -1846,7 +1846,6 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 #else
 	fprintf(fp, "source(\"%s\")\n", Rdata);
 #endif
-	fprintf(fp, "ls()\n");
     } else {
 #ifdef G_OS_WIN32
 	fprintf(fp, "gretldata <- read.table(\"%s\")\n", 
@@ -1855,7 +1854,6 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	fprintf(fp, "gretldata <- read.table(\"%s\")\n", Rdata);
 #endif
 	fprintf(fp, "attach(gretldata)\n");
-	fprintf(fp, "ls(2)\n");
     }
 
     fclose(fp);
