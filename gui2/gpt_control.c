@@ -52,8 +52,6 @@ typedef struct {
     GtkWidget *max;
 } GPT_RANGE;
 
-#define MAX_PLOT_LABELS 2
-
 GtkWidget *linetitle[6];
 GtkWidget *stylecombo[6];
 GtkWidget *yaxiscombo[6];
@@ -422,8 +420,6 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		      sizeof spec->text_labels[0].just);
 	widget_to_str(labelpos[i], spec->text_labels[i].pos, 
 		      sizeof spec->text_labels[0].pos);
-	fprintf(stderr, "label %d: '%s' at %s %s\n", i, spec->text_labels[i].text,
-		spec->text_labels[i].pos, spec->text_labels[i].just);
     }    
 
 #ifdef GNUPLOT_PIPE
@@ -1495,8 +1491,9 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 {
     const char *p, *s;
     int n, x, y;
+    char coord[8];
 
-    /* e.g. set label 'foobar' at 1500,350 left */
+    /* e.g. set label 'foobar' at [ screen | graph ] 1500,350 left */
 
     if (i >= MAX_PLOT_LABELS) return 1;
 
@@ -1512,7 +1509,12 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
     /* get the label text */
     while (*s) {
 	if (*s == '\'') {
-	    strncat(spec->text_labels[i].text, p, s - p);
+	    int len = s - p;
+
+	    if (len > PLOT_LABEL_TEXT_LEN) {
+		len = PLOT_LABEL_TEXT_LEN;
+	    }
+	    strncat(spec->text_labels[i].text, p, len);
 	    break;
 	}
 	s++;
@@ -1525,14 +1527,30 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 	return 1;
     }
     p += 2;
+
+    /* coordinate system? */
+    *coord = 0;
+    s = strstr(p, "graph");
+    if (s != NULL) {
+	strcpy(coord, "graph ");
+	p = s + 5;
+    } else {
+	s = strstr(p, "screen");
+	if (s != NULL) {
+	    strcpy(coord, "screen ");
+	    p = s + 6;
+	}
+    }
+
+    /* actual coordinates */
     n = sscanf(p, "%d,%d", &x, &y);
     if (n != 2) {
 	strcpy(spec->text_labels[i].text, "");
 	return 1;
     }
-    sprintf(spec->text_labels[i].pos, "%d,%d", x, y);
+    sprintf(spec->text_labels[i].pos, "%s%d,%d", coord, x, y);
 
-    /* get the justification */
+    /* justification */
     if (strstr(p, "left")) {
 	strcpy(spec->text_labels[i].just, "left");
     } 

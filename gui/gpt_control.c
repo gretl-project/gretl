@@ -49,6 +49,9 @@ GtkWidget *linetitle[6];
 GtkWidget *stylecombo[6];
 GtkWidget *yaxiscombo[6];
 GtkWidget *linescale[6];
+GtkWidget *labeltext[MAX_PLOT_LABELS];
+GtkWidget *labeljust[MAX_PLOT_LABELS];
+GtkWidget *labelpos[MAX_PLOT_LABELS];
 
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
@@ -386,6 +389,17 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		      sizeof spec->lines[0].scale);
     }
 
+    for (i=0; i<MAX_PLOT_LABELS; i++) {
+	widget_to_str(labeltext[i], 
+		      spec->text_labels[i].text, 
+		      sizeof spec->text_labels[0].text);
+	widget_to_str(GTK_COMBO(labeljust[i])->entry, 
+		      spec->text_labels[i].just, 
+		      sizeof spec->text_labels[0].just);
+	widget_to_str(labelpos[i], spec->text_labels[i].pos, 
+		      sizeof spec->text_labels[0].pos);
+    }    
+
 #ifndef GNUPLOT_PNG
     if (spec->edit == 2 || spec->edit == 3) {  /* silent update */
 	spec->edit -= 2;
@@ -607,6 +621,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     tbl_num = tbl_col = 0;
 
     for (i=0; i<numlines; i++) {
+
 	/* identifier and key or legend text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -630,6 +645,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			    spec);
 	gtk_widget_show(linetitle[i]);
+
 	/* line type or style */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -645,6 +661,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(stylecombo[i])->entry), 
 			   spec->lines[i].style);  
 	gtk_widget_show(stylecombo[i]);	
+
 	/* scale factor for data */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -661,6 +678,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			   spec);
 	gtk_widget_show(linescale[i]);
+
 	/* use left or right y axis? */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -676,6 +694,102 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
 			    (spec->lines[i].yaxis == 1)? "left" : "right");  
 	gtk_widget_show (yaxiscombo[i]);	
+    }
+}
+
+/* ........................................................... */
+
+static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
+{
+    GtkWidget *tempwid, *box, *tbl;
+    int i, tbl_len, tbl_num, tbl_col;
+    char label_text[32];
+    GList *label_loc = NULL;
+
+    label_loc = g_list_append(label_loc, "left");
+    label_loc = g_list_append(label_loc, "center");
+    label_loc = g_list_append(label_loc, "right");
+
+    box = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER (box), 10);
+    gtk_widget_show(box);
+
+    tempwid = gtk_label_new(_("Labels"));
+
+    gtk_widget_show(tempwid);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
+
+    tbl_len = 1;
+    tbl = gtk_table_new(tbl_len, 3, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+    gtk_widget_show(tbl);
+   
+    tbl_num = tbl_col = 0;
+
+    for (i=0; i<MAX_PLOT_LABELS; i++) {
+
+	/* label text */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	sprintf(label_text, _("label %d: "), i + 1);
+	tempwid = gtk_label_new(label_text);
+	gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  tempwid, 0, 1, tbl_len-1, tbl_len);
+	gtk_widget_show(tempwid);
+
+	tempwid = gtk_label_new(_("text"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  tempwid, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(tempwid);
+
+	labeltext[i] = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  labeltext[i], 2, 3, tbl_len-1, tbl_len);
+	gtk_entry_set_text (GTK_ENTRY(labeltext[i]),
+			    spec->text_labels[i].text );
+
+	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "activate", 
+			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
+			    spec);
+	gtk_widget_show(labeltext[i]);
+
+	/* label justification */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	tempwid = gtk_label_new(_("justification"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  tempwid, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(tempwid);
+
+	labeljust[i] = gtk_combo_new();
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
+	gtk_combo_set_popdown_strings(GTK_COMBO(labeljust[i]), label_loc); 
+	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(labeljust[i])->entry), 
+			   spec->text_labels[i].just);  
+	gtk_widget_show(labeljust[i]);	
+
+	/* label placement */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	tempwid = gtk_label_new(_("position"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  tempwid, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show (tempwid);
+
+	labelpos[i] = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  labelpos[i], 2, 3, tbl_len-1, tbl_len);
+	gtk_entry_set_text(GTK_ENTRY(labelpos[i]), spec->text_labels[i].pos);
+	gtk_signal_connect(GTK_OBJECT(labelpos[i]), "activate", 
+			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
+			   spec);
+	gtk_widget_show(labelpos[i]);
     }
 }
 
@@ -855,6 +969,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_XY(notebook, spec, 1);
     if (spec->y2axis) gpt_tab_XY(notebook, spec, 2);
     gpt_tab_lines(notebook, spec); 
+    gpt_tab_labels(notebook, spec);
     gpt_tab_output(notebook, spec);
 
     tempwid = gtk_button_new_with_label (_("Apply"));
@@ -1249,6 +1364,12 @@ static GPT_SPEC *plotspec_new (void)
 	spec->literal[i] = NULL;
     }
 
+    for (i=0; i<MAX_PLOT_LABELS; i++) {
+	strcpy(spec->text_labels[i].text, "");
+	strcpy(spec->text_labels[i].just, "left");
+	strcpy(spec->text_labels[i].pos, "0,0");
+    }
+
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
     spec->fname[0] = 0;
@@ -1276,8 +1397,90 @@ static GPT_SPEC *plotspec_new (void)
 
 /* ........................................................... */
 
+static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
+{
+    const char *p, *s;
+    int n, x, y;
+    char coord[8];
+
+    /* e.g. set label 'foobar' at [ screen | graph ] 1500,350 left */
+
+    if (i >= MAX_PLOT_LABELS) return 1;
+
+    strcpy(spec->text_labels[i].text, "");
+    strcpy(spec->text_labels[i].pos, "");
+    strcpy(spec->text_labels[i].just, "");
+
+    p = strstr(line, "'");
+    if (p == NULL) return 1;
+    p++;
+    s = p;
+
+    /* get the label text */
+    while (*s) {
+	if (*s == '\'') {
+	    int len = s - p;
+
+	    if (len > PLOT_LABEL_TEXT_LEN) {
+		len = PLOT_LABEL_TEXT_LEN;
+	    }
+	    strncat(spec->text_labels[i].text, p, len);
+	    break;
+	}
+	s++;
+    }
+
+    /* get the position */
+    p = strstr(s, "at");
+    if (p == NULL) {
+	strcpy(spec->text_labels[i].text, "");
+	return 1;
+    }
+    p += 2;
+
+    /* coordinate system? */
+    *coord = 0;
+    s = strstr(p, "graph");
+    if (s != NULL) {
+	strcpy(coord, "graph ");
+	p = s + 5;
+    } else {
+	s = strstr(p, "screen");
+	if (s != NULL) {
+	    strcpy(coord, "screen ");
+	    p = s + 6;
+	}
+    }
+
+    /* actual coordinates */
+    n = sscanf(p, "%d,%d", &x, &y);
+    if (n != 2) {
+	strcpy(spec->text_labels[i].text, "");
+	return 1;
+    }
+    sprintf(spec->text_labels[i].pos, "%s%d,%d", coord, x, y);
+
+    /* justification */
+    if (strstr(p, "left")) {
+	strcpy(spec->text_labels[i].just, "left");
+    } 
+    else if (strstr(p, "right")) {
+	strcpy(spec->text_labels[i].just, "right");
+    } 
+    else if (strstr(p, "center")) {
+	strcpy(spec->text_labels[i].just, "center");
+    } 
+    else {
+	strcpy(spec->text_labels[i].just, "left");
+    }	
+
+    return 0;
+}
+
+/* ........................................................... */
+
 static int parse_set_line (GPT_SPEC *spec, const char *line,
-			   int *i)
+			   int *i, int *labelno)
 {
     char set_thing[12], setting[MAXLEN], range[32];
     size_t n, j;
@@ -1327,6 +1530,10 @@ static int parse_set_line (GPT_SPEC *spec, const char *line,
 	safecpy(spec->xtics, setting, 15);
     else if (strcmp(set_thing, "mxtics") == 0) 
 	safecpy(spec->mxtics, setting, 3);
+    else if (strcmp(set_thing, "label") == 0) {
+	parse_label_line(spec, line, *labelno);
+	*labelno += 1;
+    }
 
     return 0;
 }
@@ -1408,7 +1615,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	This is _not_ a general parser for gnuplot files; it is
 	designed specifically for files auto-generated by gretl. */
 {
-    int i, j, t, n, plot_n, done;
+    int i, j, t, n, plot_n, done, labelno;
     int got_labels = 0;
     char line[MAXLEN], *got = NULL, *tmp = NULL;
     double *tmpy = NULL;
@@ -1437,6 +1644,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 
     /* get the preamble and "set" lines */
     i = 0;
+    labelno = 0;
     while ((got = fgets(line, MAXLEN - 1, fp))) {
 	if (cant_edit(line)) goto plot_bailout;
 	if (strncmp(line, "# timeseries", 12) == 0) {
@@ -1480,7 +1688,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	if (strncmp(line, "# ", 2) == 0) continue;
 
 	if (strncmp(line, "set ", 4)) break;
-	if (parse_set_line(spec, line, &i)) goto plot_bailout;
+	if (parse_set_line(spec, line, &i, &labelno)) goto plot_bailout;
     }
 
     if (got == NULL) goto plot_bailout;
