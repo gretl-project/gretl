@@ -1,4 +1,4 @@
 #!/bin/sh
 
-recode utf8..windows-1252 < toc.hhc > toc.ansi && \
+recode -x: u8..cp1252 < toc.hhc > toc.ansi && \
   mv toc.ansi toc.hhc
