@@ -554,7 +554,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     char title[48];
     int err = 0;
     windata_t *vwin;
-    gpointer obj;
+    gpointer obj = NULL;
     gint hsize = 78, vsize = 380;
 
     clear(line, MAXLEN);
@@ -1347,7 +1347,7 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 static void do_chow_cusum (gpointer data, int code)
 {
     windata_t *mydata;
-    dialog_t *ddata;
+    dialog_t *ddata = NULL;
     MODEL *pmod;
     char *edttext;
     print_t prn;
@@ -1523,9 +1523,9 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
     char *edttext;
     print_t prn;
     char title[26], estimator[9], modelgenr[80];
-    int order, err, action = ddata->code;
+    int order, err = 0, action = ddata->code;
     double rho;
-    MODEL *pmod;
+    MODEL *pmod = NULL;
 
     strcpy(estimator, commands[action]);
 
@@ -2591,7 +2591,7 @@ static void auto_save_script (gpointer data, guint quiet, GtkWidget *w)
 static void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     print_t prn;
-    char *runfile, fname[MAXLEN];
+    char *runfile = NULL, fname[MAXLEN];
     extern void refresh_data (void);
 
     if (!user_fopen("output_tmp", fname, &prn)) {

@@ -1033,8 +1033,8 @@ int get_data (double **pZ, DATAINFO *pdinfo, PATHS *ppaths,
 	      const int data_file_open, char *msg, FILE *fp) 
 {
 
-    FILE *dat;
-    gzFile fgz;
+    FILE *dat = NULL;
+    gzFile fgz = NULL;
     int err, zipped = 0;
 
     /* get filenames organized */

@@ -156,7 +156,7 @@ static void vcv_slopes (hausman_t *haus, MODEL *pmod, int nunits,
 
 static int lu_decomp (double **a, int n, int *idx)
 {
-    int i, j, k, imax;
+    int i, j, k, imax = 0;
     double big, dum, sum, tmp;
     double *xx;
 

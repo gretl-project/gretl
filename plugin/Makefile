@@ -7,7 +7,7 @@ ifeq ($(CC),)
   CC = gcc
 endif
 ifeq ($(CFLAGS),)
-  CFLAGS = -g -Wall
+  CFLAGS = -g -O2 -Wall
 endif
 ifeq ($(MAKE),)
   MAKE = make
@@ -60,7 +60,8 @@ installdirs:
 	../tools/mkinstalldirs $(share)/plugins
 
 clean:
-	rm -f *.o $(PLUGINS) .libs core 
+	rm -f *.o $(PLUGINS) core 
+	rm -rf .libs
 
 
 

@@ -942,7 +942,7 @@ int view_file (char *filename, int editable, int del_file,
     GtkWidget *vscrollbar; 
     extern GdkColor red, blue;
     void *colptr = NULL, *nextcolor = NULL;
-    char tempstr[MAXSTR], *fle;
+    char tempstr[MAXSTR], *fle = NULL;
     FILE *fd;
     windata_t *vwin;
     int console = 0;
@@ -1634,7 +1634,7 @@ void options_dialog (gpointer data)
 
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
-    GtkWidget *tempwid, *box, *inttbl, *chartbl;
+    GtkWidget *box, *inttbl, *chartbl, *tempwid = NULL;
     int i, tbl_len, tbl_num, tbl_col;
    
     box = gtk_vbox_new (FALSE, 0);

@@ -289,7 +289,7 @@ void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 void graph_dialog (gpointer data, guint code, GtkWidget *widget) 
 {
     windata_t *wdata = NULL;
-    void (*gfunc)();
+    void (*gfunc)() = NULL;
     char title[32], request[68], tmp[24], numstr[3];
     int i;
 

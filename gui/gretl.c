@@ -498,7 +498,7 @@ WinMain (int hInstance, int hPrevInstance, char *lpszCmdLine, int nCmdShow)
 
 int main (int argc, char *argv[])
 {
-    int opt, err, gui_get_data = 0;
+    int opt, err = 0, gui_get_data = 0;
     char dbname[MAXLEN];
 #ifdef G_OS_WIN32
     char callname[MAXLEN];
@@ -1490,8 +1490,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 				  "show help", 
 				  "X-Y graph", 
 				  "open dataset"};
-    gchar **toolxpm;
-    void (*toolfunc)();
+    gchar **toolxpm = NULL;
+    void (*toolfunc)() = NULL;
 
     colormap = gdk_colormap_get_system();
     toolbar_box = gtk_handle_box_new();

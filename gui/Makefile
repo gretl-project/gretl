@@ -7,7 +7,7 @@ ifeq ($(CC),)
   CC = gcc
 endif
 ifeq ($(CFLAGS),)
-  CFLAGS = -g -Wall
+  CFLAGS = -g -O2 -Wall
 endif
 ifeq ($(MAKE),)
   MAKE = make
@@ -30,28 +30,17 @@ endif
 ifeq ($(have_gnome),)
   have_gnome = yes
 endif
-ifeq ($(have_gtkhtml),)
-  have_gtkhtml = no
-endif
-ifeq ($(have_gtkextra),no)
-  EXTRAL = -L./gtkextra
-  EXTRAI = -I./gtkextra
-endif
 ifeq ($(have_gnome),yes)
-  LIBS = `gnome-config --libs gnomeui` ../lib/libgretl.la $(EXTRAL) -lgtkextra 
-  GUI_CFLAGS = `gnome-config --cflags gnomeui`
+  LIBS = `gnome-config --libs gnomeui` `gtkextra-config --libs` ../lib/libgretl.la 
+  GUI_CFLAGS = `gnome-config --cflags gnomeui` `gtkextra-config --cflags`
   gnome_prefix = `gnome-config --prefix`
   desktopdir = $(gnome_prefix)/share/gnome/apps/Applications
   gpixmaps = $(gnome_prefix)/share/pixmaps
   ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
   query_install_gnome = install-gnome
 else
-  LIBS = `gtk-config --libs` ../lib/libgretl.la $(EXTRAL) -lgtkextra
-  GUI_CFLAGS = `gtk-config --cflags` 
-endif
-ifeq ($(have_gtkhtml),yes)
-  LIBS = `gnome-config --libs gnomeui gtkhtml` ../lib/libgretl.la $(EXTRAL) -lgtkextra 
-  GUI_CFLAGS = `gnome-config --cflags gnomeui gtkhtml`
+  LIBS = `gtk-config --libs` `gtkextra-config --libs` ../lib/libgretl.la
+  GUI_CFLAGS = `gtk-config --cflags` `gtkextra-config --cflags`
 endif
 
 # Directories
@@ -68,19 +57,19 @@ PROG  = gretl_x11
 SRCS = gretl.c lib.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c fileselect.c gpt_control.c session.c \
 	webget.c calculator.c htmlprint.c guiprint.c exitprompt.c \
-	../cli/common.c boxplots.c
+	../cli/common.c boxplots.c plotps.c
 HDRS = gretl.h lib.h gui_utils.h callbacks.h dialogs.h session.h \
 	gretltypes.h webget.h htmlprint.h guiprint.h
 OBJS = gui_utils.o lib.o gretl.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
 	webget.o calculator.o htmlprint.o guiprint.o exitprompt.o \
 	boxplots.o
-COMPILE = $(CC) -c -I$(srcdir) $(CFLAGS) $(GUI_CFLAGS) $(EXTRAI)
+COMPILE = $(CC) -c -I$(srcdir) $(CFLAGS) $(GUI_CFLAGS)
 
 .c.o:
 	$(COMPILE) $<
 
-$(PROG): $(OBJS) ../Makefile gtkextralib
+$(PROG): $(OBJS) ../Makefile 
 	../libtool --mode=link $(CC) -o $(PROG) $(OBJS) \
 	$(LIBS) $(INETLIB)
 
@@ -125,12 +114,17 @@ topclean:
 	rm -f *.o $(PROG) core
 	rm -rf .libs
 
-gtkextralib:
-	if test -d ./gtkextra ; then \
-	cd ./gtkextra && $(MAKE) ; fi
-
 # DO NOT DELETE
 
+boxplots.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
+boxplots.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
+boxplots.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
+boxplots.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
+boxplots.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
+boxplots.o: ../lib/src/interact.h ../lib/src/graphing.h
+boxplots.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+boxplots.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
+boxplots.o: gui_utils.h callbacks.h dialogs.h lib.h session.h plotps.c
 calculator.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 calculator.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 calculator.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -176,6 +170,15 @@ dialogs.o: ../lib/src/interact.h ../lib/src/graphing.h
 dialogs.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 dialogs.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
 dialogs.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
+exitprompt.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
+exitprompt.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
+exitprompt.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
+exitprompt.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
+exitprompt.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
+exitprompt.o: ../lib/src/interact.h ../lib/src/graphing.h
+exitprompt.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+exitprompt.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
+exitprompt.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
 fileselect.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 fileselect.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 fileselect.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -216,6 +219,16 @@ gui_utils.o: ../lib/src/interact.h ../lib/src/graphing.h
 gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
 gui_utils.o: gui_utils.h callbacks.h dialogs.h lib.h session.h htmlprint.h
+gui_utils.o: guiprint.h
+guiprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
+guiprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
+guiprint.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
+guiprint.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
+guiprint.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
+guiprint.o: ../lib/src/interact.h ../lib/src/graphing.h
+guiprint.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+guiprint.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
+guiprint.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
 htmlprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 htmlprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 htmlprint.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -234,15 +247,6 @@ lib.o: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
 lib.o: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
 lib.o: gretltypes.h gui_utils.h callbacks.h dialogs.h lib.h session.h
 lib.o: htmlprint.h ../cli/common.c
-guiprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
-rtfprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
-rtfprint.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
-rtfprint.o: ../lib/src/dataio.h ../lib/src/strutils.h ../lib/src/describe.h
-rtfprint.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
-rtfprint.o: ../lib/src/interact.h ../lib/src/graphing.h
-rtfprint.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-rtfprint.o: ../lib/src/discrete.h ../lib/src/subsample.h gretltypes.h
-rtfprint.o: gui_utils.h callbacks.h dialogs.h lib.h session.h
 session.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 session.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 session.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h

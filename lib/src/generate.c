@@ -218,7 +218,7 @@ static int paren_state (char c, int *state, char lr)
 static int parenthesize (char *str)
 {
     int i, k, oppos, n = strlen(str);
-    int level1, level2;  
+    int level1 = 0, level2;  
     int priority, start, lpins, inparens;
     int rpar, pbak;
     int opcount[LEVELS + 1];

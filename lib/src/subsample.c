@@ -208,7 +208,7 @@ int set_sample_dummy (const char *line,
 {
     double xx, *dum = NULL;
     char **S, dumv[9];
-    int missobs = 0, subnum, dumnum;
+    int missobs = 0, subnum = 0, dumnum = 0;
     int i, t, st, sn, n = oldinfo->n;
 
     *msg = '\0';
@@ -480,7 +480,7 @@ int count_missing_values (double **pZ, DATAINFO *pdinfo, print_t *prn)
 {
     int i, v, t, n = pdinfo->n;
     int missval = 0, missobs = 0, oldmiss = 0, tmiss;
-    int year, yearmiss = 0, totvals = 0, yearbak;
+    int year = 0, yearmiss = 0, totvals = 0, yearbak = 0;
 
     v = varindex(pdinfo, "year");
     if (v == pdinfo->v) v = varindex(pdinfo, "YEAR");

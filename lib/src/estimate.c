@@ -429,8 +429,8 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, const double *Z,
 {
     int t, v, nobs, nv, yno, nwt = pmod->nwt;
     int t1 = pmod->t1, t2 = pmod->t2;
-    double *diag, ysum, ypy, zz, den, sgmasq, ess, rss, tss;
-    double *altyhat;
+    double *diag, *altyhat, ysum, ypy, zz, ess, rss, tss;
+    double den = 0.0, sgmasq = 0.0;
     CHOLBETA cholbeta;
 
     nv = xpxxpy.nv;

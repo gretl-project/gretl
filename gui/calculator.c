@@ -119,7 +119,7 @@ static void get_critical (GtkWidget *w, gpointer data)
     void (*dw)(int, print_t *) = NULL;
     void (*tcrit)(int, print_t *) = NULL;
     void (*chicrit)(int, print_t *) = NULL;
-    int i, n, df;
+    int i, n = 0, df = 0;
     print_t prn;
     extern GtkItemFactoryEntry view_items[];
 

@@ -449,7 +449,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 
 static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis) 
 {
-    GtkWidget *tempwid, *box, *manual, *tbl;
+    GtkWidget *box, *manual, *tbl, *tempwid = NULL;
     int i, tbl_len;
    
     box = gtk_vbox_new(FALSE, 0);

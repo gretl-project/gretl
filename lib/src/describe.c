@@ -515,7 +515,7 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
     double xx, yy, varx, w;
     int err = 0, k, xmax, L, v = list[1], n = pdinfo->n, nT; 
     int nobs, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    FILE *fq;
+    FILE *fq = NULL;
     
     adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;

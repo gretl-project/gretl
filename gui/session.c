@@ -927,9 +927,9 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 gui_obj *session_add_object (gpointer data, int sort)
 {
     gui_obj *gobj;
-    gchar *name;
-    MODEL *pmod;
-    GRAPHT *graph;
+    gchar *name = NULL;
+    MODEL *pmod = NULL;
+    GRAPHT *graph = NULL;
 
     switch (sort) {
     case 'm':
@@ -1007,7 +1007,7 @@ void open_gui_graph (gui_obj *gobj)
 gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort)
 {
     gui_obj *gobj;
-    char **image;
+    char **image = NULL;
 
     gobj = g_new(gui_obj, 1);
     gobj->iconlist = iconlist;

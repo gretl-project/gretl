@@ -789,8 +789,8 @@ int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist)
      /* plot actual frequency distribution versus theoretical
 	distribution, gaussian or gamma */
 {
-    double propn, lambda, plotmin, plotmax;
-    double alpha, beta;
+    double propn, lambda = 0.0, plotmin = 0.0, plotmax = 0.0;
+    double alpha = 0.0, beta = 0.0;
     FILE *fp;
     int err = 0, k, K = freq->numbins - 1;
 

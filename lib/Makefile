@@ -10,7 +10,7 @@ ifeq ($(CC),)
   CC = gcc
 endif
 ifeq ($(CFLAGS),)
-  CFLAGS = -g -Wall -pedantic
+  CFLAGS = -g -O2 -Wall
 endif
 ifeq ($(MAKE),)
   MAKE = make

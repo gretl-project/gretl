@@ -280,7 +280,7 @@ static void graph_dbdata (double **dbZ, DATAINFO *dbdinfo)
 
 static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
 {
-    gint err;
+    gint err = 0;
     double *xvec;
     int n, v, t, start, stop, pad1 = 0, pad2 = 0;
     guint compact_method = 1;
@@ -395,7 +395,7 @@ static void gui_import_series (windata_t *dbdat)
 void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 {
     windata_t *dbdat = (windata_t *) data;
-    int err, dbcode = dbdat->action;
+    int err = 0, dbcode = dbdat->action;
     DATAINFO *dbdinfo;
     SERIESINFO *sinfo;
     double *dbZ = NULL;
@@ -776,7 +776,7 @@ static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 {
     int t, p, pmax = 0, m0, q0, y0, skip = 0, endskip, goodobs;
     float q;
-    double val;
+    double val = 0.;
     char numstr[16];
 
     /* record the precision of the original data */

@@ -13,7 +13,6 @@ have_zlib = @have_zlib@
 have_gtk = @have_gtk@
 have_gtkextra = @have_gtkextra@
 have_gnome = @have_gnome@
-have_gtkhtml = @have_gtkhtml@
 need_libbind = @need_libbind@
 CLI_LIBS = @CLI_LIBS@
 RL_OBJ = @RL_OBJ@
@@ -32,7 +31,7 @@ ifeq ($(CC),)
   CC = gcc
 endif
 ifeq ($(CFLAGS),)
-  CFLAGS = -g -Wall
+  CFLAGS = -g -O2 -Wall
 endif
 ifeq ($(MAKE),)
   MAKE = make

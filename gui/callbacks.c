@@ -333,7 +333,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[36], query[MAXLABEL], defstr[MAXLEN];
     char startdate[9], enddate[9];
-    void (*okfunc)();
+    void (*okfunc)() = NULL;
     int v;
     guint varclick = 0;
     windata_t *mydata = (windata_t *) data;

@@ -9,7 +9,7 @@ ifeq ($(CC),)
   CC = gcc
 endif
 ifeq ($(CFLAGS),)
-  CFLAGS = -g -Wall
+  CFLAGS = -g -O2 -Wall
 endif
 ifeq ($(MAKE),)
   MAKE = make

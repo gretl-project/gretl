@@ -357,7 +357,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     GtkWidget *frame, *openbutton, *midbutton, *closebutton;
     GtkWidget *main_vbox, *button_box;
     windata_t *fdata;
-    void (*browse_func)();
+    void (*browse_func)() = NULL;
 
     if (file_sel_open) return;
     if ((fdata = mymalloc(sizeof *fdata)) == NULL)
