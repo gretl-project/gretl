@@ -2645,9 +2645,9 @@ void do_store (char *mydatfile, const int opt)
     line[0] = '\0';
 
     if (f) 
-	sprintf(line, "store -%c %s %s", f, mydatfile, storelist);
+	sprintf(line, "store -%c '%s' %s", f, mydatfile, storelist);
     else
-	sprintf(line, "store %s %s", mydatfile, storelist);   
+	sprintf(line, "store '%s' %s", mydatfile, storelist);   
 
     if (check_cmd(line) || cmd_init(line)) return; 
 

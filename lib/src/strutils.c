@@ -28,8 +28,10 @@ int dotpos (const char *str)
 { 
     int i, n = strlen(str);
 
-    for (i=n-1; i>0; i--) 
+    for (i=n-1; i>0; i--) { 
+	if (str[i] == '/' || str[i] == '\\') return n;
 	if (str[i] == '.') return i;
+    }
     return n;    
 }
 
