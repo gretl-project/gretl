@@ -1,5 +1,7 @@
 version 1.1.1
 - Fix "pmax" bug in printing of actual, fitted and residuals
+- When using "<-" save mechanism for models, preserve the model
+  info so it's accessible for genr, etc.
 
 07/23/03 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display

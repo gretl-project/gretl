@@ -186,9 +186,11 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     err = try_add_model_to_session(*ppmod);
 
     if (!err) {
-	MODEL *mnew = gretl_model_new(pdinfo);
-	
+	MODEL *mnew = malloc(sizeof *mnew);
+
 	if (mnew != NULL) {
+	    /* FIXME: is this OK? */
+	    copy_model(mnew, *ppmod, pdinfo);
 	    *ppmod = mnew;
 	    pprintf(prn, _("%s saved\n"), cmd->savename);
 	}
