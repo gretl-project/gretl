@@ -20,6 +20,7 @@
 /* interact.c for gretl */
 
 #include "libgretl.h"
+#include "var.h"
 #include "internal.h"
 
 /* equipment for the "shell" command */

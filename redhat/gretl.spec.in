@@ -7,10 +7,10 @@ Summary: econometrics package
 Name: %{name}
 Version: %{ver}
 Release: %{rel}
-Copyright: GPL
-Group: X11/Scientific Applications
+License: GPL
+Group: Applications/Math
 Source: ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl-%{ver}.tar.bz2
-BuildRoot: /var/tmp/gretl
+Buildroot: %{_tmppath}/%{name}-%{ver}-%{rel}-root
 Packager: Allin Cottrell <cottrell@wfu.edu>
 URL: http://gretl.sourceforge.net/
 Vendor: Allin Cottrell <cottrell@wfu.edu>
@@ -30,19 +30,18 @@ output regression results in LaTeX format.
 %setup -q
 
 %build
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%prefix --without-gnome \
---without-gtk2 --without-libole2 --without-gtkextra 
+%configure
 make
 
 %install
-rm -rf $RPM_BUILD_ROOT
-make prefix=$RPM_BUILD_ROOT%{prefix} install
+rm -fr %{buildroot}
+%makeinstall
  
 %post
 /sbin/ldconfig
  
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -fr %{buildroot}
  
 %files
 %doc COPYING README INSTALL 

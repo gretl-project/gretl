@@ -1167,7 +1167,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
  * Returns: pointer to #MODEL (or NULL if allocation fails).
  */
 
-MODEL *gretl_model_new (DATAINFO *pdinfo)
+MODEL *gretl_model_new (const DATAINFO *pdinfo)
 {
     MODEL *pmod = malloc(sizeof *pmod);
 
@@ -1225,7 +1225,7 @@ void debug_print_model_info (const MODEL *pmod, const char *msg)
 
 /* .......................................................... */
 
-void clear_model (MODEL *pmod, DATAINFO *pdinfo)
+void clear_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
     if (pmod != NULL) {
 #if 0

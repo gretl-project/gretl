@@ -384,7 +384,6 @@ struct _VCV {
 #include "printout.h"
 #include "modelprint.h"
 #include "texprint.h"
-#include "var.h"
 #include "interact.h"
 #include "graphing.h"
 #include "random.h"

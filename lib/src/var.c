@@ -19,7 +19,8 @@
 
 /* var.c - vector autoregressions */  
 
-#include "libgretl.h"   
+#include "libgretl.h" 
+#include "var.h"  
 #include "internal.h"
 
 struct var_resids {
@@ -30,10 +31,209 @@ struct var_resids {
 };
 
 enum {
-    VAR_PRINT_MODELS = 1 << 0,
-    VAR_DO_FTESTS    = 1 << 1,
-    VAR_PRINT_PAUSE  = 1 << 2
+    VAR_PRINT_MODELS =      1 << 0,
+    VAR_DO_FTESTS    =      1 << 1,
+    VAR_PRINT_PAUSE  =      1 << 2,
+    VAR_IMPULSE_RESPONSES = 1 << 3
 } var_flags;
+
+/* ...................................................................  */
+
+static void pad_var_coeff_matrix (GRETL_VAR *var)
+{
+    int i, j;
+    int rowmax = var->neqns * var->order;
+
+    for (i=var->neqns; i<rowmax; i++) {
+	for (j=0; j<rowmax; j++) {
+	    gretl_matrix_set(var->A, i, j, (j == i - var->neqns)? 1.0 : 0.0);
+	}
+    }
+}
+
+int gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo)
+{
+    int i, j, err = 0;
+    int rows = neqns * order;
+
+    var->neqns = neqns;
+    var->order = order;
+    var->A = NULL;
+    var->E = NULL;
+    var->C = NULL;
+    var->models = NULL;
+
+    if (neqns > 0) {
+	var->A = gretl_matrix_alloc(rows, rows);
+	if (var->A == NULL) {
+	    err = 1;
+	} else {
+	    pad_var_coeff_matrix(var);
+	}
+    }
+
+    if (!err && neqns > 0) {
+	var->C = gretl_matrix_alloc(rows, neqns);
+	if (var->C == NULL) {
+	    err = 1;
+	    gretl_matrix_free(var->A);
+	    var->A = NULL;
+	} else {
+	    gretl_matrix_zero(var->C);
+	}
+    }
+
+    if (!err && neqns > 0) {
+	var->models = malloc(neqns * sizeof *var->models);
+	if (var->models == NULL) err = 1;
+    } else {
+	var->models = NULL;
+    }
+
+    if (var->models != NULL) {
+	for (i=0; i<neqns; i++) {
+	    var->models[i] = gretl_model_new(pdinfo);
+	    if (var->models[i] == NULL) {
+		err = 1;
+		for (j=0; j<i; j++) {
+		    free(var->models[i]);
+		}
+		free(var->models);
+		var->models = NULL;
+	    }
+	}
+    } 
+
+    return err;
+}
+
+void gretl_var_free (GRETL_VAR *var, const DATAINFO *pdinfo)
+{
+    int i;
+
+    gretl_matrix_free(var->A);
+    gretl_matrix_free(var->E);
+    gretl_matrix_free(var->C);
+
+    if (var->models != NULL) {
+	for (i=0; i<var->neqns; i++) {
+	    clear_model(var->models[i], pdinfo);
+	    free(var->models[i]);
+	}
+	free(var->models);
+    }
+
+    free(var);
+}
+
+GRETL_VAR *gretl_var_new (int neqns, int order, const DATAINFO *pdinfo)
+{
+    GRETL_VAR *var;
+
+    var = malloc(sizeof *var);
+    if (var == NULL) return NULL;
+
+    if (gretl_var_init(var, neqns, order, pdinfo)) {
+	free(var);
+	return NULL;
+    } 
+
+    return var;
+}
+
+/* ......................................................  */
+
+static int gretl_var_do_error_decomp (GRETL_VAR *var)
+{
+    gretl_matrix *tmp = NULL;
+    int i, j, err = 0;
+
+    tmp = gretl_matrix_alloc(var->neqns, var->neqns);
+    if (tmp == NULL) err = E_ALLOC;
+
+    /* form e'e */
+    if (!err && gretl_matmult_mod (var->E, GRETL_MOD_TRANSPOSE,
+				   var->E, GRETL_MOD_NONE,
+				   tmp)) {
+	err = 1;
+    }
+
+    /* lower-triangularize and decompose */
+    if (!err) {
+	for (i=0; i<var->neqns-1; i++) {
+	    for (j=i+1; j<var->neqns; j++) {
+		gretl_matrix_set(tmp, i, j, 0.0);
+	    }
+	}
+	err = gretl_matrix_cholesky_decomp(tmp);
+    }
+
+    /* write the decomposition into the C matrix */
+    if (!err) {
+	for (i=0; i<var->neqns; i++) {
+	    for (j=0; j<var->neqns; j++) {
+		double x = gretl_matrix_get(tmp, i, j);
+
+		gretl_matrix_set(var->C, i, j, x);
+	    }
+	}
+    }
+
+    if (tmp != NULL) gretl_matrix_free(tmp);
+
+    /* we're done with the full-length residual series */
+    gretl_matrix_free(var->E);
+    var->E = NULL;
+
+    return err;
+}
+
+/* ......................................................  */
+
+int 
+gretl_var_print_impulse_response (GRETL_VAR *var, int targ, int shock,
+				  int periods, DATAINFO *pdinfo, 
+				  PRN *prn)
+{
+    int t, v1, v2;
+    int rows = var->neqns * var->order;
+    gretl_matrix *tmp;
+    double r;
+    int err = 0;
+
+    if (targ >= var->neqns) {
+	fprintf(stderr, "Response variable out of bounds\n");
+	return 1;
+    }
+    if (shock >= var->neqns) {
+	fprintf(stderr, "Shock variable out of bounds\n");
+	return 1;
+    }    
+
+    tmp = gretl_matrix_alloc(rows, var->neqns);
+    if (tmp == NULL) err = E_ALLOC;
+
+    v1 = (var->models[targ])->list[1];
+    v2 = (var->models[shock])->list[1];
+
+    pprintf(prn, "Response of %s to a unit shock in %s\n\n",
+	    pdinfo->varname[v1], pdinfo->varname[v2]);
+
+    for (t=0; t<periods && !err; t++) {
+	if (t == 0) {
+	    err = gretl_matmult(var->A, var->C, tmp);
+	} else {
+	    err = gretl_matmult(var->A, tmp, tmp);
+	}
+	if (err) break;
+	r = gretl_matrix_get(tmp, targ, shock);
+	pprintf(prn, "period %d: %g\n", t, r);
+    }
+
+    if (tmp != NULL) gretl_matrix_free(tmp);
+
+    return err;
+}
 
 /* ......................................................  */
 
@@ -256,6 +456,45 @@ static int get_listlen (const int *varlist, int order, double **Z,
     return v;
 }
 
+/* ...................................................................  */
+
+static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
+{
+    int i, j;
+    int v = 0, lag = 0;
+    int start = pmod->ifc;
+    int rowmax = var->neqns * var->order + start;
+
+    if (k == 0) {
+	/* first equation: set up storage for residuals */
+	var->n = pmod->t2 - pmod->t1 + 1;
+	var->E = gretl_matrix_alloc(var->n, var->neqns);
+	if (var->E == NULL) return 1;
+	var->ifc = pmod->ifc;
+    }
+
+    /* save residuals */
+    for (i=0; i<var->n; i++) {
+	gretl_matrix_set(var->E, i, k, pmod->uhat[pmod->t1 + i]);
+    }	
+
+    /* save coefficients */
+    for (i=start; i<rowmax; i++) {
+	if ((i - start) % var->order == 0) {
+	    v++;
+	    lag = 1;
+	} else {
+	    lag++;
+	}
+	j = (lag - 1) * var->neqns + v - 1;
+	gretl_matrix_set(var->A, k, j, pmod->coeff[i]);
+    }
+
+    return 0;
+}
+
+/* ...................................................................  */
+
 static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn, struct var_resids *resids, char flags)
 {
@@ -282,8 +521,11 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     int missv = 0, misst = 0;
     double essu = 0.0, F = 0.0;
     MODEL var_model;
+    GRETL_VAR *var = NULL;
+    int err = 0;
 
-    _init_model(&var_model, pdinfo);
+    oldt1 = pdinfo->t1;
+    oldt2 = pdinfo->t2;
 
     if (resids == NULL && order < 1) {
 	fprintf(stderr, I_("Not much point in a zero-order \"VAR\" surely?\n"));
@@ -298,10 +540,8 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     shortlist = malloc(listlen * sizeof *shortlist);
 
     if (varlist == NULL || depvars == NULL || shortlist == NULL) {
-	free(varlist);
-	free(depvars);
-	free(shortlist);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto var_bailout;
     }
 
     varlist[0] = listlen;
@@ -327,31 +567,41 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    for (l=1; l<=order; l++) {
 		int lnum = laggenr(list[i], l, 1, pZ, pdinfo);
 
-		/* FIXME: handle laggenr error */
 		if (lnum > 0) {
 		    varlist[index] = lnum; 
 		    index++;
+		} else {
+		    err = E_ALLOC;
+		    goto var_bailout;
 		}
 	    }
 	}
     }
 
     /* sort out sample range */
-    t1 = oldt1 = pdinfo->t1;
-    t2 = oldt2 = pdinfo->t2;
+    t1 = pdinfo->t1;
+    t2 = pdinfo->t2;
     varlist[1] = depvars[0];
 
     if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, *pZ, &misst))) {
-	free(varlist);
-	free(depvars);
-	free(shortlist);
-	return 1;
+	err = 1;
+	goto var_bailout;
     }
 
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
 
-    /* run and print out the several regressions */
+    if (flags & VAR_IMPULSE_RESPONSES) {
+	var = gretl_var_new(neqns, order, pdinfo);
+	if (var == NULL) {
+	    err = E_ALLOC;
+	    goto var_bailout;
+	}	    
+    } 
+
+    /* even in case of VAR_IMPULSE_RESPONSES this may be used */
+    _init_model(&var_model, pdinfo);
+
     if (flags & VAR_PRINT_MODELS) {
 	pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
     }
@@ -360,39 +610,57 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* apparatus for saving the residuals */
     if (resids != NULL) {
 	resids->m = 2 * neqns;
-	resids->uhat = malloc(2 * neqns * sizeof(double *));
-	if (resids->uhat == NULL) return E_ALLOC;
+	resids->uhat = malloc(2 * neqns * sizeof *resids->uhat);
+	if (resids->uhat == NULL) {
+	    err = E_ALLOC;
+	    goto var_bailout;
+	}
     }
 
+    /* run the several regressions */
     for (i=0; i<neqns; i++) {
+	MODEL *pmod;
+
+	if (flags & VAR_IMPULSE_RESPONSES) {
+	    pmod = var->models[i];
+	} else {
+	    pmod = &var_model;
+	}
+
 	varlist[1] = depvars[i];
 
 	/* run an OLS regression for the current dep var */
-	var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
-	var_model.aux = VAR;
+	*pmod = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
+	pmod->aux = VAR;
 
 	/* save the residuals if required */
 	if (resids != NULL) {
-	    resids->t1 = var_model.t1;
-	    resids->t2 = var_model.t2;
-	    resids->uhat[i] = var_model.uhat;
-	    var_model.uhat = NULL;
+	    resids->t1 = pmod->t1;
+	    resids->t2 = pmod->t2;
+	    resids->uhat[i] = pmod->uhat;
+	    pmod->uhat = NULL;
 	} 
 
 	if (flags & VAR_PRINT_MODELS) {
-	    printmodel(&var_model, pdinfo, prn);
+	    printmodel(pmod, pdinfo, prn);
 	}
 
 	if (flags & VAR_DO_FTESTS) {
 	    /* keep some results for hypothesis testing */
-	    essu = var_model.ess;
-	    dfd = var_model.dfd;	    
+	    essu = pmod->ess;
+	    dfd = pmod->dfd;	    
 	}
 
-	clear_model(&var_model, pdinfo);
+	if (flags & VAR_IMPULSE_RESPONSES) {
+	    /* store info in var structure */
+	    err = add_model_data_to_var(var, pmod, i);
+	    if (err) goto var_bailout;
+	} else {
+	    clear_model(&var_model, pdinfo);
+	}
 
 	if (resids != NULL) {
-	    /* estimate equations for Johansen test too */
+	    /* estimate equations for Johansen test too (use var_model) */
 	    varlist[1] = resids->levels_list[i + 1]; 
 	    var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
 	    if (flags & VAR_PRINT_MODELS) {
@@ -414,18 +682,18 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		for (l=1; l<=order; l++) {
 		    index = l + 1 + j * order;
 		    if (index > shortlist[0]) break;
-		    shortlist[index] = varlist[index+order];
+		    shortlist[index] = varlist[index + order];
 		}
 		end = 0;
 		for (l=shortlist[0]; l>index; l--) {
-		    shortlist[l] = varlist[varlist[0]-end];
+		    shortlist[l] = varlist[varlist[0] - end];
 		    end++;
 		}
 		pprintf(prn, _("All lags of %-8s "), 
 			pdinfo->varname[depvars[j]]);
 		/*  printlist(shortlist); */
 		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
-		F = ((var_model.ess - essu)/order)/(essu/dfd);
+		F = ((var_model.ess - essu) / order) / (essu / dfd);
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
 		pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
@@ -447,7 +715,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		    end++;
 		}
 		var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
-		F = ((var_model.ess - essu)/neqns)/(essu/dfd);
+		F = ((var_model.ess - essu) / neqns) / (essu / dfd);
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
 		pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
@@ -459,6 +727,8 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     }
     pputs(prn, "\n");
 
+ var_bailout:
+
     free(varlist);
     free(shortlist);
     free(depvars);
@@ -467,9 +737,26 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
 
-    return 0;
-}
+    /* clear the var structure? */
+    if (flags & VAR_IMPULSE_RESPONSES) {
+	if (!err) {
+	    pputs(prn, "var->A\n");
+	    simple_print_gretl_matrix(var->A, prn);
+	    err = gretl_var_do_error_decomp(var);
+	    if (!err) {
+		pputs(prn, "var->C\n");
+		simple_print_gretl_matrix(var->C, prn);
+		gretl_var_print_impulse_response(var, 0, 1, 10,
+						 pdinfo, prn);
+	    } else {
+		fprintf(stderr, "failed: gretl_var_do_error_decomp\n");
+	    }
+	}
+	gretl_var_free(var, pdinfo);
+    }
 
+    return err;
+}
 
 /**
  * var:
@@ -489,11 +776,12 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	 int pause, PRN *prn)
 {
-    char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS;
+    char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS | VAR_IMPULSE_RESPONSES;
 
     if (pause) {
 	flags |= VAR_PRINT_PAUSE;
     }
+
     return real_var(order, list, pZ, pdinfo, prn, NULL, flags);
 }
 

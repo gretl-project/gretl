@@ -26,6 +26,7 @@
 #include <dirent.h>
 
 #include "libgretl.h"
+#include "var.h"
 
 #ifdef WIN32
 # include <windows.h>

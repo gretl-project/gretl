@@ -17,7 +17,23 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* functions follow */
+#ifndef VAR_H_
+#define VAR_H_
+
+#include "gretl_matrix.h"
+
+typedef struct _GRETL_VAR GRETL_VAR;
+
+struct _GRETL_VAR {
+    int neqns;         /* number of equations in system */
+    int order;         /* lag order */
+    int n;             /* number of observations */
+    int ifc;           /* equations include a constant (1) or not (0) */
+    gretl_matrix *A;   /* augmented coefficient matrix */
+    gretl_matrix *E;   /* residuals matrix */
+    gretl_matrix *C;   /* augmented Cholesky-decomposed error matrix */
+    MODEL **models;    /* pointers to individual equation estimates */
+};
  
 int list_diffgenr (const LIST list, 
 		   double ***pZ, DATAINFO *pdinfo);
@@ -42,4 +58,11 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		   int verbose, PRN *prn);
+
+int 
+gretl_var_print_impulse_response (GRETL_VAR *var, int targ, int shock,
+				  int periods, DATAINFO *pdinfo, 
+				  PRN *prn);
+
+#endif /* VAR_H_ */
 

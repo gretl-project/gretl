@@ -20,6 +20,7 @@
 /* lib.c for gretl -- main interface to libgretl functions */
 
 #include "gretl.h"
+#include "var.h"
 
 #ifdef GNUPLOT_PNG
 # include "gpt_control.h"
@@ -4282,7 +4283,7 @@ int execute_script (const char *runfile, const char *buf,
 	/* check that the file has something in it */
 	while (fgets(tmp, MAXLEN-1, fb)) {
 	    if (*tmp != '\0') {
-		size_t n = strlen(tmp);
+		int n = strlen(tmp);
 
 		for (i=0; i<n; i++) {
 		    if (!isspace(tmp[i])) {

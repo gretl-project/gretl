@@ -22,6 +22,9 @@
 
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
+#define mdx(a,i,j)   (j)*(a)->rows+(i)
+#define mdxtr(a,i,j) (i)*(a)->rows+(j)
+
 /* ....................................................... */
 
 static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
@@ -113,6 +116,23 @@ void gretl_matrix_free (gretl_matrix *m)
 
 /* ....................................................... */
 
+void gretl_matrix_zero (gretl_matrix *m)
+{
+    int i, n;
+
+    if (m == NULL || m->val == NULL) return;
+
+    if (m->packed) {
+	n = (m->rows * m->rows + m->rows) / 2;
+    } else {
+	n = m->rows * m->cols;
+    }
+    
+    for (i=0; i<n; i++) m->val[i] = 0.0;
+}
+
+/* ....................................................... */
+
 double *gretl_matrix_steal_data (gretl_matrix *m)
 {
     double *vals = NULL;
@@ -177,23 +197,20 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
     return 0;
 }
 
-#ifdef LDEBUG
-static void simple_matrix_print (gretl_matrix *X, int rows, int cols,
-				 PRN *prn)
+void simple_print_gretl_matrix (gretl_matrix *m, PRN *prn)
 {
     int i, j;
 
-    pprintf(prn, "printing %d x %d matrix...\n", rows, cols);
+    pprintf(prn, "printing %d x %d gretl matrix...\n\n", m->rows, m->cols);
 
-    for (i=0; i<rows; i++) {
-	for (j=0; j<cols; j++) {
-	    pprintf(prn, "%#10.5g ", gretl_matrix_get(X, i, j));
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    pprintf(prn, "%#10.5g ", gretl_matrix_get(m, i, j));
 	}
 	pputs(prn, "\n");
     }
     pputs(prn, "\n");
 }
-#endif
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
 {
@@ -299,6 +316,22 @@ int gretl_matmult (const gretl_matrix *a, const gretl_matrix *b,
     return gretl_matmult_mod(a, GRETL_MOD_NONE,
 			     b, GRETL_MOD_NONE,
 			     c);
+}
+
+int gretl_matrix_cholesky_decomp (gretl_matrix *a)
+{
+    char uplo = 'L';
+    integer n = a->rows;
+    integer lda = a->rows;
+    integer info;
+
+    dpotrf_(&uplo, &n, a->val, &lda, &info);
+
+#ifdef LAPACK_DEBUG
+    printf("dpotrf: info = %d\n", (int) info);
+#endif
+
+    return (info != 0);
 }
 
 int gretl_invert_general_matrix (gretl_matrix *a)

@@ -47,9 +47,6 @@ struct _gretl_matrix {
     double *val;
 };
 
-#define mdx(a,i,j)   (j)*(a)->rows+i
-#define mdxtr(a,i,j) (i)*(a)->rows+j
-
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
 #define gretl_vector_free(v) gretl_matrix_free(v)
 #define gretl_vector_get(v,i) gretl_matrix_get((v),0,(i))
@@ -65,6 +62,8 @@ gretl_matrix *gretl_matrix_copy (gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
 					  int rows, int cols);
+
+void gretl_matrix_zero (gretl_matrix *m);
 
 void gretl_matrix_free (gretl_matrix *m);
 
@@ -89,5 +88,9 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m);
 
 double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 					  int eigenvecs);
+
+int gretl_matrix_cholesky_decomp (gretl_matrix *a);
+
+void simple_print_gretl_matrix (gretl_matrix *X, PRN *prn);
 
 #endif /* GRETL_MATRIX_H */

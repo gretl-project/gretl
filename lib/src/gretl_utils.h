@@ -106,11 +106,11 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
 int catchflag (char *line, unsigned char *oflag);
 
-MODEL *gretl_model_new (DATAINFO *pdinfo);
+MODEL *gretl_model_new (const DATAINFO *pdinfo);
 
 void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo);
 
-void clear_model (MODEL *pmod, DATAINFO *pdinfo);
+void clear_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 void debug_print_model_info (const MODEL *pmod, const char *msg);
 

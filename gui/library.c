@@ -20,6 +20,8 @@
 /* lib.c for gretl -- main interface to libgretl functions */
 
 #include "gretl.h"
+#include "var.h"
+
 #include <unistd.h>
 #include <sys/stat.h>
 #include <errno.h>
