@@ -293,12 +293,11 @@ int isdummy (const double *x, int t1, int t2)
 int gretl_iszero (int t1, int t2, const double *x)
 /*  checks whether all obs are zero for variable x from t1 to t2 */
 {
+    double sum = 0.0;
     int t;
-    double xx, sum = 0.0;
 
     for (t=t1; t<=t2; t++) {
-        xx = x[t];
-        sum = sum + xx * xx;
+        sum += x[t] * x[t];
     }
 
     return floateq(sum, 0.0);

@@ -24,7 +24,7 @@
 #include "clapack_double.h"
 #include "gretl_model.h"
 
-#define PDEBUG 1
+#define PDEBUG 0
 
 typedef struct hausman_t_ hausman_t;
 
@@ -166,25 +166,33 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
 	    }
 
 	    xbar /= (double) Ti;
-#if PDEBUG
+#if PDEBUG > 1
 	    fprintf(stderr, "xbar for var %d, unit %d = %g\n", 
 		    pmod->list[j], i, xbar);
 #endif
 
 	    for (t=0; t<T; t++) {
 		bigt = panel_index(i, t);
-#if PDEBUG
-		fprintf(stderr, "bigt = %d\n", bigt);
-#endif
 		if (!na(pmod->uhat[bigt])) {
 		    (*wZ)[k][bigt] = Z[pmod->list[j]][bigt] - xbar;
 		}
-#if PDEBUG
+#if PDEBUG > 1
 		fprintf(stderr, "Set wZ[%d][%d] = %g\n", k, bigt, (*wZ)[k][bigt]);
 #endif
 	    }
 	}
     }
+
+#if PDEBUG
+    double min5 = 0.0;
+    double max5 = 0.0;
+    for (t=0; t<winfo->n; t++) {
+	if ((*wZ)[5][t] > max5) max5 = (*wZ)[5][t];
+	if ((*wZ)[5][t] < min5) min5 = (*wZ)[5][t];
+    }
+    fprintf(stderr, "min5 = %g, max5 = %g\n", min5, max5);
+#endif
+	
 
     return winfo;
 }
@@ -232,7 +240,7 @@ group_means_dataset (const MODEL *pmod,
 		}
 	    }
 	    (*gZ)[k][s] = xx / (double) Ti;
-#if PDEBUG
+#if PDEBUG > 1
 	    fprintf(stderr, "Set gZ[%d][%d] = %g\n", k, i, (*gZ)[k][i]);
 #endif
 	    s++;
@@ -392,7 +400,7 @@ fixed_effects_model (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     /* should we use a set of unit dummy variables, or subtract
        the group means? */
 
-    if (ndum <= 20 || ndum < pmod->list[0]) {
+    if (ndum <= 100 || ndum < pmod->list[0]) {
 	*usedum = 1;
     } else {
 	*usedum = 0;
@@ -420,11 +428,15 @@ fixed_effects_model (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	for (i=1; i<=felist[0]; i++) {
 	    felist[i] = i;
 	}
+
+	printlist(felist, "felist");
 	
 	lsdv = lsq(felist, &wZ, winfo, OLS, OPT_A, 0.0);
 
+	printlist(lsdv.list, "lsdv.list");
+
 	if (lsdv.errcode == 0) {
-	    double sdcorr = sqrt(lsdv.dfd / (lsdv.dfd - nunits));
+	    double sdcorr = sqrt((double) lsdv.dfd / (lsdv.dfd - nunits));
 
 	    lsdv.dfd -= nunits;
 	    lsdv.dfn += nunits; 
@@ -432,9 +444,7 @@ fixed_effects_model (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    lsdv.sigma *= sdcorr;
 
 	    for (i=0; i<lsdv.ncoeff; i++) {
-		printf("sderr[%d] before = %g\n", i, lsdv.sderr[i]);
 		lsdv.sderr[i] *= sdcorr;
-		printf("sderr[%d] after = %g\n", i, lsdv.sderr[i]);
 	    }
 
 #if PDEBUG
