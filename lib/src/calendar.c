@@ -95,8 +95,12 @@ long get_epoch_day (const char *date)
 	return -1;
     }
 
-    if (year < 0 || month < 0 || day < 0) return -1;
-    if (year > 9999 || month > 12 || day > 31) return -1;
+    if (year < 0 || month < 0 || day < 0) {
+	return -1;
+    }
+    if (year > 9999 || month > 12 || day > 31) {
+	return -1;
+    }
 
     if (year < 100) {
 	year = FOUR_DIGIT_YEAR(year);

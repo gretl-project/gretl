@@ -47,6 +47,7 @@ static int write_xmldata (const char *fname, const int *list,
 			  double **Z, const DATAINFO *pdinfo, 
 			  int opt, PATHS *ppaths);
 static int xmlfile (const char *fname);
+static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
@@ -208,22 +209,36 @@ static int comment_lines (FILE *fp, char **pbuf)
     char s[MAXLEN], *mybuf = NULL;
     int count = 0, bigger = 1, bufsize;
 
-    if (fgets(s, MAXLEN-1, fp) == NULL) return 0;
+    if (fgets(s, MAXLEN-1, fp) == NULL) {
+	return 0;
+    }
 
     if (!strncmp(s, STARTCOMMENT, 2)) {
 	*pbuf = malloc(20 * MAXLEN);
-	if (*pbuf == NULL) return -1;
+
+	if (*pbuf == NULL) {
+	    return -1;
+	}
+
 	**pbuf = '\0';
+
 	do {
-	    if (fgets(s, MAXLEN-1, fp) == NULL) break;
-	    if (!strncmp(s, ENDCOMMENT, 2)) break;
+	    if (fgets(s, MAXLEN-1, fp) == NULL) {
+		break;
+	    }
+	    if (!strncmp(s, ENDCOMMENT, 2)) {
+		break;
+	    }
 	    count++;
 	    if (count > 20*bigger) {
 		bigger++;
 		bufsize = 20 * MAXLEN * bigger;
 		mybuf = realloc(*pbuf, bufsize);
-		if (mybuf == NULL) return -1;
-		else *pbuf = mybuf;
+		if (mybuf == NULL) {
+		    return -1;
+		} else {
+		    *pbuf = mybuf;
+		}
 	    }
 	    strcat(*pbuf, s);
 	} while (s != NULL);
@@ -737,6 +752,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
     }
     fscanf(fp, "%s", str);
     i += skipcomments(fp, str); 
+
     while (1) { /* find number of variables */
         if (fscanf(fp, "%s", str) != 1) {
 	    fclose(fp);
@@ -751,11 +767,14 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 	    break;
 	} else i++;
     }
+
     pdinfo->v = i + 1;
     fclose(fp);
 
     pdinfo->S = NULL;
-    if (dataset_allocate_varnames(pdinfo)) return E_ALLOC;
+    if (dataset_allocate_varnames(pdinfo)) {
+	return E_ALLOC;
+    }
 
     i = 1;
     fp = fopen(hdrfile, "r");
@@ -774,14 +793,16 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 	n = strlen(str);
 	if (str[n-1] != ';') {
             safecpy(pdinfo->varname[i], str, VNAMELEN - 1);
-	    if (check_varname(pdinfo->varname[i++])) 
+	    if (check_varname(pdinfo->varname[i++])) {
 		goto varname_error;
+	    }
         } else {
 	    if (n > 1) {
 		safecpy(pdinfo->varname[i], str, n-1);
 		pdinfo->varname[i][n] = '\0';
-		if (check_varname(pdinfo->varname[i]))
+		if (check_varname(pdinfo->varname[i])) {
 		    goto varname_error; 
+		}
 	    }
 	    break;
 	}
@@ -796,12 +817,13 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 
     pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
 
-    if (pdinfo->sd0 >= 2.0) 
+    if (pdinfo->sd0 >= 2.0) {
         pdinfo->time_series = TIME_SERIES; /* actual time series? */
-    else if (pdinfo->sd0 > 1.0) {
+    } else if (pdinfo->sd0 > 1.0) {
 	pdinfo->time_series = STACKED_TIME_SERIES; /* panel data? */
+    } else {
+	pdinfo->time_series = 0;
     }
-    else pdinfo->time_series = 0;
 
     pdinfo->n = -1;
     pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
@@ -810,13 +832,13 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
     pdinfo->markers = NO_MARKERS;
 
     if (fscanf(fp, "%5s %7s", byobs, option) == 2) {
-	if (strcmp(option, "SINGLE") == 0)
+	if (strcmp(option, "SINGLE") == 0) {
 	    *binary = 1;
-	else if (strcmp(option, "BINARY") == 0)
+	} else if (strcmp(option, "BINARY") == 0) {
 	    *binary = 2;
-	else if (strcmp(option, "MARKERS") == 0) 
+	} else if (strcmp(option, "MARKERS") == 0) {
 	    pdinfo->markers = 1;
-	else if (strcmp(option, "PANEL2") == 0) {
+	} else if (strcmp(option, "PANEL2") == 0) {
 	    panel = 1;
 	    pdinfo->time_series = STACKED_TIME_SERIES;
 	} else if (strcmp(option, "PANEL3") == 0) {
@@ -826,15 +848,18 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
     }
 
     if (!panel && fscanf(fp, "%6s", option) == 1) {
-	if (strcmp(option, "PANEL2") == 0)
+	if (strcmp(option, "PANEL2") == 0) {
 	    pdinfo->time_series = STACKED_TIME_SERIES;
-	else if (strcmp(option, "PANEL3") == 0)
+	} else if (strcmp(option, "PANEL3") == 0) {
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
+	}
     }
 
-    if (fp != NULL) fclose(fp);
+    if (fp != NULL) {
+	fclose(fp);
+    }
 
-    /* last pass, to pick up comments */
+    /* last pass, to pick up data description */
     pdinfo->descrip = NULL;
     if (descrip) {
 	char *dbuf = NULL;
@@ -859,6 +884,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
     return 0;
 
     varname_error:
+
     fclose(fp);
     clear_datainfo(pdinfo, CLEAR_FULL);
     return E_DATA;
@@ -874,15 +900,17 @@ static int check_date (const char *date)
 
     for (i=0; i<n; i++) {
 	if (!isdigit((unsigned char) date[i]) && !IS_DATE_SEP(date[i])) {
-	    if (isprint((unsigned char) date[i]))
+	    if (isprint((unsigned char) date[i])) {
 		sprintf(gretl_errmsg, 
 			_("Bad character '%c' in date string"), date[i]);
-	    else 
+	    } else {
 		sprintf(gretl_errmsg, 
 			_("Bad character %d in date string"), date[i]);
+	    }
 	    return 1;
 	}
     }
+
     return 0;
 }
 
@@ -1051,10 +1079,14 @@ static int blank_check (FILE *fp)
     int i, deflt = 1;
     char s[MAXLEN];
 
-    for (i=0; i<3 && deflt && fgets(s, MAXLEN-1, fp) ; i++) {
-	if (i == 0 && strncmp(s, "(*", 2)) deflt = 0;
-	else if (i == 1 && strncmp(s, _("space for comments"), 18)) deflt = 0;
-	else if (i == 2 && strncmp(s, "*)", 2)) deflt = 0;
+    for (i=0; i<3 && deflt && fgets(s, MAXLEN-1, fp); i++) {
+	if (i == 0 && strncmp(s, "(*", 2)) {
+	    deflt = 0;
+	} else if (i == 1 && strncmp(s, _("space for comments"), 18)) {
+	    deflt = 0;
+	} else if (i == 2 && strncmp(s, "*)", 2)) {
+	    deflt = 0;
+	}
     }
 
     fclose(fp);
@@ -1100,7 +1132,7 @@ int get_info (const char *hdrfile, PRN *prn)
 
     pprintf(prn, _("Data info in file %s:\n\n"), hdrfile);
 
-    if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, STARTCOMMENT, 2) == 0) {
+    if (fgets(s, MAXLEN-1, hdr) != NULL && !strncmp(s, STARTCOMMENT, 2)) {
 	do {
 	    if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, "*)", 2)) {
 #ifndef WIN32
@@ -1112,10 +1144,16 @@ int get_info (const char *hdrfile, PRN *prn)
 	} while (s != NULL && strncmp(s, ENDCOMMENT, 2));
     }
 
-    if (i == 0) pputs(prn, _(" (none)\n"));
+    if (i == 0) {
+	pputs(prn, _(" (none)\n"));
+    }
+
     pputc(prn, '\n');
 
-    if (hdr != NULL) fclose(hdr);
+    if (hdr != NULL) {
+	fclose(hdr);
+    }
+
     return 0;
 }
 
@@ -1135,7 +1173,9 @@ static int writehdr (const char *hdrfile, const int *list,
     ntodate_full(enddate, pdinfo->t2, pdinfo);
 
     fp = fopen(hdrfile, "w");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	return 1;
+    }
 
     /* write description of data set, if any */
     if (pdinfo->descrip != NULL) {
@@ -1149,9 +1189,13 @@ static int writehdr (const char *hdrfile, const int *list,
 
     /* then list of variables */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) continue;
+	if (list[i] == 0) {
+	    continue;
+	}
 	fprintf(fp, "%s ", pdinfo->varname[list[i]]);
-	if (i && i <list[0] && (i+1) % 8 == 0) fprintf(fp, "\n");
+	if (i && i <list[0] && (i+1) % 8 == 0) {
+	    fputc('\n', fp);
+	}
     }    
     fputs(";\n", fp);
 
@@ -1159,18 +1203,24 @@ static int writehdr (const char *hdrfile, const int *list,
     fprintf(fp, "%d %s %s\n", pdinfo->pd, startdate, enddate);
     
     /* and flags as required */
-    if (binary == 1) fputs("BYVAR\nSINGLE\n", fp);
-    else if (binary == 2) fputs("BYVAR\nBINARY\n", fp);
-    else { 
+    if (binary == 1) {
+	fputs("BYVAR\nSINGLE\n", fp);
+    } else if (binary == 2) {
+	fputs("BYVAR\nBINARY\n", fp);
+    } else { 
 	fputs("BYOBS\n", fp);
-	if (pdinfo->markers) fputs("MARKERS\n", fp);
+	if (pdinfo->markers) {
+	    fputs("MARKERS\n", fp);
+	}
     }
-    if (pdinfo->time_series == STACKED_TIME_SERIES) 
-	fprintf(fp, "PANEL2\n");
-    else if (pdinfo->time_series == STACKED_CROSS_SECTION) 
-	fprintf(fp, "PANEL3\n");
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	fputs("PANEL2\n", fp);
+    } else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	fputs("PANEL3\n", fp);
+    }
     
     if (fp != NULL) fclose(fp);
+
     return 0;
 }
 
@@ -1630,21 +1680,25 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 
 static double obs_float (const DATAINFO *pdinfo, int end)
 {
-    double xx, xx2 = 0.;
+    double xx, xx2 = 0.0;
     int i, x1, x2 = 0;
 
     if (end) {
 	xx = obs_str_to_double(pdinfo->endobs);
-	if ((i = haschar(':', pdinfo->endobs)) > 0)
+	if ((i = haschar(':', pdinfo->endobs)) > 0) {
 	   x2 = atoi(pdinfo->endobs + i + 1) - 1;
+	}
     } else {
 	xx = obs_str_to_double(pdinfo->stobs);
-	if ((i = haschar(':', pdinfo->stobs)) > 0)
+	if ((i = haschar(':', pdinfo->stobs)) > 0) {
 	   x2 = atoi(pdinfo->stobs + i + 1) - 1;
+	}
     }
+
     x1 = (int) xx;
-    if (x2 > 0)
+    if (x2 > 0) {
 	xx2 = (double) x2 / pdinfo->pd;
+    }
     
     return (double) x1 + xx2;
 }
@@ -1662,6 +1716,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 
     fp = fopen(lblfile, "r");
     if (fp == NULL) return 0;
+
     while (1) {
         if (fgets(line, MAXLEN-1, fp) == NULL) {
             fclose(fp);
@@ -1699,12 +1754,15 @@ static int writelbl (const char *lblfile, const int *list,
     int i, lblcount = 0;
 
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) continue;
+	if (list[i] == 0) {
+	    continue;
+	}
 	if (strlen(VARLABEL(pdinfo, list[i])) > 2) {
 	    lblcount++;
 	    break;
 	}
     }
+
     if (lblcount == 0) return 0;
 
     fp = fopen(lblfile, "w");
@@ -1712,7 +1770,9 @@ static int writelbl (const char *lblfile, const int *list,
 
     /* spit out varnames and labels (if filled out) */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) continue;
+	if (list[i] == 0) {
+	    continue;
+	}
 	if (strlen(VARLABEL(pdinfo, list[i])) > 2) {
 	    fprintf(fp, "%s %s\n", pdinfo->varname[list[i]],
 		    VARLABEL(pdinfo, list[i]));
@@ -1789,8 +1849,12 @@ void gz_switch_ext (char *targ, char *src, char *ext)
 
     strcpy(targ, src);
     targ[i] = '\0';
+
     k = dotpos(targ);
-    if (j > 0 && k < strlen(targ) && k > j) i = k;
+    if (j > 0 && k < strlen(targ) && k > j) {
+	i = k;
+    }
+
     targ[i] = '.';
     targ[i + 1] = '\0';
     strcat(targ, ext);
@@ -1876,8 +1940,9 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 	if (!found) {
 	    sprintf(gretl_errmsg, _("Couldn't open file %s"),  datfile);
 	    return E_FOPEN;
+	} else {
+	    strcpy(datfile, tryfile);
 	}
-	else strcpy(datfile, tryfile);
     }
 
     /* catch XML files that have strayed in here? */
@@ -1948,7 +2013,9 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     pputs(prn, (tmpdinfo->time_series == TIME_SERIES) ? 
 	    I_("time-series") : _("cross-sectional"));
     pputs(prn, I_(" datafile"));
-    if (strlen(datfile) > 40) pputs(prn, "\n");
+    if (strlen(datfile) > 40) {
+	pputc(prn, '\n');
+    }
     pprintf(prn, " %s\n\n", datfile);
 
     if (gzsuff) {
@@ -2052,67 +2119,22 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-/* .......................................................... */
-
-#ifdef PAD_DAILY_DATA
-
-static int daily_data_resize (double ***pZ, DATAINFO *pdinfo, 
-			      char *missvec)
-{
-    int i, j, t;
-    double **tmp;
-
-    tmp = malloc(pdinfo->v * sizeof *tmp);
-    if (tmp == NULL) return 1;
-
-    for (i=0; i<pdinfo->v; i++) {
-	tmp[i] = malloc(pdinfo->n * sizeof **tmp);
-	if (tmp[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(tmp[j]);
-	    }
-	    free(tmp);
-	    return 1;
-	}
-    }
-
-    j = 0;
-    for (t=0; t<pdinfo->n; t++) {
-	int missing = missvec[t];
-
-	tmp[0][t] = 1.0;
-	for (i=1; i<pdinfo->v; i++) {
-	    if (missing) tmp[i][t] = NADBL;
-	    else tmp[i][t] = (*pZ)[i][j];
-	}
-	if (!missing) j++;
-    }
-
-    free_Z(*pZ, pdinfo);
-    *pZ = tmp;
-
-    ntodate(pdinfo->stobs, 0, pdinfo);
-    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
-    pdinfo->t2 = pdinfo->n - 1;
-
-    return 0;
-}
-
-#endif /* PAD_DAILY_DATA */
-
-static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
+static int check_daily_dates (DATAINFO *pdinfo, int *pd)
 {
     int fulln = 0, n, t;
-    int pd = pdinfo->pd;
-    double sd0 = pdinfo->sd0;
+    int oldpd = pdinfo->pd;
+    double oldsd0 = pdinfo->sd0;
     long ed1, ed2;
     int nmiss = 0, err = 0;
-    char *missvec = NULL;
+
+    *pd = 0;
     
     ed1 = get_epoch_day(pdinfo->S[0]);
-    if (ed1 < 0) err = 1;
+    if (ed1 < 0) {
+	err = 1;
+    }
 
-    pdinfo->pd =  guess_daily_pd(pdinfo);
+    pdinfo->pd = guess_daily_pd(pdinfo);
     pdinfo->time_series = TIME_SERIES;
 
     if (!err) {
@@ -2135,88 +2157,52 @@ static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
 	    nmiss = fulln - pdinfo->n;
 	    fprintf(stderr, "Observations: %d; days in sample: %d\n", 
 		    pdinfo->n, fulln);
-	    fprintf(stderr, "Missing daily observations: %d\n", nmiss);
-	}
-    }
-
-#ifdef PAD_DAILY_DATA
-    if (!err && nmiss > 0) {
-	missvec = malloc(fulln * sizeof *missvec);
-	if (missvec == NULL) err = 1;
-	else {
-	    for (t=0; t<fulln; t++) {
-		missvec[t] = 1;
+	    if (nmiss > 300 * pdinfo->n) {
+		fprintf(stderr, "Probably annual data\n");
+		*pd = 1;
+	    } else if (nmiss > 50 * pdinfo->n) {
+		fprintf(stderr, "Probably quarterly data\n");
+		*pd = 4;
+	    } else if (nmiss > 20 * pdinfo->n) {
+		fprintf(stderr, "Probably monthly data\n");
+		*pd = 12;
+	    } else if (nmiss > 5 * pdinfo->n) {
+		fprintf(stderr, "Probably weekly data\n");
+		*pd = 52;
+	    } else {
+		fprintf(stderr, "Missing daily observations: %d\n", nmiss);
 	    }
 	}
     }
-#endif
 
     for (t=0; t<pdinfo->n && !err; t++) {
 	n = daily_obs_number(pdinfo->S[t], pdinfo);
 	if (n < t) {
 	    fprintf(stderr, "Error: n = %d < t = %d\n", n, t);
 	    err = 1;
-	} 
-	else if (n > fulln - 1) {
+	} else if (n > fulln - 1) {
 	    fprintf(stderr, "Error: n = %d >= fulln = %d\n", n, fulln);
 	    err = 1;
 	}
-#ifdef PAD_DAILY_DATA 
-	else {
-	    missvec[n] = 0;
-	}
-#endif
     }
 
     if (err) {
-	pdinfo->pd = pd;
-	pdinfo->sd0 = sd0;
+	pdinfo->pd = oldpd;
+	pdinfo->sd0 = oldsd0;
 	pdinfo->time_series = 0;
-	if (missvec) {
-	    free(missvec);
-	}
-    } else if (pmiss != NULL && missvec != NULL) {
-	*pmiss = missvec;
-	for (t=0; t<pdinfo->n; t++) {
-	    free(pdinfo->S[t]);
-	}
-	free(pdinfo->S);
-	pdinfo->S = NULL;
-	pdinfo->markers = NO_MARKERS;
-	pdinfo->n = fulln;
     } else {
 	strcpy(pdinfo->stobs, pdinfo->S[0]);
 	strcpy(pdinfo->endobs, pdinfo->S[pdinfo->n - 1]);
 	pdinfo->t2 = pdinfo->n - 1;
-	if (nmiss > 0) {
+	if (nmiss > 0 && *pd == 0) {
 	    pdinfo->markers = DAILY_DATE_STRINGS;
 	}
     }
 
-    if (!err) {
-	return pdinfo->pd;
-    } else {
-	return -1;
-    }
+    return (err)? -1 : pdinfo->pd;
 }
 
 /* ......................................................... */
-
-#if 0
-static int labels_all_numeric (DATAINFO *pdinfo)
-{
-    int t, ret = 1;
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (!_isnumber(pdinfo->S[t])) {
-	    ret = 0;
-	    break;
-	}
-    }
-
-    return  ret;
-}
-#endif
 
 static int complete_year_labels (DATAINFO *pdinfo)
 {
@@ -2235,115 +2221,233 @@ static int complete_year_labels (DATAINFO *pdinfo)
     return  ret;
 }
 
-/* ......................................................... */
+enum date_orders {
+    YYYYMMDD = 1,
+    MMDDYYYY,
+    DDMMYYYY
+};
 
-static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
-     /* attempt to parse csv row labels as dates.  Return -1 if
-	this doesn't work out, 0 if the labels seem to be just
-	integer observation numbers, else return the inferred data
-	frequency */
+int get_date_order (int f0, int fn) 
 {
-    int n1, n2, try;
-    char year[5], subper[3], endobs[OBSLEN];
-    char lbl1[OBSLEN], lbl2[OBSLEN];
+    if (f0 > 31 || fn > 31) {
+	/* first field must be year */
+	return YYYYMMDD;
+    } else if (f0 > 12 || fn > 12) {
+	/* first field must be day */
+	return DDMMYYYY;
+    } else {
+	return MMDDYYYY;
+    }
+}
 
-    *lbl1 = *lbl2 = 0;
-    strncat(lbl1, pdinfo->S[0], OBSLEN - 1);
-    strncat(lbl2, pdinfo->S[pdinfo->n - 1], OBSLEN - 1);
-    n1 = strlen(lbl1);
-    n2 = strlen(lbl2);
+static int compress_daily (DATAINFO *pdinfo, int pd)
+{
+    int t, yr, mon, day;
+
+    for (t=0; t<pdinfo->n; t++) {
+	sscanf(pdinfo->S[t], "%d/%d/%d", &yr, &mon, &day);
+	if (pd == 1) {
+	    sprintf(pdinfo->S[t], "%d", yr);
+	} else if (pd == 12) {
+	    sprintf(pdinfo->S[t], "%d:%02d", yr, mon);
+	} else if (pd == 4) {
+	    sprintf(pdinfo->S[t], "%d:%d", yr, mon / 3 + (mon % 3 != 0));
+	} 
+    }
+
+    return 0;
+}
+
+static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
+{
+    int t, yr, mon, day;
+    int sret, err = 0;
+
+    for (t=0; t<pdinfo->n && !err; t++) {
+	if (dorder == DDMMYYYY) {
+	    sret = sscanf(pdinfo->S[t], "%d/%d/%d", &day, &mon, &yr);
+	} else {
+	    sret = sscanf(pdinfo->S[t], "%d/%d/%d", &mon, &day, &yr);
+	}
+	if (sret == 3) {
+	    sprintf(pdinfo->S[t], "%02d/%02d/%02d", yr, mon, day);
+	} else {
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+static int csv_daily_date_check (DATAINFO *pdinfo, PRN *prn)
+{
+    int d1[3], d2[3];
+    char *lbl1 = pdinfo->S[0];
+    char *lbl2 = pdinfo->S[pdinfo->n - 1];
+
+    if (sscanf(lbl1, "%d/%d/%d", &d1[0], &d1[1], &d1[2]) == 3 &&
+	sscanf(lbl2, "%d/%d/%d", &d2[0], &d2[1], &d2[2]) == 3) {
+	int yr1, mon1, day1;
+	int yr2, mon2, day2;
+	int dorder = get_date_order(d1[0], d2[0]);
+	int pd, ret = 0;
+
+	if (dorder == YYYYMMDD) {
+	    pputs(prn, "Trying date order YYYYMMDD\n");
+	    yr1 = d1[0];
+	    mon1 = d1[1];
+	    day1 = d1[2];
+	    yr2 = d2[0];
+	    mon2 = d2[1];
+	    day2 = d2[2];
+	} else if (dorder == DDMMYYYY) {
+	    pputs(prn, "Trying date order DDMMYYYY\n");
+	    day1 = d1[0];
+	    mon1 = d1[1];
+	    yr1 = d1[2];
+	    day2 = d2[0];
+	    mon2 = d2[1];
+	    yr2 = d2[2];
+	} else {
+	    pputs(prn, "Trying date order MMDDYYYY\n");
+	    mon1 = d1[0];
+	    day1 = d1[1];
+	    yr1 = d1[2];
+	    mon2 = d2[0];
+	    day2 = d2[1];
+	    yr2 = d2[2];
+	}		
+	    
+	if (yr2 >= yr1 && 
+	    mon1 > 0 && mon1 < 13 &&
+	    mon2 > 0 && mon2 < 13 && 
+	    day1 > 0 && day1 < 32 &&
+	    day2 > 0 && day2 < 32) {
+	    /* looks promising for calendar dates */
+	    if (dorder != YYYYMMDD) {
+		if (transform_daily_dates(pdinfo, dorder)) {
+		    return -1;
+		}
+	    }
+	    pprintf(prn, "? %s - %s\n", lbl1, lbl2);
+	    ret = check_daily_dates(pdinfo, &pd);
+	    if (ret >= 0 && pd > 0) {
+		compress_daily(pdinfo, pd);
+		ret = csv_time_series_check(pdinfo, prn);
+	    } 
+	    return ret;
+	}
+    } 
+
+    return -1;
+}
+
+static void make_endobs_string (char *endobs, const char *s)
+{
+    *endobs = 0;
+    strncat(endobs, s, 4);
+    strcat(endobs, ":");
+    strncat(endobs, s + 5, 2);
+}
+
+static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
+{
+    char year[5];
+    char *lbl1 = pdinfo->S[0];
+    char *lbl2 = pdinfo->S[pdinfo->n - 1];
+    int len = strlen(lbl1);
+    int try, pd = -1;
+
+    *year = '\0';
+    strncat(year, lbl1, 4);
+    try = atoi(year);
+
+    if (try > 0 && try < 3000) {
+	pprintf(prn, M_("   %s: probably a year... "), year);
+    } else {
+	pprintf(prn, M_("   %s: out of bounds for a year?\n"), year);
+    }
+
+    if (len == 5) {
+	pputs(prn, M_("   but I can't make sense of the extra bit\n"));
+    } else if (len == 4) {
+	pputs(prn, M_("and just a year\n"));
+	if (complete_year_labels(pdinfo)) {
+	    strcpy(pdinfo->stobs, year);
+	    pdinfo->sd0 = atof(pdinfo->stobs);
+	    strcpy(pdinfo->endobs, lbl2);
+	    pd = pdinfo->pd = 1;
+	} else {
+	    pputs(prn, M_("   but the dates are not complete and consistent\n"));
+	    return pd;
+	}
+    } else if (lbl1[4] == '.' || 
+	       lbl1[4] == ':' || 
+	       lbl1[4] == 'Q' || 
+	       lbl1[4] == 'P') {
+	char subper[3];
+
+	*subper = '\0';
+	strncat(subper, lbl1 + 5, 2);
+	if (len == 6) {
+	    pprintf(prn, M_("quarter %s?\n"), subper);
+	    sprintf(pdinfo->stobs, "%s:%s", year, subper);
+	    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
+	    make_endobs_string(pdinfo->endobs, lbl2);
+	    pd = pdinfo->pd = 4;
+	} else if (len == 7) {
+	    pprintf(prn, M_("month %s?\n"), subper);
+	    sprintf(pdinfo->stobs, "%s:%s", year, subper);
+	    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
+	    make_endobs_string(pdinfo->endobs, lbl2);
+	    pd = pdinfo->pd = 12;
+	}
+    }
+
+    return pd;
+}
+
+/* attempt to parse csv row labels as dates.  Return -1 if this
+   doesn't work out, or 0 if the labels seem to be just integer
+   observation numbers, else return the inferred data frequency 
+*/
+
+static int test_markers_for_dates (DATAINFO *pdinfo, PRN *prn)
+{
+    char endobs[OBSLEN];
+    char *lbl1 = pdinfo->S[0];
+    int n1 = strlen(lbl1);
 
     pprintf(prn, M_("   first row label \"%s\", last label \"%s\"\n"), 
-	   lbl1, lbl2);
+	    lbl1, pdinfo->S[pdinfo->n - 1]);
 
     /* are the labels (probably) just 1, 2, 3 etc.? */
     sprintf(endobs, "%d", pdinfo->n);
-    if (strcmp(lbl1, "1") == 0 && strcmp(lbl2, endobs) == 0)
+    if (!strcmp(pdinfo->S[0], "1") && !strcmp(pdinfo->S[pdinfo->n - 1], endobs)) {
 	return 0;
+    }
 
-    if (n1 != n2) {
+    /* labels are of different lengths? */
+    if (n1 != strlen(pdinfo->S[pdinfo->n - 1])) {
 	pputs(prn, M_("   label strings can't be consistent dates\n"));
 	return -1;
     }
 
     pputs(prn, M_("trying to parse row labels as dates...\n"));
 
-    /* daily data? */
     if (n1 == 8 || n1 == 10) {
-	int yr1, mon1, day1;
-	int yr2, mon2, day2;
-
-	if (sscanf(lbl1, "%d/%d/%d", &yr1, &mon1, &day1) == 3 &&
-	    sscanf(lbl2, "%d/%d/%d", &yr2, &mon2, &day2) == 3) {
-	    if (yr2 >= yr1 && 
-		mon1 > 0 && mon1 < 13 &&
-		mon2 > 0 && mon2 < 13 && 
-		day1 > 0 && day1 < 32 &&
-		day2 > 0 && day2 < 32) {
-		/* looks promising for calendar dates */
-		return check_daily_dates(pdinfo, missvec);
-	    }
-	} else {
-	    return -1;
-	}
-    }
-
-    else if (n1 >= 4) {
-	*year = 0;
+	/* daily data? */
+	return csv_daily_date_check(pdinfo, prn);
+    } else if (n1 >= 4) {
+	/* annual, quarterly, monthly? */
 	if (isdigit((unsigned char) lbl1[0]) &&
 	    isdigit((unsigned char) lbl1[1]) &&
 	    isdigit((unsigned char) lbl1[2]) && 
 	    isdigit((unsigned char) lbl1[3])) {
-	    strncat(year, lbl1, 4);
-	    try = atoi(year);
-	    if (try > 0 && try < 3000) {
-		pprintf(prn, M_("   %s: probably a year... "), year);
-	    } else {
-		pprintf(prn, M_("   %s: out of bounds for a year?\n"), year);
-	    }
-	    if (n1 == 5) {
-		pputs(prn, M_("   but I can't make sense of the extra bit\n"));
-		return -1;
-	    }
-	    if (n1 == 4) {
-		pputs(prn, M_("and just a year\n"));
-		if (complete_year_labels(pdinfo)) {
-		    strcpy(pdinfo->stobs, year);
-		    pdinfo->sd0 = atof(pdinfo->stobs);
-		    strcpy(pdinfo->endobs, lbl2);
-		    pdinfo->pd = 1;
-		    return 1;
-		} else {
-		    pputs(prn, M_("   but the dates are not complete and consistent\n"));
-		    return -1;
-		}
-	    }
-	    if (lbl1[4] == '.' || lbl1[4] == ':' || lbl1[4] == 'Q' || lbl1[4] == 'P') {
-		strcpy(subper, lbl1 + 5);
-		if (n1 == 6) {
-		    pprintf(prn, M_("quarter %s?\n"), subper);
-		    sprintf(pdinfo->stobs, "%s:%s", year, subper);
-		    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
-		    *pdinfo->endobs = 0;
-		    strncat(pdinfo->endobs, lbl2, 4);
-		    strcat(pdinfo->endobs, ":");
-		    strcat(pdinfo->endobs, lbl2 + 5);
-		    pdinfo->pd = 4;
-		    return 4;
-		}
-		if (n1 == 7) {
-		    pprintf(prn, M_("month %s?\n"), subper);
-		    sprintf(pdinfo->stobs, "%s:%s", year, subper);
-		    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
-		    *pdinfo->endobs = 0;
-		    strncat(pdinfo->endobs, lbl2, 4);
-		    strcat(pdinfo->endobs, ":");
-		    strcat(pdinfo->endobs, lbl2 + 5);
-		    pdinfo->pd = 12;
-		    return 12;
-		}
-	    }
-	} else pputs(prn, M_("   definitely not a four-digit year\n"));
+	    return csv_time_series_check(pdinfo, prn);
+	} else {
+	    pputs(prn, M_("   definitely not a four-digit year\n"));
+	}
     }
 
     return -1;
@@ -2580,17 +2684,17 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 
     *trail = 1;
 
-    while (1) {
-	c = fgetc(fp);
+    while ((c = fgetc(fp)) != EOF) {
 	if (c == '\n') {
-	    if (cc > maxlen) maxlen = cc;
+	    if (cc > maxlen) {
+		maxlen = cc;
+	    }
 	    cc = 0;
 	    if (cbak != 0 && cbak != ',') {
 		*trail = 0;
 	    }
 	    continue;
 	}
-	if (c == EOF) break;
 	cbak = c;
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
 	    !(c == CTRLZ)) {
@@ -2599,11 +2703,16 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 	    return -1;
 	}
 	if (cc == 0) {
-	    if (c == '#') comment = 1;
-	    else comment = 0;
+	    comment = (c == '#');
 	}
-	if (!comment && *gottab == 0 && c == '\t') *gottab = 1;
-	if (!comment && *gotdelim == 0 && c == delim) *gotdelim = 1;
+	if (!comment) {
+	    if (*gottab == 0 && c == '\t') {
+		*gottab = 1;
+	    }
+	    if (*gotdelim == 0 && c == delim) {
+		*gotdelim = 1;
+	    }
+	}
 	cc++;
     }
 
@@ -2627,26 +2736,27 @@ static int count_csv_fields (const char *line, char delim)
 	if (*p == delim) nf++;
 	cbak = *p;
 	p++;
-#if 1
 	/* Problem: (when) should trailing delimiter be read as implicit "NA"? */
 	if (*p == '\0' && cbak == delim && cbak != ',') {
 	    nf--;
 	}
-#endif
     }
 
     return nf + 1;
 }
 
-static void remove_quoted_commas (char *line)
+static void remove_quoted_commas (char *s)
 {
     int inquote = 0;
-    char *p = line;
 
-    while (*p) {
-	if (*p == '"') inquote = !inquote;
-	if (inquote && *p == ',') *p = ' ';
-	p++;
+    while (*s) {
+	if (*s == '"') {
+	    inquote = !inquote;
+	}
+	if (inquote && *s == ',') {
+	    *s = ' ';
+	}
+	s++;
     }
 }
 
@@ -2659,6 +2769,7 @@ static void compress_csv_line (char *line, char delim, int trail)
 	*p = '\0';
 	p--;
     }
+
     if (*p == '\r') *p = '\0';
 
     if (delim == ',') {
@@ -2683,7 +2794,8 @@ static void compress_csv_line (char *line, char delim, int trail)
 }
 
 static void check_first_field (const char *line, char delim, 
-			       int *blank_1, int *obs_1, PRN *prn)
+			       int *blank_1, int *obs_1, 
+			       PRN *prn)
 {
     *blank_1 = 0;
     *obs_1 = 0;
@@ -2702,8 +2814,10 @@ static void check_first_field (const char *line, char delim,
 	}
 	field1[i] = '\0';
 	iso_to_ascii(field1);
+
 	pprintf(prn, M_("   first field: '%s'\n"), field1);
 	lower(field1);
+
 	if (!strcmp(field1, "obs") || !strcmp(field1, "date") ||
 	    !strcmp(field1, "year")) {
 	    pputs(prn, M_("   seems to be observation label\n"));
@@ -2822,6 +2936,40 @@ static int process_csv_obs (const char *str, int i, int t,
     return err;
 }
 
+/* pick up any comments following the data block in a CSV file */
+
+static char *get_csv_descrip (char *line, int maxlen, FILE *fp)
+{
+    char *desc = NULL;
+
+    while (fgets(line, maxlen, fp)) {
+	int len = strlen(line);
+	char *tmp;
+
+	if (desc == NULL) {
+	    desc = gretl_strdup(line);
+	    if (desc == NULL) {
+		return NULL;
+	    }
+	} else {
+	    tmp = realloc(desc, strlen(desc) + len + 1);
+	    if (tmp == NULL) {
+		free(desc);
+		return NULL;
+	    }
+	    desc = tmp;
+	    strcat(desc, line);
+	}
+    }
+
+    if (string_is_blank(desc)) {
+	free(desc);
+	desc = NULL;
+    }
+
+    return desc;
+}
+
 /**
  * import_csv:
  * @pZ: pointer to data set.
@@ -2840,14 +2988,14 @@ static int process_csv_obs (const char *str, int i, int t,
 int import_csv (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PATHS *ppaths, PRN *prn)
 {
-    int ncols, chkcols;
+    int ncols, chkcols, nrows = 0;
     int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;
     int i, k, t, blank_1 = 0, obs_1 = 0, trail, maxlen;
     char csvstr[CSVSTRLEN];
     FILE *fp = NULL;
     DATAINFO *csvinfo = NULL;
     double **csvZ = NULL;
-    char *line = NULL, *p = NULL;
+    char *line = NULL, *p = NULL, *descrip = NULL;
     const char *msg = M_("\nPlease note:\n"
 	"- The first row of the CSV file should contain the "
 	"names of the variables.\n"
@@ -2858,10 +3006,11 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	"array of data.\n");
     char delim = '\t';
     int numcount, auto_name_vars = 0;
-    char *missvec = NULL;
     gretl_string_table *st = NULL;
 
-    if (*ppdinfo != NULL) delim = (*ppdinfo)->delim;
+    if (*ppdinfo != NULL) {
+	delim = (*ppdinfo)->delim;
+    }
 
     if (prn != NULL) {
 	check_for_console(prn);
@@ -2879,6 +3028,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	pputs(prn, M_("Out of memory\n"));
 	goto csv_bailout;
     }
+
     csvinfo->delim = delim;
 
     pprintf(prn, "%s %s...\n", M_("parsing"), fname);
@@ -2888,9 +3038,14 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (maxlen <= 0) {
 	goto csv_bailout;
     }
+
     if (!gotdelim) {
-	if (gottab) delim = csvinfo->delim = '\t';
-	else delim = csvinfo->delim = ' ';
+	/* set default delimiter */
+	if (gottab) {
+	    delim = csvinfo->delim = '\t';
+	} else {
+	    delim = csvinfo->delim = ' ';
+	}
     }
 
     pprintf(prn, M_("using delimiter '%c'\n"), delim);
@@ -2911,10 +3066,21 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     chkcols = ncols = gotdata = 0;
     while (fgets(line, maxlen + 1, fp)) {
 	/* skip comment lines */
-	if (*line == '#') continue;
-	/* skip blank lines */
-	if (string_is_blank(line)) continue;
-	csvinfo->n += 1;
+	if (*line == '#') {
+	    continue;
+	}
+	/* skip blank lines -- but finish if the blank comes after data */
+	if (string_is_blank(line)) {
+	    if (gotdata) {
+		if (*pZ == NULL) {
+		    descrip = get_csv_descrip(line, maxlen + 1, fp);
+		}
+		break;
+	    } else {
+		continue;
+	    }
+	}
+	nrows++;
 	compress_csv_line(line, delim, trail);
 	if (!gotdata) {
 	    /* scrutinize first "real" line */
@@ -2928,24 +3094,21 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	} else {
 	    if (chkcols != ncols) {
 		pprintf(prn, M_("   ...but row %d has %d fields: aborting\n"),
-			csvinfo->n, chkcols);
+			nrows, chkcols);
 		pputs(prn, msg);
 		goto csv_bailout;
 	    }
 	}
     }
 
-    /* need to decrement csvinfo->n to allow for var headings */
-    csvinfo->n -= 1;
+    /* allow for var headings */
+    csvinfo->n = nrows - 1;
 
-    csvinfo->v = (blank_1 || obs_1)? ncols: ncols + 1;
+    csvinfo->v = (blank_1 || obs_1)? ncols : ncols + 1;
     pprintf(prn, M_("   number of variables: %d\n"), csvinfo->v - 1);
-    pprintf(prn, M_("   number of non-blank lines: %d\n"), 
-	    csvinfo->n + 1);
+    pprintf(prn, M_("   number of non-blank lines: %d\n"), nrows);
 
     /* end initial checking */
-    fclose(fp);
-    fp = NULL;
 
     if (csvinfo->n == 0) {
 	pputs(prn, M_("Invalid data file\n"));
@@ -2967,18 +3130,18 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     /* second pass */
-    fp = fopen(fname, "r");
-    if (fp == NULL) {
-	goto csv_bailout;
-    }
+
+    rewind(fp);
 
     /* parse the line containing variable names */
     pputs(prn, M_("scanning for variable names...\n"));
 
     while (fgets(line, maxlen + 1, fp)) {
-	if (*line == '#') continue;
-	if (string_is_blank(line)) continue;
-	else break;
+	if (*line == '#' || string_is_blank(line)) {
+	    continue;
+	} else {
+	    break;
+	}
     }
     compress_csv_line(line, delim, trail);   
 
@@ -2997,6 +3160,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    p++;
 	}
 	if (*p == delim) p++;
+
 	csvstr[i] = 0;
 	if (k == 0 && (blank_1 || obs_1)) {
 	    ;
@@ -3027,6 +3191,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     if (numcount == csvinfo->v - 1) {
 	pputs(prn, M_("it seems there are no variable names\n"));
+	/* then we undercounted the observations by one */
 	if (dataset_add_obs(&csvZ, csvinfo)) {
 	    pputs(prn, _("Out of memory\n"));
 	    goto csv_bailout;
@@ -3056,8 +3221,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     while (fgets(line, maxlen + 1, fp)) {
 	int nv;
 
-	if (*line == '#') continue;
-	if (string_is_blank(line)) continue;
+	if (*line == '#' || string_is_blank(line)) {
+	    continue;
+	}
 	compress_csv_line(line, delim, trail);
 	p = line;
 	if (delim == ' ' && *p == ' ') p++;
@@ -3065,14 +3231,17 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	for (k=0; k<ncols; k++) {
 	    i = 0;
 	    while (*p && *p != delim) {
-		if (i < CSVSTRLEN - 1) csvstr[i++] = *p;
-		else {
+		if (i < CSVSTRLEN - 1) {
+		    csvstr[i++] = *p;
+		} else {
 		    pprintf(prn, M_("warning: truncating data at row %d, column %d\n"),
 			    t+1, k+1);
 		}
 		p++;
 	    }
-	    if (*p == delim) p++;
+	    if (*p == delim) {
+		p++;
+	    }
 	    csvstr[i] = 0;
 	    if (k == 0 && (blank_1 || obs_1)) {
 		csvinfo->S[t][0] = 0;
@@ -3085,8 +3254,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		}
 	    }
 	}
-	t++;
-	if (t == csvinfo->n) break;
+	if (++t == csvinfo->n) {
+	    break;
+	}
     }
 
 #ifdef ENABLE_NLS
@@ -3099,8 +3269,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     csvinfo->t1 = 0;
     csvinfo->t2 = csvinfo->n - 1;
+
     if (blank_1 || obs_1) {
-	markertest = test_label(csvinfo, &missvec, prn);
+	markertest = test_markers_for_dates(csvinfo, prn);
     }
     if (markertest > 0) {
 	pputs(prn, M_("taking date information from row labels\n\n"));
@@ -3109,20 +3280,14 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	dataset_dates_defaults(csvinfo);
     }
 
-#ifdef PAD_DAILY_DATA
-    if (missvec != NULL) {
-	daily_data_resize(&csvZ, csvinfo, missvec);
-	free(missvec);
-    }
-#endif
-
-    if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) 
+    if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) { 
         csvinfo->time_series = TIME_SERIES;
+    }
 
     /* If there were observation labels and they were not interpretable
        as dates, and they weren't simply "1, 2, 3, ...", then they 
-       should probably be preserved; otherwise discard them. */
-
+       should probably be preserved; otherwise discard them. 
+    */
     if (csvinfo->S != NULL && markertest >= 0 && 
 	csvinfo->markers != DAILY_DATE_STRINGS) {
 	csvinfo->markers = NO_MARKERS;
@@ -3134,18 +3299,25 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     if (auto_name_vars) {
+	/* no variable names were found */
 	for (i=1; i<csvinfo->v; i++) {
 	    sprintf(csvinfo->varname[i], "v%d", i);
 	}
     }
 
     if (*pZ == NULL) {
+	/* no dataset currently in place */
 	*pZ = csvZ;
-	if (*ppdinfo != NULL) free(*ppdinfo);
+	if (*ppdinfo != NULL) {
+	    free(*ppdinfo);
+	}
+	if (descrip != NULL) {
+	    csvinfo->descrip = descrip;
+	    descrip = NULL;
+	}
 	*ppdinfo = csvinfo;
-    } else {
-	if (merge_data(pZ, *ppdinfo, csvZ, csvinfo, prn))
-	    goto csv_bailout;
+    } else if (merge_data(pZ, *ppdinfo, csvZ, csvinfo, prn)) {
+	goto csv_bailout;
     }
 
     fclose(fp); 
@@ -3156,11 +3328,19 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     return 0;
 
  csv_bailout:
-    if (fp != NULL) fclose(fp);
-    if (line != NULL) free(line);
-    if (csvinfo != NULL) 
-	clear_datainfo(csvinfo, CLEAR_FULL);
 
+    if (fp != NULL) {
+	fclose(fp);
+    }
+    if (line != NULL) {
+	free(line);
+    }
+    if (descrip != NULL) {
+	free(descrip);
+    }
+    if (csvinfo != NULL) {
+	clear_datainfo(csvinfo, CLEAR_FULL);
+    }
     if (st != NULL) {
 	gretl_string_table_destroy(st);
     }
@@ -3190,13 +3370,24 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
     int i, t;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return E_FOPEN;
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
     
     S = malloc(pdinfo->n * sizeof *S);
-    if (S == NULL) return E_ALLOC; 
+    if (S == NULL) {
+	return E_ALLOC; 
+    }
+
     for (i=0; i<pdinfo->n; i++) {
 	S[i] = malloc(OBSLEN);
-	if (S[i] == NULL) return E_ALLOC; 
+	if (S[i] == NULL) {
+	    for (t=0; t<i; t++) {
+		free(S[t]);
+	    }
+	    free(S);
+	    return E_ALLOC; 
+	}
     }
 
     sprintf(sformat, "%%%ds", OBSLEN - 1);
@@ -3204,7 +3395,9 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
     for (t=0; t<pdinfo->n; t++) {
 	eatspace(fp);
 	if (fscanf(fp, sformat, marker) != 1) {
-	    for (i=0; i<pdinfo->n; i++) free (S[i]);
+	    for (i=0; i<pdinfo->n; i++) {
+		free(S[i]);
+	    }
 	    free(S);
 	    fclose(fp);
 	    return 1;
@@ -3212,10 +3405,13 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 	marker[OBSLEN-1] = '\0';
 	strcpy(S[t], marker);
     }
+
     fclose(fp);
 
     if (pdinfo->S != NULL) {
-	for (i=0; i<pdinfo->n; i++) free (pdinfo->S[i]);
+	for (i=0; i<pdinfo->n; i++) {
+	    free(pdinfo->S[i]);
+	}
 	free(pdinfo->S);
     }
 
@@ -3292,9 +3488,8 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
        of observations, plus basic sanity check */
     cc = maxline = 0;
     boxinfo->v = 1;
-    do {
-	c = getc(fp); 
-	if (c != EOF && c != 10 && !isprint((unsigned char) c)) {
+    while ((c = getc(fp)) != EOF) {
+	if (c != 10 && !isprint((unsigned char) c)) {
 	    pprintf(prn, M_("Binary data (%d) encountered: this is not a valid "
 		   "BOX1 file\n"), c);
 	    fclose(fp);
@@ -3302,20 +3497,30 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 	    goto box_bailout;
 	}
 	if (c == '\n') {
-	    if (cc > maxline) maxline = cc;
+	    if (cc > maxline) {
+		maxline = cc;
+	    }
 	    cc = 0;
 	    if ((c = getc(fp)) != EOF) {
 		tmp[0] = c; cc++;
-	    } else break;
+	    } else {
+		break;
+	    }
 	    if ((c = getc(fp)) != EOF) {
 		tmp[1] = c; cc++;
-	    } else break;
+	    } else {
+		break;
+	    }
 	    tmp[2] = '\0';
-	    if (!strcmp(tmp, "03")) boxinfo->v += 1;
-	    else if (!strcmp(tmp, "99")) boxinfo->n += 1;
-	} else
+	    if (!strcmp(tmp, "03")) {
+		boxinfo->v += 1;
+	    } else if (!strcmp(tmp, "99")) {
+		boxinfo->n += 1;
+	    }
+	} else {
 	    cc++;
-    } while (c != EOF);
+	}
+    } 
 
     fclose(fp);
 
@@ -3401,9 +3606,10 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 	    strncpy(tmp, line+64, 20);
 	    tmp[20] = '\0';
 	    unspace(tmp);
-	    if (strlen(tmp))
+	    if (strlen(tmp)) {
 		pprintf(prn, M_("   Warning: coded variable (format '%s' "
 			"in BOX file)\n"), tmp);
+	    }
 	    *VARLABEL(boxinfo, realv) = 0;
 	    strncat(VARLABEL(boxinfo, realv), line + 87, 99);
 	    unspace(VARLABEL(boxinfo, realv));
@@ -3617,7 +3823,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 
 #define UTF const xmlChar *
 
-/* #define XML_DEBUG */
+#undef XML_DEBUG
 
 static char *simple_fname (char *dest, const char *src)
 {
@@ -3675,7 +3881,10 @@ static int write_xmldata (const char *fname, const int *list,
     const char *enc = "UTF-8";
 #else
     const char *enc = get_gretl_charset();
-    if (enc == NULL) enc = "ISO-8859-1";
+
+    if (enc == NULL) {
+	enc = "ISO-8859-1";
+    }
 #endif
 
     err = 0;

@@ -351,7 +351,7 @@ static void
 ms_excel_read_bof (BiffQuery *q,
 		   MsBiffBofData **version)
 {
-    /* The first BOF seems to be OK, the rest lie ? */
+    /* The first BOF seems to be OK, the rest lie? */
     MsBiffVersion vv = MS_BIFF_V_UNKNOWN;
     MsBiffBofData *ver = *version;
 
@@ -398,11 +398,9 @@ ms_excel_read_bof (BiffQuery *q,
     } else {
 	printf ("Unknown BOF (%x)\n", ver->type);
     }
-
-    return;
 }
 
-static void
+static int
 ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 			int *nsheets)
 {
@@ -411,6 +409,7 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
     BiffQuery *q;
     MsBiffBofData *ver = NULL;
     char *problem_loading = NULL;
+    int excel_version = MS_BIFF_V_UNKNOWN;
 
     result = ms_ole_stream_open (&stream, file, "/", "workbook", 'r');
     if (result != MS_OLE_ERR_OK) {
@@ -420,7 +419,7 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	if (result != MS_OLE_ERR_OK) {
 	    ms_ole_stream_close (&stream);
 	    fprintf (stderr, _("No book or workbook streams found."));
-	    return;
+	    return excel_version;
 	}
     }
 
@@ -559,9 +558,12 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 
     ms_biff_query_destroy(q);
     if (ver) {
+	excel_version = ver->version;
 	ms_biff_bof_data_destroy(ver);
     }
     ms_ole_stream_close(&stream);
+
+    return excel_version;
 }
 
 /* public interface */
@@ -581,21 +583,22 @@ int excel_book_get_info (const char *fname, wbook *book)
 	    _("This file is not an 'OLE' file -- it may be too "
 	      "old for gretl to read\n")
 	    : _("Unexpected error reading the file\n");
-	ms_ole_destroy (&f);
+	ms_ole_destroy(&f);
 	fprintf(stderr, msg);
 	return 1;
     }
 
-    ms_excel_read_workbook(f, &bounds, &nsheets);
+    book->version = ms_excel_read_workbook(f, &bounds, &nsheets);
     ms_ole_destroy(&f);
 
-    if (nsheets == 0 || bounds == NULL)
+    if (nsheets == 0 || bounds == NULL) {
 	return 1;
+    }
 
-    book->sheetnames = g_malloc(nsheets * sizeof (char *));
+    book->sheetnames = g_malloc(nsheets * sizeof *book->sheetnames);
     if (book->sheetnames == NULL) return 1;
 
-    book->byte_offsets = g_malloc(nsheets * sizeof (unsigned));
+    book->byte_offsets = g_malloc(nsheets * sizeof *book->byte_offsets);
     if (book->byte_offsets == NULL) return 1;
 
     book->nsheets = nsheets;

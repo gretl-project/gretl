@@ -40,6 +40,7 @@ static char *convert8to7 (const unsigned char *s, int count);
 static char *convert16to7 (const unsigned char *s, int count);
 static char *mark_string (char *str);
 
+#undef EDEBUG
 #undef MEMDEBUG
 
 #define EXCEL_IMPORTER
@@ -212,7 +213,7 @@ static int check_copy_string (struct rowdescr *prow, int row, int col,
 static int process_item (BiffQuery *q, wbook *book, PRN *prn) 
 {
     struct rowdescr *prow = NULL;
-    static char **saved_ref;
+    static char **string_targ;
     int row = 0, col = 0, xfref = 0;
 
     if (cell_record(q->ls_op)) {
@@ -286,8 +287,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     case BIFF_LABEL: {
 	unsigned int len = MS_OLE_GET_GUINT16(q->data + 6);
 
-	saved_ref = NULL;
-
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
 #endif
@@ -304,7 +303,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABELSST, row=%d, col=%d\n", row, col);
 #endif
-	saved_ref = NULL;
 
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
@@ -326,8 +324,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     case BIFF_NUMBER: {
 	double v;
 
-	saved_ref = NULL;
-
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
 
@@ -341,8 +337,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 
     case BIFF_RK: {
 	double v;
-
-	saved_ref = NULL;
 
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
@@ -358,8 +352,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     case BIFF_MULRK: {
 	int i, ncols = (q->length - 6) / 6;
 	double v;
-
-	saved_ref = NULL;
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got MULRK, row=%d, first_col=%d, ncols=%d\n", 
@@ -381,8 +373,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     case BIFF_FORMULA: { 
 	const guint8 *result = q->data + 6;
 
-	saved_ref = NULL;
-
 #ifdef EDEBUG
 	fprintf(stderr, "Got FORMULA, row=%d, col=%d\n", row, col);
 #endif
@@ -390,16 +380,20 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	prow = rowptr + row;
 
 	if (result[6] == 0xff && result[7] == 0xff) {
-	    /* not a floating point value */
+#ifdef EDEBUG
+	    fprintf(stderr, " non floating-point value, code = 0x%u\n", 
+		    (unsigned) *result);
+#endif
 
 	    switch (*result) {
 	    case 0x0: /* string formula */
-		saved_ref = prow->cells + col;
+		string_targ = &prow->cells[col];
 		break;
 	    case 0x1: /* boolean value */
 		prow->cells[col] = g_strdup((result[2])? "1" : "0");
 		break;
 	    case 0x2: /* error code */
+	    case 0x3: /* empty */
 		prow->cells[col] = g_strdup("-999.0");
 		break;
 	    default:
@@ -407,10 +401,6 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 			(unsigned) *result);
 		break;
 	    }
-#ifdef EDEBUG
-	    fprintf(stderr, " non floating-point value, code = 0x%u\n", 
-		    (unsigned) *result);
-#endif
 	} else {
 	    /* floating-point */
 	    double v = get_le_double(result);
@@ -431,16 +421,17 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
     case BIFF_STRING: {
 	unsigned int len;
 
-	if (saved_ref == NULL) {
+	if (string_targ == NULL) {
 	    pprintf(prn, _("String record without preceding string formula"));
 	    pputc(prn, '\n');
 	    break;
 	}
 	len = MS_OLE_GET_GUINT16(q->data + 0);
-	*saved_ref = mark_string(convert8to7(q->data + 2, len + 1));
+	*string_targ = mark_string(convert8to7(q->data + 2, len + 1));
 #ifdef EDEBUG
-	fprintf(stderr, "Got STRING, reference = '%s'\n", *saved_ref);	
+	fprintf(stderr, "Filled out string formula with '%s'\n", *string_targ);	
 #endif
+	string_targ = NULL;
 	break;
     }
 
@@ -707,7 +698,10 @@ static char *convert16to7 (const unsigned char *s, int count)
     guint16 u;
 
     dest = malloc(VNAMELEN);
-    if (dest == NULL) return NULL;
+    if (dest == NULL) {
+	return NULL;
+    }
+
     memset(dest, 0, VNAMELEN);
 
     p = dest;
@@ -724,6 +718,10 @@ static char *convert16to7 (const unsigned char *s, int count)
     if (*dest == '\0') {
 	strcpy(dest, "varname");
     }
+
+#ifdef EDEBUG
+    fprintf(stderr, "convert16to7: returning '%s'\n", dest);
+#endif
 
     return dest;    
 }
@@ -785,7 +783,9 @@ static int allocate_row_col (int row, int col, wbook *book)
 	rowptr[row].end = newcol;
     } 
  
-    if (col > rowptr[row].last) rowptr[row].last = col;
+    if (col > rowptr[row].last) {
+	rowptr[row].last = col;
+    }
 
     return 0;
 }
@@ -889,9 +889,11 @@ static int first_col_strings (wbook *book)
 		rowptr[t].cells[i]);
 #endif
 	if (rowptr == NULL || rowptr[t].cells[i] == NULL ||
-	    !IS_STRING(rowptr[t].cells[i]))
+	    !IS_STRING(rowptr[t].cells[i])) {
 	    return 0;
+	}
     }
+
     return 1;
 }
 
@@ -937,7 +939,8 @@ static int check_all_varnames (wbook *book, int ncols, int skip)
 	test = rowptr[t].cells[i] + 1;
 	/* "obs" or "id" in first col is OK, though not thereafter */
 	if (i == skip + book->col_offset && obs_string(test)) {
-	    ; /* pass along */
+	    /* pass along */
+	    ;
 	} else {
 	    int verr = check_varname(test);
 
@@ -1018,6 +1021,17 @@ static int check_data_block (wbook *book, int ncols, int skip,
     return ret;
 }
 
+static void print_excel_version (int version, PRN *prn)
+{
+    if (version == MS_BIFF_V5) {
+	pputs(prn, "Excel 5.0\n");
+    } else if (version == MS_BIFF_V7) {
+	pputs(prn, "Excel 95\n");
+    } else if (version == MS_BIFF_V8) {
+	pputs(prn, "Excel 97 +\n");
+    }
+}
+
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    PRN *prn)
 {
@@ -1047,12 +1061,16 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, _("No worksheets found"));
 	err = 1;
     } else {
+	print_excel_version(book.version, prn);
 	wbook_print_info(&book);
     }
 
     if (!err) {
-	if (book.nsheets > 1) wsheet_menu(&book, 1);
-	else wsheet_menu(&book, 0);
+	if (book.nsheets > 1) {
+	    wsheet_menu(&book, 1);
+	} else {
+	    wsheet_menu(&book, 0);
+	}
     }
 
 #ifdef EDEBUG
@@ -1083,16 +1101,24 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	strerr.str = NULL;
 
 	lastrow--;
-	while (lastrow > 0 && !rowptr[lastrow].cells) lastrow--;
+	while (lastrow > 0 && !rowptr[lastrow].cells) {
+	    lastrow--;
+	}
 
 	for (i=0; i<=lastrow; i++) {
 	    if (rowptr[i].cells != NULL) {
 		ncols = 0;
-		for (j=0; j<=rowptr[i].last; j++) 
-		    if (rowptr[i].cells[j] != NULL) ncols++;
-		if (ncols > maxcols) maxcols = ncols;
+		for (j=0; j<=rowptr[i].last; j++) {
+		    if (rowptr[i].cells[j] != NULL) {
+			ncols++;
+		    }
+		}
+		if (ncols > maxcols) {
+		    maxcols = ncols;
+		}
 	    }
 	}
+
 	ncols = maxcols;
 	printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
 
@@ -1104,14 +1130,17 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	label_strings = first_col_strings(&book);
-	puts("found label strings in first column"); 
+	if (label_strings) {
+	    puts("found label strings in first column");
+	} else {
+	    puts("check for label strings in first column: not found");
+	}
 
 	err = check_all_varnames(&book, ncols, label_strings);
 	if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	    pputs(prn, _("One or more variable names are missing.\n"));
 	    pputs(prn, _(adjust_rc));
-	}
-	else if (err == VARNAMES_INVALID) {
+	} else if (err == VARNAMES_INVALID) {
 	    invalid_varname(prn);
 	}
 	if (err) goto getout; 

@@ -133,11 +133,12 @@ static void wbook_print_info (wbook *book)
 	    (book->nsheets > 1)? "s" : "");
     
     for (i=0; i<book->nsheets; i++) {
-	if (book->byte_offsets != NULL) 
+	if (book->byte_offsets != NULL) {
 	    fprintf(stderr, "%d: '%s' at offset %u\n", i, 
 		    book->sheetnames[i], book->byte_offsets[i]);
-	else
+	} else {
 	    fprintf(stderr, "%d: '%s'\n", i, book->sheetnames[i]);
+	}
     }
 }
 
@@ -145,14 +146,16 @@ static void wbook_free (wbook *book)
 {
     int i;
 
-    for (i=0; i<book->nsheets; i++)
+    for (i=0; i<book->nsheets; i++) {
 	free(book->sheetnames[i]);
+    }
     free(book->sheetnames);
     free(book->byte_offsets);
 }
 
 static void wbook_init (wbook *book)
 {
+    book->version = 0;
     book->nsheets = 0;
     book->col_offset = book->row_offset = 0;
     book->sheetnames = NULL;

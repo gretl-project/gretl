@@ -1223,34 +1223,33 @@ ms_ole_read_copy_bb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 	return 0;
     }
 
-    while (length > 0)
-	{
-	    BLP block;
-	    int cpylen = BB_BLOCK_SIZE - offset;
-	    if (cpylen > length)
-		cpylen = length;
+    while (length > 0) {
+	BLP block;
+	int cpylen = BB_BLOCK_SIZE - offset;
+	if (cpylen > length)
+	    cpylen = length;
 
-	    if (s->position + cpylen > s->size
-		|| blkidx == s->blocks->len) {
+	if (s->position + cpylen > s->size
+	    || blkidx == s->blocks->len) {
 #if OLE_DEBUG > 0
-		g_print ("Trying 2 to read beyond end of stream %d+%d %d\n",
-			 s->position, cpylen, s->size);
+	    g_print ("Trying 2 to read beyond end of stream %d+%d %d\n",
+		     s->position, cpylen, s->size);
 #endif
-		return 0;
-	    }
-	    g_assert (blkidx < s->blocks->len);
-	    block = ms_array_index (s->blocks, BLP, blkidx);
-	    src = BB_R_PTR (s->file, block) + offset;
-
-	    memcpy (ptr, src, cpylen);
-	    ptr    += cpylen;
-	    length -= cpylen;
-
-	    offset = 0;
-
-	    blkidx++;
-	    s->position += cpylen;
+	    return 0;
 	}
+	g_assert (blkidx < s->blocks->len);
+	block = ms_array_index (s->blocks, BLP, blkidx);
+	src = BB_R_PTR (s->file, block) + offset;
+
+	memcpy (ptr, src, cpylen);
+	ptr    += cpylen;
+	length -= cpylen;
+
+	offset = 0;
+
+	blkidx++;
+	s->position += cpylen;
+    }
 
     return 1;
 }
@@ -1276,33 +1275,31 @@ ms_ole_read_copy_sb (MsOleStream *s, guint8 *ptr, MsOlePos length)
 	return 0;
     }
 
-    while (length > 0)
-	{
-	    int cpylen = SB_BLOCK_SIZE - offset;
-	    BLP block;
-	    if (cpylen>length)
-		cpylen = length;
-	    if (s->position + cpylen > s->size
-		|| blkidx == s->blocks->len) {
+    while (length > 0) {
+	int cpylen = SB_BLOCK_SIZE - offset;
+	BLP block;
+	if (cpylen>length)
+	    cpylen = length;
+	if (s->position + cpylen > s->size || blkidx == s->blocks->len) {
 #if OLE_DEBUG > 0
-		g_print ("Trying 3 to read beyond end of stream %d+%d %d\n",
-			 s->position, cpylen, s->size);
+	    g_print ("Trying 3 to read beyond end of stream %d+%d %d\n",
+		     s->position, cpylen, s->size);
 #endif
-		return 0;
-	    }
-	    g_assert (blkidx < s->blocks->len);
-	    block = ms_array_index (s->blocks, BLP, blkidx);
-	    src = GET_SB_R_PTR (s->file, block) + offset;
-
-	    memcpy (ptr, src, cpylen);
-	    ptr += cpylen;
-	    length -= cpylen;
-
-	    offset = 0;
-
-	    blkidx++;
-	    s->position += cpylen;
+	    return 0;
 	}
+	g_assert (blkidx < s->blocks->len);
+	block = ms_array_index (s->blocks, BLP, blkidx);
+	src = GET_SB_R_PTR (s->file, block) + offset;
+
+	memcpy (ptr, src, cpylen);
+	ptr += cpylen;
+	length -= cpylen;
+
+	offset = 0;
+
+	blkidx++;
+	s->position += cpylen;
+    }
 
     return 1;
 }
@@ -1331,8 +1328,9 @@ pps_create (MsOle *f, GList **p, GList *parent, const char *name,
     }
 
     pps  = g_new (PPS, 1);
-    if (!pps)
+    if (!pps) {
 	return MS_OLE_ERR_MEM;
+    }
 
     pps->sig      = PPS_SIG;
     pps->name     = g_strdup (name);
@@ -1373,11 +1371,11 @@ find_in_pps (GList *l, const char *name)
     g_return_val_if_fail (IS_PPS (pps), NULL);
 
     if (pps->type == MsOleStorageT ||
-	pps->type == MsOleRootT)
+	pps->type == MsOleRootT) {
 	cur = pps->children;
-    else {
+    } else {
 	g_warning ("trying to enter a stream '%s'",
-		   pps->name?pps->name:"no name");
+		   pps->name? pps->name : "no name");
 	return NULL;
     }
 

@@ -18,6 +18,7 @@
  */
 
 typedef struct {
+    int version;
     int nsheets;
     int selected;
     int col_offset, row_offset;
