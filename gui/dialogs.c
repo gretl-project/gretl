@@ -1568,6 +1568,12 @@ static GtkWidget *get_msgbox_icon (int err)
     return iconw;
 }
 
+static void msgbox_close (GtkWidget *w, gpointer p)
+{
+    gtk_widget_destroy(GTK_WIDGET(p));
+    gtk_main_quit();
+}
+
 static void msgbox (const char *msg, int err) 
 {
     GtkWidget *w, *label, *button, *vbox, *hbox, *hsep, *iconw;
@@ -1608,9 +1614,11 @@ static void msgbox (const char *msg, int err)
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(delete_widget), w);
+		       GTK_SIGNAL_FUNC(msgbox_close), w);
 
     gtk_widget_show_all(w);
+
+    gtk_main();
 }
 
 /* ........................................................... */

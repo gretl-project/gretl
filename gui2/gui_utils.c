@@ -529,6 +529,16 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
+static void maybe_delete_x12_file (const MODEL *pmod)
+{
+    if (pmod->params != NULL && pmod->params[0] != NULL &&
+	*pmod->params[0] != '\0') {
+	remove(pmod->params[0]);
+    }
+}
+
+/* ........................................................... */
+
 static void delete_unnamed_model (GtkWidget *widget, gpointer data) 
 {
     MODEL *pmod = (MODEL *) data;
@@ -538,8 +548,10 @@ static void delete_unnamed_model (GtkWidget *widget, gpointer data)
     }
 
     if (pmod->name == NULL) {
+	if (ARMA_BY_X12(pmod)) {
+	    maybe_delete_x12_file(pmod);
+	}
 	free_model(pmod);
-	pmod = NULL;
     }
 }
 

@@ -1982,7 +1982,7 @@ static int model_error (MODEL *pmod)
 {
     if (pmod->errcode) {
 	gui_errmsg(pmod->errcode);
-	clear_model(pmod, NULL);
+	free_model(pmod);
 	return 1;
     }
     return 0;
