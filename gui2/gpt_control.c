@@ -2505,8 +2505,8 @@ static int get_png_bounds_info (png_bounds_t *bounds)
     png_structp png_ptr;
     png_infop info_ptr;
     png_text *text_ptr = NULL;
-    int i, ret = 0;
-    int num_text;
+    int i, num_text;
+    volatile int ret = 0;
 
     build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
 
@@ -2515,10 +2515,6 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 
     fread(header, 1, PNG_CHECK_BYTES, fp);
 
-#ifdef G_OS_WIN32
-
-
-#else   
     if (png_sig_cmp(header, 0, PNG_CHECK_BYTES)) {
 	fclose(fp);
 	sprintf(errtext, "Bad PNG header: Got bytes %x %x %x %x", 
@@ -2526,7 +2522,6 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 	errbox(errtext);
 	return GRETL_PNG_NOT_PNG;
     }
-#endif
 
     png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, 
 				     NULL, NULL, NULL);

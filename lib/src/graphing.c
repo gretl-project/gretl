@@ -507,7 +507,7 @@ int gnuplot_display (const PATHS *ppaths)
 #ifdef GNUPLOT_PNG
 # ifdef OS_WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32) err = 1;
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 # else
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
 	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
@@ -1356,20 +1356,22 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
     if (!dump) {
 	char plotcmd[MAXLEN];
 # ifdef OS_WIN32
-	int winshow;
+	int winshow = 0;
 
 	if (fname == NULL) { /* sending plot to screen */
 	    fprintf(fp, "pause -1\n");
-	    winshow = SW_SHOWNORMAL;
-	} else {
-	    winshow = SW_SHOWMINIMIZED;
-	}
+	    winshow = 1;
+	} 
 # endif
 	fclose(fp);
 	spec->fp = NULL;
 	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
 # ifdef OS_WIN32
-	if (WinExec(plotcmd, winshow) < 32) err = 1;
+	if (winshow) {
+	    err = (WinExec(plotcmd, SW_SHOWNORMAL) < 32);
+	} else {
+	    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+	}
 # else
 	if (system(plotcmd)) err = 1;
 # endif 

@@ -1490,15 +1490,34 @@ static void get_data_xy (png_plot_t *plot, int x, int y,
 	ymax = plot->ymax;
     }
 
-    *data_x = xmin + ((double) x - PLOTXMIN) / (PLOTXMAX - PLOTXMIN) *
+    *data_x = xmin + ((double) x - pixel_xmin) / (pixel_xmax - pixel_xmin) *
 	(xmax - xmin);
     if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
 	*data_y = NADBL;
     } else {
-	int plotymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+#if 1
+	int plotymin;
 
-	*data_y = ymax - ((double) y - plotymin) / (PLOTYMAX - plotymin) *
+	if (png_got_coords) {
+	    plotymin = pixel_ymin;
+	} else {
+	    plotymin = (plot->title)? pixel_ymin : NOTITLE_YMIN;
+	}
+
+	*data_y = ymax - ((double) y - plotymin) / (pixel_ymax - plotymin) *
 	    (ymax - ymin);
+#else
+	int plotymax;
+
+	if (png_got_coords) {
+	    plotymax = pixel_ymax;
+	} else {
+	    plotymax = (plot->title)? pixel_ymax : NOTITLE_YMAX;
+	}
+
+	*data_y = ymax - ((double) y - pixel_ymin) / (plotymax - pixel_ymin) *
+	    (ymax - ymin);
+#endif
     }
 }
 
@@ -1562,7 +1581,13 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     int x, y;
     GdkModifierType state;
     gchar label[32], label_y[16];
-    int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+    int ymin;
+
+    if (png_got_coords) {
+	ymin = pixel_ymin;
+    } else {
+	ymin = (plot->title)? pixel_ymin : NOTITLE_YMIN;
+    }
 
     if (event->is_hint)
         gdk_window_get_pointer (event->window, &x, &y, &state);
@@ -1572,7 +1597,8 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
         state = event->state;
     }
 
-    if (x > PLOTXMIN && x < PLOTXMAX && y > ymin && y < PLOTYMAX) {
+    *label = 0;
+    if (x > pixel_xmin && x < pixel_xmax && y > ymin && y < pixel_ymax) {
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
@@ -1587,9 +1613,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
 	}
-    } else {
-	*label = 0;
-    }
+    } 
 
     gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
   
@@ -2342,7 +2366,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
 #ifdef PNG_COMMENTS
 
-#define PNG_CHECK_BYTES 8
+#define PNG_CHECK_BYTES 4
 
 static int get_png_plot_bounds (const char *str, png_bounds_t *bounds)
 {
@@ -2380,8 +2404,8 @@ static int get_png_bounds_info (png_bounds_t *bounds)
     png_structp png_ptr;
     png_infop info_ptr;
     png_text *text_ptr = NULL;
-    int is_png, i, ret = 0;
-    int num_text;
+    int i, num_text;
+    volatile int ret = 0;
 
     build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
 
@@ -2390,8 +2414,7 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 
     fread(header, 1, PNG_CHECK_BYTES, fp);
 
-    is_png = !png_sig_cmp(header, 0, PNG_CHECK_BYTES);
-    if (!is_png) {
+    if (png_sig_cmp(header, 0, PNG_CHECK_BYTES)) {
 	fclose(fp);
 	return GRETL_PNG_NOT_PNG;
     }
