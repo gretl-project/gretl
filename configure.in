@@ -48,12 +48,13 @@ AC_SUBST(MAKE)
 
 AC_ARG_WITH(gnome,
 [  --with-gnome            Build with gnome support [default=auto]],
-[if test "$withval" = "yes"
+if test "x${withval}" = "xno"
 then
-try_gnome=yes
+trygnome=no
 else
-try_gnome=no
-fi])
+trygnome=yes
+fi,
+trygnome=yes)
 
 AC_PROG_CC
 AC_CANONICAL_HOST
