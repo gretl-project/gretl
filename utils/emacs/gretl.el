@@ -4,7 +4,6 @@
 
 ;; Author:     Allin Cottrell <cottrell@wfu.edu>
 ;; Created:    January 18 2005
-;; Updated:    January 18 2005
 ;; Version:    0.1
 ;; Keywords:   gretl, econometrics
 
@@ -32,16 +31,14 @@
 
 ;;; Commentary:
 
-;; This package provides Emacs support for Gretl.
-;; It defines Gretl mode, a major mode for editing
-;; Gretl code.
+;; This package provides Emacs support for Gretl.  It defines Gretl
+;; mode, a major mode for editing Gretl scripts.
 
 ;; See the documentation of `gretl-mode' for further information 
 ;; on usage and customization.
 
 ;;; Code:
 
-(require 'comint)
 (require 'custom)
 
 (defgroup gretl nil
@@ -99,7 +96,7 @@ All Gretl abbrevs start with a grave accent (`).")
   '("add" "addto" "adf" "append" "ar" "arch" "arma" "break" "boxplot" 
     "chow" "coeffsum" "coint" "coint2" "corc" "corr" "corrgm" 
     "criteria" "critical" "cusum" "data" "delete" "diff" "else" 
-    "eqnprint" "equation" "estimate" 
+    "eqnprint" "equation" "estimate"
     "fcast" "fcasterr" "fit" "freq" "garch" "genr"      
     "gnuplot" "graph" "hausman" "hccm" "help" "hilu" "hsk" "if" 
     "import" "info" "kpss" "label" "labels" "lad" "lags" "ldiff" 
@@ -199,7 +196,6 @@ parenthetical grouping.")
     (define-key map "\C-c\M-\C-d" 'gretl-down-block)
     (define-key map "\C-c\M-\C-h" 'gretl-mark-block)
     (define-key map "\C-c]" 'gretl-close-block)
-    (define-key map "\C-cf" 'gretl-insert-defun)
     (setq gretl-mode-map map)))
 
 (defvar gretl-mode-menu
@@ -221,8 +217,7 @@ parenthetical grouping.")
 	      ["Begin of Function"	gretl-beginning-of-defun t]
 	      ["End of Function"	gretl-end-of-defun t]
 	      ["Mark Function"		gretl-mark-defun t]
-	      ["Indent Function"	gretl-indent-defun t]
-	      ["Insert Function"	gretl-insert-defun t])
+	      ["Indent Function"	gretl-indent-defun t])
 	"-"
 	(list "Execute"
 	      ["Run Current Buffer"	gretl-run-buffer t])
@@ -700,8 +695,8 @@ The new line is properly indented."
     (indent-region (point) (mark) nil))
   (message "Indenting function...done."))
 
-
 ;;; Motion
+
 (defun gretl-next-code-line (&optional arg)
   "Move ARG lines of Gretl code forward (backward if ARG is negative).
 Skips past all empty and comment lines.  Default for ARG is 1.
@@ -1003,8 +998,8 @@ The function marked is the one containing point or following point."
       (goto-char pos)
       (message "No function to mark found"))))
 
-
 ;;; Filling
+
 (defun gretl-auto-fill ()
   "Perform auto-fill in Gretl mode.
 Returns nil if no feasible place to break the line could be found, and t
@@ -1267,42 +1262,6 @@ Note that all Gretl mode abbrevs start with a grave accent."
 	  (let ((abbrev-table-name-list '(gretl-abbrev-table)))
 	    (list-abbrevs))
 	(setq unread-command-events (list c))))))
-
-(defun gretl-insert-defun (name args vals)
-  "Insert an Gretl function skeleton.
-Prompt for the function's name, arguments and return values (to be
-entered without parens)."
-  (interactive
-   (list
-    (read-from-minibuffer "Function name: "
-			  (substring (buffer-name) 0 -2))
-    (read-from-minibuffer "Arguments: ")
-    (read-from-minibuffer "Return values: ")))
-  (let ((string (format "%s %s (%s)"
-			(cond
-			 ((string-equal vals "")
-			  vals)
-			 ((string-match "[ ,]" vals)
-			  (concat " [" vals "] ="))
-			 (t
-			  (concat " " vals " =")))
-			name
-			args))
-	(prefix gretl-block-comment-start))
-    (if (not (bobp)) (newline))
-    (insert "function" string)
-    (indent-according-to-mode)
-    (newline 2)
-    (insert prefix "usage: " string)
-    (reindent-then-newline-and-indent)
-    (insert prefix)
-    (reindent-then-newline-and-indent)
-    (insert prefix)
-    (indent-according-to-mode)
-    (save-excursion
-      (newline 2)
-      (insert "endfunction")
-      (indent-according-to-mode))))
 
 ;;; Menu
 
