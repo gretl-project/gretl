@@ -109,7 +109,7 @@ static int win_fork_prog (char *cmdline, const char *dir)
 
     ZeroMemory(&pi, sizeof pi);    
 
-    /* zero return means failure */
+    /* win32 API: zero return means failure */
     child = CreateProcess(NULL, cmdline, 
                           NULL, NULL, FALSE,
                           CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
