@@ -91,6 +91,7 @@ GtkItemFactoryEntry script_items[] = {
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
     { "/Edit/_Paste", NULL, text_paste, 0, NULL },
     { "/Edit/_Replace...", NULL, text_replace, 0, NULL },
+    { "/Edit/_Undo", NULL, text_undo, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
@@ -4020,6 +4021,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     size_t sz, len, diff;
     char *dest = NULL, *src = NULL;
     char *destbuf, *p, *q;
+    gchar *old;
     struct search_replace *s;
 
     s = mymalloc(sizeof *s);
@@ -4080,7 +4082,15 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 	    strcat(destbuf, p);
 	    break;
 	}
-    }    
+    } 
+
+    /* save original buffer for "undo" */
+    old = gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+    if (old != NULL) {
+	g_free(old);
+	gtk_object_remove_data(GTK_OBJECT(mydata->w), "undo");
+    }
+    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", buf);
 
     /* now insert the modified buffer */
     gtk_text_freeze(GTK_TEXT(mydata->w));
@@ -4093,7 +4103,6 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     free(src);
     free(dest);
     free(s);
-    free(buf);
     free(destbuf);
 }
 

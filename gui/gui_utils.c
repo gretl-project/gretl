@@ -83,6 +83,7 @@ static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
+static void file_viewer_save (GtkWidget *widget, windata_t *mydata);
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
 #ifndef G_OS_WIN32
@@ -279,6 +280,7 @@ GtkItemFactoryEntry edit_items[] = {
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
     { "/Edit/_Paste", NULL, text_paste, 0, NULL },
     { "/Edit/_Replace...", NULL, text_replace, 0, NULL },
+    { "/Edit/_Undo", NULL, text_undo, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
@@ -414,9 +416,29 @@ void catch_key (GtkWidget *w, GdkEventKey *key)
 {
     if (key->keyval == GDK_q) 
         gtk_widget_destroy(w);
-    else if (key->keyval == GDK_s) 
+    else if (key->keyval == GDK_s) /* FIXME */
 	remember_model 
 	    (gtk_object_get_data(GTK_OBJECT(w), "ddata"), 1, NULL);
+}
+
+/* ........................................................... */
+
+void catch_ctrl_key (GtkWidget *w, GdkEventKey *key)
+{
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    if (mods & GDK_CONTROL_MASK) {
+        if (gdk_keyval_to_upper(key->keyval) == GDK_S) {
+	    windata_t *mydata =
+		gtk_object_get_data(GTK_OBJECT(w), "vwin");
+
+	    if (mydata != NULL)
+		file_viewer_save(NULL, mydata);
+	}
+        else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) 
+	    gtk_widget_destroy(w);
+    }
 }
 
 /* ........................................................... */
@@ -945,6 +967,12 @@ void free_windata (GtkWidget *w, gpointer data)
     windata_t *mydata = (windata_t *) data;
 
     if (mydata) {
+	if (mydata->w) {
+	    gchar *undo = 
+		gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+	    
+	    if (undo) g_free(undo);
+	}
 	if (mydata->listbox) 
 	    gtk_widget_destroy(GTK_WIDGET(mydata->listbox));
 	if (mydata->mbar) 
@@ -1040,10 +1068,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 		    strlen(prn->buf));
     gretl_print_destroy(prn);
     
-    /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 			   GTK_SIGNAL_FUNC(catch_key), dialog);
 
+    /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
 
@@ -1197,6 +1225,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
     if (!editable) {
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 			   GTK_SIGNAL_FUNC(catch_key), dialog);
+    } else {
+	gtk_object_set_data(GTK_OBJECT(dialog), "vwin", vwin);
+	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
+			   GTK_SIGNAL_FUNC(catch_ctrl_key), dialog);	
     }
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), vwin);
@@ -2639,8 +2671,44 @@ void window_print (gpointer data, guint u, GtkWidget *widget)
 
 /* .................................................................. */
 
+void text_undo (windata_t *mydata, guint u, GtkWidget *widget)
+{
+    gchar *old =
+	gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+    
+    if (old == NULL) {
+	errbox("No undo information available");
+    } else {
+	guint len = 
+	    gtk_text_get_length(GTK_TEXT(mydata->w));
+	guint pt = gtk_text_get_point(GTK_TEXT(mydata->w));
+
+	gtk_text_freeze(GTK_TEXT(mydata->w));
+	gtk_editable_delete_text(GTK_EDITABLE(mydata->w), 0, len);
+	len = 0;
+	gtk_editable_insert_text(GTK_EDITABLE(mydata->w), 
+				 old, strlen(old), &len);
+	gtk_text_set_point(GTK_TEXT(mydata->w), 
+			   (pt > len - 1)? len - 1 : pt);
+	gtk_text_thaw(GTK_TEXT(mydata->w));
+	g_free(old);
+	gtk_object_remove_data(GTK_OBJECT(mydata->w), "undo");
+    }
+}
+
+/* .................................................................. */
+
 void text_paste (windata_t *mydata, guint u, GtkWidget *widget)
 {
+    gchar *old;
+    gchar *undo_buf =
+	gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+
+    old = gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+    g_free(old);
+
+    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", undo_buf);
+
     gtk_editable_paste_clipboard(GTK_EDITABLE(mydata->w));
 }
 

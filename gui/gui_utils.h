@@ -102,6 +102,8 @@ void text_copy (gpointer data, guint how, GtkWidget *widget);
 
 void text_paste (windata_t *mydata, guint u, GtkWidget *widget);
 
+void text_undo (windata_t *mydata, guint u, GtkWidget *widget);
+
 void make_menu_item (gchar *label, GtkWidget *menu,
 		     GtkSignalFunc func, gpointer data);
 
