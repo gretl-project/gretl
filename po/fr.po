@@ -4,9 +4,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GNU gretl 1.0.7\n"
+"Project-Id-Version: GNU gretl 1.0.7a\n"
 "POT-Creation-Date: 2003-04-03 08:38-0500\n"
-"PO-Revision-Date: 2003-04-02 08:00-0500\n"
+"PO-Revision-Date: 2003-04-09 08:00-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -209,14 +209,12 @@ msgid "Invalid input\n"
 msgstr "Entrée invalide\n"
 
 #: lib/src/compare.c:1508
-#, fuzzy
 msgid "Variables"
-msgstr "Variable"
+msgstr "Variables"
 
 #: lib/src/compare.c:1512 gui/library.c:1358 gui2/library.c:1191
-#, fuzzy
 msgid "Sum of coefficients"
-msgstr "Somme des coefficients AR"
+msgstr "Somme des coefficients"
 
 #: lib/src/compare.c:1517 lib/src/modelprint.c:1716 plugin/mp_ols.c:374
 msgid "Standard error"
@@ -1499,7 +1497,7 @@ msgid "ESS"
 msgstr "ESS"
 
 #: lib/src/estimate.c:1387
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "\n"
@@ -1508,7 +1506,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"ESS est minimum pour rho =%.3f\n"
+"ESS est minimum pour rho =%.2f\n"
 "\n"
 
 #: lib/src/estimate.c:1394
@@ -3542,12 +3540,12 @@ msgstr "Toutes les variables, délai %-6d "
 #: lib/src/var.c:493
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
-msgstr ""
+msgstr "Étape %d: test d'une unité racine dans %s\n"
 
 #: lib/src/var.c:509
-#, fuzzy, c-format
+#, c-format
 msgid "Step %d: cointegration\n"
-msgstr "Co-intégration"
+msgstr "Pas %d: cointégration\n"
 
 #: lib/src/var.c:531
 msgid ""
@@ -5198,14 +5196,12 @@ msgid "an annual"
 msgstr "une annuelle"
 
 #: gui/database.c:1914 gui2/database.c:1974
-#, fuzzy
 msgid "Compact quarterly data to annual"
-msgstr "données trimestrielles"
+msgstr "Compacter les données trimestrielles en annuelles"
 
 #: gui/database.c:1917 gui2/database.c:1977
-#, fuzzy
 msgid "Compact monthly data to:"
-msgstr "données mensuelles"
+msgstr "Compacter les données mensuelles en:"
 
 #: gui/database.c:1923 gui2/database.c:1983
 msgid "gretl: compact data"
@@ -5216,9 +5212,8 @@ msgid "Compact by averaging"
 msgstr "Compacter par moyennage"
 
 #: gui/database.c:1957 gui2/database.c:2017
-#, fuzzy
 msgid "Compact by summing"
-msgstr "Compacter par moyennage"
+msgstr "Compacter par sommation"
 
 #: gui/database.c:1967 gui2/database.c:2027
 msgid "Use end-of-period values"
@@ -5238,7 +5233,7 @@ msgstr "Annuler"
 
 #: gui/database.c:2133 gui2/database.c:2193
 msgid "Compacted dataset would be empty"
-msgstr ""
+msgstr "Le jeu de données compacté devrait être vide"
 
 #: gui/database.c:2149 gui/gui_utils.c:443 gui/gui_utils.c:454
 #: gui/library.c:3076 gui/session.c:609 gui2/database.c:2209
@@ -6429,9 +6424,8 @@ msgid "/Sample/Set _frequency, startobs..."
 msgstr "/Échantillon/Initialiser la _fréquence, obs de départ..."
 
 #: gui/gretl.c:387 gui2/gretl.c:451
-#, fuzzy
 msgid "/Sample/Compact data..."
-msgstr "/Échantillon/Initialiser l'_Étendue..."
+msgstr "/Échantillon/Compacter les données..."
 
 #: gui/gretl.c:388 gui2/gretl.c:452
 msgid "/Sample/sep2"
@@ -7228,9 +7222,8 @@ msgid "/Tests/add variables"
 msgstr "/Tests/ajouter les variables"
 
 #: gui/gui_utils.c:74 gui2/gui_utils.c:83
-#, fuzzy
 msgid "/Tests/sum of coefficients"
-msgstr "Somme des coefficients AR"
+msgstr "/Tests/somme des coefficients"
 
 #: gui/gui_utils.c:75 gui2/gui_utils.c:84
 msgid "/Tests/sep1"
@@ -8249,19 +8242,18 @@ msgstr ""
 "Voulez-vous restaurer la pleine étendue?"
 
 #: gui/library.c:3562 gui2/library.c:3338
-#, fuzzy
 msgid "gretl: Compact data"
-msgstr "gretp: compacter les données"
+msgstr "gretl: compacter les données"
 
 #: gui/library.c:3563 gui2/library.c:3339
-#, fuzzy
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before compacting.\n"
 "Restore the full range now?"
 msgstr ""
 "Le jeu de données est couramment sous-échantillonné.\n"
-"Voulez-vous restaurer la pleine étendue?"
+"Vous devez restaurer l'étendue complète avant de compacter.\n"
+"Voulez-vous restaurer l'étendue complète maintenant?"
 
 #: gui/library.c:3608 gui2/library.c:3384
 msgid ""
@@ -8581,9 +8573,8 @@ msgid "Select variables to omit"
 msgstr "Variables sélectionnées pour l'omission"
 
 #: gui/selector.c:1009 gui2/selector.c:1204
-#, fuzzy
 msgid "Select coefficients to sum"
-msgstr "Variables sélectionnées pour les carrés"
+msgstr "Sélectionner les coefficients pour la sommation"
 
 #: gui/selector.c:1011 gui2/selector.c:1206
 msgid "Select variables to display"
