@@ -723,7 +723,7 @@ void mark_dataset_as_modified (void)
 
 /* ........................................................... */
 
-void register_data (const char *fname, const char *user_fname,
+void register_data (char *fname, const char *user_fname,
 		    int record)
 {    
     char datacmd[MAXLEN];
@@ -766,7 +766,7 @@ void register_data (const char *fname, const char *user_fname,
 
 /* ........................................................... */
 
-int get_worksheet_data (const char *fname, int datatype, int append)
+int get_worksheet_data (char *fname, int datatype, int append)
 {
     int err;
     void *handle;

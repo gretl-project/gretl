@@ -65,7 +65,7 @@ void *myrealloc (void *ptr, size_t size);
 
 void mark_dataset_as_modified (void);
 
-void register_data (const char *fname, const char *user_fname,
+void register_data (char *fname, const char *user_fname,
 		    int record);
 
 void do_open_data (GtkWidget *w, gpointer data, int code);
@@ -119,7 +119,7 @@ void *gui_get_plugin_function (const char *funcname,
 
 int prn_to_clipboard (PRN *prn, int copycode);
 
-int get_worksheet_data (const char *fname, int datatype, int append);
+int get_worksheet_data (char *fname, int datatype, int append);
 
 char *double_underscores (char *targ, const char *src);
 

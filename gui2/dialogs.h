@@ -44,4 +44,6 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w);
 
+void ssheet_precision_dialog (int *digits);
+
 #endif /* DIALOGS_H */

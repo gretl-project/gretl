@@ -22,10 +22,9 @@
 #include "ssheet.h"
 #include <errno.h>
 #include <ctype.h>
+#include <float.h>
 
 /* #define SSDEBUG */
-
-#define SHEET_PRECISION 10
 
 typedef struct {
     GtkWidget *view;
@@ -52,7 +51,7 @@ static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w);
 static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet);
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width);
 static gint get_data_col_width (void);
-static void add_data_column (spreadsheet *sheet);
+static int add_data_column (spreadsheet *sheet);
 
 static GtkItemFactoryEntry sheet_items[] = {
     { N_("/_Observation"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -170,7 +169,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 
 /* .................................................................. */
 
-static void real_add_new_var (spreadsheet *sheet, const char *varname)
+static int real_add_new_var (spreadsheet *sheet, const char *varname)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view); 
     GtkTreeModel *model;
@@ -181,7 +180,7 @@ static void real_add_new_var (spreadsheet *sheet, const char *varname)
 
     oldcols = sheet->totcols;
 
-    add_data_column(sheet);
+    if (add_data_column(sheet)) return 1;
 
     if (sheet->totcols == oldcols) {
 	column = gtk_tree_view_get_column(view, sheet->datacols);
@@ -228,6 +227,8 @@ static void real_add_new_var (spreadsheet *sheet, const char *varname)
     if (collist) g_list_free(collist);
 
     sheet_modified = 1;
+
+    return 0;
 }
 
 /* .................................................................. */
@@ -329,7 +330,10 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
     strncat(varname, buf, 8);
 
     close_dialog(ddata);
-    real_add_new_var(sheet, varname);
+
+    if (real_add_new_var(sheet, varname)) {
+	errbox(_("Out of memory attempting to add variable"));
+    }
 }
 
 /* ........................................................... */
@@ -374,25 +378,32 @@ static void new_case_dialog (spreadsheet *sheet)
 
 /* ........................................................... */
 
-static void add_data_column (spreadsheet *sheet)
+static int add_data_column (spreadsheet *sheet)
 {
     GType *types;
     GtkListStore *old_store, *new_store;
     GtkTreeIter old_iter, new_iter;
     gint i, row, newcolnum;
+    int totcols = sheet->totcols;
+    int padcols = sheet->padcols;
 
     /* This is relatively complex because, so far as I can tell, you can't
        append or insert additional columns in a GtkListStore: we have to
        create a new liststore and copy the old info across.
     */
 
-    sheet->datacols += 1;
-
-    if (sheet->padcols > 0) sheet->padcols -= 1;
-    else sheet->totcols += 1;
+    if (padcols > 0) padcols--;
+    else totcols++;
 
     /* make an expanded column types list */
-    types = mymalloc(sheet->totcols * sizeof *types);
+    types = mymalloc(totcols * sizeof *types);
+    if (types == NULL) {
+	return 1;
+    }
+
+    sheet->datacols += 1;
+    sheet->totcols = totcols;
+    sheet->padcols = padcols;
 
     /* configure the types */
     types[0] = G_TYPE_STRING;
@@ -446,6 +457,8 @@ static void add_data_column (spreadsheet *sheet)
 
     gtk_tree_view_set_model(GTK_TREE_VIEW(sheet->view), GTK_TREE_MODEL(new_store));
     g_object_unref(G_OBJECT(new_store));
+
+    return 0;
 }
 
 /* ........................................................... */
@@ -652,7 +665,7 @@ static void select_first_editable_cell (spreadsheet *sheet)
 
 /* ........................................................... */
 
-static void add_data_to_sheet (spreadsheet *sheet, int new)
+static int add_data_to_sheet (spreadsheet *sheet, int new)
 {
     gchar rowlabel[10];
     gint i, t, colnum, n = datainfo->n;
@@ -695,7 +708,7 @@ static void add_data_to_sheet (spreadsheet *sheet, int new)
 		if (na(Z[i][t])) {
 		    *numstr = '\0';
 		} else {
-		    sprintf(numstr, "%.*g", SHEET_PRECISION, Z[i][t]);
+		    sprintf(numstr, "%.*g", DBL_DIG, Z[i][t]);
 		}
 		colnum++;
 		gtk_list_store_set(store, &iter, colnum, numstr, -1);
@@ -721,6 +734,8 @@ static void add_data_to_sheet (spreadsheet *sheet, int new)
 			   sheet->totcols - 1, TRUE, -1);
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
+
+    return 0;
 }
 
 /* ........................................................... */
@@ -758,7 +773,7 @@ static gint get_data_col_width (void)
 {
     static gint width;
 
-    if (width == 0) width = get_string_width("-000000.000000");
+    if (width == 0) width = get_string_width("-00.000000");
     return width;
 }
 
@@ -767,14 +782,9 @@ static gint get_data_col_width (void)
 static void set_up_sheet_column (GtkTreeViewColumn *column, gint width)
 {
     gtk_tree_view_column_set_alignment(column, 0.5); /* header centered */
-#if 0
-    gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
-    gtk_tree_view_column_set_fixed_width(column, width);
-#else
     gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
     gtk_tree_view_column_set_resizable(column, TRUE);
     gtk_tree_view_column_set_min_width(column, width);
-#endif
 }
 
 /* ........................................................... */
@@ -1002,7 +1012,7 @@ static spreadsheet *sheet_new (void)
 {
     spreadsheet *sheet;
 
-    sheet = malloc(sizeof *sheet);
+    sheet = mymalloc(sizeof *sheet);
     if (sheet == NULL) return NULL;
 
     sheet->view = NULL;
@@ -1050,6 +1060,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     GtkWidget *status_box, *mbar;
     GtkItemFactory *ifac;
     int sheetwidth;
+    int err = 0;
 
     if (sheet != NULL) {
 	gdk_window_raise(sheet->win->window);
@@ -1141,11 +1152,15 @@ void show_spreadsheet (DATAINFO *pdinfo)
 		      G_CALLBACK(catch_spreadsheet_click),
 		      sheet);
 
-    if (pdinfo != NULL) {
-	/* add_skel_to_sheet(sheet); */
-	add_data_to_sheet(sheet, 1);
+    if (pdinfo == NULL) {
+	err = add_data_to_sheet(sheet, 0);
     } else {
-	add_data_to_sheet(sheet, 0);
+	err = add_data_to_sheet(sheet, 1);
+    }
+
+    if (err) {
+	gtk_widget_destroy(sheet->win);
+	return;
     }
 
     select_first_editable_cell(sheet);

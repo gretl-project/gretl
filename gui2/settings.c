@@ -1763,11 +1763,34 @@ static void clear_files_list (int filetype, char **filep)
 
 /* .................................................................. */
 
-void mkfilelist (int filetype, const char *fname)
+static char *cut_multiple_slashes (char *fname)
+{
+    int i, n = strlen(fname);
+#ifdef G_OS_WIN32
+    /* may be ok for a filename to start with a double backslash */
+    int start = 1;
+#else
+    int start = 0;
+#endif
+
+    for (i=start; i<n-1; i++) {
+	if (fname[i] == SLASH && fname[i+1] == SLASH) {
+	    memmove(fname + i, fname + i + 1, strlen(fname + i + 1) + 1);
+	    i--;
+	    n--;
+	}
+    }
+
+    return fname;
+}
+
+void mkfilelist (int filetype, char *fname)
 {
     char *tmp[MAXRECENT-1];
     char **filep;
     int i, match = -1;
+
+    cut_multiple_slashes(fname);
 
     if (filetype == FILE_LIST_DATA) filep = datap;
     else if (filetype == FILE_LIST_SESSION) filep = sessionp;
