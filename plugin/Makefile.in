@@ -211,6 +211,14 @@ gnumeric_import.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 gnumeric_import.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
 gnumeric_import.lo: ../lib/src/subsample.h ../lib/src/calendar.h importer.h
 gnumeric_import.lo: import_common.c
+lad.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
+lad.lo: ../lib/src/estimate.h ../lib/src/generate.h ../lib/src/gretl_utils.h
+lad.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
+lad.lo: ../lib/src/strutils.h ../lib/src/describe.h ../lib/src/printout.h
+lad.lo: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
+lad.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
+lad.lo: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
+lad.lo: ../lib/src/calendar.h
 mp_ols.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 mp_ols.lo: ../lib/src/estimate.h ../lib/src/generate.h
 mp_ols.lo: ../lib/src/gretl_utils.h ../lib/src/compare.h ../lib/src/pvalues.h
