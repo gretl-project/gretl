@@ -167,23 +167,12 @@ fi
 
 if test x"${png_graphics}" = xyes
 then
-PIXBUFCONF=''
-AC_DEFUN(AC_LIB_PIXBUF,
-[AC_CHECK_PROGS(PIXBUFCONF,gdk-pixbuf-config,)])
-
-AC_LIB_PIXBUF
-if test x"${PIXBUFCONF}" != x ; then
-   PIXBUF_CFLAGS=`$PIXBUFCONF --cflags`
-   PIXBUF_LIBS=`$PIXBUFCONF --libs`
-   AC_SUBST(PIXBUF_CFLAGS)
-   AC_SUBST(PIXBUF_LIBS)
-else
+  AM_PATH_GDK_PIXBUF(,,
    echo
    echo "* gretl wants the gdk-pixbuf library for PNG graphs."
    echo "* You can turn off this dependency by configuring with the "
    echo "* option --disable-png-graphics"
-   exit     
-fi
+   exit)    
 fi
 
 if test x"${tryole}" != "xno"

@@ -12,8 +12,6 @@ LN = @LN_S@
 have_readline = @have_readline@
 have_zlib = @have_zlib@
 need_libbind = @need_libbind@
-have_gtk = @have_gtk@
-have_gtkextra = @have_gtkextra@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
 
@@ -23,8 +21,8 @@ GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GTK_EXTRA_CFLAGS = @GTK_EXTRA_CFLAGS@
 GTK_EXTRA_LIBS = @GTK_EXTRA_LIBS@
-PIXBUF_CFLAGS = @PIXBUF_CFLAGS@
-PIXBUF_LIBS = @PIXBUF_LIBS@
+GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
+GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 USE_NLS = @USE_NLS@
 
 ifeq ($(CC),)
@@ -63,8 +61,8 @@ ifeq ($(USE_NLS),yes)
   DEFS = -DLOCALEDIR=\"$(localedir)\"
 endif
 
-override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(PIXBUF_CFLAGS) $(DEFS)
-override LIBS += $(PIXBUF_LIBS)
+override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
+override LIBS += $(GDK_PIXBUF_LIBS)
 
 # Directories
 bindir	= $(prefix)/bin
