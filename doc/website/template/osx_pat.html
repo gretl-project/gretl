@@ -14,6 +14,8 @@ HREF="./css-gretl.html">
 <h2>for Mac OS X</h2>
 </center>
 
+<h2>Pre-built disk image</h2>
+
 <p>The simple way of installing gretl for OS X, if it works for you, is to
 download a disk image, 
 <a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl.dmg">gretl.dmg</a>
@@ -27,14 +29,14 @@ if the fonts do not appear properly.</p>
 <p>Please note that this package depends upon Apple's X11 (their port to the Mac of the
 X Window system).</p>
 
+<h2>Build using Fink</h2>
+
 <p>If the pre-built image doesn't work for you, or if you want more control
 over the build, you can compile gretl from source yourself.  This requires,
 in addition to Apple's X11, the Fink system, available from
 <a
   href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p>
 
-<h2>Required fink packages</h2>
-  
 <p>Besides the basic installation of Fink itself, for building and
 running gretl you will need to ensure that the following Fink packages
 are present and correct (some of them may already be installed and up
@@ -44,25 +46,32 @@ the Mac Terminal app) to do the job:</p>
 
 <table cellspacing=8>
   <tr>
-    <td>system-xfree86</td><td><kbd>fink install system-xfree86</kbd></td>
+    <td><p class="in-cell">system-xfree86</p></td>
+    <td><kbd>fink install system-xfree86</kbd></td>
     </tr>
   <tr>
-    <td>gtk</td><td><kbd>fink install gtk+2</kbd></td>
+    <td><p class="in-cell">gtk</p></td>
+    <td><kbd>fink install gtk+2</kbd></td>
     </tr>
   <tr>
-    <td>libxml2</td><td><kbd>fink install libxml2</kbd></td>
+    <td><p class="in-cell">libxml2</p></td>
+    <td><kbd>fink install libxml2</kbd></td>
     </tr>
   <tr>
-    <td>dlcompat</td><td><kbd>fink install dlcompat</kbd></td>
+    <td><p class="in-cell">dlcompat</p></td><td>
+    <kbd>fink install dlcompat</kbd></td>
     </tr>
   <tr>
-    <td>dlcompat-dev</td><td><kbd>fink install dlcompat-dev</kbd></td>
+    <td><p class="in-cell">dlcompat-dev</p></td>
+    <td><kbd>fink install dlcompat-dev</kbd></td>
     </tr>
   <tr>
-    <td>gnuplot</td><td><kbd>fink install gnuplot</kbd></td>
+    <td><p class="in-cell">gnuplot</p></td>
+    <td><kbd>fink install gnuplot</kbd></td>
     </tr>
   <tr>
-    <td>recode</td><td><kbd>fink install recode</kbd></td>
+    <td><p class="in-cell">recode</p></td>
+    <td><kbd>fink install recode</kbd></td>
     </tr>
 </table>
 
