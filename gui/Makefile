@@ -33,19 +33,23 @@ endif
 ifeq ($(have_gtkhtml),)
   have_gtkhtml = yes
 endif
+ifeq ($(have_gtkextra),no)
+  EXTRAL = -L./gtkextra
+  EXTRAI = -I./gtkextra
+endif
 ifeq ($(have_gnome),yes)
-  LIBS = `gnome-config --libs gnomeui` ../lib/libgretl.la -lgtkextra 
+  LIBS = `gnome-config --libs gnomeui` ../lib/libgretl.la $(EXTRAL) -lgtkextra 
   GUI_CFLAGS = `gnome-config --cflags gnomeui`
   gnome_prefix = `gnome-config --prefix`
   desktopdir = $(gnome_prefix)/share/gnome/apps/Applications
   gpixmaps = $(gnome_prefix)/share/pixmaps
   ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
 else
-  LIBS = `gtk-config --libs` ../lib/libgretl.la -lgtkextra
+  LIBS = `gtk-config --libs` ../lib/libgretl.la $(EXTRAL) -lgtkextra
   GUI_CFLAGS = `gtk-config --cflags` 
 endif
 ifeq ($(have_gtkhtml),yes)
-  LIBS = `gnome-config --libs gnomeui gtkhtml` ../lib/libgretl.la -lgtkextra 
+  LIBS = `gnome-config --libs gnomeui gtkhtml` ../lib/libgretl.la $(EXTRAL) -lgtkextra 
   GUI_CFLAGS = `gnome-config --cflags gnomeui gtkhtml`
 endif
 
@@ -68,12 +72,12 @@ HDRS = gretl.h lib.h gui_utils.h callbacks.h dialogs.h session.h \
 OBJS = gui_utils.o lib.o gretl.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
 	webget.o calculator.o htmlprint.o
-COMPILE = $(CC) -c -I$(srcdir) $(CFLAGS) $(GUI_CFLAGS)
+COMPILE = $(CC) -c -I$(srcdir) $(CFLAGS) $(GUI_CFLAGS) $(EXTRAI)
 
 .c.o:
 	$(COMPILE) $<
 
-$(PROG): $(OBJS) ../Makefile
+$(PROG): $(OBJS) ../Makefile gtkextralib
 	../libtool --mode=link $(CC) -o $(PROG) $(OBJS) \
 	$(LIBS) $(INETLIB)
 
@@ -111,6 +115,10 @@ clean:
 topclean: 
 	rm -f *.o $(PROG) core
 	rm -rf .libs
+
+gtkextralib:
+	if test -d ./gtkextra ; then \
+	cd ./gtkextra && $(MAKE) ; fi
 
 # DO NOT DELETE
 

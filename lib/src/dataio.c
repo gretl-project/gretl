@@ -30,8 +30,8 @@ static int writehdr (const char *hdrfile, const int *list,
 		     const DATAINFO *pdinfo, const int opt);
 static double obs_float (const DATAINFO *pdinfo, const int end);
 
-const char STARTCOMMENT[3] = "(*";
-const char ENDCOMMENT[3] = "*)";
+static char STARTCOMMENT[3] = "(*";
+static char ENDCOMMENT[3] = "*)";
 
 /* ......................................................... */
 

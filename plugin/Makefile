@@ -39,18 +39,22 @@ all: $(PLUGINS)
 	$(COMPILE) $< 
 
 stats_tables.so: stats_tables.o
-	$(CC) -shared -o stats_tables.so stats_tables.o 
+	../libtool --mode=link $(CC) -shared -o stats_tables.so \
+	stats_tables.o ../lib/libgretl.la `gtk-config --libs`
 
 panel_data.so: panel_data.o
-	$(CC) -shared -o panel_data.so panel_data.o 
+	../libtool --mode=link $(CC) -shared -o panel_data.so \
+	panel_data.o ../lib/libgretl.la `gtk-config --libs`
 
 .PHONY: 
 
 install: $(PLUGINS) installdirs
-	$(INSTALL_PROGRAM) $(PLUGINS) $(share)/plugins
+	../libtool --mode=install $(INSTALL_PROGRAM) \
+	$(PLUGINS) $(share)/plugins
 
 install-strip: $(PLUGINS) installdirs
-	$(INSTALL_PROGRAM) -s $(PLUGINS) $(share)/plugins
+	../libtool --mode=install $(INSTALL_PROGRAM) -s \
+	$(PLUGINS) $(share)/plugins
 
 installdirs:
 	../tools/mkinstalldirs $(share)/plugins

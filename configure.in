@@ -5,7 +5,7 @@ dnl
 AC_INIT(./lib/src/version.h)
 AC_PREREQ(2.12)
 AC_CONFIG_HEADER(config.h)
-AC_CONFIG_AUX_DIR(./tools)
+AC_CONFIG_AUX_DIR(`pwd`/tools)
 
 dnl What version of gretl are we building?
 dnl
@@ -389,6 +389,17 @@ AC_ARG_ENABLE(gtkextratest, [  --disable-gtkextratest       Do not try to compil
   if test "$GTK_EXTRA_CONFIG" = "no" ; then
     no_gtkextra=yes
     AC_MSG_RESULT(no)
+    if test -d gui/gtkextra ; then
+       echo "* Will try using the gretl gtkextra addon package instead"
+    else
+       echo
+       echo "* You need the gtkextra library to compile gretl."
+       echo "* You can get this from gtkextra.sourceforge.net, or if you prefer"
+       echo "* you can grab a smaller package with only those parts of gtkextra"
+       echo "* that are essential for gretl, at "
+       echo "* http://ricardo.ecn.wfu.edu/gretl-gtkextra/"
+       exit
+    fi
   else
     have_gtkextra=yes
     # AC_MSG_RESULT(yes)
@@ -469,6 +480,7 @@ main ()
 ])
 
 AM_PATH_GTKEXTRA(0.99.13)
+AC_SUBST(have_gtkextra)
 
 # end of "build_gui" conditionality
 fi
