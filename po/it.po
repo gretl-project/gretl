@@ -5,9 +5,9 @@
 # Thanks to Daniele "Madrid" Medri for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.2.7\n"
+"Project-Id-Version: gretl 1.2.8\n"
 "POT-Creation-Date: 2004-06-30 22:05-0400\n"
-"PO-Revision-Date: 2004-06-12 00:09-0400\n"
+"PO-Revision-Date: 2004-07-03 19:36+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -3203,7 +3203,7 @@ msgstr "Ci sono valori mancanti nei dati"
 
 #: lib/src/nls.c:412
 msgid "Perfect fit achieved\n"
-msgstr ""
+msgstr "È stato ottenuto un adattamento perfetto\n"
 
 #: lib/src/nls.c:462
 msgid "In Gauss-Newton Regression:\n"
@@ -3413,7 +3413,7 @@ msgstr ""
 
 #: lib/src/printout.c:169 lib/src/printout.c:230
 msgid "Robust F"
-msgstr ""
+msgstr "F robusta"
 
 #: lib/src/printout.c:181 lib/src/printout.c:244
 #, c-format
@@ -3991,7 +3991,7 @@ msgstr "3SLS"
 
 #: lib/src/system.c:72
 msgid "FIML"
-msgstr ""
+msgstr "FIML"
 
 #: lib/src/system.c:77
 msgid "Seemingly Unrelated Regressions"
@@ -4003,7 +4003,7 @@ msgstr "Minimi quadrati a tre stadi"
 
 #: lib/src/system.c:79
 msgid "Full Information Maximum Likelihood"
-msgstr ""
+msgstr "Massima verosimiglianza ad informazione completa"
 
 #: lib/src/system.c:83
 msgid "No system of equations has been defined"
@@ -4569,17 +4569,17 @@ msgstr "Fatto\n"
 #: cli/gretlcli.c:1403
 #, c-format
 msgid "commands saved as %s\n"
-msgstr "comandi salvati com %s\n"
+msgstr "Comandi salvati in %s\n"
 
 #: cli/gretlcli.c:1408
 msgid "type a filename to store output (enter to quit): "
 msgstr ""
-"digitare un nome di file in cui salvare l'output (invio per terminare): "
+"Digitare un nome di file in cui salvare i risultati (invio per terminare): "
 
 #: cli/gretlcli.c:1414
 #, c-format
 msgid "writing session output to %s%s\n"
-msgstr "salvataggio dell'output della sessione su %s%s\n"
+msgstr "Salvataggio dei risultati della sessione in %s%s\n"
 
 #: cli/gretlcli.c:1432 gui2/library.c:5771
 msgid "This command requires a list of variables\n"
@@ -4905,9 +4905,8 @@ msgid "force use of English"
 msgstr "forza l'uso della lingua inglese"
 
 #: gui/gretl.c:114 gui2/gretl.c:125
-#, fuzzy
 msgid "dump gretl configuration to file"
-msgstr "gretl: test di cointegrazione"
+msgstr "scrive su un file la configurazione di gretl"
 
 #: gui/gretl.c:189 gui2/gretl.c:230 gui2/gui_utils.c:114 gui2/gui_utils.c:181
 #: gui2/gui_utils.c:247 gui2/gui_utils.c:265
@@ -5003,9 +5002,8 @@ msgid "/File/Export data/GNU _octave..."
 msgstr "/File/Esporta dati/GNU _octave..."
 
 #: gui/gretl.c:228 gui2/gretl.c:278
-#, fuzzy
 msgid "/File/Export data/_PcGive..."
-msgstr "/File/Esporta dati/GNU _octave..."
+msgstr "/File/Esporta dati/_PcGive..."
 
 #  "Abbandona" è più appropriato di "Cancella" per questa operazione
 #: gui/gretl.c:229 gui2/gretl.c:279
@@ -7383,11 +7381,11 @@ msgstr ""
 
 #: gui2/database.c:105 gui2/database.c:107
 msgid "Error retrieving data from server"
-msgstr "Errore nel recupero dei dati dal server"
+msgstr "errore nel recupero dei dati dal server"
 
 #: gui2/database.c:133 gui2/database.c:1408
 msgid "Retrieving data..."
-msgstr "Recupero dei dati in corso..."
+msgstr "recupero dei dati in corso..."
 
 #: gui2/database.c:181
 msgid "gretl: display database series"
@@ -7846,9 +7844,8 @@ msgid "GNU Octave files (*.m)"
 msgstr "file GNU Octave (*.m)"
 
 #: gui2/fileselect.c:583
-#, fuzzy
 msgid "PcGive files (*.dat)"
-msgstr "file PNG (*.png)"
+msgstr "file PcGive (*.dat)"
 
 #: gui2/fileselect.c:585 gui2/fileselect.c:586 gui2/fileselect.c:587
 #: gui2/fileselect.c:588
@@ -10048,9 +10045,8 @@ msgid "RATS data directory"
 msgstr "Directory dei database di RATS"
 
 #: gui2/settings.c:219
-#, fuzzy
 msgid "Database server name"
-msgstr "Indirizzo IP del server di database"
+msgstr "Indirizzo del server di database"
 
 #: gui2/settings.c:221
 msgid "HTTP proxy (ipnumber:port)"
