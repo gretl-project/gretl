@@ -444,10 +444,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 		pmod->nobs);
     else pprintf(prn, "\n");
 
-    if (pmod->ci == PROBIT || pmod->ci == LOGIT) {
-	if (print_discrete_stats(pmod, pdinfo, prn))
-	return 1;
-    }
+    if (pmod->ci == PROBIT || pmod->ci == LOGIT) 
+	return print_discrete_stats(pmod, pdinfo, prn);
 
     pprintf(prn, _("      VARIABLE      COEFFICIENT      STDERROR       "
 	    "T STAT    2Prob(t > |T|)\n\n"));
