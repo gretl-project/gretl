@@ -153,7 +153,7 @@ void noalloc (const char *str)
 
 void nosub (PRN *prn) 
 {
-    pprintf(prn, _("Can't do: the current data set is different from " 
+    pputs(prn, _("Can't do: the current data set is different from " 
 	    "the one on which\nthe reference model was estimated\n"));
 }
 
@@ -162,7 +162,7 @@ int model_test_start (const int id, PRN *prn, int ols_only)
     int m = (id)? id - 1 : 0;
 
     if (model_count == 0) { 
-	pprintf(prn, _("Can't do this: no model has been estimated yet\n"));
+	pputs(prn, _("Can't do this: no model has been estimated yet\n"));
 	return 1;
     }
     else if (id > model_count) { 
@@ -171,7 +171,7 @@ int model_test_start (const int id, PRN *prn, int ols_only)
     }    
     else if (ols_only && strncmp(modelspec[m].cmd, "ols", 3) &&
 	     strncmp(modelspec[m].cmd, "pooled", 6)) {
-	pprintf(prn, _("This command only available for OLS models "
+	pputs(prn, _("This command only available for OLS models "
 		"at present\n"));
 	return 1;
     }
@@ -727,23 +727,23 @@ void exec_line (char *line, PRN *prn)
 	order = atoi(command.param);
 	err = corrgram(command.list[1], order, &Z, datainfo, &paths,
 		       batch, prn);
-	if (err) pprintf(prn, _("Failed to generate correlogram\n"));
+	if (err) pputs(prn, _("Failed to generate correlogram\n"));
 	break;
 
     case DELEET:
 	if (fullZ != NULL) {
-	    pprintf(prn, _("Can't delete last variable when in sub-sample"
+	    pputs(prn, _("Can't delete last variable when in sub-sample"
 		    " mode\n"));
 	    break;
 	}	
 	if (datainfo->v <= 1 || dataset_drop_vars(1, &Z, datainfo)) 
-	    pprintf(prn, _("Failed to shrink the data set"));
+	    pputs(prn, _("Failed to shrink the data set"));
 	else varlist(datainfo, prn);
 	break;
 
     case ENDLOOP:
 	if (!loopstack) {
-	    pprintf(prn, _("You can't end a loop here, "
+	    pputs(prn, _("You can't end a loop here, "
 		    "you haven't started one\n"));
 	    break;
 	}
@@ -761,7 +761,7 @@ void exec_line (char *line, PRN *prn)
 	    err = tabprint(models[0], datainfo, &paths, 
 			   texfile, model_count, oflag);
 	if (err) 
-	    pprintf(prn, _("Couldn't open tex file for writing\n"));
+	    pputs(prn, _("Couldn't open tex file for writing\n"));
 	else 
 	   pprintf(prn, _("Model printed to %s\n"), texfile);
 	break;
@@ -771,7 +771,7 @@ void exec_line (char *line, PRN *prn)
 	err = fcast(line, models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
-	    pprintf(prn, _("Error retrieving fitted values\n"));
+	    pputs(prn, _("Error retrieving fitted values\n"));
 	    errmsg(err, prn);
 	    break;
 	}
@@ -791,12 +791,12 @@ void exec_line (char *line, PRN *prn)
 	err = fcast("fcast autofit", models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
-	    pprintf(prn, _("Error retrieving fitted values\n"));
+	    pputs(prn, _("Error retrieving fitted values\n"));
 	    errmsg(err, prn);
 	    break;
 	}
 	err = 0;
-	pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
+	pputs(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	varlist(datainfo, prn);
 	if (dataset_is_time_series(datainfo)) {
 	    plotvar(&Z, datainfo, "time");
@@ -808,7 +808,7 @@ void exec_line (char *line, PRN *prn)
 	    lines[0] = 1;
 	    err = gnuplot(command.list, lines, &Z, datainfo,
 			  &paths, &plot_count, batch, 0, 0);
-	    if (err) pprintf(prn, _("gnuplot command failed\n"));
+	    if (err) pputs(prn, _("gnuplot command failed\n"));
 	}
 	break;
 		
@@ -824,7 +824,7 @@ void exec_line (char *line, PRN *prn)
 	    printfreq(freq, prn); 
 	    if (!batch) {
 		if (plot_freq(freq, &paths, NORMAL))
-		    pprintf(prn, _("gnuplot command failed\n"));
+		    pputs(prn, _("gnuplot command failed\n"));
 	    }
 	    free_freq(freq);
 	}
@@ -843,8 +843,8 @@ void exec_line (char *line, PRN *prn)
 	if (oflag == OPT_Z && 
 	    (command.list[0] != 3 || 
 	     !isdummy(Z[command.list[3]], datainfo->t1, datainfo->t2))) { 
-	    pprintf(prn, _("You must supply three variables, the last of "
-			   "which is a dummy variable\n(with values 1 or 0)\n"));
+	    pputs(prn, _("You must supply three variables, the last of "
+			 "which is a dummy variable\n(with values 1 or 0)\n"));
 	    break;
 	}
 	if (oflag == OPT_M || oflag == OPT_Z) { 
@@ -855,7 +855,7 @@ void exec_line (char *line, PRN *prn)
 	    err = gnuplot(command.list, lines, &Z, datainfo,
 			  &paths, &plot_count, batch, 0, 0);
 	}
-	if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
+	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	break;
 
     case HAUSMAN:
@@ -893,7 +893,7 @@ void exec_line (char *line, PRN *prn)
     case IMPORT:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
-	    pprintf(prn, _("import command is malformed\n"));
+	    pputs(prn, _("import command is malformed\n"));
 	    break;
 	}
 	if (oflag)
@@ -904,17 +904,17 @@ void exec_line (char *line, PRN *prn)
 	    data_status = 1;
 	    print_smpl(datainfo, 0, prn);
 	    varlist(datainfo, prn);
-	    pprintf(prn, _("You should now use the \"print\" command "
-		   "to verify the data\n"));
-	    pprintf(prn, _("If they are OK, use the  \"store\" command "
-		   "to save them in gretl format\n"));
+	    pputs(prn, _("You should now use the \"print\" command "
+			 "to verify the data\n"));
+	    pputs(prn, _("If they are OK, use the \"store\" command "
+			 "to save them in gretl format\n"));
 	}
 	break;
 
     case OPEN:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
-	    pprintf(prn, _("'open' command is malformed\n"));
+	    pputs(prn, _("'open' command is malformed\n"));
 	    break;
 	}
 	if (data_status && !(batch) 
@@ -1008,12 +1008,12 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (loop.lvar == 0 && loop.ntimes < 2) {
-	    pprintf(prn, _("Loop count missing or invalid\n"));
+	    pputs(prn, _("Loop count missing or invalid\n"));
 	    monte_carlo_free(&loop);
 	    break;
 	}
 	if (!batch && !runit) 
-	    pprintf(prn, _("Enter commands for loop.  "
+	    pputs(prn, _("Enter commands for loop.  "
 		   "Type 'endloop' to get out\n"));
 	loopstack = 1; 
 	break;
@@ -1025,19 +1025,19 @@ void exec_line (char *line, PRN *prn)
     case NULLDATA:
 	nulldata_n = atoi(command.param);
 	if (nulldata_n < 2) {
-	    pprintf(prn, _("Data series length count missing or invalid\n"));
+	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    err = 1;
 	    break;
 	}
 	if (nulldata_n > 1000000) {
-	    pprintf(prn, _("Data series too long\n"));
+	    pputs(prn, _("Data series too long\n"));
 	    err = 1;
 	    break;
 	}
 	err = open_nulldata(&Z, datainfo, data_status, 
 			    nulldata_n, prn);
 	if (err) 
-	    pprintf(prn, _("Failed to create empty data set\n"));
+	    pputs(prn, _("Failed to create empty data set\n"));
 	else data_status = 1;	
 	break;
 
@@ -1061,7 +1061,7 @@ void exec_line (char *line, PRN *prn)
     case MPOLS:
 	err = mp_ols(command.list, command.param, &Z, datainfo, prn);
 	if (err) {
-	    pprintf(prn, _("mpols command failed\n"));
+	    pputs(prn, _("mpols command failed\n"));
 	    errmsg(err, prn);
 	}
 	break;
@@ -1074,7 +1074,7 @@ void exec_line (char *line, PRN *prn)
     case PERGM:
 	err = periodogram(command.list[1], &Z, datainfo, &paths,
 			  batch, oflag, prn);
-	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
+	if (err) pputs(prn, _("Failed to generate periodogram\n"));
 	break;
 
     case PVALUE:
@@ -1085,7 +1085,7 @@ void exec_line (char *line, PRN *prn)
 
     case QUIT:
 	if (batch) {
-	    pprintf(prn, _("Done\n"));
+	    pputs(prn, _("Done\n"));
 	    break;
 	}
 	if (runit) {
@@ -1120,7 +1120,7 @@ void exec_line (char *line, PRN *prn)
 
     case RHODIFF:
 	if (!command.list[0]) {
-	    pprintf(prn, _("This command requires a list of variables\n"));
+	    pputs(prn, _("This command requires a list of variables\n"));
 	    break;
 	}
 	err = rhodiff(command.param, command.list, &Z, datainfo);
@@ -1131,7 +1131,7 @@ void exec_line (char *line, PRN *prn)
     case RUN:
 	err = getopenfile(line, runfile, &paths, 1, 1);
 	if (err) { 
-	    pprintf(prn, _("Command is malformed\n"));
+	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	}
 	if ((fb = fopen(runfile, "r")) == NULL) {
@@ -1151,11 +1151,11 @@ void exec_line (char *line, PRN *prn)
 
     case SCATTERS:
 	if (batch) 
-	    pprintf(prn, _("scatters command not available in batch mode\n"));
+	    pputs(prn, _("scatters command not available in batch mode\n"));
 	else {
 	    err = multi_scatters(command.list, atoi(command.param), &Z, 
 				 datainfo, &paths);
-	    if (err) pprintf(prn, _("scatters command failed\n"));
+	    if (err) pputs(prn, _("scatters command failed\n"));
 	}		
 	break;
 
@@ -1227,7 +1227,7 @@ void exec_line (char *line, PRN *prn)
 	if (oflag) check = xpxgenr(command.list, &Z, datainfo, 1, 1);
 	else check = xpxgenr(command.list, &Z, datainfo, 0, 1);
 	if (check < 0) {
-	    pprintf(prn, _("Failed to generate squares\n"));
+	    pputs(prn, _("Failed to generate squares\n"));
 	    err = 1;
 	} else {
 	    pprintf(prn, _("Squares generated OK\n"));
