@@ -933,6 +933,10 @@ static int cant_edit (const char *line)
 	errbox(_("Sorry, can't edit sampling distribution plots"));
 	return 1;
     }
+    if (strstr(line, "no auto-parse")) {
+	errbox(_("Sorry, can't edit this plot"));
+	return 1;
+    }
     return 0;
 }
 
@@ -1665,7 +1669,7 @@ static void render_pngfile (const char *fname, png_plot_t *plot,
 				  GDK_RGB_DITHER_NONE, 0, 0);
 
     g_object_unref(pbuf);
-    /* remove(fname); */
+    remove(fname);
     
     if (view == PNG_ZOOM || view == PNG_UNZOOM) { 
 	/* refresh the whole canvas */

@@ -2394,15 +2394,20 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 #ifdef TRAMO_X12
 
+extern char tramo[];
 extern char tramodir[];
+extern char x12a[];
 extern char x12adir[];
 
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
+    int graph = 0, oldv = datainfo->v;
     void *handle;
-    int (*write_ts_data) (char *, int, double **, const DATAINFO *, 
-			  const char *);
+    int (*write_ts_data) (char *, int, 
+			  double ***, DATAINFO *, 
+			  PATHS *, int *,
+			  const char *, const char *);
     char fname[MAXLEN];
 
     if (!datainfo->vector[mdata->active_var]) {
@@ -2434,8 +2439,13 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = write_ts_data (fname, mdata->active_var, Z, datainfo, 
-			 (opt == TRAMO)? tramodir : x12adir);
+    if (opt == TRAMO) {
+	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
+			     &paths, &graph, tramo, tramodir);
+    } else { /* X12A */
+	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
+			     &paths, &graph, x12a, x12adir);
+    }
 
     close_plugin(handle);
 
@@ -2450,6 +2460,16 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	       (opt == TRAMO)? _("gretl: TRAMO analysis") :
 	       _("gretl: X-12-ARIMA analysis"),
 	       TRAMO_X12A, view_items);
+
+    if (graph) {
+	gnuplot_display(&paths);
+	register_graph();
+    }
+
+    if (datainfo->v > oldv) {
+	populate_varlist();
+	mark_dataset_as_modified();
+    }
 }
 #endif
 

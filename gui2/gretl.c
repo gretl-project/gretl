@@ -167,7 +167,9 @@ char Rcommand[MAXSTR] = "xterm -e R";
 #endif
 
 #ifdef TRAMO_X12
+char tramo[MAXSTR] = "tramo";
 char tramodir[MAXSTR] = "";
+char x12a[MAXSTR] = "x12a";
 char x12adir[MAXSTR] = "";
 #endif
 

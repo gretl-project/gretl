@@ -39,6 +39,7 @@ have_gmp="no"
 seek_inet_addr="no"
 png_graphics="yes"
 prefer_xml1="no"
+want_tramo="no"
 MAKE="make"
 XML_LIBS=
 
@@ -65,6 +66,16 @@ else
   png_graphics=no
   gnuplot_png=no
 fi])
+
+AC_ARG_ENABLE(tramo-x12a,
+[  --enable-tramo-x12a     TRAMO and X-12-ARIMA support [default=no]],
+[if test "$enableval" = "yes"
+then
+  AC_DEFINE(TRAMO_X12)
+  TRAMO_X12=1
+  want_tramo="yes"
+fi])
+AC_SUBST(TRAMO_X12)
 
 AC_ARG_WITH(gmake,
 [  --with-gmake           Use GNU make explicitly [default=no]],
@@ -473,17 +484,18 @@ else
 echo "
 Configuration:
   
-  Installation path:                    ${prefix}
-  Use readline library:                 ${have_readline}
-  Use gnuplot for graphs:               ${have_gnuplot}
-  Use PNG for gnuplot graphs:           ${gnuplot_png}
-  Use LaTeX for typesetting output:     ${have_latex}
-  Gnu Multiple Precision support:       ${have_gmp}
-  Build with GTK version:               ${have_gtk}
-  Use installed libole2:                ${have_libole2}
-  Use installed gtkextra:		${have_gtkextra}
-  Build with gnome support:             ${have_gnome}
-  Gnome installation prefix:            ${gnome_prefix}
+  Installation path:                      ${prefix}
+  Use readline library:                   ${have_readline}
+  Use gnuplot for graphs:                 ${have_gnuplot}
+  Use PNG for gnuplot graphs:             ${gnuplot_png}
+  Use LaTeX for typesetting output:       ${have_latex}
+  Gnu Multiple Precision support:         ${have_gmp}
+  Build with GTK version:                 ${have_gtk}
+  Use installed libole2:                  ${have_libole2}
+  Use installed gtkextra:		  ${have_gtkextra}
+  Build with gnome support:               ${have_gnome}
+  Gnome installation prefix:              ${gnome_prefix}
+  TRAMO/X-12-ARIMA support (experimental) ${want_tramo}
 
 Now type '$MAKE' to build gretl.
 "

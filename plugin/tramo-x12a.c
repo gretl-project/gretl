@@ -33,6 +33,7 @@ const char *default_mdl = {
 int write_tramo_data (char *fname, int varnum, 
 		      double ***pZ, DATAINFO *pdinfo, 
 		      PATHS *paths, int *graph,
+		      const char *tramo,
 		      const char *tramodir)
 {
     int i, t;
@@ -105,8 +106,8 @@ int write_tramo_data (char *fname, int varnum,
 	    tramodir, varname);
     WinExec(cmd, SW_SHOWMINIMIZED);
 #else
-    sprintf(cmd, "cd %s && ./tramo -i %s >/dev/null", 
-	    tramodir, varname);
+    sprintf(cmd, "cd %s && %s -i %s >/dev/null", 
+	    tramodir, tramo, varname);
     system(cmd);
 #endif
 
@@ -128,7 +129,7 @@ static int graph_x12a_series (double **Z, DATAINFO *pdinfo,
 			      PATHS *paths, int varno)
 {
     FILE *fp = NULL;
-    int i, t;
+    int t;
 
     if (gnuplot_init(paths, &fp)) return E_FOPEN;
 
@@ -136,14 +137,16 @@ static int graph_x12a_series (double **Z, DATAINFO *pdinfo,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    /* fixme tics */
+    /* FIXME tics? */
 
-    fprintf(fp, "set multiplot\n"
-	    "set size 1.0,0.32\n");
-    
+    fputs("# X-12-ARIMA tri-graph (no auto-parse)\n", fp);
+
+    fputs("set multiplot\nset size 1.0,0.32\n", fp);
+
     /* irregular component */
-    fprintf(fp, "set origin 0.0,0.0\n"
-	    "plot '-' using 1 w i title '%s'\n", I_("irregular"));
+    fprintf(fp, "set bars 0\nset origin 0.0,0.0\n"
+	    "plot '-' using :(1.0):($1-1.0) w yerrorbars title '%s', \\\n"
+	    "1.0 notitle\n", I_("irregular"));
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	fprintf(fp, "%g\n", Z[pdinfo->v - 1][t]);
     }
@@ -266,7 +269,7 @@ int *make_savelist (void)
 int write_x12a_data (char *fname, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo, 
 		     PATHS *paths, int *graph,
-		     const char *x12adir)
+		     const char *x12a, const char *x12adir)
 {
     int i, t, err = 0;
     char tmp[8], varname[9], cmd[MAXLEN];
@@ -354,7 +357,7 @@ int write_x12a_data (char *fname, int varnum,
     }
 
     /* FIXME win32 */
-    sprintf(cmd, "cd %s && x12a %s -r -p -q >/dev/null", x12adir, varname);
+    sprintf(cmd, "cd %s && %s %s -r -p -q >/dev/null", x12adir, x12a, varname);
     system(cmd);
 
     sprintf(fname, "%s%c%s.out", x12adir, SLASH, varname); 

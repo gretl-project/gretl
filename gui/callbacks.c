@@ -193,7 +193,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	file_selector(_("Save model output"), file_code, mydata);
 	break;
     case SAVE_GP_CMDS:
-	file_selector(_("Save gnuplot commands"), file_code, mydata->w);
+	file_selector(_("Save gnuplot commands"), file_code, mydata);
 	break;
     default:
 	dummy_call();
@@ -628,6 +628,9 @@ void file_save_callback (GtkWidget *w, gpointer data)
 	break;
     case VIEW_LOG:
 	u = SAVE_CMDS;
+	break;
+    case GR_PLOT:
+	u = SAVE_GP_CMDS;
 	break;
     default:
 	errbox(_("Sorry, not yet implemented"));

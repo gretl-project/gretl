@@ -881,6 +881,10 @@ static int cant_edit (const char *line)
 	errbox(_("Sorry, can't edit sampling distribution plots"));
 	return 1;
     }
+    if (strstr(line, "no auto-parse")) {
+	errbox(_("Sorry, can't edit this plot"));
+	return 1;
+    }
     return 0;
 }
 

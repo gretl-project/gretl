@@ -43,10 +43,14 @@ extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
+
 #ifdef TRAMO_X12
+extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
+extern char x12a[MAXSTR];
 extern char x12adir[MAXSTR];
 #endif
+
 int use_proxy;
 
 /* filelist stuff */
@@ -108,25 +112,35 @@ RCVARS rc_vars[] = {
      'R', MAXLEN, 1, NULL},
     {"userdir", N_("User's gretl directory"), NULL, paths.userdir, 
      'U', MAXLEN, 1, NULL},
-    {"gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
-     'R', MAXLEN, 1, NULL},
-    {"Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
-     'R', MAXSTR, 1, NULL},
-    {"viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
-     'R', MAXSTR, 1, NULL},
-#ifdef TRAMO_X12
-    {"x12adir", N_("X-12-ARIMA directory"), NULL, x12adir, 
-     'R', MAXSTR, 1, NULL},
-    {"tramodir", N_("TRAMO/SEATS directory"), NULL, tramodir, 
-     'R', MAXSTR, 1, NULL},
-#endif
     {"expert", N_("Expert mode (no warnings)"), NULL, &expert, 
      'B', 0, 1, NULL},
     {"updater", N_("Tell me about gretl updates"), NULL, &updater, 
      'B', 0, 1, NULL},
+    {"toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
+     'B', 0, 1, NULL},
 #ifdef ENABLE_NLS
     {"lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
      'B', 0, 1, NULL},
+#endif
+    {"gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
+     'R', MAXLEN, 3, NULL},
+    {"Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
+     'R', MAXSTR, 3, NULL},
+    {"viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
+     'R', MAXSTR, 3, NULL},
+    {"calculator", N_("Calculator"), NULL, calculator, 
+     'U', MAXSTR, 3, NULL},
+    {"editor", N_("Editor"), NULL, editor, 
+     'U', MAXSTR, 3, NULL},
+#ifdef TRAMO_X12
+    {"x12a", N_("path to x12arima"), NULL, x12a, 
+     'R', MAXSTR, 3, NULL},
+    {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
+     'R', MAXSTR, 3, NULL},
+    {"tramo", N_("path to tramo"), NULL, tramo, 
+     'R', MAXSTR, 3, NULL},
+    {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
+     'R', MAXSTR, 3, NULL},
 #endif
     {"binbase", N_("gretl database directory"), NULL, paths.binbase, 
      'U', MAXLEN, 2, NULL},
@@ -138,12 +152,6 @@ RCVARS rc_vars[] = {
      'U', 21, 2, NULL},
     {"useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
      'B', 1, 2, NULL},
-    {"calculator", N_("Calculator"), NULL, calculator, 
-     'U', MAXSTR, 3, NULL},
-    {"editor", N_("Editor"), NULL, editor, 
-     'U', MAXSTR, 3, NULL},
-    {"toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
-     'B', 0, 3, NULL},
     {"usecwd", N_("Use current working directory as default"), 
      N_("Use gretl user directory as default"), &usecwd, 'B', 0, 4, NULL},
     {"olddat", N_("Use \".dat\" as default datafile suffix"), 
@@ -322,8 +330,9 @@ static void flip_sensitive (GtkWidget *w, gpointer data)
 
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
-    GtkWidget *box, *inttbl, *chartbl, *tempwid = NULL;
-    int i, tbl_len, tbl_num, tbl_col;
+    GtkWidget *box, *b_table, *s_table, *tempwid = NULL;
+    int i, s_len, b_len, b_col;
+    int s_count = 0, b_count = 0;
     RCVARS *rc = NULL;
    
     box = gtk_vbox_new (FALSE, 0);
@@ -335,7 +344,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     else if (tab == 2)
 	tempwid = gtk_label_new (_("Databases"));
     else if (tab == 3)
-	tempwid = gtk_label_new (_("Toolbar"));
+	tempwid = gtk_label_new (_("Programs"));
     else if (tab == 4)
 	tempwid = gtk_label_new (_("Open/Save path"));
     else if (tab == 5)
@@ -344,31 +353,32 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
-    tbl_len = 1;
-    chartbl = gtk_table_new (tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (chartbl), 5);
-    gtk_table_set_col_spacings (GTK_TABLE (chartbl), 5);
-    gtk_box_pack_start (GTK_BOX (box), chartbl, FALSE, FALSE, 0);
-    gtk_widget_show (chartbl);
-   
-    tbl_num = tbl_col = 0;
-    inttbl = gtk_table_new (1, 2, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (inttbl), 2);
-    gtk_table_set_col_spacings (GTK_TABLE (inttbl), 5);
-    gtk_box_pack_start (GTK_BOX (box), inttbl, FALSE, FALSE, 0);
-    gtk_widget_show (inttbl);
+    s_len = 1;
+    s_table = gtk_table_new (s_len, 2, FALSE);
+    gtk_table_set_row_spacings (GTK_TABLE (s_table), 5);
+    gtk_table_set_col_spacings (GTK_TABLE (s_table), 5);
+    gtk_box_pack_start (GTK_BOX (box), s_table, FALSE, FALSE, 0);
+    gtk_widget_show (s_table);
+
+    b_len = b_col = 0;
+    b_table = gtk_table_new (1, 2, FALSE);
+    gtk_table_set_row_spacings (GTK_TABLE (b_table), 5);
+    gtk_table_set_col_spacings (GTK_TABLE (b_table), 5);
+    gtk_box_pack_start (GTK_BOX (box), b_table, FALSE, FALSE, 10);
+    gtk_widget_show (b_table);
 
     i = 0;
     while (rc_vars[i].key != NULL) {
 	rc = &rc_vars[i];
 	if (rc->tab == tab) {
-	    if (rc->type == 'B' 
-		&& rc->link == NULL) { /* simple boolean variable */
+	    if (rc->type == 'B' && rc->link == NULL) { 
+		/* simple boolean variable */
+		b_count++;
 		tempwid = gtk_check_button_new_with_label 
 		    (_(rc->description));
 		gtk_table_attach_defaults 
-		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
-		     tbl_num, tbl_num + 1);
+		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
+		     b_len, b_len + 1);
 		if (*(int *)(rc->var)) {
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), TRUE);
@@ -387,64 +397,71 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		/* end link to entry */
 		gtk_widget_show (tempwid);
 		rc->widget = tempwid;
-		tbl_col++;
-		if (tbl_col == 2) {
-		    tbl_col = 0;
-		    tbl_num++;
-		    gtk_table_resize (GTK_TABLE (inttbl), tbl_num + 1, 2);
+		b_col++;
+		if (b_col == 2) {
+		    b_col = 0;
+		    b_len++;
+		    gtk_table_resize (GTK_TABLE (b_table), b_len + 1, 2);
 		}
-	    } 
-	    else if (rc->type == 'B') { /* radio-button dichotomy */
+	    } else if (rc->type == 'B') { 
+		/* radio-button dichotomy */
 		int val = *(int *)(rc->var);
 		GSList *group;
 
-		tbl_num += 3;
-		gtk_table_resize (GTK_TABLE(inttbl), tbl_num + 1, 2);
+		b_count++;
+		b_len += 3;
+		gtk_table_resize (GTK_TABLE(b_table), b_len + 1, 2);
 
 		tempwid = gtk_radio_button_new_with_label(NULL, 
 							  _(rc->description));
 		gtk_table_attach_defaults 
-		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
-		     tbl_num - 3, tbl_num - 2);    
-		if (val) 
+		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
+		     b_len - 3, b_len - 2);    
+		if (val) {
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
+		}
 		gtk_widget_show (tempwid);
 		rc->widget = tempwid;
 		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tempwid));
 		tempwid = gtk_radio_button_new_with_label(group, _(rc->link));
 		gtk_table_attach_defaults 
-		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
-		     tbl_num - 2, tbl_num - 1);  
+		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
+		     b_len - 2, b_len - 1);  
 		if (!val) {
 		    gtk_toggle_button_set_active
 			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
 		}
 		gtk_widget_show (tempwid);
-		tempwid =gtk_hseparator_new ();
+		tempwid = gtk_hseparator_new ();
 		gtk_table_attach_defaults 
-		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
-		     tbl_num - 1, tbl_num);  
+		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
+		     b_len - 1, b_len);  
 		gtk_widget_show (tempwid);
 	    } else { /* string variable */
-		tbl_len++;
-		gtk_table_resize (GTK_TABLE (chartbl), tbl_len, 2);
+		s_count++;
+		s_len++;
+		gtk_table_resize (GTK_TABLE (s_table), s_len, 2);
 		tempwid = gtk_label_new (_(rc->description));
 		gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
-		gtk_table_attach_defaults (GTK_TABLE (chartbl), 
-					   tempwid, 0, 1, tbl_len-1, tbl_len);
+		gtk_table_attach_defaults (GTK_TABLE (s_table), 
+					   tempwid, 0, 1, s_len - 1, s_len);
 		gtk_widget_show (tempwid);
 
 		tempwid = gtk_entry_new ();
-		gtk_table_attach_defaults (GTK_TABLE (chartbl), 
-					   tempwid, 1, 2, tbl_len-1, tbl_len);
+		gtk_table_attach_defaults (GTK_TABLE (s_table), 
+					   tempwid, 1, 2, s_len-1, s_len);
 		gtk_entry_set_text (GTK_ENTRY (tempwid), rc->var);
 		gtk_widget_show (tempwid);
 		rc->widget = tempwid;
-	    } 
-	}
+	    }
+	} /* end if (rc->tab == tab) */
 	i++;
-    }
+    } /* end of loop over rc_vars[i].key */
+
+    if (b_count == 0) gtk_widget_destroy(b_table);
+    if (s_count == 0) gtk_widget_destroy(s_table);
+
 }
 
 /* .................................................................. */

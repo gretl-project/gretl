@@ -3,6 +3,7 @@ version 1.0.1
 - fix missing name of dependent var in gui mpols printout
 - remove RTF and LaTeX items from mpols copy options (not yet
   implemented) in gui2
+- fix bug in saving gnuplot commands to file
 - updates to updater function in gui program (both gui and gui2)
 - add rudimentary plugin support for TRAMO and X-12-ARIMA
 
