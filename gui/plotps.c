@@ -1,5 +1,6 @@
 /* functions borrowed from gtkplotps.c in gtkextra.  They are declared
-   static there, but gretl wants direct access to them. */
+   static there, but gretl wants direct access to them for the
+   postscript printing of boxplots. */
 
 /* gtkplotps - postscript driver
  * Copyright 1999-2001  Adrian E. Feiguin <feiguin@ifir.edu.ar>
