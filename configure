@@ -22479,7 +22479,7 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
 fi
 
-LAPACK_CFLAGS="-I${srcdir}/plugin"
+LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
   *darwin*) LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
   ;;

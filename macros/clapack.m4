@@ -29,8 +29,9 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
      LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
   fi
 
+  ac_save_CFLAGS="$CFLAGS"
   ac_save_LIBS="$LIBS"
-  CFLAGS="$CFLAGS $LAPACK_CFLAGS"
+  CFLAGS="$LAPACK_CFLAGS $CFLAGS"
   LIBS="$LAPACK_LIBS $LIBS"
 
 dnl
@@ -65,7 +66,7 @@ main ()
        :
      else
        echo "*** Could not run LAPACK test program, checking why..."
-       CFLAGS="$CFLAGS $LAPACK_CFLAGS"
+       CFLAGS="$LAPACK_CFLAGS $CFLAGS"
        LIBS="$LIBS $LAPACK_LIBS"
        AC_TRY_LINK([
 #include <f2c.h>

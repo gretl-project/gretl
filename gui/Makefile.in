@@ -27,8 +27,6 @@ GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 USE_NLS = @USE_NLS@
 INETLIB = @INETLIB@
 
-GMP_CFLAGS = @GMP_CFLAGS@
-
 ifeq ($(CC),)
   CC = gcc
 endif
@@ -62,7 +60,7 @@ ifeq ($(USE_NLS),yes)
   DEFS = -DLOCALEDIR=\"$(localedir)\"
 endif
 
-override CFLAGS += -I.. -I$(libsrc) $(GMP_CFLAGS) $(GUI_CFLAGS) $(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
+override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
 override LIBS += $(PNG_LIBS) $(GDK_PIXBUF_LIBS)
 
 # Directories

@@ -270,7 +270,7 @@ dnl
 dnl Check for LAPACK 
 dnl Apple will be different
 dnl
-LAPACK_CFLAGS="-I${srcdir}/plugin"
+LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
   *darwin*) LAPACK_LIBS="-Wl,-framework -Wl,vecLib"
   ;; 

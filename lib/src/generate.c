@@ -616,7 +616,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
     char *indx1, *indx2, s[MAXLEN], sright[MAXLEN], sleft[MAXLEN];
     char sexpr[MAXLEN], snew[MAXLEN], word[16], s1[MAXLEN];
-    char newvar[16], genrs[MAXLEN];
+    char newvar[32], genrs[MAXLEN];
     int err = 0;
     char op0, op1;
     register int i;
@@ -701,6 +701,13 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     
     /* get equation newvar = s, where s is expression */
     i = getword('=', s, newvar, oflag);
+
+#if 0
+    if (get_obs_index(newvar, pdinfo) >= 0) {
+	;
+    }
+#endif
+
     if (i > 0) {
 	if (!strlen(newvar)) {
 	    err = E_NOVAR;

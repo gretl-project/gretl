@@ -15,8 +15,6 @@ have_readline = @have_readline@
 READLINE_LIBS = @READLINE_LIBS@
 READLINE_CFLAGS = @READLINE_CFLAGS@
 
-GMP_CFLAGS = @GMP_CFLAGS@
-
 ifeq ($(CC),)
   CC = gcc
 endif
@@ -41,7 +39,7 @@ OBJS = gretlcli.o $(RL_OBJ)
 
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
-override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(GMP_CFLAGS) $(READLINE_CFLAGS) $(DEFS)
+override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(READLINE_CFLAGS) $(DEFS)
 
 CLI = gretlcli
 LIBTOOL = ../libtool
