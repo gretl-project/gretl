@@ -376,31 +376,31 @@ static char *est_str (int cmdnum)
 {
     switch (cmdnum) {
     case OLS:
-	return _("OLS");
+	return N_("OLS");
     case HCCM:
-	return _("HCCM");
+	return N_("HCCM");
     case HSK:
-	return _("Heteroskedasticity corrected");
+	return N_("Heteroskedasticity corrected");
     case CORC:
-	return _("Cochrane-Orcutt");
+	return N_("Cochrane-Orcutt");
     case HILU:
-	return _("Hildreth-Lu");
+	return N_("Hildreth-Lu");
     case LOGIT:
-	return _("Logit");
+	return N_("Logit");
     case PROBIT:
-	return _("Probit");
+	return N_("Probit");
     case POOLED:
-	return _("Pooled OLS");
+	return N_("Pooled OLS");
     case WLS:
-	return _("Weighted least squares");
+	return N_("Weighted least squares");
     case TSLS:
-	return _("Two-stage least squares");
+	return N_("Two-stage least squares");
     case AR:
-	return _("Autoregressive");
+	return N_("Autoregressive");
     case VAR:
-	return _("VAR");
+	return N_("VAR");
     case COINT:
-	return _("Cointegration");
+	return N_("Cointegration");
     default:
 	return "";
     }
@@ -410,24 +410,28 @@ static char *extra_string (int cmdnum)
 {
     switch (cmdnum) {
     case WLS:
-	return _("Weight variable");
+	return N_("Weight variable");
     case TSLS:
-	return _("Instruments");
+	return N_("Instruments");
     case AR:
-	return _("List of AR lags");
+	return N_("List of AR lags");
     case GR_DUMMY:
-	return _("Y-axis variable");
+	return N_("Y-axis variable");
     default:
 	return NULL;
     }
 }
 
 static void 
-dialog_select_row (GtkCList *clist, gint row, gint column, 
-		   GdkEventButton *event, selector *sr) 
+dblclick_dialog_row (GtkCList *clist, gint row, gint column, 
+		     GdkEventButton *event, selector *sr) 
 {
-    if (event != NULL && event->type == GDK_2BUTTON_PRESS) 
+    if (event != NULL && event->type == GDK_2BUTTON_PRESS) { 
 	set_dependent_var (row, sr);
+	if (sr->default_check != NULL) 
+	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(sr->default_check),
+					  TRUE);
+    }
 }
 
 static gint
@@ -652,7 +656,7 @@ static void tsls_box (selector *sr, GtkWidget *right_vbox)
 static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp;
-    char *str = extra_string(sr->code);
+    const char *str = _(extra_string(sr->code));
 
     if (str != NULL) {
 	tmp = gtk_label_new(str);
@@ -785,7 +789,7 @@ void selection_dialog (const char *title, const char *oktxt,
     selector_init(sr, cmdcode, title);
 
     if (MODEL_CODE(cmdcode))
-	strcpy(topstr, est_str(cmdcode));
+	strcpy(topstr, _(est_str(cmdcode)));
     else if (cmdcode == GR_XY)
 	strcpy(topstr, _("XY scatterplot"));
     else if (cmdcode == GR_IMP)
@@ -828,7 +832,7 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),
 				  GTK_SELECTION_EXTENDED);
     gtk_signal_connect_after (GTK_OBJECT (sr->varlist), "select_row", 
-			      GTK_SIGNAL_FUNC(dialog_select_row), sr);
+			      GTK_SIGNAL_FUNC(dblclick_dialog_row), sr);
     gtk_signal_connect(GTK_OBJECT(sr->varlist), "button_press_event",
 		       (GtkSignalFunc) dialog_right_click, sr);
     gtk_widget_show(sr->varlist); 
@@ -956,25 +960,25 @@ static char *get_topstr (int cmdnum)
 {
     switch (cmdnum) {    
     case LOGS:
-	return _("Select variables for logging");
+	return N_("Select variables for logging");
     case LAGS:
-	return _("Select variables for lagging");
+	return N_("Select variables for lagging");
     case SQUARE:
-	return _("Select variables to square");
+	return N_("Select variables to square");
     case DIFF:
-	return _("Select variables to difference");
+	return N_("Select variables to difference");
     case LDIFF:
-	return _("Select variables to log-difference");
+	return N_("Select variables to log-difference");
     case ADD:
-	return _("Select variables to add");
+	return N_("Select variables to add");
     case OMIT:
-	return _("Select variables to omit");
+	return N_("Select variables to omit");
     case PRINT:
-	return _("Select variables to display");
+	return N_("Select variables to display");
     case GR_PLOT: 
     case GR_BOX: 
     case GR_NBOX:
-	return _("Select variables to plot");
+	return N_("Select variables to plot");
     default:
 	return "";
     }
@@ -1040,7 +1044,7 @@ void simple_selection (const char *title, const char *oktxt,
 
     sr->data = p;
 
-    strcpy(topstr, get_topstr(cmdcode));
+    strcpy(topstr, _(get_topstr(cmdcode)));
     tmp = gtk_label_new(topstr);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 			       tmp, TRUE, TRUE, 0);
@@ -1097,6 +1101,8 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_widget_set_usize (sr->varlist, 80, 120);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),
 				  GTK_SELECTION_EXTENDED);
+    gtk_signal_connect(GTK_OBJECT(sr->varlist), "button_press_event",
+		       (GtkSignalFunc) dialog_right_click, sr);
     gtk_container_add(GTK_CONTAINER(scroller), sr->varlist);
     gtk_widget_show(sr->varlist); 
     gtk_box_pack_start(GTK_BOX(left_vbox), scroller, TRUE, TRUE, 0);

@@ -3,10 +3,10 @@ static char *mini_netscape_xpm[] = {
 /* width height num_colors chars_per_pixel */
 "    17    16       5            1",
 /* colors */
-". c White",
-"# c Black",
+". c #ffffff",
+"# c #000000",
 "b c Gray50",
-"i c Blue4",
+"i c #00008b",
 "  c None",
 /* pixels */
 "                 ",

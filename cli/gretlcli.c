@@ -146,7 +146,7 @@ void gretl_abort (char *line)
     exit(EXIT_FAILURE);
 }
 
-void noalloc (char *str)
+void noalloc (const char *str)
 {
     fprintf(stderr, _("Couldn't allocate memory for %s\n"), str);
     exit(EXIT_FAILURE);

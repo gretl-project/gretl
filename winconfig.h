@@ -21,6 +21,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifndef WINCONFIG_H
 #define WINCONFIG_H
 
+/* Native language support */
+#define ENABLE_NLS 1
+
 /* Define if you want GNU readline support */
 #define HAVE_READLINE 1
 

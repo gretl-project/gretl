@@ -25,7 +25,15 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "gretlconfig.h" /* to specify NLS or not */
+#ifdef BUILDING_LIB
+# include "config.h"
+#endif
+
+#define _(String) gettext (String)
+#ifndef __GNOME_I18N_H__
+# define N_(String) gettext_noop (String)
+#endif
+
 #include "gettext.h"
 
 #define MAXLABEL 128  /* maximum length of decsriptive labels for variables */

@@ -216,9 +216,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/_Append data/from Excel..."), NULL, open_data, 
       APPEND_EXCEL, NULL },
     { N_("/File/_Save data"), NULL, auto_store, 0, NULL },
-    { N_("/File/Save data _as/_standard format..."), NULL, file_save, 
+    { N_("/File/_Save data _as/_standard format..."), NULL, file_save, 
       SAVE_DATA, NULL },
-    { N_("/File/Save data _as/_gzipped..."), NULL, 
+    { N_("/File/_Save data _as/_gzipped..."), NULL, 
       file_save, SAVE_GZDATA, NULL },
 #ifdef notdef
     { N_("/File/Save data _as/_alternative formats/_single precision binary..."), 
@@ -305,8 +305,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Session/_Save"), NULL, save_session_callback, 0, NULL },
     { N_("/Session/Save _as..."), NULL, save_session_callback, 1, NULL },
     { N_("/_Data"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Data/_Display values/all variables"), NULL, display_data, 0, NULL },
-    { N_("/Data/_Display values/selected variables..."), 
+    { N_("/Data/Display values/all variables"), NULL, display_data, 0, NULL },
+    { N_("/Data/Display values/selected variables..."), 
       NULL, selector_callback, PRINT, NULL },
     { N_("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL },
     { N_("/Data/sep1"), NULL, NULL, 0, "<Separator>" },
@@ -318,12 +318,12 @@ GtkItemFactoryEntry data_items[] = {
       NULL, selector_callback, GR_IMP, NULL },
     { N_("/Data/_Graph specified vars/X-Y with factor separation..."), 
       NULL, selector_callback, GR_DUMMY, NULL },
-    { N_("/Data/_Multiple scatterplots..."), 
-      NULL, selector_callback, SCATTERS, NULL},
     { N_("/Data/_Graph specified vars/Boxplots..."), 
       NULL, selector_callback, GR_BOX, NULL },
     { N_("/Data/_Graph specified vars/Notched boxplots..."), 
       NULL, selector_callback, GR_NBOX, NULL },
+    { N_("/Data/_Multiple scatterplots..."), 
+      NULL, selector_callback, SCATTERS, NULL},
     { N_("/Data/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Data/_Read info"), NULL, open_info, 0, NULL },
     { N_("/Data/Edit _info"), NULL, edit_header, 0, NULL },
@@ -470,7 +470,7 @@ static void gui_usage (void)
     exit(0);
 }
 
-static void noalloc (char *str)
+static void noalloc (const char *str)
 {
     fprintf(stderr, _("Couldn't allocate memory for %s\n"), str);
     exit(EXIT_FAILURE);
@@ -551,7 +551,7 @@ int main (int argc, char *argv[])
     fflush(dp);
 #endif
 
-#ifdef ENABLE_NLS
+#if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
@@ -1062,7 +1062,11 @@ static int get_windows_font (char *fontspec)
 static GtkWidget *make_main_window (int gui_get_data) 
 {
     GtkWidget *box, *scroller, *dframe;
-    char *titles[3] = {_("ID #"), _("Variable name"), _("Descriptive label")};
+    char *titles[3] = {
+	_("ID #"), 
+	_("Variable name"), 
+	_("Descriptive label")
+    };
     int listbox_id_width = 30;
     int listbox_varname_width = 90;
     int listbox_label_width = 400;
@@ -1276,7 +1280,7 @@ static GtkWidget *build_var_menu (void)
 	var_item = gtk_menu_item_new_with_label(_(var_items[i]));
 	gtk_signal_connect(GTK_OBJECT(var_item), "activate",
 			   (GtkSignalFunc) popup_activated,
-			   _(var_items[i]));
+			   (gpointer) _(var_items[i]));
 	GTK_WIDGET_SET_FLAGS (var_item, GTK_SENSITIVE | GTK_CAN_FOCUS);
 	gtk_widget_show(var_item);
 	gtk_menu_append(GTK_MENU(var_menu), var_item);

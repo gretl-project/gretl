@@ -1456,7 +1456,7 @@ static void make_viewbar (windata_t *vwin)
     GtkWidget *iconw, *button, *viewbar;
     GdkPixmap *icon;
     GdkBitmap *mask;
-    GdkColormap *colormap;
+    GdkColormap *cmap;
     int i;
     static char *viewstrings[] = {
 	N_("Save"),
@@ -1474,6 +1474,7 @@ static void make_viewbar (windata_t *vwin)
     };
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
+    gchar *toolstr;
 
     int run_ok = (vwin->role == EDIT_SCRIPT ||
 		  vwin->role == VIEW_SCRIPT ||
@@ -1493,7 +1494,7 @@ static void make_viewbar (windata_t *vwin)
     int print_ok = 0;
 #endif
 
-    colormap = gdk_colormap_get_system();
+    cmap = gdk_colormap_get_system();
     viewbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
     gtk_container_add(GTK_CONTAINER(GTK_DIALOG(vwin->dialog)->action_area), 
 		      viewbar);
@@ -1581,13 +1582,13 @@ static void make_viewbar (windata_t *vwin)
 
 	if (toolfunc == NULL) continue;
 
-	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, colormap, &mask, NULL, 
+	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
 						     toolxpm);
 	iconw = gtk_pixmap_new(icon, mask);
+	toolstr = _(viewstrings[i]);
 	button = gtk_toolbar_append_item(GTK_TOOLBAR(viewbar),
-					 NULL, viewstrings[i], NULL,
-					 iconw,
-					 toolfunc, vwin);
+					 NULL, toolstr, NULL,
+					 iconw, toolfunc, vwin);
     }
     gtk_widget_show(viewbar);
 }

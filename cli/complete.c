@@ -17,11 +17,11 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#include "libgretl.h"
-
 #ifndef OS_WIN32
 # include "../config.h"
 #endif
+
+#include "libgretl.h"
 
 #include <readline/readline.h>
 #include <readline/history.h> 

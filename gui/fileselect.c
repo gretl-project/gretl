@@ -240,16 +240,16 @@ static void save_editable_content (int action, const char *fname,
 static const char *get_gp_filter (const char *termtype)
 {
     if (!strcmp(termtype, "postscript")) 
-	return _("postscript files\0*.eps\0");
+	return N_("postscript files\0*.eps\0");
     else if (!strcmp(termtype, "fig")) 
-	return _("xfig files\0*.fig\0");
+	return N_("xfig files\0*.fig\0");
     else if (!strcmp(termtype, "latex")) 
-	return _("LaTeX files\0*.tex\0");
+	return N_("LaTeX files\0*.tex\0");
     else if (!strcmp(termtype, "png")) 
-	return _("PNG files\0*.png\0");
+	return N_("PNG files\0*.png\0");
     else if (!strcmp(termtype, "plot commands")) 
-	return _("gnuplot files\0*.gp\0");
-    else return _("all files\0*\0");
+	return N_("gnuplot files\0*.gp\0");
+    else return N_("all files\0*\0");
 }
 
 struct win32_filtermap {
@@ -262,40 +262,40 @@ static const char *get_filter (int action, gpointer data)
     int i;
     char *filter;
     static struct win32_filtermap map[] = {
-	{SAVE_DATA, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_GZDATA, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_BIN1, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_BIN2, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_CMDS, _("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
-	{SAVE_SCRIPT, _("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
-	{SAVE_CONSOLE, _("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
-	{SAVE_MODEL, _("text files (*.txt)\0*.txt\0all files\0*\0")},
-	{SAVE_SESSION, _("session files (*.gretl)\0*.gretl\0all files\0*\0")},
-	{SAVE_BOXPLOT_EPS, _("postscript files (*.eps)\0*.eps\0all files\0*\0")},
-	{SAVE_BOXPLOT_PS, _("postscript files (*.ps)\0*.ps\0all files\0*\0")},
-	{SAVE_LAST_GRAPH, _("all files\0*\0")},
-	{SAVE_GP_CMDS, _("gnuplot files (*.gp)\0*.gp\0all files\0*\0")},
-	{EXPORT_CSV, _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
-	{EXPORT_R, _("GNU R files (*.R)\0*.R\0all files\0*\0")},
-	{EXPORT_R_ALT, _("GNU R files (*.R)\0*.R\0all files\0*\0")},
-	{EXPORT_OCTAVE, _("GNU Octave files (*.m)\0*.m\0all files\0*\0")},
-	{SAVE_OUTPUT, _("text files (*.txt)\0*.txt\0all files\0*\0")},
-	{SAVE_TEX_TAB, _("TeX files (*.tex)\0*.tex\0all files\0*\0")},
-	{SAVE_TEX_EQ, _("TeX files (*.tex)\0*.tex\0all files\0*\0")},
-	{OPEN_DATA, _("gretl data files (*.gdt)\0*.gdt*\0all files\0*\0")},
-	{OPEN_SCRIPT, _("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
-	{OPEN_SESSION, _("session files (*.gretl)\0*.gretl\0all files\0*\0")},
-	{OPEN_CSV,  _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
-	{APPEND_CSV,  _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
-	{OPEN_BOX, _("BOX data files (*.box)\0*.box\0all files\0*\0")},
-	{OPEN_GNUMERIC, _("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
-	{APPEND_GNUMERIC, _("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
-	{OPEN_EXCEL, _("Excel files (*.xls)\0*.xls\0all files\0*\0")},
-	{APPEND_EXCEL, _("Excel files (*.xls)\0*.xls\0all files\0*\0")},
+	{SAVE_DATA, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_GZDATA, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_BIN1, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_BIN2, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_CMDS, N_("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
+	{SAVE_SCRIPT, N_("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
+	{SAVE_CONSOLE, N_("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
+	{SAVE_MODEL, N_("text files (*.txt)\0*.txt\0all files\0*\0")},
+	{SAVE_SESSION, N_("session files (*.gretl)\0*.gretl\0all files\0*\0")},
+	{SAVE_BOXPLOT_EPS, N_("postscript files (*.eps)\0*.eps\0all files\0*\0")},
+	{SAVE_BOXPLOT_PS, N_("postscript files (*.ps)\0*.ps\0all files\0*\0")},
+	{SAVE_LAST_GRAPH, N_("all files\0*\0")},
+	{SAVE_GP_CMDS, N_("gnuplot files (*.gp)\0*.gp\0all files\0*\0")},
+	{EXPORT_CSV, N_("CSV files (*.csv)\0*.csv\0all files\0*\0")},
+	{EXPORT_R, N_("GNU R files (*.R)\0*.R\0all files\0*\0")},
+	{EXPORT_R_ALT, N_("GNU R files (*.R)\0*.R\0all files\0*\0")},
+	{EXPORT_OCTAVE, N_("GNU Octave files (*.m)\0*.m\0all files\0*\0")},
+	{SAVE_OUTPUT, N_("text files (*.txt)\0*.txt\0all files\0*\0")},
+	{SAVE_TEX_TAB, N_("TeX files (*.tex)\0*.tex\0all files\0*\0")},
+	{SAVE_TEX_EQ, N_("TeX files (*.tex)\0*.tex\0all files\0*\0")},
+	{OPEN_DATA, N_("gretl data files (*.gdt)\0*.gdt*\0all files\0*\0")},
+	{OPEN_SCRIPT, N_("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
+	{OPEN_SESSION, N_("session files (*.gretl)\0*.gretl\0all files\0*\0")},
+	{OPEN_CSV,  N_("CSV files (*.csv)\0*.csv\0all files\0*\0")},
+	{APPEND_CSV,  N_("CSV files (*.csv)\0*.csv\0all files\0*\0")},
+	{OPEN_BOX, N_("BOX data files (*.box)\0*.box\0all files\0*\0")},
+	{OPEN_GNUMERIC, N_("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
+	{APPEND_GNUMERIC, N_("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
+	{OPEN_EXCEL, N_("Excel files (*.xls)\0*.xls\0all files\0*\0")},
+	{APPEND_EXCEL, N_("Excel files (*.xls)\0*.xls\0all files\0*\0")},
     };
 
     if (olddat && is_data_action(action)) 
-	return _("gretl data files (*.dat)\0*.dat\0all files\0*\0");
+	return N_("gretl data files (*.dat)\0*.dat\0all files\0*\0");
 
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
@@ -344,7 +344,7 @@ void file_selector (char *msg, int action, gpointer data)
     of.lStructSize = sizeof of;
 #endif
     of.hwndOwner = NULL;
-    of.lpstrFilter = get_filter(action, data);
+    of.lpstrFilter = _(get_filter(action, data));
     of.lpstrCustomFilter = NULL;
     of.nFilterIndex = 1;
     of.lpstrFile = fname;
