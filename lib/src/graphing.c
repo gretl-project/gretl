@@ -596,8 +596,17 @@ int gnuplot_has_ttf (void)
 {
     static int err = -1; 
 
+    /* try a range of ttf fonts that might plausibly be installed
+       with X11 */
+
     if (err == -1) {
 	err = gnuplot_test_command("set term png font luxisr 8");
+	if (err) {
+	    err = gnuplot_test_command("set term png font Vera 8");
+	}
+	if (err) {
+	    err = gnuplot_test_command("set term png font arial 8");
+	}
     }
     return !err;
 }
