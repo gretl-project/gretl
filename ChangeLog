@@ -13,7 +13,7 @@ version 1.3.3
   means model
 - Fix bug: crash if default data and script files not installed
   with program (thanks to Ignacio and Dirk for finding this)
-- Fix bug in genr: unary minus could be wrongly handled with the
+- Fix bug in genr: unary minus could be wrongly handled within the
   argument to a function
 - Fixes for appending data (make more flexible: allow appending of
   observations and/or variables)
