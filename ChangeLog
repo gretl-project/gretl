@@ -17,8 +17,12 @@ version 1.2.2
   (GTK 2 version) when there are already 6 variables shown
 - Fix bug: handle quotation marks within descriptions of
   variables (XML encoding)
-- Fix bug: bad behavior when youput an Excel file to open on
-  the gretl command line, then cancel the import
+- Fix bug: bad behavior when you put an Excel file to open
+  on the gretl command line, then cancel the import
+- Fix bug: X-Y plot with "factor separation" went wrong in
+  some cases
+- Fix bug: weighted least squares with a dummy variable for
+  the weight crashed gretl when using QR decomposition
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation

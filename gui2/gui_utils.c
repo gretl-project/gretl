@@ -77,8 +77,8 @@ extern int session_saved;
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
-static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
-static gint query_save_info (GtkWidget *w, GdkEvent *event, windata_t *vwin);
+static gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
+static void auto_save_script (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
@@ -524,11 +524,10 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
     windata_t *vwin = (windata_t *) data;
     gint resp = 0;
 
-    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
-	resp = query_save_script(NULL, NULL, vwin);
-    } else if (vwin->role == EDIT_HEADER && CONTENT_IS_CHANGED(vwin)) {
-	resp = query_save_info(NULL, NULL, vwin);
-    } 
+    if ((vwin->role == EDIT_SCRIPT || vwin->role == EDIT_HEADER ||
+	 vwin->role == EDIT_NOTES) && CONTENT_IS_CHANGED(vwin)) {
+	resp = query_save_text(NULL, NULL, vwin);
+    }
 
     if (!resp) gtk_widget_destroy(vwin->dialog); 
 }
@@ -621,7 +620,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
 		gint resp;
 
-		resp = query_save_script(NULL, NULL, vwin);
+		resp = query_save_text(NULL, NULL, vwin);
 		if (!resp) gtk_widget_destroy(vwin->dialog);
 	    } else { 
 		gtk_widget_destroy(w);
@@ -1074,10 +1073,12 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
     if (vwin->role == EDIT_HEADER) {
 	infobox(_("Data info saved"));
+	MARK_CONTENT_SAVED(vwin);
 	mark_dataset_as_modified();
     } 
     else if (vwin->role == EDIT_NOTES) {
 	infobox(_("Notes saved"));
+	MARK_CONTENT_SAVED(vwin);
 	session_changed(1);
     }
 }
@@ -1109,7 +1110,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    g_free(text);
 	    sprintf(buf, _("Saved %s\n"), vwin->fname);
 	    infobox(buf);
-	    if (vwin->role == EDIT_SCRIPT) { 
+	    if (vwin->role == EDIT_SCRIPT || vwin->role == EDIT_HEADER) { 
 		MARK_CONTENT_SAVED(vwin);
 	    }
 	}
@@ -1927,10 +1928,10 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     if (role == EDIT_SCRIPT) {
 #ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
-			 G_CALLBACK(query_save_script), vwin);
+			 G_CALLBACK(query_save_text), vwin);
 #else
 	gtk_signal_connect(GTK_OBJECT(vwin->dialog), "delete_event", 
-			   GTK_SIGNAL_FUNC(query_save_script), vwin);
+			   GTK_SIGNAL_FUNC(query_save_text), vwin);
 #endif
     }
 
@@ -1992,19 +1993,23 @@ void file_view_set_editable (windata_t *vwin)
 
 /* ........................................................... */
 
-static gint query_save_info (GtkWidget *w, GdkEvent *event, 
+static gint query_save_text (GtkWidget *w, GdkEvent *event, 
 			     windata_t *vwin)
 {
     if (CONTENT_IS_CHANGED(vwin)) {
-	int resp = yes_no_dialog(_("gretl"), 
+	int resp = yes_no_dialog("gretl", 
 				 _("Save changes?"), 1);
 
 	if (resp == GRETL_CANCEL) {
 	    return TRUE;
 	}
 	if (resp == GRETL_YES) {
-	    buf_edit_save(NULL, vwin);
-	    MARK_CONTENT_SAVED(vwin); 
+	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
+		buf_edit_save(NULL, vwin);
+	    }
+	    else if (vwin->role == EDIT_SCRIPT) {
+		auto_save_script(vwin);
+	    }
 	}
     }
     return FALSE;
@@ -2066,12 +2071,12 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     g_signal_connect(G_OBJECT(tbuf), "changed", 
 		     G_CALLBACK(content_changed), vwin);
     g_signal_connect(G_OBJECT(vwin->dialog), "delete_event",
-		     G_CALLBACK(query_save_info), vwin);
+		     G_CALLBACK(query_save_text), vwin);
 #else
     gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
 		       GTK_SIGNAL_FUNC(content_changed), vwin);
     gtk_signal_connect(GTK_OBJECT(vwin->dialog), "delete_event",
-		       GTK_SIGNAL_FUNC(query_save_info), vwin);
+		       GTK_SIGNAL_FUNC(query_save_text), vwin);
 #endif   
 
     /* clean up when dialog is destroyed */
@@ -2243,24 +2248,6 @@ static void auto_save_script (windata_t *vwin)
 
     infobox(_("script saved"));
     MARK_CONTENT_SAVED(vwin);
-}
-
-/* ........................................................... */
-
-static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin)
-{
-    if (CONTENT_IS_CHANGED(vwin)) {
-	int resp = yes_no_dialog(_("gretl: script"), 
-				 _("Save changes?"), 1);
-
-	if (resp == GRETL_CANCEL) {
-	    return TRUE;
-	}
-	if (resp == GRETL_YES) {
-	    auto_save_script(vwin);
-	}
-    }
-    return FALSE;
 }
 
 /* ........................................................... */

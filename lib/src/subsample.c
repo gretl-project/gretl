@@ -576,45 +576,66 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    int i, v, t;
-    int missval = 0, missobs = 0, oldmiss = 0, tmiss;
-    int year = 0, yearmiss = 0, totvals = 0, yearbak = 0;
+    int i, t, tmiss;
+    int missval = 0, missobs = 0, totvals = 0, oldmiss = 0;
+    int *missvec;
 
-    v = varindex(pdinfo, "year");
-    if (v == pdinfo->v) v = varindex(pdinfo, "YEAR");
-    if (v == pdinfo->v) v = 0;
-    else yearbak = (int) (*pZ)[v][pdinfo->t1];
+    missvec = malloc(pdinfo->v * sizeof missvec);
+    if (missvec != NULL) {
+	for (i=0; i<pdinfo->v; i++) missvec[i] = 0;
+    }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (hidden_var(i, pdinfo)) continue;
-	    if (na((*pZ)[i][t])) missval++;
+	    if (hidden_var(i, pdinfo) || !pdinfo->vector[i]) continue;
+	    if (na((*pZ)[i][t])) {
+		if (missvec[i] == 0) {
+		    missvec[0] += 1;
+		}
+		missvec[i] += 1;
+		missval++;
+	    }
 	    totvals++;
 	}
-	if ((tmiss = missval - oldmiss)) missobs++;
-	if (v) {
-	    year = (int) (*pZ)[v][t];
-	    if (year != yearbak) {
-		pprintf(prn, _("%d: %4d missing data values\n"), 
-			yearbak, yearmiss);
-		yearmiss = tmiss;
-		yearbak = year;
-	    } else
-		yearmiss += tmiss;
+
+	tmiss = missval - oldmiss;
+
+	if (tmiss) {
+	    missobs++;
+
+	    if (pdinfo->markers) { 
+		pprintf(prn, "%8s %4d %s\n", pdinfo->S[t], tmiss,
+			_("missing values"));
+	    } else {
+		char tmp[OBSLEN];
+
+		ntodate(tmp, t, pdinfo);
+		pprintf(prn, "%8s %4d %s\n", tmp, tmiss,
+			_("missing values"));
+	    }
 	}
 	oldmiss = missval;
     }
-    if (v) 
-	pprintf(prn, _("%d: %4d missing data values\n"), 
-		year, yearmiss);
-    
+
     pprintf(prn, _("\nNumber of observations (rows) with missing data "
-	    "values = %d (%.1f%%)\n"), missobs, 
+	    "values = %d (%.2f%%)\n"), missobs, 
 	    (100.0 * missobs / (pdinfo->t2 - pdinfo->t1 + 1)));
-    pprintf(prn, _("Total number of missing data values = %d (%.1f%% "
+    pprintf(prn, _("Total number of missing data values = %d (%.2f%% "
 	    "of total data values)\n"), missval, 
 	    (100.0 * missval / totvals));
+    if (missvec[0] > 0) {
+	pputc(prn, '\n');
+	for (i=1; i<pdinfo->v; i++) {
+	    if (missvec[i] > 0) {
+		pprintf(prn, "%*s: %d %s\n", VNAMELEN, pdinfo->varname[i], 
+			missvec[i], _("missing values"));
+	    }
+	}
+    }
+
+    free(missvec);
+
     return missval;
 }
 

@@ -48,8 +48,8 @@ static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
-/* #define EDEBUG 1 */
-/* #define FULL_EDEBUG 1 */
+/* #define EDEBUG */
+/* #define FULL_EDEBUG */
 
 #define EXCEL_IMPORTER
 
@@ -62,9 +62,8 @@ enum {
     VARNAMES_INVALID
 } varname_errors;
 
-static char *format_double (char *rec, int offset) 
+static double biff_get_double (char *rec, int offset) 
 {	
-    static char buffer[128];
     union { 
 	char cc[8];
 	double d;
@@ -77,8 +76,8 @@ static char *format_double (char *rec, int offset)
 #else       
     for (s=rec+offset, d=dconv.cc, i=0; i<8; i++) *(d++) = *(s++);
 #endif     
-    sprintf(buffer, "%.10g", dconv.d);
-    return buffer;
+
+    return dconv.d;
 }
 
 static int process_sheet (FILE *input, const char *filename, wbook *book,
@@ -221,6 +220,15 @@ static double get_le_double (const void *p)
                                         (*((const guint8 *)(p)+2)<<16) |  \
                                         (*((const guint8 *)(p)+3)<<24))
 
+static int negerr (int row, int col) 
+{
+    if (row < 0 || col < 0) {
+	fprintf(stderr, "Error: got row=%d, col=%d\n", row, col);
+	return 1;
+    }
+    return 0;
+}
+	
 static double biff_get_rk (const unsigned char *ptr)
 {
     gint32 number;
@@ -271,11 +279,11 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	}
 
 	sstsize = getshort(rec, 4);
-	sst = malloc(sstsize * sizeof(char *));
+	sst = malloc(sstsize * sizeof *sst);
 	if (sst == NULL) return 1;
 #ifdef EDEBUG
 	fprintf(stderr, "Got SST: malloced sst at size %d (%d bytes), %p\n", 
-		sstsize, sstsize * sizeof(char *), (void *) sst);
+		sstsize, sstsize * sizeof *sst, (void *) sst);
 #endif
 	for (i=0; i<sstsize && (ptr - rec)<reclen; i++) {
 	    sst[i] = copy_unicode_string(&ptr);
@@ -301,13 +309,16 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }			   
     case LABEL: {
-	int row, col, len;
 	struct rowdescr *prow;
+	int row = getshort(rec, 0);
+	int col = getshort(rec, 2);
+	int len;
+
+	if (negerr(row, col)) return 1;
 
 	saved_reference = NULL;
-	row = getshort(rec, 0); 
-	col = getshort(rec, 2);
 	len = getshort(rec, 6);
+
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
 #endif
@@ -321,6 +332,8 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	int row = getshort(rec, 0); 
 	int col = getshort(rec, 2);
 	int string_no = getshort(rec, 6);
+
+	if (negerr(row, col)) return 1;
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got CONSTANT_STRING, row=%d, col=%d\n", row, col);
@@ -348,29 +361,35 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }
     case NUMBER: {
-	int row, col;
 	struct rowdescr *prow;
+	int row = getshort(rec, 0) - startrow; 
+	int col = getshort(rec, 2);
+	double v;
+
+	if (negerr(row, col)) return 1;
 
 	saved_reference = NULL;
-	row = getshort(rec, 0) - startrow; 
-	col = getshort(rec, 2);
+
 #ifdef EDEBUG
 	fprintf(stderr, "Got NUMBER, row=%d, col=%d\n", row, col);
 #endif
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
-	prow->cells[col] = g_strdup(format_double(rec, 6));
+	v = biff_get_double(rec, 6);
+	prow->cells[col] = g_strdup_printf("%.10g", v);
 	break;
     }
     case RK: {
-	int row, col;
-	double v;
 	struct rowdescr *prow;
+	int row = getshort(rec, 0) - startrow;
+	int col = getshort(rec, 2);
+	double v;
 	char tmp[32];
 
+	if (negerr(row, col)) return 1;
+
 	saved_reference = NULL;
-	row = getshort(rec, 0) - startrow; 
-	col = getshort(rec, 2);
+
 #ifdef EDEBUG
 	fprintf(stderr, "Got RK, row=%d, col=%d\n", row, col);
 #endif
@@ -382,14 +401,17 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }
     case MULRK: {
-	int i, row, col, ncols;
-	double v;
 	struct rowdescr *prow;
+	int row = getshort(rec, 0) - startrow; 
+	int col = getshort(rec, 2);
+	double v;
+	int i, ncols;
+
+	if (negerr(row, col)) return 1;
 
 	saved_reference = NULL;
-	row = getshort(rec, 0) - startrow; 
-	col = getshort(rec, 2);
 	ncols = (reclen - 6)/ 6;
+
 #ifdef EDEBUG
 	fprintf(stderr, "Got MULRK, row=%d, first_col=%d, sz=%d, ", 
 		row, col, reclen);
@@ -408,12 +430,14 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }
     case FORMULA: { 
-	int row, col;
 	struct rowdescr *prow;
+	int row = getshort(rec, 0) - startrow;
+	int col = getshort(rec, 2);
+
+	if (negerr(row, col)) return 1;
 
 	saved_reference = NULL;
-	row = getshort(rec, 0) - startrow; 
-	col = getshort(rec, 2);
+
 #ifdef EDEBUG
 	fprintf(stderr, "Got FORMULA, row=%d, col=%d\n", row, col);
 #endif
@@ -436,8 +460,16 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	    } else if (rec[6] == 0) {
 		saved_reference = prow->cells + col;
 	    }   
-	} else 
-	    prow->cells[col] = g_strdup(format_double(rec, 6));
+	} else {
+	    double x = biff_get_double(rec, 6);
+
+	    if (isnan(x)) {
+		fprintf(stderr, "Got a NaN\n");
+		prow->cells[col][0] = '\0';
+	    } else {
+		prow->cells[col] = g_strdup_printf("%.10g", x);
+	    }
+	}
 	break;
     }
     case STRING: {
@@ -546,7 +578,7 @@ static char *convert8to7 (char *src, int count)
 	}
     }
 
-    if (strlen(dest) == 0) {
+    if (*dest == '\0') {
 	strcpy(dest, "varname");
     }
 #ifdef EDEBUG
@@ -574,7 +606,7 @@ static char *convert16to7 (char *src, int count)
 	}
     }
 
-    if (strlen(dest) == 0) {
+    if (*dest == '\0') {
 	strcpy(dest, "varname");
     }
 
@@ -668,10 +700,19 @@ static void free_sheet (void)
     /* free cells (was i<lastrow below) */
     if (rowptr != NULL) {
 	for (i=0; i<=lastrow; i++) {
-	    if (rowptr[i].cells == NULL) continue;
+	    if (rowptr[i].cells == NULL) {
+#ifdef EDEBUG
+		fprintf(stderr, "rowptr[%d].cells = NULL, skipping free\n", i);
+#endif
+		continue;
+	    }
 	    for (j=0; j<rowptr[i].end; j++) {
 		if (rowptr[i].cells[j] != NULL) {
-		    free(rowptr[i].cells[j]); /* crash here */
+#ifdef EDEBUG
+		    fprintf(stderr, "Freeing rowptr[%d].cells[%d] at %p\n",
+			    i, j, (void *) rowptr[i].cells[j]);
+#endif
+		    free(rowptr[i].cells[j]); 
 		}
 	    }
 	    free(rowptr[i].cells);
@@ -858,13 +899,12 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (excel_book_get_info(fname, &book)) {
 	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
-    }
-    else if (book.nsheets == 0) {
+    } else if (book.nsheets == 0) {
 	pputs(prn, _("No worksheets found"));
 	err = 1;
-    }
-    else 
+    } else {
 	wbook_print_info(&book);
+    }
 
     if (!err) {
 	if (book.nsheets > 1) wsheet_menu(&book, 1);
@@ -878,7 +918,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     if (book.selected == -1) err = -1; 
 
-    if (err) goto getout; 
+    if (err) goto getout;
 
     /* processing for specific worksheet */
     fp = fopen(fname, "rb");
@@ -890,6 +930,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    pputs(prn, _("Failed to process Excel file"));
 	}
 	fprintf(stderr, "%s\n", prn->buf);
+	lastrow--;
     } else {
 	int i, j, t, i_sheet, t_sheet;
 	int label_strings, time_series = 0;

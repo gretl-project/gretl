@@ -1058,6 +1058,18 @@ static int get_signif (double *x, int n)
 
 /* ........................................................... */
 
+static int g_too_long (double x, int signif)
+{
+    char n1[32], n2[32];
+
+    sprintf(n1, "%.*G", signif, x);
+    sprintf(n2, "%.0f", x);
+    
+    return (strlen(n1) > strlen(n2));
+}
+
+/* ........................................................... */
+
 static int bufprintnum (char *buf, double x, int signif, int width)
 {
     static char numstr[24];
@@ -1097,7 +1109,11 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%dG\n", l, signif, signif);
 #endif
-	    sprintf(numstr, "%.*G", signif, x);
+	    if (g_too_long(x, signif)) {
+		sprintf(numstr, "%.0f", x);
+	    } else {
+		sprintf(numstr, "%.*G", signif, x);
+	    }
 	} else if (z >= .10) {
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
@@ -1110,7 +1126,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%#.%dG\n", l, signif, signif);
 #endif
-	    sprintf(numstr, "%#.*G", signif, x); /* hash wanted? */
+	    sprintf(numstr, "%#.*G", signif, x); /* # wanted? */
 	}
     }
 

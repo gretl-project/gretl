@@ -178,17 +178,22 @@ static double get_model_data (MODEL *pmod, const double **Z,
     int i, j, t, start;
     double x, ypy = 0.0;
     int t1 = pmod->t1;
+    int dwt = gretl_model_get_int(pmod, "wt_dummy");
 
     if (pmod->rho) t1++;
 
     start = (pmod->ifc)? 3 : 2;
+
+    if (dwt) dwt = pmod->nwt;
 
     /* copy independent vars into matrix Q */
     j = 0;
     for (i=start; i<=pmod->list[0]; i++) {
 	for (t=t1; t<=pmod->t2; t++) {
 	    x = Z[pmod->list[i]][t];
-	    if (pmod->nwt) {
+	    if (dwt) {
+		if (Z[dwt][t] == 0.0) continue;
+	    } else if (pmod->nwt) {
 		x *= Z[pmod->nwt][t];
 	    } else if (pmod->rho && pmod->list[i] != 0) {
 		x -= pmod->rho * Z[pmod->list[i]][t-1];
@@ -200,7 +205,9 @@ static double get_model_data (MODEL *pmod, const double **Z,
     /* insert constant last (numerical issues) */
     if (pmod->ifc) {
 	for (t=t1; t<=pmod->t2; t++) {
-	    if (pmod->nwt) {
+	    if (dwt) {
+		if (Z[dwt][t] == 0.0) continue;
+	    } if (pmod->nwt) {
 		Q->val[j++] = Z[pmod->nwt][t];
 	    } else {
 		Q->val[j++] = 1.0;
@@ -212,7 +219,9 @@ static double get_model_data (MODEL *pmod, const double **Z,
     j = 0;
     for (t=t1; t<=pmod->t2; t++) {
 	x = Z[pmod->list[1]][t];
-	if (pmod->nwt) {
+	if (dwt) {
+	    if (Z[dwt][t] == 0.0) continue;
+	} else if (pmod->nwt) {
 	    x *= Z[pmod->nwt][t];
 	} else if (pmod->rho) {
 	    x -= pmod->rho * Z[pmod->list[1]][t-1];
@@ -276,8 +285,10 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
 
     Q = gretl_matrix_alloc(m, n);
     y = gretl_matrix_alloc(m, 1);
+
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
+
     work = malloc(sizeof *work);
     iwork = malloc(n * sizeof *iwork);
 
