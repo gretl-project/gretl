@@ -107,11 +107,10 @@ Activating audio in gretl
 
 Assuming gretl was built with audio support, here are the controls:
 
-(1) When a graph is displayed, you can mouse-click to bring up a
-    pop-up menu and select "Audio", or alternatively, with focus in
-    the graph window, just press the "a" (for audio) key.  You should
-    get a brief speech-synthesized description followed by a MIDI
-    play-through of the graph.
+(1) When a graph is displayed, with focus in the graph window press
+    the "a" (for audio) key.  You should get a brief
+    speech-synthesized description followed by a MIDI play-through of
+    the graph.
 
 (2) When a gretl text window is displayed, again press the "a" key to
     get an audio representation.  Press "x" to stop the read-out.  In
@@ -122,6 +121,7 @@ Assuming gretl was built with audio support, here are the controls:
 
     - Summary statistics, for a variable or set of variables
     - Correlation matrix for a set of variables
+    - OLS models
     - Confidence intervals for regression coefficients
     - Covariance matrix for regression coefficients
 
@@ -138,7 +138,11 @@ default (which is a bit too quiet on my system).  Personally, I use
   GRETL_MIDI_PLAYER="timidity -A500 -ig"
 
 to get timidity to present its GTK user interface (see the timidity
-man-page for details).
+man-page for details).  You might wish to use
+
+  GRETL_MIDI_PLAYER="xmms"
+
+if you have the midi plugin for xmms.
 
 Allin Cottrell
 Wake Forest university

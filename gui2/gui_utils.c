@@ -615,10 +615,15 @@ static int should_stop_talking (void)
     return set_or_get_audio_stop(0, 0);
 }
 
-static void audio_render_window (windata_t *vwin)
+void audio_render_window (windata_t *vwin, int key)
 {
     void *handle;
     int (*read_window_text) (windata_t *, const DATAINFO *, int (*)());
+
+    if (vwin == NULL) {
+	set_or_get_audio_stop(1, 1);
+	return;
+    }
 
     read_window_text = gui_get_plugin_function("read_window_text", 
 					       &handle);
@@ -627,7 +632,12 @@ static void audio_render_window (windata_t *vwin)
     }
 
     set_or_get_audio_stop(1, 0);
-    (*read_window_text) (vwin, datainfo, &should_stop_talking);
+
+    if (key == AUDIO_LISTBOX) {
+	(*read_window_text) (vwin, NULL, &should_stop_talking);
+    } else {
+	(*read_window_text) (vwin, datainfo, &should_stop_talking);
+    }
 
     close_plugin(handle);
 }
@@ -663,10 +673,10 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     else if (key->keyval == GDK_a) {
-	audio_render_window(vwin);
+	audio_render_window(vwin, AUDIO_TEXT);
     }
     else if (key->keyval == GDK_x) {
-	set_or_get_audio_stop(1, 1);
+	audio_render_window(NULL, AUDIO_TEXT);
     }
 #endif
 #ifdef G_OS_WIN32

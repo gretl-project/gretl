@@ -126,4 +126,13 @@ char *double_underscores (char *targ, const char *src);
 
 void system_print_buf (const gchar *buf, FILE *fp);
 
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+enum {
+    AUDIO_TEXT = 0,
+    AUDIO_LISTBOX
+} audio_render_keys;
+
+void audio_render_window (windata_t *vwin, int key);
+#endif
+
 #endif /* GUI_UTILS_H */

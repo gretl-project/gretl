@@ -2922,11 +2922,6 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     else if (!strcmp(item, _("Edit"))) { 
 	start_editing_png_plot(plot);
     }
-#ifdef HAVE_AUDIO
-    else if (!strcmp(item, _("Audio"))) { 
-	audio_render_plot(plot);
-    }
-#endif
     else if (!strcmp(item, _("Close"))) { 
         killplot = 1;
     } 
@@ -2957,9 +2952,6 @@ static void build_plot_menu (png_plot_t *plot)
 	N_("Print"),
 #endif
 	N_("Edit"),
-#ifdef HAVE_AUDIO
-	N_("Audio"),
-#endif
 	N_("Help"),
         N_("Close"),
         NULL
@@ -3032,11 +3024,6 @@ static void build_plot_menu (png_plot_t *plot)
 	}
 	if ((plot_has_controller(plot) || plot_not_editable(plot)) &&
 	    !strcmp(plot_items[i], "Edit")) {
-	    i++;
-	    continue;
-	}
-	if (plot_not_editable(plot) && 
-	    !strcmp(plot_items[i], "Audio")) {
 	    i++;
 	    continue;
 	}

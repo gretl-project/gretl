@@ -1,5 +1,5 @@
-version 1.2.6
-- add Hodrick-Prescott filter, as hpfilt function in the
+5/25/2004 version 1.2.6
+- add Hodrick-Prescott filter, as "hpfilt" function in the
   genr command
 - revamp xls importer: should now be substantially more
   robust
