@@ -22,6 +22,8 @@
 
 #define CALLSTACK_DEPTH 8
 
+#undef FN_DEBUG
+
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
 
@@ -33,6 +35,7 @@ struct ufunc_ {
 
 struct fncall_ {
     ufunc *fun;
+    int lnum;
     int argc;
     char **argv;
 };
@@ -149,17 +152,17 @@ static int push_fncall (fncall *call)
 
     callstack[0] = call;
 
+    set_executing_on();
+
     return 0;
 }
 
-static fncall *pop_fncall (void)
+static void unstack_fncall (void)
 {
     int i, nc;
-    fncall *call;
 
-    if (callstack == NULL) return NULL;
+    if (callstack == NULL) return;
 
-    call = callstack[0];
     nc = callstack_get_n_calls();
 
     for (i=0; i<nc; i++) {
@@ -170,7 +173,7 @@ static fncall *pop_fncall (void)
 	}
     }
 
-    return call;
+    set_executing_off();
 }
 
 static fncall *current_call (void)
@@ -191,7 +194,7 @@ static ufunc *ufunc_new (void)
     if (func == NULL) return NULL;
 
     func->name[0] = '\0';
-    func_nlines = 0;
+    func->n_lines = 0;
     func->lines = NULL;
 
     return func;
@@ -214,6 +217,7 @@ static fncall *fncall_new (ufunc *fun, int argc, char **argv)
     }
 
     call->fun = fun;
+    call->lnum = 0;
     call->argc = argc;
     call->argv = argv;
 
@@ -255,6 +259,19 @@ static void free_ufunc (ufunc *fun)
     free(fun);
 }
 
+static void ufuncs_destroy (void)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	free_ufunc(ufuns[i]);
+    }
+    free(ufuns);
+
+    ufuns = NULL;
+    n_ufuns = 0;
+}
+
 static void free_fncall (fncall *call)
 {
     int i;
@@ -269,6 +286,8 @@ static void free_fncall (fncall *call)
 
 static ufunc *get_ufunc_by_name (const char *fname)
 {
+    int i;
+
     for (i=0; i<n_ufuns; i++) {
 	if (!strcmp(fname, (ufuns[i])->name)) {
 	    return ufuns[i];
@@ -290,17 +309,33 @@ int gretl_is_user_function (const char *s)
     }
 }
 
-static int delete_ufunc_by_name (const char *fname)
+static void delete_ufunc_from_list (ufunc *fun)
 {
-    for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(fname, (ufuns[i])->name)) {
-	    free_ufunc(ufuns[i]);
-	    ufuns[i] = NULL;
-	    return 0;
-	}
+    if (n_ufuns == 0 || fun == NULL) {
+	/* "can't happen" */
+	return;
     }
 
-    return 1;
+    if (n_ufuns == 1) {
+	free_ufunc(fun);
+	free(ufuns);
+	ufuns = NULL;
+    } else {
+	int i, gotit = 0;
+
+	for (i=0; i<n_ufuns; i++) {
+	    if (gotit) {
+		ufuns[i-1] = ufuns[i];
+	    }
+	    if (!gotit && ufuns[i] == fun) {
+		gotit = 1;
+		free_ufunc(fun);
+	    }
+	}
+	
+	ufuns = realloc(ufuns, (n_ufuns - 1) * sizeof *ufuns);
+	n_ufuns--;
+    }
 }
 
 static int check_func_name (const char *fname)
@@ -351,24 +386,25 @@ static char **parse_args (const char *s, int *argc, int *err)
     *argc = 0;
     *err = 0;
 
-    /* advance to first arg, if any */
-
+    /* skip over function name */
     while (*s) {
 	if (*s == ' ') break;
 	s++;
     }
 
-    if (*s == '\0') return NULL;
-
+    /* skip over spaces to args */
     while (*s) {
 	if (*s != ' ') break;
 	s++;
     } 
 
-    if (*s == '\0') return NULL;
+    if (*s == '\0') {
+	/* got no args */
+	return NULL;
+    }
 
     /* count comma-separated arguments */
-    na = comma_count(++s) + 1;
+    na = comma_count(s) + 1;
 
     argv = malloc(na * sizeof *argv);
     if (argv == NULL) {
@@ -381,7 +417,7 @@ static char **parse_args (const char *s, int *argc, int *err)
 	int len;
 
 	if (i < na - 1) {
-	    len = strcspn(s, ',');
+	    len = strcspn(s, ",");
 	} else {
 	    len = strlen(s);
 	}
@@ -393,6 +429,12 @@ static char **parse_args (const char *s, int *argc, int *err)
 	    break;
 	}
 	argv[i] = arg;
+
+	s += len;
+	while (*s) {
+	    if (*s != ',' && *s != ' ') break;
+	    s++;
+	}
     }
 
     if (*err) {
@@ -412,7 +454,6 @@ int gretl_start_compiling_function (const char *line)
 {
     char fname[32];
     ufunc *fun = NULL;
-    int err = 0;
 
     if (!sscanf(line, "function %31s", fname)) {
 	return E_PARSE;
@@ -447,13 +488,18 @@ int gretl_function_append_line (const char *line)
 {
     ufunc *fun = get_latest_ufunc();
     char **lines;
-    int nl;
+    int nl, err = 0;
 
     if (fun == NULL) return 1;
 
     if (!strncmp(line, "end ", 4)) {
+	if (fun->n_lines == 0) {
+	    sprintf(gretl_errmsg, "%s: empty function", fun->name);
+	    delete_ufunc_from_list(fun);
+	    err = 1;
+	}
 	set_compiling_off();
-	return 0;
+	return err;
     }
 
     nl = fun->n_lines;
@@ -471,23 +517,7 @@ int gretl_function_append_line (const char *line)
 
     fun->n_lines += 1;
 
-    return 0;
-}
-
-static void 
-add_args_to_func (ufunc *fun, int argc, char **argv)
-{
-    if (fun->argc > 0) {
-	int i;
-
-	for (i=0; i<fun->argc; i++) {
-	    free(fun->argv[i]);
-	}
-	free(fun->argv);
-    }
-
-    fun->argc = argc;
-    fun->argv = argv;
+    return err;
 }
 
 int gretl_function_start_exec (const char *line)
@@ -517,8 +547,6 @@ int gretl_function_start_exec (const char *line)
 	return E_ALLOC;
     } 
 
-    set_executing_on();
-    
     push_fncall(call);
 
     return 0;
@@ -539,20 +567,24 @@ static int dollar_term_length (const char *s)
 }
 
 static int 
-substitute_dollar_terms (char *s, int argc, const char **argv)
+substitute_dollar_terms (char *targ, const char *src, 
+			 int len, int argc, const char **argv)
 {
     char *p;
     int pos, err = 0;
 
-    while ((p = strstr(s, "$")) != NULL) {
+    *targ = '\0';
+    strncat(targ, src, len - 1);
+
+    while ((p = strstr(targ, "$")) != NULL) {
 	int dlen;
 
 	/* got a positional parameter? */
-	if (!sscanf(p, "$%d", pos)) {
+	if (!sscanf(p, "$%d", &pos)) {
 	    continue;
 	}
 	dlen = dollar_term_length(p);
-	if (pos >= argc) {
+	if (pos > argc) {
 	    /* blank the field */
 	    memmove(p, p + dlen, strlen(p + dlen) + 1);
 	} else {
@@ -573,18 +605,37 @@ substitute_dollar_terms (char *s, int argc, const char **argv)
     return err;
 }
 
-int gretl_function_substitute_args (char *s)
+char *gretl_function_get_line (char *line, int len)
 {
     fncall *call = current_call();
-    int err;
+    const char *src;
+    int err = 0;
 
     if (call == NULL || call->fun == NULL) {
-	strcpy(gretl_errmsg, "Couldn't find function");
-	return 1;
+	return NULL;
     }
 
-    err = substitute_dollar_terms(s, call->fun->argc,
-				  call->fun->argv);
+    if (call->lnum > call->fun->n_lines - 1) {
+	unstack_fncall();
+	return NULL;
+    } 
 
-    return err;
+    src = call->fun->lines[call->lnum];
+    call->lnum += 1;
+
+    err = substitute_dollar_terms(line, src, len, call->argc, 
+				  (const char **) call->argv); 
+     /* figure out response to error here */
+
+#ifdef FN_DEBUG
+    fprintf(stderr, "src='%s', line='%s'\n", src, line);
+#endif
+
+    return line;
+}
+
+void gretl_functions_cleanup (void)
+{
+    callstack_destroy();
+    ufuncs_destroy();
 }

@@ -26,6 +26,7 @@ version 1.3.0
   plotting colors (required a modification to gnuplot)
 - various minor gui fixes and enhancements
 - update Windows version to gtk 2.4.9
+- start adding user-defined functions
 
 7/23/2004 version 1.2.9
 - fixes for LaTeX printing of autoregressive models

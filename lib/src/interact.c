@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "var.h"
+#include "gretl_func.h"
 #include "gretl_private.h"
 
 /* equipment for the "shell" command */
@@ -566,6 +567,27 @@ static int field_from_line (char *field, const char *s)
     return ret;
 }
 
+#define COMMAND_CAN_END(c) (c == SYSTEM || \
+                            c == NLS || \
+			    c == RESTRICT || \
+			    c == FUNC)
+
+static void check_end_command (CMD *cmd)
+{
+    if (*cmd->param) {
+	int cmdcode = gretl_command_number(cmd->param);
+
+	if (!COMMAND_CAN_END(cmdcode)) {
+	    cmd->errcode = 1;
+	    sprintf(gretl_errmsg, _("command 'end %s' not recognized"), 
+		    cmd->param);
+	}
+    } else {
+	cmd->errcode = 1;
+	strcpy(gretl_errmsg, _("end: nothing to end")); 
+    }
+}
+
 /**
  * getcmd:
  * @line: the command line (string).
@@ -749,6 +771,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    } else {
 		sscanf(line + n + 1, "%s", command->param);
 	    }
+	}
+	if (command->ci == END) {
+	    check_end_command(command);
 	}
 	return;
     }
@@ -2058,14 +2083,21 @@ int ready_for_command (const char *line)
 	"critical", 
 	"seed", 
 	"genr",
+	"function",
 	NULL 
     };
     const char **p = ok_cmds;
 
-    if (string_is_blank(line)) return 1;
+    if (string_is_blank(line) || gretl_compiling_function()) {
+	return 1;
+    }
 
-    if (*line == 'q' || *line == 'x' || 
-	*line == '\0' || *line == '#') return 1;
+    if (*line == 'q' || 
+	*line == 'x' || 
+	*line == '\0' || 
+	*line == '#') {
+	return 1;
+    }
 
     while (*p) {
 	if (strncmp(line, *p, strlen(*p)) == 0)

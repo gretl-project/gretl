@@ -344,6 +344,7 @@ char *gretl_strdup (const char *src)
 
 char *gretl_strndup (const char *src, size_t n)
 {
+    char *targ;
     int len = strlen(src);
 
     if (len > n) {

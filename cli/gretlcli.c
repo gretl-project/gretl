@@ -28,6 +28,7 @@
 #include "libgretl.h"
 #include "var.h"
 #include "gretl_restrict.h"
+#include "gretl_func.h"
 #include "modelspec.h"
 #include "libset.h"
 
@@ -188,6 +189,28 @@ void file_get_line (void)
 	*linebak = 0;
 	strncat(linebak, line, MAXLEN-1);
     }
+
+    if (!strncmp(line, "noecho", 6)) {
+	echo_off = 1;
+    }
+    if (!echo_off && cmd.ci == RUN && batch && *line == '(') {
+	printf("%s", line);
+	*linebak = 0;
+    }
+}
+
+void fn_get_line (void)
+{
+    clear(line, MAXLINE);
+    
+    gretl_function_get_line(line, MAXLINE);
+
+    if (*line == '\0') {
+	return;
+    }
+
+    *linebak = 0;
+    strncat(linebak, line, MAXLEN-1);
 
     if (!strncmp(line, "noecho", 6)) {
 	echo_off = 1;
@@ -487,6 +510,8 @@ int main (int argc, char *argv[])
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
 	    looprun = errfatal = 0;
+	} else if (gretl_executing_function()) {
+	    fn_get_line();
 	} else { 
 #ifdef HAVE_READLINE
 	    if (!runit && !batch) { /* normal interactive use */
@@ -576,22 +601,51 @@ static void printf_strip (char *s)
     printf("%s\n", s);
 }
 
+static int handle_user_defined_function (char *line, int *fncall)
+{
+    int ufunc = gretl_is_user_function(line);
+    int err = 0;
+
+    /* allow for nested function calls */
+    if (ufunc && gretl_compiling_function()) {
+	return 0;
+    }
+
+    /* an actual function call */
+    else if (ufunc) {
+	err = gretl_function_start_exec(line);
+	*fncall = 1;
+    } 
+
+    return err;
+}
+
 static void exec_line (char *line, LOOPSET **ploop, PRN *prn) 
 {
     LOOPSET *loop = *ploop;
     int chk, nulldata_n, renumber;
     int dbdata = 0, do_arch = 0, do_nls = 0;
     char s1[12], s2[12];
+    int fncall = 0;
     double rho;
 
+    /* catch any user-defined functions */
+    err = handle_user_defined_function(line, &fncall);
+    if (err) {
+	errmsg(err, prn);
+	return;
+    } else if (fncall) {
+	return;
+    }
+    
     /* are we ready for this? */
-    if (!data_status && !ignore && !ready_for_command(line)) {
+    if (!data_status && !ignore && 
+	!ready_for_command(line)) {
 	fprintf(stderr, _("You must open a data file first\n"));
 	err = 1;
 	return;
     }
 
-    /* parse the command line... */
     err = catchflags(line, &cmd.opt);
     if (err) {
 	errmsg(err, prn);
@@ -600,7 +654,13 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     compress_spaces(line);
 
-    /* ...but if we're stacking commands for a loop, parse lightly */
+    if (gretl_compiling_function()) {
+	err = gretl_function_append_line(line);
+	if (err) errmsg(err, prn);
+	return;
+    }    
+
+    /* if we're stacking commands for a loop, parse "lightly" */
     if (loopstack) {
 	get_cmd_ci(line, &cmd);
     } else {
@@ -992,7 +1052,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    lines[0] = 1;
 	    err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
 			  &paths, &plot_count, gp_flags(batch, 0));
-	    if (err) pputs(prn, _("gnuplot command failed\n"));
+	    if (err) {
+		pputs(prn, _("gnuplot command failed\n"));
+	    }
 	}
 	break;
 		
@@ -1011,6 +1073,13 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		    pputs(prn, _("gnuplot command failed\n"));
 	    }
 	    free_freq(freq);
+	}
+	break;
+
+    case FUNC:
+	err = gretl_start_compiling_function(line);
+	if (err) {
+	    errmsg(err, prn);
 	}
 	break;
 

@@ -24,6 +24,7 @@
 #include "textbuf.h"
 #include "gpt_control.h"
 #include "gretl_restrict.h"
+#include "gretl_func.h"
 #include "modelspec.h"
 
 #ifdef G_OS_WIN32 
@@ -4608,6 +4609,9 @@ int execute_script (const char *runfile, const char *buf,
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
 	    looprun = 0;
+	} else if (gretl_executing_function()) {
+	    /* FIXME!!! */
+	    ;
 	} else { 
 	    int bslash;
 
@@ -4785,7 +4789,6 @@ int gui_exec_line (char *line,
     fprintf(stderr, "gui_exec_line: '%s'\n", line);
 #endif
 
-    /* parse the command line */
     *linecopy = 0;
     strncat(linecopy, line, sizeof linecopy - 1);
 
@@ -4793,7 +4796,13 @@ int gui_exec_line (char *line,
     if (err) {
         errmsg(err, prn);
         return 1;
-    }	
+    }
+
+    if (gretl_compiling_function()) {
+	err = gretl_function_append_line(line);
+	if (err) errmsg(err, prn);
+	return err;
+    }  	
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (loopstack) { 
@@ -5246,6 +5255,13 @@ int gui_exec_line (char *line,
 	    }
 	}
 	free_freq(freq);
+	break;
+
+    case FUNC:
+	err = gretl_start_compiling_function(line);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case GENR:
