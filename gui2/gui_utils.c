@@ -672,6 +672,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     /* trash the practice files window that launched the query? */
     if (fwin != NULL) {
 	gtk_widget_destroy(fwin->w);
+	fwin->w = NULL;
     }
 
     strcpy(paths.datfile, trydatfile);
