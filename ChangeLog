@@ -1,4 +1,4 @@
-7/07/2004 version 1.2.9
+7/23/2004 version 1.2.9
 - fixes for LaTeX printing of autoregressive models
 - correct Spanish help strings
 - fix font problem for some objects in session window
@@ -43,6 +43,7 @@
   using a shortcut of the form "x(-1 to -4)"
 - fix some subtle genr bugs, and some breakage in the nls
   command following earlier changes in genr
+- small configure fix: try harder to find libpng if wanted
 
 version 1.2.8: a "test-only" version, with some of the features
 of 1.2.9, depending on the date of the build.
