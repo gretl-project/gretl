@@ -239,15 +239,19 @@ static void set_tramo_x12a_dirs (void)
     char cmd[MAXLEN];
     
     if (*tramodir == 0) {
-	sprintf(tramodir, "%s%ctramo", paths.userdir, SLASH);
+	build_path(paths.userdir, "tramo", tramodir, NULL);
     }
     if (*x12adir == 0) {
-	sprintf(x12adir, "%s%cx12a", paths.userdir, SLASH);
+	build_path(paths.userdir, "x12a", x12adir, NULL);
     }
 
-    /* make tramo directory structure */
+    /* make directory structure */
 #ifdef G_OS_WIN32
+    CreateDirectory(x12adir, NULL);
+    CreateDirectory(tramodir, NULL);
     sprintf(cmd, "%s\\output", tramodir);
+    CreateDirectory(cmd, NULL);
+    sprintf(cmd, "%s\\graph", tramodir);
     CreateDirectory(cmd, NULL);
     sprintf(cmd, "%s\\graph\\acf", tramodir);
     CreateDirectory(cmd, NULL);
@@ -260,6 +264,8 @@ static void set_tramo_x12a_dirs (void)
     sprintf(cmd, "%s\\graph\\spectra", tramodir);
     CreateDirectory(cmd, NULL);
 #else
+    sprintf(cmd, "mkdir -p %s", x12adir);
+    system(cmd);
     sprintf(cmd, "mkdir -p %s/output", tramodir);
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/acf", tramodir);

@@ -120,6 +120,8 @@ static int win_fork_prog (char *cmdline, const char *dir)
         return 1;
     }
 
+    /* EVENT_CONSOLE_START_APPLICATION, EVENT_CONSOLE_END_APPLICATION */
+
     WaitForSingleObject(pi.hProcess, INFINITE);    
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -311,14 +313,13 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
 	fprintf(fp, "%g\n", Z[D11 + 1][t]);
 
-    fprintf(fp, "unset multiplot\n");
+    fprintf(fp, "set nomultiplot\n");
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
+    fprintf(fp, "\npause -1\n");
+#endif
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
-#endif
-
-#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fp, "pause -1\n");
 #endif
 
     fclose(fp);
@@ -451,7 +452,7 @@ static int write_tramo_file (const char *fname,
     FILE *fp;
     int startyr, startper, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int i, t;
-    char tmp[8];
+    char *p, tmp[8];
 
     fp = fopen(fname, "w");
     if (fp == NULL) return 1;
@@ -463,7 +464,9 @@ static int write_tramo_file (const char *fname,
     x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
-    startper = atoi(strchr(tmp, '.') + 1);
+    p = strchr(tmp, '.');
+    if (p != NULL) startper = atoi(p + 1);
+    else startper = 1;
 
     fprintf(fp, "%s\n", pdinfo->varname[varnum]);
     fprintf(fp, "%d %d %d %d\n", tsamp, startyr, startper, pdinfo->pd);
@@ -503,7 +506,7 @@ static int write_spc_file (const char *fname,
     FILE *fp;
     int i, t;
     int startyr, startper;
-    char tmp[8];
+    char *p, tmp[8];
 
     fp = fopen(fname, "w");
     if (fp == NULL) return 1;    
@@ -515,7 +518,9 @@ static int write_spc_file (const char *fname,
     x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
-    startper = atoi(strchr(tmp, '.') + 1);
+    p = strchr(tmp, '.');
+    if (p != NULL) startper = atoi(p + 1);
+    else startper = 1;
 
     fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, 
 	    pdinfo->varname[varnum]);
@@ -700,10 +705,12 @@ int write_tx_data (char *fname, int varnum,
 
 #ifdef OS_WIN32 
 	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
-	win_fork_prog(cmd, workdir);
-	get_seats_command(seats, prog);
-	sprintf(cmd, "\"%s\" -OF %s", seats, varname);
-	win_fork_prog(cmd, workdir);
+	err = win_fork_prog(cmd, workdir);
+	if (!err) {
+	    get_seats_command(seats, prog);
+	    sprintf(cmd, "\"%s\" -OF %s", seats, varname);
+	    err = win_fork_prog(cmd, workdir);
+	}
 #else
 	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 
 		varname);
