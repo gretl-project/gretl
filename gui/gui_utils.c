@@ -1411,12 +1411,12 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
-/* ........................................................... */
-
+#if defined(G_OS_WIN32) || defined(USE_GNOME) 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
     window_print(vwin, 0, w);
 }
+#endif
 
 /* ........................................................... */
 
@@ -1511,8 +1511,8 @@ static void make_viewbar (windata_t *vwin)
 	    if (print_ok) {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
 		toolxpm = print_xpm;
-#endif
 		toolfunc = window_print_callback;
+#endif
 	    } else
 		toolfunc = NULL;
 	    break;

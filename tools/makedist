@@ -18,6 +18,7 @@ cp -ap gretl/* gretl-$version
 find gretl-$version -name "*CVS" | xargs rm -rf
 find gretl-$version -name "*.bak" | xargs rm -rf
 find gretl-$version -name ".xvpics" | xargs rm -rf
+find gretl-$version -name "*~" | xargs rm -f
 rm -rf gretl-$version/doc
 mkdir gretl-$version/doc
 cp -ap gretl/doc/manual.pdf gretl-$version/doc

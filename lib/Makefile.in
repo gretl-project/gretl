@@ -56,7 +56,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c -I.. -I./src $(CFLAGS) $(XML_CFLAGS
 
 $(LIBGRETL): $(OBJS) $(LOBJS)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 11:0:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 12:0:0
 
 .PHONY: 
 
@@ -138,12 +138,12 @@ generate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
 generate.o: src/texprint.h src/var.h src/interact.h src/graphing.h
 generate.o: src/monte_carlo.h src/nonparam.h src/discrete.h
 generate.o: src/subsample.h src/calendar.h src/internal.h
-graphing.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-graphing.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
-graphing.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-graphing.o: src/texprint.h src/var.h src/interact.h src/graphing.h
-graphing.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-graphing.o: src/subsample.h src/calendar.h src/internal.h
+graphing.o: ../config.h src/libgretl.h src/commands.h src/errors.h
+graphing.o: src/estimate.h src/generate.h src/utils.h src/compare.h
+graphing.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
+graphing.o: src/printout.h src/texprint.h src/var.h src/interact.h
+graphing.o: src/graphing.h src/monte_carlo.h src/nonparam.h
+graphing.o: src/discrete.h src/subsample.h src/calendar.h src/internal.h
 interact.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
 interact.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
 interact.o: src/dataio.h src/strutils.h src/describe.h src/printout.h

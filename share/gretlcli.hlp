@@ -3,19 +3,19 @@ add
 @Tests
 Usage:          add varlist 
 Examples:       add 5 7 9	          add xx yy zz 
+
 The variables in varlist are added to the previous model and the new model
 estimated.  If more than one variable is added, then the F statistic for the
 added variables is printed (for the OLS procedure only) along with the
 pvalue for it.  A pvalue below 0.05 means that the coefficients are jointly
-significant at the 5 percent level.  A number of internal variables may be
-retrieved using the genr command, provided genr is invoked immediately after
-this command.  Type help genr for more details on this.
+significant at the 5 percent level. 
 
 #
 addto
 @Tests
 Usage:          addto model_ID varlist 
-Example:        addto 2 5 7 9	
+Example:        addto 2 5 7 9
+	
 Works like the "add" command, except that you specify a previous model (using
 its ID number, which is printed at the start of the model output) to take as
 the base for adding variables.  The example above adds variables number 5, 7
@@ -26,6 +26,7 @@ adf
 @Tests
 Usage:	        adf order varname
 Example:        adf 2 x1
+
 Computes statistics for two Dickey-Fuller tests.  In each case the null
 hypothesis is that the variable in question exhibits a unit root.  
 
@@ -35,7 +36,7 @@ The null hypothesis is that g = 0.
 The second (augmented) test proceeds by estimating an unrestricted regression
 (with regressors a constant, a time trend, the first lag of the variable, and
 "order" lags of the first difference) and a restricted version (dropping the
-time trend and the first lag).  The test statistic is F, determined as 
+time trend and the first lag).  The test statistic is F, determined as
 
 [(ESSr - ESSu)/2]/[ESSu/(T - k)] 
 
@@ -49,34 +50,34 @@ ar
 Usage:          ar lags ; depvar indepvar      or
                 ar lags ; -o depvar indepvar     
 Example:        ar 1 3 4 ; y 0 x1 x2 x3 
+
 Computes the estimates of a model using the generalized Cochrane-Orcutt
 iterative procedure (see Ramanathan, Section 9.5).  Iteration is terminated
-when successive error sum of squares do not vary by more than 0.005 percent
-or when 20 iterations have been done.  lags is a list of lags in the
-residuals, terminated by a semicolon.  In the above example, the error term
-is specified as
+when successive error sum of squares do not vary by more than 0.005 percent or
+when 20 iterations have been done.  lags is a list of lags in the residuals,
+terminated by a semicolon.  In the above example, the error term is specified
+as
 
      u(t) = rho1 u(t-1) + rho3 u(t-3) + rho4 u(t-4) + et
 
 depvar is the dependent variable and indepvar is the list of independent
 variables separated by spaces.  Use the number zero for a constant term.  If
 the -o flag is present, the covariance matrix of regression coefficients will
-be printed.  Residuals of the transformed regression are stored under the
-name uhat, which can be retrieved by genr.  A number of other internal
-variables may be retrieved using the genr command, provided genr is invoked
-immediately after this command.  Type help genr for more details on this.
+be printed.  Residuals of the transformed regression are stored under the name
+uhat, which can be retrieved by genr.
 
 #
 arch
 @Tests
 Usage:          arch lag depvar indepvar    
 Examples:       arch 4 1 0 2 4 6 7      or  arch 4 y 0 x1 x2 x3 x4 
-This command tests the model for ARCH of the order specified in "lag", which 
-must be an integer.  If the LM test statistic has p-value below 0.10, then 
-ARCH estimation is also carried out.   If the predicted variance of any 
-observation in the auxiliary regression is not positive, then the 
-corresponding uhat square is used instead.  Weighted least square 
-estimation is then performed on the original model.
+
+This command tests the model for ARCH of the order specified in "lag", which
+must be an integer.  If the LM test statistic has p-value below 0.10, then
+ARCH estimation is also carried out.  If the predicted variance of any
+observation in the auxiliary regression is not positive, then the
+corresponding uhat square is used instead.  Weighted least square estimation
+is then performed on the original model.
 
 #
 chow
@@ -84,14 +85,14 @@ chow
 Usage:         chow obs
 Examples:      chow 25
                chow 1988.1
-Must follow an OLS regression.  Creates a dummy variable which equals 1
-from the split point specified by "obs" to the end of the sample, 0
-otherwise, and also creates interaction terms between this dummy and the
-original independent variables.  An augmented regression is run including
-these terms and an F statistic is calculated, taking the augmented
-regression as the unrestricted and the original as restricted.  This
-statistic is appropriate for testing the null hypothesis of no structural
-break at the given split point.
+
+Must follow an OLS regression.  Creates a dummy variable which equals 1 from
+the split point specified by "obs" to the end of the sample, 0 otherwise, and
+also creates interaction terms between this dummy and the original independent
+variables.  An augmented regression is run including these terms and an F
+statistic is calculated, taking the augmented regression as the unrestricted
+and the original as restricted.  This statistic is appropriate for testing the
+null hypothesis of no structural break at the given split point.
 
 #
 coint
@@ -99,12 +100,13 @@ coint
 Usage:	        coint order depvar indepvar
 Examples:       coint 2 y x
                 coint 4 y x1 x2
-Carries out Augmented Dickey-Fuller tests on the null hypothesis that
-each of the variables listed has a unit root, using the given lag order.
-The cointegrating regression is estimated, and an ADF test is run on the
-residuals from this regression.  The Durbin-Watson statistic for the
-cointegrating regression is also given.  Note that none of these test
-statistics can be referred to the usual statistical tables.
+
+Carries out Augmented Dickey-Fuller tests on the null hypothesis that each of
+the variables listed has a unit root, using the given lag order.  The
+cointegrating regression is estimated, and an ADF test is run on the residuals
+from this regression.  The Durbin-Watson statistic for the cointegrating
+regression is also given.  Note that none of these test statistics can be
+referred to the usual statistical tables.
 
 #
 corc
@@ -112,24 +114,24 @@ corc
 Usage:          corc depvar indepvar       or   corc -o depvar indepvar 
 Examples:       corc 1 0 2 4 6 7                corc -o 1 0 2 4 6 7 
                 corc y 0 x1 x2 x3               corc -o y 0 x1 x2 x3 
+
 Computes the estimates of a model using the Cochrane-Orcutt iterative
-procedure (see Ramanathan, Section 9.4) with depvar as the dependent
-variable and indepvar as the list of independent variables separated by
-spaces and terminated by a ;.  Use the number zero for a constant term.
-Iteration is terminated when successive rho values do not differ by more
-than 0.001 or when 20 iterations have been done.  If the -o flag is
-present, the covariance matrix of regression coefficients is printed.
-The final transformed regression is performed for the observation range
-stobs+1 endobs currently in effect.  Residuals of this transformed
-regression are stored under the name uhat.  A number of other internal
-variables may be retrieved using the genr command, provided genr is invoked
-immediately after this command.  Type help genr for more details on this.
+procedure (see Ramanathan, Section 9.4) with depvar as the dependent variable
+and indepvar as the list of independent variables separated by spaces and
+terminated by a ;.  Use the number zero for a constant term.  Iteration is
+terminated when successive rho values do not differ by more than 0.001 or when
+20 iterations have been done.  If the -o flag is present, the covariance
+matrix of regression coefficients is printed.  The final transformed
+regression is performed for the observation range stobs+1 endobs currently in
+effect.  Residuals of this transformed regression are stored under the name
+uhat.
 
 #
 corr
 @Statistics
 Usage:         corr 
                corr varlist
+
 corr prints correlation coefficients for all pairs of variables in the data
 set (missing values denoted by -999 are skipped).  corr varlist prints
 correlation coefficients for the listed variables.
@@ -139,6 +141,7 @@ corrgm
 @Statistics
 Usage:          corrgm varname or varnumber 
                 corrgm varname or varnumber maxlag
+
 Prints the values of the autocorrelation function for the variable specified
 (see Ramanathan, Section 11.7).  It is thus cor[u(t), u(t-s)], where u(t) is
 the t-th observation of the variable u and s is the number of lags.  The
@@ -156,10 +159,11 @@ automatically.
 criteria
 @Utilities
 Usage:          criteria ess T k        e.g. criteria 23.45 45 8
-Computes the model selection statistics (see Section 4.4 of Ramanathan),
-given ess (error sum of squares), the number of observations (T), and the
-number of coefficients (k).  T, k, and ess may be numerical values or names
-of previously defined variables.
+
+Computes the model selection statistics (see Section 4.4 of Ramanathan), given
+ess (error sum of squares), the number of observations (T), and the number of
+coefficients (k).  T, k, and ess may be numerical values or names of
+previously defined variables.
 
 #
 critical
@@ -168,6 +172,7 @@ Usage:          critical t df           e.g. critical t 20
                 critical X df           e.g. critical X 5
                 critical F dfn dfd      e.g. critical F 3 37
                 critical d n            e.g. critical d 24
+
 If the first parameter is t, X or F, prints out the critical values for the
 students's t, chi-square or F distribution respectively, for the common
 significance levels and using the specified degrees of freedom.  If the first
@@ -180,6 +185,7 @@ and for the range of 1 to 5 explanatory variables.
 cusum
 @Tests
 Usage:          cusum
+
 Must follow the estimation of a model via OLS.  Performs the CUSUM test for
 parameter stability.  A series of (scaled) one-step ahead forecast errors is
 obtained by running a series of regressions: the first regression uses the
@@ -199,6 +205,7 @@ details.
 delete
 @Dataset
 Usage:          delete
+
 Removes the last (highest numbered) variable from the current data set.  Use
 with caution: no confirmation is asked.  Can be useful for getting rid of
 temporary dummy variables.  There is no provision for deleting any but the
@@ -208,13 +215,15 @@ last variable.
 diff
 @Transformations
 Usage:          diff varlist 
-The first difference of each variable in varlist is obtained and the 
-result stored in a new variable with the prefix "d_".  Thus "diff x y" 
-creates the new variables d_x = x(t) - x(t-1) and d_y = y(t) - y(t-1).
+
+The first difference of each variable in varlist is obtained and the result
+stored in a new variable with the prefix "d_".  Thus "diff x y" creates the
+new variables d_x = x(t) - x(t-1) and d_y = y(t) - y(t-1).
 
 #
 endloop
 @Programming
+
 Terminates a simulation loop.  See "loop".
 
 # 
@@ -222,14 +231,15 @@ eqnprint
 @Printing
 Usage:          eqnprint
                 eqnprint -o
-Must follow the estimation of a model via OLS.  Prints the estimated model
-in the form of a LaTeX equation, to a file with a name of the form
-"equation_N.tex", where N is the number of models estimated to date in the
-current session.  This can be incorporated in a LaTeX document.  See also
-the tabprint command. 
 
-If the -o flag is given the LaTeX file is a complete document, ready
-for processing; otherwise it must be included in a document.
+Must follow the estimation of a model via OLS.  Prints the estimated model in
+the form of a LaTeX equation, to a file with a name of the form
+"equation_N.tex", where N is the number of models estimated to date in the
+current session.  This can be incorporated in a LaTeX document.  See also the
+tabprint command.
+
+If the -o flag is given the LaTeX file is a complete document, ready for
+processing; otherwise it must be included in a document.
 
 #
 fcast
@@ -237,45 +247,47 @@ fcast
 Usage:          fcast startobs endobs newvarname
                 fcast newvarname
 Example:        fcast fitted 
+
 Fitted values are retrieved from the last regression run and saved as
-newvarname.  These values can be printed, graphed, or plotted.  The
-right-hand side variables are those in the original model.  There is no
-provision to substitute other variables.  If starting and ending
-observations are specified the forecast is restricted to the given range.
-If an autoregressive error process is specified (for hilu, corc, and ar)
-the forecast is conditional one step ahead and incorporates the error
-process.
+newvarname.  These values can be printed, graphed, or plotted.  The right-hand
+side variables are those in the original model.  There is no provision to
+substitute other variables.  If starting and ending observations are specified
+the forecast is restricted to the given range.  If an autoregressive error
+process is specified (for hilu, corc, and ar) the forecast is conditional one
+step ahead and incorporates the error process.
 
 #
 fcasterr
 @Prediction
 Usage:          fcasterr startobs endobs
                 fcasterr startobs endobs -o
-After estimating an OLS model which includes a constant and at least
-one independent variable (these restrictions may be relaxed at some
-point) you can use this command to print out fitted values over the
-specified observation range, along with the estimated standard errors of
-those predictions and 95 percent confidence intervals.  If the -o flag
-is given the results will also be displayed using gnuplot.
+
+After estimating an OLS model which includes a constant and at least one
+independent variable (these restrictions may be relaxed at some point) you can
+use this command to print out fitted values over the specified observation
+range, along with the estimated standard errors of those predictions and 95
+percent confidence intervals.  If the -o flag is given the results will also
+be displayed using gnuplot.
 
 #
 fit
 @Prediction
 Usage:		fit
-The fit command (which must follow an estimation command) is a shortcut
-for the fcast command.  It generates fitted values, in a series called
-"autofit", for the current sample, based on the last regression.  In the
-case of time-series models, fit also pops up a gnuplot graph of fitted
-and actual values of the dependent variable against time (if support
-for gnuplot was compiled in).
+
+This command (which must follow an estimation command) is a shortcut for the
+fcast command.  It generates fitted values, in a series called "autofit", for
+the current sample, based on the last regression.  In the case of time-series
+models, fit also pops up a gnuplot graph of fitted and actual values of the
+dependent variable against time (if support for gnuplot was compiled in).
 
 #
 freq
 @Statistics
 Usage:          freq varname (or varno) 
+
 Prints the frequency distribution for varname or varno; the results of a
-Chi-square test for normality are also reported.  The statistic for
-the latter is
+Chi-square test for normality are also reported.  The statistic for the latter
+is
 
   sample_size * [skewness^2/6 + (kurtosis - 3.0)^2/24.0] 
 
@@ -288,6 +300,7 @@ In interactive mode a gnuplot graph of the distribution is generated.
 genr
 @Dataset
 Usage:          genr newvarname = formula
+
 Creates new variables, usually through transformations of existing
 variables. See also diff, logs, lags, ldiff, multiply and square for
 shortcuts.
@@ -382,10 +395,12 @@ Examples of genr commands:
                            20 degrees of freedom]
 
 Tips on dummy variables: 
+
 * Suppose x is coded with values 1, 2, or 3 and you want three dummy
 variables, d1 = 1 if x = 1, 0 otherwise, d2 = 1 if x = 2, and so on.  To
 create these, use the commands: genr d1 = (x=1), genr d2 = (x=2), and 
 genr d3 = (x=3).
+
 * To get z = max(x,y) do genr d=x>y and genr z=(x*d)+(y*(1-d))
 
 #
@@ -416,18 +431,20 @@ graph
 @Graphs
 Usage:          graph var1 var2 
                 graph -o var1 var2 
-                graph var1 var2 var3 
-In the first two examples, variable var1 (which may be a name or a number)
-is graphed (y-axis) against var2 (x-axis).  -o flag will graph with 40 rows
-and 60 columns.  Without it, the graph will be 20 by 60 (for screen output).  
-In the third example, both var1 and var2 will be graphed (on y-axis) against 
-var3.  This is particularly useful to graph observed and predicted values 
+                graph var1 var2 var3
+ 
+In the first two examples, variable var1 (which may be a name or a number) is
+graphed (y-axis) against var2 (x-axis).  -o flag will graph with 40 rows and
+60 columns.  Without it, the graph will be 20 by 60 (for screen output).  In
+the third example, both var1 and var2 will be graphed (on y-axis) against
+var3.  This is particularly useful to graph observed and predicted values
 against time.
 
 #
 hausman
 @Tests
 Usage:          hausman
+
 This test is available only after estimating a model using the "pooled"
 command (see also the commands panel and setobs).  It tests the simple pooled
 model against the principal alternatives, the fixed effects and random effects
@@ -458,15 +475,16 @@ favor of fixed effects.
 hccm
 @Estimation
 Usage:          hccm depvar indepvar      
-            or  hccm -o depvar indepvar 
-Presents OLS estimates with the heteroscedasticity consistent covariance 
-matrix estimates for the standard errors of regression coefficients using 
-the MacKinnon-White "jacknife" procedure.
+            or  hccm -o depvar indepvar
+ 
+Presents OLS estimates with the heteroscedasticity consistent covariance
+matrix estimates for the standard errors of regression coefficients using the
+MacKinnon-White "jackknife" procedure.
 
 #
 help
 @Utilities
-help                 gives a list of esl commands
+help                 gives a list of gretl commands
 help commandname     describes commandname (e.g. help smpl)
 
 #
@@ -475,32 +493,28 @@ hilu
 Usage:          hilu depvar indepvar       or   hilu -o depvar indepvar 
 Examples:       hilu 1 0 2 4 6 7                hilu -o 1 0 2 4 6 7 
                 hilu y 0 x1 x2 x3               hilu -o y 0 x1 x2 x3 
-Computes the estimates of a model using the Hildreth-Lu search
-procedure (fine tuned by the CORC procedure) with depvar as the dependent
-variable and indepvar as the list of independent variables separated by
-spaces.  Use the number zero for a constant term.  The error sum of squares
-of the transformed model is graphed against the value of rho from -0.99 to
-0.99.  If the -o flag is present, the covariance matrix of regression
-coefficients will be printed.  The final transformed regression is
-performed for the observation range stobs+1 endobs currently in effect.
-Residuals of this transformed regression are stored under the name uhat.  A
-number of internal variables may be retrieved using the genr command,
-provided genr is invoked immediately after this command.  Type help genr
-for more details on this.
+
+Computes the estimates of a model using the Hildreth-Lu search procedure (fine
+tuned by the CORC procedure) with depvar as the dependent variable and
+indepvar as the list of independent variables separated by spaces.  Use the
+number zero for a constant term.  The error sum of squares of the transformed
+model is graphed against the value of rho from -0.99 to 0.99.  If the -o flag
+is present, the covariance matrix of regression coefficients will be printed.
+The final transformed regression is performed for the observation range
+stobs+1 endobs currently in effect.  Residuals of this transformed regression
+are stored under the name uhat.  
 
 #
 hsk
 @Estimation
 Usage:          hsk depvar indepvar 	   
-            or  hsk -o depvar indepvar 
-Prints heteroscedasticity corrected estimates and associated statistics.  
-The auxiliary regression predicts the log of the square of residuals (using 
-squares of independent variables but not their cross products) from which 
-weighted least squares estimates are obtained.  If the -o flag is present, 
-the covariance matrix of regression coefficients will be printed.  A number 
-of internal variables may be retrieved using the genr command, provided genr 
-is invoked immediately after this command.  Type help genr for more details 
-on this.
+            or  hsk -o depvar indepvar
+ 
+Prints heteroscedasticity corrected estimates and associated statistics.  The
+auxiliary regression predicts the log of the square of residuals (using
+squares of independent variables but not their cross products) from which
+weighted least squares estimates are obtained.  If the -o flag is present, the
+covariance matrix of regression coefficients will be printed.  
 
 #
 if
@@ -509,6 +523,7 @@ Usage:          if boolean_condition
                   command1
                   command2 ...
                 endif
+
 The gretl commands within the "if ... endif" block are executed if and only if
 the boolean condition evaluates as true (non-zero).  For the syntax of boolean
 conditions in gretl, see the genr command.  Optionally, "endif" may be
@@ -523,6 +538,7 @@ import
 @Dataset
 Usage:          import csv_file
                 import -o box_file
+
 Without the -o flag, brings in data from a comma-separated values (CSV) format
 file, such as can easily be written from a spreadsheet program.  The file
 should have variable names on the first line and a rectangular data matrix on
@@ -536,21 +552,24 @@ the Data Extraction Service of the US Bureau of the Census.
 info
 @Dataset
 Usage:          info
-Prints out any information contained in the header file corresponding
-to the current datafile.  This information must be enclosed between
-"(*" and "*)", these markers being placed on separate lines.
+
+Prints out any information contained in the header file corresponding to the
+current datafile.  This information must be enclosed between "(*" and "*)",
+these markers being placed on separate lines.
 
 #
 labels
 @Dataset
 Usage:          labels
-Prints out the informative labels for any variables that have been
-generated using the "genr" command. 
+
+Prints out the informative labels for any variables that have been defined
+using the "genr" command.
 
 #
 lags
 @Transformations
-Usage:          lags varlist 
+Usage:          lags varlist
+ 
 Creates new variables which are lagged values of each of the variables in 
 varlist.  The number of lagged variables equals the periodicity.  For
 example,  if the periodicity was 4 (quarterly), the command  lags x y ; will
@@ -562,9 +581,11 @@ with the underscore.
 ldiff
 @Transformations
 Usage:          ldiff varlist 
+
 The first difference of the natural log of each variable in varlist is 
 obtained and the result stored in a new variable with the prefix "ld_".  
 Thus "ldiff x y" creates the new variables 
+
                ld_x = ln[x(t)] - ln[x(t-1)]
                ld_y = ln[y(t)] - ln[y(t-1)].
 
@@ -573,6 +594,7 @@ lmtest
 @Tests
 Usage:          lmtest
                 lmtest -o 
+
 Must immediately follow an ols command.  Prints the Lagrange multiplier test
 statistics (and associated p-values) for nonlinearity and heteroscedasticity
 (White's test) or, if the -o flag is present, for serial correlation up to the
@@ -587,7 +609,8 @@ statistics cannot be obtained.
 logit
 @Estimation
 Usage:          logit depvar indepvars
-Logit regression. The dependent variable should be a binary variable.  Maximum
+
+Logit regression: the dependent variable should be a binary variable.  Maximum
 likelihood estimates of the coefficients on indepvars are obtained via
 interated least squares (the EM or Expectation-Maximization method).  As the
 model is non-linear the slopes depend on the values of the independent
@@ -598,7 +621,8 @@ zero apart from the constant.
 #
 logs
 @Transformations
-Usage:          logs varlist 
+Usage:          logs varlist
+ 
 The natural log of each of the variables in varlist is obtained and the 
 result stored in a new variable with the prefix l_ which is "el" underscore.
 Thus, "logs x y" creates the new variables l_x = ln(x) and l_y = ln(y).
@@ -665,6 +689,7 @@ meantest
 @Tests
 Usage:          meantest x1 x2
                 meantest x1 x2 -o
+
 Calculates the t statistic for the null hypothesis that the population means
 are equal for the variables x1 and x2, and shows its p-value.  Without the -o
 flag, the statistic is computed on the assumption that the variances are equal
@@ -678,13 +703,14 @@ multiply
 Usage:          multiply x suffix vars
 Examples:       multiply invpop pc 3 4 5 6
                 multiply 1000 big x1 x2 x3
-The variables in the list "vars" (referenced by name or number) are 
-multiplied by x, which may be either a numerical value or the name of a
-variable already defined.  The products are named with the specified suffix
-(maximum 3 characters).  The original varnames are truncated first if need
-be.  For instance, suppose you want to create per capita versions of certain 
-variables, and you have the variable "pop" (population).  A suitable set of 
-commands is then:
+
+The variables in the list "vars" (referenced by name or number) are multiplied
+by x, which may be either a numerical value or the name of a variable already
+defined.  The products are named with the specified suffix (maximum 3
+characters).  The original varnames are truncated first if need be.  For
+instance, suppose you want to create per capita versions of certain variables,
+and you have the variable "pop" (population).  A suitable set of commands is
+then:
 
   genr invpop = 1/pop
   multiply invpop pc income expend 
@@ -695,6 +721,7 @@ which will create incomepc = income * invpop, expendpc = expend * invpop.
 noecho
 @Programming
 Usage:          noecho
+
 Suppresses the normal echoing of the input commands when you run a gretl
 script.  See also the print command (literal string variant).
 
@@ -702,32 +729,31 @@ script.  See also the print command (literal string variant).
 nulldata
 @Dataset
 Usage:          nulldata series_length
-Example:        nulldata 100 
-Establishes a "blank" data set, containing only a constant, with
-periodicity 1 and the specified number of observations.  This may be used
-for simulation purposes: some of the genr commands (e.g. genr uniform(),
-genr normal(), genr time) will generate dummy data from scratch to fill out
-the data set.  The nulldata command may be useful in conjunction with
-"loop".
+Example:        nulldata 100
+ 
+Establishes a "blank" data set, containing only a constant, with periodicity 1
+and the specified number of observations.  This may be used for simulation
+purposes: some of the genr commands (e.g. genr uniform(), genr normal(), genr
+time) will generate dummy data from scratch to fill out the data set.  The
+nulldata command may be useful in conjunction with "loop".
 
 #
 ols
 @Estimation
 Usage:          ols depvar indepvar       or     ols -o depvar indepvar 
 Examples:       ols 1 0 2 4 6 7                  ols -o 1 0 2 4 6 7  
-                ols y 0 x1 x2 x3                 ols -o y 0 x1 x2 x3  
+                ols y 0 x1 x2 x3                 ols -o y 0 x1 x2 x3
+  
 Computes ordinary least squares estimates with depvar as the dependent
-variable and indepvar as the list of independent variables. 
-The -o flag will print the covariance matrix of regression coefficients.  The
-variables can be specified either by names or by their number.  Use the
-number zero for a constant term.  The program also prints the p-values for t
-(two-tailed) and F-statistics.  A p-value below 0.01 indicates significance
-at the 1 percent level and is denoted by three *'s.  Two *'s indicate
-significance between 1 and 5 percent and one * indicates significance between
-5 and 10 percent levels.  Model selection statistics described in Section 4.4
-are also printed.  A number of internal variables may be retrieved using the
-genr command, provided genr is invoked immediately after this command.  Type
-help genr for more details on this.
+variable and indepvar as the list of independent variables.  The -o flag will
+print the covariance matrix of regression coefficients.  The variables can be
+specified either by names or by their number.  Use the number zero for a
+constant term.  The program also prints the p-values for t (two-tailed) and
+F-statistics.  A p-value below 0.01 indicates significance at the 1 percent
+level and is denoted by three *'s.  Two *'s indicate significance between 1
+and 5 percent and one * indicates significance between 5 and 10 percent
+levels.  Model selection statistics described in Ramanathan Section 4.4 are
+also printed.  
 
 #
 omit
@@ -735,21 +761,20 @@ omit
 Usage:          omit varlist 
 Examples:       omit 5 7 9           
 		omit xx yy zz 
-Must be invoked immediately after an ols, corc, hilu, ar, arch, hsk, wls,
-hccm, add, omit, list, or genr command.  The variables in varlist will be
+
+Must be invoked after estimating a model.  The variables in varlist will be
 omitted from the previous model and the new model estimated.  If more than one
 variable is omitted, the Wald F-statistic for the omitted variables will be
 printed along with the pvalue for it (for the OLS procedure only).  A pvalue
 below 0.05 means that the coefficients are jointly significant at the 5
-percent level.  A number of internal variables may be retrieved using the genr
-command, provided genr is invoked immediately after this command.  Type help
-genr for more details on this.
+percent level.  
 
 #
 omitfrom
 @Tests
 Usage:          omitfrom model_ID varlist 
-Example:        omitfrom 2 5 7 9           
+Example:        omitfrom 2 5 7 9 
+          
 Works like the "omit" command, except that you specify a previous model (using
 its ID number, which is printed at the start of the model output) to take as
 the base for omitting variables.  The example above omits variables number 5,
@@ -759,6 +784,7 @@ the base for omitting variables.  The example above omits variables number 5,
 open
 @Dataset
 Usage:          open datafile
+
 Opens a data file.  If a data file is already open, it is replaced by the
 newly opened one.  The program will try to detect the format of the data file
 ("native", CSV or BOX1) and treat it accordingly.
@@ -769,6 +795,7 @@ panel
 Usage:          panel
                 panel -s
 	        panel -c
+
 Request that the current data set be interpreted as a panel (pooled cross
 section and time series).  With no flag, or with the -s flag, the data set is
 taken to be in the form of stacked time series (successive blocks of data
@@ -781,6 +808,7 @@ pergm
 @Statistics
 Usage:          pergm varname 
                 pergm varname -o
+
 Computes and displays (and if not in batch mode, graphs) the spectrum of the
 specified variable.  Without the -o flag the sample periodogram is given; with
 the flag a Bartlett lag window of length 2 * sqrt(sample size) is used in
@@ -794,6 +822,7 @@ plot
 @Graphs
 Usage:          plot x1       plot x1 x2 
                 plot 3 7      plot -o x1 x2
+
 Plots data values for specified variables, for the range of observations
 currently in effect.  Each line stands for an observation and the values are
 plotted horizontally.  If the flag -o is present, x1 and x2 are plotted in the
@@ -805,6 +834,7 @@ be used only if the variables have approximately the same range of values
 pooled
 @Estimation
 Usage:         pooled depvar indepvars
+
 Estimates a model via OLS (see the ols command for details on syntax), and
 flags it as a pooled or panel model, so that the "panel diagnostics" test item
 becomes available.  For an account of these diagnostics see the hausman
@@ -813,8 +843,9 @@ command.
 #
 print
 @Printing
-Prints the values of the specified variables for the current stobs-endobs 
-range, or prints a literal string.  
+
+Prints the values of the specified variables for the current stobs-endobs
+range, or prints a literal string.
 
 print              prints the entire data set in tabular form
 print 3 6          prints values of variable numbers 3 and 6
@@ -830,7 +861,8 @@ required, but the opening quote is needed to trigger this behavior.
 probit
 @Estimation
 Usage:          probit depvar indepvars
-Probit regression. The dependent variable should be a binary variable.
+
+Probit regression: the dependent variable should be a binary variable.
 Maximum likelihood estimates of the coefficients on indepvars are obtained via
 interated least squares (the EM or Expectation-Maximization method).  As the
 model is non-linear the slopes depend on the values of the independent
@@ -848,14 +880,16 @@ Usage in batch mode (or gretl console mode):
      Chi-square:              pvalue 3 d.f. xvalue
      F-distribution:          pvalue 4 dfn dfd xvalue
      Gamma distribution:      pvalue 5 mean variance xvalue
-Computes the area to the right of xvalue in the specified distribution.  d.f. 
-is the degrees of freedom, dfn is the d.f. for the numerator, dfd is the d.f. 
+
+Computes the area to the right of xvalue in the specified distribution.  d.f.
+is the degrees of freedom, dfn is the d.f. for the numerator, dfd is the d.f.
 for the denominator.
 
 #
 quit
 @Utilities
-Exit from esl. ('q' is a shortcut; 'x' exits without a prompt to save
+
+Exit from gretl. ('q' is a shortcut; 'x' exits without a prompt to save
 output.)
 
 #
@@ -864,6 +898,7 @@ rhodiff
 Usage:         rhodiff rholist ; varlist
 Examples:      rhodiff .65 ; 2 3 4
                rhodiff r1 r2 ; x1 x2 x3
+
 Creates rho-differenced counterparts of the variables (given by number or by
 name) in varlist and adds them to the data set, using the suffix # for the new
 vars.  Given variable v1 in varlist, and entries r1 and r2 in rholist,
@@ -877,14 +912,16 @@ names of variables previously defined.
 run
 @Programming
 Usage:          run inputfile
-If the file "inputfile" contains esl commands, this command (invoked
-from within esl) will execute them one by one.  This is a useful way of
-executing batch commands within an interactive session.
+
+If the file "inputfile" contains gretl commands, this command (invoked from
+within gretl) will execute them one by one.  This is a useful way of executing
+batch commands within an interactive session.
 
 # 
 runs
 @Tests 
-Usage:          runs varname 
+Usage:          runs varname
+ 
 Carries out the nonparametric runs test for randomness of the specified
 variable.  If you want to test for randomness of deviations from the median,
 for a variable named x1 with a non-zero median, you can do the following:
@@ -899,23 +936,25 @@ Usage:          scatters yvar ; xvarlist    or
 		scatters yvarlist ; xvar
 Examples:       scatters 1 ; 2 3 4 5
                 scatters 1 2 3 4 5 6 ; time
+
 Plots (using gnuplot) pairwise scatters of yvar against all the variables in
-xvarlist, or of all the variables in yvarlist against xvar.  The first
-example above puts variable 1 on the y-axis and draws four graphs, the first
-having variable 2 on the x-axis, the second variable 3 on the x-axis, and so
-on.  Scanning a set of such plots can be a useful step in exploratory data
+xvarlist, or of all the variables in yvarlist against xvar.  The first example
+above puts variable 1 on the y-axis and draws four graphs, the first having
+variable 2 on the x-axis, the second variable 3 on the x-axis, and so on.
+Scanning a set of such plots can be a useful step in exploratory data
 analysis.  The maximum number of plots is six; any extra variable in the list
-will be ignored.  
+will be ignored.
 
 #
 seed
 @Programming
 Usage:          seed integer
+
 Sets the seed for the pseudo-random number generator for the uniform() and
-normal() functions (see the genr command).  By default the seed is set
-when the program is started, using the system time.  If you want to
-obtain repeatable sequences of pseudo-random numbers you will need to
-set the seed manually.
+normal() functions (see the genr command).  By default the seed is set when
+the program is started, using the system time.  If you want to obtain
+repeatable sequences of pseudo-random numbers you will need to set the seed
+manually.
 
 #
 setobs
@@ -957,6 +996,7 @@ for the variable named xvar.
 shell
 @Utilities
 Usage:		! [shell command]
+
 A "!" at the beginning of an gretl command line is interpreted as an escape
 to the user's shell.  Thus arbitrary shell commands can be executed from
 within gretl.
@@ -965,8 +1005,9 @@ within gretl.
 sim
 @Dataset
 Usage:          sim stobs endobs y a0 a1 a2 ...
-Simulates values for y for the periods stobs through endobs.  The variable y 
-must have been defined earlier with appropriate initial values.  Also stobs 
+
+Simulates values for y for the periods stobs through endobs.  The variable y
+must have been defined earlier with appropriate initial values.  Also stobs
 and endobs must be consistent with the periodicity.  The formula used is
 
      y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ...
@@ -985,11 +1026,12 @@ Usage:         smpl startobs endobs
                smpl -o dummyvar
                smpl -o
                smpl -r <boolean expression>
+
 Resets the sample range.  In the first form startobs and endobs must be
 consistent with the periodicity of the data.  In the second form, dummyvar
 must be an indicator variable with values 0 or 1: the sample will be
-restricted to those observations where the indicator value is 1.  The
-third form, smpl -o, drops all observations for which values of one or more 
+restricted to those observations where the indicator value is 1.  The third
+form, smpl -o, drops all observations for which values of one or more
 variables are missing.  The fourth form, using the -r flag, restricts the
 sample to cases satisfying the given expression.
 
@@ -1013,6 +1055,7 @@ spearman
 @Statistics
 Usage:          spearman x y
                 spearman x y -o
+
 Prints Spearman's rank correlation coefficient for the two variables x and y.
 The variables do not have to be ranked manually in advance; the function takes
 care of this.  If the -o flag is supplied, the original data and the ranked
@@ -1029,11 +1072,12 @@ is the negative of the original first.  For example:
 square
 @Transformations
 Usage:          square x y       or     square -o x y 
-Generates new variables which are squares and cross products of selected 
-variables (-o will create the cross products).  For the above example, new 
-variables created will be sq_x = x squared, sq_y = y squared and x_y = x
-times  y.  If a particular variable is a dummy variable it is not squared
-because we will get the same variable.  
+
+Generates new variables which are squares and cross products of selected
+variables (-o will create the cross products).  For the above example, new
+variables created will be sq_x = x^2, sq_y = y^2 and x_y = x * y.  If a
+particular variable is a dummy variable it is not squared because we will get
+the same variable.
 
 #
 store
@@ -1043,9 +1087,10 @@ Usages:          store filename flag
 Examples:        store mydata.gdt
                  store mydata.csv -c
                  store mydatabin.gdt -o 2 3 4
-Filename is the name of the file in which the values should be stored.  If 
+
+Filename is the name of the file in which the values should be stored.  If
 varlist is absent, the values of all the variables will be stored, otherwise
-only those variables specified will be written to file.  
+only those variables specified will be written to file.
 
 Possible values of the optional "flag" are as follows:
 
@@ -1070,6 +1115,7 @@ summary
 summary            prints summary statistics for all variables in the file
 summary 3 7 9      prints summary statistics for variable numbers 3, 7, and 9
 summary x y z      prints summary statistics for the variables x, y, and z
+
 Output consists of the mean, standard deviation (sd), coefficient of variation
 (CV = sd/mean), median, minimum, maximum, skewness coefficient, and excess
 kurtosis.
@@ -1079,19 +1125,21 @@ tabprint
 @Printing
 Usage:          tabprint
                 tabprint -o
-Must follow the estimation of a model via OLS.  Prints the estimated model
-in the form of a LaTeX tabular environment, to a file with a name of the
-form "model_N.tex", where N is the number of models estimated to date in
-the current session.  This can be incorporated in a LaTeX document.  See
-also the eqnprint command.
 
-If the -o flag is given the LaTeX file is a complete document, ready
-for processing; otherwise it must be included in a document.
+Must follow the estimation of a model via OLS.  Prints the estimated model in
+the form of a LaTeX tabular environment, to a file with a name of the form
+"model_N.tex", where N is the number of models estimated to date in the
+current session.  This can be incorporated in a LaTeX document.  See also the
+eqnprint command.
+
+If the -o flag is given the LaTeX file is a complete document, ready for
+processing; otherwise it must be included in a document.
 
 #
 testuhat
 @Tests
 Usage:          testuhat
+
 Must follow a model estimation command.  Gives the frequency distribution for
 the residual from the model along with a chi-square test for normality.
 
@@ -1100,17 +1148,16 @@ tsls
 @Estimation
 Usage:          tsls depvar varlist1 ; varlist2       [-o is optional]
 Example:        tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6 
-This command computes two-stage least squares (tsls) estimates of parameters.
-depvar is the dependent variable, varlist1 is the list of independent 
-variables (including right-hand side endogenous variables) in the structural 
-equation for which tsls estimates are needed.  varlist2 is the combined list 
-of exogenous and predetermined variables in all the equations.  If varlist2 is 
+
+Computes two-stage least squares (tsls) estimates of parameters.  depvar is
+the dependent variable, varlist1 is the list of independent variables
+(including right-hand side endogenous variables) in the structural equation
+for which tsls estimates are needed.  varlist2 is the combined list of
+exogenous and predetermined variables in all the equations.  If varlist2 is
 not at least as long as varlist1, the model is not identified.  The -o flag
 will print the covariance matrix of the coefficients.  In the above example,
 the y's are the endogenous variables and the x's are the exogenous and
-predetermined variables.  A number of internal variables may be retrieved
-using the genr command, provided genr is invoked immediately after this
-command.  Type help genr for more details on this.
+predetermined variables.
 
 #
 var
@@ -1118,26 +1165,29 @@ var
 Usage:          var order depvar indepvar
 Examples:       var 4 x1 const time x2 x3
                 var 3 1 0 2 3 4
-Sets up and estimates (via OLS) a vector autoregression.  The first
-argument specifies the lag order, then follows the setup for the first
-equation, much as in the "ols" command.  Don't include lags among the
-elements of the "indepvar" list -- they will be added automatically. A
-regression will be run for each variable in the list, excluding the
-constant, the time trend and any dummy variables.  Output for each
-equation includes F-tests for zero restrictions on all lags of each of the
-variables, and an F-test for the maximum lag.
+
+Sets up and estimates (via OLS) a vector autoregression.  The first argument
+specifies the lag order, then follows the setup for the first equation, much
+as in the "ols" command.  Don't include lags among the elements of the
+"indepvar" list -- they will be added automatically. A regression will be run
+for each variable in the list, excluding the constant, the time trend and any
+dummy variables.  Output for each equation includes F-tests for zero
+restrictions on all lags of each of the variables, and an F-test for the
+maximum lag.
 
 # 
 varlist
 @Dataset
 Usage:          varlist
-Prints a complete list of variables currently defined. "list" and "ls" are
+
+Prints a list of the variables currently defined. "list" and "ls" are
 synonyms.
 
 #
 vartest
 @Tests
 Usage:          vartest x1 x2
+
 Calculates the F statistic for the null hypothesis that the population
 variances for the variables x1 and x2 are equal, and shows its p-value.
 	
@@ -1145,11 +1195,12 @@ variances for the variables x1 and x2 are equal, and shows its p-value.
 wls
 @Estimation
 Usage:          wls weightvar depvar indepvar            [-o optional]
+
 Weighted least squares estimates are obtained using weightvar as the weight,
 depvar as the dependent variable and indepvar as the list of independent
 variables.  More specifically, ols regression is run on weightvar*depvar
 against weight*indepvar.  If the weightvar is a dummy variable, this is equi-
-valent to eliminating all observations with the number zero for weightvar. 
+valent to eliminating all observations with the number zero for weightvar.
 The flag -o will print the covariance matrix of coefficients.  A number of
 internal variables may be retrieved using the genr command, provided genr is
 invoked immediately after this command.  Type help genr for more details on

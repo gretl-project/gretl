@@ -358,18 +358,18 @@ const char *aux_string (int aux)
 
 const char *estimator_string (int ci)
 {
-    if (ci == OLS || ci == VAR) return _("OLS ");
-    else if (ci == WLS) return _("WLS "); 
-    else if (ci == ARCH) return _("WLS (ARCH) ");
-    else if (ci == CORC) return _("Cochrane-Orcutt ");
-    else if (ci == HILU) return _("Hildreth-Lu ");
-    else if (ci == TSLS) return _("TSLS ");
-    else if (ci == HSK) return _("Heteroskedasticity ");
-    else if (ci == AR) return _("AR ");
-    else if (ci == HCCM) return _("HCCM ");
-    else if (ci == PROBIT) return _("Probit ");
-    else if (ci == LOGIT) return _("Logit ");
-    else if (ci == POOLED) return _("Pooled OLS ");
+    if (ci == OLS || ci == VAR) return _("OLS");
+    else if (ci == WLS) return _("WLS"); 
+    else if (ci == ARCH) return _("WLS (ARCH)");
+    else if (ci == CORC) return _("Cochrane-Orcutt");
+    else if (ci == HILU) return _("Hildreth-Lu");
+    else if (ci == TSLS) return _("TSLS");
+    else if (ci == HSK) return _("Heteroskedasticity");
+    else if (ci == AR) return _("AR");
+    else if (ci == HCCM) return _("HCCM");
+    else if (ci == PROBIT) return _("Probit");
+    else if (ci == LOGIT) return _("Logit");
+    else if (ci == POOLED) return _("Pooled OLS");
     else return "";
 }
 

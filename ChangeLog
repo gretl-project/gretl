@@ -1,4 +1,4 @@
-version 0.993
+04/15/2002 version 0.993
 - add option to specify lag order in autocorrelation test;
   also add Box-Pierce and Ljung-Box stats to test output
 - fixes to setmiss command (console and script modes)
@@ -6,7 +6,7 @@ version 0.993
   also add facility to print graphs directly under gnome,
   and to zoom graphs on X11 display
 - make DVI viewer configurable and make "latex view" functions
-  so they should work on win32
+  work on win32
 - add inclusive inequality operators '>=' and '<=' to genr
 - fix bug in genr: operator priority was not being fully respected
   in all cases

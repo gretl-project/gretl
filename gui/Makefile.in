@@ -222,8 +222,7 @@ gretl.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h dialogs.h
 gretl.o: library.h session.h pixmaps/gretl.xpm pixmaps/mini.calc.xpm
 gretl.o: pixmaps/mini.edit.xpm pixmaps/mini.sh.xpm pixmaps/mini.session.xpm
 gretl.o: pixmaps/mini.manual.xpm pixmaps/mini.netscape.xpm
-gretl.o: pixmaps/mini.pdf.xpm pixmaps/mini.plot.xpm pixmaps/mini.camera.xpm
-gretl.o: pixmaps/mini.ofolder.xpm
+gretl.o: pixmaps/mini.pdf.xpm pixmaps/mini.plot.xpm pixmaps/mini.ofolder.xpm
 gui_utils.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 gui_utils.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 gui_utils.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -234,9 +233,10 @@ gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h
 gui_utils.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 gui_utils.o: dialogs.h library.h session.h htmlprint.h guiprint.h
-gui_utils.o: pixmaps/save.xpm pixmaps/saveas.xpm pixmaps/exec_small.xpm
-gui_utils.o: pixmaps/copy.xpm pixmaps/paste.xpm pixmaps/replace.xpm
-gui_utils.o: pixmaps/undo.xpm pixmaps/question.xpm pixmaps/close.xpm
+gui_utils.o: pixmaps/save.xpm pixmaps/saveas.xpm pixmaps/print.xpm
+gui_utils.o: pixmaps/exec_small.xpm pixmaps/copy.xpm pixmaps/paste.xpm
+gui_utils.o: pixmaps/search.xpm pixmaps/replace.xpm pixmaps/undo.xpm
+gui_utils.o: pixmaps/question.xpm pixmaps/close.xpm
 guiprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 guiprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 guiprint.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h

@@ -344,7 +344,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	}
     }
 
-    if (new_t1 >= new_t2) {
+    if (new_t1 > new_t2) {
 	sprintf(gretl_errmsg, _("Invalid null sample"));
 	return 1;
     }
