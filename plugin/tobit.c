@@ -295,55 +295,61 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int k,
 
 #endif /* STANDALONE */
 
+static void tobit_model_info_init (model_info *tobit, int nobs, 
+				   int n_series)
+{
+    tobit->t1 = 0;
+    tobit->t2 = nobs - 1;
+    tobit->p = tobit->q = tobit->r = 0;
+    tobit->n_series = n_series;
+}
+
 /* Main Tobit function */
 
 static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		     PRN *prn)
 {
     const double **X;
-    double *theta = NULL;
-    double sigma, ll;
+    double sigma;
     int i, j, k, n;
     int n_series = 4;
     int err = 0;
 
+    model_info tobit;
+
     /* for VCV manipulation */
-    gretl_matrix *VCV = NULL;
     gretl_matrix *J = NULL; 
     gretl_matrix *tmp = NULL; 
 
     k = pmod->ncoeff;
     n = pmod->nobs;
 
-    theta = malloc((k + 1) * sizeof *theta);
-    if (theta == NULL) return E_ALLOC;
-
     /* set of pointers into original data */
     X = make_tobit_X(pmod, Z);
     if (X == NULL) {
-	free(theta);
 	return E_ALLOC;
     }
 
+    tobit_model_info_init(&tobit, pmod->nobs, n_series);
+
     /* call BHHH routine to maximize ll */
-    err = bhhh_max(tobit_ll, X, pmod->coeff, pmod->ncoeff, n_series,
-		   pmod->nobs, &ll, theta, &VCV, prn);
+    err = bhhh_max(tobit_ll, X, pmod->coeff, pmod->ncoeff, &tobit, prn);
 
     if (err) {
 	goto bailout;
     }
 
     /* recover estimate of variance */
-    sigma = 1.0 / theta[k]; 
+    sigma = 1.0 / tobit.theta[k]; 
 
     /* recover slope estimates */
     for (i=0; i<k; i++) {
-	theta[i] *= sigma;
+	tobit.theta[i] *= sigma;
     }
 
     /* get estimate of variance matrix for Olsen parameters */
-    gretl_invert_symmetric_matrix(VCV);
-    gretl_matrix_divide_by_scalar(VCV, n);
+    gretl_invert_symmetric_matrix(tobit.VCV);
+    gretl_matrix_divide_by_scalar(tobit.VCV, n);
 
     /* Jacobian mat. for transforming VCV from Olsen to slopes + variance */
     J = gretl_matrix_alloc(k + 1, k + 1);
@@ -355,7 +361,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		gretl_matrix_set(J, i, j, sigma);
 	    } else if (j == k && i < j) {
 		/* right-hand column */
-		gretl_matrix_set(J, i, j, -sigma * theta[i]);
+		gretl_matrix_set(J, i, j, -sigma * tobit.theta[i]);
 	    } else if (j == k && i == j) {
 		/* bottom right-hand element */
 		gretl_matrix_set(J, i, j, -sigma * sigma);
@@ -365,25 +371,23 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     /* VCV matrix transformation */
     tmp = gretl_matrix_alloc(k + 1, k + 1);
-    gretl_matrix_multiply(J, VCV, tmp);
+    gretl_matrix_multiply(J, tobit.VCV, tmp);
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 			      J, GRETL_MOD_TRANSPOSE,
-			      VCV);
+			      tobit.VCV);
     gretl_matrix_free(tmp);
     gretl_matrix_free(J);
 
 #ifdef STANDALONE
-    print_tobit_stats(theta, k, sigma, ll, VCV);
+    print_tobit_stats(tobit.theta, k, sigma, tobit.ll, tobit.VCV);
 #else
-    write_tobit_stats(pmod, theta, k, sigma, ll, X, VCV);
+    write_tobit_stats(pmod, tobit.theta, k, sigma, tobit.ll, X, tobit.VCV);
 #endif
-
-    gretl_matrix_free(VCV);
 
  bailout:
 
     free(X);
-    free(theta);
+    model_info_free(&tobit);
 
     return err;
 }

@@ -308,8 +308,10 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
     if (sscanf(s, format, vname, &m) == 2) {
 	v = varindex(genr->pdinfo, vname);
 	if (v >= genr->pdinfo->v) {
+#if 0
 	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
 	    genr->err = E_UNKVAR;
+#endif
 	    v = m = 0;
 	} else if (genr->pdinfo->vector[v] == 0) {
 	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
@@ -380,48 +382,48 @@ static genatom *parse_token (const char *s, char op,
 	    }
 	}
 	else if (strchr(s, '(')) {
-	    /* try for lag variable first */
-	    v = get_lagvar(s, &lag, genr);
-	    if (v > 0) {
-		DPRINTF(("recognized var #%d lag %d\n", v, lag));
+	    /* try for a function first */
+	    lag = 0;
+	    v = -1;
+	    func = get_function(s);
+	    if (func) {
+		DPRINTF(("recognized function #%d (%s)\n", func, 
+			 get_func_word(func)));
+		if (MP_MATH(func) || func == T_PVALUE ||
+		    BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
+		    genr->err = get_arg_string(str, s);
+		} 
+		if (func == T_PVALUE) {
+		    if (!genr->err) {
+			val = evaluate_pvalue(str, *genr->pZ,
+					      genr->pdinfo,
+					      &genr->err);
+			scalar = 1;
+		    }
+		}
+		else if (MODEL_DATA_ELEMENT(func)) {
+		    val = get_model_data_element(str, genr,
+						 genr->pmod, 
+						 func);
+		    scalar = 1;
+		}
+		else if (BIVARIATE_STAT(func)) {
+		    val = evaluate_bivariate_statistic(str, genr,
+						       func);
+		    scalar = 1;
+		}
 	    } else {
-		/* try for a function */
-		lag = 0;
-		v = -1;
-		func = get_function(s);
-		if (func) {
-		    DPRINTF(("recognized function #%d (%s)\n", func, 
-			     get_func_word(func)));
-		    if (MP_MATH(func) || func == T_PVALUE ||
-			BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
-			genr->err = get_arg_string(str, s);
-		    } 
-		    if (func == T_PVALUE) {
-			if (!genr->err) {
-			    val = evaluate_pvalue(str, *genr->pZ,
-						  genr->pdinfo,
-						  &genr->err);
-			    scalar = 1;
-			}
-		    }
-		    else if (MODEL_DATA_ELEMENT(func)) {
-			val = get_model_data_element(str, genr,
-						     genr->pmod, 
-						     func);
-			scalar = 1;
-		    }
-		    else if (BIVARIATE_STAT(func)) {
-			val = evaluate_bivariate_statistic(str, genr,
-							   func);
-			scalar = 1;
-		    }
+		/* not a function: try a lag variable */
+		v = get_lagvar(s, &lag, genr);
+		if (v > 0) {
+		    DPRINTF(("recognized var #%d lag %d\n", v, lag));
 		} else {
 		    /* not a variable or function: dead end? */
 		    DPRINTF(("dead end in parse_token, s='%s'\n", s));
 		    genr->err = E_SYNTAX; 
 		}
-	    } 
-	}
+	    }
+	} 
 	else if (strchr(s, '[')) {
 	    val = get_obs_value(s, *genr->pZ, genr->pdinfo);
 	    if (val == NADBL) {

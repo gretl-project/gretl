@@ -21,7 +21,8 @@ typedef struct _model_info model_info;
 
 struct _model_info {
     int k;
-    int n;
+    int p, q, r;
+    int t1, t2, n;
     int n_series;
     double ll;
     double ll2;
@@ -30,11 +31,12 @@ struct _model_info {
     double *delta;
     double *deltmp;
     double **series;
+    gretl_matrix *VCV;
 };
+
+void model_info_free (model_info *model);
 
 int bhhh_max (int (*loglik) (double *, const double **, double **,
 			     model_info *, int), 
 	      const double **X, const double *init_coeff,
-	      int n_init_coeff, int n_series, int nobs,
-	      double *ll, double *params, gretl_matrix **pVCV,
-	      PRN *prn);
+	      int n_init_coeff, model_info *model, PRN *prn);

@@ -340,6 +340,7 @@ int saved_object_action (const char *line,
     code = parse_object_request(line, savename, param, &ptr, prn);
 
     if (code == OBJ_NONE) return 0;
+
     if (code == OBJ_NULL || code == OBJ_INVALID) return -1;
 
     if (code == OBJ_MODEL_SHOW) {

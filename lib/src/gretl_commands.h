@@ -135,7 +135,6 @@ typedef enum {
                         c == ADDTO || \
                         c == ADF || \
                         c == ARCH || \
-                        c == ARMA || \
                         c == CHOW || \
                         c == COEFFSUM || \
                         c == COINT || \

@@ -44,7 +44,7 @@ static int get_maxiter (void)
     return mi;
 }
 
-static void model_info_free (model_info *model)
+void model_info_free (model_info *model)
 {
     int i;
 
@@ -59,6 +59,8 @@ static void model_info_free (model_info *model)
 	}
 	free(model->series);
     }
+
+    gretl_matrix_free(model->VCV);
 }
 
 /* Below: construct the regression list for the OPG regression, with
@@ -87,13 +89,13 @@ static int *make_opg_list (int k)
 }
 
 static int model_info_init (model_info *model, const double *init_coeff,
-			    int n_init_coeff, int n_series, int nobs)
+			    int n_init_coeff)
 {
-    int i, k, err = 0;
+    int i, t, k, err = 0;
+    int n_series = model->n_series;
 
-    model->n = nobs;
+    model->n = model->t2 + 1;
     k = model->k = n_init_coeff;  
-    model->n_series = 0;
 
     model->theta = model->delta = model->deltmp = NULL;
     model->series = NULL;
@@ -110,19 +112,24 @@ static int model_info_init (model_info *model, const double *init_coeff,
 	return 1;
     }    
 
-    model->series = malloc(n_series * sizeof *model->series);
-    if (model->series == NULL) {
-	model_info_free(model);
-	return 1;
-    }
-
-    for (i=0; i<n_series; i++) {
-	model->series[i] = malloc(model->n * sizeof **model->series);
-	if (model->series[i] == NULL) {
+    if (n_series > 0) {
+	model->series = malloc(n_series * sizeof *model->series);
+	if (model->series == NULL) {
 	    model_info_free(model);
 	    return 1;
 	}
-	model->n_series += 1;
+	model->n_series = 0;
+	for (i=0; i<n_series; i++) {
+	    model->series[i] = malloc(model->n * sizeof **model->series);
+	    if (model->series[i] == NULL) {
+		model_info_free(model);
+		return 1;
+	    }
+	    for (t=0; t<model->n; t++) {
+		model->series[i][t] = 0.0;
+	    }
+	    model->n_series += 1;
+	}
     }
 
     /* initialize the coefficients */
@@ -132,6 +139,8 @@ static int model_info_init (model_info *model, const double *init_coeff,
 
     /* initialize variance */
     model->theta[k] = 1.0;
+
+    model->VCV = NULL;
 
     return err;
 }
@@ -152,15 +161,11 @@ static void bhhh_iter_info (int iter, double *theta, int m, double ll,
 int bhhh_max (int (*loglik) (double *, const double **, double **,
 			     model_info *, int), 
 	      const double **X, const double *init_coeff,
-	      int n_init_coeff, int n_series, int nobs,
-	      double *ll, double *params, gretl_matrix **pVCV,
+	      int n_init_coeff, model_info *model,
 	      PRN *prn)
 {
     /* OPG model */
     MODEL bmod;
-
-    /* special temp model info struct */
-    model_info model;
 
     /* temporary artificial dataset */
     double **tZ = NULL;
@@ -172,18 +177,27 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
     double crit = 1.0e20;
     double stepsize = 0.25;
 
-    int i, err, k;
+    int i, t, err, k;
 
-    err = model_info_init(&model, init_coeff, n_init_coeff, n_series, nobs);
+    err = model_info_init(model, init_coeff, n_init_coeff);
     if (err) return E_ALLOC;
 
-    k = model.k;
+    k = model->k;
+
+    fprintf(stderr, "bhhh: k=%d, dataset will have %d vars\n", k, k + 2);
 
     /* create temp dataset for OPG regression: k+1 vars plus constant */    
-    tinfo = create_new_dataset(&tZ, k + 2, model.n, 0);
+    tinfo = create_new_dataset(&tZ, k + 2, model->n, 0);
     if (tinfo == NULL) {
 	return E_ALLOC;
-    }    
+    } 
+
+    /* zero the dataset */
+    for (i=1; i<k+2; i++) {
+	for (t=0; t<model->n; t++) {
+	    tZ[i][t] = 0.0;
+	}
+    }
 
     iters = 0;
     itermax = get_maxiter();
@@ -191,29 +205,29 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
     while (crit > tol && iters++ < itermax && !err) {
 
 	/* compute loglikelihood and score matrix */
-	loglik(model.theta, X, tZ, &model, 1); 
+	loglik(model->theta, X, tZ, model, 1); 
 
 	/* BHHH via OPG regression */
-	bmod = lsq(model.list, &tZ, tinfo, OLS, OPT_A, 0.0);
+	bmod = lsq(model->list, &tZ, tinfo, OLS, OPT_A, 0.0);
 
 	for (i=0; i<=k; i++) {
-	    model.delta[i] = bmod.coeff[i] * stepsize;
-	    model.deltmp[i] = model.theta[i] + model.delta[i];
+	    model->delta[i] = bmod.coeff[i] * stepsize;
+	    model->deltmp[i] = model->theta[i] + model->delta[i];
 	} 
 	
 	clear_model(&bmod, NULL);
 
 	/* see if we've gone up... (0 = "don't compute score") */
-	err = loglik(model.deltmp, X, tZ, &model, 0); 
+	err = loglik(model->deltmp, X, tZ, model, 0); 
 
-	while ((model.ll2 < model.ll || err) && stepsize > smallstep) { 
+	while ((model->ll2 < model->ll || err) && stepsize > smallstep) { 
 	    /* ... if not, halve steplength, as with ARMA models */
 	    stepsize *= 0.5;
 	    for (i=0; i<=k; i++) {
-		model.delta[i] *= 0.5;
-		model.deltmp[i] = model.theta[i] + model.delta[i];
+		model->delta[i] *= 0.5;
+		model->deltmp[i] = model->theta[i] + model->delta[i];
 	    }
-	    err = loglik(model.deltmp, X, tZ, &model, 0);
+	    err = loglik(model->deltmp, X, tZ, model, 0);
 	}
 
 	/* double the steplength? */
@@ -221,18 +235,18 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
 
 	/* actually update parameter estimates */
 	for (i=0; i<=k; i++) {
-	    model.theta[i] += model.delta[i];
+	    model->theta[i] += model->delta[i];
 	}
 
-	bhhh_iter_info(iters, model.theta, k+1, model.ll, stepsize, prn);
+	bhhh_iter_info(iters, model->theta, k+1, model->ll, stepsize, prn);
 
-	if (model.theta[k] < 0.0) {
+	if (model->theta[k] < 0.0) {
 	    /* if the variance is negative here, we're stuck */
 	    err = E_NOCONV;
 	    break;
 	}
 
-	crit = model.ll2 - model.ll;  
+	crit = model->ll2 - model->ll;  
     }
 
     if (crit > tol || err != 0) {
@@ -242,21 +256,16 @@ int bhhh_max (int (*loglik) (double *, const double **, double **,
     if (!err) {
 	gretl_matrix *G, *VCV;
 
-	/* fill out ll, params and VCV */
-	*ll = model.ll;
-	for (i=0; i<=k; i++) {
-	    params[i] = model.theta[i];
-	}
+	/* fill out VCV */
 	G = gretl_matrix_from_2d_array((const double **) tZ + 1, 
-				       model.n, model.k + 1);
+				       model->n, model->k + 1);
 	VCV = gretl_matrix_vcv(G);
-	*pVCV = VCV;
+	model->VCV = VCV;
 	gretl_matrix_free(G);
 
 	/* free all temp stuff */
 	free_Z(tZ, tinfo);
 	free_datainfo(tinfo);
-	model_info_free(&model);
     }
 
     return err;
