@@ -1245,44 +1245,54 @@ static int work_done (void)
 
 static void save_data_callback (GtkWidget *widget, dialog_t *ddata)
 {
+    gtk_main_quit();
     gtk_widget_destroy(ddata->dialog);
     file_save(NULL, SAVE_DATA, NULL);
-    if (data_file_open == 2)
-	data_file_open = 1;
+    if (data_file_open == 2) data_file_open = 1;
+}
+
+/* ......................................................... */
+
+static void ready_to_go (GtkWidget *widget, dialog_t *ddata)
+{
+    int *getout = (int *) ddata->data;
+
+    fprintf(stderr, "ready_to_go: setting getout = 1\n");
+    *getout = 1;
+    gtk_main_quit(); /* release from yes_no_dialog() */
 }
 
 /* ......................................................... */
 
 static gint data_dont_quit (void) 
 {
+    int getout = 0;
+    
     yes_no_dialog ("Exit", 
 		   "Do you want to save changes you have\n"
 		   "made to the current data set?", 1, 3,
 		   "Yes", save_data_callback, NULL, 
-		   "No", gtk_main_quit, NULL,
+		   "No", ready_to_go, &getout,
 		   "Cancel", NULL, NULL);
-    return TRUE;
-}
 
-/* ......................................................... */
-
-static void ready_to_go (void)
-{
-    session_saved = 1;
+    return !getout;
 }
 
 /* ......................................................... */
 
 static gint dont_quit (void) 
 {
+    int getout = 0;
+
     yes_no_dialog ("Exit", 
 		   "Do you want to save the commands and\n"
 		   "output from this gretl session?", 1, 3,
 		   "Yes", save_session_callback, NULL, 
-		   "No", ready_to_go, NULL, 
+		   "No", ready_to_go, &getout, 
 		   "Cancel", NULL, NULL);
-    if (session_saved) return FALSE;
-    else return TRUE;
+
+    fprintf(stderr, "dont_quit: returning %d\n", !getout);
+    return !getout;
 }
 
 /* ........................................................... */
@@ -1297,7 +1307,7 @@ static void menu_exit (GtkWidget *widget, gpointer data)
 
     if (expert[0] == 'f' && work_done() && !session_saved
 	&& dont_quit()) {
-	return; /* FIXME: will always return if choose No to save */
+	return; 
     }
 
     if (expert[0] == 'f' && data_work_done() && data_dont_quit()) {

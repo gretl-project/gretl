@@ -1530,7 +1530,7 @@ void yes_no_dialog (char *diagtxt, char *infotxt, int erase,
    }
             
    gtk_widget_show (dialog);
-   /* gtk_main(); */
+   gtk_main();
 }
 
 /* ........................................................... */
