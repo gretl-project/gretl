@@ -32,7 +32,7 @@ struct _gretl_equation_system {
 enum {
     GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
     GRETL_SYSTEM_SAVE_YHAT = 1 << 1
-} gretl_system_flags;
+};
 
 gretl_equation_system *parse_system_start_line (const char *line);
 

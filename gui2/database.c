@@ -2091,11 +2091,8 @@ static int compact_series (double **Z, int i, int n, int startskip, int cfac,
     if (x == NULL) return 1;
 
     for (t=0; t<n; t++) {
-	if (method == COMPACT_SOP) {
+	if (method == COMPACT_SOP || method == COMPACT_EOP) {
 	    x[t] = Z[i][idx];
-	}
-	else if (method == COMPACT_EOP) {
-	    x[t] = Z[i][idx + cfac - 1];
 	}
 	else {
 	    x[t] = 0.0;
@@ -2118,14 +2115,14 @@ static int compact_series (double **Z, int i, int n, int startskip, int cfac,
 void compact_data_set (void)
 {
     int newpd, oldpd = datainfo->pd;
-    int oldn = datainfo->n;
+    int newn, oldn = datainfo->n;
     int cfac;
     int startper, endper;
     int startyr;
     int startskip = 0, endskip = 0;
     int i, err = 0;
-    gint method = COMPACT_AVG;
-    char *p;
+    int method = COMPACT_AVG;
+    char stobs[9], *p;
 
     if (maybe_restore_full_data(COMPACT)) return;
 
@@ -2135,49 +2132,72 @@ void compact_data_set (void)
 
     cfac = oldpd / newpd;
 
+    /* figure starting year and sub-period */
     startyr = atoi(datainfo->stobs);
-    
     p = strchr(datainfo->stobs, ':');
     if (p == NULL) p = strchr(datainfo->stobs, '.');
     if (p == NULL) return;
-
     p++;
     if (*p == '0') p++;
     startper = atoi(p);
 
-    if (startper > 1) {
-	startskip = (startper - 1) % cfac;
+    /* figure ending sub-period */
+    p = strchr(datainfo->endobs, ':');
+    if (p == NULL) p = strchr(datainfo->endobs, '.');
+    if (p == NULL) return;
+    p++;
+    if (*p == '0') p++;
+    endper = atoi(p);   
+    
+    /* calculate offset into original dataset */
+    startskip = cfac - (startper % cfac) + 1;
+    startskip = startskip % cfac;
+
+    if (method == COMPACT_EOP) {
+	if (startskip > 0) {
+	    startskip--;
+	} else {
+	    /* move to end of initial period */
+	    startskip = cfac - 1;
+	}
     }
 
-    endper = oldn % oldpd - startskip;
-    if (endper == 0) endper = oldpd;
-
-    if (method == COMPACT_EOP && startskip > 0) {
-	startskip--;
-    }
-
-    if (endper < oldpd) endskip = endper;
-
+    /* calculate remainder at end of original dataset */
+    endskip = endper % cfac;
     if (method == COMPACT_SOP && endskip > 1) {
 	endskip--;
     }
 
     if (newpd == 1) {
-	if (startskip > 0) startyr++;
-	sprintf(datainfo->stobs, "%d", startyr);
-    } else if (newpd == 4) {
-	int qtr = 1 + (startper + 1) / cfac;
-
-	if (qtr > newpd) {
+	if (startskip > 0 && method != COMPACT_EOP) 
 	    startyr++;
-	    qtr -= newpd;
+	sprintf(stobs, "%d", startyr);
+    } else if (newpd == 4) {
+	int mo = startper + startskip;
+	int qtr = mo / 3 + (mo % 3 > 0);
+
+	if (qtr > 4) {
+	    startyr++;
+	    qtr -= 4;
 	}
-	sprintf(datainfo->stobs, "%d:%d", startyr, qtr);
+	sprintf(stobs, "%d:%d", startyr, qtr);
+    }
+
+    /* calculate number of obs in compacted dataset */
+    newn = (oldn - startskip - endskip) / cfac;
+    if (startskip && method == COMPACT_EOP) 
+	newn += 1;
+    if (endskip && method == COMPACT_SOP) 
+	newn += 1;
+    if (newn == 0) {
+	errbox(_("Compacted dataset would be empty"));
+	return;
     }
 
     /* revise datainfo members */
+    strcpy(datainfo->stobs, stobs);
     datainfo->pd = newpd;
-    datainfo->n = (oldn - startskip - endskip) / cfac;
+    datainfo->n = newn;
     datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
     datainfo->t1 = 0;
     datainfo->t2 = datainfo->n - 1;

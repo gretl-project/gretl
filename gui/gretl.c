@@ -1493,7 +1493,7 @@ void gretl_fork (const char *prog, const char *arg)
 {
     pid_t pid;
 
-    signal(SIGCLD, SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
 
     pid = fork();
     if (pid == -1) {
@@ -1569,7 +1569,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	return;
     }
 
-    signal(SIGCLD, SIG_IGN); 
+    signal(SIGCHLD, SIG_IGN); 
     pid = fork();
 
     if (pid == -1) {
