@@ -227,30 +227,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 
 #endif /* plain GTK */
 
-/* ......................................................... */
-
-static gint save_data_dlg (void) 
-{
-    int ret;
-
-    ret = yes_no_dialog ("gretl", 
-			 "Do you want to save changes you have\n"
-			 "made to the current data set?", 1);
-    return ret;
-}
-
-/* ......................................................... */
-
-static gint save_session_dlg (void) 
-{
-    int ret;
-
-    ret = yes_no_dialog ("gretl", 		      
-			 "Do you want to save the commands and\n"
-			 "output from this gretl session?", 1);
-    return ret;
-}
-
 /* ........................................................... */
 
 gint exit_check (GtkWidget *widget, gpointer data) 
@@ -266,11 +242,13 @@ gint exit_check (GtkWidget *widget, gpointer data)
        save_data_callback() blocking functions */
 
     if (expert[0] == 'f' && work_done() && !session_saved) {
-	button = save_session_dlg();
+	button = yes_no_dialog ("gretl", 		      
+				"Do you want to save the commands and\n"
+				"output from this gretl session?", 1);
 	/* button 0 = YES */
 	if (button == 0) {
 	    save_session_callback();
-	    return TRUE;
+	    return TRUE; /* bodge */
 	}
 	/* button 2 = CANCEL; -1 = wm close */
 	else if (button == 2 || button == -1) return TRUE;
@@ -278,7 +256,9 @@ gint exit_check (GtkWidget *widget, gpointer data)
     }
 
     if (expert[0] == 'f' && data_work_done()) {
-	button = save_data_dlg();
+	button = yes_no_dialog ("gretl", 
+				"Do you want to save changes you have\n"
+				"made to the current data set?", 1);
 	if (button == 0) {
 	    save_data_callback();
 	    return TRUE; 
