@@ -147,6 +147,26 @@ static void prep_subdinfo (DATAINFO *dinfo, int markers, int n)
 
 /* .......................................................... */
 
+static int dummy_with_missing (double *x, int t1, int t2)
+{
+    int t, m = 0;
+    double xx;
+
+    for (t=t1; t<=t2; t++) {
+	xx = x[t];
+	if (!na(xx) && floatneq(xx, 0.0) && floatneq(xx, 1.0)) { 
+	    return 0;
+	}
+	if (floateq(xx, 1.0)) m++;
+    }
+
+    if (m < t2 - t1 + 1) return m;
+
+    return 0;
+} 
+
+/* .......................................................... */
+
 int set_sample_dummy (const char *line, 
 		      double ***oldZ, double ***newZ,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
@@ -208,6 +228,13 @@ int set_sample_dummy (const char *line,
 	/* impossible */
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
 	return 1;
+    }
+
+    if (sn == 0) { /* "not a dummy variable" */
+	if (dummy_with_missing((*oldZ)[subnum], oldinfo->t1, oldinfo->t2)) {
+	    strcpy(gretl_errmsg, _("Missing values found when applying criterion"));
+	    return 1;
+	}
     }
 
     /* does this policy lead to an empty sample, or no change

@@ -28,7 +28,8 @@ typedef enum {
     UHATNUM = 998,
     YHATNUM = 999,
     TNUM,
-    INDEXNUM
+    INDEXNUM,
+    OBSBOOLNUM
 } genr_numbers;
 
 /* functions follow */

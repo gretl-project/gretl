@@ -19,7 +19,7 @@
 
 /* generate.c for gretl */
 
-/* #define GENR_DEBUG */
+#define GENR_DEBUG
 
 #include "libgretl.h"
 #include "internal.h"
@@ -135,6 +135,11 @@ enum composites {
     NEQ = 21,
     GEQ,
     LEQ
+};
+
+enum set_or_get {
+    OBS_SET,
+    OBS_GET
 };
 
 static char *math[] = {
@@ -424,7 +429,7 @@ int _reserved (const char *str)
 			     "coeff", "stderr", "rho",
 			     "mean", "median", "var", "cov", "vcv", "sd",
 			     "full", "subdum", 
-			     "t", "annual", "qtrs", "months", "hrs", "i",
+			     "t", "annual", "qtrs", "months", "hrs", "i", "obs",
 			     NULL};
     int i = 0;
 
@@ -458,7 +463,7 @@ int _reserved (const char *str)
 	    case 16: case 17: case 18: case 19: case 20:
 		otheruse(str, _("plotting variable"));
 		break;
-	    case 21:
+	    case 21: case 22:
 		otheruse(str, _("internal variable"));
 		break;
 	    default:
@@ -476,6 +481,48 @@ int _reserved (const char *str)
     }
  
     return 0;
+}
+
+/* .......................................................... */
+
+static const char *set_or_get_obs_marker (const char *s, int opt)
+{
+    static char obsstr[9];
+
+    if (opt == OBS_SET) {
+	size_t n;
+
+	*obsstr = 0;
+	strncat(obsstr, s + 1, 8);
+	n = strlen(obsstr);
+	if (obsstr[n - 1] == '"') obsstr[n - 1] = 0;
+	fprintf(stderr, "obsstr='%s'\n", obsstr);
+	return NULL;
+    } else {
+	return obsstr;
+    }
+}
+
+static void make_obs_dummy (double *x, const DATAINFO *pdinfo)
+{
+    const char *obs;
+    int t, gotit = 0;
+
+    if (pdinfo->S == NULL) return;
+
+    obs = set_or_get_obs_marker(NULL, OBS_GET);
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (gotit) x[t] = 0.0;
+	else {
+	    if (!strcmp(pdinfo->S[t], obs)) {
+		x[t] = 1.0;
+		gotit = 1;
+	    } else {
+		x[t] = 0.0;
+	    }
+	} 
+    }
 }
 
 /* .......................................................... */
@@ -771,7 +818,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
 #ifdef GENR_DEBUG
 	    if (isprint((unsigned char) op1)) 
-		fprintf(stderr, "after getvar: s='%s', s1='%s', op1=%c\n",
+		fprintf(stderr, "after getvar: s='%s', s1='%s', op1='%c'\n",
 			s, s1, op1);
 	    else
 		fprintf(stderr, "after getvar: s='%s', s1='%s', op1=%d\n",
@@ -1577,7 +1624,9 @@ static int evalexp (char *ss, int nt, double *mvec, double *xvec,
 	expand = genr->scalar;
 	v = varindex(pdinfo, ss);
 	if (v == UHATNUM || v == YHATNUM || v == TNUM || v == INDEXNUM ||
-	    (v < pdinfo->v && pdinfo->vector[v])) expand = 0;
+	    v == OBSBOOLNUM || (v < pdinfo->v && pdinfo->vector[v])) {
+	    expand = 0;
+	}
 	getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
 	    ig = getxvec(s3, mvec, Z, pdinfo, pmod, pscalar);
@@ -1845,7 +1894,11 @@ static int getxvec (char *s, double *xvec,
 	    } else
 		for (t=0; t<n; t++) xvec[t] = (double) (t + 1);
 	    *scalar = 0;
-	} 
+	}
+	else if (v == OBSBOOLNUM) { /* auto-boolean based on obs label */
+	    make_obs_dummy(xvec, pdinfo);
+	    break;
+	}
 	else { /* a regular variable */
 #ifdef GENR_DEBUG
 	    fprintf(stderr, "get_xvec: R_VARNAME: v=%d, name=%s\n",
@@ -2045,7 +2098,7 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
 
     i = varindex(pdinfo, ss);
     if (i < pdinfo->v || i == UHATNUM || i == YHATNUM ||
-	i == TNUM || i == INDEXNUM) {
+	i == TNUM || i == INDEXNUM || i == OBSBOOLNUM) {
 	return R_VARNAME; 
     }
 
@@ -2402,8 +2455,9 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 
     if (!strcmp(varname, "uhat")) return UHATNUM; 
     if (!strcmp(varname, "yhat")) return YHATNUM; 
-    if (!strcmp(varname, "t"))    return TNUM;
     if (!strcmp(varname, "i"))    return INDEXNUM;
+    if (!strcmp(varname, "t") || !strcmp(varname, "obs"))
+	return TNUM;
     if (!strcmp(varname, "const") || !strcmp(varname, "CONST"))
         return 0;
 
@@ -2411,6 +2465,11 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
         if (!strcmp(pdinfo->varname[i], varname)) { 
 	    return i;
 	}
+    }
+
+    if (pdinfo->markers && *varname == '"') {
+	set_or_get_obs_marker(varname, OBS_SET);
+	return OBSBOOLNUM;
     }
 
     return pdinfo->v;
