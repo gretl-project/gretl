@@ -2096,9 +2096,6 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	    *tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
 	}
 	break;
-    case HCCM:
-	*tmpmod = hccm_func(cmd.list, pZ, pdinfo);
-	break;
     case HSK:
 	*tmpmod = hsk_func(cmd.list, pZ, pdinfo);
 	break;
@@ -2111,6 +2108,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	break;
     case OLS:
     case WLS:
+    case HCCM:
     case POOLED:
 	*tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, 0.0);
 	break;

@@ -2097,14 +2097,12 @@ int loop_exec (LOOPSET *loop, char *line,
 		/* estimate the model called for */
 		clear_model(models[0]);
 
-		if (cmd.ci == OLS || cmd.ci == WLS) {
+		if (cmd.ci == OLS || cmd.ci == WLS || cmd.ci == HCCM) {
 		    *models[0] = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, 0.0);
 		} else if (cmd.ci == LAD) {
 		    *models[0] = lad(cmd.list, pZ, pdinfo);
 		} else if (cmd.ci == HSK) {
 		    *models[0] = hsk_func(cmd.list, pZ, pdinfo);
-		} else if (cmd.ci == HCCM) {
-		    *models[0] = hccm_func(cmd.list, pZ, pdinfo);
 		} else if (cmd.ci == GARCH) {
 		    *models[0] = garch(cmd.list, pZ, pdinfo, cmd.opt, prn);
 		}

@@ -110,6 +110,10 @@ char gpcolors[32];
 static char datapage[24];
 static char scriptpage[24];
 
+static int hc_by_default;
+static int hc_xsect = 1;
+static int hc_ts = 5;
+
 #ifdef G_OS_WIN32
 int wimp;
 #endif
@@ -126,8 +130,9 @@ enum {
     ROOTSET = 1 << 0,
     USERSET = 1 << 1,
     BOOLSET = 1 << 2,
-    INVISET = 1 << 3,
-    FIXSET  = 1 << 4  /* setting fixed by admin (Windows network use) */
+    LISTSET = 1 << 3,
+    INVISET = 1 << 4,
+    FIXSET  = 1 << 5  /* setting fixed by admin (Windows network use) */
 };
 
 typedef struct {
@@ -137,7 +142,8 @@ typedef struct {
     void *var;         /* pointer to variable */
     char type;         /* ROOTSET user string
 			  USERSET root string
-			  BOOLSET boolean (user) 
+			  BOOLSET boolean (user)
+			  LISTSET integer index (from fixed menu)
 			  INVISET "invisible" (user) string 
 		       */
     int len;           /* storage size for string variable (also see Note) */
@@ -233,6 +239,12 @@ RCVARS rc_vars[] = {
       INVISET, 32, 0, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
       INVISET, sizeof gpcolors, 0, NULL },
+    { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
+      &hc_by_default, BOOLSET, 0, 6, NULL },
+    { "HC_xsect", N_("For cross-sectional data"), NULL,
+      &hc_xsect, LISTSET, 4, 6, NULL },
+    { "HC_ts", N_("For time-series data"), NULL,
+      &hc_ts, LISTSET, 4, 6, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, 0, NULL }
 };
 
@@ -573,6 +585,7 @@ void options_dialog (gpointer data)
     make_prefs_tab(notebook, 3);
     make_prefs_tab(notebook, 4);
     make_prefs_tab(notebook, 5);
+    make_prefs_tab(notebook, 6);
    
     tempwid = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
@@ -668,6 +681,61 @@ static gboolean takes_effect_on_restart (void)
 
 /* .................................................................. */
 
+static char *hc_strs[] = {
+	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
+};
+
+static GList *get_settings_list (void *var)
+{
+    GList *list = NULL;
+    int *intp = (int *) var;
+    int i, n;
+
+    if (intp == &hc_xsect || intp == &hc_ts) {
+	n = sizeof hc_strs / sizeof hc_strs[0];
+	if (intp == &hc_xsect) n--;
+	for (i=0; i<n; i++) {
+	    list = g_list_append(list, hc_strs[i]);
+	}
+    } 
+
+    return list;
+}
+
+static const char *get_listset_default (void *var)
+{
+    int *intp = (int *) var;
+
+    if (intp == &hc_xsect || intp == &hc_ts) {
+	return hc_strs[*intp];
+    } else {
+	return "";
+    }
+}
+
+static void get_listset_selection (const char *str, void *var)
+{
+    int *intp = (int *) var;
+    int i, n;
+
+    if (intp == &hc_xsect || intp == &hc_ts) {
+	n = sizeof hc_strs / sizeof hc_strs[0];
+	for (i=0; i<n; i++) {
+	    if (!strcmp(str, hc_strs[i])) {
+		*intp = i;
+	    }
+	}
+    }
+
+    if (intp == &hc_xsect) {
+	*intp = 1;
+    } else if (intp == &hc_ts) {
+	*intp = 5;
+    }
+}
+
+/* .................................................................. */
+
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
     GtkWidget *box, *b_table, *s_table, *tempwid = NULL;
@@ -689,6 +757,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	tempwid = gtk_label_new(_("Open/Save path"));
     } else if (tab == 5) {
 	tempwid = gtk_label_new(_("Data files"));
+    } else if (tab == 6) {
+	tempwid = gtk_label_new(_("HCCME"));
     }
     
     gtk_widget_show(tempwid);
@@ -809,6 +879,33 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    gtk_widget_set_sensitive(button, FALSE);
 		    gtk_widget_set_sensitive(rc->widget, FALSE);
 		}
+	    } else if (rc->type & LISTSET) {
+		GList *list;
+
+		s_count++;
+		s_len++;
+		gtk_table_resize(GTK_TABLE (s_table), s_len, 
+				 (tab == 3)? 3 : 2);
+		tempwid = gtk_label_new(_(rc->description));
+		gtk_misc_set_alignment(GTK_MISC (tempwid), 1, 0.5);
+		gtk_table_attach_defaults(GTK_TABLE (s_table), 
+					  tempwid, 0, 1, s_len - 1, s_len);
+		gtk_widget_show(tempwid);
+
+		rc->widget = gtk_combo_new();
+		gtk_table_attach_defaults(GTK_TABLE (s_table), 
+					  rc->widget, 1, 2, s_len-1, s_len);
+		list = get_settings_list(rc->var);
+		gtk_combo_set_popdown_strings(GTK_COMBO(rc->widget), list);
+		gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rc->widget)->entry),
+				   get_listset_default(rc->var));
+#ifndef OLD_GTK
+		gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 
+					  rc->len);
+#endif
+		gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
+					  FALSE);
+		gtk_widget_show(rc->widget);
 	    } else if (!(rc->type & INVISET)) { /* string variable */
 		s_count++;
 		s_len++;
@@ -837,7 +934,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    gtk_widget_set_sensitive(rc->widget, FALSE);
 		    gtk_widget_set_sensitive(tempwid, FALSE);
 		}
-	    }
+	    } 
 	} /* end if (rc->tab == tab) */
     } /* end of loop over rc_vars[i].key */
 
@@ -920,21 +1017,29 @@ static void set_gp_colors (void)
 
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
-    const gchar *tempstr;
+    const gchar *str;
     int i = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	if (rc_vars[i].widget != NULL) {
 	    if (rc_vars[i].type == BOOLSET) {
-		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active)
+		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active) {
 		    *(int *)(rc_vars[i].var) = TRUE;
-		else *(int *)(rc_vars[i].var) = FALSE;
-	    } 
-	    if (rc_vars[i].type == USERSET || rc_vars[i].type == ROOTSET) {
-		tempstr = gtk_entry_get_text
-		    (GTK_ENTRY(rc_vars[i].widget));
-		if (tempstr != NULL && *tempstr != '\0') 
-		    strncpy(rc_vars[i].var, tempstr, rc_vars[i].len - 1);
+		} else {
+		    *(int *)(rc_vars[i].var) = FALSE;
+		}
+	    } else if (rc_vars[i].type == USERSET || rc_vars[i].type == ROOTSET) {
+		str = gtk_entry_get_text(GTK_ENTRY(rc_vars[i].widget));
+		if (str != NULL && *str != '\0') { 
+		    strncpy(rc_vars[i].var, str, rc_vars[i].len - 1);
+		}
+	    } else if (rc_vars[i].type == LISTSET) {
+		GtkWidget *entry = GTK_COMBO(rc_vars[i].widget)->entry;
+
+		str = gtk_entry_get_text(GTK_ENTRY(entry));
+		if (str != NULL && *str != '\0') { 
+		    get_listset_selection(str, rc_vars[i].var);
+		}
 	    }
 	}
     }
@@ -997,6 +1102,10 @@ void write_rc (void)
 	    gboolean val = *(gboolean *) rc_vars[i].var;
 
 	    gconf_client_set_bool(client, key, val, NULL);
+	} else if (rc_vars[i].type == LISTSET) {
+	    gint val = *(gint *) rc_vars[i].var;
+
+	    gconf_client_set_int(client, key, val, NULL);
 	} else {
 	    gconf_client_set_string(client, key, rc_vars[i].var, NULL);
 	}
@@ -1093,14 +1202,18 @@ static void read_rc (void)
 void write_rc (void) 
 {
     char key[MAXSTR];
-    char val[6];
+    char cval[6];
+    int ival;
     int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
 	if (rc_vars[i].type == BOOLSET) {
-	    boolvar_to_str(rc_vars[i].var, val);
-	    gnome_config_set_string(key, val);
+	    boolvar_to_str(rc_vars[i].var, cval);
+	    gnome_config_set_string(key, cval);
+	} else if (rc_vars[i].type == LISTSET) {
+	    ival = *(int *) rc_vars[i].var;
+	    gnome_config_set_int(key, ival);
 	} else {
 	    gnome_config_set_string(key, rc_vars[i].var);
 	}

@@ -3729,5 +3729,108 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
     free(dwinfo);
 }
 
+/* configuration of HCCME preferences */
+
+static GList *get_hclist (void)
+{
+    GList *hclist = NULL;
+    char *hc_strs[] = {
+	"HC0", "HC1", "HC2", "HC3", "HC3a", "HAC"
+    };
+    int i, n;
+
+    n = sizeof hc_strs / sizeof hc_strs[0];
+
+    for (i=0; i<n; i++) {
+	hclist = g_list_append(hclist, hc_strs[i]);
+    }
+
+    return hclist;
+}
+
+void hc_dialog (GtkWidget *w, gpointer p)
+{
+    GtkWidget *dialog;
+    GtkWidget *tmp;
+    GtkWidget *combo;
+    GtkWidget *table;
+    GList *hclist;
+
+    dialog = gretl_dialog_new(_("HCCME preferences"));
+
+    no_resize(dialog);
+    set_dialog_border_widths(dialog);
+
+#if 0
+    /* top label */
+    tmp = gtk_label_new(_("HCCME preferences"));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       tmp, TRUE, TRUE, 5);
+    gtk_widget_show(tmp);
+#endif
+
+    /* HCCME by default? */
+    tmp = gtk_check_button_new_with_label(_("Use robust standard errors by default"));
+    gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
+		       GTK_SIGNAL_FUNC(dummy_call), NULL);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       tmp, TRUE, TRUE, 5);
+    gtk_widget_show(tmp);
+
+    tmp = gtk_label_new(_("Preferred HCCME variants"));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
+		       tmp, FALSE, FALSE, 5);
+    gtk_widget_show(tmp);
+
+    hclist = get_hclist();
+
+    table = gtk_table_new(2, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       table, FALSE, FALSE, 0);
+    gtk_widget_show(table);
+
+    /* preferred variant for X-sections */
+    tmp = gtk_label_new(_("for cross-sectional data"));
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, 0, 1);
+    gtk_widget_show(tmp);
+
+    combo = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(combo), hclist);
+#ifndef OLD_GTK
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), 4);
+#endif
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
+    gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, 0, 1);
+    gtk_widget_show(combo);
+
+    /* preferred variant for time series */
+    tmp = gtk_label_new(_("for time-series data"));
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, 1, 2);
+    gtk_widget_show(tmp);
+
+    combo = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(combo), hclist);
+#ifndef OLD_GTK
+    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), 4);
+#endif
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
+    gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, 1, 2);
+    gtk_widget_show(combo);
+    
+    /* Create the "Next" or "OK" button */
+    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
+
+    tmp = cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
+
+    context_help_button(GTK_DIALOG(dialog)->action_area, 0);
+
+    gtk_widget_show(dialog);
+}
 
 

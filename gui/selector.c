@@ -1028,11 +1028,25 @@ build_selector_switches (selector *sr)
     GtkWidget *hbox, *tmp;
 
     if (sr->code == OLS || sr->code == GARCH || sr->code == TSLS) {
+	tmp = gtk_hseparator_new();
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
+			   tmp, FALSE, FALSE, 0);
+	gtk_widget_show(tmp);
+
 	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
 	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
 			   GTK_SIGNAL_FUNC(robust_callback), sr);
+
 	hbox = gtk_hbox_new(FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	gtk_widget_show(tmp);
+
+	tmp = gtk_button_new_with_label(_("configure"));
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(hc_dialog), sr);
+
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),

@@ -552,7 +552,6 @@ const char *estimator_string (int ci, int format)
     else if (ci == HSK) return N_("Heteroskedasticity-corrected");
     else if (ci == AR) return N_("AR");
     else if (ci == LAD) return N_("LAD");
-    else if (ci == HCCM) return N_("HCCM");
     else if (ci == PROBIT) return N_("Probit");
     else if (ci == LOGIT) return N_("Logit");
     else if (ci == TOBIT) return N_("Tobit");
@@ -864,14 +863,26 @@ static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 
 static void hc_vcv_line (const MODEL *pmod, PRN *prn)
 {
-    int v = gretl_model_get_int(pmod, "hc_version");
+    int hcv = gretl_model_get_int(pmod, "hc_version");
+    int jack = 0;
+
+    if (hcv == 4) {
+	jack = 1;
+	hcv--;
+    }
 
     if (PLAIN_FORMAT(prn->format)) {
-	pprintf(prn, _("Heteroskedasticity-robust standard errors, "
-		       "variant HC%d\n"), v);
+	pprintf(prn, "%s, %s%sHC%d%s\n", 
+		_("Heteroskedasticity-robust standard errors"),
+		(jack)? "" : _("variant"),
+		(jack)? "" : " ",
+		hcv, (jack)? " (jackknife)" : "");
     } else {
-	pprintf(prn, I_("Heteroskedasticity-robust standard errors, "
-			"variant HC%d\n"), v);
+	pprintf(prn, "%s, %sHC%d%s\n", 
+		I_("Heteroskedasticity-robust standard errors"),
+		(jack)? "" : I_("variant"),
+		(jack)? "" : " ",
+		hcv, (jack)? " (jackknife)" : "");
     }	
 }
 
@@ -1582,7 +1593,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
-	|| pmod->ci == HCCM || pmod->ci == POOLED || pmod->ci == NLS
+	|| pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| pmod->ci == ARMA || pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
@@ -1610,7 +1621,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 		} 
 	    }
 	    /* FIXME -- check output below */
-	    if (pmod->ci == HCCM || pmod->ci == TSLS) {
+	    if (pmod->ci == TSLS) {
 		dwline(pmod, prn);
 	    }
 	}

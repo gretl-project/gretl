@@ -2158,6 +2158,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case OLS:
     case WLS:
+    case HCCM:
 	*pmod = lsq(cmd.list, &Z, datainfo, action, cmd.opt, 0.0);
 	err = model_output(pmod, prn);
 	break;
@@ -2169,11 +2170,6 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case HSK:
 	*pmod = hsk_func(cmd.list, &Z, datainfo);
-	err = model_output(pmod, prn);
-	break;
-
-    case HCCM:
-	*pmod = hccm_func(cmd.list, &Z, datainfo);
 	err = model_output(pmod, prn);
 	break;
 
@@ -5646,14 +5642,9 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case HCCM:
     case HSK:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	if (cmd.ci == HCCM) {
-	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
-	} else {
-	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
-	}
+	*models[0] = hsk_func(cmd.list, &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -5850,6 +5841,7 @@ int gui_exec_line (char *line,
 
     case OLS:
     case WLS:
+    case HCCM:
     case POOLED:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	if (cmd.ci == POOLED) {

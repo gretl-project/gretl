@@ -68,6 +68,7 @@ static int depvar_zero (int t1, int t2, int yno, int nwt,
 			const double **Z);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		      double ***pZ);
+static int jackknife_vcv (MODEL *pmod, const double **Z);
 /* end private protos */
 
 
@@ -467,8 +468,6 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (ci == HSK) {
 	return hsk_func(list, pZ, pdinfo);
-    } else if (ci == HCCM) {
-	return hccm_func(list, pZ, pdinfo);
     } 
 
     gretl_model_init(&mdl);
@@ -685,9 +684,14 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 		       (mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
 		       mdl.nobs, mdl.ncoeff);
 
+    /* hccm command */
+    if (mdl.ci == HCCM) {
+	mdl.errcode = jackknife_vcv(&mdl, (const double **) *pZ);
+    }
+
  lsq_abort:
 
-    /* If we resuffled any missing observations, put them
+    /* If we reshuffled any missing observations, put them
        back in their right places now */
     if (gretl_model_get_int(&mdl, "daily_repack")) {
 	undo_daily_repack(&mdl, *pZ, pdinfo);
@@ -2400,14 +2404,14 @@ MODEL hsk_func (int *list, double ***pZ, DATAINFO *pdinfo)
     return hsk;
 }
 
-static double **allocate_hccm_p (int lo, int n)
+static double **allocate_hccm_p (int k, int n)
 {
+    double **p = malloc(k * sizeof *p);
     int i;
-    double **p = malloc(lo * sizeof *p);
 
     if (p == NULL) return NULL;
 
-    for (i=0; i<lo; i++) {
+    for (i=0; i<k; i++) {
 	p[i] = malloc(n * sizeof **p);
 	if (p[i] == NULL) {
 	    int j;
@@ -2417,6 +2421,7 @@ static double **allocate_hccm_p (int lo, int n)
 	    }
 	    free(p);
 	    p = NULL;
+	    break;
 	}
     }
 
@@ -2435,83 +2440,62 @@ static void free_hccm_p (double **p, int m)
     }
 }
 
-/**
- * hccm_func:
- * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- *
- * Estimate the model given in @list using OLS, compute
- * heteroskedasticity-consistent covariance matrix using the
- * McKinnon-White procedure, and report standard errors using this
- * matrix.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL hccm_func (int *list, double ***pZ, DATAINFO *pdinfo)
+static int jackknife_vcv (MODEL *pmod, const double **Z)
 {
-    int nobs, nc, i, j, k, t, t1, t2, tp;
-    double *st = NULL, *uhat1 = NULL, **p = NULL;
+    double *st = NULL, *ustar = NULL;
+    double **p = NULL;
+    int nobs, tp, nc = 0;
+    int i, j, k, t;
+    int t1, t2;
     double xx;
-    MODEL hccm;
+    int err = 0;
 
     *gretl_errmsg = '\0';
 
-    gretl_model_init(&hccm);
-
-    nc = list[0] - 1;
-    rearrange_list(list);
-
-    /* run a regular OLS */
-    hccm = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (hccm.errcode) {
-	goto bailout;
-    }
-
-    t1 = hccm.t1;
-    t2 = hccm.t2;
-    nobs = hccm.nobs;
-
-    hccm.ci = HCCM;
+    t1 = pmod->t1;
+    t2 = pmod->t2;
+    nobs = pmod->nobs;
+    nc = pmod->ncoeff;
 
     /* now try allocating memory */
-    st = malloc(list[0] * sizeof *st);
-    uhat1 = malloc(nobs * sizeof *uhat1);
-    p = allocate_hccm_p(list[0], nobs);
+    st = malloc(nc * sizeof *st);
+    ustar = malloc(nobs * sizeof *ustar);
+    p = allocate_hccm_p(nc, nobs);
 
-    if (st == NULL || p == NULL || uhat1 == NULL) {
-	hccm.errcode = E_ALLOC;
+    if (st == NULL || p == NULL || ustar == NULL) {
+	err = E_ALLOC;
 	goto bailout;
     }    
 
     if (get_use_qr()) {
 	/* vcv is already computed in this case */
 	int nt = (nc * nc + nc) / 2; 
-	double s2 = hccm.sigma * hccm.sigma;
+	double s2 = pmod->sigma * pmod->sigma;
 
 	for (i=0; i<nt; i++) {
-	    hccm.vcv[i] /= s2;
+	    pmod->vcv[i] /= s2;
 	}
-    } else if (makevcv(&hccm)) {
-	hccm.errcode = E_ALLOC;
+    } else if (makevcv(pmod)) {
+	err = E_ALLOC;
 	goto bailout;
-    } 
+    }
 
-    for (i=1; i<=nc; i++) {
+    /* form elements of (X'X)^{-1}X' */
+
+    for (i=0; i<nc; i++) {
 	tp = 0;
 	for (t=t1; t<=t2; t++) {
-	    if (model_missing(&hccm, t)) {
+	    if (model_missing(pmod, t)) {
 		continue;
 	    }
 	    xx = 0.0;
-	    for (j=1; j<=nc; j++) {
+	    for (j=0; j<nc; j++) {
 		if (i <= j) {
-		    k = ijton(i-1, j-1, nc);
+		    k = ijton(i, j, nc);
 		} else {
-		    k = ijton(j-1, i-1, nc);
+		    k = ijton(j, i, nc);
 		}
-		xx += hccm.vcv[k] * (*pZ)[list[j+1]][t];
+		xx += pmod->vcv[k] * Z[pmod->list[j+2]][t];
 	    }
 	    p[i][tp++] = xx;
 	}
@@ -2519,63 +2503,73 @@ MODEL hccm_func (int *list, double ***pZ, DATAINFO *pdinfo)
 
     tp = 0;
     for (t=t1; t<=t2; t++) {
-	if (model_missing(&hccm, t)) {
+	if (model_missing(pmod, t)) {
 	    continue;
 	}	
 	xx = 0.0;
-	for (i=1; i<=nc; i++) {
-	    xx += (*pZ)[list[i+1]][t] * p[i][tp];
+	for (i=0; i<nc; i++) {
+	    xx += Z[pmod->list[i+2]][t] * p[i][tp];
 	}
 	if (floateq(xx, 1.0)) {
 	    xx = 0.0;
 	}
-	uhat1[tp++] = hccm.uhat[t] / (1 - xx);
+	ustar[tp++] = pmod->uhat[t] / (1.0 - xx);
     }
 
-    for (i=1; i<=nc; i++) {
+    for (i=0; i<nc; i++) {
 	xx = 0.0;
 	for (t=0; t<nobs; t++) {
-	    xx += p[i][t] * uhat1[t];
+	    xx += p[i][t] * ustar[t];
 	}
 	st[i] = xx;
     }
 
     for (t=0; t<nobs; t++) {
-	for (i=1; i<=nc; i++) {
-	    p[i][t] *= uhat1[t];
+	for (i=0; i<nc; i++) {
+	    p[i][t] *= ustar[t];
 	}
     }
 
+    /* MacKinnon and White, 1985, equation (13) */
+
     k = 0;
-    for (i=1; i<=nc; i++) {
-	for (j=i; j<=nc; j++) {
+    for (i=0; i<nc; i++) {
+	for (j=i; j<nc; j++) {
 	    xx = 0.0;
 	    for (t=0; t<nobs; t++) {
 		xx += p[i][t] * p[j][t];
 	    }
-	    xx = xx * (nobs - 1) / nobs -
-		(nobs - 1) * st[i] * st[j] / (nobs * nobs);
+	    xx -= st[i] * st[j] / nobs;
+#if 1
+	    /* MacKinnon and White: "It is tempting to omit the factor
+	       (n - 1)/n from HC3" (1985, p. 309).  Here we leave it in
+	       place, as in their simulations.
+	    */
+	    xx *= (nobs - 1.0) / nobs;
+#endif
 	    if (i == j) {
-		hccm.sderr[i-1] = sqrt(xx);
+		pmod->sderr[i] = sqrt(xx);
 	    }
-	    hccm.vcv[k++] = xx;
+	    pmod->vcv[k++] = xx;
 	}
     }
 
     /* substitute robust F stat */
-    if (hccm.dfd > 0 && hccm.dfn > 1) {
-	hccm.fstt = robust_omit_F(NULL, &hccm);
+    if (pmod->dfd > 0 && pmod->dfn > 1) {
+	pmod->fstt = robust_omit_F(NULL, pmod);
     }
+
+    pmod->ci = OLS;
+    gretl_model_set_int(pmod, "hc", 1);
+    gretl_model_set_int(pmod, "hc_version", 4);
 
  bailout:
 
     free(st);
-    free(uhat1);
-    free_hccm_p(p, list[0]);
+    free(ustar);
+    free_hccm_p(p, nc);
 
-    set_model_id(&hccm);
-
-    return hccm;
+    return err;
 }
 
 /**

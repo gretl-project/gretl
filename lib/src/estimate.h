@@ -66,11 +66,7 @@ MODEL tsls_func (int *list, int pos_in,
 		 double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt);
 
-MODEL hsk_func (int *list, 
-		double ***pZ, DATAINFO *pdinfo);
-
-MODEL hccm_func (int *list, 
-		 double ***pZ, DATAINFO *pdinfo);
+MODEL hsk_func (int *list, double ***pZ, DATAINFO *pdinfo);
 
 int whites_test (MODEL *pmod, 
 		 double ***pZ, DATAINFO *pdinfo, 

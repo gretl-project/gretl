@@ -1159,14 +1159,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
-    case HCCM:
     case HSK:
 	clear_model(models[0]);
-	if (cmd.ci == HCCM) {
-	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
-	} else {
-	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
-	}
+	*models[0] = hsk_func(cmd.list, &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -1365,6 +1360,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case OLS:
     case WLS:
+    case HCCM:
     case POOLED:
 	clear_model(models[0]);
 	if (cmd.ci == POOLED) {
