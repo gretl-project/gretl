@@ -1098,34 +1098,45 @@ static void read_rc (void)
 
 static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 {
-    gint mono = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fs), "mono"));
+    guint which = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fs), "which"));
     gchar *fontname;
 
     fontname = gtk_font_selection_hack_dialog_get_font_name(fs);
 
-# ifdef USE_GNOME /* gnome handles the app font */
-    if (mono && strlen(fontname)) {
+    if (*fontname == 0) {
+	g_free(fontname);
+	gtk_widget_destroy(GTK_WIDGET(fs));
+	return;
+    }
+
+    if (which == FIXED_FONT_SELECTION) {
 	strcpy(fixedfontname, fontname);
 	set_fixed_font();
 	write_rc();
+    } 
+
+    else if (which == GRAPH_FONT_SELECTION) {
+	strcpy(paths.pngfont, fontname);
+	*paths.pngfont = tolower(*paths.pngfont);
     }
-# else
-    if (strlen(fontname)) {
-	if (mono) {
-	    strcpy(fixedfontname, fontname);
-	    set_fixed_font();
-	} else {
-	    set_app_font(fontname);
-	}
+
+# ifndef USE_GNOME /* gnome handles the app font */
+    else if (which == APP_FONT_SELECTION) {
+	set_app_font(fontname);
 	write_rc();
     }
-# endif /* USE_GNOME */
+# endif
 
     g_free(fontname);
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-void font_selector (gpointer data, guint fixed, GtkWidget *widget)
+static void fontsel_quit (GtkWidget *w, gpointer p)
+{
+    gtk_main_quit();
+}
+
+void font_selector (gpointer data, guint which, GtkWidget *widget)
 {
     static GtkWidget *fontsel = NULL;
 
@@ -1134,8 +1145,8 @@ void font_selector (gpointer data, guint fixed, GtkWidget *widget)
         gdk_window_raise(fontsel->window);
         return;
     }
-	
-    if (fixed) {
+
+    if (which == FIXED_FONT_SELECTION) {
 	fontsel = gtk_font_selection_hack_dialog_new 
 	    (_("Font for gretl output windows"));
 	gtk_font_selection_hack_dialog_set_filter
@@ -1143,8 +1154,8 @@ void font_selector (gpointer data, guint fixed, GtkWidget *widget)
 	     GTK_FONT_HACK_LATIN_MONO);
 	gtk_font_selection_hack_dialog_set_font_name 
 	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fixedfontname);
-	g_object_set_data(G_OBJECT(fontsel), "mono", GINT_TO_POINTER(1));
-    } else {
+	g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
+    } else if (which == APP_FONT_SELECTION) {
 # ifdef USE_GNOME
 	return; /* shouldn't be reached: gnome handles the app font */
 # else
@@ -1155,15 +1166,26 @@ void font_selector (gpointer data, guint fixed, GtkWidget *widget)
 	     GTK_FONT_HACK_LATIN);
 	gtk_font_selection_hack_dialog_set_font_name 
 	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), appfontname);
-	g_object_set_data(G_OBJECT(fontsel), "mono", GINT_TO_POINTER(0));
+	g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
 # endif /* USE_GNOME */
-    }
+    } else if (which == GRAPH_FONT_SELECTION) {
+	fontsel = gtk_font_selection_hack_dialog_new(NULL);
+	gtk_font_selection_hack_dialog_set_filter
+	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), 
+	     GTK_FONT_HACK_LATIN);
+	gtk_font_selection_hack_dialog_set_font_name 
+	    (GTK_FONT_SELECTION_HACK_DIALOG (fontsel), paths.pngfont);
+	g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
+    }	
 
     gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
 
     g_signal_connect (G_OBJECT(fontsel), "destroy",
 		      G_CALLBACK(gtk_widget_destroyed),
 		      &fontsel);
+    g_signal_connect (G_OBJECT(fontsel), "destroy",
+		      G_CALLBACK(fontsel_quit),
+		      NULL);
     g_signal_connect (G_OBJECT 
 		      (GTK_FONT_SELECTION_HACK_DIALOG 
 		       (fontsel)->ok_button),
@@ -1174,7 +1196,9 @@ void font_selector (gpointer data, guint fixed, GtkWidget *widget)
 		     G_CALLBACK(delete_widget),
 		     fontsel);
 
-    gtk_widget_show (fontsel);	
+    gtk_widget_show (fontsel);
+
+    gtk_main();
 }
 
 #else /* end non-win32 font selection, start win32 */
@@ -1208,7 +1232,7 @@ static void fontname_to_win32 (const char *src, int fixed,
     }
 }
 
-void font_selector (gpointer data, guint fixed, GtkWidget *widget)
+void font_selector (gpointer data, guint which, GtkWidget *widget)
 {
     CHOOSEFONT cf;            /* common dialog box structure */
     LOGFONT lf;               /* logical font structure */
@@ -1227,7 +1251,7 @@ void font_selector (gpointer data, guint fixed, GtkWidget *widget)
     lf.lfWeight = FW_REGULAR;
     lf.lfCharSet = DEFAULT_CHARSET;
 
-    if (fixed) {
+    if (which == FIXED_FONT_SELECTION) {
 	cf.Flags |= CF_FIXEDPITCHONLY;
 	fontname_to_win32(fixedfontname, 1, lf.lfFaceName, &(cf.iPointSize));
     } else {
@@ -1240,13 +1264,18 @@ void font_selector (gpointer data, guint fixed, GtkWidget *widget)
 	sprintf(fontname, "%s%s %d", cf.lpLogFont->lfFaceName, 
 		font_weight_string(cf.lpLogFont->lfWeight), 
 		cf.iPointSize / 10);
-	if (fixed) {
+	if (which == FIXED_FONT_SELECTION) {
 	    strcpy(fixedfontname, fontname);
 	    set_fixed_font();
-	} else {
+	    write_rc();
+	} 
+	else if (which == APP_FONT_SELECTION) {
 	    set_app_font(fontname);
+	    write_rc();
 	}
-	write_rc();
+	else if (which == GRAPH_FONT_SELECTION) {
+	    strcpy(paths.pngfont, fontname);
+	}
     }
 }
 

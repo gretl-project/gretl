@@ -65,6 +65,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
+static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
 
 #ifndef USE_GTKSOURCEVIEW
 static void correct_line_color (windata_t *vwin);
@@ -86,17 +87,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, NULL, GNULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
-      "<StockItem>", GTK_STOCK_COPY },
-    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>", GNULL },
-#ifdef G_OS_WIN32
-    { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL, GNULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
-#else
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL, GNULL },
-    { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL, GNULL },
-#endif    
-    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
     { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL, GNULL },
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL, GNULL },
@@ -168,6 +159,11 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
+
+static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
+{
+    copy_format_dialog((windata_t *) p);
+}
 
 #ifdef ENABLE_NLS
 gchar *menu_translate (const gchar *path, gpointer p)
@@ -1943,20 +1939,6 @@ void flip (GtkItemFactory *ifac, const char *path, gboolean s)
 
 /* ........................................................... */
 
-static void model_rtf_copy_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Edit/Copy all/as RTF", s);
-}
-
-/* ........................................................... */
-
-static void model_latex_copy_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Edit/Copy all/as LaTeX", s);
-}
-
-/* ........................................................... */
-
 static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX/View/Equation", s);
@@ -2080,8 +2062,6 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	model_rtf_copy_state(vwin->ifac, !pmod->errcode);
-	model_latex_copy_state(vwin->ifac, !pmod->errcode);
 	latex_menu_state(vwin->ifac, !pmod->errcode);
 
 	model_equation_copy_state(vwin->ifac, 

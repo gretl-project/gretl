@@ -357,11 +357,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Preferences/_General..."), NULL, options_dialog, 0, 
       "<StockItem>", GTK_STOCK_PREFERENCES },
-    { N_("/File/Preferences/_Fixed font..."), NULL, font_selector, 1, 
-      "<StockItem>", GTK_STOCK_SELECT_FONT },
+    { N_("/File/Preferences/_Fixed font..."), NULL, font_selector, 
+      FIXED_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
 #ifndef USE_GNOME
-    { N_("/File/Preferences/_Menu font..."), NULL, font_selector, 0, 
-      "<StockItem>", GTK_STOCK_SELECT_FONT },
+    { N_("/File/Preferences/_Menu font..."), NULL, font_selector, 
+      APP_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
 #endif
     { N_("/File/sep5"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },

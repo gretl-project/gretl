@@ -289,6 +289,12 @@ enum varclick_actions {
     VARCLICK_INSERT_TEXT
 };
 
+enum font_selections {
+    FIXED_FONT_SELECTION,
+    APP_FONT_SELECTION,
+    GRAPH_FONT_SELECTION
+};
+
 /* functions follow */
 
 #ifndef G_OS_WIN32

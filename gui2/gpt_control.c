@@ -601,6 +601,14 @@ static void set_keyspec_sensitivity (GPT_SPEC *spec)
 
 /* ........................................................... */
 
+static void graph_font_callback (GtkWidget *w, GtkWidget *fentry)
+{
+    font_selector(NULL, GRAPH_FONT_SELECTION, NULL);
+    gtk_entry_set_text(GTK_ENTRY(fentry), paths.pngfont);
+}
+
+/* ........................................................... */
+
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *tempwid, *box, *tbl;
@@ -629,7 +637,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
     tbl_len = 1;
-    tbl = gtk_table_new (tbl_len, 2, FALSE);
+    tbl = gtk_table_new (tbl_len, 3, FALSE);
     gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
     gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
     gtk_box_pack_start (GTK_BOX (box), tbl, FALSE, FALSE, 0);
@@ -641,14 +649,14 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    gchar *titlestr;
 
 	    tbl_len++;
-	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
+	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	    tempwid = gtk_label_new(_(gpt_titles[i].description));
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
 				      tempwid, 0, 1, tbl_len-1, tbl_len);
 	    gtk_widget_show(tempwid);
 	    tempwid = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      tempwid, 1, 2, tbl_len-1, tbl_len);
+				      tempwid, 1, 3, tbl_len-1, tbl_len);
 	    titlestr = g_locale_to_utf8(spec->titles[i], -1, NULL,
 					&bytes, NULL);
 	    gtk_entry_set_text(GTK_ENTRY(tempwid), titlestr);
@@ -670,7 +678,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
     keycombo = gtk_combo_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      keycombo, 1, 2, tbl_len-1, tbl_len);
+			      keycombo, 1, 3, tbl_len-1, tbl_len);
     gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
     gtk_widget_show (keycombo);	
@@ -680,7 +688,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	tbl_len++;
 	no_ols_check = gtk_check_button_new_with_label(_("Hide fitted line"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  no_ols_check, 0, 2, tbl_len-1, tbl_len);
+				  no_ols_check, 0, 3, tbl_len-1, tbl_len);
 	if (spec->flags & GPTSPEC_OLS_HIDDEN) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(no_ols_check),
 					 TRUE);
@@ -692,13 +700,13 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
     /* set TT font (if gnuplot uses libgd and freetype) */
     if (gnuplot_has_ttf()) {
-	GtkWidget *ebox;
+	GtkWidget *ebox, *fbutton;
 
 	/* first a separator */
 	tbl_len++;
 	tempwid = gtk_hseparator_new ();
 	gtk_table_attach_defaults 
-	    (GTK_TABLE (tbl), tempwid, 0, 2, tbl_len-1, tbl_len);  
+	    (GTK_TABLE (tbl), tempwid, 0, 3, tbl_len-1, tbl_len);  
 	gtk_widget_show (tempwid);
 
 	tbl_len++;
@@ -724,6 +732,14 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
 	gtk_widget_show (ttfentry);
+
+	fbutton = gtk_button_new_from_stock(GTK_STOCK_SELECT_FONT);	
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  fbutton, 2, 3, tbl_len-1, tbl_len);
+	g_signal_connect(G_OBJECT(fbutton), "clicked", 
+			 G_CALLBACK(graph_font_callback), 
+			 ttfentry);
+	gtk_widget_show (fbutton);
     } else {
 	ttfentry = NULL;
     }

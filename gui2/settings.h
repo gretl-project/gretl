@@ -19,7 +19,7 @@ void add_files_to_menu (int filetype);
 
 void options_dialog (gpointer data);
 
-void font_selector (gpointer data, guint fixed, GtkWidget *widget);
+void font_selector (gpointer data, guint which, GtkWidget *widget);
 
 void set_fixed_font (void);
 
