@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "internal.h"
 
 /* .......................................................... */
 
@@ -335,7 +334,7 @@ void clear_model (MODEL *pmod, const DATAINFO *pdinfo)
 	if (pmod->params) {
 	    int i;
 
-	    for (i=0; i<=pmod->ncoeff; i++) {
+	    for (i=0; i<=pmod->nparams; i++) {
 		free(pmod->params[i]);
 	    }
 	    free(pmod->params);
