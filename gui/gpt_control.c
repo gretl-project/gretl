@@ -81,7 +81,8 @@ typedef enum {
     PLOT_TITLE          = 1 << 0,
     PLOT_XLABEL         = 1 << 1,
     PLOT_YLABEL         = 1 << 3,
-    PLOT_Y2AXIS         = 1 << 4
+    PLOT_Y2AXIS         = 1 << 4,
+    PLOT_Y2LABEL        = 1 << 5
 } plot_format_flags;
 
 #define plot_is_saved(p)        (p->flags & PLOT_SAVED)
@@ -96,6 +97,7 @@ typedef enum {
 #define plot_has_xlabel(p)      (p->format & PLOT_XLABEL)
 #define plot_has_ylabel(p)      (p->format & PLOT_YLABEL)
 #define plot_has_y2axis(p)      (p->format & PLOT_Y2AXIS)
+#define plot_has_y2label(p)     (p->format & PLOT_Y2LABEL)
 
 #ifdef GNUPLOT_PNG
 typedef enum {
@@ -1787,6 +1789,9 @@ static void set_plot_format_flags (png_plot_t *plot)
     if (!isblank(plot->spec->titles[2])) {
 	plot->format |= PLOT_YLABEL;
     }
+    if (!isblank(plot->spec->titles[3])) {
+	plot->format |= PLOT_Y2LABEL;
+    }
     if (plot->spec->y2axis) {
 	plot->format |= PLOT_Y2AXIS;
     }
@@ -2217,36 +2222,50 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
 }
 
 static void set_approx_pixel_bounds (png_plot_t *plot, 
-				     int max_num_width)
+				     int max_num_width,
+				     int max_num2_width)
 {
-    set_plot_format_flags(plot);
+    if (PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
+	fprintf(stderr, "setting format flags from memory\n");
+	set_plot_format_flags(plot);
+    }
 
     if (plot_has_xlabel(plot)) {
 	fprintf(stderr, "got xlabel\n");
-	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 446;
+	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 36;
     } else {
-	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 456;
+	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 24;
     }
 
     if (plot_has_title(plot)) {
 	fprintf(stderr, "got title\n");
-	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 32;
+	plot->pixel_ymin = 36;
     } else {
-	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 12;
+	plot->pixel_ymin = 14;
     }
 
-    plot->pixel_xmin = 25 + 7 * max_num_width;
+    plot->pixel_xmin = 27 + 7 * max_num_width;
+    fprintf(stderr, "y axis char width = %d\n",max_num_width);
     if (plot_has_ylabel(plot)) {
 	fprintf(stderr, "got ylabel\n");
-	plot->pixel_xmin += 11;
+	plot->pixel_xmin += 12;
     }
 
-    plot->pixel_xmax = PLOT_PIXEL_WIDTH - 20; /* FIXME Y2-axis */
+    plot->pixel_xmax = PLOT_PIXEL_WIDTH - 20; 
+    if (plot_has_y2axis(plot)) {
+	fprintf(stderr, "got y2axis, char width = %d\n",
+		max_num2_width);
+	plot->pixel_xmax -= 7 * (max_num2_width + 1);
+    }
+    if (plot_has_y2label(plot)) {
+	fprintf(stderr, "got y2label\n");
+	plot->pixel_xmax -= 11;
+    }
 
     fprintf(stderr, "set_approx_pixel_bounds:\n"
-	    "pixel_ymin=%d, ymax=%d; pixel_xmin=%d, xmax=%d\n",
-	    plot->pixel_ymin, plot->pixel_ymax,
-	    plot->pixel_xmin, plot->pixel_xmax);
+	    "pixel_xmin=%d, xmax=%d; ymin=%d, ymax=%d\n",
+	    plot->pixel_xmin, plot->pixel_xmax,
+	    plot->pixel_ymin, plot->pixel_ymax);
 }
 
 static int get_dumb_plot_yrange (png_plot_t *plot)
@@ -2255,7 +2274,8 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
     char line[MAXLEN], dumbgp[MAXLEN], dumbtxt[MAXLEN];
     gchar *plotcmd = NULL;
     int err = 0, x2axis = 0;
-    int maxwidth = 0;
+    int max_ywidth = 0;
+    int max_y2width = 0;
 
     fpin = fopen(plot->spec->fname, "r");
     if (fpin == NULL) return 1;
@@ -2283,7 +2303,13 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
 			      dumbgp);
+
+#ifdef G_OS_WIN32
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+#else
     err = system(plotcmd);
+#endif
+    
     g_free(plotcmd);
     remove(dumbgp);
 
@@ -2292,8 +2318,9 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
     } else {
 	double y[16];
 	char numstr[32];
-	int numwidth[16];
-	int i = 0;
+	int y_numwidth[16];
+	int y2_numwidth[16];
+	int i = 0, j = 0;
 
 	fpin = fopen(dumbtxt, "r");
 	if (fpin == NULL) return 1;
@@ -2305,8 +2332,17 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
 	    if (sscanf(line, "%lf", &(y[i])) == 1) {
 		sscanf(line, "%31s", numstr);
-		numwidth[i] = strlen(numstr);
-		i++;
+		y_numwidth[i++] = strlen(numstr);
+	    }
+	    if (plot_has_y2axis(plot) && j < 16) {
+		double y2;
+		char *p;
+
+		p = strrchr(line, ' ');
+		if (p != NULL && sscanf(p, "%lf", &y2) == 1) {
+		    sscanf(p, "%31s", numstr);
+		    y2_numwidth[j++] = strlen(numstr);
+		}
 	    }
 	}
 #ifdef ENABLE_NLS
@@ -2323,7 +2359,8 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 		plot->ymin = y[i-2];
 		plot->ymax = y[1];
 		for (j=1; j<i-2; j++) {
-		    if (numwidth[j] > maxwidth) maxwidth = numwidth[j];
+		    if (y_numwidth[j] > max_ywidth) 
+			max_ywidth = y_numwidth[j];
 		}
 	    }
 	} else {	
@@ -2333,17 +2370,28 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 		plot->ymin = y[i-2];
 		plot->ymax = y[0];
 		for (j=0; j<i-2; j++) {
-		    if (numwidth[j] > maxwidth) maxwidth = numwidth[j];
+		    if (y_numwidth[j] > max_ywidth) 
+			max_ywidth = y_numwidth[j];
+		}
+	    }
+	}
+
+	if (plot_has_y2axis(plot)) {
+	    int k;
+	    int start = (x2axis)? 1 : 0;
+
+	    for (k=start; k<j-2; k++) {
+		if (y2_numwidth[k] > max_y2width) {
+		    max_y2width = y2_numwidth[k];
 		}
 	    }
 	}
     }
 
-    set_approx_pixel_bounds(plot, maxwidth);
+    set_approx_pixel_bounds(plot, max_ywidth, max_y2width);
     
     return 0;
 }
-
 
 static int get_plot_ranges (png_plot_t *plot)
 {
@@ -2372,14 +2420,26 @@ static int get_plot_ranges (png_plot_t *plot)
 	if (strstr(line, "# range-mean")) {
 	    plot->flags |= PLOT_RANGE_MEAN;
 	}
-	if (sscanf(line, "set xrange [%lf:%lf]", 
-		   &plot->xmin, &plot->xmax) == 2) { 
+	else if (sscanf(line, "set xrange [%lf:%lf]", 
+			&plot->xmin, &plot->xmax) == 2) { 
 	    got_x = 1;
-	} else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
+	} 
+	else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
 	    got_pd = 1;
-	} else if (!strncmp(line, "set title", 9)) {
-	    plot->format |= PLOT_TITLE;
-	}	
+	}
+	if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
+	    if (!strncmp(line, "set tit", 7)) {
+		plot->format |= PLOT_TITLE;
+	    } else if (!strncmp(line, "set xla", 7)) {
+		plot->format |= PLOT_XLABEL;
+	    } else if (!strncmp(line, "set yla", 7)) {
+		plot->format |= PLOT_YLABEL;
+	    } else if (!strncmp(line, "set y2la", 8)) {
+		plot->format |= PLOT_Y2LABEL;
+	    } else if (!strncmp(line, "set y2ti", 8)) {
+		plot->format |= PLOT_Y2AXIS;
+	    }
+	}
 	if (!strncmp(line, "plot ", 5)) break;
     }
 #ifdef ENABLE_NLS
@@ -2406,15 +2466,23 @@ static int get_plot_ranges (png_plot_t *plot)
     } 
 #endif /* PNG_COMMENTS */
 
+    fprintf(stderr, "png: pixel_xmin=%d, xmax=%d, ymin=%d, ymax=%d\n",
+	    plot->pixel_xmin, plot->pixel_xmax, plot->pixel_ymin,
+	    plot->pixel_ymax);
+
     if (got_x) {
-	if (!plot_png_coords(plot)) {
+	if (1 || !plot_png_coords(plot)) { /* hello!!! */
 	    get_dumb_plot_yrange(plot);
 	}
 
-	if ((plot->xmax - plot->xmin) / (plot->pixel_xmax - plot->pixel_xmin) >= 1.0)
+	if ((plot->xmax - plot->xmin) / 
+	    (plot->pixel_xmax - plot->pixel_xmin) >= 1.0) {
 	    plot->xint = 1;
-	if ((plot->ymax - plot->ymin) / (plot->pixel_ymax - plot->pixel_ymin) >= 1.0)
+	}
+	if ((plot->ymax - plot->ymin) / 
+	    (plot->pixel_ymax - plot->pixel_ymin) >= 1.0) {
 	    plot->yint = 1;
+	}
     }
 
     return got_x;
