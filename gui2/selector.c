@@ -653,7 +653,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     if (MODEL_CODE(sr->code)) {
 	if (rows > 0) { 
 	    xlist = realloc(xlist, (rows + 1) * sizeof *xlist);
-	    if (xlist != NULL) xlist[0] = rows;
+	    if (xlist != NULL) {
+		xlist[0] = rows;
+	    }
 	}
     }
 
@@ -680,7 +682,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	rows = varlist_row_count(sr->auxvars);
 	if (rows > 0) {
 	    auxlist = realloc(auxlist, (rows + 1) * sizeof *auxlist);
-	    if (auxlist != NULL) auxlist[0] = rows;
+	    if (auxlist != NULL) {
+		auxlist[0] = rows;
+	    }
 	    add_to_cmdlist(sr, " ;");
 	    for (i=0; i<rows; i++) {
 		gint inst;
@@ -1837,4 +1841,20 @@ gretlopt selector_get_opts (const selector *sr)
 int selector_error (const selector *sr)
 {
     return sr->error;
+}
+
+void maybe_clear_selector (const int *dlist)
+{
+    int i, j;
+
+    if (xlist != NULL) {
+	for (i=1; i<=xlist[0]; i++) {
+	    for (j=1; j<=dlist[0]; j++) {
+		if (xlist[i] >= dlist[j]) {
+		    clear_selector();
+		    return;
+		}
+	    }
+	}
+    }
 }

@@ -3647,6 +3647,7 @@ void delete_selected_vars (int id)
 	if (renumber) {
 	    infobox(_("Take note: variables have been renumbered"));
 	}
+	maybe_clear_selector(cmd.list);
 	mark_dataset_as_modified();
     }
 }
@@ -5274,6 +5275,7 @@ int gui_exec_line (char *line,
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
 	    }
+	    maybe_clear_selector(cmd.list);
 	    varlist(datainfo, prn);
 	}
 	break;

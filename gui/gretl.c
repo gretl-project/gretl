@@ -74,7 +74,6 @@ static GtkWidget *gretl_toolbar;
 GdkColor red, blue, gray;
 
 static int click_connected;
-int *default_list = NULL;
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list", 0, GRETL_FILENAME },

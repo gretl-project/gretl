@@ -444,8 +444,10 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
     if (MODEL_CODE(sr->code)) {
 	if (rows > 0) { 
-	    xlist = realloc(xlist, (rows + 1) * sizeof(int));
-	    if (xlist != NULL) xlist[0] = rows;
+	    xlist = realloc(xlist, (rows + 1) * sizeof *xlist);
+	    if (xlist != NULL) {
+		xlist[0] = rows;
+	    }
 	}
     }
     for (i=0; i<rows; i++) {
@@ -454,15 +456,18 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rvar);
 	add_to_cmdlist(sr, " ");
 	add_to_cmdlist(sr, rvar);
-	if (MODEL_CODE(sr->code) && xlist != NULL) 
+	if (MODEL_CODE(sr->code) && xlist != NULL) { 
 	    xlist[i+1] = atoi(rvar);
+	}
     }
 
     if (sr->code == TSLS || sr->code == VAR) {
 	rows = GTK_CLIST(sr->auxvars)->rows;
 	if (rows > 0) {
-	    auxlist = realloc(auxlist, (rows + 1) * sizeof(int));
-	    if (auxlist != NULL) auxlist[0] = rows;
+	    auxlist = realloc(auxlist, (rows + 1) * sizeof *auxlist);
+	    if (auxlist != NULL) {
+		auxlist[0] = rows;
+	    }
 	    add_to_cmdlist(sr, " ;");
 	    for (i=0; i<rows; i++) {
 		gchar *inst;
@@ -470,7 +475,9 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 		gtk_clist_get_text(GTK_CLIST(sr->auxvars), i, 0, &inst);
 		add_to_cmdlist(sr, " ");
 		add_to_cmdlist(sr, inst);
-		if (auxlist != NULL) auxlist[i+1] = atoi(inst);
+		if (auxlist != NULL) {
+		    auxlist[i+1] = atoi(inst);
+		}
 	    }
 	} else if (sr->code == TSLS) {
 	    errbox(_("You must specify a set of instrumental variables"));
@@ -1641,4 +1648,20 @@ gretlopt selector_get_opts (const selector *sr)
 int selector_error (const selector *sr)
 {
     return sr->error;
+}
+
+void maybe_clear_selector (const int *dlist)
+{
+    int i, j;
+
+    if (xlist != NULL) {
+	for (i=1; i<=xlist[0]; i++) {
+	    for (j=1; j<=dlist[0]; j++) {
+		if (xlist[i] >= dlist[j]) {
+		    clear_selector();
+		    return;
+		}
+	    }
+	}
+    }
 }

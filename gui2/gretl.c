@@ -85,8 +85,6 @@ static GtkWidget *main_vbox;
 static GtkWidget *gretl_toolbar;
 static GtkWidget *selection_popup;
 
-int *default_list = NULL;
-
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list", 0, GRETL_FILENAME },
     { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER }    

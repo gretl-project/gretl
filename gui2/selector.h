@@ -65,4 +65,6 @@ gretlopt selector_get_opts (const selector *sr);
 
 int selector_error (const selector *sr);
 
+void maybe_clear_selector (const int *dlist);
+
 #endif /* SELECTOR_H */

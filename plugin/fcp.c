@@ -39,6 +39,7 @@
 #define SMALL_HT      1.0e-7 
 
 int global_np;
+double gscale;
 
 #define vix(i,j) ((i) + global_np * (j))
 
@@ -477,7 +478,7 @@ int garch_estimate (int t1, int t2, int nobs,
 		    double *coeff, int nc, double *vcv, 
 		    double *res2, double *res, double *h,
 		    const double *y, double *amax, double *b, 
-		    int *iters, PRN *prn, int vopt)
+		    double scale, int *iters, PRN *prn, int vopt)
 {
     int i, j;
 
@@ -502,6 +503,9 @@ int garch_estimate (int t1, int t2, int nobs,
 
     q = (int) amax[1];
     p = (int) amax[2];
+
+    /* "export" scale as file-scope global */
+    gscale = scale;
 
     /* number of parameters of unconcentrated likelihood */
     nparam = nc + 1 + q + p;
@@ -824,7 +828,9 @@ garch_ll (double *c, int nc, double *res2,
 
     ll = 0.0;
     for (t = t1; t <= t2; ++t) {
-	ll -= 0.5 * log(h[t]) + 0.5 * res2[t] / h[t] + LN_SQRT_2_PI;
+	double hts = h[t] * gscale * gscale;
+
+	ll -= 0.5 * log(hts) + 0.5 * res2[t] / h[t] + LN_SQRT_2_PI;
     }
 
     return ll;

@@ -2207,12 +2207,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 #endif
     gretl_print_destroy(prn);
 
-    if (pmod->ci != NLS && pmod->ci != ARMA && pmod->ci != TSLS
-	&& pmod->ci != GARCH) {
-	free(default_list);
-	default_list = copylist(pmod->list);
-    }
-
     /* attach shortcuts */
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 

@@ -92,7 +92,7 @@ static int make_packed_vcv (MODEL *pmod, double *vcv, int np,
     for (i=0; i<np; i++) {
 	for (j=0; j<=i; j++) {
 	    k = ijton(i, j, np);
-	    pmod->vcv[k] = vcv[i + np * j] * scale * scale;
+	    pmod->vcv[k] = vcv[i + np * j];
 	}
     }
 
@@ -339,8 +339,8 @@ int do_fcp (const int *list, double **Z, double scale,
 
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			 (const double **) X, nx, yhat, coeff, ncoeff, 
-			 vcv, res2, res, h, y, amax, b, &iters, prn, 
-			 vopt);
+			 vcv, res2, res, h, y, amax, b, scale, &iters,
+			 prn, vopt);
 
     if (err != 0) {
 	pmod->errcode = err;
@@ -348,11 +348,12 @@ int do_fcp (const int *list, double **Z, double scale,
 	int nparam = ncoeff + p + q + 1;
 
 	for (i=1; i<=nparam; i++) {
-	    amax[i] *= scale;
-	    amax[i + nparam] *= scale;
-	    if (i > ncoeff) {
+	    if (i <= ncoeff) {
 		amax[i] *= scale;
 		amax[i + nparam] *= scale;
+	    } else if (i == ncoeff + 1) {
+		amax[i] *= scale * scale;
+		amax[i + nparam] *= scale * scale;
 	    }
 	    pprintf(prn, "theta[%d]: %#14.6g (%#.6g)\n", i-1, amax[i], 
 		    amax[i + nparam]);
@@ -470,7 +471,7 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL model;
     int *list = NULL, *ols_list = NULL;
-    double sdy = 0.0;
+    double scale = 1.0;
     int yno = 0, scaled = 0;
     int t, err;
 
@@ -496,29 +497,27 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-#if 0
+#if 1
     if (!err) {
 	yno = ols_list[1];
-	sdy = gretl_stddev(pdinfo->t1, pdinfo->t2, (*pZ)[yno]);
+	scale = model.sigma;
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[yno][t] /= sdy;
+	    (*pZ)[yno][t] /= scale;
 	}
 	for (t=0; t<model.ncoeff; t++) {
-	    model.coeff[t] *= sdy;
+	    model.coeff[t] *= scale;
 	}
 	scaled = 1;
     } 
-#else
-    sdy = 1.0;
 #endif
 
     if (!err) {
-	do_fcp(list, *pZ, sdy, pdinfo, &model, prn, opt); 
+	do_fcp(list, *pZ, scale, pdinfo, &model, prn, opt); 
     }
 
     if (scaled) {
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[yno][t] *= sdy;
+	    (*pZ)[yno][t] *= scale;
 	}
     }
 

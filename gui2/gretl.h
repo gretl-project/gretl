@@ -78,7 +78,6 @@ extern int orig_vars;
 /* global state variables */
 extern int data_status;
 extern char line[MAXLINE];
-extern int *default_list;
 extern char *storelist;
 extern gchar *clipboard_buf;
 extern float gui_scale;
