@@ -4135,7 +4135,7 @@
 	  function under the <cmd>genr</cmd> command).  The default is
 	  to use 100 times the square of the periodicity, which gives
 	  100 for annual data, 1600 for quarterly data, and so
-	  on).</cell>
+	  on.</cell>
 	</row>
       </table>
 
