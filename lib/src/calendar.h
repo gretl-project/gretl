@@ -31,7 +31,7 @@ long get_epoch_day (const char *date);
 
 int get_day_of_week (const char *date);
 
-int day_starts_month (int d, int m, int y, int wkdays);
+int day_starts_month (int d, int m, int y, int wkdays, int *pad);
 
 int day_ends_month (int d, int m, int y, int wkdays);
 

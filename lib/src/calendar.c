@@ -278,17 +278,24 @@ int get_day_of_week (const char *date)
  * @m: month number, 1-based
  * @y: 4-digit year
  * @wkdays: number of days in week (7 or 5)
+ * @pad: content set = 1 if the first day of the month
+ * can reasonably be padded by a missing value (Jan 1)
  * 
  * Returns: 1 if the day is the "first day of the month", 
  * allowance made for the possibility of a 5-day week, else 0.
  */
 
-int day_starts_month (int d, int m, int y, int wkdays)
+int day_starts_month (int d, int m, int y, int wkdays, int *pad)
 {
     int ret = 0;
 
     if (wkdays == 7) {
-	ret = (d == 1);
+	if (d == 1) {
+	    ret = 1;
+	} else if (m == 1 && d == 2) {
+	    *pad = 1;
+	    ret = 1;
+	}
     } else {
 	/* 5-day week: check for first weekday */
 	int i, wd;
@@ -297,7 +304,12 @@ int day_starts_month (int d, int m, int y, int wkdays)
 	   wd = day_of_week_from_ymd(y, m, i); 
 	   if (wd != 0 && wd != 6) break;
 	}
-	ret = (d == i);
+	if (d == i) {
+	    ret = 1;
+	} else if (m == 1 && d == i + 1) {
+	    *pad = 1;
+	    ret = 1;
+	}
     }
     
     return ret;

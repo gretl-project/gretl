@@ -1510,7 +1510,8 @@ static int get_daily_offset (const DATAINFO *pdinfo,
 static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 			    int *startyr, int *startmon,
 			    int *endyr, int *endmon,
-			    int *offset, int *p_any_eop)
+			    int *offset, int *pad, 
+			    int *p_any_eop)
 {
     int y1, m1, d1, y2, m2, d2;
     int any_eop, any_sop, all_same;
@@ -1539,8 +1540,9 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
     *startmon = m1;
     *endyr = y2;
     *endmon = m2;
+    *pad = 0;
 
-    if (!day_starts_month(d1, m1, y1, pdinfo->pd) && !any_eop) {
+    if (!day_starts_month(d1, m1, y1, pdinfo->pd, pad) && !any_eop) {
 	if (*startmon == 12) {
 	    *startmon = 1;
 	    *startyr += 1;
@@ -1561,10 +1563,31 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 	nm--;
     }
 
-    *offset = get_daily_offset(pdinfo, y1, m1, d1, skip);
+    if (*pad == 0) {
+	*offset = get_daily_offset(pdinfo, y1, m1, d1, skip);
+    } else {
+	*offset = 0;
+    }
+
     *p_any_eop = any_eop;
 
     return nm;
+}
+
+static double *series_plus_pad (double *z, int n)
+{
+    double *x = malloc(n * sizeof *x);
+
+    if (x != NULL) {
+	int t;
+
+	x[0] = NADBL;
+	for (t=1; t<n; t++) {
+	    x[t] = z[t-1];
+	}
+    }
+
+    return x;
 }
 
 /* driver for converting daily time series to monthly */
@@ -1572,16 +1595,28 @@ static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 static double *
 daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 			 int i, int default_method, int nm,
-			 int yr, int mon, int offset, 
+			 int yr, int mon, int offset, int pad,
 			 int any_eop)
 {
     int method = COMPACT_METHOD(pdinfo, i);
-    double *x;
+    double *x, *z;
+    double *tmp = NULL;
     int t, mdbak;
     int sopt, eopt;
 
     x = malloc(nm * sizeof *x);
     if (x == NULL) return NULL;
+
+    if (pad) {
+	tmp = series_plus_pad(Z[i], pdinfo->n + 1);
+	if (tmp == NULL) {
+	    free(x);
+	    return NULL;
+	}
+	z = tmp + 1;
+    } else {
+	z = Z[i];
+    }
 
     if (i == 0) {
 	for (t=0; t<nm; t++) {
@@ -1599,8 +1634,12 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
        to skip forward to the right starting point. */
 
     mdbak = 0;
-    sopt = offset;
-    eopt = offset - 1;
+    sopt = offset - pad;
+    eopt = offset - 1 - pad;
+
+#if 0
+    printf("offset=%d, pad=%d, sopt=%d\n", offset, pad, sopt);
+#endif
 
     for (t=0; t<nm; t++) {
 	int mdays = get_days_in_month(mon, yr, pdinfo->pd);
@@ -1612,12 +1651,12 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 	    method != COMPACT_EOP) {
 	    x[t] = NADBL;
 	} else if (method == COMPACT_SOP) {
-	    x[t] = Z[i][sopt];
+	    x[t] = z[sopt];
 	} else if (method == COMPACT_EOP) {
 	    if (eopt >= pdinfo->n) {
 		x[t] = NADBL;
 	    } else {
-		x[t] = Z[i][eopt];
+		x[t] = z[eopt];
 	    }
 	} else if (method == COMPACT_SUM ||
 		   method == COMPACT_AVG) {
@@ -1629,7 +1668,7 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 		if (dayt >= pdinfo->n) {
 		    x[t] = NADBL;
 		    break;
-		} else if (na(Z[i][dayt])) {
+		} else if (na(z[dayt])) {
 		    if (method == COMPACT_AVG) {
 			den--;
 		    } else {
@@ -1637,7 +1676,7 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 			break;
 		    }
 		} else {
-		    x[t] += Z[i][dayt];
+		    x[t] += z[dayt];
 		}
 	    }
 	    if (method == COMPACT_AVG && !na(x[t])) {
@@ -1659,6 +1698,10 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 	}
     }
 
+    if (tmp != NULL) {
+	free(tmp);
+    }
+
     return x;
 }
 
@@ -1668,11 +1711,11 @@ static int dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 			       int default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
-    int offset, any_eop;
+    int offset, pad, any_eop;
     int i, err = 0;
 
     nm = get_n_ok_months(pdinfo, default_method, &startyr, &startmon,
-			 &endyr, &endmon, &offset, &any_eop);
+			 &endyr, &endmon, &offset, &pad, &any_eop);
 
     if (nm <= 0) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
@@ -1687,7 +1730,7 @@ static int dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 	    x = daily_series_to_monthly(*pZ, pdinfo, i,
 					default_method, nm,
 					startyr, startmon, 
-					offset, any_eop);
+					offset, pad, any_eop);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    } else {
@@ -1802,7 +1845,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     if (dated_daily_data(pdinfo)) {
 	/* allow for the possibility that the daily dataset
 	   contains "hidden" or suppressed missing observations
-	   (holidays are just skipped)
+	   (holidays are just skipped, not marked as NA)
 	*/
 	err = maybe_expand_daily_data(pZ, pdinfo);
 	if (err) return err;
