@@ -645,7 +645,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_ADD:
     default:
 	if (pmod->ID < 0) pprintf(prn, "\n");
-	if (pmod->name) {
+	else if (pmod->name) {
 	    pprintf(prn, "\n%s:\n", pmod->name);
 	} else {
 	    pprintf(prn, "\n%s %d: ", (utf)? _("Model") : I_("Model"), pmod->ID);
@@ -921,7 +921,7 @@ static void weighted_stats_message (PRN *prn)
 static void original_stats_message (PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
-	pprintf(prn, "\n%s:\n\n", _("Statistics based on the original data"));
+	pprintf(prn, "%s:\n\n", _("Statistics based on the original data"));
     } 
     else if (TEX_FORMAT(prn->format)) {
 	pprintf(prn, "\\vspace{1em}\n%s:\n\n", 

@@ -31,19 +31,50 @@ static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
 #ifdef G_OS_WIN32
 
+static char *dosify_buffer (const char *buf)
+{
+    int nlines = 0;
+    char *targ, *q;
+    const char *p;
+
+    p = buf;
+    while (*p) {
+	if (*p++ == '\n') nlines++;
+    }
+
+    targ = malloc(strlen(buf) + nlines + 1);
+    if (targ == NULL) return NULL;
+
+    p = buf;
+    q = targ;
+    while (*p) {
+	if (*p == '\n') {
+	    *q++ = '\r';
+	    *q++ = '\n';
+	} else {
+	    *q++ = *p;
+	}
+	p++;
+    } 
+    *q = 0;
+
+    return targ;
+}
+
 /* win32 only: copy text to clipboard for pasting into Word */
 int win_copy_text (PRN *prn, int format)
 {
     HGLOBAL winclip;
-    char *ptr;
+    char *ptr, *winbuf;
     unsigned rtf_format;
     size_t len;
     gchar *tr = NULL;
 
-    if (format == COPY_RTF) 
+    if (format == COPY_RTF) { 
 	rtf_format = RegisterClipboardFormat("Rich Text Format");
-    else 
+    } else {
 	rtf_format = CF_TEXT;
+    }
 
     if (prn->buf == NULL) return 0;
 
@@ -55,17 +86,19 @@ int win_copy_text (PRN *prn, int format)
 	gint wrote;
 
 	tr = g_locale_from_utf8 (prn->buf, -1, NULL, &wrote, NULL);
-	len = strlen(tr);
-    } else 
-	len = strlen(prn->buf);
+    }
+
+    winbuf = dosify_buffer((nls_on)? tr : prn->buf);
+    len = strlen(winbuf);
         
     winclip = GlobalAlloc(GMEM_DDESHARE, len + 1);        
     ptr = (char *) GlobalLock(winclip);
 
-    memcpy(ptr, (nls_on)? tr : prn->buf, len + 1);
+    memcpy(ptr, winbuf, len + 1);
     if (nls_on) g_free(tr);
+    free(winbuf);
 
-    GlobalUnlock(winclip);
+    GlobalUnlock(winclip); /* FIXME: is the order right here? */
 
     SetClipboardData(rtf_format, winclip);
 
@@ -181,10 +214,11 @@ void winprint (char *fullbuf, char *selbuf)
 	printok = (EndPage(dc) > 0);
     }
     
-    if (printok)
+    if (printok) {
         EndDoc(dc);
-    else
+    } else {
         AbortDoc(dc);
+    }
 
     DeleteObject(fixed_font);
     DeleteDC(dc);
@@ -192,8 +226,9 @@ void winprint (char *fullbuf, char *selbuf)
     GlobalFree(pdlg.hDevNames);
 
     free(fullbuf); /* was allocated by gtk_editable_get_chars() */
-    if (selbuf)
+    if (selbuf) {
 	free(selbuf);
+    }
 }
 
 #elif defined(USE_GNOME)

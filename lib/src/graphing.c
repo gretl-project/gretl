@@ -33,7 +33,8 @@ extern double _gammadist (double s1, double s2, double x, int control);
 
 /* ........................................................ */
 
-static int printvars (FILE *fp, int t, const int *list, double **Z)
+static int printvars (FILE *fp, int t, const int *list, double **Z,
+		      double offset)
 {
     int i, miss = 0;
     double xx;
@@ -44,16 +45,21 @@ static int printvars (FILE *fp, int t, const int *list, double **Z)
 	    fprintf(fp, "? ");
 	    miss = 1;
 	} else {
+	    if (i == 1) { /* the x variable */
+		xx += offset;
+	    }
 	    fprintf(fp, "%g ", xx);
 	}
     }
+
     fprintf(fp, "\n");
+
     return miss;
 }
 
 /* ........................................................ */
 
-static void prntdate (const int nt, const int n, 
+static void prntdate (int nt, int n, 
 		      const DATAINFO *pdinfo, PRN *prn)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -91,7 +97,7 @@ static int get_timevar (DATAINFO *pdinfo, char *timevar)
 
 /* ........................................................ */
 
-int _ztoxy (const int v1, const int v2, double *px, double *py, 
+int _ztoxy (int v1, int v2, double *px, double *py, 
            const DATAINFO *pdinfo, double **Z)
 {
     int m = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -109,7 +115,7 @@ int _ztoxy (const int v1, const int v2, double *px, double *py,
 
 /* ........................................................ */
 
-static void initpx (const int nn, char *pp)
+static void initpx (int nn, char *pp)
 {
     int i;
 
@@ -120,7 +126,7 @@ static void initpx (const int nn, char *pp)
 
 /* ........................................................ */
 
-static void drawline (const int nn, PRN *prn)
+static void drawline (int nn, PRN *prn)
 {
     int t;
 
@@ -340,7 +346,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
  */
 
 int graph (const LIST list, double **Z, const DATAINFO *pdinfo, 
-	   const int oflag, PRN *prn)
+	   int oflag, PRN *prn)
 /*
   graph var1 var2 ;	graphs var1 (y-axis) against var2 (x-axis)
 			in 20 rows and 60 columns
@@ -402,9 +408,9 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 /* ........................................................ */
 
 static int factorized_vars (double ***pZ, 
-			    const int t1, const int t2,
+			    int t1, int t2,
 			    double **y1, double **y2,
-			    const int ynum, const int dum)
+			    int ynum, int dum)
 {
     int i = 0, fn, t;
     double xx;
@@ -574,7 +580,7 @@ static void make_gtitle (FILE *fp, int code, const char *n1, const char *n2)
 int gnuplot (LIST list, const int *lines, 
 	     double ***pZ, DATAINFO *pdinfo,
 	     PATHS *ppaths, int *plot_count, 
-	     const int batch, const int gui, const int opt)
+	     int batch, int gui, int opt)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
@@ -583,9 +589,10 @@ int gnuplot (LIST list, const int *lines,
     int tscale = 0;   /* time series scaling needed? */
     int ts_plot = 1;  /* plotting against time on x-axis? */
     int pdist = 0;    /* plotting probability dist. */
-    double a = 0, b = 0;
+    double a = 0, b = 0, offset = 0, xrange = 0;
     double *yvar1 = NULL, *yvar2 = NULL;
     int xvar, miss = 0, ols_ok = 0, tmplist[4];
+    int npoints;
 
     if (opt == OPT_M || lines == NULL) {
 	strcpy(withstring, "w i");
@@ -598,8 +605,9 @@ int gnuplot (LIST list, const int *lines,
 		*plot_count);
 	fq = fopen(ppaths->plotfile, "w");
 	if (fq == NULL) return E_FOPEN;
-    } else
+    } else {
 	if (gnuplot_init(ppaths, &fq)) return E_FOPEN;
+    }
 
     if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
 	if (get_timevar(pdinfo, s2) >= 0) {
@@ -609,12 +617,14 @@ int gnuplot (LIST list, const int *lines,
 	strcpy(xlabel, I_("Observation"));
 	if (lo > 2 && lo < 7) tscale = 1;
     } else {
-	if (opt == OPT_Z || opt == OPT_RESIDZ)
+	if (opt == OPT_Z || opt == OPT_RESIDZ) {
 	    strcpy(xlabel, pdinfo->varname[list[2]]); 
-	else
+	} else {
 	    strcpy(xlabel, pdinfo->varname[list[lo]]);
+	}
 	ts_plot = 0;
     }
+
     if (strcmp(pdinfo->varname[list[lo]], "qtrs") == 0 ||
 	strcmp(pdinfo->varname[list[lo]], "months") == 0) {
 	ts_plot = 1;
@@ -645,6 +655,7 @@ int gnuplot (LIST list, const int *lines,
     _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return -999;
+    npoints = t2 - t1 + 1;
 
     if (opt == OPT_Z || opt == OPT_RESIDZ) { /* separation by dummy variable */
 	if (lo != 3) return -1;
@@ -671,9 +682,11 @@ int gnuplot (LIST list, const int *lines,
     }
 
     /* titling and so on */
+
     fprintf(fq, "set xlabel '%s'\n", xlabel);
     fprintf(fq, "set xzeroaxis\n"); 
     fprintf(fq, "set missing \"?\"\n");
+
     if (lo == 2) {
 	if (ols_ok) 
 	    make_gtitle(fq, GTITLE_VLS, pdinfo->varname[list[1]], xlabel);
@@ -697,25 +710,29 @@ int gnuplot (LIST list, const int *lines,
 			pdinfo->varname[list[3]]);
 	fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[2]]);
 	fprintf(fq, "set key left top\n");	
-    } else
+    } else {
 	fprintf(fq, "set key left top\n");
+    }
 
 #ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
+    setlocale(LC_NUMERIC, "C");
 #endif
 
     xvar = (opt == OPT_Z || opt == OPT_RESIDZ)? list[lo - 1] : list[lo];
+
     if (isdummy(xvar, t1, t2, *pZ)) {
 	fputs("set xrange[-1:2]\n", fq);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fq);
+	xrange = 3;
     } else {
-	double xmin, xmax, xrange;
+	double xmin, xmax;
 
 	_minmax(t1, t2, (*pZ)[xvar], &xmin, &xmax);
 	xrange = xmax - xmin;
 	xmin -= xrange * .025;
 	xmax += xrange * .025;
 	fprintf(fq, "set xrange [%g:%g]\n", xmin, xmax);
+	xrange = xmax - xmin;
     }
 
     if (tscale) { /* two or more vars plotted against time */
@@ -723,8 +740,9 @@ int gnuplot (LIST list, const int *lines,
 	int oddcount;
 
 	/* find minima, maxima of the vars */
-	for (i=1; i<lo; i++) 
+	for (i=1; i<lo; i++) {
 	    _minmax(t1, t2, (*pZ)[list[i]], &(ymin[i]), &(ymax[i]));
+	}
 	tscale = 0;
 	for (i=1; i<lo; i++) {
 	    oddcount = 0;
@@ -747,24 +765,26 @@ int gnuplot (LIST list, const int *lines,
 	fprintf(fq, "set y2tics\n");
 	fputs("plot \\\n", fq);
 	for (i=1; i<lo; i++) {
-	    if (i != oddman) 
-		fprintf(fq, "'-' using 1:($2) axes x1y1 title '%s (%s)' "
-			"w lines", 
-			pdinfo->varname[list[i]], I_("left"));
-	    else 
-		fprintf(fq, "'-' using 1:($2) axes x1y2 title '%s (%s)' "
-			"w lines", 
-			pdinfo->varname[list[i]], I_("right"));
+	    if (i != oddman) {
+		fprintf(fq, "'-' using 1:($2) axes x1y1 title '%s (%s)' %s",
+			pdinfo->varname[list[i]], I_("left"),
+			(pdist)? "w impulses" : "w lines");
+	    } else {
+		fprintf(fq, "'-' using 1:($2) axes x1y2 title '%s (%s)' %s",
+			pdinfo->varname[list[i]], I_("right"),
+			(pdist)? "w impulses" : "w lines");
+	    }
 	    if (i == lo - 1) fprintf(fq, "\n");
 	    else fprintf(fq, " , \\\n");
 	}
     } else if (opt == OPT_Z || opt == OPT_RESIDZ) { 
 	/* FIXME OPT_Z with time series? */
 	fputs("plot \\\n", fq);
-	if (opt == OPT_Z) 
+	if (opt == OPT_Z) {
 	    strcpy(s1, pdinfo->varname[list[1]]);
-	else 
+	} else {
 	    strcpy(s1, "residual");
+	}
 	strcpy(s2, pdinfo->varname[list[3]]);
 	fprintf(fq, " '-' using 1:($2) title '%s (%s=1)', \\\n", s1, s2);
 	fprintf(fq, " '-' using 1:($2) title '%s (%s=0)'\n", s1, s2);
@@ -774,8 +794,9 @@ int gnuplot (LIST list, const int *lines,
 	    if (opt == OPT_FA) {
 		if (i == 1) strcpy(s1, I_("fitted"));
 		else strcpy(s1, I_("actual"));
-	    } else
+	    } else {
 		strcpy(s1, pdinfo->varname[list[i]]);
+	    }
 	    if (!pdist) { 
 		withstring[0] = '\0';
 		if ((gui)? lines[i-1] : lines[0]) strcpy(withstring, "w lines");
@@ -787,11 +808,18 @@ int gnuplot (LIST list, const int *lines,
 	}
     } 
 
-    if (ols_ok) 
+    if (ols_ok) {
 	fprintf(fq, "%f + %f*x title '%s' w lines\n", a, b, 
 		I_("least squares fit"));
+    }
+
+    /* multi impulse plot? calculate offset for lines */
+    if (opt == OPT_M && list[lo] > 2) {
+	offset = 0.10 * xrange / npoints;
+    }
 
     /* supply the data to gnuplot inline */
+
     if (opt == OPT_Z || opt == OPT_RESIDZ) {
 	double xx, yy;
 
@@ -800,10 +828,11 @@ int gnuplot (LIST list, const int *lines,
 		xx = (*pZ)[list[2]][t];
 		if (na(xx)) continue;
 		yy = (i)? yvar2[t-t1] : yvar1[t-t1];
-		if (na(yy))
+		if (na(yy)) {
 		    fprintf(fq, "%f ?\n", xx);
-		else
+		} else {
 		    fprintf(fq, "%f %f\n", xx, yy);
+		}
 	    }
 	    fprintf(fq, "e\n");
 	}
@@ -812,19 +841,23 @@ int gnuplot (LIST list, const int *lines,
     } else {
 	tmplist[0] = 2;
 	tmplist[1] = list[lo];
-	for (i=1; i<lo; i++)  {
+	for (i=1; i<lo; i++) {
+	    double xoff = offset * (i - 1);
+
 	    tmplist[2] = list[i];
 	    for (t=t1; t<=t2; t++) {
-		if (gui && miss == 0) 
-		    miss = printvars(fq, t, tmplist, *pZ); 
-		else
-		    printvars(fq, t, tmplist, *pZ);
+		if (gui && miss == 0) {
+		    miss = printvars(fq, t, tmplist, *pZ, xoff); 
+		} else {
+		    printvars(fq, t, tmplist, *pZ, xoff);
+		}
 	    }
 	    fprintf(fq, "e\n");
 	}
     }
+
 #ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
+    setlocale(LC_NUMERIC, "");
 #endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
@@ -852,7 +885,7 @@ int gnuplot (LIST list, const int *lines,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int multi_scatters (const LIST list, const int pos, double ***pZ, 
+int multi_scatters (const LIST list, int pos, double ***pZ, 
 		    const DATAINFO *pdinfo, PATHS *ppaths)
 {
     int i, t, err = 0, xvar, yvar, *plotlist;
@@ -1069,7 +1102,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 
 /* ......................................................... */ 
 
-int plot_fcast_errs (const int n, const double *obs, 
+int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
 		     PATHS *ppaths)

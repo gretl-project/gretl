@@ -464,10 +464,12 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
     sr->cmdlist = mymalloc(MAXLEN);
     if (sr->cmdlist == NULL) return FALSE;
+
     sr->cmdlist[0] = 0;
 
-    if (sr->code != GR_DUMMY)
+    if (sr->code != GR_DUMMY) {
 	rows = varlist_row_count(sr->rightvars);
+    }
 
     /* first deal with content of "extra" widget */
     if (sr->code == WLS) {
@@ -524,9 +526,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	    err = 1;
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
-	    if (sr->code == GR_XY || sr->code == GR_IMP)
+	    if (sr->code == GR_XY || sr->code == GR_IMP) {
 		sprintf(grvar, " %d", i);
-	    else {
+	    } else {
 		sprintf(numstr, "%d", i);
 		strcat(sr->cmdlist, numstr);
 	    }
@@ -537,10 +539,13 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     if (err) return TRUE;
 
     if (sr->default_check != NULL && 
-	GTK_TOGGLE_BUTTON(sr->default_check)->active) 
+	GTK_TOGGLE_BUTTON(sr->default_check)->active) {
 	default_var = i;
+    }
 
-    if (sr->code == SCATTERS) strcat(sr->cmdlist, ";");
+    if (sr->code == SCATTERS) {
+	strcat(sr->cmdlist, ";");
+    }
 
     if (sr->code == GR_DUMMY) { /* special case */
 	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rightvars));
@@ -575,8 +580,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	tmp = g_strdup_printf(" %d", rvar);
 	strcat(sr->cmdlist, tmp);
 	g_free(tmp);
-	if (MODEL_CODE(sr->code) && xlist != NULL) 
+	if (MODEL_CODE(sr->code) && xlist != NULL) {
 	    xlist[i+1] = rvar;
+	}
 	gtk_tree_model_iter_next(model, &iter);
     }
 
@@ -596,7 +602,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 		tmp = g_strdup_printf(" %d", inst);
 		strcat(sr->cmdlist, tmp);
 		g_free(tmp);
-		if (instlist != NULL) instlist[i+1] = inst;
+		if (instlist != NULL) {
+		    instlist[i+1] = inst;
+		}
 		gtk_tree_model_iter_next(model, &iter);
 	    }
 	} else {
@@ -605,8 +613,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
 
-    if (sr->code == GR_XY || sr->code == GR_IMP)
+    if (sr->code == GR_XY || sr->code == GR_IMP) {
 	strcat(sr->cmdlist, grvar);
+    }
 
     if (err) return TRUE;
 
@@ -1067,8 +1076,9 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 
     /* graphs: top right -> x-axis variable */
     else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
-	     || cmdcode == SCATTERS)
+	     || cmdcode == SCATTERS) {
 	build_x_axis_section(sr, right_vbox);
+    }
 
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
@@ -1076,14 +1086,18 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	build_mid_section(sr, right_vbox);
     
     /* lower right: selected (independent) variables */
-    if (MODEL_CODE(cmdcode))
+    if (MODEL_CODE(cmdcode)) {
 	tmp = gtk_label_new(_("Independent variables"));
-    else if (cmdcode == GR_XY || cmdcode == GR_IMP)
+    }
+    else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
 	tmp = gtk_label_new(_("Y-axis variables"));
-    else if (cmdcode == SCATTERS)
+    }
+    else if (cmdcode == SCATTERS) {
 	tmp = gtk_label_new(_("X-axis variables"));
-    else if (cmdcode == GR_DUMMY)
+    }
+    else if (cmdcode == GR_DUMMY) {
 	tmp = gtk_label_new(_("Factor (dummy)"));
+    }
     
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);

@@ -1029,6 +1029,7 @@ int catchflag (char *line, int *oflag)
 	line[n-1] = '\0';
 	n = strlen(line);
     }
+
     for (i=4; i<n-1; i++) {
 	if (line[i] == '-' && 
 	    isspace((unsigned char) line[i-1]) && 
@@ -1039,6 +1040,7 @@ int catchflag (char *line, int *oflag)
 		return 1;
 	    }
     }
+
     return 0;
 }
 

@@ -539,13 +539,19 @@ int adf_test (int order, int varno, double ***pZ,
     adflist[0] = 3;
     adflist[2] = _lagvarnum(varno, 1, pdinfo);
     adflist[3] = 0;
+
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
-    if (adf_model.errcode)
+    if (adf_model.errcode) {
 	return adf_model.errcode;
+    }
+
     DFt = adf_model.coeff[1] / adf_model.sderr[1];
     T = adf_model.nobs;
+
     row = (T > 500)? 5 : (T > 450)? 4 : (T > 240)? 3 : (T > 90)? 2 : 
 	(T > 40)? 1 : (T > 24)? 0 : -1;
+
+#ifdef notdef
     if (row < 0) {
 	sprintf(pval, _("significance level unknown"));
     } else {
@@ -560,6 +566,22 @@ int adf_test (int order, int varno, double ***pZ,
 	else
 	    sprintf(pval, _("not significant at the 10 percent level"));
     }
+#else
+    if (row < 0) {
+	sprintf(pval, _("significance level unknown"));
+    } else {
+	if (DFt < t_crit_vals[row][0])
+	    sprintf(pval, _("significant at the 1 percent level"));
+	else if (DFt < t_crit_vals[row][1])
+	    sprintf(pval, _("significant at the 2.5 percent level"));
+	else if (DFt < t_crit_vals[row][2])
+	    sprintf(pval, _("significant at the 5 percent level"));
+	else if (DFt < t_crit_vals[row][3])
+	    sprintf(pval, _("significant at the 10 percent level"));
+	else
+	    sprintf(pval, _("not significant at the 10 percent level"));
+    }
+#endif
     
     pprintf(prn, _("\nDickey-Fuller test with constant\n\n"
 	    "   model: (1 - L)%s = m + g * %s(-1) + e\n"

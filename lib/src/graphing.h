@@ -67,7 +67,7 @@ int plot (const LIST list,
 
 int graph (const LIST list, 
 	   double **Z, const DATAINFO *pdinfo, 
-	   const int oflag, PRN *prn);
+	   int oflag, PRN *prn);
 
 int gnuplot_init (PATHS *ppaths, FILE **fpp);
 
@@ -76,9 +76,9 @@ int gnuplot_display (const PATHS *ppaths);
 int gnuplot (LIST list, const int *lines, 
 	     double ***pZ, DATAINFO *pdinfo, 
 	     PATHS *ppaths, int *plot_count, 
-	     const int batch, const int gui, const int opt);
+	     int batch, int gui, int opt);
 
-int multi_scatters (const LIST list, const int pos, 
+int multi_scatters (const LIST list, int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 
 		    PATHS *ppaths);
 

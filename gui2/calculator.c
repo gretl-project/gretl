@@ -348,6 +348,10 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fprintf(fp, "# sampling distribution\n");
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     fprintf(fp, "set key right top\n");
     if (df1) fprintf(fp, "df1=%.1f\n", (double) df1);
     if (df2) fprintf(fp, "df2=%.1f\n", (double) df2);
@@ -358,7 +362,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	spike = .25;
 	fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
 	fprintf(fp, "set yrange [0:.50]\n");
-	fprintf(fp, _("set xlabel \"standard errors\"\n"));
+	fprintf(fp, "set xlabel \"%s\"\n", I_("standard errors"));
     }
     if (dist == 1 || dist == 3) { /* t, F */
 	fprintf(fp, "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n");
@@ -387,36 +391,49 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fprintf(fp, "plot \\\n");
     if (dist == 0) {
-	fprintf(fp, _("(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
-		      "title 'Gaussian sampling distribution' w lines , \\\n"));
+	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
+		"title '%s' w lines , \\\n",
+		I_("Gaussian sampling distribution"));
     }
     else if (dist == 1) {
-	fprintf(fp, _("Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
-		      "**(-0.5*(df1+1.0)) "
-		      "title 't(%d) sampling distribution' w lines , \\\n"),
-		df1);
+	char tmp[64];
+
+	sprintf(tmp, I_("t(%d) sampling distribution"), df1);
+	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
+		"**(-0.5*(df1+1.0)) "
+		"title '%s' w lines , \\\n", tmp);
     }
     else if (dist == 2) {
-	fprintf(fp, _("chi(x) title 'Chi-square(%d) sampling distribution' "
-		      "w lines , \\\n"), df1);
+	char tmp[64];
+	
+	sprintf(tmp, I_("Chi-square(%d) sampling distribution"), df1);
+	fprintf(fp, "chi(x) title '%s' w lines , \\\n", tmp);
     }
     else if (dist == 3) {
-	fprintf(fp, _("f(x) title 'F(%d, %d) sampling distribution' w lines , "
-		      "\\\n"), df1, df2);
+	char tmp[64];
+
+	sprintf(tmp, I_("F(%d, %d) sampling distribution"), df1, df2);
+	fprintf(fp, "f(x) title '%s' w lines , \\\n", tmp);
     }
-    fprintf(fp, _("'-' using 1:($2) title 'test statistic' w impulses\n"));
+    fprintf(fp, "'-' using 1:($2) title '%s' w impulses\n",
+	    I_("test statistic"));
     fprintf(fp, "%f %f\n", x, spike);
     fprintf(fp, "e\n");
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
 #ifdef G_OS_WIN32
     fprintf(fp, "pause -1\n");
 #endif
     if (fp) fclose(fp);
 
-    if (gnuplot_display(&paths))
+    if (gnuplot_display(&paths)) {
 	errbox(_("gnuplot command failed"));
-    else
+    } else {
 	register_graph();
+    }
 }
 
 /* ........................................................... */
