@@ -1,19 +1,19 @@
-# translation of gretl-1.2.8.po to Spanish
+# translation of gretl-1.2.9.po to Spanish
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
 # Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>, 2004.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.2.8b\n"
+"Project-Id-Version: gretl-1.2.9\n"
+"Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-07-22 10:55-0400\n"
-"PO-Revision-Date: 2004-07-22 11:39-0400\n"
+"PO-Revision-Date: 2004-07-23 08:45-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Report-Msgid-Bugs-To: \n"
 "X-Generator: KBabel 1.3\n"
 
 #: lib/src/bhhh_max.c:457
@@ -2257,7 +2257,7 @@ msgstr "Error de paso en '%s'\n"
 
 #: lib/src/gretl_restrict.c:306
 msgid "Restriction set"
-msgstr "Sistema de restricciones"
+msgstr "Conjunto de restricciones"
 
 #: lib/src/gretl_restrict.c:308
 msgid "Restriction"
@@ -2266,7 +2266,7 @@ msgstr "Restricción"
 #: lib/src/gretl_restrict.c:413
 #, c-format
 msgid "Coefficient number (%d) is out of range"
-msgstr "Número del coeficiente (%d) está fuera de los límites"
+msgstr "El coeficiente número (%d) está fuera de los límites"
 
 #: lib/src/gretl_restrict.c:446
 #, c-format
@@ -2278,12 +2278,12 @@ msgid ""
 "Matrix inversion failed:\n"
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
-"Fallo la inversión de la matriz:\n"
-"  las restricciones pueden ser inconsistentes o redundantes\n"
+"Ha fallado la inversión de una matriz:\n"
+" es posible que las restricciones sean inconsistentes o redundantes\n"
 
 #: lib/src/gretl_restrict.c:564
 msgid "Failed to compute F statistic for test\n"
-msgstr "Fallo al calcular estadístico F\n"
+msgstr "Fallo al computar el estadístico F para el contraste\n"
 
 #: lib/src/gretl_restrict.c:571 lib/src/printout.c:185 lib/src/printout.c:245
 msgid "Robust F"
@@ -2610,10 +2610,11 @@ msgid ""
 "\n"
 msgstr ""
 "El modelo no tiene término constante.\n"
-"El estadístico F se calcula como en la sección 4.4 del libro 'Introductory\n"
+"El estadístico F se calcula como en la sección 4.4 del libro 'Introductory "
 "Econometrics' de Ramanathan.\n"
-"El R-cuadrado es el cuadrado de la correlación entre los valores observado \n"
-"y ajustado de la variable dependiente.\n"
+"El R-cuadrado es el cuadrado de la correlación entre los valores observado y "
+"ajustado\n"
+"de la variable dependiente.\n"
 "\n"
 
 #: lib/src/modelprint.c:81 lib/src/modelprint.c:93 lib/src/modelprint.c:98
@@ -3985,7 +3986,7 @@ msgstr "Variable '%s' no definida"
 #: lib/src/subsample.c:274
 #, c-format
 msgid "Invalid number of cases %d"
-msgstr "Número de casos no válido %d"
+msgstr " Número de casos no válido %d"
 
 #: lib/src/subsample.c:305
 msgid "automatic sub-sampling dummy"
@@ -4072,7 +4073,7 @@ msgstr "Mínimos cuadrados en tres etapas"
 
 #: lib/src/system.c:80
 msgid "Full Information Maximum Likelihood"
-msgstr "Máxima verosimilitud con información completa"
+msgstr "Máxima Verosimilitud con Información Completa"
 
 #: lib/src/system.c:84
 msgid "No system of equations has been defined"
@@ -4400,7 +4401,7 @@ msgstr ""
 "Opciones:\n"
 " -b o --batch     Procesa un lote de instrucciones y sale.\n"
 " -r o --run       Ejecuta un lote de instrucciones y después pasa a control\n"
-"                  manual en línea de instrucciones.\n"
+" manual en línea de instrucciones.\n"
 " -p o --pvalue    Determinar valores-p interactivamente.\n"
 " -h o --help      Muestra esta información y sale.\n"
 " -v o --version   Muestra la información de versión y sale.\n"
@@ -6052,7 +6053,7 @@ msgstr "Mostrar los detalles de las iteraciones"
 #: gui2/dialogs.c:2690 plugin/leverage.c:175 plugin/logistic.c:123
 #: plugin/pca.c:190 plugin/tramo-x12a.c:253
 msgid "OK"
-msgstr "De acuerdo"
+msgstr "Aceptar"
 
 #: gui/selector.c:1043 gui2/session.c:139 gui2/session.c:2154
 msgid "Clear"
@@ -6746,8 +6747,8 @@ msgid ""
 "Critical values for\n"
 "standard normal distribution"
 msgstr ""
-"Valores críticos de la\n"
-"distribución normal estándar"
+"Valores críticos para\n"
+"la distribución normal estándar"
 
 #: gui2/calculator.c:843 gui2/calculator.c:847 gui2/calculator.c:904
 #: gui2/calculator.c:913 plugin/stats_tables.c:383 plugin/stats_tables.c:410
@@ -7185,7 +7186,7 @@ msgstr "gretl: restricciones lineales"
 
 #: gui2/callbacks.c:618
 msgid "Specify restrictions:"
-msgstr "Especifique las restricciones:"
+msgstr "Especificar restricciones:"
 
 #: gui2/callbacks.c:644 gui2/library.c:3486 gui2/session.c:1502
 #, c-format
@@ -7661,7 +7662,7 @@ msgstr "añadir a la restricción actual"
 
 #: gui2/dialogs.c:271
 msgid "replace current restriction"
-msgstr "reemplazar la restricción actual"
+msgstr "Reemplazar la restricción actual"
 
 #: gui2/dialogs.c:380
 msgid "(Please refer to Help for guidance)"
@@ -7795,7 +7796,7 @@ msgstr "Nombre de variable ficticia a utilizar:"
 #: gui2/dialogs.c:1869
 #, c-format
 msgid "Number of observations to select (max %d)"
-msgstr "Número de observaciones a seleccionar (max %d)"
+msgstr "Número de observaciones a seleccionar (máx %d)"
 
 #: gui2/dialogs.c:1890
 msgid "Set sample range"
@@ -7974,7 +7975,7 @@ msgstr "ficheros GNU Octave (*.m)"
 
 #: gui2/fileselect.c:584
 msgid "PcGive files (*.dat)"
-msgstr "ficheros de PcGive (*.dat)"
+msgstr "ficheros PcGive (*.dat)"
 
 #: gui2/fileselect.c:586 gui2/fileselect.c:587 gui2/fileselect.c:588
 #: gui2/fileselect.c:589
@@ -8567,7 +8568,7 @@ msgstr "/Contrastes/Suma de los coeficientes"
 
 #: gui2/gui_utils.c:130 gui2/gui_utils.c:198
 msgid "/Tests/linear restrictions"
-msgstr "/Contrastes/restricciones lineales"
+msgstr "/Contrastes/Restricciones lineales"
 
 #: gui2/gui_utils.c:131 gui2/gui_utils.c:199
 msgid "/Tests/sep1"
@@ -10882,9 +10883,9 @@ msgid ""
 "econometrics text, e.g. Ramanathan's Introductory Econometrics.\n"
 msgstr ""
 "\n"
-"Si desea tablas estadísticas más fáciles de entender, por favor consulte \n"
-"un manual de econometría o estadística, por ejemplo, 'Introductory \n"
-"Econometrics' de Ramanathan.\n"
+"Si desea tablas estadísticas más fáciles de entender, por favor consulte un "
+"manual de econometría\n"
+"o estadística, por ejemplo, 'Introductory Econometrics' de Ramanathan.\n"
 
 #: plugin/stats_tables.c:320
 #, no-c-format
@@ -10915,17 +10916,17 @@ msgstr ""
 msgid ""
 "Column headings show alpha (significance level) for a one-tailed test.\n"
 msgstr ""
-"Las cabeceras de columna muestran el alfa (nivel de significación) para \n"
-"un contraste a una cola.\n"
-"\n"
+"Las cabeceras de columna muestran el alfa (nivel de significación) para un "
+"contraste a una cola.\n"
 
 #: plugin/stats_tables.c:345 plugin/stats_tables.c:375
 msgid ""
 "For a two-tailed test, select the column heading showing half the desired\n"
 "alpha level.  "
 msgstr ""
-"Para un contraste a dos colas, elija el valor de encabezado que muestre \n"
-"la mitad del nivel alfa deseado.  "
+"Para un contraste a dos colas, elija el valor de encabezado que muestre la "
+"mitad del nivel\n"
+"alfa deseado.  "
 
 #: plugin/stats_tables.c:348 plugin/stats_tables.c:378
 #, no-c-format
@@ -10934,8 +10935,9 @@ msgid ""
 "level, use the 0.05 column.)\n"
 "\n"
 msgstr ""
-"(Por ejemplo, para un contraste a dos colas\n"
-"al nivel de significación del 10%, use la columna 0,05)\n"
+"(Por ejemplo, para un contraste a dos colas al nivel de significación del "
+"10%, \n"
+" use la columna 0,05)\n"
 "\n"
 
 #: plugin/stats_tables.c:372
@@ -10963,8 +10965,8 @@ msgid ""
 "Column headings show alpha (significance level) for a one-tailed test.\n"
 "\n"
 msgstr ""
-"Las cabeceras de columna muestran el alfa (nivel de significación) para \n"
-"un contraste a una cola.\n"
+"Las cabeceras de columna muestran el alfa (nivel de significación) para un "
+"contraste a una cola.\n"
 "\n"
 
 #: plugin/sysest.c:223
@@ -11166,23 +11168,9 @@ msgstr "No se soportan aún libros de trabajo protegidos por palabra clave."
 #: plugin/workbook.c:581
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
 msgstr ""
-"Este fichero no es un fichero 'OLE' -- \n"
-" puede ser demasiado antiguo para que gretl lo lea\n"
+"Este fichero no es un fichero 'OLE' -- puede ser demasiado antiguo para que "
+"gretl lo lea\n"
 
 #: plugin/workbook.c:583
 msgid "Unexpected error reading the file\n"
 msgstr "Error inesperado al leer el fichero\n"
-
-#, fuzzy
-#~ msgid "Variable %d was not in the original list"
-#~ msgstr "La variable %d no tiene nombre"
-
-#~ msgid "Nonlinear least squares"
-#~ msgstr "Mínimos cuadrados no lineales"
-
-#~ msgid "This command is only available for OLS models at present\n"
-#~ msgstr ""
-#~ "Esta orden sólo está disponible en la actualidad para modelos de MCO\n"
-
-#~ msgid "model command"
-#~ msgstr "orden 'model'"

@@ -1507,14 +1507,14 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
 
     u = newurl();
     if (u == NULL) {
-	return E_ALLOC;
+	return 1;
     }
 
     u->path = mymalloc(strlen(cgi) + 64);
 
     if (u->path == NULL) {
 	freeurl(u, 1);
-	return E_ALLOC;
+	return 1;
     }
 
 #ifdef UPDATER
@@ -1819,13 +1819,13 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
 
     u = newurl();
     if (u == NULL) {
-	return E_ALLOC;
+	return 1;
     }
 
     u->path = mymalloc(strlen(cgi) + fnlen + 64);
     if (u->path == NULL) {
 	freeurl(u, 1);
-	return E_ALLOC;
+	return 1;
     }
 
 #ifdef UPDATER
