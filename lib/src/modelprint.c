@@ -249,8 +249,8 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
     else if (TEX_FORMAT(prn->format)) {
 	if (na(pmod->fstt)) {
-	    pprintf(prn, "$F(%d, %d)$ & \\multicolumn{1}{c}{\\rm %s} \\\\\n", pmod->dfn, pmod->dfd,
-		    I_("undefined"));
+	    pprintf(prn, "$F(%d, %d)$ & \\multicolumn{1}{c}{\\rm %s} \\\\\n", 
+		    pmod->dfn, pmod->dfd, I_("undefined"));
 	} else {
 	    char x1str[32];
 

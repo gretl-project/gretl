@@ -68,6 +68,14 @@ char *tex_escape (char *targ, const char *src)
 #define UPPER_F_LIMIT (pow(10, GRETL_DIGITS))
 #define LOWER_F_LIMIT (pow(10, -4))
 
+static void cut_extra_zero (char *numstr)
+{
+    int s = strspn(numstr, "-.,0");
+    int p = (s == 0 && (strchr(numstr, '.') || strchr(numstr, ',')));
+
+    numstr[s + p + GRETL_DIGITS] = '\0';
+}
+
 void tex_dcolumn_double (double xx, char *numstr)
 {
     double a = fabs(xx);
@@ -81,8 +89,10 @@ void tex_dcolumn_double (double xx, char *numstr)
 	p = strchr(numstr, 'e');
 	expon = atoi(p + 2);
 	strcpy(p, "\\mbox{e");
-	sprintf(exponstr, "%c%02d}", (xx > 10)? '+' : '-', expon);
+	sprintf(exponstr, "%s%02d}", (xx > 10)? "+" : "-", expon);
 	strcat(numstr, exponstr);
+    } else {
+	cut_extra_zero(numstr);
     }
 }
 
