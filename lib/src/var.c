@@ -205,15 +205,18 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
 
 /* ......................................................  */
 
+#define VARS_IN_ROW 2
+
 int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, DATAINFO *pdinfo, 
 				  PRN *prn)
 {
-    int i, t, v1, v2;
+    int i, t;
+    int vsrc;
     int rows = var->neqns * var->order;
-    gretl_matrix *tmp;
-    double r;
+    gretl_matrix *rtmp, *stmp, *cc;
+    int block, blockmax;
     int err = 0;
 
     if (shock >= var->neqns) {
@@ -221,43 +224,96 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	return 1;
     }    
 
-    tmp = gretl_matrix_alloc(rows, var->neqns);
-    if (tmp == NULL) err = E_ALLOC;
+    rtmp = gretl_matrix_alloc(rows, var->neqns);
+    if (rtmp == NULL) return E_ALLOC;
 
-    v1 = (var->models[shock])->list[1];
-
-    /* FIXME: formatting below not very good; also need to
-       allow for too many variables to fit on one line */
-
-    /* TODO: add standard errors alongside point estimates */
-
-    pprintf(prn, "Responses to a one-standard error shock in %s\n\n",
-	    pdinfo->varname[v1]);
-
-    pputs(prn, "period ");
-    for (i=0; i<var->neqns; i++) {
-	v2 = (var->models[i])->list[1];
-	pprintf(prn, "  %8s  ", pdinfo->varname[v2]);
+    stmp = gretl_matrix_alloc(rows, rows);
+    if (stmp == NULL) {
+	gretl_matrix_free(rtmp);
+	return E_ALLOC;
     }
-    pputs(prn, "\n\n");
 
-    for (t=0; t<periods && !err; t++) {
-	pprintf(prn, "  %-3d  ", t);
-	if (t == 0) {
-	    err = gretl_matrix_copy_values(tmp, var->C);
+    cc = gretl_matrix_alloc(rows, rows);
+    if (cc == NULL) {
+	gretl_matrix_free(rtmp);
+	gretl_matrix_free(stmp);
+	return E_ALLOC;
+    }
+
+    vsrc = (var->models[shock])->list[1];
+
+    /* FIXME: formatting below not very good */
+
+    /* TODO: check and fix forecast standard errors */
+
+    blockmax = var->neqns / VARS_IN_ROW;
+    if (var->neqns % VARS_IN_ROW) blockmax++;
+
+    for (block=0; block<blockmax && !err; block++) {
+	int vtarg, k;
+	double r, s;
+
+	pprintf(prn, "Responses to a one-standard error shock in %s", 
+		pdinfo->varname[vsrc]);
+
+	if (block == 0) {
+	    pputs(prn, "\n\n");
 	} else {
-	    err = gretl_matrix_multiply(var->A, tmp, tmp);
+	    pprintf(prn, " %s\n\n", "(continued)");
 	}
-	if (err) break;
-	for (i=0; i<var->neqns; i++) {
-	    r = gretl_matrix_get(tmp, i, shock);
-	    pprintf(prn, "%#12.5g ", r);
+
+	pputs(prn, "period ");
+	for (i=0; i<VARS_IN_ROW; i++) {
+	    k = VARS_IN_ROW * block + i;
+	    if (k >= var->neqns) break;
+	    vtarg = (var->models[k])->list[1];
+	    pprintf(prn, "  %8s  ", pdinfo->varname[vtarg]);
+	    pprintf(prn, "  %8s  ", "std. err.");
+	}
+	pputs(prn, "\n\n");
+
+	for (t=0; t<periods && !err; t++) {
+	    pprintf(prn, "  %-3d  ", t);
+	    if (t == 0) {
+		/* calculate initial estimated responses */
+		err = gretl_matrix_copy_values(rtmp, var->C);
+		if (!err) {
+		    /* and initial standard errors: is this right? */
+		    err = gretl_matrix_multiply_mod(var->C, GRETL_MOD_NONE,
+						    var->C, GRETL_MOD_TRANSPOSE,
+						    cc);
+		    gretl_matrix_copy_values(stmp, cc);
+		}
+	    } else {
+		/* calculate estimated responses */
+		err = gretl_matrix_multiply(var->A, rtmp, rtmp);
+		if (!err) {
+		    /* and standard errors */
+		    err = gretl_matrix_multiply(var->A, stmp, stmp);
+		    err = gretl_matrix_multiply_mod(stmp, GRETL_MOD_NONE,
+						    var->A, GRETL_MOD_TRANSPOSE,
+						    stmp);
+		}
+	    }
+
+	    if (err) break;
+
+	    for (i=0; i<VARS_IN_ROW; i++) {
+		k = VARS_IN_ROW * block + i;
+		if (k >= var->neqns) break;
+		r = gretl_matrix_get(rtmp, k, shock);
+		/* FIXME: is the indexing right below? */
+		s = gretl_matrix_get(stmp, k, k) + gretl_matrix_get(cc, k, k);
+		pprintf(prn, "%#12.5g%#12.5g ", r, sqrt(s));
+	    }
+	    pputs(prn, "\n");
 	}
 	pputs(prn, "\n");
     }
-    pputs(prn, "\n");
 
-    if (tmp != NULL) gretl_matrix_free(tmp);
+    if (rtmp != NULL) gretl_matrix_free(rtmp);
+    if (stmp != NULL) gretl_matrix_free(stmp);
+    if (cc != NULL) gretl_matrix_free(cc);
 
     return err;
 }
@@ -763,7 +819,6 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t1 = oldt1;
     pdinfo->t2 = oldt2;
 
-    /* clear the var structure? */
     if (flags & VAR_IMPULSE_RESPONSES) {
 	if (!err) {
 #ifdef VAR_DEBUG
@@ -777,7 +832,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		gretl_matrix_print(var->C, prn);
 #endif
 		for (i=0; i<var->neqns; i++) {
-		    /* FIXME: make horizon configurable */
+		    /* FIXME: make horizon configurable, or at least smarter */
 		    gretl_var_print_impulse_response(var, i, 10,
 						     pdinfo, prn);
 		}

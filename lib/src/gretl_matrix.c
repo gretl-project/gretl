@@ -327,12 +327,12 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 			       gretl_matrix *c)
 {
     int i, j, k;
-    double x, y;
     int lrows, lcols;
     int rrows, rcols;
     int atr = (aflag == GRETL_MOD_TRANSPOSE);
     int btr = (bflag == GRETL_MOD_TRANSPOSE);
-    int bmax = b->rows * b->cols;
+    int aidx, amax = a->rows * a->cols;
+    int bidx, bmax = b->rows * b->cols;
 
     lrows = (atr)? a->cols : a->rows;
     lcols = (atr)? a->rows : a->cols;
@@ -340,17 +340,17 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     rcols = (btr)? b->rows : b->cols;
 
     if (lcols != rrows) {
-	fprintf(stderr, "gretl_matrix_mulitply_mod: matrices not conformable\n");
+	fprintf(stderr, "gretl_matrix_multiply_mod: matrices not conformable\n");
 	fprintf(stderr, "left-hand cols = %d, right-hand rows = %d\n",
 		lcols, rrows);	
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
     if (c->rows != lrows || c->cols != rcols) {
-	fprintf(stderr, "gretl_matrix_mulitply_mod: matrices not conformable\n");
-	fprintf(stderr, "Product cols = %d, left-hand cols = %d;\n"
-		"Product rows = %d, right-hand rows = %d\n",
-		c->cols, lcols, c->rows, rrows);
+	fprintf(stderr, "gretl_matrix_multiply_mod: matrices not conformable\n");
+	fprintf(stderr, "Product cols = %d, right-hand cols = %d;\n"
+		"Product rows = %d, left-hand rows = %d\n",
+		c->cols, rcols, c->rows, lrows);
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
@@ -358,15 +358,14 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	for (j=0; j<rcols; j++) {
 	    c->val[mdx(c, i, j)] = 0.0;
 	    for (k=0; k<lcols; k++) {
-		x = (atr)? a->val[mdxtr(a,i,k)] : a->val[mdx(a,i,k)];
-		y = (btr)? b->val[mdxtr(b,k,j)] : b->val[mdx(b,k,j)];
-		if (mdx(b,k,j) >= bmax) {
-		    fprintf(stderr, 
-			    "gretl_matrix_mulitply_mod: Bmax = %d exceeded\n", 
-			    bmax);
+		aidx = (atr)? mdxtr(a,i,k) : mdx(a,i,k);
+		bidx = (btr)? mdxtr(b,k,j) : mdx(b,k,j);
+		if (aidx >= amax || bidx >= bmax) {
+		    fputs("gretl_matrix_multiply_mod: index out of bounds\n", 
+			  stderr);
 		    return 1;
 		}
-		c->val[mdx(c, i, j)] += x * y;
+		c->val[mdx(c,i,j)] += a->val[aidx] * b->val[bidx];
 	    }
 	}
     }

@@ -1291,7 +1291,7 @@ int write_data (const char *fname, const int *list,
 	p = strchr(datestr, ':');
 	fprintf(fp, "nrow = %d, ncol = %d)), start = c(%d,%s), frequency = %d)\n",
 		l0, pdinfo->t2 - pdinfo->t1 + 1, 
-		atoi(datestr), (p != NULL)? (p + 1) : "1",
+		atoi(datestr), (p != NULL)? (p + 1) : "1", /* Is this right? */
 		pdinfo->pd);
 	fprintf(fp, "colnames(%s) <- c(", "gretldata");
 	for (i=1; i<=l0; i++) {
