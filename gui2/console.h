@@ -28,4 +28,10 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key,
 gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 			    gpointer p);
 
+#if 0
+gint console_click_handler (GtkWidget *w, GdkEventButton *event,
+			    gpointer p);
+#endif
+
+
 #endif /* CONSOLE_H */

@@ -392,6 +392,8 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
     GtkTextBuffer *buf;
     GtkTextIter iter;
 
+ start_again:
+
     /* where are we? */
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(console_view));
     gtk_text_buffer_get_iter_at_mark(buf, &iter, gtk_text_buffer_get_insert(buf));
@@ -409,7 +411,7 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 	gtk_text_buffer_get_end_iter(buf, &end);
 	gtk_text_buffer_place_cursor(buf, &end);
 	gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(console_view), TRUE);	
-	return FALSE;
+	goto start_again;
     }
 
     /* make return key execute the command, unless backslash-
@@ -644,13 +646,31 @@ static gint on_last_line (void)
 gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 			    gpointer p)
 {
+    int lline = on_last_line();
+
 #ifndef OLD_GTK
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), on_last_line());
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), lline);
 #else
-    gtk_text_set_editable(GTK_TEXT(w), on_last_line());
+    gtk_text_set_editable(GTK_TEXT(w), lline);
 #endif
 
     return FALSE;
 }
 
+#if 0
+gint console_click_handler (GtkWidget *w, GdkEventButton *event,
+			    gpointer p)
+{
+    if (!on_last_line()) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+	if (mods & GDK_BUTTON2_MASK) {
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+#endif
 

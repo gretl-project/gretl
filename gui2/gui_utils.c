@@ -1840,6 +1840,10 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 #ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(console_mouse_handler), NULL);
+# if 0
+	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
+			 G_CALLBACK(console_click_handler), NULL);
+# endif
 	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
 			 G_CALLBACK(console_key_handler), NULL);
 #else
