@@ -16,27 +16,26 @@ Again select "influential observations" from the tests menu: observation
 number 7 stands out very obviously in the plots.  Note that the oddity
 of observation 7 would not be detected by inspection of the residuals of
 the regression of y on x2: the residual at observation 7 is by no means
-the largest.</description>
-<variables count="4">
+the largest.
+</description>
+<variables count="3">
 <variable name="y"
  label="dependent variable"/>
 <variable name="x1"
  label="correct independent variable"/>
 <variable name="x2"
  label="x1 with erroneous value at obs 7"/>
-<variable name="fitted"
- label="predicted values"/>
 </variables>
 <observations count="10" labels="false">
-<obs>2.88 1.51 1.51 3.78038697 </obs>
-<obs>3.62 2.33 2.33 3.97585388 </obs>
-<obs>5.64 3.57 3.57 4.27143799 </obs>
-<obs>3.43 2.12 2.12 3.92579528 </obs>
-<obs>3.21 1.54 1.54 3.78753820 </obs>
-<obs>4.49 1.71 1.71 3.82806183 </obs>
-<obs>4.50 2.68 7.68 5.25115627 </obs>
-<obs>4.28 2.25 2.25 3.95678394 </obs>
-<obs>2.98 1.32 1.32 3.73509586 </obs>
-<obs>5.57 2.80 2.80 4.08788979 </obs>
+<obs>2.88 1.51 1.51 </obs>
+<obs>3.62 2.33 2.33 </obs>
+<obs>5.64 3.57 3.57 </obs>
+<obs>3.43 2.12 2.12 </obs>
+<obs>3.21 1.54 1.54 </obs>
+<obs>4.49 1.71 1.71 </obs>
+<obs>4.50 2.68 7.68 </obs>
+<obs>4.28 2.25 2.25 </obs>
+<obs>2.98 1.32 1.32 </obs>
+<obs>5.57 2.80 2.80 </obs>
 </observations>
 </gretldata>

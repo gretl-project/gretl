@@ -169,7 +169,7 @@ Prints the values of the autocorrelation function for the variable specified
 the t-th observation of the variable u and s is the number of lags.  The
 partial autocorrelations are also shown: these are net of the effects of
 intervening lags.  The command also graphs the correlogram and prints the
-Box-Pierce Q statistic for testing the null hypothesis that the series is
+Ljung-Box Q statistic for testing the null hypothesis that the series is
 "white noise".  This is asymptotically distributed as chi-square with degrees
 of freedom equal to the number of lags used.
 
@@ -201,7 +201,6 @@ significance levels and using the specified degrees of freedom.  If the first
 parameter is d, prints the upper and lower values of the Durbin-Watson
 statistic at 5 percent significance, for the given n (number of observations),
 and for the range of 1 to 5 explanatory variables.
-
 
 #
 cusum
@@ -262,7 +261,7 @@ Usage:          equation depvar indepvars
 Example:        equation y x1 x2 x3 const
 
 Specifies an equation within a system of equations (see the "system" command).
-The sytax for specifying an equarion is the same as that for, e.g., the
+The sytax for specifying an equation is the same as that for, e.g., the
 "ols" command.
 
 # 
@@ -651,7 +650,21 @@ obtained and the result stored in a new variable with the prefix "ld_".
 Thus "ldiff x y" creates the new variables 
 
                ld_x = ln[x(t)] - ln[x(t-1)]
-               ld_y = ln[y(t)] - ln[y(t-1)].
+               ld_y = ln[y(t)] - ln[y(t-1)]
+
+#
+leverage
+@Tests
+Usage:          leverage
+
+Must immediately follow an ols command.  Calculates the leverage (h) for each
+data point in the sample on which the previous model was estimated.  Displays
+the residual (u) for each observation along with its leverage and a measure of
+its influence on the estimates, u * h / (1 - h).  "Leverage points" for which
+the value of h exceeds 2k/n (where k is the number of parameters being
+estmated and n is the sample size) are flagged with an asterisk.  For details
+on the concepts of leverage and influence see Davidson and MacKinnon,
+Estimation and Inference in Econometrics, chapter 2.
 
 #
 lmtest

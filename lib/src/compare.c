@@ -1276,7 +1276,7 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 /**
  * leverage_test:
  * @pmod: pointer to model to be tested.
- * @Z: pointer to matrix.
+ * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  * @ppaths: path information struct (should be NULL if a graph
@@ -1288,11 +1288,11 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int leverage_test (MODEL *pmod, const double **Z, const DATAINFO *pdinfo, 
+int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, PATHS *ppaths)
 {
     void *handle;
-    int (*model_leverage) (const MODEL *, const double **, 
+    int (*model_leverage) (const MODEL *, double ***, 
 			   const DATAINFO *, PRN *, PATHS *);
     int err;
 
@@ -1304,7 +1304,7 @@ int leverage_test (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    err = (*model_leverage)(pmod, Z, pdinfo, prn, ppaths);
+    err = (*model_leverage)(pmod, pZ, pdinfo, prn, ppaths);
     close_plugin(handle);
 
     return err;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Allin Cottrell
+ *  Copyright (c) 2003 by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -21,24 +21,37 @@
 #include "gretl_matrix.h"
 
 /* To do: 
-   - fix x-axis of graph (obs number when sub-sampled; time-series)
    - do something about menu item when lapack not available?
-   - fix printout of h and influence
 */
   
 static int leverage_plot (int n, int tstart, const double *uhat, 
-			  const double *h, const DATAINFO *pdinfo, 
+			  const double *h, double ***pZ, DATAINFO *pdinfo, 
 			  PATHS *ppaths)
 {
     FILE *fp = NULL;
     int t, tmod;
+    int timeplot = 0;
 
     if (gnuplot_init(ppaths, &fp)) return 1;
+
+    if (dataset_is_time_series(pdinfo) && 
+	(pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {
+	char per[8];
+
+	if (pdinfo->pd == 1) strcpy(per, "annual");
+	else if (pdinfo->pd == 4) strcpy(per, "qtrs");
+	else if (pdinfo->pd == 12) strcpy(per, "months");
+	plotvar(pZ, pdinfo, per);
+	timeplot = varindex(pdinfo, per);
+    }
 
     fputs("# leverage/influence plot\n", fp);
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
     fputs("set xzeroaxis\n", fp);
-    fprintf(fp, "set xrange [%g:%g]\n", 0.5, n + 0.5);
+    if (!timeplot) { 
+	fprintf(fp, "set xrange [%g:%g]\n", 
+		tstart + 0.5, tstart + n + 0.5);
+    }
     fputs("set nokey\n", fp); 
 
 #ifdef ENABLE_NLS
@@ -51,7 +64,12 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     fprintf(fp, "set title '%s'\n", I_("leverage"));
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%d %g\n", t+tstart+1, h[t]);
+	if (timeplot) {
+	    tmod = t + tstart;
+	    fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], h[t]);
+	} else { 
+	    fprintf(fp, "%d %g\n", t+tstart+1, h[t]);
+	}
     }
     fputs("e\n", fp);
 
@@ -61,8 +79,15 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     fprintf(fp, "set title '%s'\n", I_("influence")); 
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
     for (t=0; t<n; t++) {
+	double f;
+
 	tmod = t + tstart;
-	fprintf(fp, "%d %g\n", tmod+1, uhat[tmod] * h[t] / (1.0 - h[t]));
+	f = uhat[tmod] * h[t] / (1.0 - h[t]);
+	if (timeplot) {
+	    fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], f);
+	} else {
+	    fprintf(fp, "%d %g\n", tmod+1, f);
+	}
     }
     fputs("e\n", fp);
     fputs("set nomultiplot\n", fp);
@@ -84,8 +109,8 @@ static int leverage_plot (int n, int tstart, const double *uhat,
    contiguous.
 */
 
-int model_leverage (const MODEL *pmod, const double **Z, 
-		    const DATAINFO *pdinfo, PRN *prn,
+int model_leverage (const MODEL *pmod, double ***pZ, 
+		    DATAINFO *pdinfo, PRN *prn,
 		    PATHS *ppaths)
 {
     integer info, lwork;
@@ -115,7 +140,7 @@ int model_leverage (const MODEL *pmod, const double **Z,
     j = 0;
     for (i=2; i<=pmod->list[0]; i++) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    Q->val[j++] = Z[pmod->list[i]][t];
+	    Q->val[j++] = (*pZ)[pmod->list[i]][t];
 	}
     }
 
@@ -164,7 +189,8 @@ int model_leverage (const MODEL *pmod, const double **Z,
     pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 13), _("residual"));
     pprintf(prn, "%*s", UTF_WIDTH(_("leverage"), 13), _("leverage"));
     pprintf(prn, "%*s", UTF_WIDTH(_("influence"), 13), _("influence"));
-    pputs(prn, "\n\n");
+    pputs(prn, "\n        ");
+    pputs(prn, "         u         0<=h<=1    u*h/(1-h)\n\n");
 
     lp = 2.0 * n / m;
 
@@ -192,7 +218,8 @@ int model_leverage (const MODEL *pmod, const double **Z,
     }
 
     if (ppaths != NULL) {
-	leverage_plot(m, pmod->t1, &pmod->uhat[pmod->t1], hvec, pdinfo, ppaths);
+	leverage_plot(m, pmod->t1, &pmod->uhat[pmod->t1], hvec, 
+		      pZ, pdinfo, ppaths);
 	free(hvec);
     }
 

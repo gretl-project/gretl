@@ -84,7 +84,7 @@ int hausman_test (MODEL *pmod,
 		  PRN *prn);
 
 int leverage_test (MODEL *pmod, 
-		   const double **Z, const DATAINFO *pdinfo, 
+		   double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, PATHS *ppaths);
 
 int mp_ols (const LIST list, const char *pos,
