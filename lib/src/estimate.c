@@ -165,9 +165,12 @@ static int ar_info_init (MODEL *pmod, int nterms)
     return 0;
 }
 
-static int get_model_df (MODEL *pmod, double rho)
+static int get_model_df (MODEL *pmod, double rho, int pwe)
 {
-    if (rho != 0.0) pmod->nobs -= 1;
+    if (rho != 0.0 && !pwe) {
+	pmod->nobs -= 1;
+    }
+
     pmod->ncoeff = pmod->list[0] - 1;
 
     pmod->dfd = pmod->nobs - pmod->ncoeff;
@@ -464,7 +467,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     else mdl.nobs = mdl.t2 - mdl.t1 + 1;
 
     /* check degrees of freedom */
-    if (get_model_df(&mdl, rho)) {
+    if (get_model_df(&mdl, rho, ((opts & OPT_P) || ci == PWE))) {
         goto lsq_abort; 
     }
 
@@ -586,7 +589,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     int i, j, t;
     int li, lj, m;
     int l0 = list[0], yno = list[1];
-    double x, z1, z2, pw1;
+    double x, z1, z2, pw1, m1, m2;
     int qdiff = (rho != 0.0);
 
     /* Prais-Winsten term */
@@ -608,8 +611,11 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     for (t=t1; t<=t2; t++) {
 	if (t == t1 && qdiff) continue;
 	x = Z[yno][t]; 
-	if (qdiff) x -= rho * Z[yno][t-1];
-	else if (nwt) x *= Z[nwt][t];
+	if (qdiff) {
+	    x -= rho * Z[yno][t-1];
+	} else if (nwt) {
+	    x *= Z[nwt][t];
+	}
         xpy[0] += x;
         xpy[l0] += x * x;
     }	
@@ -625,12 +631,14 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
 	    z1 = (li == 0)? 0.0 : rho;
+	    m1 = (li == 0)? 1.0 : pw1;
 	    for (j=i; j<=l0; j++) {
 		lj = list[j];
 		z2 = (lj == 0)? 0.0 : rho;
+		m2 = (lj == 0)? 1.0 : pw1;
 		x = 0.0;
 		if (pwe) {
-		    x += pw1 * Z[li][t1] * pw1 * Z[lj][t1];
+		    x += m1 * Z[li][t1] * m2 * Z[lj][t1];
 		}
 		for (t=t1+1; t<=t2; t++) {
 		    x += (Z[li][t] - z1 * Z[li][t-1]) * 
@@ -643,7 +651,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    }
 	    x = 0.0;
 	    if (pwe) {
-		x += pw1 * Z[yno][t1] * pw1 * Z[li][t1];
+		x += pw1 * Z[yno][t1] * m1 * Z[li][t1];
 	    }
 	    for (t=t1+1; t<=t2; t++) {
 		x += (Z[yno][t] - rho * Z[yno][t-1]) *
@@ -1100,7 +1108,7 @@ int makevcv (MODEL *pmod)
 	}
     }
 
-    if ((pmod->ci == CORC || pmod->ci == HILU) && pmod->ifc) {
+    if ((pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) && pmod->ifc) {
 	double r = gretl_model_get_double(pmod, "rho_in");
 
 	d = 1.0 / (1.0 - r);
@@ -1453,7 +1461,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
-	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, 0.0);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
@@ -1474,6 +1482,10 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, pdinfo);
 	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
+	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
+		corc_model.t1, 
+		corc_model.uhat[corc_model.t1],
+		corc_model.uhat[corc_model.t1+1]);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, pdinfo);
@@ -1482,7 +1494,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, "   %f\n", corc_model.ess);
 	corc_model.dw = 1 - rho;
 	autores(corc_model.list[1], *pZ, &corc_model, uhat);
-	rho = rhohat(1, corc_model.t1, corc_model.t2, uhat);
+	rho = rhohat((opt != PWE), corc_model.t1, corc_model.t2, uhat);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
 	if (iter == 20) break;
