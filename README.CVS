@@ -5,7 +5,8 @@ step first:
 #!bin/sh
 for f in calculator.c guiprint_common.c gpt_control.c gpt_control.h \
   model_table.c model_table.h objectsave.c objectsave.h \
-  session.c session.h webget.c webget.h library.c library.h ; do
+  session.c session.h webget.c webget.h library.c library.h \
+  datafiles.c database.h ; do
     rm -f gui/$f
     cp -ap gui2/$f gui
 done

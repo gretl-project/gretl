@@ -152,6 +152,41 @@ static int read_ps_descriptions (windata_t *fdata)
 
 /* ........................................................... */
 
+static int check_for_data_descriptions (int role)
+{
+    FILE *fp;
+    char fname[MAXLEN];
+    int err = 0;
+
+    if (role == RAMU_DATA) 
+	build_path(paths.datadir, "descriptions", fname, NULL);
+    else if (role == PWT_DATA)
+	build_path(pwtpath, "descriptions", fname, NULL);
+    else if (role == JW_DATA)
+	build_path(jwpath, "jw_descriptions", fname, NULL);
+    else if (role == DG_DATA)
+	build_path(dgpath, "dg_descriptions", fname, NULL);
+    else if (role == ETM_DATA)
+	build_path(etmpath, "etm_descriptions", fname, NULL);
+    else if (role == GREENE_DATA) {
+	strcpy(fname, paths.datadir);
+	append_dir(fname, "greene");
+	strcat(fname, "wg_descriptions"); 
+    } 
+
+    fp = fopen(fname, "r");
+
+    if (fp == NULL) {
+	sprintf(errtext, _("Couldn't open data descriptions file\n%s"), fname);
+	errbox(errtext);
+	err = 1;
+    } else {
+	fclose(fp);
+    }
+
+    return err;
+}
+
 static int read_data_descriptions (windata_t *fdata)
 {
     FILE *fp;
@@ -183,11 +218,7 @@ static int read_data_descriptions (windata_t *fdata)
     } 
 
     fp = fopen(fname, "r");
-    if (fp == NULL) {
-	sprintf(errtext, _("Couldn't open data descriptions file\n%s"), fname);
-	errbox(errtext);
-	return 1;
-    }
+    if (fp == NULL) return 1;
 
 #ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fdata->listbox)));
@@ -778,10 +809,9 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
     if (err) {
 	gtk_widget_destroy(fdata->w);
-	return;
-    }	
-
-    gtk_widget_show_all(fdata->w); 
+    } else {
+	gtk_widget_show_all(fdata->w); 
+    }
 }
 
 /* ........................................................... */
@@ -878,7 +908,7 @@ static GtkWidget *files_window (windata_t *fdata)
     return box;
 }
 
-#else /* now old gtk version */
+#else /* now the old gtk version */
 
 static GtkWidget *files_window (windata_t *fdata) 
 {
@@ -1328,11 +1358,26 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 
 static int page_missing (int i)
 {
-    if (i == JW_DATA && *jwpath == '\0') return 1;
-    if (i == DG_DATA && *dgpath == '\0') return 1;
-    if (i == ETM_DATA && *etmpath == '\0') return 1;
-    if (i == PWT_DATA && *pwtpath == '\0') return 1;
-    if (i == PWT_PS && *pwtpath == '\0') return 1;
+    if (i == PWT_PS && *pwtpath == '\0') {
+	return 1;
+    } else {
+	char *datapath = NULL;
+
+	if (i == RAMU_DATA) datapath = paths.datadir;
+	else if (i == JW_DATA) datapath = jwpath;
+	else if (i == DG_DATA) datapath = dgpath;
+	else if (i == ETM_DATA) datapath = etmpath;
+	else if (i == PWT_DATA) datapath = pwtpath;
+
+	if (datapath == NULL || *datapath == '\0') return 1;
+	else if (check_for_data_descriptions(i)) {
+	    if (datapath != paths.datadir) {
+		*datapath = '\0';
+	    }
+	    return 1;
+	}
+    }
+
     return 0;
 }
 
@@ -1451,6 +1496,7 @@ static int populate_notebook_filelists (windata_t *fdata,
 					int code)
 {
     int i, role = fdata->role;
+    int err, any_ok = 0;
 
     if (code == TEXTBOOK_DATA) {
 	for (i=RAMU_DATA; i<MAX_DATA; i++) {
@@ -1459,9 +1505,8 @@ static int populate_notebook_filelists (windata_t *fdata,
 	    }
 	    fdata->role = i;
 	    fdata->listbox = pages[i];
-	    if (populate_filelist(fdata)) {
-		return 1;
-	    }
+	    err = populate_filelist(fdata);
+	    if (!err) any_ok = 1;
 	}
     }
     else if (code == PS_FILES) {
@@ -1471,9 +1516,8 @@ static int populate_notebook_filelists (windata_t *fdata,
 	    }
 	    fdata->role = i;
 	    fdata->listbox = pages[i - RAMU_PS];
-	    if (populate_filelist(fdata)) {
-		return 1;
-	    }
+	    err = populate_filelist(fdata);
+	    if (!err) any_ok = 1;
 	}
     }
 
