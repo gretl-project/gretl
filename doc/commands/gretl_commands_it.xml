@@ -4,7 +4,7 @@
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
 
-  <command name="add" section="Tests" label="Variabili aggiunte">
+  <command name="add" section="Tests" label="Test per le variabili aggiunte">
 
     <usage>
       <arguments>
@@ -290,7 +290,7 @@
 
   </command>
 
-  <command name="arma" section="Estimation" label="Modello ARMA">
+  <command name="arma" section="Estimation" label="Stima ARMA">
 
     <usage>
       <arguments>
@@ -334,8 +334,8 @@
       </para>
 
       <para context="gui">
-	Selezionato dal menù Variabile, stima un modello autoregressivo a media
-	mobile univariato (ARMA: Autoregressive, Moving Average).  Selezionato
+	Se è selezionato dal menù Variabile, stima un modello autoregressivo a media
+	mobile univariato (ARMA: Autoregressive, Moving Average).  Se è selezionato
 	dal menù Modello (<quote>ARMAX</quote>), stima un modello ARMAX, che
 	contiene in più dei regressori esogeni.
       </para>
@@ -383,7 +383,7 @@
 
   </command>
 
-  <command name="boxplot" section="Graphs" label="Boxplot">
+  <command name="boxplot" section="Graphs" label="Grafici boxplot">
 
     <usage>
       <arguments>
@@ -399,7 +399,7 @@
 
     <description>
 
-      <para>Questo grafico (da Tukey e Chambers) mostra la distribuzione
+      <para>Questo tipo di grafici (da Tukey e Chambers) mostra la distribuzione
         di una variabile. La <quote>scatola</quote> centrale (box) racchiude il
         50 per cento centrale dei dati, ossia è delimitato dal primo e terzo
         quartile. I <quote>baffi</quote> (whiskers) si estendono fino ai valori
@@ -447,7 +447,7 @@
 
   </command>
 
-  <command name="chow" section="Tests" label="Test Chow">
+  <command name="chow" section="Tests" label="Chow">
 
     <usage>
       <arguments>
@@ -483,7 +483,7 @@
 
   </command>
 
-  <command name="coeffsum" section="Tests" label="Somma dei coefficienti">
+  <command name="coeffsum" section="Tests" label="Test sulla somma dei coefficienti">
 
     <usage>
       <arguments>
@@ -608,7 +608,7 @@
   </command>
 
   <command name="compact" section="Dataset" context="gui"
-    label="Compatta dati">
+    label="Compattamento dei dati">
 
     <description>
 
@@ -653,7 +653,7 @@
         scelto diventa quello predefinito, ma se si è scelto un metodo di
         compattamento per una certa variabile (nel menù <quote>Variabile/Modifica
         attributi</quote>) viene usato quel metodo al posto di quello predefinito.
-        Se il metodo di compattamento è già scelto per tutte le variabili, non
+        Se il metodo di compattamento è già stato scelto per tutte le variabili, non
         viene presentata la scelta per il metodo di compattamento predefinito.
 	</para>
 
@@ -1091,7 +1091,7 @@
   </command>
 
   <command name="export" section="Dataset" context="gui"
-    label="Esporta dati">
+    label="Esportazione dei dati">
 
     <description>
       <para>È possibile esportare dati in formato separato da virgole
@@ -1108,7 +1108,7 @@
   </command>
 
   <command name="factorized" section="Graphs" context="gui"
-    label="Grafico X-Y con fattore">
+    label="Grafici X-Y con fattore">
 
     <description>
       <para>Questo comando richiede che si selezionino tre variabili,
@@ -1270,7 +1270,7 @@
 
   </command>  
 
-  <command name="garch" section="Estimation" label="Modello GARCH">
+  <command name="garch" section="Estimation" label="Stima GARCH">
 
     <usage>
       <arguments>
@@ -1354,7 +1354,7 @@
   </command>
 
   <command name="genr" section="Dataset"
-    label="Genera una nuova variabile">
+    label="Generazione di una nuova variabile">
 
     <usage>
       <arguments>
@@ -1938,10 +1938,10 @@
       <para>Nella finestra della sessione, è possibile trascinare fino
 	a otto grafici sull'icona della pagina dei grafici. Facendo doppio
 	clic sull'icona della pagina dei grafici (o facendo clic col tasto
-        destro e selezionando <quote>Mostra</quote>), una pagina contenente
+        destro e selezionando <quote>Mostra</quote>), la pagina contenente
         i grafici selezionati verrà composta e aperta con il proprio
-        visualizzatore di file postscript, da cui sarà possibile stampare
-        la pagina.</para>
+        visualizzatore di file postscript, da cui sarà possibile stamparla.
+      </para>
 
       <para>Per pulire la pagina dei grafici, fare clic col tasto destro
         sull'icona e selezionare <quote>Pulisci</quote>.</para> 
@@ -1960,10 +1960,10 @@
     label="Grafici tridimensionali">
 
     <description>
-      <para>Questa funzionalità migliora se avete installata una
+      <para>Questa funzionalità migliora se è stata installata una
         versione di gnuplot pari o superiore alla 3.8, che consente
         di manipolare il grafico 3D con il mouse (ruotandolo ed
-        espandendo o riducendo gli assi).</para>
+        allungando o riducendo gli assi).</para>
 
       <para>Nella composizione di un grafico 3D, si noti che l'asse Z
         sarà l'asse verticale, quindi se si ha una variabile dipendente
@@ -2232,7 +2232,7 @@
 
   </command>
 
-  <command name="label" section="Dataset" label="Modifica gli attributi di una variabile">
+  <command name="label" section="Dataset" label="Modifica degli attributi di una variabile">
 
     <usage>
       <arguments>
@@ -2388,7 +2388,7 @@
   </command>
 
   <command name="leverage" section="Tests"
-    label="Osservazioni influenti">
+    label="Test per le osservazioni influenti">
 
     <usage>
       <options>
@@ -2445,8 +2445,8 @@
 
       <para context="gui">
 	L'icona "+" in cima alla finestra del test di leverage apre una
-        finestra di dialogo che permette di salvare una o più delle
-        variabili del test nel dataset in uso.</para>
+        finestra di dialogo che permette di salvare nel dataset in uso
+        una o più delle variabili del test.</para>
 
     </description>
 
@@ -2523,7 +2523,7 @@
   </command>
 
   <command name="logistic" section="Estimation"
-    label="Regressione logistica">
+    label="Stima logistica">
 
     <usage>
       <arguments>
@@ -2597,7 +2597,7 @@
   </command>
 
   <command name="logit" section="Estimation"
-    label="Regressione logit">
+    label="Stima logit">
 
     <usage>
       <arguments>
@@ -2746,7 +2746,7 @@
   </command>
 
   <command name="meantest" section="Tests"
-    label="Differenza delle medie">
+    label="Test per la differenza delle medie">
 
     <usage>
       <arguments>
@@ -2756,7 +2756,7 @@
       <options>
         <option>
 	  <flag>--unequal-vars</flag>
-	  <effect>assume varianze diseguali</effect>
+	  <effect>assume varianze diverse</effect>
         </option>
       </options>
     </usage>
@@ -2822,14 +2822,13 @@
 
     <description context="gui"> 
       <para>
-	Nella ricerca econometrica è prassi stimare vari modelli con una
-        variabile dipendente comune &mdash; mentre i modelli differiscono
-        tra loro per le variabili indipendenti o per lo stimatore usato.
-	In questa situazione è comodo poter rappresentare i risultati
-        delle regressioni in forma di una tabella dove ogni colonna
-        contiene i risultati (stime dei coefficienti e errori standard)
-        per un dato modello e ogni riga contiene le stime per una certa
-        variabile nei differenti modelli.</para>
+	Nella ricerca econometrica si è soliti stimare vari modelli con una
+        variabile dipendente comune, che differiscono tra loro per le variabili
+        indipendenti o per lo stimatore usato.  In questa situazione è comodo
+        poter rappresentare i risultati delle regressioni sotto forma di una
+        tabella dove ogni colonna contiene i risultati (stime dei coefficienti
+        e errori standard) per un dato modello e ogni riga contiene le stime
+        per una certa variabile nei differenti modelli.</para>
 
       <para>Gretl dà la possibilità di costruire una tabella simile (e
       di esportarla in testo semplice, &latex; o RTF - Rich Text Format).
@@ -2885,7 +2884,7 @@
     </description>
 
     <description context="cli">
-      <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda
+      <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda il
       	<manref targ="modes"/> per i dettagli. Le opzioni hanno i
         seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo modello
         stimato alla tabella modelli, se possibile; <cmd>show</cmd>
@@ -2900,7 +2899,7 @@
   </command>
 
   <command name="mpols" section="Estimation"
-    label="OLS a precisione multipla">
+    label="Stima OLS a precisione multipla">
 
     <usage>
       <arguments>
@@ -2918,12 +2917,12 @@
       </para>
 
       <para context="cli">
-	Per stimare un'interpolazione polinomiale usando l'aritmetica a
-        precisione multipla per generare le potenze richieste della
-        variabile indipendente, si usi la sintassi <cmd>mpols y 0 x ; 2
+	Si si vuole stimare un'interpolazione polinomiale usando l'aritmetica a
+        precisione multipla per generare le potenze volute della
+        variabile indipendente, si può usare la sintassi <cmd>mpols y 0 x ; 2
         3 4</cmd>. Si otterrà una regressione di <lit>y</lit> su <lit>x</lit>,
 	<lit>x</lit> quadro, <lit>x</lit> al cubo e <lit>x</lit> alla
-        quarta potenza. Quindi i numeri (interi positivi) a destra del
+        quarta potenza, ossia, i numeri (interi positivi) a destra del
         punto e virgola specificano le potenze di <lit>x</lit> da usare.
         Se si indica più di una variabile indipendente, l'ultima
         variabile prima del punto e virgola è quella di cui verranno
@@ -2977,7 +2976,7 @@
   </command>
 
   <command name="nls" section="Estimation"
-    label="Minimi quadrati non-lineari">
+    label="Stima minimi quadrati non-lineari">
 
     <usage>
       <arguments>
@@ -3041,7 +3040,7 @@
 	genr gamma = 1
       </code>
 
-      <para>Per ulteriori dettagli sulla stima NLS si veda
+      <para>Per ulteriori dettagli sulla stima NLS si veda il
 	<manref targ="chap-nls"/>.</para>
 
     </description>
@@ -3139,12 +3138,12 @@
       <para>
 	Crea un dataset <quote>vuoto</quote>, che contiene solo una
         costante e una variabile indice, con periodicità 1 e il numero
-        indicato di osservazioni. Il dataset può essere usato a scopo di
-        simulazione: alcuni dei comandi <cmd>genr</cmd> (ad es.
-        <cmd>genr uniform()</cmd>, <cmd>genr normal()</cmd>) possono
-        essere usati per riempire il dataset con dati di prova. Questo
-        comando può essere usato insieme a <cmd>loop</cmd>.  Si veda
-        anche l'opzione <quote>seed</quote> del comando <cmdref targ="set"/>.
+        indicato di osservazioni. Ad esempio, è possibile creare un dataset
+        a scopo di simulazione usando alcuni comandi <cmd>genr</cmd> (come
+        <cmd>genr uniform()</cmd> e <cmd>genr normal()</cmd>) per generare
+        dati di prova. Questo comando può essere usato insieme a
+        <cmd>loop</cmd>.  Si veda anche l'opzione <quote>seed</quote> del
+        comando <cmdref targ="set"/>.
       </para>
     </description>
 
@@ -3155,7 +3154,7 @@
   </command>
 
   <command name="ols" section="Estimation"
-    label="Minimi quadrati ordinari">
+    label="Stima minimi quadrati ordinari">
 
     <usage>
       <arguments>
@@ -3205,8 +3204,8 @@
         indicato usando il numero 0.
       </para>
 
-      <para>Oltre alle stime dei coefficienti e gli errori standard, il
-      programma mostra i p-value per le statistiche <mathvar>t</mathvar>
+      <para>Oltre alle stime dei coefficienti e agli errori standard, il
+        programma mostra i p-value per le statistiche <mathvar>t</mathvar>
 	(a due code) e <mathvar>F</mathvar>.  Un p-value inferiore a
 	0.01 indica significatività al livello dell'1 per cento ed è
         denotato con <lit>***</lit>. <lit>**</lit> indica invece la
@@ -3244,7 +3243,7 @@
 
   </command>
 
-  <command name="omit" section="Tests" label="Variabili omesse">
+  <command name="omit" section="Tests" label="Test per le variabili omesse">
 
     <usage>
       <arguments>
@@ -3279,7 +3278,7 @@
 	Se viene usata l'opzione <lit>--quiet</lit>, i risultati
         mostrati comprendono solo il test per la significatività
         congiunta delle variabili omesse, altrimenti vengono mostrate
-        anche le stime del moello ridotto. In quest'ultimo caso,
+        anche le stime del modello ridotto. In quest'ultimo caso,
         l'opzione <lit>--vcv</lit> mostra anche la matrice di covarianza
         dei coefficienti.
       </para>
@@ -3330,7 +3329,7 @@
     <description>
       <para>
 	Gretl può accedere ai database della Wake Forest University
-	(se il computer è connesso a internet).</para>
+	(se il proprio computer è connesso a internet).</para>
 
       <para>Dal menù <quote>File, Consulta database</quote>, selezionare
 	<quote>Sul server di database</quote>: apparirà una finestra che
@@ -3340,12 +3339,12 @@
         database e a una breve descrizione, apparirà un campo
         <quote>Stato</quote>, che mostra se il database è stato
         installato localmente (sul disco del computer), e, in caso
-        positivo, se la versione installata è aggiornata con quella
+        positivo, se la versione installata è aggiornata a quella
         disponibile sul server.</para>
 
       <para>Se un database è stato installato localmente ed è
       aggiornato, non c'è nessun vantaggio nell'accedervi attraverso il
-      server, ma per un database non installato o aggiornato, può essere
+      server, mentre per un database non installato o non aggiornato, può essere
       utile scaricare un elenco delle serie di dati, facendo clic su
       <quote>Scarica l'elenco delle serie</quote>. Apparirà una nuova
       finestra da cui è possibile visualizzare i valori di una serie
@@ -3356,7 +3355,7 @@
       variabile in particolare, usando il comando <quote>Trova</quote>
       del menù.</para>
 
-      <para>Per poter accedere a un database anche offline, selezionare la
+      <para>Per poter accedere a un database anche offline, basta selezionare la
       riga del database desiderato nella prima finestra e premere il pulsante 
       <quote>Installa</quote>. Il database verrà scaricato in formato
       compresso, verrà decompresso e installato sul proprio disco fisso,
@@ -3488,7 +3487,7 @@
 
       <para context="gui">Si noti che questo comando non modifica la
       struttura del dataset panel, ma imposta solo il modo in cui gretl
-      interpreta la struttura. Per convertire un dataset dal formato
+      interpreta il dataset. Per convertire un dataset dal formato
       <quote>pila di cross section</quote> a quello <quote>pila di serie
       storiche</quote> o viceversa, occorre usare il comando
       <quote>Ristruttura panel</quote>.
@@ -3540,13 +3539,13 @@
         varianza comune spiegata da ogni componente. Mostra anche i
         corrispondenti autovettori (o <quote>pesi della componente</quote>).</para>  
 
-      <para>Usando l'opzione <lit>--save</lit>, le componenti con
-      autovalori maggiori di 1.0 vengono salvati nel dataset come
-      variabili, con i nomi <lit>PC1</lit>, <lit>PC2</lit> e così via.
-      Queste variabili artificiali sono definite come la somma di
-	(peso della componente) moltiplicato per (<lit>Xi</lit>
-        standardizzato), dove <lit>Xi</lit> denota la variabile
-        <mathvar>i</mathvar>-esima nella <repl>lista-variabili</repl>.</para>
+      <para>Usando l'opzione <lit>--save</lit>, le componenti con autovalori
+      maggiori di 1.0 vengono salvati nel dataset come variabili, con i nomi
+      <lit>PC1</lit>, <lit>PC2</lit> e così via.  Queste variabili artificiali
+      sono definite come la somma del peso della componente moltiplicato per
+      <lit>Xi</lit> standardizzato, dove <lit>Xi</lit> denota la
+      <mathvar>i</mathvar>-esima variabile nella
+      <repl>lista-variabili</repl>.</para>
 
       <para>Usando l'opzione <lit>--save-all</lit>, vengono salvate
       tutte le componenti, come descritto sopra.</para> 
@@ -3627,7 +3626,7 @@
   </command>
 
   <command name="pooled" section="Estimation"
-    label="Pooled OLS">
+    label="Stima pooled OLS">
 
     <usage>
       <arguments>
@@ -3673,7 +3672,7 @@
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
-	<example>print "This is a string"</example>
+	<example>print "Questa è una stringa"</example>
       </examples>
     </usage>
 
@@ -3746,7 +3745,7 @@
   </command>
 
   <command name="probit" section="Estimation"
-    label="Modello probit">
+    label="Stima probit">
 
     <usage>
       <arguments>
@@ -3888,7 +3887,7 @@
       <para>Modifica il nome di una variabile con numero identificativo
 	<repl>numero-var</repl> in <repl>nuovo-nome</repl>. Il
 	<repl>numero-var</repl> deve essere compreso tra 1 e il numero
-        di variabili nel dataset. Il nuovo nome deve essere luno al
+        di variabili nel dataset. Il nuovo nome deve essere lungo al
         massimo 8 caratteri, deve iniziare con una lettera e deve essere
         composto di sole lettere, numeri e il carattere trattino basso.
       </para>
@@ -3906,7 +3905,7 @@
     <description>
       <para>
 	Va eseguito dopo la stima di un modello via OLS. Esegue il test
-	RESET di Ramsey per la specificazione del moello
+	RESET di Ramsey per la specificazione del modello
         (non-linearità), aggiungendo alla regressione il quadrato e il
         cubo dei valori stimati e calcolando la statistica
         <mathvar>F</mathvar> per l'ipotesi nulla che i coefficienti dei due
@@ -3920,14 +3919,14 @@
 
   </command>
 
-  <command name="restrict" section="Tests" label="Vincoli lineari">
+  <command name="restrict" section="Tests" label="Test per vincoli lineari">
 
     <description>
       <para>
 	Valuta un insieme di vincoli lineari sui parametri dell'ultimo modello
         stimato. In modalità batch, l'insieme di vincoli deve essere
         racchiuso tra i comandi <quote>restrict</quote> e
-	<quote>end restrict</quote>, mentre in modalità grafica, queste righe
+	<quote>end restrict</quote>, mentre in modalità grafica queste righe
         possono essere omesse dalla finestra di dialogo che definisce i vincoli.
       </para>
 
@@ -3997,7 +3996,7 @@
   </command>
 
   <command name="rmplot" section="Graphs"
-    label="Grafico range-mean">
+    label="Grafici range-mean">
 
     <usage>
       <arguments>
@@ -4007,7 +4006,7 @@
 
     <description>
       <para>
-	Grafico Range&ndash;mean: questo comando crea un semplice
+	Grafici Range&ndash;mean: questo comando crea un semplice
         grafico che aiuta a capire se una serie storica
 	<mathvar>y</mathvar>(t) ha varianza costante o no. L'intero
         campione t=1,...,T viene diviso in piccoli sotto-campioni di
@@ -4075,9 +4074,9 @@
     <description>
       <para>
 	Esegue il test non parametrico <quote>delle successioni</quote>
-        per la casualità della variabile specificata. Per 
+        per la casualità della variabile specificata. Ad esempio, per 
         testare la casualità delle deviazioni dalla mediana per una
-        variabile chiamata <lit>x1</lit> con una mediana diversa da
+        variabile chiamata <lit>x1</lit>, con una mediana diversa da
         zero, eseguire i comandi seguenti:</para>
 
       <code>
@@ -4102,7 +4101,7 @@
       <para>
 	Scegliendo <quote>Campione/Imposta in base a dummy...</quote>,
 	viene chiesto di scegliere una variabile dummy (indicatrice),
-        che può avere solo valori 0 o 1 per ogni osservazione. Il
+        che può assumere solo valori 0 o 1 per ogni osservazione. Il
         campione verrà limitato alle osservazioni per cui la variabile
         dummy vale 1.</para>
 
@@ -4125,7 +4124,7 @@
       variabile non ha valori mancanti, occorre usare
       <quote>Campione/Imposta in base a condizione...</quote> e inserire
       la condizione Booleana <quote>!missing(nome-variabile)</quote>
-      (sostiuire <quote>nome-variabile</quote> con il nome della
+      (sostituire <quote>nome-variabile</quote> con il nome della
       variabile che si intende usare).</para>  
 
       <para>Se sono state associate etichette alle osservazioni, è possibile
@@ -4240,19 +4239,19 @@
       <table lwidth="80pt" rwidth="320pt">
 	<row>
 	  <cell><lit>echo</lit></cell>
-	  <cell>valori: <lit>off</lit> o <lit>on</lit> (valore predefinito).
+	  <cell>Valori: <lit>off</lit> o <lit>on</lit> (valore predefinito).
 	    Sopprime o ripristina l'indicazione dei comandi eseguiti nell'output
             dei risultati.</cell>
 	</row>
 	<row>
 	  <cell><lit>qr</lit></cell>
-	  <cell>valori: <lit>on</lit> o <lit>off</lit> (valore predefinito).
+	  <cell>Valori: <lit>on</lit> o <lit>off</lit> (valore predefinito).
 	    Usa la decomposizione QR invece di quella di Cholesky nel
             calcolo delle stime OLS.</cell>
 	</row>
 	<row>
 	  <cell><lit>hac_lag</lit></cell>
-	  <cell>valori: <lit>nw1</lit> (valore predefinito) o
+	  <cell>Valori: <lit>nw1</lit> (valore predefinito) o
 	    <lit>nw2</lit>, o un intero.  Imposta il massimo valore di
             ritardo, <mathvar>p</mathvar>, usato nel calcolo degli
             errori standard HAC (Heteroskedasticity and Autocorrelation Consistent)
@@ -4273,7 +4272,7 @@
 	</row>
 	<row>
 	  <cell><lit>hc_version</lit></cell>
-	  <cell>valori: 0 (valore predefinito), 1, 2 o 3. Imposta la
+	  <cell>Valori: 0 (valore predefinito), 1, 2 o 3. Imposta la
           variante da usare nel calcolo degli errori standard HAC
           (Heteroskedasticity and Autocorrelation Consistent) con dati
           di tipo cross section. Le opzioni corrispondono alle HC0, HC1,
@@ -4282,7 +4281,7 @@
           quelli che di solito vengono chiamati <quote>errori standard di
           White</quote>.</cell> </row>
 	<row>
-	  <cell><lit>force_hc</lit></cell> <cell>valori: off (predefinito)
+	  <cell><lit>force_hc</lit></cell> <cell>Valori: off (predefinito)
 	    o on. Lo stimatore HAC viene usato in modo predefinito con dati
             serie storiche e quando si usa l'opzione <lit>--robust</lit> di
             <cmd>ols</cmd>. Impostando invece <lit>force_hc</lit> a
@@ -4292,7 +4291,7 @@
 	</row>
 	<row>
 	  <cell><lit>garch_vcv</lit></cell>
-	  <cell>valori: <lit>unset</lit>, <lit>hessian</lit>,
+	  <cell>Valori: <lit>unset</lit>, <lit>hessian</lit>,
 	    <lit>im</lit> (matrice di informazione) , <lit>op</lit>
             (matrice dei prodotti esterni), <lit>qml</lit> (stimatore QML),
 	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifica la
@@ -4304,7 +4303,7 @@
 	</row>
 	<row>
 	  <cell><lit>hp_lambda</lit></cell>
-	  <cell>valori: <lit>auto</lit> (valore predefinito), o un
+	  <cell>Valori: <lit>auto</lit> (valore predefinito), o un
           valore numerico. Imposta il parametro di livellamento per
           il filtro di Hodrick&ndash;Prescott (si veda la funzione
           <lit>hpfilt</lit> sotto il comando <cmd>genr</cmd>). Il valore
@@ -4342,7 +4341,7 @@
         veda anche <cmdref targ="panel"/>.
       </para>
       <para context="gui">
-	Usare questo comando per forzare il programma a interpretare il
+	Questo comando forza il programma a interpretare il
         dataset in uso come serie storiche o panel, invece che come
         serie semplici non datate. Servono due parametri: una frequenza
         intera e una stringa che indica l'osservazione iniziale (di
@@ -4352,7 +4351,7 @@
 	<row>
 	  <cell>4 1990:1</cell>
 	  <cell>Interpreta i dati come trimestrali a partire dal 1990,
-	    Q1</cell>
+	    primo trimestre</cell>
 	</row>
 	<row>
 	  <cell>12 1978:03</cell>
@@ -4369,7 +4368,7 @@
 	</row>
 	<row>
 	  <cell>7 2002/01/20</cell>
-          <cell>Dati giornalier (settimane di 7 giorni), a partire dal
+          <cell>Dati giornalieri (settimane di 7 giorni), a partire dal
           20 Gennaio 2002</cell>
 	</row>
       </table>
@@ -4449,7 +4448,7 @@
       <para>
 	Un <cmd>!</cmd> all'inizio di una riga di comando è
         interpretato come passaggio all'interprete di comandi (shell)
-        dell'utente sul sistema operativo in uso. In questo modo è
+        usato dall'utente nel sistema operativo. In questo modo è
         possibile eseguire comandi shell arbitrari dall'interno di
 	<program>gretl</program>.
       </para>
@@ -4588,7 +4587,7 @@
       struttura originale con il comando <cmdref targ="setobs"/>.
       </para>
 
-      <para>Si veda <manref targ="sampling"/> per ulteriori dettagli.</para>
+      <para>Si veda il <manref targ="sampling"/> per ulteriori dettagli.</para>
     
     </description>
 
@@ -4731,12 +4730,12 @@
         <program>Octave</program>, <program>R</program> e
         <program>PcGive</program> sono destinati ad essere usati con i
         rispettivi programmi. La compressione con gzip può essere utile per
-        grandi dataset. Si veda <manref targ="datafiles"/> per i dettagli sui
+        grandi dataset. Si veda il <manref targ="datafiles"/> per i dettagli sui
         vari formati.</para>
 
       <para>
 	Si noti che le variabili scalari non saranno salvate
-        automaticamente: per salvarli occorre includerli esplicitamente
+        automaticamente: per salvarle occorre includerle esplicitamente
         nella <repl>lista-variabili</repl>.
       </para>  
 	
@@ -4790,7 +4789,7 @@
 
     <description>
       <para>
-	Crea un sistema di equazioni. Al momento sono supportati due
+	Crea un sistema di equazioni. Al momento sono supportati due tipi di
         sistemi: <cmd>sur</cmd> (Seemingly Unrelated Regressions:
         regressioni apparentemente non collegate) e <cmd>3sls</cmd>
         (Three-Stage Least Squares: minimi quadrati a tre stadi). Nel
@@ -4802,10 +4801,10 @@
         system</cmd>.</para>
 
       <para>
-        Nel contesto di un sistema minimi quadrati a tre stadi, è possibile
-        fornire un elenco di strumenti (indicando le variabili per nome o per
-        numero), inserendole in una riga a sé stante, all'interno del blocco
-        <cmd>system</cmd>, preceduta dall'istruzione <cmd>instr</cmd>.
+        Nel caso di un sistema minimi quadrati a tre stadi, è possibile fornire
+        un elenco di variabili strumentali, aggiungendo all'interno del blocco
+        <cmd>system</cmd> una riga a sé stante che si apre con la parola chiave
+        <cmd>instr</cmd> e contiene le variabili, indicate per nome o per numero.
       </para>
     </description>
 
@@ -4867,7 +4866,7 @@
 
   </command>
 
-  <command name="tobit" section="Estimation" label="Modello tobit">
+  <command name="tobit" section="Estimation" label="Stima Tobit">
 
     <usage>
       <arguments>
@@ -4904,7 +4903,7 @@
   </command>
 
   <command name="tsls" section="Estimation"
-    label="Minimi quadrati a due stadi">
+    label="Stima minimi quadrati a due stadi">
 
     <usage>
       <arguments>
@@ -4935,7 +4934,7 @@
         esogene) nell'equazione strutturale per cui sono richieste le
         stime TSLS; <repl>strumenti</repl> è la lista completa delle
         variabili esogene e predeterminate in tutte le equazioni. Se la
-        lista degli <repl>instruments</repl> non è lunga almeno quanto
+        lista degli <repl>strumenti</repl> non è lunga almeno quanto
         quella delle <repl>variabili-indipendenti</repl>, il modello non
         è identificato.</para>
 
@@ -4964,7 +4963,7 @@
   </command>
 
   <command name="var" section="Estimation"
-    label="Autoregressione vettoriale">
+    label="Stima autoregressione vettoriale">
 
     <usage>
       <arguments>
@@ -4975,7 +4974,7 @@
       <options>
         <option>
 	  <flag>--quiet</flag>
-	  <effect>non mostrare risposte-impulsi ecc.</effect>
+	  <effect>non mostra impulso-risposta ecc.</effect>
         </option>
       </options>
       <examples>
@@ -4986,7 +4985,7 @@
     <description>
 
       <para context="gui">
-	Questo comando richiede la specificazione di:</para>
+	Questo comando richiede la specificazione dei seguenti elementi:</para>
 
       <ilist context="gui">
 	<li><para context="gui">- La variabile dipendente per la prima
@@ -5019,8 +5018,8 @@
       <para context="cli">
 	Imposta e stima (usando OLS) un'autoregressione vettoriale (VAR).
         Il primo argomento specifica l'ordine di ritardo, quindi segue
-        l'impostazione della prima equazione. Non includere i ritardi
-        tra gli elementi della <repl>lista-variabili</repl> &mdash;
+        l'impostazione della prima equazione. Non occorre includere i ritardi
+        tra gli elementi della <repl>lista-variabili</repl>:
         verranno aggiunti automaticamente. Il punto e virgola separa le
         variabili stocastiche, per cui verrà incluso un numero di
         ritardi pari a <repl>ordine</repl>, dai termini deterministici
@@ -5040,7 +5039,7 @@
         variabili nella <repl>lista-variabili</repl>. Il risultato di
         ogni equazione include i test <mathvar>F</mathvar> per i vincoli
         di uguaglianza a zero su tutti i ritardi delle variabili; un
-        test <mathvar>F</mathvar>-test per la significatività del
+        test <mathvar>F</mathvar> per la significatività del
         ritardo massimo; la scomposizione della varianza della
         previsione e le funzioni di impulso-risposta.</para>
 
@@ -5072,7 +5071,7 @@
   </command>
 
   <command name="vartest" section="Tests"
-    label="Differenza delle varianze">
+    label="Test per la differenza delle varianze">
 
     <usage>
       <arguments>
@@ -5131,7 +5130,7 @@
   </command>
 
   <command name="wls" section="Estimation"
-    label="Minimi quadrati ponderati">
+    label="Stima minimi quadrati ponderati">
 
     <usage>
       <arguments>
@@ -5149,8 +5148,8 @@
 
     <description>
       <para context="cli">
-	Calcola stime con minimi quadrati ponderati usando
-	<repl>variabile-pesi</repl> come pesi. In pratica viene
+	Calcola stime con minimi quadrati ponderati, prendendo i pesi da
+	<repl>variabile-pesi</repl>. In pratica viene
         calcolata una regressione OLS di <repl>variabile-pesi</repl>
         <lit>*</lit> <repl>variabile-dipendente</repl> rispetto a
         <repl>variabile-pesi</repl> <lit>*</lit>
