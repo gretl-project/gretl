@@ -1037,7 +1037,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     }
 
     tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, (sr->code == TSLS), FALSE, 0);
     gtk_widget_show(tmp);
 }
 
