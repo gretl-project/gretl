@@ -256,7 +256,15 @@ augment_restriction_set (gretl_restriction_set *rset, int n_terms)
 static const char *
 get_varname (const gretl_restriction_set *rset, int cnum)
 {
-    int vnum = rset->pmod->list[cnum + 2];
+    int vnum;
+
+    /* FIXME: garch -- vnum is wrong (probably ARMA too) 
+       and TSLS?? */
+    if (rset->pmod->ci == GARCH) {
+	vnum = rset->pmod->list[cnum + 2];
+    } else {
+	vnum = rset->pmod->list[cnum + 2];
+    }
 
     return rset->pdinfo->varname[vnum];
 }
@@ -286,13 +294,16 @@ static void print_restriction (const gretl_restriction_set *rset,
     const restriction *r = rset->restrictions[j];
     int i;
 
+    /* FIXME: reinstate get_varname when it's corrected */
+
     for (i=0; i<r->nterms; i++) {
 	print_mult(r->mult[i], i == 0, prn);
-#if 0
-	pprintf(prn, "b%d", r->coeff[i]);
-#else
-	pprintf(prn, "b(%s)", get_varname(rset, r->coeff[i]));
-#endif
+	if (rset->pmod->ci == ARMA ||
+	    rset->pmod->ci == GARCH) {
+	    pprintf(prn, "b%d", r->coeff[i]);
+	} else {
+	    pprintf(prn, "b(%s)", get_varname(rset, r->coeff[i]));
+	}
     }
     pprintf(prn, " = %g\n", r->rhs);
 }

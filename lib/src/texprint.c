@@ -167,6 +167,9 @@ static void tex_garch_coeff_name (char *targ, const char *src,
     char vname[VNAMELEN], vnesc[16];
     int lag;
 
+    /* FIXME: in equation form, varnames are coming out in
+       math mode, not mboxed */
+
     if (sscanf(src, "%[^(](%d)", vname, &lag) == 2) {
 	if (!inmath) {
 	    sprintf(targ, "$\\%s_%d$", vname, lag);

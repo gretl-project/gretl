@@ -759,10 +759,11 @@ int command_ok_for_model (int test_ci, int model_ci)
 	if (model_ci != POOLED) ok = 0;
 	break;
     case RESTRICT:
-	if (model_ci == LAD || model_ci == GARCH) ok = 0;
+	if (model_ci == LAD) ok = 0;
 	break;
     case TESTUHAT:
-	if (model_ci == TOBIT || model_ci == GARCH) ok = 0; /* garch? */
+	/* need to exclude garch? */
+	if (model_ci == TOBIT || model_ci == GARCH) ok = 0;
 	break;
 
     default:
