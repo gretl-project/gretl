@@ -20,6 +20,9 @@ newshort=`date +"%b %e, %Y"`
 newlong_es=`LANG=spanish date`
 newshort_es=`LANG=spanish date +"%b %e, %Y"`
 
+newlong_it=`LANG=italian date`
+newshort_it=`LANG=italian date +"%e %b %Y"`
+
 cat template/index_pat.html | sed s/VERSION/${newver}/g \
   | sed s/LONGDATE/"${newlong}"/ | sed s/SHORTDATE/"${newshort}"/ > htmltmp
 mv htmltmp index.html
@@ -28,17 +31,27 @@ cat template/gretl_espanol_pat.html | sed s/VERSION/${newver}/g \
   | sed s/LONGDATE/"${newlong_es}"/ | sed s/SHORTDATE/"${newshort_es}"/ > htmltmp
 mv htmltmp gretl_espanol.html
 
+cat template/gretl_italiano_pat.html | sed s/VERSION/${newver}/g \
+  | sed s/LONGDATE/"${newlong_it}"/ | sed s/SHORTDATE/"${newshort_it}"/ > htmltmp
+mv htmltmp gretl_italiano.html
+
 cat template/win32_pat.html | sed s/SHORTDATE/"${newshort}"/ > htmltmp
 mv htmltmp win32/index.html
 
 cat template/win32_pat_es.html | sed s/SHORTDATE/"${newshort_es}"/ > htmltmp
 mv htmltmp win32/index_es.html
 
+cat template/win32_pat_it.html | sed s/SHORTDATE/"${newshort_it}"/ > htmltmp
+mv htmltmp win32/index_it.html
+
 cat template/osx_pat.html | sed s/VERSION/${newver}/g > htmltmp
 mv htmltmp osx.html
 
 cat template/osx_pat_es.html | sed s/VERSION/${newver}/g > htmltmp
 mv htmltmp osx_es.html
+
+cat template/osx_pat_it.html | sed s/VERSION/${newver}/g > htmltmp
+mv htmltmp osx_it.html
 
 cat template/changelog.top > htmltmp
 cat ChangeLog >> htmltmp
