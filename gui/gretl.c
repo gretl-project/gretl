@@ -1051,18 +1051,13 @@ static int get_windows_font (char *fontspec)
 static float get_gui_scale (void)
 {
     GtkStyle *style = NULL;
-    GdkFont *font = NULL;
     int fsize = 0;
     float scale = 1.0;
 
     style = gtk_widget_get_style(mdata->w);
 
-    if (style != NULL) {
-	font = gtk_style_get_font(style);
-    }
-
-    if (font != NULL) {
-	fsize = gdk_char_height(font, 'x');
+    if (style != NULL && style->font != NULL) {
+	fsize = gdk_char_height(style->font, 'x');
     }
 
     if (fsize > 0) scale = fsize / 10.0;
