@@ -20,6 +20,8 @@ version 1.1.1
 - Workaround: command-line invocation of gretlw32.exe with 
   datafile could crash (I think this was a Windows bug)
 - Fixes for forecast-with-errors graphs
+- Fixes for "influential observations" test calculations, in
+  extreme cases
 
 07/23/03 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display

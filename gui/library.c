@@ -3023,42 +3023,40 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     int err, origv = datainfo->v, plot_list[4], lines[2];
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
-    int ts = dataset_is_time_series(datainfo);
 
-    if (xvar && pmod->list[0] == 3 && pmod->ifc) {
-	/* special case: simple regression with intercept */
-	plot_list[0] = 2;
-	plot_list[1] = pmod->list[1];
-	plot_list[2] = xvar;
-	lines[0] = lines[1] = 0;
-    } else {
-	/* add fitted values to data set temporarily */
-	if (add_fit_resid(pmod, 1, 1)) return;
-	plot_list[0] = 3;
-	plot_list[1] = datainfo->v - 1; /* last var added */
-	plot_list[2] = pmod->list[1];   /* depvar from regression */
+    /* add fitted values to data set temporarily */
+    if (add_fit_resid(pmod, 1, 1)) return;
 
-	if (xvar) {  
-	    /* plot against specified xvar */
-	    plot_list[3] = xvar;
-	    /* is it a simple regression? */
-	    lines[0] = (pmod->list[0] <= 3)? 1 : 0;
-	    lines[1] = 0;
-	} else { 
-	    /* plot against obs */
-	    int pv;
+    plot_list[0] = 3;
+    plot_list[1] = datainfo->v - 1; /* last var added (fitted vals) */
+    plot_list[2] = pmod->list[1];   /* depvar from regression */
 
-	    pv = plotvar(&Z, datainfo, (ts)? "time" : "index");
-	    if (pv < 0) {
-		errbox(_("Failed to add plotting index variable"));
-		dataset_drop_vars(1, &Z, datainfo);
-		return;
-	    }
-	    plot_list[3] = pv;
-	    lines[0] = (ts)? 1 : 0; 
-	    lines[1] = (ts)? 1 : 0;
-	} 
-    }
+    if (xvar) { 
+	int simple = 0;
+
+	/* plot against specified xvar */
+	plot_list[3] = xvar;
+	/* is it a simple regression? */
+	if ((pmod->ifc && pmod->list[0] == 3) || pmod->list[0] == 2) {
+	    simple = 1;
+	}
+	lines[0] = (simple)? 1 : 0;
+	lines[1] = 0;
+    } else { 
+	/* plot against obs */
+	int ts = dataset_is_time_series(datainfo);
+	int pv;
+
+	pv = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	if (pv < 0) {
+	    errbox(_("Failed to add plotting index variable"));
+	    dataset_drop_vars(1, &Z, datainfo);
+	    return;
+	}
+	plot_list[3] = pv;
+	lines[0] = (ts)? 1 : 0; 
+	lines[1] = (ts)? 1 : 0;
+    } 
 
     err = gnuplot(plot_list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, GP_GUI | GP_FA);

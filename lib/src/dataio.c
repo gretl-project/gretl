@@ -2035,7 +2035,8 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
    a comment line is one that starts with '#').
 */
 
-static int get_max_line_length (FILE *fp, char delim, int *gotdelim, PRN *prn)
+static int get_max_line_length (FILE *fp, char delim, int *gotdelim, 
+				int *gottab, PRN *prn)
 {
     int c, cc = 0;
     int comment = 0, maxlen = 0;
@@ -2057,6 +2058,7 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim, PRN *prn)
 	    if (c == '#') comment = 1;
 	    else comment = 0;
 	}
+	if (!comment && *gottab == 0 && c == '\t') *gottab = 1;
 	if (!comment && *gotdelim == 0 && c == delim) *gotdelim = 1;
 	cc++;
     }
@@ -2180,7 +2182,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 		const char *fname, PRN *prn)
 {
     int ncols, chkcols;
-    int gotdata = 0, gotdelim = 0, markertest = -1;
+    int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;
     int i, k, t, blank_1 = 0, obs_1 = 0, maxlen;
     char csvstr[32];
     FILE *fp = NULL;
@@ -2214,12 +2216,13 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, "%s %s...\n", _("parsing"), fname);
 
     /* get line length, also check for binary data */
-    maxlen = get_max_line_length(fp, delim, &gotdelim, prn);    
+    maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, prn);    
     if (maxlen <= 0) {
 	goto csv_bailout;
     }
     if (!gotdelim) {
-	delim = csvinfo->delim = ' ';
+	if (gottab) delim = csvinfo->delim = '\t';
+	else delim = csvinfo->delim = ' ';
     }
 
     pprintf(prn, _("using delimiter '%c'\n"), delim);

@@ -804,11 +804,9 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	_init_model(&plotmod, pdinfo);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
-	    /* is the fit significant? or is it a fitted-actual
-	       graph from a simple regression? */
+	    /* is the fit significant? */
 	    b = plotmod.coeff[1];
-	    if ((flags & GP_FA) ||
-		tprob(b / plotmod.sderr[1], plotmod.dfd) < .10) {
+	    if (tprob(b / plotmod.sderr[1], plotmod.dfd) < .10) {
 		ols_ok = 1;
 		a = plotmod.coeff[0];
 	    }
@@ -874,7 +872,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	fprintf(fq, "set ylabel '%s'\n", I_("residual"));
 	fputs("set key left top\n", fq);
     } else if (flags & GP_FA) {
-	if (list[3] == pdinfo->v - 1) {
+	if (list[3] == pdinfo->v - 1) { 
+	    /* FIXME rubbish? */
 	    /* x var is just time or index */
 	    make_gtitle(fq, GTITLE_AF, get_series_name(pdinfo, list[2]), NULL);
 	} else {
@@ -981,8 +980,18 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		strcpy(s1, get_series_name(pdinfo, list[i]));
 	    }
 	    if (!pdist) { 
-		if ((flags & GP_GUI)? lines[i-1] : lines[0]) {
-		    strcpy(withstring, "w lines");
+		if (flags & GP_GUI) {
+		    if (lines[i-1]) {
+			strcpy(withstring, "w lines");
+		    } else {
+			strcpy(withstring, "w points");
+		    }
+		} else {
+		    if (lines[0]) {
+			strcpy(withstring, "w lines");
+		    } else {
+			strcpy(withstring, "w points");
+		    }
 		}
 	    }
 	    fprintf(fq, " '-' using 1:($2) title '%s' %s", 

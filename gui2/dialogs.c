@@ -1156,6 +1156,7 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->name_entry, FALSE, FALSE, 0);
     gtk_widget_show(vset->name_entry); 
+    gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
@@ -1177,6 +1178,8 @@ void varinfo_dialog (int varnum)
 		       VARLABEL(datainfo, varnum));
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 0);
     gtk_widget_show(vset->label_entry);
+    gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
+
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);  
@@ -1197,6 +1200,7 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->display_name_entry, FALSE, FALSE, 0);
     gtk_widget_show(vset->display_name_entry); 
+    gtk_entry_set_activates_default(GTK_ENTRY(vset->display_name_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
