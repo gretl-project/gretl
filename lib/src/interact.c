@@ -1006,9 +1006,15 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case INFO:
+	if (datainfo->descrip != NULL) {
+	    pprintf(prn, "Data information:\n\n%s\n", datainfo->descrip);
+	} else 
+	    pprintf(prn, "No data information is available.\n");
+#ifdef old_info
 	err = get_info(paths->hdrfile, prn);
 	if (err == 1) /* err = 2 means no info rather than read error */
 	    pprintf(prn, "Error reading data header file.\n");
+#endif
 	break;
 
     case LABELS:

@@ -274,6 +274,27 @@ gint bufopen (PRN **pprn)
 
 /* ........................................................... */
 
+PRN *bufopen_with_size (size_t sz)
+{
+    PRN *prn;
+
+    prn = malloc(sizeof *prn);
+    if (prn == NULL) {
+	errbox("Out of memory allocating output buffer");
+	return NULL;
+    }
+    prn->fp = NULL;
+    prn->buf = malloc(sz);
+    if (prn->buf == NULL) {
+	errbox("Out of memory allocating output buffer");
+	free(prn);
+	return NULL;
+    }
+    return prn;
+}
+
+/* ........................................................... */
+
 static int freq_error (FREQDIST *freq, PRN *prn)
 {
     if (freq == NULL) {

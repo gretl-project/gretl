@@ -114,7 +114,7 @@ static int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
 		      int method);
 static void get_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
 			 int *pad1, int *pad2);
-static int get_precision (double x);
+static int get_places (double x);
 static void update_statusline (windata_t *windat, char *str);
 static void data_compact_dialog (int spd, int dpd, guint *compact_method);
 
@@ -774,7 +774,7 @@ static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 
     /* record the precision of the original data */
     for (t=0; t<sinfo->nobs; t++) {
-	p = get_precision(mvec[t]);
+	p = get_places(mvec[t]);
 	if (p > pmax) pmax = p;
     }
 
@@ -828,7 +828,7 @@ static int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
 
     /* record the precision of the original data */
     for (t=0; t<sinfo->nobs; t++) {
-	p = get_precision(mvec[t]);
+	p = get_places(mvec[t]);
 	if (p > pmax) pmax = p;
     }
 
@@ -871,7 +871,7 @@ static int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
 
 /* ........................................................... */
 
-static int get_precision (double x)
+static int get_places (double x)
 {
     char numstr[16];
     int i, n, p = 0;

@@ -125,7 +125,8 @@ enum file_ops {
 enum editables {
     EDIT_LOG = 1,
     EDIT_OUTPUT,
-    EDIT_SSHEET
+    EDIT_SSHEET,
+    EDIT_HEADER
 };
 
 enum stat_codes {

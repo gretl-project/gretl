@@ -42,6 +42,8 @@ typedef enum {
 
 /* functions follow */
 
+DATAINFO *datainfo_new (void);
+
 DATAINFO *create_new_dataset (double **pZ,  /* data matrix */
 			      int nvar,     /* number of variables */
 			      int nobs,     /* observations per variable */
@@ -57,6 +59,8 @@ int dateton (const char *date, const int pd, const char *startdate);
 void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo);
 
 int get_info (const char *hdrfile, PRN *prn);
+
+int get_precision (double *x, int n);
 
 int write_data (const char *fname, const int *list, 
 		double *Z, const DATAINFO *pdinfo, 

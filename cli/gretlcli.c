@@ -20,8 +20,6 @@
 /* interactive client program for libgretl - 
    uses the GNU readline library if available */
 
-
-
 #ifndef OS_WIN32
 # include "../config.h"
 #else
@@ -214,7 +212,8 @@ int main (int argc, char *argv[])
 #ifdef OS_WIN32
     strcpy(tmp, argv[0]);
 #endif
-    if ((datainfo = malloc(sizeof *datainfo)) == NULL)
+    datainfo = datainfo_new();
+    if (datainfo == NULL)
 	noalloc("data information");
     
     if (argc > 1) {

@@ -105,6 +105,4 @@ int _allocate_case_markers (char ***S, int n);
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, const double *Z);
 
-int _get_precision (double *x, int n);
-
 #endif /* GRETL_INTERNAL_H */

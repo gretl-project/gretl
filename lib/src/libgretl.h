@@ -71,6 +71,7 @@ typedef struct {
     short markers;
     short time_series;
     char **S;           /* to hold observation markers */
+    char *descrip;      /* to hold info on data sources etc. */
 } DATAINFO;
 
 typedef struct {

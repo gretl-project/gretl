@@ -69,6 +69,8 @@ void clear_datainfo (DATAINFO *pdinfo, int subsample)
 	    free(pdinfo->label);
 	    pdinfo->label = NULL;
 	}
+	free(pdinfo->descrip);
+	pdinfo->descrip = NULL;
     }
 }
 
@@ -106,17 +108,17 @@ static int skipcomments (FILE *fp, const char *str)
 
 static int comment_lines (FILE *fp, char **pbuf)
 {
-    char s[MAXLEN], *mybuf;
+    char s[MAXLEN], *mybuf = NULL;
     int count = 0, bigger = 1, bufsize;
 
     if (fgets(s, MAXLEN-1, fp) == NULL) return 0;
-    if (strncmp(s, STARTCOMMENT, 2) == 0) {
+    if (!strncmp(s, STARTCOMMENT, 2)) {
 	*pbuf = malloc(20 * MAXLEN);
 	if (*pbuf == NULL) return -1;
 	**pbuf = '\0';
-	strcat(*pbuf, s);
 	do {
 	    if (fgets(s, MAXLEN-1, fp) == NULL) break;
+	    if (!strncmp(s, ENDCOMMENT, 2)) break;
 	    count++;
 	    if (count > 20*bigger) {
 		bigger++;
@@ -126,7 +128,7 @@ static int comment_lines (FILE *fp, char **pbuf)
 		else *pbuf = mybuf;
 	    }
 	    strcat(*pbuf, s);
-	} while (s != NULL && strncmp(s, ENDCOMMENT, 2));
+	} while (s != NULL);
     }
     return count;
 }
@@ -171,6 +173,28 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
 }
 
 /**
+ * datainfo_new:
+ *
+ * Create a new data information struct pointer from scratch.
+ * 
+ * Returns: pointer to data information struct, or NULL on error.
+ *
+ */
+
+DATAINFO *datainfo_new (void)
+{
+    DATAINFO *dinfo;
+
+    dinfo = malloc(sizeof *dinfo);
+    if (dinfo == NULL) return NULL;
+    dinfo->varname = NULL;
+    dinfo->label = NULL;
+    dinfo->S = NULL;
+    dinfo->descrip = NULL;
+    return dinfo;
+}
+
+/**
  * create_new_dataset:
  * @pZ: pointer to data matrix.
  * @nvar: number of variables.
@@ -211,6 +235,7 @@ DATAINFO *create_new_dataset (double **pZ,
 	}
     } 
     dataset_dates_defaults(pdinfo);
+    pdinfo->descrip = NULL;
     return pdinfo;
 }
 
@@ -244,6 +269,7 @@ int start_new_Z (double **pZ, DATAINFO *pdinfo, int resample)
 
     pdinfo->S = NULL;
     pdinfo->markers = 0;
+    pdinfo->descrip = NULL;
     
     return 0;
 }
@@ -449,14 +475,14 @@ int check_varname (const char *varname)
         }
     }
     return 0;
-}       
+}   
 
 /* ................................................ */
 
 static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 {
     FILE *fp;
-    int n, i = 0, panel = 0;
+    int n, i = 0, panel = 0, descrip = 0;
     char str[MAXLEN], byobs[6], option[8];
 
     gretl_errmsg[0] = '\0';
@@ -496,7 +522,8 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
         safecpy(pdinfo->varname[i], str, 8);
 	if (check_varname(pdinfo->varname[i++])) 
 	    goto varname_error;
-    }
+    } else
+	descrip = 1; /* comments were found */
     while (1) {
         fscanf(fp, "%s", str);
 	n = strlen(str);
@@ -553,6 +580,26 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
     }
     if (fp != NULL) fclose(fp);
+
+    /* last pass, to pick up comments */
+    pdinfo->descrip = NULL;
+    if (descrip) {
+	char *dbuf = NULL;
+	int lines;
+
+	fp = fopen(hdrfile, "r");
+	if (fp == NULL) return 0;
+	if ((lines = comment_lines(fp, &dbuf)) > 0) {
+	    delchar('\r', dbuf);
+	    pdinfo->descrip = malloc(strlen(dbuf) + 1);
+	    if (pdinfo->descrip != NULL) 
+		strcpy(pdinfo->descrip, dbuf);
+	}
+	else if (lines < 0) 
+	    fprintf(stderr, "Failed to store data comments\n");
+	fclose(fp);
+    } 
+	
     return 0;
 
     varname_error:
@@ -748,8 +795,6 @@ static int writehdr (const char *hdrfile, const int *list,
 {
     FILE *fp;
     int bin = 0, i;
-    int old_comments = 0;
-    char *comment_buf = NULL;
     char startdate[8], enddate[8];
 
     if (opt == GRETL_DATA_FLOAT) bin = 1;
@@ -758,23 +803,17 @@ static int writehdr (const char *hdrfile, const int *list,
     ntodate(startdate, pdinfo->t1, pdinfo);
     ntodate(enddate, pdinfo->t2, pdinfo);
 
-    /* If there's already a file of this name, and it contains
-       comments on the data set, then preserve them */
-    fp = fopen(hdrfile, "r");
-    if (fp != NULL) {
-	old_comments = comment_lines(fp, &comment_buf);
-	if (old_comments < 0) return 1;
-	if (fp != NULL) fclose (fp);
-    }
-	
     fp = fopen(hdrfile, "w");
     if (fp == NULL) return 1;
 
-    /* write original comments, if any */
-    if (old_comments) 
-	fprintf(fp, "%s", comment_buf);
-    else
-	fprintf(fp, "(*\nspace for comments\n*)\n");
+    /* write description of data set, if any */
+    if (pdinfo->descrip != NULL) {
+	size_t len = strlen(pdinfo->descrip);
+
+	if (len > 2) 
+	    fprintf(fp, "(*\n%s%s*)\n", pdinfo->descrip,
+		    (pdinfo->descrip[len-1] == '\n')? "" : "\n");
+    }
 
     /* then list of variables */
     for (i=1; i<=list[0]; i++) {
@@ -802,12 +841,11 @@ static int writehdr (const char *hdrfile, const int *list,
 	fprintf(fp, "PANEL3\n");
     
     if (fp != NULL) fclose(fp);
-    if (comment_buf != NULL) free(comment_buf);
     return 0;
 }
 
 /**
- * _get_precision:
+ * get_precision:
  * @x: data vector.
  * @n: length of x.
  *
@@ -818,7 +856,7 @@ static int writehdr (const char *hdrfile, const int *list,
  *
  */
 
-int _get_precision (double *x, int n)
+int get_precision (double *x, int n)
 {
     int i, j, p, dot, len, pmax = 0;
     char numstr[48];
@@ -920,7 +958,7 @@ int write_data (const char *fname, const int *list,
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) return 1;
 	for (i=1; i<=l0; i++) 
-	    pmax[i-1] = _get_precision(&Z(list[i], pdinfo->t1), tsamp);
+	    pmax[i-1] = get_precision(&Z(list[i], pdinfo->t1), tsamp);
     }
 
     if (opt == GRETL_DATA_GZIPPED) { /* compressed ASCII */
@@ -2157,3 +2195,116 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     return GRETL_NATIVE_DATA; /* FIXME? */
 }
 
+#ifdef XML_NOT_YET
+
+/* ................................................. */
+
+static char *simple_fname (char *dest, const char *src)
+{
+    char *p;
+
+    /* take last part of src filename */
+    if (strrchr(src, SLASH))
+        strcpy(dest, strrchr(src, SLASH) + 1);
+    else
+        strcpy(dest, src);
+
+    /* trash any extension */
+    p = strrchr(dest, '.');
+    if (p != NULL && strlen(dest) > 3)
+	strcpy(p, "");
+
+    return dest;
+}
+
+/**
+ * write_xmldata:
+ * @fname: name of file to write.
+ * @list: list of variables to write.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * 
+ * Write out in xml a data file containing the values of the given set
+ * of variables.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ * 
+ */
+
+int write_xmldata (const char *fname, const int *list, 
+		   double *Z, const DATAINFO *pdinfo)
+{
+    int i, t, n = pdinfo->n;
+    FILE *fp = NULL;
+    int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    char startdate[8], enddate[8], datname[MAXLEN];
+
+    fp = fopen(fname, "w");
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't open %s for writing\n", fname);
+	return 1;
+    }
+
+    pmax = malloc(list[0] * sizeof *pmax);
+    if (pmax == NULL) {
+	fprintf(stderr, "Out of memory\n");
+	return 1;
+    } 
+    for (i=1; i<=list[0]; i++) 
+	pmax[i-1] = get_precision(&Z(list[i], pdinfo->t1), tsamp);
+
+    ntodate(startdate, pdinfo->t1, pdinfo);
+    ntodate(enddate, pdinfo->t2, pdinfo);
+
+    simple_fname(datname, fname);
+
+    fprintf(fp, "<?xml version=\"1.0\"?>\n"
+	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
+	    "<gretldata name=\"%s\" frequency=\"%d\" "
+	    "startobs=\"%s\" endobs=\"%s\">\n", 
+	    datname, pdinfo->pd, startdate, enddate);
+
+    /* first deal with description, if any */
+    if (pdinfo->descrip != NULL) {
+	/* FIXME: check this is idempotent!! */
+	fprintf(fp, "<description>\n%s</description>\n", pdinfo->descrip);
+    }
+
+    /* then listing of variable names and labels */
+    fprintf(fp, "<variables count=\"%d\">\n", list[0]);
+    for (i=1; i<=list[0]; i++) {
+	fprintf(fp, "<variable name=\"%s\"", pdinfo->varname[list[i]]);
+	if (pdinfo->label[list[i]][0]) {
+	    fprintf(fp, "\n label=\"%s\"/>\n", pdinfo->label[list[i]]);
+	} else {
+	    fprintf(fp, "/>\n");
+	}
+    }
+    fprintf(fp, "</variables>\n");
+
+    /* then listing of observations */
+    fprintf(fp, "<observations count=\"%d\" labels=\"%s\">\n",
+	    tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	fprintf(fp, "<obs");
+	if (pdinfo->markers && pdinfo->S != NULL) 
+	    fprintf(fp, " label=\"%s\">", pdinfo->S[t]);
+	else
+	    fputs(">", fp);
+	for (i=1; i<=list[0]; i++) {
+	    if (na(Z(list[i], t)))
+		fprintf(fp, "-999 ");
+	    else 
+		fprintf(fp, "%.*f ", pmax[i-1], Z(list[i], t));
+	}
+	fputs("</obs>\n", fp);
+    }
+    
+    fprintf(fp, "</observations>\n</gretldata>\n");
+
+    if (pmax) free(pmax);
+    if (fp != NULL) fclose(fp);
+    return 0;
+}
+
+#endif /* XML_NOT_YET */

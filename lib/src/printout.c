@@ -1597,9 +1597,9 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
     if (nfit < 0) return 1;
 
     if (isdummy(depvar, t1, t2, *pZ, n) > 0)
-	pmax = _get_precision(&(*pZ)[n*nfit], n);
+	pmax = get_precision(&(*pZ)[n*nfit], n);
     else
-	pmax = _get_precision(&(*pZ)[n*depvar], n);
+	pmax = get_precision(&(*pZ)[n*depvar], n);
 
     fit_resid_head(pmod, pdinfo, prn);
     for (t=0; t<n; t++) {

@@ -845,6 +845,18 @@ void file_viewer_save (GtkWidget *widget, gpointer data)
     FILE *fp;
     windata_t *mydata = (windata_t *) data;
 
+    if (mydata->fname[0] == '\0') { /* no file, creating data header */
+	text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+	if (text != NULL && strlen(text) > 0) {
+	    free(datainfo->descrip);
+	    datainfo->descrip = mymalloc(strlen(text) + 1);
+	    if (datainfo->descrip != NULL)
+		strcpy(datainfo->descrip, text);
+	    g_free(text);
+	}
+	return;
+    }
+
     fp = fopen(mydata->fname, "w");
     if (fp == NULL) {
 	errbox("Can't open file for writing");
@@ -997,21 +1009,25 @@ windata_t *view_file (char *filename, int editable, int del_file,
     extern GdkColor red, blue;
     void *colptr = NULL, *nextcolor = NULL;
     char tempstr[MAXSTR], *fle = NULL;
-    FILE *fd;
+    FILE *fd = NULL;
     windata_t *vwin;
     int console = 0;
 
-    fd = fopen(filename, "r");
-    if (fd == NULL) {
-	sprintf(tempstr, "Can't open %s for reading", filename);
-	errbox(tempstr);
-	return NULL;
+    if (filename != NULL) {
+	fd = fopen(filename, "r");
+	if (fd == NULL) {
+	    sprintf(tempstr, "Can't open %s for reading", filename);
+	    errbox(tempstr);
+	    return NULL;
+	}
     }
 
     if ((vwin = mymalloc(sizeof *vwin)) == NULL)
 	return NULL;
     windata_init(vwin);
-    strcpy(vwin->fname, filename);
+
+    if (filename != NULL)     
+	strcpy(vwin->fname, filename);
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
@@ -1098,22 +1114,24 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gtk_widget_show(close);
 
     /* insert the file text */
-    memset(tempstr, 0, sizeof tempstr);
-    while (fgets(tempstr, sizeof tempstr - 1, fd)) {
-	if (tempstr[0] == '?') 
-	    colptr = (console)? &red : &blue;
-	if (tempstr[0] == '#') {
-	    tempstr[0] = ' ';
-	    nextcolor = &red;
-	} else
-	    nextcolor = NULL;
-	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-			colptr, NULL, tempstr, 
-			strlen(tempstr));
-	colptr = nextcolor;
+    if (fd != NULL) {
 	memset(tempstr, 0, sizeof tempstr);
+	while (fgets(tempstr, sizeof tempstr - 1, fd)) {
+	    if (tempstr[0] == '?') 
+		colptr = (console)? &red : &blue;
+	    if (tempstr[0] == '#') {
+		tempstr[0] = ' ';
+		nextcolor = &red;
+	    } else
+		nextcolor = NULL;
+	    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			    colptr, NULL, tempstr, 
+			    strlen(tempstr));
+	    colptr = nextcolor;
+	    memset(tempstr, 0, sizeof tempstr);
+	}
+	fclose(fd);
     }
-    fclose(fd);
 
     /* clean up when dialog is destroyed */
     if (del_file) {

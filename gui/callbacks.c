@@ -191,44 +191,29 @@ void dummy_call (void)
 
 void open_info (gpointer data, guint edit, GtkWidget *widget)
 {
-    PRN *prn;
-    gint err;
-
-    if (bufopen(&prn)) return;
-
-    err = get_info(paths.hdrfile, prn);
-
-    if (err) {
-	gretl_print_destroy(prn);
-	if (err == 1) {
-	    errbox("Couldn't read data header file");
-	} else if (err == 2) { /* default blank header */
-	    FILE *fp;
-
-	    fp = fopen(paths.hdrfile, "a");
-	    if (fp == NULL) {
-		infobox("No info in data header file");
-	    } else {
-		fclose(fp);
-		if (!yes_no_dialog("gretl: add info", 
-				  "The data header file contains no\n"
-				  "informative comments.  Would you like\n"
-				  "to add some now?", 0)) {
-				     edit_header (NULL, 1, NULL);
-		}
-	    }
+    if (datainfo->descrip == NULL) {
+	if (!yes_no_dialog("gretl: add info", 
+			   "The data file contains no informative comments.\n"
+			   "Would you like to add some now?", 0)) {
+	    edit_header(NULL, 1, NULL);
 	}
-	return;
+    } else {
+	PRN *prn;
+	size_t sz = strlen(datainfo->descrip);
+
+	prn = bufopen_with_size(sz + 1);
+	if (prn != NULL) { 
+	    strcpy(prn->buf, datainfo->descrip);
+	    view_buffer(prn, 80, 300, "gretl: data info", INFO, NULL);
+	}
     }
-    view_buffer(prn, 80, 300, "gretl: data info", INFO, NULL);
 }
 
 /* ........................................................... */
 
 void edit_header (gpointer data, guint save, GtkWidget *widget)
 {
-    view_file(paths.hdrfile, 1, 0, 80, 300, "gretl: edit header", 
-	      NULL);
+    view_file(NULL, 1, 0, 80, 300, "gretl: edit data info", NULL);
 }
 
 /* ........................................................... */

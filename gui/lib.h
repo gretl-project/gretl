@@ -28,6 +28,8 @@ char *user_fopen (const char *fname, char *fullname, PRN **pprn);
 
 gint bufopen (PRN **pprn);
 
+PRN *bufopen_with_size (size_t sz);
+
 gint check_cmd (char *line);
  
 gint cmd_init (char *line);

@@ -564,13 +564,10 @@ int main (int argc, char *argv[])
     }
     fclose(cmds->fp);
 
-    /* allocate memory for data information struct */
-    datainfo = malloc(sizeof *datainfo);
+    /* allocate data information struct */
+    datainfo = datainfo_new();
     if (datainfo == NULL)
 	noalloc("data information");
-    datainfo->varname = NULL;
-    datainfo->label = NULL;
-    datainfo->S = NULL;
 
     /* allocate memory for models */
     models = malloc(3 * sizeof *models);
