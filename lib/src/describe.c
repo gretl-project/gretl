@@ -426,13 +426,14 @@ int corrgram (const int varno, const int order, double ***pZ,
     fprintf(fq, "# correlogram\n");
     fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
     fprintf(fq, "set xzeroaxis\n");
-    fprintf(fq, "set title \"Correlogram for %s\"\n", pdinfo->varname[varno]);
+    fprintf(fq, "set title \"%s %s\"\n", I_("Correlogram for"), 
+	    pdinfo->varname[varno]);
     if (maxlag) {
 	fprintf(fq, "plot '-' using 1:2 title '%s' "
 		"w impulses, \\\n'-' using 1:2 title '%s",
 		_("autocorrelations"), _("partial autocorrelations"));
 	if (maxlag < m)
-	    fprintf(fq, "(%s %d)' w impulses\n", _("to lag"), maxlag);
+	    fprintf(fq, "(%s %d)' w impulses\n", I_("to lag"), maxlag);
 	else
 	    fprintf(fq, "' w impulses\n");
     } else {
@@ -616,13 +617,13 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 	fprintf(fq, "# periodogram\n");
 	fprintf(fq, "set xtics nomirror\n"); 
 	if (pdinfo->pd == 4)
-	    fprintf(fq, "set x2label '%s'\n", _("quarters"));
+	    fprintf(fq, "set x2label '%s'\n", I_("quarters"));
 	else if (pdinfo->pd == 12)
-	    fprintf(fq, "set x2label '%s'\n", _("months"));
+	    fprintf(fq, "set x2label '%s'\n", I_("months"));
 	else if (pdinfo->pd == 1 && pdinfo->time_series == TIME_SERIES)
-	    fprintf(fq, "set x2label '%s'\n", _("years"));
+	    fprintf(fq, "set x2label '%s'\n", I_("years"));
 	else
-	    fprintf(fq, "set x2label '%s'\n", _("periods"));
+	    fprintf(fq, "set x2label '%s'\n", I_("periods"));
 	fprintf(fq, "set x2range [0:%d]\n", xmax);
 	fprintf(fq, "set x2tics(");
 	k = (nobs / 2) / 6;
@@ -631,13 +632,13 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 		    (double) (nobs / 2) / (2 * t), t);
 	}
 	fprintf(fq, "\"\" %d)\n", nobs);
-	fprintf(fq, "set xlabel '%s'\n", _("scaled frequency"));
+	fprintf(fq, "set xlabel '%s'\n", I_("scaled frequency"));
 	fprintf(fq, "set xzeroaxis\n");
 	fprintf(fq, "set nokey\n");
-	sprintf(titlestr, _("Spectrum of %s"), pdinfo->varname[varno]);
+	sprintf(titlestr, I_("Spectrum of %s"), pdinfo->varname[varno]);
 	fprintf(fq, "set title '%s", titlestr);
 	if (opt) {
-	    sprintf(titlestr, _("Bartlett window, length %d"), L);
+	    sprintf(titlestr, I_("Bartlett window, length %d"), L);
 	    fprintf(fq, " (%s)'\n", titlestr);
 	}
 	else

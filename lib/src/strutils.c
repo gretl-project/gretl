@@ -597,3 +597,18 @@ char *colonize_obs (char *obs)
     if (decpoint != '.') charsub(obs, '.', ':');
     return obs;
 }
+
+/* fudge for gnuplot strings */
+
+#ifdef ENABLE_NLS
+char *iso_gettext (const char *msgid)
+{
+   char *ret;
+
+   bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
+   ret = gettext(msgid);
+   bind_textdomain_codeset(PACKAGE, "UTF-8");
+   return ret;
+} 
+#endif  
+

@@ -22,6 +22,7 @@ cli/common.c
 cli/complete.c
 cli/gretlcli.c
 gui/boxplots.c
+gui/buildpath.c
 gui/calculator.c
 gui/callbacks.c
 gui/database.c

@@ -23,6 +23,7 @@
 #define STRUTILS_H
 
 #include "generate.h"
+#include "config.h"
 
 #ifdef OS_WIN32
 #define SLASH '\\'
@@ -71,5 +72,9 @@ int get_local_decpoint (void);
 double obs_str_to_double (const char *obs);
 
 char *colonize_obs (char *obs);
+
+#ifdef ENABLE_NLS
+char *iso_gettext (const char *msgid);
+#endif  
 
 #endif /* STRUTILS_H */
