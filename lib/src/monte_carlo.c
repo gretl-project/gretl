@@ -2528,6 +2528,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     if (!strncmp(line, "if", 2)) {
 	line += 2;
     } else if (!strncmp(line, "elif", 4)) {
+	/* dead code, for now */
 	line += 4;
     }
 
